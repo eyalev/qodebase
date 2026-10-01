@@ -12,6 +12,7 @@ import { Project, type ProjectInfo } from './project';
 import { Registry, registry } from './registry';
 import { serveRun } from './run';
 import { agentsHtml, explorePage, projectPage, type BoxStatus } from './ui';
+import { previewTabs } from './sheet';
 import { startingPage } from './pages';
 
 export { AgentBox, Project, Registry };
@@ -90,10 +91,10 @@ async function wake(env: Env, agentId: string, apiBase: string) {
 
 async function boxStatus(env: Env, id: string, withReply = false): Promise<BoxStatus> {
   const box = boxStub(env, id);
-  const awake = await box.isAwake().catch(() => false);
-  if (!awake) return { awake, cc: 'asleep' };
+  const ph = await box.phase().catch(() => ({ awake: false, booting: false, taskSent: false }));
+  if (!ph.awake) return { ...ph, cc: 'asleep' };
   const [cc, said] = await Promise.all([box.ccStatus().catch(() => 'unknown'), withReply ? box.lastReply().catch(() => undefined) : undefined]);
-  return { awake, cc, said };
+  return { ...ph, cc, said };
 }
 
 async function renderAgents(env: Env, info: ProjectInfo, runBase: string) {
@@ -175,7 +176,7 @@ export default {
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());
         if (verb === 'touch' && request.method === 'POST' && me.admin) { await registry(env).touch(slug); return json({ ok: true }); }
-        if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase) });
+        if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase), tabs: previewTabs(info, runBase) });
         if (verb === 'agents' && request.method === 'POST') {
           const b = await request.json() as { task?: string };
           return json(await spawn(env, ctx, slug, String(b.task || ''), apiBase));
@@ -184,16 +185,13 @@ export default {
           const b = await request.json() as { text?: string };
           const text = String(b.text || '').trim();
           if (!text || text.length > 8000) return json({ error: 'say something (max 8000 chars)' }, 400);
-          const r = await sendTo(env, `${slug}--router`, text, apiBase);
-          log('api', 'router_send', { slug, ok: r.ok, chars: text.length, err: r.error });
-          return json(r, r.ok ? 200 : 502);
+          return json(await askRouter(env, ctx, p, slug, text, apiBase));
         }
         if (verb === 'merge' && request.method === 'POST') {
           const b = await request.json() as { agent?: string };
           const a = info.agents.find((x) => x.id === b.agent);
           if (!a) return json({ error: 'unknown agent' }, 404);
-          const r = await sendTo(env, `${slug}--router`, `Merge agent ${a.id} into main: run \`forq merge ${a.id}\` and tell me the result in one line.`, apiBase);
-          return json(r, r.ok ? 200 : 502);
+          return json(await askRouter(env, ctx, p, slug, `Merge agent ${a.id} into main: run \`forq merge ${a.id}\` and tell me the result in one line.`, apiBase));
         }
       }
 
@@ -204,6 +202,19 @@ export default {
         if (!info || (info.owner !== me.handle && !me.admin)) return json({ error: 'not your project' }, 403);
         const box = boxStub(env, id);
         if (verb === 'state') return json({ ...(await box.state()), ...(await boxStatus(env, id, true)) });
+        // The Chat tab: the box's Claude Code transcript as messages. Never wakes a box.
+        if (verb === 'conversation') {
+          if (!(await box.isAwake())) return json({ asleep: true });
+          ctx.waitUntil(box.touch(id).catch(() => {}));
+          const [conv, cc] = await Promise.all([
+            box.fetch(new Request('https://container/api/conversation?session=claude&tail=200', { headers: { 'x-forq-port': '7681' } })),
+            box.ccStatus().catch(() => 'unknown'),
+          ]);
+          if (conv.status === 404) return json({ messages: [], status: cc });
+          if (!conv.ok) return json({ error: `conversation ${conv.status}` }, 502);
+          const j = await conv.json() as { messages: unknown[] };
+          return json({ messages: j.messages, status: cc });
+        }
         if (request.method !== 'POST') return json({ error: 'POST only' }, 405);
         if (verb === 'wake') return json(await wake(env, id, apiBase));
         if (verb === 'stop') { await box.letGo('manual'); return json(await box.state()); }
@@ -233,6 +244,24 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 const html = (body: string) => new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+
+/** Hand text to the router agent. Recorded first and answered at once; waking
+ *  (6-20 s) and delivery happen in the background, and the page shows each
+ *  phase from the project's lastRequest. */
+async function askRouter(env: Env, ctx: ExecutionContext, p: DurableObjectStub<Project>, slug: string, text: string, apiBase: string) {
+  const at = Date.now();
+  await p.setRequest({ text, at, state: 'waking', sentAt: undefined, error: undefined });
+  ctx.waitUntil(sendTo(env, `${slug}--router`, text, apiBase)
+    .then((r) => {
+      log('api', 'router_send', { slug, ok: r.ok, chars: text.length, ms: Date.now() - at, err: r.error });
+      return p.setRequest(r.ok ? { state: 'sent', sentAt: Date.now() } : { state: 'failed', error: r.error });
+    })
+    .catch((e) => {
+      log('api', 'router_send_failed', { slug, err: String(e), stack: e?.stack });
+      return p.setRequest({ state: 'failed', error: String(e?.message || e) });
+    }));
+  return { ok: true, at };
+}
 
 async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string) {
   task = task.trim();

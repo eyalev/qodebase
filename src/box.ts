@@ -78,6 +78,11 @@ export class AgentBox extends DurableObject<Env> {
 
   async isAwake(): Promise<boolean> { return !!this.ctx.container?.running; }
 
+  /** For the page's progress line: is it booting, and has its task gone in yet? */
+  async phase(): Promise<{ awake: boolean; booting: boolean; taskSent: boolean }> {
+    return { awake: !!this.ctx.container?.running, booting: !!this.#booting, taskSent: !!(await this.ctx.storage.get<boolean>('taskSent')) };
+  }
+
   async touch(agentId: string): Promise<void> {
     await this.ctx.storage.put('lastActive', Date.now());
     await this.ctx.storage.put('agentId', agentId);
@@ -312,7 +317,7 @@ PY
 function taskPrompt(spec: BootSpec) {
   if (spec.router) {
     return [
-      `You are the router of the forq project ${spec.project}. ${REPO_DIR} is a clone of the project's main branch. You coordinate; agents do the work.`,
+      `You are the router agent of the forq project ${spec.project}. ${REPO_DIR} is a clone of the project's main branch. You coordinate; agents do the work.`,
       `The person will message you from their phone. For each request: split it into independent tasks that touch different parts of the code where possible, and start one agent per task with \`forq spawn "<task>"\` (each agent gets its own fork and box; give it a complete, self-contained task). Small questions about the code you may answer yourself. Do not edit main yourself unless asked.`,
       `\`forq list\` shows the agents and their notes. When asked to merge an agent: \`forq merge <agent-id>\`; if it reports a conflict, resolve it in ${REPO_DIR}, commit, \`git push origin HEAD:main\`, then \`forq merged <agent-id>\`. \`forq send <agent-id> "text"\` messages an agent. \`forq help\` for the rest.`,
       `Keep replies short; the person reads them on a phone. Reply now with one line saying you are ready.`,

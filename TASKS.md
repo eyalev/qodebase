@@ -20,12 +20,20 @@
 - [ ] Step 3 check: 390 px screenshots light/dark; merge one fork into main from the phone
 - [ ] Measure: subscription usage with 3 parallel agents, container box-hours, Artifacts ops
 
+### Round 3 (2026-10-01): feedback from the phone
+- [x] "Router" → "Router agent" everywhere (UI + its prompt)
+- [x] Progress after Send: instant "You …" line, background delivery, phase line with ticking seconds (Sending → Waking up → Starting Claude Code → Working on it · N agents started), Retry on failure, 2 s polling while busy
+- [x] Agent cards say "starting" until the task is in (was "idle" while booting)
+- [x] Cards show input → output: You asked / Its task, from the router agent / Result
+- [x] Preview tabs above the app: Live + one per agent fork, Open in new tab; card Preview switches in place
+- [x] Agent sheet (slides up): Chat (new web chat on tmux-web's conversation API) | Terminal (mobile-agent); verified chat round-trip waking an asleep agent, and the terminal's websocket through Access
+- [ ] Eyal's message was cut off: "…stuff on it, so that's an option, maybe a toggleable option" — asked what the toggle is for
+
 ### Next
 - [ ] Every app shares the run origin, so localStorage leaks between projects (eyal/todo's tasks show in forq/todo's preview). Give each repo its own origin, or namespace storage
 - [ ] Project page: when you already have a fork, show "Your fork" instead of a second Fork button
 - [ ] Composer: trusted click on "Send to router" missed under phone emulation in ab-bg (form handler fine); check on a real phone
-- [ ] Router replies only show the last message; the chat view (computer2's chatPage) would show the conversation
-- [ ] Phone check of /a/<id>/agent/ (mobile-agent websocket through Access)
+- [ ] Terminal in the sheet: the 60-col pane clips a few characters at 390 px
 
 ## v1 (later)
 

@@ -5,6 +5,7 @@ import type { Entry } from './registry';
 import type { Agent, ProjectInfo } from './project';
 import { FRESH_CSS, freshHelp, freshLegend, freshTag } from './fresh';
 import { markdown } from './md';
+import { SHEET_CSS, SHEET_HTML, SHEET_JS, previewTabs, shortId } from './sheet';
 
 const esc = (s: string) => String(s ?? '').replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]!));
 const STEPS = [14 * 24, 3 * 24, 24, 3];   // freshbar horizon: empty after 14 days
@@ -55,22 +56,39 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .composer textarea{width:100%;min-height:76px;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:vertical}
 .composer .bar{display:flex;gap:8px;margin-top:8px;align-items:center}
 .composer .bar .btn{flex:1}
-.router{display:flex;gap:10px;align-items:flex-start;background:var(--card);border-radius:12px;padding:12px 14px;margin-top:12px;font-size:14px}
-.router .who{flex:none;font-weight:600;color:var(--fg)}
-.router .said{color:var(--dim);white-space:pre-wrap;word-break:break-word;max-height:9.5em;overflow:auto}
+.router{background:var(--card);border-radius:12px;padding:12px 14px;margin-top:12px;font-size:14px}
+.router .rh{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-height:24px}
+.router .who{font-weight:600;color:var(--fg)}
+.router .phase{color:var(--dim);font-variant-numeric:tabular-nums}
+.router.busy .phase{color:var(--fg)}
+.router .phase .n{color:var(--fg)}
+.router .phase .chipbtn{min-height:36px;padding:0 12px;font-size:14px;margin-left:4px}
+.router .err{color:var(--fg)}
+.router .you{margin-top:8px;color:var(--fg);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.router .you b{font-weight:600;margin-right:4px}
+.router .acts{display:flex;gap:8px;margin-top:10px}
+.router .acts .chipbtn{min-height:40px;padding:0 12px;font-size:14px}
+.router .said{margin-top:8px;color:var(--dim);white-space:pre-wrap;word-break:break-word;max-height:9.5em;overflow:auto}
+.card .h .st{font-variant-numeric:tabular-nums}
+.card.busy .h .st{color:var(--fg)}
 .cards{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .card{background:var(--card);border-radius:12px;padding:12px 14px}
 .card .h{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
 .card .h .st{margin-left:auto}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
 .dot.idle{background:var(--acc)}.dot.busy{background:var(--busy)}
-.card .task{margin-top:6px;font-size:15px}
-.card .said{margin-top:6px;font-size:14px;color:var(--dim)}
+.io{margin:8px 0 0}
+.io dt{font-size:12px;color:var(--dim);margin-top:8px}
+.io dt:first-child{margin-top:0}
+.io dd{margin:2px 0 0;font-size:15px;word-break:break-word}
+.io dd.none{color:var(--dim);font-size:14px}
+.io dd.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.io dd.clamp.open{-webkit-line-clamp:unset}
 .card .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .card .acts .chipbtn,.card .acts .btn{min-height:40px;padding:0 12px;font-size:14px}
 .empty{color:var(--dim);font-size:14px}
 @media (hover:hover){.row:hover{background:var(--chip)}.chipbtn:hover{background:var(--line)}}
-${FRESH_CSS}`;
+${FRESH_CSS}${SHEET_CSS}`;
 
 const shell = (title: string, body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -91,7 +109,7 @@ export function explorePage(entries: Entry[], me: string) {
   const mine = entries.filter((e) => e.owner === me);
   const others = entries.filter((e) => e.owner !== me);
   return shell('forq', `<header class="top"><span class="mark">forq</span><span class="who">${esc(me)}</span></header>
-<p class="intro">Projects that run. Open one, fork it, then tell its router what to change.</p>
+<p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.</p>
 ${freshLegend(STEPS)}
 ${mine.length ? `<h2>Yours</h2><div class="rows">${mine.map((e) => row(e, forks(e.slug), now)).join('')}</div>` : ''}
 <h2>Explore</h2><div class="rows">${others.map((e) => row(e, forks(e.slug), now)).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`);
@@ -108,12 +126,13 @@ export function projectPage(o: { info: ProjectInfo; entry: Entry; forks: Entry[]
 <h1><span class="owner">${esc(info.owner)} /</span> ${esc(info.name)}</h1>
 ${info.description ? `<p class="desc">${esc(info.description)}</p>` : ''}
 <div class="meta">${freshTag(entry.updatedAt, now, STEPS)}${forks.length ? `<span>${forks.length} fork${forks.length > 1 ? 's' : ''}</span>` : ''}${info.forkedFrom ? `<span>forked from <a href="${path(info.forkedFrom)}">${esc(label(info.forkedFrom))}</a></span>` : ''}</div>
-<div class="actions">${own ? `<a class="btn" href="${app}" target="_blank" rel="noopener">Open app</a>` : `<button class="btn" id="fork">Fork to ${esc(me)}</button><a class="chipbtn" href="${app}" target="_blank" rel="noopener">Open app</a>`}</div>
+${own ? '' : `<div class="actions"><button class="btn" id="fork">Fork to ${esc(me)}</button></div>`}
+<div class="pbar"><div class="ptabs" id="ptabs">${previewTabs(info, runBase)}</div><a class="pext" id="pext" href="${app}" target="_blank" rel="noopener">Open in new tab</a></div>
 <div class="preview"><iframe src="${app}" title="${esc(info.name)} app" loading="lazy"></iframe></div>
 ${own ? `<h2>Agents</h2>
-<form class="composer" id="ask"><textarea name="text" placeholder="Tell the router what to change. It splits the work and starts one agent per task." required enterkeyhint="send"></textarea>
-<div class="bar"><button class="btn">Send to router</button><a class="chipbtn" href="/a/${info.slug}--router/agent/">Router chat</a></div></form>
-<div id="agents">${o.agentsHtml}</div>`
+<form class="composer" id="ask"><textarea name="text" placeholder="Tell the router agent what to change. It splits the work and starts one agent per task." required enterkeyhint="send"></textarea>
+<div class="bar"><button class="btn">Send</button></div></form>
+<div id="agents">${o.agentsHtml}</div>${SHEET_HTML}`
     : `<p class="note">Fork it to change it: your copy gets its own page, its own live app and its own agents.</p>`}
 <h2>Files</h2><div class="files">${overview.files.map((f) => `<span>${esc(f.name)}${f.dir ? '/' : ''}</span>`).join('') || '<span>empty</span>'}</div>
 ${overview.readme ? `<h2>README</h2><div class="readme">${markdown(overview.readme)}</div>` : ''}
@@ -127,35 +146,100 @@ if(fork)fork.onclick=async()=>{fork.disabled=true;fork.textContent='Forking…';
  if(r.ok)location.href=j.path;else{fork.disabled=false;fork.textContent=j.error||'Fork failed';}};
 const ask=document.getElementById('ask');
 if(ask){
- ask.onsubmit=async(e)=>{e.preventDefault();const b=ask.querySelector('.btn');b.disabled=true;b.textContent='Sending…';
-  const r=await fetch(API+'/router',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:ask.text.value})});
-  const j=await r.json().catch(()=>({}));b.disabled=false;b.textContent=r.ok?'Send to router':(j.error||'Failed, try again');
-  if(r.ok){ask.text.value='';poll();}};
- document.getElementById('agents').addEventListener('click',async(e)=>{const m=e.target.closest('[data-merge]');if(!m)return;
-  m.disabled=true;m.textContent='Asking the router…';
+ const box=document.getElementById('agents');
+ // Seconds since a phase began, ticking every second on every [data-since].
+ const tick=()=>{for(const el of document.querySelectorAll('[data-since]')){const s=Math.max(0,Math.round((Date.now()-Number(el.dataset.since))/1000));el.textContent=s<60?s+'s':Math.floor(s/60)+'m '+(s%60)+'s';}};
+ setInterval(tick,1000);
+ const esc=(t)=>t.replace(/[<>&"]/g,(c)=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+ async function send(text){
+  // Show it at once: the request, and a phase line that ticks while the server works.
+  const rp=box.querySelector('.router');
+  if(rp)rp.outerHTML='<div class="router busy"><div class="rh"><span class="dot busy"></span><span class="who">Router agent</span><span class="phase">Sending <span data-since="'+Date.now()+'">0s</span></span></div><div class="you"><b>You</b> '+esc(text)+'</div></div>';
+  tick();
+  const r=await fetch(API+'/router',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text})});
+  if(!r.ok){const j=await r.json().catch(()=>({}));const ph=box.querySelector('.router .phase');if(ph)ph.textContent=j.error||'Could not send. Try again.';return false;}
+  poll();return true;
+ }
+ ask.onsubmit=async(e)=>{e.preventDefault();const t=ask.text.value.trim();if(!t)return;ask.text.value='';
+  if(!(await send(t)))ask.text.value=t;};
+ box.addEventListener('click',async(e)=>{
+  const retry=e.target.closest('[data-retry]');if(retry){retry.disabled=true;send(retry.dataset.retry);return;}
+  const c=e.target.closest('dd.clamp');if(c){c.classList.toggle('open');return;}
+  const m=e.target.closest('[data-merge]');if(!m)return;
+  m.disabled=true;m.textContent='Asking the router agent';
   const r=await fetch(API+'/merge',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({agent:m.dataset.merge})});
   if(!r.ok){const j=await r.json().catch(()=>({}));m.textContent=j.error||'Failed';}poll();});
- async function poll(){if(document.hidden)return;try{const r=await fetch(API+'/agents-html');if(r.ok)document.getElementById('agents').innerHTML=(await r.json()).html;}catch{}}
- setInterval(poll,5000);document.addEventListener('visibilitychange',poll);
+ let timer=null;
+ async function poll(){clearTimeout(timer);
+  if(!document.hidden){try{const r=await fetch(API+'/agents-html');if(r.ok){const j=await r.json();box.innerHTML=j.html;tick();
+   const pt=document.getElementById('ptabs');if(pt&&j.tabs!==undefined){const cur=window.forqCurrentPreview&&window.forqCurrentPreview();pt.innerHTML=j.tabs;for(const b of pt.querySelectorAll('.ptab'))b.classList.toggle('on',b.dataset.src===cur);}}}catch{}}
+  // Fast while anything is in progress, slow when all is quiet.
+  timer=setTimeout(poll,box.querySelector('.busy')?2000:5000);}
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll();});
+ tick();timer=setTimeout(poll,box.querySelector('.busy')?2000:5000);
 }
-</script>`);
+</script><script>${SHEET_JS}</script>`);
 }
 
-export type BoxStatus = { awake: boolean; cc: string; said?: string };
+export type BoxStatus = { awake: boolean; booting?: boolean; taskSent?: boolean; cc: string; said?: string };
+
+const BUSY = /busy|thinking|working|running|tool/;
+const since = (t: number) => `<span data-since="${t}">0s</span>`;
+
+/** One honest word for where an agent is: starting until its task has gone in. */
+function agentPhase(a: Agent, s: BoxStatus): { word: string; dot: string; busy: boolean; since?: number } {
+  if (a.state === 'pushed') return { word: 'pushed', dot: s.awake ? 'idle' : '', busy: false };
+  if (a.state === 'blocked') return { word: 'blocked', dot: 'busy', busy: false };
+  if (a.state === 'merged' || a.state === 'stopped') return { word: a.state, dot: '', busy: false };
+  if (s.booting || (s.awake && !s.taskSent) || (!s.awake && !s.taskSent)) return { word: 'starting', dot: 'busy', busy: true, since: a.createdAt };
+  if (s.awake && BUSY.test(s.cc)) return { word: 'working', dot: 'busy', busy: true };
+  if (s.awake) return { word: 'waiting for you', dot: 'idle', busy: false };
+  return { word: 'asleep', dot: '', busy: false };
+}
+
+/** The router agent panel: your last request, then where it is, then its reply. */
+function routerPanel(info: ProjectInfo, r: BoxStatus) {
+  const q = info.lastRequest;
+  const now = Date.now();
+  const started = q ? info.agents.filter((a) => a.createdAt >= q.at).length : 0;
+  const startedTxt = started ? ` <span class="n">${started} agent${started > 1 ? 's' : ''} started</span>` : '';
+  let phase = '', busy = false, said = '';
+  if (q?.state === 'failed') {
+    phase = `<span class="err">Could not reach it: ${esc(q.error || 'unknown error')}</span> <button class="chipbtn" data-retry="${esc(q.text)}">Retry</button>`;
+  } else if (q?.state === 'waking') {
+    busy = true;
+    phase = !r.awake ? `Waking up ${since(q.at)}` : `Starting Claude Code ${since(q.at)}`;
+  } else if (q?.state === 'sent' && (BUSY.test(r.cc) || now - (q.sentAt || 0) < 8000)) {
+    // Claude Code reads idle for a moment after a message lands, so the first
+    // 8 s after delivery count as working too.
+    busy = true;
+    phase = `Working on it ${since(q.sentAt || q.at)}${startedTxt}`;
+  } else {
+    said = r.said || '';
+    phase = r.awake ? (said ? '' : 'Ready') : 'Asleep. It wakes when you send something.';
+  }
+  const dot = busy ? 'busy' : r.awake ? 'idle' : '';
+  return `<div class="router${busy ? ' busy' : ''}"><div class="rh"><span class="dot ${dot}"></span><span class="who">Router agent</span>${phase ? `<span class="phase">${phase}</span>` : ''}</div>
+<div class="acts"><button type="button" class="chipbtn" data-sheet="${info.slug}--router" data-name="Router agent" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${info.slug}--router" data-name="Router agent" data-mode="term">Terminal</button></div>
+${q ? `<div class="you"><b>You</b> ${esc(q.text)}</div>` : ''}${said ? `<div class="said">${esc(said)}</div>` : ''}</div>`;
+}
 
 export function agentsHtml(info: ProjectInfo, runBase: string, router: BoxStatus, status: Record<string, BoxStatus>) {
   const now = Date.now();
-  const dot = (s: BoxStatus) => !s.awake ? '' : /busy|thinking|working|running/.test(s.cc) ? 'busy' : 'idle';
-  const word = (s: BoxStatus) => !s.awake ? 'asleep' : /busy|thinking|working|running/.test(s.cc) ? 'working' : 'idle';
   const card = (a: Agent) => {
     const s = status[a.id] || { awake: false, cc: 'asleep' };
-    return `<div class="card"><div class="h"><span class="dot ${dot(s)}"></span><span>${esc(a.id.split('--')[1])}</span>${freshTag(a.noteAt || a.createdAt, now, STEPS)}<span class="st">${a.state === 'working' ? word(s) : esc(a.state)}</span></div>
-<div class="task">${esc(a.task)}</div>${a.note ? `<div class="said">${esc(a.note)}</div>` : ''}
-<div class="acts"><a class="chipbtn" href="${runBase}/${a.fork}/" target="_blank" rel="noopener">Preview</a><a class="chipbtn" href="/a/${a.id}/agent/">Chat</a>${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge</button>` : ''}</div></div>`;
+    const ph = agentPhase(a, s);
+    return `<div class="card${ph.busy ? ' busy' : ''}"><div class="h"><span class="dot ${ph.dot}"></span><span>${esc(a.id.split('--')[1])}</span>${freshTag(a.noteAt || a.createdAt, now, STEPS)}<span class="st">${ph.word}${ph.since ? ` ${since(ph.since)}` : ''}</span></div>
+<dl class="io">
+${a.request ? `<dt>You asked</dt><dd class="clamp">${esc(a.request)}</dd>` : ''}
+<dt>${a.request ? 'Its task, from the router agent' : 'Its task'}</dt><dd class="clamp">${esc(a.task)}</dd>
+<dt>Result</dt><dd${a.note ? '' : ' class="none"'}>${a.note ? esc(a.note) : ph.busy ? 'Not yet. It reports here when it pushes.' : 'No report yet.'}</dd>
+</dl>
+<div class="acts"><button type="button" class="chipbtn" data-preview="${runBase}/${a.fork}/">Preview</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge</button>` : ''}</div></div>`;
   };
   const open = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped').reverse();
   const done = info.agents.filter((a) => a.state === 'merged').reverse().slice(0, 5);
-  return `<div class="router"><span class="dot ${dot(router)}"></span><span class="who">Router</span><span class="said">${router.said ? esc(router.said) : router.awake ? 'Ready.' : 'Asleep. It wakes when you send something.'}</span></div>
-<div class="cards">${open.map(card).join('') || '<p class="empty">No agents working. Ask the router for a change.</p>'}</div>
+  return `${routerPanel(info, router)}
+<div class="cards">${open.map(card).join('') || '<p class="empty">No agents working. Ask the router agent for a change.</p>'}</div>
 ${done.length ? `<h2>Merged</h2><div class="cards">${done.map(card).join('')}</div>` : ''}`;
 }

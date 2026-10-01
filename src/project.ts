@@ -16,11 +16,15 @@ export type Agent = {
   state: 'working' | 'pushed' | 'merged' | 'stopped' | 'blocked';
   note?: string;       // the agent's last `forq status` note
   noteAt?: number;
+  request?: string;    // the person's request that led to it (router-spawned agents)
 };
+/** The last thing the person asked the router agent, and how far delivery got. */
+export type RouterRequest = { text: string; at: number; state: 'waking' | 'sent' | 'failed'; sentAt?: number; error?: string };
 export type ProjectInfo = {
   slug: string; owner: string; name: string; description: string;
   repo: string; remote: string; forkedFrom: string | null; createdAt: number;
   agents: Agent[];
+  lastRequest?: RouterRequest;
 };
 
 export class Project extends DurableObject<Env> {
@@ -76,7 +80,8 @@ export class Project extends DurableObject<Env> {
     const id = `${info.slug}--${Math.random().toString(36).slice(2, 7)}`;
     using repo = await this.env.ARTIFACTS.get(info.repo);
     const forked = await repo.fork(id, { description: task.slice(0, 200), defaultBranchOnly: true });
-    const agent: Agent = { id, task, fork: forked.name, remote: forked.remote, createdAt: Date.now(), state: 'working' };
+    const agent: Agent = { id, task, fork: forked.name, remote: forked.remote, createdAt: Date.now(), state: 'working',
+      request: info.lastRequest && Date.now() - info.lastRequest.at < 30 * 60_000 ? info.lastRequest.text.slice(0, 1000) : undefined };
     info.agents.push(agent);
     await this.ctx.storage.put('info', info);
     log('project', 'agent_added', { slug: info.slug, id });
@@ -103,6 +108,12 @@ export class Project extends DurableObject<Env> {
     if (!agent) throw new Error('unknown agent');
     using repo = await this.env.ARTIFACTS.get(agent.fork);
     return { remote: agent.remote, token: (await repo.createToken('read', 600)).plaintext };
+  }
+
+  async setRequest(patch: Partial<RouterRequest>) {
+    const info = await this.#need();
+    info.lastRequest = { ...(info.lastRequest || { text: '', at: Date.now(), state: 'waking' }), ...patch } as RouterRequest;
+    await this.ctx.storage.put('info', info);
   }
 
   async setState(agentId: string, state: Agent['state'], note?: string) {

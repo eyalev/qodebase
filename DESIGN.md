@@ -24,7 +24,9 @@ none of its chrome.
 - **Spacing:** 4, 8, 12, 16, 24, 32. Page gutter 16 px.
 - **Radius:** cards and the app preview 12 px; buttons and inputs 8 px; tags
   4 px. Never pill-shaped.
-- **Motion:** colour/background transitions 120 ms only. No entrance animation.
+- **Motion:** colour/background transitions 120 ms; the agent sheet slides
+  (transform + height, 220 ms ease) because it is a surface arriving, not
+  decoration. No entrance animation on content.
 - **Touch:** targets ≥ 44 px; inputs 16 px (no iOS zoom); no sticky hover
   (`@media (hover:hover)` for hover styles); `-webkit-tap-highlight-color: transparent`.
 
@@ -35,8 +37,27 @@ none of its chrome.
   "forked from …") with 12 px gaps — never `A · B · C` strings.
 - **Dates:** every date in a list gets a freshbar (draining tag, house default,
   `src/fresh.ts`), horizon 14 days; legend + popover on the page.
-- **Agent card:** status dot (grey asleep, accent idle, `--busy` working), the
-  task, the agent's last note, then actions: Preview, Chat, Merge.
+- **Agent card = input → output:** status dot + one-word state, then a small
+  labelled list: "You asked" (the request that led to it), "Its task, from the
+  router agent" (input), "Result" (the agent's report, or "Not yet"), then
+  actions: Preview (the result running), Chat, Merge. Long fields clamp to 3
+  lines; tap to expand.
+- **Router agent panel:** your last request ("You …", 3 lines max), then a
+  phase line with a ticking seconds counter (Sending → Waking up → Starting
+  Claude Code → Working on it · N agents started), then its reply. Anything in
+  progress shows the `--busy` dot and the page polls every 2 s instead of 5 s.
+  A failed delivery says why and offers Retry. Never a silent button.
+- **Agent states, one word:** starting (until its task has gone in), working,
+  waiting for you, pushed, blocked, asleep, merged. Never "idle" for a box that
+  has not started its task.
+- **Preview tabs:** above the app, `Live` (main) + one tab per open agent
+  fork; the selected tab is filled `--fg`. "Open in new tab" opens whichever is
+  showing. A card's Preview switches the inline view, never navigates.
+- **Agent sheet:** Chat | Terminal for any agent or the router agent, sliding
+  up over the project page (72 dvh, grab handle toggles full height, × closes).
+  Chat = web bubbles (you in accent, the agent plain, tool steps folded into one
+  tappable "N steps" row); Terminal = mobile-agent in an iframe, loaded only
+  when chosen. Nothing about an agent navigates away from its project.
 - **Primary action** per screen is one accent button; everything else is a
   chip button or a text link.
 
