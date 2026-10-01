@@ -20,7 +20,7 @@ export function previewTabs(info: ProjectInfo, runBase: string, current?: string
 }
 
 export const SHEET_HTML = `<div class="sheet" id="sheet" aria-hidden="true">
-<button type="button" class="grab" id="sh-grab" aria-label="Half or full height"><span></span></button>
+<button type="button" class="grab" id="sh-grab" aria-label="Drag to resize, tap for full height"><span></span></button>
 <div class="sh-h"><b id="sh-name"></b><div class="seg" role="tablist"><button type="button" data-m="chat" role="tab">Chat</button><button type="button" data-m="term" role="tab">Terminal</button></div><button type="button" class="x" id="sh-x" aria-label="Close">×</button></div>
 <div class="sh-body">
  <div class="chatv" id="sh-chat"><div class="log" id="sh-log"></div>
@@ -40,8 +40,10 @@ export const SHEET_CSS = `
  transform:translateY(105%);transition:transform .22s ease,height .22s ease;visibility:hidden}
 .sheet.open{transform:none;visibility:visible}
 .sheet.full{height:calc(100dvh - 8px)}
-.grab{display:flex;justify-content:center;align-items:center;height:20px;border:0;background:none;cursor:pointer;flex:none}
-.grab span{width:40px;height:4px;border-radius:2px;background:var(--line)}
+.grab{display:flex;justify-content:center;align-items:center;height:28px;border:0;background:none;cursor:ns-resize;flex:none;touch-action:none;width:100%}
+.grab span{width:44px;height:5px;border-radius:3px;background:var(--dim);opacity:.45}
+.sheet.dragging{transition:none}
+.sheet.dragging iframe{pointer-events:none}
 .sh-h{display:flex;align-items:center;gap:8px;padding:0 12px 8px 16px;border-bottom:1px solid var(--line);flex:none}
 .sh-h b{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .seg{display:flex;background:var(--chip);border-radius:8px;padding:2px}
@@ -88,11 +90,25 @@ export const SHEET_JS = String.raw`
  window.forqOpenSheet=(id,name,m)=>{
   if(!cur||cur.id!==id){log.innerHTML='<div class="m-x">Loading…</div>';lastKey='';term.removeAttribute('src');term.dataset.for='';}
   cur={id,name};document.getElementById('sh-name').textContent=name;
-  sheet.classList.add('open');sheet.setAttribute('aria-hidden','false');document.body.classList.add('sheet-open');touched=Date.now();
+  applySaved();sheet.classList.add('open');sheet.setAttribute('aria-hidden','false');document.body.classList.add('sheet-open');touched=Date.now();
   setMode(m||'chat');};
- function close(){sheet.classList.remove('open','full');sheet.setAttribute('aria-hidden','true');document.body.classList.remove('sheet-open');clearTimeout(timer);}
+ function close(){sheet.classList.remove('open','full');sheet.style.height='';sheet.setAttribute('aria-hidden','true');document.body.classList.remove('sheet-open');clearTimeout(timer);}
  document.getElementById('sh-x').onclick=close;
- document.getElementById('sh-grab').onclick=()=>sheet.classList.toggle('full');
+ // The handle: drag to any height (remembered per viewer), tap to switch
+ // half/full, drag below a fifth of the screen to close.
+ const grab=document.getElementById('sh-grab'),HKEY='forq.sheetH';
+ const clampH=(h)=>Math.max(160,Math.min(innerHeight-8,h));
+ function applySaved(){try{const f=Number(localStorage.getItem(HKEY));if(f>0.2&&f<=1)sheet.style.height=clampH(f*innerHeight)+'px';}catch{}}
+ let drag=null;
+ grab.addEventListener('pointerdown',(e)=>{drag={y:e.clientY,h:sheet.getBoundingClientRect().height,moved:false};try{grab.setPointerCapture(e.pointerId)}catch{}sheet.classList.add('dragging');});
+ grab.addEventListener('pointermove',(e)=>{if(!drag)return;const dy=drag.y-e.clientY;if(Math.abs(dy)>4)drag.moved=true;
+  if(drag.moved){sheet.classList.remove('full');sheet.style.height=clampH(drag.h+dy)+'px';}});
+ grab.addEventListener('pointerup',(e)=>{if(!drag)return;sheet.classList.remove('dragging');const d=drag;drag=null;
+  if(!d.moved){const full=sheet.getBoundingClientRect().height>innerHeight*0.85;sheet.style.height=full?'':(innerHeight-8)+'px';try{localStorage.removeItem(HKEY)}catch{}return;}
+  const h=sheet.getBoundingClientRect().height;
+  if(e.clientY>innerHeight*0.8&&h<innerHeight*0.25){close();return;}
+  try{localStorage.setItem(HKEY,String(h/innerHeight))}catch{}});
+ grab.addEventListener('pointercancel',()=>{drag=null;sheet.classList.remove('dragging');});
  sheet.querySelector('.seg').onclick=(e)=>{const b=e.target.closest('button');if(b)setMode(b.dataset.m);};
 
  function render(j){

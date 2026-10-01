@@ -54,7 +54,8 @@ none of its chrome.
   fork; the selected tab is filled `--fg`. "Open in new tab" opens whichever is
   showing. A card's Preview switches the inline view, never navigates.
 - **Agent sheet:** Chat | Terminal for any agent or the router agent, sliding
-  up over the project page (72 dvh, grab handle toggles full height, × closes).
+  up over the project page (72 dvh by default; drag the handle to any height,
+  remembered per viewer; tap it for full/half; drag to the bottom or × closes).
   Chat = web bubbles (you in accent, the agent plain, tool steps folded into one
   tappable "N steps" row); Terminal = mobile-agent in an iframe, loaded only
   when chosen. Nothing about an agent navigates away from its project.

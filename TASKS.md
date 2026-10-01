@@ -27,6 +27,8 @@
 - [x] Cards show input → output: You asked / Its task, from the router agent / Result
 - [x] Preview tabs above the app: Live + one per agent fork, Open in new tab; card Preview switches in place
 - [x] Agent sheet (slides up): Chat (new web chat on tmux-web's conversation API) | Terminal (mobile-agent); verified chat round-trip waking an asleep agent, and the terminal's websocket through Access
+- [x] Sheet handle: drag to any height (remembered per viewer), tap for full/half, drag to bottom closes
+- [ ] mobile-agent is crowded inside the sheet: proposed a minimal layout in mobile-agent itself (appcore app config, `?ui=minimal`), shipped into boxes at boot instead of an image rebuild — waiting on Eyal's go
 - [ ] Eyal's message was cut off: "…stuff on it, so that's an option, maybe a toggleable option" — asked what the toggle is for
 
 ### Next
