@@ -49,7 +49,7 @@
 - [x] Versions: Live + every agent fork (?v=<agent>) on every code page
 - [x] Go to file: whole-tree path list (cached per root tree), filter as you type
 - [x] Changes: /p/<o>/<n>/changes/<agent> — fork vs where it started (agent.base, recorded at fork time; older agents: main's newest commit before the fork), per-file unified diff (jsdiff), +/- counts; "Changes" button on agent cards
-- [ ] Content search: per-commit full-text index in the Project DO's SQLite (FTS5)
+- [x] Content search: FTS5 trigram index in the Project DO's SQLite, built on the first search of a version (text files only, ≤256 KB each, ≤3000 files / 20 MB), 4 newest versions kept; "Search file contents" at the bottom of Go to file, matches grouped by file with line links. Verified: 2048 (20 files), reveal.js (213 + 6 skipped), an agent fork
 
 ## v1 (later)
 

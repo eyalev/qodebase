@@ -195,6 +195,88 @@ export class Project extends DurableObject<Env> {
     await this.ctx.storage.deleteAll();
   }
 
+  // ---- content search ---------------------------------------------------
+  // One FTS5 table (trigram: substring matches, like grep) holding the text
+  // files of the few most recent versions searched, keyed by root tree hash.
+  // Built on the first search of a version; the four newest versions are kept.
+  #indexing = new Map<string, Promise<{ files: number; bytes: number; skipped: number }>>();
+
+  #ensureSearchTables() {
+    const sql = this.ctx.storage.sql;
+    sql.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS code_fts USING fts5(ver UNINDEXED, path, body, tokenize='trigram')`);
+    sql.exec(`CREATE TABLE IF NOT EXISTS code_idx (ver TEXT PRIMARY KEY, files INTEGER, bytes INTEGER, skipped INTEGER, at INTEGER)`);
+  }
+
+  async #buildIndex(repoName: string, rootTree: string) {
+    const t0 = Date.now();
+    const MAX_FILES = 3000, MAX_TOTAL = 20 * 1024 * 1024, MAX_FILE = 256 * 1024;
+    const SKIP = /\.(png|jpe?g|gif|webp|ico|bmp|woff2?|ttf|otf|eot|mp3|ogg|wav|mp4|webm|mov|zip|gz|tgz|7z|pdf|wasm|lock|min\.js|min\.css|map)$/i;
+    using repo = await this.env.ARTIFACTS.get(repoName);
+    const files: { path: string; hash: string }[] = [];
+    const walk = async (hash: string, prefix: string): Promise<void> => {
+      const entries = (await repo.readTree(hash)) || [];
+      const dirs: Promise<void>[] = [];
+      for (const e of entries) {
+        if (files.length >= MAX_FILES) return;
+        if (e.type === 'tree') { if (!/^(node_modules|\.git|vendor)$/.test(e.name)) dirs.push(walk(e.hash, `${prefix}${e.name}/`)); }
+        else if (e.type === 'blob' && !SKIP.test(e.name)) files.push({ path: prefix + e.name, hash: e.hash });
+      }
+      await Promise.all(dirs);
+    };
+    await walk(rootTree, '');
+    let bytes = 0, skipped = 0, n = 0;
+    const sql = this.ctx.storage.sql;
+    for (let i = 0; i < files.length; i += 12) {
+      const batch = await Promise.all(files.slice(i, i + 12).map(async (f) => {
+        const b = await repo.readBlob(f.hash).catch(() => null);
+        if (!b || b.size > MAX_FILE) return null;
+        const buf = new Uint8Array(await b.arrayBuffer());
+        if (buf.subarray(0, 8192).includes(0)) return null;
+        return { path: f.path, text: new TextDecoder().decode(buf) };
+      }));
+      for (const r of batch) {
+        if (!r || bytes + r.text.length > MAX_TOTAL) { skipped++; continue; }
+        sql.exec(`INSERT INTO code_fts (ver, path, body) VALUES (?, ?, ?)`, rootTree, r.path, r.text);
+        bytes += r.text.length; n++;
+      }
+    }
+    sql.exec(`INSERT OR REPLACE INTO code_idx (ver, files, bytes, skipped, at) VALUES (?, ?, ?, ?, ?)`, rootTree, n, bytes, skipped, Date.now());
+    // Keep the four most recently built versions.
+    const old = sql.exec(`SELECT ver FROM code_idx ORDER BY at DESC LIMIT -1 OFFSET 4`).toArray() as { ver: string }[];
+    for (const o of old) { sql.exec(`DELETE FROM code_fts WHERE ver = ?`, o.ver); sql.exec(`DELETE FROM code_idx WHERE ver = ?`, o.ver); }
+    log('project', 'search_indexed', { repo: repoName, tree: rootTree.slice(0, 8), files: n, bytes, skipped, pruned: old.length, ms: Date.now() - t0 });
+    return { files: n, bytes, skipped };
+  }
+
+  /** Search the text files of one version (repo + root tree) for `q`. */
+  async searchCode(repoName: string, rootTree: string, q: string) {
+    this.#ensureSearchTables();
+    const sql = this.ctx.storage.sql;
+    const have = sql.exec(`SELECT files, skipped FROM code_idx WHERE ver = ?`, rootTree).toArray()[0] as { files: number; skipped: number } | undefined;
+    let indexedNow = false;
+    if (!have) {
+      let p = this.#indexing.get(rootTree);
+      if (!p) { p = this.#buildIndex(repoName, rootTree).finally(() => this.#indexing.delete(rootTree)); this.#indexing.set(rootTree, p); }
+      await p;
+      indexedNow = true;
+    }
+    const needle = q.trim();
+    if (needle.length < 3) return { error: 'type at least 3 characters', results: [] };
+    // A trigram phrase query = case-insensitive substring match.
+    const phrase = `"${needle.replace(/"/g, '""')}"`;
+    const rows = sql.exec(`SELECT path, body FROM code_fts WHERE code_fts MATCH ? AND ver = ? LIMIT 60`, phrase, rootTree).toArray() as { path: string; body: string }[];
+    const lower = needle.toLowerCase();
+    const results = rows.map((r) => {
+      const lines: { n: number; text: string }[] = [];
+      const all = r.body.split('\n');
+      for (let i = 0; i < all.length && lines.length < 6; i++) if (all[i].toLowerCase().includes(lower)) lines.push({ n: i + 1, text: all[i].slice(0, 300) });
+      let count = 0; for (const l of all) if (l.toLowerCase().includes(lower)) count++;
+      return { path: r.path, lines, count };
+    }).filter((r) => r.count > 0).sort((a, b) => b.count - a.count);
+    const meta = sql.exec(`SELECT files, skipped FROM code_idx WHERE ver = ?`, rootTree).toArray()[0] as { files: number; skipped: number };
+    return { results, indexedNow, files: meta?.files ?? 0, skipped: meta?.skipped ?? 0 };
+  }
+
   async #need(): Promise<ProjectInfo> {
     const info = await this.info();
     if (!info) throw new Error('no such project');

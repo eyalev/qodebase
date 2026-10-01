@@ -29,6 +29,14 @@ export const CODE_CSS = `<style>
 .goto .hits a{padding:10px 12px;font:13px 'JetBrains Mono',monospace;color:var(--fg);border-bottom:1px solid var(--line);word-break:break-all}
 .goto .hits a b{color:var(--acc);font-weight:600}
 .goto .hits p{margin:0;padding:10px 12px;color:var(--dim);font-size:14px}
+.goto .deep{min-height:44px;border:0;border-top:1px solid var(--line);background:var(--chip);color:var(--fg);font:500 14px 'Instrument Sans',sans-serif;text-align:left;padding:0 12px;cursor:pointer}
+.goto .sr{border-bottom:1px solid var(--line)}
+.goto .sr a.f{display:flex;justify-content:space-between;gap:8px;font-weight:600;border-bottom:0}
+.goto .sr a.f span{color:var(--dim);font-weight:400;font-family:'Instrument Sans',sans-serif}
+.goto .sr a.l{display:flex;gap:10px;padding:4px 12px 4px 12px;font-size:12px;color:var(--dim);border-bottom:0;white-space:pre;overflow:hidden;text-overflow:ellipsis}
+.goto .sr a.l:last-child{padding-bottom:10px}
+.goto .sr .ln{flex:none;min-width:2.5em;text-align:right;color:var(--dim)}
+.goto .sr .lt{min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--fg)}
 .ls{display:flex;flex-direction:column;background:var(--card);border-radius:12px;overflow:hidden}
 .ls a{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border-bottom:1px solid var(--line);color:var(--fg);font:14px 'JetBrains Mono',monospace;word-break:break-all}
 .ls a:last-child{border-bottom:0}
@@ -92,17 +100,29 @@ function crumbs(info: ProjectInfo, path: string, v: string) {
   }).join('')}</div>`;
 }
 
-const gotoBox = (info: ProjectInfo, v: string) => `<div class="goto"><input id="goto" type="search" placeholder="Go to file" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="go"><div class="hits" id="hits"></div></div>
+const gotoBox = (info: ProjectInfo, v: string) => `<div class="goto"><input id="goto" type="search" placeholder="Go to file, or search the code" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="go"><div class="hits" id="hits"></div></div>
 <script>(function(){const $i=document.getElementById('goto'),$h=document.getElementById('hits');let files=null;
 const esc=(t)=>t.replace(/[<>&"]/g,(c)=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 async function load(){if(files)return files;const r=await fetch('/api/p/${info.owner}/${info.name}/files${v ? `?v=${v}` : ''}');const j=await r.json();files=j.files||[];return files;}
 // Matches in the file name rank above matches in folder names; shorter paths first. null = no match.
 function score(p,q){const l=p.toLowerCase();const i=l.indexOf(q);if(i<0)return null;const base=l.lastIndexOf('/')+1;return (i>=base?1000:0)-i-p.length/100;}
 $i.addEventListener('focus',load);
-$i.addEventListener('input',async()=>{const q=$i.value.trim().toLowerCase();if(!q){$h.classList.remove('on');return;}
- const fs=await load();const hits=fs.map((f)=>[f,score(f,q)]).filter((x)=>x[1]!==null).sort((a,b)=>b[1]-a[1]).slice(0,40);
+const API='/api/p/${info.owner}/${info.name}',V='${v ? `?v=${v}` : ''}',VQ='${v ? `&v=${v}` : ''}';
+const codeUrl=(f,n)=>'/p/${info.owner}/${info.name}/code/'+encodeURI(f)+V+(n?'#L'+n:'');
+const mark=(t,q)=>{const i=t.toLowerCase().indexOf(q);return i<0?esc(t):esc(t.slice(0,i))+'<b>'+esc(t.slice(i,i+q.length))+'</b>'+esc(t.slice(i+q.length));};
+let seq=0;
+$i.addEventListener('input',async()=>{const q=$i.value.trim().toLowerCase();const my=++seq;if(!q){$h.classList.remove('on');return;}
+ const fs=await load();if(my!==seq)return;
+ const hits=fs.map((f)=>[f,score(f,q)]).filter((x)=>x[1]!==null).sort((a,b)=>b[1]-a[1]).slice(0,30);
  $h.classList.add('on');
- $h.innerHTML=hits.length?hits.map(([f])=>{const i=f.toLowerCase().indexOf(q);return '<a href="/p/${info.owner}/${info.name}/code/'+encodeURI(f)+'${v ? `?v=${v}` : ''}">'+esc(f.slice(0,i))+'<b>'+esc(f.slice(i,i+q.length))+'</b>'+esc(f.slice(i+q.length))+'</a>';}).join(''):'<p>No file matches.</p>';});
+ $h.innerHTML=(hits.length?hits.map(([f])=>'<a href="'+codeUrl(f)+'">'+mark(f,q)+'</a>').join(''):'<p>No file name matches.</p>')+
+  (q.length>=3?'<button type="button" class="deep" id="deep">Search file contents for “'+esc($i.value.trim())+'”</button>':'');});
+$h.addEventListener('click',async(e)=>{if(!e.target.closest('#deep'))return;const q=$i.value.trim();const my=++seq;
+ $h.innerHTML='<p>Searching the code. The first search of a version indexes it, a few seconds.</p>';
+ let j;try{const r=await fetch(API+'/search?q='+encodeURIComponent(q)+VQ);j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);}catch(err){if(my===seq)$h.innerHTML='<p>'+esc(err.message)+'</p>';return;}
+ if(my!==seq)return;const ql=q.toLowerCase();
+ $h.innerHTML='<p>'+(j.results.length?j.results.length+' file'+(j.results.length>1?'s':'')+' contain “'+esc(q)+'”':'No file contains “'+esc(q)+'”')+', '+j.files+' files searched'+(j.skipped?', '+j.skipped+' skipped (binary or large)':'')+'</p>'+
+  j.results.map((r)=>'<div class="sr"><a class="f" href="'+codeUrl(r.path)+'">'+esc(r.path)+'<span>'+r.count+'</span></a>'+r.lines.map((l)=>'<a class="l" href="'+codeUrl(r.path,l.n)+'"><span class="ln">'+l.n+'</span><span class="lt">'+mark(l.text.trim(),ql)+'</span></a>').join('')+'</div>').join('');});
 })();</script>`;
 
 const head = (info: ProjectInfo, v: string, at: string, title: string, rev?: Head | null) =>

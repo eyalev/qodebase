@@ -222,6 +222,13 @@ export default {
           const r = await allFiles(env, ctx, repo, rev.tree);
           return json({ files: r.files.map((f) => f.path), truncated: r.truncated });
         }
+        if (verb === 'search') {
+          const repo = versionRepo(info, url.searchParams.get('v') || '');
+          if (!repo) return json({ error: 'unknown version' }, 404);
+          const rev = await head(env, ctx, repo);
+          if (!rev) return json({ results: [] });
+          return json(await p.searchCode(repo, rev.tree, (url.searchParams.get('q') || '').slice(0, 200)));
+        }
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());
         if (verb === 'entry' && request.method === 'POST') {

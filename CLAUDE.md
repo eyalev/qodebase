@@ -77,6 +77,10 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 - An agent's Changes compare its fork with `agent.base` (main at fork time,
   recorded by `addAgent`), never main's current HEAD — after merges that would
   show other agents' work as removals.
+- Content search: `Project.searchCode()` keeps an FTS5 `trigram` table
+  (`code_fts`, substring = grep-like, needs ≥ 3 characters) per version (root
+  tree hash), built on first search, four newest kept (`code_idx`). Writes
+  count as DO rows written; a version is indexed once.
 - Reading code is open to anyone who can see the project; the ownership
   check in the project API comes after the read verbs.
 
