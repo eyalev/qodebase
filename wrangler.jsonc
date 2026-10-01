@@ -67,8 +67,13 @@
     "API_BASE": "https://forq.<sub>.workers.dev",
     // Hard caps (the durable_object policy has no max_instances).
     "MAX_AGENTS_PER_PROJECT": "6",
+    // Runs on the Claude subscription; everyone else brings an Anthropic API key.
+    "OWNER_HANDLE": "eyal",
+    // Awake boxes per other user (their containers bill this account).
+    "OTHERS_MAX_AWAKE": "2",
     "MAX_AWAKE_BOXES": "5"
   }
   // Secrets: CLAUDE_CODE_OAUTH_TOKEN (Eyal's subscription), ADMIN_SECRET,
-  // CF_DEPLOY_TOKEN (Workers Scripts write; only BuildBox uses it).
+  // CF_DEPLOY_TOKEN (Workers Scripts write; only BuildBox uses it), ISSUES_WEBHOOK_SECRET,
+  // OBS_READ_TOKEN (Workers Observability read), KEY_ENC_SECRET (users' API keys, AES-GCM).
 }

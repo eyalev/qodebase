@@ -12,7 +12,10 @@ export interface Env {
   CF_DEPLOY_TOKEN: string;      // Workers Scripts write only; BuildBox passes it to one wrangler command at a time
   API_BASE: string;             // this Worker on workers.dev (DOs call back into it)
   ISSUES_WEBHOOK_SECRET: string; // Cloudflare Notifications sends it as cf-webhook-auth
-  OBS_READ_TOKEN: string;        // Workers Observability read: an issue's occurrences for the router agent
+  OBS_READ_TOKEN: string;
+  KEY_ENC_SECRET: string;        // encrypts users' Anthropic API keys (AES-GCM)
+  OWNER_HANDLE: string;          // runs on the Claude subscription; everyone else brings an API key
+  OTHERS_MAX_AWAKE: string;      // awake boxes per non-owner user (their containers bill this account)        // Workers Observability read: an issue's occurrences for the router agent
   ARTIFACTS: Artifacts;
   ACCESS_TEAM_DOMAIN: string;
   ACCESS_AUD: string;

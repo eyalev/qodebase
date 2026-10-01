@@ -78,10 +78,12 @@ Bugs found and fixed during the run:
 - "You asked" on alert-born requests → "Reported by Cloudflare Issues"
 
 ### Round 9 (2026-10-02): public with your own API key, self-host guide, workflow videos
-- [ ] Public read: explore, project, code, changes pages without Access; actions need sign-in
-- [ ] Sign-in: Access only on /login (any Google account) → forq's own signed session cookie; new users pick a handle
-- [ ] Settings: paste an Anthropic API key (checked against the API, stored encrypted); boxes of that user's projects run Claude Code on it; Eyal keeps the subscription
-- [ ] Limits for other users: projects, agents, awake boxes; crawler gate + noindex on app pages; public-project baseline pass
+- [x] Public read: explore, project, code, changes, import pages without sign-in; actions, Settings, agent UIs, GitHub search need a session (anonymous = handle '' that owns nothing)
+- [x] Sign-in: Access app now covers only forq.kapps.dev/login, policy "everyone" (emailed one-time code: no IdP configured, Google would need a GCP OAuth client) → forq's own HMAC session cookie, 30 days; new users get a suggested handle, changeable until they own a project
+- [x] Settings: Anthropic API key checked with one /v1/models call, AES-GCM encrypted (KEY_ENC_SECRET), last 4 shown; their boxes run ANTHROPIC_API_KEY + ANTHROPIC_MODEL=claude-sonnet-5-5; Eyal (OWNER_HANDLE) keeps the subscription
+- [x] Limits for others: 10 projects, 2 awake boxes across their projects (their containers bill this account), no Worker deploys (they run on this account); no-key requests fail at once with "add your key"
+- [ ] A real agent run on an API key: needs a forq-specific Anthropic key from Eyal (did not run forq agents on desk's key: one key per project); key save/check verified with it, then removed
+- [ ] Baseline pass: /about, /privacy, /version.json, /health.json, crawler gate on the UI host
 - [ ] Self-host guide (SELF_HOST.md) + config that does not assume Eyal's account; repo stays PRIVATE (Eyal, 2026-10-02)
 - [ ] Video research (how good technical walkthroughs are made)
 - [ ] Recording rig: phone-size browser, visible taps, captions, time-lapse for waits, mp4

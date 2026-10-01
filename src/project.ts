@@ -156,6 +156,7 @@ export class Project extends DurableObject<Env> {
   /** Queue a deploy of main, or a Preview of an agent's fork. */
   async requestBuild(kind: 'deploy' | 'preview', agentId?: string) {
     const info = await this.#need();
+    if (this.env.OWNER_HANDLE !== info.owner && info.owner !== 'forq') throw new Error('Worker deploys are reserved for the owner of this forq instance');
     const agent = agentId ? info.agents.find((a) => a.id === agentId) : undefined;
     if (kind === 'preview' && !agent) throw new Error('unknown agent');
     const repoName = agent ? agent.fork : info.repo;
@@ -327,6 +328,12 @@ export class Project extends DurableObject<Env> {
       ok = r.ok && j.ok !== false; err = j.error || (r.ok ? '' : `HTTP ${r.status}`);
     } catch (e) { err = String((e as Error)?.message || e); }
     log('project', 'deliver_attempt', { slug: info.slug, attempt, ok, err });
+    // Errors no retry can fix fail at once (a missing API key took 3 tries / 90 s to say so).
+    if (!ok && /has not added an Anthropic API key|reserved for the owner/.test(err)) {
+      await this.setRequest({ state: 'failed', error: err });
+      await this.ctx.storage.delete('deliverPending');
+      return;
+    }
     if (ok) { await this.ctx.storage.delete('deliverPending'); if (again) await this.ctx.storage.setAlarm(Date.now() + 20_000); return; }
     if (attempt >= 3) {
       await this.setRequest({ state: 'failed', error: `could not reach the router agent after ${attempt} tries: ${err}` });
@@ -373,8 +380,14 @@ export class Project extends DurableObject<Env> {
     // First deploy of a Worker project. After every put above: requestBuild
     // re-reads and saves info itself, so nothing here may save over it later.
     if (info.kind === 'worker' && !info.app) {
-      await this.requestBuild('deploy');
-      Object.assign(info, await this.#need());
+      if (this.env.OWNER_HANDLE === info.owner || info.owner === 'forq') {
+        await this.requestBuild('deploy');
+        Object.assign(info, await this.#need());
+      } else {
+        // Deploys run other people's server code on this account: owner only.
+        info.app = { status: 'failed', at: Date.now(), worker: '', error: 'Deploying Worker projects is reserved for the owner of this forq instance. Self-host forq to deploy your own (see SELF_HOST.md). Agents can still work on the code' };
+        await this.ctx.storage.put('info', info);
+      }
     }
     return {
       importing: false, entry: info.entry, kind: info.kind, app: info.app,

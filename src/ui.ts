@@ -129,8 +129,8 @@ export function explorePage(entries: Entry[], me: string) {
   const forks = (slug: string) => entries.filter((e) => e.forkedFrom === slug).length;
   const mine = entries.filter((e) => e.owner === me);
   const others = entries.filter((e) => e.owner !== me);
-  return shell('forq', `<header class="top"><span class="mark">forq</span><span class="tr"><a class="chipbtn" href="/import">Import from GitHub</a><span class="who">${esc(me)}</span></span></header>
-<p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.</p>
+  return shell('forq', `<header class="top"><span class="mark">forq</span><span class="tr">${me ? `<a class="chipbtn" href="/import">Import from GitHub</a><a class="who" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</span></header>
+<p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.${me ? '' : ' Reading is open to everyone; sign in with your email to fork and run agents with your own Anthropic API key.'}</p>
 ${freshLegend(STEPS)}
 ${mine.length ? `<h2>Yours</h2><div class="rows">${mine.map((e) => row(e, forks(e.slug), now)).join('')}</div>` : ''}
 <h2>Explore</h2><div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`);
@@ -152,7 +152,7 @@ function deployLine(info: ProjectInfo, d: ProjectInfo['app'], own: boolean) {
 for(const el of document.querySelectorAll('.deploy [data-since]')){const t=Number(el.dataset.since);setInterval(()=>{el.textContent=Math.round((Date.now()-t)/1000)+'s'},1000);}})();</script>`;
 }
 
-export function projectPage(o: { info: ProjectInfo; entry: Entry; forks: Entry[]; overview: Overview; me: string; runBase: string; agentsHtml: string }) {
+export function projectPage(o: { info: ProjectInfo; entry: Entry; forks: Entry[]; overview: Overview; me: string; runBase: string; agentsHtml: string; needsKey?: boolean }) {
   const { info, entry, forks, overview, me, runBase } = o;
   const now = Date.now();
   const own = info.owner === me;
@@ -169,7 +169,8 @@ ${info.description ? `<p class="desc">${esc(info.description)}</p>` : ''}
 ${own ? '' : myForks.length
     ? `<div class="actions"><a class="btn" href="${path(myForks[0].slug)}">Open your fork</a><button class="chipbtn" id="fork">Fork again</button></div>
 <p class="desc">You forked it as <a href="${path(myForks[0].slug)}">${esc(label(myForks[0].slug))}</a>${myForks.length > 1 ? ` and ${myForks.length - 1} more` : ''}.</p>`
-    : `<div class="actions"><button class="btn" id="fork">Fork to ${esc(me)}</button></div>`}
+    : me ? `<div class="actions"><button class="btn" id="fork">Fork to ${esc(me)}</button></div>`
+    : `<div class="actions"><a class="btn" href="/login?next=${encodeURIComponent(path(info.slug))}">Sign in to fork</a></div>`}
 ${overview.importing
     ? `<p class="note" id="importing">Importing from GitHub. This page refreshes when it is ready (usually a few seconds).</p>
 <script>setTimeout(function(){location.reload()},3000)</script>`
@@ -180,10 +181,10 @@ ${overview.importing
       ? `<p class="note">No web page to show: forq looks for an index.html at the root and in demo/, docs/, public/, dist/, www/, site/ and examples/. The code is below, and agents can still work on it.</p>`
       : `<div class="pbar"><div class="ptabs" id="ptabs">${previewTabs(info, runBase)}</div><a class="pext" id="pext" href="${app}" target="_blank" rel="noopener">Open in new tab</a></div>
 <div class="preview"><iframe src="${app}" title="${esc(info.name)} app" loading="lazy"></iframe></div>`}
-${own ? `<h2>Agents</h2>
+${own && o.needsKey ? `<h2>Agents</h2><p class="note">Agents here run Claude Code with your own Anthropic API key. <a href="/settings">Add your key in Settings</a> to start one.</p>` : ''}${own && !o.needsKey ? `<h2>Agents</h2>
 <form class="composer" id="ask"><textarea name="text" placeholder="Tell the router agent what to change. It splits the work and starts one agent per task." required enterkeyhint="send"></textarea>
 <div class="bar"><button class="btn">Send</button></div></form>
-<div id="agents">${o.agentsHtml}</div>${SHEET_HTML}`
+<div id="agents">${o.agentsHtml}</div>${SHEET_HTML}` : ''}${own ? ''
     : `<p class="note">Fork it to change it: your copy gets its own page, its own live app and its own agents.</p>`}
 <h2>Code</h2><div class="files">${overview.files.map((f) => `<a href="/p/${info.owner}/${info.name}/code/${esc(f.name)}${f.dir ? '/' : ''}">${esc(f.name)}${f.dir ? '/' : ''}</a>`).join('') || '<span>empty</span>'}</div>
 <p style="margin:10px 0 0"><a class="chipbtn" href="/p/${info.owner}/${info.name}/code/">Browse and search the code</a></p>
@@ -331,6 +332,10 @@ ${done.length ? `<h2>Merged</h2><div class="cards">${done.map(card).join('')}</d
 const REPO_STEPS = [365 * 24, 90 * 24, 30 * 24, 7 * 24];   // GitHub activity: empty after a year
 
 export function importPage(me: string) {
+  if (!me) return shell('Import from GitHub · forq', `<a class="back" href="/">Explore</a>
+<h1>Import from GitHub</h1>
+<p class="desc">Bring any public GitHub repository into forq: it runs here, you can fork it, and agents can work on it.</p>
+<div class="actions"><a class="btn" href="/login?next=/import">Sign in with your email to import</a></div>`);
   return shell('Import from GitHub · forq', `<a class="back" href="/">Explore</a>
 <h1>Import from GitHub</h1>
 <p class="desc">Search public repositories, or paste a repo's URL. forq copies the latest commit, finds its web page if it has one, and the project is yours to fork and hand to agents.</p>
@@ -374,4 +379,30 @@ export function buildLogPage(info: ProjectInfo, label: string, d: { status: stri
 <h1>Build log</h1><p class="desc">${esc(label)}${d ? `: ${esc(d.status)}${d.error ? `, ${esc(d.error)}` : ''}` : ': no build yet'}</p>
 ${d?.url ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a></p>` : ''}
 <pre style="background:var(--card);border-radius:12px;padding:12px;overflow:auto;font:12px/1.5 'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word">${esc(d?.log || 'No log.')}</pre>`);
+}
+
+export function settingsPage(u: { handle: string; email: string; apiKeyTail?: string; apiKeyCheckedAt?: number; model?: string }, owner: boolean, projects: number, welcome: boolean) {
+  const keyBlock = owner
+    ? `<p class="desc">Your agents run on this instance's Claude subscription. No API key needed.</p>`
+    : `${u.apiKeyTail ? `<p class="desc">Key ending in <b>…${esc(u.apiKeyTail)}</b>, checked ${freshTag(u.apiKeyCheckedAt || 0, Date.now(), STEPS)}. Your agents run on it with ${esc(u.model || 'claude-sonnet-5-5')}.</p>` : `<p class="desc">Agents run Claude Code with your own Anthropic API key. You pay Anthropic directly; forq measured about $1–2 per finished, reviewed change on Sonnet.</p>`}
+<form class="composer" id="keyf"><input class="field" name="key" type="password" autocomplete="off" placeholder="sk-ant-…" aria-label="Anthropic API key">
+<div class="bar"><button class="btn">${u.apiKeyTail ? 'Replace key' : 'Save key'}</button>${u.apiKeyTail ? '<button type="button" class="chipbtn" id="rmkey">Remove</button>' : ''}</div></form>
+<p class="note">The key is checked with one call to Anthropic, stored encrypted, and only used to start Claude Code in your projects' boxes. Get one at <a href="https://console.anthropic.com/settings/keys" rel="noopener" target="_blank">console.anthropic.com</a>.</p>`;
+  return shell('Settings · forq', `<a class="back" href="/">Explore</a>
+<h1>${welcome ? 'Welcome to forq' : 'Settings'}</h1>
+${welcome ? `<p class="desc">You are signed in. ${[projects ? '' : 'Pick the name your projects live under', owner ? '' : 'add your Anthropic API key', 'then fork something from Explore'].filter(Boolean).join(', ').replace(/^./, (c) => c.toUpperCase())}.</p>` : ''}
+<h2>Your name</h2>
+<form class="composer" id="hf"><input class="field" name="handle" value="${esc(u.handle)}" ${projects ? 'disabled' : ''} autocapitalize="none" spellcheck="false" aria-label="Handle">
+${projects ? `<p class="note">You own ${projects} project${projects > 1 ? 's' : ''} under this name, so it stays.</p>` : '<div class="bar"><button class="btn">Save name</button></div>'}</form>
+<h2>Anthropic API key</h2>${keyBlock}
+<p class="err" id="msg" role="status"></p>
+<h2>Account</h2><p class="desc">Signed in as ${esc(u.email)}.</p><div class="actions"><a class="chipbtn" href="/logout">Sign out</a></div>
+<style>.field{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}.err{min-height:1.4em;color:var(--fg);font-size:14px}</style>
+<script>
+const msg=document.getElementById('msg');
+async function call(url,method,body){const r=await fetch(url,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok){msg.textContent=j.error||'Failed';return null;}return j;}
+const hf=document.getElementById('hf');if(hf)hf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Saving';if(await call('/api/me/handle','POST',{handle:hf.handle.value}))location.reload();};
+const kf=document.getElementById('keyf');if(kf)kf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Checking the key with Anthropic';if(await call('/api/me/key','POST',{key:kf.key.value}))location.reload();};
+const rm=document.getElementById('rmkey');if(rm)rm.onclick=async()=>{if(await call('/api/me/key','DELETE'))location.reload();};
+</script>`);
 }

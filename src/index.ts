@@ -12,9 +12,10 @@ import { Project, roleOf, type ProjectInfo, type Role } from './project';
 import { Registry, registry } from './registry';
 import { BuildBox } from './build';
 import { serveRun } from './run';
-import { agentsHtml, buildLogPage, explorePage, projectPage, type BoxStatus } from './ui';
+import { agentsHtml, buildLogPage, explorePage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
+import { DEFAULT_API_MODEL, checkApiKey, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
 import { importPage } from './ui';
 import { allFiles, blob, diffTrees, forkBase, head, resolvePath, tree } from './code';
 import { changesPage, dirPage, filePage, type ChangeText } from './codeui';
@@ -25,7 +26,7 @@ import MA_REV from '../box/mobile-agent.rev';
 
 export { AgentBox, Project, Registry, BuildBox };
 
-type Who = { kind: 'user'; handle: string; admin: boolean } | { kind: 'agent'; agentId: string; role: Role };
+type Who = { kind: 'user'; handle: string; admin: boolean; anon?: boolean; email?: string } | { kind: 'agent'; agentId: string; role: Role };
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 const json = (data: unknown, status = 200) => Response.json(data, { status });
 const projectStub = (env: Env, slug: string) => env.Project.get(env.Project.idFromName(slug));
@@ -51,36 +52,84 @@ async function who(request: Request, env: Env): Promise<Who | null> {
       return null;
     }
     if (env.ADMIN_SECRET && request.headers.get('x-forq-secret') === env.ADMIN_SECRET) {
+      // Admin acting as a real user (tests, demo recordings): that user's rights, not admin's.
+      const asEmail = request.headers.get('x-forq-as-email');
+      if (asEmail) {
+        let u = await userByEmail(env, asEmail.toLowerCase());
+        if (!u && request.headers.get('x-forq-create-handle')) u = (await claimHandle(env, asEmail.toLowerCase(), request.headers.get('x-forq-create-handle')!)).user || null;
+        return u ? { kind: 'user', handle: u.handle, admin: false, email: u.email } : null;
+      }
       return { kind: 'user', handle: request.headers.get('x-forq-as') || 'eyal', admin: true };
     }
     return null;
   }
+  // Public site: a forq session cookie (set by /login). No session = anonymous
+  // reader (handle '' owns nothing, so every ownership check fails by itself).
+  const email = (await sessionEmail(env, request)) || (await accessEmail(request, env));
+  if (email) {
+    const u = await userByEmail(env, email);
+    if (u) return { kind: 'user', handle: u.handle, admin: false, email: u.email };
+  }
+  return { kind: 'user', handle: '', admin: false, anon: true };
+}
+
+/** The email in a valid Cloudflare Access JWT (only /login is behind Access). */
+async function accessEmail(request: Request, env: Env): Promise<string | null> {
   const token = request.headers.get('cf-access-jwt-assertion');
   if (!token) return null;
   try {
     jwks ||= createRemoteJWKSet(new URL(`https://${env.ACCESS_TEAM_DOMAIN}/cdn-cgi/access/certs`));
     const { payload } = await jwtVerify(token, jwks, { issuer: `https://${env.ACCESS_TEAM_DOMAIN}`, audience: env.ACCESS_AUD });
-    const handle = handles[String(payload.email || '').toLowerCase()];
-    return handle ? { kind: 'user', handle, admin: false } : null;
+    return String(payload.email || '').toLowerCase() || null;
   } catch (e) {
     log('auth', 'jwt_rejected', { err: String(e) });
     return null;
   }
 }
 
+const safeNext = (n: string | null) => (n && /^\/[^/\\]/.test(n) ? n : null);
+
+/** /login (behind Access): find or create the user, set the session, go on. */
+async function loginRoute(request: Request, env: Env, url: URL): Promise<Response> {
+  const email = await accessEmail(request, env);
+  if (!email) return new Response('Sign-in did not complete. Try again from the forq home page.', { status: 401 });
+  let user = await userByEmail(env, email);
+  let fresh = false;
+  if (!user) {
+    const mapped = (JSON.parse(env.HANDLES || '{}') as Record<string, string>)[email];
+    const r = await claimHandle(env, email, mapped || await suggestHandle(env, email));
+    if (!r.ok || !r.user) return new Response(`Could not create your account: ${r.error}`, { status: 500 });
+    user = r.user; fresh = true;
+  }
+  const next = safeNext(url.searchParams.get('next')) || (fresh ? '/settings?welcome=1' : '/');
+  log('auth', 'login', { handle: user.handle, fresh });
+  return new Response(null, { status: 302, headers: { location: next, 'set-cookie': await sessionCookie(env, email), 'cache-control': 'no-store' } });
+}
+
 async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<BootSpec> {
   const slug = projectOf(agentId);
   const r = await projectStub(env, slug).boxRepo(agentId);
-  const cc = env.CLAUDE_CODE_OAUTH_TOKEN;
+  // Whose Claude: the owner of this instance runs on the subscription; any
+  // other project owner's boxes run on that person's own API key.
+  const owner = slug.split('.')[0];
+  let ccEnv: string, keyTail: string, billing: string;
+  if (isOwner(env, owner)) {
+    ccEnv = `CLAUDE_CODE_OAUTH_TOKEN=${env.CLAUDE_CODE_OAUTH_TOKEN}`; keyTail = env.CLAUDE_CODE_OAUTH_TOKEN.slice(-20); billing = 'sub';
+  } else {
+    const u = await userByHandle(env, owner);
+    if (!u?.apiKeyEnc) throw new Error(`${owner} has not added an Anthropic API key yet (Settings)`);
+    const key = await decryptKey(env, u.apiKeyEnc);
+    ccEnv = `ANTHROPIC_API_KEY=${key} ANTHROPIC_MODEL=${u.model || DEFAULT_API_MODEL}`; keyTail = key.slice(-20); billing = 'api';
+  }
   return {
     agentId, task: r.task, role: r.role, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token,
     agentToken: await agentToken(env, agentId), apiBase, maRev: MA_REV.trim(),
     bootEnv: [
       `SBX_NAME=${JSON.stringify(r.role === 'agent' ? agentId : `${slug.replace('.', '/')} ${r.role}`)}`,
       'AGENT=claude',
-      `CC_ENV=${JSON.stringify(`CLAUDE_CODE_OAUTH_TOKEN=${cc}`)}`,
-      `CC_KEY_TAIL=${JSON.stringify(cc.slice(-20))}`,
-      'BILLING=sub',
+      `CC_ENV=${JSON.stringify(ccEnv)}`,
+      `CC_KEY_TAIL=${JSON.stringify(keyTail)}`,
+      `BILLING=${billing}`,
       '',
     ].join('\n'),
   };
@@ -94,6 +143,21 @@ async function wake(env: Env, agentId: string, apiBase: string) {
   const others = [...info.agents.map((a) => a.id), `${info.slug}--router`, `${info.slug}--review`].filter((id) => id !== agentId);
   const awake = await Promise.all(others.map((id) => boxStub(env, id).isAwake().catch(() => false)));
   if (awake.filter(Boolean).length >= max) return { ok: false, ms: 0, from: 'none', error: `${max} boxes already awake in this project` };
+  // Other people's boxes run on this account's containers even with their own
+  // API key: a small cap per person across all their projects.
+  const owner = info.owner;
+  if (!isOwner(env, owner)) {
+    const cap = Number(env.OTHERS_MAX_AWAKE || 2);
+    const mine = (await registry(env).list()).filter((e) => e.owner === owner);
+    let n = 0;
+    for (const e of mine) {
+      const pi = e.slug === info.slug ? info : await projectStub(env, e.slug).info();
+      for (const id of [...(pi?.agents || []).map((a) => a.id), `${e.slug}--router`, `${e.slug}--review`]) {
+        if (id !== agentId && await boxStub(env, id).isAwake().catch(() => false)) n++;
+      }
+    }
+    if (n >= cap) return { ok: false, ms: 0, from: 'none', error: `${cap} of your boxes are already awake; they sleep after 5 idle minutes` };
+  }
   return boxStub(env, agentId).ensureUp(await bootSpec(env, agentId, apiBase));
 }
 
@@ -130,8 +194,21 @@ export default {
     if (url.hostname === env.RUN_HOST) return serveRun(request, env, ctx);
     // Cloudflare Issues → Notifications webhook. Its own auth (cf-webhook-auth), before the user/agent auth.
     if (url.pathname === '/api/hooks/issues' && request.method === 'POST') return issuesHook(request, env, ctx);
+    if (url.pathname === '/login' && url.hostname === env.UI_HOST) return loginRoute(request, env, url);
+    if (url.pathname === '/logout') return new Response(null, { status: 302, headers: { location: '/', 'set-cookie': clearCookie() } });
     const me = await who(request, env);
     if (!me) return json({ error: 'unauthorized' }, 401);
+    // Anonymous readers: pages and read APIs only.
+    if (me.kind === 'user' && me.anon) {
+      const p0 = url.pathname;
+      const needsUser = request.method !== 'GET' || p0.startsWith('/a/') || p0.endsWith('/agents-html') || p0.startsWith('/api/github') || p0 === '/settings' || p0.startsWith('/api/me');
+      if (needsUser) {
+        const login = `/login?next=${encodeURIComponent(request.method === 'GET' ? p0 + url.search : (request.headers.get('referer') ? new URL(request.headers.get('referer')!).pathname : '/'))}`;
+        return request.method === 'GET' && (request.headers.get('accept') || '').includes('text/html')
+          ? new Response(null, { status: 302, headers: { location: login } })
+          : json({ error: 'Sign in first', login }, 401);
+      }
+    }
     const path = url.pathname;
     // Boxes call back through workers.dev (no Access in front of it).
     const apiBase = `https://${url.hostname.endsWith('.workers.dev') ? url.hostname : 'forq.<sub>.workers.dev'}`;
@@ -145,6 +222,39 @@ export default {
         return html(explorePage(await registry(env).list(), me.handle));
       }
       if (path === '/import') return html(importPage(me.handle));
+      // ---- account: settings page, API key, handle
+      if (path === '/settings') {
+        const u = await userByEmail(env, me.email || '');
+        if (!u) return new Response(null, { status: 302, headers: { location: '/login?next=/settings' } });
+        const mine = (await registry(env).list()).filter((e) => e.owner === u.handle).length;
+        return html(settingsPage(u, isOwner(env, u.handle), mine, url.searchParams.has('welcome')));
+      }
+      if (path.startsWith('/api/me/') && request.method !== 'GET') {
+        const u = await userByEmail(env, me.email || '');
+        if (!u) return json({ error: 'Sign in first' }, 401);
+        if (path === '/api/me/key' && request.method === 'POST') {
+          const { key } = await request.json() as { key?: string };
+          const k = String(key || '').trim();
+          const c = await checkApiKey(k);
+          if (!c.ok) return json({ error: c.error }, 400);
+          await registry(env).putUser({ ...u, apiKeyEnc: await encryptKey(env, k), apiKeyTail: k.slice(-4), apiKeyCheckedAt: Date.now() });
+          log('auth', 'api_key_saved', { handle: u.handle });
+          return json({ ok: true, tail: k.slice(-4) });
+        }
+        if (path === '/api/me/key' && request.method === 'DELETE') {
+          const { apiKeyEnc, apiKeyTail, apiKeyCheckedAt, ...rest } = u;
+          await registry(env).putUser(rest);
+          return json({ ok: true });
+        }
+        if (path === '/api/me/handle' && request.method === 'POST') {
+          const { handle } = await request.json() as { handle?: string };
+          if ((await registry(env).list()).some((e) => e.owner === u.handle)) return json({ error: 'You already own projects under this name, so it cannot change.' }, 400);
+          const r = await claimHandle(env, u.email, String(handle || ''));
+          if (!r.ok) return json({ error: r.error }, 400);
+          await registry(env).putUser({ ...u, handle: r.user!.handle });
+          return json({ ok: true, handle: r.user!.handle });
+        }
+      }
       // ---- GitHub: search, look up one repo, import it
       if (path === '/api/github/search') {
         const q = url.searchParams.get('q') || '';
@@ -164,6 +274,8 @@ export default {
         if (gh.sizeKb > MAX_IMPORT_KB) return json({ error: `${gh.fullName} is ${Math.round(gh.sizeKb / 1024)} MB; forq imports up to ${MAX_IMPORT_KB / 1024} MB` }, 400);
         // Admin may import on behalf of another handle (the forq showcase account).
         const owner = me.admin && b.as ? b.as : me.handle;
+        const tooMany = await overProjectLimit(env, owner);
+        if (tooMany) return json({ error: tooMany }, 400);
         let name = nameFor(gh.name);
         for (let i = 2; await registry(env).get(slugOf(owner, name)); i++) name = `${nameFor(gh.name).slice(0, 35)}-${i}`;
         const info = await projectStub(env, slugOf(owner, name)).createImported(owner, name,
@@ -192,7 +304,8 @@ export default {
         const all = await registry(env).list();
         const entry = all.find((e) => e.slug === slug)!;
         return html(projectPage({ info, entry, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
-          me: me.handle, runBase, agentsHtml: info.owner === me.handle ? await renderAgents(env, info, runBase) : '' }));
+          me: me.handle, runBase, agentsHtml: info.owner === me.handle ? await renderAgents(env, info, runBase) : '',
+          needsKey: info.owner === me.handle && !isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
       }
 
       // ---- the boxes' own UIs: /a/<agentId>/agent/* → mobile-agent
@@ -218,6 +331,8 @@ export default {
         if (verb === '' && request.method === 'GET') return json(info);
         if (verb === 'fork' && request.method === 'POST') {
           if (info.owner === me.handle) return json({ error: 'this is already yours' }, 400);
+          const tooMany = await overProjectLimit(env, me.handle);
+          if (tooMany) return json({ error: tooMany }, 400);
           let newName = info.name;
           for (let i = 2; await registry(env).get(slugOf(me.handle, newName)); i++) newName = `${info.name}-${i}`;
           if (!NAME_RE.test(newName)) return json({ error: 'name too long' }, 400);
@@ -544,6 +659,13 @@ async function issueOccurrences(env: Env, issueId: string): Promise<string | nul
   }
 }
 
+/** Other people get 10 projects; the instance owner is unlimited. */
+async function overProjectLimit(env: Env, handle: string): Promise<string | null> {
+  if (isOwner(env, handle)) return null;
+  const n = (await registry(env).list()).filter((e) => e.owner === handle).length;
+  return n >= 10 ? 'You have 10 projects, the limit for now. Self-host forq for more.' : null;
+}
+
 async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string) {
   task = task.trim();
   if (!task || task.length > 4000) throw new Error('task required (max 4000 chars)');
@@ -576,7 +698,8 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     // Every push gets a review before the person merges.
     if (body.state === 'pushed') {
       // Worker projects: build the fork as a Preview first; buildDone starts the review.
-      if ((await p.kindOf()) === 'worker') ctx.waitUntil(p.requestBuild('preview', me.agentId).catch((e) => log('build', 'request_failed', { err: String(e) })));
+      const ownerDeploys = isOwner(env, slug.split('.')[0]);
+      if ((await p.kindOf()) === 'worker' && ownerDeploys) ctx.waitUntil(p.requestBuild('preview', me.agentId).catch((e) => log('build', 'request_failed', { err: String(e) })));
       else await startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId));   // awaited: see the review verb
     }
     return json({ ok: true });

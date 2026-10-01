@@ -3,6 +3,7 @@
 
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
+import type { User } from './auth';
 
 export type Entry = {
   slug: string;          // owner.name (also the Artifacts repo name)
@@ -30,6 +31,23 @@ export class Registry extends DurableObject<Env> {
     const e = await this.get(slug);
     if (e) { e.updatedAt = at; await this.put(e); }
   }
+  // ---- users: u:<email> → User, h:<handle> → email
+  async getUser(email: string): Promise<User | null> {
+    return (await this.ctx.storage.get<User>(`u:${email}`)) || null;
+  }
+  async getUserByHandle(handle: string): Promise<User | null> {
+    const email = await this.ctx.storage.get<string>(`h:${handle}`);
+    return email ? this.getUser(email) : null;
+  }
+  async putUser(u: User): Promise<void> {
+    const old = await this.getUser(u.email);
+    if (old && old.handle !== u.handle) await this.ctx.storage.delete(`h:${old.handle}`);
+    await this.ctx.storage.put({ [`u:${u.email}`]: u, [`h:${u.handle}`]: u.email });
+  }
+  async userCount(): Promise<number> {
+    return (await this.ctx.storage.list({ prefix: 'u:' })).size;
+  }
+
   async remove(slug: string): Promise<void> {
     await this.ctx.storage.delete(`p:${slug}`);
   }
