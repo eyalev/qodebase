@@ -5,7 +5,7 @@
 - [x] Project dir, CLAUDE.md, TASKS.md, private repo, Homepage registration
 - [x] Artifacts works on the account; namespace `forq` auto-created; cloudcost `gaps` entry `forq` (2026-10-01)
 - [x] Step 1: Worker + Project DO + ONE agent box cloning its own fork, pushing a commit — agent `sleepsounds--j9ly7` pushed `3fade61` (README) in 38 s; boot 6.8-8.4 s from image
-- [ ] Step 1 check: from the phone, open https://forq.kapps.dev/p/sleepsounds → agent → mobile-agent (WS through Access not yet verified in a browser)
+- [x] Step 1 check: agent UI through Access works (sheet Terminal tab, verified 2026-10-01; Eyal used it from the phone)
 ### Round 2 (2026-10-01): social layer + step 2
 - [x] Owners: projects are `<owner>/<name>` (repo `<owner>.<name>`), Registry DO lists them; Access email → handle
 - [x] Seed 4 open-source demo apps under owner `forq` (calculator, todo, timer, tipsplit), MIT, static (`seeds/`)
@@ -15,10 +15,10 @@
 - [x] Removed the sleepsounds test project (both repos + box)
 - [x] Step 2: `forq` CLI in every box (status/list/spawn/send/merge), signed per-box token, router box per project
 - [x] Step 2 check: one message to eyal/todo's router → 2 agents on 2 forks in parallel → both pushed (2.5 and 4 min) → both merged from the page, the router resolved the conflict itself; merged app verified (Clear done + "added X ago") in the box (`spawn`, `list`, `status`, `merge`) + router box
-- [ ] Step 2 check: tell the router 3 tasks → 3 boxes on 3 forks working at once
-- [ ] Step 3: phone project page — router composer + agent cards + tap-through to chat/terminal
-- [ ] Step 3 check: 390 px screenshots light/dark; merge one fork into main from the phone
-- [ ] Measure: subscription usage with 3 parallel agents, container box-hours, Artifacts ops
+- [ ] Step 2 check: tell the router 3 tasks → 3 boxes on 3 forks working at once (2 at once verified on eyal/todo; 3 running now on eyal/calculator)
+- [x] Step 3: phone project page — router composer + agent cards + Chat/Terminal sheet
+- [x] Step 3 check: 390 px light/dark screenshots; merges via the card's Merge button
+- [ ] Measure: subscription usage with 3 parallel agents, container box-hours, Artifacts ops — `scripts/measure.mjs` (Artifacts + containers GraphQL, history.jsonl, per-box transcript tokens); run in progress
 
 ### Round 3 (2026-10-01): feedback from the phone
 - [x] "Router" → "Router agent" everywhere (UI + its prompt)
@@ -78,7 +78,9 @@ Bugs found and fixed during the run:
 
 ## v1 (later)
 
-- [ ] Workers Builds previews (only for Worker projects; static apps already preview per fork), Issues → router webhook (needs a project deployed as a Worker), public project pages + baseline (needs the API-key decision)
+- [x] Worker previews: forq's own builder (`wrangler preview`), not Workers Builds (round 7)
+- [x] Issues → router agent (round 7)
+- [ ] Public forq: project pages without Access + public-project baseline — needs Eyal's decision on how others pay for Claude (BYO API key / capped credit / self-host)
 
 ## Open
 
