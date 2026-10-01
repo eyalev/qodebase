@@ -93,6 +93,28 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
   `forq fetch-agent` + `forq verdict`. One review at a time; reviews stuck in
   "reviewing" for 20 min requeue on the next page poll.
 
+## Worker projects (src/build.ts)
+
+- A project with a wrangler config at its root is `kind: 'worker'`. forq's
+  BuildBox (`<slug>--build`, same image, no Claude) deploys main as
+  `forq-app-<owner>-<name>.<sub>.workers.dev` and each pushed agent fork as a
+  Preview (`ag-<id>-forq-app-….workers.dev`, own Durable Object storage).
+- Builds run from BuildBox.alarm() (outlive the request), one at a time.
+- `CF_DEPLOY_TOKEN` (Workers Scripts write only) goes to one wrangler command
+  per build and never into agent boxes. It cannot delete Workers: use the
+  normal wrangler login (`npx wrangler delete --name forq-app-…`).
+- The sanitized config drops routes/env/account_id, refuses bindings that
+  need account resources (KV, D1, R2, queues, services…), turns on
+  observability + Issues, and adds a `previews` block.
+- Agent push on a Worker project: preview build → buildDone → the Project DO
+  calls `/api/p/<o>/<n>/review` on workers.dev to start the reviewer.
+- **A forq deploy kills running containers**, the builder's too: a build in
+  flight fails ("container connection is temporarily unavailable"); BuildBox
+  restarts a dead container on the next job. Deploy forq when no agent works.
+- Issues: `scripts/issues-automation.sh <forq-app-worker>` (cf CLI) wires one
+  app Worker to `POST /api/hooks/issues` (secret header `cf-webhook-auth`),
+  which hands the error to that project's router agent.
+
 ## Run host details
 
 - Every HTML page gets a storage shim injected first (`storageShim()` in

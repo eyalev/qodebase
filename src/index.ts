@@ -6,7 +6,7 @@
 //   *.workers.dev       admin (x-forq-secret) and the boxes' forq CLI (x-forq-agent)
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-import { AGENT_RE, NAME_RE, projectOf, slugOf, type Env } from './env';
+import { AGENT_RE, NAME_RE, appWorkerName, projectOf, slugOf, type Env } from './env';
 import { AgentBox, log, type BootSpec } from './box';
 import { Project, roleOf, type ProjectInfo, type Role } from './project';
 import { Registry, registry } from './registry';
@@ -128,6 +128,8 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     if (url.hostname === env.RUN_HOST) return serveRun(request, env, ctx);
+    // Cloudflare Issues → Notifications webhook. Its own auth (cf-webhook-auth), before the user/agent auth.
+    if (url.pathname === '/api/hooks/issues' && request.method === 'POST') return issuesHook(request, env, ctx);
     const me = await who(request, env);
     if (!me) return json({ error: 'unauthorized' }, 401);
     const path = url.pathname;
@@ -420,6 +422,34 @@ async function startReview(env: Env, p: DurableObjectStub<Project>, slug: string
   } catch (e) {
     log('review', 'failed', { slug, err: String(e), stack: (e as Error)?.stack });
   }
+}
+
+/** A Cloudflare Issues notification for one of the forq-app-* Workers: find the
+ *  project whose app it is and give the error to its router agent, which starts
+ *  an agent to fix it. The payload format is logged whole (first contact with
+ *  it), and only plain text from it reaches the router agent. */
+async function issuesHook(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  if (!env.ISSUES_WEBHOOK_SECRET || request.headers.get('cf-webhook-auth') !== env.ISSUES_WEBHOOK_SECRET) {
+    log('issues', 'rejected', { hasHeader: request.headers.has('cf-webhook-auth') });
+    return json({ error: 'unauthorized' }, 401);
+  }
+  const raw = await request.text();
+  let body: any = {};
+  try { body = JSON.parse(raw); } catch { body = { text: raw }; }
+  log('issues', 'received', { bytes: raw.length, keys: Object.keys(body), payload: raw.slice(0, 4000) });
+  // Which Worker? Look for a forq-app-* name anywhere in the payload.
+  const worker = (raw.match(/forq-app-[a-z0-9-]+/) || [])[0];
+  if (!worker) { log('issues', 'no_worker', {}); return json({ ok: true, ignored: 'no forq-app worker named (a test message?)' }); }
+  const entries = await registry(env).list();
+  const e = entries.find((x) => appWorkerName(x.slug) === worker);
+  if (!e) { log('issues', 'unknown_worker', { worker }); return json({ ok: true, ignored: `no project deploys as ${worker}` }); }
+  const p = projectStub(env, e.slug);
+  const text = String(body.text || body.data?.text || body.message || raw).slice(0, 6000);
+  const title = (text.split('\n').find((l) => l.trim()) || 'an error').slice(0, 140);
+  const ask = `Cloudflare Issues reported a production error in this project's live app (Worker ${worker}):\n\n${text}\n\nFind the cause in the code. If it is a real bug, start one agent with \`forq spawn\` to fix it, giving it the error and what you found. Reply with one line saying what you did.`;
+  const r = await askRouter(env, ctx, p, e.slug, ask, env.API_BASE, `Production error from Cloudflare Issues: ${title}`);
+  log('issues', 'routed', { worker, slug: e.slug });
+  return json({ routed: e.slug, ...r });
 }
 
 async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string) {

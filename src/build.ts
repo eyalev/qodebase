@@ -54,7 +54,8 @@ const bad = UNSUPPORTED.filter((k) => c[k] && (Array.isArray(c[k]) ? c[k].length
 if (bad.length) { console.error('FORQ_ERROR needs ' + bad.join(', ') + ', which forq cannot create yet'); process.exit(4); }
 const out = { ...c, name: worker, workers_dev: true, preview_urls: true };
 for (const k of ['route', 'routes', 'env', 'account_id', 'tail_consumers', 'logpush', 'triggers']) delete out[k];
-out.observability = { enabled: true };
+// Logs + Issues (Cloudflare's error grouping; forq's automation turns issues into agent work).
+out.observability = { ...(c.observability || {}), enabled: true, issues: { enabled: true } };
 // Previews: per-preview Durable Object namespaces (keep the bindings the code reads from env).
 out.previews = { ...(c.previews || {}) };
 if (c.durable_objects && c.durable_objects.bindings) out.previews.durable_objects = { bindings: c.durable_objects.bindings };
