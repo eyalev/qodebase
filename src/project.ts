@@ -282,7 +282,34 @@ export class Project extends DurableObject<Env> {
     await this.ctx.storage.setAlarm(Date.now() + 50);
   }
 
+  /** Hand the reviewer its next review once it is idle (verdicts arrive while
+   *  the reviewer is still mid-turn running "forq verdict"; typing into it then
+   *  interrupted it and the review stalled, 2026-10-01). */
+  async scheduleReviewDispatch(agentId: string) {
+    await this.ctx.storage.put('reviewDispatch', { agentId, tries: 0 });
+    await this.ctx.storage.setAlarm(Date.now() + 15_000);
+  }
+
+  async #reviewAlarm(): Promise<boolean> {
+    const job = await this.ctx.storage.get<{ agentId: string; tries: number }>('reviewDispatch');
+    if (!job) return false;
+    const info = await this.#need();
+    const [owner, name] = info.slug.split('.');
+    const r = await fetch(`${this.env.API_BASE}/api/p/${owner}/${name}/review-dispatch`, {
+      method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' },
+      body: JSON.stringify({ agent: job.agentId }), signal: AbortSignal.timeout(5 * 60_000),
+    }).catch((e) => ({ ok: false, status: 0, json: async () => ({ error: String(e) }) }) as any);
+    const j = await r.json().catch(() => ({})) as { busy?: boolean; error?: string };
+    log('project', 'review_dispatch_attempt', { slug: info.slug, agentId: job.agentId, tries: job.tries + 1, ok: r.ok, busy: j.busy, err: j.error });
+    if (r.ok) { await this.ctx.storage.delete('reviewDispatch'); return false; }
+    if (job.tries + 1 >= 30) { await this.ctx.storage.delete('reviewDispatch'); return false; }
+    await this.ctx.storage.put('reviewDispatch', { ...job, tries: job.tries + 1 });
+    return true;   // wants another alarm
+  }
+
   async alarm() {
+    const again = await this.#reviewAlarm();
+    if (again) await this.ctx.storage.setAlarm(Date.now() + 20_000);
     if (!(await this.ctx.storage.get<boolean>('deliverPending'))) return;
     const info = await this.#need();
     const q = info.lastRequest;
@@ -300,7 +327,7 @@ export class Project extends DurableObject<Env> {
       ok = r.ok && j.ok !== false; err = j.error || (r.ok ? '' : `HTTP ${r.status}`);
     } catch (e) { err = String((e as Error)?.message || e); }
     log('project', 'deliver_attempt', { slug: info.slug, attempt, ok, err });
-    if (ok) { await this.ctx.storage.delete('deliverPending'); return; }
+    if (ok) { await this.ctx.storage.delete('deliverPending'); if (again) await this.ctx.storage.setAlarm(Date.now() + 20_000); return; }
     if (attempt >= 3) {
       await this.setRequest({ state: 'failed', error: `could not reach the router agent after ${attempt} tries: ${err}` });
       await this.ctx.storage.delete('deliverPending');

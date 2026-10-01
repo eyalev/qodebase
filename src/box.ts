@@ -19,6 +19,18 @@ const ALARM_EVERY_MS = 60_000;
 const SNAPSHOT_EVERY_MS = 15 * 60_000;
 const INACTIVITY_BACKSTOP_MS = 45 * 60_000;
 const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 8000 };
+/** Shell: exit 0 if Claude Code's input box is empty. The line just above the
+ *  pane's last horizontal rule is the input's last line: a bare "❯" when empty.
+ *  (A tall input pushes its top rule off screen, so do not look for two rules.) */
+const INPUT_EMPTY_SH = String.raw`tmux capture-pane -p -t claude | python3 -c "
+import sys
+L=[l.rstrip() for l in sys.stdin.read().splitlines()]
+r=[i for i,l in enumerate(L) if l.startswith(chr(0x2500)*10)]
+above=[l for l in (L[:r[-1]] if r else []) if l.strip()]
+last=above[-1].strip() if above else ''
+sys.exit(0 if last in (chr(0x276f), '') else 1)
+"`;
+
 const ENTRYPOINT = ['/bin/bash', '-c', 'chown 0:0 / 2>/dev/null; mkdir -p /workspace /run/opendev /run/forq && chmod 700 /run/opendev /run/forq && exec sleep infinity'];
 export const REPO_DIR = '/workspace/repo';
 
@@ -213,8 +225,22 @@ PY
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ session: 'claude', text, delay: text.includes('\n') ? 1500 : 500 }),
     });
-    if (r.ok) return { ok: true };
-    return { ok: false, error: `${r.status} ${(await r.text()).slice(0, 200)}` };
+    if (!r.ok) return { ok: false, error: `${r.status} ${(await r.text()).slice(0, 200)}` };
+    // Confirm it was submitted, not left in the input box: an Enter landing
+    // while Claude Code was still settling (after /clear) left a review request
+    // typed but unsent (2026-10-01). If the prompt still holds text and Claude
+    // Code is not working, press Enter again (twice at most).
+    const check = await this.#sh(`set +e
+      for i in 1 2 3 4 5 6; do
+        sleep 1
+        ${INPUT_EMPTY_SH} && { echo submitted; exit 0; }
+        if [ $i -eq 3 ] || [ $i -eq 5 ]; then tmux send-keys -t claude Enter; echo enter; fi
+      done
+      echo unsent`);
+    const outcome = check.stdout.trim().split('\n');
+    if (outcome.includes('enter')) log('box', 'send_extra_enter', { agentId: await this.ctx.storage.get<string>('agentId'), outcome: outcome.join(',') });
+    if (outcome.includes('unsent')) return { ok: false, error: 'typed but not submitted (still in the input box)' };
+    return { ok: true };
   }
 
   /** Start Claude Code on a fresh conversation (/clear). Typing "/clear" opens
@@ -224,11 +250,23 @@ PY
     if (!this.c.running) return false;
     const r = await this.#sh(`set +e
       pgrep -x claude >/dev/null || exit 3
+      # Leftover text in the input (an unsent earlier request): one Ctrl-C empties
+      # it. Only when non-empty: on an empty input Ctrl-C starts "press again to exit".
+      ${INPUT_EMPTY_SH} || { tmux send-keys -t claude C-c; sleep 0.6; }
       tmux send-keys -t claude Escape; sleep 0.3
       tmux send-keys -t claude -l '/clear'; sleep 0.8
       for i in 1 2 3; do
         tmux send-keys -t claude Enter; sleep 1.2
-        tmux capture-pane -p -t claude | grep -q '^❯ /clear' || exit 0
+        if ! tmux capture-pane -p -t claude | grep -q '^❯ /clear'; then
+          # Settle: text typed while Claude Code is still finishing /clear is
+          # lost (a review request vanished this way, 2026-10-01). Wait for the
+          # empty prompt and its hint line before anyone types.
+          for j in $(seq 1 20); do
+            tmux capture-pane -p -t claude | grep -q '^❯ *$' && tmux capture-pane -p -t claude | grep -qE 'for shortcuts|auto mode|shift\\+tab' && { sleep 1; exit 0; }
+            sleep 0.5
+          done
+          exit 0
+        fi
       done
       exit 4`);
     log('box', 'clear_context', { agentId: await this.ctx.storage.get<string>('agentId'), exit: r.exitCode });

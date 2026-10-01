@@ -269,6 +269,11 @@ export default {
           return json({ ok: true });
         }
         if (verb === 'build-state' && me.admin) return json(await env.BuildBox.get(env.BuildBox.idFromName(`${slug}--build`)).state());
+        if (verb === 'review-dispatch' && request.method === 'POST' && me.admin) {
+          const b = await request.json() as { agent?: string };
+          const r = await dispatchReview(env, p, slug, apiBase, String(b.agent || ''));
+          return json(r, r.ok ? 200 : r.busy ? 409 : 502);
+        }
         if (verb === 'deliver' && request.method === 'POST' && me.admin) {
           const b = await request.json() as { at?: number };
           const r = await deliverToRouter(env, p, slug, Number(b.at), apiBase);
@@ -422,10 +427,20 @@ async function deliverToRouter(env: Env, p: DurableObjectStub<Project>, slug: st
 
 /** Run a review-queue step (queue, verdict, …) and hand the reviewer the agent
  *  it returns, if any. One review at a time per project. */
-async function startReview(env: Env, p: DurableObjectStub<Project>, slug: string, apiBase: string, step: () => Promise<string | null>) {
+async function startReview(env: Env, p: DurableObjectStub<Project>, slug: string, apiBase: string, step: () => Promise<string | null>, deferred = false) {
   try {
     const next = await step();
     if (!next) return;
+    if (deferred) { await p.scheduleReviewDispatch(next); return; }
+    await dispatchReview(env, p, slug, apiBase, next);
+  } catch (e) {
+    log('review', 'failed', { slug, err: String(e), stack: (e as Error)?.stack });
+  }
+}
+
+/** Clear the reviewer and give it one review. Returns busy if it is mid-turn. */
+async function dispatchReview(env: Env, p: DurableObjectStub<Project>, slug: string, apiBase: string, next: string): Promise<{ ok: boolean; busy?: boolean; error?: string }> {
+  try {
     const info = await p.info();
     const ag = info?.agents.find((x) => x.id === next);
     const tip = ag ? await head(env, { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext, ag.fork).catch(() => null) : null;
@@ -433,18 +448,33 @@ async function startReview(env: Env, p: DurableObjectStub<Project>, slug: string
     // its memory of the previous one and never looked at the new commit.
     // Wake first: a box restored from its snapshot resumes the old conversation.
     const rbox = boxStub(env, `${slug}--review`);
-    if (!(await rbox.isAwake())) await wake(env, `${slug}--review`, apiBase).catch(() => null);
+    if (await rbox.isAwake()) {
+      const cc = await rbox.ccStatus().catch(() => 'unknown');
+      if (/busy|thinking|working|running|tool|compact/i.test(cc)) return { ok: false, busy: true, error: `reviewer is ${cc}` };
+    } else await wake(env, `${slug}--review`, apiBase).catch(() => null);
     await rbox.clearContext().catch(() => false);
     const text = [
       `Review agent ${next}${tip ? ` at commit ${tip.commit.slice(0, 7)} ("${tip.message}")` : ''}. This is a new review: ignore any earlier review of this agent.`,
       ag?.note ? `The agent reports: ${ag.note}` : '',
       `Run \`forq fetch-agent ${next}\`, follow your review steps (you are the reviewer agent of this project: read the diff from the base it prints, look at the preview at phone size), and finish with \`forq verdict ${next} approve|changes "..."\`.`,
     ].filter(Boolean).join('\n\n');
-    const r = await sendTo(env, `${slug}--review`, text, apiBase);
+    let r = await sendTo(env, `${slug}--review`, text, apiBase);
+    // Confirm it landed: Claude Code should start working within ~15 s. If it
+    // stays idle the text was lost; type it once more.
+    if (r.ok) {
+      let started = false;
+      for (let i = 0; i < 8 && !started; i++) {
+        await new Promise((res) => setTimeout(res, 2000));
+        started = /busy|thinking|working|running|tool/i.test(await rbox.ccStatus().catch(() => ''));
+      }
+      if (!started) { log('review', 'resend', { slug, agent: next }); r = await sendTo(env, `${slug}--review`, text, apiBase); }
+    }
     log('review', 'dispatched', { slug, agent: next, ok: r.ok, err: r.error });
     if (!r.ok) await p.setVerdict(next, 'changes', `The reviewer could not start: ${r.error}. Review it yourself, or push again to retry.`);
+    return r;
   } catch (e) {
-    log('review', 'failed', { slug, err: String(e), stack: (e as Error)?.stack });
+    log('review', 'dispatch_failed', { slug, err: String(e), stack: (e as Error)?.stack });
+    return { ok: false, error: String(e) };
   }
 }
 
@@ -570,7 +600,8 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
         log('review', 'stale_verdict', { agent: body.agent, reviewed: String(body.commit).slice(0, 8), latest: tip.commit.slice(0, 8) });
         return json({ error: `you reviewed ${String(body.commit).slice(0, 7)} but the agent's latest push is ${tip.commit.slice(0, 7)}: run \`forq fetch-agent ${body.agent}\` and review again` }, 409);
       }
-      await startReview(env, p, slug, apiBase, () => p.setVerdict(body.agent, body.verdict === 'approve' ? 'approved' : 'changes', String(body.notes || '')));
+      // Deferred: the reviewer is still inside this very command; the next review waits until it is idle.
+      await startReview(env, p, slug, apiBase, () => p.setVerdict(body.agent, body.verdict === 'approve' ? 'approved' : 'changes', String(body.notes || '')), true);
       return json({ ok: true });
     }
     return json({ error: 'the reviewer can fetch-agent and verdict' }, 403);

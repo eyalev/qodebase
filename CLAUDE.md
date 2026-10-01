@@ -94,6 +94,19 @@ waitUntil work is cut ~30 s after the response. Waking a box can take longer
 - Review dispatch (`startReview`) is awaited by its callers (the review verb,
   agent pushes, verdicts), not left to waitUntil.
 - Agent boots are safe: the box DO sends its own first task inside #boot.
+- `AgentBox.send()` confirms the text was submitted: the input box must be
+  empty within a few seconds (INPUT_EMPTY_SH: the last non-blank line above
+  the pane's last horizontal rule is a bare "❯"), else it presses Enter, at
+  most twice, and reports "unsent". A tall input scrolls its top rule off
+  screen, so never look for two rules.
+- `clearContext()`: one Ctrl-C if the input holds leftover text (never on an
+  empty input: that starts "press again to exit"), Escape, type /clear, Enter
+  (the first Enter only picks the menu entry; repeat while "❯ /clear" shows),
+  then wait for the empty prompt before anyone types.
+- Next review after a verdict: deferred through the project DO alarm
+  (`scheduleReviewDispatch` → `/review-dispatch`, 409 while the reviewer is
+  still busy, retried every 20 s): the verdict arrives from inside the
+  reviewer's own turn.
 
 ## Roles (one box each, `src/box.ts` taskPrompt)
 
