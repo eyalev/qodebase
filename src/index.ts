@@ -415,7 +415,20 @@ async function startReview(env: Env, p: DurableObjectStub<Project>, slug: string
   try {
     const next = await step();
     if (!next) return;
-    const text = `Review agent ${next}: run \`forq fetch-agent ${next}\`, then follow your review steps and finish with \`forq verdict ${next} approve|changes "..."\`.`;
+    const info = await p.info();
+    const ag = info?.agents.find((x) => x.id === next);
+    const tip = ag ? await head(env, { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext, ag.fork).catch(() => null) : null;
+    // Fresh context per review: the reviewer once answered a new request from
+    // its memory of the previous one and never looked at the new commit.
+    // Wake first: a box restored from its snapshot resumes the old conversation.
+    const rbox = boxStub(env, `${slug}--review`);
+    if (!(await rbox.isAwake())) await wake(env, `${slug}--review`, apiBase).catch(() => null);
+    await rbox.clearContext().catch(() => false);
+    const text = [
+      `Review agent ${next}${tip ? ` at commit ${tip.commit.slice(0, 7)} ("${tip.message}")` : ''}. This is a new review: ignore any earlier review of this agent.`,
+      ag?.note ? `The agent reports: ${ag.note}` : '',
+      `Run \`forq fetch-agent ${next}\`, follow your review steps (you are the reviewer agent of this project: read the diff from the base it prints, look at the preview at phone size), and finish with \`forq verdict ${next} approve|changes "..."\`.`,
+    ].filter(Boolean).join('\n\n');
     const r = await sendTo(env, `${slug}--review`, text, apiBase);
     log('review', 'dispatched', { slug, agent: next, ok: r.ok, err: r.error });
     if (!r.ok) await p.setVerdict(next, 'changes', `The reviewer could not start: ${r.error}. Review it yourself, or push again to retry.`);
@@ -537,6 +550,15 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     if (verb === 'verdict') {
       if (projectOf(body.agent || '') !== slug) return json({ error: 'not an agent of this project' }, 400);
       if (!['approve', 'changes'].includes(body.verdict)) return json({ error: 'verdict: approve|changes' }, 400);
+      // A verdict counts only for the agent's latest push. A reviewer working
+      // from an old fetch approved a superseded commit once (2026-10-01).
+      const info = await p.info();
+      const ag = info?.agents.find((x) => x.id === body.agent);
+      const tip = ag ? await head(env, ctx, ag.fork).catch(() => null) : null;
+      if (tip && body.commit && tip.commit !== body.commit) {
+        log('review', 'stale_verdict', { agent: body.agent, reviewed: String(body.commit).slice(0, 8), latest: tip.commit.slice(0, 8) });
+        return json({ error: `you reviewed ${String(body.commit).slice(0, 7)} but the agent's latest push is ${tip.commit.slice(0, 7)}: run \`forq fetch-agent ${body.agent}\` and review again` }, 409);
+      }
       ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.setVerdict(body.agent, body.verdict === 'approve' ? 'approved' : 'changes', String(body.notes || ''))));
       return json({ ok: true });
     }

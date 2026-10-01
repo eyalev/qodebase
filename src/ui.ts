@@ -238,6 +238,8 @@ if(ask){
 
 export type BoxStatus = { awake: boolean; booting?: boolean; taskSent?: boolean; cc: string; said?: string };
 
+/** Requests forq made on behalf of a Cloudflare Issues alert (index.ts issuesHook). */
+const fromIssues = (t: string) => t.startsWith('Production error from Cloudflare Issues');
 const BUSY = /busy|thinking|working|running|tool/;
 const since = (t: number) => `<span data-since="${t}">0s</span>`;
 
@@ -276,7 +278,7 @@ function routerPanel(info: ProjectInfo, r: BoxStatus) {
   const dot = busy ? 'busy' : r.awake ? 'idle' : '';
   return `<div class="router${busy ? ' busy' : ''}"><div class="rh"><span class="dot ${dot}"></span><span class="who">Router agent</span>${phase ? `<span class="phase">${phase}</span>` : ''}</div>
 <div class="acts"><button type="button" class="chipbtn" data-sheet="${info.slug}--router" data-name="Router agent" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${info.slug}--router" data-name="Router agent" data-mode="term">Terminal</button></div>
-${q ? `<div class="you"><b>You</b> ${esc(q.text)}</div>` : ''}${said ? `<div class="said">${esc(said)}</div>` : ''}</div>`;
+${q ? `<div class="you"><b>${fromIssues(q.text) ? 'Cloudflare Issues' : 'You'}</b> ${esc(q.text)}</div>` : ''}${said ? `<div class="said">${esc(said)}</div>` : ''}</div>`;
 }
 
 const REVIEW_WORD: Record<string, string> = { queued: 'Waiting for the reviewer', reviewing: 'Reviewing now', approved: 'Approved', changes: 'Changes suggested', sent: 'Sent to the agent to fix' };
@@ -312,7 +314,7 @@ export function agentsHtml(info: ProjectInfo, runBase: string, router: BoxStatus
     const reviewing = a.review?.state === 'queued' || a.review?.state === 'reviewing';
     return `<div class="card${ph.busy || reviewing ? ' busy' : ''}"><div class="h"><span class="dot ${ph.dot}"></span><span>${esc(a.id.split('--')[1])}</span>${freshTag(a.noteAt || a.createdAt, now, STEPS)}<span class="st">${ph.word}${ph.since ? ` ${since(ph.since)}` : ''}</span></div>
 <dl class="io">
-${a.request ? `<dt>You asked</dt><dd class="clamp">${esc(a.request)}</dd>` : ''}
+${a.request ? `<dt>${fromIssues(a.request) ? 'Reported by Cloudflare Issues' : 'You asked'}</dt><dd class="clamp">${esc(a.request)}</dd>` : ''}
 <dt>${a.request ? 'Its task, from the router agent' : 'Its task'}</dt><dd class="clamp">${esc(a.task)}</dd>
 <dt>Result</dt><dd${a.note ? '' : ' class="none"'}>${a.note ? esc(a.note) : ph.busy ? 'Not yet. It reports here when it pushes.' : 'No report yet.'}</dd>
 ${reviewBlock(a)}

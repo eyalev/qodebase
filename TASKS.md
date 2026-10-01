@@ -63,9 +63,18 @@
 - [x] Triggers: first page view of a Worker project and every merge → deploy; agent pushed → preview, then review
 - [x] Page: Worker projects show the deployed app, status line (live / deploying with timer / failed + build log), Deploy again; agent tabs + Preview use preview URLs
 - [x] Imported cloudflare/workers-chat-demo as forq/workers-chat-demo: deployed by forq's builder in ~30 s; chat verified (joined a room, sent a message, came back over the WebSocket)
-- [ ] Issues: enable for forq-app workers; automation → generic webhook → /api/hooks/issues/<slug> (secret) → router agent gets the error
-- [ ] End to end: an error in the live app → router agent → fix agent → review → merge → redeploy
-- [ ] cloudcost line for forq-app-* workers + builds
+- [x] Issues: builder turns on observability.issues; `scripts/issues-automation.sh <worker>` (webhook destination aae815c2…, policy 8b7bcf76…, automation per app Worker); POST /api/hooks/issues (cf-webhook-auth) → occurrences fetched with the forq-issues-reader token (Workers Observability read) → router agent, told to reproduce with the same request first
+- [x] End to end on eyal/workers-chat-demo: 4 real 500s (invalid 64-hex room id → idFromString throws, stack trace returned) → Issues alert 20:14:34 → router agent → agent ggbs2 → preview → reviewer approved after checking the 404 in the preview → merged → live app redeployed, same request now 404 "Invalid room ID"
+- [x] Also verified on the way: agent itvo6 (participant count) → preview in 21 s → review → merge → redeploy
+- [x] cloudcost `forq` entry covers BuildBox, forq-app-* Workers, previews, Issues wiring and both tokens
+
+Bugs found and fixed during the run:
+- First deploy request was overwritten by a later save in overview() (kind detection)
+- BuildBox kept a container a forq deploy had killed → health check + restart
+- Alert text has no stack trace; the router agent guessed from recent commits → forq now fetches occurrences (method, path, status, headers) and asks for a reproduction first; it then reproduced the real bug and redirected the wrong agent itself
+- Reviewer was put to sleep mid-review (mobile-agent "not busy" during long commands) → busy also from Claude Code's status; forq CLI calls count as activity
+- Reviewer answered a new request from memory of the old one → /clear before each review (typed /clear needs a second Enter: the first only picks the menu entry), request names the commit, and verdicts on an older commit are refused (409)
+- "You asked" on alert-born requests → "Reported by Cloudflare Issues"
 
 ## v1 (later)
 

@@ -81,7 +81,10 @@ def main(argv):
         print(f"diff:    git diff {f.get('base') or 'HEAD'} {ref}")
     elif v == 'verdict':
         if len(rest) < 2 or rest[1] not in ('approve', 'changes'): sys.exit('usage: forq verdict <agent-id> approve|changes "notes"')
-        api('POST', '/api/agent/verdict', {'agent': rest[0], 'verdict': rest[1], 'notes': ' '.join(rest[2:])}); print('ok')
+        # Say which commit was reviewed: forq refuses a verdict on an older one.
+        c = git('rev-parse', f'refs/agents/{rest[0]}', check=False).stdout.strip()
+        if not c: sys.exit(f'forq: run "forq fetch-agent {rest[0]}" first')
+        api('POST', '/api/agent/verdict', {'agent': rest[0], 'verdict': rest[1], 'notes': ' '.join(rest[2:]), 'commit': c}); print('ok')
     elif v == 'merged':
         api('POST', '/api/agent/merged', {'agent': rest[0]}); print('ok')
     else:

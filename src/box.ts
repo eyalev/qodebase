@@ -217,6 +217,24 @@ PY
     return { ok: false, error: `${r.status} ${(await r.text()).slice(0, 200)}` };
   }
 
+  /** Start Claude Code on a fresh conversation (/clear). Typing "/clear" opens
+   *  the slash-command menu and the first Enter only picks the entry, so this
+   *  presses Enter again while the input still holds the command. */
+  async clearContext(): Promise<boolean> {
+    if (!this.c.running) return false;
+    const r = await this.#sh(`set +e
+      pgrep -x claude >/dev/null || exit 3
+      tmux send-keys -t claude Escape; sleep 0.3
+      tmux send-keys -t claude -l '/clear'; sleep 0.8
+      for i in 1 2 3; do
+        tmux send-keys -t claude Enter; sleep 1.2
+        tmux capture-pane -p -t claude | grep -q '^❯ /clear' || exit 0
+      done
+      exit 4`);
+    log('box', 'clear_context', { agentId: await this.ctx.storage.get<string>('agentId'), exit: r.exitCode });
+    return r.exitCode === 0;
+  }
+
   /** Claude Code's state (busy/idle/…) from the in-box tmux-web. */
   async ccStatus(): Promise<string> {
     if (!this.c.running) return 'asleep';
