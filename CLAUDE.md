@@ -222,8 +222,11 @@ tab loads `/a/<id>/agent/?ui=minimal` (terminal, six keys, input).
 
 ## Baseline
 
-Public-project baseline (`~/.claude/docs/public-project-baseline.md`) applies
-from v1, when the UI is public. v0's UI is behind Cloudflare Access. The run
-host is public but serves only demo apps, refuses verified bots, sends
-`noindex` everywhere and a `Disallow: /` robots.txt; nothing on it is metered
-beyond per-colo, per-commit cached Artifacts reads.
+forq is public to read since 2026-10-02 (sign-in by emailed code, BYO API key).
+Done: `/about` and `/privacy` with a contact address (hello@kapps.dev),
+`/version.json`, `/health.json`, robots.txt, a crawler gate on WHO (verified
+bots get only the front page), admin behind the admin secret on workers.dev,
+`noindex` on every page (pre-launch). Not yet, and why: feedback form,
+same-origin kstats analytics, og:image, push alerts, the 390 px check script
+(pre-launch, private repo; add before announcing). The run host is public but
+serves only static demo apps, refuses verified bots and sends `noindex`.

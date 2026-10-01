@@ -56,6 +56,7 @@
     { "type": "Text", "globs": ["**/*.rev"], "fallthrough": true }
   ],
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "forq" }],
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
   "vars": {
     "ACCESS_TEAM_DOMAIN": "<personal access team>.cloudflareaccess.com",
     "ACCESS_AUD": "<personal access aud>",

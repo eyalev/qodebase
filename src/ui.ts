@@ -133,7 +133,8 @@ export function explorePage(entries: Entry[], me: string) {
 <p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.${me ? '' : ' Reading is open to everyone; sign in with your email to fork and run agents with your own Anthropic API key.'}</p>
 ${freshLegend(STEPS)}
 ${mine.length ? `<h2>Yours</h2><div class="rows">${mine.map((e) => row(e, forks(e.slug), now)).join('')}</div>` : ''}
-<h2>Explore</h2><div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`);
+<h2>Explore</h2><div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>
+<p class="empty" style="margin-top:32px"><a href="/about">About</a>&nbsp;&nbsp; <a href="/privacy">Privacy</a></p>`);
 }
 
 export type Overview = { importing?: boolean; entry?: string | null; kind?: 'worker' | 'static'; app?: ProjectInfo['app']; commits: { hash: string; message: string; at: number; author: string }[]; files: { name: string; dir: boolean }[]; readme: string | null };
@@ -405,4 +406,24 @@ const hf=document.getElementById('hf');if(hf)hf.onsubmit=async(e)=>{e.preventDef
 const kf=document.getElementById('keyf');if(kf)kf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Checking the key with Anthropic';if(await call('/api/me/key','POST',{key:kf.key.value}))location.reload();};
 const rm=document.getElementById('rmkey');if(rm)rm.onclick=async()=>{if(await call('/api/me/key','DELETE'))location.reload();};
 </script>`);
+}
+
+export function aboutPage() {
+  return shell('About · forq', `<a class="back" href="/">Explore</a>
+<h1>About forq</h1>
+<p class="desc">forq is a git platform for the age of agents, built on Cloudflare (Artifacts, Containers, Durable Objects, Workers) and made for the phone. Every project runs; every fork comes with its own agents.</p>
+<h2>How it works</h2>
+<p class="desc">You tell a project's router agent what to change. It starts one agent per task, each in its own container on its own fork. A reviewer agent checks every push in a live preview before you merge. Errors from a deployed app can start a fix by themselves.</p>
+<h2>Whose Claude</h2>
+<p class="desc">Agents run Claude Code with your own Anthropic API key, which you add in Settings. You pay Anthropic directly. forq measured about $1–2 per finished, reviewed change on Sonnet.</p>
+<h2>Contact</h2>
+<p class="desc">hello@kapps.dev</p>`);
+}
+
+export function privacyPage() {
+  return shell('Privacy · forq', `<a class="back" href="/">Explore</a>
+<h1>Privacy</h1>
+<p class="desc">What forq stores: your email address and the name you choose; your Anthropic API key, encrypted, used only to start Claude Code in your projects' containers; the projects, forks and agent conversations you create. Projects are public to read.</p>
+<p class="desc">Sign-in is handled by Cloudflare Access with a one-time code sent to your email. forq sets one cookie, to keep you signed in. No analytics or ad trackers.</p>
+<p class="desc">Your agents' requests go to Anthropic under your key and Anthropic's terms. To delete your account and data, write to hello@kapps.dev.</p>`);
 }

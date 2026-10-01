@@ -13,7 +13,8 @@ export interface Env {
   API_BASE: string;             // this Worker on workers.dev (DOs call back into it)
   ISSUES_WEBHOOK_SECRET: string; // Cloudflare Notifications sends it as cf-webhook-auth
   OBS_READ_TOKEN: string;
-  KEY_ENC_SECRET: string;        // encrypts users' Anthropic API keys (AES-GCM)
+  KEY_ENC_SECRET: string;
+  CF_VERSION_METADATA?: { id: string; tag?: string; timestamp?: string };        // encrypts users' Anthropic API keys (AES-GCM)
   OWNER_HANDLE: string;          // runs on the Claude subscription; everyone else brings an API key
   OTHERS_MAX_AWAKE: string;      // awake boxes per non-owner user (their containers bill this account)        // Workers Observability read: an issue's occurrences for the router agent
   ARTIFACTS: Artifacts;

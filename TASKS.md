@@ -83,9 +83,9 @@ Bugs found and fixed during the run:
 - [x] Settings: Anthropic API key checked with one /v1/models call, AES-GCM encrypted (KEY_ENC_SECRET), last 4 shown; their boxes run ANTHROPIC_API_KEY + ANTHROPIC_MODEL=claude-sonnet-5-5; Eyal (OWNER_HANDLE) keeps the subscription
 - [x] Limits for others: 10 projects, 2 awake boxes across their projects (their containers bill this account), no Worker deploys (they run on this account); no-key requests fail at once with "add your key"
 - [ ] A real agent run on an API key: needs a forq-specific Anthropic key from Eyal (did not run forq agents on desk's key: one key per project); key save/check verified with it, then removed
-- [ ] Baseline pass: /about, /privacy, /version.json, /health.json, crawler gate on the UI host
-- [ ] Self-host guide (SELF_HOST.md) + config that does not assume Eyal's account; repo stays PRIVATE (Eyal, 2026-10-02)
-- [ ] Video research (how good technical walkthroughs are made)
+- [x] Baseline pass: /about, /privacy, /version.json, /health.json, robots.txt, crawler gate (verified bots: front page only); not yet: feedback form, kstats, og:image, push alerts (noted in CLAUDE.md)
+- [x] Self-host guide (SELF_HOST.md) + no account-specific values left in src (UI host, API base from config); repo stays PRIVATE (Eyal, 2026-10-02). Open item: a public Dockerfile for the box image
+- [x] Video research → docs/video-guide.md
 - [ ] Recording rig: phone-size browser, visible taps, captions, time-lapse for waits, mp4
 - [ ] Workflow videos: 1 fork + router + agents + review + merge; 2 import from GitHub; 3 Worker app error → automatic fix; 4 code browser + changes; 5 sign-up + API key
 - [ ] Review the videos frame by frame; fix UX/design problems they show; re-record

@@ -48,6 +48,7 @@ export type BootSpec = {
   gitToken: string;     // write token for that repo (art_v2_…?expires=…)
   agentToken: string;   // signs this box's /api/agent/* calls
   apiBase: string;      // where the forq CLI calls
+  uiHost: string;       // the public UI host (mobile-agent's allowed origin)
   maRev: string;        // mobile-agent version to unpack over the image's copy
   bootEnv: string;      // boot.sh env (SBX_NAME, CC_ENV, …)
 };
@@ -145,7 +146,7 @@ export class AgentBox extends DurableObject<Env> {
       printf '%s' "\${GIT_TOKEN%%\\?expires=*}" > /run/forq/git-token
       git config --global credential.helper '!f() { echo username=x; echo "password=$(cat /run/forq/git-token)"; }; f'
       git config --global user.name "forq agent $AGENT_ID"
-      git config --global user.email "agent+$AGENT_ID@forq.kapps.dev"
+      git config --global user.email "agent+$AGENT_ID@$UI_HOST"
       git config --global init.defaultBranch main
       if [ ! -d ${REPO_DIR}/.git ]; then
         git clone -q "$REMOTE" ${REPO_DIR}
@@ -166,7 +167,7 @@ PY
       printf '%s' "$AGENT_TOKEN" > /run/forq/agent-token
       printf '%s' "$API_BASE" > /run/forq/api
       printf '%s' "$FORQ_CLI" > /usr/local/bin/forq && chmod 755 /usr/local/bin/forq
-      git -C ${REPO_DIR} log --oneline -1`, { GIT_TOKEN: spec.gitToken, REMOTE: spec.remote, AGENT_ID: spec.agentId,
+      git -C ${REPO_DIR} log --oneline -1`, { GIT_TOKEN: spec.gitToken, REMOTE: spec.remote, AGENT_ID: spec.agentId, UI_HOST: spec.uiHost,
         AGENT_TOKEN: spec.agentToken, API_BASE: spec.apiBase, FORQ_CLI });
     log('box', 'repo_ready', { agentId: spec.agentId, exit: repo.exitCode, head: repo.stdout.trim().slice(-80), err: repo.stderr.slice(-300) });
     if (repo.exitCode !== 0) return { ok: false, ms: Date.now() - t0, from, error: `clone failed: ${repo.stderr.slice(-200)}` };
@@ -188,13 +189,13 @@ PY
     const boot = await this.#sh(`set +e
       mkdir -p /run/opendev && chmod 700 /run/opendev
       printf '%s' "$BOOT_ENV" > /run/opendev/boot.env && ln -sfn /run/opendev/boot.env /tmp/boot.env
-      sed -e 's#--allow-origin opendev.page#--allow-origin forq.kapps.dev#' -e 's#https://opendev.page/dashboard#https://forq.kapps.dev/#' /opt/boot.sh > /tmp/forq-boot.sh
+      sed -e "s#--allow-origin opendev.page#--allow-origin $UI_HOST#" -e "s#https://opendev.page/dashboard#https://$UI_HOST/#" /opt/boot.sh > /tmp/forq-boot.sh
       (setsid bash /tmp/forq-boot.sh > /tmp/boot.log 2>&1 < /dev/null &)
       for i in $(seq 1 450); do grep -q MA_READY /tmp/boot.log && break; sleep 0.2; done
       for i in $(seq 1 100); do grep -q TW_READY /tmp/boot.log && break; sleep 0.2; done
       for i in $(seq 1 150); do tmux capture-pane -p -t claude 2>/dev/null | grep -qE 'for shortcuts|auto mode|shift\\+tab' && break; sleep 0.2; done
       if [ -f /tmp/boot.env ] && [ ! -L /tmp/boot.env ]; then mv /tmp/boot.env /run/opendev/boot.env && ln -sfn /run/opendev/boot.env /tmp/boot.env; fi
-      grep -c MA_READY /tmp/boot.log`, { BOOT_ENV: spec.bootEnv });
+      grep -c MA_READY /tmp/boot.log`, { BOOT_ENV: spec.bootEnv, UI_HOST: spec.uiHost });
     const ok = boot.stdout.trim().endsWith('1');
     log('box', 'booted', { agentId: spec.agentId, from, ok, ms: Date.now() - t0, tail: ok ? undefined : boot.stdout.slice(-300) + boot.stderr.slice(-300) });
     if (!ok) return { ok, ms: Date.now() - t0, from, error: 'boot.sh did not report MA_READY' };

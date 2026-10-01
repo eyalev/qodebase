@@ -36,7 +36,7 @@ async function ghGet(path: string, ttlS: number, ctx: ExecutionContext): Promise
   const hit = await caches.default.match(key);
   if (hit) return { status: 200, body: await hit.json() };
   const r = await fetch(`https://api.github.com${path}`, {
-    headers: { 'user-agent': 'forq (forq.kapps.dev)', accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28' },
+    headers: { 'user-agent': 'forq (self-hostable git platform for agents)', accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28' },
   });
   const body = await r.json().catch(() => ({}));
   log('github', 'api', { path: path.slice(0, 120), status: r.status, remaining: r.headers.get('x-ratelimit-remaining') });

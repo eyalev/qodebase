@@ -1,7 +1,7 @@
 // forq Worker.
 //
 // Hosts:
-//   forq.kapps.dev      UI + API, behind Cloudflare Access (JWT verified here too)
+//   UI_HOST (forq.kapps.dev)  UI + API; public read, sign-in via /login (Access)
 //   forq-run.kapps.dev  public run host: any repo/fork as a live static app (run.ts)
 //   *.workers.dev       admin (x-forq-secret) and the boxes' forq CLI (x-forq-agent)
 
@@ -12,7 +12,7 @@ import { Project, roleOf, type ProjectInfo, type Role } from './project';
 import { Registry, registry } from './registry';
 import { BuildBox } from './build';
 import { serveRun } from './run';
-import { agentsHtml, buildLogPage, explorePage, projectPage, settingsPage, type BoxStatus } from './ui';
+import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
 import { DEFAULT_API_MODEL, checkApiKey, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
@@ -123,7 +123,7 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
   }
   return {
     agentId, task: r.task, role: r.role, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token,
-    agentToken: await agentToken(env, agentId), apiBase, maRev: MA_REV.trim(),
+    agentToken: await agentToken(env, agentId), apiBase, uiHost: env.UI_HOST, maRev: MA_REV.trim(),
     bootEnv: [
       `SBX_NAME=${JSON.stringify(r.role === 'agent' ? agentId : `${slug.replace('.', '/')} ${r.role}`)}`,
       'AGENT=claude',
@@ -194,6 +194,20 @@ export default {
     if (url.hostname === env.RUN_HOST) return serveRun(request, env, ctx);
     // Cloudflare Issues → Notifications webhook. Its own auth (cf-webhook-auth), before the user/agent auth.
     if (url.pathname === '/api/hooks/issues' && request.method === 'POST') return issuesHook(request, env, ctx);
+    // Public-site basics (baseline): about, privacy, robots, version, health.
+    if (url.hostname === env.UI_HOST) {
+      const cf = (request as any).cf || {};
+      if (url.pathname === '/robots.txt') return new Response('User-agent: *\nDisallow: /p/\nDisallow: /import\nDisallow: /api/\nDisallow: /a/\nDisallow: /login\n', { headers: { 'content-type': 'text/plain' } });
+      if (url.pathname === '/version.json') return json({ name: 'forq', version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
+      if (url.pathname === '/health.json') return json({ status: 'ok', name: 'forq', checkedAt: new Date().toISOString() });
+      if (url.pathname === '/about') return html(aboutPage());
+      if (url.pathname === '/privacy') return html(privacyPage());
+      // Crawler gate on WHO, not on paths: verified bots get the front page only
+      // (project and code pages read Artifacts on every view).
+      if ((cf.verifiedBotCategory || cf.botManagement?.verifiedBot) && url.pathname !== '/') {
+        return new Response('forq pages are for people; see /about.', { status: 403, headers: { 'retry-after': '86400', 'x-robots-tag': 'noindex' } });
+      }
+    }
     if (url.pathname === '/login' && url.hostname === env.UI_HOST) return loginRoute(request, env, url);
     if (url.pathname === '/logout') return new Response(null, { status: 302, headers: { location: '/', 'set-cookie': clearCookie() } });
     const me = await who(request, env);
@@ -211,7 +225,7 @@ export default {
     }
     const path = url.pathname;
     // Boxes call back through workers.dev (no Access in front of it).
-    const apiBase = `https://${url.hostname.endsWith('.workers.dev') ? url.hostname : 'forq.<sub>.workers.dev'}`;
+    const apiBase = url.hostname.endsWith('.workers.dev') ? `https://${url.hostname}` : env.API_BASE;
     const runBase = `https://${env.RUN_HOST}`;
     try {
       if (me.kind === 'agent') return agentApi(request, env, ctx, me, url, apiBase);
@@ -621,7 +635,7 @@ async function issuesHook(request: Request, env: Env, ctx: ExecutionContext): Pr
   const issueId = (text.match(/Issue ID: ([0-9a-f-]{36})/) || [])[1];
   const occ = issueId ? await issueOccurrences(env, issueId) : null;
   const info = await p.info();
-  const live = info?.app?.url || `https://${worker}.<sub>.workers.dev`;
+  const live = info?.app?.url || `(not deployed yet; Worker ${worker})`;
   const ask = [
     `Cloudflare Issues reported a production error in this project's live app (Worker ${worker}, live at ${live}):`,
     text.split('\n\nAI-assisted investigation')[0],
