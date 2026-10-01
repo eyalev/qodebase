@@ -84,6 +84,17 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 - Reading code is open to anyone who can see the project; the ownership
   check in the project API comes after the read verbs.
 
+## Durable delivery (never type into a box from waitUntil)
+
+waitUntil work is cut ~30 s after the response. Waking a box can take longer
+(a request sat at "waking" for 38 min with nothing delivered). So:
+- Router requests: `askRouter` stores the request and `Project.scheduleDelivery()`
+  arms the project DO's alarm, which calls `POST /api/p/<o>/<n>/deliver`
+  (admin) and waits; 3 tries with backoff, then "failed" with the reason.
+- Review dispatch (`startReview`) is awaited by its callers (the review verb,
+  agent pushes, verdicts), not left to waitUntil.
+- Agent boots are safe: the box DO sends its own first task inside #boot.
+
 ## Roles (one box each, `src/box.ts` taskPrompt)
 
 - agent `<slug>--<id>`: its fork, writable; reports with `forq status`.

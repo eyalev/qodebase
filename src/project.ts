@@ -27,7 +27,9 @@ export type Deploy = { status: 'building' | 'live' | 'failed'; url?: string; com
 /** The reviewer agent's verdict on an agent's latest push. */
 export type Review = { state: 'queued' | 'reviewing' | 'approved' | 'changes' | 'sent'; notes?: string; at: number; commit?: string };
 /** The last thing the person asked the router agent, and how far delivery got. */
-export type RouterRequest = { text: string; at: number; state: 'waking' | 'sent' | 'failed'; sentAt?: number; error?: string };
+export type RouterRequest = { text: string; at: number; state: 'waking' | 'sent' | 'failed'; sentAt?: number; error?: string;
+  /** What is actually typed to the router agent, when it differs from `text` (what the page quotes). */
+  payload?: string; attempts?: number };
 /** Where an imported project came from (GitHub metadata at import time). */
 export type ImportedFrom = { url: string; fullName: string; stars: number; license: string | null; branch: string };
 export type Role = 'agent' | 'router' | 'reviewer';
@@ -269,6 +271,42 @@ export class Project extends DurableObject<Env> {
     const info = await this.#need();
     info.lastRequest = { ...(info.lastRequest || { text: '', at: Date.now(), state: 'waking' }), ...patch } as RouterRequest;
     await this.ctx.storage.put('info', info);
+  }
+
+  /** Deliver the last request to the router agent from an alarm, retrying.
+   *  Waking a box plus typing can outlast a request's waitUntil (~30 s): a
+   *  request sat at "waking" for 38 min with nothing delivered (2026-10-01).
+   *  The alarm calls the Worker's deliver verb and waits for it. */
+  async scheduleDelivery() {
+    await this.ctx.storage.put('deliverPending', true);
+    await this.ctx.storage.setAlarm(Date.now() + 50);
+  }
+
+  async alarm() {
+    if (!(await this.ctx.storage.get<boolean>('deliverPending'))) return;
+    const info = await this.#need();
+    const q = info.lastRequest;
+    if (!q || q.state !== 'waking') { await this.ctx.storage.delete('deliverPending'); return; }
+    const attempt = (q.attempts || 0) + 1;
+    await this.setRequest({ attempts: attempt });
+    const [owner, name] = info.slug.split('.');
+    let ok = false, err = '';
+    try {
+      const r = await fetch(`${this.env.API_BASE}/api/p/${owner}/${name}/deliver`, {
+        method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' },
+        body: JSON.stringify({ at: q.at }), signal: AbortSignal.timeout(5 * 60_000),
+      });
+      const j = await r.json().catch(() => ({})) as { ok?: boolean; error?: string };
+      ok = r.ok && j.ok !== false; err = j.error || (r.ok ? '' : `HTTP ${r.status}`);
+    } catch (e) { err = String((e as Error)?.message || e); }
+    log('project', 'deliver_attempt', { slug: info.slug, attempt, ok, err });
+    if (ok) { await this.ctx.storage.delete('deliverPending'); return; }
+    if (attempt >= 3) {
+      await this.setRequest({ state: 'failed', error: `could not reach the router agent after ${attempt} tries: ${err}` });
+      await this.ctx.storage.delete('deliverPending');
+      return;
+    }
+    await this.ctx.storage.setAlarm(Date.now() + attempt * 30_000);
   }
 
   async setState(agentId: string, state: Agent['state'], note?: string) {

@@ -269,10 +269,16 @@ export default {
           return json({ ok: true });
         }
         if (verb === 'build-state' && me.admin) return json(await env.BuildBox.get(env.BuildBox.idFromName(`${slug}--build`)).state());
+        if (verb === 'deliver' && request.method === 'POST' && me.admin) {
+          const b = await request.json() as { at?: number };
+          const r = await deliverToRouter(env, p, slug, Number(b.at), apiBase);
+          return json(r, r.ok ? 200 : 502);
+        }
         if (verb === 'review' && request.method === 'POST') {
           const b = await request.json() as { agent?: string };
           if (!info.agents.some((x) => x.id === b.agent)) return json({ error: 'unknown agent' }, 404);
-          ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.queueReview(b.agent!)));
+          // Awaited, not waitUntil: waking the reviewer can outlast waitUntil's ~30 s.
+          await startReview(env, p, slug, apiBase, () => p.queueReview(b.agent!));
           return json({ ok: true });
         }
         if (verb === 'fix' && request.method === 'POST') {
@@ -396,17 +402,22 @@ const html = (body: string) => new Response(body, { headers: { 'content-type': '
 async function askRouter(env: Env, ctx: ExecutionContext, p: DurableObjectStub<Project>, slug: string, text: string, apiBase: string, shown = text) {
   const at = Date.now();
   // `shown` is what the page quotes as "You": the person's words, not forq's instruction to the router.
-  await p.setRequest({ text: shown, at, state: 'waking', sentAt: undefined, error: undefined });
-  ctx.waitUntil(sendTo(env, `${slug}--router`, text, apiBase)
-    .then((r) => {
-      log('api', 'router_send', { slug, ok: r.ok, chars: text.length, ms: Date.now() - at, err: r.error });
-      return p.setRequest(r.ok ? { state: 'sent', sentAt: Date.now() } : { state: 'failed', error: r.error });
-    })
-    .catch((e) => {
-      log('api', 'router_send_failed', { slug, err: String(e), stack: e?.stack });
-      return p.setRequest({ state: 'failed', error: String(e?.message || e) });
-    }));
+  await p.setRequest({ text: shown, payload: text === shown ? undefined : text, at, state: 'waking', sentAt: undefined, error: undefined, attempts: 0 });
+  // Delivered from the project DO's alarm (Project.scheduleDelivery), which survives this request.
+  await p.scheduleDelivery();
   return { ok: true, at };
+}
+
+/** The deliver verb (called by the project DO's alarm, which waits): wake the
+ *  router agent if needed and type the pending request. */
+async function deliverToRouter(env: Env, p: DurableObjectStub<Project>, slug: string, at: number, apiBase: string) {
+  const info = await p.info();
+  const q = info?.lastRequest;
+  if (!q || q.at !== at || q.state !== 'waking') return { ok: true, skipped: 'no pending request' };
+  const r = await sendTo(env, `${slug}--router`, q.payload || q.text, apiBase);
+  log('api', 'router_send', { slug, ok: r.ok, ms: Date.now() - at, attempt: q.attempts, err: r.error });
+  if (r.ok) await p.setRequest({ state: 'sent', sentAt: Date.now() });
+  return r;
 }
 
 /** Run a review-queue step (queue, verdict, …) and hand the reviewer the agent
@@ -536,7 +547,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     if (body.state === 'pushed') {
       // Worker projects: build the fork as a Preview first; buildDone starts the review.
       if ((await p.kindOf()) === 'worker') ctx.waitUntil(p.requestBuild('preview', me.agentId).catch((e) => log('build', 'request_failed', { err: String(e) })));
-      else ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId)));
+      else await startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId));   // awaited: see the review verb
     }
     return json({ ok: true });
   }
@@ -559,7 +570,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
         log('review', 'stale_verdict', { agent: body.agent, reviewed: String(body.commit).slice(0, 8), latest: tip.commit.slice(0, 8) });
         return json({ error: `you reviewed ${String(body.commit).slice(0, 7)} but the agent's latest push is ${tip.commit.slice(0, 7)}: run \`forq fetch-agent ${body.agent}\` and review again` }, 409);
       }
-      ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.setVerdict(body.agent, body.verdict === 'approve' ? 'approved' : 'changes', String(body.notes || ''))));
+      await startReview(env, p, slug, apiBase, () => p.setVerdict(body.agent, body.verdict === 'approve' ? 'approved' : 'changes', String(body.notes || '')));
       return json({ ok: true });
     }
     return json({ error: 'the reviewer can fetch-agent and verdict' }, 403);
