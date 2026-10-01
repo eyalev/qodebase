@@ -35,7 +35,7 @@
 - [ ] Every app shares the run origin, so localStorage leaks between projects (eyal/todo's tasks show in forq/todo's preview). Give each repo its own origin, or namespace storage
 - [ ] Project page: when you already have a fork, show "Your fork" instead of a second Fork button
 - [ ] Composer: trusted click on "Send to router" missed under phone emulation in ab-bg (form handler fine); check on a real phone
-- [ ] Terminal in the sheet: lines Claude Code drew before the pane narrowed stay clipped on the right (new output wraps right); look at tmux window size at boot (-x 60) vs the phone's columns
+- [x] Terminal "clipping": not a phone bug. A visible phone claims its width and tmux follows (kb518's terminal-diag.jsonl: phone claimed 60, window 60; direct test 60 -> 54 holds). Only my minimized test browser clipped: hidden pages never claim (by design) and rAF is paused there, so headless/ab-bg cannot verify sizing. Residual, inherent to terminals: lines already in history keep the width they were drawn at
 
 ## v1 (later)
 
