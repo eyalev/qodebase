@@ -292,7 +292,15 @@ PY
     const idle = Date.now() - ((await this.ctx.storage.get<number>('lastActive')) || 0);
     let keep = idle < IDLE_MS;
     let busy = false;
-    if (!keep && idle < BUSY_MAX_MS) { busy = await this.#agentBusy(); keep = busy; }
+    // Busy = mobile-agent says so OR Claude Code's own status does. mobile-agent
+    // alone read "not busy" during a long tool call (Chromium screenshots), and
+    // the reviewer was stopped mid-review (2026-10-01).
+    if (!keep && idle < BUSY_MAX_MS) {
+      const [ma, cc] = await Promise.all([this.#agentBusy(), this.ccStatus().catch(() => 'unknown')]);
+      busy = ma || /busy|thinking|working|running|tool|compact/i.test(cc);
+      keep = busy;
+      if (busy !== ma) log('box', 'busy_by_cc_status', { agentId, ma, cc });
+    }
     log('box', 'alarm', { agentId, idleS: Math.round(idle / 1000), busy, keep });
     if (keep) {
       const last = (await this.ctx.storage.get<number>('lastSnapshot')) || 0;

@@ -444,12 +444,50 @@ async function issuesHook(request: Request, env: Env, ctx: ExecutionContext): Pr
   const e = entries.find((x) => appWorkerName(x.slug) === worker);
   if (!e) { log('issues', 'unknown_worker', { worker }); return json({ ok: true, ignored: `no project deploys as ${worker}` }); }
   const p = projectStub(env, e.slug);
-  const text = String(body.text || body.data?.text || body.message || raw).slice(0, 6000);
+  const text = String(body.text || body.data?.text || body.message || raw).slice(0, 3000);
   const title = (text.split('\n').find((l) => l.trim()) || 'an error').slice(0, 140);
-  const ask = `Cloudflare Issues reported a production error in this project's live app (Worker ${worker}):\n\n${text}\n\nFind the cause in the code. If it is a real bug, start one agent with \`forq spawn\` to fix it, giving it the error and what you found. Reply with one line saying what you did.`;
+  // The alert says only what failed ("HTTP 500"), not where. The issue's
+  // occurrences name the failing requests; without them the router agent
+  // guessed the cause from recent commits and fixed the wrong thing (2026-10-01).
+  const issueId = (text.match(/Issue ID: ([0-9a-f-]{36})/) || [])[1];
+  const occ = issueId ? await issueOccurrences(env, issueId) : null;
+  const info = await p.info();
+  const live = info?.app?.url || `https://${worker}.<sub>.workers.dev`;
+  const ask = [
+    `Cloudflare Issues reported a production error in this project's live app (Worker ${worker}, live at ${live}):`,
+    text.split('\n\nAI-assisted investigation')[0],
+    occ ? `The failing requests, from the issue's occurrences (dynamic path parts are shown as REDACTED by Cloudflare):\n${occ}` : 'The occurrences could not be fetched.',
+    `First reproduce it: send the SAME request to the live URL with curl (same method, path and headers as above; a plain GET is not a WebSocket upgrade), trying realistic values where the path says REDACTED, until you get the same status, and read the response body. Only then decide the cause from the code. If you cannot reproduce it, say so rather than picking a theory. Start one agent with \`forq spawn\` to fix it, giving it the exact failing request, what the response showed, and the cause. If an agent is already working on this error with a different theory, tell it with \`forq send\`. Reply with one line saying what you found and did.`,
+  ].join('\n\n');
   const r = await askRouter(env, ctx, p, e.slug, ask, env.API_BASE, `Production error from Cloudflare Issues: ${title}`);
   log('issues', 'routed', { worker, slug: e.slug });
   return json({ routed: e.slug, ...r });
+}
+
+/** An issue's failing requests, grouped: "3× GET /api/room/REDACTED/websocket → 500 (HttpServerError: HTTP 500)". */
+async function issueOccurrences(env: Env, issueId: string): Promise<string | null> {
+  if (!env.OBS_READ_TOKEN) return null;
+  try {
+    const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.ACCOUNT_ID}/workers/observability/issues/${issueId}/occurrences`, {
+      headers: { authorization: `Bearer ${env.OBS_READ_TOKEN}` },
+    });
+    const j = await r.json() as { success?: boolean; result?: any[] };
+    if (!r.ok || !j.result) { log('issues', 'occurrences_failed', { issueId, status: r.status }); return null; }
+    const groups = new Map<string, number>();
+    for (const o of j.result.slice(0, 50)) {
+      // Headers matter for reproducing: the chat demo answers a WebSocket
+      // upgrade with a 101 that carries the error, a plain GET with a 500.
+      const h = o.request?.headers || {};
+      const how = [h['user-agent'] ? `user-agent ${h['user-agent']}` : null, h.upgrade ? `Upgrade: ${h.upgrade}` : 'no Upgrade header'].filter(Boolean).join(', ');
+      const k = `${o.invocation?.method || '?'} ${o.invocation?.path || o.invocation?.url || '?'} → ${o.invocation?.statusCode ?? '?'} (${o.error?.name || 'error'}: ${o.error?.message || ''}${o.error?.handled === false ? ', unhandled' : ''}; ${how})`;
+      groups.set(k, (groups.get(k) || 0) + 1);
+    }
+    const trail = j.result.flatMap((o) => (o.trail || []).map((t: any) => typeof t === 'string' ? t : JSON.stringify(t))).slice(0, 10);
+    return [...groups].map(([k, n]) => `- ${n}× ${k}`).join('\n') + (trail.length ? `\nTrail:\n${trail.join('\n')}` : '');
+  } catch (e) {
+    log('issues', 'occurrences_error', { issueId, err: String(e) });
+    return null;
+  }
 }
 
 async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string) {
@@ -472,6 +510,8 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     return new Response(MA_TGZ, { headers: { 'content-type': 'application/gzip', 'x-forq-ma-rev': MA_REV.trim() } });
   }
   log('agent_api', verb, { agentId: me.agentId });
+  // A box using its forq CLI is working, whatever its UI traffic says.
+  ctx.waitUntil(boxStub(env, me.agentId).touch(me.agentId).catch(() => {}));
   if (verb === 'list') {
     const info = await p.info();
     return json({ agents: (info?.agents || []).map(({ id, task, state, note }) => ({ id, task, state, note })) });
