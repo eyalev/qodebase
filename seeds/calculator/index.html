@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Calculator</title>
+<style>
+  :root { --bg: #ffffff; --fg: #17181a; --key: #eef0f2; --op: #dfe7f5; --eq: #2b5fd9; --eq-fg: #fff; --dim: #6a6f76; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #111214; --fg: #eceef0; --key: #1f2124; --op: #1d2840; --eq: #4d7ff0; --dim: #9aa0a6; } }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 18px/1.2 system-ui, sans-serif; }
+  main { max-width: 420px; height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+  .screen { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-end; padding: 8px 4px 16px; min-height: 120px; }
+  .expr { color: var(--dim); font-size: 18px; min-height: 22px; word-break: break-all; text-align: right; }
+  .out { font-size: 52px; font-variant-numeric: tabular-nums; word-break: break-all; text-align: right; }
+  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  button { height: 64px; border: 0; border-radius: 14px; background: var(--key); color: var(--fg); font: 500 24px system-ui, sans-serif; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  button:active { filter: brightness(0.92); }
+  .op { background: var(--op); }
+  .eq { background: var(--eq); color: var(--eq-fg); }
+  .wide { grid-column: span 2; }
+</style>
+</head>
+<body>
+<main>
+  <div class="screen"><div class="expr" id="expr"></div><div class="out" id="out">0</div></div>
+  <div class="keys" id="keys">
+    <button data-k="C" class="op">C</button><button data-k="(" class="op">(</button><button data-k=")" class="op">)</button><button data-k="/" class="op">÷</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="*" class="op">×</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="-" class="op">−</button>
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="+" class="op">+</button>
+    <button data-k="0" class="wide">0</button><button data-k=".">.</button><button data-k="=" class="eq">=</button>
+  </div>
+</main>
+<script>
+  // Tiny shunting-yard evaluator: no eval(), so the expression can only ever be arithmetic.
+  let expr = '';
+  const $expr = document.getElementById('expr'), $out = document.getElementById('out');
+
+  function tokens(s) { return s.match(/\d*\.?\d+|[()+\-*/]/g) || []; }
+  function evaluate(s) {
+    const prec = { '+': 1, '-': 1, '*': 2, '/': 2 }, out = [], ops = [];
+    let prev = null;
+    for (const t of tokens(s)) {
+      if (/\d/.test(t)) out.push(parseFloat(t));
+      else if (t === '(') ops.push(t);
+      else if (t === ')') { while (ops.length && ops.at(-1) !== '(') out.push(ops.pop()); ops.pop(); }
+      else {
+        if (t === '-' && (prev === null || prev in prec || prev === '(')) { out.push(0); }
+        while (ops.length && ops.at(-1) in prec && prec[ops.at(-1)] >= prec[t]) out.push(ops.pop());
+        ops.push(t);
+      }
+      prev = t;
+    }
+    while (ops.length) out.push(ops.pop());
+    const st = [];
+    for (const x of out) {
+      if (typeof x === 'number') { st.push(x); continue; }
+      const b = st.pop(), a = st.pop();
+      st.push(x === '+' ? a + b : x === '-' ? a - b : x === '*' ? a * b : a / b);
+    }
+    const r = st.pop();
+    return Number.isFinite(r) ? +r.toPrecision(12) : NaN;
+  }
+  function render() {
+    $expr.textContent = expr.replace(/\*/g, '×').replace(/\//g, '÷');
+    const r = expr ? evaluate(expr) : 0;
+    $out.textContent = Number.isNaN(r) ? '…' : String(r);
+  }
+  function press(k) {
+    if (k === 'C') expr = '';
+    else if (k === '=') { const r = evaluate(expr); if (!Number.isNaN(r)) expr = String(r); }
+    else expr += k;
+    render();
+  }
+  document.getElementById('keys').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) press(b.dataset.k); });
+  document.addEventListener('keydown', (e) => {
+    if (/^[\d.+\-*/()]$/.test(e.key)) press(e.key);
+    else if (e.key === 'Enter' || e.key === '=') press('=');
+    else if (e.key === 'Escape') press('C');
+    else if (e.key === 'Backspace') { expr = expr.slice(0, -1); render(); }
+  });
+</script>
+</body>
+</html>

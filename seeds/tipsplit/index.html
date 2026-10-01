@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tip split</title>
+<style>
+  :root { --bg: #ffffff; --fg: #18191b; --dim: #6c7076; --line: #e4e6e9; --card: #f4f5f6; --acc: #6a4fd1; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #111214; --fg: #ebecee; --dim: #9ca0a6; --line: #282a2e; --card: #1b1c1f; --acc: #9b85f0; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.4 system-ui, sans-serif; }
+  main { max-width: 440px; margin: 0 auto; padding: 24px 16px calc(24px + env(safe-area-inset-bottom)); }
+  h1 { font-size: 24px; margin: 0 0 20px; }
+  label { display: block; color: var(--dim); font-size: 14px; margin: 18px 0 6px; }
+  input { width: 100%; font: 28px system-ui, sans-serif; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--fg); font-variant-numeric: tabular-nums; }
+  .chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .chips button { height: 48px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--fg); font: 500 17px system-ui, sans-serif; }
+  .chips button[aria-pressed=true] { background: var(--acc); border-color: var(--acc); color: #fff; }
+  .people { display: flex; align-items: center; gap: 12px; }
+  .people button { width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--fg); font-size: 24px; }
+  .people output { font-size: 28px; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+  .result { margin-top: 28px; padding: 16px; border-radius: 12px; background: var(--card); }
+  .result div { display: flex; justify-content: space-between; padding: 4px 0; color: var(--dim); }
+  .result .each { color: var(--fg); font-size: 30px; font-weight: 600; padding-top: 8px; }
+  .num { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Tip split</h1>
+  <label for="bill">Bill</label>
+  <input id="bill" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off">
+  <label>Tip</label>
+  <div class="chips" id="tips"><button data-p="0">0%</button><button data-p="10" aria-pressed="true">10%</button><button data-p="15">15%</button><button data-p="20">20%</button></div>
+  <label>People</label>
+  <div class="people"><button id="minus" aria-label="Fewer people">−</button><output id="n">2</output><button id="plus" aria-label="More people">+</button></div>
+  <div class="result">
+    <div><span>Tip</span><span class="num" id="tip">0.00</span></div>
+    <div><span>Total</span><span class="num" id="total">0.00</span></div>
+    <div class="each"><span>Each</span><span class="num" id="each">0.00</span></div>
+  </div>
+</main>
+<script>
+  let pct = 10, n = 2;
+  const $ = (id) => document.getElementById(id);
+  const money = (x) => x.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function calc() {
+    const bill = parseFloat($('bill').value.replace(',', '.')) || 0;
+    const tip = bill * pct / 100, total = bill + tip;
+    $('tip').textContent = money(tip);
+    $('total').textContent = money(total);
+    $('each').textContent = money(total / n);
+    $('n').textContent = n;
+  }
+  $('bill').oninput = calc;
+  $('tips').onclick = (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    for (const x of e.currentTarget.children) x.setAttribute('aria-pressed', x === b);
+    pct = Number(b.dataset.p); calc();
+  };
+  $('minus').onclick = () => { n = Math.max(1, n - 1); calc(); };
+  $('plus').onclick = () => { n = Math.min(50, n + 1); calc(); };
+  calc();
+</script>
+</body>
+</html>

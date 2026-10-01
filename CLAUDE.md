@@ -34,13 +34,23 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 
 ## Running it (v0)
 
-- Phone: https://forq.kapps.dev/p/sleepsounds (Cloudflare Access app `forq`,
-  id `8bfa01d4-…`, owner@example.com only). Agent UI: `/a/<agent-id>/agent/`.
+- Phone: https://forq.kapps.dev/ (Cloudflare Access app `forq`, id
+  `8bfa01d4-…`, owner@example.com → handle `eyal` via the `HANDLES` var).
+  Explore → project `/p/<owner>/<name>` → Fork / Send to router / agent cards.
+  Agent and router UIs: `/a/<agent-id>/agent/` (router id `<owner>.<name>--router`).
+- Live apps: `https://forq-run.kapps.dev/<owner>.<name>/` (and every agent fork
+  at `/<owner>.<name>--<id>/`), public, served from Artifacts by `src/run.ts`.
+- Seeds: `seeds/` (owner `forq`): calculator, todo, timer, tipsplit. To add
+  one: `POST /api/p/forq/<name>/create {description}` → push with the returned
+  token → `POST /api/p/forq/<name>/touch`.
 - Laptop/admin: `https://forq.<sub>.workers.dev` with header
-  `x-forq-secret: $(cat ~/.config/forq/admin-secret)`. Verbs:
-  `POST /api/projects/<p>/agents {task}`, `GET /api/projects/<p>[/commits]`,
-  `POST /api/projects/<p>/main-token` (push from the laptop),
-  `GET /api/agents/<id>/state`, `POST /api/agents/<id>/{wake,stop,send,exec,reset}`.
+  `x-forq-secret: $(cat ~/.config/forq/admin-secret)` (acts as `eyal`, or
+  `x-forq-as: <handle>`). Verbs: `/api/p/<owner>/<name>` (GET info,
+  `create`, `fork`, `agents`, `router`, `merge`, `main-token`, `touch`,
+  `agents-html`), `/api/agents/<id>/{state,wake,stop,send,exec,reset}`,
+  `/api/admin/delete {repo?, box?, project?}`.
+- Boxes call `/api/agent/*` on workers.dev with `x-forq-agent: <id>.<hmac>`
+  (HMAC of the id with ADMIN_SECRET), through the `forq` CLI (`src/cli.ts`).
 - Secrets: `CLAUDE_CODE_OAUTH_TOKEN` (copied from opendev D1
   `user_connections.claude_token`), `ADMIN_SECRET`.
 - **Every deploy kills awake boxes** (same as computer2); they lose work since
@@ -57,6 +67,11 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 - Artifacts tokens are now `art_v2_…?expires=…` (docs say v1); git auth uses
   the part before `?expires=` as the Basic password via a credential helper
   reading `/run/forq/git-token` (tmpfs).
+- Cloudflare answers Python's default `Python-urllib` user agent with error
+  1010 (403) before the Worker runs; the CLI sends `forq-cli/1`.
+- Right after `wrangler deploy`, requests can still hit the previous version
+  for ~30 s (the first seed was created by old code as repo `forq`). Wait
+  before scripting against a fresh deploy.
 - `ps` inside a box shows the Claude token in boot.sh's tmux command line;
   don't print process lists into logs.
 
@@ -105,4 +120,7 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 ## Baseline
 
 Public-project baseline (`~/.claude/docs/public-project-baseline.md`) applies
-from v1, when the first page is public. v0 is behind Cloudflare Access.
+from v1, when the UI is public. v0's UI is behind Cloudflare Access. The run
+host is public but serves only demo apps, refuses verified bots, sends
+`noindex` everywhere and a `Disallow: /` robots.txt; nothing on it is metered
+beyond per-colo, per-commit cached Artifacts reads.

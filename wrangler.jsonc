@@ -11,7 +11,11 @@
   // workers.dev answers only with the admin secret (laptop scripts); the phone
   // uses forq.kapps.dev behind Cloudflare Access.
   "workers_dev": true,
-  "routes": [{ "pattern": "forq.kapps.dev", "custom_domain": true }],
+  "routes": [
+    { "pattern": "forq.kapps.dev", "custom_domain": true },
+    // Public run host: every repo and agent fork as a live static app (src/run.ts).
+    { "pattern": "forq-run.kapps.dev", "custom_domain": true }
+  ],
   "containers": [
     {
       "class_name": "AgentBox",
@@ -27,14 +31,22 @@
   "durable_objects": {
     "bindings": [
       { "name": "AgentBox", "class_name": "AgentBox" },
-      { "name": "Project", "class_name": "Project" }
+      { "name": "Project", "class_name": "Project" },
+      { "name": "Registry", "class_name": "Registry" }
     ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["AgentBox", "Project"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["AgentBox", "Project"] },
+    { "tag": "v2", "new_sqlite_classes": ["Registry"] }
+  ],
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "forq" }],
   "vars": {
     "ACCESS_TEAM_DOMAIN": "<personal access team>.cloudflareaccess.com",
     "ACCESS_AUD": "<personal access aud>",
+    // Access email → forq handle (v0: one person).
+    "HANDLES": "{\"owner@example.com\":\"eyal\"}",
+    "UI_HOST": "forq.kapps.dev",
+    "RUN_HOST": "forq-run.kapps.dev",
     // Hard caps (the durable_object policy has no max_instances).
     "MAX_AGENTS_PER_PROJECT": "6",
     "MAX_AWAKE_BOXES": "5"

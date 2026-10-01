@@ -6,11 +6,26 @@
 - [x] Artifacts works on the account; namespace `forq` auto-created; cloudcost `gaps` entry `forq` (2026-10-01)
 - [x] Step 1: Worker + Project DO + ONE agent box cloning its own fork, pushing a commit — agent `sleepsounds--j9ly7` pushed `3fade61` (README) in 38 s; boot 6.8-8.4 s from image
 - [ ] Step 1 check: from the phone, open https://forq.kapps.dev/p/sleepsounds → agent → mobile-agent (WS through Access not yet verified in a browser)
-- [ ] Step 2: `agents` CLI in the box (`spawn`, `list`, `status`, `merge`) + router box
+### Round 2 (2026-10-01): social layer + step 2
+- [x] Owners: projects are `<owner>/<name>` (repo `<owner>.<name>`), Registry DO lists them; Access email → handle
+- [x] Seed 4 open-source demo apps under owner `forq` (calculator, todo, timer, tipsplit), MIT, static (`seeds/`)
+- [x] Run host `forq-run.kapps.dev/<repo>/` serves any repo/fork from Artifacts (separate origin, per-commit cache, crawlers refused, noindex)
+- [x] Fork button: `forq/todo` → `eyal/todo`, lineage + fork counts
+- [x] DESIGN.md + explore page + project page (live app preview, README, files, forks, commits, agents panel); 390 light/dark + 1440 checked
+- [x] Removed the sleepsounds test project (both repos + box)
+- [x] Step 2: `forq` CLI in every box (status/list/spawn/send/merge), signed per-box token, router box per project
+- [x] Step 2 check: one message to eyal/todo's router → 2 agents on 2 forks in parallel → both pushed (2.5 and 4 min) → both merged from the page, the router resolved the conflict itself; merged app verified (Clear done + "added X ago") in the box (`spawn`, `list`, `status`, `merge`) + router box
 - [ ] Step 2 check: tell the router 3 tasks → 3 boxes on 3 forks working at once
 - [ ] Step 3: phone project page — router composer + agent cards + tap-through to chat/terminal
 - [ ] Step 3 check: 390 px screenshots light/dark; merge one fork into main from the phone
 - [ ] Measure: subscription usage with 3 parallel agents, container box-hours, Artifacts ops
+
+### Next
+- [ ] Every app shares the run origin, so localStorage leaks between projects (eyal/todo's tasks show in forq/todo's preview). Give each repo its own origin, or namespace storage
+- [ ] Project page: when you already have a fork, show "Your fork" instead of a second Fork button
+- [ ] Composer: trusted click on "Send to router" missed under phone emulation in ab-bg (form handler fine); check on a real phone
+- [ ] Router replies only show the last message; the chat view (computer2's chatPage) would show the conversation
+- [ ] Phone check of /a/<id>/agent/ (mobile-agent websocket through Access)
 
 ## v1 (later)
 

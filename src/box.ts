@@ -9,6 +9,7 @@
 
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
+import { FORQ_CLI } from './cli';
 
 const MA_PORT = 7901;
 const TW_PORT = 7681;
@@ -28,9 +29,13 @@ export function log(module: string, event: string, fields: Record<string, unknow
 type Snap = { id: string; size: number; name?: string };
 export type BootSpec = {
   agentId: string;
-  task: string;
-  remote: string;       // fork's git remote
-  gitToken: string;     // write token for the fork (art_v1_…?expires=…)
+  task: string;         // '' for the router
+  router: boolean;      // the router works on main itself and runs forq spawn/merge
+  project: string;      // owner/name, for prompts
+  remote: string;       // fork's (or main's) git remote
+  gitToken: string;     // write token for that repo (art_v2_…?expires=…)
+  agentToken: string;   // signs this box's /api/agent/* calls
+  apiBase: string;      // where the forq CLI calls
   bootEnv: string;      // boot.sh env (SBX_NAME, CC_ENV, …)
 };
 export type BootResult = { ok: boolean; ms: number; from: string; error?: string };
@@ -140,7 +145,11 @@ for k in ('/workspace/project', '${REPO_DIR}'):
     d.setdefault('projects', {}).setdefault(k, {})['hasTrustDialogAccepted'] = True
 json.dump(d, open(p, 'w'))
 PY
-      git -C ${REPO_DIR} log --oneline -1`, { GIT_TOKEN: spec.gitToken, REMOTE: spec.remote, AGENT_ID: spec.agentId });
+      printf '%s' "$AGENT_TOKEN" > /run/forq/agent-token
+      printf '%s' "$API_BASE" > /run/forq/api
+      printf '%s' "$FORQ_CLI" > /usr/local/bin/forq && chmod 755 /usr/local/bin/forq
+      git -C ${REPO_DIR} log --oneline -1`, { GIT_TOKEN: spec.gitToken, REMOTE: spec.remote, AGENT_ID: spec.agentId,
+        AGENT_TOKEN: spec.agentToken, API_BASE: spec.apiBase, FORQ_CLI });
     log('box', 'repo_ready', { agentId: spec.agentId, exit: repo.exitCode, head: repo.stdout.trim().slice(-80), err: repo.stderr.slice(-300) });
     if (repo.exitCode !== 0) return { ok: false, ms: Date.now() - t0, from, error: `clone failed: ${repo.stderr.slice(-200)}` };
 
@@ -198,6 +207,18 @@ PY
       const r = await this.c.getTcpPort(TW_PORT).fetch('http://container/api/sessions/claude/cc-status', { signal: AbortSignal.timeout(3000) });
       return ((await r.json()) as { status?: string }).status || 'unknown';
     } catch { return 'unknown'; }
+  }
+
+  /** The router's (or an agent's) latest reply, for the project page. */
+  async lastReply(): Promise<string | undefined> {
+    if (!this.c.running) return undefined;
+    try {
+      const r = await this.c.getTcpPort(TW_PORT).fetch('http://container/api/conversation?session=claude&tail=80', { signal: AbortSignal.timeout(3000) });
+      if (!r.ok) return undefined;
+      const { messages } = await r.json() as { messages: { type: string; text?: string }[] };
+      const last = messages.filter((m) => m.type === 'assistant_text' && (m.text || '').trim()).pop();
+      return last?.text?.trim().slice(0, 600);
+    } catch { return undefined; }
   }
 
   #watchExit(agentId: string, from: string) {
@@ -289,9 +310,17 @@ PY
 }
 
 function taskPrompt(spec: BootSpec) {
+  if (spec.router) {
+    return [
+      `You are the router of the forq project ${spec.project}. ${REPO_DIR} is a clone of the project's main branch. You coordinate; agents do the work.`,
+      `The person will message you from their phone. For each request: split it into independent tasks that touch different parts of the code where possible, and start one agent per task with \`forq spawn "<task>"\` (each agent gets its own fork and box; give it a complete, self-contained task). Small questions about the code you may answer yourself. Do not edit main yourself unless asked.`,
+      `\`forq list\` shows the agents and their notes. When asked to merge an agent: \`forq merge <agent-id>\`; if it reports a conflict, resolve it in ${REPO_DIR}, commit, \`git push origin HEAD:main\`, then \`forq merged <agent-id>\`. \`forq send <agent-id> "text"\` messages an agent. \`forq help\` for the rest.`,
+      `Keep replies short; the person reads them on a phone. Reply now with one line saying you are ready.`,
+    ].join('\n\n');
+  }
   return [
-    `You are a forq agent (${spec.agentId}). You work in ${REPO_DIR}, a clone of your own fork of the project; no other agent touches it.`,
+    `You are a forq agent (${spec.agentId}) on the project ${spec.project}. You work in ${REPO_DIR}, a clone of your own fork; no other agent touches it.`,
     `Your task: ${spec.task}`,
-    `When the task is done: commit with a clear message and push with \`git push origin HEAD:main\`, then reply with a 2-3 line summary of what changed. If you are blocked or the task is unclear, say so instead of guessing.`,
+    `When the task is done: commit with a clear message, push with \`git push origin HEAD:main\`, then run \`forq status pushed "<one-line summary>"\` and reply with a 2-3 line summary. If you are blocked or the task is unclear, run \`forq status blocked "<why>"\` and say so instead of guessing. Your pushed fork is live at its preview link, so check the result works.`,
   ].join('\n\n');
 }

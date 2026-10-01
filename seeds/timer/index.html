@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Focus timer</title>
+<style>
+  :root { --bg: #ffffff; --fg: #1b1a1d; --dim: #6f6c75; --ring: #ebe8ef; --acc: #b2452f; --chip: #f3f1f5; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #121113; --fg: #ecebee; --dim: #a19ea7; --ring: #29272c; --acc: #ef7a5f; --chip: #1e1c20; } }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 17px/1.4 system-ui, sans-serif; }
+  main { height: 100dvh; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 16px; }
+  .presets { display: flex; gap: 8px; }
+  .presets button { border: 0; border-radius: 8px; padding: 10px 14px; background: var(--chip); color: var(--fg); font: 500 15px system-ui, sans-serif; }
+  .presets button[aria-pressed=true] { background: var(--acc); color: #fff; }
+  .dial { position: relative; width: min(72vw, 300px); aspect-ratio: 1; }
+  svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  circle { fill: none; stroke-width: 10; }
+  .track { stroke: var(--ring); }
+  .bar { stroke: var(--acc); stroke-linecap: round; transition: stroke-dashoffset 0.3s linear; }
+  .time { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 56px; font-variant-numeric: tabular-nums; }
+  .go { border: 0; border-radius: 12px; width: 180px; height: 56px; background: var(--acc); color: #fff; font: 600 18px system-ui, sans-serif; }
+  .reset { border: 0; background: none; color: var(--dim); font: 15px system-ui, sans-serif; padding: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="presets" id="presets">
+    <button data-m="5">5 min</button><button data-m="15">15 min</button><button data-m="25" aria-pressed="true">25 min</button><button data-m="50">50 min</button>
+  </div>
+  <div class="dial">
+    <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle class="bar" id="bar" cx="60" cy="60" r="52"/></svg>
+    <div class="time" id="time">25:00</div>
+  </div>
+  <button class="go" id="go">Start</button>
+  <button class="reset" id="reset">Reset</button>
+</main>
+<script>
+  const C = 2 * Math.PI * 52;
+  const bar = document.getElementById('bar'), $time = document.getElementById('time'), $go = document.getElementById('go');
+  bar.style.strokeDasharray = C;
+  let total = 25 * 60, left = total, endAt = null, tick = null;
+
+  const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  function draw() {
+    $time.textContent = fmt(left);
+    bar.style.strokeDashoffset = C * (1 - left / total);
+    document.title = endAt ? `${fmt(left)} · Focus timer` : 'Focus timer';
+  }
+  function chime() {
+    try {
+      const a = new AudioContext(), o = a.createOscillator(), g = a.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(a.destination);
+      g.gain.setValueAtTime(0.2, a.currentTime); g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 1.2);
+      o.start(); o.stop(a.currentTime + 1.2);
+    } catch {}
+    navigator.vibrate?.([200, 100, 200]);
+  }
+  function stop() { clearInterval(tick); tick = null; endAt = null; $go.textContent = left ? 'Start' : 'Again'; draw(); }
+  function start() {
+    if (!left) left = total;
+    // Count against the clock, not the interval, so a backgrounded tab stays accurate.
+    endAt = Date.now() + left * 1000;
+    $go.textContent = 'Pause';
+    tick = setInterval(() => {
+      left = Math.max(0, Math.round((endAt - Date.now()) / 1000));
+      draw();
+      if (!left) { stop(); chime(); }
+    }, 250);
+  }
+  $go.onclick = () => (tick ? stop() : start());
+  document.getElementById('reset').onclick = () => { stop(); left = total; draw(); $go.textContent = 'Start'; };
+  document.getElementById('presets').onclick = (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    for (const x of e.currentTarget.children) x.setAttribute('aria-pressed', x === b);
+    stop(); total = left = Number(b.dataset.m) * 60; draw(); $go.textContent = 'Start';
+  };
+  draw();
+</script>
+</body>
+</html>
