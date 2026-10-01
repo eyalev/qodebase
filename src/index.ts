@@ -10,8 +10,9 @@ import { AGENT_RE, NAME_RE, projectOf, slugOf, type Env } from './env';
 import { AgentBox, log, type BootSpec } from './box';
 import { Project, roleOf, type ProjectInfo, type Role } from './project';
 import { Registry, registry } from './registry';
+import { BuildBox } from './build';
 import { serveRun } from './run';
-import { agentsHtml, explorePage, projectPage, type BoxStatus } from './ui';
+import { agentsHtml, buildLogPage, explorePage, projectPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
 import { importPage } from './ui';
@@ -22,7 +23,7 @@ import { startingPage } from './pages';
 import MA_TGZ from '../box/mobile-agent.tgz';
 import MA_REV from '../box/mobile-agent.rev';
 
-export { AgentBox, Project, Registry };
+export { AgentBox, Project, Registry, BuildBox };
 
 type Who = { kind: 'user'; handle: string; admin: boolean } | { kind: 'agent'; agentId: string; role: Role };
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
@@ -167,6 +168,13 @@ export default {
           { url: `https://github.com/${gh.fullName}`, fullName: gh.fullName, stars: gh.stars, license: gh.license, branch: gh.branch }, gh.description);
         return json({ ...info, path: `/p/${owner}/${name}` });
       }
+      if ((m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/build-log$/))) {
+        const info = await projectStub(env, slugOf(m[1], m[2])).info();
+        if (!info) return new Response('No such project', { status: 404 });
+        const ag = url.searchParams.get('agent');
+        const a = ag ? info.agents.find((x) => x.id.split('--')[1] === ag) : undefined;
+        return html(buildLogPage(info, a ? `Preview of agent ${ag}` : 'Live app (main)', a ? a.preview : info.app));
+      }
       // ---- code browser: /p/<o>/<n>/code/<path>[?v=<agent>], changes, file list
       if ((m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/(code|changes)(?:\/(.*))?$/))) {
         const info = await projectStub(env, slugOf(m[1], m[2])).info();
@@ -253,6 +261,12 @@ export default {
           if (!text || text.length > 8000) return json({ error: 'say something (max 8000 chars)' }, 400);
           return json(await askRouter(env, ctx, p, slug, text, apiBase));
         }
+        if (verb === 'deploy' && request.method === 'POST') {
+          const b = await request.json().catch(() => ({})) as { agent?: string };
+          await p.requestBuild(b.agent ? 'preview' : 'deploy', b.agent);
+          return json({ ok: true });
+        }
+        if (verb === 'build-state' && me.admin) return json(await env.BuildBox.get(env.BuildBox.idFromName(`${slug}--build`)).state());
         if (verb === 'review' && request.method === 'POST') {
           const b = await request.json() as { agent?: string };
           if (!info.agents.some((x) => x.id === b.agent)) return json({ error: 'unknown agent' }, 404);
@@ -436,7 +450,11 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     if (!['working', 'pushed', 'blocked'].includes(body.state)) return json({ error: 'state: working|pushed|blocked' }, 400);
     await p.setState(me.agentId, body.state as 'working', String(body.note || ''));
     // Every push gets a review before the person merges.
-    if (body.state === 'pushed') ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId)));
+    if (body.state === 'pushed') {
+      // Worker projects: build the fork as a Preview first; buildDone starts the review.
+      if ((await p.kindOf()) === 'worker') ctx.waitUntil(p.requestBuild('preview', me.agentId).catch((e) => log('build', 'request_failed', { err: String(e) })));
+      else ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId)));
+    }
     return json({ ok: true });
   }
   if (me.role === 'reviewer') {
@@ -444,7 +462,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       const agent = url.searchParams.get('agent') || '';
       if (projectOf(agent) !== slug) return json({ error: 'not an agent of this project' }, 400);
       const r = await p.reviewInfo(agent);
-      return json({ ...r, preview: `https://${env.RUN_HOST}/${agent}/${r.entry}` });
+      return json({ ...r, preview: r.previewUrl || `https://${env.RUN_HOST}/${agent}/${r.entry}` });
     }
     if (verb === 'verdict') {
       if (projectOf(body.agent || '') !== slug) return json({ error: 'not an agent of this project' }, 400);
@@ -470,6 +488,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
   if (verb === 'merged') {
     if (projectOf(body.agent || '') !== slug) return json({ error: 'not an agent of this project' }, 400);
     await p.setState(body.agent, 'merged');
+    if ((await p.kindOf()) === 'worker') ctx.waitUntil(p.requestBuild('deploy').catch((e) => log('build', 'request_failed', { err: String(e) })));
     return json({ ok: true });
   }
   return json({ error: 'unknown verb' }, 404);

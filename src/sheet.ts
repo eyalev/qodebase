@@ -13,11 +13,12 @@ export const shortId = (id: string) => id.split('--')[1] || id;
 
 export function previewTabs(info: ProjectInfo, runBase: string, current?: string) {
   const at = info.entry || '';
-  const live = `${runBase}/${info.repo}/${at}`;
-  const forks = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped');
+  const worker = info.kind === 'worker';
+  const live = worker ? (info.app?.url ? `${info.app.url}/` : 'about:blank') : `${runBase}/${info.repo}/${at}`;
+  const forks = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped' && (!worker || a.preview?.url));
   const tab = (src: string, label: string, title: string) =>
     `<button type="button" class="ptab${(current || live) === src ? ' on' : ''}" data-src="${esc(src)}" title="${esc(title)}">${esc(label)}</button>`;
-  return `${tab(live, 'Live', 'main, what everyone sees')}${forks.map((a: Agent) => tab(`${runBase}/${a.fork}/${at}`, shortId(a.id), `agent ${shortId(a.id)}'s fork`)).join('')}`;
+  return `${tab(live, 'Live', 'main, what everyone sees')}${forks.map((a: Agent) => tab(worker ? `${a.preview!.url}/` : `${runBase}/${a.fork}/${at}`, shortId(a.id), `agent ${shortId(a.id)}'s fork`)).join('')}`;
 }
 
 export const SHEET_HTML = `<div class="sheet" id="sheet" aria-hidden="true">

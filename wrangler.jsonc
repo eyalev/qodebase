@@ -18,6 +18,14 @@
   ],
   "containers": [
     {
+      // forq's builder for Worker projects (src/build.ts): same image, no Claude Code.
+      "class_name": "BuildBox",
+      "scheduling_policy": "durable_object",
+      "images": {
+        "computer": { "image": "registry.cloudflare.com/<personal account id>/opendev-computer-computerbox@sha256:a7250de79784a0d82cf7b72ab88cd0a2134740f8d5e3c5b7464c8a8613d6e27c" }
+      }
+    },
+    {
       "class_name": "AgentBox",
       "scheduling_policy": "durable_object",
       "images": {
@@ -32,12 +40,14 @@
     "bindings": [
       { "name": "AgentBox", "class_name": "AgentBox" },
       { "name": "Project", "class_name": "Project" },
-      { "name": "Registry", "class_name": "Registry" }
+      { "name": "Registry", "class_name": "Registry" },
+      { "name": "BuildBox", "class_name": "BuildBox" }
     ]
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["AgentBox", "Project"] },
-    { "tag": "v2", "new_sqlite_classes": ["Registry"] }
+    { "tag": "v2", "new_sqlite_classes": ["Registry"] },
+    { "tag": "v3", "new_sqlite_classes": ["BuildBox"] }
   ],
   // box/mobile-agent.tgz (scripts/pack-mobile-agent.sh) is bundled as bytes and
   // served to agent boxes at boot; box/mobile-agent.rev as text.
@@ -53,9 +63,12 @@
     "HANDLES": "{\"owner@example.com\":\"eyal\"}",
     "UI_HOST": "forq.kapps.dev",
     "RUN_HOST": "forq-run.kapps.dev",
+    "ACCOUNT_ID": "<personal account id>",
+    "API_BASE": "https://forq.<sub>.workers.dev",
     // Hard caps (the durable_object policy has no max_instances).
     "MAX_AGENTS_PER_PROJECT": "6",
     "MAX_AWAKE_BOXES": "5"
   }
-  // Secrets: CLAUDE_CODE_OAUTH_TOKEN (Eyal's subscription), ADMIN_SECRET.
+  // Secrets: CLAUDE_CODE_OAUTH_TOKEN (Eyal's subscription), ADMIN_SECRET,
+  // CF_DEPLOY_TOKEN (Workers Scripts write; only BuildBox uses it).
 }

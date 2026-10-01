@@ -89,6 +89,10 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .io dd.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .io dd.clamp.open{-webkit-line-clamp:unset}
 .io dd.rv b{font-weight:600}
+.card .pv{margin:8px 0 0;font-size:14px;color:var(--dim)}
+.card .pv.busy{color:var(--fg)}
+.note.deploy b{color:var(--fg)}
+.note.deploy .chipbtn{min-height:36px;padding:0 12px;font-size:14px;margin-left:4px}
 .io dd.rv.approved b{color:var(--acc)}
 .io dd.rv .rn{display:block;margin-top:2px;color:var(--fg)}
 .router.reviewer{margin-top:8px}
@@ -132,14 +136,30 @@ ${mine.length ? `<h2>Yours</h2><div class="rows">${mine.map((e) => row(e, forks(
 <h2>Explore</h2><div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`);
 }
 
-export type Overview = { importing?: boolean; entry?: string | null; commits: { hash: string; message: string; at: number; author: string }[]; files: { name: string; dir: boolean }[]; readme: string | null };
+export type Overview = { importing?: boolean; entry?: string | null; kind?: 'worker' | 'static'; app?: ProjectInfo['app']; commits: { hash: string; message: string; at: number; author: string }[]; files: { name: string; dir: boolean }[]; readme: string | null };
+
+/** Worker projects: where the live app is, or what the builder is doing. */
+function deployLine(info: ProjectInfo, d: ProjectInfo['app'], own: boolean) {
+  const now = Date.now();
+  const logLink = d?.log ? ` <a href="/p/${info.owner}/${info.name}/build-log">View build log</a>` : '';
+  const again = own ? ` <button type="button" class="chipbtn" id="redeploy">Deploy again</button>` : '';
+  const body = !d ? 'A Cloudflare Worker. Not deployed yet; it deploys when this page first loads.'
+    : d.status === 'building' ? `<b>Deploying</b> <span data-since="${d.at}">0s</span>. forq's builder runs wrangler for it; the first deploy takes about a minute.`
+    : d.status === 'failed' ? `<b>Deploy failed:</b> ${esc(d.error || 'unknown error')}.${logLink}${again}`
+    : `Live as a Cloudflare Worker at <a href="${esc(d.url || '')}" target="_blank" rel="noopener">${esc((d.url || '').replace('https://', ''))}</a> ${freshTag(d.at, now, STEPS)}${logLink}${again}`;
+  return `<p class="note deploy${d?.status === 'building' ? ' busy' : ''}">${body}</p>${d?.status === 'building' ? '<script>setTimeout(function(){location.reload()},6000)</script>' : ''}
+<script>(function(){const b=document.getElementById('redeploy');if(b)b.onclick=async()=>{b.disabled=true;b.textContent='Queued';await fetch('/api/p/${info.owner}/${info.name}/deploy',{method:'POST'});location.reload();};
+for(const el of document.querySelectorAll('.deploy [data-since]')){const t=Number(el.dataset.since);setInterval(()=>{el.textContent=Math.round((Date.now()-t)/1000)+'s'},1000);}})();</script>`;
+}
 
 export function projectPage(o: { info: ProjectInfo; entry: Entry; forks: Entry[]; overview: Overview; me: string; runBase: string; agentsHtml: string }) {
   const { info, entry, forks, overview, me, runBase } = o;
   const now = Date.now();
   const own = info.owner === me;
-  const webAt = overview.entry ?? info.entry;   // folder of the web page; null = none
-  const app = `${runBase}/${info.repo}/${webAt || ''}`;
+  const isWorker = (overview.kind ?? info.kind) === 'worker';
+  const dep = overview.app ?? info.app;
+  const webAt = isWorker ? '' : overview.entry ?? info.entry;   // folder of the web page; null = none
+  const app = isWorker ? (dep?.url ? `${dep.url}/` : '') : `${runBase}/${info.repo}/${webAt || ''}`;
   const src = info.importedFrom;
   const myForks = forks.filter((e) => e.owner === me);
   return shell(`${info.owner}/${info.name} · forq`, `<a class="back" href="/">Explore</a>
@@ -153,6 +173,9 @@ ${own ? '' : myForks.length
 ${overview.importing
     ? `<p class="note" id="importing">Importing from GitHub. This page refreshes when it is ready (usually a few seconds).</p>
 <script>setTimeout(function(){location.reload()},3000)</script>`
+    : isWorker
+      ? `${deployLine(info, dep, own)}${dep?.url ? `<div class="pbar"><div class="ptabs" id="ptabs">${previewTabs(info, runBase)}</div><a class="pext" id="pext" href="${app}" target="_blank" rel="noopener">Open in new tab</a></div>
+<div class="preview"><iframe src="${app}" title="${esc(info.name)} app" loading="lazy"></iframe></div>` : ''}`
     : webAt === null
       ? `<p class="note">No web page to show: forq looks for an index.html at the root and in demo/, docs/, public/, dist/, www/, site/ and examples/. The code is below, and agents can still work on it.</p>`
       : `<div class="pbar"><div class="ptabs" id="ptabs">${previewTabs(info, runBase)}</div><a class="pext" id="pext" href="${app}" target="_blank" rel="noopener">Open in new tab</a></div>
@@ -258,6 +281,14 @@ ${q ? `<div class="you"><b>You</b> ${esc(q.text)}</div>` : ''}${said ? `<div cla
 
 const REVIEW_WORD: Record<string, string> = { queued: 'Waiting for the reviewer', reviewing: 'Reviewing now', approved: 'Approved', changes: 'Changes suggested', sent: 'Sent to the agent to fix' };
 
+function previewLine(info: ProjectInfo, a: Agent) {
+  const p = a.preview;
+  if (!p) return '';
+  if (p.status === 'building') return `<p class="pv busy">Building its preview <span data-since="${p.at}">0s</span></p>`;
+  if (p.status === 'failed') return `<p class="pv">Preview build failed: ${esc(p.error || '')}. <a href="/p/${info.owner}/${info.name}/build-log?agent=${a.id.split('--')[1]}">Build log</a></p>`;
+  return '';
+}
+
 function reviewBlock(a: Agent) {
   const r = a.review;
   if (!r) return '';
@@ -286,7 +317,7 @@ ${a.request ? `<dt>You asked</dt><dd class="clamp">${esc(a.request)}</dd>` : ''}
 <dt>Result</dt><dd${a.note ? '' : ' class="none"'}>${a.note ? esc(a.note) : ph.busy ? 'Not yet. It reports here when it pushes.' : 'No report yet.'}</dd>
 ${reviewBlock(a)}
 </dl>
-<div class="acts"><button type="button" class="chipbtn" data-preview="${runBase}/${a.fork}/${info.entry || ''}">Preview</button><a class="chipbtn" href="/p/${info.owner}/${info.name}/changes/${shortId(a.id)}">Changes</a><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.review?.state === 'changes' ? `<button type="button" class="chipbtn" data-fix="${esc(a.id)}">Ask agent to fix</button>` : ''}${a.state === 'pushed' && !a.review ? `<button type="button" class="chipbtn" data-review="${esc(a.id)}">Review it</button>` : ''}${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge${a.review?.state === 'changes' ? ' anyway' : ''}</button>` : ''}</div></div>`;
+${info.kind === 'worker' ? previewLine(info, a) : ''}<div class="acts">${info.kind === 'worker' ? (a.preview?.url ? `<button type="button" class="chipbtn" data-preview="${esc(a.preview.url)}/">Preview</button>` : '') : `<button type="button" class="chipbtn" data-preview="${runBase}/${a.fork}/${info.entry || ''}">Preview</button>`}<a class="chipbtn" href="/p/${info.owner}/${info.name}/changes/${shortId(a.id)}">Changes</a><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.review?.state === 'changes' ? `<button type="button" class="chipbtn" data-fix="${esc(a.id)}">Ask agent to fix</button>` : ''}${a.state === 'pushed' && !a.review ? `<button type="button" class="chipbtn" data-review="${esc(a.id)}">Review it</button>` : ''}${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge${a.review?.state === 'changes' ? ' anyway' : ''}</button>` : ''}</div></div>`;
   };
   const open = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped').reverse();
   const done = info.agents.filter((a) => a.state === 'merged').reverse().slice(0, 5);
@@ -334,4 +365,11 @@ $res.addEventListener('click',async(e)=>{const b=e.target.closest('[data-import]
  const j=await r.json().catch(()=>({}));if(r.ok)location.href=j.path;else{b.disabled=false;b.textContent=j.error||'Import failed';}});
 if(location.hash.length>1){$q.value=decodeURIComponent(location.hash.slice(1));run();}
 </script>`, REPO_STEPS);
+}
+
+export function buildLogPage(info: ProjectInfo, label: string, d: { status: string; error?: string; log?: string; at: number; url?: string } | undefined) {
+  return shell(`Build log · ${info.name} · forq`, `<a class="back" href="/p/${info.owner}/${info.name}">${esc(info.owner)} / ${esc(info.name)}</a>
+<h1>Build log</h1><p class="desc">${esc(label)}${d ? `: ${esc(d.status)}${d.error ? `, ${esc(d.error)}` : ''}` : ': no build yet'}</p>
+${d?.url ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a></p>` : ''}
+<pre style="background:var(--card);border-radius:12px;padding:12px;overflow:auto;font:12px/1.5 'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word">${esc(d?.log || 'No log.')}</pre>`);
 }

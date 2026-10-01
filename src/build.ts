@@ -1,0 +1,173 @@
+// BuildBox — forq's own builder for Worker projects. One container per
+// project (`<slug>--build`), separate from the agent boxes: the deploy token
+// (CF_DEPLOY_TOKEN, Workers Scripts write only) is passed to one build command
+// at a time and never reaches a box where Claude Code runs.
+//
+// A job: clone a repo at a commit, write a sanitized Wrangler config
+// (forq-app-<slug>, workers.dev only, no routes, refuse bindings that need
+// account resources), npm install if needed, then
+//   deploy  → `wrangler deploy` (the project's live app)
+//   preview → `wrangler preview --name <alias>` (an agent fork; Previews get
+//             their own Durable Object storage, so a preview never touches
+//             the live app's data)
+// Jobs queue in DO storage and run from alarm() (15 min wall time), so a build
+// outlives the request that queued it. Results go back to the Project DO.
+
+import { DurableObject } from 'cloudflare:workers';
+import type { Env } from './env';
+import { log } from './box';
+
+export type BuildJob = {
+  id: string;
+  slug: string;
+  kind: 'deploy' | 'preview';
+  repo: string;          // Artifacts repo to build
+  remote: string;
+  token: string;         // read token for that repo
+  worker: string;        // forq-app-<slug>
+  alias?: string;        // preview name (preview jobs)
+  agentId?: string;
+  queuedAt: number;
+};
+export type BuildResult = { id: string; kind: BuildJob['kind']; agentId?: string; ok: boolean; url?: string; commit?: string; error?: string; log: string; ms: number };
+
+const WRANGLER = 'wrangler@4.146.0';
+const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 8000 };
+const IDLE_STOP_MS = 5 * 60_000;
+const ENTRYPOINT = ['/bin/bash', '-c', 'chown 0:0 / 2>/dev/null; mkdir -p /build && exec sleep infinity'];
+
+/** Writes forq.wrangler.json next to the project's own config. Node, run in the box. */
+const SANITIZE = String.raw`
+const fs = require('fs'), path = require('path');
+const T = '/opt/forq-tools/node_modules/';
+const toml = require(T + 'smol-toml'), jsonc = require(T + 'jsonc-parser');
+const dir = process.argv[2], worker = process.argv[3];
+const names = ['wrangler.jsonc', 'wrangler.json', 'wrangler.toml'];
+const found = names.find((n) => fs.existsSync(path.join(dir, n)));
+if (!found) { console.error('FORQ_ERROR no wrangler.jsonc, wrangler.json or wrangler.toml at the repo root'); process.exit(3); }
+const raw = fs.readFileSync(path.join(dir, found), 'utf8');
+const c = found.endsWith('.toml') ? toml.parse(raw) : jsonc.parse(raw);
+// Bindings that point at resources in someone else's account cannot be deployed here (yet).
+const UNSUPPORTED = ['kv_namespaces', 'd1_databases', 'r2_buckets', 'queues', 'services', 'hyperdrive', 'vectorize',
+  'analytics_engine_datasets', 'dispatch_namespaces', 'mtls_certificates', 'secrets_store_secrets', 'workflows', 'containers', 'send_email', 'pipelines'];
+const bad = UNSUPPORTED.filter((k) => c[k] && (Array.isArray(c[k]) ? c[k].length : Object.keys(c[k]).length));
+if (bad.length) { console.error('FORQ_ERROR needs ' + bad.join(', ') + ', which forq cannot create yet'); process.exit(4); }
+const out = { ...c, name: worker, workers_dev: true, preview_urls: true };
+for (const k of ['route', 'routes', 'env', 'account_id', 'tail_consumers', 'logpush', 'triggers']) delete out[k];
+out.observability = { enabled: true };
+// Previews: per-preview Durable Object namespaces (keep the bindings the code reads from env).
+out.previews = { ...(c.previews || {}) };
+if (c.durable_objects && c.durable_objects.bindings) out.previews.durable_objects = { bindings: c.durable_objects.bindings };
+if (c.ai) out.previews.ai = c.ai;
+fs.writeFileSync(path.join(dir, 'forq.wrangler.json'), JSON.stringify(out, null, 2));
+console.log('FORQ_CONFIG from ' + found + ' -> forq.wrangler.json (' + worker + ')');
+`;
+
+export class BuildBox extends DurableObject<Env> {
+  private get c() { return this.ctx.container as any; }
+
+  async #sh(cmd: string, env: Record<string, string> = {}) {
+    const p = await this.c.exec(['bash', '-c', cmd], { env });
+    const o = await p.output();
+    const dec = new TextDecoder();
+    return { exitCode: o.exitCode as number, stdout: dec.decode(o.stdout), stderr: dec.decode(o.stderr) };
+  }
+
+  /** Queue a job and make sure the alarm will run it. */
+  async enqueue(job: BuildJob) {
+    const q = (await this.ctx.storage.get<BuildJob[]>('queue')) || [];
+    // A newer job for the same target replaces a queued older one.
+    const key = (j: BuildJob) => `${j.kind}:${j.agentId || ''}`;
+    const next = q.filter((j) => key(j) !== key(job)).concat(job);
+    await this.ctx.storage.put('queue', next);
+    await this.ctx.storage.setAlarm(Date.now() + 100);
+    log('build', 'queued', { slug: job.slug, kind: job.kind, agentId: job.agentId, depth: next.length });
+  }
+
+  async alarm() {
+    const q = (await this.ctx.storage.get<BuildJob[]>('queue')) || [];
+    const job = q.shift();
+    if (!job) {
+      // Nothing to do: stop the container once it has been idle a while.
+      const last = (await this.ctx.storage.get<number>('lastBuild')) || 0;
+      if (this.c.running && Date.now() - last > IDLE_STOP_MS) { await this.c.destroy().catch(() => {}); log('build', 'idle_stop', {}); }
+      else if (this.c.running) await this.ctx.storage.setAlarm(Date.now() + 60_000);
+      return;
+    }
+    await this.ctx.storage.put('queue', q);
+    const result = await this.#run(job);
+    await this.ctx.storage.put('lastBuild', Date.now());
+    try { await this.env.Project.get(this.env.Project.idFromName(job.slug)).buildDone(result); }
+    catch (e) { log('build', 'report_failed', { slug: job.slug, err: String(e) }); }
+    await this.ctx.storage.setAlarm(Date.now() + (q.length ? 100 : 60_000));
+  }
+
+  /** A container that answers. One that claims to run but does not (a Worker
+   *  deploy killed it mid-build, seen 2026-10-01: "container connection is
+   *  temporarily unavailable") is destroyed and started fresh, once. */
+  async #ensureContainer(add: (s: string) => void) {
+    if (this.c.running) {
+      try { await this.#sh('true'); return; }
+      catch (e) { add(`container not answering (${String(e).slice(0, 120)}), restarting it`); try { await this.c.destroy(); } catch {} }
+    }
+    this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: this.c.images.computer });
+    await this.#sh('true');
+    add('container started');
+  }
+
+  async #run(job: BuildJob): Promise<BuildResult> {
+    const t0 = Date.now();
+    const lines: string[] = [];
+    const add = (s: string) => { for (const l of s.split('\n')) if (l.trim()) lines.push(l.replace(/\x1b\[[0-9;]*m/g, '')); };
+    const done = (ok: boolean, extra: Partial<BuildResult> = {}): BuildResult => {
+      const r = { id: job.id, kind: job.kind, agentId: job.agentId, ok, log: lines.slice(-150).join('\n'), ms: Date.now() - t0, ...extra };
+      log('build', 'done', { slug: job.slug, kind: job.kind, agentId: job.agentId, ok, ms: r.ms, url: r.url, error: r.error });
+      return r;
+    };
+    try {
+      await this.#ensureContainer(add);
+      // Tools once per container: TOML/JSONC parsers for the config rewrite.
+      const tools = await this.#sh(`[ -d /opt/forq-tools/node_modules/smol-toml ] || (mkdir -p /opt/forq-tools && cd /opt/forq-tools && npm init -y >/dev/null && npm i --no-audit --no-fund smol-toml@1 jsonc-parser@3 2>&1 | tail -2); printf '%s' "$SANITIZE" > /opt/forq-tools/sanitize.js`, { SANITIZE });
+      if (tools.exitCode !== 0) { add(tools.stdout + tools.stderr); return done(false, { error: 'could not install build tools' }); }
+
+      const dir = `/build/${job.id}`;
+      const clone = await this.#sh(`set -e; rm -rf "$D"; git -c http.extraHeader="Authorization: Bearer $TOK" clone -q --depth 1 "$REMOTE" "$D"; git -C "$D" log -1 --format='commit %H %s'`,
+        { D: dir, TOK: job.token, REMOTE: job.remote });
+      add(clone.stdout + clone.stderr);
+      if (clone.exitCode !== 0) return done(false, { error: 'clone failed' });
+      const commit = (clone.stdout.match(/commit ([0-9a-f]{40})/) || [])[1];
+
+      const cfg = await this.#sh(`node /opt/forq-tools/sanitize.js "$D" "$W"`, { D: dir, W: job.worker });
+      add(cfg.stdout + cfg.stderr);
+      if (cfg.exitCode !== 0) return done(false, { commit, error: (cfg.stderr.match(/FORQ_ERROR (.*)/) || [])[1] || 'config could not be read' });
+
+      const install = await this.#sh(`cd "$D"; if [ -f package.json ] && node -e "const p=require('./package.json');process.exit(Object.keys({...p.dependencies,...p.devDependencies}).length?0:1)"; then
+          (npm ci --no-audit --no-fund 2>&1 || npm install --no-audit --no-fund 2>&1) | tail -5; else echo "no dependencies to install"; fi`, { D: dir });
+      add(install.stdout + install.stderr);
+      if (install.exitCode !== 0) return done(false, { commit, error: 'npm install failed' });
+
+      const cmd = job.kind === 'deploy'
+        ? `npx -y ${WRANGLER} deploy --config forq.wrangler.json`
+        : `npx -y ${WRANGLER} preview --config forq.wrangler.json --name "$ALIAS"`;
+      const run = await this.#sh(`cd "$D"; ${cmd} 2>&1`, {
+        D: dir, ALIAS: job.alias || '',
+        CLOUDFLARE_API_TOKEN: this.env.CF_DEPLOY_TOKEN, CLOUDFLARE_ACCOUNT_ID: this.env.ACCOUNT_ID,
+        WRANGLER_SEND_METRICS: 'false', CI: 'true', NO_COLOR: '1',
+      });
+      add(run.stdout + run.stderr);
+      await this.#sh(`rm -rf "$D"`, { D: dir });
+      if (run.exitCode !== 0) return done(false, { commit, error: job.kind === 'deploy' ? 'wrangler deploy failed' : 'wrangler preview failed' });
+      const url = job.kind === 'deploy'
+        ? (run.stdout.match(/https:\/\/[a-z0-9.-]+\.workers\.dev/) || [])[0]
+        : (run.stdout.match(/Preview URL:\s*(https:\/\/\S+)/) || [])[1];
+      return done(true, { commit, url });
+    } catch (e) {
+      add(String((e as Error)?.stack || e));
+      return done(false, { error: String((e as Error)?.message || e) });
+    }
+  }
+
+  async state() {
+    return { running: !!this.ctx.container?.running, queue: ((await this.ctx.storage.get<BuildJob[]>('queue')) || []).map((j) => ({ kind: j.kind, agentId: j.agentId })), alarm: await this.ctx.storage.getAlarm() };
+  }
+}

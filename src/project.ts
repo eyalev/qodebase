@@ -3,7 +3,8 @@
 // the router (`<slug>--router`) is an AgentBox on a clone of main itself.
 
 import { DurableObject } from 'cloudflare:workers';
-import { NAME_RE, slugOf, type Env } from './env';
+import { NAME_RE, appWorkerName, previewAlias, slugOf, type Env } from './env';
+import type { BuildJob, BuildResult } from './build';
 import { log } from './box';
 import { registry, type Entry } from './registry';
 
@@ -19,7 +20,10 @@ export type Agent = {
   request?: string;    // the person's request that led to it (router-spawned agents)
   base?: { commit: string; tree: string };  // main when it was forked: what its Changes diff against
   review?: Review;
+  preview?: Deploy;    // Worker projects: its fork deployed as a Preview
 };
+/** A deploy of a Worker project's main (app) or of an agent fork (preview). */
+export type Deploy = { status: 'building' | 'live' | 'failed'; url?: string; commit?: string; at: number; error?: string; log?: string };
 /** The reviewer agent's verdict on an agent's latest push. */
 export type Review = { state: 'queued' | 'reviewing' | 'approved' | 'changes' | 'sent'; notes?: string; at: number; commit?: string };
 /** The last thing the person asked the router agent, and how far delivery got. */
@@ -35,6 +39,9 @@ export type ProjectInfo = {
   /** Path of the web page to preview ('' = root, 'demo/' …); null = none
    *  found; undefined = not looked yet (detected from main's tree). */
   entry?: string | null;
+  /** 'worker' = has a wrangler config at the root: deployed by forq's builder. */
+  kind?: 'worker' | 'static';
+  app?: Deploy & { worker: string };
   agents: Agent[];
   lastRequest?: RouterRequest;
 };
@@ -143,6 +150,55 @@ export class Project extends DurableObject<Env> {
     return { task: agent.task, remote: agent.remote, token: (await repo.createToken('write', ttlS)).plaintext, role };
   }
 
+  // ---- builds (Worker projects): BuildBox `<slug>--build` --------------------
+  /** Queue a deploy of main, or a Preview of an agent's fork. */
+  async requestBuild(kind: 'deploy' | 'preview', agentId?: string) {
+    const info = await this.#need();
+    const agent = agentId ? info.agents.find((a) => a.id === agentId) : undefined;
+    if (kind === 'preview' && !agent) throw new Error('unknown agent');
+    const repoName = agent ? agent.fork : info.repo;
+    using repo = await this.env.ARTIFACTS.get(repoName);
+    const token = (await repo.createToken('read', 3600)).plaintext;
+    const job: BuildJob = { id: crypto.randomUUID().slice(0, 8), slug: info.slug, kind, repo: repoName, remote: agent ? agent.remote : info.remote,
+      token, worker: appWorkerName(info.slug), alias: agent ? previewAlias(agent.id) : undefined, agentId, queuedAt: Date.now() };
+    const building: Deploy = { status: 'building', at: Date.now() };
+    if (agent) agent.preview = { ...agent.preview, ...building, error: undefined };
+    else info.app = { ...(info.app || {}), ...building, error: undefined, worker: job.worker };
+    await this.ctx.storage.put('info', info);
+    await this.env.BuildBox.get(this.env.BuildBox.idFromName(`${info.slug}--build`)).enqueue(job);
+  }
+
+  /** BuildBox reports back. A ready preview of a pushed agent starts its review. */
+  async buildDone(r: BuildResult) {
+    const info = await this.#need();
+    const d: Deploy = { status: r.ok ? 'live' : 'failed', url: r.url, commit: r.commit, at: Date.now(), error: r.error, log: r.log };
+    if (r.agentId) {
+      const a = info.agents.find((x) => x.id === r.agentId);
+      if (!a) return;
+      a.preview = { ...d, url: r.url || a.preview?.url };
+      await this.ctx.storage.put('info', info);
+      if (a.state === 'pushed') await this.#kick('review', a.id);
+    } else {
+      info.app = { ...d, url: r.url || info.app?.url, worker: info.app?.worker || appWorkerName(info.slug) };
+      await this.ctx.storage.put('info', info);
+      if (r.ok) await registry(this.env).touch(info.slug);
+    }
+    log('project', 'build_done', { slug: info.slug, agentId: r.agentId, ok: r.ok, url: r.url, ms: r.ms, error: r.error });
+  }
+
+  /** Ask the Worker to do something only it can (wake the reviewer box). */
+  async #kick(what: 'review', agentId: string) {
+    const info = await this.#need();
+    const [owner, name] = info.slug.split('.');
+    const r = await fetch(`${this.env.API_BASE}/api/p/${owner}/${name}/review`, {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' },
+      body: JSON.stringify({ agent: agentId }),
+    }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }) as any);
+    log('project', 'kick', { what, agentId, ok: r.ok, status: r.status });
+  }
+
+  async kindOf() { return (await this.#need()).kind; }
+
   // ---- reviews: one reviewer per project, one review at a time -----------
   /** Queue a review of an agent's latest push. Returns the agent to review
    *  now if the reviewer is free, else null (it is picked up on the next verdict). */
@@ -191,13 +247,13 @@ export class Project extends DurableObject<Env> {
   }
 
   /** What the reviewer needs: the fork (read token) and where the agent started. */
-  async reviewInfo(agentId: string): Promise<{ remote: string; token: string; base: string | null; task: string; request?: string; entry: string }> {
+  async reviewInfo(agentId: string): Promise<{ remote: string; token: string; base: string | null; task: string; request?: string; entry: string; previewUrl?: string }> {
     const info = await this.#need();
     const a = info.agents.find((x) => x.id === agentId);
     if (!a) throw new Error('unknown agent');
     using repo = await this.env.ARTIFACTS.get(a.fork);
     return { remote: a.remote, token: (await repo.createToken('read', 1800)).plaintext, base: a.base?.commit || null,
-      task: a.task, request: a.request, entry: info.entry || '' };
+      task: a.task, request: a.request, entry: info.entry || '', previewUrl: info.kind === 'worker' ? a.preview?.url : undefined };
   }
 
   /** What the router needs to merge an agent: the fork's remote + a read token. */
@@ -239,13 +295,24 @@ export class Project extends DurableObject<Env> {
     const tree = commits[0] ? await repo.readTree(commits[0].treeHash).catch(() => null) : null;
     const readmeName = (tree || []).find((e) => /^readme(\.md|\.markdown)?$/i.test(e.name))?.name || 'README.md';
     const readme = commits[0] ? await repo.readFile({ ref: commits[0].hash, path: readmeName }).catch(() => null) : null;
+    if (tree && info.kind === undefined) {
+      info.kind = tree.some((e) => e.type !== 'tree' && /^wrangler\.(toml|json|jsonc)$/.test(e.name)) ? 'worker' : 'static';
+      await this.ctx.storage.put('info', info);
+      log('project', 'kind_detected', { slug: info.slug, kind: info.kind });
+    }
     if (tree && info.entry === undefined) {
       info.entry = await detectEntry(repo, commits[0].hash, tree);
       await this.ctx.storage.put('info', info);
       log('project', 'entry_detected', { slug: info.slug, entry: info.entry });
     }
+    // First deploy of a Worker project. After every put above: requestBuild
+    // re-reads and saves info itself, so nothing here may save over it later.
+    if (info.kind === 'worker' && !info.app) {
+      await this.requestBuild('deploy');
+      Object.assign(info, await this.#need());
+    }
     return {
-      importing: false, entry: info.entry,
+      importing: false, entry: info.entry, kind: info.kind, app: info.app,
       commits: commits.map((c) => ({ hash: c.hash, message: c.message.split('\n')[0], at: c.committedAt * 1000, author: c.author.name })),
       files: (tree || []).map((e) => ({ name: e.name, dir: e.type === 'tree' })),
       readme: readme ? (await readme.text()).slice(0, 20000) : null,

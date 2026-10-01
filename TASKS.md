@@ -56,6 +56,17 @@
 - [x] Card: Review line (waiting / reviewing / approved / changes + notes), Ask agent to fix, Review it, Merge anyway; Reviewer agent row under the router agent panel; stuck reviews requeue after 20 min
 - [x] End to end on an IMPORTED project (branch master): fork forq/2048 → eyal/2048, router → agent 00l0u (7 min, SCSS + rebuilt CSS) → reviewer approved in 3 min after rebuilding Sass and reading 5 screenshots → merged into master, live app has the dark theme
 
+### Round 7 (2026-10-01): Worker projects — forq's own builder + Issues → router agent
+- [x] Pick + read the project: cloudflare/workers-chat-demo (BSD-3, 1.2k lines, Durable Objects only, no outbound calls, no secrets)
+- [x] Deploy token `forq-builder` (id c90be299…, Workers Scripts Write on this account only, expires 2027-10-01) → `~/.config/forq/deploy-token` + Worker secret CF_DEPLOY_TOKEN; never in agent boxes. It cannot `wrangler delete` (no memberships read): delete with the normal wrangler login
+- [x] BuildBox container: clone commit, sanitize wrangler config (forq-app-<slug>, workers.dev only, routes/env stripped, account-resource bindings refused, observability on, `previews` block so each preview gets its own Durable Object storage), npm install, `wrangler deploy` / `wrangler preview --name ag-<id>` (aliased Version URLs do not work for Durable Object Workers; Previews do); logs kept per build; restarts a dead container
+- [x] Triggers: first page view of a Worker project and every merge → deploy; agent pushed → preview, then review
+- [x] Page: Worker projects show the deployed app, status line (live / deploying with timer / failed + build log), Deploy again; agent tabs + Preview use preview URLs
+- [x] Imported cloudflare/workers-chat-demo as forq/workers-chat-demo: deployed by forq's builder in ~30 s; chat verified (joined a room, sent a message, came back over the WebSocket)
+- [ ] Issues: enable for forq-app workers; automation → generic webhook → /api/hooks/issues/<slug> (secret) → router agent gets the error
+- [ ] End to end: an error in the live app → router agent → fix agent → review → merge → redeploy
+- [ ] cloudcost line for forq-app-* workers + builds
+
 ## v1 (later)
 
 - [ ] Workers Builds previews (only for Worker projects; static apps already preview per fork), Issues → router webhook (needs a project deployed as a Worker), public project pages + baseline (needs the API-key decision)
