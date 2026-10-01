@@ -31,6 +31,12 @@ const CF = readFileSync(home('<analytics token file>'), 'utf8').trim();
 const ADMIN = readFileSync(home('~/.config/forq/admin-secret'), 'utf8').trim();
 const API = 'https://forq.<sub>.workers.dev';
 const RATE = { memGiBs: 0.0000025, cpuS: 0.00002, diskGBs: 0.00000007, artifactsPer1k: 0.15 };
+// What the agents' tokens would cost on the Claude API (what a public forq pays
+// without subscriptions). Sonnet 5 / 5.5, $ per token, from the claude-api skill
+// (cached 2026-09-25): input $2/M, 5-min cache write 1.25x = $2.50/M, cache read
+// $0.20/M, output $10/M. If Claude Code wrote 1-hour cache entries, writes are 2x.
+const PRICE = { input: 2e-6, cacheWrite: 2.5e-6, cacheRead: 0.2e-6, output: 10e-6 };
+const apiUsd = (b) => b.input_tokens * PRICE.input + b.cache_creation_input_tokens * PRICE.cacheWrite + b.cache_read_input_tokens * PRICE.cacheRead + b.output_tokens * PRICE.output;
 
 async function gql(query) {
   const r = await fetch('https://api.cloudflare.com/client/v4/graphql', {
@@ -66,13 +72,17 @@ function subscription() {
   const f = home('~/.claude/data/history.jsonl');
   if (!existsSync(f)) return null;
   const t0 = Date.parse(FROM), t1 = Date.parse(TO);
-  const rows = readFileSync(f, 'utf8').trim().split('\n').slice(-2000).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
-  const at = (t) => rows.filter((r) => Date.parse(r.timestamp) <= t).pop();
-  const a = at(t0), b = at(t1);
+  const rows = readFileSync(f, 'utf8').trim().split('\n').slice(-50000).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  // The scraper writes nanoseconds (…:01.690775167Z), which Date.parse rejects: keep milliseconds.
+  const ms = (ts) => Date.parse(String(ts).replace(/(\.\d{3})\d+Z$/, '$1Z'));
+  const at = (t) => rows.filter((r) => ms(r.timestamp) <= t).pop();
+  // history.jsonl is rotated (12 lines seen): fall back to its earliest reading and say so.
+  const a = at(t0) || rows[0], b = at(t1);
   if (!a || !b) return null;
-  const sameWindow = a.session_reset_epoch === b.session_reset_epoch;
+  const startNote = ms(a.timestamp) > t0 ? ` (earliest reading available: ${a.timestamp.slice(11, 16)} UTC)` : '';
+  const sameWindow = Math.abs((a.session_reset_epoch || 0) - (b.session_reset_epoch || 0)) < 300;   // the reset time jitters by a minute
   return { fiveHour: { from: a.session_pct, to: b.session_pct, sameWindow }, weekly: { from: a.weekly_all_pct, to: b.weekly_all_pct },
-    note: 'account-wide: includes every Claude Code session running in the window' };
+    note: 'account-wide: includes every Claude Code session running in the window' + startNote };
 }
 
 const TOKENS_PY = String.raw`
@@ -109,11 +119,12 @@ if (process.argv.includes('--json')) { console.log(JSON.stringify(out, null, 2))
 console.log(`window ${FROM} → ${TO} (${out.window.minutes} min)`);
 console.log(`artifacts: ${JSON.stringify(art.byType)}; billed ops ${art.billedOps} ($${art.usdBeyondFree} if past the free 10k)`);
 for (const c of cont) console.log(`containers ${c.app}: ${c.memGiBs} GiB·s (${c.boxHoursAt3GiB} box-hours at 3 GiB), CPU ${c.cpuS} s, ≤ $${c.usdBeforeFree}`);
-if (out.subscription) console.log(`subscription (account-wide): 5-hour ${out.subscription.fiveHour.from}% → ${out.subscription.fiveHour.to}%${out.subscription.fiveHour.sameWindow ? '' : ' (window reset in between)'}, weekly ${out.subscription.weekly.from}% → ${out.subscription.weekly.to}%`);
-let sumOut = 0, sumIn = 0;
+if (out.subscription) console.log(`subscription (account-wide): 5-hour ${out.subscription.fiveHour.from}% → ${out.subscription.fiveHour.to}%${out.subscription.fiveHour.sameWindow ? '' : ' (window reset in between)'}, weekly ${out.subscription.weekly.from}% → ${out.subscription.weekly.to}%; ${out.subscription.note}`);
+let sumOut = 0, sumIn = 0, sumUsd = 0;
 for (const b of boxes) {
   if (b.error) { console.log(`box ${b.box}: ${b.error}`); continue; }
   sumOut += b.output_tokens; sumIn += b.input_tokens + b.cache_creation_input_tokens + b.cache_read_input_tokens;
-  console.log(`box ${b.box}: ${b.messages} replies, in ${b.input_tokens} + cache write ${b.cache_creation_input_tokens} + cache read ${b.cache_read_input_tokens}, out ${b.output_tokens}, models ${JSON.stringify(b.models)}`);
+  sumUsd += apiUsd(b);
+  console.log(`box ${b.box}: ${b.messages} replies, in ${b.input_tokens} + cache write ${b.cache_creation_input_tokens} + cache read ${b.cache_read_input_tokens}, out ${b.output_tokens}, ≈ $${apiUsd(b).toFixed(2)} at API prices, models ${JSON.stringify(b.models)}`);
 }
-if (boxes.length) console.log(`all boxes: ${sumIn} input-side tokens (mostly cache reads), ${sumOut} output tokens`);
+if (boxes.length) console.log(`all boxes: ${sumIn} input-side tokens (mostly cache reads), ${sumOut} output tokens, ≈ $${sumUsd.toFixed(2)} at Sonnet API prices (on the subscription: no per-token charge)`);

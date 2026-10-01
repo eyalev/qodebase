@@ -15,10 +15,11 @@
 - [x] Removed the sleepsounds test project (both repos + box)
 - [x] Step 2: `forq` CLI in every box (status/list/spawn/send/merge), signed per-box token, router box per project
 - [x] Step 2 check: one message to eyal/todo's router → 2 agents on 2 forks in parallel → both pushed (2.5 and 4 min) → both merged from the page, the router resolved the conflict itself; merged app verified (Clear done + "added X ago") in the box (`spawn`, `list`, `status`, `merge`) + router box
-- [ ] Step 2 check: tell the router 3 tasks → 3 boxes on 3 forks working at once (2 at once verified on eyal/todo; 3 running now on eyal/calculator)
+- [x] Step 2 check: one message → 3 agents on 3 forks at once (eyal/calculator, 2026-10-01): started within 30 s, pushed within 1.5–3 min, 7 reviews, 3 merges (one conflict resolved by the router agent)
 - [x] Step 3: phone project page — router composer + agent cards + Chat/Terminal sheet
 - [x] Step 3 check: 390 px light/dark screenshots; merges via the card's Merge button
-- [ ] Measure: subscription usage with 3 parallel agents, container box-hours, Artifacts ops — `scripts/measure.mjs` (Artifacts + containers GraphQL, history.jsonl, per-box transcript tokens); run in progress
+- [x] Measure: MEASUREMENTS.md — 3-change round: 23 Artifacts ops, 1.43 box-hours (≤ $0.05), ~2 pts of the 5-hour window, ≈ $4.26 at Sonnet API prices (≈ $1.42 per reviewed change)
+- [x] Fixed during the measured run: durable router delivery (project DO alarm), deferred review hand-off, settled /clear, send() submit check (stalls: 38 min waking; 3 lost review requests)
 
 ### Round 3 (2026-10-01): feedback from the phone
 - [x] "Router" → "Router agent" everywhere (UI + its prompt)
