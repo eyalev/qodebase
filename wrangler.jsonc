@@ -1,0 +1,43 @@
+{
+  // forq v0: one Worker. Project DOs hold a repo + its agents; each agent is an
+  // AgentBox container DO (opendev computer2's image) working on its own
+  // Artifacts fork. See CLAUDE.md.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "forq",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // workers.dev answers only with the admin secret (laptop scripts); the phone
+  // uses forq.kapps.dev behind Cloudflare Access.
+  "workers_dev": true,
+  "routes": [{ "pattern": "forq.kapps.dev", "custom_domain": true }],
+  "containers": [
+    {
+      "class_name": "AgentBox",
+      "scheduling_policy": "durable_object",
+      "images": {
+        // opendev's prod ComputerBox image, pinned by digest (Claude Code,
+        // tmux-web :7681, mobile-agent :7901, headless Chromium). Pinning
+        // avoids re-pushing 2.56 GB over the shaped uplink.
+        "computer": { "image": "registry.cloudflare.com/<personal account id>/opendev-computer-computerbox@sha256:a7250de79784a0d82cf7b72ab88cd0a2134740f8d5e3c5b7464c8a8613d6e27c" }
+      }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "AgentBox", "class_name": "AgentBox" },
+      { "name": "Project", "class_name": "Project" }
+    ]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["AgentBox", "Project"] }],
+  "artifacts": [{ "binding": "ARTIFACTS", "namespace": "forq" }],
+  "vars": {
+    "ACCESS_TEAM_DOMAIN": "<personal access team>.cloudflareaccess.com",
+    "ACCESS_AUD": "<personal access aud>",
+    // Hard caps (the durable_object policy has no max_instances).
+    "MAX_AGENTS_PER_PROJECT": "6",
+    "MAX_AWAKE_BOXES": "5"
+  }
+  // Secrets: CLAUDE_CODE_OAUTH_TOKEN (Eyal's subscription), ADMIN_SECRET.
+}

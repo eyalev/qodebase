@@ -1,0 +1,297 @@
+// AgentBox — one agent's container: Claude Code working in a clone of its own
+// Artifacts fork. A slim copy of opendev's Computer2 (computer-next/src/
+// computer2.ts): same image, same boot.sh, snapshot on stop, idle stop.
+// Read that file's comments for the why behind each lifecycle detail.
+//
+// Secrets (Claude token, Artifacts token) live in /run/forq (tmpfs; snapshots
+// skip mounts). git reads the Artifacts token through a credential helper, so
+// .git/config never holds it.
+
+import { DurableObject } from 'cloudflare:workers';
+import type { Env } from './env';
+
+const MA_PORT = 7901;
+const TW_PORT = 7681;
+const IDLE_MS = 5 * 60_000;
+const BUSY_MAX_MS = 4 * 60 * 60_000;
+const ALARM_EVERY_MS = 60_000;
+const SNAPSHOT_EVERY_MS = 15 * 60_000;
+const INACTIVITY_BACKSTOP_MS = 45 * 60_000;
+const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 8000 };
+const ENTRYPOINT = ['/bin/bash', '-c', 'chown 0:0 / 2>/dev/null; mkdir -p /workspace /run/opendev /run/forq && chmod 700 /run/opendev /run/forq && exec sleep infinity'];
+export const REPO_DIR = '/workspace/repo';
+
+export function log(module: string, event: string, fields: Record<string, unknown> = {}) {
+  console.log(JSON.stringify({ ts: new Date().toISOString(), module, event, ...fields }));
+}
+
+type Snap = { id: string; size: number; name?: string };
+export type BootSpec = {
+  agentId: string;
+  task: string;
+  remote: string;       // fork's git remote
+  gitToken: string;     // write token for the fork (art_v1_…?expires=…)
+  bootEnv: string;      // boot.sh env (SBX_NAME, CC_ENV, …)
+};
+export type BootResult = { ok: boolean; ms: number; from: string; error?: string };
+
+export class AgentBox extends DurableObject<Env> {
+  #booting: Promise<BootResult> | null = null;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    const c = ctx.container as any;
+    if (c?.running) {
+      void ctx.blockConcurrencyWhile(async () => {
+        await c.setInactivityTimeout(INACTIVITY_BACKSTOP_MS);
+        if ((await ctx.storage.getAlarm()) === null) await ctx.storage.setAlarm(Date.now() + ALARM_EVERY_MS);
+        log('box', 'rearmed_after_restart');
+      });
+    }
+  }
+
+  private get c() {
+    const c = this.ctx.container;
+    if (!c) throw new Error('DO is not container-enabled (check wrangler.jsonc)');
+    return c as any;
+  }
+
+  async #sh(cmd: string, env: Record<string, string> = {}) {
+    const p = await this.c.exec(['bash', '-c', cmd], { env });
+    const o = await p.output();
+    const dec = new TextDecoder();
+    return { exitCode: o.exitCode as number, stdout: dec.decode(o.stdout), stderr: dec.decode(o.stderr) };
+  }
+
+  async #maUp(): Promise<boolean> {
+    if (!this.c.running) return false;
+    try {
+      const r = await this.c.getTcpPort(MA_PORT).fetch('http://container/', { signal: AbortSignal.timeout(3000) });
+      return r.status < 500;
+    } catch { return false; }
+  }
+
+  async isAwake(): Promise<boolean> { return !!this.ctx.container?.running; }
+
+  async touch(agentId: string): Promise<void> {
+    await this.ctx.storage.put('lastActive', Date.now());
+    await this.ctx.storage.put('agentId', agentId);
+    if ((await this.ctx.storage.getAlarm()) === null) await this.ctx.storage.setAlarm(Date.now() + ALARM_EVERY_MS);
+  }
+
+  ensureUp(spec: BootSpec) {
+    if (!this.#booting) this.#booting = this.#boot(spec).finally(() => { this.#booting = null; });
+    return this.#booting;
+  }
+
+  async #boot(spec: BootSpec): Promise<BootResult> {
+    const t0 = Date.now();
+    await this.touch(spec.agentId);
+    if (await this.#maUp()) return { ok: true, ms: 0, from: 'running' };
+
+    let from = 'running';
+    if (!this.c.running) {
+      const snap = await this.ctx.storage.get<Snap>('snapshot');
+      from = snap ? 'snapshot' : 'image';
+      try {
+        this.c.start({
+          instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT,
+          ...(snap ? { containerSnapshot: snap } : { image: this.c.images.computer }),
+        });
+        await this.#sh('true');
+      } catch (e) {
+        log('box', 'start_failed', { agentId: spec.agentId, from, snapshot: snap?.id, err: String(e), stack: (e as Error)?.stack });
+        if (!snap) return { ok: false, ms: Date.now() - t0, from, error: String(e) };
+        const lost = (await this.ctx.storage.get<Snap[]>('failedSnapshots')) || [];
+        lost.push(snap);
+        await this.ctx.storage.put('failedSnapshots', lost);
+        await this.ctx.storage.delete('snapshot');
+        try { if (this.c.running) await this.c.destroy(); } catch {}
+        from = 'image-after-failed-restore';
+        this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: this.c.images.computer });
+        await this.#sh('true');
+      }
+      await this.c.setInactivityTimeout(INACTIVITY_BACKSTOP_MS);
+      this.#watchExit(spec.agentId, from);
+    }
+
+    // 1. Repo: credential helper reads the token from tmpfs; clone once (a
+    //    restored snapshot already has the clone and its commits).
+    const repo = await this.#sh(`set -e
+      mkdir -p /run/forq && chmod 700 /run/forq
+      printf '%s' "\${GIT_TOKEN%%\\?expires=*}" > /run/forq/git-token
+      git config --global credential.helper '!f() { echo username=x; echo "password=$(cat /run/forq/git-token)"; }; f'
+      git config --global user.name "forq agent $AGENT_ID"
+      git config --global user.email "agent+$AGENT_ID@forq.kapps.dev"
+      git config --global init.defaultBranch main
+      if [ ! -d ${REPO_DIR}/.git ]; then
+        git clone -q "$REMOTE" ${REPO_DIR}
+      fi
+      echo ${REPO_DIR} > /workspace/.sbx-cwd
+      # Trust ${REPO_DIR} before Claude Code starts. boot.sh only pre-trusts
+      # /workspace/project; without this the trust dialog's default "No, exit"
+      # took the task's Enter and Claude Code quit (2026-10-01, first agent).
+      python3 - <<'PY'
+import json
+p = '/workspace/claude-config.json'
+try: d = json.load(open(p))
+except Exception: d = {"hasCompletedOnboarding": True, "theme": "dark", "bypassPermissionsModeAccepted": True}
+for k in ('/workspace/project', '${REPO_DIR}'):
+    d.setdefault('projects', {}).setdefault(k, {})['hasTrustDialogAccepted'] = True
+json.dump(d, open(p, 'w'))
+PY
+      git -C ${REPO_DIR} log --oneline -1`, { GIT_TOKEN: spec.gitToken, REMOTE: spec.remote, AGENT_ID: spec.agentId });
+    log('box', 'repo_ready', { agentId: spec.agentId, exit: repo.exitCode, head: repo.stdout.trim().slice(-80), err: repo.stderr.slice(-300) });
+    if (repo.exitCode !== 0) return { ok: false, ms: Date.now() - t0, from, error: `clone failed: ${repo.stderr.slice(-200)}` };
+
+    // 2. The image's boot.sh, with mobile-agent's allowed origin pointed at
+    //    forq instead of opendev.page. Polled through its log (sidecars keep
+    //    its stdout open).
+    const boot = await this.#sh(`set +e
+      mkdir -p /run/opendev && chmod 700 /run/opendev
+      printf '%s' "$BOOT_ENV" > /run/opendev/boot.env && ln -sfn /run/opendev/boot.env /tmp/boot.env
+      sed -e 's#--allow-origin opendev.page#--allow-origin forq.kapps.dev#' -e 's#https://opendev.page/dashboard#https://forq.kapps.dev/#' /opt/boot.sh > /tmp/forq-boot.sh
+      (setsid bash /tmp/forq-boot.sh > /tmp/boot.log 2>&1 < /dev/null &)
+      for i in $(seq 1 450); do grep -q MA_READY /tmp/boot.log && break; sleep 0.2; done
+      for i in $(seq 1 100); do grep -q TW_READY /tmp/boot.log && break; sleep 0.2; done
+      for i in $(seq 1 150); do tmux capture-pane -p -t claude 2>/dev/null | grep -qE 'for shortcuts|auto mode|shift\\+tab' && break; sleep 0.2; done
+      if [ -f /tmp/boot.env ] && [ ! -L /tmp/boot.env ]; then mv /tmp/boot.env /run/opendev/boot.env && ln -sfn /run/opendev/boot.env /tmp/boot.env; fi
+      grep -c MA_READY /tmp/boot.log`, { BOOT_ENV: spec.bootEnv });
+    const ok = boot.stdout.trim().endsWith('1');
+    log('box', 'booted', { agentId: spec.agentId, from, ok, ms: Date.now() - t0, tail: ok ? undefined : boot.stdout.slice(-300) + boot.stderr.slice(-300) });
+    if (!ok) return { ok, ms: Date.now() - t0, from, error: 'boot.sh did not report MA_READY' };
+
+    // 3. First boot only: hand Claude Code its task.
+    if (!(await this.ctx.storage.get<boolean>('taskSent'))) {
+      const sent = await this.send(taskPrompt(spec));
+      log('box', 'task_sent', { agentId: spec.agentId, ok: sent.ok, err: sent.error });
+      if (sent.ok) await this.ctx.storage.put('taskSent', true);
+    }
+    return { ok: true, ms: Date.now() - t0, from };
+  }
+
+  /** Type a message into the box's Claude Code (via the in-box tmux-web). */
+  async send(text: string): Promise<{ ok: boolean; error?: string }> {
+    // Never type into a bare shell: if Claude Code has exited, the pane is
+    // bash and the text would run as commands (it did once, 2026-10-01).
+    // boot.sh runs claude inside a subshell, so tmux's pane_current_command
+    // says "bash" either way; look for the claude process itself.
+    const alive = await this.#sh(`pgrep -x claude >/dev/null`);
+    if (alive.exitCode !== 0) {
+      log('box', 'send_refused', { why: 'no claude process' });
+      return { ok: false, error: 'Claude Code is not running in the pane' };
+    }
+    const status = await this.ccStatus();
+    if (status === 'untrusted') return { ok: false, error: 'Claude Code is waiting on its folder-trust prompt' };
+    const r = await this.c.getTcpPort(TW_PORT).fetch('http://container/api/conversation/send', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ session: 'claude', text, delay: text.includes('\n') ? 1500 : 500 }),
+    });
+    if (r.ok) return { ok: true };
+    return { ok: false, error: `${r.status} ${(await r.text()).slice(0, 200)}` };
+  }
+
+  /** Claude Code's state (busy/idle/…) from the in-box tmux-web. */
+  async ccStatus(): Promise<string> {
+    if (!this.c.running) return 'asleep';
+    try {
+      const r = await this.c.getTcpPort(TW_PORT).fetch('http://container/api/sessions/claude/cc-status', { signal: AbortSignal.timeout(3000) });
+      return ((await r.json()) as { status?: string }).status || 'unknown';
+    } catch { return 'unknown'; }
+  }
+
+  #watchExit(agentId: string, from: string) {
+    const started = Date.now();
+    this.c.monitor().then(
+      () => log('box', 'container_exit', { agentId, from, clean: true, ranMs: Date.now() - started }),
+      (e: any) => log('box', 'container_exit', { agentId, from, clean: false, ranMs: Date.now() - started, exitCode: e?.exitCode, err: String(e) }),
+    );
+  }
+
+  async #agentBusy(): Promise<boolean> {
+    try {
+      const r = await this.c.getTcpPort(MA_PORT).fetch('http://container/api/p/terminal/states', { signal: AbortSignal.timeout(3000) });
+      if (!r.ok) return false;
+      return !!((await r.json()) as { busy?: boolean }).busy;
+    } catch { return false; }
+  }
+
+  async snapshot(why: string): Promise<Snap | null> {
+    if (!this.c.running) return null;
+    const t0 = Date.now();
+    try {
+      await this.#sh(`[ -L /tmp/boot.env ] || rm -f /tmp/boot.env; sync`);
+      const agentId = await this.ctx.storage.get<string>('agentId');
+      const snap = await this.c.snapshotContainer({ name: `${agentId || 'agent'}-${why}` }) as Snap;
+      await this.ctx.storage.put('snapshot', snap);
+      await this.ctx.storage.put('lastSnapshot', Date.now());
+      log('box', 'snapshot', { agentId, why, ms: Date.now() - t0, id: snap.id, sizeMB: Math.round(snap.size / 1e6) });
+      return snap;
+    } catch (e) {
+      log('box', 'snapshot_failed', { why, ms: Date.now() - t0, err: String(e), stack: (e as Error)?.stack });
+      return null;
+    }
+  }
+
+  async letGo(why: string): Promise<void> {
+    if (!this.c.running) return;
+    const snap = await this.snapshot(why);
+    if (!snap) { await this.ctx.storage.setAlarm(Date.now() + ALARM_EVERY_MS); return; }
+    await this.c.destroy();
+    log('box', 'let_go', { why, agentId: await this.ctx.storage.get<string>('agentId') });
+  }
+
+  /** Delete the agent: stop without a snapshot and forget everything. */
+  async destroy(): Promise<void> {
+    try { if (this.c.running) await this.c.destroy(); } catch {}
+    await this.ctx.storage.deleteAlarm();
+    await this.ctx.storage.deleteAll();
+  }
+
+  async alarm(): Promise<void> {
+    const agentId = await this.ctx.storage.get<string>('agentId');
+    if (!this.c.running) { log('box', 'alarm_not_running', { agentId }); return; }
+    const idle = Date.now() - ((await this.ctx.storage.get<number>('lastActive')) || 0);
+    let keep = idle < IDLE_MS;
+    let busy = false;
+    if (!keep && idle < BUSY_MAX_MS) { busy = await this.#agentBusy(); keep = busy; }
+    log('box', 'alarm', { agentId, idleS: Math.round(idle / 1000), busy, keep });
+    if (keep) {
+      const last = (await this.ctx.storage.get<number>('lastSnapshot')) || 0;
+      if (Date.now() - last > SNAPSHOT_EVERY_MS) await this.snapshot('periodic');
+      await this.ctx.storage.setAlarm(Date.now() + ALARM_EVERY_MS);
+      return;
+    }
+    log('box', 'idle_stop', { agentId, idleMin: Math.round(idle / 60000) });
+    await this.letGo('idle');
+  }
+
+  /** Proxy to mobile-agent (default) or the in-box tmux-web (x-forq-port: 7681).
+   *  A fetch handler, not RPC: a WebSocket 101 cannot come back over RPC. */
+  override async fetch(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    const port = request.headers.get('x-forq-port') === '7681' ? TW_PORT : MA_PORT;
+    const headers = new Headers(request.headers);
+    headers.delete('x-forq-port');
+    return this.c.getTcpPort(port).fetch(new Request(`http://container${url.pathname}${url.search}`, new Request(request, { headers })));
+  }
+
+  async adminExec(cmd: string) {
+    if (!this.c.running) return { error: 'not running' };
+    return this.#sh(cmd);
+  }
+
+  async state() {
+    const keys = ['agentId', 'lastActive', 'lastSnapshot', 'snapshot', 'failedSnapshots', 'taskSent'];
+    const m = await this.ctx.storage.get(keys);
+    return { running: !!this.ctx.container?.running, alarm: await this.ctx.storage.getAlarm(), ...Object.fromEntries(m) };
+  }
+}
+
+function taskPrompt(spec: BootSpec) {
+  return [
+    `You are a forq agent (${spec.agentId}). You work in ${REPO_DIR}, a clone of your own fork of the project; no other agent touches it.`,
+    `Your task: ${spec.task}`,
+    `When the task is done: commit with a clear message and push with \`git push origin HEAD:main\`, then reply with a 2-3 line summary of what changed. If you are blocked or the task is unclear, say so instead of guessing.`,
+  ].join('\n\n');
+}

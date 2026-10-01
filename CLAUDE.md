@@ -32,6 +32,34 @@ Personal project first; Cloudflare's "next Git platform" contest
 
 Not in v0: per-branch previews, voice, Google login, multiple users, contest video.
 
+## Running it (v0)
+
+- Phone: https://forq.kapps.dev/p/sleepsounds (Cloudflare Access app `forq`,
+  id `8bfa01d4-…`, owner@example.com only). Agent UI: `/a/<agent-id>/agent/`.
+- Laptop/admin: `https://forq.<sub>.workers.dev` with header
+  `x-forq-secret: $(cat ~/.config/forq/admin-secret)`. Verbs:
+  `POST /api/projects/<p>/agents {task}`, `GET /api/projects/<p>[/commits]`,
+  `POST /api/projects/<p>/main-token` (push from the laptop),
+  `GET /api/agents/<id>/state`, `POST /api/agents/<id>/{wake,stop,send,exec,reset}`.
+- Secrets: `CLAUDE_CODE_OAUTH_TOKEN` (copied from opendev D1
+  `user_connections.claude_token`), `ADMIN_SECRET`.
+- **Every deploy kills awake boxes** (same as computer2); they lose work since
+  the last snapshot. Agents push to their fork, so pushed work is safe.
+
+## Gotchas found building step 1
+
+- Claude Code's folder-trust prompt: boot.sh only trusts `/workspace/project`;
+  the agent works in `/workspace/repo`, so `box.ts` pre-writes the trust before
+  boot. Without it the task's Enter picked "No, exit".
+- `send()` refuses unless a `claude` process exists (`pgrep -x claude`): once
+  Claude had exited, the task text ran in bash. tmux's `pane_current_command`
+  reads `bash` even while Claude runs (it is in a subshell).
+- Artifacts tokens are now `art_v2_…?expires=…` (docs say v1); git auth uses
+  the part before `?expires=` as the Basic password via a credential helper
+  reading `/run/forq/git-token` (tmpfs).
+- `ps` inside a box shows the Claude token in boot.sh's tmux command line;
+  don't print process lists into logs.
+
 ## Reference code
 
 - `<opendev computer-next>` — computer2 ("Fast

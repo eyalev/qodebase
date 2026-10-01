@@ -3,9 +3,9 @@
 ## v0 — personal engine
 
 - [x] Project dir, CLAUDE.md, TASKS.md, private repo, Homepage registration
-- [ ] Confirm Artifacts is enabled on the account; create namespace `forq`; cloudcost line or gaps entry
-- [ ] Step 1: Worker + Project DO + ONE agent box (computer2 image by digest) cloning its own Artifacts fork, pushing a commit
-- [ ] Step 1 check: from the phone, open the agent's chat, ask for a change, see the push land on the fork
+- [x] Artifacts works on the account; namespace `forq` auto-created; cloudcost `gaps` entry `forq` (2026-10-01)
+- [x] Step 1: Worker + Project DO + ONE agent box cloning its own fork, pushing a commit — agent `sleepsounds--j9ly7` pushed `3fade61` (README) in 38 s; boot 6.8-8.4 s from image
+- [ ] Step 1 check: from the phone, open https://forq.kapps.dev/p/sleepsounds → agent → mobile-agent (WS through Access not yet verified in a browser)
 - [ ] Step 2: `agents` CLI in the box (`spawn`, `list`, `status`, `merge`) + router box
 - [ ] Step 2 check: tell the router 3 tasks → 3 boxes on 3 forks working at once
 - [ ] Step 3: phone project page — router composer + agent cards + tap-through to chat/terminal
@@ -19,4 +19,5 @@
 ## Open
 
 - Name: `forq` is a working name.
-- Demo repo for v0: a small Worker project (prayertimes or sleepsounds) — not chosen yet.
+- Demo repo: sleepsounds (pushed from the laptop's origin/master as `main`; the GitHub repo is private, so Artifacts import — public remotes only — could not be used).
+- Subscription agents run on the plan's default model (Sonnet 5 seen); pass `--model` if a task needs more.
