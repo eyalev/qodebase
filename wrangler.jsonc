@@ -39,6 +39,12 @@
     { "tag": "v1", "new_sqlite_classes": ["AgentBox", "Project"] },
     { "tag": "v2", "new_sqlite_classes": ["Registry"] }
   ],
+  // box/mobile-agent.tgz (scripts/pack-mobile-agent.sh) is bundled as bytes and
+  // served to agent boxes at boot; box/mobile-agent.rev as text.
+  "rules": [
+    { "type": "Data", "globs": ["**/*.tgz"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/*.rev"], "fallthrough": true }
+  ],
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "forq" }],
   "vars": {
     "ACCESS_TEAM_DOMAIN": "<personal access team>.cloudflareaccess.com",

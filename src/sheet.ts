@@ -85,7 +85,7 @@ export const SHEET_JS = String.raw`
  function setMode(m){mode=m;
   for(const b of sheet.querySelectorAll('.seg button'))b.classList.toggle('on',b.dataset.m===m);
   chat.hidden=m!=='chat';term.hidden=m!=='term';
-  if(m==='term'){const src='/a/'+cur.id+'/agent/';if(term.dataset.for!==cur.id){term.src=src;term.dataset.for=cur.id;}}
+  if(m==='term'){const src='/a/'+cur.id+'/agent/?ui=minimal';if(term.dataset.for!==cur.id){term.src=src;term.dataset.for=cur.id;}}
   else poll();}
  window.forqOpenSheet=(id,name,m)=>{
   if(!cur||cur.id!==id){log.innerHTML='<div class="m-x">Loading…</div>';lastKey='';term.removeAttribute('src');term.dataset.for='';}

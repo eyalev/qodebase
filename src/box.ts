@@ -36,6 +36,7 @@ export type BootSpec = {
   gitToken: string;     // write token for that repo (art_v2_…?expires=…)
   agentToken: string;   // signs this box's /api/agent/* calls
   apiBase: string;      // where the forq CLI calls
+  maRev: string;        // mobile-agent version to unpack over the image's copy
   bootEnv: string;      // boot.sh env (SBX_NAME, CC_ENV, …)
 };
 export type BootResult = { ok: boolean; ms: number; from: string; error?: string };
@@ -157,6 +158,17 @@ PY
         AGENT_TOKEN: spec.agentToken, API_BASE: spec.apiBase, FORQ_CLI });
     log('box', 'repo_ready', { agentId: spec.agentId, exit: repo.exitCode, head: repo.stdout.trim().slice(-80), err: repo.stderr.slice(-300) });
     if (repo.exitCode !== 0) return { ok: false, ms: Date.now() - t0, from, error: `clone failed: ${repo.stderr.slice(-200)}` };
+
+    // 1b. mobile-agent newer than the image's: unpack forq's copy over
+    //     /opt/mobile-agent (the image's node_modules stay; pack-mobile-agent.sh
+    //     refuses a dependency change), once per version. It brings ?ui=minimal,
+    //     which the sheet's Terminal tab uses. A failure keeps the image's copy.
+    const ma = await this.#sh(`set -e
+      [ "$(cat /opt/mobile-agent/.forq-rev 2>/dev/null)" = "$MA_REV" ] && { echo current; exit 0; }
+      curl -sfS --max-time 30 -A forq-cli/1 -H "x-forq-agent: $(cat /run/forq/agent-token)" "$(cat /run/forq/api)/api/agent/mobile-agent.tgz" -o /tmp/ma.tgz
+      tar xzf /tmp/ma.tgz -C /opt/mobile-agent && rm -f /tmp/ma.tgz
+      printf '%s' "$MA_REV" > /opt/mobile-agent/.forq-rev && echo updated`, { MA_REV: spec.maRev });
+    log('box', 'mobile_agent', { agentId: spec.agentId, rev: spec.maRev, exit: ma.exitCode, out: ma.stdout.trim().slice(-40), err: ma.stderr.slice(-200) });
 
     // 2. The image's boot.sh, with mobile-agent's allowed origin pointed at
     //    forq instead of opendev.page. Polled through its log (sidecars keep

@@ -28,14 +28,14 @@
 - [x] Preview tabs above the app: Live + one per agent fork, Open in new tab; card Preview switches in place
 - [x] Agent sheet (slides up): Chat (new web chat on tmux-web's conversation API) | Terminal (mobile-agent); verified chat round-trip waking an asleep agent, and the terminal's websocket through Access
 - [x] Sheet handle: drag to any height (remembered per viewer), tap for full/half, drag to bottom closes
-- [ ] mobile-agent is crowded inside the sheet: proposed a minimal layout in mobile-agent itself (appcore app config, `?ui=minimal`), shipped into boxes at boot instead of an image rebuild — waiting on Eyal's go
+- [x] mobile-agent `?ui=minimal` (in mobile-agent itself: kernel uiModes + `minimal` plugin, eyalev/mobile-agent 113d18b): terminal, six keys, input. forq ships it into boxes at boot (box/mobile-agent.tgz, scripts/pack-mobile-agent.sh) instead of an image rebuild; the sheet's Terminal tab uses it
 - [ ] Eyal's message was cut off: "…stuff on it, so that's an option, maybe a toggleable option" — asked what the toggle is for
 
 ### Next
 - [ ] Every app shares the run origin, so localStorage leaks between projects (eyal/todo's tasks show in forq/todo's preview). Give each repo its own origin, or namespace storage
 - [ ] Project page: when you already have a fork, show "Your fork" instead of a second Fork button
 - [ ] Composer: trusted click on "Send to router" missed under phone emulation in ab-bg (form handler fine); check on a real phone
-- [ ] Terminal in the sheet: the 60-col pane clips a few characters at 390 px
+- [ ] Terminal in the sheet: lines Claude Code drew before the pane narrowed stay clipped on the right (new output wraps right); look at tmux window size at boot (-x 60) vs the phone's columns
 
 ## v1 (later)
 

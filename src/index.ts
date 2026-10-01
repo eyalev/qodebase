@@ -14,6 +14,9 @@ import { serveRun } from './run';
 import { agentsHtml, explorePage, projectPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
 import { startingPage } from './pages';
+// mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
+import MA_TGZ from '../box/mobile-agent.tgz';
+import MA_REV from '../box/mobile-agent.rev';
 
 export { AgentBox, Project, Registry };
 
@@ -66,7 +69,7 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
   const cc = env.CLAUDE_CODE_OAUTH_TOKEN;
   return {
     agentId, task: r.task, router: r.router, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token,
-    agentToken: await agentToken(env, agentId), apiBase,
+    agentToken: await agentToken(env, agentId), apiBase, maRev: MA_REV.trim(),
     bootEnv: [
       `SBX_NAME=${JSON.stringify(r.router ? `${slug.replace('.', '/')} router` : agentId)}`,
       'AGENT=claude',
@@ -279,6 +282,9 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
   const p = projectStub(env, slug);
   const verb = url.pathname.replace(/^\/api\/agent\//, '');
   const body = request.method === 'POST' ? await request.json().catch(() => ({})) as Record<string, string> : {};
+  if (verb === 'mobile-agent.tgz') {
+    return new Response(MA_TGZ, { headers: { 'content-type': 'application/gzip', 'x-forq-ma-rev': MA_REV.trim() } });
+  }
   log('agent_api', verb, { agentId: me.agentId });
   if (verb === 'list') {
     const info = await p.info();

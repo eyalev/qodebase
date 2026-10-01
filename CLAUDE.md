@@ -56,6 +56,16 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 - **Every deploy kills awake boxes** (same as computer2); they lose work since
   the last snapshot. Agents push to their fork, so pushed work is safe.
 
+## mobile-agent in the boxes
+
+The image's mobile-agent is a 2026-09-06 copy. Each box unpacks forq's newer
+copy over `/opt/mobile-agent` at boot (once per version, `.forq-rev`), keeping
+the image's `node_modules`. After changing mobile-agent
+(`<mobile-agent repo>`, commit first):
+`./scripts/pack-mobile-agent.sh && npx wrangler deploy`. The script refuses a
+dependency change, which needs an image rebuild instead. The sheet's Terminal
+tab loads `/a/<id>/agent/?ui=minimal` (terminal, six keys, input).
+
 ## Gotchas found building step 1
 
 - Claude Code's folder-trust prompt: boot.sh only trusts `/workspace/project`;
