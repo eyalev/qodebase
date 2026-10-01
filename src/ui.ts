@@ -33,6 +33,7 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .stretch::after{content:'';position:absolute;inset:0;border-radius:12px}
 .row button.fresh{position:relative;z-index:1}.row .t b{font-weight:600}
 .row .d{color:var(--dim);font-size:14px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta .yours{color:var(--acc)}
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:13px;color:var(--dim);margin-top:8px}
 .back{display:inline-flex;align-items:center;min-height:44px;font-size:15px}
 .desc{color:var(--dim);margin:0}
@@ -97,10 +98,10 @@ const shell = (title: string, body: string) => `<!doctype html><html lang="en"><
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>${CSS}</style></head><body><main>${body}</main>${freshHelp(STEPS)}</body></html>`;
 
-function row(e: Entry, forks: number, now: number) {
+function row(e: Entry, forks: number, now: number, mineFork?: Entry) {
   return `<div class="row"><a class="t stretch" href="${path(e.slug)}"><span class="owner">${esc(e.owner)} /</span> <b>${esc(e.name)}</b></a>
   ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
-  <div class="meta">${freshTag(e.updatedAt, now, STEPS)}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.forkedFrom ? `<span>forked from ${esc(label(e.forkedFrom))}</span>` : ''}</div></div>`;
+  <div class="meta">${freshTag(e.updatedAt, now, STEPS)}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.forkedFrom ? `<span>forked from ${esc(label(e.forkedFrom))}</span>` : ''}${mineFork ? `<span class="yours">you have a fork</span>` : ''}</div></div>`;
 }
 
 export function explorePage(entries: Entry[], me: string) {
@@ -112,7 +113,7 @@ export function explorePage(entries: Entry[], me: string) {
 <p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.</p>
 ${freshLegend(STEPS)}
 ${mine.length ? `<h2>Yours</h2><div class="rows">${mine.map((e) => row(e, forks(e.slug), now)).join('')}</div>` : ''}
-<h2>Explore</h2><div class="rows">${others.map((e) => row(e, forks(e.slug), now)).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`);
+<h2>Explore</h2><div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`);
 }
 
 export type Overview = { commits: { hash: string; message: string; at: number; author: string }[]; files: { name: string; dir: boolean }[]; readme: string | null };
@@ -122,11 +123,15 @@ export function projectPage(o: { info: ProjectInfo; entry: Entry; forks: Entry[]
   const now = Date.now();
   const own = info.owner === me;
   const app = `${runBase}/${info.repo}/`;
+  const myForks = forks.filter((e) => e.owner === me);
   return shell(`${info.owner}/${info.name} · forq`, `<a class="back" href="/">Explore</a>
 <h1><span class="owner">${esc(info.owner)} /</span> ${esc(info.name)}</h1>
 ${info.description ? `<p class="desc">${esc(info.description)}</p>` : ''}
 <div class="meta">${freshTag(entry.updatedAt, now, STEPS)}${forks.length ? `<span>${forks.length} fork${forks.length > 1 ? 's' : ''}</span>` : ''}${info.forkedFrom ? `<span>forked from <a href="${path(info.forkedFrom)}">${esc(label(info.forkedFrom))}</a></span>` : ''}</div>
-${own ? '' : `<div class="actions"><button class="btn" id="fork">Fork to ${esc(me)}</button></div>`}
+${own ? '' : myForks.length
+    ? `<div class="actions"><a class="btn" href="${path(myForks[0].slug)}">Open your fork</a><button class="chipbtn" id="fork">Fork again</button></div>
+<p class="desc">You forked it as <a href="${path(myForks[0].slug)}">${esc(label(myForks[0].slug))}</a>${myForks.length > 1 ? ` and ${myForks.length - 1} more` : ''}.</p>`
+    : `<div class="actions"><button class="btn" id="fork">Fork to ${esc(me)}</button></div>`}
 <div class="pbar"><div class="ptabs" id="ptabs">${previewTabs(info, runBase)}</div><a class="pext" id="pext" href="${app}" target="_blank" rel="noopener">Open in new tab</a></div>
 <div class="preview"><iframe src="${app}" title="${esc(info.name)} app" loading="lazy"></iframe></div>
 ${own ? `<h2>Agents</h2>
@@ -141,7 +146,7 @@ ${forks.length ? `<h2>Forks</h2><div class="rows">${forks.map((e) => row(e, 0, n
 <script>
 const API='/api/p/${esc(info.owner)}/${esc(info.name)}';
 const fork=document.getElementById('fork');
-if(fork)fork.onclick=async()=>{fork.disabled=true;fork.textContent='Forking…';
+if(fork)fork.onclick=async()=>{fork.disabled=true;fork.textContent='Forking';
  const r=await fetch(API+'/fork',{method:'POST'});const j=await r.json();
  if(r.ok)location.href=j.path;else{fork.disabled=false;fork.textContent=j.error||'Fork failed';}};
 const ask=document.getElementById('ask');

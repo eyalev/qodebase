@@ -56,6 +56,16 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 - **Every deploy kills awake boxes** (same as computer2); they lose work since
   the last snapshot. Agents push to their fork, so pushed work is safe.
 
+## Run host details
+
+- Every HTML page gets a storage shim injected first (`storageShim()` in
+  `src/run.ts`): localStorage/sessionStorage keys are prefixed `<repo>::`, so
+  projects, forks and agent previews never see each other's data on the shared
+  origin. Cookies and IndexedDB are not scoped.
+- Files are cached per colo per commit for a day. **Bump `SERVE_V`** whenever
+  what is served for the same commit changes (the shim did), or old bytes keep
+  being served.
+
 ## mobile-agent in the boxes
 
 The image's mobile-agent is a 2026-09-06 copy. Each box unpacks forq's newer

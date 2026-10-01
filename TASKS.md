@@ -31,8 +31,9 @@
 - [x] mobile-agent `?ui=minimal` (in mobile-agent itself: kernel uiModes + `minimal` plugin, eyalev/mobile-agent 113d18b): terminal, six keys, input. forq ships it into boxes at boot (box/mobile-agent.tgz, scripts/pack-mobile-agent.sh) instead of an image rebuild; the sheet's Terminal tab uses it
 
 ### Next
-- [ ] Every app shares the run origin, so localStorage leaks between projects (eyal/todo's tasks show in forq/todo's preview). Give each repo its own origin, or namespace storage
-- [ ] Project page: when you already have a fork, show "Your fork" instead of a second Fork button
+- [x] Storage isolation: the run host injects a shim first in every HTML page that scopes localStorage/sessionStorage to the repo (verified forq/todo vs eyal/todo). Not covered: cookies, IndexedDB, Cache Storage (per-repo origins would be the full fix; a `*.kapps.dev` wildcard route would swallow other projects)
+- [x] "Open your fork" + "Fork again" on a project you forked; Explore marks it "you have a fork"
+- [x] Merged t1tmy (done-today counter) into eyal/todo via the router agent
 - [ ] Composer: trusted click on "Send to router" missed under phone emulation in ab-bg (form handler fine); check on a real phone
 - [x] Terminal "clipping": not a phone bug. A visible phone claims its width and tmux follows (kb518's terminal-diag.jsonl: phone claimed 60, window 60; direct test 60 -> 54 holds). Only my minimized test browser clipped: hidden pages never claim (by design) and rAF is paused there, so headless/ab-bg cannot verify sizing. Residual, inherent to terminals: lines already in history keep the width they were drawn at
 

@@ -12,6 +12,9 @@ import { log } from './box';
 import type { Env } from './env';
 
 const HEAD_TTL_S = 15;
+// Bump when what we serve for the same commit changes (e.g. the storage shim),
+// or the per-commit cache keeps answering with the old bytes for a day.
+const SERVE_V = 2;
 const FILE_TTL_S = 86400;
 const TYPES: Record<string, string> = {
   html: 'text/html; charset=utf-8', htm: 'text/html; charset=utf-8', css: 'text/css; charset=utf-8',
@@ -52,7 +55,7 @@ export async function serveRun(request: Request, env: Env, ctx: ExecutionContext
     ctx.waitUntil(cache.put(headKey, new Response(head, { headers: { 'cache-control': `max-age=${HEAD_TTL_S}` } })));
   }
 
-  const fileKey = new Request(`https://${env.RUN_HOST}/__f/${repoName}/${head}/${encodeURIComponent(path)}`);
+  const fileKey = new Request(`https://${env.RUN_HOST}/__f${SERVE_V}/${repoName}/${head}/${encodeURIComponent(path)}`);
   const hit = await cache.match(fileKey);
   if (hit) return withHeaders(hit, head);
 
@@ -69,11 +72,40 @@ export async function serveRun(request: Request, env: Env, ctx: ExecutionContext
   }
   if (!blob) return deny(404, `${path} is not in ${repoName}`);
   const ext = (path.split('.').pop() || '').toLowerCase();
-  const res = new Response(await blob.arrayBuffer(), {
+  let body: ArrayBuffer | string = await blob.arrayBuffer();
+  if (ext === 'html' || ext === 'htm') {
+    // The shim goes before anything else in the document, so it runs before
+    // the app's own scripts (which may read storage at parse time).
+    const text = new TextDecoder().decode(body);
+    const at = text.search(/<head[^>]*>/i);
+    const doctype = text.match(/^\s*<!doctype[^>]*>/i);
+    body = at >= 0
+      ? text.replace(/<head[^>]*>/i, (m) => m + storageShim(repoName))
+      // No <head>: after the doctype, never before it (that flips quirks mode).
+      : doctype ? doctype[0] + storageShim(repoName) + text.slice(doctype[0].length) : storageShim(repoName) + text;
+  }
+  const res = new Response(body, {
     headers: { 'content-type': TYPES[ext] || blob.type || 'application/octet-stream', 'cache-control': `max-age=${FILE_TTL_S}` },
   });
   ctx.waitUntil(cache.put(fileKey, res.clone()));
   return withHeaders(res, head);
+}
+
+// Every repo and fork shares this one origin, so their browser storage would
+// mix (eyal/todo's tasks showed up in forq/todo). Each HTML page therefore gets
+// this first: localStorage and sessionStorage become views prefixed with the
+// repo name. Covers getItem/setItem/removeItem/clear/key/length and property
+// access (storage.foo = …). Not covered: cookies, IndexedDB, Cache Storage —
+// static demo apps here use none; a per-repo origin would be the full answer.
+function storageShim(repo: string) {
+  return `<script>/* forq: storage scoped to ${repo} */(function(){var P=${JSON.stringify(repo + '::')};
+function scope(real){var own=function(){var k=[];for(var i=0;i<real.length;i++){var n=real.key(i);if(n&&n.indexOf(P)===0)k.push(n.slice(P.length));}return k;};
+var api={getItem:function(k){return real.getItem(P+k);},setItem:function(k,v){real.setItem(P+k,String(v));},removeItem:function(k){real.removeItem(P+k);},
+clear:function(){own().forEach(function(k){real.removeItem(P+k);});},key:function(i){var k=own();return i<k.length?k[i]:null;}};
+return new Proxy(api,{get:function(t,k){if(k==='length')return own().length;if(k in api)return api[k];if(typeof k==='symbol')return undefined;return real.getItem(P+k)===null?undefined:real.getItem(P+k);},
+set:function(t,k,v){if(k in api)return false;real.setItem(P+k,String(v));return true;},deleteProperty:function(t,k){real.removeItem(P+k);return true;},
+has:function(t,k){return k in api||real.getItem(P+k)!==null;},ownKeys:function(){return own();},getOwnPropertyDescriptor:function(t,k){var v=real.getItem(P+k);return v===null?undefined:{value:v,enumerable:true,configurable:true,writable:true};}});}
+['localStorage','sessionStorage'].forEach(function(n){try{var real=window[n];var s=scope(real);Object.defineProperty(window,n,{get:function(){return s;},configurable:true});}catch(e){}});})();</script>`;
 }
 
 function withHeaders(r: Response, head: string) {
