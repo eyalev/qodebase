@@ -12,6 +12,7 @@ export type Entry = {
   forkedFrom: string | null;  // slug of the source project
   createdAt: number;
   updatedAt: number;     // last change to main that forq made or saw
+  importedFrom?: { fullName: string; stars: number; license: string | null };
 };
 
 export class Registry extends DurableObject<Env> {

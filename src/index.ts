@@ -13,6 +13,8 @@ import { Registry, registry } from './registry';
 import { serveRun } from './run';
 import { agentsHtml, explorePage, projectPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
+import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
+import { importPage } from './ui';
 import { startingPage } from './pages';
 // mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
 import MA_TGZ from '../box/mobile-agent.tgz';
@@ -136,6 +138,32 @@ export default {
       if (path === '/') {
         return html(explorePage(await registry(env).list(), me.handle));
       }
+      if (path === '/import') return html(importPage(me.handle));
+      // ---- GitHub: search, look up one repo, import it
+      if (path === '/api/github/search') {
+        const q = url.searchParams.get('q') || '';
+        const ref = parseRepoRef(q);
+        if (ref) { const r = await getRepo(ref, ctx); return 'error' in r ? json(r, r.status) : json({ repos: [r], exact: true }); }
+        if (q.trim().length < 2) return json({ repos: [] });
+        const r = await searchRepos(q, ctx);
+        return Array.isArray(r) ? json({ repos: r }) : json(r, r.status);
+      }
+      if (path === '/api/import' && request.method === 'POST') {
+        const b = await request.json() as { repo?: string; as?: string };
+        const ref = parseRepoRef(String(b.repo || ''));
+        if (!ref) return json({ error: 'give a GitHub URL or owner/repo' }, 400);
+        const gh = await getRepo(ref, ctx);
+        if ('error' in gh) return json(gh, gh.status);
+        if (gh.private) return json({ error: 'private repos cannot be imported' }, 400);
+        if (gh.sizeKb > MAX_IMPORT_KB) return json({ error: `${gh.fullName} is ${Math.round(gh.sizeKb / 1024)} MB; forq imports up to ${MAX_IMPORT_KB / 1024} MB` }, 400);
+        // Admin may import on behalf of another handle (the forq showcase account).
+        const owner = me.admin && b.as ? b.as : me.handle;
+        let name = nameFor(gh.name);
+        for (let i = 2; await registry(env).get(slugOf(owner, name)); i++) name = `${nameFor(gh.name).slice(0, 35)}-${i}`;
+        const info = await projectStub(env, slugOf(owner, name)).createImported(owner, name,
+          { url: `https://github.com/${gh.fullName}`, fullName: gh.fullName, stars: gh.stars, license: gh.license, branch: gh.branch }, gh.description);
+        return json({ ...info, path: `/p/${owner}/${name}` });
+      }
       if ((m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/?$/))) {
         const slug = slugOf(m[1], m[2]);
         const p = projectStub(env, slug);
@@ -178,6 +206,11 @@ export default {
         }
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());
+        if (verb === 'entry' && request.method === 'POST') {
+          const b = await request.json() as { entry?: string | null };
+          await p.setEntry(b.entry === null ? null : String(b.entry ?? ''));
+          return json({ ok: true, entry: (await p.info())?.entry });
+        }
         if (verb === 'touch' && request.method === 'POST' && me.admin) { await registry(env).touch(slug); return json({ ok: true }); }
         if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase), tabs: previewTabs(info, runBase) });
         if (verb === 'agents' && request.method === 'POST') {

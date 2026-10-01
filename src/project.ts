@@ -20,9 +20,15 @@ export type Agent = {
 };
 /** The last thing the person asked the router agent, and how far delivery got. */
 export type RouterRequest = { text: string; at: number; state: 'waking' | 'sent' | 'failed'; sentAt?: number; error?: string };
+/** Where an imported project came from (GitHub metadata at import time). */
+export type ImportedFrom = { url: string; fullName: string; stars: number; license: string | null; branch: string };
 export type ProjectInfo = {
   slug: string; owner: string; name: string; description: string;
   repo: string; remote: string; forkedFrom: string | null; createdAt: number;
+  importedFrom?: ImportedFrom;
+  /** Path of the web page to preview ('' = root, 'demo/' …); null = none
+   *  found; undefined = not looked yet (detected from main's tree). */
+  entry?: string | null;
   agents: Agent[];
   lastRequest?: RouterRequest;
 };
@@ -35,7 +41,8 @@ export class Project extends DurableObject<Env> {
   async #register(info: ProjectInfo) {
     await this.ctx.storage.put('info', info);
     const e: Entry = { slug: info.slug, owner: info.owner, name: info.name, description: info.description,
-      forkedFrom: info.forkedFrom, createdAt: info.createdAt, updatedAt: Date.now() };
+      forkedFrom: info.forkedFrom, createdAt: info.createdAt, updatedAt: Date.now(),
+      importedFrom: info.importedFrom ? { fullName: info.importedFrom.fullName, stars: info.importedFrom.stars, license: info.importedFrom.license } : undefined };
     await registry(this.env).put(e);
   }
 
@@ -59,10 +66,35 @@ export class Project extends DurableObject<Env> {
     using repo = await this.env.ARTIFACTS.get(source.repo);
     const forked = await repo.fork(slug, { description: source.description, defaultBranchOnly: true });
     const info: ProjectInfo = { slug, owner, name, description: source.description, repo: forked.name, remote: forked.remote,
-      forkedFrom: source.slug, createdAt: Date.now(), agents: [] };
+      forkedFrom: source.slug, createdAt: Date.now(), agents: [], importedFrom: source.importedFrom, entry: source.entry };
     await this.#register(info);
     log('project', 'forked', { slug, from: source.slug });
     return info;
+  }
+
+  /** A project imported from a public GitHub repo (shallow). Artifacts imports
+   *  in the background; the page shows "Importing" until main can be read. */
+  async createImported(owner: string, name: string, src: ImportedFrom, description: string): Promise<ProjectInfo> {
+    if (!NAME_RE.test(owner) || !NAME_RE.test(name)) throw new Error('names: lowercase letters, digits, dashes');
+    if (await this.info()) throw new Error('project exists');
+    const slug = slugOf(owner, name);
+    const imported = await this.env.ARTIFACTS.import({
+      source: { url: src.url, branch: src.branch, depth: 1 },
+      target: { name: slug, opts: { description: description.slice(0, 300) } },
+    });
+    const info: ProjectInfo = { slug, owner, name, description, repo: imported.name, remote: imported.remote,
+      forkedFrom: null, createdAt: Date.now(), agents: [], importedFrom: src };
+    await this.#register(info);
+    log('project', 'imported', { slug, from: src.fullName, branch: src.branch });
+    return info;
+  }
+
+  /** Owner override of the previewed page: a folder ('demo/') or a file ('demo.html'). */
+  async setEntry(entry: string | null) {
+    const info = await this.#need();
+    if (entry !== null && !/^([\w.-]+\/)*([\w.-]+\.html?)?$/.test(entry)) throw new Error('entry: a folder like demo/ or a file like demo.html');
+    info.entry = entry;
+    await this.ctx.storage.put('info', info);
   }
 
   async mainToken(ttlS = 3600): Promise<{ remote: string; token: string }> {
@@ -129,11 +161,24 @@ export class Project extends DurableObject<Env> {
   /** Main's newest commits + root files, for the project page. */
   async overview() {
     const info = await this.#need();
-    using repo = await this.env.ARTIFACTS.get(info.repo);
-    const commits = await repo.log({ ref: 'main', limit: 5 }).catch(() => []);
+    let repo: ArtifactsRepo;
+    try { repo = await this.env.ARTIFACTS.get(info.repo); } catch (e) {
+      // get() throws while an import or fork is still in progress.
+      log('project', 'overview_not_ready', { slug: info.slug, err: String(e).slice(0, 160) });
+      return { importing: true, entry: info.entry, commits: [], files: [], readme: null };
+    }
+    using _r = repo;
+    const commits = await repo.log({ limit: 5 }).catch(() => []);   // HEAD: imports keep GitHub's branch name
     const tree = commits[0] ? await repo.readTree(commits[0].treeHash).catch(() => null) : null;
-    const readme = commits[0] ? await repo.readFile({ ref: commits[0].hash, path: 'README.md' }).catch(() => null) : null;
+    const readmeName = (tree || []).find((e) => /^readme(\.md|\.markdown)?$/i.test(e.name))?.name || 'README.md';
+    const readme = commits[0] ? await repo.readFile({ ref: commits[0].hash, path: readmeName }).catch(() => null) : null;
+    if (tree && info.entry === undefined) {
+      info.entry = await detectEntry(repo, commits[0].hash, tree);
+      await this.ctx.storage.put('info', info);
+      log('project', 'entry_detected', { slug: info.slug, entry: info.entry });
+    }
     return {
+      importing: false, entry: info.entry,
       commits: commits.map((c) => ({ hash: c.hash, message: c.message.split('\n')[0], at: c.committedAt * 1000, author: c.author.name })),
       files: (tree || []).map((e) => ({ name: e.name, dir: e.type === 'tree' })),
       readme: readme ? (await readme.text()).slice(0, 20000) : null,
@@ -152,4 +197,19 @@ export class Project extends DurableObject<Env> {
     if (!info) throw new Error('no such project');
     return info;
   }
+}
+
+/** Where the project's web page is: index.html at the root, else in one of the
+ *  usual folders. The preview opens AT that folder (relative ../ links keep
+ *  working because the whole repo is served). */
+const ENTRY_DIRS = ['demo', 'docs', 'public', 'dist', 'www', 'site', 'example', 'examples', 'web', 'app'];
+async function detectEntry(repo: ArtifactsRepo, ref: string, tree: ArtifactsTreeEntry[]): Promise<string | null> {
+  if (tree.some((e) => e.type !== 'tree' && e.name.toLowerCase() === 'index.html')) return '';
+  for (const d of ENTRY_DIRS) {
+    const dir = tree.find((e) => e.type === 'tree' && e.name.toLowerCase() === d);
+    if (!dir) continue;
+    const f = await repo.readFile({ ref, path: `${dir.name}/index.html` }).catch(() => null);
+    if (f) return `${dir.name}/`;
+  }
+  return null;
 }

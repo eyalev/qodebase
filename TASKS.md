@@ -37,9 +37,16 @@
 - [ ] Composer: trusted click on "Send to router" missed under phone emulation in ab-bg (form handler fine); check on a real phone
 - [x] Terminal "clipping": not a phone bug. A visible phone claims its width and tmux follows (kb518's terminal-diag.jsonl: phone claimed 60, window 60; direct test 60 -> 54 holds). Only my minimized test browser clipped: hidden pages never claim (by design) and rAF is paused there, so headless/ab-bg cannot verify sizing. Residual, inherent to terminals: lines already in history keep the width they were drawn at
 
+### Round 4 (2026-10-01): import from GitHub
+- [x] Import screen (/import): one box for search or a pasted URL/owner/repo; GitHub public API, cached per query; refuses private repos and > 200 MB; shallow import (latest commit)
+- [x] Imported projects show source, stars and license; Explore rows too
+- [x] Web page detection: index.html at the root, else demo/ docs/ public/ dist/ www/ site/ example(s)/ web/ app/; owner can override (`POST /api/p/<o>/<n>/entry`, e.g. reveal.js → demo.html); "No web page" note otherwise
+- [x] Default branch is no longer assumed to be main (run host and overview read HEAD; agents push HEAD; forq merge uses origin/HEAD)
+- [x] Showcase under owner forq, each verified rendering at 390 px: 2048, reveal.js (demo.html), particles.js (demo/), Sortable, vivus, javascript-tetris
+
 ## v1 (later)
 
-- [ ] Import from GitHub, preview per fork (Workers Builds), Issues → router webhook, reviewer agent, public project pages + baseline
+- [ ]  preview per fork (Workers Builds), Issues → router webhook, reviewer agent, public project pages + baseline
 
 ## Open
 

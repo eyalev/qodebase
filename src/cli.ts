@@ -55,12 +55,14 @@ def main(argv):
     elif v == 'merge':
         if not rest: sys.exit('usage: forq merge <agent-id>')
         f = api('GET', '/api/agent/merge-info?agent=' + rest[0])
-        git('checkout', '-q', 'main'); git('pull', '-q', '--ff-only', 'origin', 'main')
-        git('-c', f"http.extraHeader=Authorization: Bearer {f['token']}", 'fetch', '-q', f['remote'], 'main')
+        # The default branch is not always main (GitHub imports keep master, gh-pages…).
+        br = git('symbolic-ref', '--short', 'refs/remotes/origin/HEAD', check=False).stdout.strip().split('/', 1)[-1] or 'main'
+        git('checkout', '-q', br); git('pull', '-q', '--ff-only', 'origin', br)
+        git('-c', f"http.extraHeader=Authorization: Bearer {f['token']}", 'fetch', '-q', f['remote'], br)
         m = git('merge', '--no-edit', '-m', f"Merge {rest[0]}", 'FETCH_HEAD', check=False)
         if m.returncode:
-            sys.exit(f'forq: merge conflict - resolve in /workspace/repo, commit, then: git push origin HEAD:main && forq merged {rest[0]}\n{m.stdout}{m.stderr}')
-        git('push', '-q', 'origin', 'HEAD:main')
+            sys.exit(f'forq: merge conflict - resolve in /workspace/repo, commit, then: git push origin HEAD && forq merged {rest[0]}\n{m.stdout}{m.stderr}')
+        git('push', '-q', 'origin', f'HEAD:{br}')
         api('POST', '/api/agent/merged', {'agent': rest[0]}); print(f'merged {rest[0]} into main')
     elif v == 'merged':
         api('POST', '/api/agent/merged', {'agent': rest[0]}); print('ok')

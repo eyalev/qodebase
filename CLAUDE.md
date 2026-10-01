@@ -56,6 +56,18 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 - **Every deploy kills awake boxes** (same as computer2); they lose work since
   the last snapshot. Agents push to their fork, so pushed work is safe.
 
+## Import from GitHub
+
+- `/import` page; `/api/github/search?q=` (search or exact `owner/repo`/URL);
+  `POST /api/import {repo, as?}` (`as` = admin importing for another handle,
+  e.g. `forq` for the showcase). Unauthenticated GitHub API, cached per colo
+  (repo 10 min, search 1 h): fine for one person, needs a token when public.
+- Imports are shallow (`depth: 1`) and keep GitHub's default branch name, so
+  never assume `main`: the run host and overview read `HEAD`, agents push
+  `HEAD`, `forq merge` reads `origin/HEAD`.
+- The previewed page (`entry`) is detected once from main's tree and can be
+  overridden: `POST /api/p/<o>/<n>/entry {"entry":"demo.html"}`.
+
 ## Run host details
 
 - Every HTML page gets a storage shim injected first (`storageShim()` in

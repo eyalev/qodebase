@@ -47,7 +47,7 @@ export async function serveRun(request: Request, env: Env, ctx: ExecutionContext
   if (!head) {
     try {
       using repo = await env.ARTIFACTS.get(repoName);
-      head = (await repo.log({ ref: 'main', limit: 1 }))[0]?.hash;
+      head = (await repo.log({ limit: 1 }))[0]?.hash;   // HEAD = the repo's default branch (main, master, gh-pages…)
     } catch (e) {
       log('run', 'head_failed', { repoName, err: String(e) });
     }

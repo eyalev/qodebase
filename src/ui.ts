@@ -5,6 +5,7 @@ import type { Entry } from './registry';
 import type { Agent, ProjectInfo } from './project';
 import { FRESH_CSS, freshHelp, freshLegend, freshTag } from './fresh';
 import { markdown } from './md';
+import { MAX_IMPORT_KB } from './github';
 import { SHEET_CSS, SHEET_HTML, SHEET_JS, previewTabs, shortId } from './sheet';
 
 const esc = (s: string) => String(s ?? '').replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -22,6 +23,8 @@ a{color:var(--acc);text-decoration:none}
 header.top{display:flex;align-items:center;justify-content:space-between;height:48px}
 .mark{font-weight:600;font-size:20px;color:var(--fg);letter-spacing:-.01em}
 .who{font-size:13px;color:var(--dim)}
+.top .tr{display:flex;align-items:center;gap:12px}
+.top .chipbtn{min-height:40px;font-size:14px;padding:0 12px}
 .intro{color:var(--dim);margin:4px 0 24px;font-size:15px}
 h1{font-size:24px;line-height:1.2;margin:8px 0 4px;font-weight:600;word-break:break-word}
 h2{font-size:15px;font-weight:600;margin:32px 0 8px}
@@ -88,20 +91,29 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .card .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .card .acts .chipbtn,.card .acts .btn{min-height:40px;padding:0 12px;font-size:14px}
 .empty{color:var(--dim);font-size:14px}
+.search input{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);margin:16px 0 12px}
+.sugg{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:16px}
+.sugg>span{color:var(--dim);font-size:14px}
+.sugg[hidden]{display:none}
+.sugg .chipbtn{min-height:40px;font-size:14px;padding:0 12px}
+.row.gh .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+.row.gh .acts .btn,.row.gh .acts .chipbtn{min-height:40px;font-size:14px;padding:0 14px}
 @media (hover:hover){.row:hover{background:var(--chip)}.chipbtn:hover{background:var(--line)}}
 ${FRESH_CSS}${SHEET_CSS}`;
 
-const shell = (title: string, body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
+const shell = (title: string, body: string, steps: number[] = STEPS) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${esc(title)}</title><meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
-<style>${CSS}</style></head><body><main>${body}</main>${freshHelp(STEPS)}</body></html>`;
+<style>${CSS}</style></head><body><main>${body}</main>${freshHelp(steps)}</body></html>`;
+
+const stars = (n: number) => `${n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : n} stars`;
 
 function row(e: Entry, forks: number, now: number, mineFork?: Entry) {
   return `<div class="row"><a class="t stretch" href="${path(e.slug)}"><span class="owner">${esc(e.owner)} /</span> <b>${esc(e.name)}</b></a>
   ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
-  <div class="meta">${freshTag(e.updatedAt, now, STEPS)}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.forkedFrom ? `<span>forked from ${esc(label(e.forkedFrom))}</span>` : ''}${mineFork ? `<span class="yours">you have a fork</span>` : ''}</div></div>`;
+  <div class="meta">${freshTag(e.updatedAt, now, STEPS)}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.forkedFrom ? `<span>forked from ${esc(label(e.forkedFrom))}</span>` : ''}${e.importedFrom ? `<span>from GitHub ${esc(e.importedFrom.fullName)}</span><span>${stars(e.importedFrom.stars)}</span>${e.importedFrom.license ? `<span>${esc(e.importedFrom.license)}</span>` : ''}` : ''}${mineFork ? `<span class="yours">you have a fork</span>` : ''}</div></div>`;
 }
 
 export function explorePage(entries: Entry[], me: string) {
@@ -109,31 +121,38 @@ export function explorePage(entries: Entry[], me: string) {
   const forks = (slug: string) => entries.filter((e) => e.forkedFrom === slug).length;
   const mine = entries.filter((e) => e.owner === me);
   const others = entries.filter((e) => e.owner !== me);
-  return shell('forq', `<header class="top"><span class="mark">forq</span><span class="who">${esc(me)}</span></header>
+  return shell('forq', `<header class="top"><span class="mark">forq</span><span class="tr"><a class="chipbtn" href="/import">Import from GitHub</a><span class="who">${esc(me)}</span></span></header>
 <p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.</p>
 ${freshLegend(STEPS)}
 ${mine.length ? `<h2>Yours</h2><div class="rows">${mine.map((e) => row(e, forks(e.slug), now)).join('')}</div>` : ''}
 <h2>Explore</h2><div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`);
 }
 
-export type Overview = { commits: { hash: string; message: string; at: number; author: string }[]; files: { name: string; dir: boolean }[]; readme: string | null };
+export type Overview = { importing?: boolean; entry?: string | null; commits: { hash: string; message: string; at: number; author: string }[]; files: { name: string; dir: boolean }[]; readme: string | null };
 
 export function projectPage(o: { info: ProjectInfo; entry: Entry; forks: Entry[]; overview: Overview; me: string; runBase: string; agentsHtml: string }) {
   const { info, entry, forks, overview, me, runBase } = o;
   const now = Date.now();
   const own = info.owner === me;
-  const app = `${runBase}/${info.repo}/`;
+  const webAt = overview.entry ?? info.entry;   // folder of the web page; null = none
+  const app = `${runBase}/${info.repo}/${webAt || ''}`;
+  const src = info.importedFrom;
   const myForks = forks.filter((e) => e.owner === me);
   return shell(`${info.owner}/${info.name} · forq`, `<a class="back" href="/">Explore</a>
 <h1><span class="owner">${esc(info.owner)} /</span> ${esc(info.name)}</h1>
 ${info.description ? `<p class="desc">${esc(info.description)}</p>` : ''}
-<div class="meta">${freshTag(entry.updatedAt, now, STEPS)}${forks.length ? `<span>${forks.length} fork${forks.length > 1 ? 's' : ''}</span>` : ''}${info.forkedFrom ? `<span>forked from <a href="${path(info.forkedFrom)}">${esc(label(info.forkedFrom))}</a></span>` : ''}</div>
+<div class="meta">${freshTag(entry.updatedAt, now, STEPS)}${forks.length ? `<span>${forks.length} fork${forks.length > 1 ? 's' : ''}</span>` : ''}${info.forkedFrom ? `<span>forked from <a href="${path(info.forkedFrom)}">${esc(label(info.forkedFrom))}</a></span>` : ''}${src && !info.forkedFrom ? `<span>imported from <a href="${esc(src.url)}" rel="noopener">GitHub ${esc(src.fullName)}</a></span>` : ''}${src ? `<span>${stars(src.stars)}</span>${src.license ? `<span>${esc(src.license)}</span>` : ''}` : ''}</div>
 ${own ? '' : myForks.length
     ? `<div class="actions"><a class="btn" href="${path(myForks[0].slug)}">Open your fork</a><button class="chipbtn" id="fork">Fork again</button></div>
 <p class="desc">You forked it as <a href="${path(myForks[0].slug)}">${esc(label(myForks[0].slug))}</a>${myForks.length > 1 ? ` and ${myForks.length - 1} more` : ''}.</p>`
     : `<div class="actions"><button class="btn" id="fork">Fork to ${esc(me)}</button></div>`}
-<div class="pbar"><div class="ptabs" id="ptabs">${previewTabs(info, runBase)}</div><a class="pext" id="pext" href="${app}" target="_blank" rel="noopener">Open in new tab</a></div>
-<div class="preview"><iframe src="${app}" title="${esc(info.name)} app" loading="lazy"></iframe></div>
+${overview.importing
+    ? `<p class="note" id="importing">Importing from GitHub. This page refreshes when it is ready (usually a few seconds).</p>
+<script>setTimeout(function(){location.reload()},3000)</script>`
+    : webAt === null
+      ? `<p class="note">No web page to show: forq looks for an index.html at the root and in demo/, docs/, public/, dist/, www/, site/ and examples/. The code is below, and agents can still work on it.</p>`
+      : `<div class="pbar"><div class="ptabs" id="ptabs">${previewTabs(info, runBase)}</div><a class="pext" id="pext" href="${app}" target="_blank" rel="noopener">Open in new tab</a></div>
+<div class="preview"><iframe src="${app}" title="${esc(info.name)} app" loading="lazy"></iframe></div>`}
 ${own ? `<h2>Agents</h2>
 <form class="composer" id="ask"><textarea name="text" placeholder="Tell the router agent what to change. It splits the work and starts one agent per task." required enterkeyhint="send"></textarea>
 <div class="bar"><button class="btn">Send</button></div></form>
@@ -142,7 +161,7 @@ ${own ? `<h2>Agents</h2>
 <h2>Files</h2><div class="files">${overview.files.map((f) => `<span>${esc(f.name)}${f.dir ? '/' : ''}</span>`).join('') || '<span>empty</span>'}</div>
 ${overview.readme ? `<h2>README</h2><div class="readme">${markdown(overview.readme)}</div>` : ''}
 ${forks.length ? `<h2>Forks</h2><div class="rows">${forks.map((e) => row(e, 0, now)).join('')}</div>` : ''}
-<h2>Recent commits</h2>${overview.commits.map((c) => `<div class="commit">${freshTag(c.at, now, STEPS)}<span class="msg">${esc(c.message)}</span><code>${esc(c.hash.slice(0, 7))}</code></div>`).join('') || '<p class="empty">No commits yet.</p>'}
+<h2>Recent commits</h2>${src && !info.forkedFrom ? `<p class="empty">Imported with the latest commit only; full history stays on <a href="${esc(src.url)}" rel="noopener">GitHub</a>.</p>` : ''}${overview.commits.map((c) => `<div class="commit">${freshTag(c.at, now, STEPS)}<span class="msg">${esc(c.message)}</span><code>${esc(c.hash.slice(0, 7))}</code></div>`).join('') || '<p class="empty">No commits yet.</p>'}
 <script>
 const API='/api/p/${esc(info.owner)}/${esc(info.name)}';
 const fork=document.getElementById('fork');
@@ -240,11 +259,52 @@ ${a.request ? `<dt>You asked</dt><dd class="clamp">${esc(a.request)}</dd>` : ''}
 <dt>${a.request ? 'Its task, from the router agent' : 'Its task'}</dt><dd class="clamp">${esc(a.task)}</dd>
 <dt>Result</dt><dd${a.note ? '' : ' class="none"'}>${a.note ? esc(a.note) : ph.busy ? 'Not yet. It reports here when it pushes.' : 'No report yet.'}</dd>
 </dl>
-<div class="acts"><button type="button" class="chipbtn" data-preview="${runBase}/${a.fork}/">Preview</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge</button>` : ''}</div></div>`;
+<div class="acts"><button type="button" class="chipbtn" data-preview="${runBase}/${a.fork}/${info.entry || ''}">Preview</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge</button>` : ''}</div></div>`;
   };
   const open = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped').reverse();
   const done = info.agents.filter((a) => a.state === 'merged').reverse().slice(0, 5);
   return `${routerPanel(info, router)}
 <div class="cards">${open.map(card).join('') || '<p class="empty">No agents working. Ask the router agent for a change.</p>'}</div>
 ${done.length ? `<h2>Merged</h2><div class="cards">${done.map(card).join('')}</div>` : ''}`;
+}
+
+const REPO_STEPS = [365 * 24, 90 * 24, 30 * 24, 7 * 24];   // GitHub activity: empty after a year
+
+export function importPage(me: string) {
+  return shell('Import from GitHub · forq', `<a class="back" href="/">Explore</a>
+<h1>Import from GitHub</h1>
+<p class="desc">Search public repositories, or paste a repo's URL. forq copies the latest commit, finds its web page if it has one, and the project is yours to fork and hand to agents.</p>
+<form id="gq" class="search" role="search"><input id="q" type="search" name="q" placeholder="Search GitHub, or paste a URL" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="search"></form>
+<div class="sugg" id="sugg"><span>Try</span>${['2048', 'reveal.js', 'particles.js', 'tetris javascript', 'https://github.com/SortableJS/Sortable'].map((t) => `<button type="button" class="chipbtn" data-q="${esc(t)}">${esc(t.replace('https://github.com/', ''))}</button>`).join('')}</div>
+${freshLegend(REPO_STEPS).replace('how recent it is', 'when the repo was last pushed')}
+<div id="res" class="rows" aria-live="polite"></div>
+<script>
+const $q=document.getElementById('q'),$res=document.getElementById('res');
+const esc=(t)=>String(t||'').replace(/[<>&"]/g,(c)=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const stars=(n)=>(n>=1000?(n/1000).toFixed(n>=10000?0:1)+'k':n)+' stars';
+const STEPS=${JSON.stringify(REPO_STEPS)};
+function rel(ts){const s=Math.max(0,(Date.now()-ts)/1000);if(s<3600)return Math.floor(s/60)+' min ago';if(s<86400)return Math.floor(s/3600)+'h ago';if(s<86400*60)return Math.floor(s/86400)+'d ago';if(s<86400*730)return Math.floor(s/86400/30)+' mo ago';return Math.floor(s/86400/365)+'y ago';}
+function fresh(ts){const age=Date.now()-ts;const l=STEPS.filter((h)=>age<h*3600000).length;return '<button type="button" class="fresh'+(l===4?' is-new':'')+'" style="--l:'+l+'" popovertarget="fresh-help">'+rel(ts)+'</button>';}
+let seq=0,timer=null;
+async function run(){const q=$q.value.trim();const my=++seq;
+ document.getElementById('sugg').hidden=!!q;
+ if(q.length<2){$res.innerHTML='';return;}
+ $res.innerHTML='<p class="empty">Searching GitHub</p>';
+ let j;try{const r=await fetch('/api/github/search?q='+encodeURIComponent(q));j=await r.json();if(!r.ok)throw new Error(j.error||r.status);}catch(e){if(my===seq)$res.innerHTML='<p class="empty">'+esc(e.message)+'</p>';return;}
+ if(my!==seq)return;
+ if(!j.repos.length){$res.innerHTML='<p class="empty">Nothing found. Try other words, or paste the repo URL.</p>';return;}
+ $res.innerHTML=j.repos.map((r)=>{const big=r.sizeKb>${MAX_IMPORT_KB};
+  return '<div class="row gh"><div class="t"><span class="owner">'+esc(r.fullName.split('/')[0])+' /</span> <b>'+esc(r.name)+'</b></div>'+
+  (r.description?'<div class="d">'+esc(r.description)+'</div>':'')+
+  '<div class="meta">'+(r.pushedAt?fresh(r.pushedAt):'')+'<span>'+stars(r.stars)+'</span>'+(r.license?'<span>'+esc(r.license)+'</span>':'<span>no license</span>')+'<span>'+(r.sizeKb>=1024?Math.round(r.sizeKb/1024)+' MB':r.sizeKb+' KB')+'</span>'+(r.archived?'<span>archived</span>':'')+'</div>'+
+  '<div class="acts">'+(big?'<span class="empty">Too big to import (over ${MAX_IMPORT_KB / 1024} MB)</span>':'<button type="button" class="btn" data-import="'+esc(r.fullName)+'">Import</button>')+'<a class="chipbtn" href="'+esc(r.url)+'" target="_blank" rel="noopener">View on GitHub</a></div></div>';}).join('');}
+$q.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(run,450);});
+document.getElementById('gq').onsubmit=(e)=>{e.preventDefault();clearTimeout(timer);run();};
+document.getElementById('sugg').onclick=(e)=>{const b=e.target.closest('[data-q]');if(b){$q.value=b.dataset.q;run();}};
+$res.addEventListener('click',async(e)=>{const b=e.target.closest('[data-import]');if(!b)return;
+ b.disabled=true;b.textContent='Importing';
+ const r=await fetch('/api/import',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({repo:b.dataset.import})});
+ const j=await r.json().catch(()=>({}));if(r.ok)location.href=j.path;else{b.disabled=false;b.textContent=j.error||'Import failed';}});
+if(location.hash.length>1){$q.value=decodeURIComponent(location.hash.slice(1));run();}
+</script>`, REPO_STEPS);
 }
