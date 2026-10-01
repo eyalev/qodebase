@@ -17,6 +17,7 @@ export type Agent = {
   note?: string;       // the agent's last `forq status` note
   noteAt?: number;
   request?: string;    // the person's request that led to it (router-spawned agents)
+  base?: { commit: string; tree: string };  // main when it was forked: what its Changes diff against
 };
 /** The last thing the person asked the router agent, and how far delivery got. */
 export type RouterRequest = { text: string; at: number; state: 'waking' | 'sent' | 'failed'; sentAt?: number; error?: string };
@@ -111,9 +112,11 @@ export class Project extends DurableObject<Env> {
     if (live.length >= max) throw new Error(`agent limit reached (${max} open per project)`);
     const id = `${info.slug}--${Math.random().toString(36).slice(2, 7)}`;
     using repo = await this.env.ARTIFACTS.get(info.repo);
+    const baseC = (await repo.log({ limit: 1 }).catch(() => []))[0];
     const forked = await repo.fork(id, { description: task.slice(0, 200), defaultBranchOnly: true });
     const agent: Agent = { id, task, fork: forked.name, remote: forked.remote, createdAt: Date.now(), state: 'working',
-      request: info.lastRequest && Date.now() - info.lastRequest.at < 30 * 60_000 ? info.lastRequest.text.slice(0, 1000) : undefined };
+      request: info.lastRequest && Date.now() - info.lastRequest.at < 30 * 60_000 ? info.lastRequest.text.slice(0, 1000) : undefined,
+      base: baseC ? { commit: baseC.hash, tree: baseC.treeHash } : undefined };
     info.agents.push(agent);
     await this.ctx.storage.put('info', info);
     log('project', 'agent_added', { slug: info.slug, id });

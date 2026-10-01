@@ -44,6 +44,13 @@
 - [x] Default branch is no longer assumed to be main (run host and overview read HEAD; agents push HEAD; forq merge uses origin/HEAD)
 - [x] Showcase under owner forq, each verified rendering at 390 px: 2048, reveal.js (demo.html), particles.js (demo/), Sortable, vivus, javascript-tetris
 
+### Round 5 (2026-10-01): code browser
+- [x] Browse: /p/<o>/<n>/code/<path> — folders, file view (line numbers, highlight.js with our tokens, #L links, tap number copies link), Markdown rendered, images inline, Raw / Open in preview
+- [x] Versions: Live + every agent fork (?v=<agent>) on every code page
+- [x] Go to file: whole-tree path list (cached per root tree), filter as you type
+- [x] Changes: /p/<o>/<n>/changes/<agent> — fork vs where it started (agent.base, recorded at fork time; older agents: main's newest commit before the fork), per-file unified diff (jsdiff), +/- counts; "Changes" button on agent cards
+- [ ] Content search: per-commit full-text index in the Project DO's SQLite (FTS5)
+
 ## v1 (later)
 
 - [ ]  preview per fork (Workers Builds), Issues → router webhook, reviewer agent, public project pages + baseline

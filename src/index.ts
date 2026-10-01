@@ -15,6 +15,8 @@ import { agentsHtml, explorePage, projectPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
 import { importPage } from './ui';
+import { allFiles, blob, diffTrees, forkBase, head, resolvePath, tree } from './code';
+import { changesPage, dirPage, filePage, type ChangeText } from './codeui';
 import { startingPage } from './pages';
 // mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
 import MA_TGZ from '../box/mobile-agent.tgz';
@@ -164,6 +166,13 @@ export default {
           { url: `https://github.com/${gh.fullName}`, fullName: gh.fullName, stars: gh.stars, license: gh.license, branch: gh.branch }, gh.description);
         return json({ ...info, path: `/p/${owner}/${name}` });
       }
+      // ---- code browser: /p/<o>/<n>/code/<path>[?v=<agent>], changes, file list
+      if ((m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/(code|changes)(?:\/(.*))?$/))) {
+        const info = await projectStub(env, slugOf(m[1], m[2])).info();
+        if (!info) return new Response('No such project', { status: 404 });
+        if (m[3] === 'changes') return changesRoute(env, ctx, info, decodeURIComponent(m[4] || ''), runBase);
+        return codeRoute(env, ctx, info, url.searchParams.get('v') || '', decodeURIComponent(m[4] || ''), runBase);
+      }
       if ((m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/?$/))) {
         const slug = slugOf(m[1], m[2]);
         const p = projectStub(env, slug);
@@ -203,6 +212,15 @@ export default {
           if (!NAME_RE.test(newName)) return json({ error: 'name too long' }, 400);
           const fi = await projectStub(env, slugOf(me.handle, newName)).createFork(me.handle, newName, info);
           return json({ ...fi, path: `/p/${fi.owner}/${fi.name}` });
+        }
+        // Reading code is open to anyone who can see the project; acting on it is owner-only (below).
+        if (verb === 'files') {
+          const repo = versionRepo(info, url.searchParams.get('v') || '');
+          if (!repo) return json({ error: 'unknown version' }, 404);
+          const rev = await head(env, ctx, repo);
+          if (!rev) return json({ files: [] });
+          const r = await allFiles(env, ctx, repo, rev.tree);
+          return json({ files: r.files.map((f) => f.path), truncated: r.truncated });
         }
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());
@@ -278,6 +296,55 @@ export default {
     }
   },
 } satisfies ExportedHandler<Env>;
+
+/** The repo behind a version: '' = main, else an agent's short id → its fork. */
+function versionRepo(info: ProjectInfo, v: string): string | null {
+  if (!v) return info.repo;
+  const a = info.agents.find((x) => x.id.split('--')[1] === v);
+  return a ? a.fork : null;
+}
+
+async function codeRoute(env: Env, ctx: ExecutionContext, info: ProjectInfo, v: string, path: string, runBase: string) {
+  const repo = versionRepo(info, v);
+  if (!repo) return new Response('No such version', { status: 404 });
+  const rev = await head(env, ctx, repo).catch(() => null);
+  if (!rev) return html(dirPage({ info, v, path: '', entries: [], readme: null, rev: null }));
+  const clean = path.replace(/^\/+/, '');
+  const e = await resolvePath(env, ctx, repo, rev.tree, clean);
+  if (!e) return new Response(`${clean} is not in this version`, { status: 404 });
+  if (e.type === 'tree') {
+    const dir = clean && !clean.endsWith('/') ? clean + '/' : clean;
+    const entries = await tree(env, ctx, repo, e.hash);
+    const rd = entries.find((x) => x.type === 'blob' && /^readme(\.md|\.markdown)?$/i.test(x.name));
+    const readme = rd ? (await blob(env, ctx, repo, rd.hash, rd.name)).text : null;
+    return html(dirPage({ info, v, path: dir, entries, readme, rev }));
+  }
+  const file = await blob(env, ctx, repo, e.hash, clean);
+  return html(filePage({ info, v, path: clean, file, rev, runUrl: `${runBase}/${repo}/${clean}` }));
+}
+
+async function changesRoute(env: Env, ctx: ExecutionContext, info: ProjectInfo, short: string, runBase: string) {
+  const agent = info.agents.find((a) => a.id.split('--')[1] === short.replace(/\/$/, ''));
+  if (!agent) return new Response('No such agent', { status: 404 });
+  const base = agent.base || await forkBase(env, info.repo, agent.fork, agent.createdAt);
+  const tip = await head(env, ctx, agent.fork);
+  if (!base || !tip) return new Response('Could not find where this fork started', { status: 500 });
+  const changes = await diffTrees(env, ctx, info.repo, base.tree, agent.fork, tip.tree);
+  const CAP = 60;
+  const withText: ChangeText[] = await Promise.all(changes.slice(0, CAP).map(async (c) => {
+    const [a, b] = await Promise.all([
+      c.oldHash ? blob(env, ctx, info.repo, c.oldHash, c.path) : null,
+      c.newHash ? blob(env, ctx, agent.fork, c.newHash, c.path) : null,
+    ]);
+    const odd = (x: typeof a) => x && (x.binary || x.tooBig);
+    return { ...c, oldText: a?.text ?? null, newText: b?.text ?? null,
+      note: odd(a) || odd(b) ? `${(a || b)!.binary ? 'Binary' : 'Large'} file, ${c.status}; not shown` : undefined };
+  }));
+  log('code', 'changes', { agent: agent.id, files: changes.length, base: base.commit.slice(0, 8), tip: tip.commit.slice(0, 8) });
+  return html(changesPage({ info, agent, changes: withText,
+    baseNote: `Compared with main at ${base.commit.slice(0, 7)}, when it started${changes.length > CAP ? `; first ${CAP} of ${changes.length} files` : ''}`,
+    previewUrl: `${runBase}/${agent.fork}/${info.entry || ''}` }));
+}
 
 const html = (body: string) => new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 

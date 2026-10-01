@@ -68,6 +68,18 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 - The previewed page (`entry`) is detected once from main's tree and can be
   overridden: `POST /api/p/<o>/<n>/entry {"entry":"demo.html"}`.
 
+## Code browser (src/code.ts, src/codeui.ts)
+
+- Reads go through Artifacts `readTree`/`readBlob` and are memoised per colo
+  by git object hash (immutable, 1 day), so main and its forks share every
+  unchanged folder and file; only "HEAD of repo X" is short-lived (15 s).
+- `diffTrees` skips equal subtree hashes, so a diff costs what changed.
+- An agent's Changes compare its fork with `agent.base` (main at fork time,
+  recorded by `addAgent`), never main's current HEAD — after merges that would
+  show other agents' work as removals.
+- Reading code is open to anyone who can see the project; the ownership
+  check in the project API comes after the read verbs.
+
 ## Run host details
 
 - Every HTML page gets a storage shim injected first (`storageShim()` in

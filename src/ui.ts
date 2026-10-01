@@ -8,10 +8,10 @@ import { markdown } from './md';
 import { MAX_IMPORT_KB } from './github';
 import { SHEET_CSS, SHEET_HTML, SHEET_JS, previewTabs, shortId } from './sheet';
 
-const esc = (s: string) => String(s ?? '').replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]!));
-const STEPS = [14 * 24, 3 * 24, 24, 3];   // freshbar horizon: empty after 14 days
-const path = (slug: string) => `/p/${slug.replace('.', '/')}`;
-const label = (slug: string) => slug.replace('.', ' / ');
+export const esc = (s: string) => String(s ?? '').replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]!));
+export const STEPS = [14 * 24, 3 * 24, 24, 3];   // freshbar horizon: empty after 14 days
+export const path = (slug: string) => `/p/${slug.replace('.', '/')}`;
+export const label = (slug: string) => slug.replace('.', ' / ');
 
 const CSS = `
 :root{--bg:#fff;--card:#f6f7f8;--chip:#eceef1;--line:#e2e5e9;--fg:#15171a;--dim:#5f6670;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;color-scheme:light}
@@ -49,8 +49,8 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .preview iframe{width:100%;height:100%;border:0;display:block;background:#fff}
 .note{background:var(--card);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--dim);margin-top:16px}
 .files{display:flex;flex-wrap:wrap;gap:6px}
-.files span{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:3px 7px}
-.readme{background:var(--card);border-radius:12px;padding:4px 16px;font-size:15px}
+.files span,.files a{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:6px 8px;color:var(--fg)}
+.readme{background:var(--card);border-radius:12px;padding:4px 16px;font-size:15px;overflow-wrap:anywhere}
 .readme h2,.readme h3,.readme h4{margin:16px 0 6px;font-size:17px}
 .readme code{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:1px 4px}
 .readme pre{overflow-x:auto;background:var(--chip);border-radius:8px;padding:10px}
@@ -101,7 +101,7 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 @media (hover:hover){.row:hover{background:var(--chip)}.chipbtn:hover{background:var(--line)}}
 ${FRESH_CSS}${SHEET_CSS}`;
 
-const shell = (title: string, body: string, steps: number[] = STEPS) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
+export const shell = (title: string, body: string, steps: number[] = STEPS) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${esc(title)}</title><meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -158,7 +158,8 @@ ${own ? `<h2>Agents</h2>
 <div class="bar"><button class="btn">Send</button></div></form>
 <div id="agents">${o.agentsHtml}</div>${SHEET_HTML}`
     : `<p class="note">Fork it to change it: your copy gets its own page, its own live app and its own agents.</p>`}
-<h2>Files</h2><div class="files">${overview.files.map((f) => `<span>${esc(f.name)}${f.dir ? '/' : ''}</span>`).join('') || '<span>empty</span>'}</div>
+<h2>Code</h2><div class="files">${overview.files.map((f) => `<a href="/p/${info.owner}/${info.name}/code/${esc(f.name)}${f.dir ? '/' : ''}">${esc(f.name)}${f.dir ? '/' : ''}</a>`).join('') || '<span>empty</span>'}</div>
+<p style="margin:10px 0 0"><a class="chipbtn" href="/p/${info.owner}/${info.name}/code/">Browse and search the code</a></p>
 ${overview.readme ? `<h2>README</h2><div class="readme">${markdown(overview.readme)}</div>` : ''}
 ${forks.length ? `<h2>Forks</h2><div class="rows">${forks.map((e) => row(e, 0, now)).join('')}</div>` : ''}
 <h2>Recent commits</h2>${src && !info.forkedFrom ? `<p class="empty">Imported with the latest commit only; full history stays on <a href="${esc(src.url)}" rel="noopener">GitHub</a>.</p>` : ''}${overview.commits.map((c) => `<div class="commit">${freshTag(c.at, now, STEPS)}<span class="msg">${esc(c.message)}</span><code>${esc(c.hash.slice(0, 7))}</code></div>`).join('') || '<p class="empty">No commits yet.</p>'}
@@ -259,7 +260,7 @@ ${a.request ? `<dt>You asked</dt><dd class="clamp">${esc(a.request)}</dd>` : ''}
 <dt>${a.request ? 'Its task, from the router agent' : 'Its task'}</dt><dd class="clamp">${esc(a.task)}</dd>
 <dt>Result</dt><dd${a.note ? '' : ' class="none"'}>${a.note ? esc(a.note) : ph.busy ? 'Not yet. It reports here when it pushes.' : 'No report yet.'}</dd>
 </dl>
-<div class="acts"><button type="button" class="chipbtn" data-preview="${runBase}/${a.fork}/${info.entry || ''}">Preview</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge</button>` : ''}</div></div>`;
+<div class="acts"><button type="button" class="chipbtn" data-preview="${runBase}/${a.fork}/${info.entry || ''}">Preview</button><a class="chipbtn" href="/p/${info.owner}/${info.name}/changes/${shortId(a.id)}">Changes</a><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge</button>` : ''}</div></div>`;
   };
   const open = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped').reverse();
   const done = info.agents.filter((a) => a.state === 'merged').reverse().slice(0, 5);
