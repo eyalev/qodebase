@@ -77,6 +77,17 @@ Bugs found and fixed during the run:
 - Reviewer answered a new request from memory of the old one → /clear before each review (typed /clear needs a second Enter: the first only picks the menu entry), request names the commit, and verdicts on an older commit are refused (409)
 - "You asked" on alert-born requests → "Reported by Cloudflare Issues"
 
+### Round 9 (2026-10-02): public with your own API key, self-host guide, workflow videos
+- [ ] Public read: explore, project, code, changes pages without Access; actions need sign-in
+- [ ] Sign-in: Access only on /login (any Google account) → forq's own signed session cookie; new users pick a handle
+- [ ] Settings: paste an Anthropic API key (checked against the API, stored encrypted); boxes of that user's projects run Claude Code on it; Eyal keeps the subscription
+- [ ] Limits for other users: projects, agents, awake boxes; crawler gate + noindex on app pages; public-project baseline pass
+- [ ] Self-host guide (SELF_HOST.md) + config that does not assume Eyal's account; repo stays PRIVATE (Eyal, 2026-10-02)
+- [ ] Video research (how good technical walkthroughs are made)
+- [ ] Recording rig: phone-size browser, visible taps, captions, time-lapse for waits, mp4
+- [ ] Workflow videos: 1 fork + router + agents + review + merge; 2 import from GitHub; 3 Worker app error → automatic fix; 4 code browser + changes; 5 sign-up + API key
+- [ ] Review the videos frame by frame; fix UX/design problems they show; re-record
+
 ## v1 (later)
 
 - [x] Worker previews: forq's own builder (`wrangler preview`), not Workers Builds (round 7)
