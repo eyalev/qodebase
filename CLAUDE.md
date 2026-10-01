@@ -84,6 +84,15 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 - Reading code is open to anyone who can see the project; the ownership
   check in the project API comes after the read verbs.
 
+## Roles (one box each, `src/box.ts` taskPrompt)
+
+- agent `<slug>--<id>`: its fork, writable; reports with `forq status`.
+- router agent `<slug>--router`: main, writable; `forq spawn|send|list|merge`.
+- reviewer agent `<slug>--review`: main, read-only token; on every push forq
+  queues a review (Project.queueReview → startReview in index.ts), it runs
+  `forq fetch-agent` + `forq verdict`. One review at a time; reviews stuck in
+  "reviewing" for 20 min requeue on the next page poll.
+
 ## Run host details
 
 - Every HTML page gets a storage shim injected first (`storageShim()` in

@@ -10,6 +10,8 @@ export const FORQ_CLI = String.raw`#!/usr/bin/env python3
   forq spawn "task"                             start an agent on its own fork (router)
   forq send <agent-id> "text"                   message an agent (router)
   forq merge <agent-id>                         merge an agent's fork into main (router)
+  forq fetch-agent <agent-id>                   fetch an agent's work to review it (reviewer)
+  forq verdict <agent-id> approve|changes "notes"   your review verdict (reviewer)
 """
 import json, os, subprocess, sys, urllib.request
 
@@ -64,6 +66,22 @@ def main(argv):
             sys.exit(f'forq: merge conflict - resolve in /workspace/repo, commit, then: git push origin HEAD && forq merged {rest[0]}\n{m.stdout}{m.stderr}')
         git('push', '-q', 'origin', f'HEAD:{br}')
         api('POST', '/api/agent/merged', {'agent': rest[0]}); print(f'merged {rest[0]} into main')
+    elif v == 'fetch-agent':
+        if not rest: sys.exit('usage: forq fetch-agent <agent-id>')
+        f = api('GET', '/api/agent/review-info?agent=' + rest[0])
+        ref = f'refs/agents/{rest[0]}'
+        git('-c', f"http.extraHeader=Authorization: Bearer {f['token']}", 'fetch', '-q', f['remote'], f'+HEAD:{ref}')
+        if f.get('base'):
+            # Shallow imports may lack the base commit locally; deepen once if needed.
+            if git('cat-file', '-e', f['base'] + '^{commit}', check=False).returncode:
+                git('-c', f"http.extraHeader=Authorization: Bearer {f['token']}", 'fetch', '-q', '--deepen=50', f['remote'], f'+HEAD:{ref}', check=False)
+        print(f"agent:   {rest[0]}\ntask:    {f['task']}")
+        if f.get('request'): print(f"asked:   {f['request']}")
+        print(f"base:    {f.get('base') or '(unknown: diff against main)'}\nfetched: {ref}\npreview: {f['preview']}")
+        print(f"diff:    git diff {f.get('base') or 'HEAD'} {ref}")
+    elif v == 'verdict':
+        if len(rest) < 2 or rest[1] not in ('approve', 'changes'): sys.exit('usage: forq verdict <agent-id> approve|changes "notes"')
+        api('POST', '/api/agent/verdict', {'agent': rest[0], 'verdict': rest[1], 'notes': ' '.join(rest[2:])}); print('ok')
     elif v == 'merged':
         api('POST', '/api/agent/merged', {'agent': rest[0]}); print('ok')
     else:

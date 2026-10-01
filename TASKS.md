@@ -51,9 +51,14 @@
 - [x] Changes: /p/<o>/<n>/changes/<agent> — fork vs where it started (agent.base, recorded at fork time; older agents: main's newest commit before the fork), per-file unified diff (jsdiff), +/- counts; "Changes" button on agent cards
 - [x] Content search: FTS5 trigram index in the Project DO's SQLite, built on the first search of a version (text files only, ≤256 KB each, ≤3000 files / 20 MB), 4 newest versions kept; "Search file contents" at the bottom of Go to file, matches grouped by file with line links. Verified: 2048 (20 files), reveal.js (213 + 6 skipped), an agent fork
 
+### Round 6 (2026-10-01): reviewer agent
+- [x] Reviewer agent per project (`<slug>--review`, main read-only): every `forq status pushed` queues a review, one at a time; `forq fetch-agent` + `forq verdict approve|changes`; phone-size Chromium screenshots it reads itself
+- [x] Card: Review line (waiting / reviewing / approved / changes + notes), Ask agent to fix, Review it, Merge anyway; Reviewer agent row under the router agent panel; stuck reviews requeue after 20 min
+- [x] End to end on an IMPORTED project (branch master): fork forq/2048 → eyal/2048, router → agent 00l0u (7 min, SCSS + rebuilt CSS) → reviewer approved in 3 min after rebuilding Sass and reading 5 screenshots → merged into master, live app has the dark theme
+
 ## v1 (later)
 
-- [ ]  preview per fork (Workers Builds), Issues → router webhook, reviewer agent, public project pages + baseline
+- [ ] Workers Builds previews (only for Worker projects; static apps already preview per fork), Issues → router webhook (needs a project deployed as a Worker), public project pages + baseline (needs the API-key decision)
 
 ## Open
 

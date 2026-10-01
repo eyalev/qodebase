@@ -88,6 +88,10 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .io dd.none{color:var(--dim);font-size:14px}
 .io dd.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .io dd.clamp.open{-webkit-line-clamp:unset}
+.io dd.rv b{font-weight:600}
+.io dd.rv.approved b{color:var(--acc)}
+.io dd.rv .rn{display:block;margin-top:2px;color:var(--fg)}
+.router.reviewer{margin-top:8px}
 .card .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .card .acts .chipbtn,.card .acts .btn{min-height:40px;padding:0 12px;font-size:14px}
 .empty{color:var(--dim);font-size:14px}
@@ -190,6 +194,9 @@ if(ask){
  box.addEventListener('click',async(e)=>{
   const retry=e.target.closest('[data-retry]');if(retry){retry.disabled=true;send(retry.dataset.retry);return;}
   const c=e.target.closest('dd.clamp');if(c){c.classList.toggle('open');return;}
+  const fx=e.target.closest('[data-fix],[data-review]');if(fx){fx.disabled=true;const isFix=!!fx.dataset.fix;fx.textContent=isFix?'Sending to the agent':'Queueing review';
+   const r=await fetch(API+(isFix?'/fix':'/review'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({agent:fx.dataset.fix||fx.dataset.review})});
+   if(!r.ok){const j=await r.json().catch(()=>({}));fx.textContent=j.error||'Failed';}poll();return;}
   const m=e.target.closest('[data-merge]');if(!m)return;
   m.disabled=true;m.textContent='Asking the router agent';
   const r=await fetch(API+'/merge',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({agent:m.dataset.merge})});
@@ -249,22 +256,41 @@ function routerPanel(info: ProjectInfo, r: BoxStatus) {
 ${q ? `<div class="you"><b>You</b> ${esc(q.text)}</div>` : ''}${said ? `<div class="said">${esc(said)}</div>` : ''}</div>`;
 }
 
-export function agentsHtml(info: ProjectInfo, runBase: string, router: BoxStatus, status: Record<string, BoxStatus>) {
+const REVIEW_WORD: Record<string, string> = { queued: 'Waiting for the reviewer', reviewing: 'Reviewing now', approved: 'Approved', changes: 'Changes suggested', sent: 'Sent to the agent to fix' };
+
+function reviewBlock(a: Agent) {
+  const r = a.review;
+  if (!r) return '';
+  const live = r.state === 'queued' || r.state === 'reviewing';
+  return `<dt>Review</dt><dd class="rv ${r.state}${live ? ' busy' : ''}"><b>${REVIEW_WORD[r.state] || r.state}</b>${live ? ` <span data-since="${r.at}">0s</span>` : ''}${r.notes ? `<span class="rn">${esc(r.notes)}</span>` : ''}</dd>`;
+}
+
+function reviewerRow(info: ProjectInfo, s: BoxStatus) {
+  const doing = info.agents.find((a) => a.review?.state === 'reviewing');
+  const queued = info.agents.filter((a) => a.review?.state === 'queued').length;
+  const word = doing ? `Reviewing ${shortId(doing.id)}${queued ? `, ${queued} waiting` : ''}` : s.awake ? 'Idle' : 'Asleep. It reviews every push before you merge.';
+  return `<div class="router reviewer${doing ? ' busy' : ''}"><div class="rh"><span class="dot ${doing ? 'busy' : s.awake ? 'idle' : ''}"></span><span class="who">Reviewer agent</span><span class="phase">${esc(word)}</span></div>
+<div class="acts"><button type="button" class="chipbtn" data-sheet="${info.slug}--review" data-name="Reviewer agent" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${info.slug}--review" data-name="Reviewer agent" data-mode="term">Terminal</button></div></div>`;
+}
+
+export function agentsHtml(info: ProjectInfo, runBase: string, router: BoxStatus, status: Record<string, BoxStatus>, reviewer: BoxStatus = { awake: false, cc: 'asleep' }) {
   const now = Date.now();
   const card = (a: Agent) => {
     const s = status[a.id] || { awake: false, cc: 'asleep' };
     const ph = agentPhase(a, s);
-    return `<div class="card${ph.busy ? ' busy' : ''}"><div class="h"><span class="dot ${ph.dot}"></span><span>${esc(a.id.split('--')[1])}</span>${freshTag(a.noteAt || a.createdAt, now, STEPS)}<span class="st">${ph.word}${ph.since ? ` ${since(ph.since)}` : ''}</span></div>
+    const reviewing = a.review?.state === 'queued' || a.review?.state === 'reviewing';
+    return `<div class="card${ph.busy || reviewing ? ' busy' : ''}"><div class="h"><span class="dot ${ph.dot}"></span><span>${esc(a.id.split('--')[1])}</span>${freshTag(a.noteAt || a.createdAt, now, STEPS)}<span class="st">${ph.word}${ph.since ? ` ${since(ph.since)}` : ''}</span></div>
 <dl class="io">
 ${a.request ? `<dt>You asked</dt><dd class="clamp">${esc(a.request)}</dd>` : ''}
 <dt>${a.request ? 'Its task, from the router agent' : 'Its task'}</dt><dd class="clamp">${esc(a.task)}</dd>
 <dt>Result</dt><dd${a.note ? '' : ' class="none"'}>${a.note ? esc(a.note) : ph.busy ? 'Not yet. It reports here when it pushes.' : 'No report yet.'}</dd>
+${reviewBlock(a)}
 </dl>
-<div class="acts"><button type="button" class="chipbtn" data-preview="${runBase}/${a.fork}/${info.entry || ''}">Preview</button><a class="chipbtn" href="/p/${info.owner}/${info.name}/changes/${shortId(a.id)}">Changes</a><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge</button>` : ''}</div></div>`;
+<div class="acts"><button type="button" class="chipbtn" data-preview="${runBase}/${a.fork}/${info.entry || ''}">Preview</button><a class="chipbtn" href="/p/${info.owner}/${info.name}/changes/${shortId(a.id)}">Changes</a><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.review?.state === 'changes' ? `<button type="button" class="chipbtn" data-fix="${esc(a.id)}">Ask agent to fix</button>` : ''}${a.state === 'pushed' && !a.review ? `<button type="button" class="chipbtn" data-review="${esc(a.id)}">Review it</button>` : ''}${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge${a.review?.state === 'changes' ? ' anyway' : ''}</button>` : ''}</div></div>`;
   };
   const open = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped').reverse();
   const done = info.agents.filter((a) => a.state === 'merged').reverse().slice(0, 5);
-  return `${routerPanel(info, router)}
+  return `${routerPanel(info, router)}${reviewerRow(info, reviewer)}
 <div class="cards">${open.map(card).join('') || '<p class="empty">No agents working. Ask the router agent for a change.</p>'}</div>
 ${done.length ? `<h2>Merged</h2><div class="cards">${done.map(card).join('')}</div>` : ''}`;
 }

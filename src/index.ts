@@ -8,7 +8,7 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AGENT_RE, NAME_RE, projectOf, slugOf, type Env } from './env';
 import { AgentBox, log, type BootSpec } from './box';
-import { Project, type ProjectInfo } from './project';
+import { Project, roleOf, type ProjectInfo, type Role } from './project';
 import { Registry, registry } from './registry';
 import { serveRun } from './run';
 import { agentsHtml, explorePage, projectPage, type BoxStatus } from './ui';
@@ -24,7 +24,7 @@ import MA_REV from '../box/mobile-agent.rev';
 
 export { AgentBox, Project, Registry };
 
-type Who = { kind: 'user'; handle: string; admin: boolean } | { kind: 'agent'; agentId: string; router: boolean };
+type Who = { kind: 'user'; handle: string; admin: boolean } | { kind: 'agent'; agentId: string; role: Role };
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 const json = (data: unknown, status = 200) => Response.json(data, { status });
 const projectStub = (env: Env, slug: string) => env.Project.get(env.Project.idFromName(slug));
@@ -46,7 +46,7 @@ async function who(request: Request, env: Env): Promise<Who | null> {
     if (at) {
       const i = at.lastIndexOf('.');
       const id = at.slice(0, i);
-      if (i > 0 && AGENT_RE.test(id) && at.slice(i + 1) === await hmac(env, id)) return { kind: 'agent', agentId: id, router: id.endsWith('--router') };
+      if (i > 0 && AGENT_RE.test(id) && at.slice(i + 1) === await hmac(env, id)) return { kind: 'agent', agentId: id, role: roleOf(id) };
       return null;
     }
     if (env.ADMIN_SECRET && request.headers.get('x-forq-secret') === env.ADMIN_SECRET) {
@@ -72,10 +72,10 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
   const r = await projectStub(env, slug).boxRepo(agentId);
   const cc = env.CLAUDE_CODE_OAUTH_TOKEN;
   return {
-    agentId, task: r.task, router: r.router, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token,
+    agentId, task: r.task, role: r.role, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token,
     agentToken: await agentToken(env, agentId), apiBase, maRev: MA_REV.trim(),
     bootEnv: [
-      `SBX_NAME=${JSON.stringify(r.router ? `${slug.replace('.', '/')} router` : agentId)}`,
+      `SBX_NAME=${JSON.stringify(r.role === 'agent' ? agentId : `${slug.replace('.', '/')} ${r.role}`)}`,
       'AGENT=claude',
       `CC_ENV=${JSON.stringify(`CLAUDE_CODE_OAUTH_TOKEN=${cc}`)}`,
       `CC_KEY_TAIL=${JSON.stringify(cc.slice(-20))}`,
@@ -90,7 +90,7 @@ async function wake(env: Env, agentId: string, apiBase: string) {
   const info = await projectStub(env, projectOf(agentId)).info();
   if (!info) throw new Error('no such project');
   const max = Number(env.MAX_AWAKE_BOXES || 5);
-  const others = [...info.agents.map((a) => a.id), `${info.slug}--router`].filter((id) => id !== agentId);
+  const others = [...info.agents.map((a) => a.id), `${info.slug}--router`, `${info.slug}--review`].filter((id) => id !== agentId);
   const awake = await Promise.all(others.map((id) => boxStub(env, id).isAwake().catch(() => false)));
   if (awake.filter(Boolean).length >= max) return { ok: false, ms: 0, from: 'none', error: `${max} boxes already awake in this project` };
   return boxStub(env, agentId).ensureUp(await bootSpec(env, agentId, apiBase));
@@ -108,7 +108,8 @@ async function renderAgents(env: Env, info: ProjectInfo, runBase: string) {
   const status: Record<string, BoxStatus> = {};
   const open = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped');
   await Promise.all(open.map(async (a) => { status[a.id] = await boxStatus(env, a.id); }));
-  return agentsHtml(info, runBase, await boxStatus(env, `${info.slug}--router`, true), status);
+  const [router, reviewer] = await Promise.all([boxStatus(env, `${info.slug}--router`, true), boxStatus(env, `${info.slug}--review`)]);
+  return agentsHtml(info, runBase, router, status, reviewer);
 }
 
 /** Send text to a box's Claude Code, booting it first if needed. */
@@ -237,6 +238,10 @@ export default {
           return json({ ok: true, entry: (await p.info())?.entry });
         }
         if (verb === 'touch' && request.method === 'POST' && me.admin) { await registry(env).touch(slug); return json({ ok: true }); }
+        if (verb === 'agents-html') {
+          // Opportunistic: a review stuck in 'reviewing' (its box died) goes back to the queue.
+          ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.requeueStale()));
+        }
         if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase), tabs: previewTabs(info, runBase) });
         if (verb === 'agents' && request.method === 'POST') {
           const b = await request.json() as { task?: string };
@@ -248,11 +253,25 @@ export default {
           if (!text || text.length > 8000) return json({ error: 'say something (max 8000 chars)' }, 400);
           return json(await askRouter(env, ctx, p, slug, text, apiBase));
         }
+        if (verb === 'review' && request.method === 'POST') {
+          const b = await request.json() as { agent?: string };
+          if (!info.agents.some((x) => x.id === b.agent)) return json({ error: 'unknown agent' }, 404);
+          ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.queueReview(b.agent!)));
+          return json({ ok: true });
+        }
+        if (verb === 'fix' && request.method === 'POST') {
+          const b = await request.json() as { agent?: string };
+          const a = info.agents.find((x) => x.id === b.agent);
+          if (!a?.review?.notes) return json({ error: 'no review notes for that agent' }, 400);
+          const r = await sendTo(env, a.id, `The reviewer asked for changes:\n\n${a.review.notes}\n\nFix them, commit, push with \`git push origin HEAD\`, then run \`forq status pushed "<what you changed>"\`.`, apiBase);
+          if (r.ok) { await p.markReviewSent(a.id); await p.setState(a.id, 'working'); }
+          return json(r, r.ok ? 200 : 502);
+        }
         if (verb === 'merge' && request.method === 'POST') {
           const b = await request.json() as { agent?: string };
           const a = info.agents.find((x) => x.id === b.agent);
           if (!a) return json({ error: 'unknown agent' }, 404);
-          return json(await askRouter(env, ctx, p, slug, `Merge agent ${a.id} into main: run \`forq merge ${a.id}\` and tell me the result in one line.`, apiBase));
+          return json(await askRouter(env, ctx, p, slug, `Merge agent ${a.id} into the project's main line: run \`forq merge ${a.id}\` and tell me the result in one line.`, apiBase, `Merge ${a.id.split('--')[1]}`));
         }
       }
 
@@ -358,9 +377,10 @@ const html = (body: string) => new Response(body, { headers: { 'content-type': '
 /** Hand text to the router agent. Recorded first and answered at once; waking
  *  (6-20 s) and delivery happen in the background, and the page shows each
  *  phase from the project's lastRequest. */
-async function askRouter(env: Env, ctx: ExecutionContext, p: DurableObjectStub<Project>, slug: string, text: string, apiBase: string) {
+async function askRouter(env: Env, ctx: ExecutionContext, p: DurableObjectStub<Project>, slug: string, text: string, apiBase: string, shown = text) {
   const at = Date.now();
-  await p.setRequest({ text, at, state: 'waking', sentAt: undefined, error: undefined });
+  // `shown` is what the page quotes as "You": the person's words, not forq's instruction to the router.
+  await p.setRequest({ text: shown, at, state: 'waking', sentAt: undefined, error: undefined });
   ctx.waitUntil(sendTo(env, `${slug}--router`, text, apiBase)
     .then((r) => {
       log('api', 'router_send', { slug, ok: r.ok, chars: text.length, ms: Date.now() - at, err: r.error });
@@ -371,6 +391,21 @@ async function askRouter(env: Env, ctx: ExecutionContext, p: DurableObjectStub<P
       return p.setRequest({ state: 'failed', error: String(e?.message || e) });
     }));
   return { ok: true, at };
+}
+
+/** Run a review-queue step (queue, verdict, …) and hand the reviewer the agent
+ *  it returns, if any. One review at a time per project. */
+async function startReview(env: Env, p: DurableObjectStub<Project>, slug: string, apiBase: string, step: () => Promise<string | null>) {
+  try {
+    const next = await step();
+    if (!next) return;
+    const text = `Review agent ${next}: run \`forq fetch-agent ${next}\`, then follow your review steps and finish with \`forq verdict ${next} approve|changes "..."\`.`;
+    const r = await sendTo(env, `${slug}--review`, text, apiBase);
+    log('review', 'dispatched', { slug, agent: next, ok: r.ok, err: r.error });
+    if (!r.ok) await p.setVerdict(next, 'changes', `The reviewer could not start: ${r.error}. Review it yourself, or push again to retry.`);
+  } catch (e) {
+    log('review', 'failed', { slug, err: String(e), stack: (e as Error)?.stack });
+  }
 }
 
 async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string) {
@@ -397,12 +432,29 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     const info = await p.info();
     return json({ agents: (info?.agents || []).map(({ id, task, state, note }) => ({ id, task, state, note })) });
   }
-  if (verb === 'status' && !me.router) {
+  if (verb === 'status' && me.role === 'agent') {
     if (!['working', 'pushed', 'blocked'].includes(body.state)) return json({ error: 'state: working|pushed|blocked' }, 400);
     await p.setState(me.agentId, body.state as 'working', String(body.note || ''));
+    // Every push gets a review before the person merges.
+    if (body.state === 'pushed') ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId)));
     return json({ ok: true });
   }
-  if (!me.router) return json({ error: 'only the router can do that' }, 403);
+  if (me.role === 'reviewer') {
+    if (verb === 'review-info') {
+      const agent = url.searchParams.get('agent') || '';
+      if (projectOf(agent) !== slug) return json({ error: 'not an agent of this project' }, 400);
+      const r = await p.reviewInfo(agent);
+      return json({ ...r, preview: `https://${env.RUN_HOST}/${agent}/${r.entry}` });
+    }
+    if (verb === 'verdict') {
+      if (projectOf(body.agent || '') !== slug) return json({ error: 'not an agent of this project' }, 400);
+      if (!['approve', 'changes'].includes(body.verdict)) return json({ error: 'verdict: approve|changes' }, 400);
+      ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.setVerdict(body.agent, body.verdict === 'approve' ? 'approved' : 'changes', String(body.notes || ''))));
+      return json({ ok: true });
+    }
+    return json({ error: 'the reviewer can fetch-agent and verdict' }, 403);
+  }
+  if (me.role !== 'router') return json({ error: 'only the router agent can do that' }, 403);
   if (verb === 'spawn') {
     return json(await spawn(env, ctx, slug, String(body.task || ''), apiBase));
   }

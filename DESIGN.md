@@ -47,6 +47,11 @@ none of its chrome.
   Claude Code → Working on it · N agents started), then its reply. Anything in
   progress shows the `--busy` dot and the page polls every 2 s instead of 5 s.
   A failed delivery says why and offers Retry. Never a silent button.
+- **Review on the card:** a "Review" line after Result: Waiting for the
+  reviewer / Reviewing now (ticking) / Approved (accent) / Changes suggested
+  with the notes, then "Ask agent to fix". Merge stays available; after a
+  "changes" verdict it reads "Merge anyway". A Reviewer agent row sits under
+  the router agent panel (state + Chat/Terminal).
 - **Agent states, one word:** starting (until its task has gone in), working,
   waiting for you, pushed, blocked, asleep, merged. Never "idle" for a box that
   has not started its task.

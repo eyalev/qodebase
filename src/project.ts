@@ -18,11 +18,16 @@ export type Agent = {
   noteAt?: number;
   request?: string;    // the person's request that led to it (router-spawned agents)
   base?: { commit: string; tree: string };  // main when it was forked: what its Changes diff against
+  review?: Review;
 };
+/** The reviewer agent's verdict on an agent's latest push. */
+export type Review = { state: 'queued' | 'reviewing' | 'approved' | 'changes' | 'sent'; notes?: string; at: number; commit?: string };
 /** The last thing the person asked the router agent, and how far delivery got. */
 export type RouterRequest = { text: string; at: number; state: 'waking' | 'sent' | 'failed'; sentAt?: number; error?: string };
 /** Where an imported project came from (GitHub metadata at import time). */
 export type ImportedFrom = { url: string; fullName: string; stars: number; license: string | null; branch: string };
+export type Role = 'agent' | 'router' | 'reviewer';
+export const roleOf = (id: string): Role => id.endsWith('--router') ? 'router' : id.endsWith('--review') ? 'reviewer' : 'agent';
 export type ProjectInfo = {
   slug: string; owner: string; name: string; description: string;
   repo: string; remote: string; forkedFrom: string | null; createdAt: number;
@@ -124,16 +129,75 @@ export class Project extends DurableObject<Env> {
   }
 
   /** Remote + write token for what a box clones: its fork, or main for the router. */
-  async boxRepo(agentId: string, ttlS = 7 * 86400): Promise<{ task: string; remote: string; token: string; router: boolean }> {
+  async boxRepo(agentId: string, ttlS = 7 * 86400): Promise<{ task: string; remote: string; token: string; role: Role }> {
     const info = await this.#need();
-    if (agentId === `${info.slug}--router`) {
+    const role = roleOf(agentId);
+    if (role !== 'agent') {
+      // Router: main, writable (it merges). Reviewer: main, read-only (it only reads).
       using repo = await this.env.ARTIFACTS.get(info.repo);
-      return { task: '', remote: info.remote, token: (await repo.createToken('write', ttlS)).plaintext, router: true };
+      return { task: '', remote: info.remote, token: (await repo.createToken(role === 'router' ? 'write' : 'read', ttlS)).plaintext, role };
     }
     const agent = info.agents.find((a) => a.id === agentId);
     if (!agent) throw new Error('unknown agent');
     using repo = await this.env.ARTIFACTS.get(agent.fork);
-    return { task: agent.task, remote: agent.remote, token: (await repo.createToken('write', ttlS)).plaintext, router: false };
+    return { task: agent.task, remote: agent.remote, token: (await repo.createToken('write', ttlS)).plaintext, role };
+  }
+
+  // ---- reviews: one reviewer per project, one review at a time -----------
+  /** Queue a review of an agent's latest push. Returns the agent to review
+   *  now if the reviewer is free, else null (it is picked up on the next verdict). */
+  async queueReview(agentId: string, commit?: string): Promise<string | null> {
+    const info = await this.#need();
+    const a = info.agents.find((x) => x.id === agentId);
+    if (!a) throw new Error('unknown agent');
+    a.review = { state: 'queued', at: Date.now(), commit };
+    await this.ctx.storage.put('info', info);
+    const busy = info.agents.some((x) => x.review?.state === 'reviewing');
+    return busy ? null : this.#startNext(info);
+  }
+
+  async #startNext(info: ProjectInfo): Promise<string | null> {
+    const next = info.agents.filter((x) => x.review?.state === 'queued').sort((x, y) => x.review!.at - y.review!.at)[0];
+    if (!next) return null;
+    next.review = { ...next.review!, state: 'reviewing', at: Date.now() };
+    await this.ctx.storage.put('info', info);
+    return next.id;
+  }
+
+  /** The reviewer's verdict. Returns the next agent to review, if any. */
+  async setVerdict(agentId: string, verdict: 'approved' | 'changes', notes: string): Promise<string | null> {
+    const info = await this.#need();
+    const a = info.agents.find((x) => x.id === agentId);
+    if (!a) throw new Error('unknown agent');
+    a.review = { state: verdict, notes: notes.slice(0, 2000), at: Date.now(), commit: a.review?.commit };
+    await this.ctx.storage.put('info', info);
+    log('project', 'review_verdict', { slug: info.slug, agentId, verdict });
+    return this.#startNext(info);
+  }
+
+  /** A review stuck in 'reviewing' (box died) goes back to the queue. */
+  async requeueStale(maxMs = 20 * 60_000): Promise<string | null> {
+    const info = await this.#need();
+    let changed = false;
+    for (const a of info.agents) if (a.review?.state === 'reviewing' && Date.now() - a.review.at > maxMs) { a.review.state = 'queued'; changed = true; }
+    if (changed) await this.ctx.storage.put('info', info);
+    return info.agents.some((x) => x.review?.state === 'reviewing') ? null : this.#startNext(info);
+  }
+
+  async markReviewSent(agentId: string) {
+    const info = await this.#need();
+    const a = info.agents.find((x) => x.id === agentId);
+    if (a?.review) { a.review.state = 'sent'; a.review.at = Date.now(); await this.ctx.storage.put('info', info); }
+  }
+
+  /** What the reviewer needs: the fork (read token) and where the agent started. */
+  async reviewInfo(agentId: string): Promise<{ remote: string; token: string; base: string | null; task: string; request?: string; entry: string }> {
+    const info = await this.#need();
+    const a = info.agents.find((x) => x.id === agentId);
+    if (!a) throw new Error('unknown agent');
+    using repo = await this.env.ARTIFACTS.get(a.fork);
+    return { remote: a.remote, token: (await repo.createToken('read', 1800)).plaintext, base: a.base?.commit || null,
+      task: a.task, request: a.request, entry: info.entry || '' };
   }
 
   /** What the router needs to merge an agent: the fork's remote + a read token. */

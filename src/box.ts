@@ -29,8 +29,8 @@ export function log(module: string, event: string, fields: Record<string, unknow
 type Snap = { id: string; size: number; name?: string };
 export type BootSpec = {
   agentId: string;
-  task: string;         // '' for the router
-  router: boolean;      // the router works on main itself and runs forq spawn/merge
+  task: string;         // '' for the router and the reviewer
+  role: 'agent' | 'router' | 'reviewer';  // router: main, merges; reviewer: main read-only, reviews pushes
   project: string;      // owner/name, for prompts
   remote: string;       // fork's (or main's) git remote
   gitToken: string;     // write token for that repo (art_v2_…?expires=…)
@@ -327,7 +327,15 @@ PY
 }
 
 function taskPrompt(spec: BootSpec) {
-  if (spec.router) {
+  if (spec.role === 'reviewer') {
+    return [
+      `You are the reviewer agent of the forq project ${spec.project}. ${REPO_DIR} is a read-only clone of the project's main line. Agents work on their own forks; when one pushes, you are asked to review it before the person merges.`,
+      `For each review request: run \`forq fetch-agent <agent-id>\` (it fetches the agent's work into refs/agents/<agent-id> and prints its task, where it started and its preview URL). Read the change with \`git diff <base> refs/agents/<agent-id>\`. If the project has a web page, look at the agent's preview at phone size: \`chromium --headless=new --hide-scrollbars --window-size=390,844 --screenshot=/tmp/<agent-id>.png <preview-url>\`, then open that PNG with your Read tool and look at it.`,
+      `Check: does it do what the task asked, does anything look broken or out of place, any obvious bug. Be brief and concrete. Then give your verdict with exactly one of: \`forq verdict <agent-id> approve "<one or two lines>"\` or \`forq verdict <agent-id> changes "<what to fix, specific>"\`. Never edit or push code yourself.`,
+      `Reply now with one line saying you are ready, then wait for review requests.`,
+    ].join('\n\n');
+  }
+  if (spec.role === 'router') {
     return [
       `You are the router agent of the forq project ${spec.project}. ${REPO_DIR} is a clone of the project's main line (its default branch). You coordinate; agents do the work.`,
       `The person will message you from their phone. For each request: split it into independent tasks that touch different parts of the code where possible, and start one agent per task with \`forq spawn "<task>"\` (each agent gets its own fork and box; give it a complete, self-contained task). Small questions about the code you may answer yourself. Do not edit main yourself unless asked.`,
