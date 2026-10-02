@@ -86,9 +86,12 @@ Bugs found and fixed during the run:
 - [x] Baseline pass: /about, /privacy, /version.json, /health.json, robots.txt, crawler gate (verified bots: front page only); not yet: feedback form, kstats, og:image, push alerts (noted in CLAUDE.md)
 - [x] Self-host guide (SELF_HOST.md) + no account-specific values left in src (UI host, API base from config); repo stays PRIVATE (Eyal, 2026-10-02). Open item: a public Dockerfile for the box image
 - [x] Video research → docs/video-guide.md
-- [ ] Recording rig: phone-size browser, visible taps, captions, time-lapse for waits, mp4
-- [ ] Workflow videos: 1 fork + router + agents + review + merge; 2 import from GitHub; 3 Worker app error → automatic fix; 4 code browser + changes; 5 sign-up + API key
-- [ ] Review the videos frame by frame; fix UX/design problems they show; re-record
+- [x] Recording rig (video/rig.mjs + compose.py): phone-size browser, visible taps, captions, time-lapse capped at 8 s per wait, readable plain-text pages, mp4
+- [x] W2 import, W4 code browser, W5 sign-up + key (re-recorded: captions now lead their taps)
+- [ ] W1 fork + router + agents + review + merge (re-recording)
+- [ ] W3 Worker error → automatic fix (re-record on a fresh fork of forq/workers-chat-demo)
+- [ ] Combined contest video (5–10 min) + .srt
+- Fixes the videos and their runs surfaced: reviewer prompt judges the agent's own task; on-screen spinner = busy; send() waits for the ready prompt and confirms Claude Code started (a request to a just-booted router was lost); delete destroys a project's boxes; review watchdog; settings errors show under their form
 
 ## v1 (later)
 
