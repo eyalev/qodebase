@@ -44,7 +44,11 @@ If you bring your own image, it must keep this contract (see `src/box.ts`):
    (this Worker's `https://<name>.<subdomain>.workers.dev`), `OWNER_HANDLE`
    (your handle), `HANDLES` (`{"you@example.com":"you"}`), the two `routes`
    (custom domains for `UI_HOST` and `RUN_HOST`), and the container image(s).
-   Delete `UI_VARIANT_HOSTS` (design previews of the hosted instance). The caps
+   Delete `UI_VARIANT_HOSTS` (design previews of the hosted instance).
+   `APPS_DOMAIN` (optional): a zone on your account where Worker projects get
+   `<name>--<owner>.<APPS_DOMAIN>` and previews `<alias>.<that host>`; then
+   `CF_DEPLOY_TOKEN` also needs Zone > Workers Routes > Write on that zone.
+   Without it, apps stay on workers.dev. The caps
    `MAX_AGENTS_PER_PROJECT`, `MAX_AWAKE_BOXES` and `OTHERS_MAX_AWAKE` bound
    what containers can cost you.
 2. **Cloudflare Access**: create a self-hosted Access application for

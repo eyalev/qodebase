@@ -130,9 +130,17 @@ waitUntil work is cut ~30 s after the response. Waking a box can take longer
 ## Worker projects (src/build.ts)
 
 - A project with a wrangler config at its root is `kind: 'worker'`. forq's
-  BuildBox (`<slug>--build`, same image, no Claude) deploys main as
-  `forq-app-<owner>-<name>.forqdev.workers.dev` and each pushed agent fork as a
-  Preview (`ag-<id>-forq-app-….workers.dev`, own Durable Object storage).
+  BuildBox (`<slug>--build`, same image, no Claude) deploys main as Worker
+  `forq-app-<owner>-<name>` on its own host **`<name>--<owner>.ttyview.dev`**
+  (custom domain, `APPS_DOMAIN`), and each pushed agent fork as a Preview at
+  **`ag-<id>.<name>--<owner>.ttyview.dev`** (`previews_enabled` on that custom
+  domain: Cloudflare adds the wildcard record and certificate; own Durable
+  Object storage). workers.dev (`*.forqdev.workers.dev`) stays as a fallback.
+  Handles cannot contain `--`, so the owner is what follows the last one. A
+  proxy Worker on `*.ttyview.dev` is not possible: fetching another Worker's
+  workers.dev URL on the same account is error 1042.
+- `CF_DEPLOY_TOKEN` (forq-builder): Workers Scripts write on the account plus
+  Workers Routes write on the ttyview.dev zone only (custom domains need it).
 - Builds run from BuildBox.alarm() (outlive the request), one at a time.
 - `CF_DEPLOY_TOKEN` (Workers Scripts write only) goes to one wrangler command
   per build and never into agent boxes. It cannot delete Workers: use the

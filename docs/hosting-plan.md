@@ -42,9 +42,11 @@ Eyal chose to do Phases 1 and 2 before the contest:
   own Access team (`forqdev`), tokens, image registry and Artifacts namespace.
 - **Platform on `projectsbase.dev`**, the apex. Its old subdomains redirect:
   `whenfit.` and `pdf.` to their kapps.dev homes, `www.` to the apex.
-- **Run host on `ttyview.dev`** (`/<owner>.<name>/`). Worker apps still land on
-  `forq-app-….forqdev.workers.dev`; moving them under ttyview.dev is the
-  remaining Phase 2 step.
+- **Run host on `ttyview.dev`** (`/<owner>.<name>/`) for static apps; **Worker
+  apps on `<name>--<owner>.ttyview.dev`**, their agent previews on
+  `ag-<id>.<name>--<owner>.ttyview.dev` (custom domain with previews enabled).
+  Phase 2 is done; static apps could move to per-project hosts too, which
+  would also give each its own origin (storage isolation).
 - **Fresh start**: showcase re-imported, seeds and Eyal's projects copied with
   their history; the old instance is frozen behind 301s from kapps.dev.
 
