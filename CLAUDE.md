@@ -232,11 +232,38 @@ tab loads `/a/<id>/agent/?ui=minimal` (terminal, six keys, input).
 
 ## Baseline
 
-forq is public to read since 2026-10-02 (sign-in by emailed code, BYO API key).
-Done: `/about` and `/privacy` with a contact address (hello@kapps.dev),
-`/version.json`, `/health.json`, robots.txt, a crawler gate on WHO (verified
-bots get only the front page), admin behind the admin secret on workers.dev,
-`noindex` on every page (pre-launch). Not yet, and why: feedback form,
-same-origin kstats analytics, og:image, push alerts, the 390 px check script
-(pre-launch, private repo; add before announcing). The run host is public but
-serves only static demo apps, refuses verified bots and sends `noindex`.
+forq is public to read since 2026-10-02 (sign-in by emailed code, BYO API key),
+and its repo is public (Apache-2.0). Done, in `src/baseline.ts` unless noted:
+- `/about`, `/privacy` (contact hello@kapps.dev; privacy text says what
+  kstats and the feedback form keep: change it with the code).
+- **Feedback:** `/feedback?from=<path>`, server-rendered, honeypot, posts to
+  remote-manage's central inbox (`FEEDBACK_KEY`, project `forq`); not stored →
+  the visitor keeps their text and a push carries the message. Links in the
+  UI tab's footers / More menu.
+- **Analytics:** kstats site `forq` (origin https://projectsbase.dev), tag
+  injected into every HTML page by `withBaseline` (HTMLRewriter on the way
+  out), same-origin `/e` forwarder (`KSTATS_KEY`). Mark a browser as ours:
+  open `/e?self=1` once per host (projectsbase.dev and each `X.projectsbase.dev`
+  variant: localStorage is per origin).
+- **Share cards:** og-cards theme `forq` (key `OG_KEY`, laptop copy
+  `~/.config/forq-cf/og-key`), signed per page by `withBaseline`.
+- **`/health.json`** `{sha, version, built, checks:[builds]}` (sha = the deploy
+  `--tag`: always deploy with `--tag "$(git rev-parse --short HEAD)"`).
+- **Alerts** (`src/alert.ts`, Pushover `PUSHOVER_TOKEN`/`PUSHOVER_USER`): a live
+  app deploy that failed, a new sign-up, feedback that could not be stored.
+  (notify-hub was the default, but its admin has no Access app yet, so no app
+  token could be made.)
+- **390 px check:** `node scripts/check-mobile.mjs` (proven to fail with `--break`).
+- `/version.json`, robots.txt, crawler gate, admin behind the admin secret on
+  workers.dev, observability on (forq and the variants).
+
+Not yet, and why:
+- `noindex` stays on every page and verified bots get only the front page:
+  pre-launch. At launch, remove `noindex` and revisit the gate (the baseline
+  now says welcome verified bots and make them cheap; forq's project/code
+  pages read Artifacts per view, so measure first).
+- Deploy by push (Workers Builds): forq deploys from the laptop with the
+  forq-account token, because a forq deploy kills running agent containers and
+  is timed by hand (see "Durable delivery"). Revisit when boxes survive deploys.
+- The run host (ttyview.dev) serves only static demo apps, refuses verified
+  bots and sends `noindex`; it has no baseline pages of its own.
