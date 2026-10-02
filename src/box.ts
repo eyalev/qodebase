@@ -227,6 +227,8 @@ PY
     // empty input then looks like a submitted message (tipsplit's router, 2026-10-02).
     const ready = await this.#sh(`for i in $(seq 1 30); do tmux capture-pane -p -t claude | grep -q '^❯' && tmux capture-pane -p -t claude | grep -qE 'for shortcuts|auto mode|shift\\+tab' && exit 0; sleep 0.5; done; exit 1`);
     if (ready.exitCode !== 0) log('box', 'send_not_ready', { agentId: await this.ctx.storage.get<string>('agentId') });
+    const REPLIES = `tmux capture-pane -p -S - -t claude | grep -c '^● '`;
+    const before = Number((await this.#sh(REPLIES).catch(() => null))?.stdout.trim() || 0);
     const r = await this.c.getTcpPort(TW_PORT).fetch('http://container/api/conversation/send', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ session: 'claude', text, delay: text.includes('\n') ? 1500 : 500 }),
@@ -256,8 +258,11 @@ PY
     }
     // An empty input is not proof: the text may never have arrived. Delivered
     // means Claude Code started working on it.
+    // A short message can be answered within a second, between two samples, so
+    // a new reply bullet (●) counts as started too.
     for (let i = 0; i < 15; i++) {
       if (/busy|thinking|working|running|tool|compact/i.test(await this.ccStatus())) return { ok: true };
+      if (Number((await this.#sh(REPLIES).catch(() => null))?.stdout.trim() || 0) > before) return { ok: true };
       await new Promise((res) => setTimeout(res, 1000));
     }
     const pane = await this.#sh(`tmux capture-pane -p -t claude | tail -14`).catch(() => null);
@@ -298,7 +303,9 @@ PY
   /** Claude Code's state (busy/idle/…). tmux-web's cc-status misses spinner
    *  words it does not know ("Flowing…" read as idle while the reviewer worked,
    *  2026-10-02), so a spinner line on screen always means busy: a glyph, a
-   *  capitalised word ending in "…", then "(" and a running time. */
+   *  capitalised word ending in "…", then "(" and a running time. The glyph is
+   *  matched as "not a space": the box's shell is in the C locale, where \S is
+   *  one byte and never matches a 3-byte glyph like ✢. */
   async ccStatus(): Promise<string> {
     if (!this.c.running) return 'asleep';
     let st = 'unknown';
@@ -307,7 +314,7 @@ PY
       st = ((await r.json()) as { status?: string }).status || 'unknown';
     } catch {}
     if (/busy|thinking|working|running|tool|compact/i.test(st)) return st;
-    const pane = await this.#sh(`tmux capture-pane -p -t claude 2>/dev/null | grep -cE '^\\S [A-Z][a-z]+(ing)?… \\([0-9]+(m|s)'`).catch(() => null);
+    const pane = await this.#sh(`tmux capture-pane -p -t claude 2>/dev/null | grep -cE '^[^ ]+ [A-Z][a-z]+… \\([0-9]+(m|s)'`).catch(() => null);
     return pane && Number(pane.stdout.trim()) > 0 ? 'busy' : st;
   }
 
