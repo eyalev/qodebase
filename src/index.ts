@@ -7,7 +7,7 @@
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AGENT_RE, NAME_RE, appWorkerName, projectOf, slugOf, type Env } from './env';
-import { AgentBox, log, type BootSpec } from './box';
+import { AgentBox, log, REVIEW_STEPS, type BootSpec } from './box';
 import { Project, roleOf, type ProjectInfo, type Role } from './project';
 import { Registry, registry } from './registry';
 import { BuildBox } from './build';
@@ -598,7 +598,8 @@ async function dispatchReview(env: Env, p: DurableObjectStub<Project>, slug: str
     const text = [
       `Review agent ${next}${tip ? ` at commit ${tip.commit.slice(0, 7)} ("${tip.message}")` : ''}. This is a new review: ignore any earlier review of this agent.`,
       ag?.note ? `The agent reports: ${ag.note}` : '',
-      `Run \`forq fetch-agent ${next}\`, follow your review steps (you are the reviewer agent of this project: read the diff from the base it prints, look at the preview at phone size), and finish with \`forq verdict ${next} approve|changes "..."\`.`,
+      `You are the reviewer agent of this project (${slug.replace('.', '/')}). The agent id is ${next}.`,
+      ...REVIEW_STEPS.map((x) => x.replaceAll('<agent-id>', next)),
     ].filter(Boolean).join('\n\n');
     let r = await sendTo(env, `${slug}--review`, text, apiBase);
     // Confirm it landed: Claude Code should start working within ~15 s. If it

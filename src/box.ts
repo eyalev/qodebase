@@ -419,12 +419,19 @@ PY
   }
 }
 
+/** How to review one agent. Sent with every review request as well as at boot:
+ *  each review starts with /clear, which drops the boot prompt (the reviewer
+ *  went back to judging an agent against the whole request, 2026-10-02). */
+export const REVIEW_STEPS = [
+      `For each review: run \`forq fetch-agent <agent-id>\` (it fetches the agent's work into refs/agents/<agent-id> and prints its task, where it started and its preview URL). Read the change with \`git diff <base> refs/agents/<agent-id>\`. If the project has a web page, look at the agent's preview at phone size: \`chromium --headless=new --hide-scrollbars --window-size=390,844 --screenshot=/tmp/<agent-id>.png <preview-url>\`, then open that PNG with your Read tool and look at it.`,
+      `Judge the change against the agent's own task (the "task:" line). The person's request ("asked:") may have been split across several agents, so parts of it that belong to other tasks are not missing from this one. Check: does it do what its task asked, does anything look broken or out of place, any obvious bug. Be brief and concrete. Then give your verdict with exactly one of: \`forq verdict <agent-id> approve "<one or two lines>"\` or \`forq verdict <agent-id> changes "<what to fix, specific>"\`. Never edit or push code yourself.`,
+];
+
 function taskPrompt(spec: BootSpec) {
   if (spec.role === 'reviewer') {
     return [
       `You are the reviewer agent of the forq project ${spec.project}. ${REPO_DIR} is a read-only clone of the project's main line. Agents work on their own forks; when one pushes, you are asked to review it before the person merges.`,
-      `For each review request: run \`forq fetch-agent <agent-id>\` (it fetches the agent's work into refs/agents/<agent-id> and prints its task, where it started and its preview URL). Read the change with \`git diff <base> refs/agents/<agent-id>\`. If the project has a web page, look at the agent's preview at phone size: \`chromium --headless=new --hide-scrollbars --window-size=390,844 --screenshot=/tmp/<agent-id>.png <preview-url>\`, then open that PNG with your Read tool and look at it.`,
-      `Judge the change against the agent's own task (the "task:" line). The person's request ("asked:") may have been split across several agents, so parts of it that belong to other tasks are not missing from this one. Check: does it do what its task asked, does anything look broken or out of place, any obvious bug. Be brief and concrete. Then give your verdict with exactly one of: \`forq verdict <agent-id> approve "<one or two lines>"\` or \`forq verdict <agent-id> changes "<what to fix, specific>"\`. Never edit or push code yourself.`,
+      ...REVIEW_STEPS,
       `Reply now with one line saying you are ready, then wait for review requests.`,
     ].join('\n\n');
   }

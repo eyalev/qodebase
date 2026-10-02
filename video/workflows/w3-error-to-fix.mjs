@@ -2,8 +2,8 @@
 // with no human in the loop until the merge.
 import { rig, api } from '../rig.mjs';
 
-const SLUG = 'eyal/workers-chat-demo-2';
-const APP = 'https://forq-app-eyal-workers-chat-demo-2.<sub>.workers.dev';
+const SLUG = 'eyal/workers-chat-demo-3';
+const APP = 'https://forq-app-eyal-workers-chat-demo-3.<sub>.workers.dev';
 const BAD = `${APP}/api/room/${'0'.repeat(64)}/websocket`;
 const info = () => api(`/api/p/${SLUG}`);
 const open = (j) => (j.agents || []).filter((a) => a.state !== 'merged' && a.state !== 'stopped');
