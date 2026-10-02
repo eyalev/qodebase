@@ -10,20 +10,44 @@ import { freshTag } from './fresh';
 
 const H = 3600_000, D = 24 * H;
 
-type SProject = { owner: string; name: string; desc: string; forks: number; working: number; createdAgo: number };
+type Tag = 'productivity' | 'money' | 'food' | 'games' | 'creative' | 'learning' | 'social' | 'devtools' | 'worker';
+type SProject = { owner: string; name: string; desc: string; tags: Tag[]; stars: number; week: number; forks: number; working: number; createdAgo: number };
 type SEvent = { ago: number; kind: 'merged' | 'forked' | 'asked' | 'fixed' | 'created' | 'imported'; who: string; project: string; text: string; extra?: string };
+
+/** Categories, in the order they are offered. 'worker' = has a backend (a Worker), not just a page. */
+const TAGS: [Tag, string][] = [['productivity', 'Productivity'], ['money', 'Money'], ['food', 'Food'], ['games', 'Games'], ['creative', 'Creative'],
+  ['learning', 'Learning'], ['social', 'Social'], ['devtools', 'Dev tools'], ['worker', 'With a backend']];
+const TAG_LABEL = Object.fromEntries(TAGS) as Record<Tag, string>;
 
 // Made-up people and projects (no real people), only for the feel of the page.
 const PEOPLE = ['maya', 'noa', 'dan', 'lior', 'amit', 'sara', 'tom'];
+const P = (owner: string, name: string, desc: string, tags: Tag[], stars: number, week: number, forks: number, working: number, createdAgo: number): SProject => ({ owner, name, desc, tags, stars, week, forks, working, createdAgo });
 const PROJECTS: SProject[] = [
-  { owner: 'maya', name: 'focus-timer', desc: 'Pomodoro timer with a soft chime and a daily streak', forks: 12, working: 2, createdAgo: 9 * D },
-  { owner: 'noa', name: 'recipe-box', desc: 'Save recipes from any link, scale them for the number of people', forks: 8, working: 1, createdAgo: 4 * D },
-  { owner: 'dan', name: 'kanban', desc: 'A one-page kanban board that works offline', forks: 21, working: 3, createdAgo: 16 * D },
-  { owner: 'lior', name: 'pixel-paint', desc: 'Draw 32×32 pixel art on your phone and share it', forks: 5, working: 0, createdAgo: 2 * D },
-  { owner: 'amit', name: 'habit-streak', desc: 'Track three habits, one tap each, no account', forks: 14, working: 1, createdAgo: 11 * D },
-  { owner: 'sara', name: 'trip-split', desc: 'Split a group trip: who paid what, who owes whom', forks: 9, working: 0, createdAgo: 6 * D },
-  { owner: 'tom', name: 'plant-water', desc: 'Reminds you which plant to water today (a Worker with Durable Objects)', forks: 3, working: 1, createdAgo: 1 * D },
-  { owner: 'noa', name: 'quiz-night', desc: 'Run a pub quiz from your phone; teams join with a code', forks: 6, working: 0, createdAgo: 20 * H },
+  P('dan', 'kanban', 'A one-page kanban board that works offline', ['productivity'], 1240, 96, 21, 3, 16 * D),
+  P('maya', 'focus-timer', 'Pomodoro timer with a soft chime and a daily streak', ['productivity'], 412, 38, 12, 2, 9 * D),
+  P('amit', 'habit-streak', 'Track three habits, one tap each, no account', ['productivity'], 655, 41, 14, 1, 11 * D),
+  P('lior', 'daily-note', 'One note a day, searchable, nothing else', ['productivity'], 96, 22, 4, 0, 3 * D),
+  P('sara', 'trip-split', 'Split a group trip: who paid what, who owes whom', ['money', 'social'], 388, 12, 9, 0, 6 * D),
+  P('maya', 'budget-bars', 'Monthly budget as bars that fill as you spend', ['money'], 220, 30, 7, 0, 5 * D),
+  P('tom', 'rent-split', 'Split rent by room size and who has the balcony', ['money'], 45, 9, 2, 0, 2 * D),
+  P('noa', 'recipe-box', 'Save recipes from any link, scale them for the number of people', ['food'], 530, 64, 8, 1, 4 * D),
+  P('noa', 'meal-plan', 'Plan the week\'s dinners, get one shopping list', ['food', 'productivity'], 77, 18, 3, 0, 1 * D),
+  P('dan', 'coffee-ratio', 'Grams of coffee and water for any brew method', ['food'], 210, 3, 6, 0, 30 * D),
+  P('noa', 'quiz-night', 'Run a pub quiz from your phone; teams join with a code', ['games', 'social', 'worker'], 150, 120, 6, 0, 20 * H),
+  P('lior', 'snake-touch', 'Snake for thumbs: swipe to turn, haptics on every apple', ['games'], 860, 15, 31, 0, 40 * D),
+  P('amit', 'word-ladder', 'Change one letter at a time from COLD to WARM', ['games', 'learning'], 300, 44, 11, 1, 8 * D),
+  P('dan', 'minesweeper', 'Minesweeper with long-press to flag', ['games'], 95, 2, 5, 0, 60 * D),
+  P('lior', 'pixel-paint', 'Draw 32×32 pixel art on your phone and share it', ['creative'], 470, 52, 5, 0, 2 * D),
+  P('maya', 'color-pick', 'Pick a colour from a photo, get a palette of five', ['creative', 'devtools'], 130, 11, 3, 0, 12 * D),
+  P('sara', 'slides-md', 'Write slides in Markdown, present from your phone', ['creative', 'productivity'], 305, 27, 10, 0, 14 * D),
+  P('noa', 'flashcards', 'Spaced-repetition flashcards that sync between devices', ['learning', 'worker'], 720, 58, 19, 2, 21 * D),
+  P('amit', 'hebrew-letters', 'Learn the Hebrew alphabet by tracing letters', ['learning'], 60, 14, 2, 0, 3 * D),
+  P('tom', 'periodic-table', 'A periodic table you can actually read on a phone', ['learning'], 410, 6, 9, 0, 50 * D),
+  P('dan', 'potluck', 'Who brings what to the potluck, no sign-up', ['social', 'food', 'worker'], 88, 19, 4, 0, 5 * D),
+  P('tom', 'plant-water', 'Reminds you which plant to water today', ['social', 'worker'], 140, 33, 3, 1, 1 * D),
+  P('sara', 'event-rsvp', 'An event page with RSVPs and a waitlist', ['social', 'worker'], 199, 24, 8, 0, 9 * D),
+  P('amit', 'json-view', 'Paste JSON, get a foldable tree you can search', ['devtools'], 940, 21, 15, 0, 35 * D),
+  P('lior', 'regex-tester', 'Test a regex against your text, see every match', ['devtools'], 610, 9, 12, 0, 45 * D),
 ];
 const EVENTS: SEvent[] = [
   { ago: 4 * 60_000, kind: 'merged', who: 'dan', project: 'dan/kanban', text: 'Drag cards between columns', extra: 'reviewed in a preview, merged' },
@@ -42,6 +66,11 @@ const EVENTS: SEvent[] = [
 
 const VERB: Record<SEvent['kind'], string> = { merged: 'merged a change in', forked: 'forked', asked: 'asked for a change in', fixed: 'got an error fixed in', created: 'started', imported: 'imported' };
 const MARK: Record<SEvent['kind'], string> = { merged: 'm', forked: 'f', asked: 'a', fixed: 'x', created: 'c', imported: 'i' };
+
+const STAR = `<svg class="ic" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="m8 1.8 1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg>`;
+const FORK = `<svg class="ic" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="4.5" cy="3.5" r="1.5"/><circle cx="11.5" cy="3.5" r="1.5"/><circle cx="8" cy="12.5" r="1.5"/><path d="M4.5 5v1.5c0 1.2 1 2 2 2h3c1 0 2-.8 2-2V5M8 8.5V11"/></svg>`;
+const k = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(n));
+export type Sort = 'trending' | 'top' | 'new';
 
 const mono = (h: string) => `<span class="av" aria-hidden="true">${esc(h[0].toUpperCase())}</span>`;
 /** Only real projects are links; sample ones are text (they have no page). */
@@ -81,6 +110,31 @@ export const WORLD_CSS = `
 .pc .s{margin-top:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)}
 .pc .s.busy{color:var(--fg)}
 .pc .s.busy .dot{background:var(--busy);animation:pulse 1.6s ease-in-out infinite}
+.cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 8px;padding:0 16px}
+.cats::-webkit-scrollbar{display:none}
+.cats a{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);color:var(--fg);font:500 14px 'Instrument Sans',sans-serif}
+.cats a span{color:var(--dim);font-variant-numeric:tabular-nums}
+.cats a.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.cats a.on span{color:color-mix(in srgb,var(--bg) 70%,var(--fg))}
+.sorts{display:flex;align-items:center;gap:16px;margin:4px 0 4px;font-size:14px}
+.sorts a{color:var(--dim);font-weight:500;padding:8px 0;border-bottom:2px solid transparent}
+.sorts a.on{color:var(--fg);border-bottom-color:var(--fg)}
+.sorts .why{margin-left:auto;font-size:12px;color:var(--dim)}
+.plist{display:flex;flex-direction:column}
+.pr{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);color:inherit}
+.pr .tile{flex:none;width:44px;height:44px;border-radius:8px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px}
+.pr .bd{flex:1;min-width:0}
+.pr .n{display:block;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr .n .o{color:var(--dim);font-weight:400}
+.pr .d{display:block;font-size:14px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.pr .m{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
+.pr .m .st{display:inline-flex;align-items:center;gap:4px;color:var(--fg);font-weight:500}
+.pr .m .up{color:var(--acc);font-weight:500}
+.pr .m .f{display:inline-flex;align-items:center;gap:4px}
+.pr .m .w{display:inline-flex;align-items:center;gap:6px;color:var(--fg)}
+.pr .m .w .dot{background:var(--busy);animation:pulse 1.6s ease-in-out infinite}
+.pr .tg{display:inline-block;font-size:12px;color:var(--dim);background:var(--chip);border-radius:4px;padding:1px 6px}
+.ic{flex:none}
 .people{display:flex;flex-direction:column}
 .pp{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .pp .av{width:44px;height:44px;font-size:17px}
@@ -94,15 +148,16 @@ export const WORLD_CSS = `
 export type WorldTab = 'happening' | 'projects' | 'people';
 
 /** The world: same for everyone. `real` adds the instance's real projects to Projects. */
-export function worldBody(tab: WorldTab, real: Entry[], signedIn: boolean) {
+export function worldBody(tab: WorldTab, real: Entry[], signedIn: boolean, opts: { tag?: string; sort?: string } = {}) {
   const now = Date.now();
   REAL = new Set(real.map((e) => e.slug));
   const working = PROJECTS.reduce((n, p) => n + p.working, 0);
   const merged = EVENTS.filter((e) => e.kind === 'merged' || e.kind === 'fixed').length * 9;
   const sub = (id: WorldTab, labelT: string) => `<a href="/${id === 'happening' ? '' : `?s=${id}`}" class="${tab === id ? 'on' : ''}"${tab === id ? ' aria-current="page"' : ''}>${labelT}</a>`;
-  const head = `<p class="lede2">Projects that run, and agents that change them.</p>
+  // The intro and the pulse open Happening only; Projects and People start at their content.
+  const head = `${tab === 'happening' ? `<p class="lede2">Projects that run, and agents that change them.</p>
 <div class="pulse"><div><b>${PROJECTS.length + real.length}</b><span>projects</span></div><div class="live"><b>${working}</b><span>agents working</span></div><div><b>${merged}</b><span>merged this week</span></div></div>
-<p class="sample">Sample data: these people and most projects are made up.</p>
+` : ''}<p class="sample">Sample data: these people and most projects are made up.</p>
 <nav class="sub3" aria-label="Home">${sub('happening', 'Happening')}${sub('projects', 'Projects')}${sub('people', 'People')}</nav>`;
   let body = '';
   if (tab === 'happening') {
@@ -110,17 +165,27 @@ export function worldBody(tab: WorldTab, real: Entry[], signedIn: boolean) {
 ${e.kind === 'forked' ? `<span class="what">as ${esc(e.text)}</span>` : `<span class="what k-${MARK[e.kind]}">${esc(e.text)}</span>`}
 <span class="meta2">${freshTag(now - e.ago, now, STEPS)}${e.extra ? `<span>${esc(e.extra)}</span>` : ''}</span></div></div>`).join('')}</div>`;
   } else if (tab === 'projects') {
-    const card = (p: { owner: string; name: string; desc: string; working?: number; forks?: number; slug?: string }) => `<${p.slug ? `a href="${path(p.slug)}"` : 'div title="Sample project"'} class="pc"><span class="tile">${esc(p.name[0].toUpperCase())}</span>
+    const want = (opts.tag && (TAG_LABEL as Record<string, string>)[opts.tag] ? opts.tag : '') as Tag | '';
+    const sort: Sort = opts.sort === 'top' || opts.sort === 'new' ? opts.sort : 'trending';
+    const q = (t: string, so: Sort) => `/?s=projects${t ? `&tag=${t}` : ''}${so === 'trending' ? '' : `&sort=${so}`}`;
+    const count = (t: Tag) => PROJECTS.filter((p) => p.tags.includes(t)).length;
+    const cats = `<nav class="cats" aria-label="Categories"><a href="${q('', sort)}" class="${want ? '' : 'on'}">All<span>${PROJECTS.length + real.length}</span></a>${TAGS.map(([t, l]) =>
+      `<a href="${q(t, sort)}" class="${want === t ? 'on' : ''}">${l}<span>${count(t)}</span></a>`).join('')}</nav>`;
+    const sorts = `<nav class="sorts" aria-label="Sort">${(['trending', 'top', 'new'] as Sort[]).map((so) =>
+      `<a href="${q(want, so)}" class="${sort === so ? 'on' : ''}">${{ trending: 'Trending', top: 'Top', new: 'New' }[so]}</a>`).join('')}
+<span class="why">${{ trending: 'most stars this week', top: 'most stars', new: 'newest first' }[sort]}</span></nav>`;
+    const list = PROJECTS.filter((p) => !want || p.tags.includes(want))
+      .sort((x, y) => (sort === 'trending' ? y.week - x.week : sort === 'top' ? y.stars - x.stars : x.createdAgo - y.createdAgo));
+    const row = (p: SProject) => `<div class="pr" title="Sample project"><span class="tile">${esc(p.name[0].toUpperCase())}</span><span class="bd">
 <span class="n"><span class="o">${esc(p.owner)} /</span> ${esc(p.name)}</span><span class="d">${esc(p.desc)}</span>
-<span class="s${p.working ? ' busy' : ''}">${p.working ? `<span class="dot"></span>${p.working} agent${p.working > 1 ? 's' : ''} working` : `${p.forks || 0} fork${p.forks === 1 ? '' : 's'}`}</span></${p.slug ? 'a' : 'div'}>`;
-    const busy = PROJECTS.filter((p) => p.working).sort((a, b) => b.working - a.working);
-    const fresh = [...PROJECTS].sort((a, b) => a.createdAgo - b.createdAgo).slice(0, 4);
-    const forked = [...PROJECTS].sort((a, b) => b.forks - a.forks).slice(0, 4);
-    const realCards = real.slice(0, 6).map((e) => card({ owner: e.owner, name: e.name, desc: e.description || '', slug: e.slug, forks: real.filter((x) => x.forkedFrom === e.slug).length }));
-    body = `<p class="sec2">Busy right now</p><div class="cards2">${busy.map(card).join('')}</div>
-<p class="sec2">New this week</p><div class="cards2">${fresh.map(card).join('')}</div>
-<p class="sec2">Most forked</p><div class="cards2">${forked.map(card).join('')}</div>
-${realCards.length ? `<p class="sec2">On this forq (real)</p><div class="cards2">${realCards.join('')}</div>` : ''}`;
+<span class="m"><span class="st">${STAR}${k(p.stars)}</span>${sort === 'trending' ? `<span class="up">+${p.week} this week</span>` : ''}<span class="f">${FORK}${p.forks}</span>
+${p.working ? `<span class="w"><span class="dot"></span>${p.working} agent${p.working > 1 ? 's' : ''} working</span>` : ''}${sort === 'new' ? freshTag(now - p.createdAgo, now, STEPS) : ''}
+${p.tags.map((t) => `<span class="tg">${TAG_LABEL[t]}</span>`).join('')}</span></span></div>`;
+    const realRows = !want ? real.slice(0, 8).map((e) => `<a class="pr" href="${path(e.slug)}"><span class="tile">${esc(e.name[0].toUpperCase())}</span><span class="bd">
+<span class="n"><span class="o">${esc(e.owner)} /</span> ${esc(e.name)}</span><span class="d">${esc(e.description || '')}</span>
+<span class="m"><span class="st">${STAR}0</span><span class="f">${FORK}${real.filter((x) => x.forkedFrom === e.slug).length}</span>${freshTag(e.updatedAt, now, STEPS)}</span></span></a>`).join('') : '';
+    body = `${cats}<script>document.querySelector('.cats a.on')?.scrollIntoView({inline:'center',block:'nearest'})</script>${sorts}<div class="plist">${list.map(row).join('')}</div>
+${realRows ? `<p class="sec2">Real projects on this forq</p><div class="plist">${realRows}</div>` : ''}`;
   } else {
     const stats = PEOPLE.map((h) => ({ h, projects: PROJECTS.filter((p) => p.owner === h).length, merged: EVENTS.filter((e) => e.who === h && e.kind === 'merged').length * 7 + 3, last: Math.min(...EVENTS.filter((e) => e.who === h).map((e) => e.ago), 9 * D) }));
     body = `<div class="people">${stats.sort((a, b) => a.last - b.last).map((p) => `<div class="pp">${mono(p.h)}<div class="tx"><b>${esc(p.h)}</b><span>${p.projects} project${p.projects === 1 ? '' : 's'}, ${p.merged} changes merged</span></div>${freshTag(now - p.last, now, STEPS)}</div>`).join('')}</div>`;

@@ -513,7 +513,7 @@ ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
 }
 
 /** The home pages with tabs: Projects, Inbox, Explore (Account is the settings page). */
-export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, items: InboxItem[], world: WorldTab = 'happening') {
+export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, items: InboxItem[], world: WorldTab = 'happening', wopts: { tag?: string; sort?: string } = {}) {
   const now = Date.now();
   const inboxN = items.reduce((n, it) => n + needsOf(it.open).length, 0);
   const forks = (slug: string) => entries.filter((e) => e.forkedFrom === slug).length;
@@ -528,7 +528,7 @@ export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, ite
   let title = '', body = '';
   if (tab === 'home') {
     title = 'forq';
-    body = worldBody(world, entries, !!me);
+    body = worldBody(world, entries, !!me, wopts);
   } else if (tab === 'projects' || tab === 'mine') {
     title = 'Your projects';
     body = `<div class="hrow"><span class="lede" style="flex:1;margin:0">${mine.length} project${mine.length === 1 ? '' : 's'}</span><a class="chipbtn" href="/import">Import from GitHub</a></div>
