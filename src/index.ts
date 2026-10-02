@@ -5,6 +5,7 @@
 //   forq-run.kapps.dev  public run host: any repo/fork as a live static app (run.ts)
 //   *.workers.dev       admin (x-forq-secret) and the boxes' forq CLI (x-forq-agent)
 
+import { withBaseline, kstatsForward, feedback, health } from './baseline';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AGENT_RE, NAME_RE, appWorkerName, projectOf, slugOf, type Env } from './env';
 import { AgentBox, log, REVIEW_STEPS, type BootSpec } from './box';
@@ -237,7 +238,7 @@ async function sendTo(env: Env, agentId: string, text: string, apiBase: string) 
   return box.send(text);
 }
 
-export default {
+const app = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     if (url.hostname === env.RUN_HOST) return serveRun(request, env, ctx);
@@ -248,7 +249,9 @@ export default {
       const cf = (request as any).cf || {};
       if (url.pathname === '/robots.txt') return new Response('User-agent: *\nDisallow: /p/\nDisallow: /import\nDisallow: /api/\nDisallow: /a/\nDisallow: /login\n', { headers: { 'content-type': 'text/plain' } });
       if (url.pathname === '/version.json') return json({ name: 'forq', version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
-      if (url.pathname === '/health.json') return json({ status: 'ok', name: 'forq', checkedAt: new Date().toISOString() });
+      if (url.pathname === '/health.json') return health(env, ctx, url.origin);
+      if (url.pathname === '/e') return kstatsForward(request, env, ctx);
+      if (url.pathname === '/feedback') return feedback(request, env);
       if (url.pathname === '/about') return html(aboutPage());
       if (url.pathname === '/privacy') return html(privacyPage());
       // Crawler gate on WHO, not on paths: verified bots get the front page only
@@ -309,7 +312,8 @@ export default {
         const entries = await registry(env).list();
         const tab = path === '/mine' && me.handle ? 'mine' : path === '/inbox' && me.handle ? 'inbox' : 'home';
         const s = url.searchParams.get('s');
-        return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'projects' || s === 'people' ? s : 'happening'));
+        return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'projects' || s === 'people' ? s : 'happening',
+          { tag: url.searchParams.get('tag') || undefined, sort: url.searchParams.get('sort') || undefined }));
       }
       if (tabsNav && (path === '/' || path === '/inbox' || path === '/explore')) {
         const entries = await registry(env).list();
@@ -613,6 +617,15 @@ export default {
       log('api', 'error', { path, err: String(e), stack: (e as Error)?.stack });
       return json({ error: String((e as Error)?.message || e) }, 500);
     }
+  },
+} satisfies ExportedHandler<Env>;
+
+// Every HTML page on the UI host (and the variants) leaves through the
+// baseline rewriter: kstats tag and share-card tags (src/baseline.ts).
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const res = await app.fetch(request, env, ctx);
+    return new URL(request.url).hostname === env.UI_HOST ? withBaseline(request, env, res) : res;
   },
 } satisfies ExportedHandler<Env>;
 

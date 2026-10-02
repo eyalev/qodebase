@@ -13,6 +13,7 @@
 import type { Env } from './env';
 import { log } from './box';
 import { registry } from './registry';
+import { pushAlert } from './alert';
 
 export type User = {
   email: string;
@@ -124,6 +125,7 @@ export async function claimHandle(env: Env, email: string, handle: string): Prom
   const user: User = { email: email.toLowerCase(), handle, createdAt: Date.now() };
   await registry(env).putUser(user);
   log('auth', 'user_created', { handle });
+  if (!taken) await pushAlert(env, 'forq: new sign-up', `${handle} (${user.email}) chose a name on forq.`, `https://${env.UI_HOST}/`);
   return { ok: true, user };
 }
 

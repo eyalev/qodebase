@@ -16,6 +16,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
 import { log } from './box';
+import { pushAlert } from './alert';
 
 export type BuildJob = {
   id: string;
@@ -98,6 +99,8 @@ export class BuildBox extends DurableObject<Env> {
     await this.ctx.storage.put('queue', q);
     const result = await this.#run(job);
     await this.ctx.storage.put('lastBuild', Date.now());
+    // A live app that failed to deploy needs a person; a fork's preview is the agent's to fix.
+    if (!result.ok && !result.agentId) await pushAlert(this.env, `forq: deploy failed, ${job.slug}`, (result.error || 'no error text').slice(0, 500), `https://${this.env.UI_HOST}/p/${job.slug.replace('.', '/')}`, 0);
     try { await this.env.Project.get(this.env.Project.idFromName(job.slug)).buildDone(result); }
     catch (e) { log('build', 'report_failed', { slug: job.slug, err: String(e) }); }
     await this.ctx.storage.setAlarm(Date.now() + (q.length ? 100 : 60_000));
