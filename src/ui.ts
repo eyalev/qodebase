@@ -401,12 +401,14 @@ ${projects ? `<p class="note">You own ${projects} project${projects > 1 ? 's' : 
 <h2>Anthropic API key</h2>${keyBlock}
 <p class="err" id="msg" role="status"></p>
 <h2>Account</h2><p class="desc">Signed in as ${esc(u.email)}.</p><div class="actions"><a class="chipbtn" href="/logout">Sign out</a></div>
-<style>.field{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}.err{min-height:1.4em;color:var(--fg);font-size:14px}</style>
+<style>.field{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}.err{min-height:1.4em;color:var(--dim);font-size:15px;margin:8px 0 0}.err.bad{color:var(--fg);font-weight:600}</style>
 <script>
 const msg=document.getElementById('msg');
-async function call(url,method,body){const r=await fetch(url,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok){msg.textContent=j.error||'Failed';return null;}return j;}
-const hf=document.getElementById('hf');if(hf)hf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Saving';if(await call('/api/me/handle','POST',{handle:hf.handle.value}))location.reload();};
-const kf=document.getElementById('keyf');if(kf)kf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Checking the key with Anthropic';if(await call('/api/me/key','POST',{key:kf.key.value}))location.reload();};
+// The message shows under the form that was used, not at the foot of the page
+// (a refused key was easy to miss there, seen in the sign-up video).
+async function call(url,method,body,form){if(form)form.after(msg);msg.classList.remove('bad');const r=await fetch(url,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok){msg.textContent=j.error||'Failed';msg.classList.add('bad');return null;}return j;}
+const hf=document.getElementById('hf');if(hf)hf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Saving';if(await call('/api/me/handle','POST',{handle:hf.handle.value},hf))location.reload();};
+const kf=document.getElementById('keyf');if(kf)kf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Checking the key with Anthropic';if(await call('/api/me/key','POST',{key:kf.key.value},kf))location.reload();};
 const rm=document.getElementById('rmkey');if(rm)rm.onclick=async()=>{if(await call('/api/me/key','DELETE'))location.reload();};
 </script>`);
 }

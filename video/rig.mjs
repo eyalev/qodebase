@@ -83,7 +83,16 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
     page, cdp, sleep,
     /** Switch to a signed-in user mid-recording (after showing the sign-in page). */
     async signInAs(e) { await signIn(e); },
-    async open(url) { await page.goto(url.startsWith('http') ? url : SITE + url, { waitUntil: 'networkidle' }).catch(() => {}); await sleep(600); },
+    async open(url) {
+      await page.goto(url.startsWith('http') ? url : SITE + url, { waitUntil: 'networkidle' }).catch(() => {});
+      // A plain-text response (an error page) renders as 13 px monospace, too
+      // small to read in the video: wrap it and set it at a readable size.
+      await page.evaluate(() => {
+        const pre = document.body && document.body.children.length === 1 && document.body.firstElementChild.tagName === 'PRE' ? document.body.firstElementChild : null;
+        if (pre) pre.style.cssText = 'white-space:pre-wrap;word-break:break-word;font-size:17px;line-height:1.45;padding:20px 16px;margin:0';
+      }).catch(() => {});
+      await sleep(600);
+    },
     /** A title card between sections (rendered by compose.py, ~2.5 s). */
     async chapter(title, sub = '') { mark('chapter', { title, sub }); await sleep(200); },
     /** Caption for what follows; holds long enough to read (≥ 1.2 s, 0.33 s/word). */

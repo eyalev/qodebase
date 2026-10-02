@@ -473,7 +473,14 @@ export default {
       if (path === '/api/admin/delete' && request.method === 'POST' && me.admin) {
         const b = await request.json() as { repo?: string; box?: string; project?: string };
         if (b.box) await boxStub(env, b.box).destroy();
-        if (b.project) await projectStub(env, b.project).wipe();
+        if (b.project) {
+          // Its boxes too: a re-created project otherwise boots the old router
+          // and reviewer from their snapshots (tipsplit, 2026-10-02).
+          const pi = await projectStub(env, b.project).info();
+          const boxes = [...(pi?.agents || []).map((a) => a.id), `${b.project}--router`, `${b.project}--review`];
+          await Promise.all(boxes.map((id) => boxStub(env, id).destroy().catch(() => {})));
+          await projectStub(env, b.project).wipe();
+        }
         const ok = b.repo ? await env.ARTIFACTS.delete(b.repo).catch((e) => String(e)) : null;
         return json({ deleted: ok });
       }

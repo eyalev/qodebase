@@ -67,6 +67,13 @@ def main(src, out):
 
     # Walk source time; speed comes from 'speed' events (eased over 0.25 s).
     ev = sorted(events, key=lambda e: e['t'])
+    # Cap every sped-up stretch at MAX_WAIT seconds of output: a 20-minute
+    # wait at x16 is still 75 s of a still screen. The badge shows the real factor.
+    MAX_WAIT = 8.0
+    for i, e in enumerate(ev):
+        if e['type'] == 'speed' and float(e['speed']) > 1:
+            stop = next((x['t'] for x in ev[i + 1:] if x['type'] == 'speed'), t1)
+            e['speed'] = max(float(e['speed']), (stop - e['t']) / MAX_WAIT)
     fi, cache, last_img = 0, {}, None
     caption, chapter, speed_target, speed, label, compressed_from = '', '', 1.0, 1.0, '', None
     ei, t = 0, t0

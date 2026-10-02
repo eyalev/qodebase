@@ -222,6 +222,11 @@ PY
     }
     const status = await this.ccStatus();
     if (status === 'untrusted') return { ok: false, error: 'Claude Code is waiting on its folder-trust prompt' };
+    // Wait for Claude Code's ready prompt: text typed while it is still starting
+    // (a box booted from a snapshot one second earlier) is silently lost, and the
+    // empty input then looks like a submitted message (tipsplit's router, 2026-10-02).
+    const ready = await this.#sh(`for i in $(seq 1 30); do tmux capture-pane -p -t claude | grep -q '^❯' && tmux capture-pane -p -t claude | grep -qE 'for shortcuts|auto mode|shift\\+tab' && exit 0; sleep 0.5; done; exit 1`);
+    if (ready.exitCode !== 0) log('box', 'send_not_ready', { agentId: await this.ctx.storage.get<string>('agentId') });
     const r = await this.c.getTcpPort(TW_PORT).fetch('http://container/api/conversation/send', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ session: 'claude', text, delay: text.includes('\n') ? 1500 : 500 }),
@@ -249,7 +254,15 @@ PY
       if (/busy|thinking|working|running|tool|compact/i.test(st)) return { ok: true };
       return { ok: false, error: 'typed but not submitted (still in the input box)' };
     }
-    return { ok: true };
+    // An empty input is not proof: the text may never have arrived. Delivered
+    // means Claude Code started working on it.
+    for (let i = 0; i < 15; i++) {
+      if (/busy|thinking|working|running|tool|compact/i.test(await this.ccStatus())) return { ok: true };
+      await new Promise((res) => setTimeout(res, 1000));
+    }
+    const pane = await this.#sh(`tmux capture-pane -p -t claude | tail -14`).catch(() => null);
+    log('box', 'send_not_started', { agentId: await this.ctx.storage.get<string>('agentId'), pane: pane?.stdout });
+    return { ok: false, error: 'Claude Code did not start working on the message' };
   }
 
   /** Start Claude Code on a fresh conversation (/clear). Typing "/clear" opens
