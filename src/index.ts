@@ -398,6 +398,12 @@ export default {
           return json({ ok: true });
         }
         if (verb === 'build-state' && me.admin) return json(await env.BuildBox.get(env.BuildBox.idFromName(`${slug}--build`)).state());
+        if (verb === 'reviewer-state' && request.method === 'POST' && me.admin) {
+          const rb = boxStub(env, `${slug}--review`);
+          const awake = await rb.isAwake();
+          const cc = awake ? await rb.ccStatus().catch(() => 'unknown') : 'asleep';
+          return json({ ok: true, awake, cc, idle: !awake || !/busy|thinking|working|running|tool|compact/i.test(cc) });
+        }
         if (verb === 'review-dispatch' && request.method === 'POST' && me.admin) {
           const b = await request.json() as { agent?: string };
           const r = await dispatchReview(env, p, slug, apiBase, String(b.agent || ''));
@@ -560,8 +566,8 @@ async function startReview(env: Env, p: DurableObjectStub<Project>, slug: string
   try {
     const next = await step();
     if (!next) return;
-    if (deferred) { await p.scheduleReviewDispatch(next); return; }
-    await dispatchReview(env, p, slug, apiBase, next);
+    void deferred;   // every hand-off goes through the project DO's review watchdog
+    await p.scheduleReviewDispatch(next);
   } catch (e) {
     log('review', 'failed', { slug, err: String(e), stack: (e as Error)?.stack });
   }

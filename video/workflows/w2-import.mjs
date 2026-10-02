@@ -1,0 +1,23 @@
+// Workflow 2: import a project from GitHub.
+import { rig, api } from '../rig.mjs';
+await api('/api/admin/delete', { method: 'POST', body: { repo: 'eyal.particles-js', project: 'eyal.particles-js' } });
+const r = await rig({ name: 'w2-import' });
+const p = r.page;
+await r.chapter('Import from GitHub', 'Any public repository becomes a forq project that runs.');
+await r.open('/');
+await r.say('Bring in a project from GitHub.');
+await r.tap('a[href="/import"]');
+await r.say('Search GitHub, or paste a repository link.');
+await r.fill('#q', 'particles.js', { after: 300 });
+await r.page.waitForSelector('[data-import="VincentGarreau/particles.js"]', { timeout: 30000 });
+await r.sleep(800);
+await r.say('Each result shows its stars, license, size and how recently it changed.');
+await r.tap('[data-import="VincentGarreau/particles.js"]', { after: 500 });
+await p.waitForURL(/\/p\/eyal\/particles-js/, { timeout: 60000 });
+await r.say('forq copies the latest commit into Cloudflare Artifacts. That takes seconds.');
+await r.waitFor(async () => !!(await p.$('.preview iframe')), { speed: 2, label: 'importing', poll: 1000 });
+await r.sleep(2500);
+await r.say('It found the web page in demo/ and runs it. Same for every fork, and for every agent\'s work.', { hold: 5000 });
+await r.scroll('.files', { offset: -120, after: 1200 });
+await r.say('The code, license and history link stay with it. Fork it, or hand it to agents.');
+await r.end({ title: 'Import from GitHub', sub: 'forq.kapps.dev/import' });

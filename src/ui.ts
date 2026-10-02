@@ -17,6 +17,8 @@ const CSS = `
 :root{--bg:#fff;--card:#f6f7f8;--chip:#eceef1;--line:#e2e5e9;--fg:#15171a;--dim:#5f6670;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1112;--card:#171a1c;--chip:#202427;--line:#272b2f;--fg:#e8eaec;--dim:#9ba2a9;--acc:#4fbf9f;--acc-fg:#0f1112;--busy:#e0a948;color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+input:focus,textarea:focus{outline:none;border-color:var(--acc)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 'Instrument Sans',sans-serif}
 main{max-width:720px;margin:0 auto;padding:12px 16px calc(32px + env(safe-area-inset-bottom))}
 a{color:var(--acc);text-decoration:none}
@@ -37,6 +39,8 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .row button.fresh{position:relative;z-index:1}.row .t b{font-weight:600}
 .row .d{color:var(--dim);font-size:14px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .meta .yours{color:var(--acc)}
+.meta.one{flex-wrap:nowrap;overflow:hidden;white-space:nowrap}
+.meta.one span:last-child{overflow:hidden;text-overflow:ellipsis}
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:13px;color:var(--dim);margin-top:8px}
 .back{display:inline-flex;align-items:center;min-height:44px;font-size:15px}
 .desc{color:var(--dim);margin:0}
@@ -121,7 +125,7 @@ const stars = (n: number) => `${n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 
 function row(e: Entry, forks: number, now: number, mineFork?: Entry) {
   return `<div class="row"><a class="t stretch" href="${path(e.slug)}"><span class="owner">${esc(e.owner)} /</span> <b>${esc(e.name)}</b></a>
   ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
-  <div class="meta">${freshTag(e.updatedAt, now, STEPS)}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.forkedFrom ? `<span>forked from ${esc(label(e.forkedFrom))}</span>` : ''}${e.importedFrom ? `<span>from GitHub ${esc(e.importedFrom.fullName)}</span><span>${stars(e.importedFrom.stars)}</span>${e.importedFrom.license ? `<span>${esc(e.importedFrom.license)}</span>` : ''}` : ''}${mineFork ? `<span class="yours">you have a fork</span>` : ''}</div></div>`;
+  <div class="meta one">${freshTag(e.updatedAt, now, STEPS)}${mineFork ? `<span class="yours">you have a fork</span>` : ''}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.forkedFrom ? `<span>forked from ${esc(label(e.forkedFrom))}</span>` : e.importedFrom ? `<span>${stars(e.importedFrom.stars)} on GitHub</span>` : ''}</div></div>`;
 }
 
 export function explorePage(entries: Entry[], me: string) {
@@ -131,9 +135,8 @@ export function explorePage(entries: Entry[], me: string) {
   const others = entries.filter((e) => e.owner !== me);
   return shell('forq', `<header class="top"><span class="mark">forq</span><span class="tr">${me ? `<a class="chipbtn" href="/import">Import from GitHub</a><a class="who" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</span></header>
 <p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.${me ? '' : ' Reading is open to everyone; sign in with your email to fork and run agents with your own Anthropic API key.'}</p>
-${freshLegend(STEPS)}
-${mine.length ? `<h2>Yours</h2><div class="rows">${mine.map((e) => row(e, forks(e.slug), now)).join('')}</div>` : ''}
-<h2>Explore</h2><div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>
+${mine.length ? `<h2>Yours</h2><p class="fresh-legend">Shaded dates: full today, empty after two weeks. Tap one for more.</p><div class="rows">${mine.map((e) => row(e, forks(e.slug), now)).join('')}</div>` : ''}
+<h2>Explore</h2>${mine.length ? '' : '<p class="fresh-legend">Shaded dates: full today, empty after two weeks. Tap one for more.</p>'}<div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>
 <p class="empty" style="margin-top:32px"><a href="/about">About</a>&nbsp;&nbsp; <a href="/privacy">Privacy</a></p>`);
 }
 
@@ -342,7 +345,7 @@ export function importPage(me: string) {
 <p class="desc">Search public repositories, or paste a repo's URL. forq copies the latest commit, finds its web page if it has one, and the project is yours to fork and hand to agents.</p>
 <form id="gq" class="search" role="search"><input id="q" type="search" name="q" placeholder="Search GitHub, or paste a URL" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="search"></form>
 <div class="sugg" id="sugg"><span>Try</span>${['2048', 'reveal.js', 'particles.js', 'tetris javascript', 'https://github.com/SortableJS/Sortable'].map((t) => `<button type="button" class="chipbtn" data-q="${esc(t)}">${esc(t.replace('https://github.com/', ''))}</button>`).join('')}</div>
-${freshLegend(REPO_STEPS).replace('how recent it is', 'when the repo was last pushed')}
+<p class="fresh-legend">Shaded dates: last push, full this week, empty after a year.</p>
 <div id="res" class="rows" aria-live="polite"></div>
 <script>
 const $q=document.getElementById('q'),$res=document.getElementById('res');
@@ -385,7 +388,7 @@ ${d?.url ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.ur
 export function settingsPage(u: { handle: string; email: string; apiKeyTail?: string; apiKeyCheckedAt?: number; model?: string }, owner: boolean, projects: number, welcome: boolean) {
   const keyBlock = owner
     ? `<p class="desc">Your agents run on this instance's Claude subscription. No API key needed.</p>`
-    : `${u.apiKeyTail ? `<p class="desc">Key ending in <b>…${esc(u.apiKeyTail)}</b>, checked ${freshTag(u.apiKeyCheckedAt || 0, Date.now(), STEPS)}. Your agents run on it with ${esc(u.model || 'claude-sonnet-5-5')}.</p>` : `<p class="desc">Agents run Claude Code with your own Anthropic API key. You pay Anthropic directly; forq measured about $1–2 per finished, reviewed change on Sonnet.</p>`}
+    : `${u.apiKeyTail ? `<p class="desc">Key ending in <b>…${esc(u.apiKeyTail)}</b>, checked ${freshTag(u.apiKeyCheckedAt || 0, Date.now(), STEPS)}. Your agents run on it with ${esc(({ 'claude-sonnet-5-5': 'Sonnet 5.5', 'claude-opus-5-5': 'Opus 5.5', 'claude-sonnet-5': 'Sonnet 5' } as Record<string, string>)[u.model || 'claude-sonnet-5-5'] || u.model || 'Sonnet 5.5')}.</p>` : `<p class="desc">Agents run Claude Code with your own Anthropic API key. You pay Anthropic directly; forq measured about $1–2 per finished, reviewed change on Sonnet.</p>`}
 <form class="composer" id="keyf"><input class="field" name="key" type="password" autocomplete="off" placeholder="sk-ant-…" aria-label="Anthropic API key">
 <div class="bar"><button class="btn">${u.apiKeyTail ? 'Replace key' : 'Save key'}</button>${u.apiKeyTail ? '<button type="button" class="chipbtn" id="rmkey">Remove</button>' : ''}</div></form>
 <p class="note">The key is checked with one call to Anthropic, stored encrypted, and only used to start Claude Code in your projects' boxes. Get one at <a href="https://console.anthropic.com/settings/keys" rel="noopener" target="_blank">console.anthropic.com</a>.</p>`;

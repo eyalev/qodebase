@@ -240,7 +240,15 @@ PY
       echo unsent`);
     const outcome = check.stdout.trim().split('\n');
     if (outcome.includes('enter')) log('box', 'send_extra_enter', { agentId: await this.ctx.storage.get<string>('agentId'), outcome: outcome.join(',') });
-    if (outcome.includes('unsent')) return { ok: false, error: 'typed but not submitted (still in the input box)' };
+    if (outcome.includes('unsent')) {
+      // The input check has misread a working pane as unsent (xfcio's review,
+      // 2026-10-02). If Claude Code is working, the message went in.
+      const st = await this.ccStatus();
+      const pane = await this.#sh(`tmux capture-pane -p -t claude | tail -14`).catch(() => null);
+      log('box', 'send_unsent', { agentId: await this.ctx.storage.get<string>('agentId'), cc: st, pane: pane?.stdout });
+      if (/busy|thinking|working|running|tool|compact/i.test(st)) return { ok: true };
+      return { ok: false, error: 'typed but not submitted (still in the input box)' };
+    }
     return { ok: true };
   }
 
@@ -274,13 +282,20 @@ PY
     return r.exitCode === 0;
   }
 
-  /** Claude Code's state (busy/idle/…) from the in-box tmux-web. */
+  /** Claude Code's state (busy/idle/…). tmux-web's cc-status misses spinner
+   *  words it does not know ("Flowing…" read as idle while the reviewer worked,
+   *  2026-10-02), so a spinner line on screen always means busy: a glyph, a
+   *  capitalised word ending in "…", then "(" and a running time. */
   async ccStatus(): Promise<string> {
     if (!this.c.running) return 'asleep';
+    let st = 'unknown';
     try {
       const r = await this.c.getTcpPort(TW_PORT).fetch('http://container/api/sessions/claude/cc-status', { signal: AbortSignal.timeout(3000) });
-      return ((await r.json()) as { status?: string }).status || 'unknown';
-    } catch { return 'unknown'; }
+      st = ((await r.json()) as { status?: string }).status || 'unknown';
+    } catch {}
+    if (/busy|thinking|working|running|tool|compact/i.test(st)) return st;
+    const pane = await this.#sh(`tmux capture-pane -p -t claude 2>/dev/null | grep -cE '^\\S [A-Z][a-z]+(ing)?… \\([0-9]+(m|s)'`).catch(() => null);
+    return pane && Number(pane.stdout.trim()) > 0 ? 'busy' : st;
   }
 
   /** The router's (or an agent's) latest reply, for the project page. */
@@ -396,7 +411,7 @@ function taskPrompt(spec: BootSpec) {
     return [
       `You are the reviewer agent of the forq project ${spec.project}. ${REPO_DIR} is a read-only clone of the project's main line. Agents work on their own forks; when one pushes, you are asked to review it before the person merges.`,
       `For each review request: run \`forq fetch-agent <agent-id>\` (it fetches the agent's work into refs/agents/<agent-id> and prints its task, where it started and its preview URL). Read the change with \`git diff <base> refs/agents/<agent-id>\`. If the project has a web page, look at the agent's preview at phone size: \`chromium --headless=new --hide-scrollbars --window-size=390,844 --screenshot=/tmp/<agent-id>.png <preview-url>\`, then open that PNG with your Read tool and look at it.`,
-      `Check: does it do what the task asked, does anything look broken or out of place, any obvious bug. Be brief and concrete. Then give your verdict with exactly one of: \`forq verdict <agent-id> approve "<one or two lines>"\` or \`forq verdict <agent-id> changes "<what to fix, specific>"\`. Never edit or push code yourself.`,
+      `Judge the change against the agent's own task (the "task:" line). The person's request ("asked:") may have been split across several agents, so parts of it that belong to other tasks are not missing from this one. Check: does it do what its task asked, does anything look broken or out of place, any obvious bug. Be brief and concrete. Then give your verdict with exactly one of: \`forq verdict <agent-id> approve "<one or two lines>"\` or \`forq verdict <agent-id> changes "<what to fix, specific>"\`. Never edit or push code yourself.`,
       `Reply now with one line saying you are ready, then wait for review requests.`,
     ].join('\n\n');
   }
@@ -411,6 +426,6 @@ function taskPrompt(spec: BootSpec) {
   return [
     `You are a forq agent (${spec.agentId}) on the project ${spec.project}. You work in ${REPO_DIR}, a clone of your own fork; no other agent touches it.`,
     `Your task: ${spec.task}`,
-    `When the task is done: commit with a clear message, push with \`git push origin HEAD\` (your clone is on the default branch), then run \`forq status pushed "<one-line summary>"\` and reply with a 2-3 line summary. If you are blocked or the task is unclear, run \`forq status blocked "<why>"\` and say so instead of guessing. Your pushed fork is live at its preview link, so check the result works.`,
+    `Check your change works before you push (run it locally where you can). When the task is done: commit with a clear message, push with \`git push origin HEAD\` (your clone is on the default branch), and run \`forq status pushed "<one-line summary>"\` right away: that is what builds your preview and starts the review, so never wait for a deploy yourself. Then reply with a 2-3 line summary. If you are blocked or the task is unclear, run \`forq status blocked "<why>"\` and say so instead of guessing.`,
   ].join('\n\n');
 }

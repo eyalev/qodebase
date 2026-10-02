@@ -1,0 +1,11 @@
+import { rig } from '../rig.mjs';
+const r = await rig({ name: 'smoke' });
+await r.chapter('Smoke test', 'Checking the recording rig');
+await r.open('/');
+await r.say('This is forq. Every project here runs, and every fork gets its own agents.');
+await r.tap('a.stretch[href="/p/forq/2048"]');
+await r.say('2048, imported from GitHub. The game is live right on the project page.');
+await r.scroll('.preview', { block: 'center' });
+await r.say('Below it, the code.');
+await r.tap('a.chipbtn[href="/p/forq/2048/code/"]');
+await r.end();

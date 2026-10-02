@@ -283,34 +283,55 @@ export class Project extends DurableObject<Env> {
     await this.ctx.storage.setAlarm(Date.now() + 50);
   }
 
-  /** Hand the reviewer its next review once it is idle (verdicts arrive while
-   *  the reviewer is still mid-turn running "forq verdict"; typing into it then
-   *  interrupted it and the review stalled, 2026-10-01). */
+  /** Review watchdog. Every review is handed to the reviewer from this alarm,
+   *  which then keeps watching until a verdict lands: if the reviewer is idle
+   *  or asleep for 3 minutes with no verdict, the review is handed over again
+   *  (5 times at most), then recorded as unfinished. Replaces direct dispatch,
+   *  which lost reviews three ways on 2026-10-01 (typed into a busy reviewer,
+   *  typed during /clear, gave up while the reviewer was busy). */
   async scheduleReviewDispatch(agentId: string) {
-    await this.ctx.storage.put('reviewDispatch', { agentId, tries: 0 });
-    await this.ctx.storage.setAlarm(Date.now() + 15_000);
+    await this.ctx.storage.put('reviewDispatch', { agentId, tries: 0, sends: 0, sentAt: 0 });
+    await this.ctx.storage.setAlarm(Date.now() + 1000);
   }
 
   async #reviewAlarm(): Promise<boolean> {
-    const job = await this.ctx.storage.get<{ agentId: string; tries: number }>('reviewDispatch');
+    type Job = { agentId: string; tries: number; sends: number; sentAt: number };
+    const job = await this.ctx.storage.get<Job>('reviewDispatch');
     if (!job) return false;
     const info = await this.#need();
+    const a = info.agents.find((x) => x.id === job.agentId);
+    if (!a || a.review?.state !== 'reviewing') { await this.ctx.storage.delete('reviewDispatch'); return false; }   // verdict in
     const [owner, name] = info.slug.split('.');
-    const r = await fetch(`${this.env.API_BASE}/api/p/${owner}/${name}/review-dispatch`, {
-      method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' },
-      body: JSON.stringify({ agent: job.agentId }), signal: AbortSignal.timeout(5 * 60_000),
-    }).catch((e) => ({ ok: false, status: 0, json: async () => ({ error: String(e) }) }) as any);
-    const j = await r.json().catch(() => ({})) as { busy?: boolean; error?: string };
-    log('project', 'review_dispatch_attempt', { slug: info.slug, agentId: job.agentId, tries: job.tries + 1, ok: r.ok, busy: j.busy, err: j.error });
-    if (r.ok) { await this.ctx.storage.delete('reviewDispatch'); return false; }
-    if (job.tries + 1 >= 30) { await this.ctx.storage.delete('reviewDispatch'); return false; }
-    await this.ctx.storage.put('reviewDispatch', { ...job, tries: job.tries + 1 });
-    return true;   // wants another alarm
+    const call = async (verb: string, body: unknown) => {
+      const r = await fetch(`${this.env.API_BASE}/api/p/${owner}/${name}/${verb}`, {
+        method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' },
+        body: JSON.stringify(body), signal: AbortSignal.timeout(5 * 60_000),
+      }).catch((e) => ({ ok: false, status: 0, json: async () => ({ error: String(e) }) }) as any);
+      return { ok: r.ok, status: r.status, ...(await r.json().catch(() => ({}))) } as { ok: boolean; status: number; busy?: boolean; idle?: boolean; error?: string };
+    };
+    if (job.sentAt) {
+      // Sent: is the reviewer still at it?
+      const st = await call('reviewer-state', {});
+      if (!st.idle || Date.now() - job.sentAt < 3 * 60_000) return true;
+      if (job.sends >= 5) {
+        await this.ctx.storage.delete('reviewDispatch');
+        log('project', 'review_unfinished', { slug: info.slug, agentId: job.agentId, sends: job.sends });
+        const next = await this.setVerdict(job.agentId, 'changes', 'The reviewer agent did not finish this review. Look at the changes yourself, or push again to retry.');
+        if (next) await this.scheduleReviewDispatch(next);
+        return false;
+      }
+      log('project', 'review_resend', { slug: info.slug, agentId: job.agentId, sends: job.sends });
+    }
+    const r = await call('review-dispatch', { agent: job.agentId });
+    log('project', 'review_dispatch_attempt', { slug: info.slug, agentId: job.agentId, ok: r.ok, busy: r.busy, sends: job.sends, err: r.error });
+    if (r.ok) await this.ctx.storage.put('reviewDispatch', { ...job, sends: job.sends + 1, sentAt: Date.now() });
+    else await this.ctx.storage.put('reviewDispatch', { ...job, tries: job.tries + 1 });
+    return true;
   }
 
   async alarm() {
     const again = await this.#reviewAlarm();
-    if (again) await this.ctx.storage.setAlarm(Date.now() + 20_000);
+    if (again) await this.ctx.storage.setAlarm(Date.now() + 30_000);
     if (!(await this.ctx.storage.get<boolean>('deliverPending'))) return;
     const info = await this.#need();
     const q = info.lastRequest;
@@ -334,7 +355,7 @@ export class Project extends DurableObject<Env> {
       await this.ctx.storage.delete('deliverPending');
       return;
     }
-    if (ok) { await this.ctx.storage.delete('deliverPending'); if (again) await this.ctx.storage.setAlarm(Date.now() + 20_000); return; }
+    if (ok) { await this.ctx.storage.delete('deliverPending'); if (again) await this.ctx.storage.setAlarm(Date.now() + 30_000); return; }
     if (attempt >= 3) {
       await this.setRequest({ state: 'failed', error: `could not reach the router agent after ${attempt} tries: ${err}` });
       await this.ctx.storage.delete('deliverPending');

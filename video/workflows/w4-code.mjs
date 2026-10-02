@@ -1,0 +1,23 @@
+// Workflow 4: browse and search a project's code; see what an agent changed.
+import { rig, api } from '../rig.mjs';
+const r = await rig({ name: 'w4-code' });
+const p = r.page;
+await r.chapter('Read the code', 'Browse, jump to a file, search inside files, from the phone.');
+await r.open('/p/eyal/2048');
+await r.scroll('.files', { offset: -100 });
+await r.say('Every project\'s code is one tap away.');
+await r.tap('a.chipbtn[href="/p/eyal/2048/code/"]');
+await r.say('Folders first, then files. A folder\'s README shows below it.');
+await r.tap('.ls a[href="/p/eyal/2048/code/js/"]');
+await r.tap('.ls a[href="/p/eyal/2048/code/js/game_manager.js"]', { after: 1200 });
+await r.say('Files open with line numbers and syntax colouring. Tap a line number to share a link to that line.');
+await r.page.evaluate(() => window.scrollBy(0, 700)); await r.sleep(1200);
+await r.tap('#L54 td.n', { after: 2000 });
+await r.chapter('Search', 'File names as you type; file contents in one more tap.');
+await r.open('/p/eyal/2048/code/');
+await r.fill('#goto', 'keepPlaying', { after: 1200 });
+await r.say('Typing filters file names. The last row searches inside every file.');
+await r.tap('#deep', { after: 3500 });
+await r.say('Every match, grouped by file, each line a link.', { hold: 4000 });
+await r.tap('.goto .sr a.l', { after: 2500 });
+await r.end({ title: 'Code, on the phone', sub: 'forq.kapps.dev' });

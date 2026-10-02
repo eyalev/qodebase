@@ -10,9 +10,24 @@ function inline(s: string) {
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" rel="noopener nofollow">$1</a>');
 }
 
+/** READMEs often open with raw HTML (centered logos, badges). Keep the words:
+ *  <br> becomes a line break, links keep their text, images and other tags go.
+ *  (2048's and particles.js's READMEs showed their HTML as literal text.) */
+function stripHtml(src: string) {
+  // Only outside ``` fences: an HTML example inside a code block stays verbatim.
+  return src.split(/(^```[\s\S]*?^```)/m).map((part, i) => (i % 2 ? part : stripTags(part))).join('');
+}
+function stripTags(src: string) {
+  return src
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<img\b[^>]*>/gi, '')
+    .replace(/<\/?(?:a|p|div|span|h[1-6]|b|strong|i|em|center|sup|sub|picture|source|details|summary|table|tr|td|th|thead|tbody|kbd|code)\b[^>]*>/gi, '');
+}
+
 export function markdown(src: string): string {
   const out: string[] = [];
-  const lines = src.replace(/\r/g, '').split('\n');
+  const lines = stripHtml(src).replace(/\r/g, '').split('\n');
   let para: string[] = [], list: string[] = [], code: string[] | null = null;
   const flush = () => {
     if (para.length) { out.push(`<p>${inline(para.join(' '))}</p>`); para = []; }
