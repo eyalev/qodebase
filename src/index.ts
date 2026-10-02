@@ -14,7 +14,8 @@ import { BuildBox } from './build';
 import { serveRun } from './run';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
-import { docLabel, docRank, fixtureV3, liveV3, projectV3, withTabs, VIEW_IDS, type Docs, type ViewId } from './v3';
+import { docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
+import { changesOf } from './v2';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
 import { DEFAULT_API_MODEL, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
@@ -197,6 +198,17 @@ async function docsOf(env: Env, ctx: ExecutionContext, info: ProjectInfo, want: 
   return { list: list.map((d) => ({ path: d.path, label: docLabel(d.path) })), current: cur?.path || null, text };
 }
 
+/** Your projects with changes in progress (no box calls: states from the Project DO). */
+async function inboxOf(env: Env, me: string, entries: Entry[], runBase: string): Promise<InboxItem[]> {
+  if (!me) return [];
+  const out = await Promise.all(entries.filter((e) => e.owner === me).map(async (entry) => {
+    const info = await projectStub(env, entry.slug).info().catch(() => null);
+    return info ? { entry, info, open: changesOf(info, {}, runBase).open } : null;
+  }));
+  return out.filter((x): x is InboxItem => !!x && x.open.length > 0);
+}
+const inboxCount = (items: InboxItem[]) => items.reduce((n, it) => n + needsOf(it.open).length, 0);
+
 /** Box states for a project's open agents, its router and its reviewer. */
 async function statusesOf(env: Env, info: ProjectInfo) {
   const status: Record<string, BoxStatus> = {};
@@ -282,8 +294,19 @@ export default {
 
       // ---- pages
       const ui = uiOf(request);
-      if (ui === 'c' && (m = path.match(/^\/design-fixture(?:\/([a-z]+))?\/?$/))) {
-        return html(fixtureV3(runBase, url.searchParams.get('state') || 'full', (VIEW_IDS as string[]).includes(m[1] || '') ? m[1] as ViewId : null, url.searchParams.get('try') || undefined));
+      // The views design: 'c' alone, 'a' and 'b' with home tabs (two navigation takes).
+      const views = ui === 'a' || ui === 'b' || ui === 'c';
+      const tabsNav = ui === 'a' || ui === 'b';
+      const globalOf = async (entries?: Entry[]): Promise<Global> => ({ nav: (ui || 'c') as Nav,
+        inbox: tabsNav && me.handle ? inboxCount(await inboxOf(env, me.handle, entries || await registry(env).list(), runBase)) : 0 });
+      if (views && (m = path.match(/^\/design-fixture(?:\/([a-z]+))?\/?$/))) {
+        return html(fixtureV3(runBase, url.searchParams.get('state') || 'full', (VIEW_IDS as string[]).includes(m[1] || '') ? m[1] as ViewId : null, url.searchParams.get('try') || undefined, await globalOf()));
+      }
+      // Home tabs (A and B): Projects, Inbox, Explore; signed out, Explore only.
+      if (tabsNav && (path === '/' || path === '/inbox' || path === '/explore')) {
+        const entries = await registry(env).list();
+        const tab = !me.handle || path === '/explore' ? 'explore' : path === '/inbox' ? 'inbox' : 'projects';
+        return html(homeV3(ui as Nav, tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase)));
       }
       if (ui && path === '/design-fixture') return html(fixtureV2(ui, runBase, url.searchParams.get('state') || 'full'));
       if (path === '/') {
@@ -308,7 +331,8 @@ export default {
         const u = await userByEmail(env, me.email || '');
         if (!u) return new Response(null, { status: 302, headers: { location: '/login?next=/settings' } });
         const mine = (await registry(env).list()).filter((e) => e.owner === u.handle).length;
-        return html(settingsPage(u, isOwner(env, u.handle), mine, url.searchParams.has('welcome')));
+        const page = settingsPage(u, isOwner(env, u.handle), mine, url.searchParams.has('welcome'));
+        return html(tabsNav ? withGlobal(page, 'account', (await globalOf()).inbox, u.handle) : page);
       }
       if (path.startsWith('/api/me/') && request.method !== 'GET') {
         const u = await userByEmail(env, me.email || '');
@@ -371,7 +395,7 @@ export default {
         return html(buildLogPage(info, a ? `Preview of agent ${ag}` : 'Live app (main)', a ? a.preview : info.app));
       }
       // ---- design v3 (views): /p/<o>/<n>[/<view>] on the views host
-      if (ui === 'c' && (m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(readme|changes|app|history|more|agents|errors|about))?\/?$/))) {
+      if (views && (m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(readme|changes|app|history|more|agents|errors|about))?\/?$/))) {
         const slug = slugOf(m[1], m[2]);
         const p = projectStub(env, slug);
         const info = await p.info();
@@ -382,6 +406,7 @@ export default {
         return html(projectV3({ info, entry: all.find((e) => e.slug === slug)!, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
           me: me.handle, runBase, liveHtml: '', view: m[3] === 'about' ? 'readme' : (m[3] as ViewId) || null, tryAgent: url.searchParams.get('try') || undefined, ...st,
           docs: !m[3] || m[3] === 'readme' || m[3] === 'about' ? await docsOf(env, ctx, info, url.searchParams.get('doc')) : undefined,
+          g: await globalOf(all),
           needsKey: own && !isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
       }
       // ---- code browser: /p/<o>/<n>/code/<path>[?v=<agent>], changes, file list
@@ -391,7 +416,7 @@ export default {
         const r = m[3] === 'changes' ? await changesRoute(env, ctx, info, decodeURIComponent(m[4] || ''), runBase)
           : await codeRoute(env, ctx, info, url.searchParams.get('v') || '', decodeURIComponent(m[4] || ''), runBase);
         // The views design keeps its tab bar on the code pages.
-        if (ui === 'c' && (r.headers.get('content-type') || '').includes('text/html')) return html(withTabs(await r.text(), info, me.handle));
+        if (views && (r.headers.get('content-type') || '').includes('text/html')) return html(withTabs(await r.text(), info, me.handle, await globalOf()));
         return r;
       }
       if ((m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/?$/))) {
@@ -468,7 +493,7 @@ export default {
           // Opportunistic: a review stuck in 'reviewing' (its box died) goes back to the queue.
           ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.requeueStale()));
         }
-        if (verb === 'agents-html' && uiOf(request) === 'c') {
+        if (verb === 'agents-html' && ['a', 'b', 'c'].includes(uiOf(request) || '')) {
           const st = await statusesOf(env, info);
           return json({ html: liveV3(url.searchParams.get('view') || 'changes', { info, me: me.handle, runBase, ...st, entry: undefined as unknown as Entry, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: '' }) });
         }

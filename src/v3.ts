@@ -11,7 +11,7 @@ import { freshTag } from './fresh';
 import { markdown } from './md';
 import { SHEET_HTML, shortId } from './sheet';
 import {
-  type Change, type ProjectArgs, ORDER, OPEN_ICON_C as OPEN_ICON, SEND, VISIT, BUSY,
+  type Change, type ProjectArgs, type UI, ORDER, OPEN_ICON_C as OPEN_ICON, SEND, VISIT, BUSY,
   accentOf, appUrl, changeRow, changesOf, fixtureData, forkAction, FORK_JS, fromIssues, isMerge, keyNote, legend,
   noApp, pageJs, planningHtml, planningOf, primary, shell2,
 } from './v2';
@@ -65,7 +65,15 @@ const ICONS = {
   readme: I('<path d="M5 4h10l4 4v12H5z"/><path d="M14 4v5h5M8.5 13h7M8.5 16.5h5"/>'),
 };
 
-const needsOf = (open: Change[]) => open.filter((c) => primary(c));
+export const needsOf = (open: Change[]) => open.filter((c) => primary(c));
+
+/** How the site navigates (2026-10-02, two to compare):
+ *  'a': home pages get their own bottom bar (Projects, Inbox, Explore, Account);
+ *       inside a project the bottom bar is the project's views, "‹ forq" goes back.
+ *  'b': one global bottom bar everywhere; a project's views are tabs at the top.
+ *  'c': no home tabs (the first views build). */
+export type Nav = 'a' | 'b' | 'c';
+export type Global = { nav: Nav; inbox: number };
 
 // ---- the views ---------------------------------------------------------------
 
@@ -222,9 +230,9 @@ function tabsFor(c: Ctx) {
   return c.own ? VIEWS.filter((v) => v.tab && v.when(c)) : VIEWS.filter((v) => ['readme', 'app', 'code', 'history'].includes(v.id));
 }
 
-export function tabBar(c: Pick<Ctx, 'own' | 'base' | 'worker' | 'info'> & Partial<Ctx>, active: ViewId, needs: number) {
+export function tabBar(c: Pick<Ctx, 'own' | 'base' | 'worker' | 'info'> & Partial<Ctx>, active: ViewId, needs: number, top = false) {
   const tabs = tabsFor(c as Ctx);
-  return `<nav class="tabbar" aria-label="Views">${tabs.map((v) => {
+  return `<nav class="${top ? 'ptop' : 'tabbar'}" aria-label="Project views">${tabs.map((v) => {
     const on = v.id === active || (v.id === 'more' && !tabs.some((t) => t.id === active));
     const href = v.href ? v.href(c as Ctx) : `${c.base}/${v.id}`;
     // More opens a sheet over the current view; a second tap closes it (Eyal, 2026-10-02).
@@ -336,7 +344,8 @@ body.typing .tabbar{display:none}
 @media (hover:hover){.tab:hover{color:var(--fg)}.mi:hover{background:var(--card)}}
 `;
 
-export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record<string, BoxStatus>; router: BoxStatus; reviewer: BoxStatus; tryAgent?: string; base?: string; docs?: Docs }) {
+export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record<string, BoxStatus>; router: BoxStatus; reviewer: BoxStatus; tryAgent?: string; base?: string; docs?: Docs; g?: Global }) {
+  const g: Global = o.g || { nav: 'c', inbox: 0 };
   const { info, me } = o;
   const own = info.owner === me;
   const worker = (o.overview.kind ?? info.kind) === 'worker';
@@ -349,10 +358,15 @@ export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record
   if (!v) { id = 'readme'; v = VIEWS.find((x) => x.id === id)!; }
   const r = v.render!(c);
   const needs = own ? needsOf(open).length : 0;
-  return shell2('c', `${v.label} · ${info.owner}/${info.name} · forq`, `
-<header class="h3"><a class="home" href="/" aria-label="All projects">forq</a><a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(info.owner)} /</span> <b>${esc(info.name)}</b></a>${r.action || ''}</header>
+  // A: the way back to the home tabs is "‹ forq", carrying the Inbox count.
+  const home = g.nav === 'a'
+    ? `<a class="home back" href="/" aria-label="All projects${g.inbox ? `, ${g.inbox} need you` : ''}">${CHEV}forq${g.inbox ? `<span class="hbadge">${g.inbox}</span>` : ''}</a>`
+    : `<a class="home" href="/" aria-label="All projects">forq</a>`;
+  return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · forq`, `
+<header class="h3">${home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(info.owner)} /</span> <b>${esc(info.name)}</b></a>${r.action || ''}</header>
+${g.nav === 'b' ? tabBar(c, id, needs, true) : ''}
 <main class="view${r.full ? ' full' : ''}" id="view">${r.body}</main>${r.compose || ''}
-${tabBar(c, id, needs)}
+${g.nav === 'b' ? globalBar('projects', g.inbox, me) : tabBar(c, id, needs)}
 ${own ? `<div class="scrim3" id="scrim3"></div><div class="moresheet" id="moresheet" aria-hidden="true">${moreMenu(c)}</div>` : ''}
 ${own ? SHEET_HTML : ''}${pageJs(info, r.poll ? `?view=${id}` : '?view=none')}${FORK_JS}
 <script>
@@ -369,7 +383,7 @@ forqTry=(src,title,agent)=>{location.href='${c.base}/app?try='+encodeURIComponen
 document.addEventListener('focusin',(e)=>{if(e.target.matches('textarea,input'))document.body.classList.add('typing');});
 document.addEventListener('focusout',()=>document.body.classList.remove('typing'));
 ${r.js || ''}
-</script>`, V3_CSS, 'v3');
+</script>`, V3_CSS + NAV_CSS, `v3 nav-${g.nav}`);
 }
 
 /** The polled part of a view (Changes, Agents). */
@@ -381,10 +395,21 @@ export function liveV3(view: string, o: ProjectArgs & { status: Record<string, B
 }
 
 /** Wrap a code-browser page (an older full page) with the tab bar on the Code tab. */
-export function withTabs(html: string, info: ProjectInfo, me: string) {
+export function withTabs(html: string, info: ProjectInfo, me: string, g: Global = { nav: 'c', inbox: 0 }) {
   const own = info.owner === me;
   const { open } = changesOf(info, {}, '');
-  const bar = tabBar({ own, base: `/p/${info.owner}/${info.name}`, worker: info.kind === 'worker', info }, 'code', own ? needsOf(open).length : 0);
+  const pc = { own, base: `/p/${info.owner}/${info.name}`, worker: info.kind === 'worker', info };
+  const n = own ? needsOf(open).length : 0;
+  if (g.nav === 'b') {
+    const css = `<style>${V3_CSS.slice(V3_CSS.indexOf('/* Tab bar'))}${NAV_CSS}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30}
+body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+.ptop{position:sticky;top:0;z-index:20;margin:0 0 8px}
+@media (min-width:900px){.tabbar{right:auto;top:0;bottom:0;width:80px}body{padding-bottom:0;padding-left:80px}}
+.badge{position:absolute}</style>`;
+    return html.replace('</head>', `${css}</head>`).replace(/<body([^>]*)>/, `<body$1>${tabBar(pc, 'code', n, true)}`).replace('</body>', `${globalBar('projects', g.inbox, me)}</body>`);
+  }
+  const bar = tabBar(pc, 'code', n);
   const css = `<style>${V3_CSS.slice(V3_CSS.indexOf('/* Tab bar'))}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30}
 body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
@@ -394,8 +419,129 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 }
 
 /** Sample data for /design-fixture on the views host. */
-export function fixtureV3(runBase: string, mode: string, view: ViewId | null, tryAgent?: string) {
+export function fixtureV3(runBase: string, mode: string, view: ViewId | null, tryAgent?: string, g?: Global) {
   const f = fixtureData(runBase, mode);
   const docs: Docs = { list: ['README.md', 'CONTRIBUTING.md', 'CHANGELOG.md', 'docs/sharing.md', 'LICENSE'].map((p) => ({ path: p, label: docLabel(p) })), current: 'README.md', text: f.overview.readme };
-  return projectV3({ info: f.info, entry: f.entry, forks: [], overview: f.overview, me: 'eyal', runBase, liveHtml: '', view, status: f.status, router: f.router, reviewer: { awake: true, cc: 'idle' }, tryAgent, base: '/design-fixture', docs });
+  return projectV3({ info: f.info, entry: f.entry, forks: [], overview: f.overview, me: 'eyal', runBase, liveHtml: '', view, status: f.status, router: f.router, reviewer: { awake: true, cc: 'idle' }, tryAgent, base: '/design-fixture', docs, g });
+}
+
+
+// ---- Home with tabs (nav 'a' and 'b') ---------------------------------------------
+
+const CHEV = `<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>`;
+const HI = {
+  projects: I('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
+  inbox: I('<path d="M3 13h5l1.5 2.5h5L16 13h5"/><path d="M5.5 5h13L21 13v6H3v-6z"/>'),
+  explore: I('<circle cx="12" cy="12" r="8.5"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>'),
+  account: I('<circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.2-3.5 4-5 7-5s5.8 1.5 7 5"/>'),
+};
+export type HomeTab = 'projects' | 'inbox' | 'explore' | 'account';
+
+/** The site-wide bar: home tabs (A), or everywhere (B). */
+export function globalBar(active: HomeTab, inbox: number, me: string) {
+  const tabs: [HomeTab, string, string][] = me
+    ? [['projects', 'Projects', '/'], ['inbox', 'Inbox', '/inbox'], ['explore', 'Explore', '/explore'], ['account', 'Account', '/settings']]
+    : [['explore', 'Explore', '/'], ['account', 'Sign in', '/login']];
+  return `<nav class="tabbar" aria-label="forq">${tabs.map(([id, labelT, href]) => {
+    const on = id === active;
+    const badge = id === 'inbox' ? `<span class="badge"${inbox ? '' : ' hidden'}>${inbox || ''}</span>` : '';
+    return `<a href="${href}" class="tab${on ? ' on' : ''}"${on ? ' aria-current="page"' : ''}>${HI[id]}${badge}<span>${labelT}</span></a>`;
+  }).join('')}</nav>`;
+}
+
+export const NAV_CSS = `
+.h3 .home.back{gap:2px;padding-left:6px;position:relative}
+.hbadge{margin-left:6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;font-weight:600;line-height:18px;text-align:center}
+.ptop{flex:none;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);background:var(--bg);padding:0 8px}
+.ptop::-webkit-scrollbar{display:none}
+.ptop .tab{flex:none;flex-direction:row;gap:6px;min-height:44px;padding:0 12px;font-size:14px;border-bottom:2px solid transparent}
+.ptop .tab svg{display:none}
+@media (max-width:599px){.ptop{justify-content:space-between}}
+.ptop .tab{padding:0 10px}
+.ptop .tab.on{border-bottom-color:var(--fg)}
+.ptop .badge{position:static;margin-left:2px}
+@media (min-width:900px){body.nav-b{grid-template-rows:48px auto 1fr auto}body.nav-b .ptop{grid-column:2}body.nav-b>.tabbar{grid-row:1 / 5}}
+.htitle{flex:1;font-size:15px;font-weight:600}
+.home-list{display:flex;flex-direction:column;gap:8px}
+.prow{position:relative;display:block;background:var(--card);border-radius:12px;padding:12px 14px;color:inherit}
+.prow .t{display:block;font-size:15px;color:var(--fg)}
+.prow .t b{font-weight:600}.prow .t .o{color:var(--dim)}
+.prow .d{color:var(--dim);font-size:14px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .m{display:flex;align-items:center;gap:8px 12px;margin-top:8px;font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden}
+.prow .m .st{display:inline-flex;align-items:center;gap:6px;font-weight:500}
+.prow .m .st.ready{color:var(--acc)}.prow .m .st.fix{color:var(--warn)}.prow .m .st.working{color:var(--fg)}
+.stretch::after{content:'';position:absolute;inset:0;border-radius:12px}
+.prow button.fresh{position:relative;z-index:1}
+.hrow{display:flex;align-items:center;gap:8px;margin:0 0 12px}
+.hrow .btn,.hrow .chipbtn{min-height:40px;padding:0 14px;font-size:14px}
+.ibx h3 a{color:var(--fg)}
+.ibx .chg{margin-bottom:8px}
+@media (hover:hover){.prow:hover{background:var(--chip)}}
+`;
+
+export type InboxItem = { entry: Entry; info: ProjectInfo; open: Change[] };
+
+function projRow(e: Entry, now: number, st?: { ready: number; fix: number; working: number }, forks = 0) {
+  const s = !st ? '' : st.fix ? `<span class="st fix"><span class="dot s-fix"></span>${st.fix} need${st.fix > 1 ? '' : 's'} you</span>`
+    : st.ready ? `<span class="st ready"><span class="dot s-ready"></span>${st.ready} ready to merge</span>`
+    : st.working ? `<span class="st working"><span class="dot s-working"></span>${st.working} in progress</span>` : '';
+  return `<div class="prow"><a class="t stretch" href="${path(e.slug)}"><span class="o">${esc(e.owner)} /</span> <b>${esc(e.name)}</b></a>
+${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
+<div class="m">${s}${freshTag(e.updatedAt, now, STEPS)}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.importedFrom ? `<span>${e.importedFrom.stars >= 1000 ? (e.importedFrom.stars / 1000).toFixed(1) + 'k' : e.importedFrom.stars} stars</span>` : ''}</div></div>`;
+}
+
+/** The home pages with tabs: Projects, Inbox, Explore (Account is the settings page). */
+export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, items: InboxItem[]) {
+  const now = Date.now();
+  const inboxN = items.reduce((n, it) => n + needsOf(it.open).length, 0);
+  const forks = (slug: string) => entries.filter((e) => e.forkedFrom === slug).length;
+  const mine = entries.filter((e) => me && e.owner === me).sort((a, b) => b.updatedAt - a.updatedAt);
+  const others = entries.filter((e) => e.owner !== me);
+  const st = (slug: string) => {
+    const it = items.find((x) => x.entry.slug === slug);
+    if (!it) return undefined;
+    const n = (k: string) => it.open.filter((c) => c.state === k).length;
+    return { ready: n('ready'), fix: n('fix') + n('waiting'), working: n('working') + n('checking') };
+  };
+  let title = '', body = '';
+  if (tab === 'projects') {
+    title = 'Your projects';
+    body = `<div class="hrow"><span class="lede" style="flex:1;margin:0">${mine.length} project${mine.length === 1 ? '' : 's'}</span><a class="chipbtn" href="/import">Import from GitHub</a></div>
+<div class="home-list">${mine.map((e) => projRow(e, now, st(e.slug))).join('') || `<p class="empty">No projects yet. Fork one from <a href="/explore">Explore</a>.</p>`}</div>`;
+  } else if (tab === 'inbox') {
+    title = 'Inbox';
+    const need = items.map((it) => ({ ...it, need: needsOf(it.open).sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state)) })).filter((it) => it.need.length);
+    const moving = items.flatMap((it) => it.open.filter((c) => c.state === 'working' || c.state === 'checking').map((c) => ({ it, c })));
+    let first = true;
+    body = `<div class="ibx">${need.length ? need.map((it) => `<h3><a href="${path(it.entry.slug)}/changes">${esc(label(it.entry.slug))}</a></h3>${it.need.map((c) => { const html = changeRow(it.info, c, now, first ? c.a.id : undefined).replace('<div class="chg ', `<div data-api="/api/p/${it.info.owner}/${it.info.name}" class="chg `); first = false; return html; }).join('')}`).join('')
+      : `<div class="hello"><b>Nothing needs you.</b><p>When a change is ready to merge, needs a fix, or an agent has a question, it shows up here, from every project.</p></div>`}
+${moving.length ? `<h3>In progress</h3>${moving.map(({ it, c }) => `<a class="mi" href="${path(it.entry.slug)}/changes"><span class="dot s-${c.state}"></span><span><b>${esc(c.title)}</b><span>${esc(label(it.entry.slug))}, ${c.word.toLowerCase()}</span></span></a>`).join('')}` : ''}</div>`;
+  } else {
+    title = 'Explore';
+    body = `<div class="hrow"><span class="lede" style="flex:1;margin:0">Projects that run. Open one, fork it, ask for changes.</span>${me ? '<a class="chipbtn" href="/import">Import</a>' : ''}</div>
+<div class="home-list">${others.map((e) => projRow(e, now, undefined, forks(e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`;
+  }
+  return shell2(nav as UI, `${title} · forq`, `
+<header class="h3"><a class="home" href="/">forq</a><span class="htitle">${title}</span></header>
+<main class="view" id="view"><div class="pad">${body}${legend(1)}</div></main>
+${globalBar(tab, inboxN, me)}
+<script>
+// Inbox actions: each row knows its project's API.
+document.addEventListener('click',async(e)=>{
+ const o=!e.target.closest('.fresh')&&e.target.closest('[data-open]');if(o){const r=o.closest('.chg');r.classList.toggle('open');return;}
+ const b=e.target.closest('[data-merge],[data-fix]');if(!b)return;const api=b.closest('[data-api]').dataset.api;const m=!!b.dataset.merge;
+ b.disabled=true;b.textContent=m?'Merging':'Sending to its agent';
+ const r=await fetch(api+'/'+(m?'merge':'fix'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({agent:b.dataset.merge||b.dataset.fix})});
+ if(!r.ok){const j=await r.json().catch(()=>({}));b.textContent=j.error||'Failed';return;}setTimeout(()=>location.reload(),1200);});
+</script>`, V3_CSS + NAV_CSS, `v3 nav-${nav}`);
+}
+
+/** The settings page under the site-wide bar (Account tab). */
+export function withGlobal(html: string, tab: HomeTab, inbox: number, me: string) {
+  const css = `<style>${V3_CSS.slice(V3_CSS.indexOf('/* Tab bar'))}${NAV_CSS}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30}
+body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+@media (min-width:900px){.tabbar{right:auto;top:0;bottom:0;width:80px}body{padding-bottom:0;padding-left:80px}}
+.badge{position:absolute}</style>`;
+  return html.replace('</head>', `${css}</head>`).replace('</body>', `${globalBar(tab, inbox, me)}</body>`);
 }

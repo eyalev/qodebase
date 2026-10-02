@@ -22,7 +22,7 @@ export const uiOf = (request: Request): UI | null => {
   const v = request.headers.get('x-forq-ui');
   return v === 'a' || v === 'b' || v === 'c' || v === 'd' ? v : null;
 };
-const NAMES: Record<UI, string> = { a: 'App first', b: 'Task list', c: 'Views', d: 'Chat' };
+const NAMES: Record<UI, string> = { a: 'Views, home tabs (two bars)', b: 'Views, one bar', c: 'Views', d: 'Chat' };
 
 // ---- the change model ------------------------------------------------------
 
