@@ -114,3 +114,7 @@ Bugs found and fixed during the run:
 - [x] Eyal picked C (views). Rebuilt as src/v3.ts on forq-c; first take kept on forq-d
 - [ ] Eyal reviews the views; then make it the default, add --warn and the views pattern to DESIGN.md, delete forq-ui-a/b/d and /design-fixture
 - [ ] Views later: remember the last view per project; a "needs you" jump when those cards are scrolled away; projects declaring their own views
+
+### Hosting others' projects (plan only, 2026-10-02)
+- [x] Plan: docs/hosting-plan.md (separate account, two domains, Workers for Platforms, metering, payments)
+- [ ] Eyal decides: product vs open source first; domains; when (default: after Oct 14)
