@@ -241,7 +241,7 @@ async function sendTo(env: Env, agentId: string, text: string, apiBase: string) 
 const app = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
-    if (url.hostname === env.RUN_HOST) return serveRun(request, env, ctx);
+    if (url.hostname === env.RUN_HOST || url.hostname.endsWith(`.${env.RUN_HOST}`)) return serveRun(request, env, ctx);
     // Cloudflare Issues → Notifications webhook. Its own auth (cf-webhook-auth), before the user/agent auth.
     if (url.pathname === '/api/hooks/issues' && request.method === 'POST') return issuesHook(request, env, ctx);
     // Public-site basics (baseline): about, privacy, robots, version, health.

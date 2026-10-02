@@ -25,6 +25,7 @@ export interface Env {
   UI_VARIANT_HOSTS?: string;  // design-variant preview hosts (comma-separated), see variants/
   RUN_HOST: string;           // ttyview.dev (static apps, /<owner>.<name>/)
   APPS_DOMAIN?: string;       // ttyview.dev: Worker apps at <name>--<owner>.<APPS_DOMAIN>
+  APPS_ZONE_ID?: string;      // that zone (exclusion routes, see build.ts excludeFromRunRoute)
   MAX_AGENTS_PER_PROJECT: string;
   MAX_AWAKE_BOXES: string;
   CLAUDE_CODE_OAUTH_TOKEN: string;
@@ -33,7 +34,8 @@ export interface Env {
 
 /** `owner/name` ↔ Artifacts repo name `owner.name`. */
 export const slugOf = (owner: string, name: string) => `${owner}.${name}`;
-export const NAME_RE = /^[a-z0-9][a-z0-9-]{0,38}$/;
+// No '--': app hosts are <name>--<owner>[.…] and agent ids <slug>--<short>.
+export const NAME_RE = /^(?!.*--)[a-z0-9][a-z0-9-]{0,38}$/;
 /** Agent ids are `<slug>--<short>`; the router is `<slug>--router`. */
 export const AGENT_RE = /^([a-z0-9-]+\.[a-z0-9-]+)--([a-z0-9]+)$/;
 export const projectOf = (agentId: string) => agentId.split('--')[0];
@@ -48,5 +50,23 @@ export const appHost = (slug: string, domain?: string) => {
   const [owner, name] = slug.split('.');
   return `${name.slice(0, 63 - 2 - owner.length).replace(/-+$/, '')}--${owner}.${domain}`;
 };
+/** A static project's or fork's own host on the run domain (one label, so the
+ *  zone's universal certificate covers it): `owner.name` → `name--owner`,
+ *  fork `owner.name--short` → `ag-short--name--owner`. Undefined past 63
+ *  characters (served by path on the run host instead). */
+export function runHost(repo: string, domain: string) {
+  const m = repo.match(/^([a-z0-9-]+)\.([a-z0-9-]+?)(?:--([a-z0-9]+))?$/);
+  if (!m) return undefined;
+  const [, owner, name, short] = m;
+  const label = short ? `ag-${short}--${name}--${owner}` : `${name}--${owner}`;
+  return label.length <= 63 ? `${label}.${domain}` : undefined;
+}
+/** The reverse of runHost's label; null when the label is not one. */
+export function repoOfHostLabel(label: string) {
+  const p = label.split('--');
+  if (p.length === 2 && p.every(Boolean)) return `${p[1]}.${p[0]}`;
+  if (p.length === 3 && /^ag-[a-z0-9]+$/.test(p[0]) && p[1] && p[2]) return `${p[2]}.${p[1]}--${p[0].slice(3)}`;
+  return null;
+}
 /** Preview names must start with a letter. */
 export const previewAlias = (agentId: string) => `ag-${agentId.split('--')[1]}`;

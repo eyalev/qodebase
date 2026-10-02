@@ -1,7 +1,15 @@
-// Run host: https://forq-run.kapps.dev/<repo>/<path> serves a repo's files
-// straight from Artifacts, so every project AND every agent fork is a live app
-// with no build step (static apps; v0). A separate origin from the UI, so an
-// app's script can never reach forq's API or Access cookie.
+// Run host: every static project and every agent fork is a live app served
+// straight from Artifacts, no build step, each on its OWN origin:
+//   https://<name>--<owner>.<RUN_HOST>/          a project (owner.name)
+//   https://ag-<id>--<name>--<owner>.<RUN_HOST>/ an agent fork (owner.name--id)
+// One label, so the zone's universal certificate covers every host. Own
+// origins mean apps never share storage, cookies or service workers (until
+// 2026-10-02 they shared https://<RUN_HOST>/<repo>/, kept as a 301 to the host
+// and, for names too long for one label, as the fallback that still serves).
+// Worker projects have their own custom domains on the same names; a request
+// for one that reaches forq (its exclusion route missing) is passed through.
+// The run domain is separate from the UI, so an app's script can never reach
+// forq's API or Access cookie.
 //
 // Cost bounds: the branch head is memoised per colo for HEAD_TTL_S; files are
 // memoised per colo by commit hash (immutable), so a page view is at most one
@@ -9,12 +17,12 @@
 // before any of it (v0 is demo content; noindex everywhere).
 
 import { log } from './box';
-import type { Env } from './env';
+import { repoOfHostLabel, runHost, type Env } from './env';
 
 const HEAD_TTL_S = 15;
 // Bump when what we serve for the same commit changes (e.g. the storage shim),
 // or the per-commit cache keeps answering with the old bytes for a day.
-const SERVE_V = 2;
+const SERVE_V = 3;
 const FILE_TTL_S = 86400;
 const TYPES: Record<string, string> = {
   html: 'text/html; charset=utf-8', htm: 'text/html; charset=utf-8', css: 'text/css; charset=utf-8',
@@ -33,10 +41,29 @@ export async function serveRun(request: Request, env: Env, ctx: ExecutionContext
   if (request.method !== 'GET' && request.method !== 'HEAD') return deny(405, 'GET only');
   const url = new URL(request.url);
   if (url.pathname === '/robots.txt') return deny(200, 'User-agent: *\nDisallow: /\n');
-  const m = url.pathname.match(/^\/([a-z0-9][a-z0-9.-]*\.[a-z0-9-]+(?:--[a-z0-9]+)?)(\/.*)?$/);
-  if (!m) return deny(404, 'not found');
-  const [, repoName, rest] = m;
-  if (!rest) return Response.redirect(`${url.origin}/${repoName}/`, 301);
+  let repoName: string;
+  let rest: string;
+  let shim = false;
+  if (url.hostname !== env.RUN_HOST) {
+    // A project's or fork's own host.
+    const label = url.hostname.slice(0, -(env.RUN_HOST.length + 1));
+    const repo = label.includes('.') ? null : repoOfHostLabel(label);
+    // Two labels deep is a Worker app's preview (<alias>.<name>--<owner>), and a
+    // Worker project's host belongs to its own custom domain: hand it on.
+    if (!repo || await isWorker(env, repo)) return fetch(request);
+    repoName = repo;
+    rest = url.pathname;
+  } else {
+    const m = url.pathname.match(/^\/([a-z0-9][a-z0-9.-]*\.[a-z0-9-]+(?:--[a-z0-9]+)?)(\/.*)?$/);
+    if (!m) return deny(404, 'not found');
+    repoName = m[1];
+    // Old shared-origin links move to the repo's own host, path and query kept.
+    const host = runHost(repoName, env.RUN_HOST);
+    if (host) return Response.redirect(`https://${host}${m[2] || '/'}${url.search}`, 301);
+    if (!m[2]) return Response.redirect(`${url.origin}/${repoName}/`, 301);
+    rest = m[2];
+    shim = true;   // still a shared origin: scope its storage
+  }
   let path = decodeURIComponent(rest.slice(1));
   if (path === '' || path.endsWith('/')) path += 'index.html';
   if (path.split('/').some((s) => s === '..' || s.startsWith('.git'))) return deny(404, 'not found');
@@ -55,7 +82,7 @@ export async function serveRun(request: Request, env: Env, ctx: ExecutionContext
     ctx.waitUntil(cache.put(headKey, new Response(head, { headers: { 'cache-control': `max-age=${HEAD_TTL_S}` } })));
   }
 
-  const fileKey = new Request(`https://${env.RUN_HOST}/__f${SERVE_V}/${repoName}/${head}/${encodeURIComponent(path)}`);
+  const fileKey = new Request(`https://${env.RUN_HOST}/__f${SERVE_V}${shim ? 's' : ''}/${repoName}/${head}/${encodeURIComponent(path)}`);
   const hit = await cache.match(fileKey);
   if (hit) return withHeaders(hit, head);
 
@@ -73,7 +100,7 @@ export async function serveRun(request: Request, env: Env, ctx: ExecutionContext
   if (!blob) return deny(404, `${path} is not in ${repoName}`);
   const ext = (path.split('.').pop() || '').toLowerCase();
   let body: ArrayBuffer | string = await blob.arrayBuffer();
-  if (ext === 'html' || ext === 'htm') {
+  if (shim && (ext === 'html' || ext === 'htm')) {
     // The shim goes before anything else in the document, so it runs before
     // the app's own scripts (which may read storage at parse time).
     const text = new TextDecoder().decode(body);
@@ -106,6 +133,18 @@ return new Proxy(api,{get:function(t,k){if(k==='length')return own().length;if(k
 set:function(t,k,v){if(k in api)return false;real.setItem(P+k,String(v));return true;},deleteProperty:function(t,k){real.removeItem(P+k);return true;},
 has:function(t,k){return k in api||real.getItem(P+k)!==null;},ownKeys:function(){return own();},getOwnPropertyDescriptor:function(t,k){var v=real.getItem(P+k);return v===null?undefined:{value:v,enumerable:true,configurable:true,writable:true};}});}
 ['localStorage','sessionStorage'].forEach(function(n){try{var real=window[n];var s=scope(real);Object.defineProperty(window,n,{get:function(){return s;},configurable:true});}catch(e){}});})();</script>`;
+}
+
+/** Is this repo's project a Worker project? Memoised per isolate for 10 min. */
+const kinds = new Map<string, { worker: boolean; at: number }>();
+async function isWorker(env: Env, repo: string): Promise<boolean> {
+  const slug = repo.split('--')[0];
+  const hit = kinds.get(slug);
+  if (hit && Date.now() - hit.at < 600_000) return hit.worker;
+  const info = await env.Project.get(env.Project.idFromName(slug)).info().catch(() => null);
+  const worker = info?.kind === 'worker';
+  kinds.set(slug, { worker, at: Date.now() });
+  return worker;
 }
 
 function withHeaders(r: Response, head: string) {

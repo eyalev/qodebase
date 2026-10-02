@@ -17,7 +17,10 @@
   "routes": [
     { "pattern": "projectsbase.dev", "custom_domain": true },
     // Public run host: every repo and agent fork as a live static app (src/run.ts).
-    { "pattern": "ttyview.dev", "custom_domain": true }
+    { "pattern": "ttyview.dev", "custom_domain": true },
+    // Every static project and fork on its own host: <name>--<owner>.ttyview.dev
+    // (src/run.ts). Worker apps' hosts are excluded by routes with no Worker.
+    { "pattern": "*.ttyview.dev/*", "zone_name": "ttyview.dev" }
   ],
   "containers": [
     {
@@ -70,6 +73,7 @@
     "RUN_HOST": "ttyview.dev",
     // Worker apps: <name>--<owner>.ttyview.dev, previews <alias>.<that host> (src/build.ts).
     "APPS_DOMAIN": "ttyview.dev",
+    "APPS_ZONE_ID": "784f54acf330324763b9749cc76bc871",
     "ACCOUNT_ID": "887d7234a6b8d65ad355a4f6684cab67",
     "API_BASE": "https://forq.forqdev.workers.dev",
     // Hard caps (the durable_object policy has no max_instances).

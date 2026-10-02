@@ -32,6 +32,23 @@ export type BuildJob = {
   agentId?: string;
   queuedAt: number;
 };
+/** A Worker app's host and its previews' hosts must not run forq's catch-all
+ *  route on the apps domain (`*.<APPS_DOMAIN>/*`, the static run host): a
+ *  route with no Worker on `<host>/*` and `*.<host>/*` hands them to the app's
+ *  own custom domain. Idempotent: an existing route counts as done. */
+export async function excludeFromRunRoute(env: Env, host: string) {
+  if (!env.APPS_ZONE_ID) return;
+  for (const pattern of [`${host}/*`, `*.${host}/*`]) {
+    const r = await fetch(`https://api.cloudflare.com/client/v4/zones/${env.APPS_ZONE_ID}/workers/routes`, {
+      method: 'POST', headers: { authorization: `Bearer ${env.CF_DEPLOY_TOKEN}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ pattern }),
+    }).catch((e) => ({ ok: false, status: 0, json: async () => ({ errors: [{ message: String(e) }] }) }) as any);
+    const j = await r.json().catch(() => ({})) as { errors?: { code?: number; message?: string }[] };
+    const dup = (j.errors || []).some((e) => e.code === 10020 || /duplicate|already exists/i.test(e.message || ''));
+    log('build', r.ok || dup ? 'route_excluded' : 'route_exclude_failed', { pattern, status: r.status, errors: r.ok || dup ? undefined : j.errors });
+  }
+}
+
 export type BuildResult = { id: string; kind: BuildJob['kind']; agentId?: string; ok: boolean; url?: string; commit?: string; error?: string; log: string; ms: number };
 
 const WRANGLER = 'wrangler@4.146.0';

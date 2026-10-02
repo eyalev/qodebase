@@ -62,4 +62,4 @@ export async function searchRepos(q: string, ctx: ExecutionContext): Promise<GhR
 
 /** A forq project name from a GitHub repo name. */
 export const nameFor = (repoName: string) =>
-  repoName.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 39) || 'project';
+  repoName.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-{2,}/g, '-').replace(/^-+|-+$/g, '').slice(0, 39).replace(/-+$/, '') || 'project';

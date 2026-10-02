@@ -4,6 +4,7 @@
 
 import { DurableObject } from 'cloudflare:workers';
 import { NAME_RE, appHost, appWorkerName, previewAlias, slugOf, type Env } from './env';
+import { excludeFromRunRoute } from './build';
 import type { BuildJob, BuildResult } from './build';
 import { log } from './box';
 import { registry, type Entry } from './registry';
@@ -185,6 +186,8 @@ export class Project extends DurableObject<Env> {
       info.app = { ...d, url: r.url || info.app?.url, worker: info.app?.worker || appWorkerName(info.slug) };
       await this.ctx.storage.put('info', info);
       if (r.ok) await registry(this.env).touch(info.slug);
+      const host = appHost(info.slug, this.env.APPS_DOMAIN);
+      if (r.ok && host) await excludeFromRunRoute(this.env, host);
     }
     log('project', 'build_done', { slug: info.slug, agentId: r.agentId, ok: r.ok, url: r.url, ms: r.ms, error: r.error });
   }
