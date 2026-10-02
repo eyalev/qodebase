@@ -16,7 +16,7 @@ import { serveRun } from './run';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
 import { docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
-import { changesOf } from './v2';
+import { changesOf, runUrl } from './v2';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
 import { DEFAULT_API_MODEL, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
@@ -652,7 +652,7 @@ async function codeRoute(env: Env, ctx: ExecutionContext, info: ProjectInfo, v: 
     return html(dirPage({ info, v, path: dir, entries, readme, rev }));
   }
   const file = await blob(env, ctx, repo, e.hash, clean);
-  return html(filePage({ info, v, path: clean, file, rev, runUrl: `${runBase}/${repo}/${clean}` }));
+  return html(filePage({ info, v, path: clean, file, rev, runUrl: runUrl(runBase, repo, clean) }));
 }
 
 async function changesRoute(env: Env, ctx: ExecutionContext, info: ProjectInfo, short: string, runBase: string) {
@@ -675,7 +675,7 @@ async function changesRoute(env: Env, ctx: ExecutionContext, info: ProjectInfo, 
   log('code', 'changes', { agent: agent.id, files: changes.length, base: base.commit.slice(0, 8), tip: tip.commit.slice(0, 8) });
   return html(changesPage({ info, agent, changes: withText,
     baseNote: `Compared with main at ${base.commit.slice(0, 7)}, when it started${changes.length > CAP ? `; first ${CAP} of ${changes.length} files` : ''}`,
-    previewUrl: `${runBase}/${agent.fork}/${info.entry || ''}` }));
+    previewUrl: runUrl(runBase, agent.fork, info.entry || '') }));
 }
 
 const html = (body: string) => new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });

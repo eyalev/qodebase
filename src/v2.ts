@@ -15,6 +15,8 @@ import { esc, path, label, STEPS } from './ui';
 import { FRESH_CSS, freshHelp, freshLegend, freshTag } from './fresh';
 import { markdown } from './md';
 import { SHEET_CSS, SHEET_HTML, SHEET_JS, shortId } from './sheet';
+import { runUrl } from './runurl';
+export { runUrl };
 
 // 'c' is the views design (src/v3.ts); 'd' keeps the first chat take for comparison.
 export type UI = 'a' | 'b' | 'c' | 'd';
@@ -43,7 +45,7 @@ export function titleOf(task: string) {
 
 export function changeOf(info: ProjectInfo, a: Agent, s: BoxStatus | undefined, runBase: string): Change {
   const worker = info.kind === 'worker';
-  const tryUrl = worker ? (a.preview?.status === 'live' && a.preview.url ? `${a.preview.url}/` : undefined) : `${runBase}/${a.fork}/${info.entry || ''}`;
+  const tryUrl = worker ? (a.preview?.status === 'live' && a.preview.url ? `${a.preview.url}/` : undefined) : runUrl(runBase, a.fork, info.entry || '');
   const base = { a, title: titleOf(a.task), tryUrl, busy: false } as Change;
   const r = a.review;
   if (a.state === 'merged' || a.state === 'stopped') return { ...base, state: 'merged', word: a.state === 'merged' ? 'Merged' : 'Stopped' };
@@ -305,7 +307,7 @@ export function appUrl(o: ProjectArgs) {
   const dep = overview.app ?? info.app;
   if (isWorker) return dep?.url ? `${dep.url}/` : '';
   const at = overview.entry ?? info.entry;
-  return at === null ? '' : `${runBase}/${info.repo}/${at || ''}`;
+  return at === null ? '' : runUrl(runBase, info.repo, at || '');
 }
 
 /** What to show where the app would be, when there is no app to show. */

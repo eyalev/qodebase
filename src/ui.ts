@@ -7,6 +7,7 @@ import { FRESH_CSS, freshHelp, freshLegend, freshTag } from './fresh';
 import { markdown } from './md';
 import { MAX_IMPORT_KB } from './github';
 import { SHEET_CSS, SHEET_HTML, SHEET_JS, previewTabs, shortId } from './sheet';
+import { runUrl } from './runurl';
 
 export const esc = (s: string) => String(s ?? '').replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]!));
 export const STEPS = [14 * 24, 3 * 24, 24, 3];   // freshbar horizon: empty after 14 days
@@ -164,7 +165,7 @@ export function projectPage(o: { info: ProjectInfo; entry: Entry; forks: Entry[]
   const isWorker = (overview.kind ?? info.kind) === 'worker';
   const dep = overview.app ?? info.app;
   const webAt = isWorker ? '' : overview.entry ?? info.entry;   // folder of the web page; null = none
-  const app = isWorker ? (dep?.url ? `${dep.url}/` : '') : `${runBase}/${info.repo}/${webAt || ''}`;
+  const app = isWorker ? (dep?.url ? `${dep.url}/` : '') : runUrl(runBase, info.repo, webAt || '');
   const src = info.importedFrom;
   const myForks = forks.filter((e) => e.owner === me);
   return shell(`${info.owner}/${info.name} · forq`, `<a class="back" href="/">Explore</a>
@@ -325,7 +326,7 @@ ${a.request ? `<dt>${fromIssues(a.request) ? 'Reported by Cloudflare Issues' : '
 <dt>Result</dt><dd${a.note ? '' : ' class="none"'}>${a.note ? esc(a.note) : ph.busy ? 'Not yet. It reports here when it pushes.' : 'No report yet.'}</dd>
 ${reviewBlock(a)}
 </dl>
-${info.kind === 'worker' ? previewLine(info, a) : ''}<div class="acts">${info.kind === 'worker' ? (a.preview?.url ? `<button type="button" class="chipbtn" data-preview="${esc(a.preview.url)}/">Preview</button>` : '') : `<button type="button" class="chipbtn" data-preview="${runBase}/${a.fork}/${info.entry || ''}">Preview</button>`}<a class="chipbtn" href="/p/${info.owner}/${info.name}/changes/${shortId(a.id)}">Changes</a><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.review?.state === 'changes' ? `<button type="button" class="chipbtn" data-fix="${esc(a.id)}">Ask agent to fix</button>` : ''}${a.state === 'pushed' && !a.review ? `<button type="button" class="chipbtn" data-review="${esc(a.id)}">Review it</button>` : ''}${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge${a.review?.state === 'changes' ? ' anyway' : ''}</button>` : ''}</div></div>`;
+${info.kind === 'worker' ? previewLine(info, a) : ''}<div class="acts">${info.kind === 'worker' ? (a.preview?.url ? `<button type="button" class="chipbtn" data-preview="${esc(a.preview.url)}/">Preview</button>` : '') : `<button type="button" class="chipbtn" data-preview="${runUrl(runBase, a.fork, info.entry || '')}">Preview</button>`}<a class="chipbtn" href="/p/${info.owner}/${info.name}/changes/${shortId(a.id)}">Changes</a><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="chat">Chat</button><button type="button" class="chipbtn" data-sheet="${a.id}" data-name="Agent ${shortId(a.id)}" data-mode="term">Terminal</button>${a.review?.state === 'changes' ? `<button type="button" class="chipbtn" data-fix="${esc(a.id)}">Ask agent to fix</button>` : ''}${a.state === 'pushed' && !a.review ? `<button type="button" class="chipbtn" data-review="${esc(a.id)}">Review it</button>` : ''}${a.state === 'pushed' ? `<button class="btn" data-merge="${esc(a.id)}">Merge${a.review?.state === 'changes' ? ' anyway' : ''}</button>` : ''}</div></div>`;
   };
   const open = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped').reverse();
   const done = info.agents.filter((a) => a.state === 'merged').reverse().slice(0, 5);
