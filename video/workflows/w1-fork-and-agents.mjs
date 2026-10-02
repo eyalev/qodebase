@@ -59,9 +59,12 @@ await r.tap(`.ptab[data-src*="${short}"]`, { after: 2500 });
 await r.say('And its preview: the change running live, before anything is merged.');
 
 await r.chapter('Merge', 'One tap per agent. The router agent does the git, conflicts included.');
-for (const x of others(await info())) {
+const toMerge = others(await info());
+for (const [i, x] of toMerge.entries()) {
   await r.scroll('#agents', { offset: -12, after: 400 });
-  await r.tap(`[data-merge="${x.id}"]`, { after: 600 });
+  await r.tap(`[data-merge="${x.id}"]`, { after: 300 });
+  await r.say(i === 0 ? 'Tap Merge. The router agent merges it into the main line, and the live app updates.'
+    : 'If both agents edited the same file, the router agent resolves the conflict and keeps both changes.', { hold: 300 });
   await r.waitFor(async () => (await info()).agents.find((y) => y.id === x.id)?.state === 'merged', { speed: 6, label: 'router agent merging' });
 }
 await p.reload(); await p.waitForLoadState('networkidle').catch(() => {}); await r.sleep(1200);

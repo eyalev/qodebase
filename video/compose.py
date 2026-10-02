@@ -26,6 +26,7 @@ def font(size, weight=400):
     except Exception: pass
     return f
 
+MONO = ImageFont.truetype(__import__('subprocess').run(['fc-match', '-f', '%{file}', 'monospace'], capture_output=True, text=True).stdout, 21)
 F_TITLE, F_SUB, F_CAP, F_CHAP, F_BADGE = font(72, 600), font(34, 400), font(40, 500), font(26, 600), font(26, 600)
 
 def wrap(draw, text, f, width):
@@ -82,6 +83,7 @@ def main(src, out):
             stop = next((x['t'] for x in ev[i + 1:] if x['type'] == 'speed'), t1)
             e['speed'] = max(float(e['speed']), (stop - e['t']) / MAX_WAIT)
     fi, cache, last_img = 0, {}, None
+    plaintext = None   # a 'plaintext' event redraws a tiny text/plain page legibly
     caption, chapter, speed_target, speed, label, compressed_from = '', '', 1.0, 1.0, '', None
     ei, t = 0, t0
     emitted = 0
@@ -98,6 +100,8 @@ def main(src, out):
             elif e['type'] == 'speed':
                 speed_target = float(e['speed']); label = e.get('label', '')
                 compressed_from = e['t'] if speed_target > 1 else None
+            elif e['type'] == 'plaintext':
+                plaintext = e.get('text')
             elif e['type'] == 'end':
                 pass
         # ease speed toward target over ~0.25 s of output time
@@ -111,6 +115,13 @@ def main(src, out):
             im = Image.open(os.path.join(src, f)).convert('RGB').resize((ph_w, ph_h), Image.LANCZOS)
             cache[f] = im
         shot = cache[f]
+        if plaintext:
+            shot = Image.new('RGB', (ph_w, ph_h), (255, 255, 255)); sd = ImageDraw.Draw(shot)
+            yy = 60
+            for para in plaintext.split('\n'):
+                ind = len(para) - len(para.lstrip())
+                for k, line in enumerate(wrap(sd, para.strip(), MONO, ph_w - 60 - ind * 6 - 24) or ['']):
+                    sd.text((30 + ind * 6 + (24 if k else 0), yy), line, font=MONO, fill=(20, 20, 20)); yy += 30
         canvas = Image.new('RGB', (W, H), BG)
         d = ImageDraw.Draw(canvas)
         d.rounded_rectangle((px - 3, py - 3, px + ph_w + 2, py + ph_h + 2), radius=39, outline=(70, 76, 84), width=2)

@@ -47,6 +47,9 @@ await r.chapter('Merged and redeployed', 'One tap. forq deploys the new version.
 await r.tap(`[data-merge="${a.id}"]`, { after: 800 });
 const before = (await info()).app?.at || 0;
 await r.waitFor(async () => { const j = await info(); return j.agents.find((x) => x.id === a.id)?.state === 'merged' && j.app?.status === 'live' && j.app.at > before; }, { speed: 6, label: 'merging and redeploying' });
+// A fresh deploy takes a few seconds to reach every edge: film the fixed
+// request only once it really answers 404 (the first take showed the old trace).
+await r.waitFor(async () => (await fetch(BAD)).status === 404, { speed: 6, label: 'new version reaching the edge', poll: 2000 });
 await p.reload(); await r.sleep(1000);
 await r.scroll('.note.deploy', { offset: -12 });
 await r.say('Live again, with the fix.');

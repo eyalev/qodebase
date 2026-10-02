@@ -87,10 +87,28 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
       await page.goto(url.startsWith('http') ? url : SITE + url, { waitUntil: 'networkidle' }).catch(() => {});
       // A plain-text response (an error page) renders as 13 px monospace, too
       // small to read in the video: wrap it and set it at a readable size.
-      await page.evaluate(() => {
-        const pre = document.body && document.body.children.length === 1 && document.body.firstElementChild.tagName === 'PRE' ? document.body.firstElementChild : null;
-        if (pre) pre.style.cssText = 'white-space:pre-wrap;word-break:break-word;font-size:17px;line-height:1.45;padding:20px 16px;margin:0';
-      }).catch(() => {});
+      const zoomed = await page.evaluate(() => {
+        // Either Chrome's text/plain view (one <pre>) or bare text served as
+        // HTML (the chat demo's 500 page: no elements at all).
+        const b = document.body; if (!b) return;
+        const pre = b.children.length === 1 && b.firstElementChild.tagName === 'PRE' ? b.firstElementChild : b.children.length === 0 && b.textContent.trim() ? b : null;
+        // Such pages have no viewport tag, so a phone lays them out 980 px wide
+        // and shrinks them: give them one, or 17 px renders as ~7 px.
+        if (pre && !document.querySelector('meta[name=viewport]')) {
+          const m = document.createElement('meta'); m.name = 'viewport'; m.content = 'width=device-width,initial-scale=1';
+          document.head.appendChild(m);
+        }
+        if (pre) pre.style.cssText = 'white-space:pre-wrap;word-break:break-word;font:17px/1.45 monospace;padding:20px 16px;margin:0';
+        return !!pre;
+      }).catch(() => false);
+      // The screencast can miss this repaint (W3's last scene kept the tiny
+      // text), so add the enlarged page as a frame of our own.
+      if (zoomed) {
+        await sleep(150);
+        const file = `${String(n++).padStart(6, '0')}.jpg`;
+        writeFileSync(join(dir, file), await page.screenshot({ type: 'jpeg', quality: 92 }));
+        frames.push({ t: now(), file });
+      }
       await sleep(600);
     },
     /** A title card between sections (rendered by compose.py, ~2.5 s). */
@@ -140,6 +158,7 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
       await sleep(300);
       clearInterval(keepAlive);
       await cdp.send('Page.stopScreencast').catch(() => {});
+      frames.sort((a, b) => a.t - b.t);
       writeFileSync(join(dir, 'timeline.json'), JSON.stringify({ name, width, height, frames, events }, null, 1));
       await browser.close();
       console.log(`recorded ${frames.length} frames, ${events.length} events → ${dir}`);

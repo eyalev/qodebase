@@ -88,9 +88,11 @@ Bugs found and fixed during the run:
 - [x] Video research → docs/video-guide.md
 - [x] Recording rig (video/rig.mjs + compose.py): phone-size browser, visible taps, captions, time-lapse capped at 8 s per wait, readable plain-text pages, mp4
 - [x] W2 import, W4 code browser, W5 sign-up + key (re-recorded: captions now lead their taps)
-- [ ] W1 fork + router + agents + review + merge (re-recording)
-- [ ] W3 Worker error → automatic fix (re-record on a fresh fork of forq/workers-chat-demo)
-- [ ] Combined contest video (5–10 min) + .srt
+- [x] W1 fork + router + agents + review + merge (both approved on their own tasks; router resolved a real index.html conflict)
+- [x] W3 Worker error → automatic fix (workers-chat-demo-3; Issues → router → 1 agent → approved first time → merged, ~8 min real; last scene re-shot after propagation via splice.py)
+- [x] Combined contest video video/out/forq-contest.mp4 (6:34) + .srt (combine.py)
+- [ ] Eyal reviews the cut; voice-over is optional (captions carry it now)
+- [ ] Clean up: eyal/workers-chat-demo-2's app Worker is now redundant with -3 (ask before deleting)
 - Fixes the videos and their runs surfaced: reviewer prompt judges the agent's own task; on-screen spinner = busy; send() waits for the ready prompt and confirms Claude Code started (a request to a just-booted router was lost); delete destroys a project's boxes; review watchdog; settings errors show under their form
 
 ## v1 (later)
