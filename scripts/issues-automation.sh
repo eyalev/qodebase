@@ -4,16 +4,21 @@
 #
 #   scripts/issues-automation.sh forq-app-eyal-workers-chat-demo [occurrences]
 #
-# Once per account (ids cached in ~/.config/forq/issues.json):
-#   webhook destination  → https://forq.<sub>.workers.dev/api/hooks/issues
+# Once per account (ids cached in $FORQ_ISSUES_STATE, default ~/.config/forq/issues.json):
+#   webhook destination  → $FORQ_API/api/hooks/issues
 #                          (secret ~/.config/forq/issues-webhook-secret, sent as cf-webhook-auth)
 #   notification policy  → alert type workers_observability_real_time_issue → that webhook
 # Per Worker: an Issues automation (occurrence threshold) using that policy.
-# Uses the `cf` CLI login; every write is dry-run first.
+# Uses the `cf` CLI login, or CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID for
+# another account; every write is dry-run first. The hosted forq (2026-10-02):
+#   CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) \
+#   CLOUDFLARE_ACCOUNT_ID=887d7234a6b8d65ad355a4f6684cab67 \
+#   FORQ_API=https://forq.forqdev.workers.dev FORQ_ISSUES_STATE=~/.config/forq-cf/issues.json \
+#   scripts/issues-automation.sh forq-app-eyal-workers-chat-demo
 set -euo pipefail
 WORKER=${1:?usage: issues-automation.sh <forq-app-worker> [occurrences]}
 N=${2:-3}
-STATE=~/.config/forq/issues.json
+STATE=${FORQ_ISSUES_STATE:-$HOME/.config/forq/issues.json}
 SECRET=$(cat ~/.config/forq/issues-webhook-secret)
 HOOK=${FORQ_API:-https://forq.<sub>.workers.dev}/api/hooks/issues
 [ -f "$STATE" ] || echo '{}' > "$STATE"
