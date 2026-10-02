@@ -12,7 +12,7 @@ import type { Entry } from './registry';
 import type { Agent, ProjectInfo } from './project';
 import type { BoxStatus, Overview } from './ui';
 import { esc, path, label, STEPS } from './ui';
-import { FRESH_CSS, freshHelp, freshTag } from './fresh';
+import { FRESH_CSS, freshHelp, freshLegend, freshTag } from './fresh';
 import { markdown } from './md';
 import { SHEET_CSS, SHEET_HTML, SHEET_JS, shortId } from './sheet';
 
@@ -62,27 +62,23 @@ export function changeOf(info: ProjectInfo, a: Agent, s: BoxStatus | undefined, 
 export function changesOf(info: ProjectInfo, status: Record<string, BoxStatus>, runBase: string) {
   const all = info.agents.map((a) => changeOf(info, a, status[a.id], runBase));
   // What needs you first (Codex-style), newest first within each state.
-  const ORDER: State[] = ['ready', 'fix', 'waiting', 'working', 'checking', 'paused'];
   const open = all.filter((c) => c.state !== 'merged').reverse().sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state));
   const done = all.filter((c) => c.a.state === 'merged').reverse();
   return { open, done };
 }
+const ORDER: State[] = ['waiting', 'fix', 'ready', 'working', 'checking', 'paused', 'merged'];
 
 /** One line for the whole project: what needs you first. */
-export function summaryOf(open: Change[], planning: string) {
-  if (planning) return { text: planning, busy: true };
-  if (!open.length) return { text: 'No changes in progress', busy: false };
+export function summaryOf(open: Change[], planning: string): { html: string; state: State | ''; busy: boolean } {
+  if (planning) return { html: planning, state: 'working', busy: true };
+  if (!open.length) return { html: 'No changes in progress', state: '', busy: false };
   const n = (s: State) => open.filter((c) => c.state === s).length;
-  const parts: string[] = [];
-  if (n('ready')) parts.push(`${n('ready')} ready to merge`);
-  if (n('fix')) parts.push(`${n('fix')} need${n('fix') > 1 ? '' : 's'} a fix`);
-  if (n('waiting')) parts.push(`${n('waiting')} waiting for you`);
   const moving = n('working') + n('checking');
-  if (moving) parts.push(`${moving} in progress`);
-  if (n('paused')) parts.push(`${n('paused')} paused`);
-  const more = parts.length > 2 ? ', and more' : '';
-  const text = parts.slice(0, 2).join(', ') + more;
-  return { text: text.charAt(0).toUpperCase() + text.slice(1), busy: moving > 0 };
+  // The most urgent thing only (critique 2026-10-02: a list of counts is read, not scanned).
+  const top = n('waiting') ? `${n('waiting')} waiting for your answer` : n('fix') ? `${n('fix')} need${n('fix') > 1 ? '' : 's'} a fix` : n('ready') ? `${n('ready')} ready to merge`
+    : moving ? `${moving} in progress` : `${n('paused')} paused`;
+  const state = (['waiting', 'fix', 'ready', 'working', 'paused'] as State[]).find((s) => (s === 'working' ? moving : n(s)) > 0) || '';
+  return { html: top, state, busy: moving > 0 };
 }
 
 /** The router agent's progress as one plain line ('' when idle). */
@@ -106,22 +102,27 @@ export function planningOf(info: ProjectInfo, r: BoxStatus): { line: string; fai
 const since = (t?: number) => (t ? ` <span class="t" data-since="${t}">0s</span>` : '');
 const dot = (c: Change) => `<span class="dot s-${c.state}"></span>`;
 
-function primary(c: Change) {
-  if (c.state === 'ready') return `<button class="btn" data-merge="${esc(c.a.id)}">Merge</button>`;
-  if (c.state === 'fix') return `<button class="btn" data-fix="${esc(c.a.id)}">Ask to fix</button>`;
-  if (c.state === 'waiting') return `<button class="btn" data-sheet="${esc(c.a.id)}" data-name="${esc(c.title)}" data-mode="chat">Reply</button>`;
+/** The one thing to do with a change. Accent only on the page's most urgent one. */
+function primary(c: Change, accent = false) {
+  const k = accent ? 'btn' : 'chipbtn';
+  if (c.state === 'ready') return `<button class="${k}" data-merge="${esc(c.a.id)}">Merge</button>`;
+  if (c.state === 'fix') return `<button class="${k}" data-fix="${esc(c.a.id)}">Ask to fix</button>`;
+  if (c.state === 'waiting') return `<button class="${k}" data-sheet="${esc(c.a.id)}" data-name="${esc(c.title)}" data-mode="chat">Reply</button>`;
   return '';
 }
+/** Which change gets the page's one accent button. */
+const accentOf = (cs: Change[]) => cs.find((c) => primary(c))?.a.id;
 
 /** Everything a change can do besides its primary action. */
 function secondary(info: ProjectInfo, c: Change, opts: { tryIt?: boolean } = {}) {
   const a = c.a;
   const out: string[] = [];
-  if (opts.tryIt !== false && c.tryUrl && c.state !== 'merged') out.push(`<button type="button" class="chipbtn" data-try="${esc(c.tryUrl)}" data-title="${esc(c.title)}" data-agent="${esc(a.id)}">Try it</button>`);
-  out.push(`<a class="chipbtn" href="/p/${info.owner}/${info.name}/changes/${shortId(a.id)}">See the code</a>`);
-  if (c.state !== 'merged') out.push(`<button type="button" class="chipbtn" data-sheet="${esc(a.id)}" data-name="${esc(c.title)}" data-mode="chat">Talk to its agent</button>`);
-  if (c.state === 'fix') out.push(`<button type="button" class="chipbtn" data-merge="${esc(a.id)}">Merge anyway</button>`);
-  return out.join('');
+  if (opts.tryIt !== false && c.tryUrl && c.state !== 'merged') out.push(`<button type="button" class="chipbtn" data-try="${esc(c.tryUrl)}" data-title="${esc(c.title)}" data-agent="${esc(a.id)}" data-state="${c.state}">Try it</button>`);
+  // The rest are quiet links: rarely needed, never competing with the main action.
+  const links = [`<a href="/p/${info.owner}/${info.name}/changes/${shortId(a.id)}">See the code</a>`];
+  if (c.state !== 'merged') links.push(`<button type="button" class="lnk" data-sheet="${esc(a.id)}" data-name="${esc(c.title)}" data-mode="chat">Talk to its agent</button>`);
+  if (c.state === 'fix') links.push(`<button type="button" class="lnk" data-merge="${esc(a.id)}">Merge anyway</button>`);
+  return `${out.join('')}<span class="links">${links.join('')}</span>`;
 }
 
 /** The detail under a change: what it was asked, what it did, what the check said. */
@@ -141,12 +142,17 @@ ${a.note ? `<p><b>What it did.</b> ${esc(a.note)}</p>` : ''}${check}${pv}
 const ROW_STEPS = STEPS;
 
 /** A change as a list row: title, state, primary action; tap to open the detail. */
-function changeRow(info: ProjectInfo, c: Change, now: number) {
-  return `<div class="chg s-${c.state}${c.busy ? ' busy' : ''}" data-id="${esc(c.a.id)}">
+function changeRow(info: ProjectInfo, c: Change, now: number, accentId?: string) {
+  const act = primary(c, c.a.id === accentId);
+  return `<div class="chg s-${c.state}${c.busy ? ' busy' : ''}" data-id="${esc(c.a.id)}" id="c-${esc(shortId(c.a.id))}"><div class="chg-row">
 <div class="chg-h" data-open role="button" tabindex="0" aria-expanded="false"><span class="chg-t">${esc(c.title)}</span>
 <span class="chg-s">${dot(c)}<span class="w">${c.word}${since(c.since)}</span>${freshTag(c.a.noteAt || c.a.createdAt, now, ROW_STEPS)}</span></div>
-${primary(c) ? `<div class="chg-p">${primary(c)}</div>` : ''}${detail(info, c)}</div>`;
+${act ? `<div class="chg-p">${act}</div>` : ''}</div>${detail(info, c)}</div>`;
 }
+const legend = (n: number) => (n ? freshLegend(STEPS) : '');
+const TRYBAR = `<div class="trybar" id="trybar" hidden><div class="tt">Trying <b></b></div><button type="button" class="btn" data-trymerge>Merge</button><button type="button" class="chipbtn" data-trylive>Back to live</button></div>`;
+const SEND = `<button class="send chipbtn">Send</button>`;
+const VISIT = `<p class="visit">A running app on forq. Fork it to ask agents for changes.</p>`;
 
 function planningHtml(p: ReturnType<typeof planningOf>, q?: ProjectInfo['lastRequest']) {
   if (p.failed) return `<div class="plan bad">Could not start: ${esc(p.failed)} <button class="chipbtn" data-retry="${esc(q?.text || '')}">Retry</button></div>`;
@@ -157,8 +163,8 @@ function planningHtml(p: ReturnType<typeof planningOf>, q?: ProjectInfo['lastReq
 // ---- CSS ---------------------------------------------------------------------
 
 const TOKENS = `
-:root{--bg:#fff;--card:#f6f7f8;--chip:#eceef1;--line:#e2e5e9;--fg:#15171a;--dim:#5f6670;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1112;--card:#171a1c;--chip:#202427;--line:#272b2f;--fg:#e8eaec;--dim:#9ba2a9;--acc:#4fbf9f;--acc-fg:#0f1112;--busy:#e0a948;color-scheme:dark}}`;
+:root{--bg:#fff;--card:#f6f7f8;--chip:#eceef1;--line:#e2e5e9;--fg:#15171a;--dim:#5f6670;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;--warn:#b42d1f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1112;--card:#171a1c;--chip:#202427;--line:#272b2f;--fg:#e8eaec;--dim:#9ba2a9;--acc:#4fbf9f;--acc-fg:#0f1112;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}}`;
 
 const BASE_CSS = `${TOKENS}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -175,7 +181,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset
 .dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none}
 .dot.s-working,.dot.s-checking{background:var(--busy)}
 .dot.s-ready{background:var(--acc)}
-.dot.s-fix,.dot.s-waiting{background:var(--fg)}
+.dot.s-fix,.dot.s-waiting{background:var(--warn)}
 .dot.s-merged{background:var(--dim)}
 .busy .dot{animation:pulse 1.6s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.35}}
@@ -187,20 +193,33 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset
 .chg-s{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--dim)}
 .chg-s .w{flex:1;min-width:0;font-variant-numeric:tabular-nums}
 .chg.s-ready .chg-s .w{color:var(--acc);font-weight:500}
-.chg.s-fix .chg-s .w,.chg.s-waiting .chg-s .w{color:var(--fg);font-weight:500}
-.chg-p{padding:0 14px 12px;display:flex}
-.chg-p .btn{flex:1}
+.chg.s-fix .chg-s .w,.chg.s-waiting .chg-s .w{color:var(--warn);font-weight:500}
+.chg-row{display:flex;align-items:center}
+.chg-row .chg-h{flex:1;min-width:0}
+.chg-p{flex:none;padding:0 12px 0 0}
+.chg-p .btn,.chg-p .chipbtn{min-height:40px;padding:0 14px;font-size:14px}
+.links{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 16px;margin-left:4px}
+.links a,.lnk{font:500 14px 'Instrument Sans',sans-serif;color:var(--acc);background:none;border:0;padding:10px 0;cursor:pointer}
 .chg .more{display:none;padding:0 14px 14px;font-size:14px;border-top:1px solid var(--line);margin-top:2px}
 .chg.open .more{display:block}
 .more p{margin:10px 0 0;overflow-wrap:anywhere}
 .more b{font-weight:600}
-.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.acts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
 .acts .chipbtn,.acts .btn{min-height:40px;padding:0 12px;font-size:14px}
 .plan{font-size:14px;color:var(--fg);display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .plan.busy::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--busy);animation:pulse 1.6s ease-in-out infinite}
 .plan .chipbtn{min-height:36px;padding:0 12px;font-size:14px}
 .said{font-size:14px;color:var(--dim);white-space:pre-wrap;overflow-wrap:anywhere;max-height:9.5em;overflow:auto}
 .empty{color:var(--dim);font-size:14px;margin:0}
+.fresh-legend{margin:8px 2px 0}
+/* Trying a change: a strip above the app, never over it. */
+.trybar{flex:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 8px 8px 14px;background:var(--fg);color:var(--bg)}
+.trybar .tt{flex:1 1 180px;min-width:0;font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.trybar .tt b{font-weight:600}
+.trybar .btn,.trybar .chipbtn{min-height:40px;padding:0 14px;font-size:14px}
+.trybar .chipbtn{background:color-mix(in srgb,var(--bg) 20%,var(--fg));color:var(--bg)}
+.ask .send.chipbtn{color:var(--dim)}
+.visit{color:var(--dim);font-size:14px;margin:0}
 .ask textarea{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:none}
 .readme{font-size:15px;overflow-wrap:anywhere}
 .readme h2,.readme h3,.readme h4{margin:16px 0 6px;font-size:17px}
@@ -208,7 +227,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset
 .readme pre{overflow-x:auto;background:var(--chip);border-radius:8px;padding:10px}
 .files{display:flex;flex-wrap:wrap;gap:6px}
 .files a{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:6px 8px;color:var(--fg)}
-.vtag{position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:40;font-size:11px;color:var(--dim);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:2px 6px;pointer-events:none;opacity:.8}
+.vtag{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:4px;padding:2px 6px;margin-left:8px;font-weight:400;vertical-align:2px}
 @media (hover:hover){.chipbtn:hover{background:var(--line)}.chg-h:hover{background:var(--chip)}}
 ${FRESH_CSS}${SHEET_CSS}`;
 
@@ -218,7 +237,7 @@ function shell2(ui: UI, title: string, body: string, css: string, bodyClass = ''
 <title>${esc(title)} (${ui.toUpperCase()})</title><meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
-<style>${BASE_CSS}${css}</style></head><body class="${bodyClass}">${body}${freshHelp(STEPS)}${bodyClass === 'home' ? `<span class="vtag">Variant ${ui.toUpperCase()}: ${NAMES[ui]}</span>` : ''}</body></html>`;
+<style>${BASE_CSS}${css}</style></head><body class="${bodyClass}">${body}${freshHelp(STEPS)}</body></html>`;
 }
 
 /** Page script shared by the variants: polling, actions, Try it, row toggles. */
@@ -241,14 +260,25 @@ async function ask(text){window.forqAsked&&window.forqAsked(text);
  if(live){const p=live.querySelector('.plan');const h='<div class="plan busy">Sending <span data-since="'+Date.now()+'">0s</span></div>';if(p)p.outerHTML=h;else live.insertAdjacentHTML('afterbegin',h);tick();}
  try{await post('router',{text});poll();return true;}catch(e){const p=live&&live.querySelector('.plan');if(p){p.className='plan bad';p.textContent=e.message;}return false;}}
 document.addEventListener('keydown',(e)=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-open]')){e.preventDefault();e.target.click();}});
+// Trying a change: the app shows its preview under a strip that says so.
+const frame=document.getElementById('app'),ext=document.getElementById('ext'),tbar=document.getElementById('trybar');
+const liveSrc=frame&&(frame.getAttribute('src')||frame.dataset.src);let trying=null;
+function forqTry(src,title,agent,state){if(!frame||!tbar)return;window.forqBeforeTry&&window.forqBeforeTry();
+ frame.src=src;if(ext)ext.href=src;trying=agent;tbar.querySelector('b').textContent=title;
+ tbar.querySelector('[data-trymerge]').hidden=state!=='ready';tbar.hidden=false;document.body.classList.add('trying');window.forqAfterTry&&window.forqAfterTry();}
+function backLive(){if(!frame)return;frame.src=liveSrc;if(ext)ext.href=liveSrc;if(tbar)tbar.hidden=true;trying=null;document.body.classList.remove('trying');}
 for(const f of document.querySelectorAll('form.ask')){
- const ta=f.querySelector('textarea');
- const grow=()=>{ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,160)+'px';};ta.addEventListener('input',grow);
+ const ta=f.querySelector('textarea'),sb=f.querySelector('.send');
+ // Send is quiet until there is something to send: one accent per screen.
+ const lit=()=>{if(sb)sb.className='send '+(ta.value.trim()?'btn':'chipbtn');};
+ const grow=()=>{ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,160)+'px';lit();};ta.addEventListener('input',grow);
  ta.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();f.requestSubmit();}});
  f.onsubmit=async(e)=>{e.preventDefault();const t=ta.value.trim();if(!t)return;ta.value='';grow();if(!(await ask(t))){ta.value=t;grow();}};}
 document.addEventListener('click',async(e)=>{
  const o=!e.target.closest('.fresh')&&e.target.closest('[data-open]');if(o){const r=o.closest('.chg');const on=r.classList.toggle('open');o.setAttribute('aria-expanded',on);on?openIds.add(r.dataset.id):openIds.delete(r.dataset.id);return;}
- const t=e.target.closest('[data-try]');if(t){window.forqTry&&window.forqTry(t.dataset.try,t.dataset.title,t.dataset.agent);return;}
+ const t=e.target.closest('[data-try]');if(t){forqTry(t.dataset.try,t.dataset.title,t.dataset.agent,t.dataset.state);return;}
+ if(e.target.closest('[data-trylive]')){backLive();return;}
+ const tm=e.target.closest('[data-trymerge]');if(tm){tm.disabled=true;tm.textContent='Merging';try{await post('merge',{agent:trying});backLive();}catch(err){tm.textContent=err.message;return;}tm.disabled=false;tm.textContent='Merge';poll();return;}
  const rt=e.target.closest('[data-retry]');if(rt){rt.disabled=true;ask(rt.dataset.retry);return;}
  const b=e.target.closest('[data-merge],[data-fix]');if(!b)return;
  b.disabled=true;const m=!!b.dataset.merge;b.textContent=m?'Merging':'Sending to its agent';
@@ -292,29 +322,27 @@ const keyNote = `<p class="empty">Agents run on your own Anthropic API key. <a h
 
 const A_CSS = `
 body.app{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
-.abar{display:flex;align-items:center;gap:8px;height:52px;padding:0 8px 0 4px;border-bottom:1px solid var(--line);flex:none}
+.abar{display:flex;align-items:center;gap:4px;height:52px;padding:0 8px 0 4px;border-bottom:1px solid var(--line);flex:none}
 .abar .home{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;font-weight:600;color:var(--fg)}
 .abar .nm{flex:1;min-width:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .abar .nm .o{color:var(--dim)}
-.abar .chipbtn{min-height:36px;padding:0 12px;font-size:14px}
-.stage{flex:1;min-height:0;position:relative;background:var(--card)}
-.stage iframe{width:100%;height:100%;border:0;display:block;background:#fff}
-.viewing{position:absolute;left:8px;right:8px;top:8px;z-index:2;display:flex;align-items:center;gap:8px;background:var(--fg);color:var(--bg);border-radius:12px;padding:8px 8px 8px 14px;font-size:14px;box-shadow:0 4px 16px rgb(0 0 0 / .2)}
-.viewing[hidden]{display:none}
-.viewing span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.viewing .chipbtn{min-height:36px;padding:0 12px;font-size:14px;background:color-mix(in srgb,var(--bg) 18%,var(--fg));color:var(--bg)}
-.viewing .btn{min-height:36px;padding:0 12px;font-size:14px}
-.noapp{display:flex;align-items:center;justify-content:center;height:100%;padding:24px;text-align:center;color:var(--dim);font-size:15px}
-.dock{flex:none;border-top:1px solid var(--line);background:var(--bg);padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
-.status{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;background:none;border:0;padding:0 2px;color:var(--fg);font:500 14px 'Instrument Sans',sans-serif;text-align:left;cursor:pointer;font-variant-numeric:tabular-nums}
+.abar .lnk{padding:10px 8px}
+.abar .chipbtn{min-height:36px;padding:0 12px;font-size:14px;gap:6px}
+.ico{width:14px;height:14px;flex:none}
+.stage{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--card)}
+.stage iframe{flex:1;width:100%;border:0;display:block;background:#fff}
+.noapp{display:flex;align-items:center;justify-content:center;flex:1;padding:24px;text-align:center;color:var(--dim);font-size:15px}
+.dock{flex:none;border-top:1px solid var(--line);background:var(--bg);padding:4px 12px calc(8px + env(safe-area-inset-bottom))}
+.status{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;background:none;border:0;padding:0 2px;color:var(--fg);font:500 15px 'Instrument Sans',sans-serif;text-align:left;cursor:pointer;font-variant-numeric:tabular-nums}
 .status .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.status .more-l{color:var(--acc);flex:none}
-.dock .ask{display:flex;gap:8px;align-items:flex-end;margin-top:4px}
+.status.s-fix .tx,.status.s-waiting .tx{color:var(--warn)}
+.status.s-ready .tx{color:var(--acc)}
+.status .up{width:10px;height:10px;border-left:2px solid var(--dim);border-top:2px solid var(--dim);transform:rotate(45deg);margin:4px 6px 0}
+.dock .ask{display:flex;gap:8px;align-items:flex-end}
 .dock .ask textarea{flex:1;min-height:44px;max-height:160px;padding:10px 12px}
-.dock .btn{min-height:44px}
-.list{position:fixed;left:0;right:0;bottom:0;z-index:19;max-width:720px;margin:0 auto;max-height:78dvh;display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:0 -8px 32px rgb(0 0 0 / .18);transform:translateY(105%);transition:transform .22s ease;visibility:hidden}
+.list{position:fixed;left:0;right:0;bottom:0;z-index:19;max-width:720px;margin:0 auto;max-height:80dvh;display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:0 -8px 32px rgb(0 0 0 / .18);transform:translateY(105%);transition:transform .22s ease;visibility:hidden}
 .list.open{transform:none;visibility:visible}
-.list .lh{display:flex;align-items:center;padding:8px 8px 8px 16px;border-bottom:1px solid var(--line)}
+.list .lh{display:flex;align-items:center;padding:4px 8px 4px 16px;border-bottom:1px solid var(--line);flex:none}
 .list .lh b{flex:1;font-weight:600}
 .list .x{width:44px;height:44px;border:0;background:none;color:var(--dim);font-size:24px;cursor:pointer}
 .list .lb>*{flex:none}
@@ -323,24 +351,27 @@ body.app{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .scrim{position:fixed;inset:0;z-index:18;background:rgb(0 0 0 / .25);opacity:0;pointer-events:none;transition:opacity .22s}
 .scrim.on{opacity:1;pointer-events:auto}
 .info .lb p{margin:0}
-.vtag{bottom:auto;top:calc(56px + env(safe-area-inset-top))}
+.dock .visit{margin:6px 2px 8px}
 /* Desktop: the app on the left, the changes always open on the right. */
 @media (min-width:1000px){
  body.app .stage{margin-right:400px}
- body.app #list{left:auto;right:0;top:52px;bottom:68px;width:400px;max-width:none;max-height:none;margin:0;transform:none;visibility:visible;border:0;border-left:1px solid var(--line);border-radius:0;box-shadow:none;z-index:5}
+ body.app #list{left:auto;right:0;top:52px;bottom:64px;width:400px;max-width:none;max-height:none;margin:0;transform:none;visibility:visible;border:0;border-left:1px solid var(--line);border-radius:0;box-shadow:none;z-index:5}
  body.app #list .x{display:none}
- body.app .dock{position:fixed;right:0;bottom:0;width:400px;border-left:1px solid var(--line)}
+ body.app .dock{position:fixed;right:0;bottom:0;width:400px;border-left:1px solid var(--line);padding-top:8px}
  body.app .status{display:none}
 }
 `;
 
+const OPEN_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 3h4v4M13 3 7.5 8.5M12 9.5V13H3V4h3.5"/></svg>`;
+
 export function liveA(info: ProjectInfo, open: Change[], done: Change[], plan: ReturnType<typeof planningOf>) {
   const now = Date.now();
   const sum = summaryOf(open, plan.line);
-  return `<div id="sum" data-text="${esc(plan.failed ? `Could not start: ${plan.failed}` : sum.text.replace(/<[^>]+>/g, ''))}" data-busy="${sum.busy ? 1 : ''}" hidden></div>
+  const accent = accentOf(open);
+  return `<template id="sum" data-state="${plan.failed ? 'fix' : sum.state}" data-busy="${sum.busy ? 1 : ''}">${plan.failed ? `Could not start: ${esc(plan.failed)}` : sum.html}</template>
 ${planningHtml(plan, info.lastRequest)}${plan.said ? `<div class="said">${esc(plan.said)}</div>` : ''}
-${open.map((c) => changeRow(info, c, now)).join('') || (plan.line ? '' : '<p class="empty">Nothing in progress. Ask for a change below.</p>')}
-${done.length ? `<p class="sec">Merged</p>${done.slice(0, 8).map((c) => changeRow(info, c, now)).join('')}` : ''}`;
+${open.map((c) => changeRow(info, c, now, accent)).join('') || (plan.line ? '' : '<p class="empty">Nothing in progress. Ask for a change below.</p>')}
+${done.length ? `<p class="sec">Merged</p>${done.slice(0, 8).map((c) => changeRow(info, c, now)).join('')}` : ''}${legend(open.length + done.length)}`;
 }
 
 export function projectA(o: ProjectArgs) {
@@ -350,12 +381,11 @@ export function projectA(o: ProjectArgs) {
   const myForks = forks.filter((e) => e.owner === me);
   return shell2('a', `${info.owner}/${info.name} · forq`, `
 <header class="abar"><a class="home" href="/" aria-label="All projects">forq</a><span class="nm"><span class="o">${esc(info.owner)} /</span> ${esc(info.name)}</span>
-<button type="button" class="chipbtn" id="info-b">About</button>${app ? `<a class="chipbtn" id="ext" href="${esc(app)}" target="_blank" rel="noopener">Open</a>` : ''}</header>
-<div class="stage"><div class="viewing" id="viewing" hidden><span id="v-t"></span><button type="button" class="btn" id="v-m">Merge</button><button type="button" class="chipbtn" id="v-x">Live</button></div>
-${app ? `<iframe id="app" src="${esc(app)}" title="${esc(info.name)}"></iframe>` : noApp(o)}</div>
-<div class="dock">${own ? (o.needsKey ? keyNote : `<button type="button" class="status" id="status"><span class="dot"></span><span class="tx">No changes in progress</span><span class="more-l">Changes</span></button>
-<form class="ask"><textarea rows="1" placeholder="Ask for a change" enterkeyhint="send" aria-label="Ask for a change"></textarea><button class="btn">Send</button></form>`)
-    : `<div style="display:flex;gap:8px">${forkAction(info, me, myForks, 'btn" style="flex:1')}</div>`}</div>
+<button type="button" class="lnk" id="info-b">About</button>${app ? `<a class="chipbtn" id="ext" href="${esc(app)}" target="_blank" rel="noopener">Open app${OPEN_ICON}</a>` : ''}</header>
+<div class="stage">${TRYBAR}${app ? `<iframe id="app" src="${esc(app)}" title="${esc(info.name)}"></iframe>` : noApp(o)}</div>
+<div class="dock">${own ? (o.needsKey ? keyNote : `<button type="button" class="status" id="status" aria-label="Show changes"><span class="dot"></span><span class="tx">No changes in progress</span><span class="up"></span></button>
+<form class="ask"><textarea rows="1" placeholder="Ask for a change" enterkeyhint="send" aria-label="Ask for a change"></textarea>${SEND}</form>`)
+    : `${VISIT}<div style="display:flex">${forkAction(info, me, myForks, 'btn" style="flex:1')}</div>`}</div>
 <div class="scrim" id="scrim"></div>
 ${own ? `<div class="list" id="list" aria-hidden="true"><div class="lh"><b>Changes</b><button type="button" class="x" data-close aria-label="Close">×</button></div><div class="lb" id="live">${o.liveHtml}</div></div>` : ''}
 <div class="list info" id="info" aria-hidden="true"><div class="lh"><b>${esc(info.name)}</b><button type="button" class="x" data-close aria-label="Close">×</button></div><div class="lb">
@@ -377,18 +407,12 @@ ${pageJs(info)}${FORK_JS}
  if(st)st.onclick=()=>show(list);
  // Opening an agent's chat closes the list first (one surface at a time).
  document.addEventListener('click',(e)=>{if(e.target.closest('[data-sheet]'))show(null);},true);
- function sync(){const s=document.getElementById('sum');if(!s||!st)return;st.querySelector('.tx').textContent=s.dataset.text;
-  st.querySelector('.dot').className='dot'+(s.dataset.busy?' s-working':(/ready/.test(s.dataset.text)?' s-ready':''));st.classList.toggle('busy',!!s.dataset.busy);}
+ function sync(){const s=document.getElementById('sum');if(!s||!st)return;st.querySelector('.tx').innerHTML=s.innerHTML;
+  st.className='status'+(s.dataset.state?' s-'+s.dataset.state:'')+(s.dataset.busy?' busy':'');
+  st.querySelector('.dot').className='dot'+(s.dataset.state?' s-'+s.dataset.state:'');tick();}
  sync();window.forqAfterPoll=sync;
- window.forqAsked=(t)=>{if(st){st.querySelector('.tx').textContent='Sending';st.classList.add('busy');}};
- const frame=document.getElementById('app'),ext=document.getElementById('ext'),vw=document.getElementById('viewing');
- const liveSrc=frame&&frame.src;let trying=null;
- window.forqTry=(src,title,agent)=>{if(!frame)return;frame.src=src;ext.href=src;trying=agent;
-  document.getElementById('v-t').textContent=title;vw.hidden=false;show(null);};
- document.getElementById('v-x').onclick=()=>{frame.src=liveSrc;ext.href=liveSrc;vw.hidden=true;trying=null;};
- document.getElementById('v-m').onclick=async(e)=>{const b=e.currentTarget;b.disabled=true;b.textContent='Merging';
-  try{await post('merge',{agent:trying});}catch(err){b.textContent=err.message;return;}
-  vw.hidden=true;frame.src=liveSrc;b.disabled=false;b.textContent='Merge';poll();};
+ window.forqAsked=()=>{if(st){st.querySelector('.tx').textContent='Sending';st.classList.add('busy');}};
+ window.forqBeforeTry=()=>show(null);
 })();
 </script>`, A_CSS, 'app');
 }
@@ -403,19 +427,18 @@ main{max-width:720px;margin:0 auto;padding:4px 16px calc(32px + env(safe-area-in
 h1{font-size:24px;line-height:1.2;margin:8px 0 4px;font-weight:600;word-break:break-word}
 h1 .o{color:var(--dim);font-weight:400}
 .lede{color:var(--dim);margin:0;font-size:15px}
-h2{font-size:15px;font-weight:600;margin:28px 0 10px}
-.frame{margin-top:16px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
-.frame .fh{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 6px 0 14px;border-bottom:1px solid var(--line);font-size:14px}
-.frame .fh .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dim)}
-.frame .fh .lbl b{color:var(--fg);font-weight:600}
-.frame .fh .chipbtn,.frame .fh .btn{min-height:36px;padding:0 12px;font-size:14px}
-.frame iframe{width:100%;height:min(520px,56dvh);}
-.own .frame iframe{height:min(440px,40dvh)}
-.frame iframe{border:0;display:block;background:#fff}
+h2{font-size:15px;font-weight:600;margin:24px 0 10px}
+.frame{margin-top:16px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card);scroll-margin-top:8px}
+.frame .fh{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 6px 0 14px;border-bottom:1px solid var(--line);font-size:14px;color:var(--dim)}
+.frame .fh span{flex:1}
+.frame .fh .chipbtn{min-height:36px;padding:0 12px;font-size:14px;gap:6px}
+body.trying .frame .fh{display:none}
+.ico{width:14px;height:14px;flex:none}
+.frame iframe{width:100%;height:min(520px,56dvh);border:0;display:block;background:#fff}
+.own .frame iframe{height:min(420px,38dvh)}
 .noapp{padding:32px 16px;text-align:center;color:var(--dim);font-size:15px}
-.ask{display:flex;flex-direction:column;gap:8px}
-.ask textarea{min-height:52px;max-height:160px}
-.ask .btn{align-self:stretch}
+.ask{display:flex;gap:8px;align-items:flex-end}
+.ask textarea{flex:1;min-height:44px;max-height:160px;padding:10px 12px}
 #live{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 details.fold{border-top:1px solid var(--line);margin-top:24px}
 details.fold summary{display:flex;align-items:center;min-height:52px;font-weight:600;font-size:15px;cursor:pointer;list-style:none}
@@ -424,14 +447,20 @@ details.fold summary .n{margin-left:8px;color:var(--dim);font-weight:400}
 details.fold summary::after{content:'';margin-left:auto;width:8px;height:8px;border-right:2px solid var(--dim);border-bottom:2px solid var(--dim);transform:rotate(45deg);transition:transform .12s}
 details.fold[open] summary::after{transform:rotate(-135deg)}
 details.fold .in{padding-bottom:16px;display:flex;flex-direction:column;gap:8px}
+#live details.fold{margin-top:16px}
 .forkbar{margin-top:16px;display:flex}
 .forkbar .btn{flex:1}
+.lede+.visit{margin-top:6px}
 `;
+
+const OPEN_ICON_B = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 3h4v4M13 3 7.5 8.5M12 9.5V13H3V4h3.5"/></svg>`;
 
 export function liveB(info: ProjectInfo, open: Change[], done: Change[], plan: ReturnType<typeof planningOf>) {
   const now = Date.now();
+  const accent = accentOf(open);
   return `${planningHtml(plan, info.lastRequest)}${plan.said ? `<div class="said">${esc(plan.said)}</div>` : ''}
-${open.map((c) => changeRow(info, c, now)).join('') || (plan.line ? '' : '<p class="empty">No changes in progress.</p>')}
+${open.map((c) => changeRow(info, c, now, accent)).join('') || (plan.line ? '' : '<p class="empty">No changes in progress.</p>')}
+${legend(open.length + done.length)}
 ${done.length ? `<details class="fold"><summary>Merged<span class="n">${done.length}</span></summary><div class="in">${done.slice(0, 10).map((c) => changeRow(info, c, now)).join('')}</div></details>` : ''}`;
 }
 
@@ -443,11 +472,11 @@ export function projectB(o: ProjectArgs) {
   return shell2('b', `${info.owner}/${info.name} · forq`, `<main>
 <header class="top"><a class="home" href="/">forq</a>${me ? `<a class="me" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</header>
 <h1><span class="o">${esc(info.owner)} /</span> ${esc(info.name)}</h1>
-${info.description ? `<p class="lede">${esc(info.description)}</p>` : ''}
+${info.description ? `<p class="lede">${esc(info.description)}</p>` : ''}${own ? '' : VISIT}
 ${own ? '' : `<div class="forkbar">${forkAction(info, me, myForks)}</div>`}
-<div class="frame"><div class="fh"><span class="lbl" id="lbl"><b>Live</b></span><button type="button" class="btn" id="v-m" hidden>Merge</button><button type="button" class="chipbtn" id="v-x" hidden>Back to live</button>${app ? `<a class="chipbtn" id="ext" href="${esc(app)}" target="_blank" rel="noopener">Open</a>` : ''}</div>
+<div class="frame">${TRYBAR}<div class="fh"><span>Live app</span>${app ? `<a class="chipbtn" id="ext" href="${esc(app)}" target="_blank" rel="noopener">Open app${OPEN_ICON_B}</a>` : ''}</div>
 ${app ? `<iframe id="app" src="${esc(app)}" title="${esc(info.name)}" loading="lazy"></iframe>` : noApp(o)}</div>
-${own ? `<h2>Changes</h2>${o.needsKey ? keyNote : `<form class="ask"><textarea rows="2" placeholder="Ask for a change, in plain words" enterkeyhint="send" aria-label="Ask for a change"></textarea><button class="btn">Send</button></form>
+${own ? `<h2>Changes</h2>${o.needsKey ? keyNote : `<form class="ask"><textarea rows="1" placeholder="Ask for a change" enterkeyhint="send" aria-label="Ask for a change"></textarea>${SEND}</form>
 <div id="live">${o.liveHtml}</div>`}` : ''}
 <details class="fold"><summary>About this project</summary><div class="in">
 <p class="dim" style="margin:0;font-size:14px">${info.forkedFrom ? `Forked from <a href="${path(info.forkedFrom)}">${esc(label(info.forkedFrom))}</a>. ` : ''}${forks.length ? `${forks.length} fork${forks.length > 1 ? 's' : ''}. ` : ''}${info.importedFrom ? `Imported from <a href="${esc(info.importedFrom.url)}" rel="noopener">GitHub</a>.` : ''}</p>
@@ -456,19 +485,7 @@ ${overview.readme ? `<div class="readme">${markdown(overview.readme)}</div>` : '
 <div class="files">${overview.files.map((f) => `<a href="/p/${info.owner}/${info.name}/code/${esc(f.name)}${f.dir ? '/' : ''}">${esc(f.name)}${f.dir ? '/' : ''}</a>`).join('')}</div>
 <div class="acts"><a class="chipbtn" href="/p/${info.owner}/${info.name}/code/">Browse and search</a>${own ? `<button type="button" class="chipbtn" data-sheet="${info.slug}--router" data-name="Router agent" data-mode="chat">Router agent</button><button type="button" class="chipbtn" data-sheet="${info.slug}--review" data-name="Reviewer agent" data-mode="chat">Reviewer agent</button>` : ''}</div></div></details>
 </main>${own ? SHEET_HTML : ''}${pageJs(info)}${FORK_JS}
-<script>
-(function(){
- const frame=document.getElementById('app'),ext=document.getElementById('ext'),lbl=document.getElementById('lbl'),vm=document.getElementById('v-m'),vx=document.getElementById('v-x');
- const liveSrc=frame&&frame.src;let trying=null;
- const back=()=>{frame.src=liveSrc;ext.href=liveSrc;lbl.innerHTML='<b>Live</b>';vm.hidden=vx.hidden=true;trying=null;};
- window.forqTry=(src,title,agent)=>{if(!frame)return;frame.src=src;ext.href=src;trying=agent;
-  lbl.innerHTML='Trying <b></b>';lbl.querySelector('b').textContent=title;vx.hidden=false;
-  vm.hidden=!document.querySelector('.chg.s-ready[data-id="'+CSS.escape(agent)+'"]');
-  document.querySelector('.frame').scrollIntoView({behavior:'smooth',block:'start'});};
- if(vx)vx.onclick=back;
- if(vm)vm.onclick=async()=>{vm.disabled=true;vm.textContent='Merging';try{await post('merge',{agent:trying});back();}catch(err){vm.textContent=err.message;return;}vm.disabled=false;vm.textContent='Merge';poll();};
-})();
-</script>`, B_CSS, own ? 'own' : '');
+<script>window.forqAfterTry=()=>document.querySelector('.frame').scrollIntoView({behavior:'smooth',block:'start'});</script>`, B_CSS, own ? 'own' : '');
 }
 
 // ---- Variant C: the project as a conversation ---------------------------------
@@ -476,19 +493,27 @@ ${overview.readme ? `<div class="readme">${markdown(overview.readme)}</div>` : '
 const C_CSS = `
 body.chat{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .cbar{flex:none;border-bottom:1px solid var(--line);padding:0 12px}
-.cbar .r1{display:flex;align-items:center;gap:8px;height:48px}
-.cbar .home{font-weight:600;color:var(--fg);min-height:44px;display:inline-flex;align-items:center;padding-right:4px}
+.cbar .r1{display:flex;align-items:center;gap:4px;height:48px}
+.cbar .home{font-weight:600;color:var(--fg);min-height:44px;display:inline-flex;align-items:center;padding-right:8px}
 .cbar .nm{flex:1;min-width:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cbar .nm .o{color:var(--dim)}
+.cbar .lnk{padding:10px 8px}
+.cbar .chipbtn{min-height:36px;padding:0 12px;font-size:14px;gap:6px}
+.ico{width:14px;height:14px;flex:none}
 .tabs{display:flex;gap:4px;padding-bottom:8px}
 .tabs button{flex:1;min-height:40px;border:0;border-radius:8px;background:none;color:var(--dim);font:500 15px 'Instrument Sans',sans-serif;cursor:pointer}
 .tabs button.on{background:var(--chip);color:var(--fg)}
 .pane{flex:1;min-height:0;display:none;flex-direction:column}
 .pane.on{display:flex}
 .thread>*,.them>*{flex:none}
-.thread{flex:1;overflow-y:auto;padding:16px 12px 8px;display:flex;flex-direction:column;gap:12px;overscroll-behavior:contain}
-.you{align-self:flex-end;max-width:86%;background:var(--acc);color:var(--acc-fg);border-radius:16px 16px 4px 16px;padding:10px 14px;white-space:pre-wrap;overflow-wrap:anywhere}
-.you.sys{align-self:stretch;max-width:none;background:var(--card);color:var(--fg);border-radius:12px;font-size:14px}
+.thread{flex:1;overflow-y:auto;padding:0 12px 8px;display:flex;flex-direction:column;gap:12px;overscroll-behavior:contain}
+.thread>:nth-child(2){margin-top:16px}
+.needbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;min-height:44px;margin:0 -12px;padding:0 12px;background:var(--bg);border-bottom:1px solid var(--line);font:500 14px 'Instrument Sans',sans-serif;color:var(--warn)}
+.needbar.none{display:none}
+.needbar .tx{flex:1}
+.needbar i{font-style:normal;color:var(--acc)}
+.you{align-self:flex-end;max-width:86%;background:var(--chip);color:var(--fg);border-radius:12px 12px 4px 12px;padding:10px 14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.you.sys{align-self:stretch;max-width:none;background:none;border:1px solid var(--line);border-radius:12px;font-size:14px}
 .you.sys b{display:block;font-weight:600;margin-bottom:2px}
 .when{align-self:center;font-size:12px;color:var(--dim)}
 .them{display:flex;flex-direction:column;gap:8px;max-width:100%}
@@ -496,22 +521,19 @@ body.chat{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .thread .plan{padding:2px 2px}
 .compose{flex:none;border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:var(--bg)}
 .compose .ask{display:flex;gap:8px;align-items:flex-end}
-.compose .ask textarea{flex:1;min-height:44px;max-height:160px;padding:10px 12px;border-radius:22px}
-.compose .btn{min-height:44px;border-radius:22px}
+.compose .ask textarea{flex:1;min-height:44px;max-height:160px;padding:10px 12px}
 .appw{flex:1;min-height:0;display:flex;flex-direction:column}
-.appw .pbar{display:flex;gap:6px;padding:8px 12px;overflow-x:auto;flex:none;margin:0;scrollbar-width:none}
-.appw .pbar button{flex:none;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--dim);font:500 14px 'Instrument Sans',sans-serif;cursor:pointer;max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.appw .pbar button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .appw iframe{flex:1;width:100%;border:0;background:#fff}
 .noapp{padding:32px 16px;text-align:center;color:var(--dim)}
 .codep{overflow-y:auto;padding:16px}
 .codep h2{font-size:15px;margin:20px 0 8px}
-.forkbar{padding:8px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex}
+.forkbar{padding:8px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 .forkbar .btn{flex:1}
-.vtag{bottom:auto;top:calc(100px + env(safe-area-inset-top))}
 /* Desktop: a conversation reads best in a column; the app keeps the full width. */
-@media (min-width:800px){.cbar,.thread,.compose,.codep{padding-left:max(12px,calc(50% - 360px));padding-right:max(12px,calc(50% - 360px))}}
+@media (min-width:800px){.cbar,.thread,.compose,.codep,.forkbar{padding-left:max(12px,calc(50% - 360px));padding-right:max(12px,calc(50% - 360px))}.needbar{margin:0 calc(-1 * max(12px,calc(50% - 360px)));padding:0 max(12px,calc(50% - 360px))}}
 `;
+
+const OPEN_ICON_C = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 3h4v4M13 3 7.5 8.5M12 9.5V13H3V4h3.5"/></svg>`;
 
 type Group = { text: string; at: number; issues: boolean; changes: Change[] };
 
@@ -526,6 +548,12 @@ export function liveC(info: ProjectInfo, all: Change[], plan: ReturnType<typeof 
   const q = info.lastRequest;
   const lastHasAgents = q && groups.some((g) => g.text === q.text && g.at >= q.at - 60_000);
   if (q && !lastHasAgents && !isMerge(q.text)) groups.push({ text: q.text, at: q.at, issues: fromIssues(q.text), changes: [] });
+  // What needs you, pinned on top: the thread is in time order, so it may be far up.
+  const needs = all.filter((c) => primary(c)).sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state));
+  const accent = needs[0]?.a.id;
+  const need = needs.length
+    ? `<a class="needbar" href="#c-${esc(shortId(needs[0].a.id))}"><span class="dot s-${needs[0].state}"></span><span class="tx">${needs.length} need${needs.length > 1 ? '' : 's'} you</span><i>Show</i></a>`
+    : '<div class="needbar none"></div>';
   const day = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   let lastDay = '';
   const out = groups.map((g, i) => {
@@ -537,10 +565,10 @@ export function liveC(info: ProjectInfo, all: Change[], plan: ReturnType<typeof 
       ? `<div class="you sys"><b>Cloudflare Issues reported an error</b>${esc(g.text.replace(/^Production error from Cloudflare Issues:\s*/, '').slice(0, 220))}</div>`
       : `<div class="you">${esc(g.text)}</div>`;
     const tail = isLast && !(q && isMerge(q.text)) ? `${planningHtml(plan, q)}${plan.said ? `<div class="said">${esc(plan.said)}</div>` : ''}` : '';
-    return `${when}${you}<div class="them">${g.changes.map((c) => changeRow(info, c, now)).join('')}${tail}</div>`;
+    return `${when}${you}<div class="them">${g.changes.map((c) => changeRow(info, c, now, accent)).join('')}${tail}</div>`;
   });
   if (q && isMerge(q.text)) out.push(`${planningHtml(plan, q)}`);
-  return out.join('') || `<p class="empty" style="text-align:center;margin-top:24px">Ask for a change. forq splits it into tasks, an agent does each one, and a reviewer checks it before you merge.</p>`;
+  return need + (out.join('') || `<p class="empty" style="text-align:center;margin-top:24px">Ask for a change. forq splits it into tasks, an agent does each one, and a reviewer checks it before you merge.</p>`) + legend(all.length);
 }
 
 export function projectC(o: ProjectArgs) {
@@ -548,45 +576,38 @@ export function projectC(o: ProjectArgs) {
   const own = info.owner === me;
   const app = appUrl(o);
   const myForks = forks.filter((e) => e.owner === me);
-  const tabs = own ? ['chat', 'app', 'code'] : ['app', 'code'];
-  const names: Record<string, string> = { chat: 'Changes', app: 'App', code: 'Code' };
+  const codeHref = `/p/${info.owner}/${info.name}/code/`;
   return shell2('c', `${info.owner}/${info.name} · forq`, `
-<header class="cbar"><div class="r1"><a class="home" href="/">forq</a><span class="nm"><span class="o">${esc(info.owner)} /</span> ${esc(info.name)}</span>${app ? `<a class="chipbtn" id="ext" href="${esc(app)}" target="_blank" rel="noopener" style="min-height:36px;padding:0 12px;font-size:14px">Open</a>` : ''}</div>
-<nav class="tabs" role="tablist">${tabs.map((t, i) => `<button type="button" role="tab" data-tab="${t}"${i === 0 ? ' class="on"' : ''}>${names[t]}</button>`).join('')}</nav></header>
+<header class="cbar"><div class="r1"><a class="home" href="/">forq</a><span class="nm"><span class="o">${esc(info.owner)} /</span> ${esc(info.name)}</span>${own ? '' : `<a class="lnk" href="${codeHref}">Code</a>`}${app ? `<a class="chipbtn" id="ext" href="${esc(app)}" target="_blank" rel="noopener">Open app${OPEN_ICON_C}</a>` : ''}</div>
+${own ? `<nav class="tabs" role="tablist"><button type="button" role="tab" data-tab="chat" class="on">Changes</button><button type="button" role="tab" data-tab="app">App</button><button type="button" role="tab" data-tab="code">Code</button></nav>` : ''}</header>
 ${own ? `<section class="pane on" id="p-chat"><div class="thread" id="live">${o.liveHtml}</div>
-<div class="compose">${o.needsKey ? keyNote : `<form class="ask"><textarea rows="1" placeholder="Ask for a change" enterkeyhint="send" aria-label="Ask for a change"></textarea><button class="btn">Send</button></form>`}</div></section>` : ''}
-<section class="pane${own ? '' : ' on'}" id="p-app"><div class="appw">${own ? `<div class="pbar" id="pbar"></div>` : ''}${app ? `<iframe id="app" data-src="${esc(app)}" title="${esc(info.name)}"></iframe>` : noApp(o)}</div>
-${own ? '' : `<div class="forkbar">${forkAction(info, me, myForks)}</div>`}</section>
-<section class="pane" id="p-code"><div class="codep">
+<div class="compose">${o.needsKey ? keyNote : `<form class="ask"><textarea rows="1" placeholder="Ask for a change" enterkeyhint="send" aria-label="Ask for a change"></textarea>${SEND}</form>`}</div></section>` : ''}
+<section class="pane${own ? '' : ' on'}" id="p-app"><div class="appw">${TRYBAR}${app ? `<iframe id="app" ${own ? 'data-src' : 'src'}="${esc(app)}" title="${esc(info.name)}"></iframe>` : noApp(o)}</div>
+${own ? '' : `<div class="forkbar">${VISIT}${forkAction(info, me, myForks)}</div>`}</section>
+${own ? `<section class="pane" id="p-code"><div class="codep">
 ${info.description ? `<p style="margin:0 0 8px">${esc(info.description)}</p>` : ''}
-<div class="acts" style="margin-top:0"><a class="btn" href="/p/${info.owner}/${info.name}/code/">Browse and search the code</a></div>
-<h2>Files</h2><div class="files">${overview.files.map((f) => `<a href="/p/${info.owner}/${info.name}/code/${esc(f.name)}${f.dir ? '/' : ''}">${esc(f.name)}${f.dir ? '/' : ''}</a>`).join('')}</div>
-${own ? `<h2>The agents behind it</h2><div class="acts" style="margin-top:0"><button type="button" class="chipbtn" data-sheet="${info.slug}--router" data-name="Router agent" data-mode="chat">Router agent</button><button type="button" class="chipbtn" data-sheet="${info.slug}--review" data-name="Reviewer agent" data-mode="chat">Reviewer agent</button></div>` : ''}
-${overview.readme ? `<h2>README</h2><div class="readme">${markdown(overview.readme)}</div>` : ''}</div></section>
+<div class="acts" style="margin-top:0"><a class="chipbtn" href="${codeHref}">Browse and search the code</a></div>
+<h2>Files</h2><div class="files">${overview.files.map((f) => `<a href="${codeHref}${esc(f.name)}${f.dir ? '/' : ''}">${esc(f.name)}${f.dir ? '/' : ''}</a>`).join('')}</div>
+<h2>The agents behind it</h2><div class="acts" style="margin-top:0"><button type="button" class="chipbtn" data-sheet="${info.slug}--router" data-name="Router agent" data-mode="chat">Router agent</button><button type="button" class="chipbtn" data-sheet="${info.slug}--review" data-name="Reviewer agent" data-mode="chat">Reviewer agent</button></div>
+${overview.readme ? `<h2>README</h2><div class="readme">${markdown(overview.readme)}</div>` : ''}</div></section>` : ''}
 ${own ? SHEET_HTML : ''}${pageJs(info)}${FORK_JS}
 <script>
 (function(){
  const panes={},btns=document.querySelectorAll('.tabs button');for(const b of btns)panes[b.dataset.tab]=document.getElementById('p-'+b.dataset.tab);
- const frame=document.getElementById('app'),ext=document.getElementById('ext'),pbar=document.getElementById('pbar');
- const liveSrc=frame&&frame.dataset.src;
+ const fr=document.getElementById('app');
  function tab(t){for(const b of btns)b.classList.toggle('on',b.dataset.tab===t);for(const k in panes)panes[k].classList.toggle('on',k===t);
-  if(t==='app'&&frame&&!frame.src)frame.src=liveSrc;}
+  if(t==='app'&&fr&&!fr.getAttribute('src'))fr.src=fr.dataset.src;}
  for(const b of btns)b.onclick=()=>tab(b.dataset.tab);
- if(!document.getElementById('p-chat'))tab('app');
  const th=document.getElementById('live');const bottom=()=>{if(th)th.scrollTop=th.scrollHeight;};bottom();
  (document.fonts?document.fonts.ready:Promise.resolve()).then(()=>requestAnimationFrame(bottom));
- // The App tab's switcher: Live plus every change you can try.
- function chips(cur){if(!pbar)return;const items=[['Live',liveSrc,'']];
-  for(const b of document.querySelectorAll('#live [data-try]'))if(!items.some((x)=>x[1]===b.dataset.try))items.push([b.dataset.title,b.dataset.try,b.dataset.agent]);
-  pbar.innerHTML='';for(const [t,s,a] of items){const b=document.createElement('button');b.type='button';b.textContent=t;b.className=s===cur?'on':'';b.onclick=()=>show(s);pbar.appendChild(b);}
-  pbar.hidden=items.length<2;}
- function show(s){if(!frame)return;frame.src=s;if(ext)ext.href=s;chips(s);}
- window.forqTry=(src)=>{tab('app');show(src);};
- chips(liveSrc);
+ window.forqBeforeTry=()=>tab('app');
  const near=()=>th&&th.scrollHeight-th.scrollTop-th.clientHeight<120;
  let stick=true;if(th)th.addEventListener('scroll',()=>{stick=near();});
- window.forqAfterPoll=()=>{chips(frame&&frame.src||liveSrc);if(stick)bottom();};
+ window.forqAfterPoll=()=>{if(stick)bottom();};
  window.forqAsked=(t)=>{if(!th)return;const e=document.createElement('div');e.className='you';e.textContent=t;th.appendChild(e);bottom();};
+ // The needs-you bar jumps to the card, inside the thread's own scroller.
+ document.addEventListener('click',(e)=>{const a=e.target.closest('.needbar[href]');if(!a)return;e.preventDefault();
+  const c=document.querySelector(a.getAttribute('href'));if(c){c.scrollIntoView({behavior:'smooth',block:'center'});c.classList.add('open');}});
 })();
 </script>`, C_CSS, 'chat');
 }
@@ -636,7 +657,7 @@ export function homeV2(ui: UI, entries: Entry[], me: string, status: Record<stri
 ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
 <div class="m">${withStatus ? st(status[e.slug]) : ''}${freshTag(e.updatedAt, now, STEPS)}${!withStatus && forks(e.slug) ? `<span>${forks(e.slug)} fork${forks(e.slug) > 1 ? 's' : ''}</span>` : ''}${e.importedFrom ? `<span>${e.importedFrom.stars >= 1000 ? (e.importedFrom.stars / 1000).toFixed(1) + 'k' : e.importedFrom.stars} stars</span>` : ''}</div></div>`;
   return shell2(ui, 'forq', `<main>
-<header class="top"><a class="home" href="/">forq</a><span class="tr">${me ? `<a class="chipbtn" href="/import">Import</a><a class="me" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</span></header>
+<header class="top"><a class="home" href="/">forq<span class="vtag">Variant ${ui.toUpperCase()}: ${NAMES[ui]}</span></a><span class="tr">${me ? `<a class="chipbtn" href="/import">Import</a><a class="me" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</span></header>
 ${mine.length ? '' : `<p class="hero">Projects that run, and agents that change them.</p><p class="sub">Open one to use it. Fork it, then ask for a change in plain words.</p>`}
 ${mine.length ? `<h2>Your projects</h2><div class="rows">${mine.map((e) => row(e, true)).join('')}</div>` : ''}
 <h2>${mine.length ? 'Explore' : 'Projects'}</h2><div class="rows">${others.map((e) => row(e, false)).join('') || '<p class="empty">Nothing here yet.</p>'}</div>

@@ -106,3 +106,9 @@ Bugs found and fixed during the run:
 - Name: `forq` is a working name.
 - Demo repo: sleepsounds (pushed from the laptop's origin/master as `main`; the GitHub repo is private, so Artifacts import — public remotes only — could not be used).
 - Subscription agents run on the plan's default model (Sonnet 5 seen); pass `--model` if a task needs more.
+
+### Round 10 (2026-10-02): design v2, three variants to compare
+- [x] Research (Codex mobile tasks, Cursor web agents, Lovable/Replit, Krug) and first principles: docs/design-v2.md
+- [x] Variants A app first, B task list, C chat (src/v2.ts) on forq-a/b/c.kapps.dev via forwarding Workers (variants/); sign-in hand-over; /design-fixture
+- [x] Screenshot gate 390 light/dark + 1440 (video/design-shots.mjs); critique by a separate agent; blockers/high fixed
+- [ ] Eyal picks (or combines); then make it the default, add --warn to DESIGN.md, delete forq-ui-a/b/c and /design-fixture
