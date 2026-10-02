@@ -303,6 +303,14 @@ export default {
         return html(fixtureV3(runBase, url.searchParams.get('state') || 'full', (VIEW_IDS as string[]).includes(m[1] || '') ? m[1] as ViewId : null, url.searchParams.get('try') || undefined, await globalOf()));
       }
       // Home tabs (A and B): Projects, Inbox, Explore; signed out, Explore only.
+      // D: Home is the world (same for everyone), Yours is your projects.
+      if (ui === 'd' && (path === '/' || path === '/mine' || path === '/inbox' || path === '/explore')) {
+        if (path === '/explore') return new Response(null, { status: 302, headers: { location: '/?s=projects' } });
+        const entries = await registry(env).list();
+        const tab = path === '/mine' && me.handle ? 'mine' : path === '/inbox' && me.handle ? 'inbox' : 'home';
+        const s = url.searchParams.get('s');
+        return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'projects' || s === 'people' ? s : 'happening'));
+      }
       if (tabsNav && (path === '/' || path === '/inbox' || path === '/explore')) {
         const entries = await registry(env).list();
         const tab = !me.handle || path === '/explore' ? 'explore' : path === '/inbox' ? 'inbox' : 'projects';

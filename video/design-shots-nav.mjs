@@ -9,9 +9,9 @@ const CHROME = homedir() + '/.cache/ms-playwright/chromium-1234/chrome-linux64/c
 const OUT = new URL('./out/design/', import.meta.url).pathname; mkdirSync(OUT, { recursive: true });
 const cookie = (email) => { const body = `${email}|${Date.now() + 86400_000}`; return Buffer.from(`${body}|${createHmac('sha256', ADMIN).update(`session:${body}`).digest('hex')}`).toString('base64').replace(/=+$/, ''); };
 const b = await chromium.launch({ executablePath: CHROME });
-async function shot(v, name, url, { w = 390, h = 844, signedIn = true } = {}) {
+async function shot(v, name, url, { w = 390, h = 844, signedIn = true, dark = false } = {}) {
   const mobile = w < 800;
-  const c = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile });
+  const c = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile, colorScheme: dark ? 'dark' : 'light' });
   if (signedIn) await c.addCookies([{ name: 'forq_session', value: cookie('owner@example.com'), domain: `forq-${v}.kapps.dev`, path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
   const p = await c.newPage();
   await p.goto(`https://forq-${v}.kapps.dev${url}`, { waitUntil: 'networkidle' }).catch(() => {});
@@ -20,7 +20,13 @@ async function shot(v, name, url, { w = 390, h = 844, signedIn = true } = {}) {
   await c.close(); console.log(v, name);
 }
 for (const v of (process.argv[2] ? process.argv.slice(2) : ['a', 'b'])) {
-  await shot(v, 'projects', '/');
+  await shot(v, 'world', '/');
+  await shot(v, 'world-projects', '/?s=projects');
+  await shot(v, 'world-people', '/?s=people');
+  await shot(v, 'world-out', '/', { signedIn: false });
+  await shot(v, 'world-dark', '/', { dark: true });
+  await shot(v, 'world-wide', '/?s=projects', { w: 1440, h: 900 });
+  await shot(v, 'projects', '/mine');
   await shot(v, 'inbox', '/inbox');
   await shot(v, 'explore', '/explore');
   await shot(v, 'readme', '/p/eyal/tipsplit');

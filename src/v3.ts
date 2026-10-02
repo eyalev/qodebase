@@ -10,6 +10,7 @@ import { esc, path, label, STEPS } from './ui';
 import { freshTag } from './fresh';
 import { markdown } from './md';
 import { SHEET_HTML, shortId } from './sheet';
+import { WORLD_CSS, worldBody, type WorldTab } from './world';
 import {
   type Change, type ProjectArgs, type UI, ORDER, OPEN_ICON_C as OPEN_ICON, SEND, VISIT, BUSY,
   accentOf, appUrl, changeRow, changesOf, fixtureData, forkAction, FORK_JS, fromIssues, isMerge, keyNote, legend,
@@ -444,8 +445,10 @@ const HI = {
   inbox: I('<path d="M3 13h5l1.5 2.5h5L16 13h5"/><path d="M5.5 5h13L21 13v6H3v-6z"/>'),
   explore: I('<circle cx="12" cy="12" r="8.5"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>'),
   account: I('<circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.2-3.5 4-5 7-5s5.8 1.5 7 5"/>'),
+  home: I('<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>'),
+  mine: I('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
 };
-export type HomeTab = 'projects' | 'inbox' | 'explore' | 'account';
+export type HomeTab = 'projects' | 'inbox' | 'explore' | 'account' | 'home' | 'mine';
 
 /** The site-wide bar: home tabs (A), or everywhere (B). */
 export function globalBar(active: HomeTab, inbox: number, me: string) {
@@ -510,7 +513,7 @@ ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
 }
 
 /** The home pages with tabs: Projects, Inbox, Explore (Account is the settings page). */
-export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, items: InboxItem[]) {
+export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, items: InboxItem[], world: WorldTab = 'happening') {
   const now = Date.now();
   const inboxN = items.reduce((n, it) => n + needsOf(it.open).length, 0);
   const forks = (slug: string) => entries.filter((e) => e.forkedFrom === slug).length;
@@ -523,7 +526,10 @@ export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, ite
     return { ready: n('ready'), fix: n('fix') + n('waiting'), working: n('working') + n('checking') };
   };
   let title = '', body = '';
-  if (tab === 'projects') {
+  if (tab === 'home') {
+    title = 'forq';
+    body = worldBody(world, entries, !!me);
+  } else if (tab === 'projects' || tab === 'mine') {
     title = 'Your projects';
     body = `<div class="hrow"><span class="lede" style="flex:1;margin:0">${mine.length} project${mine.length === 1 ? '' : 's'}</span><a class="chipbtn" href="/import">Import from GitHub</a></div>
 <div class="home-list">${mine.map((e) => projRow(e, now, st(e.slug))).join('') || `<p class="empty">No projects yet. Fork one from <a href="/explore">Explore</a>.</p>`}</div>`;
@@ -552,7 +558,7 @@ document.addEventListener('click',async(e)=>{
  b.disabled=true;b.textContent=m?'Merging':'Sending to its agent';
  const r=await fetch(api+'/'+(m?'merge':'fix'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({agent:b.dataset.merge||b.dataset.fix})});
  if(!r.ok){const j=await r.json().catch(()=>({}));b.textContent=j.error||'Failed';return;}setTimeout(()=>location.reload(),1200);});
-</script>`, V3_CSS + NAV_CSS, `v3 nav-${nav}`);
+</script>`, V3_CSS + NAV_CSS + WORLD_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav}${nav === 'd' ? ' dhome' : ''}`);
 }
 
 /** The settings page under the site-wide bar (Account tab). */
@@ -572,9 +578,11 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 
 /** D: the site-wide tabs as a strip at the top: forq, then Projects, Inbox, Explore, Account. */
 export function globalTop(active: HomeTab, inbox: number, me: string) {
+  // Home is the world (the same for everyone); your own projects are under Yours.
   const tabs: [HomeTab, string, string][] = me
-    ? [['projects', 'Projects', '/'], ['inbox', 'Inbox', '/inbox'], ['explore', 'Explore', '/explore'], ['account', 'Account', '/settings']]
-    : [['explore', 'Explore', '/'], ['account', 'Sign in', '/login']];
+    ? [['home', 'Home', '/'], ['inbox', 'Inbox', '/inbox'], ['mine', 'Yours', '/mine'], ['account', 'Account', '/settings']]
+    : [['home', 'Home', '/'], ['account', 'Sign in', '/login']];
+  if (active === 'projects') active = 'mine';
   return `<nav class="gtop" aria-label="forq"><a class="mark" href="/">forq</a>${tabs.map(([id, labelT, href]) =>
     `<a href="${href}" class="g${id === active ? ' on' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}</nav>`;
 }
