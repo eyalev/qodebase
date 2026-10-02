@@ -19,7 +19,7 @@ async function shot(v, name, url, { w = 390, h = 844, signedIn = true } = {}) {
   await p.screenshot({ path: `${OUT}n${v}-${name}.png` });
   await c.close(); console.log(v, name);
 }
-for (const v of ['a', 'b']) {
+for (const v of (process.argv[2] ? process.argv.slice(2) : ['a', 'b'])) {
   await shot(v, 'projects', '/');
   await shot(v, 'inbox', '/inbox');
   await shot(v, 'explore', '/explore');

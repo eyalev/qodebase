@@ -71,8 +71,9 @@ export const needsOf = (open: Change[]) => open.filter((c) => primary(c));
  *  'a': home pages get their own bottom bar (Projects, Inbox, Explore, Account);
  *       inside a project the bottom bar is the project's views, "‹ forq" goes back.
  *  'b': one global bottom bar everywhere; a project's views are tabs at the top.
- *  'c': no home tabs (the first views build). */
-export type Nav = 'a' | 'b' | 'c';
+ *  'c': no home tabs (the first views build).
+ *  'd': the global tabs at the top everywhere; a project's views at the bottom. */
+export type Nav = 'a' | 'b' | 'c' | 'd';
 export type Global = { nav: Nav; inbox: number };
 
 // ---- the views ---------------------------------------------------------------
@@ -362,8 +363,8 @@ export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record
   const home = g.nav === 'a'
     ? `<a class="home back" href="/" aria-label="All projects${g.inbox ? `, ${g.inbox} need you` : ''}">${CHEV}forq${g.inbox ? `<span class="hbadge">${g.inbox}</span>` : ''}</a>`
     : `<a class="home" href="/" aria-label="All projects">forq</a>`;
-  return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · forq`, `
-<header class="h3">${home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(info.owner)} /</span> <b>${esc(info.name)}</b></a>${r.action || ''}</header>
+  return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · forq`, `${g.nav === 'd' ? globalTop('projects', g.inbox, me) : ''}
+<header class="h3${g.nav === 'd' ? ' sub' : ''}">${g.nav === 'd' ? '' : home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(info.owner)} /</span> <b>${esc(info.name)}</b></a>${r.action || ''}</header>
 ${g.nav === 'b' ? tabBar(c, id, needs, true) : ''}
 <main class="view${r.full ? ' full' : ''}" id="view">${r.body}</main>${r.compose || ''}
 ${g.nav === 'b' ? globalBar('projects', g.inbox, me) : tabBar(c, id, needs)}
@@ -409,6 +410,15 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 .badge{position:absolute}</style>`;
     return html.replace('</head>', `${css}</head>`).replace(/<body([^>]*)>/, `<body$1>${tabBar(pc, 'code', n, true)}`).replace('</body>', `${globalBar('projects', g.inbox, me)}</body>`);
   }
+  if (g.nav === 'd') {
+    const css = `<style>${V3_CSS.slice(V3_CSS.indexOf('/* Tab bar'))}${NAV_CSS}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30}
+body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+.gtop{margin:0 0 8px}
+@media (min-width:900px){.tabbar{right:auto;top:48px;bottom:0;width:80px}body{padding-bottom:0;padding-left:80px}.gtop{margin-left:-80px}}
+.badge{position:absolute}.gtop .badge{position:static}</style>`;
+    return html.replace('</head>', `${css}</head>`).replace(/<body([^>]*)>/, `<body$1>${globalTop('projects', g.inbox, me)}`).replace('</body>', `${tabBar(pc, 'code', n)}</body>`);
+  }
   const bar = tabBar(pc, 'code', n);
   const css = `<style>${V3_CSS.slice(V3_CSS.indexOf('/* Tab bar'))}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30}
@@ -450,6 +460,15 @@ export function globalBar(active: HomeTab, inbox: number, me: string) {
 }
 
 export const NAV_CSS = `
+.gtop{flex:none;display:flex;align-items:stretch;height:48px;padding:0 4px;border-bottom:1px solid var(--line);background:var(--bg);overflow-x:auto;scrollbar-width:none}
+.gtop::-webkit-scrollbar{display:none}
+.gtop .mark{display:flex;align-items:center;padding:0 10px 0 8px;font-weight:600;font-size:16px;color:var(--fg)}
+.gtop .g{flex:none;display:flex;align-items:center;gap:6px;padding:0 9px;font:500 14px 'Instrument Sans',sans-serif;color:var(--dim);border-bottom:2px solid transparent}
+.gtop .g.on{color:var(--fg);border-bottom-color:var(--fg)}
+.gtop .badge{position:static;margin:0;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;font-weight:600;line-height:18px;text-align:center}
+.h3.sub{height:44px;background:var(--card)}
+.h3.sub .nm{padding-left:12px}
+@media (min-width:900px){body.nav-d{grid-template-rows:48px 44px 1fr auto}body.nav-d>.gtop{grid-column:1 / 3;grid-row:1}body.nav-d>.h3{grid-row:2}body.nav-d>.tabbar{grid-row:2 / 5;padding-top:8px}}
 .h3 .home.back{gap:2px;padding-left:6px;position:relative}
 .hbadge{margin-left:6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;font-weight:600;line-height:18px;text-align:center}
 .ptop{flex:none;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);background:var(--bg);padding:0 8px}
@@ -521,10 +540,10 @@ ${moving.length ? `<h3>In progress</h3>${moving.map(({ it, c }) => `<a class="mi
     body = `<div class="hrow"><span class="lede" style="flex:1;margin:0">Projects that run. Open one, fork it, ask for changes.</span>${me ? '<a class="chipbtn" href="/import">Import</a>' : ''}</div>
 <div class="home-list">${others.map((e) => projRow(e, now, undefined, forks(e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`;
   }
-  return shell2(nav as UI, `${title} · forq`, `
-<header class="h3"><a class="home" href="/">forq</a><span class="htitle">${title}</span></header>
+  return shell2(nav as UI, `${title} · forq`, `${nav === 'd' ? globalTop(tab, inboxN, me) : `
+<header class="h3"><a class="home" href="/">forq</a><span class="htitle">${title}</span></header>`}
 <main class="view" id="view"><div class="pad">${body}${legend(1)}</div></main>
-${globalBar(tab, inboxN, me)}
+${nav === 'd' ? '' : globalBar(tab, inboxN, me)}
 <script>
 // Inbox actions: each row knows its project's API.
 document.addEventListener('click',async(e)=>{
@@ -537,11 +556,25 @@ document.addEventListener('click',async(e)=>{
 }
 
 /** The settings page under the site-wide bar (Account tab). */
-export function withGlobal(html: string, tab: HomeTab, inbox: number, me: string) {
+export function withGlobal(html: string, tab: HomeTab, inbox: number, me: string, nav: Nav = 'a') {
+  if (nav === 'd') {
+    const css = `<style>${NAV_CSS}.gtop{margin:0 0 8px}</style>`;
+    return html.replace('</head>', `${css}</head>`).replace(/<body([^>]*)>/, `<body$1>${globalTop(tab, inbox, me)}`);
+  }
   const css = `<style>${V3_CSS.slice(V3_CSS.indexOf('/* Tab bar'))}${NAV_CSS}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30}
 body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 @media (min-width:900px){.tabbar{right:auto;top:0;bottom:0;width:80px}body{padding-bottom:0;padding-left:80px}}
 .badge{position:absolute}</style>`;
   return html.replace('</head>', `${css}</head>`).replace('</body>', `${globalBar(tab, inbox, me)}</body>`);
+}
+
+
+/** D: the site-wide tabs as a strip at the top: forq, then Projects, Inbox, Explore, Account. */
+export function globalTop(active: HomeTab, inbox: number, me: string) {
+  const tabs: [HomeTab, string, string][] = me
+    ? [['projects', 'Projects', '/'], ['inbox', 'Inbox', '/inbox'], ['explore', 'Explore', '/explore'], ['account', 'Account', '/settings']]
+    : [['explore', 'Explore', '/'], ['account', 'Sign in', '/login']];
+  return `<nav class="gtop" aria-label="forq"><a class="mark" href="/">forq</a>${tabs.map(([id, labelT, href]) =>
+    `<a href="${href}" class="g${id === active ? ' on' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}</nav>`;
 }

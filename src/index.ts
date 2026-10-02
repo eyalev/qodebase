@@ -294,9 +294,9 @@ export default {
 
       // ---- pages
       const ui = uiOf(request);
-      // The views design: 'c' alone, 'a' and 'b' with home tabs (two navigation takes).
-      const views = ui === 'a' || ui === 'b' || ui === 'c';
-      const tabsNav = ui === 'a' || ui === 'b';
+      // The views design: 'c' alone; 'a', 'b' and 'd' with home tabs (three navigation takes).
+      const views = ui === 'a' || ui === 'b' || ui === 'c' || ui === 'd';
+      const tabsNav = ui === 'a' || ui === 'b' || ui === 'd';
       const globalOf = async (entries?: Entry[]): Promise<Global> => ({ nav: (ui || 'c') as Nav,
         inbox: tabsNav && me.handle ? inboxCount(await inboxOf(env, me.handle, entries || await registry(env).list(), runBase)) : 0 });
       if (views && (m = path.match(/^\/design-fixture(?:\/([a-z]+))?\/?$/))) {
@@ -332,7 +332,7 @@ export default {
         if (!u) return new Response(null, { status: 302, headers: { location: '/login?next=/settings' } });
         const mine = (await registry(env).list()).filter((e) => e.owner === u.handle).length;
         const page = settingsPage(u, isOwner(env, u.handle), mine, url.searchParams.has('welcome'));
-        return html(tabsNav ? withGlobal(page, 'account', (await globalOf()).inbox, u.handle) : page);
+        return html(tabsNav ? withGlobal(page, 'account', (await globalOf()).inbox, u.handle, ui as Nav) : page);
       }
       if (path.startsWith('/api/me/') && request.method !== 'GET') {
         const u = await userByEmail(env, me.email || '');
@@ -493,7 +493,7 @@ export default {
           // Opportunistic: a review stuck in 'reviewing' (its box died) goes back to the queue.
           ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.requeueStale()));
         }
-        if (verb === 'agents-html' && ['a', 'b', 'c'].includes(uiOf(request) || '')) {
+        if (verb === 'agents-html' && ['a', 'b', 'c', 'd'].includes(uiOf(request) || '')) {
           const st = await statusesOf(env, info);
           return json({ html: liveV3(url.searchParams.get('view') || 'changes', { info, me: me.handle, runBase, ...st, entry: undefined as unknown as Entry, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: '' }) });
         }
