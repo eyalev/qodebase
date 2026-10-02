@@ -637,6 +637,8 @@ h2 a{margin-left:auto;font-weight:500;font-size:14px}
 .stretch::after{content:'';position:absolute;inset:0;border-radius:12px}
 .prow button.fresh{position:relative;z-index:1}
 .foot{margin-top:32px;font-size:14px;display:flex;gap:16px}
+.vnote{display:block;margin:8px 0 4px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);color:var(--fg);font-size:15px}
+.vnote b{display:block;font-weight:600}
 @media (hover:hover){.prow:hover{background:var(--chip)}}
 `;
 
@@ -659,6 +661,7 @@ ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
 <div class="m">${withStatus ? st(status[e.slug]) : ''}${freshTag(e.updatedAt, now, STEPS)}${!withStatus && forks(e.slug) ? `<span>${forks(e.slug)} fork${forks(e.slug) > 1 ? 's' : ''}</span>` : ''}${e.importedFrom ? `<span>${e.importedFrom.stars >= 1000 ? (e.importedFrom.stars / 1000).toFixed(1) + 'k' : e.importedFrom.stars} stars</span>` : ''}</div></div>`;
   return shell2(ui, 'forq', `<main>
 <header class="top"><a class="home" href="/">forq<span class="vtag">Variant ${ui.toUpperCase()}: ${NAMES[ui]}</span></a><span class="tr">${me ? `<a class="chipbtn" href="/import">Import</a><a class="me" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</span></header>
+${ui === 'c' ? `<a class="vnote" href="/design-fixture"><b>The views design lives inside a project.</b> Open any project below, or see the sample with every state</a>` : ''}
 ${mine.length ? '' : `<p class="hero">Projects that run, and agents that change them.</p><p class="sub">Open one to use it. Fork it, then ask for a change in plain words.</p>`}
 ${mine.length ? `<h2>Your projects</h2><div class="rows">${mine.map((e) => row(e, true)).join('')}</div>` : ''}
 <h2>${mine.length ? 'Explore' : 'Projects'}</h2><div class="rows">${others.map((e) => row(e, false)).join('') || '<p class="empty">Nothing here yet.</p>'}</div>
