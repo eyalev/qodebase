@@ -1,0 +1,12 @@
+// Three thin Workers, one per design variant: `npx wrangler deploy --env a|b|c`.
+{
+  "name": "forq-ui",
+  "main": "index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "env": {
+    "a": { "name": "forq-ui-a", "vars": { "UI": "a" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-a.kapps.dev", "custom_domain": true }] },
+    "b": { "name": "forq-ui-b", "vars": { "UI": "b" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-b.kapps.dev", "custom_domain": true }] },
+    "c": { "name": "forq-ui-c", "vars": { "UI": "c" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-c.kapps.dev", "custom_domain": true }] }
+  }
+}

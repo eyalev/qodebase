@@ -47,6 +47,18 @@ export async function sessionCookie(env: Env, email: string) {
   const v = btoa(`${body}|${await hmacHex(env.ADMIN_SECRET, `session:${body}`)}`).replace(/=+$/, '');
   return `${COOKIE}=${v}; Path=/; Max-Age=${SESSION_DAYS * 86400}; HttpOnly; Secure; SameSite=Lax`;
 }
+/** A 2-minute token that hands a session to a design-variant host (variants/). */
+export async function handoffToken(env: Env, email: string, host: string) {
+  const body = `${email}|${Date.now() + 120_000}|${host}`;
+  return btoa(`${body}|${await hmacHex(env.ADMIN_SECRET, `handoff:${body}`)}`);
+}
+export async function handoffEmail(env: Env, token: string, host: string): Promise<string | null> {
+  try {
+    const [email, exp, h, sig] = atob(token).split('|');
+    if (!email || h !== host || Number(exp) < Date.now()) return null;
+    return sig === await hmacHex(env.ADMIN_SECRET, `handoff:${email}|${exp}|${h}`) ? email : null;
+  } catch { return null; }
+}
 export const clearCookie = () => `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
 
 /** The signed-in email, or null. */

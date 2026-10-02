@@ -14,8 +14,9 @@ import { BuildBox } from './build';
 import { serveRun } from './run';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
+import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
-import { DEFAULT_API_MODEL, checkApiKey, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
+import { DEFAULT_API_MODEL, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
 import { importPage } from './ui';
 import { allFiles, blob, diffTrees, forkBase, head, resolvePath, tree } from './code';
 import { changesPage, dirPage, filePage, type ChangeText } from './codeui';
@@ -87,6 +88,9 @@ async function accessEmail(request: Request, env: Env): Promise<string | null> {
   }
 }
 
+/** Hosts of the design-variant preview Workers, which forward here with x-forq-host. */
+const variantHosts = (env: Env) => (env.UI_VARIANT_HOSTS || '').split(',').map((h) => h.trim()).filter(Boolean);
+
 const safeNext = (n: string | null) => (n && /^\/[^/\\]/.test(n) ? n : null);
 
 /** /login (behind Access): find or create the user, set the session, go on. */
@@ -102,6 +106,13 @@ async function loginRoute(request: Request, env: Env, url: URL): Promise<Respons
     user = r.user; fresh = true;
   }
   const next = safeNext(url.searchParams.get('next')) || (fresh ? '/settings?welcome=1' : '/');
+  // Signing in for a design-variant host (variants/): hand the session over
+  // with a short-lived token; its cookie is set on that host by /session.
+  const to = url.searchParams.get('to');
+  if (to && variantHosts(env).includes(to)) {
+    log('auth', 'handoff', { handle: user.handle, to });
+    return new Response(null, { status: 302, headers: { location: `https://${to}/session?t=${encodeURIComponent(await handoffToken(env, email, to))}&next=${encodeURIComponent(next)}`, 'cache-control': 'no-store' } });
+  }
   log('auth', 'login', { handle: user.handle, fresh });
   return new Response(null, { status: 302, headers: { location: next, 'set-cookie': await sessionCookie(env, email), 'cache-control': 'no-store' } });
 }
@@ -169,12 +180,12 @@ async function boxStatus(env: Env, id: string, withReply = false): Promise<BoxSt
   return { ...ph, cc, said };
 }
 
-async function renderAgents(env: Env, info: ProjectInfo, runBase: string) {
+async function renderAgents(env: Env, info: ProjectInfo, runBase: string, ui: UI | null = null) {
   const status: Record<string, BoxStatus> = {};
   const open = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped');
   await Promise.all(open.map(async (a) => { status[a.id] = await boxStatus(env, a.id); }));
   const [router, reviewer] = await Promise.all([boxStatus(env, `${info.slug}--router`, true), boxStatus(env, `${info.slug}--review`)]);
-  return agentsHtml(info, runBase, router, status, reviewer);
+  return ui ? liveV2(ui, info, router, status, runBase) : agentsHtml(info, runBase, router, status, reviewer);
 }
 
 /** Send text to a box's Claude Code, booting it first if needed. */
@@ -208,6 +219,18 @@ export default {
         return new Response('forq pages are for people; see /about.', { status: 403, headers: { 'retry-after': '86400', 'x-robots-tag': 'noindex' } });
       }
     }
+    // Design-variant hosts: sign in on the real host, come back with a token.
+    const vhost = request.headers.get('x-forq-host');
+    if (vhost && variantHosts(env).includes(vhost)) {
+      if (url.pathname === '/login') {
+        return new Response(null, { status: 302, headers: { location: `https://${env.UI_HOST}/login?to=${vhost}&next=${encodeURIComponent(safeNext(url.searchParams.get('next')) || '/')}` } });
+      }
+      if (url.pathname === '/session') {
+        const email = await handoffEmail(env, url.searchParams.get('t') || '', vhost);
+        if (!email) return new Response('That sign-in link has expired. Sign in again.', { status: 401 });
+        return new Response(null, { status: 302, headers: { location: safeNext(url.searchParams.get('next')) || '/', 'set-cookie': await sessionCookie(env, email), 'cache-control': 'no-store' } });
+      }
+    }
     if (url.pathname === '/login' && url.hostname === env.UI_HOST) return loginRoute(request, env, url);
     if (url.pathname === '/logout') return new Response(null, { status: 302, headers: { location: '/', 'set-cookie': clearCookie() } });
     const me = await who(request, env);
@@ -232,8 +255,23 @@ export default {
       let m: RegExpMatchArray | null;
 
       // ---- pages
+      const ui = uiOf(request);
+      if (ui && path === '/design-fixture') return html(fixtureV2(ui, runBase, url.searchParams.get('state') || 'full'));
       if (path === '/') {
-        return html(explorePage(await registry(env).list(), me.handle));
+        const entries = await registry(env).list();
+        if (ui) {
+          // Each of your projects' changes, from its Project DO (no box calls).
+          const status: Record<string, HomeStatus> = {};
+          await Promise.all(entries.filter((e) => me.handle && e.owner === me.handle).map(async (e) => {
+            const pi = await projectStub(env, e.slug).info().catch(() => null);
+            const ag = (pi?.agents || []).filter((a) => a.state !== 'merged' && a.state !== 'stopped');
+            status[e.slug] = { ready: ag.filter((a) => a.state === 'pushed' && a.review?.state !== 'changes' && a.review?.state !== 'queued' && a.review?.state !== 'reviewing' && a.review?.state !== 'sent').length,
+              fix: ag.filter((a) => a.review?.state === 'changes' || a.state === 'blocked').length,
+              working: ag.filter((a) => a.state === 'working' || ['queued', 'reviewing', 'sent'].includes(a.review?.state || '')).length };
+          }));
+          return html(homeV2(ui, entries, me.handle, status));
+        }
+        return html(explorePage(entries, me.handle));
       }
       if (path === '/import') return html(importPage(me.handle));
       // ---- account: settings page, API key, handle
@@ -317,6 +355,9 @@ export default {
         if (!info) return new Response('No such project', { status: 404 });
         const all = await registry(env).list();
         const entry = all.find((e) => e.slug === slug)!;
+        if (ui) return html(projectV2(ui, { info, entry, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
+          me: me.handle, runBase, liveHtml: info.owner === me.handle ? await renderAgents(env, info, runBase, ui) : '',
+          needsKey: info.owner === me.handle && !isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
         return html(projectPage({ info, entry, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
           me: me.handle, runBase, agentsHtml: info.owner === me.handle ? await renderAgents(env, info, runBase) : '',
           needsKey: info.owner === me.handle && !isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
@@ -381,7 +422,7 @@ export default {
           // Opportunistic: a review stuck in 'reviewing' (its box died) goes back to the queue.
           ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.requeueStale()));
         }
-        if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase), tabs: previewTabs(info, runBase) });
+        if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase, uiOf(request)), tabs: previewTabs(info, runBase) });
         if (verb === 'agents' && request.method === 'POST') {
           const b = await request.json() as { task?: string };
           return json(await spawn(env, ctx, slug, String(b.task || ''), apiBase));

@@ -22,6 +22,7 @@ export interface Env {
   ACCESS_AUD: string;
   HANDLES: string;            // JSON {email: handle}
   UI_HOST: string;            // forq.kapps.dev
+  UI_VARIANT_HOSTS?: string;  // design-variant preview hosts (comma-separated), see variants/
   RUN_HOST: string;           // forq-run.kapps.dev
   MAX_AGENTS_PER_PROJECT: string;
   MAX_AWAKE_BOXES: string;
