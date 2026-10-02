@@ -179,9 +179,11 @@ export async function feedback(request: Request, env: BaselineEnv): Promise<Resp
  *  check is a Worker app whose last deploy failed; memoised 5 min per colo. */
 export async function health(env: BaselineEnv, ctx: ExecutionContext, origin: string): Promise<Response> {
   const cache = caches.default;
-  const key = new Request(`${origin}/health.json?memo=1`);
+  // Keyed by version: a deploy must not answer with the previous version's memo
+  // (the edge kept one for hours under its own browser-TTL default, 2026-10-02).
+  const key = new Request(`${origin}/health.json?memo=${env.CF_VERSION_METADATA?.id || 'none'}`);
   const hit = await cache.match(key);
-  if (hit) return hit;
+  if (hit) return new Response(hit.body, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
   const checks: { id: string; label: string; status: string; detail: string; at: string }[] = [];
   const at = new Date().toISOString();
   try {
@@ -194,7 +196,8 @@ export async function health(env: BaselineEnv, ctx: ExecutionContext, origin: st
     checks.push({ id: 'builds', label: 'Worker app deploys', status: 'unknown', detail: `could not read: ${String(err).slice(0, 80)}`, at });
   }
   const res = new Response(JSON.stringify({ sha: env.CF_VERSION_METADATA?.tag || null, version: env.CF_VERSION_METADATA?.id || null, built: env.CF_VERSION_METADATA?.timestamp || null, checks }),
-    { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=300' } });
-  ctx.waitUntil(cache.put(key, res.clone()));
+    { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+  const memo = new Response(res.clone().body, { headers: { 'content-type': 'application/json', 'cache-control': 's-maxage=300' } });
+  ctx.waitUntil(cache.put(key, memo));
   return res;
 }
