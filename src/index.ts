@@ -14,7 +14,7 @@ import { BuildBox } from './build';
 import { serveRun } from './run';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
-import { fixtureV3, liveV3, projectV3, withTabs, VIEW_IDS, type ViewId } from './v3';
+import { docLabel, docRank, fixtureV3, liveV3, projectV3, withTabs, VIEW_IDS, type Docs, type ViewId } from './v3';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
 import { DEFAULT_API_MODEL, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
@@ -179,6 +179,22 @@ async function boxStatus(env: Env, id: string, withReply = false): Promise<BoxSt
   if (!ph.awake) return { ...ph, cc: 'asleep' };
   const [cc, said] = await Promise.all([box.ccStatus().catch(() => 'unknown'), withReply ? box.lastReply().catch(() => undefined) : undefined]);
   return { ...ph, cc, said };
+}
+
+/** A project's documents (root text files and docs/*.md, README first) and one of them read. */
+async function docsOf(env: Env, ctx: ExecutionContext, info: ProjectInfo, want: string | null): Promise<Docs> {
+  const h = await head(env, ctx, info.repo).catch(() => null);
+  if (!h) return { list: [], current: null, text: null };
+  const root = await tree(env, ctx, info.repo, h.tree);
+  const found: { path: string; hash: string; rank: number }[] = [];
+  for (const e of root) if (e.type === 'blob') { const r = docRank(e.name); if (r !== null) found.push({ path: e.name, hash: e.hash, rank: r }); }
+  const dd = root.find((e) => e.type === 'tree' && /^docs?$/i.test(e.name));
+  if (dd) for (const e of (await tree(env, ctx, info.repo, dd.hash)).slice(0, 40)) if (e.type === 'blob') { const p = `${dd.name}/${e.name}`; const r = docRank(p); if (r !== null) found.push({ path: p, hash: e.hash, rank: r }); }
+  found.sort((a, b) => a.rank - b.rank || a.path.localeCompare(b.path));
+  const list = found.slice(0, 16);
+  const cur = (want && list.find((d) => d.path === want)) || list.find((d) => d.rank === 0) || null;
+  const text = cur ? (await blob(env, ctx, info.repo, cur.hash, cur.path).catch(() => null))?.text ?? null : null;
+  return { list: list.map((d) => ({ path: d.path, label: docLabel(d.path) })), current: cur?.path || null, text };
 }
 
 /** Box states for a project's open agents, its router and its reviewer. */
@@ -355,7 +371,7 @@ export default {
         return html(buildLogPage(info, a ? `Preview of agent ${ag}` : 'Live app (main)', a ? a.preview : info.app));
       }
       // ---- design v3 (views): /p/<o>/<n>[/<view>] on the views host
-      if (ui === 'c' && (m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(changes|app|history|more|agents|errors|about))?\/?$/))) {
+      if (ui === 'c' && (m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(readme|changes|app|history|more|agents|errors|about))?\/?$/))) {
         const slug = slugOf(m[1], m[2]);
         const p = projectStub(env, slug);
         const info = await p.info();
@@ -364,7 +380,8 @@ export default {
         const own = info.owner === me.handle;
         const st = own ? await statusesOf(env, info) : { status: {}, router: { awake: false, cc: 'asleep' }, reviewer: { awake: false, cc: 'asleep' } };
         return html(projectV3({ info, entry: all.find((e) => e.slug === slug)!, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
-          me: me.handle, runBase, liveHtml: '', view: (m[3] as ViewId) || null, tryAgent: url.searchParams.get('try') || undefined, ...st,
+          me: me.handle, runBase, liveHtml: '', view: m[3] === 'about' ? 'readme' : (m[3] as ViewId) || null, tryAgent: url.searchParams.get('try') || undefined, ...st,
+          docs: !m[3] || m[3] === 'readme' || m[3] === 'about' ? await docsOf(env, ctx, info, url.searchParams.get('doc')) : undefined,
           needsKey: own && !isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
       }
       // ---- code browser: /p/<o>/<n>/code/<path>[?v=<agent>], changes, file list

@@ -58,6 +58,7 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .readme h2,.readme h3,.readme h4{margin:16px 0 6px;font-size:17px}
 .readme code{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:1px 4px}
 .readme pre{overflow-x:auto;background:var(--chip);border-radius:8px;padding:10px}
+.readme hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .commit{display:flex;gap:8px;align-items:baseline;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
 .commit .msg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .commit code{font:12px 'JetBrains Mono',monospace;color:var(--dim)}

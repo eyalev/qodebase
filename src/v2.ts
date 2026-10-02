@@ -226,6 +226,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset
 .readme h2,.readme h3,.readme h4{margin:16px 0 6px;font-size:17px}
 .readme code{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:1px 4px}
 .readme pre{overflow-x:auto;background:var(--chip);border-radius:8px;padding:10px}
+.readme hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .files{display:flex;flex-wrap:wrap;gap:6px}
 .files a{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:6px 8px;color:var(--fg)}
 .vtag{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:4px;padding:2px 6px;margin-left:8px;font-weight:400;vertical-align:2px}

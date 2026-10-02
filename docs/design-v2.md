@@ -154,7 +154,19 @@ https://forq-d.kapps.dev for comparison.
   with Chat and Terminal.
 - **Errors** (Worker projects, under More): Cloudflare Issues reports and the
   fixes they started.
-- **The project opens on** Changes for the owner and App for a visitor.
-  Remembering the last view used is not built yet.
+- **Readme is the first view and the default for everyone** (Eyal,
+  2026-10-02). It shows:
+  - the project's description and where it came from;
+  - Fork, for visitors;
+  - a row of the project's documents: README first, then CONTRIBUTING,
+    CHANGELOG/CHANGES, AGENTS/CLAUDE, the others, `docs/*.md`, and LICENSE last.
+    Each has its own URL, `?doc=`.
+- **The tabs changed with it:**
+  - the owner gets Readme, Changes, App, Code, More (History moved into More);
+  - a visitor gets Readme, App, Code, History.
+- **More is a toggle** (Eyal): a sheet over the current view; tapping More
+  again, or outside the sheet, closes it. `/more` still works as a page.
+- **Markdown** gained horizontal rules, underlined headings, bare-URL links,
+  numbered lists and italics.
 
 Later: projects that ship their own views, declared in the repo.
