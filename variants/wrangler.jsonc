@@ -7,6 +7,8 @@
   "env": {
     "a": { "name": "forq-ui-a", "vars": { "UI": "a" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-a.kapps.dev", "custom_domain": true }] },
     "b": { "name": "forq-ui-b", "vars": { "UI": "b" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-b.kapps.dev", "custom_domain": true }] },
-    "c": { "name": "forq-ui-c", "vars": { "UI": "c" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-c.kapps.dev", "custom_domain": true }] }
+    "c": { "name": "forq-ui-c", "vars": { "UI": "c" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-c.kapps.dev", "custom_domain": true }] },
+    // The first chat take, kept to compare with C's views (2026-10-02).
+    "d": { "name": "forq-ui-d", "vars": { "UI": "d" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-d.kapps.dev", "custom_domain": true }] }
   }
 }

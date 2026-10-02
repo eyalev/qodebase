@@ -124,3 +124,37 @@ Workers (`forq-ui-a/b/c`) and `/design-fixture`.
 
 Cost: three tiny forwarding Workers on the existing Workers plan. They only
 run when someone opens a variant URL.
+
+## Views (variant C, chosen 2026-10-02)
+
+Eyal picked C, for its tabs: "will give us more flexibility". C was rebuilt as
+**views** (`src/v3.ts`) at https://forq-c.kapps.dev. The first chat take stays at
+https://forq-d.kapps.dev for comparison.
+
+- **Each view is its own URL:**
+  - `/p/<o>/<n>/changes`, `/app`, `/history`, `/more`, `/agents`, `/errors`, `/about`;
+  - Code is the code browser at `/p/<o>/<n>/code/`, which keeps the tab bar.
+  - The back button works and every view can be linked.
+- **Tab bar:** at the bottom on a phone (it hides while you type), a left rail
+  on desktop.
+  - The owner gets Changes, App, Code, History, More.
+  - A visitor gets App, Code, History, About.
+  - Changes carries a red badge with the number of changes that need you, on every view.
+- **Views are a registry:** each has an id, label, icon, `when` (Agents for the
+  owner, Errors for Worker projects) and `render`. Adding a view is one entry.
+- **Changes** shows only work in progress, as a conversation that opens at the
+  newest message. It uses a `column-reverse` scroller, so it starts at the bottom
+  without script; this fixes the bug in Eyal's screenshot. Merged changes are
+  one link away, in History.
+- **App:** the running app, with a picker for Live or any change you can try,
+  and Merge when the change you picked is ready.
+- **History:** merged changes, commits, the deploy, forks and the project's
+  origin, by day.
+- **Agents** (under More): the router, the reviewer and each change's agent,
+  with Chat and Terminal.
+- **Errors** (Worker projects, under More): Cloudflare Issues reports and the
+  fixes they started.
+- **The project opens on** Changes for the owner and App for a visitor.
+  Remembering the last view used is not built yet.
+
+Later: projects that ship their own views, declared in the repo.

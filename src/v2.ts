@@ -16,22 +16,23 @@ import { FRESH_CSS, freshHelp, freshLegend, freshTag } from './fresh';
 import { markdown } from './md';
 import { SHEET_CSS, SHEET_HTML, SHEET_JS, shortId } from './sheet';
 
-export type UI = 'a' | 'b' | 'c';
+// 'c' is the views design (src/v3.ts); 'd' keeps the first chat take for comparison.
+export type UI = 'a' | 'b' | 'c' | 'd';
 export const uiOf = (request: Request): UI | null => {
   const v = request.headers.get('x-forq-ui');
-  return v === 'a' || v === 'b' || v === 'c' ? v : null;
+  return v === 'a' || v === 'b' || v === 'c' || v === 'd' ? v : null;
 };
-const NAMES: Record<UI, string> = { a: 'App first', b: 'Task list', c: 'Chat' };
+const NAMES: Record<UI, string> = { a: 'App first', b: 'Task list', c: 'Views', d: 'Chat' };
 
 // ---- the change model ------------------------------------------------------
 
-type State = 'working' | 'checking' | 'ready' | 'fix' | 'waiting' | 'paused' | 'merged';
+export type State = 'working' | 'checking' | 'ready' | 'fix' | 'waiting' | 'paused' | 'merged';
 export type Change = { a: Agent; title: string; state: State; word: string; busy: boolean; since?: number; tryUrl?: string; notes?: string };
 
-const BUSY = /busy|thinking|working|running|tool/;
+export const BUSY = /busy|thinking|working|running|tool/;
 /** Merge taps go through the router agent as "Merge <id>": not something the person typed. */
-const isMerge = (t?: string) => !!t && /^Merge [a-z0-9]+$/.test(t);
-const fromIssues = (t?: string) => !!t && t.startsWith('Production error from Cloudflare Issues');
+export const isMerge = (t?: string) => !!t && /^Merge [a-z0-9]+$/.test(t);
+export const fromIssues = (t?: string) => !!t && t.startsWith('Production error from Cloudflare Issues');
 
 /** A change's title: its task's first sentence (the page clamps it to two lines). */
 export function titleOf(task: string) {
@@ -66,7 +67,7 @@ export function changesOf(info: ProjectInfo, status: Record<string, BoxStatus>, 
   const done = all.filter((c) => c.a.state === 'merged').reverse();
   return { open, done };
 }
-const ORDER: State[] = ['waiting', 'fix', 'ready', 'working', 'checking', 'paused', 'merged'];
+export const ORDER: State[] = ['waiting', 'fix', 'ready', 'working', 'checking', 'paused', 'merged'];
 
 /** One line for the whole project: what needs you first. */
 export function summaryOf(open: Change[], planning: string): { html: string; state: State | ''; busy: boolean } {
@@ -103,7 +104,7 @@ const since = (t?: number) => (t ? ` <span class="t" data-since="${t}">0s</span>
 const dot = (c: Change) => `<span class="dot s-${c.state}"></span>`;
 
 /** The one thing to do with a change. Accent only on the page's most urgent one. */
-function primary(c: Change, accent = false) {
+export function primary(c: Change, accent = false) {
   const k = accent ? 'btn' : 'chipbtn';
   if (c.state === 'ready') return `<button class="${k}" data-merge="${esc(c.a.id)}">Merge</button>`;
   if (c.state === 'fix') return `<button class="${k}" data-fix="${esc(c.a.id)}">Ask to fix</button>`;
@@ -111,7 +112,7 @@ function primary(c: Change, accent = false) {
   return '';
 }
 /** Which change gets the page's one accent button. */
-const accentOf = (cs: Change[]) => cs.find((c) => primary(c))?.a.id;
+export const accentOf = (cs: Change[]) => cs.find((c) => primary(c))?.a.id;
 
 /** Everything a change can do besides its primary action. */
 function secondary(info: ProjectInfo, c: Change, opts: { tryIt?: boolean } = {}) {
@@ -142,19 +143,19 @@ ${a.note ? `<p><b>What it did.</b> ${esc(a.note)}</p>` : ''}${check}${pv}
 const ROW_STEPS = STEPS;
 
 /** A change as a list row: title, state, primary action; tap to open the detail. */
-function changeRow(info: ProjectInfo, c: Change, now: number, accentId?: string) {
+export function changeRow(info: ProjectInfo, c: Change, now: number, accentId?: string) {
   const act = primary(c, c.a.id === accentId);
   return `<div class="chg s-${c.state}${c.busy ? ' busy' : ''}" data-id="${esc(c.a.id)}" id="c-${esc(shortId(c.a.id))}"><div class="chg-row">
 <div class="chg-h" data-open role="button" tabindex="0" aria-expanded="false"><span class="chg-t">${esc(c.title)}</span>
 <span class="chg-s">${dot(c)}<span class="w">${c.word}${since(c.since)}</span>${freshTag(c.a.noteAt || c.a.createdAt, now, ROW_STEPS)}</span></div>
 ${act ? `<div class="chg-p">${act}</div>` : ''}</div>${detail(info, c)}</div>`;
 }
-const legend = (n: number) => (n ? freshLegend(STEPS) : '');
-const TRYBAR = `<div class="trybar" id="trybar" hidden><div class="tt">Trying <b></b></div><button type="button" class="btn" data-trymerge>Merge</button><button type="button" class="chipbtn" data-trylive>Back to live</button></div>`;
-const SEND = `<button class="send chipbtn">Send</button>`;
-const VISIT = `<p class="visit">A running app on forq. Fork it to ask agents for changes.</p>`;
+export const legend = (n: number) => (n ? freshLegend(STEPS) : '');
+export const TRYBAR = `<div class="trybar" id="trybar" hidden><div class="tt">Trying <b></b></div><button type="button" class="btn" data-trymerge>Merge</button><button type="button" class="chipbtn" data-trylive>Back to live</button></div>`;
+export const SEND = `<button class="send chipbtn">Send</button>`;
+export const VISIT = `<p class="visit">A running app on forq. Fork it to ask agents for changes.</p>`;
 
-function planningHtml(p: ReturnType<typeof planningOf>, q?: ProjectInfo['lastRequest']) {
+export function planningHtml(p: ReturnType<typeof planningOf>, q?: ProjectInfo['lastRequest']) {
   if (p.failed) return `<div class="plan bad">Could not start: ${esc(p.failed)} <button class="chipbtn" data-retry="${esc(q?.text || '')}">Retry</button></div>`;
   if (p.line) return `<div class="plan busy">${p.line}</div>`;
   return '';
@@ -231,7 +232,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset
 @media (hover:hover){.chipbtn:hover{background:var(--line)}.chg-h:hover{background:var(--chip)}}
 ${FRESH_CSS}${SHEET_CSS}`;
 
-function shell2(ui: UI, title: string, body: string, css: string, bodyClass = '') {
+export function shell2(ui: UI, title: string, body: string, css: string, bodyClass = '') {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${esc(title)} (${ui.toUpperCase()})</title><meta name="robots" content="noindex">
@@ -241,7 +242,7 @@ function shell2(ui: UI, title: string, body: string, css: string, bodyClass = ''
 }
 
 /** Page script shared by the variants: polling, actions, Try it, row toggles. */
-function pageJs(info: ProjectInfo) {
+export function pageJs(info: ProjectInfo, pollQ = '') {
   return `<script>
 const API='/api/p/${esc(info.owner)}/${esc(info.name)}';
 const live=document.getElementById('live');
@@ -251,7 +252,7 @@ const openIds=new Set();
 function restore(){for(const id of openIds){const r=document.querySelector('.chg[data-id="'+CSS.escape(id)+'"]');if(r){r.classList.add('open');r.querySelector('[data-open]')?.setAttribute('aria-expanded','true');}}}
 let timer=null;
 async function poll(){clearTimeout(timer);
- if(live&&!document.hidden){try{const r=await fetch(API+'/agents-html');if(r.ok){const j=await r.json();live.innerHTML=j.html;restore();tick();window.forqAfterPoll&&window.forqAfterPoll(j);}}catch{}}
+ if(live&&!document.hidden){try{const r=await fetch(API+'/agents-html${pollQ}');if(r.ok){const j=await r.json();live.innerHTML=j.html;restore();tick();window.forqAfterPoll&&window.forqAfterPoll(j);}}catch{}}
  timer=setTimeout(poll,document.querySelector('#live .busy,#live .plan.busy')?2000:5000);}
 // The design fixture shows sample data: never replace it with the real project's.
 if(live&&!location.pathname.startsWith('/design-fixture')){document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll();});timer=setTimeout(poll,2000);}
@@ -288,16 +289,16 @@ document.addEventListener('click',async(e)=>{
 }
 
 /** Fork / sign-in for someone who does not own the project. */
-function forkAction(info: ProjectInfo, me: string, myForks: Entry[], cls = 'btn') {
+export function forkAction(info: ProjectInfo, me: string, myForks: Entry[], cls = 'btn') {
   if (myForks.length) return `<a class="${cls}" href="${path(myForks[0].slug)}">Open your copy</a>`;
   if (me) return `<button class="${cls}" id="fork">Fork to change it</button>`;
   return `<a class="${cls}" href="/login?next=${encodeURIComponent(path(info.slug))}">Sign in to fork</a>`;
 }
-const FORK_JS = `<script>const fk=document.getElementById('fork');if(fk)fk.onclick=async()=>{fk.disabled=true;fk.textContent='Forking';const r=await fetch(location.pathname.replace(/\\/$/,'').replace(/^\\/p\\//,'/api/p/')+'/fork',{method:'POST'});const j=await r.json();if(r.ok)location.href=j.path;else{fk.disabled=false;fk.textContent=j.error||'Fork failed';}};</script>`;
+export const FORK_JS = `<script>const fk=document.getElementById('fork');if(fk)fk.onclick=async()=>{fk.disabled=true;fk.textContent='Forking';const r=await fetch(location.pathname.replace(/\\/$/,'').replace(/^\\/p\\//,'/api/p/')+'/fork',{method:'POST'});const j=await r.json();if(r.ok)location.href=j.path;else{fk.disabled=false;fk.textContent=j.error||'Fork failed';}};</script>`;
 
 export type ProjectArgs = { info: ProjectInfo; entry: Entry; forks: Entry[]; overview: Overview; me: string; runBase: string; liveHtml: string; needsKey?: boolean };
 
-function appUrl(o: ProjectArgs) {
+export function appUrl(o: ProjectArgs) {
   const { info, overview, runBase } = o;
   const isWorker = (overview.kind ?? info.kind) === 'worker';
   const dep = overview.app ?? info.app;
@@ -307,7 +308,7 @@ function appUrl(o: ProjectArgs) {
 }
 
 /** What to show where the app would be, when there is no app to show. */
-function noApp(o: ProjectArgs) {
+export function noApp(o: ProjectArgs) {
   const isWorker = (o.overview.kind ?? o.info.kind) === 'worker';
   const dep = o.overview.app ?? o.info.app;
   if (o.overview.importing) return `<div class="noapp">Importing from GitHub<script>setTimeout(()=>location.reload(),3000)</script></div>`;
@@ -316,7 +317,7 @@ function noApp(o: ProjectArgs) {
   return `<div class="noapp">This project has no web page to show.</div>`;
 }
 
-const keyNote = `<p class="empty">Agents run on your own Anthropic API key. <a href="/settings">Add it in Settings</a>.</p>`;
+export const keyNote = `<p class="empty">Agents run on your own Anthropic API key. <a href="/settings">Add it in Settings</a>.</p>`;
 
 // ---- Variant A: the app is the page -----------------------------------------
 
@@ -533,7 +534,7 @@ body.chat{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 @media (min-width:800px){.cbar,.thread,.compose,.codep,.forkbar{padding-left:max(12px,calc(50% - 360px));padding-right:max(12px,calc(50% - 360px))}.needbar{margin:0 calc(-1 * max(12px,calc(50% - 360px)));padding:0 max(12px,calc(50% - 360px))}}
 `;
 
-const OPEN_ICON_C = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 3h4v4M13 3 7.5 8.5M12 9.5V13H3V4h3.5"/></svg>`;
+export const OPEN_ICON_C = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 3h4v4M13 3 7.5 8.5M12 9.5V13H3V4h3.5"/></svg>`;
 
 type Group = { text: string; at: number; issues: boolean; changes: Change[] };
 
@@ -679,6 +680,12 @@ export function liveV2(ui: UI, info: ProjectInfo, router: BoxStatus, status: Rec
 // ---- Fixture: every change state at once, for design review (variant hosts only) ----
 
 export function fixtureV2(ui: UI, runBase: string, mode: string) {
+  const f = fixtureData(runBase, mode);
+  return projectV2(ui, { info: f.info, entry: f.entry, forks: [], overview: f.overview, me: 'eyal', runBase, liveHtml: liveV2(ui, f.info, f.router, f.status, runBase) });
+}
+
+/** Sample data with every change state at once (design review on the variant hosts). */
+export function fixtureData(runBase: string, mode: string) {
   const now = Date.now();
   const m = 60_000;
   const ask = "Two changes: a switch that rounds each person's share up to the next whole number, and a Copy button next to the per-person amount.";
@@ -701,5 +708,5 @@ export function fixtureV2(ui: UI, runBase: string, mode: string) {
   const router: BoxStatus = mode === 'planning' ? busy : { awake: false, cc: 'asleep' };
   const entry: Entry = { slug: info.slug, owner: 'eyal', name: 'tipsplit', description: info.description, forkedFrom: 'forq.tipsplit', createdAt: info.createdAt, updatedAt: now - 4 * m };
   const overview: Overview = { kind: 'static', entry: '', commits: [], files: [{ name: 'index.html', dir: false }, { name: 'README.md', dir: false }, { name: 'LICENSE', dir: false }], readme: '# Tip split\n\nSplit a restaurant bill: type the amount, pick a tip, set how many people. One HTML file, no dependencies.' };
-  return projectV2(ui, { info, entry, forks: [], overview, me: 'eyal', runBase, liveHtml: liveV2(ui, info, router, status, runBase) });
+  return { info, entry, overview, status, router };
 }

@@ -9,11 +9,12 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AGENT_RE, NAME_RE, appWorkerName, projectOf, slugOf, type Env } from './env';
 import { AgentBox, log, REVIEW_STEPS, type BootSpec } from './box';
 import { Project, roleOf, type ProjectInfo, type Role } from './project';
-import { Registry, registry } from './registry';
+import { Registry, registry, type Entry } from './registry';
 import { BuildBox } from './build';
 import { serveRun } from './run';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
+import { fixtureV3, liveV3, projectV3, withTabs, VIEW_IDS, type ViewId } from './v3';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
 import { DEFAULT_API_MODEL, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
@@ -180,6 +181,15 @@ async function boxStatus(env: Env, id: string, withReply = false): Promise<BoxSt
   return { ...ph, cc, said };
 }
 
+/** Box states for a project's open agents, its router and its reviewer. */
+async function statusesOf(env: Env, info: ProjectInfo) {
+  const status: Record<string, BoxStatus> = {};
+  const open = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped');
+  await Promise.all(open.map(async (a) => { status[a.id] = await boxStatus(env, a.id); }));
+  const [router, reviewer] = await Promise.all([boxStatus(env, `${info.slug}--router`, true), boxStatus(env, `${info.slug}--review`)]);
+  return { status, router, reviewer };
+}
+
 async function renderAgents(env: Env, info: ProjectInfo, runBase: string, ui: UI | null = null) {
   const status: Record<string, BoxStatus> = {};
   const open = info.agents.filter((a) => a.state !== 'merged' && a.state !== 'stopped');
@@ -256,6 +266,9 @@ export default {
 
       // ---- pages
       const ui = uiOf(request);
+      if (ui === 'c' && (m = path.match(/^\/design-fixture(?:\/([a-z]+))?\/?$/))) {
+        return html(fixtureV3(runBase, url.searchParams.get('state') || 'full', (VIEW_IDS as string[]).includes(m[1] || '') ? m[1] as ViewId : null, url.searchParams.get('try') || undefined));
+      }
       if (ui && path === '/design-fixture') return html(fixtureV2(ui, runBase, url.searchParams.get('state') || 'full'));
       if (path === '/') {
         const entries = await registry(env).list();
@@ -341,12 +354,28 @@ export default {
         const a = ag ? info.agents.find((x) => x.id.split('--')[1] === ag) : undefined;
         return html(buildLogPage(info, a ? `Preview of agent ${ag}` : 'Live app (main)', a ? a.preview : info.app));
       }
+      // ---- design v3 (views): /p/<o>/<n>[/<view>] on the views host
+      if (ui === 'c' && (m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(changes|app|history|more|agents|errors|about))?\/?$/))) {
+        const slug = slugOf(m[1], m[2]);
+        const p = projectStub(env, slug);
+        const info = await p.info();
+        if (!info) return new Response('No such project', { status: 404 });
+        const all = await registry(env).list();
+        const own = info.owner === me.handle;
+        const st = own ? await statusesOf(env, info) : { status: {}, router: { awake: false, cc: 'asleep' }, reviewer: { awake: false, cc: 'asleep' } };
+        return html(projectV3({ info, entry: all.find((e) => e.slug === slug)!, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
+          me: me.handle, runBase, liveHtml: '', view: (m[3] as ViewId) || null, tryAgent: url.searchParams.get('try') || undefined, ...st,
+          needsKey: own && !isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
+      }
       // ---- code browser: /p/<o>/<n>/code/<path>[?v=<agent>], changes, file list
       if ((m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/(code|changes)(?:\/(.*))?$/))) {
         const info = await projectStub(env, slugOf(m[1], m[2])).info();
         if (!info) return new Response('No such project', { status: 404 });
-        if (m[3] === 'changes') return changesRoute(env, ctx, info, decodeURIComponent(m[4] || ''), runBase);
-        return codeRoute(env, ctx, info, url.searchParams.get('v') || '', decodeURIComponent(m[4] || ''), runBase);
+        const r = m[3] === 'changes' ? await changesRoute(env, ctx, info, decodeURIComponent(m[4] || ''), runBase)
+          : await codeRoute(env, ctx, info, url.searchParams.get('v') || '', decodeURIComponent(m[4] || ''), runBase);
+        // The views design keeps its tab bar on the code pages.
+        if (ui === 'c' && (r.headers.get('content-type') || '').includes('text/html')) return html(withTabs(await r.text(), info, me.handle));
+        return r;
       }
       if ((m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/?$/))) {
         const slug = slugOf(m[1], m[2]);
@@ -421,6 +450,10 @@ export default {
         if (verb === 'agents-html') {
           // Opportunistic: a review stuck in 'reviewing' (its box died) goes back to the queue.
           ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.requeueStale()));
+        }
+        if (verb === 'agents-html' && uiOf(request) === 'c') {
+          const st = await statusesOf(env, info);
+          return json({ html: liveV3(url.searchParams.get('view') || 'changes', { info, me: me.handle, runBase, ...st, entry: undefined as unknown as Entry, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: '' }) });
         }
         if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase, uiOf(request)), tabs: previewTabs(info, runBase) });
         if (verb === 'agents' && request.method === 'POST') {

@@ -64,7 +64,7 @@
     "HANDLES": "{\"owner@example.com\":\"eyal\"}",
     "UI_HOST": "forq.kapps.dev",
     // Design-variant preview Workers (variants/), 2026-10-02.
-    "UI_VARIANT_HOSTS": "forq-a.kapps.dev,forq-b.kapps.dev,forq-c.kapps.dev",
+    "UI_VARIANT_HOSTS": "forq-a.kapps.dev,forq-b.kapps.dev,forq-c.kapps.dev,forq-d.kapps.dev",
     "RUN_HOST": "forq-run.kapps.dev",
     "ACCOUNT_ID": "<personal account id>",
     "API_BASE": "https://forq.<sub>.workers.dev",

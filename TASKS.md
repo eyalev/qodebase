@@ -111,4 +111,6 @@ Bugs found and fixed during the run:
 - [x] Research (Codex mobile tasks, Cursor web agents, Lovable/Replit, Krug) and first principles: docs/design-v2.md
 - [x] Variants A app first, B task list, C chat (src/v2.ts) on forq-a/b/c.kapps.dev via forwarding Workers (variants/); sign-in hand-over; /design-fixture
 - [x] Screenshot gate 390 light/dark + 1440 (video/design-shots.mjs); critique by a separate agent; blockers/high fixed
-- [ ] Eyal picks (or combines); then make it the default, add --warn to DESIGN.md, delete forq-ui-a/b/c and /design-fixture
+- [x] Eyal picked C (views). Rebuilt as src/v3.ts on forq-c; first take kept on forq-d
+- [ ] Eyal reviews the views; then make it the default, add --warn and the views pattern to DESIGN.md, delete forq-ui-a/b/d and /design-fixture
+- [ ] Views later: remember the last view per project; a "needs you" jump when those cards are scrolled away; projects declaring their own views
