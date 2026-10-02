@@ -68,6 +68,8 @@
     // Design-variant preview Workers (variants/), 2026-10-02.
     "UI_VARIANT_HOSTS": "a.projectsbase.dev,b.projectsbase.dev,c.projectsbase.dev,d.projectsbase.dev",
     "RUN_HOST": "ttyview.dev",
+    // Worker apps: <name>--<owner>.ttyview.dev, previews <alias>.<that host> (src/build.ts).
+    "APPS_DOMAIN": "ttyview.dev",
     "ACCOUNT_ID": "887d7234a6b8d65ad355a4f6684cab67",
     "API_BASE": "https://forq.forqdev.workers.dev",
     // Hard caps (the durable_object policy has no max_instances).

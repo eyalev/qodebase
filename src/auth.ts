@@ -120,6 +120,8 @@ export async function claimHandle(env: Env, email: string, handle: string): Prom
   handle = handle.trim().toLowerCase();
   if (!HANDLE_RE.test(handle)) return { ok: false, error: '2–24 characters: lowercase letters, digits and dashes, starting with a letter.' };
   if (RESERVED.has(handle)) return { ok: false, error: 'That name is reserved.' };
+  // App hostnames are <project>--<handle>.<apps domain>: a handle with -- would make them ambiguous.
+  if (handle.includes('--')) return { ok: false, error: 'Use single dashes only.' };
   const taken = await userByHandle(env, handle);
   if (taken && taken.email !== email.toLowerCase()) return { ok: false, error: 'That name is taken.' };
   const user: User = { email: email.toLowerCase(), handle, createdAt: Date.now() };

@@ -6,7 +6,8 @@
 // A job: clone a repo at a commit, write a sanitized Wrangler config
 // (forq-app-<slug>, workers.dev only, no routes, refuse bindings that need
 // account resources), npm install if needed, then
-//   deploy  → `wrangler deploy` (the project's live app)
+//   deploy  → `wrangler deploy` (the project's live app, on its custom domain
+//             <name>--<owner>.<APPS_DOMAIN> when set, plus workers.dev)
 //   preview → `wrangler preview --name <alias>` (an agent fork; Previews get
 //             their own Durable Object storage, so a preview never touches
 //             the live app's data)
@@ -27,6 +28,7 @@ export type BuildJob = {
   token: string;         // read token for that repo
   worker: string;        // forq-app-<slug>
   alias?: string;        // preview name (preview jobs)
+  host?: string;         // custom domain (<name>--<owner>.<APPS_DOMAIN>); previews at <alias>.<host>
   agentId?: string;
   queuedAt: number;
 };
@@ -42,7 +44,7 @@ const SANITIZE = String.raw`
 const fs = require('fs'), path = require('path');
 const T = '/opt/forq-tools/node_modules/';
 const toml = require(T + 'smol-toml'), jsonc = require(T + 'jsonc-parser');
-const dir = process.argv[2], worker = process.argv[3];
+const dir = process.argv[2], worker = process.argv[3], host = process.argv[4] || '';
 const names = ['wrangler.jsonc', 'wrangler.json', 'wrangler.toml'];
 const found = names.find((n) => fs.existsSync(path.join(dir, n)));
 if (!found) { console.error('FORQ_ERROR no wrangler.jsonc, wrangler.json or wrangler.toml at the repo root'); process.exit(3); }
@@ -57,6 +59,9 @@ const out = { ...c, name: worker, workers_dev: true, preview_urls: true };
 for (const k of ['route', 'routes', 'env', 'account_id', 'tail_consumers', 'logpush', 'triggers']) delete out[k];
 // Logs + Issues (Cloudflare's error grouping; forq's automation turns issues into agent work).
 out.observability = { ...(c.observability || {}), enabled: true, issues: { enabled: true } };
+// The app's own hostname on the apps domain; previews_enabled gives every preview
+// <alias>.<host> (Cloudflare adds the wildcard record and certificate).
+if (host) out.routes = [{ pattern: host, custom_domain: true, previews_enabled: true }];
 // Previews: per-preview Durable Object namespaces (keep the bindings the code reads from env).
 out.previews = { ...(c.previews || {}) };
 if (c.durable_objects && c.durable_objects.bindings) out.previews.durable_objects = { bindings: c.durable_objects.bindings };
@@ -141,7 +146,7 @@ export class BuildBox extends DurableObject<Env> {
       if (clone.exitCode !== 0) return done(false, { error: 'clone failed' });
       const commit = (clone.stdout.match(/commit ([0-9a-f]{40})/) || [])[1];
 
-      const cfg = await this.#sh(`node /opt/forq-tools/sanitize.js "$D" "$W"`, { D: dir, W: job.worker });
+      const cfg = await this.#sh(`node /opt/forq-tools/sanitize.js "$D" "$W" "$H"`, { D: dir, W: job.worker, H: job.host || '' });
       add(cfg.stdout + cfg.stderr);
       if (cfg.exitCode !== 0) return done(false, { commit, error: (cfg.stderr.match(/FORQ_ERROR (.*)/) || [])[1] || 'config could not be read' });
 
@@ -161,9 +166,13 @@ export class BuildBox extends DurableObject<Env> {
       add(run.stdout + run.stderr);
       await this.#sh(`rm -rf "$D"`, { D: dir });
       if (run.exitCode !== 0) return done(false, { commit, error: job.kind === 'deploy' ? 'wrangler deploy failed' : 'wrangler preview failed' });
-      const url = job.kind === 'deploy'
-        ? (run.stdout.match(/https:\/\/[a-z0-9.-]+\.workers\.dev/) || [])[0]
-        : (run.stdout.match(/Preview URL:\s*(https:\/\/\S+)/) || [])[1];
+      // With a custom domain the app's address is that host (previews: <alias>.<host>);
+      // workers.dev stays as a fallback address.
+      const url = job.host
+        ? (job.kind === 'deploy' ? `https://${job.host}` : `https://${job.alias}.${job.host}`)
+        : job.kind === 'deploy'
+          ? (run.stdout.match(/https:\/\/[a-z0-9.-]+\.workers\.dev/) || [])[0]
+          : (run.stdout.match(/Preview URL:\s*(https:\/\/\S+)/) || [])[1];
       return done(true, { commit, url });
     } catch (e) {
       add(String((e as Error)?.stack || e));

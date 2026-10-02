@@ -3,7 +3,7 @@
 // the router (`<slug>--router`) is an AgentBox on a clone of main itself.
 
 import { DurableObject } from 'cloudflare:workers';
-import { NAME_RE, appWorkerName, previewAlias, slugOf, type Env } from './env';
+import { NAME_RE, appHost, appWorkerName, previewAlias, slugOf, type Env } from './env';
 import type { BuildJob, BuildResult } from './build';
 import { log } from './box';
 import { registry, type Entry } from './registry';
@@ -163,7 +163,7 @@ export class Project extends DurableObject<Env> {
     using repo = await this.env.ARTIFACTS.get(repoName);
     const token = (await repo.createToken('read', 3600)).plaintext;
     const job: BuildJob = { id: crypto.randomUUID().slice(0, 8), slug: info.slug, kind, repo: repoName, remote: agent ? agent.remote : info.remote,
-      token, worker: appWorkerName(info.slug), alias: agent ? previewAlias(agent.id) : undefined, agentId, queuedAt: Date.now() };
+      token, worker: appWorkerName(info.slug), alias: agent ? previewAlias(agent.id) : undefined, host: appHost(info.slug, this.env.APPS_DOMAIN), agentId, queuedAt: Date.now() };
     const building: Deploy = { status: 'building', at: Date.now() };
     if (agent) agent.preview = { ...agent.preview, ...building, error: undefined };
     else info.app = { ...(info.app || {}), ...building, error: undefined, worker: job.worker };

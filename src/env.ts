@@ -23,7 +23,8 @@ export interface Env {
   HANDLES: string;            // JSON {email: handle}
   UI_HOST: string;            // forq.kapps.dev
   UI_VARIANT_HOSTS?: string;  // design-variant preview hosts (comma-separated), see variants/
-  RUN_HOST: string;           // forq-run.kapps.dev
+  RUN_HOST: string;           // ttyview.dev (static apps, /<owner>.<name>/)
+  APPS_DOMAIN?: string;       // ttyview.dev: Worker apps at <name>--<owner>.<APPS_DOMAIN>
   MAX_AGENTS_PER_PROJECT: string;
   MAX_AWAKE_BOXES: string;
   CLAUDE_CODE_OAUTH_TOKEN: string;
@@ -39,5 +40,13 @@ export const projectOf = (agentId: string) => agentId.split('--')[0];
 
 /** The Worker a project's live app deploys as (workers.dev, ≤ 63 chars with a preview alias). */
 export const appWorkerName = (slug: string) => `forq-app-${slug.replace(/\./g, '-')}`.slice(0, 50).replace(/-+$/, '');
+/** A Worker app's own hostname, `<name>--<owner>.<domain>` (handles cannot hold
+ *  `--`, so the owner is what follows the last one). One DNS label: at most 63
+ *  characters, the name is shortened to fit. No domain → workers.dev only. */
+export const appHost = (slug: string, domain?: string) => {
+  if (!domain) return undefined;
+  const [owner, name] = slug.split('.');
+  return `${name.slice(0, 63 - 2 - owner.length).replace(/-+$/, '')}--${owner}.${domain}`;
+};
 /** Preview names must start with a letter. */
 export const previewAlias = (agentId: string) => `ag-${agentId.split('--')[1]}`;
