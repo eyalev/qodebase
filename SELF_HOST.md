@@ -5,9 +5,6 @@ namespace, all on your own Cloudflare account. Self-hosted, you are the
 instance owner: your projects' agents run on your Claude subscription (or a key),
 Worker projects deploy to your account, and nobody else's limits apply.
 
-> Status (2026-10-02): the repository is private. This guide is written for
-> when it opens, and for anyone given access before then.
-
 ## What you need
 
 | | |
@@ -18,26 +15,28 @@ Worker projects deploy to your account, and nobody else's limits apply.
 | Claude | a Claude subscription token (`claude setup-token`) for your own projects, or an Anthropic API key |
 | Local tools | Node 20+, `wrangler` 4.145+ (logged in), `jq`; optionally the `cf` CLI for the Issues wiring |
 
-## The box image (the one real requirement)
+## The box image
 
-Agents run in a container image that must provide this contract (see
-`src/box.ts`):
+Agents run in a container image built from [`box/Dockerfile`](box/Dockerfile):
+Debian, Claude Code, tmux, git, Node, Python, headless Chromium (the reviewer
+agent screenshots previews with it), [mobile-agent](https://github.com/eyalev/mobile-agent)
+for the Terminal tab and `box/box-api.mjs` for the Chat tab. Point both
+`containers[].images` entries in `wrangler.jsonc` at the Dockerfile
+(`"image": "./box/Dockerfile"`) and `wrangler deploy` builds and pushes it
+(about 1.5 GB; the first push takes a while).
+
+If you bring your own image, it must keep this contract (see `src/box.ts`):
 
 - `/opt/boot.sh`: reads `/tmp/boot.env` (`SBX_NAME`, `CC_ENV`, `CC_KEY_TAIL`,
-  `BILLING`), starts a tmux session named `claude` running Claude Code in the
-  directory named by `/workspace/.sbx-cwd`, and prints `MA_READY` / `TW_READY`
-  when its services listen.
-- A terminal web UI on port **7901** (forq proxies the Terminal tab to it).
-- A tmux web API on port **7681** with `/api/conversation`,
-  `/api/conversation/send` and `/api/sessions/claude/cc-status` (the Chat tab,
-  the progress lines and message delivery use these).
-- `git`, `python3`, `curl`, `node`/`npm`, and headless `chromium` (the reviewer
-  agent screenshots previews with it).
-
-The hosted forq uses a private image built from two private projects
-(mobile-agent and tmux-web). A public Dockerfile that meets the contract with
-public tools is on the to-do list; until then, point `containers[].images` in
-`wrangler.jsonc` at an image of your own that follows it.
+  `BILLING`) and `UI_HOST` from its environment, starts a tmux session named
+  `claude` running Claude Code in the directory named by `/workspace/.sbx-cwd`,
+  and prints `MA_READY` / `TW_READY` when its two servers answer.
+- A terminal web UI on port **7901** (forq proxies the Terminal tab to it;
+  `/api/p/terminal/states` says whether the agent is busy).
+- An API on port **7681** with `GET /api/conversation?session=&tail=`,
+  `POST /api/conversation/send` and `GET /api/sessions/<s>/cc-status`
+  (`box/box-api.mjs` is the reference).
+- `git`, `python3`, `curl`, `node`/`npm`, and headless `chromium`.
 
 ## Configure
 
@@ -45,8 +44,13 @@ public tools is on the to-do list; until then, point `containers[].images` in
    (this Worker's `https://<name>.<subdomain>.workers.dev`), `OWNER_HANDLE`
    (your handle), `HANDLES` (`{"you@example.com":"you"}`), the two `routes`
    (custom domains for `UI_HOST` and `RUN_HOST`), and the container image(s).
+   Delete `UI_VARIANT_HOSTS` (design previews of the hosted instance). The caps
+   `MAX_AGENTS_PER_PROJECT`, `MAX_AWAKE_BOXES` and `OTHERS_MAX_AWAKE` bound
+   what containers can cost you.
 2. **Cloudflare Access**: create a self-hosted Access application for
-   `<UI_HOST>/login` only, with an allow policy (everyone, or just you). Put its
+   `<UI_HOST>/login` only, with an allow policy (everyone, or just you) and the
+   One-time PIN login method (sign-in by emailed code). People not in `HANDLES`
+   choose a handle on first sign-in and bring their own Anthropic API key. Put its
    team domain and AUD in `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD`. Everything else
    on the UI host stays public to read.
 3. **Secrets** (`wrangler secret put …`):
@@ -60,9 +64,10 @@ public tools is on the to-do list; until then, point `containers[].images` in
    | `OBS_READ_TOKEN` | API token with **Workers Observability Read** only (Issues → agent) |
    | `ISSUES_WEBHOOK_SECRET` | random; Cloudflare Notifications sends it as `cf-webhook-auth` |
 
-4. **mobile-agent overlay** (only if your image uses mobile-agent):
-   `./scripts/pack-mobile-agent.sh` (see `CLAUDE.md`). Otherwise remove the
-   overlay step in `src/box.ts`.
+4. **mobile-agent overlay** (optional): the repo ships `box/mobile-agent.tgz`,
+   which boxes unpack over the image's mobile-agent at boot, so a newer
+   mobile-agent reaches running agents without an image rebuild. To refresh it:
+   `MA_SRC=<mobile-agent checkout> ./scripts/pack-mobile-agent.sh`, then deploy.
 
 ## Deploy
 
@@ -74,9 +79,10 @@ npx wrangler deploy
 Then open `https://<UI_HOST>/login`, sign in (your handle comes from
 `HANDLES`), and import a project from GitHub.
 
-Optional, for "a production error starts a fix": for each Worker project you
-deploy, run `scripts/issues-automation.sh forq-app-<owner>-<name>` once (needs
-the `cf` CLI logged in).
+Optional, for "a production error starts a fix": put the `ISSUES_WEBHOOK_SECRET`
+value in `~/.config/forq/issues-webhook-secret`, then for each Worker project
+you deploy run `FORQ_API=<API_BASE> scripts/issues-automation.sh forq-app-<owner>-<name>`
+once (needs the `cf` CLI logged in).
 
 ## What it costs
 

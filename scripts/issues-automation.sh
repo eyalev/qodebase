@@ -15,7 +15,7 @@ WORKER=${1:?usage: issues-automation.sh <forq-app-worker> [occurrences]}
 N=${2:-3}
 STATE=~/.config/forq/issues.json
 SECRET=$(cat ~/.config/forq/issues-webhook-secret)
-HOOK=https://forq.<sub>.workers.dev/api/hooks/issues
+HOOK=${FORQ_API:-https://forq.<sub>.workers.dev}/api/hooks/issues
 [ -f "$STATE" ] || echo '{}' > "$STATE"
 get() { jq -r ".$1 // empty" "$STATE"; }
 put() { tmp=$(mktemp); jq ".$1 = \"$2\"" "$STATE" > "$tmp" && mv "$tmp" "$STATE" && chmod 600 "$STATE"; }
