@@ -61,9 +61,16 @@ def main(src, out):
     ff = subprocess.Popen(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(FPS), '-i', '-',
                            '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-tune', 'stillimage', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
                            '-r', str(FPS), '-movflags', '+faststart', out], stdin=subprocess.PIPE)
+    out_frames = [0]   # frames written so far (for the .srt timings)
+    cues = []          # [start_s, end_s, text]
     def emit(im, n=1):
         b = im.tobytes()
         for _ in range(n): ff.stdin.write(b)
+        out_frames[0] += n
+    def cue(text):
+        now = out_frames[0] / FPS
+        if cues and cues[-1][1] is None: cues[-1][1] = now
+        if text: cues.append([now, None, text])
 
     # Walk source time; speed comes from 'speed' events (eased over 0.25 s).
     ev = sorted(events, key=lambda e: e['t'])
@@ -82,10 +89,12 @@ def main(src, out):
         # events up to t
         while ei < len(ev) and ev[ei]['t'] <= t:
             e = ev[ei]; ei += 1
-            if e['type'] == 'caption': caption = e['text']
+            if e['type'] == 'caption': caption = e['text']; cue(caption)
             elif e['type'] == 'chapter':
                 chapter = e['title']; caption = ''
+                cue(f"{e['title']}. {e.get('sub', '')}".strip())
                 emit(card(e['title'], e.get('sub', '')), int(FPS * 2.6))
+                cue('')
             elif e['type'] == 'speed':
                 speed_target = float(e['speed']); label = e.get('label', '')
                 compressed_from = e['t'] if speed_target > 1 else None
@@ -122,8 +131,14 @@ def main(src, out):
         emit(canvas); emitted += 1
         t += speed / FPS
     end = next((e for e in reversed(ev) if e['type'] == 'end'), None)
+    cue(f"{end['title']}. {end.get('sub', '')}" if end else '')
     emit(card(end['title'] if end else 'forq', end.get('sub', '') if end else ''), int(FPS * 3))
+    cue('')
     ff.stdin.close(); ff.wait()
+    ts = lambda x: f'{int(x // 3600):02d}:{int(x % 3600 // 60):02d}:{int(x % 60):02d},{int(x * 1000 % 1000):03d}'
+    with open(os.path.splitext(out)[0] + '.srt', 'w') as f:
+        for i, (a, b, text) in enumerate(cues, 1):
+            f.write(f'{i}\n{ts(a)} --> {ts(b)}\n{text}\n\n')
     print(f'{out}: {emitted / FPS:.1f}s of recording + cards')
 
 if __name__ == '__main__':
