@@ -68,6 +68,10 @@ const ICONS = {
 
 export const needsOf = (open: Change[]) => open.filter((c) => primary(c));
 
+/** About, Privacy, Feedback. Feedback carries the page it was sent from (baseline: /feedback?from=). */
+export const FOOT = `<p class="foot3"><a href="/about">About</a><a href="/privacy">Privacy</a><a href="/feedback" data-fb>Feedback</a></p>
+<script>for(const a of document.querySelectorAll('a[data-fb]'))a.href='/feedback?from='+encodeURIComponent(location.pathname+location.search);</script>`;
+
 /** How the site navigates (2026-10-02, two to compare):
  *  'a': home pages get their own bottom bar (Projects, Inbox, Explore, Account);
  *       inside a project the bottom bar is the project's views, "‹ forq" goes back.
@@ -201,7 +205,7 @@ function readmeView(c: Ctx) {
     forks.length ? `${forks.length} fork${forks.length > 1 ? 's' : ''}` : ''].filter(Boolean);
   return { body: `<div class="pad">${info.description ? `<p class="big">${esc(info.description)}</p>` : ''}${origin.length ? `<p class="lede">${origin.join('. ')}.</p>` : ''}
 ${c.own ? '' : `<div class="forkbar in">${VISIT}${forkAction(info, c.me, forks.filter((e) => e.owner === c.me))}</div>`}
-${chips}${doc}${cur ? `<p class="srcl"><a href="/p/${info.owner}/${info.name}/code/${esc(cur)}">${esc(cur)} in Code</a></p>` : ''}</div>` };
+${chips}${doc}${cur ? `<p class="srcl"><a href="/p/${info.owner}/${info.name}/code/${esc(cur)}">${esc(cur)} in Code</a></p>` : ''}${FOOT}</div>` };
 }
 
 
@@ -210,7 +214,8 @@ function moreMenu(c: Ctx) {
   const extra = VIEWS.filter((v) => !v.tab && v.when(c));
   return `<div class="menu">${extra.map((v) => `<a class="mi" href="${c.base}/${v.id}">${v.icon}<span><b>${v.label}</b><span>${v.desc}</span></span></a>`).join('')}
 <a class="mi" href="/settings">${ICONS.about}<span><b>Account</b><span>Your name${c.own ? '' : ', your Anthropic API key'}, sign out</span></span></a>
-<a class="mi" href="/">${ICONS.app}<span><b>All projects</b><span>Your projects and Explore</span></span></a></div>`;
+<a class="mi" href="/">${ICONS.app}<span><b>All projects</b><span>Your projects and Explore</span></span></a>
+<a class="mi" href="/feedback" data-fb>${ICONS.changes}<span><b>Feedback</b><span>Something missing, confusing or broken? Tell us.</span></span></a></div>`;
 }
 function moreView(c: Ctx) {
   return { body: `<div class="pad">${moreMenu(c)}</div>` };
@@ -329,6 +334,7 @@ h3{font-size:13px;font-weight:600;color:var(--dim);margin:24px 0 8px}
 .tab[data-more].open{color:var(--fg)}
 .tabbar{position:relative;z-index:26}
 @media (min-width:900px){.moresheet{left:88px;right:auto;bottom:16px;width:360px;border:1px solid var(--line);border-radius:12px;transform:translateX(-12px);opacity:0;transition:opacity .15s,transform .15s}.moresheet.open{transform:none;opacity:1}}
+.foot3{display:flex;gap:16px;margin:32px 0 8px;font-size:14px}
 /* Tab bar: bottom on a phone, a left rail on a desktop. */
 .tabbar{flex:none;display:flex;border-top:1px solid var(--line);background:var(--bg);padding-bottom:env(safe-area-inset-bottom)}
 .tab{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;color:var(--dim);font-size:12px;font-weight:500}
@@ -548,7 +554,7 @@ ${moving.length ? `<h3>In progress</h3>${moving.map(({ it, c }) => `<a class="mi
   }
   return shell2(nav as UI, `${title} · forq`, `${nav === 'd' ? globalTop(tab, inboxN, me) : `
 <header class="h3"><a class="home" href="/">forq</a><span class="htitle">${title}</span></header>`}
-<main class="view" id="view"><div class="pad">${body}${legend(1)}</div></main>
+<main class="view" id="view"><div class="pad">${body}${legend(1)}${FOOT}</div></main>
 ${nav === 'd' ? '' : globalBar(tab, inboxN, me)}
 <script>
 // Inbox actions: each row knows its project's API.

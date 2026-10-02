@@ -138,7 +138,7 @@ export function explorePage(entries: Entry[], me: string) {
 <p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.${me ? '' : ' Reading is open to everyone; sign in with your email to fork and run agents with your own Anthropic API key.'}</p>
 ${mine.length ? `<h2>Yours</h2><p class="fresh-legend">Shaded dates: full today, empty after two weeks. Tap one for more.</p><div class="rows">${mine.map((e) => row(e, forks(e.slug), now)).join('')}</div>` : ''}
 <h2>Explore</h2>${mine.length ? '' : '<p class="fresh-legend">Shaded dates: full today, empty after two weeks. Tap one for more.</p>'}<div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>
-<p class="empty" style="margin-top:32px"><a href="/about">About</a>&nbsp;&nbsp; <a href="/privacy">Privacy</a></p>`);
+<p class="empty" style="margin-top:32px"><a href="/about">About</a>&nbsp;&nbsp; <a href="/privacy">Privacy</a>&nbsp;&nbsp; <a href="/feedback?from=/">Feedback</a></p>`);
 }
 
 export type Overview = { importing?: boolean; entry?: string | null; kind?: 'worker' | 'static'; app?: ProjectInfo['app']; commits: { hash: string; message: string; at: number; author: string }[]; files: { name: string; dir: boolean }[]; readme: string | null };

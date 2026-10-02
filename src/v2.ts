@@ -666,7 +666,7 @@ ${ui === 'c' ? `<a class="vnote" href="/design-fixture"><b>The views design live
 ${mine.length ? '' : `<p class="hero">Projects that run, and agents that change them.</p><p class="sub">Open one to use it. Fork it, then ask for a change in plain words.</p>`}
 ${mine.length ? `<h2>Your projects</h2><div class="rows">${mine.map((e) => row(e, true)).join('')}</div>` : ''}
 <h2>${mine.length ? 'Explore' : 'Projects'}</h2><div class="rows">${others.map((e) => row(e, false)).join('') || '<p class="empty">Nothing here yet.</p>'}</div>
-<p class="foot"><a href="/about">About</a><a href="/privacy">Privacy</a></p></main>`, HOME_CSS, 'home');
+<p class="foot"><a href="/about">About</a><a href="/privacy">Privacy</a><a href="/feedback">Feedback</a></p></main>`, HOME_CSS, 'home');
 }
 
 export function projectV2(ui: UI, o: ProjectArgs) {
