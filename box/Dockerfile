@@ -35,7 +35,7 @@ RUN curl -fsSL https://claude.ai/install.sh | bash \
 ARG MOBILE_AGENT_REF=main
 RUN git clone https://github.com/eyalev/mobile-agent.git /opt/mobile-agent \
  && cd /opt/mobile-agent && git checkout "$MOBILE_AGENT_REF" && rm -rf .git \
- && npm ci --omit=dev --silent \
+ && npm ci --omit=dev --no-audit --no-fund \
  && node -e "require('/opt/mobile-agent/packages/core/package.json')"
 
 COPY boot.sh /opt/boot.sh

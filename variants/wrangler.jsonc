@@ -1,14 +1,15 @@
 // Three thin Workers, one per design variant: `npx wrangler deploy --env a|b|c`.
 {
   "name": "forq-ui",
+  "account_id": "887d7234a6b8d65ad355a4f6684cab67",
   "main": "index.js",
   "compatibility_date": "2026-10-01",
   "workers_dev": false,
   "env": {
-    "a": { "name": "forq-ui-a", "vars": { "UI": "a" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-a.kapps.dev", "custom_domain": true }] },
-    "b": { "name": "forq-ui-b", "vars": { "UI": "b" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-b.kapps.dev", "custom_domain": true }] },
-    "c": { "name": "forq-ui-c", "vars": { "UI": "c" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-c.kapps.dev", "custom_domain": true }] },
+    "a": { "name": "forq-ui-a", "vars": { "UI": "a", "UI_HOST": "projectsbase.dev" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "a.projectsbase.dev", "custom_domain": true }] },
+    "b": { "name": "forq-ui-b", "vars": { "UI": "b", "UI_HOST": "projectsbase.dev" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "b.projectsbase.dev", "custom_domain": true }] },
+    "c": { "name": "forq-ui-c", "vars": { "UI": "c", "UI_HOST": "projectsbase.dev" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "c.projectsbase.dev", "custom_domain": true }] },
     // The first chat take, kept to compare with C's views (2026-10-02).
-    "d": { "name": "forq-ui-d", "vars": { "UI": "d" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "forq-d.kapps.dev", "custom_domain": true }] }
+    "d": { "name": "forq-ui-d", "vars": { "UI": "d", "UI_HOST": "projectsbase.dev" }, "services": [{ "binding": "FORQ", "service": "forq" }], "routes": [{ "pattern": "d.projectsbase.dev", "custom_domain": true }] }
   }
 }

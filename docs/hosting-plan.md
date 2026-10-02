@@ -35,6 +35,19 @@ whichever account the app and the agents run in:
 - **Through the contest (Oct 14): keep it this way.** Nothing below is needed to
   demo forq.
 
+## Status (2026-10-02, evening)
+
+Eyal chose to do Phases 1 and 2 before the contest:
+- **Account `forq`** (`887d7234…`) exists, Workers Paid, its
+  own Access team (`forqdev`), tokens, image registry and Artifacts namespace.
+- **Platform on `projectsbase.dev`**, the apex. Its old subdomains redirect:
+  `whenfit.` and `pdf.` to their kapps.dev homes, `www.` to the apex.
+- **Run host on `ttyview.dev`** (`/<owner>.<name>/`). Worker apps still land on
+  `forq-app-….forqdev.workers.dev`; moving them under ttyview.dev is the
+  remaining Phase 2 step.
+- **Fresh start**: showcase re-imported, seeds and Eyal's projects copied with
+  their history; the old instance is frozen behind 301s from kapps.dev.
+
 ## Phase 1: a separate Cloudflare account for forq
 
 One Cloudflare login can own several accounts. Create one named "forq" from the

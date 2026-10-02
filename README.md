@@ -10,7 +10,7 @@ agent works in its own container on its own fork, a **reviewer agent** checks
 each push (including phone-size screenshots of the result), and you merge from
 your phone.
 
-Try it: https://forq.kapps.dev (public to read; signing in needs your own
+Try it: https://projectsbase.dev (public to read; signing in needs your own
 Anthropic API key).
 
 ## How it works

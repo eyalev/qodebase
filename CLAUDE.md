@@ -21,9 +21,9 @@ Personal project first; Cloudflare's "next Git platform" contest
 
 | piece | how |
 |---|---|
-| Worker | one Worker, `forq.kapps.dev` (Cloudflare Access only in v0) |
+| Worker | one Worker, `projectsbase.dev` in forq's own Cloudflare account (Access on `/login`) |
 | Project | one Durable Object per project: repo name, agent list, status |
-| Agent box | container DO on the `durable_object` scheduling policy + snapshots, **computer2's image pinned by digest** (Claude Code + tmux-web + mobile-agent). Copy the slim parts of opendev `computer-next/src/computer2.ts`: boot over `exec`, snapshot on stop, idle stop at 5 min, secrets in tmpfs |
+| Agent box | container DO on the `durable_object` scheduling policy + snapshots, **`box/Dockerfile` image pinned by digest** (Claude Code + mobile-agent + `box/box-api.mjs`; was computer2's image until 2026-10-02). Copy the slim parts of opendev `computer-next/src/computer2.ts`: boot over `exec`, snapshot on stop, idle stop at 5 min, secrets in tmpfs |
 | Repo | Artifacts namespace `forq`: one main repo per project (new or **imported from GitHub**), one **fork per agent**, a write token scoped to that fork |
 | Model | Claude Code in each box with Eyal's **subscription** (`CLAUDE_CODE_OAUTH_TOKEN`). Personal use only; a public version needs bring-your-own API key or a capped platform credit |
 | Router | Claude Code too, in its own box, with a small `agents` CLI: `spawn "<task>"`, `list`, `status <state>`, `merge <id>` |
@@ -34,16 +34,26 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 
 ## Running it (v0)
 
-- Phone: https://forq.kapps.dev/ (Cloudflare Access app `forq`, id
-  `8bfa01d4-…`, owner@example.com → handle `eyal` via the `HANDLES` var).
+- **Account:** forq runs in its own Cloudflare account `forq` (`887d7234…`,
+  Workers Paid ) since 2026-10-02, not the personal one.
+  Deploy with `CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx
+  wrangler deploy` (account token, write all, forq account only, expires
+  2027-10-02); the OAuth login cannot see this account. Zones projectsbase.dev
+  and ttyview.dev live there. The old instance (personal account) is frozen;
+  `forq.kapps.dev`, `forq-run.kapps.dev` and `forq-{a..d}.kapps.dev` 301 to the
+  new hosts (redirect rules in the kapps.dev zone). Repo mirrors of the old
+  instance and the migration script: `~/.local/share/forq-backups/old-account-repos/`.
+- Phone: https://projectsbase.dev/ (Access team `forqdev`, app `forq sign-in`
+  on `/login`, One-time PIN; owner@example.com → handle `eyal` via `HANDLES`).
+  Design variants: `a.`…`d.projectsbase.dev` (`variants/`).
   Explore → project `/p/<owner>/<name>` → Fork / Send to router / agent cards.
   Agent and router UIs: `/a/<agent-id>/agent/` (router id `<owner>.<name>--router`).
-- Live apps: `https://forq-run.kapps.dev/<owner>.<name>/` (and every agent fork
+- Live apps: `https://ttyview.dev/<owner>.<name>/` (and every agent fork
   at `/<owner>.<name>--<id>/`), public, served from Artifacts by `src/run.ts`.
 - Seeds: `seeds/` (owner `forq`): calculator, todo, timer, tipsplit. To add
   one: `POST /api/p/forq/<name>/create {description}` → push with the returned
   token → `POST /api/p/forq/<name>/touch`.
-- Laptop/admin: `https://forq.<sub>.workers.dev` with header
+- Laptop/admin: `https://forq.forqdev.workers.dev` with header
   `x-forq-secret: $(cat ~/.config/forq/admin-secret)` (acts as `eyal`, or
   `x-forq-as: <handle>`). Verbs: `/api/p/<owner>/<name>` (GET info,
   `create`, `fork`, `agents`, `router`, `merge`, `main-token`, `touch`,
@@ -121,12 +131,12 @@ waitUntil work is cut ~30 s after the response. Waking a box can take longer
 
 - A project with a wrangler config at its root is `kind: 'worker'`. forq's
   BuildBox (`<slug>--build`, same image, no Claude) deploys main as
-  `forq-app-<owner>-<name>.<sub>.workers.dev` and each pushed agent fork as a
+  `forq-app-<owner>-<name>.forqdev.workers.dev` and each pushed agent fork as a
   Preview (`ag-<id>-forq-app-….workers.dev`, own Durable Object storage).
 - Builds run from BuildBox.alarm() (outlive the request), one at a time.
 - `CF_DEPLOY_TOKEN` (Workers Scripts write only) goes to one wrangler command
   per build and never into agent boxes. It cannot delete Workers: use the
-  normal wrangler login (`npx wrangler delete --name forq-app-…`).
+  account token (`CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler delete --name forq-app-…`).
 - The sanitized config drops routes/env/account_id, refuses bindings that
   need account resources (KV, D1, R2, queues, services…), turns on
   observability + Issues, and adds a `previews` block.
