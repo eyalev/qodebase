@@ -48,8 +48,12 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
   Design variants: `a.`…`d.projectsbase.dev` (`variants/`).
   Explore → project `/p/<owner>/<name>` → Fork / Send to router / agent cards.
   Agent and router UIs: `/a/<agent-id>/agent/` (router id `<owner>.<name>--router`).
-- Live apps: `https://ttyview.dev/<owner>.<name>/` (and every agent fork
-  at `/<owner>.<name>--<id>/`), public, served from Artifacts by `src/run.ts`.
+- Live apps: every static project on its own host
+  `https://<name>--<owner>.ttyview.dev/` and every agent fork on
+  `https://ag-<id>--<name>--<owner>.ttyview.dev/` (`runHost()` in env.ts),
+  public, served from Artifacts by `src/run.ts` through the `*.ttyview.dev/*`
+  route. Old `ttyview.dev/<owner>.<name>/…` links 301 there. Project names and
+  handles cannot contain `--`.
 - Seeds: `seeds/` (owner `forq`): calculator, todo, timer, tipsplit. To add
   one: `POST /api/p/forq/<name>/create {description}` → push with the returned
   token → `POST /api/p/forq/<name>/touch`.
@@ -159,10 +163,13 @@ waitUntil work is cut ~30 s after the response. Waking a box can take longer
 
 ## Run host details
 
-- Every HTML page gets a storage shim injected first (`storageShim()` in
-  `src/run.ts`): localStorage/sessionStorage keys are prefixed `<repo>::`, so
-  projects, forks and agent previews never see each other's data on the shared
-  origin. Cookies and IndexedDB are not scoped.
+- Since 2026-10-02 each repo has its own origin (see "Running it"), so apps
+  never share storage, cookies or IndexedDB. The storage shim (`storageShim()`
+  in `src/run.ts`, keys prefixed `<repo>::`) is only injected on the old shared
+  path form, which is still served for names too long for one DNS label.
+- Worker apps' hosts are taken out of the `*.ttyview.dev/*` route by no-Worker
+  routes (`<host>/*`, `*.<host>/*`, added after each live deploy by
+  `excludeFromRunRoute`); route Workers run before custom domains.
 - Files are cached per colo per commit for a day. **Bump `SERVE_V`** whenever
   what is served for the same commit changes (the shim did), or old bytes keep
   being served.
