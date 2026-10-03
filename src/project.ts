@@ -313,9 +313,25 @@ export class Project extends DurableObject<Env> {
       }).catch((e) => ({ ok: false, status: 0, json: async () => ({ error: String(e) }) }) as any);
       return { ok: r.ok, status: r.status, ...(await r.json().catch(() => ({}))) } as { ok: boolean; status: number; busy?: boolean; idle?: boolean; error?: string };
     };
+    // Every call above waits, and a verdict or a new job can land meanwhile (the DO
+    // takes other calls while this one waits on fetch). Act and write only while this
+    // is still the job and its agent is still in review; otherwise leave the newer
+    // job alone. (2026-10-03: a check of a finished review handed it out again and
+    // wrote it back over the next one; that review then sat in 'reviewing', unwatched.)
+    const current = async () => {
+      const j = await this.ctx.storage.get<Job>('reviewDispatch');
+      if (!j || j.agentId !== job.agentId || j.sends !== job.sends || j.sentAt !== job.sentAt) return false;
+      const now = (await this.#need()).agents.find((x) => x.id === job.agentId);
+      return now?.review?.state === 'reviewing';
+    };
+    const superseded = async () => {
+      log('project', 'review_job_superseded', { slug: info.slug, agentId: job.agentId, next: (await this.ctx.storage.get<Job>('reviewDispatch'))?.agentId ?? null });
+      return !!(await this.ctx.storage.get<Job>('reviewDispatch'));
+    };
     if (job.sentAt) {
       // Sent: is the reviewer still at it?
       const st = await call('reviewer-state', {});
+      if (!(await current())) return superseded();
       if (!st.idle || Date.now() - job.sentAt < 3 * 60_000) return true;
       if (job.sends >= 5) {
         await this.ctx.storage.delete('reviewDispatch');
@@ -326,8 +342,10 @@ export class Project extends DurableObject<Env> {
       }
       log('project', 'review_resend', { slug: info.slug, agentId: job.agentId, sends: job.sends });
     }
+    if (!(await current())) return superseded();
     const r = await call('review-dispatch', { agent: job.agentId });
     log('project', 'review_dispatch_attempt', { slug: info.slug, agentId: job.agentId, ok: r.ok, busy: r.busy, sends: job.sends, err: r.error });
+    if (!(await current())) return superseded();
     if (r.ok) await this.ctx.storage.put('reviewDispatch', { ...job, sends: job.sends + 1, sentAt: Date.now() });
     else await this.ctx.storage.put('reviewDispatch', { ...job, tries: job.tries + 1 });
     return true;
@@ -335,7 +353,8 @@ export class Project extends DurableObject<Env> {
 
   async alarm() {
     const again = await this.#reviewAlarm();
-    if (again) await this.ctx.storage.setAlarm(Date.now() + 30_000);
+    // A job not yet handed over (just queued while this run waited) goes at once.
+    if (again) await this.ctx.storage.setAlarm(Date.now() + ((await this.ctx.storage.get<{ sentAt: number }>('reviewDispatch'))?.sentAt === 0 ? 1000 : 30_000));
     if (!(await this.ctx.storage.get<boolean>('deliverPending'))) return;
     const info = await this.#need();
     const q = info.lastRequest;
