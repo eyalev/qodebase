@@ -1,5 +1,5 @@
 {
- "builtAt": "2026-10-03T10:38:06.984Z",
+ "builtAt": "2026-10-03T11:46:34.130Z",
  "projects": [
   {
    "full": "hakimel/reveal.js",
@@ -59,7 +59,7 @@
   },
   {
    "full": "catdad/canvas-confetti",
-   "desc": "\ud83c\udf89 performant confetti animation in the browser",
+   "desc": "🎉 performant confetti animation in the browser",
    "stars": 12775,
    "license": "ISC",
    "sizeKb": 317,
@@ -83,6 +83,20 @@
    "pushed": 1705101594000,
    "branch": "master",
    "entry": "docs",
+   "lang": "JavaScript"
+  },
+  {
+   "full": "ncase/trust",
+   "desc": "An interactive guide to the game theory of cooperation",
+   "stars": 6301,
+   "license": "CC0-1.0",
+   "sizeKb": 7406,
+   "cat": "learning",
+   "topic": "picked",
+   "homepage": null,
+   "pushed": 1766970039000,
+   "branch": "gh-pages",
+   "entry": "",
    "lang": "JavaScript"
   },
   {
@@ -115,7 +129,7 @@
   },
   {
    "full": "simonwep/pickr",
-   "desc": "\ud83c\udfa8 Pickr - A simple, multi-themed, responsive and hackable Color-Picker library. No dependencies, no jQuery. Compatible with all CSS Framewo",
+   "desc": "🎨 Pickr - A simple, multi-themed, responsive and hackable Color-Picker library. No dependencies, no jQuery. Compatible with all CSS Framewo",
    "stars": 4489,
    "license": "MIT",
    "sizeKb": 6646,
@@ -170,8 +184,22 @@
    "lang": "PureScript"
   },
   {
+   "full": "ncase/loopy",
+   "desc": "A tool for thinking in systems",
+   "stars": 1747,
+   "license": "CC0-1.0",
+   "sizeKb": 2805,
+   "cat": "learning",
+   "topic": "picked",
+   "homepage": "http://ncase.me/loopy/",
+   "pushed": 1720428623000,
+   "branch": "gh-pages",
+   "entry": "",
+   "lang": "JavaScript"
+  },
+  {
    "full": "mumuy/pacman",
-   "desc": "\u57fa\u4e8eHTML5\u7684\u5403\u8c46\u4eba\u6e38\u620f - \u7ecf\u5178\u6e38\u620f\u5f00\u53d1\u6837\u4f8b_Pacman based on HTML5",
+   "desc": "基于HTML5的吃豆人游戏 - 经典游戏开发样例_Pacman based on HTML5",
    "stars": 1645,
    "license": "MIT",
    "sizeKb": 124,
@@ -222,6 +250,20 @@
    "homepage": "https://k8sgames.com",
    "pushed": 1777370023000,
    "branch": "main",
+   "entry": "",
+   "lang": "JavaScript"
+  },
+  {
+   "full": "ncase/polygons",
+   "desc": "A playable post on how harmless choices can make a harmful world.",
+   "stars": 1358,
+   "license": "CC0-1.0",
+   "sizeKb": 9875,
+   "cat": "learning",
+   "topic": "picked",
+   "homepage": "http://ncase.me/polygons",
+   "pushed": 1667835089000,
+   "branch": "gh-pages",
    "entry": "",
    "lang": "JavaScript"
   },
@@ -282,6 +324,34 @@
    "lang": "JavaScript"
   },
   {
+   "full": "stared/interactive-machine-learning-list",
+   "desc": "A collaborative list of interactive Machine Learning, Deep Learning and Statistics websites",
+   "stars": 455,
+   "license": "MIT",
+   "sizeKb": 4723,
+   "cat": "learning",
+   "topic": "explorable-explanations",
+   "homepage": "https://p.migdal.pl/interactive-machine-learning-list/",
+   "pushed": 1773583387000,
+   "branch": "master",
+   "entry": "",
+   "lang": "JavaScript"
+  },
+  {
+   "full": "ncase/crowds",
+   "desc": "The Wisdom and/or Madness of the Crowds",
+   "stars": 449,
+   "license": "CC0-1.0",
+   "sizeKb": 19228,
+   "cat": "learning",
+   "topic": "picked",
+   "homepage": "http://ncase.me/crowds",
+   "pushed": 1633020406000,
+   "branch": "master",
+   "entry": "",
+   "lang": "HTML"
+  },
+  {
    "full": "dmcinnes/HTML5-Asteroids",
    "desc": "Pure Javascript Asteroids",
    "stars": 355,
@@ -297,7 +367,7 @@
   },
   {
    "full": "gd4Ark/star-battle",
-   "desc": "\ud83c\udfae A spaceship shooting game developed using JavaScript ES6, Canvas",
+   "desc": "🎮 A spaceship shooting game developed using JavaScript ES6, Canvas",
    "stars": 354,
    "license": "MIT",
    "sizeKb": 2073,
@@ -308,6 +378,34 @@
    "branch": "master",
    "entry": "",
    "lang": "JavaScript"
+  },
+  {
+   "full": "ncase/fireflies",
+   "desc": "Fireflies: an example of emergence",
+   "stars": 345,
+   "license": "CC0-1.0",
+   "sizeKb": 2662,
+   "cat": "learning",
+   "topic": "picked",
+   "homepage": null,
+   "pushed": 1579366402000,
+   "branch": "gh-pages",
+   "entry": "",
+   "lang": "JavaScript"
+  },
+  {
+   "full": "fasiha/ebisu",
+   "desc": "Public-domain Python library for flashcard quiz scheduling using Bayesian statistics. (JavaScript, Java, Dart, and other ports available!)",
+   "stars": 338,
+   "license": "Unlicense",
+   "sizeKb": 8149,
+   "cat": "learning",
+   "topic": "quiz",
+   "homepage": "https://fasiha.github.io/ebisu",
+   "pushed": 1727843499000,
+   "branch": "gh-pages",
+   "entry": "",
+   "lang": "Python"
   },
   {
    "full": "Lallassu/wizardwarz",
@@ -367,7 +465,7 @@
   },
   {
    "full": "henni99/WriteBuddy",
-   "desc": "\ud83d\udcdd Write smarter, smoother: A Compose-based handwriting assistant \u270d\ufe0f",
+   "desc": "📝 Write smarter, smoother: A Compose-based handwriting assistant ✍️",
    "stars": 235,
    "license": "Apache-2.0",
    "sizeKb": 961,
@@ -378,6 +476,20 @@
    "branch": "main",
    "entry": "docs",
    "lang": "Kotlin"
+  },
+  {
+   "full": "ncase/ballot",
+   "desc": "An interactive guide to alternative voting systems",
+   "stars": 222,
+   "license": "CC0-1.0",
+   "sizeKb": 1179,
+   "cat": "learning",
+   "topic": "picked",
+   "homepage": null,
+   "pushed": 1729644015000,
+   "branch": "gh-pages",
+   "entry": "",
+   "lang": "HTML"
   },
   {
    "full": "sundegan/JsonStudio",
