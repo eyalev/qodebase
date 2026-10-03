@@ -50,6 +50,8 @@ export const CATALOG_CSS = `
 .pp .tx span a{color:var(--dim)}
 .pst{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums}
 .runs{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--acc);border:1px solid color-mix(in srgb,var(--acc) 45%,transparent);border-radius:4px;padding:0 6px;line-height:18px}
+.plist[data-list=gh] .upd{display:none}
+.plist.by-upd .upd{display:inline}
 .back3{display:inline-flex;align-items:center;min-height:44px;font-size:15px}
 @media (min-width:600px){.gh-acts .btn{flex:0 0 auto}}
 `;
@@ -64,7 +66,10 @@ export function importedMap(entries: Entry[]) {
   return m;
 }
 
-/** The home page's Projects view: categories, Top / Updated, one row per project. */
+/** The home page's Projects view. Every row is in the page once, carrying its category,
+ *  stars and last commit, so categories and Top / Recently updated switch in place
+ *  (Eyal, 2026-10-03: "it should be instant"); the URL keeps the state for links and
+ *  the back button, and the server renders the same state on a direct load. */
 export function catalogBody(entries: Entry[], opts: { cat?: string; sort?: string }) {
   const now = Date.now();
   const onForq = importedMap(entries);
@@ -73,27 +78,23 @@ export function catalogBody(entries: Entry[], opts: { cat?: string; sort?: strin
   const q = (c: string, so: string) => `/?${[c ? `cat=${c}` : '', so === 'updated' ? 'sort=updated' : ''].filter(Boolean).join('&')}`.replace(/\?$/, '');
   const native = entries.filter((e) => !e.forkedFrom);
   const count = (c: string) => ITEMS.filter((x) => x.cat === c).length;
-  const cats = `<nav class="cats" aria-label="Categories"><a href="${q('', sort)}" class="${cat ? '' : 'on'}">All<span>${ITEMS.length}</span></a><a href="${q('runs', sort)}" class="${cat === 'runs' ? 'on' : ''}">Runs here<span>${ITEMS.filter(runsHere).length}</span></a>${CATS.filter(([c]) => count(c)).map(([c, l]) =>
-    `<a href="${q(c, sort)}" class="${cat === c ? 'on' : ''}">${l}<span>${count(c)}</span></a>`).join('')}<a href="${q('forq', sort)}" class="${cat === 'forq' ? 'on' : ''}">On forq<span>${native.length}</span></a></nav>
-<script>document.querySelector('.cats a.on')?.scrollIntoView({inline:'center',block:'nearest'})</script>`;
-  const sorts = cat === 'forq' ? '' : `<nav class="sorts" aria-label="Sort"><a href="${q(cat, 'top')}" class="${sort === 'top' ? 'on' : ''}">Top</a><a href="${q(cat, 'updated')}" class="${sort === 'updated' ? 'on' : ''}">Recently updated</a>
+  const chip = (c: string, l: string, n: number) => `<a href="${q(c, sort)}" data-cat="${c}" class="${cat === c ? 'on' : ''}">${l}<span>${n}</span></a>`;
+  const cats = `<nav class="cats" aria-label="Categories">${chip('', 'All', ITEMS.length)}${chip('runs', 'Runs here', ITEMS.filter(runsHere).length)}${CATS.filter(([c]) => count(c)).map(([c, l]) => chip(c, l, count(c))).join('')}${chip('forq', 'On forq', native.length)}</nav>`;
+  const sorts = `<nav class="sorts" aria-label="Sort"${cat === 'forq' ? ' hidden' : ''}><a href="${q(cat, 'top')}" data-sort="top" class="${sort === 'top' ? 'on' : ''}">Top</a><a href="${q(cat, 'updated')}" data-sort="updated" class="${sort === 'updated' ? 'on' : ''}">Recently updated</a>
 <span class="why">${sort === 'top' ? 'most GitHub stars' : 'latest commit first'}</span></nav>`;
-  let rows = '';
-  if (cat === 'forq') {
-    rows = native.sort((a, b) => b.updatedAt - a.updatedAt).map((e) => `<a class="pr" href="${path(e.slug)}">${avatar(e.importedFrom ? e.importedFrom.fullName.split('/')[0] : e.owner)}<span class="bd">
+  const shown = (x: CatalogItem) => !cat || (cat === 'runs' ? runsHere(x) : x.cat === cat);
+  const ordered = [...ITEMS].sort((a, b) => (sort === 'top' ? b.stars - a.stars : b.pushed - a.pushed));
+  const rows = ordered.map((x) => {
+    const [owner, name] = x.full.split('/');
+    const there = onForq.get(x.full.toLowerCase());
+    return `<a class="pr" href="${ghPath(x.full)}" data-cat="${esc(x.cat)}"${runsHere(x) ? ' data-runs' : ''} data-stars="${x.stars}" data-pushed="${x.pushed}"${shown(x) && cat !== 'forq' ? '' : ' hidden'}>${avatar(owner)}<span class="bd">
+<span class="n"><span class="o">${esc(owner)} /</span> ${esc(name)}</span><span class="d">${esc(x.desc)}</span>
+<span class="m"><span class="st">${STAR}${k(x.stars)}</span><span class="upd">${freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24])}</span>${runsHere(x) ? RUNS : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>${esc(x.license)}</span>${there ? '<span class="onforq">On forq</span>' : ''}</span></span></a>`;
+  }).join('');
+  const forqRows = native.sort((a, b) => b.updatedAt - a.updatedAt).map((e) => `<a class="pr" href="${path(e.slug)}">${avatar(e.importedFrom ? e.importedFrom.fullName.split('/')[0] : e.owner)}<span class="bd">
 <span class="n"><span class="o">${esc(e.owner)} /</span> ${esc(e.name)}</span><span class="d">${esc(e.description || '')}</span>
 <span class="m">${e.importedFrom ? `<span class="st">${STAR}${k(e.importedFrom.stars)}</span>` : ''}${freshTag(e.updatedAt, now, STEPS)}</span></span></a>`).join('') || '<p class="empty">Nothing imported yet.</p>';
-  } else {
-    const list = ITEMS.filter((x) => !cat || (cat === 'runs' ? runsHere(x) : x.cat === cat)).sort((a, b) => (sort === 'top' ? b.stars - a.stars : b.pushed - a.pushed));
-    rows = list.map((x) => {
-      const [owner, name] = x.full.split('/');
-      const there = onForq.get(x.full.toLowerCase());
-      return `<a class="pr" href="${ghPath(x.full)}">${avatar(owner)}<span class="bd">
-<span class="n"><span class="o">${esc(owner)} /</span> ${esc(name)}</span><span class="d">${esc(x.desc)}</span>
-<span class="m"><span class="st">${STAR}${k(x.stars)}</span>${sort === 'updated' ? freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24]) : ''}${runsHere(x) ? RUNS : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>${esc(x.license)}</span>${there ? '<span class="onforq">On forq</span>' : ''}</span></span></a>`;
-    }).join('');
-  }
-  return `${cats}${sorts}<div class="plist">${rows}</div>`;
+  return `${cats}${sorts}<div class="plist${sort === 'updated' ? ' by-upd' : ''}" data-list="gh"${cat === 'forq' ? ' hidden' : ''}>${rows}</div><div class="plist" data-list="forq"${cat === 'forq' ? '' : ' hidden'}>${forqRows}</div>`;
 }
 
 /** People: the GitHub owners behind the catalogue, and the people with projects on forq. */

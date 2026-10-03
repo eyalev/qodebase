@@ -10,7 +10,7 @@ import { esc, path, label, STEPS } from './ui';
 import { freshTag } from './fresh';
 import { markdown } from './md';
 import { SHEET_HTML, shortId } from './sheet';
-import { WORLD_CSS, worldBody, type WorldTab } from './world';
+import { SPECULATE, WORLD_CSS, worldBody, type WorldTab } from './world';
 import { CATALOG_CSS, catalogPage } from './catalog';
 import {
   type Change, type ProjectArgs, type UI, ORDER, OPEN_ICON_C as OPEN_ICON, SEND, VISIT, BUSY,
@@ -599,5 +599,5 @@ export function catalogV3(nav: Nav, full: string, entries: Entry[], me: string, 
   const pg = catalogPage(full, entries, me);
   if (!pg) return null;
   return shell2(nav as UI, `${pg.title} · forq`, `${globalTop('home', inbox, me)}
-<main class="view" id="view"><div class="pad">${pg.body}${legend(1)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
+<main class="view" id="view"><div class="pad">${pg.body}${legend(1)}${FOOT}</div></main>${SPECULATE}`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }

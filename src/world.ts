@@ -77,8 +77,55 @@ export const WORLD_CSS = `
 export type WorldTab = 'projects' | 'people';
 
 export function worldBody(tab: WorldTab, real: Entry[], signedIn: boolean, opts: { tag?: string; sort?: string } = {}) {
-  const sub = (id: WorldTab, labelT: string) => `<a href="/${id === 'projects' ? '' : `?s=${id}`}" class="${tab === id ? 'on' : ''}"${tab === id ? ' aria-current="page"' : ''}>${labelT}</a>`;
+  const sub = (id: WorldTab, labelT: string) => `<a href="/${id === 'projects' ? '' : `?s=${id}`}" data-tab="${id}" class="${tab === id ? 'on' : ''}"${tab === id ? ' aria-current="page"' : ''}>${labelT}</a>`;
   const head = `<nav class="sub3" aria-label="Home">${sub('projects', 'Projects')}${sub('people', 'People')}</nav>`;
-  const body = tab === 'people' ? peopleBody(real) : catalogBody(real, { cat: opts.tag, sort: opts.sort });
-  return `${head}${body}${signedIn ? '' : '<p class="empty" style="margin-top:20px"><a href="/login">Sign in</a> to import projects, fork them and run agents with your own Anthropic API key.</p>'}`;
+  // Both views are in the page; switching between them, and between categories and
+  // sorts, happens in place (no request), keeping the URL in step.
+  const body = `<section data-panel="projects"${tab === 'projects' ? '' : ' hidden'}>${catalogBody(real, { cat: opts.tag, sort: opts.sort })}</section>
+<section data-panel="people"${tab === 'people' ? '' : ' hidden'}>${peopleBody(real)}</section>`;
+  return `${head}${body}${signedIn ? '' : '<p class="empty" style="margin-top:20px"><a href="/login">Sign in</a> to import projects, fork them and run agents with your own Anthropic API key.</p>'}
+<script>${HOME_JS}</script>${SPECULATE}`;
 }
+
+/** Chrome builds the next page as a finger lands on a link (eagerness "moderate":
+ *  pointerdown on a phone, hover on a desktop), so opening a project is instant.
+ *  GET pages only; never sign-in, the API, agent terminals or feedback. */
+export const SPECULATE = `<script type="speculationrules">${JSON.stringify({
+  prerender: [{ where: { and: [{ href_matches: '/*' }, { not: { href_matches: ['/api/*', '/login*', '/logout*', '/a/*', '/feedback*', '/e*'] } }] }, eagerness: 'moderate' }],
+})}</script>`;
+
+/** In-place switching for the home page: tabs, categories, sort; the URL follows. */
+const HOME_JS = String.raw`(function(){
+ const list=document.querySelector('.plist[data-list=gh]'),forq=document.querySelector('.plist[data-list=forq]'),sorts=document.querySelector('.sorts'),view=document.getElementById('view');
+ if(!list)return;
+ const rows=[...list.children];
+ const read=()=>{const u=new URLSearchParams(location.search);return{s:u.get('s')==='people'?'people':'projects',cat:u.get('cat')||u.get('tag')||'',sort:u.get('sort')==='updated'?'updated':'top'};};
+ let st=read(),last={cat:st.cat,sort:st.sort};
+ const url=()=>st.s==='people'?'/?s=people':'/'+(([st.cat?'cat='+st.cat:'',st.sort==='updated'?'sort=updated':''].filter(Boolean).join('&'))?'?'+[st.cat?'cat='+st.cat:'',st.sort==='updated'?'sort=updated':''].filter(Boolean).join('&'):'');
+ function apply(push){
+  for(const a of document.querySelectorAll('.sub3 a')){const on=a.dataset.tab===st.s;a.classList.toggle('on',on);on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current');}
+  for(const p of document.querySelectorAll('[data-panel]'))p.hidden=p.dataset.panel!==st.s;
+  if(st.s==='projects'){
+   for(const a of document.querySelectorAll('.cats a'))a.classList.toggle('on',a.dataset.cat===st.cat);
+   for(const a of document.querySelectorAll('.sorts a'))a.classList.toggle('on',a.dataset.sort===st.sort);
+   sorts.querySelector('.why').textContent=st.sort==='top'?'most GitHub stars':'latest commit first';
+   const isForq=st.cat==='forq';sorts.hidden=isForq;list.hidden=isForq;forq.hidden=!isForq;
+   list.classList.toggle('by-upd',st.sort==='updated');
+   const key=st.sort==='top'?'stars':'pushed';
+   rows.sort((a,b)=>Number(b.dataset[key])-Number(a.dataset[key]));
+   for(const r of rows){r.hidden=!(!st.cat||(st.cat==='runs'?r.hasAttribute('data-runs'):r.dataset.cat===st.cat));list.appendChild(r);}
+   document.querySelector('.cats a.on')?.scrollIntoView({inline:'center',block:'nearest'});
+  }
+  if(push){history.pushState(null,'',url());if(view)view.scrollTop=0;}
+ }
+ document.addEventListener('click',(e)=>{
+  if(e.metaKey||e.ctrlKey||e.shiftKey||e.button)return;
+  const t=e.target.closest('.sub3 a[data-tab]'),c=e.target.closest('.cats a[data-cat]'),o=e.target.closest('.sorts a[data-sort]');
+  if(!t&&!c&&!o)return;e.preventDefault();
+  if(t){if(st.s===t.dataset.tab)return;if(st.s==='projects')last={cat:st.cat,sort:st.sort};st.s=t.dataset.tab;if(st.s==='projects'){st.cat=last.cat;st.sort=last.sort;}}
+  if(c)st.cat=c.dataset.cat;
+  if(o)st.sort=o.dataset.sort;
+  apply(true);});
+ addEventListener('popstate',()=>{st=read();apply(false);});
+ document.querySelector('.cats a.on')?.scrollIntoView({inline:'center',block:'nearest'});
+})();`;
