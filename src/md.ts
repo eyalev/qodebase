@@ -22,8 +22,22 @@ function stripHtml(src: string) {
   // Only outside ``` fences: an HTML example inside a code block stays verbatim.
   return src.split(/(^```[\s\S]*?^```)/m).map((part, i) => (i % 2 ? part : stripTags(part))).join('');
 }
-function stripTags(src: string) {
+/** Markdown images and badges add nothing here (images are not shown): drop linked
+ *  images `[![a](img)](url)`, images `![a](img)` / `![a][ref]`, and reference
+ *  definitions `[ref]: url`; a reference link `[text][ref]` keeps its text. */
+function stripImages(src: string) {
+  // Inline code is left exactly as written.
+  return src.split(/(`[^`\n]*`)/).map((part, i) => (i % 2 ? part : stripImagesIn(part))).join('');
+}
+function stripImagesIn(src: string) {
   return src
+    .replace(/\[!\[[^\]]*\](?:\([^)]*\)|\[[^\]]*\])\](?:\([^)]*\)|\[[^\]]*\])/g, '')
+    .replace(/!\[[^\]]*\](?:\([^)]*\)|\[[^\]]*\])/g, '')
+    .replace(/^\s{0,3}\[[^\]]+\]:\s*\S+.*$/gm, '')
+    .replace(/\[([^\]]+)\]\[[^\]]*\]/g, '$1');
+}
+function stripTags(src: string) {
+  return stripImages(src)
     .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<img\b[^>]*>/gi, '')

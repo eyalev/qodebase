@@ -7,6 +7,7 @@
 import type { Entry } from './registry';
 import { esc, path, STEPS } from './ui';
 import { freshTag } from './fresh';
+import { catalogBody } from './catalog';
 
 const H = 3600_000, D = 24 * H;
 
@@ -153,39 +154,20 @@ export function worldBody(tab: WorldTab, real: Entry[], signedIn: boolean, opts:
   REAL = new Set(real.map((e) => e.slug));
   const working = PROJECTS.reduce((n, p) => n + p.working, 0);
   const merged = EVENTS.filter((e) => e.kind === 'merged' || e.kind === 'fixed').length * 9;
-  const sub = (id: WorldTab, labelT: string) => `<a href="/${id === 'happening' ? '' : `?s=${id}`}" class="${tab === id ? 'on' : ''}"${tab === id ? ' aria-current="page"' : ''}>${labelT}</a>`;
+  // Projects is the home page's first view (Eyal, 2026-10-03: "I want to see top projects").
+  const sub = (id: WorldTab, labelT: string) => `<a href="/${id === 'projects' ? '' : `?s=${id}`}" class="${tab === id ? 'on' : ''}"${tab === id ? ' aria-current="page"' : ''}>${labelT}</a>`;
   // The intro and the pulse open Happening only; Projects and People start at their content.
   const head = `${tab === 'happening' ? `<p class="lede2">Projects that run, and agents that change them.</p>
 <div class="pulse"><div><b>${PROJECTS.length + real.length}</b><span>projects</span></div><div class="live"><b>${working}</b><span>agents working</span></div><div><b>${merged}</b><span>merged this week</span></div></div>
-` : ''}<p class="sample">Sample data: these people and most projects are made up.</p>
-<nav class="sub3" aria-label="Home">${sub('happening', 'Happening')}${sub('projects', 'Projects')}${sub('people', 'People')}</nav>`;
+` : ''}${tab === 'projects' ? '' : '<p class="sample">Sample data: these people and most projects are made up.</p>'}
+<nav class="sub3" aria-label="Home">${sub('projects', 'Projects')}${sub('happening', 'Happening')}${sub('people', 'People')}</nav>`;
   let body = '';
   if (tab === 'happening') {
     body = `<div class="feed">${EVENTS.map((e) => `<div class="ev">${mono(e.who)}<div class="tx"><b>${esc(e.who)}</b> ${VERB[e.kind]} ${plink(e.project)}
 ${e.kind === 'forked' ? `<span class="what">as ${esc(e.text)}</span>` : `<span class="what k-${MARK[e.kind]}">${esc(e.text)}</span>`}
 <span class="meta2">${freshTag(now - e.ago, now, STEPS)}${e.extra ? `<span>${esc(e.extra)}</span>` : ''}</span></div></div>`).join('')}</div>`;
   } else if (tab === 'projects') {
-    const want = (opts.tag && (TAG_LABEL as Record<string, string>)[opts.tag] ? opts.tag : '') as Tag | '';
-    const sort: Sort = opts.sort === 'top' || opts.sort === 'new' ? opts.sort : 'trending';
-    const q = (t: string, so: Sort) => `/?s=projects${t ? `&tag=${t}` : ''}${so === 'trending' ? '' : `&sort=${so}`}`;
-    const count = (t: Tag) => PROJECTS.filter((p) => p.tags.includes(t)).length;
-    const cats = `<nav class="cats" aria-label="Categories"><a href="${q('', sort)}" class="${want ? '' : 'on'}">All<span>${PROJECTS.length + real.length}</span></a>${TAGS.map(([t, l]) =>
-      `<a href="${q(t, sort)}" class="${want === t ? 'on' : ''}">${l}<span>${count(t)}</span></a>`).join('')}</nav>`;
-    const sorts = `<nav class="sorts" aria-label="Sort">${(['trending', 'top', 'new'] as Sort[]).map((so) =>
-      `<a href="${q(want, so)}" class="${sort === so ? 'on' : ''}">${{ trending: 'Trending', top: 'Top', new: 'New' }[so]}</a>`).join('')}
-<span class="why">${{ trending: 'most stars this week', top: 'most stars', new: 'newest first' }[sort]}</span></nav>`;
-    const list = PROJECTS.filter((p) => !want || p.tags.includes(want))
-      .sort((x, y) => (sort === 'trending' ? y.week - x.week : sort === 'top' ? y.stars - x.stars : x.createdAgo - y.createdAgo));
-    const row = (p: SProject) => `<div class="pr" title="Sample project"><span class="tile">${esc(p.name[0].toUpperCase())}</span><span class="bd">
-<span class="n"><span class="o">${esc(p.owner)} /</span> ${esc(p.name)}</span><span class="d">${esc(p.desc)}</span>
-<span class="m"><span class="st">${STAR}${k(p.stars)}</span>${sort === 'trending' ? `<span class="up">+${p.week} this week</span>` : ''}<span class="f">${FORK}${p.forks}</span>
-${p.working ? `<span class="w"><span class="dot"></span>${p.working} agent${p.working > 1 ? 's' : ''} working</span>` : ''}${sort === 'new' ? freshTag(now - p.createdAgo, now, STEPS) : ''}
-${p.tags.map((t) => `<span class="tg">${TAG_LABEL[t]}</span>`).join('')}</span></span></div>`;
-    const realRows = !want ? real.slice(0, 8).map((e) => `<a class="pr" href="${path(e.slug)}"><span class="tile">${esc(e.name[0].toUpperCase())}</span><span class="bd">
-<span class="n"><span class="o">${esc(e.owner)} /</span> ${esc(e.name)}</span><span class="d">${esc(e.description || '')}</span>
-<span class="m"><span class="st">${STAR}0</span><span class="f">${FORK}${real.filter((x) => x.forkedFrom === e.slug).length}</span>${freshTag(e.updatedAt, now, STEPS)}</span></span></a>`).join('') : '';
-    body = `${cats}<script>document.querySelector('.cats a.on')?.scrollIntoView({inline:'center',block:'nearest'})</script>${sorts}<div class="plist">${list.map(row).join('')}</div>
-${realRows ? `<p class="sec2">Real projects on this forq</p><div class="plist">${realRows}</div>` : ''}`;
+    body = catalogBody(real, { cat: opts.tag, sort: opts.sort });
   } else {
     const stats = PEOPLE.map((h) => ({ h, projects: PROJECTS.filter((p) => p.owner === h).length, merged: EVENTS.filter((e) => e.who === h && e.kind === 'merged').length * 7 + 3, last: Math.min(...EVENTS.filter((e) => e.who === h).map((e) => e.ago), 9 * D) }));
     body = `<div class="people">${stats.sort((a, b) => a.last - b.last).map((p) => `<div class="pp">${mono(p.h)}<div class="tx"><b>${esc(p.h)}</b><span>${p.projects} project${p.projects === 1 ? '' : 's'}, ${p.merged} changes merged</span></div>${freshTag(now - p.last, now, STEPS)}</div>`).join('')}</div>`;

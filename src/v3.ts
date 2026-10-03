@@ -11,6 +11,7 @@ import { freshTag } from './fresh';
 import { markdown } from './md';
 import { SHEET_HTML, shortId } from './sheet';
 import { WORLD_CSS, worldBody, type WorldTab } from './world';
+import { CATALOG_CSS, catalogPage } from './catalog';
 import {
   type Change, type ProjectArgs, type UI, ORDER, OPEN_ICON_C as OPEN_ICON, SEND, VISIT, BUSY,
   accentOf, appUrl, changeRow, changesOf, fixtureData, forkAction, FORK_JS, fromIssues, isMerge, keyNote, legend,
@@ -564,7 +565,7 @@ document.addEventListener('click',async(e)=>{
  b.disabled=true;b.textContent=m?'Merging':'Sending to its agent';
  const r=await fetch(api+'/'+(m?'merge':'fix'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({agent:b.dataset.merge||b.dataset.fix})});
  if(!r.ok){const j=await r.json().catch(()=>({}));b.textContent=j.error||'Failed';return;}setTimeout(()=>location.reload(),1200);});
-</script>`, V3_CSS + NAV_CSS + WORLD_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav}${nav === 'd' ? ' dhome' : ''}`);
+</script>`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav}${nav === 'd' ? ' dhome' : ''}`);
 }
 
 /** The settings page under the site-wide bar (Account tab). */
@@ -591,4 +592,12 @@ export function globalTop(active: HomeTab, inbox: number, me: string) {
   if (active === 'projects') active = 'mine';
   return `<nav class="gtop" aria-label="forq"><a class="mark" href="/">forq</a>${tabs.map(([id, labelT, href]) =>
     `<a href="${href}" class="g${id === active ? ' on' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}</nav>`;
+}
+
+/** A catalogue project's page (/gh/<owner>/<repo>) under D's top tabs. */
+export function catalogV3(nav: Nav, full: string, entries: Entry[], me: string, inbox: number) {
+  const pg = catalogPage(full, entries, me);
+  if (!pg) return null;
+  return shell2(nav as UI, `${pg.title} · forq`, `${globalTop('home', inbox, me)}
+<main class="view" id="view"><div class="pad">${pg.body}${legend(1)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }

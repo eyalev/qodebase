@@ -15,7 +15,8 @@ import { BuildBox } from './build';
 import { serveRun } from './run';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
-import { docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
+import { catalogReadme } from './catalog';
+import { catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
@@ -312,8 +313,16 @@ const app = {
         const entries = await registry(env).list();
         const tab = path === '/mine' && me.handle ? 'mine' : path === '/inbox' && me.handle ? 'inbox' : 'home';
         const s = url.searchParams.get('s');
-        return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'projects' || s === 'people' ? s : 'happening',
-          { tag: url.searchParams.get('tag') || undefined, sort: url.searchParams.get('sort') || undefined }));
+        return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'happening' || s === 'people' ? s : 'projects',
+          { tag: url.searchParams.get('cat') || url.searchParams.get('tag') || undefined, sort: url.searchParams.get('sort') || undefined }));
+      }
+      // The catalogue: a GitHub project's page, and its README fetched only when the page asks.
+      if (ui === 'd' && (m = path.match(/^\/gh\/([\w.-]+)\/([\w.-]+?)(\/readme)?\/?$/))) {
+        const full = `${m[1]}/${m[2]}`;
+        if (m[3]) { const h = await catalogReadme(full, ctx); return h == null ? new Response('No README', { status: 404 }) : new Response(h, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=3600' } }); }
+        const entries = await registry(env).list();
+        const pg = catalogV3('d', full, entries, me.handle, me.handle ? inboxCount(await inboxOf(env, me.handle, entries, runBase)) : 0);
+        return pg ? html(pg) : new Response('Not in the catalogue', { status: 404 });
       }
       if (tabsNav && (path === '/' || path === '/inbox' || path === '/explore')) {
         const entries = await registry(env).list();

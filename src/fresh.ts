@@ -11,7 +11,9 @@ export const relShort = (ts: number, now: number) => {
   if (s < 60) return 'just now';
   if (s < 3600) return `${Math.floor(s / 60)} min ago`;
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
+  if (s < 86400 * 60) return `${Math.floor(s / 86400)}d ago`;
+  if (s < 86400 * 730) return `${Math.floor(s / 86400 / 30)} mo ago`;
+  return `${Math.floor(s / 86400 / 365)}y ago`;
 };
 
 export const freshTag = (ts: number, now: number, steps: number[]) => {
