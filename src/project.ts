@@ -76,15 +76,16 @@ export class Project extends DurableObject<Env> {
   }
 
   /** This project as a fork of `source` (a user-level fork: own page, own agents). */
-  async createFork(owner: string, name: string, source: ProjectInfo): Promise<ProjectInfo> {
+  /** `fresh`: a new project started from a starter (Build), not shown as a fork of it. */
+  async createFork(owner: string, name: string, source: ProjectInfo, description = source.description, fresh = false): Promise<ProjectInfo> {
     if (await this.info()) throw new Error('project exists');
     const slug = slugOf(owner, name);
     using repo = await this.env.ARTIFACTS.get(source.repo);
-    const forked = await repo.fork(slug, { description: source.description, defaultBranchOnly: true });
-    const info: ProjectInfo = { slug, owner, name, description: source.description, repo: forked.name, remote: forked.remote,
-      forkedFrom: source.slug, createdAt: Date.now(), agents: [], importedFrom: source.importedFrom, entry: source.entry };
+    const forked = await repo.fork(slug, { description, defaultBranchOnly: true });
+    const info: ProjectInfo = { slug, owner, name, description, repo: forked.name, remote: forked.remote,
+      forkedFrom: fresh ? null : source.slug, createdAt: Date.now(), agents: [], importedFrom: fresh ? undefined : source.importedFrom, entry: source.entry };
     await this.#register(info);
-    log('project', 'forked', { slug, from: source.slug });
+    log('project', fresh ? 'started' : 'forked', { slug, from: source.slug });
     return info;
   }
 

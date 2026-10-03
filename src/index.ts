@@ -16,7 +16,8 @@ import { serveRun } from './run';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
 import { catalogReadme } from './catalog';
-import { catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
+import { STARTER, buildPayload } from './newproject';
+import { buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
@@ -316,6 +317,13 @@ const app = {
         return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'people' ? s : 'projects',
           { tag: url.searchParams.get('cat') || url.searchParams.get('tag') || undefined, sort: url.searchParams.get('sort') || undefined }));
       }
+      // Build: a new project from one sentence (src/newproject.ts).
+      if (ui === 'd' && path === '/build' && request.method === 'GET') {
+        const own = me.handle && !isOwner(env, me.handle);
+        const needsKey = !!own && !(await userByHandle(env, me.handle))?.apiKeyEnc;
+        const inbox = me.handle ? inboxCount(await inboxOf(env, me.handle, await registry(env).list(), runBase)) : 0;
+        return html(buildV3('d', me.handle, inbox, needsKey, env.RUN_HOST));
+      }
       // The catalogue: a GitHub project's page, and its README fetched only when the page asks.
       if (ui === 'd' && (m = path.match(/^\/gh\/([\w.-]+)\/([\w.-]+?)(\/readme)?\/?$/))) {
         const full = `${m[1]}/${m[2]}`;
@@ -389,6 +397,28 @@ const app = {
         if (q.trim().length < 2) return json({ repos: [] });
         const r = await searchRepos(q, ctx);
         return Array.isArray(r) ? json({ repos: r }) : json(r, r.status);
+      }
+      if (path === '/api/build' && request.method === 'POST') {
+        if (!me.handle) return json({ error: 'Sign in first' }, 401);
+        const b = await request.json().catch(() => ({})) as { name?: string; prompt?: string };
+        const prompt = String(b.prompt || '').trim().slice(0, 3000);
+        if (prompt.length < 4) return json({ error: 'Say what to build' }, 400);
+        if (!isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json({ error: 'Add your Anthropic API key in Settings first' }, 400);
+        const tooMany = await overProjectLimit(env, me.handle);
+        if (tooMany) return json({ error: tooMany }, 400);
+        const starter = await projectStub(env, STARTER).info();
+        if (!starter) return json({ error: 'the starter project is missing on this forq' }, 500);
+        const base = nameFor(String(b.name || '')) || 'my-app';
+        let name = base;
+        for (let i = 2; await registry(env).get(slugOf(me.handle, name)); i++) name = `${base.slice(0, 35)}-${i}`;
+        if (!NAME_RE.test(name)) return json({ error: 'That name does not work; use letters, digits and dashes' }, 400);
+        const slug = slugOf(me.handle, name);
+        const p = projectStub(env, slug);
+        const desc = prompt.split('\n')[0].slice(0, 140);
+        await p.createFork(me.handle, name, starter, desc, true);
+        await askRouter(env, ctx, p, slug, buildPayload(prompt), apiBase, prompt);
+        log('build', 'started', { slug, chars: prompt.length });
+        return json({ ok: true, slug, path: `/p/${me.handle}/${name}/changes` });
       }
       if (path === '/api/import' && request.method === 'POST') {
         const b = await request.json() as { repo?: string; as?: string };

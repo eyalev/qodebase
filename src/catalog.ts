@@ -76,7 +76,8 @@ export function catalogBody(entries: Entry[], opts: { cat?: string; sort?: strin
   const cat = opts.cat === 'forq' || opts.cat === 'runs' || (opts.cat && CAT_LABEL[opts.cat]) ? opts.cat : '';
   const sort = opts.sort === 'updated' ? 'updated' : 'top';
   const q = (c: string, so: string) => `/?${[c ? `cat=${c}` : '', so === 'updated' ? 'sort=updated' : ''].filter(Boolean).join('&')}`.replace(/\?$/, '');
-  const native = entries.filter((e) => !e.forkedFrom);
+  // forq/blank is the starter Build forks from, not a project to show.
+  const native = entries.filter((e) => !e.forkedFrom && e.slug !== 'forq.blank');
   const count = (c: string) => ITEMS.filter((x) => x.cat === c).length;
   const chip = (c: string, l: string, n: number) => `<a href="${q(c, sort)}" data-cat="${c}" class="${cat === c ? 'on' : ''}">${l}<span>${n}</span></a>`;
   const cats = `<nav class="cats" aria-label="Categories">${chip('', 'All', ITEMS.length)}${chip('runs', 'Runs here', ITEMS.filter(runsHere).length)}${CATS.filter(([c]) => count(c)).map(([c, l]) => chip(c, l, count(c))).join('')}${chip('forq', 'On forq', native.length)}</nav>`;
@@ -103,6 +104,7 @@ export function peopleBody(entries: Entry[]) {
   for (const x of ITEMS) { const o = x.full.split('/')[0]; by.set(o, [...(by.get(o) || []), x]); }
   const owners = [...by.entries()].map(([o, list]) => ({ o, list: list.sort((a, b) => b.stars - a.stars), stars: list.reduce((n, x) => n + x.stars, 0) }))
     .sort((a, b) => b.stars - a.stars);
+  entries = entries.filter((e) => e.slug !== 'forq.blank');
   const onForq = [...new Set(entries.map((e) => e.owner))].map((h) => ({ h, n: entries.filter((e) => e.owner === h).length })).sort((a, b) => b.n - a.n);
   return `<div class="people">${owners.map((p) => `<div class="pp">${avatar(p.o)}<div class="tx"><b><a href="https://github.com/${esc(p.o)}" target="_blank" rel="noopener" style="color:inherit">${esc(p.o)}</a></b>
 <span>${p.list.map((x) => `<a href="${ghPath(x.full)}">${esc(x.full.split('/')[1])}</a>`).join(', ')}</span></div><span class="pst">${STAR}${k(p.stars)}</span></div>`).join('')}</div>

@@ -12,6 +12,7 @@ import { markdown } from './md';
 import { SHEET_HTML, shortId } from './sheet';
 import { SPECULATE, WORLD_CSS, worldBody, type WorldTab } from './world';
 import { CATALOG_CSS, catalogPage } from './catalog';
+import { BUILD_CSS, buildBody } from './newproject';
 import {
   type Change, type ProjectArgs, type UI, ORDER, OPEN_ICON_C as OPEN_ICON, SEND, VISIT, BUSY,
   accentOf, appUrl, changeRow, changesOf, fixtureData, forkAction, FORK_JS, fromIssues, isMerge, keyNote, legend,
@@ -447,7 +448,7 @@ export function fixtureV3(runBase: string, mode: string, view: ViewId | null, tr
 // ---- Home with tabs (nav 'a' and 'b') ---------------------------------------------
 
 const CHEV = `<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>`;
-const HI = {
+const HI: Record<string, string> = {
   projects: I('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
   inbox: I('<path d="M3 13h5l1.5 2.5h5L16 13h5"/><path d="M5.5 5h13L21 13v6H3v-6z"/>'),
   explore: I('<circle cx="12" cy="12" r="8.5"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>'),
@@ -455,7 +456,7 @@ const HI = {
   home: I('<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>'),
   mine: I('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
 };
-export type HomeTab = 'projects' | 'inbox' | 'explore' | 'account' | 'home' | 'mine';
+export type HomeTab = 'projects' | 'inbox' | 'explore' | 'account' | 'home' | 'mine' | 'build';
 
 /** The site-wide bar: home tabs (A), or everywhere (B). */
 export function globalBar(active: HomeTab, inbox: number, me: string) {
@@ -475,6 +476,7 @@ export const NAV_CSS = `
 .gtop .mark{display:flex;align-items:center;padding:0 10px 0 8px;font-weight:600;font-size:16px;color:var(--fg)}
 .gtop .g{flex:none;display:flex;align-items:center;gap:6px;padding:0 9px;font:500 14px 'Instrument Sans',sans-serif;color:var(--dim);border-bottom:2px solid transparent}
 .gtop .g.on{color:var(--fg);border-bottom-color:var(--fg)}
+.gtop .gbuild{flex:none;align-self:center;margin-left:auto;min-height:34px;padding:0 14px;font-size:14px;border-radius:8px}
 .gtop .badge{position:static;margin:0;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;font-weight:600;line-height:18px;text-align:center}
 .h3.sub{height:44px;background:var(--card)}
 .h3.sub .nm{padding-left:12px}
@@ -590,8 +592,9 @@ export function globalTop(active: HomeTab, inbox: number, me: string) {
     ? [['home', 'Home', '/'], ['inbox', 'Inbox', '/inbox'], ['mine', 'Yours', '/mine'], ['account', 'Account', '/settings']]
     : [['home', 'Home', '/'], ['account', 'Sign in', '/login']];
   if (active === 'projects') active = 'mine';
+  // Build: the call to action on every page, signed in or not (Eyal, 2026-10-03).
   return `<nav class="gtop" aria-label="forq"><a class="mark" href="/">forq</a>${tabs.map(([id, labelT, href]) =>
-    `<a href="${href}" class="g${id === active ? ' on' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}</nav>`;
+    `<a href="${href}" class="g${id === active ? ' on' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}<a class="btn gbuild" href="/build"${active === 'build' ? ' aria-current="page"' : ''}>Build</a></nav>`;
 }
 
 /** A catalogue project's page (/gh/<owner>/<repo>) under D's top tabs. */
@@ -600,4 +603,10 @@ export function catalogV3(nav: Nav, full: string, entries: Entry[], me: string, 
   if (!pg) return null;
   return shell2(nav as UI, `${pg.title} · forq`, `${globalTop('home', inbox, me)}
 <main class="view" id="view"><div class="pad">${pg.body}${legend(1)}${FOOT}</div></main>${SPECULATE}`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
+}
+
+/** The Build page under D's top tabs. */
+export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, runDomain: string) {
+  return shell2(nav as UI, 'Build · forq', `${globalTop('build', inbox, me)}
+<main class="view" id="view"><div class="pad">${buildBody(me, needsKey, runDomain)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + BUILD_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
