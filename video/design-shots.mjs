@@ -5,7 +5,8 @@ import { chromium } from 'playwright';
 import { createHmac } from 'node:crypto';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
-const ADMIN = readFileSync(homedir() + '/.config/forq/admin-secret', 'utf8').trim();
+// The forq account's secrets (since the move to its own account, 2026-10-02); older setups keep ~/.config/forq/admin-secret.
+const ADMIN = (() => { try { return JSON.parse(readFileSync(homedir() + '/.config/forq-cf/secrets.json', 'utf8')).ADMIN_SECRET; } catch { return readFileSync(homedir() + '/.config/forq/admin-secret', 'utf8').trim(); } })();
 const CHROME = homedir() + '/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome';
 const OUT = new URL('./out/design/', import.meta.url).pathname; mkdirSync(OUT, { recursive: true });
 const cookie = (email) => { const body = `${email}|${Date.now() + 86400_000}`; return Buffer.from(`${body}|${createHmac('sha256', ADMIN).update(`session:${body}`).digest('hex')}`).toString('base64').replace(/=+$/, ''); };
