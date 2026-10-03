@@ -342,7 +342,7 @@ const app = {
         const tab = !me.handle || path === '/explore' ? 'explore' : path === '/inbox' ? 'inbox' : 'projects';
         return html(homeV3(ui as Nav, tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase)));
       }
-      if (ui && path === '/design-fixture') return html(fixtureV2(ui, runBase, url.searchParams.get('state') || 'full'));
+      if (uiOf(request) && path === '/design-fixture') return html(fixtureV2(uiOf(request)!, runBase, url.searchParams.get('state') || 'full'));
       if (path === '/') {
         const entries = await registry(env).list();
         if (ui) {
