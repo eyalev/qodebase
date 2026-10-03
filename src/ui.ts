@@ -431,7 +431,7 @@ export function privacyPage() {
   return shell('Privacy · forq', `<a class="back" href="/">Explore</a>
 <h1>Privacy</h1>
 <p class="desc">What forq stores: your email address and the name you choose; your Anthropic API key, encrypted, used only to start Claude Code in your projects' containers; the projects, forks and agent conversations you create. Projects are public to read.</p>
-<p class="desc">Sign-in is handled by Cloudflare Access with a one-time code sent to your email. forq sets one cookie, to keep you signed in.</p>
+<p class="desc">Sign-in is handled by Cloudflare Access: with your Google account, or with a one-time code sent to your email. With Google, forq receives only your email address from Google, nothing else from your account. forq sets one cookie, to keep you signed in.</p>
 <p class="desc">Visits are counted with our own analytics (kstats), sent to forq itself and not to a third party: the pages you open, the buttons and links you tap, the kind of device and the country. Your IP address is used once to make a visitor code that changes every day, and is not stored. No ad trackers.</p>
 <p class="desc">The <a href="/feedback">feedback form</a> keeps your message, the page you sent it from, the kind of device, and your email only if you give one.</p>
 <p class="desc">Your agents' requests go to Anthropic under your key and Anthropic's terms. To delete your account and data, write to hello@kapps.dev.</p>`);
