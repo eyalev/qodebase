@@ -11,11 +11,17 @@ import { markdown } from './md';
 import CATALOG from './catalog.json';
 
 export type CatalogItem = { full: string; desc: string; stars: number; license: string; sizeKb: number; cat: string; topic: string;
-  homepage: string | null; pushed: number; branch: string; entry: string; lang: string | null };
-export const ITEMS = (CATALOG as { projects: CatalogItem[] }).projects;
+  homepage: string | null; pushed: number; branch: string; entry: string | null; runs?: boolean; lang: string | null };
+export const ITEMS = (CATALOG as unknown as { projects: CatalogItem[] }).projects;
+/** forq can serve it as a live app as it is (older catalogue files listed only those). */
+export const runsHere = (x: CatalogItem) => x.runs ?? x.entry !== null;
 
-export const CATS: [string, string][] = [['games', 'Games'], ['creative', 'Creative'], ['music', 'Music'], ['productivity', 'Productivity'],
-  ['tools', 'Tools'], ['learning', 'Learning'], ['slides', 'Slides'], ['visual', 'Visual']];
+export const CATS: [string, string][] = [['ai', 'AI'], ['frameworks', 'Frameworks'], ['libraries', 'Libraries'], ['devtools', 'Dev tools'],
+  ['cli', 'CLI'], ['data', 'Data'], ['selfhosted', 'Self-hosted'], ['games', 'Games'], ['creative', 'Creative'], ['music', 'Music'],
+  ['productivity', 'Productivity'], ['tools', 'Tools'], ['learning', 'Learning'], ['slides', 'Slides'], ['visual', 'Visual']];
+const PLAY = `<svg class="ic" viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z"/></svg>`;
+/** The mark for projects forq can open as a live app. */
+const RUNS = `<span class="runs">${PLAY}Runs here</span>`;
 const CAT_LABEL = Object.fromEntries(CATS) as Record<string, string>;
 
 const STAR = `<svg class="ic" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="m8 1.8 1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg>`;
@@ -43,6 +49,7 @@ export const CATALOG_CSS = `
 .pp .gav{width:44px;height:44px}
 .pp .tx span a{color:var(--dim)}
 .pst{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums}
+.runs{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--acc);border:1px solid color-mix(in srgb,var(--acc) 45%,transparent);border-radius:4px;padding:0 6px;line-height:18px}
 .back3{display:inline-flex;align-items:center;min-height:44px;font-size:15px}
 @media (min-width:600px){.gh-acts .btn{flex:0 0 auto}}
 `;
@@ -61,12 +68,12 @@ export function importedMap(entries: Entry[]) {
 export function catalogBody(entries: Entry[], opts: { cat?: string; sort?: string }) {
   const now = Date.now();
   const onForq = importedMap(entries);
-  const cat = opts.cat === 'forq' || (opts.cat && CAT_LABEL[opts.cat]) ? opts.cat : '';
+  const cat = opts.cat === 'forq' || opts.cat === 'runs' || (opts.cat && CAT_LABEL[opts.cat]) ? opts.cat : '';
   const sort = opts.sort === 'updated' ? 'updated' : 'top';
   const q = (c: string, so: string) => `/?${[c ? `cat=${c}` : '', so === 'updated' ? 'sort=updated' : ''].filter(Boolean).join('&')}`.replace(/\?$/, '');
   const native = entries.filter((e) => !e.forkedFrom);
   const count = (c: string) => ITEMS.filter((x) => x.cat === c).length;
-  const cats = `<nav class="cats" aria-label="Categories"><a href="${q('', sort)}" class="${cat ? '' : 'on'}">All<span>${ITEMS.length}</span></a>${CATS.filter(([c]) => count(c)).map(([c, l]) =>
+  const cats = `<nav class="cats" aria-label="Categories"><a href="${q('', sort)}" class="${cat ? '' : 'on'}">All<span>${ITEMS.length}</span></a><a href="${q('runs', sort)}" class="${cat === 'runs' ? 'on' : ''}">Runs here<span>${ITEMS.filter(runsHere).length}</span></a>${CATS.filter(([c]) => count(c)).map(([c, l]) =>
     `<a href="${q(c, sort)}" class="${cat === c ? 'on' : ''}">${l}<span>${count(c)}</span></a>`).join('')}<a href="${q('forq', sort)}" class="${cat === 'forq' ? 'on' : ''}">On forq<span>${native.length}</span></a></nav>
 <script>document.querySelector('.cats a.on')?.scrollIntoView({inline:'center',block:'nearest'})</script>`;
   const sorts = cat === 'forq' ? '' : `<nav class="sorts" aria-label="Sort"><a href="${q(cat, 'top')}" class="${sort === 'top' ? 'on' : ''}">Top</a><a href="${q(cat, 'updated')}" class="${sort === 'updated' ? 'on' : ''}">Recently updated</a>
@@ -77,13 +84,13 @@ export function catalogBody(entries: Entry[], opts: { cat?: string; sort?: strin
 <span class="n"><span class="o">${esc(e.owner)} /</span> ${esc(e.name)}</span><span class="d">${esc(e.description || '')}</span>
 <span class="m">${e.importedFrom ? `<span class="st">${STAR}${k(e.importedFrom.stars)}</span>` : ''}${freshTag(e.updatedAt, now, STEPS)}</span></span></a>`).join('') || '<p class="empty">Nothing imported yet.</p>';
   } else {
-    const list = ITEMS.filter((x) => !cat || x.cat === cat).sort((a, b) => (sort === 'top' ? b.stars - a.stars : b.pushed - a.pushed));
+    const list = ITEMS.filter((x) => !cat || (cat === 'runs' ? runsHere(x) : x.cat === cat)).sort((a, b) => (sort === 'top' ? b.stars - a.stars : b.pushed - a.pushed));
     rows = list.map((x) => {
       const [owner, name] = x.full.split('/');
       const there = onForq.get(x.full.toLowerCase());
       return `<a class="pr" href="${ghPath(x.full)}">${avatar(owner)}<span class="bd">
 <span class="n"><span class="o">${esc(owner)} /</span> ${esc(name)}</span><span class="d">${esc(x.desc)}</span>
-<span class="m"><span class="st">${STAR}${k(x.stars)}</span>${sort === 'updated' ? freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24]) : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>${esc(x.license)}</span>${there ? '<span class="onforq">On forq</span>' : ''}</span></span></a>`;
+<span class="m"><span class="st">${STAR}${k(x.stars)}</span>${sort === 'updated' ? freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24]) : ''}${runsHere(x) ? RUNS : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>${esc(x.license)}</span>${there ? '<span class="onforq">On forq</span>' : ''}</span></span></a>`;
     }).join('');
   }
   return `${cats}${sorts}<div class="plist">${rows}</div>`;
@@ -115,9 +122,10 @@ export function catalogPage(full: string, entries: Entry[], me: string) {
   const body = `<a class="back3" href="/">Projects</a>
 <div class="gh-head">${avatar(owner, 56)}<h1><span class="o">${esc(owner)} /</span> ${esc(name)}</h1></div>
 <p class="gh-desc">${esc(x.desc)}</p>
-<div class="gh-meta"><span class="st">${STAR}${k(x.stars)} stars</span><span>${esc(x.license)}</span>${x.lang ? `<span>${esc(x.lang)}</span>` : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>updated ${freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24])}</span></div>
+<div class="gh-meta">${runsHere(x) ? RUNS : ''}<span class="st">${STAR}${k(x.stars)} stars</span><span>${esc(x.license)}</span>${x.lang ? `<span>${esc(x.lang)}</span>` : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>updated ${freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24])}</span></div>
 <div class="gh-acts">${action}<a class="chipbtn" href="https://github.com/${esc(x.full)}" target="_blank" rel="noopener">GitHub</a>${x.homepage ? `<a class="chipbtn" href="${esc(x.homepage)}" target="_blank" rel="noopener">Live demo</a>` : ''}</div>
-<p class="gh-note">${there ? `Already imported as ${esc(there.owner)} / ${esc(there.name)}: open it to run it, fork it and change it with agents.` : 'Importing copies its latest commit into forq, runs it on its own address, and gives you a project you can fork and change with agents.'}</p>
+<p class="gh-note">${there ? `Already imported as ${esc(there.owner)} / ${esc(there.name)}: open it to run it, fork it and change it with agents.` : runsHere(x) ? 'Runs here: importing copies its latest commit into forq and opens it as a live app on its own address, ready to fork and change with agents.'
+    : 'Importing copies its latest commit into forq: read and search the code, fork it, and change it with agents. It has no page forq can open as an app.'}</p>
 <h3>README</h3><div class="readme" id="readme"><div class="skel" aria-label="Loading the README"><i></i><i></i><i></i><i></i><i></i></div></div>
 <script>
 fetch(location.pathname.replace(/\\/$/,'')+'/readme').then((r)=>r.ok?r.text():Promise.reject()).then((h)=>{document.getElementById('readme').innerHTML=h;})

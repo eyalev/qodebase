@@ -1,7 +1,8 @@
-// Builds src/catalog.json: popular GitHub projects that forq can run as they are
-// (an index.html where forq looks for one, a licence, under 50 MB, no build step),
-// grouped by category. The home page lists them; nothing is imported until someone
-// taps Import.
+// Builds src/catalog.json: popular GitHub projects by category, like GitHub's own
+// explore page, each marked `runs` when forq can serve it as a live app as it is
+// (an index.html where forq looks for one, no build step, not Electron). Every one
+// has a licence and fits forq's import limit; nothing is imported until someone
+// taps Import (2026-10-03: widened from "runs in your browser" only).
 //   node scripts/build-catalog.mjs             (every category; uses the gh CLI's login; about 5 minutes)
 //   node scripts/build-catalog.mjs learning    (one category, merged into the existing catalogue)
 import { execFile } from 'node:child_process';
@@ -20,8 +21,19 @@ const CATS = {
   learning: ['typing-test', 'flashcards', 'periodic-table', 'math-games', 'education', 'educational-game', 'quiz', 'language-learning',
     'typing-game', 'explorable-explanations', 'interactive-learning', 'physics-simulation', 'mathematics', 'learn-to-code'],
   slides: ['presentation', 'slides'],
-  visual: ['particles', 'data-visualization', 'webgl-demos'],
+  visual: ['particles', 'webgl-demos', 'three-js'],
+  ai: ['llm', 'ai-agents', 'machine-learning', 'rag'],
+  frameworks: ['web-framework', 'frontend-framework', 'css-framework', 'static-site-generator'],
+  libraries: ['javascript-library', 'react-components', 'animation-library', 'charting-library'],
+  cli: ['cli', 'command-line-tool', 'terminal'],
+  devtools: ['developer-tools', 'api-client', 'testing-tools', 'code-editor'],
+  data: ['database', 'data-visualization', 'analytics'],
+  selfhosted: ['self-hosted', 'cloudflare-workers', 'home-automation'],
 };
+/** Searches for the categories that are about apps you use (they need fewer stars to count). */
+const APP_CATS = new Set(['games', 'creative', 'music', 'productivity', 'tools', 'learning', 'slides', 'visual']);
+/** forq's import limit (src/github.ts MAX_IMPORT_KB). */
+const MAX_KB = 200 * 1024;
 const ENTRY_DIRS = ['', 'demo', 'docs', 'public', 'dist', 'www', 'site', 'examples'];   // forq's own search order
 const PERMISSIVE = /^(MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC|0BSD|Unlicense|MPL-2.0|CC0-1.0|GPL-2.0|GPL-3.0|AGPL-3.0|LGPL-2.1|LGPL-3.0|WTFPL)$/;
 /** Known to run as served although they have a build step (their built files are committed). */
@@ -71,7 +83,8 @@ for (const [cat, full] of Object.entries(PICKS).flatMap(([c, l]) => l.map((f) =>
 for (const [cat, topics] of Object.entries(CATS)) {
   if (only && cat !== only) continue;
   for (const t of topics) {
-    const res = await gh(`search/repositories?q=${encodeURIComponent(`topic:${t} stars:>150 fork:false archived:false`)}&sort=stars&order=desc&per_page=15`);
+    const minStars = APP_CATS.has(cat) ? 150 : 2000;
+    const res = await gh(`search/repositories?q=${encodeURIComponent(`topic:${t} stars:>${minStars} fork:false archived:false`)}&sort=stars&order=desc&per_page=15`);
     for (const r of res.items || []) if (!cand.has(r.full_name) && !SKIP.has(r.full_name)) cand.set(r.full_name, { r, cat, topic: t });
     await new Promise((s) => setTimeout(s, 2200));   // the search API allows 30 a minute
   }
@@ -79,12 +92,15 @@ for (const [cat, topics] of Object.entries(CATS)) {
 process.stderr.write(`${cand.size} candidates\n`);
 const ok = (await pool([...cand.values()], 8, async ({ r, cat, topic }) => {
   const lic = r.license?.spdx_id;
-  if (!lic || !PERMISSIVE.test(lic) || r.size > 50 * 1024 || !r.description) return null;
-  const entry = await entryOf(r);
-  if (entry === null || (!KEEP.has(r.full_name) && await needsBuild(r, entry))) return null;
-  process.stderr.write(`${cat}\t${r.stargazers_count}\t${r.full_name}\t${entry || '/'}\n`);
+  if (!lic || !PERMISSIVE.test(lic) || r.size > MAX_KB || !r.description) return null;
+  // Runs here: forq can serve it as a live app as it is.
+  let entry = await entryOf(r);
+  if (entry !== null && !KEEP.has(r.full_name) && await needsBuild(r, entry)) entry = null;
+  // App categories are about things you open and use; keep only the ones that run.
+  if (APP_CATS.has(cat) && entry === null) return null;
+  process.stderr.write(`${cat}\t${r.stargazers_count}\t${r.full_name}\t${entry === null ? '-' : entry || '/'}\n`);
   return { full: r.full_name, desc: r.description.trim().slice(0, 140), stars: r.stargazers_count, license: lic, sizeKb: r.size,
-    cat, topic, homepage: r.homepage || null, pushed: Date.parse(r.pushed_at), branch: r.default_branch, entry, lang: r.language || null };
+    cat, topic, homepage: r.homepage || null, pushed: Date.parse(r.pushed_at), branch: r.default_branch, entry, runs: entry !== null, lang: r.language || null };
 })).filter(Boolean).sort((a, b) => b.stars - a.stars);
 const file = new URL('../src/catalog.json', import.meta.url);
 // One category: replace that category's entries in the existing catalogue, keep the rest.
