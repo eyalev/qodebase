@@ -151,14 +151,21 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
   };
 }
 
-/** Boot an agent's (or the router's) box unless too many boxes in its project are awake. */
+/** Boot a box. The caps count change agents only: a project's router and reviewer
+ *  (one each) always start, because nothing gets planned or checked without them.
+ *  (2026-10-03: a Build split into 4 agents filled the old cap of 5 with the router,
+ *  and all 4 reviews failed with "5 boxes already awake".) */
 async function wake(env: Env, agentId: string, apiBase: string) {
   const info = await projectStub(env, projectOf(agentId)).info();
   if (!info) throw new Error('no such project');
+  if (roleOf(agentId) !== 'agent') return boxStub(env, agentId).ensureUp(await bootSpec(env, agentId, apiBase));
   const max = Number(env.MAX_AWAKE_BOXES || 5);
-  const others = [...info.agents.map((a) => a.id), `${info.slug}--router`, `${info.slug}--review`].filter((id) => id !== agentId);
+  const others = info.agents.map((a) => a.id).filter((id) => id !== agentId);
   const awake = await Promise.all(others.map((id) => boxStub(env, id).isAwake().catch(() => false)));
-  if (awake.filter(Boolean).length >= max) return { ok: false, ms: 0, from: 'none', error: `${max} boxes already awake in this project` };
+  if (awake.filter(Boolean).length >= max) {
+    log('wake', 'refused', { agentId, why: 'project cap', max });
+    return { ok: false, ms: 0, from: 'none', error: `${max} agents already awake in this project` };
+  }
   // Other people's boxes run on this account's containers even with their own
   // API key: a small cap per person across all their projects.
   const owner = info.owner;
@@ -168,11 +175,14 @@ async function wake(env: Env, agentId: string, apiBase: string) {
     let n = 0;
     for (const e of mine) {
       const pi = e.slug === info.slug ? info : await projectStub(env, e.slug).info();
-      for (const id of [...(pi?.agents || []).map((a) => a.id), `${e.slug}--router`, `${e.slug}--review`]) {
+      for (const id of (pi?.agents || []).map((a) => a.id)) {
         if (id !== agentId && await boxStub(env, id).isAwake().catch(() => false)) n++;
       }
     }
-    if (n >= cap) return { ok: false, ms: 0, from: 'none', error: `${cap} of your boxes are already awake; they sleep after 5 idle minutes` };
+    if (n >= cap) {
+      log('wake', 'refused', { agentId, why: 'person cap', cap });
+      return { ok: false, ms: 0, from: 'none', error: `${cap} of your agents are already awake; they sleep after 5 idle minutes` };
+    }
   }
   return boxStub(env, agentId).ensureUp(await bootSpec(env, agentId, apiBase));
 }
