@@ -27,7 +27,8 @@ export interface Env {
   APPS_DOMAIN?: string;       // ttyview.dev: Worker apps at <name>--<owner>.<APPS_DOMAIN>
   APPS_ZONE_ID?: string;      // that zone (exclusion routes, see build.ts excludeFromRunRoute)
   MAX_AGENTS_PER_PROJECT: string;
-  MAX_AWAKE_BOXES: string;
+  MAX_AWAKE_BOXES: string;     // change agents awake per project
+  MAX_TOTAL_AWAKE?: string;    // every box on the account, every role, owner included (safety net)
   CLAUDE_CODE_OAUTH_TOKEN: string;
   ADMIN_SECRET: string;
 }

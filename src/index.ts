@@ -158,33 +158,48 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
 async function wake(env: Env, agentId: string, apiBase: string) {
   const info = await projectStub(env, projectOf(agentId)).info();
   if (!info) throw new Error('no such project');
-  if (roleOf(agentId) !== 'agent') return boxStub(env, agentId).ensureUp(await bootSpec(env, agentId, apiBase));
+  const box = boxStub(env, agentId);
+  // Already awake: no new container starts, so there is nothing to cap.
+  if (await box.isAwake().catch(() => false)) return box.ensureUp(await bootSpec(env, agentId, apiBase));
+  const refuse = (why: string, data: Record<string, unknown>, error: string) => {
+    log('wake', 'refused', { agentId, why, ...data });
+    return { ok: false, ms: 0, from: 'none', error };
+  };
+
+  // Every box on the account, awake or not: each project's agents, router and reviewer.
+  const entries = await registry(env).list();
+  const infos = await Promise.all(entries.map((e) => (e.slug === info.slug ? info : projectStub(env, e.slug).info().catch(() => null))));
+  const awake: { id: string; slug: string; owner: string; role: string }[] = [];
+  await Promise.all(infos.flatMap((pi) => (pi ? [...pi.agents.map((a) => a.id), `${pi.slug}--router`, `${pi.slug}--review`] : [])
+    .filter((id) => id !== agentId)
+    .map(async (id) => {
+      if (await boxStub(env, id).isAwake().catch(() => false)) awake.push({ id, slug: projectOf(id), owner: id.split('.')[0], role: roleOf(id) });
+    })));
+
+  // 1. Account-wide ceiling, every role, owner included: a safety net on what
+  //    the containers can bill at once (each awake box bills its full 3 GiB).
+  const total = Number(env.MAX_TOTAL_AWAKE || 20);
+  if (awake.length >= total) return refuse('account cap', { total, awake: awake.length }, `forq is busy: ${total} boxes are awake across all projects. Try again in a few minutes`);
+
+  // 2. Per project: change agents only. A project's router and reviewer always
+  //    start (2026-10-03: a Build split into 4 agents filled the old cap of 5
+  //    with the router, and all 4 reviews failed with "5 boxes already awake").
+  const role = roleOf(agentId);
   const max = Number(env.MAX_AWAKE_BOXES || 5);
-  const others = info.agents.map((a) => a.id).filter((id) => id !== agentId);
-  const awake = await Promise.all(others.map((id) => boxStub(env, id).isAwake().catch(() => false)));
-  if (awake.filter(Boolean).length >= max) {
-    log('wake', 'refused', { agentId, why: 'project cap', max });
-    return { ok: false, ms: 0, from: 'none', error: `${max} agents already awake in this project` };
+  if (role === 'agent' && awake.filter((b) => b.slug === info.slug && b.role === 'agent').length >= max) {
+    return refuse('project cap', { max }, `${max} agents already awake in this project`);
   }
-  // Other people's boxes run on this account's containers even with their own
-  // API key: a small cap per person across all their projects.
-  const owner = info.owner;
-  if (!isOwner(env, owner)) {
+
+  // 3. Per person, other people only (their boxes run on this account even with
+  //    their own API key): their agents everywhere, plus the router and reviewer
+  //    of their OTHER projects. This project's router and reviewer stay exempt,
+  //    so nothing here can stop the project being worked on from being checked.
+  if (!isOwner(env, info.owner)) {
     const cap = Number(env.OTHERS_MAX_AWAKE || 2);
-    const mine = (await registry(env).list()).filter((e) => e.owner === owner);
-    let n = 0;
-    for (const e of mine) {
-      const pi = e.slug === info.slug ? info : await projectStub(env, e.slug).info();
-      for (const id of (pi?.agents || []).map((a) => a.id)) {
-        if (id !== agentId && await boxStub(env, id).isAwake().catch(() => false)) n++;
-      }
-    }
-    if (n >= cap) {
-      log('wake', 'refused', { agentId, why: 'person cap', cap });
-      return { ok: false, ms: 0, from: 'none', error: `${cap} of your agents are already awake; they sleep after 5 idle minutes` };
-    }
+    const n = awake.filter((b) => b.owner === info.owner && (b.role === 'agent' || b.slug !== info.slug)).length;
+    if (n >= cap) return refuse('person cap', { cap, n, role }, `${cap} of your boxes are already awake; they sleep after 5 idle minutes`);
   }
-  return boxStub(env, agentId).ensureUp(await bootSpec(env, agentId, apiBase));
+  return box.ensureUp(await bootSpec(env, agentId, apiBase));
 }
 
 async function boxStatus(env: Env, id: string, withReply = false): Promise<BoxStatus> {

@@ -82,7 +82,10 @@
     "OWNER_HANDLE": "eyal",
     // Awake boxes per other user (their containers bill this account).
     "OTHERS_MAX_AWAKE": "2",
-    "MAX_AWAKE_BOXES": "5"
+    "MAX_AWAKE_BOXES": "5",
+    // Every awake box on the account, every role, owner included: a ceiling on
+    // what the containers can bill at once (~$0.027/h per 3 GiB box).
+    "MAX_TOTAL_AWAKE": "20"
   }
   // Secrets: CLAUDE_CODE_OAUTH_TOKEN (Eyal's subscription), ADMIN_SECRET,
   // CF_DEPLOY_TOKEN (Workers Scripts write; only BuildBox uses it), ISSUES_WEBHOOK_SECRET,
