@@ -201,6 +201,9 @@ async function docsOf(env: Env, ctx: ExecutionContext, info: ProjectInfo, want: 
   return { list: list.map((d) => ({ path: d.path, label: docLabel(d.path) })), current: cur?.path || null, text };
 }
 
+/** Which design to render: a preview host's choice (x-forq-ui), else D on the real site. */
+const uiFor = (request: Request, env: Env): UI | null => uiOf(request) ?? (new URL(request.url).hostname === env.UI_HOST ? 'd' : null);
+
 /** Your projects with changes in progress (no box calls: states from the Project DO). */
 async function inboxOf(env: Env, me: string, entries: Entry[], runBase: string): Promise<InboxItem[]> {
   if (!me) return [];
@@ -298,13 +301,15 @@ const app = {
       let m: RegExpMatchArray | null;
 
       // ---- pages
-      const ui = uiOf(request);
+      // Production renders design D (views, home tabs, Build) since 2026-10-03; the
+      // preview hosts a/b/c still pick theirs with x-forq-ui.
+      const ui = uiFor(request, env);
       // The views design: 'c' alone; 'a', 'b' and 'd' with home tabs (three navigation takes).
       const views = ui === 'a' || ui === 'b' || ui === 'c' || ui === 'd';
       const tabsNav = ui === 'a' || ui === 'b' || ui === 'd';
       const globalOf = async (entries?: Entry[]): Promise<Global> => ({ nav: (ui || 'c') as Nav,
         inbox: tabsNav && me.handle ? inboxCount(await inboxOf(env, me.handle, entries || await registry(env).list(), runBase)) : 0 });
-      if (views && (m = path.match(/^\/design-fixture(?:\/([a-z]+))?\/?$/))) {
+      if (views && uiOf(request) && (m = path.match(/^\/design-fixture(?:\/([a-z]+))?\/?$/))) {
         return html(fixtureV3(runBase, url.searchParams.get('state') || 'full', (VIEW_IDS as string[]).includes(m[1] || '') ? m[1] as ViewId : null, url.searchParams.get('try') || undefined, await globalOf()));
       }
       // Home tabs (A and B): Projects, Inbox, Explore; signed out, Explore only.
@@ -544,11 +549,11 @@ const app = {
           // Opportunistic: a review stuck in 'reviewing' (its box died) goes back to the queue.
           ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.requeueStale()));
         }
-        if (verb === 'agents-html' && ['a', 'b', 'c', 'd'].includes(uiOf(request) || '')) {
+        if (verb === 'agents-html' && ['a', 'b', 'c', 'd'].includes(uiFor(request, env) || '')) {
           const st = await statusesOf(env, info);
           return json({ html: liveV3(url.searchParams.get('view') || 'changes', { info, me: me.handle, runBase, ...st, entry: undefined as unknown as Entry, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: '' }) });
         }
-        if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase, uiOf(request)), tabs: previewTabs(info, runBase) });
+        if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase, uiFor(request, env)), tabs: previewTabs(info, runBase) });
         if (verb === 'agents' && request.method === 'POST') {
           const b = await request.json() as { task?: string };
           return json(await spawn(env, ctx, slug, String(b.task || ''), apiBase));
