@@ -520,7 +520,7 @@ ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
 }
 
 /** The home pages with tabs: Projects, Inbox, Explore (Account is the settings page). */
-export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, items: InboxItem[], world: WorldTab = 'happening', wopts: { tag?: string; sort?: string } = {}) {
+export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, items: InboxItem[], world: WorldTab = 'projects', wopts: { tag?: string; sort?: string } = {}) {
   const now = Date.now();
   const inboxN = items.reduce((n, it) => n + needsOf(it.open).length, 0);
   const forks = (slug: string) => entries.filter((e) => e.forkedFrom === slug).length;

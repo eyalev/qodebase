@@ -40,6 +40,9 @@ export const CATALOG_CSS = `
 .skel{display:flex;flex-direction:column;gap:10px;margin-top:8px}
 .skel i{display:block;height:14px;border-radius:4px;background:var(--card)}
 .skel i:nth-child(1){width:60%;height:20px}.skel i:nth-child(3){width:85%}.skel i:nth-child(5){width:70%}
+.pp .gav{width:44px;height:44px}
+.pp .tx span a{color:var(--dim)}
+.pst{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums}
 .back3{display:inline-flex;align-items:center;min-height:44px;font-size:15px}
 @media (min-width:600px){.gh-acts .btn{flex:0 0 auto}}
 `;
@@ -83,8 +86,19 @@ export function catalogBody(entries: Entry[], opts: { cat?: string; sort?: strin
 <span class="m"><span class="st">${STAR}${k(x.stars)}</span>${sort === 'updated' ? freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24]) : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>${esc(x.license)}</span>${there ? '<span class="onforq">On forq</span>' : ''}</span></span></a>`;
     }).join('');
   }
-  return `<p class="intro3">Open-source projects that run in your browser. Open one to read about it; import it to run it here, fork it and change it with agents.</p>
-${cats}${sorts}<div class="plist">${rows}</div>`;
+  return `${cats}${sorts}<div class="plist">${rows}</div>`;
+}
+
+/** People: the GitHub owners behind the catalogue, and the people with projects on forq. */
+export function peopleBody(entries: Entry[]) {
+  const by = new Map<string, CatalogItem[]>();
+  for (const x of ITEMS) { const o = x.full.split('/')[0]; by.set(o, [...(by.get(o) || []), x]); }
+  const owners = [...by.entries()].map(([o, list]) => ({ o, list: list.sort((a, b) => b.stars - a.stars), stars: list.reduce((n, x) => n + x.stars, 0) }))
+    .sort((a, b) => b.stars - a.stars);
+  const onForq = [...new Set(entries.map((e) => e.owner))].map((h) => ({ h, n: entries.filter((e) => e.owner === h).length })).sort((a, b) => b.n - a.n);
+  return `<div class="people">${owners.map((p) => `<div class="pp">${avatar(p.o)}<div class="tx"><b><a href="https://github.com/${esc(p.o)}" target="_blank" rel="noopener" style="color:inherit">${esc(p.o)}</a></b>
+<span>${p.list.map((x) => `<a href="${ghPath(x.full)}">${esc(x.full.split('/')[1])}</a>`).join(', ')}</span></div><span class="pst">${STAR}${k(p.stars)}</span></div>`).join('')}</div>
+${onForq.length ? `<p class="sec2">On this forq</p><div class="people">${onForq.map((p) => `<div class="pp">${avatar(p.h)}<div class="tx"><b>${esc(p.h)}</b><span>${p.n} project${p.n === 1 ? '' : 's'}</span></div></div>`).join('')}</div>` : ''}`;
 }
 
 /** A catalogue project's page: what it is, Import (or Open on forq), and its README, loaded lazily. */

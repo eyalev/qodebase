@@ -313,7 +313,7 @@ const app = {
         const entries = await registry(env).list();
         const tab = path === '/mine' && me.handle ? 'mine' : path === '/inbox' && me.handle ? 'inbox' : 'home';
         const s = url.searchParams.get('s');
-        return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'happening' || s === 'people' ? s : 'projects',
+        return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'people' ? s : 'projects',
           { tag: url.searchParams.get('cat') || url.searchParams.get('tag') || undefined, sort: url.searchParams.get('sort') || undefined }));
       }
       // The catalogue: a GitHub project's page, and its README fetched only when the page asks.
