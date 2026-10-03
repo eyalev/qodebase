@@ -40,7 +40,10 @@ export async function withBaseline(request: Request, env: BaselineEnv, res: Resp
     .on('head', {
       element(e) {
         e.onEndTag(async (end) => {
-          const tags = [`<script defer src="https://stats.kapps.dev/k.js" data-site="${KSTATS_SITE}"></script>`];
+          // k.js is inserted only once the page is really shown: a prerendered
+          // page (speculation rules on the home and /gh pages) runs its scripts
+          // before anyone sees it, and would count views that never happened.
+          const tags = [`<script>(function(){function k(){var s=document.createElement('script');s.defer=true;s.src='https://stats.kapps.dev/k.js';s.setAttribute('data-site','${KSTATS_SITE}');document.head.appendChild(s)}if(document.prerendering)document.addEventListener('prerenderingchange',k,{once:true});else k()})()</script>`];
           if (!hasOg) tags.push(...await shareTags(env, host, url.pathname, title, desc));
           end.before(tags.join(''), { html: true });
         });
