@@ -70,30 +70,34 @@ export function personalAgentsPage(): string {
 <div class="cards">
 <section class="card" id="personal-agent">
 <div class="head"><h3>Personal Agent</h3><span class="tag acc">Start here</span></div>
-<ul class="facts"><li>Free</li><li>Chat on the web</li><li>2 minutes</li></ul>
-<div class="btns"><a class="btn pri" href="https://deploy.workers.dev/?url=https://github.com/DomWane/workers-personal-agent" rel="noopener">Deploy</a><a class="btn sec" href="https://github.com/DomWane/workers-personal-agent" rel="noopener">Details</a></div>
+<ul class="facts"><li>Free</li><li>Chat on the web</li><li>About 10 minutes</li></ul>
+<div class="btns"><a class="btn pri" href="https://deploy.workers.cloudflare.com/?url=https://github.com/DomWane/workers-personal-agent" rel="noopener">Deploy</a><a class="btn sec" href="https://github.com/DomWane/workers-personal-agent" rel="noopener">Details</a></div>
 <details><summary>Steps</summary><ol>
-<li>Tap Deploy, sign in to Cloudflare</li>
-<li>Keep the defaults</li>
-<li>Open the address it gives you</li>
+<li>Tap Deploy, sign in, connect GitHub</li>
+<li>Make an <a href="https://dash.cloudflare.com/profile/api-tokens" rel="noopener">API token</a> with Workers AI Read, Browser Run Write, Billing Read</li>
+<li>Paste it and your account ID</li>
+<li>Type <code>none</code> in the two search-key boxes</li>
+<li>After deploy: Worker, Access, All traffic, Cloudflare account</li>
 </ol></details>
 </section>
 
 <section class="card" id="openclaw">
 <div class="head"><h3>OpenClaw</h3><span class="tag busy">Experimental</span></div>
 <ul class="facts"><li>From $5/month</li><li>Telegram, Discord, Slack</li><li>Browses the web for you</li></ul>
-<div class="btns"><a class="btn pri" href="https://deploy.workers.dev/?url=https://github.com/cloudflare/moltworker" rel="noopener">Deploy</a><a class="btn sec" href="https://github.com/cloudflare/moltworker" rel="noopener">Details</a></div>
+<div class="btns"><a class="btn pri" href="https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/moltworker" rel="noopener">Deploy</a><a class="btn sec" href="https://github.com/cloudflare/moltworker" rel="noopener">Details</a></div>
 <details><summary>Steps</summary><ol>
 <li>Turn on Workers Paid ($5/month)</li>
-<li>Tap Deploy, paste your <a href="https://console.anthropic.com/" rel="noopener">Anthropic key</a></li>
-<li>Add a Telegram bot from <a href="https://t.me/BotFather" rel="noopener">@BotFather</a></li>
-<li>Set it to sleep when idle (keeps it near $5)</li>
+<li>Tap Deploy, paste an <a href="https://console.anthropic.com/" rel="noopener">Anthropic key</a> (or use a free Cloudflare model through AI Gateway)</li>
+<li>Make up a password for the gateway token</li>
+<li>Lock it with Access, your email only</li>
+<li>Wait 2 minutes for the first start, then approve your phone at <code>/_admin</code></li>
+<li>Set it to sleep after 10 minutes idle (keeps it near $5)</li>
 </ol></details>
 </section>
 
 <section class="card" id="hermes">
-<div class="head"><h3>Hermes</h3><span class="tag">Not in your account</span></div>
-<ul class="facts"><li>Hosted by Nous Research</li><li>Your account version: <a href="/feedback?from=/personal-agents">ask for it</a></li></ul>
+<div class="head"><h3>Hermes</h3><span class="tag">Hosted</span></div>
+<ul class="facts"><li>Easiest: hosted by Nous, $2 to start</li><li>Also runs in your Cloudflare (we tested it), no button yet: <a href="/feedback?from=/personal-agents">ask for one</a></li></ul>
 <div class="btns"><a class="btn sec" href="https://portal.nousresearch.com/cloud" rel="noopener">Details</a></div>
 </section>
 </div>
