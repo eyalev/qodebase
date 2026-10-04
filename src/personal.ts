@@ -108,14 +108,14 @@ ${many ? `<div class="field"><label for="account">Cloudflare account</label><sel
 <form method="post" action="/connect/cf/disconnect?next=/personal-agents"><button class="linkbtn" type="submit">Disconnect Cloudflare</button></form>`);
 }
 
-export type InstallView = { id: string; title: string; name: string; accountName: string; steps: { key: string; label: string; state: string; note?: string }[]; url?: string; error?: string; fix?: { text: string; href: string } };
+export type InstallView = { id: string; title: string; name: string; accountName: string; steps: { key: string; label: string; state: string; note?: string }[]; url?: string; error?: string; fix?: { text: string; href: string }; log?: string };
 
 export function installProgressPage(v: InstallView): string {
   const body = `<h1 id="h">${v.url ? `${esc(v.name)} is ready` : v.error ? 'Install stopped' : `Installing ${esc(v.name)}`}</h1>
 <p class="small">${esc(v.title)} into ${esc(v.accountName)}</p>
 <ul class="steps" id="steps">${v.steps.map((s) => `<li><span class="dot ${esc(s.state)}"></span><div><div class="t">${esc(s.label)}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</div></li>`).join('')}</ul>
 <div id="end">${v.url ? `<div class="btns"><a class="btn pri wide" href="${esc(v.url)}">Open my assistant</a></div><p class="addr">${esc(v.url)}</p><p class="small">Only you can open it. The first visit asks you to sign in with Cloudflare.</p>`
-  : v.error ? `<p class="err">${esc(v.error)}</p>${v.fix ? `<div class="btns"><a class="btn pri wide" href="${esc(v.fix.href)}">${esc(v.fix.text)}</a></div>` : ''}<div class="btns"><a class="btn sec wide" href="/personal-agents">Back</a></div>` : ''}</div>`;
+  : v.error ? `<p class="err">${esc(v.error)}</p>${v.fix ? `<div class="btns"><a class="btn pri wide" href="${esc(v.fix.href)}">${esc(v.fix.text)}</a></div>` : ''}<div class="btns"><a class="btn sec wide" href="/personal-agents">Back</a></div>${v.log ? `<details><summary>Details</summary><pre class="addr" style="white-space:pre-wrap">${esc(v.log)}</pre></details>` : ''}` : ''}</div>`;
   const poll = v.url || v.error ? '' : `<script>
 (function(){var t=setInterval(function(){fetch(location.pathname+'.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){
 if(v.url||v.error){clearInterval(t);location.reload();return}

@@ -48,7 +48,7 @@ export type Install = {
   id: string; template: string; name: string; accountId: string; accountName: string; email: string;
   createdAt: number; updatedAt: number;
   steps: { key: StepKey; label: string; state: 'todo' | 'doing' | 'done' | 'failed'; note?: string }[];
-  subdomain?: string; url?: string; error?: string; fix?: { text: string; href: string };
+  subdomain?: string; url?: string; error?: string; fix?: { text: string; href: string }; log?: string;
 };
 type Conn = { refreshEnc: string; accessEnc: string; accessExp: number; accounts: { id: string; name: string }[]; connectedAt: number };
 
@@ -136,7 +136,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
   return null;
 }
 
-const view = (i: Install): InstallView => ({ id: i.id, title: TEMPLATES[i.template]?.title || i.template, name: i.name, accountName: i.accountName, steps: i.steps, url: i.url, error: i.error, fix: i.fix });
+const view = (i: Install): InstallView => ({ id: i.id, title: TEMPLATES[i.template]?.title || i.template, name: i.name, accountName: i.accountName, steps: i.steps, url: i.url, error: i.error, fix: i.fix, log: i.log });
 
 async function tokenRequest(env: Env, params: Record<string, string>): Promise<any> {
   const r = await fetch(TOKEN_URL, {
@@ -318,6 +318,7 @@ export class Installs extends DurableObject<Env> {
     if (!i) return;
     if (!result.ok) {
       log('install', 'deploy_failed', { id, error: result.error, tail: result.log.slice(-800) });
+      i.log = result.log.slice(-4000);
       return this.#fail(i, 'deploy', `The upload failed: ${result.error || 'no reason given'}`);
     }
     this.#step(i, 'deploy', 'done');
