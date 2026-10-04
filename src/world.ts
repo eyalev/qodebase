@@ -101,7 +101,7 @@ const HOME_JS = String.raw`(function(){
  const rows=[...list.children];
  const read=()=>{const u=new URLSearchParams(location.search);return{s:u.get('s')==='people'?'people':'projects',cat:u.get('cat')||u.get('tag')||'',sort:u.get('sort')==='updated'?'updated':'top'};};
  let st=read(),last={cat:st.cat,sort:st.sort};
- const url=()=>st.s==='people'?'/?s=people':'/'+(([st.cat?'cat='+st.cat:'',st.sort==='updated'?'sort=updated':''].filter(Boolean).join('&'))?'?'+[st.cat?'cat='+st.cat:'',st.sort==='updated'?'sort=updated':''].filter(Boolean).join('&'):'');
+ const url=()=>st.s==='people'?'/explore?s=people':'/explore'+(([st.cat?'cat='+st.cat:'',st.sort==='updated'?'sort=updated':''].filter(Boolean).join('&'))?'?'+[st.cat?'cat='+st.cat:'',st.sort==='updated'?'sort=updated':''].filter(Boolean).join('&'):'');
  function apply(push){
   for(const a of document.querySelectorAll('.sub3 a')){const on=a.dataset.tab===st.s;a.classList.toggle('on',on);on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current');}
   for(const p of document.querySelectorAll('[data-panel]'))p.hidden=p.dataset.panel!==st.s;

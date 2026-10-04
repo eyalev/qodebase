@@ -340,9 +340,10 @@ const app = {
       // Home tabs (A and B): Projects, Inbox, Explore; signed out, Explore only.
       // D: Home is the world (same for everyone), Yours is your projects.
       if (ui === 'd' && (path === '/' || path === '/mine' || path === '/inbox' || path === '/explore')) {
-        if (path === '/explore') return new Response(null, { status: 302, headers: { location: '/?s=projects' } });
+        // The catalogue lives at /explore since 2026-10-04; old home links with its filters follow it.
+        if (path === '/' && ['s', 'cat', 'tag', 'sort'].some((k) => url.searchParams.has(k))) return new Response(null, { status: 301, headers: { location: `/explore${url.search}` } });
         const entries = await registry(env).list();
-        const tab = path === '/mine' && me.handle ? 'mine' : path === '/inbox' && me.handle ? 'inbox' : 'home';
+        const tab = path === '/mine' && me.handle ? 'mine' : path === '/inbox' && me.handle ? 'inbox' : path === '/explore' ? 'explore' : 'home';
         const s = url.searchParams.get('s');
         return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'people' ? s : 'projects',
           { tag: url.searchParams.get('cat') || url.searchParams.get('tag') || undefined, sort: url.searchParams.get('sort') || undefined }));

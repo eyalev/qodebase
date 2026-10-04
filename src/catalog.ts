@@ -75,7 +75,7 @@ export function catalogBody(entries: Entry[], opts: { cat?: string; sort?: strin
   const onForq = importedMap(entries);
   const cat = opts.cat === 'forq' || opts.cat === 'runs' || (opts.cat && CAT_LABEL[opts.cat]) ? opts.cat : '';
   const sort = opts.sort === 'updated' ? 'updated' : 'top';
-  const q = (c: string, so: string) => `/?${[c ? `cat=${c}` : '', so === 'updated' ? 'sort=updated' : ''].filter(Boolean).join('&')}`.replace(/\?$/, '');
+  const q = (c: string, so: string) => `/explore?${[c ? `cat=${c}` : '', so === 'updated' ? 'sort=updated' : ''].filter(Boolean).join('&')}`.replace(/\?$/, '');
   // forq/blank is the starter Build forks from, not a project to show.
   const native = entries.filter((e) => !e.forkedFrom && e.slug !== 'forq.blank');
   const count = (c: string) => ITEMS.filter((x) => x.cat === c).length;

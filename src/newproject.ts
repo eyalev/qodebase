@@ -94,6 +94,9 @@ ${needsKey ? `<p class="lede">Agents run on your own Anthropic API key. <a href=
    rec.onresult=(e)=>{let t='';for(const r of e.results)t+=r[0].transcript;idea.value=base+t;};
    rec.onend=()=>{rec=null;mic.classList.remove('on');mic.querySelector('span').textContent='Speak';};
    rec.onerror=()=>{};rec.start();mic.classList.add('on');mic.querySelector('span').textContent='Listening';};}
+ // From the home page's box (/build?idea=…): straight to the brief.
+ const fromHome=new URLSearchParams(location.search).get('idea');
+ if(fromHome){idea.value=fromHome;pname.dataset.touched='';brief();}
  // Back from sign-in (or a reload): the brief, filled in.
  try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&d.idea&&new URLSearchParams(location.search).get('step')==='brief'){idea.value=d.idea;if(d.name){pname.value=d.name;pname.dataset.touched=1;}brief();}}catch{}
  $('go').onclick=async()=>{const name=clean(pname.value),prompt=pidea.value.trim(),err=$('err');

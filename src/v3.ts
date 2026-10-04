@@ -11,7 +11,7 @@ import { freshTag } from './fresh';
 import { markdown } from './md';
 import { SHEET_HTML, shortId } from './sheet';
 import { SPECULATE, WORLD_CSS, worldBody, type WorldTab } from './world';
-import { CATALOG_CSS, catalogPage } from './catalog';
+import { CATALOG_CSS, ITEMS, catalogPage } from './catalog';
 import { BUILD_CSS, buildBody } from './newproject';
 import {
   type Change, type ProjectArgs, type UI, ORDER, OPEN_ICON_C as OPEN_ICON, SEND, VISIT, BUSY,
@@ -545,7 +545,15 @@ export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, ite
     return { ready: n('ready'), fix: n('fix') + n('waiting'), working: n('working') + n('checking') };
   };
   let title = '', body = '';
-  if (tab === 'home') {
+  if (tab === 'home' && nav === 'd') {
+    // Home is one question and one way out (Eyal, 2026-10-04: "really simple, a call
+    // to action, build something, or browse public projects; not a lot of mental strength").
+    title = 'forq';
+    body = landBody(entries);
+  } else if (tab === 'explore' && nav === 'd') {
+    title = 'Explore';
+    body = worldBody(world, entries, !!me, wopts);
+  } else if (tab === 'home') {
     title = 'forq';
     body = worldBody(world, entries, !!me, wopts);
   } else if (tab === 'projects' || tab === 'mine') {
@@ -567,7 +575,7 @@ ${moving.length ? `<h3>In progress</h3>${moving.map(({ it, c }) => `<a class="mi
   }
   return shell2(nav as UI, `${title} · forq`, `${nav === 'd' ? globalTop(tab, inboxN, me) : `
 <header class="h3"><a class="home" href="/">forq</a><span class="htitle">${title}</span></header>`}
-<main class="view" id="view"><div class="pad">${body}${legend(1)}${FOOT}</div></main>
+<main class="view" id="view"><div class="pad">${body}${tab === 'home' && nav === 'd' ? '' : legend(1)}${FOOT}</div></main>
 ${nav === 'd' ? '' : globalBar(tab, inboxN, me)}
 <script>
 // Inbox actions: each row knows its project's API.
@@ -577,7 +585,7 @@ document.addEventListener('click',async(e)=>{
  b.disabled=true;b.textContent=m?'Merging':'Sending to its agent';
  const r=await fetch(api+'/'+(m?'merge':'fix'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({agent:b.dataset.merge||b.dataset.fix})});
  if(!r.ok){const j=await r.json().catch(()=>({}));b.textContent=j.error||'Failed';return;}setTimeout(()=>location.reload(),1200);});
-</script>`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav}${nav === 'd' ? ' dhome' : ''}`);
+</script>`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + LAND_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav}${nav === 'd' ? ' dhome' : ''}`);
 }
 
 /** The settings page under the site-wide bar (Account tab). */
@@ -598,9 +606,11 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 /** D: the site-wide tabs as a strip at the top: forq, then Projects, Inbox, Explore, Account. */
 export function globalTop(active: HomeTab, inbox: number, me: string) {
   // Home is the world (the same for everyone); your own projects are under Yours.
+  // The forq mark is the way home (2026-10-04: Home became a calm start page and the
+  // catalogue moved to Explore, without adding a tab to a full bar).
   const tabs: [HomeTab, string, string][] = me
-    ? [['home', 'Home', '/'], ['inbox', 'Inbox', '/inbox'], ['mine', 'Yours', '/mine'], ['account', 'Account', '/settings']]
-    : [['home', 'Home', '/'], ['account', 'Sign in', '/login']];
+    ? [['explore', 'Explore', '/explore'], ['inbox', 'Inbox', '/inbox'], ['mine', 'Yours', '/mine'], ['account', 'Account', '/settings']]
+    : [['explore', 'Explore', '/explore'], ['account', 'Sign in', '/login']];
   if (active === 'projects') active = 'mine';
   // Build: the call to action on every page, signed in or not (Eyal, 2026-10-03).
   return `<nav class="gtop" aria-label="forq"><a class="mark" href="/">forq</a>${tabs.map(([id, labelT, href]) =>
@@ -611,7 +621,7 @@ export function globalTop(active: HomeTab, inbox: number, me: string) {
 export function catalogV3(nav: Nav, full: string, entries: Entry[], me: string, inbox: number) {
   const pg = catalogPage(full, entries, me);
   if (!pg) return null;
-  return shell2(nav as UI, `${pg.title} · forq`, `${globalTop('home', inbox, me)}
+  return shell2(nav as UI, `${pg.title} · forq`, `${globalTop('explore', inbox, me)}
 <main class="view" id="view"><div class="pad">${pg.body}${legend(1)}${FOOT}</div></main>${SPECULATE}`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
 
@@ -620,3 +630,31 @@ export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, 
   return shell2(nav as UI, 'Build · forq', `${globalTop('build', inbox, me)}
 <main class="view" id="view"><div class="pad">${buildBody(me, needsKey, runDomain)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + BUILD_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
+
+/** D's home: what forq is in one line, the build box, and the way to the catalogue. */
+function landBody(entries: Entry[]) {
+  const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && e.slug !== 'forq.blank').length;
+  return `<section class="land">
+<h1>Say what you want. Agents build it.</h1>
+<p class="lede">Every project here is a web app that runs. Start one from a sentence, or open someone else's and ask for changes.</p>
+<form class="landask" action="/build" method="get">
+<textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
+<button class="btn" type="submit">Build it</button>
+</form>
+<a class="browse" href="/explore"><span>Browse public projects</span><span class="n">${n}</span></a>
+</section>${SPECULATE}
+<script>(function(){const f=document.querySelector('.landask'),t=f.querySelector('textarea');
+t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();if(t.value.trim())f.requestSubmit();}});})();</script>`;
+}
+
+export const LAND_CSS = `
+.land{max-width:560px;margin:0 auto;padding:12vh 0 24px}
+.land h1{font-size:30px;line-height:1.15;font-weight:600;margin:0 0 10px;letter-spacing:-.01em}
+.land .lede{margin:0 0 24px;font-size:17px}
+.landask{display:flex;flex-direction:column;gap:10px}
+.landask textarea{width:100%;min-height:96px;font:17px/1.45 'Instrument Sans',sans-serif;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:none}
+.landask .btn{min-height:48px;font-size:16px}
+.land .browse{display:flex;align-items:center;justify-content:space-between;margin:28px 0 0;padding:14px 0;border-top:1px solid var(--line);color:var(--fg);font-weight:500;text-decoration:none}
+.land .browse .n{color:var(--dim);font-variant-numeric:tabular-nums;font-weight:400}
+@media (min-width:900px){.land{padding-top:16vh}.land h1{font-size:36px}}
+`;
