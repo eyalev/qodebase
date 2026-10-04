@@ -187,15 +187,22 @@ OWN account with no GitHub and no pasted tokens (research and options:
 - Verified 2026-10-04 at 390 px: consent → Install → ready in ~50 s into the
   personal account, chat + web search + memory working, anonymous → 302.
 - **Container agents** (`forq/container-agents`, local `../forq-container-agents`):
-  OpenClaw, Hermes and T3 Code run public Docker Hub images (default
-  scheduling policy, so no image build or push) in the user's account; Workers
-  AI reaches them through the outbound handler `http://ai.forq/v1`; the Worker
-  refuses anything Access did not sign in, then fills in the agent's own login
-  (OpenClaw gateway token + auto device approval, Hermes dashboard cookie login,
-  T3 Code pairing token reported by the container to `http://forq.token`).
-  Needs Workers Paid. `/__forq/restart` destroys a stuck container.
-  **No persistence yet:** each container start is a fresh disk (T3 Code's
-  wizard, projects and /workspace start over after a sleep).
+  OpenClaw, Hermes, T3 Code. **v2 (2026-10-05):** `durable_object` scheduling
+  policy on Cloudflare's managed image `cloudflare/debian-trixie` (no
+  Dockerfile, no registry push) with snapshots: first start installs the agent
+  (npm / Hermes install.sh) and snapshots once `/opt/forq/installed` exists;
+  later starts restore the newest snapshot (install + chats + files + logins
+  survive). The DO alarm (1 min) snapshots every 15 min while state dirs
+  change and before stopping an idle box (OpenClaw/Hermes 15 min, T3 30 min;
+  file changes count as activity because WebSocket traffic never reaches
+  fetch()). Measured restarts: T3 Code ~35 s to usable, OpenClaw and Hermes
+  ~1.5 min. First installs: T3 ~2 min, OpenClaw ~1.5 min, Hermes ~2.5 min.
+  Workers AI via `interceptOutboundHttp('ai.forq', ctx.exports.ForqOutbound)`.
+  The Worker refuses anything Access did not sign in, then fills in the agent's
+  own login. `/__forq/state`, `/__forq/logs` (install + agent log, processes),
+  `/__forq/save`, `/__forq/restart[?fresh=1]`. Container deploys no longer
+  restart running boxes (DO policy), so test entrypoint changes with a restart.
+  Needs Workers Paid. Snapshot storage price: not documented (cloudcost gap).
 - Personal Agent keeps its vault in a Durable Object (no R2, no card).
 
 ## Run host details

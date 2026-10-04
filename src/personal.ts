@@ -156,34 +156,34 @@ export function personalAgentsPage(): string {
 
 <section class="card" id="openclaw">
 <div class="head"><h3>OpenClaw</h3><span class="tag busy">Needs $5 plan</span></div>
-<ul class="facts"><li>The popular open-source assistant</li><li>Chat on the web, add Telegram later</li><li>Sleeps when idle, about $5–6/month</li></ul>
+<ul class="facts"><li>The popular open-source assistant</li><li>Chat on the web, add Telegram later</li><li>Sleeps when idle and keeps your chats</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/openclaw">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
 <details><summary>What happens</summary><ol>
 <li>Your account needs Workers Paid ($5/month) for containers</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
-<li>First open takes about a minute while it wakes up</li>
+<li>First open installs it (a few minutes, once)</li>
 </ol></details>
 </section>
 
 <section class="card" id="t3code">
 <div class="head"><h3>T3 Code</h3><span class="tag busy">Needs $5 plan</span></div>
-<ul class="facts"><li>Coding agents from your phone</li><li>OpenCode free built in; add Claude Code or Codex</li><li>Sleeps after 30 idle minutes</li></ul>
+<ul class="facts"><li>Coding agents from your phone</li><li>OpenCode with a free model built in; sign in to Claude Code too</li><li>Keeps your projects; wakes in about 30 seconds</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/t3code">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
 <details><summary>What happens</summary><ol>
 <li>Your account needs Workers Paid ($5/month) for containers</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
-<li>First open takes a minute or two while it sets up</li>
+<li>First open installs it (a few minutes, once)</li>
 </ol></details>
 </section>
 
 <section class="card" id="hermes">
 <div class="head"><h3>Hermes</h3><span class="tag busy">Needs $5 plan</span></div>
-<ul class="facts"><li>Nous Research's agent that learns as it goes</li><li>Web dashboard, add Telegram later</li><li>Sleeps when idle, about $5–6/month</li></ul>
+<ul class="facts"><li>Nous Research's agent that learns as it goes</li><li>Web dashboard, add Telegram later</li><li>Sleeps when idle and keeps what it learned</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/hermes">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
 <details><summary>What happens</summary><ol>
 <li>Your account needs Workers Paid ($5/month) for containers</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
-<li>First open takes about a minute while it wakes up</li>
+<li>First open installs it (a few minutes, once)</li>
 </ol></details>
 </section>
 </div>
