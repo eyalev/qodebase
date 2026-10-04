@@ -21,7 +21,7 @@ const BASE = arg('--base', 'https://projectsbase.dev');
 const BREAK = process.argv.includes('--break');
 const host = new URL(BASE).hostname;
 
-const PAGES = ['/', '/explore', '/p/forq/todo', '/p/eyal/calculator', '/p/forq/reveal-js/code', '/about', '/privacy', '/personal-agents', '/feedback?from=/p/forq/todo'];
+const PAGES = ['/', '/explore', '/p/forq/todo', '/p/eyal/calculator', '/p/forq/reveal-js/code', '/about', '/privacy', '/personal-agents', '/personal-agents/install/personal-agent', '/feedback?from=/p/forq/todo'];
 const PHONE = 390;   // fixed: a too-wide page widens the mobile layout viewport, so innerWidth grows with it
 const VARIANTS = ['a', 'b', 'c', 'd'].map((v) => `https://${v}.${host}/`);
 

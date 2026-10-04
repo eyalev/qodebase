@@ -161,6 +161,33 @@ waitUntil work is cut ~30 s after the response. Waking a box can take longer
   app Worker to `POST /api/hooks/issues` (secret header `cf-webhook-auth`),
   which hands the error to that project's router agent.
 
+## Install into your own Cloudflare (src/install.ts)
+
+`/personal-agents` → "Install in my Cloudflare" puts an agent into the user's
+OWN account with no GitHub and no pasted tokens (research and options:
+`docs/deploy-without-github.md`).
+- **Sign in with Cloudflare** = forq's OAuth client `c7a959b3…` (forq account;
+  secret `CF_OAUTH_CLIENT_SECRET`, laptop copy `~/.config/forq-cf/oauth-client.json`).
+  Endpoints `dash.cloudflare.com/oauth2/{auth,token,revoke}`; access tokens live
+  1 h, refresh tokens rotate on every refresh. Private until projectsbase.dev is
+  verified (TXT `cloudflare_oauth_client_publisher=…` on the apex), then public.
+- **Installs DO** (one per forq email) keeps the encrypted refresh token and runs
+  each install as steps from its alarm: workers.dev subdomain → R2 bucket →
+  BuildBox `installs` instance runs `wrangler deploy` on the template's prebuilt
+  `forq-release/` with the user's access token (never logged) → Access app on
+  the Worker (`destinations: [{type: worker}]`, account members + their email,
+  Cloudflare IdP when present) → ready. A failed step keeps the build log
+  (Details on the progress page) and, where we know it, a fix link.
+- **Templates** live in forq's Artifacts: `forq/workers-personal-agent` (import
+  of DomWane/workers-personal-agent) with `src/connectors/ai-binding.ts` (Workers
+  AI through the `AI` binding, so no `CF_API_TOKEN`) and `forq-release/`
+  (`wrangler.base.json`, `no_bundle` index.js, `public/`). Rebuild it with its
+  `scripts/forq-release.sh` and push. Add a template in `TEMPLATES`.
+- Verified 2026-10-04 at 390 px: consent → Install → ready in ~50 s into the
+  personal account, chat + web search + memory working, anonymous → 302.
+- Not yet: container agents (OpenClaw, Hermes) — no image path into a user's
+  account; a fresh account without R2 stops at storage with a "Turn on R2" link.
+
 ## Run host details
 
 - Since 2026-10-02 each repo has its own origin (see "Running it"), so apps

@@ -109,6 +109,16 @@ contest demo: a stranger has a running agent in seconds.
 - **Auto Router** as the default model for BYO-key users who do not care.
 - **Cloudflare OS managed**: nearest neighbour, still not phone-first or forkable.
 
+## Answered 2026-10-04 (built: src/install.ts)
+
+1. wrangler accepts the OAuth access token as `CLOUDFLARE_API_TOKEN`: yes.
+   Public-style refresh works and rotates the refresh token every time.
+2. Access on a Worker via API: `POST /access/apps` with
+   `destinations: [{type: "worker", worker_id: <script tag>}]` and an include
+   rule `cloudflare_account_member`; anonymous requests get 302.
+3. Workers AI without a token: the binding answers the agent's OpenAI calls
+   (non-streaming, converted to OpenAI chunks; tool calls work).
+
 ## Open questions (check before building)
 
 1. Does wrangler accept a third-party OAuth access token as
