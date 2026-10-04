@@ -186,8 +186,17 @@ OWN account with no GitHub and no pasted tokens (research and options:
   `scripts/forq-release.sh` and push. Add a template in `TEMPLATES`.
 - Verified 2026-10-04 at 390 px: consent → Install → ready in ~50 s into the
   personal account, chat + web search + memory working, anonymous → 302.
-- Not yet: container agents (OpenClaw, Hermes) — no image path into a user's
-  account; a fresh account without R2 stops at storage with a "Turn on R2" link.
+- **Container agents** (`forq/container-agents`, local `../forq-container-agents`):
+  OpenClaw, Hermes and T3 Code run public Docker Hub images (default
+  scheduling policy, so no image build or push) in the user's account; Workers
+  AI reaches them through the outbound handler `http://ai.forq/v1`; the Worker
+  refuses anything Access did not sign in, then fills in the agent's own login
+  (OpenClaw gateway token + auto device approval, Hermes dashboard cookie login,
+  T3 Code pairing token reported by the container to `http://forq.token`).
+  Needs Workers Paid. `/__forq/restart` destroys a stuck container.
+  **No persistence yet:** each container start is a fresh disk (T3 Code's
+  wizard, projects and /workspace start over after a sleep).
+- Personal Agent keeps its vault in a Durable Object (no R2, no card).
 
 ## Run host details
 
