@@ -661,13 +661,13 @@ export const LAND_CSS = `
 .land .browse+.browse{margin-top:0}
 .tryh{font-size:17px;font-weight:600;margin:32px 0 2px}
 .trys{margin:0 0 12px;color:var(--dim);font-size:15px}
-.tryrow{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}
+.tryrow{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}
 .tryrow::-webkit-scrollbar{display:none}
 .tcard{flex:none;width:148px;scroll-snap-align:start;color:var(--fg);text-decoration:none}
 .tcard img{display:block;width:148px;height:197px;object-fit:cover;object-position:top;border-radius:10px;box-shadow:inset 0 0 0 1px var(--line);border:1px solid var(--line);background:var(--card)}
 .tcard b{display:block;font-size:15px;font-weight:600;margin:8px 0 2px}
 .tcard span{display:block;font-size:13px;line-height:1.35;color:var(--dim)}
-@media (min-width:900px){.tryrow{margin:0;padding:2px 0 6px}}
+@media (min-width:900px){.tryrow{margin:0;padding:2px 0 6px;scroll-padding-inline:0}}
 .land .browse small{display:block;margin-top:2px;color:var(--dim);font-size:14px;font-weight:400;line-height:1.4}
 .land~.foot3{max-width:560px;margin-left:auto;margin-right:auto}
 /* One green button on the start page: the box's own Build it. */
