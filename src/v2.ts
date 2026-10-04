@@ -262,7 +262,7 @@ if(live&&!location.pathname.startsWith('/design-fixture')){document.addEventList
 async function post(verb,body){const r=await fetch(API+'/'+verb,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body||{})});const j=await r.json().catch(()=>({}));return r.ok?j:Promise.reject(new Error(j.error||'Failed'));}
 async function ask(text){window.forqAsked&&window.forqAsked(text);
  if(live){const p=live.querySelector('.plan');const h='<div class="plan busy">Sending <span data-since="'+Date.now()+'">0s</span></div>';if(p)p.outerHTML=h;else live.insertAdjacentHTML('afterbegin',h);tick();}
- try{await post('router',{text});poll();return true;}catch(e){const p=live&&live.querySelector('.plan');if(p){p.className='plan bad';p.textContent=e.message;}return false;}}
+ try{await post('router',{text});poll();return true;}catch(e){const p=live&&live.querySelector('.plan');if(p){p.className='plan bad';p.textContent=e.message;}else{const ta=document.querySelector('form.ask textarea');if(ta)ta.placeholder=e.message;}return false;}}
 document.addEventListener('keydown',(e)=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-open]')){e.preventDefault();e.target.click();}});
 // Trying a change: the app shows its preview under a strip that says so.
 const frame=document.getElementById('app'),ext=document.getElementById('ext'),tbar=document.getElementById('trybar');
@@ -277,7 +277,7 @@ for(const f of document.querySelectorAll('form.ask')){
  const lit=()=>{if(sb)sb.className='send '+(ta.value.trim()?'btn':'chipbtn');};
  const grow=()=>{ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,160)+'px';lit();};ta.addEventListener('input',grow);
  ta.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();f.requestSubmit();}});
- f.onsubmit=async(e)=>{e.preventDefault();const t=ta.value.trim();if(!t)return;ta.value='';grow();if(!(await ask(t))){ta.value=t;grow();}};}
+ f.onsubmit=async(e)=>{e.preventDefault();const t=ta.value.trim();if(!t)return;ta.value='';grow();if(!(await ask(t))){ta.value=t;grow();}else if(window.forqAskedGo)location.href=window.forqAskedGo;};}
 document.addEventListener('click',async(e)=>{
  const o=!e.target.closest('.fresh')&&e.target.closest('[data-open]');if(o){const r=o.closest('.chg');const on=r.classList.toggle('open');o.setAttribute('aria-expanded',on);on?openIds.add(r.dataset.id):openIds.delete(r.dataset.id);return;}
  const t=e.target.closest('[data-try]');if(t){forqTry(t.dataset.try,t.dataset.title,t.dataset.agent,t.dataset.state);return;}

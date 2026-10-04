@@ -544,7 +544,8 @@ const app = {
           for (let i = 2; await registry(env).get(slugOf(me.handle, newName)); i++) newName = `${info.name}-${i}`;
           if (!NAME_RE.test(newName)) return json({ error: 'name too long' }, 400);
           const fi = await projectStub(env, slugOf(me.handle, newName)).createFork(me.handle, newName, info);
-          return json({ ...fi, path: `/p/${fi.owner}/${fi.name}` });
+          // Land where you change it (2026-10-04: landing on the README left it unclear how).
+          return json({ ...fi, path: `/p/${fi.owner}/${fi.name}/changes` });
         }
         // Reading code is open to anyone who can see the project; acting on it is owner-only (below).
         if (verb === 'files') {

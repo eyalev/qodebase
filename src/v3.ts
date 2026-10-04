@@ -85,11 +85,17 @@ export type Global = { nav: Nav; inbox: number };
 
 // ---- the views ---------------------------------------------------------------
 
+/** The "Ask for a change" box. On your own project it sits above the tabs on every
+ *  view, not only Changes (Eyal, 2026-10-04: after forking he landed on the README
+ *  and could not tell how to change anything); sent from another view, it goes on to
+ *  Changes, where the work shows. */
+const askBox = (c: Ctx) => c.needsKey ? `<div class="compose">${keyNote}</div>` : `<div class="compose"><form class="ask"><textarea rows="1" placeholder="Ask for a change" enterkeyhint="send" aria-label="Ask for a change"></textarea>${SEND}</form></div>`;
+
 /** Changes: what is in progress, as a conversation, newest at the bottom. */
 function changesView(c: Ctx) {
   return {
     body: `<div class="thread"><div class="tin" id="live">${liveChanges(c)}</div></div>`,
-    compose: c.needsKey ? `<div class="compose">${keyNote}</div>` : `<div class="compose"><form class="ask"><textarea rows="1" placeholder="Ask for a change" enterkeyhint="send" aria-label="Ask for a change"></textarea>${SEND}</form></div>`,
+    compose: askBox(c),
     poll: true,
     // Your message and a "Sending" line appear at the bottom at once; the poll replaces both.
     js: `window.forqAsked=(t)=>{const th=document.getElementById('live');for(const p of th.querySelectorAll('.plan,.hello'))p.remove();const e=document.createElement('div');e.className='you';e.textContent=t;th.appendChild(e);th.insertAdjacentHTML('beforeend','<div class="plan busy">Sending</div>');};`,
@@ -120,7 +126,9 @@ export function liveChanges(c: Ctx) {
   });
   if (q && isMerge(q.text)) out.push(planningHtml(plan, q));
   const merged = done.length ? `<a class="older" href="${c.base}/history">${done.length} merged change${done.length > 1 ? 's' : ''} in History</a>` : '';
-  const empty = !out.join('').trim() ? `<div class="hello"><b>Nothing in progress.</b><p>Ask for a change in plain words. forq splits it into tasks, an agent does each one on its own fork, and a reviewer checks it before you merge.</p></div>` : '';
+  // A copy you just made: say it is yours and what to do with it.
+  const fresh = info.forkedFrom && !info.agents.length && !q;
+  const empty = !out.join('').trim() ? fresh ? `<div class="hello"><b>This is your copy.</b><p>Forked from <a href="/p/${esc(info.forkedFrom!.replace('.', '/'))}">${esc(info.forkedFrom!.replace('.', ' / '))}</a>. Say what to change below, in plain words: forq splits it into tasks, an agent does each one, and a reviewer checks it before you merge. The original is not touched.</p></div>` : `<div class="hello"><b>Nothing in progress.</b><p>Ask for a change in plain words. forq splits it into tasks, an agent does each one on its own fork, and a reviewer checks it before you merge.</p></div>` : '';
   return `<template id="needs" data-n="${needsOf(open).length}"></template>${merged}${empty}${out.join('')}${legend(open.length)}`;
 }
 
@@ -375,7 +383,7 @@ export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record
   return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · forq`, `${g.nav === 'd' ? globalTop('projects', g.inbox, me) : ''}
 <header class="h3${g.nav === 'd' ? ' sub' : ''}">${g.nav === 'd' ? '' : home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(info.owner)} /</span> <b>${esc(info.name)}</b></a>${r.action || ''}</header>
 ${g.nav === 'b' ? tabBar(c, id, needs, true) : ''}
-<main class="view${r.full ? ' full' : ''}" id="view">${r.body}</main>${r.compose || ''}
+<main class="view${r.full ? ' full' : ''}" id="view">${r.body}</main>${r.compose || (own ? askBox(c) : '')}
 ${g.nav === 'b' ? globalBar('projects', g.inbox, me) : tabBar(c, id, needs)}
 ${own ? `<div class="scrim3" id="scrim3"></div><div class="moresheet" id="moresheet" aria-hidden="true">${moreMenu(c)}</div>` : ''}
 ${own ? SHEET_HTML : ''}${pageJs(info, r.poll ? `?view=${id}` : '?view=none')}${FORK_JS}
@@ -392,6 +400,7 @@ forqTry=(src,title,agent)=>{location.href='${c.base}/app?try='+encodeURIComponen
 // The keyboard covers half a phone: hide the tab bar while typing.
 document.addEventListener('focusin',(e)=>{if(e.target.matches('textarea,input'))document.body.classList.add('typing');});
 document.addEventListener('focusout',()=>document.body.classList.remove('typing'));
+${!r.compose && own ? `window.forqAskedGo='${c.base}/changes';` : ''}
 ${r.js || ''}
 </script>`, V3_CSS + NAV_CSS, `v3 nav-${g.nav}`);
 }
