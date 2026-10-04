@@ -113,6 +113,7 @@ export type InstallView = { id: string; title: string; name: string; accountName
 export function installProgressPage(v: InstallView): string {
   const body = `<h1 id="h">${v.url ? `${esc(v.name)} is ready` : v.error ? 'Install stopped' : `Installing ${esc(v.name)}`}</h1>
 <p class="small">${esc(v.title)} into ${esc(v.accountName)}</p>
+${v.url || v.error ? '' : `<p class="small">Usually under a minute. You can leave this page; it keeps going.</p>`}
 <ul class="steps" id="steps">${v.steps.map((s) => `<li><span class="dot ${esc(s.state)}"></span><div><div class="t">${esc(s.label)}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</div></li>`).join('')}</ul>
 <div id="end">${v.url ? `<div class="btns"><a class="btn pri wide" href="${esc(v.url)}">Open my assistant</a></div><p class="addr">${esc(v.url)}</p><p class="small">Only you can open it. The first visit asks you to sign in with Cloudflare.${v.wakes ? ' The first start takes about a minute; after that it sleeps when idle and wakes in seconds.' : ''}</p>`
   : v.error ? `<p class="err">${esc(v.error)}</p>${v.fix ? `<div class="btns"><a class="btn pri wide" href="${esc(v.fix.href)}">${esc(v.fix.text)}</a></div>` : ''}<div class="btns"><a class="btn sec wide" href="/personal-agents">Back</a></div>${v.log ? `<details><summary>Details</summary><pre class="addr" style="white-space:pre-wrap">${esc(v.log)}</pre></details>` : ''}` : ''}</div>`;
