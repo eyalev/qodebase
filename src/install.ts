@@ -60,7 +60,7 @@ export type Install = {
   steps: { key: StepKey; label: string; state: 'todo' | 'doing' | 'done' | 'failed'; note?: string }[];
   subdomain?: string; url?: string; error?: string; fix?: { text: string; href: string }; log?: string;
 };
-type Conn = { refreshEnc: string; accessEnc: string; accessExp: number; accounts: { id: string; name: string }[]; connectedAt: number };
+type Conn = { refreshEnc: string; accessEnc: string; accessExp: number; accounts: { id: string; name: string }[]; connectedAt: number; scopes?: string[] };
 
 const enc = new TextEncoder();
 async function hmac(secret: string, msg: string) {
@@ -113,7 +113,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
     const accts = await cf(tok.access_token, '/accounts?per_page=50');
     const accounts = (accts.result || []).map((a: any) => ({ id: a.id, name: a.name }));
     if (!accounts.length) return fail('No Cloudflare account was shared with forq. Start again and tick an account.');
-    await stub.saveConnection(tok.access_token, tok.refresh_token, Number(tok.expires_in || 3600), accounts);
+    await stub.saveConnection(tok.access_token, tok.refresh_token, Number(tok.expires_in || 3600), accounts, String(tok.scope || '').split(/\s+/).filter(Boolean));
     log('install', 'oauth_connected', { email, accounts: accounts.length });
     return redirect(safePath(sNext), { 'set-cookie': 'forq_cfstate=; Path=/connect/cf; Max-Age=0; HttpOnly; Secure; SameSite=Lax' });
   }
@@ -133,7 +133,8 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
       if (!r.ok) return html(installPage({ kind: 'form', template: t, accounts: conn.accounts, name: String(f.get('name') || ''), error: r.error }), 400);
       return new Response(null, { status: 303, headers: { location: `/personal-agents/i/${r.id}` } });
     }
-    if (!conn.connected) return html(installPage({ kind: 'connect', template: t, startHref: `/connect/cf/start?next=${encodeURIComponent(p)}` }));
+    // A container agent needs containers.write, which older connections were not asked for.
+    if (!conn.connected || (t.container && !conn.scopes.includes('containers.write'))) return html(installPage({ kind: 'connect', template: t, startHref: `/connect/cf/start?next=${encodeURIComponent(p)}` }));
     return html(installPage({ kind: 'form', template: t, accounts: conn.accounts, name: t.defaultName }));
   }
   const s = p.match(/^\/personal-agents\/i\/([a-z0-9]+)(\.json)?$/);
@@ -162,12 +163,12 @@ async function tokenRequest(env: Env, params: Record<string, string>): Promise<a
 export class Installs extends DurableObject<Env> {
   async connection() {
     const c = await this.ctx.storage.get<Conn>('conn');
-    return { connected: !!c, accounts: c?.accounts || [], connectedAt: c?.connectedAt };
+    return { connected: !!c, accounts: c?.accounts || [], connectedAt: c?.connectedAt, scopes: c?.scopes || [] };
   }
-  async saveConnection(access: string, refresh: string, expiresIn: number, accounts: { id: string; name: string }[]) {
+  async saveConnection(access: string, refresh: string, expiresIn: number, accounts: { id: string; name: string }[], scopes: string[] = []) {
     await this.ctx.storage.put('conn', {
       refreshEnc: await encryptKey(this.env, refresh), accessEnc: await encryptKey(this.env, access),
-      accessExp: Date.now() + (expiresIn - 120) * 1000, accounts, connectedAt: Date.now(),
+      accessExp: Date.now() + (expiresIn - 120) * 1000, accounts, connectedAt: Date.now(), scopes,
     } satisfies Conn);
   }
   async disconnect() {
