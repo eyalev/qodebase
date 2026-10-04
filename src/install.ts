@@ -23,15 +23,25 @@ import { decryptKey, encryptKey, sessionEmail } from './auth';
 import type { BuildJob, BuildResult } from './build';
 import { installPage, installProgressPage, type InstallView } from './personal';
 
-export type Template = { id: string; title: string; repo: string; dir: string; bucketBinding: string; defaultName: string };
+export type Template = {
+  id: string; title: string; repo: string; dir: string; defaultName: string;
+  bucketBinding?: string;              // an R2 bucket to make (none: the template keeps its data in Durable Objects)
+  vars?: Record<string, string>;       // fixed vars for this template
+  secretVar?: string;                  // a var set to a fresh random value per install (the agent's own login)
+  container?: boolean;                 // runs a Cloudflare Container: needs Workers Paid
+};
 export const TEMPLATES: Record<string, Template> = {
-  'personal-agent': { id: 'personal-agent', title: 'Personal Agent', repo: 'forq.workers-personal-agent', dir: 'forq-release', bucketBinding: 'VAULT', defaultName: 'my-assistant' },
+  'personal-agent': { id: 'personal-agent', title: 'Personal Agent', repo: 'forq.workers-personal-agent', dir: 'forq-release', defaultName: 'my-assistant' },
+  openclaw: { id: 'openclaw', title: 'OpenClaw', repo: 'forq.container-agents', dir: 'forq-release-openclaw', defaultName: 'my-openclaw',
+    vars: { AGENT_KIND: 'openclaw', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
+  hermes: { id: 'hermes', title: 'Hermes', repo: 'forq.container-agents', dir: 'forq-release-hermes', defaultName: 'my-hermes',
+    vars: { AGENT_KIND: 'hermes', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
 };
 
 const API = 'https://api.cloudflare.com/client/v4';
 const AUTH_URL = 'https://dash.cloudflare.com/oauth2/auth';
 const TOKEN_URL = 'https://dash.cloudflare.com/oauth2/token';
-const SCOPES = ['memberships.read', 'account-settings.read', 'workers-scripts.read', 'workers-scripts.write', 'workers-r2.read', 'workers-r2.write',
+const SCOPES = ['memberships.read', 'account-settings.read', 'workers-scripts.read', 'workers-scripts.write', 'containers.write',
   'ai.read', 'aig.read', 'aig.write', 'browser-rendering.write', 'access-app.write', 'access-policy.write', 'access-org.read', 'access-org.write',
   'access-idp.read', 'access-idp.write', 'offline_access'];
 export const WORKER_NAME_RE = /^[a-z][a-z0-9-]{1,38}[a-z0-9]$/;
@@ -136,7 +146,8 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
   return null;
 }
 
-const view = (i: Install): InstallView => ({ id: i.id, title: TEMPLATES[i.template]?.title || i.template, name: i.name, accountName: i.accountName, steps: i.steps, url: i.url, error: i.error, fix: i.fix, log: i.log });
+const view = (i: Install): InstallView => ({ id: i.id, title: TEMPLATES[i.template]?.title || i.template, name: i.name, accountName: i.accountName, steps: i.steps, url: i.url, error: i.error, fix: i.fix, log: i.log,
+  wakes: !!TEMPLATES[i.template]?.container });
 
 async function tokenRequest(env: Env, params: Record<string, string>): Promise<any> {
   const r = await fetch(TOKEN_URL, {
@@ -242,6 +253,7 @@ export class Installs extends DurableObject<Env> {
         i.subdomain = subdomain;
         this.#step(i, 'account', 'done', `${i.accountName}`);
       } else if (next.key === 'storage') {
+        if (!TEMPLATES[i.template].bucketBinding) { this.#step(i, 'storage', 'done', 'Built in, nothing to set up'); await this.#save(i); await this.ctx.storage.setAlarm(Date.now() + 50); return; }
         const bucket = `${i.name}-vault`;
         const r = await cf(token, `/accounts/${a}/r2/buckets`, { method: 'POST', body: JSON.stringify({ name: bucket }) });
         const exists = r.errors.some((e) => e.code === 10004 || /already exists/i.test(e.message || ''));
@@ -259,7 +271,9 @@ export class Installs extends DurableObject<Env> {
         const job: BuildJob = {
           id: `install-${i.id}`, slug: t.repo, kind: 'install', repo: info.repo, remote: info.remote, token: read.plaintext.split('?')[0],
           worker: i.name, queuedAt: Date.now(),
-          install: { owner: i.email, installId: i.id, accountId: a, cfToken: token, dir: t.dir, vars: { CF_ACCOUNT_ID: a }, bucket: { binding: t.bucketBinding, name: `${i.name}-vault` } },
+          install: { owner: i.email, installId: i.id, accountId: a, cfToken: token, dir: t.dir,
+            vars: { CF_ACCOUNT_ID: a, ...(t.vars || {}), ...(t.secretVar ? { [t.secretVar]: [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, '0')).join('') } : {}) },
+            bucket: t.bucketBinding ? { binding: t.bucketBinding, name: `${i.name}-vault` } : undefined },
         };
         await this.env.BuildBox.get(this.env.BuildBox.idFromName('installs')).enqueue(job);
         await this.#save(i);
@@ -319,6 +333,10 @@ export class Installs extends DurableObject<Env> {
     if (!result.ok) {
       log('install', 'deploy_failed', { id, error: result.error, tail: result.log.slice(-800) });
       i.log = result.log.slice(-4000);
+      const t = TEMPLATES[i.template];
+      if (t?.container && /paid|subscription|containers? (are|is) not (enabled|available)|not entitled|plan/i.test(`${result.error} ${result.log.slice(-1500)}`)) {
+        return this.#fail(i, 'deploy', `${t.title} runs in a Cloudflare Container, which needs the Workers Paid plan ($5/month).`, { text: 'Turn on Workers Paid', href: `https://dash.cloudflare.com/${i.accountId}/workers/plans` });
+      }
       return this.#fail(i, 'deploy', `The upload failed: ${result.error || 'no reason given'}`);
     }
     this.#step(i, 'deploy', 'done');

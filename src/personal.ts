@@ -108,13 +108,13 @@ ${many ? `<div class="field"><label for="account">Cloudflare account</label><sel
 <form method="post" action="/connect/cf/disconnect?next=/personal-agents"><button class="linkbtn" type="submit">Disconnect Cloudflare</button></form>`);
 }
 
-export type InstallView = { id: string; title: string; name: string; accountName: string; steps: { key: string; label: string; state: string; note?: string }[]; url?: string; error?: string; fix?: { text: string; href: string }; log?: string };
+export type InstallView = { id: string; title: string; name: string; accountName: string; steps: { key: string; label: string; state: string; note?: string }[]; url?: string; error?: string; fix?: { text: string; href: string }; log?: string; wakes?: boolean };
 
 export function installProgressPage(v: InstallView): string {
   const body = `<h1 id="h">${v.url ? `${esc(v.name)} is ready` : v.error ? 'Install stopped' : `Installing ${esc(v.name)}`}</h1>
 <p class="small">${esc(v.title)} into ${esc(v.accountName)}</p>
 <ul class="steps" id="steps">${v.steps.map((s) => `<li><span class="dot ${esc(s.state)}"></span><div><div class="t">${esc(s.label)}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</div></li>`).join('')}</ul>
-<div id="end">${v.url ? `<div class="btns"><a class="btn pri wide" href="${esc(v.url)}">Open my assistant</a></div><p class="addr">${esc(v.url)}</p><p class="small">Only you can open it. The first visit asks you to sign in with Cloudflare.</p>`
+<div id="end">${v.url ? `<div class="btns"><a class="btn pri wide" href="${esc(v.url)}">Open my assistant</a></div><p class="addr">${esc(v.url)}</p><p class="small">Only you can open it. The first visit asks you to sign in with Cloudflare.${v.wakes ? ' The first start takes about a minute; after that it sleeps when idle and wakes in seconds.' : ''}</p>`
   : v.error ? `<p class="err">${esc(v.error)}</p>${v.fix ? `<div class="btns"><a class="btn pri wide" href="${esc(v.fix.href)}">${esc(v.fix.text)}</a></div>` : ''}<div class="btns"><a class="btn sec wide" href="/personal-agents">Back</a></div>${v.log ? `<details><summary>Details</summary><pre class="addr" style="white-space:pre-wrap">${esc(v.log)}</pre></details>` : ''}` : ''}</div>`;
   const poll = v.url || v.error ? '' : `<script>
 (function(){var t=setInterval(function(){fetch(location.pathname+'.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){
@@ -154,23 +154,25 @@ export function personalAgentsPage(): string {
 </section>
 
 <section class="card" id="openclaw">
-<div class="head"><h3>OpenClaw</h3><span class="tag busy">Experimental</span></div>
-<ul class="facts"><li>From $5/month</li><li>Telegram, Discord, Slack</li><li>Browses the web for you</li></ul>
-<div class="btns"><a class="btn pri" href="https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/moltworker" rel="noopener">Deploy</a><a class="btn sec" href="https://github.com/cloudflare/moltworker" rel="noopener">Details</a></div>
-<details><summary>Steps</summary><ol>
-<li>Turn on Workers Paid ($5/month)</li>
-<li>Tap Deploy, paste an <a href="https://console.anthropic.com/" rel="noopener">Anthropic key</a> (or use a free Cloudflare model through AI Gateway)</li>
-<li>Make up a password for the gateway token</li>
-<li>Lock it with Access, your email only</li>
-<li>Wait 2 minutes for the first start, then approve your phone at <code>/_admin</code></li>
-<li>Set it to sleep after 10 minutes idle (keeps it near $5)</li>
+<div class="head"><h3>OpenClaw</h3><span class="tag busy">Needs $5 plan</span></div>
+<ul class="facts"><li>The popular open-source assistant</li><li>Chat on the web, add Telegram later</li><li>Sleeps when idle, about $5–6/month</li></ul>
+<div class="btns"><a class="btn pri" href="/personal-agents/install/openclaw">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
+<details><summary>What happens</summary><ol>
+<li>Your account needs Workers Paid ($5/month) for containers</li>
+<li>Sign in with Cloudflare, name it, tap Install</li>
+<li>First open takes about a minute while it wakes up</li>
 </ol></details>
 </section>
 
 <section class="card" id="hermes">
-<div class="head"><h3>Hermes</h3><span class="tag">Hosted</span></div>
-<ul class="facts"><li>Easiest: hosted by Nous, $2 to start</li><li>Also runs in your Cloudflare (we tested it), no button yet: <a href="/feedback?from=/personal-agents">ask for one</a></li></ul>
-<div class="btns"><a class="btn sec" href="https://portal.nousresearch.com/cloud" rel="noopener">Details</a></div>
+<div class="head"><h3>Hermes</h3><span class="tag busy">Needs $5 plan</span></div>
+<ul class="facts"><li>Nous Research's agent that learns as it goes</li><li>Web dashboard, add Telegram later</li><li>Sleeps when idle, about $5–6/month</li></ul>
+<div class="btns"><a class="btn pri" href="/personal-agents/install/hermes">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
+<details><summary>What happens</summary><ol>
+<li>Your account needs Workers Paid ($5/month) for containers</li>
+<li>Sign in with Cloudflare, name it, tap Install</li>
+<li>First open takes about a minute while it wakes up</li>
+</ol></details>
 </section>
 </div>
 
