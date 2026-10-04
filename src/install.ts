@@ -275,7 +275,7 @@ export class Installs extends DurableObject<Env> {
           id: `install-${i.id}`, slug: t.repo, kind: 'install', repo: info.repo, remote: info.remote, token: read.plaintext.split('?')[0],
           worker: i.name, queuedAt: Date.now(),
           install: { owner: i.email, installId: i.id, accountId: a, cfToken: token, dir: t.dir,
-            vars: { CF_ACCOUNT_ID: a, ...(t.vars || {}), ...(t.secretVar ? { [t.secretVar]: [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, '0')).join('') } : {}) },
+            vars: { CF_ACCOUNT_ID: a, ...(t.vars || {}), ...(t.secretVar ? { [t.secretVar]: await this.#agentSecret(a, i.name) } : {}) },
             bucket: t.bucketBinding ? { binding: t.bucketBinding, name: `${i.name}-vault` } : undefined },
         };
         await this.env.BuildBox.get(this.env.BuildBox.idFromName('installs')).enqueue(job);
@@ -326,6 +326,17 @@ export class Installs extends DurableObject<Env> {
       policies: [{ name: 'Only you', decision: 'allow', include: [{ cloudflare_account_member: { account_id: a } }, { email: { email: i.email } }] }],
     }) });
     if (!r.ok) throw new Error(`could not lock it: ${errText(r.errors)}`);
+  }
+
+  /** The agent's own login secret, the same on every reinstall of one Worker
+   *  (a new one would lock the running container out until it restarts). */
+  async #agentSecret(accountId: string, name: string): Promise<string> {
+    const key = `secret:${accountId}/${name}`;
+    const have = await this.ctx.storage.get<string>(key);
+    if (have) return decryptKey(this.env, have);
+    const fresh = [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, '0')).join('');
+    await this.ctx.storage.put(key, await encryptKey(this.env, fresh));
+    return fresh;
   }
 
   /** BuildBox reports the deploy. */
