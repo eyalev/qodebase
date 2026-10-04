@@ -97,6 +97,8 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
     const body = `${email}|${exp}|${next}|${nonce}`;
     const state = btoa(`${body}|${await hmac(env.ADMIN_SECRET, `cfstate:${body}`)}`).replace(/=+$/, '');
     const q = new URLSearchParams({ response_type: 'code', client_id: env.CF_OAUTH_CLIENT_ID, redirect_uri: `https://${env.UI_HOST}/connect/cf/callback`, scope: SCOPES.join(' '), state });
+    // Asking again for a permission the user has not granted yet: show the consent screen even if Cloudflare remembers an older grant.
+    if (url.searchParams.get('again')) q.set('prompt', 'consent');
     log('install', 'oauth_start', { email, next });
     return redirect(`${AUTH_URL}?${q}`, { 'set-cookie': `forq_cfstate=${nonce}; Path=/connect/cf; Max-Age=900; HttpOnly; Secure; SameSite=Lax` });
   }
@@ -114,7 +116,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
     const accounts = (accts.result || []).map((a: any) => ({ id: a.id, name: a.name }));
     if (!accounts.length) return fail('No Cloudflare account was shared with forq. Start again and tick an account.');
     await stub.saveConnection(tok.access_token, tok.refresh_token, Number(tok.expires_in || 3600), accounts, String(tok.scope || '').split(/\s+/).filter(Boolean));
-    log('install', 'oauth_connected', { email, accounts: accounts.length });
+    log('install', 'oauth_connected', { email, accounts: accounts.length, scope: tok.scope });
     return redirect(safePath(sNext), { 'set-cookie': 'forq_cfstate=; Path=/connect/cf; Max-Age=0; HttpOnly; Secure; SameSite=Lax' });
   }
   if (p === '/connect/cf/disconnect' && request.method === 'POST') {
@@ -134,7 +136,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
       return new Response(null, { status: 303, headers: { location: `/personal-agents/i/${r.id}` } });
     }
     // A container agent needs containers.write, which older connections were not asked for.
-    if (!conn.connected || (t.container && !conn.scopes.includes('containers.write'))) return html(installPage({ kind: 'connect', template: t, startHref: `/connect/cf/start?next=${encodeURIComponent(p)}` }));
+    if (!conn.connected || (t.container && !conn.scopes.includes('containers.write'))) return html(installPage({ kind: 'connect', template: t, startHref: `/connect/cf/start?next=${encodeURIComponent(p)}${conn.connected ? '&again=1' : ''}` }));
     return html(installPage({ kind: 'form', template: t, accounts: conn.accounts, name: t.defaultName }));
   }
   const s = p.match(/^\/personal-agents\/i\/([a-z0-9]+)(\.json)?$/);
