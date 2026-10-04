@@ -636,12 +636,13 @@ function landBody(entries: Entry[]) {
   const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && e.slug !== 'forq.blank').length;
   return `<section class="land">
 <h1>Say what you want. Agents build it.</h1>
-<p class="lede">Every project here is a web app that runs. Start one from a sentence, or open someone else's and ask for changes.</p>
+<p class="lede">Any code: an app, a site, a tool, a library. Start a project from a sentence, or open someone else's and ask for changes.</p>
 <form class="landask" action="/build" method="get">
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button class="btn" type="submit">Build it</button>
 </form>
 <a class="browse" href="/explore"><span>Browse public projects</span><span class="n">${n}</span></a>
+<a class="browse own" href="https://github.com/eyalev/forq/blob/main/SELF_HOST.md"><span>Run your own forq<small>This is the hosted forq. It is open source: run it on your own Cloudflare account and it is yours.</small></span></a>
 </section>${SPECULATE}
 <script>(function(){const f=document.querySelector('.landask'),t=f.querySelector('textarea');
 t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();if(t.value.trim())f.requestSubmit();}});})();</script>`;
@@ -656,6 +657,8 @@ export const LAND_CSS = `
 .landask .btn{min-height:48px;font-size:16px}
 .land .browse{display:flex;align-items:center;justify-content:space-between;margin:28px 0 0;padding:14px 0;border-top:1px solid var(--line);color:var(--fg);font-weight:500;text-decoration:none}
 .land .browse .n{color:var(--dim);font-variant-numeric:tabular-nums;font-weight:400}
+.land .browse+.browse{margin-top:0}
+.land .browse small{display:block;margin-top:2px;color:var(--dim);font-size:14px;font-weight:400;line-height:1.4}
 .land~.foot3{max-width:560px;margin-left:auto;margin-right:auto}
 /* One green button on the start page: the box's own Build it. */
 body:has(.land) .gbuild{display:none}

@@ -14,8 +14,9 @@ export const STARTER = 'forq.blank';
 /** What the router agent is told, around the person's own words. */
 export const buildPayload = (prompt: string) =>
   `This is a brand-new project: it only has a placeholder index.html and README.md. The person wants:\n\n${prompt}\n\n` +
-  `Plan it as a web app that runs as plain static files (index.html at the root, no build step, no npm install) unless they asked for something else. ` +
-  `Replace the placeholder page and the README. Split the work into a few tasks and start one agent per task.`;
+  `Build what they asked for: any kind of code (an app, a site, a tool, a library, a Worker). If people will use it in a browser, prefer plain static files ` +
+  `(index.html at the root, no build step) so it runs here at once; if it is a library, a CLI or other code, write it as that, with a README showing how to use it ` +
+  `and the placeholder page replaced by a short page about it. Replace the README either way. Split the work into a few tasks and start one agent per task.`;
 
 const EXAMPLES = ['A shared shopping list for my family', 'A pomodoro timer with a daily streak', 'A quiz game for my class', 'A page that splits a restaurant bill', 'A habit tracker with three habits', 'A recipe box that scales servings'];
 
@@ -53,7 +54,7 @@ const esc = (s: string) => String(s ?? '').replace(/[<>&"']/g, (c) => ({ '<': '&
 export function buildBody(me: string, needsKey: boolean, runDomain: string) {
   return `<div class="bld">
 <section id="s1"><h1>What do you want to build?</h1>
-<p class="lede">Say it in a sentence. Agents build it as a web app with its own address, and you can keep changing it in plain words.</p>
+<p class="lede">Say it in a sentence: an app, a site, a tool, a library. Agents write it, and you keep changing it in plain words. Anything that opens in a browser gets its own address.</p>
 <textarea id="idea" placeholder="A shared shopping list for my family…" enterkeyhint="next" aria-label="What do you want to build?"></textarea>
 <div class="row"><button type="button" class="chipbtn mic" id="mic" hidden aria-label="Speak instead of typing">${MIC}<span>Speak</span></button><button type="button" class="btn" id="next">Next</button></div>
 <p class="exl">Or start from one of these</p><div class="ex">${EXAMPLES.map((e) => `<button type="button" data-ex="${esc(e)}">${esc(e)}</button>`).join('')}</div></section>
@@ -62,7 +63,7 @@ export function buildBody(me: string, needsKey: boolean, runDomain: string) {
 <div class="brief"><div class="fld"><label for="pname">Project name</label><input id="pname" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="39">
 <p class="url">It will live at <b id="purl"></b></p></div>
 <div class="fld"><label for="pidea">What you asked for</label><textarea id="pidea"></textarea></div></div>
-<ol class="steps3"><li><b>1</b>A new project is created${me ? ` under ${esc(me)}` : ''}, with a page that runs at once.</li>
+<ol class="steps3"><li><b>1</b>A new project is created${me ? ` under ${esc(me)}` : ''}, with its own code and history.</li>
 <li><b>2</b>Its router agent plans the work and starts an agent for each part.</li>
 <li><b>3</b>A reviewer agent checks every change in a preview before it goes live.</li>
 <li><b>4</b>You watch it happen, try the result, and ask for more changes any time.</li></ol>
