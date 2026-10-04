@@ -26,6 +26,7 @@ import { importPage } from './ui';
 import { allFiles, blob, diffTrees, forkBase, head, resolvePath, tree } from './code';
 import { changesPage, dirPage, filePage, type ChangeText } from './codeui';
 import { startingPage } from './pages';
+import { personalAgentsPage } from './personal';
 // mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
 import MA_TGZ from '../box/mobile-agent.tgz';
 import MA_REV from '../box/mobile-agent.rev';
@@ -284,6 +285,7 @@ const app = {
       if (url.pathname === '/feedback') return feedback(request, env);
       if (url.pathname === '/about') return html(aboutPage());
       if (url.pathname === '/privacy') return html(privacyPage());
+      if (url.pathname === '/personal-agents') return html(personalAgentsPage());
       // Crawler gate on WHO, not on paths: verified bots get the front page only
       // (project and code pages read Artifacts on every view).
       if ((cf.verifiedBotCategory || cf.botManagement?.verifiedBot) && url.pathname !== '/') {
