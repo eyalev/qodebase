@@ -649,12 +649,15 @@ t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('
 
 export const LAND_CSS = `
 .land{max-width:560px;margin:0 auto;padding:12vh 0 24px}
-.land h1{font-size:30px;line-height:1.15;font-weight:600;margin:0 0 10px;letter-spacing:-.01em}
+.land h1{font-size:30px;line-height:1.15;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;text-wrap:balance}
 .land .lede{margin:0 0 24px;font-size:17px}
 .landask{display:flex;flex-direction:column;gap:10px}
 .landask textarea{width:100%;min-height:96px;font:17px/1.45 'Instrument Sans',sans-serif;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:none}
 .landask .btn{min-height:48px;font-size:16px}
 .land .browse{display:flex;align-items:center;justify-content:space-between;margin:28px 0 0;padding:14px 0;border-top:1px solid var(--line);color:var(--fg);font-weight:500;text-decoration:none}
 .land .browse .n{color:var(--dim);font-variant-numeric:tabular-nums;font-weight:400}
+.land~.foot3{max-width:560px;margin-left:auto;margin-right:auto}
+/* One green button on the start page: the box's own Build it. */
+body:has(.land) .gbuild{display:none}
 @media (min-width:900px){.land{padding-top:16vh}.land h1{font-size:36px}}
 `;
