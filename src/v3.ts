@@ -641,6 +641,7 @@ function landBody(entries: Entry[]) {
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button class="btn" type="submit">Build it</button>
 </form>
+${tryRow()}
 <a class="browse" href="/explore"><span>Browse public projects</span><span class="n">${n}</span></a>
 <a class="browse own" href="/p/forq/forq/readme?doc=SELF_HOST.md"><span>Run your own forq<small>This is the hosted forq. It is open source: run it on your own Cloudflare account and it is yours.</small></span></a>
 </section>${SPECULATE}
@@ -658,9 +659,37 @@ export const LAND_CSS = `
 .land .browse{display:flex;align-items:center;justify-content:space-between;margin:28px 0 0;padding:14px 0;border-top:1px solid var(--line);color:var(--fg);font-weight:500;text-decoration:none}
 .land .browse .n{color:var(--dim);font-variant-numeric:tabular-nums;font-weight:400}
 .land .browse+.browse{margin-top:0}
+.tryh{font-size:17px;font-weight:600;margin:32px 0 2px}
+.trys{margin:0 0 12px;color:var(--dim);font-size:15px}
+.tryrow{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}
+.tryrow::-webkit-scrollbar{display:none}
+.tcard{flex:none;width:148px;scroll-snap-align:start;color:var(--fg);text-decoration:none}
+.tcard img{display:block;width:148px;height:197px;object-fit:cover;object-position:top;border-radius:10px;box-shadow:inset 0 0 0 1px var(--line);border:1px solid var(--line);background:var(--card)}
+.tcard b{display:block;font-size:15px;font-weight:600;margin:8px 0 2px}
+.tcard span{display:block;font-size:13px;line-height:1.35;color:var(--dim)}
+@media (min-width:900px){.tryrow{margin:0;padding:2px 0 6px}}
 .land .browse small{display:block;margin-top:2px;color:var(--dim);font-size:14px;font-weight:400;line-height:1.4}
 .land~.foot3{max-width:560px;margin-left:auto;margin-right:auto}
 /* One green button on the start page: the box's own Build it. */
 body:has(.land) .gbuild{display:none}
 @media (min-width:900px){.land{padding-top:16vh}.land h1{font-size:36px}}
 `;
+
+/** Small apps that run here, each with one change to ask for: the fastest way to see
+ *  fork-and-change (Eyal, 2026-10-04: "hand-picked projects someone can easily fork
+ *  and change, to demonstrate it"). The suggestion rides along (?ask=) into the
+ *  copy's box after Fork. Thumbnails: public/_forq/thumbs/, 360x480 shots. */
+const TRY: [string, string, string][] = [
+  ['calculator', 'Calculator', 'Add a history of past results'],
+  ['2048', '2048', 'Show the best score of all time'],
+  ['javascript-tetris', 'Tetris', 'Add touch controls so it plays on a phone'],
+  ['timer', 'Focus timer', 'Add a 90 minute option'],
+  ['tipsplit', 'Tip split', 'Let each person pay a different share'],
+  ['todo', 'To-do', 'Add due dates'],
+];
+function tryRow() {
+  return `<h2 class="tryh">Or try changing one of these</h2>
+<p class="trys">Open it, tap Fork, and send the change under it. Agents do the rest.</p>
+<div class="tryrow">${TRY.map(([n, title, ask]) => `<a class="tcard" href="/p/forq/${n}/app?ask=${encodeURIComponent(ask)}">
+<img src="/_forq/thumbs/${n}.webp" alt="" width="360" height="480" loading="lazy" decoding="async"><b>${esc(title)}</b><span>Try asking: ${esc(ask)}</span></a>`).join('')}</div>`;
+}

@@ -14,6 +14,10 @@
   // workers.dev answers only with the admin secret (laptop scripts); the phone
   // uses projectsbase.dev, sign-in through Cloudflare Access on /login.
   "workers_dev": true,
+  // Static files under /_forq/ (home page thumbnails, 2026-10-04). Assets answer on
+  // every host this Worker serves, app hosts included, hence the unlikely prefix;
+  // anything that is not a file here goes to the Worker as before.
+  "assets": { "directory": "./public" },
   "routes": [
     { "pattern": "projectsbase.dev", "custom_domain": true },
     // Public run host: every repo and agent fork as a live static app (src/run.ts).

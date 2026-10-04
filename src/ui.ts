@@ -60,7 +60,7 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .readme code{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:1px 4px}
 .readme .tbl{overflow-x:auto;margin:0 0 14px}
 .readme table{border-collapse:collapse;font-size:14px;min-width:100%}
-.readme th,.readme td{text-align:left;vertical-align:top;padding:7px 10px;border-bottom:1px solid var(--line)}
+.readme th,.readme td{overflow-wrap:normal;word-break:normal;text-align:left;vertical-align:top;padding:7px 10px;border-bottom:1px solid var(--line)}
 .readme th{font-weight:600}
 .readme pre{overflow-x:auto;background:var(--chip);border-radius:8px;padding:10px}
 .readme hr{border:0;border-top:1px solid var(--line);margin:16px 0}

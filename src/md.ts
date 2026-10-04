@@ -10,6 +10,8 @@ function inline(s: string) {
   t = t.replace(/\*\*([^*]+)\*\*|__([^_]+)__/g, (_, a, b) => `<strong>${a || b}</strong>`)
     .replace(/(^|[\s(])\*([^*\s][^*]*)\*(?=[\s).,!?:;]|$)|(^|[\s(])_([^_\s][^_]*)_(?=[\s).,!?:;]|$)/g, (_, p1, a, p2, b) => `${p1 ?? p2 ?? ''}<em>${a || b}</em>`)
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" rel="noopener nofollow">$1</a>')
+    // A link to a file in the repo ([box/Dockerfile](box/Dockerfile)) keeps its words.
+    .replace(/\[([^\]]+)\]\((?!https?:)[^)\s]+\)/g, '$1')
     // Bare URLs become links (not ones already inside an href).
     .replace(/(^|[\s(])(https?:\/\/[^\s<)]+[^\s<).,!?:;'"])/g, '$1<a href="$2" rel="noopener nofollow">$2</a>');
   return t.replace(/\u0000(\d+)\u0000/g, (_, i) => codes[Number(i)]);

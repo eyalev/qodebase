@@ -229,7 +229,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset
 .readme code{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:1px 4px}
 .readme .tbl{overflow-x:auto;margin:0 0 14px}
 .readme table{border-collapse:collapse;font-size:14px;min-width:100%}
-.readme th,.readme td{text-align:left;vertical-align:top;padding:7px 10px;border-bottom:1px solid var(--line)}
+.readme th,.readme td{overflow-wrap:normal;word-break:normal;text-align:left;vertical-align:top;padding:7px 10px;border-bottom:1px solid var(--line)}
 .readme th{font-weight:600}
 .readme pre{overflow-x:auto;background:var(--chip);border-radius:8px;padding:10px}
 .readme hr{border:0;border-top:1px solid var(--line);margin:16px 0}
@@ -285,6 +285,8 @@ for(const f of document.querySelectorAll('form.ask')){
  // keyboard, the page re-lays out, Send moves and the tap misses (2026-10-04, measured
  // 57 px at 390 px wide). Keeping focus keeps Send where the finger is.
  if(sb)sb.addEventListener('pointerdown',(e)=>{if(document.activeElement===ta)e.preventDefault();});
+ // A suggested change (from the home page's Try row) is waiting in the box, not sent.
+ const sug=new URLSearchParams(location.search).get('ask');if(sug&&!ta.value){ta.value=sug.slice(0,500);grow();}
  f.onsubmit=async(e)=>{e.preventDefault();const t=ta.value.trim();if(!t)return;ta.value='';grow();if(!(await ask(t))){ta.value=t;grow();}else if(window.forqAskedGo)location.href=window.forqAskedGo;};}
 document.addEventListener('click',async(e)=>{
  const o=!e.target.closest('.fresh')&&e.target.closest('[data-open]');if(o){const r=o.closest('.chg');const on=r.classList.toggle('open');o.setAttribute('aria-expanded',on);on?openIds.add(r.dataset.id):openIds.delete(r.dataset.id);return;}
@@ -305,7 +307,7 @@ export function forkAction(info: ProjectInfo, me: string, myForks: Entry[], cls 
   if (me) return `<button class="${cls}" id="fork">Fork to change it</button>`;
   return `<a class="${cls}" href="/login?next=${encodeURIComponent(path(info.slug))}">Sign in to fork</a>`;
 }
-export const FORK_JS = `<script>const fk=document.getElementById('fork');if(fk)fk.onclick=async()=>{fk.disabled=true;fk.textContent='Forking';const r=await fetch(location.pathname.replace(/\\/$/,'').replace(/^\\/p\\//,'/api/p/')+'/fork',{method:'POST'});const j=await r.json();if(r.ok)location.href=j.path;else{fk.disabled=false;fk.textContent=j.error||'Fork failed';}};</script>`;
+export const FORK_JS = `<script>const fk=document.getElementById('fork');if(fk)fk.onclick=async()=>{fk.disabled=true;fk.textContent='Forking';const r=await fetch(location.pathname.replace(/\\/$/,'').replace(/^\\/p\\//,'/api/p/')+'/fork',{method:'POST'});const j=await r.json();const ak=new URLSearchParams(location.search).get('ask');if(r.ok)location.href=j.path+(ak?'?ask='+encodeURIComponent(ak):'');else{fk.disabled=false;fk.textContent=j.error||'Fork failed';}};</script>`;
 
 export type ProjectArgs = { info: ProjectInfo; entry: Entry; forks: Entry[]; overview: Overview; me: string; runBase: string; liveHtml: string; needsKey?: boolean };
 
