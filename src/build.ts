@@ -22,7 +22,7 @@ import { pushAlert } from './alert';
 export type BuildJob = {
   id: string;
   slug: string;
-  kind: 'deploy' | 'preview';
+  kind: 'deploy' | 'preview' | 'install';
   repo: string;          // Artifacts repo to build
   remote: string;
   token: string;         // read token for that repo
@@ -31,6 +31,9 @@ export type BuildJob = {
   host?: string;         // custom domain (<name>--<owner>.<APPS_DOMAIN>); previews at <alias>.<host>
   agentId?: string;
   queuedAt: number;
+  /** kind 'install': deploy a template's prebuilt release into a user's own
+   *  account with their OAuth access token (src/install.ts). */
+  install?: { owner: string; installId: string; accountId: string; cfToken: string; dir: string; vars: Record<string, string>; bucket?: { binding: string; name: string } };
 };
 /** A Worker app's host and its previews' hosts must not run forq's catch-all
  *  route on the apps domain (`*.<APPS_DOMAIN>/*`, the static run host): a
@@ -101,7 +104,7 @@ export class BuildBox extends DurableObject<Env> {
   async enqueue(job: BuildJob) {
     const q = (await this.ctx.storage.get<BuildJob[]>('queue')) || [];
     // A newer job for the same target replaces a queued older one.
-    const key = (j: BuildJob) => `${j.kind}:${j.agentId || ''}`;
+    const key = (j: BuildJob) => `${j.kind}:${j.agentId || j.install?.installId || ''}`;
     const next = q.filter((j) => key(j) !== key(job)).concat(job);
     await this.ctx.storage.put('queue', next);
     await this.ctx.storage.setAlarm(Date.now() + 100);
@@ -122,9 +125,14 @@ export class BuildBox extends DurableObject<Env> {
     const result = await this.#run(job);
     await this.ctx.storage.put('lastBuild', Date.now());
     // A live app that failed to deploy needs a person; a fork's preview is the agent's to fix.
-    if (!result.ok && !result.agentId) await pushAlert(this.env, `forq: deploy failed, ${job.slug}`, (result.error || 'no error text').slice(0, 500), `https://${this.env.UI_HOST}/p/${job.slug.replace('.', '/')}`, 0);
-    try { await this.env.Project.get(this.env.Project.idFromName(job.slug)).buildDone(result); }
-    catch (e) { log('build', 'report_failed', { slug: job.slug, err: String(e) }); }
+    if (job.install) {
+      try { await this.env.Installs.get(this.env.Installs.idFromName(job.install.owner.toLowerCase())).buildDone(result); }
+      catch (e) { log('build', 'report_failed', { install: job.install.installId, err: String(e) }); }
+    } else {
+      if (!result.ok && !result.agentId) await pushAlert(this.env, `forq: deploy failed, ${job.slug}`, (result.error || 'no error text').slice(0, 500), `https://${this.env.UI_HOST}/p/${job.slug.replace('.', '/')}`, 0);
+      try { await this.env.Project.get(this.env.Project.idFromName(job.slug)).buildDone(result); }
+      catch (e) { log('build', 'report_failed', { slug: job.slug, err: String(e) }); }
+    }
     await this.ctx.storage.setAlarm(Date.now() + (q.length ? 100 : 60_000));
   }
 
@@ -162,6 +170,7 @@ export class BuildBox extends DurableObject<Env> {
       add(clone.stdout + clone.stderr);
       if (clone.exitCode !== 0) return done(false, { error: 'clone failed' });
       const commit = (clone.stdout.match(/commit ([0-9a-f]{40})/) || [])[1];
+      if (job.install) { const [ok, extra] = await this.#install(job, dir, add); return done(ok, { commit, ...extra }); }
 
       const cfg = await this.#sh(`node /opt/forq-tools/sanitize.js "$D" "$W" "$H"`, { D: dir, W: job.worker, H: job.host || '' });
       add(cfg.stdout + cfg.stderr);
@@ -195,6 +204,30 @@ export class BuildBox extends DurableObject<Env> {
       add(String((e as Error)?.stack || e));
       return done(false, { error: String((e as Error)?.message || e) });
     }
+  }
+
+  /** Deploy <dir>/wrangler.base.json (a prebuilt, no_bundle release) as the
+   *  user's Worker, with their access token. Never logs the token. */
+  async #install(job: BuildJob, dir: string, add: (s: string) => void): Promise<[boolean, Partial<BuildResult>]> {
+    const ins = job.install!;
+    const cfgJs = `const fs=require('fs');const p=process.env.R+'/wrangler.base.json';const c=JSON.parse(fs.readFileSync(p,'utf8'));
+c.name=process.env.W;c.workers_dev=true;c.vars=Object.assign(c.vars||{},JSON.parse(process.env.V));
+const b=JSON.parse(process.env.B||'null');if(b){c.r2_buckets=(c.r2_buckets||[]).filter(x=>x.binding!==b.binding).concat({binding:b.binding,bucket_name:b.name});}
+fs.writeFileSync(process.env.R+'/wrangler.json',JSON.stringify(c));console.log('FORQ_INSTALL config for '+c.name);`;
+    const root = `${dir}/${ins.dir}`;
+    const cfg = await this.#sh(`node -e "$JS"`, { JS: cfgJs, R: root, W: job.worker, V: JSON.stringify(ins.vars), B: JSON.stringify(ins.bucket || null) });
+    add(cfg.stdout + cfg.stderr);
+    if (cfg.exitCode !== 0) return [false, { error: 'could not prepare the release' }];
+    const run = await this.#sh(`cd "$R"; npx -y ${WRANGLER} deploy --config wrangler.json 2>&1`, {
+      R: root, CLOUDFLARE_API_TOKEN: ins.cfToken, CLOUDFLARE_ACCOUNT_ID: ins.accountId, WRANGLER_SEND_METRICS: 'false', CI: 'true', NO_COLOR: '1',
+    });
+    add(run.stdout.replaceAll(ins.cfToken, '***'));
+    await this.#sh(`rm -rf "$D"`, { D: dir });
+    if (run.exitCode !== 0) {
+      const why = (run.stdout.match(/✘ \[ERROR\] (.+)/) || run.stdout.match(/ERROR\]? (.+)/) || [])[1];
+      return [false, { error: why ? why.slice(0, 300) : 'wrangler deploy failed' }];
+    }
+    return [true, { url: (run.stdout.match(/https:\/\/[a-z0-9.-]+\.workers\.dev/) || [])[0] }];
   }
 
   async state() {

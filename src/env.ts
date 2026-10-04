@@ -2,12 +2,16 @@ import type { AgentBox } from './box';
 import type { Project } from './project';
 import type { Registry } from './registry';
 import type { BuildBox } from './build';
+import type { Installs } from './install';
 
 export interface Env {
   AgentBox: DurableObjectNamespace<AgentBox>;
   Project: DurableObjectNamespace<Project>;
   Registry: DurableObjectNamespace<Registry>;
   BuildBox: DurableObjectNamespace<BuildBox>;
+  Installs: DurableObjectNamespace<Installs>;
+  CF_OAUTH_CLIENT_ID: string;      // forq's "Sign in with Cloudflare" OAuth client (src/install.ts)
+  CF_OAUTH_CLIENT_SECRET: string;
   ACCOUNT_ID: string;
   CF_DEPLOY_TOKEN: string;      // Workers Scripts write only; BuildBox passes it to one wrangler command at a time
   API_BASE: string;             // this Worker on workers.dev (DOs call back into it)

@@ -27,11 +27,12 @@ import { allFiles, blob, diffTrees, forkBase, head, resolvePath, tree } from './
 import { changesPage, dirPage, filePage, type ChangeText } from './codeui';
 import { startingPage } from './pages';
 import { personalAgentsPage } from './personal';
+import { Installs, installRoute } from './install';
 // mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
 import MA_TGZ from '../box/mobile-agent.tgz';
 import MA_REV from '../box/mobile-agent.rev';
 
-export { AgentBox, Project, Registry, BuildBox };
+export { AgentBox, Project, Registry, BuildBox, Installs };
 
 type Who = { kind: 'user'; handle: string; admin: boolean; anon?: boolean; email?: string } | { kind: 'agent'; agentId: string; role: Role };
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
@@ -286,6 +287,7 @@ const app = {
       if (url.pathname === '/about') return html(aboutPage());
       if (url.pathname === '/privacy') return html(privacyPage());
       if (url.pathname === '/personal-agents') return html(personalAgentsPage());
+      if (url.pathname.startsWith('/connect/cf/') || url.pathname.startsWith('/personal-agents/')) { const r = await installRoute(request, env, ctx, url); if (r) return r; }
       // Crawler gate on WHO, not on paths: verified bots get the front page only
       // (project and code pages read Artifacts on every view).
       if ((cf.verifiedBotCategory || cf.botManagement?.verifiedBot) && url.pathname !== '/') {

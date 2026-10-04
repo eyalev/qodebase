@@ -50,13 +50,15 @@
       { "name": "AgentBox", "class_name": "AgentBox" },
       { "name": "Project", "class_name": "Project" },
       { "name": "Registry", "class_name": "Registry" },
-      { "name": "BuildBox", "class_name": "BuildBox" }
+      { "name": "BuildBox", "class_name": "BuildBox" },
+      { "name": "Installs", "class_name": "Installs" }
     ]
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["AgentBox", "Project"] },
     { "tag": "v2", "new_sqlite_classes": ["Registry"] },
-    { "tag": "v3", "new_sqlite_classes": ["BuildBox"] }
+    { "tag": "v3", "new_sqlite_classes": ["BuildBox"] },
+    { "tag": "v4", "new_sqlite_classes": ["Installs"] }
   ],
   // box/mobile-agent.tgz (scripts/pack-mobile-agent.sh) is bundled as bytes and
   // served to agent boxes at boot; box/mobile-agent.rev as text.
@@ -67,6 +69,8 @@
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "forq" }],
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
   "vars": {
+    // "Sign in with Cloudflare" (src/install.ts); secret CF_OAUTH_CLIENT_SECRET.
+    "CF_OAUTH_CLIENT_ID": "c7a959b3f19f0ba8cabb1f7efb55d809",
     "ACCESS_TEAM_DOMAIN": "forqdev.cloudflareaccess.com",
     "ACCESS_AUD": "6c86f18e31312db3a76b73caf12f86a9ee360a75a667bb961608e55c9fea251e",
     // Access email → forq handle (v0: one person).
