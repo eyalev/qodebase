@@ -307,7 +307,16 @@ export function forkAction(info: ProjectInfo, me: string, myForks: Entry[], cls 
   if (me) return `<button class="${cls}" id="fork">Fork to change it</button>`;
   return `<a class="${cls}" href="/login?next=${encodeURIComponent(path(info.slug))}">Sign in to fork</a>`;
 }
-export const FORK_JS = `<script>const fk=document.getElementById('fork');if(fk)fk.onclick=async()=>{fk.disabled=true;fk.textContent='Forking';const r=await fetch(location.pathname.replace(/\\/$/,'').replace(/^\\/p\\//,'/api/p/')+'/fork',{method:'POST'});const j=await r.json();const ak=new URLSearchParams(location.search).get('ask');if(r.ok)location.href=j.path+(ak?'?ask='+encodeURIComponent(ak):'');else{fk.disabled=false;fk.textContent=j.error||'Fork failed';}};</script>`;
+// The project's API is /api/p/<owner>/<name>, whatever view the page is on: on
+// /p/o/n/app it used to post to .../app/fork, so Fork failed everywhere but the
+// README (2026-10-04). A suggested change (?ask=, from the home page's Try row) is
+// shown above the button and rides through Fork, or through sign-in, into the copy.
+export const FORK_JS = `<script>(function(){const ak=new URLSearchParams(location.search).get('ask');
+const v=document.querySelector('.visit');if(ak&&v){v.textContent='';v.append('After you fork, ask for: ');const b=document.createElement('b');b.textContent=ak;v.append(b);}
+if(ak)for(const a of document.querySelectorAll('a[href^="/login?next="]'))a.href='/login?next='+encodeURIComponent(location.pathname+location.search);
+const fk=document.getElementById('fork');if(!fk)return;const api='/api/p/'+location.pathname.split('/').slice(2,4).join('/');
+fk.onclick=async()=>{fk.disabled=true;fk.textContent='Forking';const r=await fetch(api+'/fork',{method:'POST'});const j=await r.json().catch(()=>({}));
+if(r.ok)location.href=j.path+(ak?'?ask='+encodeURIComponent(ak):'');else{fk.disabled=false;fk.textContent=j.error||'Fork failed';}};})();</script>`;
 
 export type ProjectArgs = { info: ProjectInfo; entry: Entry; forks: Entry[]; overview: Overview; me: string; runBase: string; liveHtml: string; needsKey?: boolean };
 

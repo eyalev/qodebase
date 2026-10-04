@@ -380,7 +380,7 @@ export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record
   const home = g.nav === 'a'
     ? `<a class="home back" href="/" aria-label="All projects${g.inbox ? `, ${g.inbox} need you` : ''}">${CHEV}forq${g.inbox ? `<span class="hbadge">${g.inbox}</span>` : ''}</a>`
     : `<a class="home" href="/" aria-label="All projects">forq</a>`;
-  return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · forq`, `${g.nav === 'd' ? globalTop('projects', g.inbox, me) : ''}
+  return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · forq`, `${g.nav === 'd' ? globalTop(own ? 'projects' : 'explore', g.inbox, me) : ''}
 <header class="h3${g.nav === 'd' ? ' sub' : ''}">${g.nav === 'd' ? '' : home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(info.owner)} /</span> <b>${esc(info.name)}</b></a>${r.action || ''}</header>
 ${g.nav === 'b' ? tabBar(c, id, needs, true) : ''}
 <main class="view${r.full ? ' full' : ''}" id="view">${r.body}</main>${r.compose || (own ? askBox(c) : '')}
