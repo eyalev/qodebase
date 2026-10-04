@@ -169,8 +169,9 @@ OWN account with no GitHub and no pasted tokens (research and options:
 - **Sign in with Cloudflare** = forq's OAuth client `c7a959b3…` (forq account;
   secret `CF_OAUTH_CLIENT_SECRET`, laptop copy `~/.config/forq-cf/oauth-client.json`).
   Endpoints `dash.cloudflare.com/oauth2/{auth,token,revoke}`; access tokens live
-  1 h, refresh tokens rotate on every refresh. Private until projectsbase.dev is
-  verified (TXT `cloudflare_oauth_client_publisher=…` on the apex), then public.
+  1 h, refresh tokens rotate on every refresh. **Public** since 2026-10-04
+  (projectsbase.dev verified by TXT `cloudflare_oauth_client_publisher=…` on the
+  apex; consent screen logo is `/icon.svg`, required to go public).
 - **Installs DO** (one per forq email) keeps the encrypted refresh token and runs
   each install as steps from its alarm: workers.dev subdomain → R2 bucket →
   BuildBox `installs` instance runs `wrangler deploy` on the template's prebuilt
