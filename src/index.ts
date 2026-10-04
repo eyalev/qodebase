@@ -280,6 +280,7 @@ const app = {
     if (url.hostname === env.UI_HOST) {
       const cf = (request as any).cf || {};
       if (url.pathname === '/robots.txt') return new Response('User-agent: *\nDisallow: /p/\nDisallow: /import\nDisallow: /api/\nDisallow: /a/\nDisallow: /login\n', { headers: { 'content-type': 'text/plain' } });
+      if (url.pathname === '/icon.svg') return new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#17695a"/><path d="M150 52c-30 0-48 18-48 50v18H80v30h22v78h34v-78h32v-30h-32v-16c0-14 6-21 19-21 6 0 11 1 15 2l4-30c-7-2-15-3-24-3z" fill="#fff"/></svg>', { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' } });
       if (url.pathname === '/version.json') return json({ name: 'forq', version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
       if (url.pathname === '/health.json') return health(env, ctx, url.origin);
       if (url.pathname === '/e') return kstatsForward(request, env, ctx);
