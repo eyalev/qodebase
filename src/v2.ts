@@ -277,6 +277,10 @@ for(const f of document.querySelectorAll('form.ask')){
  const lit=()=>{if(sb)sb.className='send '+(ta.value.trim()?'btn':'chipbtn');};
  const grow=()=>{ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,160)+'px';lit();};ta.addEventListener('input',grow);
  ta.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();f.requestSubmit();}});
+ // Pressing Send must not take focus from the box first: on a phone that closes the
+ // keyboard, the page re-lays out, Send moves and the tap misses (2026-10-04, measured
+ // 57 px at 390 px wide). Keeping focus keeps Send where the finger is.
+ if(sb)sb.addEventListener('pointerdown',(e)=>{if(document.activeElement===ta)e.preventDefault();});
  f.onsubmit=async(e)=>{e.preventDefault();const t=ta.value.trim();if(!t)return;ta.value='';grow();if(!(await ask(t))){ta.value=t;grow();}else if(window.forqAskedGo)location.href=window.forqAskedGo;};}
 document.addEventListener('click',async(e)=>{
  const o=!e.target.closest('.fresh')&&e.target.closest('[data-open]');if(o){const r=o.closest('.chg');const on=r.classList.toggle('open');o.setAttribute('aria-expanded',on);on?openIds.add(r.dataset.id):openIds.delete(r.dataset.id);return;}

@@ -399,7 +399,8 @@ forqTry=(src,title,agent)=>{location.href='${c.base}/app?try='+encodeURIComponen
  sc.addEventListener('click',()=>set(false));document.addEventListener('keydown',(e)=>{if(e.key==='Escape')set(false);});})();
 // The keyboard covers half a phone: hide the tab bar while typing.
 document.addEventListener('focusin',(e)=>{if(e.target.matches('textarea,input'))document.body.classList.add('typing');});
-document.addEventListener('focusout',()=>document.body.classList.remove('typing'));
+// …and bring it back only after focus has really left, so nothing moves under a tap.
+document.addEventListener('focusout',()=>setTimeout(()=>{if(!document.activeElement?.matches('textarea,input'))document.body.classList.remove('typing');},250));
 ${!r.compose && own ? `window.forqAskedGo='${c.base}/changes';` : ''}
 ${r.js || ''}
 </script>`, V3_CSS + NAV_CSS, `v3 nav-${g.nav}`);
