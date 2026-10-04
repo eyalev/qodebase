@@ -19,6 +19,8 @@ h3{font-size:17px;font-weight:600;margin:0}
 p{margin:8px 0}
 .lede{font-size:17px;color:var(--fg)}
 .dim{color:var(--dim)}
+.pts{margin:8px 0 20px;padding-left:20px;font-size:17px}.pts li{margin:4px 0}
+.facts{margin:8px 0 0;padding-left:18px;color:var(--dim);font-size:15px}.facts li{margin:2px 0}
 .need{display:grid;gap:8px;margin:12px 0 0;padding:0;list-style:none}
 .need li{background:var(--card);border-radius:8px;padding:12px 14px}
 .need b{font-weight:600}
@@ -58,96 +60,43 @@ export function personalAgentsPage(): string {
 <style>${CSS}</style></head><body><main>
 <header><a class="mark" href="/">forq</a><a href="/about">About</a></header>
 
-<h1>Your own AI assistant, in your own account</h1>
-<p class="lede">Personal assistants from big companies keep your most private notes, messages and plans on their servers, with their model and their rules. You can run one yourself instead, on Cloudflare, in an account that belongs to you.</p>
-<p class="dim">No computer has to stay on at home. You don't need to write code: you click a button, paste one key, and you have an assistant you can chat with from your phone.</p>
-
-<h2>What "yours" means here</h2>
-<ul class="need">
-<li><b>Your data stays in your account.</b> Memory and files are saved in your own Cloudflare storage. You can download or delete them at any time.</li>
-<li><b>You choose the AI model.</b> You bring your own key (Anthropic's Claude, or a free model from Cloudflare). If a better model comes out, you change a setting. You don't move house.</li>
-<li><b>Nobody sits in the middle.</b> No ads and no company deciding what your assistant may do. The code is open source, so anyone can check what it does.</li>
-<li><b>The honest part:</b> Cloudflare hosts it, so it is not as private as a computer in your own room. It is far more yours than an app that someone else runs for you.</li>
+<h1>Your own AI assistant</h1>
+<ul class="pts">
+<li>Runs in <b>your</b> Cloudflare account</li>
+<li>Your data, your AI model, no ads</li>
+<li>No code: tap Deploy, paste a key</li>
 </ul>
 
-<h2>Before you start</h2>
-<ul class="need">
-<li><b>A Cloudflare account.</b> Free to make at <a href="https://dash.cloudflare.com/sign-up" rel="noopener">dash.cloudflare.com/sign-up</a>. Some assistants need the $5/month Workers Paid plan; each one below says so.</li>
-<li><b>An AI key</b> (only for some assistants). Anthropic keys come from <a href="https://console.anthropic.com/" rel="noopener">console.anthropic.com</a>; you pay Anthropic for what you use.</li>
-<li><b>About 15 minutes.</b></li>
-</ul>
-
-<h2>Choose an assistant</h2>
-<p class="dim">Not sure? Start with Personal Agent: it is free and the quickest to set up.</p>
 <div class="cards">
-
 <section class="card" id="personal-agent">
 <div class="head"><h3>Personal Agent</h3><span class="tag acc">Start here</span></div>
-<p>A simple assistant you chat with in your browser. It remembers what you tell it and can look things up on the web.</p>
-<dl>
-<dt>Cost</dt><dd>Free (fits Cloudflare's free plan with Cloudflare's own free models)</dd>
-<dt>Chat from</dt><dd>A web page on your phone or computer</dd>
-<dt>AI model</dt><dd>Free Cloudflare models, or your own key (OpenAI-compatible, OpenRouter, Groq)</dd>
-<dt>Made by</dt><dd>An independent developer, open source (MIT)</dd>
-</dl>
-<div class="btns"><a class="btn pri" href="https://deploy.workers.dev/?url=https://github.com/DomWane/workers-personal-agent" rel="noopener">Deploy to my Cloudflare</a><a class="btn sec" href="https://github.com/DomWane/workers-personal-agent" rel="noopener">See the project</a></div>
-<details><summary>Step by step</summary><ol>
-<li>Tap <b>Deploy to my Cloudflare</b> and sign in to Cloudflare.</li>
-<li>Cloudflare copies the assistant into your account. It also connects GitHub so you get your own copy of the code; accept that.</li>
-<li>When it asks for settings, keep the defaults to use the free models.</li>
-<li>Wait for "Deployed", then open the address it shows. That page is your assistant.</li>
-<li>Lock it so only you can open it: in the Cloudflare dashboard, open <b>Zero Trust → Access</b> and add your email to that address. The project's page explains this under "Access".</li>
+<ul class="facts"><li>Free</li><li>Chat on the web</li><li>2 minutes</li></ul>
+<div class="btns"><a class="btn pri" href="https://deploy.workers.dev/?url=https://github.com/DomWane/workers-personal-agent" rel="noopener">Deploy</a><a class="btn sec" href="https://github.com/DomWane/workers-personal-agent" rel="noopener">Details</a></div>
+<details><summary>Steps</summary><ol>
+<li>Tap Deploy, sign in to Cloudflare</li>
+<li>Keep the defaults</li>
+<li>Open the address it gives you</li>
 </ol></details>
 </section>
 
 <section class="card" id="openclaw">
 <div class="head"><h3>OpenClaw</h3><span class="tag busy">Experimental</span></div>
-<p>The popular open-source assistant (once called Moltbot), running in your Cloudflare account through Cloudflare's own "Moltworker". You talk to it on Telegram, Discord or Slack, and it can use a real web browser to do things for you.</p>
-<dl>
-<dt>Cost</dt><dd>$5/month Workers Paid plan, plus running time: about $5–6/month if it sleeps when not in use, about $35/month if it is awake around the clock. Plus your AI key's usage.</dd>
-<dt>Chat from</dt><dd>Telegram, Discord, Slack, or its web page</dd>
-<dt>AI model</dt><dd>Claude, with your Anthropic key</dd>
-<dt>Made by</dt><dd>Cloudflare (Moltworker) and the OpenClaw community. Cloudflare calls it a proof of concept, not officially supported.</dd>
-</dl>
-<div class="btns"><a class="btn pri" href="https://deploy.workers.dev/?url=https://github.com/cloudflare/moltworker" rel="noopener">Deploy to my Cloudflare</a><a class="btn sec" href="https://github.com/cloudflare/moltworker" rel="noopener">See the project</a></div>
-<details><summary>Step by step</summary><ol>
-<li>In the Cloudflare dashboard, turn on the <b>Workers Paid</b> plan ($5/month). OpenClaw runs in a small container, which the free plan does not include.</li>
-<li>Tap <b>Deploy to my Cloudflare</b>. When it asks for secrets, paste your Anthropic key and make up a long password for the gateway token. Write the password down.</li>
-<li>Protect the admin page with Cloudflare Access (Zero Trust → Access, your email only). The project's page shows the exact settings.</li>
-<li>Open your new address, go to the admin page, and approve your phone or computer when it asks to pair.</li>
-<li>To chat on Telegram, create a bot with <a href="https://t.me/BotFather" rel="noopener">@BotFather</a> and add its token as a secret. Discord and Slack work the same way.</li>
-<li>Save money: set it to go to sleep after a while without messages. It wakes up when you write to it, in a few seconds.</li>
+<ul class="facts"><li>From $5/month</li><li>Telegram, Discord, Slack</li><li>Browses the web for you</li></ul>
+<div class="btns"><a class="btn pri" href="https://deploy.workers.dev/?url=https://github.com/cloudflare/moltworker" rel="noopener">Deploy</a><a class="btn sec" href="https://github.com/cloudflare/moltworker" rel="noopener">Details</a></div>
+<details><summary>Steps</summary><ol>
+<li>Turn on Workers Paid ($5/month)</li>
+<li>Tap Deploy, paste your <a href="https://console.anthropic.com/" rel="noopener">Anthropic key</a></li>
+<li>Add a Telegram bot from <a href="https://t.me/BotFather" rel="noopener">@BotFather</a></li>
+<li>Set it to sleep when idle (keeps it near $5)</li>
 </ol></details>
 </section>
 
 <section class="card" id="hermes">
-<div class="head"><h3>Hermes Agent</h3><span class="tag">Hosted by Nous</span></div>
-<p>An assistant from Nous Research that keeps learning the longer it runs. Their one-click setup runs it on Nous's own cloud, not in your account. It is here so you can compare.</p>
-<dl>
-<dt>Cost</dt><dd>Set by Nous Portal</dd>
-<dt>Your data</dt><dd>On Nous's servers</dd>
-<dt>Made by</dt><dd>Nous Research, open source</dd>
-</dl>
-<div class="btns"><a class="btn sec" href="https://portal.nousresearch.com/cloud" rel="noopener">Hermes on Nous Portal</a></div>
-<p class="dim">A version for your own Cloudflare account is on our list. <a href="/feedback?from=/personal-agents">Tell us</a> if you want it.</p>
+<div class="head"><h3>Hermes</h3><span class="tag">Not in your account</span></div>
+<ul class="facts"><li>Hosted by Nous Research</li><li>Your account version: <a href="/feedback?from=/personal-agents">ask for it</a></li></ul>
+<div class="btns"><a class="btn sec" href="https://portal.nousresearch.com/cloud" rel="noopener">Details</a></div>
 </section>
 </div>
-
-<h2>Side by side</h2>
-<div class="cmpwrap"><table class="cmp">
-<tr><th></th><th>Personal Agent</th><th>OpenClaw</th><th>Hermes</th></tr>
-<tr><td>Runs in</td><td>Your account</td><td>Your account</td><td>Nous's cloud</td></tr>
-<tr><td>Per month</td><td>Free</td><td>About $5–35</td><td>Nous pricing</td></tr>
-<tr><td>Chat on</td><td>Web</td><td>Telegram, Discord, Slack, web</td><td>Web, chat apps</td></tr>
-<tr><td>Setup</td><td>Easiest</td><td>Medium</td><td>Easiest</td></tr>
-<tr><td>Stability</td><td>New project</td><td>Proof of concept</td><td>Product</td></tr>
-</table></div>
-
-<h2>Questions</h2>
-<details><summary>Do I need to know how to code?</summary><p>No. You click, sign in and paste a key. If a step asks for a command, the button above does it for you.</p></details>
-<details><summary>Can someone else talk to my assistant?</summary><p>Only if you skip the "lock it" step. Put your assistant's address behind Cloudflare Access with your email, and only you get in.</p></details>
-<details><summary>How do I stop paying?</summary><p>In the Cloudflare dashboard, open Workers, choose the assistant and delete it. Download anything you want to keep from R2 storage first. Turn off Workers Paid if nothing else uses it.</p></details>
-<details><summary>What does forq have to do with this?</summary><p>forq runs coding agents on Cloudflare, each in its own box with its own copy of a project. A personal assistant is the same idea pointed at your life instead of your code. Next: an assistant whose memory is a forq project, so you can see what it learned, undo it, and copy someone else's setup.</p></details>
 
 <p class="foot"><a href="/">forq</a><a href="/about">About</a><a href="/privacy">Privacy</a><a href="/feedback?from=/personal-agents">Feedback</a></p>
 </main></body></html>`;
