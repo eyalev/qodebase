@@ -165,6 +165,17 @@ export function personalAgentsPage(): string {
 </ol></details>
 </section>
 
+<section class="card" id="t3code">
+<div class="head"><h3>T3 Code</h3><span class="tag busy">Needs $5 plan</span></div>
+<ul class="facts"><li>Coding agents from your phone</li><li>OpenCode free built in; add Claude Code or Codex</li><li>Sleeps after 30 idle minutes</li></ul>
+<div class="btns"><a class="btn pri" href="/personal-agents/install/t3code">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
+<details><summary>What happens</summary><ol>
+<li>Your account needs Workers Paid ($5/month) for containers</li>
+<li>Sign in with Cloudflare, name it, tap Install</li>
+<li>First open takes a minute or two while it sets up</li>
+</ol></details>
+</section>
+
 <section class="card" id="hermes">
 <div class="head"><h3>Hermes</h3><span class="tag busy">Needs $5 plan</span></div>
 <ul class="facts"><li>Nous Research's agent that learns as it goes</li><li>Web dashboard, add Telegram later</li><li>Sleeps when idle, about $5–6/month</li></ul>
