@@ -47,8 +47,20 @@ function stripTags(src: string) {
 export function markdown(src: string): string {
   const out: string[] = [];
   const lines = stripHtml(src).replace(/\r/g, '').split('\n');
-  let para: string[] = [], list: string[] = [], code: string[] | null = null, ordered = false;
+  let para: string[] = [], list: string[] = [], code: string[] | null = null, ordered = false, table: string[] = [];
+  // GitHub tables: a header row, a |---| row, then body rows (forq's SELF_HOST.md showed them raw, 2026-10-04).
+  const cells = (r: string) => r.trim().replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, '|'));
+  const flushTable = () => {
+    if (!table.length) return;
+    if (table.length >= 2 && /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(table[1])) {
+      const head = cells(table[0]), body = table.slice(2).map(cells);
+      const th = head.some((c) => c) ? `<thead><tr>${head.map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead>` : '';
+      out.push(`<div class="tbl"><table>${th}<tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+    } else out.push(`<p>${inline(table.join(' '))}</p>`);
+    table = [];
+  };
   const flush = () => {
+    flushTable();
     if (para.length) { out.push(`<p>${inline(para.join(' '))}</p>`); para = []; }
     if (list.length) { const tag = ordered ? 'ol' : 'ul'; out.push(`<${tag}>${list.map((l) => `<li>${inline(l)}</li>`).join('')}</${tag}>`); list = []; }
   };
@@ -58,6 +70,8 @@ export function markdown(src: string): string {
       continue;
     }
     if (line.startsWith('```')) { flush(); code = []; continue; }
+    if (line.trim().startsWith('|')) { if (!table.length) flush(); table.push(line); continue; }
+    if (table.length) flush();
     // Underlined headings: a paragraph line followed by === or ---.
     if (para.length === 1 && /^(=+|-+)\s*$/.test(line)) { const n = line.trim()[0] === '=' ? 2 : 3; out.push(`<h${n}>${inline(para[0])}</h${n}>`); para = []; continue; }
     if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) { flush(); out.push('<hr>'); continue; }

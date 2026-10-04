@@ -155,7 +155,7 @@ ${act ? `<div class="chg-p">${act}</div>` : ''}</div>${detail(info, c)}</div>`;
 export const legend = (n: number) => (n ? freshLegend(STEPS) : '');
 export const TRYBAR = `<div class="trybar" id="trybar" hidden><div class="tt">Trying <b></b></div><button type="button" class="btn" data-trymerge>Merge</button><button type="button" class="chipbtn" data-trylive>Back to live</button></div>`;
 export const SEND = `<button class="send chipbtn">Send</button>`;
-export const VISIT = `<p class="visit">A running app on forq. Fork it to ask agents for changes.</p>`;
+export const VISIT = `<p class="visit">On forq. Fork it to make it yours and ask agents for changes.</p>`;
 
 export function planningHtml(p: ReturnType<typeof planningOf>, q?: ProjectInfo['lastRequest']) {
   if (p.failed) return `<div class="plan bad">Could not start: ${esc(p.failed)} <button class="chipbtn" data-retry="${esc(q?.text || '')}">Retry</button></div>`;
@@ -227,6 +227,10 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset
 .readme{font-size:15px;overflow-wrap:anywhere}
 .readme h2,.readme h3,.readme h4{margin:16px 0 6px;font-size:17px}
 .readme code{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:1px 4px}
+.readme .tbl{overflow-x:auto;margin:0 0 14px}
+.readme table{border-collapse:collapse;font-size:14px;min-width:100%}
+.readme th,.readme td{text-align:left;vertical-align:top;padding:7px 10px;border-bottom:1px solid var(--line)}
+.readme th{font-weight:600}
 .readme pre{overflow-x:auto;background:var(--chip);border-radius:8px;padding:10px}
 .readme hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .files{display:flex;flex-wrap:wrap;gap:6px}

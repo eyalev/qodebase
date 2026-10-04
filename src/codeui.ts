@@ -54,6 +54,10 @@ export const CODE_CSS = `<style>
 .md{background:var(--card);border-radius:12px;padding:4px 16px;font-size:15px;overflow-wrap:anywhere}
 .md img{max-width:100%;height:auto}
 .md code{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:1px 4px}
+.md .tbl{overflow-x:auto;margin:0 0 14px}
+.md table{border-collapse:collapse;font-size:14px;min-width:100%}
+.md th,.md td{text-align:left;vertical-align:top;padding:7px 10px;border-bottom:1px solid var(--line)}
+.md th{font-weight:600}
 .md pre{overflow-x:auto;background:var(--chip);border-radius:8px;padding:10px}
 .imgv{background:var(--card);border-radius:12px;padding:16px;text-align:center}.imgv img{max-width:100%;height:auto}
 .hljs-keyword,.hljs-built_in,.hljs-selector-tag,.hljs-literal{color:var(--tk-kw)}
