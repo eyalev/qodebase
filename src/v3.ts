@@ -642,7 +642,7 @@ function landBody(entries: Entry[]) {
 <button class="btn" type="submit">Build it</button>
 </form>
 <a class="browse" href="/explore"><span>Browse public projects</span><span class="n">${n}</span></a>
-<a class="browse own" href="https://github.com/eyalev/forq/blob/main/SELF_HOST.md"><span>Run your own forq<small>This is the hosted forq. It is open source: run it on your own Cloudflare account and it is yours.</small></span></a>
+<a class="browse own" href="/p/forq/forq/readme?doc=SELF_HOST.md"><span>Run your own forq<small>This is the hosted forq. It is open source: run it on your own Cloudflare account and it is yours.</small></span></a>
 </section>${SPECULATE}
 <script>(function(){const f=document.querySelector('.landask'),t=f.querySelector('textarea');
 t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();if(t.value.trim())f.requestSubmit();}});})();</script>`;
