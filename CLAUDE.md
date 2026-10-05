@@ -215,7 +215,9 @@ OWN account with no GitHub and no pasted tokens (research and options:
   no Artifacts, no "Deploy app" (needs a deploy token), no `experimental` compat
   flag (deployed Workers refuse it; tracing observer off). Previews work
   (Dynamic Workers, `/__preview/<session>/`). Needs Workers Paid.
-- Personal Agent keeps its vault in a Durable Object (no R2, no card).
+- Personal Agent (DomWane/workers-personal-agent, 11 stars, one author) was
+  dropped from the page and installer on 2026-10-05: too small and unreviewed to
+  vouch for. Its forq copy (forq/workers-personal-agent) is still in Artifacts.
 
 ## Run host details
 

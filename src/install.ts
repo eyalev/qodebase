@@ -13,7 +13,7 @@
 //   lock     → Access on the Worker itself: members of that account + the
 //              user's forq email; Cloudflare's own sign-in when the account has it
 //   ready    → https://<name>.<subdomain>.workers.dev
-// Templates live in forq's Artifacts (forq/workers-personal-agent): the user's
+// Templates live in forq's Artifacts (forq/container-agents, forq/pi-on-cf): the user's
 // account only runs the agent.
 
 import { DurableObject } from 'cloudflare:workers';
@@ -32,7 +32,6 @@ export type Template = {
   paid?: boolean;                      // needs Workers Paid for another reason (Dynamic Workers)
 };
 export const TEMPLATES: Record<string, Template> = {
-  'personal-agent': { id: 'personal-agent', title: 'Personal Agent', repo: 'forq.workers-personal-agent', dir: 'forq-release', defaultName: 'my-assistant' },
   openclaw: { id: 'openclaw', title: 'OpenClaw', repo: 'forq.container-agents', dir: 'forq-release-openclaw', defaultName: 'my-openclaw',
     vars: { AGENT_KIND: 'openclaw', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
   pi: { id: 'pi', title: 'Pi', repo: 'forq.pi-on-cf', dir: 'forq-release', defaultName: 'my-pi', paid: true },

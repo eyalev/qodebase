@@ -150,7 +150,7 @@ export function personalAgentsPage(): string {
 <li>Your data, your AI model, no ads</li>
 <li>No code, no GitHub: sign in with Cloudflare, tap Install</li>
 </ul>
-<p class="planline">Personal Agent runs on Cloudflare's free plan. The others need Cloudflare's Workers Paid plan: <b>$5 a month for your whole Cloudflare account</b>, not per assistant. One plan covers all of them. <button class="linkish" type="button" popovertarget="planinfo">What you get <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></p>
+<p class="planline">All of these need Cloudflare's Workers Paid plan: <b>$5 a month for your whole Cloudflare account</b>, not per assistant. One plan covers all of them. <button class="linkish" type="button" popovertarget="planinfo">What you get <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></p>
 
 <div id="planinfo" popover class="planpop">
 <h3>One plan for all your assistants</h3>
@@ -160,17 +160,6 @@ export function personalAgentsPage(): string {
 <div class="btns"><a class="btn sec" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare's plan page<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2h5v5M14 2 7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><button class="btn pri" type="button" popovertarget="planinfo" popovertargetaction="hide">Got it</button></div>
 </div>
 <div class="cards">
-<section class="card" id="personal-agent">
-<div class="head"><h3>Personal Agent</h3><span class="tag acc">Start here</span></div>
-<ul class="facts"><li>Free: works on Cloudflare's free plan</li><li>Chat on the web, remembers you</li><li>About 2 minutes</li></ul>
-<div class="btns"><a class="btn pri" href="/personal-agents/install/personal-agent">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/workers-personal-agent">Code</a></div>
-<details><summary>What happens</summary><ol>
-<li>Sign in with Cloudflare, pick your account</li>
-<li>Name it, tap Install</li>
-<li>forq puts it in your account and locks it to you</li>
-</ol></details>
-</section>
-
 <section class="card" id="openclaw">
 <div class="head"><h3>OpenClaw</h3><button class="tag busy" type="button" popovertarget="planinfo" aria-label="Needs the Cloudflare $5 a month plan. What this means">Cloudflare $5/mo plan <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
 <ul class="facts"><li>The popular open-source assistant</li><li>Chat on the web, add Telegram later</li><li>Sleeps when idle and keeps your chats</li></ul>
@@ -184,7 +173,7 @@ export function personalAgentsPage(): string {
 
 <section class="card" id="pi">
 <div class="head"><h3>Pi</h3><button class="tag busy" type="button" popovertarget="planinfo" aria-label="Needs the Cloudflare $5 a month plan. What this means">Cloudflare $5/mo plan <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-<ul class="facts"><li>A coding agent that builds small apps</li><li>Live preview of what it builds</li><li>No container: always on, nothing to wake</li></ul>
+<ul class="facts"><li>Pi, the popular coding agent (112k ★ on GitHub), on <a href="https://github.com/harshil1712/pi-on-cf" target="_blank" rel="noopener">Cloudflare's example app</a></li><li>Builds small apps</li><li>Live preview of what it builds</li><li>No container: always on, nothing to wake</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/pi">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/pi-on-cf">Code</a></div>
 <details><summary>What happens</summary><ol>
 <li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2h5v5M14 2 7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a> ($5/month for your whole account)</li>
