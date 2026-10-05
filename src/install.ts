@@ -29,11 +29,13 @@ export type Template = {
   vars?: Record<string, string>;       // fixed vars for this template
   secretVar?: string;                  // a var set to a fresh random value per install (the agent's own login)
   container?: boolean;                 // runs a Cloudflare Container: needs Workers Paid
+  paid?: boolean;                      // needs Workers Paid for another reason (Dynamic Workers)
 };
 export const TEMPLATES: Record<string, Template> = {
   'personal-agent': { id: 'personal-agent', title: 'Personal Agent', repo: 'forq.workers-personal-agent', dir: 'forq-release', defaultName: 'my-assistant' },
   openclaw: { id: 'openclaw', title: 'OpenClaw', repo: 'forq.container-agents', dir: 'forq-release-openclaw', defaultName: 'my-openclaw',
     vars: { AGENT_KIND: 'openclaw', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
+  pi: { id: 'pi', title: 'Pi', repo: 'forq.pi-on-cf', dir: 'forq-release', defaultName: 'my-pi', paid: true },
   t3code: { id: 't3code', title: 'T3 Code', repo: 'forq.container-agents', dir: 'forq-release-t3code', defaultName: 'my-t3code',
     vars: { AGENT_KIND: 't3code', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
   hermes: { id: 'hermes', title: 'Hermes', repo: 'forq.container-agents', dir: 'forq-release-hermes', defaultName: 'my-hermes',
@@ -350,8 +352,8 @@ export class Installs extends DurableObject<Env> {
       log('install', 'deploy_failed', { id, error: result.error, tail: result.log.slice(-800) });
       i.log = result.log.slice(-4000);
       const t = TEMPLATES[i.template];
-      if (t?.container && /paid|subscription|containers? (are|is) not (enabled|available)|not entitled|plan/i.test(`${result.error} ${result.log.slice(-1500)}`)) {
-        return this.#fail(i, 'deploy', `${t.title} runs in a Cloudflare Container, which needs the Workers Paid plan ($5/month).`, { text: 'Turn on Workers Paid', href: `https://dash.cloudflare.com/${i.accountId}/workers/plans` });
+      if ((t?.container || t?.paid) && /paid|subscription|containers? (are|is) not (enabled|available)|not entitled|plan/i.test(`${result.error} ${result.log.slice(-1500)}`)) {
+        return this.#fail(i, 'deploy', `${t.title} needs the Workers Paid plan ($5/month).`, { text: 'Turn on Workers Paid', href: `https://dash.cloudflare.com/${i.accountId}/workers/plans` });
       }
       return this.#fail(i, 'deploy', `The upload failed: ${result.error || 'no reason given'}`);
     }

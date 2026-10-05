@@ -165,6 +165,17 @@ export function personalAgentsPage(): string {
 </ol></details>
 </section>
 
+<section class="card" id="pi">
+<div class="head"><h3>Pi</h3><span class="tag busy">Needs $5 plan</span></div>
+<ul class="facts"><li>A coding agent that builds small apps</li><li>Live preview of what it builds</li><li>No container: always on, nothing to wake</li></ul>
+<div class="btns"><a class="btn pri" href="/personal-agents/install/pi">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/pi-on-cf">Code</a></div>
+<details><summary>What happens</summary><ol>
+<li>Your account needs Workers Paid ($5/month)</li>
+<li>Sign in with Cloudflare, name it, tap Install</li>
+<li>Open it and ask for an app</li>
+</ol></details>
+</section>
+
 <section class="card" id="t3code">
 <div class="head"><h3>T3 Code</h3><span class="tag busy">Needs $5 plan</span></div>
 <ul class="facts"><li>Coding agents from your phone</li><li>OpenCode with a free model built in; sign in to Claude Code too</li><li>Keeps your projects; wakes in about 30 seconds</li></ul>
