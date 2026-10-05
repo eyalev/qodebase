@@ -215,6 +215,11 @@ OWN account with no GitHub and no pasted tokens (research and options:
   no Artifacts, no "Deploy app" (needs a deploy token), no `experimental` compat
   flag (deployed Workers refuse it; tracing observer off). Previews work
   (Dynamic Workers, `/__preview/<session>/`). Needs Workers Paid.
+- **Cloudflare Agent** (`forq/agents-starter`, local `../forq-agents-starter`):
+  Cloudflare's official cloudflare/agents-starter, the only option that fits the
+  free plan. forq changes: model glm-4.7-flash (upstream kimi-k2.7-code needs
+  Workers Paid) and real weather from Open-Meteo (upstream returns random demo
+  values). No secrets; AI binding + one DO.
 - Personal Agent (DomWane/workers-personal-agent, 11 stars, one author) was
   dropped from the page and installer on 2026-10-05: too small and unreviewed to
   vouch for. Its forq copy (forq/workers-personal-agent) is still in Artifacts.
