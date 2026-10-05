@@ -34,6 +34,7 @@ export type Template = {
 export const TEMPLATES: Record<string, Template> = {
   openclaw: { id: 'openclaw', title: 'OpenClaw', repo: 'forq.container-agents', dir: 'forq-release-openclaw', defaultName: 'my-openclaw',
     vars: { AGENT_KIND: 'openclaw', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
+  'agents-starter': { id: 'agents-starter', title: 'Cloudflare Agent', repo: 'forq.agents-starter', dir: 'forq-release', defaultName: 'my-agent' },
   pi: { id: 'pi', title: 'Pi', repo: 'forq.pi-on-cf', dir: 'forq-release', defaultName: 'my-pi', paid: true },
   t3code: { id: 't3code', title: 'T3 Code', repo: 'forq.container-agents', dir: 'forq-release-t3code', defaultName: 'my-t3code',
     vars: { AGENT_KIND: 't3code', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
