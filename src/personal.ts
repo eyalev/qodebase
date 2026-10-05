@@ -29,6 +29,8 @@ p{margin:8px 0}
 .card .head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .tag{font-size:13px;background:var(--chip);border-radius:4px;padding:2px 8px;white-space:nowrap;color:var(--fg)}
 .tag.acc{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc)}
+a.tag{text-decoration:none}
+.planline{font-size:14px;color:var(--dim);margin:-8px 0 16px}
 .tag.busy{background:color-mix(in srgb,var(--busy) 18%,transparent);color:var(--busy)}
 dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:12px 0;font-size:15px}
 dt{color:var(--dim)}dd{margin:0}
@@ -141,11 +143,12 @@ export function personalAgentsPage(): string {
 <li>Your data, your AI model, no ads</li>
 <li>No code, no GitHub: sign in with Cloudflare, tap Install</li>
 </ul>
+<p class="planline">Personal Agent runs on Cloudflare's free plan. The others need Cloudflare's <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan</a>, $5 a month, paid to Cloudflare in your account.</p>
 
 <div class="cards">
 <section class="card" id="personal-agent">
 <div class="head"><h3>Personal Agent</h3><span class="tag acc">Start here</span></div>
-<ul class="facts"><li>Free</li><li>Chat on the web, remembers you</li><li>About 2 minutes</li></ul>
+<ul class="facts"><li>Free: works on Cloudflare's free plan</li><li>Chat on the web, remembers you</li><li>About 2 minutes</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/personal-agent">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/workers-personal-agent">Code</a></div>
 <details><summary>What happens</summary><ol>
 <li>Sign in with Cloudflare, pick your account</li>
@@ -155,44 +158,44 @@ export function personalAgentsPage(): string {
 </section>
 
 <section class="card" id="openclaw">
-<div class="head"><h3>OpenClaw</h3><span class="tag busy">Needs $5 plan</span></div>
+<div class="head"><h3>OpenClaw</h3><a class="tag busy" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare $5/mo plan</a></div>
 <ul class="facts"><li>The popular open-source assistant</li><li>Chat on the web, add Telegram later</li><li>Sleeps when idle and keeps your chats</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/openclaw">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
 <details><summary>What happens</summary><ol>
-<li>Your account needs Workers Paid ($5/month) for containers</li>
+<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan</a> ($5/month)</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
 <li>First open installs it (a few minutes, once)</li>
 </ol></details>
 </section>
 
 <section class="card" id="pi">
-<div class="head"><h3>Pi</h3><span class="tag busy">Needs $5 plan</span></div>
+<div class="head"><h3>Pi</h3><a class="tag busy" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare $5/mo plan</a></div>
 <ul class="facts"><li>A coding agent that builds small apps</li><li>Live preview of what it builds</li><li>No container: always on, nothing to wake</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/pi">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/pi-on-cf">Code</a></div>
 <details><summary>What happens</summary><ol>
-<li>Your account needs Workers Paid ($5/month)</li>
+<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan</a> ($5/month)</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
 <li>Open it and ask for an app</li>
 </ol></details>
 </section>
 
 <section class="card" id="t3code">
-<div class="head"><h3>T3 Code</h3><span class="tag busy">Needs $5 plan</span></div>
+<div class="head"><h3>T3 Code</h3><a class="tag busy" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare $5/mo plan</a></div>
 <ul class="facts"><li>Coding agents from your phone</li><li>OpenCode with a free model built in; sign in to Claude Code too</li><li>Keeps your projects; wakes in about 30 seconds</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/t3code">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
 <details><summary>What happens</summary><ol>
-<li>Your account needs Workers Paid ($5/month) for containers</li>
+<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan</a> ($5/month)</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
 <li>First open installs it (a few minutes, once)</li>
 </ol></details>
 </section>
 
 <section class="card" id="hermes">
-<div class="head"><h3>Hermes</h3><span class="tag busy">Needs $5 plan</span></div>
+<div class="head"><h3>Hermes</h3><a class="tag busy" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare $5/mo plan</a></div>
 <ul class="facts"><li>Nous Research's agent that learns as it goes</li><li>Web dashboard, add Telegram later</li><li>Sleeps when idle and keeps what it learned</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/hermes">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
 <details><summary>What happens</summary><ol>
-<li>Your account needs Workers Paid ($5/month) for containers</li>
+<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan</a> ($5/month)</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
 <li>First open installs it (a few minutes, once)</li>
 </ol></details>
