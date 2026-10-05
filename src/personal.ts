@@ -30,6 +30,13 @@ p{margin:8px 0}
 .tag{font-size:13px;background:var(--chip);border-radius:4px;padding:2px 8px;white-space:nowrap;color:var(--fg)}
 .tag.acc{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc)}
 a.tag{text-decoration:none}
+.ico{width:.95em;height:.95em;vertical-align:-.12em;margin-left:.25em;flex:none}
+button.tag{border:0;font:inherit;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;min-height:28px}
+.linkish{background:none;border:0;padding:0;font:inherit;color:var(--acc);cursor:pointer;display:inline-flex;align-items:center}
+.planpop{max-width:min(420px,calc(100vw - 32px));border:0;border-radius:12px;padding:20px;background:var(--bg);color:var(--fg);box-shadow:0 12px 40px rgba(0,0,0,.25),inset 0 0 0 1px var(--line)}
+.planpop::backdrop{background:rgba(0,0,0,.35)}
+.planpop h3{margin:0 0 8px;font-size:18px}.planpop p{font-size:15px;color:var(--dim);margin:8px 0}.planpop p b{color:var(--fg)}
+.planpop .btns{margin-top:16px}
 .planline{font-size:14px;color:var(--dim);margin:-8px 0 16px}
 .tag.busy{background:color-mix(in srgb,var(--busy) 18%,transparent);color:var(--busy)}
 dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:12px 0;font-size:15px}
@@ -143,8 +150,15 @@ export function personalAgentsPage(): string {
 <li>Your data, your AI model, no ads</li>
 <li>No code, no GitHub: sign in with Cloudflare, tap Install</li>
 </ul>
-<p class="planline">Personal Agent runs on Cloudflare's free plan. The others need Cloudflare's <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan</a>, $5 a month, paid to Cloudflare in your account.</p>
+<p class="planline">Personal Agent runs on Cloudflare's free plan. The others need Cloudflare's Workers Paid plan: <b>$5 a month for your whole Cloudflare account</b>, not per assistant. One plan covers all of them. <button class="linkish" type="button" popovertarget="planinfo">What you get <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></p>
 
+<div id="planinfo" popover class="planpop">
+<h3>One plan for all your assistants</h3>
+<p>Cloudflare's Workers Paid plan costs <b>$5 a month per Cloudflare account</b>, not per assistant. Install OpenClaw, Hermes, T3 Code and Pi in the same account and you still pay $5.</p>
+<p>It includes a monthly amount of use (requests, compute, AI). Most personal use stays inside it; anything above is billed by Cloudflare to your account. Assistants sleep when idle to keep it low.</p>
+<p>You pay Cloudflare directly. forq never sees your card.</p>
+<div class="btns"><a class="btn sec" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare's plan page<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2h5v5M14 2 7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><button class="btn pri" type="button" popovertarget="planinfo" popovertargetaction="hide">Got it</button></div>
+</div>
 <div class="cards">
 <section class="card" id="personal-agent">
 <div class="head"><h3>Personal Agent</h3><span class="tag acc">Start here</span></div>
@@ -158,44 +172,44 @@ export function personalAgentsPage(): string {
 </section>
 
 <section class="card" id="openclaw">
-<div class="head"><h3>OpenClaw</h3><a class="tag busy" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare $5/mo plan</a></div>
+<div class="head"><h3>OpenClaw</h3><button class="tag busy" type="button" popovertarget="planinfo" aria-label="Needs the Cloudflare $5 a month plan. What this means">Cloudflare $5/mo plan <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
 <ul class="facts"><li>The popular open-source assistant</li><li>Chat on the web, add Telegram later</li><li>Sleeps when idle and keeps your chats</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/openclaw">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
 <details><summary>What happens</summary><ol>
-<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan</a> ($5/month)</li>
+<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2h5v5M14 2 7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a> ($5/month for your whole account)</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
 <li>First open installs it (a few minutes, once)</li>
 </ol></details>
 </section>
 
 <section class="card" id="pi">
-<div class="head"><h3>Pi</h3><a class="tag busy" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare $5/mo plan</a></div>
+<div class="head"><h3>Pi</h3><button class="tag busy" type="button" popovertarget="planinfo" aria-label="Needs the Cloudflare $5 a month plan. What this means">Cloudflare $5/mo plan <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
 <ul class="facts"><li>A coding agent that builds small apps</li><li>Live preview of what it builds</li><li>No container: always on, nothing to wake</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/pi">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/pi-on-cf">Code</a></div>
 <details><summary>What happens</summary><ol>
-<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan</a> ($5/month)</li>
+<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2h5v5M14 2 7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a> ($5/month for your whole account)</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
 <li>Open it and ask for an app</li>
 </ol></details>
 </section>
 
 <section class="card" id="t3code">
-<div class="head"><h3>T3 Code</h3><a class="tag busy" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare $5/mo plan</a></div>
+<div class="head"><h3>T3 Code</h3><button class="tag busy" type="button" popovertarget="planinfo" aria-label="Needs the Cloudflare $5 a month plan. What this means">Cloudflare $5/mo plan <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
 <ul class="facts"><li>Coding agents from your phone</li><li>OpenCode with a free model built in; sign in to Claude Code too</li><li>Keeps your projects; wakes in about 30 seconds</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/t3code">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
 <details><summary>What happens</summary><ol>
-<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan</a> ($5/month)</li>
+<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2h5v5M14 2 7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a> ($5/month for your whole account)</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
 <li>First open installs it (a few minutes, once)</li>
 </ol></details>
 </section>
 
 <section class="card" id="hermes">
-<div class="head"><h3>Hermes</h3><a class="tag busy" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare $5/mo plan</a></div>
+<div class="head"><h3>Hermes</h3><button class="tag busy" type="button" popovertarget="planinfo" aria-label="Needs the Cloudflare $5 a month plan. What this means">Cloudflare $5/mo plan <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
 <ul class="facts"><li>Nous Research's agent that learns as it goes</li><li>Web dashboard, add Telegram later</li><li>Sleeps when idle and keeps what it learned</li></ul>
 <div class="btns"><a class="btn pri" href="/personal-agents/install/hermes">Install in my Cloudflare</a><a class="btn sec" href="/p/forq/container-agents">Code</a></div>
 <details><summary>What happens</summary><ol>
-<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan</a> ($5/month)</li>
+<li>Your Cloudflare account needs the <a href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Workers Paid plan<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2h5v5M14 2 7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a> ($5/month for your whole account)</li>
 <li>Sign in with Cloudflare, name it, tap Install</li>
 <li>First open installs it (a few minutes, once)</li>
 </ol></details>
