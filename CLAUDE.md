@@ -203,6 +203,18 @@ OWN account with no GitHub and no pasted tokens (research and options:
   `/__forq/save`, `/__forq/restart[?fresh=1]`. Container deploys no longer
   restart running boxes (DO policy), so test entrypoint changes with a restart.
   Needs Workers Paid. Snapshot storage price: not documented (cloudcost gap).
+  Wakes after the Fable tuning (restore on standard-2, waking page polls
+  /__forq/state which also wakes the box, Node compile cache, smaller
+  snapshots): T3 Code 18-23 s, OpenClaw 34 s, Hermes ~10 s to its dashboard.
+  T3 Code: `/__forq/claude` signs in to Claude Code from a phone (runs
+  `claude auth login` in a pty fed from a FIFO; T3's terminal is hidden at phone
+  width); linked from the install's ready page.
+- **Pi** (`forq/pi-on-cf`, local `../forq-pi-on-cf`): Cloudflare's pi-on-cf
+  (harshil1712/pi-on-cf) as a Worker-only install: Workers AI through the AI
+  binding (`src/server/ai-binding.ts` patches fetch), no Linux container, no R2,
+  no Artifacts, no "Deploy app" (needs a deploy token), no `experimental` compat
+  flag (deployed Workers refuse it; tracing observer off). Previews work
+  (Dynamic Workers, `/__preview/<session>/`). Needs Workers Paid.
 - Personal Agent keeps its vault in a Durable Object (no R2, no card).
 
 ## Run host details
