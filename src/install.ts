@@ -154,7 +154,8 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
 }
 
 const view = (i: Install): InstallView => ({ id: i.id, title: TEMPLATES[i.template]?.title || i.template, name: i.name, accountName: i.accountName, steps: i.steps, url: i.url, error: i.error, fix: i.fix, log: i.log,
-  wakes: !!TEMPLATES[i.template]?.container });
+  wakes: !!TEMPLATES[i.template]?.container,
+  extra: i.url && i.template === 't3code' ? { text: 'Sign in to Claude Code (optional)', href: `${i.url}/__forq/claude` } : undefined });
 
 async function tokenRequest(env: Env, params: Record<string, string>): Promise<any> {
   const r = await fetch(TOKEN_URL, {
