@@ -10,7 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const DEFAULT_HOST = 'https://qodebase.app';
 const CONFIG = join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'qodebase', 'config.json');
 
@@ -33,6 +33,10 @@ const HELP = `qb ${VERSION} — qodebase from the command line
   qb send <agent-id> "<text>"      message an agent
   qb chat <agent-id>               an agent's conversation
   qb merge <owner/name> <agent-id> merge an agent's fork into main
+  qb install <agent> [--name n] [--account id]
+                                   your own AI assistant in YOUR Cloudflare account
+                                   (agents-starter, openclaw, pi, t3code, hermes)
+  qb installs                      what you installed, and the agents you can install
   qb files <owner/name>            file list of main
   qb search <owner/name> "<text>"  search main's code
 
@@ -221,6 +225,39 @@ const cmds = {
     const p = project(need(ref, 'search <owner/name> "<text>"'));
     const { data } = await api('GET', `${p.path}/search?q=${encodeURIComponent(need(q, 'search <owner/name> "<text>"'))}`, undefined, { auth: !!TOKEN });
     out(data, (d) => (d.results || []).flatMap((r) => r.lines.map((l) => `${r.path}:${l.n}  ${l.text.trim().slice(0, 120)}`)).join('\n') || 'No matches.');
+  },
+  async installs() {
+    const { data } = await api('GET', '/api/installs');
+    out(data, (d) => [
+      d.connected ? `Cloudflare: connected (${d.accounts.map((a) => a.name).join(', ')})` : 'Cloudflare: not connected yet (qb install asks once)',
+      '', 'Installed:', ...(d.installs.length ? d.installs.map((i) => `  ${i.name.padEnd(18)} ${i.title.padEnd(18)} ${i.url || (i.error ? `stopped: ${i.error}` : 'installing')}`) : ['  nothing yet']),
+      '', 'Can install:', ...d.templates.map((t) => `  ${t.id.padEnd(16)} ${t.title}${t.needsPaidPlan ? '  (Cloudflare $5/mo Workers Paid plan)' : '  (Cloudflare free plan)'}`),
+    ].join('\n'));
+  },
+  async install(template) {
+    need(template, 'install <agent> [--name n] [--account id]   (qb installs lists them)');
+    const body = { template, name: flags.name, account: flags.account };
+    let r = await api('POST', '/api/installs', body, { okStatus: [409] });
+    if (r.status === 409) {
+      // One browser step: let qodebase into the person's Cloudflare account.
+      if (JSON_OUT) console.error(JSON.stringify({ needs: 'cloudflare', approve_url: r.data.approve_url }));
+      else console.log(`First, let qodebase install into your Cloudflare account (once):\n${r.data.approve_url}\n\nWaiting…`);
+      const until = Date.now() + 15 * 60_000;
+      while (r.status === 409 && Date.now() < until) { await sleep(4000); r = await api('POST', '/api/installs', body, { okStatus: [409] }); }
+      if (r.status === 409) die('Cloudflare was not connected within 15 minutes; run qb install again');
+    }
+    const { id, page, status } = r.data;
+    if (!JSON_OUT) console.log(`Installing (${page})`);
+    let last = '';
+    for (;;) {
+      await sleep(2500);
+      const { data: v } = await api('GET', new URL(status).pathname);
+      const doing = v.steps.find((s) => s.state === 'doing');
+      const line = doing ? `${doing.label}${doing.note ? ` (${doing.note})` : ''}` : '';
+      if (!JSON_OUT && line && line !== last) { console.log(`  ${line}`); last = line; }
+      if (v.url) return out({ ok: true, id, name: v.name, url: v.url, page }, (d) => `Ready: ${d.url}\nIt is locked to you: the first visit asks you to sign in (choose Cloudflare if offered).`);
+      if (v.error) die(`${v.error}${v.fix ? ` (${v.fix.text}: ${v.fix.href})` : ''}`);
+    }
   },
   help() { console.log(HELP); },
   version() { out({ version: VERSION }, (d) => d.version); },

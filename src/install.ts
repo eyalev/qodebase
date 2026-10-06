@@ -20,6 +20,7 @@ import { DurableObject } from 'cloudflare:workers';
 import { isUiHost, type Env } from './env';
 import { log } from './box';
 import { decryptKey, encryptKey, sessionEmail } from './auth';
+import { bearerEmail } from './cliauth';
 import type { BuildJob, BuildResult } from './build';
 import { installPage, installProgressPage, type InstallView } from './personal';
 
@@ -91,11 +92,38 @@ const callbackUrl = (env: Env, url: URL) => `https://${isUiHost(env, url.hostnam
 
 export async function installRoute(request: Request, env: Env, ctx: ExecutionContext, url: URL): Promise<Response | null> {
   const p = url.pathname;
-  if (!p.startsWith('/connect/cf/') && !p.startsWith('/personal-agents/install/') && !p.startsWith('/personal-agents/i/')) return null;
-  const email = await sessionEmail(env, request);
+  if (!p.startsWith('/connect/cf/') && !p.startsWith('/personal-agents/install/') && !p.startsWith('/personal-agents/i/') && p !== '/api/installs') return null;
+  // The qb CLI signs in with a bearer token (src/cliauth.ts); the browser with the session cookie.
+  const bearer = await bearerEmail(env, request);
+  const email = bearer || await sessionEmail(env, request);
   const back = p + url.search;
-  if (!email) return redirect(`/login?next=${encodeURIComponent(back)}`);
+  if (!email) return bearer === null || p === '/api/installs' || p.endsWith('.json') ? Response.json({ error: 'Sign in first (qb login)' }, { status: 401 }) : redirect(`/login?next=${encodeURIComponent(back)}`);
   const stub = installsStub(env, email);
+
+  // ---- JSON for qb (qb install / qb installs)
+  if (p === '/api/installs') {
+    const conn = await stub.connection();
+    const approve = (t?: Template) => `${url.origin}/connect/cf/start?next=${encodeURIComponent(t ? `/personal-agents/install/${t.id}` : '/personal-agents')}${conn.connected ? '&again=1' : ''}`;
+    if (request.method === 'GET') {
+      return Response.json({ connected: conn.connected, accounts: conn.accounts,
+        templates: Object.values(TEMPLATES).map((t) => ({ id: t.id, title: t.title, defaultName: t.defaultName, needsPaidPlan: !!(t.paid || t.container) })),
+        installs: (await stub.list()).map(view) }, { headers: { 'cache-control': 'no-store' } });
+    }
+    if (request.method === 'POST') {
+      const b = await request.json().catch(() => ({})) as { template?: string; name?: string; account?: string };
+      const t = TEMPLATES[String(b.template || '')];
+      if (!t) return Response.json({ error: `Unknown agent. One of: ${Object.keys(TEMPLATES).join(', ')}` }, { status: 400 });
+      // The one step a person must do in a browser: let qodebase into their Cloudflare account.
+      if (!conn.connected || (t.container && !conn.scopes.includes('containers.write'))) {
+        return Response.json({ needs: 'cloudflare', approve_url: approve(t), error: 'Approve qodebase in your Cloudflare account first' }, { status: 409 });
+      }
+      if (!b.account && conn.accounts.length > 1) return Response.json({ error: 'Pick the Cloudflare account (--account <id>)', accounts: conn.accounts }, { status: 400 });
+      const r = await stub.start(t.id, String(b.name || t.defaultName).trim().toLowerCase(), String(b.account || ''), email);
+      if (!r.ok) return Response.json({ error: r.error }, { status: 400 });
+      return Response.json({ id: r.id, page: `${url.origin}/personal-agents/i/${r.id}`, status: `${url.origin}/personal-agents/i/${r.id}.json` });
+    }
+    return Response.json({ error: 'GET or POST' }, { status: 405 });
+  }
 
   if (p === '/connect/cf/start') {
     const next = safePath(url.searchParams.get('next'));

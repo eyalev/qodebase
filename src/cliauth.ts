@@ -174,6 +174,8 @@ or with --json. Projects are named owner/name. Another instance: --host <url> or
 - \`qb chat <agent-id>\` — an agent's conversation so far
 - \`qb merge <owner/name> <agent-id>\` — merge an agent's fork into main
 - \`qb files <owner/name>\`, \`qb search <owner/name> "<text>"\` — read code without cloning
+- \`qb installs\` — your own AI assistants (installed into YOUR Cloudflare account) and the ones you can install
+- \`qb install <agents-starter|openclaw|pi|t3code|hermes> [--name n] [--account id]\` — installs one; the first time it prints one link where a person lets qodebase into their Cloudflare account, then waits and prints the assistant's URL (locked to that person by Cloudflare Access)
 - \`qb clone <owner/name> [dir]\` — git clone (a short-lived token: write for your own projects, read otherwise)
 - \`qb open <owner/name>\` — the project's page and live app URLs
 - \`qb tokens\`, \`qb revoke <id>\`, \`qb logout\`
@@ -183,6 +185,6 @@ or with --json. Projects are named owner/name. Another instance: --host <url> or
 Everything qb does is HTTP with \`authorization: Bearer qb_…\` on ${origin}:
 GET /api/projects, GET /api/p/<owner>/<name>, POST /api/build {prompt,name}, POST /api/import {repo},
 POST /api/p/<o>/<n>/fork, /router {text}, /agents {task}, /merge {agent}, /git-token,
-GET /api/p/<o>/<n>/files, /search?q=, GET /api/agents/<id>/state, /conversation, POST /api/agents/<id>/send {text}.
+GET /api/p/<o>/<n>/files, /search?q=, GET|POST /api/installs {template,name,account} (409 + approve_url until Cloudflare is connected), GET /personal-agents/i/<id>.json, GET /api/agents/<id>/state, /conversation, POST /api/agents/<id>/send {text}.
 `;
 }

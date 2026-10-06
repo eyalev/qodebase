@@ -296,7 +296,7 @@ const app = {
       if (url.pathname === '/about') return html(aboutPage());
       if (url.pathname === '/privacy') return html(privacyPage());
       if (url.pathname === '/personal-agents') return html(personalAgentsPage());
-      if (url.pathname.startsWith('/connect/cf/') || url.pathname.startsWith('/personal-agents/')) { const r = await installRoute(request, env, ctx, url); if (r) return r; }
+      if (url.pathname.startsWith('/connect/cf/') || url.pathname.startsWith('/personal-agents/') || url.pathname === '/api/installs') { const r = await installRoute(request, env, ctx, url); if (r) return r; }
       if (url.pathname.startsWith('/api/cli/') || url.pathname.startsWith('/cli') || url.pathname === '/llms.txt') { const r = await cliPublicRoute(request, env, url); if (r) return r; }
       // Crawler gate on WHO, not on paths: verified bots get the front page only
       // (project and code pages read Artifacts on every view).
@@ -324,7 +324,7 @@ const app = {
     // Anonymous readers: pages and read APIs only.
     if (me.kind === 'user' && me.anon) {
       const p0 = url.pathname;
-      const needsUser = request.method !== 'GET' || p0 === '/cli/login' || p0.startsWith('/api/cli/') || p0.startsWith('/a/') || p0.endsWith('/agents-html') || p0.startsWith('/api/github') || p0 === '/settings' || p0.startsWith('/api/me');
+      const needsUser = (request.method !== 'GET' && request.method !== 'HEAD') || p0 === '/cli/login' || p0.startsWith('/api/cli/') || p0.startsWith('/a/') || p0.endsWith('/agents-html') || p0.startsWith('/api/github') || p0 === '/settings' || p0.startsWith('/api/me');
       if (needsUser) {
         const login = `/login?next=${encodeURIComponent(request.method === 'GET' ? p0 + url.search : (request.headers.get('referer') ? new URL(request.headers.get('referer')!).pathname : '/'))}`;
         return request.method === 'GET' && (request.headers.get('accept') || '').includes('text/html')
