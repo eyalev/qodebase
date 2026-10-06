@@ -264,6 +264,13 @@ OWN account with no GitHub and no pasted tokens (research and options:
   snapshots): T3 Code 18-23 s, OpenClaw 34 s, Hermes ~10 s to its dashboard.
   T3 Code skips its "Connect your computers" wizard: the kind's `headScript` (injected
   into every HTML page) sets `onboardingCompletedAt` in localStorage `t3code:client-settings:v1`.
+  T3 Code runs Claude as root with T3's "Full access" (bypassPermissions), which
+  Claude Code refuses unless `IS_SANDBOX=1` (set in kinds.ts T3 env since
+  2026-10-06; before that every Claude turn failed with "turn/setPermissionMode
+  failed" + "Claude runtime stream failed"). A thread whose first Claude turn
+  failed stays broken ("No conversation found with session ID"): start a new
+  thread. `/__forq/claude-check` runs one tiny `claude -p` with and without the
+  flag and prints both (spends a few subscription tokens).
   T3 Code: `/__forq/claude` signs in to Claude Code from a phone (runs
   `claude auth login` in a pty fed from a FIFO; T3's terminal is hidden at phone
   width); linked from the install's ready page.
