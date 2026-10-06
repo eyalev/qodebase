@@ -63,7 +63,8 @@ export function buildBody(me: string, needsKey: boolean, runDomain: string) {
 <p class="lede">Say it in a sentence: an app, a site, a tool, a library. Agents write it, and you keep changing it in plain words. Anything that opens in a browser gets its own address.</p>
 <textarea id="idea" placeholder="A shared shopping list for my family…" enterkeyhint="next" aria-label="What do you want to build?"></textarea>
 <div class="row"><button type="button" class="chipbtn mic" id="mic" hidden aria-label="Speak instead of typing">${MIC}<span>Speak</span></button><button type="button" class="btn" id="next">Next</button></div>
-<p class="exl">Or start from one of these</p><div class="ex">${EXAMPLES.map((e) => `<button type="button" data-ex="${esc(e)}">${esc(e)}</button>`).join('')}</div></section>
+<p class="exl">Or start from one of these</p><div class="ex">${EXAMPLES.map((e) => `<button type="button" data-ex="${esc(e)}">${esc(e)}</button>`).join('')}</div>
+<p class="exl imp">Already have code? <a href="/import">Import a GitHub repo</a></p></section>
 <section id="s2" hidden><button type="button" class="back4" id="back">Change the idea</button>
 <h1>Here's what qodebase will build</h1>
 <div class="brief"><div class="fld"><label for="pname">Project name</label><input id="pname" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="39">

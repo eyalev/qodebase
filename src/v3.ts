@@ -505,6 +505,18 @@ export const NAV_CSS = `
 .gtop .g{flex:none;display:flex;align-items:center;gap:6px;padding:0 9px;font:500 14px 'Instrument Sans',sans-serif;color:var(--dim);border-bottom:2px solid transparent}
 .gtop .g.on{color:var(--fg);border-bottom-color:var(--fg)}
 .gtop .gbuild{flex:none;align-self:center;margin-left:auto;min-height:34px;padding:0 14px;font-size:14px;border-radius:8px}
+.gtop .gmenu{flex:none;align-self:center;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin-left:2px;border:0;background:none;color:var(--fg);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gmenupop{position:fixed;inset:52px 8px auto auto;margin:0;width:min(300px,calc(100vw - 16px));padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg);box-shadow:0 8px 32px rgb(0 0 0 / .16)}
+.gmenupop a{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none}
+.gmenupop a b{font-weight:500;font-size:15px}.gmenupop a span{font-size:13px;color:var(--dim)}
+.gmenupop a[aria-current]{background:var(--card)}
+@media (hover:hover){.gmenupop a:hover{background:var(--card)}}
+/* Home, Explore, Yours, Inbox, Build: the page itself scrolls (so Chrome's pull-to-refresh
+   works) under a sticky header. Project pages keep the app shell: their Changes thread
+   scrolls on its own, starting at the bottom. */
+body.v3.dhome{height:auto;min-height:100dvh;display:block;overflow:visible}
+body.dhome>.gtop{position:sticky;top:0;z-index:20}
+body.dhome>.view{overflow:visible;min-height:0}
 .gtop .badge{position:static;margin:0;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;font-weight:600;line-height:18px;text-align:center}
 .h3.sub{height:44px;background:var(--card)}
 .h3.sub .nm{padding-left:12px}
@@ -604,7 +616,7 @@ document.addEventListener('click',async(e)=>{
  b.disabled=true;b.textContent=m?'Merging':'Sending to its agent';
  const r=await fetch(api+'/'+(m?'merge':'fix'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({agent:b.dataset.merge||b.dataset.fix})});
  if(!r.ok){const j=await r.json().catch(()=>({}));b.textContent=j.error||'Failed';return;}setTimeout(()=>location.reload(),1200);});
-</script>`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + LAND_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav}${nav === 'd' ? ' dhome' : ''}`);
+</script>`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + LAND_CSS + `@media (min-width:900px){body.v3.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav}${nav === 'd' ? ' dhome' : ''}`);
 }
 
 /** The settings page under the site-wide bar (Account tab). */
@@ -627,13 +639,29 @@ export function globalTop(active: HomeTab, inbox: number, me: string) {
   // Home is the world (the same for everyone); your own projects are under Yours.
   // The forq mark is the way home (2026-10-04: Home became a calm start page and the
   // catalogue moved to Explore, without adding a tab to a full bar).
+  // Account lives in the ☰ menu when signed in: with it in the bar, Build fell off a
+  // 390 px screen (2026-10-06).
   const tabs: [HomeTab, string, string][] = me
-    ? [['explore', 'Explore', '/explore'], ['inbox', 'Inbox', '/inbox'], ['mine', 'Yours', '/mine'], ['account', 'Account', '/settings']]
+    ? [['explore', 'Explore', '/explore'], ['inbox', 'Inbox', '/inbox'], ['mine', 'Yours', '/mine']]
     : [['explore', 'Explore', '/explore'], ['account', 'Sign in', '/login']];
   if (active === 'projects') active = 'mine';
   // Build: the call to action on every page, signed in or not (Eyal, 2026-10-03).
   return `<nav class="gtop" aria-label="qodebase"><a class="mark" href="/">qodebase</a>${tabs.map(([id, labelT, href]) =>
-    `<a href="${href}" class="g${id === active ? ' on' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}<a class="btn gbuild" href="/build"${active === 'build' ? ' aria-current="page"' : ''}>Build</a></nav>`;
+    `<a href="${href}" class="g${id === active ? ' on' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}<a class="btn gbuild" href="/build"${active === 'build' ? ' aria-current="page"' : ''}>Build</a>${gmenu(me, active)}</nav>`;
+}
+
+const MENU_ICON = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+/** The ☰ menu at the header's right end: the things every page can reach but no page leads with. */
+function gmenu(me: string, active: HomeTab) {
+  const item = (href: string, label: string, sub: string, on = false) => `<a href="${href}"${on ? ' aria-current="page"' : ''}><b>${label}</b><span>${sub}</span></a>`;
+  return `<button type="button" class="gmenu" popovertarget="gmenupop" aria-label="Menu">${MENU_ICON}</button>
+<div id="gmenupop" class="gmenupop" popover>
+${me ? item('/settings', 'Account', `${esc(me)}: your name, API key, sign out`, active === 'account') : ''}
+${item('/import', 'Import from GitHub', 'Bring a public repo in and change it with agents')}
+${item('/cli', 'Command line', 'qb: qodebase from a terminal or an agent')}
+${item('/about', 'About', 'What qodebase is')}
+${item('/feedback', 'Feedback', 'Something missing or broken? Tell us')}
+</div>`;
 }
 
 /** A catalogue project's page (/gh/<owner>/<repo>) under D's top tabs. */
@@ -641,13 +669,13 @@ export function catalogV3(nav: Nav, full: string, entries: Entry[], me: string, 
   const pg = catalogPage(full, entries, me);
   if (!pg) return null;
   return shell2(nav as UI, `${pg.title} · qodebase`, `${globalTop('explore', inbox, me)}
-<main class="view" id="view"><div class="pad">${pg.body}${legend(1)}${FOOT}</div></main>${SPECULATE}`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
+<main class="view" id="view"><div class="pad">${pg.body}${legend(1)}${FOOT}</div></main>${SPECULATE}`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.v3.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
 
 /** The Build page under D's top tabs. */
 export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, runDomain: string) {
   return shell2(nav as UI, 'Build · qodebase', `${globalTop('build', inbox, me)}
-<main class="view" id="view"><div class="pad">${buildBody(me, needsKey, runDomain)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + BUILD_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
+<main class="view" id="view"><div class="pad">${buildBody(me, needsKey, runDomain)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + BUILD_CSS + `@media (min-width:900px){body.v3.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
 
 /** D's home (2026-10-06, Eyal: lead with Build; headline "Own your codebase." since the same day): the promise in one
@@ -662,7 +690,6 @@ function landBody(entries: Entry[], selfHost = false) {
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button class="btn" type="submit">Build it</button>
 </form>
-<p class="landalt">or <a href="/import">import from GitHub</a></p>
 <nav class="doors" aria-label="More">
 ${selfHost ? '' : `<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account. Yours to keep.</small></span></a>
 <a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>OpenClaw, Hermes, T3 Code, Mobile Agent and more, in your Cloudflare account.</small></span></a>`}
@@ -684,7 +711,6 @@ export const LAND_CSS = `
 .land .browse{display:flex;align-items:center;justify-content:space-between;margin:28px 0 0;padding:14px 0;border-top:1px solid var(--line);color:var(--fg);font-weight:500;text-decoration:none}
 .land .browse .n{color:var(--dim);font-variant-numeric:tabular-nums;font-weight:400}
 .land .browse+.browse{margin-top:0}
-.landalt{margin:12px 0 0;color:var(--dim);font-size:15px;text-align:center}
 .doors{margin-top:28px}
 .doors .browse{margin-top:0}
 .doors .browse:last-child{border-bottom:1px solid var(--line)}
