@@ -631,28 +631,33 @@ export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, 
 <main class="view" id="view"><div class="pad">${buildBody(me, needsKey, runDomain)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + BUILD_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
 
-/** D's home: what forq is in one line, the build box, and the way to the catalogue. */
+/** D's home (2026-10-06, Eyal: lead with Build; "Be your own GitHub"): the promise in one
+ *  line, the build box above the fold, then three doors (your own qodebase, your own AI
+ *  assistant, explore) and the try-changing row. */
 function landBody(entries: Entry[]) {
   const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && e.slug !== 'forq.blank').length;
   return `<section class="land">
-<h1>Say what you want. Agents build it.</h1>
-<p class="lede">Any code: an app, a site, a tool, a library. Start a project from a sentence, or open someone else's and ask for changes.</p>
+<h1>Be your own GitHub.</h1>
+<p class="lede">Every project runs as a live app, and AI agents change it for you. On Cloudflare, from your phone.</p>
 <form class="landask" action="/build" method="get">
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button class="btn" type="submit">Build it</button>
 </form>
+<p class="landalt">or <a href="/import">import from GitHub</a></p>
+<nav class="doors" aria-label="More">
+<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account. Yours to keep.</small></span></a>
+<a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>OpenClaw, Hermes, T3 Code, Mobile Agent and more, in your Cloudflare account.</small></span></a>
+<a class="browse" href="/explore"><span>Explore projects</span><span class="n">${n}</span></a>
+</nav>
 ${tryRow()}
-<a class="browse" href="/explore"><span>Browse public projects</span><span class="n">${n}</span></a>
-<a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>Install Cloudflare's official agent starter, OpenClaw, Hermes, T3 Code, Mobile Agent or Pi in your own Cloudflare account. Sign in with Cloudflare; no GitHub, no keys.</small></span></a>
-<a class="browse own" href="/p/forq/forq/readme?doc=SELF_HOST.md"><span>Run your own qodebase<small>This is the hosted qodebase. It is open source: run it on your own Cloudflare account and it is yours.</small></span></a>
 </section>${SPECULATE}
 <script>(function(){const f=document.querySelector('.landask'),t=f.querySelector('textarea');
 t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();if(t.value.trim())f.requestSubmit();}});})();</script>`;
 }
 
 export const LAND_CSS = `
-.land{max-width:560px;margin:0 auto;padding:12vh 0 24px}
-.land h1{font-size:30px;line-height:1.15;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;text-wrap:balance}
+.land{max-width:560px;margin:0 auto;padding:8vh 0 24px}
+.land h1{font-size:34px;line-height:1.15;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;text-wrap:balance}
 .land .lede{margin:0 0 24px;font-size:17px}
 .landask{display:flex;flex-direction:column;gap:10px}
 .landask textarea{width:100%;min-height:96px;font:17px/1.45 'Instrument Sans',sans-serif;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:none}
@@ -660,6 +665,10 @@ export const LAND_CSS = `
 .land .browse{display:flex;align-items:center;justify-content:space-between;margin:28px 0 0;padding:14px 0;border-top:1px solid var(--line);color:var(--fg);font-weight:500;text-decoration:none}
 .land .browse .n{color:var(--dim);font-variant-numeric:tabular-nums;font-weight:400}
 .land .browse+.browse{margin-top:0}
+.landalt{margin:12px 0 0;color:var(--dim);font-size:15px;text-align:center}
+.doors{margin-top:28px}
+.doors .browse{margin-top:0}
+.doors .browse:last-child{border-bottom:1px solid var(--line)}
 .tryh{font-size:17px;font-weight:600;margin:32px 0 2px}
 .trys{margin:0 0 12px;color:var(--dim);font-size:15px}
 .tryrow{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}

@@ -27,6 +27,7 @@ import { allFiles, blob, diffTrees, forkBase, head, resolvePath, tree } from './
 import { changesPage, dirPage, filePage, type ChangeText } from './codeui';
 import { startingPage } from './pages';
 import { personalAgentsPage } from './personal';
+import { ownPage } from './own';
 import { Installs, installRoute } from './install';
 import { bearerEmail, cliPublicRoute, cliUserRoute } from './cliauth';
 // mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
@@ -296,6 +297,7 @@ const app = {
       if (url.pathname === '/about') return html(aboutPage());
       if (url.pathname === '/privacy') return html(privacyPage());
       if (url.pathname === '/personal-agents') return html(personalAgentsPage());
+      if (url.pathname === '/own') return html(ownPage(false));
       if (url.pathname.startsWith('/connect/cf/') || url.pathname.startsWith('/personal-agents/') || url.pathname === '/api/installs') { const r = await installRoute(request, env, ctx, url); if (r) return r; }
       if (url.pathname.startsWith('/api/cli/') || url.pathname.startsWith('/cli') || url.pathname === '/llms.txt') { const r = await cliPublicRoute(request, env, url); if (r) return r; }
       // Crawler gate on WHO, not on paths: verified bots get the front page only
