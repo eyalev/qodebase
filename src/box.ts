@@ -244,7 +244,8 @@ PY
       printf '%s' "$AGENT_TOKEN" > /run/forq/agent-token
       printf '%s' "$API_BASE" > /run/forq/api
       printf '%s' "$FORQ_CLI" > /usr/local/bin/forq && chmod 755 /usr/local/bin/forq
-      git -C ${REPO_DIR} log --oneline -1`, { GIT_TOKEN: spec.gitToken, REMOTE: spec.remote, AGENT_ID: spec.agentId, UI_HOST: spec.uiHost,
+      # An empty repo (a self-hosted copy's Build starts empty) has no commit to show yet.
+      git -C ${REPO_DIR} log --oneline -1 2>/dev/null || echo '(empty repository)'`, { GIT_TOKEN: spec.gitToken, REMOTE: spec.remote, AGENT_ID: spec.agentId, UI_HOST: spec.uiHost,
         AGENT_TOKEN: spec.agentToken, API_BASE: spec.apiBase, FORQ_CLI });
     log('box', 'repo_ready', { agentId: spec.agentId, exit: repo.exitCode, head: repo.stdout.trim().slice(-80), err: repo.stderr.slice(-300) });
     if (repo.exitCode !== 0) return { ok: false, ms: Date.now() - t0, from, error: `clone failed: ${repo.stderr.slice(-200)}` };

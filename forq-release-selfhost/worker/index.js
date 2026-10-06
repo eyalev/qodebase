@@ -591,7 +591,8 @@ PY
       printf '%s' "$AGENT_TOKEN" > /run/forq/agent-token
       printf '%s' "$API_BASE" > /run/forq/api
       printf '%s' "$FORQ_CLI" > /usr/local/bin/forq && chmod 755 /usr/local/bin/forq
-      git -C ${REPO_DIR} log --oneline -1`, {
+      # An empty repo (a self-hosted copy's Build starts empty) has no commit to show yet.
+      git -C ${REPO_DIR} log --oneline -1 2>/dev/null || echo '(empty repository)'`, {
       GIT_TOKEN: spec.gitToken,
       REMOTE: spec.remote,
       AGENT_ID: spec.agentId,
@@ -2591,6 +2592,7 @@ var BuildBox = class extends DurableObject3 {
     if (job.install) {
       try {
         await this.env.Installs.get(this.env.Installs.idFromName(job.install.owner.toLowerCase())).buildDone(result);
+        log("build", "reported", { install: job.install.installId, ok: result.ok });
       } catch (e) {
         log("build", "report_failed", { install: job.install.installId, err: String(e) });
       }
@@ -8450,7 +8452,7 @@ function landBody(entries, selfHost = false) {
   const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && !e.private && e.slug !== "forq.blank").length;
   return `<section class="land">
 <h1>Be your own GitHub.</h1>
-<p class="lede">Every project runs as a live app, and AI agents change it for you. On Cloudflare, from your phone.</p>
+<p class="lede">Apps, sites, backends, CLIs: AI agents build and change them for you. Anything with a web page runs live. On Cloudflare, from your phone.</p>
 <form class="landask" action="/build" method="get">
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button class="btn" type="submit">Build it</button>
@@ -10026,6 +10028,7 @@ var Installs = class extends DurableObject5 {
   async buildDone(result) {
     const id = result.id.replace(/^install-/, "");
     const i = await this.get(id);
+    log("install", "build_report", { id, ok: result.ok, found: !!i, step: i?.steps.find((st) => st.key === "deploy")?.state, url: result.url });
     if (!i) return;
     if (!result.ok) {
       log("install", "deploy_failed", { id, error: result.error, tail: result.log.slice(-800) });
