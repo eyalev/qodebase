@@ -251,6 +251,14 @@ OWN account with no GitHub and no pasted tokens (research and options:
   `/__forq/save`, `/__forq/restart[?fresh=1]`. Container deploys no longer
   restart running boxes (DO policy), so test entrypoint changes with a restart.
   Needs Workers Paid. Snapshot storage price: not documented (cloudcost gap).
+  **Idle rule (2026-10-06, after three boxes ran 24/7 for a day, ~€1.17/day each):**
+  use = requests through fetch(), POST chat completions through ai.forq
+  (ForqOutbound → `touch('ai')`), and a kind's `workDirs` (T3: Claude Code
+  transcripts). `stateDirs` changes only trigger snapshots and never count as
+  use; 4 h with no use stops a box whatever else. `/__forq/state` wakes only
+  with `?wake=1` (the waking page); `/__forq/stop` saves and stops. Verified on
+  my-hermes: idle_stop 15 min after its last use. An open tab whose UI polls
+  over HTTP still counts as use.
   Wakes after the Fable tuning (restore on standard-2, waking page polls
   /__forq/state which also wakes the box, Node compile cache, smaller
   snapshots): T3 Code 18-23 s, OpenClaw 34 s, Hermes ~10 s to its dashboard.
@@ -268,6 +276,12 @@ OWN account with no GitHub and no pasted tokens (research and options:
   free plan. forq changes: model glm-4.7-flash (upstream kimi-k2.7-code needs
   Workers Paid) and real weather from Open-Meteo (upstream returns random demo
   values). No secrets; AI binding + one DO.
+- **qb install / installs / uninstall** (`/api/installs` GET|POST|DELETE, bearer
+  or session): install = update in place for the same name + agent (a name used
+  by another agent is refused); the list is one row per name + account, without
+  build logs, and marks `removed` when the Worker is gone (one scripts list per
+  account per call); uninstall deletes the Worker (`force`, data included), its
+  Access app and the records.
 - Personal Agent (DomWane/workers-personal-agent, 11 stars, one author) was
   dropped from the page and installer on 2026-10-05: too small and unreviewed to
   vouch for. Its forq copy (forq/workers-personal-agent) is still in Artifacts.
