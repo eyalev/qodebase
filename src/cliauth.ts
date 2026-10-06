@@ -127,7 +127,7 @@ function cliPage(origin: string) {
 <h2>Install</h2><div class="cmd">curl -fsSL ${esc(origin)}/cli/install.sh | sh</div>
 <h2>Sign in</h2><div class="cmd">qb login</div>
 <p class="desc">It prints a code and a link. Open the link on your phone, check the code, approve.</p>
-<h2>Your own AI assistant</h2><div class="cmd">qb install pi</div>
+<h2>Your own AI assistant</h2><div class="cmd">qb install agents-starter</div>
 <p class="desc">Installs it into <b>your</b> Cloudflare account. The first time it asks you to approve twice on your phone: qodebase sign-in, then Cloudflare. <span class="cmd" style="display:inline;padding:1px 6px">qb installs</span> lists the others.</p>
 <h2>Use it</h2><div class="cmd">qb new "a tip calculator with a dark mode"
 qb import github.com/owner/repo
@@ -146,7 +146,7 @@ command -v node >/dev/null 2>&1 || { echo "qb needs Node 18 or newer: https://no
 mkdir -p "$HOME/.local/bin"
 curl -fsSL ${origin}/cli/qb.mjs -o "$HOME/.local/bin/qb"
 chmod +x "$HOME/.local/bin/qb"
-echo "Installed qb in $HOME/.local/bin. Next: qb install pi (your own AI assistant), or qb help"
+echo "Installed qb in $HOME/.local/bin. Next: qb install agents-starter (your own AI assistant, Cloudflare free plan), qb installs (all of them), or qb help"
 case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) echo "Add $HOME/.local/bin to your PATH.";; esac
 `;
 
