@@ -212,5 +212,5 @@ const projLabel = (p: Proj, part: string) => `${p.owner}/${p.name}${part && part
 
 function projectHref(p: Proj, part: string): string {
   const root = `/p/${p.owner}/${p.name}`;
-  return part === 'app' ? `${root}/app` : part === 'code' ? `${root}/code/` : part === 'readme' ? `${root}/readme` : part === 'history' ? `${root}/history` : part === 'agents' ? `${root}/agents` : root;
+  return part === 'app' ? `${root}/app` : part === 'code' ? `${root}/code/` : part === 'readme' ? `${root}/readme` : part === 'history' ? `${root}/history` : root;   // agents: the cards on the project page (/agents is not a page)
 }
