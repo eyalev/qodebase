@@ -7,6 +7,7 @@
 //   POST /api/talk/chat        questions and "both": glm-4.7-flash with the same actions as tools
 //   POST /api/talk/transcribe  audio -> text (Whisper large v3 turbo), for the Whisper dictation setting
 //   GET  /api/talk/me          signed in? today's budget left
+//   POST /api/talk/log         one row per page-tool call (window.__webmcp, Jarvis hands)
 //   GET  /talk.js              the layer (src/talkclient.ts)
 //
 // Cost: every model call goes through the AI Gateway in TALK_GATEWAY (rate
@@ -215,5 +216,11 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
   if (url.pathname === '/api/talk/decide') return decide(request, env, who);
   if (url.pathname === '/api/talk/chat') return chat(request, env, who);
   if (url.pathname === '/api/talk/transcribe') return transcribe(request, env, who, url);
+  if (url.pathname === '/api/talk/log') {
+    // One row per page-tool call (window.__webmcp / WebMCP, src/talkclient.ts). No model, no budget.
+    const b = await request.json().catch(() => null) as any;
+    log('webmcp', { level: 'info', handle: who.handle, tool: String(b?.tool || '').slice(0, 40), args: JSON.stringify(b?.args ?? {}).slice(0, 300), ms: Number(b?.ms) || 0, ok: !!b?.ok, path: String(b?.path || '').slice(0, 200), text_len: Number(b?.text_len) || 0 });
+    return json({ ok: true });
+  }
   return json({ error: 'not found' }, 404);
 }

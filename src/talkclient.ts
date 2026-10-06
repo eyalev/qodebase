@@ -129,7 +129,7 @@ function build() {
 
 function open(on) { root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
 function status(t) { stEl.textContent = t || ''; }
-function add(who, text) { hist.push({ who: who, text: String(text) }); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
+function add(who, text) { if (run && who !== 'you') run.texts.push(String(text)); hist.push({ who: who, text: String(text) }); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
 function render() {
   logEl.innerHTML = '';
   if (!hist.length) {
@@ -186,8 +186,9 @@ function submit(text) {
   var reuse = preview && preview.text === text ? Promise.resolve({ cmd: preview.cmd, ms: { total: 0 } }) : api('decide', { utterance: text, screen: screen() });
   preview = null;
   reuse.then(function (r) {
-    if (r.error) { add('note', r.why || 'Something went wrong.'); return done(); }
+    if (r.error) { if (run) run.ok = false; add('note', r.why || 'Something went wrong.'); return done(); }
     var c = r.cmd;
+    if (run) { run.mode = c.mode; run.action = c.op; }
     logEv('decide', { text: text, mode: c.mode, mode_p: c.modeP, op: c.op, p: c.p, risky: c.risky, ms: Date.now() - t0 });
     if ((c.risky || 0) >= 0.5) {
       add('ai', 'That would change or remove something, so I will leave the doing to you.');
@@ -205,9 +206,9 @@ function submit(text) {
       if (c.mode === 'act') return done();
     }
     ask(text, '');
-  }).catch(function (e) { add('note', 'Could not reach qodebase.'); logEv('error', { where: 'decide', err: String(e) }); done(); });
+  }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'decide', err: String(e) }); done(); });
 }
-function done() { busy = false; status(''); }
+function done() { busy = false; status(''); finish(); }
 
 function describe(c) {
   if (c.op === 'go') return 'open ' + (c.label || c.href);
@@ -228,10 +229,10 @@ function act(c, withPreview) {
       sset('last', c.label || c.href);
       sset('open', true);
       busy = false;
-      location.assign(c.href);
+      leave(function () { location.assign(c.href); });
       return;
     }
-    if (c.op === 'back') { add('app', 'Going back…'); busy = false; history.back(); return; }
+    if (c.op === 'back') { add('app', 'Going back…'); busy = false; leave(function () { history.back(); }); return; }
     if (c.op === 'press' && target) { add('app', 'Pressed “' + c.label + '”.'); target.click(); }
     else if (c.op === 'type' && target) { typeInto(target, c.text); add('app', 'Typed “' + c.text + '”.'); offerSubmit(target); }
     else if (c.op === 'scroll') {
@@ -267,6 +268,7 @@ function offerSubmit(t) {
 }
 
 function offerOn(text, yes, yesLabel) {
+  if (run) run.texts.push(text);
   offer.innerHTML = '';
   var s = el('span'); s.textContent = text;
   var y = el('button', { type: 'button', class: 'talk-chip pri' }); y.textContent = yesLabel || 'Go';
@@ -282,7 +284,7 @@ function ask(text, did) {
   busy = true;
   status('Answering…');
   api('chat', { utterance: text, did: did, screen: screen(), pageText: pageText(), history: chatHist }).then(function (r) {
-    if (r.error) { add('note', r.why || 'No answer.'); return done(); }
+    if (r.error) { if (run) run.ok = false; add('note', r.why || 'No answer.'); return done(); }
     var reply = r.reply || '';
     chatHist.push({ role: 'user', content: text });
     if (reply) chatHist.push({ role: 'assistant', content: reply });
@@ -304,7 +306,7 @@ function ask(text, did) {
     });
     if (nav) { var c = { op: 'go', href: nav.href, label: nav.label }; setTimeout(function () { act(c); }, reply ? 900 : 0); return; }
     done();
-  }).catch(function (e) { add('note', 'Could not reach qodebase.'); logEv('error', { where: 'chat', err: String(e) }); done(); });
+  }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'chat', err: String(e) }); done(); });
 }
 
 function say(text) {
@@ -439,11 +441,122 @@ function silenceStop(s) {
   } catch (e) { setTimeout(function () { if (mr) mr.stop(); }, 8000); }
 }
 
+// ---- Page tools (WebMCP) ------------------------------------------------------
+// Jarvis hands (and any WebMCP client) can call Talk and a few typed navigation
+// tools. Contract: <jarvis webmcp contract>.
+// Mirrored in window.__webmcp (what Jarvis reads over CDP) and registered with
+// real WebMCP when the browser has it. Navigation and questions only: nothing
+// that deletes, merges, deploys or changes settings.
+var run = null;   // the talk() call in flight: { texts, mode, action, ok, resolve }
+function finish() {
+  if (!run) return;
+  var r = run; run = null;
+  r.resolve({ ok: r.ok !== false, text: r.texts.join(' ') || 'Done.', data: { mode: r.mode || null, action: r.action || null } });
+}
+// Navigating away: answer the call first, then leave (a result sent after unload is lost).
+function leave(go) { if (run) { finish(); setTimeout(go, 80); } else go(); }
+
+var PAGES = { home: '/', explore: '/explore', yours: '/mine', inbox: '/inbox', build: '/build', import: '/import', settings: '/settings', command_line: '/cli', personal_agents: '/personal-agents', own_copy: '/own', about: '/about' };
+var PAGE_WORDS = { home: 'home', explore: 'Explore', yours: 'your projects', inbox: 'Inbox', build: 'Build', import: 'Import from GitHub', settings: 'Settings', command_line: 'the command line page', personal_agents: 'your own AI assistant', own_copy: 'get your own qodebase', about: 'About' };
+var PARTS = { page: '', app: '/app', code: '/code/', readme: '/readme', history: '/history', agents: '/agents' };
+
+function navTo(href, label) {
+  add('app', 'Opening ' + label + '…');
+  sset('last', label); sset('open', true); open(true);
+  setTimeout(function () { location.assign(href); }, 80);
+}
+
+var projList = null;
+function projects() {
+  if (projList) return Promise.resolve(projList);
+  return fetch('/api/projects', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) { projList = j.projects || []; return projList; });
+}
+function findProject(list, q) {
+  var raw = String(q || '').toLowerCase().trim();
+  var slash = /^([a-z0-9-]+)\s*\/\s*([a-z0-9-]+)$/.exec(raw);
+  if (slash) return list.filter(function (p) { return p.owner === slash[1] && p.name === slash[2]; });
+  var words = raw.replace(/[^a-z0-9 -]/g, ' ').split(/[\s-]+/).filter(function (w) { return w && !/^(the|my|a|an|project|app|repo)$/.test(w); });
+  var key = words.join('-');
+  if (!key) return [];
+  var rank = function (p) { return p.owner === me ? 0 : p.owner === 'forq' ? 1 : 2; };
+  var by = function (a, b) { return rank(a) - rank(b); };
+  var exact = list.filter(function (p) { return p.name === key || p.name.replace(/-/g, '') === key.replace(/-/g, ''); }).sort(by);
+  if (exact.length) return exact;
+  return list.filter(function (p) { return words.every(function (w) { return p.name.indexOf(w) >= 0; }); }).sort(by);
+}
+
+var TOOLS = [
+  { name: 'talk',
+    description: 'Say a sentence to qodebase Talk, as if typed in the talk sheet: it opens pages, presses safe buttons, or answers questions about the page and projects. Use for questions and anything the other tools do not cover. Pass the whole sentence.',
+    inputSchema: { type: 'object', properties: { sentence: { type: 'string', description: 'The sentence, verbatim.' } }, required: ['sentence'] },
+    run: function (a) {
+      var text = String(a.sentence || '').trim();
+      if (!text) return Promise.resolve({ ok: false, text: 'No sentence.' });
+      if (busy || run) return Promise.resolve({ ok: false, text: 'Talk is busy with the last sentence.' });
+      return new Promise(function (resolve) {
+        run = { texts: [], ok: true, resolve: resolve };
+        open(true); lastSpoken = false; submit(text);
+      });
+    } },
+  { name: 'open_project',
+    description: 'Open a project by name (like "calculator" or "forq/timer"), or one part of it: its live app, code, readme, history or agents.',
+    inputSchema: { type: 'object', properties: { name: { type: 'string', description: 'Project name, or owner/name.' }, part: { type: 'string', enum: Object.keys(PARTS), description: 'Which part; page = the project page.' } }, required: ['name'] },
+    run: function (a) {
+      return projects().then(function (list) {
+        var hits = findProject(list, a.name);
+        if (!hits.length) return { ok: false, text: 'No project called ' + a.name + '.', data: { candidates: [] } };
+        var p = hits[0], part = PARTS.hasOwnProperty(a.part) ? a.part : 'page';
+        var label = p.owner + '/' + p.name + (part !== 'page' ? ' (' + part + ')' : '');
+        navTo('/p/' + p.owner + '/' + p.name + PARTS[part], label);
+        return { ok: true, text: 'Opening ' + label + '.', data: { project: p.owner + '/' + p.name, part: part, others: hits.slice(1, 5).map(function (h) { return h.owner + '/' + h.name; }) } };
+      });
+    } },
+  { name: 'go',
+    description: 'Open one of qodebase\'s main pages: home, explore (public projects), yours (your projects), inbox, build (start a new project), import (from GitHub), settings, command_line, personal_agents (install an AI assistant), own_copy (your own qodebase), about.',
+    inputSchema: { type: 'object', properties: { page: { type: 'string', enum: Object.keys(PAGES) } }, required: ['page'] },
+    run: function (a) {
+      if (!PAGES.hasOwnProperty(a.page)) return Promise.resolve({ ok: false, text: 'No page called ' + a.page + '.' });
+      navTo(PAGES[a.page], PAGE_WORDS[a.page]);
+      return Promise.resolve({ ok: true, text: 'Opening ' + PAGE_WORDS[a.page] + '.', data: { page: a.page } });
+    } },
+];
+var TOOL_BY = {};
+TOOLS.forEach(function (t) { TOOL_BY[t.name] = t; });
+
+function callTool(name, args) {
+  var t = TOOL_BY[name], t0 = Date.now();
+  args = args && typeof args === 'object' ? args : {};
+  var p = t ? Promise.resolve().then(function () { return t.run(args); }) : Promise.resolve({ ok: false, text: 'No tool called ' + name + '.' });
+  return p.catch(function (e) { return { ok: false, text: 'The tool failed.', data: { err: String(e) } }; }).then(function (r) {
+    var row = { tool: name, args: args, ms: Date.now() - t0, ok: !!r.ok, path: location.pathname, text_len: (r.text || '').length };
+    logEv('webmcp', row);
+    try { fetch('/api/talk/log', { method: 'POST', keepalive: true, credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(row) }).catch(function () {}); } catch (e) {}
+    return r;
+  });
+}
+
+function publishTools() {
+  var pub = TOOLS.map(function (t) { return { name: t.name, description: t.description, inputSchema: t.inputSchema }; });
+  window.__webmcp = { version: 1, app: 'qodebase', tools: pub, call: callTool };
+  // Real WebMCP (origin trial; was navigator.modelContext before Chrome 150). One wrapper, so a moved API breaks only here.
+  var mc = document.modelContext || navigator.modelContext;
+  if (mc && typeof mc.registerTool === 'function') {
+    pub.forEach(function (t) {
+      try {
+        mc.registerTool({ name: t.name, description: t.description, inputSchema: t.inputSchema,
+          execute: function (args) { return callTool(t.name, args).then(function (r) { return { content: [{ type: 'text', text: r.text }], isError: !r.ok }; }); } });
+      } catch (e) { logEv('webmcp_register_error', { tool: t.name, err: String(e) }); }
+    });
+  }
+  window.dispatchEvent(new Event('webmcp:ready'));
+}
+
 // ---- Boot ----------------------------------------------------------------
 fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
   if (!j.signedIn) return;
   me = j.handle;
   build();
+  publishTools();
   // Coming back from a navigation Talk made: show the sheet, finish any pending question.
   if (sget('open', false)) {
     open(true);
