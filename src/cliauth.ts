@@ -146,7 +146,7 @@ command -v node >/dev/null 2>&1 || { echo "qb needs Node 18 or newer: https://no
 mkdir -p "$HOME/.local/bin"
 curl -fsSL ${origin}/cli/qb.mjs -o "$HOME/.local/bin/qb"
 chmod +x "$HOME/.local/bin/qb"
-echo "Installed qb in $HOME/.local/bin. Next: qb login"
+echo "Installed qb in $HOME/.local/bin. Next: qb install pi (your own AI assistant), or qb help"
 case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) echo "Add $HOME/.local/bin to your PATH.";; esac
 `;
 

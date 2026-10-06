@@ -10,7 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
 
-const VERSION = '0.3.0';
+const VERSION = '0.3.1';
 const DEFAULT_HOST = 'https://qodebase.app';
 const CONFIG = join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'qodebase', 'config.json');
 
@@ -266,7 +266,7 @@ const cmds = {
       const doing = v.steps.find((s) => s.state === 'doing');
       const line = doing ? `${doing.label}${doing.note ? ` (${doing.note})` : ''}` : '';
       if (!JSON_OUT && line && line !== last) { console.log(`  ${line}`); last = line; }
-      if (v.url) return out({ ok: true, id, name: v.name, url: v.url, page }, (d) => `Ready: ${d.url}\nIt is locked to you: the first visit asks you to sign in (choose Cloudflare if offered).`);
+      if (v.url) return out({ ok: true, id, name: v.name, url: v.url, page }, (d) => `Ready: ${d.url}\nIt is locked to you: the first visit asks you to sign in. Choose Cloudflare (quick if this browser is signed in to the Cloudflare dashboard) or get a code by email.`);
       if (v.error) die(`${v.error}${v.fix ? ` (${v.fix.text}: ${v.fix.href})` : ''}`);
     }
   },
