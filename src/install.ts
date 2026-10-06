@@ -39,8 +39,8 @@ export const TEMPLATES: Record<string, Template> = {
   pi: { id: 'pi', title: 'Pi', repo: 'forq.pi-durable', dir: 'forq-release', defaultName: 'my-pi', paid: true },
   t3code: { id: 't3code', title: 'T3 Code', repo: 'forq.container-agents', dir: 'forq-release-t3code', defaultName: 'my-t3code',
     vars: { AGENT_KIND: 't3code', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
-  claudecode: { id: 'claudecode', title: 'Claude Code', repo: 'forq.container-agents', dir: 'forq-release-claudecode', defaultName: 'my-claude',
-    vars: { AGENT_KIND: 'claudecode', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
+  'mobile-agent': { id: 'mobile-agent', title: 'Mobile Agent', repo: 'forq.container-agents', dir: 'forq-release-mobile-agent', defaultName: 'my-mobile-agent',
+    vars: { AGENT_KIND: 'mobile-agent', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
   hermes: { id: 'hermes', title: 'Hermes', repo: 'forq.container-agents', dir: 'forq-release-hermes', defaultName: 'my-hermes',
     vars: { AGENT_KIND: 'hermes', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
 };
@@ -216,7 +216,7 @@ function latestInstalls(all: Install[], live: Record<string, string[]> | null) {
 const RETIRED: Record<string, string> = { 'personal-agent': 'Personal Agent' };
 const view = (i: Install): InstallView => ({ id: i.id, title: TEMPLATES[i.template]?.title || RETIRED[i.template] || i.template, name: i.name, accountName: i.accountName, steps: i.steps, url: i.url, error: i.error, fix: i.fix, log: i.log,
   wakes: !!TEMPLATES[i.template]?.container,
-  extra: i.url && i.template === 'claudecode' ? { text: 'Sign in to Claude (needed)', href: `${i.url}/__forq/claude` } : i.url && i.template === 't3code' ? { text: 'Sign in to Claude Code (optional)', href: `${i.url}/__forq/claude` } : undefined });
+  extra: i.url && i.template === 'mobile-agent' ? { text: 'Sign in to Claude (needed)', href: `${i.url}/__forq/claude` } : i.url && i.template === 't3code' ? { text: 'Sign in to Claude Code (optional)', href: `${i.url}/__forq/claude` } : undefined });
 
 async function tokenRequest(env: Env, params: Record<string, string>): Promise<any> {
   const r = await fetch(TOKEN_URL, {
@@ -316,8 +316,10 @@ export class Installs extends DurableObject<Env> {
     return t.access_token;
   }
 
-  async get(id: string) { return (await this.ctx.storage.get<Install>(`i:${id}`)) || null; }
-  async list() { return [...(await this.ctx.storage.list<Install>({ prefix: 'i:' })).values()].sort((a, b) => b.createdAt - a.createdAt); }
+  async get(id: string) { const i = (await this.ctx.storage.get<Install>(`i:${id}`)) || null; return i && this.#renamed(i); }
+  async list() { return [...(await this.ctx.storage.list<Install>({ prefix: 'i:' })).values()].map((i) => this.#renamed(i)).sort((a, b) => b.createdAt - a.createdAt); }
+  /** Templates renamed since an install was made (claudecode → mobile-agent, 2026-10-06). */
+  #renamed(i: Install): Install { const to = ({ claudecode: 'mobile-agent' } as Record<string, string>)[i.template]; return to ? { ...i, template: to } : i; }
 
   async start(template: string, name: string, accountId: string, email: string): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
     const c = await this.ctx.storage.get<Conn>('conn');

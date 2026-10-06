@@ -643,7 +643,7 @@ function landBody(entries: Entry[]) {
 </form>
 ${tryRow()}
 <a class="browse" href="/explore"><span>Browse public projects</span><span class="n">${n}</span></a>
-<a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>Install Cloudflare's official agent starter, OpenClaw, Hermes, T3 Code, Claude Code or Pi in your own Cloudflare account. Sign in with Cloudflare; no GitHub, no keys.</small></span></a>
+<a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>Install Cloudflare's official agent starter, OpenClaw, Hermes, T3 Code, Mobile Agent or Pi in your own Cloudflare account. Sign in with Cloudflare; no GitHub, no keys.</small></span></a>
 <a class="browse own" href="/p/forq/forq/readme?doc=SELF_HOST.md"><span>Run your own qodebase<small>This is the hosted qodebase. It is open source: run it on your own Cloudflare account and it is yours.</small></span></a>
 </section>${SPECULATE}
 <script>(function(){const f=document.querySelector('.landask'),t=f.querySelector('textarea');

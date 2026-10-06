@@ -274,8 +274,9 @@ OWN account with no GitHub and no pasted tokens (research and options:
   T3 Code: `/__forq/claude` signs in to Claude Code from a phone (runs
   `claude auth login` in a pty fed from a FIFO; T3's terminal is hidden at phone
   width); linked from the install's ready page.
-- **Claude Code** (kind `claudecode` in `forq/container-agents`, since
-  2026-10-06): the real Claude Code TUI in tmux session `claude` (/workspace,
+- **Mobile Agent** (template + kind `mobile-agent` in `forq/container-agents`,
+  since 2026-10-06; first named Claude Code / `claudecode`, still an alias in
+  KINDS and mapped by `#renamed()` in the Installs DO): the real Claude Code TUI in tmux session `claude` (/workspace,
   `IS_SANDBOX=1`, `--continue`), mobile-agent (public eyalev/mobile-agent,
   pinned `MOBILE_AGENT_REF`) as the phone UI on :8080. The person signs in with
   their OWN Claude subscription at `/__forq/claude`; until then the pane waits.

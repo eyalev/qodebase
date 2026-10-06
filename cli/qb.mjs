@@ -36,7 +36,7 @@ const HELP = `qb ${VERSION} — qodebase from the command line
   qb merge <owner/name> <agent-id> merge an agent's fork into main
   qb install <agent> [--name n] [--account id]
                                    your own AI assistant in YOUR Cloudflare account
-                                   (agents-starter, openclaw, pi, t3code, claudecode, hermes)
+                                   (agents-starter, openclaw, pi, t3code, mobile-agent, hermes)
   qb installs                      what you installed, and the agents you can install
   qb uninstall <name> [--yes]      delete an assistant: its Worker, its data, its lock
   qb files <owner/name>            file list of main
