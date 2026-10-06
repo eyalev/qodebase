@@ -298,7 +298,8 @@ function ask(text, did) {
       else if (a.name === 'go' && !did) {
         var to = String(a.args.to || ''); var l = byId(to);
         var href = l ? l.getAttribute('href') : (to.charAt(0) === '/' ? to : null);
-        if (href) nav = { href: href, label: l ? (l.innerText || href).split('\n')[0] : href };
+        var pm = /^\/p\/([^/]+)\/([^/?]+)\/?([a-z]*)/.exec(href || '');
+        if (href) nav = { href: href, label: l ? (l.innerText || href).split('\n')[0] : pm ? pm[1] + '/' + pm[2] + (pm[3] ? ' (' + pm[3] + ')' : '') : href };
       }
     });
     if (nav) { var c = { op: 'go', href: nav.href, label: nav.label }; setTimeout(function () { act(c); }, reply ? 900 : 0); return; }
