@@ -502,10 +502,10 @@ export const NAV_CSS = `
 .gtop{flex:none;display:flex;align-items:stretch;height:48px;padding:0 4px;border-bottom:1px solid var(--line);background:var(--bg);overflow-x:auto;scrollbar-width:none}
 .gtop::-webkit-scrollbar{display:none}
 .gtop .mark{display:flex;align-items:center;padding:0 10px 0 8px;font-weight:600;font-size:16px;color:var(--fg)}
-.gtop .g{flex:none;display:flex;align-items:center;gap:6px;padding:0 9px;font:500 14px 'Instrument Sans',sans-serif;color:var(--dim);border-bottom:2px solid transparent}
+.gtop .g{flex:none;display:flex;align-items:center;gap:6px;padding:0 7px;font:500 14px 'Instrument Sans',sans-serif;color:var(--dim);border-bottom:2px solid transparent}
 .gtop .g.on{color:var(--fg);border-bottom-color:var(--fg)}
-.gtop .gbuild{flex:none;align-self:center;margin-left:auto;min-height:34px;padding:0 14px;font-size:14px;border-radius:8px}
-.gtop .gmenu{flex:none;align-self:center;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin-left:2px;border:0;background:none;color:var(--fg);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gtop .gbuild{flex:none;align-self:center;margin-left:auto;min-height:34px;padding:0 12px;font-size:14px;border-radius:8px}
+.gtop .gmenu{flex:none;align-self:center;display:inline-flex;align-items:center;justify-content:center;width:40px;height:44px;margin-left:0;border:0;background:none;color:var(--fg);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .gmenupop{position:fixed;inset:52px 8px auto auto;margin:0;width:min(300px,calc(100vw - 16px));padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg);box-shadow:0 8px 32px rgb(0 0 0 / .16)}
 .gmenupop a{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none}
 .gmenupop a b{font-weight:500;font-size:15px}.gmenupop a span{font-size:13px;color:var(--dim)}
