@@ -289,6 +289,11 @@ OWN account with no GitHub and no pasted tokens (research and options:
   tmux `focus-events on`. Claude starts only after the phone attaches (tmux
   list-clients) + 2 s: with the alternate screen off, lines drawn at the first
   60 columns stay cut off after the phone's resize.
+  Codex (`@openai/codex`, pinned in `AGENTS_REF`) in its own tmux tab, started
+  when the tab is first opened; from a phone pick "Sign in with Device Code"
+  (ChatGPT sign-in waits for a localhost callback). The tab switcher is only in
+  `?ui=full`. Grok left out until Eyal decides: no official xAI CLI, and
+  Superagent's `grok-dev` 1.1.7 pulls `@coinbase/agentkit` (wallet SDKs, 199 MB).
   After `qb install` updates a box, its Durable Object can run the old code for
   ~1 min: a `/__forq/restart` right away restarts with the OLD entrypoint.
 - **Pi** (`forq/pi-durable`, local `../forq-pi-durable`, since 2026-10-06):
