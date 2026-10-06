@@ -439,6 +439,7 @@ export function privacyPage() {
   return shell('Privacy · qodebase', `<a class="back" href="/">Explore</a>
 <h1>Privacy</h1>
 <p class="desc">What qodebase stores: your email address and the name you choose; your Anthropic API key, encrypted, used only to start Claude Code in your projects' containers; the projects, forks and agent conversations you create. Projects are public to read.</p>
+<p class="desc">Private projects: only you see them on qodebase (the project, its code, its live app and its agents). Their code is still stored in this instance's Cloudflare account, so whoever runs the instance can technically read it; for code only you can reach, <a href="/own">get your own qodebase</a>.</p>
 <p class="desc">Sign-in is handled by Cloudflare Access: with your Google account, or with a one-time code sent to your email. With Google, qodebase receives only your email address from Google, nothing else from your account. qodebase sets one cookie, to keep you signed in.</p>
 <p class="desc">Visits are counted with our own analytics (kstats), sent to qodebase itself and not to a third party: the pages you open, the buttons and links you tap, the kind of device and the country. Your IP address is used once to make a visitor code that changes every day, and is not stored. No ad trackers.</p>
 <p class="desc">The <a href="/feedback">feedback form</a> keeps your message, the page you sent it from, the kind of device, and your email only if you give one.</p>

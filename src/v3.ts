@@ -222,23 +222,26 @@ ${chips}${doc}${cur ? `<p class="srcl"><a href="/p/${info.owner}/${info.name}/co
 /** More: the views that do not fit the tab bar, plus the account. */
 function moreMenu(c: Ctx) {
   const extra = VIEWS.filter((v) => !v.tab && v.when(c));
-  return `<div class="menu">${extra.map((v) => `<a class="mi" href="${c.base}/${v.id}">${v.icon}<span><b>${v.label}</b><span>${v.desc}</span></span></a>`).join('')}
+  return `${c.own ? visibilityRow(c) : ''}<div class="menu">${extra.map((v) => `<a class="mi" href="${c.base}/${v.id}">${v.icon}<span><b>${v.label}</b><span>${v.desc}</span></span></a>`).join('')}
 <a class="mi" href="/settings">${ICONS.about}<span><b>Account</b><span>Your name${c.own ? '' : ', your Anthropic API key'}, sign out</span></span></a>
 <a class="mi" href="/">${ICONS.app}<span><b>All projects</b><span>Your projects and Explore</span></span></a>
 <a class="mi" href="/feedback" data-fb>${ICONS.changes}<span><b>Feedback</b><span>Something missing, confusing or broken? Tell us.</span></span></a></div>`;
 }
 function moreView(c: Ctx) {
-  return { body: `<div class="pad">${c.own ? visibilityRow(c) : ''}${moreMenu(c)}</div>` };
+  return { body: `<div class="pad">${moreMenu(c)}</div>` };
 }
 /** Owner: public or private (POST /api/p/<o>/<n>/visibility). */
 function visibilityRow(c: Ctx) {
   const pv = !!c.info.private;
   return `<div class="visrow"><div><b>${pv ? `${LOCK} Private` : 'Public'}</b><span>${pv ? 'Only you can see this project, its code and its app.' : 'Anyone can see this project, try its app and fork it.'}</span></div>
-<button type="button" class="chipbtn" id="visbtn" data-to="${pv ? 'public' : 'private'}">${pv ? 'Make public' : 'Make private'}</button></div>
-<p class="err" id="vismsg" role="status"></p>
-<script>(function(){const b=document.getElementById('visbtn');b.onclick=async()=>{b.disabled=true;
+<button type="button" class="chipbtn" data-visto="${pv ? 'public' : 'private'}">${pv ? 'Make public' : 'Make private'}</button></div>
+<p class="err" data-vismsg role="status"></p>
+<script>(function(){if(window.__visBound)return;window.__visBound=1;
+// The menu can be on the page twice (the More view and the More sheet): one handler for every button.
+document.addEventListener('click',async(e)=>{const b=e.target.closest&&e.target.closest('[data-visto]');if(!b)return;
+document.querySelectorAll('[data-visto]').forEach((x)=>x.disabled=true);
 const r=await fetch('/api/p/${esc(c.info.owner)}/${esc(c.info.name)}/visibility',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({private:b.dataset.to==='private'})});
-if(r.ok)location.reload();else{b.disabled=false;document.getElementById('vismsg').textContent='Could not change it. Try again.';}};})();</script>`;
+if(r.ok)location.reload();else{document.querySelectorAll('[data-visto]').forEach((x)=>x.disabled=false);document.querySelectorAll('[data-vismsg]').forEach((m)=>m.textContent='Could not change it. Try again.');}});})();</script>`;
 }
 
 const VIEWS: View[] = [
