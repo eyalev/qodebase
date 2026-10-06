@@ -573,7 +573,7 @@ ${moving.length ? `<h3>In progress</h3>${moving.map(({ it, c }) => `<a class="mi
     body = `<div class="hrow"><span class="lede" style="flex:1;margin:0">Projects that run. Open one, fork it, ask for changes.</span>${me ? '<a class="chipbtn" href="/import">Import</a>' : ''}</div>
 <div class="home-list">${others.map((e) => projRow(e, now, undefined, forks(e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`;
   }
-  return shell2(nav as UI, `${title} · qodebase`, `${nav === 'd' ? globalTop(tab, inboxN, me) : `
+  return shell2(nav as UI, title === 'qodebase' ? 'qodebase' : `${title} · qodebase`, `${nav === 'd' ? globalTop(tab, inboxN, me) : `
 <header class="h3"><a class="home" href="/">qodebase</a><span class="htitle">${title}</span></header>`}
 <main class="view" id="view"><div class="pad">${body}${tab === 'home' && nav === 'd' ? '' : legend(1)}${FOOT}</div></main>
 ${nav === 'd' ? '' : globalBar(tab, inboxN, me)}
