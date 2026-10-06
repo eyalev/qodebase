@@ -657,7 +657,7 @@ function landBody(entries: Entry[], selfHost = false) {
   const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && !e.private && e.slug !== 'forq.blank').length;
   return `<section class="land">
 <h1>Be your own GitHub.</h1>
-<p class="lede">Every project runs as a live app, and AI agents change it for you. On Cloudflare, from your phone.</p>
+<p class="lede">Apps, sites, backends, CLIs: AI agents build and change them for you. Anything with a web page runs live. On Cloudflare, from your phone.</p>
 <form class="landask" action="/build" method="get">
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button class="btn" type="submit">Build it</button>

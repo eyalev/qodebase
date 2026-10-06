@@ -126,7 +126,7 @@ export class BuildBox extends DurableObject<Env> {
     await this.ctx.storage.put('lastBuild', Date.now());
     // A live app that failed to deploy needs a person; a fork's preview is the agent's to fix.
     if (job.install) {
-      try { await this.env.Installs.get(this.env.Installs.idFromName(job.install.owner.toLowerCase())).buildDone(result); }
+      try { await this.env.Installs.get(this.env.Installs.idFromName(job.install.owner.toLowerCase())).buildDone(result); log('build', 'reported', { install: job.install.installId, ok: result.ok }); }
       catch (e) { log('build', 'report_failed', { install: job.install.installId, err: String(e) }); }
     } else {
       if (!result.ok && !result.agentId) await pushAlert(this.env, `forq: deploy failed, ${job.slug}`, (result.error || 'no error text').slice(0, 500), `https://${this.env.UI_HOST}/p/${job.slug.replace('.', '/')}`, 0);

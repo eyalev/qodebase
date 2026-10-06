@@ -526,6 +526,7 @@ export class Installs extends DurableObject<Env> {
   async buildDone(result: BuildResult) {
     const id = result.id.replace(/^install-/, '');
     const i = await this.get(id);
+    log('install', 'build_report', { id, ok: result.ok, found: !!i, step: i?.steps.find((st) => st.key === 'deploy')?.state, url: result.url });
     if (!i) return;
     if (!result.ok) {
       log('install', 'deploy_failed', { id, error: result.error, tail: result.log.slice(-800) });
