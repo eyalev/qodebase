@@ -650,13 +650,13 @@ export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, 
 <main class="view" id="view"><div class="pad">${buildBody(me, needsKey, runDomain)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + BUILD_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
 
-/** D's home (2026-10-06, Eyal: lead with Build; "Be your own GitHub"): the promise in one
+/** D's home (2026-10-06, Eyal: lead with Build; headline "Own your codebase." since the same day): the promise in one
  *  line, the build box above the fold, then three doors (your own qodebase, your own AI
  *  assistant, explore) and the try-changing row. */
 function landBody(entries: Entry[], selfHost = false) {
   const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && !e.private && e.slug !== 'forq.blank').length;
   return `<section class="land">
-<h1>Be your own GitHub.</h1>
+<h1>Own your codebase.</h1>
 <p class="lede">Apps, sites, backends, CLIs: AI agents build and change them for you. Anything with a web page runs live. On Cloudflare, from your phone.</p>
 <form class="landask" action="/build" method="get">
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
