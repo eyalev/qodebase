@@ -7,7 +7,7 @@
 
 import { withBaseline, kstatsForward, feedback, health } from './baseline';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-import { AGENT_RE, NAME_RE, appWorkerName, projectOf, slugOf, type Env } from './env';
+import { AGENT_RE, NAME_RE, appWorkerName, frontHosts, isUiHost, projectOf, slugOf, type Env } from './env';
 import { AgentBox, log, REVIEW_STEPS, type BootSpec } from './box';
 import { Project, roleOf, type ProjectInfo, type Role } from './project';
 import { Registry, registry, type Entry } from './registry';
@@ -116,7 +116,7 @@ async function loginRoute(request: Request, env: Env, url: URL): Promise<Respons
   // Signing in for a design-variant host (variants/): hand the session over
   // with a short-lived token; its cookie is set on that host by /session.
   const to = url.searchParams.get('to');
-  if (to && variantHosts(env).includes(to)) {
+  if (to && (variantHosts(env).includes(to) || frontHosts(env).includes(to))) {
     log('auth', 'handoff', { handle: user.handle, to });
     return new Response(null, { status: 302, headers: { location: `https://${to}/session?t=${encodeURIComponent(await handoffToken(env, email, to))}&next=${encodeURIComponent(next)}`, 'cache-control': 'no-store' } });
   }
@@ -229,7 +229,7 @@ async function docsOf(env: Env, ctx: ExecutionContext, info: ProjectInfo, want: 
 }
 
 /** Which design to render: a preview host's choice (x-forq-ui), else D on the real site. */
-const uiFor = (request: Request, env: Env): UI | null => uiOf(request) ?? (new URL(request.url).hostname === env.UI_HOST ? 'd' : null);
+const uiFor = (request: Request, env: Env): UI | null => uiOf(request) ?? (isUiHost(env, new URL(request.url).hostname) ? 'd' : null);
 
 /** Your projects with changes in progress (no box calls: states from the Project DO). */
 async function inboxOf(env: Env, me: string, entries: Entry[], runBase: string): Promise<InboxItem[]> {
@@ -277,7 +277,7 @@ const app = {
     // Cloudflare Issues → Notifications webhook. Its own auth (cf-webhook-auth), before the user/agent auth.
     if (url.pathname === '/api/hooks/issues' && request.method === 'POST') return issuesHook(request, env, ctx);
     // Public-site basics (baseline): about, privacy, robots, version, health.
-    if (url.hostname === env.UI_HOST) {
+    if (isUiHost(env, url.hostname)) {
       const cf = (request as any).cf || {};
       if (url.pathname === '/robots.txt') return new Response('User-agent: *\nDisallow: /p/\nDisallow: /import\nDisallow: /api/\nDisallow: /a/\nDisallow: /login\n', { headers: { 'content-type': 'text/plain' } });
       if (url.pathname === '/icon.svg') return new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#17695a"/><path d="M150 52c-30 0-48 18-48 50v18H80v30h22v78h34v-78h32v-30h-32v-16c0-14 6-21 19-21 6 0 11 1 15 2l4-30c-7-2-15-3-24-3z" fill="#fff"/></svg>', { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' } });
@@ -295,9 +295,10 @@ const app = {
         return new Response('forq pages are for people; see /about.', { status: 403, headers: { 'retry-after': '86400', 'x-robots-tag': 'noindex' } });
       }
     }
-    // Design-variant hosts: sign in on the real host, come back with a token.
-    const vhost = request.headers.get('x-forq-host');
-    if (vhost && variantHosts(env).includes(vhost)) {
+    // Design-variant and front-Worker hosts: sign in on the real host (Access
+    // sits on UI_HOST/login only), come back with a token.
+    const vhost = frontHosts(env).includes(url.hostname) ? url.hostname : request.headers.get('x-forq-host');
+    if (vhost && (variantHosts(env).includes(vhost) || frontHosts(env).includes(vhost))) {
       if (url.pathname === '/login') {
         return new Response(null, { status: 302, headers: { location: `https://${env.UI_HOST}/login?to=${vhost}&next=${encodeURIComponent(safeNext(url.searchParams.get('next')) || '/')}` } });
       }
@@ -700,10 +701,29 @@ const app = {
 // baseline rewriter: kstats tag and share-card tags (src/baseline.ts).
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    request = fromFront(request, env);
     const res = await app.fetch(request, env, ctx);
-    return new URL(request.url).hostname === env.UI_HOST ? withBaseline(request, env, res) : res;
+    return isUiHost(env, new URL(request.url).hostname) ? withBaseline(request, env, res) : res;
   },
 } satisfies ExportedHandler<Env>;
+
+/** A request the front Worker (front/, another Cloudflare account) forwarded
+ *  for one of FRONT_HOSTS: carry on as if it had arrived on that host, with
+ *  the visitor's IP and cf facts (the hop itself would show the front's). */
+function fromFront(request: Request, env: Env): Request {
+  const host = request.headers.get('x-qb-host');
+  if (!host || !env.FRONT_SECRET || request.headers.get('x-qb-front') !== env.FRONT_SECRET || !frontHosts(env).includes(host)) return request;
+  const url = new URL(request.url);
+  url.hostname = host;
+  const req = new Request(url, request);
+  let cf: Record<string, unknown> = {};
+  try { cf = JSON.parse(req.headers.get('x-qb-cf') || '{}'); } catch {}
+  const ip = req.headers.get('x-qb-ip');
+  if (ip) req.headers.set('cf-connecting-ip', ip);
+  for (const h of ['x-qb-front', 'x-qb-host', 'x-qb-cf', 'x-qb-ip']) req.headers.delete(h);
+  Object.defineProperty(req, 'cf', { value: cf });
+  return req;
+}
 
 /** The repo behind a version: '' = main, else an agent's short id → its fork. */
 function versionRepo(info: ProjectInfo, v: string): string | null {
@@ -998,7 +1018,12 @@ async function agentProxy(request: Request, env: Env, ctx: ExecutionContext, age
   const sub = rest.slice('/agent'.length);
   const box = boxStub(env, agentId);
   ctx.waitUntil(box.touch(agentId).catch(() => {}));
-  const proxy = () => box.fetch(new Request(`https://container${sub}${url.search}`, request));
+  // The box's mobile-agent allows one origin (UI_HOST, set at boot); the other
+  // site hosts are the same site.
+  const origin = request.headers.get('origin');
+  const fwd = new Request(request);
+  if (origin && isUiHost(env, new URL(origin).hostname)) fwd.headers.set('origin', `https://${env.UI_HOST}`);
+  const proxy = () => box.fetch(new Request(`https://container${sub}${url.search}`, fwd));
   const isWs = (request.headers.get('upgrade') || '').toLowerCase() === 'websocket';
   const isDoc = request.method === 'GET' && !isWs && (request.headers.get('accept') || '').includes('text/html');
 

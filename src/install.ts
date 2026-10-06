@@ -17,7 +17,7 @@
 // account only runs the agent.
 
 import { DurableObject } from 'cloudflare:workers';
-import type { Env } from './env';
+import { isUiHost, type Env } from './env';
 import { log } from './box';
 import { decryptKey, encryptKey, sessionEmail } from './auth';
 import type { BuildJob, BuildResult } from './build';
@@ -86,6 +86,9 @@ async function cf(token: string, path: string, init: RequestInit = {}) {
 const errText = (e: { code?: number; message?: string }[]) => e.map((x) => `${x.message || ''}${x.code ? ` (${x.code})` : ''}`).join('; ') || 'unknown error';
 
 /** /connect/cf/* and /personal-agents/install|i/* on the UI host. */
+/** The OAuth callback on the host the person is on (each host is registered with the client). */
+const callbackUrl = (env: Env, url: URL) => `https://${isUiHost(env, url.hostname) ? url.hostname : env.UI_HOST}/connect/cf/callback`;
+
 export async function installRoute(request: Request, env: Env, ctx: ExecutionContext, url: URL): Promise<Response | null> {
   const p = url.pathname;
   if (!p.startsWith('/connect/cf/') && !p.startsWith('/personal-agents/install/') && !p.startsWith('/personal-agents/i/')) return null;
@@ -100,7 +103,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
     const exp = Date.now() + 15 * 60_000;
     const body = `${email}|${exp}|${next}|${nonce}`;
     const state = btoa(`${body}|${await hmac(env.ADMIN_SECRET, `cfstate:${body}`)}`).replace(/=+$/, '');
-    const q = new URLSearchParams({ response_type: 'code', client_id: env.CF_OAUTH_CLIENT_ID, redirect_uri: `https://${env.UI_HOST}/connect/cf/callback`, scope: SCOPES.join(' '), state });
+    const q = new URLSearchParams({ response_type: 'code', client_id: env.CF_OAUTH_CLIENT_ID, redirect_uri: callbackUrl(env, url), scope: SCOPES.join(' '), state });
     // Asking again for a permission the user has not granted yet: show the consent screen even if Cloudflare remembers an older grant.
     if (url.searchParams.get('again')) q.set('prompt', 'consent');
     log('install', 'oauth_start', { email, next });
@@ -114,7 +117,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
     const [sEmail, sExp, sNext, sNonce, sig] = parts;
     const cookieNonce = ((request.headers.get('cookie') || '').match(/forq_cfstate=([0-9a-f-]+)/) || [])[1];
     if (!sig || sig !== await hmac(env.ADMIN_SECRET, `cfstate:${sEmail}|${sExp}|${sNext}|${sNonce}`) || sEmail !== email || Number(sExp) < Date.now() || cookieNonce !== sNonce) return fail('That sign-in link has expired. Start again.');
-    const tok = await tokenRequest(env, { grant_type: 'authorization_code', code: url.searchParams.get('code') || '', redirect_uri: `https://${env.UI_HOST}/connect/cf/callback` });
+    const tok = await tokenRequest(env, { grant_type: 'authorization_code', code: url.searchParams.get('code') || '', redirect_uri: callbackUrl(env, url) });
     if (!tok.access_token || !tok.refresh_token) return fail('Cloudflare did not hand over a sign-in token. Try again.', { status: tok.status, error: tok.error });
     const accts = await cf(tok.access_token, '/accounts?per_page=50');
     const accounts = (accts.result || []).map((a: any) => ({ id: a.id, name: a.name }));

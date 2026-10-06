@@ -1,0 +1,21 @@
+// qodebase.app's front door, in Eyal's PERSONAL Cloudflare account (where the
+// domain was registered on 2026-10-06). It forwards every request to forq on
+// projectsbase.dev (forq's own account) with a shared secret, and forq answers
+// as qodebase.app (src/index.ts fromFront). Delete this Worker once the zone has
+// moved to the forq account (inter-account moves open 10 days after
+// registration, ≈ 2026-10-16) and qodebase.app is a custom domain of forq.
+//   cd front && npx wrangler deploy        (personal-account OAuth login)
+//   secret: printf %s "$(cat ~/.config/forq-cf/front-secret)" | npx wrangler secret put FRONT_SECRET
+{
+  "name": "qodebase-front",
+  "account_id": "<personal account id>",
+  "main": "index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "observability": { "enabled": true },
+  "routes": [
+    { "pattern": "qodebase.app", "custom_domain": true },
+    { "pattern": "www.qodebase.app", "custom_domain": true }
+  ],
+  "vars": { "ORIGIN": "projectsbase.dev" }
+}

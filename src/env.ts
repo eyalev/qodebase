@@ -27,6 +27,8 @@ export interface Env {
   HANDLES: string;            // JSON {email: handle}
   UI_HOST: string;            // forq.kapps.dev
   UI_VARIANT_HOSTS?: string;  // design-variant preview hosts (comma-separated), see variants/
+  FRONT_HOSTS?: string;       // hosts served through a front Worker in another account (qodebase.app until its zone moves here)
+  FRONT_SECRET?: string;      // that front Worker's shared secret (x-qb-front)
   RUN_HOST: string;           // ttyview.dev (static apps, /<owner>.<name>/)
   APPS_DOMAIN?: string;       // ttyview.dev: Worker apps at <name>--<owner>.<APPS_DOMAIN>
   APPS_ZONE_ID?: string;      // that zone (exclusion routes, see build.ts excludeFromRunRoute)
@@ -75,3 +77,9 @@ export function repoOfHostLabel(label: string) {
 }
 /** Preview names must start with a letter. */
 export const previewAlias = (agentId: string) => `ag-${agentId.split('--')[1]}`;
+
+/** Hosts that serve the site itself: UI_HOST plus the front-Worker hosts. */
+export const uiHosts = (env: { UI_HOST: string; FRONT_HOSTS?: string }) => [env.UI_HOST, ...(env.FRONT_HOSTS || '').split(',').map((h) => h.trim()).filter(Boolean)];
+export const isUiHost = (env: { UI_HOST: string; FRONT_HOSTS?: string }, host: string) => uiHosts(env).includes(host);
+/** Front-Worker hosts: no Access in front of /login, so sign-in hands over from UI_HOST. */
+export const frontHosts = (env: { FRONT_HOSTS?: string }) => (env.FRONT_HOSTS || '').split(',').map((h) => h.trim()).filter(Boolean);

@@ -76,6 +76,8 @@
     // Access email → forq handle (v0: one person).
     "HANDLES": "{\"owner@example.com\":\"eyal\"}",
     "UI_HOST": "projectsbase.dev",
+    // Served by the front Worker in the personal account until the zone moves here (front/).
+    "FRONT_HOSTS": "qodebase.app",
     // Design-variant preview Workers (variants/), 2026-10-02.
     "UI_VARIANT_HOSTS": "a.projectsbase.dev,b.projectsbase.dev,c.projectsbase.dev,d.projectsbase.dev",
     "RUN_HOST": "ttyview.dev",
