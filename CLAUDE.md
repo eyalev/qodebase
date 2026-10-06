@@ -56,6 +56,42 @@ private project stay private). Owner (and admin) only, everywhere:
   API, files, the app host; absent from /api/projects and Explore; the owner's
   app view loads in the iframe with the pass; toggled both ways.
 
+## Get your own qodebase (self-hosted copies, 2026-10-06)
+
+`/own` → installer template `qodebase` (src/install.ts) puts this code into the
+person's own Cloudflare account. Verified 2026-10-06: `my-qodebase` in Eyal's
+personal account built a project end to end (router + 2 agents).
+- **Release:** `node scripts/selfhost-release.mjs` builds `forq-release-selfhost/`
+  from `selfhost/wrangler.jsonc` (no_bundle; extra modules have hashed names, so the
+  release config carries its own text/data rules). Commit it, then push this repo to
+  the Artifacts mirror forq/forq (`main-token`, force: it was a shallow import) —
+  the installer clones that.
+- **Two Workers:** `<name>` (the site, whole Worker behind Access; owner's first
+  visit creates the account from HANDLES) and `<name>-run` (selfhost/run-worker.js,
+  service binding to the main one): live apps in path form (`<run>/<owner>.<name>/`,
+  workers.dev has no deeper subdomains) and the boxes' `/api/…` calls (API_BASE),
+  which cannot pass Access. `who()` treats a workers.dev UI host as the site.
+- **Installer:** per-install vars (#selfhostVars: hosts, OWNER_HANDLE, HANDLES,
+  ADMIN_SECRET/KEY_ENC_SECRET kept per name), second deploy of `run/`, then after
+  the lock ACCESS_TEAM_DOMAIN / ACCESS_AUD as Worker secrets. Asks for
+  artifacts.read/write only for this template (`extra=artifacts`).
+- **Boxes (BOX_IMAGE=managed):** start from cloudflare/debian-trixie; `#setup` in
+  box.ts installs apt tools, Claude Code, mobile-agent (pinned), boot.sh and
+  box-api.mjs (~50 s), and the first box snapshots the base (Registry `baseSnap`,
+  SETUP_V); later boxes boot from it in 6-8 s. No Chromium yet.
+- **Build** without the forq/blank starter creates an empty repo and the router
+  pushes the first files (buildPayload empty=true). Worker projects cannot deploy
+  on a copy (no deploy token): the builder refuses them.
+- Claude: Settings takes an API key or a `claude setup-token` subscription token
+  (`isClaudeToken`); Eyal's my-qodebase has CLAUDE_CODE_OAUTH_TOKEN as a secret.
+- Hosted-only parts are off (`SELF_HOST`): /own, personal agents, try cards,
+  analytics, og cards, feedback relay.
+- **Builds survive restarts** (2026-10-06): a forq deploy reset the builder mid-
+  install twice and the result was lost. BuildBox now keeps `running` (resumed
+  twice at most), retries a lost container connection, keeps `result:<id>`
+  (last 30); Installs asks `BuildBox.result()` while waiting. Still: deploy forq
+  when no install is running.
+
 ## qb, the CLI (src/cliauth.ts, cli/qb.mjs)
 
 One Node file, no deps, served at `/cli/qb.mjs`, installed by `/cli/install.sh`
