@@ -36,7 +36,7 @@ export const TEMPLATES: Record<string, Template> = {
   openclaw: { id: 'openclaw', title: 'OpenClaw', repo: 'forq.container-agents', dir: 'forq-release-openclaw', defaultName: 'my-openclaw',
     vars: { AGENT_KIND: 'openclaw', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
   'agents-starter': { id: 'agents-starter', title: 'Cloudflare Agent', repo: 'forq.agents-starter', dir: 'forq-release', defaultName: 'my-agent' },
-  pi: { id: 'pi', title: 'Pi', repo: 'forq.pi-on-cf', dir: 'forq-release', defaultName: 'my-pi', paid: true },
+  pi: { id: 'pi', title: 'Pi', repo: 'forq.pi-durable', dir: 'forq-release', defaultName: 'my-pi', paid: true },
   t3code: { id: 't3code', title: 'T3 Code', repo: 'forq.container-agents', dir: 'forq-release-t3code', defaultName: 'my-t3code',
     vars: { AGENT_KIND: 't3code', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
   hermes: { id: 'hermes', title: 'Hermes', repo: 'forq.container-agents', dir: 'forq-release-hermes', defaultName: 'my-hermes',
@@ -328,16 +328,33 @@ export class Installs extends DurableObject<Env> {
     // and Access app stay). Same name for a DIFFERENT agent would overwrite one with the other.
     const clash = (await this.list()).find((i) => i.name === name && i.accountId === acct.id && i.template !== template && i.url);
     if (clash) return { ok: false, error: `${name} is already your ${TEMPLATES[clash.template]?.title || clash.template} in ${acct.name}. Pick another name.` };
-    const running = (await this.list()).find((i) => i.steps.some((s) => s.state === 'doing'));
-    if (running) return { ok: false, error: `${running.name} is still installing. Wait for it to finish.` };
+    // One install runs at a time per person; others wait in line (all steps 'todo') and #next()
+    // starts them. Asking again for one that is already waiting returns it instead of a second copy.
+    const waiting = (await this.list()).find((i) => i.name === name && i.accountId === acct.id && !i.error && i.steps.some((s) => s.state !== 'done'));
+    if (waiting) {
+      if (waiting.template !== template) return { ok: false, error: `${name} is still installing. Wait for it to finish.` };
+      if (!(await this.ctx.storage.get('active'))) await this.#next();
+      return { ok: true, id: waiting.id };
+    }
     const id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
     const inst: Install = { id, template, name, accountId: acct.id, accountName: acct.name, email, createdAt: Date.now(), updatedAt: Date.now(),
       steps: STEPS.map((s) => ({ ...s, state: 'todo' as const })) };
     await this.ctx.storage.put(`i:${id}`, inst);
-    await this.ctx.storage.put('active', id);
-    await this.ctx.storage.setAlarm(Date.now() + 50);
-    log('install', 'start', { email, template, name, account: acct.id });
+    // Two starts a moment apart used to overwrite 'active', and the first sat at 'todo' forever.
+    const busy = await this.ctx.storage.get<string>('active');
+    if (!busy) await this.#next();
+    log('install', 'start', { email, template, name, account: acct.id, queued: !!busy });
     return { ok: true, id };
+  }
+
+  /** The current install is over (ready or failed): start the oldest one waiting in line. */
+  async #next() {
+    await this.ctx.storage.delete('active');
+    const queued = (await this.list()).filter((i) => !i.error && i.steps.every((s) => s.state === 'todo')).sort((a, b) => a.createdAt - b.createdAt)[0];
+    if (!queued) return;
+    await this.ctx.storage.put('active', queued.id);
+    await this.ctx.storage.setAlarm(Date.now() + 50);
+    log('install', 'dequeued', { id: queued.id, name: queued.name });
   }
 
   async #save(i: Install) { i.updatedAt = Date.now(); await this.ctx.storage.put(`i:${i.id}`, i); }
@@ -346,16 +363,16 @@ export class Installs extends DurableObject<Env> {
   }
   async #fail(i: Install, key: StepKey, error: string, fix?: Install['fix']) {
     this.#step(i, key, 'failed', error); i.error = error; i.fix = fix;
-    await this.#save(i); await this.ctx.storage.delete('active');
+    await this.#save(i); await this.#next();
     log('install', 'failed', { id: i.id, step: key, error });
   }
 
   async alarm() {
     const id = await this.ctx.storage.get<string>('active');
     const i = id ? await this.get(id) : null;
-    if (!i) return;
+    if (!i) return this.#next();
     const next = i.steps.find((s) => s.state !== 'done');
-    if (!next || next.state === 'failed') { await this.ctx.storage.delete('active'); return; }
+    if (!next || next.state === 'failed') return this.#next();
     if (next.key === 'deploy' && next.state === 'doing') {
       // Waiting for BuildBox; a lost result fails the step after 12 minutes.
       if (Date.now() - i.updatedAt > 12 * 60_000) return this.#fail(i, 'deploy', 'The upload did not finish. Try again.');
@@ -413,7 +430,7 @@ export class Installs extends DurableObject<Env> {
       } else if (next.key === 'ready') {
         i.url = `https://${i.name}.${i.subdomain}.workers.dev`;
         this.#step(i, 'ready', 'done');
-        await this.#save(i); await this.ctx.storage.delete('active');
+        await this.#save(i); await this.#next();
         log('install', 'ready', { id: i.id, url: i.url });
         return;
       }

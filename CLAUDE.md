@@ -265,12 +265,16 @@ OWN account with no GitHub and no pasted tokens (research and options:
   T3 Code: `/__forq/claude` signs in to Claude Code from a phone (runs
   `claude auth login` in a pty fed from a FIFO; T3's terminal is hidden at phone
   width); linked from the install's ready page.
-- **Pi** (`forq/pi-on-cf`, local `../forq-pi-on-cf`): Cloudflare's pi-on-cf
-  (harshil1712/pi-on-cf) as a Worker-only install: Workers AI through the AI
-  binding (`src/server/ai-binding.ts` patches fetch), no Linux container, no R2,
-  no Artifacts, no "Deploy app" (needs a deploy token), no `experimental` compat
-  flag (deployed Workers refuse it; tracing observer off). Previews work
-  (Dynamic Workers, `/__preview/<session>/`). Needs Workers Paid.
+- **Pi** (`forq/pi-durable`, local `../forq-pi-durable`, since 2026-10-06):
+  Cloudflare's official example `cloudflare/agents` `examples/next/harnesses/pi`
+  (5.8k ★ repo; Earendil's `@earendil-works/pi-durable` 1.0, 113k ★ pi repo):
+  pi-durable on a Durable Object via `agents/harness/pi`, Workers AI
+  (`@cf/moonshotai/kimi-k2.7-code`) over the AI binding, Workspace on the DO's
+  SQLite, `exec` in Dynamic Workers (`LOADER`). Beta upstream. Release worker
+  sits in `forq-release/worker/` so `no_bundle` rules skip the UI's JS
+  (1.2 MB gzip instead of 3.2). Needs Workers Paid. Replaced the 23-star
+  `harshil1712/pi-on-cf` port (`forq/pi-on-cf`, kept in Artifacts, unused) after
+  Eyal's social-proof rule (~/.claude/CLAUDE.md).
 - **Cloudflare Agent** (`forq/agents-starter`, local `../forq-agents-starter`):
   Cloudflare's official cloudflare/agents-starter, the only option that fits the
   free plan. forq changes: model glm-4.7-flash (upstream kimi-k2.7-code needs
