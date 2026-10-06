@@ -458,7 +458,7 @@ function leave(go) { if (run) { finish(); setTimeout(go, 80); } else go(); }
 
 var PAGES = { home: '/', explore: '/explore', yours: '/mine', inbox: '/inbox', build: '/build', import: '/import', settings: '/settings', command_line: '/cli', personal_agents: '/personal-agents', own_copy: '/own', about: '/about' };
 var PAGE_WORDS = { home: 'home', explore: 'Explore', yours: 'your projects', inbox: 'Inbox', build: 'Build', import: 'Import from GitHub', settings: 'Settings', command_line: 'the command line page', personal_agents: 'your own AI assistant', own_copy: 'get your own qodebase', about: 'About' };
-var PARTS = { page: '', app: '/app', code: '/code/', readme: '/readme', history: '/history', agents: '/agents' };
+var PARTS = { page: '', app: '/app', code: '/code/', readme: '/readme', history: '/history', agents: '' };   // agents are cards on the project page (no /agents page)
 
 function navTo(href, label) {
   add('app', 'Opening ' + label + '…');
@@ -475,14 +475,34 @@ function findProject(list, q) {
   var raw = String(q || '').toLowerCase().trim();
   var slash = /^([a-z0-9-]+)\s*\/\s*([a-z0-9-]+)$/.exec(raw);
   if (slash) return list.filter(function (p) { return p.owner === slash[1] && p.name === slash[2]; });
-  var words = raw.replace(/[^a-z0-9 -]/g, ' ').split(/[\s-]+/).filter(function (w) { return w && !/^(the|my|a|an|project|app|repo)$/.test(w); });
+  var words = raw.replace(/[^a-z0-9 -]/g, ' ').split(/[\s-]+/).filter(function (w) { return w && !/^(the|my|a|an|project|projects|app|repo|one|open|show|me|please)$/.test(w); });
   var key = words.join('-');
   if (!key) return [];
   var rank = function (p) { return p.owner === me ? 0 : p.owner === 'forq' ? 1 : 2; };
   var by = function (a, b) { return rank(a) - rank(b); };
   var exact = list.filter(function (p) { return p.name === key || p.name.replace(/-/g, '') === key.replace(/-/g, ''); }).sort(by);
   if (exact.length) return exact;
-  return list.filter(function (p) { return words.every(function (w) { return p.name.indexOf(w) >= 0; }); }).sort(by);
+  var all = list.filter(function (p) { return words.every(function (w) { return p.name.indexOf(w) >= 0; }); }).sort(by);
+  if (all.length) return all;
+  // Spoken names: "the podqast one", "podcast" for podqast. A name said inside the sentence, then a near spelling.
+  var spaced = ' ' + words.join(' ') + ' ';
+  var inside = list.filter(function (p) { return spaced.indexOf(' ' + p.name.replace(/-/g, ' ') + ' ') >= 0; }).sort(by);
+  if (inside.length) return inside;
+  var flat = key.replace(/-/g, '');
+  var near = list.map(function (p) { return { p: p, d: dist(p.name.replace(/-/g, ''), flat) }; })
+    .filter(function (x) { return x.d <= Math.max(1, Math.floor(flat.length / 4)); })
+    .sort(function (a, b) { return a.d - b.d || by(a.p, b.p); });
+  return near.map(function (x) { return x.p; });
+}
+function dist(a, b) {
+  var prev = [], cur, i, j;
+  for (j = 0; j <= b.length; j++) prev[j] = j;
+  for (i = 1; i <= a.length; i++) {
+    cur = [i];
+    for (j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
 }
 
 var TOOLS = [
@@ -499,7 +519,7 @@ var TOOLS = [
       });
     } },
   { name: 'open_project',
-    description: 'Open a project by name (like "calculator" or "forq/timer"), or one part of it: its live app, code, readme, history or agents.',
+    description: 'Open a project by name (like "calculator" or "forq/timer"), or one part of it: page (the project page), app (the live app), code, readme, history, agents (its agent cards).',
     inputSchema: { type: 'object', properties: { name: { type: 'string', description: 'Project name, or owner/name.' }, part: { type: 'string', enum: Object.keys(PARTS), description: 'Which part; page = the project page.' } }, required: ['name'] },
     run: function (a) {
       return projects().then(function (list) {
@@ -512,7 +532,7 @@ var TOOLS = [
       });
     } },
   { name: 'go',
-    description: 'Open one of qodebase\'s main pages: home, explore (public projects), yours (your projects), inbox, build (start a new project), import (from GitHub), settings, command_line, personal_agents (install an AI assistant), own_copy (your own qodebase), about.',
+    description: 'Open one of qodebase\'s main pages by its page value: home, explore (public projects), yours (your projects), inbox, build (start a new project), import (from GitHub), settings, command_line, personal_agents (install an AI assistant), own_copy (your own qodebase), about.',
     inputSchema: { type: 'object', properties: { page: { type: 'string', enum: Object.keys(PAGES) } }, required: ['page'] },
     run: function (a) {
       if (!PAGES.hasOwnProperty(a.page)) return Promise.resolve({ ok: false, text: 'No page called ' + a.page + '.' });

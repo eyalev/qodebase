@@ -532,3 +532,13 @@ answers, or both.
   caps (per person decide 600 / chat 150 / stt 300; total 5000/1500/3000);
   signed-in only. NOT under remote-manage's AI breaker (personal account only);
   cloudcost gap `qodebase-talk`. Self-host copies have the binding but no gateway.
+- **Page tools for Jarvis hands** (contract:
+  `<jarvis webmcp contract>`): signed-in pages
+  publish `window.__webmcp` {version 1, app qodebase, tools, call} and register
+  the same tools with WebMCP (`document.modelContext`, else
+  `navigator.modelContext`). Tools: `talk({sentence})` (submits to the sheet,
+  resolves with Talk's answer / what it did, before any navigation),
+  `open_project({name, part})` (fuzzy over `/api/projects`, spoken names),
+  `go({page})`. Nothing destructive. One row per call: console + `/api/talk/log`
+  (Workers Logs, `event: webmcp`). `/talk.js` is cached 5 min, so a tab opened
+  before a deploy keeps the old tools until it reloads.
