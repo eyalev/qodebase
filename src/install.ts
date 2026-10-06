@@ -263,7 +263,7 @@ export class Installs extends DurableObject<Env> {
   }
 
   /** Deletes an installed assistant: its Worker (with its data), its Access app, our records. */
-  async uninstall(name: string, accountId: string): Promise<{ ok: boolean; error?: string; worker?: boolean; accessApps?: number; records?: number }> {
+  async uninstall(name: string, accountId: string): Promise<{ ok: boolean; error?: string; worker?: boolean; accessApps?: number; records?: number; buckets?: string[] }> {
     const mine = (await this.list()).filter((i) => i.name === name && i.accountId === accountId);
     if (!mine.length) return { ok: false, error: `You have no assistant called ${name} in that account.` };
     if (mine.some((i) => i.steps.some((st) => st.state === 'doing'))) return { ok: false, error: `${name} is installing right now. Wait for it to finish.` };
@@ -282,9 +282,26 @@ export class Installs extends DurableObject<Env> {
       const del = await cf(token, `/accounts/${accountId}/workers/scripts/${name}?force=true`, { method: 'DELETE' });
       if (!del.ok) return { ok: false, error: `Cloudflare did not delete the Worker: ${JSON.stringify(del.errors || del).slice(0, 200)}` };
     }
+    // Its R2 bucket (templates with bucketBinding; the storage step recorded the name). The
+    // API only deletes an empty bucket: delete the objects first, a page at a time.
+    const buckets = [...new Set(mine.map((i) => i.steps.find((st) => st.key === 'storage' && st.state === 'done')?.note || '').filter((n) => /^[a-z0-9][a-z0-9-]{2,62}$/.test(n)))];
+    const gone: string[] = [];
+    for (const b of buckets) {
+      const base = `/accounts/${accountId}/r2/buckets/${b}`;
+      if ((await cf(token, base)).status === 404) continue;
+      for (let page = 0; page < 20; page++) {
+        const list = await cf(token, `${base}/objects?per_page=1000`);
+        const keys = ((list.result || []) as { key: string }[]).map((o) => o.key);
+        if (!keys.length) break;
+        for (const k of keys) await cf(token, `${base}/objects/${encodeURIComponent(k)}`, { method: 'DELETE' });
+      }
+      const d = await cf(token, base, { method: 'DELETE' });
+      if (!d.ok) return { ok: false, error: `The Worker is deleted, but its storage bucket ${b} is not (${JSON.stringify(d.errors).slice(0, 160)}). Delete it in the Cloudflare dashboard under R2.` };
+      gone.push(b);
+    }
     await this.ctx.storage.delete(mine.map((i) => `i:${i.id}`));
-    log('install', 'uninstalled', { name, account: accountId, worker: !!tag, accessApps, records: mine.length });
-    return { ok: true, worker: !!tag, accessApps, records: mine.length };
+    log('install', 'uninstalled', { name, account: accountId, worker: !!tag, accessApps, records: mine.length, buckets: gone });
+    return { ok: true, worker: !!tag, accessApps, records: mine.length, buckets: gone };
   }
 
   async #token(): Promise<string> {

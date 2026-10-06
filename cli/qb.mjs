@@ -257,7 +257,7 @@ const cmds = {
       if (typed !== name) die('not deleted');
     }
     const { data } = await api('DELETE', '/api/installs', { name, account: flags.account });
-    out(data, (d) => `Deleted ${name}${d.worker ? '' : ' (its Worker was already gone)'}${d.accessApps ? `, its lock` : ''}.`);
+    X
   },
   async install(template) {
     need(template, 'install <agent> [--name n] [--account id]   (qb installs lists them)');
