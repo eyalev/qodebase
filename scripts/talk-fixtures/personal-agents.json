@@ -1,0 +1,183 @@
+{
+ "path": "/personal-agents",
+ "title": "Your own AI assistant \u00b7 qodebase",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "Your own AI assistant"
+  },
+  {
+   "id": "h2",
+   "kind": "heading",
+   "text": "One plan for all your assistants"
+  },
+  {
+   "id": "h3",
+   "kind": "heading",
+   "text": "Cloudflare Agent"
+  },
+  {
+   "id": "h4",
+   "kind": "heading",
+   "text": "OpenClaw"
+  },
+  {
+   "id": "h5",
+   "kind": "heading",
+   "text": "Pi"
+  },
+  {
+   "id": "h6",
+   "kind": "heading",
+   "text": "T3 Code"
+  },
+  {
+   "id": "h7",
+   "kind": "heading",
+   "text": "Mobile Agent"
+  },
+  {
+   "id": "h8",
+   "kind": "heading",
+   "text": "Hermes"
+  },
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase (home page)",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "About",
+   "href": "/about"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Cloudflare's plan page",
+   "href": "https://www.cloudflare.com/plans/developer-platform/"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "agents starter",
+   "href": "https://github.com/cloudflare/agents-starter"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "10,000 AI units a day",
+   "href": "https://developers.cloudflare.com/workers-ai/platform/pricing/"
+  },
+  {
+   "id": "l6",
+   "kind": "link",
+   "text": "Install in my Cloudflare",
+   "href": "/personal-agents/install/agents-starter"
+  },
+  {
+   "id": "l7",
+   "kind": "link",
+   "text": "Code",
+   "href": "/p/forq/agents-starter"
+  },
+  {
+   "id": "l8",
+   "kind": "link",
+   "text": "Install in my Cloudflare",
+   "href": "/personal-agents/install/openclaw"
+  },
+  {
+   "id": "l9",
+   "kind": "link",
+   "text": "Code",
+   "href": "/p/forq/container-agents"
+  },
+  {
+   "id": "l10",
+   "kind": "link",
+   "text": "Cloudflare's official example",
+   "href": "https://github.com/cloudflare/agents/tree/main/examples/next/harnesses/pi"
+  },
+  {
+   "id": "l11",
+   "kind": "link",
+   "text": "Install in my Cloudflare",
+   "href": "/personal-agents/install/pi"
+  },
+  {
+   "id": "l12",
+   "kind": "link",
+   "text": "Code",
+   "href": "/p/forq/pi-durable"
+  },
+  {
+   "id": "l13",
+   "kind": "link",
+   "text": "Install in my Cloudflare",
+   "href": "/personal-agents/install/t3code"
+  },
+  {
+   "id": "l14",
+   "kind": "link",
+   "text": "Install in my Cloudflare",
+   "href": "/personal-agents/install/mobile-agent"
+  },
+  {
+   "id": "l15",
+   "kind": "link",
+   "text": "Install in my Cloudflare",
+   "href": "/personal-agents/install/hermes"
+  },
+  {
+   "id": "l16",
+   "kind": "link",
+   "text": "Privacy",
+   "href": "/privacy"
+  },
+  {
+   "id": "l17",
+   "kind": "link",
+   "text": "Feedback",
+   "href": "/feedback?from=/personal-agents"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "What you get"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "Got it"
+  },
+  {
+   "id": "b3",
+   "kind": "button",
+   "text": "Needs the Cloudflare $5 a month plan. What this means"
+  },
+  {
+   "id": "b4",
+   "kind": "button",
+   "text": "Needs the Cloudflare $5 a month plan. What this means"
+  },
+  {
+   "id": "b5",
+   "kind": "button",
+   "text": "Needs the Cloudflare $5 a month plan. What this means"
+  },
+  {
+   "id": "b6",
+   "kind": "button",
+   "text": "Needs the Cloudflare $5 a month plan. What this means"
+  },
+  {
+   "id": "b7",
+   "kind": "button",
+   "text": "Needs the Cloudflare $5 a month plan. What this means"
+  }
+ ]
+}

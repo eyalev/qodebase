@@ -1540,6 +1540,7 @@ async function withBaseline(request, env, res) {
       e.onEndTag(async (end) => {
         const tags = !env.KSTATS_KEY ? [] : [`<script>(function(){function k(){var s=document.createElement('script');s.defer=true;s.src='https://stats.kapps.dev/k.js';s.setAttribute('data-site','${KSTATS_SITE}');document.head.appendChild(s)}if(document.prerendering)document.addEventListener('prerenderingchange',k,{once:true});else k()})()<\/script>`];
         tags.push('<link rel="icon" href="/icon.svg" type="image/svg+xml">');
+        tags.push('<script src="/talk.js" defer><\/script>');
         if (!hasOg) tags.push(...await shareTags(env, host, url.pathname, title, desc));
         end.before(tags.join(""), { html: true });
       });
@@ -2453,13 +2454,13 @@ function createRemoteJWKSet(url, options) {
   }
   const reload = /* @__PURE__ */ __name(async () => {
     if (pendingFetch && isCloudflareWorkers() && (pendingFetch = void 0), !pendingFetch) {
-      const sequence = ++reloadSequence, current = pendingFetch = fetchJwks(href, headers, AbortSignal.timeout(timeoutDuration), fetchImpl).then((json3) => {
-        const next = createLocalJWKSet(json3);
+      const sequence = ++reloadSequence, current = pendingFetch = fetchJwks(href, headers, AbortSignal.timeout(timeoutDuration), fetchImpl).then((json4) => {
+        const next = createLocalJWKSet(json4);
         if (sequence <= appliedSequence)
           return;
         local = next;
         const updatedAt = Date.now();
-        cache2 && (cache2.uat = updatedAt, cache2.jwks = json3), jwksTimestamp = updatedAt, appliedSequence = sequence;
+        cache2 && (cache2.uat = updatedAt, cache2.jwks = json4), jwksTimestamp = updatedAt, appliedSequence = sequence;
       }).finally(() => {
         pendingFetch === current && (pendingFetch = void 0);
       });
@@ -2576,6 +2577,14 @@ var BuildBox = class extends DurableObject3 {
   }
   async alarm() {
     const q = await this.ctx.storage.get("queue") || [];
+    const stale = await this.ctx.storage.get("running");
+    if (stale) {
+      await this.ctx.storage.delete("running");
+      if ((stale.tries || 0) < 2) {
+        q.unshift({ ...stale, tries: (stale.tries || 0) + 1 });
+        log("build", "resumed", { slug: stale.slug, kind: stale.kind, tries: (stale.tries || 0) + 1 });
+      } else await this.#report(stale, { id: stale.id, kind: stale.kind, agentId: stale.agentId, ok: false, log: "interrupted three times", ms: 0, error: "The build was interrupted three times. Try again." });
+    }
     const job = q.shift();
     if (!job) {
       const last = await this.ctx.storage.get("lastBuild") || 0;
@@ -2586,9 +2595,25 @@ var BuildBox = class extends DurableObject3 {
       } else if (this.c.running) await this.ctx.storage.setAlarm(Date.now() + 6e4);
       return;
     }
-    await this.ctx.storage.put("queue", q);
+    await this.ctx.storage.put({ queue: q, running: job });
     const result = await this.#run(job);
+    await this.ctx.storage.delete("running");
     await this.ctx.storage.put("lastBuild", Date.now());
+    if (!result.ok && /Network connection lost|temporarily unavailable/i.test(result.error || "") && (job.tries || 0) < 2) {
+      q.unshift({ ...job, tries: (job.tries || 0) + 1 });
+      await this.ctx.storage.put("queue", q);
+      log("build", "retry", { slug: job.slug, kind: job.kind, tries: (job.tries || 0) + 1, error: result.error });
+      await this.ctx.storage.setAlarm(Date.now() + 5e3);
+      return;
+    }
+    await this.#report(job, result);
+    await this.ctx.storage.setAlarm(Date.now() + (q.length ? 100 : 6e4));
+  }
+  /** Keep the result (Installs asks for it if the call below is lost) and hand it on. */
+  async #report(job, result) {
+    await this.ctx.storage.put(`result:${job.id}`, { ...result, at: Date.now() });
+    const kept = await this.ctx.storage.list({ prefix: "result:" });
+    if (kept.size > 30) await this.ctx.storage.delete([...kept].sort((x, y) => x[1].at - y[1].at).slice(0, kept.size - 30).map(([k2]) => k2));
     if (job.install) {
       try {
         await this.env.Installs.get(this.env.Installs.idFromName(job.install.owner.toLowerCase())).buildDone(result);
@@ -2604,7 +2629,10 @@ var BuildBox = class extends DurableObject3 {
         log("build", "report_failed", { slug: job.slug, err: String(e) });
       }
     }
-    await this.ctx.storage.setAlarm(Date.now() + (q.length ? 100 : 6e4));
+  }
+  /** A finished job's result, if this builder still has it. */
+  async result(id) {
+    return await this.ctx.storage.get(`result:${id}`) || null;
   }
   /** A container that answers. One that claims to run but does not (a Worker
    *  deploy killed it mid-build, seen 2026-10-01: "container connection is
@@ -7063,7 +7091,8 @@ function buildBody(me, needsKey, runDomain) {
 <p class="lede">Say it in a sentence: an app, a site, a tool, a library. Agents write it, and you keep changing it in plain words. Anything that opens in a browser gets its own address.</p>
 <textarea id="idea" placeholder="A shared shopping list for my family\u2026" enterkeyhint="next" aria-label="What do you want to build?"></textarea>
 <div class="row"><button type="button" class="chipbtn mic" id="mic" hidden aria-label="Speak instead of typing">${MIC}<span>Speak</span></button><button type="button" class="btn" id="next">Next</button></div>
-<p class="exl">Or start from one of these</p><div class="ex">${EXAMPLES.map((e) => `<button type="button" data-ex="${esc6(e)}">${esc6(e)}</button>`).join("")}</div></section>
+<p class="exl">Or start from one of these</p><div class="ex">${EXAMPLES.map((e) => `<button type="button" data-ex="${esc6(e)}">${esc6(e)}</button>`).join("")}</div>
+<p class="exl imp">Already have code? <a href="/import">Import a GitHub repo</a></p></section>
 <section id="s2" hidden><button type="button" class="back4" id="back">Change the idea</button>
 <h1>Here's what qodebase will build</h1>
 <div class="brief"><div class="fld"><label for="pname">Project name</label><input id="pname" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="39">
@@ -7285,9 +7314,9 @@ function summaryOf(open, planning) {
   if (!open.length) return { html: "No changes in progress", state: "", busy: false };
   const n = /* @__PURE__ */ __name((s) => open.filter((c) => c.state === s).length, "n");
   const moving = n("working") + n("checking");
-  const top = n("waiting") ? `${n("waiting")} waiting for your answer` : n("fix") ? `${n("fix")} need${n("fix") > 1 ? "" : "s"} a fix` : n("ready") ? `${n("ready")} ready to merge` : moving ? `${moving} in progress` : `${n("paused")} paused`;
+  const top2 = n("waiting") ? `${n("waiting")} waiting for your answer` : n("fix") ? `${n("fix")} need${n("fix") > 1 ? "" : "s"} a fix` : n("ready") ? `${n("ready")} ready to merge` : moving ? `${moving} in progress` : `${n("paused")} paused`;
   const state = ["waiting", "fix", "ready", "working", "paused"].find((s) => (s === "working" ? moving : n(s)) > 0) || "";
-  return { html: top, state, busy: moving > 0 };
+  return { html: top2, state, busy: moving > 0 };
 }
 __name(summaryOf, "summaryOf");
 function planningOf(info, r) {
@@ -7739,10 +7768,10 @@ function liveC(info, all, plan) {
   const needs = all.filter((c) => primary(c)).sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state));
   const accent = needs[0]?.a.id;
   const need = needs.length ? `<a class="needbar" href="#c-${esc4(shortId(needs[0].a.id))}"><span class="dot s-${needs[0].state}"></span><span class="tx">${needs.length} need${needs.length > 1 ? "" : "s"} you</span><i>Show</i></a>` : '<div class="needbar none"></div>';
-  const day = /* @__PURE__ */ __name((t) => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" }), "day");
+  const day2 = /* @__PURE__ */ __name((t) => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" }), "day");
   let lastDay = "";
   const out = groups.map((g, i) => {
-    const d = day(g.at);
+    const d = day2(g.at);
     const when = d !== lastDay ? `<div class="when">${d}</div>` : "";
     lastDay = d;
     const isLast = i === groups.length - 1;
@@ -8000,10 +8029,10 @@ function historyView(c) {
   for (const f of c.forks) items.push({ at: f.createdAt, html: `<span class="k">Forked</span><span class="t"><a href="${path(f.slug)}">${esc4(label(f.slug))}</a></span>` });
   items.push({ at: c.info.createdAt, html: `<span class="k">${c.info.forkedFrom ? "Forked from" : c.info.importedFrom ? "Imported" : "Created"}</span><span class="t">${c.info.forkedFrom ? `<a href="${path(c.info.forkedFrom)}">${esc4(label(c.info.forkedFrom))}</a>` : c.info.importedFrom ? `<a href="${esc4(c.info.importedFrom.url)}" rel="noopener">${esc4(c.info.importedFrom.fullName)}</a>` : esc4(c.info.name)}</span>` });
   items.sort((a, b) => b.at - a.at);
-  const day = /* @__PURE__ */ __name((t) => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: new Date(t).getFullYear() === (/* @__PURE__ */ new Date()).getFullYear() ? void 0 : "numeric" }), "day");
+  const day2 = /* @__PURE__ */ __name((t) => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: new Date(t).getFullYear() === (/* @__PURE__ */ new Date()).getFullYear() ? void 0 : "numeric" }), "day");
   let last = "";
   const rows = items.map((it) => {
-    const d = day(it.at);
+    const d = day2(it.at);
     const h = d !== last ? `<h3>${d}</h3>` : "";
     last = d;
     return `${h}<div class="hi">${it.html}${freshTag(it.at, now, STEPS)}</div>`;
@@ -8092,9 +8121,9 @@ function tabsFor(c) {
   return c.own ? VIEWS.filter((v) => v.tab && v.when(c)) : VIEWS.filter((v) => ["readme", "app", "code", "history"].includes(v.id));
 }
 __name(tabsFor, "tabsFor");
-function tabBar(c, active, needs, top = false) {
+function tabBar(c, active, needs, top2 = false) {
   const tabs = tabsFor(c);
-  return `<nav class="${top ? "ptop" : "tabbar"}" aria-label="Project views">${tabs.map((v) => {
+  return `<nav class="${top2 ? "ptop" : "tabbar"}" aria-label="Project views">${tabs.map((v) => {
     const on = v.id === active || v.id === "more" && !tabs.some((t) => t.id === active);
     const href = v.href ? v.href(c) : `${c.base}/${v.id}`;
     if (v.id === "more") return `<a href="${href}" class="tab${on ? " on" : ""}" data-more aria-expanded="false" aria-controls="moresheet">${v.icon}<span>${v.label}</span></a>`;
@@ -8317,9 +8346,21 @@ var NAV_CSS = `
 .gtop{flex:none;display:flex;align-items:stretch;height:48px;padding:0 4px;border-bottom:1px solid var(--line);background:var(--bg);overflow-x:auto;scrollbar-width:none}
 .gtop::-webkit-scrollbar{display:none}
 .gtop .mark{display:flex;align-items:center;padding:0 10px 0 8px;font-weight:600;font-size:16px;color:var(--fg)}
-.gtop .g{flex:none;display:flex;align-items:center;gap:6px;padding:0 9px;font:500 14px 'Instrument Sans',sans-serif;color:var(--dim);border-bottom:2px solid transparent}
+.gtop .g{flex:none;display:flex;align-items:center;gap:6px;padding:0 7px;font:500 14px 'Instrument Sans',sans-serif;color:var(--dim);border-bottom:2px solid transparent}
 .gtop .g.on{color:var(--fg);border-bottom-color:var(--fg)}
-.gtop .gbuild{flex:none;align-self:center;margin-left:auto;min-height:34px;padding:0 14px;font-size:14px;border-radius:8px}
+.gtop .gbuild{flex:none;align-self:center;margin-left:auto;min-height:34px;padding:0 12px;font-size:14px;border-radius:8px}
+.gtop .gmenu{flex:none;align-self:center;display:inline-flex;align-items:center;justify-content:center;width:40px;height:44px;margin-left:0;border:0;background:none;color:var(--fg);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gmenupop{position:fixed;inset:52px 8px auto auto;margin:0;width:min(300px,calc(100vw - 16px));padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg);box-shadow:0 8px 32px rgb(0 0 0 / .16)}
+.gmenupop a{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none}
+.gmenupop a b{font-weight:500;font-size:15px}.gmenupop a span{font-size:13px;color:var(--dim)}
+.gmenupop a[aria-current]{background:var(--card)}
+@media (hover:hover){.gmenupop a:hover{background:var(--card)}}
+/* Home, Explore, Yours, Inbox, Build: the page itself scrolls (so Chrome's pull-to-refresh
+   works) under a sticky header. Project pages keep the app shell: their Changes thread
+   scrolls on its own, starting at the bottom. */
+body.v3.dhome{height:auto;min-height:100dvh;display:block;overflow:visible}
+body.dhome>.gtop{position:sticky;top:0;z-index:20}
+body.dhome>.view{overflow:visible;min-height:0}
 .gtop .badge{position:static;margin:0;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;font-weight:600;line-height:18px;text-align:center}
 .h3.sub{height:44px;background:var(--card)}
 .h3.sub .nm{padding-left:12px}
@@ -8414,7 +8455,7 @@ document.addEventListener('click',async(e)=>{
  b.disabled=true;b.textContent=m?'Merging':'Sending to its agent';
  const r=await fetch(api+'/'+(m?'merge':'fix'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({agent:b.dataset.merge||b.dataset.fix})});
  if(!r.ok){const j=await r.json().catch(()=>({}));b.textContent=j.error||'Failed';return;}setTimeout(()=>location.reload(),1200);});
-<\/script>`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + LAND_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav}${nav === "d" ? " dhome" : ""}`);
+<\/script>`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + LAND_CSS + `@media (min-width:900px){body.v3.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav}${nav === "d" ? " dhome" : ""}`);
 }
 __name(homeV3, "homeV3");
 function withGlobal(html4, tab, inbox, me, nav = "a") {
@@ -8431,33 +8472,45 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 }
 __name(withGlobal, "withGlobal");
 function globalTop(active, inbox, me) {
-  const tabs = me ? [["explore", "Explore", "/explore"], ["inbox", "Inbox", "/inbox"], ["mine", "Yours", "/mine"], ["account", "Account", "/settings"]] : [["explore", "Explore", "/explore"], ["account", "Sign in", "/login"]];
+  const tabs = me ? [["explore", "Explore", "/explore"], ["inbox", "Inbox", "/inbox"], ["mine", "Yours", "/mine"]] : [["explore", "Explore", "/explore"], ["account", "Sign in", "/login"]];
   if (active === "projects") active = "mine";
-  return `<nav class="gtop" aria-label="qodebase"><a class="mark" href="/">qodebase</a>${tabs.map(([id, labelT, href]) => `<a href="${href}" class="g${id === active ? " on" : ""}"${id === active ? ' aria-current="page"' : ""}>${labelT}${id === "inbox" && inbox ? `<span class="badge">${inbox}</span>` : ""}</a>`).join("")}<a class="btn gbuild" href="/build"${active === "build" ? ' aria-current="page"' : ""}>Build</a></nav>`;
+  return `<nav class="gtop" aria-label="qodebase"><a class="mark" href="/">qodebase</a>${tabs.map(([id, labelT, href]) => `<a href="${href}" class="g${id === active ? " on" : ""}"${id === active ? ' aria-current="page"' : ""}>${labelT}${id === "inbox" && inbox ? `<span class="badge">${inbox}</span>` : ""}</a>`).join("")}<a class="btn gbuild" href="/build"${active === "build" ? ' aria-current="page"' : ""}>Build</a>${gmenu(me, active)}</nav>`;
 }
 __name(globalTop, "globalTop");
+var MENU_ICON = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+function gmenu(me, active) {
+  const item = /* @__PURE__ */ __name((href, label2, sub, on = false) => `<a href="${href}"${on ? ' aria-current="page"' : ""}><b>${label2}</b><span>${sub}</span></a>`, "item");
+  return `<button type="button" class="gmenu" popovertarget="gmenupop" aria-label="Menu">${MENU_ICON}</button>
+<div id="gmenupop" class="gmenupop" popover>
+${me ? item("/settings", "Account", `${esc4(me)}: your name, API key, sign out`, active === "account") : ""}
+${item("/import", "Import from GitHub", "Bring a public repo in and change it with agents")}
+${item("/cli", "Command line", "qb: qodebase from a terminal or an agent")}
+${item("/about", "About", "What qodebase is")}
+${item("/feedback", "Feedback", "Something missing or broken? Tell us")}
+</div>`;
+}
+__name(gmenu, "gmenu");
 function catalogV3(nav, full, entries, me, inbox) {
   const pg = catalogPage(full, entries, me);
   if (!pg) return null;
   return shell2(nav, `${pg.title} \xB7 qodebase`, `${globalTop("explore", inbox, me)}
-<main class="view" id="view"><div class="pad">${pg.body}${legend(1)}${FOOT}</div></main>${SPECULATE}`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
+<main class="view" id="view"><div class="pad">${pg.body}${legend(1)}${FOOT}</div></main>${SPECULATE}`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.v3.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
 __name(catalogV3, "catalogV3");
 function buildV3(nav, me, inbox, needsKey, runDomain) {
   return shell2(nav, "Build \xB7 qodebase", `${globalTop("build", inbox, me)}
-<main class="view" id="view"><div class="pad">${buildBody(me, needsKey, runDomain)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + BUILD_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
+<main class="view" id="view"><div class="pad">${buildBody(me, needsKey, runDomain)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + BUILD_CSS + `@media (min-width:900px){body.v3.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
 __name(buildV3, "buildV3");
 function landBody(entries, selfHost = false) {
   const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && !e.private && e.slug !== "forq.blank").length;
   return `<section class="land">
-<h1>Be your own GitHub.</h1>
+<h1>Own your codebase.</h1>
 <p class="lede">Apps, sites, backends, CLIs: AI agents build and change them for you. Anything with a web page runs live. On Cloudflare, from your phone.</p>
 <form class="landask" action="/build" method="get">
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button class="btn" type="submit">Build it</button>
 </form>
-<p class="landalt">or <a href="/import">import from GitHub</a></p>
 <nav class="doors" aria-label="More">
 ${selfHost ? "" : `<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account. Yours to keep.</small></span></a>
 <a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>OpenClaw, Hermes, T3 Code, Mobile Agent and more, in your Cloudflare account.</small></span></a>`}
@@ -8479,7 +8532,6 @@ var LAND_CSS = `
 .land .browse{display:flex;align-items:center;justify-content:space-between;margin:28px 0 0;padding:14px 0;border-top:1px solid var(--line);color:var(--fg);font-weight:500;text-decoration:none}
 .land .browse .n{color:var(--dim);font-variant-numeric:tabular-nums;font-weight:400}
 .land .browse+.browse{margin-top:0}
-.landalt{margin:12px 0 0;color:var(--dim);font-size:15px;text-align:center}
 .doors{margin-top:28px}
 .doors .browse{margin-top:0}
 .doors .browse:last-child{border-bottom:1px solid var(--line)}
@@ -9102,7 +9154,7 @@ function installProgressPage(v) {
 <p class="small">${esc8(v.title)} into ${esc8(v.accountName)}</p>
 ${v.url || v.error ? "" : `<p class="small">Usually under a minute. You can leave this page; it keeps going.</p>`}
 <ul class="steps" id="steps">${v.steps.map((s) => `<li><span class="dot ${esc8(s.state)}"></span><div><div class="t">${esc8(s.label)}</div>${s.note ? `<div class="n">${esc8(s.note)}</div>` : ""}</div></li>`).join("")}</ul>
-<div id="end">${v.url ? `<div class="btns"><a class="btn pri wide" href="${esc8(v.url)}">Open my assistant</a></div><p class="addr">${esc8(v.url)}</p><p class="small">It is locked to you, so the first time you open it Cloudflare asks you to sign in once more. Choose <b>Cloudflare</b> (quickest if this browser is signed in to the Cloudflare dashboard) or <b>get a code by email</b>.</p>${v.extra ? `<div class="btns"><a class="btn sec wide" href="${esc8(v.extra.href)}">${esc8(v.extra.text)}</a></div>` : ""}<p class="small">Only you can open it. The first visit asks you to sign in with Cloudflare.${v.wakes ? " The first start takes about a minute; after that it sleeps when idle and wakes in seconds." : ""}</p>` : v.error ? `<p class="err">${esc8(v.error)}</p>${v.fix ? `<div class="btns"><a class="btn pri wide" href="${esc8(v.fix.href)}">${esc8(v.fix.text)}</a></div>` : ""}<div class="btns"><a class="btn sec wide" href="/personal-agents">Back</a></div>${v.log ? `<details><summary>Details</summary><pre class="addr" style="white-space:pre-wrap">${esc8(v.log)}</pre></details>` : ""}` : ""}</div>`;
+<div id="end">${v.url ? `<div class="btns"><a class="btn pri wide" href="${esc8(v.url)}">Open ${esc8(v.title)}</a></div><p class="addr">${esc8(v.url)}</p><p class="small">It is locked to you, so the first time you open it Cloudflare asks you to sign in once more. Choose <b>Cloudflare</b> (quickest if this browser is signed in to the Cloudflare dashboard) or <b>get a code by email</b>.</p>${v.extra ? `<div class="btns"><a class="btn sec wide" href="${esc8(v.extra.href)}">${esc8(v.extra.text)}</a></div>` : ""}<p class="small">Only you can open it. The first visit asks you to sign in with Cloudflare.${v.wakes ? " The first start takes about a minute; after that it sleeps when idle and wakes in seconds." : ""}</p>` : v.error ? `<p class="err">${esc8(v.error)}</p>${v.fix ? `<div class="btns"><a class="btn pri wide" href="${esc8(v.fix.href)}">${esc8(v.fix.text)}</a></div>` : ""}<div class="btns"><a class="btn sec wide" href="/personal-agents">Back</a></div>${v.log ? `<details><summary>Details</summary><pre class="addr" style="white-space:pre-wrap">${esc8(v.log)}</pre></details>` : ""}` : ""}</div>`;
   const poll = v.url || v.error ? "" : `<script>
 (function(){var t=setInterval(function(){fetch(location.pathname+'.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){
 if(v.url||v.error){clearInterval(t);location.reload();return}
@@ -9852,7 +9904,12 @@ var Installs = class extends DurableObject5 {
     const next = i.steps.find((s) => s.state !== "done");
     if (!next || next.state === "failed") return this.#next();
     if (next.key === "deploy" && next.state === "doing") {
-      if (Date.now() - i.updatedAt > 12 * 6e4) return this.#fail(i, "deploy", "The upload did not finish. Try again.");
+      const kept = await this.env.BuildBox.get(this.env.BuildBox.idFromName("installs")).result(`install-${i.id}`).catch(() => null);
+      if (kept) {
+        log("install", "result_fetched", { id: i.id, ok: kept.ok });
+        return this.buildDone(kept);
+      }
+      if (Date.now() - i.updatedAt > 20 * 6e4) return this.#fail(i, "deploy", "The upload did not finish. Try again.");
       await this.ctx.storage.setAlarm(Date.now() + 3e4);
       return;
     }
@@ -10045,11 +10102,935 @@ var Installs = class extends DurableObject5 {
   }
 };
 
+// ../src/talk.ts
+import { DurableObject as DurableObject6 } from "cloudflare:workers";
+
+// ../src/talkdecide.ts
+var currentSlug = /* @__PURE__ */ __name((path2) => {
+  const m = /^\/p\/([^/]+)\/([^/]+)/.exec(path2 || "");
+  return m ? `${m[1]}.${m[2]}` : null;
+}, "currentSlug");
+var MODES = {
+  act: "A request to do something in the app: go to a page, open a project or one of its parts, search, type, press something, go back, scroll. No answer needed beyond doing it.",
+  ask: "A question or conversation for the assistant to answer in words: what is this, how does it work, why, should I, explain, tell me about, chit-chat.",
+  both: 'Both: do something in the app AND answer or explain something ("open the calculator and tell me what it does", "show me the agents, which one is stuck?").',
+  none: "Not a request at all: a fragment cut off mid-sentence, noise, or filler words."
+};
+var ACTIONS = {
+  link: "Go to a page or open something listed on the screen or in the menu: the home page, Explore, Yours, Inbox, Build, Account, Import, Command line, About, Feedback, Get your own qodebase, Your own AI assistant, a document or file shown on the page (README, LICENSE), or any other link shown",
+  project: "Open a project by its name, or one part of it (its app, code, readme, history, agents)",
+  search: "Search or look for something by words: find a project, find text in the code",
+  type: "Type words into a field on the page (an idea to build, a search box, a message to an agent)",
+  press: "Press a button that is on the screen",
+  back: 'Go back to the previous page (only when they say back or previous; "go home" is the home page link)',
+  scroll: "Scroll to or show a section of this page (by its heading), or scroll to the top or bottom",
+  explain: "Explain, describe or show around the page the person is looking at",
+  none: "No action in the app"
+};
+var PARTS = {
+  page: "The project page itself (its main page)",
+  app: "Its live app, running (try it, use it, play it, run it)",
+  code: "Its code, files, source",
+  readme: "Its readme, its description document",
+  history: "Its history, commits, changes",
+  agents: "Its agents, the AI agents working on it"
+};
+var MARKERS = /* @__PURE__ */ new Set([
+  "for",
+  "find",
+  "search",
+  "called",
+  "named",
+  "type",
+  "write",
+  "saying",
+  "say",
+  "build",
+  "make",
+  "create",
+  "about",
+  "with",
+  "containing",
+  "contains",
+  "that",
+  "idea",
+  "is",
+  "to",
+  "mentions"
+]);
+function spans(utterance) {
+  const quoted = [...utterance.matchAll(/["“]([^"”]{1,120})["”]/g)].map((m) => m[1].trim());
+  const words2 = utterance.trim().replace(/[.?!]+$/, "").split(/\s+/).filter(Boolean);
+  const lw = words2.map((w) => w.toLowerCase().replace(/[^a-z0-9']/g, ""));
+  const starts = /* @__PURE__ */ new Set(), ends = /* @__PURE__ */ new Set([words2.length]);
+  lw.forEach((w, i) => {
+    if (MARKERS.has(w) && i + 1 < words2.length) starts.add(i + 1);
+    if (w === "and" || w === "please" || w === "then") ends.add(i);
+    if (/[,;]$/.test(words2[i])) ends.add(i + 1);
+  });
+  const out = [...quoted];
+  for (const s of [...starts].sort((a, b) => a - b)) {
+    for (const e of [...ends].sort((a, b) => a - b)) {
+      if (e <= s || e - s > 16) continue;
+      const phrase = words2.slice(s, e).join(" ").replace(/[,;"“”]+$/g, "").replace(/^["“]/, "").trim();
+      if (phrase && !/^(the|a|an|to|it|this|that|and|me|my)$/i.test(phrase)) out.push(phrase);
+    }
+  }
+  return [...new Set(out)].slice(0, 24);
+}
+__name(spans, "spans");
+var STOP = /* @__PURE__ */ new Set(["the", "a", "an", "my", "me", "open", "show", "go", "to", "app", "project", "please", "and", "of", "in", "on", "for", "it", "one", "that", "this", "i", "can", "you", "what", "is"]);
+var words = /* @__PURE__ */ __name((s) => s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 1 && !STOP.has(w)), "words");
+function candidateProjects(utterance, projects, max = 24, current = null) {
+  const u = new Set(words(utterance));
+  const score = /* @__PURE__ */ __name((p) => {
+    const n = words(p.name.replace(/[-_.]/g, " ")), d = words(p.description || "");
+    let s = 0;
+    for (const w of n) if (u.has(w) || [...u].some((x) => x.length > 3 && (w.startsWith(x) || x.startsWith(w)))) s += 3;
+    for (const w of d) if (u.has(w)) s += 1;
+    return s + (p.mine ? 0.5 : 0);
+  }, "score");
+  const ranked = projects.map((p) => ({ p, s: score(p) })).sort((a, b) => b.s - a.s);
+  const hits = ranked.filter((x) => x.s >= 1).map((x) => x.p);
+  const mine = projects.filter((p) => p.mine);
+  const here = projects.filter((p) => p.slug === current);
+  return [.../* @__PURE__ */ new Set([...here, ...hits, ...mine])].slice(0, max);
+}
+__name(candidateProjects, "candidateProjects");
+var choice = /* @__PURE__ */ __name((instructions, criteria) => ({ type: "choice", instructions, criteria }), "choice");
+var noul = /* @__PURE__ */ __name((instructions) => ({ type: "noul", instructions }), "noul");
+function stateText(utterance, s, projects) {
+  const lines = [`Sentence: "${utterance}"`, "", `The person is on qodebase (a git platform where every project runs as an app and has AI agents), page ${s.path} titled "${s.title}".`];
+  if (s.me) lines.push(`They are signed in as ${s.me}.`);
+  const by = /* @__PURE__ */ __name((k2) => s.items.filter((i) => i.kind === k2), "by");
+  if (by("heading").length) lines.push("", "Headings on the page: " + by("heading").map((h) => `"${h.text}"`).join(", "));
+  if (by("link").length) lines.push("", "Links (page and menu):", ...by("link").map((l) => `- ${l.id}: ${l.text}`));
+  if (by("button").length) lines.push("", "Buttons: " + by("button").map((b) => `${b.id} "${b.text}"`).join(", "));
+  if (by("field").length) lines.push("", "Fields: " + by("field").map((f) => `${f.id} "${f.text}"`).join(", "));
+  const cur = currentSlug(s.path);
+  if (projects.length) lines.push("", "Projects:", ...projects.map((p) => `- ${p.id}: ${p.owner}/${p.name}${p.slug === cur ? " (the project this page shows)" : ""}${p.mine ? " (theirs)" : ""}${p.description ? " \u2014 " + p.description.slice(0, 90) : ""}`));
+  if (cur) lines.push("", `This page shows the project ${cur.replace(".", "/")}: "this", "it", "its", "the app" or "the code" without a project name mean that project.`);
+  if (s.last) lines.push("", `The last thing opened was ${s.last}; "it", "that" or "this one" means it.`);
+  return lines.join("\n");
+}
+__name(stateText, "stateText");
+function buildQuestions(utterance, s, projects) {
+  const cands = spans(utterance);
+  const by = /* @__PURE__ */ __name((k2) => s.items.filter((i) => i.kind === k2), "by");
+  const none = { none: "None of these" };
+  const q = {
+    mode: choice("Is the sentence a request to do something in the app, a question or conversation to answer, both, or not a request?", MODES),
+    action: choice("If it asks to do something in the app, what kind of thing?", ACTIONS),
+    complete: noul("The sentence is a finished request or question, not cut off in the middle."),
+    risky: noul("Doing what the sentence asks would delete, merge, publish, make something public or private, sign out, revoke, uninstall, disconnect, or spend money.")
+  };
+  if (by("link").length) q.link = choice("Which link does it want to open? Pick the link whose words match what the sentence asks for.", { ...Object.fromEntries(by("link").map((l) => [l.id, l.text])), ...none });
+  if (projects.length) {
+    q.project = choice(
+      'Which project does the sentence name or mean? Match by name or what it is (a "timer" is the Focus timer project). With no project name ("the app", "its history", "this"), it is the project the page shows. "My copy", "my version" or "mine" means their own project of the same name. Prefer their own project when they say "my" or names tie.',
+      { ...Object.fromEntries(projects.map((p) => [p.id, `${p.owner}/${p.name}${p.mine ? " (theirs)" : ""}${p.description ? ": " + p.description.slice(0, 80) : ""}`])), ...none }
+    );
+    q.part = choice("Which part of the project does it want?", PARTS);
+    q.names_part = noul("The sentence names or implies one part of a project: its app (try, play, use, run it), code, files, readme, license, history or agents.");
+  }
+  if (by("button").length) q.button = choice("Which button does it want to press?", { ...Object.fromEntries(by("button").map((b) => [b.id, b.text])), ...none });
+  if (by("field").length) q.field = choice("Which field does it want to type into?", { ...Object.fromEntries(by("field").map((f) => [f.id, f.text])), ...none });
+  if (by("heading").length) q.section = choice("Which section of the page does it want to see?", { ...Object.fromEntries(by("heading").map((h) => [h.id, h.text])), top: "The top of the page", bottom: "The bottom of the page", ...none });
+  if (cands.length) q.text = choice("What exact words should be searched for or typed?", { ...Object.fromEntries(cands.map((c, i) => [`s${i}`, `"${c}"`])), ...none });
+  return { questions: q, cands };
+}
+__name(buildQuestions, "buildQuestions");
+var partOf = /* @__PURE__ */ __name((answers) => (answers.names_part?.noul ?? 1) >= 0.5 ? top(answers.part).choice : "page", "partOf");
+var top = /* @__PURE__ */ __name((a) => a?.choice ? { choice: a.choice, p: a.probabilities?.[a.choice] ?? a.confidence ?? null } : { choice: "none", p: null }, "top");
+var pick = /* @__PURE__ */ __name((a, min = 0) => {
+  const t = top(a);
+  return t.choice !== "none" && (t.p ?? 1) >= min ? t.choice : null;
+}, "pick");
+function resolve(answers, cands, s, projects, utterance) {
+  const cmd = resolveAction(answers, cands, s, projects, utterance);
+  const home = s.items.find((i) => i.kind === "link" && i.href === "/");
+  if (home && cmd.mode !== "ask" && /\b(go|take me|back to the|bring me) home\b|\bhome ?page\b|^home$/i.test(utterance.trim())) return { ...cmd, mode: cmd.mode === "none" ? "act" : cmd.mode, op: "go", href: "/", label: home.text, target: home.id };
+  if (cmd.op !== "none" || cmd.mode === "ask" || cmd.mode === "none") return cmd;
+  const l = s.items.find((i) => i.id === pick(answers.link, 0.5));
+  return l?.href ? { ...cmd, op: "go", href: l.href, label: l.text, target: l.id, why: `${cmd.why}; used the link` } : cmd;
+}
+__name(resolve, "resolve");
+function resolveAction(answers, cands, s, projects, utterance) {
+  const mode = top(answers.mode);
+  const action = top(answers.action);
+  const base = { mode: mode.choice, modeP: mode.p, op: "none", p: action.p, risky: answers.risky?.noul ?? null, complete: answers.complete?.noul ?? null };
+  const item = /* @__PURE__ */ __name((id) => s.items.find((i) => i.id === id) || null, "item");
+  const text = (() => {
+    const c = pick(answers.text);
+    return c && /^s\d+$/.test(c) ? cands[Number(c.slice(1))] : null;
+  })();
+  switch (action.choice) {
+    case "link": {
+      const l = item(pick(answers.link));
+      if (l?.href) return { ...base, op: "go", href: l.href, label: l.text, target: l.id };
+      const p = projects.find((x) => x.id === pick(answers.project, 0.3));
+      if (p) return { ...base, op: "go", href: projectHref(p, partOf(answers)), label: `${p.owner}/${p.name}`, target: p.slug };
+      return { ...base, why: "no link matched" };
+    }
+    case "project": {
+      const p = projects.find((x) => x.id === pick(answers.project));
+      if (!p) return { ...base, why: "no project matched" };
+      return { ...base, op: "go", href: projectHref(p, partOf(answers)), label: `${p.owner}/${p.name}`, target: p.slug };
+    }
+    case "search": {
+      const f = s.items.find((i) => i.kind === "field" && /search|go to file/i.test(i.text));
+      if (f && text) return { ...base, op: "type", target: f.id, text, label: f.text };
+      const p = projects.find((x) => x.id === pick(answers.project, 0.3));
+      if (p) return { ...base, op: "go", href: projectHref(p, partOf(answers)), label: `${p.owner}/${p.name}`, target: p.slug };
+      return { ...base, op: "search", text: text || utterance };
+    }
+    case "type": {
+      const f = item(pick(answers.field)) || s.items.find((i) => i.kind === "field") || null;
+      if (!f || !text) return { ...base, why: f ? "no words to type" : "no field on this page" };
+      return { ...base, op: "type", target: f.id, text, label: f.text };
+    }
+    case "press": {
+      const b = item(pick(answers.button));
+      if (!b) return { ...base, why: "no button matched" };
+      return { ...base, op: "press", target: b.id, label: b.text };
+    }
+    case "back":
+      return { ...base, op: "back" };
+    case "scroll": {
+      const c = pick(answers.section);
+      if (c === "top" || c === "bottom") return { ...base, op: "scroll", section: c };
+      const h = item(c);
+      return h ? { ...base, op: "scroll", target: h.id, label: h.text } : { ...base, why: "no section matched" };
+    }
+    case "explain":
+      return { ...base, op: "explain" };
+  }
+  return base;
+}
+__name(resolveAction, "resolveAction");
+function projectHref(p, part) {
+  const root = `/p/${p.owner}/${p.name}`;
+  return part === "app" ? `${root}/app` : part === "code" ? `${root}/code/` : part === "readme" ? `${root}/readme` : part === "history" ? `${root}/history` : part === "agents" ? `${root}/agents` : root;
+}
+__name(projectHref, "projectHref");
+
+// ../src/talkscan.ts
+var SCAN_JS = String.raw`function talkScan(root) {
+  root = root || document;
+  var out = [], seen = {}, n = { l: 0, b: 0, f: 0, h: 0 };
+  var clean = function (s) { return String(s || '').replace(/\s+/g, ' ').trim(); };
+  var lines = function (el) { var t = String(el.innerText || el.textContent || '').split('\n').map(clean).filter(Boolean); return t.length > 1 ? t[0] + ' (' + t.slice(1).join(', ') + ')' : (t[0] || ''); };
+  var skip = function (el) { return el.closest('#talk-root') || el.closest('[aria-hidden="true"]'); };
+  var add = function (el, kind, text, extra) {
+    text = clean(text).slice(0, kind === 'link' ? 120 : 70);
+    if (!text) return;
+    var p = kind === 'link' ? 'l' : kind === 'button' ? 'b' : kind === 'field' ? 'f' : 'h';
+    var id = el.getAttribute('data-talk') || (p + (++n[p]));
+    if (!el.getAttribute('data-talk')) el.setAttribute('data-talk', id); else n[p] = Math.max(n[p], Number(id.slice(1)) || 0);
+    var item = { id: id, kind: kind, text: text };
+    for (var k in extra || {}) item[k] = extra[k];
+    out.push(item);
+  };
+  root.querySelectorAll('h1, h2, h3').forEach(function (h) { if (!skip(h) && out.filter(function (i) { return i.kind === 'heading'; }).length < 20) add(h, 'heading', h.textContent); });
+  var links = 0;
+  root.querySelectorAll('a[href]').forEach(function (a) {
+    if (skip(a) || links >= 60) return;
+    var href = a.getAttribute('href');
+    if (!href || href.charAt(0) === '#' || /^(javascript|mailto):/.test(href)) return;
+    // Menu links carry a second line ("Account" / "eyal: your name…"): first line names it.
+    var text = a.getAttribute('aria-label') || lines(a);
+    var key = href + '|' + clean(text).toLowerCase();
+    if (seen[href] || seen[key]) return;
+    seen[href] = seen[key] = 1; links++;
+    if (href === '/' && !/home/i.test(text)) text = clean(text) + ' (home page)';
+    add(a, 'link', text, { href: href });
+  });
+  var buttons = 0;
+  root.querySelectorAll('button').forEach(function (b) {
+    if (skip(b) || b.disabled || b.type === 'hidden' || buttons >= 40) return;
+    var t = b.getAttribute('aria-label') || b.title || lines(b);
+    if (/^(close|×|✕)$/i.test(clean(t))) return;
+    buttons++;
+    add(b, 'button', t);
+  });
+  root.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=submit]), textarea, [contenteditable=true]').forEach(function (f) {
+    if (skip(f)) return;
+    var lab = f.id && root.querySelector('label[for="' + f.id + '"]');
+    add(f, 'field', f.getAttribute('placeholder') || f.getAttribute('aria-label') || (lab && lab.textContent) || f.name || 'text field');
+  });
+  return out;
+}`;
+
+// ../src/talkclient.ts
+var TALK_JS = String.raw`(function () {
+'use strict';
+if (window.top !== window || window.__talk) return;
+window.__talk = 1;
+if (/^\/(login|a\/|session)/.test(location.pathname)) return;
+` + SCAN_JS + String.raw`
+var KEY = 'qb-talk-', ss = window.sessionStorage, ls = window.localStorage;
+function get(k, d) { try { var v = ls.getItem(KEY + k); return v == null ? d : v; } catch (e) { return d; } }
+function set(k, v) { try { ls.setItem(KEY + k, v); } catch (e) {} }
+function sget(k, d) { try { var v = ss.getItem(KEY + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
+function sset(k, v) { try { ss.setItem(KEY + k, JSON.stringify(v)); } catch (e) {} }
+function logEv(event, data) { try { console.log(JSON.stringify(Object.assign({ ts: new Date().toISOString(), module: 'talk', event: event }, data || {}))); } catch (e) {} }
+
+var S = {
+  engine: get('engine', ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) ? 'native' : 'whisper'),
+  lang: get('lang', 'en'),
+  speak: get('speak', 'voice'),        // off | voice (only when I spoke) | always
+};
+var LANGS = { en: 'en-US', he: 'he-IL', auto: 'en-US' };
+var me = null, busy = false, listening = false, lastSpoken = false;
+var hist = sget('log', []);             // [{who:'you'|'app'|'ai'|'note', text}]
+var chatHist = sget('chat', []);       // [{role, content}] for the chat lane
+
+// ---- DOM -------------------------------------------------------------------
+var css = [
+  '#talk-root{--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);font:16px/1.45 "Instrument Sans",system-ui,sans-serif;color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
+  '#talk-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483000;width:52px;height:52px;border-radius:12px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer;transition:background-color .12s}',
+  '#talk-fab svg{width:24px;height:24px}',
+  '#talk-fab.on{background:#b42d1f}',
+  '#talk-root.open #talk-fab{display:none}',
+  '#talk-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483001;background:var(--t-bg);border-top:1px solid var(--t-line);border-radius:12px 12px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.14);transform:translateY(105%);transition:transform .22s ease;max-height:62dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}',
+  '#talk-root.open #talk-sheet{transform:none}',
+  '@media (min-width:720px){#talk-sheet{left:auto;right:16px;bottom:16px;width:420px;border:1px solid var(--t-line);border-radius:12px}}',
+  '#talk-head{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 16px;border-bottom:1px solid var(--t-line)}',
+  '#talk-head b{font-weight:600;font-size:15px;flex:1}',
+  '#talk-head .st{font-size:13px;color:var(--t-dim);font-variant-numeric:tabular-nums}',
+  '.talk-ib{width:44px;height:44px;border:0;border-radius:8px;background:transparent;color:var(--t-fg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}',
+  '.talk-ib svg{width:20px;height:20px}',
+  '@media (hover:hover){.talk-ib:hover{background:var(--t-chip)}}',
+  '#talk-log{overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-height:64px;overscroll-behavior:contain}',
+  '#talk-log .you{align-self:flex-end;background:var(--t-acc);color:var(--t-accfg);padding:8px 12px;border-radius:12px;max-width:85%;font-size:15px}',
+  '#talk-log .ai{align-self:flex-start;font-size:15px;max-width:92%}',
+  '#talk-log .app,#talk-log .note{align-self:flex-start;font-size:13px;color:var(--t-dim)}',
+  '#talk-log .hint{font-size:13px;color:var(--t-dim)}',
+  '#talk-live{padding:0 16px;min-height:0;font-size:15px;color:var(--t-dim)}',
+  '#talk-live:not(:empty){padding:4px 16px 8px}',
+  '#talk-offer{display:none;gap:8px;align-items:center;padding:0 16px 8px;font-size:15px;flex-wrap:wrap}',
+  '#talk-offer.on{display:flex}',
+  '.talk-chip{min-height:44px;padding:0 14px;border-radius:8px;border:0;background:var(--t-chip);color:var(--t-fg);font:500 15px "Instrument Sans",system-ui,sans-serif;cursor:pointer}',
+  '.talk-chip.pri{background:var(--t-acc);color:var(--t-accfg)}',
+  '#talk-form{display:flex;gap:8px;padding:8px 8px 8px 16px;border-top:1px solid var(--t-line);align-items:center}',
+  '#talk-in{flex:1;min-width:0;height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);padding:0 12px;font:16px "Instrument Sans",system-ui,sans-serif;outline:none}',
+  '#talk-in:focus{border-color:var(--t-acc)}',
+  '#talk-mic{width:44px;height:44px;border-radius:8px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}',
+  '#talk-mic svg{width:22px;height:22px}',
+  '#talk-mic.on{background:#b42d1f}',
+  '#talk-set{display:none;padding:12px 16px;border-bottom:1px solid var(--t-line);gap:12px;flex-direction:column;font-size:15px}',
+  '#talk-root.settings #talk-set{display:flex}',
+  '#talk-set label{display:flex;flex-direction:column;gap:4px;color:var(--t-dim);font-size:13px}',
+  '#talk-set select{height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);font:16px "Instrument Sans",system-ui,sans-serif;padding:0 8px}',
+  '.talk-mark{outline:3px solid var(--acc,#17695a)!important;outline-offset:3px!important;border-radius:8px;transition:outline-color .12s}',
+  '.talk-mark.dash{outline-style:dashed!important}',
+].join('\n');
+
+var ICON = {
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  stop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+};
+
+var root, sheet, logEl, live, offer, inp, micBtn, fab, stEl;
+function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
+
+function build() {
+  var st = el('style'); st.textContent = css; document.head.appendChild(st);
+  root = el('div', { id: 'talk-root' });
+  fab = el('button', { id: 'talk-fab', type: 'button', 'aria-label': 'Talk to qodebase' }, ICON.mic);
+  sheet = el('section', { id: 'talk-sheet', 'aria-label': 'Talk' });
+  var head = el('div', { id: 'talk-head' });
+  head.innerHTML = '<b>Talk</b><span class="st" id="talk-st"></span>';
+  var gear = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Talk settings' }, ICON.gear);
+  var close = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Close' }, ICON.x);
+  head.appendChild(gear); head.appendChild(close);
+  var setp = el('div', { id: 'talk-set' });
+  setp.innerHTML =
+    '<label>Dictation<select id="talk-s-engine"><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
+    '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
+    '<label>Speak replies<select id="talk-s-speak"><option value="voice">When I talked</option><option value="always">Always</option><option value="off">Never</option></select></label>' +
+    '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>';
+  logEl = el('div', { id: 'talk-log', 'aria-live': 'polite' });
+  live = el('div', { id: 'talk-live' });
+  offer = el('div', { id: 'talk-offer' });
+  var form = el('form', { id: 'talk-form' });
+  inp = el('input', { id: 'talk-in', type: 'text', enterkeyhint: 'send', autocomplete: 'off', placeholder: 'Say or type: open my calculator', 'aria-label': 'Talk to qodebase' });
+  micBtn = el('button', { id: 'talk-mic', type: 'button', 'aria-label': 'Speak' }, ICON.mic);
+  form.appendChild(inp); form.appendChild(micBtn);
+  sheet.appendChild(head); sheet.appendChild(setp); sheet.appendChild(logEl); sheet.appendChild(live); sheet.appendChild(offer); sheet.appendChild(form);
+  root.appendChild(fab); root.appendChild(sheet);
+  document.body.appendChild(root);
+  stEl = document.getElementById('talk-st');
+
+  fab.addEventListener('click', function () { open(true); if (S.engine === 'native' || S.engine === 'whisper') startListen(); });
+  close.addEventListener('click', function () { stopListen(true); open(false); });
+  gear.addEventListener('click', function () { root.classList.toggle('settings'); });
+  micBtn.addEventListener('click', function () { if (listening) stopListen(false); else startListen(); });
+  form.addEventListener('submit', function (e) { e.preventDefault(); var v = inp.value.trim(); if (!v) return; inp.value = ''; lastSpoken = false; submit(v); });
+  var se = document.getElementById('talk-s-engine'), sl = document.getElementById('talk-s-lang'), sp = document.getElementById('talk-s-speak');
+  se.value = S.engine; sl.value = S.lang; sp.value = S.speak;
+  se.onchange = function () { S.engine = se.value; set('engine', S.engine); };
+  sl.onchange = function () { S.lang = sl.value; set('lang', S.lang); };
+  sp.onchange = function () { S.speak = sp.value; set('speak', S.speak); };
+  document.getElementById('talk-s-clear').onclick = function () { hist = []; chatHist = []; sset('log', hist); sset('chat', chatHist); render(); root.classList.remove('settings'); };
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && root.classList.contains('open')) { stopListen(true); open(false); }
+  });
+  render();
+}
+
+function open(on) { root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+function status(t) { stEl.textContent = t || ''; }
+function add(who, text) { hist.push({ who: who, text: String(text) }); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
+function render() {
+  logEl.innerHTML = '';
+  if (!hist.length) {
+    var h = el('div', { class: 'hint' });
+    h.textContent = 'Try: “open my calculator”, “show me the code of the timer”, “what is this page?”, “build a habit tracker”.';
+    logEl.appendChild(h);
+  }
+  hist.forEach(function (m) { var d = el('div', { class: m.who }); d.textContent = m.text; logEl.appendChild(d); });
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ---- Pointing ----------------------------------------------------------------
+var marked = [];
+function unmark() { marked.forEach(function (e) { e.classList.remove('talk-mark', 'dash'); }); marked = []; }
+function mark(e, dashed) {
+  if (!e) return;
+  e.classList.add('talk-mark'); if (dashed) e.classList.add('dash'); marked.push(e);
+  try { e.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (x) {}
+}
+function byId(id) { return id ? document.querySelector('[data-talk="' + id + '"]') : null; }
+function showSeq(ids) {
+  unmark();
+  var i = 0;
+  (function step() { unmark(); if (i >= ids.length) return; mark(byId(ids[i++])); setTimeout(step, 1700); })();
+}
+
+// ---- Screen ----------------------------------------------------------------
+function screen() {
+  var items = talkScan(document);
+  return { path: location.pathname + location.search, title: document.title, items: items, last: sget('last', null) };
+}
+function pageText() {
+  var main = document.querySelector('main') || document.body;
+  var t = String(main.innerText || '').replace(/\n{3,}/g, '\n\n');
+  var mine = root ? String(root.innerText || '') : '';
+  if (mine) t = t.replace(mine, '');
+  return t.slice(0, 5000);
+}
+
+// ---- Server ----------------------------------------------------------------
+function api(path, body) {
+  return fetch('/api/talk/' + path, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) })
+    .then(function (r) { return r.json().then(function (j) { j._status = r.status; return j; }); });
+}
+
+// ---- The one entry point: a sentence --------------------------------------
+var preview = null;   // { text, cmd } from interim speech
+function submit(text) {
+  if (busy) return;
+  busy = true; unmark(); offerOff();
+  add('you', text);
+  status('Thinking…');
+  var t0 = Date.now();
+  var reuse = preview && preview.text === text ? Promise.resolve({ cmd: preview.cmd, ms: { total: 0 } }) : api('decide', { utterance: text, screen: screen() });
+  preview = null;
+  reuse.then(function (r) {
+    if (r.error) { add('note', r.why || 'Something went wrong.'); return done(); }
+    var c = r.cmd;
+    logEv('decide', { text: text, mode: c.mode, mode_p: c.modeP, op: c.op, p: c.p, risky: c.risky, ms: Date.now() - t0 });
+    if ((c.risky || 0) >= 0.5) {
+      add('ai', 'That would change or remove something, so I will leave the doing to you.');
+      if (c.op === 'go' && c.href) offerOn('Take me to ' + (c.label || 'that page') + '?', function () { act(c); });
+      return done();
+    }
+    if (c.mode === 'none') { add('note', (c.complete || 0) < 0.5 ? 'Sounds cut off. Say it again?' : 'I did not catch a request there.'); return done(); }
+    var acts = (c.mode === 'act' || c.mode === 'both') && c.op !== 'none' && c.op !== 'explain';
+    if (acts && (c.p == null || c.p >= 0.45)) {
+      if (c.mode === 'both') sset('pending', { text: text, did: describe(c) });
+      return act(c, true);
+    }
+    if (acts && c.p >= 0.2) {
+      offerOn('Maybe: ' + describe(c) + '?', function () { if (c.mode === 'both') sset('pending', { text: text, did: describe(c) }); act(c); });
+      if (c.mode === 'act') return done();
+    }
+    ask(text, '');
+  }).catch(function (e) { add('note', 'Could not reach qodebase.'); logEv('error', { where: 'decide', err: String(e) }); done(); });
+}
+function done() { busy = false; status(''); }
+
+function describe(c) {
+  if (c.op === 'go') return 'open ' + (c.label || c.href);
+  if (c.op === 'back') return 'go back';
+  if (c.op === 'press') return 'press “' + c.label + '”';
+  if (c.op === 'type') return 'type “' + c.text + '” into “' + c.label + '”';
+  if (c.op === 'scroll') return 'scroll to ' + (c.label || c.section);
+  if (c.op === 'search') return 'search for “' + c.text + '”';
+  return c.op;
+}
+
+function act(c, withPreview) {
+  var target = c.target && byId(c.target);
+  var go = function () {
+    unmark();
+    if (c.op === 'go') {
+      add('app', 'Opening ' + (c.label || c.href) + '…');
+      sset('last', c.label || c.href);
+      sset('open', true);
+      busy = false;
+      location.assign(c.href);
+      return;
+    }
+    if (c.op === 'back') { add('app', 'Going back…'); busy = false; history.back(); return; }
+    if (c.op === 'press' && target) { add('app', 'Pressed “' + c.label + '”.'); target.click(); }
+    else if (c.op === 'type' && target) { typeInto(target, c.text); add('app', 'Typed “' + c.text + '”.'); offerSubmit(target); }
+    else if (c.op === 'scroll') {
+      if (c.section === 'top') window.scrollTo({ top: 0, behavior: 'smooth' });
+      else if (c.section === 'bottom') window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      else if (target) { mark(target); setTimeout(unmark, 1800); }
+      add('app', 'Scrolled to ' + (c.label || c.section) + '.');
+    }
+    else if (c.op === 'search') { add('note', 'There is no search box on this page.'); return ask('Find ' + c.text, ''); }
+    else { add('note', 'Could not find that on the page any more.'); }
+    var p = sget('pending', null);
+    if (p) { sset('pending', null); return ask(p.text, p.did); }
+    done();
+  };
+  if (withPreview && target) { mark(target, true); status(describe(c)); setTimeout(go, 450); }
+  else go();
+}
+
+function typeInto(t, text) {
+  t.focus();
+  if (t.isContentEditable) { t.textContent = text; t.dispatchEvent(new InputEvent('input', { bubbles: true })); return; }
+  var proto = t.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+  var setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+  setter.call(t, text);
+  t.dispatchEvent(new Event('input', { bubbles: true }));
+  t.dispatchEvent(new Event('change', { bubbles: true }));
+}
+function offerSubmit(t) {
+  var f = t.form; if (!f) return;
+  var b = f.querySelector('button[type=submit], button:not([type])');
+  if (!b) return;
+  offerOn('Send it?', function () { if (f.requestSubmit) f.requestSubmit(b); else b.click(); }, (b.innerText || 'Send').trim());
+}
+
+function offerOn(text, yes, yesLabel) {
+  offer.innerHTML = '';
+  var s = el('span'); s.textContent = text;
+  var y = el('button', { type: 'button', class: 'talk-chip pri' }); y.textContent = yesLabel || 'Go';
+  var n = el('button', { type: 'button', class: 'talk-chip' }); n.textContent = 'No';
+  y.onclick = function () { offerOff(); yes(); };
+  n.onclick = function () { offerOff(); };
+  offer.appendChild(s); offer.appendChild(y); offer.appendChild(n);
+  offer.classList.add('on');
+}
+function offerOff() { offer.classList.remove('on'); offer.innerHTML = ''; }
+
+function ask(text, did) {
+  busy = true;
+  status('Answering…');
+  api('chat', { utterance: text, did: did, screen: screen(), pageText: pageText(), history: chatHist }).then(function (r) {
+    if (r.error) { add('note', r.why || 'No answer.'); return done(); }
+    var reply = r.reply || '';
+    chatHist.push({ role: 'user', content: text });
+    if (reply) chatHist.push({ role: 'assistant', content: reply });
+    chatHist = chatHist.slice(-12); sset('chat', chatHist);
+    if (reply) { add('ai', reply); say(reply); }
+    var acts = r.actions || [];
+    logEv('chat', { text: text, reply_len: reply.length, actions: acts.map(function (a) { return a.name; }), ms: r.ms && r.ms.model });
+    var nav = null;
+    acts.forEach(function (a) {
+      if (a.name === 'show') showSeq((a.args && a.args.ids) || []);
+      else if (a.name === 'press') { var b = byId(a.args.id); if (b) { add('app', 'Pressed “' + (b.innerText || b.getAttribute('aria-label') || '').trim() + '”.'); b.click(); } }
+      else if (a.name === 'type_into') { var f = byId(a.args.id); if (f) { typeInto(f, String(a.args.text || '')); offerSubmit(f); } }
+      else if (a.name === 'go') {
+        var to = String(a.args.to || ''); var l = byId(to);
+        var href = l ? l.getAttribute('href') : (to.charAt(0) === '/' ? to : null);
+        if (href) nav = { href: href, label: l ? (l.innerText || href).split('\n')[0] : href };
+      }
+    });
+    if (nav) { var c = { op: 'go', href: nav.href, label: nav.label }; setTimeout(function () { act(c); }, reply ? 900 : 0); return; }
+    done();
+  }).catch(function (e) { add('note', 'Could not reach qodebase.'); logEv('error', { where: 'chat', err: String(e) }); done(); });
+}
+
+function say(text) {
+  if (S.speak === 'off' || (S.speak === 'voice' && !lastSpoken) || !window.speechSynthesis) return;
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = /[֐-׿]/.test(text) ? 'he-IL' : 'en-US';
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+// ---- Listening ---------------------------------------------------------------
+var rec = null, mr = null, chunks = [], stream = null, t0 = 0, tick = null, interimTimer = null, interimCalls = 0;
+function setListening(on) {
+  listening = on;
+  micBtn.classList.toggle('on', on); micBtn.innerHTML = on ? ICON.stop : ICON.mic;
+  micBtn.setAttribute('aria-label', on ? 'Stop' : 'Speak');
+  clearInterval(tick);
+  if (on) { t0 = Date.now(); tick = setInterval(function () { status('Listening ' + Math.floor((Date.now() - t0) / 1000) + 's'); }, 250); status('Listening'); }
+  else if (!busy) status('');
+}
+function startListen() {
+  if (listening || busy) return;
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  offerOff(); live.textContent = '';
+  if (S.engine === 'native') return startNative();
+  return startWhisper();
+}
+function stopListen(cancel) {
+  if (!listening) return;
+  if (rec) { if (cancel) rec.abort(); else rec.stop(); }
+  if (mr) { if (cancel) { chunks = []; mr.onstop = null; } try { mr.stop(); } catch (e) {} }
+  if (cancel) { setListening(false); live.textContent = ''; unmark(); }
+}
+
+function startNative() {
+  var R = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!R) { add('note', 'This browser has no built-in dictation. Switch to Whisper in Talk settings.'); return; }
+  rec = new R();
+  rec.lang = LANGS[S.lang] || 'en-US';
+  rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+  var finalText = '';
+  interimCalls = 0;
+  rec.onresult = function (e) {
+    var interim = '';
+    for (var i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript; else interim += e.results[i][0].transcript;
+    }
+    live.textContent = (finalText + ' ' + interim).trim();
+    // Preview while still talking: what it would do, the target outlined (dashed).
+    clearTimeout(interimTimer);
+    var said = (finalText + ' ' + interim).trim();
+    if (said.split(/\s+/).length >= 3 && interimCalls < 2) interimTimer = setTimeout(function () { interimDecide(said); }, 450);
+  };
+  rec.onerror = function (e) {
+    logEv('stt_error', { engine: 'native', err: e.error });
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') add('note', 'The microphone is blocked for this site. Allow it in the browser, or type instead.');
+    else if (e.error !== 'no-speech' && e.error !== 'aborted') add('note', 'Dictation stopped (' + e.error + ').');
+  };
+  rec.onend = function () {
+    clearTimeout(interimTimer);
+    setListening(false); rec = null;
+    var t = finalText.trim() || live.textContent.trim();
+    live.textContent = '';
+    if (t) { lastSpoken = true; submit(t); }
+  };
+  try { rec.start(); setListening(true); } catch (e) { add('note', 'Could not start dictation: ' + e.message); }
+}
+function interimDecide(text) {
+  interimCalls++;
+  api('decide', { utterance: text, screen: screen(), interim: true }).then(function (r) {
+    if (!listening || !r.cmd) return;
+    var c = r.cmd;
+    if ((c.mode === 'act' || c.mode === 'both') && c.op !== 'none' && (c.risky || 0) < 0.5) {
+      preview = { text: text, cmd: c };
+      unmark(); if (c.target) mark(byId(c.target), true);
+      status('→ ' + describe(c));
+    }
+  }).catch(function () {});
+}
+
+function startWhisper() {
+  if (!navigator.mediaDevices || !window.MediaRecorder) { add('note', 'This browser cannot record audio. Switch to the phone’s own dictation in Talk settings.'); return; }
+  setListening(true); status('Starting the microphone…');
+  navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function (s) {
+    stream = s; chunks = [];
+    var type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].filter(function (t) { return MediaRecorder.isTypeSupported(t); })[0] || '';
+    mr = new MediaRecorder(s, type ? { mimeType: type } : {});
+    mr.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+    mr.onstop = function () {
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      setListening(false);
+      var blob = new Blob(chunks, { type: mr.mimeType || 'audio/webm' });
+      mr = null;
+      if (blob.size < 2000) { status(''); return; }
+      status('Hearing…');
+      fetch('/api/talk/transcribe?lang=' + encodeURIComponent(S.lang), { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type }, body: blob })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          status('');
+          if (j.error) { add('note', j.why || 'Could not hear that.'); return; }
+          if (!j.text) { add('note', 'I did not hear anything.'); return; }
+          lastSpoken = true; submit(j.text);
+        }).catch(function (e) { status(''); add('note', 'Could not reach qodebase.'); logEv('error', { where: 'stt', err: String(e) }); });
+    };
+    mr.start(250);
+    t0 = Date.now();
+    // Stop by itself after a pause in speech or 30 s, whichever comes first.
+    silenceStop(s);
+  }).catch(function (e) {
+    setListening(false);
+    logEv('stt_error', { engine: 'whisper', err: String(e) });
+    add('note', /denied|allowed/i.test(String(e)) ? 'The microphone is blocked for this site. Allow it in the browser, or type instead.' : 'Could not start the microphone.');
+  });
+}
+function silenceStop(s) {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var src = ctx.createMediaStreamSource(s), an = ctx.createAnalyser();
+    an.fftSize = 512; src.connect(an);
+    var buf = new Uint8Array(an.fftSize), spoke = false, quietSince = 0;
+    (function loop() {
+      if (!mr) { ctx.close(); return; }
+      an.getByteTimeDomainData(buf);
+      var peak = 0; for (var i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128));
+      var now = Date.now();
+      if (peak > 12) { spoke = true; quietSince = 0; } else if (!quietSince) quietSince = now;
+      if ((spoke && quietSince && now - quietSince > 1300) || now - t0 > 30000) { try { mr.stop(); } catch (e) {} ctx.close(); return; }
+      requestAnimationFrame(loop);
+    })();
+  } catch (e) { setTimeout(function () { if (mr) mr.stop(); }, 8000); }
+}
+
+// ---- Boot ----------------------------------------------------------------
+fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
+  if (!j.signedIn) return;
+  me = j.handle;
+  build();
+  // Coming back from a navigation Talk made: show the sheet, finish any pending question.
+  if (sget('open', false)) {
+    open(true);
+    var last = hist[hist.length - 1];
+    if (last && last.who === 'app' && /^Opening /.test(last.text)) { hist[hist.length - 1] = { who: 'app', text: last.text.replace(/^Opening (.*)…$/, 'Opened $1.') }; sset('log', hist); render(); }
+    var p = sget('pending', null);
+    if (p) { sset('pending', null); setTimeout(function () { ask(p.text, p.did); }, 300); }
+  }
+}).catch(function () {});
+})();`;
+
+// ../src/talk.ts
+var DECIDE_MODEL = "@cf/cloudflare/clef-flash";
+var CHAT_MODEL = "@cf/zai-org/glm-4.7-flash";
+var STT_MODEL = "@cf/openai/whisper-large-v3-turbo";
+var CAPS = { decide: { me: 600, all: 5e3 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3e3 } };
+var log4 = /* @__PURE__ */ __name((event, data = {}) => console.log(JSON.stringify({ ts: (/* @__PURE__ */ new Date()).toISOString(), module: "talk", event, ...data })), "log");
+var json2 = /* @__PURE__ */ __name((data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } }), "json");
+var day = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "day");
+var TalkLog = class extends DurableObject6 {
+  static {
+    __name(this, "TalkLog");
+  }
+  async take(kind, who2) {
+    const me = `${kind}:${who2}`, all = `${kind}:*`;
+    const [a, b] = [await this.ctx.storage.get(me) || 0, await this.ctx.storage.get(all) || 0];
+    if (a >= CAPS[kind].me || b >= CAPS[kind].all) return { ok: false, left: 0 };
+    await this.ctx.storage.put({ [me]: a + 1, [all]: b + 1 });
+    return { ok: true, left: Math.min(CAPS[kind].me - a - 1, CAPS[kind].all - b - 1) };
+  }
+  async counts(who2) {
+    const out = {};
+    for (const k2 of Object.keys(CAPS)) out[k2] = await this.ctx.storage.get(`${k2}:${who2}`) || 0;
+    return out;
+  }
+};
+var talkLog = /* @__PURE__ */ __name((env) => env.TalkLog.get(env.TalkLog.idFromName(day())), "talkLog");
+var aiOpts = /* @__PURE__ */ __name((env) => env.TALK_GATEWAY ? { gateway: { id: env.TALK_GATEWAY } } : {}, "aiOpts");
+var HEDGE_MS = [1200, 2500];
+async function hedged(call, marks) {
+  let fired = 1;
+  const timers = [];
+  const first = call().then((res) => ({ res, which: 0 }));
+  const extra = marks.map((ms, i) => new Promise((ok, bad) => {
+    timers.push(setTimeout(() => {
+      fired++;
+      call().then((res) => ok({ res, which: i + 1 }), bad);
+    }, ms));
+  }));
+  try {
+    const w = await Promise.any([first, ...extra]);
+    return { res: w.res, fired, won: w.which };
+  } finally {
+    timers.forEach(clearTimeout);
+  }
+}
+__name(hedged, "hedged");
+function cleanScreen(b) {
+  const items = (Array.isArray(b?.items) ? b.items : []).slice(0, 140).map((i) => ({
+    id: String(i.id || "").slice(0, 8),
+    kind: ["link", "button", "field", "heading"].includes(i.kind) ? i.kind : "link",
+    text: String(i.text || "").slice(0, 140),
+    href: i.href ? String(i.href).slice(0, 300) : void 0
+  })).filter((i) => /^[lbfh]\d{1,4}$/.test(i.id) && i.text);
+  return { path: String(b?.path || "/").slice(0, 200), title: String(b?.title || "").slice(0, 120), items, projects: [], last: b?.last ? String(b.last).slice(0, 120) : null };
+}
+__name(cleanScreen, "cleanScreen");
+async function projectsFor(env, who2) {
+  const list = await listFor(env, who2?.handle || "", !!who2?.admin);
+  return list.slice(0, 400).map((e, i) => ({ id: `p${i + 1}`, slug: e.slug, name: e.name, owner: e.owner, description: String(e.description || "").slice(0, 120), mine: !!who2 && e.owner === who2.handle }));
+}
+__name(projectsFor, "projectsFor");
+async function decide(request, env, who2) {
+  const t0 = Date.now();
+  const body = await request.json().catch(() => null);
+  const utterance = String(body?.utterance || "").trim().slice(0, 300);
+  if (!utterance) return json2({ error: "empty" }, 400);
+  const budget = await talkLog(env).take("decide", who2.handle);
+  if (!budget.ok) return json2({ error: "budget", why: "Talk has reached today's limit. It resets at midnight UTC." }, 429);
+  const s = { ...cleanScreen(body.screen), me: who2.handle };
+  const projects = candidateProjects(utterance, await projectsFor(env, who2), 24, currentSlug(s.path));
+  const { questions, cands } = buildQuestions(utterance, s, projects);
+  const state = stateText(utterance, s, projects);
+  const tm = Date.now();
+  let res, fired = 1, won = 0;
+  try {
+    ({ res, fired, won } = await hedged(() => env.AI.run(DECIDE_MODEL, { model: "clef-flash", state, questions }, aiOpts(env)), body.interim ? [] : HEDGE_MS));
+  } catch (e) {
+    log4("decide_error", { level: "error", err: String(e), stack: e?.stack, handle: who2.handle });
+    return json2({ error: "model", why: "The model did not answer. Try again." }, 502);
+  }
+  const cmd = resolve(res.answers, cands, s, projects, utterance);
+  log4("decide", {
+    level: "info",
+    handle: who2.handle,
+    path: s.path,
+    interim: !!body.interim,
+    model_ms: Date.now() - tm,
+    total_ms: Date.now() - t0,
+    fired,
+    won,
+    n_items: s.items.length,
+    n_projects: projects.length,
+    n_questions: Object.keys(questions).length,
+    mode: cmd.mode,
+    mode_p: cmd.modeP,
+    op: cmd.op,
+    p: cmd.p,
+    risky: cmd.risky,
+    why: cmd.why,
+    usage: res.usage
+  });
+  return json2({ cmd, ms: { model: Date.now() - tm, total: Date.now() - t0 }, left: budget.left, ...body.debug ? { answers: res.answers, state } : {} });
+}
+__name(decide, "decide");
+var TOOLS = [
+  { type: "function", function: { name: "go", description: "Open a page: a link id from the page (like l12) or a path on this site (like /p/forq/timer/app).", parameters: { type: "object", properties: { to: { type: "string" } }, required: ["to"] } } },
+  { type: "function", function: { name: "press", description: "Press a button on the page by its id (like b3). Never for deleting, merging, publishing or signing out.", parameters: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } } },
+  { type: "function", function: { name: "type_into", description: "Type text into a field on the page by its id (like f1).", parameters: { type: "object", properties: { id: { type: "string" }, text: { type: "string" } }, required: ["id", "text"] } } },
+  { type: "function", function: { name: "show", description: "Point at parts of the page while you explain them: heading, link, button or field ids, in the order you talk about them.", parameters: { type: "object", properties: { ids: { type: "array", items: { type: "string" } } }, required: ["ids"] } } }
+];
+async function chat(request, env, who2) {
+  const t0 = Date.now();
+  const body = await request.json().catch(() => null);
+  const utterance = String(body?.utterance || "").trim().slice(0, 500);
+  if (!utterance) return json2({ error: "empty" }, 400);
+  const budget = await talkLog(env).take("chat", who2.handle);
+  if (!budget.ok) return json2({ error: "budget", why: "Talk has reached today's chat limit. It resets at midnight UTC." }, 429);
+  const s = cleanScreen(body.screen);
+  const pageText = String(body.pageText || "").slice(0, 5e3);
+  const did = body.did ? String(body.did).slice(0, 200) : "";
+  const items = s.items.map((i) => `${i.id} ${i.kind}: ${i.text}${i.href ? " \u2192 " + i.href : ""}`).join("\n");
+  const system = [
+    "You are the voice of qodebase, a git platform made for the phone: every project runs as a live app, every fork gets its own AI agents, and people can install AI assistants into their own Cloudflare account.",
+    `You talk with ${who2.handle}, who is on ${s.path} ("${s.title}"). Answer in plain words, short: two or three sentences unless they ask for more. Spoken aloud too, so no markdown, no lists, no code.`,
+    "You can act with the tools: open pages, press buttons, type into fields, and point at parts of the page while you explain. Act when asked; explain what is on the page when asked; never press anything that deletes, merges, publishes or signs out.",
+    did ? `The app already did this for their last sentence: ${did}.` : "",
+    "",
+    "What is on the page (id, kind, text):",
+    items || "(nothing)",
+    "",
+    "The page text:",
+    pageText || "(none)"
+  ].filter((x) => x !== "").join("\n");
+  const history = (Array.isArray(body.history) ? body.history : []).slice(-8).map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content || "").slice(0, 800) }));
+  const messages = [{ role: "system", content: system }, ...history, { role: "user", content: utterance }];
+  const tm = Date.now();
+  const run = /* @__PURE__ */ __name((msgs) => env.AI.run(CHAT_MODEL, { messages: msgs, tools: TOOLS, max_tokens: 700, temperature: 0.3, chat_template_kwargs: { enable_thinking: false } }, aiOpts(env)), "run");
+  const parse = /* @__PURE__ */ __name((res2) => {
+    const msg = res2?.choices?.[0]?.message || res2;
+    const raw = msg?.tool_calls || res2?.tool_calls || [];
+    const calls2 = raw.map((c) => {
+      const f = c.function || c;
+      let args = f.arguments;
+      if (typeof args === "string") {
+        try {
+          args = JSON.parse(args);
+        } catch {
+          args = {};
+        }
+      }
+      return { id: c.id, name: String(f.name || ""), args: args || {} };
+    }).filter((c) => ["go", "press", "type_into", "show"].includes(c.name)).slice(0, 4);
+    return { msg, raw, calls: calls2, reply: String(msg?.content ?? res2?.response ?? "").replace(/<think>[\s\S]*?<\/think>/g, "").trim() };
+  }, "parse");
+  let res, out, rounds = 1;
+  try {
+    res = await run(messages);
+    out = parse(res);
+    if (!out.reply && out.raw.length) {
+      rounds = 2;
+      const res2 = await run([
+        ...messages,
+        { role: "assistant", content: "", tool_calls: out.raw },
+        ...out.raw.map((c) => ({ role: "tool", tool_call_id: c.id, content: "done" }))
+      ]);
+      const out2 = parse(res2);
+      out = { ...out, reply: out2.reply };
+      res = { ...res, usage2: res2?.usage };
+    }
+  } catch (e) {
+    log4("chat_error", { level: "error", err: String(e), stack: e?.stack, handle: who2.handle });
+    return json2({ error: "model", why: "The model did not answer. Try again." }, 502);
+  }
+  const { calls, reply } = out;
+  log4("chat", { level: "info", handle: who2.handle, path: s.path, rounds, model_ms: Date.now() - tm, total_ms: Date.now() - t0, tools: calls.map((c) => c.name), reply_len: reply.length, usage: res?.usage, usage2: res?.usage2 });
+  return json2({ reply, actions: calls.map((c) => ({ name: c.name, args: c.args })), ms: { model: Date.now() - tm }, left: budget.left });
+}
+__name(chat, "chat");
+async function transcribe(request, env, who2, url) {
+  const t0 = Date.now();
+  const buf = await request.arrayBuffer();
+  if (buf.byteLength < 800) return json2({ text: "", why: "too short" });
+  if (buf.byteLength > 8e6) return json2({ error: "too long" }, 413);
+  const budget = await talkLog(env).take("stt", who2.handle);
+  if (!budget.ok) return json2({ error: "budget", why: "Dictation has reached today's limit. Use the phone's own dictation in Talk settings." }, 429);
+  const lang = url.searchParams.get("lang");
+  let b642 = "";
+  const bytes = new Uint8Array(buf);
+  for (let i = 0; i < bytes.length; i += 32768) b642 += String.fromCharCode(...bytes.subarray(i, i + 32768));
+  try {
+    const res = await env.AI.run(STT_MODEL, { audio: btoa(b642), ...lang === "en" || lang === "he" ? { language: lang } : {}, vad_filter: true }, aiOpts(env));
+    const text = String(res?.text || "").trim();
+    log4("stt", { level: "info", handle: who2.handle, bytes: buf.byteLength, lang, ms: Date.now() - t0, chars: text.length, detected: res?.transcription_info?.language });
+    return json2({ text, ms: Date.now() - t0 });
+  } catch (e) {
+    log4("stt_error", { level: "error", err: String(e), stack: e?.stack, bytes: buf.byteLength, type: request.headers.get("content-type") });
+    return json2({ error: "stt", why: "Could not hear that. Try again, or use the phone's own dictation in Talk settings." }, 502);
+  }
+}
+__name(transcribe, "transcribe");
+async function talkRoute(request, env, _ctx, url, who2) {
+  if (url.pathname === "/talk.js") return new Response(TALK_JS, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "public, max-age=300" } });
+  if (!url.pathname.startsWith("/api/talk/")) return null;
+  if (!env.AI) return json2({ error: "off", why: "Talk is not set up on this copy (no AI binding)." }, 404);
+  if (url.pathname === "/api/talk/me") {
+    if (!who2) return json2({ signedIn: false });
+    return json2({ signedIn: true, handle: who2.handle, used: await talkLog(env).counts(who2.handle), caps: CAPS });
+  }
+  if (!who2) return json2({ error: "signin", why: "Sign in to talk to qodebase." }, 401);
+  if (request.method !== "POST") return json2({ error: "method" }, 405);
+  if (url.pathname === "/api/talk/decide") return decide(request, env, who2);
+  if (url.pathname === "/api/talk/chat") return chat(request, env, who2);
+  if (url.pathname === "/api/talk/transcribe") return transcribe(request, env, who2, url);
+  return json2({ error: "not found" }, 404);
+}
+__name(talkRoute, "talkRoute");
+
 // ../src/index.ts
 import MA_TGZ from "./8569221bf067334f0605d74e2f82bbaeea407027-mobile-agent.tgz";
 import MA_REV from "./03797df4c2fa76c8d38f994f31f763c57b4be342-mobile-agent.rev";
 var jwks = null;
-var json2 = /* @__PURE__ */ __name((data, status = 200) => Response.json(data, { status }), "json");
+var json3 = /* @__PURE__ */ __name((data, status = 200) => Response.json(data, { status }), "json");
 var projectStub = /* @__PURE__ */ __name((env, slug) => env.Project.get(env.Project.idFromName(slug)), "projectStub");
 var boxStub = /* @__PURE__ */ __name((env, agentId) => env.AgentBox.get(env.AgentBox.idFromName(agentId)), "boxStub");
 var INLINE_BOOT_MS = 12e3;
@@ -10294,16 +11275,21 @@ var app = {
       const cf2 = request.cf || {};
       if (url.pathname === "/robots.txt") return new Response("User-agent: *\nDisallow: /p/\nDisallow: /import\nDisallow: /api/\nDisallow: /a/\nDisallow: /login\n", { headers: { "content-type": "text/plain" } });
       if (url.pathname === "/icon.svg") return new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#17695a"/><circle cx="121" cy="110" r="48" fill="none" stroke="#fff" stroke-width="30"/><path d="M154 58h30v138h-30z" fill="#fff"/></svg>', { headers: { "content-type": "image/svg+xml", "cache-control": "public, max-age=86400" } });
-      if (url.pathname === "/version.json") return json2({ name: "forq", version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
+      if (url.pathname === "/version.json") return json3({ name: "forq", version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
       if (url.pathname === "/health.json") return health(env, ctx, url.origin);
       if (url.pathname === "/e") return kstatsForward(request, env, ctx);
       if (url.pathname === "/feedback") return feedback(request, env);
       if (url.pathname === "/about") return html3(aboutPage());
       if (url.pathname === "/privacy") return html3(privacyPage());
       if (url.pathname === "/personal-agents" && env.CF_OAUTH_CLIENT_ID) return html3(personalAgentsPage());
-      if (url.pathname === "/own" && !env.SELF_HOST) return html3(ownPage(false));
+      if (url.pathname === "/own" && !env.SELF_HOST) return html3(ownPage(true));
       if (url.pathname.startsWith("/connect/cf/") || url.pathname.startsWith("/personal-agents/") || url.pathname === "/api/installs") {
         const r = await installRoute(request, env, ctx, url);
+        if (r) return r;
+      }
+      if (url.pathname === "/talk.js" || url.pathname.startsWith("/api/talk/")) {
+        const w = await who(request, env);
+        const r = await talkRoute(request, env, ctx, url, w?.kind === "user" && !w.anon ? { handle: w.handle, admin: w.admin } : null);
         if (r) return r;
       }
       if (url.pathname.startsWith("/api/cli/") || url.pathname.startsWith("/cli") || url.pathname === "/llms.txt") {
@@ -10328,13 +11314,13 @@ var app = {
     if (url.pathname === "/login" && url.hostname === env.UI_HOST) return loginRoute(request, env, url);
     if (url.pathname === "/logout") return new Response(null, { status: 302, headers: { location: "/", "set-cookie": clearCookie() } });
     const me = await who(request, env);
-    if (!me) return json2({ error: "unauthorized" }, 401);
+    if (!me) return json3({ error: "unauthorized" }, 401);
     if (me.kind === "user" && me.anon) {
       const p0 = url.pathname;
       const needsUser = request.method !== "GET" && request.method !== "HEAD" || p0 === "/cli/login" || p0.startsWith("/api/cli/") || p0.startsWith("/a/") || p0.endsWith("/agents-html") || p0.startsWith("/api/github") || p0 === "/settings" || p0.startsWith("/api/me");
       if (needsUser) {
         const login = `/login?next=${encodeURIComponent(request.method === "GET" ? p0 + url.search : request.headers.get("referer") ? new URL(request.headers.get("referer")).pathname : "/")}`;
-        return request.method === "GET" && (request.headers.get("accept") || "").includes("text/html") ? new Response(null, { status: 302, headers: { location: login } }) : json2({ error: "Sign in first", login }, 401);
+        return request.method === "GET" && (request.headers.get("accept") || "").includes("text/html") ? new Response(null, { status: 302, headers: { location: login } }) : json3({ error: "Sign in first", login }, 401);
       }
     }
     const path2 = url.pathname;
@@ -10349,7 +11335,7 @@ var app = {
       let m;
       if (m = path2.match(/^\/(?:api\/)?p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/|$)/)) {
         const e = await registry(env).get(slugOf(m[1], m[2]));
-        if (e && !canSee(e, me.handle, me.admin)) return path2.startsWith("/api/") ? json2({ error: "no such project" }, 404) : new Response("No such project", { status: 404 });
+        if (e && !canSee(e, me.handle, me.admin)) return path2.startsWith("/api/") ? json3({ error: "no such project" }, 404) : new Response("No such project", { status: 404 });
       }
       const ui = uiFor(request, env);
       const views = ui === "a" || ui === "b" || ui === "c" || ui === "d";
@@ -10426,59 +11412,59 @@ var app = {
       }
       if (path2.startsWith("/api/me/") && request.method !== "GET") {
         const u = await userByEmail(env, me.email || "");
-        if (!u) return json2({ error: "Sign in first" }, 401);
+        if (!u) return json3({ error: "Sign in first" }, 401);
         if (path2 === "/api/me/key" && request.method === "POST") {
           const { key } = await request.json();
           const k2 = String(key || "").trim();
           const c = await checkApiKey(k2);
-          if (!c.ok) return json2({ error: c.error }, 400);
+          if (!c.ok) return json3({ error: c.error }, 400);
           await registry(env).putUser({ ...u, apiKeyEnc: await encryptKey(env, k2), apiKeyTail: k2.slice(-4), apiKeyCheckedAt: Date.now() });
           log("auth", "api_key_saved", { handle: u.handle });
-          return json2({ ok: true, tail: k2.slice(-4) });
+          return json3({ ok: true, tail: k2.slice(-4) });
         }
         if (path2 === "/api/me/key" && request.method === "DELETE") {
           const { apiKeyEnc, apiKeyTail, apiKeyCheckedAt, ...rest } = u;
           await registry(env).putUser(rest);
-          return json2({ ok: true });
+          return json3({ ok: true });
         }
         if (path2 === "/api/me/handle" && request.method === "POST") {
           const { handle } = await request.json();
-          if ((await listFor(env, me.handle, me.admin)).some((e) => e.owner === u.handle)) return json2({ error: "You already own projects under this name, so it cannot change." }, 400);
+          if ((await listFor(env, me.handle, me.admin)).some((e) => e.owner === u.handle)) return json3({ error: "You already own projects under this name, so it cannot change." }, 400);
           const r = await claimHandle(env, u.email, String(handle || ""));
-          if (!r.ok) return json2({ error: r.error }, 400);
+          if (!r.ok) return json3({ error: r.error }, 400);
           await registry(env).putUser({ ...u, handle: r.user.handle });
-          return json2({ ok: true, handle: r.user.handle });
+          return json3({ ok: true, handle: r.user.handle });
         }
       }
       if (path2 === "/api/projects" && request.method === "GET") {
         const owner = url.searchParams.get("owner") || (url.searchParams.has("mine") ? me.handle : "");
         const list = (await listFor(env, me.handle, me.admin)).filter((e) => !owner || e.owner === owner);
-        return json2({ projects: list.slice(0, 500).map((e) => ({ ...e, path: `/p/${e.owner}/${e.name}`, live: runUrl(runBase, e.slug) })) });
+        return json3({ projects: list.slice(0, 500).map((e) => ({ ...e, path: `/p/${e.owner}/${e.name}`, live: runUrl(runBase, e.slug) })) });
       }
       if (path2 === "/api/github/search") {
         const q = url.searchParams.get("q") || "";
         const ref = parseRepoRef(q);
         if (ref) {
           const r2 = await getRepo(ref, ctx);
-          return "error" in r2 ? json2(r2, r2.status) : json2({ repos: [r2], exact: true });
+          return "error" in r2 ? json3(r2, r2.status) : json3({ repos: [r2], exact: true });
         }
-        if (q.trim().length < 2) return json2({ repos: [] });
+        if (q.trim().length < 2) return json3({ repos: [] });
         const r = await searchRepos(q, ctx);
-        return Array.isArray(r) ? json2({ repos: r }) : json2(r, r.status);
+        return Array.isArray(r) ? json3({ repos: r }) : json3(r, r.status);
       }
       if (path2 === "/api/build" && request.method === "POST") {
-        if (!me.handle) return json2({ error: "Sign in first" }, 401);
+        if (!me.handle) return json3({ error: "Sign in first" }, 401);
         const b = await request.json().catch(() => ({}));
         const prompt = String(b.prompt || "").trim().slice(0, 3e3);
-        if (prompt.length < 4) return json2({ error: "Say what to build" }, 400);
-        if (!onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json2({ error: "Add your Anthropic API key in Settings first" }, 400);
+        if (prompt.length < 4) return json3({ error: "Say what to build" }, 400);
+        if (!onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json3({ error: "Add your Anthropic API key in Settings first" }, 400);
         const tooMany = await overProjectLimit(env, me.handle);
-        if (tooMany) return json2({ error: tooMany }, 400);
+        if (tooMany) return json3({ error: tooMany }, 400);
         const starter = await projectStub(env, STARTER).info();
         const base = nameFor(String(b.name || "")) || "my-app";
         let name = base;
         for (let i = 2; await registry(env).get(slugOf(me.handle, name)); i++) name = `${base.slice(0, 35)}-${i}`;
-        if (!NAME_RE.test(name)) return json2({ error: "That name does not work; use letters, digits and dashes" }, 400);
+        if (!NAME_RE.test(name)) return json3({ error: "That name does not work; use letters, digits and dashes" }, 400);
         const slug = slugOf(me.handle, name);
         const p = projectStub(env, slug);
         const desc = prompt.split("\n")[0].slice(0, 140);
@@ -10487,19 +11473,19 @@ var app = {
         if (b.private) await p.setPrivate(true);
         await askRouter(env, ctx, p, slug, buildPayload(prompt, !starter), apiBase, prompt);
         log("build", "started", { slug, chars: prompt.length });
-        return json2({ ok: true, slug, path: `/p/${me.handle}/${name}/changes` });
+        return json3({ ok: true, slug, path: `/p/${me.handle}/${name}/changes` });
       }
       if (path2 === "/api/import" && request.method === "POST") {
         const b = await request.json();
         const ref = parseRepoRef(String(b.repo || ""));
-        if (!ref) return json2({ error: "give a GitHub URL or owner/repo" }, 400);
+        if (!ref) return json3({ error: "give a GitHub URL or owner/repo" }, 400);
         const gh = await getRepo(ref, ctx);
-        if ("error" in gh) return json2(gh, gh.status);
-        if (gh.private) return json2({ error: "private repos cannot be imported" }, 400);
-        if (gh.sizeKb > MAX_IMPORT_KB) return json2({ error: `${gh.fullName} is ${Math.round(gh.sizeKb / 1024)} MB; qodebase imports up to ${MAX_IMPORT_KB / 1024} MB` }, 400);
+        if ("error" in gh) return json3(gh, gh.status);
+        if (gh.private) return json3({ error: "private repos cannot be imported" }, 400);
+        if (gh.sizeKb > MAX_IMPORT_KB) return json3({ error: `${gh.fullName} is ${Math.round(gh.sizeKb / 1024)} MB; qodebase imports up to ${MAX_IMPORT_KB / 1024} MB` }, 400);
         const owner = me.admin && b.as ? b.as : me.handle;
         const tooMany = await overProjectLimit(env, owner);
-        if (tooMany) return json2({ error: tooMany }, 400);
+        if (tooMany) return json3({ error: tooMany }, 400);
         let name = nameFor(gh.name);
         for (let i = 2; await registry(env).get(slugOf(owner, name)); i++) name = `${nameFor(gh.name).slice(0, 35)}-${i}`;
         const info = await projectStub(env, slugOf(owner, name)).createImported(
@@ -10509,7 +11495,7 @@ var app = {
           gh.description
         );
         if (b.private) await projectStub(env, info.slug).setPrivate(true);
-        return json2({ ...info, private: !!b.private, path: `/p/${owner}/${name}` });
+        return json3({ ...info, private: !!b.private, path: `/p/${owner}/${name}` });
       }
       if (m = path2.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/build-log$/)) {
         const info = await projectStub(env, slugOf(m[1], m[2])).info();
@@ -10580,7 +11566,7 @@ var app = {
       if (m = path2.match(/^\/a\/([a-z0-9.-]+--[a-z0-9]+)(\/.*)?$/)) {
         const id = m[1];
         const info = await projectStub(env, projectOf(id)).info();
-        if (!info || info.owner !== me.handle && !me.admin) return json2({ error: "not your project" }, 403);
+        if (!info || info.owner !== me.handle && !me.admin) return json3({ error: "not your project" }, 403);
         return agentProxy(request, env, ctx, id, m[2] || "/", url, apiBase);
       }
       if (m = path2.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/([a-z-]+))?$/)) {
@@ -10588,110 +11574,110 @@ var app = {
         const slug = slugOf(owner, name);
         const p = projectStub(env, slug);
         if (verb === "create" && request.method === "POST") {
-          if (!me.admin) return json2({ error: "admin only" }, 403);
+          if (!me.admin) return json3({ error: "admin only" }, 403);
           const b = await request.json().catch(() => ({}));
-          return json2(await p.create(owner, name, b.description || ""));
+          return json3(await p.create(owner, name, b.description || ""));
         }
         const info = await p.info();
-        if (!info) return json2({ error: "no such project" }, 404);
-        if (verb === "" && request.method === "GET") return json2(info);
+        if (!info) return json3({ error: "no such project" }, 404);
+        if (verb === "" && request.method === "GET") return json3(info);
         if (verb === "fork" && request.method === "POST") {
-          if (info.owner === me.handle) return json2({ error: "this is already yours" }, 400);
+          if (info.owner === me.handle) return json3({ error: "this is already yours" }, 400);
           const tooMany = await overProjectLimit(env, me.handle);
-          if (tooMany) return json2({ error: tooMany }, 400);
+          if (tooMany) return json3({ error: tooMany }, 400);
           let newName = info.name;
           for (let i = 2; await registry(env).get(slugOf(me.handle, newName)); i++) newName = `${info.name}-${i}`;
-          if (!NAME_RE.test(newName)) return json2({ error: "name too long" }, 400);
+          if (!NAME_RE.test(newName)) return json3({ error: "name too long" }, 400);
           const fi = await projectStub(env, slugOf(me.handle, newName)).createFork(me.handle, newName, info);
-          return json2({ ...fi, path: `/p/${fi.owner}/${fi.name}/changes` });
+          return json3({ ...fi, path: `/p/${fi.owner}/${fi.name}/changes` });
         }
         if (verb === "files") {
           const repo = versionRepo(info, url.searchParams.get("v") || "");
-          if (!repo) return json2({ error: "unknown version" }, 404);
+          if (!repo) return json3({ error: "unknown version" }, 404);
           const rev = await head(env, ctx, repo);
-          if (!rev) return json2({ files: [] });
+          if (!rev) return json3({ files: [] });
           const r = await allFiles(env, ctx, repo, rev.tree);
-          return json2({ files: r.files.map((f) => f.path), truncated: r.truncated });
+          return json3({ files: r.files.map((f) => f.path), truncated: r.truncated });
         }
         if (verb === "search") {
           const repo = versionRepo(info, url.searchParams.get("v") || "");
-          if (!repo) return json2({ error: "unknown version" }, 404);
+          if (!repo) return json3({ error: "unknown version" }, 404);
           const rev = await head(env, ctx, repo);
-          if (!rev) return json2({ results: [] });
-          return json2(await p.searchCode(repo, rev.tree, (url.searchParams.get("q") || "").slice(0, 200)));
+          if (!rev) return json3({ results: [] });
+          return json3(await p.searchCode(repo, rev.tree, (url.searchParams.get("q") || "").slice(0, 200)));
         }
         if (verb === "git-token" && request.method === "POST") {
-          if (!me.handle) return json2({ error: "Sign in first" }, 401);
+          if (!me.handle) return json3({ error: "Sign in first" }, 401);
           const mine = info.owner === me.handle;
           log("cli", "git_token", { slug, handle: me.handle, write: mine });
-          return json2({ ...await p.gitToken(mine ? "write" : "read"), write: mine });
+          return json3({ ...await p.gitToken(mine ? "write" : "read"), write: mine });
         }
-        if (info.owner !== me.handle && !me.admin) return json2({ error: "not your project" }, 403);
-        if (verb === "main-token" && request.method === "POST" && me.admin) return json2(await p.mainToken());
+        if (info.owner !== me.handle && !me.admin) return json3({ error: "not your project" }, 403);
+        if (verb === "main-token" && request.method === "POST" && me.admin) return json3(await p.mainToken());
         if (verb === "visibility" && request.method === "POST") {
           const b = await request.json().catch(() => ({}));
           const ni = await p.setPrivate(!!b.private);
-          return json2({ ok: true, private: !!ni.private });
+          return json3({ ok: true, private: !!ni.private });
         }
         if (verb === "entry" && request.method === "POST") {
           const b = await request.json();
           await p.setEntry(b.entry === null ? null : String(b.entry ?? ""));
-          return json2({ ok: true, entry: (await p.info())?.entry });
+          return json3({ ok: true, entry: (await p.info())?.entry });
         }
         if (verb === "touch" && request.method === "POST" && me.admin) {
           await registry(env).touch(slug);
-          return json2({ ok: true });
+          return json3({ ok: true });
         }
         if (verb === "agents-html") {
           ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.requeueStale()));
         }
         if (verb === "agents-html" && ["a", "b", "c", "d"].includes(uiFor(request, env) || "")) {
           const st = await statusesOf(env, info);
-          return json2({ html: liveV3(url.searchParams.get("view") || "changes", { info, me: me.handle, runBase, ...st, entry: void 0, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: "" }) });
+          return json3({ html: liveV3(url.searchParams.get("view") || "changes", { info, me: me.handle, runBase, ...st, entry: void 0, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: "" }) });
         }
-        if (verb === "agents-html") return json2({ html: await renderAgents(env, info, runBase, uiFor(request, env)), tabs: previewTabs(info, runBase) });
+        if (verb === "agents-html") return json3({ html: await renderAgents(env, info, runBase, uiFor(request, env)), tabs: previewTabs(info, runBase) });
         if (verb === "agents" && request.method === "POST") {
           const b = await request.json();
-          return json2(await spawn(env, ctx, slug, String(b.task || ""), apiBase));
+          return json3(await spawn(env, ctx, slug, String(b.task || ""), apiBase));
         }
         if (verb === "router" && request.method === "POST") {
           const b = await request.json();
           const text = String(b.text || "").trim();
-          if (!text || text.length > 8e3) return json2({ error: "say something (max 8000 chars)" }, 400);
-          return json2(await askRouter(env, ctx, p, slug, text, apiBase));
+          if (!text || text.length > 8e3) return json3({ error: "say something (max 8000 chars)" }, 400);
+          return json3(await askRouter(env, ctx, p, slug, text, apiBase));
         }
         if (verb === "deploy" && request.method === "POST") {
           const b = await request.json().catch(() => ({}));
           await p.requestBuild(b.agent ? "preview" : "deploy", b.agent);
-          return json2({ ok: true });
+          return json3({ ok: true });
         }
-        if (verb === "build-state" && me.admin) return json2(await env.BuildBox.get(env.BuildBox.idFromName(`${slug}--build`)).state());
+        if (verb === "build-state" && me.admin) return json3(await env.BuildBox.get(env.BuildBox.idFromName(`${slug}--build`)).state());
         if (verb === "reviewer-state" && request.method === "POST" && me.admin) {
           const rb = boxStub(env, `${slug}--review`);
           const awake = await rb.isAwake();
           const cc = awake ? await rb.ccStatus().catch(() => "unknown") : "asleep";
-          return json2({ ok: true, awake, cc, idle: !awake || !/busy|thinking|working|running|tool|compact/i.test(cc) });
+          return json3({ ok: true, awake, cc, idle: !awake || !/busy|thinking|working|running|tool|compact/i.test(cc) });
         }
         if (verb === "review-dispatch" && request.method === "POST" && me.admin) {
           const b = await request.json();
           const r = await dispatchReview(env, p, slug, apiBase, String(b.agent || ""));
-          return json2(r, r.ok ? 200 : r.busy ? 409 : 502);
+          return json3(r, r.ok ? 200 : r.busy ? 409 : 502);
         }
         if (verb === "deliver" && request.method === "POST" && me.admin) {
           const b = await request.json();
           const r = await deliverToRouter(env, p, slug, Number(b.at), apiBase);
-          return json2(r, r.ok ? 200 : 502);
+          return json3(r, r.ok ? 200 : 502);
         }
         if (verb === "review" && request.method === "POST") {
           const b = await request.json();
-          if (!info.agents.some((x) => x.id === b.agent)) return json2({ error: "unknown agent" }, 404);
+          if (!info.agents.some((x) => x.id === b.agent)) return json3({ error: "unknown agent" }, 404);
           await startReview(env, p, slug, apiBase, () => p.queueReview(b.agent));
-          return json2({ ok: true });
+          return json3({ ok: true });
         }
         if (verb === "fix" && request.method === "POST") {
           const b = await request.json();
           const a = info.agents.find((x) => x.id === b.agent);
-          if (!a?.review?.notes) return json2({ error: "no review notes for that agent" }, 400);
+          if (!a?.review?.notes) return json3({ error: "no review notes for that agent" }, 400);
           const r = await sendTo(env, a.id, `The reviewer asked for changes:
 
 ${a.review.notes}
@@ -10701,49 +11687,49 @@ Fix them, commit, push with \`git push origin HEAD\`, then run \`forq status pus
             await p.markReviewSent(a.id);
             await p.setState(a.id, "working");
           }
-          return json2(r, r.ok ? 200 : 502);
+          return json3(r, r.ok ? 200 : 502);
         }
         if (verb === "merge" && request.method === "POST") {
           const b = await request.json();
           const a = info.agents.find((x) => x.id === b.agent);
-          if (!a) return json2({ error: "unknown agent" }, 404);
-          return json2(await askRouter(env, ctx, p, slug, `Merge agent ${a.id} into the project's main line: run \`forq merge ${a.id}\` and tell me the result in one line.`, apiBase, `Merge ${a.id.split("--")[1]}`));
+          if (!a) return json3({ error: "unknown agent" }, 404);
+          return json3(await askRouter(env, ctx, p, slug, `Merge agent ${a.id} into the project's main line: run \`forq merge ${a.id}\` and tell me the result in one line.`, apiBase, `Merge ${a.id.split("--")[1]}`));
         }
       }
       if (m = path2.match(/^\/api\/agents\/([a-z0-9.-]+--[a-z0-9]+)\/([a-z]+)$/)) {
         const [, id, verb] = m;
         const info = await projectStub(env, projectOf(id)).info();
-        if (!info || info.owner !== me.handle && !me.admin) return json2({ error: "not your project" }, 403);
+        if (!info || info.owner !== me.handle && !me.admin) return json3({ error: "not your project" }, 403);
         const box = boxStub(env, id);
-        if (verb === "state") return json2({ ...await box.state(), ...await boxStatus(env, id, true) });
+        if (verb === "state") return json3({ ...await box.state(), ...await boxStatus(env, id, true) });
         if (verb === "conversation") {
-          if (!await box.isAwake()) return json2({ asleep: true });
+          if (!await box.isAwake()) return json3({ asleep: true });
           ctx.waitUntil(box.touch(id).catch(() => {
           }));
           const [conv, cc] = await Promise.all([
             box.fetch(new Request("https://container/api/conversation?session=claude&tail=200", { headers: { "x-forq-port": "7681" } })),
             box.ccStatus().catch(() => "unknown")
           ]);
-          if (conv.status === 404) return json2({ messages: [], status: cc });
-          if (!conv.ok) return json2({ error: `conversation ${conv.status}` }, 502);
+          if (conv.status === 404) return json3({ messages: [], status: cc });
+          if (!conv.ok) return json3({ error: `conversation ${conv.status}` }, 502);
           const j = await conv.json();
-          return json2({ messages: j.messages, status: cc });
+          return json3({ messages: j.messages, status: cc });
         }
-        if (request.method !== "POST") return json2({ error: "POST only" }, 405);
-        if (verb === "wake") return json2(await wake(env, id, apiBase));
+        if (request.method !== "POST") return json3({ error: "POST only" }, 405);
+        if (verb === "wake") return json3(await wake(env, id, apiBase));
         if (verb === "stop") {
           await box.letGo("manual");
-          return json2(await box.state());
+          return json3(await box.state());
         }
         if (verb === "send") {
           const { text } = await request.json();
-          if (!text) return json2({ error: "text required" }, 400);
-          return json2(await sendTo(env, id, text, apiBase));
+          if (!text) return json3({ error: "text required" }, 400);
+          return json3(await sendTo(env, id, text, apiBase));
         }
-        if (verb === "exec" && me.admin) return json2(await box.adminExec(await request.text()));
+        if (verb === "exec" && me.admin) return json3(await box.adminExec(await request.text()));
         if (verb === "reset" && me.admin) {
           await box.destroy();
-          return json2(await wake(env, id, apiBase));
+          return json3(await wake(env, id, apiBase));
         }
       }
       if (path2 === "/api/admin/delete" && request.method === "POST" && me.admin) {
@@ -10757,12 +11743,12 @@ Fix them, commit, push with \`git push origin HEAD\`, then run \`forq status pus
           await projectStub(env, b.project).wipe();
         }
         const ok = b.repo ? await env.ARTIFACTS.delete(b.repo).catch((e) => String(e)) : null;
-        return json2({ deleted: ok });
+        return json3({ deleted: ok });
       }
-      return json2({ error: "not found" }, 404);
+      return json3({ error: "not found" }, 404);
     } catch (e) {
       log("api", "error", { path: path2, err: String(e), stack: e?.stack });
-      return json2({ error: String(e?.message || e) }, 500);
+      return json3({ error: String(e?.message || e) }, 500);
     }
   }
 };
@@ -10941,7 +11927,7 @@ __name(dispatchReview, "dispatchReview");
 async function issuesHook(request, env, ctx) {
   if (!env.ISSUES_WEBHOOK_SECRET || request.headers.get("cf-webhook-auth") !== env.ISSUES_WEBHOOK_SECRET) {
     log("issues", "rejected", { hasHeader: request.headers.has("cf-webhook-auth") });
-    return json2({ error: "unauthorized" }, 401);
+    return json3({ error: "unauthorized" }, 401);
   }
   const raw = await request.text();
   let body = {};
@@ -10954,13 +11940,13 @@ async function issuesHook(request, env, ctx) {
   const worker = (raw.match(/forq-app-[a-z0-9-]+/) || [])[0];
   if (!worker) {
     log("issues", "no_worker", {});
-    return json2({ ok: true, ignored: "no forq-app worker named (a test message?)" });
+    return json3({ ok: true, ignored: "no forq-app worker named (a test message?)" });
   }
   const entries = await registry(env).list();
   const e = entries.find((x) => appWorkerName(x.slug) === worker);
   if (!e) {
     log("issues", "unknown_worker", { worker });
-    return json2({ ok: true, ignored: `no project deploys as ${worker}` });
+    return json3({ ok: true, ignored: `no project deploys as ${worker}` });
   }
   const p = projectStub(env, e.slug);
   const text = String(body.text || body.data?.text || body.message || raw).slice(0, 3e3);
@@ -10978,7 +11964,7 @@ ${occ}` : "The occurrences could not be fetched.",
   ].join("\n\n");
   const r = await askRouter(env, ctx, p, e.slug, ask, env.API_BASE, `Production error from Cloudflare Issues: ${title}`);
   log("issues", "routed", { worker, slug: e.slug });
-  return json2({ routed: e.slug, ...r });
+  return json3({ routed: e.slug, ...r });
 }
 __name(issuesHook, "issuesHook");
 async function issueOccurrences(env, issueId) {
@@ -11036,65 +12022,65 @@ async function agentApi(request, env, ctx, me, url, apiBase) {
   }));
   if (verb === "list") {
     const info = await p.info();
-    return json2({ agents: (info?.agents || []).map(({ id, task, state, note }) => ({ id, task, state, note })) });
+    return json3({ agents: (info?.agents || []).map(({ id, task, state, note }) => ({ id, task, state, note })) });
   }
   if (verb === "status" && me.role === "agent") {
-    if (!["working", "pushed", "blocked"].includes(body.state)) return json2({ error: "state: working|pushed|blocked" }, 400);
+    if (!["working", "pushed", "blocked"].includes(body.state)) return json3({ error: "state: working|pushed|blocked" }, 400);
     await p.setState(me.agentId, body.state, String(body.note || ""));
     if (body.state === "pushed") {
       const ownerDeploys = isOwner(env, slug.split(".")[0]);
       if (await p.kindOf() === "worker" && ownerDeploys) ctx.waitUntil(p.requestBuild("preview", me.agentId).catch((e) => log("build", "request_failed", { err: String(e) })));
       else await startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId));
     }
-    return json2({ ok: true });
+    return json3({ ok: true });
   }
   if (me.role === "reviewer") {
     if (verb === "review-info") {
       const agent = url.searchParams.get("agent") || "";
-      if (projectOf(agent) !== slug) return json2({ error: "not an agent of this project" }, 400);
+      if (projectOf(agent) !== slug) return json3({ error: "not an agent of this project" }, 400);
       const r = await p.reviewInfo(agent);
-      return json2({ ...r, preview: r.previewUrl || `https://${env.RUN_HOST}/${agent}/${r.entry}` });
+      return json3({ ...r, preview: r.previewUrl || `https://${env.RUN_HOST}/${agent}/${r.entry}` });
     }
     if (verb === "verdict") {
-      if (projectOf(body.agent || "") !== slug) return json2({ error: "not an agent of this project" }, 400);
-      if (!["approve", "changes"].includes(body.verdict)) return json2({ error: "verdict: approve|changes" }, 400);
+      if (projectOf(body.agent || "") !== slug) return json3({ error: "not an agent of this project" }, 400);
+      if (!["approve", "changes"].includes(body.verdict)) return json3({ error: "verdict: approve|changes" }, 400);
       const info = await p.info();
       const ag = info?.agents.find((x) => x.id === body.agent);
       const tip = ag ? await head(env, ctx, ag.fork).catch(() => null) : null;
       if (tip && body.commit && tip.commit !== body.commit) {
         log("review", "stale_verdict", { agent: body.agent, reviewed: String(body.commit).slice(0, 8), latest: tip.commit.slice(0, 8) });
-        return json2({ error: `you reviewed ${String(body.commit).slice(0, 7)} but the agent's latest push is ${tip.commit.slice(0, 7)}: run \`forq fetch-agent ${body.agent}\` and review again` }, 409);
+        return json3({ error: `you reviewed ${String(body.commit).slice(0, 7)} but the agent's latest push is ${tip.commit.slice(0, 7)}: run \`forq fetch-agent ${body.agent}\` and review again` }, 409);
       }
       await startReview(env, p, slug, apiBase, () => p.setVerdict(body.agent, body.verdict === "approve" ? "approved" : "changes", String(body.notes || "")), true);
-      return json2({ ok: true });
+      return json3({ ok: true });
     }
-    return json2({ error: "the reviewer can fetch-agent and verdict" }, 403);
+    return json3({ error: "the reviewer can fetch-agent and verdict" }, 403);
   }
-  if (me.role !== "router") return json2({ error: "only the router agent can do that" }, 403);
+  if (me.role !== "router") return json3({ error: "only the router agent can do that" }, 403);
   if (verb === "spawn") {
-    return json2(await spawn(env, ctx, slug, String(body.task || ""), apiBase));
+    return json3(await spawn(env, ctx, slug, String(body.task || ""), apiBase));
   }
   if (verb === "send") {
-    if (projectOf(body.agent || "") !== slug) return json2({ error: "not an agent of this project" }, 400);
-    return json2(await sendTo(env, body.agent, String(body.text || ""), apiBase));
+    if (projectOf(body.agent || "") !== slug) return json3({ error: "not an agent of this project" }, 400);
+    return json3(await sendTo(env, body.agent, String(body.text || ""), apiBase));
   }
   if (verb === "merge-info") {
     const agent = url.searchParams.get("agent") || "";
-    if (projectOf(agent) !== slug) return json2({ error: "not an agent of this project" }, 400);
-    return json2(await p.forkForMerge(agent));
+    if (projectOf(agent) !== slug) return json3({ error: "not an agent of this project" }, 400);
+    return json3(await p.forkForMerge(agent));
   }
   if (verb === "merged") {
-    if (projectOf(body.agent || "") !== slug) return json2({ error: "not an agent of this project" }, 400);
+    if (projectOf(body.agent || "") !== slug) return json3({ error: "not an agent of this project" }, 400);
     await p.setState(body.agent, "merged");
     if (await p.kindOf() === "worker") ctx.waitUntil(p.requestBuild("deploy").catch((e) => log("build", "request_failed", { err: String(e) })));
-    return json2({ ok: true });
+    return json3({ ok: true });
   }
-  return json2({ error: "unknown verb" }, 404);
+  return json3({ error: "unknown verb" }, 404);
 }
 __name(agentApi, "agentApi");
 async function agentProxy(request, env, ctx, agentId, rest, url, apiBase) {
   if (rest === "/" || rest === "/agent") return Response.redirect(`${url.origin}/a/${agentId}/agent/${url.search}`, 302);
-  if (!rest.startsWith("/agent/")) return json2({ error: "not found" }, 404);
+  if (!rest.startsWith("/agent/")) return json3({ error: "not found" }, 404);
   const sub = rest.slice("/agent".length);
   const box = boxStub(env, agentId);
   ctx.waitUntil(box.touch(agentId).catch(() => {
@@ -11130,6 +12116,7 @@ export {
   Installs,
   Project,
   Registry,
+  TalkLog,
   index_default as default
 };
 //# sourceMappingURL=index.js.map

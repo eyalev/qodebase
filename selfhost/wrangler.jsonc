@@ -26,14 +26,16 @@
       { "name": "Project", "class_name": "Project" },
       { "name": "Registry", "class_name": "Registry" },
       { "name": "BuildBox", "class_name": "BuildBox" },
-      { "name": "Installs", "class_name": "Installs" }
+      { "name": "Installs", "class_name": "Installs" },
+      { "name": "TalkLog", "class_name": "TalkLog" }
     ]
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["AgentBox", "Project"] },
     { "tag": "v2", "new_sqlite_classes": ["Registry"] },
     { "tag": "v3", "new_sqlite_classes": ["BuildBox"] },
-    { "tag": "v4", "new_sqlite_classes": ["Installs"] }
+    { "tag": "v4", "new_sqlite_classes": ["Installs"] },
+    { "tag": "v5", "new_sqlite_classes": ["TalkLog"] }
   ],
   "rules": [
     { "type": "Data", "globs": ["**/*.tgz"], "fallthrough": true },
@@ -43,6 +45,7 @@
   ],
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "qodebase" }],
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "ai": { "binding": "AI" },
   "vars": {
     "SELF_HOST": "1",
     "BOX_IMAGE": "managed",

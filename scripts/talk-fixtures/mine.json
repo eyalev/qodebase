@@ -1,0 +1,193 @@
+{
+ "path": "/mine",
+ "title": "Your projects \u00b7 qodebase",
+ "items": [
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase (home page)",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "Explore",
+   "href": "/explore"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox (1)",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "Yours",
+   "href": "/mine"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "Build",
+   "href": "/build"
+  },
+  {
+   "id": "l6",
+   "kind": "link",
+   "text": "Accounteyal: your name, API key, sign out",
+   "href": "/settings"
+  },
+  {
+   "id": "l7",
+   "kind": "link",
+   "text": "Import from GitHubBring a public repo in and change it with agents",
+   "href": "/import"
+  },
+  {
+   "id": "l8",
+   "kind": "link",
+   "text": "Command lineqb: qodebase from a terminal or an agent",
+   "href": "/cli"
+  },
+  {
+   "id": "l9",
+   "kind": "link",
+   "text": "AboutWhat qodebase is",
+   "href": "/about"
+  },
+  {
+   "id": "l10",
+   "kind": "link",
+   "text": "FeedbackSomething missing or broken? Tell us",
+   "href": "/feedback"
+  },
+  {
+   "id": "l11",
+   "kind": "link",
+   "text": "eyal / reveal-js",
+   "href": "/p/eyal/reveal-js"
+  },
+  {
+   "id": "l12",
+   "kind": "link",
+   "text": "eyal / pomodoro-streak",
+   "href": "/p/eyal/pomodoro-streak"
+  },
+  {
+   "id": "l13",
+   "kind": "link",
+   "text": "eyal / workers-chat-demo-3",
+   "href": "/p/eyal/workers-chat-demo-3"
+  },
+  {
+   "id": "l14",
+   "kind": "link",
+   "text": "eyal / workers-chat-demo-2",
+   "href": "/p/eyal/workers-chat-demo-2"
+  },
+  {
+   "id": "l15",
+   "kind": "link",
+   "text": "eyal / workers-chat-demo",
+   "href": "/p/eyal/workers-chat-demo"
+  },
+  {
+   "id": "l16",
+   "kind": "link",
+   "text": "eyal / particles-js",
+   "href": "/p/eyal/particles-js"
+  },
+  {
+   "id": "l17",
+   "kind": "link",
+   "text": "eyal / todo",
+   "href": "/p/eyal/todo"
+  },
+  {
+   "id": "l18",
+   "kind": "link",
+   "text": "eyal / tipsplit",
+   "href": "/p/eyal/tipsplit"
+  },
+  {
+   "id": "l19",
+   "kind": "link",
+   "text": "eyal / calculator",
+   "href": "/p/eyal/calculator"
+  },
+  {
+   "id": "l20",
+   "kind": "link",
+   "text": "eyal / 2048",
+   "href": "/p/eyal/2048"
+  },
+  {
+   "id": "l21",
+   "kind": "link",
+   "text": "Privacy",
+   "href": "/privacy"
+  },
+  {
+   "id": "l22",
+   "kind": "link",
+   "text": "Feedback",
+   "href": "/feedback?from=%2Fmine"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Menu"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "2d ago, how recent"
+  },
+  {
+   "id": "b3",
+   "kind": "button",
+   "text": "2d ago, how recent"
+  },
+  {
+   "id": "b4",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b5",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b6",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b7",
+   "kind": "button",
+   "text": "4d ago, how recent"
+  },
+  {
+   "id": "b8",
+   "kind": "button",
+   "text": "4d ago, how recent"
+  },
+  {
+   "id": "b9",
+   "kind": "button",
+   "text": "4d ago, how recent"
+  },
+  {
+   "id": "b10",
+   "kind": "button",
+   "text": "4d ago, how recent"
+  },
+  {
+   "id": "b11",
+   "kind": "button",
+   "text": "4d ago, how recent"
+  }
+ ]
+}

@@ -1,0 +1,566 @@
+{
+ "path": "/explore",
+ "title": "Explore \u00b7 qodebase",
+ "items": [
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase (home page)",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "Explore",
+   "href": "/explore"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox (1)",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "Yours",
+   "href": "/mine"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "Build",
+   "href": "/build"
+  },
+  {
+   "id": "l6",
+   "kind": "link",
+   "text": "Accounteyal: your name, API key, sign out",
+   "href": "/settings"
+  },
+  {
+   "id": "l7",
+   "kind": "link",
+   "text": "Import from GitHubBring a public repo in and change it with agents",
+   "href": "/import"
+  },
+  {
+   "id": "l8",
+   "kind": "link",
+   "text": "Command lineqb: qodebase from a terminal or an agent",
+   "href": "/cli"
+  },
+  {
+   "id": "l9",
+   "kind": "link",
+   "text": "AboutWhat qodebase is",
+   "href": "/about"
+  },
+  {
+   "id": "l10",
+   "kind": "link",
+   "text": "FeedbackSomething missing or broken? Tell us",
+   "href": "/feedback"
+  },
+  {
+   "id": "l11",
+   "kind": "link",
+   "text": "People",
+   "href": "/?s=people"
+  },
+  {
+   "id": "l12",
+   "kind": "link",
+   "text": "Runs here (54)",
+   "href": "/explore?cat=runs"
+  },
+  {
+   "id": "l13",
+   "kind": "link",
+   "text": "AI (20)",
+   "href": "/explore?cat=ai"
+  },
+  {
+   "id": "l14",
+   "kind": "link",
+   "text": "Frameworks (37)",
+   "href": "/explore?cat=frameworks"
+  },
+  {
+   "id": "l15",
+   "kind": "link",
+   "text": "Libraries (31)",
+   "href": "/explore?cat=libraries"
+  },
+  {
+   "id": "l16",
+   "kind": "link",
+   "text": "Dev tools (27)",
+   "href": "/explore?cat=devtools"
+  },
+  {
+   "id": "l17",
+   "kind": "link",
+   "text": "CLI (26)",
+   "href": "/explore?cat=cli"
+  },
+  {
+   "id": "l18",
+   "kind": "link",
+   "text": "Data (12)",
+   "href": "/explore?cat=data"
+  },
+  {
+   "id": "l19",
+   "kind": "link",
+   "text": "Self-hosted (22)",
+   "href": "/explore?cat=selfhosted"
+  },
+  {
+   "id": "l20",
+   "kind": "link",
+   "text": "Games (9)",
+   "href": "/explore?cat=games"
+  },
+  {
+   "id": "l21",
+   "kind": "link",
+   "text": "Creative (6)",
+   "href": "/explore?cat=creative"
+  },
+  {
+   "id": "l22",
+   "kind": "link",
+   "text": "Music (5)",
+   "href": "/explore?cat=music"
+  },
+  {
+   "id": "l23",
+   "kind": "link",
+   "text": "Productivity (1)",
+   "href": "/explore?cat=productivity"
+  },
+  {
+   "id": "l24",
+   "kind": "link",
+   "text": "Tools (8)",
+   "href": "/explore?cat=tools"
+  },
+  {
+   "id": "l25",
+   "kind": "link",
+   "text": "Learning (9)",
+   "href": "/explore?cat=learning"
+  },
+  {
+   "id": "l26",
+   "kind": "link",
+   "text": "Slides (3)",
+   "href": "/explore?cat=slides"
+  },
+  {
+   "id": "l27",
+   "kind": "link",
+   "text": "Visual (3)",
+   "href": "/explore?cat=visual"
+  },
+  {
+   "id": "l28",
+   "kind": "link",
+   "text": "On qodebase (19)",
+   "href": "/explore?cat=forq"
+  },
+  {
+   "id": "l29",
+   "kind": "link",
+   "text": "Recently updated",
+   "href": "/explore?sort=updated"
+  },
+  {
+   "id": "l30",
+   "kind": "link",
+   "text": "affaan-m / ECC (The agent harness performance optimization system. Skills, instincts, memory, security, and research-fir",
+   "href": "/gh/affaan-m/ECC"
+  },
+  {
+   "id": "l31",
+   "kind": "link",
+   "text": "yt-dlp / yt-dlp (A feature-rich command-line audio/video downloader, 195k, CLI, Unlicense)",
+   "href": "/gh/yt-dlp/yt-dlp"
+  },
+  {
+   "id": "l32",
+   "kind": "link",
+   "text": "ohmyzsh / ohmyzsh (\ud83d\ude43 A delightful community-driven (with 2,500+ contributors) framework for managing your zsh configura",
+   "href": "/gh/ohmyzsh/ohmyzsh"
+  },
+  {
+   "id": "l33",
+   "kind": "link",
+   "text": "firecrawl / firecrawl (Supercharge your AI agents with data from the web and beyond. Building the library for superintel",
+   "href": "/gh/firecrawl/firecrawl"
+  },
+  {
+   "id": "l34",
+   "kind": "link",
+   "text": "ollama / ollama (Get up and running with Kimi, GLM, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma and other models., 182k, AI,",
+   "href": "/gh/ollama/ollama"
+  },
+  {
+   "id": "l35",
+   "kind": "link",
+   "text": "DietrichGebert / ponytail (Makes your AI agent think like the laziest senior dev in the room. The best code is the code ",
+   "href": "/gh/DietrichGebert/ponytail"
+  },
+  {
+   "id": "l36",
+   "kind": "link",
+   "text": "Graphify-Labs / graphify (Turn any codebase, with its docs, SQL schemas, configs, and PDFs, into a queryable knowledge g",
+   "href": "/gh/Graphify-Labs/graphify"
+  },
+  {
+   "id": "l37",
+   "kind": "link",
+   "text": "browser-use / browser-use (Agents that use the browser., 117k, AI, MIT)",
+   "href": "/gh/browser-use/browser-use"
+  },
+  {
+   "id": "l38",
+   "kind": "link",
+   "text": "d3 / d3 (Bring data to life with SVG, Canvas and HTML. :bar_chart::chart_with_upwards_trend::tada:, 114k, Data, ISC)",
+   "href": "/gh/d3/d3"
+  },
+  {
+   "id": "l39",
+   "kind": "link",
+   "text": "TauricResearch / TradingAgents (TradingAgents: Multi-Agents LLM Financial Trading Framework, 110k, AI, Apache-2.0)",
+   "href": "/gh/TauricResearch/TradingAgents"
+  },
+  {
+   "id": "l40",
+   "kind": "link",
+   "text": "google-gemini / gemini-cli (An open-source AI agent that brings the power of Gemini directly into your terminal., 107k, ",
+   "href": "/gh/google-gemini/gemini-cli"
+  },
+  {
+   "id": "l41",
+   "kind": "link",
+   "text": "microsoft / terminal (The new Windows Terminal and the original Windows console host, all in the same place!, 105k, CLI,",
+   "href": "/gh/microsoft/terminal"
+  },
+  {
+   "id": "l42",
+   "kind": "link",
+   "text": "tailwindlabs / tailwindcss (A utility-first CSS framework for rapid UI development., 98k, Frameworks, MIT)",
+   "href": "/gh/tailwindlabs/tailwindcss"
+  },
+  {
+   "id": "l43",
+   "kind": "link",
+   "text": "sherlock-project / sherlock (Hunt down social media accounts by username across social networks, 93k, CLI, MIT)",
+   "href": "/gh/sherlock-project/sherlock"
+  },
+  {
+   "id": "l44",
+   "kind": "link",
+   "text": "louislam / uptime-kuma (A fancy self-hosted monitoring tool, 92k, Self-hosted, MIT)",
+   "href": "/gh/louislam/uptime-kuma"
+  },
+  {
+   "id": "l45",
+   "kind": "link",
+   "text": "infiniflow / ragflow (RAGFlow is a leading open-source Retrieval-Augmented Generation (RAG) engine that fuses cutting-ed",
+   "href": "/gh/infiniflow/ragflow"
+  },
+  {
+   "id": "l46",
+   "kind": "link",
+   "text": "gohugoio / hugo (The world\u2019s fastest framework for building websites., 90k, Frameworks, Apache-2.0)",
+   "href": "/gh/gohugoio/hugo"
+  },
+  {
+   "id": "l47",
+   "kind": "link",
+   "text": "Panniantong / Agent-Reach (Give your AI agent eyes to see the entire internet. Read & search Twitter, Reddit, YouTube, G",
+   "href": "/gh/Panniantong/Agent-Reach"
+  },
+  {
+   "id": "l48",
+   "kind": "link",
+   "text": "unclecode / crawl4ai (Open-source web crawler and scraper for LLMs and AI agents: any website into clean, LLM-ready Mark",
+   "href": "/gh/unclecode/crawl4ai"
+  },
+  {
+   "id": "l49",
+   "kind": "link",
+   "text": "junegunn / fzf (:cherry_blossom: A command-line fuzzy finder, 83k, CLI, MIT)",
+   "href": "/gh/junegunn/fzf"
+  },
+  {
+   "id": "l50",
+   "kind": "link",
+   "text": "bytedance / deer-flow (An open-source long-horizon SuperAgent harness that researches, codes, and creates. With the help",
+   "href": "/gh/bytedance/deer-flow"
+  },
+  {
+   "id": "l51",
+   "kind": "link",
+   "text": "mlabonne / llm-course (Course to get into Large Language Models (LLMs) with roadmaps and Colab notebooks., 83k, AI, Apac",
+   "href": "/gh/mlabonne/llm-course"
+  },
+  {
+   "id": "l52",
+   "kind": "link",
+   "text": "jesseduffield / lazygit (simple terminal UI for git commands, 83k, CLI, MIT)",
+   "href": "/gh/jesseduffield/lazygit"
+  },
+  {
+   "id": "l53",
+   "kind": "link",
+   "text": "rtk-ai / rtk (CLI proxy that reduces LLM token consumption by 60-90% on common dev commands. Single Rust binary, zero de",
+   "href": "/gh/rtk-ai/rtk"
+  },
+  {
+   "id": "l54",
+   "kind": "link",
+   "text": "hoppscotch / hoppscotch (Open-Source API Development Ecosystem \u2022 https://hoppscotch.io \u2022 Offline, On-Prem & Cloud \u2022 Web,",
+   "href": "/gh/hoppscotch/hoppscotch"
+  },
+  {
+   "id": "l55",
+   "kind": "link",
+   "text": "dair-ai / Prompt-Engineering-Guide (\ud83d\udc19 Guides, papers, lessons, notebooks and resources for prompt engineering, context ",
+   "href": "/gh/dair-ai/Prompt-Engineering-Guide"
+  },
+  {
+   "id": "l56",
+   "kind": "link",
+   "text": "tesseract-ocr / tesseract (Tesseract Open Source OCR Engine (main repository), 77k, AI, Apache-2.0)",
+   "href": "/gh/tesseract-ocr/tesseract"
+  },
+  {
+   "id": "l57",
+   "kind": "link",
+   "text": "pallets / flask (The Python micro framework for building web applications., 75k, Frameworks, BSD-3-Clause)",
+   "href": "/gh/pallets/flask"
+  },
+  {
+   "id": "l58",
+   "kind": "link",
+   "text": "Eugeny / tabby (A terminal for a more modern age, 75k, CLI, MIT)",
+   "href": "/gh/Eugeny/tabby"
+  },
+  {
+   "id": "l59",
+   "kind": "link",
+   "text": "binhnguyennus / awesome-scalability (The Patterns of Scalable, Reliable, and Performant Large-Scale Systems, 74k, AI, MI",
+   "href": "/gh/binhnguyennus/awesome-scalability"
+  },
+  {
+   "id": "l60",
+   "kind": "link",
+   "text": "headroomlabs-ai / headroom (Compress tool outputs, logs, files, and RAG chunks before they reach the LLM. 20% fewer toke",
+   "href": "/gh/headroomlabs-ai/headroom"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Menu"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "4d ago, how recent"
+  },
+  {
+   "id": "b3",
+   "kind": "button",
+   "text": "8d ago, how recent"
+  },
+  {
+   "id": "b4",
+   "kind": "button",
+   "text": "7d ago, how recent"
+  },
+  {
+   "id": "b5",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b6",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b7",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b8",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b9",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b10",
+   "kind": "button",
+   "text": "4 mo ago, how recent"
+  },
+  {
+   "id": "b11",
+   "kind": "button",
+   "text": "7d ago, how recent"
+  },
+  {
+   "id": "b12",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b13",
+   "kind": "button",
+   "text": "4d ago, how recent"
+  },
+  {
+   "id": "b14",
+   "kind": "button",
+   "text": "10d ago, how recent"
+  },
+  {
+   "id": "b15",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b16",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b17",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b18",
+   "kind": "button",
+   "text": "5d ago, how recent"
+  },
+  {
+   "id": "b19",
+   "kind": "button",
+   "text": "21d ago, how recent"
+  },
+  {
+   "id": "b20",
+   "kind": "button",
+   "text": "11d ago, how recent"
+  },
+  {
+   "id": "b21",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b22",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b23",
+   "kind": "button",
+   "text": "8 mo ago, how recent"
+  },
+  {
+   "id": "b24",
+   "kind": "button",
+   "text": "5d ago, how recent"
+  },
+  {
+   "id": "b25",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b26",
+   "kind": "button",
+   "text": "6d ago, how recent"
+  },
+  {
+   "id": "b27",
+   "kind": "button",
+   "text": "6 mo ago, how recent"
+  },
+  {
+   "id": "b28",
+   "kind": "button",
+   "text": "8d ago, how recent"
+  },
+  {
+   "id": "b29",
+   "kind": "button",
+   "text": "28d ago, how recent"
+  },
+  {
+   "id": "b30",
+   "kind": "button",
+   "text": "7d ago, how recent"
+  },
+  {
+   "id": "b31",
+   "kind": "button",
+   "text": "9 mo ago, how recent"
+  },
+  {
+   "id": "b32",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b33",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b34",
+   "kind": "button",
+   "text": "45d ago, how recent"
+  },
+  {
+   "id": "b35",
+   "kind": "button",
+   "text": "5d ago, how recent"
+  },
+  {
+   "id": "b36",
+   "kind": "button",
+   "text": "2 mo ago, how recent"
+  },
+  {
+   "id": "b37",
+   "kind": "button",
+   "text": "8 mo ago, how recent"
+  },
+  {
+   "id": "b38",
+   "kind": "button",
+   "text": "3d ago, how recent"
+  },
+  {
+   "id": "b39",
+   "kind": "button",
+   "text": "4d ago, how recent"
+  },
+  {
+   "id": "b40",
+   "kind": "button",
+   "text": "35d ago, how recent"
+  }
+ ]
+}

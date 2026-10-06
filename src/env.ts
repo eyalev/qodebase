@@ -10,6 +10,9 @@ export interface Env {
   Registry: DurableObjectNamespace<Registry>;
   BuildBox: DurableObjectNamespace<BuildBox>;
   Installs: DurableObjectNamespace<Installs>;
+  TalkLog: DurableObjectNamespace<import('./talk').TalkLog>;
+  AI?: Ai;                    // Workers AI (Talk: src/talk.ts)
+  TALK_GATEWAY?: string;      // AI Gateway id for Talk's model calls (rate limited); unset on self-hosted copies
   CF_OAUTH_CLIENT_ID: string;      // forq's "Sign in with Cloudflare" OAuth client (src/install.ts)
   CF_OAUTH_CLIENT_SECRET: string;
   ACCOUNT_ID: string;

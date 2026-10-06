@@ -45,6 +45,7 @@ export async function withBaseline(request: Request, env: BaselineEnv, res: Resp
           // before anyone sees it, and would count views that never happened.
           const tags = !env.KSTATS_KEY ? [] : [`<script>(function(){function k(){var s=document.createElement('script');s.defer=true;s.src='https://stats.kapps.dev/k.js';s.setAttribute('data-site','${KSTATS_SITE}');document.head.appendChild(s)}if(document.prerendering)document.addEventListener('prerenderingchange',k,{once:true});else k()})()</script>`];   // a self-hosted copy has no kstats key: no analytics
           tags.push('<link rel="icon" href="/icon.svg" type="image/svg+xml">');
+          tags.push('<script src="/talk.js" defer></script>');   // Talk: speak or type to the app (src/talk.ts); shows only when signed in
           if (!hasOg) tags.push(...await shareTags(env, host, url.pathname, title, desc));
           end.before(tags.join(''), { html: true });
         });

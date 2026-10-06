@@ -1,0 +1,136 @@
+{
+ "path": "/p/forq/calculator",
+ "title": "Readme \u00b7 forq/calculator \u00b7 qodebase",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "Calculator"
+  },
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase (home page)",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "Explore",
+   "href": "/explore"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox (1)",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "Yours",
+   "href": "/mine"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "Build",
+   "href": "/build"
+  },
+  {
+   "id": "l6",
+   "kind": "link",
+   "text": "Accounteyal: your name, API key, sign out",
+   "href": "/settings"
+  },
+  {
+   "id": "l7",
+   "kind": "link",
+   "text": "Import from GitHubBring a public repo in and change it with agents",
+   "href": "/import"
+  },
+  {
+   "id": "l8",
+   "kind": "link",
+   "text": "Command lineqb: qodebase from a terminal or an agent",
+   "href": "/cli"
+  },
+  {
+   "id": "l9",
+   "kind": "link",
+   "text": "AboutWhat qodebase is",
+   "href": "/about"
+  },
+  {
+   "id": "l10",
+   "kind": "link",
+   "text": "FeedbackSomething missing or broken? Tell us",
+   "href": "/feedback"
+  },
+  {
+   "id": "l11",
+   "kind": "link",
+   "text": "forq / calculator",
+   "href": "/p/forq/calculator"
+  },
+  {
+   "id": "l12",
+   "kind": "link",
+   "text": "Open your copy",
+   "href": "/p/eyal/calculator"
+  },
+  {
+   "id": "l13",
+   "kind": "link",
+   "text": "README",
+   "href": "/p/forq/calculator/readme"
+  },
+  {
+   "id": "l14",
+   "kind": "link",
+   "text": "LICENSE",
+   "href": "/p/forq/calculator/readme?doc=LICENSE"
+  },
+  {
+   "id": "l15",
+   "kind": "link",
+   "text": "README.md in Code",
+   "href": "/p/forq/calculator/code/README.md"
+  },
+  {
+   "id": "l16",
+   "kind": "link",
+   "text": "Privacy",
+   "href": "/privacy"
+  },
+  {
+   "id": "l17",
+   "kind": "link",
+   "text": "Feedback",
+   "href": "/feedback?from=%2Fp%2Fforq%2Fcalculator"
+  },
+  {
+   "id": "l18",
+   "kind": "link",
+   "text": "App",
+   "href": "/p/forq/calculator/app"
+  },
+  {
+   "id": "l19",
+   "kind": "link",
+   "text": "Code",
+   "href": "/p/forq/calculator/code/"
+  },
+  {
+   "id": "l20",
+   "kind": "link",
+   "text": "History",
+   "href": "/p/forq/calculator/history"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Menu"
+  }
+ ]
+}

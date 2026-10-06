@@ -1,0 +1,170 @@
+[
+ {
+  "slug": "forq.forq",
+  "name": "forq",
+  "owner": "forq",
+  "description": "A Git platform for the age of agents, on Cloudflare, used from your phone: every project runs, every fork comes with its"
+ },
+ {
+  "slug": "forq.container-agents",
+  "name": "container-agents",
+  "owner": "forq",
+  "description": "OpenClaw and Hermes in a Cloudflare Container in your own account: official images, Workers AI with no keys, installed b"
+ },
+ {
+  "slug": "forq.pi-durable",
+  "name": "pi-durable",
+  "owner": "forq",
+  "description": "Pi Durable (Earendil pi-durable 1.0) on a Durable Object: Cloudflare official example, for qodebase installs"
+ },
+ {
+  "slug": "forq.agents-starter",
+  "name": "agents-starter",
+  "owner": "forq",
+  "description": "A starter kit for building ai agents on Cloudflare"
+ },
+ {
+  "slug": "forq.pi-on-cf",
+  "name": "pi-on-cf",
+  "owner": "forq",
+  "description": "An experimental project to run Pi on Cloudflare"
+ },
+ {
+  "slug": "forq.workers-personal-agent",
+  "name": "workers-personal-agent",
+  "owner": "forq",
+  "description": "Personal AI agent on Cloudflare Workers: Durable Object per conversation, markdown memory in R2, vector recall in SQLite"
+ },
+ {
+  "slug": "eyal.reveal-js",
+  "name": "reveal-js",
+  "owner": "eyal",
+  "description": "The HTML Presentation Framework"
+ },
+ {
+  "slug": "eyal.pomodoro-streak",
+  "name": "pomodoro-streak",
+  "owner": "eyal",
+  "description": "A pomodoro timer with a daily streak"
+ },
+ {
+  "slug": "forq.blank",
+  "name": "blank",
+  "owner": "forq",
+  "description": "The starter every new project begins from: a placeholder page that runs at once."
+ },
+ {
+  "slug": "eyal.workers-chat-demo-3",
+  "name": "workers-chat-demo-3",
+  "owner": "eyal",
+  "description": ""
+ },
+ {
+  "slug": "forq.workers-chat-demo",
+  "name": "workers-chat-demo",
+  "owner": "forq",
+  "description": ""
+ },
+ {
+  "slug": "eyal.workers-chat-demo-2",
+  "name": "workers-chat-demo-2",
+  "owner": "eyal",
+  "description": ""
+ },
+ {
+  "slug": "eyal.workers-chat-demo",
+  "name": "workers-chat-demo",
+  "owner": "eyal",
+  "description": ""
+ },
+ {
+  "slug": "eyal.particles-js",
+  "name": "particles-js",
+  "owner": "eyal",
+  "description": "A lightweight JavaScript library for creating particles"
+ },
+ {
+  "slug": "eyal.todo",
+  "name": "todo",
+  "owner": "eyal",
+  "description": "The smallest useful to-do list: add, tick, delete"
+ },
+ {
+  "slug": "eyal.tipsplit",
+  "name": "tipsplit",
+  "owner": "eyal",
+  "description": "Split a bill: amount, tip, people"
+ },
+ {
+  "slug": "eyal.calculator",
+  "name": "calculator",
+  "owner": "eyal",
+  "description": "A phone-first calculator: big keys, brackets, live result"
+ },
+ {
+  "slug": "eyal.2048",
+  "name": "2048",
+  "owner": "eyal",
+  "description": "The source code for 2048 "
+ },
+ {
+  "slug": "forq.javascript-tetris",
+  "name": "javascript-tetris",
+  "owner": "forq",
+  "description": "A simple javascript tetris game"
+ },
+ {
+  "slug": "forq.vivus",
+  "name": "vivus",
+  "owner": "forq",
+  "description": "JavaScript library to make drawing animation on SVG"
+ },
+ {
+  "slug": "forq.sortable",
+  "name": "sortable",
+  "owner": "forq",
+  "description": "Reorderable drag-and-drop lists for modern browsers and touch devices. No jQuery or framework required."
+ },
+ {
+  "slug": "forq.reveal-js",
+  "name": "reveal-js",
+  "owner": "forq",
+  "description": "The HTML Presentation Framework"
+ },
+ {
+  "slug": "forq.particles-js",
+  "name": "particles-js",
+  "owner": "forq",
+  "description": "A lightweight JavaScript library for creating particles"
+ },
+ {
+  "slug": "forq.2048",
+  "name": "2048",
+  "owner": "forq",
+  "description": "The source code for 2048 "
+ },
+ {
+  "slug": "forq.tipsplit",
+  "name": "tipsplit",
+  "owner": "forq",
+  "description": "Split a bill: amount, tip, people"
+ },
+ {
+  "slug": "forq.timer",
+  "name": "timer",
+  "owner": "forq",
+  "description": "A focus timer with a chime: 5, 15, 25 or 50 minutes"
+ },
+ {
+  "slug": "forq.todo",
+  "name": "todo",
+  "owner": "forq",
+  "description": "The smallest useful to-do list: add, tick, delete"
+ },
+ {
+  "slug": "forq.calculator",
+  "name": "calculator",
+  "owner": "forq",
+  "description": "A phone-first calculator: big keys, brackets, live result"
+ }
+]
