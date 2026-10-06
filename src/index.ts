@@ -103,7 +103,7 @@ const safeNext = (n: string | null) => (n && /^\/[^/\\]/.test(n) ? n : null);
 /** /login (behind Access): find or create the user, set the session, go on. */
 async function loginRoute(request: Request, env: Env, url: URL): Promise<Response> {
   const email = await accessEmail(request, env);
-  if (!email) return new Response('Sign-in did not complete. Try again from the forq home page.', { status: 401 });
+  if (!email) return new Response('Sign-in did not complete. Try again from the qodebase home page.', { status: 401 });
   let user = await userByEmail(env, email);
   let fresh = false;
   if (!user) {
@@ -181,7 +181,7 @@ async function wake(env: Env, agentId: string, apiBase: string) {
   // 1. Account-wide ceiling, every role, owner included: a safety net on what
   //    the containers can bill at once (each awake box bills its full 3 GiB).
   const total = Number(env.MAX_TOTAL_AWAKE || 20);
-  if (awake.length >= total) return refuse('account cap', { total, awake: awake.length }, `forq is busy: ${total} boxes are awake across all projects. Try again in a few minutes`);
+  if (awake.length >= total) return refuse('account cap', { total, awake: awake.length }, `qodebase is busy: ${total} boxes are awake across all projects. Try again in a few minutes`);
 
   // 2. Per project: change agents only. A project's router and reviewer always
   //    start (2026-10-03: a Build split into 4 agents filled the old cap of 5
@@ -280,7 +280,7 @@ const app = {
     if (isUiHost(env, url.hostname)) {
       const cf = (request as any).cf || {};
       if (url.pathname === '/robots.txt') return new Response('User-agent: *\nDisallow: /p/\nDisallow: /import\nDisallow: /api/\nDisallow: /a/\nDisallow: /login\n', { headers: { 'content-type': 'text/plain' } });
-      if (url.pathname === '/icon.svg') return new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#17695a"/><path d="M150 52c-30 0-48 18-48 50v18H80v30h22v78h34v-78h32v-30h-32v-16c0-14 6-21 19-21 6 0 11 1 15 2l4-30c-7-2-15-3-24-3z" fill="#fff"/></svg>', { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' } });
+      if (url.pathname === '/icon.svg') return new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#17695a"/><circle cx="116" cy="118" r="48" fill="none" stroke="#fff" stroke-width="30"/><path d="M149 66h30v138h-30z" fill="#fff"/></svg>', { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' } });
       if (url.pathname === '/version.json') return json({ name: 'forq', version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
       if (url.pathname === '/health.json') return health(env, ctx, url.origin);
       if (url.pathname === '/e') return kstatsForward(request, env, ctx);
@@ -464,7 +464,7 @@ const app = {
         const gh = await getRepo(ref, ctx);
         if ('error' in gh) return json(gh, gh.status);
         if (gh.private) return json({ error: 'private repos cannot be imported' }, 400);
-        if (gh.sizeKb > MAX_IMPORT_KB) return json({ error: `${gh.fullName} is ${Math.round(gh.sizeKb / 1024)} MB; forq imports up to ${MAX_IMPORT_KB / 1024} MB` }, 400);
+        if (gh.sizeKb > MAX_IMPORT_KB) return json({ error: `${gh.fullName} is ${Math.round(gh.sizeKb / 1024)} MB; qodebase imports up to ${MAX_IMPORT_KB / 1024} MB` }, 400);
         // Admin may import on behalf of another handle (the forq showcase account).
         const owner = me.admin && b.as ? b.as : me.handle;
         const tooMany = await overProjectLimit(env, owner);
@@ -924,7 +924,7 @@ async function issueOccurrences(env: Env, issueId: string): Promise<string | nul
 async function overProjectLimit(env: Env, handle: string): Promise<string | null> {
   if (isOwner(env, handle)) return null;
   const n = (await registry(env).list()).filter((e) => e.owner === handle).length;
-  return n >= 10 ? 'You have 10 projects, the limit for now. Self-host forq for more.' : null;
+  return n >= 10 ? 'You have 10 projects, the limit for now. Self-host qodebase for more.' : null;
 }
 
 async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string) {

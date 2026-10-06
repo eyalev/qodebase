@@ -139,7 +139,7 @@ export function dirPage(o: { info: ProjectInfo; v: string; path: string; entries
   const q = v ? `?v=${v}` : '';
   const sorted = [...o.entries].sort((a, b) => (a.type === 'tree' ? 0 : 1) - (b.type === 'tree' ? 0 : 1) || a.name.localeCompare(b.name));
   const up = path ? `<a href="/p/${info.owner}/${info.name}/code/${esc(path.split('/').filter(Boolean).slice(0, -1).join('/'))}${path.split('/').filter(Boolean).length > 1 ? '/' : ''}${q}"><span class="k">..</span>up a folder</a>` : '';
-  return shell(`${path || info.name} · code · forq`, `${head(info, v, path, 'Code', o.rev)}${gotoBox(info, v)}${crumbs(info, path, v)}
+  return shell(`${path || info.name} · code · qodebase`, `${head(info, v, path, 'Code', o.rev)}${gotoBox(info, v)}${crumbs(info, path, v)}
 <div class="ls">${up}${sorted.map((e) => `<a class="${e.type === 'tree' ? 'dir' : ''}" href="/p/${info.owner}/${info.name}/code/${esc(path + e.name)}${e.type === 'tree' ? '/' : ''}${q}"><span class="k">${e.type === 'tree' ? '/' : ''}</span>${esc(e.name)}</a>`).join('') || '<p class="empty" style="padding:14px">Empty folder.</p>'}</div>
 ${o.readme ? `<h2>README</h2><div class="md">${markdown(o.readme)}</div>` : ''}`);
 }
@@ -161,7 +161,7 @@ export function filePage(o: { info: ProjectInfo; v: string; path: string; file: 
     body = `<div class="md">${markdown(file.text)}</div><h2>Source</h2>${codeBlock(file.text, 'markdown')}`;
   } else body = codeBlock(file.text, LANG[ext]);
   const lines = file.text ? file.text.split('\n').length : 0;
-  return shell(`${name} · code · forq`, `${head(info, v, path, name, o.rev)}${crumbs(info, path, v)}
+  return shell(`${name} · code · qodebase`, `${head(info, v, path, name, o.rev)}${crumbs(info, path, v)}
 <div class="fmeta"><span>${size}</span>${lines ? `<span>${lines} lines</span>` : ''}${actions}</div>${body}`);
 }
 
@@ -190,7 +190,7 @@ export function changesPage(o: { info: ProjectInfo; agent: Agent; changes: Chang
   const { info, agent, changes } = o;
   const s = agent.id.split('--')[1];
   const data = JSON.stringify(changes.map((c) => ({ p: c.path, s: c.status, a: c.oldText, b: c.newText, n: c.note || null }))).replace(/</g, '\\u003c');
-  return shell(`Changes by ${s} · forq`, `${CODE_CSS}<a class="back" href="/p/${info.owner}/${info.name}">${esc(info.owner)} / ${esc(info.name)}</a>
+  return shell(`Changes by ${s} · qodebase`, `${CODE_CSS}<a class="back" href="/p/${info.owner}/${info.name}">${esc(info.owner)} / ${esc(info.name)}</a>
 <h1>Changes by agent ${esc(s)}</h1>
 <p class="desc">${esc(agent.task)}</p>
 <div class="fmeta"><span>${esc(o.baseNote)}</span><a class="chipbtn" href="/p/${info.owner}/${info.name}/code/?v=${s}">Browse its code</a><a class="chipbtn" href="${esc(o.previewUrl)}" target="_blank" rel="noopener">Open its preview</a></div>

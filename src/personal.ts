@@ -65,7 +65,7 @@ const shell = (title: string, body: string, extraCss = '') => `<!doctype html><h
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>${CSS}${INSTALL_CSS}${extraCss}</style></head><body><main>
-<header><a class="mark" href="/">forq</a><a href="/personal-agents">Assistants</a></header>
+<header><a class="mark" href="/">qodebase</a><a href="/personal-agents">Assistants</a></header>
 ${body}
 </main></body></html>`;
 
@@ -98,13 +98,13 @@ export type InstallPageState =
   | { kind: 'error'; text: string; next: string };
 
 export function installPage(st: InstallPageState): string {
-  if (st.kind === 'error') return shell('Could not connect · forq', `<h1>That did not work</h1><p class="err">${esc(st.text)}</p><div class="btns"><a class="btn pri wide" href="${esc(st.next)}">Back</a></div>`);
-  if (st.kind === 'connect') return shell(`Install ${st.template.title} · forq`, `<h1>Install ${esc(st.template.title)}</h1>
-<ul class="pts"><li>It goes into <b>your</b> Cloudflare account</li><li>forq asks Cloudflare for permission once</li><li>No GitHub, no keys to copy</li></ul>
+  if (st.kind === 'error') return shell('Could not connect · qodebase', `<h1>That did not work</h1><p class="err">${esc(st.text)}</p><div class="btns"><a class="btn pri wide" href="${esc(st.next)}">Back</a></div>`);
+  if (st.kind === 'connect') return shell(`Install ${st.template.title} · qodebase`, `<h1>Install ${esc(st.template.title)}</h1>
+<ul class="pts"><li>It goes into <b>your</b> Cloudflare account</li><li>qodebase asks Cloudflare for permission once</li><li>No GitHub, no keys to copy</li></ul>
 <div class="btns"><a class="btn pri wide" href="${esc(st.startHref)}">Sign in with Cloudflare</a></div>
-<p class="small">No account yet? You can make one on the same screen. You can take forq's access back any time in your Cloudflare profile.</p>`);
+<p class="small">No account yet? You can make one on the same screen. You can take qodebase's access back any time in your Cloudflare profile.</p>`);
   const many = st.accounts.length > 1;
-  return shell(`Install ${st.template.title} · forq`, `<h1>Install ${esc(st.template.title)}</h1>
+  return shell(`Install ${st.template.title} · qodebase`, `<h1>Install ${esc(st.template.title)}</h1>
 ${st.error ? `<p class="err">${esc(st.error)}</p>` : ''}
 <form method="post">
 <div class="field"><label for="name">Name</label>
@@ -131,18 +131,18 @@ ${v.url || v.error ? '' : `<p class="small">Usually under a minute. You can leav
 if(v.url||v.error){clearInterval(t);location.reload();return}
 var ul=document.getElementById('steps');ul.innerHTML=v.steps.map(function(s){return '<li><span class="dot '+s.state+'"></span><div><div class="t">'+s.label+'</div>'+(s.note?'<div class="n">'+s.note.replace(/[<>&]/g,'')+'</div>':'')+'</div></li>'}).join('')
 }).catch(function(){})},2000)})();</script>`;
-  return shell(`${v.name} · forq`, body + poll);
+  return shell(`${v.name} · qodebase`, body + poll);
 }
 
 export function personalAgentsPage(): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Your own AI assistant · forq</title>
+<title>Your own AI assistant · qodebase</title>
 <meta name="description" content="Run a personal AI assistant in your own Cloudflare account: what it is, what it costs, and how to set one up without writing code.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>${CSS}</style></head><body><main>
-<header><a class="mark" href="/">forq</a><a href="/about">About</a></header>
+<header><a class="mark" href="/">qodebase</a><a href="/about">About</a></header>
 
 <h1>Your own AI assistant</h1>
 <ul class="pts">
@@ -156,7 +156,7 @@ export function personalAgentsPage(): string {
 <h3>One plan for all your assistants</h3>
 <p>Cloudflare's Workers Paid plan costs <b>$5 a month per Cloudflare account</b>, not per assistant. Install OpenClaw, Hermes, T3 Code and Pi in the same account and you still pay $5.</p>
 <p>It includes a monthly amount of use (requests, compute, AI). Most personal use stays inside it; anything above is billed by Cloudflare to your account. Assistants sleep when idle to keep it low.</p>
-<p>You pay Cloudflare directly. forq never sees your card.</p>
+<p>You pay Cloudflare directly. qodebase never sees your card.</p>
 <div class="btns"><a class="btn sec" href="https://www.cloudflare.com/plans/developer-platform/" target="_blank" rel="noopener">Cloudflare's plan page<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2h5v5M14 2 7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><button class="btn pri" type="button" popovertarget="planinfo" popovertargetaction="hide">Got it</button></div>
 </div>
 <div class="cards">
@@ -217,6 +217,6 @@ export function personalAgentsPage(): string {
 </section>
 </div>
 
-<p class="foot"><a href="/">forq</a><a href="/about">About</a><a href="/privacy">Privacy</a><a href="/feedback?from=/personal-agents">Feedback</a></p>
+<p class="foot"><a href="/">qodebase</a><a href="/about">About</a><a href="/privacy">Privacy</a><a href="/feedback?from=/personal-agents">Feedback</a></p>
 </main></body></html>`;
 }

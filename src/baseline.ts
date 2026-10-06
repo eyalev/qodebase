@@ -44,6 +44,7 @@ export async function withBaseline(request: Request, env: BaselineEnv, res: Resp
           // page (speculation rules on the home and /gh pages) runs its scripts
           // before anyone sees it, and would count views that never happened.
           const tags = [`<script>(function(){function k(){var s=document.createElement('script');s.defer=true;s.src='https://stats.kapps.dev/k.js';s.setAttribute('data-site','${KSTATS_SITE}');document.head.appendChild(s)}if(document.prerendering)document.addEventListener('prerenderingchange',k,{once:true});else k()})()</script>`];
+          tags.push('<link rel="icon" href="/icon.svg" type="image/svg+xml">');
           if (!hasOg) tags.push(...await shareTags(env, host, url.pathname, title, desc));
           end.before(tags.join(''), { html: true });
         });
@@ -53,10 +54,10 @@ export async function withBaseline(request: Request, env: BaselineEnv, res: Resp
 }
 
 async function shareTags(env: BaselineEnv, host: string, path: string, rawTitle: string, desc: string): Promise<string[]> {
-  const title = rawTitle.replace(/\s*·\s*forq(\s*\([A-D]\))?\s*$/, '').trim() || 'forq';
+  const title = rawTitle.replace(/\s*·\s*qodebase(\s*\([A-D]\))?\s*$/, '').trim() || 'qodebase';
   const page = `https://${host}${path}`;
   const tags = [
-    `<meta property="og:site_name" content="forq">`,
+    `<meta property="og:site_name" content="qodebase">`,
     `<meta property="og:title" content="${esc(title)}">`,
     `<meta property="og:url" content="${esc(page)}">`,
     `<meta property="og:type" content="website">`,
@@ -141,7 +142,7 @@ ${o.error ? `<p class="fb-err" role="alert">${esc(o.error)}</p>` : ''}
 <p class="note">Sent from ${esc(o.from)}. We keep the message, the page, the kind of device and the email if you give one. See <a href="/privacy">Privacy</a>.</p>
 </form>
 <script>try{if(localStorage.getItem('k:self')==='1')document.getElementById('fbself').value='1'}catch(e){}</script>`;
-  return shell('Feedback · forq', `<a class="back" href="${esc(o.from)}">Back</a>
+  return shell('Feedback · qodebase', `<a class="back" href="${esc(o.from)}">Back</a>
 ${body}
 <style>.fb{display:grid;gap:8px;margin-top:16px}.fb fieldset{border:0;padding:0;margin:0 0 8px;display:grid;gap:8px}.fb legend{font-weight:600;margin-bottom:4px}
 .fb label{font-size:15px}.fb fieldset label{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
@@ -172,7 +173,7 @@ export async function feedback(request: Request, env: BaselineEnv): Promise<Resp
   if (r?.ok) { log('feedback_stored', { kind: o.kind, self }); return page({ from: o.from, done: true }); }
   // Not stored: this push is the only copy, so it carries the whole text.
   log('feedback_store_failed', { status: r?.status ?? 0, body: r ? (await r.text().catch(() => '')).slice(0, 200) : '' });
-  await pushAlert(env, 'forq feedback NOT stored', `${o.kind} from ${o.email || 'no email'} on ${o.from}:\n${o.msg}`, body.page, 1);
+  await pushAlert(env, 'qodebase feedback NOT stored', `${o.kind} from ${o.email || 'no email'} on ${o.from}:\n${o.msg}`, body.page, 1);
   return page({ ...o, error: 'It did not go through on our side. Your text is still here: try again, or email hello@kapps.dev.' }, 502);
 }
 

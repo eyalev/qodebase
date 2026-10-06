@@ -139,7 +139,7 @@ export function explorePage(entries: Entry[], me: string) {
   const forks = (slug: string) => entries.filter((e) => e.forkedFrom === slug).length;
   const mine = entries.filter((e) => e.owner === me);
   const others = entries.filter((e) => e.owner !== me);
-  return shell('forq', `<header class="top"><span class="mark">forq</span><span class="tr">${me ? `<a class="chipbtn" href="/import">Import from GitHub</a><a class="who" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</span></header>
+  return shell('forq', `<header class="top"><span class="mark">qodebase</span><span class="tr">${me ? `<a class="chipbtn" href="/import">Import from GitHub</a><a class="who" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</span></header>
 <p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.${me ? '' : ' Reading is open to everyone; sign in with your email to fork and run agents with your own Anthropic API key.'}</p>
 ${mine.length ? `<h2>Yours</h2><p class="fresh-legend">Shaded dates: full today, empty after two weeks. Tap one for more.</p><div class="rows">${mine.map((e) => row(e, forks(e.slug), now)).join('')}</div>` : ''}
 <h2>Explore</h2>${mine.length ? '' : '<p class="fresh-legend">Shaded dates: full today, empty after two weeks. Tap one for more.</p>'}<div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>
@@ -154,7 +154,7 @@ function deployLine(info: ProjectInfo, d: ProjectInfo['app'], own: boolean) {
   const logLink = d?.log ? ` <a href="/p/${info.owner}/${info.name}/build-log">View build log</a>` : '';
   const again = own ? ` <button type="button" class="chipbtn" id="redeploy">Deploy again</button>` : '';
   const body = !d ? 'A Cloudflare Worker. Not deployed yet; it deploys when this page first loads.'
-    : d.status === 'building' ? `<b>Deploying</b> <span data-since="${d.at}">0s</span>. forq's builder runs wrangler for it; the first deploy takes about a minute.`
+    : d.status === 'building' ? `<b>Deploying</b> <span data-since="${d.at}">0s</span>. qodebase's builder runs wrangler for it; the first deploy takes about a minute.`
     : d.status === 'failed' ? `<b>Deploy failed:</b> ${esc(d.error || 'unknown error')}.${logLink}${again}`
     : `Live as a Cloudflare Worker at <a href="${esc(d.url || '')}" target="_blank" rel="noopener">${esc((d.url || '').replace('https://', ''))}</a> ${freshTag(d.at, now, STEPS)}${logLink}${again}`;
   return `<p class="note deploy${d?.status === 'building' ? ' busy' : ''}">${body}</p>${d?.status === 'building' ? '<script>setTimeout(function(){location.reload()},6000)</script>' : ''}
@@ -172,7 +172,7 @@ export function projectPage(o: { info: ProjectInfo; entry: Entry; forks: Entry[]
   const app = isWorker ? (dep?.url ? `${dep.url}/` : '') : runUrl(runBase, info.repo, webAt || '');
   const src = info.importedFrom;
   const myForks = forks.filter((e) => e.owner === me);
-  return shell(`${info.owner}/${info.name} · forq`, `<a class="back" href="/">Explore</a>
+  return shell(`${info.owner}/${info.name} · qodebase`, `<a class="back" href="/">Explore</a>
 <h1><span class="owner">${esc(info.owner)} /</span> ${esc(info.name)}</h1>
 ${info.description ? `<p class="desc">${esc(info.description)}</p>` : ''}
 <div class="meta">${freshTag(entry.updatedAt, now, STEPS)}${forks.length ? `<span>${forks.length} fork${forks.length > 1 ? 's' : ''}</span>` : ''}${info.forkedFrom ? `<span>forked from <a href="${path(info.forkedFrom)}">${esc(label(info.forkedFrom))}</a></span>` : ''}${src && !info.forkedFrom ? `<span>imported from <a href="${esc(src.url)}" rel="noopener">GitHub ${esc(src.fullName)}</a></span>` : ''}${src ? `<span>${stars(src.stars)}</span>${src.license ? `<span>${esc(src.license)}</span>` : ''}` : ''}</div>
@@ -188,7 +188,7 @@ ${overview.importing
       ? `${deployLine(info, dep, own)}${dep?.url ? `<div class="pbar"><div class="ptabs" id="ptabs">${previewTabs(info, runBase)}</div><a class="pext" id="pext" href="${app}" target="_blank" rel="noopener">Open in new tab</a></div>
 <div class="preview"><iframe src="${app}" title="${esc(info.name)} app" loading="lazy"></iframe></div>` : ''}`
     : webAt === null
-      ? `<p class="note">No web page to show: forq looks for an index.html at the root and in demo/, docs/, public/, dist/, www/, site/ and examples/. The code is below, and agents can still work on it.</p>`
+      ? `<p class="note">No web page to show: qodebase looks for an index.html at the root and in demo/, docs/, public/, dist/, www/, site/ and examples/. The code is below, and agents can still work on it.</p>`
       : `<div class="pbar"><div class="ptabs" id="ptabs">${previewTabs(info, runBase)}</div><a class="pext" id="pext" href="${app}" target="_blank" rel="noopener">Open in new tab</a></div>
 <div class="preview"><iframe src="${app}" title="${esc(info.name)} app" loading="lazy"></iframe></div>`}
 ${own && o.needsKey ? `<h2>Agents</h2><p class="note">Agents here run Claude Code with your own Anthropic API key. <a href="/settings">Add your key in Settings</a> to start one.</p>` : ''}${own && !o.needsKey ? `<h2>Agents</h2>
@@ -342,13 +342,13 @@ ${done.length ? `<h2>Merged</h2><div class="cards">${done.map(card).join('')}</d
 const REPO_STEPS = [365 * 24, 90 * 24, 30 * 24, 7 * 24];   // GitHub activity: empty after a year
 
 export function importPage(me: string) {
-  if (!me) return shell('Import from GitHub · forq', `<a class="back" href="/">Explore</a>
+  if (!me) return shell('Import from GitHub · qodebase', `<a class="back" href="/">Explore</a>
 <h1>Import from GitHub</h1>
-<p class="desc">Bring any public GitHub repository into forq: it runs here, you can fork it, and agents can work on it.</p>
+<p class="desc">Bring any public GitHub repository into qodebase: it runs here, you can fork it, and agents can work on it.</p>
 <div class="actions"><a class="btn" href="/login?next=/import">Sign in with your email to import</a></div>`);
-  return shell('Import from GitHub · forq', `<a class="back" href="/">Explore</a>
+  return shell('Import from GitHub · qodebase', `<a class="back" href="/">Explore</a>
 <h1>Import from GitHub</h1>
-<p class="desc">Search public repositories, or paste a repo's URL. forq copies the latest commit, finds its web page if it has one, and the project is yours to fork and hand to agents.</p>
+<p class="desc">Search public repositories, or paste a repo's URL. qodebase copies the latest commit, finds its web page if it has one, and the project is yours to fork and hand to agents.</p>
 <form id="gq" class="search" role="search"><input id="q" type="search" name="q" placeholder="Search GitHub, or paste a URL" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="search"></form>
 <div class="sugg" id="sugg"><span>Try</span>${['2048', 'reveal.js', 'particles.js', 'tetris javascript', 'https://github.com/SortableJS/Sortable'].map((t) => `<button type="button" class="chipbtn" data-q="${esc(t)}">${esc(t.replace('https://github.com/', ''))}</button>`).join('')}</div>
 <p class="fresh-legend">Shaded dates: last push, full this week, empty after a year.</p>
@@ -385,7 +385,7 @@ if(location.hash.length>1){$q.value=decodeURIComponent(location.hash.slice(1));r
 }
 
 export function buildLogPage(info: ProjectInfo, label: string, d: { status: string; error?: string; log?: string; at: number; url?: string } | undefined) {
-  return shell(`Build log · ${info.name} · forq`, `<a class="back" href="/p/${info.owner}/${info.name}">${esc(info.owner)} / ${esc(info.name)}</a>
+  return shell(`Build log · ${info.name} · qodebase`, `<a class="back" href="/p/${info.owner}/${info.name}">${esc(info.owner)} / ${esc(info.name)}</a>
 <h1>Build log</h1><p class="desc">${esc(label)}${d ? `: ${esc(d.status)}${d.error ? `, ${esc(d.error)}` : ''}` : ': no build yet'}</p>
 ${d?.url ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a></p>` : ''}
 <pre style="background:var(--card);border-radius:12px;padding:12px;overflow:auto;font:12px/1.5 'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word">${esc(d?.log || 'No log.')}</pre>`);
@@ -394,12 +394,12 @@ ${d?.url ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.ur
 export function settingsPage(u: { handle: string; email: string; apiKeyTail?: string; apiKeyCheckedAt?: number; model?: string }, owner: boolean, projects: number, welcome: boolean) {
   const keyBlock = owner
     ? `<p class="desc">Your agents run on this instance's Claude subscription. No API key needed.</p>`
-    : `${u.apiKeyTail ? `<p class="desc">Key ending in <b>…${esc(u.apiKeyTail)}</b>, checked ${freshTag(u.apiKeyCheckedAt || 0, Date.now(), STEPS)}. Your agents run on it with ${esc(({ 'claude-sonnet-5-5': 'Sonnet 5.5', 'claude-opus-5-5': 'Opus 5.5', 'claude-sonnet-5': 'Sonnet 5' } as Record<string, string>)[u.model || 'claude-sonnet-5-5'] || u.model || 'Sonnet 5.5')}.</p>` : `<p class="desc">Agents run Claude Code with your own Anthropic API key. You pay Anthropic directly; forq measured about $1–2 per finished, reviewed change on Sonnet.</p>`}
+    : `${u.apiKeyTail ? `<p class="desc">Key ending in <b>…${esc(u.apiKeyTail)}</b>, checked ${freshTag(u.apiKeyCheckedAt || 0, Date.now(), STEPS)}. Your agents run on it with ${esc(({ 'claude-sonnet-5-5': 'Sonnet 5.5', 'claude-opus-5-5': 'Opus 5.5', 'claude-sonnet-5': 'Sonnet 5' } as Record<string, string>)[u.model || 'claude-sonnet-5-5'] || u.model || 'Sonnet 5.5')}.</p>` : `<p class="desc">Agents run Claude Code with your own Anthropic API key. You pay Anthropic directly; qodebase measured about $1–2 per finished, reviewed change on Sonnet.</p>`}
 <form class="composer" id="keyf"><input class="field" name="key" type="password" autocomplete="off" placeholder="sk-ant-…" aria-label="Anthropic API key">
 <div class="bar"><button class="btn">${u.apiKeyTail ? 'Replace key' : 'Save key'}</button>${u.apiKeyTail ? '<button type="button" class="chipbtn" id="rmkey">Remove</button>' : ''}</div></form>
 <p class="note">The key is checked with one call to Anthropic, stored encrypted, and only used to start Claude Code in your projects' boxes. Get one at <a href="https://console.anthropic.com/settings/keys" rel="noopener" target="_blank">console.anthropic.com</a>.</p>`;
-  return shell('Settings · forq', `<a class="back" href="/">Explore</a>
-<h1>${welcome ? 'Welcome to forq' : 'Settings'}</h1>
+  return shell('Settings · qodebase', `<a class="back" href="/">Explore</a>
+<h1>${welcome ? 'Welcome to qodebase' : 'Settings'}</h1>
 ${welcome ? `<p class="desc">You are signed in. ${[projects ? '' : 'Pick the name your projects live under', owner ? '' : 'add your Anthropic API key', 'then fork something from Explore'].filter(Boolean).join(', ').replace(/^./, (c) => c.toUpperCase())}.</p>` : ''}
 <h2>Your name</h2>
 <form class="composer" id="hf"><input class="field" name="handle" value="${esc(u.handle)}" ${projects ? 'disabled' : ''} autocapitalize="none" spellcheck="false" aria-label="Handle">
@@ -420,23 +420,23 @@ const rm=document.getElementById('rmkey');if(rm)rm.onclick=async()=>{if(await ca
 }
 
 export function aboutPage() {
-  return shell('About · forq', `<a class="back" href="/">Explore</a>
-<h1>About forq</h1>
-<p class="desc">forq is a git platform for the age of agents, built on Cloudflare (Artifacts, Containers, Durable Objects, Workers) and made for the phone. Every project runs; every fork comes with its own agents.</p>
+  return shell('About · qodebase', `<a class="back" href="/">Explore</a>
+<h1>About qodebase</h1>
+<p class="desc">qodebase is a git platform for the age of agents, built on Cloudflare (Artifacts, Containers, Durable Objects, Workers) and made for the phone. Every project runs; every fork comes with its own agents.</p>
 <h2>How it works</h2>
 <p class="desc">You tell a project's router agent what to change. It starts one agent per task, each in its own container on its own fork. A reviewer agent checks every push in a live preview before you merge. Errors from a deployed app can start a fix by themselves.</p>
 <h2>Whose Claude</h2>
-<p class="desc">Agents run Claude Code with your own Anthropic API key, which you add in Settings. You pay Anthropic directly. forq measured about $1–2 per finished, reviewed change on Sonnet.</p>
+<p class="desc">Agents run Claude Code with your own Anthropic API key, which you add in Settings. You pay Anthropic directly. qodebase measured about $1–2 per finished, reviewed change on Sonnet.</p>
 <h2>Contact</h2>
 <p class="desc">hello@kapps.dev, or the <a href="/feedback?from=/about">feedback form</a>.</p>`);
 }
 
 export function privacyPage() {
-  return shell('Privacy · forq', `<a class="back" href="/">Explore</a>
+  return shell('Privacy · qodebase', `<a class="back" href="/">Explore</a>
 <h1>Privacy</h1>
-<p class="desc">What forq stores: your email address and the name you choose; your Anthropic API key, encrypted, used only to start Claude Code in your projects' containers; the projects, forks and agent conversations you create. Projects are public to read.</p>
-<p class="desc">Sign-in is handled by Cloudflare Access: with your Google account, or with a one-time code sent to your email. With Google, forq receives only your email address from Google, nothing else from your account. forq sets one cookie, to keep you signed in.</p>
-<p class="desc">Visits are counted with our own analytics (kstats), sent to forq itself and not to a third party: the pages you open, the buttons and links you tap, the kind of device and the country. Your IP address is used once to make a visitor code that changes every day, and is not stored. No ad trackers.</p>
+<p class="desc">What qodebase stores: your email address and the name you choose; your Anthropic API key, encrypted, used only to start Claude Code in your projects' containers; the projects, forks and agent conversations you create. Projects are public to read.</p>
+<p class="desc">Sign-in is handled by Cloudflare Access: with your Google account, or with a one-time code sent to your email. With Google, qodebase receives only your email address from Google, nothing else from your account. qodebase sets one cookie, to keep you signed in.</p>
+<p class="desc">Visits are counted with our own analytics (kstats), sent to qodebase itself and not to a third party: the pages you open, the buttons and links you tap, the kind of device and the country. Your IP address is used once to make a visitor code that changes every day, and is not stored. No ad trackers.</p>
 <p class="desc">The <a href="/feedback">feedback form</a> keeps your message, the page you sent it from, the kind of device, and your email only if you give one.</p>
 <p class="desc">Your agents' requests go to Anthropic under your key and Anthropic's terms. To delete your account and data, write to hello@kapps.dev.</p>`);
 }

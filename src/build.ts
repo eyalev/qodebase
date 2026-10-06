@@ -74,7 +74,7 @@ const c = found.endsWith('.toml') ? toml.parse(raw) : jsonc.parse(raw);
 const UNSUPPORTED = ['kv_namespaces', 'd1_databases', 'r2_buckets', 'queues', 'services', 'hyperdrive', 'vectorize',
   'analytics_engine_datasets', 'dispatch_namespaces', 'mtls_certificates', 'secrets_store_secrets', 'workflows', 'containers', 'send_email', 'pipelines'];
 const bad = UNSUPPORTED.filter((k) => c[k] && (Array.isArray(c[k]) ? c[k].length : Object.keys(c[k]).length));
-if (bad.length) { console.error('FORQ_ERROR needs ' + bad.join(', ') + ', which forq cannot create yet'); process.exit(4); }
+if (bad.length) { console.error('FORQ_ERROR needs ' + bad.join(', ') + ', which qodebase cannot create yet'); process.exit(4); }
 const out = { ...c, name: worker, workers_dev: true, preview_urls: true };
 for (const k of ['route', 'routes', 'env', 'account_id', 'tail_consumers', 'logpush', 'triggers']) delete out[k];
 // Logs + Issues (Cloudflare's error grouping; forq's automation turns issues into agent work).

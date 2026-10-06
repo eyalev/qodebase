@@ -80,7 +80,7 @@ export function catalogBody(entries: Entry[], opts: { cat?: string; sort?: strin
   const native = entries.filter((e) => !e.forkedFrom && e.slug !== 'forq.blank');
   const count = (c: string) => ITEMS.filter((x) => x.cat === c).length;
   const chip = (c: string, l: string, n: number) => `<a href="${q(c, sort)}" data-cat="${c}" class="${cat === c ? 'on' : ''}">${l}<span>${n}</span></a>`;
-  const cats = `<nav class="cats" aria-label="Categories">${chip('', 'All', ITEMS.length)}${chip('runs', 'Runs here', ITEMS.filter(runsHere).length)}${CATS.filter(([c]) => count(c)).map(([c, l]) => chip(c, l, count(c))).join('')}${chip('forq', 'On forq', native.length)}</nav>`;
+  const cats = `<nav class="cats" aria-label="Categories">${chip('', 'All', ITEMS.length)}${chip('runs', 'Runs here', ITEMS.filter(runsHere).length)}${CATS.filter(([c]) => count(c)).map(([c, l]) => chip(c, l, count(c))).join('')}${chip('forq', 'On qodebase', native.length)}</nav>`;
   const sorts = `<nav class="sorts" aria-label="Sort"${cat === 'forq' ? ' hidden' : ''}><a href="${q(cat, 'top')}" data-sort="top" class="${sort === 'top' ? 'on' : ''}">Top</a><a href="${q(cat, 'updated')}" data-sort="updated" class="${sort === 'updated' ? 'on' : ''}">Recently updated</a>
 <span class="why">${sort === 'top' ? 'most GitHub stars' : 'latest commit first'}</span></nav>`;
   const shown = (x: CatalogItem) => !cat || (cat === 'runs' ? runsHere(x) : x.cat === cat);
@@ -90,7 +90,7 @@ export function catalogBody(entries: Entry[], opts: { cat?: string; sort?: strin
     const there = onForq.get(x.full.toLowerCase());
     return `<a class="pr" href="${ghPath(x.full)}" data-cat="${esc(x.cat)}"${runsHere(x) ? ' data-runs' : ''} data-stars="${x.stars}" data-pushed="${x.pushed}"${shown(x) && cat !== 'forq' ? '' : ' hidden'}>${avatar(owner)}<span class="bd">
 <span class="n"><span class="o">${esc(owner)} /</span> ${esc(name)}</span><span class="d">${esc(x.desc)}</span>
-<span class="m"><span class="st">${STAR}${k(x.stars)}</span><span class="upd">${freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24])}</span>${runsHere(x) ? RUNS : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>${esc(x.license)}</span>${there ? '<span class="onforq">On forq</span>' : ''}</span></span></a>`;
+<span class="m"><span class="st">${STAR}${k(x.stars)}</span><span class="upd">${freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24])}</span>${runsHere(x) ? RUNS : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>${esc(x.license)}</span>${there ? '<span class="onforq">On qodebase</span>' : ''}</span></span></a>`;
   }).join('');
   const forqRows = native.sort((a, b) => b.updatedAt - a.updatedAt).map((e) => `<a class="pr" href="${path(e.slug)}">${avatar(e.importedFrom ? e.importedFrom.fullName.split('/')[0] : e.owner)}<span class="bd">
 <span class="n"><span class="o">${esc(e.owner)} /</span> ${esc(e.name)}</span><span class="d">${esc(e.description || '')}</span>
@@ -108,7 +108,7 @@ export function peopleBody(entries: Entry[]) {
   const onForq = [...new Set(entries.map((e) => e.owner))].map((h) => ({ h, n: entries.filter((e) => e.owner === h).length })).sort((a, b) => b.n - a.n);
   return `<div class="people">${owners.map((p) => `<div class="pp">${avatar(p.o)}<div class="tx"><b><a href="https://github.com/${esc(p.o)}" target="_blank" rel="noopener" style="color:inherit">${esc(p.o)}</a></b>
 <span>${p.list.map((x) => `<a href="${ghPath(x.full)}">${esc(x.full.split('/')[1])}</a>`).join(', ')}</span></div><span class="pst">${STAR}${k(p.stars)}</span></div>`).join('')}</div>
-${onForq.length ? `<p class="sec2">On this forq</p><div class="people">${onForq.map((p) => `<div class="pp">${avatar(p.h)}<div class="tx"><b>${esc(p.h)}</b><span>${p.n} project${p.n === 1 ? '' : 's'}</span></div></div>`).join('')}</div>` : ''}`;
+${onForq.length ? `<p class="sec2">On this qodebase</p><div class="people">${onForq.map((p) => `<div class="pp">${avatar(p.h)}<div class="tx"><b>${esc(p.h)}</b><span>${p.n} project${p.n === 1 ? '' : 's'}</span></div></div>`).join('')}</div>` : ''}`;
 }
 
 /** A catalogue project's page: what it is, Import (or Open on forq), and its README, loaded lazily. */
@@ -119,16 +119,16 @@ export function catalogPage(full: string, entries: Entry[], me: string) {
   const [owner, name] = x.full.split('/');
   const there = importedMap(entries).get(x.full.toLowerCase());
   const action = there
-    ? `<a class="btn" href="${path(there.slug)}">Open on forq</a>`
-    : me ? `<button class="btn" id="imp" data-repo="${esc(x.full)}">Import into forq</button>`
+    ? `<a class="btn" href="${path(there.slug)}">Open on qodebase</a>`
+    : me ? `<button class="btn" id="imp" data-repo="${esc(x.full)}">Import into qodebase</button>`
     : `<a class="btn" href="/login?next=${encodeURIComponent(ghPath(x.full))}">Sign in to import</a>`;
   const body = `<a class="back3" href="/">Projects</a>
 <div class="gh-head">${avatar(owner, 56)}<h1><span class="o">${esc(owner)} /</span> ${esc(name)}</h1></div>
 <p class="gh-desc">${esc(x.desc)}</p>
 <div class="gh-meta">${runsHere(x) ? RUNS : ''}<span class="st">${STAR}${k(x.stars)} stars</span><span>${esc(x.license)}</span>${x.lang ? `<span>${esc(x.lang)}</span>` : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>updated ${freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24])}</span></div>
 <div class="gh-acts">${action}<a class="chipbtn" href="https://github.com/${esc(x.full)}" target="_blank" rel="noopener">GitHub</a>${x.homepage ? `<a class="chipbtn" href="${esc(x.homepage)}" target="_blank" rel="noopener">Live demo</a>` : ''}</div>
-<p class="gh-note">${there ? `Already imported as ${esc(there.owner)} / ${esc(there.name)}: open it to run it, fork it and change it with agents.` : runsHere(x) ? 'Runs here: importing copies its latest commit into forq and opens it as a live app on its own address, ready to fork and change with agents.'
-    : 'Importing copies its latest commit into forq: read and search the code, fork it, and change it with agents. It has no page forq can open as an app.'}</p>
+<p class="gh-note">${there ? `Already imported as ${esc(there.owner)} / ${esc(there.name)}: open it to run it, fork it and change it with agents.` : runsHere(x) ? 'Runs here: importing copies its latest commit into qodebase and opens it as a live app on its own address, ready to fork and change with agents.'
+    : 'Importing copies its latest commit into qodebase: read and search the code, fork it, and change it with agents. It has no page qodebase can open as an app.'}</p>
 <h3>README</h3><div class="readme" id="readme"><div class="skel" aria-label="Loading the README"><i></i><i></i><i></i><i></i><i></i></div></div>
 <script>
 fetch(location.pathname.replace(/\\/$/,'')+'/readme').then((r)=>r.ok?r.text():Promise.reject()).then((h)=>{document.getElementById('readme').innerHTML=h;})

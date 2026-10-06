@@ -128,7 +128,7 @@ export function liveChanges(c: Ctx) {
   const merged = done.length ? `<a class="older" href="${c.base}/history">${done.length} merged change${done.length > 1 ? 's' : ''} in History</a>` : '';
   // A copy you just made: say it is yours and what to do with it.
   const fresh = info.forkedFrom && !info.agents.length && !q;
-  const empty = !out.join('').trim() ? fresh ? `<div class="hello"><b>This is your copy.</b><p>Forked from <a href="/p/${esc(info.forkedFrom!.replace('.', '/'))}">${esc(info.forkedFrom!.replace('.', ' / '))}</a>. Say what to change below, in plain words: forq splits it into tasks, an agent does each one, and a reviewer checks it before you merge. The original is not touched.</p></div>` : `<div class="hello"><b>Nothing in progress.</b><p>Ask for a change in plain words. forq splits it into tasks, an agent does each one on its own fork, and a reviewer checks it before you merge.</p></div>` : '';
+  const empty = !out.join('').trim() ? fresh ? `<div class="hello"><b>This is your copy.</b><p>Forked from <a href="/p/${esc(info.forkedFrom!.replace('.', '/'))}">${esc(info.forkedFrom!.replace('.', ' / '))}</a>. Say what to change below, in plain words: qodebase splits it into tasks, an agent does each one, and a reviewer checks it before you merge. The original is not touched.</p></div>` : `<div class="hello"><b>Nothing in progress.</b><p>Ask for a change in plain words. qodebase splits it into tasks, an agent does each one on its own fork, and a reviewer checks it before you merge.</p></div>` : '';
   return `<template id="needs" data-n="${needsOf(open).length}"></template>${merged}${empty}${out.join('')}${legend(open.length)}`;
 }
 
@@ -378,9 +378,9 @@ export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record
   const needs = own ? needsOf(open).length : 0;
   // A: the way back to the home tabs is "‹ forq", carrying the Inbox count.
   const home = g.nav === 'a'
-    ? `<a class="home back" href="/" aria-label="All projects${g.inbox ? `, ${g.inbox} need you` : ''}">${CHEV}forq${g.inbox ? `<span class="hbadge">${g.inbox}</span>` : ''}</a>`
-    : `<a class="home" href="/" aria-label="All projects">forq</a>`;
-  return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · forq`, `${g.nav === 'd' ? globalTop(own ? 'projects' : 'explore', g.inbox, me) : ''}
+    ? `<a class="home back" href="/" aria-label="All projects${g.inbox ? `, ${g.inbox} need you` : ''}">${CHEV}qodebase${g.inbox ? `<span class="hbadge">${g.inbox}</span>` : ''}</a>`
+    : `<a class="home" href="/" aria-label="All projects">qodebase</a>`;
+  return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · qodebase`, `${g.nav === 'd' ? globalTop(own ? 'projects' : 'explore', g.inbox, me) : ''}
 <header class="h3${g.nav === 'd' ? ' sub' : ''}">${g.nav === 'd' ? '' : home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(info.owner)} /</span> <b>${esc(info.name)}</b></a>${r.action || ''}</header>
 ${g.nav === 'b' ? tabBar(c, id, needs, true) : ''}
 <main class="view${r.full ? ' full' : ''}" id="view">${r.body}</main>${r.compose || (own ? askBox(c) : '')}
@@ -473,7 +473,7 @@ export function globalBar(active: HomeTab, inbox: number, me: string) {
   const tabs: [HomeTab, string, string][] = me
     ? [['projects', 'Projects', '/'], ['inbox', 'Inbox', '/inbox'], ['explore', 'Explore', '/explore'], ['account', 'Account', '/settings']]
     : [['explore', 'Explore', '/'], ['account', 'Sign in', '/login']];
-  return `<nav class="tabbar" aria-label="forq">${tabs.map(([id, labelT, href]) => {
+  return `<nav class="tabbar" aria-label="qodebase">${tabs.map(([id, labelT, href]) => {
     const on = id === active;
     const badge = id === 'inbox' ? `<span class="badge"${inbox ? '' : ' hidden'}>${inbox || ''}</span>` : '';
     return `<a href="${href}" class="tab${on ? ' on' : ''}"${on ? ' aria-current="page"' : ''}>${HI[id]}${badge}<span>${labelT}</span></a>`;
@@ -548,13 +548,13 @@ export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, ite
   if (tab === 'home' && nav === 'd') {
     // Home is one question and one way out (Eyal, 2026-10-04: "really simple, a call
     // to action, build something, or browse public projects; not a lot of mental strength").
-    title = 'forq';
+    title = 'qodebase';
     body = landBody(entries);
   } else if (tab === 'explore' && nav === 'd') {
     title = 'Explore';
     body = worldBody(world, entries, !!me, wopts);
   } else if (tab === 'home') {
-    title = 'forq';
+    title = 'qodebase';
     body = worldBody(world, entries, !!me, wopts);
   } else if (tab === 'projects' || tab === 'mine') {
     title = 'Your projects';
@@ -573,8 +573,8 @@ ${moving.length ? `<h3>In progress</h3>${moving.map(({ it, c }) => `<a class="mi
     body = `<div class="hrow"><span class="lede" style="flex:1;margin:0">Projects that run. Open one, fork it, ask for changes.</span>${me ? '<a class="chipbtn" href="/import">Import</a>' : ''}</div>
 <div class="home-list">${others.map((e) => projRow(e, now, undefined, forks(e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>`;
   }
-  return shell2(nav as UI, `${title} · forq`, `${nav === 'd' ? globalTop(tab, inboxN, me) : `
-<header class="h3"><a class="home" href="/">forq</a><span class="htitle">${title}</span></header>`}
+  return shell2(nav as UI, `${title} · qodebase`, `${nav === 'd' ? globalTop(tab, inboxN, me) : `
+<header class="h3"><a class="home" href="/">qodebase</a><span class="htitle">${title}</span></header>`}
 <main class="view" id="view"><div class="pad">${body}${tab === 'home' && nav === 'd' ? '' : legend(1)}${FOOT}</div></main>
 ${nav === 'd' ? '' : globalBar(tab, inboxN, me)}
 <script>
@@ -613,7 +613,7 @@ export function globalTop(active: HomeTab, inbox: number, me: string) {
     : [['explore', 'Explore', '/explore'], ['account', 'Sign in', '/login']];
   if (active === 'projects') active = 'mine';
   // Build: the call to action on every page, signed in or not (Eyal, 2026-10-03).
-  return `<nav class="gtop" aria-label="forq"><a class="mark" href="/">forq</a>${tabs.map(([id, labelT, href]) =>
+  return `<nav class="gtop" aria-label="qodebase"><a class="mark" href="/">qodebase</a>${tabs.map(([id, labelT, href]) =>
     `<a href="${href}" class="g${id === active ? ' on' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}<a class="btn gbuild" href="/build"${active === 'build' ? ' aria-current="page"' : ''}>Build</a></nav>`;
 }
 
@@ -621,13 +621,13 @@ export function globalTop(active: HomeTab, inbox: number, me: string) {
 export function catalogV3(nav: Nav, full: string, entries: Entry[], me: string, inbox: number) {
   const pg = catalogPage(full, entries, me);
   if (!pg) return null;
-  return shell2(nav as UI, `${pg.title} · forq`, `${globalTop('explore', inbox, me)}
+  return shell2(nav as UI, `${pg.title} · qodebase`, `${globalTop('explore', inbox, me)}
 <main class="view" id="view"><div class="pad">${pg.body}${legend(1)}${FOOT}</div></main>${SPECULATE}`, V3_CSS + NAV_CSS + WORLD_CSS + CATALOG_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
 
 /** The Build page under D's top tabs. */
 export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, runDomain: string) {
-  return shell2(nav as UI, 'Build · forq', `${globalTop('build', inbox, me)}
+  return shell2(nav as UI, 'Build · qodebase', `${globalTop('build', inbox, me)}
 <main class="view" id="view"><div class="pad">${buildBody(me, needsKey, runDomain)}${FOOT}</div></main>`, V3_CSS + NAV_CSS + BUILD_CSS + `@media (min-width:900px){body.dhome{display:flex;flex-direction:column}}`, `v3 nav-${nav} dhome`);
 }
 
@@ -644,7 +644,7 @@ function landBody(entries: Entry[]) {
 ${tryRow()}
 <a class="browse" href="/explore"><span>Browse public projects</span><span class="n">${n}</span></a>
 <a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>Install Cloudflare's official agent starter, OpenClaw, Hermes, T3 Code or Pi in your own Cloudflare account. Sign in with Cloudflare; no GitHub, no keys.</small></span></a>
-<a class="browse own" href="/p/forq/forq/readme?doc=SELF_HOST.md"><span>Run your own forq<small>This is the hosted forq. It is open source: run it on your own Cloudflare account and it is yours.</small></span></a>
+<a class="browse own" href="/p/forq/forq/readme?doc=SELF_HOST.md"><span>Run your own qodebase<small>This is the hosted qodebase. It is open source: run it on your own Cloudflare account and it is yours.</small></span></a>
 </section>${SPECULATE}
 <script>(function(){const f=document.querySelector('.landask'),t=f.querySelector('textarea');
 t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();if(t.value.trim())f.requestSubmit();}});})();</script>`;

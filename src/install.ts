@@ -329,7 +329,7 @@ export class Installs extends DurableObject<Env> {
     const apps = await cf(token, `/accounts/${a}/access/apps?per_page=100`);
     if (((apps.result || []) as any[]).some((ap) => (ap.destinations || []).some((d: any) => d.type === 'worker' && d.worker_id === tag))) return;
     const r = await cf(token, `/accounts/${a}/access/apps`, { method: 'POST', body: JSON.stringify({
-      type: 'self_hosted', name: `${i.name} (forq)`, destinations: [{ type: 'worker', worker_id: tag }], session_duration: '720h',
+      type: 'self_hosted', name: `${i.name} (qodebase)`, destinations: [{ type: 'worker', worker_id: tag }], session_duration: '720h',
       ...(allowed.length ? { allowed_idps: allowed, auto_redirect_to_identity: allowed.length === 1 } : {}),
       policies: [{ name: 'Only you', decision: 'allow', include: [{ cloudflare_account_member: { account_id: a } }, { email: { email: i.email } }] }],
     }) });

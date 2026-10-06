@@ -59,7 +59,7 @@ export function buildBody(me: string, needsKey: boolean, runDomain: string) {
 <div class="row"><button type="button" class="chipbtn mic" id="mic" hidden aria-label="Speak instead of typing">${MIC}<span>Speak</span></button><button type="button" class="btn" id="next">Next</button></div>
 <p class="exl">Or start from one of these</p><div class="ex">${EXAMPLES.map((e) => `<button type="button" data-ex="${esc(e)}">${esc(e)}</button>`).join('')}</div></section>
 <section id="s2" hidden><button type="button" class="back4" id="back">Change the idea</button>
-<h1>Here's what forq will build</h1>
+<h1>Here's what qodebase will build</h1>
 <div class="brief"><div class="fld"><label for="pname">Project name</label><input id="pname" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="39">
 <p class="url">It will live at <b id="purl"></b></p></div>
 <div class="fld"><label for="pidea">What you asked for</label><textarea id="pidea"></textarea></div></div>

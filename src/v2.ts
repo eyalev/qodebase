@@ -155,7 +155,7 @@ ${act ? `<div class="chg-p">${act}</div>` : ''}</div>${detail(info, c)}</div>`;
 export const legend = (n: number) => (n ? freshLegend(STEPS) : '');
 export const TRYBAR = `<div class="trybar" id="trybar" hidden><div class="tt">Trying <b></b></div><button type="button" class="btn" data-trymerge>Merge</button><button type="button" class="chipbtn" data-trylive>Back to live</button></div>`;
 export const SEND = `<button class="send chipbtn">Send</button>`;
-export const VISIT = `<p class="visit">On forq. Fork it to make it yours and ask agents for changes.</p>`;
+export const VISIT = `<p class="visit">On qodebase. Fork it to make it yours and ask agents for changes.</p>`;
 
 export function planningHtml(p: ReturnType<typeof planningOf>, q?: ProjectInfo['lastRequest']) {
   if (p.failed) return `<div class="plan bad">Could not start: ${esc(p.failed)} <button class="chipbtn" data-retry="${esc(q?.text || '')}">Retry</button></div>`;
@@ -402,8 +402,8 @@ export function projectA(o: ProjectArgs) {
   const own = info.owner === me;
   const app = appUrl(o);
   const myForks = forks.filter((e) => e.owner === me);
-  return shell2('a', `${info.owner}/${info.name} · forq`, `
-<header class="abar"><a class="home" href="/" aria-label="All projects">forq</a><span class="nm"><span class="o">${esc(info.owner)} /</span> ${esc(info.name)}</span>
+  return shell2('a', `${info.owner}/${info.name} · qodebase`, `
+<header class="abar"><a class="home" href="/" aria-label="All projects">qodebase</a><span class="nm"><span class="o">${esc(info.owner)} /</span> ${esc(info.name)}</span>
 <button type="button" class="lnk" id="info-b">About</button>${app ? `<a class="chipbtn" id="ext" href="${esc(app)}" target="_blank" rel="noopener">Open app${OPEN_ICON}</a>` : ''}</header>
 <div class="stage">${TRYBAR}${app ? `<iframe id="app" src="${esc(app)}" title="${esc(info.name)}"></iframe>` : noApp(o)}</div>
 <div class="dock">${own ? (o.needsKey ? keyNote : `<button type="button" class="status" id="status" aria-label="Show changes"><span class="dot"></span><span class="tx">No changes in progress</span><span class="up"></span></button>
@@ -492,8 +492,8 @@ export function projectB(o: ProjectArgs) {
   const own = info.owner === me;
   const app = appUrl(o);
   const myForks = forks.filter((e) => e.owner === me);
-  return shell2('b', `${info.owner}/${info.name} · forq`, `<main>
-<header class="top"><a class="home" href="/">forq</a>${me ? `<a class="me" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</header>
+  return shell2('b', `${info.owner}/${info.name} · qodebase`, `<main>
+<header class="top"><a class="home" href="/">qodebase</a>${me ? `<a class="me" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</header>
 <h1><span class="o">${esc(info.owner)} /</span> ${esc(info.name)}</h1>
 ${info.description ? `<p class="lede">${esc(info.description)}</p>` : ''}${own ? '' : VISIT}
 ${own ? '' : `<div class="forkbar">${forkAction(info, me, myForks)}</div>`}
@@ -591,7 +591,7 @@ export function liveC(info: ProjectInfo, all: Change[], plan: ReturnType<typeof 
     return `${when}${you}<div class="them">${g.changes.map((c) => changeRow(info, c, now, accent)).join('')}${tail}</div>`;
   });
   if (q && isMerge(q.text)) out.push(`${planningHtml(plan, q)}`);
-  return need + (out.join('') || `<p class="empty" style="text-align:center;margin-top:24px">Ask for a change. forq splits it into tasks, an agent does each one, and a reviewer checks it before you merge.</p>`) + legend(all.length);
+  return need + (out.join('') || `<p class="empty" style="text-align:center;margin-top:24px">Ask for a change. qodebase splits it into tasks, an agent does each one, and a reviewer checks it before you merge.</p>`) + legend(all.length);
 }
 
 export function projectC(o: ProjectArgs) {
@@ -600,8 +600,8 @@ export function projectC(o: ProjectArgs) {
   const app = appUrl(o);
   const myForks = forks.filter((e) => e.owner === me);
   const codeHref = `/p/${info.owner}/${info.name}/code/`;
-  return shell2('c', `${info.owner}/${info.name} · forq`, `
-<header class="cbar"><div class="r1"><a class="home" href="/">forq</a><span class="nm"><span class="o">${esc(info.owner)} /</span> ${esc(info.name)}</span>${own ? '' : `<a class="lnk" href="${codeHref}">Code</a>`}${app ? `<a class="chipbtn" id="ext" href="${esc(app)}" target="_blank" rel="noopener">Open app${OPEN_ICON_C}</a>` : ''}</div>
+  return shell2('c', `${info.owner}/${info.name} · qodebase`, `
+<header class="cbar"><div class="r1"><a class="home" href="/">qodebase</a><span class="nm"><span class="o">${esc(info.owner)} /</span> ${esc(info.name)}</span>${own ? '' : `<a class="lnk" href="${codeHref}">Code</a>`}${app ? `<a class="chipbtn" id="ext" href="${esc(app)}" target="_blank" rel="noopener">Open app${OPEN_ICON_C}</a>` : ''}</div>
 ${own ? `<nav class="tabs" role="tablist"><button type="button" role="tab" data-tab="chat" class="on">Changes</button><button type="button" role="tab" data-tab="app">App</button><button type="button" role="tab" data-tab="code">Code</button></nav>` : ''}</header>
 ${own ? `<section class="pane on" id="p-chat"><div class="thread" id="live">${o.liveHtml}</div>
 <div class="compose">${o.needsKey ? keyNote : `<form class="ask"><textarea rows="1" placeholder="Ask for a change" enterkeyhint="send" aria-label="Ask for a change"></textarea>${SEND}</form>`}</div></section>` : ''}
@@ -682,7 +682,7 @@ export function homeV2(ui: UI, entries: Entry[], me: string, status: Record<stri
 ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
 <div class="m">${withStatus ? st(status[e.slug]) : ''}${freshTag(e.updatedAt, now, STEPS)}${!withStatus && forks(e.slug) ? `<span>${forks(e.slug)} fork${forks(e.slug) > 1 ? 's' : ''}</span>` : ''}${e.importedFrom ? `<span>${e.importedFrom.stars >= 1000 ? (e.importedFrom.stars / 1000).toFixed(1) + 'k' : e.importedFrom.stars} stars</span>` : ''}</div></div>`;
   return shell2(ui, 'forq', `<main>
-<header class="top"><a class="home" href="/">forq<span class="vtag">Variant ${ui.toUpperCase()}: ${NAMES[ui]}</span></a><span class="tr">${me ? `<a class="chipbtn" href="/import">Import</a><a class="me" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</span></header>
+<header class="top"><a class="home" href="/">qodebase<span class="vtag">Variant ${ui.toUpperCase()}: ${NAMES[ui]}</span></a><span class="tr">${me ? `<a class="chipbtn" href="/import">Import</a><a class="me" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</span></header>
 ${ui === 'c' ? `<a class="vnote" href="/design-fixture"><b>The views design lives inside a project.</b> Open any project below, or see the sample with every state</a>` : ''}
 ${mine.length ? '' : `<p class="hero">Projects that run, and agents that change them.</p><p class="sub">Open one to use it. Fork it, then ask for a change in plain words.</p>`}
 ${mine.length ? `<h2>Your projects</h2><div class="rows">${mine.map((e) => row(e, true)).join('')}</div>` : ''}
