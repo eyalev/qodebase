@@ -281,6 +281,15 @@ OWN account with no GitHub and no pasted tokens (research and options:
   their OWN Claude subscription at `/__forq/claude`; until then the pane waits.
   mobile-agent only accepts a same-origin browser Origin, so the Worker sends
   `origin: http://container` (Access is the lock). Same container rules as T3.
+  `/` opens mobile-agent's `?ui=minimal` (terminal, six keys, input; `?ui=full`
+  for everything). Status line from opendev's boot.sh, in Node:
+  `[model] ~dir branch* $cost | subscription|API key`. `chown 0:0 /` +
+  `XDG_RUNTIME_DIR=/run/user/0` (else Claude warns its messaging socket is off),
+  tmux `focus-events on`. Claude starts only after the phone attaches (tmux
+  list-clients) + 2 s: with the alternate screen off, lines drawn at the first
+  60 columns stay cut off after the phone's resize.
+  After `qb install` updates a box, its Durable Object can run the old code for
+  ~1 min: a `/__forq/restart` right away restarts with the OLD entrypoint.
 - **Pi** (`forq/pi-durable`, local `../forq-pi-durable`, since 2026-10-06):
   Cloudflare's official example `cloudflare/agents` `examples/next/harnesses/pi`
   (5.8k ★ repo; Earendil's `@earendil-works/pi-durable` 1.0, 113k ★ pi repo):
