@@ -10,6 +10,10 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
 import { FORQ_CLI } from './cli';
+import { registry } from './registry';
+// The image's own files, for boxes that set themselves up (BOX_IMAGE=managed).
+import BOOT_SH from '../box/boot.sh';
+import BOX_API from '../box/box-api.mjs';
 
 const MA_PORT = 7901;
 const TW_PORT = 7681;
@@ -39,6 +43,30 @@ export function log(module: string, event: string, fields: Record<string, unknow
 }
 
 type Snap = { id: string; size: number; name?: string };
+
+// ---- managed boxes (a self-hosted copy: no registry image in its account) ----------------
+// The box starts from Cloudflare's cloudflare/debian-trixie (Node 24) and installs what
+// box/Dockerfile bakes in: apt tools, Claude Code, mobile-agent (public repo, pinned),
+// /opt/boot.sh and /opt/box-api.mjs. The first box to finish snapshots that as the
+// instance's base (Registry 'baseSnap'); every later box starts from it. Bump SETUP_V
+// when the script changes: old bases are then ignored. Chromium (the reviewer's phone
+// screenshots) is left out of v1: 300 MB more per base.
+const MANAGED_IMAGE = 'cloudflare/debian-trixie';
+const SETUP_V = 1;
+const MA_BASE_REF = '9aa1a4d82a79';
+const MANAGED_SETUP = String.raw`set -e
+export DEBIAN_FRONTEND=noninteractive HOME=/root PATH=/root/.local/bin:/usr/local/bin:$PATH
+fail() { echo "[forq] setup failed: $1"; touch /opt/forq-setup-failed; exit 1; }
+rm -f /opt/forq-setup-failed
+echo "[forq] apt"; { apt-get update -qq && apt-get install -y -qq --no-install-recommends ca-certificates curl git jq python3 tmux ncurses-term procps > /dev/null; } || fail apt
+echo "[forq] claude code"; npm i -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code > /tmp/forq-npm.log 2>&1 || fail claude-code
+echo "[forq] mobile-agent"; rm -rf /opt/mobile-agent && git clone -q https://github.com/eyalev/mobile-agent.git /opt/mobile-agent || fail clone
+(cd /opt/mobile-agent && git checkout -q "$MA_BASE_REF" && rm -rf .git && npm ci --omit=dev --no-audit --no-fund > /tmp/forq-ma-npm.log 2>&1) || fail mobile-agent
+printf '%s' "$BOOT_SH" > /opt/boot.sh && chmod +x /opt/boot.sh
+printf '%s' "$BOX_API" > /opt/box-api.mjs
+rm -rf /var/lib/apt/lists/* /root/.npm/_cacache
+echo "$SETUP_V" > /opt/forq-ready
+echo "[forq] ready"`;
 export type BootSpec = {
   agentId: string;
   task: string;         // '' for the router and the reviewer
@@ -73,6 +101,43 @@ export class AgentBox extends DurableObject<Env> {
     const c = this.ctx.container;
     if (!c) throw new Error('DO is not container-enabled (check wrangler.jsonc)');
     return c as any;
+  }
+
+  /** The image a fresh box starts from: forq's registry image, or Cloudflare's managed one. */
+  #image(): string {
+    return this.env.BOX_IMAGE === 'managed' ? MANAGED_IMAGE : this.c.images.computer;
+  }
+
+  /** Managed boxes: install what the image would have (MANAGED_SETUP), in the background,
+   *  polled with short execs; then make it the instance's base snapshot if there is none. */
+  async #setup(agentId: string): Promise<{ ok: boolean; error?: string }> {
+    const t0 = Date.now();
+    const have = await this.#sh('cat /opt/forq-ready 2>/dev/null');
+    if (have.stdout.trim() === String(SETUP_V)) return { ok: true };
+    await this.#sh('(setsid bash -c "$SETUP" > /tmp/forq-setup.log 2>&1 < /dev/null &)', { SETUP: MANAGED_SETUP, BOOT_SH, BOX_API, MA_BASE_REF, SETUP_V: String(SETUP_V) });
+    log('box', 'setup_started', { agentId });
+    for (let i = 0; i < 200; i++) {   // up to ~10 min
+      await new Promise((r) => setTimeout(r, 3000));
+      const st = await this.#sh('if [ -f /opt/forq-ready ]; then echo ready; elif [ -f /opt/forq-setup-failed ]; then echo failed; tail -15 /tmp/forq-setup.log /tmp/forq-npm.log /tmp/forq-ma-npm.log 2>/dev/null; else echo working; fi');
+      const out = st.stdout.trim();
+      if (out.startsWith('ready')) {
+        log('box', 'setup_done', { agentId, ms: Date.now() - t0 });
+        if (!(await registry(this.env).getBaseSnap(SETUP_V))) {
+          try {
+            const snap = await this.c.snapshotContainer({ name: `base-v${SETUP_V}` }) as Snap;
+            await registry(this.env).setBaseSnap({ snap, v: SETUP_V });
+            log('box', 'base_snapshot', { agentId, id: snap.id, sizeMB: Math.round(snap.size / 1e6) });
+          } catch (e) { log('box', 'base_snapshot_failed', { agentId, err: String(e) }); }
+        }
+        return { ok: true };
+      }
+      if (out.startsWith('failed')) {
+        log('box', 'setup_failed', { agentId, ms: Date.now() - t0, tail: out.slice(-1500) });
+        return { ok: false, error: `box setup failed: ${out.slice(6, 400).trim()}` };
+      }
+    }
+    log('box', 'setup_timeout', { agentId });
+    return { ok: false, error: 'box setup took over 10 minutes' };
   }
 
   async #sh(cmd: string, env: Record<string, string> = {}) {
@@ -116,27 +181,39 @@ export class AgentBox extends DurableObject<Env> {
     let from = 'running';
     if (!this.c.running) {
       const snap = await this.ctx.storage.get<Snap>('snapshot');
-      from = snap ? 'snapshot' : 'image';
+      const managed = this.env.BOX_IMAGE === 'managed';
+      // A managed box with no snapshot of its own starts from the instance's base.
+      const base = !snap && managed ? await registry(this.env).getBaseSnap(SETUP_V) : null;
+      from = snap ? 'snapshot' : base ? 'base' : 'image';
       try {
         this.c.start({
           instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT,
-          ...(snap ? { containerSnapshot: snap } : { image: this.c.images.computer }),
+          ...(snap ? { containerSnapshot: snap } : base ? { containerSnapshot: base } : { image: this.#image() }),
         });
         await this.#sh('true');
       } catch (e) {
+        if (base) await registry(this.env).setBaseSnap(null);   // expired (30 days unused) or gone: set up from the image
         log('box', 'start_failed', { agentId: spec.agentId, from, snapshot: snap?.id, err: String(e), stack: (e as Error)?.stack });
-        if (!snap) return { ok: false, ms: Date.now() - t0, from, error: String(e) };
-        const lost = (await this.ctx.storage.get<Snap[]>('failedSnapshots')) || [];
-        lost.push(snap);
-        await this.ctx.storage.put('failedSnapshots', lost);
-        await this.ctx.storage.delete('snapshot');
+        if (!snap && !base) return { ok: false, ms: Date.now() - t0, from, error: String(e) };
+        if (snap) {
+          const lost = (await this.ctx.storage.get<Snap[]>('failedSnapshots')) || [];
+          lost.push(snap);
+          await this.ctx.storage.put('failedSnapshots', lost);
+          await this.ctx.storage.delete('snapshot');
+        }
         try { if (this.c.running) await this.c.destroy(); } catch {}
         from = 'image-after-failed-restore';
-        this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: this.c.images.computer });
+        this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: this.#image() });
         await this.#sh('true');
       }
       await this.c.setInactivityTimeout(INACTIVITY_BACKSTOP_MS);
       this.#watchExit(spec.agentId, from);
+    }
+
+    // 0. Managed boxes set themselves up once (a restored snapshot or base already is).
+    if (this.env.BOX_IMAGE === 'managed') {
+      const st = await this.#setup(spec.agentId);
+      if (!st.ok) return { ok: false, ms: Date.now() - t0, from, error: st.error };
     }
 
     // 1. Repo: credential helper reads the token from tmpfs; clone once (a

@@ -27,6 +27,8 @@ export interface Env {
   HANDLES: string;            // JSON {email: handle}
   UI_HOST: string;            // forq.kapps.dev
   UI_VARIANT_HOSTS?: string;  // design-variant preview hosts (comma-separated), see variants/
+  SELF_HOST?: string;         // '1' = a copy installed into someone's own Cloudflare (src/install.ts template qodebase)
+  BOX_IMAGE?: string;         // 'managed' = boxes start from cloudflare/debian-trixie and set themselves up (no registry image)
   FRONT_HOSTS?: string;       // hosts served through a front Worker in another account (qodebase.app until its zone moves here)
   FRONT_SECRET?: string;      // that front Worker's shared secret (x-qb-front)
   RUN_HOST: string;           // ttyview.dev (static apps, /<owner>.<name>/)
@@ -62,6 +64,9 @@ export const appHost = (slug: string, domain?: string) => {
  *  fork `owner.name--short` → `ag-short--name--owner`. Undefined past 63
  *  characters (served by path on the run host instead). */
 export function runHost(repo: string, domain: string) {
+  // A self-hosted copy's run host is a workers.dev name, which has no deeper
+  // subdomains: its apps use the path form (<run host>/<owner>.<name>/).
+  if (domain.endsWith('.workers.dev')) return undefined;
   const m = repo.match(/^([a-z0-9-]+)\.([a-z0-9-]+?)(?:--([a-z0-9]+))?$/);
   if (!m) return undefined;
   const [, owner, name, short] = m;

@@ -12,8 +12,10 @@
 export const STARTER = 'forq.blank';
 
 /** What the router agent is told, around the person's own words. */
-export const buildPayload = (prompt: string) =>
-  `This is a brand-new project: it only has a placeholder index.html and README.md. The person wants:\n\n${prompt}\n\n` +
+export const buildPayload = (prompt: string, empty = false) =>
+  (empty
+    ? `This is a brand-new, EMPTY project (no commits yet). First write a placeholder index.html and a README.md, commit them and push to main (git push origin HEAD:main), so the project runs and agents can fork it. Then build it. The person wants:\n\n${prompt}\n\n`
+    : `This is a brand-new project: it only has a placeholder index.html and README.md. The person wants:\n\n${prompt}\n\n`) +
   `Build what they asked for: any kind of code (an app, a site, a tool, a library, a Worker). If people will use it in a browser, prefer plain static files ` +
   `(index.html at the root, no build step) so it runs here at once; if it is a library, a CLI or other code, write it as that, with a README showing how to use it ` +
   `and the placeholder page replaced by a short page about it. Replace the README either way. Split the work into a few tasks and start one agent per task.`;

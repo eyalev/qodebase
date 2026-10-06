@@ -4,3 +4,4 @@ docs-cache/
 .dev.vars
 claude[0-9]/
 claude[0-9][0-9]/
+selfhost/.selfhost-build/

@@ -21,7 +21,7 @@ import { buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needs
 import { changesOf, runUrl } from './v2';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
-import { DEFAULT_API_MODEL, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
+import { DEFAULT_API_MODEL, isClaudeToken, onSubscription, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
 import { importPage } from './ui';
 import { allFiles, blob, diffTrees, forkBase, head, resolvePath, tree } from './code';
 import { changesPage, dirPage, filePage, type ChangeText } from './codeui';
@@ -53,7 +53,9 @@ const agentToken = async (env: Env, agentId: string) => `${agentId}.${await hmac
 async function who(request: Request, env: Env): Promise<Who | null> {
   const url = new URL(request.url);
   const handles = JSON.parse(env.HANDLES || '{}') as Record<string, string>;
-  if (url.hostname.endsWith('.workers.dev')) {
+  // workers.dev = the API for boxes and the laptop, unless it is this site's own host
+  // (a self-hosted copy lives on workers.dev).
+  if (url.hostname.endsWith('.workers.dev') && !isUiHost(env, url.hostname)) {
     const at = request.headers.get('x-forq-agent');
     if (at) {
       const i = at.lastIndexOf('.');
@@ -84,7 +86,12 @@ async function who(request: Request, env: Env): Promise<Who | null> {
   // reader (handle '' owns nothing, so every ownership check fails by itself).
   const email = (await sessionEmail(env, request)) || (await accessEmail(request, env));
   if (email) {
-    const u = await userByEmail(env, email);
+    let u = await userByEmail(env, email);
+    // A self-hosted copy sits wholly behind Access: its owner's first visit makes the account.
+    if (!u && env.SELF_HOST) {
+      const mapped = (JSON.parse(env.HANDLES || '{}') as Record<string, string>)[email];
+      u = (await claimHandle(env, email, mapped || await suggestHandle(env, email))).user || null;
+    }
     if (u) return { kind: 'user', handle: u.handle, admin: false, email: u.email };
   }
   return { kind: 'user', handle: '', admin: false, anon: true };
@@ -140,13 +147,14 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
   // other project owner's boxes run on that person's own API key.
   const owner = slug.split('.')[0];
   let ccEnv: string, keyTail: string, billing: string;
-  if (isOwner(env, owner)) {
+  if (onSubscription(env, owner)) {
     ccEnv = `CLAUDE_CODE_OAUTH_TOKEN=${env.CLAUDE_CODE_OAUTH_TOKEN}`; keyTail = env.CLAUDE_CODE_OAUTH_TOKEN.slice(-20); billing = 'sub';
   } else {
     const u = await userByHandle(env, owner);
     if (!u?.apiKeyEnc) throw new Error(`${owner} has not added an Anthropic API key yet (Settings)`);
     const key = await decryptKey(env, u.apiKeyEnc);
-    ccEnv = `ANTHROPIC_API_KEY=${key} ANTHROPIC_MODEL=${u.model || DEFAULT_API_MODEL}`; keyTail = key.slice(-20); billing = 'api';
+    if (isClaudeToken(key)) { ccEnv = `CLAUDE_CODE_OAUTH_TOKEN=${key}`; keyTail = key.slice(-20); billing = 'sub'; }
+    else { ccEnv = `ANTHROPIC_API_KEY=${key} ANTHROPIC_MODEL=${u.model || DEFAULT_API_MODEL}`; keyTail = key.slice(-20); billing = 'api'; }
   }
   return {
     agentId, task: r.task, role: r.role, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token,
@@ -282,7 +290,10 @@ async function sendTo(env: Env, agentId: string, text: string, apiBase: string) 
 const app = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
-    if (url.hostname === env.RUN_HOST || url.hostname.endsWith(`.${env.RUN_HOST}`)) return serveRun(request, env, ctx);
+    // The run host serves apps. A self-hosted copy's run host also carries the boxes'
+    // API calls (/api/…: no repo path starts so, repo names have a dot), because its
+    // UI host is behind Access.
+    if ((url.hostname === env.RUN_HOST || url.hostname.endsWith(`.${env.RUN_HOST}`)) && !(env.SELF_HOST && url.pathname.startsWith('/api/'))) return serveRun(request, env, ctx);
     // Cloudflare Issues → Notifications webhook. Its own auth (cf-webhook-auth), before the user/agent auth.
     if (url.pathname === '/api/hooks/issues' && request.method === 'POST') return issuesHook(request, env, ctx);
     // Public-site basics (baseline): about, privacy, robots, version, health.
@@ -296,8 +307,8 @@ const app = {
       if (url.pathname === '/feedback') return feedback(request, env);
       if (url.pathname === '/about') return html(aboutPage());
       if (url.pathname === '/privacy') return html(privacyPage());
-      if (url.pathname === '/personal-agents') return html(personalAgentsPage());
-      if (url.pathname === '/own') return html(ownPage(false));
+      if (url.pathname === '/personal-agents' && env.CF_OAUTH_CLIENT_ID) return html(personalAgentsPage());
+      if (url.pathname === '/own' && !env.SELF_HOST) return html(ownPage(false));
       if (url.pathname.startsWith('/connect/cf/') || url.pathname.startsWith('/personal-agents/') || url.pathname === '/api/installs') { const r = await installRoute(request, env, ctx, url); if (r) return r; }
       if (url.pathname.startsWith('/api/cli/') || url.pathname.startsWith('/cli') || url.pathname === '/llms.txt') { const r = await cliPublicRoute(request, env, url); if (r) return r; }
       // Crawler gate on WHO, not on paths: verified bots get the front page only
@@ -373,11 +384,11 @@ const app = {
         const tab = path === '/mine' && me.handle ? 'mine' : path === '/inbox' && me.handle ? 'inbox' : path === '/explore' ? 'explore' : 'home';
         const s = url.searchParams.get('s');
         return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'people' ? s : 'projects',
-          { tag: url.searchParams.get('cat') || url.searchParams.get('tag') || undefined, sort: url.searchParams.get('sort') || undefined }));
+          { tag: url.searchParams.get('cat') || url.searchParams.get('tag') || undefined, sort: url.searchParams.get('sort') || undefined }, !!env.SELF_HOST));
       }
       // Build: a new project from one sentence (src/newproject.ts).
       if (ui === 'd' && path === '/build' && request.method === 'GET') {
-        const own = me.handle && !isOwner(env, me.handle);
+        const own = me.handle && !onSubscription(env, me.handle);
         const needsKey = !!own && !(await userByHandle(env, me.handle))?.apiKeyEnc;
         const inbox = me.handle ? inboxCount(await inboxOf(env, me.handle, await listFor(env, me.handle, me.admin), runBase)) : 0;
         return html(buildV3('d', me.handle, inbox, needsKey, env.RUN_HOST));
@@ -418,7 +429,7 @@ const app = {
         const u = await userByEmail(env, me.email || '');
         if (!u) return new Response(null, { status: 302, headers: { location: '/login?next=/settings' } });
         const mine = (await listFor(env, me.handle, me.admin)).filter((e) => e.owner === u.handle).length;
-        const page = settingsPage(u, isOwner(env, u.handle), mine, url.searchParams.has('welcome'), await registry(env).cliTokens(u.email));
+        const page = settingsPage(u, onSubscription(env, u.handle), mine, url.searchParams.has('welcome'), await registry(env).cliTokens(u.email));
         return html(tabsNav ? withGlobal(page, 'account', (await globalOf()).inbox, u.handle, ui as Nav) : page);
       }
       if (path.startsWith('/api/me/') && request.method !== 'GET') {
@@ -467,11 +478,12 @@ const app = {
         const b = await request.json().catch(() => ({})) as { name?: string; prompt?: string; private?: boolean };
         const prompt = String(b.prompt || '').trim().slice(0, 3000);
         if (prompt.length < 4) return json({ error: 'Say what to build' }, 400);
-        if (!isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json({ error: 'Add your Anthropic API key in Settings first' }, 400);
+        if (!onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json({ error: 'Add your Anthropic API key in Settings first' }, 400);
         const tooMany = await overProjectLimit(env, me.handle);
         if (tooMany) return json({ error: tooMany }, 400);
+        // A self-hosted copy has no forq/blank starter: its new projects start empty and
+        // the router writes the first files on main before it splits the work.
         const starter = await projectStub(env, STARTER).info();
-        if (!starter) return json({ error: 'the starter project is missing on this forq' }, 500);
         const base = nameFor(String(b.name || '')) || 'my-app';
         let name = base;
         for (let i = 2; await registry(env).get(slugOf(me.handle, name)); i++) name = `${base.slice(0, 35)}-${i}`;
@@ -479,9 +491,10 @@ const app = {
         const slug = slugOf(me.handle, name);
         const p = projectStub(env, slug);
         const desc = prompt.split('\n')[0].slice(0, 140);
-        await p.createFork(me.handle, name, starter, desc, true);
+        if (starter) await p.createFork(me.handle, name, starter, desc, true);
+        else await p.create(me.handle, name, desc);
         if (b.private) await p.setPrivate(true);
-        await askRouter(env, ctx, p, slug, buildPayload(prompt), apiBase, prompt);
+        await askRouter(env, ctx, p, slug, buildPayload(prompt, !starter), apiBase, prompt);
         log('build', 'started', { slug, chars: prompt.length });
         return json({ ok: true, slug, path: `/p/${me.handle}/${name}/changes` });
       }
@@ -524,7 +537,7 @@ const app = {
           me: me.handle, runBase, liveHtml: '', view: m[3] === 'about' ? 'readme' : (m[3] as ViewId) || null, tryAgent: url.searchParams.get('try') || undefined, ...st,
           docs: !m[3] || m[3] === 'readme' || m[3] === 'about' ? await docsOf(env, ctx, info, url.searchParams.get('doc')) : undefined,
           g: await globalOf(all),
-          needsKey: own && !isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
+          needsKey: own && !onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
       }
       // ---- code browser: /p/<o>/<n>/code/<path>[?v=<agent>], changes, file list
       if ((m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/(code|changes)(?:\/(.*))?$/))) {
@@ -545,10 +558,10 @@ const app = {
         const entry = all.find((e) => e.slug === slug)!;
         if (ui) return html(projectV2(ui, { info, entry, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
           me: me.handle, runBase, liveHtml: info.owner === me.handle ? await renderAgents(env, info, runBase, ui) : '',
-          needsKey: info.owner === me.handle && !isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
+          needsKey: info.owner === me.handle && !onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
         return html(projectPage({ info, entry, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
           me: me.handle, runBase, agentsHtml: info.owner === me.handle ? await renderAgents(env, info, runBase) : '',
-          needsKey: info.owner === me.handle && !isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
+          needsKey: info.owner === me.handle && !onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
       }
 
       // ---- the boxes' own UIs: /a/<agentId>/agent/* → mobile-agent
@@ -765,7 +778,9 @@ async function withRunPasses(request: Request, env: Env, res: Response): Promise
   if (!me || me.kind !== 'user' || !canSee(e, me.handle, me.admin)) return res;
   const pass = await mintRunPass(env, slug);
   // https://<name>--<owner>.<run>/… and https://ag-<id>--<name>--<owner>.<run>/…
-  const host = `(?:ag-[a-z0-9]+--)?${m[2]}--${m[1]}\\.${env.RUN_HOST.replace(/\./g, '\\.')}`;
+  const run = env.RUN_HOST.replace(/\./g, '\\.');
+  // Host form (…--owner.<run>/) and the path form a self-hosted copy uses (<run>/owner.name[--id]/).
+  const host = `(?:(?:ag-[a-z0-9]+--)?${m[2]}--${m[1]}\\.${run}|${run}/${m[1]}\\.${m[2]}(?:--[a-z0-9]+)?)`;
   const re = new RegExp(`(https://${host}/[^"'\\\\\\s<>?#]*)(\\?[^"'\\\\\\s<>#]*)?`, 'g');   // a URL ends at quotes, backslashes (JSON's \"), space, < >
   const text = (await res.text()).replace(re, (_x, base: string, q?: string) => `${base}${q ? `${q}&` : '?'}__qb=${pass}`);
   const out = new Response(text, res);

@@ -91,8 +91,14 @@ export async function decryptKey(env: Env, blob: string) {
 }
 
 /** Is this a working Anthropic API key? One cheap call (list models). */
+/** `claude setup-token` output (a Claude subscription), not an API key. */
+export const isClaudeToken = (key: string) => key.startsWith('sk-ant-oat');
+
 export async function checkApiKey(key: string): Promise<{ ok: boolean; error?: string }> {
   if (!/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(key)) return { ok: false, error: 'That does not look like an Anthropic API key (sk-ant-…).' };
+  // A Claude Code subscription token (claude setup-token): only Claude Code itself uses it,
+  // in the owner's own boxes. It cannot be checked against the API with x-api-key.
+  if (isClaudeToken(key)) return { ok: true };
   const r = await fetch('https://api.anthropic.com/v1/models?limit=1', {
     headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
   }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }) as any);
@@ -133,3 +139,6 @@ export async function claimHandle(env: Env, email: string, handle: string): Prom
 
 /** The owner of this instance runs on the subscription; nobody else does. */
 export const isOwner = (env: Env, handle: string) => handle === env.OWNER_HANDLE || handle === 'forq';
+/** Runs on this instance's Claude subscription (CLAUDE_CODE_OAUTH_TOKEN). A self-hosted
+ *  copy has none until its owner adds one: its owner brings an API key like anyone. */
+export const onSubscription = (env: Env, handle: string) => isOwner(env, handle) && !!env.CLAUDE_CODE_OAUTH_TOKEN;

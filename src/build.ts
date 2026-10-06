@@ -33,7 +33,7 @@ export type BuildJob = {
   queuedAt: number;
   /** kind 'install': deploy a template's prebuilt release into a user's own
    *  account with their OAuth access token (src/install.ts). */
-  install?: { owner: string; installId: string; accountId: string; cfToken: string; dir: string; vars: Record<string, string>; bucket?: { binding: string; name: string } };
+  install?: { owner: string; installId: string; accountId: string; cfToken: string; dir: string; vars: Record<string, string>; bucket?: { binding: string; name: string }; runWorker?: boolean };
 };
 /** A Worker app's host and its previews' hosts must not run forq's catch-all
  *  route on the apps domain (`*.<APPS_DOMAIN>/*`, the static run host): a
@@ -158,6 +158,12 @@ export class BuildBox extends DurableObject<Env> {
       log('build', 'done', { slug: job.slug, kind: job.kind, agentId: job.agentId, ok, ms: r.ms, url: r.url, error: r.error });
       return r;
     };
+    // A self-hosted copy has no deploy token and no builder image: Worker projects run
+    // only as code there for now (static projects are served by run.ts without a build).
+    if (!job.install && (!this.env.CF_DEPLOY_TOKEN || this.env.BOX_IMAGE === 'managed')) {
+      add('This instance cannot deploy Worker projects yet (no deploy token).');
+      return done(false, { error: 'Worker projects cannot be deployed on this instance yet' });
+    }
     try {
       await this.#ensureContainer(add);
       // Tools once per container: TOML/JSONC parsers for the config rewrite.
@@ -218,16 +224,29 @@ fs.writeFileSync(process.env.R+'/wrangler.json',JSON.stringify(c));console.log('
     const cfg = await this.#sh(`node -e "$JS"`, { JS: cfgJs, R: root, W: job.worker, V: JSON.stringify(ins.vars), B: JSON.stringify(ins.bucket || null) });
     add(cfg.stdout + cfg.stderr);
     if (cfg.exitCode !== 0) return [false, { error: 'could not prepare the release' }];
-    const run = await this.#sh(`cd "$R"; npx -y ${WRANGLER} deploy --config wrangler.json 2>&1`, {
-      R: root, CLOUDFLARE_API_TOKEN: ins.cfToken, CLOUDFLARE_ACCOUNT_ID: ins.accountId, WRANGLER_SEND_METRICS: 'false', CI: 'true', NO_COLOR: '1',
-    });
+    const wenv = { CLOUDFLARE_API_TOKEN: ins.cfToken, CLOUDFLARE_ACCOUNT_ID: ins.accountId, WRANGLER_SEND_METRICS: 'false', CI: 'true', NO_COLOR: '1' };
+    const run = await this.#sh(`cd "$R"; npx -y ${WRANGLER} deploy --config wrangler.json 2>&1`, { R: root, ...wenv });
     add(run.stdout.replaceAll(ins.cfToken, '***'));
-    await this.#sh(`rm -rf "$D"`, { D: dir });
-    if (run.exitCode !== 0) {
-      const why = (run.stdout.match(/✘ \[ERROR\] (.+)/) || run.stdout.match(/ERROR\]? (.+)/) || [])[1];
-      return [false, { error: why ? why.slice(0, 300) : 'wrangler deploy failed' }];
+    const fail = (out: string) => {
+      const why = (out.match(/✘ \[ERROR\] (.+)/) || out.match(/ERROR\]? (.+)/) || [])[1];
+      return [false, { error: why ? why.slice(0, 300) : 'wrangler deploy failed' }] as [boolean, Partial<BuildResult>];
+    };
+    if (run.exitCode !== 0) { await this.#sh(`rm -rf "$D"`, { D: dir }); return fail(run.stdout); }
+    const url = (run.stdout.match(/https:\/\/[a-z0-9.-]+\.workers\.dev/) || [])[0];
+    // qodebase's second Worker (<name>-run): its apps and its boxes' API calls, forwarded
+    // to the main Worker over a service binding (release dir run/).
+    if (ins.runWorker) {
+      const runCfg = `const fs=require('fs');const p=process.env.R+'/run/wrangler.base.json';const c=JSON.parse(fs.readFileSync(p,'utf8'));
+c.name=process.env.W+'-run';c.workers_dev=true;c.services=[{binding:'MAIN',service:process.env.W}];
+fs.writeFileSync(process.env.R+'/run/wrangler.json',JSON.stringify(c));console.log('FORQ_INSTALL config for '+c.name);`;
+      const rc = await this.#sh(`node -e "$JS"`, { JS: runCfg, R: root, W: job.worker });
+      add(rc.stdout + rc.stderr);
+      const r2 = await this.#sh(`cd "$R/run"; npx -y ${WRANGLER} deploy --config wrangler.json 2>&1`, { R: root, ...wenv });
+      add(r2.stdout.replaceAll(ins.cfToken, '***'));
+      if (rc.exitCode !== 0 || r2.exitCode !== 0) { await this.#sh(`rm -rf "$D"`, { D: dir }); return fail(r2.stdout); }
     }
-    return [true, { url: (run.stdout.match(/https:\/\/[a-z0-9.-]+\.workers\.dev/) || [])[0] }];
+    await this.#sh(`rm -rf "$D"`, { D: dir });
+    return [true, { url }];
   }
 
   async state() {

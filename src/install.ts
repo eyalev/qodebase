@@ -31,10 +31,16 @@ export type Template = {
   secretVar?: string;                  // a var set to a fresh random value per install (the agent's own login)
   container?: boolean;                 // runs a Cloudflare Container: needs Workers Paid
   paid?: boolean;                      // needs Workers Paid for another reason (Dynamic Workers)
+  selfhost?: boolean;                  // qodebase itself: per-install hosts/secrets/owner, a second (run) Worker, Access details set after the lock
+  artifacts?: boolean;                 // binds Artifacts: the connection needs artifacts.write
 };
 export const TEMPLATES: Record<string, Template> = {
   openclaw: { id: 'openclaw', title: 'OpenClaw', repo: 'forq.container-agents', dir: 'forq-release-openclaw', defaultName: 'my-openclaw',
     vars: { AGENT_KIND: 'openclaw', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
+  // Get your own qodebase (/own): this code, from forq's own Artifacts copy (forq/forq,
+  // forq-release-selfhost/ built by scripts/selfhost-release.mjs).
+  qodebase: { id: 'qodebase', title: 'qodebase', repo: 'forq.forq', dir: 'forq-release-selfhost', defaultName: 'my-qodebase',
+    vars: { SELF_HOST: '1', BOX_IMAGE: 'managed' }, container: true, selfhost: true, artifacts: true },
   'agents-starter': { id: 'agents-starter', title: 'Cloudflare Agent', repo: 'forq.agents-starter', dir: 'forq-release', defaultName: 'my-agent' },
   pi: { id: 'pi', title: 'Pi', repo: 'forq.pi-durable', dir: 'forq-release', defaultName: 'my-pi', paid: true },
   t3code: { id: 't3code', title: 'T3 Code', repo: 'forq.container-agents', dir: 'forq-release-t3code', defaultName: 'my-t3code',
@@ -89,6 +95,10 @@ async function cf(token: string, path: string, init: RequestInit = {}) {
 const errText = (e: { code?: number; message?: string }[]) => e.map((x) => `${x.message || ''}${x.code ? ` (${x.code})` : ''}`).join('; ') || 'unknown error';
 
 /** /connect/cf/* and /personal-agents/install|i/* on the UI host. */
+/** Connect (again) when not connected, or when this template needs a permission the connection lacks. */
+const needsConnect = (conn: { connected: boolean; scopes: string[] }, t: Template) =>
+  !conn.connected || (!!t.container && !conn.scopes.includes('containers.write')) || (!!t.artifacts && !conn.scopes.includes('artifacts.write'));
+
 /** The OAuth callback on the host the person is on (each host is registered with the client). */
 const callbackUrl = (env: Env, url: URL) => `https://${isUiHost(env, url.hostname) ? url.hostname : env.UI_HOST}/connect/cf/callback`;
 
@@ -105,7 +115,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
   // ---- JSON for qb (qb install / qb installs)
   if (p === '/api/installs') {
     const conn = await stub.connection();
-    const approve = (t?: Template) => `${url.origin}/connect/cf/start?next=${encodeURIComponent(t ? `/personal-agents/install/${t.id}` : '/personal-agents')}${conn.connected ? '&again=1' : ''}`;
+    const approve = (t?: Template) => `${url.origin}/connect/cf/start?next=${encodeURIComponent(t ? `/personal-agents/install/${t.id}` : '/personal-agents')}${conn.connected ? '&again=1' : ''}${t?.artifacts ? '&extra=artifacts' : ''}`;
     if (request.method === 'GET') {
       return Response.json({ connected: conn.connected, accounts: conn.accounts,
         templates: Object.values(TEMPLATES).map((t) => ({ id: t.id, title: t.title, defaultName: t.defaultName, needsPaidPlan: !!(t.paid || t.container) })),
@@ -116,7 +126,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
       const t = TEMPLATES[String(b.template || '')];
       if (!t) return Response.json({ error: `Unknown agent. One of: ${Object.keys(TEMPLATES).join(', ')}` }, { status: 400 });
       // The one step a person must do in a browser: let qodebase into their Cloudflare account.
-      if (!conn.connected || (t.container && !conn.scopes.includes('containers.write'))) {
+      if (needsConnect(conn, t)) {
         return Response.json({ needs: 'cloudflare', approve_url: approve(t), error: 'Approve qodebase in your Cloudflare account first' }, { status: 409 });
       }
       if (!b.account && conn.accounts.length > 1) return Response.json({ error: 'Pick the Cloudflare account (--account <id>)', accounts: conn.accounts }, { status: 400 });
@@ -142,7 +152,9 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
     const exp = Date.now() + 15 * 60_000;
     const body = `${email}|${exp}|${next}|${nonce}`;
     const state = btoa(`${body}|${await hmac(env.ADMIN_SECRET, `cfstate:${body}`)}`).replace(/=+$/, '');
-    const q = new URLSearchParams({ response_type: 'code', client_id: env.CF_OAUTH_CLIENT_ID, redirect_uri: callbackUrl(env, url), scope: SCOPES.join(' '), state });
+    // Some templates need more than the base set (qodebase binds Artifacts): ask only then.
+    const extra = url.searchParams.get('extra') === 'artifacts' ? ['artifacts.read', 'artifacts.write'] : [];
+    const q = new URLSearchParams({ response_type: 'code', client_id: env.CF_OAUTH_CLIENT_ID, redirect_uri: callbackUrl(env, url), scope: [...SCOPES, ...extra].join(' '), state });
     // Asking again for a permission the user has not granted yet: show the consent screen even if Cloudflare remembers an older grant.
     if (url.searchParams.get('again')) q.set('prompt', 'consent');
     log('install', 'oauth_start', { email, next });
@@ -182,7 +194,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
       return new Response(null, { status: 303, headers: { location: `/personal-agents/i/${r.id}` } });
     }
     // A container agent needs containers.write, which older connections were not asked for.
-    if (!conn.connected || (t.container && !conn.scopes.includes('containers.write'))) return html(installPage({ kind: 'connect', template: t, startHref: `/connect/cf/start?next=${encodeURIComponent(p)}${conn.connected ? '&again=1' : ''}` }));
+    if (needsConnect(conn, t)) return html(installPage({ kind: 'connect', template: t, startHref: `/connect/cf/start?next=${encodeURIComponent(p)}${conn.connected ? '&again=1' : ''}${t.artifacts ? '&extra=artifacts' : ''}` }));
     return html(installPage({ kind: 'form', template: t, accounts: conn.accounts, name: t.defaultName }));
   }
   const s = p.match(/^\/personal-agents\/i\/([a-z0-9]+)(\.json)?$/);
@@ -421,15 +433,18 @@ export class Installs extends DurableObject<Env> {
           id: `install-${i.id}`, slug: t.repo, kind: 'install', repo: info.repo, remote: info.remote, token: read.plaintext.split('?')[0],
           worker: i.name, queuedAt: Date.now(),
           install: { owner: i.email, installId: i.id, accountId: a, cfToken: token, dir: t.dir,
-            vars: { CF_ACCOUNT_ID: a, ...(t.vars || {}), ...(t.secretVar ? { [t.secretVar]: await this.#agentSecret(a, i.name) } : {}) },
-            bucket: t.bucketBinding ? { binding: t.bucketBinding, name: `${i.name}-vault` } : undefined },
+            vars: { CF_ACCOUNT_ID: a, ...(t.vars || {}), ...(t.secretVar ? { [t.secretVar]: await this.#agentSecret(a, i.name) } : {}), ...(t.selfhost ? await this.#selfhostVars(i) : {}) },
+            bucket: t.bucketBinding ? { binding: t.bucketBinding, name: `${i.name}-vault` } : undefined,
+            runWorker: !!t.selfhost },
         };
         await this.env.BuildBox.get(this.env.BuildBox.idFromName('installs')).enqueue(job);
         await this.#save(i);
         await this.ctx.storage.setAlarm(Date.now() + 30_000);
         return;
       } else if (next.key === 'lock') {
-        await this.#lock(i, token);
+        const lock = await this.#lock(i, token);
+        // A qodebase copy checks the Access token itself (index.ts accessEmail): tell it which.
+        if (TEMPLATES[i.template]?.selfhost) await this.#setAccessSecrets(i, token, lock);
         this.#step(i, 'lock', 'done', 'Only you');
       } else if (next.key === 'ready') {
         i.url = `https://${i.name}.${i.subdomain}.workers.dev`;
@@ -464,14 +479,36 @@ export class Installs extends DurableObject<Env> {
     const scripts = await cf(token, `/accounts/${a}/workers/scripts`);
     const tag = ((scripts.result || []) as { id: string; tag: string }[]).find((s) => s.id === i.name)?.tag;
     if (!tag) throw new Error('the assistant was not found after upload');
+    const teamDomain = String(org.result?.auth_domain || (await cf(token, `/accounts/${a}/access/organizations`)).result?.auth_domain || '');
     const apps = await cf(token, `/accounts/${a}/access/apps?per_page=100`);
-    if (((apps.result || []) as any[]).some((ap) => (ap.destinations || []).some((d: any) => d.type === 'worker' && d.worker_id === tag))) return;
+    const have = ((apps.result || []) as any[]).find((ap) => (ap.destinations || []).some((d: any) => d.type === 'worker' && d.worker_id === tag));
+    if (have) return { aud: String(have.aud || ''), teamDomain };
     const r = await cf(token, `/accounts/${a}/access/apps`, { method: 'POST', body: JSON.stringify({
       type: 'self_hosted', name: `${i.name} (qodebase)`, destinations: [{ type: 'worker', worker_id: tag }], session_duration: '720h',
       ...(allowed.length ? { allowed_idps: allowed, auto_redirect_to_identity: allowed.length === 1 } : {}),
       policies: [{ name: 'Only you', decision: 'allow', include: [{ cloudflare_account_member: { account_id: a } }, { email: { email: i.email } }] }],
     }) });
     if (!r.ok) throw new Error(`could not lock it: ${errText(r.errors)}`);
+    return { aud: String(r.result?.aud || ''), teamDomain };
+  }
+
+  /** qodebase's per-install vars: its hosts on the person's workers.dev, its owner, its secrets. */
+  async #selfhostVars(i: Install): Promise<Record<string, string>> {
+    const sub = i.subdomain || '';
+    const ui = `${i.name}.${sub}.workers.dev`, run = `${i.name}-run.${sub}.workers.dev`;
+    const handle = (i.email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').replace(/^([^a-z])/, 'u$1') || 'me').slice(0, 24);
+    return { UI_HOST: ui, RUN_HOST: run, API_BASE: `https://${run}`, OWNER_HANDLE: handle, HANDLES: JSON.stringify({ [i.email.toLowerCase()]: handle }),
+      ADMIN_SECRET: await this.#agentSecret(i.accountId, `${i.name}#admin`), KEY_ENC_SECRET: await this.#agentSecret(i.accountId, `${i.name}#keys`),
+      CF_OAUTH_CLIENT_ID: '', MAX_AGENTS_PER_PROJECT: '6', MAX_AWAKE_BOXES: '3', MAX_TOTAL_AWAKE: '6', OTHERS_MAX_AWAKE: '2' };
+  }
+
+  /** The Access team and audience go to the copy as secrets (a new version of its Worker). */
+  async #setAccessSecrets(i: Install, token: string, lock: { aud: string; teamDomain: string }) {
+    for (const [name, text] of [['ACCESS_TEAM_DOMAIN', lock.teamDomain], ['ACCESS_AUD', lock.aud]] as const) {
+      const r = await cf(token, `/accounts/${i.accountId}/workers/scripts/${i.name}/secrets`, { method: 'PUT', body: JSON.stringify({ name, text, type: 'secret_text' }) });
+      if (!r.ok) throw new Error(`could not finish its sign-in setup: ${errText(r.errors)}`);
+    }
+    log('install', 'access_secrets', { name: i.name, team: lock.teamDomain, aud: !!lock.aud });
   }
 
   /** The agent's own login secret, the same on every reinstall of one Worker

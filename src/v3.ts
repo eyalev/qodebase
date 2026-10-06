@@ -551,7 +551,7 @@ ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
 }
 
 /** The home pages with tabs: Projects, Inbox, Explore (Account is the settings page). */
-export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, items: InboxItem[], world: WorldTab = 'projects', wopts: { tag?: string; sort?: string } = {}) {
+export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, items: InboxItem[], world: WorldTab = 'projects', wopts: { tag?: string; sort?: string } = {}, selfHost = false) {
   const now = Date.now();
   const inboxN = items.reduce((n, it) => n + needsOf(it.open).length, 0);
   const forks = (slug: string) => entries.filter((e) => e.forkedFrom === slug).length;
@@ -568,7 +568,7 @@ export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, ite
     // Home is one question and one way out (Eyal, 2026-10-04: "really simple, a call
     // to action, build something, or browse public projects; not a lot of mental strength").
     title = 'qodebase';
-    body = landBody(entries);
+    body = landBody(entries, selfHost);
   } else if (tab === 'explore' && nav === 'd') {
     title = 'Explore';
     body = worldBody(world, entries, !!me, wopts);
@@ -653,7 +653,7 @@ export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, 
 /** D's home (2026-10-06, Eyal: lead with Build; "Be your own GitHub"): the promise in one
  *  line, the build box above the fold, then three doors (your own qodebase, your own AI
  *  assistant, explore) and the try-changing row. */
-function landBody(entries: Entry[]) {
+function landBody(entries: Entry[], selfHost = false) {
   const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && !e.private && e.slug !== 'forq.blank').length;
   return `<section class="land">
 <h1>Be your own GitHub.</h1>
@@ -664,11 +664,11 @@ function landBody(entries: Entry[]) {
 </form>
 <p class="landalt">or <a href="/import">import from GitHub</a></p>
 <nav class="doors" aria-label="More">
-<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account. Yours to keep.</small></span></a>
-<a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>OpenClaw, Hermes, T3 Code, Mobile Agent and more, in your Cloudflare account.</small></span></a>
+${selfHost ? '' : `<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account. Yours to keep.</small></span></a>
+<a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>OpenClaw, Hermes, T3 Code, Mobile Agent and more, in your Cloudflare account.</small></span></a>`}
 <a class="browse" href="/explore"><span>Explore projects</span><span class="n">${n}</span></a>
 </nav>
-${tryRow()}
+${tryRow(entries)}
 </section>${SPECULATE}
 <script>(function(){const f=document.querySelector('.landask'),t=f.querySelector('textarea');
 t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();if(t.value.trim())f.requestSubmit();}});})();</script>`;
@@ -716,9 +716,13 @@ const TRY: [string, string, string][] = [
   ['tipsplit', 'Tip split', 'Let each person pay a different share'],
   ['todo', 'To-do', 'Add due dates'],
 ];
-function tryRow() {
+function tryRow(entries: Entry[]) {
+  // Only the ones this instance has (a self-hosted copy starts without forq's showcase).
+  const have = new Set(entries.map((e) => e.slug));
+  const items = TRY.filter(([n]) => have.has(`forq.${n}`));
+  if (!items.length) return '';
   return `<h2 class="tryh">Or try changing one of these</h2>
 <p class="trys">Open it, tap Fork, and send the change under it. Agents do the rest.</p>
-<div class="tryrow">${TRY.map(([n, title, ask]) => `<a class="tcard" href="/p/forq/${n}/app?ask=${encodeURIComponent(ask)}">
+<div class="tryrow">${items.map(([n, title, ask]) => `<a class="tcard" href="/p/forq/${n}/app?ask=${encodeURIComponent(ask)}">
 <img src="/_forq/thumbs/${n}.webp" alt="" width="360" height="480" loading="lazy" decoding="async"><b>${esc(title)}</b><span>Try asking: ${esc(ask)}</span></a>`).join('')}</div>`;
 }

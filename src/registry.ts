@@ -98,6 +98,15 @@ export class Registry extends DurableObject<Env> {
     return !!hit;
   }
 
+  // ---- managed boxes: the instance's base snapshot (box.ts #setup)
+  async getBaseSnap(v: number): Promise<{ id: string; size: number; name?: string } | null> {
+    const b = await this.ctx.storage.get<{ snap: { id: string; size: number; name?: string }; v: number }>('baseSnap');
+    return b && b.v === v ? b.snap : null;
+  }
+  async setBaseSnap(b: { snap: { id: string; size: number; name?: string }; v: number } | null): Promise<void> {
+    if (b) await this.ctx.storage.put('baseSnap', b); else await this.ctx.storage.delete('baseSnap');
+  }
+
   async remove(slug: string): Promise<void> {
     await this.ctx.storage.delete(`p:${slug}`);
   }

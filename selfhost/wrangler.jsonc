@@ -1,0 +1,60 @@
+// qodebase as installed into someone's OWN Cloudflare account ("Get your own
+// qodebase", /own → installer template qodebase in src/install.ts). Built into
+// forq-release-selfhost/ by scripts/selfhost-release.mjs; the installer fills in
+// name, hosts, owner and secrets (Installs #selfhostVars) and sets ACCESS_TEAM_DOMAIN /
+// ACCESS_AUD as secrets after it locks the Worker with Access.
+// Differences from the hosted wrangler.jsonc: workers.dev only (no routes), boxes
+// start from Cloudflare's managed image (BOX_IMAGE=managed, no registry images),
+// its own Artifacts namespace, no hosted-only keys (kstats, og-cards, feedback,
+// Pushover, Sign in with Cloudflare, deploy token).
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "my-qodebase",
+  "main": "../src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "workers_dev": true,
+  "assets": { "directory": "../public" },
+  "containers": [
+    { "class_name": "BuildBox", "scheduling_policy": "durable_object" },
+    { "class_name": "AgentBox", "scheduling_policy": "durable_object" }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "AgentBox", "class_name": "AgentBox" },
+      { "name": "Project", "class_name": "Project" },
+      { "name": "Registry", "class_name": "Registry" },
+      { "name": "BuildBox", "class_name": "BuildBox" },
+      { "name": "Installs", "class_name": "Installs" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["AgentBox", "Project"] },
+    { "tag": "v2", "new_sqlite_classes": ["Registry"] },
+    { "tag": "v3", "new_sqlite_classes": ["BuildBox"] },
+    { "tag": "v4", "new_sqlite_classes": ["Installs"] }
+  ],
+  "rules": [
+    { "type": "Data", "globs": ["**/*.tgz"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/*.rev"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/qb.mjs"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/boot.sh", "**/box-api.mjs"], "fallthrough": true }
+  ],
+  "artifacts": [{ "binding": "ARTIFACTS", "namespace": "qodebase" }],
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "vars": {
+    "SELF_HOST": "1",
+    "BOX_IMAGE": "managed",
+    "UI_HOST": "set-by-installer",
+    "RUN_HOST": "set-by-installer",
+    "API_BASE": "set-by-installer",
+    "OWNER_HANDLE": "set-by-installer",
+    "HANDLES": "{}",
+    "CF_OAUTH_CLIENT_ID": "",
+    "MAX_AGENTS_PER_PROJECT": "6",
+    "OTHERS_MAX_AWAKE": "2",
+    "MAX_AWAKE_BOXES": "3",
+    "MAX_TOTAL_AWAKE": "6"
+  }
+}
