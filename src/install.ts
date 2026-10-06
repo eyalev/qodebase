@@ -390,8 +390,10 @@ export class Installs extends DurableObject<Env> {
     const next = i.steps.find((s) => s.state !== 'done');
     if (!next || next.state === 'failed') return this.#next();
     if (next.key === 'deploy' && next.state === 'doing') {
-      // Waiting for BuildBox; a lost result fails the step after 12 minutes.
-      if (Date.now() - i.updatedAt > 12 * 60_000) return this.#fail(i, 'deploy', 'The upload did not finish. Try again.');
+      // Waiting for BuildBox. Its report can be lost (a restart in between): ask it.
+      const kept = await this.env.BuildBox.get(this.env.BuildBox.idFromName('installs')).result(`install-${i.id}`).catch(() => null);
+      if (kept) { log('install', 'result_fetched', { id: i.id, ok: kept.ok }); return this.buildDone(kept); }
+      if (Date.now() - i.updatedAt > 20 * 60_000) return this.#fail(i, 'deploy', 'The upload did not finish. Try again.');
       await this.ctx.storage.setAlarm(Date.now() + 30_000);
       return;
     }

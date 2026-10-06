@@ -23,6 +23,7 @@ export type BuildJob = {
   id: string;
   slug: string;
   kind: 'deploy' | 'preview' | 'install';
+  tries?: number;        // runs interrupted by a restart or a lost container connection (retried twice)
   repo: string;          // Artifacts repo to build
   remote: string;
   token: string;         // read token for that repo
@@ -113,6 +114,14 @@ export class BuildBox extends DurableObject<Env> {
 
   async alarm() {
     const q = (await this.ctx.storage.get<BuildJob[]>('queue')) || [];
+    // A job that was running when this object restarted (a forq deploy resets it and its
+    // container: two qodebase installs lost their result that way, 2026-10-06) runs again.
+    const stale = await this.ctx.storage.get<BuildJob>('running');
+    if (stale) {
+      await this.ctx.storage.delete('running');
+      if ((stale.tries || 0) < 2) { q.unshift({ ...stale, tries: (stale.tries || 0) + 1 }); log('build', 'resumed', { slug: stale.slug, kind: stale.kind, tries: (stale.tries || 0) + 1 }); }
+      else await this.#report(stale, { id: stale.id, kind: stale.kind, agentId: stale.agentId, ok: false, log: 'interrupted three times', ms: 0, error: 'The build was interrupted three times. Try again.' });
+    }
     const job = q.shift();
     if (!job) {
       // Nothing to do: stop the container once it has been idle a while.
@@ -121,9 +130,27 @@ export class BuildBox extends DurableObject<Env> {
       else if (this.c.running) await this.ctx.storage.setAlarm(Date.now() + 60_000);
       return;
     }
-    await this.ctx.storage.put('queue', q);
+    await this.ctx.storage.put({ queue: q, running: job });
     const result = await this.#run(job);
+    await this.ctx.storage.delete('running');
     await this.ctx.storage.put('lastBuild', Date.now());
+    // The container connection dropped (a restart under way): not the build's fault, run it again.
+    if (!result.ok && /Network connection lost|temporarily unavailable/i.test(result.error || '') && (job.tries || 0) < 2) {
+      q.unshift({ ...job, tries: (job.tries || 0) + 1 });
+      await this.ctx.storage.put('queue', q);
+      log('build', 'retry', { slug: job.slug, kind: job.kind, tries: (job.tries || 0) + 1, error: result.error });
+      await this.ctx.storage.setAlarm(Date.now() + 5_000);
+      return;
+    }
+    await this.#report(job, result);
+    await this.ctx.storage.setAlarm(Date.now() + (q.length ? 100 : 60_000));
+  }
+
+  /** Keep the result (Installs asks for it if the call below is lost) and hand it on. */
+  async #report(job: BuildJob, result: BuildResult) {
+    await this.ctx.storage.put(`result:${job.id}`, { ...result, at: Date.now() });
+    const kept = await this.ctx.storage.list<{ at: number }>({ prefix: 'result:' });
+    if (kept.size > 30) await this.ctx.storage.delete([...kept].sort((x, y) => x[1].at - y[1].at).slice(0, kept.size - 30).map(([k]) => k));
     // A live app that failed to deploy needs a person; a fork's preview is the agent's to fix.
     if (job.install) {
       try { await this.env.Installs.get(this.env.Installs.idFromName(job.install.owner.toLowerCase())).buildDone(result); log('build', 'reported', { install: job.install.installId, ok: result.ok }); }
@@ -133,7 +160,11 @@ export class BuildBox extends DurableObject<Env> {
       try { await this.env.Project.get(this.env.Project.idFromName(job.slug)).buildDone(result); }
       catch (e) { log('build', 'report_failed', { slug: job.slug, err: String(e) }); }
     }
-    await this.ctx.storage.setAlarm(Date.now() + (q.length ? 100 : 60_000));
+  }
+
+  /** A finished job's result, if this builder still has it. */
+  async result(id: string): Promise<BuildResult | null> {
+    return (await this.ctx.storage.get<BuildResult>(`result:${id}`)) || null;
   }
 
   /** A container that answers. One that claims to run but does not (a Worker
