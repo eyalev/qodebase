@@ -39,6 +39,8 @@ export const TEMPLATES: Record<string, Template> = {
   pi: { id: 'pi', title: 'Pi', repo: 'forq.pi-durable', dir: 'forq-release', defaultName: 'my-pi', paid: true },
   t3code: { id: 't3code', title: 'T3 Code', repo: 'forq.container-agents', dir: 'forq-release-t3code', defaultName: 'my-t3code',
     vars: { AGENT_KIND: 't3code', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
+  claudecode: { id: 'claudecode', title: 'Claude Code', repo: 'forq.container-agents', dir: 'forq-release-claudecode', defaultName: 'my-claude',
+    vars: { AGENT_KIND: 'claudecode', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
   hermes: { id: 'hermes', title: 'Hermes', repo: 'forq.container-agents', dir: 'forq-release-hermes', defaultName: 'my-hermes',
     vars: { AGENT_KIND: 'hermes', MODEL: '@cf/zai-org/glm-4.7-flash' }, secretVar: 'AGENT_SECRET', container: true },
 };
@@ -214,7 +216,7 @@ function latestInstalls(all: Install[], live: Record<string, string[]> | null) {
 const RETIRED: Record<string, string> = { 'personal-agent': 'Personal Agent' };
 const view = (i: Install): InstallView => ({ id: i.id, title: TEMPLATES[i.template]?.title || RETIRED[i.template] || i.template, name: i.name, accountName: i.accountName, steps: i.steps, url: i.url, error: i.error, fix: i.fix, log: i.log,
   wakes: !!TEMPLATES[i.template]?.container,
-  extra: i.url && i.template === 't3code' ? { text: 'Sign in to Claude Code (optional)', href: `${i.url}/__forq/claude` } : undefined });
+  extra: i.url && i.template === 'claudecode' ? { text: 'Sign in to Claude (needed)', href: `${i.url}/__forq/claude` } : i.url && i.template === 't3code' ? { text: 'Sign in to Claude Code (optional)', href: `${i.url}/__forq/claude` } : undefined });
 
 async function tokenRequest(env: Env, params: Record<string, string>): Promise<any> {
   const r = await fetch(TOKEN_URL, {

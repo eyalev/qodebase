@@ -177,7 +177,7 @@ or with --json. Projects are named owner/name. Another instance: --host <url> or
 - \`qb merge <owner/name> <agent-id>\` — merge an agent's fork into main
 - \`qb files <owner/name>\`, \`qb search <owner/name> "<text>"\` — read code without cloning
 - \`qb installs\` — your own AI assistants (installed into YOUR Cloudflare account) and the ones you can install
-- \`qb install <agents-starter|openclaw|pi|t3code|hermes> [--name n] [--account id]\` — installs one; the first time it prints one link where a person lets qodebase into their Cloudflare account, then waits and prints the assistant's URL (locked to that person by Cloudflare Access). An existing name for the same agent updates it in place (keeps its data); a name used by a different agent is refused. Without a token it starts qb login first
+- \`qb install <agents-starter|openclaw|pi|t3code|claudecode|hermes> [--name n] [--account id]\` — installs one; the first time it prints one link where a person lets qodebase into their Cloudflare account, then waits and prints the assistant's URL (locked to that person by Cloudflare Access). An existing name for the same agent updates it in place (keeps its data); a name used by a different agent is refused. Without a token it starts qb login first
 - \`qb uninstall <name> --yes\` — deletes an installed assistant: its Worker and data, its Access app, the record (\`removed: true\` in qb installs = its Worker was deleted elsewhere)
 - \`qb clone <owner/name> [dir]\` — git clone (a short-lived token: write for your own projects, read otherwise)
 - \`qb open <owner/name>\` — the project's page and live app URLs

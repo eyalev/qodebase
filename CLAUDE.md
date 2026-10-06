@@ -274,6 +274,13 @@ OWN account with no GitHub and no pasted tokens (research and options:
   T3 Code: `/__forq/claude` signs in to Claude Code from a phone (runs
   `claude auth login` in a pty fed from a FIFO; T3's terminal is hidden at phone
   width); linked from the install's ready page.
+- **Claude Code** (kind `claudecode` in `forq/container-agents`, since
+  2026-10-06): the real Claude Code TUI in tmux session `claude` (/workspace,
+  `IS_SANDBOX=1`, `--continue`), mobile-agent (public eyalev/mobile-agent,
+  pinned `MOBILE_AGENT_REF`) as the phone UI on :8080. The person signs in with
+  their OWN Claude subscription at `/__forq/claude`; until then the pane waits.
+  mobile-agent only accepts a same-origin browser Origin, so the Worker sends
+  `origin: http://container` (Access is the lock). Same container rules as T3.
 - **Pi** (`forq/pi-durable`, local `../forq-pi-durable`, since 2026-10-06):
   Cloudflare's official example `cloudflare/agents` `examples/next/harnesses/pi`
   (5.8k ★ repo; Earendil's `@earendil-works/pi-durable` 1.0, 113k ★ pi repo):
