@@ -10,7 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
 
-const VERSION = '0.3.1';
+const VERSION = '0.4.0';
 const DEFAULT_HOST = 'https://qodebase.app';
 const CONFIG = join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'qodebase', 'config.json');
 
@@ -38,6 +38,7 @@ const HELP = `qb ${VERSION} — qodebase from the command line
                                    your own AI assistant in YOUR Cloudflare account
                                    (agents-starter, openclaw, pi, t3code, hermes)
   qb installs                      what you installed, and the agents you can install
+  qb uninstall <name> [--yes]      delete an assistant: its Worker, its data, its lock
   qb files <owner/name>            file list of main
   qb search <owner/name> "<text>"  search main's code
 
@@ -240,10 +241,23 @@ const cmds = {
     const { data } = await api('GET', '/api/installs');
     out(data, (d) => [
       d.connected ? `Cloudflare: connected (${d.accounts.map((a) => a.name).join(', ')})` : 'Cloudflare: not connected yet (qb install asks once)',
-      '', 'Installed:', ...(d.installs.length ? d.installs.map((i) => `  ${i.name.padEnd(18)} ${i.title.padEnd(18)} ${i.url ? i.url + (i.runningOlder ? '  (last update failed; the previous version runs)' : '') : i.error ? `stopped: ${i.error}` : 'installing'}`) : ['  nothing yet']),
+      '', 'Installed:', ...(d.installs.length ? d.installs.map((i) => `  ${i.name.padEnd(18)} ${i.title.padEnd(18)} ${i.removed ? 'removed (its Worker is gone; qb uninstall forgets it)' : i.url ? i.url + (i.runningOlder ? '  (last update failed; the previous version runs)' : '') : i.error ? `stopped: ${i.error}` : 'installing'}`) : ['  nothing yet']),
       '', 'qb install with an existing name updates that assistant in place (its data stays).',
       '', 'Can install:', ...d.templates.map((t) => `  ${t.id.padEnd(16)} ${t.title}${t.needsPaidPlan ? '  (Cloudflare $5/mo Workers Paid plan)' : '  (Cloudflare free plan)'}`),
     ].join('\n'));
+  },
+  async uninstall(name) {
+    need(name, 'uninstall <name> [--account id] [--yes]');
+    if (!flags.yes) {
+      if (!process.stdin.isTTY || JSON_OUT) die('this deletes the assistant and its data; add --yes to confirm');
+      const { createInterface } = await import('node:readline/promises');
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
+      const typed = (await rl.question(`This deletes ${name}, everything it stored, and its Cloudflare Access lock.\nType the name to confirm: `)).trim();
+      rl.close();
+      if (typed !== name) die('not deleted');
+    }
+    const { data } = await api('DELETE', '/api/installs', { name, account: flags.account });
+    out(data, (d) => `Deleted ${name}${d.worker ? '' : ' (its Worker was already gone)'}${d.accessApps ? `, its lock` : ''}.`);
   },
   async install(template) {
     need(template, 'install <agent> [--name n] [--account id]   (qb installs lists them)');

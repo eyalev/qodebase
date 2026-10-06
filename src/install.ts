@@ -107,7 +107,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
     if (request.method === 'GET') {
       return Response.json({ connected: conn.connected, accounts: conn.accounts,
         templates: Object.values(TEMPLATES).map((t) => ({ id: t.id, title: t.title, defaultName: t.defaultName, needsPaidPlan: !!(t.paid || t.container) })),
-        installs: latestInstalls(await stub.list()) }, { headers: { 'cache-control': 'no-store' } });
+        installs: latestInstalls(await stub.list(), conn.connected ? await stub.liveWorkers() : null) }, { headers: { 'cache-control': 'no-store' } });
     }
     if (request.method === 'POST') {
       const b = await request.json().catch(() => ({})) as { template?: string; name?: string; account?: string };
@@ -122,7 +122,16 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
       if (!r.ok) return Response.json({ error: r.error }, { status: 400 });
       return Response.json({ id: r.id, page: `${url.origin}/personal-agents/i/${r.id}`, status: `${url.origin}/personal-agents/i/${r.id}.json` });
     }
-    return Response.json({ error: 'GET or POST' }, { status: 405 });
+    if (request.method === 'DELETE') {
+      const b = await request.json().catch(() => ({})) as { name?: string; account?: string };
+      const name = String(b.name || '');
+      const accts = [...new Set((await stub.list()).filter((i) => i.name === name).map((i) => i.accountId))];
+      const account = String(b.account || (accts.length === 1 ? accts[0] : ''));
+      if (!account) return Response.json({ error: accts.length ? 'That name is in more than one account (--account <id>)' : `You have no assistant called ${name}.` }, { status: 400 });
+      const r = await stub.uninstall(name, account);
+      return Response.json(r, { status: r.ok ? 200 : 400 });
+    }
+    return Response.json({ error: 'GET, POST or DELETE' }, { status: 405 });
   }
 
   if (p === '/connect/cf/start') {
@@ -187,8 +196,8 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
 /** One row per name + account for qb installs: the newest attempt, without its build log
  *  (that stays on /personal-agents/i/<id>.json). A failed newest attempt over an older
  *  success keeps that success's URL: the Worker still runs the older version. */
-function latestInstalls(all: Install[]) {
-  const rows = new Map<string, InstallView & { account: string; updated: number; attempts: number; runningOlder?: boolean }>();
+function latestInstalls(all: Install[], live: Record<string, string[]> | null) {
+  const rows = new Map<string, InstallView & { account: string; updated: number; attempts: number; runningOlder?: boolean; removed?: boolean }>();
   for (const i of all) {   // newest first
     const k = `${i.accountId}/${i.name}`;
     const row = rows.get(k);
@@ -196,6 +205,8 @@ function latestInstalls(all: Install[]) {
     row.attempts++;
     if (!row.url && i.url) { row.url = i.url; row.runningOlder = true; }
   }
+  // Deleted outside qodebase (dashboard, wrangler): say so instead of a dead link.
+  for (const r of rows.values()) if (r.url && live?.[r.account] && !live[r.account].includes(r.name)) { r.removed = true; r.url = undefined; }
   return [...rows.values()];
 }
 
@@ -236,6 +247,46 @@ export class Installs extends DurableObject<Env> {
     await this.ctx.storage.delete('conn');
   }
   /** A live access token, refreshing (and saving the rotated refresh token) when needed. */
+  /** Worker names per account that has installs, so the list can show removed ones. null = could not check. */
+  async liveWorkers(): Promise<Record<string, string[]> | null> {
+    try {
+      const token = await this.#token();
+      const accts = [...new Set((await this.list()).filter((i) => i.url).map((i) => i.accountId))];
+      const out: Record<string, string[]> = {};
+      for (const a of accts) {
+        const r = await cf(token, `/accounts/${a}/workers/scripts`);
+        if (!r.ok) return null;
+        out[a] = ((r.result || []) as { id: string }[]).map((x) => x.id);
+      }
+      return out;
+    } catch (e) { log('install', 'live_check_failed', { err: String(e) }); return null; }
+  }
+
+  /** Deletes an installed assistant: its Worker (with its data), its Access app, our records. */
+  async uninstall(name: string, accountId: string): Promise<{ ok: boolean; error?: string; worker?: boolean; accessApps?: number; records?: number }> {
+    const mine = (await this.list()).filter((i) => i.name === name && i.accountId === accountId);
+    if (!mine.length) return { ok: false, error: `You have no assistant called ${name} in that account.` };
+    if (mine.some((i) => i.steps.some((st) => st.state === 'doing'))) return { ok: false, error: `${name} is installing right now. Wait for it to finish.` };
+    const token = await this.#token();
+    const scripts = await cf(token, `/accounts/${accountId}/workers/scripts`);
+    const tag = ((scripts.result || []) as { id: string; tag: string }[]).find((x) => x.id === name)?.tag;
+    let accessApps = 0;
+    if (tag) {
+      const apps = await cf(token, `/accounts/${accountId}/access/apps?per_page=100`);
+      for (const ap of (apps.result || []) as any[]) {
+        if ((ap.destinations || []).some((d: any) => d.type === 'worker' && d.worker_id === tag)) {
+          const d = await cf(token, `/accounts/${accountId}/access/apps/${ap.id}`, { method: 'DELETE' });
+          if (d.ok) accessApps++;
+        }
+      }
+      const del = await cf(token, `/accounts/${accountId}/workers/scripts/${name}?force=true`, { method: 'DELETE' });
+      if (!del.ok) return { ok: false, error: `Cloudflare did not delete the Worker: ${JSON.stringify(del.errors || del).slice(0, 200)}` };
+    }
+    await this.ctx.storage.delete(mine.map((i) => `i:${i.id}`));
+    log('install', 'uninstalled', { name, account: accountId, worker: !!tag, accessApps, records: mine.length });
+    return { ok: true, worker: !!tag, accessApps, records: mine.length };
+  }
+
   async #token(): Promise<string> {
     const c = await this.ctx.storage.get<Conn>('conn');
     if (!c) throw new Error('not connected to Cloudflare');
