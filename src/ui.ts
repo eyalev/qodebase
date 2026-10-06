@@ -391,7 +391,7 @@ ${d?.url ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.ur
 <pre style="background:var(--card);border-radius:12px;padding:12px;overflow:auto;font:12px/1.5 'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word">${esc(d?.log || 'No log.')}</pre>`);
 }
 
-export function settingsPage(u: { handle: string; email: string; apiKeyTail?: string; apiKeyCheckedAt?: number; model?: string }, owner: boolean, projects: number, welcome: boolean) {
+export function settingsPage(u: { handle: string; email: string; apiKeyTail?: string; apiKeyCheckedAt?: number; model?: string }, owner: boolean, projects: number, welcome: boolean, cli: { id: string; label: string; createdAt: number; usedAt: number }[] = []) {
   const keyBlock = owner
     ? `<p class="desc">Your agents run on this instance's Claude subscription. No API key needed.</p>`
     : `${u.apiKeyTail ? `<p class="desc">Key ending in <b>…${esc(u.apiKeyTail)}</b>, checked ${freshTag(u.apiKeyCheckedAt || 0, Date.now(), STEPS)}. Your agents run on it with ${esc(({ 'claude-sonnet-5-5': 'Sonnet 5.5', 'claude-opus-5-5': 'Opus 5.5', 'claude-sonnet-5': 'Sonnet 5' } as Record<string, string>)[u.model || 'claude-sonnet-5-5'] || u.model || 'Sonnet 5.5')}.</p>` : `<p class="desc">Agents run Claude Code with your own Anthropic API key. You pay Anthropic directly; qodebase measured about $1–2 per finished, reviewed change on Sonnet.</p>`}
@@ -406,8 +406,11 @@ ${welcome ? `<p class="desc">You are signed in. ${[projects ? '' : 'Pick the nam
 ${projects ? `<p class="note">You own ${projects} project${projects > 1 ? 's' : ''} under this name, so it stays.</p>` : '<div class="bar"><button class="btn">Save name</button></div>'}</form>
 <h2>Anthropic API key</h2>${keyBlock}
 <p class="err" id="msg" role="status"></p>
+<h2>Command line</h2>
+<p class="desc">${cli.length ? `Signed-in CLIs (last used):` : `No CLI signed in.`} <a href="/cli">Install qb</a> to use qodebase from a terminal or an agent.</p>
+${cli.map((t) => `<div class="actions cli-t"><span><b>${esc(t.label)}</b> ${freshTag(t.usedAt, Date.now(), STEPS)}</span><button type="button" class="chipbtn" data-revoke="${esc(t.id)}">Revoke</button></div>`).join('')}
 <h2>Account</h2><p class="desc">Signed in as ${esc(u.email)}.</p><div class="actions"><a class="chipbtn" href="/logout">Sign out</a></div>
-<style>.field{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}.err{min-height:1.4em;color:var(--dim);font-size:15px;margin:8px 0 0}.err.bad{color:var(--fg);font-weight:600}</style>
+<style>.field{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}.cli-t{align-items:center;justify-content:space-between;margin:8px 0}.cli-t span{display:flex;gap:8px;align-items:center;min-width:0}.err{min-height:1.4em;color:var(--dim);font-size:15px;margin:8px 0 0}.err.bad{color:var(--fg);font-weight:600}</style>
 <script>
 const msg=document.getElementById('msg');
 // The message shows under the form that was used, not at the foot of the page
@@ -415,6 +418,7 @@ const msg=document.getElementById('msg');
 async function call(url,method,body,form){if(form)form.after(msg);msg.classList.remove('bad');const r=await fetch(url,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok){msg.textContent=j.error||'Failed';msg.classList.add('bad');return null;}return j;}
 const hf=document.getElementById('hf');if(hf)hf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Saving';if(await call('/api/me/handle','POST',{handle:hf.handle.value},hf))location.reload();};
 const kf=document.getElementById('keyf');if(kf)kf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Checking the key with Anthropic';if(await call('/api/me/key','POST',{key:kf.key.value},kf))location.reload();};
+document.querySelectorAll('[data-revoke]').forEach((b)=>b.onclick=async()=>{if(await call('/api/cli/revoke','POST',{id:b.dataset.revoke},b.parentElement))location.reload();});
 const rm=document.getElementById('rmkey');if(rm)rm.onclick=async()=>{if(await call('/api/me/key','DELETE'))location.reload();};
 </script>`);
 }

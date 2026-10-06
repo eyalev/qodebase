@@ -410,7 +410,7 @@ const app = {
         const u = await userByEmail(env, me.email || '');
         if (!u) return new Response(null, { status: 302, headers: { location: '/login?next=/settings' } });
         const mine = (await registry(env).list()).filter((e) => e.owner === u.handle).length;
-        const page = settingsPage(u, isOwner(env, u.handle), mine, url.searchParams.has('welcome'));
+        const page = settingsPage(u, isOwner(env, u.handle), mine, url.searchParams.has('welcome'), await registry(env).cliTokens(u.email));
         return html(tabsNav ? withGlobal(page, 'account', (await globalOf()).inbox, u.handle, ui as Nav) : page);
       }
       if (path.startsWith('/api/me/') && request.method !== 'GET') {
