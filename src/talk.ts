@@ -203,8 +203,22 @@ async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
   }
 }
 
+let etagMemo: string | null = null;
+async function talkEtag() {
+  if (!etagMemo) {
+    const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(TALK_JS)));
+    etagMemo = '"' + [...h.slice(0, 8)].map((x) => x.toString(16).padStart(2, '0')).join('') + '"';
+  }
+  return etagMemo;
+}
+
 export async function talkRoute(request: Request, env: Env, _ctx: ExecutionContext, url: URL, who: Who): Promise<Response | null> {
-  if (url.pathname === '/talk.js') return new Response(TALK_JS, { headers: { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'public, max-age=300' } });
+  if (url.pathname === '/talk.js') {
+    // Revalidate on every page load (304 when unchanged), so a deploy's new page tools reach the next load, not 5 min later.
+    const etag = await talkEtag();
+    if (request.headers.get('if-none-match') === etag) return new Response(null, { status: 304, headers: { etag, 'cache-control': 'no-cache' } });
+    return new Response(TALK_JS, { headers: { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache', etag } });
+  }
   if (!url.pathname.startsWith('/api/talk/')) return null;
   if (!env.AI) return json({ error: 'off', why: 'Talk is not set up on this copy (no AI binding).' }, 404);
   if (url.pathname === '/api/talk/me') {

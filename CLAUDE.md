@@ -540,5 +540,5 @@ answers, or both.
   resolves with Talk's answer / what it did, before any navigation),
   `open_project({name, part})` (fuzzy over `/api/projects`, spoken names),
   `go({page})`. Nothing destructive. One row per call: console + `/api/talk/log`
-  (Workers Logs, `event: webmcp`). `/talk.js` is cached 5 min, so a tab opened
-  before a deploy keeps the old tools until it reloads.
+  (Workers Logs, `event: webmcp`). `/talk.js` revalidates on every load (ETag,
+  `no-cache`), but a tab opened before a deploy keeps the old tools until it reloads.
