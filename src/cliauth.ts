@@ -94,7 +94,7 @@ export async function cliUserRoute(request: Request, env: Env, url: URL, email: 
 
 const html = (body: string, status = 200) => new Response(body, { status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 const CSS = `<style>.field{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
-.code{font:600 28px 'JetBrains Mono',monospace;letter-spacing:.06em;margin:8px 0 4px}.cmd{font:14px 'JetBrains Mono',monospace;background:var(--chip);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.code{font:600 28px 'JetBrains Mono',monospace;letter-spacing:.06em;margin:8px 0 4px}.cmd{font:14px 'JetBrains Mono',monospace;background:var(--chip);border-radius:8px;padding:10px 12px;white-space:pre-wrap;overflow-wrap:anywhere}
 form .btn{margin-top:12px;width:100%}.err{color:var(--bad,#b3261e)}</style>`;
 
 function approvePage(code: string, live: boolean, handle: string, failed = false) {
@@ -125,7 +125,6 @@ function cliPage(origin: string) {
 <h1>qodebase from the command line</h1>
 <p class="desc">For you and for your agents (Claude Code, Codex, anything with a shell). Needs Node 18 or newer.</p>
 <h2>Install</h2><div class="cmd">curl -fsSL ${esc(origin)}/cli/install.sh | sh</div>
-<p class="desc">Or run it without installing: <span class="cmd" style="display:inline-block;padding:2px 8px">node &lt;(curl -fsSL ${esc(origin)}/cli/qb.mjs) help</span></p>
 <h2>Sign in</h2><div class="cmd">qb login</div>
 <p class="desc">It prints a code and a link. Open the link on your phone, check the code, approve.</p>
 <h2>Use it</h2><div class="cmd">qb new "a tip calculator with a dark mode"
