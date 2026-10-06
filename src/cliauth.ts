@@ -127,6 +127,8 @@ function cliPage(origin: string) {
 <h2>Install</h2><div class="cmd">curl -fsSL ${esc(origin)}/cli/install.sh | sh</div>
 <h2>Sign in</h2><div class="cmd">qb login</div>
 <p class="desc">It prints a code and a link. Open the link on your phone, check the code, approve.</p>
+<h2>Your own AI assistant</h2><div class="cmd">qb install pi</div>
+<p class="desc">Installs it into <b>your</b> Cloudflare account. The first time it asks you to approve twice on your phone: qodebase sign-in, then Cloudflare. <span class="cmd" style="display:inline;padding:1px 6px">qb installs</span> lists the others.</p>
 <h2>Use it</h2><div class="cmd">qb new "a tip calculator with a dark mode"
 qb import github.com/owner/repo
 qb fork forq/todo
@@ -175,7 +177,7 @@ or with --json. Projects are named owner/name. Another instance: --host <url> or
 - \`qb merge <owner/name> <agent-id>\` — merge an agent's fork into main
 - \`qb files <owner/name>\`, \`qb search <owner/name> "<text>"\` — read code without cloning
 - \`qb installs\` — your own AI assistants (installed into YOUR Cloudflare account) and the ones you can install
-- \`qb install <agents-starter|openclaw|pi|t3code|hermes> [--name n] [--account id]\` — installs one; the first time it prints one link where a person lets qodebase into their Cloudflare account, then waits and prints the assistant's URL (locked to that person by Cloudflare Access)
+- \`qb install <agents-starter|openclaw|pi|t3code|hermes> [--name n] [--account id]\` — installs one; the first time it prints one link where a person lets qodebase into their Cloudflare account, then waits and prints the assistant's URL (locked to that person by Cloudflare Access). An existing name for the same agent updates it in place (keeps its data); a name used by a different agent is refused. Without a token it starts qb login first
 - \`qb clone <owner/name> [dir]\` — git clone (a short-lived token: write for your own projects, read otherwise)
 - \`qb open <owner/name>\` — the project's page and live app URLs
 - \`qb tokens\`, \`qb revoke <id>\`, \`qb logout\`

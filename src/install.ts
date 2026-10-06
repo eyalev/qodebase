@@ -107,7 +107,7 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
     if (request.method === 'GET') {
       return Response.json({ connected: conn.connected, accounts: conn.accounts,
         templates: Object.values(TEMPLATES).map((t) => ({ id: t.id, title: t.title, defaultName: t.defaultName, needsPaidPlan: !!(t.paid || t.container) })),
-        installs: (await stub.list()).map(view) }, { headers: { 'cache-control': 'no-store' } });
+        installs: latestInstalls(await stub.list()) }, { headers: { 'cache-control': 'no-store' } });
     }
     if (request.method === 'POST') {
       const b = await request.json().catch(() => ({})) as { template?: string; name?: string; account?: string };
@@ -184,6 +184,21 @@ export async function installRoute(request: Request, env: Env, ctx: ExecutionCon
   return null;
 }
 
+/** One row per name + account for qb installs: the newest attempt, without its build log
+ *  (that stays on /personal-agents/i/<id>.json). A failed newest attempt over an older
+ *  success keeps that success's URL: the Worker still runs the older version. */
+function latestInstalls(all: Install[]) {
+  const rows = new Map<string, InstallView & { account: string; updated: number; attempts: number; runningOlder?: boolean }>();
+  for (const i of all) {   // newest first
+    const k = `${i.accountId}/${i.name}`;
+    const row = rows.get(k);
+    if (!row) { const { log: _log, ...v } = view(i); rows.set(k, { ...v, account: i.accountId, updated: i.updatedAt, attempts: 1 }); continue; }
+    row.attempts++;
+    if (!row.url && i.url) { row.url = i.url; row.runningOlder = true; }
+  }
+  return [...rows.values()];
+}
+
 const view = (i: Install): InstallView => ({ id: i.id, title: TEMPLATES[i.template]?.title || i.template, name: i.name, accountName: i.accountName, steps: i.steps, url: i.url, error: i.error, fix: i.fix, log: i.log,
   wakes: !!TEMPLATES[i.template]?.container,
   extra: i.url && i.template === 't3code' ? { text: 'Sign in to Claude Code (optional)', href: `${i.url}/__forq/claude` } : undefined });
@@ -239,6 +254,10 @@ export class Installs extends DurableObject<Env> {
     if (!WORKER_NAME_RE.test(name)) return { ok: false, error: 'Use 3 to 40 lowercase letters, numbers and dashes, starting with a letter.' };
     const acct = c.accounts.find((a) => a.id === accountId) || (c.accounts.length === 1 ? c.accounts[0] : undefined);
     if (!acct) return { ok: false, error: 'Pick the Cloudflare account to install into.' };
+    // Same name, same account = an update in place (wrangler overwrites the Worker, its data
+    // and Access app stay). Same name for a DIFFERENT agent would overwrite one with the other.
+    const clash = (await this.list()).find((i) => i.name === name && i.accountId === acct.id && i.template !== template && i.url);
+    if (clash) return { ok: false, error: `${name} is already your ${TEMPLATES[clash.template]?.title || clash.template} in ${acct.name}. Pick another name.` };
     const running = (await this.list()).find((i) => i.steps.some((s) => s.state === 'doing'));
     if (running) return { ok: false, error: `${running.name} is still installing. Wait for it to finish.` };
     const id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);

@@ -10,13 +10,14 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const DEFAULT_HOST = 'https://qodebase.app';
 const CONFIG = join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'qodebase', 'config.json');
 
 const HELP = `qb ${VERSION} — qodebase from the command line
 
-  qb login                         sign in (approve a code on your phone)
+  qb login                         sign in (approve a code on your phone; any
+                                   command does this by itself when needed)
   qb logout | whoami | tokens | revoke <id>
 
   qb ls [--mine] [--owner <h>]     projects
@@ -57,7 +58,7 @@ const loadConfig = () => { try { return JSON.parse(readFileSync(CONFIG, 'utf8'))
 const saveConfig = (c) => { mkdirSync(join(CONFIG, '..'), { recursive: true, mode: 0o700 }); writeFileSync(CONFIG, JSON.stringify(c, null, 2) + '\n', { mode: 0o600 }); };
 const config = loadConfig();
 const HOST = (flags.host || process.env.QB_HOST || config.default || DEFAULT_HOST).replace(/\/+$/, '');
-const TOKEN = flags.token || process.env.QB_TOKEN || config.hosts?.[HOST]?.token || null;
+let TOKEN = flags.token || process.env.QB_TOKEN || config.hosts?.[HOST]?.token || null;
 const JSON_OUT = flags.json || !process.stdout.isTTY;
 
 const die = (msg, code = 1) => {
@@ -71,7 +72,8 @@ const out = (data, human) => {
 };
 
 async function api(method, path, body, { auth = true, okStatus = [] } = {}) {
-  if (auth && !TOKEN) die(`not signed in to ${HOST}. Run: qb login`);
+  // No token yet: sign in first (one approval on the phone), then carry on with the command.
+  if (auth && !TOKEN) await deviceLogin();
   let r;
   try {
     r = await fetch(HOST + path, {
@@ -87,6 +89,29 @@ async function api(method, path, body, { auth = true, okStatus = [] } = {}) {
   return { status: r.status, data };
 }
 
+/** Device sign-in: print a link + code, wait for the approval, save and use the token. */
+async function deviceLogin() {
+  const { data: s } = await api('POST', '/api/cli/start', { label: `qb on ${hostname()}` }, { auth: false });
+  if (JSON_OUT) console.error(JSON.stringify({ needs: 'qb_login', user_code: s.user_code, verification_uri_complete: s.verification_uri_complete }));
+  else console.log(`Sign in to ${HOST}: open ${s.verification_uri_complete}\nand check the code: ${s.user_code}\n\nWaiting for approval…`);
+  const until = Date.now() + s.expires_in * 1000;
+  while (Date.now() < until) {
+    await sleep(s.interval * 1000);
+    const { status, data } = await api('POST', '/api/cli/token', { device_code: s.device_code }, { auth: false, okStatus: [428, 410] });
+    if (status === 428) continue;
+    if (status === 410) die(data.error || 'the code expired; run qb login again');
+    const c = loadConfig();
+    c.hosts = c.hosts || {};
+    c.hosts[HOST] = { token: data.token, handle: data.handle, at: new Date().toISOString() };
+    if (!c.default || flags.host) c.default = HOST;
+    saveConfig(c);
+    TOKEN = data.token;
+    if (!JSON_OUT) console.log(`Signed in as ${data.handle}.\n`);
+    return data;
+  }
+  die('the code expired; run qb login again');
+}
+
 const project = (s) => {
   const m = String(s || '').match(/^(?:https?:\/\/[^/]+\/p\/)?([a-z0-9-]+)\/([a-z0-9-]+)\/?$/);
   if (!m) die(`expected owner/name, got "${s ?? ''}"`);
@@ -99,23 +124,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ---- commands ----------------------------------------------------------------
 const cmds = {
   async login() {
-    const { data: s } = await api('POST', '/api/cli/start', { label: `qb on ${hostname()}` }, { auth: false });
-    if (JSON_OUT) console.error(JSON.stringify({ user_code: s.user_code, verification_uri_complete: s.verification_uri_complete }));
-    else console.log(`Open ${s.verification_uri_complete}\nand check the code: ${s.user_code}\n\nWaiting for approval…`);
-    const until = Date.now() + s.expires_in * 1000;
-    while (Date.now() < until) {
-      await sleep(s.interval * 1000);
-      const { status, data } = await api('POST', '/api/cli/token', { device_code: s.device_code }, { auth: false, okStatus: [428, 410] });
-      if (status === 428) continue;
-      if (status === 410) die(data.error || 'the code expired; run qb login again');
-      const c = loadConfig();
-      c.hosts = c.hosts || {};
-      c.hosts[HOST] = { token: data.token, handle: data.handle, at: new Date().toISOString() };
-      if (!c.default || flags.host) c.default = HOST;
-      saveConfig(c);
-      return out({ ok: true, host: HOST, handle: data.handle }, (d) => `Signed in to ${d.host} as ${d.handle}.`);
-    }
-    die('the code expired; run qb login again');
+    const d = await deviceLogin();
+    out({ ok: true, host: HOST, handle: d.handle }, (x) => `Signed in to ${x.host} as ${x.handle}.`);
   },
   async logout() {
     const c = loadConfig();
@@ -230,7 +240,8 @@ const cmds = {
     const { data } = await api('GET', '/api/installs');
     out(data, (d) => [
       d.connected ? `Cloudflare: connected (${d.accounts.map((a) => a.name).join(', ')})` : 'Cloudflare: not connected yet (qb install asks once)',
-      '', 'Installed:', ...(d.installs.length ? d.installs.map((i) => `  ${i.name.padEnd(18)} ${i.title.padEnd(18)} ${i.url || (i.error ? `stopped: ${i.error}` : 'installing')}`) : ['  nothing yet']),
+      '', 'Installed:', ...(d.installs.length ? d.installs.map((i) => `  ${i.name.padEnd(18)} ${i.title.padEnd(18)} ${i.url ? i.url + (i.runningOlder ? '  (last update failed; the previous version runs)' : '') : i.error ? `stopped: ${i.error}` : 'installing'}`) : ['  nothing yet']),
+      '', 'qb install with an existing name updates that assistant in place (its data stays).',
       '', 'Can install:', ...d.templates.map((t) => `  ${t.id.padEnd(16)} ${t.title}${t.needsPaidPlan ? '  (Cloudflare $5/mo Workers Paid plan)' : '  (Cloudflare free plan)'}`),
     ].join('\n'));
   },
