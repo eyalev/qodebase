@@ -28,6 +28,7 @@ import { changesPage, dirPage, filePage, type ChangeText } from './codeui';
 import { startingPage } from './pages';
 import { personalAgentsPage } from './personal';
 import { Installs, installRoute } from './install';
+import { bearerEmail, cliPublicRoute, cliUserRoute } from './cliauth';
 // mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
 import MA_TGZ from '../box/mobile-agent.tgz';
 import MA_REV from '../box/mobile-agent.rev';
@@ -70,6 +71,13 @@ async function who(request: Request, env: Env): Promise<Who | null> {
       return { kind: 'user', handle: request.headers.get('x-forq-as') || 'eyal', admin: true };
     }
     return null;
+  }
+  // The qb CLI: a bearer token (src/cliauth.ts). A bad one is refused, never anonymous.
+  const bearer = await bearerEmail(env, request);
+  if (bearer === null) return null;
+  if (bearer) {
+    const u = await userByEmail(env, bearer);
+    return u ? { kind: 'user', handle: u.handle, admin: false, email: u.email } : null;
   }
   // Public site: a forq session cookie (set by /login). No session = anonymous
   // reader (handle '' owns nothing, so every ownership check fails by itself).
@@ -280,7 +288,7 @@ const app = {
     if (isUiHost(env, url.hostname)) {
       const cf = (request as any).cf || {};
       if (url.pathname === '/robots.txt') return new Response('User-agent: *\nDisallow: /p/\nDisallow: /import\nDisallow: /api/\nDisallow: /a/\nDisallow: /login\n', { headers: { 'content-type': 'text/plain' } });
-      if (url.pathname === '/icon.svg') return new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#17695a"/><circle cx="116" cy="118" r="48" fill="none" stroke="#fff" stroke-width="30"/><path d="M149 66h30v138h-30z" fill="#fff"/></svg>', { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' } });
+      if (url.pathname === '/icon.svg') return new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#17695a"/><circle cx="121" cy="110" r="48" fill="none" stroke="#fff" stroke-width="30"/><path d="M154 58h30v138h-30z" fill="#fff"/></svg>', { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' } });
       if (url.pathname === '/version.json') return json({ name: 'forq', version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
       if (url.pathname === '/health.json') return health(env, ctx, url.origin);
       if (url.pathname === '/e') return kstatsForward(request, env, ctx);
@@ -289,6 +297,7 @@ const app = {
       if (url.pathname === '/privacy') return html(privacyPage());
       if (url.pathname === '/personal-agents') return html(personalAgentsPage());
       if (url.pathname.startsWith('/connect/cf/') || url.pathname.startsWith('/personal-agents/')) { const r = await installRoute(request, env, ctx, url); if (r) return r; }
+      if (url.pathname.startsWith('/api/cli/') || url.pathname.startsWith('/cli') || url.pathname === '/llms.txt') { const r = await cliPublicRoute(request, env, url); if (r) return r; }
       // Crawler gate on WHO, not on paths: verified bots get the front page only
       // (project and code pages read Artifacts on every view).
       if ((cf.verifiedBotCategory || cf.botManagement?.verifiedBot) && url.pathname !== '/') {
@@ -315,7 +324,7 @@ const app = {
     // Anonymous readers: pages and read APIs only.
     if (me.kind === 'user' && me.anon) {
       const p0 = url.pathname;
-      const needsUser = request.method !== 'GET' || p0.startsWith('/a/') || p0.endsWith('/agents-html') || p0.startsWith('/api/github') || p0 === '/settings' || p0.startsWith('/api/me');
+      const needsUser = request.method !== 'GET' || p0 === '/cli/login' || p0.startsWith('/api/cli/') || p0.startsWith('/a/') || p0.endsWith('/agents-html') || p0.startsWith('/api/github') || p0 === '/settings' || p0.startsWith('/api/me');
       if (needsUser) {
         const login = `/login?next=${encodeURIComponent(request.method === 'GET' ? p0 + url.search : (request.headers.get('referer') ? new URL(request.headers.get('referer')!).pathname : '/'))}`;
         return request.method === 'GET' && (request.headers.get('accept') || '').includes('text/html')
@@ -324,6 +333,10 @@ const app = {
       }
     }
     const path = url.pathname;
+    if (me.kind === 'user' && me.email && me.handle && (path.startsWith('/cli/') || path.startsWith('/api/cli/'))) {
+      const r = await cliUserRoute(request, env, url, me.email, me.handle);
+      if (r) return r;
+    }
     // Boxes call back through workers.dev (no Access in front of it).
     const apiBase = url.hostname.endsWith('.workers.dev') ? `https://${url.hostname}` : env.API_BASE;
     const runBase = `https://${env.RUN_HOST}`;
@@ -427,6 +440,12 @@ const app = {
         }
       }
       // ---- GitHub: search, look up one repo, import it
+      // The project list as JSON (qb ls): the Registry only, no Artifacts reads.
+      if (path === '/api/projects' && request.method === 'GET') {
+        const owner = url.searchParams.get('owner') || (url.searchParams.has('mine') ? me.handle : '');
+        const list = (await registry(env).list()).filter((e) => !owner || e.owner === owner);
+        return json({ projects: list.slice(0, 500).map((e) => ({ ...e, path: `/p/${e.owner}/${e.name}`, live: runUrl(runBase, e.slug) })) });
+      }
       if (path === '/api/github/search') {
         const q = url.searchParams.get('q') || '';
         const ref = parseRepoRef(q);
@@ -569,6 +588,13 @@ const app = {
           const rev = await head(env, ctx, repo);
           if (!rev) return json({ results: [] });
           return json(await p.searchCode(repo, rev.tree, (url.searchParams.get('q') || '').slice(0, 200)));
+        }
+        // qb clone: a short-lived git token for main, write for the owner, read for anyone else.
+        if (verb === 'git-token' && request.method === 'POST') {
+          if (!me.handle) return json({ error: 'Sign in first' }, 401);
+          const mine = info.owner === me.handle;
+          log('cli', 'git_token', { slug, handle: me.handle, write: mine });
+          return json({ ...(await p.gitToken(mine ? 'write' : 'read')), write: mine });
         }
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());

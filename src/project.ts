@@ -121,6 +121,14 @@ export class Project extends DurableObject<Env> {
     return { remote: info.remote, token: t.plaintext };
   }
 
+  /** A git token for main (qb clone): write for the owner, read for others; 1 hour. */
+  async gitToken(mode: 'read' | 'write'): Promise<{ remote: string; token: string; branch: string | null }> {
+    const info = await this.#need();
+    using repo = await this.env.ARTIFACTS.get(info.repo);
+    const t = await repo.createToken(mode, 3600);
+    return { remote: info.remote, token: t.plaintext, branch: info.importedFrom?.branch || null };
+  }
+
   async addAgent(task: string): Promise<Agent> {
     const info = await this.#need();
     const max = Number(this.env.MAX_AGENTS_PER_PROJECT || 6);

@@ -16,6 +16,9 @@ export type Entry = {
   importedFrom?: { fullName: string; stars: number; license: string | null };
 };
 
+export type CliPending = { userCode: string; exp: number; email?: string; label?: string };
+export type CliToken = { id: string; email: string; label: string; createdAt: number; usedAt: number };
+
 export class Registry extends DurableObject<Env> {
   async list(): Promise<Entry[]> {
     const m = await this.ctx.storage.list<Entry>({ prefix: 'p:' });
@@ -46,6 +49,52 @@ export class Registry extends DurableObject<Env> {
   }
   async userCount(): Promise<number> {
     return (await this.ctx.storage.list({ prefix: 'u:' })).size;
+  }
+
+  // ---- CLI sign-in (src/cliauth.ts): cd:<device hash> → pending login,
+  // cu:<user code> → device hash, ct:<token hash> → CliToken. Only hashes are stored.
+  async cliStart(deviceHash: string, userCode: string, exp: number): Promise<void> {
+    const old = await this.ctx.storage.list<CliPending>({ prefix: 'cd:' });
+    const dead = [...old].filter(([, v]) => v.exp < Date.now()).flatMap(([k, v]) => [k, `cu:${v.userCode}`]);
+    if (dead.length) await this.ctx.storage.delete(dead);
+    await this.ctx.storage.put({ [`cd:${deviceHash}`]: { userCode, exp } satisfies CliPending, [`cu:${userCode}`]: deviceHash });
+  }
+  async cliPending(userCode: string): Promise<CliPending | null> {
+    const dh = await this.ctx.storage.get<string>(`cu:${userCode}`);
+    const p = dh ? await this.ctx.storage.get<CliPending>(`cd:${dh}`) : null;
+    return p && p.exp > Date.now() ? p : null;
+  }
+  async cliApprove(userCode: string, email: string, label: string): Promise<boolean> {
+    const dh = await this.ctx.storage.get<string>(`cu:${userCode}`);
+    const p = dh ? await this.ctx.storage.get<CliPending>(`cd:${dh}`) : null;
+    if (!dh || !p || p.exp < Date.now() || p.email) return false;
+    await this.ctx.storage.put(`cd:${dh}`, { ...p, email, label });
+    return true;
+  }
+  /** The approved login for this device, once: stores the new token's hash and forgets the login. */
+  async cliClaim(deviceHash: string, tokenHash: string): Promise<{ status: 'pending' | 'expired' | 'ok'; email?: string }> {
+    const p = await this.ctx.storage.get<CliPending>(`cd:${deviceHash}`);
+    if (!p || p.exp < Date.now()) return { status: 'expired' };
+    if (!p.email) return { status: 'pending' };
+    await this.ctx.storage.delete([`cd:${deviceHash}`, `cu:${p.userCode}`]);
+    const t: CliToken = { email: p.email, label: p.label || 'CLI', createdAt: Date.now(), usedAt: Date.now(), id: tokenHash.slice(0, 8) };
+    await this.ctx.storage.put(`ct:${tokenHash}`, t);
+    return { status: 'ok', email: p.email };
+  }
+  async cliToken(tokenHash: string): Promise<CliToken | null> {
+    const t = await this.ctx.storage.get<CliToken>(`ct:${tokenHash}`);
+    if (t && Date.now() - t.usedAt > 3600_000) { t.usedAt = Date.now(); await this.ctx.storage.put(`ct:${tokenHash}`, t); }
+    return t || null;
+  }
+  async cliTokens(email: string): Promise<CliToken[]> {
+    const m = await this.ctx.storage.list<CliToken>({ prefix: 'ct:' });
+    return [...m.values()].filter((t) => t.email === email).sort((a, b) => b.createdAt - a.createdAt);
+  }
+  async cliRevoke(email: string, id: string): Promise<boolean> {
+    const m = await this.ctx.storage.list<CliToken>({ prefix: 'ct:' });
+    const hit = [...m].find(([, t]) => t.email === email && t.id === id);
+    if (hit) await this.ctx.storage.delete(hit[0]);
+    return !!hit;
   }
 
   async remove(slug: string): Promise<void> {
