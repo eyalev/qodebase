@@ -10,7 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
 
-const VERSION = '0.4.0';
+const VERSION = '0.4.1';
 const DEFAULT_HOST = 'https://qodebase.app';
 const CONFIG = join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'qodebase', 'config.json');
 
@@ -51,7 +51,7 @@ const flags = {};
 const args = [];
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
-  if (a === '--json' || a === '--mine' || a === '-h' || a === '--help') flags[a.replace(/^-+/, '')] = true;
+  if (a === '--json' || a === '--mine' || a === '--yes' || a === '-h' || a === '--help') flags[a.replace(/^-+/, '')] = true;
   else if (a.startsWith('--')) flags[a.slice(2)] = argv[++i];
   else args.push(a);
 }
