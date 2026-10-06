@@ -10,7 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
 
-const VERSION = '0.4.1';
+const VERSION = '0.4.2';
 const DEFAULT_HOST = 'https://qodebase.app';
 const CONFIG = join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'qodebase', 'config.json');
 
@@ -257,7 +257,7 @@ const cmds = {
       if (typed !== name) die('not deleted');
     }
     const { data } = await api('DELETE', '/api/installs', { name, account: flags.account });
-    X
+    out(data, (d) => `Deleted ${name}${d.worker ? '' : ' (its Worker was already gone)'}${d.accessApps ? ', its lock' : ''}${d.buckets?.length ? `, its storage (${d.buckets.join(', ')})` : ''}.`);
   },
   async install(template) {
     need(template, 'install <agent> [--name n] [--account id]   (qb installs lists them)');
