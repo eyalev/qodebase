@@ -14,6 +14,7 @@ export type Entry = {
   createdAt: number;
   updatedAt: number;     // last change to main that forq made or saw
   importedFrom?: { fullName: string; stars: number; license: string | null };
+  private?: boolean;     // only its owner sees it anywhere (lists, pages, code, API, live app)
 };
 
 export type CliPending = { userCode: string; exp: number; email?: string; label?: string };
@@ -103,3 +104,10 @@ export class Registry extends DurableObject<Env> {
 }
 
 export const registry = (env: Env) => env.Registry.get(env.Registry.idFromName('main'));
+
+/** Can this person see this project? Private ones: the owner (and admin) only. */
+export const canSee = (e: { owner: string; private?: boolean } | null | undefined, handle: string, admin = false) => !!e && (!e.private || admin || (!!handle && e.owner === handle));
+/** The registry as one person may see it. */
+export async function listFor(env: Env, handle: string, admin = false): Promise<Entry[]> {
+  return (await registry(env).list()).filter((e) => canSee(e, handle, admin));
+}

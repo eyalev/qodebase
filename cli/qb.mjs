@@ -10,7 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
 
-const VERSION = '0.4.2';
+const VERSION = '0.5.0';
 const DEFAULT_HOST = 'https://qodebase.app';
 const CONFIG = join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'qodebase', 'config.json');
 
@@ -23,8 +23,9 @@ const HELP = `qb ${VERSION} — qodebase from the command line
   qb ls [--mine] [--owner <h>]     projects
   qb info <owner/name>             a project and its agents
   qb open <owner/name>             its page and live app URLs
-  qb new "<what to build>" [--name n]   start a project; agents build it
-  qb import <github url|owner/repo>     copy a public GitHub repo in
+  qb new "<what to build>" [--name n] [--private]   start a project; agents build it
+  qb import <github url|owner/repo> [--private]     copy a public GitHub repo in
+  qb visibility <owner/name> public|private        who can see a project of yours
   qb fork <owner/name>             your own copy
   qb clone <owner/name> [dir]      git clone (stays signed in through qb)
 
@@ -51,7 +52,7 @@ const flags = {};
 const args = [];
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
-  if (a === '--json' || a === '--mine' || a === '--yes' || a === '-h' || a === '--help') flags[a.replace(/^-+/, '')] = true;
+  if (a === '--json' || a === '--mine' || a === '--yes' || a === '--private' || a === '-h' || a === '--help') flags[a.replace(/^-+/, '')] = true;
   else if (a.startsWith('--')) flags[a.slice(2)] = argv[++i];
   else args.push(a);
 }
@@ -150,12 +151,12 @@ const cmds = {
   async ls() {
     const q = flags.owner ? `?owner=${encodeURIComponent(flags.owner)}` : flags.mine ? '?mine=1' : '';
     const { data } = await api('GET', `/api/projects${q}`, undefined, { auth: !!TOKEN || !!flags.mine });
-    out(data.projects, (ps) => ps.map((p) => `${(p.owner + '/' + p.name).padEnd(32)} ${ago(p.updatedAt).padEnd(12)} ${p.description || ''}`).join('\n') || 'No projects.');
+    out(data.projects, (ps) => ps.map((p) => `${(p.owner + '/' + p.name).padEnd(32)} ${(p.private ? 'private' : '').padEnd(8)}${ago(p.updatedAt).padEnd(12)} ${p.description || ''}`).join('\n') || 'No projects.');
   },
   async info(ref) {
     const p = project(need(ref, 'info <owner/name>'));
     const { data } = await api('GET', p.path, undefined, { auth: !!TOKEN });
-    out(data, (d) => [`${d.owner}/${d.name}${d.forkedFrom ? `  (fork of ${d.forkedFrom.replace('.', '/')})` : ''}`, d.description || '', `${HOST}/p/${d.owner}/${d.name}`,
+    out(data, (d) => [`${d.owner}/${d.name}${d.private ? '  (private)' : ''}${d.forkedFrom ? `  (fork of ${d.forkedFrom.replace('.', '/')})` : ''}`, d.description || '', `${HOST}/p/${d.owner}/${d.name}`,
       ...(d.agents || []).filter((a) => a.state !== 'stopped').map((a) => `  ${a.id.padEnd(28)} ${String(a.state).padEnd(8)} ${(a.task || '').split('\n')[0].slice(0, 70)}`)].filter(Boolean).join('\n'));
   },
   async open(ref) {
@@ -165,12 +166,18 @@ const cmds = {
     out({ page: `${HOST}${e.path}`, live: e.live, code: `${HOST}${e.path}/code` }, (d) => `page  ${d.page}\nlive  ${d.live}\ncode  ${d.code}`);
   },
   async new(prompt) {
-    const { data } = await api('POST', '/api/build', { prompt: need(prompt, 'new "<what to build>" [--name n]'), name: flags.name });
+    const { data } = await api('POST', '/api/build', { prompt: need(prompt, 'new "<what to build>" [--name n] [--private]'), name: flags.name, private: !!flags.private });
     out({ ...data, url: `${HOST}${data.path}` }, (d) => `Started ${d.slug.replace('.', '/')}. Agents are building it: ${d.url}`);
   },
   async import(repo) {
-    const { data } = await api('POST', '/api/import', { repo: need(repo, 'import <github url|owner/repo>') });
+    const { data } = await api('POST', '/api/import', { repo: need(repo, 'import <github url|owner/repo> [--private]'), private: !!flags.private });
     out({ ...data, url: `${HOST}${data.path}` }, (d) => `Imported as ${d.owner}/${d.name}: ${d.url}`);
+  },
+  async visibility(ref, to) {
+    const p = project(need(ref, 'visibility <owner/name> public|private'));
+    if (to !== 'public' && to !== 'private') die('usage: qb visibility <owner/name> public|private');
+    const { data } = await api('POST', `${p.path}/visibility`, { private: to === 'private' });
+    out(data, (d) => `${p.owner}/${p.name} is now ${d.private ? 'private: only you can see it, its code and its app' : 'public'}.`);
   },
   async fork(ref) {
     const p = project(need(ref, 'fork <owner/name>'));

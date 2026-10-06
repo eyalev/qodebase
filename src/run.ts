@@ -64,6 +64,24 @@ export async function serveRun(request: Request, env: Env, ctx: ExecutionContext
     rest = m[2];
     shim = true;   // still a shared origin: scope its storage
   }
+  // Private projects (main and agent forks): only with a signed pass, handed out by the
+  // project page to people who can see it (index.ts withRunPasses). It arrives once as
+  // ?__qb=, becomes a cookie on this host (partitioned, so it works in the project
+  // page's preview iframe too), and the URL is cleaned. No pass = no such project.
+  const meta = await projectMeta(env, repoName);
+  if (meta.private) {
+    const slug = repoName.split('--')[0];
+    const cookieName = `qbp_${slug.replace(/[^a-z0-9]/g, '_')}`;
+    const given = url.searchParams.get('__qb');
+    if (given) {
+      if (!(await checkRunPass(env, slug, given))) return deny(404, 'no such project');
+      url.searchParams.delete('__qb');
+      return new Response(null, { status: 302, headers: { location: url.pathname + (url.search || ''), 'cache-control': 'no-store',
+        'set-cookie': `${cookieName}=${given}; Path=/; Max-Age=${PASS_TTL_S}; HttpOnly; Secure; SameSite=None; Partitioned` } });
+    }
+    const c = (request.headers.get('cookie') || '').match(new RegExp(`${cookieName}=([0-9a-f.]+)`));
+    if (!c || !(await checkRunPass(env, slug, c[1]))) return deny(404, 'no such project');
+  }
   let path = decodeURIComponent(rest.slice(1));
   if (path === '' || path.endsWith('/')) path += 'index.html';
   if (path.split('/').some((s) => s === '..' || s.startsWith('.git'))) return deny(404, 'not found');
@@ -135,16 +153,35 @@ has:function(t,k){return k in api||real.getItem(P+k)!==null;},ownKeys:function()
 ['localStorage','sessionStorage'].forEach(function(n){try{var real=window[n];var s=scope(real);Object.defineProperty(window,n,{get:function(){return s;},configurable:true});}catch(e){}});})();</script>`;
 }
 
-/** Is this repo's project a Worker project? Memoised per isolate for 10 min. */
-const kinds = new Map<string, { worker: boolean; at: number }>();
-async function isWorker(env: Env, repo: string): Promise<boolean> {
+/** A repo's project: Worker project? private? Memoised per isolate for a minute (so
+ *  making a project private closes its app within a minute everywhere). */
+const kinds = new Map<string, { worker: boolean; private: boolean; at: number }>();
+async function projectMeta(env: Env, repo: string): Promise<{ worker: boolean; private: boolean }> {
   const slug = repo.split('--')[0];
   const hit = kinds.get(slug);
-  if (hit && Date.now() - hit.at < 600_000) return hit.worker;
+  if (hit && Date.now() - hit.at < 60_000) return hit;
   const info = await env.Project.get(env.Project.idFromName(slug)).info().catch(() => null);
-  const worker = info?.kind === 'worker';
-  kinds.set(slug, { worker, at: Date.now() });
-  return worker;
+  const meta = { worker: info?.kind === 'worker', private: !!info?.private, at: Date.now() };
+  kinds.set(slug, meta);
+  return meta;
+}
+const isWorker = async (env: Env, repo: string) => (await projectMeta(env, repo)).worker;
+
+// ---- private apps: signed passes (exp.hmac), one project each, 12 h
+const PASS_TTL_S = 12 * 3600;
+async function passSig(env: Env, slug: string, exp: number) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.ADMIN_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`runpass:${slug}:${exp}`));
+  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+export async function mintRunPass(env: Env, slug: string) {
+  const exp = Math.floor(Date.now() / 1000) + PASS_TTL_S;
+  return `${exp}.${await passSig(env, slug, exp)}`;
+}
+async function checkRunPass(env: Env, slug: string, pass: string) {
+  const [e, sig] = pass.split('.');
+  const exp = Number(e);
+  return !!sig && exp > Date.now() / 1000 && sig === await passSig(env, slug, exp);
 }
 
 function withHeaders(r: Response, head: string) {

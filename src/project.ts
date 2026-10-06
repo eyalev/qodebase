@@ -47,6 +47,7 @@ export type ProjectInfo = {
   app?: Deploy & { worker: string };
   agents: Agent[];
   lastRequest?: RouterRequest;
+  private?: boolean;   // owner-only everywhere (registry.ts canSee); its live app needs a signed pass (run.ts)
 };
 
 export class Project extends DurableObject<Env> {
@@ -58,7 +59,8 @@ export class Project extends DurableObject<Env> {
     await this.ctx.storage.put('info', info);
     const e: Entry = { slug: info.slug, owner: info.owner, name: info.name, description: info.description,
       forkedFrom: info.forkedFrom, createdAt: info.createdAt, updatedAt: Date.now(),
-      importedFrom: info.importedFrom ? { fullName: info.importedFrom.fullName, stars: info.importedFrom.stars, license: info.importedFrom.license } : undefined };
+      importedFrom: info.importedFrom ? { fullName: info.importedFrom.fullName, stars: info.importedFrom.stars, license: info.importedFrom.license } : undefined,
+      ...(info.private ? { private: true } : {}) };
     await registry(this.env).put(e);
   }
 
@@ -83,7 +85,8 @@ export class Project extends DurableObject<Env> {
     using repo = await this.env.ARTIFACTS.get(source.repo);
     const forked = await repo.fork(slug, { description, defaultBranchOnly: true });
     const info: ProjectInfo = { slug, owner, name, description, repo: forked.name, remote: forked.remote,
-      forkedFrom: fresh ? null : source.slug, createdAt: Date.now(), agents: [], importedFrom: fresh ? undefined : source.importedFrom, entry: source.entry };
+      forkedFrom: fresh ? null : source.slug, createdAt: Date.now(), agents: [], importedFrom: fresh ? undefined : source.importedFrom, entry: source.entry,
+      ...(source.private && !fresh ? { private: true } : {}) };
     await this.#register(info);
     log('project', fresh ? 'started' : 'forked', { slug, from: source.slug });
     return info;
@@ -103,6 +106,16 @@ export class Project extends DurableObject<Env> {
       forkedFrom: null, createdAt: Date.now(), agents: [], importedFrom: src };
     await this.#register(info);
     log('project', 'imported', { slug, from: src.fullName, branch: src.branch });
+    return info;
+  }
+
+  /** Public or private (owner-only). */
+  async setPrivate(v: boolean): Promise<ProjectInfo> {
+    const info = await this.#need();
+    if (!!info.private === v) return info;
+    if (v) info.private = true; else delete info.private;
+    await this.#register(info);
+    log('project', 'visibility', { slug: info.slug, private: v });
     return info;
   }
 

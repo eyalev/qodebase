@@ -10,9 +10,9 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AGENT_RE, NAME_RE, appWorkerName, frontHosts, isUiHost, projectOf, slugOf, type Env } from './env';
 import { AgentBox, log, REVIEW_STEPS, type BootSpec } from './box';
 import { Project, roleOf, type ProjectInfo, type Role } from './project';
-import { Registry, registry, type Entry } from './registry';
+import { Registry, canSee, listFor, registry, type Entry } from './registry';
 import { BuildBox } from './build';
-import { serveRun } from './run';
+import { mintRunPass, serveRun } from './run';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
 import { catalogReadme } from './catalog';
@@ -345,6 +345,12 @@ const app = {
     try {
       if (me.kind === 'agent') return agentApi(request, env, ctx, me, url, apiBase);
       let m: RegExpMatchArray | null;
+      // Private projects: one gate for every page and API under /p/<o>/<n> and /api/p/<o>/<n>.
+      // Someone else's private project answers exactly like one that does not exist.
+      if ((m = path.match(/^\/(?:api\/)?p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/|$)/))) {
+        const e = await registry(env).get(slugOf(m[1], m[2]));
+        if (e && !canSee(e, me.handle, me.admin)) return path.startsWith('/api/') ? json({ error: 'no such project' }, 404) : new Response('No such project', { status: 404 });
+      }
 
       // ---- pages
       // Production renders design D (views, home tabs, Build) since 2026-10-03; the
@@ -354,7 +360,7 @@ const app = {
       const views = ui === 'a' || ui === 'b' || ui === 'c' || ui === 'd';
       const tabsNav = ui === 'a' || ui === 'b' || ui === 'd';
       const globalOf = async (entries?: Entry[]): Promise<Global> => ({ nav: (ui || 'c') as Nav,
-        inbox: tabsNav && me.handle ? inboxCount(await inboxOf(env, me.handle, entries || await registry(env).list(), runBase)) : 0 });
+        inbox: tabsNav && me.handle ? inboxCount(await inboxOf(env, me.handle, entries || await listFor(env, me.handle, me.admin), runBase)) : 0 });
       if (views && uiOf(request) && (m = path.match(/^\/design-fixture(?:\/([a-z]+))?\/?$/))) {
         return html(fixtureV3(runBase, url.searchParams.get('state') || 'full', (VIEW_IDS as string[]).includes(m[1] || '') ? m[1] as ViewId : null, url.searchParams.get('try') || undefined, await globalOf()));
       }
@@ -363,7 +369,7 @@ const app = {
       if (ui === 'd' && (path === '/' || path === '/mine' || path === '/inbox' || path === '/explore')) {
         // The catalogue lives at /explore since 2026-10-04; old home links with its filters follow it.
         if (path === '/' && ['s', 'cat', 'tag', 'sort'].some((k) => url.searchParams.has(k))) return new Response(null, { status: 301, headers: { location: `/explore${url.search}` } });
-        const entries = await registry(env).list();
+        const entries = await listFor(env, me.handle, me.admin);
         const tab = path === '/mine' && me.handle ? 'mine' : path === '/inbox' && me.handle ? 'inbox' : path === '/explore' ? 'explore' : 'home';
         const s = url.searchParams.get('s');
         return html(homeV3('d', tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase), s === 'people' ? s : 'projects',
@@ -373,25 +379,25 @@ const app = {
       if (ui === 'd' && path === '/build' && request.method === 'GET') {
         const own = me.handle && !isOwner(env, me.handle);
         const needsKey = !!own && !(await userByHandle(env, me.handle))?.apiKeyEnc;
-        const inbox = me.handle ? inboxCount(await inboxOf(env, me.handle, await registry(env).list(), runBase)) : 0;
+        const inbox = me.handle ? inboxCount(await inboxOf(env, me.handle, await listFor(env, me.handle, me.admin), runBase)) : 0;
         return html(buildV3('d', me.handle, inbox, needsKey, env.RUN_HOST));
       }
       // The catalogue: a GitHub project's page, and its README fetched only when the page asks.
       if (ui === 'd' && (m = path.match(/^\/gh\/([\w.-]+)\/([\w.-]+?)(\/readme)?\/?$/))) {
         const full = `${m[1]}/${m[2]}`;
         if (m[3]) { const h = await catalogReadme(full, ctx); return h == null ? new Response('No README', { status: 404 }) : new Response(h, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=3600' } }); }
-        const entries = await registry(env).list();
+        const entries = await listFor(env, me.handle, me.admin);
         const pg = catalogV3('d', full, entries, me.handle, me.handle ? inboxCount(await inboxOf(env, me.handle, entries, runBase)) : 0);
         return pg ? html(pg) : new Response('Not in the catalogue', { status: 404 });
       }
       if (tabsNav && (path === '/' || path === '/inbox' || path === '/explore')) {
-        const entries = await registry(env).list();
+        const entries = await listFor(env, me.handle, me.admin);
         const tab = !me.handle || path === '/explore' ? 'explore' : path === '/inbox' ? 'inbox' : 'projects';
         return html(homeV3(ui as Nav, tab, entries, me.handle, await inboxOf(env, me.handle, entries, runBase)));
       }
       if (uiOf(request) && path === '/design-fixture') return html(fixtureV2(uiOf(request)!, runBase, url.searchParams.get('state') || 'full'));
       if (path === '/') {
-        const entries = await registry(env).list();
+        const entries = await listFor(env, me.handle, me.admin);
         if (ui) {
           // Each of your projects' changes, from its Project DO (no box calls).
           const status: Record<string, HomeStatus> = {};
@@ -411,7 +417,7 @@ const app = {
       if (path === '/settings') {
         const u = await userByEmail(env, me.email || '');
         if (!u) return new Response(null, { status: 302, headers: { location: '/login?next=/settings' } });
-        const mine = (await registry(env).list()).filter((e) => e.owner === u.handle).length;
+        const mine = (await listFor(env, me.handle, me.admin)).filter((e) => e.owner === u.handle).length;
         const page = settingsPage(u, isOwner(env, u.handle), mine, url.searchParams.has('welcome'), await registry(env).cliTokens(u.email));
         return html(tabsNav ? withGlobal(page, 'account', (await globalOf()).inbox, u.handle, ui as Nav) : page);
       }
@@ -434,7 +440,7 @@ const app = {
         }
         if (path === '/api/me/handle' && request.method === 'POST') {
           const { handle } = await request.json() as { handle?: string };
-          if ((await registry(env).list()).some((e) => e.owner === u.handle)) return json({ error: 'You already own projects under this name, so it cannot change.' }, 400);
+          if ((await listFor(env, me.handle, me.admin)).some((e) => e.owner === u.handle)) return json({ error: 'You already own projects under this name, so it cannot change.' }, 400);
           const r = await claimHandle(env, u.email, String(handle || ''));
           if (!r.ok) return json({ error: r.error }, 400);
           await registry(env).putUser({ ...u, handle: r.user!.handle });
@@ -445,7 +451,7 @@ const app = {
       // The project list as JSON (qb ls): the Registry only, no Artifacts reads.
       if (path === '/api/projects' && request.method === 'GET') {
         const owner = url.searchParams.get('owner') || (url.searchParams.has('mine') ? me.handle : '');
-        const list = (await registry(env).list()).filter((e) => !owner || e.owner === owner);
+        const list = (await listFor(env, me.handle, me.admin)).filter((e) => !owner || e.owner === owner);
         return json({ projects: list.slice(0, 500).map((e) => ({ ...e, path: `/p/${e.owner}/${e.name}`, live: runUrl(runBase, e.slug) })) });
       }
       if (path === '/api/github/search') {
@@ -458,7 +464,7 @@ const app = {
       }
       if (path === '/api/build' && request.method === 'POST') {
         if (!me.handle) return json({ error: 'Sign in first' }, 401);
-        const b = await request.json().catch(() => ({})) as { name?: string; prompt?: string };
+        const b = await request.json().catch(() => ({})) as { name?: string; prompt?: string; private?: boolean };
         const prompt = String(b.prompt || '').trim().slice(0, 3000);
         if (prompt.length < 4) return json({ error: 'Say what to build' }, 400);
         if (!isOwner(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json({ error: 'Add your Anthropic API key in Settings first' }, 400);
@@ -474,12 +480,13 @@ const app = {
         const p = projectStub(env, slug);
         const desc = prompt.split('\n')[0].slice(0, 140);
         await p.createFork(me.handle, name, starter, desc, true);
+        if (b.private) await p.setPrivate(true);
         await askRouter(env, ctx, p, slug, buildPayload(prompt), apiBase, prompt);
         log('build', 'started', { slug, chars: prompt.length });
         return json({ ok: true, slug, path: `/p/${me.handle}/${name}/changes` });
       }
       if (path === '/api/import' && request.method === 'POST') {
-        const b = await request.json() as { repo?: string; as?: string };
+        const b = await request.json() as { repo?: string; as?: string; private?: boolean };
         const ref = parseRepoRef(String(b.repo || ''));
         if (!ref) return json({ error: 'give a GitHub URL or owner/repo' }, 400);
         const gh = await getRepo(ref, ctx);
@@ -494,7 +501,8 @@ const app = {
         for (let i = 2; await registry(env).get(slugOf(owner, name)); i++) name = `${nameFor(gh.name).slice(0, 35)}-${i}`;
         const info = await projectStub(env, slugOf(owner, name)).createImported(owner, name,
           { url: `https://github.com/${gh.fullName}`, fullName: gh.fullName, stars: gh.stars, license: gh.license, branch: gh.branch }, gh.description);
-        return json({ ...info, path: `/p/${owner}/${name}` });
+        if (b.private) await projectStub(env, info.slug).setPrivate(true);
+        return json({ ...info, private: !!b.private, path: `/p/${owner}/${name}` });
       }
       if ((m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/build-log$/))) {
         const info = await projectStub(env, slugOf(m[1], m[2])).info();
@@ -509,7 +517,7 @@ const app = {
         const p = projectStub(env, slug);
         const info = await p.info();
         if (!info) return new Response('No such project', { status: 404 });
-        const all = await registry(env).list();
+        const all = await listFor(env, me.handle, me.admin);
         const own = info.owner === me.handle;
         const st = own ? await statusesOf(env, info) : { status: {}, router: { awake: false, cc: 'asleep' }, reviewer: { awake: false, cc: 'asleep' } };
         return html(projectV3({ info, entry: all.find((e) => e.slug === slug)!, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
@@ -533,7 +541,7 @@ const app = {
         const p = projectStub(env, slug);
         const info = await p.info();
         if (!info) return new Response('No such project', { status: 404 });
-        const all = await registry(env).list();
+        const all = await listFor(env, me.handle, me.admin);
         const entry = all.find((e) => e.slug === slug)!;
         if (ui) return html(projectV2(ui, { info, entry, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
           me: me.handle, runBase, liveHtml: info.owner === me.handle ? await renderAgents(env, info, runBase, ui) : '',
@@ -600,6 +608,11 @@ const app = {
         }
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());
+        if (verb === 'visibility' && request.method === 'POST') {
+          const b = await request.json().catch(() => ({})) as { private?: boolean };
+          const ni = await p.setPrivate(!!b.private);
+          return json({ ok: true, private: !!ni.private });
+        }
         if (verb === 'entry' && request.method === 'POST') {
           const b = await request.json() as { entry?: string | null };
           await p.setEntry(b.entry === null ? null : String(b.entry ?? ''));
@@ -730,10 +743,36 @@ const app = {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     request = fromFront(request, env);
-    const res = await app.fetch(request, env, ctx);
+    let res = await app.fetch(request, env, ctx);
+    res = await withRunPasses(request, env, res);
     return isUiHost(env, new URL(request.url).hostname) ? withBaseline(request, env, res) : res;
   },
 } satisfies ExportedHandler<Env>;
+
+/** A private project's pages (and the agents-html JSON that refreshes them) link to its
+ *  live app and agent forks on the run host, which only opens with a signed pass
+ *  (run.ts): add one to every such link, for viewers who may see the project. Public
+ *  projects pay one Registry read on project paths and nothing else. */
+async function withRunPasses(request: Request, env: Env, res: Response): Promise<Response> {
+  const url = new URL(request.url);
+  const m = url.pathname.match(/^\/(?:api\/)?p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/|$)/);
+  const type = res.headers.get('content-type') || '';
+  if (!m || res.status !== 200 || !(type.includes('text/html') || type.includes('json'))) return res;
+  const slug = slugOf(m[1], m[2]);
+  const e = await registry(env).get(slug);
+  if (!e?.private) return res;
+  const me = await who(request, env);
+  if (!me || me.kind !== 'user' || !canSee(e, me.handle, me.admin)) return res;
+  const pass = await mintRunPass(env, slug);
+  // https://<name>--<owner>.<run>/… and https://ag-<id>--<name>--<owner>.<run>/…
+  const host = `(?:ag-[a-z0-9]+--)?${m[2]}--${m[1]}\\.${env.RUN_HOST.replace(/\./g, '\\.')}`;
+  const re = new RegExp(`(https://${host}/[^"'\\\\\\s<>?#]*)(\\?[^"'\\\\\\s<>#]*)?`, 'g');   // a URL ends at quotes, backslashes (JSON's \"), space, < >
+  const text = (await res.text()).replace(re, (_x, base: string, q?: string) => `${base}${q ? `${q}&` : '?'}__qb=${pass}`);
+  const out = new Response(text, res);
+  out.headers.delete('content-length');
+  out.headers.set('cache-control', 'private, no-store');
+  return out;
+}
 
 /** A request the front Worker (front/, another Cloudflare account) forwarded
  *  for one of FRONT_HOSTS: carry on as if it had arrived on that host, with

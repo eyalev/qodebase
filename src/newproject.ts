@@ -43,6 +43,10 @@ export const BUILD_CSS = `
 .steps3 li{display:flex;gap:10px;font-size:15px}
 .steps3 li b{flex:none;width:22px;height:22px;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center;font-size:12px}
 .bld .err{color:var(--warn);font-size:14px;min-height:1.4em;margin:8px 0 0}
+.vis{border:0;padding:0;margin:12px 0 0}.vis legend{font-size:14px;font-weight:500;margin-bottom:6px}
+.vis label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-top:8px;cursor:pointer}
+.vis label:has(input:checked){border-color:var(--acc)}.vis input{margin-top:3px;accent-color:var(--acc)}
+.vis span{display:flex;flex-direction:column;font-size:14px;color:var(--dim)}.vis b{color:var(--fg);font-size:15px;font-weight:500}
 .bld .back4{background:none;border:0;color:var(--acc);font:500 15px 'Instrument Sans',sans-serif;padding:10px 0;cursor:pointer}
 `;
 
@@ -62,7 +66,10 @@ export function buildBody(me: string, needsKey: boolean, runDomain: string) {
 <h1>Here's what qodebase will build</h1>
 <div class="brief"><div class="fld"><label for="pname">Project name</label><input id="pname" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="39">
 <p class="url">It will live at <b id="purl"></b></p></div>
-<div class="fld"><label for="pidea">What you asked for</label><textarea id="pidea"></textarea></div></div>
+<div class="fld"><label for="pidea">What you asked for</label><textarea id="pidea"></textarea></div>
+<fieldset class="fld vis"><legend>Who can see it</legend>
+<label><input type="radio" name="vis" value="public" checked><span><b>Public</b>Anyone can see it, try it and fork it</span></label>
+<label><input type="radio" name="vis" value="private"><span><b>Private</b>Only you: the project, its code and its app</span></label></fieldset></div>
 <ol class="steps3"><li><b>1</b>A new project is created${me ? ` under ${esc(me)}` : ''}, with its own code and history.</li>
 <li><b>2</b>Its router agent plans the work and starts an agent for each part.</li>
 <li><b>3</b>A reviewer agent checks every change in a preview before it goes live.</li>
@@ -104,7 +111,7 @@ ${needsKey ? `<p class="lede">Agents run on your own Anthropic API key. <a href=
   if(!name){err.textContent='Give the project a name.';return;}if(!prompt){err.textContent='Say what to build.';return;}
   save();if(!ME){location.href='/login?next='+encodeURIComponent('/build?step=brief');return;}
   const b=$('go');b.disabled=true;b.textContent='Creating the project';err.textContent='';
-  const r=await fetch('/api/build',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,prompt})});
+  const r=await fetch('/api/build',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,prompt,private:(document.querySelector('input[name=vis]:checked')||{}).value==='private'})});
   const j=await r.json().catch(()=>({}));
   if(!r.ok){b.disabled=false;b.textContent='Start building';err.textContent=j.error||'Could not start';return;}
   try{localStorage.removeItem(KEY)}catch{}location.href=j.path;};

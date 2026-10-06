@@ -228,7 +228,17 @@ function moreMenu(c: Ctx) {
 <a class="mi" href="/feedback" data-fb>${ICONS.changes}<span><b>Feedback</b><span>Something missing, confusing or broken? Tell us.</span></span></a></div>`;
 }
 function moreView(c: Ctx) {
-  return { body: `<div class="pad">${moreMenu(c)}</div>` };
+  return { body: `<div class="pad">${c.own ? visibilityRow(c) : ''}${moreMenu(c)}</div>` };
+}
+/** Owner: public or private (POST /api/p/<o>/<n>/visibility). */
+function visibilityRow(c: Ctx) {
+  const pv = !!c.info.private;
+  return `<div class="visrow"><div><b>${pv ? `${LOCK} Private` : 'Public'}</b><span>${pv ? 'Only you can see this project, its code and its app.' : 'Anyone can see this project, try its app and fork it.'}</span></div>
+<button type="button" class="chipbtn" id="visbtn" data-to="${pv ? 'public' : 'private'}">${pv ? 'Make public' : 'Make private'}</button></div>
+<p class="err" id="vismsg" role="status"></p>
+<script>(function(){const b=document.getElementById('visbtn');b.onclick=async()=>{b.disabled=true;
+const r=await fetch('/api/p/${esc(c.info.owner)}/${esc(c.info.name)}/visibility',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({private:b.dataset.to==='private'})});
+if(r.ok)location.reload();else{b.disabled=false;document.getElementById('vismsg').textContent='Could not change it. Try again.';}};})();</script>`;
 }
 
 const VIEWS: View[] = [
@@ -360,6 +370,11 @@ body.typing .tabbar{display:none}
  body.typing .tabbar{display:flex}
 }
 @media (hover:hover){.tab:hover{color:var(--fg)}.mi:hover{background:var(--card)}}
+
+.priv{display:inline-flex;align-items:center;gap:4px;color:var(--dim)}.lockic{flex:none}
+.visrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 16px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.visrow b{display:inline-flex;align-items:center;gap:6px;font-weight:600}.visrow span{display:block;color:var(--dim);font-size:14px;margin-top:2px}
+.visrow .chipbtn{flex:none;min-height:44px}
 `;
 
 export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record<string, BoxStatus>; router: BoxStatus; reviewer: BoxStatus; tryAgent?: string; base?: string; docs?: Docs; g?: Global }) {
@@ -381,7 +396,7 @@ export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record
     ? `<a class="home back" href="/" aria-label="All projects${g.inbox ? `, ${g.inbox} need you` : ''}">${CHEV}qodebase${g.inbox ? `<span class="hbadge">${g.inbox}</span>` : ''}</a>`
     : `<a class="home" href="/" aria-label="All projects">qodebase</a>`;
   return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · qodebase`, `${g.nav === 'd' ? globalTop(own ? 'projects' : 'explore', g.inbox, me) : ''}
-<header class="h3${g.nav === 'd' ? ' sub' : ''}">${g.nav === 'd' ? '' : home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(info.owner)} /</span> <b>${esc(info.name)}</b></a>${r.action || ''}</header>
+<header class="h3${g.nav === 'd' ? ' sub' : ''}">${g.nav === 'd' ? '' : home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(info.owner)} /</span> <b>${esc(info.name)}</b>${info.private ? ` <span class="priv" title="Private: only you">${LOCK}</span>` : ''}</a>${r.action || ''}</header>
 ${g.nav === 'b' ? tabBar(c, id, needs, true) : ''}
 <main class="view${r.full ? ' full' : ''}" id="view">${r.body}</main>${r.compose || (own ? askBox(c) : '')}
 ${g.nav === 'b' ? globalBar('projects', g.inbox, me) : tabBar(c, id, needs)}
@@ -522,13 +537,14 @@ export const NAV_CSS = `
 
 export type InboxItem = { entry: Entry; info: ProjectInfo; open: Change[] };
 
+const LOCK = `<svg class="lockic" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 function projRow(e: Entry, now: number, st?: { ready: number; fix: number; working: number }, forks = 0) {
   const s = !st ? '' : st.fix ? `<span class="st fix"><span class="dot s-fix"></span>${st.fix} need${st.fix > 1 ? '' : 's'} you</span>`
     : st.ready ? `<span class="st ready"><span class="dot s-ready"></span>${st.ready} ready to merge</span>`
     : st.working ? `<span class="st working"><span class="dot s-working"></span>${st.working} in progress</span>` : '';
   return `<div class="prow"><a class="t stretch" href="${path(e.slug)}"><span class="o">${esc(e.owner)} /</span> <b>${esc(e.name)}</b></a>
 ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
-<div class="m">${s}${freshTag(e.updatedAt, now, STEPS)}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.importedFrom ? `<span>${e.importedFrom.stars >= 1000 ? (e.importedFrom.stars / 1000).toFixed(1) + 'k' : e.importedFrom.stars} stars</span>` : ''}</div></div>`;
+<div class="m">${e.private ? `<span class="priv">${LOCK}Private</span>` : ''}${s}${freshTag(e.updatedAt, now, STEPS)}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.importedFrom ? `<span>${e.importedFrom.stars >= 1000 ? (e.importedFrom.stars / 1000).toFixed(1) + 'k' : e.importedFrom.stars} stars</span>` : ''}</div></div>`;
 }
 
 /** The home pages with tabs: Projects, Inbox, Explore (Account is the settings page). */
@@ -635,7 +651,7 @@ export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, 
  *  line, the build box above the fold, then three doors (your own qodebase, your own AI
  *  assistant, explore) and the try-changing row. */
 function landBody(entries: Entry[]) {
-  const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && e.slug !== 'forq.blank').length;
+  const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && !e.private && e.slug !== 'forq.blank').length;
   return `<section class="land">
 <h1>Be your own GitHub.</h1>
 <p class="lede">Every project runs as a live app, and AI agents change it for you. On Cloudflare, from your phone.</p>
@@ -656,7 +672,7 @@ t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('
 }
 
 export const LAND_CSS = `
-.land{max-width:560px;margin:0 auto;padding:8vh 0 24px}
+.land{max-width:560px;margin:0 auto;padding:5vh 0 24px}
 .land h1{font-size:34px;line-height:1.15;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;text-wrap:balance}
 .land .lede{margin:0 0 24px;font-size:17px}
 .landask{display:flex;flex-direction:column;gap:10px}

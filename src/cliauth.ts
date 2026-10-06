@@ -168,6 +168,7 @@ or with --json. Projects are named owner/name. Another instance: --host <url> or
 - \`qb info <owner/name>\` — a project: description, live URL, agents and their states
 - \`qb new "<what to build>" [--name <name>]\` — a new project; agents build it
 - \`qb import <github url or owner/repo>\` — copy a public GitHub repo in
+- \`qb visibility <owner/name> public|private\` — private = only the owner sees the project, its code and its live app (\`--private\` on new and import too)
 - \`qb fork <owner/name>\` — your own copy
 - \`qb ask <owner/name> "<request>"\` — the project's router agent splits it into tasks, one agent each
 - \`qb spawn <owner/name> "<task>"\` — one agent on its own fork, directly
@@ -186,7 +187,7 @@ or with --json. Projects are named owner/name. Another instance: --host <url> or
 ## HTTP API
 
 Everything qb does is HTTP with \`authorization: Bearer qb_…\` on ${origin}:
-GET /api/projects, GET /api/p/<owner>/<name>, POST /api/build {prompt,name}, POST /api/import {repo},
+GET /api/projects, GET /api/p/<owner>/<name>, POST /api/build {prompt,name,private}, POST /api/import {repo,private}, POST /api/p/<o>/<n>/visibility {private},
 POST /api/p/<o>/<n>/fork, /router {text}, /agents {task}, /merge {agent}, /git-token,
 GET /api/p/<o>/<n>/files, /search?q=, GET|POST|DELETE /api/installs {template,name,account} (409 + approve_url until Cloudflare is connected), GET /personal-agents/i/<id>.json, GET /api/agents/<id>/state, /conversation, POST /api/agents/<id>/send {text}.
 `;
