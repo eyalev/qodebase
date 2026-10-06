@@ -169,20 +169,20 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
       if (l?.href) return { ...base, op: 'go', href: l.href, label: l.text, target: l.id };
       // A link the page does not show may still be a project ("open my calculator").
       const p = projects.find((x) => x.id === pick(answers.project, 0.3));
-      if (p) return { ...base, op: 'go', href: projectHref(p, partOf(answers)), label: `${p.owner}/${p.name}`, target: p.slug };
+      if (p) return { ...base, op: 'go', href: projectHref(p, partOf(answers)), label: projLabel(p, partOf(answers)), target: p.slug };
       return { ...base, why: 'no link matched' };
     }
     case 'project': {
       const p = projects.find((x) => x.id === pick(answers.project));
       if (!p) return { ...base, why: 'no project matched' };
-      return { ...base, op: 'go', href: projectHref(p, partOf(answers)), label: `${p.owner}/${p.name}`, target: p.slug };
+      return { ...base, op: 'go', href: projectHref(p, partOf(answers)), label: projLabel(p, partOf(answers)), target: p.slug };
     }
     case 'search': {
       // In a project's code: its own search box. Elsewhere: projects by name.
       const f = s.items.find((i) => i.kind === 'field' && /search|go to file/i.test(i.text));
       if (f && text) return { ...base, op: 'type', target: f.id, text, label: f.text };
       const p = projects.find((x) => x.id === pick(answers.project, 0.3));
-      if (p) return { ...base, op: 'go', href: projectHref(p, partOf(answers)), label: `${p.owner}/${p.name}`, target: p.slug };
+      if (p) return { ...base, op: 'go', href: projectHref(p, partOf(answers)), label: projLabel(p, partOf(answers)), target: p.slug };
       return { ...base, op: 'search', text: text || utterance };
     }
     case 'type': {
@@ -206,6 +206,9 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
   }
   return base;
 }
+
+/** "eyal/calculator", or "eyal/calculator (code)" when a part of it opens. */
+const projLabel = (p: Proj, part: string) => `${p.owner}/${p.name}${part && part !== 'page' ? ` (${part})` : ''}`;
 
 function projectHref(p: Proj, part: string): string {
   const root = `/p/${p.owner}/${p.name}`;
