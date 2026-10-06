@@ -292,7 +292,7 @@ OWN account with no GitHub and no pasted tokens (research and options:
   Codex (`@openai/codex`, pinned in `AGENTS_REF`) in its own tmux tab, started
   when the tab is first opened; from a phone pick "Sign in with Device Code"
   (ChatGPT sign-in waits for a localhost callback). The tab switcher is only in
-  `?ui=full`. Grok left out until Eyal decides: no official xAI CLI, and
+  `?ui=full`. Grok skipped for now (Eyal, 2026-10-06): no official xAI CLI, and
   Superagent's `grok-dev` 1.1.7 pulls `@coinbase/agentkit` (wallet SDKs, 199 MB).
   After `qb install` updates a box, its Durable Object can run the old code for
   ~1 min: a `/__forq/restart` right away restarts with the OLD entrypoint.
