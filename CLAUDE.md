@@ -502,3 +502,33 @@ Not yet, and why:
   is timed by hand (see "Durable delivery"). Revisit when boxes survive deploys.
 - The run host (ttyview.dev) serves only static demo apps, refuses verified
   bots and sends `noindex`; it has no baseline pages of its own.
+
+## Talk: speak or type to the app (src/talk*.ts, since 2026-10-06)
+
+A talk button on every signed-in UI page (`/talk.js`, injected by
+`withBaseline`) opens a sheet: speak or type a sentence and the app acts,
+answers, or both.
+- **Fast lane** `POST /api/talk/decide`: clef-flash, one call, picks from the
+  page's own links/buttons/fields/headings (`talkScan`, src/talkscan.ts, ids in
+  `data-talk`) and ~24 of the person's projects (word match + theirs + the one
+  the page shows). Mode act | ask | both | none, action, target, risky. Acts at
+  p ≥ 0.45, offers "Maybe … ? Go" between 0.2 and 0.45, never acts when
+  risky ≥ 0.5 (offers to take you to the page). Hedged at 1.2/2.5 s.
+  "Go home" is a word rule (vocabulary in code).
+- **Chat lane** `POST /api/talk/chat`: glm-4.7-flash, thinking OFF (7 s → ~1 s),
+  tools go/press/type_into/show (show = point at elements in turn); a tool call
+  comes back without words, so a second round asks for them. Fact sheet about
+  qodebase in the system prompt (it invented plans without it). After a "both"
+  sentence the action is done first and the new page answers, tool-free.
+- **Dictation** (Talk settings, per device): phone's own (Web Speech, live
+  words + a dashed preview of the target while you talk) or Whisper on
+  Cloudflare (`/api/talk/transcribe`, whisper-large-v3-turbo, WebM/Opus,
+  stops on 1.3 s of silence). Language en/he/auto; spoken replies
+  when-I-talked/always/never.
+- Eval: `node --experimental-strip-types scripts/talk-eval.mjs` (real page
+  snapshots in scripts/talk-fixtures, real model through the gateway): 36/36,
+  median ~0.6–1 s. Refresh fixtures when pages change.
+- Cost: AI Gateway `qodebase-talk` (forq account, 120/min) + TalkLog DO daily
+  caps (per person decide 600 / chat 150 / stt 300; total 5000/1500/3000);
+  signed-in only. NOT under remote-manage's AI breaker (personal account only);
+  cloudcost gap `qodebase-talk`. Self-host copies have the binding but no gateway.
