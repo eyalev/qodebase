@@ -295,7 +295,7 @@ function ask(text, did) {
       if (a.name === 'show') showSeq((a.args && a.args.ids) || []);
       else if (a.name === 'press') { var b = byId(a.args.id); if (b) { add('app', 'Pressed “' + (b.innerText || b.getAttribute('aria-label') || '').trim() + '”.'); b.click(); } }
       else if (a.name === 'type_into') { var f = byId(a.args.id); if (f) { typeInto(f, String(a.args.text || '')); offerSubmit(f); } }
-      else if (a.name === 'go') {
+      else if (a.name === 'go' && !did) {
         var to = String(a.args.to || ''); var l = byId(to);
         var href = l ? l.getAttribute('href') : (to.charAt(0) === '/' ? to : null);
         if (href) nav = { href: href, label: l ? (l.innerText || href).split('\n')[0] : href };

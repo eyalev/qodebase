@@ -133,13 +133,14 @@ async function chat(request: Request, env: Env, who: Who & {}) {
     '- Fork copies a project to your account. Ask (the router agent) splits a request into tasks; each task gets an agent (Claude Code in a Cloudflare container) on its own fork; a reviewer agent checks pushes; you merge from the phone.',
     '- Your own AI assistant (/personal-agents) installs an assistant into YOUR Cloudflare account with Sign in with Cloudflare: Cloudflare Agent fits the free plan; OpenClaw, Hermes, T3 Code, Mobile Agent and Pi need Workers Paid ($5 a month per account, not per assistant). Mobile Agent and T3 Code can use your own Claude subscription.',
     '- Get your own qodebase (/own) installs a whole copy of qodebase into your Cloudflare account. The qb command line (/cli) does everything from a terminal or an agent.',
-    did ? `The app already did this for their last sentence: ${did}.` : '',
+    did ? `The app has ALREADY done this for their sentence: ${did}. Do not do it again; answer the rest of what they asked, about the page they are on now.` : '',
     '', 'What is on the page (id, kind, text):', items || '(nothing)', '', 'The page text:', pageText || '(none)',
   ].filter((x) => x !== '').join('\n');
   const history = (Array.isArray(body.history) ? body.history : []).slice(-8).map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || '').slice(0, 800) }));
   const messages = [{ role: 'system', content: system }, ...history, { role: 'user', content: utterance }];
   const tm = Date.now();
-  const run = (msgs: unknown[]) => (env.AI as any).run(CHAT_MODEL, { messages: msgs, tools: TOOLS, max_tokens: 700, temperature: 0.3, chat_template_kwargs: { enable_thinking: false } }, aiOpts(env));
+  // After a "both" sentence the app has already acted (did): answer only, no tools, or it acts again.
+  const run = (msgs: unknown[], tools = !did) => (env.AI as any).run(CHAT_MODEL, { messages: msgs, ...(tools ? { tools: TOOLS } : {}), max_tokens: 700, temperature: 0.3, chat_template_kwargs: { enable_thinking: false } }, aiOpts(env));
   const parse = (res: any) => {
     const msg = res?.choices?.[0]?.message || res;
     const raw = msg?.tool_calls || res?.tool_calls || [];
@@ -163,6 +164,12 @@ async function chat(request: Request, env: Env, who: Who & {}) {
       const out2 = parse(res2);
       out = { ...out, reply: out2.reply };
       res = { ...res, usage2: res2?.usage };
+    }
+    if (!out.reply) {
+      // Still no words: ask once more with no tools at all.
+      rounds++;
+      const res3 = await run(messages, false);
+      out = { ...out, reply: parse(res3).reply };
     }
   } catch (e) {
     log('chat_error', { level: 'error', err: String(e), stack: (e as Error)?.stack, handle: who.handle });
