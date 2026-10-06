@@ -6,6 +6,54 @@ the phone. Every project runs, and every fork comes with its own agents.
 Personal project first; Cloudflare's "next Git platform" contest
 (deadline 2026-10-14) is a bonus, not the driver.
 
+## Name: qodebase (since 2026-10-06)
+
+The product is **qodebase** at **https://qodebase.app**; "forq" stays as the
+internal name (directory, Worker `forq`, DO classes, Artifacts namespace,
+cookies, `x-forq-*` headers, the `forq` CLI inside boxes, the showcase handle
+`forq`). Visible text says qodebase. The public GitHub repo is `eyalev/qodebase`.
+- **qodebase.app was registered in the PERSONAL account** (zone `9630d9cb…`).
+  Cloudflare lets a Registrar domain move between accounts only 10+ days after
+  registration, so until then **`front/`** (Worker `qodebase-front`, personal
+  account, deploy with the OAuth wrangler login) forwards every request to
+  projectsbase.dev with `x-qb-front: <FRONT_SECRET>` + `x-qb-host`; forq's
+  `fromFront()` (index.ts) checks the secret and rewrites the URL to
+  qodebase.app, so all code sees the real host (`FRONT_HOSTS`, `isUiHost()` in
+  env.ts). Visitor IP and cf facts ride along in `x-qb-ip` / `x-qb-cf`.
+  Secret: `~/.config/forq-cf/front-secret` (set on both Workers).
+- Sign-in on qodebase.app: Access sits only on projectsbase.dev/login, so the
+  front sends `/login` to `projectsbase.dev/login?to=qodebase.app` and forq hands
+  the session back through `/session` (the variant-host handoff).
+- Cloudflare OAuth ("Sign in with Cloudflare"): the callback follows the host
+  (`callbackUrl()` in install.ts); `https://qodebase.app/connect/cf/callback`
+  is registered on the client.
+- **After ~2026-10-16 (needs Eyal's approval in both accounts):** move the
+  qodebase.app registration to the forq account (Manage Domain → Configuration;
+  DNSSEC off), make it a custom domain of forq, add the Access app for
+  qodebase.app/login, set `UI_HOST=qodebase.app` and clear `FRONT_HOSTS`, 301
+  projectsbase.dev → qodebase.app, re-verify the OAuth client's domain (TXT) for
+  qodebase.app, delete `qodebase-front`.
+
+## qb, the CLI (src/cliauth.ts, cli/qb.mjs)
+
+One Node file, no deps, served at `/cli/qb.mjs`, installed by `/cli/install.sh`
+into `~/.local/bin/qb`; `/cli` explains it and `/llms.txt` lists every command
+for agents. Works against any instance (`--host`, `QB_HOST`).
+- Sign-in is a device flow: `POST /api/cli/start` → code; the person approves at
+  `/cli/login?code=…` (signed in; SameSite=Lax cookie, so no cross-site POST);
+  the CLI polls `POST /api/cli/token` (428 pending, 410 expired) and gets
+  `qb_…`. Requests send `authorization: Bearer qb_…`; `who()` maps it to the user
+  (a bad bearer is a 401, never anonymous). The Registry stores SHA-256 hashes
+  only (`cd:`, `cu:`, `ct:` keys). Settings → Command line lists and revokes.
+- API it uses: `/api/projects`, `/api/build`, `/api/import`, `/api/p/<o>/<n>`
+  (+ `fork`, `router`, `agents`, `merge`, `files`, `search`, `git-token`),
+  `/api/agents/<id>/{state,conversation,send}`.
+- `qb clone` gets a 1-hour Artifacts token (write for the owner, read for
+  others) and sets `credential.helper` to `qb git-credential <o/n>`, so later
+  fetches/pushes mint a fresh one.
+- Verified 2026-10-06: login approved from the phone page, whoami, tokens, info,
+  open, files, search, clone + fetch, bad token refused, revoke.
+
 ## The idea
 
 - **Project page:** the live app first, code one tap away, the project's agents

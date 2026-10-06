@@ -1,6 +1,6 @@
-# Self-hosting forq
+# Self-hosting qodebase
 
-forq is one Cloudflare Worker plus Durable Objects, Containers and an Artifacts
+qodebase (formerly forq) is one Cloudflare Worker plus Durable Objects, Containers and an Artifacts
 namespace, all on your own Cloudflare account. Self-hosted, you are the
 instance owner: your projects' agents run on your Claude subscription (or a key),
 Worker projects deploy to your account, and nobody else's limits apply.
@@ -11,7 +11,7 @@ Worker projects deploy to your account, and nobody else's limits apply.
 |---|---|
 | Cloudflare | Workers **Paid** plan (Containers, Artifacts and Durable Objects with SQLite need it) |
 | Artifacts | open beta, enabled on the account |
-| A domain on Cloudflare | for the UI host and the run host (two hostnames, e.g. `forq.example.com`, `forq-run.example.com`) |
+| A domain on Cloudflare | for the UI host and the run host (two hostnames, e.g. `code.example.com`, `run.example.com`) |
 | Claude | a Claude subscription token (`claude setup-token`) for your own projects, or an Anthropic API key |
 | Local tools | Node 20+, `wrangler` 4.145+ (logged in), `jq`; optionally the `cf` CLI for the Issues wiring |
 
@@ -31,7 +31,7 @@ If you bring your own image, it must keep this contract (see `src/box.ts`):
   `BILLING`) and `UI_HOST` from its environment, starts a tmux session named
   `claude` running Claude Code in the directory named by `/workspace/.sbx-cwd`,
   and prints `MA_READY` / `TW_READY` when its two servers answer.
-- A terminal web UI on port **7901** (forq proxies the Terminal tab to it;
+- A terminal web UI on port **7901** (qodebase proxies the Terminal tab to it;
   `/api/p/terminal/states` says whether the agent is busy).
 - An API on port **7681** with `GET /api/conversation?session=&tail=`,
   `POST /api/conversation/send` and `GET /api/sessions/<s>/cc-status`
@@ -64,7 +64,7 @@ If you bring your own image, it must keep this contract (see `src/box.ts`):
    | `ADMIN_SECRET` | random; signs sessions and agent tokens, and unlocks the admin API on workers.dev |
    | `KEY_ENC_SECRET` | random; encrypts users' Anthropic API keys |
    | `CLAUDE_CODE_OAUTH_TOKEN` | your `claude setup-token` value (the owner's agents) |
-   | `CF_DEPLOY_TOKEN` | API token with **Workers Scripts Write** only (forq's builder deploys Worker projects) |
+   | `CF_DEPLOY_TOKEN` | API token with **Workers Scripts Write** only (qodebase's builder deploys Worker projects) |
    | `OBS_READ_TOKEN` | API token with **Workers Observability Read** only (Issues → agent) |
    | `ISSUES_WEBHOOK_SECRET` | random; Cloudflare Notifications sends it as `cf-webhook-auth` |
 
@@ -95,3 +95,8 @@ changes used 23 Artifacts operations, 1.4 container box-hours (≤ $0.05) and,
 at Sonnet API prices, about $4.30 of model tokens (about $1.40 per reviewed
 change). Containers bill their full memory while awake; boxes stop after 5
 idle minutes.
+
+## The CLI against your copy
+
+`qb` works with any instance: `qb login --host https://code.example.com` (or
+`QB_HOST`). Your instance serves its own copy at `/cli/qb.mjs` and `/cli/install.sh`.
