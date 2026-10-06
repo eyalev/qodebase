@@ -262,6 +262,8 @@ OWN account with no GitHub and no pasted tokens (research and options:
   Wakes after the Fable tuning (restore on standard-2, waking page polls
   /__forq/state which also wakes the box, Node compile cache, smaller
   snapshots): T3 Code 18-23 s, OpenClaw 34 s, Hermes ~10 s to its dashboard.
+  T3 Code skips its "Connect your computers" wizard: the kind's `headScript` (injected
+  into every HTML page) sets `onboardingCompletedAt` in localStorage `t3code:client-settings:v1`.
   T3 Code: `/__forq/claude` signs in to Claude Code from a phone (runs
   `claude auth login` in a pty fed from a FIFO; T3's terminal is hidden at phone
   width); linked from the install's ready page.
@@ -276,6 +278,8 @@ OWN account with no GitHub and no pasted tokens (research and options:
   `harshil1712/pi-on-cf` port (`forq/pi-on-cf`, kept in Artifacts, unused) after
   Eyal's social-proof rule (~/.claude/CLAUDE.md).
 - **Cloudflare Agent** (`forq/agents-starter`, local `../forq-agents-starter`):
+  Push with `git push forq HEAD:main` (`origin` is Cloudflare's GitHub repo). Its
+  release keeps the Worker in `forq-release/worker/` (no_bundle would upload `client/` too).
   Cloudflare's official cloudflare/agents-starter, the only option that fits the
   free plan. forq changes: model glm-4.7-flash (upstream kimi-k2.7-code needs
   Workers Paid) and real weather from Open-Meteo (upstream returns random demo
