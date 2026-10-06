@@ -34,6 +34,28 @@ cookies, `x-forq-*` headers, the `forq` CLI inside boxes, the showcase handle
   projectsbase.dev → qodebase.app, re-verify the OAuth client's domain (TXT) for
   qodebase.app, delete `qodebase-front`.
 
+## Private projects (2026-10-06)
+
+`private` on ProjectInfo and the Registry Entry (Project.setPrivate; forks of a
+private project stay private). Owner (and admin) only, everywhere:
+- one gate in index.ts for `/p/<o>/<n>/*` and `/api/p/<o>/<n>/*` (others get 404,
+  same as a missing project); every list on a page goes through `listFor()`
+  (registry.ts `canSee`); Explore (world.ts) never lists private projects.
+- live apps: run.ts refuses a private project's hosts (main and `ag-` forks)
+  without a signed 12 h pass (`mintRunPass`, HMAC of slug + expiry). The pass
+  arrives once as `?__qb=` and becomes a `SameSite=None; Partitioned` cookie on
+  that host (so the project page's preview iframe works too). `withRunPasses()`
+  adds passes to every app link in the project's pages and agents-html JSON,
+  only for viewers who may see it. Visibility is memoised per isolate for 60 s.
+- Not covered: a private **Worker** project's deployed app (its own custom
+  domain) is still public.
+- Set it: Public/Private on Build, More → Make private/public (also in the phone
+  More sheet), `POST /api/p/<o>/<n>/visibility`, `qb visibility`, `--private`
+  on `qb new`/`qb import`.
+- Verified 2026-10-06 on a private import: anonymous 404 on page, code, app view,
+  API, files, the app host; absent from /api/projects and Explore; the owner's
+  app view loads in the iframe with the pass; toggled both ways.
+
 ## qb, the CLI (src/cliauth.ts, cli/qb.mjs)
 
 One Node file, no deps, served at `/cli/qb.mjs`, installed by `/cli/install.sh`
