@@ -15,7 +15,7 @@ import { TASKS, applyEdits, type Edit, type Task } from './demoproject';
 import { Objects, push } from '../../sim/cloud/src/gitpush.js';
 
 type Job = { kind: 'task' | 'fix' | 'redo'; changeId: string; key: string; fork: string; remote: string; base: string | null; until: number; stage: 'work' | 'review' };
-type St = { slug: string; n: number; speed: number; runId: number; stopped: boolean; job: Job | null; pending: { changeId: string; kind: 'fix' | 'redo' }[] };
+type St = { slug: string; n: number; speed: number; runId: number; stopped: boolean; job: Job | null };
 
 const TASK = new Map(TASKS.map((t) => [t.key, t]));
 const enc = new TextEncoder();
@@ -27,7 +27,7 @@ export class DemoAgent extends DurableObject<Env> {
   #name(s: St) { return `scripted agent ${s.n}`; }
 
   async start(slug: string, n: number, speed: number, runId: number) {
-    await this.#save({ slug, n, speed, runId, stopped: false, job: null, pending: [] });
+    await this.#save({ slug, n, speed, runId, stopped: false, job: null });
     // Staggered: agents start a couple of seconds apart, like people picking up work.
     await this.ctx.storage.setAlarm(Date.now() + 800 + n * 1800 / speed);
   }
@@ -38,12 +38,11 @@ export class DemoAgent extends DurableObject<Env> {
     const s = await this.#st(); if (!s) return;
     s.stopped = true; await this.#save(s); await this.ctx.storage.deleteAlarm();
   }
-  /** Landing: a change of mine bounced (fix it) or needs the lead (redo it on today's main). */
-  async nudge(changeId: string, state: 'bounced' | 'with-lead') {
-    const s = await this.#st(); if (!s || s.stopped) return;
-    if (!s.pending.some((p) => p.changeId === changeId)) s.pending.push({ changeId, kind: state === 'bounced' ? 'fix' : 'redo' });
-    await this.#save(s);
-    if (!s.job) await this.ctx.storage.setAlarm(Date.now() + 1500 / s.speed);
+  /** Landing: a change of mine bounced or needs the lead. Only wakes the agent sooner:
+   *  the chore itself comes from Landing.demoNext (never written here, see there). */
+  async nudge(_changeId: string, _state: 'bounced' | 'with-lead') {
+    const s = await this.#st(); if (!s || s.stopped || s.job) return;
+    await this.ctx.storage.setAlarm(Date.now() + 1500 / s.speed);
   }
 
   async alarm() {
@@ -71,13 +70,15 @@ export class DemoAgent extends DurableObject<Env> {
     // the first alarm after the demo stops ends the agent. (Without this, every agent went
     // idle after its first change, 2026-10-07.)
     if (s.job) await this.ctx.storage.setAlarm(Math.max(Date.now() + 500, s.job.until));
-    else await this.ctx.storage.setAlarm(Date.now() + (s.pending.length ? 1000 : 3000 / s.speed));
+    else await this.ctx.storage.setAlarm(Date.now() + 3000 / s.speed);
   }
 
   /** Pick up a fix or redo first, else the next task of the script. */
   async #next(s: St) {
     const L = this.#landing(s.slug);
-    const p = s.pending.shift();
+    const pick = await L.demoNext(s.n);
+    if (!pick) return;
+    const p = pick.chore ? { changeId: pick.id!, kind: pick.chore } : null;
     if (p) {
       const c = await L.change(p.changeId);
       if (!c || !c.task) return;
@@ -99,8 +100,6 @@ export class DemoAgent extends DurableObject<Env> {
       }
       return;
     }
-    const pick = await L.demoNext(s.n);
-    if (!pick) return;
     const task = TASK.get(pick.key)!;
     const id = `${s.slug}--d${s.n}${Math.random().toString(36).slice(2, 6)}`;
     let fork: { name: string; remote: string }, base: string | null;

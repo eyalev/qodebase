@@ -515,6 +515,37 @@ Not yet, and why:
 - The run host (ttyview.dev) serves only static demo apps, refuses verified
   bots and sends `noindex`; it has no baseline pages of its own.
 
+## Landing system (src/landing/, contest work, 2026-10-07)
+
+How changes get onto main when many agents work at once (docs/contest/PLAN.md, brief
+docs/contest/landing.md; owner tab qb6). UI: src/landingui/ (qb7), view "Agents at work".
+- **Landing DO** per project (idFromName(slug)), separate from Project on purpose (the 2 s
+  poll and the queue alarm never touch the Project DO): change records (intent, agent,
+  fork, base, claims, events in plain words), claims + `overlap` warnings, the merge
+  queue (alarm-driven trains of up to 8, stacked changes only after their base), tier-3
+  escalation, `view()` = the qb6/qb7 contract. Infra failures back off 5 s doubling to 5 min.
+- **MergeBox** container (`<slug>--merge`, forq-box image by digest, 1 vCPU / 3 GiB,
+  idle stop 5 min) runs src/landing/mergejob.mjs (Text module): each change's reviewed
+  diff (base..commit) applied to the LATEST main with `git apply --3way`; conflicts in
+  shared files go to tier-1 handlers (package.json key merge, list files = routes/index/
+  CHANGELOG/`.qodebase/landing.json` "list", lockfile regenerate); checks once per train
+  (`.qodebase/landing.json` "check"), on failure one by one so a bad change bounces alone;
+  records as git notes `refs/notes/qodebase`; one plain (non-force) push.
+  **Custom container sizes need ≥ 3 GiB per vCPU**: 1 vCPU / 2 GiB was refused with no
+  error, and exec() said "container not running" for 90 s (2026-10-07).
+- **Demo mode**: DemoAgent DOs (`<slug>#<n>`) are SCRIPTED agents (no model, no container):
+  they take tasks from src/landing/demoproject.ts (the Corner Café site, 14 tasks ordered
+  so the story happens: handler replays, a bounce + fix, a lead redo, a stack), fork in
+  Artifacts and push real commits with sim/cloud/src/gitpush.js. Caps in code: 12 agents,
+  20 minutes. Demo project: eyal/corner-cafe (`info.landing = true` → the view is its tab).
+- API: `GET /api/p/<o>/<n>/landing`, `POST …/landing/{approve,demo,flags}` (owner),
+  `GET …/landing/state` (admin: merger box + each scripted agent's state and last error).
+  Demo: `{"action":"seed"}` once on an empty project, then `reset` / `start {agents, speed}` / `stop`.
+- Tests (real git, no Cloudflare): `node --experimental-strip-types --test src/landing/*.test.mjs`.
+- After a deploy, Durable Objects can answer with the OLD code for about a minute (a
+  scripted run started right after a deploy ran the old agents): wait before testing.
+- Cost: cloudcost gap `qodebase-landing` (local cloudcost settings).
+
 ## Talk: speak or type to the app (src/talk*.ts, since 2026-10-06)
 
 A talk button on every signed-in UI page (`/talk.js`, injected by

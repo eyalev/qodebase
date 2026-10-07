@@ -100,8 +100,9 @@ function applyChange(c, cfg) {
   const patch = git(['diff', '--binary', '--full-index', base, c.commit]).out + '\n';
   const files = git(['diff', '--name-only', base, c.commit]).out.split('\n').filter(Boolean);
   if (!files.length) return { id: c.id, ok: false, empty: true, files, conflicts: [], why: 'no changes since its base' };
-  writeFileSync('/tmp/qb.patch', patch);
-  const ap = git(['apply', '--3way', '--index', '--whitespace=nowarn', '/tmp/qb.patch'], { ok: true });
+  const patchFile = join(DIR, '.git', 'qb.patch');   // per repo: two jobs never share it
+  writeFileSync(patchFile, patch);
+  const ap = git(['apply', '--3way', '--index', '--whitespace=nowarn', patchFile], { ok: true });
   let how = 'merged', conflicts = [], handled = [];
   if (ap.code !== 0) {
     conflicts = git(['diff', '--name-only', '--diff-filter=U'], { ok: true }).out.split('\n').filter(Boolean);

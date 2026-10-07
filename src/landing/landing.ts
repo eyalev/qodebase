@@ -35,6 +35,7 @@ export type Change = {
   /** tier 3 / redo: the next landing of this change is a lead's (or LLM's) replay. */
   redo?: 'lead' | 'llm';
   task?: string;       // demo: the script's task key (demoproject.ts)
+  choreTaken?: string; // demo: the fix/redo for this state was handed out ('bounced@<tries>' / 'with-lead@<tries>')
 };
 export type Train = { id: string; state: 'testing' | 'landed' | 'bounced'; changes: string[]; startedAt: number; endedAt: number | null;
   checks: { ok: boolean; ms: number; failures: string[] } | null; mainBefore: string | null; mainAfter: string | null; note?: string };
@@ -402,7 +403,7 @@ export class Landing extends DurableObject<Env> {
       now, mode: m.demo ? 'demo' : 'live',
       demo: m.demo, flags: m.flags,
       queue: { trains: trains.map((t) => ({ id: t.id, state: t.state, changes: t.changes, startedAt: t.startedAt, endedAt: t.endedAt, checks: t.checks || { ok: false, ms: 0, failures: [] }, mainBefore: t.mainBefore, mainAfter: t.mainAfter, ...(t.note ? { note: t.note } : {}) })), waiting: m.waiting },
-      changes: changes.slice().reverse().map(({ remote, queuedAt, tries, redo, task, ...c }) => c),
+      changes: changes.slice().reverse().map(({ remote, queuedAt, tries, redo, task, choreTaken, ...c }) => c),
       areas: [...areas.values()].sort((a, b) => (b.working + b.claimed) - (a.working + a.claimed) || a.path.localeCompare(b.path)),
       stats: { landedToday: today.length, inQueue: m.waiting.length + (m.running ? (trains.find((t) => t.id === m.running)?.changes.length || 0) : 0),
         bounced: recentEv('bounced'), replayed: recentEv('replayed'), medianAskToLandS: lat.length ? Math.round(lat[Math.floor(lat.length / 2)]) : null },
@@ -469,8 +470,19 @@ export class Landing extends DurableObject<Env> {
   async change(id: string) { return this.#get(id); }
   /** The next task of the script for scripted agent n (one task per change, in order; a
    *  stacked task only once the change it builds on has pushed). Null when none is ready. */
-  async demoNext(n: number): Promise<{ key: string; stackOn?: { id: string; fork: string; commit: string } } | null> {
+  async demoNext(n: number): Promise<{ key: string; stackOn?: { id: string; fork: string; commit: string }; chore?: 'fix' | 'redo'; id?: string } | null> {
     const m = await this.#m();
+    // First the agent's own chores: a bounced change to fix, a conflict the lead redoes.
+    // Handed out here, once per state, so nothing depends on a nudge arriving (a nudge
+    // written into the agent's storage was lost to its own alarm's save, 2026-10-07).
+    for (const c of await this.#all()) {
+      if (c.kind !== 'demo' || c.agent !== `scripted agent ${n}` || (c.state !== 'bounced' && c.state !== 'with-lead')) continue;
+      const mark = `${c.state}@${c.tries}`;
+      if (c.choreTaken === mark) continue;
+      c.choreTaken = mark; await this.#put(c);
+      log('landing', 'demo_chore', { slug: m.slug, n, id: c.id, chore: c.state === 'bounced' ? 'fix' : 'redo' });
+      return { key: c.task || '', chore: c.state === 'bounced' ? 'fix' : 'redo', id: c.id };
+    }
     const taken = m.demoTaken || (m.demoTaken = {});
     for (const t of TASKS) {
       const v = taken[t.key];
