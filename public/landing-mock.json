@@ -1,0 +1,1641 @@
+{
+ "now": 1791556200000,
+ "mode": "demo",
+ "demo": {
+  "running": true,
+  "agents": 12,
+  "speed": 1,
+  "startedAt": 1791555300000
+ },
+ "flags": {
+  "llmReplay": false
+ },
+ "queue": {
+  "trains": [
+   {
+    "id": "T1",
+    "changes": [
+     "103",
+     "102"
+    ],
+    "startedAt": 1791555720000,
+    "endedAt": 1791555760000,
+    "mainBefore": "3f9c2e1",
+    "mainAfter": "e2a1f04",
+    "checks": {
+     "ok": true,
+     "ms": 38200,
+     "failures": []
+    },
+    "state": "landed"
+   },
+   {
+    "id": "T2",
+    "changes": [
+     "101"
+    ],
+    "startedAt": 1791555885000,
+    "endedAt": 1791555930000,
+    "mainBefore": "e2a1f04",
+    "mainAfter": "e7d2b10",
+    "checks": {
+     "ok": true,
+     "ms": 41800,
+     "failures": []
+    },
+    "state": "landed"
+   },
+   {
+    "id": "T3",
+    "changes": [
+     "107"
+    ],
+    "startedAt": 1791555960000,
+    "endedAt": 1791556000000,
+    "mainBefore": "e7d2b10",
+    "checks": {
+     "ok": false,
+     "ms": 36500,
+     "failures": [
+      "src/router/trie-router/router.test.ts › optional params › matches /docs when :page? is empty"
+     ]
+    },
+    "state": "bounced"
+   },
+   {
+    "id": "T6",
+    "changes": [
+     "116"
+    ],
+    "startedAt": 1791556070000,
+    "endedAt": 1791556110000,
+    "mainBefore": "e7d2b10",
+    "mainAfter": "4c1e8b7",
+    "checks": {
+     "ok": true,
+     "ms": 37100,
+     "failures": []
+    },
+    "state": "landed"
+   },
+   {
+    "id": "T4",
+    "changes": [
+     "104",
+     "105"
+    ],
+    "startedAt": 1791556175000,
+    "endedAt": 1791556220000,
+    "mainBefore": "4c1e8b7",
+    "mainAfter": "b5f0e93",
+    "checks": {
+     "ok": true,
+     "ms": 44000,
+     "failures": []
+    },
+    "state": "testing"
+   }
+  ],
+  "waiting": [
+   "113",
+   "114",
+   "106"
+  ]
+ },
+ "changes": [
+  {
+   "id": "101",
+   "title": "Add a timing middleware",
+   "intent": "Add a middleware that measures how long each request takes and reports it in a Server-Timing header, exported as hono/timing.",
+   "agent": "agent-1",
+   "kind": "demo",
+   "fork": "hono--agent-1-1",
+   "base": "3f9c2e1",
+   "state": "landed",
+   "files": [
+    "src/middleware/timing/index.ts",
+    "src/middleware/timing/index.test.ts",
+    "package.json",
+    "jsr.json"
+   ],
+   "claims": [
+    "src/middleware/timing/index.ts",
+    "src/middleware/timing/index.test.ts",
+    "package.json",
+    "jsr.json"
+   ],
+   "needs": [],
+   "provides": [
+    "hono/timing"
+   ],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555560000,
+   "landedAt": 1791555930000,
+   "events": [
+    {
+     "t": 1791555560000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555564000,
+     "what": "claimed",
+     "detail": "src/middleware/timing/, package.json, jsr.json"
+    },
+    {
+     "t": 1791555566000,
+     "what": "working"
+    },
+    {
+     "t": 1791555780000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791555790000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791555848000,
+     "what": "approved",
+     "detail": "Scripted review: looks right, has tests."
+    },
+    {
+     "t": 1791555860000,
+     "what": "queued"
+    },
+    {
+     "t": 1791555874000,
+     "what": "conflict",
+     "detail": "package.json, jsr.json: #103 added its export on the same lines"
+    },
+    {
+     "t": 1791555875000,
+     "what": "replaying",
+     "detail": "Rule for package.json exports: add the line again on the newest main"
+    },
+    {
+     "t": 1791555881000,
+     "what": "replayed",
+     "detail": "Same intent, re-applied on e2a1f04; diff unchanged"
+    },
+    {
+     "t": 1791555885000,
+     "what": "testing",
+     "detail": "train T2"
+    },
+    {
+     "t": 1791555930000,
+     "what": "landed",
+     "detail": "e7d2b10"
+    }
+   ],
+   "future": [],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": "replayed-handler",
+    "conflicts": [
+     "package.json",
+     "jsr.json"
+    ],
+    "diff": [
+     {
+      "path": "src/middleware/timing/index.ts",
+      "lines": [
+       "+import type { MiddlewareHandler } from '../../types'",
+       "+",
+       "+export const timing = (): MiddlewareHandler => async (c, next) => {",
+       "+  const start = performance.now()",
+       "+  await next()",
+       "+  c.header('Server-Timing', `total;dur=${performance.now() - start}`)",
+       "+}"
+      ]
+     },
+     {
+      "path": "package.json",
+      "lines": [
+       "   \"exports\": {",
+       "     \"./ip-restriction\": \"./dist/middleware/ip-restriction/index.js\",",
+       "+    \"./timing\": \"./dist/middleware/timing/index.js\",",
+       "     \"./jwt\": \"./dist/middleware/jwt/index.js\","
+      ]
+     },
+     {
+      "path": "jsr.json",
+      "lines": [
+       "     \"./ip-restriction\": \"./src/middleware/ip-restriction/index.ts\",",
+       "+    \"./timing\": \"./src/middleware/timing/index.ts\","
+      ]
+     }
+    ],
+    "commit": "a41c09e",
+    "mainCommit": "e7d2b10"
+   }
+  },
+  {
+   "id": "102",
+   "title": "Faster route matching for static paths",
+   "intent": "Static paths like /about should skip the big regular expression in RegExpRouter and match from a lookup table.",
+   "agent": "agent-2",
+   "kind": "demo",
+   "fork": "hono--agent-2-2",
+   "base": "3f9c2e1",
+   "state": "landed",
+   "files": [
+    "src/router/reg-exp-router/router.ts"
+   ],
+   "claims": [
+    "src/router/reg-exp-router/router.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555300000,
+   "landedAt": 1791555760000,
+   "events": [
+    {
+     "t": 1791555300000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555304000,
+     "what": "claimed",
+     "detail": "src/router/reg-exp-router/router.ts"
+    },
+    {
+     "t": 1791555305000,
+     "what": "working"
+    },
+    {
+     "t": 1791555640000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791555650000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791555700000,
+     "what": "approved"
+    },
+    {
+     "t": 1791555705000,
+     "what": "queued"
+    },
+    {
+     "t": 1791555720000,
+     "what": "testing",
+     "detail": "train T1"
+    },
+    {
+     "t": 1791555760000,
+     "what": "landed",
+     "detail": "e2a1f04"
+    }
+   ],
+   "future": [],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": "merged",
+    "conflicts": [],
+    "diff": [
+     {
+      "path": "src/router/reg-exp-router/router.ts",
+      "lines": [
+       "   match(method, path) {",
+       "+    const hit = this.#static[method]?.[path]",
+       "+    if (hit) return hit",
+       "     const [re, handlers] = this.#matchers[method]",
+       "…",
+       "-    // every path goes through the big regexp",
+       "+    // static paths skip the regexp entirely"
+      ]
+     }
+    ],
+    "commit": "5be8d21",
+    "mainCommit": "e2a1f04"
+   }
+  },
+  {
+   "id": "103",
+   "title": "Add an IP restriction middleware",
+   "intent": "Allow or deny requests by client IP address with allow and deny lists, exported as hono/ip-restriction.",
+   "agent": "agent-3",
+   "kind": "demo",
+   "fork": "hono--agent-3-3",
+   "base": "3f9c2e1",
+   "state": "landed",
+   "files": [
+    "src/middleware/ip-restriction/index.ts",
+    "package.json",
+    "jsr.json"
+   ],
+   "claims": [
+    "src/middleware/ip-restriction/index.ts",
+    "package.json",
+    "jsr.json"
+   ],
+   "needs": [],
+   "provides": [
+    "hono/ip-restriction"
+   ],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555340000,
+   "landedAt": 1791555760000,
+   "events": [
+    {
+     "t": 1791555340000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555342000,
+     "what": "claimed",
+     "detail": "src/middleware/ip-restriction/, package.json, jsr.json"
+    },
+    {
+     "t": 1791555343000,
+     "what": "overlap",
+     "detail": "package.json: #101 claimed it too. Fine: export lists are merged by a rule"
+    },
+    {
+     "t": 1791555344000,
+     "what": "working"
+    },
+    {
+     "t": 1791555670000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791555680000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791555702000,
+     "what": "approved"
+    },
+    {
+     "t": 1791555708000,
+     "what": "queued"
+    },
+    {
+     "t": 1791555720000,
+     "what": "testing",
+     "detail": "train T1"
+    },
+    {
+     "t": 1791555760000,
+     "what": "landed",
+     "detail": "e2a1f04"
+    }
+   ],
+   "future": [],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": "merged",
+    "conflicts": [],
+    "diff": [
+     {
+      "path": "src/middleware/ip-restriction/index.ts",
+      "lines": [
+       "+export const ipRestriction = (getIP, { denyList = [], allowList = [] }) =>",
+       "+  async (c, next) => {",
+       "+    const ip = getIP(c)",
+       "+    if (denyList.includes(ip) || (allowList.length && !allowList.includes(ip))) return c.text('Forbidden', 403)",
+       "+    await next()",
+       "+  }"
+      ]
+     },
+     {
+      "path": "package.json",
+      "lines": [
+       "   \"exports\": {",
+       "+    \"./ip-restriction\": \"./dist/middleware/ip-restriction/index.js\",",
+       "     \"./jwt\": \"./dist/middleware/jwt/index.js\","
+      ]
+     },
+     {
+      "path": "jsr.json",
+      "lines": [
+       "+    \"./ip-restriction\": \"./src/middleware/ip-restriction/index.ts\","
+      ]
+     }
+    ],
+    "commit": "0c77a3f",
+    "mainCommit": "e2a1f04"
+   }
+  },
+  {
+   "id": "104",
+   "title": "Cookies: support Partitioned",
+   "intent": "setCookie should accept partitioned: true and refuse it without Secure, as browsers do.",
+   "agent": "agent-4",
+   "kind": "demo",
+   "fork": "hono--agent-4-4",
+   "base": "3f9c2e1",
+   "state": "testing",
+   "files": [
+    "src/utils/cookie.ts",
+    "src/helper/cookie/index.test.ts"
+   ],
+   "claims": [
+    "src/utils/cookie.ts",
+    "src/helper/cookie/index.test.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555680000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555680000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555683000,
+     "what": "working"
+    },
+    {
+     "t": 1791556020000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791556030000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791556090000,
+     "what": "approved"
+    },
+    {
+     "t": 1791556100000,
+     "what": "queued"
+    },
+    {
+     "t": 1791556175000,
+     "what": "testing",
+     "detail": "train T4"
+    }
+   ],
+   "future": [
+    {
+     "t": 1791556220000,
+     "what": "landed",
+     "detail": "b5f0e93"
+    }
+   ],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": null,
+    "conflicts": [],
+    "diff": [
+     {
+      "path": "src/utils/cookie.ts",
+      "lines": [
+       "   if (opt.secure) cookie += '; Secure'",
+       "+  if (opt.partitioned) {",
+       "+    if (!opt.secure) throw new Error('Partitioned cookies need Secure')",
+       "+    cookie += '; Partitioned'",
+       "+  }"
+      ]
+     }
+    ],
+    "commit": "9a0e4c2",
+    "mainCommit": null
+   }
+  },
+  {
+   "id": "105",
+   "title": "Fix CORS preflight for listed origins",
+   "intent": "When origin is a list, a preflight request should echo the caller's origin if it is listed, and add Vary: Origin.",
+   "agent": "agent-5",
+   "kind": "demo",
+   "fork": "hono--agent-5-5",
+   "base": "3f9c2e1",
+   "state": "testing",
+   "files": [
+    "src/middleware/cors/index.ts",
+    "src/middleware/cors/index.test.ts"
+   ],
+   "claims": [
+    "src/middleware/cors/index.ts",
+    "src/middleware/cors/index.test.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555720000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555720000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555722000,
+     "what": "working"
+    },
+    {
+     "t": 1791556050000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791556060000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791556105000,
+     "what": "approved"
+    },
+    {
+     "t": 1791556110000,
+     "what": "queued"
+    },
+    {
+     "t": 1791556175000,
+     "what": "testing",
+     "detail": "train T4"
+    }
+   ],
+   "future": [
+    {
+     "t": 1791556220000,
+     "what": "landed",
+     "detail": "b5f0e93"
+    }
+   ],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": null,
+    "conflicts": [],
+    "diff": [
+     {
+      "path": "src/middleware/cors/index.ts",
+      "lines": [
+       "   if (c.req.method === 'OPTIONS') {",
+       "-    if (opts.origin === '*') set('Access-Control-Allow-Origin', '*')",
+       "+    const origin = findAllowOrigin(c.req.header('origin') || '', c)",
+       "+    if (origin) set('Access-Control-Allow-Origin', origin)",
+       "+    if (opts.origin !== '*') set('Vary', 'Origin')"
+      ]
+     }
+    ],
+    "commit": "1d4b7e8",
+    "mainCommit": null
+   }
+  },
+  {
+   "id": "106",
+   "title": "Server-sent events: retry field",
+   "intent": "writeSSE should send the retry field so clients know how long to wait before reconnecting.",
+   "agent": "agent-6",
+   "kind": "demo",
+   "fork": "hono--agent-6-6",
+   "base": "3f9c2e1",
+   "state": "queued",
+   "files": [
+    "src/helper/streaming/sse.ts"
+   ],
+   "claims": [
+    "src/helper/streaming/sse.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555800000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555800000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555802000,
+     "what": "working"
+    },
+    {
+     "t": 1791556080000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791556088000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791556140000,
+     "what": "approved"
+    },
+    {
+     "t": 1791556145000,
+     "what": "queued"
+    }
+   ],
+   "future": [
+    {
+     "t": 1791556225000,
+     "what": "testing",
+     "detail": "train T5"
+    },
+    {
+     "t": 1791556270000,
+     "what": "landed",
+     "detail": "6ad94f1"
+    }
+   ],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": null,
+    "conflicts": [],
+    "diff": [
+     {
+      "path": "src/helper/streaming/sse.ts",
+      "lines": [
+       "   async writeSSE(message: SSEMessage) {",
+       "+    if (message.retry != null) data.push(`retry: ${message.retry}`)",
+       "     data.push(`data: ${message.data}`)"
+      ]
+     }
+    ],
+    "commit": "c3e81aa",
+    "mainCommit": null
+   }
+  },
+  {
+   "id": "107",
+   "title": "Trie router: optional parameters",
+   "intent": "Routes like /docs/:page? should match both /docs and /docs/intro in TrieRouter, as they do in RegExpRouter.",
+   "agent": "agent-7",
+   "kind": "demo",
+   "fork": "hono--agent-7-7",
+   "base": "3f9c2e1",
+   "state": "bounced",
+   "files": [
+    "src/router/trie-router/node.ts"
+   ],
+   "claims": [
+    "src/router/trie-router/node.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555500000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555500000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555502000,
+     "what": "claimed",
+     "detail": "src/router/trie-router/node.ts"
+    },
+    {
+     "t": 1791555503000,
+     "what": "working"
+    },
+    {
+     "t": 1791555900000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791555910000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791555950000,
+     "what": "approved"
+    },
+    {
+     "t": 1791555955000,
+     "what": "queued"
+    },
+    {
+     "t": 1791555960000,
+     "what": "testing",
+     "detail": "train T3"
+    },
+    {
+     "t": 1791556000000,
+     "what": "bounced",
+     "detail": "Test failed: trie-router matches /docs/:page? when page is empty"
+    }
+   ],
+   "future": [
+    {
+     "t": 1791556240000,
+     "what": "working",
+     "detail": "Fixing the failed test"
+    }
+   ],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": null,
+    "conflicts": [],
+    "diff": [
+     {
+      "path": "src/router/trie-router/node.ts",
+      "lines": [
+       "   for (const part of parts) {",
+       "+    if (part.endsWith('?')) {",
+       "+      optional.push(part.slice(0, -1))",
+       "+      continue",
+       "+    }",
+       "     const [key, pattern] = getPattern(part)"
+      ]
+     }
+    ],
+    "commit": "7f2c5d0",
+    "mainCommit": null
+   }
+  },
+  {
+   "id": "108",
+   "title": "JWT middleware: verify with JWKS",
+   "intent": "Let the JWT middleware fetch signing keys from a JWKS URL instead of a fixed secret.",
+   "agent": "agent-8",
+   "kind": "demo",
+   "fork": "hono--agent-8-8",
+   "base": "3f9c2e1",
+   "state": "reviewing",
+   "files": [
+    "src/middleware/jwt/index.ts",
+    "src/utils/jwt/jws.ts"
+   ],
+   "claims": [
+    "src/middleware/jwt/index.ts",
+    "src/utils/jwt/jws.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555600000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555600000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555602000,
+     "what": "working"
+    },
+    {
+     "t": 1791556140000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791556150000,
+     "what": "reviewing"
+    }
+   ],
+   "future": [
+    {
+     "t": 1791556215000,
+     "what": "changes-suggested",
+     "detail": "Cache the JWKS response: fetching keys on every request is slow"
+    },
+    {
+     "t": 1791556216000,
+     "what": "working",
+     "detail": "Adding a cache"
+    },
+    {
+     "t": 1791556290000,
+     "what": "pushed"
+    }
+   ],
+   "review": null,
+   "landing": null
+  },
+  {
+   "id": "109",
+   "title": "Redirects keep the query string",
+   "intent": "c.redirect() should be able to keep the current query string (option keepQuery).",
+   "agent": "agent-9",
+   "kind": "demo",
+   "fork": "hono--agent-9-9",
+   "base": "3f9c2e1",
+   "state": "working",
+   "files": [
+    "src/context.ts"
+   ],
+   "claims": [
+    "src/context.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791556112000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791556112000,
+     "what": "asked"
+    },
+    {
+     "t": 1791556114000,
+     "what": "claimed",
+     "detail": "src/context.ts"
+    },
+    {
+     "t": 1791556115000,
+     "what": "working"
+    }
+   ],
+   "future": [],
+   "review": null,
+   "landing": null
+  },
+  {
+   "id": "110",
+   "title": "Validator: turn query numbers into numbers",
+   "intent": "The query validator should optionally coerce \"42\" to 42 and \"true\" to true before validating.",
+   "agent": "agent-10",
+   "kind": "demo",
+   "fork": "hono--agent-10-10",
+   "base": "3f9c2e1",
+   "state": "with-lead",
+   "files": [
+    "src/validator/validator.ts",
+    "src/context.ts"
+   ],
+   "claims": [
+    "src/validator/validator.ts",
+    "src/context.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": "agent-2 (lead for src/)",
+   "createdAt": 1791555640000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555640000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555642000,
+     "what": "claimed",
+     "detail": "src/validator/validator.ts, src/context.ts"
+    },
+    {
+     "t": 1791555643000,
+     "what": "working"
+    },
+    {
+     "t": 1791555970000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791555980000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791556040000,
+     "what": "approved"
+    },
+    {
+     "t": 1791556050000,
+     "what": "queued"
+    },
+    {
+     "t": 1791556108000,
+     "what": "conflict",
+     "detail": "src/context.ts: #116 changed the same getter"
+    },
+    {
+     "t": 1791556109000,
+     "what": "replaying",
+     "detail": "No rule for this kind of edit"
+    },
+    {
+     "t": 1791556112000,
+     "what": "with-lead",
+     "detail": "No rule fits and AI replay is off for this project: agent-2, the lead for src/, decides"
+    }
+   ],
+   "future": [],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": null,
+    "conflicts": [
+     "src/context.ts"
+    ],
+    "diff": [
+     {
+      "path": "src/validator/validator.ts",
+      "lines": [
+       "     case 'query':",
+       "-      value = c.req.queries()",
+       "+      value = coerce(c.req.queries(), opts.coerce)"
+      ]
+     },
+     {
+      "path": "src/context.ts",
+      "lines": [
+       "   get var() {",
+       "-    return this.#var",
+       "+    return Object.freeze({ ...this.#var, query: this.#coerced })"
+      ]
+     }
+    ],
+    "commit": null,
+    "mainCommit": null
+   }
+  },
+  {
+   "id": "111",
+   "title": "JSX: keep keyed list items when reordering",
+   "intent": "When a keyed list is reordered, move the DOM nodes instead of re-creating them, so inputs keep focus.",
+   "agent": "agent-11",
+   "kind": "demo",
+   "fork": "hono--agent-11-11",
+   "base": "3f9c2e1",
+   "state": "working",
+   "files": [
+    "src/jsx/dom/render.ts"
+   ],
+   "claims": [
+    "src/jsx/dom/render.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555870000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555870000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555872000,
+     "what": "claimed",
+     "detail": "src/jsx/dom/render.ts"
+    },
+    {
+     "t": 1791555873000,
+     "what": "working"
+    }
+   ],
+   "future": [],
+   "review": null,
+   "landing": null
+  },
+  {
+   "id": "112",
+   "title": "Serve static files from R2 with ETags",
+   "intent": "serveStatic on Workers should send the object's ETag so browsers can cache files from R2.",
+   "agent": "agent-12",
+   "kind": "demo",
+   "fork": "hono--agent-12-12",
+   "base": "3f9c2e1",
+   "state": "pushed",
+   "files": [
+    "src/adapter/cloudflare-workers/serve-static.ts"
+   ],
+   "claims": [
+    "src/adapter/cloudflare-workers/serve-static.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555920000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555920000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555922000,
+     "what": "working"
+    },
+    {
+     "t": 1791556190000,
+     "what": "pushed"
+    }
+   ],
+   "future": [
+    {
+     "t": 1791556205000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791556235000,
+     "what": "approved"
+    },
+    {
+     "t": 1791556240000,
+     "what": "queued"
+    }
+   ],
+   "review": null,
+   "landing": null
+  },
+  {
+   "id": "113",
+   "title": "Compress middleware: zstd",
+   "intent": "Prefer zstd when the client accepts it; keep gzip and deflate as fallbacks.",
+   "agent": "agent-1",
+   "kind": "demo",
+   "fork": "hono--agent-1-13",
+   "base": "3f9c2e1",
+   "state": "queued",
+   "files": [
+    "src/middleware/compress/index.ts"
+   ],
+   "claims": [
+    "src/middleware/compress/index.ts"
+   ],
+   "needs": [],
+   "provides": [
+    "zstd encoding"
+   ],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555938000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555938000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555940000,
+     "what": "claimed",
+     "detail": "src/middleware/compress/index.ts"
+    },
+    {
+     "t": 1791555941000,
+     "what": "working"
+    },
+    {
+     "t": 1791556070000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791556078000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791556120000,
+     "what": "approved"
+    },
+    {
+     "t": 1791556125000,
+     "what": "queued"
+    }
+   ],
+   "future": [
+    {
+     "t": 1791556225000,
+     "what": "testing",
+     "detail": "train T5"
+    },
+    {
+     "t": 1791556270000,
+     "what": "landed",
+     "detail": "6ad94f1"
+    }
+   ],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": null,
+    "conflicts": [],
+    "diff": [
+     {
+      "path": "src/middleware/compress/index.ts",
+      "lines": [
+       "-const ENCODING_TYPES = ['gzip', 'deflate'] as const",
+       "+const ENCODING_TYPES = ['zstd', 'gzip', 'deflate'] as const"
+      ]
+     }
+    ],
+    "commit": "f0a2b6c",
+    "mainCommit": null
+   }
+  },
+  {
+   "id": "114",
+   "title": "Tests for zstd compression",
+   "intent": "Add tests that zstd is chosen when accepted and gzip otherwise. Builds on #113 before it has landed.",
+   "agent": "agent-3",
+   "kind": "demo",
+   "fork": "hono--agent-3-14",
+   "base": "3f9c2e1",
+   "state": "queued",
+   "files": [
+    "src/middleware/compress/index.test.ts"
+   ],
+   "claims": [
+    "src/middleware/compress/index.test.ts"
+   ],
+   "needs": [
+    "113"
+   ],
+   "provides": [],
+   "stackedOn": "113",
+   "lead": null,
+   "createdAt": 1791555960000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555960000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555961000,
+     "what": "stacked",
+     "detail": "On #113 (Compress middleware: zstd), not yet landed"
+    },
+    {
+     "t": 1791555962000,
+     "what": "working"
+    },
+    {
+     "t": 1791556100000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791556106000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791556130000,
+     "what": "approved"
+    },
+    {
+     "t": 1791556134000,
+     "what": "queued",
+     "detail": "Lands right after #113"
+    }
+   ],
+   "future": [
+    {
+     "t": 1791556225000,
+     "what": "testing",
+     "detail": "train T5"
+    },
+    {
+     "t": 1791556270000,
+     "what": "landed",
+     "detail": "6ad94f1"
+    }
+   ],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": null,
+    "conflicts": [],
+    "diff": [
+     {
+      "path": "src/middleware/compress/index.test.ts",
+      "lines": [
+       "+  it('prefers zstd when the client accepts it', async () => {",
+       "+    const res = await app.request('/', { headers: { 'Accept-Encoding': 'zstd, gzip' } })",
+       "+    expect(res.headers.get('Content-Encoding')).toBe('zstd')",
+       "+  })"
+      ]
+     }
+    ],
+    "commit": "2b9d4e7",
+    "mainCommit": null
+   }
+  },
+  {
+   "id": "115",
+   "title": "Add a request ID middleware",
+   "intent": "Give every request an ID (from X-Request-Id or a new UUID), set it on the context and the response, exported as hono/request-id.",
+   "agent": "agent-2",
+   "kind": "demo",
+   "fork": "hono--agent-2-15",
+   "base": "3f9c2e1",
+   "state": "replaying",
+   "files": [
+    "src/middleware/request-id/index.ts",
+    "package.json",
+    "jsr.json"
+   ],
+   "claims": [
+    "src/middleware/request-id/index.ts",
+    "package.json",
+    "jsr.json"
+   ],
+   "needs": [],
+   "provides": [
+    "hono/request-id"
+   ],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555780000,
+   "landedAt": null,
+   "events": [
+    {
+     "t": 1791555780000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555782000,
+     "what": "claimed",
+     "detail": "src/middleware/request-id/, package.json, jsr.json"
+    },
+    {
+     "t": 1791555783000,
+     "what": "overlap",
+     "detail": "package.json: #101 claimed it too"
+    },
+    {
+     "t": 1791555784000,
+     "what": "working"
+    },
+    {
+     "t": 1791556060000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791556068000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791556160000,
+     "what": "approved"
+    },
+    {
+     "t": 1791556165000,
+     "what": "queued"
+    },
+    {
+     "t": 1791556192000,
+     "what": "conflict",
+     "detail": "package.json: #101 added hono/timing on the next line"
+    },
+    {
+     "t": 1791556193000,
+     "what": "replaying",
+     "detail": "Rule for package.json exports: add the line again on the newest main"
+    }
+   ],
+   "future": [
+    {
+     "t": 1791556206000,
+     "what": "replayed",
+     "detail": "Same intent, re-applied; diff unchanged"
+    },
+    {
+     "t": 1791556225000,
+     "what": "testing",
+     "detail": "train T5"
+    },
+    {
+     "t": 1791556270000,
+     "what": "landed",
+     "detail": "6ad94f1"
+    }
+   ],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": null,
+    "conflicts": [
+     "package.json"
+    ],
+    "diff": [
+     {
+      "path": "src/middleware/request-id/index.ts",
+      "lines": [
+       "+export const requestId = ({ header = 'X-Request-Id' } = {}) => async (c, next) => {",
+       "+  const id = c.req.header(header) ?? crypto.randomUUID()",
+       "+  c.set('requestId', id)",
+       "+  c.header(header, id)",
+       "+  await next()",
+       "+}"
+      ]
+     },
+     {
+      "path": "package.json",
+      "lines": [
+       "     \"./ip-restriction\": \"./dist/middleware/ip-restriction/index.js\",",
+       "+    \"./request-id\": \"./dist/middleware/request-id/index.js\",",
+       "     \"./timing\": \"./dist/middleware/timing/index.js\","
+      ]
+     }
+    ],
+    "commit": "8e1f3a9",
+    "mainCommit": null
+   }
+  },
+  {
+   "id": "116",
+   "title": "Context: typed c.var",
+   "intent": "c.var should be typed with the app's Variables so c.var.user needs no cast.",
+   "agent": "agent-9",
+   "kind": "demo",
+   "fork": "hono--agent-9-16",
+   "base": "3f9c2e1",
+   "state": "landed",
+   "files": [
+    "src/context.ts"
+   ],
+   "claims": [
+    "src/context.ts"
+   ],
+   "needs": [],
+   "provides": [],
+   "stackedOn": null,
+   "lead": null,
+   "createdAt": 1791555440000,
+   "landedAt": 1791556110000,
+   "events": [
+    {
+     "t": 1791555440000,
+     "what": "asked"
+    },
+    {
+     "t": 1791555442000,
+     "what": "claimed",
+     "detail": "src/context.ts"
+    },
+    {
+     "t": 1791555443000,
+     "what": "working"
+    },
+    {
+     "t": 1791556020000,
+     "what": "pushed"
+    },
+    {
+     "t": 1791556028000,
+     "what": "reviewing"
+    },
+    {
+     "t": 1791556060000,
+     "what": "approved"
+    },
+    {
+     "t": 1791556065000,
+     "what": "queued"
+    },
+    {
+     "t": 1791556070000,
+     "what": "testing",
+     "detail": "train T6"
+    },
+    {
+     "t": 1791556110000,
+     "what": "landed",
+     "detail": "4c1e8b7"
+    }
+   ],
+   "future": [],
+   "review": {
+    "verdict": "auto",
+    "notes": "Scripted review: the change does what it says, tests added."
+   },
+   "landing": {
+    "how": "merged",
+    "conflicts": [],
+    "diff": [
+     {
+      "path": "src/context.ts",
+      "lines": [
+       "-  get var(): Readonly<ContextVariableMap> {",
+       "+  get var(): Readonly<ContextVariableMap & E['Variables']> {",
+       "     return Object.fromEntries(this.#var)"
+      ]
+     }
+    ],
+    "commit": "d6c0f12",
+    "mainCommit": "4c1e8b7"
+   }
+  }
+ ],
+ "areas": [
+  {
+   "path": "src/router",
+   "files": 14,
+   "working": 0,
+   "claimed": 0,
+   "recentConflicts": 0,
+   "recentLandings": 3
+  },
+  {
+   "path": "src/middleware",
+   "files": 61,
+   "working": 0,
+   "claimed": 6,
+   "recentConflicts": 5,
+   "recentLandings": 8
+  },
+  {
+   "path": "src/helper",
+   "files": 27,
+   "working": 0,
+   "claimed": 2,
+   "recentConflicts": 0,
+   "recentLandings": 3
+  },
+  {
+   "path": "src/adapter",
+   "files": 22,
+   "working": 0,
+   "claimed": 1,
+   "recentConflicts": 0,
+   "recentLandings": 0
+  },
+  {
+   "path": "src/jsx",
+   "files": 31,
+   "working": 1,
+   "claimed": 1,
+   "recentConflicts": 0,
+   "recentLandings": 0
+  },
+  {
+   "path": "src/utils",
+   "files": 24,
+   "working": 0,
+   "claimed": 2,
+   "recentConflicts": 0,
+   "recentLandings": 2
+  },
+  {
+   "path": "src/validator",
+   "files": 4,
+   "working": 0,
+   "claimed": 1,
+   "recentConflicts": 1,
+   "recentLandings": 0
+  },
+  {
+   "path": "src",
+   "files": 12,
+   "working": 1,
+   "claimed": 1,
+   "recentConflicts": 1,
+   "recentLandings": 3
+  },
+  {
+   "path": ".",
+   "files": 9,
+   "working": 0,
+   "claimed": 2,
+   "recentConflicts": 6,
+   "recentLandings": 7
+  }
+ ],
+ "stats": {
+  "landedToday": 23,
+  "inQueue": 5,
+  "bounced": 2,
+  "replayed": 7,
+  "medianAskToLandS": 412
+ },
+ "mock": {
+  "note": "Mock only: changes[].future and mock.trains let the UI play the next two minutes.",
+  "trains": [
+   {
+    "id": "T1",
+    "changes": [
+     "103",
+     "102"
+    ],
+    "startedAt": 1791555720000,
+    "endedAt": 1791555760000,
+    "mainBefore": "3f9c2e1",
+    "mainAfter": "e2a1f04",
+    "checks": {
+     "ok": true,
+     "ms": 38200,
+     "failures": []
+    }
+   },
+   {
+    "id": "T2",
+    "changes": [
+     "101"
+    ],
+    "startedAt": 1791555885000,
+    "endedAt": 1791555930000,
+    "mainBefore": "e2a1f04",
+    "mainAfter": "e7d2b10",
+    "checks": {
+     "ok": true,
+     "ms": 41800,
+     "failures": []
+    }
+   },
+   {
+    "id": "T3",
+    "changes": [
+     "107"
+    ],
+    "startedAt": 1791555960000,
+    "endedAt": 1791556000000,
+    "mainBefore": "e7d2b10",
+    "checks": {
+     "ok": false,
+     "ms": 36500,
+     "failures": [
+      "src/router/trie-router/router.test.ts › optional params › matches /docs when :page? is empty"
+     ]
+    }
+   },
+   {
+    "id": "T6",
+    "changes": [
+     "116"
+    ],
+    "startedAt": 1791556070000,
+    "endedAt": 1791556110000,
+    "mainBefore": "e7d2b10",
+    "mainAfter": "4c1e8b7",
+    "checks": {
+     "ok": true,
+     "ms": 37100,
+     "failures": []
+    }
+   },
+   {
+    "id": "T4",
+    "changes": [
+     "104",
+     "105"
+    ],
+    "startedAt": 1791556175000,
+    "endedAt": 1791556220000,
+    "mainBefore": "4c1e8b7",
+    "mainAfter": "b5f0e93",
+    "checks": {
+     "ok": true,
+     "ms": 44000,
+     "failures": []
+    }
+   },
+   {
+    "id": "T5",
+    "changes": [
+     "113",
+     "114",
+     "106",
+     "115"
+    ],
+    "startedAt": 1791556225000,
+    "endedAt": 1791556270000,
+    "mainBefore": "b5f0e93",
+    "mainAfter": "6ad94f1",
+    "checks": {
+     "ok": true,
+     "ms": 45500,
+     "failures": []
+    }
+   }
+  ],
+  "playS": [
+   -60,
+   100
+  ]
+ }
+}

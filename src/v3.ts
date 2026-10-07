@@ -13,14 +13,15 @@ import { SHEET_HTML, shortId } from './sheet';
 import { SPECULATE, WORLD_CSS, worldBody, type WorldTab } from './world';
 import { CATALOG_CSS, ITEMS, catalogPage } from './catalog';
 import { BUILD_CSS, buildBody } from './newproject';
+import { workBody, workJs } from './landingui/view';
 import {
   type Change, type ProjectArgs, type UI, ORDER, OPEN_ICON_C as OPEN_ICON, SEND, VISIT, BUSY,
   accentOf, appUrl, changeRow, changesOf, fixtureData, forkAction, FORK_JS, fromIssues, isMerge, keyNote, legend,
   noApp, pageJs, planningHtml, planningOf, primary, shell2,
 } from './v2';
 
-export type ViewId = 'readme' | 'changes' | 'app' | 'code' | 'history' | 'more' | 'agents' | 'errors';
-export const VIEW_IDS: ViewId[] = ['readme', 'changes', 'app', 'code', 'history', 'more', 'agents', 'errors'];
+export type ViewId = 'readme' | 'changes' | 'app' | 'code' | 'history' | 'more' | 'agents' | 'errors' | 'work';
+export const VIEW_IDS: ViewId[] = ['readme', 'changes', 'app', 'code', 'history', 'more', 'agents', 'errors', 'work'];
 
 /** The project's documents (README first) and the one being read. */
 export type Docs = { list: { path: string; label: string }[]; current: string | null; text: string | null };
@@ -66,6 +67,7 @@ const ICONS = {
   errors: I('<path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/>'),
   about: I('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/>'),
   readme: I('<path d="M5 4h10l4 4v12H5z"/><path d="M14 4v5h5M8.5 13h7M8.5 16.5h5"/>'),
+  work: I('<rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/>'),
 };
 
 export const needsOf = (open: Change[]) => open.filter((c) => primary(c));
@@ -252,6 +254,9 @@ const VIEWS: View[] = [
   { id: 'more', label: 'More', icon: ICONS.more, tab: true, when: (c) => c.own, render: moreView },
   { id: 'history', label: 'History', icon: ICONS.history, desc: 'Merged changes, commits, deploys and forks, by day', when: () => true, render: historyView },
   { id: 'agents', label: 'Agents', icon: ICONS.agents, desc: 'The router, the reviewer and each change\'s agent: chat or terminal', when: (c) => c.own, render: agentsView },
+  // Agents at work (qb7, src/landingui): many agents at once, the merge queue, who works where.
+  { id: 'work', label: 'Agents at work', icon: ICONS.work, desc: 'Every agent changing the project at once: where they work, the line their changes wait in, how each landed', when: () => true,
+    render: (c) => ({ body: workBody({ owner: c.info.owner, name: c.info.name, own: c.own }), js: workJs() }) },
   { id: 'errors', label: 'Errors', icon: ICONS.errors, desc: 'Production errors from Cloudflare Issues and the fixes they started', when: (c) => c.worker, render: errorsView },
 ];
 

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agents at work (dev)</title>
+<!-- Local preview of the "Agents at work" view on the mock: from the forq root,
+     python3 -m http.server 8790, then open /src/landingui/dev.html (?theme=dark). -->
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--card:#fafafa;--chip:#f3f4f6;--line:#ececef;--fg:#111214;--dim:#6e737b;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;--warn:#b42d1f;color-scheme:light}
+:root[data-theme=dark]{--bg:#0c0d0e;--card:#141517;--chip:#1c1d20;--line:#222428;--fg:#ececee;--dim:#9a9fa6;--acc:#4fbf9f;--acc-fg:#0c0d0e;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 15px/1.45 Geist,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+</style>
+<link rel="stylesheet" href="./work.css">
+<script>if(new URLSearchParams(location.search).get('theme')==='dark')document.documentElement.dataset.theme='dark';</script>
+</head>
+<body>
+<div id="lw" data-src="/public/landing-mock.json" data-name="hono" data-mock></div>
+<script src="./work.js"></script>
+</body>
+</html>
