@@ -423,16 +423,36 @@ const rm=document.getElementById('rmkey');if(rm)rm.onclick=async()=>{if(await ca
 </script>`);
 }
 
-export function aboutPage() {
-  return shell('About · qodebase', `<a class="back" href="/">Explore</a>
-<h1>About qodebase</h1>
-<p class="desc">qodebase is a git platform for the age of agents, built on Cloudflare (Artifacts, Containers, Durable Objects, Workers) and made for the phone. Every project runs; every fork comes with its own agents.</p>
-<h2>How it works</h2>
-<p class="desc">You tell a project's router agent what to change. It starts one agent per task, each in its own container on its own fork. A reviewer agent checks every push in a live preview before you merge. Errors from a deployed app can start a fix by themselves.</p>
-<h2>Whose Claude</h2>
-<p class="desc">Agents run Claude Code with your own Anthropic API key, which you add in Settings. You pay Anthropic directly. qodebase measured about $1–2 per finished, reviewed change on Sonnet.</p>
+/** /about (rewritten 2026-10-07): what it is in one line, then four short answers. A
+ *  self-hosted copy leaves out the hosted-only parts. */
+export function aboutPage(selfHost = false) {
+  const li = (b: string, t: string) => `<li><b>${b}</b><span>${t}</span></li>`;
+  return shell('About · qodebase', `<h1>About qodebase</h1>
+<p class="desc">A home for your code where AI agents do the work. Open source, on Cloudflare, made for your phone.</p>
+<h2>What you can do</h2>
+<ul class="abl">
+${li('Start or bring a project', 'Describe it in a sentence, or import a public repo from GitHub.')}
+${li('Ask for changes', 'Agents each work on their own copy; a reviewer agent checks every change; you merge.')}
+${li('See it run', 'Anything with a web page runs live at its own address, every version too.')}
+${li('Public or private', 'Share a project with everyone, or keep it, its code and its app to yourself.')}
+</ul>
+<h2>Where it runs</h2>
+<ul class="abl">
+${selfHost ? li('Your own copy', 'This qodebase runs in your Cloudflare account, behind your Cloudflare sign-in.') : li('Here, or your own copy', '<a href="/own">Get your own qodebase</a>: the same thing in your Cloudflare account, yours to keep.')}
+${li('Your code is plain git', 'Clone it any time and take it anywhere.')}
+${li('Open source', '<a href="https://github.com/eyalev/qodebase" target="_blank" rel="noopener">github.com/eyalev/qodebase</a> (Apache-2.0).')}
+</ul>
+<h2>What it costs</h2>
+<ul class="abl">
+${li('Agents run Claude Code', 'On your Anthropic API key or your Claude subscription, added in Settings. You pay Anthropic directly.')}
+${li('About $1–2 a change', 'One finished, reviewed change on Sonnet with an API key, measured in October 2026.')}
+${selfHost ? '' : li('Your own copy', "Needs Cloudflare's Workers Paid plan: $5 a month for the whole account.")}
+</ul>
+<h2>From a terminal or an agent</h2>
+<p class="desc"><a href="/cli">qb</a>, the command line, does everything the site does. Agents can read <a href="/llms.txt">llms.txt</a>.</p>
 <h2>Contact</h2>
-<p class="desc">hello@kapps.dev, or the <a href="/feedback?from=/about">feedback form</a>.</p>`);
+<p class="desc">${selfHost ? '' : 'hello@kapps.dev, or '}the <a href="/feedback?from=/about">feedback form</a>.</p>
+<style>.abl{list-style:none;padding:0;margin:0 0 8px}.abl li{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-bottom:1px solid var(--line)}.abl li:last-child{border-bottom:0}.abl b{font-weight:600;font-size:16px}.abl span{color:var(--dim);font-size:15px}</style>`);
 }
 
 export function privacyPage() {

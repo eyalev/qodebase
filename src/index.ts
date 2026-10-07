@@ -306,7 +306,12 @@ const app = {
       if (url.pathname === '/health.json') return health(env, ctx, url.origin);
       if (url.pathname === '/e') return kstatsForward(request, env, ctx);
       if (url.pathname === '/feedback') return feedback(request, env);
-      if (url.pathname === '/about') return html(aboutPage());
+      if (url.pathname === '/about') {
+        // The site header like any page (signed in or not): one session read, no Registry list.
+        const em = await sessionEmail(env, request);
+        const u = em ? await userByEmail(env, em) : null;
+        return html(withGlobal(aboutPage(!!env.SELF_HOST), 'home', 0, u?.handle || '', 'd'));
+      }
       if (url.pathname === '/privacy') return html(privacyPage());
       if (url.pathname === '/personal-agents' && env.CF_OAUTH_CLIENT_ID) return html(personalAgentsPage());
       if (url.pathname === '/own' && !env.SELF_HOST) return html(ownPage(true));
