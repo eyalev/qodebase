@@ -26,7 +26,7 @@ Presets: `today` (1 repo, 20 agents), `k1` (1 repo, 1,000), `k10` (1 repo,
 10,000), `k100` (500 repos × 200 = 100,000). Override with `--agents`,
 `--repos`, `--files`, `--seed`.
 
-## The five ways changes land
+## The six ways changes land
 
 | policy | review | before work | on conflict | merging |
 |---|---|---|---|---|
@@ -35,57 +35,63 @@ Presets: `today` (1 repo, 20 agents), `k1` (1 repo, 1,000), `k10` (1 repo,
 | Claims | as above | claim every file you will touch; wait if taken | (none happen) | one at a time |
 | Claims + redo + trains | as above | claim ordinary files, leave hot shared files open; if taken, pick another task | rerun the task on the new main | trains of up to 16, tested together |
 | Team leads | as above; an author who disputes a review gets one round, then the area lead decides | as above | the area lead merges both intents; only a failed merge is redone | as above |
+| Land by intent | as team leads | as above | the merge queue replays the reviewed change on main and the train tests it; a failed replay goes to the lead | as above |
 
 In every policy a review that asks for changes is disputed 30% of the time; without a lead
 the two agents argue ~2.5 rounds and one side gives in.
 
 ## What it says so far (seed 1)
 
+Hot shared files (routes, schema, package.json) merge cleanly 20% of the time when two
+changes touch them: that is what the real-code run below showed (two appends to one
+list conflict in git nearly every time). It was 80% before that run; every number here
+is after the correction.
+
 One repo, 20 agents, 4 simulated hours:
 
-| policy | landed/h | median ask→landed | slowest 10% | $/change |
-|---|---|---|---|---|
-| Classic PRs | 8 | 85 min | 2.7 h | $1.93 |
-| Agent review | 49 | 16 min | 47 min | $3.00 |
-| Claims | 58 | 12 min | 44 min | $2.00 |
-| Claims + redo + trains | 77 | 14 min | 23 min | $1.99 |
+| policy | landed/h | median | slowest 10% | redoing | $/change |
+|---|---|---|---|---|---|
+| Classic PRs | 8 | 78 min | 1.7 h | 14% | $2.10 |
+| Agent review | 48 | 15 min | 44 min | 37% | $3.30 |
+| Claims | 57 | 11 min | 42 min | 7% | $2.02 |
+| Claims + redo + trains | 57 | 14 min | 35 min | 36% | $2.83 |
+| Team leads | 76 | 14 min | 23 min | 8% | $2.17 |
+| Land by intent | 77 | 14 min | 24 min | 7% | $2.07 |
 
 500 repos × 200 agents = 100,000 agents, 2 simulated hours:
 
-| policy | landed/h | median | slowest 10% | conflicts | agent time redoing | main broken | stuck |
+| policy | landed/h | median | slowest 10% | conflicts | redoing | main broken | stuck at the end |
 |---|---|---|---|---|---|---|---|
-| Classic PRs | 4,555 | 1.6 h | 1.9 h | 1,787 | 1% | 0.4% | 98,702 waiting for a person |
-| Agent review | 145,192 | 25 min | 82 min | 446,418 | 42% | 14% | 49,248 waiting for review |
-| Claims | 115,858 | 16 min | 2.0 h | 0 | 6% | 12.5% | 90,387 waiting for a claim |
-| Claims + redo + trains | 354,786 | 12 min | 24 min | 51,217 | 9% | 3.9% | 14,675 waiting for a claim |
+| Classic PRs | 4,165 | 1.6 h | 1.9 h | 2,562 | 1% | 0.6% | 98,730 waiting for a person |
+| Agent review | 116,997 | 27 min | 1.8 h | 524,278 | 52% | 12.6% | 49,103 waiting for review |
+| Claims | 114,350 | 15 min | 2.0 h | 0 | 11% | 12.9% | 90,285 waiting for a claim |
+| Claims + redo + trains | 220,962 | 14 min | 62 min | 372,148 | 38% | 2.8% | 34,072 in merge queues |
+| Team leads | 241,015 | 11 min | 60 min | 266,947 | 13% | 2.4% | 16,115 waiting for a claim |
+| Land by intent | 375,228 | 12 min | 22 min | 181,979 | 7% | 4.1% | 16,771 waiting for review |
 
-Read as: with people reviewing every change, agents mostly wait for people.
-Agent review alone moves the wall to conflicts (42% of agent time is redo) and
-a broken main. Claims remove conflicts but park most agents. Claiming only
-ordinary files, picking free work, redoing on conflict and landing tested
-trains keeps ~2.4× the throughput of agent review at half the cost per change.
-One repo still tops out near ~900 landed/h with 60 s train tests (preset
-`k1`): the answer past that is many repos, not one bigger one.
+Read as: with people reviewing every change, agents mostly wait for people. Agent
+review alone moves the wall to conflicts (half of agent time is redo) and a broken
+main. Claims remove conflicts but park most agents. Trains and claims on ordinary
+files help, but the shared hot files keep conflicting; leads absorb that by merging
+intents by hand, and then become the queue themselves. Landing by intent (the queue
+replays the reviewed change on main, the train tests it) takes that load off the
+leads: 3.2× agent review's throughput at a third of its cost per change.
 
-## Team leads (added the same day)
+## Team leads: how many agents per lead
 
-100,000 agents, 2 simulated hours: team leads land 368,393/h against 361,350 for
-claims + redo + trains, and agents spend 8% of their time redoing instead of 14%
-(redos replaced by lead merges, arguments cut to one round).
-
-How many agents per lead (100,000 agents, 1 simulated hour):
+100,000 agents, 1 simulated hour:
 
 | agents per lead | leads | lead busy | waiting for a lead | slowest 10% |
 |---|---|---|---|---|
-| 10 | 10,000 | 10% | 1,246 | 24 min |
-| 25 | 4,000 | 26% | 1,567 | 24 min |
-| 50 | 2,000 | 51% | 2,454 | 25 min |
-| 100 | 1,000 | 82% | 9,025 | 27 min |
-| 200 | 500 | 91% | 21,851 | 23 min* |
+| 5 | 20,000 | 22% | 10,752 | 41 min |
+| 10 | 10,000 | 41% | 14,760 | 39 min |
+| 25 | 4,000 | 78% | 35,903 | 38 min |
+| 50 | 2,000 | 89% | 49,708 | 40 min |
+| 100 | 1,000 | 92% | 59,370 | 48 min |
 
-25-50 agents per lead keeps leads under ~half busy; past 100 they become the
-queue. *The p90 at 200 looks better only because changes stuck with a lead have
-not landed yet and are not counted.
+With realistic conflicts a lead can serve about 10 agents before it becomes the queue;
+past 25 most of the waiting is for leads. That is why the next step was to make the
+merge queue do the leads' most common job (replaying an intent) by itself.
 
 ## A real run: real code, real git (`sim/real/`)
 

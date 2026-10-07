@@ -32,6 +32,11 @@ export const POLICIES = {
     about: 'Everything in claims + redo + trains, plus an area lead per group of agents: an author and reviewer who disagree get one round, then the lead decides; a conflict goes to the lead, who knows both intents and merges them, and only a failed merge is redone.',
     humanReview: 'risky', claims: 'cold', onConflict: 'lead', batch: 16, pickFree: 8, trainTest: true, leads: true,
   },
+  intents: {
+    label: 'Land by intent',
+    about: 'Team leads, plus: the merge queue lands intents, not text. When git reports a conflict, the queue replays the reviewed change on the current main and the train tests it; only a replay that fails goes to the lead. (In the real-code run, 972 of 976 conflicts replayed cleanly.)',
+    humanReview: 'risky', claims: 'cold', onConflict: 'lead', batch: 16, pickFree: 8, trainTest: true, leads: true, replay: true,
+  },
 };
 
 export const PRESETS = {
@@ -61,7 +66,9 @@ export const DEFAULTS = {
   humanQuickMedS: 90, // a person approving a risky change on its evidence
   pRisky: 0.05,
   mergeS: 2, mergePerChangeS: 0.2,
-  pCleanCold: 0.35, pCleanHot: 0.8, // chance git merges a conflicting file by itself
+  // Chance git merges a conflicting file by itself. Hot files were 0.8 until the real-code run
+  // (sim/real) showed two appends to the same list (routes, schema, deps) conflict nearly always.
+  pCleanCold: 0.35, pCleanHot: 0.2,
   rebaseFactor: 0.5, redoFactor: 0.6, redoReviewFactor: 0.5,
   pBreak: 0.003, fixMainMedS: 600, // a change that breaks main once merged with the others
   trainTestS: 60, pTestCatches: 0.9, // a tested train bounces a breaking change instead of landing it
@@ -72,6 +79,7 @@ export const DEFAULTS = {
   argueFactor: 0.15, // agent time per round, as a share of the task's work
   leadSpan: 25, // agents per area lead
   leadDecideMedS: 60, leadMergeMedS: 90, pLeadMerge: 0.75,
+  pReplay: 0.95, // land by intent: share of conflicts the queue replays on main by itself (real-code run: 972/976)
   sampleEveryS: 60,
   latencyWindow: 3000,
 };
@@ -417,6 +425,11 @@ export function createSim(opts = {}) {
           if (repo.conflictT) repo.conflictT[f] = t;
           if (rnd() > (f < H ? cfg.pCleanHot : cfg.pCleanCold)) clean = false;
         }
+      }
+      if (conflicting && !clean && pol.replay && rnd() < cfg.pReplay) {
+        m.conflicts++; repo.conflicts++; m.replayed = (m.replayed || 0) + 1;
+        note(task, 'replayed on main: no text merge');
+        clean = true;
       }
       if (conflicting && !clean) {
         m.conflicts++; repo.conflicts++;
