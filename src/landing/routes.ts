@@ -3,7 +3,7 @@
 //   GET  /api/p/<o>/<n>/landing             the contract view (docs/contest/PLAN.md); anyone who can see the project
 //   POST /api/p/<o>/<n>/landing/approve     {id}: the merge tap -> the change waits for the next train (owner)
 //   POST /api/p/<o>/<n>/landing/demo        {action: 'start'|'stop'|'reset'|'seed', agents?, speed?, mode?: 'story'|'busy'} (owner)
-//   POST /api/p/<o>/<n>/landing/flags       {llmReplay?: boolean, agentModel?: 'sonnet'|'haiku'|'opus'|null} (owner)
+//   POST /api/p/<o>/<n>/landing/flags       {llmReplay?, agentModel?, replayModel?} (owner; models: alias or claude-… id, null clears)
 //   GET  /api/p/<o>/<n>/landing/state       merger box + alarm state (admin)
 
 import type { Env } from '../env';
@@ -24,9 +24,15 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
   const body = request.method === 'POST' ? await request.json().catch(() => ({})) as Record<string, unknown> : {};
   try {
     if (verb === 'approve' && request.method === 'POST') return json(await L.approve(String(body.id || '')));
-    if (verb === 'flags' && request.method === 'POST') return json(await L.setFlags({ ...(typeof body.llmReplay === 'boolean' ? { llmReplay: body.llmReplay } : {}),
-      // The model this project's agent boxes run (on the owner's subscription), e.g. Sonnet for a cheap test.
-      ...(['sonnet', 'haiku', 'opus'].includes(String(body.agentModel)) ? { agentModel: body.agentModel as 'sonnet' } : body.agentModel === null ? { agentModel: undefined } : {}) }));
+    if (verb === 'flags' && request.method === 'POST') {
+      // A model: an alias (sonnet, haiku, opus) or a full id (claude-haiku-5-5). null clears it.
+      const model = (v: unknown) => (typeof v === 'string' && /^(sonnet|haiku|opus|claude-[a-z0-9-]{3,40})$/.test(v) ? { ok: v } : v === null ? { ok: undefined } : null);
+      const am = model(body.agentModel), rm = model(body.replayModel);
+      return json(await L.setFlags(info.slug, { ...(typeof body.llmReplay === 'boolean' ? { llmReplay: body.llmReplay } : {}),
+        // agentModel: the model this project's agent boxes run on the owner's subscription (a cheap test);
+        // replayModel: the model tier-2 replays use (default Haiku 5.5).
+        ...(am ? { agentModel: am.ok } : {}), ...(rm ? { replayModel: rm.ok } : {}) }));
+    }
     if (verb === 'state' && me.admin) {
       const v = await L.view(info.slug);
       const agents = [];

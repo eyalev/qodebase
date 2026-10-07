@@ -46,7 +46,7 @@ type Demo = { running: boolean; agents: number; speed: number; startedAt: number
   mode?: 'story' | 'busy' };
 type Meta = {
   slug: string; waiting: string[]; running: string | null; runningSince?: number;
-  flags: { llmReplay: boolean; agentModel?: 'sonnet' | 'haiku' | 'opus' }; demo: Demo | null;
+  flags: { llmReplay: boolean; agentModel?: string; replayModel?: string }; demo: Demo | null;
   tree?: { commit: string; files: string[]; at: number };
   order: string[];   // change ids, oldest first (capped)
   trains: string[];
@@ -406,10 +406,10 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     this.#tell(`${m.slug}--router`, `qodebase merge queue: agent ${c.id} ("${c.title}") conflicts with main in ${where}. Ask it to redo the change on the latest main (forq send ${c.id} "run forq sync-main, redo your change on it, push"), or tell the person it needs a decision.`);
   }
 
-  async flags() { return (await this.#m()).flags; }
+  async flags() { const m = (await this.ctx.storage.get<Meta>('meta')) || null; return m?.flags || { llmReplay: false }; }
 
-  async setFlags(flags: Partial<Meta['flags']>) {
-    const m = await this.#m();
+  async setFlags(slug: string, flags: Partial<Meta['flags']>) {
+    const m = await this.#m(slug);
     m.flags = { ...m.flags, ...flags };
     await this.#saveMeta();
     return m.flags;
