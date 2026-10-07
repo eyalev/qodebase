@@ -36,7 +36,7 @@ let t = 0, playing = false, speed = 300, timer = null;
 const params = new URLSearchParams(location.search);
 const index = await fetch('./runs/index.json').then((r) => r.json()).catch(() => []);
 if (!index.length) { $('view').innerHTML = '<p class="muted">No runs published yet.</p>'; throw new Error('no runs'); }
-for (const r of index) $('run').add(new Option(`${r.label}, ${n0(r.agents)} agents, ${r.hours} h`, r.name));
+for (const r of index) $('run').add(new Option(`${r.label}, ${n0(r.agents)} agents, ${r.policy === 'cloud' ? `${Math.round(r.hours * 60)} real min` : `${r.hours} simulated h`}`, r.name));
 const first = index.find((r) => r.name === params.get('run')) || index.find((r) => r.policy === 'leads' && r.agents >= 500) || index[index.length - 1];
 $('run').value = first.name;
 $('run').onchange = () => { const u = new URL(location.href); u.searchParams.set('run', $('run').value); history.replaceState(null, '', u); load($('run').value); };
@@ -63,7 +63,17 @@ async function load(name) {
   b.folders = [...folders.entries()].sort((x, y) => (x[0] === 'shared' ? -1 : y[0] === 'shared' ? 1 : +x[0].slice(5) - +y[0].slice(5)));
   R = b;
   const end = b.meta.hours * 3600;
-  $('t').max = end; $('tend').textContent = `of ${clock(end)}`;
+  $('t').max = end; $('tend').textContent = `of ${b.meta.realTime ? clockS(end) : clock(end)}`;
+  // Real-time runs (on Cloudflare) are minutes long: label them so and play them slower.
+  const rt = !!b.meta.realTime;
+  $('tlabel').textContent = rt ? 'Real time' : 'Simulated';
+  $('lede').textContent = rt
+    ? 'A generated project changed by scripted agents on Cloudflare, in real time: each agent a Durable Object with its own Artifacts fork, real pushes, a merge queue landing trains on main. No model calls. Scrub through time, then tap a folder, a file or a change.'
+    : 'A generated project changed by scripted agents in a real git repo: real commits, real merge conflicts, real tests on every merge. No model calls; the clock is virtual, the code is not. Scrub through time, then tap a folder, a file or a change.';
+  $('t').step = rt ? 1 : 10;
+  const speeds = rt ? [[1, '1×'], [5, '5×'], [20, '20×']] : [[60, '1 min/s'], [300, '5 min/s'], [900, '15 min/s']];
+  document.querySelectorAll('[data-speed]').forEach((btn, k) => { btn.dataset.speed = speeds[k][0]; btn.textContent = speeds[k][1]; btn.setAttribute('aria-pressed', String(k === 1)); });
+  speed = speeds[1][0];
   t = Math.min(t || end / 2, end); $('t').value = t;
   $('about').textContent = `${b.meta.about} ${n0(b.meta.agents)} agents, ${n0(b.meta.reviewers)} reviewer agents${b.meta.leads ? `, ${n0(b.meta.leads)} leads` : ''}; ${n0(b.paths.length)} files.`;
   const s = b.stats;

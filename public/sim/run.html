@@ -108,7 +108,7 @@ pre.diff .gap { color: var(--dim); }
 <main>
   <p class="muted"><a href="./">qodebase sim</a></p>
   <h1>A real run</h1>
-  <p class="lede">A generated project changed by scripted agents in a real git repo: real commits, real merge conflicts, real tests on every merge. No model calls; the clock is virtual, the code is not. Scrub through time, then tap a folder, a file or a change.</p>
+  <p class="lede" id="lede">A generated project changed by scripted agents in a real git repo: real commits, real merge conflicts, real tests on every merge. No model calls; the clock is virtual, the code is not. Scrub through time, then tap a folder, a file or a change.</p>
 
   <div class="grid">
     <div class="side stack">
@@ -119,7 +119,7 @@ pre.diff .gap { color: var(--dim); }
         <p class="about" id="about"></p>
         <div>
           <input type="range" id="t" min="0" max="3600" step="10" value="0" aria-label="Simulated time">
-          <div class="time"><span>Simulated <b id="tnow">0:00</b></span><span id="tend"></span></div>
+          <div class="time"><span><span id="tlabel">Simulated</span> <b id="tnow">0:00</b></span><span id="tend"></span></div>
         </div>
         <div class="row">
           <button class="btn" id="play">Play</button>
