@@ -170,6 +170,7 @@ export class Landing extends DurableObject<Env> {
 
   async alarm() {
     const m = await this.#m();
+    log('landing', 'alarm', { slug: m.slug, running: m.running, waiting: m.waiting.length, failStreak: m.failStreak || 0 });
     try {
       if (m.running) {
         // A train lost to a restart (the box reports back; if it never does, run it again).
@@ -296,10 +297,11 @@ export class Landing extends DurableObject<Env> {
     }
     await this.ctx.storage.put(`t:${t.id}`, t);
     await this.#saveMeta();
-    log('landing', 'train_done', { slug: m.slug, train: t.id, state: t.state, ms: Date.now() - t.startedAt, checks: t.checks?.ok, main: r.mainAfter });
+    log('landing', 'train_done', { slug: m.slug, train: t.id, state: t.state, ms: Date.now() - t.startedAt, checks: t.checks?.ok, main: r.mainAfter, ok: r.ok, error: r.error, failStreak: m.failStreak, waiting: m.waiting.length });
     // After a merger failure, wait longer each time (5 s, 10 s, 20 s … 5 min): a tight retry
     // loop ran a train every 5 s against a container that could not start (2026-10-07).
     if (m.waiting.length) await this.#arm(m.failStreak ? Math.min(300_000, 5000 * 2 ** (m.failStreak - 1)) : 500);
+    log('landing', 'next_alarm', { slug: m.slug, inMs: ((await this.ctx.storage.getAlarm()) || 0) - Date.now(), failStreak: m.failStreak });
     await this.#notifyDemo(t);
   }
 

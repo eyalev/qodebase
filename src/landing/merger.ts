@@ -88,7 +88,8 @@ export class MergeBox extends DurableObject<Env> {
       try { await this.#sh('true'); return; } catch { try { await this.c.destroy(); } catch {} }
     }
     const t0 = Date.now();
-    this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: this.c.images.computer });
+    try { this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: this.c.images.computer }); }
+    catch (e) { log('merger', 'start_threw', { err: String(e), stack: String((e as Error)?.stack || ''), running: !!this.c.running, image: !!this.c.images?.computer }); throw e; }
     // A fresh start can refuse exec for a while ("The container has not been started":
     // every train failed that way for the first minute after MergeBox was first deployed,
     // 2026-10-07). Keep asking for up to 90 s, then give up with the last error.
@@ -121,7 +122,7 @@ export class MergeBox extends DurableObject<Env> {
       return { trainId: job.trainId, ...out, changes: out.changes || [], log: clean(progress) };
     } catch (e) {
       log('merger', 'error', { train: job.trainId, err: String((e as Error)?.stack || e).slice(0, 600) });
-      return { trainId: job.trainId, ok: false, error: String((e as Error)?.message || e), changes: [], ms: Date.now() - t0 };
+      return { trainId: job.trainId, ok: false, error: String((e as Error)?.message || e), log: String((e as Error)?.stack || e).slice(0, 2000), changes: [], ms: Date.now() - t0 };
     }
   }
 
