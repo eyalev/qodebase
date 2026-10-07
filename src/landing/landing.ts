@@ -47,6 +47,7 @@ type Meta = {
   trains: string[];
   demoTaken?: Record<string, string>;   // demo task key -> change id ('pending:<ms>' while forking)
   demoForks?: string[];                 // every fork a scripted agent made (deleted on reset)
+  failStreak?: number;                  // trains in a row the merger could not run: back off
 };
 
 const TRAIN_MAX = 8;
@@ -158,7 +159,7 @@ export class Landing extends DurableObject<Env> {
     this.#ev(c, 'queued', m.waiting.length > 1 ? `${m.waiting.length - 1} ahead` : 'next train');
     await this.#put(c);
     await this.#saveMeta();
-    await this.#arm(300);
+    await this.#arm(m.failStreak ? Math.min(300_000, 5000 * 2 ** (m.failStreak - 1)) : 300);
     return c;
   }
 
@@ -252,6 +253,7 @@ export class Landing extends DurableObject<Env> {
     t.endedAt = Date.now(); t.mainBefore = r.mainBefore || null; t.mainAfter = r.mainAfter || null;
     t.checks = r.checks ? { ok: !!r.checks.ok, ms: r.checks.ms || 0, failures: r.checks.failures || [] } : null;
     m.running = null;
+    m.failStreak = !r.ok ? (m.failStreak || 0) + 1 : 0;
     if (!r.ok || r.stale) {
       // The box failed or main moved under it: everyone goes back to the front of the line.
       t.state = 'bounced'; t.note = r.error || (r.stale ? 'main moved during the train; running it again' : 'merger failed');
@@ -295,7 +297,9 @@ export class Landing extends DurableObject<Env> {
     await this.ctx.storage.put(`t:${t.id}`, t);
     await this.#saveMeta();
     log('landing', 'train_done', { slug: m.slug, train: t.id, state: t.state, ms: Date.now() - t.startedAt, checks: t.checks?.ok, main: r.mainAfter });
-    if (m.waiting.length) await this.#arm(500);
+    // After a merger failure, wait longer each time (5 s, 10 s, 20 s … 5 min): a tight retry
+    // loop ran a train every 5 s against a container that could not start (2026-10-07).
+    if (m.waiting.length) await this.#arm(m.failStreak ? Math.min(300_000, 5000 * 2 ** (m.failStreak - 1)) : 500);
     await this.#notifyDemo(t);
   }
 

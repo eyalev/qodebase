@@ -87,9 +87,20 @@ export class MergeBox extends DurableObject<Env> {
     if (this.c.running) {
       try { await this.#sh('true'); return; } catch { try { await this.c.destroy(); } catch {} }
     }
+    const t0 = Date.now();
     this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: this.c.images.computer });
-    await this.#sh('true');
-    log('merger', 'container_started', {});
+    // A fresh start can refuse exec for a while ("The container has not been started":
+    // every train failed that way for the first minute after MergeBox was first deployed,
+    // 2026-10-07). Keep asking for up to 90 s, then give up with the last error.
+    for (let i = 0; ; i++) {
+      try { await this.#sh('true'); break; }
+      catch (e) {
+        if (i === 0 || i % 10 === 9) log('merger', 'container_not_ready', { tries: i + 1, ms: Date.now() - t0, err: String(e).slice(0, 200), running: !!this.c.running });
+        if (Date.now() - t0 > 90_000) throw e;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
+    log('merger', 'container_started', { ms: Date.now() - t0 });
   }
 
   async #run(job: MergeJob): Promise<MergeResult> {
