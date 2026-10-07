@@ -691,7 +691,7 @@ function landBody(entries: Entry[], selfHost = false) {
   const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && !e.private && e.slug !== 'forq.blank').length;
   return `<section class="land">
 <h1>Own your codebase.</h1>
-<p class="lede">Apps, sites, backends, CLIs: AI agents build and change them for you. Anything with a web page runs live. On Cloudflare, from your phone.</p>
+<p class="lede">Say what you want built. AI agents write the code, and it stays yours. On Cloudflare, from your phone.</p>
 <form class="landask" action="/build" method="get">
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button class="btn" type="submit">Build it</button>
@@ -703,7 +703,9 @@ ${selfHost ? '' : `<a class="browse own" href="/own"><span>Get your own qodebase
 </nav>
 ${tryRow(entries)}
 </section>${SPECULATE}
-<script>(function(){const f=document.querySelector('.landask'),t=f.querySelector('textarea');
+<script>(function(){document.querySelectorAll('.land .browse').forEach((a)=>a.addEventListener('click',()=>a.classList.add('going')));
+addEventListener('pageshow',()=>document.querySelectorAll('.land .browse.going').forEach((a)=>a.classList.remove('going')));
+const f=document.querySelector('.landask'),t=f.querySelector('textarea');
 t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();if(t.value.trim())f.requestSubmit();}});})();</script>`;
 }
 
@@ -720,6 +722,13 @@ export const LAND_CSS = `
 .doors{margin-top:28px}
 .doors .browse{margin-top:0}
 .doors .browse:last-child{border-bottom:1px solid var(--line)}
+/* Tap feedback: the row shades under the finger, and once tapped it stays shaded with a
+   small spinner until the next page arrives (Eyal, 2026-10-07: "nothing is happening"). */
+.land .browse{position:relative;margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px;transition:background-color .12s;-webkit-tap-highlight-color:transparent}
+.land .browse:active,.land .browse.going{background:var(--card)}
+.land .browse.going::after{content:'';position:absolute;right:16px;top:50%;width:16px;height:16px;margin-top:-8px;border:2px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
+.land .browse.going .n{visibility:hidden}
+@keyframes spin{to{transform:rotate(360deg)}}
 .tryh{font-size:17px;font-weight:600;margin:32px 0 2px}
 .trys{margin:0 0 12px;color:var(--dim);font-size:15px}
 .tryrow{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}
