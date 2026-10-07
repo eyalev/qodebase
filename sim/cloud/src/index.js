@@ -39,7 +39,7 @@ export class Run extends DurableObject {
 
   async start(opts) {
     if (this.s && this.s.phase !== 'done') return { error: 'a run is already going', status: this.summary() };
-    const cfg = { agents: 20, minutes: 5, workMinS: 20, workMaxS: 60, trainEveryS: 10, trainMax: 32, seed: 1, forkConcurrency: 8, forkTries: 5, ...opts };
+    const cfg = { agents: 20, minutes: 5, workMinS: 20, workMaxS: 60, trainEveryS: 5, trainMax: 200, seed: 1, forkConcurrency: 8, forkTries: 5, ...opts };
     cfg.agents = Math.min(cfg.agents, 600); cfg.minutes = Math.min(cfg.minutes, 20); // hard caps (cost)
     const runId = `r${Date.now().toString(36)}`;
     const rnd = mulberry32(cfg.seed);
@@ -62,8 +62,9 @@ export class Run extends DurableObject {
       snapshots: new Map([[root, new Map(snap)]]), paths: [...snap.keys()].sort(),
       changes: [], ops: new Map(), queue: [], history: [], series: [],
       m: { forks: 0, forkMs: [], forkRetries: 0, forkFailed: 0, agentPushes: 0, agentPushMs: [], agentPushFail: 0, mainPushes: 0, mainPushMs: [], mainPushFail: 0, landed: 0, dropped: 0, testFails: 0, artifactsOps: 2, errors: [] },
-      agentsDone: 0,
+      agentsDone: 0, trains: 0,
     };
+    await this.ctx.storage.delete(['bundle:n']);
     await this.ctx.storage.setAlarm(Date.now() + 10);
     return { runId, main: created.name, createMs, initialPush: pushed };
   }
@@ -72,6 +73,15 @@ export class Run extends DurableObject {
   ev(c, what, extra) { c.events.push(extra === undefined ? [this.now(), what] : [this.now(), what, extra]); }
 
   async alarm() {
+    try { await this.step(); }
+    catch (e) {
+      // An uncaught exception resets the object and its in-memory run (lost one on 2026-10-07).
+      log('run_alarm_error', { err: String(e), stack: e?.stack, phase: this.s?.phase, queue: this.s?.queue.length, landed: this.s?.m.landed });
+      if (this.s) { this.s.m.errors.push(`run: ${String(e)}`.slice(0, 200)); await this.ctx.storage.setAlarm(Date.now() + 2000); }
+    }
+  }
+
+  async step() {
     const s = this.s;
     if (!s) return;
     if (s.phase === 'spawn') {
@@ -99,14 +109,13 @@ export class Run extends DurableObject {
     if (s.phase === 'run' || s.phase === 'drain') {
       await this.train();
       this.sample();
+      // Checkpoint: if the object is reset mid-run, /bundle still has the run so far.
+      if (++s.trains % 6 === 0) await this.save();
       if (s.phase === 'run' && Date.now() > s.deadline) s.phase = 'drain';
       if (s.phase === 'drain' && !s.queue.length && (s.agentsDone >= s.m.forks || Date.now() > s.deadline + 180_000)) {
         s.phase = 'done';
         log('done', { runId: s.runId, ...this.summary() });
-        // Keep the finished run (DO values are capped at 2 MB: store in chunks).
-        const json = JSON.stringify(this.makeBundle()), parts = Math.ceil(json.length / 1_000_000);
-        for (let k = 0; k < parts; k++) await this.ctx.storage.put(`bundle:${k}`, json.slice(k * 1_000_000, (k + 1) * 1_000_000));
-        await this.ctx.storage.put('bundle:n', parts);
+        await this.save();
         return;
       }
       return this.ctx.storage.setAlarm(Date.now() + s.cfg.trainEveryS * 1000);
@@ -181,7 +190,8 @@ export class Run extends DurableObject {
     }
     s.m.mainPushMs.push(ms);
     s.main.tip = tip; s.main.snap = snap;
-    s.snapshots.set(tip, new Map(snap));
+    // Agents only ever need the root snapshot; drop texts no longer on main (memory).
+    if (s.trains % 10 === 0) { const live = new Set(snap.values()); for (const k of s.text.keys()) if (!live.has(k)) s.text.delete(k); }
     for (const c of landed) { c.state = 'landed'; c.landedAt = this.now(); c.sha = tip.slice(0, 10); this.ev(c, 'landed', `${tip.slice(0, 7)} (push ${ms} ms)`); s.m.landed++; }
     s.history.push({ t: this.now(), sha: tip, ids: landed.map((c) => c.id), kind: 'land', pushMs: ms });
   }
@@ -233,6 +243,15 @@ export class Run extends DurableObject {
       history: s.history, series: s.series,
     };
   }
+  // DO values are capped at 2 MB: store the bundle in chunks.
+  async save() {
+    const t0 = Date.now();
+    const json = JSON.stringify(this.makeBundle()), parts = Math.ceil(json.length / 1_000_000);
+    for (let k = 0; k < parts; k++) await this.ctx.storage.put(`bundle:${k}`, json.slice(k * 1_000_000, (k + 1) * 1_000_000));
+    await this.ctx.storage.put('bundle:n', parts);
+    log('saved', { bytes: json.length, parts, ms: Date.now() - t0, phase: this.s.phase, landed: this.s.m.landed });
+  }
+
   async bundle() {
     if (this.s) return this.makeBundle();
     const n = await this.ctx.storage.get('bundle:n');
