@@ -102,7 +102,7 @@ export class TalkVoice extends VoiceAgent {
       return;
     }
     if (m?.type === 'say' && m.text) {
-      const text = String(m.text).slice(0, 600);
+      const text = String(m.text).slice(0, 1500);
       await this.speak(connection, text);
     }
   }
@@ -183,6 +183,13 @@ export class TalkVoice extends VoiceAgent {
     return ch.reply || '';
   }
 
-  /** Every spoken reply is charged as Aura characters (the kit synthesizes it next). */
-  async beforeSynthesize(text: string, _connection: Connection) { await this.#cost(text.length / 1000 * (AURA_USD_PER_1K[this.#ttsModel] || 0.015)); return text; }
+  /** What the voice says: no markdown, links or file paths, at most ~3 sentences (the transcript keeps the full text).
+   *  Every spoken reply is charged as Aura characters. */
+  async beforeSynthesize(text: string, _connection: Connection) {
+    let t = String(text || '').replace(/https?:\/\/\S+/g, '').replace(/[`*#_]/g, '').replace(/\(?\b[\w.-]+\/[\w./-]+\.[a-z]{1,5}(:\d+)?\)?/gi, '')
+      .replace(/^\s*[-•]\s+/gm, '').replace(/\s+([,.])/g, '$1').replace(/\s+/g, ' ').trim();
+    if (t.length > 600) { const cut = t.slice(0, 600); const i = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! ')); t = i > 200 ? cut.slice(0, i + 1) : cut; }
+    await this.#cost(t.length / 1000 * (AURA_USD_PER_1K[this.#ttsModel] || 0.015));
+    return t;
+  }
 }

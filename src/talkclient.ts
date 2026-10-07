@@ -743,7 +743,8 @@ function publishTools() {
 // ends turns, the agent decides and speaks, this page does what it says.
 var vc = null, vcSeen = 0, vcStatus = 'idle', vcLast = 0, vcIdle = null, vcLinks = null, vcPending = null;
 var VC_QUIET_MS = 30000;
-function speakOut(text) { if (vc) { try { vc.sendJSON({ type: 'say', text: spoken(text) }); } catch (e) {} } else say(text); }
+// In a conversation send the answer as written (the transcript shows its lines and lists); the agent cleans it for the voice.
+function speakOut(text) { if (vc) { try { vc.sendJSON({ type: 'say', text: String(text || '').slice(0, 1500) }); } catch (e) {} } else say(text); }
 function vcActive() { vcLast = Date.now(); }
 function loadKit(cb) {
   if (window.TalkVoiceKit) return cb();
