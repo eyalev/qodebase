@@ -55,10 +55,12 @@ function line(c: any): string {
 const PCM_RATE = 24000;
 const VoiceAgent = withVoice(Agent<any>, { audioFormat: 'pcm16', sampleRate: PCM_RATE });
 
-/** Aura as raw PCM, time-stretched to the person's speed (default 1.25x, like Ask's Jarvis voice). */
+/** Aura as raw PCM, time-stretched to the person's speed (default 1.25x, like Ask's Jarvis voice).
+ *  Streamed by sentence: the whole reply took Aura-2 ~5.7 s before its first word could play
+ *  (measured 2026-10-07); the first sentence alone takes ~1 s, and the next one is made while it plays. */
 class AuraTTS {
   constructor(private ai: Ai, private model: string, private speaker: string, private speed: number) {}
-  async synthesize(text: string, _signal?: AbortSignal): Promise<ArrayBuffer | null> {
+  async #one(text: string): Promise<ArrayBuffer | null> {
     const t0 = Date.now();
     const r: any = await (this.ai as any).run(this.model, { text, speaker: this.speaker, encoding: 'linear16', container: 'none', sample_rate: PCM_RATE }, { returnRawResponse: true });
     const buf: ArrayBuffer = r instanceof Response ? await r.arrayBuffer() : r instanceof ReadableStream ? await new Response(r).arrayBuffer() : r;
@@ -67,6 +69,22 @@ class AuraTTS {
     const out = stretchPcm16(pcm, PCM_RATE, this.speed);
     log('tts', { model: this.model, chars: text.length, speed: this.speed, in_s: Math.round(pcm.length / PCM_RATE * 10) / 10, out_s: Math.round(out.length / PCM_RATE * 10) / 10, ms: Date.now() - t0 });
     return out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength) as ArrayBuffer;
+  }
+  async synthesize(text: string, _signal?: AbortSignal): Promise<ArrayBuffer | null> { return this.#one(text); }
+  /** Sentence by sentence, each one made while the one before plays. */
+  async *synthesizeStream(text: string, signal?: AbortSignal): AsyncGenerator<ArrayBuffer> {
+    const parts = String(text || '').match(/[^.!?]+[.!?]+["”’)]*\s*|[^.!?]+$/g)?.map((p) => p.trim()).filter(Boolean) || [];
+    // Very short pieces ("Okay." "Done.") join the next one: one tiny request each costs time.
+    const chunks: string[] = [];
+    for (const p of parts) { if (chunks.length && chunks[chunks.length - 1].length < 24) chunks[chunks.length - 1] += ' ' + p; else chunks.push(p); }
+    let next: Promise<ArrayBuffer | null> | null = chunks.length ? this.#one(chunks[0]) : null;
+    for (let i = 0; i < chunks.length; i++) {
+      if (signal?.aborted) return;
+      const cur = next!;
+      next = i + 1 < chunks.length ? this.#one(chunks[i + 1]) : null;
+      const audio = await cur;
+      if (audio && !signal?.aborted) yield audio;
+    }
   }
 }
 
