@@ -182,8 +182,11 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
   (HMAC of the id with ADMIN_SECRET), through the `forq` CLI (`src/cli.ts`).
 - Secrets: `CLAUDE_CODE_OAUTH_TOKEN` (copied from opendev D1
   `user_connections.claude_token`), `ADMIN_SECRET`.
-- **Every deploy kills awake boxes** (same as computer2); they lose work since
-  the last snapshot. Agents push to their fork, so pushed work is safe.
+- **Deploys do NOT kill awake boxes** (measured 2026-10-07: AgentBox/BuildBox use the
+  `durable_object` scheduling policy, so a deploy restarts only the Durable Object; the
+  container and every process in it kept running). What a deploy breaks is a command
+  the DO is running in the box at that moment (an `exec` stream): its result is lost.
+  BuildBox jobs resume and ask-box questions retry for that reason.
 
 ## Import from GitHub
 
@@ -269,9 +272,9 @@ waitUntil work is cut ~30 s after the response. Waking a box can take longer
   observability + Issues, and adds a `previews` block.
 - Agent push on a Worker project: preview build → buildDone → the Project DO
   calls `/api/p/<o>/<n>/review` on workers.dev to start the reviewer.
-- **A forq deploy kills running containers**, the builder's too: a build in
-  flight fails ("container connection is temporarily unavailable"); BuildBox
-  restarts a dead container on the next job. Deploy forq when no agent works.
+- **A forq deploy interrupts a build in flight** (the DO restarts and loses its exec
+  stream; the container itself keeps running, measured 2026-10-07). BuildBox resumes an
+  interrupted job (twice at most) and keeps its result for Installs to fetch.
 - Issues: `scripts/issues-automation.sh <forq-app-worker>` (cf CLI) wires one
   app Worker to `POST /api/hooks/issues` (secret header `cf-webhook-auth`),
   which hands the error to that project's router agent.
