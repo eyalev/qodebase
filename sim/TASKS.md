@@ -42,9 +42,11 @@
 - [x] Goal: move Hono's src/utils/ (27 modules) to src/lib/ with shims: 26 move tasks (jwt/jws + jwt/types import each other: one task), 87 import rewrites (source + tests), 27 shim deletions; needs from the import graph (299 edges, critical path 6). sim/swarm/migration.mjs; whole migration applied in order = the starting tree's 5 type errors, nothing new
 - [x] Judge: tsgo -p tsconfig.spec.json (tests included) --incremental: 0.3 s per check
 - [x] Engine sim/swarm/run.mjs: ffa / phases (Bun: shared tree + ownership + gates) / stack / intent; agent time 18 min median (Bun 3.3 commits/agent-h)
-- [ ] Runs at 10 / 100 / 1,000 agents; numbers
-- [ ] Cross-check our measured clean-merge rate against Bun's 0.84-0.85 (calibration.json .merge_replay)
-- [ ] Bundles in the viewer (kind move/use/unshim), README section, deploy
+- [x] Runs at 10 / 100 / 1,000 agents, seed 1 (table in sim/README.md); fixed on the way: shared-tree commits lost updates (applied at finish, committed 5 s later), stacks skipped the change being landed (most of stacking's waste), slow checks (import-resolution pre-scan before tsgo)
+- [ ] Seeds 2 and 3 at 10/100/1,000 running (sim/swarm/out/seeds-*.log, swarm.jsonl): is intent vs stack vs phases at 100/1,000 more than noise?
+- [x] Clean-merge cross-check: jsr.json (the only file changed on both sides) clean 48-76% vs Bun 84%: a list file, not big source files
+- [x] Bundles in the viewer (swarm stats, needs links, phase gates, readable folder names), screenshot gate 390/1440 light/dark, README section
+- [ ] Deploy: qb6 includes public/sim in its next contest deploy (manager: do not deploy forq myself)
 
 ## Handoff (2026-10-07 ~22:15): continued in tab qb4 (forq/claude4)
 Context for the next agent: sim/README.md (fast sim + real-code run), sim/cloud/README.md

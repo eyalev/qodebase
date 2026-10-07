@@ -87,8 +87,9 @@ export function openRepo(dir) {
   }
 
   // Real three-way merge of two commits. -> { tree, conflicts: [paths] }
-  function merge(ours, theirs) {
-    const r = spawnSync('git', ['--git-dir', dir, 'merge-tree', '--write-tree', '--name-only', ours, theirs], { encoding: 'utf8' });
+  // `base` (optional): apply only base -> theirs onto ours (a change built on a stacked base).
+  function merge(ours, theirs, base) {
+    const r = spawnSync('git', ['--git-dir', dir, 'merge-tree', '--write-tree', '--name-only', ...(base ? [`--merge-base=${base}`] : []), ours, theirs], { encoding: 'utf8' });
     if (r.status !== 0 && r.status !== 1) throw new Error(`merge-tree failed (${r.status}): ${r.stderr}`);
     const lines = r.stdout.split('\n');
     const conflicts = [];

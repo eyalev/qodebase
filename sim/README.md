@@ -150,3 +150,104 @@ is 6% per 15 min, 15% per hour; 3.6 lost-work fixes per 100 merges, mostly from
 cold (0.95 for small merges, 0.79 for sweeps over 50 shared files), against the sim's
 0.2 / 0.35, which hold for append lists, not for big source files.
 Details and what it means for the policies: `sim/bun/README.md`.
+
+## Real pull requests: replaying honojs/hono (`sim/hono/`)
+
+The real-code run above uses scripted changes. `sim/hono/replay.mjs` uses real ones: the
+last 500 changes on honojs/hono's main (346 pull requests and 154 direct pushes such as
+release bumps and "Merge next", June 2025 to October 2026), replayed as if they had been
+opened in waves of W at once. Every PR in a wave is written against the same main (its real
+patch, three-way merged onto that main), then they land in their original order onto a main
+that keeps moving. Each landing is type-checked (tsgo); only errors the real history did not
+have count. No model calls.
+
+```sh
+node sim/hono/replay.mjs --waves 1,10,50,100   # ~5 min per W; needs ~/projects/github/honojs/hono + pnpm install
+```
+
+W=1 is history itself (every PR written on the latest main) and must end on history's exact
+tree: that checks the method. It does, at every W.
+
+| PRs opened at once | PRs that ran into another | needed an earlier PR of their wave | git conflicts | merged clean, broke the type check |
+|---|---|---|---|---|
+| 1 (history) | 0 | 0 | 0 | 0 |
+| 10 | 56 of 346 (16%) | 110 attempts | 0 | 0 |
+| 50 | 139 (40%) | 668 attempts | 0 | 0 |
+| 100 | 167 (48%) | 1,496 attempts | 0 | 0 |
+
+What it shows: **for real PRs the problem is ordering, not conflicts.** Half the PRs of a
+100-wide wave could not be written on the wave's starting main because they built on another
+PR of the same wave (a lockfile bump after a lockfile bump, a fix to code another PR adds).
+Once they waited for it, git merged everything cleanly and nothing broke the type check.
+
+Two replay bugs made earlier numbers look like conflicts (19/40/50% with 1-3 git conflicts and
+1-9 breaks): a PR could merge "cleanly" onto a main that lacked a change it builds on, with
+part of its patch silently absorbed (a revert of code that only arrived with an earlier
+"Merge next" became an empty diff), and changes could land past an earlier direct push.
+Both were changes landing out of order; with them fixed the conflicts and breaks went away
+and the final tree equals history.
+
+## A migration swarm on real code (`sim/swarm/`)
+
+Bun's Zig-to-Rust port (64 Claude agents, 11 days, 6,755 commits) is what "thousands of
+agents" work looks like: one big goal split into small tasks, a machine signal as the work
+list, phases gated by a check. The swarm sim runs that shape on Hono's real code, with no
+model calls: **move every module of `src/utils/` (27) to `src/lib/`**, as 140 tasks:
+
+- 26 moves (create `src/lib/X.ts`, leave a one-line re-export shim, point `jsr.json` at the new
+  file; `jwt/jws` and `jwt/types` import each other, so they move together),
+- 87 import rewrites (every source and test file that imports a utils module),
+- 27 shim deletions.
+
+Each task is a codemod (`migration.mjs`), i.e. an intent that can be applied to any version
+of the tree. What each task needs comes from the import graph, not from guessing (299 edges;
+the longest chain is 6 tasks): a move needs the moves of what it imports, a rewrite needs the
+moves it points at, a deletion needs every importer rewritten. Applying all 140 in order ends
+with exactly the starting tree's type errors. The judge is tsgo with the tests included
+(`tsconfig.spec.json`, incremental); only errors the starting tree did not have count. Agents
+take ~18 min per task (Bun: ~3.3 commits per agent-hour, `sim/bun/calibration.json`), the merge
+queue lands one change per 30 s.
+
+```sh
+node sim/swarm/run.mjs --agents 10,100,1000 --policies ffa,phases,stack,intent   # ~6 min per run
+```
+
+Four ways to run the swarm, same tasks, same seed:
+
+- **Free-for-all**: any agent takes any open task on a branch from main, checks its own
+  change, lands it; a task whose prerequisites have not landed fails its own check and is
+  given back (retried 5 min later); a git conflict means redo.
+- **Phases with gates (Bun's way)**: one shared tree, each file owned by one agent (no
+  branches, no merges; Bun's bulk phases worked like this, qb5's calibration); moves, then
+  rewrites, then deletions; main may be red inside a phase, the next opens when the check is green.
+- **Dependency map + stacking**: an agent only takes a task whose needs are done, landed or
+  not; it builds on the unlanded ones and the queue lands it right after them.
+- **Stacking + land by intent**: as stacking, but stacks are built by replaying the needed
+  codemods, and a git conflict at landing is resolved by re-running the codemod on the latest
+  main (and checking it) instead of an agent redoing it.
+
+Seed 1 (hours to land all 140 tasks; wasted = agent time on attempts that did not land):
+
+| agents | Free-for-all | Phases (Bun) | Stacking | Stacking + intent |
+|---|---|---|---|---|
+| 10 | 13.3 h, 80 h wasted | 6.7 h, 0 wasted, main red 8% | 5.6 h, 2.0 h wasted | 5.7 h, 0 wasted |
+| 100 | 4.7 h, 151 h wasted | 3.9 h, 0, red 13% | 2.6 h, 9.9 h | 3.0 h, 0 |
+| 1,000 | 4.1 h, 130 h wasted | 2.6 h, 0, red 25% | 3.2 h, 10.1 h | 2.4 h, 0 |
+
+Useful agent time is ~45 h in every run (the migration itself). In no run did a landing break
+the check on main except in phases, where breaking it inside a phase is the design.
+
+What it shows:
+- **Free-for-all burns 2-3× the work it does**: agents keep picking tasks whose prerequisites
+  have not landed, find out only at their own type check, and give them back. More agents make
+  it worse in absolute terms (151 h wasted at 100).
+- **Knowing the order is what matters, not how you merge.** Phases, stacking and intent all
+  waste little or nothing; they differ by how they pay for order: phases with idle agents at
+  the gates and a red main inside a phase, stacking with a short redo when a stack does not
+  merge, intent with nothing.
+- **Past ~100 agents, more agents do not help**: 140 tasks, a chain of 6, a serial merge
+  queue. 10 → 100 agents halves the time; 100 → 1,000 barely moves it (98% of 1,000 agents are
+  idle). The floor is the dependency chain (6 tasks × ~18 min) plus the queue (140 × 30 s).
+- **The one shared file** (`jsr.json`, one line per module) merged cleanly in 48-76% of the
+  cases where both sides changed it, against Bun's measured 84% (its hot files are big source
+  files edited in different regions; ours is a list, like Hono's append lists at 20%).

@@ -74,14 +74,23 @@ async function load(name) {
   $('tlabel').textContent = rt ? 'Real time' : 'Simulated';
   $('lede').textContent = rt
     ? 'A generated project changed by scripted agents on Cloudflare, in real time: each agent a Durable Object with its own Artifacts fork, real pushes, a merge queue landing trains on main. No model calls. Scrub through time, then tap a folder, a file or a change.'
-    : 'A generated project changed by scripted agents in a real git repo: real commits, real merge conflicts, real tests on every merge. No model calls; the clock is virtual, the code is not. Scrub through time, then tap a folder, a file or a change.';
+    : b.stats.tasks != null
+      ? "Hono's real code, one migration split into tasks for a swarm of scripted agents: real commits, real merge conflicts, a real type check on every change. No model calls; the clock is virtual, the code is not. Scrub through time, then tap a folder, a file or a task."
+      : b.meta.policy === 'replay'
+        ? "Hono's real pull requests, replayed as if many were opened at once: real three-way merges, a real type check on every landing. No model calls. Scrub through time, then tap a folder, a file or a change."
+        : 'A generated project changed by scripted agents in a real git repo: real commits, real merge conflicts, real tests on every merge. No model calls; the clock is virtual, the code is not. Scrub through time, then tap a folder, a file or a change.';
   $('t').step = rt ? 1 : 10;
   const speeds = rt ? [[1, '1×'], [5, '5×'], [20, '20×']] : [[60, '1 min/s'], [300, '5 min/s'], [900, '15 min/s']];
   document.querySelectorAll('[data-speed]').forEach((btn, k) => { btn.dataset.speed = speeds[k][0]; btn.textContent = speeds[k][1]; btn.setAttribute('aria-pressed', String(k === 1)); });
   speed = speeds[1][0];
   t = Math.min(t || end / 2, end); $('t').value = t;
-  $('about').textContent = `${b.meta.about} ${n0(b.meta.agents)} agents, ${n0(b.meta.reviewers)} reviewer agents${b.meta.leads ? `, ${n0(b.meta.leads)} leads` : ''}; ${n0(b.paths.length)} files.`;
+  $('about').textContent = `${b.meta.about} ${n0(b.meta.agents)} agents${b.meta.reviewers ? `, ${n0(b.meta.reviewers)} reviewer agents` : ''}${b.meta.leads ? `, ${n0(b.meta.leads)} leads` : ''}; ${n0(b.paths.length)} files.`;
   const s = b.stats;
+  // Migration swarm (sim/swarm/run.mjs): a task given back waits for what it needs, not for files.
+  const swarm = s.tasks != null;
+  WORDS.claimWait = swarm ? 'given back: waiting for what it needs' : 'waiting for its files to be free';
+  SHORT.claimWait = swarm ? 'waiting for needs' : 'waiting for files';
+  GROUPS[1][0] = SHORT.claimWait;
   const stats = [
     [n0(s.landed), `changes landed (${n0(s.landedPerHour)}/h)`],
     [dur(s.p50S), 'asked to landed, median'],
@@ -92,6 +101,17 @@ async function load(name) {
     [n0(s.dropped), 'dropped: nothing left to do'],
     [`${Math.round(s.reworkShare * 100)}%`, 'agent time spent redoing'],
   ];
+  if (swarm) {
+    stats.splice(0, stats.length,
+      [s.finished ? dur(s.finishS) : `not done in ${dur(s.finishS)}`, `to land all ${n0(s.tasks)} tasks of the migration`],
+      [`${s.usefulH} h`, 'agent time that landed'],
+      [`${s.wastedH} h`, `agent time wasted (${s.blockedH} h given back, ${s.redoneH} h redone)`],
+      [`${Math.round(s.idleShare * 100)}%`, 'agent time idle: no task ready'],
+      [n0(s.conflicts), `real git conflicts${s.replayedOnLand ? `, ${n0(s.replayedOnLand)} replayed by intent` : `, ${n0(s.redos)} redone`}`],
+      [n0(s.breaks), 'landings that broke the type check'],
+      [dur(s.redS), 'main red'],
+      [s.gateWaitS ? dur(s.gateWaitS) : '–', 'waiting at phase gates']);
+  }
   if (b.meta.realTime && s.cloud) {
     const c = s.cloud, ms = (x) => (x == null ? '–' : x < 1000 ? `${x} ms` : `${(x / 1000).toFixed(1)} s`);
     stats.splice(0, stats.length,
@@ -159,7 +179,7 @@ const stateTag = (s) => (s == null ? '<span class="tag">not yet asked</span>' : 
 function viewCodebase() {
   const cls = fileMarks(t);
   const folders = R.folders.map(([name, idxs]) => `<button class="folder" data-go="#/folder/${encodeURIComponent(name)}" aria-label="${esc(name)}">
-    <span class="cells">${idxs.map((i) => `<i class="${cls[i]}"></i>`).join('')}</span><small>${esc(name === 'shared' || name === 'root' ? name : name.replace(/^src\//, ''))}</small></button>`).join('');
+    <span class="cells">${idxs.map((i) => `<i class="${cls[i]}"></i>`).join('')}</span><small>${esc(name === 'shared' || name === 'root' ? name : name.split('/').length > 2 ? name.split('/').pop() : name.replace(/^src\//, ''))}</small></button>`).join('');
   const recent = R.history.filter((h) => h.t <= t).slice(-6).reverse();
   return `${crumbs([['Codebase']])}
     <div class="folders">${folders}</div>
@@ -170,6 +190,7 @@ function viewCodebase() {
 }
 function mainRow(h) {
   const ids = h.ids.map((id) => `<a href="#/change/${id}" style="display:inline;padding:0;min-height:0;color:var(--acc)">#${id}</a>`).join(' ');
+  if (h.kind === 'gate') return `<li><div class="item"><span>phase ${h.phase} done, check green: phase ${h.phase + 1} opens</span><span class="mono" style="color:var(--dim)">${h.sha.slice(0, 7)}</span><span class="sub">at ${clockS(h.t)}</span></div></li>`;
   const what = h.kind === 'revert' ? 'reverted' : h.ids.length > 1 ? `train of ${h.ids.length}` : 'landed';
   return `<li><div class="item"><span>${what} ${ids}</span><span class="mono" style="color:var(--dim)">${h.sha.slice(0, 7)}</span>
     <span class="sub">at ${clockS(h.t)}${h.broke ? `; broke main: ${esc(h.broke[0])}` : ''}</span></div></li>`;
@@ -232,6 +253,7 @@ function viewChange(id) {
   return `${crumbs([['Codebase', '#/'], [`#${c.id}`]])}
     <h2 style="font-size:18px">${esc(c.text)}</h2>
     <div class="row" style="margin:8px 0 12px">${stateTag(s)}<span class="tag">${esc(c.kind)}</span><span class="tag">agent ${c.agent}</span>${c.tries > 1 ? `<span class="tag">built ${c.tries} times</span>` : ''}</div>
+    ${c.needs?.length ? `<p class="muted" style="margin:0 0 12px">Needs ${c.needs.map((id) => `<a href="#/change/${id}" style="display:inline;padding:0;min-height:0;color:var(--acc)">#${id}</a>`).join(' ')} (from the import graph)</p>` : ''}
     <div class="row" style="margin-bottom:12px"><button class="chip" data-t="${c.created}">Go to when asked</button>${c.landedAt != null ? `<button class="chip" data-t="${c.landedAt}">Go to when landed</button>` : ''}</div>
     <ol class="story">${story}</ol>
     ${c.conflicts.length ? `<h2 style="margin-top:16px">Git conflicts</h2><p class="mono">${c.conflicts.map(esc).join('<br>')}</p>` : ''}
