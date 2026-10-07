@@ -517,13 +517,20 @@ PY
   async #runAsks() {
     const spec = await this.ctx.storage.get<BootSpec>('askSpec');
     const ids = (await this.ctx.storage.get<string[]>('askQueue')) || [];
-    await this.ctx.storage.put('askQueue', []);
     if (!spec || !ids.length) return;
+    // A question leaves the queue only once answered: a forq deploy restarts this object
+    // mid-answer, and the next alarm must pick it up again (a test question was lost that
+    // way, 2026-10-07). Re-arm first so a restart before the end still comes back.
+    await this.ctx.storage.setAlarm(Date.now() + 60_000);
     const up = await this.ensureUp(spec);
     for (const id of ids) {
       const a = await this.ctx.storage.get<{ question: string; model?: string; at: number }>(`ask:${id}`);
       if (!a) continue;
-      if (!up.ok) { await this.ctx.storage.put(`ask:${id}`, { ...a, state: 'failed', error: up.error || 'the box did not start' }); continue; }
+      if (!up.ok) {
+        await this.ctx.storage.put(`ask:${id}`, { ...a, state: 'failed', error: up.error || 'the box did not start' });
+        await this.ctx.storage.put('askQueue', ((await this.ctx.storage.get<string[]>('askQueue')) || []).filter((x) => x !== id));
+        continue;
+      }
       await this.ctx.storage.put(`ask:${id}`, { ...a, state: 'running', startedAt: Date.now() });
       await this.touch(spec.agentId);
       const t0 = Date.now();
@@ -537,6 +544,7 @@ IS_SANDBOX=1 timeout 300 claude -p "$Q" --permission-mode plan --model "$MODEL" 
       await this.ctx.storage.put(`ask:${id}`, { ...a, state: ok ? 'done' : 'failed', answer: ok ? answer : undefined, error: ok ? undefined : (answer || r.stderr || 'no answer').slice(-400), ms: Date.now() - t0 });
       log('box', 'ask_done', { agentId: spec.agentId, id, ok, ms: Date.now() - t0, chars: answer.length });
       await this.touch(spec.agentId);
+      await this.ctx.storage.put('askQueue', ((await this.ctx.storage.get<string[]>('askQueue')) || []).filter((x) => x !== id));
     }
   }
 
