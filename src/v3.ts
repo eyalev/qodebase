@@ -722,14 +722,14 @@ export const LAND_CSS = `
 .doors{margin-top:28px}
 .doors .browse{margin-top:0}
 .doors .browse:last-child{border-bottom:1px solid var(--line)}
-/* Tap feedback: the row shades under the finger, and once tapped it stays shaded with a
-   small spinner until the next page arrives (Eyal, 2026-10-07: "nothing is happening"). */
-.land .browse{position:relative;margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:44px;transition:background-color .12s;-webkit-tap-highlight-color:transparent}
-.land .browse:active,.land .browse.going{background:var(--card)}
-.land .browse.going::after{content:'';position:absolute;right:18px;top:50%;width:16px;height:16px;margin-top:-8px;border:2px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
-.land .browse.going .n{visibility:hidden}
-.land .browse .n{margin-right:-28px}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* The three doors are cards. Tap feedback is the whole card: border darkens, a light fill,
+   a slight press, held until the next page arrives (Eyal, 2026-10-07: "something in the
+   overall section, not the right side only"; the spinner hid under the thumb). */
+.doors{display:flex;flex-direction:column;gap:8px}
+.land .doors .browse{margin:0;padding:14px 16px;border:1px solid var(--line);border-top:1px solid var(--line);border-radius:14px;transition:background-color .12s,border-color .12s,transform .12s;-webkit-tap-highlight-color:transparent}
+.doors .browse:last-child{border-bottom:1px solid var(--line)}
+.land .doors .browse:active,.land .doors .browse.going{background:var(--card);border-color:color-mix(in srgb,var(--fg) 35%,var(--line));transform:scale(.985)}
+@media (hover:hover){.land .doors .browse:hover{border-color:color-mix(in srgb,var(--fg) 20%,var(--line))}}
 .tryh{font-size:17px;font-weight:600;margin:32px 0 2px}
 .trys{margin:0 0 12px;color:var(--dim);font-size:15px}
 .tryrow{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}
