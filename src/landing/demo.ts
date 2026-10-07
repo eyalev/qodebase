@@ -61,9 +61,12 @@ export class DemoAgent extends DurableObject<Env> {
       return;
     }
     await this.#save(s);
+    // Always come back: for the job's next step, a fix or redo, or the next task (a stacked
+    // task becomes ready only once its base pushed). Bounded by the demo's 20-minute cap:
+    // the first alarm after the demo stops ends the agent. (Without this, every agent went
+    // idle after its first change, 2026-10-07.)
     if (s.job) await this.ctx.storage.setAlarm(Math.max(Date.now() + 500, s.job.until));
-    else if (s.pending.length) await this.ctx.storage.setAlarm(Date.now() + 1000);
-    // Nothing left: idle until nudged or stopped.
+    else await this.ctx.storage.setAlarm(Date.now() + (s.pending.length ? 1000 : 3000 / s.speed));
   }
 
   /** Pick up a fix or redo first, else the next task of the script. */
