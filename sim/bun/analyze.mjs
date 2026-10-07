@@ -19,9 +19,10 @@ const REPO = opt('--repo', join(homedir(), 'projects/github/oven-sh/bun-pr30412'
 const BASE = '0d9b296af33f', TIP = 'refs/pr/30412', RANGE = `${BASE}..${TIP}`;
 const OUT = opt('--out', join(dirname(fileURLToPath(import.meta.url)), 'calibration.json'));
 
-// GIT_NO_LAZY_FETCH: never let a blobless clone go to the network behind our back.
+// Never let the blobless clone go to the network behind our back: git 2.43 ignores
+// GIT_NO_LAZY_FETCH, so allow only the file protocol and a lazy fetch becomes an error.
 const git = (...a) => execFileSync('git', ['-C', REPO, ...a],
-  { encoding: 'utf8', maxBuffer: 1 << 30, env: { ...process.env, GIT_NO_LAZY_FETCH: '1' } });
+  { encoding: 'utf8', maxBuffer: 1 << 30, env: { ...process.env, GIT_ALLOW_PROTOCOL: 'file' } });
 
 // ---------- load ----------
 const commits = new Map(); // full sha -> {sha, parents, at, ct, author, subject, files}
@@ -158,6 +159,7 @@ const hot = { distinct_files: fileCounts.length, file_touches: totalTouches,
     return { commits_considered: smallWork.length, files: k, share_of_touches: pct(sc.slice(0, k).reduce((a, [, n]) => a + n, 0), scTotal) }; })(),
   touched_once_pct: pct(fileCounts.filter(x => x[1] === 1).length, fileCounts.length),
   top_1pct_kinds: hotKinds,
+  top_1pct_files: fileCounts.slice(0, Math.max(1, Math.round(fileCounts.length * 0.01))).map(x => x[0]),
   top_files: fileCounts.slice(0, 25).map(([f, n]) => ({ file: f, commits: n, branches: new Set(touches.get(f).map(c => c.branch)).size })),
   top_dirs: Object.entries(dirCounts).sort((a, b) => b[1] - a[1]).slice(0, 12) };
 

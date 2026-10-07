@@ -145,4 +145,8 @@ owning files and line ranges instead of branches; phases ran gated and back to b
 commit p50 3 / p90 11; the top 1% of files appear in 49% of commits but are big source
 files edited in different regions, not append lists; branch-vs-branch overlap on a file
 is 6% per 15 min, 15% per hour; 3.6 lost-work fixes per 100 merges, mostly from
-`merge --theirs`. Details and what it means for the policies: `sim/bun/README.md`.
+`merge --theirs`. Replaying all 276 merges with real contents (`sim/bun/replay.mjs`):
+17% conflict, and a file changed on both sides merges cleanly 84% of the time, hot or
+cold (0.95 for small merges, 0.79 for sweeps over 50 shared files), against the sim's
+0.2 / 0.35, which hold for append lists, not for big source files.
+Details and what it means for the policies: `sim/bun/README.md`.

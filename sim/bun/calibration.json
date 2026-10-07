@@ -7,7 +7,7 @@
   "license": "MIT",
   "note": "blobless fetch: file names and blob ids only, no line counts. Agents commit as \"Jarred Sumner\"; branches inferred from merge subjects, streams from subject prefixes."
  },
- "generated": "2026-10-07T21:55:29.154Z",
+ "generated": "2026-10-07T22:00:29.533Z",
  "totals": {
   "commits": 6755,
   "non_merge": 6479,
@@ -409,6 +409,39 @@
    "other .rs": 26,
    "lib.rs/mod.rs (module root)": 5
   },
+  "top_1pct_files": [
+   "src/runtime/bake/DevServer.rs",
+   "src/runtime/webcore/Blob.rs",
+   "src/bundler/bundle_v2.rs",
+   "src/runtime/node/node_fs.rs",
+   "src/resolver/lib.rs",
+   "src/runtime/server/server_body.rs",
+   "src/jsc/VirtualMachine.rs",
+   "src/runtime/cli/run_command.rs",
+   "src/runtime/jsc_hooks.rs",
+   "src/sys/lib.rs",
+   "src/runtime/dns_jsc/dns.rs",
+   "src/install/lib.rs",
+   "src/runtime/api/BunObject.rs",
+   "src/runtime/server/RequestContext.rs",
+   "src/runtime/api/bun/js_bun_spawn_bindings.rs",
+   "src/jsc/lib.rs",
+   "src/bundler/LinkerContext.rs",
+   "src/runtime/api/bun/h2_frame_parser.rs",
+   "src/runtime/api/cron.rs",
+   "src/runtime/shell/subproc.rs",
+   "src/js_parser/ast/P.rs",
+   "src/install/PackageManager.rs",
+   "src/runtime/socket/socket_body.rs",
+   "src/runtime/api/JSBundler.rs",
+   "src/runtime/api/html_rewriter.rs",
+   "src/bundler/transpiler.rs",
+   "src/runtime/server/mod.rs",
+   "src/jsc/ConsoleObject.rs",
+   "src/runtime/webcore/Body.rs",
+   "src/bundler/ParseTask.rs",
+   "src/bun_core/util.rs"
+  ],
   "top_files": [
    {
     "file": "src/runtime/bake/DevServer.rs",
@@ -7888,5 +7921,739 @@
    "minutes_after_merge": 2,
    "subject": "phase-f(static-mut): re-apply reverted drive-by fixes; wrap C-mutated extern statics in RacyCell"
   }
- ]
+ ],
+ "merge_replay": {
+  "note": "git merge-tree --write-tree on every merge, renames on like git merge (ort, git 2.43.0). \"content file\" = changed on both sides to different results; clean = git merged it by itself.",
+  "merges": 276,
+  "merges_needing_text_merge": 125,
+  "merges_with_conflicts": 47,
+  "pct_of_all_merges_with_conflicts": 17,
+  "pct_of_text_merges_with_conflicts": 37.6,
+  "content_files": 2017,
+  "conflicted_files": 329,
+  "p_clean_all": 0.837,
+  "conflicted_files_not_content_files": 1,
+  "p_clean_hot": 0.847,
+  "p_clean_cold": 0.835,
+  "hot_definition": "top 1% of files by commits touching them (31 files)",
+  "content_files_hot_cold": {
+   "hot": 385,
+   "cold": 1632
+  },
+  "p_clean_by_kind": {
+   "cargo": {
+    "files": 22,
+    "p_clean": 0.818
+   },
+   "rs": {
+    "files": 1689,
+    "p_clean": 0.835
+   },
+   "module_root": {
+    "files": 286,
+    "p_clean": 0.857
+   },
+   "other": {
+    "files": 9,
+    "p_clean": 0.667
+   },
+   "zig": {
+    "files": 10,
+    "p_clean": 0.9
+   },
+   "test": {
+    "files": 1,
+    "p_clean": 1
+   }
+  },
+  "p_clean_by_merge_size": {
+   ">50": {
+    "merges": 14,
+    "with_conflicts": 14,
+    "files": 1148,
+    "conflicted": 244,
+    "p_clean": 0.787
+   },
+   "4-10": {
+    "merges": 27,
+    "with_conflicts": 11,
+    "files": 167,
+    "conflicted": 17,
+    "p_clean": 0.898
+   },
+   "1-3": {
+    "merges": 62,
+    "with_conflicts": 5,
+    "files": 101,
+    "conflicted": 5,
+    "p_clean": 0.95
+   },
+   "11-50": {
+    "merges": 22,
+    "with_conflicts": 17,
+    "files": 601,
+    "conflicted": 63,
+    "p_clean": 0.895
+   }
+  },
+  "agents_named_same_count_in_subject": 15,
+  "conflicts_per_conflicted_merge": {
+   "p50": 2,
+   "max": 67
+  },
+  "how_agents_resolved_conflicts": {
+   "took_ours": 53,
+   "took_theirs": 44,
+   "new_text": 223,
+   "deleted": 8,
+   "pct_took_one_side_whole": 29.6
+  },
+  "clean_files_agent_kept_gits_result": 99.8,
+  "conflicted_merges": [
+   {
+    "sha": "cf54191a0a",
+    "at": "2026-05-07T00:37:22.000Z",
+    "content_files": 90,
+    "conflicted": 67,
+    "files": [
+     "Cargo.lock",
+     "src/bundler/bundle_v2.rs",
+     "src/bundler/linker_context/computeCrossChunkDependencies.rs",
+     "src/bundler/ungate_support.rs",
+     "src/bunfig/bunfig.rs",
+     "src/http_jsc/fetch_enums_jsc.rs",
+     "src/install/PackageManager.rs",
+     "src/install/PackageManager/PackageJSONEditor.rs",
+     "src/install/PackageManager/PackageManagerDirectories.rs",
+     "src/install/PackageManager/updatePackageJSONAndInstall.rs",
+     "src/install/bin.rs",
+     "src/install/lib.rs"
+    ],
+    "subject": "phase-e: merge diverged branch (detached-HEAD recovery)"
+   },
+   {
+    "sha": "0439a1c34c",
+    "at": "2026-05-07T08:08:59.000Z",
+    "content_files": 35,
+    "conflicted": 1,
+    "files": [
+     "src/shell_parser/braces.rs"
+    ],
+    "subject": "phase-f: merge unwrap-question worktree (4625→2009)"
+   },
+   {
+    "sha": "e1d89e73b7",
+    "at": "2026-05-07T08:14:33.000Z",
+    "content_files": 20,
+    "conflicted": 1,
+    "files": [
+     "src/install/PackageManager/runTasks.rs"
+    ],
+    "subject": "phase-f: merge install-lockfile-arena (resolved)"
+   },
+   {
+    "sha": "cdc762e938",
+    "at": "2026-05-07T08:19:14.000Z",
+    "content_files": 96,
+    "conflicted": 12,
+    "files": [
+     "src/bundler/LinkerContext.rs",
+     "src/collections/baby_list.rs",
+     "src/install/PackageManager/PackageJSONEditor.rs",
+     "src/install/lockfile/bun.lock.rs",
+     "src/install/migration.rs",
+     "src/install/pnpm.rs",
+     "src/js_parser/ast/ConvertESMExportsForHmr.rs",
+     "src/js_parser/ast/P.rs",
+     "src/js_parser/ast/Parser.rs",
+     "src/runtime/cli/create_command.rs",
+     "src/runtime/cli/pm_view_command.rs",
+     "src/standalone_graph/StandaloneModuleGraph.rs"
+    ],
+    "subject": "phase-f: merge delete-babylist (12 conflicts resolved)"
+   },
+   {
+    "sha": "de7d36a1b4",
+    "at": "2026-05-07T08:23:20.000Z",
+    "content_files": 92,
+    "conflicted": 20,
+    "files": [
+     "src/bundler/Graph.rs",
+     "src/bundler/bundle_v2.rs",
+     "src/bundler/linker_context/StaticRouteVisitor.rs",
+     "src/bundler/linker_context/computeCrossChunkDependencies.rs",
+     "src/bundler/linker_context/convertStmtsForChunk.rs",
+     "src/bundler/linker_context/findAllImportedPartsInJSOrder.rs",
+     "src/bundler/linker_context/generateCodeForFileInChunkJS.rs",
+     "src/bundler/linker_context/generateCodeForLazyExport.rs",
+     "src/bundler/linker_context/postProcessCSSChunk.rs",
+     "src/bundler/linker_context/renameSymbolsInChunk.rs",
+     "src/bundler/linker_context/writeOutputFilesToDisk.rs",
+     "src/collections/lib.rs"
+    ],
+    "subject": "phase-f: merge multiarraylist-v2 (20 conflicts resolved)"
+   },
+   {
+    "sha": "395ad00800",
+    "at": "2026-05-07T08:29:24.000Z",
+    "content_files": 26,
+    "conflicted": 8,
+    "files": [
+     "src/jsc/VirtualMachine.rs",
+     "src/runtime/api/bun/Terminal.rs",
+     "src/runtime/api/bun/h2_frame_parser.rs",
+     "src/runtime/node/node_cluster_binding.rs",
+     "src/runtime/node/node_crypto_binding.rs",
+     "src/runtime/server/server_body.rs",
+     "src/runtime/socket/udp_socket.rs",
+     "src/runtime/valkey_jsc/valkey.rs"
+    ],
+    "subject": "phase-f: merge runtime-hostfn-safe (8 resolved)"
+   },
+   {
+    "sha": "2265ac6af6",
+    "at": "2026-05-07T08:29:48.000Z",
+    "content_files": 9,
+    "conflicted": 1,
+    "files": [
+     "src/http/state_machine_prelude.rs"
+    ],
+    "subject": "phase-f: merge http-body-lifetime (state_machine_prelude deleted)"
+   },
+   {
+    "sha": "a33c7c8a4d",
+    "at": "2026-05-07T08:41:23.000Z",
+    "content_files": 4,
+    "conflicted": 1,
+    "files": [
+     "src/runtime/lib.rs"
+    ],
+    "subject": "phase-f: merge must-use-jsresult"
+   },
+   {
+    "sha": "c17ee86a9e",
+    "at": "2026-05-07T08:43:07.000Z",
+    "content_files": 50,
+    "conflicted": 4,
+    "files": [
+     "src/bun_core/lib.rs",
+     "src/collections/lib.rs",
+     "src/string/lib.rs",
+     "src/which/lib.rs"
+    ],
+    "subject": "phase-f: merge pub-tighten"
+   },
+   {
+    "sha": "35ea2d6d98",
+    "at": "2026-05-07T09:43:09.000Z",
+    "content_files": 19,
+    "conflicted": 13,
+    "files": [
+     "src/bun_core/util.rs",
+     "src/io/lib.rs",
+     "src/io/openForWriting.rs",
+     "src/jsc/btjs.rs",
+     "src/resolver/fs/stat_hash.rs",
+     "src/runtime/node/dir_iterator.rs",
+     "src/runtime/node/node_fs.rs",
+     "src/runtime/node/node_os.rs",
+     "src/runtime/shell/interpreter.rs",
+     "src/runtime/socket/SocketAddress.rs",
+     "src/runtime/test_runner/harness/recover.rs",
+     "src/sys/PosixStat.rs"
+    ],
+    "subject": "phase-f: merge cross-macos (13 conflicts resolved)"
+   },
+   {
+    "sha": "fe98df5fb6",
+    "at": "2026-05-07T10:47:27.000Z",
+    "content_files": 57,
+    "conflicted": 19,
+    "files": [
+     "src/aio/posix_event_loop.rs",
+     "src/bun_alloc/heap_breakdown.rs",
+     "src/event_loop/AnyEventLoop.rs",
+     "src/jsc/ConsoleObject.rs",
+     "src/jsc/JSValue.rs",
+     "src/jsc/bindings/helpers.h",
+     "src/runtime/api/bun/subprocess/SubprocessPipeReader.rs",
+     "src/runtime/api/cron.rs",
+     "src/runtime/api/filesystem_router.rs",
+     "src/runtime/cli/filter_run.rs",
+     "src/runtime/cli/multi_run.rs",
+     "src/runtime/cli/test/parallel/Worker.rs"
+    ],
+    "subject": "phase-f: merge ptr-cast (19 resolved)"
+   },
+   {
+    "sha": "8d29111072",
+    "at": "2026-05-07T11:16:13.000Z",
+    "content_files": 104,
+    "conflicted": 22,
+    "files": [
+     "src/bun_alloc/lib.rs",
+     "src/bundler/BundleThread.rs",
+     "src/css_jsc/css_internals.rs",
+     "src/http/HTTPThread.rs",
+     "src/install/PackageManager.rs",
+     "src/io/lib.rs",
+     "src/jsc/CppTask.rs",
+     "src/resolver/dir_info.rs",
+     "src/runtime/cli/filter_arg.rs",
+     "src/runtime/cli/install_command.rs",
+     "src/runtime/cli/mod.rs",
+     "src/runtime/cli/pm_update_package_json.rs"
+    ],
+    "subject": "phase-f: merge static-mut (22 resolved)"
+   },
+   {
+    "sha": "fda62c0ba0",
+    "at": "2026-05-07T11:25:04.000Z",
+    "content_files": 87,
+    "conflicted": 14,
+    "files": [
+     "src/bun_core/Progress.rs",
+     "src/bundler/LinkerContext.rs",
+     "src/bundler/bundle_v2.rs",
+     "src/jsc/VirtualMachine.rs",
+     "src/jsc/hot_reloader.rs",
+     "src/jsc/webcore_types.rs",
+     "src/ptr/ref_count.rs",
+     "src/resolver/lib.rs",
+     "src/runtime/api/bun/subprocess/StaticPipeWriter.rs",
+     "src/runtime/node/node_fs.rs",
+     "src/runtime/server/mod.rs",
+     "src/runtime/webcore/Blob.rs"
+    ],
+    "subject": "phase-f: merge accessor-sweep (14 resolved)"
+   },
+   {
+    "sha": "1bc4f31d6f",
+    "at": "2026-05-07T13:34:46.000Z",
+    "content_files": 114,
+    "conflicted": 22,
+    "files": [
+     "src/bun_core/lib.rs",
+     "src/bun_core/util.rs",
+     "src/crash_handler/lib.rs",
+     "src/dns/lib.rs",
+     "src/event_loop/MiniEventLoop.rs",
+     "src/install/PackageInstall.rs",
+     "src/install/lifecycle_script_runner.rs",
+     "src/io/PipeReader.rs",
+     "src/io/PipeWriter.rs",
+     "src/libuv_sys/libuv.rs",
+     "src/resolver/fs.rs",
+     "src/runtime/cli/multi_run.rs"
+    ],
+    "subject": "phase-f: merge cross-windows (22 resolved)"
+   },
+   {
+    "sha": "a979ff0dbe",
+    "at": "2026-05-07T23:07:34.000Z",
+    "content_files": 4,
+    "conflicted": 2,
+    "files": [
+     "src/bundler/linker_context/postProcessJSChunk.rs",
+     "src/runtime/ffi/ffi_body.rs"
+    ],
+    "subject": "phase-g: merge tswarm-s0"
+   },
+   {
+    "sha": "ecbed98f96",
+    "at": "2026-05-07T23:11:40.000Z",
+    "content_files": 6,
+    "conflicted": 3,
+    "files": [
+     "src/runtime/ffi/ffi_body.rs",
+     "src/runtime/shell/IO.rs",
+     "src/runtime/shell/states/Cmd.rs"
+    ],
+    "subject": "phase-g: merge tswarm-s3"
+   },
+   {
+    "sha": "ff0eb2eef4",
+    "at": "2026-05-07T23:55:44.000Z",
+    "content_files": 2,
+    "conflicted": 1,
+    "files": [
+     "src/bundler/linker_context/generateChunksInParallel.rs"
+    ],
+    "subject": "phase-f: merge bun-build-2 (resolved)"
+   },
+   {
+    "sha": "8845285093",
+    "at": "2026-05-08T03:26:22.000Z",
+    "content_files": 45,
+    "conflicted": 8,
+    "files": [
+     "src/bun_core/util.rs",
+     "src/bundler/defines.rs",
+     "src/jsc/Task.rs",
+     "src/runtime/allocators/LinuxMemFdAllocator.rs",
+     "src/runtime/server/FileRoute.rs",
+     "src/safety/alloc.rs",
+     "src/spawn/process.rs",
+     "src/uws_sys/h3.rs"
+    ],
+    "subject": "phase-h: merge hooks-layering-fix v2 (8 resolved)"
+   },
+   {
+    "sha": "2a0ca4a5ce",
+    "at": "2026-05-08T03:39:31.000Z",
+    "content_files": 48,
+    "conflicted": 9,
+    "files": [
+     "src/bundler/LinkerGraph.rs",
+     "src/bundler/linker_context/computeCrossChunkDependencies.rs",
+     "src/js_parser/ast/G.rs",
+     "src/js_parser/ast/S.rs",
+     "src/js_parser/ast/foldStringAddition.rs",
+     "src/js_parser/ast/lowerDecorators.rs",
+     "src/js_parser/ast/parseProperty.rs",
+     "src/js_parser/ast/repl_transforms.rs",
+     "src/js_parser/lib.rs"
+    ],
+    "subject": "phase-h: merge storeslice (9 resolved)"
+   },
+   {
+    "sha": "c1b7f45c87",
+    "at": "2026-05-08T06:28:45.000Z",
+    "content_files": 33,
+    "conflicted": 4,
+    "files": [
+     "src/bundler/linker_context/findImportedFilesInCSSOrder.rs",
+     "src/bundler/linker_context/prepareCssAstsForChunk.rs",
+     "src/runtime/allocators/allocation_scope.rs",
+     "src/runtime/bake/DevServer.rs"
+    ],
+    "subject": "phase-h: merge cyclebreak-audit (4 resolved: allocation_scope deleted, 3 comment-only)"
+   },
+   {
+    "sha": "06843f668e",
+    "at": "2026-05-08T06:45:22.000Z",
+    "content_files": 74,
+    "conflicted": 2,
+    "files": [
+     "src/runtime/api/bun/js_bun_spawn_bindings.rs",
+     "src/runtime/dns_jsc/dns.rs"
+    ],
+    "subject": "analyze_transpiled_module: guard finalize() in into_deserialized"
+   },
+   {
+    "sha": "5aa4cfbdb0",
+    "at": "2026-05-08T13:35:27.000Z",
+    "content_files": 17,
+    "conflicted": 1,
+    "files": [
+     "src/ptr/lib.rs"
+    ],
+    "subject": "phase-h: merge transmute-r4 (resolved: detach_ref aliases detach_lifetime_ref)"
+   },
+   {
+    "sha": "4681b6604d",
+    "at": "2026-05-08T15:47:10.000Z",
+    "content_files": 13,
+    "conflicted": 1,
+    "files": [
+     "src/runtime/test_runner/expect.rs"
+    ],
+    "subject": "phase-h: merge transmute-r5 (174→76; cast_fn_ptr helper, exhaustive enum decoders, detach_lifetime helpers)"
+   },
+   {
+    "sha": "2436ca268f",
+    "at": "2026-05-08T16:23:00.000Z",
+    "content_files": 9,
+    "conflicted": 1,
+    "files": [
+     "src/brotli_sys/brotli_c.rs"
+    ],
+    "subject": "phase-h: merge safefn-boringssl (resolved brotli_c)"
+   },
+   {
+    "sha": "fa107ddfd2",
+    "at": "2026-05-08T22:28:48.000Z",
+    "content_files": 1,
+    "conflicted": 1,
+    "files": [
+     "src/runtime/server/RequestContext.rs"
+    ],
+    "subject": "phase-h: merge refptr-migration (resolved)"
+   },
+   {
+    "sha": "749f408067",
+    "at": "2026-05-08T22:57:43.000Z",
+    "content_files": 7,
+    "conflicted": 1,
+    "files": [
+     "build.zig"
+    ],
+    "subject": "Merge remote-tracking branch 'origin/main' into claude/phase-a-port"
+   },
+   {
+    "sha": "378ce29432",
+    "at": "2026-05-09T08:23:08.000Z",
+    "content_files": 1,
+    "conflicted": 1,
+    "files": [
+     "src/bundler/bundle_v2.rs"
+    ],
+    "subject": "phase-h: bake DevServer 'Failed to load bundled module <abs>' for SCB plugin imports. Two spec divergences: (1) enqueue_"
+   },
+   {
+    "sha": "02a0ea2f21",
+    "at": "2026-05-09T12:19:03.000Z",
+    "content_files": 68,
+    "conflicted": 9,
+    "files": [
+     "src/bun.rs",
+     "src/bun_core/lib.rs",
+     "src/bun_core/windows_sys.rs",
+     "src/main.rs",
+     "src/resolver/lib.rs",
+     "src/runtime/allocators/MimallocArena.rs",
+     "src/runtime/cli/test_command.rs",
+     "src/sys/lib_draft_b1.rs",
+     "src/windows_sys/externs.rs"
+    ],
+    "subject": "sync (post unsafe-wrap): resolve 9 conflicts — keep dedup moves + apply unsafe-wrap conversions to moved code"
+   },
+   {
+    "sha": "1dd17189ce",
+    "at": "2026-05-09T14:58:40.000Z",
+    "content_files": 7,
+    "conflicted": 1,
+    "files": [
+     "src/spawn/process.rs"
+    ],
+    "subject": "sync"
+   },
+   {
+    "sha": "8957e90182",
+    "at": "2026-05-09T15:10:23.000Z",
+    "content_files": 94,
+    "conflicted": 11,
+    "files": [
+     "Cargo.lock",
+     "src/analytics/lib.rs",
+     "src/boringssl/lib.rs",
+     "src/bun_core/util.rs",
+     "src/bun_core/windows_sys.rs",
+     "src/perf/lib.rs",
+     "src/resolve_builtins/HardcodedModule.rs",
+     "src/runtime/dns_jsc/options_jsc.rs",
+     "src/runtime/node/node_os.rs",
+     "src/sys/windows/mod.rs",
+     "src/windows_sys/externs.rs"
+    ],
+    "subject": "sync (resolve 11 conflicts: keep dedup moves + apply uw-r2/r3 safe-fn conversions to canonical decls)"
+   },
+   {
+    "sha": "3a9898199e",
+    "at": "2026-05-09T15:41:48.000Z",
+    "content_files": 80,
+    "conflicted": 27,
+    "files": [
+     "src/bun.rs",
+     "src/bun_core/util.rs",
+     "src/bun_core/windows_sys.rs",
+     "src/bundler/BundleThread.rs",
+     "src/codegen/process_windows_translate_c.rs",
+     "src/errno/windows_errno.rs",
+     "src/install/lifecycle_script_runner.rs",
+     "src/io/PipeReader.rs",
+     "src/io/PipeWriter.rs",
+     "src/jsc/btjs.rs",
+     "src/runtime/api/cron.rs",
+     "src/runtime/cli/bunx_command.rs"
+    ],
+    "subject": "sync: 27 conflicts → theirs (12 libuv-audit-touched already correct; 15 dedup/uw-moved — bughunt fixes superseded by can"
+   },
+   {
+    "sha": "cd5879aeb5",
+    "at": "2026-05-09T20:40:53.000Z",
+    "content_files": 37,
+    "conflicted": 1,
+    "files": [
+     "src/spawn/process.rs"
+    ],
+    "subject": "sync (resolve spawn/process.rs: keep pid-hoist + use callback_ctx helper)"
+   },
+   {
+    "sha": "beaabb5813",
+    "at": "2026-05-09T20:51:42.000Z",
+    "content_files": 63,
+    "conflicted": 7,
+    "files": [
+     "src/bun.rs",
+     "src/bun_core/lib.rs",
+     "src/install/patch_install.rs",
+     "src/jsc/ZigString.rs",
+     "src/jsc/lib.rs",
+     "src/runtime/cli/install_completions_command.rs",
+     "src/runtime/cli/run_command.rs"
+    ],
+    "subject": "sync (resolve 7: ours for moved-canonicals — basename Windows handled at bun_paths::basename_windows; errno_to_zig_err c"
+   },
+   {
+    "sha": "75814df100",
+    "at": "2026-05-11T21:41:27.000Z",
+    "content_files": 10,
+    "conflicted": 3,
+    "files": [
+     "src/runtime/webcore/ByteStream.rs",
+     "src/runtime/webcore/FileReader.rs",
+     "src/runtime/webcore/ReadableStream.rs"
+    ],
+    "subject": "Merge branch 'claude/r2-phase2-migration' into claude/phase-a-port"
+   },
+   {
+    "sha": "0923258030",
+    "at": "2026-05-11T21:43:05.000Z",
+    "content_files": 25,
+    "conflicted": 2,
+    "files": [
+     "src/io/posix_event_loop.rs",
+     "src/runtime/webcore/FileReader.rs"
+    ],
+    "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+   },
+   {
+    "sha": "ad4780d923",
+    "at": "2026-05-11T21:52:59.000Z",
+    "content_files": 22,
+    "conflicted": 4,
+    "files": [
+     "src/js_parser/visit/mod.rs",
+     "src/runtime/api/bun/h2_frame_parser.rs",
+     "src/runtime/node/node_fs_stat_watcher.rs",
+     "src/sql_jsc/postgres/PostgresSQLConnection.rs"
+    ],
+    "subject": "Merge origin/claude/phase-a-port (R-2 Phase 2) into unsafe-r1-serial; resolve 4 conflicts (visit/mod, h2_frame_parser, n"
+   },
+   {
+    "sha": "1b185a7fce",
+    "at": "2026-05-12T01:14:46.000Z",
+    "content_files": 10,
+    "conflicted": 2,
+    "files": [
+     "src/ast/lib.rs",
+     "src/bun_alloc/MimallocArena.rs"
+    ],
+    "subject": "Merge origin/claude/bench-until-green into claude/phase-a-port"
+   },
+   {
+    "sha": "d030164eff",
+    "at": "2026-05-12T06:14:24.000Z",
+    "content_files": 66,
+    "conflicted": 11,
+    "files": [
+     "src/bun_alloc/MimallocArena.rs",
+     "src/bun_alloc/ast_alloc.rs",
+     "src/bun_alloc/lib.rs",
+     "src/io/PipeReader.rs",
+     "src/jsc/ConcurrentPromiseTask.rs",
+     "src/jsc/JSSecrets.rs",
+     "src/jsc/WorkTask.rs",
+     "src/runtime/api/BunObject.rs",
+     "src/runtime/shell/ParsedShellScript.rs",
+     "src/sys/File.rs",
+     "src/sys/lib.rs"
+    ],
+    "subject": "Merge remote-tracking branch 'origin/claude/code-dedup' into claude/phase-a-port"
+   },
+   {
+    "sha": "d4f7103769",
+    "at": "2026-05-12T06:25:01.000Z",
+    "content_files": 14,
+    "conflicted": 1,
+    "files": [
+     "src/runtime/node/node_crypto_binding.rs"
+    ],
+    "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+   },
+   {
+    "sha": "d28b23c7e3",
+    "at": "2026-05-12T07:43:09.000Z",
+    "content_files": 63,
+    "conflicted": 1,
+    "files": [
+     "src/jsc/ErrorCode.rs"
+    ],
+    "subject": "Merge branch 'claude/merge-bun-string-into-core' into claude/phase-a-port"
+   },
+   {
+    "sha": "9cf644515c",
+    "at": "2026-05-12T07:54:12.000Z",
+    "content_files": 19,
+    "conflicted": 1,
+    "files": [
+     "src/jsc/JSGlobalObject.rs"
+    ],
+    "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+   },
+   {
+    "sha": "7469ef4934",
+    "at": "2026-05-12T08:51:33.000Z",
+    "content_files": 13,
+    "conflicted": 3,
+    "files": [
+     "src/sql_jsc/mysql/JSMySQLConnection.rs",
+     "src/sql_jsc/mysql/JSMySQLQuery.rs",
+     "src/sql_jsc/postgres/PostgresSQLConnection.rs"
+    ],
+    "subject": "Merge origin/claude/unsafe-5k into claude/phase-a-port"
+   },
+   {
+    "sha": "44cee700cc",
+    "at": "2026-05-12T08:52:46.000Z",
+    "content_files": 2,
+    "conflicted": 1,
+    "files": [
+     "scripts/build/rust.ts"
+    ],
+    "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+   },
+   {
+    "sha": "51f05c0083",
+    "at": "2026-05-12T21:09:33.000Z",
+    "content_files": 4,
+    "conflicted": 1,
+    "files": [
+     "src/runtime/api/bun/subprocess/Writable.rs"
+    ],
+    "subject": "Merge origin/claude/divergence-fix-all into claude/phase-a-port"
+   },
+   {
+    "sha": "cfa232f7b8",
+    "at": "2026-05-12T21:41:35.000Z",
+    "content_files": 31,
+    "conflicted": 1,
+    "files": [
+     "src/http_types/Cargo.toml"
+    ],
+    "subject": "Merge origin/claude/code-dedup into claude/phase-a-port"
+   },
+   {
+    "sha": "2e4537b295",
+    "at": "2026-05-13T14:12:28.000Z",
+    "content_files": 9,
+    "conflicted": 1,
+    "files": [
+     "src/js_parser/lexer.rs"
+    ],
+    "subject": "Merge claude/spec-divergence-fix"
+   },
+   {
+    "sha": "9cc9c4ea9b",
+    "at": "2026-05-13T18:46:51.000Z",
+    "content_files": 1,
+    "conflicted": 1,
+    "files": [
+     "src/startup.order"
+    ],
+    "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+   }
+  ]
+ }
 }

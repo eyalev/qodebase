@@ -2,17 +2,22 @@
 
 oven-sh/bun#30412: 6,755 commits by ~64 Claude agents over 11 days (2026-05-04..14),
 the only large real multi-agent commit history we know of. `analyze.mjs` mines it into
-`calibration.json`; no model calls, no file contents.
+`calibration.json` from commits and trees; `replay.mjs` replays every merge with real
+file contents and adds `merge_replay`. No model calls.
 
 ```sh
-node sim/bun/analyze.mjs     # ~20 s; reads ~/projects/github/oven-sh/bun-pr30412
+node sim/bun/analyze.mjs           # ~20 s; reads ~/projects/github/oven-sh/bun-pr30412
+node sim/bun/replay.mjs --fetch    # once: fetch only the blobs the merges need (cap --max-gb 2)
+node sim/bun/replay.mjs            # ~15 s, offline: merge-tree on all 276 merges
 ```
 
 Data: a blobless fetch (commits + trees, 35 MB) of `refs/pull/30412/head`, range
 `0d9b296af33f..refs/pr/30412`. Every number comes from commit metadata and tree
-diffs (file names and blob ids), so the script never touches the network
-(`GIT_NO_LAZY_FETCH=1`). **Not measured:** lines per commit and real text conflicts
-(both need file contents; see "Next"). Agents all commit as "Jarred Sumner", so an
+diffs (file names and blob ids), so the script never touches the network (git 2.43
+ignores `GIT_NO_LAZY_FETCH`; both scripts set `GIT_ALLOW_PROTOCOL=file`, so a missing
+blob is an error, not a silent download). The replay fetched 9,886 blobs, 56 MiB, into
+the same clone (2026-10-07). **Not measured:** lines per commit (needs every
+commit's blobs, not just the merges'). Agents all commit as "Jarred Sumner", so an
 agent is never identified directly: branches come from merge subjects, streams from
 subject prefixes (`phase-d(bun_runtime)`), and the agent count (~64) from Bun's blog.
 
@@ -80,11 +85,26 @@ minutes, 15% at an hour, 33% over 4 h.
 **7. Merges.** 276 merges, 244 into the integration branch, one every 12 min at the
 median (p90 67). A merge brings p50 3 / p90 12 commits and p50 14 / p90 148 files.
 - 46% of merges had files changed on both sides since the merge base, 45% with
-  different results on each side (a text merge was needed), 43% ended with text that
-  matches neither side. Whether git did those by itself is unknown without contents.
+  different results on each side (a text merge was needed): 125 merges, 2,017 files.
 - Only 7 merge subjects name conflicts, 96 in total ("sync: 27 conflicts → theirs",
   "resolve 11 conflicts: keep dedup moves + apply ... conversions"): the big ones came
   from syncs between long-lived sweep branches, not from the per-agent work.
+- **Replayed with `git merge-tree` (real contents, renames on, like `git merge`):**
+  47 merges conflict (17% of all merges, 38% of those needing a text merge), 329 files.
+  Per file changed on both sides, **git merges it by itself 84% of the time** (hot top-1%
+  files 0.85, the rest 0.84; Cargo.toml/lock 0.82 on 22 files; module roots
+  lib.rs/mod.rs 0.86). Hot files conflict no more often than cold ones: they are big
+  files edited in different regions. Checked against the agents' own notes: 15 merges
+  name a conflict count in their subject, and the replay finds exactly that number in
+  all 15.
+- Conflicts depend on how much the merge brings: p_clean 0.95 for merges where 1–3
+  files changed on both sides (5 of 62 merges conflict), 0.90 for 4–50, 0.79 for >50
+  (all 14 conflict). The 10 biggest merges (phase-f sweeps, syncs, a detached-HEAD
+  recovery with 67) hold 69% of all conflicted files.
+- How agents resolved the 328 conflicted files: new text 68%, took ours 16%, took
+  theirs 13%, deleted 2%. Taking one side whole (30%) is where the lost-work commits
+  below came from. On files git merged cleanly the agents kept git's result 99.8% of
+  the time.
 - 13 merges are two agents pushing the same branch from different clones.
 - 10 follow-up commits restore work a merge lost (3.6 per 100 merges), half within
   7 minutes: "re-apply BackRef migration ... (merge --theirs lost it)", "lost in
@@ -105,8 +125,10 @@ median (p90 67). A merge brings p50 3 / p90 12 commits and p50 14 / p90 148 file
   the two middle phases (here 57% of all commits in 17 h).
 - **Hot files ≠ append lists.** For a migration, `pHot` is ~0.5 (top 1.5% of files in
   about half the commits), higher than our 0.3, but the hot files are large and edited
-  in disjoint regions, so `pCleanHot` should be higher than Hono's 0.2. Measuring it
-  needs step 3.
+  in disjoint regions: measured `pCleanHot` 0.85 and `pCleanCold` 0.84 (per file
+  changed on both sides), against the sim's 0.2 / 0.35. The sim's low numbers stay
+  right for append-lists (Hono); for a migration's big source files use ~0.85, and
+  scale with merge size (0.95 for small merges, 0.79 for sweep-sized ones).
 - **Branches only for sweeps, merged often.** Cross-cutting sweeps lived on branches
   and merged every ~12 min; overlap with another branch within the hour was 8–15%.
   The losses came from resolving conflicts wholesale (`--theirs`) between long-lived
@@ -116,10 +138,13 @@ median (p90 67). A merge brings p50 3 / p90 12 commits and p50 14 / p90 148 file
 Suggested numbers for `DEFAULTS` / the swarm sim (cite `sim/bun/calibration.json`):
 `meanTouches` 3 (median; mean 6.5 with a heavy tail, p90 11), `pHot` ≈ 0.5 with
 `hotFiles` ≈ 1% of files, per-agent commit interval ~18 min at full speed (~3.3/h),
-cross-branch overlap 6% per 15 min / 15% per hour, lost-work after merges 3.6%.
+cross-branch overlap 6% per 15 min / 15% per hour, `pCleanHot` ≈ `pCleanCold` ≈ 0.84
+(0.95 small merges, 0.79 > 50 shared files), 17% of merges conflict, lost-work after
+merges 3.6%, 30% of conflicted files resolved by taking one side whole.
 
-## Next (needs Eyal's OK: fetches file contents)
+## Next
 
-Fetch the blobs for the merged branches' changed files only and replay each of the
-276 merges with `git merge-tree` to count real text conflicts, per file kind, and get
-lines per commit. That gives `pCleanHot` / `pCleanCold` measured on agent work.
+Lines per commit would need every commit's blobs (most of the repo's history at each
+step), not only the merges'; not fetched. The replay could also run each merge's
+result through `cargo check` to count semantic breaks, but that needs a full Bun
+toolchain per merge: out of scope for minutes-long scripts.
