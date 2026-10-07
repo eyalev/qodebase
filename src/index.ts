@@ -372,7 +372,9 @@ const app = {
     // Anonymous readers: pages and read APIs only.
     if (me.kind === 'user' && me.anon) {
       const p0 = url.pathname;
-      const needsUser = (request.method !== 'GET' && request.method !== 'HEAD') || p0 === '/api/costs' || p0 === '/cli/login' || p0.startsWith('/api/cli/') || p0.startsWith('/a/') || p0.endsWith('/agents-html') || p0.startsWith('/api/github') || p0 === '/settings' || p0.startsWith('/api/me');
+      // Watch a run (src/landing/routes.ts) is the one anonymous POST: capped per IP and per day there.
+      const anonPost = request.method === 'POST' && /^\/api\/p\/[a-z0-9-]+\/[a-z0-9-]+\/landing\/watch$/.test(p0);
+      const needsUser = (request.method !== 'GET' && request.method !== 'HEAD' && !anonPost) || p0 === '/api/costs' || p0 === '/cli/login' || p0.startsWith('/api/cli/') || p0.startsWith('/a/') || p0.endsWith('/agents-html') || p0.startsWith('/api/github') || p0 === '/settings' || p0.startsWith('/api/me');
       if (needsUser) {
         const login = `/login?next=${encodeURIComponent(request.method === 'GET' ? p0 + url.search : (request.headers.get('referer') ? new URL(request.headers.get('referer')!).pathname : '/'))}`;
         return request.method === 'GET' && (request.headers.get('accept') || '').includes('text/html')
