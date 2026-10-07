@@ -22,11 +22,14 @@ const enc = new TextEncoder();
 
 export class DemoAgent extends DurableObject<Env> {
   async #st() { return (await this.ctx.storage.get<St>('st')) || null; }
-  async #save(s: St) { await this.ctx.storage.put('st', s); }
+  /** A stop lives in its own key: an alarm step that was running when stop() came would
+   *  otherwise save its copy of the state over it (stray agents, 2026-10-08). */
+  async #save(s: St) { if (await this.ctx.storage.get<boolean>('stopped')) s.stopped = true; await this.ctx.storage.put('st', s); }
   #landing(slug: string) { return this.env.Landing.get(this.env.Landing.idFromName(slug)); }
   #name(s: St) { return `scripted agent ${s.n}`; }
 
   async start(slug: string, n: number, speed: number, runId: number) {
+    await this.ctx.storage.delete('stopped');
     await this.#save({ slug, n, speed, runId, stopped: false, job: null });
     // Staggered: agents start a couple of seconds apart, like people picking up work.
     await this.ctx.storage.setAlarm(Date.now() + 800 + n * 1800 / speed);
@@ -35,6 +38,7 @@ export class DemoAgent extends DurableObject<Env> {
   async peek() { return { st: await this.#st(), alarm: await this.ctx.storage.getAlarm() }; }
 
   async stop() {
+    await this.ctx.storage.put('stopped', true);
     const s = await this.#st(); if (!s) return;
     s.stopped = true; await this.#save(s); await this.ctx.storage.deleteAlarm();
   }
@@ -47,7 +51,7 @@ export class DemoAgent extends DurableObject<Env> {
 
   async alarm() {
     const s = await this.#st();
-    if (!s || s.stopped) return;
+    if (!s || s.stopped || (await this.ctx.storage.get<boolean>('stopped'))) return;
     (s as any).lastAlarm = Date.now();
     const L = this.#landing(s.slug);
     const d = await L.demoState();
@@ -65,6 +69,7 @@ export class DemoAgent extends DurableObject<Env> {
       return;
     }
     await this.#save(s);
+    if (s.stopped) return;
     // Always come back: for the job's next step, a fix or redo, or the next task (a stacked
     // task becomes ready only once its base pushed). Bounded by the demo's 20-minute cap:
     // the first alarm after the demo stops ends the agent. (Without this, every agent went
@@ -76,8 +81,9 @@ export class DemoAgent extends DurableObject<Env> {
   /** Pick up a fix or redo first, else the next task of the script. */
   async #next(s: St) {
     const L = this.#landing(s.slug);
-    const pick = await L.demoNext(s.n);
+    const pick = await L.demoNext(s.n, s.runId);
     if (!pick) return;
+    if (pick.stop) { s.stopped = true; log('demo', 'agent_stale_stopped', { slug: s.slug, n: s.n, runId: s.runId }); return; }
     const p = pick.chore ? { changeId: pick.id!, kind: pick.chore } : null;
     if (p) {
       const c = await L.change(p.changeId);
@@ -115,7 +121,7 @@ export class DemoAgent extends DurableObject<Env> {
       fork = await this.#fork(main, id, task.title);
     }
     await L.record(s.slug, { id, title: task.title, intent: task.intent, agent: this.#name(s), kind: 'demo', fork: fork.name, remote: fork.remote, base,
-      claims: task.claims, stackedOn: pick.stackOn?.id || null, task: task.key });
+      claims: task.claims, stackedOn: pick.stackOn?.id || null, task: task.key }, s.runId);
     s.job = { kind: 'task', changeId: id, key: task.key, fork: fork.name, remote: fork.remote, base, until: Date.now() + this.#dur(s, 1, task), stage: 'work' };
     log('demo', 'task_started', { slug: s.slug, n: s.n, id, task: task.key, stackedOn: pick.stackOn?.id });
   }

@@ -95,8 +95,9 @@ export class Landing extends DurableObject<Env> {
 
   // ---- the record --------------------------------------------------------------
   /** A new change: at spawn (real agents) or when a scripted agent picks a task. */
-  async record(slug: string, c: Pick<Change, 'id' | 'title' | 'intent' | 'agent' | 'kind' | 'fork' | 'remote' | 'base'> & Partial<Pick<Change, 'claims' | 'needs' | 'provides' | 'stackedOn' | 'task'>>) {
+  async record(slug: string, c: Pick<Change, 'id' | 'title' | 'intent' | 'agent' | 'kind' | 'fork' | 'remote' | 'base'> & Partial<Pick<Change, 'claims' | 'needs' | 'provides' | 'stackedOn' | 'task'>>, runId?: number) {
     const m = await this.#m(slug);
+    if (c.kind === 'demo' && (!m.demo?.running || m.demo.startedAt !== runId)) throw new Error('stale demo run: this scripted agent belongs to an earlier run');
     const ch: Change = { ...c, title: (c.title || c.intent.split('\n')[0]).slice(0, 60), intent: c.intent.slice(0, 4000), commit: null, state: 'working',
       files: [], claims: c.claims || [], needs: c.needs || [], provides: c.provides || [], stackedOn: c.stackedOn || null,
       events: [], review: null, landing: null, lead: null, createdAt: Date.now(), landedAt: null, tries: 0 };
@@ -546,8 +547,11 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
   async change(id: string) { return this.#get(id); }
   /** The next task of the script for scripted agent n (one task per change, in order; a
    *  stacked task only once the change it builds on has pushed). Null when none is ready. */
-  async demoNext(n: number): Promise<{ key: string; stackOn?: { id: string; fork: string; commit: string }; chore?: 'fix' | 'redo'; id?: string } | null> {
+  async demoNext(n: number, runId: number): Promise<{ key: string; stackOn?: { id: string; fork: string; commit: string }; chore?: 'fix' | 'redo'; id?: string; stop?: boolean } | null> {
     const m = await this.#m();
+    // Only the current run's agents get work: a stray agent of an earlier run (stopped
+    // mid-step) took three tasks of a filmed take and never finished them (2026-10-08).
+    if (!m.demo?.running || m.demo.startedAt !== runId || n > m.demo.agents) return { key: '', stop: true };
     // First the agent's own chores: a bounced change to fix, a conflict the lead redoes.
     // Handed out here, once per state, so nothing depends on a nudge arriving (a nudge
     // written into the agent's storage was lost to its own alarm's save, 2026-10-07).
