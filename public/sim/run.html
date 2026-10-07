@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>qodebase sim run</title>
+<meta name="description" content="A real codebase changed by hundreds of scripted agents at once: real git commits, merge conflicts and tests, no model calls. Scrub through time and drill into any folder, file or change.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff; --card: #fafafa; --chip: #f3f4f6; --line: #ececef;
+  --fg: #111214; --dim: #6e737b; --acc: #17695a; --acc-fg: #ffffff; --busy: #b7791f;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0d0e; --card: #141517; --chip: #1c1d20; --line: #222428;
+    --fg: #ececee; --dim: #9a9fa6; --acc: #4fbf9f; --acc-fg: #0f1112; --busy: #e0a948;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0d0e; --card: #141517; --chip: #1c1d20; --line: #222428;
+  --fg: #ececee; --dim: #9a9fa6; --acc: #4fbf9f; --acc-fg: #0f1112; --busy: #e0a948;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 400 15px/1.45 Geist, ui-sans-serif, sans-serif; letter-spacing: -.003em;
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; font-variant-numeric: tabular-nums;
+}
+main { max-width: 1120px; margin: 0 auto; padding: 16px 16px calc(32px + env(safe-area-inset-bottom)); }
+h1 { font-size: 22px; font-weight: 600; letter-spacing: -.02em; margin: 4px 0; }
+h2 { font-size: 15px; font-weight: 600; margin: 0 0 8px; letter-spacing: -.01em; }
+p { margin: 0; }
+a { color: var(--acc); }
+.lede { color: var(--dim); font-size: 14px; max-width: 62ch; }
+.card { background: var(--card); border-radius: 14px; box-shadow: inset 0 0 0 1px var(--line); padding: 16px; }
+.stack { display: grid; gap: 12px; }
+.grid { display: grid; gap: 12px; margin-top: 16px; }
+@media (min-width: 900px) { .grid { grid-template-columns: 360px 1fr; align-items: start; } .side { position: sticky; top: 16px; } }
+select { font: inherit; font-size: 16px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-height: 44px; width: 100%; }
+label.f { display: grid; gap: 4px; font-size: 13px; color: var(--dim); }
+.chip { font: inherit; font-size: 14px; color: var(--fg); background: var(--chip); border: 0; border-radius: 10px; padding: 0 12px; min-height: 44px; cursor: pointer; transition: background-color 120ms; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.btn { font: inherit; font-weight: 500; border: 0; cursor: pointer; background: var(--acc); color: var(--acc-fg); border-radius: 10px; min-height: 44px; padding: 0 18px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.about { font-size: 13px; color: var(--dim); }
+input[type=range] { width: 100%; accent-color: var(--acc); min-height: 32px; }
+.time { display: flex; justify-content: space-between; font-size: 13px; color: var(--dim); }
+.time b { color: var(--fg); font-weight: 500; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border-radius: 14px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+@media (min-width: 640px) and (max-width: 899px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+.stat { background: var(--card); padding: 12px 14px; min-width: 0; }
+.stat .v { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+.stat .k { font-size: 13px; color: var(--dim); }
+.crumbs { display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: 14px; margin-bottom: 12px; align-items: center; }
+.crumbs a { text-decoration: none; }
+.crumbs span.sep { color: var(--dim); }
+.folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 6px; }
+.folder { background: none; border: 0; padding: 6px; border-radius: 10px; cursor: pointer; color: var(--fg); font: inherit; text-align: left; box-shadow: inset 0 0 0 1px var(--line); }
+.folder .cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+.folder .cells i { display: block; aspect-ratio: 1; border-radius: 2px; background: var(--chip); }
+.folder small { display: block; font-size: 12px; color: var(--dim); margin-top: 4px; font-family: "JetBrains Mono", ui-monospace, monospace; }
+.c-work { background: var(--acc) !important; }
+.c-claim { background: color-mix(in srgb, var(--acc) 35%, transparent) !important; }
+.c-conf { background: var(--busy) !important; }
+.c-land { background: var(--fg) !important; }
+.key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--dim); margin-top: 10px; }
+.key span { display: inline-flex; gap: 6px; align-items: center; }
+.key i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { box-shadow: inset 0 -1px 0 var(--line); }
+.list li:last-child { box-shadow: none; }
+.list a, .list .item { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 10px 0; text-decoration: none; color: var(--fg); min-height: 44px; }
+.list .sub { grid-column: 1 / -1; font-size: 13px; color: var(--dim); }
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; overflow-wrap: anywhere; }
+.tag { display: inline-block; font-size: 12px; padding: 1px 6px; border-radius: 4px; background: var(--chip); color: var(--fg); white-space: nowrap; }
+.tag.ok { background: color-mix(in srgb, var(--acc) 18%, transparent); color: var(--acc); }
+.tag.warn { background: color-mix(in srgb, var(--busy) 20%, transparent); color: var(--busy); }
+.lane { position: relative; height: 10px; background: var(--chip); border-radius: 3px; margin-top: 4px; overflow: hidden; }
+.lane i { position: absolute; top: 0; bottom: 0; width: 2px; }
+.lane .now { background: var(--dim); width: 1px; }
+.story { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.story li { display: grid; grid-template-columns: 72px 1fr; gap: 8px; padding: 6px 0; box-shadow: inset 0 -1px 0 var(--line); }
+.story li.future { color: var(--dim); }
+.story time { color: var(--dim); }
+pre.diff { margin: 8px 0 0; padding: 10px 0; background: var(--bg); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); overflow-x: auto; font: 12.5px/1.5 "JetBrains Mono", ui-monospace, monospace; }
+pre.diff span { display: block; padding: 0 12px; white-space: pre; }
+pre.diff .add { background: color-mix(in srgb, var(--acc) 14%, transparent); }
+pre.diff .del { background: color-mix(in srgb, var(--busy) 16%, transparent); }
+pre.diff .gap { color: var(--dim); }
+.bar { display: flex; height: 12px; border-radius: 4px; overflow: hidden; background: var(--chip); }
+.bar span { display: block; height: 100%; }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-top: 10px; font-size: 13px; }
+.legend div { display: flex; gap: 6px; align-items: center; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.legend .n { margin-left: auto; color: var(--dim); }
+.muted { color: var(--dim); font-size: 13px; }
+@media (hover: hover) { .chip:hover, .folder:hover { background: var(--chip); } .chip[aria-pressed="true"]:hover { background: var(--fg); } }
+</style>
+</head>
+<body>
+<main>
+  <p class="muted"><a href="./">qodebase sim</a></p>
+  <h1>A real run</h1>
+  <p class="lede">A generated project changed by scripted agents in a real git repo: real commits, real merge conflicts, real tests on every merge. No model calls; the clock is virtual, the code is not. Scrub through time, then tap a folder, a file or a change.</p>
+
+  <div class="grid">
+    <div class="side stack">
+      <section class="card stack">
+        <label class="f">Run
+          <select id="run"></select>
+        </label>
+        <p class="about" id="about"></p>
+        <div>
+          <input type="range" id="t" min="0" max="3600" step="10" value="0" aria-label="Simulated time">
+          <div class="time"><span>Simulated <b id="tnow">0:00</b></span><span id="tend"></span></div>
+        </div>
+        <div class="row">
+          <button class="btn" id="play">Play</button>
+          <button class="chip" data-speed="60" aria-pressed="false">1 min/s</button>
+          <button class="chip" data-speed="300" aria-pressed="true">5 min/s</button>
+          <button class="chip" data-speed="900" aria-pressed="false">15 min/s</button>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Where the agents are</h2>
+        <div class="bar" id="bar"></div>
+        <div class="legend" id="legend"></div>
+      </section>
+      <section class="stats" id="stats"></section>
+    </div>
+
+    <section class="card" id="view" aria-live="polite"></section>
+  </div>
+</main>
+<script type="module" src="./run.js"></script>
+</body>
+</html>
