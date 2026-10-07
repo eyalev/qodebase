@@ -90,6 +90,8 @@
     if (r.status === 404) { D = null; throw Object.assign(new Error('none'), { none: true }); }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     D = await r.json(); fetchedAt = Date.now();
+    // Trains that failed for infrastructure reasons carry a note (qb6): not part of the story.
+    D.queue.trains = D.queue.trains.filter((t) => !t.note);
   }
   const byId = () => new Map(D.changes.map((c) => [c.id, c]));
   const isRoot = (p) => p === '.' || p === '/' || p === '';
