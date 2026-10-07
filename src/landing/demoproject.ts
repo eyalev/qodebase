@@ -203,3 +203,60 @@ export function applyEdits(files: Map<string, string>, edits: Edit[]): string[] 
   }
   return [...changed];
 }
+
+// ---- busy mode: many agents, many collisions --------------------------------------
+// An endless, deterministic stream of small café changes (task keys `busy:<i>`), mixed so
+// that collisions are the norm: most touch the menu list, routes.js or style.css (tier-1
+// handlers replay them), a few change the same item's price (a real conflict: the lead
+// redoes it), a few forget the page heading (a test fails: bounce, fix, land).
+const ITEMS = ['Oat milk latte', 'Flat white', 'Cortado', 'Iced coffee', 'Hot chocolate', 'Matcha latte', 'Earl grey', 'Mint tea',
+  'Lemonade', 'Orange juice', 'Banana bread', 'Lemon tart', 'Cheesecake', 'Apple pie', 'Scone', 'Muffin', 'Cinnamon roll',
+  'Bagel', 'Toast and jam', 'Granola bowl', 'Avocado toast', 'Tomato soup', 'Quiche', 'Ham sandwich', 'Hummus plate',
+  'Fruit salad', 'Brownie bite', 'Almond croissant', 'Chocolate cookie', 'Pastel de feijão', 'Bolo de arroz', 'Queijada',
+  'Mocha', 'Macchiato', 'Affogato', 'Chai', 'Rooibos', 'Ginger shot', 'Smoothie', 'Yogurt pot'];
+const PAGES = ['events', 'gallery', 'jobs', 'about', 'faq', 'gift-cards', 'catering', 'press', 'wifi', 'kids', 'loyalty', 'news',
+  'team', 'suppliers', 'books', 'music', 'workshops', 'terrace', 'parking', 'allergens'];
+const SHADES = ['#8a5a44', '#4f6d3a', '#7a4e8c', '#2f6f73', '#a0522d', '#5b6b8c', '#946b2d', '#6d4c41'];
+const PRICED = ['Espresso', 'Cappuccino', 'Croissant'];
+const slugTitle = (s: string) => s.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+const ident = (s: string) => s.replace(/-(\w)/g, (_, c: string) => c.toUpperCase());
+
+export function busyTask(i: number): Task {
+  const key = `busy:${i}`;
+  const pick = (i * 7919) % 100;                 // deterministic mix
+  const round = Math.floor(i / 20);
+  if (pick < 8) {
+    // Two agents a few tasks apart change the same price: the second one conflicts.
+    const item = PRICED[Math.floor(i / 2) % PRICED.length];
+    const price = (1 + ((i * 37) % 300) / 100).toFixed(2);
+    return { key, title: `New price for ${item}: €${price}`, intent: `Change the price of ${item} to €${price}.`, claims: ['src/data/menu.js'], workS: 8,
+      edits: [{ path: 'src/data/menu.js', re: `\\{ name: '${item}', price: [0-9.]+`, to: `{ name: '${item}', price: ${price}` }] };
+  }
+  if (pick < 45) {
+    const name = ITEMS[i % ITEMS.length] + (round ? ` ${round + 1}` : '');
+    const price = (1 + ((i * 53) % 400) / 100).toFixed(2);
+    return { key, title: `Add ${name} to the menu`, intent: `Add ${name} (€${price}) to the menu.`, claims: ['src/data/menu.js'], workS: 8,
+      edits: [{ path: 'src/data/menu.js', before: '];', insert: `  { name: '${name.replace(/'/g, "\\'")}', price: ${price} },` }] };
+  }
+  if (pick < 75) {
+    const slug = PAGES[i % PAGES.length] + (round ? `-${round + 1}` : '');
+    const name = ident(slug.replace(/^(\d)/, 'p$1'));
+    const broken = pick >= 70;                    // forgets the heading: "every page renders a heading" fails
+    const page = { path: `src/pages/${slug}.js`, create: `export default () => \`\n  ${broken ? '' : `<h1>${slugTitle(slug)}</h1>\n  `}<p>Coming soon.</p>\n\`;\n` };
+    return { key, title: `Add a ${slugTitle(slug)} page`, intent: `Add a ${slugTitle(slug)} page, linked in the menu bar.`, claims: [page.path, 'src/routes.js'], workS: 10,
+      edits: [page,
+        { path: 'src/routes.js', after: "import menu from './pages/menu.js';", insert: `import ${name} from './pages/${slug}.js';` },
+        { path: 'src/routes.js', after: "{ path: '/menu', title: 'Menu', page: menu },", insert: `  { path: '/${slug}', title: '${slugTitle(slug)}', page: ${name} },` }],
+      ...(broken ? { fix: [{ path: page.path, re: '<p>Coming soon.</p>', to: `<h1>${slugTitle(slug)}</h1>\n  <p>Coming soon.</p>` }], fixNote: 'add the missing heading' } : {}) };
+  }
+  const shade = SHADES[i % SHADES.length];
+  const cls = `tone-${i}`;
+  return { key, title: `Add a ${shade} accent style`, intent: `Add a .${cls} style with the ${shade} accent.`, claims: ['style.css'], workS: 6,
+    edits: [{ path: 'style.css', append: `.${cls} { color: ${shade}; }\n` }] };
+}
+
+/** A task by key: the story's (`hours`, …) or busy mode's (`busy:<i>`). */
+export function taskByKey(key: string): Task | undefined {
+  if (key.startsWith('busy:')) return busyTask(Number(key.slice(5)));
+  return TASKS.find((t) => t.key === key);
+}

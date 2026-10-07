@@ -38,8 +38,12 @@ export type Change = {
   choreTaken?: string; // demo: the fix/redo for this state was handed out ('bounced@<tries>' / 'with-lead@<tries>')
 };
 export type Train = { id: string; state: 'testing' | 'landed' | 'bounced'; changes: string[]; startedAt: number; endedAt: number | null;
-  checks: { ok: boolean; ms: number; failures: string[] } | null; mainBefore: string | null; mainAfter: string | null; note?: string };
-type Demo = { running: boolean; agents: number; speed: number; startedAt: number; endsAt: number; stoppedAt?: number };
+  checks: { ok: boolean; ms: number; failures: string[] } | null; mainBefore: string | null; mainAfter: string | null; note?: string;
+  /** What happened to each change in this train (set when the merger reports). */
+  outcomes?: Record<string, 'landed' | 'bounced' | 'conflict' | 'retry'> };
+type Demo = { running: boolean; agents: number; speed: number; startedAt: number; endsAt: number; stoppedAt?: number;
+  /** story = the café's 14 tasks; busy = an endless stream of small colliding changes. */
+  mode?: 'story' | 'busy' };
 type Meta = {
   slug: string; waiting: string[]; running: string | null; runningSince?: number;
   flags: { llmReplay: boolean }; demo: Demo | null;
@@ -48,13 +52,15 @@ type Meta = {
   trains: string[];
   demoTaken?: Record<string, string>;   // demo task key -> change id ('pending:<ms>' while forking)
   demoForks?: string[];                 // every fork a scripted agent made (deleted on reset)
-  failStreak?: number;                  // trains in a row the merger could not run: back off
+  failStreak?: number;
+  demoBusyNext?: number;                // busy mode: the next generated task's index
+  landings?: [number, number][];        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
 };
 
 const TRAIN_MAX = 8;
 const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40;
 const TRAIN_STUCK_MS = 12 * 60_000;
-export const DEMO_MAX_AGENTS = 12, DEMO_MAX_MS = 20 * 60_000;
+export const DEMO_MAX_AGENTS = 24, DEMO_MAX_MS = 20 * 60_000, DEMO_MAX_STORY_AGENTS = 12, BUSY_MAX_TASKS = 400;
 const OPEN = (c: Change) => c.state !== 'landed';
 
 export class Landing extends DurableObject<Env> {
@@ -265,9 +271,11 @@ export class Landing extends DurableObject<Env> {
       }
     } else {
       let landed = 0;
+      t.outcomes = {};
       for (const rc of r.changes) {
         const c = await this.#get(rc.id);
         if (!c) continue;
+        t.outcomes[rc.id] = rc.landed ? 'landed' : rc.bounced ? 'bounced' : (rc.unhandled?.length || rc.conflicts.length) ? 'conflict' : 'retry';
         c.files = rc.files?.length ? rc.files : c.files;
         if (rc.landed) {
           const how = c.redo === 'lead' ? 'lead' : c.redo === 'llm' ? 'replayed-llm' : rc.how;
@@ -275,6 +283,8 @@ export class Landing extends DurableObject<Env> {
           if (how === 'replayed-handler') this.#ev(c, 'replayed', (rc.handled || []).map((h) => `${h.path} (${h.handler})`).join(', ') || 'on the latest code');
           if (how === 'replayed-llm' || how === 'lead') this.#ev(c, 'replayed', how === 'lead' ? `by ${c.lead || 'the lead'} on the latest code` : 'by a model on the latest code');
           c.state = 'landed'; c.landedAt = Date.now(); delete c.redo;
+          (m.landings ||= []).push([c.landedAt, Math.round((c.landedAt - c.createdAt) / 1000)]);
+          if (m.landings.length > 2000) m.landings.splice(0, m.landings.length - 2000);
           c.landing = { how, conflicts: rc.conflicts, diff: rc.diff || [], commit: rc.commit, mainCommit: r.mainAfter || null };
           this.#ev(c, 'landed', `${(rc.commit || '').slice(0, 7)} on main`);
           landed++;
@@ -384,6 +394,7 @@ export class Landing extends DurableObject<Env> {
     const m = await this.#m(slug);
     const changes = await this.#all();
     const trains = (await Promise.all(m.trains.slice(-12).map((id) => this.ctx.storage.get<Train>(`t:${id}`)))).filter(Boolean) as Train[];
+    const byId = new Map(changes.map((c) => [c.id, c]));
     const files = await this.#files();
     const areaOf = (p: string) => { const d = p.split('/').slice(0, -1); return d.length ? d.slice(0, 2).join('/') : '/'; };
     const areas = new Map<string, { path: string; files: number; working: number; claimed: number; recentConflicts: number; recentLandings: number }>();
@@ -396,13 +407,15 @@ export class Landing extends DurableObject<Env> {
       for (const k of new Set(c.claims.map(areaOf))) if (open) area(k === '/' ? 'x' : `${k}/x`).claimed++;
       for (const e of c.events) if (e.what === 'conflict' && now - e.t < DAY) for (const p of (e.detail || '').split(', ')) if (p) area(p).recentConflicts++;
     }
-    const today = changes.filter((c) => c.landedAt && now - c.landedAt < DAY);
-    const lat = today.map((c) => (c.landedAt! - c.createdAt) / 1000).sort((a, b) => a - b);
+    const today = (m.landings || []).filter(([t]) => now - t < DAY);
+    const lat = today.map(([, s]) => s).sort((a, b) => a - b);
     const recentEv = (w: What) => changes.filter((c) => c.events.some((e) => e.what === w && now - e.t < DAY)).length;
     return {
       now, mode: m.demo ? 'demo' : 'live',
       demo: m.demo, flags: m.flags,
-      queue: { trains: trains.map((t) => ({ id: t.id, state: t.state, changes: t.changes, startedAt: t.startedAt, endedAt: t.endedAt, checks: t.checks || { ok: false, ms: 0, failures: [] }, mainBefore: t.mainBefore, mainAfter: t.mainAfter, ...(t.note ? { note: t.note } : {}) })), waiting: m.waiting },
+      queue: { trains: trains.map((t) => ({ id: t.id, state: t.state, changes: t.changes, startedAt: t.startedAt, endedAt: t.endedAt, checks: t.checks || { ok: false, ms: 0, failures: [] }, mainBefore: t.mainBefore, mainAfter: t.mainAfter, ...(t.note ? { note: t.note } : {}),
+        // What was in the train, by name ("Landed: Add teas to the menu (scripted agent 4)").
+        items: t.changes.map((id) => ({ id, title: byId.get(id)?.title || id, agent: byId.get(id)?.agent || '', outcome: t.outcomes?.[id] || (t.state === 'testing' ? 'testing' : null) })) })), waiting: m.waiting },
       changes: changes.slice().reverse().map(({ remote, queuedAt, tries, redo, task, choreTaken, ...c }) => c),
       areas: [...areas.values()].sort((a, b) => (b.working + b.claimed) - (a.working + a.claimed) || a.path.localeCompare(b.path)),
       stats: { landedToday: today.length, inQueue: m.waiting.length + (m.running ? (trains.find((t) => t.id === m.running)?.changes.length || 0) : 0),
@@ -411,15 +424,17 @@ export class Landing extends DurableObject<Env> {
   }
 
   // ---- demo mode (scripted agents, src/landing/demo.ts) ------------------------------
-  async demoStart(slug: string, agents: number, speed: number) {
+  async demoStart(slug: string, agents: number, speed: number, mode: 'story' | 'busy' = 'story') {
     const m = await this.#m(slug);
-    agents = Math.max(1, Math.min(DEMO_MAX_AGENTS, Math.round(agents || 4)));
+    agents = Math.max(1, Math.min(mode === 'busy' ? DEMO_MAX_AGENTS : DEMO_MAX_STORY_AGENTS, Math.round(agents || 4)));
     speed = Math.max(0.5, Math.min(4, speed || 1));
-    m.demo = { running: true, agents, speed, startedAt: Date.now(), endsAt: Date.now() + DEMO_MAX_MS };
+    // Agents of a bigger earlier run that are still ticking would keep taking tasks.
+    if (m.demo && m.demo.agents > agents) for (let i = agents + 1; i <= m.demo.agents; i++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${slug}#${i}`)).stop().catch(() => {});
+    m.demo = { running: true, agents, speed, mode, startedAt: Date.now(), endsAt: Date.now() + DEMO_MAX_MS };
     await this.#saveMeta();
     for (let i = 1; i <= agents; i++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${slug}#${i}`)).start(slug, i, speed, m.demo.startedAt);
     await this.#arm(60_000);
-    log('landing', 'demo_start', { slug, agents, speed });
+    log('landing', 'demo_start', { slug, agents, speed, mode });
     return m.demo;
   }
 
@@ -441,7 +456,7 @@ export class Landing extends DurableObject<Env> {
     if (m.running) throw new Error('a train is running');
     for (const id of m.order) await this.ctx.storage.delete(`c:${id}`);
     for (const id of m.trains) await this.ctx.storage.delete(`t:${id}`);
-    this.#meta = { ...m, waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demo: m.demo && !m.demo.running ? null : m.demo };
+    this.#meta = { ...m, waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [], demo: m.demo && !m.demo.running ? null : m.demo };
     await this.#saveMeta();
   }
 
@@ -466,7 +481,7 @@ export class Landing extends DurableObject<Env> {
   }
 
   /** For scripted agents: the change, and whether the demo still runs. */
-  async demoState() { const m = await this.#m(); return { running: !!m.demo?.running, speed: m.demo?.speed || 1, startedAt: m.demo?.startedAt || 0 }; }
+  async demoState() { const m = await this.#m(); return { running: !!m.demo?.running, speed: m.demo?.speed || 1, startedAt: m.demo?.startedAt || 0, mode: m.demo?.mode || 'story' }; }
   async change(id: string) { return this.#get(id); }
   /** The next task of the script for scripted agent n (one task per change, in order; a
    *  stacked task only once the change it builds on has pushed). Null when none is ready. */
@@ -482,6 +497,13 @@ export class Landing extends DurableObject<Env> {
       c.choreTaken = mark; await this.#put(c);
       log('landing', 'demo_chore', { slug: m.slug, n, id: c.id, chore: c.state === 'bounced' ? 'fix' : 'redo' });
       return { key: c.task || '', chore: c.state === 'bounced' ? 'fix' : 'redo', id: c.id };
+    }
+    if (m.demo?.mode === 'busy') {
+      const i = m.demoBusyNext || 0;
+      if (i >= BUSY_MAX_TASKS) return null;
+      m.demoBusyNext = i + 1;
+      await this.#saveMeta();
+      return { key: `busy:${i}` };
     }
     const taken = m.demoTaken || (m.demoTaken = {});
     for (const t of TASKS) {

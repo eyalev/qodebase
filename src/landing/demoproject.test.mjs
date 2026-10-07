@@ -91,3 +91,22 @@ test('every task applies to the seed (or to its stack base)', () => {
     if (t.fix) assert.ok(applyEdits(files, t.fix).length > 0, `${t.key} fix`);
   }
 });
+
+test('busy mode: 300 tasks apply in order on top of each other and main stays green except the broken pages', async () => {
+  const { busyTask } = await import('./demoproject.ts');
+  const files = new Map(Object.entries(SEED));
+  const kinds = {};
+  for (let i = 0; i < 300; i++) {
+    const t = busyTask(i);
+    const k = t.fix ? 'broken' : t.title.split(' ')[0];
+    kinds[k] = (kinds[k] || 0) + 1;
+    applyEdits(files, t.edits);
+    if (t.fix) applyEdits(files, t.fix);
+  }
+  const root = mkdtempSync(join(tmpdir(), 'qbbusy-'));
+  writeAll(root, files);
+  const r = spawnSync('node', ['--test'], { cwd: root, env: ENV, encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stdout.slice(-800));
+  assert.ok(kinds.broken > 5 && kinds.Add > 200, JSON.stringify(kinds));
+  rmSync(root, { recursive: true, force: true });
+});

@@ -2,7 +2,7 @@
 // private-project gate):
 //   GET  /api/p/<o>/<n>/landing             the contract view (docs/contest/PLAN.md); anyone who can see the project
 //   POST /api/p/<o>/<n>/landing/approve     {id}: the merge tap -> the change waits for the next train (owner)
-//   POST /api/p/<o>/<n>/landing/demo        {action: 'start'|'stop'|'reset'|'seed', agents?, speed?} (owner)
+//   POST /api/p/<o>/<n>/landing/demo        {action: 'start'|'stop'|'reset'|'seed', agents?, speed?, mode?: 'story'|'busy'} (owner)
 //   POST /api/p/<o>/<n>/landing/flags       {llmReplay?: boolean} (owner)
 //   GET  /api/p/<o>/<n>/landing/state       merger box + alarm state (admin)
 
@@ -33,7 +33,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
     }
     if (verb === 'demo' && request.method === 'POST') {
       const action = String(body.action || '');
-      if (action === 'start') return json(await L.demoStart(info.slug, Number(body.agents) || 4, Number(body.speed) || 1));
+      if (action === 'start') return json(await L.demoStart(info.slug, Number(body.agents) || 4, Number(body.speed) || 1, body.mode === 'busy' ? 'busy' : 'story'));
       if (action === 'stop') return json(await L.demoStop());
       if (action === 'seed' || action === 'reset') {
         // seed: an empty project gets the café; reset: main goes back to the café's first
@@ -56,7 +56,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
         log('landing', `demo_${action}`, { slug: info.slug, commit, forksDeleted: deleted });
         return json({ ok: true, commit, forksDeleted: deleted });
       }
-      return json({ error: `action: start (agents 1-${DEMO_MAX_AGENTS}, speed 0.5-4), stop, reset, seed` }, 400);
+      return json({ error: `action: start (mode story|busy, agents 1-${DEMO_MAX_AGENTS}, speed 0.5-4), stop, reset, seed` }, 400);
     }
   } catch (e) {
     return json({ error: String((e as Error)?.message || e) }, 400);

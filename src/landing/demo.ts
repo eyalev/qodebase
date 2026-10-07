@@ -11,13 +11,13 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from '../env';
 import { log } from '../box';
-import { TASKS, applyEdits, type Edit, type Task } from './demoproject';
+import { applyEdits, taskByKey, type Edit, type Task } from './demoproject';
 import { Objects, push } from '../../sim/cloud/src/gitpush.js';
 
 type Job = { kind: 'task' | 'fix' | 'redo'; changeId: string; key: string; fork: string; remote: string; base: string | null; until: number; stage: 'work' | 'review' };
 type St = { slug: string; n: number; speed: number; runId: number; stopped: boolean; job: Job | null };
 
-const TASK = new Map(TASKS.map((t) => [t.key, t]));
+const TASK = { get: (key: string) => taskByKey(key) };   // the story's tasks and busy mode's generated ones
 const enc = new TextEncoder();
 
 export class DemoAgent extends DurableObject<Env> {
@@ -120,7 +120,7 @@ export class DemoAgent extends DurableObject<Env> {
     log('demo', 'task_started', { slug: s.slug, n: s.n, id, task: task.key, stackedOn: pick.stackOn?.id });
   }
 
-  #dur(s: St, k: number, t: Task) { return ((t.workS || 18 + Math.random() * 22) * k * 1000) / s.speed; }
+  #dur(s: St, k: number, t: Task) { return ((t.workS ? t.workS * (0.6 + Math.random() * 0.8) : 18 + Math.random() * 22) * k * 1000) / s.speed; }
 
   async #fork(repo: ArtifactsRepo, name: string, description: string) {
     for (let i = 0; ; i++) {
