@@ -27,6 +27,7 @@ anything to see why. Overview first, details on tap.
 - [x] Map as people in places (manager review 2026-10-07): numbered agent chips per area, each agent once,
       collisions drawn between two chips, legend under the title; --warn added to DESIGN.md.
 - [x] Tab + default view on projects with info.landing (qb6's flag); Readme moves to More.
+- [ ] Busy mode on live data (qb6 deploys 0f7bbfb + 77c748f after qb8's filming, then starts a busy run): check the line moving and the map at 390 px.
 - [x] Real API: eyal/corner-cafe live (qb6 86c2ca6). Long ids shown short, the collision partner inferred from the file when the detail names none, root area '/' (real snapshot: src/landingui/stress/cafe-real.json).
 Contract confirmed with qb6 2026-10-07: ms epoch times, top-level now/mode/demo/flags, event words
 (asked claimed working pushed reviewing approved changes-suggested queued testing landed bounced conflict
