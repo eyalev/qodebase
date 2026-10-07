@@ -542,8 +542,10 @@ docs/contest/landing.md; owner tab qb6). UI: src/landingui/ (qb7), view "Agents 
   `GET …/landing/state` (admin: merger box + each scripted agent's state and last error).
   Demo: `{"action":"seed"}` once on an empty project, then `reset` / `start {agents, speed}` / `stop`.
 - Tests (real git, no Cloudflare): `node --experimental-strip-types --test src/landing/*.test.mjs`.
-- After a deploy, Durable Objects can answer with the OLD code for about a minute (a
-  scripted run started right after a deploy ran the old agents): wait before testing.
+- **After a deploy, a Durable Object that never goes idle keeps running the OLD code**
+  (scripted agents ticking every 1.5 s ran pre-deploy code for 3+ minutes, 2026-10-07;
+  idle ones switch within a minute). Deploying a demo change: `stop`, wait until
+  `landing/state` shows no agent alarms, then `start`.
 - Cost: cloudcost gap `qodebase-landing` (local cloudcost settings).
 
 ## Talk: speak or type to the app (src/talk*.ts, since 2026-10-06)
