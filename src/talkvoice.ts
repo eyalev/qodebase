@@ -146,7 +146,14 @@ export class TalkVoice extends VoiceAgent {
     }
   }
 
+  // The kit speaks a plain string in one go (Aura-2 made the whole reply before its first word: 6.4 s);
+  // a streamed reply goes sentence by sentence, each made while the one before plays. '' stays a silence.
   async onTurn(transcript: string, context: VoiceTurnContext) {
+    const reply = await this.#turn(transcript, context);
+    return reply ? (async function* () { yield reply; })() : reply;
+  }
+
+  async #turn(transcript: string, context: VoiceTurnContext): Promise<string> {
     const t0 = Date.now();
     const connection = context.connection as Connection;
     const said = String(transcript || '').trim();
