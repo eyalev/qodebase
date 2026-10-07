@@ -21,7 +21,9 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CHROME = join(homedir(), '.cache/ms-playwright/chromium-1234/chrome-linux64/chrome');
-export const SITE = 'https://forq.kapps.dev';
+// QB_SITE overrides (a variant host, a self-hosted copy). forq.kapps.dev 301s here since 2026-10-02.
+export const SITE = process.env.QB_SITE || 'https://qodebase.app';
+const SITE_HOST = new URL(SITE).hostname;
 export const ADMIN = readFileSync(join(homedir(), '.config/forq/admin-secret'), 'utf8').trim();
 
 /** forq's session cookie (same format as src/auth.ts sessionCookie). */
@@ -58,7 +60,7 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
     colorScheme: dark ? 'dark' : 'light', locale: 'en-US',
     userAgent: 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0 Mobile Safari/537.36 forq-demo',
   });
-  const signIn = (e) => context.addCookies([{ name: 'forq_session', value: sessionValue(e), domain: 'forq.kapps.dev', path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
+  const signIn = (e) => context.addCookies([{ name: 'forq_session', value: sessionValue(e), domain: SITE_HOST, path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
   if (email) await signIn(email);   // email: null = start signed out
   await context.addInitScript(TAP_MARKER);
   const page = await context.newPage();
@@ -153,8 +155,9 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
       if (!ok) throw new Error(`waitFor timed out: ${label}`);
       await sleep(800);
     },
-    async end(card = { title: 'forq', sub: 'forq.kapps.dev' }) {
-      mark('end', card);
+    /** card = null: no end card (a scene inside a longer cut, video/contest/cut.py). */
+    async end(card = { title: 'qodebase', sub: 'qodebase.app' }) {
+      if (card) mark('end', card);
       await sleep(300);
       clearInterval(keepAlive);
       await cdp.send('Page.stopScreencast').catch(() => {});
@@ -171,6 +174,6 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
 export async function api(path, { method = 'GET', body, asEmail } = {}) {
   const headers = { 'x-forq-secret': ADMIN, 'content-type': 'application/json' };
   if (asEmail) headers['x-forq-as-email'] = asEmail;
-  const r = await fetch(`https://forq.<sub>.workers.dev${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch(`https://forq.forqdev.workers.dev${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
   return r.json().catch(() => ({}));
 }
