@@ -576,6 +576,15 @@ answers, or both.
   gateway option; Aura and the brain do), and did not show in
   aiInferenceAdaptiveGroups the same hour: its guard is the minute cap + quiet
   hang-up. Measured turn: end of speech → reply done 3.6 s; connect 0.6-1.2 s.
+- **Push-to-talk dictation = tmux-web's recipe** (default "live", 2026-10-07): live
+  words from Nova-3 over the voice kit (TalkVoice `createTranscriber`: dictate
+  connections get `WorkersAINova3STT` with keyterms = the person's project names;
+  conversations keep Flux), plus the whole clip recorded on the phone from the tap
+  (MediaRecorder, independent of the call, which starts ~0.8 s later), re-read by
+  Whisper (`/api/talk/transcribe?names=1`, project names as `initial_prompt`, an
+  echoed prompt is dropped); Whisper's text replaces the live words (6 s timeout →
+  live words). Trace: `rec_start`, `srv_stt`, `dc_whisper {live, final}`. Verified:
+  live "List projects." → final "List some of my projects.".
 - **Talk is its own Worker, `qodebase-talk`** (since 2026-10-07, Eyal's call):
   src/talkworker.ts + talk/wrangler.jsonc (no route; own TalkLog/TalkVoice;
   forq's Registry/Project/Ledger by script_name). forq hands /talk.js,
