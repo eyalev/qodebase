@@ -50,7 +50,7 @@ var css = [
   '@media (hover:hover){.talk-ib:hover{background:var(--t-chip)}}',
   '#talk-log{overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-height:64px;overscroll-behavior:contain}',
   '#talk-log .you{align-self:flex-end;background:var(--t-acc);color:var(--t-accfg);padding:8px 12px;border-radius:12px;max-width:85%;font-size:15px}',
-  '#talk-log .ai{align-self:flex-start;font-size:15px;max-width:92%}',
+  '#talk-log .ai{align-self:flex-start;font-size:15px;max-width:92%;white-space:pre-line}',
   '#talk-log .app,#talk-log .note{align-self:flex-start;font-size:13px;color:var(--t-dim)}',
   '#talk-log .hint{font-size:13px;color:var(--t-dim)}',
   '#talk-live{padding:0 16px;min-height:0;font-size:15px;color:var(--t-dim)}',
@@ -161,7 +161,9 @@ function render() {
     logEl.appendChild(h);
   }
   hist.forEach(function (m) {
-    var d = el('div', { class: m.who }); d.textContent = m.text;
+    var d = el('div', { class: m.who });
+    // Answers from the code reader come as light markdown: show it as plain lines.
+    d.textContent = m.who === 'ai' ? String(m.text).replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\x60([^\x60]+)\x60/g, '$1').replace(/^\s*[-*] /gm, '\u2022 ') : m.text;
     if (m.links && m.links.length) {
       var row = el('div', { class: 'talk-links' });
       m.links.forEach(function (l) { if (!/^\/[^/]/.test(l.href)) return; var a = el('a', { href: l.href, class: 'talk-link' }); a.textContent = l.text; row.appendChild(a); });
