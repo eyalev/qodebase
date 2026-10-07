@@ -60,7 +60,7 @@ type Meta = {
 const TRAIN_MAX = 8;
 const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER_CHANGE = 3;
 const TRAIN_STUCK_MS = 12 * 60_000;
-export const DEMO_MAX_AGENTS = 24, DEMO_MAX_MS = 20 * 60_000, DEMO_MAX_STORY_AGENTS = 12, BUSY_MAX_TASKS = 400;
+export const DEMO_MAX_AGENTS = 24, DEMO_MAX_MS = 20 * 60_000, DEMO_MAX_STORY_AGENTS = 12, BUSY_MAX_TASKS = 400, BUSY_MAX_WAITING = 40;
 const OPEN = (c: Change) => c.state !== 'landed';
 
 export class Landing extends DurableObject<Env> {
@@ -511,6 +511,9 @@ export class Landing extends DurableObject<Env> {
     if (m.demo?.mode === 'busy') {
       const i = m.demoBusyNext || 0;
       if (i >= BUSY_MAX_TASKS) return null;
+      // Backpressure: with a long line, scripted agents wait for it to shorten (20 agents
+      // took all 400 tasks in 4 minutes while trains landed ~30 a minute, 2026-10-08).
+      if (m.waiting.length >= BUSY_MAX_WAITING) return null;
       m.demoBusyNext = i + 1;
       await this.#saveMeta();
       return { key: `busy:${i}` };
