@@ -1,0 +1,59 @@
+{
+ "about": "Every number on the evidence charts, with where it came from. build.mjs reads only this file. Refresh it from the sources before the final cut.",
+ "fastsim": {
+  "source": "sim/README.md, '500 repos x 200 agents' table (node sim/cli.mjs --preset k100 --hours 2, seed 1)",
+  "agents": 100000, "hours": 2,
+  "landedPerHour": [
+   ["Classic pull requests", 4165],
+   ["Agent review", 116997],
+   ["Claims", 114350],
+   ["Claims + redo + trains", 220962],
+   ["Team leads", 241015],
+   ["Land by intent", 375228]
+  ],
+  "winner": "Land by intent", "baseline": "Agent review"
+ },
+ "realcode": {
+  "source": "public/sim/runs/*-500.json (node sim/real/run.mjs --all --agents 500 --hours 2, seed 1)",
+  "agents": 500, "hours": 2,
+  "rows": [
+   ["Agent review", 242, 977, 7],
+   ["Claims + redo + trains", 224, 1264, 0],
+   ["Team leads", 290, 1132, 0],
+   ["Land by intent", 849, 976, 0]
+  ],
+  "rowsAre": ["policy", "landed per hour", "git conflicts", "times main broke"],
+  "replayedByQueue": 972,
+  "winner": "Land by intent", "baseline": "Agent review"
+ },
+ "hono": {
+  "source": "sim/hono/replay.mjs, run of 2026-10-07 22:04-22:05 UTC (~/.local/share/qbsim-bench/hono-replay.jsonl; same as public/sim/runs/hono-w*.json)",
+  "repo": "honojs/hono", "changes": 500, "prs": 346,
+  "waves": [
+   [1, 0, 0, 0],
+   [10, 56, 0, 0],
+   [50, 139, 0, 0],
+   [100, 167, 0, 0]
+  ],
+  "wavesAre": ["opened at once", "PRs that needed another to land first", "git conflicts", "clean merges that broke the type check"],
+  "earlierRunsConflicts": "0 to 3 git conflicts per run across the day's runs"
+ },
+ "bunSwarm": {
+  "source": "sim/bun/calibration.json (sim/bun/analyze.mjs on oven-sh/bun#30412)",
+  "commits": 6755, "agents": 64, "days": 11, "pctOneBranch": 81.3, "secondsApart": 9
+ },
+ "bunMerges": {
+  "source": "sim/bun/calibration.json .merge_replay (sim/bun/replay.mjs: git merge-tree on every merge, real file contents)",
+  "merges": 276, "noSharedFile": 151, "gitMergedClean": 78, "conflicted": 47,
+  "conflictedFiles": 328, "newText": 223, "keptOneSide": 97, "deleted": 8,
+  "lostWorkCommits": 10
+ },
+ "cloud": {
+  "source": "public/sim/runs/cloud-500.json and sim/cloud/README.md (qbsim-cloud Worker, run rmuyfdkx9, 2026-10-07)",
+  "agents": 500, "minutes": 10,
+  "forks": 500, "forkMedianS": 2.8,
+  "pushes": 7033, "pushMedianMs": 280, "pushP90Ms": 588, "pushFailed": 7,
+  "queuePerSecond": 11,
+  "landedOverTime": [[6,0],[16,0],[28,42],[41,187],[54,366],[68,565],[81,690],[94,854],[108,1023],[121,1191],[135,1357],[148,1519],[162,1672],[177,1864],[191,2036],[205,2213],[219,2363],[236,2581],[253,2772],[270,2973],[288,3196],[308,3409],[327,3663],[345,3869],[362,4099],[382,4308],[404,4556],[426,4805],[450,5079],[477,5380],[507,5700]]
+ }
+}
