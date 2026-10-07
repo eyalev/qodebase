@@ -20,7 +20,7 @@ function sget(k, d) { try { var v = ss.getItem(KEY + k); return v == null ? d : 
 function sset(k, v) { try { ss.setItem(KEY + k, JSON.stringify(v)); } catch (e) {} }
 function logEv(event, data) { try { console.log(JSON.stringify(Object.assign({ ts: new Date().toISOString(), module: 'talk', event: event }, data || {}))); } catch (e) {} trace(event, data); }
 // ---- Experience trace (the owner only, /api/talk/trace): every step, batched, sent on leaving a page.
-var tq = [], tOn = false, tTimer = null;
+var tq = [], tOn = false, tTimer = null, VERSION = '';
 var tsid = (function () { try { var v = ss.getItem(KEY + 'sid'); if (!v) { v = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); ss.setItem(KEY + 'sid', v); } return v; } catch (e) { return 'nosid'; } })();
 function trace(ev, data) {
   if (!tOn && tq.length > 300) return;
@@ -40,7 +40,7 @@ function traceFlush(beacon) {
 function traceStart() {
   tOn = true;
   var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {};
-  trace('page', { title: document.title, w: window.innerWidth, h: window.innerHeight, nav: nav.type, load_ms: nav.duration ? Math.round(nav.duration) : undefined });
+  trace('page', { version: VERSION || undefined, title: document.title, w: window.innerWidth, h: window.innerHeight, nav: nav.type, load_ms: nav.duration ? Math.round(nav.duration) : undefined });
   document.addEventListener('click', function (e) {
     var t = e.target && e.target.closest && e.target.closest('a, button, [role=button], input, textarea, summary');
     if (!t) return;
@@ -74,6 +74,9 @@ var css = [
   '#talk-root{--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);font:16px/1.45 var(--t-ff);color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
   '#talk-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483000;width:52px;height:52px;border-radius:12px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer;transition:background-color .12s}',
   '#talk-fab svg{width:24px;height:24px}',
+  '#talk-ver{position:fixed;z-index:2147483000;font:11px/1 var(--t-ff);color:var(--t-dim);font-variant-numeric:tabular-nums;pointer-events:none;text-align:center;width:72px}',
+  '#talk-root.open #talk-ver{display:none}',
+  '#talk-head .ver{font-size:11px;color:var(--t-dim);font-variant-numeric:tabular-nums}',
   '#talk-fab.on{background:#b42d1f}',
   '#talk-root.open #talk-fab{display:none}',
   '#talk-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483001;background:var(--t-bg);border-top:1px solid var(--t-line);border-radius:12px 12px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.14);transform:translateY(105%);transition:transform .22s ease,height .22s ease;height:var(--talk-h,62dvh);max-height:92dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}',
@@ -176,6 +179,10 @@ function build() {
   head.addEventListener('click', function (e) { if (e.target.closest('button')) return; setSheet(root.classList.contains('bar') ? 'open' : 'bar'); });
   peek.addEventListener('click', function () { setSheet('open'); });
   dragHandle(grab);
+  if (VERSION) {
+    var vb = el('div', { id: 'talk-ver', 'aria-hidden': 'true' }); vb.textContent = VERSION; root.appendChild(vb);
+    var vh = el('span', { class: 'ver' }); vh.textContent = VERSION; head.querySelector('b').after(vh);
+  }
   placeFab(); window.addEventListener('resize', placeFab); setTimeout(placeFab, 600);
   root.appendChild(fab); root.appendChild(sheet);
   document.body.appendChild(root);
@@ -243,6 +250,8 @@ function placeFab() {
     lift = window.innerHeight - top; y = top;
   }
   fab.style.bottom = 'calc(' + (lift ? Math.round(lift) + 12 : 16) + 'px + env(safe-area-inset-bottom))';
+  var vb = document.getElementById('talk-ver');
+  if (vb) { vb.style.right = '6px'; vb.style.bottom = 'calc(' + (lift ? Math.round(lift) : 0) + 'px + 2px + env(safe-area-inset-bottom))'; }
 }
 // open (the conversation, at the height they chose) | bar (header + input only, the page shows). Per device.
 function setSheet(st) { trace('sheet', { state: st, h: Math.round(sheet.getBoundingClientRect().height) }); root.classList.toggle('bar', st === 'bar'); set('sheet', st); if (st === 'open') setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 60); }
@@ -987,6 +996,7 @@ function voiceChange(c) {
 fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
   if (!j.signedIn) return;
   me = j.handle;
+  if (j.version && j.version.sha) VERSION = j.version.sha + (j.version.built ? ' ' + new Date(j.version.built).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '');
   if (j.trace) traceStart(); else tq = [];
   build();
   publishTools();

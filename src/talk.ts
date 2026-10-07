@@ -335,7 +335,10 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
   if (!env.AI) return json({ error: 'off', why: 'Talk is not set up on this copy (no AI binding).' }, 404);
   if (url.pathname === '/api/talk/me') {
     if (!who) return json({ signedIn: false });
-    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: isOwner(env, who.handle) });
+    const owner = isOwner(env, who.handle);
+    // The owner sees which deploy a page came from (so a screenshot says its version).
+    const v = owner ? { sha: (env as any).CF_VERSION_METADATA?.tag || null, built: (env as any).CF_VERSION_METADATA?.timestamp || null } : undefined;
+    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: owner, version: v });
   }
   if (url.pathname === '/api/talk/trace') {
     // The owner's own experience, step by step (Eyal, 2026-10-07: "log and instrument every part of the app
