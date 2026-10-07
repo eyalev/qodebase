@@ -93,7 +93,8 @@
     // Trains that failed for infrastructure reasons carry a note (qb6): not part of the story.
     D.queue.trains = D.queue.trains.filter((t) => !t.note);
   }
-  const byId = () => new Map(D.changes.map((c) => [c.id, c]));
+  let idxOf = null, idxMap = null;
+  const byId = () => (idxOf === D ? idxMap : ((idxOf = D), (idxMap = new Map(D.changes.map((c) => [c.id, c])))));
   const isRoot = (p) => p === '.' || p === '/' || p === '';
   const areaOf = (p) => {
     const a = D.areas.map((x) => x.path).filter((x) => !isRoot(x) && (p === x || p.startsWith(`${x}/`))).sort((x, y) => y.length - x.length)[0];
@@ -145,7 +146,7 @@
   function feedItems() {
     const idx = byId(), out = [];
     for (const c of D.changes) for (const e of c.events) { const s = sentence(c, e, idx); if (s) out.push({ t: e.t, c, e, s }); }
-    for (const tr of D.queue.trains) out.push({ t: tr.startedAt, train: tr, s: [tr.changes.length > 1 ? `Testing ${tr.changes.length} changes together` : 'Testing one change', `${tr.changes.map((id) => (idx.get(id) ? AG(idx.get(id).agent) : ref(id))).join(', ')}, on the newest main`], key: `${tr.id}s` });
+    for (const tr of D.queue.trains) out.push({ t: tr.startedAt, train: tr, s: [tr.changes.length > 1 ? `Testing ${tr.changes.length} changes together` : 'Testing one change', `${tr.changes.map((id) => { const x = idx.get(id) || (tr.items || []).find((i) => i.id === id); return x ? AG(x.agent) : ref(id); }).join(', ')}, on the newest main`], key: `${tr.id}s` });
     return out.sort((a, b) => b.t - a.t);
   }
 
@@ -155,7 +156,7 @@
     if (D.mode !== 'demo') return '';
     const on = !D.demo || D.demo.running;
     const ctl = OWN && !MOCK ? `<button class="chipb" type="button" data-demo="${on ? 'stop' : 'start'}">${on ? 'Stop' : 'Start'}</button>` : '';
-    return `<div class="demo"><i class="live${on ? '' : ' off'}"></i><span><b>Demo</b> with ${D.demo ? D.demo.agents : ''} ${term('scripted', 'scripted agents')}. Commits, collisions and tests are real.</span>${ctl}</div>`;
+    return `<div class="demo"><i class="live${on ? '' : ' off'}"></i><span><b>${D.demo?.mode === 'busy' ? 'Busy demo' : 'Demo'}</b> with ${D.demo ? D.demo.agents : ''} ${term('scripted', 'scripted agents')}. Commits, collisions and tests are real.${on ? '' : ' Not running now.'}</span>${ctl}</div>`;
   }
   function numbers() {
     const s = D.stats;
@@ -175,6 +176,9 @@
     const age = Date.now() - firstSeen.get(key);
     return age < PULSE ? ` style="animation-delay:-${age}ms"` : null;
   }
+  // A change by id: from the view's changes, else the train's own items (busy runs keep only
+  // the newest 150 changes in the view).
+  const look = (id, t) => byId().get(id) || (t?.items || []).find((x) => x.id === id) || D.queue.trains.flatMap((x) => x.items || []).find((x) => x.id === id) || null;
   const car = (c, id) => `<button class="car${c && c.state === 'replaying' ? ' rp' : ''}" type="button" data-car="${esc(id)}" data-go="#/change/${esc(id)}" aria-label="${c ? `${AG(c.agent)}: ${short(c)}` : `Change ${esc(id)}`}">${c ? AG(c.agent) : ref(id)}<small>${c ? short(c) : ''}</small></button>`;
   // A long line shows its front and a "+N more" that opens the whole line.
   const capped = (cars, max) => (cars.length <= max ? cars.join('') : cars.slice(0, max).join('') + `<a class="car more" href="#/line">+${cars.length - max}<small>more</small></a>`);
@@ -183,8 +187,9 @@
     const testing = D.queue.trains.filter((t) => t.state === 'testing');
     const replaying = D.changes.filter((c) => c.state === 'replaying');
     const parts = testing.map((t) => {
+      const lk = (id) => look(id, t);
       const el = now() - t.startedAt, typical = 42e3, sp = MOCK ? MSPEED : 1;
-      return `<div class="train"><div class="cars">${capped(t.changes.map((id) => car(idx.get(id), id)), full ? 99 : 8)}</div><div class="prog"><i style="animation-duration:${Math.round(typical / sp)}ms;animation-delay:-${Math.round(Math.min(el, typical - 1) / sp)}ms"></i></div><div class="lbl"><b>Being tested</b> ${since(t.startedAt)}</div></div>`;
+      return `<div class="train"><div class="cars">${capped(t.changes.map((id) => car(lk(id), id)), full ? 99 : 8)}</div><div class="prog"><i style="animation-duration:${Math.round(typical / sp)}ms;animation-delay:-${Math.round(Math.min(el, typical - 1) / sp)}ms"></i></div><div class="lbl"><b>Being tested</b> ${since(t.startedAt)}</div></div>`;
     });
     const wait = [...D.queue.waiting.map((id) => car(idx.get(id), id)), ...replaying.map((c) => car(c, c.id))];
     if (wait.length) parts.push(`<div class="wait"><div class="cars">${capped(wait, full ? 999 : 10)}</div><div class="lbl">${D.queue.waiting.length} waiting${replaying.length ? `, ${replaying.length} replaying` : ''}</div></div>`);
@@ -193,12 +198,21 @@
     const track = parts.length || landP ? `<div class="track" aria-label="The line, front first"><div class="stop${landP ? ' pl' : ''}"${landP || ''}><b>main</b>lands here</div>${parts.join('')}</div>` : '<p class="empty-line">The line is empty. Finished changes wait here to be tested.</p>';
     const done = D.queue.trains.filter((t) => t.state !== 'testing').sort((a, b) => b.endedAt - a.endedAt).slice(0, full ? 50 : 3);
     // What landed, by name: "Add oat milk to the menu (Agent 4)".
-    const what = (ids) => ids.map((id) => { const c = idx.get(id); return c ? `<a href="#/change/${esc(id)}">${short(c)}</a> (${AG(c.agent)})` : `<a href="#/change/${esc(id)}">${ref(id)}</a>`; }).join(', ');
-    const res = done.map((t) => {
-      const rp = t.changes.filter((id) => /^replayed/.test(idx.get(id)?.landing?.how || ''));
-      return t.state === 'landed'
-        ? `<li><i class="dot s-landed"></i><span>Landed${t.changes.length > 1 ? ` ${t.changes.length} changes` : ''}: ${what(t.changes)}${rp.length ? `, ${rp.length === t.changes.length ? '' : rp.length + ' '}after a ${term('replay', 'replay')}` : ''}; tests passed</span><span class="dim small">${ago(t.endedAt)}</span></li>`
-        : `<li><i class="dot s-bounced"></i><span>Sent back: ${what(t.changes)}. A test failed, so main stayed healthy.<span class="dim small" style="display:block">${esc((t.checks.failures[0] || '').split(' › ').pop())}</span></span><span class="dim small">${ago(t.endedAt)}</span></li>`;
+    const what = (ids, t) => ids.map((id) => { const c = look(id, t); return c ? `<a href="#/change/${esc(id)}">${short(c)}</a> (${AG(c.agent)})` : `<a href="#/change/${esc(id)}">${ref(id)}</a>`; }).join(', ');
+    // One row per outcome. train.items (qb6) says each change's outcome: a train can land
+    // some changes and send one back; without items the train's state is everyone's.
+    const res = done.flatMap((t) => {
+      const by = { landed: [], bounced: [], back: [] };
+      if (t.items?.length) for (const it of t.items) (it.outcome === 'landed' ? by.landed : it.outcome === 'bounced' ? by.bounced : by.back).push(it.id);
+      else (t.state === 'landed' ? by.landed : by.bounced).push(...t.changes);
+      const when = `<span class="dim small">${ago(t.endedAt)}</span>`, rows = [];
+      if (by.landed.length) {
+        const rp = by.landed.filter((id) => /^replayed/.test(idx.get(id)?.landing?.how || ''));
+        rows.push(`<li><i class="dot s-landed"></i><span>Landed${by.landed.length > 1 ? ` ${by.landed.length} changes` : ''}: ${what(by.landed, t)}${rp.length ? `, ${rp.length === by.landed.length ? '' : rp.length + ' '}after a ${term('replay', 'replay')}` : ''}; tests passed</span>${when}</li>`);
+      }
+      if (by.bounced.length) rows.push(`<li><i class="dot s-bounced"></i><span>Sent back: ${what(by.bounced, t)}. A test failed, so main stayed healthy.${t.checks?.failures?.[0] ? `<span class="dim small" style="display:block">${esc(t.checks.failures[0].split(' › ').pop())}</span>` : ''}</span>${when}</li>`);
+      if (by.back.length) rows.push(`<li><i class="dot s-replaying"></i><span>Back in line after a ${term('collision', 'collision')}: ${what(by.back, t)}</span>${when}</li>`);
+      return rows;
     }).join('');
     return `<div class="line">${track}${res ? `<ul class="results">${res}</ul>` : ''}</div>`;
   }
@@ -222,6 +236,11 @@
     return `<button class="ag s-${k}${p ? ' pl' : ''}${extra}" type="button"${p || ''} data-go="#/change/${esc(c.id)}" aria-label="${AG(c.agent)}: ${WORD[k]}, ${short(c)}">${esc(agNum(c.agent))}</button>`;
   };
   const mapKey = () => `<div class="key top"><span><i class="ag s-working"></i>working</span><span><i class="ag s-reviewing"></i>in review</span><span><i class="ag s-ready"></i>ready to merge</span><span><i class="ag s-queued"></i>in the line or being tested</span><span><i class="ag s-replaying"></i>${term('replay', 'replaying')}</span><span><i class="ag s-bounced"></i>sent back or stuck</span><span><i class="ag s-landed"></i>just landed</span><span><i class="zap"></i><span>${term('collision', 'collided')}</span></span><span><i class="zap ok"></i><span>collided, then ${term('replay', 'replayed')}</span></span></div>`;
+  const collWords = (pairs) => {
+    const open = pairs.filter((x) => !x.ok), ok = pairs.filter((x) => x.ok);
+    return open.map((x) => `<span class="coll">${esc(x.words)}</span>`).join('')
+      + (ok.length === 1 ? `<span class="coll ok">${esc(ok[0].words)}</span>` : ok.length ? `<span class="coll ok">${ok.length} collisions just replayed and landed</span>` : '');
+  };
   function theMap() {
     const T = now(), idx = byId();
     // Each agent shows once: in the area of its most important change's first file.
@@ -242,7 +261,10 @@
         if (!o || paired.has(c.agent) || paired.has(o.agent)) continue;
         paired.add(c.agent); paired.add(o.agent);
         const p = pulse(`x:${c.id}:${e.t}`);
-        const fixed = c.events.some((x) => x.t > e.t && x.what === 'replayed') || c.state === 'landed';
+        const fixedAt = c.events.find((x) => x.t >= e.t && (x.what === 'replayed' || x.what === 'landed'))?.t ?? (c.state === 'landed' ? c.landedAt : null);
+        const fixed = fixedAt != null;
+        // A resolved collision stays on the map for 90 s (green), then leaves: busy runs have hundreds.
+        if (fixed && fixedAt < T - 90e3) continue;
         const pc = (x) => { const t = top.get(x.agent) || x; return chip(t, skey(t), home.get(x.agent) === a.path ? '' : ' past'); };
         pairs.push({ ok: fixed, html: `<span class="pair${fixed ? ' ok' : ''}${p ? ' pl' : ''}"${p || ''}>${pc(c)}<i class="zap" aria-hidden="true"></i>${pc(o)}</span>`,
           words: `${AG(c.agent)} and ${AG(o.agent)} collided on ${conflictPaths(c, e).map((x) => x.split('/').pop()).join(', ')}${c.state === 'landed' ? '; replayed, landed' : fixed ? '; replayed' : c.state === 'replaying' ? '; replaying now' : ''}` });
@@ -252,7 +274,7 @@
       const n = best.size;
       const meta = a.recentLandings ? `${a.recentLandings} landed today` : '';
       if (!chips) { quiet.push(a.path); return ''; }
-      return `<div class="area" data-go="#/area/${encodeURIComponent(a.path)}"><button class="nm" type="button" data-go="#/area/${encodeURIComponent(a.path)}">${esc(areaLabel(a.path))}<span class="meta">${meta}</span></button><span class="chips">${chips}</span>${pairs.map((x) => `<span class="coll${x.ok ? ' ok' : ''}">${esc(x.words)}</span>`).join('')}</div>`;
+      return `<div class="area" data-go="#/area/${encodeURIComponent(a.path)}"><button class="nm" type="button" data-go="#/area/${encodeURIComponent(a.path)}">${esc(areaLabel(a.path))}<span class="meta">${meta}</span></button><span class="chips">${chips}</span>${collWords(pairs)}</div>`;
     }).join('')}${quiet.length ? `<p class="quiet">Quiet now: ${quiet.map((q) => `<a href="#/area/${encodeURIComponent(q)}" class="mono">${esc(areaLabel(q))}</a>`).join(', ')}</p>` : ''}</div>`;
   }
   let firstPaint = true;
@@ -357,7 +379,7 @@
   }
   function viewChange(id) {
     const idx = byId(), c = idx.get(id);
-    if (!c) return `<div class="drill">${crumbs([['Agents at work', '#/'], [ref(id)]])}<p class="dim">This change is not in today's data.</p></div>`;
+    if (!c) return `<div class="drill">${crumbs([['Agents at work', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style="font-size:20px;margin-bottom:6px">${short(it)}</h2><p class="dim">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : '<p class="dim">This change is not in today\'s data.</p>'; })()}</div>`;
     const area = areaOf(c.files[0] || '.');
     const story = c.events.map((e) => { const s = sentence(c, e, idx) || [{ working: `${AG(c.agent)} working`, reviewing: 'The reviewer is reading it', testing: 'Being tested with the newest main' }[e.what] || e.what, { alone: 'on its own', 'next train': '' }[e.detail] ?? e.detail]; return `<li><time>${hhmm(e.t)}</time><span>${esc(s[0])}${s[1] && s[1] !== short(c) ? `<span class="d">${esc(s[1])}</span>` : ''}</span></li>`; }).reverse().join('');
     const stackOn = c.stackedOn && idx.get(c.stackedOn);
