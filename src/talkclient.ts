@@ -232,6 +232,7 @@ function submit(text) {
       if (c.op === 'go' && c.href) offerOn('Take me to ' + (c.label || 'that page') + '?', function () { act(c); });
       return done();
     }
+    if (c.greet) { var hi = greeting(c.example); add('ai', hi); say(hi); return done(); }
     if (c.mode === 'none') { add('note', (c.complete || 0) < 0.5 ? 'Sounds cut off. Say it again?' : 'I did not catch a request there.'); return done(); }
     if (c.op === 'status') return whatsGoingOn(text);
     if (c.op === 'change') return changeRequest(c);
@@ -249,6 +250,11 @@ function submit(text) {
   }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'decide', err: String(e) }); done(); });
 }
 function done() { busy = false; status(''); finish(); }
+// A greeting or small talk: a friendly line and three things to try, one with their own project.
+function greeting(example) {
+  var p = example || 'todo';
+  return 'Hi! I can find things, open your projects, and answer questions about them. Try \u201cwhat\u2019s going on\u201d, \u201copen my ' + p + ' app\u201d, or \u201chow does my ' + p + ' app save its data?\u201d';
+}
 
 // ---- "What's going on": real data across their projects (/api/talk/status, no model).
 function whatsGoingOn(text) {

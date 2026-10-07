@@ -133,6 +133,7 @@ export function buildQuestions(utterance: string, s: Screen, projects: Proj[]) {
     mode: choice('Is the sentence a request to do something in the app, a question or conversation to answer, both, or not a request?', MODES),
     action: choice('If it asks to do something in the app, what kind of thing?', ACTIONS),
     complete: noul('The sentence is a finished request or question, not cut off in the middle.'),
+    greeting: noul('The sentence is a greeting, thanks, goodbye or small talk to the assistant ("hi", "hello there", "thanks", "how are you", "good morning"), not a request.'),
     wants_change: noul('The sentence asks for something in an app or project to be different: a feature added, fixed, changed, improved or removed (not just opening or looking at it).'),
     risky: noul('Doing what the sentence asks would delete a project or an account, merge, publish, make something public or private, sign out, revoke, uninstall, disconnect, or spend money. Asking the agents to change, add or remove something inside an app is NOT risky (it only proposes a change).'),
   };
@@ -162,12 +163,20 @@ export type Cmd = {
   mode: string; modeP: number | null; op: string; p: number | null; risky: number | null; complete: number | null;
   href?: string; label?: string; target?: string; text?: string; section?: string; why?: string;
   slug?: string; mine?: boolean;   // change / code: the project, and whether it is theirs
+  greet?: boolean; example?: string;   // a greeting / small talk, and one of their projects to suggest
   depth?: string;                  // code: fact | explain | plan (haiku | sonnet | opus in the ask box)
 };
 
 /** Answers -> one command the page carries out (or hands to the chat lane). */
 export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen, projects: Proj[], utterance: string): Cmd {
   const cmd = resolveAction(answers, cands, s, projects, utterance);
+  // Greetings and small talk get a friendly reply with examples, never "say it again" (Eyal's phone, 2026-10-07:
+  // "hi there" and "hello" got "Sounds cut off"). Fixed words in code; the model's yes/no for the rest.
+  const hello = /^\s*(hi|hello|hey|hiya|yo|howdy|good (morning|afternoon|evening|night)|thanks|thank you|cheers|how are you|what'?s up|bye|goodbye)\b/i.test(utterance) || (answers.greeting?.noul ?? 0) >= 0.6;
+  if (hello && cmd.op === 'none') {
+    const own = projects.find((p) => p.mine);
+    return { ...cmd, mode: 'none', greet: true, example: own ? own.name.replace(/-/g, ' ') : undefined };
+  }
   // "Go home" / "home page" is a fixed phrase: vocabulary in code, not the model (talkui's rule).
   const home = s.items.find((i) => i.kind === 'link' && i.href === '/');
   if (home && cmd.mode !== 'ask' && /\b(go|take me|back to the|bring me) home\b|\bhome ?page\b|^home$/i.test(utterance.trim())) return { ...cmd, mode: cmd.mode === 'none' ? 'act' : cmd.mode, op: 'go', href: '/', label: home.text, target: home.id };

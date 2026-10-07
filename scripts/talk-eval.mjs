@@ -63,7 +63,10 @@ const CASES = [
   ['p_forq_calculator', 'open the app and tell me how it works', { mode: 'both' }],
   ['home', 'explain this page', { mode: ['ask', 'both', 'act'], op: ['explain', 'none'] }],
   ['home', 'thanks', { mode: ['none', 'ask'] }],
-  ['home', 'um so I was', { mode: ['none'] }],
+  ['home', 'hi there', { mode: ['none', 'ask'], greet: true }],
+  ['home', 'hello', { mode: ['none', 'ask'], greet: true }],
+  ['p_forq_calculator', 'good morning, how are you?', { mode: ['none', 'ask'], greet: true }],
+  ['home', 'um so I was', { mode: ['none'], greet: false }],
   // Change requests and status (2026-10-07).
   ['home', 'in my todo app, add due dates', { mode: 'act', op: 'change', label: 'eyal/todo' }],
   ['home', 'make the timer chime louder', { mode: 'act', op: 'change', label: 'timer' }],
@@ -110,6 +113,8 @@ function judge(cmd, want) {
   if (want.href && cmd.op === 'go' && !(want.href === '/' ? cmd.href === '/' : (cmd.href || '').includes(want.href))) bad.push(`href ${cmd.href}`);
   if (want.label && !(cmd.label || '').includes(want.label)) bad.push(`label ${cmd.label}`);
   if (want.text && !(cmd.text || '').toLowerCase().includes(want.text)) bad.push(`text ${cmd.text}`);
+  if (want.greet === true && !cmd.greet && cmd.mode !== 'ask') bad.push('not treated as a greeting');
+  if (want.greet === false && cmd.greet) bad.push('treated as a greeting');
   if (want.risky === true && !((cmd.risky ?? 0) >= 0.5)) bad.push(`risky ${cmd.risky}`);
   if (want.risky === false && (cmd.risky ?? 0) >= 0.5) bad.push(`risky ${cmd.risky} (should act)`);
   return bad;
