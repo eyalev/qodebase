@@ -61,6 +61,7 @@ var S = {
   speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
   when: get('when', 'voice'),           // voice (only when I spoke) | always
   speed: Number(get('speed', '1.25')) || 1.25,   // reply speed, pitch kept (Ask's Jarvis default)
+  pause: get('pause', '2500'),          // Deepgram live: send after this many ms of quiet, or 'tap' (Ask's "send when I stop talking")
 };
 // Aura-2 is the default voice since 2026-10-07 (Eyal): devices that had Aura-1 only because it was the default move once.
 try { if (!ls.getItem(KEY + 'v2')) { if (ls.getItem(KEY + 'voice-on') === 'aura-1') ls.setItem(KEY + 'voice-on', 'aura-2'); if (S.voice === 'aura-1') { S.voice = 'aura-2'; S.speaker = ''; ls.setItem(KEY + 'voice', 'aura-2'); ls.removeItem(KEY + 'speaker'); } ls.setItem(KEY + 'v2', '1'); } } catch (e) {}
@@ -159,6 +160,7 @@ function build() {
   var setp = el('div', { id: 'talk-set' });
   setp.innerHTML =
     '<label>Dictation<select id="talk-s-engine"><option value="live">Deepgram live (Cloudflare): words as you speak, waits for you to finish</option><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
+    '<label>Send what I said<select id="talk-s-pause"><option value="1500">After a 1.5 s pause</option><option value="2500">After a 2.5 s pause</option><option value="4000">After a 4 s pause</option><option value="tap">Only when I tap the mic</option></select></label>' +
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
     '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
     '<label>Voice<select id="talk-s-speaker"></select></label>' +
@@ -216,6 +218,8 @@ function build() {
   sv.onchange = function () { S.voice = sv.value; set('voice', S.voice); if (S.voice !== 'off') set('voice-on', S.voice); fillSpeakers(); set('speaker', S.speaker); voiceBtn(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how I sound.'); } };
   sk.onchange = function () { S.speaker = sk.value; set('speaker', S.speaker); unlockAudio(); lastSpoken = true; say('This is how I sound.'); };
   sw.onchange = function () { S.when = sw.value; set('when', S.when); };
+  var spz = document.getElementById('talk-s-pause'); spz.value = S.pause;
+  spz.onchange = function () { S.pause = spz.value; set('pause', S.pause); trace('setting', { pause: S.pause }); };
   var sspd = document.getElementById('talk-s-speed'); sspd.value = String(S.speed);
   sspd.onchange = function () { S.speed = Number(sspd.value) || 1.25; set('speed', String(S.speed)); trace('setting', { speed: S.speed }); vcVoice(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how fast I talk.'); } };
   spk.addEventListener('click', function () { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-2') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); if (S.voice === 'off') stopSpeaking(); });
@@ -881,7 +885,10 @@ function publishTools() {
 // mode; Flux shows the words as they are said and ends the turn when the sentence is done (a pause
 // to think does not end it); the words then go through the usual Talk flow. Kept connected while
 // Talk is open so the mic starts at once; billed only while listening.
-var dc = null, dcReady = false, dcOn = false, dcText = '', dcT0 = 0;
+var dc = null, dcReady = false, dcOn = false, dcText = '', dcT0 = 0, dcBuf = [], dcQuiet = null;
+// What was said so far: the finished pieces plus the one being said now.
+function dcSaid(interim) { return dcBuf.concat(interim ? [interim] : []).join(' ').replace(/\s+/g, ' ').trim(); }
+function dcArm() { clearTimeout(dcQuiet); if (S.pause !== 'tap' && dcOn) dcQuiet = setTimeout(function () { if (dcOn) liveFinish(''); }, Number(S.pause) || 2500); }
 function dcWarm(cb) {
   if (dc && dcReady) return cb && cb();
   if (dc) { if (cb) dc.__wait = (dc.__wait || []).concat(cb); return; }
@@ -893,18 +900,21 @@ function dcWarm(cb) {
       dcReady = !!on; logEv('dc_connection', { on: on, ms: Date.now() - t0 });
       if (on) { try { dc.sendJSON({ type: 'mode', dictate: true }); } catch (e) {} var w = dc.__wait || []; dc.__wait = []; w.forEach(function (f) { f(); }); }
     });
-    dc.addEventListener('interimtranscript', function (t) { if (dcOn && t) { dcText = t; live.textContent = t; } });
+    dc.addEventListener('interimtranscript', function (t) { if (dcOn && t) { dcText = t; live.textContent = dcSaid(t); clearTimeout(dcQuiet); } });
     dc.addEventListener('custommessage', function (d) {
       if (!d || d.type !== 'talk-dictated') return;
-      logEv('dc_final', { chars: String(d.text || '').length, ms: Date.now() - dcT0 });
-      liveFinish(String(d.text || ''));
+      // Flux ended a turn: keep it and keep listening (a pause to think is not the end), send after the quiet.
+      if (!dcOn) return;
+      dcBuf.push(String(d.text || '').trim()); dcText = ''; live.textContent = dcSaid('');
+      logEv('dc_piece', { chars: String(d.text || '').length, pieces: dcBuf.length, ms: Date.now() - dcT0 });
+      dcArm();
     });
     dc.addEventListener('error', function (e) { if (e && !/no response generated/i.test(String(e))) logEv('dc_error', { err: String(e) }); });
     dc.connect();
   });
 }
 function startLive() {
-  setListening(true); status('Starting\u2026'); dcText = ''; live.textContent = '';
+  setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); live.textContent = '';
   dcWarm(function () {
     if (!listening) return;
     dcOn = true; dcT0 = Date.now();
@@ -914,17 +924,20 @@ function startLive() {
 }
 function liveFinish(text) {
   if (!dcOn) return;
-  dcOn = false;
+  dcOn = false; clearTimeout(dcQuiet);
   try { dc.endCall(); } catch (e) {}
   setListening(false); live.textContent = '';
-  var t = (text || dcText || '').trim();
+  var t = (dcSaid(text || dcText) || '').trim();
+  logEv('dc_final', { chars: t.length, pieces: dcBuf.length, ms: Date.now() - dcT0 });
+  dcBuf = [];
   if (t) { lastSpoken = true; submit(t); } else add('note', 'I did not hear anything.');
 }
 function liveStop(cancel) {
   if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} setListening(false); live.textContent = ''; return; }
-  // Stopped by hand: Flux may still send the final words; else use what was shown.
-  var t = dcText; status('Finishing\u2026');
-  setTimeout(function () { if (dcOn) liveFinish(t); }, 1200);
+  // Stopped by hand (tap, or releasing the button): send what was heard, including the piece being said.
+  status('Finishing\u2026');
+  var t = dcText;
+  setTimeout(function () { if (dcOn) liveFinish(t); }, 600);
 }
 
 // ---- Conversation (phase 2): mic streamed to the TalkVoice agent (src/talkvoice.ts)
