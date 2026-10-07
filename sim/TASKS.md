@@ -17,9 +17,10 @@
 - [x] Drill-down UI: repo map at time t, folder, file history, change record with diff, scrubber
 
 ## 3. Same run on Cloudflare
-- [ ] Artifacts pricing + limits read; budget cap; cloudcost line
-- [ ] Agents as Durable Objects pushing to Artifacts forks
-- [ ] 500-agent run, measured latency and cost
-
-Found on the way (step 2): check() lost its path list to a one-shot iterator (no semantic breaks were ever caught, fixed);
-edit/addField generators ran dry at high throughput (fixed). Added a 4th real policy, land by intent (replay on landing).
+- [x] Artifacts pricing + limits read ($0.15/1k ops past 10k/month, billing from 10-14); caps in code (600 agents, 20 min); cloudcost gap `qbsim-cloud`
+- [x] Agents as Durable Objects pushing to Artifacts forks (in-Worker git push, no deps)
+- [x] 10 / 20 / 50 agents: all pushes ok; concurrent forks of a fresh repo fail (retry + backoff now)
+- [x] Run state survives DO resets (two runs lost before this; verified with a mid-run deploy)
+- [x] 500 agents x 10 min: 5,810 landed, 7,033 agent pushes (7 failed), coordinator overloaded at ~11 landings/s; main resync on stale push added and verified; bundle + git fsck + README
+- [ ] Deploy forq so qodebase.app/sim has the cloud run (check no boxes awake, coordinate with qb tabs)
+- [ ] Artifacts ops actually billed: check the dashboard/GraphQL after 10-14 (counted by the sim so far ~17k this month)

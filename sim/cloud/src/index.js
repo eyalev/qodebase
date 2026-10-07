@@ -26,6 +26,15 @@ export default {
       if (request.headers.get('x-sim-key') !== env.SIM_KEY) return new Response('forbidden', { status: 403 });
       return Response.json(await run.cloneToken());
     }
+    if (url.pathname === '/forget' && request.method === 'POST') {
+      if (request.headers.get('x-sim-key') !== env.SIM_KEY) return new Response('forbidden', { status: 403 });
+      return Response.json(await run.forgetLastTrain());
+    }
+    // End a run now (it keeps what landed).
+    if (url.pathname === '/stop' && request.method === 'POST') {
+      if (request.headers.get('x-sim-key') !== env.SIM_KEY) return new Response('forbidden', { status: 403 });
+      return Response.json(await run.stop());
+    }
     // Test the restore path: reset the merge-queue object as an eviction would.
     if (url.pathname === '/abort' && request.method === 'POST') {
       if (request.headers.get('x-sim-key') !== env.SIM_KEY) return new Response('forbidden', { status: 403 });
@@ -72,6 +81,45 @@ export class Run extends DurableObject {
     this.s = s;
     log('restored', { build: BUILD, runId: s.runId, phase: s.phase, changes: changes.length, queue: s.queue.length, restores: s.m.restores });
     return true;
+  }
+  async stop() {
+    if (!(await this.ensure())) return { error: 'no run' };
+    this.s.phase = 'done'; this.s.m.errors.push('stopped by hand');
+    await this.ctx.storage.deleteAlarm();
+    await this.persist();
+    log('stopped', { runId: this.s.runId, ...this.summary() });
+    return this.summary();
+  }
+  async resyncMain() {
+    const s = this.s, t0 = Date.now();
+    const repo = await this.env.ARTIFACTS.get(s.main.name);
+    const [head] = await repo.log({ limit: 1 });
+    const snap = new Map(); let reads = 2;
+    const walk = async (treeHash, prefix) => {
+      reads++;
+      for (const e of (await repo.readTree(treeHash)) || []) {
+        if (e.mode === '40000' || e.type === 'tree') await walk(e.hash, prefix + e.name + '/');
+        else {
+          snap.set(prefix + e.name, e.hash);
+          if (!s.text.has(e.hash)) { reads++; s.text.set(e.hash, await (await repo.readBlob(e.hash)).text()); }
+        }
+      }
+    };
+    await walk(head.treeHash, '');
+    s.m.resyncs = (s.m.resyncs || 0) + 1; s.m.artifactsOps += reads;
+    log('main_resynced', { from: s.main.tip, to: head.hash, files: snap.size, reads, ms: Date.now() - t0 });
+    s.history.push({ t: this.now(), sha: head.hash, ids: [], kind: 'resync' });
+    s.main.tip = head.hash; s.main.snap = snap;
+  }
+  // Test hook: pretend the last train's push was never recorded (what a reset at the wrong moment does).
+  async forgetLastTrain() {
+    if (!(await this.ensure())) return { error: 'no run' };
+    const lands = this.s.history.filter((h) => h.kind === 'land');
+    if (lands.length < 2) return { error: 'need two trains' };
+    const prev = lands[lands.length - 2];
+    this.s.main.tip = prev.sha; // keep snap: the content mismatch is what a reset leaves too
+    await this.persist();
+    return { tipNow: prev.sha };
   }
   async abort() { log('abort_requested', { runId: this.s?.runId }); this.ctx.abort('test: simulated eviction'); }
   touch(c) { this.dirty.add(Math.floor((c.id - 1) / CHUNK)); }
@@ -152,7 +200,8 @@ export class Run extends DurableObject {
       this.sample();
       s.trains++;
       if (s.phase === 'run' && Date.now() > s.deadline) s.phase = 'drain';
-      if (s.phase === 'drain' && !s.queue.length && (s.agentsDone >= s.m.forks || Date.now() > s.deadline + 180_000)) {
+      // Done when drained, or 5 minutes after the deadline whatever is left (a run must end).
+      if (s.phase === 'drain' && ((!s.queue.length && s.agentsDone >= s.m.forks) || Date.now() > s.deadline + 300_000)) {
         s.phase = 'done';
         log('done', { runId: s.runId, ...this.summary() });
         return;
@@ -227,7 +276,10 @@ export class Run extends DurableObject {
     if (!r.ok) {
       s.m.mainPushFail++; s.m.errors.push(`main push ${r.status}: ${r.detail}`.slice(0, 200));
       log('main_push_failed', { status: r.status, detail: r.detail });
-      for (const c of landed) { s.queue.unshift(c.id); }
+      for (const c of landed.slice().reverse()) { c.state = 'mergeWait'; s.queue.unshift(c.id); }
+      // Stale: main moved without us (a train landed just before a reset). Re-read the
+      // real tip and tree from Artifacts; the queued changes replay on top of it.
+      if (/stale ref|non-fast-forward/.test(r.detail || '')) await this.resyncMain();
       return;
     }
     s.m.mainPushMs.push(ms);
@@ -253,7 +305,7 @@ export class Run extends DurableObject {
       forks: s.m.forks, forkFailed: s.m.forkFailed, forkRetries: s.m.forkRetries, forkMsP50: pct(s.m.forkMs, 0.5), forkMsP90: pct(s.m.forkMs, 0.9),
       agentPushes: s.m.agentPushes, agentPushFail: s.m.agentPushFail, agentPushMsP50: pct(s.m.agentPushMs, 0.5), agentPushMsP90: pct(s.m.agentPushMs, 0.9),
       mainPushes: s.m.mainPushes, mainPushFail: s.m.mainPushFail, mainPushMsP50: pct(s.m.mainPushMs, 0.5), mainPushMsP90: pct(s.m.mainPushMs, 0.9),
-      restores: s.m.restores || 0, artifactsOpsCounted: s.m.artifactsOps, errors: s.m.errors.slice(0, 10), errorCount: s.m.errors.length,
+      restores: s.m.restores || 0, resyncs: s.m.resyncs || 0, artifactsOpsCounted: s.m.artifactsOps, errors: s.m.errors.slice(0, 10), errorCount: s.m.errors.length,
     };
   }
   async cloneToken() {
