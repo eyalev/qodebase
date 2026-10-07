@@ -23,7 +23,8 @@ import { fileURLToPath } from 'node:url';
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => { if (a.startsWith('--')) acc.push([a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : true]); return acc; }, []));
 const REPO = (args.repo || join(homedir(), 'projects/github/honojs/hono')).replace(/^~/, homedir());
 const NPRS = Number(args.prs || 500);
-const MAX_RETRIES = 20; // per change, across every retry path; then it is dropped and counted
+const MAX_RETRIES = 20; // per change, across the conflict/break redo paths; then it is dropped and counted
+const STALL_WAVES = 3; // waves in a row with no landing before the earliest change is dropped
 const WAVES = String(args.waves || '1,10,50,100').split(',').map(Number);
 const HERE = dirname(fileURLToPath(import.meta.url));
 const RUNS = join(HERE, '../../public/sim/runs');
@@ -32,6 +33,8 @@ const TRACE = join(LOG, 'hono-replay-trace.jsonl');
 const trace = (o) => appendFileSync(TRACE, JSON.stringify({ ts: new Date().toISOString(), ...o }) + '\n');
 const git = (a, opts = {}) => execFileSync('git', ['-C', REPO, ...a], { encoding: 'utf8', maxBuffer: 64 << 20, ...opts }).trim();
 const gitTry = (a) => spawnSync('git', ['-C', REPO, ...a], { encoding: 'utf8', maxBuffer: 64 << 20 });
+// "added\tremoved\tpath" per file, sorted: the shape of a diff, independent of its base.
+const numstat = (a, b) => git(['diff', '--numstat', a, b]).split('\n').filter(Boolean).sort().join('\n');
 
 // ---- the PRs: newest NPRS squash commits on main's first-parent line, oldest first ----
 const lines = git(['log', '--first-parent', '--format=%H%x09%P%x09%at%x09%an%x09%s', 'origin/main', `-n`, String(NPRS * 2)]).split('\n');
@@ -44,7 +47,7 @@ for (const l of lines.slice(0, NPRS)) {
   prs.push({ sha, parent: parents.split(' ')[0], at: +at, author, subject, pr: m ? +m[1] : null });
 }
 prs.reverse();
-for (const p of prs) p.files = git(['diff', '--name-only', p.parent, p.sha]).split('\n').filter(Boolean);
+for (const p of prs) { p.files = git(['diff', '--name-only', p.parent, p.sha]).split('\n').filter(Boolean); p.numstat = numstat(p.parent, p.sha); }
 console.log(`${prs.length} changes (${prs.filter((p) => p.pr).length} PRs, ${prs.filter((p) => !p.pr).length} direct pushes), #${prs.find((p) => p.pr)?.pr} (${new Date(prs[0].at * 1000).toISOString().slice(0, 10)}) to #${[...prs].reverse().find((p) => p.pr)?.pr} (${new Date(prs.at(-1).at * 1000).toISOString().slice(0, 10)})`);
 
 // ---- type check in a scratch worktree (node_modules shared with the clone) ----
@@ -87,11 +90,12 @@ function replay(W) {
   const pending = prs.map((p, i) => ({ ...p, idx: i, events: [], deferrals: 0 }));
   const done = [];
   const history = [];
-  let wave = 0, clock = 0;
+  let wave = 0, clock = 0, stall = 0;
   const counts = { landed: 0, depends: 0, conflict: 0, conflictRebased: 0, broken: 0, deferred: 0 };
   const conflictFiles = {}, brokenFiles = {};
   while (pending.length) {
     wave++;
+    const landedBefore = counts.landed;
     const S = main, Serrs = mainErrs;
     // A wave is the next W pull requests; direct pushes between them (release bumps) are
     // not concurrent work: they ride along and land in order on the latest main.
@@ -106,11 +110,22 @@ function replay(W) {
       p.events.push([clock, 'asked', p.subject]);
       if (!p.pr) { p.direct = true; authored.push(p); continue; }
       const a = merge3(p.parent, S, p.sha);
+      // A clean merge can still lose part of the PR: when S lacks a change the PR builds on,
+      // git takes "both sides removed it" as already done (PR #4757 reverted code that only
+      // arrived with the next "Merge next"; authored on S it was empty and landed as nothing,
+      // so main != history). The PR applies as written only if its diff on S has the same
+      // per-file line counts as its real diff; otherwise it needed an earlier change.
+      if (!a.conflicts.length && numstat(S, a.tree) !== p.numstat) {
+        trace({ event: 'absorbed', W, wave, change: p.sha.slice(0, 10), pr: p.pr, real: p.numstat.slice(0, 200), onS: numstat(S, a.tree).slice(0, 200) });
+        a.conflicts = ['(part of the change already absorbed on this main)'];
+      }
       if (a.conflicts.length) {
         trace({ event: 'depends', W, wave, change: p.sha.slice(0, 10), pr: p.pr, deferrals: p.deferrals, files: a.conflicts.slice(0, 3) });
-        counts.depends++; p.deferrals++; p.overlapped = true;
+        // Waiting for an earlier PR is not a retry: it lands once that one has. Only a stall
+        // (no landing for STALL_WAVES waves) ends it, so the run still ends.
+        counts.depends++; p.waitsEarlier = (p.waitsEarlier || 0) + 1; p.overlapped = true;
         p.events.push([clock, 'depends', a.conflicts.slice(0, 5)]);
-        if (p.deferrals > MAX_RETRIES) { p.state = 'dropped'; p.events.push([clock, 'dropped', 'never applied']); done.push(p); } else back.push(p);
+        back.push(p);
         continue;
       }
       p.authoredTree = a.tree; p.base = S;
@@ -138,6 +153,15 @@ function replay(W) {
         p.events.push([clock, 'landed', main.slice(0, 7)]);
         history.push({ t: clock, sha: main, ids: [p.idx + 1], kind: 'land' });
         done.push(p); continue;
+      }
+      // A direct push earlier in history that has not landed yet (e.g. "Merge next") is a
+      // barrier: landing past it reorders two changes that may not commute (a revert landed
+      // before the merge that re-adds what it reverted, and main ended up != history).
+      if (pending.some((q) => !q.pr && q.idx < p.idx) || back.some((q) => !q.pr && q.idx < p.idx)) {
+        p.waits = (p.waits || 0) + 1;
+        trace({ event: 'pr_waits_direct', W, wave, change: p.sha.slice(0, 10), pr: p.pr, waits: p.waits });
+        p.events.push([clock, 'waits for an earlier direct push']);
+        back.push(p); continue;
       }
       const tip = commitTree(p.authoredTree, p.base, `${p.pr ? `PR #${p.pr}` : p.sha.slice(0, 7)} as written on ${p.base.slice(0, 7)}`);
       let r = merge3(p.base, main, tip), how = 'merged';
@@ -183,6 +207,13 @@ function replay(W) {
     }
     back.sort((x, y) => x.idx - y.idx);
     pending.unshift(...back);
+    // Stall guard: if STALL_WAVES waves in a row land nothing, the earliest change can never
+    // apply; drop it (counted, traced) so the run ends.
+    stall = counts.landed === landedBefore ? stall + 1 : 0;
+    if (stall >= STALL_WAVES && pending.length) {
+      const p = pending.shift(); p.state = 'dropped'; p.events.push([clock, 'dropped', 'never applied (stalled)']); done.push(p);
+      trace({ event: 'stall_dropped', W, wave, change: p.sha.slice(0, 10), pr: p.pr }); stall = 0;
+    }
     if (wave % 25 === 0) process.stderr.write(`  W=${W}: wave ${wave}, ${counts.landed}/${prs.length} landed\n`);
   }
   counts.prsAffected = done.filter((p) => p.overlapped && p.pr).length;
