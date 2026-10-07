@@ -724,10 +724,11 @@ export const LAND_CSS = `
 .doors .browse:last-child{border-bottom:1px solid var(--line)}
 /* Tap feedback: the row shades under the finger, and once tapped it stays shaded with a
    small spinner until the next page arrives (Eyal, 2026-10-07: "nothing is happening"). */
-.land .browse{position:relative;margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px;transition:background-color .12s;-webkit-tap-highlight-color:transparent}
+.land .browse{position:relative;margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:44px;transition:background-color .12s;-webkit-tap-highlight-color:transparent}
 .land .browse:active,.land .browse.going{background:var(--card)}
-.land .browse.going::after{content:'';position:absolute;right:16px;top:50%;width:16px;height:16px;margin-top:-8px;border:2px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
+.land .browse.going::after{content:'';position:absolute;right:18px;top:50%;width:16px;height:16px;margin-top:-8px;border:2px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
 .land .browse.going .n{visibility:hidden}
+.land .browse .n{margin-right:-28px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .tryh{font-size:17px;font-weight:600;margin:32px 0 2px}
 .trys{margin:0 0 12px;color:var(--dim);font-size:15px}
