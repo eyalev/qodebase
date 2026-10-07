@@ -308,7 +308,8 @@ function codeQuestion(c) {
         stop();
         logEv('code_answer', { project: owner + '/' + name, model: j.model || model, ms: Date.now() - t0, box_ms: j.ms, tries: tries });
         chatHist.push({ role: 'user', content: c.text }); chatHist.push({ role: 'assistant', content: j.answer || '' }); chatHist = chatHist.slice(-12); sset('chat', chatHist);
-        add('ai', j.answer || 'No answer came back.'); speakOut(j.answer || '');
+        // In a conversation the agent speaks it and the transcript shows it: add it here only when typing.
+        if (vc) speakOut(j.answer || 'No answer came back.'); else { add('ai', j.answer || 'No answer came back.'); say(j.answer || ''); }
         return done();
       }
       if (j.state === 'failed') {
