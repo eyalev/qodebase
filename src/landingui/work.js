@@ -194,14 +194,18 @@
     const p = k === 'landed' ? pulse(`land:${c.id}`) : null;
     return `<button class="ag s-${k}${p ? ' pl' : ''}${extra}" type="button"${p || ''} data-go="#/change/${esc(c.id)}" aria-label="${AG(c.agent)}: ${WORD[k]}, ${short(c)}">${esc(agNum(c.agent))}</button>`;
   };
+  const mapKey = () => `<div class="key top"><span><i class="ag s-working"></i>working</span><span><i class="ag s-reviewing"></i>in review</span><span><i class="ag s-ready"></i>ready to merge</span><span><i class="ag s-queued"></i>in the line or being tested</span><span><i class="ag s-replaying"></i>${term('replay', 'replaying')}</span><span><i class="ag s-bounced"></i>needs a decision</span><span><i class="ag s-landed"></i>just landed</span><span><i class="zap"></i><span>${term('collision', 'collided')}</span></span></div>`;
   function theMap() {
     const T = now(), idx = byId();
+    // Each agent shows once: in the area of its most important change's first file.
+    const shown = D.changes.filter((c) => active(c) || (c.state === 'landed' && c.landedAt > T - 90e3));
+    const top = new Map();
+    for (const c of shown) { const o = top.get(c.agent); if (!o || RANK[skey(c)] > RANK[skey(o)]) top.set(c.agent, c); }
+    const home = new Map([...top].map(([ag, c]) => [ag, areaOf(c.files[0] || (c.claims || [])[0] || '.')]));
     return `<div class="map">${D.areas.map((a) => {
       const inArea = (c) => [...c.files, ...(c.claims || [])].some((p) => areaOf(p) === a.path);
       // Agents here: active changes, and ones that landed in the last 90 s.
-      const here = D.changes.filter((c) => inArea(c) && (active(c) || (c.state === 'landed' && c.landedAt > T - 90e3)));
-      const best = new Map();
-      for (const c of here) { const o = best.get(c.agent); if (!o || RANK[skey(c)] > RANK[skey(o)]) best.set(c.agent, c); }
+      const best = new Map([...top].filter(([ag]) => home.get(ag) === a.path));
       // Collisions in this area in the last 10 min, drawn between the two agents.
       const pairs = [], paired = new Set();
       for (const c of D.changes) for (const e of c.events) {
@@ -210,16 +214,16 @@
         if (!o || paired.has(c.agent) || paired.has(o.agent)) continue;
         paired.add(c.agent); paired.add(o.agent);
         const p = pulse(`x:${c.id}:${e.t}`);
-        pairs.push({ html: `<span class="pair${p ? ' pl' : ''}"${p || ''}>${chip(best.get(c.agent) || c, skey(best.get(c.agent) || c))}<i class="zap" aria-hidden="true"></i>${chip(best.get(o.agent) || o, skey(best.get(o.agent) || o), active(o) || o.landedAt > T - 90e3 ? '' : ' past')}</span>`,
+        const pc = (x) => { const t = top.get(x.agent) || x; return chip(t, skey(t), home.get(x.agent) === a.path ? '' : ' past'); };
+        pairs.push({ html: `<span class="pair${p ? ' pl' : ''}"${p || ''}>${pc(c)}<i class="zap" aria-hidden="true"></i>${pc(o)}</span>`,
           words: `${AG(c.agent)} and ${AG(o.agent)} collided on ${conflictPaths(c, e).map((x) => x.split('/').pop()).join(', ')}` });
       }
       const singles = [...best.values()].filter((c) => !paired.has(c.agent)).sort((x, y) => RANK[skey(y)] - RANK[skey(x)]);
       const chips = [...pairs.map((x) => x.html), ...singles.map((c) => chip(c, skey(c)))].join('');
-      const n = best.size + [...paired].filter((x) => !best.has(x)).length;
-      const meta = [n ? `<span class="hot">${n} agent${n === 1 ? '' : 's'} here</span>` : '<span>quiet</span>', a.recentLandings ? `<span>${a.recentLandings} landed today</span>` : ''].filter(Boolean).join('');
-      return `<div class="area${n ? '' : ' quiet'}" data-go="#/area/${encodeURIComponent(a.path)}"><button class="nm" type="button" data-go="#/area/${encodeURIComponent(a.path)}">${esc(areaLabel(a.path))}</button>${chips ? `<span class="chips">${chips}</span>` : ''}${pairs.length ? `<span class="coll">${esc(pairs.map((x) => x.words).join('; '))}</span>` : ''}<span class="meta">${meta}</span></div>`;
-    }).join('')}</div>
-    <div class="key"><span><i class="ag s-working"></i>working</span><span><i class="ag s-reviewing"></i>in review</span><span><i class="ag s-queued"></i>in the line</span><span><i class="ag s-replaying"></i>${term('replay', 'replaying')}</span><span><i class="ag s-bounced"></i>needs a decision</span><span><i class="ag s-landed"></i>just landed</span><span><i class="zap"></i><span>${term('collision', 'collided')}</span></span></div>`;
+      const n = best.size;
+      const meta = [n ? `<span class="hot">${n} agent${n === 1 ? '' : 's'} here</span>` : pairs.length ? '' : '<span>quiet</span>', a.recentLandings ? `<span>${a.recentLandings} landed today</span>` : ''].filter(Boolean).join('');
+      return `<div class="area${n || pairs.length ? '' : ' quiet'}" data-go="#/area/${encodeURIComponent(a.path)}"><button class="nm" type="button" data-go="#/area/${encodeURIComponent(a.path)}">${esc(areaLabel(a.path))}</button>${chips ? `<span class="chips">${chips}</span>` : ''}${pairs.length ? `<span class="coll">${esc(pairs.map((x) => x.words).join('; '))}</span>` : ''}<span class="meta">${meta}</span></div>`;
+    }).join('')}</div>`;
   }
   let firstPaint = true;
   function feed(limit) {
@@ -252,7 +256,7 @@
           <p class="cap">Finished changes wait here and are tested together, then join ${term('main', 'the main code')}. Tap a change to see it.</p>${theLine(false)}</section>
       </div><div class="col2">
         <section class="sec"><div class="sec-h"><h3>Where they work</h3><a href="#/changes">All changes</a></div>
-          <p class="cap">Each circle is an agent, in the part of the code it is changing. Tap one to see its change.</p>${theMap()}</section>
+          <p class="cap">Each circle is an agent, in the part of the code it is changing. Faint: also involved here. Tap one to see its change.</p>${mapKey()}${theMap()}</section>
         <section class="sec"><div class="sec-h"><h3>What just happened</h3><a href="#/feed">All</a></div>${feed(8)}</section>
       </div></div>`;
   }
