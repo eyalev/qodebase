@@ -35,7 +35,7 @@ export const SHEET_CSS = `
 .pbar{display:flex;align-items:center;gap:8px;margin:16px 0 8px}
 .ptabs{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
 .ptabs::-webkit-scrollbar{display:none}
-.ptab{flex:none;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--dim);font:500 14px 'Instrument Sans',sans-serif;cursor:pointer}
+.ptab{flex:none;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--dim);font:500 14px 'Geist',sans-serif;cursor:pointer}
 .ptab.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .pext{flex:none;margin-left:auto;font-size:14px;padding:8px 4px;white-space:nowrap}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:720px;margin:0 auto;height:72dvh;display:flex;flex-direction:column;
@@ -50,7 +50,7 @@ export const SHEET_CSS = `
 .sh-h{display:flex;align-items:center;gap:8px;padding:0 12px 8px 16px;border-bottom:1px solid var(--line);flex:none}
 .sh-h b{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .seg{display:flex;background:var(--chip);border-radius:8px;padding:2px}
-.seg button{min-height:36px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--dim);font:500 14px 'Instrument Sans',sans-serif;cursor:pointer}
+.seg button{min-height:36px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--dim);font:500 14px 'Geist',sans-serif;cursor:pointer}
 .seg button.on{background:var(--bg);color:var(--fg)}
 .x{width:44px;height:44px;border:0;background:none;color:var(--dim);font-size:24px;cursor:pointer}
 .sh-body{flex:1;min-height:0;display:flex;flex-direction:column}
@@ -66,7 +66,7 @@ export const SHEET_CSS = `
 .m-q{background:var(--card);border-radius:12px;padding:10px 12px;font-size:14px}
 .m-x{color:var(--dim);font-size:14px;text-align:center;padding:24px 0}
 .sh-send{display:flex;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);flex:none}
-.sh-send textarea{flex:1;font:16px 'Instrument Sans',sans-serif;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:none;max-height:30dvh}
+.sh-send textarea{flex:1;font:16px 'Geist',sans-serif;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:none;max-height:30dvh}
 .sh-send .btn{min-height:44px}
 body.sheet-open{overflow:hidden}
 `;

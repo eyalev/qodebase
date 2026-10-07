@@ -16,7 +16,7 @@ export const WORLD_CSS = `
 .pulse .live b::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--busy);animation:pulse 1.6s ease-in-out infinite}
 .lede2{font-size:17px;line-height:1.35;margin:0 0 12px;font-weight:500}
 .sub3{position:sticky;top:0;z-index:5;display:flex;gap:4px;margin:0 -16px 12px;padding:6px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
-.sub3 a{flex:1;text-align:center;min-height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:var(--dim);font:500 14px 'Instrument Sans',sans-serif}
+.sub3 a{flex:1;text-align:center;min-height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:var(--dim);font:500 14px 'Geist',sans-serif}
 .sub3 a.on{background:var(--chip);color:var(--fg)}
 .feed{display:flex;flex-direction:column}
 .ev{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
@@ -41,7 +41,7 @@ export const WORLD_CSS = `
 .pc .s.busy .dot{background:var(--busy);animation:pulse 1.6s ease-in-out infinite}
 .cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 8px;padding:0 16px}
 .cats::-webkit-scrollbar{display:none}
-.cats a{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);color:var(--fg);font:500 14px 'Instrument Sans',sans-serif}
+.cats a{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);color:var(--fg);font:500 14px 'Geist',sans-serif}
 .cats a span{color:var(--dim);font-variant-numeric:tabular-nums}
 .cats a.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .cats a.on span{color:color-mix(in srgb,var(--bg) 70%,var(--fg))}

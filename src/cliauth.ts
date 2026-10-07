@@ -93,7 +93,7 @@ export async function cliUserRoute(request: Request, env: Env, url: URL, email: 
 }
 
 const html = (body: string, status = 200) => new Response(body, { status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
-const CSS = `<style>.field{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+const CSS = `<style>.field{width:100%;font:16px 'Geist',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
 .code{font:600 28px 'JetBrains Mono',monospace;letter-spacing:.06em;margin:8px 0 4px}.cmd{font:14px 'JetBrains Mono',monospace;background:var(--chip);border-radius:8px;padding:10px 12px;white-space:pre-wrap;overflow-wrap:anywhere}
 form .btn{margin-top:12px;width:100%}.err{color:var(--bad,#b3261e)}</style>`;
 

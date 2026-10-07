@@ -309,7 +309,7 @@ h3{font-size:13px;font-weight:600;color:var(--dim);margin:24px 0 8px}
 .view.full iframe{flex:1;width:100%;border:0;display:block;background:#fff}
 .pick{flex:none;display:flex;gap:6px;padding:8px 12px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line)}
 .pick::-webkit-scrollbar{display:none}
-.pick button{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;max-width:min(70vw,280px);padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--dim);font:500 14px 'Instrument Sans',sans-serif;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick button{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;max-width:min(70vw,280px);padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--dim);font:500 14px 'Geist',sans-serif;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pick button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .pstrip{flex:none;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 14px;background:var(--card);border-bottom:1px solid var(--line);font-size:14px;color:var(--dim)}
 .pstrip span{flex:1}
@@ -343,7 +343,7 @@ h3{font-size:13px;font-weight:600;color:var(--dim);margin:24px 0 8px}
 /* Readme: the project's documents as a row of tabs over the rendered file. */
 .docs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:16px -16px 8px;padding:0 16px 10px;border-bottom:1px solid var(--line)}
 .docs::-webkit-scrollbar{display:none}
-.docs a{flex:none;display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);color:var(--dim);font:500 14px 'Instrument Sans',sans-serif}
+.docs a{flex:none;display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);color:var(--dim);font:500 14px 'Geist',sans-serif}
 .docs a.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .plain{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.55 'JetBrains Mono',monospace;background:var(--card);border-radius:8px;padding:12px}
 .srcl{font-size:13px;margin:24px 0 0}
@@ -502,7 +502,7 @@ export const NAV_CSS = `
 .gtop{flex:none;display:flex;align-items:stretch;height:48px;padding:0 4px;border-bottom:1px solid var(--line);background:var(--bg);overflow-x:auto;scrollbar-width:none}
 .gtop::-webkit-scrollbar{display:none}
 .gtop .mark{display:flex;align-items:center;padding:0 10px 0 8px;font-weight:600;font-size:16px;color:var(--fg)}
-.gtop .g{flex:none;display:flex;align-items:center;gap:6px;padding:0 7px;font:500 14px 'Instrument Sans',sans-serif;color:var(--dim);border-bottom:2px solid transparent}
+.gtop .g{flex:none;display:flex;align-items:center;gap:6px;padding:0 7px;font:500 14px 'Geist',sans-serif;color:var(--dim);border-bottom:2px solid transparent}
 .gtop .g.on{color:var(--fg);border-bottom-color:var(--fg)}
 .gtop .gbuild{flex:none;align-self:center;margin-left:auto;min-height:34px;padding:0 12px;font-size:14px;border-radius:8px}
 /* Sign in and ☰ sit at the right end. Build (margin-left:auto) usually pushes them there;
@@ -691,7 +691,7 @@ function landBody(entries: Entry[], selfHost = false) {
   const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && !e.private && e.slug !== 'forq.blank').length;
   return `<section class="land">
 <h1>Own your codebase.</h1>
-<p class="lede">Say what you want built. AI agents write the code, and it stays yours. On Cloudflare, from your phone.</p>
+<p class="lede">Describe it. Agents build it. The code is yours to keep.</p>
 <form class="landask" action="/build" method="get">
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button class="btn" type="submit">Build it</button>
@@ -714,7 +714,7 @@ export const LAND_CSS = `
 .land h1{font-size:34px;line-height:1.15;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;text-wrap:balance}
 .land .lede{margin:0 0 24px;font-size:17px}
 .landask{display:flex;flex-direction:column;gap:10px}
-.landask textarea{width:100%;min-height:96px;font:17px/1.45 'Instrument Sans',sans-serif;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:none}
+.landask textarea{width:100%;min-height:96px;font:17px/1.45 'Geist',sans-serif;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:none}
 .landask .btn{min-height:48px;font-size:16px}
 .land .browse{display:flex;align-items:center;justify-content:space-between;margin:28px 0 0;padding:14px 0;border-top:1px solid var(--line);color:var(--fg);font-weight:500;text-decoration:none}
 .land .browse .n{color:var(--dim);font-variant-numeric:tabular-nums;font-weight:400}

@@ -23,16 +23,16 @@ export const CODE_CSS = `<style>
 .crumbs{font:14px 'JetBrains Mono',monospace;margin:12px 0;word-break:break-all;line-height:1.7}
 .crumbs a{color:var(--acc)}.crumbs .sep{color:var(--dim);margin:0 4px}
 .goto{position:relative;margin:8px 0 12px}
-.goto input{width:100%;font:16px 'Instrument Sans',sans-serif;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+.goto input{width:100%;font:16px 'Geist',sans-serif;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
 .goto .hits{display:none;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:8px;margin-top:6px;max-height:50dvh;overflow:auto}
 .goto .hits.on{display:flex}
 .goto .hits a{padding:10px 12px;font:13px 'JetBrains Mono',monospace;color:var(--fg);border-bottom:1px solid var(--line);word-break:break-all}
 .goto .hits a b{color:var(--acc);font-weight:600}
 .goto .hits p{margin:0;padding:10px 12px;color:var(--dim);font-size:14px}
-.goto .deep{min-height:44px;border:0;border-top:1px solid var(--line);background:var(--chip);color:var(--fg);font:500 14px 'Instrument Sans',sans-serif;text-align:left;padding:0 12px;cursor:pointer}
+.goto .deep{min-height:44px;border:0;border-top:1px solid var(--line);background:var(--chip);color:var(--fg);font:500 14px 'Geist',sans-serif;text-align:left;padding:0 12px;cursor:pointer}
 .goto .sr{border-bottom:1px solid var(--line)}
 .goto .sr a.f{display:flex;justify-content:space-between;gap:8px;font-weight:600;border-bottom:0}
-.goto .sr a.f span{color:var(--dim);font-weight:400;font-family:'Instrument Sans',sans-serif}
+.goto .sr a.f span{color:var(--dim);font-weight:400;font-family:'Geist',sans-serif}
 .goto .sr a.l{display:flex;gap:10px;padding:4px 12px 4px 12px;font-size:12px;color:var(--dim);border-bottom:0;white-space:pre;overflow:hidden;text-overflow:ellipsis}
 .goto .sr a.l:last-child{padding-bottom:10px}
 .goto .sr .ln{flex:none;min-width:2.5em;text-align:right;color:var(--dim)}
@@ -40,7 +40,7 @@ export const CODE_CSS = `<style>
 .ls{display:flex;flex-direction:column;background:var(--card);border-radius:12px;overflow:hidden}
 .ls a{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border-bottom:1px solid var(--line);color:var(--fg);font:14px 'JetBrains Mono',monospace;word-break:break-all}
 .ls a:last-child{border-bottom:0}
-.ls .k{width:16px;flex:none;color:var(--dim);font-family:'Instrument Sans',sans-serif;font-size:13px;text-align:center}
+.ls .k{width:16px;flex:none;color:var(--dim);font-family:'Geist',sans-serif;font-size:13px;text-align:center}
 .ls .dir{font-weight:600}
 .fmeta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:var(--dim);font-size:13px;margin:8px 0}
 .fmeta .chipbtn{min-height:36px;padding:0 12px;font-size:14px}
@@ -71,9 +71,9 @@ export const CODE_CSS = `<style>
 .chg details{background:var(--card);border-radius:12px;overflow:hidden}
 .chg summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;cursor:pointer;font:13px 'JetBrains Mono',monospace;word-break:break-all;list-style:none}
 .chg summary::-webkit-details-marker{display:none}
-.chg .st{font:600 12px 'Instrument Sans',sans-serif;border-radius:4px;padding:1px 6px;flex:none}
+.chg .st{font:600 12px 'Geist',sans-serif;border-radius:4px;padding:1px 6px;flex:none}
 .chg .st.added{background:var(--add);color:var(--addfg)}.chg .st.removed{background:var(--del);color:var(--delfg)}.chg .st.modified{background:var(--chip);color:var(--fg)}
-.chg .cnt{margin-left:auto;font:12px 'Instrument Sans',sans-serif;color:var(--dim);flex:none}
+.chg .cnt{margin-left:auto;font:12px 'Geist',sans-serif;color:var(--dim);flex:none}
 .chg .cnt .a{color:var(--addfg)}.chg .cnt .d{color:var(--delfg)}
 .dl{overflow:auto;font:12px/1.55 'JetBrains Mono',monospace;border-top:1px solid var(--line)}
 .dl table{border-collapse:collapse;min-width:100%}

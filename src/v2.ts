@@ -166,17 +166,17 @@ export function planningHtml(p: ReturnType<typeof planningOf>, q?: ProjectInfo['
 // ---- CSS ---------------------------------------------------------------------
 
 const TOKENS = `
-:root{--bg:#fff;--card:#f6f7f8;--chip:#eceef1;--line:#e2e5e9;--fg:#15171a;--dim:#5f6670;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;--warn:#b42d1f;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1112;--card:#171a1c;--chip:#202427;--line:#272b2f;--fg:#e8eaec;--dim:#9ba2a9;--acc:#4fbf9f;--acc-fg:#0f1112;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}}`;
+:root{--bg:#fff;--card:#fafafa;--chip:#f3f4f6;--line:#ececef;--fg:#111214;--dim:#6e737b;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;--warn:#b42d1f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0c0d0e;--card:#141517;--chip:#1c1d20;--line:#222428;--fg:#ececee;--dim:#9a9fa6;--acc:#4fbf9f;--acc-fg:#0c0d0e;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}}`;
 
 const BASE_CSS = `${TOKENS}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 'Instrument Sans',sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 'Geist',sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--acc);text-decoration:none}
 input:focus,textarea:focus{outline:none;border-color:var(--acc)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
 a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.btn,.chipbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:8px;border:0;font:500 15px 'Instrument Sans',sans-serif;cursor:pointer;transition:background-color .12s;white-space:nowrap;text-decoration:none}
+.btn,.chipbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:8px;border:0;font:500 15px 'Geist',sans-serif;cursor:pointer;transition:background-color .12s;white-space:nowrap;text-decoration:none}
 .btn{background:var(--acc);color:var(--acc-fg)}
 .chipbtn{background:var(--chip);color:var(--fg)}
 .btn[disabled],.chipbtn[disabled]{opacity:.6}
@@ -202,7 +202,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset
 .chg-p{flex:none;padding:0 12px 0 0}
 .chg-p .btn,.chg-p .chipbtn{min-height:40px;padding:0 14px;font-size:14px}
 .links{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 16px;margin-left:4px}
-.links a,.lnk{font:500 14px 'Instrument Sans',sans-serif;color:var(--acc);background:none;border:0;padding:10px 0;cursor:pointer}
+.links a,.lnk{font:500 14px 'Geist',sans-serif;color:var(--acc);background:none;border:0;padding:10px 0;cursor:pointer}
 .chg .more{display:none;padding:0 14px 14px;font-size:14px;border-top:1px solid var(--line);margin-top:2px}
 .chg.open .more{display:block}
 .more p{margin:10px 0 0;overflow-wrap:anywhere}
@@ -223,7 +223,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset
 .trybar .chipbtn{background:color-mix(in srgb,var(--bg) 20%,var(--fg));color:var(--bg)}
 .ask .send.chipbtn{color:var(--dim)}
 .visit{color:var(--dim);font-size:14px;margin:0}
-.ask textarea{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:none}
+.ask textarea{width:100%;font:16px 'Geist',sans-serif;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:none}
 .readme{font-size:15px;overflow-wrap:anywhere}
 .readme h2,.readme h3,.readme h4{margin:16px 0 6px;font-size:17px}
 .readme code{font:13px 'JetBrains Mono',monospace;background:var(--chip);border-radius:4px;padding:1px 4px}
@@ -244,7 +244,7 @@ export function shell2(ui: UI, title: string, body: string, css: string, bodyCla
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${esc(title)}</title><meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>${BASE_CSS}${css}</style></head><body class="${bodyClass}">${body}${freshHelp(STEPS)}</body></html>`;
 }
 
@@ -356,7 +356,7 @@ body.app{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .stage iframe{flex:1;width:100%;border:0;display:block;background:#fff}
 .noapp{display:flex;align-items:center;justify-content:center;flex:1;padding:24px;text-align:center;color:var(--dim);font-size:15px}
 .dock{flex:none;border-top:1px solid var(--line);background:var(--bg);padding:4px 12px calc(8px + env(safe-area-inset-bottom))}
-.status{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;background:none;border:0;padding:0 2px;color:var(--fg);font:500 15px 'Instrument Sans',sans-serif;text-align:left;cursor:pointer;font-variant-numeric:tabular-nums}
+.status{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;background:none;border:0;padding:0 2px;color:var(--fg);font:500 15px 'Geist',sans-serif;text-align:left;cursor:pointer;font-variant-numeric:tabular-nums}
 .status .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .status.s-fix .tx,.status.s-waiting .tx{color:var(--warn)}
 .status.s-ready .tx{color:var(--acc)}
@@ -524,14 +524,14 @@ body.chat{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .cbar .chipbtn{min-height:36px;padding:0 12px;font-size:14px;gap:6px}
 .ico{width:14px;height:14px;flex:none}
 .tabs{display:flex;gap:4px;padding-bottom:8px}
-.tabs button{flex:1;min-height:40px;border:0;border-radius:8px;background:none;color:var(--dim);font:500 15px 'Instrument Sans',sans-serif;cursor:pointer}
+.tabs button{flex:1;min-height:40px;border:0;border-radius:8px;background:none;color:var(--dim);font:500 15px 'Geist',sans-serif;cursor:pointer}
 .tabs button.on{background:var(--chip);color:var(--fg)}
 .pane{flex:1;min-height:0;display:none;flex-direction:column}
 .pane.on{display:flex}
 .thread>*,.them>*{flex:none}
 .thread{flex:1;overflow-y:auto;padding:0 12px 8px;display:flex;flex-direction:column;gap:12px;overscroll-behavior:contain}
 .thread>:nth-child(2){margin-top:16px}
-.needbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;min-height:44px;margin:0 -12px;padding:0 12px;background:var(--bg);border-bottom:1px solid var(--line);font:500 14px 'Instrument Sans',sans-serif;color:var(--warn)}
+.needbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;min-height:44px;margin:0 -12px;padding:0 12px;background:var(--bg);border-bottom:1px solid var(--line);font:500 14px 'Geist',sans-serif;color:var(--warn)}
 .needbar.none{display:none}
 .needbar .tx{flex:1}
 .needbar i{font-style:normal;color:var(--acc)}

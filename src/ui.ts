@@ -15,12 +15,12 @@ export const path = (slug: string) => `/p/${slug.replace('.', '/')}`;
 export const label = (slug: string) => slug.replace('.', ' / ');
 
 const CSS = `
-:root{--bg:#fff;--card:#f6f7f8;--chip:#eceef1;--line:#e2e5e9;--fg:#15171a;--dim:#5f6670;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;--warn:#b42d1f;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1112;--card:#171a1c;--chip:#202427;--line:#272b2f;--fg:#e8eaec;--dim:#9ba2a9;--acc:#4fbf9f;--acc-fg:#0f1112;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}}
+:root{--bg:#fff;--card:#fafafa;--chip:#f3f4f6;--line:#ececef;--fg:#111214;--dim:#6e737b;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;--warn:#b42d1f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0c0d0e;--card:#141517;--chip:#1c1d20;--line:#222428;--fg:#ececee;--dim:#9a9fa6;--acc:#4fbf9f;--acc-fg:#0c0d0e;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 input:focus,textarea:focus{outline:none;border-color:var(--acc)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
 a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 'Instrument Sans',sans-serif}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 'Geist',sans-serif}
 main{max-width:720px;margin:0 auto;padding:12px 16px calc(32px + env(safe-area-inset-bottom))}
 a{color:var(--acc);text-decoration:none}
 header.top{display:flex;align-items:center;justify-content:space-between;height:48px}
@@ -46,7 +46,7 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .back{display:inline-flex;align-items:center;min-height:44px;font-size:15px}
 .desc{color:var(--dim);margin:0}
 .actions{display:flex;gap:8px;margin:16px 0}
-.btn,.chipbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:8px;border:0;font:500 15px 'Instrument Sans',sans-serif;cursor:pointer;transition:background-color .12s}
+.btn,.chipbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:8px;border:0;font:500 15px 'Geist',sans-serif;cursor:pointer;transition:background-color .12s}
 .btn{background:var(--acc);color:var(--acc-fg)}
 .chipbtn{background:var(--chip);color:var(--fg)}
 .btn[disabled]{opacity:.6}
@@ -67,7 +67,7 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .commit{display:flex;gap:8px;align-items:baseline;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
 .commit .msg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .commit code{font:12px 'JetBrains Mono',monospace;color:var(--dim)}
-.composer textarea{width:100%;min-height:76px;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:vertical}
+.composer textarea{width:100%;min-height:76px;font:16px 'Geist',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:vertical}
 .composer .bar{display:flex;gap:8px;margin-top:8px;align-items:center}
 .composer .bar .btn{flex:1}
 .router{background:var(--card);border-radius:12px;padding:12px 14px;margin-top:12px;font-size:14px}
@@ -109,7 +109,7 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 .card .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .card .acts .chipbtn,.card .acts .btn{min-height:40px;padding:0 12px;font-size:14px}
 .empty{color:var(--dim);font-size:14px}
-.search input{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);margin:16px 0 12px}
+.search input{width:100%;font:16px 'Geist',sans-serif;padding:12px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);margin:16px 0 12px}
 .sugg{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:16px}
 .sugg>span{color:var(--dim);font-size:14px}
 .sugg[hidden]{display:none}
@@ -123,7 +123,7 @@ export const shell = (title: string, body: string, steps: number[] = STEPS) => `
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${esc(title)}</title><meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>${CSS}</style></head><body><main>${body}</main>${freshHelp(steps)}</body></html>`;
 
 const stars = (n: number) => `${n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : n} stars`;
@@ -410,7 +410,7 @@ ${projects ? `<p class="note">You own ${projects} project${projects > 1 ? 's' : 
 <p class="desc">${cli.length ? `Signed-in CLIs (last used):` : `No CLI signed in.`} <a href="/cli">Install qb</a> to use qodebase from a terminal or an agent.</p>
 ${cli.map((t) => `<div class="actions cli-t"><span><b>${esc(t.label)}</b> ${freshTag(t.usedAt, Date.now(), STEPS)}</span><button type="button" class="chipbtn" data-revoke="${esc(t.id)}">Revoke</button></div>`).join('')}
 <h2>Account</h2><p class="desc">Signed in as ${esc(u.email)}.</p><div class="actions"><a class="chipbtn" href="/logout">Sign out</a></div>
-<style>.field{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}.cli-t{align-items:center;justify-content:space-between;margin:8px 0}.cli-t span{display:flex;gap:8px;align-items:center;min-width:0}.err{min-height:1.4em;color:var(--dim);font-size:15px;margin:8px 0 0}.err.bad{color:var(--fg);font-weight:600}</style>
+<style>.field{width:100%;font:16px 'Geist',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}.cli-t{align-items:center;justify-content:space-between;margin:8px 0}.cli-t span{display:flex;gap:8px;align-items:center;min-width:0}.err{min-height:1.4em;color:var(--dim);font-size:15px;margin:8px 0 0}.err.bad{color:var(--fg);font-weight:600}</style>
 <script>
 const msg=document.getElementById('msg');
 // The message shows under the form that was used, not at the foot of the page

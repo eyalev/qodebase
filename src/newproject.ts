@@ -26,14 +26,14 @@ export const BUILD_CSS = `
 .bld{max-width:640px;margin:0 auto}
 .bld h1{font-size:24px;line-height:1.2;font-weight:600;margin:4px 0 6px}
 .bld .lede{margin:0 0 16px}
-.bld textarea{width:100%;min-height:120px;font:17px/1.45 'Instrument Sans',sans-serif;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:vertical}
+.bld textarea{width:100%;min-height:120px;font:17px/1.45 'Geist',sans-serif;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);resize:vertical}
 .bld .row{display:flex;gap:8px;margin-top:10px}
 .bld .row .btn{flex:1}
 .bld .mic{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:52px}
 .bld .mic.on{background:var(--warn);color:#fff}
 .bld .mic svg{width:20px;height:20px}
 .bld .ex{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 0}
-.bld .ex button{min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:500 14px 'Instrument Sans',sans-serif;cursor:pointer}
+.bld .ex button{min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:500 14px 'Geist',sans-serif;cursor:pointer}
 .bld .exl{font-size:13px;color:var(--dim);margin:18px 0 0}
 .brief{background:var(--card);border-radius:12px;padding:14px;margin:4px 0 14px}
 .brief label{display:block;font-size:13px;color:var(--dim);margin:0 0 4px}
@@ -49,7 +49,7 @@ export const BUILD_CSS = `
 .vis label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-top:8px;cursor:pointer}
 .vis label:has(input:checked){border-color:var(--acc)}.vis input{margin-top:3px;accent-color:var(--acc)}
 .vis span{display:flex;flex-direction:column;font-size:14px;color:var(--dim)}.vis b{color:var(--fg);font-size:15px;font-weight:500}
-.bld .back4{background:none;border:0;color:var(--acc);font:500 15px 'Instrument Sans',sans-serif;padding:10px 0;cursor:pointer}
+.bld .back4{background:none;border:0;color:var(--acc);font:500 15px 'Geist',sans-serif;padding:10px 0;cursor:pointer}
 `;
 
 const MIC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>`;

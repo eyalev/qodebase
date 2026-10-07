@@ -28,7 +28,7 @@ import { changesPage, dirPage, filePage, type ChangeText } from './codeui';
 import { startingPage } from './pages';
 import { personalAgentsPage } from './personal';
 import { ownPage } from './own';
-import { lookCookie, lookOn, withLook } from './look';
+import { withLook } from './look';
 import { Installs, installRoute } from './install';
 import { TalkLog, talkRoute } from './talk';
 import { bearerEmail, cliPublicRoute, cliUserRoute } from './cliauth';
@@ -769,11 +769,7 @@ export default {
     const u = new URL(request.url);
     if (!isUiHost(env, u.hostname)) return res;
     res = await withBaseline(request, env, res);
-    // Look 2 preview (src/look.ts): opt-in per browser.
-    const set = lookCookie(u);
-    if (lookOn(request, u)) res = withLook(res);
-    if (set) { res = new Response(res.body, res); res.headers.append('set-cookie', set); }
-    return res;
+    return withLook(res);   // the site-wide look layer (src/look.ts)
   },
 } satisfies ExportedHandler<Env>;
 

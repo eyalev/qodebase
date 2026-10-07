@@ -4,11 +4,11 @@
 // changing a cost or a claim.
 
 const CSS = `
-:root{--bg:#fff;--card:#f6f7f8;--chip:#eceef1;--line:#e2e5e9;--fg:#15171a;--dim:#5f6670;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1112;--card:#171a1c;--chip:#202427;--line:#272b2f;--fg:#e8eaec;--dim:#9ba2a9;--acc:#4fbf9f;--acc-fg:#0f1112;--busy:#e0a948;color-scheme:dark}}
+:root{--bg:#fff;--card:#fafafa;--chip:#f3f4f6;--line:#ececef;--fg:#111214;--dim:#6e737b;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0c0d0e;--card:#141517;--chip:#1c1d20;--line:#222428;--fg:#ececee;--dim:#9a9fa6;--acc:#4fbf9f;--acc-fg:#0c0d0e;--busy:#e0a948;color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 'Instrument Sans',sans-serif}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 'Geist',sans-serif}
 main{max-width:720px;margin:0 auto;padding:12px 16px calc(40px + env(safe-area-inset-bottom))}
 a{color:var(--acc);text-decoration:none}
 header{display:flex;align-items:center;justify-content:space-between;height:48px}
@@ -63,7 +63,7 @@ const shell = (title: string, body: string, extraCss = '') => `<!doctype html><h
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>${CSS}${INSTALL_CSS}${extraCss}</style></head><body><main>
 <header><a class="mark" href="/">qodebase</a><a href="/personal-agents">Assistants</a></header>
 ${body}
@@ -72,10 +72,10 @@ ${body}
 const INSTALL_CSS = `
 .field{display:flex;flex-direction:column;gap:6px;margin:16px 0}
 .field label{font-weight:600;font-size:15px}
-.field input,.field select{font:16px 'Instrument Sans',sans-serif;min-height:48px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
+.field input,.field select{font:16px 'Geist',sans-serif;min-height:48px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
 .field .hint{font-size:13px;color:var(--dim)}
 .addr{font:14px 'JetBrains Mono',monospace;color:var(--dim);word-break:break-all}
-button.btn{border:0;cursor:pointer;font:600 15px 'Instrument Sans',sans-serif;width:100%;justify-content:center}
+button.btn{border:0;cursor:pointer;font:600 15px 'Geist',sans-serif;width:100%;justify-content:center}
 .btn.wide{width:100%;justify-content:center}
 .err{background:color-mix(in srgb,#b42d1f 12%,transparent);color:var(--fg);border-radius:8px;padding:12px 14px;margin:12px 0}
 .steps{list-style:none;padding:0;margin:20px 0;display:flex;flex-direction:column;gap:2px}
@@ -140,7 +140,7 @@ export function personalAgentsPage(): string {
 <title>Your own AI assistant · qodebase</title>
 <meta name="description" content="Run a personal AI assistant in your own Cloudflare account: what it is, what it costs, and how to set one up without writing code.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>${CSS}</style></head><body><main>
 <header><a class="mark" href="/">qodebase</a><a href="/about">About</a></header>
 

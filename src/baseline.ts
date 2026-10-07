@@ -147,7 +147,7 @@ ${o.error ? `<p class="fb-err" role="alert">${esc(o.error)}</p>` : ''}
 ${body}
 <style>.fb{display:grid;gap:8px;margin-top:16px}.fb fieldset{border:0;padding:0;margin:0 0 8px;display:grid;gap:8px}.fb legend{font-weight:600;margin-bottom:4px}
 .fb label{font-size:15px}.fb fieldset label{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
-.fb textarea,.fb .field{width:100%;font:16px 'Instrument Sans',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+.fb textarea,.fb .field{width:100%;font:16px 'Geist',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
 .fb .bar{margin-top:8px}.fb .note{color:var(--dim);font-size:14px}.hp{position:absolute;left:-9999px}.fb-err{color:var(--warn,#b45309);font-weight:500}</style>`);
 }
 

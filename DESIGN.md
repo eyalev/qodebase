@@ -8,22 +8,22 @@ none of its chrome.
 
 | token | light | dark | use |
 |---|---|---|---|
-| `--bg` | `#ffffff` | `#0f1112` | page |
-| `--card` | `#f6f7f8` | `#171a1c` | rows, cards, inputs |
-| `--chip` | `#eceef1` | `#202427` | tags, secondary buttons |
-| `--line` | `#e2e5e9` | `#272b2f` | hairlines |
-| `--fg` | `#15171a` | `#e8eaec` | text |
-| `--dim` | `#5f6670` | `#9ba2a9` | secondary text |
+| `--bg` | `#ffffff` | `#0c0d0e` | page |
+| `--card` | `#fafafa` | `#141517` | rows, cards, inputs |
+| `--chip` | `#f3f4f6` | `#1c1d20` | tags, secondary buttons |
+| `--line` | `#ececef` | `#222428` | hairlines |
+| `--fg` | `#111214` | `#ececee` | text |
+| `--dim` | `#6e737b` | `#9a9fa6` | secondary text |
 | `--acc` | `#17695a` | `#4fbf9f` | one accent: primary buttons, links, live dots |
 | `--acc-fg` | `#ffffff` | `#0f1112` | text on accent |
 | `--busy` | `#b7791f` | `#e0a948` | an agent that is working |
 
-- **Type:** Instrument Sans (UI, 400/500/600) + JetBrains Mono (file names,
+- **Type (2026-10-07, after Executor's look and feel):** Geist (UI, 400/500/600, headings −0.02em) + JetBrains Mono (file names,
   commit hashes, code only; never labels). Body 16 px, rows 15 px, meta 13 px,
   title 24 px. Numbers `tabular-nums`.
 - **Spacing:** 4, 8, 12, 16, 24, 32. Page gutter 16 px.
-- **Radius:** cards and the app preview 12 px; buttons and inputs 8 px; tags
-  4 px. Never pill-shaped.
+- **Radius:** cards 14 px, the app preview 12 px, inputs 12 px, buttons 10 px; tags
+  4 px. Site-wide layer: src/look.ts (sizes a step down, home h1 28 px). Never pill-shaped.
 - **Motion:** colour/background transitions 120 ms; the agent sheet slides
   (transform + height, 220 ms ease) because it is a surface arriving, not
   decoration. No entrance animation on content.
