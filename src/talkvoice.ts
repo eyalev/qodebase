@@ -130,7 +130,7 @@ export class TalkVoice extends VoiceAgent {
     if (!r.ok) return r.why || 'Something went wrong there.';
     const c = r.cmd;
     await this.#cost(0.00032);   // one clef-flash decision (measured mean, gateway logs 2026-10-07)
-    log('turn', { handle: this.name, mode: c.mode, op: c.op, p: c.p, risky: c.risky, decide_ms: Date.now() - t0 });
+    log('turn', { handle: this.name, said, path: this.#screen?.path, mode: c.mode, op: c.op, p: c.p, risky: c.risky, why: c.why, decide_ms: Date.now() - t0 });
 
     if ((c.risky || 0) >= 0.5) { this.#send(connection, { type: 'talk-cmd', cmd: { ...c, refused: true } }); return 'That would change or remove something, so I\'ll leave the doing to you.'; }
     if (c.mode === 'none') return '';

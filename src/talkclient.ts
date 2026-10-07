@@ -818,7 +818,7 @@ function vcNavigate(c) {
 }
 function onVoiceMsg(d) {
   if (!d || typeof d !== 'object') return;
-  logEv('vc_msg', { type: d.type, op: d.cmd && d.cmd.op, mode: d.cmd && d.cmd.mode, offer: !!(d.cmd && d.cmd.offer) });
+  logEv('vc_msg', { type: d.type, op: d.cmd && d.cmd.op, mode: d.cmd && d.cmd.mode, offer: !!(d.cmd && d.cmd.offer), heard: d.type === 'talk-heard' ? d.text : undefined, actions: d.actions ? d.actions.map(function (a) { return a.name; }) : undefined });
   vcActive();
   if (d.type === 'talk-ready') { vcSeen = vc ? vc.transcript.length : 0; return; }
   if (d.type === 'talk-end') return endConversation(d.why || 'minutes');
@@ -830,7 +830,8 @@ function onVoiceMsg(d) {
       if (a.name === 'show') showSeq((a.args && a.args.ids) || []);
       else if (a.name === 'press') { var b = byId(a.args.id); if (b) b.click(); }
       else if (a.name === 'type_into') { var f = byId(a.args.id); if (f) { typeInto(f, String(a.args.text || '')); offerSubmit(f); } }
-      else if (a.name === 'go') { var to = String(a.args.to || ''); var l = byId(to); var href = l ? l.getAttribute('href') : (to.charAt(0) === '/' ? to : null); if (href) vcNavigate({ op: 'go', href: href, label: l ? (l.innerText || href).split('\n')[0] : href }); }
+      // A page the answer chose by itself is offered, not opened: in a conversation nobody is watching the screen.
+      else if (a.name === 'go') { var to = String(a.args.to || ''); var l = byId(to); var href = l ? l.getAttribute('href') : (to.charAt(0) === '/' ? to : null); if (href) { var g = { op: 'go', href: href, label: l ? (l.innerText || href).split('\n')[0] : href }; offerOn('Open ' + g.label + '?', function () { vcNavigate(g); }); } }
     });
     return;
   }
