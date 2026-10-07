@@ -22,5 +22,5 @@
 - [x] 10 / 20 / 50 agents: all pushes ok; concurrent forks of a fresh repo fail (retry + backoff now)
 - [x] Run state survives DO resets (two runs lost before this; verified with a mid-run deploy)
 - [x] 500 agents x 10 min: 5,810 landed, 7,033 agent pushes (7 failed), coordinator overloaded at ~11 landings/s; main resync on stale push added and verified; bundle + git fsck + README
-- [ ] Deploy forq so qodebase.app/sim has the cloud run (check no boxes awake, coordinate with qb tabs)
+- [x] Deployed (clean worktree: live code + public/sim), qodebase.app/sim/run?run=cloud-500
 - [ ] Artifacts ops actually billed: check the dashboard/GraphQL after 10-14 (counted by the sim so far ~17k this month)
