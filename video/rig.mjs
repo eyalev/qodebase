@@ -63,6 +63,8 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
   const signIn = (e) => context.addCookies([{ name: 'forq_session', value: sessionValue(e), domain: SITE_HOST, path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
   if (email) await signIn(email);   // email: null = start signed out
   await context.addInitScript(TAP_MARKER);
+  // Never film the owner's version label (forq sha, time, talk sha): docs/contest/storyboard.md.
+  await context.addInitScript(() => { const st = document.createElement('style'); st.textContent = '#talk-ver, .talk-head .ver, #talk-head .ver { display:none !important }'; (document.head || document.documentElement).appendChild(st); });
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
   const frames = [];
@@ -79,7 +81,12 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const mark = (type, data = {}) => events.push({ t: now(), type, ...data });
   // Keep a still screen "alive" so the composer has a frame for every moment.
-  const keepAlive = setInterval(() => page.evaluate(() => { document.documentElement.dataset.tick = String(Date.now()); }).catch(() => {}), 500);
+  // It also hides the owner's version label (forq sha, time, talk sha), which talk.js adds
+  // after load: never film it (docs/contest/storyboard.md).
+  const keepAlive = setInterval(() => page.evaluate(() => {
+    document.documentElement.dataset.tick = String(Date.now());
+    for (const el of document.querySelectorAll('#talk-ver, .ver')) if (/^[0-9a-f]{7}\b/.test(el.textContent)) el.style.setProperty('display', 'none', 'important');
+  }).catch(() => {}), 200);
 
   const r = {
     page, cdp, sleep,
