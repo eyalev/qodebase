@@ -15,7 +15,8 @@ export interface Env {
   Ledger: DurableObjectNamespace<import('./costs').Ledger>;   // per-person cost ledger (src/costs.ts)
   AI?: Ai;                    // Workers AI (Talk: src/talk.ts)
   TALK_GATEWAY?: string;
-  TALK?: Fetcher;             // the Talk Worker (qodebase-talk) over a service binding; unset = Talk runs in-process      // AI Gateway id for Talk's model calls (rate limited); unset on self-hosted copies
+  TALK?: Fetcher;
+  CLIPS?: R2Bucket;            // Talk: the owner's own dictation recordings, kept 7 days when they turn it on (talk Worker only)             // the Talk Worker (qodebase-talk) over a service binding; unset = Talk runs in-process      // AI Gateway id for Talk's model calls (rate limited); unset on self-hosted copies
   CF_OAUTH_CLIENT_ID: string;      // forq's "Sign in with Cloudflare" OAuth client (src/install.ts)
   CF_OAUTH_CLIENT_SECRET: string;
   ACCOUNT_ID: string;

@@ -2,6 +2,7 @@
 // Read Eyal's experience trace (src/talk.ts /api/talk/trace): every page view, tap, Talk step,
 // spoken reply and error from his own use of qodebase, as a timeline.
 //   node scripts/talk-trace.mjs [--day YYYY-MM-DD] [--min 30] [--sid <id>] [--sessions] [-f]
+//   node scripts/talk-trace.mjs --clips [--day …]   |   --clip <key> [-o file]   (the owner's kept recordings)
 // Signs in with the qodebase.app session of the debug Chrome (CDP :9222), or QB_SESSION=<cookie value>.
 const args = process.argv.slice(2);
 const opt = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
@@ -26,6 +27,22 @@ async function sessionCookie() {
 }
 
 const cookie = `forq_session=${await sessionCookie()}`;
+// Recordings (owner only, when "Keep my recordings" is on): --clips lists the day's, --clip <key> [-o file] downloads one.
+if (args.includes('--clips')) {
+  const r = await fetch(`https://qodebase.app/api/talk/clip?day=${day}`, { headers: { cookie } });
+  const { clips = [] } = await r.json();
+  for (const c of clips) console.log(`${c.key}  ${(c.bytes / 1024).toFixed(0)} KB  ${c.how || ''}  live=${JSON.stringify(c.live || '')}  final=${JSON.stringify(c.final || '')}`);
+  process.exit(0);
+}
+if (args.includes('--clip')) {
+  const key = opt('--clip', '');
+  const r = await fetch(`https://qodebase.app/api/talk/clip?key=${encodeURIComponent(key)}`, { headers: { cookie } });
+  if (!r.ok) { console.error(`clip ${r.status}: ${(await r.text()).slice(0, 200)}`); process.exit(1); }
+  const out = opt('-o', key.split('/').pop());
+  (await import('node:fs')).writeFileSync(out, Buffer.from(await r.arrayBuffer()));
+  console.log(`${out}  ${r.headers.get('x-talk-meta') || ''}`);
+  process.exit(0);
+}
 const t = (ms) => new Date(ms).toLocaleTimeString('en-GB', { timeZone: process.env.TZ || undefined, hour12: false }) + '.' + String(ms % 1000).padStart(3, '0');
 let since = minutes ? Date.now() - minutes * 60_000 : 0;
 let lastTs = 0;

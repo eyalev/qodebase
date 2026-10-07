@@ -12,6 +12,8 @@
   "workers_dev": false,
   "preview_urls": false,
   "observability": { "enabled": true },
+  // The owner's own dictation recordings, only when they turn on "Keep my recordings"; lifecycle rule deletes after 7 days.
+  "r2_buckets": [{ "binding": "CLIPS", "bucket_name": "qodebase-talk-clips" }],
   // Talk imports the registry, which reaches modules that embed box files as text/data (same rules as forq).
   "rules": [
     { "type": "Data", "globs": ["**/*.tgz"], "fallthrough": true },

@@ -351,7 +351,7 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     let site: any = null; try { site = JSON.parse(request.headers.get('x-talk-site') || 'null'); } catch { /* none */ }
     const own = { sha: (env as any).CF_VERSION_METADATA?.tag || null, built: (env as any).CF_VERSION_METADATA?.timestamp || null };
     const v = owner ? (site?.sha ? { sha: site.sha, built: site.built, talk: own.sha } : own) : undefined;
-    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: owner, version: v });
+    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: owner, clips: owner && !!env.CLIPS, version: v });
   }
   if (url.pathname === '/api/talk/trace') {
     // The owner's own experience, step by step (Eyal, 2026-10-07: "log and instrument every part of the app
@@ -367,6 +367,31 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
       return { ts: Number(ts) || Date.now(), ev: String(ev || '').slice(0, 40), data: JSON.stringify(rest).slice(0, 2000) };
     }).filter((r: any) => r.ev);
     return json(rows.length ? await env.TalkLog.get(env.TalkLog.idFromName(new Date().toISOString().slice(0, 10))).addTrace(who.handle, sid, rows) : { ok: true, n: 0 });
+  }
+  if (url.pathname === '/api/talk/clip') {
+    // The owner's own recordings, kept for debugging only when they turn it on in Talk settings (Eyal, 2026-10-07:
+    // "only for me, only as me as the owner. This shouldn't be the default"). Bucket deletes after 7 days.
+    if (!who || !isOwner(env, who.handle) || !env.CLIPS) return json({ error: 'forbidden' }, 403);
+    if (request.method === 'POST') {
+      const buf = await request.arrayBuffer();
+      if (buf.byteLength < 800 || buf.byteLength > 8_000_000) return json({ error: 'size' }, 413);
+      const type = (request.headers.get('content-type') || 'audio/webm').split(';')[0];
+      const ext = /mp4/.test(type) ? 'm4a' : /ogg/.test(type) ? 'ogg' : 'webm';
+      const q = (k: string, n = 500) => String(url.searchParams.get(k) || '').slice(0, n);
+      const key = `${new Date().toISOString().slice(0, 10)}/${Date.now()}-${q('sid', 40).replace(/[^\w-]/g, '') || 'x'}.${ext}`;
+      await env.CLIPS.put(key, buf, { httpMetadata: { contentType: type }, customMetadata: { handle: who.handle, path: q('path', 200), live: q('live'), final: q('final'), how: q('how', 20) } });
+      log('clip_saved', { level: 'info', handle: who.handle, key, bytes: buf.byteLength });
+      return json({ key });
+    }
+    const key = url.searchParams.get('key');
+    if (key) {
+      const o = await env.CLIPS.get(key);
+      if (!o) return json({ error: 'gone', why: 'Not found (recordings are deleted after 7 days).' }, 404);
+      return new Response(o.body, { headers: { 'content-type': o.httpMetadata?.contentType || 'audio/webm', 'cache-control': 'private, no-store', 'x-talk-meta': JSON.stringify(o.customMetadata || {}) } });
+    }
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('day') || '') ? url.searchParams.get('day')! : new Date().toISOString().slice(0, 10);
+    const list = await env.CLIPS.list({ prefix: day + '/', limit: 500, include: ['customMetadata'] } as any);
+    return json({ day, clips: list.objects.map((o: any) => ({ key: o.key, bytes: o.size, at: o.uploaded, ...(o.customMetadata || {}) })) });
   }
   if (!who) return json({ error: 'signin', why: 'Sign in to talk to qodebase.' }, 401);
   if (url.pathname === '/api/talk/tts' && request.method === 'GET') return tts(request, env, _ctx, who, url);

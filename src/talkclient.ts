@@ -64,10 +64,12 @@ var S = {
   pause: get('pause', '2500'),          // mic 'pause': send after this many ms of quiet
   mic: get('mic', 'send'),              // how the mic works: send (tap, speak, tap Send, like tmux-web; default) | pause (sends when I stop) | hold | conv (conversation)
   whisper: get('whisper', 'on'),        // re-read the whole clip with Whisper before sending (Deepgram live only)
-  keep: get('keepmic', 'open'),         // open = keep the mic ready while Talk is open (first words never lost) | use = only while speaking
+  keep: get('keepmic', 'open'),
+  clips: get('clips', 'off'),           // owner only: keep my recordings for debugging (7 days); off by default         // open = keep the mic ready while Talk is open (first words never lost) | use = only while speaking
 };
 // Aura-2 is the default voice since 2026-10-07 (Eyal): devices that had Aura-1 only because it was the default move once.
 try { if (!ls.getItem(KEY + 'v2')) { if (ls.getItem(KEY + 'voice-on') === 'aura-1') ls.setItem(KEY + 'voice-on', 'aura-2'); if (S.voice === 'aura-1') { S.voice = 'aura-2'; S.speaker = ''; ls.setItem(KEY + 'voice', 'aura-2'); ls.removeItem(KEY + 'speaker'); } ls.setItem(KEY + 'v2', '1'); } } catch (e) {}
+var CLIPS = false;   // the owner may keep recordings (set from /api/talk/me)
 var LANGS = { en: 'en-US', he: 'he-IL', auto: 'en-US' };
 var me = null, busy = false, listening = false, lastSpoken = false;
 var hist = sget('log', []);             // [{who:'you'|'app'|'ai'|'note', text}]
@@ -180,6 +182,7 @@ function build() {
     '<label>Voice<select id="talk-s-speaker"></select></label>' +
     '<label>Speed<select id="talk-s-speed"><option value="1">1\u00d7</option><option value="1.1">1.1\u00d7</option><option value="1.15">1.15\u00d7</option><option value="1.25">1.25\u00d7</option><option value="1.4">1.4\u00d7</option><option value="1.6">1.6\u00d7</option></select></label>' +
     '<label>Speak<select id="talk-s-when"><option value="voice">When I talked</option><option value="always">Always</option></select></label>' +
+    (CLIPS ? '<label>Keep my recordings (only you can hear them, deleted after 7 days)<select id="talk-s-clips"><option value="off">Off</option><option value="on">On, for debugging</option></select></label>' : '') +
     '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>' +
     '<button type="button" class="talk-chip pri" id="talk-s-done">Done</button>';
   logEl = el('div', { id: 'talk-log', 'aria-live': 'polite' });
@@ -257,6 +260,8 @@ function build() {
   sw.onchange = function () { S.when = sw.value; set('when', S.when); };
   var spz = document.getElementById('talk-s-pause'); spz.value = S.pause === 'tap' ? '2500' : S.pause;
   spz.onchange = function () { S.pause = spz.value; set('pause', S.pause); trace('setting', { pause: S.pause }); };
+  var sclp = document.getElementById('talk-s-clips');
+  if (sclp) { sclp.value = S.clips; sclp.onchange = function () { S.clips = sclp.value; set('clips', S.clips); trace('setting', { clips: S.clips }); }; }
   var smic = document.getElementById('talk-s-mic'), swh = document.getElementById('talk-s-whisper'), skp = document.getElementById('talk-s-keep');
   var showMic = function () { spz.parentNode.style.display = S.mic === 'pause' ? '' : 'none'; swh.parentNode.style.display = S.engine === 'live' && S.mic !== 'conv' ? '' : 'none'; micBtn.setAttribute('aria-label', S.mic === 'hold' ? 'Hold to speak' : S.mic === 'conv' ? 'Start a conversation' : 'Speak'); };
   smic.value = S.mic; swh.value = S.whisper; skp.value = S.keep; showMic();
@@ -1001,6 +1006,15 @@ function clipStart(ready) {
   if (warmUsed) return begin(clipStream);
   (warmP || navigator.mediaDevices.getUserMedia(micOpts())).then(function (st) { begin(st || clipStream); }).catch(function (e) { trace('rec_error', { err: String(e) }); if (ready) ready(); });
 }
+// Owner only, when "Keep my recordings" is on: the clip goes to the Talk Worker's bucket (7 days) with what was
+// heard live and what was sent, and its key lands in the trace (scripts/talk-trace.mjs --clip <key> plays it back).
+function keepClip(blob, m) {
+  if (!CLIPS || S.clips !== 'on' || !blob || blob.size < 800) return;
+  var q = '?sid=' + encodeURIComponent(tsid || '') + '&path=' + encodeURIComponent(location.pathname) + '&live=' + encodeURIComponent((m.live || '').slice(0, 400)) + '&final=' + encodeURIComponent((m.final || '').slice(0, 400)) + '&how=' + encodeURIComponent(m.how || '');
+  fetch('/api/talk/clip' + q, { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type || 'audio/webm' }, body: blob })
+    .then(function (r) { return r.json(); }).then(function (j) { trace('clip_saved', { key: j.key, bytes: blob.size, err: j.error }); })
+    .catch(function (e) { trace('clip_error', { err: String(e) }); });
+}
 function clipStop(cb) {
   var r = clip, st = clipStream; clip = null;
   if (!r) { if (cb) cb(null); return; }
@@ -1036,13 +1050,16 @@ function liveFinish(text, sendIt) {
   function send(final, how, extra) {
     if (sent) return; sent = true; status('');
     trace('dc_whisper', Object.assign({ how: how, live: t, final: final, send: !!sendIt }, extra || {}));
+    keepClip(clipBlob, { live: t, final: final || '', how: how });
     var all = (base + (final || '')).trim();
     if (!sendIt) { setInp(all); if (!final) status('I did not hear anything'); return; }   // tap, speak, tap Send: the words wait in the box
     setInp('');
     if (all) { lastSpoken = true; submit(all); } else add('note', 'I did not hear anything.');
   }
   setInp((base + t).trim());
+  var clipBlob = null;
   clipStop(function (blob) {
+    clipBlob = blob;
     if (S.whisper === 'off' || !blob || blob.size < 2000) return send(t, S.whisper === 'off' ? 'live-only' : 'live', { bytes: blob ? blob.size : 0 });
     status('Checking the words\u2026');
     var w0 = Date.now();
@@ -1189,6 +1206,7 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   me = j.handle;
   if (j.version && j.version.sha) VERSION = j.version.sha + (j.version.built ? ' ' + new Date(j.version.built).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '') + (j.version.talk && j.version.talk !== j.version.sha ? ' talk ' + j.version.talk : '');
   if (j.trace) traceStart(); else tq = [];
+  CLIPS = !!j.clips;
   build();
   publishTools();
   // Coming back from a navigation Talk made: show the sheet, finish any pending question.
