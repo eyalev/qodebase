@@ -211,8 +211,17 @@ export class AgentBox extends DurableObject<Env> {
       }
       await this.c.setInactivityTimeout(INACTIVITY_BACKSTOP_MS);
       this.#watchExit(spec.agentId, from);
-      // Costs (src/costs.ts): awake time and CPU from now; Claude tokens since the last read.
-      await this.ctx.storage.put({ costFrom: Date.now(), cpuLast: 0, costOwner: spec.project.split('/')[0], costProject: spec.project, costBilling: spec.billing || 'api', costCovered: !!spec.costCovered });
+      // Costs (src/costs.ts): a container that died without letGo (a forq deploy kills it)
+      // still bills its awake time, up to the last minute the alarm saw it alive.
+      const st = await this.ctx.storage.get(['costFrom', 'aliveAt', 'costOwner', 'costProject', 'costCovered']);
+      const lostFrom = st.get('costFrom') as number | undefined, aliveAt = st.get('aliveAt') as number | undefined;
+      if (lostFrom && aliveAt && aliveAt > lostFrom && st.get('costOwner')) {
+        const sec = (aliveAt - lostFrom) / 1000;
+        await recordCost(this.env, st.get('costOwner') as string, 'boxes', (st.get('costProject') as string) || '', { usd: boxUsd(sec, 0, INSTANCE.memoryMib / 1024, INSTANCE.diskMb / 1000), covered: !!st.get('costCovered'), seconds: sec });
+        log('box', 'costs_recovered', { agentId: spec.agentId, seconds: Math.round(sec) });
+      }
+      // Awake time and CPU from now; Claude tokens since the last read (cursor kept).
+      await this.ctx.storage.put({ costFrom: Date.now(), aliveAt: Date.now(), cpuLast: 0, costOwner: spec.project.split('/')[0], costProject: spec.project, costBilling: spec.billing || 'api', costCovered: !!spec.costCovered });
     }
 
     // 0. Managed boxes set themselves up once (a restored snapshot or base already is).
@@ -450,6 +459,7 @@ PY
   async letGo(why: string): Promise<void> {
     if (!this.c.running) return;
     await this.#collectCosts();
+    await this.ctx.storage.delete('costFrom');
     const snap = await this.snapshot(why);
     if (!snap) { await this.ctx.storage.setAlarm(Date.now() + ALARM_EVERY_MS); return; }
     await this.c.destroy();
@@ -465,6 +475,7 @@ PY
 
   async alarm(): Promise<void> {
     if (((await this.ctx.storage.get<string[]>('askQueue')) || []).length) await this.#runAsks();
+    if (this.c.running) await this.ctx.storage.put('aliveAt', Date.now());
     if (this.c.running && Date.now() - ((await this.ctx.storage.get<number>('costFrom')) || Date.now()) > 10 * 60_000) await this.#collectCosts();
     const agentId = await this.ctx.storage.get<string>('agentId');
     if (!this.c.running) { log('box', 'alarm_not_running', { agentId }); return; }
