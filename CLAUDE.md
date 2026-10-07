@@ -544,8 +544,39 @@ answers, or both.
   `listFor` + `Project.info()` for their 20 newest own projects (no boxes):
   working, ready to merge (with review state), blocked, undelivered requests,
   changed today/this week, link chips to each project's Changes. Cap 200/day.
+- **Spoken replies** (phase 1, 2026-10-07): `GET /api/talk/tts` = Aura-1
+  (default, $0.015/1k chars) or Aura-2 ($0.03), MP3 streamed
+  (`returnRawResponse`), cached per colo by voice+text, TalkLog `tts_chars`
+  cap. Off by default; speaker toggle in the sheet header, voice/speaker/when
+  in settings. Every tap unlocks audio; blocked play() falls back to the phone
+  voice. Measured: ~$0.017 per minute of speech (Aura-1), $0.027 (Aura-2),
+  first sound ~1.4 s.
+- **Code questions** (phase 3 hook): action `code` + depth → qb1's ask box
+  (`POST /api/p/<o>/<n>/ask {question, model}`, poll `ask-result?id=`):
+  fact→haiku, explain→sonnet, plan/why→opus ("plan…/why…/how would we…" is a
+  word rule). Owner only; others get the chat lane over the page. A deploy
+  kills a running ask: one retry.
+- **Conversation** (phase 2): Cloudflare's voice kit (`agents/voice`,
+  `withVoice(Agent)`), DO `TalkVoice` per handle (migration v7), route
+  `/agents/talk-voice/<handle>` (only your own), client bundle `/talk-voice.js`
+  (`scripts/build-talk-voice.mjs` → `src/talkvoicejs.gen.ts`; rerun after
+  upgrading `agents`). Flux (@cf/deepgram/flux, end of turn built in) + Aura;
+  `onTurn` runs the shared cores (`decideCore`/`chatCore`/`statusCore` in
+  src/talk.ts); page actions go to the page as custom messages (`talk-cmd`,
+  `talk-chat`, `talk-status`, `talk-confirm`), a spoken yes/no answers the
+  pending offer, code answers come back as `say`. Navigation waits for the
+  reply, the call resumes on the next page (one tap if the browser blocks
+  sound); opening the page you are on does not reload. Hangs up after 30 s of
+  quiet. Caps: TalkLog `voice_sec` 60 min/day each. Costs per turn/minute go to
+  the Ledger (`recordCost`, kind voice).
+  **Flux does not go through the AI Gateway** (its websocket call ignores the
+  gateway option; Aura and the brain do), and did not show in
+  aiInferenceAdaptiveGroups the same hour: its guard is the minute cap + quiet
+  hang-up. Measured turn: end of speech → reply done 3.6 s; connect 0.6-1.2 s.
+- Deploys: batched (≤ 1 per ~30 min, qb1's ask, 2026-10-07): each one kills
+  every running box. Always from a clean detached worktree of HEAD.
 - Eval: `node --experimental-strip-types scripts/talk-eval.mjs` (real page
-  snapshots in scripts/talk-fixtures, real model through the gateway): 44/44,
+  snapshots in scripts/talk-fixtures, real model through the gateway): 48/48,
   median ~0.6–1 s. Refresh fixtures when pages change.
 - Cost: AI Gateway `qodebase-talk` (forq account, 120/min) + TalkLog DO daily
   caps (per person decide 600 / chat 150 / stt 300; total 5000/1500/3000);
