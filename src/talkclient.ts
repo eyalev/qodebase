@@ -350,6 +350,11 @@ function act(c, withPreview) {
   var target = c.target && byId(c.target);
   var go = function () {
     unmark();
+    if (c.op === 'go' && String(c.href).replace(/\/$/, '') === (location.pathname + location.search).replace(/\/$/, '')) {
+      // Already here: a reload would drop the conversation and repeat the page for nothing.
+      add('app', 'You are on ' + (c.label || 'that page') + '.');
+      return done();
+    }
     if (c.op === 'go') {
       add('app', 'Opening ' + (c.label || c.href) + '…');
       sset('last', c.label || c.href);
@@ -808,6 +813,7 @@ function vcNavigate(c) {
 }
 function onVoiceMsg(d) {
   if (!d || typeof d !== 'object') return;
+  logEv('vc_msg', { type: d.type, op: d.cmd && d.cmd.op, mode: d.cmd && d.cmd.mode, offer: !!(d.cmd && d.cmd.offer) });
   vcActive();
   if (d.type === 'talk-ready') { vcSeen = vc ? vc.transcript.length : 0; return; }
   if (d.type === 'talk-end') return endConversation(d.why || 'minutes');
