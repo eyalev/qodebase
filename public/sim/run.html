@@ -63,6 +63,7 @@ input[type=range] { width: 100%; accent-color: var(--acc); min-height: 32px; }
 .crumbs a { text-decoration: none; }
 .crumbs span.sep { color: var(--dim); }
 .folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 6px; }
+.folder small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .folder { background: none; border: 0; padding: 6px; border-radius: 10px; cursor: pointer; color: var(--fg); font: inherit; text-align: left; box-shadow: inset 0 0 0 1px var(--line); }
 .folder .cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
 .folder .cells i { display: block; aspect-ratio: 1; border-radius: 2px; background: var(--chip); }

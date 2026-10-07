@@ -1,5 +1,72 @@
 [
  {
+  "name": "hono-w1",
+  "policy": "replay",
+  "label": "Hono, real PRs, one at a time (history)",
+  "agents": 1,
+  "hours": 12.917,
+  "stats": {
+   "landed": 150,
+   "landedPerHour": 12,
+   "conflicts": 0,
+   "testFails": 0,
+   "breaks": 0,
+   "reverts": 0,
+   "redos": 0,
+   "leadReplays": 0,
+   "replayedOnLand": 0,
+   "dropped": 0,
+   "reworkShare": 0,
+   "p50S": null,
+   "p90S": null,
+   "replay": {
+    "landed": 150,
+    "depends": 0,
+    "conflict": 0,
+    "conflictRebased": 0,
+    "broken": 0,
+    "deferred": 0,
+    "prsAffected": 0,
+    "wallS": 34.636,
+    "sameAsHistory": true
+   }
+  },
+  "bytes": 507943
+ },
+ {
+  "name": "hono-w10",
+  "policy": "replay",
+  "label": "Hono, real PRs, 10 at once",
+  "agents": 10,
+  "hours": 1.25,
+  "stats": {
+   "landed": 60,
+   "landedPerHour": 48,
+   "conflicts": 0,
+   "testFails": 0,
+   "breaks": 0,
+   "reverts": 0,
+   "redos": 0,
+   "leadReplays": 0,
+   "replayedOnLand": 0,
+   "dropped": 0,
+   "reworkShare": 0,
+   "p50S": null,
+   "p90S": null,
+   "replay": {
+    "landed": 60,
+    "depends": 62,
+    "conflict": 0,
+    "conflictRebased": 0,
+    "broken": 0,
+    "deferred": 0,
+    "wallS": 9.146,
+    "sameAsHistory": true
+   }
+  },
+  "bytes": 221837
+ },
+ {
   "name": "agentReview-50",
   "policy": "agentReview",
   "label": "Agent review",
@@ -79,6 +146,41 @@
    }
   },
   "bytes": 249344
+ },
+ {
+  "name": "hono-w50",
+  "policy": "replay",
+  "label": "Hono, real PRs, 50 at once",
+  "agents": 50,
+  "hours": 7.394,
+  "stats": {
+   "landed": 500,
+   "landedPerHour": 68,
+   "conflicts": 1,
+   "testFails": 7,
+   "breaks": 0,
+   "reverts": 0,
+   "redos": 0,
+   "leadReplays": 0,
+   "replayedOnLand": 0,
+   "dropped": 0,
+   "reworkShare": 0,
+   "p50S": null,
+   "p90S": null,
+   "replay": {
+    "landed": 500,
+    "depends": 816,
+    "conflict": 1,
+    "conflictRebased": 0,
+    "broken": 7,
+    "deferred": 1,
+    "prsAffected": 138,
+    "prs": 346,
+    "wallS": 612.952,
+    "sameAsHistory": false
+   }
+  },
+  "bytes": 1692464
  },
  {
   "name": "hybrid-50",
@@ -175,6 +277,41 @@
    "p90S": 1389.3860995023654
   },
   "bytes": 147450
+ },
+ {
+  "name": "hono-w100",
+  "policy": "replay",
+  "label": "Hono, real PRs, 100 at once",
+  "agents": 100,
+  "hours": 1.978,
+  "stats": {
+   "landed": 418,
+   "landedPerHour": 211,
+   "conflicts": 1,
+   "testFails": 21,
+   "breaks": 0,
+   "reverts": 0,
+   "redos": 0,
+   "leadReplays": 0,
+   "replayedOnLand": 0,
+   "dropped": 82,
+   "reworkShare": 0,
+   "p50S": null,
+   "p90S": null,
+   "replay": {
+    "landed": 418,
+    "depends": 1549,
+    "conflict": 1,
+    "conflictRebased": 0,
+    "broken": 21,
+    "deferred": 1,
+    "prsAffected": 153,
+    "prs": 346,
+    "wallS": 517.499,
+    "sameAsHistory": false
+   }
+  },
+  "bytes": 1362751
  },
  {
   "name": "agentReview-500",

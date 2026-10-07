@@ -57,10 +57,15 @@ async function load(name) {
   b.byId = new Map(b.changes.map((c) => [c.id, c]));
   b.byFile = byFile;
   b.pathIdx = new Map(b.paths.map((p, i) => [p, i]));
-  // Folders: src/mN, everything else is "shared".
+  // Folders: the generated project's src/mN (everything else "shared"); a real repo's
+  // directories, at most three levels deep (src/middleware/cors).
+  const synthetic = b.paths.some((p) => /^src\/m\d+\//.test(p));
+  const folderOf = (p) => (synthetic ? (/^src\/m\d+\//.test(p) ? p.split('/').slice(0, 2).join('/') : 'shared') : (p.includes('/') ? p.split('/').slice(0, Math.min(3, p.split('/').length - 1)).join('/') : 'root'));
+  b.folderOf = folderOf;
   const folders = new Map();
-  b.paths.forEach((p, i) => { const f = /^src\/m\d+\//.test(p) ? p.split('/').slice(0, 2).join('/') : 'shared'; if (!folders.has(f)) folders.set(f, []); folders.get(f).push(i); });
-  b.folders = [...folders.entries()].sort((x, y) => (x[0] === 'shared' ? -1 : y[0] === 'shared' ? 1 : +x[0].slice(5) - +y[0].slice(5)));
+  b.paths.forEach((p, i) => { const f = folderOf(p); if (!folders.has(f)) folders.set(f, []); folders.get(f).push(i); });
+  const rank = (n) => (n === 'shared' || n === 'root' ? -1 : 0);
+  b.folders = [...folders.entries()].sort((x, y) => rank(x[0]) - rank(y[0]) || (synthetic ? +x[0].slice(5) - +y[0].slice(5) : x[0].localeCompare(y[0])));
   R = b;
   const end = b.meta.hours * 3600;
   $('t').max = end; $('tend').textContent = `of ${b.meta.realTime ? clockS(end) : clock(end)}`;
@@ -154,7 +159,7 @@ const stateTag = (s) => (s == null ? '<span class="tag">not yet asked</span>' : 
 function viewCodebase() {
   const cls = fileMarks(t);
   const folders = R.folders.map(([name, idxs]) => `<button class="folder" data-go="#/folder/${encodeURIComponent(name)}" aria-label="${esc(name)}">
-    <span class="cells">${idxs.map((i) => `<i class="${cls[i]}"></i>`).join('')}</span><small>${esc(name === 'shared' ? 'shared' : name.slice(4))}</small></button>`).join('');
+    <span class="cells">${idxs.map((i) => `<i class="${cls[i]}"></i>`).join('')}</span><small>${esc(name === 'shared' || name === 'root' ? name : name.replace(/^src\//, ''))}</small></button>`).join('');
   const recent = R.history.filter((h) => h.t <= t).slice(-6).reverse();
   return `${crumbs([['Codebase']])}
     <div class="folders">${folders}</div>
@@ -200,7 +205,7 @@ function viewFolder(name) {
 function viewFile(i) {
   const p = R.paths[i];
   if (!p) return viewCodebase();
-  const folder = /^src\/m\d+\//.test(p) ? p.split('/').slice(0, 2).join('/') : 'shared';
+  const folder = R.folderOf(p);
   const ids = R.byFile[i].filter((id) => R.byId.get(id).created <= t);
   const rows = ids.slice().reverse().slice(0, 200).map((id) => {
     const c = R.byId.get(id), s = stateAt(c, t);
