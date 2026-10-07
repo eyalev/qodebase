@@ -55,7 +55,7 @@ function traceStart() {
 }
 
 var S = {
-  engine: get('engine2', 'live'),   // live (Deepgram Flux, words as you speak; default since 2026-10-07) | native | whisper
+  engine: get('engine2', 'live'),   // live (Deepgram Nova-3 live words + Whisper on the whole clip, like tmux-web; default) | native | whisper
   lang: get('lang', 'en'),
   voice: get('voice', 'off'),           // spoken replies: off | aura-1 | aura-2 | phone (off by default)
   speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
@@ -159,7 +159,7 @@ function build() {
   head.appendChild(convBtn); head.appendChild(spk); head.appendChild(gear); head.appendChild(close);
   var setp = el('div', { id: 'talk-set' });
   setp.innerHTML =
-    '<label>Dictation<select id="talk-s-engine"><option value="live">Deepgram live (Cloudflare): words as you speak, waits for you to finish</option><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
+    '<label>Dictation<select id="talk-s-engine"><option value="live">Deepgram live + Whisper check (like tmux-web): words as you speak, then the whole clip is re-read</option><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
     '<label>Send what I said<select id="talk-s-pause"><option value="1500">After a 1.5 s pause</option><option value="2500">After a 2.5 s pause</option><option value="4000">After a 4 s pause</option><option value="tap">Only when I tap the mic</option></select></label>' +
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
     '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
@@ -906,7 +906,7 @@ function dcWarm(cb) {
     dc.addEventListener('connectionchange', function (on) {
       dcReady = !!on; logEv('dc_connection', { on: on, ms: Date.now() - t0 });
       if (!on) trace('dc_disconnect', { listening: dcOn });
-      if (on) { try { dc.sendJSON({ type: 'mode', dictate: true }); } catch (e) {} var w = dc.__wait || []; dc.__wait = []; w.forEach(function (f) { f(); }); }
+      if (on) { try { dc.sendJSON({ type: 'mode', dictate: true, lang: S.lang }); } catch (e) {} var w = dc.__wait || []; dc.__wait = []; w.forEach(function (f) { f(); }); }
     });
     dc.addEventListener('interimtranscript', function (t) { if (dcOn) trace('dc_interim', { text: t || '', ms: Date.now() - dcT0 }); if (dcOn && t) { dcText = t; live.textContent = dcSaid(t); clearTimeout(dcQuiet); } });
     dc.addEventListener('statuschange', function (st) { trace('dc_status', { status: st, on: dcOn, ms: dcT0 ? Date.now() - dcT0 : undefined }); });
@@ -924,13 +924,40 @@ function dcWarm(cb) {
     dc.connect();
   });
 }
+// The whole clip, recorded on the phone from the tap (like tmux-web): Deepgram's live words can miss
+// the start (the call takes ~0.8 s to begin) and mishear names; Whisper reads the clip at the end and
+// its text replaces the live words.
+var rec = null, recChunks = [], recStream = null, recT0 = 0;
+function recStart() {
+  recChunks = []; recT0 = Date.now();
+  if (!navigator.mediaDevices || !window.MediaRecorder) return;
+  navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function (s) {
+    if (!listening) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+    recStream = s;
+    var type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].filter(function (t) { return MediaRecorder.isTypeSupported(t); })[0] || '';
+    rec = new MediaRecorder(s, type ? { mimeType: type } : {});
+    rec.ondataavailable = function (e) { if (e.data && e.data.size) recChunks.push(e.data); };
+    rec.start(250);
+    trace('rec_start', { ms: Date.now() - recT0 });
+  }).catch(function (e) { trace('rec_error', { err: String(e) }); });
+}
+function recStop(cb) {
+  var r = rec, s = recStream; rec = null; recStream = null;
+  if (!r) { if (cb) cb(null); return; }
+  r.onstop = function () {
+    if (s) s.getTracks().forEach(function (t) { t.stop(); });
+    if (cb) cb(new Blob(recChunks, { type: r.mimeType || 'audio/webm' }));
+  };
+  try { r.stop(); } catch (e) { if (cb) cb(null); }
+}
 function startLive() {
   setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); live.textContent = '';
+  recStart();
   dcWarm(function () {
     if (!listening) return;
     dcOn = true; dcT0 = Date.now(); dc.__heardSound = 0;
     dc.startCall().then(function () { status('Listening'); logEv('dc_start', {}); })
-      .catch(function (e) { dcOn = false; setListening(false); add('note', 'Could not start the microphone: ' + (e && e.message || e)); });
+      .catch(function (e) { dcOn = false; setListening(false); recStop(null); add('note', 'Could not start the microphone: ' + (e && e.message || e)); });
   });
 }
 function liveFinish(text) {
@@ -941,10 +968,26 @@ function liveFinish(text) {
   var t = (dcSaid(text || dcText) || '').trim();
   logEv('dc_final', { chars: t.length, pieces: dcBuf.length, ms: Date.now() - dcT0 });
   dcBuf = [];
-  if (t) { lastSpoken = true; submit(t); } else add('note', 'I did not hear anything.');
+  var sent = false;
+  function send(final, how, extra) {
+    if (sent) return; sent = true; status('');
+    trace('dc_whisper', Object.assign({ how: how, live: t, final: final }, extra || {}));
+    if (final) { lastSpoken = true; submit(final); } else add('note', 'I did not hear anything.');
+  }
+  recStop(function (blob) {
+    if (!blob || blob.size < 2000) return send(t, 'live', { bytes: blob ? blob.size : 0 });
+    if (t) live.textContent = t;
+    status('Checking the words\u2026');
+    var w0 = Date.now();
+    setTimeout(function () { send(t, 'live-timeout', { bytes: blob.size }); }, 6000);
+    fetch('/api/talk/transcribe?names=1&lang=' + encodeURIComponent(S.lang), { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type }, body: blob })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { live.textContent = ''; send((j && j.text) || t, j && j.text ? 'whisper' : 'live', { bytes: blob.size, whisper_ms: Date.now() - w0, err: j && j.error }); })
+      .catch(function (e) { live.textContent = ''; send(t, 'live-error', { err: String(e) }); });
+  });
 }
 function liveStop(cancel) {
-  if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} setListening(false); live.textContent = ''; return; }
+  if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} recStop(null); setListening(false); live.textContent = ''; return; }
   // Stopped by hand (tap, or releasing the button): send what was heard, including the piece being said.
   trace('dc_stop', { how: 'hand', pieces: dcBuf.length, interim: dcText, ms: Date.now() - dcT0 });
   status('Finishing\u2026');

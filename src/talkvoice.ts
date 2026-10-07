@@ -12,15 +12,16 @@
 // characters, plus the brain's calls. Capped per person per day in TalkLog
 // (voice_sec) and recorded per turn in the cost ledger (src/costs.ts).
 import { Agent, type Connection } from 'agents';
-import { withVoice, WorkersAIFluxSTT, type VoiceTurnContext } from 'agents/voice';
+import { withVoice, WorkersAIFluxSTT, WorkersAINova3STT, type VoiceTurnContext } from 'agents/voice';
 import type { Env } from './env';
 import { isOwner } from './auth';
 import { recordCost } from './costs';
-import { chatCore, decideCore, statusCore, talkLog } from './talk';
+import { chatCore, decideCore, projectsFor, statusCore, talkLog } from './talk';
 import { stretchPcm16 } from './stretch';
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talkvoice', event, ...data }));
 const FLUX_USD_PER_MIN = 0.0077;
+const NOVA3_USD_PER_MIN = 0.0092;   // websocket price, 2026-10-07 list
 const AURA_USD_PER_1K: Record<string, number> = { '@cf/deepgram/aura-1': 0.015, '@cf/deepgram/aura-2-en': 0.03 };
 const SPEAKERS: Record<string, string[]> = {
   '@cf/deepgram/aura-1': ['helios', 'angus', 'arcas', 'orion', 'orpheus', 'perseus', 'zeus', 'athena', 'asteria', 'luna', 'hera', 'stella'],
@@ -106,6 +107,9 @@ export class TalkVoice extends VoiceAgent {
   #pageText = '';
   #pending: any = null;              // a command waiting for a spoken yes / no
   #callStart = 0;
+  #dictLang = new Map<string, string>();   // connection → dictation language ('en' | 'he' | 'auto')
+  #keyterms: string[] = [];               // the person's project names, for Nova-3's keyterm biasing
+  #callDictate = false;
   #dictate = new Set<string>();      // connections in dictation (push-to-talk): Flux hears, the page gets the words, nothing is spoken
 
   get #who() { return { handle: this.name, admin: false }; }
@@ -125,7 +129,23 @@ export class TalkVoice extends VoiceAgent {
     return true;
   }
   async onInterrupt(_connection: Connection) { this.#trace('srv_interrupt', {}); }
+  // Push-to-talk dictation hears with Nova-3 (Deepgram's dictation model, keyterms = your project
+  // names), like tmux-web; a conversation keeps Flux, which knows when a turn ends.
+  createTranscriber(connection: Connection) {
+    if (!this.#dictate.has(connection.id)) return undefined as any;
+    const lang = this.#dictLang.get(connection.id) || 'en';
+    const keyterms = ['qodebase', 'Talk', 'fork', 'merge', 'router', ...this.#keyterms].slice(0, 80);
+    this.#trace('srv_stt', { model: 'nova-3', lang, keyterms: keyterms.length });
+    return new WorkersAINova3STT(gatewayed(this.env), { keyterms, language: lang === 'en' ? 'en' : 'multi', endpointingMs: 300, utteranceEndMs: 1000 }) as any;
+  }
+  async #loadKeyterms() {
+    try {
+      const ps = await projectsFor(this.env, this.#who);
+      this.#keyterms = [...new Set(ps.filter((p) => p.mine).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' ')))].slice(0, 60);
+    } catch (e) { log('keyterms_error', { err: String(e) }); }
+  }
   async onCallStart(connection: Connection) {
+    this.#callDictate = this.#dictate.has(connection.id);
     this.#callStart = Date.now();
     this.#send(connection, { type: 'talk-ready' });
     log('call_start', { handle: this.name });
@@ -136,16 +156,21 @@ export class TalkVoice extends VoiceAgent {
     const sec = Math.round((Date.now() - this.#callStart) / 1000);
     this.#callStart = 0;
     await talkLog(this.env).take('voice_sec', this.name, Math.max(0, sec - 1)).catch(() => null);
-    await this.#cost(sec / 60 * FLUX_USD_PER_MIN);
-    this.#trace('srv_call_end', { seconds: sec });
-    log('call_end', { handle: this.name, seconds: sec, flux_usd: Math.round(sec / 60 * FLUX_USD_PER_MIN * 1e5) / 1e5 });
+    const rate = this.#callDictate ? NOVA3_USD_PER_MIN : FLUX_USD_PER_MIN;
+    await this.#cost(sec / 60 * rate);
+    this.#trace('srv_call_end', { seconds: sec, model: this.#callDictate ? 'nova-3' : 'flux' });
+    log('call_end', { handle: this.name, seconds: sec, model: this.#callDictate ? 'nova-3' : 'flux', stt_usd: Math.round(sec / 60 * rate * 1e5) / 1e5 });
   }
 
   /** Non-voice messages from the page: what it shows, voice settings, and words to say (late answers). */
   async onMessage(connection: Connection, message: unknown) {
     let m: any;
     try { m = JSON.parse(String(message)); } catch { return; }
-    if (m?.type === 'mode') { if (m.dictate) this.#dictate.add(connection.id); else this.#dictate.delete(connection.id); return; }
+    if (m?.type === 'mode') {
+      if (m.dictate) { this.#dictate.add(connection.id); this.#dictLang.set(connection.id, String(m.lang || 'en')); if (!this.#keyterms.length) await this.#loadKeyterms(); }
+      else { this.#dictate.delete(connection.id); this.#dictLang.delete(connection.id); }
+      return;
+    }
     if (m?.type === 'screen') { this.#screen = m.screen || null; this.#pageText = String(m.pageText || '').slice(0, 5000); return; }
     if (m?.type === 'voice') {
       const model = m.model === 'aura-1' ? '@cf/deepgram/aura-1' : '@cf/deepgram/aura-2-en';

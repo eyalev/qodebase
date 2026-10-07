@@ -98,7 +98,7 @@ function cleanScreen(b: any): Screen {
   return { path: String(b?.path || '/').slice(0, 200), title: String(b?.title || '').slice(0, 120), items, projects: [], last: b?.last ? String(b.last).slice(0, 120) : null };
 }
 
-async function projectsFor(env: Env, who: Who): Promise<Proj[]> {
+export async function projectsFor(env: Env, who: Who): Promise<Proj[]> {
   const list = await listFor(env, who?.handle || '', !!who?.admin);
   return list.slice(0, 400).map((e: any, i: number) => ({ id: `p${i + 1}`, slug: e.slug, name: e.name, owner: e.owner, description: String(e.description || '').slice(0, 120), mine: !!who && e.owner === who.handle, updatedAt: e.updatedAt || 0 }));
 }
@@ -214,9 +214,17 @@ async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
   let b64 = '';
   const bytes = new Uint8Array(buf);
   for (let i = 0; i < bytes.length; i += 0x8000) b64 += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  // The person's project names as Whisper's prompt, so "reveal js" or "pomodoro streak" come out spelled
+  // their way (tmux-web does the same with its vocabulary). On a silent clip Whisper can echo the prompt: dropped.
+  let prompt = '';
+  if (url.searchParams.get('names') === '1') {
+    const names = (await projectsFor(env, who).catch(() => [] as Proj[])).filter((p) => p.mine).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' '));
+    if (names.length) prompt = 'qodebase. My projects: ' + [...new Set(names)].slice(0, 40).join(', ') + '.';
+  }
   try {
-    const res: any = await (env.AI as any).run(STT_MODEL, { audio: btoa(b64), ...(lang === 'en' || lang === 'he' ? { language: lang } : {}), vad_filter: true }, aiOpts(env));
-    const text = String(res?.text || '').trim();
+    const res: any = await (env.AI as any).run(STT_MODEL, { audio: btoa(b64), ...(lang === 'en' || lang === 'he' ? { language: lang } : {}), vad_filter: true, ...(prompt ? { initial_prompt: prompt } : {}) }, aiOpts(env));
+    let text = String(res?.text || '').trim();
+    if (prompt && text && (prompt.includes(text) || /^qodebase\. my projects:/i.test(text))) { log('stt_prompt_echo', { level: 'warn', handle: who.handle, text: text.slice(0, 200) }); text = ''; }
     log('stt', { level: 'info', handle: who.handle, bytes: buf.byteLength, lang, ms: Date.now() - t0, chars: text.length, detected: res?.transcription_info?.language });
     return json({ text, ms: Date.now() - t0 });
   } catch (e) {
