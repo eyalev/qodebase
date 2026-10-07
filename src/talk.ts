@@ -20,12 +20,14 @@ import type { Env } from './env';
 import { listFor } from './registry';
 import { buildQuestions, candidateProjects, currentSlug, resolve, stateText, type Item, type Proj, type Screen } from './talkdecide';
 import { TALK_JS } from './talkclient';
+import { TALK_VOICE_JS } from './talkvoicejs.gen';
+import { routeAgentRequest } from 'agents';
 
 const DECIDE_MODEL = '@cf/cloudflare/clef-flash';
 const CHAT_MODEL = '@cf/zai-org/glm-4.7-flash';
 const STT_MODEL = '@cf/openai/whisper-large-v3-turbo';
 // Daily caps (UTC day). A person's own, and everyone's together.
-const CAPS = { decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 }, tts_chars: { me: 20000, all: 150000 } };   // tts in characters: 20k = $0.30 of Aura-1 a day each
+const CAPS = { decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 }, tts_chars: { me: 20000, all: 150000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
 type Kind = keyof typeof CAPS;
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talk', event, ...data }));
@@ -47,7 +49,7 @@ export class TalkLog extends DurableObject<Env> {
     return out;
   }
 }
-const talkLog = (env: Env) => env.TalkLog.get(env.TalkLog.idFromName(day()));
+export const talkLog = (env: Env) => env.TalkLog.get(env.TalkLog.idFromName(day()));
 
 const aiOpts = (env: Env) => (env.TALK_GATEWAY ? { gateway: { id: env.TALK_GATEWAY } } : {});
 
@@ -67,7 +69,7 @@ async function hedged<T>(call: () => Promise<T>, marks: number[]): Promise<{ res
   } finally { timers.forEach(clearTimeout); }
 }
 
-type Who = { handle: string; admin: boolean } | null;
+export type Who = { handle: string; admin: boolean } | null;
 
 /** Keep what the page sends to a known shape and size (it is the model's input). */
 function cleanScreen(b: any): Screen {
@@ -83,13 +85,12 @@ async function projectsFor(env: Env, who: Who): Promise<Proj[]> {
   return list.slice(0, 400).map((e: any, i: number) => ({ id: `p${i + 1}`, slug: e.slug, name: e.name, owner: e.owner, description: String(e.description || '').slice(0, 120), mine: !!who && e.owner === who.handle }));
 }
 
-async function decide(request: Request, env: Env, who: Who & {}) {
+export async function decideCore(env: Env, who: Who & {}, body: any) {
   const t0 = Date.now();
-  const body = await request.json().catch(() => null) as any;
   const utterance = String(body?.utterance || '').trim().slice(0, 300);
-  if (!utterance) return json({ error: 'empty' }, 400);
+  if (!utterance) return { ok: false as const, http: 400, error: 'empty' };
   const budget = await talkLog(env).take('decide', who.handle);
-  if (!budget.ok) return json({ error: 'budget', why: 'Talk has reached today\'s limit. It resets at midnight UTC.' }, 429);
+  if (!budget.ok) return { ok: false as const, http: 429, error: 'budget', why: 'Talk has reached today\'s limit. It resets at midnight UTC.' };
   const s = { ...cleanScreen(body.screen), me: who.handle };
   const projects = candidateProjects(utterance, await projectsFor(env, who), 24, currentSlug(s.path));
   const { questions, cands } = buildQuestions(utterance, s, projects);
@@ -100,12 +101,12 @@ async function decide(request: Request, env: Env, who: Who & {}) {
     ({ res, fired, won } = await hedged(() => (env.AI as any).run(DECIDE_MODEL, { model: 'clef-flash', state, questions }, aiOpts(env)), body.interim ? [] : HEDGE_MS));
   } catch (e) {
     log('decide_error', { level: 'error', err: String(e), stack: (e as Error)?.stack, handle: who.handle });
-    return json({ error: 'model', why: 'The model did not answer. Try again.' }, 502);
+    return { ok: false as const, http: 502, error: 'model', why: 'The model did not answer. Try again.' };
   }
   const cmd = resolve(res.answers, cands, s, projects, utterance);
   log('decide', { level: 'info', handle: who.handle, path: s.path, interim: !!body.interim, model_ms: Date.now() - tm, total_ms: Date.now() - t0, fired, won,
     n_items: s.items.length, n_projects: projects.length, n_questions: Object.keys(questions).length, mode: cmd.mode, mode_p: cmd.modeP, op: cmd.op, p: cmd.p, risky: cmd.risky, why: cmd.why, usage: res.usage });
-  return json({ cmd, ms: { model: Date.now() - tm, total: Date.now() - t0 }, left: budget.left, ...(body.debug ? { answers: res.answers, state } : {}) });
+  return { ok: true as const, cmd, ms: { model: Date.now() - tm, total: Date.now() - t0 }, left: budget.left, ...(body.debug ? { answers: res.answers, state } : {}) };
 }
 
 // ---- Chat lane: answers questions about the page, and can act with the same verbs.
@@ -116,13 +117,12 @@ const TOOLS = [
   { type: 'function', function: { name: 'show', description: 'Point at parts of the page while you explain them: heading, link, button or field ids, in the order you talk about them.', parameters: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } }, required: ['ids'] } } },
 ];
 
-async function chat(request: Request, env: Env, who: Who & {}) {
+export async function chatCore(env: Env, who: Who & {}, body: any) {
   const t0 = Date.now();
-  const body = await request.json().catch(() => null) as any;
   const utterance = String(body?.utterance || '').trim().slice(0, 500);
-  if (!utterance) return json({ error: 'empty' }, 400);
+  if (!utterance) return { ok: false as const, http: 400, error: 'empty' };
   const budget = await talkLog(env).take('chat', who.handle);
-  if (!budget.ok) return json({ error: 'budget', why: 'Talk has reached today\'s chat limit. It resets at midnight UTC.' }, 429);
+  if (!budget.ok) return { ok: false as const, http: 429, error: 'budget', why: 'Talk has reached today\'s chat limit. It resets at midnight UTC.' };
   const s = cleanScreen(body.screen);
   const pageText = String(body.pageText || '').slice(0, 5000);
   const did = body.did ? String(body.did).slice(0, 200) : '';
@@ -176,11 +176,11 @@ async function chat(request: Request, env: Env, who: Who & {}) {
     }
   } catch (e) {
     log('chat_error', { level: 'error', err: String(e), stack: (e as Error)?.stack, handle: who.handle });
-    return json({ error: 'model', why: 'The model did not answer. Try again.' }, 502);
+    return { ok: false as const, http: 502, error: 'model', why: 'The model did not answer. Try again.' };
   }
   const { calls, reply } = out;
   log('chat', { level: 'info', handle: who.handle, path: s.path, rounds, model_ms: Date.now() - tm, total_ms: Date.now() - t0, tools: calls.map((c: any) => c.name), reply_len: reply.length, usage: res?.usage, usage2: res?.usage2 });
-  return json({ reply, actions: calls.map((c: any) => ({ name: c.name, args: c.args })), ms: { model: Date.now() - tm }, left: budget.left });
+  return { ok: true as const, reply, actions: calls.map((c: any) => ({ name: c.name, args: c.args })), ms: { model: Date.now() - tm }, left: budget.left };
 }
 
 async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
@@ -216,11 +216,10 @@ async function talkEtag() {
 
 // ---- "What's going on": from the projects themselves, not the page. No model:
 // one Registry list + one Project info() per own project (newest 20), no boxes.
-async function status(request: Request, env: Env, who: Who & {}) {
+export async function statusCore(env: Env, who: Who & {}, body: any) {
   const t0 = Date.now();
-  const body = await request.json().catch(() => ({})) as any;
   const budget = await talkLog(env).take('status', who.handle);
-  if (!budget.ok) return json({ error: 'budget', why: 'Talk has reached today\'s limit. It resets at midnight UTC.' }, 429);
+  if (!budget.ok) return { ok: false as const, http: 429, error: 'budget', why: 'Talk has reached today\'s limit. It resets at midnight UTC.' };
   const today = /\btoday\b/i.test(String(body?.utterance || ''));
   const since = Date.now() - (today ? 24 : 7 * 24) * 3600_000;
   const own = (await listFor(env, who.handle, false)).filter((e: any) => e.owner === who.handle)
@@ -255,7 +254,7 @@ async function status(request: Request, env: Env, who: Who & {}) {
   if (!parts.length) parts.push(own.length ? 'Nothing is in progress: no agents working and nothing waiting to merge.' : 'You have no projects yet. Say what you want to build.');
   if (own.length) parts.push(`${today ? 'Today' : 'This week'} ${changed === 0 ? 'none of your projects changed' : changed === 1 ? 'one of your projects changed' : `${changed} of your projects changed`}${merged ? `, with ${merged} merged change${merged > 1 ? 's' : ''}` : ''}.`);
   log('status', { level: 'info', handle: who.handle, projects: own.length, working: working.length, ready: ready.length, blocked: blocked.length, waiting: waiting.length, changed, merged, ms: Date.now() - t0 });
-  return json({ text: parts.join(' '), links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left });
+  return { ok: true as const, text: parts.join(' '), links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left };
 }
 
 // ---- Spoken replies: Aura on Workers AI, streamed (first sound ~0.5 s). Same voices
@@ -292,7 +291,22 @@ async function tts(request: Request, env: Env, ctx: ExecutionContext, who: Who &
   return new Response(a, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'private, max-age=86400', 'x-talk-tts': 'fresh' } });
 }
 
+// HTTP wrappers over the cores (the voice agent, src/talkvoice.ts, calls the cores directly).
+const wrap = (r: { ok: boolean; http?: number }) => json(r, r.ok ? 200 : (r as any).http || 500);
+const decide = async (request: Request, env: Env, who: Who & {}) => wrap(await decideCore(env, who, await request.json().catch(() => null)));
+const chat = async (request: Request, env: Env, who: Who & {}) => wrap(await chatCore(env, who, await request.json().catch(() => null)));
+const status = async (request: Request, env: Env, who: Who & {}) => wrap(await statusCore(env, who, await request.json().catch(() => ({}))));
+
 export async function talkRoute(request: Request, env: Env, _ctx: ExecutionContext, url: URL, who: Who): Promise<Response | null> {
+  if (url.pathname.startsWith('/agents/talk-voice/')) {
+    // The conversation agent is one per person, named by their handle; nobody else's.
+    if (!who) return json({ error: 'signin', why: 'Sign in to talk to qodebase.' }, 401);
+    if (!env.AI || !env.TalkVoice) return json({ error: 'off', why: 'Talk is not set up on this copy.' }, 404);
+    const name = decodeURIComponent(url.pathname.split('/')[3] || '');
+    if (name !== who.handle) return json({ error: 'forbidden' }, 403);
+    return (await routeAgentRequest(request, env as any)) || json({ error: 'not found' }, 404);
+  }
+  if (url.pathname === '/talk-voice.js') return new Response(TALK_VOICE_JS, { headers: { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
   if (url.pathname === '/talk.js') {
     // Revalidate on every page load (304 when unchanged), so a deploy's new page tools reach the next load, not 5 min later.
     const etag = await talkEtag();

@@ -28,6 +28,7 @@
       { "name": "BuildBox", "class_name": "BuildBox" },
       { "name": "Installs", "class_name": "Installs" },
       { "name": "TalkLog", "class_name": "TalkLog" },
+      { "name": "TalkVoice", "class_name": "TalkVoice" },
       { "name": "Ledger", "class_name": "Ledger" }
     ]
   },
@@ -37,7 +38,8 @@
     { "tag": "v3", "new_sqlite_classes": ["BuildBox"] },
     { "tag": "v4", "new_sqlite_classes": ["Installs"] },
     { "tag": "v5", "new_sqlite_classes": ["TalkLog"] },
-    { "tag": "v6", "new_sqlite_classes": ["Ledger"] }
+    { "tag": "v6", "new_sqlite_classes": ["Ledger"] },
+    { "tag": "v7", "new_sqlite_classes": ["TalkVoice"] }
   ],
   "rules": [
     { "type": "Data", "globs": ["**/*.tgz"], "fallthrough": true },

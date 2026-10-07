@@ -31,13 +31,14 @@ import { ownPage } from './own';
 import { withLook } from './look';
 import { Installs, installRoute } from './install';
 import { TalkLog, talkRoute } from './talk';
+import { TalkVoice } from './talkvoice';
 import { Ledger, costSummary, costsPage } from './costs';
 import { bearerEmail, cliPublicRoute, cliUserRoute } from './cliauth';
 // mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
 import MA_TGZ from '../box/mobile-agent.tgz';
 import MA_REV from '../box/mobile-agent.rev';
 
-export { AgentBox, Project, Registry, BuildBox, Installs, TalkLog, Ledger };
+export { AgentBox, Project, Registry, BuildBox, Installs, TalkLog, Ledger, TalkVoice };
 
 type Who = { kind: 'user'; handle: string; admin: boolean; anon?: boolean; email?: string } | { kind: 'agent'; agentId: string; role: Role };
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
@@ -321,7 +322,7 @@ const app = {
       if (url.pathname === '/personal-agents' && env.CF_OAUTH_CLIENT_ID) return html(personalAgentsPage());
       if (url.pathname === '/own' && !env.SELF_HOST) return html(ownPage(true));
       if (url.pathname.startsWith('/connect/cf/') || url.pathname.startsWith('/personal-agents/') || url.pathname === '/api/installs') { const r = await installRoute(request, env, ctx, url); if (r) return r; }
-      if (url.pathname === '/talk.js' || url.pathname.startsWith('/api/talk/')) { const w = await who(request, env); const r = await talkRoute(request, env, ctx, url, w?.kind === 'user' && !w.anon ? { handle: w.handle, admin: w.admin } : null); if (r) return r; }
+      if (url.pathname === '/talk.js' || url.pathname === '/talk-voice.js' || url.pathname.startsWith('/api/talk/') || url.pathname.startsWith('/agents/talk-voice/')) { const w = await who(request, env); const r = await talkRoute(request, env, ctx, url, w?.kind === 'user' && !w.anon ? { handle: w.handle, admin: w.admin } : null); if (r) return r; }
       if (url.pathname.startsWith('/api/cli/') || url.pathname.startsWith('/cli') || url.pathname === '/llms.txt') { const r = await cliPublicRoute(request, env, url); if (r) return r; }
       // Crawler gate on WHO, not on paths: verified bots get the front page only
       // (project and code pages read Artifacts on every view).

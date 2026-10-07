@@ -11,6 +11,7 @@ export interface Env {
   BuildBox: DurableObjectNamespace<BuildBox>;
   Installs: DurableObjectNamespace<Installs>;
   TalkLog: DurableObjectNamespace<import('./talk').TalkLog>;
+  TalkVoice?: DurableObjectNamespace<import('./talkvoice').TalkVoice>;   // the conversation agent (src/talkvoice.ts)
   Ledger: DurableObjectNamespace<import('./costs').Ledger>;   // per-person cost ledger (src/costs.ts)
   AI?: Ai;                    // Workers AI (Talk: src/talk.ts)
   TALK_GATEWAY?: string;      // AI Gateway id for Talk's model calls (rate limited); unset on self-hosted copies

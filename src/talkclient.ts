@@ -65,6 +65,7 @@ var css = [
   '#talk-mic{width:44px;height:44px;border-radius:8px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}',
   '#talk-mic svg{width:22px;height:22px}',
   '#talk-mic.on{background:#b42d1f}',
+  '.talk-ib.on{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-set{display:none;padding:12px 16px;border-bottom:1px solid var(--t-line);gap:12px;flex-direction:column;font-size:15px}',
   '#talk-root.settings #talk-set{display:flex}',
   '#talk-set label{display:flex;flex-direction:column;gap:4px;color:var(--t-dim);font-size:13px}',
@@ -76,6 +77,7 @@ var css = [
 ].join('\n');
 
 var ICON = {
+  conv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 11v2"/></svg>',
   mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
   stop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>',
   gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
@@ -85,7 +87,7 @@ var ICON = {
   send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
 };
 
-var root, sheet, logEl, live, offer, inp, micBtn, fab, stEl, spk;
+var root, sheet, logEl, live, offer, inp, micBtn, fab, stEl, spk, convBtn;
 function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
 
 function build() {
@@ -100,7 +102,9 @@ function build() {
   spk = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Spoken replies' }, ICON.mute);
   var gear = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Talk settings' }, ICON.gear);
   var close = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Close' }, ICON.x);
-  head.appendChild(spk); head.appendChild(gear); head.appendChild(close);
+  convBtn = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Start a conversation' }, ICON.conv);
+  convBtn.addEventListener('click', function () { unlockAudio(); if (vc) endConversation('you'); else startConversation(); });
+  head.appendChild(convBtn); head.appendChild(spk); head.appendChild(gear); head.appendChild(close);
   var setp = el('div', { id: 'talk-set' });
   setp.innerHTML =
     '<label>Dictation<select id="talk-s-engine"><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
@@ -124,8 +128,8 @@ function build() {
   fab.addEventListener('click', function () { unlockAudio(); open(true); if (S.engine === 'native' || S.engine === 'whisper') startListen(); });
   close.addEventListener('click', function () { stopListen(true); open(false); });
   gear.addEventListener('click', function () { root.classList.toggle('settings'); });
-  micBtn.addEventListener('click', function () { unlockAudio(); if (listening) stopListen(false); else startListen(); });
-  form.addEventListener('submit', function (e) { e.preventDefault(); unlockAudio(); var v = inp.value.trim(); if (!v) return; inp.value = ''; lastSpoken = false; submit(v); });
+  micBtn.addEventListener('click', function () { unlockAudio(); if (vc) { vc.toggleMute(); return; } if (listening) stopListen(false); else startListen(); });
+  form.addEventListener('submit', function (e) { e.preventDefault(); unlockAudio(); var v = inp.value.trim(); if (!v) return; inp.value = ''; if (vc) { vcActive(); vc.sendText(v); return; } lastSpoken = false; submit(v); });
   var se = document.getElementById('talk-s-engine'), sl = document.getElementById('talk-s-lang'), sv = document.getElementById('talk-s-voice'), sk = document.getElementById('talk-s-speaker'), sw = document.getElementById('talk-s-when');
   se.value = S.engine; sl.value = S.lang; sv.value = S.voice; sw.value = S.when;
   var fillSpeakers = function () {
@@ -287,7 +291,7 @@ function codeQuestion(c) {
   var model = DEPTH_MODEL[c.depth] || 'sonnet';
   var t0 = Date.now(), tries = 0;
   add('app', 'Reading the code of ' + owner + '/' + name + '\u2026');
-  say('Reading the code.');
+  if (!vc) say('Reading the code.');   // in a conversation the agent already said it
   var tick = setInterval(function () { status('Reading the code ' + Math.floor((Date.now() - t0) / 1000) + 's'); }, 500);
   var stop = function () { clearInterval(tick); };
   var start = function () {
@@ -304,7 +308,7 @@ function codeQuestion(c) {
         stop();
         logEv('code_answer', { project: owner + '/' + name, model: j.model || model, ms: Date.now() - t0, box_ms: j.ms, tries: tries });
         chatHist.push({ role: 'user', content: c.text }); chatHist.push({ role: 'assistant', content: j.answer || '' }); chatHist = chatHist.slice(-12); sset('chat', chatHist);
-        add('ai', j.answer || 'No answer came back.'); say(j.answer || '');
+        add('ai', j.answer || 'No answer came back.'); speakOut(j.answer || '');
         return done();
       }
       if (j.state === 'failed') {
@@ -727,6 +731,118 @@ function publishTools() {
   window.dispatchEvent(new Event('webmcp:ready'));
 }
 
+// ---- Conversation (phase 2): mic streamed to the TalkVoice agent (src/talkvoice.ts)
+// over a WebSocket with Cloudflare's voice client (/talk-voice.js); Flux hears and
+// ends turns, the agent decides and speaks, this page does what it says.
+var vc = null, vcSeen = 0, vcStatus = 'idle', vcLast = 0, vcIdle = null, vcLinks = null, vcPending = null;
+var VC_QUIET_MS = 30000;
+function speakOut(text) { if (vc) { try { vc.sendJSON({ type: 'say', text: spoken(text) }); } catch (e) {} } else say(text); }
+function vcActive() { vcLast = Date.now(); }
+function loadKit(cb) {
+  if (window.TalkVoiceKit) return cb();
+  var sc = document.createElement('script'); sc.src = '/talk-voice.js'; sc.onload = cb;
+  sc.onerror = function () { add('note', 'Could not load the conversation client.'); };
+  document.head.appendChild(sc);
+}
+function vcScreen() { if (vc) try { vc.sendJSON({ type: 'screen', screen: screen(), pageText: pageText() }); } catch (e) {} }
+function startConversation() {
+  if (vc || !me) return;
+  stopListen(true); stopSpeaking(); offerOff();
+  open(true); status('Connecting\u2026');
+  convBtn.classList.add('on'); convBtn.setAttribute('aria-label', 'End the conversation');
+  loadKit(function () {
+    var t0 = Date.now();
+    vc = new window.TalkVoiceKit.VoiceClient({ agent: 'TalkVoice', name: me, silenceDurationMs: 600, interruptThreshold: 0.06 });
+    vc.addEventListener('connectionchange', function (on) {
+      logEv('vc_connection', { on: on, ms: Date.now() - t0 });
+      if (!on || !vc) return;
+      vcScreen();
+      if (S.voice === 'aura-1' || S.voice === 'aura-2') vc.sendJSON({ type: 'voice', model: S.voice, speaker: S.speaker });
+      vc.startCall().then(function () { sset('call', true); vcActive(); }).catch(function (e) { add('note', 'Could not start: ' + (e && e.message || e)); endConversation('error'); });
+    });
+    vc.addEventListener('statuschange', function (st) {
+      vcStatus = st; vcActive();
+      status(st === 'listening' ? 'Listening' : st === 'thinking' ? 'Thinking\u2026' : st === 'speaking' ? 'Speaking' : '');
+      fab.classList.toggle('on', st !== 'idle');
+    });
+    vc.addEventListener('interimtranscript', function (t) { live.textContent = t || ''; if (t) vcActive(); });
+    vc.addEventListener('transcriptchange', function (msgs) {
+      for (var i = vcSeen; i < msgs.length; i++) {
+        var m = msgs[i];
+        if (m.role === 'user') { live.textContent = ''; add('you', m.text); }
+        else if (m.text) { add('ai', m.text, vcLinks || undefined); vcLinks = null; }
+      }
+      vcSeen = msgs.length; vcActive();
+    });
+    vc.addEventListener('custommessage', function (d) { onVoiceMsg(d); });
+    vc.addEventListener('turnmetrics', function (t) { logEv('vc_turn', { outcome: t.outcome, total_ms: t.turnTotalMs }); });
+    vc.addEventListener('error', function (e) { if (e) { add('note', String(e)); logEv('vc_error', { err: String(e) }); } });
+    vc.addEventListener('voiceerror', function (e) { logEv('vc_voiceerror', { e: e && (e.code || e.message || String(e)) }); });
+    vc.addEventListener('mutechange', function (m) { micBtn.classList.toggle('on', !m); micBtn.innerHTML = m ? ICON.mic : ICON.stop; });
+    vc.connect();
+    clearInterval(vcIdle);
+    vcIdle = setInterval(function () {
+      // Hang up after 30 s with nothing said or played: an open mic is billed by the minute.
+      if (vc && vcStatus === 'listening' && !live.textContent && Date.now() - vcLast > VC_QUIET_MS) endConversation('quiet');
+    }, 2000);
+  });
+}
+function endConversation(why) {
+  clearInterval(vcIdle);
+  if (vc) { try { vc.endCall(); } catch (e) {} try { vc.disconnect(); } catch (e) {} }
+  vc = null; vcSeen = 0; vcStatus = 'idle'; sset('call', false);
+  if (convBtn) { convBtn.classList.remove('on'); convBtn.setAttribute('aria-label', 'Start a conversation'); }
+  fab.classList.remove('on'); live.textContent = ''; status('');
+  if (why === 'quiet') add('note', 'Ended the conversation after 30 seconds of quiet.');
+  if (why === 'minutes') add('note', 'That is all the talking time for today.');
+  logEv('vc_end', { why: why });
+}
+// Navigating keeps the conversation: leave once the reply has been spoken, continue on the next page.
+function vcNavigate(c) {
+  var waited = 0;
+  (function wait() {
+    if (vc && vcStatus === 'speaking' && waited < 8000) { waited += 200; return setTimeout(wait, 200); }
+    sset('call', true);
+    act(c);
+  })();
+}
+function onVoiceMsg(d) {
+  if (!d || typeof d !== 'object') return;
+  vcActive();
+  if (d.type === 'talk-ready') { vcSeen = vc ? vc.transcript.length : 0; return; }
+  if (d.type === 'talk-end') return endConversation(d.why || 'minutes');
+  if (d.type === 'talk-status') { vcLinks = d.links || null; return; }
+  if (d.type === 'talk-cancel') { offerOff(); vcPending = null; return; }
+  if (d.type === 'talk-confirm') { offerOff(); var p = d.cmd || vcPending; vcPending = null; if (!p) return; if (p.op === 'change') return voiceChange(p); return p.op === 'go' || p.op === 'back' ? vcNavigate(p) : act(p); }
+  if (d.type === 'talk-chat') {
+    (d.actions || []).forEach(function (a) {
+      if (a.name === 'show') showSeq((a.args && a.args.ids) || []);
+      else if (a.name === 'press') { var b = byId(a.args.id); if (b) b.click(); }
+      else if (a.name === 'type_into') { var f = byId(a.args.id); if (f) { typeInto(f, String(a.args.text || '')); offerSubmit(f); } }
+      else if (a.name === 'go') { var to = String(a.args.to || ''); var l = byId(to); var href = l ? l.getAttribute('href') : (to.charAt(0) === '/' ? to : null); if (href) vcNavigate({ op: 'go', href: href, label: l ? (l.innerText || href).split('\n')[0] : href }); }
+    });
+    return;
+  }
+  if (d.type !== 'talk-cmd' || !d.cmd) return;
+  var c = d.cmd;
+  if (c.refused) { if (c.op === 'go' && c.href) offerOn('Take me to ' + (c.label || 'that page') + '?', function () { vcNavigate(c); }); return; }
+  if (c.offer) { vcPending = c; offerOn('Maybe: ' + describe(c) + '?', function () { vcPending = null; vcNavigate(c); }); return; }
+  if (c.op === 'change') { vcPending = c; offerOn(c.mine ? 'Send to ' + c.label + '\u2019s agents?' : 'Fork ' + c.label + '?', function () { vcPending = null; voiceChange(c); }, c.mine ? 'Send' : 'Fork'); return; }
+  if (c.op === 'code') return codeQuestion(c);
+  if (c.op === 'go' || c.op === 'back') return vcNavigate(c);
+  act(c);
+}
+function voiceChange(c) {
+  var parts = String(c.slug || '').split('.'), owner = parts[0], name = parts.slice(1).join('.');
+  if (c.mine) { busy = true; return sendChange(owner, name, c.text); }
+  busy = true; status('Forking\u2026');
+  projPost(owner, name, 'fork', {}).then(function (f) {
+    if (f.error) { add('note', 'Could not fork: ' + f.error); return done(); }
+    add('app', 'Forked to ' + f.owner + '/' + f.name + '.');
+    sendChange(f.owner, f.name, c.text);
+  }).catch(function () { add('note', 'Could not reach qodebase.'); done(); });
+}
+
 // ---- Boot ----------------------------------------------------------------
 fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
   if (!j.signedIn) return;
@@ -734,6 +850,13 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   build();
   publishTools();
   // Coming back from a navigation Talk made: show the sheet, finish any pending question.
+  if (sget('call', false)) {
+    // Continue the conversation on this page. Sound needs a tap unless the browser still allows it.
+    open(true);
+    var probe = null; try { var C = window.AudioContext || window.webkitAudioContext; probe = C ? new C() : null; } catch (e) {}
+    if (probe && probe.state === 'running') { probe.close(); startConversation(); }
+    else { if (probe) probe.close(); offerOn('Keep talking?', function () { unlockAudio(); startConversation(); }, 'Talk'); }
+  }
   if (sget('open', false)) {
     open(true);
     var last = hist[hist.length - 1];
