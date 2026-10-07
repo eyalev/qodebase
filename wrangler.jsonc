@@ -52,7 +52,8 @@
       { "name": "Registry", "class_name": "Registry" },
       { "name": "BuildBox", "class_name": "BuildBox" },
       { "name": "Installs", "class_name": "Installs" },
-      { "name": "TalkLog", "class_name": "TalkLog" }
+      { "name": "TalkLog", "class_name": "TalkLog" },
+      { "name": "Ledger", "class_name": "Ledger" }
     ]
   },
   "migrations": [
@@ -60,7 +61,8 @@
     { "tag": "v2", "new_sqlite_classes": ["Registry"] },
     { "tag": "v3", "new_sqlite_classes": ["BuildBox"] },
     { "tag": "v4", "new_sqlite_classes": ["Installs"] },
-    { "tag": "v5", "new_sqlite_classes": ["TalkLog"] }
+    { "tag": "v5", "new_sqlite_classes": ["TalkLog"] },
+    { "tag": "v6", "new_sqlite_classes": ["Ledger"] }
   ],
   // box/mobile-agent.tgz (scripts/pack-mobile-agent.sh) is bundled as bytes and
   // served to agent boxes at boot; box/mobile-agent.rev as text.

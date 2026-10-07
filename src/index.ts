@@ -31,12 +31,13 @@ import { ownPage } from './own';
 import { withLook } from './look';
 import { Installs, installRoute } from './install';
 import { TalkLog, talkRoute } from './talk';
+import { Ledger, costSummary, costsPage } from './costs';
 import { bearerEmail, cliPublicRoute, cliUserRoute } from './cliauth';
 // mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
 import MA_TGZ from '../box/mobile-agent.tgz';
 import MA_REV from '../box/mobile-agent.rev';
 
-export { AgentBox, Project, Registry, BuildBox, Installs, TalkLog };
+export { AgentBox, Project, Registry, BuildBox, Installs, TalkLog, Ledger };
 
 type Who = { kind: 'user'; handle: string; admin: boolean; anon?: boolean; email?: string } | { kind: 'agent'; agentId: string; role: Role };
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
@@ -161,6 +162,9 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
   return {
     agentId, task: r.task, role: r.role, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token,
     agentToken: await agentToken(env, agentId), apiBase, uiHost: env.UI_HOST, maRev: MA_REV.trim(),
+    billing: billing === 'sub' ? 'sub' : 'api',
+    // Hosted qodebase pays for other people's boxes; its owner and a self-hosted copy pay their own.
+    costCovered: !env.SELF_HOST && !isOwner(env, owner),
     bootEnv: [
       `SBX_NAME=${JSON.stringify(r.role === 'agent' ? agentId : `${slug.replace('.', '/')} ${r.role}`)}`,
       'AGENT=claude',
@@ -345,7 +349,7 @@ const app = {
     // Anonymous readers: pages and read APIs only.
     if (me.kind === 'user' && me.anon) {
       const p0 = url.pathname;
-      const needsUser = (request.method !== 'GET' && request.method !== 'HEAD') || p0 === '/cli/login' || p0.startsWith('/api/cli/') || p0.startsWith('/a/') || p0.endsWith('/agents-html') || p0.startsWith('/api/github') || p0 === '/settings' || p0.startsWith('/api/me');
+      const needsUser = (request.method !== 'GET' && request.method !== 'HEAD') || p0 === '/api/costs' || p0 === '/cli/login' || p0.startsWith('/api/cli/') || p0.startsWith('/a/') || p0.endsWith('/agents-html') || p0.startsWith('/api/github') || p0 === '/settings' || p0.startsWith('/api/me');
       if (needsUser) {
         const login = `/login?next=${encodeURIComponent(request.method === 'GET' ? p0 + url.search : (request.headers.get('referer') ? new URL(request.headers.get('referer')!).pathname : '/'))}`;
         return request.method === 'GET' && (request.headers.get('accept') || '').includes('text/html')
@@ -472,6 +476,15 @@ const app = {
         const owner = url.searchParams.get('owner') || (url.searchParams.has('mine') ? me.handle : '');
         const list = (await listFor(env, me.handle, me.admin)).filter((e) => !owner || e.owner === owner);
         return json({ projects: list.slice(0, 500).map((e) => ({ ...e, path: `/p/${e.owner}/${e.name}`, live: runUrl(runBase, e.slug) })) });
+      }
+      // Costs (src/costs.ts): the header chip's numbers and the /costs page.
+      if (path === '/api/costs' && me.handle) {
+        const c = await costSummary(env, me.handle);
+        return json({ today: c.today, week: c.week, month: c.month, pricesChecked: c.pricesChecked });
+      }
+      if (path === '/costs') {
+        if (!me.handle) return new Response(null, { status: 302, headers: { location: '/login?next=/costs' } });
+        return html(withGlobal(costsPage(await costSummary(env, me.handle), !!env.SELF_HOST), 'home', 0, me.handle, 'd'));
       }
       if (path === '/api/github/search') {
         const q = url.searchParams.get('q') || '';

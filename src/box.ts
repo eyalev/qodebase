@@ -11,6 +11,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
 import { FORQ_CLI } from './cli';
 import { registry } from './registry';
+import { boxUsd, claudeUsd, recordCost, type Tokens } from './costs';
 // The image's own files, for boxes that set themselves up (BOX_IMAGE=managed).
 import BOOT_SH from '../box/boot.sh';
 import BOX_API from '../box/box-api.mjs';
@@ -79,6 +80,8 @@ export type BootSpec = {
   uiHost: string;       // the public UI host (mobile-agent's allowed origin)
   maRev: string;        // mobile-agent version to unpack over the image's copy
   bootEnv: string;      // boot.sh env (SBX_NAME, CC_ENV, …)
+  billing?: 'sub' | 'api';   // whose Claude: a subscription (tokens only) or an API key (dollars)
+  costCovered?: boolean;     // the boxes bill this instance's owner, not the person (hosted qodebase)
 };
 export type BootResult = { ok: boolean; ms: number; from: string; error?: string };
 
@@ -208,6 +211,8 @@ export class AgentBox extends DurableObject<Env> {
       }
       await this.c.setInactivityTimeout(INACTIVITY_BACKSTOP_MS);
       this.#watchExit(spec.agentId, from);
+      // Costs (src/costs.ts): awake time and CPU from now; Claude tokens since the last read.
+      await this.ctx.storage.put({ costFrom: Date.now(), cpuLast: 0, costOwner: spec.project.split('/')[0], costProject: spec.project, costBilling: spec.billing || 'api', costCovered: !!spec.costCovered });
     }
 
     // 0. Managed boxes set themselves up once (a restored snapshot or base already is).
@@ -444,6 +449,7 @@ PY
 
   async letGo(why: string): Promise<void> {
     if (!this.c.running) return;
+    await this.#collectCosts();
     const snap = await this.snapshot(why);
     if (!snap) { await this.ctx.storage.setAlarm(Date.now() + ALARM_EVERY_MS); return; }
     await this.c.destroy();
@@ -459,6 +465,7 @@ PY
 
   async alarm(): Promise<void> {
     if (((await this.ctx.storage.get<string[]>('askQueue')) || []).length) await this.#runAsks();
+    if (this.c.running && Date.now() - ((await this.ctx.storage.get<number>('costFrom')) || Date.now()) > 10 * 60_000) await this.#collectCosts();
     const agentId = await this.ctx.storage.get<string>('agentId');
     if (!this.c.running) { log('box', 'alarm_not_running', { agentId }); return; }
     const idle = Date.now() - ((await this.ctx.storage.get<number>('lastActive')) || 0);
@@ -531,6 +538,37 @@ IS_SANDBOX=1 timeout 300 claude -p "$Q" --permission-mode plan --model "$MODEL" 
       log('box', 'ask_done', { agentId: spec.agentId, id, ok, ms: Date.now() - t0, chars: answer.length });
       await this.touch(spec.agentId);
     }
+  }
+
+  /** Adds this box's costs since the last call to its owner's ledger: awake seconds and
+   *  measured CPU (cgroup usage_usec), and Claude Code tokens per model read from the
+   *  transcripts written after the last cursor. Never throws. */
+  async #collectCosts() {
+    try {
+      const st = await this.ctx.storage.get(['costFrom', 'cpuLast', 'costOwner', 'costProject', 'costBilling', 'costCovered', 'costCursor']);
+      const from = st.get('costFrom') as number | undefined, owner = st.get('costOwner') as string | undefined;
+      if (!from || !owner || !this.c.running) return;
+      const now = Date.now();
+      const r = await this.#sh(String.raw`cpu=$(awk '/usage_usec/{print $2}' /sys/fs/cgroup/cpu.stat 2>/dev/null); echo "CPU=$cpu"
+node -e '
+const fs=require("fs"),p=require("path");const since=process.argv[1]||"";let last=since;const m={};
+function walk(d){let e;try{e=fs.readdirSync(d,{withFileTypes:true})}catch{return}for(const f of e){const q=p.join(d,f.name);if(f.isDirectory())walk(q);else if(f.name.endsWith(".jsonl")){
+for(const line of fs.readFileSync(q,"utf8").split("
+")){if(!line.includes(""usage""))continue;let o;try{o=JSON.parse(line)}catch{continue}
+const ts=o.timestamp||"";if(!ts||ts<=since)continue;const u=o.message&&o.message.usage;if(!u)continue;const k=o.message.model||"unknown";
+const t=m[k]||(m[k]={in:0,out:0,cw:0,cr:0});t.in+=u.input_tokens||0;t.out+=u.output_tokens||0;t.cw+=u.cache_creation_input_tokens||0;t.cr+=u.cache_read_input_tokens||0;if(ts>last)last=ts}}}}
+walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}))' "$CURSOR"`, { CURSOR: (st.get('costCursor') as string) || '' });
+      const cpuNow = Number((r.stdout.match(/CPU=(\d+)/) || [])[1] || 0) / 1e6;
+      const usage = JSON.parse((r.stdout.match(/USAGE=(.*)/) || [])[1] || '{"m":{},"last":""}') as { m: Record<string, Tokens>; last: string };
+      const seconds = (now - from) / 1000, cpuSeconds = Math.max(0, cpuNow - ((st.get('cpuLast') as number) || 0));
+      const covered = !!st.get('costCovered'), billing = (st.get('costBilling') as 'sub' | 'api') || 'api', project = (st.get('costProject') as string) || '';
+      await recordCost(this.env, owner, 'boxes', project, { usd: boxUsd(seconds, cpuSeconds, INSTANCE.memoryMib / 1024, INSTANCE.diskMb / 1000), covered, seconds, cpuSeconds });
+      for (const [model, t] of Object.entries(usage.m)) {
+        await recordCost(this.env, owner, 'claude', project, { usd: billing === 'sub' ? null : claudeUsd(model, t), covered: false, tokens: t, billing });
+      }
+      await this.ctx.storage.put({ costFrom: now, cpuLast: cpuNow, ...(usage.last ? { costCursor: usage.last } : {}) });
+      log('box', 'costs', { agentId: await this.ctx.storage.get<string>('agentId'), seconds: Math.round(seconds), cpuSeconds: Math.round(cpuSeconds), models: Object.keys(usage.m) });
+    } catch (e) { log('box', 'costs_failed', { err: String(e) }); }
   }
 
   async adminExec(cmd: string) {

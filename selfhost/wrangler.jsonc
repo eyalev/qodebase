@@ -27,7 +27,8 @@
       { "name": "Registry", "class_name": "Registry" },
       { "name": "BuildBox", "class_name": "BuildBox" },
       { "name": "Installs", "class_name": "Installs" },
-      { "name": "TalkLog", "class_name": "TalkLog" }
+      { "name": "TalkLog", "class_name": "TalkLog" },
+      { "name": "Ledger", "class_name": "Ledger" }
     ]
   },
   "migrations": [
@@ -35,7 +36,8 @@
     { "tag": "v2", "new_sqlite_classes": ["Registry"] },
     { "tag": "v3", "new_sqlite_classes": ["BuildBox"] },
     { "tag": "v4", "new_sqlite_classes": ["Installs"] },
-    { "tag": "v5", "new_sqlite_classes": ["TalkLog"] }
+    { "tag": "v5", "new_sqlite_classes": ["TalkLog"] },
+    { "tag": "v6", "new_sqlite_classes": ["Ledger"] }
   ],
   "rules": [
     { "type": "Data", "globs": ["**/*.tgz"], "fallthrough": true },

@@ -511,6 +511,14 @@ export const NAV_CSS = `
 .gtop .signin~.gbuild{margin-left:8px}
 body:has(.land) .gtop .gmenu{margin-left:auto}
 body:has(.land) .gtop .signin~.gmenu{margin-left:0}
+.gtop .mark{gap:6px}.gtop .markq{display:none;flex:none}
+@media (max-width:430px){.gtop:has(.gcost) .markq{display:block}.gtop:has(.gcost) .markt{display:none}}
+.gtop .gcost{flex:none;align-self:center;display:inline-flex;align-items:center;gap:4px;height:34px;margin-left:6px;padding:0 8px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);font:500 13px 'Geist',sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gcostpop{padding:10px 12px}.gcostpop .gcr{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-size:15px}.gcostpop .gcr b{font-weight:600;font-variant-numeric:tabular-nums}
+.gcostpop .gcs{margin:-2px 0 4px;font-size:12px;color:var(--dim)}.gcostpop .gch{margin:10px 0 2px;font-size:12px;color:var(--dim)}.gcostpop .gcl{color:var(--dim);font-size:14px}
+.gcostpop a.gca{display:block;margin-top:8px;padding:10px 0 2px;border-top:1px solid var(--line);color:var(--acc);font-weight:500}
+body:has(.land) .gtop .gcost{margin-left:auto}
+body:has(.land) .gtop .gcost~.gmenu{margin-left:0}
 .gtop .gmenu{flex:none;align-self:center;display:inline-flex;align-items:center;justify-content:center;width:40px;height:44px;margin-left:0;border:0;background:none;color:var(--fg);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .gmenupop{position:fixed;inset:52px 8px auto auto;margin:0;width:min(300px,calc(100vw - 16px));padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg);box-shadow:0 8px 32px rgb(0 0 0 / .16)}
 .gmenupop a{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none}
@@ -652,10 +660,22 @@ export function globalTop(active: HomeTab, inbox: number, me: string) {
     : [['explore', 'Explore', '/explore'], ['account', 'Sign in', '/login']];
   if (active === 'projects') active = 'mine';
   // Build: the call to action on every page, signed in or not (Eyal, 2026-10-03).
-  return `<nav class="gtop" aria-label="qodebase"><a class="mark" href="/">qodebase</a>${tabs.map(([id, labelT, href]) =>
-    `<a href="${href}" class="g${id === active ? ' on' : ''}${href === '/login' ? ' signin' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}<a class="btn gbuild" href="/build"${active === 'build' ? ' aria-current="page"' : ''}>Build</a>${gmenu(me, active)}</nav>`;
+  return `<nav class="gtop" aria-label="qodebase"><a class="mark" href="/" aria-label="qodebase home"><svg class="markq" viewBox="0 0 256 256" width="24" height="24" aria-hidden="true"><rect width="256" height="256" rx="56" fill="var(--acc)"/><circle cx="121" cy="110" r="48" fill="none" stroke="var(--acc-fg)" stroke-width="30"/><path d="M154 58h30v138h-30z" fill="var(--acc-fg)"/></svg><span class="markt">qodebase</span></a>${tabs.map(([id, labelT, href]) =>
+    `<a href="${href}" class="g${id === active ? ' on' : ''}${href === '/login' ? ' signin' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}<a class="btn gbuild" href="/build"${active === 'build' ? ' aria-current="page"' : ''}>Build</a>${me ? COST_CHIP : ''}${gmenu(me, active)}</nav>`;
 }
 
+/** Costs (src/costs.ts): today's amount in the header; tap for 7 days, 30-day estimate, link. */
+const COST_CHIP = `<button type="button" class="gcost" popovertarget="gcostpop" aria-label="Your costs"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M14.5 9.3c-.5-.8-1.4-1.2-2.5-1.2-1.4 0-2.4.7-2.4 1.8 0 2.4 5 1.3 5 3.9 0 1.1-1.1 1.9-2.6 1.9-1.2 0-2.1-.5-2.6-1.3M12 6.5v1.6m0 7.8v1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span data-cost>…</span></button>
+<div id="gcostpop" class="gmenupop gcostpop" popover><p class="gcl">Loading your costs</p></div>
+<script>(function(){var b=document.querySelector('.gcost');if(!b||b.dataset.on)return;b.dataset.on=1;
+var m=function(n){return n>0&&n<0.005?'<$0.01':'$'+n.toFixed(2)},L={boxes:'Agent boxes',claude:'Claude',voice:'Talk and voice'};
+fetch('/api/costs',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(c){if(!c)return;
+b.querySelector('[data-cost]').textContent=m(c.today.total.usd);
+var row=function(l,v,s){return '<div class="gcr"><span>'+l+'</span><b>'+v+'</b></div>'+(s?'<p class="gcs">'+s+'</p>':'')};
+var cov=function(t){var x=[];if(t.covered)x.push(m(t.covered)+' covered by qodebase');if(t.subTokens)x.push(Math.round(t.subTokens/1000)+'k tokens on your Claude plan');return x.join('. ')};
+var kinds=Object.keys(L).filter(function(k){return c.week.byKind[k]}).map(function(k){var t=c.week.byKind[k];return row(L[k],m(t.usd),cov(t))}).join('');
+document.getElementById('gcostpop').innerHTML=row('Today',m(c.today.total.usd),cov(c.today.total))+row('Last 7 days',m(c.week.total.usd),cov(c.week.total))+row('Next 30 days',m(c.month.usd),'Estimate at this week\'s pace')+(kinds?'<p class="gch">Last 7 days by kind</p>'+kinds:'')+'<a class="gca" href="/costs">See all costs</a>';
+}).catch(function(){});})();</script>`;
 const MENU_ICON = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 /** The ☰ menu at the header's right end: the things every page can reach but no page leads with. */
 function gmenu(me: string, active: HomeTab) {
