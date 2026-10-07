@@ -82,7 +82,7 @@ function cleanScreen(b: any): Screen {
 
 async function projectsFor(env: Env, who: Who): Promise<Proj[]> {
   const list = await listFor(env, who?.handle || '', !!who?.admin);
-  return list.slice(0, 400).map((e: any, i: number) => ({ id: `p${i + 1}`, slug: e.slug, name: e.name, owner: e.owner, description: String(e.description || '').slice(0, 120), mine: !!who && e.owner === who.handle }));
+  return list.slice(0, 400).map((e: any, i: number) => ({ id: `p${i + 1}`, slug: e.slug, name: e.name, owner: e.owner, description: String(e.description || '').slice(0, 120), mine: !!who && e.owner === who.handle, updatedAt: e.updatedAt || 0 }));
 }
 
 export async function decideCore(env: Env, who: Who & {}, body: any) {

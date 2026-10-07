@@ -253,7 +253,7 @@ function done() { busy = false; status(''); finish(); }
 // A greeting or small talk: a friendly line and three things to try, one with their own project.
 function greeting(example) {
   var p = example || 'todo';
-  return 'Hi! I can find things, open your projects, and answer questions about them. Try \u201cwhat\u2019s going on\u201d, \u201copen my ' + p + ' app\u201d, or \u201chow does my ' + p + ' app save its data?\u201d';
+  return 'Hi! I can find things, open your projects, and answer questions about them. Try \u201cwhat\u2019s going on\u201d, \u201copen my ' + p + '\u201d, or \u201chow does my ' + p + ' work?\u201d';
 }
 
 // ---- "What's going on": real data across their projects (/api/talk/status, no model).

@@ -9,7 +9,7 @@
 // file only uses erasable TypeScript and imports nothing.
 
 export type Item = { id: string; kind: 'link' | 'button' | 'field' | 'heading'; text: string; href?: string };
-export type Proj = { id: string; slug: string; name: string; owner: string; description?: string; mine?: boolean };
+export type Proj = { id: string; slug: string; name: string; owner: string; description?: string; mine?: boolean; updatedAt?: number };
 export type Screen = { path: string; title: string; items: Item[]; projects: Proj[]; me?: string | null; last?: string | null };
 
 /** The project a /p/<owner>/<name>/… page shows, if any. */
@@ -174,7 +174,7 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // "hi there" and "hello" got "Sounds cut off"). Fixed words in code; the model's yes/no for the rest.
   const hello = /^\s*(hi|hello|hey|hiya|yo|howdy|good (morning|afternoon|evening|night)|thanks|thank you|cheers|how are you|what'?s up|bye|goodbye)\b/i.test(utterance) || (answers.greeting?.noul ?? 0) >= 0.6;
   if (hello && cmd.op === 'none') {
-    const own = projects.find((p) => p.mine);
+    const own = projects.filter((p) => p.mine).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];   // the one they touched last
     return { ...cmd, mode: 'none', greet: true, example: own ? own.name.replace(/-/g, ' ') : undefined };
   }
   // "Go home" / "home page" is a fixed phrase: vocabulary in code, not the model (talkui's rule).

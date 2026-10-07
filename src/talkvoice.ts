@@ -135,7 +135,7 @@ export class TalkVoice extends VoiceAgent {
     if ((c.risky || 0) >= 0.5) { this.#send(connection, { type: 'talk-cmd', cmd: { ...c, refused: true } }); return 'That would change or remove something, so I\'ll leave the doing to you.'; }
     if (c.greet) {
       const p = c.example || 'todo';
-      return `Hi! I can find things, open your projects, and answer questions about them. Try asking what's going on, or say open my ${p} app.`;
+      return `Hi! I can find things, open your projects, and answer questions about them. Try asking what's going on, or say open my ${p}.`;
     }
     // Speech comes garbled ("Our tasks stored in my to do app"): "not a request" with a concrete
     // reading behind it is not silence. Questions are answered (safe), a change goes to its confirm,
