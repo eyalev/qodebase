@@ -368,6 +368,13 @@ function submit(text) {
     if (c.greet) { var hi = greeting(c.example); add('ai', hi); say(hi); return done(); }
     if (c.mode === 'none') { add('note', (c.complete || 0) < 0.5 ? 'Sounds cut off. Say it again?' : 'I did not catch a request there.'); return done(); }
     if (c.op === 'status') return whatsGoingOn(text);
+    if (c.op === 'list') {
+      var n = Number(c.target) || 0;
+      var line = n ? 'You have ' + n + ' project' + (n === 1 ? '' : 's') + '. The latest: ' + c.text + '.' : 'You have no projects yet. Say what you want to build.';
+      add('ai', line); say(line);
+      if (n && location.pathname !== '/mine') { sset('last', 'your projects'); setTimeout(function () { act({ op: 'go', href: '/mine', label: 'your projects' }); }, 400); return; }
+      return done();
+    }
     if (c.op === 'change') return changeRequest(c);
     if (c.op === 'code') return codeQuestion(c);
     var acts = (c.mode === 'act' || c.mode === 'both') && c.op !== 'none' && c.op !== 'explain';

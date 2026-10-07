@@ -110,7 +110,9 @@ export async function decideCore(env: Env, who: Who & {}, body: any) {
   const budget = await talkLog(env).take('decide', who.handle);
   if (!budget.ok) return { ok: false as const, http: 429, error: 'budget', why: 'Talk has reached today\'s limit. It resets at midnight UTC.' };
   const s = { ...cleanScreen(body.screen), me: who.handle };
-  const projects = candidateProjects(utterance, await projectsFor(env, who), 24, currentSlug(s.path));
+  const allProjects = await projectsFor(env, who);
+  const projects = candidateProjects(utterance, allProjects, 24, currentSlug(s.path));
+  (s as any).projects = allProjects.filter((p) => p.mine);   // for "list my projects" (not shown to the model)
   const { questions, cands } = buildQuestions(utterance, s, projects);
   const state = stateText(utterance, s, projects);
   const tm = Date.now();

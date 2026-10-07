@@ -219,6 +219,11 @@ export class TalkVoice extends VoiceAgent {
       }
       log('turn_rescued', { handle: this.name, said, op: c.op, as: c.mode });
     }
+    if (c.op === 'list') {
+      const n = Number(c.target) || 0;
+      if (n && this.#screen?.path !== '/mine') this.#send(connection, { type: 'talk-cmd', cmd: { ...c, op: 'go', href: '/mine', label: 'your projects' } });
+      return n ? `You have ${n} projects. The latest are ${c.text}.` : 'You have no projects yet. Say what you want to build.';
+    }
     if (c.op === 'status') {
       const s: any = await statusCore(this.env, this.#who, { utterance: said });
       if (!s.ok) return s.why || 'I could not look just now.';

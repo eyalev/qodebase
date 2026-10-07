@@ -33,6 +33,7 @@ const ACTIONS = {
   scroll: 'Scroll to or show a section of this page (by its heading), or scroll to the top or bottom',
   explain: 'Explain, describe or show around the page the person is looking at',
   change: 'Ask for a change in one of the projects: add, fix, change, improve or remove a feature in an app or its code ("in my todo app add due dates", "make the timer chime louder", "fix the dark mode")',
+  list: 'List or name their projects ("list my projects", "what projects do I have", "show me some of my projects")',
   code: 'Answer a question about a project\'s CODE that needs reading it: how something works or is stored, where something is, why it is built a certain way, or a plan for how to change it ("how are tasks stored in my todo app", "why does the timer use a worker", "plan how to add accounts")',
   status: 'Say what is going on across their projects: what their agents are doing, what is ready to merge or review, what changed today or this week, what needs them',
   none: 'No action in the app',
@@ -239,6 +240,13 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
     }
     case 'explain': return { ...base, op: 'explain' };
     case 'status': return { ...base, op: 'status' };
+    case 'list': {
+      // Their projects, the ones touched most recently first: named in the answer, and the Yours page opened.
+      const mine = projects.filter((p) => p.mine).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      const all = (s.projects?.length ? s.projects : mine).filter((p: Proj) => p.mine);
+      const names = (mine.length ? mine : all).map((p) => p.name.replace(/-/g, ' '));
+      return { ...base, op: 'list', text: names.slice(0, 6).join(', '), href: '/mine', label: 'your projects', target: String(names.length) };
+    }
     case 'code': {
       const cur = currentSlug(s.path);
       const p = projects.find((x) => x.id === pick(answers.project, 0.3)) || projects.find((x) => x.slug === cur);

@@ -25,7 +25,7 @@ const allProjects = JSON.parse(fs.readFileSync(path.join(FX, 'projects.json'), '
 // or which element (label substring).
 const CASES = [
   // Navigation by menu words.
-  ['home', 'show me my projects', { mode: 'act', op: 'go', href: '/mine' }],
+  ['home', 'show me my projects', { mode: 'act', op: ['go', 'list'], href: '/mine' }],
   ['home', 'go to explore', { mode: 'act', op: 'go', href: '/explore' }],
   ['home', 'open my inbox', { mode: 'act', op: 'go', href: '/inbox' }],
   ['home', 'take me to settings', { mode: 'act', op: 'go', href: '/settings' }],
@@ -81,6 +81,8 @@ const CASES = [
   ['p_forq_calculator', 'why does it use a shunting-yard parser?', { mode: ['ask', 'both', 'act'], op: ['code', 'none'] }],
   ['mine', 'plan how to add user accounts to my todo app', { mode: ['ask', 'both', 'act'], op: 'code', label: 'eyal/todo' }],
   ['p_forq_calculator', 'what does this project do?', { mode: ['ask', 'both'], op: ['explain', 'none', 'code'] }],
+  ['mine', 'list some of my projects', { mode: ['act', 'ask', 'both'], op: 'list' }],
+  ['home', 'what projects do I have?', { mode: ['act', 'ask', 'both'], op: 'list' }],
   // Risky: must be flagged.
   ['mine', 'delete the particles project', { mode: ['act', 'both', 'ask'], risky: true }],
   ['home', 'sign me out', { mode: 'act', risky: true }],
@@ -92,6 +94,7 @@ async function run(page, utterance) {
   const s = screen(page);
   s.me = 'eyal';
   const projects = candidateProjects(utterance, allProjects, 24, currentSlug(s.path));
+  s.projects = allProjects.filter((p) => p.mine);
   const { questions, cands } = buildQuestions(utterance, s, projects);
   const state = stateText(utterance, s, projects);
   const t0 = Date.now();
