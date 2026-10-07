@@ -33,7 +33,7 @@
   const term = (k, text) => `<button class="term" type="button" data-gloss="${k}">${esc(text || GLOSS[k][0].toLowerCase())}</button>`;
 
   const AG = (a) => { const m = /(\d+)\D*$/.exec(a || ''); return m && /agent/i.test(a) ? `Agent ${m[1]}` : String(a || 'an agent'); };
-  const leadName = (l) => (l || '').replace(/^agent-(\d+)/i, 'Agent $1');
+  const leadName = (l) => { const x = (l || '').replace(/^agent-(\d+)/i, 'Agent $1'); return /^(scripted )?lead$/i.test(x) ? 'its lead' : x; };
   const ready = (c) => c.state === 'pushed' && c.review && c.review.verdict !== 'changes';
   const skey = (c) => (ready(c) ? 'ready' : c.state);
   const WORD = { working: 'Working', pushed: 'Waiting for review', ready: 'Ready to merge', reviewing: 'Being reviewed', queued: 'In line', testing: 'Being tested', landed: 'Landed', bounced: 'Sent back', replaying: 'Replaying', 'with-lead': 'With its lead' };
@@ -192,12 +192,13 @@
     const landP = lastLand ? pulse(`train:${lastLand.id}`) : null;
     const track = parts.length || landP ? `<div class="track" aria-label="The line, front first"><div class="stop${landP ? ' pl' : ''}"${landP || ''}><b>main</b>lands here</div>${parts.join('')}</div>` : '<p class="empty-line">The line is empty. Finished changes wait here to be tested.</p>';
     const done = D.queue.trains.filter((t) => t.state !== 'testing').sort((a, b) => b.endedAt - a.endedAt).slice(0, full ? 50 : 3);
-    const who = (ids) => ids.map((id) => `<a href="#/change/${esc(id)}">${idx.get(id) ? AG(idx.get(id).agent) : ref(id)}</a>`).join(', ');
+    // What landed, by name: "Add oat milk to the menu (Agent 4)".
+    const what = (ids) => ids.map((id) => { const c = idx.get(id); return c ? `<a href="#/change/${esc(id)}">${short(c)}</a> (${AG(c.agent)})` : `<a href="#/change/${esc(id)}">${ref(id)}</a>`; }).join(', ');
     const res = done.map((t) => {
       const rp = t.changes.filter((id) => /^replayed/.test(idx.get(id)?.landing?.how || ''));
       return t.state === 'landed'
-        ? `<li><i class="dot s-landed"></i><span>Landed ${t.changes.length > 1 ? `${t.changes.length} changes` : 'a change'} (${who(t.changes)})${rp.length ? `, ${rp.length === t.changes.length ? '' : rp.length + ' '}after a ${term('replay', 'replay')}` : ''}; tests passed</span><span class="dim small">${ago(t.endedAt)}</span></li>`
-        : `<li><i class="dot s-bounced"></i><span>Sent back ${who(t.changes)}'s change: a test failed, so main stayed healthy.<span class="dim small" style="display:block">${esc((t.checks.failures[0] || '').split(' › ').pop())}</span></span><span class="dim small">${ago(t.endedAt)}</span></li>`;
+        ? `<li><i class="dot s-landed"></i><span>Landed${t.changes.length > 1 ? ` ${t.changes.length} changes` : ''}: ${what(t.changes)}${rp.length ? `, ${rp.length === t.changes.length ? '' : rp.length + ' '}after a ${term('replay', 'replay')}` : ''}; tests passed</span><span class="dim small">${ago(t.endedAt)}</span></li>`
+        : `<li><i class="dot s-bounced"></i><span>Sent back: ${what(t.changes)}. A test failed, so main stayed healthy.<span class="dim small" style="display:block">${esc((t.checks.failures[0] || '').split(' › ').pop())}</span></span><span class="dim small">${ago(t.endedAt)}</span></li>`;
     }).join('');
     return `<div class="line">${track}${res ? `<ul class="results">${res}</ul>` : ''}</div>`;
   }
@@ -275,7 +276,7 @@
     const act = D.changes.filter(active);
     const agents = new Set(act.map((c) => c.agent)).size;
     return `${demoStrip()}
-      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)} right now.` : `No agents are working on ${esc(NAME)} right now.`}</h2>
+      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)} right now.` : `No agents are working on ${esc(NAME)} right now.${D.stats.landedToday ? ` ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed today.` : ''}`}</h2>
       <p class="intro">Each agent is an AI working on its own ${term('fork', 'copy')} of the code. Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>
       ${numbers()}
       <section class="sec"><div class="sec-h"><h3>${term('queue', 'The line')}</h3><a href="#/line">Everything</a></div>
@@ -332,15 +333,19 @@
     return `<div class="steps" aria-hidden="true">${lbl.map((_, i) => `<i class="${cls(i)}"></i>`).join('')}</div><div class="stepl" aria-hidden="true">${lbl.map((l) => `<span>${l}</span>`).join('')}</div>${ev.has('replayed') && k !== 'landed' ? '' : ''}`;
   }
   function howBox(c) {
-    const L = c.landing, conf = L?.conflicts || [], idx = byId();
+    const L = c.landing, idx = byId();
     const ce = [...c.events].reverse().find((e) => e.what === 'conflict');
+    const conf = L?.conflicts?.length ? L.conflicts : ce ? conflictPaths(c, ce) : [];
+    const sentBack = c.events.some((e) => e.what === 'bounced');
+    const sha = (x) => `<span class="mono">${esc(String(x).slice(0, 7))}</span>`;
     const oc = ce && otherOf(c, ce, idx);
     const withWho = oc ? ` with ${AG(oc.agent)}'s ${ref(oc.id)}` : '';
     switch (skey(c)) {
       case 'landed':
         if (/^replayed/.test(L?.how || '')) return `<div class="how"><b>Landed after a ${term('replay', 'replay')}</b><p>It ${term('collision', 'collided')}${withWho} on ${files(conf)}. Instead of sending it back, qodebase re-applied what it was meant to do on the newest code (${L.how === 'replayed-llm' ? 'an AI re-did the edit; the difference is shown below' : 'a fixed rule for this kind of file'}), tested it again, and it passed.</p></div>`;
-        if (L?.how === 'lead') return `<div class="how"><b>Landed with its ${term('lead', 'lead')}'s help</b><p>It collided on ${files(conf)}; the lead combined both changes.</p></div>`;
-        return `<div class="how"><b>Landed</b><p>It passed review and the tests, and joined main${L?.mainCommit ? ` as <span class="mono">${esc(L.mainCommit)}</span>` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
+        if (L?.how === 'lead') return `<div class="how"><b>Landed with its ${term('lead', 'lead')}'s help</b><p>It ${term('collision', 'collided')}${withWho}${conf.length ? ` on ${files(conf)}` : ''}. No rule could replay this edit, so its lead redid it on the newest code; it passed the tests and joined main.</p></div>`;
+        if (sentBack) return `<div class="how"><b>Landed on the second try</b><p>The first time, a test failed, so it was sent back and main stayed healthy. ${AG(c.agent)} fixed it, and it passed${L?.mainCommit ? `, joining main as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
+        return `<div class="how"><b>Landed</b><p>It passed review and the tests, and joined main${L?.mainCommit ? ` as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
       case 'replaying': return `<div class="how busy"><b>Replaying now</b><p>It ${term('collision', 'collided')}${withWho} on ${files(conf.length ? conf : (ce?.detail || '').split(':')[0].split(', '))}. qodebase is re-applying its intent on the newest code instead of throwing the work away.</p></div>`;
       case 'with-lead': return `<div class="how warn"><b>Waiting for its ${term('lead', 'lead')}</b><p>It collided${withWho} on ${files(conf)}. No rule could replay this edit${D.flags && D.flags.llmReplay === false ? ' and AI replay is off for this project' : ''}, so ${esc(leadName(c.lead) || 'the lead')} decides how to combine both.</p></div>`;
       case 'bounced': { const tr = D.queue.trains.find((t) => t.changes.includes(c.id) && t.state === 'bounced'); return `<div class="how warn"><b>Sent back</b><p>A test failed when it was tested with the newest main, so it did not land and main stayed healthy. ${AG(c.agent)} gets the failure and fixes it.</p>${tr ? `<p class="mono" style="margin-top:6px">${esc(tr.checks.failures.join('\n'))}</p>` : ''}</div>`; }
@@ -373,7 +378,7 @@
         ${(c.claims || []).some((p) => !c.files.includes(p)) ? `<dt>${term('claim', 'Claimed')}</dt><dd>${files(c.claims.filter((p) => !c.files.includes(p)))}</dd>` : ''}
         ${rv}
         <dt>${term('fork', 'Its copy')}</dt><dd class="mono">${esc(c.fork)}</dd>
-        ${L?.commit ? `<dt>Commit</dt><dd class="mono">${esc(L.commit)}${L.mainCommit ? ` landed as ${esc(L.mainCommit)}` : ''}</dd>` : ''}
+        ${L?.commit ? `<dt>Commit</dt><dd class="mono">${esc(L.commit.slice(0, 7))}${L.mainCommit ? ` landed as ${esc(L.mainCommit.slice(0, 7))}` : ''}</dd>` : ''}
       </dl></section>
       ${diff ? `<section class="sec"><h3>The change</h3><p class="cap">Green lines were added, red lines removed.</p>${diff}</section>` : ''}</div>`;
   }
