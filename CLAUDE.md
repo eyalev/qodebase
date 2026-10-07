@@ -56,6 +56,15 @@ private project stay private). Owner (and admin) only, everywhere:
   API, files, the app host; absent from /api/projects and Explore; the owner's
   app view loads in the iframe with the pass; toggled both ways.
 
+## Ask box (2026-10-07, Jarvis mode phase 3)
+
+`POST /api/p/<o>/<n>/ask {question, model}` → AgentBox `<slug>--ask` (role 'ask':
+read-only token, no task at boot) runs `claude -p` in plan mode from its alarm
+(startAsk → askQueue → #runAsks) on the owner's Claude (credentials from the box's
+tmux env), `--model opus|sonnet|haiku`; `GET …/ask-result?id=` polls. Talk (qb2's
+src/talk*.ts) routes explain/plan/why questions here. A forq deploy mid-answer kills
+it (state stays running/failed): retry. Verified: eyal/todo, haiku, 9.5 s.
+
 ## Get your own qodebase (self-hosted copies, 2026-10-06)
 
 `/own` → installer template `qodebase` (src/install.ts) puts this code into the
