@@ -592,6 +592,11 @@ answers, or both.
   **Microphone** ready while Talk is open (`keepmic`: the stream opens with the
   sheet when the mic is already allowed, so the recording starts at 0 ms) or only
   while speaking. Live words grow in the input (textarea, up to 35dvh, then scrolls).
+- **Keep my recordings** (owner only, off by default, 2026-10-07): Talk setting →
+  each dictation clip goes to R2 `qodebase-talk-clips` (talk Worker binding
+  `CLIPS`, lifecycle rule deletes after 7 days) with the live and final words;
+  `/api/talk/clip` (POST save, `?key=` play, `?day=` list) answers 403 to anyone
+  but the owner. `node scripts/talk-trace.mjs --clips` / `--clip <key> -o f.webm`.
 - **Talk is its own Worker, `qodebase-talk`** (since 2026-10-07, Eyal's call):
   src/talkworker.ts + talk/wrangler.jsonc (no route; own TalkLog/TalkVoice;
   forq's Registry/Project/Ledger by script_name). forq hands /talk.js,
