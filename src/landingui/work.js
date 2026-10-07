@@ -157,16 +157,18 @@
     return age < PULSE ? ` style="animation-delay:-${age}ms"` : null;
   }
   const car = (c, id) => `<button class="car${c && c.state === 'replaying' ? ' rp' : ''}" type="button" data-car="${esc(id)}" data-go="#/change/${esc(id)}" aria-label="Change ${esc(id)}${c ? ': ' + short(c) : ''}">${ref(id)}<small>${c ? AG(c.agent) : ''}</small></button>`;
+  // A long line shows its front and a "+N more" that opens the whole line.
+  const capped = (cars, max) => (cars.length <= max ? cars.join('') : cars.slice(0, max).join('') + `<a class="car more" href="#/line">+${cars.length - max}<small>more</small></a>`);
   function theLine(full) {
     const idx = byId();
     const testing = D.queue.trains.filter((t) => t.state === 'testing');
     const replaying = D.changes.filter((c) => c.state === 'replaying');
     const parts = testing.map((t) => {
       const el = now() - t.startedAt, typical = 42e3, sp = MOCK ? MSPEED : 1;
-      return `<div class="train"><div class="cars">${t.changes.map((id) => car(idx.get(id), id)).join('')}</div><div class="prog"><i style="animation-duration:${Math.round(typical / sp)}ms;animation-delay:-${Math.round(Math.min(el, typical - 1) / sp)}ms"></i></div><div class="lbl"><b>Being tested</b> ${secs(el)}</div></div>`;
+      return `<div class="train"><div class="cars">${capped(t.changes.map((id) => car(idx.get(id), id)), full ? 99 : 8)}</div><div class="prog"><i style="animation-duration:${Math.round(typical / sp)}ms;animation-delay:-${Math.round(Math.min(el, typical - 1) / sp)}ms"></i></div><div class="lbl"><b>Being tested</b> ${secs(el)}</div></div>`;
     });
     const wait = [...D.queue.waiting.map((id) => car(idx.get(id), id)), ...replaying.map((c) => car(c, c.id))];
-    if (wait.length) parts.push(`<div class="wait"><div class="cars">${wait.join('')}</div><div class="lbl">${D.queue.waiting.length} waiting${replaying.length ? `, ${replaying.length} replaying` : ''}</div></div>`);
+    if (wait.length) parts.push(`<div class="wait"><div class="cars">${capped(wait, full ? 999 : 10)}</div><div class="lbl">${D.queue.waiting.length} waiting${replaying.length ? `, ${replaying.length} replaying` : ''}</div></div>`);
     const lastLand = D.queue.trains.filter((t) => t.state === 'landed').sort((x, y) => y.endedAt - x.endedAt)[0];
     const landP = lastLand ? pulse(`train:${lastLand.id}`) : null;
     const track = parts.length || landP ? `<div class="track" aria-label="The line, front first"><div class="stop${landP ? ' pl' : ''}"${landP || ''}><b>main</b>lands here</div>${parts.join('')}</div>` : '<p class="empty-line">The line is empty. Finished changes wait here to be tested.</p>';

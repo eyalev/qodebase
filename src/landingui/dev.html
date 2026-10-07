@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Agents at work (dev)</title>
 <!-- Local preview of the "Agents at work" view on the mock: from the forq root,
-     python3 -m http.server 8790, then open /src/landingui/dev.html (?theme=dark). -->
+     python3 -m http.server 8790, then open /src/landingui/dev.html (?theme=dark, ?mockspeed=4;
+     ?src=<json>&live plays a static file as if it were the API: stress cases). -->
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#fff;--card:#fafafa;--chip:#f3f4f6;--line:#ececef;--fg:#111214;--dim:#6e737b;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;--warn:#b42d1f;color-scheme:light}
@@ -17,6 +18,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:400 15px/1.45 Geist,sans
 </head>
 <body>
 <div id="lw" data-src="/public/landing-mock.json" data-name="hono" data-mock></div>
+<script>{const q=new URLSearchParams(location.search),el=document.getElementById('lw');if(q.get('src')){el.dataset.src=q.get('src');if(q.get('live')!==null)delete el.dataset.mock;}}</script>
 <script src="./work.js"></script>
 </body>
 </html>
