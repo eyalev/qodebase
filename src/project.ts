@@ -48,6 +48,7 @@ export type ProjectInfo = {
   agents: Agent[];
   lastRequest?: RouterRequest;
   private?: boolean;   // owner-only everywhere (registry.ts canSee); its live app needs a signed pass (run.ts)
+  landing?: boolean;   // shows 'Agents at work' as its main view (the landing system's demo, src/landing/)
 };
 
 export class Project extends DurableObject<Env> {
@@ -117,6 +118,13 @@ export class Project extends DurableObject<Env> {
     await this.#register(info);
     log('project', 'visibility', { slug: info.slug, private: v });
     return info;
+  }
+
+  /** The landing system's view becomes this project's main view (qb6/qb7, src/landing/). */
+  async setLanding(v: boolean) {
+    const info = await this.#need();
+    if (v) info.landing = true; else delete info.landing;
+    await this.ctx.storage.put('info', info);
   }
 
   /** Owner override of the previewed page: a folder ('demo/') or a file ('demo.html'). */

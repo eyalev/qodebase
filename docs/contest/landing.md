@@ -4,7 +4,31 @@ Read ../../CLAUDE.md (architecture: Project DO, agent boxes on Artifacts forks, 
 agents, forq CLI, BuildBox container), docs/contest/PLAN.md (story, contract, rules), and
 sim/README.md + sim/cloud/README.md (why: the measurements).
 
+## Plan (qb6, 2026-10-07)
+Files (all new unless noted): src/landing/landing.ts (Landing DO, one per project: records,
+queue, claims, stats, the contract JSON), src/landing/merger.ts (MergeBox container DO,
+`<slug>--merge`, same forq-box image by digest, 1 vCPU / 2 GiB, idle stop 5 min),
+src/landing/mergejob.mjs (node script run in the box: git apply --3way per change on main,
+tier-1 handlers, checks, git notes, push), src/landing/demo.ts (DemoAgent DO per scripted
+agent: forks main in Artifacts, pushes real commits with sim/cloud/src/gitpush.js),
+src/landing/demoproject.ts (seed + scripted task list, Hono-shaped: routes list,
+package.json deps, modules, node --test tests), src/landing/routes.ts (API).
+Edits: wrangler.jsonc (MergeBox container, 3 DO bindings, migration v8), index.ts (one line
+routing `landing*` verbs + hooks at spawn/push/verdict/merge, coordinated with qb2),
+cli.ts (`forq spawn --files`, `--on`, `forq list` claims).
+Why a separate Landing DO, not Project: project.ts stays as qb1-3 left it; the hot 2 s poll
+and the queue alarm never contend with the Project DO's review/delivery alarm.
+Order: (1) Landing DO + contract endpoint, (2) MergeBox + mergejob (plain merges, checks,
+bounce, notes), (3) demo project + DemoAgents, live on a demo project by Oct 9, (4) tier-1
+handlers, claims, stacking, (5) real-agent hooks, (6) tier 2/3, docs, cloudcost.
+Reuse: BuildBox's queue/alarm/resume pattern, gitpush.js, sim/real ideas for scripted edits.
+Contract additions agreed with qb7: now, mode, demo, flags, change.lead/createdAt/landedAt/
+title, train.mainBefore/mainAfter, review.verdict 'auto', event word 'overlap'.
+
 ## Checklist
+Status 2026-10-07 night: record, queue, merger box, notes, tier-1 handlers, stacking and demo
+mode are BUILT (src/landing/*, local tests: `node --experimental-strip-types --test src/landing/*.test.mjs`),
+not deployed yet. [x] = verified on Cloudflare.
 - [ ] Change RECORD in the Project DO: created at spawn (intent = task text, agent, fork, base,
       expected files), updated on push/review/landing; events log. Served in the PLAN.md contract.
 - [ ] MERGE QUEUE in the Project DO (alarm-driven trains). Git + checks run in a MERGER box

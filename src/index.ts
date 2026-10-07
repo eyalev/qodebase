@@ -39,6 +39,10 @@ import MA_TGZ from '../box/mobile-agent.tgz';
 import MA_REV from '../box/mobile-agent.rev';
 
 export { AgentBox, Project, Registry, BuildBox, Installs, TalkLog, Ledger, TalkVoice };
+import { landingRoute } from './landing/routes';
+export { Landing } from './landing/landing';
+export { MergeBox } from './landing/merger';
+export { DemoAgent } from './landing/demo';
 
 type Who = { kind: 'user'; handle: string; admin: boolean; anon?: boolean; email?: string } | { kind: 'agent'; agentId: string; role: Role };
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
@@ -386,6 +390,11 @@ const app = {
       if ((m = path.match(/^\/(?:api\/)?p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/|$)/))) {
         const e = await registry(env).get(slugOf(m[1], m[2]));
         if (e && !canSee(e, me.handle, me.admin)) return path.startsWith('/api/') ? json({ error: 'no such project' }, 404) : new Response('No such project', { status: 404 });
+      }
+      // The landing system (qb6, src/landing/routes.ts): /api/p/<o>/<n>/landing[/<verb>].
+      if ((m = path.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/landing(?:\/([a-z-]+))?$/))) {
+        const info = await projectStub(env, slugOf(m[1], m[2])).info();
+        return info ? landingRoute(request, env, info, m[3] || '', me) : json({ error: 'no such project' }, 404);
       }
 
       // ---- pages

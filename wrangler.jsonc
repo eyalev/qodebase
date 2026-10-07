@@ -36,6 +36,15 @@
       }
     },
     {
+      // The merger box (src/landing/merger.ts): lands merge-queue trains with real git.
+      // Same image as the builder (git + Node); idle-stopped after 5 minutes.
+      "class_name": "MergeBox",
+      "scheduling_policy": "durable_object",
+      "images": {
+        "computer": { "image": "registry.cloudflare.com/887d7234a6b8d65ad355a4f6684cab67/forq-box@sha256:cdc40854e171b65865c695c590296aa4e3f1a47c272c7bbbef014827e6b67ccd" }
+      }
+    },
+    {
       "class_name": "AgentBox",
       "scheduling_policy": "durable_object",
       "images": {
@@ -54,7 +63,12 @@
       { "name": "Installs", "class_name": "Installs" },
       { "name": "TalkLog", "class_name": "TalkLog" },
       { "name": "TalkVoice", "class_name": "TalkVoice" },
-      { "name": "Ledger", "class_name": "Ledger" }
+      { "name": "Ledger", "class_name": "Ledger" },
+      // Landing system (src/landing/): records + merge queue per project, the merger box,
+      // scripted demo agents (no model, no container).
+      { "name": "Landing", "class_name": "Landing" },
+      { "name": "MergeBox", "class_name": "MergeBox" },
+      { "name": "DemoAgent", "class_name": "DemoAgent" }
     ]
   },
   "migrations": [
@@ -64,7 +78,8 @@
     { "tag": "v4", "new_sqlite_classes": ["Installs"] },
     { "tag": "v5", "new_sqlite_classes": ["TalkLog"] },
     { "tag": "v6", "new_sqlite_classes": ["Ledger"] },
-    { "tag": "v7", "new_sqlite_classes": ["TalkVoice"] }
+    { "tag": "v7", "new_sqlite_classes": ["TalkVoice"] },
+    { "tag": "v8", "new_sqlite_classes": ["Landing", "MergeBox", "DemoAgent"] }
   ],
   // box/mobile-agent.tgz (scripts/pack-mobile-agent.sh) is bundled as bytes and
   // served to agent boxes at boot; box/mobile-agent.rev as text.
@@ -74,7 +89,9 @@
     // cli/qb.mjs is served as text at /cli/qb.mjs (src/cliauth.ts), never run here.
     { "type": "Text", "globs": ["**/qb.mjs"], "fallthrough": true },
     // box/boot.sh and box/box-api.mjs, written into managed boxes by box.ts #setup.
-    { "type": "Text", "globs": ["**/boot.sh", "**/box-api.mjs"], "fallthrough": true }
+    { "type": "Text", "globs": ["**/boot.sh", "**/box-api.mjs"], "fallthrough": true },
+    // src/landing/mergejob.mjs, written into the merger box and run there with node.
+    { "type": "Text", "globs": ["**/mergejob.mjs"], "fallthrough": true }
   ],
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "forq" }],
   "version_metadata": { "binding": "CF_VERSION_METADATA" },

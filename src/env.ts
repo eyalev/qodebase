@@ -12,7 +12,11 @@ export interface Env {
   Installs: DurableObjectNamespace<Installs>;
   TalkLog: DurableObjectNamespace<import('./talk').TalkLog>;
   TalkVoice?: DurableObjectNamespace<import('./talkvoice').TalkVoice>;   // the conversation agent (src/talkvoice.ts)
-  Ledger: DurableObjectNamespace<import('./costs').Ledger>;   // per-person cost ledger (src/costs.ts)
+  Ledger: DurableObjectNamespace<import('./costs').Ledger>;
+  // Landing system (src/landing/): records + merge queue, the merger box, scripted demo agents.
+  Landing: DurableObjectNamespace<import('./landing/landing').Landing>;
+  MergeBox: DurableObjectNamespace<import('./landing/merger').MergeBox>;
+  DemoAgent: DurableObjectNamespace<import('./landing/demo').DemoAgent>;   // per-person cost ledger (src/costs.ts)
   AI?: Ai;                    // Workers AI (Talk: src/talk.ts)
   TALK_GATEWAY?: string;
   TALK?: Fetcher;
