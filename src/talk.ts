@@ -8,6 +8,7 @@
 //   POST /api/talk/transcribe  audio -> text (Whisper large v3 turbo), for the Whisper dictation setting
 //   POST /api/talk/status      "what's going on": their agents, what is ready, what changed (real data, no model)
 //   GET  /api/talk/tts         spoken reply: Deepgram Aura (Workers AI), MP3 streamed while it is made, cached per colo
+//   POST /api/talk/trace       the owner's experience trace (page views, taps, Talk steps, errors); GET reads it
 //   GET  /api/talk/me          signed in? today's budget left
 //   POST /api/talk/log         one row per page-tool call (window.__webmcp, Jarvis hands)
 //   GET  /talk.js              the layer (src/talkclient.ts)
@@ -18,6 +19,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
 import { listFor } from './registry';
+import { isOwner } from './auth';
 import { buildQuestions, candidateProjects, currentSlug, resolve, stateText, type Item, type Proj, type Screen } from './talkdecide';
 import { TALK_JS } from './talkclient';
 import { TALK_VOICE_JS } from './talkvoicejs.gen';
@@ -42,6 +44,22 @@ export class TalkLog extends DurableObject<Env> {
     if (a + n > CAPS[kind].me || b + n > CAPS[kind].all) return { ok: false, left: 0 };
     await this.ctx.storage.put({ [me]: a + n, [all]: b + n });
     return { ok: true, left: Math.min(CAPS[kind].me - a - n, CAPS[kind].all - b - n) };
+  }
+  // ---- Experience trace (the owner's own use only): what happened, step by step, per tab session.
+  #traceReady = false;
+  #trace() {
+    if (!this.#traceReady) { this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS trace (ts INTEGER, handle TEXT, sid TEXT, ev TEXT, data TEXT)'); this.#traceReady = true; }
+    return this.ctx.storage.sql;
+  }
+  async addTrace(handle: string, sid: string, rows: { ts: number; ev: string; data: string }[]) {
+    const sql = this.#trace();
+    const n = (sql.exec('SELECT COUNT(*) AS n FROM trace WHERE handle = ?', handle).one() as any).n as number;
+    if (n > 20000) return { ok: false, n };
+    for (const r of rows) sql.exec('INSERT INTO trace (ts, handle, sid, ev, data) VALUES (?, ?, ?, ?, ?)', r.ts, handle, sid, r.ev, r.data);
+    return { ok: true, n: n + rows.length };
+  }
+  async readTrace(handle: string, since: number, limit: number) {
+    return this.#trace().exec('SELECT ts, sid, ev, data FROM trace WHERE handle = ? AND ts > ? ORDER BY ts LIMIT ?', handle, since, limit).toArray();
   }
   async counts(who: string) {
     const out: Record<string, number> = {};
@@ -317,7 +335,22 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
   if (!env.AI) return json({ error: 'off', why: 'Talk is not set up on this copy (no AI binding).' }, 404);
   if (url.pathname === '/api/talk/me') {
     if (!who) return json({ signedIn: false });
-    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS });
+    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: isOwner(env, who.handle) });
+  }
+  if (url.pathname === '/api/talk/trace') {
+    // The owner's own experience, step by step (Eyal, 2026-10-07: "log and instrument every part of the app
+    // experience … so you really have a sense of what I'm going through"). Nobody else's is collected.
+    if (!who || !isOwner(env, who.handle)) return json({ error: 'forbidden' }, 403);
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('day') || '') ? url.searchParams.get('day')! : new Date().toISOString().slice(0, 10);
+    const stub = env.TalkLog.get(env.TalkLog.idFromName(day));
+    if (request.method === 'GET') return json({ day, rows: await stub.readTrace(who.handle, Number(url.searchParams.get('since')) || 0, Math.min(5000, Number(url.searchParams.get('limit')) || 2000)) });
+    const b = await request.json().catch(() => null) as any;
+    const sid = String(b?.sid || '').slice(0, 40);
+    const rows = (Array.isArray(b?.events) ? b.events : []).slice(0, 200).map((e: any) => {
+      const { ts, ev, ...rest } = e || {};
+      return { ts: Number(ts) || Date.now(), ev: String(ev || '').slice(0, 40), data: JSON.stringify(rest).slice(0, 2000) };
+    }).filter((r: any) => r.ev);
+    return json(rows.length ? await env.TalkLog.get(env.TalkLog.idFromName(new Date().toISOString().slice(0, 10))).addTrace(who.handle, sid, rows) : { ok: true, n: 0 });
   }
   if (!who) return json({ error: 'signin', why: 'Sign in to talk to qodebase.' }, 401);
   if (url.pathname === '/api/talk/tts' && request.method === 'GET') return tts(request, env, _ctx, who, url);

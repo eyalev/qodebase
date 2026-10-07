@@ -12,11 +12,12 @@
 // characters, plus the brain's calls. Capped per person per day in TalkLog
 // (voice_sec) and recorded per turn in the cost ledger (src/costs.ts).
 import { Agent, type Connection } from 'agents';
-import { withVoice, WorkersAIFluxSTT, WorkersAITTS, type VoiceTurnContext } from 'agents/voice';
+import { withVoice, WorkersAIFluxSTT, type VoiceTurnContext } from 'agents/voice';
 import type { Env } from './env';
 import { isOwner } from './auth';
 import { recordCost } from './costs';
 import { chatCore, decideCore, statusCore, talkLog } from './talk';
+import { stretchPcm16 } from './stretch';
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talkvoice', event, ...data }));
 const FLUX_USD_PER_MIN = 0.0077;
@@ -50,14 +51,31 @@ function line(c: any): string {
 }
 
 // The SDK types its env as Cloudflare.Env; ours is src/env.ts.
-const VoiceAgent = withVoice(Agent<any>);
+// Replies go to the page as raw 24 kHz PCM: sped up on the server without changing pitch (AuraTTS below).
+const PCM_RATE = 24000;
+const VoiceAgent = withVoice(Agent<any>, { audioFormat: 'pcm16', sampleRate: PCM_RATE });
+
+/** Aura as raw PCM, time-stretched to the person's speed (default 1.25x, like Ask's Jarvis voice). */
+class AuraTTS {
+  constructor(private ai: Ai, private model: string, private speaker: string, private speed: number) {}
+  async synthesize(text: string, _signal?: AbortSignal): Promise<ArrayBuffer | null> {
+    const t0 = Date.now();
+    const r: any = await (this.ai as any).run(this.model, { text, speaker: this.speaker, encoding: 'linear16', container: 'none', sample_rate: PCM_RATE }, { returnRawResponse: true });
+    const buf: ArrayBuffer = r instanceof Response ? await r.arrayBuffer() : r instanceof ReadableStream ? await new Response(r).arrayBuffer() : r;
+    if (!buf || buf.byteLength < 2) return null;
+    const pcm = new Int16Array(buf, 0, buf.byteLength >> 1);
+    const out = stretchPcm16(pcm, PCM_RATE, this.speed);
+    log('tts', { model: this.model, chars: text.length, speed: this.speed, in_s: Math.round(pcm.length / PCM_RATE * 10) / 10, out_s: Math.round(out.length / PCM_RATE * 10) / 10, ms: Date.now() - t0 });
+    return out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength) as ArrayBuffer;
+  }
+}
 
 export class TalkVoice extends VoiceAgent {
   declare env: Env;
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.transcriber = new WorkersAIFluxSTT(gatewayed(env), { keyterms: ['qodebase', 'Talk', 'fork', 'merge', 'router'] });
-    this.tts = new WorkersAITTS(gatewayed(env), { model: '@cf/deepgram/aura-2-en', speaker: 'draco' });   // Aura-2 default (Eyal, 2026-10-07)
+    this.tts = new AuraTTS(gatewayed(env), '@cf/deepgram/aura-2-en', 'draco', 1.25) as any;   // Aura-2 at 1.25x by default (Eyal, 2026-10-07)
   }
   #ttsModel = '@cf/deepgram/aura-2-en';
   #screen: any = null;
@@ -98,7 +116,8 @@ export class TalkVoice extends VoiceAgent {
       const model = m.model === 'aura-1' ? '@cf/deepgram/aura-1' : '@cf/deepgram/aura-2-en';
       const speaker = SPEAKERS[model].includes(m.speaker) ? m.speaker : SPEAKERS[model][0];
       this.#ttsModel = model;
-      this.tts = new WorkersAITTS(gatewayed(this.env), { model, speaker });
+      const speed = Math.min(2, Math.max(0.7, Number(m.speed) || 1.25));
+      this.tts = new AuraTTS(gatewayed(this.env), model, speaker, speed) as any;
       return;
     }
     if (m?.type === 'say' && m.text) {

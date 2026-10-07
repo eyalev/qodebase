@@ -18,7 +18,41 @@ function get(k, d) { try { var v = ls.getItem(KEY + k); return v == null ? d : v
 function set(k, v) { try { ls.setItem(KEY + k, v); } catch (e) {} }
 function sget(k, d) { try { var v = ss.getItem(KEY + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
 function sset(k, v) { try { ss.setItem(KEY + k, JSON.stringify(v)); } catch (e) {} }
-function logEv(event, data) { try { console.log(JSON.stringify(Object.assign({ ts: new Date().toISOString(), module: 'talk', event: event }, data || {}))); } catch (e) {} }
+function logEv(event, data) { try { console.log(JSON.stringify(Object.assign({ ts: new Date().toISOString(), module: 'talk', event: event }, data || {}))); } catch (e) {} trace(event, data); }
+// ---- Experience trace (the owner only, /api/talk/trace): every step, batched, sent on leaving a page.
+var tq = [], tOn = false, tTimer = null;
+var tsid = (function () { try { var v = ss.getItem(KEY + 'sid'); if (!v) { v = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); ss.setItem(KEY + 'sid', v); } return v; } catch (e) { return 'nosid'; } })();
+function trace(ev, data) {
+  if (!tOn && tq.length > 300) return;
+  var r = { ts: Date.now(), ev: ev, path: location.pathname };
+  for (var k in data || {}) { var v = data[k]; r[k] = typeof v === 'string' ? v.slice(0, 400) : v; }
+  tq.push(r);
+  if (tOn && !tTimer) tTimer = setTimeout(traceFlush, 4000);
+}
+function traceFlush(beacon) {
+  clearTimeout(tTimer); tTimer = null;
+  if (!tOn || !tq.length) return;
+  var body = JSON.stringify({ sid: tsid, events: tq.splice(0, 200) });
+  try { if (beacon && navigator.sendBeacon) { navigator.sendBeacon('/api/talk/trace', new Blob([body], { type: 'application/json' })); return; } } catch (e) {}
+  fetch('/api/talk/trace', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+  if (tq.length) tTimer = setTimeout(traceFlush, 1000);
+}
+function traceStart() {
+  tOn = true;
+  var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {};
+  trace('page', { title: document.title, w: window.innerWidth, h: window.innerHeight, nav: nav.type, load_ms: nav.duration ? Math.round(nav.duration) : undefined });
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest && e.target.closest('a, button, [role=button], input, textarea, summary');
+    if (!t) return;
+    trace('tap', { what: t.tagName.toLowerCase(), id: t.id || undefined, talk: !!t.closest('#talk-root') || undefined, label: (t.getAttribute('aria-label') || t.innerText || t.value || t.placeholder || '').trim().replace(/\s+/g, ' ').slice(0, 80), href: t.getAttribute('href') || undefined });
+  }, true);
+  document.addEventListener('submit', function (e) { trace('submit', { form: (e.target && (e.target.id || e.target.getAttribute('action'))) || '' }); }, true);
+  document.addEventListener('visibilitychange', function () { trace('visibility', { state: document.visibilityState }); if (document.visibilityState === 'hidden') traceFlush(true); });
+  window.addEventListener('pagehide', function () { trace('leave', {}); traceFlush(true); });
+  window.addEventListener('error', function (e) { trace('js_error', { msg: String(e.message || ''), src: String(e.filename || '').split('/').pop(), line: e.lineno }); });
+  window.addEventListener('unhandledrejection', function (e) { trace('js_rejection', { msg: String(e.reason && (e.reason.message || e.reason)) }); });
+  traceFlush();
+}
 
 var S = {
   engine: get('engine', ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) ? 'native' : 'whisper'),
@@ -26,6 +60,7 @@ var S = {
   voice: get('voice', 'off'),           // spoken replies: off | aura-1 | aura-2 | phone (off by default)
   speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
   when: get('when', 'voice'),           // voice (only when I spoke) | always
+  speed: Number(get('speed', '1.25')) || 1.25,   // reply speed, pitch kept (Ask's Jarvis default)
 };
 // Aura-2 is the default voice since 2026-10-07 (Eyal): devices that had Aura-1 only because it was the default move once.
 try { if (!ls.getItem(KEY + 'v2')) { if (ls.getItem(KEY + 'voice-on') === 'aura-1') ls.setItem(KEY + 'voice-on', 'aura-2'); if (S.voice === 'aura-1') { S.voice = 'aura-2'; S.speaker = ''; ls.setItem(KEY + 'voice', 'aura-2'); ls.removeItem(KEY + 'speaker'); } ls.setItem(KEY + 'v2', '1'); } } catch (e) {}
@@ -122,6 +157,7 @@ function build() {
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
     '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
     '<label>Voice<select id="talk-s-speaker"></select></label>' +
+    '<label>Speed<select id="talk-s-speed"><option value="1">1\u00d7</option><option value="1.1">1.1\u00d7</option><option value="1.15">1.15\u00d7</option><option value="1.25">1.25\u00d7</option><option value="1.4">1.4\u00d7</option><option value="1.6">1.6\u00d7</option></select></label>' +
     '<label>Speak<select id="talk-s-when"><option value="voice">When I talked</option><option value="always">Always</option></select></label>' +
     '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>';
   logEl = el('div', { id: 'talk-log', 'aria-live': 'polite' });
@@ -164,11 +200,14 @@ function build() {
     if (list.indexOf(S.speaker) < 0) S.speaker = list[0] || '';
     sk.value = S.speaker; sk.parentNode.style.display = list.length ? '' : 'none';
     sw.parentNode.style.display = S.voice === 'off' ? 'none' : '';
+    var spd = document.getElementById('talk-s-speed'); if (spd) spd.parentNode.style.display = S.voice === 'phone' ? 'none' : '';
   };
   fillSpeakers();
   sv.onchange = function () { S.voice = sv.value; set('voice', S.voice); if (S.voice !== 'off') set('voice-on', S.voice); fillSpeakers(); set('speaker', S.speaker); voiceBtn(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how I sound.'); } };
   sk.onchange = function () { S.speaker = sk.value; set('speaker', S.speaker); unlockAudio(); lastSpoken = true; say('This is how I sound.'); };
   sw.onchange = function () { S.when = sw.value; set('when', S.when); };
+  var sspd = document.getElementById('talk-s-speed'); sspd.value = String(S.speed);
+  sspd.onchange = function () { S.speed = Number(sspd.value) || 1.25; set('speed', String(S.speed)); trace('setting', { speed: S.speed }); vcVoice(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how fast I talk.'); } };
   spk.addEventListener('click', function () { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-2') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); if (S.voice === 'off') stopSpeaking(); });
   voiceBtn();
   se.onchange = function () { S.engine = se.value; set('engine', S.engine); };
@@ -180,7 +219,7 @@ function build() {
   render();
 }
 
-function open(on) { root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+function open(on) { trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
 // Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is.
 function placeFab() {
   if (!fab) return;
@@ -206,7 +245,7 @@ function placeFab() {
   fab.style.bottom = 'calc(' + (lift ? Math.round(lift) + 12 : 16) + 'px + env(safe-area-inset-bottom))';
 }
 // open (the conversation, at the height they chose) | bar (header + input only, the page shows). Per device.
-function setSheet(st) { root.classList.toggle('bar', st === 'bar'); set('sheet', st); if (st === 'open') setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 60); }
+function setSheet(st) { trace('sheet', { state: st, h: Math.round(sheet.getBoundingClientRect().height) }); root.classList.toggle('bar', st === 'bar'); set('sheet', st); if (st === 'open') setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 60); }
 // The handle: drag to any height (remembered), low enough folds to the bar, to the bottom closes; a tap folds/unfolds.
 function dragHandle(g) {
   var y0 = 0, h0 = 0, moved = false, on = false;
@@ -291,6 +330,7 @@ function api(path, body) {
 // ---- The one entry point: a sentence --------------------------------------
 var preview = null;   // { text, cmd } from interim speech
 function submit(text) {
+  trace('said', { text: text, spoken: lastSpoken, engine: lastSpoken ? S.engine : 'typed' });
   if (busy) return;
   busy = true; unmark(); offerOff();
   add('you', text);
@@ -562,7 +602,8 @@ function say(text) {
   unlockAudio();
   var t0 = Date.now();
   player.src = '/api/talk/tts?model=' + encodeURIComponent(S.voice) + '&speaker=' + encodeURIComponent(S.speaker || '') + '&text=' + encodeURIComponent(t);
-  player.onplaying = function () { logEv('speak_start', { chars: t.length, ms_first: Date.now() - t0 }); };
+  try { player.playbackRate = S.speed; player.preservesPitch = true; player.defaultPlaybackRate = S.speed; } catch (e) {}
+  player.onplaying = function () { try { player.playbackRate = S.speed; } catch (e) {} logEv('speak_start', { chars: t.length, ms_first: Date.now() - t0, speed: S.speed }); };
   player.onerror = function () { logEv('speak_error', { chars: t.length }); phoneSay(t); };
   var p = player.play();
   if (p && p.catch) p.catch(function (e) { logEv('speak_blocked', { err: String(e) }); phoneSay(t); });
@@ -579,6 +620,7 @@ function setListening(on) {
   else if (!busy) status('');
 }
 function startListen() {
+  trace('listen_start', { engine: S.engine, lang: S.lang, listening: listening, busy: busy });
   if (listening || busy) return;
   stopSpeaking();   // talking over the reply stops it
   offerOff(); live.textContent = '';
@@ -826,6 +868,7 @@ function publishTools() {
 var vc = null, vcSeen = 0, vcStatus = 'idle', vcLast = 0, vcIdle = null, vcLinks = null, vcPending = null;
 var VC_QUIET_MS = 30000;
 // In a conversation send the answer as written (the transcript shows its lines and lists); the agent cleans it for the voice.
+function vcVoice() { if (vc) try { vc.sendJSON({ type: 'voice', model: S.voice === 'aura-1' ? 'aura-1' : 'aura-2', speaker: S.voice === 'aura-1' || S.voice === 'aura-2' ? S.speaker : '', speed: S.speed }); } catch (e) {} }
 function speakOut(text) { if (vc) { try { vc.sendJSON({ type: 'say', text: String(text || '').slice(0, 1500) }); } catch (e) {} } else say(text); }
 function vcActive() { vcLast = Date.now(); }
 function loadKit(cb) {
@@ -847,7 +890,7 @@ function startConversation() {
       logEv('vc_connection', { on: on, ms: Date.now() - t0 });
       if (!on || !vc) return;
       vcScreen();
-      if (S.voice === 'aura-1' || S.voice === 'aura-2') vc.sendJSON({ type: 'voice', model: S.voice, speaker: S.speaker });
+      vcVoice();
       vc.startCall().then(function () { sset('call', true); vcActive(); }).catch(function (e) { add('note', 'Could not start: ' + (e && e.message || e)); endConversation('error'); });
     });
     vc.addEventListener('statuschange', function (st) {
@@ -944,6 +987,7 @@ function voiceChange(c) {
 fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
   if (!j.signedIn) return;
   me = j.handle;
+  if (j.trace) traceStart(); else tq = [];
   build();
   publishTools();
   // Coming back from a navigation Talk made: show the sheet, finish any pending question.
