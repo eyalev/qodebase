@@ -775,7 +775,8 @@ function startConversation() {
     vc.addEventListener('transcriptchange', function (msgs) { vcFlush(msgs, false); vcActive(); });
     vc.addEventListener('custommessage', function (d) { onVoiceMsg(d); });
     vc.addEventListener('turnmetrics', function (t) { logEv('vc_turn', { outcome: t.outcome, total_ms: t.turnTotalMs }); });
-    vc.addEventListener('error', function (e) { if (e) { add('note', String(e)); logEv('vc_error', { err: String(e) }); } });
+    // Silence is a choice (filler, a fragment, talk to someone else): the kit reports it as an error; keep it out of the sheet.
+    vc.addEventListener('error', function (e) { if (!e) return; logEv('vc_error', { err: String(e) }); if (!/no response generated/i.test(String(e))) add('note', String(e)); });
     vc.addEventListener('voiceerror', function (e) { logEv('vc_voiceerror', { e: e && (e.code || e.message || String(e)) }); });
     vc.addEventListener('mutechange', function (m) { micBtn.classList.toggle('on', !m); micBtn.innerHTML = m ? ICON.mic : ICON.stop; });
     vc.connect();
