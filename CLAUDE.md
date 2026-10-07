@@ -585,6 +585,13 @@ answers, or both.
   echoed prompt is dropped); Whisper's text replaces the live words (6 s timeout →
   live words). Trace: `rec_start`, `srv_stt`, `dc_whisper {live, final}`. Verified:
   live "List projects." → final "List some of my projects.".
+  Nova-3 goes to the AI binding directly: through the gateway the first live words
+  came ~7 s late. The client re-sends `mode` before every call (the agent forgets it
+  when it sleeps). Settings: **How the mic works** (`mic`: send = tap, speak, tap
+  Send, default, like tmux-web | pause | hold | conv), Whisper check on/off,
+  **Microphone** ready while Talk is open (`keepmic`: the stream opens with the
+  sheet when the mic is already allowed, so the recording starts at 0 ms) or only
+  while speaking. Live words grow in the input (textarea, up to 35dvh, then scrolls).
 - **Talk is its own Worker, `qodebase-talk`** (since 2026-10-07, Eyal's call):
   src/talkworker.ts + talk/wrangler.jsonc (no route; own TalkLog/TalkVoice;
   forq's Registry/Project/Ledger by script_name). forq hands /talk.js,
