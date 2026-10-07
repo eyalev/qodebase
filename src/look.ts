@@ -24,6 +24,7 @@ textarea,input[type=text],input[type=password],input:not([type]),.field,.landask
 .prow,.tcard img,.gmenupop{border-radius:14px}
 .gtop .g{font-size:14.5px;font-weight:500}
 .gtop .mark{font-weight:600;letter-spacing:-.02em}
+body:has(.tabbar) #look2chip{bottom:80px!important}
 `;
 
 /** The cookie to set or clear when the URL asks (?look=2 / ?look=1), else null. */
@@ -46,6 +47,6 @@ export function withLook(res: Response): Response {
   if (!(res.headers.get('content-type') || '').startsWith('text/html')) return res;
   return new HTMLRewriter()
     .on('head', { element(e) { e.append(`<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet"><style id="look2">${CSS}</style>`, { html: true }); } })
-    .on('body', { element(e) { e.append(`<a href="?look=1" style="position:fixed;left:12px;bottom:12px;z-index:99;font:500 12px Geist,sans-serif;padding:6px 10px;border-radius:999px;background:var(--fg);color:var(--bg);opacity:.75;text-decoration:none">Look 2 · back</a>`, { html: true }); } })
+    .on('body', { element(e) { e.append(`<a id="look2chip" href="?look=1" style="position:fixed;left:12px;bottom:12px;z-index:99;font:500 12px Geist,sans-serif;padding:6px 10px;border-radius:999px;background:var(--fg);color:var(--bg);opacity:.75;text-decoration:none">Look 2 · back</a>`, { html: true }); } })
     .transform(res);
 }
