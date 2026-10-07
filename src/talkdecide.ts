@@ -33,6 +33,7 @@ const ACTIONS = {
   scroll: 'Scroll to or show a section of this page (by its heading), or scroll to the top or bottom',
   explain: 'Explain, describe or show around the page the person is looking at',
   change: 'Ask for a change in one of the projects: add, fix, change, improve or remove a feature in an app or its code ("in my todo app add due dates", "make the timer chime louder", "fix the dark mode")',
+  code: 'Answer a question about a project\'s CODE that needs reading it: how something works or is stored, where something is, why it is built a certain way, or a plan for how to change it ("how are tasks stored in my todo app", "why does the timer use a worker", "plan how to add accounts")',
   status: 'Say what is going on across their projects: what their agents are doing, what is ready to merge or review, what changed today or this week, what needs them',
   none: 'No action in the app',
 };
@@ -140,6 +141,7 @@ export function buildQuestions(utterance: string, s: Screen, projects: Proj[]) {
     q.project = choice('Which project does the sentence name or mean? Match by name or what it is (a "timer" is the Focus timer project). With no project name ("the app", "its history", "this"), it is the project the page shows. "My copy", "my version" or "mine" means their own project of the same name. Prefer their own project when they say "my" or names tie.',
       { ...Object.fromEntries(projects.map((p) => [p.id, `${p.owner}/${p.name}${p.mine ? ' (theirs)' : ''}${p.description ? ': ' + p.description.slice(0, 80) : ''}`])), ...none });
     q.part = choice('Which part of the project does it want?', PARTS);
+    q.depth = choice('If it is a question about a project\'s code, how deep is it?', { fact: 'A quick fact: where something is, what it uses, how something is stored', explain: 'An explanation of how something works', plan: 'A plan, a design question, or why it was built this way' });
     q.names_part = noul('The sentence names or implies one part of a project: its app (try, play, use, run it), code, files, readme, license, history or agents.');
   }
   if (by('button').length) q.button = choice('Which button does it want to press?', { ...Object.fromEntries(by('button').map((b) => [b.id, b.text])), ...none });
@@ -159,7 +161,8 @@ const pick = (a: Ans | undefined, min = 0) => { const t = top(a); return t.choic
 export type Cmd = {
   mode: string; modeP: number | null; op: string; p: number | null; risky: number | null; complete: number | null;
   href?: string; label?: string; target?: string; text?: string; section?: string; why?: string;
-  slug?: string; mine?: boolean;   // change: the project, and whether it is theirs
+  slug?: string; mine?: boolean;   // change / code: the project, and whether it is theirs
+  depth?: string;                  // code: fact | explain | plan (haiku | sonnet | opus in the ask box)
 };
 
 /** Answers -> one command the page carries out (or hands to the chat lane). */
@@ -180,7 +183,9 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
   // The many-way action spreads thin on "in my X app, let it do Y" (it opens X); a direct yes/no on just that is sharper (talkui's rewords rule).
   const wc = answers.wants_change?.noul ?? 0;
   const changeP = answers.action?.probabilities?.change ?? 0;
-  if (action.choice !== 'change' && !['status', 'explain', 'type'].includes(action.choice) && (wc >= 0.75 || (wc >= 0.55 && changeP >= 0.15))) action = { choice: 'change', p: wc };
+  if (action.choice !== 'change' && !['status', 'explain', 'type', 'code'].includes(action.choice) && (wc >= 0.75 || (wc >= 0.55 && changeP >= 0.15))) action = { choice: 'change', p: wc };
+  // "Plan how to…", "how would we…", "why does…" ask for an answer about the code, not an edit (vocabulary in code).
+  if (action.choice === 'change' && /^\s*(plan|how (would|should|could|do) (we|i|you)|why\b|what would it take|should (we|i))/i.test(utterance)) action = { choice: 'code', p: action.p };
   const base: Cmd = { mode: mode.choice, modeP: mode.p, op: 'none', p: action.p, risky: answers.risky?.noul ?? null, complete: answers.complete?.noul ?? null };
   const item = (id: string | null) => s.items.find((i) => i.id === id) || null;
   const text = (() => { const c = pick(answers.text); return c && /^s\d+$/.test(c) ? cands[Number(c.slice(1))] : null; })();
@@ -225,6 +230,13 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
     }
     case 'explain': return { ...base, op: 'explain' };
     case 'status': return { ...base, op: 'status' };
+    case 'code': {
+      const cur = currentSlug(s.path);
+      const p = projects.find((x) => x.id === pick(answers.project, 0.3)) || projects.find((x) => x.slug === cur);
+      if (!p) return { ...base, why: 'which project? say its name' };
+      const depth = /^\s*(plan|why\b|how (would|should|could)|what would it take|should (we|i))/i.test(utterance) ? 'plan' : top(answers.depth).choice;
+      return { ...base, op: 'code', slug: p.slug, mine: !!p.mine, label: `${p.owner}/${p.name}`, text: utterance, depth, target: p.slug };
+    }
     case 'change': {
       // The named project, else the one this page shows.
       const cur = currentSlug(s.path);

@@ -73,6 +73,11 @@ const CASES = [
   ["home", "what's going on", { mode: ['act', 'ask'], op: ['status', 'none'] }],
   ['home', 'what are my agents doing?', { mode: ['act', 'ask', 'both'], op: ['status', 'none'] }],
   ['mine', 'is anything ready to merge?', { mode: ['act', 'ask', 'both'], op: ['status', 'none'] }],
+  // Code questions for the ask box (2026-10-07).
+  ['home', 'how are tasks stored in my todo app?', { mode: ['ask', 'both', 'act'], op: 'code', label: 'eyal/todo' }],
+  ['p_forq_calculator', 'why does it use a shunting-yard parser?', { mode: ['ask', 'both', 'act'], op: ['code', 'none'] }],
+  ['mine', 'plan how to add user accounts to my todo app', { mode: ['ask', 'both', 'act'], op: 'code', label: 'eyal/todo' }],
+  ['p_forq_calculator', 'what does this project do?', { mode: ['ask', 'both'], op: ['explain', 'none', 'code'] }],
   // Risky: must be flagged.
   ['mine', 'delete the particles project', { mode: ['act', 'both', 'ask'], risky: true }],
   ['home', 'sign me out', { mode: 'act', risky: true }],

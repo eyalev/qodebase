@@ -229,6 +229,7 @@ function submit(text) {
     if (c.mode === 'none') { add('note', (c.complete || 0) < 0.5 ? 'Sounds cut off. Say it again?' : 'I did not catch a request there.'); return done(); }
     if (c.op === 'status') return whatsGoingOn(text);
     if (c.op === 'change') return changeRequest(c);
+    if (c.op === 'code') return codeQuestion(c);
     var acts = (c.mode === 'act' || c.mode === 'both') && c.op !== 'none' && c.op !== 'explain';
     if (acts && (c.p == null || c.p >= 0.45)) {
       if (c.mode === 'both') sset('pending', { text: text, did: describe(c) });
@@ -275,6 +276,46 @@ function changeRequest(c) {
   offerOn('Send to ' + owner + '/' + name + '\u2019s agents: \u201c' + text + '\u201d?', function () { busy = true; sendChange(owner, name, text); }, 'Send');
   done();
 }
+// ---- Questions about a project's code: qb1's ask box (a read-only Claude Code box on
+// the owner's Claude). Owner only; others get the quick chat lane over the page.
+var DEPTH_MODEL = { fact: 'haiku', explain: 'sonnet', plan: 'opus' };
+function codeQuestion(c) {
+  var parts = String(c.slug || '').split('.'), owner = parts[0], name = parts.slice(1).join('.');
+  if (!c.mine) { add('note', 'I can only read the code of your own projects, so this answer is from the page.'); return ask(c.text, ''); }
+  var model = DEPTH_MODEL[c.depth] || 'sonnet';
+  var t0 = Date.now(), tries = 0;
+  add('app', 'Reading the code of ' + owner + '/' + name + '\u2026');
+  say('Reading the code.');
+  var tick = setInterval(function () { status('Reading the code ' + Math.floor((Date.now() - t0) / 1000) + 's'); }, 500);
+  var stop = function () { clearInterval(tick); };
+  var start = function () {
+    tries++;
+    projPost(owner, name, 'ask', { question: c.text, model: model }).then(function (r) {
+      if (r.error || !r.id) { stop(); add('note', 'Could not ask: ' + (r.error || 'no answer')); return done(); }
+      poll(r.id);
+    }).catch(function () { stop(); add('note', 'Could not reach qodebase.'); done(); });
+  };
+  var poll = function (id) {
+    if (Date.now() - t0 > 240000) { stop(); add('note', 'Still reading after four minutes. The answer will be in the project when it is ready.'); return done(); }
+    fetch('/api/p/' + owner + '/' + name + '/ask-result?id=' + encodeURIComponent(id), { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j.state === 'done') {
+        stop();
+        logEv('code_answer', { project: owner + '/' + name, model: j.model || model, ms: Date.now() - t0, box_ms: j.ms, tries: tries });
+        chatHist.push({ role: 'user', content: c.text }); chatHist.push({ role: 'assistant', content: j.answer || '' }); chatHist = chatHist.slice(-12); sset('chat', chatHist);
+        add('ai', j.answer || 'No answer came back.'); say(j.answer || '');
+        return done();
+      }
+      if (j.state === 'failed') {
+        logEv('code_failed', { project: owner + '/' + name, err: j.error, tries: tries });
+        if (tries < 2) return start();   // a deploy restarts the box mid-question: one retry
+        stop(); add('note', 'The code reader failed: ' + (j.error || 'unknown')); return done();
+      }
+      setTimeout(function () { poll(id); }, 2500);
+    }).catch(function () { setTimeout(function () { poll(id); }, 4000); });
+  };
+  start();
+}
+
 function projPost(owner, name, verb, body) {
   return fetch('/api/p/' + owner + '/' + name + '/' + verb, { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
     .then(function (r) { return r.json().catch(function () { return { error: 'HTTP ' + r.status }; }); });
@@ -410,7 +451,7 @@ function stopSpeaking() {
 }
 function spoken(text) {
   // What is worth hearing: no links or ids, at most ~3 sentences / 600 characters.
-  var t = String(text || '').replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
+  var t = String(text || '').replace(/https?:\/\/\S+/g, '').replace(/[\x60*#_]/g, '').replace(/\(?\b[\w.-]+\/[\w./-]+\.[a-z]{1,5}(:\d+)?\)?/gi, '').replace(/\s+([,.])/g, '$1').replace(/\s+/g, ' ').trim();
   if (t.length > 600) { var cut = t.slice(0, 600); var i = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! ')); t = i > 200 ? cut.slice(0, i + 1) : cut; }
   return t;
 }
