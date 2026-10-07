@@ -23,11 +23,11 @@ anything to see why. Overview first, details on tap.
       without a gloss: "merge queue = the line changes wait in to be tested together").
 - [x] Live updates: poll every 2 s while visible, backoff on errors; pulses and the line's FLIP animation survive re-renders (negative animation-delay); ?mockspeed=N for video, smooth enough for video; demo-mode banner ("scripted agents").
 - [~] Screenshot gate: 390 px + 1440 px, light + dark, every state (`node src/landingui/shots.mjs`, 44 shots, 0 sideways);
-      stress cases in src/landingui/stress/ (empty, 60 agents, long text) — done. Critique by a different agent: running.
+      stress cases in src/landingui/stress/ (empty, 60 agents, long text) — done. Critique by a different agent (2026-10-07): 2 blockers, 4 high fixed (taps lost to per-second rebuilds -> times update in place, no rebuild under a finger; a replayed collision drawn green 'collided, replayed, landed'; line + map before the numbers; agent + title instead of #ids; replays named in the line; red = sent back or stuck). Medium fixed too: dashed faint chips, dark text on amber, outlined main stop, 13 px floor, bigger cars on desktop.
 - [x] Map as people in places (manager review 2026-10-07): numbered agent chips per area, each agent once,
       collisions drawn between two chips, legend under the title; --warn added to DESIGN.md.
 - [x] Tab + default view on projects with info.landing (qb6's flag); Readme moves to More.
-- [ ] Switch from mock to the real API when qb6 serves it.
+- [x] Real API: eyal/corner-cafe live (qb6 86c2ca6). Long ids shown short, the collision partner inferred from the file when the detail names none, root area '/' (real snapshot: src/landingui/stress/cafe-real.json).
 Contract confirmed with qb6 2026-10-07: ms epoch times, top-level now/mode/demo/flags, event words
 (asked claimed working pushed reviewing approved changes-suggested queued testing landed bounced conflict
 replaying replayed with-lead stacked overlap), change.lead/title/createdAt/landedAt, review.verdict

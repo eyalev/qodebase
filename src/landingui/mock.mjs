@@ -135,7 +135,7 @@ const out = {
   queue: { trains: snapTrains.filter((t) => t.state), waiting: ['113', '114', '106'] },
   changes, areas,
   stats: { landedToday: 23, inQueue: 5, bounced: 2, replayed: 7, medianAskToLandS: 412 },
-  mock: { note: 'Mock only: changes[].future and mock.trains let the UI play the next two minutes.', trains, playS: [-60, 100] },
+  mock: { note: 'Mock only: changes[].future and mock.trains let the UI play the next two minutes.', trains, playS: [-20, 110] },
 };
 writeFileSync(new URL('../../public/landing-mock.json', import.meta.url), JSON.stringify(out, null, 1));
 console.log(`wrote ${changes.length} changes, ${out.queue.trains.length} trains; states:`, Object.entries(changes.reduce((a, c) => ((a[c.state] = (a[c.state] || 0) + 1), a), {})).map((x) => x.join('=')).join(' '));
