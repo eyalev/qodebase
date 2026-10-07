@@ -133,7 +133,24 @@ export class TalkVoice extends VoiceAgent {
     log('turn', { handle: this.name, said, path: this.#screen?.path, mode: c.mode, op: c.op, p: c.p, risky: c.risky, why: c.why, decide_ms: Date.now() - t0 });
 
     if ((c.risky || 0) >= 0.5) { this.#send(connection, { type: 'talk-cmd', cmd: { ...c, refused: true } }); return 'That would change or remove something, so I\'ll leave the doing to you.'; }
-    if (c.mode === 'none') return '';
+    // Speech comes garbled ("Our tasks stored in my to do app"): "not a request" with a concrete
+    // reading behind it is not silence. Questions are answered (safe), a change goes to its confirm,
+    // a page action becomes "did you mean…?". Only one- or two-word filler stays silent.
+    if (c.mode === 'none') {
+      const words = said.split(/\s+/).filter(Boolean).length;
+      if ((c.op === 'code' || c.op === 'status') && words >= 3) c.mode = 'ask';
+      else if (c.op === 'change' && words >= 3) c.mode = 'act';
+      else if (!['none', 'explain'].includes(c.op) && (c.p ?? 0) >= 0.3 && words >= 3) {
+        this.#pending = c;
+        this.#send(connection, { type: 'talk-cmd', cmd: { ...c, offer: true } });
+        log('turn_rescued', { handle: this.name, said, op: c.op, as: 'offer' });
+        return `Did you mean ${line(c).replace(/\.$/, '').toLowerCase() || 'that'}?`;
+      } else {
+        log('turn_unclear', { handle: this.name, said, op: c.op, p: c.p, words });
+        return words >= 3 ? 'Sorry, I didn\'t catch that. Say it again?' : '';
+      }
+      log('turn_rescued', { handle: this.name, said, op: c.op, as: c.mode });
+    }
     if (c.op === 'status') {
       const s: any = await statusCore(this.env, this.#who, { utterance: said });
       if (!s.ok) return s.why || 'I could not look just now.';
