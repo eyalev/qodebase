@@ -576,8 +576,19 @@ answers, or both.
   gateway option; Aura and the brain do), and did not show in
   aiInferenceAdaptiveGroups the same hour: its guard is the minute cap + quiet
   hang-up. Measured turn: end of speech → reply done 3.6 s; connect 0.6-1.2 s.
-- Deploys: batched (≤ 1 per ~30 min, qb1's ask, 2026-10-07): each one kills
-  every running box. Always from a clean detached worktree of HEAD.
+- **Talk is its own Worker, `qodebase-talk`** (since 2026-10-07, Eyal's call):
+  src/talkworker.ts + talk/wrangler.jsonc (no route; own TalkLog/TalkVoice;
+  forq's Registry/Project/Ledger by script_name). forq hands /talk.js,
+  /talk-voice.js, /api/talk/*, /agents/talk-voice/* to it over the `TALK`
+  service binding with `x-talk-who` (signed-in person; stripped from incoming
+  requests) and `x-talk-site` (forq's version). Self-host has no binding and
+  runs Talk in-process (talkRoute). **Deploy Talk changes with**
+  `CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler deploy -c talk/wrangler.jsonc --tag $(git rev-parse --short HEAD)`
+  (from a clean worktree): it never touches forq or its boxes, so no batching.
+  Changes to the hand-off in index.ts still need a forq deploy. The owner's
+  label reads `<forq sha> HH:MM talk <talk sha>`.
+- Owner experience trace: `node scripts/talk-trace.mjs --min 30` (page views,
+  taps, Talk steps, spoken replies, conversation events, errors; Eyal only).
 - Eval: `node --experimental-strip-types scripts/talk-eval.mjs` (real page
   snapshots in scripts/talk-fixtures, real model through the gateway): 48/48,
   median ~0.6–1 s. Refresh fixtures when pages change.
