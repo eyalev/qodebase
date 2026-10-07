@@ -1,5 +1,5 @@
 // Screenshot gate for the sim page: 390 px (phone emulation) and 1440 px, light and dark.
-//   node sim/scripts/shots.mjs [url] [outdir]   (needs the page served, e.g. devserve start 7873 -- python3 -m http.server 7873)
+//   node sim/scripts/shots.mjs [url] [outdir]   (default: the local copy; pass https://qodebase.app/sim/ for the live one)
 import { chromium } from '../../video/node_modules/playwright/index.mjs';
 import { homedir } from 'node:os';
 import { mkdirSync } from 'node:fs';
