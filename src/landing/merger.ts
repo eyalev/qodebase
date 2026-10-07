@@ -30,6 +30,7 @@ export type MergeResult = {
 // saying the container was not running (2026-10-07).
 const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 8000 };
 const IDLE_STOP_MS = 5 * 60_000;
+const MERGER_V = '2026-10-07c';   // shown by landing/state: which code a merger box runs
 const ENTRYPOINT = ['/bin/bash', '-c', 'chown 0:0 / 2>/dev/null; mkdir -p /m /opt/qb && exec sleep infinity'];
 
 export class MergeBox extends DurableObject<Env> {
@@ -93,7 +94,9 @@ export class MergeBox extends DurableObject<Env> {
     try { this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: this.c.images.computer }); }
     catch (e) { log('merger', 'start_threw', { err: String(e), stack: String((e as Error)?.stack || ''), running: !!this.c.running, image: !!this.c.images?.computer }); throw e; }
     // Why a container stopped or never started shows up only here.
-    try { this.c.monitor().then(() => log('merger', 'container_exited', {}), (e: unknown) => log('merger', 'container_failed', { err: String(e).slice(0, 400) })); } catch {}
+    const note = (event: string, err?: unknown) => { log('merger', event, { err: err === undefined ? undefined : String(err).slice(0, 400) });
+      this.ctx.storage.put('containerEvents', [{ at: Date.now(), event, err: err === undefined ? null : String(err).slice(0, 400) }]).catch(() => {}); };
+    try { this.c.monitor().then(() => note('container_exited'), (e: unknown) => note('container_failed', e)); } catch (e) { note('monitor_threw', e); }
     // A fresh start can refuse exec for a while ("The container has not been started":
     // every train failed that way for the first minute after MergeBox was first deployed,
     // 2026-10-07). Keep asking for up to 90 s, then give up with the last error.
@@ -131,7 +134,7 @@ export class MergeBox extends DurableObject<Env> {
   }
 
   async state() {
-    return { running: !!this.ctx.container?.running, queue: ((await this.ctx.storage.get<MergeJob[]>('queue')) || []).map((j) => j.trainId),
+    return { code: MERGER_V, instance: INSTANCE, containerEvents: await this.ctx.storage.get('containerEvents'), running: !!this.ctx.container?.running, queue: ((await this.ctx.storage.get<MergeJob[]>('queue')) || []).map((j) => j.trainId),
       busy: (await this.ctx.storage.get<MergeJob>('running'))?.trainId || null, last: await this.ctx.storage.get('last'), alarm: await this.ctx.storage.getAlarm() };
   }
 }
