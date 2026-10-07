@@ -23,7 +23,9 @@ function logEv(event, data) { try { console.log(JSON.stringify(Object.assign({ t
 var S = {
   engine: get('engine', ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) ? 'native' : 'whisper'),
   lang: get('lang', 'en'),
-  speak: get('speak', 'voice'),        // off | voice (only when I spoke) | always
+  voice: get('voice', 'off'),           // spoken replies: off | aura-1 | aura-2 | phone (off by default)
+  speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
+  when: get('when', 'voice'),           // voice (only when I spoke) | always
 };
 var LANGS = { en: 'en-US', he: 'he-IL', auto: 'en-US' };
 var me = null, busy = false, listening = false, lastSpoken = false;
@@ -78,10 +80,12 @@ var ICON = {
   stop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>',
   gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  sound: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+  mute: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
   send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
 };
 
-var root, sheet, logEl, live, offer, inp, micBtn, fab, stEl;
+var root, sheet, logEl, live, offer, inp, micBtn, fab, stEl, spk;
 function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
 
 function build() {
@@ -93,14 +97,17 @@ function build() {
   sheet = el('section', { id: 'talk-sheet', 'aria-label': 'Talk' });
   var head = el('div', { id: 'talk-head' });
   head.innerHTML = '<b>Talk</b><span class="st" id="talk-st"></span>';
+  spk = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Spoken replies' }, ICON.mute);
   var gear = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Talk settings' }, ICON.gear);
   var close = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Close' }, ICON.x);
-  head.appendChild(gear); head.appendChild(close);
+  head.appendChild(spk); head.appendChild(gear); head.appendChild(close);
   var setp = el('div', { id: 'talk-set' });
   setp.innerHTML =
     '<label>Dictation<select id="talk-s-engine"><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
-    '<label>Speak replies<select id="talk-s-speak"><option value="voice">When I talked</option><option value="always">Always</option><option value="off">Never</option></select></label>' +
+    '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-1">Natural voice (Cloudflare Aura)</option><option value="aura-2">Richer voice (Aura 2, twice the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
+    '<label>Voice<select id="talk-s-speaker"></select></label>' +
+    '<label>Speak<select id="talk-s-when"><option value="voice">When I talked</option><option value="always">Always</option></select></label>' +
     '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>';
   logEl = el('div', { id: 'talk-log', 'aria-live': 'polite' });
   live = el('div', { id: 'talk-live' });
@@ -114,16 +121,28 @@ function build() {
   document.body.appendChild(root);
   stEl = document.getElementById('talk-st');
 
-  fab.addEventListener('click', function () { open(true); if (S.engine === 'native' || S.engine === 'whisper') startListen(); });
+  fab.addEventListener('click', function () { unlockAudio(); open(true); if (S.engine === 'native' || S.engine === 'whisper') startListen(); });
   close.addEventListener('click', function () { stopListen(true); open(false); });
   gear.addEventListener('click', function () { root.classList.toggle('settings'); });
-  micBtn.addEventListener('click', function () { if (listening) stopListen(false); else startListen(); });
-  form.addEventListener('submit', function (e) { e.preventDefault(); var v = inp.value.trim(); if (!v) return; inp.value = ''; lastSpoken = false; submit(v); });
-  var se = document.getElementById('talk-s-engine'), sl = document.getElementById('talk-s-lang'), sp = document.getElementById('talk-s-speak');
-  se.value = S.engine; sl.value = S.lang; sp.value = S.speak;
+  micBtn.addEventListener('click', function () { unlockAudio(); if (listening) stopListen(false); else startListen(); });
+  form.addEventListener('submit', function (e) { e.preventDefault(); unlockAudio(); var v = inp.value.trim(); if (!v) return; inp.value = ''; lastSpoken = false; submit(v); });
+  var se = document.getElementById('talk-s-engine'), sl = document.getElementById('talk-s-lang'), sv = document.getElementById('talk-s-voice'), sk = document.getElementById('talk-s-speaker'), sw = document.getElementById('talk-s-when');
+  se.value = S.engine; sl.value = S.lang; sv.value = S.voice; sw.value = S.when;
+  var fillSpeakers = function () {
+    var list = SPEAKERS[S.voice] || [];
+    sk.innerHTML = list.map(function (n) { return '<option value="' + n + '">' + n.charAt(0).toUpperCase() + n.slice(1) + '</option>'; }).join('');
+    if (list.indexOf(S.speaker) < 0) S.speaker = list[0] || '';
+    sk.value = S.speaker; sk.parentNode.style.display = list.length ? '' : 'none';
+    sw.parentNode.style.display = S.voice === 'off' ? 'none' : '';
+  };
+  fillSpeakers();
+  sv.onchange = function () { S.voice = sv.value; set('voice', S.voice); if (S.voice !== 'off') set('voice-on', S.voice); fillSpeakers(); set('speaker', S.speaker); voiceBtn(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how I sound.'); } };
+  sk.onchange = function () { S.speaker = sk.value; set('speaker', S.speaker); unlockAudio(); lastSpoken = true; say('This is how I sound.'); };
+  sw.onchange = function () { S.when = sw.value; set('when', S.when); };
+  spk.addEventListener('click', function () { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-1') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); if (S.voice === 'off') stopSpeaking(); });
+  voiceBtn();
   se.onchange = function () { S.engine = se.value; set('engine', S.engine); };
   sl.onchange = function () { S.lang = sl.value; set('lang', S.lang); };
-  sp.onchange = function () { S.speak = sp.value; set('speak', S.speak); };
   document.getElementById('talk-s-clear').onclick = function () { hist = []; chatHist = []; sset('log', hist); sset('chat', chatHist); render(); root.classList.remove('settings'); };
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && root.classList.contains('open')) { stopListen(true); open(false); }
@@ -369,14 +388,48 @@ function ask(text, did) {
   }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'chat', err: String(e) }); done(); });
 }
 
-function say(text) {
-  if (S.speak === 'off' || (S.speak === 'voice' && !lastSpoken) || !window.speechSynthesis) return;
+// ---- Spoken replies --------------------------------------------------------
+var SPEAKERS = {
+  'aura-1': ['helios', 'angus', 'arcas', 'orion', 'orpheus', 'perseus', 'zeus', 'athena', 'asteria', 'luna', 'hera', 'stella'],
+  'aura-2': ['draco', 'apollo', 'arcas', 'atlas', 'hermes', 'orion', 'zeus', 'asteria', 'athena', 'aurora', 'cora', 'helena', 'hera', 'iris', 'juno', 'luna', 'minerva', 'thalia'],
+};
+var player = null, actx = null;
+function voiceBtn() { if (!spk) return; var on = S.voice !== 'off'; spk.innerHTML = on ? ICON.sound : ICON.mute; spk.setAttribute('aria-label', on ? 'Spoken replies on (tap for text only)' : 'Text only (tap for spoken replies)'); spk.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+// Phones only play sound that a tap started: every tap in Talk calls this, so a reply
+// that arrives seconds later may still play (the element and audio context are unlocked).
+function unlockAudio() {
   try {
-    speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = /[֐-׿]/.test(text) ? 'he-IL' : 'en-US';
-    speechSynthesis.speak(u);
+    if (!player) { player = new Audio(); player.preload = 'auto'; player.addEventListener('ended', function () { logEv('speak_done', {}); }); }
+    var C = window.AudioContext || window.webkitAudioContext;
+    if (C) { actx = actx || new C(); if (actx.state === 'suspended') actx.resume(); }
   } catch (e) {}
+}
+function stopSpeaking() {
+  try { if (player) { player.pause(); player.removeAttribute('src'); player.load(); } } catch (e) {}
+  try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}
+}
+function spoken(text) {
+  // What is worth hearing: no links or ids, at most ~3 sentences / 600 characters.
+  var t = String(text || '').replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
+  if (t.length > 600) { var cut = t.slice(0, 600); var i = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! ')); t = i > 200 ? cut.slice(0, i + 1) : cut; }
+  return t;
+}
+function phoneSay(text) {
+  if (!window.speechSynthesis) return;
+  try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(text); u.lang = /[\u0590-\u05ff]/.test(text) ? 'he-IL' : 'en-US'; speechSynthesis.speak(u); } catch (e) {}
+}
+function say(text) {
+  if (S.voice === 'off' || (S.when === 'voice' && !lastSpoken)) return;
+  var t = spoken(text);
+  if (!t) return;
+  if (S.voice === 'phone') return phoneSay(t);
+  unlockAudio();
+  var t0 = Date.now();
+  player.src = '/api/talk/tts?model=' + encodeURIComponent(S.voice) + '&speaker=' + encodeURIComponent(S.speaker || '') + '&text=' + encodeURIComponent(t);
+  player.onplaying = function () { logEv('speak_start', { chars: t.length, ms_first: Date.now() - t0 }); };
+  player.onerror = function () { logEv('speak_error', { chars: t.length }); phoneSay(t); };
+  var p = player.play();
+  if (p && p.catch) p.catch(function (e) { logEv('speak_blocked', { err: String(e) }); phoneSay(t); });
 }
 
 // ---- Listening ---------------------------------------------------------------
@@ -391,7 +444,7 @@ function setListening(on) {
 }
 function startListen() {
   if (listening || busy) return;
-  if (window.speechSynthesis) speechSynthesis.cancel();
+  stopSpeaking();   // talking over the reply stops it
   offerOff(); live.textContent = '';
   if (S.engine === 'native') return startNative();
   return startWhisper();

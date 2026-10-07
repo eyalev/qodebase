@@ -7,6 +7,7 @@
 //   POST /api/talk/chat        questions and "both": glm-4.7-flash with the same actions as tools
 //   POST /api/talk/transcribe  audio -> text (Whisper large v3 turbo), for the Whisper dictation setting
 //   POST /api/talk/status      "what's going on": their agents, what is ready, what changed (real data, no model)
+//   GET  /api/talk/tts         spoken reply: Deepgram Aura (Workers AI), MP3 streamed while it is made, cached per colo
 //   GET  /api/talk/me          signed in? today's budget left
 //   POST /api/talk/log         one row per page-tool call (window.__webmcp, Jarvis hands)
 //   GET  /talk.js              the layer (src/talkclient.ts)
@@ -24,7 +25,7 @@ const DECIDE_MODEL = '@cf/cloudflare/clef-flash';
 const CHAT_MODEL = '@cf/zai-org/glm-4.7-flash';
 const STT_MODEL = '@cf/openai/whisper-large-v3-turbo';
 // Daily caps (UTC day). A person's own, and everyone's together.
-const CAPS = { decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 } };
+const CAPS = { decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 }, tts_chars: { me: 20000, all: 150000 } };   // tts in characters: 20k = $0.30 of Aura-1 a day each
 type Kind = keyof typeof CAPS;
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talk', event, ...data }));
@@ -33,12 +34,12 @@ const day = () => new Date().toISOString().slice(0, 10);
 
 /** Daily counts per kind, per person and in total. One object per UTC day. */
 export class TalkLog extends DurableObject<Env> {
-  async take(kind: Kind, who: string): Promise<{ ok: boolean; left: number }> {
+  async take(kind: Kind, who: string, n = 1): Promise<{ ok: boolean; left: number }> {
     const me = `${kind}:${who}`, all = `${kind}:*`;
     const [a, b] = [(await this.ctx.storage.get<number>(me)) || 0, (await this.ctx.storage.get<number>(all)) || 0];
-    if (a >= CAPS[kind].me || b >= CAPS[kind].all) return { ok: false, left: 0 };
-    await this.ctx.storage.put({ [me]: a + 1, [all]: b + 1 });
-    return { ok: true, left: Math.min(CAPS[kind].me - a - 1, CAPS[kind].all - b - 1) };
+    if (a + n > CAPS[kind].me || b + n > CAPS[kind].all) return { ok: false, left: 0 };
+    await this.ctx.storage.put({ [me]: a + n, [all]: b + n });
+    return { ok: true, left: Math.min(CAPS[kind].me - a - n, CAPS[kind].all - b - n) };
   }
   async counts(who: string) {
     const out: Record<string, number> = {};
@@ -257,6 +258,40 @@ async function status(request: Request, env: Env, who: Who & {}) {
   return json({ text: parts.join(' '), links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left });
 }
 
+// ---- Spoken replies: Aura on Workers AI, streamed (first sound ~0.5 s). Same voices
+// and prices as jarvis (lib/voice.js): Aura-1 $0.015, Aura-2 $0.03 per 1k characters.
+// Cached per colo by voice + text, so fixed lines and repeats never pay twice.
+const VOICES: Record<string, { id: string; speakers: string[]; def: string }> = {
+  'aura-1': { id: '@cf/deepgram/aura-1', def: 'helios', speakers: ['helios', 'angus', 'arcas', 'orion', 'orpheus', 'perseus', 'zeus', 'athena', 'asteria', 'luna', 'hera', 'stella'] },
+  'aura-2': { id: '@cf/deepgram/aura-2-en', def: 'draco', speakers: ['draco', 'apollo', 'arcas', 'atlas', 'hermes', 'orion', 'zeus', 'asteria', 'athena', 'aurora', 'cora', 'helena', 'hera', 'iris', 'juno', 'luna', 'minerva', 'thalia'] },
+};
+async function tts(request: Request, env: Env, ctx: ExecutionContext, who: Who & {}, url: URL) {
+  const t0 = Date.now();
+  const text = String(url.searchParams.get('text') || '').replace(/\s+/g, ' ').trim().slice(0, 600);
+  if (!text) return json({ error: 'empty' }, 400);
+  const model = VOICES[url.searchParams.get('model') || ''] ? url.searchParams.get('model')! : 'aura-1';
+  const v = VOICES[model];
+  const speaker = v.speakers.includes(url.searchParams.get('speaker') || '') ? url.searchParams.get('speaker')! : v.def;
+  const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-1', new TextEncoder().encode(`${model}|${speaker}|${text}`)))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const key = new Request(`https://talk-tts.cache/${hash}.mp3`);
+  const hit = await caches.default.match(key);
+  if (hit) { log('tts', { level: 'info', handle: who.handle, model, speaker, chars: text.length, cached: true, ms: Date.now() - t0 }); return new Response(hit.body, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'private, max-age=86400', 'x-talk-tts': 'cache' } }); }
+  const budget = await talkLog(env).take('tts_chars', who.handle, text.length);
+  if (!budget.ok) return json({ error: 'budget', why: 'Spoken replies have reached today\'s limit.' }, 429);
+  let res: Response;
+  try {
+    res = await (env.AI as any).run(v.id, { text, speaker, encoding: 'mp3' }, { ...aiOpts(env), returnRawResponse: true });
+  } catch (e) {
+    log('tts_error', { level: 'error', err: String(e), stack: (e as Error)?.stack, model, chars: text.length });
+    return json({ error: 'tts', why: 'No voice right now.' }, 502);
+  }
+  if (!res.ok || !res.body) { log('tts_error', { level: 'error', status: res.status, body: (await res.text().catch(() => '')).slice(0, 200) }); return json({ error: 'tts' }, 502); }
+  const [a, b] = res.body.tee();
+  ctx.waitUntil(new Response(b).arrayBuffer().then((buf) => caches.default.put(key, new Response(buf, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=604800' } }))).catch(() => {}));
+  log('tts', { level: 'info', handle: who.handle, model, speaker, chars: text.length, usd: Math.round(text.length / 1000 * (model === 'aura-2' ? 0.03 : 0.015) * 1e5) / 1e5, cached: false, ms_first: Date.now() - t0, left: budget.left });
+  return new Response(a, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'private, max-age=86400', 'x-talk-tts': 'fresh' } });
+}
+
 export async function talkRoute(request: Request, env: Env, _ctx: ExecutionContext, url: URL, who: Who): Promise<Response | null> {
   if (url.pathname === '/talk.js') {
     // Revalidate on every page load (304 when unchanged), so a deploy's new page tools reach the next load, not 5 min later.
@@ -271,6 +306,7 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS });
   }
   if (!who) return json({ error: 'signin', why: 'Sign in to talk to qodebase.' }, 401);
+  if (url.pathname === '/api/talk/tts' && request.method === 'GET') return tts(request, env, _ctx, who, url);
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
   if (url.pathname === '/api/talk/decide') return decide(request, env, who);
   if (url.pathname === '/api/talk/chat') return chat(request, env, who);
