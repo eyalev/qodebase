@@ -59,10 +59,23 @@ const SCENES = {
     console.log(JSON.stringify({ event: 'run_done', realS: Math.round((Date.now() - t0) / 1000), ...s }));
     await top(r); await r.sleep(500);
     await r.say(`All fourteen landed in ${Math.round((Date.now() - t0) / 60000)} minutes. Typical time from ask to landed: ${s.medianAskToLandS} seconds.`);
-    await may('replayed', async () => { await openChange(r, 'Add a Contact page'); await r.say('Every change explains itself. This one collided with another on a shared file, and was replayed on the newest code.'); });
-    await may('bounced', async () => { await openChange(r, 'Show round prices without cents'); await r.say('This one broke a test, so it bounced alone. Its agent pushed a fix, and it landed on the next train.'); });
-    await may('lead', async () => { await openChange(r, 'Rename to Corner Café & Books'); await r.say('When a replay is not enough, the lead agent for that area redoes it. You only hear about it if it needs you.'); });
-    await may('stacked', async () => { await openChange(r, 'Add a booking form'); await r.say('And this one was built on a page that had not landed yet. It landed right after it.'); });
+    // Drill into one change of each kind, picked from this run's records (outcomes vary per run).
+    const ch = (await api(CAFE)).changes || [];
+    const has = (c, re) => (c.events || []).some((e) => re.test(e.what));
+    const pick = {
+      replayed: ch.find((c) => c.landing?.how === 'replayed-handler'),
+      bounced: ch.find((c) => has(c, /bounced/)),
+      lead: ch.find((c) => c.landing?.how === 'lead' || has(c, /with-lead/)),
+      stacked: ch.find((c) => c.stackedOn),
+    };
+    console.log(JSON.stringify({ event: 'picks', ...Object.fromEntries(Object.entries(pick).map(([k, c]) => [k, c?.title || null])) }));
+    const SAYS = {
+      replayed: 'Every change explains itself. This one collided with another on a shared file, and was replayed on the newest code.',
+      bounced: 'This one broke a test, so it bounced alone. Its agent pushed a fix, and it landed on the next train.',
+      lead: 'When a replay is not enough, the lead agent for that area redoes it. You only hear about it if it needs you.',
+      stacked: 'And this one was built on a page that had not landed yet. It landed right after it.',
+    };
+    for (const k of Object.keys(SAYS)) if (pick[k]) await may(k, async () => { await openChange(r, pick[k].title); await r.say(SAYS[k]); });
     await r.end(null);
   },
 

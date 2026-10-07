@@ -24,9 +24,11 @@ sim/README.md, sim/cloud/README.md, and the challenge page https://www.cloudflar
 - [x] qb5's evidence charts in (hono-ordering, bun-swarm, realcode-500, cloudflare-500).
 - [x] Voice-over: Aura-2 (`draco`) via Workers AI + AI Gateway qodebase-talk, cached per line
       in build/vo/, ledger build/vo/ledger.jsonl (~$0.12 so far); captions stay.
-- [ ] Draft 2 with the live corner-cafe run (rec-work.mjs `live`) -> manager.
-- [ ] Still to film: Talk steering on the phone; busy mode (qb6, up to 24 agents) for the
-      cold open; notes in the code browser (by Oct 10). Then final numbers from qb6.
+- [x] Draft 2 (2026-10-08, 5:34, narrated): live corner-cafe take 3 (14/14 in 203 s), drill-downs
+      picked from the run's records -> manager.
+- [ ] Still to film (placeholders in cut.py `todo`): busy mode for the cold open (20 scripted
+      agents, ~46 landed/min, say scripted); the AI replay demo (7.8 s, ~1 cent); real agents on
+      eyal/cafe-real (Claude Haiku 5.5, verified, 5.5 min); Talk steering; notes in the code browser.
 - [ ] Submission texts: draft 1 in docs/contest/submission.md; [final] lines after Oct 10.
 - [ ] README polish (quick start, screenshots, the measurements) on Oct 12.
 - [ ] Hand each cut to the manager tab for review (cc_com send s1007-1655 or tell Eyal).

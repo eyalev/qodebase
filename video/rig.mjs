@@ -13,7 +13,7 @@
 //   await r.end();
 
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, renameSync } from 'node:fs';
 import { createHmac } from 'node:crypto';
 import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
@@ -52,7 +52,9 @@ const TAP_MARKER = `(() => {
 
 export async function rig({ name, email = 'owner@example.com', width = 390, height = 844, dark = false }) {
   const dir = join(HERE, 'frames', name);
-  rmSync(dir, { recursive: true, force: true });
+  // Keep the previous take as <name>.prev: a spoiled take must not wipe the last good one.
+  rmSync(dir + '.prev', { recursive: true, force: true });
+  if (existsSync(dir)) renameSync(dir, dir + '.prev');
   mkdirSync(dir, { recursive: true });
   const browser = await chromium.launch({ executablePath: CHROME });
   const context = await browser.newContext({

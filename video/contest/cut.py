@@ -190,6 +190,9 @@ class Cut:
                     self.speak(caption)
                 elif e['type'] == 'speed':
                     speed, label = float(e['speed']), e.get('label', ''); since = e['t'] if speed > 1 else None
+                elif e['type'] == 'tap' and caption:
+                    # A tap starts the next step: the sentence about the last one leaves with it.
+                    close_cue(); caption, open_cue = '', None
             while fi + 1 < len(frames) and frames[fi + 1]['t'] <= t: fi += 1
             f = frames[fi]['file']
             if f not in cache: cache.clear(); cache[f] = Image.open(os.path.join(src, f)).convert('RGB')
@@ -272,6 +275,10 @@ def script(c):
     # 4. The product on the phone (~2:30 when filmed in full)
     c.chapter('On the phone')
     c.phone('live', max_wait=60)   # eyal/corner-cafe, qb6's scripted run, x8 time-lapse
+    c.todo('AI replay demo (qb6): a collision a fixed rule cannot handle, replayed by an AI on the newest code, with the difference shown. Measured: 7.8 s, ~1 cent.',
+           ['When a fixed rule is not enough, an AI replays the intent on the newest code. Here it took eight seconds and about a cent.'], secs=14)
+    c.todo('Real agents on eyal/cafe-real: router request, 2 agents with claims, reviewed, one tested train, landed in 5.5 min; records as git notes.',
+           ['The same line works with real AI agents. Two Claude Haiku 5.5 agents took one request, were reviewed, and landed together in five and a half minutes.'], secs=18)
     c.todo('Talk: tap the mic on the project page, say "add a gift card page", the router opens an agent card.',
            ['And you steer it by talking to it, from your phone.'], secs=12)
     c.slide('different', ['So this is not GitHub with agents on top. The unit is an intent with its record, and landing is automatic: a conflict is replayed, not bounced.'], after=2)
