@@ -1,7 +1,7 @@
 // node --test sim/engine.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createSim, POLICIES } from './engine.js';
+import { createSim, POLICIES } from '../public/sim/engine.js';
 
 const small = { repos: 3, agentsPerRepo: 30, files: 300 };
 

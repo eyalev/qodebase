@@ -9,7 +9,7 @@ Timings are calibrated on qodebase's measured runs (`../MEASUREMENTS.md`):
 box boot ~8 s, an agent pushes in 1.5–4 min, a reviewer agent takes ~3 min,
 ~$1.42 per reviewed change at Sonnet API prices. Everything else (how often
 files collide, how often git merges a conflict by itself, how often a change
-breaks main) is an assumption in `DEFAULTS` in `engine.js`. **The outputs are
+breaks main) is an assumption in `DEFAULTS` in `public/sim/engine.js`. **The outputs are
 estimates, not measurements.**
 
 ## Run it
@@ -18,7 +18,7 @@ estimates, not measurements.**
 node sim/cli.mjs --preset k100 --hours 2        # compare the four policies
 node sim/cli.mjs --preset k1 --policy hybrid --out runs.jsonl
 node --test sim/engine.test.mjs
-cd sim && python3 -m http.server 7873           # the playback UI at http://127.0.0.1:7873/
+cd public/sim && python3 -m http.server 7873    # the playback UI at http://127.0.0.1:7873/ (live: https://qodebase.app/sim/)
 ```
 
 Presets: `today` (1 repo, 20 agents), `k1` (1 repo, 1,000), `k10` (1 repo,

@@ -4,7 +4,7 @@
 //   node sim/cli.mjs --preset today --policy classic   one policy
 //   --agents N --repos N --files N --seed N --out runs.jsonl (one JSON line per run)
 import { appendFileSync } from 'node:fs';
-import { POLICIES, PRESETS, runHeadless } from './engine.js';
+import { POLICIES, PRESETS, runHeadless } from '../public/sim/engine.js';
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, all) => {
