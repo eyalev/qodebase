@@ -77,6 +77,18 @@ async function load(name) {
     [n0(s.dropped), 'dropped: nothing left to do'],
     [`${Math.round(s.reworkShare * 100)}%`, 'agent time spent redoing'],
   ];
+  if (b.meta.realTime && s.cloud) {
+    const c = s.cloud, ms = (x) => (x == null ? '–' : x < 1000 ? `${x} ms` : `${(x / 1000).toFixed(1)} s`);
+    stats.splice(0, stats.length,
+      [n0(s.landed), `changes landed in ${dur(c.elapsedS)} of real time`],
+      [`${n0(c.forks)} of ${n0(c.agents)}`, `agents got an Artifacts fork${c.forkRetries ? ` (${n0(c.forkRetries)} retries)` : ''}`],
+      [ms(c.forkMsP50), `to fork, median (slowest 10%: ${ms(c.forkMsP90)})`],
+      [n0(c.agentPushes), `pushes by agents to their forks, ${n0(c.agentPushFail)} failed`],
+      [ms(c.agentPushMsP50), `per agent push, median (slowest 10%: ${ms(c.agentPushMsP90)})`],
+      [n0(c.mainPushes), `trains pushed to main, ${n0(c.mainPushFail)} failed`],
+      [ms(c.mainPushMsP50), 'per train push to main, median'],
+      [n0(c.artifactsOpsCounted), 'Artifacts operations (counted by the sim)']);
+  }
   $('stats').innerHTML = stats.map(([v, k]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
   render();
 }

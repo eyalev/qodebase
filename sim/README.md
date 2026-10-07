@@ -86,3 +86,45 @@ How many agents per lead (100,000 agents, 1 simulated hour):
 25-50 agents per lead keeps leads under ~half busy; past 100 they become the
 queue. *The p90 at 200 looks better only because changes stuck with a lead have
 not landed yet and are not counted.
+
+## A real run: real code, real git (`sim/real/`)
+
+The fast sim rolls dice for conflicts. `sim/real/run.mjs` doesn't: it generates a small
+real project (50 folders × 8 TypeScript files, `src/routes.ts`, `src/schema.ts`,
+`package.json`, 403 files), and scripted agents change it with operations an agent
+would do: edit a function, add a function and its route, rename a function across
+every file that imports it, call another module's function, add a schema field, bump
+a dependency. Commits are real git objects; merges are `git merge-tree` (real
+conflicts); every merged tree runs the project's tests (real semantic breaks, like a
+clean merge that calls a function another change just renamed). The clock is virtual
+(same timing model as above); no model calls.
+
+```sh
+node sim/real/run.mjs --all --agents 500 --hours 2   # every policy; repos in sim/real/out/*.git
+```
+
+Each run writes `public/sim/runs/<policy>-<agents>.json`, which
+[`run.html`](https://qodebase.app/sim/run.html) plays back: scrub time, then tap a
+folder, a file, a change (its story, its conflicts, the tests it failed, the diff that
+landed) or main's history.
+
+Four policies here; the fourth is new: **land by intent**. A change is reviewed as an
+intent ("rename b of src/m5/f5.ts", "add the email field") plus the diff it made. When
+git reports a text conflict or the train's tests fail, the merge queue replays the
+intent on the current main and tests it again, instead of sending it back to an agent.
+
+500 agents, 2 simulated hours, seed 1:
+
+| policy | landed/h | median | git conflicts | caught by train tests | broke main |
+|---|---|---|---|---|---|
+| Agent review | 242 | 22 min | 977 | (no train tests) | 7 |
+| Claims + redo + trains | 224 | 31 min | 1,264 | 1 | 0 |
+| Team leads | 290 | 21 min | 1,132 | 0 | 0 |
+| Land by intent | 849 | 30 min | 976 (972 replayed on landing) | 10 | 0 |
+
+What it shows: in a real codebase the conflicts are not spread out, they pile onto
+the shared list files (routes, schema, package.json): two agents appending to the same
+list conflict in git every time, although their changes are independent. Redoing or
+escalating those costs a round trip each; replaying the intent costs nothing, so the
+queue keeps moving. The train tests are what make replay safe (10 replays/merges were
+caught breaking the build and bounced).
