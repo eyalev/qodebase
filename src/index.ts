@@ -629,6 +629,21 @@ const app = {
         }
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());
+        // Ask Claude (the ask box, src/box.ts): owner-only, read-only, on the owner's Claude.
+        if (verb === 'ask' && request.method === 'POST') {
+          const b = await request.json().catch(() => ({})) as { question?: string; model?: string };
+          const question = String(b.question || '').trim().slice(0, 2000);
+          const model = ['opus', 'sonnet', 'haiku'].includes(String(b.model)) ? String(b.model) : 'opus';
+          if (question.length < 3) return json({ error: 'Ask a question' }, 400);
+          const askId = `${slug}--ask`;
+          const id = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+          await boxStub(env, askId).startAsk(id, question, await bootSpec(env, askId, apiBase), model);
+          return json({ id, model, result: `/api/p/${owner}/${name}/ask-result?id=${id}` });
+        }
+        if (verb === 'ask-result') {
+          const r = await boxStub(env, `${slug}--ask`).askResult(url.searchParams.get('id') || '');
+          return r ? json(r) : json({ error: 'no such question' }, 404);
+        }
         if (verb === 'visibility' && request.method === 'POST') {
           const b = await request.json().catch(() => ({})) as { private?: boolean };
           const ni = await p.setPrivate(!!b.private);

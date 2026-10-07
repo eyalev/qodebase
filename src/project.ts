@@ -33,8 +33,8 @@ export type RouterRequest = { text: string; at: number; state: 'waking' | 'sent'
   payload?: string; attempts?: number };
 /** Where an imported project came from (GitHub metadata at import time). */
 export type ImportedFrom = { url: string; fullName: string; stars: number; license: string | null; branch: string };
-export type Role = 'agent' | 'router' | 'reviewer';
-export const roleOf = (id: string): Role => id.endsWith('--router') ? 'router' : id.endsWith('--review') ? 'reviewer' : 'agent';
+export type Role = 'agent' | 'router' | 'reviewer' | 'ask';
+export const roleOf = (id: string): Role => id.endsWith('--router') ? 'router' : id.endsWith('--review') ? 'reviewer' : id.endsWith('--ask') ? 'ask' : 'agent';
 export type ProjectInfo = {
   slug: string; owner: string; name: string; description: string;
   repo: string; remote: string; forkedFrom: string | null; createdAt: number;

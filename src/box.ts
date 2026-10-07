@@ -70,7 +70,7 @@ echo "[forq] ready"`;
 export type BootSpec = {
   agentId: string;
   task: string;         // '' for the router and the reviewer
-  role: 'agent' | 'router' | 'reviewer';  // router: main, merges; reviewer: main read-only, reviews pushes
+  role: 'agent' | 'router' | 'reviewer' | 'ask';  // router: main, merges; reviewer: main read-only, reviews pushes; ask: main read-only, answers questions
   project: string;      // owner/name, for prompts
   remote: string;       // fork's (or main's) git remote
   gitToken: string;     // write token for that repo (art_v2_…?expires=…)
@@ -279,7 +279,8 @@ PY
     if (!ok) return { ok, ms: Date.now() - t0, from, error: 'boot.sh did not report MA_READY' };
 
     // 3. First boot only: hand Claude Code its task.
-    if (!(await this.ctx.storage.get<boolean>('taskSent'))) {
+    // The ask box (role 'ask', src/box.ts askQueue) has no task: it only answers questions.
+    if (spec.role !== 'ask' && !(await this.ctx.storage.get<boolean>('taskSent'))) {
       const sent = await this.send(taskPrompt(spec));
       log('box', 'task_sent', { agentId: spec.agentId, ok: sent.ok, err: sent.error });
       if (sent.ok) await this.ctx.storage.put('taskSent', true);
@@ -457,6 +458,7 @@ PY
   }
 
   async alarm(): Promise<void> {
+    if (((await this.ctx.storage.get<string[]>('askQueue')) || []).length) await this.#runAsks();
     const agentId = await this.ctx.storage.get<string>('agentId');
     if (!this.c.running) { log('box', 'alarm_not_running', { agentId }); return; }
     const idle = Date.now() - ((await this.ctx.storage.get<number>('lastActive')) || 0);
@@ -490,6 +492,45 @@ PY
     const headers = new Headers(request.headers);
     headers.delete('x-forq-port');
     return this.c.getTcpPort(port).fetch(new Request(`http://container${url.pathname}${url.search}`, new Request(request, { headers })));
+  }
+
+  // ---- the ask box (<slug>--ask): Claude Code answers questions about the project ----
+  // Read-only clone (a read token), `claude -p` in plan mode (it reads, never edits), on
+  // the owner's own Claude (subscription token or API key, from the box's tmux env).
+  // Runs from the alarm so a long answer outlives the request that asked.
+  async startAsk(id: string, question: string, spec: BootSpec, model = 'opus') {
+    const q = (await this.ctx.storage.get<string[]>('askQueue')) || [];
+    await this.ctx.storage.put({ [`ask:${id}`]: { state: 'queued', question, model, at: Date.now() }, askQueue: [...q, id], askSpec: spec });
+    await this.ctx.storage.setAlarm(Date.now() + 50);
+    log('box', 'ask_queued', { agentId: spec.agentId, id, chars: question.length });
+  }
+  async askResult(id: string) {
+    return (await this.ctx.storage.get<Record<string, unknown>>(`ask:${id}`)) || null;
+  }
+  async #runAsks() {
+    const spec = await this.ctx.storage.get<BootSpec>('askSpec');
+    const ids = (await this.ctx.storage.get<string[]>('askQueue')) || [];
+    await this.ctx.storage.put('askQueue', []);
+    if (!spec || !ids.length) return;
+    const up = await this.ensureUp(spec);
+    for (const id of ids) {
+      const a = await this.ctx.storage.get<{ question: string; model?: string; at: number }>(`ask:${id}`);
+      if (!a) continue;
+      if (!up.ok) { await this.ctx.storage.put(`ask:${id}`, { ...a, state: 'failed', error: up.error || 'the box did not start' }); continue; }
+      await this.ctx.storage.put(`ask:${id}`, { ...a, state: 'running', startedAt: Date.now() });
+      await this.touch(spec.agentId);
+      const t0 = Date.now();
+      const prompt = `You are answering a question about this repository for its owner, who is reading on a phone. Read the code and git history as needed. Do not modify any files. Answer in plain words, at most about 150 words unless asked for more, with file paths where they help.\n\nQuestion: ${a.question}`;
+      const r = await this.#sh(`cd ${REPO_DIR} 2>/dev/null || cd /workspace
+git pull -q --ff-only 2>/dev/null
+eval "$(tmux show-environment -g 2>/dev/null | grep -E '^(CLAUDE_CODE_OAUTH_TOKEN|ANTHROPIC_API_KEY|ANTHROPIC_MODEL)=' | sed 's/^/export /')"
+IS_SANDBOX=1 timeout 300 claude -p "$Q" --permission-mode plan --model "$MODEL" --output-format text 2>&1 | tail -c 20000`, { Q: prompt, MODEL: ['opus', 'sonnet', 'haiku'].includes(a.model || '') ? a.model! : 'opus' }).catch((e) => ({ exitCode: 1, stdout: '', stderr: String(e) }));
+      const answer = r.stdout.trim();
+      const ok = r.exitCode === 0 && !!answer;
+      await this.ctx.storage.put(`ask:${id}`, { ...a, state: ok ? 'done' : 'failed', answer: ok ? answer : undefined, error: ok ? undefined : (answer || r.stderr || 'no answer').slice(-400), ms: Date.now() - t0 });
+      log('box', 'ask_done', { agentId: spec.agentId, id, ok, ms: Date.now() - t0, chars: answer.length });
+      await this.touch(spec.agentId);
+    }
   }
 
   async adminExec(cmd: string) {
