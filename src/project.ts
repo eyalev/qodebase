@@ -150,13 +150,16 @@ export class Project extends DurableObject<Env> {
     return { remote: info.remote, token: t.plaintext, branch: info.importedFrom?.branch || null };
   }
 
-  async addAgent(task: string): Promise<Agent> {
+  /** `fromAgent`: stack on another agent's unlanded work (fork its fork; base = its head). */
+  async addAgent(task: string, fromAgent?: string): Promise<Agent> {
     const info = await this.#need();
     const max = Number(this.env.MAX_AGENTS_PER_PROJECT || 6);
     const live = info.agents.filter((a) => a.state === 'working' || a.state === 'pushed' || a.state === 'blocked');
     if (live.length >= max) throw new Error(`agent limit reached (${max} open per project)`);
     const id = `${info.slug}--${Math.random().toString(36).slice(2, 7)}`;
-    using repo = await this.env.ARTIFACTS.get(info.repo);
+    const from = fromAgent ? info.agents.find((a) => a.id === fromAgent) : undefined;
+    if (fromAgent && !from) throw new Error(`no agent ${fromAgent} in this project`);
+    using repo = await this.env.ARTIFACTS.get(from ? from.fork : info.repo);
     const baseC = (await repo.log({ limit: 1 }).catch(() => []))[0];
     const forked = await repo.fork(id, { description: task.slice(0, 200), defaultBranchOnly: true });
     const agent: Agent = { id, task, fork: forked.name, remote: forked.remote, createdAt: Date.now(), state: 'working',

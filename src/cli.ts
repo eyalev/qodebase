@@ -7,9 +7,14 @@ export const FORQ_CLI = String.raw`#!/usr/bin/env python3
 
   forq status <working|pushed|blocked> "note"   report your state (agents)
   forq list                                     this project's agents
-  forq spawn "task"                             start an agent on its own fork (router)
+  forq spawn "task" [--files a,b] [--on <agent-id>]
+                                                start an agent on its own fork (router); --files claims
+                                                the files it expects to change, --on stacks it on
+                                                another agent's unlanded work
   forq send <agent-id> "text"                   message an agent (router)
-  forq merge <agent-id>                         merge an agent's fork into main (router)
+  forq merge <agent-id>                         merge an agent's fork into main (router); on projects
+                                                with the merge queue it queues the change instead
+  forq sync-main                                rebase your work on the latest main (agents)
   forq fetch-agent <agent-id>                   fetch an agent's work to review it (reviewer)
   forq verdict <agent-id> approve|changes "notes"   your review verdict (reviewer)
 """
@@ -48,15 +53,28 @@ def main(argv):
         for a in api('GET', '/api/agent/list')['agents']:
             print(f"{a['id']}  [{a['state']}]  {a['task'][:70]}")
             if a.get('note'): print(f"    note: {a['note'][:200]}")
+            if a.get('claims'): print(f"    claims: {', '.join(a['claims'][:12])}")
+            if a.get('landing'): print(f"    queue: {a['landing']}")
     elif v == 'spawn':
-        if not rest: sys.exit('usage: forq spawn "task"')
-        a = api('POST', '/api/agent/spawn', {'task': ' '.join(rest)}); print(f"started {a['id']}")
+        files, on, words = [], None, []
+        it = iter(rest)
+        for w in it:
+            if w == '--files': files += [f for f in next(it, '').split(',') if f]
+            elif w == '--on': on = next(it, None)
+            else: words.append(w)
+        if not words: sys.exit('usage: forq spawn "task" [--files a,b] [--on <agent-id>]')
+        body = {'task': ' '.join(words)}
+        if files: body['files'] = files
+        if on: body['on'] = on
+        a = api('POST', '/api/agent/spawn', body); print(f"started {a['id']}" + (f" (stacked on {on})" if on else ''))
     elif v == 'send':
         if len(rest) < 2: sys.exit('usage: forq send <agent-id> "text"')
         print(api('POST', '/api/agent/send', {'agent': rest[0], 'text': ' '.join(rest[1:])}))
     elif v == 'merge':
         if not rest: sys.exit('usage: forq merge <agent-id>')
         f = api('GET', '/api/agent/merge-info?agent=' + rest[0])
+        if f.get('queued'):
+            print(f"queued {rest[0]} for the merge queue: it lands on main once it passes the checks (state: {f.get('state')})"); return
         # The default branch is not always main (GitHub imports keep master, gh-pages…).
         br = git('symbolic-ref', '--short', 'refs/remotes/origin/HEAD', check=False).stdout.strip().split('/', 1)[-1] or 'main'
         git('checkout', '-q', br); git('pull', '-q', '--ff-only', 'origin', br)
@@ -85,6 +103,16 @@ def main(argv):
         c = git('rev-parse', f'refs/agents/{rest[0]}', check=False).stdout.strip()
         if not c: sys.exit(f'forq: run "forq fetch-agent {rest[0]}" first')
         api('POST', '/api/agent/verdict', {'agent': rest[0], 'verdict': rest[1], 'notes': ' '.join(rest[2:]), 'commit': c}); print('ok')
+    elif v == 'sync-main':
+        f = api('GET', '/api/agent/main-info')
+        auth = f"http.extraHeader=Authorization: Bearer {f['token']}"
+        br = f.get('branch') or 'main'
+        git('-c', auth, 'fetch', '-q', f['remote'], f'+refs/heads/{br}:refs/remotes/main/{br}')
+        r = git('rebase', f'refs/remotes/main/{br}', check=False)
+        if r.returncode:
+            sys.exit(f'forq: conflicts while rebasing on main. Resolve them keeping BOTH main\'s changes and your intent, then: git add -A && git rebase --continue && git push -f origin HEAD && forq status pushed "redone on the latest main"\n{r.stdout}{r.stderr}')
+        git('push', '-q', '-f', 'origin', 'HEAD')
+        print(f'rebased on main ({br}) and pushed. Run the tests, then: forq status pushed "redone on the latest main"')
     elif v == 'merged':
         api('POST', '/api/agent/merged', {'agent': rest[0]}); print('ok')
     else:

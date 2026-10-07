@@ -40,6 +40,8 @@ import MA_REV from '../box/mobile-agent.rev';
 
 export { AgentBox, Project, Registry, BuildBox, Installs, TalkLog, Ledger, TalkVoice };
 import { landingRoute } from './landing/routes';
+import * as landingHooks from './landing/hooks';
+import { landingOn } from './landing/hooks';
 export { Landing } from './landing/landing';
 export { MergeBox } from './landing/merger';
 export { DemoAgent } from './landing/demo';
@@ -750,6 +752,8 @@ const app = {
           const b = await request.json() as { agent?: string };
           const a = info.agents.find((x) => x.id === b.agent);
           if (!a) return json({ error: 'unknown agent' }, 404);
+          // Landing projects: the merge tap queues the change (src/landing/), no router turn.
+          if (landingOn(info)) return json({ queued: true, change: await landingHooks.onMerge(env, slug, a.id) });
           return json(await askRouter(env, ctx, p, slug, `Merge agent ${a.id} into the project's main line: run \`forq merge ${a.id}\` and tell me the result in one line.`, apiBase, `Merge ${a.id.split('--')[1]}`));
         }
       }
@@ -1070,10 +1074,13 @@ async function overProjectLimit(env: Env, handle: string): Promise<string | null
   return n >= 10 ? 'You have 10 projects, the limit for now. Self-host qodebase for more.' : null;
 }
 
-async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string) {
+async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string, o: { files?: string[]; on?: string } = {}) {
   task = task.trim();
   if (!task || task.length > 4000) throw new Error('task required (max 4000 chars)');
-  const agent = await projectStub(env, slug).addAgent(task);
+  const agent = await projectStub(env, slug).addAgent(task, o.on || undefined);
+  // The landing system (src/landing/hooks.ts): the change's record with its claims.
+  const pinfo = await projectStub(env, slug).info();
+  if (landingOn(pinfo)) await landingHooks.onSpawn(env, pinfo!, agent, o).catch((e) => log('landing', 'spawn_hook_failed', { id: agent.id, err: String(e) }));
   ctx.waitUntil(wake(env, agent.id, apiBase)
     .then((r) => log('api', 'agent_boot', { id: agent.id, ...r }))
     .catch((e) => log('api', 'agent_boot_failed', { id: agent.id, err: String(e), stack: e?.stack })));
@@ -1094,7 +1101,13 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
   ctx.waitUntil(boxStub(env, me.agentId).touch(me.agentId).catch(() => {}));
   if (verb === 'list') {
     const info = await p.info();
-    return json({ agents: (info?.agents || []).map(({ id, task, state, note }) => ({ id, task, state, note })) });
+    const agents = (info?.agents || []).map(({ id, task, state, note }) => ({ id, task, state, note } as Record<string, unknown>));
+    // Landing projects: each agent's claims and where its change is in the queue (`forq list`).
+    if (landingOn(info)) for (const a of agents) {
+      const c = await env.Landing.get(env.Landing.idFromName(slug)).change(String(a.id)).catch(() => null);
+      if (c) { a.claims = [...new Set([...c.claims, ...c.files])]; a.landing = c.state; }
+    }
+    return json({ agents });
   }
   if (verb === 'status' && me.role === 'agent') {
     if (!['working', 'pushed', 'blocked'].includes(body.state)) return json({ error: 'state: working|pushed|blocked' }, 400);
@@ -1105,8 +1118,15 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       const ownerDeploys = isOwner(env, slug.split('.')[0]);
       if ((await p.kindOf()) === 'worker' && ownerDeploys) ctx.waitUntil(p.requestBuild('preview', me.agentId).catch((e) => log('build', 'request_failed', { err: String(e) })));
       else await startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId));   // awaited: see the review verb
+      const pinfo = await p.info();
+      if (landingOn(pinfo)) await landingHooks.onPushed(env, ctx, pinfo!, me.agentId, String(body.note || '')).catch((e) => log('landing', 'push_hook_failed', { id: me.agentId, err: String(e) }));
     }
     return json({ ok: true });
+  }
+  // An agent's own main, read-only: `forq sync-main` rebases its work on it (landing tier 2).
+  if (verb === 'main-info' && me.role === 'agent') {
+    const t = await p.gitToken('read');
+    return json({ remote: t.remote, token: t.token, branch: t.branch });
   }
   if (me.role === 'reviewer') {
     if (verb === 'review-info') {
@@ -1129,13 +1149,15 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       }
       // Deferred: the reviewer is still inside this very command; the next review waits until it is idle.
       await startReview(env, p, slug, apiBase, () => p.setVerdict(body.agent, body.verdict === 'approve' ? 'approved' : 'changes', String(body.notes || '')), true);
+      if (landingOn(info)) await landingHooks.onVerdict(env, slug, body.agent, body.verdict === 'approve' ? 'approved' : 'changes', String(body.notes || '')).catch((e) => log('landing', 'verdict_hook_failed', { err: String(e) }));
       return json({ ok: true });
     }
     return json({ error: 'the reviewer can fetch-agent and verdict' }, 403);
   }
   if (me.role !== 'router') return json({ error: 'only the router agent can do that' }, 403);
   if (verb === 'spawn') {
-    return json(await spawn(env, ctx, slug, String(body.task || ''), apiBase));
+    const b = body as Record<string, unknown>;
+    return json(await spawn(env, ctx, slug, String(b.task || ''), apiBase, { files: Array.isArray(b.files) ? b.files.map(String) : undefined, on: b.on ? String(b.on) : undefined }));
   }
   if (verb === 'send') {
     if (projectOf(body.agent || '') !== slug) return json({ error: 'not an agent of this project' }, 400);
@@ -1144,6 +1166,8 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
   if (verb === 'merge-info') {
     const agent = url.searchParams.get('agent') || '';
     if (projectOf(agent) !== slug) return json({ error: 'not an agent of this project' }, 400);
+    // Landing projects: `forq merge` puts the change in the merge queue instead.
+    if (landingOn(await p.info())) { const c = await landingHooks.onMerge(env, slug, agent); return json({ queued: true, state: c.state }); }
     return json(await p.forkForMerge(agent));
   }
   if (verb === 'merged') {

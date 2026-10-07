@@ -54,7 +54,8 @@ type Meta = {
   demoForks?: string[];                 // every fork a scripted agent made (deleted on reset)
   failStreak?: number;
   demoBusyNext?: number;                // busy mode: the next generated task's index
-  landings?: [number, number][];        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
+  landings?: [number, number][];
+  outbox?: { to: string; text: string; tries: number; at: number }[];   // messages to real agents, sent from the alarm        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
 };
 
 const TRAIN_MAX = 8;
@@ -160,7 +161,9 @@ export class Landing extends DurableObject<Env> {
     if (verdict === 'changes') { c.state = 'pushed'; this.#ev(c, 'changes-suggested', notes.split('\n')[0]); }
     else { this.#ev(c, 'approved', verdict === 'auto' ? 'scripted review' : notes.split('\n')[0]); if (c.state === 'reviewing') c.state = 'pushed'; }
     await this.#put(c);
-    if (thenQueue && verdict !== 'changes') await this.approve(id);
+    // A change its agent redid on the latest main (tier 2) was approved by the person once
+    // already: approved again by the reviewer, it goes straight back in line.
+    if ((thenQueue || c.redo === 'llm') && verdict !== 'changes') await this.approve(id);
   }
 
   // ---- the queue ---------------------------------------------------------------
@@ -196,8 +199,32 @@ export class Landing extends DurableObject<Env> {
       }
       await this.#startTrain();
     } finally {
+      await this.#deliver();
       await this.#demoTick();
     }
+  }
+
+  /** Messages to real agents (bounce: fix it; conflict: redo it; the router: decide). From
+   *  the alarm, never from a request: waking a box can take longer than a request lives. */
+  #tell(to: string, text: string) { const m = this.#meta!; (m.outbox ||= []).push({ to, text, tries: 0, at: Date.now() }); }
+  async #deliver() {
+    const m = await this.#m();
+    const msg = m.outbox?.[0];
+    if (!msg) return;
+    let ok = false, err = '';
+    try {
+      const r = await fetch(`${this.env.API_BASE}/api/agents/${msg.to}/send`, {
+        method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' },
+        body: JSON.stringify({ text: msg.text }), signal: AbortSignal.timeout(4 * 60_000) });
+      const j = await r.json().catch(() => ({})) as { ok?: boolean; error?: string };
+      ok = r.ok && j.ok !== false; err = j.error || (r.ok ? '' : `HTTP ${r.status}`);
+    } catch (e) { err = String((e as Error)?.message || e); }
+    const now = await this.#m();
+    const i = now.outbox?.findIndex((x) => x.at === msg.at && x.to === msg.to) ?? -1;
+    if (i >= 0) { if (ok || msg.tries >= 2) now.outbox!.splice(i, 1); else now.outbox![i].tries++; }
+    log('landing', 'tell', { slug: m.slug, to: msg.to, ok, err, tries: msg.tries });
+    await this.#saveMeta();
+    if (now.outbox?.length) await this.#arm(ok ? 1000 : 30_000);
   }
 
   /** Which waiting changes can go now: stacked ones only after their base. */
@@ -315,6 +342,7 @@ export class Landing extends DurableObject<Env> {
       }
       t.state = landed ? 'landed' : 'bounced';
       if (r.mainAfter) m.tree = undefined;   // re-read the file map on the next view
+      await this.#afterRealTrain(r);
     }
     await this.ctx.storage.put(`t:${t.id}`, t);
     await this.#saveMeta();
@@ -322,6 +350,7 @@ export class Landing extends DurableObject<Env> {
     // After a merger failure, wait longer each time (5 s, 10 s, 20 s … 5 min): a tight retry
     // loop ran a train every 5 s against a container that could not start (2026-10-07).
     if (m.waiting.length) await this.#arm(m.failStreak ? Math.min(300_000, 5000 * 2 ** (m.failStreak - 1)) : 500);
+    else if (m.outbox?.length) await this.#arm(500);
     log('landing', 'next_alarm', { slug: m.slug, inMs: ((await this.ctx.storage.getAlarm()) || 0) - Date.now(), failStreak: m.failStreak });
     await this.#notifyDemo(t);
   }
@@ -337,6 +366,23 @@ export class Landing extends DurableObject<Env> {
     }).join(', ');
   }
 
+  /** Real agents: landed ones are merged in the Project (and a Worker project redeploys);
+   *  bounced ones are told why. Conflicts are handled in #escalate. */
+  async #afterRealTrain(r: MergeResult) {
+    const m = await this.#m();
+    const P = this.env.Project.get(this.env.Project.idFromName(m.slug));
+    let deploy = false;
+    for (const rc of r.changes) {
+      const c = await this.#get(rc.id);
+      if (!c || c.kind !== 'agent') continue;
+      if (rc.landed) { await P.setState(c.id, 'merged', `landed on main as ${(rc.commit || '').slice(0, 7)}`).catch((e) => log('landing', 'set_merged_failed', { id: c.id, err: String(e) })); deploy = true; }
+      else if (rc.bounced) this.#tell(c.id, `qodebase merge queue: your change did not pass the project's checks on the latest main, so it was sent back.
+Failures: ${(rc.checks?.failures || []).slice(0, 4).join(' | ') || rc.why}
+Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
+    }
+    if (deploy && (await P.kindOf()) === 'worker') await P.requestBuild('deploy').catch((e) => log('landing', 'deploy_request_failed', { err: String(e) }));
+  }
+
   /** Tier 2 (LLM replay, flag) or tier 3 (the lead) for a real conflict. */
   async #escalate(c: Change, m: Meta) {
     if (c.kind === 'demo') {
@@ -345,13 +391,18 @@ export class Landing extends DurableObject<Env> {
       this.#ev(c, 'with-lead', 'the scripted lead will redo it on the latest code');
       return;
     }
+    const where = c.landing?.conflicts.join(', ') || 'shared files';
     if (m.flags.llmReplay) {
+      // Tier 2: the change's own agent redoes its intent on today's main.
       c.state = 'replaying'; c.redo = 'llm';
       this.#ev(c, 'replaying', 'its agent is asked to redo the change on the latest main');
+      this.#tell(c.id, `qodebase merge queue: main changed under your change and it conflicts in ${where}. Redo your task on the latest main: run \`forq sync-main\` (it rebases your work on main; resolve any conflict keeping BOTH main's changes and your intent), run the tests, push, then: forq status pushed "redone on the latest main"`);
       return;
     }
+    // Tier 3: the owner (or the router on their behalf) decides.
     c.state = 'with-lead'; c.lead = (await this.env.Project.get(this.env.Project.idFromName(m.slug)).info())?.owner || null;
-    this.#ev(c, 'with-lead', `${c.lead || 'the owner'} decides: conflict in ${c.landing?.conflicts.join(', ')}`);
+    this.#ev(c, 'with-lead', `${c.lead || 'the owner'} decides: conflict in ${where}`);
+    this.#tell(`${m.slug}--router`, `qodebase merge queue: agent ${c.id} ("${c.title}") conflicts with main in ${where}. Ask it to redo the change on the latest main (forq send ${c.id} "run forq sync-main, redo your change on it, push"), or tell the person it needs a decision.`);
   }
 
   async setFlags(flags: Partial<Meta['flags']>) {
