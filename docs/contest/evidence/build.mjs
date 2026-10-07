@@ -241,6 +241,51 @@ const C = [];
   });
 }
 
+// 7. Migration swarm (qb4): hours to finish, agent time wasted
+{
+  const d = D.swarm, a10 = d.agents['10'], ffa = a10[0], ordered = a10.slice(1);
+  const best = Math.min(...ordered.map(r => r[0])), ratio = best / ffa[0];
+  const faster = ratio <= 0.45 ? 'less than half the time' : ratio <= 0.55 ? 'half the time' : `${Math.round(100 * ratio)}% of the time`;
+  const fmtH = v => `${v >= 10 ? Math.round(v) : v % 1 ? v.toFixed(1) : v} h`;
+  C.push({ name: 'swarm-migration', data: d,
+    title: { L: [`Free-for-all wasted ${Math.round(ffa[1])} agent-hours; knowing the`, `order finished in ${faster}`], P: [`Free-for-all wasted ${Math.round(ffa[1])} h;`, 'knowing the order finished', `in ${faster}`] },
+    sub: { L: [`One migration in Hono's real code: 140 tasks, about ${d.usefulH} h of real work`], P: [`Hono migration: 140 tasks, ~${d.usefulH} h of work`] },
+    source: 'sim/swarm/run.mjs, mean of 3 seeds (sim/README.md)',
+    table: [['way of working', 'agents', 'hours to finish (3 seeds)', 'agent-hours wasted', 'main broken'],
+      ...Object.entries(d.agents).flatMap(([n, rows]) => rows.map((r, i) => [d.policies[i], n, `${r[0]} h (${d.ranges[n][i][0]})`, `${r[1]} h (${d.ranges[n][i][1]})`, r[2] ? `${Math.round(100 * r[2])}% of the time` : 'never']))],
+    body: (f, box) => {
+      const L = f.tag === '1920x1080', max = Math.max(...Object.values(d.agents).flat().map(r => r[0]));
+      const groups = Object.entries(d.agents);
+      let out = '';
+      // one block per agent count: side by side on the slide, stacked on the phone
+      const labelW = L ? 500 : 0, colGap = L ? 60 : 0, short = ['Free-for-all', 'Phases', 'Stacking', 'Stack + intent'];
+      const colW = L ? (box.w - labelW - colGap) / groups.length : box.w;
+      const blockH = L ? box.h : (box.h - 30) / groups.length;
+      groups.forEach(([n, rows], gi) => {
+        const cx = L ? box.x + labelW + gi * (colW + colGap) : box.x, cy = L ? box.y : box.y + gi * (blockH + 30);
+        out += text(cx, cy + f.txt * 0.8, `${n} agents`, { size: f.txt, weight: 600 });
+        const top = cy + f.txt + 24, rowH = (L ? box.h : blockH) - (top - cy);
+        const rh = rowH / rows.length, barH = L ? 40 : 36;
+        rows.forEach((r, i) => {
+          const y0 = top + i * rh, hi = d.policies[i] === d.winner;
+          if (L && gi === 0) out += text(box.x, y0 + barH * 0.5 + f.txt * 0.35, d.policies[i], { size: f.txt - 4, c: hi ? 'fg' : 'dim', weight: hi ? 600 : 400 });
+          if (!L) out += text(cx, y0 + barH * 0.5 + f.txt * 0.3, short[i], { size: f.txt - 8, c: hi ? 'fg' : 'dim', weight: hi ? 600 : 400 });
+          const bx = L ? cx : cx + 310, by = y0, tw = L ? 140 : 220, w = r[0] / max * tw;
+          out += track(bx, by, tw, barH) + rect(bx, by, w, barH, hi ? 'acc' : 'bar', { title: `${d.policies[i]}, ${n} agents: ${fmtH(r[0])} to finish, ${fmtH(r[1])} wasted` });
+          out += text(bx + tw + 16, by + barH / 2 + f.val * 0.35, fmtH(r[0]), { size: f.val - 4, weight: 600, c: hi ? 'fg' : 'dim' });
+          // the second fact: agent time wasted, or how often main was broken
+          const note = r[1] > 0 ? `${fmtH(r[1])} wasted` : r[2] > 0 ? `main broken ${Math.round(100 * r[2])}%` : null;
+          if (note) {
+            const wx = bx + tw + (L ? 128 : 150), wy = by + barH / 2 + f.txt * 0.33;
+            out += `<rect x="${wx}" y="${wy - f.txt * 0.33 - 8}" width="16" height="16" rx="3" fill="var(--bad)"/>` + text(wx + 26, wy, L ? note : note.replace('main broken', 'broken'), { size: f.txt - (L ? 10 : 8), c: 'dim' });
+          }
+        });
+      });
+      return out;
+    },
+  });
+}
+
 // ---------- write ----------
 const vars = t => Object.entries(THEMES[t]).map(([k, v]) => `--${k}:${v}`).join(';');
 // On the page (no theme) the SVG has no fixed size: it scales with the column.
