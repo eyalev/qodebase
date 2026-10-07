@@ -25,8 +25,10 @@ export type MergeResult = {
     diff: { path: string; lines: string[] }[] | null }[];
 };
 
-// Small: git, node --test, an occasional npm install. Billed while awake only.
-const INSTANCE = { vcpu: 1, memoryMib: 2048, diskMb: 4000 };
+// git, node --test, an occasional npm install. Billed while awake only. Custom sizes need
+// at least 3 GiB per vCPU: 1 vCPU / 2 GiB was refused without an error and exec() kept
+// saying the container was not running (2026-10-07).
+const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 8000 };
 const IDLE_STOP_MS = 5 * 60_000;
 const ENTRYPOINT = ['/bin/bash', '-c', 'chown 0:0 / 2>/dev/null; mkdir -p /m /opt/qb && exec sleep infinity'];
 
@@ -90,6 +92,8 @@ export class MergeBox extends DurableObject<Env> {
     const t0 = Date.now();
     try { this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: this.c.images.computer }); }
     catch (e) { log('merger', 'start_threw', { err: String(e), stack: String((e as Error)?.stack || ''), running: !!this.c.running, image: !!this.c.images?.computer }); throw e; }
+    // Why a container stopped or never started shows up only here.
+    try { this.c.monitor().then(() => log('merger', 'container_exited', {}), (e: unknown) => log('merger', 'container_failed', { err: String(e).slice(0, 400) })); } catch {}
     // A fresh start can refuse exec for a while ("The container has not been started":
     // every train failed that way for the first minute after MergeBox was first deployed,
     // 2026-10-07). Keep asking for up to 90 s, then give up with the last error.
