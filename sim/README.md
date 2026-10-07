@@ -134,3 +134,15 @@ list conflict in git every time, although their changes are independent. Redoing
 escalating those costs a round trip each; replaying the intent costs nothing, so the
 queue keeps moving. The train tests are what make replay safe (10 replays/merges were
 caught breaking the build and bounced).
+
+## Calibration from a real agent swarm (`sim/bun/`)
+
+Bun's Zig→Rust port (oven-sh/bun#30412, 6,755 commits by ~64 Claude agents in 11 days),
+mined from commit metadata alone by `node sim/bun/analyze.mjs` → `sim/bun/calibration.json`.
+Headlines: 81% of commits went straight onto one shared branch, 9 s apart, with agents
+owning files and line ranges instead of branches; phases ran gated and back to back
+(the two middle phases = 57% of commits in 17 h, ~3.3 commits per agent-hour); files per
+commit p50 3 / p90 11; the top 1% of files appear in 49% of commits but are big source
+files edited in different regions, not append lists; branch-vs-branch overlap on a file
+is 6% per 15 min, 15% per hour; 3.6 lost-work fixes per 100 merges, mostly from
+`merge --theirs`. Details and what it means for the policies: `sim/bun/README.md`.

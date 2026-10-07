@@ -1,0 +1,7892 @@
+{
+ "source": {
+  "repo": "oven-sh/bun",
+  "pr": 30412,
+  "range": "0d9b296af33f..refs/pr/30412",
+  "tip": "ed1a70f81708d7d137de8de057d11668c5f4e220",
+  "license": "MIT",
+  "note": "blobless fetch: file names and blob ids only, no line counts. Agents commit as \"Jarred Sumner\"; branches inferred from merge subjects, streams from subject prefixes."
+ },
+ "generated": "2026-10-07T21:55:29.154Z",
+ "totals": {
+  "commits": 6755,
+  "non_merge": 6479,
+  "merges": 276,
+  "authors": {
+   "Jarred Sumner": 6673,
+   "Dylan Conway": 42,
+   "autofix-ci[bot]": 31,
+   "Alistair Smith": 8,
+   "robobun": 1
+  },
+  "first": "2026-05-04T12:02:41.000Z",
+  "last": "2026-05-14T07:23:14.000Z"
+ },
+ "rate": {
+  "span_hours": 236,
+  "active_hours": 204,
+  "per_active_hour": {
+   "n": 204,
+   "mean": 31.76,
+   "p50": 6,
+   "p75": 23,
+   "p90": 55,
+   "p99": 327,
+   "max": 695
+  },
+  "per_minute_peak_10min": 328,
+  "same_second_bursts": 297
+ },
+ "files_per_commit": {
+  "n": 6479,
+  "mean": 6.48,
+  "p50": 3,
+  "p75": 5,
+  "p90": 11,
+  "p99": 66,
+  "max": 1289,
+  "buckets": {
+   "0": 170,
+   "1": 1961,
+   "2-3": 1811,
+   "4-10": 1877,
+   "11-50": 580,
+   "51-200": 62,
+   ">200": 18
+  }
+ },
+ "lines_per_commit": null,
+ "lines_note": "needs file contents (step 3, not fetched)",
+ "phases": {
+  "other": {
+   "commits": 2163,
+   "first": "2026-05-04T12:02:41.000Z",
+   "last": "2026-05-14T07:23:14.000Z",
+   "bulk_from": "2026-05-07T11:13:40.000Z",
+   "bulk_to": "2026-05-13T09:51:07.000Z",
+   "bulk_hours": 142.6,
+   "files_per_commit": {
+    "n": 2163,
+    "mean": 6.55,
+    "p50": 2,
+    "p75": 4,
+    "p90": 9,
+    "p99": 68,
+    "max": 1289
+   },
+   "top_streams": [
+    [
+     "(untagged)",
+     810
+    ],
+    [
+     "perf",
+     128
+    ],
+    [
+     "win",
+     86
+    ],
+    [
+     "build",
+     37
+    ],
+    [
+     "bundler",
+     28
+    ],
+    [
+     "install",
+     24
+    ],
+    [
+     "jsc",
+     24
+    ],
+    [
+     "shell",
+     23
+    ]
+   ]
+  },
+  "phase-a": {
+   "commits": 18,
+   "first": "2026-05-04T14:05:28.000Z",
+   "last": "2026-05-04T22:37:56.000Z",
+   "bulk_from": "2026-05-04T14:05:28.000Z",
+   "bulk_to": "2026-05-04T22:37:56.000Z",
+   "bulk_hours": 8.5,
+   "files_per_commit": {
+    "n": 18,
+    "mean": 78.83,
+    "p50": 100,
+    "p75": 106,
+    "p90": 112,
+    "p99": 119,
+    "max": 119
+   },
+   "top_streams": [
+    [
+     "phase-a",
+     18
+    ]
+   ]
+  },
+  "phase-b": {
+   "commits": 352,
+   "first": "2026-05-05T00:00:27.000Z",
+   "last": "2026-05-06T06:40:43.000Z",
+   "bulk_from": "2026-05-05T04:27:48.000Z",
+   "bulk_to": "2026-05-06T06:33:33.000Z",
+   "bulk_hours": 26.1,
+   "files_per_commit": {
+    "n": 352,
+    "mean": 15.71,
+    "p50": 7,
+    "p75": 12,
+    "p90": 24,
+    "p99": 115,
+    "max": 1161
+   },
+   "top_streams": [
+    [
+     "phase-b2",
+     326
+    ],
+    [
+     "phase-b1",
+     19
+    ],
+    [
+     "phase-b0",
+     7
+    ]
+   ]
+  },
+  "phase-c": {
+   "commits": 63,
+   "first": "2026-05-06T03:20:21.000Z",
+   "last": "2026-05-06T20:16:13.000Z",
+   "bulk_from": "2026-05-06T06:44:20.000Z",
+   "bulk_to": "2026-05-06T19:48:27.000Z",
+   "bulk_hours": 13.1,
+   "files_per_commit": {
+    "n": 63,
+    "mean": 4,
+    "p50": 3,
+    "p75": 5,
+    "p90": 9,
+    "p99": 17,
+    "max": 17
+   },
+   "top_streams": [
+    [
+     "phase-c",
+     63
+    ]
+   ]
+  },
+  "phase-d": {
+   "commits": 2229,
+   "first": "2026-05-06T07:07:13.000Z",
+   "last": "2026-05-06T19:42:46.000Z",
+   "bulk_from": "2026-05-06T08:26:34.000Z",
+   "bulk_to": "2026-05-06T18:06:05.000Z",
+   "bulk_hours": 9.7,
+   "files_per_commit": {
+    "n": 2229,
+    "mean": 4.51,
+    "p50": 3,
+    "p75": 5,
+    "p90": 9,
+    "p99": 22,
+    "max": 319
+   },
+   "top_streams": [
+    [
+     "phase-d(bun_runtime)",
+     1155
+    ],
+    [
+     "phase-d(unsafe)",
+     269
+    ],
+    [
+     "phase-d(bundler)",
+     248
+    ],
+    [
+     "phase-d",
+     199
+    ],
+    [
+     "phase-d(todo)",
+     150
+    ],
+    [
+     "phase-d(bun_sql_jsc)",
+     59
+    ],
+    [
+     "phase-d(jpa)",
+     38
+    ],
+    [
+     "phase-d(tier3)",
+     14
+    ]
+   ]
+  },
+  "phase-e": {
+   "commits": 1530,
+   "first": "2026-05-06T20:31:38.000Z",
+   "last": "2026-05-07T04:39:04.000Z",
+   "bulk_from": "2026-05-06T23:03:23.000Z",
+   "bulk_to": "2026-05-07T03:55:24.000Z",
+   "bulk_hours": 4.9,
+   "files_per_commit": {
+    "n": 1530,
+    "mean": 4.45,
+    "p50": 3,
+    "p75": 6,
+    "p90": 10,
+    "p99": 21,
+    "max": 82
+   },
+   "top_streams": [
+    [
+     "phase-e(port)",
+     1195
+    ],
+    [
+     "phase-e",
+     220
+    ],
+    [
+     "phase-e(raii)",
+     115
+    ]
+   ]
+  },
+  "phase-f": {
+   "commits": 58,
+   "first": "2026-05-07T04:41:29.000Z",
+   "last": "2026-05-08T01:14:55.000Z",
+   "bulk_from": "2026-05-07T04:53:11.000Z",
+   "bulk_to": "2026-05-07T23:00:46.000Z",
+   "bulk_hours": 18.1,
+   "files_per_commit": {
+    "n": 58,
+    "mean": 25.86,
+    "p50": 10,
+    "p75": 17,
+    "p90": 66,
+    "p99": 379,
+    "max": 379
+   },
+   "top_streams": [
+    [
+     "phase-f",
+     52
+    ],
+    [
+     "phase-f(static-mut)",
+     6
+    ]
+   ]
+  },
+  "phase-g": {
+   "commits": 42,
+   "first": "2026-05-07T08:55:43.000Z",
+   "last": "2026-05-08T04:35:25.000Z",
+   "bulk_from": "2026-05-07T09:22:47.000Z",
+   "bulk_to": "2026-05-08T01:40:06.000Z",
+   "bulk_hours": 16.3,
+   "files_per_commit": {
+    "n": 42,
+    "mean": 2.21,
+    "p50": 1,
+    "p75": 2,
+    "p90": 5,
+    "p99": 9,
+    "max": 9
+   },
+   "top_streams": [
+    [
+     "phase-g",
+     42
+    ]
+   ]
+  },
+  "phase-h": {
+   "commits": 24,
+   "first": "2026-05-08T02:18:40.000Z",
+   "last": "2026-05-11T22:23:48.000Z",
+   "bulk_from": "2026-05-08T06:22:18.000Z",
+   "bulk_to": "2026-05-09T20:27:05.000Z",
+   "bulk_hours": 38.1,
+   "files_per_commit": {
+    "n": 24,
+    "mean": 89.96,
+    "p50": 21,
+    "p75": 213,
+    "p90": 260,
+    "p99": 296,
+    "max": 296
+   },
+   "top_streams": [
+    [
+     "phase-h",
+     24
+    ]
+   ]
+  }
+ },
+ "topology": {
+  "pct_commits_straight_on_one_branch": 81.3,
+  "pct_mainline_not_rebased": 99.5,
+  "seconds_between_mainline_commits": {
+   "n": 5267,
+   "mean": 160.86,
+   "p50": 9,
+   "p75": 29,
+   "p90": 178,
+   "p99": 3401,
+   "max": 22140
+  },
+  "pct_on_mainline_by_phase": {
+   "other": 46.9,
+   "phase-h": 29.2,
+   "phase-g": 90.5,
+   "phase-f": 56.9,
+   "phase-e": 99,
+   "phase-c": 100,
+   "phase-d": 100,
+   "phase-b": 100,
+   "phase-a": 100
+  },
+  "line_range_claims_in_subjects": 37,
+  "line_range_claim_examples": [
+   "phase-d(bun_runtime): fix Blob.rs [4800,5600) — joiner Result, WTF init, AnyPromise wrap shim, node_",
+   "phase-d(bun_runtime): fix Blob.rs[3200,4000) — to_js by-value, raw-ptr deref, Blob::get runtime args",
+   "phase-d(bun_runtime): expect.rs [1601,2401) — bind arguments_old temps, local clearException FFI shi"
+  ]
+ },
+ "hot_files": {
+  "distinct_files": 3056,
+  "file_touches": 41996,
+  "touches_per_file": {
+   "n": 3056,
+   "mean": 13.74,
+   "p50": 4,
+   "p75": 13,
+   "p90": 35,
+   "p99": 134,
+   "max": 380
+  },
+  "top_0_1pct": {
+   "files": 3,
+   "share_of_touches": 2.5,
+   "share_of_commits": 14.2
+  },
+  "top_1pct": {
+   "files": 31,
+   "share_of_touches": 15.5,
+   "share_of_commits": 48.7
+  },
+  "top_10pct": {
+   "files": 306,
+   "share_of_touches": 57.7,
+   "share_of_commits": 84.1
+  },
+  "top_1pct_without_mass_commits": {
+   "commits_considered": 6399,
+   "files": 18,
+   "share_of_touches": 14.4
+  },
+  "touched_once_pct": 31.1,
+  "top_1pct_kinds": {
+   "other .rs": 26,
+   "lib.rs/mod.rs (module root)": 5
+  },
+  "top_files": [
+   {
+    "file": "src/runtime/bake/DevServer.rs",
+    "commits": 380,
+    "branches": 29
+   },
+   {
+    "file": "src/runtime/webcore/Blob.rs",
+    "commits": 338,
+    "branches": 29
+   },
+   {
+    "file": "src/bundler/bundle_v2.rs",
+    "commits": 311,
+    "branches": 35
+   },
+   {
+    "file": "src/runtime/node/node_fs.rs",
+    "commits": 308,
+    "branches": 34
+   },
+   {
+    "file": "src/resolver/lib.rs",
+    "commits": 294,
+    "branches": 28
+   },
+   {
+    "file": "src/runtime/server/server_body.rs",
+    "commits": 294,
+    "branches": 24
+   },
+   {
+    "file": "src/jsc/VirtualMachine.rs",
+    "commits": 267,
+    "branches": 34
+   },
+   {
+    "file": "src/runtime/cli/run_command.rs",
+    "commits": 254,
+    "branches": 25
+   },
+   {
+    "file": "src/runtime/jsc_hooks.rs",
+    "commits": 252,
+    "branches": 25
+   },
+   {
+    "file": "src/sys/lib.rs",
+    "commits": 241,
+    "branches": 28
+   },
+   {
+    "file": "src/runtime/dns_jsc/dns.rs",
+    "commits": 222,
+    "branches": 27
+   },
+   {
+    "file": "src/install/lib.rs",
+    "commits": 196,
+    "branches": 18
+   },
+   {
+    "file": "src/runtime/api/BunObject.rs",
+    "commits": 195,
+    "branches": 23
+   },
+   {
+    "file": "src/runtime/server/RequestContext.rs",
+    "commits": 193,
+    "branches": 22
+   },
+   {
+    "file": "src/runtime/api/bun/js_bun_spawn_bindings.rs",
+    "commits": 192,
+    "branches": 20
+   },
+   {
+    "file": "src/jsc/lib.rs",
+    "commits": 191,
+    "branches": 19
+   },
+   {
+    "file": "src/bundler/LinkerContext.rs",
+    "commits": 179,
+    "branches": 30
+   },
+   {
+    "file": "src/runtime/api/bun/h2_frame_parser.rs",
+    "commits": 179,
+    "branches": 24
+   },
+   {
+    "file": "src/runtime/api/cron.rs",
+    "commits": 172,
+    "branches": 23
+   },
+   {
+    "file": "src/runtime/shell/subproc.rs",
+    "commits": 169,
+    "branches": 25
+   },
+   {
+    "file": "src/js_parser/ast/P.rs",
+    "commits": 169,
+    "branches": 17
+   },
+   {
+    "file": "src/install/PackageManager.rs",
+    "commits": 163,
+    "branches": 22
+   },
+   {
+    "file": "src/runtime/socket/socket_body.rs",
+    "commits": 161,
+    "branches": 23
+   },
+   {
+    "file": "src/runtime/api/JSBundler.rs",
+    "commits": 159,
+    "branches": 18
+   },
+   {
+    "file": "src/runtime/api/html_rewriter.rs",
+    "commits": 158,
+    "branches": 18
+   }
+  ],
+  "top_dirs": [
+   [
+    "src/runtime",
+    17187
+   ],
+   [
+    "src/install",
+    3102
+   ],
+   [
+    "src/jsc",
+    3028
+   ],
+   [
+    "src/bundler",
+    2379
+   ],
+   [
+    "src/js_parser",
+    1807
+   ],
+   [
+    "src/css",
+    1683
+   ],
+   [
+    "src/sql_jsc",
+    857
+   ],
+   [
+    "src/http",
+    811
+   ],
+   [
+    "src/bun_core",
+    639
+   ],
+   [
+    "src/resolver",
+    597
+   ],
+   [
+    "src/sys",
+    510
+   ],
+   [
+    "src/sql",
+    408
+   ]
+  ]
+ },
+ "collisions": {
+  "note": "% of non-merge commits for which an earlier commit within N minutes touched at least one of the same files",
+  "any": {
+   "1m": 53.7,
+   "5m": 62.8,
+   "15m": 70.6,
+   "30m": 76.1,
+   "60m": 81.3,
+   "120m": 86.5,
+   "240m": 90.1,
+   "480m": 92.8
+  },
+  "other_stream": {
+   "1m": 10.5,
+   "5m": 19.9,
+   "15m": 28.9,
+   "30m": 34.7,
+   "60m": 48,
+   "120m": 60,
+   "240m": 69.1,
+   "480m": 76.6
+  },
+  "other_branch": {
+   "1m": 0.8,
+   "5m": 2.6,
+   "15m": 5.9,
+   "30m": 9.3,
+   "60m": 15,
+   "120m": 22.6,
+   "240m": 33.2,
+   "480m": 37.7
+  },
+  "small_commits_only_any": {
+   "1m": 51.6,
+   "5m": 60,
+   "15m": 66.1,
+   "30m": 70.7,
+   "60m": 75.1,
+   "120m": 80.3,
+   "240m": 84,
+   "480m": 87.1
+  },
+  "small_commits_only_other_branch": {
+   "1m": 0.4,
+   "5m": 1.1,
+   "15m": 2.6,
+   "30m": 4.7,
+   "60m": 7.9,
+   "120m": 12.6,
+   "240m": 18.8,
+   "480m": 21.9
+  }
+ },
+ "merges": {
+  "merges": 276,
+  "into_mainline": 244,
+  "branches": 148,
+  "minutes_between_mainline_merges": {
+   "n": 243,
+   "mean": 41.37,
+   "p50": 12,
+   "p75": 30,
+   "p90": 67,
+   "p99": 419,
+   "max": 2275
+  },
+  "side_commits_per_merge": {
+   "n": 276,
+   "mean": 5.93,
+   "p50": 3,
+   "p75": 7,
+   "p90": 12,
+   "p99": 58,
+   "max": 122
+  },
+  "side_files_per_merge": {
+   "n": 276,
+   "mean": 54.54,
+   "p50": 14,
+   "p75": 43,
+   "p90": 148,
+   "p99": 565,
+   "max": 1289
+  },
+  "pct_merges_with_files_touched_on_both_sides": 45.7,
+  "pct_merges_needing_a_content_merge": 45.3,
+  "pct_merges_with_hand_or_auto_merged_text": 43.1,
+  "files_changed_differently_per_merge": {
+   "n": 276,
+   "mean": 7.31,
+   "p50": 0,
+   "p75": 3,
+   "p90": 20,
+   "p99": 96,
+   "max": 114
+  },
+  "merges_naming_conflicts_in_subject": 7,
+  "conflicts_named_total": 96,
+  "parallel_push_merges": 13,
+  "lost_work_followups": 10,
+  "lost_work_followups_per_100_merges": 3.6,
+  "by_branch": [
+   [
+    "(other merge)",
+    {
+     "merges": 33,
+     "side_commits": 157,
+     "content_merges": 6,
+     "hand_merged_files": 83
+    }
+   ],
+   [
+    "claude/unsafe-5k",
+    {
+     "merges": 27,
+     "side_commits": 228,
+     "content_merges": 11,
+     "hand_merged_files": 56
+    }
+   ],
+   [
+    "(sync)",
+    {
+     "merges": 20,
+     "side_commits": 174,
+     "content_merges": 10,
+     "hand_merged_files": 322
+    }
+   ],
+   [
+    "claude/bench-until-green",
+    {
+     "merges": 19,
+     "side_commits": 199,
+     "content_merges": 11,
+     "hand_merged_files": 33
+    }
+   ],
+   [
+    "claude/phase-a-port (parallel push)",
+    {
+     "merges": 13,
+     "side_commits": 91,
+     "content_merges": 4,
+     "hand_merged_files": 32
+    }
+   ],
+   [
+    "idiom",
+    {
+     "merges": 6,
+     "side_commits": 23,
+     "content_merges": 3,
+     "hand_merged_files": 27
+    }
+   ],
+   [
+    "main",
+    {
+     "merges": 3,
+     "side_commits": 0,
+     "content_merges": 3,
+     "hand_merged_files": 6
+    }
+   ],
+   [
+    "storeslice",
+    {
+     "merges": 2,
+     "side_commits": 7,
+     "content_merges": 1,
+     "hand_merged_files": 48
+    }
+   ],
+   [
+    "static-mut",
+    {
+     "merges": 2,
+     "side_commits": 15,
+     "content_merges": 2,
+     "hand_merged_files": 102
+    }
+   ],
+   [
+    "accessor-sweep",
+    {
+     "merges": 2,
+     "side_commits": 97,
+     "content_merges": 2,
+     "hand_merged_files": 89
+    }
+   ],
+   [
+    "cross-windows",
+    {
+     "merges": 2,
+     "side_commits": 33,
+     "content_merges": 1,
+     "hand_merged_files": 113
+    }
+   ],
+   [
+    "tswarm-s1",
+    {
+     "merges": 2,
+     "side_commits": 9,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "hooks-layering-fix",
+    {
+     "merges": 2,
+     "side_commits": 29,
+     "content_merges": 1,
+     "hand_merged_files": 44
+    }
+   ],
+   [
+    "perf-bundler",
+    {
+     "merges": 2,
+     "side_commits": 6,
+     "content_merges": 2,
+     "hand_merged_files": 4
+    }
+   ],
+   [
+    "arena-lifetime",
+    {
+     "merges": 2,
+     "side_commits": 4,
+     "content_merges": 2,
+     "hand_merged_files": 3
+    }
+   ],
+   [
+    "transmute-audit",
+    {
+     "merges": 2,
+     "side_commits": 2,
+     "content_merges": 1,
+     "hand_merged_files": 7
+    }
+   ],
+   [
+    "storeslice-runtime",
+    {
+     "merges": 2,
+     "side_commits": 2,
+     "content_merges": 1,
+     "hand_merged_files": 3
+    }
+   ],
+   [
+    "noalias-reentry",
+    {
+     "merges": 2,
+     "side_commits": 2,
+     "content_merges": 1,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/phase-a-port",
+    {
+     "merges": 2,
+     "side_commits": 127,
+     "content_merges": 2,
+     "hand_merged_files": 23
+    }
+   ],
+   [
+    "claude/code-dedup",
+    {
+     "merges": 2,
+     "side_commits": 21,
+     "content_merges": 2,
+     "hand_merged_files": 93
+    }
+   ],
+   [
+    "claude/divergence-fix-all",
+    {
+     "merges": 2,
+     "side_commits": 27,
+     "content_merges": 1,
+     "hand_merged_files": 3
+    }
+   ],
+   [
+    "diverged",
+    {
+     "merges": 1,
+     "side_commits": 16,
+     "content_merges": 1,
+     "hand_merged_files": 52
+    }
+   ],
+   [
+    "self-default",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "option-ptr-ffi",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "send-sync-audit",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "maybe-result",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "box-from-raw-arena",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "mem-zeroed",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 4
+    }
+   ],
+   [
+    "intrusive-refcount",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "transmute-static",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "jscell",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 1,
+     "hand_merged_files": 22
+    }
+   ],
+   [
+    "babylist-vec",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 43
+    }
+   ],
+   [
+    "unsound-sync",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "as-cast",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "jsc-vm-safe",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "unwrap-question",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 35
+    }
+   ],
+   [
+    "install-lockfile-arena",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 20
+    }
+   ],
+   [
+    "delete-babylist",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 95
+    }
+   ],
+   [
+    "multiarraylist-v2",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 92
+    }
+   ],
+   [
+    "string-builder-split",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 6
+    }
+   ],
+   [
+    "runtime-hostfn-safe",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 22
+    }
+   ],
+   [
+    "http-body-lifetime",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 8
+    }
+   ],
+   [
+    "jscell-unsafe",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "improper-ctypes",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "clone-audit",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "extern-c-unwind",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "must-use-jsresult",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 4
+    }
+   ],
+   [
+    "pub-tighten",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 50
+    }
+   ],
+   [
+    "static-global-lie",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 10
+    }
+   ],
+   [
+    "test-runner",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "cross-freebsd",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 2
+    }
+   ],
+   [
+    "linux-syscall",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "cross-macos",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 14
+    }
+   ],
+   [
+    "EventLoopHandle",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "ptr-cast",
+    {
+     "merges": 1,
+     "side_commits": 5,
+     "content_merges": 1,
+     "hand_merged_files": 55
+    }
+   ],
+   [
+    "allocator-sweep",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "bun-build",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "uws-callback",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "bun-install",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "tswarm-s2",
+    {
+     "merges": 1,
+     "side_commits": 10,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "nomangle-hostfn",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "tswarm-s0",
+    {
+     "merges": 1,
+     "side_commits": 13,
+     "content_merges": 1,
+     "hand_merged_files": 4
+    }
+   ],
+   [
+    "tswarm-s3",
+    {
+     "merges": 1,
+     "side_commits": 14,
+     "content_merges": 1,
+     "hand_merged_files": 4
+    }
+   ],
+   [
+    "bun-build-2",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "filepoll-aio",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "uws-merge",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 1,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "bundler-misplaced",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 1,
+     "hand_merged_files": 2
+    }
+   ],
+   [
+    "atomicptr-extern",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "stringptr-dedup",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "niche-expr",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "threadpool-debug",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 3
+    }
+   ],
+   [
+    "unsafe-uws-callback",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "from_raw_parts",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 1,
+     "hand_merged_files": 3
+    }
+   ],
+   [
+    "hostfn-safesig",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 3
+    }
+   ],
+   [
+    "cyclebreak-audit",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 1,
+     "hand_merged_files": 29
+    }
+   ],
+   [
+    "refptr-derive",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "threadpool-send-audit",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "perf-beat-zig",
+    {
+     "merges": 1,
+     "side_commits": 4,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "ci-rust",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "noalias-shrink",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "raii-args",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "noalias-visitor",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "raii-protected",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "transmute-r3",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 2
+    }
+   ],
+   [
+    "storeslice-r3",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "zeroed-cstr",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "storeslice-r4",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 3
+    }
+   ],
+   [
+    "container-of",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 39
+    }
+   ],
+   [
+    "transmute-r4",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 17
+    }
+   ],
+   [
+    "jsc-hot",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "safefn-codegen",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "safefn-runtime",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "hostfn-refs",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "jsc-hot-r3",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "transmute-r5",
+    {
+     "merges": 1,
+     "side_commits": 12,
+     "content_merges": 1,
+     "hand_merged_files": 12
+    }
+   ],
+   [
+    "jssink-safefn",
+    {
+     "merges": 1,
+     "side_commits": 5,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "safefn-runtime-r2",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 2
+    }
+   ],
+   [
+    "safefn-bundler",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 2
+    }
+   ],
+   [
+    "safefn-all",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 7
+    }
+   ],
+   [
+    "safefn-install",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "finalize-box",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 13
+    }
+   ],
+   [
+    "vm-accessors",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 2
+    }
+   ],
+   [
+    "safefn-boringssl",
+    {
+     "merges": 1,
+     "side_commits": 5,
+     "content_merges": 1,
+     "hand_merged_files": 8
+    }
+   ],
+   [
+    "collections-r1",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "shell-r1",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "http-r1",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "crossplat",
+    {
+     "merges": 1,
+     "side_commits": 7,
+     "content_merges": 1,
+     "hand_merged_files": 4
+    }
+   ],
+   [
+    "jsparser-r1",
+    {
+     "merges": 1,
+     "side_commits": 5,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "install-r2",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "bundler-r2",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "http-r2",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "sslconfig-leak",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "jsc-hot-r4",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "backref-rawslice",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "opaque-ffi",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "refptr-migration",
+    {
+     "merges": 1,
+     "side_commits": 5,
+     "content_merges": 1,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/phase-h-vm-accessors-r2",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "claude/phase-h-leak-audit",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "warnings",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "posix-spawn",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "dd-integ",
+    {
+     "merges": 1,
+     "side_commits": 5,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "dd-node",
+    {
+     "merges": 1,
+     "side_commits": 5,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "exception-scope",
+    {
+     "merges": 1,
+     "side_commits": 6,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "cpp-safe",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "ptr-audit",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/r2-phase2-migration",
+    {
+     "merges": 1,
+     "side_commits": 62,
+     "content_merges": 1,
+     "hand_merged_files": 10
+    }
+   ],
+   [
+    "claude/ci-fix-53599",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/bun-sys-file-refactor",
+    {
+     "merges": 1,
+     "side_commits": 7,
+     "content_merges": 1,
+     "hand_merged_files": 3
+    }
+   ],
+   [
+    "claude/merge-bun-string-into-core",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 63
+    }
+   ],
+   [
+    "claude/ci-auto-fix-53633",
+    {
+     "merges": 1,
+     "side_commits": 4,
+     "content_merges": 1,
+     "hand_merged_files": 1
+    }
+   ],
+   [
+    "claude/local-test-sweep",
+    {
+     "merges": 1,
+     "side_commits": 6,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/ci-auto-fix-53753",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/zig-rust-divergence-audit",
+    {
+     "merges": 1,
+     "side_commits": 11,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/stack-fallback-allocator",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/divergence-top5",
+    {
+     "merges": 1,
+     "side_commits": 3,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/parking-lot-to-futex",
+    {
+     "merges": 1,
+     "side_commits": 9,
+     "content_merges": 1,
+     "hand_merged_files": 2
+    }
+   ],
+   [
+    "claude/ci-auto-fix-53852",
+    {
+     "merges": 1,
+     "side_commits": 2,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/ci-auto-fix-53863",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/ci-auto-fix-53893",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/flaky-stabilize",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/flaky-stabilize-v2",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/flaky-stabilize-v3",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/fix-hot-h3-flakes",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/security-audit-patches",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/fix-lockb-corrupt-regression",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/spec-divergence-fix",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 1,
+     "hand_merged_files": 9
+    }
+   ],
+   [
+    "claude/fix-transpiler-cache-50kb",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ],
+   [
+    "claude/fix-claude-ci-bugs",
+    {
+     "merges": 1,
+     "side_commits": 1,
+     "content_merges": 0,
+     "hand_merged_files": 0
+    }
+   ]
+  ]
+ },
+ "commits_by_branch": [
+  [
+   "claude/phase-a-port (mainline)",
+   5242
+  ],
+  [
+   "claude/unsafe-5k",
+   228
+  ],
+  [
+   "claude/bench-until-green",
+   199
+  ],
+  [
+   "(other merge)",
+   135
+  ],
+  [
+   "claude/phase-a-port (parallel push)",
+   90
+  ],
+  [
+   "claude/r2-phase2-migration",
+   62
+  ],
+  [
+   "accessor-sweep",
+   48
+  ],
+  [
+   "claude/divergence-fix-all",
+   27
+  ],
+  [
+   "(sync)",
+   26
+  ],
+  [
+   "claude/code-dedup",
+   21
+  ],
+  [
+   "idiom",
+   16
+  ],
+  [
+   "cross-windows",
+   16
+  ],
+  [
+   "diverged",
+   16
+  ],
+  [
+   "hooks-layering-fix",
+   14
+  ],
+  [
+   "tswarm-s3",
+   14
+  ],
+  [
+   "tswarm-s0",
+   13
+  ],
+  [
+   "transmute-r5",
+   12
+  ],
+  [
+   "claude/zig-rust-divergence-audit",
+   11
+  ],
+  [
+   "tswarm-s2",
+   10
+  ],
+  [
+   "claude/parking-lot-to-futex",
+   9
+  ],
+  [
+   "tswarm-s1",
+   9
+  ],
+  [
+   "claude/bun-sys-file-refactor",
+   7
+  ],
+  [
+   "crossplat",
+   7
+  ],
+  [
+   "storeslice",
+   7
+  ],
+  [
+   "static-mut",
+   7
+  ],
+  [
+   "claude/local-test-sweep",
+   6
+  ],
+  [
+   "perf-bundler",
+   6
+  ],
+  [
+   "exception-scope",
+   5
+  ],
+  [
+   "refptr-migration",
+   5
+  ],
+  [
+   "jsparser-r1",
+   5
+  ],
+  [
+   "safefn-boringssl",
+   5
+  ],
+  [
+   "jssink-safefn",
+   5
+  ],
+  [
+   "ptr-cast",
+   5
+  ],
+  [
+   "claude/ci-auto-fix-53633",
+   4
+  ],
+  [
+   "dd-integ",
+   4
+  ],
+  [
+   "dd-node",
+   4
+  ],
+  [
+   "perf-beat-zig",
+   4
+  ],
+  [
+   "arena-lifetime",
+   4
+  ],
+  [
+   "claude/divergence-top5",
+   3
+  ],
+  [
+   "claude/phase-h-leak-audit",
+   3
+  ],
+  [
+   "http-r1",
+   3
+  ],
+  [
+   "collections-r1",
+   3
+  ],
+  [
+   "shell-r1",
+   3
+  ],
+  [
+   "vm-accessors",
+   3
+  ],
+  [
+   "finalize-box",
+   3
+  ],
+  [
+   "safefn-all",
+   3
+  ],
+  [
+   "safefn-runtime",
+   3
+  ],
+  [
+   "jsc-hot",
+   3
+  ],
+  [
+   "storeslice-r3",
+   3
+  ],
+  [
+   "transmute-r3",
+   3
+  ],
+  [
+   "raii-protected",
+   3
+  ],
+  [
+   "noalias-shrink",
+   3
+  ],
+  [
+   "refptr-derive",
+   3
+  ],
+  [
+   "threadpool-debug",
+   3
+  ],
+  [
+   "niche-expr",
+   3
+  ],
+  [
+   "bun-build-2",
+   3
+  ],
+  [
+   "nomangle-hostfn",
+   3
+  ],
+  [
+   "bun-install",
+   3
+  ],
+  [
+   "cross-macos",
+   3
+  ],
+  [
+   "cross-freebsd",
+   3
+  ],
+  [
+   "linux-syscall",
+   3
+  ],
+  [
+   "test-runner",
+   3
+  ],
+  [
+   "install-lockfile-arena",
+   3
+  ],
+  [
+   "claude/ci-auto-fix-53852",
+   2
+  ],
+  [
+   "noalias-reentry",
+   2
+  ],
+  [
+   "noalias-visitor",
+   2
+  ],
+  [
+   "threadpool-send-audit",
+   2
+  ],
+  [
+   "cyclebreak-audit",
+   2
+  ],
+  [
+   "storeslice-runtime",
+   2
+  ],
+  [
+   "transmute-audit",
+   2
+  ],
+  [
+   "from_raw_parts",
+   2
+  ],
+  [
+   "bundler-misplaced",
+   2
+  ],
+  [
+   "uws-merge",
+   2
+  ],
+  [
+   "uws-callback",
+   2
+  ],
+  [
+   "jscell",
+   2
+  ],
+  [
+   "claude/fix-claude-ci-bugs",
+   1
+  ],
+  [
+   "claude/fix-transpiler-cache-50kb",
+   1
+  ],
+  [
+   "claude/spec-divergence-fix",
+   1
+  ],
+  [
+   "claude/fix-lockb-corrupt-regression",
+   1
+  ],
+  [
+   "claude/security-audit-patches",
+   1
+  ],
+  [
+   "claude/fix-hot-h3-flakes",
+   1
+  ],
+  [
+   "claude/flaky-stabilize-v3",
+   1
+  ],
+  [
+   "claude/flaky-stabilize-v2",
+   1
+  ],
+  [
+   "claude/flaky-stabilize",
+   1
+  ],
+  [
+   "claude/ci-auto-fix-53893",
+   1
+  ],
+  [
+   "claude/ci-auto-fix-53863",
+   1
+  ],
+  [
+   "claude/stack-fallback-allocator",
+   1
+  ],
+  [
+   "claude/ci-auto-fix-53753",
+   1
+  ],
+  [
+   "claude/merge-bun-string-into-core",
+   1
+  ],
+  [
+   "claude/ci-fix-53599",
+   1
+  ],
+  [
+   "ptr-audit",
+   1
+  ],
+  [
+   "cpp-safe",
+   1
+  ],
+  [
+   "posix-spawn",
+   1
+  ],
+  [
+   "warnings",
+   1
+  ],
+  [
+   "claude/phase-h-vm-accessors-r2",
+   1
+  ],
+  [
+   "opaque-ffi",
+   1
+  ],
+  [
+   "backref-rawslice",
+   1
+  ],
+  [
+   "jsc-hot-r4",
+   1
+  ],
+  [
+   "sslconfig-leak",
+   1
+  ],
+  [
+   "http-r2",
+   1
+  ],
+  [
+   "bundler-r2",
+   1
+  ],
+  [
+   "install-r2",
+   1
+  ],
+  [
+   "safefn-install",
+   1
+  ],
+  [
+   "safefn-runtime-r2",
+   1
+  ],
+  [
+   "safefn-bundler",
+   1
+  ],
+  [
+   "jsc-hot-r3",
+   1
+  ],
+  [
+   "hostfn-refs",
+   1
+  ],
+  [
+   "safefn-codegen",
+   1
+  ],
+  [
+   "transmute-r4",
+   1
+  ],
+  [
+   "container-of",
+   1
+  ],
+  [
+   "storeslice-r4",
+   1
+  ],
+  [
+   "zeroed-cstr",
+   1
+  ],
+  [
+   "raii-args",
+   1
+  ],
+  [
+   "ci-rust",
+   1
+  ],
+  [
+   "hostfn-safesig",
+   1
+  ],
+  [
+   "unsafe-uws-callback",
+   1
+  ],
+  [
+   "stringptr-dedup",
+   1
+  ],
+  [
+   "atomicptr-extern",
+   1
+  ],
+  [
+   "filepoll-aio",
+   1
+  ],
+  [
+   "bun-build",
+   1
+  ],
+  [
+   "allocator-sweep",
+   1
+  ],
+  [
+   "EventLoopHandle",
+   1
+  ],
+  [
+   "static-global-lie",
+   1
+  ],
+  [
+   "pub-tighten",
+   1
+  ],
+  [
+   "must-use-jsresult",
+   1
+  ],
+  [
+   "extern-c-unwind",
+   1
+  ],
+  [
+   "clone-audit",
+   1
+  ],
+  [
+   "improper-ctypes",
+   1
+  ],
+  [
+   "jscell-unsafe",
+   1
+  ],
+  [
+   "http-body-lifetime",
+   1
+  ],
+  [
+   "runtime-hostfn-safe",
+   1
+  ],
+  [
+   "string-builder-split",
+   1
+  ],
+  [
+   "multiarraylist-v2",
+   1
+  ],
+  [
+   "delete-babylist",
+   1
+  ],
+  [
+   "unwrap-question",
+   1
+  ],
+  [
+   "jsc-vm-safe",
+   1
+  ],
+  [
+   "as-cast",
+   1
+  ],
+  [
+   "unsound-sync",
+   1
+  ],
+  [
+   "babylist-vec",
+   1
+  ],
+  [
+   "transmute-static",
+   1
+  ],
+  [
+   "intrusive-refcount",
+   1
+  ],
+  [
+   "mem-zeroed",
+   1
+  ],
+  [
+   "box-from-raw-arena",
+   1
+  ],
+  [
+   "maybe-result",
+   1
+  ],
+  [
+   "send-sync-audit",
+   1
+  ],
+  [
+   "self-default",
+   1
+  ],
+  [
+   "option-ptr-ffi",
+   1
+  ]
+ ],
+ "hourly": [
+  {
+   "hour": "2026-05-04T12",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-04T13",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-04T14",
+   "total": 6,
+   "phases": 1,
+   "commits": 6,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-04T15",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-04T16",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-04T18",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-04T19",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-04T20",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-04T22",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T00",
+   "total": 5,
+   "phases": 2,
+   "commits": 5,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T01",
+   "total": 5,
+   "phases": 1,
+   "commits": 5,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T04",
+   "total": 13,
+   "phases": 1,
+   "commits": 13,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T06",
+   "total": 6,
+   "phases": 1,
+   "commits": 6,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T07",
+   "total": 9,
+   "phases": 1,
+   "commits": 9,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T08",
+   "total": 7,
+   "phases": 1,
+   "commits": 7,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T09",
+   "total": 4,
+   "phases": 2,
+   "commits": 4,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T10",
+   "total": 4,
+   "phases": 2,
+   "commits": 4,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T11",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T12",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T15",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T16",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T18",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T19",
+   "total": 4,
+   "phases": 1,
+   "commits": 4,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T20",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T21",
+   "total": 4,
+   "phases": 1,
+   "commits": 4,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T22",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-05T23",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T00",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T01",
+   "total": 4,
+   "phases": 1,
+   "commits": 4,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T02",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T03",
+   "total": 4,
+   "phases": 2,
+   "commits": 4,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T04",
+   "total": 43,
+   "phases": 1,
+   "commits": 43,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T05",
+   "total": 139,
+   "phases": 1,
+   "commits": 139,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T06",
+   "total": 141,
+   "phases": 3,
+   "commits": 141,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T07",
+   "total": 60,
+   "phases": 2,
+   "commits": 60,
+   "streams": 18,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T08",
+   "total": 296,
+   "phases": 1,
+   "commits": 296,
+   "streams": 53,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T09",
+   "total": 306,
+   "phases": 1,
+   "commits": 306,
+   "streams": 4,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T10",
+   "total": 196,
+   "phases": 2,
+   "commits": 196,
+   "streams": 9,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T11",
+   "total": 86,
+   "phases": 1,
+   "commits": 86,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T12",
+   "total": 16,
+   "phases": 1,
+   "commits": 16,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T15",
+   "total": 5,
+   "phases": 1,
+   "commits": 5,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T16",
+   "total": 458,
+   "phases": 1,
+   "commits": 458,
+   "streams": 6,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T17",
+   "total": 695,
+   "phases": 1,
+   "commits": 695,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T18",
+   "total": 102,
+   "phases": 1,
+   "commits": 102,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T19",
+   "total": 19,
+   "phases": 2,
+   "commits": 19,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T20",
+   "total": 3,
+   "phases": 2,
+   "commits": 3,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T22",
+   "total": 64,
+   "phases": 1,
+   "commits": 64,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-06T23",
+   "total": 264,
+   "phases": 1,
+   "commits": 264,
+   "streams": 2,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-07T00",
+   "total": 266,
+   "phases": 1,
+   "commits": 266,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-07T01",
+   "total": 281,
+   "phases": 1,
+   "commits": 281,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-07T02",
+   "total": 258,
+   "phases": 1,
+   "commits": 258,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-07T03",
+   "total": 327,
+   "phases": 1,
+   "commits": 327,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-07T04",
+   "total": 74,
+   "phases": 2,
+   "commits": 74,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-07T05",
+   "total": 17,
+   "phases": 2,
+   "commits": 17,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-07T06",
+   "total": 11,
+   "phases": 2,
+   "commits": 11,
+   "streams": 6,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-07T07",
+   "total": 17,
+   "phases": 2,
+   "commits": 17,
+   "streams": 10,
+   "branches": 12
+  },
+  {
+   "hour": "2026-05-07T08",
+   "total": 22,
+   "phases": 3,
+   "commits": 22,
+   "streams": 8,
+   "branches": 19
+  },
+  {
+   "hour": "2026-05-07T09",
+   "total": 21,
+   "phases": 3,
+   "commits": 21,
+   "streams": 10,
+   "branches": 8
+  },
+  {
+   "hour": "2026-05-07T10",
+   "total": 53,
+   "phases": 3,
+   "commits": 53,
+   "streams": 35,
+   "branches": 6
+  },
+  {
+   "hour": "2026-05-07T11",
+   "total": 31,
+   "phases": 3,
+   "commits": 31,
+   "streams": 18,
+   "branches": 4
+  },
+  {
+   "hour": "2026-05-07T12",
+   "total": 9,
+   "phases": 2,
+   "commits": 9,
+   "streams": 5,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-07T13",
+   "total": 4,
+   "phases": 2,
+   "commits": 4,
+   "streams": 3,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-07T14",
+   "total": 5,
+   "phases": 2,
+   "commits": 5,
+   "streams": 5,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-07T20",
+   "total": 5,
+   "phases": 2,
+   "commits": 5,
+   "streams": 5,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-07T21",
+   "total": 9,
+   "phases": 2,
+   "commits": 9,
+   "streams": 2,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-07T22",
+   "total": 51,
+   "phases": 3,
+   "commits": 51,
+   "streams": 28,
+   "branches": 9
+  },
+  {
+   "hour": "2026-05-07T23",
+   "total": 55,
+   "phases": 3,
+   "commits": 55,
+   "streams": 41,
+   "branches": 7
+  },
+  {
+   "hour": "2026-05-08T00",
+   "total": 159,
+   "phases": 2,
+   "commits": 159,
+   "streams": 115,
+   "branches": 6
+  },
+  {
+   "hour": "2026-05-08T01",
+   "total": 42,
+   "phases": 3,
+   "commits": 42,
+   "streams": 25,
+   "branches": 4
+  },
+  {
+   "hour": "2026-05-08T02",
+   "total": 46,
+   "phases": 3,
+   "commits": 46,
+   "streams": 28,
+   "branches": 4
+  },
+  {
+   "hour": "2026-05-08T03",
+   "total": 52,
+   "phases": 1,
+   "commits": 52,
+   "streams": 28,
+   "branches": 5
+  },
+  {
+   "hour": "2026-05-08T04",
+   "total": 27,
+   "phases": 2,
+   "commits": 27,
+   "streams": 16,
+   "branches": 5
+  },
+  {
+   "hour": "2026-05-08T05",
+   "total": 27,
+   "phases": 1,
+   "commits": 27,
+   "streams": 18,
+   "branches": 8
+  },
+  {
+   "hour": "2026-05-08T06",
+   "total": 30,
+   "phases": 2,
+   "commits": 30,
+   "streams": 18,
+   "branches": 10
+  },
+  {
+   "hour": "2026-05-08T07",
+   "total": 26,
+   "phases": 2,
+   "commits": 26,
+   "streams": 21,
+   "branches": 4
+  },
+  {
+   "hour": "2026-05-08T08",
+   "total": 14,
+   "phases": 2,
+   "commits": 14,
+   "streams": 12,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-08T09",
+   "total": 8,
+   "phases": 1,
+   "commits": 8,
+   "streams": 5,
+   "branches": 4
+  },
+  {
+   "hour": "2026-05-08T10",
+   "total": 13,
+   "phases": 1,
+   "commits": 13,
+   "streams": 12,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-08T11",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-08T12",
+   "total": 15,
+   "phases": 1,
+   "commits": 15,
+   "streams": 8,
+   "branches": 4
+  },
+  {
+   "hour": "2026-05-08T13",
+   "total": 12,
+   "phases": 1,
+   "commits": 12,
+   "streams": 9,
+   "branches": 6
+  },
+  {
+   "hour": "2026-05-08T14",
+   "total": 14,
+   "phases": 2,
+   "commits": 14,
+   "streams": 10,
+   "branches": 4
+  },
+  {
+   "hour": "2026-05-08T15",
+   "total": 55,
+   "phases": 1,
+   "commits": 55,
+   "streams": 30,
+   "branches": 12
+  },
+  {
+   "hour": "2026-05-08T16",
+   "total": 35,
+   "phases": 2,
+   "commits": 35,
+   "streams": 13,
+   "branches": 9
+  },
+  {
+   "hour": "2026-05-08T17",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-08T21",
+   "total": 11,
+   "phases": 1,
+   "commits": 11,
+   "streams": 5,
+   "branches": 8
+  },
+  {
+   "hour": "2026-05-08T22",
+   "total": 24,
+   "phases": 1,
+   "commits": 24,
+   "streams": 11,
+   "branches": 10
+  },
+  {
+   "hour": "2026-05-08T23",
+   "total": 18,
+   "phases": 2,
+   "commits": 18,
+   "streams": 6,
+   "branches": 4
+  },
+  {
+   "hour": "2026-05-09T00",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-09T01",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-09T02",
+   "total": 11,
+   "phases": 1,
+   "commits": 11,
+   "streams": 9,
+   "branches": 6
+  },
+  {
+   "hour": "2026-05-09T03",
+   "total": 22,
+   "phases": 1,
+   "commits": 22,
+   "streams": 16,
+   "branches": 5
+  },
+  {
+   "hour": "2026-05-09T04",
+   "total": 10,
+   "phases": 1,
+   "commits": 10,
+   "streams": 10,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-09T05",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-09T06",
+   "total": 6,
+   "phases": 1,
+   "commits": 6,
+   "streams": 4,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-09T07",
+   "total": 9,
+   "phases": 2,
+   "commits": 9,
+   "streams": 5,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-09T08",
+   "total": 9,
+   "phases": 1,
+   "commits": 9,
+   "streams": 8,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-09T09",
+   "total": 8,
+   "phases": 1,
+   "commits": 8,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-09T10",
+   "total": 63,
+   "phases": 1,
+   "commits": 63,
+   "streams": 4,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-09T11",
+   "total": 11,
+   "phases": 2,
+   "commits": 11,
+   "streams": 7,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-09T12",
+   "total": 4,
+   "phases": 1,
+   "commits": 4,
+   "streams": 2,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-09T13",
+   "total": 3,
+   "phases": 2,
+   "commits": 3,
+   "streams": 2,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-09T14",
+   "total": 6,
+   "phases": 2,
+   "commits": 6,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-09T15",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-09T16",
+   "total": 11,
+   "phases": 1,
+   "commits": 11,
+   "streams": 5,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-09T18",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-09T19",
+   "total": 4,
+   "phases": 2,
+   "commits": 4,
+   "streams": 3,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-09T20",
+   "total": 7,
+   "phases": 2,
+   "commits": 7,
+   "streams": 3,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-09T21",
+   "total": 5,
+   "phases": 1,
+   "commits": 5,
+   "streams": 2,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-09T22",
+   "total": 5,
+   "phases": 1,
+   "commits": 5,
+   "streams": 5,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-09T23",
+   "total": 17,
+   "phases": 1,
+   "commits": 17,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T00",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T01",
+   "total": 4,
+   "phases": 1,
+   "commits": 4,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T02",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T07",
+   "total": 4,
+   "phases": 1,
+   "commits": 4,
+   "streams": 4,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T08",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T09",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T10",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T11",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T12",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T13",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T14",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T15",
+   "total": 4,
+   "phases": 1,
+   "commits": 4,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T16",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T17",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T18",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T19",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T20",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T21",
+   "total": 5,
+   "phases": 1,
+   "commits": 5,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T22",
+   "total": 5,
+   "phases": 1,
+   "commits": 5,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-10T23",
+   "total": 5,
+   "phases": 1,
+   "commits": 5,
+   "streams": 1,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-11T00",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T01",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 2,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-11T02",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T03",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T04",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T05",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T06",
+   "total": 5,
+   "phases": 1,
+   "commits": 5,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T07",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T08",
+   "total": 4,
+   "phases": 1,
+   "commits": 4,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T09",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T10",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T11",
+   "total": 5,
+   "phases": 1,
+   "commits": 5,
+   "streams": 3,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-11T13",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T14",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T15",
+   "total": 10,
+   "phases": 1,
+   "commits": 10,
+   "streams": 7,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T16",
+   "total": 16,
+   "phases": 1,
+   "commits": 16,
+   "streams": 6,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T17",
+   "total": 18,
+   "phases": 1,
+   "commits": 18,
+   "streams": 8,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T18",
+   "total": 9,
+   "phases": 1,
+   "commits": 9,
+   "streams": 4,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-11T19",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T20",
+   "total": 11,
+   "phases": 1,
+   "commits": 11,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-11T21",
+   "total": 157,
+   "phases": 1,
+   "commits": 157,
+   "streams": 3,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-11T22",
+   "total": 16,
+   "phases": 2,
+   "commits": 16,
+   "streams": 4,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-11T23",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-12T00",
+   "total": 41,
+   "phases": 1,
+   "commits": 41,
+   "streams": 3,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-12T01",
+   "total": 55,
+   "phases": 1,
+   "commits": 55,
+   "streams": 2,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-12T02",
+   "total": 53,
+   "phases": 1,
+   "commits": 53,
+   "streams": 2,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-12T03",
+   "total": 32,
+   "phases": 1,
+   "commits": 32,
+   "streams": 4,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-12T04",
+   "total": 45,
+   "phases": 1,
+   "commits": 45,
+   "streams": 4,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-12T05",
+   "total": 45,
+   "phases": 1,
+   "commits": 45,
+   "streams": 4,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-12T06",
+   "total": 51,
+   "phases": 1,
+   "commits": 51,
+   "streams": 8,
+   "branches": 6
+  },
+  {
+   "hour": "2026-05-12T07",
+   "total": 30,
+   "phases": 1,
+   "commits": 30,
+   "streams": 3,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-12T08",
+   "total": 24,
+   "phases": 1,
+   "commits": 24,
+   "streams": 5,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-12T09",
+   "total": 41,
+   "phases": 1,
+   "commits": 41,
+   "streams": 7,
+   "branches": 4
+  },
+  {
+   "hour": "2026-05-12T10",
+   "total": 39,
+   "phases": 1,
+   "commits": 39,
+   "streams": 8,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-12T11",
+   "total": 27,
+   "phases": 1,
+   "commits": 27,
+   "streams": 3,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-12T12",
+   "total": 23,
+   "phases": 1,
+   "commits": 23,
+   "streams": 1,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-12T13",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-12T14",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-12T15",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-12T16",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-12T17",
+   "total": 5,
+   "phases": 1,
+   "commits": 5,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-12T18",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-12T19",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-12T20",
+   "total": 29,
+   "phases": 1,
+   "commits": 29,
+   "streams": 6,
+   "branches": 5
+  },
+  {
+   "hour": "2026-05-12T21",
+   "total": 41,
+   "phases": 1,
+   "commits": 41,
+   "streams": 15,
+   "branches": 4
+  },
+  {
+   "hour": "2026-05-12T22",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 3,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-12T23",
+   "total": 27,
+   "phases": 1,
+   "commits": 27,
+   "streams": 3,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-13T00",
+   "total": 19,
+   "phases": 1,
+   "commits": 19,
+   "streams": 19,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-13T01",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-13T02",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-13T04",
+   "total": 7,
+   "phases": 1,
+   "commits": 7,
+   "streams": 5,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-13T05",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 2,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-13T06",
+   "total": 7,
+   "phases": 1,
+   "commits": 7,
+   "streams": 7,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-13T07",
+   "total": 2,
+   "phases": 1,
+   "commits": 2,
+   "streams": 2,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-13T08",
+   "total": 14,
+   "phases": 1,
+   "commits": 14,
+   "streams": 13,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-13T09",
+   "total": 12,
+   "phases": 1,
+   "commits": 12,
+   "streams": 10,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-13T11",
+   "total": 10,
+   "phases": 1,
+   "commits": 10,
+   "streams": 10,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-13T12",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-13T13",
+   "total": 11,
+   "phases": 1,
+   "commits": 11,
+   "streams": 8,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-13T14",
+   "total": 12,
+   "phases": 1,
+   "commits": 12,
+   "streams": 11,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-13T15",
+   "total": 14,
+   "phases": 1,
+   "commits": 14,
+   "streams": 10,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-13T16",
+   "total": 7,
+   "phases": 1,
+   "commits": 7,
+   "streams": 7,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-13T17",
+   "total": 10,
+   "phases": 1,
+   "commits": 10,
+   "streams": 10,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-13T18",
+   "total": 6,
+   "phases": 1,
+   "commits": 6,
+   "streams": 5,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-13T19",
+   "total": 10,
+   "phases": 1,
+   "commits": 10,
+   "streams": 9,
+   "branches": 3
+  },
+  {
+   "hour": "2026-05-13T20",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-13T21",
+   "total": 3,
+   "phases": 1,
+   "commits": 3,
+   "streams": 3,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-14T00",
+   "total": 7,
+   "phases": 1,
+   "commits": 7,
+   "streams": 5,
+   "branches": 2
+  },
+  {
+   "hour": "2026-05-14T01",
+   "total": 4,
+   "phases": 1,
+   "commits": 4,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-14T04",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-14T05",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-14T06",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  },
+  {
+   "hour": "2026-05-14T07",
+   "total": 1,
+   "phases": 1,
+   "commits": 1,
+   "streams": 1,
+   "branches": 1
+  }
+ ],
+ "merge_rows": [
+  {
+   "sha": "cf54191a0a",
+   "at": "2026-05-07T00:37:22.000Z",
+   "branch": "diverged",
+   "into_mainline": true,
+   "side_commits": 16,
+   "side_files": 110,
+   "both_sides_touched": 95,
+   "both_changed_differently": 90,
+   "merged_to_new_text": 52,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-e: merge diverged branch (detached-HEAD recovery)"
+  },
+  {
+   "sha": "3b7fd5188d",
+   "at": "2026-05-07T07:08:59.000Z",
+   "branch": "self-default",
+   "into_mainline": false,
+   "side_commits": 1,
+   "side_files": 6,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge self-default worktree"
+  },
+  {
+   "sha": "db5e8936e7",
+   "at": "2026-05-07T07:09:10.000Z",
+   "branch": "option-ptr-ffi",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 9,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge option-ptr-ffi worktree"
+  },
+  {
+   "sha": "96884aef05",
+   "at": "2026-05-07T07:10:15.000Z",
+   "branch": "send-sync-audit",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 12,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge send-sync-audit worktree (12 unnecessary removed, 3 UNSOUND flagged)"
+  },
+  {
+   "sha": "359d3abeeb",
+   "at": "2026-05-07T07:12:58.000Z",
+   "branch": "maybe-result",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 12,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge maybe-result"
+  },
+  {
+   "sha": "ea4b65fcf7",
+   "at": "2026-05-07T07:13:15.000Z",
+   "branch": "box-from-raw-arena",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge box-from-raw-arena worktree (419 audited, 1 fixed, 3 SUSPECT)"
+  },
+  {
+   "sha": "add5b8dcd1",
+   "at": "2026-05-07T07:14:54.000Z",
+   "branch": "mem-zeroed",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 27,
+   "both_sides_touched": 4,
+   "both_changed_differently": 4,
+   "merged_to_new_text": 4,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge mem-zeroed worktree (27 converted, 192 C POD documented)"
+  },
+  {
+   "sha": "247ed72cf8",
+   "at": "2026-05-07T07:18:43.000Z",
+   "branch": "intrusive-refcount",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 22,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge intrusive-refcount"
+  },
+  {
+   "sha": "157895515f",
+   "at": "2026-05-07T07:22:37.000Z",
+   "branch": "transmute-static",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 33,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge transmute-static worktree (38 transmutes → StoreStr)"
+  },
+  {
+   "sha": "ec319c0970",
+   "at": "2026-05-07T07:23:27.000Z",
+   "branch": "jscell",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 139,
+   "both_sides_touched": 22,
+   "both_changed_differently": 22,
+   "merged_to_new_text": 22,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge jscell worktree (JsCell, safe VM::get, codegen helpers — generated unsafe 4254→838)"
+  },
+  {
+   "sha": "15f8f84b59",
+   "at": "2026-05-07T07:27:32.000Z",
+   "branch": "babylist-vec",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 123,
+   "both_sides_touched": 43,
+   "both_changed_differently": 43,
+   "merged_to_new_text": 43,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge babylist-vec worktree (272→49, ByteList=Vec<u8>)"
+  },
+  {
+   "sha": "5108ae3b1c",
+   "at": "2026-05-07T08:00:08.000Z",
+   "branch": "unsound-sync",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 3,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge unsound-sync worktree (3 UNSOUND fixed)"
+  },
+  {
+   "sha": "71dd907289",
+   "at": "2026-05-07T08:03:39.000Z",
+   "branch": "storeslice",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 17,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge storeslice worktree (StoreSlice<T>, 11 transmutes removed)"
+  },
+  {
+   "sha": "f48b1b8c86",
+   "at": "2026-05-07T08:05:56.000Z",
+   "branch": "as-cast",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 12,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge as-cast worktree (66 lossy→try_from, 197 lossless→From)"
+  },
+  {
+   "sha": "c04991c4bc",
+   "at": "2026-05-07T08:06:43.000Z",
+   "branch": "jsc-vm-safe",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 33,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge jsc-vm-safe worktree (99 sites, safe helpers)"
+  },
+  {
+   "sha": "0439a1c34c",
+   "at": "2026-05-07T08:08:59.000Z",
+   "branch": "unwrap-question",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 379,
+   "both_sides_touched": 35,
+   "both_changed_differently": 35,
+   "merged_to_new_text": 35,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge unwrap-question worktree (4625→2009)"
+  },
+  {
+   "sha": "e1d89e73b7",
+   "at": "2026-05-07T08:14:33.000Z",
+   "branch": "install-lockfile-arena",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 38,
+   "both_sides_touched": 20,
+   "both_changed_differently": 20,
+   "merged_to_new_text": 20,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge install-lockfile-arena (resolved)"
+  },
+  {
+   "sha": "cdc762e938",
+   "at": "2026-05-07T08:19:14.000Z",
+   "branch": "delete-babylist",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 145,
+   "both_sides_touched": 96,
+   "both_changed_differently": 96,
+   "merged_to_new_text": 95,
+   "conflicts_named_in_subject": 12,
+   "subject": "phase-f: merge delete-babylist (12 conflicts resolved)"
+  },
+  {
+   "sha": "de7d36a1b4",
+   "at": "2026-05-07T08:23:20.000Z",
+   "branch": "multiarraylist-v2",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 112,
+   "both_sides_touched": 93,
+   "both_changed_differently": 92,
+   "merged_to_new_text": 92,
+   "conflicts_named_in_subject": 20,
+   "subject": "phase-f: merge multiarraylist-v2 (20 conflicts resolved)"
+  },
+  {
+   "sha": "d5c15c544f",
+   "at": "2026-05-07T08:25:35.000Z",
+   "branch": "string-builder-split",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 8,
+   "both_sides_touched": 6,
+   "both_changed_differently": 6,
+   "merged_to_new_text": 6,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge string-builder-split (LockfileFields destructure)"
+  },
+  {
+   "sha": "395ad00800",
+   "at": "2026-05-07T08:29:24.000Z",
+   "branch": "runtime-hostfn-safe",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 34,
+   "both_sides_touched": 26,
+   "both_changed_differently": 26,
+   "merged_to_new_text": 22,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge runtime-hostfn-safe (8 resolved)"
+  },
+  {
+   "sha": "2265ac6af6",
+   "at": "2026-05-07T08:29:48.000Z",
+   "branch": "http-body-lifetime",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 23,
+   "both_sides_touched": 9,
+   "both_changed_differently": 9,
+   "merged_to_new_text": 8,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge http-body-lifetime (state_machine_prelude deleted)"
+  },
+  {
+   "sha": "e471310241",
+   "at": "2026-05-07T08:36:05.000Z",
+   "branch": "jscell-unsafe",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge jscell-unsafe (get_mut unsafe, with_mut)"
+  },
+  {
+   "sha": "0754ac0d72",
+   "at": "2026-05-07T08:37:16.000Z",
+   "branch": "improper-ctypes",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge improper-ctypes (deny added, 3 fixed)"
+  },
+  {
+   "sha": "6bd33b9d3b",
+   "at": "2026-05-07T08:38:19.000Z",
+   "branch": "clone-audit",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 17,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge clone-audit (117 audited, JobCtx Clone removed)"
+  },
+  {
+   "sha": "0571144d2e",
+   "at": "2026-05-07T08:40:32.000Z",
+   "branch": "extern-c-unwind",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 4,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge extern-c-unwind (catch_unwind in host_fn helpers, panic→JS Error)"
+  },
+  {
+   "sha": "a33c7c8a4d",
+   "at": "2026-05-07T08:41:23.000Z",
+   "branch": "must-use-jsresult",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 168,
+   "both_sides_touched": 4,
+   "both_changed_differently": 4,
+   "merged_to_new_text": 4,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge must-use-jsresult"
+  },
+  {
+   "sha": "c17ee86a9e",
+   "at": "2026-05-07T08:43:07.000Z",
+   "branch": "pub-tighten",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 90,
+   "both_sides_touched": 50,
+   "both_changed_differently": 50,
+   "merged_to_new_text": 50,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge pub-tighten"
+  },
+  {
+   "sha": "efafc3cf5b",
+   "at": "2026-05-07T08:50:35.000Z",
+   "branch": "static-global-lie",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 28,
+   "both_sides_touched": 10,
+   "both_changed_differently": 10,
+   "merged_to_new_text": 10,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge static-global-lie (GlobalRef newtype, 27 fields)"
+  },
+  {
+   "sha": "760b81267c",
+   "at": "2026-05-07T09:24:02.000Z",
+   "branch": "test-runner",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 8,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-g: merge test-runner (6 blockers, 4 test files completing)"
+  },
+  {
+   "sha": "7d19bc8095",
+   "at": "2026-05-07T09:39:03.000Z",
+   "branch": "cross-freebsd",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 26,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge cross-freebsd (compiles, 2-vote reviewed, dirent UB + GetErrno fixed)"
+  },
+  {
+   "sha": "20fde2f762",
+   "at": "2026-05-07T09:39:03.000Z",
+   "branch": "linux-syscall",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 6,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge linux-syscall (rustix raw syscalls, 2-vote reviewed)"
+  },
+  {
+   "sha": "35ea2d6d98",
+   "at": "2026-05-07T09:43:09.000Z",
+   "branch": "cross-macos",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 37,
+   "both_sides_touched": 19,
+   "both_changed_differently": 19,
+   "merged_to_new_text": 14,
+   "conflicts_named_in_subject": 13,
+   "subject": "phase-f: merge cross-macos (13 conflicts resolved)"
+  },
+  {
+   "sha": "3e01c04542",
+   "at": "2026-05-07T10:17:25.000Z",
+   "branch": "EventLoopHandle",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 9,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-g: merge EventLoopHandle convention fix (8 sites)"
+  },
+  {
+   "sha": "fe98df5fb6",
+   "at": "2026-05-07T10:47:27.000Z",
+   "branch": "ptr-cast",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 565,
+   "both_sides_touched": 57,
+   "both_changed_differently": 57,
+   "merged_to_new_text": 55,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge ptr-cast (19 resolved)"
+  },
+  {
+   "sha": "8d29111072",
+   "at": "2026-05-07T11:16:13.000Z",
+   "branch": "static-mut",
+   "into_mainline": false,
+   "side_commits": 7,
+   "side_files": 131,
+   "both_sides_touched": 106,
+   "both_changed_differently": 104,
+   "merged_to_new_text": 101,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge static-mut (22 resolved)"
+  },
+  {
+   "sha": "7c6fca8153",
+   "at": "2026-05-07T11:17:12.000Z",
+   "branch": "static-mut",
+   "into_mainline": true,
+   "side_commits": 8,
+   "side_files": 131,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge static-mut (RacyCell/Atomic*, 4-round reviewed)"
+  },
+  {
+   "sha": "fda62c0ba0",
+   "at": "2026-05-07T11:25:04.000Z",
+   "branch": "accessor-sweep",
+   "into_mainline": false,
+   "side_commits": 48,
+   "side_files": 96,
+   "both_sides_touched": 87,
+   "both_changed_differently": 87,
+   "merged_to_new_text": 87,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge accessor-sweep (14 resolved)"
+  },
+  {
+   "sha": "d649427634",
+   "at": "2026-05-07T11:25:28.000Z",
+   "branch": "accessor-sweep",
+   "into_mainline": true,
+   "side_commits": 49,
+   "side_files": 96,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge accessor-sweep (48 structs, ~270 unsafe removed, 4-round reviewed)"
+  },
+  {
+   "sha": "1bc4f31d6f",
+   "at": "2026-05-07T13:34:46.000Z",
+   "branch": "cross-windows",
+   "into_mainline": false,
+   "side_commits": 16,
+   "side_files": 148,
+   "both_sides_touched": 114,
+   "both_changed_differently": 114,
+   "merged_to_new_text": 113,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge cross-windows (22 resolved)"
+  },
+  {
+   "sha": "04a57a8f70",
+   "at": "2026-05-07T13:35:47.000Z",
+   "branch": "cross-windows",
+   "into_mainline": true,
+   "side_commits": 17,
+   "side_files": 148,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge cross-windows (libuv 2624-line port + tier fixes, 8-round reviewed)"
+  },
+  {
+   "sha": "372f24e784",
+   "at": "2026-05-07T21:28:34.000Z",
+   "branch": "allocator-sweep",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 226,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge allocator-sweep (allocator refs 454→32, 93% reduction, 1-round reviewed)"
+  },
+  {
+   "sha": "5be87f8562",
+   "at": "2026-05-07T22:48:10.000Z",
+   "branch": "bun-build",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 3,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge bun-build (post_process_js_chunk UAF fix — three.js byte-identical, 1-round reviewed)"
+  },
+  {
+   "sha": "618c228058",
+   "at": "2026-05-07T22:59:18.000Z",
+   "branch": "uws-callback",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 13,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge uws-callback macro (42 sites, 2-round reviewed)"
+  },
+  {
+   "sha": "d8dccabe9d",
+   "at": "2026-05-07T23:00:24.000Z",
+   "branch": "bun-install",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 5,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge bun-install (uninit-Drop fix, bun.lockb/.npm-cache Zig↔Rust binary-compat verified, layout_asserts pins, 2-round reviewed)"
+  },
+  {
+   "sha": "939ededfdc",
+   "at": "2026-05-07T23:03:17.000Z",
+   "branch": "tswarm-s2",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 8,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-g: merge tswarm-s2 (mid-flight)"
+  },
+  {
+   "sha": "d9b0aeec3d",
+   "at": "2026-05-07T23:03:17.000Z",
+   "branch": "tswarm-s1",
+   "into_mainline": true,
+   "side_commits": 8,
+   "side_files": 9,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-g: merge tswarm-s1 (mid-flight)"
+  },
+  {
+   "sha": "f7d7367229",
+   "at": "2026-05-07T23:06:04.000Z",
+   "branch": "nomangle-hostfn",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 16,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge nomangle-hostfn codegen (generate-host-exports.ts, 26 conversions, sysv64 ABI fix, 2-round reviewed)"
+  },
+  {
+   "sha": "a979ff0dbe",
+   "at": "2026-05-07T23:07:34.000Z",
+   "branch": "tswarm-s0",
+   "into_mainline": true,
+   "side_commits": 13,
+   "side_files": 18,
+   "both_sides_touched": 4,
+   "both_changed_differently": 4,
+   "merged_to_new_text": 4,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-g: merge tswarm-s0"
+  },
+  {
+   "sha": "ecbed98f96",
+   "at": "2026-05-07T23:11:40.000Z",
+   "branch": "tswarm-s3",
+   "into_mainline": true,
+   "side_commits": 14,
+   "side_files": 12,
+   "both_sides_touched": 6,
+   "both_changed_differently": 6,
+   "merged_to_new_text": 4,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-g: merge tswarm-s3"
+  },
+  {
+   "sha": "2890ea6125",
+   "at": "2026-05-07T23:14:32.000Z",
+   "branch": "tswarm-s1",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-g: merge tswarm-s1 (final)"
+  },
+  {
+   "sha": "ff0eb2eef4",
+   "at": "2026-05-07T23:55:44.000Z",
+   "branch": "bun-build-2",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 12,
+   "both_sides_touched": 6,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge bun-build-2 (resolved)"
+  },
+  {
+   "sha": "f8440108a3",
+   "at": "2026-05-08T01:02:59.000Z",
+   "branch": "filepoll-aio",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 8,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge filepoll-aio (io↔aio inverted, 16 externs deleted, 1-round reviewed)"
+  },
+  {
+   "sha": "4827bf88f4",
+   "at": "2026-05-08T01:08:53.000Z",
+   "branch": "uws-merge",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 15,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge uws-merge (-1087 lines, 7/11 dup types, ssl_wrapper unified, SSLWrapper Drop)"
+  },
+  {
+   "sha": "205c0cfa2a",
+   "at": "2026-05-08T01:11:43.000Z",
+   "branch": "bundler-misplaced",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 25,
+   "both_sides_touched": 16,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge bundler-misplaced (CachedBytecode rename, BundledAst.css typed, 8 downcasts removed)"
+  },
+  {
+   "sha": "a98f3b39f9",
+   "at": "2026-05-08T01:13:42.000Z",
+   "branch": "atomicptr-extern",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 14,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge atomicptr-extern (7 hooks → link-time, round-1 only — round-2 was phantom-parity)"
+  },
+  {
+   "sha": "15cae5fc4e",
+   "at": "2026-05-08T01:13:55.000Z",
+   "branch": "stringptr-dedup",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 10,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-f: merge stringptr-dedup (4→1, bun_core canonical)"
+  },
+  {
+   "sha": "8485fff302",
+   "at": "2026-05-08T02:53:42.000Z",
+   "branch": "idiom",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge idiom #7 resolver (ExtOrder enum tag, fs_mut accessor)"
+  },
+  {
+   "sha": "c38ec73094",
+   "at": "2026-05-08T02:56:17.000Z",
+   "branch": "idiom",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 10,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge idiom #5+#8 privatize (11 pub removals, from_timer_ptr, init_exact_refs ctor)"
+  },
+  {
+   "sha": "eb0a2560be",
+   "at": "2026-05-08T02:57:14.000Z",
+   "branch": "idiom",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1289,
+   "both_sides_touched": 17,
+   "both_changed_differently": 17,
+   "merged_to_new_text": 17,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge idiom #6 PORT-STATUS sweep (-8320 lines, 1289 files)"
+  },
+  {
+   "sha": "2b881c8499",
+   "at": "2026-05-08T03:19:28.000Z",
+   "branch": "idiom",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 5,
+   "both_sides_touched": 5,
+   "both_changed_differently": 5,
+   "merged_to_new_text": 5,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge idiom #3 splitmut (multi_array_columns! split_mut/split_raw, drop col_ptr! macros, free-fn LinkerGraph helpers)"
+  },
+  {
+   "sha": "b48a7d327c",
+   "at": "2026-05-08T03:23:52.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 8,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: codegen-resolver — drop prior-output bootstrap, walk pub mod + pub use, explicit rustPath, untrack generated file"
+  },
+  {
+   "sha": "8845285093",
+   "at": "2026-05-08T03:26:22.000Z",
+   "branch": "hooks-layering-fix",
+   "into_mainline": false,
+   "side_commits": 14,
+   "side_files": 50,
+   "both_sides_touched": 45,
+   "both_changed_differently": 45,
+   "merged_to_new_text": 44,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge hooks-layering-fix v2 (8 resolved)"
+  },
+  {
+   "sha": "b8e15c4efa",
+   "at": "2026-05-08T03:28:22.000Z",
+   "branch": "hooks-layering-fix",
+   "into_mainline": true,
+   "side_commits": 15,
+   "side_files": 50,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge hooks-layering-fix v2 (7 hooks → move-data-down, +4 extern eliminated, 110→64)"
+  },
+  {
+   "sha": "2a0ca4a5ce",
+   "at": "2026-05-08T03:39:31.000Z",
+   "branch": "storeslice",
+   "into_mainline": false,
+   "side_commits": 6,
+   "side_files": 50,
+   "both_sides_touched": 48,
+   "both_changed_differently": 48,
+   "merged_to_new_text": 48,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge storeslice (9 resolved)"
+  },
+  {
+   "sha": "48e6b6c349",
+   "at": "2026-05-08T03:40:14.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 11,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: dedup hand-written externs vs codegen (27→0 redeclared warnings, -200 LOC)"
+  },
+  {
+   "sha": "c15eed02e7",
+   "at": "2026-05-08T03:40:37.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 9,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: lolhtml → workspace path-dep (one std, release link fixed); clear 2 stale link blockers"
+  },
+  {
+   "sha": "4316bb04c2",
+   "at": "2026-05-08T03:40:56.000Z",
+   "branch": "idiom",
+   "into_mainline": true,
+   "side_commits": 7,
+   "side_files": 50,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge idiom #2 storeslice (AST → StoreSlice/StoreStr, ~100 unsafe derefs removed, 61→3)"
+  },
+  {
+   "sha": "f732bab660",
+   "at": "2026-05-08T03:42:10.000Z",
+   "branch": "idiom",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 5,
+   "both_sides_touched": 5,
+   "both_changed_differently": 5,
+   "merged_to_new_text": 5,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge idiom #1 mgrptr (PackageInstaller/Installer BACKREF fields → *mut + accessors, SB-aware, 28→22)"
+  },
+  {
+   "sha": "e634502154",
+   "at": "2026-05-08T04:11:00.000Z",
+   "branch": "main",
+   "into_mainline": true,
+   "side_commits": 0,
+   "side_files": 0,
+   "both_sides_touched": 3,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "merge main (11 commits: TLS close, publish readme, MessageEvent locker, DCE else trim, pidfd EPOLLONESHOT, etc.)"
+  },
+  {
+   "sha": "1c5c61c1dd",
+   "at": "2026-05-08T05:01:21.000Z",
+   "branch": "perf-bundler",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 7,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge perf-bundler r1 (lexer jump-table + OneShotHasher + ASCII fast-path, three.js 1.29×→1.14× vs Zig; reviewer fixes: nextCodepoint invalid-UTF8 sema"
+  },
+  {
+   "sha": "c20f8c74f1",
+   "at": "2026-05-08T05:06:18.000Z",
+   "branch": "niche-expr",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 7,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge niche-expr (Expr/Stmt/Binding already match Zig sizes; add const-assert tripwires + B payload StoreRef consistency)"
+  },
+  {
+   "sha": "48b58dc7d8",
+   "at": "2026-05-08T05:08:11.000Z",
+   "branch": "arena-lifetime",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 14,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge arena-lifetime r1 (bundler leak_static 39→9; bump is &'static so slices are already 'static; Chunk paths → Box<[u8]> owned)"
+  },
+  {
+   "sha": "0aa449ee66",
+   "at": "2026-05-08T05:22:15.000Z",
+   "branch": "threadpool-debug",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 7,
+   "both_sides_touched": 3,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 3,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge threadpool-debug (do_step5 was serial TODO leftover; parallelize via worker_pool.each with raw-ptr per-row access — 14.26→27.25 CPUs, wall 1.62→1"
+  },
+  {
+   "sha": "7d0253b428",
+   "at": "2026-05-08T05:33:50.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 4,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: cross-lang LTO via rust-lld (rustLlvmMajor>clangMajor); -Zsplit-lto-unit + CARGO_PROFILE_RELEASE_LTO=off so bitcode SplitLTOUnit matches C++ -fwhole-pr"
+  },
+  {
+   "sha": "6abee069ba",
+   "at": "2026-05-08T05:37:16.000Z",
+   "branch": "arena-lifetime",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 41,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge arena-lifetime r2 (in-scope leak_static 126→0; cli_arena() LazyLock + cli_dupe for ~45 one-shot CLI sites; reviewers reverted Box::leak→into_raw "
+  },
+  {
+   "sha": "a5450572fb",
+   "at": "2026-05-08T06:00:25.000Z",
+   "branch": "unsafe-uws-callback",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 7,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge unsafe-uws-callback (thunk.rs centralized dispatcher, -26 net unsafe)"
+  },
+  {
+   "sha": "76188a70b8",
+   "at": "2026-05-08T06:04:58.000Z",
+   "branch": "transmute-audit",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 24,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge transmute-audit r1 (467→423; layout-pun→to_ne_bytes, ptr-pun→.cast, repr(transparent)→ctors, enum→match, identity transmutes deleted)"
+  },
+  {
+   "sha": "6e2f9ddd82",
+   "at": "2026-05-08T06:06:38.000Z",
+   "branch": "storeslice-runtime",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 13,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge storeslice-runtime r1 (bun_ptr::RawSlice<T>/BackRef<T> + 16 fields, -28; finding: ~820 are host_fn param derefs not StoreSlice targets)"
+  },
+  {
+   "sha": "6ae78faa69",
+   "at": "2026-05-08T06:11:34.000Z",
+   "branch": "from_raw_parts",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 54,
+   "both_sides_touched": 3,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 3,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge from_raw_parts (932→790; bun_core::ffi::slice null-safe helper, reverted on provably-non-null hot paths per review)"
+  },
+  {
+   "sha": "368eee2a5d",
+   "at": "2026-05-08T06:13:51.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 22,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: delete AllocationScope (-1034 LOC, 102→0; Rust ownership IS the tracker)"
+  },
+  {
+   "sha": "dad36cdd48",
+   "at": "2026-05-08T06:23:13.000Z",
+   "branch": "transmute-audit",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 58,
+   "both_sides_touched": 7,
+   "both_changed_differently": 7,
+   "merged_to_new_text": 7,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge transmute-audit r2 (423→297; PathUnit trait dispatch, 14 enums→match, IntoStr centralized, WindowsNamedPipe fn-ptr→closure)"
+  },
+  {
+   "sha": "a8737794ed",
+   "at": "2026-05-08T06:26:23.000Z",
+   "branch": "storeslice-runtime",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 13,
+   "both_sides_touched": 3,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 3,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge storeslice-runtime r2 (19 BackRef<T> fields, -44; remaining self.field candidates are nullable)"
+  },
+  {
+   "sha": "607fcacefd",
+   "at": "2026-05-08T06:27:12.000Z",
+   "branch": "hostfn-safesig",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 22,
+   "both_sides_touched": 3,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 3,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge hostfn-safesig (26 hand-written #[no_mangle] → HOST_EXPORT codegen, 318→263; reviewers flagged 7 grep-evasion sites)"
+  },
+  {
+   "sha": "c1b7f45c87",
+   "at": "2026-05-08T06:28:45.000Z",
+   "branch": "cyclebreak-audit",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 119,
+   "both_sides_touched": 33,
+   "both_changed_differently": 33,
+   "merged_to_new_text": 29,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge cyclebreak-audit (4 resolved: allocation_scope deleted, 3 comment-only)"
+  },
+  {
+   "sha": "e6e32009b5",
+   "at": "2026-05-08T06:44:48.000Z",
+   "branch": "perf-bundler",
+   "into_mainline": true,
+   "side_commits": 4,
+   "side_files": 13,
+   "both_sides_touched": 3,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 3,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge perf-bundler r2 (three.js 1.14×→1.05×; ArrayHashMap index_header + length-bucketed keywords drop SipHash, iterative Symbol::Map::follow, inline l"
+  },
+  {
+   "sha": "06843f668e",
+   "at": "2026-05-08T06:45:22.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 262,
+   "both_sides_touched": 74,
+   "both_changed_differently": 74,
+   "merged_to_new_text": 72,
+   "conflicts_named_in_subject": 0,
+   "subject": "analyze_transpiled_module: guard finalize() in into_deserialized"
+  },
+  {
+   "sha": "2ac6001a2f",
+   "at": "2026-05-08T07:17:20.000Z",
+   "branch": "refptr-derive",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 22,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge refptr-derive (#[derive(CellRefCounted/ThreadSafeRefCounted)] + default destroy, 18 types migrated, 70→33)"
+  },
+  {
+   "sha": "47b15bef81",
+   "at": "2026-05-08T07:32:31.000Z",
+   "branch": "threadpool-send-audit",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 12,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge threadpool-send-audit (V:Send bound; rename_symbols_in_chunk had do_step5-shape aliased-&mut UB, fixed via raw + split_raw; 16 CONCURRENCY docs; "
+  },
+  {
+   "sha": "d8265aec32",
+   "at": "2026-05-08T07:44:28.000Z",
+   "branch": "perf-beat-zig",
+   "into_mainline": true,
+   "side_commits": 4,
+   "side_files": 8,
+   "both_sides_touched": 5,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge perf-beat-zig (three.js 1.02→0.99× — #[cold] next_codepoint_multibyte stops LTO over-inline, do_step5 map hoist, StringHashMap single entry() pro"
+  },
+  {
+   "sha": "d4bf5fb961",
+   "at": "2026-05-08T09:00:39.000Z",
+   "branch": "ci-rust",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 17,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge ci-rust (BuildMode rust-only, .buildkite step keys, package.json rust:check/fmt/clippy, artifacts, rustc annotations, docs/CI_RUST_MIGRATION.md; "
+  },
+  {
+   "sha": "82edaa8de9",
+   "at": "2026-05-08T09:15:01.000Z",
+   "branch": "noalias-shrink",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 14,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge noalias-shrink (Expr 32→24; Identifier flags packed in Ref bits 28-30, masked from identity; insn 0.986× vs Zig, 100×-bench cycles −5.7%, sha-ide"
+  },
+  {
+   "sha": "cf6e1855dd",
+   "at": "2026-05-08T09:37:34.000Z",
+   "branch": "raii-args",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 6,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge raii-args r1 (35 deinit() no-ops → Drop, 10 scopeguard errdefer wrappers deleted; 128→79; fs.test 244/5 baseline-parity)"
+  },
+  {
+   "sha": "0ef47b039d",
+   "at": "2026-05-08T09:55:04.000Z",
+   "branch": "noalias-visitor",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 5,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge noalias-visitor (visit_expr (Expr)->Expr → (&mut Expr); noalias verified in LLVM IR; single cycles -2.3%, 100×-bench 0.76× vs Zig, sha-identical)"
+  },
+  {
+   "sha": "f48350d105",
+   "at": "2026-05-08T12:54:08.000Z",
+   "branch": "raii-protected",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 14,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge raii-protected (bun_jsc::ThreadSafe<T> + Unprotect trait, all deinit_and_unprotect removed ~100 sites, 159→124; reviewers caught Scrypt sync-path"
+  },
+  {
+   "sha": "8f800360aa",
+   "at": "2026-05-08T12:55:36.000Z",
+   "branch": "transmute-r3",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 28,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge transmute-r3 (302→265; WireByteSwap, NodeFSDispatch trait, assume_ssl/tcp, ABIType::from_int, Step/Method match)"
+  },
+  {
+   "sha": "b532547033",
+   "at": "2026-05-08T13:02:40.000Z",
+   "branch": "storeslice-r3",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 35,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge storeslice-r3 (627→469; RawSlice fields jsc/http/install, RacyCell static accessors, detach_lifetime; ~50 lateral as_ptr→as_ref normalized)"
+  },
+  {
+   "sha": "cdcb991882",
+   "at": "2026-05-08T13:18:01.000Z",
+   "branch": "zeroed-cstr",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 129,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge zeroed-cstr (388→31; bun_core::ffi::cstr + zeroed<T> wrappers, 174+179 sites, 130 files; consolidation w/ debug_assert)"
+  },
+  {
+   "sha": "f6dbd81fc9",
+   "at": "2026-05-08T13:27:52.000Z",
+   "branch": "storeslice-r4",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 30,
+   "both_sides_touched": 3,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 3,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge storeslice-r4 (1174→1079; detach_lifetime helpers, S3 RawSlice, Worker::arena/RequestContext::server/Sink::get_this accessors)"
+  },
+  {
+   "sha": "e3e3b4deeb",
+   "at": "2026-05-08T13:32:44.000Z",
+   "branch": "container-of",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 102,
+   "both_sides_touched": 39,
+   "both_changed_differently": 39,
+   "merged_to_new_text": 39,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge container-of (148→40; bun_core::container_of + from_field_ptr! macro, 143 sites, 100 files)"
+  },
+  {
+   "sha": "5aa4cfbdb0",
+   "at": "2026-05-08T13:35:27.000Z",
+   "branch": "transmute-r4",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 40,
+   "both_sides_touched": 17,
+   "both_changed_differently": 17,
+   "merged_to_new_text": 17,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge transmute-r4 (resolved: detach_ref aliases detach_lifetime_ref)"
+  },
+  {
+   "sha": "3a2a483535",
+   "at": "2026-05-08T13:45:07.000Z",
+   "branch": "jsc-hot",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 19,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge jsc-hot (1623→1387; edition-2024 safe fn on extern C decls with value/&T params, JSValue 122→24, JSGlobalObject 50→18, +15 opaque handle types)"
+  },
+  {
+   "sha": "1ec9fad1aa",
+   "at": "2026-05-08T14:26:41.000Z",
+   "branch": "safefn-codegen",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 4,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge safefn-codegen (codegen output 2296→91; host_fn helpers safe, generate-classes/host-exports emit safe thunks; reviewers: host_fn params should be"
+  },
+  {
+   "sha": "6e546e6420",
+   "at": "2026-05-08T14:51:24.000Z",
+   "branch": "safefn-runtime",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 62,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge safefn-runtime (8501→8321; ~50 opaque ZSTs UnsafeCell + ~110 safe fn externs; reviewers caught Loop/SocketGroup noalias UB on reentrant calls — r"
+  },
+  {
+   "sha": "fa84d1ba05",
+   "at": "2026-05-08T15:33:20.000Z",
+   "branch": "hostfn-refs",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 6,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge hostfn-refs (host_fn helpers take &mut T/&JSGlobalObject/&CallFrame — soundness laundering fixed; generated_classes.rs 91→0)"
+  },
+  {
+   "sha": "087afd8d3d",
+   "at": "2026-05-08T15:35:03.000Z",
+   "branch": "jsc-hot-r3",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 43,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge jsc-hot-r3 (1389→1347; all 38 opaque ZSTs → UnsafeCell<[u8;0]> for soundness, +40 safe-fn externs)"
+  },
+  {
+   "sha": "4681b6604d",
+   "at": "2026-05-08T15:47:10.000Z",
+   "branch": "transmute-r5",
+   "into_mainline": true,
+   "side_commits": 12,
+   "side_files": 94,
+   "both_sides_touched": 13,
+   "both_changed_differently": 13,
+   "merged_to_new_text": 12,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge transmute-r5 (174→76; cast_fn_ptr helper, exhaustive enum decoders, detach_lifetime helpers)"
+  },
+  {
+   "sha": "951b4dcf9a",
+   "at": "2026-05-08T15:48:22.000Z",
+   "branch": "jssink-safefn",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge jssink-safefn (codegen 108→0; rustSink() emits safe-body thunks via host_fn_static, getInternalFd C++ now passes wrapped() not JS cell)"
+  },
+  {
+   "sha": "d1bc8c1221",
+   "at": "2026-05-08T15:59:17.000Z",
+   "branch": "safefn-runtime-r2",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 8,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge safefn-runtime-r2"
+  },
+  {
+   "sha": "92f5d178c7",
+   "at": "2026-05-08T15:59:17.000Z",
+   "branch": "safefn-bundler",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 17,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge safefn-bundler"
+  },
+  {
+   "sha": "1e2924eda2",
+   "at": "2026-05-08T16:02:13.000Z",
+   "branch": "safefn-all",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 23,
+   "both_sides_touched": 7,
+   "both_changed_differently": 7,
+   "merged_to_new_text": 7,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge safefn-all"
+  },
+  {
+   "sha": "c0edc80333",
+   "at": "2026-05-08T16:02:13.000Z",
+   "branch": "safefn-install",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 13,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge safefn-install"
+  },
+  {
+   "sha": "c768e067a7",
+   "at": "2026-05-08T16:02:47.000Z",
+   "branch": "finalize-box",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 58,
+   "both_sides_touched": 13,
+   "both_changed_differently": 13,
+   "merged_to_new_text": 13,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge finalize-box (74 finalize impls → Box<Self>; FFI no-op leak per spec, panic-path leak-first for refcounted)"
+  },
+  {
+   "sha": "7097977132",
+   "at": "2026-05-08T16:12:11.000Z",
+   "branch": "vm-accessors",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 7,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge vm-accessors (499→377; reviewers caught ref_concurrently &mut cross-thread UB + IPC SB provenance trap, fixed r2)"
+  },
+  {
+   "sha": "2436ca268f",
+   "at": "2026-05-08T16:23:00.000Z",
+   "branch": "safefn-boringssl",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 27,
+   "both_sides_touched": 9,
+   "both_changed_differently": 9,
+   "merged_to_new_text": 8,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge safefn-boringssl (resolved brotli_c)"
+  },
+  {
+   "sha": "9eaf026fa5",
+   "at": "2026-05-08T16:59:13.000Z",
+   "branch": "collections-r1",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 16,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge collections-r1"
+  },
+  {
+   "sha": "48ef5bd0f6",
+   "at": "2026-05-08T16:59:13.000Z",
+   "branch": "shell-r1",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 27,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge shell-r1"
+  },
+  {
+   "sha": "73196c6b58",
+   "at": "2026-05-08T16:59:14.000Z",
+   "branch": "http-r1",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 15,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge http-r1"
+  },
+  {
+   "sha": "7636b8ef1d",
+   "at": "2026-05-08T17:00:32.000Z",
+   "branch": "noalias-reentry",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 3,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge noalias-reentry r1 (fire/run_immediate_task → *mut Self end-to-end; 26 hazard sites audited, sockets/fs_watcher/ServerWebSocket flagged for r2)"
+  },
+  {
+   "sha": "74070ec908",
+   "at": "2026-05-08T21:11:15.000Z",
+   "branch": "crossplat",
+   "into_mainline": true,
+   "side_commits": 7,
+   "side_files": 53,
+   "both_sides_touched": 4,
+   "both_changed_differently": 4,
+   "merged_to_new_text": 4,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge crossplat"
+  },
+  {
+   "sha": "73dfde907b",
+   "at": "2026-05-08T21:11:15.000Z",
+   "branch": "jsparser-r1",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 28,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge jsparser-r1"
+  },
+  {
+   "sha": "3769ce5b66",
+   "at": "2026-05-08T21:23:42.000Z",
+   "branch": "install-r2",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge install-r2 (migration.rs column accessors, -11)"
+  },
+  {
+   "sha": "ebe0de08ec",
+   "at": "2026-05-08T21:25:13.000Z",
+   "branch": "bundler-r2",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 8,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge bundler-r2 (LinkerGraph::symbol accessors, GenerateChunkCtx::c, doStep5 &mut→&; -5)"
+  },
+  {
+   "sha": "d613e6fa71",
+   "at": "2026-05-08T21:27:50.000Z",
+   "branch": "http-r2",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 3,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge http-r2 (h3_client client_mut/stream_mut accessors, callbacks session_of/stream_of, ssl_config cstr_bytes; -24)"
+  },
+  {
+   "sha": "ef7ff9f97b",
+   "at": "2026-05-08T21:34:25.000Z",
+   "branch": "sslconfig-leak",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge sslconfig-leak (Drop impls in jsc/generated.rs deref the +1 WTFStringImpl refs adopted by bindgen SSLConfig/SocketConfig conversion — bun_string:"
+  },
+  {
+   "sha": "1d02373e95",
+   "at": "2026-05-08T21:45:51.000Z",
+   "branch": "noalias-reentry",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 13,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge noalias-reentry r2 — socket_body on_*, ServerWebSocket on_*, fs_watcher emit_*, EventLoopTimer::fire all converted &mut self → *mut Self; trampol"
+  },
+  {
+   "sha": "68fb063c6d",
+   "at": "2026-05-08T21:51:47.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 19,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: remove vestigial Zig build infra — delete scripts/build/zig.ts (zig_build ninja rule, toolchain download, cache dirs), pack-codegen-for-zig-team.ts, ro"
+  },
+  {
+   "sha": "db4ffbf8b5",
+   "at": "2026-05-08T22:08:45.000Z",
+   "branch": "jsc-hot-r4",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 3,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge jsc-hot-r4 (StringBuilder externs → &mut StringBuilder + safe fn, TextCodec/array_buffer safe-fn; -12)"
+  },
+  {
+   "sha": "39268ca22d",
+   "at": "2026-05-08T22:15:05.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 7,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: generate .cargo/config.toml from the build system (scripts/build/cargo-config.ts, written at configure time from discovered toolchain cfg.cxx; gitignor"
+  },
+  {
+   "sha": "0336c866d4",
+   "at": "2026-05-08T22:21:50.000Z",
+   "branch": "backref-rawslice",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 4,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge backref-rawslice (RequestContext.server→BackRef<ThisServer>, NewHotReloader.ctx→BackRef<Ctx>, ModuleInfoDeserialized 6 self-ref views→RawSlice<T>"
+  },
+  {
+   "sha": "17f90976e7",
+   "at": "2026-05-08T22:23:52.000Z",
+   "branch": "opaque-ffi",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 14,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge opaque-ffi (all 22 remaining _p:[u8;0] opaque markers → UnsafeCell<[u8;0]> across tcc_sys/mimalloc_sys/uws/sourcemap/sha_hmac/CppWebSocket/etc; Z"
+  },
+  {
+   "sha": "fa107ddfd2",
+   "at": "2026-05-08T22:28:48.000Z",
+   "branch": "refptr-migration",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 9,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge refptr-migration (resolved)"
+  },
+  {
+   "sha": "5c6a602f24",
+   "at": "2026-05-08T22:36:04.000Z",
+   "branch": "claude/phase-h-vm-accessors-r2",
+   "into_mainline": false,
+   "side_commits": 1,
+   "side_files": 4,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-h-vm-accessors-r2' into claude/phase-h-merge-fixup"
+  },
+  {
+   "sha": "880150ffdb",
+   "at": "2026-05-08T22:38:46.000Z",
+   "branch": "claude/phase-h-leak-audit",
+   "into_mainline": false,
+   "side_commits": 3,
+   "side_files": 36,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-h-leak-audit' into claude/phase-h-merge-fixup"
+  },
+  {
+   "sha": "a6de7f6f19",
+   "at": "2026-05-08T22:55:01.000Z",
+   "branch": "warnings",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 20,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge warnings (293→0; fix JsClass/codegen_cached_accessors macros to emit same sigs as generate-classes.ts (267 clashing_extern_declarations); drops ~"
+  },
+  {
+   "sha": "9f0e3f7162",
+   "at": "2026-05-08T22:55:01.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync to main"
+  },
+  {
+   "sha": "749f408067",
+   "at": "2026-05-08T22:57:43.000Z",
+   "branch": "main",
+   "into_mainline": false,
+   "side_commits": 0,
+   "side_files": 0,
+   "both_sides_touched": 7,
+   "both_changed_differently": 7,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/main' into claude/phase-a-port"
+  },
+  {
+   "sha": "fff91458d1",
+   "at": "2026-05-08T22:58:23.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 15,
+   "side_files": 54,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: land merge-fixup (vm-accessors-r2 + leak-audit + refptr-migration cleanly resolved; vm()→*const VirtualMachine per reviewer; RequestContext has both se"
+  },
+  {
+   "sha": "dc3e9e31a5",
+   "at": "2026-05-08T22:58:23.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 6,
+   "side_files": 29,
+   "both_sides_touched": 4,
+   "both_changed_differently": 4,
+   "merged_to_new_text": 4,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync to main (warnings merge)"
+  },
+  {
+   "sha": "286c46f94a",
+   "at": "2026-05-08T23:09:12.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 27,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "a518b7ed7d",
+   "at": "2026-05-08T23:17:12.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "9f6b0f5978",
+   "at": "2026-05-08T23:27:29.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 21,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: delete css Cargo feature (74→0 cfg gates; bun_css unconditional in bundler+runtime; no_css/no_css_layer dead-code removed; downstream default-features="
+  },
+  {
+   "sha": "0b5df73b9e",
+   "at": "2026-05-08T23:27:29.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 5,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync to main"
+  },
+  {
+   "sha": "aa81f16224",
+   "at": "2026-05-08T23:29:19.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 3,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "413cae2268",
+   "at": "2026-05-09T02:09:33.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 6,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: fix JSC exception scope verification — Rust port lacks cpp.rs codegen equiv of Zig's bun.cpp.* shims, so call sites did '<raw FFI>; if has_exception()'"
+  },
+  {
+   "sha": "5e2719ed63",
+   "at": "2026-05-09T02:32:28.000Z",
+   "branch": "posix-spawn",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge posix-spawn (bun_core spawn_sync_inherit → posix_spawn_bun on Linux/FreeBSD; libc::posix_spawnp only under cfg(macos); tier-0 #[repr(C)] mirror o"
+  },
+  {
+   "sha": "1344160b3b",
+   "at": "2026-05-09T02:32:28.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 3,
+   "side_files": 6,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "ed031387c8",
+   "at": "2026-05-09T02:38:39.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 6,
+   "side_files": 7,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "f843206fe0",
+   "at": "2026-05-09T02:38:40.000Z",
+   "branch": "dd-integ",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 3,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge dd-integ (linux_kernel_version() real uname parser — was 0.0.0 stub so copy_file_range/sendfile/ioctl_ficlone probes always failed; Bun.write(des"
+  },
+  {
+   "sha": "797ba9b2f6",
+   "at": "2026-05-09T03:44:05.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 12,
+   "side_files": 174,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "c9b74f8c10",
+   "at": "2026-05-09T03:48:24.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 26,
+   "side_files": 183,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "21bee13fff",
+   "at": "2026-05-09T03:48:25.000Z",
+   "branch": "dd-node",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 5,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge dd-node (dump_current_stack_trace fn-ptr hook→WTF__DumpStackTrace instead of std::backtrace parsing 500MB .debug_info — closeSync EBADF 7965ms→2."
+  },
+  {
+   "sha": "39d8591a17",
+   "at": "2026-05-09T03:55:42.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 31,
+   "side_files": 181,
+   "both_sides_touched": 6,
+   "both_changed_differently": 6,
+   "merged_to_new_text": 6,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "9f6c77d10c",
+   "at": "2026-05-09T03:55:52.000Z",
+   "branch": "exception-scope",
+   "into_mainline": true,
+   "side_commits": 6,
+   "side_files": 30,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge exception-scope (RAII TopExceptionScopeGuard/ExceptionValidationScopeGuard w/ Drop; top_scope!/validation_scope!/src!() macros; cppbind.ts emits "
+  },
+  {
+   "sha": "56aca06bb0",
+   "at": "2026-05-09T04:45:55.000Z",
+   "branch": "cpp-safe",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 13,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge cpp-safe (cppbind.ts opaque-ZST *mut T→&T, pub fn iff no raw-ptr params survive — cpp.rs 39→15 unsafe fn, 73 safe fn; runtime_embed_file! cfg(bun"
+  },
+  {
+   "sha": "95866a507c",
+   "at": "2026-05-09T05:03:12.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: fix bun build ASAN use-after-poison — clone_for_worker bitwise-copies parent Transpiler then field reassignment drops the bitwise-copied old value (Zig"
+  },
+  {
+   "sha": "ebbc0d52af",
+   "at": "2026-05-09T05:54:27.000Z",
+   "branch": "ptr-audit",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 14,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: merge ptr-audit (PTR_AUDIT.md per-site classification of all 83 copy_nonoverlapping + 18 MaybeUninit fields; 0 active UAF found. Hardened 2 latent: fro"
+  },
+  {
+   "sha": "a1b2b576a0",
+   "at": "2026-05-09T06:20:17.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "f17128cdbb",
+   "at": "2026-05-09T06:50:16.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "docs: PORT_NOTES_PLAN.md (10,220 PORT NOTEs surveyed → 42 ranked refactors; adoption sweeps for BackRef/split_mut/bun_css_derive/PostMatchGuard/pretty_fmt; reje"
+  },
+  {
+   "sha": "f4ecef9f8b",
+   "at": "2026-05-09T07:02:38.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 3,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "b456f331a9",
+   "at": "2026-05-09T07:03:07.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 8,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: replace bitwise Transpiler clone with per-field Transpiler::for_worker / BundleOptions::for_worker / Resolver::for_worker. clone_for_worker + arena_bit"
+  },
+  {
+   "sha": "d6949cacf0",
+   "at": "2026-05-09T07:42:01.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 4,
+   "side_files": 5,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: fix initialize_client_transpiler leak — arena.alloc(ct)→Box on owned_client_transpiler (Drop runs in deinit_without_freeing_arena; bake-borrowed path l"
+  },
+  {
+   "sha": "f4dd944e15",
+   "at": "2026-05-09T07:42:01.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 2,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "b6257e5527",
+   "at": "2026-05-09T08:22:23.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 3,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: musl argv — bun_core::init_argv(argc,argv) called first in main(); argv_storage() reads C-runtime argv (musl-safe), falls back to std::env::args_os() f"
+  },
+  {
+   "sha": "7c4c8e9f6b",
+   "at": "2026-05-09T08:22:40.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 10,
+   "side_files": 11,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "378ce29432",
+   "at": "2026-05-09T08:23:08.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 4,
+   "both_sides_touched": 3,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: bake DevServer 'Failed to load bundled module <abs>' for SCB plugin imports. Two spec divergences: (1) enqueue_parse_task2 rebuilt path via Fs::Path::i"
+  },
+  {
+   "sha": "0b82e4fe8e",
+   "at": "2026-05-09T08:43:15.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 10,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: 37→0 warnings. Deleted hand-written extern decls for ZIG_EXPORT-annotated symbols (JSC__VM__*, BunString__*, Bun__parseDate/gregorianDateTime, JSC__JSG"
+  },
+  {
+   "sha": "3d868981e5",
+   "at": "2026-05-09T09:57:06.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 5,
+   "side_files": 13,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "cfd885e130",
+   "at": "2026-05-09T09:57:07.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 4,
+   "side_files": 4,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: T040 RuntimeTranspilerStore MimallocArena leak — MacroContext.bump arena now lazy (only created in .call() when file actually invokes a macro). Was eag"
+  },
+  {
+   "sha": "5e354d84d0",
+   "at": "2026-05-09T09:57:07.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 5,
+   "side_files": 13,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "ff156adc1f",
+   "at": "2026-05-09T09:57:07.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 8,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: fetch leaks (2 real). FetchTasklet::get redundant Store::ref_() — leaked one Blob.Store ref per fetch with Blob/FormData/URLSearchParams body. HTTPRequ"
+  },
+  {
+   "sha": "e51d12e4bb",
+   "at": "2026-05-09T10:32:30.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 57,
+   "side_files": 57,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: Windows compile 297→0 (53 files, 4 rounds). bun_shim_impl(77) blob/copy_file(36) sys/lib(34) node_fs(28) Blob(24) sys/windows(21) spawn/process(19) blo"
+  },
+  {
+   "sha": "694265e18d",
+   "at": "2026-05-09T11:01:43.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 5,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: 2-vote review of Windows fix (54 files). Found+fixed 5 UB (Box<uv::Pipe> double-free class — Zig *uv.Pipe has no drop, Rust Box auto-drops): js_bun_spa"
+  },
+  {
+   "sha": "1b34a59883",
+   "at": "2026-05-09T12:01:24.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 6,
+   "side_files": 7,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "f6537c126f",
+   "at": "2026-05-09T12:01:25.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 4,
+   "side_files": 206,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: unsafe-wrap — 768 sites converted across 20 strategies (−733 unsafe). 14,355 sites classified (8,452 removable). Top: ZStr/WStr from_buf+from_slice_wit"
+  },
+  {
+   "sha": "02a0ea2f21",
+   "at": "2026-05-09T12:19:03.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 13,
+   "side_files": 213,
+   "both_sides_touched": 68,
+   "both_changed_differently": 68,
+   "merged_to_new_text": 66,
+   "conflicts_named_in_subject": 9,
+   "subject": "sync (post unsafe-wrap): resolve 9 conflicts — keep dedup moves + apply unsafe-wrap conversions to moved code"
+  },
+  {
+   "sha": "3f068f1ac7",
+   "at": "2026-05-09T12:30:29.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 296,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: dedup — 138 clusters (1,118 raw candidates → 177 clusters → 143 accepted/2-vote → 138 applied; 525 agents, 27M tokens). PathName→bun_paths; WTFStringIm"
+  },
+  {
+   "sha": "f53795e839",
+   "at": "2026-05-09T14:05:50.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 226,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: unsafe-wrap r2 — 816 sites/23 strategies (−614 unsafe, 15,084→14,470). Top: ffi::slice(102), opaque_ref/opaque_mut on opaque_ffi! types(88), safe-fn ex"
+  },
+  {
+   "sha": "4d91b0d8ea",
+   "at": "2026-05-09T14:05:50.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "12e47d4571",
+   "at": "2026-05-09T14:09:03.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 16,
+   "both_sides_touched": 7,
+   "both_changed_differently": 7,
+   "merged_to_new_text": 7,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: libuv reliability audit — 29 fixes/16 files (20 UB, 7 leak, 1 race, 1 semantics). Systemic Zig *T→Rust Box<T> auto-drop class: Source::File(mut file)=>"
+  },
+  {
+   "sha": "4f7bb784d5",
+   "at": "2026-05-09T14:32:11.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 7,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: libuv reliability audit r2 — 9 fixes/7 files (7 UB, 2 leak). r1-missed: jsc/ipc.rs sync uv_write error re-enters via backref while &mut self live; cron"
+  },
+  {
+   "sha": "b14cdf2252",
+   "at": "2026-05-09T14:58:40.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 158,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: unsafe-wrap r3 — 535 sites/21 strategies (−428 unsafe). Top: opaque_deref(92), safe-fn extern(51), VM/JSGlobalObject accessors(41), sysctl safe wrapper"
+  },
+  {
+   "sha": "1dd17189ce",
+   "at": "2026-05-09T14:58:40.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 3,
+   "side_files": 7,
+   "both_sides_touched": 7,
+   "both_changed_differently": 7,
+   "merged_to_new_text": 6,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync"
+  },
+  {
+   "sha": "8957e90182",
+   "at": "2026-05-09T15:10:23.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 14,
+   "side_files": 325,
+   "both_sides_touched": 94,
+   "both_changed_differently": 94,
+   "merged_to_new_text": 91,
+   "conflicts_named_in_subject": 11,
+   "subject": "sync (resolve 11 conflicts: keep dedup moves + apply uw-r2/r3 safe-fn conversions to canonical decls)"
+  },
+  {
+   "sha": "0d4d0663d2",
+   "at": "2026-05-09T15:22:32.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 266,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: dedup r2 — 126 clusters (842 raw → 203 → 133 accepted/2-vote → 126; 567 agents, 29M tokens). r2 focused on helper_pattern/trait-impls/error-conversion/"
+  },
+  {
+   "sha": "3a9898199e",
+   "at": "2026-05-09T15:41:48.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 16,
+   "side_files": 495,
+   "both_sides_touched": 80,
+   "both_changed_differently": 80,
+   "merged_to_new_text": 53,
+   "conflicts_named_in_subject": 27,
+   "subject": "sync: 27 conflicts → theirs (12 libuv-audit-touched already correct; 15 dedup/uw-moved — bughunt fixes superseded by canonical-location refactor; bughunt's WRNO"
+  },
+  {
+   "sha": "85126bbf9c",
+   "at": "2026-05-09T16:18:21.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 106,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: windows-bughunt — 77 files, 487 findings (130 UB+49 leak+259 sem). diff-review caught 10 blocking incl. CRITICAL: scopeguard moved self-referential fs_"
+  },
+  {
+   "sha": "9f64cf2c1d",
+   "at": "2026-05-09T19:52:30.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 223,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: unsafe-wrap r4 — 672 sites/23 strategies (−477 unsafe). Top: callback_ctx<T> helper(126), VirtualMachine::get() routing(87), singleton accessors log_mu"
+  },
+  {
+   "sha": "cd5879aeb5",
+   "at": "2026-05-09T20:40:53.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 5,
+   "side_files": 224,
+   "both_sides_touched": 37,
+   "both_changed_differently": 37,
+   "merged_to_new_text": 37,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync (resolve spawn/process.rs: keep pid-hoist + use callback_ctx helper)"
+  },
+  {
+   "sha": "300242f061",
+   "at": "2026-05-09T20:47:03.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 7,
+   "side_files": 74,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: windows-bughunt r2 — 313 bugs/85 files (73 UB, 18 leak, 3 race, 143 semantics). Real fixes: getenv_w NUL guard; FileNotifyChangeFilter repr(transparent"
+  },
+  {
+   "sha": "beaabb5813",
+   "at": "2026-05-09T20:51:42.000Z",
+   "branch": "(sync)",
+   "into_mainline": false,
+   "side_commits": 13,
+   "side_files": 261,
+   "both_sides_touched": 63,
+   "both_changed_differently": 63,
+   "merged_to_new_text": 56,
+   "conflicts_named_in_subject": 0,
+   "subject": "sync (resolve 7: ours for moved-canonicals — basename Windows handled at bun_paths::basename_windows; errno_to_zig_err canonical doesn't use SystemErrno::init; "
+  },
+  {
+   "sha": "73d71d7783",
+   "at": "2026-05-09T21:17:59.000Z",
+   "branch": "(other merge)",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 213,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "phase-h: dedup r3 — 109 clusters (533 agents, 26M tokens). 5-target clean, soundness-audited ScopedRef. diff-review 0 blocking."
+  },
+  {
+   "sha": "17d3b667d9",
+   "at": "2026-05-09T21:21:26.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 12,
+   "both_sides_touched": 5,
+   "both_changed_differently": 5,
+   "merged_to_new_text": 5,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "fc2bc07693",
+   "at": "2026-05-09T21:24:05.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "abbd171210",
+   "at": "2026-05-11T11:19:29.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 4,
+   "side_files": 537,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "74ae58b82f",
+   "at": "2026-05-11T18:18:02.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 7,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "18c56ceb37",
+   "at": "2026-05-11T18:36:33.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "d0fbd419bb",
+   "at": "2026-05-11T21:38:01.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 10,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "728e9920bf",
+   "at": "2026-05-11T21:39:02.000Z",
+   "branch": "claude/phase-a-port",
+   "into_mainline": false,
+   "side_commits": 5,
+   "side_files": 10,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/phase-a-port' into HEAD"
+  },
+  {
+   "sha": "75814df100",
+   "at": "2026-05-11T21:41:27.000Z",
+   "branch": "claude/r2-phase2-migration",
+   "into_mainline": false,
+   "side_commits": 62,
+   "side_files": 189,
+   "both_sides_touched": 10,
+   "both_changed_differently": 10,
+   "merged_to_new_text": 10,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/r2-phase2-migration' into claude/phase-a-port"
+  },
+  {
+   "sha": "0923258030",
+   "at": "2026-05-11T21:43:05.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": false,
+   "side_commits": 58,
+   "side_files": 86,
+   "both_sides_touched": 26,
+   "both_changed_differently": 25,
+   "merged_to_new_text": 25,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "ad4780d923",
+   "at": "2026-05-11T21:52:59.000Z",
+   "branch": "claude/phase-a-port",
+   "into_mainline": true,
+   "side_commits": 122,
+   "side_files": 264,
+   "both_sides_touched": 22,
+   "both_changed_differently": 22,
+   "merged_to_new_text": 21,
+   "conflicts_named_in_subject": 4,
+   "subject": "Merge origin/claude/phase-a-port (R-2 Phase 2) into unsafe-r1-serial; resolve 4 conflicts (visit/mod, h2_frame_parser, node_fs_stat_watcher, PostgresSQLConnecti"
+  },
+  {
+   "sha": "2412c07c46",
+   "at": "2026-05-11T22:58:21.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 12,
+   "side_files": 82,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "8d99706003",
+   "at": "2026-05-12T00:03:17.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 12,
+   "side_files": 74,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "a2c0e1c00f",
+   "at": "2026-05-12T00:27:18.000Z",
+   "branch": "claude/phase-a-port (parallel push)",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/phase-a-port' of https://github.com/oven-sh/bun into claude/phase-a-port"
+  },
+  {
+   "sha": "6615caf459",
+   "at": "2026-05-12T00:31:00.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 12,
+   "side_files": 69,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "4dc2370a68",
+   "at": "2026-05-12T00:51:02.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 12,
+   "side_files": 51,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "1b185a7fce",
+   "at": "2026-05-12T01:14:46.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 20,
+   "side_files": 38,
+   "both_sides_touched": 10,
+   "both_changed_differently": 10,
+   "merged_to_new_text": 9,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge origin/claude/bench-until-green into claude/phase-a-port"
+  },
+  {
+   "sha": "c220f43506",
+   "at": "2026-05-12T01:33:21.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 11,
+   "side_files": 67,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "57e42e770e",
+   "at": "2026-05-12T02:48:45.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 23,
+   "side_files": 32,
+   "both_sides_touched": 5,
+   "both_changed_differently": 5,
+   "merged_to_new_text": 5,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "79217e0140",
+   "at": "2026-05-12T02:55:33.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 11,
+   "side_files": 54,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "c3eafc804f",
+   "at": "2026-05-12T03:15:44.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 11,
+   "side_files": 33,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "0d526cc071",
+   "at": "2026-05-12T03:29:41.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 7,
+   "side_files": 24,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "68d48d09d3",
+   "at": "2026-05-12T03:42:02.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 19,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "410373be4b",
+   "at": "2026-05-12T04:09:35.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 12,
+   "side_files": 67,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "3b5bd70046",
+   "at": "2026-05-12T04:18:12.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 21,
+   "both_sides_touched": 3,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 3,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "f950be23ff",
+   "at": "2026-05-12T04:28:27.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 9,
+   "side_files": 37,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "735dd56b8d",
+   "at": "2026-05-12T05:52:55.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 20,
+   "side_files": 24,
+   "both_sides_touched": 5,
+   "both_changed_differently": 5,
+   "merged_to_new_text": 5,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "5a2660461b",
+   "at": "2026-05-12T05:56:08.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 4,
+   "side_files": 13,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "43f61c2a3c",
+   "at": "2026-05-12T06:00:33.000Z",
+   "branch": "claude/ci-fix-53599",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/ci-fix-53599' into claude/phase-a-port"
+  },
+  {
+   "sha": "d030164eff",
+   "at": "2026-05-12T06:14:24.000Z",
+   "branch": "claude/code-dedup",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 330,
+   "both_sides_touched": 66,
+   "both_changed_differently": 66,
+   "merged_to_new_text": 62,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/code-dedup' into claude/phase-a-port"
+  },
+  {
+   "sha": "d4f7103769",
+   "at": "2026-05-12T06:25:01.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 34,
+   "both_sides_touched": 14,
+   "both_changed_differently": 14,
+   "merged_to_new_text": 14,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "cb55749433",
+   "at": "2026-05-12T06:43:17.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 9,
+   "side_files": 12,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "f35c77ef17",
+   "at": "2026-05-12T06:55:43.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 12,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "fd6e64c39a",
+   "at": "2026-05-12T07:08:13.000Z",
+   "branch": "claude/bun-sys-file-refactor",
+   "into_mainline": true,
+   "side_commits": 7,
+   "side_files": 26,
+   "both_sides_touched": 3,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 3,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bun-sys-file-refactor' into claude/phase-a-port"
+  },
+  {
+   "sha": "ba8ee2af99",
+   "at": "2026-05-12T07:09:14.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 6,
+   "side_files": 15,
+   "both_sides_touched": 4,
+   "both_changed_differently": 4,
+   "merged_to_new_text": 4,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "90546ec8b4",
+   "at": "2026-05-12T07:17:25.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 7,
+   "side_files": 7,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "a5c25ff24b",
+   "at": "2026-05-12T07:34:59.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 40,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "d28b23c7e3",
+   "at": "2026-05-12T07:43:09.000Z",
+   "branch": "claude/merge-bun-string-into-core",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 683,
+   "both_sides_touched": 63,
+   "both_changed_differently": 63,
+   "merged_to_new_text": 63,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge branch 'claude/merge-bun-string-into-core' into claude/phase-a-port"
+  },
+  {
+   "sha": "9cf644515c",
+   "at": "2026-05-12T07:54:12.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 9,
+   "side_files": 25,
+   "both_sides_touched": 19,
+   "both_changed_differently": 19,
+   "merged_to_new_text": 19,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "1215368951",
+   "at": "2026-05-12T08:08:44.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 4,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "a83f716e40",
+   "at": "2026-05-12T08:12:22.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 6,
+   "side_files": 15,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "7469ef4934",
+   "at": "2026-05-12T08:51:33.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 8,
+   "side_files": 34,
+   "both_sides_touched": 13,
+   "both_changed_differently": 13,
+   "merged_to_new_text": 12,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge origin/claude/unsafe-5k into claude/phase-a-port"
+  },
+  {
+   "sha": "44cee700cc",
+   "at": "2026-05-12T08:52:46.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 2,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "8ecd519acc",
+   "at": "2026-05-12T09:06:09.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 9,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "ee106d6710",
+   "at": "2026-05-12T09:46:47.000Z",
+   "branch": "claude/ci-auto-fix-53633",
+   "into_mainline": true,
+   "side_commits": 4,
+   "side_files": 6,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/ci-auto-fix-53633' into claude/phase-a-port"
+  },
+  {
+   "sha": "58e91d641f",
+   "at": "2026-05-12T09:59:34.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 6,
+   "side_files": 15,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "aa0c405748",
+   "at": "2026-05-12T10:23:56.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 13,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "cb231a7fea",
+   "at": "2026-05-12T10:37:08.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 32,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "ff2b62679d",
+   "at": "2026-05-12T10:59:28.000Z",
+   "branch": "claude/local-test-sweep",
+   "into_mainline": true,
+   "side_commits": 6,
+   "side_files": 6,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/local-test-sweep' into claude/phase-a-port"
+  },
+  {
+   "sha": "610dc0b258",
+   "at": "2026-05-12T10:59:46.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 4,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "f2209d78c5",
+   "at": "2026-05-12T11:08:30.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 5,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "0ccf3c1486",
+   "at": "2026-05-12T11:29:13.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "007ca3ffbf",
+   "at": "2026-05-12T11:40:19.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 9,
+   "side_files": 13,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "a85d0b5572",
+   "at": "2026-05-12T12:01:19.000Z",
+   "branch": "claude/unsafe-5k",
+   "into_mainline": true,
+   "side_commits": 6,
+   "side_files": 17,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/unsafe-5k' into claude/phase-a-port"
+  },
+  {
+   "sha": "9e326173be",
+   "at": "2026-05-12T15:46:39.000Z",
+   "branch": "claude/ci-auto-fix-53753",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/ci-auto-fix-53753' into claude/phase-a-port"
+  },
+  {
+   "sha": "ee9443ccee",
+   "at": "2026-05-12T20:10:21.000Z",
+   "branch": "claude/zig-rust-divergence-audit",
+   "into_mainline": true,
+   "side_commits": 11,
+   "side_files": 11,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/zig-rust-divergence-audit' into claude/phase-a-port"
+  },
+  {
+   "sha": "31df24ea52",
+   "at": "2026-05-12T20:25:13.000Z",
+   "branch": "claude/stack-fallback-allocator",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/stack-fallback-allocator' into claude/phase-a-port"
+  },
+  {
+   "sha": "4f55569901",
+   "at": "2026-05-12T20:33:15.000Z",
+   "branch": "claude/divergence-top5",
+   "into_mainline": true,
+   "side_commits": 3,
+   "side_files": 10,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/divergence-top5' into claude/phase-a-port"
+  },
+  {
+   "sha": "d29020dcba",
+   "at": "2026-05-12T20:52:12.000Z",
+   "branch": "claude/parking-lot-to-futex",
+   "into_mainline": true,
+   "side_commits": 9,
+   "side_files": 132,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 2,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/parking-lot-to-futex' into claude/phase-a-port"
+  },
+  {
+   "sha": "51f05c0083",
+   "at": "2026-05-12T21:09:33.000Z",
+   "branch": "claude/divergence-fix-all",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 34,
+   "both_sides_touched": 4,
+   "both_changed_differently": 4,
+   "merged_to_new_text": 3,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge origin/claude/divergence-fix-all into claude/phase-a-port"
+  },
+  {
+   "sha": "4f1245ac3f",
+   "at": "2026-05-12T21:29:48.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 18,
+   "side_files": 26,
+   "both_sides_touched": 4,
+   "both_changed_differently": 4,
+   "merged_to_new_text": 4,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "cfa232f7b8",
+   "at": "2026-05-12T21:41:35.000Z",
+   "branch": "claude/code-dedup",
+   "into_mainline": true,
+   "side_commits": 11,
+   "side_files": 273,
+   "both_sides_touched": 31,
+   "both_changed_differently": 31,
+   "merged_to_new_text": 31,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge origin/claude/code-dedup into claude/phase-a-port"
+  },
+  {
+   "sha": "b953dfcee8",
+   "at": "2026-05-12T22:17:15.000Z",
+   "branch": "main",
+   "into_mainline": true,
+   "side_commits": 0,
+   "side_files": 0,
+   "both_sides_touched": 5,
+   "both_changed_differently": 3,
+   "merged_to_new_text": 3,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/main' into claude/phase-a-port"
+  },
+  {
+   "sha": "f5e485d325",
+   "at": "2026-05-12T22:26:03.000Z",
+   "branch": "claude/ci-auto-fix-53852",
+   "into_mainline": true,
+   "side_commits": 2,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/ci-auto-fix-53852' into claude/phase-a-port"
+  },
+  {
+   "sha": "fa548fb132",
+   "at": "2026-05-12T23:20:47.000Z",
+   "branch": "claude/ci-auto-fix-53863",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/ci-auto-fix-53863' into claude/phase-a-port"
+  },
+  {
+   "sha": "fcc705959a",
+   "at": "2026-05-12T23:52:57.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 23,
+   "side_files": 38,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "f45d593a64",
+   "at": "2026-05-13T00:48:38.000Z",
+   "branch": "claude/ci-auto-fix-53893",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/ci-auto-fix-53893' into claude/phase-a-port"
+  },
+  {
+   "sha": "18aeb1176c",
+   "at": "2026-05-13T00:54:57.000Z",
+   "branch": "claude/divergence-fix-all",
+   "into_mainline": true,
+   "side_commits": 17,
+   "side_files": 63,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/divergence-fix-all' into claude/phase-a-port"
+  },
+  {
+   "sha": "1d3c3c0f95",
+   "at": "2026-05-13T05:14:02.000Z",
+   "branch": "claude/flaky-stabilize",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 10,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/flaky-stabilize' into claude/phase-a-port"
+  },
+  {
+   "sha": "131fcbace0",
+   "at": "2026-05-13T05:27:43.000Z",
+   "branch": "claude/flaky-stabilize-v2",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/flaky-stabilize-v2' into claude/phase-a-port"
+  },
+  {
+   "sha": "efe955f3dd",
+   "at": "2026-05-13T06:26:02.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 5,
+   "side_files": 7,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "34417d4418",
+   "at": "2026-05-13T08:22:04.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 11,
+   "side_files": 18,
+   "both_sides_touched": 1,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "e242a56fcc",
+   "at": "2026-05-13T09:00:26.000Z",
+   "branch": "claude/flaky-stabilize-v3",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 12,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/flaky-stabilize-v3' into claude/phase-a-port"
+  },
+  {
+   "sha": "1ae4e1d4b0",
+   "at": "2026-05-13T09:51:26.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 13,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "110e9c87a3",
+   "at": "2026-05-13T11:00:50.000Z",
+   "branch": "claude/fix-hot-h3-flakes",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/fix-hot-h3-flakes' into claude/phase-a-port"
+  },
+  {
+   "sha": "29daf97806",
+   "at": "2026-05-13T11:45:54.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 9,
+   "side_files": 10,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "5537688da1",
+   "at": "2026-05-13T12:24:15.000Z",
+   "branch": "claude/security-audit-patches",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 76,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge claude/security-audit-patches"
+  },
+  {
+   "sha": "8f897c2eb3",
+   "at": "2026-05-13T13:15:17.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 10,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "91f749cce7",
+   "at": "2026-05-13T13:27:18.000Z",
+   "branch": "claude/fix-lockb-corrupt-regression",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge claude/fix-lockb-corrupt-regression"
+  },
+  {
+   "sha": "2e4537b295",
+   "at": "2026-05-13T14:12:28.000Z",
+   "branch": "claude/spec-divergence-fix",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 66,
+   "both_sides_touched": 9,
+   "both_changed_differently": 9,
+   "merged_to_new_text": 9,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge claude/spec-divergence-fix"
+  },
+  {
+   "sha": "4524fbb0ae",
+   "at": "2026-05-13T14:42:08.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 10,
+   "side_files": 15,
+   "both_sides_touched": 2,
+   "both_changed_differently": 2,
+   "merged_to_new_text": 1,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "9cc9c4ea9b",
+   "at": "2026-05-13T18:46:51.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 4,
+   "side_files": 7,
+   "both_sides_touched": 1,
+   "both_changed_differently": 1,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "44cd8e747b",
+   "at": "2026-05-13T19:24:10.000Z",
+   "branch": "claude/fix-transpiler-cache-50kb",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 1,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge claude/fix-transpiler-cache-50kb"
+  },
+  {
+   "sha": "06b6d0fd14",
+   "at": "2026-05-13T19:36:34.000Z",
+   "branch": "claude/bench-until-green",
+   "into_mainline": true,
+   "side_commits": 8,
+   "side_files": 33,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge remote-tracking branch 'origin/claude/bench-until-green' into claude/phase-a-port"
+  },
+  {
+   "sha": "78be156076",
+   "at": "2026-05-14T00:11:15.000Z",
+   "branch": "claude/fix-claude-ci-bugs",
+   "into_mainline": true,
+   "side_commits": 1,
+   "side_files": 2,
+   "both_sides_touched": 0,
+   "both_changed_differently": 0,
+   "merged_to_new_text": 0,
+   "conflicts_named_in_subject": 0,
+   "subject": "Merge claude/fix-claude-ci-bugs"
+  }
+ ],
+ "lost_work_commits": [
+  {
+   "sha": "ed1a70f817",
+   "minutes_after_merge": 432,
+   "subject": "test: restore source-driven test adjustments dropped by e99311e584"
+  },
+  {
+   "sha": "92ac770368",
+   "minutes_after_merge": 364,
+   "subject": "Phase 0 noalias defense: Terminal on_reader_{done,error} + NativeZlib params (3 SUSPECT — re-applied; lost in e549d61 race)"
+  },
+  {
+   "sha": "49c6ba4ad1",
+   "minutes_after_merge": 26,
+   "subject": "post-sync compile fixes: re-add dedup-r3's bun_core::ffi::{slice_to_nul[_mut],cached_uname,boxed_zeroed[_unchecked]} + bun_core::JsError + jsc::js_error_to_writ"
+  },
+  {
+   "sha": "fc93c74b15",
+   "minutes_after_merge": 7,
+   "subject": "fix: re-apply BackRef migration to dns.rs + js_bun_spawn_bindings (merge --theirs lost it)"
+  },
+  {
+   "sha": "ba41d1c4a2",
+   "minutes_after_merge": 4,
+   "subject": "fix: re-apply BackRef migration to dns.rs + js_bun_spawn_bindings (merge --theirs lost it)"
+  },
+  {
+   "sha": "21daace12c",
+   "minutes_after_merge": 2,
+   "subject": "fix: re-apply allocscope removal to DevServer.rs (merge --theirs reintroduced deleted refs)"
+  },
+  {
+   "sha": "a2ad8c094e",
+   "minutes_after_merge": 5,
+   "subject": "bundler: restore cross-thread arena fix in addError (reverted by 8653dd1)"
+  },
+  {
+   "sha": "f32ec0834e",
+   "minutes_after_merge": 51,
+   "subject": "test/fetch-http2-leak: no source fix — hang is debug-build subprocess+h2-throughput slowness, not a port logic bug. File runs 7 sequential tests (default 5s tim"
+  },
+  {
+   "sha": "0f5eb42172",
+   "minutes_after_merge": 47,
+   "subject": "jsc: re-add String::max_length() check in ZigStringJsc::external/to_external_value (Blob/Response/Request .text() OOM path; ZigString.zig:732,761 spec — was rev"
+  },
+  {
+   "sha": "9f138da4d4",
+   "minutes_after_merge": 2,
+   "subject": "phase-f(static-mut): re-apply reverted drive-by fixes; wrap C-mutated extern statics in RacyCell"
+  }
+ ]
+}
