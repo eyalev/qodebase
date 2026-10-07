@@ -58,7 +58,7 @@ type Meta = {
 };
 
 const TRAIN_MAX = 8;
-const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40;
+const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER_CHANGE = 3;
 const TRAIN_STUCK_MS = 12 * 60_000;
 export const DEMO_MAX_AGENTS = 24, DEMO_MAX_MS = 20 * 60_000, DEMO_MAX_STORY_AGENTS = 12, BUSY_MAX_TASKS = 400;
 const OPEN = (c: Change) => c.state !== 'landed';
@@ -78,7 +78,11 @@ export class Landing extends DurableObject<Env> {
   async #saveMeta() { await this.ctx.storage.put('meta', this.#meta!); }
   async #get(id: string) { return (await this.ctx.storage.get<Change>(`c:${id}`)) || null; }
   async #put(c: Change) {
-    if (c.events.length > EVENTS_PER_CHANGE) c.events = c.events.slice(-EVENTS_PER_CHANGE);
+    // Over the cap: overlap warnings go first, then the oldest events; 'asked' always stays.
+    while (c.events.length > EVENTS_PER_CHANGE) {
+      const i = c.events.findIndex((e) => e.what === 'overlap');
+      c.events.splice(i >= 0 ? i : c.events.findIndex((e, k) => k > 0 || e.what !== 'asked'), 1);
+    }
     await this.ctx.storage.put(`c:${c.id}`, c);
   }
   #ev(c: Change, what: What, detail?: string) { c.events.push({ t: Date.now(), what, ...(detail ? { detail: detail.slice(0, 300) } : {}) }); }
@@ -110,19 +114,25 @@ export class Landing extends DurableObject<Env> {
     return ch;
   }
 
-  /** Warn both changes when this one's files or claims overlap another open change's. */
+  /** Warn when this change's files or claims overlap another open change's. At most
+   *  OVERLAPS_PER_CHANGE warnings each, and the other change hears of it only while it is
+   *  still being worked on: in busy mode every menu change warned every other one (13,253
+   *  events in 6 minutes, pushing the real events out of each change's history). */
   async #overlaps(ch: Change, paths: string[]) {
     if (!paths.length) return;
+    const count = (c: Change) => c.events.filter((e) => e.what === 'overlap').length;
+    if (count(ch) >= OVERLAPS_PER_CHANGE) return;
     for (const o of await this.#all()) {
       if (o.id === ch.id || !OPEN(o) || o.id === ch.stackedOn || o.stackedOn === ch.id) continue;
       const theirs = new Set([...o.claims, ...o.files]);
       const shared = paths.filter((p) => theirs.has(p));
-      if (!shared.length) continue;
-      const already = ch.events.some((e) => e.what === 'overlap' && e.detail?.includes(o.id));
-      if (already) continue;
+      if (!shared.length || ch.events.some((e) => e.what === 'overlap' && e.detail?.includes(o.id))) continue;
       this.#ev(ch, 'overlap', `${shared.slice(0, 3).join(', ')} with ${o.id}`);
-      this.#ev(o, 'overlap', `${shared.slice(0, 3).join(', ')} with ${ch.id}`);
-      await this.#put(o);
+      if ((o.state === 'working' || o.state === 'pushed') && count(o) < OVERLAPS_PER_CHANGE) {
+        this.#ev(o, 'overlap', `${shared.slice(0, 3).join(', ')} with ${ch.id}`);
+        await this.#put(o);
+      }
+      if (count(ch) >= OVERLAPS_PER_CHANGE) break;
     }
   }
 
