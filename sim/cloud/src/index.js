@@ -6,7 +6,7 @@
 //   POST /start  {agents, minutes, workMinS, workMaxS, trainEveryS}   (x-sim-key header)
 //   GET  /status                 GET /bundle   (the run, in the viewer's format)
 import { DurableObject } from 'cloudflare:workers';
-import { generate, randomOp, check, lineDiff } from '../../real/project.mjs';
+import { generate, randomOp, makeOp, check, lineDiff } from '../../real/project.mjs';
 import { Objects, push } from './gitpush.js';
 
 const ZERO = '0'.repeat(40);
@@ -26,6 +26,12 @@ export default {
       if (request.headers.get('x-sim-key') !== env.SIM_KEY) return new Response('forbidden', { status: 403 });
       return Response.json(await run.cloneToken());
     }
+    // Test the restore path: reset the merge-queue object as an eviction would.
+    if (url.pathname === '/abort' && request.method === 'POST') {
+      if (request.headers.get('x-sim-key') !== env.SIM_KEY) return new Response('forbidden', { status: 403 });
+      await run.abort().catch(() => {});
+      return Response.json({ aborted: true });
+    }
     if (url.pathname === '/start' && request.method === 'POST') {
       if (request.headers.get('x-sim-key') !== env.SIM_KEY) return new Response('forbidden', { status: 403 });
       return Response.json(await run.start(await request.json()));
@@ -34,11 +40,44 @@ export default {
   },
 };
 
+const CHUNK = 400; // changes per storage value
+const BUILD = '2026-10-07b'; // logged on restore, to tell which code picked a run up
+
 export class Run extends DurableObject {
-  constructor(ctx, env) { super(ctx, env); this.s = null; }
+  constructor(ctx, env) { super(ctx, env); this.s = null; this.dirty = new Set(); }
+
+  // The run lives in memory but is written to storage after every step: a Durable Object
+  // can be evicted at any moment (one was, mid-run, on 2026-10-07, with no exception).
+  async persist() {
+    const s = this.s;
+    const texts = [...new Set(s.main.snap.values())].map((k) => [k, s.text.get(k)]);
+    await this.ctx.storage.put('core', {
+      cfg: s.cfg, runId: s.runId, phase: s.phase, startedAt: s.startedAt, runFrom: s.runFrom, deadline: s.deadline, spawned: s.spawned,
+      main: { ...s.main, snap: [...s.main.snap.entries()] }, root: s.root, rootSnap: [...s.rootSnap.entries()], texts,
+      paths: s.paths, queue: s.queue, history: s.history, series: s.series.slice(-400), m: s.m, agentsDone: s.agentsDone, trains: s.trains, nChanges: s.changes.length,
+    });
+    for (const k of this.dirty) await this.ctx.storage.put(`ch:${k}`, s.changes.slice(k * CHUNK, (k + 1) * CHUNK));
+    this.dirty.clear();
+  }
+  async ensure() {
+    if (this.s) return true;
+    const core = await this.ctx.storage.get('core');
+    if (!core) return false;
+    const changes = [];
+    for (let k = 0; k * CHUNK < core.nChanges; k++) changes.push(...((await this.ctx.storage.get(`ch:${k}`)) || []));
+    const s = { ...core, main: { ...core.main, snap: new Map(core.main.snap) }, rootSnap: new Map(core.rootSnap), text: new Map(core.texts), changes, rnd: mulberry32(Date.now() % 2 ** 31) };
+    delete s.texts;
+    s.ops = new Map(changes.map((c) => [c.id, makeOp(c.opKind, c.opArgs)]));
+    s.m.restores = (s.m.restores || 0) + 1;
+    this.s = s;
+    log('restored', { build: BUILD, runId: s.runId, phase: s.phase, changes: changes.length, queue: s.queue.length, restores: s.m.restores });
+    return true;
+  }
+  async abort() { log('abort_requested', { runId: this.s?.runId }); this.ctx.abort('test: simulated eviction'); }
+  touch(c) { this.dirty.add(Math.floor((c.id - 1) / CHUNK)); }
 
   async start(opts) {
-    if (this.s && this.s.phase !== 'done') return { error: 'a run is already going', status: this.summary() };
+    if ((await this.ensure()) && this.s.phase !== 'done') return { error: 'a run is already going', status: this.summary() };
     const cfg = { agents: 20, minutes: 5, workMinS: 20, workMaxS: 60, trainEveryS: 5, trainMax: 200, seed: 1, forkConcurrency: 8, forkTries: 5, ...opts };
     cfg.agents = Math.min(cfg.agents, 600); cfg.minutes = Math.min(cfg.minutes, 20); // hard caps (cost)
     const runId = `r${Date.now().toString(36)}`;
@@ -59,21 +98,23 @@ export class Run extends DurableObject {
     this.s = {
       cfg, runId, phase: 'spawn', startedAt: Date.now(), runFrom: null, deadline: null, spawned: 0,
       rnd, main: { name: created.name, remote: created.remote, token: created.token, tip: root, snap }, text,
-      snapshots: new Map([[root, new Map(snap)]]), paths: [...snap.keys()].sort(),
+      root, rootSnap: new Map(snap), paths: [...snap.keys()].sort(),
       changes: [], ops: new Map(), queue: [], history: [], series: [],
       m: { forks: 0, forkMs: [], forkRetries: 0, forkFailed: 0, agentPushes: 0, agentPushMs: [], agentPushFail: 0, mainPushes: 0, mainPushMs: [], mainPushFail: 0, landed: 0, dropped: 0, testFails: 0, artifactsOps: 2, errors: [] },
       agentsDone: 0, trains: 0,
     };
-    await this.ctx.storage.delete(['bundle:n']);
+    await this.ctx.storage.deleteAll();
+    this.dirty.clear();
+    await this.persist();
     await this.ctx.storage.setAlarm(Date.now() + 10);
     return { runId, main: created.name, createMs, initialPush: pushed };
   }
 
   now() { return Math.round((Date.now() - (this.s.runFrom ?? this.s.startedAt)) / 1000); }
-  ev(c, what, extra) { c.events.push(extra === undefined ? [this.now(), what] : [this.now(), what, extra]); }
+  ev(c, what, extra) { c.events.push(extra === undefined ? [this.now(), what] : [this.now(), what, extra]); this.touch(c); }
 
   async alarm() {
-    try { await this.step(); }
+    try { if (await this.ensure()) { await this.step(); await this.persist(); } }
     catch (e) {
       // An uncaught exception resets the object and its in-memory run (lost one on 2026-10-07).
       log('run_alarm_error', { err: String(e), stack: e?.stack, phase: this.s?.phase, queue: this.s?.queue.length, landed: this.s?.m.landed });
@@ -109,13 +150,11 @@ export class Run extends DurableObject {
     if (s.phase === 'run' || s.phase === 'drain') {
       await this.train();
       this.sample();
-      // Checkpoint: if the object is reset mid-run, /bundle still has the run so far.
-      if (++s.trains % 6 === 0) await this.save();
+      s.trains++;
       if (s.phase === 'run' && Date.now() > s.deadline) s.phase = 'drain';
       if (s.phase === 'drain' && !s.queue.length && (s.agentsDone >= s.m.forks || Date.now() > s.deadline + 180_000)) {
         s.phase = 'done';
         log('done', { runId: s.runId, ...this.summary() });
-        await this.save();
         return;
       }
       return this.ctx.storage.setAlarm(Date.now() + s.cfg.trainEveryS * 1000);
@@ -123,26 +162,29 @@ export class Run extends DurableObject {
   }
 
   // ---- agents call these ----
-  snapshot(sha) { return [...(this.s.snapshots.get(sha) || this.s.snapshots.get(this.s.history[0]?.sha) || []).entries()]; }
-  rootSha() { return [...this.s.snapshots.keys()][0]; }
+  async snapshot() { await this.ensure(); return [...this.s.rootSnap.entries()]; }
+  async rootSha() { await this.ensure(); return this.s.root; }
 
-  task(agent) {
+  async task(agent) {
+    if (!(await this.ensure())) return null;
     const s = this.s;
-    if (!s || s.phase !== 'run' || Date.now() > s.deadline) return null;
+    if (s.phase !== 'run' || Date.now() > s.deadline) return null;
     const get = (p) => (s.main.snap.has(p) ? s.text.get(s.main.snap.get(p)) : null), paths = () => s.main.snap.keys();
     for (let i = 0; i < 6; i++) {
       const op = randomOp(s.rnd, () => `src/m${Math.min(49, Math.floor(-Math.log(1 - s.rnd()) * 8))}/f${Math.floor(s.rnd() * 8)}.ts`, get);
       const out = op.apply(get, paths);
       if (!out || !out.size) continue;
-      const c = { id: s.changes.length + 1, agent, kind: op.kind, text: op.text, created: this.now(), events: [], files: [...out.keys()], conflicts: [], fails: [], tries: 1, state: 'work' };
+      const c = { id: s.changes.length + 1, agent, kind: op.kind, opKind: op.kind, opArgs: op.args, text: op.text, created: this.now(), events: [], files: [...out.keys()], conflicts: [], fails: [], tries: 1, state: 'work' };
       this.ev(c, 'asked', op.text); this.ev(c, 'work');
       s.changes.push(c); s.ops.set(c.id, op);
       return { id: c.id, text: op.text, files: [...out.entries()] };
     }
     return null;
   }
-  submitted(id, r) {
+  async submitted(id, r) {
+    if (!(await this.ensure())) return;
     const s = this.s, c = s.changes[id - 1];
+    if (!c) return; // created after the last save and lost in a reset
     s.m.agentPushes++; s.m.artifactsOps++;
     if (r.ok) s.m.agentPushMs.push(r.ms); else { s.m.agentPushFail++; s.m.errors.push(`agent push ${r.status}: ${r.detail}`.slice(0, 200)); }
     this.ev(c, 'pushed to its fork', `${r.ms} ms, ${r.bytes} bytes${r.ok ? '' : `, failed ${r.status}`}`);
@@ -150,13 +192,13 @@ export class Run extends DurableObject {
     c.state = 'mergeWait'; this.ev(c, 'mergeWait');
     s.queue.push(id);
   }
-  agentDone() { this.s.agentsDone++; }
+  async agentDone() { if (await this.ensure()) this.s.agentsDone++; }
 
   // Land a train: replay each queued change's intent on main, test, chain the commits, one push.
   async train() {
     const s = this.s;
     if (!s.queue.length) return;
-    const ids = s.queue.splice(0, s.cfg.trainMax);
+    const ids = s.queue.splice(0, s.cfg.trainMax).filter((id) => s.changes[id - 1]);
     const objs = new Objects();
     let tip = s.main.tip, snap = new Map(s.main.snap);
     const landed = [];
@@ -211,15 +253,15 @@ export class Run extends DurableObject {
       forks: s.m.forks, forkFailed: s.m.forkFailed, forkRetries: s.m.forkRetries, forkMsP50: pct(s.m.forkMs, 0.5), forkMsP90: pct(s.m.forkMs, 0.9),
       agentPushes: s.m.agentPushes, agentPushFail: s.m.agentPushFail, agentPushMsP50: pct(s.m.agentPushMs, 0.5), agentPushMsP90: pct(s.m.agentPushMs, 0.9),
       mainPushes: s.m.mainPushes, mainPushFail: s.m.mainPushFail, mainPushMsP50: pct(s.m.mainPushMs, 0.5), mainPushMsP90: pct(s.m.mainPushMs, 0.9),
-      artifactsOpsCounted: s.m.artifactsOps, errors: s.m.errors.slice(0, 10), errorCount: s.m.errors.length,
+      restores: s.m.restores || 0, artifactsOpsCounted: s.m.artifactsOps, errors: s.m.errors.slice(0, 10), errorCount: s.m.errors.length,
     };
   }
   async cloneToken() {
-    if (!this.s) return { error: 'no run in memory' };
+    if (!(await this.ensure())) return { error: 'no run' };
     const t = await (await this.env.ARTIFACTS.get(this.s.main.name)).createToken('read', 600);
     return { remote: this.s.main.remote, token: t.plaintext.split('?')[0] };
   }
-  status() { return this.s ? this.summary() : { phase: 'idle (no run in memory)' }; }
+  async status() { return (await this.ensure()) ? this.summary() : { phase: 'idle' }; }
 
   makeBundle() {
     const s = this.s; const sum = this.summary();
@@ -243,21 +285,8 @@ export class Run extends DurableObject {
       history: s.history, series: s.series,
     };
   }
-  // DO values are capped at 2 MB: store the bundle in chunks.
-  async save() {
-    const t0 = Date.now();
-    const json = JSON.stringify(this.makeBundle()), parts = Math.ceil(json.length / 1_000_000);
-    for (let k = 0; k < parts; k++) await this.ctx.storage.put(`bundle:${k}`, json.slice(k * 1_000_000, (k + 1) * 1_000_000));
-    await this.ctx.storage.put('bundle:n', parts);
-    log('saved', { bytes: json.length, parts, ms: Date.now() - t0, phase: this.s.phase, landed: this.s.m.landed });
-  }
-
   async bundle() {
-    if (this.s) return this.makeBundle();
-    const n = await this.ctx.storage.get('bundle:n');
-    if (!n) return { error: 'no run' };
-    let json = ''; for (let k = 0; k < n; k++) json += await this.ctx.storage.get(`bundle:${k}`);
-    return JSON.parse(json);
+    return (await this.ensure()) ? this.makeBundle() : { error: 'no run' };
   }
 }
 
@@ -275,7 +304,7 @@ export class Agent extends DurableObject {
     const run = this.env.RUN.get(this.env.RUN.idFromName('run'));
     const root = await run.rootSha();
     const snap = await run.snapshot(root);
-    await this.ctx.storage.put('st', { i, cfg, remote: fork.remote, token: fork.token, tip: root, snap, task: null, seed: i + 1 });
+    await this.ctx.storage.put('st', { i, cfg, forkName: fork.name, remote: fork.remote, token: fork.token, tip: root, snap, task: null, seed: i + 1 });
     return { forkMs, retries };
   }
   async go() { await this.ctx.storage.setAlarm(Date.now() + Math.random() * 5000); }
@@ -297,12 +326,28 @@ export class Agent extends DurableObject {
     const snap = new Map(st.snap);
     for (const [p, t] of st.task.files) snap.set(p, objs.blob(t));
     const commit = objs.commit(objs.tree(snap), [st.tip], `#${st.task.id} ${st.task.text}`, Date.now());
+    let commitAfter = null;
     const t0 = Date.now();
     let r;
     try { r = await push({ remote: st.remote, token: st.token, oldSha: st.tip, newSha: commit, objs: [...objs.map.values()] }); }
     catch (e) { r = { ok: false, status: 0, bytes: 0, detail: String(e) }; }
+    // A reset between a push and saving the new tip leaves st.tip stale: read the fork's
+    // real tip and commit on top of that instead (its tree only differs in files we resend).
+    if (!r.ok && /stale ref|non-fast-forward|fetch first/.test(r.detail || '')) {
+      try {
+        const [head] = await (await this.env.ARTIFACTS.get(st.forkName)).log({ limit: 1 });
+        console.log(JSON.stringify({ module: 'qbsim', event: 'stale_tip', agent: st.i, had: st.tip, remote: head?.hash }));
+        if (head?.hash) {
+          st.tip = head.hash;
+          const again = objs.commit(objs.tree(snap), [st.tip], `#${st.task.id} ${st.task.text}`, Date.now());
+          r = await push({ remote: st.remote, token: st.token, oldSha: st.tip, newSha: again, objs: [...objs.map.values()] });
+          r.retriedStale = true;
+          if (r.ok) commitAfter = again;
+        }
+      } catch (e) { console.log(JSON.stringify({ module: 'qbsim', event: 'stale_tip_error', agent: st.i, err: String(e), stack: e?.stack })); }
+    }
     const ms = Date.now() - t0;
-    if (r.ok) { st.tip = commit; st.snap = [...snap.entries()]; }
+    if (r.ok) { st.tip = commitAfter || commit; st.snap = [...snap.entries()]; }
     await run.submitted(st.task.id, { ok: r.ok, status: r.status, bytes: r.bytes, detail: r.detail, ms, commit });
     st.task = null;
     await this.ctx.storage.put('st', st);
