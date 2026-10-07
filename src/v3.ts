@@ -688,7 +688,6 @@ export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, 
  *  line, the build box above the fold, then three doors (your own qodebase, your own AI
  *  assistant, explore) and the try-changing row. */
 function landBody(entries: Entry[], selfHost = false) {
-  const n = ITEMS.length + entries.filter((e) => !e.forkedFrom && !e.private && e.slug !== 'forq.blank').length;
   return `<section class="land">
 <h1>Own your codebase.</h1>
 <p class="lede">Describe it. Agents build it. The code is yours to keep.</p>
@@ -698,8 +697,8 @@ function landBody(entries: Entry[], selfHost = false) {
 </form>
 <nav class="doors" aria-label="More">
 ${selfHost ? '' : `<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account.</small></span></a>
-<a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>OpenClaw, Hermes, T3 Code, Mobile Agent and more, in your Cloudflare account.</small></span></a>`}
-<a class="browse" href="/explore"><span>Explore projects</span><span class="n">${n}</span></a>
+<a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>OpenClaw, Hermes, T3 Code and more.</small></span></a>`}
+<a class="browse own" href="/explore"><span>Explore public projects<small>Apps and code others have shared.</small></span></a>
 </nav>
 ${tryRow(entries)}
 </section>${SPECULATE}
@@ -728,7 +727,10 @@ export const LAND_CSS = `
 .doors{display:flex;flex-direction:column;gap:8px}
 .land .doors .browse{margin:0;padding:14px 16px;border:1px solid var(--line);border-top:1px solid var(--line);border-radius:14px;transition:background-color .12s,border-color .12s,transform .12s;-webkit-tap-highlight-color:transparent}
 .doors .browse:last-child{border-bottom:1px solid var(--line)}
-.land .doors .browse:active,.land .doors .browse.going{background:var(--card);border-color:color-mix(in srgb,var(--fg) 35%,var(--line));transform:scale(.985)}
+.land .doors .browse{min-height:76px;box-sizing:border-box}
+.land .doors .browse small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.land .doors .browse>span{min-width:0}
+.land .doors .browse:active,.land .doors .browse.going{background:var(--chip);border-color:color-mix(in srgb,var(--fg) 55%,var(--line));transform:scale(.98)}
 @media (hover:hover){.land .doors .browse:hover{border-color:color-mix(in srgb,var(--fg) 20%,var(--line))}}
 .tryh{font-size:17px;font-weight:600;margin:32px 0 2px}
 .trys{margin:0 0 12px;color:var(--dim);font-size:15px}
