@@ -60,8 +60,10 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
         const token = (await repo.createToken('write', 600)).plaintext;
         const commit = await pushSeed(info.remote, token, SEED, head, action === 'seed' ? 'Corner Café: the first version' : 'Reset the demo to the first version');
         // The scripted agents' forks are throwaway: delete them (Artifacts storage).
+        // Ten at a time: one by one took ~8 minutes after a 400-change busy run (2026-10-08).
         let deleted = 0;
-        for (const f of forks) if (await env.ARTIFACTS.delete(f).catch(() => false)) deleted++;
+        for (let i = 0; i < forks.length; i += 10)
+          deleted += (await Promise.all(forks.slice(i, i + 10).map((f) => env.ARTIFACTS.delete(f).catch(() => false)))).filter(Boolean).length;
         if (action === 'seed') await env.Project.get(env.Project.idFromName(info.slug)).setLanding(true);
         log('landing', `demo_${action}`, { slug: info.slug, commit, forksDeleted: deleted });
         return json({ ok: true, commit, forksDeleted: deleted });
