@@ -27,6 +27,11 @@ export const POLICIES = {
     about: 'Claims on ordinary files, shared hot files left open; an agent whose files are taken picks another task; a conflict reruns the task on the new main; merges go in trains of up to 16, tested together before they land.',
     humanReview: 'risky', claims: 'cold', onConflict: 'redo', batch: 16, pickFree: 8, trainTest: true,
   },
+  leads: {
+    label: 'Team leads',
+    about: 'Everything in claims + redo + trains, plus an area lead per group of agents: an author and reviewer who disagree get one round, then the lead decides; a conflict goes to the lead, who knows both intents and merges them, and only a failed merge is redone.',
+    humanReview: 'risky', claims: 'cold', onConflict: 'lead', batch: 16, pickFree: 8, trainTest: true, leads: true,
+  },
 };
 
 export const PRESETS = {
@@ -62,6 +67,11 @@ export const DEFAULTS = {
   trainTestS: 60, pTestCatches: 0.9, // a tested train bounces a breaking change instead of landing it
   llmPerS: 0.0043, // $/s of an agent thinking (≈ $1.42 per change at Sonnet API prices)
   boxPerS: 0.05 / (1.43 * 3600), // container $/s
+  // Disagreements: when a review asks for changes, sometimes the author pushes back.
+  pDispute: 0.3, disputeRounds: 2.5, // without a lead: rounds of arguing (mean), then a coin flip
+  argueFactor: 0.15, // agent time per round, as a share of the task's work
+  leadSpan: 25, // agents per area lead
+  leadDecideMedS: 60, leadMergeMedS: 90, pLeadMerge: 0.75,
   sampleEveryS: 60,
   latencyWindow: 3000,
 };
@@ -73,6 +83,8 @@ export const STATE_GROUPS = [
   ['working', ['work', 'fix', 'rework']],
   ['waiting for review', ['reviewWait', 'humanWait']],
   ['in review', ['review', 'human']],
+  ['arguing', ['dispute']],
+  ['with a lead', ['leadWait', 'lead']],
   ['in the merge queue', ['mergeWait']],
 ];
 
@@ -142,6 +154,7 @@ export function createSim(opts = {}) {
   const moduleCdf = zipfCdf(M, 1.0);
   const inModuleCdf = zipfCdf(cfg.filesPerModule, 0.8);
   const reviewersPerRepo = Math.max(1, Math.round(cfg.agentsPerRepo * cfg.reviewersShare));
+  const leadsPerRepo = pol.leads ? Math.max(1, Math.ceil(cfg.agentsPerRepo / cfg.leadSpan)) : 0;
 
   const heap = new Heap();
   let seq = 0, t = 0, nextId = 1;
@@ -159,6 +172,7 @@ export function createSim(opts = {}) {
       claimWait: [],
       reviewQ: [], reviewersFree: reviewersPerRepo,
       humanQ: [], humansFree: cfg.humansPerRepo,
+      leads: Array.from({ length: leadsPerRepo }, () => ({ busy: false, q: [], qHead: 0, busyS: 0 })),
       mq: [], mqHead: 0, mergeBusy: false,
       brokenUntil: -1, redFrom: 0, redDone: 0,
       merged: 0, conflicts: 0,
@@ -169,6 +183,7 @@ export function createSim(opts = {}) {
     merged: 0, conflicts: 0, autoMerged: 0, rebases: 0, redos: 0, breaks: 0,
     workS: 0, reworkS: 0, discardedS: 0, reviewS: 0, humanS: 0, claimWaitS: 0,
     cost: 0, created: 0, deferred: 0, caught: 0,
+    disputes: 0, disputeS: 0, leadCalls: 0, leadS: 0, leadMerged: 0,
   };
   const stateCount = Object.create(null);
   const latencies = []; let latIdx = 0;
@@ -185,10 +200,12 @@ export function createSim(opts = {}) {
   }
   const note = (task, what) => { if (task.id === followId) followLog.push([t, what]); };
 
+  let lastHome = 0;
   function sampleFiles() {
     let k = 1; while (k < 8 && rnd() < 1 - 1 / cfg.meanTouches) k++;
     const set = new Set();
     const home = sampleCdf(moduleCdf, rnd());
+    lastHome = home;
     for (let i = 0; i < k; i++) {
       const mod = rnd() < 0.8 ? home : sampleCdf(moduleCdf, rnd());
       const j = sampleCdf(inModuleCdf, rnd());
@@ -200,7 +217,7 @@ export function createSim(opts = {}) {
 
   function newTask(repo, agent) {
     const task = {
-      id: nextId++, repo, agent, files: sampleFiles(), base: null,
+      id: nextId++, repo, agent, files: sampleFiles(), home: lastHome, base: null,
       workS: logn(cfg.workMedS, cfg.workSigma), created: t, state: null, since: t,
       risky: rnd() < cfg.pRisky, attempts: 0, claimed: false,
     };
@@ -233,7 +250,7 @@ export function createSim(opts = {}) {
 
   function startOrWait(task) {
     // pickFree: the agent leaves a task whose files are taken in the backlog and draws another.
-    for (let i = 0; i < (pol.pickFree || 0) && !tryClaim(task); i++) { m.deferred++; task.files = sampleFiles(); }
+    for (let i = 0; i < (pol.pickFree || 0) && !tryClaim(task); i++) { m.deferred++; task.files = sampleFiles(); task.home = lastHome; }
     if (tryClaim(task)) beginWork(task, task.workS, 'work');
     else { setState(task, 'claimWait'); task.repo.claimWait.push(task); }
   }
@@ -282,11 +299,68 @@ export function createSim(opts = {}) {
     repo.reviewersFree++;
     if (rnd() > cfg.pApprove) {
       note(task, 'changes asked');
-      beginWork(task, task.workS * cfg.fixFactor, 'fix');
-    } else if (task.risky) {
-      toHuman(task, cfg.humanQuickMedS);
-    } else toMerge(task);
+      if (rnd() < cfg.pDispute) dispute(task);
+      else beginWork(task, task.workS * cfg.fixFactor, 'fix');
+    } else afterApproval(task);
     pumpReview(repo);
+  }
+  const afterApproval = (task) => (task.risky ? toHuman(task, cfg.humanQuickMedS) : toMerge(task));
+
+  // The author disagrees with the review. Without a lead they argue for a few rounds
+  // and then one side gives in; with a lead, one round and the lead decides.
+  function dispute(task) {
+    m.disputes++;
+    note(task, 'author disagrees');
+    const round = task.workS * cfg.argueFactor + logn(cfg.reviewMedS, cfg.reviewSigma) * 0.5;
+    let rounds = 1;
+    if (!pol.leads) while (rnd() < 1 - 1 / cfg.disputeRounds) rounds++;
+    const d = round * rounds;
+    m.disputeS += d;
+    setState(task, 'dispute');
+    at(d, () => {
+      m.reworkS += d;
+      if (pol.leads) return toLead(task, 'decide');
+      note(task, `${rounds} round${rounds > 1 ? 's' : ''} of arguing`);
+      if (rnd() < 0.5) afterApproval(task); else beginWork(task, task.workS * cfg.fixFactor, 'fix');
+    }, task);
+  }
+
+  // Area leads: one per leadSpan agents, picked by the task's home folder. One thing at a time.
+  function toLead(task, why) {
+    const lead = task.repo.leads[task.home % task.repo.leads.length];
+    task.leadWhy = why;
+    setState(task, 'leadWait');
+    lead.q.push(task);
+    pumpLead(lead);
+  }
+  function pumpLead(lead) {
+    if (lead.busy || lead.qHead >= lead.q.length) return;
+    const task = lead.q[lead.qHead++];
+    if (lead.qHead > 1024 && lead.qHead * 2 > lead.q.length) { lead.q = lead.q.slice(lead.qHead); lead.qHead = 0; }
+    lead.busy = true;
+    const d = logn(task.leadWhy === 'merge' ? cfg.leadMergeMedS : cfg.leadDecideMedS, 0.5);
+    m.leadCalls++; m.leadS += d; lead.busyS += d;
+    setState(task, 'lead');
+    at(d, () => { lead.busy = false; leadDone(task); pumpLead(lead); }, task);
+  }
+  function leadDone(task) {
+    if (task.leadWhy === 'decide') {
+      if (rnd() < 0.5) { note(task, 'lead sided with the author'); afterApproval(task); }
+      else { note(task, 'lead sided with the reviewer'); beginWork(task, task.workS * cfg.fixFactor, 'fix'); }
+      return;
+    }
+    // A conflict: the lead knows both intents and merges them onto the new main.
+    if (rnd() < cfg.pLeadMerge) {
+      m.leadMerged++;
+      note(task, 'lead merged both changes');
+      snapBase(task);
+      toMerge(task);
+    } else {
+      note(task, 'lead could not merge: redo');
+      m.redos++; m.discardedS += task.workS;
+      task.lightReview = true;
+      beginWork(task, task.workS * cfg.redoFactor, 'rework');
+    }
   }
 
   function toHuman(task, med) {
@@ -347,7 +421,9 @@ export function createSim(opts = {}) {
       if (conflicting && !clean) {
         m.conflicts++; repo.conflicts++;
         note(task, `conflict on ${conflicting} file${conflicting > 1 ? 's' : ''}`);
-        if (pol.onConflict === 'redo') {
+        if (pol.onConflict === 'lead') {
+          toLead(task, 'merge');
+        } else if (pol.onConflict === 'redo') {
           m.redos++; m.discardedS += task.workS;
           task.lightReview = true;
           beginWork(task, task.workS * cfg.redoFactor, 'rework');
@@ -406,6 +482,7 @@ export function createSim(opts = {}) {
 
   const totalAgents = cfg.repos * cfg.agentsPerRepo;
   const reviewerAgents = cfg.repos * reviewersPerRepo;
+  const leadAgents = cfg.repos * leadsPerRepo;
   let lastSample = -Infinity, events = 0;
 
   function sample() {
@@ -422,7 +499,7 @@ export function createSim(opts = {}) {
     });
   }
   // Agents' thinking time so far plus every box awake.
-  const costNow = () => (m.workS + m.reworkS + m.reviewS) * cfg.llmPerS + (totalAgents + reviewerAgents) * t * cfg.boxPerS;
+  const costNow = () => (m.workS + m.reworkS + m.reviewS + m.leadS) * cfg.llmPerS + (totalAgents + reviewerAgents + leadAgents) * t * cfg.boxPerS;
 
   function runUntil(tEnd, maxEvents = Infinity) {
     let n = 0;
@@ -465,7 +542,8 @@ export function createSim(opts = {}) {
     }
     const followed = followId > 0 ? live0.get(followId) : null;
     return {
-      t, events, totalAgents, reviewerAgents, policy: cfg.policy,
+      t, events, totalAgents, reviewerAgents, leadAgents, policy: cfg.policy,
+      leadBusy: leadAgents ? repos.reduce((s, r) => s + r.leads.reduce((a, l) => a + l.busyS, 0), 0) / Math.max(1, t * leadAgents) : null,
       groups, metrics: { ...m }, mergeWait: mq, redRepos: red,
       p50: pct(0.5), p90: pct(0.9),
       redShare: repos.reduce((s, r) => s + r.redDone + Math.max(0, Math.min(t, r.brokenUntil) - r.redFrom), 0) / Math.max(1, t * repos.length),

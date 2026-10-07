@@ -15,7 +15,8 @@ estimates, not measurements.**
 ## Run it
 
 ```sh
-node sim/cli.mjs --preset k100 --hours 2        # compare the four policies
+node sim/cli.mjs --preset k100 --hours 2        # compare the policies
+node sim/cli.mjs --preset k100 --hours 1 --sweep span   # team leads: agents per lead
 node sim/cli.mjs --preset k1 --policy hybrid --out runs.jsonl
 node --test sim/engine.test.mjs
 cd public/sim && python3 -m http.server 7873    # the playback UI at http://127.0.0.1:7873/ (live: https://qodebase.app/sim/)
@@ -25,7 +26,7 @@ Presets: `today` (1 repo, 20 agents), `k1` (1 repo, 1,000), `k10` (1 repo,
 10,000), `k100` (500 repos × 200 = 100,000). Override with `--agents`,
 `--repos`, `--files`, `--seed`.
 
-## The four ways changes land
+## The five ways changes land
 
 | policy | review | before work | on conflict | merging |
 |---|---|---|---|---|
@@ -33,6 +34,10 @@ Presets: `today` (1 repo, 20 agents), `k1` (1 repo, 1,000), `k10` (1 repo,
 | Agent review | reviewer agents; a person only for risky changes | nothing | rebase, review again | one at a time |
 | Claims | as above | claim every file you will touch; wait if taken | (none happen) | one at a time |
 | Claims + redo + trains | as above | claim ordinary files, leave hot shared files open; if taken, pick another task | rerun the task on the new main | trains of up to 16, tested together |
+| Team leads | as above; an author who disputes a review gets one round, then the area lead decides | as above | the area lead merges both intents; only a failed merge is redone | as above |
+
+In every policy a review that asks for changes is disputed 30% of the time; without a lead
+the two agents argue ~2.5 rounds and one side gives in.
 
 ## What it says so far (seed 1)
 
@@ -61,3 +66,23 @@ ordinary files, picking free work, redoing on conflict and landing tested
 trains keeps ~2.4× the throughput of agent review at half the cost per change.
 One repo still tops out near ~900 landed/h with 60 s train tests (preset
 `k1`): the answer past that is many repos, not one bigger one.
+
+## Team leads (added the same day)
+
+100,000 agents, 2 simulated hours: team leads land 368,393/h against 361,350 for
+claims + redo + trains, and agents spend 8% of their time redoing instead of 14%
+(redos replaced by lead merges, arguments cut to one round).
+
+How many agents per lead (100,000 agents, 1 simulated hour):
+
+| agents per lead | leads | lead busy | waiting for a lead | slowest 10% |
+|---|---|---|---|---|
+| 10 | 10,000 | 10% | 1,246 | 24 min |
+| 25 | 4,000 | 26% | 1,567 | 24 min |
+| 50 | 2,000 | 51% | 2,454 | 25 min |
+| 100 | 1,000 | 82% | 9,025 | 27 min |
+| 200 | 500 | 91% | 21,851 | 23 min* |
+
+25-50 agents per lead keeps leads under ~half busy; past 100 they become the
+queue. *The p90 at 200 looks better only because changes stuck with a lead have
+not landed yet and are not counted.

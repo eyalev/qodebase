@@ -30,8 +30,10 @@ const GROUP_COLOR = {
   'waiting for review': () => C.busy,
   'in review': () => mix(C.acc, 45),
   'in the merge queue': () => C.fg,
+  'arguing': () => mix(C.busy, 75),
+  'with a lead': () => mix(C.fg, 45),
 };
-const POLICY_COLOR = { classic: () => C.dim, agentReview: () => C.busy, claims: () => mix(C.fg, 70), hybrid: () => C.acc };
+const POLICY_COLOR = { classic: () => C.dim, agentReview: () => C.busy, claims: () => mix(C.fg, 70), hybrid: () => mix(C.acc, 50), leads: () => C.acc };
 
 // ---- formatting ----
 const n0 = (x) => Math.round(x).toLocaleString('en-US');
@@ -73,7 +75,7 @@ $('compareBtn').onclick = () => {
   const hours = 2;
   $('compareCard').hidden = false;
   $('compareTitle').textContent = `Compare: ${PRESETS[state.preset].label}, ${hours} simulated hours, same seed`;
-  $('cmpTable').innerHTML = '<tr><td class="muted">Running the four policies…</td></tr>';
+  $('cmpTable').innerHTML = '<tr><td class="muted">Running every policy…</td></tr>';
   worker.postMessage({ cmd: 'compare', cfg: simCfg(), hours });
   $('compareCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
@@ -105,7 +107,7 @@ function render(msg) {
   const m = s.metrics, r = msg.rate;
   const thinking = m.workS + m.reworkS;
   const stats = [
-    [n0(s.totalAgents), `agents, plus ${n0(s.reviewerAgents)} reviewers`],
+    [n0(s.totalAgents), `agents, plus ${n0(s.reviewerAgents)} reviewers${s.leadAgents ? ` and ${n0(s.leadAgents)} leads (${Math.round(100 * s.leadBusy)}% busy)` : ''}`],
     [r ? n0(r.mergedPerH) : '–', 'landed per hour'],
     [dur(s.p50), 'asked to landed, median'],
     [dur(s.p90), 'asked to landed, slowest 10%'],
@@ -232,7 +234,8 @@ function drawRepos(strip) {
 
 const STORY_WORDS = {
   asked: 'asked for', claimWait: 'waiting for its files to be free', work: 'agent working', fix: 'fixing what the review asked',
-  rework: 'redoing it on the new main', reviewWait: 'waiting for a reviewer', review: 'reviewer agent checking',
+  rework: 'redoing it on the new main', dispute: 'author and reviewer arguing',
+  leadWait: 'waiting for its lead', lead: 'the lead deciding', reviewWait: 'waiting for a reviewer', review: 'reviewer agent checking',
   humanWait: 'waiting for a person', human: 'a person reviewing', mergeWait: 'in the merge queue', merged: 'landed',
 };
 function renderFollow(s) {
@@ -265,7 +268,7 @@ function renderCompare(msg) {
 
 worker.onmessage = ({ data }) => {
   if (data.type === 'snap') { state.last = data; requestAnimationFrame(() => render(data)); }
-  else if (data.type === 'compareProgress') $('cmpTable').innerHTML = `<tr><td class="muted">Running the four policies… ${data.done} of ${data.of}</td></tr>`;
+  else if (data.type === 'compareProgress') $('cmpTable').innerHTML = `<tr><td class="muted">Running every policy… ${data.done} of ${data.of}</td></tr>`;
   else if (data.type === 'compare') renderCompare(data);
 };
 addEventListener('resize', () => { layout = null; if (state.last) render(state.last); });

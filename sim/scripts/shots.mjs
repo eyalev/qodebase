@@ -14,7 +14,7 @@ for (const [name, w, h, dark] of [['390-light', 390, 844, false], ['390-dark', 3
   p.on('pageerror', (e) => errors.push(`${name}: ${e.message}`));
   p.on('console', (m) => m.type() === 'error' && errors.push(`${name}: ${m.text()}`));
   await p.goto(URL_);
-  await p.evaluate(() => localStorage.setItem('qbsim.preset', 'k1'));
+  await p.evaluate(() => { localStorage.setItem('qbsim.preset', 'k1'); localStorage.setItem('qbsim.policy', 'leads'); });
   await p.reload();
   await p.click('#speed button:nth-child(4)');
   await p.click('#play');
