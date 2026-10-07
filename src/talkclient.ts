@@ -116,7 +116,9 @@ var css = [
   '#talk-mic.on{background:#b42d1f}',
   '.talk-ib.on{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-set{display:none;padding:12px 16px;border-bottom:1px solid var(--t-line);gap:12px;flex-direction:column;font-size:15px}',
-  '#talk-root.settings #talk-set{display:flex}',
+  '#talk-root.settings #talk-set{display:flex;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}',
+  '#talk-root.settings #talk-log,#talk-root.settings #talk-live,#talk-root.settings #talk-offer,#talk-root.settings #talk-peek{display:none!important}',
+  '#talk-root.settings.bar #talk-sheet{height:var(--talk-h,62dvh)}',
   '#talk-set label{display:flex;flex-direction:column;gap:4px;color:var(--t-dim);font-size:13px}',
   '#talk-set select{height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);font:16px var(--t-ff);padding:0 8px}',
   '.talk-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}',
@@ -162,7 +164,8 @@ function build() {
     '<label>Voice<select id="talk-s-speaker"></select></label>' +
     '<label>Speed<select id="talk-s-speed"><option value="1">1\u00d7</option><option value="1.1">1.1\u00d7</option><option value="1.15">1.15\u00d7</option><option value="1.25">1.25\u00d7</option><option value="1.4">1.4\u00d7</option><option value="1.6">1.6\u00d7</option></select></label>' +
     '<label>Speak<select id="talk-s-when"><option value="voice">When I talked</option><option value="always">Always</option></select></label>' +
-    '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>';
+    '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>' +
+    '<button type="button" class="talk-chip pri" id="talk-s-done">Done</button>';
   logEl = el('div', { id: 'talk-log', 'aria-live': 'polite' });
   live = el('div', { id: 'talk-live' });
   offer = el('div', { id: 'talk-offer' });
@@ -196,7 +199,7 @@ function build() {
   fab.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   fab.addEventListener('click', function () { if (ptt) { ptt = false; return; } unlockAudio(); open(true); });
   close.addEventListener('click', function () { stopListen(true); open(false); });
-  gear.addEventListener('click', function () { root.classList.toggle('settings'); });
+  gear.addEventListener('click', function () { var on = root.classList.toggle('settings'); if (on) setp.scrollTop = 0; trace('settings', { open: on }); });
   micBtn.addEventListener('click', function () { unlockAudio(); if (vc) { vc.toggleMute(); return; } if (listening) stopListen(false); else startListen(); });
   form.addEventListener('submit', function (e) { e.preventDefault(); unlockAudio(); var v = inp.value.trim(); if (!v) return; inp.value = ''; if (vc) { vcActive(); vc.sendText(v); return; } lastSpoken = false; submit(v); });
   var se = document.getElementById('talk-s-engine'), sl = document.getElementById('talk-s-lang'), sv = document.getElementById('talk-s-voice'), sk = document.getElementById('talk-s-speaker'), sw = document.getElementById('talk-s-when');
@@ -219,6 +222,7 @@ function build() {
   voiceBtn();
   se.onchange = function () { S.engine = se.value; set('engine', S.engine); };
   sl.onchange = function () { S.lang = sl.value; set('lang', S.lang); };
+  document.getElementById('talk-s-done').onclick = function () { root.classList.remove('settings'); trace('settings', { open: false }); };
   document.getElementById('talk-s-clear').onclick = function () { hist = []; chatHist = []; sset('log', hist); sset('chat', chatHist); render(); root.classList.remove('settings'); };
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && root.classList.contains('open')) { stopListen(true); open(false); }
