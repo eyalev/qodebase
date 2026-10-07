@@ -12,7 +12,7 @@
 // carries its record as a git note (refs/notes/qodebase). One push at the end.
 //
 // Output: progress lines, then one line `QB_RESULT {json}`.
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -28,6 +28,16 @@ function git(args, { tok, input, ok = false } = {}) {
   const r = spawnSync('git', [...ID, ...auth(tok), ...args], { cwd: DIR, input, encoding: 'utf8', maxBuffer: 64 << 20 });
   if (r.status !== 0 && !ok) throw new Error(`git ${args[0]} failed (${r.status}): ${(r.stderr || r.stdout || '').trim().slice(0, 600)}`);
   return { code: r.status, out: (r.stdout || '').trimEnd(), err: (r.stderr || '').trimEnd() };
+}
+// The same, without blocking: for fetching many forks at once (each git takes its own ref).
+function gitAsync(args, tok) {
+  return new Promise((resolve) => {
+    const p = spawn('git', [...ID, ...auth(tok), ...args], { cwd: DIR });
+    let out = '', err = '';
+    p.stdout.on('data', (d) => { out += d; }); p.stderr.on('data', (d) => { err += d; });
+    p.on('close', (code) => resolve({ code, out: out.trimEnd(), err: err.trimEnd() }));
+    p.on('error', (e) => resolve({ code: -1, out: '', err: String(e) }));
+  });
 }
 const show = (spec) => { const r = git(['show', spec], { ok: true }); return r.code === 0 ? r.out + '\n' : null; };
 
@@ -173,7 +183,7 @@ function diffOf(from, to) {
 }
 
 // ---- the train --------------------------------------------------------------------
-function main() {
+async function main() {
   if (!existsSync(join(DIR, '.git'))) { mkdirSync(DIR, { recursive: true }); git(['init', '-q']); }
   const sym = git(['ls-remote', '--symref', job.mainRemote, 'HEAD'], { tok: job.mainToken }).out;
   const branch = job.branch || (sym.match(/ref: refs\/heads\/(\S+)\s+HEAD/) || [])[1] || 'main';
@@ -186,8 +196,11 @@ function main() {
 
   const fetched = [];
   const results = new Map();
-  for (const c of job.changes) {
-    const f = git(['fetch', '-q', '--no-tags', c.remote, `+HEAD:refs/qb/c/${c.id}`], { tok: c.token, ok: true });
+  // Every fork at once: one at a time took ~1 s each, 8.7 s of an 11.7 s train (2026-10-08).
+  const fetches = await Promise.all(job.changes.map((c) => gitAsync(['fetch', '-q', '--no-tags', '--no-write-fetch-head', c.remote, `+HEAD:refs/qb/c/${c.id}`], c.token)));
+  say('fetched', { forks: job.changes.length, ms: Date.now() - t0 });
+  for (const [k, c] of job.changes.entries()) {
+    const f = fetches[k];
     if (f.code !== 0) { results.set(c.id, { id: c.id, ok: false, conflicts: [], why: 'could not fetch its fork: ' + f.err.slice(0, 200) }); continue; }
     const head = git(['rev-parse', `refs/qb/c/${c.id}`]).out;
     if (c.commit && c.commit !== head && git(['cat-file', '-e', `${c.commit}^{commit}`], { ok: true }).code !== 0) c.commit = head;
@@ -261,5 +274,4 @@ function main() {
   console.log('QB_RESULT ' + JSON.stringify(out));
 }
 
-try { main(); }
-catch (e) { say('error', { err: String(e?.stack || e) }); console.log('QB_RESULT ' + JSON.stringify({ ok: false, error: String(e?.message || e).slice(0, 600), ms: Date.now() - t0 })); }
+main().catch((e) => { say('error', { err: String(e?.stack || e) }); console.log('QB_RESULT ' + JSON.stringify({ ok: false, error: String(e?.message || e).slice(0, 600), ms: Date.now() - t0 })); });
