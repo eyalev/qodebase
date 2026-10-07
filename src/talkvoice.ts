@@ -77,6 +77,12 @@ class AuraTTS {
     // Very short pieces ("Okay." "Done.") join the next one: one tiny request each costs time.
     const chunks: string[] = [];
     for (const p of parts) { if (chunks.length && chunks[chunks.length - 1].length < 24) chunks[chunks.length - 1] += ' ' + p; else chunks.push(p); }
+    // A long first sentence starts with its first clause (": ", "; ", ", " after 20+ characters): the first
+    // word plays after ~1 s instead of after the whole sentence is made (~3.7 s measured for Aura-2).
+    if (chunks.length && chunks[0].length > 60) {
+      const m = /^(.{20,}?[:;,])\s+(.{12,})$/s.exec(chunks[0]);
+      if (m) chunks.splice(0, 1, m[1], m[2]);
+    }
     let next: Promise<ArrayBuffer | null> | null = chunks.length ? this.#one(chunks[0]) : null;
     for (let i = 0; i < chunks.length; i++) {
       if (signal?.aborted) return;
