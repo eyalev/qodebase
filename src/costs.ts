@@ -117,7 +117,7 @@ ${rs.map((r) => `<div class="crow"><span>${esc(KIND_LABEL[r.kind] || r.kind)}${r
 <table class="ctab"><tr><th></th><th>Today</th><th>7 days</th></tr>${kinds}</table>
 <h2>By day</h2>${days}
 <h2>How it is measured</h2>
-<ul class="cnote"><li>Agent boxes: every second awake (memory ${CONTAINER.gibSecond}/GiB-s, disk ${CONTAINER.gbDiskSecond}/GB-s) plus the CPU they used (${CONTAINER.vcpuSecond}/vCPU-s), Cloudflare Workers Paid rates beyond the plan's included usage.</li>
+<ul class="cnote"><li>Agent boxes: every second awake (memory $${(CONTAINER.gibSecond * 3600).toFixed(3)} per GiB-hour, disk $${(CONTAINER.gbDiskSecond * 3600).toFixed(5)} per GB-hour) plus the CPU they actually used ($${(CONTAINER.vcpuSecond * 3600).toFixed(3)} per vCPU-hour), Cloudflare Workers Paid rates beyond the plan's included usage.</li>
 <li>Claude: tokens per model from Claude Code's own records, at Anthropic's API prices (Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 4.5 $1/$5 per million in/out).</li>
 <li>Not measured: git storage and requests, a few cents a month.</li>
 <li>Prices checked ${PRICES_CHECKED}. Updated every 10 minutes while agents run.</li></ul>
