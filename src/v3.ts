@@ -505,6 +505,12 @@ export const NAV_CSS = `
 .gtop .g{flex:none;display:flex;align-items:center;gap:6px;padding:0 7px;font:500 14px 'Instrument Sans',sans-serif;color:var(--dim);border-bottom:2px solid transparent}
 .gtop .g.on{color:var(--fg);border-bottom-color:var(--fg)}
 .gtop .gbuild{flex:none;align-self:center;margin-left:auto;min-height:34px;padding:0 12px;font-size:14px;border-radius:8px}
+/* Sign in and ☰ sit at the right end. Build (margin-left:auto) usually pushes them there;
+   on the home page Build is hidden, so they push themselves (2026-10-07). */
+.gtop .g.signin{margin-left:auto}
+.gtop .signin~.gbuild{margin-left:8px}
+body:has(.land) .gtop .gmenu{margin-left:auto}
+body:has(.land) .gtop .signin~.gmenu{margin-left:0}
 .gtop .gmenu{flex:none;align-self:center;display:inline-flex;align-items:center;justify-content:center;width:40px;height:44px;margin-left:0;border:0;background:none;color:var(--fg);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .gmenupop{position:fixed;inset:52px 8px auto auto;margin:0;width:min(300px,calc(100vw - 16px));padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg);box-shadow:0 8px 32px rgb(0 0 0 / .16)}
 .gmenupop a{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none}
@@ -647,7 +653,7 @@ export function globalTop(active: HomeTab, inbox: number, me: string) {
   if (active === 'projects') active = 'mine';
   // Build: the call to action on every page, signed in or not (Eyal, 2026-10-03).
   return `<nav class="gtop" aria-label="qodebase"><a class="mark" href="/">qodebase</a>${tabs.map(([id, labelT, href]) =>
-    `<a href="${href}" class="g${id === active ? ' on' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}<a class="btn gbuild" href="/build"${active === 'build' ? ' aria-current="page"' : ''}>Build</a>${gmenu(me, active)}</nav>`;
+    `<a href="${href}" class="g${id === active ? ' on' : ''}${href === '/login' ? ' signin' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}<a class="btn gbuild" href="/build"${active === 'build' ? ' aria-current="page"' : ''}>Build</a>${gmenu(me, active)}</nav>`;
 }
 
 const MENU_ICON = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
