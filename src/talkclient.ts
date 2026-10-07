@@ -32,7 +32,7 @@ var chatHist = sget('chat', []);       // [{role, content}] for the chat lane
 
 // ---- DOM -------------------------------------------------------------------
 var css = [
-  '#talk-root{--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);font:16px/1.45 "Instrument Sans",system-ui,sans-serif;color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
+  '#talk-root{--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);font:16px/1.45 var(--t-ff);color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
   '#talk-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483000;width:52px;height:52px;border-radius:12px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer;transition:background-color .12s}',
   '#talk-fab svg{width:24px;height:24px}',
   '#talk-fab.on{background:#b42d1f}',
@@ -55,10 +55,10 @@ var css = [
   '#talk-live:not(:empty){padding:4px 16px 8px}',
   '#talk-offer{display:none;gap:8px;align-items:center;padding:0 16px 8px;font-size:15px;flex-wrap:wrap}',
   '#talk-offer.on{display:flex}',
-  '.talk-chip{min-height:44px;padding:0 14px;border-radius:8px;border:0;background:var(--t-chip);color:var(--t-fg);font:500 15px "Instrument Sans",system-ui,sans-serif;cursor:pointer}',
+  '.talk-chip{min-height:44px;padding:0 14px;border-radius:8px;border:0;background:var(--t-chip);color:var(--t-fg);font:500 15px var(--t-ff);cursor:pointer}',
   '.talk-chip.pri{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-form{display:flex;gap:8px;padding:8px 8px 8px 16px;border-top:1px solid var(--t-line);align-items:center}',
-  '#talk-in{flex:1;min-width:0;height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);padding:0 12px;font:16px "Instrument Sans",system-ui,sans-serif;outline:none}',
+  '#talk-in{flex:1;min-width:0;height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);padding:0 12px;font:16px var(--t-ff);outline:none}',
   '#talk-in:focus{border-color:var(--t-acc)}',
   '#talk-mic{width:44px;height:44px;border-radius:8px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}',
   '#talk-mic svg{width:22px;height:22px}',
@@ -66,7 +66,7 @@ var css = [
   '#talk-set{display:none;padding:12px 16px;border-bottom:1px solid var(--t-line);gap:12px;flex-direction:column;font-size:15px}',
   '#talk-root.settings #talk-set{display:flex}',
   '#talk-set label{display:flex;flex-direction:column;gap:4px;color:var(--t-dim);font-size:13px}',
-  '#talk-set select{height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);font:16px "Instrument Sans",system-ui,sans-serif;padding:0 8px}',
+  '#talk-set select{height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);font:16px var(--t-ff);padding:0 8px}',
   '.talk-mark{outline:3px solid var(--acc,#17695a)!important;outline-offset:3px!important;border-radius:8px;transition:outline-color .12s}',
   '.talk-mark.dash{outline-style:dashed!important}',
 ].join('\n');
@@ -85,6 +85,8 @@ function el(tag, attrs, html) { var e = document.createElement(tag); for (var k 
 function build() {
   var st = el('style'); st.textContent = css; document.head.appendChild(st);
   root = el('div', { id: 'talk-root' });
+  // The page's own font (it changes with the site's look), for every Talk control too.
+  root.style.setProperty('--t-ff', getComputedStyle(document.body).fontFamily || 'sans-serif');
   fab = el('button', { id: 'talk-fab', type: 'button', 'aria-label': 'Talk to qodebase' }, ICON.mic);
   sheet = el('section', { id: 'talk-sheet', 'aria-label': 'Talk' });
   var head = el('div', { id: 'talk-head' });
