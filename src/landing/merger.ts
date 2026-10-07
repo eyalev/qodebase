@@ -137,8 +137,10 @@ export class MergeBox extends DurableObject<Env> {
     }
   }
 
+  async restart(): Promise<void> { await this.c.destroy().catch(() => {}); this.ctx.abort('restart on the deployed code'); }
+
   async state() {
-    return { code: MERGER_V, instance: INSTANCE, containerEvents: await this.ctx.storage.get('containerEvents'), running: !!this.ctx.container?.running, queue: ((await this.ctx.storage.get<MergeJob[]>('queue')) || []).map((j) => j.trainId),
+    return { code: MERGER_V, version: this.env.CF_VERSION_METADATA?.id || null, instance: INSTANCE, containerEvents: await this.ctx.storage.get('containerEvents'), running: !!this.ctx.container?.running, queue: ((await this.ctx.storage.get<MergeJob[]>('queue')) || []).map((j) => j.trainId),
       busy: (await this.ctx.storage.get<MergeJob>('running'))?.trainId || null, last: await this.ctx.storage.get('last'), alarm: await this.ctx.storage.getAlarm() };
   }
 }

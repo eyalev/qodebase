@@ -46,10 +46,14 @@ export type Train = { id: string; state: 'testing' | 'landed' | 'bounced'; chang
   outcomes?: Record<string, 'landed' | 'bounced' | 'conflict' | 'retry'> };
 type Demo = { running: boolean; agents: number; speed: number; startedAt: number; endsAt: number; stoppedAt?: number;
   /** story = the café's 14 tasks; busy = an endless stream of small colliding changes. */
-  mode?: 'story' | 'busy' };
+  mode?: 'story' | 'busy';
+  /** Started by an anonymous visitor (Watch a run): never uses model replay. */
+  publicRun?: boolean };
 type Meta = {
   slug: string; waiting: string[]; running: string | null; runningSince?: number;
-  flags: { llmReplay: boolean; agentModel?: string; replayModel?: string }; demo: Demo | null;
+  flags: { llmReplay: boolean; agentModel?: string; replayModel?: string; publicWatch?: boolean }; demo: Demo | null;
+  watchLog?: { at: number; ip: string }[];   // Watch a run: starts in the last day (caps)
+  watchStarting?: number;                    // a visitor's run is being set up (blocks a second one)
   tree?: { commit: string; files: string[]; at: number };
   order: string[];   // change ids, oldest first (capped)
   trains: string[];
@@ -66,6 +70,8 @@ const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER
 const TRAIN_STUCK_MS = 12 * 60_000;
 /** Tier 2's default model: short prompts, a fraction of a cent each (2026-10-08: Haiku 5.5). */
 export const DEFAULT_REPLAY_MODEL = 'claude-haiku-5-5';
+/** Watch a run (public, no sign-in): one at a time, 10 a day, 3 a day and one per 5 min per IP. */
+export const WATCH = { perDay: 10, perIpDay: 3, ipCooldownS: 300, agents: 6, speed: 2, maxMs: 5 * 60_000 };
 export const DEMO_MAX_AGENTS = 24, DEMO_MAX_MS = 20 * 60_000, DEMO_MAX_STORY_AGENTS = 12, BUSY_MAX_TASKS = 400, BUSY_MAX_WAITING = 40;
 const OPEN = (c: Change) => c.state !== 'landed';
 
@@ -262,7 +268,7 @@ export class Landing extends DurableObject<Env> {
     const train: Train = { id: `t${Date.now().toString(36)}`, state: 'testing', changes: picked.map((c) => c.id), startedAt: Date.now(), endedAt: null, checks: null, mainBefore: null, mainAfter: null };
     const job: MergeJob = { trainId: train.id, slug: m.slug, mainRemote: project.remote, mainToken, branch: project.importedFrom?.branch || null, changes: [],
       // Tier 2 runs on the owner's Claude subscription: only for the instance owner's projects (and the showcase).
-      ...(m.flags.llmReplay && (project.owner === this.env.OWNER_HANDLE || project.owner === 'forq') ? { llm: { model: m.flags.replayModel || DEFAULT_REPLAY_MODEL } } : {}) };
+      ...(m.flags.llmReplay && !m.demo?.publicRun && (project.owner === this.env.OWNER_HANDLE || project.owner === 'forq') ? { llm: { model: m.flags.replayModel || DEFAULT_REPLAY_MODEL } } : {}) };
     for (const c of picked) {
       using fork = await this.env.ARTIFACTS.get(c.fork);
       // A stacked change's base is its parent's pushed commit; once the parent landed as a
@@ -488,8 +494,11 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     const lat = today.map(([, s]) => s).sort((a, b) => a - b);
     const recentEv = (w: What) => changes.filter((c) => c.events.some((e) => e.what === w && now - e.t < DAY)).length;
     return {
-      now, mode: m.demo ? 'demo' : 'live',
-      demo: m.demo, flags: m.flags,
+      now, mode: m.demo ? 'demo' : 'live', code: (this.env.CF_VERSION_METADATA?.id || '').slice(0, 8),
+      demo: m.demo || m.flags.publicWatch ? { ...(m.demo || { running: false, agents: 0, speed: 1, startedAt: 0, endsAt: 0 }),
+        public: !!m.flags.publicWatch, runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 86400_000).length) } : null,
+      flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch },
+      watch: { enabled: !!m.flags.publicWatch, runsToday: (m.watchLog || []).filter((w) => now - w.at < 86400_000).length, maxPerDay: WATCH.perDay, running: !!m.demo?.running },
       queue: { trains: trains.map((t) => ({ id: t.id, state: t.state, changes: t.changes, startedAt: t.startedAt, endedAt: t.endedAt, checks: t.checks || { ok: false, ms: 0, failures: [] }, mainBefore: t.mainBefore, mainAfter: t.mainAfter, ...(t.note ? { note: t.note } : {}),
         // What was in the train, by name ("Landed: Add teas to the menu (scripted agent 4)").
         items: t.changes.map((id) => ({ id, title: byId.get(id)?.title || id, agent: byId.get(id)?.agent || '', outcome: t.outcomes?.[id] || (t.state === 'testing' ? 'testing' : null) })) })), waiting: m.waiting },
@@ -501,13 +510,14 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
   }
 
   // ---- demo mode (scripted agents, src/landing/demo.ts) ------------------------------
-  async demoStart(slug: string, agents: number, speed: number, mode: 'story' | 'busy' = 'story') {
+  async demoStart(slug: string, agents: number, speed: number, mode: 'story' | 'busy' = 'story', o: { maxMs?: number; publicRun?: boolean } = {}) {
     const m = await this.#m(slug);
     agents = Math.max(1, Math.min(mode === 'busy' ? DEMO_MAX_AGENTS : DEMO_MAX_STORY_AGENTS, Math.round(agents || 4)));
     speed = Math.max(0.5, Math.min(4, speed || 1));
     // Agents of a bigger earlier run that are still ticking would keep taking tasks.
     if (m.demo && m.demo.agents > agents) for (let i = agents + 1; i <= m.demo.agents; i++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${slug}#${i}`)).stop().catch(() => {});
-    m.demo = { running: true, agents, speed, mode, startedAt: Date.now(), endsAt: Date.now() + DEMO_MAX_MS };
+    m.demo = { running: true, agents, speed, mode, startedAt: Date.now(), endsAt: Date.now() + Math.min(DEMO_MAX_MS, o.maxMs || DEMO_MAX_MS), ...(o.publicRun ? { publicRun: true } : {}) };
+    delete m.watchStarting;
     await this.#saveMeta();
     for (let i = 1; i <= agents; i++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${slug}#${i}`)).start(slug, i, speed, m.demo.startedAt);
     await this.#arm(60_000);
@@ -524,6 +534,31 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     log('landing', 'demo_stop', { slug: m.slug, why });
     return m.demo;
   }
+
+  /** Watch a run: may this visitor start one now? Records the start atomically (one DO). */
+  async watchClaim(ip: string): Promise<{ state: 'running'; startedAt: number; endsAt: number; startedNow: false } | { state: 'limit'; reason: 'daily' | 'ip' | 'cooldown' | 'off'; retryAfterS: number } | { state: 'go' }> {
+    const m = await this.#m();
+    if (!m.flags.publicWatch) return { state: 'limit', reason: 'off', retryAfterS: 3600 };
+    if (m.demo?.running) return { state: 'running', startedAt: m.demo.startedAt, endsAt: m.demo.endsAt, startedNow: false };
+    const now = Date.now();
+    if (m.watchStarting && now - m.watchStarting < 60_000) return { state: 'running', startedAt: m.watchStarting, endsAt: m.watchStarting + WATCH.maxMs, startedNow: false };
+    const day = (m.watchLog || []).filter((w) => now - w.at < 86400_000);
+    if (day.length >= WATCH.perDay) return { state: 'limit', reason: 'daily', retryAfterS: Math.ceil((day[0].at + 86400_000 - now) / 1000) };
+    const mine = day.filter((w) => w.ip === ip);
+    if (mine.length >= WATCH.perIpDay) return { state: 'limit', reason: 'ip', retryAfterS: Math.ceil((mine[0].at + 86400_000 - now) / 1000) };
+    const last = mine[mine.length - 1];
+    if (last && now - last.at < WATCH.ipCooldownS * 1000) return { state: 'limit', reason: 'cooldown', retryAfterS: Math.ceil((last.at + WATCH.ipCooldownS * 1000 - now) / 1000) };
+    if (m.running) return { state: 'limit', reason: 'cooldown', retryAfterS: 30 };   // the last run's final train is still landing
+    m.watchLog = [...day, { at: now, ip }]; m.watchStarting = now;
+    await this.#saveMeta();
+    log('landing', 'watch_start', { slug: m.slug, ip: ip.replace(/[.:][^.:]*$/, '.x'), today: m.watchLog.length });
+    return { state: 'go' };
+  }
+
+  /** Version check after a deploy: a Durable Object that never went idle keeps the old code. */
+  async version() { return this.env.CF_VERSION_METADATA?.id || null; }
+  /** Restart this object on the deployed code (admin, src/landing/routes.ts 'restart'). */
+  async restart(): Promise<void> { this.ctx.abort('restart on the deployed code'); }
 
   async demoForks() { return (await this.#m()).demoForks || []; }
 

@@ -11,16 +11,54 @@ import type { ProjectInfo } from '../project';
 import { log } from '../box';
 import { SEED } from './demoproject';
 import { pushSeed } from './demo';
-import { DEMO_MAX_AGENTS } from './landing';
+import { DEMO_MAX_AGENTS, WATCH } from './landing';
 
 const json = (v: unknown, status = 200) => Response.json(v, { status, headers: { 'cache-control': 'no-store' } });
 
 export const landingStub = (env: Env, slug: string) => env.Landing.get(env.Landing.idFromName(slug));
 
+/** Main back to the café's first version (a new commit on top, so history stays), records
+ *  cleared, the scripted forks deleted (ten at a time: one by one took ~8 min after a busy run). */
+async function resetDemo(env: Env, info: ProjectInfo, L: ReturnType<typeof landingStub>) {
+  using repo = await env.ARTIFACTS.get(info.repo);
+  const head = (await repo.log({ limit: 1 }).catch(() => []))[0]?.hash || null;
+  await L.demoStop('reset');
+  const forks = await L.demoForks();
+  await L.clear();
+  const token = (await repo.createToken('write', 600)).plaintext;
+  const commit = await pushSeed(info.remote, token, SEED, head, 'Reset the demo to the first version');
+  let deleted = 0;
+  for (let i = 0; i < forks.length; i += 10)
+    deleted += (await Promise.all(forks.slice(i, i + 10).map((f) => env.ARTIFACTS.delete(f).catch(() => false)))).filter(Boolean).length;
+  log('landing', 'demo_reset', { slug: info.slug, commit, forksDeleted: deleted });
+  return { ok: true, commit, forksDeleted: deleted };
+}
+
 export async function landingRoute(request: Request, env: Env, info: ProjectInfo, verb: string, me: { handle: string | null; admin?: boolean }): Promise<Response> {
   const L = landingStub(env, info.slug);
   if (verb === '' && request.method === 'GET') return json(await L.view(info.slug));
+  // Watch a run: anyone, no sign-in, on projects with flags.publicWatch (eyal/corner-cafe). Caps in Landing.watchClaim.
+  if (verb === 'watch' && request.method === 'POST') {
+    if (info.private) return json({ error: 'no such project' }, 404);
+    const ip = request.headers.get('x-qb-ip') || request.headers.get('cf-connecting-ip') || 'unknown';
+    const c = await L.watchClaim(ip);
+    // Both spellings: state running|started|limit, why/reason, nextAt/retryAfterS.
+    if (c.state === 'limit') return json({ ...c, why: c.reason, nextAt: Date.now() + c.retryAfterS * 1000 });
+    if (c.state === 'running') return json(c);
+    await resetDemo(env, info, L);
+    const d = await L.demoStart(info.slug, WATCH.agents, WATCH.speed, 'story', { maxMs: WATCH.maxMs, publicRun: true });
+    return json({ state: 'started', startedAt: d.startedAt, endsAt: d.endsAt, startedNow: true, demo: d });
+  }
   if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
+  if (verb === 'restart' && me.admin) {
+    // After a deploy: objects that never went idle keep the old code; this restarts them on the new one.
+    let merger: string | null = null;
+    try { merger = ((await env.MergeBox.get(env.MergeBox.idFromName(`${info.slug}--merge`)).state()) as { version?: string | null }).version || null; } catch {}
+    const before = { landing: await L.version().catch(() => null), merger };
+    await L.restart().catch(() => {});
+    await env.MergeBox.get(env.MergeBox.idFromName(`${info.slug}--merge`)).restart().catch(() => {});
+    return json({ before, now: env.CF_VERSION_METADATA?.id || null });
+  }
   const body = request.method === 'POST' ? await request.json().catch(() => ({})) as Record<string, unknown> : {};
   try {
     if (verb === 'approve' && request.method === 'POST') return json(await L.approve(String(body.id || '')));
@@ -29,6 +67,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
       const model = (v: unknown) => (typeof v === 'string' && /^(sonnet|haiku|opus|claude-[a-z0-9-]{3,40})$/.test(v) ? { ok: v } : v === null ? { ok: undefined } : null);
       const am = model(body.agentModel), rm = model(body.replayModel);
       return json(await L.setFlags(info.slug, { ...(typeof body.llmReplay === 'boolean' ? { llmReplay: body.llmReplay } : {}),
+        ...(typeof body.publicWatch === 'boolean' ? { publicWatch: body.publicWatch } : {}),
         // agentModel: the model this project's agent boxes run on the owner's subscription (a cheap test);
         // replayModel: the model tier-2 replays use (default Haiku 5.5).
         ...(am ? { agentModel: am.ok } : {}), ...(rm ? { replayModel: rm.ok } : {}) }));
@@ -45,29 +84,17 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
       const action = String(body.action || '');
       if (action === 'start') return json(await L.demoStart(info.slug, Number(body.agents) || 4, Number(body.speed) || 1, body.mode === 'busy' ? 'busy' : 'story'));
       if (action === 'stop') return json(await L.demoStop());
-      if (action === 'seed' || action === 'reset') {
-        // seed: an empty project gets the café; reset: main goes back to the café's first
-        // version (a new commit on top, so history stays) and the records are cleared.
+      if (action === 'seed') {
         using repo = await env.ARTIFACTS.get(info.repo);
         const head = (await repo.log({ limit: 1 }).catch(() => []))[0]?.hash || null;
-        if (action === 'seed' && head) return json({ error: 'not empty: use reset' }, 400);
-        let forks: string[] = [];
-        if (action === 'reset') {
-          await L.demoStop('reset');
-          forks = await L.demoForks();
-          await L.clear();
-        }
+        if (head) return json({ error: 'not empty: use reset' }, 400);
         const token = (await repo.createToken('write', 600)).plaintext;
-        const commit = await pushSeed(info.remote, token, SEED, head, action === 'seed' ? 'Corner Café: the first version' : 'Reset the demo to the first version');
-        // The scripted agents' forks are throwaway: delete them (Artifacts storage).
-        // Ten at a time: one by one took ~8 minutes after a 400-change busy run (2026-10-08).
-        let deleted = 0;
-        for (let i = 0; i < forks.length; i += 10)
-          deleted += (await Promise.all(forks.slice(i, i + 10).map((f) => env.ARTIFACTS.delete(f).catch(() => false)))).filter(Boolean).length;
-        if (action === 'seed') await env.Project.get(env.Project.idFromName(info.slug)).setLanding(true);
-        log('landing', `demo_${action}`, { slug: info.slug, commit, forksDeleted: deleted });
-        return json({ ok: true, commit, forksDeleted: deleted });
+        const commit = await pushSeed(info.remote, token, SEED, null, 'Corner Café: the first version');
+        await env.Project.get(env.Project.idFromName(info.slug)).setLanding(true);
+        log('landing', 'demo_seed', { slug: info.slug, commit });
+        return json({ ok: true, commit });
       }
+      if (action === 'reset') return json(await resetDemo(env, info, L));
       return json({ error: `action: start (mode story|busy, agents 1-${DEMO_MAX_AGENTS}, speed 0.5-4), stop, reset, seed` }, 400);
     }
   } catch (e) {
