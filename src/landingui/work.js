@@ -45,7 +45,7 @@
 
   // ---- time --------------------------------------------------------------------
   let D = null, fetchedAt = 0;
-  const now = () => (D ? D.now + (Date.now() - fetchedAt) * (MOCK ? MSPEED : 1) : Date.now());
+  const now = () => (D ? D.now + (Date.now() - fetchedAt) * (P ? P.speed : 1) : Date.now());
   const agoTxt = (t) => { const s = Math.max(0, Math.round((now() - t) / 1000)); return s < 5 ? 'just now' : s < 60 ? `${s} s ago` : s < 3600 ? `${Math.floor(s / 60)} min ago` : `${Math.floor(s / 3600)} h ago`; };
   // Times are spans the tick updates in place (render() ignores their text when deciding to rebuild).
   const ago = (t) => `<span data-ago="${t}">${agoTxt(t)}</span>`;
@@ -53,39 +53,62 @@
   const secs = (ms) => (ms < 90e3 ? `${Math.round(ms / 1000)} s` : `${Math.round(ms / 60e3)} min`);
   const hhmm = (t) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-  // ---- mock playback: the mock's future events and trains, revealed over time -------
+  // ---- playback: a run revealed over time from its own events and train times ---------
+  // Used for the mock (looping, its `future` events) and for replaying the last finished
+  // real run ("Watch a run" when no live run can start). P = {base, start, end, wall0, speed, loop}.
   const STATE = { asked: 'working', claimed: 'working', working: 'working', stacked: 'working', 'changes-suggested': 'working', pushed: 'pushed', approved: 'pushed', reviewing: 'reviewing', queued: 'queued', replayed: 'queued', testing: 'testing', landed: 'landed', bounced: 'bounced', replaying: 'replaying', 'with-lead': 'with-lead' };
-  let M = null, playFrom = 0;
+  let P = null;
   const MSPEED = Math.min(20, Math.max(0.25, +new URLSearchParams(location.search).get('mockspeed') || 1));
-  function mockAt() {
-    const [a, b] = M.mock.playS, span = (b - a) * 1000;
-    const T = M.now + a * 1000 + (((Date.now() - playFrom) * MSPEED) % span);
-    const landedNow = M.changes.filter((c) => c.state === 'landed').length;
-    const changes = M.changes.map((c) => {
-      const ev = [...c.events, ...(c.future || [])].filter((e) => e.t <= T);
+  const allEv = (c) => [...c.events, ...(c.future || [])];
+  const countIf = (l, f) => l.filter(f).length;
+  const hasEv = (what) => (c) => c.events.some((e) => e.what === what);
+  function playAt(P) {
+    const { base } = P, span = P.end - P.start, el = (Date.now() - P.wall0) * P.speed;
+    const T = P.start + (P.loop ? el % span : Math.min(el, span));
+    const changes = base.changes.map((c) => {
+      const ev = allEv(c).filter((e) => e.t <= T);
       if (!ev.length) return null;
-      const state = ev.reduce((s, e) => STATE[e.what] || s, 'working');
+      const state = ev.reduce((x, e) => STATE[e.what] || x, 'working');
       const landed = ev.find((e) => e.what === 'landed');
       const rv = ev.some((e) => e.what === 'approved' || e.what === 'changes-suggested') ? c.review : null;
       const landing = c.landing ? { ...c.landing, how: landed ? (c.landing.how || 'merged') : null, mainCommit: landed ? c.landing.mainCommit : null } : null;
       return { ...c, events: ev, state, review: rv, landing: ['pushed', 'working', 'reviewing'].includes(state) && !landed ? null : landing, landedAt: landed ? landed.t : null, lead: state === 'with-lead' ? c.lead : null };
     }).filter(Boolean);
-    const trains = M.mock.trains.filter((t) => t.startedAt <= T).map((t) => ({ ...t, state: T < t.endedAt ? 'testing' : t.checks.ok ? 'landed' : 'bounced' }));
+    const trains = (base.mock?.trains || base.queue.trains).filter((t) => t.startedAt <= T).map((t) => {
+      const testing = t.endedAt == null || T < t.endedAt;
+      const fin = t.state && t.state !== 'testing' ? t.state : t.checks?.ok === false ? 'bounced' : 'landed';
+      return { ...t, state: testing ? 'testing' : fin, items: t.items && (testing ? t.items.map((i) => ({ ...i, outcome: 'testing' })) : t.items) };
+    });
     const inTrain = new Set(trains.filter((t) => t.state === 'testing').flatMap((t) => t.changes));
     const lastQ = (c) => [...c.events].reverse().find((e) => e.what === 'queued' || e.what === 'replayed')?.t || 0;
     const waiting = changes.filter((c) => c.state === 'queued' && !inTrain.has(c.id)).sort((x, y) => lastQ(x) - lastQ(y)).map((c) => c.id);
-    const landed = changes.filter((c) => c.state === 'landed').length;
-    return { ...M, now: T, changes, queue: { trains, waiting },
-      stats: { ...M.stats, landedToday: M.stats.landedToday - landedNow + landed, inQueue: waiting.length + inTrain.size, replayed: M.stats.replayed - 1 + (changes.find((c) => c.id === '115')?.events.some((e) => e.what === 'replayed') ? 1 : 0) } };
+    // Today's totals: whatever the snapshot counted outside these changes, plus what has happened by T.
+    const bs = base.stats, isL = (c) => c.state === 'landed';
+    return { ...base, now: T, changes, queue: { trains, waiting },
+      demo: base.demo ? { ...base.demo, running: T < P.end } : base.demo,
+      stats: { ...bs, landedToday: bs.landedToday - countIf(base.changes, isL) + countIf(changes, isL), inQueue: waiting.length + inTrain.size,
+        replayed: bs.replayed - countIf(base.changes, hasEv('replayed')) + countIf(changes, hasEv('replayed')),
+        bounced: bs.bounced - countIf(base.changes, hasEv('bounced')) + countIf(changes, hasEv('bounced')) } };
+  }
+  const mockPlay = (m) => ({ base: m, start: m.now + m.mock.playS[0] * 1000, end: m.now + m.mock.playS[1] * 1000, wall0: Date.now(), speed: MSPEED, loop: true, mock: true });
+  function replayOf(d0, speed = 1) {
+    const ts = [...new Set(d0.changes.flatMap((c) => allEv(c).map((e) => e.t)).concat(d0.queue.trains.flatMap((t) => [t.startedAt, t.endedAt].filter(Boolean))))].sort((a, b) => a - b);
+    if (!ts.length) return null;
+    // Quiet stretches (a lead redoing a change minutes later) shrink to 12 s, so a replay never idles.
+    const GAP = 12e3, W = [ts[0]];
+    for (let i = 1; i < ts.length; i++) W.push(W[i - 1] + Math.min(ts[i] - ts[i - 1], GAP));
+    const warp = (t) => { if (t == null) return t; let lo = 0, hi = ts.length - 1; if (t <= ts[0]) return t; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (ts[m] <= t) lo = m; else hi = m - 1; } return W[lo] + Math.min(t - ts[lo], GAP); };
+    const d = { ...d0,
+      changes: d0.changes.map((c) => ({ ...c, createdAt: warp(c.createdAt), landedAt: warp(c.landedAt), events: allEv(c).map((e) => ({ ...e, t: warp(e.t) })), future: undefined })),
+      queue: { ...d0.queue, trains: d0.queue.trains.map((t) => ({ ...t, startedAt: warp(t.startedAt), endedAt: warp(t.endedAt) })) } };
+    return { base: d, start: W[0] - 2000, end: W[W.length - 1] + 4000, wall0: Date.now(), speed, loop: false, replay: true, realStart: ts[0] };
   }
 
   // ---- data ----------------------------------------------------------------------
   let failures = 0;
   async function load() {
-    if (MOCK) {
-      if (!M) { M = await fetch(SRC, { cache: 'no-store' }).then((r) => r.json()); playFrom = Date.now(); }
-      D = mockAt(); fetchedAt = Date.now(); return;
-    }
+    if (MOCK && !P) P = mockPlay(await fetch(SRC, { cache: 'no-store' }).then((r) => r.json()));
+    if (P) { D = playAt(P); fetchedAt = Date.now(); return; }
     const r = await fetch(SRC, { cache: 'no-store', credentials: 'same-origin' });
     if (r.status === 404) { D = null; throw Object.assign(new Error('none'), { none: true }); }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -151,7 +174,31 @@
   }
 
   // ---- overview -------------------------------------------------------------------------------
+  // ---- Watch a run (public, no sign-in; qb6's POST …/landing/watch) ----------------------
+  let starting = 0, limitNote = '';
+  const until = (t) => `<span data-until="${t}">${untilTxt(t)}</span>`;
+  const untilTxt = (t) => { const s = Math.max(0, Math.round((t - now()) / 1000)); return s < 60 ? `${s} s` : `${Math.ceil(s / 60)} min`; };
+  const LIMIT = { daily: 'Today\'s live runs are used up.', ip: 'You have started the most live runs for today.', cooldown: 'You started a run a few minutes ago.', running: 'A run is already going.', off: 'Live runs are switched off right now.' };
+  function watchCard() {
+    const W = D.watch || {}, dm = D.demo || {};
+    const speedChips = (on) => [1, 2, 4].map((x) => `<button class="chipb sp" type="button" data-speed="${x}" aria-pressed="${on === x}">${x}×</button>`).join('');
+    if (P && P.replay) {
+      const done = now() >= P.end - 1, pct = Math.min(100, (100 * (now() - P.start)) / (P.end - P.start));
+      return `<div class="watch"><div class="wt"><i class="live off"></i><span><b>Replay</b> of a run from ${hhmm(P.realStart)}: ${dm.agents || ''} ${term('scripted', 'scripted agents')}, sped up ${P.speed}×.${limitNote ? ` ${esc(limitNote)}` : ''}</span></div>
+        <div class="prog"><i style="width:${pct.toFixed(1)}%;animation:none"></i></div>
+        <div class="wa">${done ? '<button class="btn" type="button" data-watch="again">Replay again</button>' : speedChips(P.speed)}<button class="chipb" type="button" data-watch="live">Back to live</button></div></div>`;
+    }
+    if (starting && Date.now() - starting < 25e3 && !(dm.running && D.changes.length)) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Starting a run…</b> The café site goes back to its first version and the agents get their tasks.</span></div></div>`;
+    if (dm.running) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Live run</b>${dm.startedAt ? `, started ${ago(dm.startedAt)}` : ''}${dm.endsAt ? `, ends in ${until(dm.endsAt)}` : ''}. ${dm.agents || ''} ${term('scripted', 'scripted agents')}; their commits, collisions and tests are real.</span></div>${ownerCtl(true)}</div>`;
+    const left = W.maxPerDay ? Math.max(0, W.maxPerDay - (W.runsToday || 0)) : null;
+    return `<div class="watch"><div class="wt"><span><b>Watch a run.</b> ${dm.agents || 6} ${term('scripted', 'scripted agents')} change this café's website at once for about 5 minutes: real commits, real collisions, real tests.</span></div>
+      ${limitNote ? `<p class="small dim">${esc(limitNote)}</p>` : ''}
+      <div class="wa"><button class="btn" type="button" data-watch="start">Watch a run</button>${D.changes.length ? '<button class="chipb" type="button" data-watch="replay">Replay the last one</button>' : ''}${ownerCtl(false)}</div>
+      ${left != null ? `<p class="small dim">${left} of ${W.maxPerDay} live runs left today.</p>` : ''}</div>`;
+  }
+  const ownerCtl = (on) => (OWN && !MOCK ? `<button class="chipb" type="button" data-demo="${on ? 'stop' : 'start'}">${on ? 'Stop' : 'Start (owner)'}</button>` : '');
   function demoStrip() {
+    if (!MOCK && (D.watch?.enabled || (P && P.replay))) return watchCard();
     if (MOCK) return `<div class="demo"><i class="live"></i><span><b>Sample data</b>, played in a loop: how ${term('scripted', 'scripted agents')} look at work on a project.</span></div>`;
     if (D.mode !== 'demo') return '';
     const on = !D.demo || D.demo.running;
@@ -188,7 +235,7 @@
     const replaying = D.changes.filter((c) => c.state === 'replaying');
     const parts = testing.map((t) => {
       const lk = (id) => look(id, t);
-      const el = now() - t.startedAt, typical = 42e3, sp = MOCK ? MSPEED : 1;
+      const el = now() - t.startedAt, typical = 42e3, sp = P ? P.speed : 1;
       return `<div class="train"><div class="cars">${capped(t.changes.map((id) => car(lk(id), id)), full ? 99 : 8)}</div><div class="prog"><i style="animation-duration:${Math.round(typical / sp)}ms;animation-delay:-${Math.round(Math.min(el, typical - 1) / sp)}ms"></i></div><div class="lbl"><b>Being tested</b> ${since(t.startedAt)}</div></div>`;
     });
     const wait = [...D.queue.waiting.map((id) => car(idx.get(id), id)), ...replaying.map((c) => car(c, c.id))];
@@ -298,7 +345,7 @@
     const act = D.changes.filter(active);
     const agents = new Set(act.map((c) => c.agent)).size;
     return `${demoStrip()}
-      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)} right now.` : `No agents are working on ${esc(NAME)} right now.${D.stats.landedToday ? ` ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed today.` : ''}`}</h2>
+      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : `No agents are working on ${esc(NAME)} right now.${D.stats.landedToday ? ` ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed today.` : ''}`}</h2>
       <p class="intro">Each agent is an AI working on its own ${term('fork', 'copy')} of the code. Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>
       ${numbers()}
       <section class="sec"><div class="sec-h"><h3>${term('queue', 'The line')}</h3><a href="#/line">Everything</a></div>
@@ -451,10 +498,11 @@
       : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : overview();
     // Rebuild only when something other than a time changed, and never under a finger:
     // a rebuild mid-tap swallowed about one tap in six (critique, 2026-10-07).
-    const key = html.replace(/(data-(?:ago|since)="\d+">)[^<]*/g, '$1').replace(/animation-delay:-\d+ms/g, '');
+    const key = html.replace(/(data-(?:ago|since|until)="\d+">)[^<]*/g, '$1').replace(/animation-delay:-\d+ms/g, '');
     if (key === lastKey || pressing) {
       root.querySelectorAll('[data-ago]').forEach((e) => { const v = agoTxt(+e.dataset.ago); if (e.textContent !== v) e.textContent = v; });
       root.querySelectorAll('[data-since]').forEach((e) => { const v = secs(now() - +e.dataset.since); if (e.textContent !== v) e.textContent = v; });
+      root.querySelectorAll('[data-until]').forEach((e) => { const v = untilTxt(+e.dataset.until); if (e.textContent !== v) e.textContent = v; });
       if (pressing) pendingRender = true;
     } else {
       lastKey = key;
@@ -474,7 +522,7 @@
     clearTimeout(timer);
     try { await load(); failures = 0; render(); } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (e.none) { root.innerHTML = `<h2>No agents at work here yet.</h2><p class="dim">When agents work on ${esc(NAME)} at the same time, this page shows where they work, the line their changes wait in, and how each one landed. <a href="?mock=1">See it with sample data</a>.</p>`; return; }
       if (!D) root.innerHTML = `<p class="dim">Could not load the agents (${esc(e.message)}). Retrying…</p>`; }
-    if (!document.hidden) timer = setTimeout(tick, MOCK ? Math.max(250, 1000 / MSPEED) : Math.min(30e3, 2000 * 2 ** Math.min(failures, 4)));
+    if (!document.hidden) timer = setTimeout(tick, P ? Math.max(250, 1000 / P.speed) : Math.min(30e3, 2000 * 2 ** Math.min(failures, 4)));
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
   addEventListener('hashchange', render);
@@ -498,6 +546,10 @@
       if (!r.ok) { ap.disabled = false; toast('Could not merge it. Try again.'); } else { toast('Put in the line.'); tick(); }
       return;
     }
+    const sp = ev.target.closest('[data-speed]');
+    if (sp && P && P.replay) { const T = now(); P.speed = +sp.dataset.speed; P.wall0 = Date.now() - (T - P.start) / P.speed; tick(); return; }
+    const wb = ev.target.closest('[data-watch]');
+    if (wb) { watch(wb.dataset.watch, wb); return; }
     const dm = ev.target.closest('[data-demo]');
     if (dm) {
       dm.disabled = true;
@@ -506,5 +558,21 @@
       if (!r.ok) { dm.disabled = false; toast('Could not change the demo.'); } else tick();
     }
   });
+  async function watch(what, btn) {
+    log('watch', { what });
+    if (what === 'live') { P = null; limitNote = ''; return tick(); }
+    if (what === 'again') { P.wall0 = Date.now(); return tick(); }
+    if (what === 'replay') { const p = replayOf(D, 2); if (p) { P = p; tick(); } return; }
+    btn.disabled = true;
+    const r = await fetch(`${API}/landing/watch`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch((e) => ({ ok: false, statusText: String(e) }));
+    const j = r.ok ? await r.json().catch(() => ({})) : {};
+    log('watch_reply', { status: r.status, state: j.state, why: j.why });
+    if (j.state === 'running' || j.state === 'started') { P = null; limitNote = ''; starting = j.state === 'started' ? Date.now() : 0; return tick(); }
+    // No live run: say why, and replay the last one instead.
+    limitNote = j.state === 'limit' ? `${LIMIT[j.why] || 'No live run can start right now.'}${j.nextAt ? ` The next one can start at ${hhmm(j.nextAt)}.` : ''} Here is a replay instead.` : 'Live runs are not available right now. Here is a replay instead.';
+    const p = replayOf(D, 2);
+    if (p) P = p; else { btn.disabled = false; toast(limitNote.replace(' Here is a replay instead.', '')); }
+    tick();
+  }
   tick();
 })();

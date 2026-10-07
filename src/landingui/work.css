@@ -186,3 +186,12 @@
   .lw .car{height:56px;font-size:15px;max-width:160px}.lw .car small{font-size:13px;max-width:140px}.lw .stop{min-height:92px;width:96px;font-size:14px}.lw .stop b{font-size:16px}
   .lw .drill{max-width:760px}
 }
+
+/* Watch a run (public) */
+.lw .watch{display:grid;gap:10px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:14px;padding:12px 12px 12px 14px}
+.lw .watch .wt{display:flex;gap:10px;align-items:baseline;font-size:15px}
+.lw .watch .wt .live{transform:translateY(-1px)}
+.lw .watch .wt b{font-weight:600}
+.lw .watch .wa{display:flex;flex-wrap:wrap;gap:8px}
+.lw .watch .prog i{background:var(--acc)}
+.lw .chipb.sp[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
