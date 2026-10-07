@@ -47,6 +47,14 @@
    {
     "name": "TalkLog",
     "class_name": "TalkLog"
+   },
+   {
+    "name": "TalkVoice",
+    "class_name": "TalkVoice"
+   },
+   {
+    "name": "Ledger",
+    "class_name": "Ledger"
    }
   ]
  },
@@ -80,6 +88,18 @@
    "tag": "v5",
    "new_sqlite_classes": [
     "TalkLog"
+   ]
+  },
+  {
+   "tag": "v6",
+   "new_sqlite_classes": [
+    "Ledger"
+   ]
+  },
+  {
+   "tag": "v7",
+   "new_sqlite_classes": [
+    "TalkVoice"
    ]
   }
  ],
