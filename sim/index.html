@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>qodebase sim</title>
+<meta name="description" content="Many agents changing one codebase, simulated: compare how classic pull requests, agent review, claims and merge trains hold up from 20 to 100,000 agents.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff; --card: #fafafa; --chip: #f3f4f6; --line: #ececef;
+  --fg: #111214; --dim: #6e737b; --acc: #17695a; --acc-fg: #ffffff; --busy: #b7791f;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0d0e; --card: #141517; --chip: #1c1d20; --line: #222428;
+    --fg: #ececee; --dim: #9a9fa6; --acc: #4fbf9f; --acc-fg: #0f1112; --busy: #e0a948;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0d0e; --card: #141517; --chip: #1c1d20; --line: #222428;
+  --fg: #ececee; --dim: #9a9fa6; --acc: #4fbf9f; --acc-fg: #0f1112; --busy: #e0a948;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 400 15px/1.45 Geist, ui-sans-serif, sans-serif; letter-spacing: -.003em;
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+main { max-width: 1120px; margin: 0 auto; padding: 16px 16px calc(32px + env(safe-area-inset-bottom)); }
+h1 { font-size: 22px; font-weight: 600; letter-spacing: -.02em; margin: 4px 0 4px; }
+h2 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 8px; }
+p { margin: 0; }
+.lede { color: var(--dim); font-size: 14px; max-width: 60ch; }
+.grid { display: grid; gap: 12px; margin-top: 16px; }
+@media (min-width: 900px) {
+  .grid { grid-template-columns: 360px 1fr; align-items: start; }
+  .side { position: sticky; top: 16px; }
+}
+.card { background: var(--card); border-radius: 14px; box-shadow: inset 0 0 0 1px var(--line); padding: 16px; }
+.stack { display: grid; gap: 12px; }
+label.f { display: grid; gap: 4px; font-size: 13px; color: var(--dim); }
+select {
+  font: inherit; font-size: 16px; color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-height: 44px; width: 100%;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  font: inherit; font-size: 14px; color: var(--fg); background: var(--chip); border: 0;
+  border-radius: 10px; padding: 0 12px; min-height: 44px; cursor: pointer;
+  transition: background-color 120ms, color 120ms;
+}
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.pol .chip { flex: 1 1 calc(50% - 4px); text-align: left; padding: 8px 12px; }
+.row { display: flex; gap: 8px; align-items: center; }
+.btn {
+  font: inherit; font-weight: 500; font-size: 15px; border: 0; cursor: pointer;
+  background: var(--acc); color: var(--acc-fg); border-radius: 10px; min-height: 44px; padding: 0 18px;
+}
+.about { font-size: 13px; color: var(--dim); }
+.clock { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--dim); }
+.clock b { color: var(--fg); font-weight: 500; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border-radius: 14px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+@media (min-width: 640px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+.stat { background: var(--card); padding: 12px 14px; min-width: 0; }
+.stat .v { font-size: 20px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat .k { font-size: 13px; color: var(--dim); }
+.bar { display: flex; height: 12px; border-radius: 4px; overflow: hidden; background: var(--chip); }
+.bar span { display: block; height: 100%; min-width: 0; transition: flex-grow 200ms; }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-top: 10px; font-size: 13px; }
+.legend div { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.legend .n { margin-left: auto; color: var(--dim); }
+canvas { display: block; width: 100%; }
+.mapkey { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--dim); margin-top: 8px; }
+.mapkey span { display: inline-flex; gap: 6px; align-items: center; }
+.mapkey i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.story { list-style: none; margin: 8px 0 0; padding: 0; font-size: 14px; }
+.story li { display: grid; grid-template-columns: 64px 1fr; gap: 8px; padding: 6px 0; box-shadow: inset 0 -1px 0 var(--line); }
+.story li:last-child { box-shadow: none; }
+.story time { color: var(--dim); }
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; color: var(--dim); overflow-wrap: anywhere; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: right; padding: 8px 6px; box-shadow: inset 0 -1px 0 var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; }
+th { font-weight: 500; color: var(--dim); font-size: 13px; }
+.scroll { overflow-x: auto; margin: 0 -16px; padding: 0 16px; }
+.muted { color: var(--dim); font-size: 13px; }
+.note { font-size: 13px; color: var(--dim); margin-top: 8px; }
+a { color: var(--acc); }
+@media (hover: hover) { .chip:hover { background: var(--line); } .chip[aria-pressed="true"]:hover { background: var(--fg); } }
+</style>
+</head>
+<body>
+<main>
+  <h1>qodebase sim</h1>
+  <p class="lede">Many agents changing code at once, simulated: no model calls, each agent a small state machine on a virtual clock. Timings come from qodebase's measured runs; the outcomes are estimates, not measurements.</p>
+
+  <div class="grid">
+    <div class="side stack">
+      <section class="card stack" aria-label="Controls">
+        <label class="f">Scale
+          <select id="preset"></select>
+        </label>
+        <div>
+          <div class="muted" id="polLabel">How changes land</div>
+          <div class="chips pol" id="policy" role="group" aria-labelledby="polLabel" style="margin-top:4px"></div>
+          <p class="about" id="about" style="margin-top:8px"></p>
+        </div>
+        <div>
+          <div class="muted" id="spdLabel">Speed</div>
+          <div class="chips" id="speed" role="group" aria-labelledby="spdLabel" style="margin-top:4px"></div>
+        </div>
+        <div class="row">
+          <button class="btn" id="play">Play</button>
+          <button class="chip" id="restart">Restart</button>
+          <button class="chip" id="compareBtn">Compare all four</button>
+        </div>
+        <div class="clock" id="clock"></div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="stats" id="stats" aria-label="Numbers"></section>
+
+      <section class="card">
+        <h2>Where the agents are</h2>
+        <div class="bar" id="bar"></div>
+        <div class="legend" id="legend"></div>
+      </section>
+
+      <section class="card">
+        <h2>Changes landed per hour</h2>
+        <canvas id="chart" height="160" aria-label="Changes landed per hour over simulated time"></canvas>
+        <div class="mapkey"><span><i style="background:var(--acc)"></i>landed per hour</span><span><i style="background:var(--busy)"></i>waiting (review, claims, merge queue)</span></div>
+      </section>
+
+      <section class="card">
+        <h2 id="mapTitle">The codebase, file by file</h2>
+        <canvas id="map" aria-label="Every file of the first repo"></canvas>
+        <div class="mapkey">
+          <span><i style="background:var(--chip);box-shadow:inset 0 0 0 1px var(--line)"></i>quiet</span>
+          <span><i style="background:var(--acc)"></i>being changed</span>
+          <span><i style="background:var(--busy)"></i>conflict in the last 5 min</span>
+          <span><i style="background:var(--fg)"></i>just landed</span>
+        </div>
+        <p class="note">Top-left: the shared hot files (package.json, routes, schema), then folders, busiest first.</p>
+      </section>
+
+      <section class="card" id="followCard">
+        <div class="row" style="justify-content:space-between">
+          <h2 style="margin:0">One change, start to finish</h2>
+          <button class="chip" id="follow">Follow one</button>
+        </div>
+        <p class="note" id="followNote">Pick a change in the first repo and watch what happens to it.</p>
+        <p class="mono" id="followFiles"></p>
+        <ol class="story" id="story"></ol>
+      </section>
+      <section class="card" id="reposCard" hidden>
+        <h2>Every repo</h2>
+        <canvas id="repos" aria-label="Merge queue of each repo"></canvas>
+        <div class="mapkey"><span><i style="background:var(--acc)"></i>longer merge queue</span><span><i style="background:var(--busy)"></i>main is broken</span></div>
+      </section>
+
+      <section class="card" id="compareCard" hidden>
+        <h2 id="compareTitle">Compare</h2>
+        <canvas id="cmpChart" height="160"></canvas>
+        <div class="mapkey" id="cmpKey"></div>
+        <div class="scroll" style="margin-top:12px"><table id="cmpTable"></table></div>
+      </section>
+    </div>
+  </div>
+</main>
+<script type="module" src="./ui.js"></script>
+</body>
+</html>
