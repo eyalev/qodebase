@@ -17,6 +17,7 @@ none of its chrome.
 | `--acc` | `#17695a` | `#4fbf9f` | one accent: primary buttons, links, live dots |
 | `--acc-fg` | `#ffffff` | `#0f1112` | text on accent |
 | `--busy` | `#b7791f` | `#e0a948` | an agent that is working |
+| `--warn` | `#b42d1f` | `#f08a7e` | something needs a decision or went wrong: sent back, collided, with its lead, needs a fix (design v2; added 2026-10-07 because `--busy` already means "working") |
 
 - **Type (2026-10-07, after Executor's look and feel):** Geist (UI, 400/500/600, headings −0.02em) + JetBrains Mono (file names,
   commit hashes, code only; never labels). Body 16 px, rows 15 px, meta 13 px,

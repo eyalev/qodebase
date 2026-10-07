@@ -44,7 +44,7 @@
 
   // ---- time --------------------------------------------------------------------
   let D = null, fetchedAt = 0;
-  const now = () => (D ? D.now + (Date.now() - fetchedAt) : Date.now());
+  const now = () => (D ? D.now + (Date.now() - fetchedAt) * (MOCK ? MSPEED : 1) : Date.now());
   const ago = (t) => { const s = Math.max(0, Math.round((now() - t) / 1000)); return s < 5 ? 'just now' : s < 60 ? `${s} s ago` : s < 3600 ? `${Math.floor(s / 60)} min ago` : `${Math.floor(s / 3600)} h ago`; };
   const secs = (ms) => (ms < 90e3 ? `${Math.round(ms / 1000)} s` : `${Math.round(ms / 60e3)} min`);
   const hhmm = (t) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -52,9 +52,10 @@
   // ---- mock playback: the mock's future events and trains, revealed over time -------
   const STATE = { asked: 'working', claimed: 'working', working: 'working', stacked: 'working', 'changes-suggested': 'working', pushed: 'pushed', approved: 'pushed', reviewing: 'reviewing', queued: 'queued', replayed: 'queued', testing: 'testing', landed: 'landed', bounced: 'bounced', replaying: 'replaying', 'with-lead': 'with-lead' };
   let M = null, playFrom = 0;
+  const MSPEED = Math.min(20, Math.max(0.25, +new URLSearchParams(location.search).get('mockspeed') || 1));
   function mockAt() {
     const [a, b] = M.mock.playS, span = (b - a) * 1000;
-    const T = M.now + a * 1000 + ((Date.now() - playFrom) % span);
+    const T = M.now + a * 1000 + (((Date.now() - playFrom) * MSPEED) % span);
     const landedNow = M.changes.filter((c) => c.state === 'landed').length;
     const changes = M.changes.map((c) => {
       const ev = [...c.events, ...(c.future || [])].filter((e) => e.t <= T);
@@ -146,18 +147,29 @@
       <div class="num"><div class="v">${n0(s.replayed)}</div><div class="k">${term('replay', 'replayed')}, not thrown away</div></div>
       <div class="num"><div class="v">${s.medianAskToLandS ? secs(s.medianAskToLandS * 1000) : '–'}</div><div class="k">from ask to landed, typical</div></div></div>`;
   }
-  const car = (c, id) => `<button class="car${c && c.state === 'replaying' ? ' rp' : ''}" type="button" data-go="#/change/${esc(id)}" aria-label="Change ${esc(id)}${c ? ': ' + short(c) : ''}">${ref(id)}<small>${c ? AG(c.agent) : ''}</small></button>`;
+  // Things that just happened pulse once. innerHTML is replaced every tick, so an animation
+  // keeps its place with a negative delay = how long ago it was first seen.
+  const firstSeen = new Map();
+  const PULSE = 1800;
+  function pulse(key) {
+    if (!firstSeen.has(key)) firstSeen.set(key, firstPaint ? -1e9 : Date.now());
+    const age = Date.now() - firstSeen.get(key);
+    return age < PULSE ? ` style="animation-delay:-${age}ms"` : null;
+  }
+  const car = (c, id) => `<button class="car${c && c.state === 'replaying' ? ' rp' : ''}" type="button" data-car="${esc(id)}" data-go="#/change/${esc(id)}" aria-label="Change ${esc(id)}${c ? ': ' + short(c) : ''}">${ref(id)}<small>${c ? AG(c.agent) : ''}</small></button>`;
   function theLine(full) {
     const idx = byId();
     const testing = D.queue.trains.filter((t) => t.state === 'testing');
     const replaying = D.changes.filter((c) => c.state === 'replaying');
     const parts = testing.map((t) => {
-      const el = now() - t.startedAt, typical = 42e3;
-      return `<div class="train"><div class="cars">${t.changes.map((id) => car(idx.get(id), id)).join('')}</div><div class="prog"><i style="width:${Math.min(96, (100 * el) / typical).toFixed(1)}%"></i></div><div class="lbl"><b>Being tested</b> ${secs(el)}</div></div>`;
+      const el = now() - t.startedAt, typical = 42e3, sp = MOCK ? MSPEED : 1;
+      return `<div class="train"><div class="cars">${t.changes.map((id) => car(idx.get(id), id)).join('')}</div><div class="prog"><i style="animation-duration:${Math.round(typical / sp)}ms;animation-delay:-${Math.round(Math.min(el, typical - 1) / sp)}ms"></i></div><div class="lbl"><b>Being tested</b> ${secs(el)}</div></div>`;
     });
     const wait = [...D.queue.waiting.map((id) => car(idx.get(id), id)), ...replaying.map((c) => car(c, c.id))];
     if (wait.length) parts.push(`<div class="wait"><div class="cars">${wait.join('')}</div><div class="lbl">${D.queue.waiting.length} waiting${replaying.length ? `, ${replaying.length} replaying` : ''}</div></div>`);
-    const track = parts.length ? `<div class="track" aria-label="The line, front first"><div class="stop"><b>main</b>lands here</div>${parts.join('')}</div>` : '<p class="empty-line">The line is empty. Finished changes wait here to be tested.</p>';
+    const lastLand = D.queue.trains.filter((t) => t.state === 'landed').sort((x, y) => y.endedAt - x.endedAt)[0];
+    const landP = lastLand ? pulse(`train:${lastLand.id}`) : null;
+    const track = parts.length || landP ? `<div class="track" aria-label="The line, front first"><div class="stop${landP ? ' pl' : ''}"${landP || ''}><b>main</b>lands here</div>${parts.join('')}</div>` : '<p class="empty-line">The line is empty. Finished changes wait here to be tested.</p>';
     const done = D.queue.trains.filter((t) => t.state !== 'testing').sort((a, b) => b.endedAt - a.endedAt).slice(0, full ? 50 : 3);
     const res = done.map((t) => t.state === 'landed'
       ? `<li><i class="dot s-landed"></i><span>Landed ${t.changes.map((id) => `<a href="#/change/${esc(id)}">${ref(id)}</a>`).join(', ')}, tests passed in ${secs(t.checks.ms)}</span><time class="dim small">${ago(t.endedAt)}</time></li>`
@@ -170,30 +182,54 @@
     for (const c of D.changes) {
       if (c.state === 'landed' && c.landedAt > T - 10 * 60e3) c.files.forEach((p) => put(p, 'l'));
       if (active(c)) (c.claims || []).forEach((p) => put(p, c.state === 'working' ? 'w' : 'c'));
-      for (const e of c.events) if (e.what === 'conflict' && e.t > T - 10 * 60e3) (c.landing?.conflicts?.length ? c.landing.conflicts : c.files).forEach((p) => put(p, 'x'));
+      for (const e of c.events) if (e.what === 'conflict' && e.t > T - 10 * 60e3) conflictPaths(c, e).forEach((p) => put(p, 'x'));
     }
     return m;
   }
+  const conflictPaths = (c, e) => (c.landing?.conflicts?.length ? c.landing.conflicts : (e.detail || '').split(':')[0].split(/,\s*/).filter((p) => /[./]/.test(p)));
+  const agNum = (a) => (/(\d+)\D*$/.exec(a || '') || [])[1] || (a || '?').slice(0, 2);
+  const RANK = { 'with-lead': 9, bounced: 8, replaying: 7, testing: 6, queued: 5, ready: 4, reviewing: 3, pushed: 2, working: 1, landed: 0 };
+  // One chip per agent: its number, coloured by what its change is doing; tap opens the change.
+  const chip = (c, k, extra = '') => {
+    const p = k === 'landed' ? pulse(`land:${c.id}`) : null;
+    return `<button class="ag s-${k}${p ? ' pl' : ''}${extra}" type="button"${p || ''} data-go="#/change/${esc(c.id)}" aria-label="${AG(c.agent)}: ${WORD[k]}, ${short(c)}">${esc(agNum(c.agent))}</button>`;
+  };
   function theMap() {
-    const marks = fileMarks();
+    const T = now(), idx = byId();
     return `<div class="map">${D.areas.map((a) => {
-      const known = [...marks.entries()].filter(([p]) => areaOf(p) === a.path).map(([, k]) => k).sort();
-      const cells = [...known, ...Array(Math.max(0, Math.min(a.files, 48) - known.length)).fill('')].map((k) => `<i class="${k}"></i>`).join('');
-      const working = new Set(D.changes.filter((c) => c.state === 'working' && c.files.some((p) => areaOf(p) === a.path)).map((c) => c.agent)).size;
-      const meta = [working ? `<span class="hot">${working} working</span>` : '', a.recentLandings ? `<span>${a.recentLandings} landed</span>` : '', a.recentConflicts ? `<span>${a.recentConflicts} collided</span>` : ''].filter(Boolean).join('') || '<span>quiet</span>';
-      return `<button class="area" type="button" data-go="#/area/${encodeURIComponent(a.path)}"><span class="nm">${esc(areaLabel(a.path))}</span><span class="cells" aria-hidden="true">${cells}</span><span class="meta">${meta}</span></button>`;
+      const inArea = (c) => [...c.files, ...(c.claims || [])].some((p) => areaOf(p) === a.path);
+      // Agents here: active changes, and ones that landed in the last 90 s.
+      const here = D.changes.filter((c) => inArea(c) && (active(c) || (c.state === 'landed' && c.landedAt > T - 90e3)));
+      const best = new Map();
+      for (const c of here) { const o = best.get(c.agent); if (!o || RANK[skey(c)] > RANK[skey(o)]) best.set(c.agent, c); }
+      // Collisions in this area in the last 10 min, drawn between the two agents.
+      const pairs = [], paired = new Set();
+      for (const c of D.changes) for (const e of c.events) {
+        if (e.what !== 'conflict' || e.t < T - 10 * 60e3 || !conflictPaths(c, e).some((p) => areaOf(p) === a.path)) continue;
+        const o = idx.get((/#(\d+)/.exec(e.detail || '') || [])[1]);
+        if (!o || paired.has(c.agent) || paired.has(o.agent)) continue;
+        paired.add(c.agent); paired.add(o.agent);
+        const p = pulse(`x:${c.id}:${e.t}`);
+        pairs.push({ html: `<span class="pair${p ? ' pl' : ''}"${p || ''}>${chip(best.get(c.agent) || c, skey(best.get(c.agent) || c))}<i class="zap" aria-hidden="true"></i>${chip(best.get(o.agent) || o, skey(best.get(o.agent) || o), active(o) || o.landedAt > T - 90e3 ? '' : ' past')}</span>`,
+          words: `${AG(c.agent)} and ${AG(o.agent)} collided on ${conflictPaths(c, e).map((x) => x.split('/').pop()).join(', ')}` });
+      }
+      const singles = [...best.values()].filter((c) => !paired.has(c.agent)).sort((x, y) => RANK[skey(y)] - RANK[skey(x)]);
+      const chips = [...pairs.map((x) => x.html), ...singles.map((c) => chip(c, skey(c)))].join('');
+      const n = best.size + [...paired].filter((x) => !best.has(x)).length;
+      const meta = [n ? `<span class="hot">${n} agent${n === 1 ? '' : 's'} here</span>` : '<span>quiet</span>', a.recentLandings ? `<span>${a.recentLandings} landed today</span>` : ''].filter(Boolean).join('');
+      return `<div class="area${n ? '' : ' quiet'}" data-go="#/area/${encodeURIComponent(a.path)}"><button class="nm" type="button" data-go="#/area/${encodeURIComponent(a.path)}">${esc(areaLabel(a.path))}</button>${chips ? `<span class="chips">${chips}</span>` : ''}${pairs.length ? `<span class="coll">${esc(pairs.map((x) => x.words).join('; '))}</span>` : ''}<span class="meta">${meta}</span></div>`;
     }).join('')}</div>
-    <div class="key"><span><i style="background:var(--busy)"></i>being changed</span><span><i style="background:color-mix(in srgb,var(--busy) 40%,transparent)"></i>${term('claim', 'claimed')}</span><span><i style="background:var(--warn,#b42d1f)"></i><span>${term('collision', 'collided')}, last 10 min</span></span><span><i style="background:var(--acc)"></i>landed, last 10 min</span></div>`;
+    <div class="key"><span><i class="ag s-working"></i>working</span><span><i class="ag s-reviewing"></i>in review</span><span><i class="ag s-queued"></i>in the line</span><span><i class="ag s-replaying"></i>${term('replay', 'replaying')}</span><span><i class="ag s-bounced"></i>needs a decision</span><span><i class="ag s-landed"></i>just landed</span><span><i class="zap"></i><span>${term('collision', 'collided')}</span></span></div>`;
   }
-  let seen = new Set(), firstPaint = true;
+  let firstPaint = true;
   function feed(limit) {
     const items = feedItems().slice(0, limit);
     const html = items.map((it) => {
       const k = it.key || `${it.c.id}:${it.e.what}:${it.t}`;
-      const fresh = !firstPaint && !seen.has(k); seen.add(k);
+      const fresh = pulse(`feed:${k}`);
       const href = it.c ? `#/change/${esc(it.c.id)}` : '#/line';
       const cls = it.c ? `s-${STATE[it.e.what] === 'pushed' && it.e.what === 'approved' ? 'ready' : it.e.what === 'conflict' ? 'bounced' : STATE[it.e.what] || 'working'}` : 's-testing';
-      return `<li${fresh ? ' class="new"' : ''}><a href="${href}"><i class="dot ${cls}"></i><span class="t">${esc(it.s[0])}</span><time>${ago(it.t)}</time>${it.s[1] ? `<span class="sub">${esc(it.s[1])}</span>` : ''}</a></li>`;
+      return `<li${fresh ? ` class="new"${fresh}` : ''}><a href="${href}"><i class="dot ${cls}"></i><span class="t">${esc(it.s[0])}</span><time>${ago(it.t)}</time>${it.s[1] ? `<span class="sub">${esc(it.s[1])}</span>` : ''}</a></li>`;
     }).join('');
     return html ? `<ul class="feed">${html}</ul>` : '<p class="dim">Nothing has happened yet.</p>';
   }
@@ -208,6 +244,7 @@
     const agents = new Set(act.map((c) => c.agent)).size;
     return `${demoStrip()}
       <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent is' : 'agents are')} changing ${esc(NAME)} right now.` : `No agents are working on ${esc(NAME)} right now.`}</h2>
+      <p class="intro">Each agent is an AI working on its own ${term('fork', 'copy')} of the code. Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>
       <div class="ov"><div class="col1">
         ${numbers()}
         ${needsYou()}
@@ -215,7 +252,7 @@
           <p class="cap">Finished changes wait here and are tested together, then join ${term('main', 'the main code')}. Tap a change to see it.</p>${theLine(false)}</section>
       </div><div class="col2">
         <section class="sec"><div class="sec-h"><h3>Where they work</h3><a href="#/changes">All changes</a></div>
-          <p class="cap">Each square is a file. Every agent works on its own ${term('fork', 'copy')}, so they never type over each other; collisions only happen when two changes are combined.</p>${theMap()}</section>
+          <p class="cap">Each circle is an agent, in the part of the code it is changing. Tap one to see its change.</p>${theMap()}</section>
         <section class="sec"><div class="sec-h"><h3>What just happened</h3><a href="#/feed">All</a></div>${feed(8)}</section>
       </div></div>`;
   }
@@ -310,7 +347,7 @@
   }
   function viewLine() {
     return `<div class="drill">${crumbs([['Agents at work', '#/'], ['The line']])}
-      <p class="cap" style="margin-top:4px">${GLOSS.queue[1]} ${GLOSS.train[1]}</p>${theLine(true)}</div>`;
+      <p class="cap" style="margin-top:4px">${GLOSS.queue[1]} Changes tested together are a ${term('train', 'train')}: if the tests pass, they all land at once.</p>${theLine(true)}</div>`;
   }
   function viewFeed() { return `<div class="drill">${crumbs([['Agents at work', '#/'], ['What happened']])}${feed(200)}</div>`; }
   function viewChanges() {
@@ -320,13 +357,41 @@
 
   // ---- render, poll -----------------------------------------------------------------------------
   root.classList.add('lw');
-  let lastHtml = '', lastHash = null;
+  let lastHtml = '', lastHash = null, lastNow = 0;
+  function flip(before) {
+    const idx = byId(), stop = root.querySelector('.stop')?.getBoundingClientRect();
+    const ease = 'cubic-bezier(.2,.7,.2,1)';
+    root.querySelectorAll('[data-car]').forEach((e) => {
+      const o = before.get(e.dataset.car), n = e.getBoundingClientRect();
+      if (!o) { e.animate([{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: ease }); return; }
+      const dx = o.left - n.left, dy = o.top - n.top;
+      if (Math.abs(dx) + Math.abs(dy) > 1) e.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 800, easing: ease });
+    });
+    for (const [id, o] of before) {
+      if (root.querySelector(`[data-car="${CSS.escape(id)}"]`) || !stop) continue;
+      const c = idx.get(id), landed = c && c.state === 'landed';
+      const g = document.createElement('div');
+      g.className = 'lw-ghost'; g.textContent = `#${id}`;
+      Object.assign(g.style, { position: 'fixed', left: `${o.left}px`, top: `${o.top}px`, width: `${o.width}px`, height: `${o.height}px`, margin: 0, zIndex: 40, pointerEvents: 'none' });
+      document.body.appendChild(g);
+      const to = landed ? `translate(${stop.left + stop.width / 2 - o.left - o.width / 2}px,${stop.top + stop.height / 2 - o.top - o.height / 2}px) scale(.4)` : 'translateY(16px) scale(.8)';
+      g.animate([{ transform: 'none', opacity: 1 }, { transform: to, opacity: 0 }], { duration: landed ? 900 : 600, easing: ease, fill: 'forwards' }).finished.then(() => g.remove(), () => g.remove());
+    }
+  }
   function render() {
     if (!D) return;
     const h = decodeURIComponent(location.hash || '#/'); let m;
     const html = (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
       : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : overview();
-    if (html !== lastHtml) { root.innerHTML = html; lastHtml = html; }
+    if (html !== lastHtml) {
+      // The line moves: cars glide from waiting to the train, and a landed train flies into main (FLIP).
+      const same = h === lastHash && D.now >= lastNow && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const before = new Map();
+      if (same) root.querySelectorAll('[data-car]').forEach((e) => before.set(e.dataset.car, e.getBoundingClientRect()));
+      root.innerHTML = html; lastHtml = html;
+      if (same && before.size) flip(before);
+    }
+    lastNow = D.now;
     firstPaint = false;
     if (h !== lastHash) { const sc = root.closest('.view') || document.scrollingElement; if (lastHash !== null && sc) sc.scrollTop = 0; lastHash = h; }
   }
@@ -335,7 +400,7 @@
     clearTimeout(timer);
     try { await load(); failures = 0; render(); } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (e.none) { root.innerHTML = `<h2>No agents at work here yet.</h2><p class="dim">When agents work on ${esc(NAME)} at the same time, this page shows where they work, the line their changes wait in, and how each one landed. <a href="?mock=1">See it with sample data</a>.</p>`; return; }
       if (!D) root.innerHTML = `<p class="dim">Could not load the agents (${esc(e.message)}). Retrying…</p>`; }
-    if (!document.hidden) timer = setTimeout(tick, MOCK ? 1000 : Math.min(30e3, 2000 * 2 ** Math.min(failures, 4)));
+    if (!document.hidden) timer = setTimeout(tick, MOCK ? Math.max(250, 1000 / MSPEED) : Math.min(30e3, 2000 * 2 ** Math.min(failures, 4)));
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
   addEventListener('hashchange', render);

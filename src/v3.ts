@@ -223,7 +223,9 @@ ${chips}${doc}${cur ? `<p class="srcl"><a href="/p/${info.owner}/${info.name}/co
 
 /** More: the views that do not fit the tab bar, plus the account. */
 function moreMenu(c: Ctx) {
-  const extra = VIEWS.filter((v) => !v.tab && v.when(c));
+  const tabs = tabsFor(c).map((v) => v.id);
+  const extra = VIEWS.filter((v) => !tabs.includes(v.id) && v.id !== 'more' && v.id !== 'changes' && v.when(c) && (v.desc || v.id === 'readme'))
+    .map((v) => (v.id === 'readme' ? { ...v, desc: 'The project\'s README and other documents' } : v));
   return `${c.own ? visibilityRow(c) : ''}<div class="menu">${extra.map((v) => `<a class="mi" href="${c.base}/${v.id}">${v.icon}<span><b>${v.label}</b><span>${v.desc}</span></span></a>`).join('')}
 <a class="mi" href="/settings">${ICONS.about}<span><b>Account</b><span>Your name${c.own ? '' : ', your Anthropic API key'}, sign out</span></span></a>
 <a class="mi" href="/">${ICONS.app}<span><b>All projects</b><span>Your projects and Explore</span></span></a>
@@ -262,7 +264,9 @@ const VIEWS: View[] = [
 
 /** Tabs for this person: the owner's five, or a visitor's four (History instead of Changes and More). */
 function tabsFor(c: Ctx) {
-  return c.own ? VIEWS.filter((v) => v.tab && v.when(c)) : VIEWS.filter((v) => ['readme', 'app', 'code', 'history'].includes(v.id));
+  const tabs = c.own ? VIEWS.filter((v) => v.tab && v.when(c)) : VIEWS.filter((v) => ['readme', 'app', 'code', 'history'].includes(v.id));
+  // A landing-system project (qb6/qb7) leads with Agents at work in Readme's place; Readme stays under More.
+  return c.info.landing ? tabs.map((v) => (v.id === 'readme' ? VIEWS.find((x) => x.id === 'work')! : v)) : tabs;
 }
 
 export function tabBar(c: Pick<Ctx, 'own' | 'base' | 'worker' | 'info'> & Partial<Ctx>, active: ViewId, needs: number, top = false) {
@@ -394,7 +398,7 @@ export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record
   const c: Ctx = { ...o, own, worker, base: o.base || `/p/${info.owner}/${info.name}`, status: o.status, router: o.router, reviewer: o.reviewer, open, done, plan: planningOf(info, o.router), tryAgent: o.tryAgent, docs: o.docs };
   // The page opens where the work is: the owner on Changes, a visitor on the app.
   // Every project opens on its README (Eyal, 2026-10-02).
-  let id: ViewId = o.view || 'readme';
+  let id: ViewId = o.view || (info.landing ? 'work' : 'readme');
   let v = VIEWS.find((x) => x.id === id && x.when(c) && x.render);
   if (!v) { id = 'readme'; v = VIEWS.find((x) => x.id === id)!; }
   const r = v.render!(c);
