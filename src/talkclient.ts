@@ -39,16 +39,25 @@ var css = [
   '#talk-fab svg{width:24px;height:24px}',
   '#talk-fab.on{background:#b42d1f}',
   '#talk-root.open #talk-fab{display:none}',
-  '#talk-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483001;background:var(--t-bg);border-top:1px solid var(--t-line);border-radius:12px 12px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.14);transform:translateY(105%);transition:transform .22s ease;max-height:62dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}',
+  '#talk-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483001;background:var(--t-bg);border-top:1px solid var(--t-line);border-radius:12px 12px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.14);transform:translateY(105%);transition:transform .22s ease,height .22s ease;height:var(--talk-h,62dvh);max-height:92dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}',
+  '#talk-sheet.drag{transition:none}',
+  '#talk-root.bar #talk-sheet{height:auto}',
+  '#talk-root.bar #talk-log,#talk-root.bar #talk-set{display:none!important}',
+  '#talk-grab{display:flex;align-items:center;justify-content:center;height:20px;margin:0;padding:0;border:0;background:transparent;width:100%;cursor:grab;touch-action:none}',
+  '#talk-grab i{display:block;width:36px;height:4px;border-radius:2px;background:var(--t-line)}',
+  '#talk-head{cursor:pointer}',
+  '#talk-peek{display:none;padding:0 16px 8px;font-size:15px;color:var(--t-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}',
+  '#talk-root.bar #talk-peek:not(:empty){display:block}',
   '#talk-root.open #talk-sheet{transform:none}',
   '@media (min-width:720px){#talk-sheet{left:auto;right:16px;bottom:16px;width:420px;border:1px solid var(--t-line);border-radius:12px}}',
-  '#talk-head{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 16px;border-bottom:1px solid var(--t-line)}',
+  '#talk-head{display:flex;align-items:center;gap:8px;padding:0 8px 8px 16px;border-bottom:1px solid var(--t-line)}',
+  '#talk-root.bar #talk-head{border-bottom:0}',
   '#talk-head b{font-weight:600;font-size:15px;flex:1}',
   '#talk-head .st{font-size:13px;color:var(--t-dim);font-variant-numeric:tabular-nums}',
   '.talk-ib{width:44px;height:44px;border:0;border-radius:8px;background:transparent;color:var(--t-fg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}',
   '.talk-ib svg{width:20px;height:20px}',
   '@media (hover:hover){.talk-ib:hover{background:var(--t-chip)}}',
-  '#talk-log{overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-height:64px;overscroll-behavior:contain}',
+  '#talk-log{overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-height:64px;overscroll-behavior:contain;flex:1 1 auto}',
   '#talk-log .you{align-self:flex-end;background:var(--t-acc);color:var(--t-accfg);padding:8px 12px;border-radius:12px;max-width:85%;font-size:15px}',
   '#talk-log .ai{align-self:flex-start;font-size:15px;max-width:92%;white-space:pre-line}',
   '#talk-log .app,#talk-log .note{align-self:flex-start;font-size:13px;color:var(--t-dim)}',
@@ -87,7 +96,7 @@ var ICON = {
   send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
 };
 
-var root, sheet, logEl, live, offer, inp, micBtn, fab, stEl, spk, convBtn;
+var root, sheet, logEl, live, offer, inp, micBtn, fab, stEl, spk, convBtn, peek;
 function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
 
 function build() {
@@ -95,7 +104,7 @@ function build() {
   root = el('div', { id: 'talk-root' });
   // The page's own font (it changes with the site's look), for every Talk control too.
   root.style.setProperty('--t-ff', getComputedStyle(document.body).fontFamily || 'sans-serif');
-  fab = el('button', { id: 'talk-fab', type: 'button', 'aria-label': 'Talk to qodebase' }, ICON.mic);
+  fab = el('button', { id: 'talk-fab', type: 'button', 'aria-label': 'Talk to qodebase (tap to open, hold to speak)', title: 'Tap to open, hold to speak' }, ICON.mic);
   sheet = el('section', { id: 'talk-sheet', 'aria-label': 'Talk' });
   var head = el('div', { id: 'talk-head' });
   head.innerHTML = '<b>Talk</b><span class="st" id="talk-st"></span>';
@@ -120,12 +129,26 @@ function build() {
   inp = el('input', { id: 'talk-in', type: 'text', enterkeyhint: 'send', autocomplete: 'off', placeholder: 'Say or type: open my calculator', 'aria-label': 'Talk to qodebase' });
   micBtn = el('button', { id: 'talk-mic', type: 'button', 'aria-label': 'Speak' }, ICON.mic);
   form.appendChild(inp); form.appendChild(micBtn);
-  sheet.appendChild(head); sheet.appendChild(setp); sheet.appendChild(logEl); sheet.appendChild(live); sheet.appendChild(offer); sheet.appendChild(form);
+  var grab = el('button', { id: 'talk-grab', type: 'button', 'aria-label': 'Drag to resize Talk, tap to fold it to a bar' }, '<i></i>');
+  peek = el('div', { id: 'talk-peek' });
+  sheet.appendChild(grab); sheet.appendChild(head); sheet.appendChild(setp); sheet.appendChild(peek); sheet.appendChild(logEl); sheet.appendChild(live); sheet.appendChild(offer); sheet.appendChild(form);
+  var h0 = Number(get('h', 0)); if (h0 > 0) sheet.style.setProperty('--talk-h', h0 + 'px');
+  if (get('sheet', 'open') === 'bar') root.classList.add('bar');
+  // Tap the header (not its buttons) or the last line to fold to a bar / unfold.
+  head.addEventListener('click', function (e) { if (e.target.closest('button')) return; setSheet(root.classList.contains('bar') ? 'open' : 'bar'); });
+  peek.addEventListener('click', function () { setSheet('open'); });
+  dragHandle(grab);
   root.appendChild(fab); root.appendChild(sheet);
   document.body.appendChild(root);
   stEl = document.getElementById('talk-st');
 
-  fab.addEventListener('click', function () { unlockAudio(); open(true); if (S.engine === 'native' || S.engine === 'whisper') startListen(); });
+  // Tap: show Talk (no recording). Hold: push-to-talk (records while held, sends on release).
+  var pttTimer = null, ptt = false;
+  fab.addEventListener('pointerdown', function () { unlockAudio(); ptt = false; pttTimer = setTimeout(function () { ptt = true; open(true); startListen(); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} }, 350); });
+  var pttEnd = function () { clearTimeout(pttTimer); if (ptt && listening) stopListen(false); };
+  fab.addEventListener('pointerup', pttEnd); fab.addEventListener('pointercancel', pttEnd); fab.addEventListener('pointerleave', pttEnd);
+  fab.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  fab.addEventListener('click', function () { if (ptt) { ptt = false; return; } unlockAudio(); open(true); });
   close.addEventListener('click', function () { stopListen(true); open(false); });
   gear.addEventListener('click', function () { root.classList.toggle('settings'); });
   micBtn.addEventListener('click', function () { unlockAudio(); if (vc) { vc.toggleMute(); return; } if (listening) stopListen(false); else startListen(); });
@@ -155,6 +178,30 @@ function build() {
 }
 
 function open(on) { root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+// open (the conversation, at the height they chose) | bar (header + input only, the page shows). Per device.
+function setSheet(st) { root.classList.toggle('bar', st === 'bar'); set('sheet', st); if (st === 'open') setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 60); }
+// The handle: drag to any height (remembered), low enough folds to the bar, to the bottom closes; a tap folds/unfolds.
+function dragHandle(g) {
+  var y0 = 0, h0 = 0, moved = false, on = false;
+  g.addEventListener('pointerdown', function (e) { on = true; moved = false; y0 = e.clientY; h0 = sheet.getBoundingClientRect().height; g.setPointerCapture(e.pointerId); });
+  g.addEventListener('pointermove', function (e) {
+    if (!on) return;
+    var dy = y0 - e.clientY;
+    if (!moved && Math.abs(dy) < 6) return;
+    if (!moved) { moved = true; sheet.classList.add('drag'); root.classList.remove('bar'); }
+    var h = Math.max(96, Math.min(window.innerHeight * 0.92, h0 + dy));
+    sheet.style.setProperty('--talk-h', h + 'px');
+  });
+  var end = function (e) {
+    if (!on) return; on = false; sheet.classList.remove('drag');
+    if (!moved) return setSheet(root.classList.contains('bar') ? 'open' : 'bar');
+    var h = sheet.getBoundingClientRect().height;
+    if (h < 110) { stopListen(true); open(false); sheet.style.setProperty('--talk-h', (Number(get('h', 0)) || window.innerHeight * 0.62) + 'px'); return; }
+    if (h < 200) { sheet.style.setProperty('--talk-h', (Number(get('h', 0)) || window.innerHeight * 0.62) + 'px'); return setSheet('bar'); }
+    set('h', Math.round(h)); setSheet('open');
+  };
+  g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+}
 function status(t) { stEl.textContent = t || ''; }
 function add(who, text, links) { if (run && who !== 'you') run.texts.push(String(text)); hist.push({ who: who, text: String(text), links: links || undefined }); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
 function render() {
@@ -164,6 +211,8 @@ function render() {
     h.textContent = 'Try: “open my calculator”, “show me the code of the timer”, “what is this page?”, “build a habit tracker”.';
     logEl.appendChild(h);
   }
+  var lastMsg = hist.length ? hist[hist.length - 1] : null;
+  if (peek) peek.textContent = lastMsg && lastMsg.who !== 'you' ? String(lastMsg.text).replace(/\s+/g, ' ') : '';
   hist.forEach(function (m) {
     var d = el('div', { class: m.who });
     // Answers from the code reader come as light markdown: show it as plain lines.
