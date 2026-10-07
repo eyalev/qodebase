@@ -1,0 +1,40 @@
+// qodebase-talk: Talk as its own Worker (src/talkworker.ts). Deploy:
+//   CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler deploy -c talk/wrangler.jsonc --tag "$(git rev-parse --short HEAD)"
+// No route: forq reaches it through its TALK service binding. Its own TalkLog / TalkVoice;
+// Registry, Project and Ledger are forq's (script_name).
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "qodebase-talk",
+  "main": "../src/talkworker.ts",
+  "account_id": "887d7234a6b8d65ad355a4f6684cab67",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+  // Talk imports the registry, which reaches modules that embed box files as text/data (same rules as forq).
+  "rules": [
+    { "type": "Data", "globs": ["**/*.tgz"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/*.rev"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/qb.mjs"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/boot.sh", "**/box-api.mjs"], "fallthrough": true }
+  ],
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "ai": { "binding": "AI" },
+  "durable_objects": {
+    "bindings": [
+      { "name": "TalkLog", "class_name": "TalkLog" },
+      { "name": "TalkVoice", "class_name": "TalkVoice" },
+      { "name": "Registry", "class_name": "Registry", "script_name": "forq" },
+      { "name": "Project", "class_name": "Project", "script_name": "forq" },
+      { "name": "Ledger", "class_name": "Ledger", "script_name": "forq" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["TalkLog", "TalkVoice"] }
+  ],
+  "vars": {
+    "TALK_GATEWAY": "qodebase-talk",
+    "OWNER_HANDLE": "eyal"
+  }
+}

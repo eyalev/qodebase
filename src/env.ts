@@ -14,7 +14,8 @@ export interface Env {
   TalkVoice?: DurableObjectNamespace<import('./talkvoice').TalkVoice>;   // the conversation agent (src/talkvoice.ts)
   Ledger: DurableObjectNamespace<import('./costs').Ledger>;   // per-person cost ledger (src/costs.ts)
   AI?: Ai;                    // Workers AI (Talk: src/talk.ts)
-  TALK_GATEWAY?: string;      // AI Gateway id for Talk's model calls (rate limited); unset on self-hosted copies
+  TALK_GATEWAY?: string;
+  TALK?: Fetcher;             // the Talk Worker (qodebase-talk) over a service binding; unset = Talk runs in-process      // AI Gateway id for Talk's model calls (rate limited); unset on self-hosted copies
   CF_OAUTH_CLIENT_ID: string;      // forq's "Sign in with Cloudflare" OAuth client (src/install.ts)
   CF_OAUTH_CLIENT_SECRET: string;
   ACCOUNT_ID: string;

@@ -322,7 +322,19 @@ const app = {
       if (url.pathname === '/personal-agents' && env.CF_OAUTH_CLIENT_ID) return html(personalAgentsPage());
       if (url.pathname === '/own' && !env.SELF_HOST) return html(ownPage(true));
       if (url.pathname.startsWith('/connect/cf/') || url.pathname.startsWith('/personal-agents/') || url.pathname === '/api/installs') { const r = await installRoute(request, env, ctx, url); if (r) return r; }
-      if (url.pathname === '/talk.js' || url.pathname === '/talk-voice.js' || url.pathname.startsWith('/api/talk/') || url.pathname.startsWith('/agents/talk-voice/')) { const w = await who(request, env); const r = await talkRoute(request, env, ctx, url, w?.kind === 'user' && !w.anon ? { handle: w.handle, admin: w.admin } : null); if (r) return r; }
+      if (url.pathname === '/talk.js' || url.pathname === '/talk-voice.js' || url.pathname.startsWith('/api/talk/') || url.pathname.startsWith('/agents/talk-voice/')) {
+        const w = await who(request, env);
+        const me = w?.kind === 'user' && !w.anon ? { handle: w.handle, admin: w.admin } : null;
+        // Talk is its own Worker (qodebase-talk, src/talkworker.ts) so its deploys never restart boxes; a copy without it runs Talk here.
+        if (env.TALK) {
+          const h = new Headers(request.headers);
+          h.delete('x-talk-who'); h.delete('x-talk-site');
+          if (me) h.set('x-talk-who', JSON.stringify(me));
+          if (env.CF_VERSION_METADATA?.tag) h.set('x-talk-site', JSON.stringify({ sha: env.CF_VERSION_METADATA.tag, built: env.CF_VERSION_METADATA.timestamp }));
+          return env.TALK.fetch(new Request(url.toString(), { method: request.method, headers: h, body: request.body, redirect: 'manual', ...(request.body ? { duplex: 'half' } : {}) } as RequestInit));
+        }
+        const r = await talkRoute(request, env, ctx, url, me); if (r) return r;
+      }
       if (url.pathname.startsWith('/api/cli/') || url.pathname.startsWith('/cli') || url.pathname === '/llms.txt') { const r = await cliPublicRoute(request, env, url); if (r) return r; }
       // Crawler gate on WHO, not on paths: verified bots get the front page only
       // (project and code pages read Artifacts on every view).

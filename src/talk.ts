@@ -337,7 +337,10 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     if (!who) return json({ signedIn: false });
     const owner = isOwner(env, who.handle);
     // The owner sees which deploy a page came from (so a screenshot says its version).
-    const v = owner ? { sha: (env as any).CF_VERSION_METADATA?.tag || null, built: (env as any).CF_VERSION_METADATA?.timestamp || null } : undefined;
+    // forq passes its own version when Talk runs as its own Worker (x-talk-site); the label shows the site, then Talk's.
+    let site: any = null; try { site = JSON.parse(request.headers.get('x-talk-site') || 'null'); } catch { /* none */ }
+    const own = { sha: (env as any).CF_VERSION_METADATA?.tag || null, built: (env as any).CF_VERSION_METADATA?.timestamp || null };
+    const v = owner ? (site?.sha ? { sha: site.sha, built: site.built, talk: own.sha } : own) : undefined;
     return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: owner, version: v });
   }
   if (url.pathname === '/api/talk/trace') {
