@@ -767,18 +767,12 @@ function startConversation() {
     });
     vc.addEventListener('statuschange', function (st) {
       vcStatus = st; vcActive();
+      if (st === 'listening' || st === 'idle') vcFlush(vc.transcript || [], true);
       status(st === 'listening' ? 'Listening' : st === 'thinking' ? 'Thinking\u2026' : st === 'speaking' ? 'Speaking' : '');
       fab.classList.toggle('on', st !== 'idle');
     });
     vc.addEventListener('interimtranscript', function (t) { live.textContent = t || ''; if (t) vcActive(); });
-    vc.addEventListener('transcriptchange', function (msgs) {
-      for (var i = vcSeen; i < msgs.length; i++) {
-        var m = msgs[i];
-        if (m.role === 'user') { live.textContent = ''; add('you', m.text); }
-        else if (m.text) { add('ai', m.text, vcLinks || undefined); vcLinks = null; }
-      }
-      vcSeen = msgs.length; vcActive();
-    });
+    vc.addEventListener('transcriptchange', function (msgs) { vcFlush(msgs, false); vcActive(); });
     vc.addEventListener('custommessage', function (d) { onVoiceMsg(d); });
     vc.addEventListener('turnmetrics', function (t) { logEv('vc_turn', { outcome: t.outcome, total_ms: t.turnTotalMs }); });
     vc.addEventListener('error', function (e) { if (e) { add('note', String(e)); logEv('vc_error', { err: String(e) }); } });
@@ -791,6 +785,16 @@ function startConversation() {
       if (vc && vcStatus === 'listening' && !live.textContent && Date.now() - vcLast > VC_QUIET_MS) endConversation('quiet');
     }, 2000);
   });
+}
+// The assistant's reply streams in: add it to the log once its turn is over, not while empty.
+function vcFlush(msgs, final) {
+  for (var i = vcSeen; i < msgs.length; i++) {
+    var m = msgs[i];
+    if (m.role !== 'user' && i === msgs.length - 1 && !final) break;
+    if (m.role === 'user') { live.textContent = ''; add('you', m.text); }
+    else if (m.text) { add('ai', m.text, vcLinks || undefined); vcLinks = null; }
+    vcSeen = i + 1;
+  }
 }
 function endConversation(why) {
   clearInterval(vcIdle);
