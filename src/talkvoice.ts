@@ -57,9 +57,9 @@ export class TalkVoice extends VoiceAgent {
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.transcriber = new WorkersAIFluxSTT(gatewayed(env), { keyterms: ['qodebase', 'Talk', 'fork', 'merge', 'router'] });
-    this.tts = new WorkersAITTS(gatewayed(env), { model: '@cf/deepgram/aura-1', speaker: 'helios' });
+    this.tts = new WorkersAITTS(gatewayed(env), { model: '@cf/deepgram/aura-2-en', speaker: 'draco' });   // Aura-2 default (Eyal, 2026-10-07)
   }
-  #ttsModel = '@cf/deepgram/aura-1';
+  #ttsModel = '@cf/deepgram/aura-2-en';
   #screen: any = null;
   #pageText = '';
   #pending: any = null;              // a command waiting for a spoken yes / no
@@ -95,7 +95,7 @@ export class TalkVoice extends VoiceAgent {
     try { m = JSON.parse(String(message)); } catch { return; }
     if (m?.type === 'screen') { this.#screen = m.screen || null; this.#pageText = String(m.pageText || '').slice(0, 5000); return; }
     if (m?.type === 'voice') {
-      const model = m.model === 'aura-2' ? '@cf/deepgram/aura-2-en' : '@cf/deepgram/aura-1';
+      const model = m.model === 'aura-1' ? '@cf/deepgram/aura-1' : '@cf/deepgram/aura-2-en';
       const speaker = SPEAKERS[model].includes(m.speaker) ? m.speaker : SPEAKERS[model][0];
       this.#ttsModel = model;
       this.tts = new WorkersAITTS(gatewayed(this.env), { model, speaker });

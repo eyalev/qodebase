@@ -27,6 +27,8 @@ var S = {
   speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
   when: get('when', 'voice'),           // voice (only when I spoke) | always
 };
+// Aura-2 is the default voice since 2026-10-07 (Eyal): devices that had Aura-1 only because it was the default move once.
+try { if (!ls.getItem(KEY + 'v2')) { if (ls.getItem(KEY + 'voice-on') === 'aura-1') ls.setItem(KEY + 'voice-on', 'aura-2'); if (S.voice === 'aura-1') { S.voice = 'aura-2'; S.speaker = ''; ls.setItem(KEY + 'voice', 'aura-2'); ls.removeItem(KEY + 'speaker'); } ls.setItem(KEY + 'v2', '1'); } } catch (e) {}
 var LANGS = { en: 'en-US', he: 'he-IL', auto: 'en-US' };
 var me = null, busy = false, listening = false, lastSpoken = false;
 var hist = sget('log', []);             // [{who:'you'|'app'|'ai'|'note', text}]
@@ -118,7 +120,7 @@ function build() {
   setp.innerHTML =
     '<label>Dictation<select id="talk-s-engine"><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
-    '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-1">Natural voice (Cloudflare Aura)</option><option value="aura-2">Richer voice (Aura 2, twice the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
+    '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
     '<label>Voice<select id="talk-s-speaker"></select></label>' +
     '<label>Speak<select id="talk-s-when"><option value="voice">When I talked</option><option value="always">Always</option></select></label>' +
     '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>';
@@ -167,7 +169,7 @@ function build() {
   sv.onchange = function () { S.voice = sv.value; set('voice', S.voice); if (S.voice !== 'off') set('voice-on', S.voice); fillSpeakers(); set('speaker', S.speaker); voiceBtn(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how I sound.'); } };
   sk.onchange = function () { S.speaker = sk.value; set('speaker', S.speaker); unlockAudio(); lastSpoken = true; say('This is how I sound.'); };
   sw.onchange = function () { S.when = sw.value; set('when', S.when); };
-  spk.addEventListener('click', function () { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-1') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); if (S.voice === 'off') stopSpeaking(); });
+  spk.addEventListener('click', function () { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-2') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); if (S.voice === 'off') stopSpeaking(); });
   voiceBtn();
   se.onchange = function () { S.engine = se.value; set('engine', S.engine); };
   sl.onchange = function () { S.lang = sl.value; set('lang', S.lang); };

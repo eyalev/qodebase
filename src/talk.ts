@@ -268,7 +268,7 @@ async function tts(request: Request, env: Env, ctx: ExecutionContext, who: Who &
   const t0 = Date.now();
   const text = String(url.searchParams.get('text') || '').replace(/\s+/g, ' ').trim().slice(0, 600);
   if (!text) return json({ error: 'empty' }, 400);
-  const model = VOICES[url.searchParams.get('model') || ''] ? url.searchParams.get('model')! : 'aura-1';
+  const model = VOICES[url.searchParams.get('model') || ''] ? url.searchParams.get('model')! : 'aura-2';   // Aura-2 default (Eyal, 2026-10-07)
   const v = VOICES[model];
   const speaker = v.speakers.includes(url.searchParams.get('speaker') || '') ? url.searchParams.get('speaker')! : v.def;
   const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-1', new TextEncoder().encode(`${model}|${speaker}|${text}`)))].map((b) => b.toString(16).padStart(2, '0')).join('');
