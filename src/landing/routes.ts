@@ -25,7 +25,12 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
   try {
     if (verb === 'approve' && request.method === 'POST') return json(await L.approve(String(body.id || '')));
     if (verb === 'flags' && request.method === 'POST') return json(await L.setFlags({ ...(typeof body.llmReplay === 'boolean' ? { llmReplay: body.llmReplay } : {}) }));
-    if (verb === 'state' && me.admin) return json({ merger: await env.MergeBox.get(env.MergeBox.idFromName(`${info.slug}--merge`)).state() });
+    if (verb === 'state' && me.admin) {
+      const v = await L.view(info.slug);
+      const agents = [];
+      for (let i = 1; i <= (v.demo?.agents || 0); i++) agents.push(await env.DemoAgent.get(env.DemoAgent.idFromName(`${info.slug}#${i}`)).peek());
+      return json({ merger: await env.MergeBox.get(env.MergeBox.idFromName(`${info.slug}--merge`)).state(), agents });
+    }
     if (verb === 'demo' && request.method === 'POST') {
       const action = String(body.action || '');
       if (action === 'start') return json(await L.demoStart(info.slug, Number(body.agents) || 4, Number(body.speed) || 1));

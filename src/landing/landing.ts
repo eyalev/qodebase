@@ -270,7 +270,7 @@ export class Landing extends DurableObject<Env> {
         c.files = rc.files?.length ? rc.files : c.files;
         if (rc.landed) {
           const how = c.redo === 'lead' ? 'lead' : c.redo === 'llm' ? 'replayed-llm' : rc.how;
-          if (rc.conflicts.length) this.#ev(c, 'conflict', rc.conflicts.join(', '));
+          if (rc.conflicts.length) this.#ev(c, 'conflict', await this.#withWhom(c, rc.conflicts, r));
           if (how === 'replayed-handler') this.#ev(c, 'replayed', (rc.handled || []).map((h) => `${h.path} (${h.handler})`).join(', ') || 'on the latest code');
           if (how === 'replayed-llm' || how === 'lead') this.#ev(c, 'replayed', how === 'lead' ? `by ${c.lead || 'the lead'} on the latest code` : 'by a model on the latest code');
           c.state = 'landed'; c.landedAt = Date.now(); delete c.redo;
@@ -282,7 +282,7 @@ export class Landing extends DurableObject<Env> {
           c.landing = { how: null, conflicts: [], diff: [], commit: null, mainCommit: null };
           this.#ev(c, 'bounced', (rc.checks?.failures || []).slice(0, 2).join('; ') || rc.why || 'checks failed');
         } else if (rc.unhandled?.length || rc.conflicts.length) {
-          this.#ev(c, 'conflict', (rc.unhandled?.length ? rc.unhandled : rc.conflicts).join(', '));
+          this.#ev(c, 'conflict', await this.#withWhom(c, rc.unhandled?.length ? rc.unhandled : rc.conflicts, r));
           c.landing = { how: null, conflicts: rc.unhandled?.length ? rc.unhandled : rc.conflicts, diff: [], commit: null, mainCommit: null };
           await this.#escalate(c, m);
         } else {
@@ -303,6 +303,17 @@ export class Landing extends DurableObject<Env> {
     if (m.waiting.length) await this.#arm(m.failStreak ? Math.min(300_000, 5000 * 2 ** (m.failStreak - 1)) : 500);
     log('landing', 'next_alarm', { slug: m.slug, inMs: ((await this.ctx.storage.getAlarm()) || 0) - Date.now(), failStreak: m.failStreak });
     await this.#notifyDemo(t);
+  }
+
+  /** 'src/x.js with <id>': the change that last landed on that file since this one's base
+   *  (earlier in this train, else the newest landed change that touched it). */
+  async #withWhom(c: Change, paths: string[], r: MergeResult) {
+    const earlier = r.changes.slice(0, r.changes.findIndex((x) => x.id === c.id)).filter((x) => x.landed).reverse();
+    const landed = (await this.#all()).filter((o) => o.id !== c.id && o.state === 'landed' && (o.landedAt || 0) >= c.createdAt).sort((a, b) => (b.landedAt || 0) - (a.landedAt || 0));
+    return paths.map((p) => {
+      const other = earlier.find((x) => x.files.includes(p))?.id || landed.find((o) => o.files.includes(p))?.id;
+      return other ? `${p} with ${other}` : p;
+    }).join(', ');
   }
 
   /** Tier 2 (LLM replay, flag) or tier 3 (the lead) for a real conflict. */

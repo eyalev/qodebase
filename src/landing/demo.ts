@@ -31,6 +31,9 @@ export class DemoAgent extends DurableObject<Env> {
     // Staggered: agents start a couple of seconds apart, like people picking up work.
     await this.ctx.storage.setAlarm(Date.now() + 800 + n * 1800 / speed);
   }
+  /** For landing/state: what this agent is doing, its next alarm, its last error. */
+  async peek() { return { st: await this.#st(), alarm: await this.ctx.storage.getAlarm() }; }
+
   async stop() {
     const s = await this.#st(); if (!s) return;
     s.stopped = true; await this.#save(s); await this.ctx.storage.deleteAlarm();
@@ -46,6 +49,7 @@ export class DemoAgent extends DurableObject<Env> {
   async alarm() {
     const s = await this.#st();
     if (!s || s.stopped) return;
+    (s as any).lastAlarm = Date.now();
     const L = this.#landing(s.slug);
     const d = await L.demoState();
     if (!d.running || d.startedAt !== s.runId) { s.stopped = true; await this.#save(s); return; }
@@ -54,6 +58,7 @@ export class DemoAgent extends DurableObject<Env> {
       else await this.#next(s);
     } catch (e) {
       log('demo', 'agent_error', { slug: s.slug, n: s.n, job: s.job?.changeId, err: String((e as Error)?.stack || e).slice(0, 500) });
+      (s as any).lastError = { at: Date.now(), err: String((e as Error)?.stack || e).slice(0, 800) };
       // Try again shortly; a job that keeps failing is dropped after the record says so.
       if (s.job) { (s.job as any).fails = ((s.job as any).fails || 0) + 1; if ((s.job as any).fails > 3) s.job = null; }
       await this.#save(s);
