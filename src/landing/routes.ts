@@ -37,7 +37,9 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
       const v = await L.view(info.slug);
       const agents = [];
       for (let i = 1; i <= (v.demo?.agents || 0); i++) agents.push(await env.DemoAgent.get(env.DemoAgent.idFromName(`${info.slug}#${i}`)).peek());
-      return json({ merger: await env.MergeBox.get(env.MergeBox.idFromName(`${info.slug}--merge`)).state(), agents });
+      // This project's ledger rows (box time, Claude tokens) for the last 2 days: what a real-agent test cost.
+      const costs = (await env.Ledger.get(env.Ledger.idFromName(info.owner)).rows(2).catch(() => [])).filter((r) => r.project.includes(info.name));
+      return json({ merger: await env.MergeBox.get(env.MergeBox.idFromName(`${info.slug}--merge`)).state(), agents, costs });
     }
     if (verb === 'demo' && request.method === 'POST') {
       const action = String(body.action || '');
