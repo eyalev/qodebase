@@ -136,7 +136,9 @@ export class TalkVoice extends VoiceAgent {
     const lang = this.#dictLang.get(connection.id) || 'en';
     const keyterms = ['qodebase', 'Talk', 'fork', 'merge', 'router', ...this.#keyterms].slice(0, 80);
     this.#trace('srv_stt', { model: 'nova-3', lang, keyterms: keyterms.length });
-    return new WorkersAINova3STT(gatewayed(this.env), { keyterms, language: lang === 'en' ? 'en' : 'multi', endpointingMs: 300, utteranceEndMs: 1000 }) as any;
+    // Straight to the AI binding, not through the gateway: through it the first words came ~7 s late
+    // (2026-10-07, Eyal's phone). Flux's websocket skips the gateway too; the cost goes to the Ledger per call.
+    return new WorkersAINova3STT(this.env.AI as any, { keyterms, language: lang === 'en' ? 'en' : 'multi', endpointingMs: 300, utteranceEndMs: 1000 }) as any;
   }
   async #loadKeyterms() {
     try {

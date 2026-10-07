@@ -61,7 +61,10 @@ var S = {
   speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
   when: get('when', 'voice'),           // voice (only when I spoke) | always
   speed: Number(get('speed', '1.25')) || 1.25,   // reply speed, pitch kept (Ask's Jarvis default)
-  pause: get('pause', '2500'),          // Deepgram live: send after this many ms of quiet, or 'tap' (Ask's "send when I stop talking")
+  pause: get('pause', '2500'),          // mic 'pause': send after this many ms of quiet
+  mic: get('mic', 'send'),              // how the mic works: send (tap, speak, tap Send, like tmux-web; default) | pause (sends when I stop) | hold | conv (conversation)
+  whisper: get('whisper', 'on'),        // re-read the whole clip with Whisper before sending (Deepgram live only)
+  keep: get('keepmic', 'open'),         // open = keep the mic ready while Talk is open (first words never lost) | use = only while speaking
 };
 // Aura-2 is the default voice since 2026-10-07 (Eyal): devices that had Aura-1 only because it was the default move once.
 try { if (!ls.getItem(KEY + 'v2')) { if (ls.getItem(KEY + 'voice-on') === 'aura-1') ls.setItem(KEY + 'voice-on', 'aura-2'); if (S.voice === 'aura-1') { S.voice = 'aura-2'; S.speaker = ''; ls.setItem(KEY + 'voice', 'aura-2'); ls.removeItem(KEY + 'speaker'); } ls.setItem(KEY + 'v2', '1'); } } catch (e) {}
@@ -110,7 +113,12 @@ var css = [
   '.talk-chip{min-height:44px;padding:0 14px;border-radius:8px;border:0;background:var(--t-chip);color:var(--t-fg);font:500 15px var(--t-ff);cursor:pointer}',
   '.talk-chip.pri{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-form{display:flex;gap:8px;padding:8px 8px 8px 16px;border-top:1px solid var(--t-line);align-items:center}',
-  '#talk-in{flex:1;min-width:0;height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);padding:0 12px;font:16px var(--t-ff);outline:none}',
+  '#talk-form{align-items:flex-end!important}',
+  '#talk-in{flex:1;min-width:0;min-height:44px;max-height:35dvh;height:44px;resize:none;overflow-y:auto;box-sizing:border-box;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);padding:10px 12px;font:16px/22px var(--t-ff);outline:none;display:block}',
+  '#talk-in.live{border-color:var(--t-acc);box-shadow:inset 0 0 0 1px var(--t-acc)}',
+  '#talk-send{width:44px;height:44px;border-radius:8px;border:0;background:var(--t-chip);color:var(--t-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}',
+  '#talk-send svg{width:22px;height:22px}',
+  '#talk-send.ready{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-in:focus{border-color:var(--t-acc)}',
   '#talk-mic{width:44px;height:44px;border-radius:8px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}',
   '#talk-mic svg{width:22px;height:22px}',
@@ -139,7 +147,10 @@ var ICON = {
   send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
 };
 
-var root, sheet, logEl, live, offer, inp, micBtn, fab, stEl, spk, convBtn, peek;
+var root, sheet, logEl, live, offer, inp, micBtn, sendBtn, fab, stEl, spk, convBtn, peek;
+// The input grows with what you say or type (up to a third of the screen), then scrolls to the newest words.
+function fitInp() { if (!inp) return; inp.style.height = 'auto'; inp.style.height = Math.max(44, inp.scrollHeight + 2) + 'px'; inp.scrollTop = inp.scrollHeight; if (sendBtn) sendBtn.classList.toggle('ready', !!inp.value.trim() || listening); }
+function setInp(v) { inp.value = v; fitInp(); }
 function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
 
 function build() {
@@ -159,8 +170,11 @@ function build() {
   head.appendChild(convBtn); head.appendChild(spk); head.appendChild(gear); head.appendChild(close);
   var setp = el('div', { id: 'talk-set' });
   setp.innerHTML =
-    '<label>Dictation<select id="talk-s-engine"><option value="live">Deepgram live + Whisper check (like tmux-web): words as you speak, then the whole clip is re-read</option><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
-    '<label>Send what I said<select id="talk-s-pause"><option value="1500">After a 1.5 s pause</option><option value="2500">After a 2.5 s pause</option><option value="4000">After a 4 s pause</option><option value="tap">Only when I tap the mic</option></select></label>' +
+    '<label>Dictation<select id="talk-s-engine"><option value="live">Deepgram live (Cloudflare): words as you speak</option><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
+    '<label>How the mic works<select id="talk-s-mic"><option value="send">Tap the mic, speak, tap Send (like tmux-web)</option><option value="pause">Tap the mic; it sends when I stop talking</option><option value="hold">Hold the mic while I talk; letting go sends</option><option value="conv">Conversation: it keeps listening and talks back</option></select></label>' +
+    '<label>Send after a pause of<select id="talk-s-pause"><option value="1500">1.5 s</option><option value="2500">2.5 s</option><option value="4000">4 s</option></select></label>' +
+    '<label>Check the words with Whisper<select id="talk-s-whisper"><option value="on">On: the whole recording is read again (steadier, about 1.5 s)</option><option value="off">Off: send the live words right away</option></select></label>' +
+    '<label>Microphone<select id="talk-s-keep"><option value="open">Ready while Talk is open (your first words are never lost)</option><option value="use">Only while I speak</option></select></label>' +
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
     '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
     '<label>Voice<select id="talk-s-speaker"></select></label>' +
@@ -172,9 +186,12 @@ function build() {
   live = el('div', { id: 'talk-live' });
   offer = el('div', { id: 'talk-offer' });
   var form = el('form', { id: 'talk-form' });
-  inp = el('input', { id: 'talk-in', type: 'text', enterkeyhint: 'send', autocomplete: 'off', placeholder: 'Say or type: open my calculator', 'aria-label': 'Talk to qodebase' });
+  inp = el('textarea', { id: 'talk-in', rows: '1', enterkeyhint: 'send', autocomplete: 'off', placeholder: 'Say or type: open my calculator', 'aria-label': 'Talk to qodebase' });
   micBtn = el('button', { id: 'talk-mic', type: 'button', 'aria-label': 'Speak' }, ICON.mic);
-  form.appendChild(inp); form.appendChild(micBtn);
+  sendBtn = el('button', { id: 'talk-send', type: 'submit', 'aria-label': 'Send' }, ICON.send);
+  form.appendChild(inp); form.appendChild(micBtn); form.appendChild(sendBtn);
+  inp.addEventListener('input', function () { fitInp(); });
+  inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
   var grab = el('button', { id: 'talk-grab', type: 'button', 'aria-label': 'Drag to resize Talk, tap to fold it to a bar' }, '<i></i>');
   peek = el('div', { id: 'talk-peek' });
   sheet.appendChild(grab); sheet.appendChild(head); sheet.appendChild(setp); sheet.appendChild(peek); sheet.appendChild(logEl); sheet.appendChild(live); sheet.appendChild(offer); sheet.appendChild(form);
@@ -196,14 +213,34 @@ function build() {
   // Tap: show Talk (no recording). Hold: push-to-talk (records while held, sends on release).
   var pttTimer = null, ptt = false;
   fab.addEventListener('pointerdown', function () { unlockAudio(); ptt = false; pttTimer = setTimeout(function () { ptt = true; open(true); startListen(); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} }, 350); });
-  var pttEnd = function () { clearTimeout(pttTimer); if (ptt && listening) stopListen(false); };
+  var pttEnd = function () { clearTimeout(pttTimer); if (ptt && listening) stopListen(false, true); };
   fab.addEventListener('pointerup', pttEnd); fab.addEventListener('pointercancel', pttEnd); fab.addEventListener('pointerleave', pttEnd);
   fab.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   fab.addEventListener('click', function () { if (ptt) { ptt = false; return; } unlockAudio(); open(true); });
   close.addEventListener('click', function () { stopListen(true); open(false); });
   gear.addEventListener('click', function () { var on = root.classList.toggle('settings'); if (on) setp.scrollTop = 0; trace('settings', { open: on }); });
-  micBtn.addEventListener('click', function () { unlockAudio(); if (vc) { vc.toggleMute(); return; } if (listening) stopListen(false); else startListen(); });
-  form.addEventListener('submit', function (e) { e.preventDefault(); unlockAudio(); var v = inp.value.trim(); if (!v) return; inp.value = ''; if (vc) { vcActive(); vc.sendText(v); return; } lastSpoken = false; submit(v); });
+  // The mic follows "How the mic works": send (tap, speak, tap Send), pause (sends when you stop), hold, conv.
+  var holdT = null, held = false;
+  micBtn.addEventListener('pointerdown', function () { if (S.mic !== 'hold' || vc || listening) return; unlockAudio(); held = false; holdT = setTimeout(function () { held = true; startListen(); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} }, 150); });
+  var holdEnd = function () { clearTimeout(holdT); if (S.mic === 'hold' && held && listening) { trace('mic', { how: 'release' }); stopListen(false, true); } };
+  micBtn.addEventListener('pointerup', holdEnd); micBtn.addEventListener('pointercancel', holdEnd); micBtn.addEventListener('pointerleave', holdEnd);
+  micBtn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  micBtn.addEventListener('click', function () {
+    unlockAudio();
+    if (S.mic === 'hold') { if (held) { held = false; return; } if (!listening) status('Hold the mic while you talk'); return; }
+    if (S.mic === 'conv') { if (vc) endConversation('you'); else startConversation(); return; }
+    if (vc) { vc.toggleMute(); return; }
+    if (listening) { trace('mic', { how: 'stop-tap', mode: S.mic }); stopListen(false, S.mic === 'pause'); } else startListen();
+  });
+  form.addEventListener('submit', function (e) {
+    e.preventDefault(); unlockAudio();
+    // Send while listening: stop, let Whisper check the words, then send them.
+    if (listening && dcOn) { trace('mic', { how: 'send-tap' }); stopListen(false, true); return; }
+    if (listening) { stopListen(false); return; }
+    var v = inp.value.trim(); if (!v) return; setInp('');
+    if (vc) { vcActive(); vc.sendText(v); return; }
+    lastSpoken = false; submit(v);
+  });
   var se = document.getElementById('talk-s-engine'), sl = document.getElementById('talk-s-lang'), sv = document.getElementById('talk-s-voice'), sk = document.getElementById('talk-s-speaker'), sw = document.getElementById('talk-s-when');
   se.value = S.engine; sl.value = S.lang; sv.value = S.voice; sw.value = S.when;
   var fillSpeakers = function () {
@@ -218,13 +255,19 @@ function build() {
   sv.onchange = function () { S.voice = sv.value; set('voice', S.voice); if (S.voice !== 'off') set('voice-on', S.voice); fillSpeakers(); set('speaker', S.speaker); voiceBtn(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how I sound.'); } };
   sk.onchange = function () { S.speaker = sk.value; set('speaker', S.speaker); unlockAudio(); lastSpoken = true; say('This is how I sound.'); };
   sw.onchange = function () { S.when = sw.value; set('when', S.when); };
-  var spz = document.getElementById('talk-s-pause'); spz.value = S.pause;
+  var spz = document.getElementById('talk-s-pause'); spz.value = S.pause === 'tap' ? '2500' : S.pause;
   spz.onchange = function () { S.pause = spz.value; set('pause', S.pause); trace('setting', { pause: S.pause }); };
+  var smic = document.getElementById('talk-s-mic'), swh = document.getElementById('talk-s-whisper'), skp = document.getElementById('talk-s-keep');
+  var showMic = function () { spz.parentNode.style.display = S.mic === 'pause' ? '' : 'none'; swh.parentNode.style.display = S.engine === 'live' && S.mic !== 'conv' ? '' : 'none'; micBtn.setAttribute('aria-label', S.mic === 'hold' ? 'Hold to speak' : S.mic === 'conv' ? 'Start a conversation' : 'Speak'); };
+  smic.value = S.mic; swh.value = S.whisper; skp.value = S.keep; showMic();
+  smic.onchange = function () { S.mic = smic.value; set('mic', S.mic); trace('setting', { mic: S.mic }); showMic(); };
+  swh.onchange = function () { S.whisper = swh.value; set('whisper', S.whisper); trace('setting', { whisper: S.whisper }); };
+  skp.onchange = function () { S.keep = skp.value; set('keepmic', S.keep); trace('setting', { keep: S.keep }); if (S.keep === 'open') warmMic(); else releaseMic(); };
   var sspd = document.getElementById('talk-s-speed'); sspd.value = String(S.speed);
   sspd.onchange = function () { S.speed = Number(sspd.value) || 1.25; set('speed', String(S.speed)); trace('setting', { speed: S.speed }); vcVoice(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how fast I talk.'); } };
   spk.addEventListener('click', function () { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-2') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); if (S.voice === 'off') stopSpeaking(); });
   voiceBtn();
-  se.onchange = function () { S.engine = se.value; set('engine2', S.engine); trace('setting', { engine: S.engine }); if (S.engine === 'live') dcWarm(); };
+  se.onchange = function () { S.engine = se.value; set('engine2', S.engine); trace('setting', { engine: S.engine }); if (S.engine === 'live') dcWarm(); showMic(); };
   sl.onchange = function () { S.lang = sl.value; set('lang', S.lang); };
   document.getElementById('talk-s-done').onclick = function () { root.classList.remove('settings'); trace('settings', { open: false }); };
   document.getElementById('talk-s-clear').onclick = function () { hist = []; chatHist = []; sset('log', hist); sset('chat', chatHist); render(); root.classList.remove('settings'); };
@@ -234,7 +277,7 @@ function build() {
   render();
 }
 
-function open(on) { if (on && S.engine === 'live' && me) dcWarm(); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+function open(on) { if (on && S.engine === 'live' && me) { dcWarm(); warmMic(); } if (!on) releaseMic(); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
 // Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is.
 function placeFab() {
   if (!fab) return;
@@ -638,6 +681,7 @@ var rec = null, mr = null, chunks = [], stream = null, t0 = 0, tick = null, inte
 function setListening(on) {
   listening = on;
   micBtn.classList.toggle('on', on); micBtn.innerHTML = on ? ICON.stop : ICON.mic;
+  if (inp) { inp.classList.toggle('live', on); inp.placeholder = on ? 'Listening\u2026' : 'Say or type: open my calculator'; fitInp(); }
   micBtn.setAttribute('aria-label', on ? 'Stop' : 'Speak');
   clearInterval(tick);
   if (on) { t0 = Date.now(); tick = setInterval(function () { status('Listening ' + Math.floor((Date.now() - t0) / 1000) + 's'); }, 250); status('Listening'); }
@@ -652,9 +696,9 @@ function startListen() {
   if (S.engine === 'native') return startNative();
   return startWhisper();
 }
-function stopListen(cancel) {
+function stopListen(cancel, send) {
   if (!listening) return;
-  if (dcOn) return liveStop(cancel);
+  if (dcOn) return liveStop(cancel, send);
   if (rec) { if (cancel) rec.abort(); else rec.stop(); }
   if (mr) { if (cancel) { chunks = []; mr.onstop = null; } try { mr.stop(); } catch (e) {} }
   if (cancel) { setListening(false); live.textContent = ''; unmark(); }
@@ -895,7 +939,7 @@ function publishTools() {
 var dc = null, dcReady = false, dcOn = false, dcText = '', dcT0 = 0, dcBuf = [], dcQuiet = null;
 // What was said so far: the finished pieces plus the one being said now.
 function dcSaid(interim) { return dcBuf.concat(interim ? [interim] : []).join(' ').replace(/\s+/g, ' ').trim(); }
-function dcArm() { clearTimeout(dcQuiet); if (S.pause !== 'tap' && dcOn) dcQuiet = setTimeout(function () { if (dcOn) { trace('dc_stop', { how: 'quiet', pieces: dcBuf.length, ms: Date.now() - dcT0 }); liveFinish(''); } }, Number(S.pause) || 2500); }
+function dcArm() { clearTimeout(dcQuiet); if (S.mic === 'pause' && S.pause !== 'tap' && dcOn) dcQuiet = setTimeout(function () { if (dcOn) { trace('dc_stop', { how: 'quiet', pieces: dcBuf.length, ms: Date.now() - dcT0 }); liveFinish('', true); } }, Number(S.pause) || 2500); }
 function dcWarm(cb) {
   if (dc && dcReady) return cb && cb();
   if (dc) { if (cb) dc.__wait = (dc.__wait || []).concat(cb); return; }
@@ -908,7 +952,7 @@ function dcWarm(cb) {
       if (!on) trace('dc_disconnect', { listening: dcOn });
       if (on) { try { dc.sendJSON({ type: 'mode', dictate: true, lang: S.lang }); } catch (e) {} var w = dc.__wait || []; dc.__wait = []; w.forEach(function (f) { f(); }); }
     });
-    dc.addEventListener('interimtranscript', function (t) { if (dcOn) trace('dc_interim', { text: t || '', ms: Date.now() - dcT0 }); if (dcOn && t) { dcText = t; live.textContent = dcSaid(t); clearTimeout(dcQuiet); } });
+    dc.addEventListener('interimtranscript', function (t) { if (dcOn) trace('dc_interim', { text: t || '', ms: Date.now() - dcT0 }); if (dcOn && t) { dcText = t; setInp(dcBase + dcSaid(t)); clearTimeout(dcQuiet); } });
     dc.addEventListener('statuschange', function (st) { trace('dc_status', { status: st, on: dcOn, ms: dcT0 ? Date.now() - dcT0 : undefined }); });
     dc.addEventListener('voiceerror', function (e) { trace('dc_voiceerror', { e: e && (e.code || e.message || String(e)) }); });
     dc.addEventListener('audiolevelchange', function (lv) { if (dcOn && lv > 0.05 && !dc.__heardSound) { dc.__heardSound = 1; trace('dc_sound', { level: Math.round(lv * 100) / 100, ms: Date.now() - dcT0 }); } });
@@ -916,7 +960,7 @@ function dcWarm(cb) {
       if (!d || d.type !== 'talk-dictated') return;
       // Flux ended a turn: keep it and keep listening (a pause to think is not the end), send after the quiet.
       if (!dcOn) return;
-      dcBuf.push(String(d.text || '').trim()); dcText = ''; live.textContent = dcSaid('');
+      dcBuf.push(String(d.text || '').trim()); dcText = ''; setInp(dcBase + dcSaid(''));
       logEv('dc_piece', { text: String(d.text || ''), pieces: dcBuf.length, ms: Date.now() - dcT0 });
       dcArm();
     });
@@ -927,40 +971,59 @@ function dcWarm(cb) {
 // The whole clip, recorded on the phone from the tap (like tmux-web): Deepgram's live words can miss
 // the start (the call takes ~0.8 s to begin) and mishear names; Whisper reads the clip at the end and
 // its text replaces the live words.
-var rec = null, recChunks = [], recStream = null, recT0 = 0;
-function recStart() {
-  recChunks = []; recT0 = Date.now();
-  if (!navigator.mediaDevices || !window.MediaRecorder) return;
-  navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function (s) {
-    if (!listening) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
-    recStream = s;
-    var type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].filter(function (t) { return MediaRecorder.isTypeSupported(t); })[0] || '';
-    rec = new MediaRecorder(s, type ? { mimeType: type } : {});
-    rec.ondataavailable = function (e) { if (e.data && e.data.size) recChunks.push(e.data); };
-    rec.start(250);
-    trace('rec_start', { ms: Date.now() - recT0 });
-  }).catch(function (e) { trace('rec_error', { err: String(e) }); });
+var clip = null, clipChunks = [], clipStream = null, clipT0 = 0, warmP = null;
+function micOpts() { return { audio: { echoCancellation: true, noiseSuppression: true } }; }
+// "Microphone: ready while Talk is open": the stream is opened when Talk opens (only if the mic was
+// already allowed, so no permission prompt pops up) and kept until Talk closes, so a tap records at once.
+function warmMic() {
+  if (S.keep !== 'open' || S.engine !== 'live' || clipStream || warmP || !navigator.mediaDevices) return;
+  var go = function () {
+    var t = Date.now();
+    warmP = navigator.mediaDevices.getUserMedia(micOpts()).then(function (st) { warmP = null; if (!root.classList.contains('open')) { st.getTracks().forEach(function (x) { x.stop(); }); return; } clipStream = st; trace('mic_warm', { ms: Date.now() - t }); }).catch(function (e) { warmP = null; trace('mic_warm_error', { err: String(e) }); });
+  };
+  try { navigator.permissions.query({ name: 'microphone' }).then(function (r) { if (r.state === 'granted') go(); }, function () {}); } catch (e) {}
 }
-function recStop(cb) {
-  var r = rec, s = recStream; rec = null; recStream = null;
+function releaseMic() { if (clipStream && !clip) { clipStream.getTracks().forEach(function (x) { x.stop(); }); clipStream = null; trace('mic_release', {}); } }
+function clipStart(ready) {
+  clipChunks = []; clipT0 = Date.now();
+  if (!navigator.mediaDevices || !window.MediaRecorder) return ready && ready();
+  var begin = function (st) {
+    if (!listening) { if (S.keep !== 'open') st.getTracks().forEach(function (x) { x.stop(); }); return; }
+    clipStream = st;
+    var type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].filter(function (x) { return MediaRecorder.isTypeSupported(x); })[0] || '';
+    clip = new MediaRecorder(st, type ? { mimeType: type } : {});
+    clip.ondataavailable = function (e) { if (e.data && e.data.size) clipChunks.push(e.data); };
+    clip.start(250);
+    trace('rec_start', { ms: Date.now() - clipT0, warm: !!warmUsed });
+    if (ready) ready();
+  };
+  var warmUsed = !!(clipStream && clipStream.active);
+  if (warmUsed) return begin(clipStream);
+  (warmP || navigator.mediaDevices.getUserMedia(micOpts())).then(function (st) { begin(st || clipStream); }).catch(function (e) { trace('rec_error', { err: String(e) }); if (ready) ready(); });
+}
+function clipStop(cb) {
+  var r = clip, st = clipStream; clip = null;
   if (!r) { if (cb) cb(null); return; }
   r.onstop = function () {
-    if (s) s.getTracks().forEach(function (t) { t.stop(); });
-    if (cb) cb(new Blob(recChunks, { type: r.mimeType || 'audio/webm' }));
+    if (S.keep !== 'open' || !root.classList.contains('open')) { if (st) st.getTracks().forEach(function (x) { x.stop(); }); clipStream = null; }
+    if (cb) cb(new Blob(clipChunks, { type: r.mimeType || 'audio/webm' }));
   };
   try { r.stop(); } catch (e) { if (cb) cb(null); }
 }
+var dcBase = '';
 function startLive() {
   setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); live.textContent = '';
-  recStart();
+  dcBase = inp.value.trim() ? inp.value.trim() + ' ' : '';   // speak more after typing: the words are added
+  clipStart(function () { if (listening) status('Listening, speak'); });
   dcWarm(function () {
     if (!listening) return;
     dcOn = true; dcT0 = Date.now(); dc.__heardSound = 0;
-    dc.startCall().then(function () { status('Listening'); logEv('dc_start', {}); })
-      .catch(function (e) { dcOn = false; setListening(false); recStop(null); add('note', 'Could not start the microphone: ' + (e && e.message || e)); });
+    try { dc.sendJSON({ type: 'mode', dictate: true, lang: S.lang }); } catch (e) {}
+    dc.startCall().then(function () { logEv('dc_start', {}); })
+      .catch(function (e) { dcOn = false; setListening(false); clipStop(null); add('note', 'Could not start the microphone: ' + (e && e.message || e)); });
   });
 }
-function liveFinish(text) {
+function liveFinish(text, sendIt) {
   if (!dcOn) return;
   dcOn = false; clearTimeout(dcQuiet);
   try { dc.endCall(); } catch (e) {}
@@ -969,30 +1032,34 @@ function liveFinish(text) {
   logEv('dc_final', { chars: t.length, pieces: dcBuf.length, ms: Date.now() - dcT0 });
   dcBuf = [];
   var sent = false;
+  var base = dcBase;
   function send(final, how, extra) {
     if (sent) return; sent = true; status('');
-    trace('dc_whisper', Object.assign({ how: how, live: t, final: final }, extra || {}));
-    if (final) { lastSpoken = true; submit(final); } else add('note', 'I did not hear anything.');
+    trace('dc_whisper', Object.assign({ how: how, live: t, final: final, send: !!sendIt }, extra || {}));
+    var all = (base + (final || '')).trim();
+    if (!sendIt) { setInp(all); if (!final) status('I did not hear anything'); return; }   // tap, speak, tap Send: the words wait in the box
+    setInp('');
+    if (all) { lastSpoken = true; submit(all); } else add('note', 'I did not hear anything.');
   }
-  recStop(function (blob) {
-    if (!blob || blob.size < 2000) return send(t, 'live', { bytes: blob ? blob.size : 0 });
-    if (t) live.textContent = t;
+  setInp((base + t).trim());
+  clipStop(function (blob) {
+    if (S.whisper === 'off' || !blob || blob.size < 2000) return send(t, S.whisper === 'off' ? 'live-only' : 'live', { bytes: blob ? blob.size : 0 });
     status('Checking the words\u2026');
     var w0 = Date.now();
     setTimeout(function () { send(t, 'live-timeout', { bytes: blob.size }); }, 6000);
     fetch('/api/talk/transcribe?names=1&lang=' + encodeURIComponent(S.lang), { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type }, body: blob })
       .then(function (r) { return r.json(); })
-      .then(function (j) { live.textContent = ''; send((j && j.text) || t, j && j.text ? 'whisper' : 'live', { bytes: blob.size, whisper_ms: Date.now() - w0, err: j && j.error }); })
-      .catch(function (e) { live.textContent = ''; send(t, 'live-error', { err: String(e) }); });
+      .then(function (j) { send((j && j.text) || t, j && j.text ? 'whisper' : 'live', { bytes: blob.size, whisper_ms: Date.now() - w0, err: j && j.error }); })
+      .catch(function (e) { send(t, 'live-error', { err: String(e) }); });
   });
 }
-function liveStop(cancel) {
-  if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} recStop(null); setListening(false); live.textContent = ''; return; }
+function liveStop(cancel, sendIt) {
+  if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} clipStop(null); setListening(false); live.textContent = ''; return; }
   // Stopped by hand (tap, or releasing the button): send what was heard, including the piece being said.
   trace('dc_stop', { how: 'hand', pieces: dcBuf.length, interim: dcText, ms: Date.now() - dcT0 });
   status('Finishing\u2026');
   var t = dcText;
-  setTimeout(function () { if (dcOn) liveFinish(t); }, 600);
+  setTimeout(function () { if (dcOn) liveFinish(t, sendIt); }, 600);
 }
 
 // ---- Conversation (phase 2): mic streamed to the TalkVoice agent (src/talkvoice.ts)

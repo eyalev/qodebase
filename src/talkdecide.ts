@@ -181,6 +181,10 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // "Go home" / "home page" is a fixed phrase: vocabulary in code, not the model (talkui's rule).
   const home = s.items.find((i) => i.kind === 'link' && i.href === '/');
   if (home && cmd.mode !== 'ask' && /\b(go|take me|back to the|bring me) home\b|\bhome ?page\b|^home$/i.test(utterance.trim())) return { ...cmd, mode: cmd.mode === 'none' ? 'act' : cmd.mode, op: 'go', href: '/', label: home.text, target: home.id };
+  // A bare name of a place ("the code.", "changes", "agents"): saying it means open it. Eyal's phone, 2026-10-07:
+  // "show me the code" arrived clipped as "the code." and the model picked the Code link but chose mode none.
+  const words = utterance.trim().replace(/[.!?,]+$/g, '').split(/\s+/).filter(Boolean);
+  if (cmd.mode === 'none' && cmd.op === 'go' && cmd.href && words.length <= 3 && (cmd.p ?? 0) >= 0.3 && !hello) return { ...cmd, mode: 'act', why: `${cmd.why || ''}; a bare place name opens it` };
   if (cmd.op !== 'none' || cmd.mode === 'ask' || cmd.mode === 'none') return cmd;
   // The action kind could not be done (no field, no words): a confident link pick still can.
   const l = s.items.find((i) => i.id === pick(answers.link, 0.5));

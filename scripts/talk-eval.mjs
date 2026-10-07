@@ -50,6 +50,9 @@ const CASES = [
   ['p_forq_calculator', 'what does this project do?', { mode: ['ask', 'both'] }],
   ['p_forq_calculator', 'read me the license', { mode: ['act', 'both'], op: 'go', href: 'LICENSE' }],
   // Search and typing.
+  ['p_forq_calculator', 'show me the code', { mode: 'act', op: 'go', href: 'calculator/code' }],
+  ['p_forq_calculator', 'the code.', { mode: 'act', op: 'go', href: 'calculator/code' }],
+  ['p_forq_calculator', 'open the code', { mode: 'act', op: 'go', href: 'calculator/code' }],
   ['p_forq_calculator_code', 'search the code for divide', { mode: 'act', op: 'type', text: 'divide' }],
   ['home', 'build a habit tracker with streaks', { mode: 'act', op: 'type', text: 'habit tracker' }],
   ['home', 'I want to make a recipe app', { mode: ['act', 'ask'], op: ['type', 'none'], text: 'recipe app' }],
