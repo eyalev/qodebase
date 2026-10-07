@@ -513,7 +513,8 @@ PY
   }
 
   // ---- the ask box (<slug>--ask): Claude Code answers questions about the project ----
-  // Read-only clone (a read token), `claude -p` in plan mode (it reads, never edits), on
+  // Read-only clone (a read token), `claude -p` with the edit tools disallowed (plan mode
+  // ignored --model and ran Sonnet for every question, 2026-10-07), on
   // the owner's own Claude (subscription token or API key, from the box's tmux env).
   // Runs from the alarm so a long answer outlives the request that asked.
   async startAsk(id: string, question: string, spec: BootSpec, model = 'opus') {
@@ -549,7 +550,7 @@ PY
       const r = await this.#sh(`cd ${REPO_DIR} 2>/dev/null || cd /workspace
 git pull -q --ff-only 2>/dev/null
 eval "$(tmux show-environment -g 2>/dev/null | grep -E '^(CLAUDE_CODE_OAUTH_TOKEN|ANTHROPIC_API_KEY|ANTHROPIC_MODEL)=' | sed 's/^/export /')"
-IS_SANDBOX=1 timeout 300 claude -p "$Q" --permission-mode plan --model "$MODEL" --output-format text 2>&1 | tail -c 20000`, { Q: prompt, MODEL: ['opus', 'sonnet', 'haiku'].includes(a.model || '') ? a.model! : 'opus' }).catch((e) => ({ exitCode: 1, stdout: '', stderr: String(e) }));
+IS_SANDBOX=1 timeout 300 claude -p "$Q" --model "$MODEL" --disallowedTools Edit Write NotebookEdit --output-format text 2>&1 | tail -c 20000`, { Q: prompt, MODEL: ['opus', 'sonnet', 'haiku'].includes(a.model || '') ? a.model! : 'opus' }).catch((e) => ({ exitCode: 1, stdout: '', stderr: String(e) }));
       const answer = r.stdout.trim();
       const ok = r.exitCode === 0 && !!answer;
       await this.ctx.storage.put(`ask:${id}`, { ...a, state: ok ? 'done' : 'failed', answer: ok ? answer : undefined, error: ok ? undefined : (answer || r.stderr || 'no answer').slice(-400), ms: Date.now() - t0 });
@@ -572,10 +573,9 @@ IS_SANDBOX=1 timeout 300 claude -p "$Q" --permission-mode plan --model "$MODEL" 
 node -e '
 const fs=require("fs"),p=require("path");const since=process.argv[1]||"";let last=since;const m={};
 function walk(d){let e;try{e=fs.readdirSync(d,{withFileTypes:true})}catch{return}for(const f of e){const q=p.join(d,f.name);if(f.isDirectory())walk(q);else if(f.name.endsWith(".jsonl")){
-for(const line of fs.readFileSync(q,"utf8").split("
-")){if(!line.includes(""usage""))continue;let o;try{o=JSON.parse(line)}catch{continue}
+for(const line of fs.readFileSync(q,"utf8").split("\n")){if(!line.includes("\"usage\""))continue;let o;try{o=JSON.parse(line)}catch{continue}
 const ts=o.timestamp||"";if(!ts||ts<=since)continue;const u=o.message&&o.message.usage;if(!u)continue;const k=o.message.model||"unknown";
-const t=m[k]||(m[k]={in:0,out:0,cw:0,cr:0});t.in+=u.input_tokens||0;t.out+=u.output_tokens||0;t.cw+=u.cache_creation_input_tokens||0;t.cr+=u.cache_read_input_tokens||0;if(ts>last)last=ts}}}}
+const t=m[k]||(m[k]={in:0,out:0,cw:0,cw1h:0,cr:0});const cc=u.cache_creation||{};const h1=cc.ephemeral_1h_input_tokens||0;t.in+=u.input_tokens||0;t.out+=u.output_tokens||0;t.cw1h+=h1;t.cw+=Math.max(0,(u.cache_creation_input_tokens||0)-h1);t.cr+=u.cache_read_input_tokens||0;if(ts>last)last=ts}}}}
 walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}))' "$CURSOR"`, { CURSOR: (st.get('costCursor') as string) || '' });
       const cpuNow = Number((r.stdout.match(/CPU=(\d+)/) || [])[1] || 0) / 1e6;
       const usage = JSON.parse((r.stdout.match(/USAGE=(.*)/) || [])[1] || '{"m":{},"last":""}') as { m: Record<string, Tokens>; last: string };

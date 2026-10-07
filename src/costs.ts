@@ -17,16 +17,17 @@ export const PRICES_CHECKED = '2026-10-07';
 /** USD per second. CPU is charged on active use only (we measure it from the cgroup). */
 export const CONTAINER = { gibSecond: 0.0000025, vcpuSecond: 0.00002, gbDiskSecond: 0.00000007 };
 /** USD per million tokens: input, 5-minute cache write, cache read, output. */
-export const CLAUDE: Record<string, { in: number; cw: number; cr: number; out: number }> = {
-  opus: { in: 4, cw: 5, cr: 0.2, out: 20 },        // Claude Opus 5.5
-  sonnet: { in: 2, cw: 2.5, cr: 0.2, out: 10 },    // Claude Sonnet 5.5
-  haiku: { in: 1, cw: 1.25, cr: 0.1, out: 5 },     // Claude Haiku 4.5
-  fable: { in: 10, cw: 12.5, cr: 0.25, out: 50 },  // Claude Fable 5.1
+/** USD per million tokens: input, 5-minute and 1-hour cache writes, cache read, output. */
+export const CLAUDE: Record<string, { in: number; cw: number; cw1h: number; cr: number; out: number }> = {
+  opus: { in: 4, cw: 5, cw1h: 8, cr: 0.2, out: 20 },        // Claude Opus 5.5
+  sonnet: { in: 2, cw: 2.5, cw1h: 4, cr: 0.2, out: 10 },    // Claude Sonnet 5.5
+  haiku: { in: 1, cw: 1.25, cw1h: 2, cr: 0.1, out: 5 },     // Claude Haiku 4.5
+  fable: { in: 10, cw: 12.5, cw1h: 20, cr: 0.25, out: 50 },  // Claude Fable 5.1
 };
 export const WORKERS_AI_PER_1K_NEURONS = 0.011;
 
 export type Kind = 'boxes' | 'claude' | 'voice';
-export type Tokens = { in: number; out: number; cw: number; cr: number };
+export type Tokens = { in: number; out: number; cw: number; cw1h?: number; cr: number };
 export type CostRow = { usd: number | null; covered: boolean; tokens?: Tokens; seconds?: number; cpuSeconds?: number; billing?: 'api' | 'sub' };
 
 const day = (t = Date.now()) => new Date(t).toISOString().slice(0, 10);
@@ -37,7 +38,7 @@ export function claudeUsd(model: string, t: Tokens): number | null {
   const k = modelKey(model);
   if (!k) return null;
   const p = CLAUDE[k];
-  return (t.in * p.in + t.cw * p.cw + t.cr * p.cr + t.out * p.out) / 1e6;
+  return (t.in * p.in + t.cw * p.cw + (t.cw1h || 0) * p.cw1h + t.cr * p.cr + t.out * p.out) / 1e6;
 }
 /** Dollars for a box's awake time (memory and disk provisioned, CPU as measured). */
 export const boxUsd = (seconds: number, cpuSeconds: number, gib: number, diskGb: number) =>
@@ -47,7 +48,7 @@ export class Ledger extends DurableObject<Env> {
   async add(kind: Kind, project: string, row: CostRow, at = Date.now()) {
     const key = `d:${day(at)}:${kind}:${project}`;
     const old = (await this.ctx.storage.get<CostRow>(key)) || { usd: 0, covered: row.covered };
-    const sumT = (a?: Tokens, b?: Tokens) => (a || b ? { in: (a?.in || 0) + (b?.in || 0), out: (a?.out || 0) + (b?.out || 0), cw: (a?.cw || 0) + (b?.cw || 0), cr: (a?.cr || 0) + (b?.cr || 0) } : undefined);
+    const sumT = (a?: Tokens, b?: Tokens) => (a || b ? { in: (a?.in || 0) + (b?.in || 0), out: (a?.out || 0) + (b?.out || 0), cw: (a?.cw || 0) + (b?.cw || 0), cw1h: (a?.cw1h || 0) + (b?.cw1h || 0), cr: (a?.cr || 0) + (b?.cr || 0) } : undefined);
     await this.ctx.storage.put(key, {
       usd: old.usd === null || row.usd === null ? null : old.usd + row.usd,
       covered: row.covered, billing: row.billing || old.billing,
@@ -82,7 +83,7 @@ export async function costSummary(env: Env, handle: string) {
     const out = { total: blank(), byKind: {} as Record<string, ReturnType<typeof blank>> };
     for (const r of rows.filter(pred)) {
       for (const t of [out.total, (out.byKind[r.kind] ||= blank())]) {
-        if (r.billing === 'sub') t.subTokens += (r.tokens?.in || 0) + (r.tokens?.out || 0) + (r.tokens?.cw || 0) + (r.tokens?.cr || 0);
+        if (r.billing === 'sub') t.subTokens += (r.tokens?.in || 0) + (r.tokens?.out || 0) + (r.tokens?.cw || 0) + (r.tokens?.cw1h || 0) + (r.tokens?.cr || 0);
         else if (r.usd === null) t.unknown = true;
         else if (r.covered) t.covered += r.usd;
         else t.usd += r.usd;
@@ -109,7 +110,7 @@ export function costsPage(s: Awaited<ReturnType<typeof costSummary>>, selfHost: 
   const days = [...new Set(s.rows.map((r) => r.date))].map((d) => {
     const rs = s.rows.filter((r) => r.date === d);
     return `<details class="cday"><summary><b>${d}</b><span>${usd(rs.reduce((a, r) => a + (!r.covered && r.usd ? r.usd : 0), 0))}</span></summary>
-${rs.map((r) => `<div class="crow"><span>${esc(KIND_LABEL[r.kind] || r.kind)}${r.project ? `<i>${esc(r.project)}</i>` : ''}</span><span>${r.billing === 'sub' ? fmtTok((r.tokens?.in || 0) + (r.tokens?.out || 0) + (r.tokens?.cw || 0) + (r.tokens?.cr || 0)) : r.usd === null ? 'not priced' : usd(r.usd)}${r.covered ? '<i>covered</i>' : ''}${r.seconds ? `<i>${Math.round(r.seconds / 60)} min awake</i>` : ''}</span></div>`).join('')}</details>`;
+${rs.map((r) => `<div class="crow"><span>${esc(KIND_LABEL[r.kind] || r.kind)}${r.project ? `<i>${esc(r.project)}</i>` : ''}</span><span>${r.billing === 'sub' ? fmtTok((r.tokens?.in || 0) + (r.tokens?.out || 0) + (r.tokens?.cw || 0) + (r.tokens?.cw1h || 0) + (r.tokens?.cr || 0)) : r.usd === null ? 'not priced' : usd(r.usd)}${r.covered ? '<i>covered</i>' : ''}${r.seconds ? `<i>${Math.round(r.seconds / 60)} min awake</i>` : ''}</span></div>`).join('')}</details>`;
   }).join('') || '<p class="desc">Nothing yet. Costs appear here once your agents run.</p>';
   return shell('Costs · qodebase', `<h1>Costs</h1>
 <div class="csum"><div><span>Today</span><b>${usd(s.today.total.usd)}</b></div><div><span>Last 7 days</span><b>${usd(s.week.total.usd)}</b></div><div><span>Next 30 days</span><b>${usd(s.month.usd)}</b><small>estimate at this week's pace</small></div></div>
