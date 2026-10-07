@@ -134,7 +134,16 @@ function applyChange(c, cfg) {
       git(['add', p]);
       handled.push({ path: p, handler: h[0] });
     }
-    if (unhandled.length) { git(['reset', '-q', '--hard', before]); return { id: c.id, ok: false, files, conflicts, unhandled, why: `conflict in ${unhandled.join(', ')}` }; }
+    if (unhandled.length) {
+      git(['reset', '-q', '--hard', before]);
+      // Tier 2: a model redoes the change's intent on today's code (per-project flag).
+      if (job.llm) {
+        const rp = replay(c, base, before, conflicts, unhandled);
+        if (rp.ok) return { id: c.id, ok: true, how: 'replayed-llm', files, conflicts, handled, commit: rp.commit, before, llm: rp.llm };
+        return { id: c.id, ok: false, files, conflicts, unhandled, llm: rp.llm, why: `conflict in ${unhandled.join(', ')}; model replay failed: ${rp.why}` };
+      }
+      return { id: c.id, ok: false, files, conflicts, unhandled, why: `conflict in ${unhandled.join(', ')}` };
+    }
     if (lock) {
       const r = spawnSync('npm', ['install', '--package-lock-only', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: DIR, encoding: 'utf8' });
       if (r.status !== 0) { git(['reset', '-q', '--hard', before]); return { id: c.id, ok: false, files, conflicts, unhandled: ['package-lock.json'], why: 'lockfile could not be regenerated' }; }
@@ -146,6 +155,44 @@ function applyChange(c, cfg) {
   git(['commit', '-q', '--allow-empty', '-F', '-'], { input: msg });
   const commit = git(['rev-parse', 'HEAD']).out;
   return { id: c.id, ok: true, how, files, conflicts, handled, commit, before };
+}
+
+// ---- tier 2: model replay -----------------------------------------------------------
+// The change could not be merged as text. Give a small model (default Claude Haiku 5.5) the
+// change's intent and the diff the agent made on older code, in a checkout of TODAY's main,
+// and let it make the same change here. Its edits are committed like any other change and
+// still go through the checks. Usage is reported (tokens, cost estimate, prompt size).
+function replay(c, base, before, conflicts, unhandled) {
+  const t = Date.now();
+  const diff = git(['diff', '-U3', base, c.commit]).out.slice(0, 12000);
+  const prompt = [
+    'You are the merge queue of a git platform. A reviewed change could not be merged as text because the files changed since the change was written.',
+    'Make the SAME change to the code in this directory (it is the latest version). Keep everything that is already here; add the change\'s intent on top.',
+    'Edit files only. Do not run git. Do not change files the change did not touch unless the intent needs it.',
+    '', `Intent: ${c.title}`, (c.intent || '').slice(0, 2000), '',
+    `Files that conflicted: ${unhandled.join(', ')}`, '',
+    'The change as it was written on the older code (unified diff):', '```diff', diff, '```',
+  ].join('\n');
+  const r = spawnSync('claude', ['-p', prompt, '--model', job.llm.model, '--output-format', 'json', '--permission-mode', 'acceptEdits',
+    '--allowedTools', 'Read,Edit,Write,Glob,Grep', '--max-turns', '12'], {
+    cwd: DIR, encoding: 'utf8', timeout: 240_000, maxBuffer: 16 << 20,
+    env: { ...process.env, IS_SANDBOX: '1', CLAUDE_CODE_OAUTH_TOKEN: process.env.QB_CLAUDE_TOKEN || '', ANTHROPIC_API_KEY: process.env.QB_ANTHROPIC_KEY || '', JOB: '' } });
+  let j = {}; try { j = JSON.parse(r.stdout || '{}'); } catch {}
+  const u = j.usage || {};
+  const llm = { model: job.llm.model, ms: Date.now() - t, turns: j.num_turns ?? null, usd: j.total_cost_usd ?? null,
+    in: u.input_tokens ?? null, out: u.output_tokens ?? null, cacheRead: u.cache_read_input_tokens ?? null, cacheWrite: u.cache_creation_input_tokens ?? null,
+    promptChars: prompt.length, exit: r.status, error: r.status === 0 && !j.is_error ? undefined : String(j.result || r.stderr || r.error || '').slice(0, 300) };
+  say('replay', { id: c.id, ...llm });
+  if (r.status !== 0 || j.is_error) { git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']); return { ok: false, llm, why: llm.error || `exit ${r.status}` }; }
+  git(['add', '-A']);
+  if (!git(['diff', '--cached', '--name-only']).out.trim()) { git(['reset', '-q', '--hard', before]); return { ok: false, llm, why: 'the model made no change' }; }
+  // Diff-of-diffs: did the replay add/remove the same lines the reviewed change did?
+  const lines = (d) => d.split('\n').filter((l) => /^[+-](?![+-])/.test(l)).map((l) => l.trim()).sort().join('\n');
+  const msg = `${c.title || c.id}\n\n${(c.intent || '').slice(0, 4000)}\n\nReplayed by ${job.llm.model} on the latest main (the text merge conflicted in ${unhandled.join(', ')}).\n\nqodebase-change: ${c.id}\n`;
+  git(['commit', '-q', '-F', '-'], { input: msg });
+  const commit = git(['rev-parse', 'HEAD']).out;
+  llm.sameLines = lines(git(['diff', before, commit]).out) === lines(git(['diff', base, c.commit]).out);
+  return { ok: true, commit, llm };
 }
 
 // ---- checks -----------------------------------------------------------------------
@@ -250,7 +297,7 @@ async function main() {
     const c = job.changes.find((x) => x.id === r.id);
     r.diff = diffOf(r.before, r.commit);
     const note = { change: r.id, title: c.title, intent: (c.intent || '').slice(0, 2000), agent: c.agent, fork: c.fork, base: c.base, agentCommit: c.commit,
-      how: r.how, handled: r.handled, review: c.review || null, checks: { ok: true }, landedBy: 'qodebase merge queue', at: new Date().toISOString() };
+      how: r.how, handled: r.handled, review: c.review || null, ...(r.llm ? { replay: { model: r.llm.model, sameLinesAsReviewed: r.llm.sameLines } } : {}), checks: { ok: true }, landedBy: 'qodebase merge queue', at: new Date().toISOString() };
     git(['notes', '--ref=qodebase', 'add', '-f', '-F', '-', r.commit], { input: JSON.stringify(note, null, 2) + '\n' });
   }
   let mainAfter = mainBefore, pushed = false, stale = false, notesPushed = false, pushErr = '';
@@ -268,7 +315,7 @@ async function main() {
       const r = results.get(c.id) || { id: c.id, ok: false, why: 'not applied' };
       const landedOk = r.ok && pushed;
       return { id: c.id, landed: landedOk, how: landedOk ? r.how : null, commit: landedOk ? r.commit : null, agentCommit: c.commit, files: r.files || [], conflicts: r.conflicts || [],
-        unhandled: r.unhandled || [], handled: r.handled || [], bounced: !!r.bounced, checks: r.checks || null, why: r.why || (r.ok && !pushed ? (stale ? 'main moved: retry' : 'push failed') : ''), diff: landedOk ? r.diff : null };
+        unhandled: r.unhandled || [], handled: r.handled || [], bounced: !!r.bounced, llm: r.llm || null, checks: r.checks || null, why: r.why || (r.ok && !pushed ? (stale ? 'main moved: retry' : 'push failed') : ''), diff: landedOk ? r.diff : null };
     }),
   };
   console.log('QB_RESULT ' + JSON.stringify(out));

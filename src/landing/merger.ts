@@ -15,13 +15,16 @@ import MERGEJOB from './mergejob.mjs';
 
 export type MergeChange = { id: string; title: string; intent: string; agent: string; fork: string; remote: string; token: string;
   base: string | null; commit: string | null; review: unknown };
-export type MergeJob = { trainId: string; slug: string; mainRemote: string; mainToken: string; branch: string | null; check?: string | null; changes: MergeChange[]; tries?: number };
+export type MergeJob = { trainId: string; slug: string; mainRemote: string; mainToken: string; branch: string | null; check?: string | null; changes: MergeChange[]; tries?: number;
+  /** Tier 2: replay conflicting changes with this model (on the owner's Claude subscription). */
+  llm?: { model: string } };
+export type LlmUse = { model: string; ms: number; turns: number | null; usd: number | null; in: number | null; out: number | null; cacheRead: number | null; cacheWrite: number | null; sameLines?: boolean; error?: string };
 export type MergeResult = {
   trainId: string; ok: boolean; error?: string; ms?: number; log?: string;
   branch?: string; mainBefore?: string; mainAfter?: string; pushed?: boolean; stale?: boolean; notesPushed?: boolean; solo?: boolean;
   checks?: { ok: boolean; ms: number; failures: string[]; skipped?: boolean };
-  changes: { id: string; landed: boolean; how: 'merged' | 'replayed-handler' | null; commit: string | null; files: string[]; conflicts: string[];
-    unhandled: string[]; handled: { path: string; handler: string }[]; bounced: boolean; checks: { ok: boolean; failures: string[] } | null; why: string;
+  changes: { id: string; landed: boolean; how: 'merged' | 'replayed-handler' | 'replayed-llm' | null; commit: string | null; files: string[]; conflicts: string[];
+    unhandled: string[]; handled: { path: string; handler: string }[]; bounced: boolean; checks: { ok: boolean; failures: string[] } | null; why: string; llm?: LlmUse | null;
     diff: { path: string; lines: string[] }[] | null }[];
 };
 
@@ -116,12 +119,13 @@ export class MergeBox extends DurableObject<Env> {
     try {
       await this.#ensureContainer();
       await this.#sh(`mkdir -p /opt/qb && printf '%s' "$JS" > /opt/qb/mergejob.mjs`, { JS: MERGEJOB });
-      const spec = { dir: `/m/${job.slug}`, mainRemote: job.mainRemote, mainToken: job.mainToken, branch: job.branch, check: job.check ?? null, changes: job.changes };
-      const r = await this.#sh('node /opt/qb/mergejob.mjs 2>&1', { JOB: JSON.stringify(spec), HOME: '/root' });
+      const spec = { dir: `/m/${job.slug}`, mainRemote: job.mainRemote, mainToken: job.mainToken, branch: job.branch, check: job.check ?? null, changes: job.changes, llm: job.llm || null };
+      // The Claude token only reaches the box for a tier-2 replay, as its own variable (never in JOB, never logged).
+      const r = await this.#sh('node /opt/qb/mergejob.mjs 2>&1', { JOB: JSON.stringify(spec), HOME: '/root', ...(job.llm ? { QB_CLAUDE_TOKEN: this.env.CLAUDE_CODE_OAUTH_TOKEN } : {}) });
       const line = r.stdout.split('\n').find((l) => l.startsWith('QB_RESULT '));
       const progress = r.stdout.split('\n').filter((l) => l && !l.startsWith('QB_RESULT ')).slice(-60).join('\n');
       // Tokens never reach the log: the job prints none, but be sure.
-      const clean = (s: string) => [job.mainToken, ...job.changes.map((c) => c.token)].reduce((a, t) => a.replaceAll(t.split('?')[0], '***'), s);
+      const clean = (s: string) => [job.mainToken, ...job.changes.map((c) => c.token), ...(job.llm ? [this.env.CLAUDE_CODE_OAUTH_TOKEN] : [])].filter(Boolean).reduce((a, t) => a.replaceAll(t.split('?')[0], '***'), s);
       if (!line) { log('merger', 'no_result', { train: job.trainId, exit: r.exitCode, tail: clean(progress).slice(-800) }); return { trainId: job.trainId, ok: false, error: 'the merge job printed no result', log: clean(progress), changes: [] }; }
       const out = JSON.parse(line.slice(10));
       log('merger', 'train_done', { slug: job.slug, train: job.trainId, ok: out.ok, pushed: out.pushed, stale: out.stale, notes: out.notesPushed, solo: out.solo, ms: Date.now() - t0,

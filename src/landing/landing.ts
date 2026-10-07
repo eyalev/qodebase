@@ -19,12 +19,15 @@ import type { Env } from '../env';
 import { log } from '../box';
 import type { MergeJob, MergeResult } from './merger';
 import { TASKS } from './demoproject';
+import { recordCost } from '../costs';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
   | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap';
 export type Ev = { t: number; what: What; detail?: string };
 export type ChangeState = 'working' | 'pushed' | 'reviewing' | 'queued' | 'testing' | 'landed' | 'bounced' | 'replaying' | 'with-lead';
-export type Landing_ = { how: 'merged' | 'replayed-handler' | 'replayed-llm' | 'lead' | null; conflicts: string[]; diff: { path: string; lines: string[] }[]; commit: string | null; mainCommit: string | null };
+export type Landing_ = { how: 'merged' | 'replayed-handler' | 'replayed-llm' | 'lead' | null; conflicts: string[]; diff: { path: string; lines: string[] }[]; commit: string | null; mainCommit: string | null;
+  /** Tier 2: the model that redid it, its usage, and whether it changed the same lines as the reviewed change. */
+  replay?: { model: string; ms: number; usd: number | null; tokensIn: number; tokensOut: number; sameLinesAsReviewed: boolean | null } };
 export type Change = {
   id: string; title: string; intent: string; agent: string; kind: 'agent' | 'demo';
   fork: string; remote: string; base: string | null; commit: string | null;
@@ -61,6 +64,8 @@ type Meta = {
 const TRAIN_MAX = 8;
 const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER_CHANGE = 3;
 const TRAIN_STUCK_MS = 12 * 60_000;
+/** Tier 2's default model: short prompts, a fraction of a cent each (2026-10-08: Haiku 5.5). */
+export const DEFAULT_REPLAY_MODEL = 'claude-haiku-5-5';
 export const DEMO_MAX_AGENTS = 24, DEMO_MAX_MS = 20 * 60_000, DEMO_MAX_STORY_AGENTS = 12, BUSY_MAX_TASKS = 400, BUSY_MAX_WAITING = 40;
 const OPEN = (c: Change) => c.state !== 'landed';
 
@@ -255,7 +260,9 @@ export class Landing extends DurableObject<Env> {
     using main = await this.env.ARTIFACTS.get(project.repo);
     const mainToken = (await main.createToken('write', 1800)).plaintext;
     const train: Train = { id: `t${Date.now().toString(36)}`, state: 'testing', changes: picked.map((c) => c.id), startedAt: Date.now(), endedAt: null, checks: null, mainBefore: null, mainAfter: null };
-    const job: MergeJob = { trainId: train.id, slug: m.slug, mainRemote: project.remote, mainToken, branch: project.importedFrom?.branch || null, changes: [] };
+    const job: MergeJob = { trainId: train.id, slug: m.slug, mainRemote: project.remote, mainToken, branch: project.importedFrom?.branch || null, changes: [],
+      // Tier 2 runs on the owner's Claude subscription: only for the instance owner's projects (and the showcase).
+      ...(m.flags.llmReplay && (project.owner === this.env.OWNER_HANDLE || project.owner === 'forq') ? { llm: { model: m.flags.replayModel || DEFAULT_REPLAY_MODEL } } : {}) };
     for (const c of picked) {
       using fork = await this.env.ARTIFACTS.get(c.fork);
       // A stacked change's base is its parent's pushed commit; once the parent landed as a
@@ -319,11 +326,12 @@ export class Landing extends DurableObject<Env> {
           const how = c.redo === 'lead' ? 'lead' : c.redo === 'llm' ? 'replayed-llm' : rc.how;
           if (rc.conflicts.length) this.#ev(c, 'conflict', await this.#withWhom(c, rc.conflicts, r));
           if (how === 'replayed-handler') this.#ev(c, 'replayed', (rc.handled || []).map((h) => `${h.path} (${h.handler})`).join(', ') || 'on the latest code');
-          if (how === 'replayed-llm' || how === 'lead') this.#ev(c, 'replayed', how === 'lead' ? `by ${c.lead || 'the lead'} on the latest code` : 'by a model on the latest code');
+          if (how === 'replayed-llm' || how === 'lead') this.#ev(c, 'replayed', how === 'lead' ? `by ${c.lead || 'the lead'} on the latest code` : `by ${rc.llm?.model || 'a model'} on the latest code`);
           c.state = 'landed'; c.landedAt = Date.now(); delete c.redo;
           (m.landings ||= []).push([c.landedAt, Math.round((c.landedAt - c.createdAt) / 1000)]);
           if (m.landings.length > 2000) m.landings.splice(0, m.landings.length - 2000);
-          c.landing = { how, conflicts: rc.conflicts, diff: rc.diff || [], commit: rc.commit, mainCommit: r.mainAfter || null };
+          c.landing = { how, conflicts: rc.conflicts, diff: rc.diff || [], commit: rc.commit, mainCommit: r.mainAfter || null,
+            ...(rc.llm ? { replay: { model: rc.llm.model, ms: rc.llm.ms, usd: rc.llm.usd, tokensIn: (rc.llm.in || 0) + (rc.llm.cacheRead || 0) + (rc.llm.cacheWrite || 0), tokensOut: rc.llm.out || 0, sameLinesAsReviewed: rc.llm.sameLines ?? null } } : {}) };
           this.#ev(c, 'landed', `${(rc.commit || '').slice(0, 7)} on main`);
           landed++;
         } else if (rc.bounced) {
@@ -343,6 +351,11 @@ export class Landing extends DurableObject<Env> {
       }
       t.state = landed ? 'landed' : 'bounced';
       if (r.mainAfter) m.tree = undefined;   // re-read the file map on the next view
+      for (const rc of r.changes) if (rc.llm) {
+        log('landing', 'replay_llm', { slug: m.slug, id: rc.id, landed: rc.landed, ...rc.llm });
+        await recordCost(this.env, m.slug.split('.')[0], 'claude', m.slug, { usd: null, covered: false, billing: 'sub',
+          tokens: { in: rc.llm.in || 0, out: rc.llm.out || 0, cw: rc.llm.cacheWrite || 0, cr: rc.llm.cacheRead || 0 } });
+      }
       await this.#afterRealTrain(r);
     }
     await this.ctx.storage.put(`t:${t.id}`, t);

@@ -110,3 +110,30 @@ test('busy mode: 300 tasks apply in order on top of each other and main stays gr
   assert.ok(kinds.broken > 5 && kinds.Add > 200, JSON.stringify(kinds));
   rmSync(root, { recursive: true, force: true });
 });
+
+// Calls a real model (Claude Code on this machine): QB_TEST_LLM=1 node --experimental-strip-types --test src/landing/demoproject.test.mjs
+test('tier 2: a real conflict is replayed by a model on the latest main', { skip: !process.env.QB_TEST_LLM }, () => {
+  const root = mkdtempSync(join(tmpdir(), 'qbllm-'));
+  const main = join(root, 'main.git'); g(root, 'init', '-q', '--bare', main);
+  const w = join(root, 'w'); g(root, 'clone', '-q', main, w);
+  writeAll(w, new Map(Object.entries(SEED))); g(w, 'add', '-A'); g(w, 'commit', '-qm', 'seed'); g(w, 'push', '-q', 'origin', 'HEAD:main');
+  const base = g(w, 'rev-parse', 'HEAD');
+  const mk = (key) => {
+    const f = join(root, `${key}.git`); g(root, 'clone', '-q', '--bare', main, f);
+    const fw = join(root, `w-${key}`); g(root, 'clone', '-q', f, fw);
+    const files = readAll(fw); const ch = applyEdits(files, T[key].edits); writeAll(fw, new Map(ch.map((p) => [p, files.get(p)])));
+    g(fw, 'add', '-A'); g(fw, 'commit', '-qm', key); g(fw, 'push', '-q', 'origin', 'HEAD:main');
+    return { id: key, title: T[key].title, intent: T[key].intent, remote: f, token: null, base, commit: g(fw, 'rev-parse', 'HEAD') };
+  };
+  const changes = [mk('rename'), mk('tagline')];
+  const r = spawnSync('node', [join(HERE, 'mergejob.mjs')], { env: { ...ENV, JOB: JSON.stringify({ dir: join(root, 'merger'), mainRemote: main, mainToken: null, check: 'node --test', llm: { model: process.env.QB_TEST_LLM_MODEL || 'claude-haiku-5-5' }, changes }) }, encoding: 'utf8', timeout: 300_000 });
+  const out = JSON.parse(r.stdout.split('\n').find((l) => l.startsWith('QB_RESULT ')).slice(10));
+  const by = Object.fromEntries(out.changes.map((c) => [c.id, c]));
+  console.log(JSON.stringify(by.tagline.llm));
+  assert.equal(by.rename.how, 'merged');
+  assert.equal(by.tagline.how, 'replayed-llm', by.tagline.why);
+  const end = join(root, 'end'); g(root, 'clone', '-q', main, end);
+  const site = readFileSync(join(end, 'src/site.js'), 'utf8');
+  assert.match(site, /Corner Café & Books/); assert.match(site, /good books since 1998/);
+  rmSync(root, { recursive: true, force: true });
+});
