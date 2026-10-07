@@ -25,13 +25,15 @@ const MODES = {
 
 const ACTIONS = {
   link: 'Go to a page or open something listed on the screen or in the menu: the home page, Explore, Yours, Inbox, Build, Account, Import, Command line, About, Feedback, Get your own qodebase, Your own AI assistant, a document or file shown on the page (README, LICENSE), or any other link shown',
-  project: 'Open a project by its name, or one part of it (its app, code, readme, history, agents)',
+  project: 'Open a project by its name, or one part of it (its app, code, readme, history, agents), just to look at it or use it. A sentence that also says what the project should do differently is a change, not this.',
   search: 'Search or look for something by words: find a project, find text in the code',
   type: 'Type words into a field on the page (an idea to build, a search box, a message to an agent)',
   press: 'Press a button that is on the screen',
   back: 'Go back to the previous page (only when they say back or previous; "go home" is the home page link)',
   scroll: 'Scroll to or show a section of this page (by its heading), or scroll to the top or bottom',
   explain: 'Explain, describe or show around the page the person is looking at',
+  change: 'Ask for a change in one of the projects: add, fix, change, improve or remove a feature in an app or its code ("in my todo app add due dates", "make the timer chime louder", "fix the dark mode")',
+  status: 'Say what is going on across their projects: what their agents are doing, what is ready to merge or review, what changed today or this week, what needs them',
   none: 'No action in the app',
 };
 
@@ -70,16 +72,29 @@ export function spans(utterance: string): string[] {
   return [...new Set(out)].slice(0, 24);
 }
 
+/** Edit distance, for one-letter slips in spoken project names. */
+function lev(a: string, b: string): number {
+  const m = a.length, n = b.length, d = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 1; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[m][n];
+}
+
 const STOP = new Set(['the', 'a', 'an', 'my', 'me', 'open', 'show', 'go', 'to', 'app', 'project', 'please', 'and', 'of', 'in', 'on', 'for', 'it', 'one', 'that', 'this', 'i', 'can', 'you', 'what', 'is']);
 const words = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 1 && !STOP.has(w));
 
 /** The projects worth offering: theirs first, then any whose name or description shares a word with the sentence. */
 export function candidateProjects(utterance: string, projects: Proj[], max = 24, current: string | null = null): Proj[] {
   const u = new Set(words(utterance));
+  // Spoken names: "todo" for to-do, "tip split" for tipsplit, one letter off ("calculater").
+  const joined = utterance.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const near = (a: string, b: string) => a.length >= 4 && b.length >= 4 && Math.abs(a.length - b.length) <= 1 && lev(a, b) <= (a.length >= 7 ? 2 : 1);
   const score = (p: Proj) => {
     const n = words(p.name.replace(/[-_.]/g, ' ')), d = words(p.description || '');
     let s = 0;
-    for (const w of n) if (u.has(w) || [...u].some((x) => x.length > 3 && (w.startsWith(x) || x.startsWith(w)))) s += 3;
+    const flat = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '');
+    if (flat.length >= 3 && joined.includes(flat)) s += 4;
+    for (const w of n) if (u.has(w) || [...u].some((x) => (x.length > 3 && (w.startsWith(x) || x.startsWith(w))) || near(x, w))) s += 3;
     for (const w of d) if (u.has(w)) s += 1;
     return s + (p.mine ? 0.5 : 0);
   };
@@ -117,7 +132,8 @@ export function buildQuestions(utterance: string, s: Screen, projects: Proj[]) {
     mode: choice('Is the sentence a request to do something in the app, a question or conversation to answer, both, or not a request?', MODES),
     action: choice('If it asks to do something in the app, what kind of thing?', ACTIONS),
     complete: noul('The sentence is a finished request or question, not cut off in the middle.'),
-    risky: noul('Doing what the sentence asks would delete, merge, publish, make something public or private, sign out, revoke, uninstall, disconnect, or spend money.'),
+    wants_change: noul('The sentence asks for something in an app or project to be different: a feature added, fixed, changed, improved or removed (not just opening or looking at it).'),
+    risky: noul('Doing what the sentence asks would delete a project or an account, merge, publish, make something public or private, sign out, revoke, uninstall, disconnect, or spend money. Asking the agents to change, add or remove something inside an app is NOT risky (it only proposes a change).'),
   };
   if (by('link').length) q.link = choice('Which link does it want to open? Pick the link whose words match what the sentence asks for.', { ...Object.fromEntries(by('link').map((l) => [l.id, l.text])), ...none });
   if (projects.length) {
@@ -143,6 +159,7 @@ const pick = (a: Ans | undefined, min = 0) => { const t = top(a); return t.choic
 export type Cmd = {
   mode: string; modeP: number | null; op: string; p: number | null; risky: number | null; complete: number | null;
   href?: string; label?: string; target?: string; text?: string; section?: string; why?: string;
+  slug?: string; mine?: boolean;   // change: the project, and whether it is theirs
 };
 
 /** Answers -> one command the page carries out (or hands to the chat lane). */
@@ -159,7 +176,11 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
 
 function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen, projects: Proj[], utterance: string): Cmd {
   const mode = top(answers.mode);
-  const action = top(answers.action);
+  let action = top(answers.action);
+  // The many-way action spreads thin on "in my X app, let it do Y" (it opens X); a direct yes/no on just that is sharper (talkui's rewords rule).
+  const wc = answers.wants_change?.noul ?? 0;
+  const changeP = answers.action?.probabilities?.change ?? 0;
+  if (action.choice !== 'change' && !['status', 'explain', 'type'].includes(action.choice) && (wc >= 0.75 || (wc >= 0.55 && changeP >= 0.15))) action = { choice: 'change', p: wc };
   const base: Cmd = { mode: mode.choice, modeP: mode.p, op: 'none', p: action.p, risky: answers.risky?.noul ?? null, complete: answers.complete?.noul ?? null };
   const item = (id: string | null) => s.items.find((i) => i.id === id) || null;
   const text = (() => { const c = pick(answers.text); return c && /^s\d+$/.test(c) ? cands[Number(c.slice(1))] : null; })();
@@ -203,6 +224,14 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
       return h ? { ...base, op: 'scroll', target: h.id, label: h.text } : { ...base, why: 'no section matched' };
     }
     case 'explain': return { ...base, op: 'explain' };
+    case 'status': return { ...base, op: 'status' };
+    case 'change': {
+      // The named project, else the one this page shows.
+      const cur = currentSlug(s.path);
+      const p = projects.find((x) => x.id === pick(answers.project, 0.3)) || projects.find((x) => x.slug === cur);
+      if (!p) return { ...base, why: 'which project? say its name' };
+      return { ...base, op: 'change', slug: p.slug, mine: !!p.mine, label: `${p.owner}/${p.name}`, text: utterance, href: `/p/${p.owner}/${p.name}/changes`, target: p.slug };
+    }
   }
   return base;
 }

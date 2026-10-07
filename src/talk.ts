@@ -6,6 +6,7 @@
 //   POST /api/talk/decide      one sentence -> command (clef-flash, ~0.5 s, src/talkdecide.ts)
 //   POST /api/talk/chat        questions and "both": glm-4.7-flash with the same actions as tools
 //   POST /api/talk/transcribe  audio -> text (Whisper large v3 turbo), for the Whisper dictation setting
+//   POST /api/talk/status      "what's going on": their agents, what is ready, what changed (real data, no model)
 //   GET  /api/talk/me          signed in? today's budget left
 //   POST /api/talk/log         one row per page-tool call (window.__webmcp, Jarvis hands)
 //   GET  /talk.js              the layer (src/talkclient.ts)
@@ -23,7 +24,7 @@ const DECIDE_MODEL = '@cf/cloudflare/clef-flash';
 const CHAT_MODEL = '@cf/zai-org/glm-4.7-flash';
 const STT_MODEL = '@cf/openai/whisper-large-v3-turbo';
 // Daily caps (UTC day). A person's own, and everyone's together.
-const CAPS = { decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 } };
+const CAPS = { decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 } };
 type Kind = keyof typeof CAPS;
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talk', event, ...data }));
@@ -212,6 +213,50 @@ async function talkEtag() {
   return etagMemo;
 }
 
+// ---- "What's going on": from the projects themselves, not the page. No model:
+// one Registry list + one Project info() per own project (newest 20), no boxes.
+async function status(request: Request, env: Env, who: Who & {}) {
+  const t0 = Date.now();
+  const body = await request.json().catch(() => ({})) as any;
+  const budget = await talkLog(env).take('status', who.handle);
+  if (!budget.ok) return json({ error: 'budget', why: 'Talk has reached today\'s limit. It resets at midnight UTC.' }, 429);
+  const today = /\btoday\b/i.test(String(body?.utterance || ''));
+  const since = Date.now() - (today ? 24 : 7 * 24) * 3600_000;
+  const own = (await listFor(env, who.handle, false)).filter((e: any) => e.owner === who.handle)
+    .sort((a: any, b: any) => (b.updatedAt || 0) - (a.updatedAt || 0)).slice(0, 20);
+  const infos = await Promise.all(own.map((e: any) => env.Project.get(env.Project.idFromName(e.slug)).info().catch(() => null)));
+  const working: string[] = [], ready: string[] = [], blocked: string[] = [], waiting: string[] = [];
+  const links: { text: string; href: string }[] = [];
+  const short = (t: string) => { const x = String(t || '').replace(/\s+/g, ' ').trim(); return x.length > 48 ? x.slice(0, 46).replace(/\s\S*$/, '') + '…' : x; };
+  let changed = 0, merged = 0;
+  own.forEach((e: any, i: number) => {
+    const info: any = infos[i];
+    if (!info) return;
+    const base = `/p/${info.owner}/${info.name}`;
+    let note = '';
+    for (const a of info.agents || []) {
+      const what = `“${short(a.request || a.task)}” in ${info.name}`;
+      if (a.state === 'working') { working.push(what); note ||= 'working'; }
+      else if (a.state === 'pushed') { ready.push(what + (a.review?.state === 'approved' ? ' (approved)' : a.review?.state === 'changes' ? ' (reviewer asked for changes)' : '')); note = 'ready to merge'; }
+      else if (a.state === 'blocked') { blocked.push(what); note ||= 'blocked'; }
+      else if (a.state === 'merged' && (a.noteAt || a.createdAt) >= since) merged++;
+    }
+    if (info.lastRequest && info.lastRequest.state !== 'sent' && info.lastRequest.at >= since) { waiting.push(`${info.name} (${info.lastRequest.state === 'failed' ? 'your request did not reach its agents' : 'delivering your request'})`); note ||= info.lastRequest.state === 'failed' ? 'request failed' : 'delivering'; }
+    if ((e.updatedAt || 0) >= since) changed++;
+    if (note) links.push({ text: `${info.name}: ${note}`, href: `${base}/changes` });
+  });
+  const list = (xs: string[]) => xs.length <= 2 ? xs.join(' and ') : `${xs.slice(0, 2).join(', ')} and ${xs.length - 2} more`;
+  const parts: string[] = [];
+  if (working.length) parts.push(`${working.length === 1 ? 'One agent is' : `${working.length} agents are`} working: ${list(working)}.`);
+  if (ready.length) parts.push(`${ready.length === 1 ? 'One change is' : `${ready.length} changes are`} ready to merge: ${list(ready)}.`);
+  if (blocked.length) parts.push(`Blocked and waiting for you: ${list(blocked)}.`);
+  if (waiting.length) parts.push(`Also: ${list(waiting)}.`);
+  if (!parts.length) parts.push(own.length ? 'Nothing is in progress: no agents working and nothing waiting to merge.' : 'You have no projects yet. Say what you want to build.');
+  if (own.length) parts.push(`${today ? 'Today' : 'This week'} ${changed === 0 ? 'none of your projects changed' : changed === 1 ? 'one of your projects changed' : `${changed} of your projects changed`}${merged ? `, with ${merged} merged change${merged > 1 ? 's' : ''}` : ''}.`);
+  log('status', { level: 'info', handle: who.handle, projects: own.length, working: working.length, ready: ready.length, blocked: blocked.length, waiting: waiting.length, changed, merged, ms: Date.now() - t0 });
+  return json({ text: parts.join(' '), links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left });
+}
+
 export async function talkRoute(request: Request, env: Env, _ctx: ExecutionContext, url: URL, who: Who): Promise<Response | null> {
   if (url.pathname === '/talk.js') {
     // Revalidate on every page load (304 when unchanged), so a deploy's new page tools reach the next load, not 5 min later.
@@ -230,6 +275,7 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
   if (url.pathname === '/api/talk/decide') return decide(request, env, who);
   if (url.pathname === '/api/talk/chat') return chat(request, env, who);
   if (url.pathname === '/api/talk/transcribe') return transcribe(request, env, who, url);
+  if (url.pathname === '/api/talk/status') return status(request, env, who);
   if (url.pathname === '/api/talk/log') {
     // One row per page-tool call (window.__webmcp / WebMCP, src/talkclient.ts). No model, no budget.
     const b = await request.json().catch(() => null) as any;

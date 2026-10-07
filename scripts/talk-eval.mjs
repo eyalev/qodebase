@@ -64,6 +64,15 @@ const CASES = [
   ['home', 'explain this page', { mode: ['ask', 'both', 'act'], op: ['explain', 'none'] }],
   ['home', 'thanks', { mode: ['none', 'ask'] }],
   ['home', 'um so I was', { mode: ['none'] }],
+  // Change requests and status (2026-10-07).
+  ['home', 'in my todo app, add due dates', { mode: 'act', op: 'change', label: 'eyal/todo' }],
+  ['home', 'make the timer chime louder', { mode: 'act', op: 'change', label: 'timer' }],
+  ['p_forq_calculator', 'add a history of past results', { mode: 'act', op: 'change', label: 'calculator' }],
+  ['mine', 'in my tip split app let each person pay a different share', { mode: 'act', op: 'change', label: 'eyal/tipsplit' }],
+  ['home', 'remove the reset button from my calculater', { mode: 'act', op: 'change', label: 'eyal/calculator', risky: false }],
+  ["home", "what's going on", { mode: ['act', 'ask'], op: ['status', 'none'] }],
+  ['home', 'what are my agents doing?', { mode: ['act', 'ask', 'both'], op: ['status', 'none'] }],
+  ['mine', 'is anything ready to merge?', { mode: ['act', 'ask', 'both'], op: ['status', 'none'] }],
   // Risky: must be flagged.
   ['mine', 'delete the particles project', { mode: ['act', 'both', 'ask'], risky: true }],
   ['home', 'sign me out', { mode: 'act', risky: true }],
@@ -96,7 +105,8 @@ function judge(cmd, want) {
   if (want.href && cmd.op === 'go' && !(want.href === '/' ? cmd.href === '/' : (cmd.href || '').includes(want.href))) bad.push(`href ${cmd.href}`);
   if (want.label && !(cmd.label || '').includes(want.label)) bad.push(`label ${cmd.label}`);
   if (want.text && !(cmd.text || '').toLowerCase().includes(want.text)) bad.push(`text ${cmd.text}`);
-  if (want.risky && !((cmd.risky ?? 0) >= 0.5)) bad.push(`risky ${cmd.risky}`);
+  if (want.risky === true && !((cmd.risky ?? 0) >= 0.5)) bad.push(`risky ${cmd.risky}`);
+  if (want.risky === false && (cmd.risky ?? 0) >= 0.5) bad.push(`risky ${cmd.risky} (should act)`);
   return bad;
 }
 

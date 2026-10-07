@@ -67,6 +67,8 @@ var css = [
   '#talk-root.settings #talk-set{display:flex}',
   '#talk-set label{display:flex;flex-direction:column;gap:4px;color:var(--t-dim);font-size:13px}',
   '#talk-set select{height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);font:16px var(--t-ff);padding:0 8px}',
+  '.talk-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}',
+  '.talk-link{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:8px;background:var(--t-chip);color:var(--t-fg);font-size:14px;text-decoration:none}',
   '.talk-mark{outline:3px solid var(--acc,#17695a)!important;outline-offset:3px!important;border-radius:8px;transition:outline-color .12s}',
   '.talk-mark.dash{outline-style:dashed!important}',
 ].join('\n');
@@ -131,7 +133,7 @@ function build() {
 
 function open(on) { root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
 function status(t) { stEl.textContent = t || ''; }
-function add(who, text) { if (run && who !== 'you') run.texts.push(String(text)); hist.push({ who: who, text: String(text) }); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
+function add(who, text, links) { if (run && who !== 'you') run.texts.push(String(text)); hist.push({ who: who, text: String(text), links: links || undefined }); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
 function render() {
   logEl.innerHTML = '';
   if (!hist.length) {
@@ -139,7 +141,15 @@ function render() {
     h.textContent = 'Try: “open my calculator”, “show me the code of the timer”, “what is this page?”, “build a habit tracker”.';
     logEl.appendChild(h);
   }
-  hist.forEach(function (m) { var d = el('div', { class: m.who }); d.textContent = m.text; logEl.appendChild(d); });
+  hist.forEach(function (m) {
+    var d = el('div', { class: m.who }); d.textContent = m.text;
+    if (m.links && m.links.length) {
+      var row = el('div', { class: 'talk-links' });
+      m.links.forEach(function (l) { if (!/^\/[^/]/.test(l.href)) return; var a = el('a', { href: l.href, class: 'talk-link' }); a.textContent = l.text; row.appendChild(a); });
+      d.appendChild(row);
+    }
+    logEl.appendChild(d);
+  });
   logEl.scrollTop = logEl.scrollHeight;
 }
 
@@ -198,6 +208,8 @@ function submit(text) {
       return done();
     }
     if (c.mode === 'none') { add('note', (c.complete || 0) < 0.5 ? 'Sounds cut off. Say it again?' : 'I did not catch a request there.'); return done(); }
+    if (c.op === 'status') return whatsGoingOn(text);
+    if (c.op === 'change') return changeRequest(c);
     var acts = (c.mode === 'act' || c.mode === 'both') && c.op !== 'none' && c.op !== 'explain';
     if (acts && (c.p == null || c.p >= 0.45)) {
       if (c.mode === 'both') sset('pending', { text: text, did: describe(c) });
@@ -211,6 +223,52 @@ function submit(text) {
   }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'decide', err: String(e) }); done(); });
 }
 function done() { busy = false; status(''); finish(); }
+
+// ---- "What's going on": real data across their projects (/api/talk/status, no model).
+function whatsGoingOn(text) {
+  status('Looking at your projects\u2026');
+  api('status', { utterance: text }).then(function (r) {
+    if (r.error) { if (run) run.ok = false; add('note', r.why || 'Could not look.'); return done(); }
+    add('ai', r.text, r.links); say(r.text);
+    logEv('status', { ms: r.ms, links: (r.links || []).length });
+    done();
+  }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'status', err: String(e) }); done(); });
+}
+
+// ---- Change requests: "in my todo app, add due dates" -> that project's router agent.
+// Theirs: one-line confirm, send, open its Changes. Not theirs: offer Fork, then send to the copy.
+function changeRequest(c) {
+  var parts = String(c.slug || '').split('.'), owner = parts[0], name = parts.slice(1).join('.');
+  if (!owner || !name) { add('note', 'Which project? Say its name.'); return done(); }
+  var text = c.text;
+  if (!c.mine) {
+    add('ai', owner + '/' + name + ' is not yours. Fork it to get your own copy, then I can send the change to its agents.');
+    offerOn('Fork ' + owner + '/' + name + '?', function () {
+      busy = true; status('Forking\u2026');
+      projPost(owner, name, 'fork', {}).then(function (f) {
+        if (f.error) { add('note', 'Could not fork: ' + f.error); return done(); }
+        add('app', 'Forked to ' + f.owner + '/' + f.name + '.');
+        sendChange(f.owner, f.name, text);
+      }).catch(function () { add('note', 'Could not reach qodebase.'); done(); });
+    }, 'Fork');
+    return done();
+  }
+  offerOn('Send to ' + owner + '/' + name + '\u2019s agents: \u201c' + text + '\u201d?', function () { busy = true; sendChange(owner, name, text); }, 'Send');
+  done();
+}
+function projPost(owner, name, verb, body) {
+  return fetch('/api/p/' + owner + '/' + name + '/' + verb, { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    .then(function (r) { return r.json().catch(function () { return { error: 'HTTP ' + r.status }; }); });
+}
+function sendChange(owner, name, text) {
+  status('Sending\u2026');
+  projPost(owner, name, 'router', { text: text }).then(function (r) {
+    logEv('change', { project: owner + '/' + name, ok: !r.error, err: r.error || null });
+    if (r.error) { add('note', 'Could not send it: ' + r.error); return done(); }
+    add('app', 'Sent to ' + owner + '/' + name + '\u2019s agents. Opening its Changes\u2026');
+    act({ op: 'go', href: '/p/' + owner + '/' + name + '/changes', label: owner + '/' + name + ' (changes)' });
+  }).catch(function () { add('note', 'Could not reach qodebase.'); done(); });
+}
 
 function describe(c) {
   if (c.op === 'go') return 'open ' + (c.label || c.href);
