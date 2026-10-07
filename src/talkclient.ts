@@ -980,7 +980,7 @@ function startConversation() {
     vc.addEventListener('interimtranscript', function (t) { live.textContent = t || ''; if (t) vcActive(); });
     vc.addEventListener('transcriptchange', function (msgs) { vcFlush(msgs, false); vcActive(); });
     vc.addEventListener('custommessage', function (d) { onVoiceMsg(d); });
-    vc.addEventListener('turnmetrics', function (t) { logEv('vc_turn', { outcome: t.outcome, total_ms: t.turnTotalMs }); });
+    vc.addEventListener('turnmetrics', function (t) { var m = { outcome: t.outcome, total_ms: t.turnTotalMs }; for (var k in t) if (/Ms$/.test(k) && typeof t[k] === 'number') m[k] = Math.round(t[k]); logEv('vc_turn', m); });
     // Silence is a choice (filler, a fragment, talk to someone else): the kit reports it as an error; keep it out of the sheet.
     vc.addEventListener('error', function (e) { if (!e) return; logEv('vc_error', { err: String(e) }); if (!/no response generated/i.test(String(e))) add('note', String(e)); });
     vc.addEventListener('voiceerror', function (e) { logEv('vc_voiceerror', { e: e && (e.code || e.message || String(e)) }); });
