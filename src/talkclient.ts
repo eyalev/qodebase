@@ -401,12 +401,13 @@ function offerSubmit(t) {
 function offerOn(text, yes, yesLabel) {
   if (run) run.texts.push(text);
   offer.innerHTML = '';
-  var s = el('span'); s.textContent = text;
+  var s = el('span'); s.textContent = text || '';
   var y = el('button', { type: 'button', class: 'talk-chip pri' }); y.textContent = yesLabel || 'Go';
   var n = el('button', { type: 'button', class: 'talk-chip' }); n.textContent = 'No';
   y.onclick = function () { offerOff(); yes(); };
   n.onclick = function () { offerOff(); };
-  offer.appendChild(s); offer.appendChild(y); offer.appendChild(n);
+  if (text) offer.appendChild(s);   // in a conversation the question is spoken (and in the log): buttons only
+  offer.appendChild(y); offer.appendChild(n);
   offer.classList.add('on');
 }
 function offerOff() { offer.classList.remove('on'); offer.innerHTML = ''; }
@@ -838,8 +839,8 @@ function onVoiceMsg(d) {
   if (d.type !== 'talk-cmd' || !d.cmd) return;
   var c = d.cmd;
   if (c.refused) { if (c.op === 'go' && c.href) offerOn('Take me to ' + (c.label || 'that page') + '?', function () { vcNavigate(c); }); return; }
-  if (c.offer) { vcPending = c; offerOn('Maybe: ' + describe(c) + '?', function () { vcPending = null; vcNavigate(c); }); return; }
-  if (c.op === 'change') { vcPending = c; offerOn(c.mine ? 'Send to ' + c.label + '\u2019s agents?' : 'Fork ' + c.label + '?', function () { vcPending = null; voiceChange(c); }, c.mine ? 'Send' : 'Fork'); return; }
+  if (c.offer) { vcPending = c; offerOn('', function () { vcPending = null; vcNavigate(c); }); return; }
+  if (c.op === 'change') { vcPending = c; offerOn('', function () { vcPending = null; voiceChange(c); }, c.mine ? 'Send' : 'Fork'); return; }
   if (c.op === 'code') return codeQuestion(c);
   if (c.op === 'go' || c.op === 'back') return vcNavigate(c);
   act(c);
