@@ -525,8 +525,18 @@ answers, or both.
   Cloudflare (`/api/talk/transcribe`, whisper-large-v3-turbo, WebM/Opus,
   stops on 1.3 s of silence). Language en/he/auto; spoken replies
   when-I-talked/always/never.
+- **Change requests** (2026-10-07): action `change` (+ a `wants_change` yes/no
+  that overrides "open the app" at ≥ 0.75, or ≥ 0.55 with change ≥ 0.15) →
+  the named project (word match, todo/to-do, one-letter slips) or the page's
+  → one-line confirm → `POST /api/p/<o>/<n>/router {text}` from the page (the
+  API checks ownership) → its `/changes`. Not theirs: Fork offer, then send to
+  the copy. Never sent without the tap.
+- **"What's going on"**: action `status` → `POST /api/talk/status`, no model:
+  `listFor` + `Project.info()` for their 20 newest own projects (no boxes):
+  working, ready to merge (with review state), blocked, undelivered requests,
+  changed today/this week, link chips to each project's Changes. Cap 200/day.
 - Eval: `node --experimental-strip-types scripts/talk-eval.mjs` (real page
-  snapshots in scripts/talk-fixtures, real model through the gateway): 36/36,
+  snapshots in scripts/talk-fixtures, real model through the gateway): 44/44,
   median ~0.6–1 s. Refresh fixtures when pages change.
 - Cost: AI Gateway `qodebase-talk` (forq account, 120/min) + TalkLog DO daily
   caps (per person decide 600 / chat 150 / stt 300; total 5000/1500/3000);
