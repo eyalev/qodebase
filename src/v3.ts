@@ -697,7 +697,7 @@ function landBody(entries: Entry[], selfHost = false) {
 <button class="btn" type="submit">Build it</button>
 </form>
 <nav class="doors" aria-label="More">
-${selfHost ? '' : `<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account. Yours to keep.</small></span></a>
+${selfHost ? '' : `<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account.</small></span></a>
 <a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>OpenClaw, Hermes, T3 Code, Mobile Agent and more, in your Cloudflare account.</small></span></a>`}
 <a class="browse" href="/explore"><span>Explore projects</span><span class="n">${n}</span></a>
 </nav>
