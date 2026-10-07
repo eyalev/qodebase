@@ -888,7 +888,7 @@ function publishTools() {
 var dc = null, dcReady = false, dcOn = false, dcText = '', dcT0 = 0, dcBuf = [], dcQuiet = null;
 // What was said so far: the finished pieces plus the one being said now.
 function dcSaid(interim) { return dcBuf.concat(interim ? [interim] : []).join(' ').replace(/\s+/g, ' ').trim(); }
-function dcArm() { clearTimeout(dcQuiet); if (S.pause !== 'tap' && dcOn) dcQuiet = setTimeout(function () { if (dcOn) liveFinish(''); }, Number(S.pause) || 2500); }
+function dcArm() { clearTimeout(dcQuiet); if (S.pause !== 'tap' && dcOn) dcQuiet = setTimeout(function () { if (dcOn) { trace('dc_stop', { how: 'quiet', pieces: dcBuf.length, ms: Date.now() - dcT0 }); liveFinish(''); } }, Number(S.pause) || 2500); }
 function dcWarm(cb) {
   if (dc && dcReady) return cb && cb();
   if (dc) { if (cb) dc.__wait = (dc.__wait || []).concat(cb); return; }
@@ -898,15 +898,19 @@ function dcWarm(cb) {
     dc.__wait = cb ? [cb] : [];
     dc.addEventListener('connectionchange', function (on) {
       dcReady = !!on; logEv('dc_connection', { on: on, ms: Date.now() - t0 });
+      if (!on) trace('dc_disconnect', { listening: dcOn });
       if (on) { try { dc.sendJSON({ type: 'mode', dictate: true }); } catch (e) {} var w = dc.__wait || []; dc.__wait = []; w.forEach(function (f) { f(); }); }
     });
-    dc.addEventListener('interimtranscript', function (t) { if (dcOn && t) { dcText = t; live.textContent = dcSaid(t); clearTimeout(dcQuiet); } });
+    dc.addEventListener('interimtranscript', function (t) { if (dcOn) trace('dc_interim', { text: t || '', ms: Date.now() - dcT0 }); if (dcOn && t) { dcText = t; live.textContent = dcSaid(t); clearTimeout(dcQuiet); } });
+    dc.addEventListener('statuschange', function (st) { trace('dc_status', { status: st, on: dcOn, ms: dcT0 ? Date.now() - dcT0 : undefined }); });
+    dc.addEventListener('voiceerror', function (e) { trace('dc_voiceerror', { e: e && (e.code || e.message || String(e)) }); });
+    dc.addEventListener('audiolevelchange', function (lv) { if (dcOn && lv > 0.05 && !dc.__heardSound) { dc.__heardSound = 1; trace('dc_sound', { level: Math.round(lv * 100) / 100, ms: Date.now() - dcT0 }); } });
     dc.addEventListener('custommessage', function (d) {
       if (!d || d.type !== 'talk-dictated') return;
       // Flux ended a turn: keep it and keep listening (a pause to think is not the end), send after the quiet.
       if (!dcOn) return;
       dcBuf.push(String(d.text || '').trim()); dcText = ''; live.textContent = dcSaid('');
-      logEv('dc_piece', { chars: String(d.text || '').length, pieces: dcBuf.length, ms: Date.now() - dcT0 });
+      logEv('dc_piece', { text: String(d.text || ''), pieces: dcBuf.length, ms: Date.now() - dcT0 });
       dcArm();
     });
     dc.addEventListener('error', function (e) { if (e && !/no response generated/i.test(String(e))) logEv('dc_error', { err: String(e) }); });
@@ -917,7 +921,7 @@ function startLive() {
   setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); live.textContent = '';
   dcWarm(function () {
     if (!listening) return;
-    dcOn = true; dcT0 = Date.now();
+    dcOn = true; dcT0 = Date.now(); dc.__heardSound = 0;
     dc.startCall().then(function () { status('Listening'); logEv('dc_start', {}); })
       .catch(function (e) { dcOn = false; setListening(false); add('note', 'Could not start the microphone: ' + (e && e.message || e)); });
   });
@@ -935,6 +939,7 @@ function liveFinish(text) {
 function liveStop(cancel) {
   if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} setListening(false); live.textContent = ''; return; }
   // Stopped by hand (tap, or releasing the button): send what was heard, including the piece being said.
+  trace('dc_stop', { how: 'hand', pieces: dcBuf.length, interim: dcText, ms: Date.now() - dcT0 });
   status('Finishing\u2026');
   var t = dcText;
   setTimeout(function () { if (dcOn) liveFinish(t); }, 600);

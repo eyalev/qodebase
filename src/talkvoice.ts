@@ -111,6 +111,12 @@ export class TalkVoice extends VoiceAgent {
   get #who() { return { handle: this.name, admin: false }; }
   get #covered() { return !this.env.SELF_HOST && !isOwner(this.env, this.name); }
   #cost(usd: number, project = '') { if (usd > 0) return recordCost(this.env, this.name, 'voice', project, { usd, covered: this.#covered }); }
+  /** The owner's experience trace, server side (what the agent heard and did), next to the page's events. */
+  #trace(ev: string, data: Record<string, unknown> = {}) {
+    if (!isOwner(this.env, this.name)) return;
+    const rows = [{ ts: Date.now(), ev, data: JSON.stringify({ path: this.#screen?.path, ...data }).slice(0, 2000) }];
+    this.ctx.waitUntil(talkLog(this.env).addTrace(this.name, 'agent', rows).catch(() => null));
+  }
   #send(connection: Connection, data: unknown) { try { connection.send(JSON.stringify(data)); } catch { /* closed */ } }
 
   async beforeCallStart(_connection: Connection) {
@@ -118,10 +124,12 @@ export class TalkVoice extends VoiceAgent {
     if (!left.ok) { log('call_refused', { handle: this.name, why: 'daily minutes used' }); return false; }
     return true;
   }
+  async onInterrupt(_connection: Connection) { this.#trace('srv_interrupt', {}); }
   async onCallStart(connection: Connection) {
     this.#callStart = Date.now();
     this.#send(connection, { type: 'talk-ready' });
     log('call_start', { handle: this.name });
+    this.#trace('srv_call_start', { dictate: this.#dictate.has(connection.id) });
   }
   async onCallEnd(_connection: Connection) {
     if (!this.#callStart) return;
@@ -129,6 +137,7 @@ export class TalkVoice extends VoiceAgent {
     this.#callStart = 0;
     await talkLog(this.env).take('voice_sec', this.name, Math.max(0, sec - 1)).catch(() => null);
     await this.#cost(sec / 60 * FLUX_USD_PER_MIN);
+    this.#trace('srv_call_end', { seconds: sec });
     log('call_end', { handle: this.name, seconds: sec, flux_usd: Math.round(sec / 60 * FLUX_USD_PER_MIN * 1e5) / 1e5 });
   }
 
@@ -165,6 +174,7 @@ export class TalkVoice extends VoiceAgent {
     const said = String(transcript || '').trim();
     if (!said) return '';
     // Push-to-talk on Deepgram live: hand the words to the page, which runs the usual Talk flow.
+    this.#trace('srv_heard', { text: said, dictate: this.#dictate.has(connection.id) });
     if (this.#dictate.has(connection.id)) { this.#send(connection, { type: 'talk-dictated', text: said }); log('dictated', { handle: this.name, chars: said.length }); return ''; }
     // Over today's minutes mid-call: say so and hang up.
     const used = this.#callStart ? Math.round((Date.now() - this.#callStart) / 1000) : 0;
