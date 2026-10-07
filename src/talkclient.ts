@@ -55,7 +55,7 @@ function traceStart() {
 }
 
 var S = {
-  engine: get('engine', ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) ? 'native' : 'whisper'),
+  engine: get('engine2', 'live'),   // live (Deepgram Flux, words as you speak; default since 2026-10-07) | native | whisper
   lang: get('lang', 'en'),
   voice: get('voice', 'off'),           // spoken replies: off | aura-1 | aura-2 | phone (off by default)
   speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
@@ -158,7 +158,7 @@ function build() {
   head.appendChild(convBtn); head.appendChild(spk); head.appendChild(gear); head.appendChild(close);
   var setp = el('div', { id: 'talk-set' });
   setp.innerHTML =
-    '<label>Dictation<select id="talk-s-engine"><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
+    '<label>Dictation<select id="talk-s-engine"><option value="live">Deepgram live (Cloudflare): words as you speak, waits for you to finish</option><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
     '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
     '<label>Voice<select id="talk-s-speaker"></select></label>' +
@@ -220,7 +220,7 @@ function build() {
   sspd.onchange = function () { S.speed = Number(sspd.value) || 1.25; set('speed', String(S.speed)); trace('setting', { speed: S.speed }); vcVoice(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how fast I talk.'); } };
   spk.addEventListener('click', function () { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-2') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); if (S.voice === 'off') stopSpeaking(); });
   voiceBtn();
-  se.onchange = function () { S.engine = se.value; set('engine', S.engine); };
+  se.onchange = function () { S.engine = se.value; set('engine2', S.engine); trace('setting', { engine: S.engine }); if (S.engine === 'live') dcWarm(); };
   sl.onchange = function () { S.lang = sl.value; set('lang', S.lang); };
   document.getElementById('talk-s-done').onclick = function () { root.classList.remove('settings'); trace('settings', { open: false }); };
   document.getElementById('talk-s-clear').onclick = function () { hist = []; chatHist = []; sset('log', hist); sset('chat', chatHist); render(); root.classList.remove('settings'); };
@@ -230,7 +230,7 @@ function build() {
   render();
 }
 
-function open(on) { trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+function open(on) { if (on && S.engine === 'live' && me) dcWarm(); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
 // Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is.
 function placeFab() {
   if (!fab) return;
@@ -637,11 +637,13 @@ function startListen() {
   if (listening || busy) return;
   stopSpeaking();   // talking over the reply stops it
   offerOff(); live.textContent = '';
+  if (S.engine === 'live') return startLive();
   if (S.engine === 'native') return startNative();
   return startWhisper();
 }
 function stopListen(cancel) {
   if (!listening) return;
+  if (dcOn) return liveStop(cancel);
   if (rec) { if (cancel) rec.abort(); else rec.stop(); }
   if (mr) { if (cancel) { chunks = []; mr.onstop = null; } try { mr.stop(); } catch (e) {} }
   if (cancel) { setListening(false); live.textContent = ''; unmark(); }
@@ -873,6 +875,56 @@ function publishTools() {
     });
   }
   window.dispatchEvent(new Event('webmcp:ready'));
+}
+
+// ---- Deepgram live dictation (push-to-talk): the mic streams to the TalkVoice agent in dictate
+// mode; Flux shows the words as they are said and ends the turn when the sentence is done (a pause
+// to think does not end it); the words then go through the usual Talk flow. Kept connected while
+// Talk is open so the mic starts at once; billed only while listening.
+var dc = null, dcReady = false, dcOn = false, dcText = '', dcT0 = 0;
+function dcWarm(cb) {
+  if (dc && dcReady) return cb && cb();
+  if (dc) { if (cb) dc.__wait = (dc.__wait || []).concat(cb); return; }
+  loadKit(function () {
+    var t0 = Date.now();
+    dc = new window.TalkVoiceKit.VoiceClient({ agent: 'TalkVoice', name: me, silenceDurationMs: 900 });
+    dc.__wait = cb ? [cb] : [];
+    dc.addEventListener('connectionchange', function (on) {
+      dcReady = !!on; logEv('dc_connection', { on: on, ms: Date.now() - t0 });
+      if (on) { try { dc.sendJSON({ type: 'mode', dictate: true }); } catch (e) {} var w = dc.__wait || []; dc.__wait = []; w.forEach(function (f) { f(); }); }
+    });
+    dc.addEventListener('interimtranscript', function (t) { if (dcOn && t) { dcText = t; live.textContent = t; } });
+    dc.addEventListener('custommessage', function (d) {
+      if (!d || d.type !== 'talk-dictated') return;
+      logEv('dc_final', { chars: String(d.text || '').length, ms: Date.now() - dcT0 });
+      liveFinish(String(d.text || ''));
+    });
+    dc.addEventListener('error', function (e) { if (e && !/no response generated/i.test(String(e))) logEv('dc_error', { err: String(e) }); });
+    dc.connect();
+  });
+}
+function startLive() {
+  setListening(true); status('Starting\u2026'); dcText = ''; live.textContent = '';
+  dcWarm(function () {
+    if (!listening) return;
+    dcOn = true; dcT0 = Date.now();
+    dc.startCall().then(function () { status('Listening'); logEv('dc_start', {}); })
+      .catch(function (e) { dcOn = false; setListening(false); add('note', 'Could not start the microphone: ' + (e && e.message || e)); });
+  });
+}
+function liveFinish(text) {
+  if (!dcOn) return;
+  dcOn = false;
+  try { dc.endCall(); } catch (e) {}
+  setListening(false); live.textContent = '';
+  var t = (text || dcText || '').trim();
+  if (t) { lastSpoken = true; submit(t); } else add('note', 'I did not hear anything.');
+}
+function liveStop(cancel) {
+  if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} setListening(false); live.textContent = ''; return; }
+  // Stopped by hand: Flux may still send the final words; else use what was shown.
+  var t = dcText; status('Finishing\u2026');
+  setTimeout(function () { if (dcOn) liveFinish(t); }, 1200);
 }
 
 // ---- Conversation (phase 2): mic streamed to the TalkVoice agent (src/talkvoice.ts)

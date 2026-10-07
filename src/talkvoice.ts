@@ -82,6 +82,7 @@ export class TalkVoice extends VoiceAgent {
   #pageText = '';
   #pending: any = null;              // a command waiting for a spoken yes / no
   #callStart = 0;
+  #dictate = new Set<string>();      // connections in dictation (push-to-talk): Flux hears, the page gets the words, nothing is spoken
 
   get #who() { return { handle: this.name, admin: false }; }
   get #covered() { return !this.env.SELF_HOST && !isOwner(this.env, this.name); }
@@ -111,6 +112,7 @@ export class TalkVoice extends VoiceAgent {
   async onMessage(connection: Connection, message: unknown) {
     let m: any;
     try { m = JSON.parse(String(message)); } catch { return; }
+    if (m?.type === 'mode') { if (m.dictate) this.#dictate.add(connection.id); else this.#dictate.delete(connection.id); return; }
     if (m?.type === 'screen') { this.#screen = m.screen || null; this.#pageText = String(m.pageText || '').slice(0, 5000); return; }
     if (m?.type === 'voice') {
       const model = m.model === 'aura-1' ? '@cf/deepgram/aura-1' : '@cf/deepgram/aura-2-en';
@@ -131,6 +133,8 @@ export class TalkVoice extends VoiceAgent {
     const connection = context.connection as Connection;
     const said = String(transcript || '').trim();
     if (!said) return '';
+    // Push-to-talk on Deepgram live: hand the words to the page, which runs the usual Talk flow.
+    if (this.#dictate.has(connection.id)) { this.#send(connection, { type: 'talk-dictated', text: said }); log('dictated', { handle: this.name, chars: said.length }); return ''; }
     // Over today's minutes mid-call: say so and hang up.
     const used = this.#callStart ? Math.round((Date.now() - this.#callStart) / 1000) : 0;
     const budget = await talkLog(this.env).take('voice_sec', this.name, 0);
