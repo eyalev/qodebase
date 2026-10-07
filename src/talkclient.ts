@@ -138,6 +138,7 @@ function build() {
   head.addEventListener('click', function (e) { if (e.target.closest('button')) return; setSheet(root.classList.contains('bar') ? 'open' : 'bar'); });
   peek.addEventListener('click', function () { setSheet('open'); });
   dragHandle(grab);
+  placeFab(); window.addEventListener('resize', placeFab); setTimeout(placeFab, 600);
   root.appendChild(fab); root.appendChild(sheet);
   document.body.appendChild(root);
   stEl = document.getElementById('talk-st');
@@ -178,6 +179,30 @@ function build() {
 }
 
 function open(on) { root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+// Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is.
+function placeFab() {
+  if (!fab) return;
+  // Walk up from the bottom edge: each short bar touching the one below (fixed, sticky, or a page
+  // that lays out as a full-height column, like a project page's tabs + "Ask for a change") lifts the button.
+  var y = window.innerHeight, lift = 0;
+  for (var n = 0; n < 4; n++) {
+    var top = null;
+    [0.15, 0.5].forEach(function (fx) {
+      var e = document.elementFromPoint(Math.round(window.innerWidth * fx), y - 4);
+      var bar = null;
+      for (; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
+        if (root.contains(e)) { bar = null; break; }
+        var r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+        var pinned = cs.position === 'fixed' || cs.position === 'sticky' || e.parentElement === document.body;
+        if (pinned && r.height < window.innerHeight * 0.3 && Math.abs(r.bottom - y) < 3) { bar = e; break; }
+      }
+      if (bar) { var t = bar.getBoundingClientRect().top; top = top === null ? t : Math.min(top, t); }
+    });
+    if (top === null) break;
+    lift = window.innerHeight - top; y = top;
+  }
+  fab.style.bottom = 'calc(' + (lift ? Math.round(lift) + 12 : 16) + 'px + env(safe-area-inset-bottom))';
+}
 // open (the conversation, at the height they chose) | bar (header + input only, the page shows). Per device.
 function setSheet(st) { root.classList.toggle('bar', st === 'bar'); set('sheet', st); if (st === 'open') setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 60); }
 // The handle: drag to any height (remembered), low enough folds to the bar, to the bottom closes; a tap folds/unfolds.
