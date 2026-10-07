@@ -3,7 +3,7 @@
 //   GET  /api/p/<o>/<n>/landing             the contract view (docs/contest/PLAN.md); anyone who can see the project
 //   POST /api/p/<o>/<n>/landing/approve     {id}: the merge tap -> the change waits for the next train (owner)
 //   POST /api/p/<o>/<n>/landing/demo        {action: 'start'|'stop'|'reset'|'seed', agents?, speed?, mode?: 'story'|'busy'} (owner)
-//   POST /api/p/<o>/<n>/landing/flags       {llmReplay?: boolean} (owner)
+//   POST /api/p/<o>/<n>/landing/flags       {llmReplay?: boolean, agentModel?: 'sonnet'|'haiku'|'opus'|null} (owner)
 //   GET  /api/p/<o>/<n>/landing/state       merger box + alarm state (admin)
 
 import type { Env } from '../env';
@@ -24,7 +24,9 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
   const body = request.method === 'POST' ? await request.json().catch(() => ({})) as Record<string, unknown> : {};
   try {
     if (verb === 'approve' && request.method === 'POST') return json(await L.approve(String(body.id || '')));
-    if (verb === 'flags' && request.method === 'POST') return json(await L.setFlags({ ...(typeof body.llmReplay === 'boolean' ? { llmReplay: body.llmReplay } : {}) }));
+    if (verb === 'flags' && request.method === 'POST') return json(await L.setFlags({ ...(typeof body.llmReplay === 'boolean' ? { llmReplay: body.llmReplay } : {}),
+      // The model this project's agent boxes run (on the owner's subscription), e.g. Sonnet for a cheap test.
+      ...(['sonnet', 'haiku', 'opus'].includes(String(body.agentModel)) ? { agentModel: body.agentModel as 'sonnet' } : body.agentModel === null ? { agentModel: undefined } : {}) }));
     if (verb === 'state' && me.admin) {
       const v = await L.view(info.slug);
       const agents = [];

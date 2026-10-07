@@ -159,6 +159,10 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
   let ccEnv: string, keyTail: string, billing: string;
   if (onSubscription(env, owner)) {
     ccEnv = `CLAUDE_CODE_OAUTH_TOKEN=${env.CLAUDE_CODE_OAUTH_TOKEN}`; keyTail = env.CLAUDE_CODE_OAUTH_TOKEN.slice(-20); billing = 'sub';
+    // A landing project can pin its boxes' model (landing flags.agentModel, e.g. Sonnet for a test).
+    const pinfo = await projectStub(env, slug).info();
+    const lm = landingOn(pinfo) ? (await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null))?.agentModel : undefined;
+    if (lm) ccEnv += ` ANTHROPIC_MODEL=${lm}`;
   } else {
     const u = await userByHandle(env, owner);
     if (!u?.apiKeyEnc) throw new Error(`${owner} has not added an Anthropic API key yet (Settings)`);
