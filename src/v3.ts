@@ -674,7 +674,7 @@ b.querySelector('[data-cost]').textContent=m(c.today.total.usd);
 var row=function(l,v,s){return '<div class="gcr"><span>'+l+'</span><b>'+v+'</b></div>'+(s?'<p class="gcs">'+s+'</p>':'')};
 var cov=function(t){var x=[];if(t.covered)x.push(m(t.covered)+' covered by qodebase');if(t.subTokens)x.push(Math.round(t.subTokens/1000)+'k tokens on your Claude plan');return x.join('. ')};
 var kinds=Object.keys(L).filter(function(k){return c.week.byKind[k]}).map(function(k){var t=c.week.byKind[k];return row(L[k],m(t.usd),cov(t))}).join('');
-document.getElementById('gcostpop').innerHTML=row('Today',m(c.today.total.usd),cov(c.today.total))+row('Last 7 days',m(c.week.total.usd),cov(c.week.total))+row('Next 30 days',m(c.month.usd),'Estimate at this week\'s pace')+(kinds?'<p class="gch">Last 7 days by kind</p>'+kinds:'')+'<a class="gca" href="/costs">See all costs</a>';
+document.getElementById('gcostpop').innerHTML=row('Today',m(c.today.total.usd),cov(c.today.total))+row('Last 7 days',m(c.week.total.usd),cov(c.week.total))+row('Next 30 days',m(c.month.usd),'Estimate at this week’s pace')+(kinds?'<p class="gch">Last 7 days by kind</p>'+kinds:'')+'<a class="gca" href="/costs">See all costs</a>';
 }).catch(function(){});})();</script>`;
 const MENU_ICON = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 /** The ☰ menu at the header's right end: the things every page can reach but no page leads with. */
