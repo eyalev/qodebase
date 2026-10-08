@@ -131,3 +131,8 @@
 #lab details.oldplan{margin-top:14px}
 #lab details.oldplan summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;display:flex;align-items:center;list-style:none}
 #lab details.oldplan summary::-webkit-details-marker{display:none}
+#lab .tw{overflow-x:auto;margin:0 -2px}
+#lab table.found{width:100%;border-collapse:collapse;font-size:14px}
+#lab table.found th,#lab table.found td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+#lab table.found thead th{font-size:13px;font-weight:500;color:var(--dim)}
+#lab table.found tbody th{font-weight:500}

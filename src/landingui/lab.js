@@ -162,19 +162,29 @@
   // Stage 1 = the APPROVED list (public/lab/stage1-plan.json, the source of truth); a run is
   // done when runs.jsonl has its variantKey + repetition at stage 1.
   const WHYB = { 'opus-alone': 'Baseline: one Opus agent alone', github: 'Baseline: GitHub-style' };
+  const dropped = (p) => /^dropped/i.test(p.status || '');
+  // A job is finished when no planned run for it is still open (not done, not dropped, not excluded).
+  function jobOpen(id) {
+    for (const pl of PLANS) for (const p of pl.runs) {
+      if ((p.scenario || pl.scenario) !== id || dropped(p) || /^done/i.test(p.status || '')) continue;
+      const hit = RUNS.find((r) => r.stage === pl.stage && r.scenario === id && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);
+      if (!hit) return true;
+    }
+    return false;
+  }
   // One stage's approved plan (stageN-plan.json). The newest plan is "being run now"; older ones fold away.
   function planView(PLAN, active) {
     const notCounted = (p) => RUNS.find((r) => r.excluded && r.stage === PLAN.stage && r.scenario === p.scenario && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);
     const done = (p) => RUNS.find((r) => !r.excluded && r.stage === PLAN.stage && r.scenario === p.scenario && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);
     const total = PLAN.runs[PLAN.runs.length - 1]?.predictedCumulativeUsd;
     const n = PLAN.runs.filter(done).length;
-    const allDone = n + PLAN.runs.filter((p) => !done(p) && notCounted(p)).length >= PLAN.runs.length;
+    const allDone = n + PLAN.runs.filter((p) => !done(p) && (notCounted(p) || dropped(p))).length >= PLAN.runs.length;
     const g = PLAN.guards || {};
-    const firstOpen = PLAN.runs.find((p) => !done(p) && !notCounted(p));
+    const firstOpen = PLAN.runs.find((p) => !done(p) && !notCounted(p) && !dropped(p));
     const rows = PLAN.runs.map((p) => {
       const r = done(p), pr = p.predicted || {};
       const nc = !r && notCounted(p);
-      const real = nc ? `<span class="dim">Not counted: ${esc(nc.excluded)}</span>` : r ? `<span class="act">Done: ${mins(r.timings?.wallS)}, ${sc100(r.quality?.score)}/100, ${usd(r.cost?.apiUsdStd)}${r.links?.replay ? ` <a href="${esc(r.links.replay)}">replay</a>` : ''}</span>` : `<span class="dim">${p === firstOpen ? 'Next' : 'Waiting'}</span>`;
+      const real = !r && dropped(p) ? '<span class="dim">Dropped: the plan changed after the first results.</span>' : nc ? `<span class="dim">Not counted: ${esc(nc.excluded)}</span>` : r ? `<span class="act">Done: ${mins(r.timings?.wallS)}, ${sc100(r.quality?.score)}/100, ${usd(r.cost?.apiUsdStd)}${r.links?.replay ? ` <a href="${esc(r.links.replay)}">replay</a>` : ''}</span>` : `<span class="dim">${p === firstOpen ? 'Next' : 'Waiting'}</span>`;
       const cond = p.conditional && !r ? '<span class="dim">Runs only if the first one-Opus-agent run comes within about 15% of the swarm.</span>' : '';
       return `<li class="${r ? 'done' : ''}"><span class="no">${p.order}</span><span class="pb"><b>${esc(WHYB[p.baseline] || WHY[p.why] || (p.baseline ? '' : p.why.replace(/ repetition \d+( of \d+)?$/, '') === 'swarm' ? 'Swarm' : p.why))}${p.repetition > 1 ? `, run ${p.repetition}` : ''}</b>${cond}
         <span>${esc(p.baseline ? BASELINES[p.baseline]?.about || '' : plain(p.variant))}</span>
@@ -260,7 +270,8 @@
       hidden: med(g.runs.map((r) => (r.quality?.hiddenTotal ? r.quality.hiddenPass / r.quality.hiddenTotal : null))),
       hiddenOf: g.runs.find((r) => r.quality?.hiddenTotal)?.quality.hiddenTotal,
       floor: Object.fromEntries(['build', 'typecheck', 'ownTests'].map((k) => [k, g.runs.every((r) => r.quality?.[k] !== false)])),
-      typeErrors: med(g.runs.map((r) => r.quality?.typeErrors)), usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
+      typeErrors: med(g.runs.map((r) => r.quality?.typeErrors)),
+      real: med(g.runs.map((r) => r.cost?.usdReal)), usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
       pWallS: med(g.runs.map((r) => r.predicted?.wallS)), pQuality: med(g.runs.map((r) => r.predicted?.quality)), stage: Math.max(...g.runs.map((r) => r.stage || 0)) }));
   }
   function scatter(gs) {
@@ -333,6 +344,8 @@
       const [c, e] = a.usd < b.usd ? [a, b] : [b, a], r = c.usd / e.usd;
       out.push(`${nm(c)} cost ${r > 0.45 && r < 0.55 ? 'about half as much' : `${Math.round((1 - r) * 100)}% less`} (${usd(c.usd)} against ${usd(e.usd)}).`);
     }
+    // What is actually billed: containers (Claude runs on the subscription).
+    if (a.real != null && b.real != null && (a.real || b.real)) out.push(`Real spend on containers: ${usd(a.real)} against ${usd(b.real)}.`);
     return out.join(' ');
   }
   function compare(gs) {
@@ -343,11 +356,12 @@
     const hid = (g) => (g.hidden != null && g.hiddenOf ? `${Math.round(g.hidden * g.hiddenOf)}/${g.hiddenOf} hidden tests` : null);
     const parts = [];
     const second = ok[1];
-    if (!second) parts.push(`<p><b>First result:</b> ${one(lead)}.</p>`);
+    const sf = jobOpen(st.scenario) ? ' so far' : '';
+    if (!second) parts.push(`<p><b>${sf ? 'First result' : 'Result'}:</b> ${one(lead)}.</p>`);
     else if (qTie(lead, second) && tTie(lead, second)) {
-      parts.push(`<p><b>Too close to call so far.</b> The same quality within the judge's noise${hid(lead) && hid(lead) === hid(second) ? ` (both passed ${hid(lead)})` : ''}, and finish times within 15% of each other:</p><p>${one(lead)}.</p><p>${one(second)}.</p>`);
+      parts.push(`<p><b>Too close to call${sf}.</b> The same quality within the judge's noise${hid(lead) && hid(lead) === hid(second) ? ` (both passed ${hid(lead)})` : ''}, and finish times within 15% of each other:</p><p>${one(lead)}.</p><p>${one(second)}.</p>`);
     } else {
-      parts.push(`<p><b>Leading so far:</b> ${one(lead)}.</p>`);
+      parts.push(`<p><b>${sf ? 'Leading so far' : 'Result'}:</b> ${one(lead)}.</p>`);
       if (qTie(lead, second)) parts.push(`<p>${one(second)}.</p><p class="dim">${diffWords(lead, second)}</p>`);
       else { const bm = lead.baseline ? ok.find((g) => !g.baseline) : second; if (bm) parts.push(`<p>${lead.baseline ? 'Best setup with several agents: ' : ''}${one(bm)}.</p><p class="dim">${diffWords(lead, bm)}</p>`); }
     }
@@ -380,7 +394,7 @@
       const status = r.status && r.status !== 'done' ? ` <span class="warn">${esc({ 'stopped-budget': 'stopped: budget', timeout: 'timed out', failed: 'failed' }[r.status] || r.status)}</span>` : '';
       const stall = r.timings?.stallS ? ` <span class="dim">(a platform stall of ${mins(r.timings.stallS)}, not the setup; left out of time comparisons)</span>` : '';
       const th = q.scoreTrulyHidden != null ? ` <span class="dim">(${Math.round(q.scoreTrulyHidden)}/100 on the checks it could not look up)</span>` : '';
-      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(r.timings?.wallS)}${stall}, ${sc100(q.score)}/100${th}, ${usd(r.cost?.apiUsdStd)}</span>
+      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(r.timings?.wallS)}${stall}, ${sc100(q.score)}/100${th}, ${usd(r.cost?.apiUsdStd)} at API prices${r.cost?.usdReal != null ? `, ${usd(r.cost.usdReal)} real` : ''}</span>
         <span class="rw2">${esc(words)}.</span>${r.notes ? `<span class="rw2">${esc(r.notes)}</span>` : ''}
         <span class="lk">${r.links?.replay ? `<a href="${esc(r.links.replay)}">Watch the replay</a>` : ''}${r.links?.app ? `<a href="${esc(r.links.app)}" target="_blank" rel="noopener">The app it built</a>` : ''}${r.links?.repo ? `<a href="${esc(r.links.repo)}">The code</a>` : ''}</span></li>`;
     }).join('');
@@ -396,10 +410,27 @@
     const n = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded).length;
     const ex = RUNS.filter((r) => r.scenario === st.scenario && r.excluded);
     const exHtml = ex.length ? `<h3 class="fh">Not counted</h3><ul class="runs ex">${ex.map((r) => `<li><span class="rn">${esc(plain(r.variant || {}, r.baseline))}, run ${r.seed ?? ''}</span><span class="rw2">${esc(r.excluded)}</span>${r.links?.replay ? `<span class="lk"><a href="${esc(r.links.replay)}">Watch the replay</a></span>` : ''}</li>`).join('')}</ul>` : '';
-    return `<section class="sec" id="results"><h2>Results so far</h2>
+    return `<section class="sec" id="results"><h2>${jobOpen(st.scenario) ? 'Results so far' : 'Results'}</h2>
       ${n ? `<p class="cap">${n} real run${n === 1 ? '' : 's'} of “${esc(scenOf(st.scenario).title)}”, ${gs.length} setup${gs.length === 1 ? '' : 's'}. Tap a dot or a row for its runs, the replay and the app it built.</p>${compare(gs)}<p class="small dim">${anchors()}</p>${scatter(gs)}${stallNote}${list(gs)}${truly}${exHtml}`
         : `<p class="dim">No real runs of this job yet. The simulation picks the setups worth running; they appear here as they finish.</p>`}
     </section>`;
+  }
+  function foundView() {
+    const rows = [];
+    for (const sc of SCEN) {
+      const keep = st.scenario; st.scenario = sc.id; const gs = groups(); st.scenario = keep;
+      const oa = gs.find((g) => g.baseline === 'opus-alone' && g.wallS != null), sw = bestOf(gs.filter((g) => g.wallS != null));
+      if (!oa || !sw) continue;
+      const ha = oa.hidden != null && oa.hiddenOf ? Math.round(oa.hidden * oa.hiddenOf) : null, hs = sw.hidden != null && sw.hiddenOf ? Math.round(sw.hidden * sw.hiddenOf) : null;
+      const fast = tTie(oa, sw) ? 'Within 15%' : oa.wallS < sw.wallS ? `One agent, ${(sw.wallS / oa.wallS).toFixed(1)}×` : `Several, ${(oa.wallS / sw.wallS).toFixed(1)}×`;
+      const cost = oa.usd != null && sw.usd != null ? (sw.usd < oa.usd ? `Several, ${Math.round((1 - sw.usd / oa.usd) * 100)}% less` : `One agent, ${Math.round((1 - oa.usd / sw.usd) * 100)}% less`) : '–';
+      const qual = qTie(oa, sw) ? `Tie${ha != null && ha === hs ? ` (${ha}/${oa.hiddenOf})` : ''}` : ha != null && hs != null && ha !== hs ? `${ha > hs ? 'One agent' : 'Several'}, +${Math.abs(ha - hs)} hidden test${Math.abs(ha - hs) === 1 ? '' : 's'}` : `${oa.quality > sw.quality ? 'One agent' : 'Several'}`;
+      rows.push(`<tr><th scope="row">${esc(sc.title)}${jobOpen(sc.id) ? ' <span class="dim">(running)</span>' : ''}</th><td>${fast}</td><td>${cost}</td><td>${qual}</td></tr>`);
+    }
+    if (!rows.length) return '';
+    return `<section class="sec" id="found"><h2>What we found</h2>
+      <p class="cap">One Opus agent alone against the best setup with several agents, on each job (medians of the real runs; stalled runs left out of time).</p>
+      <div class="tw"><table class="found"><thead><tr><th scope="col">Job</th><th scope="col">Faster</th><th scope="col">Cheaper at API prices</th><th scope="col">Hidden tests</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></section>`;
   }
   function funnelView() {
     const list = STAGES.slice();
@@ -418,7 +449,7 @@
     root.innerHTML = `${MOCK || RUNS.some((r) => r.mock) ? '<div class="mock"><b>Sample data.</b> These results are invented to show the page; real runs replace them.</div>' : ''}
       <h1>Variants lab</h1>
       <p class="lede">Is one strong agent better than many? How many, checked by whom, landing how? We predict every setup with a simulation, run the best ones on real jobs, and score what they built with tests the agents never saw.</p>
-      ${tryView()}${picksView()}${resultsView()}${funnelView()}`;
+      ${foundView()}${tryView()}${picksView()}${resultsView()}${funnelView()}`;
   }
   function setUrl() {
     const u = new URL(location.href); u.searchParams.set('s', st.scenario); u.searchParams.set('v', JSON.stringify(st.v)); history.replaceState(null, '', u);
