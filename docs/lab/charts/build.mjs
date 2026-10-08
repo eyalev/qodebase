@@ -4,7 +4,8 @@
 //   node docs/lab/charts/build.mjs [--png]
 //
 // Each run is a dot; the median of a variant is a bar across its dots. A run with a known
-// platform stall (timings.stallS) is plotted without the stall, and says so.
+// platform stall (timings.stallS) is left out of TIME entirely (manager's rule, 2026-10-08:
+// never subtract a stall), and still counts for quality and cost.
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,7 +17,8 @@ const L = (f) => f.tag === '1920x1080';
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const baseline = (r) => r.baseline ?? r.variant?.baseline ?? null;
 const cost = (r) => r.cost?.apiUsdStd ?? r.cost?.usdApiEquiv;
-const minutes = (r) => (r.timings.wallS - (r.timings.stallS || 0)) / 60;
+const minutes = (r) => r.timings.wallS / 60;
+const stalled = (r) => Boolean(r.timings.stallS);
 const C = [];
 
 // Dots per run in panels (one scale each), rows = variants. rows: [{label, short, runs, hi}],
@@ -30,7 +32,8 @@ function runPanels(f, box, rows, panels) {
   const ph = L_ ? box.h : (box.h - 20 * (panels.length - 1)) / panels.length;
   panels.forEach((pn, k) => {
     const px = L_ ? box.x + labelW + k * (pw + gap) : box.x, py = L_ ? box.y : box.y + k * (ph + 20);
-    const vals = rows.flatMap((r) => r.runs.map(pn.v)), max = pn.max ?? Math.max(...vals) * 1.08, min = pn.min ?? 0;
+    const runsOf = (r) => r.runs.filter((x) => !pn.skip || !pn.skip(x));
+    const vals = rows.flatMap((r) => runsOf(r).map(pn.v)), max = pn.max ?? Math.max(...vals) * 1.08, min = pn.min ?? 0;
     const tw = L_ ? pw - 140 : pw - 290, tx = L_ ? px : px + 150;
     const X = (v) => tx + ((v - min) / (max - min)) * tw;
     out += text(px, py + 28, pn.title, { size: f.txt - 8, weight: 600 });
@@ -39,14 +42,14 @@ function runPanels(f, box, rows, panels) {
       if (L_ && k === 0) out += text(box.x, cy + 12, r.label, { size: f.txt - 8, c: r.hi ? 'fg' : 'dim', weight: r.hi ? 600 : 400 });
       if (!L_) out += text(px, cy + 11, r.short, { size: f.txt - 14, c: r.hi ? 'fg' : 'dim', weight: r.hi ? 600 : 400 });
       out += track(tx, y, tw, 30);
-      const med = median(r.runs.map(pn.v));
+      const med = median(runsOf(r).map(pn.v));
       out += `<rect x="${X(med) - 2}" y="${y - 8}" width="4" height="46" fill="var(--fg)"><title>${r.label}, median ${pn.fmt(med)}</title></rect>`;
       // runs with the same value sit on top of each other: spread them vertically so each shows
       const seen = new Map();
-      for (const run of r.runs) {
-        const x = X(pn.v(run)), k = Math.round(x / 6), same = r.runs.filter((o) => Math.round(X(pn.v(o)) / 6) === k).length, i = seen.get(k) || 0;
+      for (const run of runsOf(r)) {
+        const x = X(pn.v(run)), k = Math.round(x / 6), same = runsOf(r).filter((o) => Math.round(X(pn.v(o)) / 6) === k).length, i = seen.get(k) || 0;
         seen.set(k, i + 1);
-        out += dot(x, cy + (i - (same - 1) / 2) * 14, r.hi, run.timings.stallS && pn.stallAware);
+        out += dot(x, cy + (i - (same - 1) / 2) * 14, r.hi, false);
       }
       out += text(tx + tw + 14, cy + 12, pn.fmt(med), { size: L_ ? f.val - 8 : f.txt - 12, weight: 600, c: r.hi ? 'fg' : 'dim' });
     });
@@ -59,13 +62,19 @@ const wrap = (t, n) => t.split(' ').reduce((ls, w) => { const l = ls.at(-1); if 
 
 // Headline from the numbers: who was faster, by how much, quality and cost, said plainly
 // whichever way they come out.
-function headline(title, speed, qGap, cheaper) {
-  const pts = Math.round(Math.abs(qGap)), q = pts < 1 ? null : pts;
-  const fast = speed >= 1
-    ? `one Opus agent was ${speed.toFixed(1)}x faster${q ? (qGap > 0 ? ` and ${q} points better` : `, ${q} points worse`) : ', same quality'}`
-    : `the swarm was ${(1 / speed).toFixed(1)}x faster${q ? (qGap < 0 ? ` and ${q} points better` : `, ${q} points worse`) : ', same quality'}`;
-  const c = cheaper >= 0 ? `the swarm cost ${Math.round(100 * cheaper)}% less` : `the swarm cost ${Math.round(-100 * cheaper)}% more`;
-  return { L: [`${title}: ${fast};`, c], P: wrap(`${title}: ${fast}; ${c}`, 31) };
+// Quality in a headline is said in hidden tests passed, never as a score gap: the judge's
+// part moves ~2 points between calls on the same code (manager, 2026-10-08), so equal hidden
+// passes are a tie whatever the judge said.
+function headline(title, speed, hiddenGap, hiddenTotal, cheaper) {
+  const n = Math.round(Math.abs(hiddenGap));
+  const q = n === 0 ? `the same quality: both passed ${hiddenTotal.passed} of ${hiddenTotal.of} hidden tests`
+    : `${hiddenGap > 0 ? 'Opus' : 'the swarm'} passed ${n} more hidden test${n > 1 ? 's' : ''}`;
+  const sp = (x) => `${x.toFixed(1)}x faster`, pc = `${Math.round(100 * Math.abs(cheaper))}%`;
+  // under 15% apart is not a speed difference worth a headline at these run counts
+  const c = Math.abs(speed - 1) < 0.15 ? `the swarm was about as fast and cost ${pc} ${cheaper >= 0 ? 'less' : 'more'}`
+    : speed < 1 ? `the swarm was ${sp(1 / speed)} and cost ${pc} ${cheaper >= 0 ? 'less' : 'more'}`
+    : `one Opus agent was ${sp(speed)}; the swarm cost ${pc} ${cheaper >= 0 ? 'less' : 'more'}`;
+  return { L: wrap(`${title}: ${c}; ${q}`, 50), P: wrap(`${title}: ${c}; ${q}`, 31) };
 }
 
 // One Opus agent vs the swarm on a scenario; skipped until both have a finished run
@@ -74,25 +83,31 @@ function versus(scenario, name, title) {
   const opus = bake.filter((r) => baseline(r) === 'opus-alone');
   const swarm = bake.filter((r) => !baseline(r) && r.variant.planner === 'opus' && r.variant.coders === 12);
   const m = (rs, f) => median(rs.map(f));
-  const speed = m(swarm, minutes) / m(opus, minutes), qGap = m(opus, (r) => r.quality.score) - m(swarm, (r) => r.quality.score);
+  const timed = (rs) => rs.filter((r) => !stalled(r));
+  const speed = m(timed(swarm), minutes) / m(timed(opus), minutes), hiddenGap = m(opus, (r) => r.quality.hiddenPass) - m(swarm, (r) => r.quality.hiddenPass);
+  const hiddenTotal = { passed: m(opus, (r) => r.quality.hiddenPass), of: opus[0].quality.hiddenTotal };
   const cheaper = 1 - m(swarm, cost) / m(opus, cost);
   if (!opus.length || !swarm.length) return;
-  const stalled = swarm.filter((r) => r.timings.stallS);
-  const runsTxt = opus.length === swarm.length ? `${opus.length} run${opus.length > 1 ? 's' : ''} each` : `${opus.length} vs ${swarm.length} runs`;
+  const leftOut = [...opus, ...swarm].filter(stalled);
+  const interim = opus.length < 2 || swarm.length < 2 ? 'Interim, ' : '';
+  const runsTxt0 = opus.length === swarm.length ? `${opus.length} run${opus.length > 1 ? 's' : ''} each` : `${opus.length} vs ${swarm.length} runs`;
+  const tOpus = timed(opus).length, tSwarm = timed(swarm).length;
+  const timeNote = [tOpus !== opus.length ? `Opus time from its ${tOpus} clean run${tOpus > 1 ? 's' : ''}` : '', tSwarm !== swarm.length ? `swarm time from its ${tSwarm} clean run${tSwarm > 1 ? 's' : ''}` : ''].filter(Boolean).join(', ');
+  const runsTxt = interim + runsTxt0 + (timeNote ? `; ${timeNote}` : '');
   C.push({ name,
-    title: headline(title, speed, qGap, cheaper),
-    sub: { L: [`${runsTxt}: a dot per run, a line at the median. The swarm is 16 agents`],
+    title: headline(title, speed, hiddenGap, hiddenTotal, cheaper),
+    sub: { L: [`${runsTxt}. Dot = run, line = median`],
       P: [`${runsTxt}, dot = a run,`, 'line = the median'] },
-    source: `runs.jsonl. Swarm: Opus planner, 12 Haiku coders, 3 reviewers${stalled.length ? `. Hollow: ${Math.round(stalled[0].timings.stallS / 60)}-min platform stall removed` : ''}`,
+    source: `runs.jsonl. Swarm: Opus planner, 12 Haiku coders, 3 reviewers${leftOut.length ? `. ${leftOut.length} run${leftOut.length > 1 ? 's' : ''} with a platform stall left out of time` : ''}`,
     dataSource: `public/lab/runs.jsonl, scenario ${scenario}, status done`,
-    table: [['run', 'variant', 'minutes', 'platform stall', 'quality', 'API-equivalent $'],
-      ...[...opus, ...swarm].map((r) => [r.id, baseline(r) ? 'one Opus agent' : 'swarm', (r.timings.wallS / 60).toFixed(1), r.timings.stallS ? `${(r.timings.stallS / 60).toFixed(1)} min` : '', String(r.quality.score), cost(r).toFixed(2)])],
+    table: [['run', 'variant', 'minutes', 'platform stall', 'hidden tests', 'judge', 'quality', 'API-equivalent $'],
+      ...[...opus, ...swarm].map((r) => [r.id, baseline(r) ? 'one Opus agent' : 'swarm', (r.timings.wallS / 60).toFixed(1), r.timings.stallS ? 'yes: left out of time' : '', `${r.quality.hiddenPass}/${r.quality.hiddenTotal}`, String(r.quality.judgeScore), String(r.quality.score), cost(r).toFixed(2)])],
     body: (f, box) => runPanels(f, { ...box, h: Math.min(box.h, L(f) ? 260 : 700) }, [
       { label: 'One Opus agent', short: 'Opus', runs: opus, hi: true },
       { label: 'Swarm (16 agents)', short: 'Swarm', runs: swarm },
     ], [
-      { title: 'Minutes to finish', v: minutes, fmt: (v) => `${v.toFixed(0)} min`, stallAware: true },
-      { title: 'Quality (0-100)', v: (r) => r.quality.score, fmt: (v) => String(Math.round(v)), min: 80, max: 100 },
+      { title: 'Minutes to finish', v: minutes, fmt: (v) => `${v.toFixed(0)} min`, skip: stalled },
+      { title: 'Quality (judge ±2)', v: (r) => r.quality.score, fmt: (v) => String(Math.round(v)), min: 80, max: 100 },
       { title: 'Cost, API-equivalent', v: cost, fmt: (v) => `$${v.toFixed(2)}` },
     ]),
   });
