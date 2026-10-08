@@ -67,14 +67,14 @@ const wrap = (t, n) => t.split(' ').reduce((ls, w) => { const l = ls.at(-1); if 
 // passes are a tie whatever the judge said.
 function headline(title, speed, hiddenGap, hiddenTotal, cheaper) {
   const n = Math.round(Math.abs(hiddenGap));
-  const q = n === 0 ? `the same quality: both passed ${hiddenTotal.passed} of ${hiddenTotal.of} hidden tests`
+  const q = n === 0 ? `same quality (${hiddenTotal.passed}/${hiddenTotal.of} hidden tests)`
     : `${hiddenGap > 0 ? 'Opus' : 'the swarm'} passed ${n} more hidden test${n > 1 ? 's' : ''}`;
   const sp = (x) => `${x.toFixed(1)}x faster`, pc = `${Math.round(100 * Math.abs(cheaper))}%`;
   // under 15% apart is not a speed difference worth a headline at these run counts
   const c = Math.abs(speed - 1) < 0.15 ? `the swarm was about as fast and cost ${pc} ${cheaper >= 0 ? 'less' : 'more'}`
     : speed < 1 ? `the swarm was ${sp(1 / speed)} and cost ${pc} ${cheaper >= 0 ? 'less' : 'more'}`
     : `one Opus agent was ${sp(speed)}; the swarm cost ${pc} ${cheaper >= 0 ? 'less' : 'more'}`;
-  return { L: wrap(`${title}: ${c}; ${q}`, 50), P: wrap(`${title}: ${c}; ${q}`, 31) };
+  return { L: wrap(`${title}: ${c}; ${q}`, 50), P: wrap(`${title}: ${c}; ${q}`, 32) };
 }
 
 // One Opus agent vs the swarm on a scenario; skipped until both have a finished run
@@ -97,7 +97,7 @@ function versus(scenario, name, title) {
   C.push({ name,
     title: headline(title, speed, hiddenGap, hiddenTotal, cheaper),
     sub: { L: [`${runsTxt}. Dot = run, line = median`],
-      P: [`${runsTxt}, dot = a run,`, 'line = the median'] },
+      P: wrap(`${runsTxt}. Dot = run, line = median`, 40) },
     source: `runs.jsonl. Swarm: Opus planner, 12 Haiku coders, 3 reviewers${leftOut.length ? `. ${leftOut.length} run${leftOut.length > 1 ? 's' : ''} with a platform stall left out of time` : ''}`,
     dataSource: `public/lab/runs.jsonl, scenario ${scenario}, status done`,
     table: [['run', 'variant', 'minutes', 'platform stall', 'hidden tests', 'judge', 'quality', 'API-equivalent $'],
