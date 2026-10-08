@@ -23,6 +23,11 @@ so hidden tests, judge rubrics and reference solutions never come here or into a
 | cafe-family | 7 family tests on the rendered pages (kids' menu, facilities, allergens, reachable, bookings, home, children's books), scaled by the share of 7 "nothing broken" checks still passing | build = the 7 "nothing broken" checks; typecheck = every file parses; own tests | Sonnet, rubric with 4 criteria, 390 px screenshots of every page |
 | port-ts | 125 upstream behaviour tests (against src/index.ts only) + 29 type cases (19 must compile, 10 must be errors, i.e. not `any`) + 4 structure checks | build = src/index.ts loads; typecheck = strict tsc on src; own tests | Sonnet, rubric with 4 criteria, diff of 11 sample modules |
 
+**port-ts reports two numbers** (manager, 2026-10-08): `score` (all 158 hidden) and
+`scoreTrulyHidden` (only the 29 type cases + 4 structure checks, `trulyHiddenPass` /
+`trulyHiddenTotal`), because the 125 behaviour tests are validator.js's own, public
+upstream. Show them side by side; the runner notes whether a box fetched validator.js.
+
 Validated 2026-10-08 before any real run:
 
 | | cafe-family | port-ts |

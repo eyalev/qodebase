@@ -97,6 +97,8 @@ try {
     const CHECKS = ['port: no JavaScript left in src', 'port: every function has a TypeScript module', 'port: no explicit any',
       'port: src/index.ts exports every function, the default object and version'];
     result.hiddenTotal = nBehaviour + typeCases.length + CHECKS.length;
+    result.trulyHiddenPass = 0;
+    result.trulyHiddenTotal = typeCases.length + CHECKS.length;
     const failed = [];
     if (!ported) {
       notes.push('not ported: src/index.ts does not exist');
@@ -155,6 +157,9 @@ try {
       if (anyHits.length) notes.push(`${anyHits.length} explicit any`);
       checks.forEach((ok, i) => { if (!ok) failed.push(CHECKS[i]); });
       result.hiddenPass = bOk + tOk + checks.filter(Boolean).length;
+      // the behaviour tests are validator.js's own, public upstream; the type cases and
+      // structure checks exist only in lab-hidden (manager, 2026-10-08): report both
+      result.trulyHiddenPass = tOk + checks.filter(Boolean).length;
       result.details = { behaviour: `${bOk}/${nBehaviour}`, types: `${tOk}/${typeCases.length}`, checks: `${checks.filter(Boolean).length}/${CHECKS.length}` };
     }
     result.failed = failed;
@@ -174,4 +179,5 @@ result.failedCount = result.failed.length;
 result.failed = result.failed.slice(0, 10);
 result.notes = notes.join('; ');
 result.score = qualityScore(result);
+if (result.trulyHiddenTotal) result.scoreTrulyHidden = qualityScore({ ...result, hiddenPass: result.trulyHiddenPass, hiddenTotal: result.trulyHiddenTotal });
 console.log(JSON.stringify(result));
