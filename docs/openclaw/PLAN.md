@@ -31,6 +31,8 @@ star or open anything on their repo or ClawSweeper.
 ## Phase 2 — small real tests (ask the manager first; cheap models)
 - [x] (added) Triage as an agent on 100 of the 200 (code snapshot + earlier-issue search): 59% (49-68)
       vs text-only Haiku 50% on the same 100, paired p = 0.12; duplicates 68% vs 16%. $0.12 API-equiv.
+- [x] (added) v1 on all 200: 61% vs 50%, paired p = 0.004 (duplicates 66% vs 14%); v2 (code check)
+      on 100 NEW issues: 56% vs v1 53%, p = 0.51 (no gain). $0.50 total. FINDINGS 2b-3.
 - [x] (added, no model) Do PR-scoped tests catch the hourly suite's breaks? Map new persistent
       shard failures to that hour's commits/files. Decides whether scoped-union trains are real.
       _Done 2026-10-08: 31/40 (78%, CI 62-88%) had a same-area change that hour; 254 requests._

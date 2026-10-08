@@ -80,7 +80,11 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 ## Lab results
 
-*Coming: the variants lab (which mix of planner, coders, reviewers and landing policy works best, measured against one strong agent alone) and the OpenClaw experiment. Results land here and in `docs/lab/` and `docs/openclaw/`.*
+*Coming: the variants lab (which mix of planner, coders, reviewers and landing policy works best, measured against one strong agent alone). Results land here and in `docs/lab/`.*
+
+**OpenClaw, from their real data** (30 days of a ~535-commits-a-day repo, read-only; [docs/openclaw/FINDINGS.md](docs/openclaw/FINDINGS.md)):
+- Their no-queue flow is the cheapest and fastest way to land at that rate. A merge queue that runs each change's own tests would cost ~1.6x their landing CI and add ~20 minutes, and ~78% of the breaks their hourly full suite finds sit next to a change from that same hour (an upper bound for what it would catch).
+- Triage: a Haiku agent that can search earlier issues and read the code was right on 61% of 200 real issues vs 50% for text-only triage (paired p = 0.004), almost all of it from finding duplicates (66% vs 14%), at about a tenth of a cent per issue. Their own bot, ClawSweeper (dozens of Codex agents with the repo), still matches real outcomes far more often.
 
 ## More
 

@@ -180,9 +180,35 @@ cent per issue. Overall triage accuracy is still far from ClawSweeper's, and the
 already fixed / intended" check, which needs the agent to actually read code (a prompt and turn-budget change,
 not a bigger model, is the next thing to try).
 
+## Phase 2b-3: the triage agent on all 200, then a v2 prompt on 100 new issues (2026-10-08)
+
+Order fixed by the manager so nothing is tuned on the test set: (1) v1 unchanged on the other 100 of the 200;
+(2) v2 (one required code check before "fix" or "close", written after seeing v1 on set A) on **100 issues never
+used before** (`triage-sample2.jsonl`, same 25/class balance and snapshot rule), with v1 on the same 100.
+Data: `data/triage-score.json` → `agent_rounds` and `on_agent_subset.paired_vs_haiku`.
+
+| | n | accuracy (95% CI) | paired (exact McNemar) |
+|---|---|---|---|
+| **v1 agent vs text-only Haiku, all 200** | 200 | **61% (54–68) vs 50% (43–57)** | agent alone right 38, text alone 16, **p = 0.004** |
+| duplicates found, same 200 | 50 | **66% (52–78) vs 14% (7–26)** | |
+| v1 agent on the new 100 (set C) | 100 | 53% (43–63) | |
+| v2 vs v1 on the new 100 | 100 | 56% (46–65) vs 53% (43–63) | v2 alone 6, v1 alone 3, p = 0.51 |
+
+- **The result holds: on 200 issues the agent beats text-only triage (p = 0.004), and the whole gain is
+  finding duplicates.** Fix/decision recall are about the same; "close" stays the weak class (20–28% for every
+  variant).
+- On fresh issues v1 scored 53%, at the low end of its 200-issue interval: across all 300 issues it was given,
+  v1 is 175/300 = 58%.
+- **v2's code check did not help.** It did check code (cited a `path:line` in 24 of its 36 fix/close answers vs 8
+  of 39 for v1; median turns 4 vs 3), but accuracy moved 3 points (p = 0.51) and "close" recall 20% -> 24%. Reading
+  the code is not what separates "close" from "fix" here; what ClawSweeper knows and the agent does not is the
+  project's policy (what is supported, what is out of scope) and current main.
+- Cost: v1 on 200 $0.24, v1 + v2 on the new 100 $0.25; all rounds $0.50 API-equivalent at Haiku 5.5 rates, on the
+  subscription (cap $1).
+
 ## What phase 2 should test next
-- Triage agent on the other 100 (tightens the paired test; ~$0.12), and a v2 prompt that requires one code
-  check before calling fix/close.
+- Triage: give the agent the project's policy (CONTRIBUTING, the support/out-of-scope rules ClawSweeper
+  applies) instead of more code reading; test on a fresh 100 again.
 - Duplicate rate over all closed issues from comment text (85 of a 900-issue pool were duplicates by comment,
   so the rate is far above GitHub's 0.1%; measure it properly).
 - The fix lane as in PLAN.md.

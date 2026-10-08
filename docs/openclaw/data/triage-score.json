@@ -249,86 +249,86 @@
    }
   },
   "haiku-agent": {
-   "n": 100,
+   "n": 200,
    "accuracy_vs_outcome": {
-    "k": 59,
-    "n": 100,
-    "p": 0.59,
-    "lo": 0.492,
-    "hi": 0.681
+    "k": 122,
+    "n": 200,
+    "p": 0.61,
+    "lo": 0.541,
+    "hi": 0.675
    },
    "recall_per_outcome": {
     "close": {
-     "k": 7,
-     "n": 25,
+     "k": 14,
+     "n": 50,
      "p": 0.28,
-     "lo": 0.143,
-     "hi": 0.476
+     "lo": 0.175,
+     "hi": 0.417
     },
     "duplicate": {
-     "k": 17,
-     "n": 25,
-     "p": 0.68,
-     "lo": 0.484,
-     "hi": 0.828
+     "k": 33,
+     "n": 50,
+     "p": 0.66,
+     "lo": 0.522,
+     "hi": 0.776
     },
     "fix": {
-     "k": 18,
-     "n": 25,
+     "k": 36,
+     "n": 50,
      "p": 0.72,
-     "lo": 0.524,
-     "hi": 0.857
+     "lo": 0.583,
+     "hi": 0.825
     },
     "decision": {
-     "k": 17,
-     "n": 25,
-     "p": 0.68,
-     "lo": 0.484,
-     "hi": 0.828
+     "k": 39,
+     "n": 50,
+     "p": 0.78,
+     "lo": 0.648,
+     "hi": 0.872
     }
    },
    "agreement_with_clawsweeper": {
-    "k": 56,
-    "n": 86,
-    "p": 0.651,
-    "lo": 0.546,
-    "hi": 0.743
+    "k": 115,
+    "n": 170,
+    "p": 0.676,
+    "lo": 0.603,
+    "hi": 0.742
    },
    "when_p_ge_0_8": {
-    "acted_on": 34,
+    "acted_on": 60,
     "accuracy": {
-     "k": 23,
-     "n": 34,
-     "p": 0.676,
-     "lo": 0.508,
-     "hi": 0.809
+     "k": 41,
+     "n": 60,
+     "p": 0.683,
+     "lo": 0.558,
+     "hi": 0.787
     }
    },
-   "brier": 0.563,
+   "brier": 0.565,
    "confusion": {
-    "duplicate->duplicate": 17,
-    "duplicate->decision": 2,
-    "duplicate->fix": 5,
+    "duplicate->duplicate": 33,
+    "duplicate->decision": 6,
+    "duplicate->fix": 10,
     "duplicate->close": 1,
-    "close->decision": 13,
-    "close->close": 7,
-    "close->duplicate": 3,
-    "close->fix": 2,
-    "fix->fix": 18,
-    "fix->decision": 5,
-    "fix->duplicate": 2,
-    "decision->decision": 17,
-    "decision->fix": 5,
+    "close->decision": 21,
+    "close->close": 14,
+    "close->duplicate": 10,
+    "close->fix": 5,
+    "fix->fix": 36,
+    "fix->decision": 9,
+    "fix->duplicate": 5,
+    "decision->decision": 39,
+    "decision->fix": 7,
     "decision->close": 1,
-    "decision->duplicate": 2
+    "decision->duplicate": 3
    },
-   "ms_p50": 7776,
-   "cost_usd": 0.1214,
+   "ms_p50": 7662,
+   "cost_usd": 0.2416,
    "cost_note": "subscription; API-equivalent at Haiku 5.5 rates",
    "tokens": {
-    "input": 466,
-    "output": 84594,
-    "cache_read": 1348865
+    "input": 918,
+    "output": 167574,
+    "cache_read": 2615160
    }
   }
  },
@@ -341,80 +341,260 @@
   "note": "ClawSweeper's call is partly what caused the outcome (it closes issues), so this is not independent"
  },
  "on_agent_subset": {
-  "n": 100,
+  "n": 200,
   "jev": {
    "accuracy": {
-    "k": 39,
-    "n": 100,
-    "p": 0.39,
-    "lo": 0.3,
-    "hi": 0.488
+    "k": 79,
+    "n": 200,
+    "p": 0.395,
+    "lo": 0.33,
+    "hi": 0.464
    },
    "recall": {
-    "close": 0.2,
+    "close": 0.22,
     "duplicate": 0,
-    "fix": 0.88,
-    "decision": 0.48
+    "fix": 0.84,
+    "decision": 0.52
    }
   },
   "clef-flash": {
    "accuracy": {
-    "k": 35,
-    "n": 100,
-    "p": 0.35,
-    "lo": 0.264,
-    "hi": 0.447
+    "k": 71,
+    "n": 200,
+    "p": 0.355,
+    "lo": 0.292,
+    "hi": 0.423
    },
    "recall": {
     "close": 0.12,
     "duplicate": 0,
-    "fix": 0.96,
-    "decision": 0.32
+    "fix": 0.94,
+    "decision": 0.36
    }
   },
   "haiku": {
    "accuracy": {
-    "k": 50,
-    "n": 100,
+    "k": 100,
+    "n": 200,
     "p": 0.5,
-    "lo": 0.404,
-    "hi": 0.596
+    "lo": 0.431,
+    "hi": 0.569
    },
    "recall": {
-    "close": 0.2,
-    "duplicate": 0.16,
-    "fix": 0.88,
-    "decision": 0.76
+    "close": 0.24,
+    "duplicate": 0.14,
+    "fix": 0.84,
+    "decision": 0.78
    }
   },
   "haiku-agent": {
    "accuracy": {
-    "k": 59,
-    "n": 100,
-    "p": 0.59,
-    "lo": 0.492,
-    "hi": 0.681
+    "k": 122,
+    "n": 200,
+    "p": 0.61,
+    "lo": 0.541,
+    "hi": 0.675
    },
    "recall": {
     "close": 0.28,
-    "duplicate": 0.68,
+    "duplicate": 0.66,
     "fix": 0.72,
-    "decision": 0.68
+    "decision": 0.78
    }
+  },
+  "paired_vs_haiku": {
+   "p": 0.0038,
+   "n": 200,
+   "only_agent_right": 38,
+   "only_text_right": 16,
+   "test": "McNemar exact (two-sided binomial on discordant pairs)"
   }
  },
  "agent_detail": {
   "turns_p50": 3,
-  "denials": 3,
-  "named_a_duplicate": 26,
-  "true_duplicates_named": 18,
-  "of_true_duplicates": 25,
-  "cost_usd_api_equiv": 0.121,
+  "denials": 4,
+  "named_a_duplicate": 54,
+  "true_duplicates_labelled_duplicate": 33,
+  "true_duplicates_with_an_issue_named_any_label": 34,
+  "of_true_duplicates": 50,
+  "cost_usd_api_equiv": 0.242,
   "tokens": {
-   "input": 466,
-   "output": 84594,
-   "cache_read": 1348865,
-   "cache_write": 524910
+   "input": 918,
+   "output": 167574,
+   "cache_read": 2615160,
+   "cache_write": 1052544
   }
+ },
+ "agent_rounds": {
+  "round1_v1_vs_text_on_200": {
+   "a": "haiku-agent v1",
+   "b": "haiku text-only",
+   "n": 200,
+   "a_accuracy": {
+    "k": 122,
+    "n": 200,
+    "p": 0.61,
+    "lo": 0.541,
+    "hi": 0.675
+   },
+   "b_accuracy": {
+    "k": 100,
+    "n": 200,
+    "p": 0.5,
+    "lo": 0.431,
+    "hi": 0.569
+   },
+   "only_a_right": 38,
+   "only_b_right": 16,
+   "mcnemar_exact_p": 0.0038,
+   "recall_agent": {
+    "close": {
+     "k": 14,
+     "n": 50,
+     "p": 0.28,
+     "lo": 0.175,
+     "hi": 0.417
+    },
+    "duplicate": {
+     "k": 33,
+     "n": 50,
+     "p": 0.66,
+     "lo": 0.522,
+     "hi": 0.776
+    },
+    "fix": {
+     "k": 36,
+     "n": 50,
+     "p": 0.72,
+     "lo": 0.583,
+     "hi": 0.825
+    },
+    "decision": {
+     "k": 39,
+     "n": 50,
+     "p": 0.78,
+     "lo": 0.648,
+     "hi": 0.872
+    }
+   },
+   "recall_text": {
+    "close": {
+     "k": 12,
+     "n": 50,
+     "p": 0.24,
+     "lo": 0.143,
+     "hi": 0.374
+    },
+    "duplicate": {
+     "k": 7,
+     "n": 50,
+     "p": 0.14,
+     "lo": 0.07,
+     "hi": 0.262
+    },
+    "fix": {
+     "k": 42,
+     "n": 50,
+     "p": 0.84,
+     "lo": 0.715,
+     "hi": 0.917
+    },
+    "decision": {
+     "k": 39,
+     "n": 50,
+     "p": 0.78,
+     "lo": 0.648,
+     "hi": 0.872
+    }
+   },
+   "cost_agent_usd_api_equiv": 0.242
+  },
+  "round2_v2_vs_v1_on_new_100": {
+   "a": "haiku-agent v2",
+   "b": "haiku-agent v1",
+   "n": 100,
+   "a_accuracy": {
+    "k": 56,
+    "n": 100,
+    "p": 0.56,
+    "lo": 0.462,
+    "hi": 0.653
+   },
+   "b_accuracy": {
+    "k": 53,
+    "n": 100,
+    "p": 0.53,
+    "lo": 0.433,
+    "hi": 0.625
+   },
+   "only_a_right": 6,
+   "only_b_right": 3,
+   "mcnemar_exact_p": 0.5078,
+   "recall_v2": {
+    "close": {
+     "k": 6,
+     "n": 25,
+     "p": 0.24,
+     "lo": 0.115,
+     "hi": 0.434
+    },
+    "duplicate": {
+     "k": 16,
+     "n": 25,
+     "p": 0.64,
+     "lo": 0.445,
+     "hi": 0.798
+    },
+    "fix": {
+     "k": 14,
+     "n": 25,
+     "p": 0.56,
+     "lo": 0.371,
+     "hi": 0.733
+    },
+    "decision": {
+     "k": 20,
+     "n": 25,
+     "p": 0.8,
+     "lo": 0.609,
+     "hi": 0.911
+    }
+   },
+   "recall_v1": {
+    "close": {
+     "k": 5,
+     "n": 25,
+     "p": 0.2,
+     "lo": 0.089,
+     "hi": 0.391
+    },
+    "duplicate": {
+     "k": 14,
+     "n": 25,
+     "p": 0.56,
+     "lo": 0.371,
+     "hi": 0.733
+    },
+    "fix": {
+     "k": 16,
+     "n": 25,
+     "p": 0.64,
+     "lo": 0.445,
+     "hi": 0.798
+    },
+    "decision": {
+     "k": 18,
+     "n": 25,
+     "p": 0.72,
+     "lo": 0.524,
+     "hi": 0.857
+    }
+   },
+   "cost_v2": 0.135,
+   "cost_v1": 0.118,
+   "turns_p50_v2": 4,
+   "turns_p50_v1": 3
+  },
+  "note": "v2 wording was written after seeing v1 on set A; it was never run on A or B. Set C = 100 issues never used before (triage-sample2.jsonl). Costs are API-equivalent at Haiku 5.5 rates; billing was the subscription."
  }
 }
