@@ -69,6 +69,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
       const model = (v: unknown) => (typeof v === 'string' && /^(sonnet|haiku|opus|claude-[a-z0-9-]{3,40})$/.test(v) ? { ok: v } : v === null ? { ok: undefined } : null);
       const am = model(body.agentModel), rm = model(body.replayModel);
       if (typeof body.unlisted === 'boolean') await env.Project.get(env.Project.idFromName(info.slug)).setUnlisted(body.unlisted);
+      if (typeof body.landing === 'boolean') await env.Project.get(env.Project.idFromName(info.slug)).setLanding(body.landing);   // lab projects: not seeded by the demo
       return json(await L.setFlags(info.slug, { ...(typeof body.llmReplay === 'boolean' ? { llmReplay: body.llmReplay } : {}),
         ...(typeof body.publicWatch === 'boolean' ? { publicWatch: body.publicWatch } : {}),
         // A crew run: caps {agents, awake}, reviewers (pool size, 1-4), budgetUsd (hard stop), halted:false to resume.
