@@ -88,8 +88,8 @@ const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER
 const TRAIN_STUCK_MS = 12 * 60_000;
 /** Tier 2's default model: short prompts, a fraction of a cent each (2026-10-08: Haiku 5.5). */
 export const DEFAULT_REPLAY_MODEL = 'claude-haiku-5-5';
-/** Watch a run (public, no sign-in): one at a time, 10 a day, 3 a day and one per 5 min per IP. */
-export const WATCH = { perDay: 10, perIpDay: 3, ipCooldownS: 300, agents: 6, speed: 2, maxMs: 5 * 60_000 };
+/** Watch a run (public, no sign-in): one at a time, 40 a day (judges in many timezones, manager 2026-10-08), 3 a day and one per 5 min per IP. */
+export const WATCH = { perDay: 40, perIpDay: 3, ipCooldownS: 300, agents: 6, speed: 2, maxMs: 5 * 60_000 };
 export const DEMO_MAX_AGENTS = 24, DEMO_MAX_MS = 20 * 60_000, DEMO_MAX_STORY_AGENTS = 12, BUSY_MAX_TASKS = 400, BUSY_MAX_WAITING = 40;
 const OPEN = (c: Change) => c.state !== 'landed';
 
