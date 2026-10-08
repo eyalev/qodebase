@@ -69,6 +69,7 @@ export const CAL = {
   // share of the job x aloneS. Fitted: haiku coders summed 284 s for cafe's 8 tasks (8 x 25 +
   // 1.7 x 50) and 1159 s for bakery's 7 (7 x 25 + 1.24 x 796); opus = 1 by definition.
   taskFixedS: 25, workSigma: 0.5,
+  aloneSigma: 0.2, // one agent doing a whole job varies less than a single task: runs 3, 13, 15 were -8%, +3%, +8% off lab-0.8's median
   workRatio: { haiku: 1.4, sonnet: 1.15, opus: 1 }, // sonnet assumed between
   workMedS: 48, // only for fix/redo shares below (a cafe-size task)
   speed: { haiku: 0.6, sonnet: 1, opus: 1.4 }, // reviewer time ratios (assumed)
@@ -173,7 +174,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
 
   // ---- one agent alone: the whole job in one pass, one commit (no split, no queue, no merges) ----
   if (alone) {
-    const d = logn(W * C.workRatio[v.coderModel] * (1 - [...tasks].filter((t) => t.missed).length / N), C.workSigma);
+    const d = logn(W * C.workRatio[v.coderModel] * (1 - [...tasks].filter((t) => t.missed).length / N), C.aloneSigma);
     usd.coders += d * C.usdPerS[v.coderModel];
     for (const x of work) { x.st = 'landed'; x.defect = rnd() < C.pDefect[v.coderModel] * sc.difficulty && !(rnd() < C.aloneSelfCatch); }
     const wallS = (v.planner === 'none' ? 0 : planS) + d + 5;

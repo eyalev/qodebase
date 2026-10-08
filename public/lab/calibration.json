@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-08T14:00:51.402Z",
+ "generated": "2026-10-08T14:02:50.196Z",
  "simVersion": "lab-0.8",
  "fit": {
   "runs": 7,
@@ -51,8 +51,8 @@
   },
   "actualOverNow": {
    "simVersion": "lab-0.8",
-   "wallS": 0.9206349206349206,
-   "apiUsdStd": 0.8410416666666667,
+   "wallS": 0.9658703071672355,
+   "apiUsdStd": 0.8272540983606558,
    "quality": 1.0905125408942202
   }
  },
@@ -176,8 +176,8 @@
     "simVersion": "lab-0.3"
    },
    "now": {
-    "wallS": 63,
-    "apiUsdStd": 0.38,
+    "wallS": 53,
+    "apiUsdStd": 0.31,
     "quality": 75,
     "simVersion": "lab-0.8"
    },
@@ -271,8 +271,8 @@
     "simVersion": "lab-0.4"
    },
    "now": {
-    "wallS": 234,
-    "apiUsdStd": 1.49,
+    "wallS": 230,
+    "apiUsdStd": 1.47,
     "quality": 91.7,
     "simVersion": "lab-0.8"
    },
@@ -318,8 +318,8 @@
     "simVersion": "lab-0.7"
    },
    "now": {
-    "wallS": 744,
-    "apiUsdStd": 4.8,
+    "wallS": 755,
+    "apiUsdStd": 4.88,
     "quality": 92,
     "simVersion": "lab-0.8"
    },
