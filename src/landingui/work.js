@@ -109,9 +109,10 @@
     const bs = base.stats, isL = (c) => c.state === 'landed';
     return { ...base, now: T, changes, queue: { trains, waiting },
       demo: base.demo ? { ...base.demo, running: T < P.end } : base.demo,
-      stats: { ...bs, landedToday: bs.landedToday - countIf(base.changes, isL) + countIf(changes, isL), inQueue: waiting.length + inTrain.size,
-        replayed: bs.replayed - countIf(base.changes, hasEv('replayed')) + countIf(changes, hasEv('replayed')),
-        bounced: bs.bounced - countIf(base.changes, hasEv('bounced')) + countIf(changes, hasEv('bounced')) } };
+      // (a counter that began after the run counts less than the records: never below zero)
+      stats: { ...bs, landedToday: Math.max(0, bs.landedToday - countIf(base.changes, isL)) + countIf(changes, isL), inQueue: waiting.length + inTrain.size,
+        replayed: Math.max(0, bs.replayed - countIf(base.changes, hasEv('replayed'))) + countIf(changes, hasEv('replayed')),
+        bounced: Math.max(0, bs.bounced - countIf(base.changes, hasEv('bounced'))) + countIf(changes, hasEv('bounced')) } };
   }
   const mockPlay = (m) => ({ base: m, start: m.now + m.mock.playS[0] * 1000, end: m.now + m.mock.playS[1] * 1000, wall0: Date.now(), speed: MSPEED, loop: true, mock: true });
   function replayOf(d0, speed = 1) {
@@ -216,7 +217,7 @@
         <div class="wa">${done ? '<button class="btn" type="button" data-watch="again">Replay again</button>' : speedChips(P.speed)}<button class="chipb" type="button" data-watch="live">Back to live</button></div></div>`;
     }
     if (starting && Date.now() - starting < 60e3 && !(dm.running && D.changes.length)) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Starting a run…</b> The café site goes back to its first version and the agents get their tasks.</span></div></div>`;
-    if (dm.running) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Live run</b>${dm.startedAt ? `, started ${ago(dm.startedAt)}` : ''}${dm.endsAt ? `, ends in ${until(dm.endsAt)}` : ''}. ${dm.agents || ''} ${term('scripted', 'scripted agents')}; their commits, collisions and tests are real.</span></div>${ownerCtl(true)}</div>`;
+    if (dm.running) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Live run</b>${dm.startedAt ? `, started ${ago(dm.startedAt)}` : ''}${dm.endsAt ? (dm.mode === 'busy' ? `, runs until its tasks are done (at most ${until(dm.endsAt)} more)` : `, ends in ${until(dm.endsAt)}`) : ''}. ${dm.agents || ''} ${term('scripted', 'scripted agents')}; their commits, collisions and tests are real.</span></div>${ownerCtl(true)}</div>`;
     const left = W.maxPerDay ? Math.max(0, W.maxPerDay - (W.runsToday || 0)) : null;
     return `<div class="watch"><div class="wt"><span><b>Watch a run.</b> Six ${term('scripted', 'scripted agents')} change this café's website at once for about 5 minutes: real commits, real collisions, real tests.</span></div>
       ${limitNote ? `<p class="small dim">${esc(limitNote)}</p>` : ''}
@@ -233,7 +234,8 @@
     return `<div class="demo"><i class="live${on ? '' : ' off'}"></i><span><b>${D.demo?.mode === 'busy' ? 'Busy demo' : 'Demo'}</b> with ${D.demo ? D.demo.agents : ''} ${term('scripted', 'scripted agents')}. Commits, collisions and tests are real.${on ? '' : ' Not running now.'}</span>${ctl}</div>`;
   }
   function numbers() {
-    const s = D.stats;
+    // The server's counters can start after a run began (qb6, 2026-10-08): never show fewer than the records here.
+    const s = { ...D.stats, landedToday: Math.max(D.stats.landedToday || 0, countIf(D.changes, (c) => c.state === 'landed')), replayed: Math.max(D.stats.replayed || 0, countIf(D.changes, hasEv('replayed'))) };
     // One row of words: the numbers support the picture below, they are not the picture.
     return `<div class="nums">
       <span><b>${n0(s.landedToday)}</b> landed ${D.mode === 'demo' ? 'in this run' : 'today'}</span>
