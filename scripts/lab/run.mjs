@@ -37,7 +37,7 @@ const has = (k) => args.includes(k);
 export const STAGE_CAPS = { 1: { usdReal: 2, apiUsdHigh: 15, quotaPts: 5 }, 2: { usdReal: 5, apiUsdHigh: 40, quotaPts: 8 }, 3: { usdReal: 3, apiUsdHigh: 25, quotaPts: 2 } };
 
 async function api(method, path, body) {
-  const r = await fetch(API + path, { method, headers: { 'x-forq-secret': SECRET, 'user-agent': 'forq-cli/1', 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+  const r = await fetch(API + path, { signal: AbortSignal.timeout(120_000), method, headers: { 'x-forq-secret': SECRET, 'user-agent': 'forq-cli/1', 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
   const t = await r.text(); let j; try { j = JSON.parse(t); } catch { j = { raw: t.slice(0, 300) }; }
   if (!r.ok) throw new Error(`${method} ${path}: ${r.status} ${JSON.stringify(j).slice(0, 300)}`);
   return j;
@@ -138,6 +138,7 @@ const policyText = {
 const routerText = [
   prompt, '',
   `How to work: split this into at most ${variant.coders} tasks and start one agent per task (never more than ${variant.coders} at once).`,
+  'Begin every task text with a short title line (under 60 characters) saying what it does; details after it.',
   variant.claims ? 'Start every agent with --files listing the files it will change (forq spawn "<task>" --files a,b).' : '',
   variant.dedupe ? 'Before starting agents, check that no two tasks do the same thing; merge duplicates into one task.' : '',
   policyText, `The project's checks: ${check}. Do not merge anything yourself.`,
@@ -209,7 +210,8 @@ const counts = { tasksPlanned: view.changes.length, tasksLanded: landed.length, 
   conflicts: view.changes.filter((c) => ev(c, 'conflict').length).length,
   replaysHandler: landed.filter((c) => c.landing?.how === 'replayed-handler').length, replaysLlm: landed.filter((c) => c.landing?.how === 'replayed-llm').length,
   leads: landed.filter((c) => c.landing?.how === 'lead').length, bounces: view.changes.reduce((n, c) => n + ev(c, 'bounced').length, 0),
-  reviews: view.changes.reduce((n, c) => n + ev(c, 'approved').length + ev(c, 'changes-suggested').length, 0),
+  // Real verdicts only: a variant without reviewers approves automatically ('auto').
+  reviews: variant.reviewers ? view.changes.reduce((n, c) => n + ev(c, 'approved').length + ev(c, 'changes-suggested').length, 0) : 0,
   reviewRejects: view.changes.reduce((n, c) => n + ev(c, 'changes-suggested').length, 0), breaksOnMain: 0, humanInterventions: 0 };
 
 // ---- quality: qb5's scorer on a clone of the final main, on the laptop ----------------------

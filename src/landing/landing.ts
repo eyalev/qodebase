@@ -338,7 +338,12 @@ export class Landing extends DurableObject<Env> {
         // The project's box model from forq's price table (Haiku 5.5 at its >100k tier); no model
         // set = Opus, the most expensive the boxes could run. Claude Code's own estimate is not
         // used: its table lags new models (it priced Haiku 5.5 as Haiku 4.5, 2026-10-08).
-        claude += Math.max(claudeUsd(m.flags.agentModel || 'opus', x.tokens) ?? claudeUsd('opus', x.tokens) ?? 0, x.usd || 0);
+        // Lab variants set a model per role: price at the most expensive one this project runs.
+        // Short names are the 5.5 models (the table's plain 'haiku' row is Haiku 4.5).
+        const full = (s: string) => ({ haiku: 'claude-haiku-5-5', sonnet: 'claude-sonnet-5-5', opus: 'claude-opus-5-5' } as Record<string, string>)[s] || s;
+        const roleModels = ([m.flags.plannerModel, m.flags.coderModel, m.flags.reviewers ? m.flags.reviewerModel : undefined, m.flags.agentModel].filter(Boolean) as string[]).map(full);
+        const priciest = roleModels.length ? roleModels.reduce((a, b) => ((claudeUsd(b, x.tokens!) ?? Infinity) > (claudeUsd(a, x.tokens!) ?? Infinity) ? b : a)) : 'opus';
+        claude += Math.max(claudeUsd(priciest, x.tokens) ?? claudeUsd('opus', x.tokens) ?? 0, x.usd || 0);
       }
     }
     const total = boxes + claude;
