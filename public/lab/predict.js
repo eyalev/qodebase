@@ -17,7 +17,7 @@
 import { qualityScore } from './score.js';
 export { qualityScore }; // qb5's one quality formula (public/lab/score.js)
 
-export const SIM_VERSION = 'lab-0.3';
+export const SIM_VERSION = 'lab-0.4';
 
 // Knob names and values = the Landing flags and runs.jsonl `variant` (docs/lab/runs-schema.md).
 export const KNOBS = {
@@ -53,27 +53,29 @@ export function variantKey(variant, baseline = variant?.baseline ?? null) {
 // (for a Sonnet planner; other planners scale by CAL.pDup), hidden = hiddenTotal
 // (public/lab/scenarios.json). difficulty is qb4's guess (defects and work time multiplier).
 export const SCENARIOS = {
-  'cafe-family': { label: 'Make the cafe family-friendly', tasks: 7, depth: 2, pShared: 0.6, sharedFiles: 4, vague: 0.8, dupRisk: 0.3, difficulty: 1, hidden: 7 },
+  'cafe-family': { label: 'Make the cafe family-friendly', tasks: 7, depth: 2, pShared: 0.6, sharedFiles: 4, vague: 0.8, dupRisk: 0.05, difficulty: 1, hidden: 7 }, // dupRisk 0.3 -> 0.05: 0 duplicates in 11 tasks (stage 1, qb5)
   'port-ts': { label: 'Port a library to TypeScript', tasks: 21, depth: 3, pShared: 0.1, sharedFiles: 3, vague: 0.2, dupRisk: 0.05, difficulty: 1.3, hidden: 158 },
   rename: { label: 'Rename X across the codebase + a dependent change', tasks: 20, depth: 3, pShared: 0.4, sharedFiles: 2, vague: 0.1, difficulty: 0.7, hidden: 10 }, // qb4 guess (backup scenario)
 };
 
 export const CAL = {
   // Agent work per task (Sonnet): agents push in 1.5-4 min (measured, MEASUREMENTS.md run 1).
-  workMedS: 180, workSigma: 0.5,
-  speed: { haiku: 0.6, sonnet: 1, opus: 1.4 }, // assumed (relative time per task)
+  // Calibrated 2026-10-08 on stage-1 runs 1-3 (cafe-family; sim/lab/calibrate.mjs, public/lab/calibration.json):
+  // Haiku coders took a median 29 s per task (11 tasks). Sonnet/Opus coders not measured yet: same speed ratios.
+  workMedS: 48, workSigma: 0.5, // a Sonnet-equivalent task; was 180 (MEASUREMENTS run 1 had bigger changes)
+  speed: { haiku: 0.6, sonnet: 1, opus: 1.4 }, // assumed ratios; haiku x 48 = 29 s measured
   // API $ per second of an agent working: $1.42 per reviewed change at Sonnet rates (measured).
-  usdPerS: { haiku: 0.0043 / 3, sonnet: 0.0043, opus: 0.0043 * 1.67 }, // haiku/opus ratios assumed from list prices
-  pDefect: { haiku: 0.25, sonnet: 0.15, opus: 0.08 }, // assumed, per task, times difficulty
-  pVisible: 0.5, // assumed: share of defects the build/type check/own tests see (bounced in the queue)
+  usdPerS: { haiku: 0.00059, sonnet: 0.0043, opus: 0.0079 }, // API $ per agent-second: haiku measured (runs 1-2, incl. planner/router), sonnet measured (MEASUREMENTS run 1), opus measured (run 3, one run)
+  pDefect: { haiku: 0.55, sonnet: 0.3, opus: 0.14 }, // per task, times difficulty: haiku fitted on runs 1-2 (hidden 1/7, 3/7 with 3 and 8 tasks), opus on run 3 (6/7); sonnet assumed between. Was 0.25/0.15/0.08
+  pVisible: 0.1, // share of defects the build/type check/own tests see: runs 1-3 had every floor green while 1-6 of 7 hidden tests failed. Was 0.5
   // Planner (one call): time, missed requirements, duplicate intents, missed dependency edges (x vague).
-  planS: { haiku: 30, sonnet: 60, opus: 120 }, // assumed
-  pMiss: { haiku: 0.15, sonnet: 0.08, opus: 0.04 }, // assumed
+  planS: { haiku: 47, sonnet: 60, opus: 90 }, // haiku measured (runs 1-2: ask to first task); sonnet/opus assumed
+  pMiss: { haiku: 0.37, sonnet: 0.2, opus: 0.08 }, // x vague: haiku fitted on runs 1-2 (3 and 8 tasks for a ~7-task prompt); sonnet/opus assumed. Was 0.15/0.08/0.04
   pDup: { haiku: 0.25, sonnet: 0.12, opus: 0.06 }, // assumed
   pEdgeMiss: { haiku: 0.3, sonnet: 0.15, opus: 0.08 }, // assumed (not scaled by vague)
   dedupeCatch: 0.85, dedupeS: 20, // assumed
   // Review: ~3 min per review (measured: reviewer agent ~3 min); catch rates assumed.
-  reviewMedS: 170, reviewSigma: 0.4,
+  reviewMedS: 45, reviewSigma: 0.4, // assumed: the measured ~170 s review scaled to the measured task size (48/180); no reviewed run yet
   pCatch: { haiku: 0.4, sonnet: 0.6, opus: 0.75 }, adversarialCatch: 1.35, adversarialTime: 1.8, pFalseAlarm: 0.05,
   fixFactor: 0.35, // fixing what review asked, share of the task's work (fast sim DEFAULTS)
   // Landing: per train 30 s + 5 s per extra change (sim/swarm); conflicts on shared files.
@@ -85,7 +87,8 @@ export const CAL = {
   leadSpan: 10, leadS: 90, pLead: 0.85, // swarm/fast sim: a lead serves ~10 agents
   gateS: 120, // phases: full check between phases (assumed)
   backoffS: 120, // a task given back is retried after 2 min
-  aloneContext: 1.3, // one agent doing everything pays for its growing context (assumed)
+  // One agent alone does the whole job in one pass and one commit (run 3: Opus, 8 files, ~50 s).
+  aloneBaseS: 30, alonePerTaskS: 3, // fitted on run 3 (one run)
   aloneSelfCatch: 0.3, // assumed
   maxTries: 8, // redos (conflict, failed check) before a task is dropped
   maxGiveBacks: 40, // given back because a prerequisite had not landed (sim/swarm)
@@ -150,6 +153,20 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
   let dedupeS = 0;
   if (v.dedupe) { dedupeS = C.dedupeS * (work.length + dups.length) / 4; usd.planner += dedupeS * C.usdPerS.haiku; }
   for (const d of dups) if (!(v.dedupe && rnd() < C.dedupeCatch)) work.push(d);
+
+  // ---- one agent alone: the whole job in one pass, one commit (no split, no queue, no merges) ----
+  if (alone) {
+    const d = logn(C.aloneBaseS + C.alonePerTaskS * work.length, C.workSigma) * sc.difficulty;
+    usd.coders += d * C.usdPerS[v.coderModel];
+    for (const x of work) { x.st = 'landed'; x.defect = rnd() < C.pDefect[v.coderModel] * sc.difficulty && !(rnd() < C.aloneSelfCatch); }
+    const wallS = (v.planner === 'none' ? 0 : planS) + d + 5;
+    let passed = 0;
+    const per = sc.hidden / N;
+    const mine = new Map(work.map((x) => [x.id, x]));
+    for (const x of tasks) { const w = mine.get(x.id); if (!x.missed && w && !w.defect) passed += per; }
+    const apiUsdStd = usd.planner * (v.planner === 'none' ? 0 : 1) + usd.coders;
+    return { wallS, apiUsdStd, quality: qualityScore({ hiddenPass: passed, hiddenTotal: sc.hidden, build: true, typecheck: true, ownTests: true, judgeScore: null }), hiddenPass: +passed.toFixed(1), hiddenTotal: sc.hidden, tasksPlanned: work.length, tasksTrue: N, landed: work.length, dropped: 0, missed: tasks.filter((x) => x.missed).length, dupPlanned: 0, workS: d, wastedS: 0, redS: 0, usd, ...n };
+  }
 
   // ---- event loop ----
   const heap = []; let seq = 0, t = 0;
@@ -316,7 +333,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
   for (const x of tasks) {
     const w = byId.get(x.id);
     if (x.missed || !w || w.st !== 'landed') continue;
-    passed += w.defect ? per * 0.5 : per;
+    passed += w.defect ? 0 : per; // a wrong task fails its hidden tests (runs 1-3); was half
   }
   const dropped = work.filter((x) => x.st === 'dropped').length;
   const quality = qualityScore({ hiddenPass: passed, hiddenTotal: sc.hidden, build: !dropped, typecheck: !dropped, ownTests: true, judgeScore: null });

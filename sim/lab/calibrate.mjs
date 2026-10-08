@@ -41,9 +41,9 @@ const rows = lines.map((l) => {
 });
 
 console.log(`${rows.length} real runs (sim now ${SIM_VERSION})\n`);
-console.log('run                         | wall s pred/real | API $ pred/real | quality pred/real (real w/o judge) | tasks planned/expected | coder work med s');
+console.log(`run                         | wall s: at run time / now (${SIM_VERSION}) / real | API $: at run / now / real | quality (no judge): at run / now / real | tasks planned/expected`);
 for (const r of rows) {
-  console.log(`${(r.baseline || r.id).padEnd(28)}| ${fmt(r.pred?.wallS).padStart(6)} / ${fmt(r.wallS).padEnd(6)} | ${fmt(r.pred?.apiUsdStd, 2).padStart(6)} / ${fmt(r.usd, 3).padEnd(6)} | ${fmt(r.pred?.quality, 1).padStart(5)} / ${fmt(r.quality, 1)} (${fmt(r.qualityNoJudge, 1)})`.padEnd(95) + ` | ${fmt(r.tasksPlanned)} / ${fmt(r.expectedTasks)}`.padEnd(14) + ` | ${fmt(r.workMedS)}`);
+  console.log(`${(r.baseline || r.id).padEnd(28)}| ${fmt(r.pred?.wallS).padStart(5)} / ${fmt(r.now.wallS).padStart(5)} / ${fmt(r.wallS).padEnd(5)} | ${fmt(r.pred?.apiUsdStd, 2).padStart(6)} / ${fmt(r.now.apiUsdStd, 2).padStart(5)} / ${fmt(r.usd, 3).padEnd(6)} | ${fmt(r.pred?.quality, 1).padStart(5)} / ${fmt(r.now.quality, 1).padStart(5)} / ${fmt(r.qualityNoJudge, 1).padEnd(5)} | ${fmt(r.tasksPlanned)} / ${fmt(r.expectedTasks)}`);
 }
 
 // ---- what the runs say about CAL ----
@@ -66,12 +66,15 @@ for (const [model, rs] of Object.entries(byModel('planner'))) {
 }
 const ratio = (k1, k2) => med(rows.map((r) => (r.pred?.[k1] && r[k2] != null ? r[k2] / r.pred[k1] : null)));
 fit.actualOverPredicted = { wallS: ratio('wallS', 'wallS'), apiUsdStd: ratio('apiUsdStd', 'usd'), quality: ratio('quality', 'qualityNoJudge') };
+const ratioNow = (k1, k2) => med(rows.map((r) => (r.now?.[k1] && r[k2] != null ? r[k2] / r.now[k1] : null)));
+fit.actualOverNow = { simVersion: SIM_VERSION, wallS: ratioNow('wallS', 'wallS'), apiUsdStd: ratioNow('apiUsdStd', 'usd'), quality: ratioNow('quality', 'qualityNoJudge') };
 
 console.log('\nCoder models (sim -> real):');
 for (const [m, f] of Object.entries(fit.coder)) console.log(`  ${m}: work median ${fmt(f.simWorkMedS)} s -> ${fmt(f.workMedS)} s (${f.tasks} tasks); $/s ${f.simUsdPerS.toFixed(5)} -> ${f.usdPerS?.toFixed(5) ?? '–'}`);
 console.log('Planners:');
 for (const [m, f] of Object.entries(fit.planner)) console.log(`  ${m}: plan ${fmt(f.simPlanS)} s -> ${fmt(f.planMedS)} s; planned ${f.tasksPlannedShare} of the tasks the scenario needs; hidden tests passed (median) ${fmt(f.hiddenShareMed, 2)}`);
-console.log(`Actual / predicted (median over runs): wall ${fmt(fit.actualOverPredicted.wallS, 2)}x, API $ ${fmt(fit.actualOverPredicted.apiUsdStd, 2)}x, quality ${fmt(fit.actualOverPredicted.quality, 2)}x`);
+console.log(`Actual / predicted at run time (median): wall ${fmt(fit.actualOverPredicted.wallS, 2)}x, API $ ${fmt(fit.actualOverPredicted.apiUsdStd, 2)}x, quality ${fmt(fit.actualOverPredicted.quality, 2)}x`);
+console.log(`Actual / predicted now (${SIM_VERSION}):        wall ${fmt(fit.actualOverNow.wallS, 2)}x, API $ ${fmt(fit.actualOverNow.apiUsdStd, 2)}x, quality ${fmt(fit.actualOverNow.quality, 2)}x`);
 
 writeFileSync(join(ROOT, 'public/lab/calibration.json'), JSON.stringify({ generated: new Date().toISOString(), simVersion: SIM_VERSION, fit, runs: rows }, null, 1));
 console.log('\nwrote public/lab/calibration.json');

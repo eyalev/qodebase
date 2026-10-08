@@ -63,5 +63,6 @@ Contest: deadline Oct 14; eligibility (US/Canada residents only) still unresolve
 - [x] sim/lab/sweep.mjs + funnel.mjs: 47,880 combos x 2 scenarios x 5 seeds in ~65 s -> public/lab/stage0.json (frontier, picks, marginals)
 - [x] Manager approved option B (2026-10-08): run list + guards in public/lab/stage1-plan.json, sent to qb6. Was: stage-1 picks + budget (unbudgeted: 6 picks + baselines x2 = 16 runs, ~$217 API-equiv; with --budget 60 --baseline-reps 1: 4 picks x2 + baselines x1 = 10 runs, ~$59). "No reviewers" winning is an assumption (defect cost model), stage 1 must measure review value
 - [ ] Swap in qb5's scenario.json profiles when they land (sweep reads them automatically), rerun
-- [ ] CHECKPOINT after stage-1 run 3: predicted vs actual cost/time, recalibrate predict.js, tell the manager the correction (real 12-Haiku run cost $0.53 vs predicted $1.3-37), before run 4
-- [ ] sim/lab/calibrate.mjs from the first real runs.jsonl lines (work time, cost per task by model, catch rates, planner misses/dups) -> public/lab/calibration.json; predicted-vs-actual
+- [x] CHECKPOINT after stage-1 run 3: recalibrated (lab-0.4): actual/predicted went from 0.43x wall, 0.13x cost, 0.67x quality to 1.07x / 1.29x / 1.13x on runs 1-3. Manager re-planned stage 1 (orders 11-16: cafe balance + github, port-ts opus-alone / 6 haiku / 12 haiku + 3 reviewers / github), predicted $30.87
+- [x] sim/lab/calibrate.mjs -> public/lab/calibration.json (predicted at run time / now / real)
+- [ ] Recalibrate after orders 11-16 (first port-ts runs, first reviewed run, first Sonnet coders via github)

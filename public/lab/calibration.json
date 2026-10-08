@@ -1,33 +1,55 @@
 {
- "generated": "2026-10-08T10:01:03.311Z",
- "simVersion": "lab-0.3",
+ "generated": "2026-10-08T10:18:38.189Z",
+ "simVersion": "lab-0.4",
  "fit": {
-  "runs": 1,
+  "runs": 3,
   "from": [
-   "lab-cafefamily-739a1-r1"
+   "lab-cafefamily-739a1-r1",
+   "lab-cafefamily-08ce0-r1",
+   "lab-cafefamily-41305-r1"
   ],
   "coder": {
    "haiku": {
-    "tasks": 3,
-    "workMedS": 37.42,
-    "simWorkMedS": 108,
-    "usdPerS": 0.000482,
-    "simUsdPerS": 0.0014333333333333333
+    "tasks": 11,
+    "workMedS": 28.883,
+    "simWorkMedS": 28.799999999999997,
+    "usdPerS": 0.000589,
+    "simUsdPerS": 0.00059
+   },
+   "opus": {
+    "tasks": 1,
+    "workMedS": 49.578,
+    "simWorkMedS": 67.19999999999999,
+    "usdPerS": 0.007866,
+    "simUsdPerS": 0.0079
    }
   },
   "planner": {
    "haiku": {
-    "runs": 1,
+    "runs": 2,
     "planMedS": 47.084,
-    "simPlanS": 30,
+    "simPlanS": 47,
     "tasksPlannedShare": 0.43,
     "hiddenShareMed": 0.14285714285714285
+   },
+   "opus": {
+    "runs": 1,
+    "planMedS": 3.651,
+    "simPlanS": 90,
+    "tasksPlannedShare": 0.14,
+    "hiddenShareMed": 0.8571428571428571
    }
   },
   "actualOverPredicted": {
-   "wallS": 0.621978021978022,
+   "wallS": 0.428927680798005,
    "apiUsdStd": 0.13027522935779814,
-   "quality": 0.42805755395683454
+   "quality": 0.6717647058823529
+  },
+  "actualOverNow": {
+   "simVersion": "lab-0.4",
+   "wallS": 1.075,
+   "apiUsdStd": 1.2909090909090908,
+   "quality": 1.1346886912325285
   }
  },
  "runs": [
@@ -46,10 +68,10 @@
     "simVersion": "lab-0.3"
    },
    "now": {
-    "wallS": 455,
-    "apiUsdStd": 1.09,
-    "quality": 83.4,
-    "simVersion": "lab-0.3"
+    "wallS": 233,
+    "apiUsdStd": 0.11,
+    "quality": 49.4,
+    "simVersion": "lab-0.4"
    },
    "wallS": 283,
    "planS": 47.084,
@@ -72,6 +94,99 @@
     "out": 80774,
     "cacheR": 5067561,
     "cacheW": 254204
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-cafefamily-08ce0-r1",
+   "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "cafe-family",
+   "planner": "haiku",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 6.2,
+    "wallS": 401,
+    "apiUsdStd": 1.34,
+    "quality": 85,
+    "simVersion": "lab-0.3"
+   },
+   "now": {
+    "wallS": 160,
+    "apiUsdStd": 0.11,
+    "quality": 41.3,
+    "simVersion": "lab-0.4"
+   },
+   "wallS": 172,
+   "planS": 69.878,
+   "usd": 0.198,
+   "tasksPlanned": 8,
+   "tasksLanded": 8,
+   "expectedTasks": 7,
+   "workS": [
+    33.568,
+    28.883,
+    84.652,
+    21.611,
+    27.829,
+    28.014,
+    29.528,
+    28.234
+   ],
+   "workMedS": 28.234,
+   "quality": 53.7,
+   "qualityNoJudge": 57.1,
+   "hiddenShare": 0.42857142857142855,
+   "judge": 4,
+   "tokens": {
+    "in": 360,
+    "out": 120213,
+    "cacheR": 7828572,
+    "cacheW": 300021
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-cafefamily-41305-r1",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "cafe-family",
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 6,
+    "wallS": 1515,
+    "apiUsdStd": 13.89,
+    "quality": 88.1,
+    "simVersion": "lab-0.3"
+   },
+   "now": {
+    "wallS": 64,
+    "apiUsdStd": 0.47,
+    "quality": 78.7,
+    "simVersion": "lab-0.4"
+   },
+   "wallS": 58,
+   "planS": 3.651,
+   "usd": 0.39,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 7,
+   "workS": [
+    49.578
+   ],
+   "workMedS": 49.578,
+   "quality": 85.4,
+   "qualityNoJudge": 89.3,
+   "hiddenShare": 0.8571428571428571,
+   "judge": 7,
+   "tokens": {
+    "in": 24,
+    "out": 5225,
+    "cacheR": 363313,
+    "cacheW": 26557
    },
    "conflicts": 0,
    "bounces": 0

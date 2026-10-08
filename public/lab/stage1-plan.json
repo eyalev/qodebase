@@ -38,7 +38,8 @@
     "quality": 83.4,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 1.09
+   "predictedCumulativeUsd": 1.09,
+   "status": "done"
   },
   {
    "order": 2,
@@ -66,7 +67,8 @@
     "quality": 85,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 2.43
+   "predictedCumulativeUsd": 2.43,
+   "status": "done"
   },
   {
    "order": 3,
@@ -94,7 +96,8 @@
     "quality": 88.1,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 16.32
+   "predictedCumulativeUsd": 16.32,
+   "status": "done"
   },
   {
    "order": 4,
@@ -122,7 +125,8 @@
     "quality": 77.2,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 37.64
+   "predictedCumulativeUsd": 37.64,
+   "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
    "order": 5,
@@ -150,7 +154,8 @@
     "quality": 81.4,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 39.72
+   "predictedCumulativeUsd": 39.72,
+   "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
    "order": 6,
@@ -178,7 +183,8 @@
     "quality": 90.6,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 43
+   "predictedCumulativeUsd": 43,
+   "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
    "order": 7,
@@ -206,7 +212,8 @@
     "quality": 83.4,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 44.09
+   "predictedCumulativeUsd": 44.09,
+   "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
    "order": 8,
@@ -234,7 +241,8 @@
     "quality": 85,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 45.43
+   "predictedCumulativeUsd": 45.43,
+   "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
    "order": 9,
@@ -262,7 +270,8 @@
     "quality": 81.4,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 47.51
+   "predictedCumulativeUsd": 47.51,
+   "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
    "order": 10,
@@ -290,8 +299,270 @@
     "quality": 90.6,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 50.79
+   "predictedCumulativeUsd": 50.79,
+   "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
+  },
+  {
+   "order": 11,
+   "scenario": "cafe-family",
+   "repetition": 1,
+   "why": "balance: does a strong planner + a cheap swarm match Opus alone?",
+   "baseline": null,
+   "variant": {
+    "planner": "opus",
+    "coders": 12,
+    "coderModel": "haiku",
+    "reviewers": 3,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "intent",
+    "claims": false,
+    "dedupe": true,
+    "trainMax": 4
+   },
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "predicted": {
+    "landed": 6,
+    "wallS": 300,
+    "apiUsdStd": 0.86,
+    "quality": 68.8,
+    "simVersion": "lab-0.4"
+   },
+   "range": {
+    "wallS": [
+     238,
+     376
+    ],
+    "apiUsdStd": [
+     0.78,
+     0.96
+    ],
+    "quality": [
+     50,
+     87.5
+    ]
+   },
+   "predictedCumulativeUsd": 0.86
+  },
+  {
+   "order": 12,
+   "scenario": "cafe-family",
+   "repetition": 1,
+   "why": "github baseline",
+   "baseline": "github",
+   "variant": {
+    "planner": "sonnet",
+    "coders": 6,
+    "coderModel": "sonnet",
+    "reviewers": 1,
+    "reviewerModel": "sonnet",
+    "reviewStyle": "read",
+    "policy": "github",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 1
+   },
+   "variantKey": "github",
+   "predicted": {
+    "landed": 5.6,
+    "wallS": 536,
+    "apiUsdStd": 3.67,
+    "quality": 81.3,
+    "simVersion": "lab-0.4"
+   },
+   "range": {
+    "wallS": [
+     221,
+     750
+    ],
+    "apiUsdStd": [
+     1.32,
+     5.77
+    ],
+    "quality": [
+     62.5,
+     100
+    ]
+   },
+   "predictedCumulativeUsd": 4.53
+  },
+  {
+   "order": 13,
+   "scenario": "port-ts",
+   "repetition": 1,
+   "why": "opus-alone baseline (bigger job, parallel by nature)",
+   "baseline": "opus-alone",
+   "variant": {
+    "planner": "none",
+    "coders": 1,
+    "coderModel": "opus",
+    "reviewers": 0,
+    "reviewerModel": "opus",
+    "reviewStyle": "read",
+    "policy": "ffa",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 1
+   },
+   "variantKey": "opus-alone",
+   "predicted": {
+    "landed": 19.8,
+    "wallS": 144,
+    "apiUsdStd": 1.1,
+    "quality": 89.4,
+    "simVersion": "lab-0.4"
+   },
+   "range": {
+    "wallS": [
+     84,
+     182
+    ],
+    "apiUsdStd": [
+     0.62,
+     1.4
+    ],
+    "quality": [
+     86.8,
+     94
+    ]
+   },
+   "predictedCumulativeUsd": 5.63
+  },
+  {
+   "order": 14,
+   "scenario": "port-ts",
+   "repetition": 1,
+   "why": "opus planner + 6 haiku coders, intent",
+   "baseline": null,
+   "variant": {
+    "planner": "opus",
+    "coders": 6,
+    "coderModel": "haiku",
+    "reviewers": 0,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "intent",
+    "claims": false,
+    "dedupe": true,
+    "trainMax": 4
+   },
+   "variantKey": "planner=opus;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "predicted": {
+    "landed": 19.8,
+    "wallS": 539,
+    "apiUsdStd": 1.34,
+    "quality": 44.5,
+    "simVersion": "lab-0.4"
+   },
+   "range": {
+    "wallS": [
+     435,
+     678
+    ],
+    "apiUsdStd": [
+     1.07,
+     1.62
+    ],
+    "quality": [
+     38.2,
+     49
+    ]
+   },
+   "predictedCumulativeUsd": 6.97
+  },
+  {
+   "order": 15,
+   "scenario": "port-ts",
+   "repetition": 1,
+   "why": "balance: opus planner + 12 haiku coders + 3 reviewers, intent",
+   "baseline": null,
+   "variant": {
+    "planner": "opus",
+    "coders": 12,
+    "coderModel": "haiku",
+    "reviewers": 3,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "intent",
+    "claims": false,
+    "dedupe": true,
+    "trainMax": 4
+   },
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "predicted": {
+    "landed": 19.8,
+    "wallS": 630,
+    "apiUsdStd": 1.88,
+    "quality": 74.7,
+    "simVersion": "lab-0.4"
+   },
+   "range": {
+    "wallS": [
+     445,
+     826
+    ],
+    "apiUsdStd": [
+     1.46,
+     2.25
+    ],
+    "quality": [
+     69.1,
+     83.3
+    ]
+   },
+   "predictedCumulativeUsd": 8.85
+  },
+  {
+   "order": 16,
+   "scenario": "port-ts",
+   "repetition": 1,
+   "why": "github baseline",
+   "baseline": "github",
+   "variant": {
+    "planner": "sonnet",
+    "coders": 6,
+    "coderModel": "sonnet",
+    "reviewers": 1,
+    "reviewerModel": "sonnet",
+    "reviewStyle": "read",
+    "policy": "github",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 1
+   },
+   "variantKey": "github",
+   "predicted": {
+    "landed": 19.6,
+    "wallS": 1602,
+    "apiUsdStd": 22.02,
+    "quality": 81.9,
+    "simVersion": "lab-0.4"
+   },
+   "range": {
+    "wallS": [
+     1112,
+     2360
+    ],
+    "apiUsdStd": [
+     13.23,
+     32.84
+    ],
+    "quality": [
+     70.3,
+     91.2
+    ]
+   },
+   "predictedCumulativeUsd": 30.87
   }
  ],
- "predictionsUpdated": "2026-10-08: lab-0.3 (claims fix; qb5 scenario profiles); variants and order unchanged (approved list)"
+ "predictionsUpdated": "2026-10-08: lab-0.4 (calibrated on runs 1-3) for orders 11+; orders 1-3 keep the predictions recorded when they ran",
+ "replan": {
+  "at": "2026-10-08",
+  "by": "manager s1007-1655 after the run-3 checkpoint",
+  "why": "on a small vague job one Opus agent won (58 s, quality 85): test where parallel work pays, on port-ts (bigger, parallel by nature)",
+  "budgetLeftUsd": 58,
+  "guards": "unchanged: stop at $60 API-equiv for the stage or +12 points on the weekly meter (40% at approval)",
+  "simVersion": "lab-0.4",
+  "calibratedOn": "runs 1-3 (sim/lab/calibrate.mjs, public/lab/calibration.json)"
+ }
 }
