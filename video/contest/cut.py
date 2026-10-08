@@ -176,13 +176,20 @@ class Cut:
             d.text((tx + 18, H - 180), badge, font=F_BADGE, fill=FG)
         return canvas, (px, py, ph_w, ph_h)
 
-    def phone(self, scene, max_wait=8.0):
+    def phone(self, scene, max_wait=8.0, start=0, replace=None):
         """A rig recording (video/frames/contest-<scene>), captions from its say() events.
         A caption waits for the previous narration to finish (the picture holds still)."""
         src = os.path.join(VIDEO, 'frames', f'contest-{scene}')
         tl = json.load(open(os.path.join(src, 'timeline.json')))
         frames, ev = tl['frames'], sorted(tl['events'], key=lambda e: e['t'])
+        # replace: {old caption start: new text}, for a line the footage proved wrong (re-voiced).
+        for e in ev:
+            if e['type'] == 'caption':
+                for a, b in (replace or {}).items():
+                    if e['text'].startswith(a): e['text'] = b
         caps = [e for e in ev if e['type'] == 'caption']
+        # start: begin at the start-th caption (drops a part of the take that cannot be shown).
+        if start: ev = [e for e in ev if e['t'] >= caps[start]['t'] - 0.3 or e['type'] == 'focus' and e['t'] >= caps[start]['t'] - 3]; caps = caps[start:]
         t = caps[0]['t'] - 0.3 if caps else frames[0]['t']
         t1 = max(ev[-1]['t'], caps[-1]['t'] + hold(caps[-1]['text'])) if caps else frames[-1]['t']
         for i, e in enumerate(ev):
@@ -295,12 +302,10 @@ def script(c):
     # 4. The product on the phone (~2:30 when filmed in full)
     c.chapter('On the phone')
     c.phone('live', max_wait=60)   # eyal/corner-cafe, qb6's scripted run, x8 time-lapse
-    c.phone('real')                # eyal/cafe-real: two real Claude Haiku 5.5 agents, landed in one train
+    # eyal/cafe-crew: ONE request typed into Talk (delivered 01:18:47 UTC, confirmed by qb6) ->
+    # 12 real Claude Haiku 5.5 agents + 3 reviewers (qb6). Numbers in the captions are read from the run.
+    c.phone('crew', max_wait=90)
     c.slide('notes', ['Anyone can read it later, people and agents alike: git log shows why each change is there.'], after=2)
-    c.todo('AI replay demo (qb6, not filmable yet): "New tagline with books" collides with the rename on src/site.js, replayed by an AI; its drill-down shows how, model, time, cost.',
-           ['When a fixed rule is not enough, an AI replays the intent on the newest code. Here it took eight seconds and about a cent.'], secs=12)
-    c.todo('Talk: tap the mic on the project page, say "add a gift card page", the router opens an agent card.',
-           ['And you steer it by talking to it, from your phone.'], secs=12)
     c.slide('different', ['So this is not GitHub with agents on top. The unit is an intent with its record, and landing is automatic: a conflict is replayed, not bounced.'], after=2)
 
     # 5. Cloudflare (~25 s)

@@ -32,20 +32,25 @@ Judging, and where each part is answered:
 - Hono is final (qb4, 395cbb5): 16/40/48% of PRs needed an earlier one, 0 git conflicts
   and 0 clean-but-broken at every wave.
 
-## Scenes
+## Scenes (draft 3, after the manager's review of draft 2)
 
-| # | scene | on screen | narration / caption (short form) |
+| # | scene | on screen | narration (short form) |
 |---|---|---|---|
-| 0 | Cold open (~18 s) | Phone: Agents at work, the line with a train being tested | Ten agents are changing one app at the same time. / Their work waits in one line, is tested, and joins the main code. No one has to step in. |
-| 0 | Title | Card: qodebase | qodebase. A git platform for the age of agents, built on Cloudflare. |
-| 1 | Problem (~30 s) | Slides people, agents, collision, ordering | Pull requests were built for people. / Now one person runs fifty agents. / Two changes, each fine alone, collide. / Or one needs another that has not landed yet. |
-| 2 | Measured (~50 s) | qb5 charts: hono-ordering, bun-swarm, realcode-500, cloudflare-500 | Hono replayed as 100 at once: half needed another first, git conflicts none, the problem is order. / Bun's 64 agents: mostly one shared branch. / Real code, 500 agents: land by intent 3.5x review-then-merge. / Cloudflare: 7,033 pushes, 280 ms; one queue was the limit, split by area. |
-| 3 | Idea (~35 s) | Slides idea-fork, idea-record, idea-intent | Own fork per agent. / The record (intent, diff, review, tests) as git notes. / On collision, replay the reviewed intent on the newest code. |
-| 4 | On the phone (~2:30) | Live scripted run on eyal/corner-cafe: overview, x8 time-lapse with badge, then taps into a replayed, a bounced, a lead-handled and a stacked change | A café website, four agents, fourteen tasks, scripted (real commits, real queue, no AI bills). / Trains. / Collisions replayed. / A bounce, fixed. / All landed in N minutes, typical ask-to-land S seconds (read from the run). / Each record explained. |
-| 4 | Talk (to film) | Mic on the project page, a spoken request, an agent card appears | And you steer it by talking to it, from your phone. |
-| 4 | Not GitHub + agents | Slide "different" | The unit is an intent with its record; landing is automatic; a conflict is replayed, not bounced. |
-| 5 | Cloudflare (~25 s) | Slide cloudflare | Workers, Durable Objects, Artifacts, Containers, Workers AI (including this narration); install your own copy. |
-| 6 | Close | Slide "measured", end card | We measured it, then built it. / qodebase.app, open source. |
+| 0 | Cold open (~20 s) | Busy mode on eyal/cafe-busy: 20 scripted agents, the line, the map | N agents are changing one app at once (N read from the page); scripted, but every commit, collision and test is real. |
+| 0 | Title | Card: qodebase | A git platform for the age of agents, built on Cloudflare. |
+| 1 | Problem (~30 s) | Slides people, agents, collision, ordering | as draft 2 |
+| 2 | Measured (~70 s) | qb5 charts: hono-ordering, swarm-migration, realcode-500, cloudflare-500 | Hono: half needed another first, no conflicts. / Migration swarm: any-order wastes 90 agent-hours; knowing the order < half the time; stacking + land by intent wastes nothing, never breaks main. / Real code: 3.5x. / Cloudflare: 7,033 pushes, 280 ms; one queue was the limit. |
+| 3 | Idea (~35 s) | idea-fork, idea-record, idea-intent | as draft 2 |
+| 4a | Judge's view (~1:45) | corner-cafe, tap Watch a run, x4 time-lapse, then a replayed, a bounced-then-fixed, a lead-redone and a stacked change (picked from the run's records) | Anyone can watch a run, no sign-in. / trains / collisions replayed / one bounce, fixed / all landed in N min (read from the run). |
+| 4b | Real agents (~1:30) | cafe-crew: the 12-feature request typed into Talk, Send confirmed (the run Talk really started, 01:18:47 UTC), x24 time-lapse, the AI-replayed change, a reviewer's notes | One request, 12 real Claude Haiku 5.5 agents, 3 reviewers; N of 12 landed in M minutes (read from the run). |
+| 4c | Proof | Slide notes: `git log --notes=qodebase` on cafe-real | The record travels with the code. |
+| 4d | Not GitHub + agents | Slide different | as draft 2 |
+| 5 | Cloudflare | Slide cloudflare | as draft 2 |
+| 6 | Close | measured slide; end card with the live-run link (qodebase.app/p/eyal/corner-cafe), the sims (qodebase.app/sim), the repo | |
+
+Phone scenes are a zoomed window (760 px wide, ~40% of the frame) on 2x frames, panning to what is narrated.
+Projects: corner-cafe is the JUDGES' project (only Watch-a-run takes there); busy mode on cafe-busy;
+real agents on cafe-crew / cafe-real (qb6 runs them; tell qb6 before and after).
 
 ## Production notes
 - 1920×1080, 30 fps, H.264 + AAC narration (loudnorm -16 LUFS), burned-in captions + `.srt`.

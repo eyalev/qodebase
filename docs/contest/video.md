@@ -26,7 +26,10 @@ sim/README.md, sim/cloud/README.md, and the challenge page https://www.cloudflar
       in build/vo/, ledger build/vo/ledger.jsonl (~$0.12 so far); captions stay.
 - [x] Draft 2 (2026-10-08, 5:34, narrated): live corner-cafe take 3 (14/14 in 203 s), drill-downs
       picked from the run's records -> manager.
-- [ ] Still to film (placeholders in cut.py `todo`): busy mode for the cold open (20 scripted
+- [x] Draft 3 review notes (2026-10-08): zoomed phone on 2x frames, cold-open count read from
+      the page, swarm chart for Bun, close card links; busy on cafe-busy; judge take via Watch a run;
+      crew run (12 real Haiku 5.5 agents) started by Talk.
+- [ ] (old) Still to film (placeholders in cut.py `todo`): busy mode for the cold open (20 scripted
       agents, ~46 landed/min, say scripted); the AI replay demo (7.8 s, ~1 cent); real agents on
       eyal/cafe-real (Claude Haiku 5.5, verified, 5.5 min); Talk steering; notes in the code browser.
 - [ ] Submission texts: draft 1 in docs/contest/submission.md; [final] lines after Oct 10.
