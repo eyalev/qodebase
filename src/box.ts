@@ -583,7 +583,10 @@ walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}
       const covered = !!st.get('costCovered'), billing = (st.get('costBilling') as 'sub' | 'api') || 'api', project = (st.get('costProject') as string) || '';
       await recordCost(this.env, owner, 'boxes', project, { usd: boxUsd(seconds, cpuSeconds, INSTANCE.memoryMib / 1024, INSTANCE.diskMb / 1000), covered, seconds, cpuSeconds });
       for (const [model, t] of Object.entries(usage.m)) {
-        await recordCost(this.env, owner, 'claude', project, { usd: billing === 'sub' ? null : claudeUsd(model, t), covered: false, tokens: t, billing });
+        // Variants lab projects keep tokens per model in the ledger (`<project>:<model>`), so their
+        // budget guard prices each model at its own rate (src/landing/landing.ts #budgetTick).
+        const proj = /\/lab-/.test(project) ? `${project}:${model}` : project;
+        await recordCost(this.env, owner, 'claude', proj, { usd: billing === 'sub' ? null : claudeUsd(model, t), covered: false, tokens: t, billing });
       }
       await this.ctx.storage.put({ costFrom: now, cpuLast: cpuNow, ...(usage.last ? { costCursor: usage.last } : {}) });
       // tokens per model: the variants lab prices each role at its own model (scripts/lab/run.mjs reads these lines).

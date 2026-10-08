@@ -341,7 +341,7 @@ export class Landing extends DurableObject<Env> {
     const m = await this.#m();
     if (!m.flags.budgetUsd || m.flags.halted) return;
     const [owner, name] = m.slug.split('.');
-    const rows = (await this.env.Ledger.get(this.env.Ledger.idFromName(owner)).rows(2)).filter((x) => x.project === `${owner}/${name}` || x.project === m.slug);
+    const rows = (await this.env.Ledger.get(this.env.Ledger.idFromName(owner)).rows(2)).filter((x) => x.project === `${owner}/${name}` || x.project === m.slug || x.project.startsWith(`${owner}/${name}:`));
     let boxes = 0, claude = 0;
     for (const x of rows) {
       if (x.kind === 'boxes') boxes += x.usd || 0;
@@ -354,7 +354,9 @@ export class Landing extends DurableObject<Env> {
         const full = (s: string) => ({ haiku: 'claude-haiku-5-5', sonnet: 'claude-sonnet-5-5', opus: 'claude-opus-5-5' } as Record<string, string>)[s] || s;
         const roleModels = ([m.flags.plannerModel, m.flags.coderModel, m.flags.reviewers ? m.flags.reviewerModel : undefined, m.flags.agentModel].filter(Boolean) as string[]).map(full);
         const priciest = roleModels.length ? roleModels.reduce((a, b) => ((claudeUsd(b, x.tokens!) ?? Infinity) > (claudeUsd(a, x.tokens!) ?? Infinity) ? b : a)) : 'opus';
-        claude += Math.max(claudeUsd(priciest, x.tokens) ?? claudeUsd('opus', x.tokens) ?? 0, x.usd || 0);
+        // A row that names its model (lab projects, box.ts) is priced at that model; otherwise the priciest.
+        const rowModel = x.project.includes(':') ? x.project.slice(x.project.lastIndexOf(':') + 1) : '';
+        claude += Math.max(claudeUsd(rowModel || priciest, x.tokens) ?? claudeUsd('opus', x.tokens) ?? 0, x.usd || 0);
       }
     }
     const total = boxes + claude;
