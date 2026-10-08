@@ -89,7 +89,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 | bakery site (median of 3 runs) | 509 s, 26/26, $4.08 | 987 s, 25/26, $1.75 |
 | club site, a 15-minute job (median) | 728 s, 42/42, $5.71 | 1,184 s, 42/42, $2.96 |
 
-- **Across the jobs, one Opus agent was faster and the crew cost about half; quality was the same or within one hidden test.** Opus was 1.9× faster on the bakery and 1.6× on the club; the crew cost 57% and 48% less. Both passed every club test; on the bakery Opus passed 1 more.
+- **Across the jobs, one Opus agent was faster and the crew cost about half; quality was the same or within one hidden test, though the port crew's code also failed the strict type check.** Opus was 1.9× faster on the bakery and 1.6× on the club; the crew cost 57% and 48% less. Both passed every club test; on the bakery Opus passed 1 more.
 - **The crew is limited by how fast changes land** (one per ~60–100 s), not by how many agents work. The simulator, fitted to these runs within ~5%, predicts it stays slower even on a job four times wider; faster landing (shorter waits, bigger trains, more reviewers) is what would change that.
 - Haiku as the planner under-plans: 1 and 3 of 7 hidden tests on the café.
 - GitHub-style (pull requests merged one at a time) timed out after an hour with 3 of 6 tasks landed.

@@ -56,7 +56,8 @@ notes (`git log --notes=qodebase`).
 We also measured which team shape works best (qodebase.app/lab, every run in
 `public/lab/runs.jsonl`): the same job given to one Opus agent and to an Opus planner with a
 crew of Haiku agents, through qodebase's queue. Across four jobs one Opus agent was faster and
-the crew cost about half, with quality the same or within one hidden test: on the bakery site Opus took 509 s
+the crew cost about half, with quality the same or within one hidden test (though on the TypeScript port the crew's code
+also failed the strict type check): on the bakery site Opus took 509 s
 vs 987 s (1.9x) and passed 1 more of 26 hidden tests, and the crew cost 57% less; on the club
 site, a 15-minute job, 728 s vs 1,184 s (1.6x), 42/42 hidden tests for both, the crew 48% less
 (API-equivalent prices; runs stalled by the platform are left out of times). The crew is
