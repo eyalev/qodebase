@@ -25,7 +25,7 @@ const DATA = process.env.OPENCLAW_DATA || path.join(os.homedir(), 'projects/gith
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const SINCE = opt('since', '2026-09-08T00:00:00Z');
-const BADS = opt('bad', '0.002,0.01,0.03').split(',').map(Number);
+const BADS = opt('bad', '0.01,0.025,0.04').split(',').map(Number);
 const SEED = +opt('seed', 1);
 const MIN = 60e3, H = 3600e3;
 const flow = JSON.parse(fs.readFileSync(path.join(DATA, 'flow.json'), 'utf8'));
@@ -45,8 +45,7 @@ changes.reverse();
 
 // PR head time (when its own CI last ran) → how stale its tested base was at landing.
 const prHead = new Map();
-const prFile = path.join(DATA, 'prs.jsonl');
-if (fs.existsSync(prFile)) for (const l of fs.readFileSync(prFile, 'utf8').split('\n')) {
+for (const prFile of ['prs.jsonl', 'prs-days.jsonl'].map((f) => path.join(DATA, f))) if (fs.existsSync(prFile)) for (const l of fs.readFileSync(prFile, 'utf8').split('\n')) {
   if (!l) continue; const p = JSON.parse(l); const c = p.lastCommit?.nodes?.[0]?.commit?.committedDate; if (p.mergedAt && c) prHead.set(p.number, Date.parse(c));
 }
 
@@ -75,72 +74,129 @@ function staleOverlap() {
 function q(xs, p) { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; }
 const days = (changes.at(-1).ready - changes[0].ready) / 864e5;
 
-function theirs(bad, r) {
-  // Every push runs CI on main; a share is cancelled by the next push (observed).
-  const runsN = Math.round(changes.length * (1 - cancelledShare));
-  // A bad change turns main red until the next change that touches one of its files lands (the fix).
-  // Red stretches overlap when two bad changes are in flight: count the union, not the sum.
-  const spans = []; let bads = 0;
-  for (let i = 0; i < changes.length; i++) {
-    if (r() >= bad) continue; bads++;
-    const fs_ = new Set(changes[i].files);
-    let j = i + 1; while (j < changes.length && !changes[j].files.some((f) => fs_.has(f))) j++;
-    spans.push([changes[i].ready, j < changes.length ? changes[j].ready : changes.at(-1).ready]);
-  }
-  let redMs = 0, end = -Infinity;
-  for (const [a, b] of spans) { if (b <= end) continue; redMs += b - Math.max(a, end); end = b; }
-  return { policy: 'theirs', main_ci_runs_per_day: +(runsN / days).toFixed(0), runner_hours_per_day: runnerPerMainRun ? +((runsN * runnerPerMainRun) / days / 60).toFixed(0) : null, wait_min_p50: 0, wait_min_p90: 0, bad_on_main: bads, bounced: 0, red_main_hours_per_day: +(redMs / H / days).toFixed(1) };
+// A suite run: `shards` jobs costing `runnerMin` runner-minutes and `wall()` ms. Each shard fails
+// transiently with probability `flake` (their measured rate); failing shards are retried up to
+// `retries` times (each retry costs that shard's share and half a wall). Returns whether it ends
+// red because of flakes alone.
+function suiteRun(suite, r, acc) {
+  acc.runs++; acc.runnerMin += suite.runnerMin; let w = suite.wall(r);
+  const perShard = suite.runnerMin / suite.shards;
+  let failing = 0; for (let s = 0; s < suite.shards; s++) if (r() < suite.flake) failing++;
+  for (let k = 0; k < suite.retries && failing; k++) { acc.runnerMin += failing * perShard; w += suite.wall(r) * 0.5; let still = 0; for (let s = 0; s < failing; s++) if (r() < suite.flake) still++; failing = still; }
+  return { w, flakyRed: failing > 0 };
 }
 
-function trains(N, K, bad, r) {
-  // Event loop over ready times; K lanes; a train takes up to N queued changes.
+// Bisect a red set: halves in parallel, down to single changes. Returns wall ms; pushes results.
+function bisect(part, isBad, suite, r, acc, out) {
+  if (part.length === 1) { (isBad[part[0]] ? out.bad : out.falseRed).push(part[0]); return 0; }
+  const x = part.slice(0, part.length >> 1), y = part.slice(part.length >> 1);
+  // Bisect re-runs only the shards that failed (suite.bisectWith), not the whole suite.
+  const bs = suite.bisectWith || suite;
+  const tx = suiteRun(bs, r, acc), ty = suiteRun(bs, r, acc);
+  const xr = x.some((i) => isBad[i]) || tx.flakyRed, yr = y.some((i) => isBad[i]) || ty.flakyRed;
+  let w = Math.max(tx.w, ty.w), wx = 0, wy = 0;
+  if (xr) wx = bisect(x, isBad, suite, r, acc, out); else out.good.push(...x);
+  if (yr) wy = bisect(y, isBad, suite, r, acc, out); else out.good.push(...y);
+  return w + Math.max(wx, wy);
+}
+
+// Pre-merge speculative trains (a merge queue): up to K trains in flight, each tested on top of
+// the one before it, up to N changes each. The head lands when green; a red head is bisected,
+// its bad changes bounce (and, after flakes, some good ones: false_bounces), and every train
+// behind it is thrown away and rebuilt (half its CI counted as wasted).
+function trains(N, K, bad, r, suite) {
   const isBad = changes.map(() => r() < bad);
-  let qi = 0; const queue = []; const lanes = Array(K).fill(0); // lane free-at times
-  const waits = []; let ciRuns = 0, bounced = 0, trainsN = 0, sizes = [];
-  let now = changes[0].ready, lastLanded = 0;
-  while (qi < changes.length || queue.length) {
-    const lane = lanes.indexOf(Math.min(...lanes));
-    now = Math.max(now, lanes[lane]);
-    while (qi < changes.length && changes[qi].ready <= now) queue.push(qi++);
-    if (!queue.length) { now = changes[qi].ready; continue; }
-    const train = queue.splice(0, N); trainsN++; sizes.push(train.length);
-    // Bisect: one run for the train; if red, halves until each bad change is isolated.
-    let runsThis = 0, wall = 0;
-    const test = (part) => { runsThis++; const w = sampleWall(r); const red = part.some((i) => isBad[i]); return { w, red }; };
-    const first = test(train); wall += first.w;
-    const good = [];
-    if (!first.red) good.push(...train);
-    else {
-      const split = (part, depth) => {
-        if (part.length === 1) { if (isBad[part[0]]) bounced++; else good.push(part[0]); return 0; }
-        const a = part.slice(0, part.length >> 1), b = part.slice(part.length >> 1);
-        const ta = test(a), tb = test(b); // both halves in parallel lanes: wall = the slower
-        let w = Math.max(ta.w, tb.w);
-        if (ta.red) w += split(a, depth + 1); else good.push(...a);
-        if (tb.red) w += split(b, depth + 1); else good.push(...b);
-        return w;
-      };
-      wall += split(train, 0);
+  const acc = { runs: 0, runnerMin: 0 };
+  let qi = 0, now = changes[0].ready; const queue = []; let inflight = [];
+  const waits = []; let bounced = 0, falseBounced = 0, rebuilt = 0, trainsN = 0; const sizes = [];
+  const start = () => {
+    while (inflight.length < K && queue.length) {
+      const t0 = inflight.length ? Math.max(now, inflight.at(-1).start) : now;
+      const part = queue.splice(0, N); trainsN++; sizes.push(part.length);
+      const res = suiteRun(suite, r, acc);
+      // A train includes everything ahead of it: it is red if any change in it or ahead is bad.
+      inflight.push({ part, start: t0, end: t0 + res.w, red: part.some((i) => isBad[i]) || res.flakyRed });
     }
-    ciRuns += runsThis;
-    // Stacked trains land in order: never before the previous train landed.
-    const landed = Math.max(now + wall, lastLanded); lastLanded = landed;
-    lanes[lane] = now + wall;
-    for (const i of good) waits.push(landed - changes[i].ready);
+  };
+  while (qi < changes.length || queue.length || inflight.length) {
+    while (qi < changes.length && changes[qi].ready <= now) queue.push(qi++);
+    start();
+    const head = inflight[0];
+    const nextArrival = qi < changes.length ? changes[qi].ready : Infinity;
+    if (!head) { now = nextArrival; continue; }
+    if (head.end > now) { now = Math.min(head.end, inflight.length < K ? nextArrival : Infinity); continue; }
+    inflight.shift();
+    if (!head.red) { for (const i of head.part) waits.push(now - changes[i].ready); continue; }
+    const out = { good: [], bad: [], falseRed: [] };
+    now += bisect(head.part, isBad, suite, r, acc, out);
+    bounced += out.bad.length; falseBounced += out.falseRed.length;
+    for (const i of out.good) waits.push(now - changes[i].ready);
+    // Everything behind the red head was tested on the wrong base: rebuild it.
+    for (const t of inflight) { acc.runnerMin -= suite.runnerMin / 2; rebuilt++; }
+    queue.unshift(...inflight.flatMap((t) => t.part)); inflight = [];
   }
-  return { policy: `train:${N}:${K}`, trains: trainsN, train_size_p50: q(sizes, 0.5), main_ci_runs_per_day: +(ciRuns / days).toFixed(0), runner_hours_per_day: runnerPerMainRun ? +((ciRuns * runnerPerMainRun) / days / 60).toFixed(0) : null, wait_min_p50: +(q(waits, 0.5) / MIN).toFixed(1), wait_min_p90: +(q(waits, 0.9) / MIN).toFixed(1), wait_min_max: +(Math.max(...waits) / MIN).toFixed(0), bad_on_main: 0, bounced, red_main_hours_per_day: 0 };
+  return { policy: `queue N${N} K${K} ${suite.name}`, trains: trainsN, train_size_p50: q(sizes, 0.5), ci_runs_per_day: +(acc.runs / days).toFixed(0), landing_runner_hours_per_day: +(acc.runnerMin / 60 / days).toFixed(0), wait_min_p50: +(q(waits, 0.5) / MIN).toFixed(1), wait_min_p90: +(q(waits, 0.9) / MIN).toFixed(1), wait_min_max: +(Math.max(...waits) / MIN).toFixed(0), bounced_bad: bounced, bounced_false: falseBounced, rebuilt_trains: rebuilt, bad_reaching_main: 0, red_main_h_per_day: 0 };
 }
 
-const out = { since: SINCE, train_ci: TRAIN_CI, changes: changes.length, days: +days.toFixed(1), per_hour: +(changes.length / days / 24).toFixed(1), ci_wall_min_p50: +(q(ciWall, 0.5) / MIN).toFixed(1), ci_wall_min_p90: +(q(ciWall, 0.9) / MIN).toFixed(1), cancelled_share: cancelledShare, runner_min_per_main_run: runnerPerMainRun, stale_overlap: staleOverlap(), results: [] };
+// Land, then verify: changes land at once (their way); every `every` minutes the suite runs on
+// main covering what landed since the last run; a red run is bisected over that batch and the
+// bad change is reverted. Red main lasts from the bad landing to its revert.
+function landThenVerify(everyMin, bad, r, suite) {
+  const isBad = changes.map(() => r() < bad);
+  const acc = { runs: 0, runnerMin: 0 };
+  let qi = 0; const reds = []; let reverted = 0, falseReverts = 0;
+  for (let t = changes[0].ready + everyMin * MIN; qi < changes.length; t += everyMin * MIN) {
+    const batch = []; while (qi < changes.length && changes[qi].ready <= t) batch.push(qi++);
+    if (!batch.length) continue;
+    const res = suiteRun(suite, r, acc);
+    const red = batch.some((i) => isBad[i]) || res.flakyRed;
+    if (!red) continue;
+    const out = { good: [], bad: [], falseRed: [] };
+    const w = res.w + bisect(batch, isBad, suite, r, acc, out);
+    for (const i of out.bad) { reverted++; reds.push([changes[i].ready, t + w]); }
+    falseReverts += out.falseRed.length;
+  }
+  reds.sort((a, b) => a[0] - b[0]);
+  let redMs = 0, end = -Infinity; for (const [a, b] of reds) { if (b <= end) continue; redMs += b - Math.max(a, end); end = b; }
+  return { policy: `land+verify every ${everyMin}m ${suite.name}`, ci_runs_per_day: +(acc.runs / days).toFixed(0), landing_runner_hours_per_day: +(acc.runnerMin / 60 / days).toFixed(0), wait_min_p50: 0, wait_min_p90: 0, bounced_bad: reverted, bounced_false: falseReverts, bad_reaching_main: reverted, red_main_h_per_day: +(redMs / H / days).toFixed(1) };
+}
+
+// Their way, measured (not simulated): push-to-main CI is near-free and tests almost nothing;
+// the hourly full suite finds breaks after they land.
+function theirs(bad) {
+  const fs_ = flow.ci.full_suite_on_main || {};
+  return { policy: 'theirs (measured)', trains: 0, ci_runs_per_day: flow.ci.runner_hours_per_day_est?.by_event?.push?.runs_per_day, landing_runner_hours_per_day: (flow.ci.runner_hours_per_day_est?.by_event?.push?.runner_hours_per_day || 0) + (flow.ci.runner_hours_per_day_est?.by_event?.schedule?.runner_hours_per_day || 0), wait_min_p50: 0, wait_min_p90: 0, bounced_bad: 0, bounced_false: 0, bad_reaching_main: Math.round(bad * changes.length), red_main_h_per_day: null, note: `full suite on main green ${fs_.all_green}/${fs_.runs} hourly runs; ${fs_.new_persistent_breaks_per_day} new persistent breaks/day` };
+}
+
+// Suites, calibrated from their jobs (flow.json): the full hourly suite and a PR-sized scope.
+const schedWall = runs.filter((x) => x.event === 'schedule' && x.conclusion !== 'cancelled').map((x) => Date.parse(x.updated_at) - Date.parse(x.run_started_at || x.created_at)).filter((x) => x > 0).sort((x, y) => x - y);
+const fsm = flow.ci.full_suite_on_main, rbe = flow.ci.runner_min_per_run_by_event, jbe = flow.ci.jobs_per_run_by_event;
+// Upper bound: the hourly run's non-repeating shard failures include breaks fixed within the hour.
+// PR runs (40% red over ~64 shards) put the real flake rate at or below ~0.8%. --flake overrides.
+const flake = opt('flake', null) != null ? +opt('flake') : (fsm?.transient_failure_per_shard_pct ?? 3) / 100;
+const RETRIES = +opt('retries', 1);
+// One shard's wall time, from the full suite's jobs; a break fails ~2.4 shards (flow.json).
+const shardWall = fs.readFileSync(path.join(DATA, 'jobs.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((j) => j.event === 'schedule').flatMap((j) => j.jobs).filter((x) => x.started_at && x.completed_at && x.conclusion !== 'skipped').map((x) => Date.parse(x.completed_at) - Date.parse(x.started_at)).filter((x) => x > 0).sort((x, y) => x - y);
+const SHARDS_PER_BREAK = 3;
+const shardSuite = (perShardMin) => ({ name: 'failing-shards', shards: SHARDS_PER_BREAK, runnerMin: SHARDS_PER_BREAK * perShardMin, flake, retries: RETRIES, wall: (r) => shardWall[Math.floor(r() * shardWall.length)] });
+const SHARD_BISECT = opt('bisect', 'shards') === 'shards';
+const SUITES = [
+  { name: 'full', shards: fsm?.jobs_per_run ?? 162, runnerMin: rbe?.schedule?.mean ?? 900, flake, retries: RETRIES, wall: (r) => schedWall[Math.floor(r() * schedWall.length)] },
+  { name: 'pr-scope', shards: jbe?.pull_request?.p50 ?? 64, runnerMin: rbe?.pull_request?.mean ?? 123, flake, retries: RETRIES, wall: (r) => sampleWall(r) },
+];
+if (SHARD_BISECT) for (const su of SUITES) su.bisectWith = shardSuite(su.runnerMin / su.shards);
+
+const out = { since: SINCE, train_ci: TRAIN_CI, flake_per_shard: flake, retries: RETRIES, bisect: SHARD_BISECT ? 'failing shards only' : 'whole suite', shard_wall_min_p50: +(q(shardWall, 0.5) / MIN).toFixed(1), full_wall_min_p50: +(q(schedWall, 0.5) / MIN).toFixed(1), changes: changes.length, days: +days.toFixed(1), per_hour: +(changes.length / days / 24).toFixed(1), ci_wall_min_p50: +(q(ciWall, 0.5) / MIN).toFixed(1), ci_wall_min_p90: +(q(ciWall, 0.9) / MIN).toFixed(1), cancelled_share: cancelledShare, runner_min_per_main_run: runnerPerMainRun, stale_overlap: staleOverlap(), results: [] };
 for (const bad of BADS) {
   const row = { bad, policies: [] };
-  row.policies.push(theirs(bad, rng(SEED)));
-  for (const [N, K] of [[4, 1], [8, 1], [16, 1], [8, 2], [8, 4]]) row.policies.push(trains(N, K, bad, rng(SEED)));
+  row.policies.push(theirs(bad));
+  for (const suite of SUITES) for (const [N, K] of [[8, 2], [16, 4], [32, 4], [32, 8]]) row.policies.push(trains(N, K, bad, rng(SEED), suite));
+  for (const every of [60, 20]) row.policies.push(landThenVerify(every, bad, rng(SEED), SUITES[0]));
   out.results.push(row);
 }
 fs.writeFileSync(path.join(DATA, 'replay.json'), JSON.stringify(out, null, 1));
 console.log(JSON.stringify({ ...out, results: undefined }, null, 1));
 for (const row of out.results) {
   console.log(`\nbad=${row.bad}`);
-  console.table(row.policies.map(({ policy, main_ci_runs_per_day, runner_hours_per_day, wait_min_p50, wait_min_p90, wait_min_max, bounced, bad_on_main, red_main_hours_per_day, train_size_p50 }) => ({ policy, main_ci_runs_per_day, runner_hours_per_day, wait_min_p50, wait_min_p90, wait_min_max, train_size_p50, bounced, bad_on_main, red_main_hours_per_day })));
+  console.table(row.policies.map(({ note, ...x }) => x));
 }

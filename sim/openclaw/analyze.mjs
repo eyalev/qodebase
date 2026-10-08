@@ -65,8 +65,9 @@ const mainStats = {
 };
 
 // ---------- PRs ----------
-const prs = uniqBy(readJsonl('prs.jsonl'), 'number').filter((p) => p.createdAt >= SINCE);
+const prs = uniqBy([...readJsonl('prs-days.jsonl'), ...readJsonl('prs.jsonl')], 'number').filter((p) => p.createdAt >= SINCE);
 const merged = prs.filter((p) => p.mergedAt), closedUnmerged = prs.filter((p) => p.state === 'CLOSED'), open = prs.filter((p) => p.state === 'OPEN');
+const mergers = new Set(merged.map((p) => p.mergedBy?.login).filter(Boolean));
 function firstOther(p, pred) {
   const me = p.author?.login;
   const ev = (p.timelineItems?.nodes || []).filter((e) => e.createdAt && who(e) !== me && pred(e));
@@ -78,8 +79,12 @@ const prStats = {
   authors: { distinct: new Set(prs.map((p) => p.author?.login)).size, top_created: top(count(prs, (p) => p.author?.login || '?'), 10), top_merged: top(count(merged, (p) => p.author?.login || '?'), 10), bot_authored: prs.filter((p) => p.author?.__typename === 'Bot').length, association: count(prs, (p) => p.authorAssociation) },
   merged_by: top(count(merged, (p) => p.mergedBy?.login || '?'), 8),
   hours_to_merge: dist(merged.map((p) => t(p.mergedAt) - t(p.createdAt)), H, 2),
-  hours_to_merge_by_maintainers: dist(merged.filter((p) => ['MEMBER', 'OWNER', 'COLLABORATOR'].includes(p.authorAssociation)).map((p) => t(p.mergedAt) - t(p.createdAt)), H, 2),
-  hours_to_merge_outside: dist(merged.filter((p) => !['MEMBER', 'OWNER', 'COLLABORATOR'].includes(p.authorAssociation)).map((p) => t(p.mergedAt) - t(p.createdAt)), H, 2),
+  // authorAssociation is unreliable here (maintainers show as CONTRIBUTOR): "maintainer" = someone who merged a PR.
+  hours_to_merge_by_mergers: dist(merged.filter((p) => mergers.has(p.author?.login)).map((p) => t(p.mergedAt) - t(p.createdAt)), H, 2),
+  hours_to_merge_others: dist(merged.filter((p) => !mergers.has(p.author?.login)).map((p) => t(p.mergedAt) - t(p.createdAt)), H, 2),
+  merged_share_by_mergers: pct(merged.filter((p) => mergers.has(p.author?.login)).length, merged.length),
+  pct_merged_others: pct(prs.filter((p) => !mergers.has(p.author?.login) && p.mergedAt).length, prs.filter((p) => !mergers.has(p.author?.login) && p.state !== 'OPEN').length),
+  mergers: mergers.size,
   hours_to_close_unmerged: dist(closedUnmerged.map((p) => t(p.closedAt) - t(p.createdAt)), H, 2),
   closed_unmerged_by: top(count(closedUnmerged, (p) => { const c = (p.timelineItems?.nodes || []).find((e) => e.__typename === 'ClosedEvent'); return c ? who(c) || '?' : '(close beyond first 12 events)'; }), 8),
   minutes_to_first_bot_touch: dist(prs.map((p) => firstOther(p, (e) => isBot(who(e)))).filter((x) => x != null), MIN, 1),
@@ -173,10 +178,58 @@ const ciStats = {
   runner_min_per_run: dist(runnerMin.map((j) => j.min), 1, 0),
   runner_min_per_run_by_conclusion: Object.fromEntries(['success', 'failure', 'cancelled'].map((c) => [c, dist(runnerMin.filter((j) => j.conclusion === c).map((j) => j.min), 1, 0)])),
 };
+// Runner minutes by event (pull_request / push / schedule are different shapes of ci.yml).
+ciStats.runner_min_per_run_by_event = Object.fromEntries(['pull_request', 'push', 'schedule'].map((e) => [e, dist(runnerMin.filter((j) => j.event === e).map((j) => j.min), 1, 0)]));
+ciStats.jobs_per_run_by_event = Object.fromEntries(['pull_request', 'push', 'schedule'].map((e) => [e, dist(jobs.filter((j) => j.event === e).map((j) => j.jobs.length), 1, 0)]));
+// The hourly scheduled run is the full suite on main. A shard that fails in two consecutive
+// hourly runs is a persistent break (real, or a test that is flaky most of the time); one
+// that does not repeat is transient (flake, or fixed within the hour).
+{
+  const sched = jobs.filter((j) => j.event === 'schedule').sort((a, b) => a.run_id - b.run_id);
+  const failed = sched.map((j) => new Set(j.jobs.filter((x) => x.conclusion === 'failure' && x.name !== 'openclaw/ci-gate').map((x) => x.name)));
+  let repeat = 0, total = 0, newPersistent = 0;
+  for (let i = 1; i < failed.length; i++) { for (const n of failed[i - 1]) { total++; if (failed[i].has(n)) repeat++; } }
+  for (let i = 1; i < failed.length - 1; i++) for (const n of failed[i]) if (!failed[i - 1].has(n) && failed[i + 1].has(n)) newPersistent++;
+  const jobsPerRun = dist(sched.map((j) => j.jobs.length), 1, 0).p50;
+  ciStats.full_suite_on_main = {
+    runs: sched.length, all_green: sched.filter((j) => j.conclusion === 'success').length,
+    failing_shards_per_run: dist(failed.map((s) => s.size), 1, 0), jobs_per_run: jobsPerRun,
+    shard_failure_repeats_next_hour_pct: pct(repeat, total),
+    new_persistent_breaks: newPersistent, new_persistent_breaks_per_day: +(newPersistent / ((sched.length - 2) / 24)).toFixed(1),
+    transient_failure_per_shard_pct: +((100 * (total - repeat)) / Math.max(1, failed.length - 1) / jobsPerRun).toFixed(2),
+  };
+}
+// Runner minutes per day: each event's own mean x its run count (the jobs sample over-weights schedule runs).
 if (runnerMin.length && mainInSpan) {
-  const mean = runnerMin.reduce((a, j) => a + j.min, 0) / runnerMin.length;
-  ciStats.runner_min_per_main_commit_est = +((mean * runs.length) / mainInSpan).toFixed(0);
-  ciStats.runner_hours_per_day_est = +((mean * runs.length) / ciSpan / 60).toFixed(0);
+  let perDay = 0; const parts = {};
+  for (const e of ['pull_request', 'push', 'schedule', 'workflow_dispatch']) {
+    const m = runnerMin.filter((j) => j.event === e); if (!m.length) continue;
+    const mean = m.reduce((a, j) => a + j.min, 0) / m.length; const n = runs.filter((r) => r.event === e).length;
+    parts[e] = { runs_per_day: +(n / ciSpan).toFixed(0), runner_hours_per_day: +((mean * n) / ciSpan / 60).toFixed(0), sampled: m.length };
+    perDay += (mean * n) / ciSpan;
+  }
+  ciStats.runner_hours_per_day_est = { total: +(perDay / 60).toFixed(0), by_event: parts, per_main_commit_min: +(perDay / (mainInSpan / ciSpan)).toFixed(0), note: 'workflow_dispatch and events without a sample are left out' };
+}
+
+// Which PRs did the PR runs serve? A run carries its PR number for same-repo branches; fork
+// runs are matched by (head branch, actor) = (PR head branch, PR author) when that pair is unique.
+{
+  const byNum = new Map(prs.map((p) => [p.number, p]));
+  const byBranch = new Map();
+  for (const p of prs) { const k = `${p.headRefName}\u0000${p.author?.login}`; byBranch.set(k, byBranch.has(k) ? null : p); }
+  const prRuns = runs.filter((r) => r.event === 'pull_request');
+  const fate = {}; let matched = 0;
+  for (const r of prRuns) {
+    const p = (r.prs?.length && byNum.get(r.prs[0])) || byBranch.get(`${r.branch}\u0000${r.actor}`);
+    if (!p) continue; matched++;
+    const f = p.mergedAt ? 'merged' : p.state === 'CLOSED' ? 'closed_unmerged' : 'open';
+    fate[f] = (fate[f] || 0) + 1;
+  }
+  const prMean = runnerMin.filter((j) => j.event === 'pull_request');
+  const meanMin = prMean.length ? prMean.reduce((a, j) => a + j.min, 0) / prMean.length : null;
+  ciStats.pr_runs_by_pr_fate = { pr_runs: prRuns.length, matched, pct_matched: pct(matched, prRuns.length), fate, pct_on_closed_unmerged: pct(fate.closed_unmerged || 0, matched),
+    runner_hours_per_day_on_closed_unmerged_est: meanMin ? +(((fate.closed_unmerged || 0) / Math.max(1, matched)) * prRuns.length * meanMin / ciSpan / 60).toFixed(0) : null,
+    note: 'runs of the last 7 days; PRs created since SINCE only, so runs of older PRs stay unmatched; a PR still open may close unmerged later' };
 }
 
 // ---------- requests ----------

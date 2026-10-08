@@ -1,0 +1,1017 @@
+{
+ "generated": "2026-10-08T11:04:11.945Z",
+ "since": "2026-09-08T00:00:00Z",
+ "main": {
+  "commits": 16273,
+  "days": 30.4,
+  "per_day": 535,
+  "via_pr": 15048,
+  "direct_push": 1225,
+  "direct_push_by": [
+   [
+    "Peter Steinberger",
+    1163
+   ],
+   [
+    "Vincent Koc",
+    18
+   ],
+   [
+    "joshavant",
+    12
+   ],
+   [
+    "Dallin Romney",
+    9
+   ],
+   [
+    "Masato Hoshino",
+    3
+   ],
+   [
+    "roboclaw-bot",
+    2
+   ],
+   [
+    "openclaw-release-bot",
+    2
+   ],
+   [
+    "ruel225",
+    2
+   ]
+  ],
+  "top_authors": [
+   [
+    "Peter Steinberger",
+    10227
+   ],
+   [
+    "Vincent Koc",
+    1426
+   ],
+   [
+    "RoboClaw",
+    794
+   ],
+   [
+    "Dallin Romney",
+    729
+   ],
+   [
+    "Ayaan Zaidi",
+    410
+   ],
+   [
+    "openclaw-mantis[bot]",
+    314
+   ],
+   [
+    "Shakker",
+    249
+   ],
+   [
+    "Jason (Json)",
+    151
+   ],
+   [
+    "Patrick Erichsen",
+    133
+   ],
+   [
+    "Josh Avant",
+    122
+   ]
+  ],
+  "files_per_commit": {
+   "n": 16273,
+   "p10": 1,
+   "p50": 4,
+   "p90": 36,
+   "mean": 14
+  },
+  "per_hour": {
+   "active_hours": 730,
+   "n": 730,
+   "p10": 12,
+   "p50": 22,
+   "p90": 34,
+   "mean": 22,
+   "max": 60
+  },
+  "hot_files": [
+   [
+    "config/assertion-safety-baseline.txt",
+    929
+   ],
+   [
+    "test/vitest/vitest.database-worker-core-paths.mjs",
+    392
+   ],
+   [
+    "scripts/pr-lib/wrapper-components.txt",
+    325
+   ],
+   [
+    "docs/reference/database-schemas/worker-access.md",
+    301
+   ],
+   [
+    "ui/src/i18n/locales/en.ts",
+    299
+   ],
+   [
+    ".github/workflows/ci.yml",
+    250
+   ],
+   [
+    "docs/reference/database-schemas/storage-changes.md",
+    249
+   ],
+   [
+    "docs/web/control-ui/chat.md",
+    234
+   ],
+   [
+    "ui/src/i18n/.i18n/ar.meta.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/catalog-fallbacks.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/de.meta.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/es.meta.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/fa.meta.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/fr.meta.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/hi.meta.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/id.meta.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/it.meta.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/ja-JP.meta.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/ko.meta.json",
+    229
+   ],
+   [
+    "ui/src/i18n/.i18n/nl.meta.json",
+    229
+   ]
+  ],
+  "same_file_within": {
+   "10min": {
+    "commits": 16273,
+    "with_same_file_commit_before": 982,
+    "pct": 6
+   },
+   "1h": {
+    "commits": 16273,
+    "with_same_file_commit_before": 3667,
+    "pct": 22.5
+   },
+   "6h": {
+    "commits": 16273,
+    "with_same_file_commit_before": 8362,
+    "pct": 51.4
+   }
+  },
+  "same_file_within_excl_changelog": {
+   "commits": 16273,
+   "with_same_file_commit_before": 3158,
+   "pct": 19.4
+  }
+ },
+ "prs": {
+  "window": {
+   "since": "2026-09-08T00:00:00Z",
+   "created": 18977,
+   "merged": 14976,
+   "closed_unmerged": 1792,
+   "open": 2209,
+   "drafts": 701
+  },
+  "pct_merged": 89.3,
+  "authors": {
+   "distinct": 837,
+   "top_created": [
+    [
+     "steipete",
+     9668
+    ],
+    [
+     "vincentkoc",
+     1774
+    ],
+    [
+     "roboclaw-bot",
+     1089
+    ],
+    [
+     "RomneyDa",
+     1049
+    ],
+    [
+     "obviyus",
+     456
+    ],
+    [
+     "openclaw-mantis",
+     326
+    ],
+    [
+     "shakkernerd",
+     263
+    ],
+    [
+     "vyctorbrzezowski",
+     181
+    ],
+    [
+     "Patrick-Erichsen",
+     171
+    ],
+    [
+     "fuller-stack-dev",
+     168
+    ]
+   ],
+   "top_merged": [
+    [
+     "steipete",
+     9057
+    ],
+    [
+     "vincentkoc",
+     1389
+    ],
+    [
+     "RomneyDa",
+     890
+    ],
+    [
+     "roboclaw-bot",
+     828
+    ],
+    [
+     "obviyus",
+     409
+    ],
+    [
+     "openclaw-mantis",
+     315
+    ],
+    [
+     "shakkernerd",
+     248
+    ],
+    [
+     "fuller-stack-dev",
+     147
+    ],
+    [
+     "Patrick-Erichsen",
+     124
+    ],
+    [
+     "joshavant",
+     122
+    ]
+   ],
+   "bot_authored": 357,
+   "association": {
+    "CONTRIBUTOR": 14620,
+    "MEMBER": 3572,
+    "NONE": 655,
+    "COLLABORATOR": 130
+   }
+  },
+  "merged_by": [
+   [
+    "steipete",
+    9131
+   ],
+   [
+    "vincentkoc",
+    1414
+   ],
+   [
+    "obviyus",
+    966
+   ],
+   [
+    "RomneyDa",
+    964
+   ],
+   [
+    "roboclaw-bot",
+    791
+   ],
+   [
+    "openclaw-mantis",
+    308
+   ],
+   [
+    "shakkernerd",
+    270
+   ],
+   [
+    "fuller-stack-dev",
+    223
+   ]
+  ],
+  "hours_to_merge": {
+   "n": 14976,
+   "p10": 0.28,
+   "p50": 1.53,
+   "p90": 20.87,
+   "mean": 11.81
+  },
+  "hours_to_merge_by_mergers": {
+   "n": 14043,
+   "p10": 0.27,
+   "p50": 1.35,
+   "p90": 15.07,
+   "mean": 7.81
+  },
+  "hours_to_merge_others": {
+   "n": 933,
+   "p10": 2.62,
+   "p50": 20.13,
+   "p90": 204.81,
+   "mean": 72.04
+  },
+  "merged_share_by_mergers": 93.8,
+  "pct_merged_others": 54.8,
+  "mergers": 35,
+  "hours_to_close_unmerged": {
+   "n": 1792,
+   "p10": 0.14,
+   "p50": 4.57,
+   "p90": 231.25,
+   "mean": 64.89
+  },
+  "closed_unmerged_by": [
+   [
+    "(close beyond first 12 events)",
+    1119
+   ],
+   [
+    "steipete",
+    292
+   ],
+   [
+    "vincentkoc",
+    90
+   ],
+   [
+    "RomneyDa",
+    47
+   ],
+   [
+    "openclaw-barnacle",
+    32
+   ],
+   [
+    "roboclaw-bot",
+    27
+   ],
+   [
+    "obviyus",
+    17
+   ],
+   [
+    "shakkernerd",
+    9
+   ]
+  ],
+  "minutes_to_first_bot_touch": {
+   "n": 18976,
+   "p10": 0.1,
+   "p50": 0.1,
+   "p90": 0.1,
+   "mean": 0.1
+  },
+  "minutes_to_first_human_touch": {
+   "n": 1590,
+   "p10": 2,
+   "p50": 306,
+   "p90": 9401,
+   "mean": 2854,
+   "note": "only within the first 12 timeline events; bots fill most of them"
+  },
+  "files_per_pr": {
+   "n": 18977,
+   "p10": 1,
+   "p50": 5,
+   "p90": 37,
+   "mean": 18
+  },
+  "lines_per_merged_pr": {
+   "n": 14976,
+   "p10": 14,
+   "p50": 185,
+   "p90": 1854,
+   "mean": 898
+  },
+  "commits_per_pr": {
+   "n": 18977,
+   "p10": 1,
+   "p50": 1,
+   "p90": 6,
+   "mean": 5
+  },
+  "force_pushed": 12.2,
+  "links_an_issue": {
+   "merged": 11.3,
+   "all": 15.3
+  },
+  "last_check_state_of_merged": {
+   "SUCCESS": 13538,
+   "FAILURE": 1368,
+   "PENDING": 69,
+   "none": 1
+  },
+  "labels_top": [
+   [
+    "status: 👀 ready for maintainer look",
+    15411
+   ],
+   [
+    "rating: 🐚 platinum hermit",
+    14018
+   ],
+   [
+    "P2",
+    10607
+   ],
+   [
+    "maintainer",
+    8869
+   ],
+   [
+    "proof: sufficient",
+    6927
+   ],
+   [
+    "docs",
+    6422
+   ],
+   [
+    "P3",
+    5412
+   ],
+   [
+    "size: S",
+    5406
+   ],
+   [
+    "size: XS",
+    4538
+   ],
+   [
+    "gateway",
+    4536
+   ],
+   [
+    "size: M",
+    3741
+   ],
+   [
+    "agents",
+    3545
+   ],
+   [
+    "app: web-ui",
+    3305
+   ],
+   [
+    "size: XL",
+    3082
+   ],
+   [
+    "scripts",
+    2735
+   ],
+   [
+    "merge-risk: 🚨 compatibility",
+    2247
+   ],
+   [
+    "size: L",
+    2034
+   ],
+   [
+    "rating: 🦐 gold shrimp",
+    1870
+   ],
+   [
+    "proof: 📸 screenshot",
+    1707
+   ],
+   [
+    "status: 📣 needs proof",
+    1504
+   ],
+   [
+    "P1",
+    1502
+   ],
+   [
+    "cli",
+    1459
+   ],
+   [
+    "commands",
+    1402
+   ],
+   [
+    "rating: 🦪 silver shellfish",
+    911
+   ],
+   [
+    "security-sensitive-changed",
+    813
+   ],
+   [
+    "rating: 🦞 diamond lobster",
+    795
+   ],
+   [
+    "extensions: codex",
+    788
+   ],
+   [
+    "status: ⏳ waiting on author",
+    775
+   ],
+   [
+    "merge-risk: 🚨 security-boundary",
+    725
+   ],
+   [
+    "extensions: qa-lab",
+    534
+   ]
+  ],
+  "too_many_prs_label": 34,
+  "peak_open_per_author": [
+   [
+    "vincentkoc",
+    252
+   ],
+   [
+    "steipete",
+    224
+   ],
+   [
+    "roboclaw-bot",
+    146
+   ],
+   [
+    "RomneyDa",
+    66
+   ],
+   [
+    "vyctorbrzezowski",
+    66
+   ],
+   [
+    "Patrick-Erichsen",
+    36
+   ],
+   [
+    "Alix-007",
+    25
+   ],
+   [
+    "chelsealong",
+    20
+   ],
+   [
+    "wangmiao0668000666",
+    20
+   ],
+   [
+    "Marvinthebored",
+    20
+   ]
+  ],
+  "authors_ever_over_20_open": 7,
+  "merged_while_open_same_file": {
+   "merged": 14976,
+   "exposed": 5220,
+   "pct": 34.9,
+   "pct_excl_changelog_lock": 34.5,
+   "other_merges_into_same_files": {
+    "n": 14976,
+    "p10": 0,
+    "p50": 0,
+    "p90": 10,
+    "mean": 6
+   }
+  }
+ },
+ "issues": {
+  "window": {
+   "created": 6408,
+   "closed": 3380,
+   "open": 3028
+  },
+  "per_day": 210,
+  "state_reason": {
+   "NOT_PLANNED": 928,
+   "COMPLETED": 2445,
+   "DUPLICATE": 7
+  },
+  "closed_by": [
+   [
+    "clawsweeper",
+    1116
+   ],
+   [
+    "(beyond first 15 events)",
+    814
+   ],
+   [
+    "steipete",
+    559
+   ],
+   [
+    "obviyus",
+    283
+   ],
+   [
+    "shakkernerd",
+    117
+   ],
+   [
+    "roboclaw-bot",
+    95
+   ],
+   [
+    "vincentkoc",
+    81
+   ],
+   [
+    "vyctorbrzezowski",
+    70
+   ],
+   [
+    "jalehman",
+    24
+   ],
+   [
+    "fuller-stack-dev",
+    20
+   ]
+  ],
+  "closed_by_bot_pct": 36.1,
+  "fixed": {
+   "by_pr_or_commit_or_ref": 1795,
+   "pct_of_closed": 53.1,
+   "how": {
+    "PullRequest": 1119,
+    "merged PR referenced": 660,
+    "Commit": 16
+   }
+  },
+  "duplicates": {
+   "n": 8,
+   "pct": 0.1
+  },
+  "hours_to_close": {
+   "n": 3380,
+   "p10": 0.12,
+   "p50": 2.34,
+   "p90": 156.26,
+   "mean": 48.79
+  },
+  "hours_to_close_not_planned": {
+   "n": 928,
+   "p10": 0.11,
+   "p50": 0.15,
+   "p90": 139.17,
+   "mean": 40.83
+  },
+  "hours_to_close_completed": {
+   "n": 2445,
+   "p10": 0.16,
+   "p50": 4.8,
+   "p90": 172.64,
+   "mean": 51.95
+  },
+  "minutes_to_first_triage_any": {
+   "n": 6373,
+   "p10": 0.3,
+   "p50": 6.4,
+   "p90": 11.5,
+   "mean": 13.5
+  },
+  "minutes_to_first_label": {
+   "n": 6274,
+   "p10": 0.4,
+   "p50": 6.9,
+   "p90": 14.5,
+   "mean": 24.4
+  },
+  "minutes_to_first_human": {
+   "n": 2061,
+   "p10": 10,
+   "p50": 285,
+   "p90": 8558,
+   "mean": 2768,
+   "of": 6408,
+   "note": "within the first 15 timeline events only"
+  },
+  "clawsweeper_labels": [
+   [
+    "clawsweeper:no-new-fix-pr",
+    2986
+   ],
+   [
+    "clawsweeper:source-repro",
+    2457
+   ],
+   [
+    "clawsweeper:needs-maintainer-review",
+    1288
+   ],
+   [
+    "clawsweeper:needs-product-decision",
+    1172
+   ],
+   [
+    "clawsweeper:linked-pr-open",
+    1100
+   ],
+   [
+    "clawsweeper:needs-info",
+    711
+   ],
+   [
+    "clawsweeper:fix-shape-clear",
+    608
+   ],
+   [
+    "clawsweeper:queueable-fix",
+    608
+   ],
+   [
+    "clawsweeper:needs-security-review",
+    536
+   ],
+   [
+    "clawsweeper:bulk-filed",
+    398
+   ],
+   [
+    "clawsweeper:needs-live-repro",
+    351
+   ],
+   [
+    "clawsweeper:not-repro-on-main",
+    103
+   ],
+   [
+    "clawsweeper:manual-only",
+    43
+   ],
+   [
+    "clawsweeper:current-main-repro",
+    17
+   ]
+  ],
+  "priority": {
+   "P2": 3018,
+   "P1": 1075,
+   "P3": 892,
+   "P0": 1314
+  },
+  "open_needs_decision": 1381,
+  "authors_bot": 6
+ },
+ "ci": {
+  "runs": 13969,
+  "days": 7,
+  "per_hour": 83.2,
+  "by_event": {
+   "workflow_dispatch": 254,
+   "pull_request": 10486,
+   "schedule": 153,
+   "push": 3076
+  },
+  "by_conclusion": {
+   "workflow_dispatch:failure": 190,
+   "pull_request:failure": 2800,
+   "pull_request:skipped": 2301,
+   "pull_request:cancelled": 1249,
+   "schedule:failure": 149,
+   "push:success": 2936,
+   "pull_request:success": 4129,
+   "push:cancelled": 78,
+   "schedule:cancelled": 3,
+   "workflow_dispatch:cancelled": 46,
+   "workflow_dispatch:success": 17,
+   "pull_request:action_required": 6,
+   "push:failure": 62,
+   "workflow_dispatch:startup_failure": 1,
+   "schedule:success": 1
+  },
+  "wall_min_success": {
+   "n": 7083,
+   "p10": 1.7,
+   "p50": 7,
+   "p90": 13.1,
+   "mean": 6.9
+  },
+  "wall_min_failure": {
+   "n": 3201,
+   "p10": 7,
+   "p50": 11.6,
+   "p90": 29.8,
+   "mean": 17.3
+  },
+  "pr_fail_pct": 40.4,
+  "main_push_runs": 3076,
+  "main_fail_pct": 2.1,
+  "main_cancelled_pct": 2.5,
+  "reruns": 200,
+  "main_commits_in_span": 3081,
+  "runs_per_main_commit": 4.53,
+  "sampled_runs_with_jobs": 353,
+  "jobs_per_run": {
+   "n": 353,
+   "p10": 39,
+   "p50": 97,
+   "p90": 163,
+   "mean": 106
+  },
+  "runner_min_per_run": {
+   "n": 353,
+   "p10": 0,
+   "p50": 244,
+   "p90": 1010,
+   "mean": 460
+  },
+  "runner_min_per_run_by_conclusion": {
+   "success": {
+    "n": 103,
+    "p10": 1,
+    "p50": 53,
+    "p90": 178,
+    "mean": 84
+   },
+   "failure": {
+    "n": 182,
+    "p10": 196,
+    "p50": 849,
+    "p90": 1098,
+    "mean": 805
+   },
+   "cancelled": {
+    "n": 28,
+    "p10": 0,
+    "p50": 128,
+    "p90": 943,
+    "mean": 250
+   }
+  },
+  "runner_min_per_run_by_event": {
+   "pull_request": {
+    "n": 150,
+    "p10": -1,
+    "p50": 101,
+    "p90": 330,
+    "mean": 123
+   },
+   "push": {
+    "n": 48,
+    "p10": 0,
+    "p50": 1,
+    "p90": 2,
+    "mean": 1
+   },
+   "schedule": {
+    "n": 153,
+    "p10": 788,
+    "p50": 883,
+    "p90": 1106,
+    "mean": 912
+   }
+  },
+  "jobs_per_run_by_event": {
+   "pull_request": {
+    "n": 150,
+    "p10": 39,
+    "p50": 64,
+    "p90": 113,
+    "mean": 69
+   },
+   "push": {
+    "n": 48,
+    "p10": 38,
+    "p50": 39,
+    "p90": 40,
+    "mean": 38
+   },
+   "schedule": {
+    "n": 153,
+    "p10": 161,
+    "p50": 162,
+    "p90": 163,
+    "mean": 161
+   }
+  },
+  "full_suite_on_main": {
+   "runs": 153,
+   "all_green": 1,
+   "failing_shards_per_run": {
+    "n": 153,
+    "p10": 2,
+    "p50": 6,
+    "p90": 15,
+    "mean": 7
+   },
+   "jobs_per_run": 162,
+   "shard_failure_repeats_next_hour_pct": 28.8,
+   "new_persistent_breaks": 202,
+   "new_persistent_breaks_per_day": 32.1,
+   "transient_failure_per_shard_pct": 3.22
+  },
+  "runner_hours_per_day_est": {
+   "total": 4679,
+   "by_event": {
+    "pull_request": {
+     "runs_per_day": 1498,
+     "runner_hours_per_day": 3082,
+     "sampled": 150
+    },
+    "push": {
+     "runs_per_day": 439,
+     "runner_hours_per_day": 9,
+     "sampled": 48
+    },
+    "schedule": {
+     "runs_per_day": 22,
+     "runner_hours_per_day": 332,
+     "sampled": 153
+    },
+    "workflow_dispatch": {
+     "runs_per_day": 36,
+     "runner_hours_per_day": 1256,
+     "sampled": 2
+    }
+   },
+   "per_main_commit_min": 638,
+   "note": "workflow_dispatch and events without a sample are left out"
+  },
+  "pr_runs_by_pr_fate": {
+   "pr_runs": 10486,
+   "matched": 9553,
+   "pct_matched": 91.1,
+   "fate": {
+    "open": 2383,
+    "merged": 6905,
+    "closed_unmerged": 265
+   },
+   "pct_on_closed_unmerged": 2.8,
+   "runner_hours_per_day_on_closed_unmerged_est": 85,
+   "note": "runs of the last 7 days; PRs created since SINCE only, so runs of older PRs stay unmatched; a PR still open may close unmerged later"
+  }
+ },
+ "requests": {
+  "total": 2165,
+  "by_api": {
+   "graphql:prs": 513,
+   "graphql:issues": 129,
+   "rest:runs": 156,
+   "graphql:prs-days": 191,
+   "rest:jobs": 1176
+  },
+  "graphql_points": 1291,
+  "non_200": 115
+ }
+}
