@@ -165,21 +165,29 @@ export class Project extends DurableObject<Env> {
     // maxAgents: a landing project's own cap (landing flags.caps), else the instance's.
     const max = maxAgents || Number(this.env.MAX_AGENTS_PER_PROJECT || 6);
     const live = info.agents.filter((a) => a.state === 'working' || a.state === 'pushed' || a.state === 'blocked');
-    if (live.length >= max) throw new Error(`agent limit reached (${max} open per project)`);
-    const id = `${info.slug}--${Math.random().toString(36).slice(2, 7)}`;
-    const from = fromAgent ? info.agents.find((a) => a.id === fromAgent) : undefined;
-    if (fromAgent && !from) throw new Error(`no agent ${fromAgent} in this project`);
-    using repo = await this.env.ARTIFACTS.get(from ? from.fork : info.repo);
-    const baseC = (await repo.log({ limit: 1 }).catch(() => []))[0];
-    const forked = await repo.fork(id, { description: task.slice(0, 200), defaultBranchOnly: true });
-    const agent: Agent = { id, task, fork: forked.name, remote: forked.remote, createdAt: Date.now(), state: 'working',
-      request: info.lastRequest && Date.now() - info.lastRequest.at < 30 * 60_000 ? info.lastRequest.text.slice(0, 1000) : undefined,
-      base: baseC ? { commit: baseC.hash, tree: baseC.treeHash } : undefined };
-    info.agents.push(agent);
-    await this.ctx.storage.put('info', info);
-    log('project', 'agent_added', { slug: info.slug, id });
-    return agent;
+    // Spawns still forking count too: parallel spawns each passed the check before any was saved.
+    if (live.length + this.#spawning >= max) throw new Error(`agent limit reached (${max} open per project)`);
+    this.#spawning++;
+    try {
+      const id = `${info.slug}--${Math.random().toString(36).slice(2, 7)}`;
+      const from = fromAgent ? info.agents.find((a) => a.id === fromAgent) : undefined;
+      if (fromAgent && !from) throw new Error(`no agent ${fromAgent} in this project`);
+      using repo = await this.env.ARTIFACTS.get(from ? from.fork : info.repo);
+      const baseC = (await repo.log({ limit: 1 }).catch(() => []))[0];
+      const forked = await repo.fork(id, { description: task.slice(0, 200), defaultBranchOnly: true });
+      const agent: Agent = { id, task, fork: forked.name, remote: forked.remote, createdAt: Date.now(), state: 'working',
+        request: info.lastRequest && Date.now() - info.lastRequest.at < 30 * 60_000 ? info.lastRequest.text.slice(0, 1000) : undefined,
+        base: baseC ? { commit: baseC.hash, tree: baseC.treeHash } : undefined };
+      // Re-read before saving: other spawns (or verdicts, merges) saved while this one forked. Writing
+      // back the copy read before the fork lost agents: 4 parallel spawns kept 1 (lab run, 2026-10-08).
+      const now = await this.#need();
+      now.agents.push(agent);
+      await this.ctx.storage.put('info', now);
+      log('project', 'agent_added', { slug: now.slug, id });
+      return agent;
+    } finally { this.#spawning--; }
   }
+  #spawning = 0;
 
   /** Remote + write token for what a box clones: its fork, or main for the router. */
   async boxRepo(agentId: string, ttlS = 7 * 86400): Promise<{ task: string; remote: string; token: string; role: Role }> {

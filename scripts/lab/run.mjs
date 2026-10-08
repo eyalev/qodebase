@@ -82,7 +82,8 @@ const pred = predict(variant, scenario.profile ? { ...scenario.profile, id: scen
 const predicted = entry?.predicted || { landed: pred.landed, wallS: pred.wallS, apiUsdStd: pred.apiUsdStd, quality: pred.quality, simVersion: pred.simVersion };
 const hash = createHash('sha1').update(`${key}|${scenarioId}|${stage}`).digest('hex').slice(0, 5);
 const short = scenarioId.replace(/[^a-z0-9]/g, '').slice(0, 10);
-const name = `lab-${short}-${hash}-r${seed}`;   // NAME_RE: no '--', <= 39 chars
+// --retry <letter>: redo a run that broke for reasons outside the variant (same seed, fresh project).
+const name = `lab-${short}-${hash}-r${seed}${opt('--retry', '')}`;   // NAME_RE: no '--', <= 39 chars
 const slug = `eyal.${name}`;
 
 // ---- stage guard -------------------------------------------------------------------------
