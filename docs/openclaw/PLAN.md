@@ -40,6 +40,8 @@ star or open anything on their repo or ClawSweeper.
       Jev, Clef-flash and Haiku 5.5; compare with ClawSweeper's labels + actual outcomes as ground truth.
       _Done 2026-10-08: Haiku 50% (43-57), Jev 40%, Clef-flash 36% vs ClawSweeper 94% (not independent);
       text-only classifiers are no triage lane; next = a triage agent with repo + issue index. ~$0.09._
+- [x] (added, Eyal) Triage agent with vs without the project's dated policy docs, 299 issues: 55% vs 58%,
+      paired 13 vs 23, p = 0.13 -> no gain; close 27% vs 25%. $0.62 vs $0.36. FINDINGS 2b-4.
 - [x] Fix lane PREP done; RUN dropped for now (manager, decision C): one test's import closure ~11k
       files, Node 24 + pnpm, 2.8 GB install; boxes need per-project toolchains first (post-contest).
       Candidates + verified fixes in docs/openclaw/data/. Original item:

@@ -206,6 +206,34 @@ Data: `data/triage-score.json` → `agent_rounds` and `on_agent_subset.paired_vs
 - Cost: v1 on 200 $0.24, v1 + v2 on the new 100 $0.25; all rounds $0.50 API-equivalent at Haiku 5.5 rates, on the
   subscription (cap $1).
 
+## Phase 2b-4: the triage agent with vs without the project's own policy (Eyal's design, 2026-10-08)
+
+Same v1 harness (Haiku 5.5, dated code snapshot + earlier-issue search) on all 300 issues (the 200 + the new 100),
+paired: v1 vs v1 + policy. **Policy = the project's documents as they were at each snapshot date**, verbatim from
+git (no later rules): openclaw `VISION.md`, `CONTRIBUTING.md`, root `AGENTS.md`,
+`.agents/skills/tag-duplicate-prs-issues` and `security-triage` `SKILL.md`, and ClawSweeper's 6–7
+`docs/*close-polic*.md` at its last commit before the date (bundles: ~100 KB, `data/policy-<date>.md` in the
+local mirror). **Put in the system prompt**, not as files to read (v2 showed the agent rarely reads what it is not
+handed; a system prompt is also cached across the issues of one snapshot), plus one line in the task: "the project's
+own policy documents as of <date> are in your system prompt: apply them". 299 of 300 answered (one answer's JSON
+was cut off). Data: `data/triage-score.json` → `agent_rounds.round3_policy_vs_v1_on_300`.
+
+| on the same 299 issues | accuracy (95% CI) | close | duplicate | fix | decision |
+|---|---|---|---|---|---|
+| v1 (no policy) | **58.5%** (53–64) | 25% (17–36) | 63% (51–73) | 69% (58–79) | 76% (65–84) |
+| v1 + policy | 55.2% (50–61) | 27% (18–38) | 64% (52–74) | 61% (50–72) | 69% (58–79) |
+
+- **Paired (exact McNemar): policy alone right on 13, no-policy alone right on 23, p = 0.13.** The project's own
+  rules did not help this agent; if anything it got slightly worse (both the original 200 and the new 100 point
+  the same way: 58% vs 61%, 50% vs 54%).
+- **"Close" did not move** (27% vs 25%), the class the policy was meant to fix; fix and decision lost a few points.
+- Cost: ~72k more input tokens per call (cached: 90k vs 18k per call incl. cache), **$0.62 vs $0.36
+  API-equivalent** for the 299 (subscription; this round's cap $2).
+- **Caveat:** the ground truth (outcomes, ClawSweeper's closings) was itself produced by applying this policy, so
+  "with policy" measures *following the project's rules*, not independent judgement; even so, a small model handed
+  the rules does not reproduce the calls. What ClawSweeper has that the agent does not is more than the documents:
+  live repro on current main, linked-PR state, maintainers' product decisions, and a much larger model per item.
+
 ## Phase 2c: why there is no OpenClaw fix lane (yet) (2026-10-08, manager's decision C)
 
 Prepared without model calls (`sim/openclaw/fixlane.mjs`, `closure.mjs`): **199 candidate fixes** from the mirrored
@@ -234,8 +262,8 @@ per scenario (corepack pnpm), a Node 24 image, a shared package store or a snaps
 starters of ~10k+ files. That is option A, **post-contest work**. Until then OpenClaw stays a triage and landing study.
 
 ## What phase 2 should test next
-- Triage: give the agent the project's policy (CONTRIBUTING, the support/out-of-scope rules ClawSweeper
-  applies) instead of more code reading; test on a fresh 100 again.
+- Triage: the policy documents did not help Haiku (2b-4). Next candidates: a stronger model on the same 300
+  (Sonnet 5.5), and giving the agent current main + linked-PR state as ClawSweeper has.
 - Duplicate rate over all closed issues from comment text (85 of a 900-issue pool were duplicates by comment,
   so the rate is far above GitHub's 0.1%; measure it properly).
 - Post-contest (option A): fix lane on OpenClaw once boxes have per-project toolchains (Node 24, pnpm install step,

@@ -595,6 +595,167 @@
    "turns_p50_v2": 4,
    "turns_p50_v1": 3
   },
+  "round3_policy_vs_v1_on_300": {
+   "a": "haiku-agent v1 + policy (system prompt: VISION, CONTRIBUTING, AGENTS, 2 skills, ClawSweeper close policies, as of the snapshot date)",
+   "b": "haiku-agent v1",
+   "n": 299,
+   "a_accuracy": {
+    "k": 165,
+    "n": 299,
+    "p": 0.552,
+    "lo": 0.495,
+    "hi": 0.607
+   },
+   "b_accuracy": {
+    "k": 175,
+    "n": 299,
+    "p": 0.585,
+    "lo": 0.529,
+    "hi": 0.64
+   },
+   "only_a_right": 13,
+   "only_b_right": 23,
+   "mcnemar_exact_p": 0.1325,
+   "by_set": {
+    "all300": {
+     "n": 299,
+     "a_accuracy": {
+      "k": 165,
+      "n": 299,
+      "p": 0.552,
+      "lo": 0.495,
+      "hi": 0.607
+     },
+     "b_accuracy": {
+      "k": 175,
+      "n": 299,
+      "p": 0.585,
+      "lo": 0.529,
+      "hi": 0.64
+     },
+     "only_a_right": 13,
+     "only_b_right": 23,
+     "mcnemar_exact_p": 0.1325
+    },
+    "original200": {
+     "n": 200,
+     "a_accuracy": {
+      "k": 116,
+      "n": 200,
+      "p": 0.58,
+      "lo": 0.511,
+      "hi": 0.646
+     },
+     "b_accuracy": {
+      "k": 122,
+      "n": 200,
+      "p": 0.61,
+      "lo": 0.541,
+      "hi": 0.675
+     },
+     "only_a_right": 7,
+     "only_b_right": 13,
+     "mcnemar_exact_p": 0.2632
+    },
+    "new100": {
+     "n": 99,
+     "a_accuracy": {
+      "k": 49,
+      "n": 99,
+      "p": 0.495,
+      "lo": 0.399,
+      "hi": 0.592
+     },
+     "b_accuracy": {
+      "k": 53,
+      "n": 99,
+      "p": 0.535,
+      "lo": 0.438,
+      "hi": 0.63
+     },
+     "only_a_right": 6,
+     "only_b_right": 10,
+     "mcnemar_exact_p": 0.4545
+    }
+   },
+   "recall_policy": {
+    "close": {
+     "k": 20,
+     "n": 75,
+     "p": 0.267,
+     "lo": 0.18,
+     "hi": 0.376
+    },
+    "duplicate": {
+     "k": 47,
+     "n": 74,
+     "p": 0.635,
+     "lo": 0.521,
+     "hi": 0.736
+    },
+    "fix": {
+     "k": 46,
+     "n": 75,
+     "p": 0.613,
+     "lo": 0.5,
+     "hi": 0.715
+    },
+    "decision": {
+     "k": 52,
+     "n": 75,
+     "p": 0.693,
+     "lo": 0.582,
+     "hi": 0.786
+    }
+   },
+   "recall_v1": {
+    "close": {
+     "k": 19,
+     "n": 75,
+     "p": 0.253,
+     "lo": 0.169,
+     "hi": 0.362
+    },
+    "duplicate": {
+     "k": 47,
+     "n": 75,
+     "p": 0.627,
+     "lo": 0.514,
+     "hi": 0.727
+    },
+    "fix": {
+     "k": 52,
+     "n": 75,
+     "p": 0.693,
+     "lo": 0.582,
+     "hi": 0.786
+    },
+    "decision": {
+     "k": 57,
+     "n": 75,
+     "p": 0.76,
+     "lo": 0.652,
+     "hi": 0.842
+    }
+   },
+   "cost_policy": 0.616,
+   "cost_v1": 0.36,
+   "tokens_policy": {
+    "calls": 299,
+    "cache_read": 25181183,
+    "cache_write": 1748112,
+    "output": 291503,
+    "per_call_input_incl_cache": 90069
+   },
+   "tokens_v1": {
+    "calls": 300,
+    "cache_read": 3847026,
+    "cache_write": 1561815,
+    "output": 251423,
+    "per_call_input_incl_cache": 18034
+   },
+   "caveat": "Ground truth (outcomes and ClawSweeper closings) was produced by applying this same policy, so \"with policy\" measures following the project's rules, not independent judgement."
+  },
   "note": "v2 wording was written after seeing v1 on set A; it was never run on A or B. Set C = 100 issues never used before (triage-sample2.jsonl). Costs are API-equivalent at Haiku 5.5 rates; billing was the subscription."
  }
 }
