@@ -27,7 +27,8 @@ blocks are ms epoch too (subtract `timings.askAt` for "seconds from the request"
   "predicted": { "landed": 0, "wallS": 0, "apiUsdStd": 0, "quality": 0, "simVersion": "" },  // qb4's public/lab/predict.js, called BEFORE the run
   "status": "done|stopped-budget|failed|timeout",
   "excluded": "<reason>",                      // optional: present = do not count this line as the variant's result (e.g. a platform bug stopped it)
-  "timings": { "askAt": 0, "planAt": 0, "firstLandAt": 0, "lastLandAt": 0, "wallS": 0, "medianAskToLandS": 0 },
+  "timings": { "askAt": 0, "planAt": 0, "firstLandAt": 0, "lastLandAt": 0, "wallS": 0, "medianAskToLandS": 0,
+               "stallS": 0 },   // optional: seconds of wallS lost to a known PLATFORM stall (said in notes); calibration subtracts it
   "counts": { "tasksPlanned": 0, "tasksLanded": 0, "dupIntents": 0, "conflicts": 0, "replaysHandler": 0, "replaysLlm": 0,
               "leads": 0, "bounces": 0, "reviews": 0, "reviewRejects": 0, "breaksOnMain": 0, "humanInterventions": 0 },
   "tasks": [                                   // from the Landing DO records (or public/lab/runs/<id>.tasks.json when large: "tasks": "runs/<id>.tasks.json")
