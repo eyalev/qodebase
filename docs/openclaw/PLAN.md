@@ -14,6 +14,10 @@ star or open anything on their repo or ClawSweeper.
       ~/projects/github/openclaw/data/): last 30 days of PRs (author, created/merged, files touched,
       CI duration/result, labels, linked issues) and issues (labels incl. ClawSweeper's, close reason,
       duplicates/cluster labels). Report request counts; stay far below rate limits.
+      _2026-10-08: main clone (16,273 commits since 09-08), issues (6,408) and 7 days of ci.yml runs
+      (13,970) done; PRs fetching from both ends (`prs` newest-first + `prs-days` by day); jobs of
+      every scheduled run + a 200-run sample fetching (runner minutes). Scripts: sim/openclaw/
+      fetch|analyze|replay.mjs; every request in data/requests.jsonl._
 - [ ] Describe their real flow as numbers: time to first triage, to close, to merge; CI minutes per
       merge; how many PRs touch the same files within an hour; duplicate rate; how much work is closed
       vs fixed.
