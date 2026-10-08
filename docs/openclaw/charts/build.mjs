@@ -152,6 +152,45 @@ const C = [];
   });
 }
 
+// Dot + 95% interval per row, in panels side by side (slide) or stacked (phone), one 0-100%
+// scale per panel. rows: {label, short, hi}; panels: [{title, v(row) -> {p, lo, hi}, mark?}]
+function dotPanels(f, box, rows, panels) {
+  const pct = (v) => `${Math.round(100 * v)}%`;
+    let out = '';
+    const dot = (x, cy, hiRow) => `<circle cx="${x}" cy="${cy}" r="12" fill="var(--${hiRow ? 'acc' : 'dim'})" stroke="var(--bg)" stroke-width="3"/>`;
+    if (L(f)) {
+      const labelW = 510, gap = 60, pw = (box.w - labelW - gap) / 2, tw = pw - 120, rh = 86, th = 30;
+      panels.forEach((pn, k) => {
+        const px = box.x + labelW + k * (pw + gap);
+        out += text(px, box.y + 26, pn.title, { size: f.txt - 8, weight: 600 });
+        rows.forEach((r, i) => {
+          const y = box.y + 56 + i * rh, cy = y + th / 2, a = pn.v(r), X = (p) => px + p * tw;
+          if (k === 0) out += text(box.x, cy + (f.txt - 8) * 0.35, r.label, { size: f.txt - 8, c: r.hi ? 'fg' : 'dim', weight: r.hi ? 600 : 400 });
+          out += track(px, y, tw, th);
+          if (pn.mark) out += `<line x1="${X(pn.mark)}" x2="${X(pn.mark)}" y1="${y - 6}" y2="${y + th + 6}" stroke="var(--dim)" stroke-width="2" stroke-dasharray="4 4"/>`;
+          out += rect(X(a.lo), y + 4, (a.hi - a.lo) * tw, th - 8, 'bar', { title: `${r.label}, ${pn.title.toLowerCase()}: ${pct(a.p)} (${pct(a.lo)}-${pct(a.hi)})` }) + dot(X(a.p), cy, r.hi);
+          out += text(px + tw + 16, cy + (f.val - 8) * 0.35, pct(a.p), { size: f.val - 8, weight: 600, c: r.hi ? 'fg' : 'dim' });
+        });
+      });
+      out += text(box.x + labelW, box.y + 56 + rows.length * 86 + 20, 'dashed: guessing (one in four)', { size: f.src, c: 'dim' });
+    } else {
+      const ph = (box.h - 40) / 2;
+      panels.forEach((pn, k) => {
+        const py = box.y + k * (ph + 20), tw = box.w - 330, th = 26, rh = (ph - 50) / rows.length;
+        out += text(box.x, py + 30, pn.title, { size: f.txt - 8, weight: 600 });
+        rows.forEach((r, i) => {
+          const y = py + 52 + i * rh, cy = y + th / 2, a = pn.v(r), bx = box.x + 220, X = (p) => bx + p * tw;
+          out += text(box.x, cy + 10, r.short, { size: f.txt - 14, c: r.hi ? 'fg' : 'dim', weight: r.hi ? 600 : 400 });
+          out += track(bx, y, tw, th);
+          if (pn.mark) out += `<line x1="${X(pn.mark)}" x2="${X(pn.mark)}" y1="${y - 4}" y2="${y + th + 4}" stroke="var(--dim)" stroke-width="2" stroke-dasharray="4 4"/>`;
+          out += rect(X(a.lo), y + 3, (a.hi - a.lo) * tw, th - 6, 'bar') + dot(X(a.p), cy, r.hi);
+          out += text(bx + tw + 14, cy + 11, pct(a.p), { size: f.txt - 12, weight: 600, c: r.hi ? 'fg' : 'dim' });
+        });
+      });
+    }
+  return out;
+}
+
 // 6. triage, like for like: the 100 issues the triage agent also did (qb9: use on_agent_subset)
 {
   const sub = triage.on_agent_subset, perKind = sub.n / Object.keys(triage.outcome_mix).length;
@@ -179,44 +218,33 @@ const C = [];
       [`agent cost for ${sub.n}`, `$${triage.agent_detail.cost_usd_api_equiv} API-equivalent`, `${triage.agent_detail.turns_p50} turns (median)`, '', '', '', ''],
       ...(paired ? [['agent vs text-only Haiku, paired', `only the agent right: ${paired.only_agent_right}`, `only text right: ${paired.only_text_right}`, pTxt, '', '', '']] : []),
       ...(v2 ? [[`agent prompt v2 vs v1, ${v2.n} new issues`, `${pct(v2.a_accuracy.p)} vs ${pct(v2.b_accuracy.p)}`, `p = ${v2.mcnemar_exact_p.toFixed(2)}`, `duplicates ${pct(v2.recall_v2.duplicate.p)} vs ${pct(v2.recall_v1.duplicate.p)}`, '', '', '']] : [])],
-    body: (f, box) => {
-      // two panels, one scale each (0-100%): right overall (guessing marked) and duplicates found
-      const panels = [{ title: 'Right overall', v: (r) => r.acc, mark: chance }, { title: 'Duplicates found', v: (r) => r.dup }];
-      let out = '';
-      const dot = (x, cy, hiRow) => `<circle cx="${x}" cy="${cy}" r="12" fill="var(--${hiRow ? 'acc' : 'dim'})" stroke="var(--bg)" stroke-width="3"/>`;
-      if (L(f)) {
-        const labelW = 510, gap = 60, pw = (box.w - labelW - gap) / 2, tw = pw - 120, rh = 86, th = 30;
-        panels.forEach((pn, k) => {
-          const px = box.x + labelW + k * (pw + gap);
-          out += text(px, box.y + 26, pn.title, { size: f.txt - 8, weight: 600 });
-          rows.forEach((r, i) => {
-            const y = box.y + 56 + i * rh, cy = y + th / 2, a = pn.v(r), X = (p) => px + p * tw;
-            if (k === 0) out += text(box.x, cy + (f.txt - 8) * 0.35, r.label, { size: f.txt - 8, c: r.hi ? 'fg' : 'dim', weight: r.hi ? 600 : 400 });
-            out += track(px, y, tw, th);
-            if (pn.mark) out += `<line x1="${X(pn.mark)}" x2="${X(pn.mark)}" y1="${y - 6}" y2="${y + th + 6}" stroke="var(--dim)" stroke-width="2" stroke-dasharray="4 4"/>`;
-            out += rect(X(a.lo), y + 4, (a.hi - a.lo) * tw, th - 8, 'bar', { title: `${r.label}, ${pn.title.toLowerCase()}: ${pct(a.p)} (${pct(a.lo)}-${pct(a.hi)})` }) + dot(X(a.p), cy, r.hi);
-            out += text(px + tw + 16, cy + (f.val - 8) * 0.35, pct(a.p), { size: f.val - 8, weight: 600, c: r.hi ? 'fg' : 'dim' });
-          });
-        });
-        out += text(box.x + labelW, box.y + 56 + rows.length * 86 + 20, 'dashed: guessing (one in four)', { size: f.src, c: 'dim' });
-      } else {
-        const ph = (box.h - 40) / 2;
-        panels.forEach((pn, k) => {
-          const py = box.y + k * (ph + 20), tw = box.w - 330, th = 26, rh = (ph - 50) / rows.length;
-          out += text(box.x, py + 30, pn.title, { size: f.txt - 8, weight: 600 });
-          rows.forEach((r, i) => {
-            const y = py + 52 + i * rh, cy = y + th / 2, a = pn.v(r), bx = box.x + 220, X = (p) => bx + p * tw;
-            out += text(box.x, cy + 10, r.short, { size: f.txt - 14, c: r.hi ? 'fg' : 'dim', weight: r.hi ? 600 : 400 });
-            out += track(bx, y, tw, th);
-            if (pn.mark) out += `<line x1="${X(pn.mark)}" x2="${X(pn.mark)}" y1="${y - 4}" y2="${y + th + 4}" stroke="var(--dim)" stroke-width="2" stroke-dasharray="4 4"/>`;
-            out += rect(X(a.lo), y + 3, (a.hi - a.lo) * tw, th - 6, 'bar') + dot(X(a.p), cy, r.hi);
-            out += text(bx + tw + 14, cy + 11, pct(a.p), { size: f.txt - 12, weight: 600, c: r.hi ? 'fg' : 'dim' });
-          });
-        });
-      }
-      return out;
-    },
+    body: (f, box) => dotPanels(f, box, rows, [{ title: 'Right overall', v: (r) => r.acc, mark: chance }, { title: 'Duplicates found', v: (r) => r.dup }]),
   });
+}
+
+// 7. triage agent with vs without the project's policy docs, same issues (paired)
+{
+  const r = triage.agent_rounds.round3_policy_vs_v1_on_300;
+  const pct = (v) => `${Math.round(100 * v)}%`, clear = r.mcnemar_exact_p < 0.05;
+  const rows = [
+    { label: 'Agent', short: 'Agent', acc: r.b_accuracy, dup: r.recall_v1.duplicate, hi: false },
+    { label: '+ the project\'s policy docs', short: '+ policy docs', acc: r.a_accuracy, dup: r.recall_policy.duplicate, hi: false },
+  ];
+  const better = r.a_accuracy.p > r.b_accuracy.p;
+  C.push({ name: 'openclaw-triage-policy',
+    title: { L: [`Giving the triage agent OpenClaw's policy docs did not`, `help: right ${pct(r.a_accuracy.p)} with them, ${pct(r.b_accuracy.p)} without`],
+      P: ["OpenClaw's policy docs", 'did not help the agent:', `${pct(r.a_accuracy.p)} with, ${pct(r.b_accuracy.p)} without`] },
+    sub: { L: [`The same ${r.n} issues both ways${clear ? '' : ', not a clear difference'}; with the docs it cost ${(r.cost_policy / r.cost_v1).toFixed(1)}x as much`],
+      P: [`The same ${r.n} issues both ways;`, `the docs cost ${(r.cost_policy / r.cost_v1).toFixed(1)}x as much`] },
+    source: `qb9, paired McNemar exact p = ${r.mcnemar_exact_p.toFixed(2)}. The right answers came from the same policy, so this measures following its rules`,
+    dataSource: 'docs/openclaw/data/triage-score.json: agent_rounds.round3_policy_vs_v1_on_300',
+    table: [['', 'with policy docs', 'without', 'p (paired)'],
+      ...Object.entries(r.by_set).map(([k, v]) => [`right overall, ${k === 'all300' ? `all ${v.n}` : k === 'original200' ? `the first ${v.n}` : `the new ${v.n}`}`, pct(v.a_accuracy.p), pct(v.b_accuracy.p), v.mcnemar_exact_p.toFixed(2)]),
+      ...Object.keys(r.recall_v1).map((k) => [`${k} found`, `${r.recall_policy[k].k} of ${r.recall_policy[k].n}`, `${r.recall_v1[k].k} of ${r.recall_v1[k].n}`, '']),
+      ['cost (API-equivalent)', `$${r.cost_policy}`, `$${r.cost_v1}`, '']],
+    body: (f, box) => dotPanels(f, { ...box, h: Math.min(box.h, L(f) ? 330 : 600) }, rows, [{ title: 'Right overall', v: (x) => x.acc, mark: 0.25 }, { title: 'Duplicates found', v: (x) => x.dup }]),
+  });
+  void better;
 }
 
 writeCharts({ dir: DIR, charts: C, png: process.argv.includes('--png'),
