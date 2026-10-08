@@ -47,7 +47,10 @@ Local tests: `node --experimental-strip-types --test src/landing/*.test.mjs`.
 - [x] REAL AGENTS through the queue (info.landing projects): verified 2026-10-08 on eyal/cafe-real,
       Haiku 5.5: 1 router request -> 2 agents -> reviewer -> merge taps -> one train -> landed with
       records + git notes; ~$0.17 total (boxes $0.059 + Haiku tokens).
-- [ ] REAL CREW RUN (manager, 2026-10-08): eyal/cafe-crew, 12 Haiku agents, 3 reviewers, $5 hard stop, filmed by qb8.
+- [x] REAL CREW RUN (2026-10-08, filmed by qb8): eyal/cafe-crew, 12 Haiku 5.5 agents + router + 3
+      parallel reviewers from one request: 12/12 landed in 7 min 17 s, 0 bounced, 6 collisions (5
+      handlers, 1 Haiku replay), main green with 12 notes; real spend $0.20 container time, API-equiv.
+      $0.51 standard / $2.55 at the >100k tier; quota < 1%.
 Next: notes in the code browser (qb7 panel); README section.
 Keep existing behaviour working for projects without the flag. Coordinate src/project.ts edits
 with qb2 (cc_com) since qb1-3 work in src/ too.
