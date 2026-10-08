@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-08T14:02:50.196Z",
+ "generated": "2026-10-08T14:18:41.860Z",
  "simVersion": "lab-0.8",
  "fit": {
-  "runs": 7,
+  "runs": 8,
   "from": [
    "lab-cafefamily-739a1-r1",
    "lab-cafefamily-08ce0-r1",
@@ -10,7 +10,8 @@
    "lab-cafefamily-7eac1-r1",
    "lab-portts-ec6ec-r1",
    "lab-bakery-712d7-r1",
-   "lab-bakery-7fe05-r1"
+   "lab-bakery-7fe05-r1",
+   "lab-portts-e62a6-r1b"
   ],
   "coder": {
    "haiku": {
@@ -37,7 +38,7 @@
     "hiddenShareMed": 0.14285714285714285
    },
    "opus": {
-    "runs": 5,
+    "runs": 6,
     "planMedS": 3.891,
     "simPlanS": 60,
     "tasksPlannedShare": 0.14,
@@ -47,13 +48,13 @@
   "actualOverPredicted": {
    "wallS": 0.428927680798005,
    "apiUsdStd": 0.14776119402985075,
-   "quality": 1.091703056768559
+   "quality": 1.0691676436107855
   },
   "actualOverNow": {
    "simVersion": "lab-0.8",
    "wallS": 0.9658703071672355,
    "apiUsdStd": 0.8272540983606558,
-   "quality": 1.0905125408942202
+   "quality": 1.0896057347670252
   }
  },
  "runs": [
@@ -214,7 +215,7 @@
    "scenario": "cafe-family",
    "excluded": [
     "wall (human intervention)",
-    "cost (upper bound)"
+    "cost (upper or lower bound)"
    ],
    "planner": "opus",
    "coderModel": "haiku",
@@ -400,6 +401,54 @@
     "cacheW": 1598052
    },
    "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-portts-e62a6-r1b",
+   "variantKey": "planner=opus;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "port-ts",
+   "excluded": [
+    "wall (human intervention)",
+    "cost (upper or lower bound)"
+   ],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 19.8,
+    "wallS": 738,
+    "apiUsdStd": 2.04,
+    "quality": 85.3,
+    "simVersion": "lab-0.7"
+   },
+   "now": {
+    "wallS": 580,
+    "apiUsdStd": 1.64,
+    "quality": 83.7,
+    "simVersion": "lab-0.8"
+   },
+   "wallS": null,
+   "wallSRaw": 830,
+   "planS": 64.183,
+   "usd": null,
+   "usdRaw": 0.85,
+   "coderUsd": null,
+   "tasksPlanned": 5,
+   "tasksLanded": 5,
+   "expectedTasks": 21,
+   "workS": [],
+   "workMedS": null,
+   "quality": 81,
+   "qualityNoJudge": 91.2,
+   "hiddenShare": 0.9936708860759493,
+   "judge": 4,
+   "tokens": {
+    "in": 1152,
+    "out": 792158,
+    "cacheR": 45364866,
+    "cacheW": 1845673
+   },
+   "conflicts": 4,
    "bounces": 0
   }
  ],

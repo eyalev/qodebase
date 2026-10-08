@@ -35,9 +35,9 @@ const rows = lines.map((l) => {
   // Not fit on what a run says it cannot vouch for: wall time when a person had to step in (a
   // stall), cost when it is an upper bound (every token priced as Opus, run 11).
   const wallOk = !(l.counts?.humanInterventions > 0);
-  const usdOk = !/upper bound/i.test(l.cost?.pricedAs || '');
+  const usdOk = !/upper bound/i.test(l.cost?.pricedAs || '') && l.cost?.apiUsdStdLowerBound == null; // and not a lower bound (run 14b: the planner's box reported no cost)
   return {
-    id: l.id, variantKey: l.variantKey, baseline: l.baseline, scenario: l.scenario, excluded: [!wallOk && 'wall (human intervention)', !usdOk && 'cost (upper bound)'].filter(Boolean),
+    id: l.id, variantKey: l.variantKey, baseline: l.baseline, scenario: l.scenario, excluded: [!wallOk && 'wall (human intervention)', !usdOk && 'cost (upper or lower bound)'].filter(Boolean),
     planner: l.baseline === 'opus-alone' ? 'opus' : l.variant?.planner, coderModel: l.variant?.coderModel,
     pred: l.predicted, now: { wallS: now.wallS, apiUsdStd: now.apiUsdStd, quality: now.quality, simVersion: now.simVersion },
     wallS: wallOk ? l.timings?.wallS : null, wallSRaw: l.timings?.wallS, planS: l.timings?.planAt && l.timings?.askAt ? (l.timings.planAt - l.timings.askAt) / 1000 : null,
