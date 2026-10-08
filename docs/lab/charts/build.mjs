@@ -54,22 +54,37 @@ function runPanels(f, box, rows, panels) {
   return out;
 }
 
-// 1. bakery: one Opus agent vs the swarm
-{
-  const bake = RUNS.filter((r) => r.scenario === 'bakery' && r.status === 'done');
+// Greedy word wrap for the phone headline (about 28 characters a line at 62 px).
+const wrap = (t, n) => t.split(' ').reduce((ls, w) => { const l = ls.at(-1); if (l && (l + ' ' + w).length <= n) ls[ls.length - 1] = l + ' ' + w; else ls.push(w); return ls; }, []);
+
+// Headline from the numbers: who was faster, by how much, quality and cost, said plainly
+// whichever way they come out.
+function headline(title, speed, qGap, cheaper) {
+  const pts = Math.round(Math.abs(qGap)), q = pts < 1 ? null : pts;
+  const fast = speed >= 1
+    ? `one Opus agent was ${speed.toFixed(1)}x faster${q ? (qGap > 0 ? ` and ${q} points better` : `, ${q} points worse`) : ', same quality'}`
+    : `the swarm was ${(1 / speed).toFixed(1)}x faster${q ? (qGap < 0 ? ` and ${q} points better` : `, ${q} points worse`) : ', same quality'}`;
+  const c = cheaper >= 0 ? `the swarm cost ${Math.round(100 * cheaper)}% less` : `the swarm cost ${Math.round(-100 * cheaper)}% more`;
+  return { L: [`${title}: ${fast};`, c], P: wrap(`${title}: ${fast}; ${c}`, 31) };
+}
+
+// One Opus agent vs the swarm on a scenario; skipped until both have a finished run
+function versus(scenario, name, title) {
+  const bake = RUNS.filter((r) => r.scenario === scenario && r.status === 'done');
   const opus = bake.filter((r) => baseline(r) === 'opus-alone');
   const swarm = bake.filter((r) => !baseline(r) && r.variant.planner === 'opus' && r.variant.coders === 12);
   const m = (rs, f) => median(rs.map(f));
   const speed = m(swarm, minutes) / m(opus, minutes), qGap = m(opus, (r) => r.quality.score) - m(swarm, (r) => r.quality.score);
   const cheaper = 1 - m(swarm, cost) / m(opus, cost);
+  if (!opus.length || !swarm.length) return;
   const stalled = swarm.filter((r) => r.timings.stallS);
-  C.push({ name: 'lab-bakery',
-    title: { L: [`Bakery: one Opus agent was ${speed.toFixed(1)}x faster and ${Math.round(qGap)} points better;`, `the swarm cost ${Math.round(100 * cheaper)}% less`],
-      P: [`Bakery: one Opus agent`, `${speed.toFixed(1)}x faster, ${Math.round(qGap)} points`, `better; swarm ${Math.round(100 * cheaper)}% cheaper`] },
-    sub: { L: [`${opus.length} runs each: a dot per run, a line at the median. The swarm is 16 agents`],
-      P: [`${opus.length} runs each, dot = a run,`, 'line = the median'] },
+  const runsTxt = opus.length === swarm.length ? `${opus.length} run${opus.length > 1 ? 's' : ''} each` : `${opus.length} vs ${swarm.length} runs`;
+  C.push({ name,
+    title: headline(title, speed, qGap, cheaper),
+    sub: { L: [`${runsTxt}: a dot per run, a line at the median. The swarm is 16 agents`],
+      P: [`${runsTxt}, dot = a run,`, 'line = the median'] },
     source: `runs.jsonl. Swarm: Opus planner, 12 Haiku coders, 3 reviewers${stalled.length ? `. Hollow: ${Math.round(stalled[0].timings.stallS / 60)}-min platform stall removed` : ''}`,
-    dataSource: 'public/lab/runs.jsonl, scenario bakery, status done',
+    dataSource: `public/lab/runs.jsonl, scenario ${scenario}, status done`,
     table: [['run', 'variant', 'minutes', 'platform stall', 'quality', 'API-equivalent $'],
       ...[...opus, ...swarm].map((r) => [r.id, baseline(r) ? 'one Opus agent' : 'swarm', (r.timings.wallS / 60).toFixed(1), r.timings.stallS ? `${(r.timings.stallS / 60).toFixed(1)} min` : '', String(r.quality.score), cost(r).toFixed(2)])],
     body: (f, box) => runPanels(f, { ...box, h: Math.min(box.h, L(f) ? 260 : 700) }, [
@@ -82,6 +97,10 @@ function runPanels(f, box, rows, panels) {
     ]),
   });
 }
+
+
+versus('bakery', 'lab-bakery', 'Bakery');
+versus('club', 'lab-club', 'Club');
 
 writeCharts({ dir: DIR, charts: C, png: process.argv.includes('--png'),
   title: 'Lab results', heading: 'Variants lab: results',
