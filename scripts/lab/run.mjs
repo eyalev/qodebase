@@ -66,7 +66,7 @@ const entry = PLAN ? PLAN.runs.find((r) => r.order === Number(opt('--order'))) :
 if (PLAN && !entry) throw new Error(`no order ${opt('--order')} in the plan`);
 const scenarioId = opt('--scenario', entry?.scenario || PLAN?.scenario);   // a plan entry can name its own scenario
 const stage = Number(opt('--stage', String(PLAN?.stage ?? 1)));
-const seed = entry ? (entry.seed ?? PLAN.runs.filter((r) => r.order <= entry.order && r.variantKey === entry.variantKey && (r.scenario || PLAN.scenario) === (entry.scenario || PLAN.scenario)).length) : Number(opt('--seed', '1'));
+const seed = entry ? (entry.repetition ?? entry.seed ?? PLAN.runs.filter((r) => r.order <= entry.order && r.variantKey === entry.variantKey && (r.scenario || PLAN.scenario) === (entry.scenario || PLAN.scenario)).length) : Number(opt('--seed', '1'));
 const baseline = entry ? entry.baseline : opt('--baseline', null);
 const budget = Number(opt('--budget', '2'));
 const timeoutMin = Number(opt('--timeout', '40'));
