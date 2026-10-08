@@ -17,7 +17,7 @@
 import { qualityScore } from './score.js';
 export { qualityScore }; // qb5's one quality formula (public/lab/score.js)
 
-export const SIM_VERSION = 'lab-0.4';
+export const SIM_VERSION = 'lab-0.5';
 
 // Knob names and values = the Landing flags and runs.jsonl `variant` (docs/lab/runs-schema.md).
 export const KNOBS = {
@@ -52,10 +52,12 @@ export function variantKey(variant, baseline = variant?.baseline ?? null) {
 // sharedFiles = how many, vague = vagueness (high 0.8 / medium 0.5 / low 0.2), dupRisk = duplicateIntentRisk
 // (for a Sonnet planner; other planners scale by CAL.pDup), hidden = hiddenTotal
 // (public/lab/scenarios.json). difficulty is qb4's guess (defects and work time multiplier).
+// size: how big each task is, relative to cafe-family's (=1, measured on stage-1 runs 1-3); it
+// scales every work time (coders and one-agent-alone). port-ts: 1 until stage-1 run 13 measures it.
 export const SCENARIOS = {
   'cafe-family': { label: 'Make the cafe family-friendly', tasks: 7, depth: 2, pShared: 0.6, sharedFiles: 4, vague: 0.8, dupRisk: 0.05, difficulty: 1, hidden: 7 }, // dupRisk 0.3 -> 0.05: 0 duplicates in 11 tasks (stage 1, qb5)
   'port-ts': { label: 'Port a library to TypeScript', tasks: 21, depth: 3, pShared: 0.1, sharedFiles: 3, vague: 0.2, dupRisk: 0.05, difficulty: 1.3, hidden: 158 },
-  bakery: { label: 'Build a small bakery website with online orders', tasks: 25, depth: 3, pShared: 0.5, sharedFiles: 5, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 26 }, // qb5 682084f; one Opus subagent built the reference in ~13 min
+  bakery: { label: 'Build a small bakery website with online orders', tasks: 25, depth: 3, pShared: 0.5, sharedFiles: 5, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 26, size: 4.4 }, // qb5 682084f; size: one Opus subagent built the reference in ~13 min (~31 s per task vs cafe's ~7)
   rename: { label: 'Rename X across the codebase + a dependent change', tasks: 20, depth: 3, pShared: 0.4, sharedFiles: 2, vague: 0.1, difficulty: 0.7, hidden: 10 }, // qb4 guess (backup scenario)
 };
 
@@ -157,7 +159,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
 
   // ---- one agent alone: the whole job in one pass, one commit (no split, no queue, no merges) ----
   if (alone) {
-    const d = logn(C.aloneBaseS + C.alonePerTaskS * work.length, C.workSigma) * sc.difficulty;
+    const d = logn(C.aloneBaseS + C.alonePerTaskS * work.length * (sc.size ?? 1), C.workSigma) * sc.difficulty;
     usd.coders += d * C.usdPerS[v.coderModel];
     for (const x of work) { x.st = 'landed'; x.defect = rnd() < C.pDefect[v.coderModel] * sc.difficulty && !(rnd() < C.aloneSelfCatch); }
     const wallS = (v.planner === 'none' ? 0 : planS) + d + 5;
@@ -209,7 +211,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
   function start(x) {
     freeCoders--; x.st = 'work'; x.tries++;
     const model = v.coderModel;
-    let d = logn(C.workMedS * C.speed[model] * sc.difficulty, C.workSigma);
+    let d = logn(C.workMedS * C.speed[model] * sc.difficulty * (sc.size ?? 1), C.workSigma);
     if (x.fixing) d *= x.fixing; else if (x.tries > 1) d *= C.redoFactor;
     if (alone) d *= 0.8; // no hand-offs, but the context grows (costed below)
     // Base: main now (+ the needs it stacks on, for stacking/intent/leads).
