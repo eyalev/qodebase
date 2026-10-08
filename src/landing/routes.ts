@@ -72,6 +72,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
         ...(Number(body.reviewers) >= 1 ? { reviewers: Math.min(4, Math.round(Number(body.reviewers))) } : {}),
         ...(Number(body.budgetUsd) > 0 ? { budgetUsd: Math.min(20, Number(body.budgetUsd)) } : body.budgetUsd === null ? { budgetUsd: undefined } : {}),
         ...(body.halted === false ? { halted: false } : {}),
+        ...(typeof body.autoMerge === 'boolean' ? { autoMerge: body.autoMerge } : {}),
         // agentModel: the model this project's agent boxes run on the owner's subscription (a cheap test);
         // replayModel: the model tier-2 replays use (default Haiku 5.5).
         ...(am ? { agentModel: am.ok } : {}), ...(rm ? { replayModel: rm.ok } : {}) }));

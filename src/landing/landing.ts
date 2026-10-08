@@ -62,7 +62,9 @@ type Meta = {
     /** Reviewer pool size (1 = the Project's single reviewer flow; 2+ = Landing's pool). */
     reviewers?: number;
     /** Hard budget for this project's boxes + Claude tokens (conservative pricing); halted = boxes stopped. */
-    budgetUsd?: number; halted?: boolean };
+    budgetUsd?: number; halted?: boolean;
+    /** A real agent's change the reviewer approves goes straight into the queue (no merge tap). */
+    autoMerge?: boolean };
   demo: Demo | null;
   reviews?: { queue: string[]; busy: Record<string, { change: string; at: number; sends: number; nudged?: number }>; coolUntil?: Record<string, number> };
   spent?: { usd: number; at: number; boxes: number; claude: number };
@@ -196,7 +198,7 @@ export class Landing extends DurableObject<Env> {
     await this.#put(c);
     // A change its agent redid on the latest main (tier 2) was approved by the person once
     // already: approved again by the reviewer, it goes straight back in line.
-    if ((thenQueue || c.redo === 'llm') && verdict !== 'changes') await this.approve(id);
+    if ((thenQueue || c.redo === 'llm' || (m0.flags.autoMerge && c.kind === 'agent')) && verdict !== 'changes') await this.approve(id);
   }
 
   // ---- the queue ---------------------------------------------------------------
