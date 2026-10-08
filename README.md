@@ -93,7 +93,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 - GitHub-style (pull requests merged one at a time) timed out after an hour with 3 of 6 tasks landed.
 - Next: a club website, a 15-minute job on ready foundations. The simulator (fitted to these runs within ~5% on time and cost) predicts one Opus agent ~10 min vs the crew ~17 min: here a crew is limited by how fast changes land (one per ~60–100 s measured on the bakery), not by how many agents work. Runs pending.
 
-Hidden tests are ours and never visible to the agents; the 0–100 scores, which add build checks and an AI judge, are in each run ([`docs/lab/scoring.md`](docs/lab/scoring.md)). Times leave out runs stalled by the platform (one bakery crew run); quality and cost use every run. Costs are API-equivalent (the runs used a Claude subscription); the café crew's cost is an upper bound and not shown. Every run: [`public/lab/runs.jsonl`](public/lab/runs.jsonl); plan: [`docs/lab/`](docs/lab/).
+Hidden tests are never in the agents' repo (for the port, 125 of the 158 are the upstream library's own public tests); the 0–100 scores, which add build checks and an AI judge, are in each run ([`docs/lab/scoring.md`](docs/lab/scoring.md)). Times leave out runs stalled by the platform (one bakery crew run); quality and cost use every run. Costs are API-equivalent (the runs used a Claude subscription); the café crew's cost is an upper bound and not shown. Every run: [`public/lab/runs.jsonl`](public/lab/runs.jsonl); plan: [`docs/lab/`](docs/lab/).
 
 **OpenClaw, a very busy open-source repo** (30 days of public data; [`docs/openclaw/FINDINGS.md`](docs/openclaw/FINDINGS.md)):
 
