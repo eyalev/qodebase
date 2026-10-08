@@ -176,12 +176,14 @@ export class Landing extends DurableObject<Env> {
   }
 
   /** The agent pushed (its fork's head). Files = what it changed since its base. */
-  async pushed(id: string, commit: string, files: string[], note?: string) {
+  async pushed(id: string, commit: string, files: string[], note?: string, base?: string) {
     const c = await this.#get(id);
     if (!c) throw new Error('unknown change');
     c.commit = commit; c.files = files.slice(0, 200);
+    let onMain = '';
+    if (base && base !== c.base && !c.stackedOn) { onMain = ` (now on main ${base.slice(0, 7)})`; c.base = base; }
     if (c.state === 'bounced' || c.state === 'with-lead' || c.state === 'working' || c.state === 'replaying') c.state = 'pushed';
-    this.#ev(c, 'pushed', note || `${files.length} file${files.length === 1 ? '' : 's'}`);
+    this.#ev(c, 'pushed', (note || `${files.length} file${files.length === 1 ? '' : 's'}`) + onMain);
     await this.#overlaps(c, c.files);
     await this.#put(c);
     return c;
