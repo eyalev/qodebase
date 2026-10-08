@@ -217,14 +217,15 @@ const priceOf = (model, t) => {
   const std = ((t.in || 0) * ri + (t.out || 0) * ro + (t.cr || t.cacheR || 0) * rc + (t.cw1h || 0) * rw + (t.cw || 0) * ri * 1.25) / 1e6;
   return { k, std, high: k === 'haiku' ? std * 5 : std };
 };
-async function telemetry(needle, fromMs) {
+async function telemetry(needle, fromMs, event) {
   const acc = '887d7234a6b8d65ad355a4f6684cab67';
   const tok = readFileSync(join(homedir(), '.config/forq-cf/api-token'), 'utf8').trim();
   const out = [];
   for (let offset = 0; offset < 4000; offset += 500) {
     const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${acc}/workers/observability/telemetry/query`, { method: 'POST', signal: AbortSignal.timeout(60_000),
       headers: { authorization: `Bearer ${tok}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ queryId: 'adhoc', timeframe: { from: fromMs, to: Date.now() }, view: 'events', limit: 500, offset, parameters: { needle: { value: needle, isRegex: false } } }) }).then((x) => x.json()).catch(() => null);
+      // A field filter on the log's event name: lines are stored parsed, so a quoted-text needle never matches.
+      body: JSON.stringify({ queryId: 'adhoc', timeframe: { from: fromMs, to: Date.now() }, view: 'events', limit: 500, offset, parameters: { needle: { value: needle, isRegex: false }, ...(event ? { filters: [{ key: 'event', operation: 'eq', type: 'string', value: event }] } : {}) } }) }).then((x) => x.json()).catch(() => null);
     const ev = r?.result?.events?.events || [];
     out.push(...ev.map((e) => e.source).filter((x) => x && typeof x === 'object'));
     if (ev.length < 500) break;
@@ -238,11 +239,12 @@ let apiUsdStd = 0, apiUsdHigh = 0, pricedAs = 'per-model';
 // ask until the count holds for two reads, at most ~6 min.
 let boxLines = [];
 for (let i = 0, last = -1; i < 12; i++) {
-  boxLines = (await telemetry(`${slug}--`, askAt - 10 * 60_000)).filter((x) => x.module === 'box' && x.event === 'costs' && String(x.agentId || '').startsWith(`${slug}--`) && x.tokens);
+  // Only cost lines (event filter): the project needle alone matched 500+ other lines first.
+  boxLines = (await telemetry(`${slug}--`, askAt - 10 * 60_000, 'costs')).filter((x) => x.module === 'box' && x.event === 'costs' && String(x.agentId || '').startsWith(`${slug}--`) && x.tokens);
   if (boxLines.length && boxLines.length === last) break;
   last = boxLines.length; await sleep(30_000);
 }
-const replayLines = (await telemetry('replay_llm', askAt - 10 * 60_000)).filter((x) => x.module === 'landing' && x.event === 'replay_llm' && x.slug === slug);
+const replayLines = (await telemetry(slug, askAt - 10 * 60_000, 'replay_llm')).filter((x) => x.module === 'landing' && x.event === 'replay_llm' && x.slug === slug);
 const addRole = (role, model, t) => {
   const p = priceOf(model, t);
   const r = byRole[role] || (byRole[role] = { apiUsdStd: 0, apiUsdHigh: 0, models: {}, tokens: { in: 0, out: 0, cacheR: 0, cacheW: 0 } });
