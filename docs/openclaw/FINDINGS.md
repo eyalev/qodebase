@@ -146,9 +146,43 @@ and searches existing issues and PRs. **qodebase's triage lane has to be an agen
 index, not a classifier.** A cheap classifier can still sort decision vs fix as a first pass (Haiku: 78% / 84%
 recall) for routing to that agent. Spend for 2b: ~$0.09 (cap $2).
 
+## Phase 2b-2: triage as an agent, 100 of the 200 issues (2026-10-08)
+
+Same question (`triage-v1`), same scoring. Haiku 5.5 via `claude -p` on the subscription (harness
+`triage-agent-v1` in `sim/openclaw/triage.mjs`): working directory = a sparse snapshot of main taken on or before
+the issue's date (09-08 / 09-15 / 09-22; src, extensions, ui/src, packages, docs, skills, config), Read/Grep/Glob
+inside it only, and one shell command: `issue-search.mjs`, BM25 over the titles of all 58,238 issues (+ the
+window's PR titles) filed before the issue, titles and dates only (no state or labels, so no later outcome leaks).
+Sandbox checked: reads outside the snapshot and any other command are refused (3 refusals in the run).
+100 issues = the first 25 of each outcome class.
+
+| on the same 100 | accuracy (95% CI) | recall close / dup / fix / decision |
+|---|---|---|
+| **Haiku agent** | **59%** (49–68) | 28 / **68** / 72 / 68% |
+| Haiku, text only | 50% (40–60) | 20 / 16 / 88 / 76% |
+| Jev | 39% (30–49) | 20 / 0 / 88 / 48% |
+| Clef-flash | 35% (26–45) | 12 / 0 / 96 / 32% |
+
+- **Paired against text-only Haiku: the agent alone right on 18, text-only alone right on 9 (exact McNemar
+  p = 0.12).** Better, not yet clearly better at n = 100.
+- **Duplicates are the clear gain: 17 of 25 found (68%) vs 16%, and 17 of its 24 duplicate calls were right**
+  (71%). It names the issue (`duplicate_of`); spot checks: the repeated auto-filed update-failure reports point at
+  the first of the series. Which issue it named is not scored against ClawSweeper's choice.
+- "Close" stays weak (28%): 13 of 25 go to "decision". Part of that is the ground truth: a feature request the
+  maintainers declined is closed *not planned* here, which a triager could fairly call "needs a decision". The
+  agent also barely read code (median 3 turns: mostly searches), so "already fixed / works as intended" went
+  unchecked.
+- Agrees with ClawSweeper 65% (55–74). Cost: **$0.12 API-equivalent for 100** (subscription; 1.35M cache-read +
+  0.52M cache-write + 85k output tokens), median 7.8 s per issue.
+
+Read as: giving a cheap model the issue index turns duplicate detection from 16% to ~70%, at about a tenth of a
+cent per issue. Overall triage accuracy is still far from ClawSweeper's, and the remaining gap is the "is this
+already fixed / intended" check, which needs the agent to actually read code (a prompt and turn-budget change,
+not a bigger model, is the next thing to try).
+
 ## What phase 2 should test next
-- Triage as an agent: the same 200 issues, a Haiku agent with read access to main at the issue's date and a
-  search over earlier issues (dedupe = cluster lookup), scored the same way.
+- Triage agent on the other 100 (tightens the paired test; ~$0.12), and a v2 prompt that requires one code
+  check before calling fix/close.
 - Duplicate rate over all closed issues from comment text (85 of a 900-issue pool were duplicates by comment,
   so the rate is far above GitHub's 0.1%; measure it properly).
 - The fix lane as in PLAN.md.

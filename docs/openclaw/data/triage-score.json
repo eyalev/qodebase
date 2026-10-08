@@ -247,6 +247,89 @@
     "output": 39452,
     "cache_read": 931
    }
+  },
+  "haiku-agent": {
+   "n": 100,
+   "accuracy_vs_outcome": {
+    "k": 59,
+    "n": 100,
+    "p": 0.59,
+    "lo": 0.492,
+    "hi": 0.681
+   },
+   "recall_per_outcome": {
+    "close": {
+     "k": 7,
+     "n": 25,
+     "p": 0.28,
+     "lo": 0.143,
+     "hi": 0.476
+    },
+    "duplicate": {
+     "k": 17,
+     "n": 25,
+     "p": 0.68,
+     "lo": 0.484,
+     "hi": 0.828
+    },
+    "fix": {
+     "k": 18,
+     "n": 25,
+     "p": 0.72,
+     "lo": 0.524,
+     "hi": 0.857
+    },
+    "decision": {
+     "k": 17,
+     "n": 25,
+     "p": 0.68,
+     "lo": 0.484,
+     "hi": 0.828
+    }
+   },
+   "agreement_with_clawsweeper": {
+    "k": 56,
+    "n": 86,
+    "p": 0.651,
+    "lo": 0.546,
+    "hi": 0.743
+   },
+   "when_p_ge_0_8": {
+    "acted_on": 34,
+    "accuracy": {
+     "k": 23,
+     "n": 34,
+     "p": 0.676,
+     "lo": 0.508,
+     "hi": 0.809
+    }
+   },
+   "brier": 0.563,
+   "confusion": {
+    "duplicate->duplicate": 17,
+    "duplicate->decision": 2,
+    "duplicate->fix": 5,
+    "duplicate->close": 1,
+    "close->decision": 13,
+    "close->close": 7,
+    "close->duplicate": 3,
+    "close->fix": 2,
+    "fix->fix": 18,
+    "fix->decision": 5,
+    "fix->duplicate": 2,
+    "decision->decision": 17,
+    "decision->fix": 5,
+    "decision->close": 1,
+    "decision->duplicate": 2
+   },
+   "ms_p50": 7776,
+   "cost_usd": 0.1214,
+   "cost_note": "subscription; API-equivalent at Haiku 5.5 rates",
+   "tokens": {
+    "input": 466,
+    "output": 84594,
+    "cache_read": 1348865
+   }
   }
  },
  "clawsweeper_vs_outcome": {
@@ -256,5 +339,82 @@
   "lo": 0.895,
   "hi": 0.968,
   "note": "ClawSweeper's call is partly what caused the outcome (it closes issues), so this is not independent"
+ },
+ "on_agent_subset": {
+  "n": 100,
+  "jev": {
+   "accuracy": {
+    "k": 39,
+    "n": 100,
+    "p": 0.39,
+    "lo": 0.3,
+    "hi": 0.488
+   },
+   "recall": {
+    "close": 0.2,
+    "duplicate": 0,
+    "fix": 0.88,
+    "decision": 0.48
+   }
+  },
+  "clef-flash": {
+   "accuracy": {
+    "k": 35,
+    "n": 100,
+    "p": 0.35,
+    "lo": 0.264,
+    "hi": 0.447
+   },
+   "recall": {
+    "close": 0.12,
+    "duplicate": 0,
+    "fix": 0.96,
+    "decision": 0.32
+   }
+  },
+  "haiku": {
+   "accuracy": {
+    "k": 50,
+    "n": 100,
+    "p": 0.5,
+    "lo": 0.404,
+    "hi": 0.596
+   },
+   "recall": {
+    "close": 0.2,
+    "duplicate": 0.16,
+    "fix": 0.88,
+    "decision": 0.76
+   }
+  },
+  "haiku-agent": {
+   "accuracy": {
+    "k": 59,
+    "n": 100,
+    "p": 0.59,
+    "lo": 0.492,
+    "hi": 0.681
+   },
+   "recall": {
+    "close": 0.28,
+    "duplicate": 0.68,
+    "fix": 0.72,
+    "decision": 0.68
+   }
+  }
+ },
+ "agent_detail": {
+  "turns_p50": 3,
+  "denials": 3,
+  "named_a_duplicate": 26,
+  "true_duplicates_named": 18,
+  "of_true_duplicates": 25,
+  "cost_usd_api_equiv": 0.121,
+  "tokens": {
+   "input": 466,
+   "output": 84594,
+   "cache_read": 1348865,
+   "cache_write": 524910
+  }
  }
 }

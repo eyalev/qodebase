@@ -29,6 +29,8 @@ star or open anything on their repo or ClawSweeper.
       readiness vs merge authority), each tied to what their data shows.
 
 ## Phase 2 — small real tests (ask the manager first; cheap models)
+- [x] (added) Triage as an agent on 100 of the 200 (code snapshot + earlier-issue search): 59% (49-68)
+      vs text-only Haiku 50% on the same 100, paired p = 0.12; duplicates 68% vs 16%. $0.12 API-equiv.
 - [x] (added, no model) Do PR-scoped tests catch the hourly suite's breaks? Map new persistent
       shard failures to that hour's commits/files. Decides whether scoped-union trains are real.
       _Done 2026-10-08: 31/40 (78%, CI 62-88%) had a same-area change that hour; 254 requests._
