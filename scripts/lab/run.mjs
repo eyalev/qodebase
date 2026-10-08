@@ -318,5 +318,9 @@ const out = {
     pricedAs !== 'per-model' ? `API-equivalent priced as ${pricedAs} for every token (upper bound: this run's boxes ran before per-model cost lines)` : '', opt('--notes', '')].filter(Boolean).join('; '),
 };
 appendFileSync(RUNS, JSON.stringify(out) + '\n');
+// Commit the line at once, by explicit path (manager, 2026-10-08: a checkout once lost an uncommitted
+// line). No push here: the shared tree is pushed by its owner.
+try { execFileSync('git', ['commit', '-q', '-m', `Lab stage ${stage}: ${name} (${status}, ${counts.tasksLanded}/${counts.tasksPlanned} landed)\n\nCo-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>`, '--', relative(ROOT, RUNS)], { cwd: ROOT, encoding: 'utf8' }); log('committed', { file: relative(ROOT, RUNS) }); }
+catch (e) { log('commit_failed', { err: String(e).slice(0, 300) }); }
 log('done', { project: slug, status, landed: counts.tasksLanded, wallS: out.timings.wallS, usdReal: out.cost.usdReal, apiUsdStd: out.cost.apiUsdStd, score: quality?.score ?? null });
 rmSync(work, { recursive: true, force: true });
