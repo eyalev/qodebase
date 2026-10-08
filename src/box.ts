@@ -586,7 +586,8 @@ walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}
         await recordCost(this.env, owner, 'claude', project, { usd: billing === 'sub' ? null : claudeUsd(model, t), covered: false, tokens: t, billing });
       }
       await this.ctx.storage.put({ costFrom: now, cpuLast: cpuNow, ...(usage.last ? { costCursor: usage.last } : {}) });
-      log('box', 'costs', { agentId: await this.ctx.storage.get<string>('agentId'), seconds: Math.round(seconds), cpuSeconds: Math.round(cpuSeconds), models: Object.keys(usage.m) });
+      // tokens per model: the variants lab prices each role at its own model (scripts/lab/run.mjs reads these lines).
+      log('box', 'costs', { agentId: await this.ctx.storage.get<string>('agentId'), seconds: Math.round(seconds), cpuSeconds: Math.round(cpuSeconds), models: Object.keys(usage.m), tokens: usage.m });
     } catch (e) { log('box', 'costs_failed', { err: String(e) }); }
   }
 
