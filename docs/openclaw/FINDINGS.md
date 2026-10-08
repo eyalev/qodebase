@@ -16,7 +16,7 @@ outputs `docs/openclaw/data/flow.json`, `replay*.json` (mirror: `~/projects/gith
 | ci.yml runs (7 days) | 13,970 | 2,000 (83/h) |
 
 **Who lands the work.** 35 people (and bots) merge PRs; PRs authored by them are **94% of merges**, merged
-at a median **1.4 h** (p90 16 h). Everyone else: **55%** of their decided PRs merge, median **18.6 h** (p90 8 days).
+at a median **1.4 h** (p90 15 h). Everyone else: **55%** of their decided PRs merge, median **20.1 h** (p90 8.5 days).
 The 20-open-PR cap is for outsiders: two maintainers peaked at **252 and 224 open PRs at once**, a bot at 146
 (`r: too-many-prs` hit 34 PRs in the window). steipete alone authored 45% of PRs and merged 53%.
 
@@ -43,14 +43,15 @@ which the metadata does not show. **Duplicate rate is therefore not measured her
 **Main is not tested on push, and the full suite is almost never green.** The push run costs ~1 runner-min
 and passes 98%. The hourly full suite on main passed **1 of 153** runs; a failing run fails 6 shards (p50)
 of 162. 29% of failing shards fail again the next hour; **111 of 152 hours (73%) have a failure that persists
-into the next run**; 84 hours saw a *new* persistent break (~13/day ≈ **2.5% of landed changes**, an upper bound if
-one change causes each). 9% of merged PRs merged with a red last check (1,368) — "readiness is not merge
+into the next run**; 84 of 151 hours saw a *new* persistent break (13.4 such hours/day ≈ **2.5% of landed changes**, an upper bound if
+one change causes each; counted in shards: 202, 32.1/day, since one break can fail several shards; flow.json
+`ci.full_suite_on_main`). 9% of merged PRs merged with a red last check (1,368) — "readiness is not merge
 authority" in practice.
 
 **Collisions.** 22.5% of main commits touch a file another commit touched in the hour before (6% within 10 min,
 51% within 6 h). 35% of merged PRs had another PR merge into one of their files while they were open (p90: 10
 such merges). 19% of PRs landed after one of their files changed on main since their own last CI. Where the
-same-hour collisions land: **i18n catalogs 30%, list/baseline files 11%** (`config/assertion-safety-baseline.txt`
+same-hour collisions land (flow.json `main.same_hour_collisions_by_kind`, classed by path, rules listed there): **i18n catalogs 30%, list/baseline files 11%** (`config/assertion-safety-baseline.txt`
 alone: 929 commits, 674 same-hour collisions), docs 12%, tests/scripts 22%, code 22%. Only 12% of PRs were
 force-pushed (they do not rebase because main moved).
 
@@ -64,7 +65,7 @@ PR runs' 40% red rate allows). Bisect re-runs only the failing shards. Numbers b
 
 | policy | landing CI runner-h/day | wait to land p50 / p90 | breaks reaching main | red-main h/day |
 |---|---|---|---|---|
-| **theirs** (no queue; hourly full suite, measured) | **~340** | **0 / 0** | all (~13/day) | **~17.5 measured** (73% of hours) |
+| **theirs** (no queue; hourly full suite, measured) | **~340** | **0 / 0** | all (~13/day) | **17.5 measured** (111/152 hours, `persistent_red_h_per_day`) |
 | queue, full suite, N32 K4 | ~1,330 (3.9x) | 82 / 163 min | 0 | 0 |
 | queue, full suite, N8 K2 | ~1,150 | falls behind (days) | 0 | 0 |
 | queue, PR-sized scope, N16 K4 | ~550 (1.6x) | 18 / 52 min | 0 *if the scope catches it* | 0 |
