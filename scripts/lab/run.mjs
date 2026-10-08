@@ -61,7 +61,12 @@ const meter = () => { try { const l = readFileSync(join(homedir(), '.claude/data
 // ---- inputs ----------------------------------------------------------------------------
 // --plan public/lab/stage1-plan.json --order N: the run comes from qb4's plan (variant, baseline,
 // predicted, guards); seed = how many earlier entries of the plan share its variantKey, plus one.
-const PLAN = opt('--plan') ? JSON.parse(readFileSync(join(ROOT, opt('--plan')), 'utf8')) : null;
+// --part N: a later part of the stage (stage2-plan.json part2: the club job) — its runs, scenario and
+// guards replace the top level, and the money guard counts only that part's scenario.
+const PLAN_FILE = opt('--plan') ? JSON.parse(readFileSync(join(ROOT, opt('--plan')), 'utf8')) : null;
+const PART = opt('--part', null);
+const PLAN = PLAN_FILE && PART && PART !== '1' ? { ...PLAN_FILE, ...PLAN_FILE[`part${PART}`], stage: PLAN_FILE.stage, partOf: PART } : PLAN_FILE;
+if (PLAN_FILE && PART && PART !== '1' && !PLAN_FILE[`part${PART}`]) throw new Error(`no part${PART} in the plan`);
 const entry = PLAN ? PLAN.runs.find((r) => r.order === Number(opt('--order'))) : null;
 if (PLAN && !entry) throw new Error(`no order ${opt('--order')} in the plan`);
 const scenarioId = opt('--scenario', entry?.scenario || PLAN?.scenario);   // a plan entry can name its own scenario
@@ -90,7 +95,7 @@ const slug = `eyal.${name}`;
 const RUNS = join(ROOT, opt('--out', 'public/lab/runs.jsonl'));   // --out public/lab/runs.smoke.jsonl for runner smoke tests
 const STAGES = join(ROOT, 'public/lab/stages.jsonl');
 const lines = existsSync(RUNS) ? readFileSync(RUNS, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
-const spent = lines.filter((l) => l.stage === stage).reduce((a, l) => ({ usdReal: a.usdReal + (l.cost?.usdReal || 0), apiUsdHigh: a.apiUsdHigh + (l.cost?.apiUsdHigh || 0), apiUsdStd: a.apiUsdStd + (l.cost?.apiUsdStd || 0) }), { usdReal: 0, apiUsdHigh: 0, apiUsdStd: 0 });
+const spent = lines.filter((l) => l.stage === stage && (!PLAN?.partOf || l.scenario === scenarioId)).reduce((a, l) => ({ usdReal: a.usdReal + (l.cost?.usdReal || 0), apiUsdHigh: a.apiUsdHigh + (l.cost?.apiUsdHigh || 0), apiUsdStd: a.apiUsdStd + (l.cost?.apiUsdStd || 0) }), { usdReal: 0, apiUsdHigh: 0, apiUsdStd: 0 });
 // The plan's guards replace the defaults: stop at its API-equivalent total or weekly-meter rise.
 const cap = PLAN?.guards ? { usdReal: (STAGE_CAPS[stage] || STAGE_CAPS[1]).usdReal, apiUsdHigh: Infinity, apiUsdStd: PLAN.guards.stopAtApiUsdStd ?? Infinity, quotaPts: PLAN.guards.stopAtWeeklyMeterRisePts ?? Infinity } : { apiUsdStd: Infinity, ...(STAGE_CAPS[stage] || STAGE_CAPS[1]) };
 const stageRows = existsSync(STAGES) ? readFileSync(STAGES, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((r) => r.stage === stage) : [];
