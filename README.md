@@ -87,13 +87,14 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 | café site, small | 58 s, 6/7 hidden tests, $0.39 | 1,431 s, 6/7 |
 | TypeScript port | 228 s, 158/158, $2.02 | 830 s, 157/158 and a failing strict type check, $0.85 |
 | bakery site (median of 3 runs) | 509 s, 26/26, $4.08 | 987 s, 25/26, $1.75 |
+| club site, a 15-minute job (median) | 728 s, 42/42, $5.71 | 1,184 s, 42/42, $2.96 |
 
-- **On these jobs one Opus agent was faster and at least as good.** On the bakery it was 1.9× faster and passed 1 more hidden test; the crew cost 57% less there (58% less on the port).
+- **Across the jobs, one Opus agent was faster and the crew cost about half; quality was the same or within one hidden test.** Opus was 1.9× faster on the bakery and 1.6× on the club; the crew cost 57% and 48% less. Both passed every club test; on the bakery Opus passed 1 more.
+- **The crew is limited by how fast changes land** (one per ~60–100 s), not by how many agents work. The simulator, fitted to these runs within ~5%, predicts it stays slower even on a job four times wider; faster landing (shorter waits, bigger trains, more reviewers) is what would change that.
 - Haiku as the planner under-plans: 1 and 3 of 7 hidden tests on the café.
 - GitHub-style (pull requests merged one at a time) timed out after an hour with 3 of 6 tasks landed.
-- Next: a club website, a 15-minute job on ready foundations. The simulator (fitted to these runs within ~5% on time and cost) predicts one Opus agent ~10 min vs the crew ~17 min: here a crew is limited by how fast changes land (one per ~60–100 s measured on the bakery), not by how many agents work. Runs pending.
 
-Hidden tests are never in the agents' repo (for the port, 125 of the 158 are the upstream library's own public tests); the 0–100 scores, which add build checks and an AI judge, are in each run ([`docs/lab/scoring.md`](docs/lab/scoring.md)). Times leave out runs stalled by the platform (one bakery crew run); quality and cost use every run. Costs are API-equivalent (the runs used a Claude subscription); the café crew's cost is an upper bound and not shown. Every run: [`public/lab/runs.jsonl`](public/lab/runs.jsonl); plan: [`docs/lab/`](docs/lab/).
+Hidden tests are never in the agents' repo (for the port, 125 of the 158 are the upstream library's own public tests); the 0–100 scores, which add build checks and an AI judge, are in each run ([`docs/lab/scoring.md`](docs/lab/scoring.md)). Times leave out runs stalled by the platform (one bakery and one club crew run); quality and cost use every run. Costs are API-equivalent (the runs used a Claude subscription); the café crew's cost is an upper bound and not shown. Every run: [`public/lab/runs.jsonl`](public/lab/runs.jsonl); plan: [`docs/lab/`](docs/lab/).
 
 **OpenClaw, a very busy open-source repo** (30 days of public data; [`docs/openclaw/FINDINGS.md`](docs/openclaw/FINDINGS.md)):
 

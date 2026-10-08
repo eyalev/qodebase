@@ -54,15 +54,16 @@ one train and landed in 5.5 minutes, right the first time, their records attache
 notes (`git log --notes=qodebase`).
 
 We also measured which team shape works best (qodebase.app/lab, every run in
-`public/lab/runs.jsonl`): on these jobs one Opus agent was faster and at least as good (café
-58 s; TypeScript port 228 s, all 158 hidden tests; bakery median 509 s, 26/26). On the bakery
-it was 1.9x faster than an Opus planner with a crew of Haiku agents (987 s, clean runs only)
-and passed 1 more hidden test, while the crew cost 57% less at API-equivalent prices (58% less
-on the port, where its code failed the strict type check). Haiku planners under-plan (1 and 3
-of 7 hidden tests), and a GitHub-style flow (pull requests merged one at a time) timed out. Next: a club website,
-a 15-minute job on ready foundations, where the simulator (fitted within ~5% on these runs)
-predicts one Opus agent ~10 min vs the crew ~17 min: a crew is limited by how fast changes
-land (one per ~60-100 s on the bakery), not by how many agents work.
+`public/lab/runs.jsonl`): the same job given to one Opus agent and to an Opus planner with a
+crew of Haiku agents, through qodebase's queue. Across four jobs one Opus agent was faster and
+the crew cost about half, with quality the same or within one hidden test: on the bakery site Opus took 509 s
+vs 987 s (1.9x) and passed 1 more of 26 hidden tests, and the crew cost 57% less; on the club
+site, a 15-minute job, 728 s vs 1,184 s (1.6x), 42/42 hidden tests for both, the crew 48% less
+(API-equivalent prices; runs stalled by the platform are left out of times). The crew is
+limited by how fast changes land (one per ~60-100 s), not by how many agents work: the
+simulator, fitted to these runs within ~5%, predicts it stays slower even on a job four times
+wider. Haiku planners under-plan (1 and 3 of 7 hidden tests on the café), and a GitHub-style
+flow (pull requests merged one at a time) timed out.
 
 And we studied a very busy open-source repo, OpenClaw (30 days of public data,
 `docs/openclaw/FINDINGS.md`): with no merge queue, their flow is the cheapest and fastest at
