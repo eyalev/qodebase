@@ -13,8 +13,10 @@ blocks are ms epoch too (subtract `timings.askAt` for "seconds from the request"
   "scenario": "cafe-family",
   "scenarioCommit": "<sha of the starter repo the run started from>",
   "promptVersion": "cafe-family@1",           // the one-line prompt's version (qb5)
+  "scenarioVersion": "1",                      // scenario.json version: a changed scenario never mixes with old runs
   "seed": 1,                                   // repetition index: LLM runs are not seedable
   "baseline": null,                            // null | "opus-alone" | "github"
+  "variantKey": "…",                           // qb4's variantKey(variant) from public/lab/predict.js: groups repetitions, matches sim to real
   "variant": {
     "planner": "haiku|sonnet|opus|none",       // none = opus-alone (no split)
     "coders": 6, "coderModel": "haiku|sonnet|opus",
@@ -34,16 +36,20 @@ blocks are ms epoch too (subtract `timings.askAt` for "seconds from the request"
   "cost": {
     "usdReal": 0,                              // container time (what is actually billed; Claude runs on the subscription)
     "apiUsdStd": 0, "apiUsdHigh": 0,           // tokens at standard rates / at the >100k-prompt tier
-    "quotaPctWeekly": 0,                       // DERIVED from tokens vs the plan, not the account-wide meter
     "byRole": { "planner": { "apiUsdStd": 0, "tokens": { "in": 0, "out": 0, "cacheR": 0, "cacheW": 0 } },
-                "coders": {}, "reviewers": {}, "merge": {} }
+                "coders": {}, "reviewers": {}, "merge": {}, "judge": {} }   // judge = qb5's scoring call: counts toward the lab budget, not the variant
   },
-  "quality": { "hiddenPass": 0, "hiddenTotal": 0, "build": true, "typecheck": true, "ownTests": true,
-               "judgeScore": 0, "judgeModel": "", "notes": "" },   // qb5's scorer, run on the laptop; hidden tests never in this repo
+  // qb5's scorer output, verbatim (scripts/lab/score.mjs, run on the laptop; hidden tests live in a
+  // private repo, never in this one, never in a box). score 0-100 = 60 x hidden pass rate + 20 x floor
+  // (build/typecheck/ownTests a third each) + 20 x judgeScore/10; no judge: the other 80 rescaled to 100.
+  "quality": { "scorer": "1", "score": 0, "hiddenPass": 0, "hiddenTotal": 0, "failed": [], "build": true, "typecheck": true,
+               "ownTests": true, "judgeScore": 0, "judgeModel": "", "notes": "" },
   "links": { "replay": "https://qodebase.app/p/eyal/<id>/work?replay=4", "app": "https://<id>--eyal.ttyview.dev/", "repo": "https://qodebase.app/p/eyal/<id>" },
   "notes": ""
 }
 ```
 
-Lab projects are unlisted (reachable by link, not in Explore or home). The stage guard reads the
-account-wide cc-usage history; per-run quota is derived from the run's own tokens.
+Lab projects are unlisted (reachable by link, not in Explore or home). No per-run quota percentage:
+the weekly quota's size in tokens is not published, so per run we record tokens and API-equivalent
+dollars only. The stage guard reads the real meter (cc-usage history) before and after each stage and
+records the delta at stage level, labelled account-wide (public/lab/stages.jsonl).
