@@ -80,11 +80,27 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 ## Lab results
 
-*Coming: the variants lab (which mix of planner, coders, reviewers and landing policy works best, measured against one strong agent alone). Results land here and in `docs/lab/`.*
+**Which team shape works best?** The same job given to one strong agent, and to a planner with a crew of cheaper agents, through qodebase's queue (live: https://qodebase.app/lab).
 
-**OpenClaw, from their real data** (30 days of a ~535-commits-a-day repo, read-only; [docs/openclaw/FINDINGS.md](docs/openclaw/FINDINGS.md)):
-- Their no-queue flow is the cheapest and fastest way to land at that rate. A merge queue that runs each change's own tests would cost ~1.6x their landing CI and add ~20 minutes, and ~78% of the breaks their hourly full suite finds sit next to a change from that same hour (an upper bound for what it would catch).
-- Triage: a Haiku agent that can search earlier issues and read the code was right on 61% of 200 real issues vs 50% for text-only triage (paired p = 0.004), almost all of it from finding duplicates (66% vs 14%), at about a tenth of a cent per issue. Their own bot, ClawSweeper (dozens of Codex agents with the repo), still matches real outcomes far more often.
+| job | one Opus agent | Opus planner + Haiku crew |
+|---|---|---|
+| café site, small | 58 s, quality 85, $0.39 | 1,431 s, quality 85 |
+| TypeScript port | 228 s, quality 92, $2.02 | 830 s, quality 81, $0.85 |
+| bakery site, 3 runs each (median) | 509 s, quality 96, $4.08 | ~1,070 s, quality 92, $1.75 |
+
+- **Up to ~13-minute jobs, one Opus agent wins on speed and quality.** The crew comes within 4 quality points on the bakery job at ~57% lower cost, and 11 points lower on the port.
+- Haiku as the planner under-plans: quality 35 and 54 on the café.
+- GitHub-style (pull requests merged one at a time) timed out after an hour with 3 of 6 tasks landed.
+- Next: a wide, ~60-minute job (a club website), to find where a crew wins on speed.
+
+Quality is a 0–100 score from hidden tests, build checks and an AI judge ([`docs/lab/scoring.md`](docs/lab/scoring.md)). Costs are API-equivalent (the runs used a Claude subscription); the café crew's cost is an upper bound and not shown. Every run: [`public/lab/runs.jsonl`](public/lab/runs.jsonl); plan: [`docs/lab/`](docs/lab/).
+
+**OpenClaw, a very busy open-source repo** (30 days of public data; [`docs/openclaw/FINDINGS.md`](docs/openclaw/FINDINGS.md)):
+
+- ~16,000 commits on main, ~630 pull requests a day, and no merge queue: at their pace, their flow is the cheapest and fastest.
+- A queue that tests each train's own scoped tests would cost ~1.6× their landing CI with an ~18-minute median wait; for ~78% of full-suite breaks, a change in the failing test's area landed that hour, so scoped trains would plausibly catch them.
+- Triage: a Haiku agent that reads the repo and the issue index was right on 61% of 200 issues vs 50% for text-only (p = 0.004), and found 66% of duplicates vs 14%.
+- Putting the project's own triage policy files into the prompt did not help (55% vs 58.5%, p = 0.13).
 
 ## More
 

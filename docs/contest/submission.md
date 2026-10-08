@@ -53,6 +53,22 @@ Claude Haiku 5.5 agents with declared files; both changes were reviewed, tested 
 one train and landed in 5.5 minutes, right the first time, their records attached as git
 notes (`git log --notes=qodebase`).
 
+We also measured which team shape works best (qodebase.app/lab, every run in
+`public/lab/runs.jsonl`): on jobs up to ~13 minutes one Opus agent wins on speed and quality
+(café 58 s, quality 85; TypeScript port 228 s, 92; bakery median 509 s, 96), while an Opus
+planner with a crew of Haiku agents comes within 4 quality points on the bakery job at ~57%
+lower API-equivalent cost (11 points lower on the port). Haiku planners under-plan (quality
+35-54), and a GitHub-style flow (pull requests merged one at a time) timed out. A wide,
+~60-minute job comes next, to find where a crew wins on speed.
+
+And we studied a very busy open-source repo, OpenClaw (30 days of public data,
+`docs/openclaw/FINDINGS.md`): with no merge queue, their flow is the cheapest and fastest at
+their pace; a queue running each train's scoped tests would cost ~1.6x their landing CI, and
+for ~78% of full-suite breaks a change in the failing test's area landed that hour. A Haiku
+triage agent that reads the repo and the issue index was right on 61% of 200 issues vs 50% for
+text-only (p = 0.004), finding 66% of duplicates vs 14%; adding the project's own policy files
+to the prompt did not help.
+
 So this is not GitHub with agents on top: the unit is an intent with its record, and
 landing is automatic. A person steers (by typing or talking to the project, from the
 phone) and is asked only when something needs them.
