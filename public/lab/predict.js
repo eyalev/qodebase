@@ -17,7 +17,7 @@
 import { qualityScore } from './score.js';
 export { qualityScore }; // qb5's one quality formula (public/lab/score.js)
 
-export const SIM_VERSION = 'lab-0.9';
+export const SIM_VERSION = 'lab-0.10';
 
 // Knob names and values = the Landing flags and runs.jsonl `variant` (docs/lab/runs-schema.md).
 export const KNOBS = {
@@ -58,7 +58,7 @@ export const SCENARIOS = {
   'cafe-family': { label: 'Make the cafe family-friendly', tasks: 7, depth: 2, pShared: 0.6, sharedFiles: 4, vague: 0.8, dupRisk: 0.05, difficulty: 1, hidden: 7, aloneS: 50 }, // dupRisk 0.3 -> 0.05: 0 duplicates in 11 tasks (stage 1, qb5)
   'port-ts': { label: 'Port a library to TypeScript', tasks: 21, depth: 3, pShared: 0.1, sharedFiles: 3, vague: 0.2, dupRisk: 0.05, difficulty: 1, hidden: 158, aloneS: 223 }, // aloneS: stage-1 run 13 (one Opus agent, 81 files); difficulty 1.3 -> 1: it passed 158/158
   bakery: { label: 'Build a small bakery website with online orders', tasks: 25, depth: 3, pShared: 0.5, sharedFiles: 5, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 26, aloneS: 530 }, // aloneS: one Opus agent took 806 / 465 / 509 s (stage-1 run 15, stage-2 r2, r3): median 509 / 0.96 coverage
-  club: { label: 'Build a booking app for a padel club', tasks: 47, depth: 2, pShared: 0.2, sharedFiles: 4, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 42, aloneS: 565 }, // qb5 7828aef: wide, shallow; reference = one Opus subagent 881 s (one session), x 0.64 = bakery's box/subagent ratio (509 / ~795 s)
+  club: { label: 'Build a booking app for a padel club', tasks: 47, depth: 2, pShared: 0.2, sharedFiles: 4, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 42, aloneS: 740 }, // qb5 7828aef: wide, shallow; one Opus agent on a box took 850 / 606 s (stage-2 club r1, r2): median 728 / ~0.98 coverage. (qb5's subagent reference: 881 s; bakery's box/subagent ratio 0.64 did NOT carry over)
   rename: { label: 'Rename X across the codebase + a dependent change', tasks: 20, depth: 3, pShared: 0.4, sharedFiles: 2, vague: 0.1, difficulty: 0.7, hidden: 10, aloneS: 300 }, // qb4 guess (backup scenario)
 };
 

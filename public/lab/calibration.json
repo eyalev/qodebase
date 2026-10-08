@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-08T18:21:50.661Z",
- "simVersion": "lab-0.9",
+ "generated": "2026-10-08T18:52:38.619Z",
+ "simVersion": "lab-0.10",
  "fit": {
-  "runs": 15,
+  "runs": 17,
   "from": [
    "lab-cafefamily-739a1-r1",
    "lab-cafefamily-08ce0-r1",
@@ -18,21 +18,23 @@
    "lab-bakery-aa826-r3",
    "lab-club-40f21-r1",
    "lab-club-5db67-r1",
-   "lab-club-40f21-r2"
+   "lab-club-40f21-r2",
+   "lab-club-40f21-r3",
+   "lab-club-5db67-r2"
   ],
   "coder": {
    "haiku": {
-    "tasks": 48,
-    "workMedS": 207.235,
+    "tasks": 60,
+    "workMedS": 205.174,
     "simWorkMedS": 28.799999999999997,
-    "usdPerS": 0.000287,
+    "usdPerS": 0.000332,
     "simUsdPerS": 0.00059
    },
    "opus": {
-    "tasks": 6,
-    "workMedS": 452.007,
+    "tasks": 7,
+    "workMedS": 497.846,
     "simWorkMedS": 67.19999999999999,
-    "usdPerS": 0.007348,
+    "usdPerS": 0.00771,
     "simUsdPerS": 0.0085
    }
   },
@@ -45,23 +47,23 @@
     "hiddenShareMed": 0.14285714285714285
    },
    "opus": {
-    "runs": 13,
+    "runs": 15,
     "planMedS": 42.842,
     "simPlanS": 60,
     "tasksPlannedShare": 0.24,
-    "hiddenShareMed": 0.9936708860759493
+    "hiddenShareMed": 1
    }
   },
   "actualOverPredicted": {
-   "wallS": 0.6841397849462365,
-   "apiUsdStd": 0.6722419928825623,
-   "quality": 1.0873460246360582
+   "wallS": 0.7354014598540146,
+   "apiUsdStd": 0.8504166666666667,
+   "quality": 1.091703056768559
   },
   "actualOverNow": {
-   "simVersion": "lab-0.9",
+   "simVersion": "lab-0.10",
    "wallS": 1.007920792079208,
-   "apiUsdStd": 1.0266304347826087,
-   "quality": 1.0896057347670252
+   "apiUsdStd": 0.977027027027027,
+   "quality": 1.0869565217391304
   }
  },
  "runs": [
@@ -84,7 +86,7 @@
     "wallS": 293,
     "apiUsdStd": 0.15,
     "quality": 37.5,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": 283,
    "wallSRaw": 283,
@@ -133,7 +135,7 @@
     "wallS": 254,
     "apiUsdStd": 0.15,
     "quality": 43.8,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": 172,
    "wallSRaw": 172,
@@ -187,7 +189,7 @@
     "wallS": 53,
     "apiUsdStd": 0.41,
     "quality": 75,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": 58,
    "wallSRaw": 58,
@@ -237,7 +239,7 @@
     "wallS": 304,
     "apiUsdStd": 0.64,
     "quality": 81.3,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": null,
    "wallSRaw": 1431,
@@ -282,7 +284,7 @@
     "wallS": 230,
     "apiUsdStd": 1.92,
     "quality": 91.7,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": 228,
    "wallSRaw": 228,
@@ -329,7 +331,7 @@
     "wallS": 505,
     "apiUsdStd": 4.25,
     "quality": 92,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": 806,
    "wallSRaw": 806,
@@ -376,7 +378,7 @@
     "wallS": 829,
     "apiUsdStd": 1.84,
     "quality": 92.9,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": 811,
    "wallSRaw": 811,
@@ -432,7 +434,7 @@
     "wallS": 580,
     "apiUsdStd": 0.98,
     "quality": 83.7,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": null,
    "wallSRaw": 830,
@@ -477,7 +479,7 @@
     "wallS": 829,
     "apiUsdStd": 1.84,
     "quality": 92.9,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": 1163,
    "wallSRaw": 1163,
@@ -532,7 +534,7 @@
     "wallS": 505,
     "apiUsdStd": 4.25,
     "quality": 92,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": 465,
    "wallSRaw": 465,
@@ -581,7 +583,7 @@
     "wallS": 829,
     "apiUsdStd": 1.84,
     "quality": 92.9,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": null,
    "wallSRaw": 2090,
@@ -636,7 +638,7 @@
     "wallS": 505,
     "apiUsdStd": 4.25,
     "quality": 92,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": 509,
    "wallSRaw": 509,
@@ -682,10 +684,10 @@
     "simVersion": "lab-0.9"
    },
    "now": {
-    "wallS": 943,
-    "apiUsdStd": 2.51,
-    "quality": 87.3,
-    "simVersion": "lab-0.9"
+    "wallS": 968,
+    "apiUsdStd": 2.71,
+    "quality": 92,
+    "simVersion": "lab-0.10"
    },
    "wallS": null,
    "wallSRaw": 1616,
@@ -727,10 +729,10 @@
     "simVersion": "lab-0.9"
    },
    "now": {
-    "wallS": 537,
-    "apiUsdStd": 4.52,
+    "wallS": 702,
+    "apiUsdStd": 5.92,
     "quality": 90.6,
-    "simVersion": "lab-0.9"
+    "simVersion": "lab-0.10"
    },
    "wallS": 850,
    "wallSRaw": 850,
@@ -774,10 +776,10 @@
     "simVersion": "lab-0.9"
    },
    "now": {
-    "wallS": 943,
-    "apiUsdStd": 2.51,
-    "quality": 87.3,
-    "simVersion": "lab-0.9"
+    "wallS": 968,
+    "apiUsdStd": 2.71,
+    "quality": 92,
+    "simVersion": "lab-0.10"
    },
    "wallS": 1263,
    "wallSRaw": 1263,
@@ -815,6 +817,111 @@
    },
    "conflicts": 0,
    "bounces": 3
+  },
+  {
+   "id": "lab-club-40f21-r3",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "club",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 17,
+    "wallS": 1024,
+    "apiUsdStd": 2.46,
+    "quality": 90.4,
+    "simVersion": "lab-0.9"
+   },
+   "now": {
+    "wallS": 968,
+    "apiUsdStd": 2.71,
+    "quality": 92,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 1104,
+   "wallSRaw": 1104,
+   "planS": 66.24,
+   "usd": 3.01,
+   "usdRaw": 3.01,
+   "coderUsd": 1.791,
+   "tasksPlanned": 12,
+   "tasksLanded": 12,
+   "expectedTasks": 47,
+   "workS": [
+    219.653,
+    270.014,
+    184.121,
+    148.904,
+    222.165,
+    330.844,
+    173.087,
+    112.472,
+    203.708,
+    160.388,
+    151.947,
+    362.086
+   ],
+   "workMedS": 184.121,
+   "quality": 94,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 7,
+   "tokens": {
+    "in": 2238,
+    "out": 1933500,
+    "cacheR": 74560113,
+    "cacheW": 4265043
+   },
+   "conflicts": 0,
+   "bounces": 2
+  },
+  {
+   "id": "lab-club-5db67-r2",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "club",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 49,
+    "wallS": 613,
+    "apiUsdStd": 5.17,
+    "quality": 88.8,
+    "simVersion": "lab-0.9"
+   },
+   "now": {
+    "wallS": 702,
+    "apiUsdStd": 5.92,
+    "quality": 90.6,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 606,
+   "wallSRaw": 606,
+   "planS": 3.763,
+   "usd": 5.633,
+   "usdRaw": 5.633,
+   "coderUsd": 5.633,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 47,
+   "workS": [
+    596.582
+   ],
+   "workMedS": 596.582,
+   "quality": 94,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 7,
+   "tokens": {
+    "in": 132,
+    "out": 157661,
+    "cacheR": 4932579,
+    "cacheW": 186588
+   },
+   "conflicts": 0,
+   "bounces": 0
   }
  ],
  "notFitted": [

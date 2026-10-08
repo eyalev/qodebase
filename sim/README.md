@@ -267,3 +267,33 @@ What it shows:
 - **The one shared file** (`jsr.json`, one line per module) merged cleanly in 48-76% of the
   cases where both sides changed it, against Bun's measured 84% (its hot files are big source
   files edited in different regions; ours is a list, like Hono's append lists at 20%).
+
+## Variants lab: one Opus agent vs a swarm, on real jobs (2026-10-08)
+
+Real runs on qodebase (public/lab/runs.jsonl, docs/lab/), each scored on hidden acceptance tests
+the agents never see, plus a judge (qb5's scorer). The swarm: an Opus planner, 12 Haiku coders,
+3 Haiku reviewers, landing by intent (bakery, club; 6 coders on port-ts). Times exclude any run
+with a platform stall or a human intervention (never "corrected"); costs are API-equivalent at
+standard rates (the real bill is container time: cents).
+
+| job | one Opus agent | swarm | faster | cheaper (API-equiv) | hidden tests |
+|---|---|---|---|---|---|
+| cafe-family (small feature burst, 1 run each) | 58 s, $0.39 | time not comparable (a reviewer bug stalled it) | Opus | | 6/7 both |
+| port-ts (port a library, 1 run each) | 228 s, $2.02 | time not comparable (a stacking bug, fixed by hand) | Opus | | 158/158 vs 157/158 |
+| bakery (greenfield shop, 3 runs each) | median 509 s (465-806), $4.08 | median 987 s (811, 1163; 1 stalled run left out), $1.75 | Opus 1.9x | swarm 57% less | Opus 26/26 in 2 of 3 runs; swarm 25/26 in all 3 |
+| club (wide job on ready foundations, 2 Opus / 3 swarm) | median 728 s (606, 850), $5.71 | median 1184 s (1104, 1263; 1 stalled run left out), $2.96 | Opus 1.6x | swarm 48% less | 42/42 in every run (a tie) |
+
+What it shows, across three jobs that finished cleanly:
+- **One strong agent is faster** at every size we ran (1.6-1.9x on the two bigger jobs).
+- **The swarm costs about half** at API prices (48-57% less), because its coders are Haiku.
+- **Quality ties on the hidden tests** (club: 42/42 everywhere; bakery: one test the swarm
+  missed every time). Judge scores moved 4-7 for the same 42/42 code, so judge-only gaps are noise.
+- **The swarm is landing-bound, not size-bound.** Each change lands one at a time, ~60-100 s each
+  (bakery). The sim (fitted on these runs: 1.01x time, 0.98x cost) predicts a 4x wider club
+  would still be slower for the swarm (0.82x); only faster landing (~30 s each, trains of 8,
+  more reviewers) tips it (~1.1x). That's a landing-system change, not a bigger job.
+- **Single runs mislead**: bakery's first pair tied (811 vs 806 s) only because it was the
+  swarm's best run and Opus's worst.
+
+The sim: public/lab/predict.js (lab-0.10), calibration in public/lab/calibration.json
+(predicted at run time / now / real for every run), stage plans in public/lab/stage*-plan.json.
