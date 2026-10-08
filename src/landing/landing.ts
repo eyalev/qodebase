@@ -570,6 +570,17 @@ Failures: ${(rc.checks?.failures || []).slice(0, 4).join(' | ') || rc.why}
 Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     }
     if (deploy && (await P.kindOf()) === 'worker') await P.requestBuild('deploy').catch((e) => log('landing', 'deploy_request_failed', { err: String(e) }));
+    // Agents that said they are blocked (often: waiting for another agent's work) learn that main
+    // moved. Four agents waited 20 min for helpers that had already landed (lab run 14, 2026-10-08).
+    if (deploy) {
+      const landedTitles = r.changes.filter((x) => x.landed).map((x) => x.id);
+      const info = await P.info().catch(() => null);
+      for (const a of info?.agents || []) {
+        if (a.state !== 'blocked' || landedTitles.includes(a.id)) continue;
+        const what = (await Promise.all(landedTitles.map((id) => this.#get(id)))).filter(Boolean).map((c) => `"${c!.title}"`).join(', ');
+        this.#tell(a.id, `qodebase: main moved: ${what} landed (${(r.mainAfter || '').slice(0, 7)}). If you were waiting for it, run \`forq sync-main\` to rebase on the latest main and continue your task; then push and run: forq status pushed "<what you did>".`);
+      }
+    }
   }
 
   #rebasePolicy(m: Meta) { return m.flags.policy === 'github' || m.flags.policy === 'ffa'; }
