@@ -179,8 +179,32 @@
   "how": "predicted, lab-0.8 medians"
  },
  "part2": {
-  "when": "after the weekly reset (2026-10-12 13:00 UTC)",
-  "what": "a bigger job where the sim says the swarm wins on time",
-  "sizeAsked": "45-60 one-Opus-agent minutes (qb5 designs it)"
+  "approved": "manager s1007-1655, 2026-10-08",
+  "scenario": "club",
+  "job": "~60 one-Opus-agent minutes, dependency depth ~3: foundations (storage, members/login, courts/slots) in the starter or pinned in the brief, the rest wide ('wide job, shallow chain': the honest best case for a swarm, said so when published)",
+  "when": "after the weekly reset (2026-10-12 13:00 UTC) and qb5's validated reference build",
+  "order": [
+   "swarm r1",
+   "opus-alone r1",
+   "swarm r2"
+  ],
+  "conditional": "opus-alone r2 ONLY if opus-alone r1 lands within ~15% of the swarm's time or quality, and the meter allows",
+  "swarm": {
+   "planner": "opus",
+   "coders": 12,
+   "coderModel": "haiku",
+   "reviewers": 3,
+   "reviewerModel": "haiku",
+   "reviewStyle": "read",
+   "policy": "intent",
+   "claims": false,
+   "dedupe": true,
+   "trainMax": 4
+  },
+  "guards": {
+   "stopAtApiUsdStd": 50,
+   "stopAtWeeklyMeter": "value at the reset + 15 points"
+  },
+  "predicted": "pending: qb4 sends per-run predictions once qb5's reference time sets club's size (sim at 60 min, depth 3: swarm ~33 min / ~$11, opus-alone ~53 min / ~$21; 2 swarm + 1 opus ~$43)"
  }
 }
