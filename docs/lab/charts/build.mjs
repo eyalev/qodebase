@@ -41,7 +41,13 @@ function runPanels(f, box, rows, panels) {
       out += track(tx, y, tw, 30);
       const med = median(r.runs.map(pn.v));
       out += `<rect x="${X(med) - 2}" y="${y - 8}" width="4" height="46" fill="var(--fg)"><title>${r.label}, median ${pn.fmt(med)}</title></rect>`;
-      for (const run of r.runs) out += dot(X(pn.v(run)), cy, r.hi, run.timings.stallS && pn.stallAware);
+      // runs with the same value sit on top of each other: spread them vertically so each shows
+      const seen = new Map();
+      for (const run of r.runs) {
+        const x = X(pn.v(run)), k = Math.round(x / 6), same = r.runs.filter((o) => Math.round(X(pn.v(o)) / 6) === k).length, i = seen.get(k) || 0;
+        seen.set(k, i + 1);
+        out += dot(x, cy + (i - (same - 1) / 2) * 14, r.hi, run.timings.stallS && pn.stallAware);
+      }
       out += text(tx + tw + 14, cy + 12, pn.fmt(med), { size: L_ ? f.val - 8 : f.txt - 12, weight: 600, c: r.hi ? 'fg' : 'dim' });
     });
   });
