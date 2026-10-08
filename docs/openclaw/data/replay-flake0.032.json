@@ -32,8 +32,9 @@
      "bounced_bad": 0,
      "bounced_false": 0,
      "bad_reaching_main": 163,
-     "red_main_h_per_day": null,
-     "note": "full suite on main green 1/153 hourly runs; 32.1 new persistent breaks/day"
+     "red_main_h_per_day": 17.5,
+     "red_main_measured": true,
+     "note": "measured, independent of bad: full suite on main green 1/153 hourly runs; persistent failure in 111/152 hours; 13.4 hours/day with a new persistent break (32.1 shards/day)"
     },
     {
      "policy": "queue N8 K2 full",
@@ -192,8 +193,9 @@
      "bounced_bad": 0,
      "bounced_false": 0,
      "bad_reaching_main": 407,
-     "red_main_h_per_day": null,
-     "note": "full suite on main green 1/153 hourly runs; 32.1 new persistent breaks/day"
+     "red_main_h_per_day": 17.5,
+     "red_main_measured": true,
+     "note": "measured, independent of bad: full suite on main green 1/153 hourly runs; persistent failure in 111/152 hours; 13.4 hours/day with a new persistent break (32.1 shards/day)"
     },
     {
      "policy": "queue N8 K2 full",
@@ -352,8 +354,9 @@
      "bounced_bad": 0,
      "bounced_false": 0,
      "bad_reaching_main": 651,
-     "red_main_h_per_day": null,
-     "note": "full suite on main green 1/153 hourly runs; 32.1 new persistent breaks/day"
+     "red_main_h_per_day": 17.5,
+     "red_main_measured": true,
+     "note": "measured, independent of bad: full suite on main green 1/153 hourly runs; persistent failure in 111/152 hours; 13.4 hours/day with a new persistent break (32.1 shards/day)"
     },
     {
      "policy": "queue N8 K2 full",

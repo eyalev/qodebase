@@ -165,7 +165,7 @@ function landThenVerify(everyMin, bad, r, suite) {
 // the hourly full suite finds breaks after they land.
 function theirs(bad) {
   const fs_ = flow.ci.full_suite_on_main || {};
-  return { policy: 'theirs (measured)', trains: 0, ci_runs_per_day: flow.ci.runner_hours_per_day_est?.by_event?.push?.runs_per_day, landing_runner_hours_per_day: (flow.ci.runner_hours_per_day_est?.by_event?.push?.runner_hours_per_day || 0) + (flow.ci.runner_hours_per_day_est?.by_event?.schedule?.runner_hours_per_day || 0), wait_min_p50: 0, wait_min_p90: 0, bounced_bad: 0, bounced_false: 0, bad_reaching_main: Math.round(bad * changes.length), red_main_h_per_day: null, note: `full suite on main green ${fs_.all_green}/${fs_.runs} hourly runs; ${fs_.new_persistent_breaks_per_day} new persistent breaks/day` };
+  return { policy: 'theirs (measured)', trains: 0, ci_runs_per_day: flow.ci.runner_hours_per_day_est?.by_event?.push?.runs_per_day, landing_runner_hours_per_day: (flow.ci.runner_hours_per_day_est?.by_event?.push?.runner_hours_per_day || 0) + (flow.ci.runner_hours_per_day_est?.by_event?.schedule?.runner_hours_per_day || 0), wait_min_p50: 0, wait_min_p90: 0, bounced_bad: 0, bounced_false: 0, bad_reaching_main: Math.round(bad * changes.length), red_main_h_per_day: fs_.persistent_red_h_per_day ?? null, red_main_measured: true, note: `measured, independent of bad: full suite on main green ${fs_.all_green}/${fs_.runs} hourly runs; persistent failure in ${fs_.persistent_red_hours}/${fs_.persistent_red_of_hours} hours; ${fs_.new_breaks_per_day} hours/day with a new persistent break (${fs_.new_persistent_shard_failures_per_day} shards/day)` };
 }
 
 // Suites, calibrated from their jobs (flow.json): the full hourly suite and a PR-sized scope.

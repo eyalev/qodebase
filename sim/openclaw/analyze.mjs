@@ -49,6 +49,21 @@ function overlapWithin(commits, windowMs) {
   return { commits: commits.length, with_same_file_commit_before: hit, pct: pct(hit, commits.length) };
 }
 
+// Which kinds of files the same-hour collisions land on. A collision = a file in a commit that
+// another commit touched within the window before it; counted per file, classed by path (first
+// rule that matches, in this order).
+const KINDS = [
+  ['i18n', /i18n|locales/], ['list/baseline', /\.txt$|baseline|\.snap$|wrapper-components/],
+  ['docs', /\.md$|^docs\//], ['manifest/changelog', /package\.json|pnpm-lock|CHANGELOG/],
+  ['ci config', /\.github\//], ['tests/scripts', /test|\.mjs$/],
+];
+const kindOf = (f) => (KINDS.find(([, re]) => re.test(f)) || ['code'])[0];
+function collisionKinds(commits, windowMs) {
+  const last = new Map(); const n = {}; let total = 0;
+  for (const c of commits) { for (const f of c.files) { const lt = last.get(f); if (lt != null && c.ts - lt <= windowMs) { const k = kindOf(f); n[k] = (n[k] || 0) + 1; total++; } } for (const f of c.files) last.set(f, c.ts); }
+  return { unit: 'file-collisions (a file touched again within 1 h)', total, rules: KINDS.map(([k, re]) => `${k}: ${re}`).concat('code: everything else'), kinds: Object.fromEntries(Object.entries(n).sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, { collisions: v, pct: pct(v, total) }])) };
+}
+
 const main = mainCommits();
 const span = (main.at(-1).ts - main[0].ts) / 864e5;
 const fileHits = count(main, (c) => c.files);
@@ -61,6 +76,7 @@ const mainStats = {
   per_hour: (() => { const m = count(main, (c) => Math.floor(c.ts / H)); const v = Object.values(m); return { active_hours: v.length, ...dist(v, 1, 0), max: Math.max(...v) }; })(),
   hot_files: top(fileHits, 20),
   same_file_within: { '10min': overlapWithin(main, 10 * MIN), '1h': overlapWithin(main, H), '6h': overlapWithin(main, 6 * H) },
+  same_hour_collisions_by_kind: collisionKinds(main, H),
   same_file_within_excl_changelog: overlapWithin(main.map((c) => ({ ...c, files: c.files.filter((f) => !/CHANGELOG|\.md$|pnpm-lock|package\.json$/.test(f)) })), H),
 };
 
@@ -187,15 +203,21 @@ ciStats.jobs_per_run_by_event = Object.fromEntries(['pull_request', 'push', 'sch
 {
   const sched = jobs.filter((j) => j.event === 'schedule').sort((a, b) => a.run_id - b.run_id);
   const failed = sched.map((j) => new Set(j.jobs.filter((x) => x.conclusion === 'failure' && x.name !== 'openclaw/ci-gate').map((x) => x.name)));
-  let repeat = 0, total = 0, newPersistent = 0;
+  let repeat = 0, total = 0, newPersistent = 0, breakHours = 0, persistentRed = 0;
   for (let i = 1; i < failed.length; i++) { for (const n of failed[i - 1]) { total++; if (failed[i].has(n)) repeat++; } }
-  for (let i = 1; i < failed.length - 1; i++) for (const n of failed[i]) if (!failed[i - 1].has(n) && failed[i + 1].has(n)) newPersistent++;
+  for (let i = 1; i < failed.length - 1; i++) { let k = 0; for (const n of failed[i]) if (!failed[i - 1].has(n) && failed[i + 1].has(n)) k++; newPersistent += k; if (k) breakHours++; }
+  for (let i = 0; i < failed.length - 1; i++) if ([...failed[i]].some((n) => failed[i + 1].has(n))) persistentRed++;
   const jobsPerRun = dist(sched.map((j) => j.jobs.length), 1, 0).p50;
   ciStats.full_suite_on_main = {
     runs: sched.length, all_green: sched.filter((j) => j.conclusion === 'success').length,
     failing_shards_per_run: dist(failed.map((s) => s.size), 1, 0), jobs_per_run: jobsPerRun,
     shard_failure_repeats_next_hour_pct: pct(repeat, total),
-    new_persistent_breaks: newPersistent, new_persistent_breaks_per_day: +(newPersistent / ((sched.length - 2) / 24)).toFixed(1),
+    // Two units: shards (one break can fail several shards) and hours with at least one new break.
+    new_persistent_shard_failures: newPersistent, new_persistent_shard_failures_per_day: +(newPersistent / ((sched.length - 2) / 24)).toFixed(1),
+    hours_with_new_persistent_break: breakHours, of_hours: sched.length - 2, new_breaks_per_day: +(breakHours / ((sched.length - 2) / 24)).toFixed(1),
+    bad_rate_upper_bound_pct: +((100 * breakHours) / ((sched.length - 2) / 24) / mainStats.per_day).toFixed(1),
+    // "Red main" as the replay counts it: an hour whose run has a failure that the next run repeats.
+    persistent_red_hours: persistentRed, persistent_red_of_hours: sched.length - 1, persistent_red_h_per_day: +((24 * persistentRed) / (sched.length - 1)).toFixed(1),
     transient_failure_per_shard_pct: +((100 * (total - repeat)) / Math.max(1, failed.length - 1) / jobsPerRun).toFixed(2),
   };
 }
