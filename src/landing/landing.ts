@@ -68,6 +68,7 @@ type Meta = {
   demo: Demo | null;
   reviews?: { queue: string[]; busy: Record<string, { change: string; at: number; sends: number; nudged?: number }>; coolUntil?: Record<string, number> };
   spent?: { usd: number; at: number; boxes: number; claude: number };
+  spentBase?: number;   // spend already in the ledger when the budget was set: the budget counts from there
   watchLog?: { at: number; ip: string }[];   // Watch a run: starts in the last day (caps)
   watchStarting?: number;                    // a visitor's run is being set up (blocks a second one)
   watchPrep?: { prevAgents: number };        // the alarm resets the café and starts the visitor's run
@@ -332,7 +333,11 @@ export class Landing extends DurableObject<Env> {
         claude += Math.max(claudeUsd(m.flags.agentModel || 'opus', x.tokens) ?? claudeUsd('opus', x.tokens) ?? 0, x.usd || 0);
       }
     }
-    m.spent = { usd: Math.round((boxes + claude) * 1000) / 1000, at: Date.now(), boxes: Math.round(boxes * 1000) / 1000, claude: Math.round(claude * 1000) / 1000 };
+    const total = boxes + claude;
+    // A budget counts from when it was set (the second crew run of a day started with the first one's $2.74 in the ledger).
+    if (m.spentBase === undefined) m.spentBase = total;
+    const run = Math.max(0, total - m.spentBase);
+    m.spent = { usd: Math.round(run * 1000) / 1000, at: Date.now(), boxes: Math.round(boxes * 1000) / 1000, claude: Math.round(claude * 1000) / 1000 };
     if (m.spent.usd >= m.flags.budgetUsd) await this.#halt(m, `budget reached: $${m.spent.usd} of $${m.flags.budgetUsd}`);
     await this.#saveMeta();
     if (!m.flags.halted) await this.#arm(60_000);
@@ -560,6 +565,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
 
   async setFlags(slug: string, flags: Partial<Meta['flags']>) {
     const m = await this.#m(slug);
+    if ('budgetUsd' in flags) { delete m.spentBase; delete m.spent; await this.ctx.storage.setAlarm(Date.now() + 1000); }   // re-baselined by the next budget tick
     m.flags = { ...m.flags, ...flags };
     await this.#saveMeta();
     return m.flags;
