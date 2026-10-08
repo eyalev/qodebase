@@ -164,16 +164,21 @@ const C = [];
   const agent = rows[0], textBest = Math.max(...rows.slice(1).map((r) => r.dup.p));
   const chance = 1 / Object.keys(triage.outcome_mix).length;
   const pct = (v) => `${Math.round(100 * v)}%`;
+  const paired = sub.paired_vs_haiku, clear = paired && paired.p < 0.05;
+  const pTxt = paired ? `p = ${paired.p < 0.01 ? paired.p.toFixed(3) : paired.p.toFixed(2)}` : 'p unknown';
+  const v2 = triage.agent_rounds?.round2_v2_vs_v1_on_new_100;
   C.push({ name: 'openclaw-triage',
     title: { L: [`A triage agent that can search found ${pct(agent.dup.p)} of duplicates;`, `text-only triage found ${pct(textBest)} at most`],
       P: ['A triage agent that', `can search found ${pct(agent.dup.p)}`, 'of duplicates; text-only', `${pct(textBest)} at most`] },
-    sub: { L: [`${sub.n} OpenClaw issues, ${perKind} of each kind. Overall it was right ${pct(agent.acc.p)} vs ${pct(rows[1].acc.p)}: not a clear difference`],
-      P: [`${sub.n} OpenClaw issues, ${perKind} of each`, `kind. Overall ${pct(agent.acc.p)} vs ${pct(rows[1].acc.p)}, not clear`] },
-    source: `sim/openclaw/triage.mjs (qb9), ${triage.question_version}; bars = 95% intervals; overall agent vs text-only Haiku, paired: p = 0.12`,
+    sub: { L: [`${sub.n} OpenClaw issues, ${perKind} of each kind. Overall it was right ${pct(agent.acc.p)} vs ${pct(rows[1].acc.p)}${clear ? ` (${pTxt})` : ': not a clear difference'}`],
+      P: [`${sub.n} OpenClaw issues, ${perKind} of each`, `kind. Overall ${pct(agent.acc.p)} vs ${pct(rows[1].acc.p)}${clear ? ` (${pTxt})` : ', not clear'}`] },
+    source: `sim/openclaw/triage.mjs (qb9), ${triage.question_version}; bars = 95% intervals; agent vs text-only Haiku, paired (${(paired?.test || '').split(' (')[0]}): ${pTxt}`,
     dataSource: 'docs/openclaw/data/triage-score.json: on_agent_subset (+ agent_detail)',
     table: [['classifier', 'right overall', '95% interval', 'duplicates found', 'closes', 'fixes', 'decisions'],
       ...rows.map((r) => { const rc = sub[r.key].recall; return [r.label, pct(r.acc.p), `${pct(r.acc.lo)}-${pct(r.acc.hi)}`, `${r.dup.k} of ${r.dup.n}`, pct(rc.close), pct(rc.fix), pct(rc.decision)]; }),
-      ['agent cost for 100', `$${triage.agent_detail.cost_usd_api_equiv} API-equivalent`, `${triage.agent_detail.turns_p50} turns (median)`, '', '', '', '']],
+      [`agent cost for ${sub.n}`, `$${triage.agent_detail.cost_usd_api_equiv} API-equivalent`, `${triage.agent_detail.turns_p50} turns (median)`, '', '', '', ''],
+      ...(paired ? [['agent vs text-only Haiku, paired', `only the agent right: ${paired.only_agent_right}`, `only text right: ${paired.only_text_right}`, pTxt, '', '', '']] : []),
+      ...(v2 ? [[`agent prompt v2 vs v1, ${v2.n} new issues`, `${pct(v2.a_accuracy.p)} vs ${pct(v2.b_accuracy.p)}`, `p = ${v2.mcnemar_exact_p.toFixed(2)}`, `duplicates ${pct(v2.recall_v2.duplicate.p)} vs ${pct(v2.recall_v1.duplicate.p)}`, '', '', '']] : [])],
     body: (f, box) => {
       // two panels, one scale each (0-100%): right overall (guessing marked) and duplicates found
       const panels = [{ title: 'Right overall', v: (r) => r.acc, mark: chance }, { title: 'Duplicates found', v: (r) => r.dup }];
