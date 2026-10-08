@@ -810,7 +810,9 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
   /** Version check after a deploy: a Durable Object that never went idle keeps the old code. */
   async version() { return this.env.CF_VERSION_METADATA?.id || null; }
   /** Restart this object on the deployed code (admin, src/landing/routes.ts 'restart'). */
-  async restart(): Promise<void> { this.ctx.abort('restart on the deployed code'); }
+  /** Restart on the deployed code. Arms the alarm first: an alarm cut by the abort is not retried,
+   *  and a run's queue sat still for minutes after a restart (stage 2, 2026-10-08). */
+  async restart(): Promise<void> { await this.ctx.storage.setAlarm(Date.now() + 2000); this.ctx.abort('restart on the deployed code'); }
 
   async demoForks() { return (await this.#m()).demoForks || []; }
 
