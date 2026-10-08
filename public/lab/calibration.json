@@ -1,0 +1,80 @@
+{
+ "generated": "2026-10-08T10:01:03.311Z",
+ "simVersion": "lab-0.3",
+ "fit": {
+  "runs": 1,
+  "from": [
+   "lab-cafefamily-739a1-r1"
+  ],
+  "coder": {
+   "haiku": {
+    "tasks": 3,
+    "workMedS": 37.42,
+    "simWorkMedS": 108,
+    "usdPerS": 0.000482,
+    "simUsdPerS": 0.0014333333333333333
+   }
+  },
+  "planner": {
+   "haiku": {
+    "runs": 1,
+    "planMedS": 47.084,
+    "simPlanS": 30,
+    "tasksPlannedShare": 0.43,
+    "hiddenShareMed": 0.14285714285714285
+   }
+  },
+  "actualOverPredicted": {
+   "wallS": 0.621978021978022,
+   "apiUsdStd": 0.13027522935779814,
+   "quality": 0.42805755395683454
+  }
+ },
+ "runs": [
+  {
+   "id": "lab-cafefamily-739a1-r1",
+   "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "baseline": null,
+   "scenario": "cafe-family",
+   "planner": "haiku",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 6.2,
+    "wallS": 455,
+    "apiUsdStd": 1.09,
+    "quality": 83.4,
+    "simVersion": "lab-0.3"
+   },
+   "now": {
+    "wallS": 455,
+    "apiUsdStd": 1.09,
+    "quality": 83.4,
+    "simVersion": "lab-0.3"
+   },
+   "wallS": 283,
+   "planS": 47.084,
+   "usd": 0.142,
+   "tasksPlanned": 3,
+   "tasksLanded": 3,
+   "expectedTasks": 7,
+   "workS": [
+    26.852,
+    230.489,
+    37.42
+   ],
+   "workMedS": 37.42,
+   "quality": 34.6,
+   "qualityNoJudge": 35.7,
+   "hiddenShare": 0.14285714285714285,
+   "judge": 3,
+   "tokens": {
+    "in": 218,
+    "out": 80774,
+    "cacheR": 5067561,
+    "cacheW": 254204
+   },
+   "conflicts": 0,
+   "bounces": 0
+  }
+ ]
+}
