@@ -176,7 +176,7 @@ class Cut:
             d.text((tx + 18, H - 180), badge, font=F_BADGE, fill=FG)
         return canvas, (px, py, ph_w, ph_h)
 
-    def phone(self, scene, max_wait=8.0, start=0, replace=None):
+    def phone(self, scene, max_wait=8.0, start=0, replace=None, speed_x=None, extra=None, squeeze=None):
         """A rig recording (video/frames/contest-<scene>), captions from its say() events.
         A caption waits for the previous narration to finish (the picture holds still)."""
         src = os.path.join(VIDEO, 'frames', f'contest-{scene}')
@@ -187,6 +187,15 @@ class Cut:
             if e['type'] == 'caption':
                 for a, b in (replace or {}).items():
                     if e['text'].startswith(a): e['text'] = b
+        # speed_x: play the take's time-lapse at this factor instead of the recorded one.
+        # extra: [(seconds after the time-lapse starts, caption)] for lines the take's schedule missed.
+        # squeeze: [(from, to, x, label)] seconds after the first event: speed up a dead stretch (with its badge).
+        for a, b, x, label in (squeeze or []):
+            ev = sorted(ev + [{'t': ev[0]['t'] + a, 'type': 'speed', 'speed': x, 'label': label}, {'t': ev[0]['t'] + b, 'type': 'speed', 'speed': 1}], key=lambda e: e['t'])
+        sp = next((e for e in ev if e['type'] == 'speed' and float(e['speed']) > 1 and e.get('label') != (squeeze or [[0, 0, 0, None]])[0][3]), None)
+        if sp and speed_x: sp['speed'] = speed_x
+        if sp and extra:
+            ev = sorted(ev + [{'t': sp['t'] + dt, 'type': 'caption', 'text': text} for dt, text in extra], key=lambda e: e['t'])
         caps = [e for e in ev if e['type'] == 'caption']
         # start: begin at the start-th caption (drops a part of the take that cannot be shown).
         if start: ev = [e for e in ev if e['t'] >= caps[start]['t'] - 0.3 or e['type'] == 'focus' and e['t'] >= caps[start]['t'] - 3]; caps = caps[start:]
@@ -195,7 +204,7 @@ class Cut:
         for i, e in enumerate(ev):
             if e['type'] == 'speed' and float(e['speed']) > 1:
                 stop = next((x['t'] for x in ev[i + 1:] if x['type'] == 'speed'), t1)
-                e['speed'] = max(float(e['speed']), (stop - e['t']) / max_wait)
+                e['speed'] = max(float(e['speed']), (stop - e['t']) / max_wait) if not speed_x else float(e['speed'])
         fi, ei, caption, speed, label, since, cache, open_cue, canvas = 0, 0, '', 1.0, '', None, {}, None, None
         pan_y, pan_to = 0.0, 0.0       # window top in screencast px; eased toward pan_to (~0.5 s)
         ease = 1 - 2.718 ** (-1 / (FPS * 0.15))
@@ -301,10 +310,13 @@ def script(c):
 
     # 4. The product on the phone (~2:30 when filmed in full)
     c.chapter('On the phone')
-    c.phone('live', max_wait=60)   # eyal/corner-cafe, qb6's scripted run, x8 time-lapse
+    c.phone('live', max_wait=60, replace={'All fourteen landed in 1 minutes': 'All fourteen landed in 77 seconds. Typical time from ask to landed: 26 seconds.'})   # eyal/corner-cafe, qb6's scripted run, x8 time-lapse
     # eyal/cafe-crew: ONE request typed into Talk (delivered 01:18:47 UTC, confirmed by qb6) ->
     # 12 real Claude Haiku 5.5 agents + 3 reviewers (qb6). Numbers in the captions are read from the run.
-    c.phone('crew', max_wait=90)
+    # The run took 6:43 (qb6): the take's caption schedule (7 and 14 min) missed two lines, added here.
+    c.phone('crew', speed_x=13, squeeze=[(33, 70.3, 8, 'router waking the agents')], extra=[
+        (120, 'Approved changes join the line by themselves and land in tested trains.'),
+        (235, 'Two agents changed the same line of the same file. An AI replayed the second one on the newest code, in nineteen seconds.')])
     c.slide('notes', ['Anyone can read it later, people and agents alike: git log shows why each change is there.'], after=2)
     c.slide('different', ['So this is not GitHub with agents on top. The unit is an intent with its record, and landing is automatic: a conflict is replayed, not bounced.'], after=2)
 

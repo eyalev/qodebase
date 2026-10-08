@@ -188,7 +188,8 @@ const SCENES = {
     const s = (await api(CAFE)).stats || {};
     console.log(JSON.stringify({ event: 'run_done', realS: Math.round((Date.now() - t0) / 1000), ...s }));
     await top(r); await r.sleep(500); await r.focus({ y: 0 });
-    await r.say(`All fourteen landed in ${Math.round((Date.now() - t0) / 60000)} minutes. Typical time from ask to landed: ${s.medianAskToLandS} seconds.`);
+    const took = Math.round((Date.now() - t0) / 1000);
+    await r.say(`All fourteen landed in ${took < 120 ? `${took} seconds` : `${Math.round(took / 60)} minutes`}. Typical time from ask to landed: ${s.medianAskToLandS} seconds.`);
     // Drill into one change of each kind, picked from this run's records (outcomes vary per run).
     const ch = (await api(CAFE)).changes || [];
     const has = (c, re) => (c.events || []).some((e) => re.test(e.what));
