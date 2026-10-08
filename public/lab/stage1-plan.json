@@ -38,7 +38,6 @@
     "quality": 83.4,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 1.09,
    "status": "done"
   },
   {
@@ -67,7 +66,6 @@
     "quality": 85,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 2.43,
    "status": "done"
   },
   {
@@ -96,7 +94,6 @@
     "quality": 88.1,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 16.32,
    "status": "done"
   },
   {
@@ -125,7 +122,6 @@
     "quality": 77.2,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 37.64,
    "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
@@ -154,7 +150,6 @@
     "quality": 81.4,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 39.72,
    "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
@@ -183,7 +178,6 @@
     "quality": 90.6,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 43,
    "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
@@ -212,7 +206,6 @@
     "quality": 83.4,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 44.09,
    "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
@@ -241,7 +234,6 @@
     "quality": 85,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 45.43,
    "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
@@ -270,7 +262,6 @@
     "quality": 81.4,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 47.51,
    "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
@@ -299,7 +290,6 @@
     "quality": 90.6,
     "simVersion": "lab-0.3"
    },
-   "predictedCumulativeUsd": 50.79,
    "status": "dropped (re-plan 2026-10-08: manager, after the run-3 checkpoint)"
   },
   {
@@ -342,7 +332,6 @@
      87.5
     ]
    },
-   "predictedCumulativeUsd": 0.86,
    "status": "done"
   },
   {
@@ -385,7 +374,6 @@
      100
     ]
    },
-   "predictedCumulativeUsd": 4.53,
    "status": "done (12b: timeout at 75 min, 3/6 landed)"
   },
   {
@@ -428,7 +416,6 @@
      94
     ]
    },
-   "predictedCumulativeUsd": 5.63,
    "status": "done"
   },
   {
@@ -470,8 +457,7 @@
      77.9,
      91
     ]
-   },
-   "predictedCumulativeUsd": 6.97
+   }
   },
   {
    "order": 15,
@@ -512,8 +498,7 @@
      87.5,
      96.4
     ]
-   },
-   "predictedCumulativeUsd": 67.08
+   }
   },
   {
    "order": 16,
@@ -555,7 +540,7 @@
      92.9
     ]
    },
-   "predictedCumulativeUsd": 74.67
+   "predictedCumulativeUsd": 30.54
   }
  ],
  "predictionsUpdated": "2026-10-08: lab-0.7 (calibrated on runs 1-3, 11 quality, 13) for orders 14-16",
@@ -590,5 +575,19 @@
   "plan": "14 port-ts opus planner + 6 haiku (one port-ts swarm only); 15 bakery opus-alone; 16 bakery balance; port-ts balance and github dropped",
   "framing": "on small and medium jobs one strong agent wins; we test where parallel pays at bakery size",
   "guards": "weekly meter stop at 52% (46% after run 13), $60 API-equiv"
+ },
+ "totals": {
+  "asOf": "2026-10-08T13:38:29.958Z",
+  "spentApiUsdStd": 22.95,
+  "spentRuns": 8,
+  "spentNote": "every stage-1 line in runs.jsonl, excluded and timed-out ones included (the money was spent); run 11 is an upper bound",
+  "judgeApiUsdStd": 2.07,
+  "toComeRuns": [
+   16
+  ],
+  "toComeApiUsdStd": 7.59,
+  "expectedTotalApiUsdStd": 30.54,
+  "guardApiUsdStd": 60,
+  "how": "spent so far (actual) + predicted for runs still to come; dropped runs not counted"
  }
 }
