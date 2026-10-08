@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-08T15:53:41.984Z",
+ "generated": "2026-10-08T18:21:50.661Z",
  "simVersion": "lab-0.9",
  "fit": {
-  "runs": 12,
+  "runs": 15,
   "from": [
    "lab-cafefamily-739a1-r1",
    "lab-cafefamily-08ce0-r1",
@@ -15,21 +15,24 @@
    "lab-bakery-bfe16-r2",
    "lab-bakery-aa826-r2",
    "lab-bakery-bfe16-r3",
-   "lab-bakery-aa826-r3"
+   "lab-bakery-aa826-r3",
+   "lab-club-40f21-r1",
+   "lab-club-5db67-r1",
+   "lab-club-40f21-r2"
   ],
   "coder": {
    "haiku": {
-    "tasks": 36,
-    "workMedS": 230.489,
+    "tasks": 48,
+    "workMedS": 207.235,
     "simWorkMedS": 28.799999999999997,
-    "usdPerS": 0.000167,
+    "usdPerS": 0.000287,
     "simUsdPerS": 0.00059
    },
    "opus": {
-    "tasks": 5,
+    "tasks": 6,
     "workMedS": 452.007,
     "simWorkMedS": 67.19999999999999,
-    "usdPerS": 0.007529,
+    "usdPerS": 0.007348,
     "simUsdPerS": 0.0085
    }
   },
@@ -42,23 +45,23 @@
     "hiddenShareMed": 0.14285714285714285
    },
    "opus": {
-    "runs": 10,
-    "planMedS": 3.891,
+    "runs": 13,
+    "planMedS": 42.842,
     "simPlanS": 60,
-    "tasksPlannedShare": 0.14,
-    "hiddenShareMed": 0.9615384615384616
+    "tasksPlannedShare": 0.24,
+    "hiddenShareMed": 0.9936708860759493
    }
   },
   "actualOverPredicted": {
-   "wallS": 0.625,
-   "apiUsdStd": 0.4683294663573086,
-   "quality": 1.0869565217391304
+   "wallS": 0.6841397849462365,
+   "apiUsdStd": 0.6722419928825623,
+   "quality": 1.0873460246360582
   },
   "actualOverNow": {
    "simVersion": "lab-0.9",
-   "wallS": 0.991304347826087,
-   "apiUsdStd": 0.9521739130434782,
-   "quality": 1.0869565217391304
+   "wallS": 1.007920792079208,
+   "apiUsdStd": 1.0266304347826087,
+   "quality": 1.0896057347670252
   }
  },
  "runs": [
@@ -562,7 +565,9 @@
    "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
    "baseline": null,
    "scenario": "bakery",
-   "excluded": [],
+   "excluded": [
+    "wall (platform stall)"
+   ],
    "planner": "opus",
    "coderModel": "haiku",
    "pred": {
@@ -578,7 +583,7 @@
     "quality": 92.9,
     "simVersion": "lab-0.9"
    },
-   "wallS": 1070,
+   "wallS": null,
    "wallSRaw": 2090,
    "planS": 55.498,
    "usd": 1.889,
@@ -658,6 +663,158 @@
    },
    "conflicts": 0,
    "bounces": 0
+  },
+  {
+   "id": "lab-club-40f21-r1",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "club",
+   "excluded": [
+    "wall (platform stall)"
+   ],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 17,
+    "wallS": 1024,
+    "apiUsdStd": 2.46,
+    "quality": 90.4,
+    "simVersion": "lab-0.9"
+   },
+   "now": {
+    "wallS": 943,
+    "apiUsdStd": 2.51,
+    "quality": 87.3,
+    "simVersion": "lab-0.9"
+   },
+   "wallS": null,
+   "wallSRaw": 1616,
+   "planS": 92.285,
+   "usd": 2.867,
+   "usdRaw": 2.867,
+   "coderUsd": 1.523,
+   "tasksPlanned": 12,
+   "tasksLanded": 12,
+   "expectedTasks": 47,
+   "workS": [],
+   "workMedS": null,
+   "quality": 92,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 6,
+   "tokens": {
+    "in": 1992,
+    "out": 1943378,
+    "cacheR": 66881320,
+    "cacheW": 3961845
+   },
+   "conflicts": 0,
+   "bounces": 2
+  },
+  {
+   "id": "lab-club-5db67-r1",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "club",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 49,
+    "wallS": 613,
+    "apiUsdStd": 5.17,
+    "quality": 88.8,
+    "simVersion": "lab-0.9"
+   },
+   "now": {
+    "wallS": 537,
+    "apiUsdStd": 4.52,
+    "quality": 90.6,
+    "simVersion": "lab-0.9"
+   },
+   "wallS": 850,
+   "wallSRaw": 850,
+   "planS": 4.144,
+   "usd": 5.784,
+   "usdRaw": 5.784,
+   "coderUsd": 5.784,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 47,
+   "workS": [
+    836.871
+   ],
+   "workMedS": 836.871,
+   "quality": 88,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 4,
+   "tokens": {
+    "in": 140,
+    "out": 152872,
+    "cacheR": 5586028,
+    "cacheW": 201133
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-club-40f21-r2",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "club",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 17,
+    "wallS": 1024,
+    "apiUsdStd": 2.46,
+    "quality": 90.4,
+    "simVersion": "lab-0.9"
+   },
+   "now": {
+    "wallS": 943,
+    "apiUsdStd": 2.51,
+    "quality": 87.3,
+    "simVersion": "lab-0.9"
+   },
+   "wallS": 1263,
+   "wallSRaw": 1263,
+   "planS": 96.356,
+   "usd": 2.963,
+   "usdRaw": 2.963,
+   "coderUsd": 1.479,
+   "tasksPlanned": 12,
+   "tasksLanded": 12,
+   "expectedTasks": 47,
+   "workS": [
+    167.616,
+    236.728,
+    176.999,
+    134.784,
+    454.583,
+    307.87,
+    171.873,
+    122.978,
+    207.235,
+    189.611,
+    150.415,
+    340.227
+   ],
+   "workMedS": 176.999,
+   "quality": 92,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 6,
+   "tokens": {
+    "in": 2134,
+    "out": 1971801,
+    "cacheR": 70562146,
+    "cacheW": 4185143
+   },
+   "conflicts": 0,
+   "bounces": 3
   }
  ],
  "notFitted": [
