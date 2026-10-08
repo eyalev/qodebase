@@ -54,11 +54,12 @@ one train and landed in 5.5 minutes, right the first time, their records attache
 notes (`git log --notes=qodebase`).
 
 We also measured which team shape works best (qodebase.app/lab, every run in
-`public/lab/runs.jsonl`): on jobs up to ~13 minutes one Opus agent wins on speed and quality
-(café 58 s, quality 85; TypeScript port 228 s, 92; bakery median 509 s, 96), while an Opus
-planner with a crew of Haiku agents comes within 4 quality points on the bakery job at ~57%
-lower API-equivalent cost (11 points lower on the port). Haiku planners under-plan (quality
-35-54), and a GitHub-style flow (pull requests merged one at a time) timed out. Next: a club website,
+`public/lab/runs.jsonl`): on these jobs one Opus agent was faster and at least as good (café
+58 s; TypeScript port 228 s, all 158 hidden tests; bakery median 509 s, 26/26). On the bakery
+it was 1.9x faster than an Opus planner with a crew of Haiku agents (987 s, clean runs only)
+and passed 1 more hidden test, while the crew cost 57% less at API-equivalent prices (58% less
+on the port, where its code failed the strict type check). Haiku planners under-plan (1 and 3
+of 7 hidden tests), and a GitHub-style flow (pull requests merged one at a time) timed out. Next: a club website,
 a 15-minute job on ready foundations, where the simulator (fitted within ~5% on these runs)
 predicts one Opus agent ~10 min vs the crew ~17 min: a crew is limited by how fast changes
 land (one per ~60-100 s on the bakery), not by how many agents work.

@@ -84,16 +84,16 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 | job | one Opus agent | Opus planner + Haiku crew |
 |---|---|---|
-| café site, small | 58 s, quality 85, $0.39 | 1,431 s, quality 85 |
-| TypeScript port | 228 s, quality 92, $2.02 | 830 s, quality 81, $0.85 |
-| bakery site, 3 runs each (median) | 509 s, quality 96, $4.08 | ~1,070 s, quality 92, $1.75 |
+| café site, small | 58 s, 6/7 hidden tests, $0.39 | 1,431 s, 6/7 |
+| TypeScript port | 228 s, 158/158, $2.02 | 830 s, 157/158 and a failing strict type check, $0.85 |
+| bakery site (median of 3 runs) | 509 s, 26/26, $4.08 | 987 s, 25/26, $1.75 |
 
-- **Up to ~13-minute jobs, one Opus agent wins on speed and quality.** The crew comes within 4 quality points on the bakery job at ~57% lower cost, and 11 points lower on the port.
-- Haiku as the planner under-plans: quality 35 and 54 on the café.
+- **On these jobs one Opus agent was faster and at least as good.** On the bakery it was 1.9× faster and passed 1 more hidden test; the crew cost 57% less there (58% less on the port).
+- Haiku as the planner under-plans: 1 and 3 of 7 hidden tests on the café.
 - GitHub-style (pull requests merged one at a time) timed out after an hour with 3 of 6 tasks landed.
 - Next: a club website, a 15-minute job on ready foundations. The simulator (fitted to these runs within ~5% on time and cost) predicts one Opus agent ~10 min vs the crew ~17 min: here a crew is limited by how fast changes land (one per ~60–100 s measured on the bakery), not by how many agents work. Runs pending.
 
-Quality is a 0–100 score from hidden tests, build checks and an AI judge ([`docs/lab/scoring.md`](docs/lab/scoring.md)). Costs are API-equivalent (the runs used a Claude subscription); the café crew's cost is an upper bound and not shown. Every run: [`public/lab/runs.jsonl`](public/lab/runs.jsonl); plan: [`docs/lab/`](docs/lab/).
+Hidden tests are ours and never visible to the agents; the 0–100 scores, which add build checks and an AI judge, are in each run ([`docs/lab/scoring.md`](docs/lab/scoring.md)). Times leave out runs stalled by the platform (one bakery crew run); quality and cost use every run. Costs are API-equivalent (the runs used a Claude subscription); the café crew's cost is an upper bound and not shown. Every run: [`public/lab/runs.jsonl`](public/lab/runs.jsonl); plan: [`docs/lab/`](docs/lab/).
 
 **OpenClaw, a very busy open-source repo** (30 days of public data; [`docs/openclaw/FINDINGS.md`](docs/openclaw/FINDINGS.md)):
 
