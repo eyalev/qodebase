@@ -40,7 +40,10 @@ star or open anything on their repo or ClawSweeper.
       Jev, Clef-flash and Haiku 5.5; compare with ClawSweeper's labels + actual outcomes as ground truth.
       _Done 2026-10-08: Haiku 50% (43-57), Jev 40%, Clef-flash 36% vs ClawSweeper 94% (not independent);
       text-only classifiers are no triage lane; next = a triage agent with repo + issue index. ~$0.09._
-- [ ] Fix lane: 10 small closed issues with exactly one linked merged PR that adds a failing test,
+- [x] Fix lane PREP done; RUN dropped for now (manager, decision C): one test's import closure ~11k
+      files, Node 24 + pnpm, 2.8 GB install; boxes need per-project toolchains first (post-contest).
+      Candidates + verified fixes in docs/openclaw/data/. Original item:
+      Fix lane: 10 small closed issues with exactly one linked merged PR that adds a failing test,
       pinned to the fix's parent commit, fixed by Haiku agents in qodebase (lab runner from qb6);
       score fail->pass, diff vs the real fix (blinded judge), time, cost.
 ## Phase 3 — scale (only if phase 2 is promising; manager + Eyal approve)

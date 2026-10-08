@@ -1,0 +1,4043 @@
+{
+ "n": 199,
+ "rejected": {
+  "not closed by a PR": 2279,
+  ">= 200 lines": 459,
+  "more than one area": 109,
+  "test-only PR": 35,
+  "more than one merged PR linked": 125,
+  "no test file": 95,
+  "not src/extensions/packages": 58,
+  "file list truncated": 14,
+  "touches deps/CI": 5,
+  "PR closes several issues": 21,
+  "PR not in mirror or not merged": 9
+ },
+ "candidates": [
+  {
+   "issue": 162777,
+   "issue_title": "[Bug]: claude-cli runtime: subagent final answer always lost (terminal transcript row lacks __openclaw.runId)",
+   "issue_created": "2026-10-01T14:52:00Z",
+   "pr": 162843,
+   "pr_title": "fix(agents): preserve complete CLI subagent answers",
+   "merged": "2026-10-01T19:13:12Z",
+   "fix": "d7cea26df24dac303a77f0e6149654a685e55323",
+   "lines": 3,
+   "files": [
+    "src/agents/cli-runner/cli-run-transcript.test.ts",
+    "src/agents/cli-runner/cli-run-transcript.ts"
+   ],
+   "tests": [
+    "src/agents/cli-runner/cli-run-transcript.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "zyz619963502zyz"
+  },
+  {
+   "issue": 148339,
+   "issue_title": "Code-heavy replies repeatedly scan for absent transcript headers",
+   "issue_created": "2026-09-14T15:21:56Z",
+   "pr": 148345,
+   "pr_title": "improve(markdown): reduce transcript scanning for code-heavy replies",
+   "merged": "2026-09-14T22:56:43Z",
+   "fix": "db5871b3aca477c8d2a7e94876ff0bf8ddede21b",
+   "lines": 6,
+   "files": [
+    "packages/markdown-core/src/assistant-transcript-headers.ts",
+    "packages/markdown-core/src/assistant-transcript.test.ts"
+   ],
+   "tests": [
+    "packages/markdown-core/src/assistant-transcript.test.ts"
+   ],
+   "area": "packages/markdown-core",
+   "author": "steipete"
+  },
+  {
+   "issue": 154325,
+   "issue_title": "[Bug]:  First-time plugin install fails because gateway-ized install executes plugin register (kind inspection), racing install's own config write",
+   "issue_created": "2026-09-21T02:48:35Z",
+   "pr": 154539,
+   "pr_title": "fix(plugins): prevent config conflicts during legacy plugin installation",
+   "merged": "2026-09-21T11:47:01Z",
+   "fix": "d510628543b9903dbc4b03b6078bc130dcbb5a31",
+   "lines": 8,
+   "files": [
+    "src/plugins/slot-selection.ts",
+    "src/plugins/status.runtime-inspection.test.ts",
+    "src/plugins/status.ts"
+   ],
+   "tests": [
+    "src/plugins/status.runtime-inspection.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "goutamadwant"
+  },
+  {
+   "issue": 147700,
+   "issue_title": "Heartbeat hint text suggests invalid config CLI syntax (YAML-style colon in key)",
+   "issue_created": "2026-09-14T01:53:03Z",
+   "pr": 153448,
+   "pr_title": "fix(heartbeat): show a runnable config command",
+   "merged": "2026-09-20T11:52:38Z",
+   "fix": "6ff46df6ecc409d0682d63d905cc304cd84b0391",
+   "lines": 8,
+   "files": [
+    "src/infra/heartbeat-dispatch.ts",
+    "src/infra/heartbeat-runner.returns-default-unset.test.ts"
+   ],
+   "tests": [
+    "src/infra/heartbeat-runner.returns-default-unset.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "Alix-007"
+  },
+  {
+   "issue": 147087,
+   "issue_title": "Streaming JSON repair rebuilds frames that cannot require repair",
+   "issue_created": "2026-09-13T14:30:26Z",
+   "pr": 147101,
+   "pr_title": "improve(ai): reduce JSON parsing overhead for streamed responses",
+   "merged": "2026-09-13T15:09:22Z",
+   "fix": "59067ac739473b6baa8ebc1b83217e47592217c2",
+   "lines": 12,
+   "files": [
+    "packages/ai/src/utils/json-parse.test.ts",
+    "packages/ai/src/utils/json-parse.ts"
+   ],
+   "tests": [
+    "packages/ai/src/utils/json-parse.test.ts"
+   ],
+   "area": "packages/ai",
+   "author": "steipete"
+  },
+  {
+   "issue": 164832,
+   "issue_title": "[Bug]: TypeSafe HTTP 400 input rejection is reported as unreachable Jev provider",
+   "issue_created": "2026-10-04T08:23:32Z",
+   "pr": 164835,
+   "pr_title": "fix(typesafe): report rejected Jev requests as input errors",
+   "merged": "2026-10-04T12:11:01Z",
+   "fix": "d9f36acbe3b6c8a29ddeffe1e89ebe2b6992d085",
+   "lines": 13,
+   "files": [
+    "docs/plugins/typesafe.md",
+    "extensions/typesafe/src/registration.transport.test.ts",
+    "extensions/typesafe/src/transport.test.ts",
+    "extensions/typesafe/src/transport.ts"
+   ],
+   "tests": [
+    "extensions/typesafe/src/registration.transport.test.ts",
+    "extensions/typesafe/src/transport.test.ts"
+   ],
+   "area": "extensions/typesafe",
+   "author": "danhayman"
+  },
+  {
+   "issue": 166508,
+   "issue_title": "[Bug]: Android notification event wake rejected with heartbeat.every=0m",
+   "issue_created": "2026-10-07T07:32:31Z",
+   "pr": 166522,
+   "pr_title": "fix(heartbeat): deliver Android notification wakes when heartbeat.every is 0m",
+   "merged": "2026-10-07T11:13:24Z",
+   "fix": "de38a04548251cbd6cc7e190c1470412c077908b",
+   "lines": 14,
+   "files": [
+    "src/infra/heartbeat-runner.scheduler.test.ts",
+    "src/infra/heartbeat-wake-policy.ts"
+   ],
+   "tests": [
+    "src/infra/heartbeat-runner.scheduler.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "jayzhou2309"
+  },
+  {
+   "issue": 162594,
+   "issue_title": "Agent session regression fixtures fail with retained worker readers and hashed claim errors",
+   "issue_created": "2026-10-01T09:43:15Z",
+   "pr": 162598,
+   "pr_title": "fix(test): honor session worker fixture lifecycle contracts",
+   "merged": "2026-10-01T10:01:47Z",
+   "fix": "43c68a5838a93793aab0bad9d59bd3677924ad17",
+   "lines": 14,
+   "files": [
+    "src/agents/embedded-agent-runner/run.compaction-runtime.test-support.ts",
+    "src/agents/sessions/session-manager-branching.test.ts"
+   ],
+   "tests": [
+    "src/agents/sessions/session-manager-branching.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "vincentkoc"
+  },
+  {
+   "issue": 157831,
+   "issue_title": "[Bug]: Manual /compact on claude-cli/<model> refs routes to the Codex app-server compactor, then drops the CLI session binding (context loss)",
+   "issue_created": "2026-09-25T02:32:08Z",
+   "pr": 157870,
+   "pr_title": "fix: preserve CLI session context when compacting runtime aliases",
+   "merged": "2026-09-25T05:02:32Z",
+   "fix": "c65a96a54f73640ce7e91b3f5a3973630438a32a",
+   "lines": 15,
+   "files": [
+    "src/agents/cli-backends.ts",
+    "src/agents/session-runtime-compat.test.ts"
+   ],
+   "tests": [
+    "src/agents/session-runtime-compat.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "obviyus"
+  },
+  {
+   "issue": 154984,
+   "issue_title": "[Bug]: Workboard search does not match card IDs",
+   "issue_created": "2026-09-21T16:01:37Z",
+   "pr": 155033,
+   "pr_title": "fix(workboard): find cards by their own IDs",
+   "merged": "2026-09-21T20:40:14Z",
+   "fix": "267bb9d27fa146e940340a385740b6b54cd86d89",
+   "lines": 17,
+   "files": [
+    "extensions/workboard/browser/pages/workboard/view-helpers.test.ts",
+    "extensions/workboard/browser/pages/workboard/view-helpers.ts",
+    "extensions/workboard/openclaw.plugin.json"
+   ],
+   "tests": [
+    "extensions/workboard/browser/pages/workboard/view-helpers.test.ts"
+   ],
+   "area": "extensions/workboard",
+   "author": "aniketkrs"
+  },
+  {
+   "issue": 152906,
+   "issue_title": "[Bug]: Desktop computer control fails to start when Bun's node shim shadows the Node runtime on PATH",
+   "issue_created": "2026-09-19T13:40:52Z",
+   "pr": 151933,
+   "pr_title": "fix(desktop): computer control fails when a node shim shadows the Node runtime",
+   "merged": "2026-09-19T14:38:40Z",
+   "fix": "fb86d4bb3392eecd0a0ab4d5ff9886ed574e24c1",
+   "lines": 17,
+   "files": [
+    "docs/install/bun-compatibility.md",
+    "src/gateway/desktop/computer-process.runtime.test.ts",
+    "src/gateway/desktop/computer-process.ts"
+   ],
+   "tests": [
+    "src/gateway/desktop/computer-process.runtime.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "wangmiao0668000666"
+  },
+  {
+   "issue": 146446,
+   "issue_title": "[Bug]: String staggerMs values silently discarded, 5-minute default can apply",
+   "issue_created": "2026-09-12T20:44:08Z",
+   "pr": 151740,
+   "pr_title": "fix(cron): reject invalid stagger before silent schedule changes",
+   "merged": "2026-09-19T20:25:48Z",
+   "fix": "f9494701bb700b46b2feae6cfc29fa5bcd564aa6",
+   "lines": 17,
+   "files": [
+    "src/cron/normalize.test.ts",
+    "src/cron/normalize.ts"
+   ],
+   "tests": [
+    "src/cron/normalize.test.ts"
+   ],
+   "area": "src/cron",
+   "author": "Alix-007"
+  },
+  {
+   "issue": 151276,
+   "issue_title": "[Bug]: Gateway service management is refused as \"non-default state dir or config path\" when OPENCLAW_HOME is the literal \"undefined\"",
+   "issue_created": "2026-09-18T00:39:15Z",
+   "pr": 151277,
+   "pr_title": "fix: restore gateway service management when OPENCLAW_HOME is the literal \"undefined\"",
+   "merged": "2026-09-18T02:20:50Z",
+   "fix": "4fc44e147e8c83a448869a2dadcea16d713b68fd",
+   "lines": 18,
+   "files": [
+    "src/config/paths.test.ts",
+    "src/config/paths.ts"
+   ],
+   "tests": [
+    "src/config/paths.test.ts"
+   ],
+   "area": "src/config",
+   "author": "masatohoshino"
+  },
+  {
+   "issue": 165815,
+   "issue_title": "Managed llama.cpp setup refuses on fresh low-RAM profiles without mentioning the embedding-only path",
+   "issue_created": "2026-10-05T21:39:26Z",
+   "pr": 165832,
+   "pr_title": "fix: show embedding-only setup when llama.cpp chat exceeds RAM",
+   "merged": "2026-10-05T22:53:58Z",
+   "fix": "9cb1660d94a1c194c23b2099dc14413bf9569e85",
+   "lines": 19,
+   "files": [
+    "docs/plugins/llama-cpp.md",
+    "extensions/llama-cpp/src/model-catalog.ts",
+    "extensions/llama-cpp/src/setup.test.ts"
+   ],
+   "tests": [
+    "extensions/llama-cpp/src/setup.test.ts"
+   ],
+   "area": "extensions/llama-cpp",
+   "author": "obviyus"
+  },
+  {
+   "issue": 156094,
+   "issue_title": "[Bug]: Discord Activity titles with emoji are rejected as over 80 characters when they are not",
+   "issue_created": "2026-09-23T02:10:34Z",
+   "pr": 156096,
+   "pr_title": "fix(discord): accept 80-character Activity titles that contain emoji",
+   "merged": "2026-09-23T04:15:12Z",
+   "fix": "73feceeb54c5209d8c51afac6b88fe53b98fb736",
+   "lines": 20,
+   "files": [
+    "extensions/discord/src/activities/presenter.test.ts",
+    "extensions/discord/src/activities/presenter.ts"
+   ],
+   "tests": [
+    "extensions/discord/src/activities/presenter.test.ts"
+   ],
+   "area": "extensions/discord",
+   "author": "superdiaodiao"
+  },
+  {
+   "issue": 163518,
+   "issue_title": "[Bug]: message tool says \"plugin not loaded\" for the loaded a2a channel when the channel has no message actions",
+   "issue_created": "2026-10-02T12:35:52Z",
+   "pr": 163551,
+   "pr_title": "fix: message tool says plugin not loaded for a loaded channel without message actions",
+   "merged": "2026-10-02T14:37:02Z",
+   "fix": "ade7e3c216a4b9896672c02692ef05ff3e0e4579",
+   "lines": 21,
+   "files": [
+    "src/infra/outbound/message-action-execution.ts",
+    "src/infra/outbound/message-action-runner.plugin-dispatch.test.ts"
+   ],
+   "tests": [
+    "src/infra/outbound/message-action-runner.plugin-dispatch.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "jayzhou2309"
+  },
+  {
+   "issue": 147772,
+   "issue_title": "doctor reports CRITICAL: OAuth dir missing for a pairing channel with no registered plugin",
+   "issue_created": "2026-09-14T02:57:17Z",
+   "pr": 147888,
+   "pr_title": "fix: doctor reports missing OAuth dir for channel config with no installed plugin",
+   "merged": "2026-09-14T12:37:19Z",
+   "fix": "31b7c6552a891a1eda5b11de08096190a6032ce3",
+   "lines": 21,
+   "files": [
+    "src/commands/doctor-state-integrity.test.ts",
+    "src/commands/doctor-state-integrity.ts"
+   ],
+   "tests": [
+    "src/commands/doctor-state-integrity.test.ts"
+   ],
+   "area": "src/commands",
+   "author": "zhangguiping-xydt"
+  },
+  {
+   "issue": 166725,
+   "issue_title": "[Bug]: config get reports the documented root $schema key as an unknown path",
+   "issue_created": "2026-10-07T20:31:43Z",
+   "pr": 166745,
+   "pr_title": "fix(cli): recognize unset root schema metadata",
+   "merged": "2026-10-07T21:32:39Z",
+   "fix": "38c96048a567f287293207a172388bb7ca1e6f65",
+   "lines": 24,
+   "files": [
+    "src/cli/config-cli-path.ts",
+    "src/cli/config-cli.integration.test.ts"
+   ],
+   "tests": [
+    "src/cli/config-cli.integration.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "obviyus"
+  },
+  {
+   "issue": 166344,
+   "issue_title": "Browser exec continuations repeat final replies after private child work",
+   "issue_created": "2026-10-06T23:14:33Z",
+   "pr": 166362,
+   "pr_title": "fix: stop repeated browser replies after background child work",
+   "merged": "2026-10-07T00:47:58Z",
+   "fix": "513871f9ca8e072b3af03a739091b34c61ee9048",
+   "lines": 24,
+   "files": [
+    "src/infra/heartbeat-runner-run.ts",
+    "src/infra/heartbeat-runner.sender-prefers-delivery-target.test.ts",
+    "src/infra/heartbeat-runner.webchat-exec-completion.test.ts"
+   ],
+   "tests": [
+    "src/infra/heartbeat-runner.sender-prefers-delivery-target.test.ts",
+    "src/infra/heartbeat-runner.webchat-exec-completion.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "shakkernerd"
+  },
+  {
+   "issue": 145029,
+   "issue_title": "[Bug]: restart-safe recovery silently strips side-effecting tools; the recovery prompt tells the model to continue and never mentions the restriction",
+   "issue_created": "2026-09-11T15:18:00Z",
+   "pr": 145057,
+   "pr_title": "fix(agents): tell the model about restart-safe tool restriction in recovery prompt",
+   "merged": "2026-09-13T23:19:57Z",
+   "fix": "210a3c5af9f971cba0d2d05f2cf804a57f40a08b",
+   "lines": 25,
+   "files": [
+    "src/agents/main-session-recovery/main-session-restart-dispatch.ts",
+    "src/agents/main-session-recovery/main-session-restart-recovery.test.ts"
+   ],
+   "tests": [
+    "src/agents/main-session-recovery/main-session-restart-recovery.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "SunnyShu0925"
+  },
+  {
+   "issue": 150612,
+   "issue_title": "[Bug]: Automation shell commands lose escaped trailing spaces on create and edit",
+   "issue_created": "2026-09-17T05:12:55Z",
+   "pr": 150071,
+   "pr_title": "fix(cron): preserve escaped spaces in automation commands",
+   "merged": "2026-09-19T17:51:47Z",
+   "fix": "9b173309c71f99ae85bb677703639cb35dd1cefc",
+   "lines": 26,
+   "files": [
+    "src/cli/cron-cli/register.cron-add.ts",
+    "src/cli/cron-cli/register.cron-edit-options.ts",
+    "src/cli/cron-cli/register.cron-options.test.ts"
+   ],
+   "tests": [
+    "src/cli/cron-cli/register.cron-options.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "zhangguiping-xydt"
+  },
+  {
+   "issue": 144229,
+   "issue_title": "Reuse selected plugin metadata lifecycle resources during completion",
+   "issue_created": "2026-09-10T17:19:23Z",
+   "pr": 144230,
+   "pr_title": "perf(plugins): reuse completed metadata owners",
+   "merged": "2026-09-10T17:49:47Z",
+   "fix": "073936813599dc2977bf376ba2410f3681fef05e",
+   "lines": 26,
+   "files": [
+    "src/plugins/plugin-metadata-snapshot.test.ts",
+    "src/plugins/plugin-metadata-snapshot.ts"
+   ],
+   "tests": [
+    "src/plugins/plugin-metadata-snapshot.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "steipete"
+  },
+  {
+   "issue": 154309,
+   "issue_title": "[Bug]: exec silently ignores the unsupported cwd parameter and runs in the default directory",
+   "issue_created": "2026-09-21T02:31:38Z",
+   "pr": 154248,
+   "pr_title": "fix(exec): reject the unsupported cwd parameter instead of running in the default directory",
+   "merged": "2026-10-02T04:27:24Z",
+   "fix": "cc618e0e7be6c02ab7f53e2487641fe2fe6b8f0c",
+   "lines": 28,
+   "files": [
+    "src/agents/bash-tools.exec-request-preparation.ts",
+    "src/agents/bash-tools.exec.path.test.ts"
+   ],
+   "tests": [
+    "src/agents/bash-tools.exec.path.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "wangmiao0668000666"
+  },
+  {
+   "issue": 145201,
+   "issue_title": "[Bug] telegram: richMessages vs older self-hosted Bot API server (apiRoot) — every send 400s \"rich message must be non-empty\", total channel blackout",
+   "issue_created": "2026-09-11T19:24:28Z",
+   "pr": 145223,
+   "pr_title": "fix(telegram): deliver plain text after legacy rich rejection",
+   "merged": "2026-09-16T00:44:55Z",
+   "fix": "a380b59cfd4e5097b7e7bb64d0a4b30d0159e5ea",
+   "lines": 28,
+   "files": [
+    "extensions/telegram/src/bot/delivery.test.ts",
+    "extensions/telegram/src/rich-plain-fallback.test.ts",
+    "extensions/telegram/src/rich-plain-fallback.ts"
+   ],
+   "tests": [
+    "extensions/telegram/src/bot/delivery.test.ts",
+    "extensions/telegram/src/rich-plain-fallback.test.ts"
+   ],
+   "area": "extensions/telegram",
+   "author": "0xalydev"
+  },
+  {
+   "issue": 154315,
+   "issue_title": "[Bug]: process poll silently ignores the unsupported timeoutMs parameter",
+   "issue_created": "2026-09-21T02:35:32Z",
+   "pr": 153844,
+   "pr_title": "fix(agents): reject the undeclared process timeoutMs parameter",
+   "merged": "2026-10-02T05:38:24Z",
+   "fix": "6b9d1b7b050b0917ac7337c506bbf12bfb6aad6d",
+   "lines": 29,
+   "files": [
+    "src/agents/bash-tools.process.poll-timeout.test.ts",
+    "src/agents/bash-tools.process.ts"
+   ],
+   "tests": [
+    "src/agents/bash-tools.process.poll-timeout.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "wangmiao0668000666"
+  },
+  {
+   "issue": 142680,
+   "issue_title": "[Bug]: Task progress cards appear for trivial chat requests",
+   "issue_created": "2026-09-08T23:28:19Z",
+   "pr": 142696,
+   "pr_title": "fix(agents): skip progress cards for trivial chat requests",
+   "merged": "2026-09-09T00:26:22Z",
+   "fix": "738c982be22a85fab8750fec832f9a66361df3ec",
+   "lines": 29,
+   "files": [
+    "docs/tools/progress-card.md",
+    "src/agents/progress-card-system-prompt.test.ts",
+    "src/agents/progress-card-system-prompt.ts",
+    "src/agents/tools/progress-card-tool.test.ts",
+    "src/agents/tools/progress-card-tool.ts"
+   ],
+   "tests": [
+    "src/agents/progress-card-system-prompt.test.ts",
+    "src/agents/tools/progress-card-tool.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "vyctorbrzezowski"
+  },
+  {
+   "issue": 142247,
+   "issue_title": "Plugin tool resolution rebuilds an already prepared manifest lookup",
+   "issue_created": "2026-09-08T14:52:12Z",
+   "pr": 142249,
+   "pr_title": "refactor(plugins): reuse prepared tool manifest lookup",
+   "merged": "2026-09-08T20:45:59Z",
+   "fix": "1a06c2f8575c283c41876c605f7090e6edf7f2e6",
+   "lines": 29,
+   "files": [
+    "src/plugins/manifest-contract-eligibility.test.ts",
+    "src/plugins/manifest-contract-eligibility.ts",
+    "src/plugins/plugin-metadata-snapshot.types.ts",
+    "src/plugins/tools.optional.test.ts",
+    "src/plugins/tools.ts"
+   ],
+   "tests": [
+    "src/plugins/manifest-contract-eligibility.test.ts",
+    "src/plugins/tools.optional.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "steipete"
+  },
+  {
+   "issue": 145270,
+   "issue_title": "Tool event delivery copies session and payload data unnecessarily",
+   "issue_created": "2026-09-11T20:51:59Z",
+   "pr": 145271,
+   "pr_title": "perf(gateway): avoid unused tool-event copies",
+   "merged": "2026-09-11T22:29:46Z",
+   "fix": "772dea0106a54ef629304a4d53984e89fe298e71",
+   "lines": 30,
+   "files": [
+    "src/gateway/server-chat.agent-events.test.ts",
+    "src/gateway/server-chat.ts"
+   ],
+   "tests": [
+    "src/gateway/server-chat.agent-events.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "steipete"
+  },
+  {
+   "issue": 146392,
+   "issue_title": "[Bug]: doctor reports core tool `pdf` as an unknown plugin-only allowlist entry, because it is missing from CORE_TOOL_DEFINITIONS",
+   "issue_created": "2026-09-12T20:09:46Z",
+   "pr": 146408,
+   "pr_title": "fix(tools): treat pdf as a known core media tool",
+   "merged": "2026-09-13T00:35:35Z",
+   "fix": "b78d651e03ce5d3ac8c680929142c3f864cc25c9",
+   "lines": 31,
+   "files": [
+    "docs/gateway/config-tools/tool-policy.md",
+    "docs/gateway/sandbox-vs-tool-policy-vs-elevated.md",
+    "src/agents/tool-catalog.test.ts",
+    "src/agents/tool-catalog.ts",
+    "src/agents/tool-policy-pipeline.test.ts"
+   ],
+   "tests": [
+    "src/agents/tool-catalog.test.ts",
+    "src/agents/tool-policy-pipeline.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "Bartok9"
+  },
+  {
+   "issue": 164470,
+   "issue_title": "Copilot plugin/MCP tool calls fail from a session's 2nd turn onward (\"Async work scope is closed\")",
+   "issue_created": "2026-10-03T19:04:42Z",
+   "pr": 164598,
+   "pr_title": "fix(copilot): plugin tool calls fail from the second turn of a session",
+   "merged": "2026-10-04T02:28:35Z",
+   "fix": "c6e5ae87b9f57334ac497c71659af0dd0051ace3",
+   "lines": 33,
+   "files": [
+    "extensions/copilot/src/tool-bridge.test.ts",
+    "extensions/copilot/src/tool-bridge.ts"
+   ],
+   "tests": [
+    "extensions/copilot/src/tool-bridge.test.ts"
+   ],
+   "area": "extensions/copilot",
+   "author": "ericcurtin"
+  },
+  {
+   "issue": 150829,
+   "issue_title": "Consolidate Mattermost request URL test fixtures",
+   "issue_created": "2026-09-17T11:00:57Z",
+   "pr": 150830,
+   "pr_title": "test(mattermost): reuse request URL fixtures",
+   "merged": "2026-09-17T13:48:15Z",
+   "fix": "162d0fcfcc91ef89416e5b80dd0ddeaf1d5bd13d",
+   "lines": 33,
+   "files": [
+    "extensions/mattermost/src/channel.test.ts",
+    "extensions/mattermost/src/mattermost/client.test.ts",
+    "extensions/mattermost/src/mattermost/reactions.test-helpers.ts",
+    "extensions/mattermost/src/mattermost/reactions.test.ts",
+    "extensions/mattermost/src/mattermost/read.test.ts"
+   ],
+   "tests": [
+    "extensions/mattermost/src/channel.test.ts",
+    "extensions/mattermost/src/mattermost/client.test.ts",
+    "extensions/mattermost/src/mattermost/reactions.test.ts",
+    "extensions/mattermost/src/mattermost/read.test.ts"
+   ],
+   "area": "extensions/mattermost",
+   "author": "steipete"
+  },
+  {
+   "issue": 145058,
+   "issue_title": "[Bug]: nodes invoke forwards a blank --idempotency-key to the Gateway and fails with a cryptic schema error",
+   "issue_created": "2026-09-11T16:09:47Z",
+   "pr": 145032,
+   "pr_title": "fix(cli): reject an empty nodes invoke --idempotency-key instead of forwarding it",
+   "merged": "2026-09-20T10:20:31Z",
+   "fix": "94c89b4350e962ee49b6c66594e51570bf293042",
+   "lines": 34,
+   "files": [
+    "docs/cli/nodes.md",
+    "src/cli/nodes-cli.coverage.test.ts",
+    "src/cli/nodes-cli/register.invoke.ts"
+   ],
+   "tests": [
+    "src/cli/nodes-cli.coverage.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "wangmiao0668000666"
+  },
+  {
+   "issue": 165745,
+   "issue_title": "[Bug]: deferred tool_call serializes MCP image blocks into text instead of preserving model-visible images",
+   "issue_created": "2026-10-05T19:13:43Z",
+   "pr": 165762,
+   "pr_title": "fix: preserve images returned by deferred tool calls",
+   "merged": "2026-10-05T21:53:25Z",
+   "fix": "3ff615b7b02fab8563dacca97b44c069e8cc9cac",
+   "lines": 35,
+   "files": [
+    "src/agents/tool-search-runtime.ts",
+    "src/agents/tool-search.mcp-error.test.ts",
+    "src/agents/tool-search.ts"
+   ],
+   "tests": [
+    "src/agents/tool-search.mcp-error.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "obviyus"
+  },
+  {
+   "issue": 144795,
+   "issue_title": "fix(cli): reject blank message channel selectors before outbound actions",
+   "issue_created": "2026-09-11T08:36:27Z",
+   "pr": 144802,
+   "pr_title": "fix(cli): reject blank message channel selectors",
+   "merged": "2026-09-11T10:51:56Z",
+   "fix": "227e7ae26af4e4f3f8a256c4fa808c7b046f4c88",
+   "lines": 36,
+   "files": [
+    "docs/cli/message.md",
+    "src/cli/program/message/helpers.test.ts",
+    "src/cli/program/message/helpers.ts"
+   ],
+   "tests": [
+    "src/cli/program/message/helpers.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "ly85206559"
+  },
+  {
+   "issue": 156721,
+   "issue_title": "[Bug]: --timeout-ms errors point at a --timeout flag the capability commands reject as unknown",
+   "issue_created": "2026-09-23T19:12:05Z",
+   "pr": 157419,
+   "pr_title": "fix(cli): --timeout-ms errors recommend a flag the command rejects",
+   "merged": "2026-09-24T17:24:16Z",
+   "fix": "878de19f4214f297bc8c069bcefd28f8d976cb42",
+   "lines": 40,
+   "files": [
+    "src/cli/capability-cli.test.ts",
+    "src/cli/capability-cli/shared.test.ts",
+    "src/cli/capability-cli/shared.ts",
+    "src/cli/parse-timeout.test.ts",
+    "src/cli/parse-timeout.ts"
+   ],
+   "tests": [
+    "src/cli/capability-cli.test.ts",
+    "src/cli/capability-cli/shared.test.ts",
+    "src/cli/parse-timeout.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "obviyus"
+  },
+  {
+   "issue": 153750,
+   "issue_title": "[Bug]: Nextcloud Talk send reports a configured bot secret as missing when its secret file cannot be read",
+   "issue_created": "2026-09-20T14:05:49Z",
+   "pr": 153751,
+   "pr_title": "fix(nextcloud-talk): distinguish unavailable bot secrets",
+   "merged": "2026-09-20T15:34:48Z",
+   "fix": "803aa8312db9f8d9ed0e61c36cc8a5689afcda43",
+   "lines": 40,
+   "files": [
+    "extensions/nextcloud-talk/src/send.cfg-threading.test.ts",
+    "extensions/nextcloud-talk/src/send.ts"
+   ],
+   "tests": [
+    "extensions/nextcloud-talk/src/send.cfg-threading.test.ts"
+   ],
+   "area": "extensions/nextcloud-talk",
+   "author": "masatohoshino"
+  },
+  {
+   "issue": 150865,
+   "issue_title": "Agent-level model fallback does not fire when a cron job's model override fails to route",
+   "issue_created": "2026-09-17T11:58:14Z",
+   "pr": 150908,
+   "pr_title": "fix(agents): recover configured fallbacks after blank runtime errors",
+   "merged": "2026-09-21T12:53:30Z",
+   "fix": "cc69fd0745d8ecb9072cb49c59b000e5d81ebcaf",
+   "lines": 40,
+   "files": [
+    "src/agents/embedded-agent-runner/run.incomplete-turn.error-recovery.test.ts",
+    "src/agents/embedded-agent-runner/run/assistant-failure.test.ts",
+    "src/agents/embedded-agent-runner/run/incomplete-turn-recovery.ts"
+   ],
+   "tests": [
+    "src/agents/embedded-agent-runner/run.incomplete-turn.error-recovery.test.ts",
+    "src/agents/embedded-agent-runner/run/assistant-failure.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "DonnieFi"
+  },
+  {
+   "issue": 150298,
+   "issue_title": "[Bug]: Control UI Browser panel drops the Space key when typing into a page (regression in 2026.9.4)",
+   "issue_created": "2026-09-16T21:02:25Z",
+   "pr": 150317,
+   "pr_title": "fix(browser): Space key from Control UI rejected as empty press",
+   "merged": "2026-09-17T01:54:42Z",
+   "fix": "903d0790c210730e2e2ad04048876445c8ffa18d",
+   "lines": 40,
+   "files": [
+    "extensions/browser/src/browser/routes/agent.act.normalize.test.ts",
+    "extensions/browser/src/browser/routes/agent.act.normalize.ts"
+   ],
+   "tests": [
+    "extensions/browser/src/browser/routes/agent.act.normalize.test.ts"
+   ],
+   "area": "extensions/browser",
+   "author": "DonnieFi"
+  },
+  {
+   "issue": 148284,
+   "issue_title": "Long formatted Telegram replies repeatedly parse text without role headers",
+   "issue_created": "2026-09-14T14:05:36Z",
+   "pr": 148285,
+   "pr_title": "improve(telegram): avoid redundant parsing of formatted replies",
+   "merged": "2026-09-14T15:30:33Z",
+   "fix": "5523bc68a89cac273b6241341a699b9095cfc9c4",
+   "lines": 40,
+   "files": [
+    "extensions/telegram/src/format-assistant-transcript.ts",
+    "extensions/telegram/src/format.test.ts"
+   ],
+   "tests": [
+    "extensions/telegram/src/format.test.ts"
+   ],
+   "area": "extensions/telegram",
+   "author": "steipete"
+  },
+  {
+   "issue": 163696,
+   "issue_title": "[Bug]: infer embedding create omits vectors without --json",
+   "issue_created": "2026-10-02T18:02:29Z",
+   "pr": 163722,
+   "pr_title": "fix: show embedding vectors and dimensions in infer text output",
+   "merged": "2026-10-02T19:08:34Z",
+   "fix": "60f64f5537333e081e828c9fba46c64fe8b506ce",
+   "lines": 41,
+   "files": [
+    "docs/cli/infer.md",
+    "src/cli/capability-cli.test.ts",
+    "src/cli/capability-cli/output.ts"
+   ],
+   "tests": [
+    "src/cli/capability-cli.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "obviyus"
+  },
+  {
+   "issue": 163615,
+   "issue_title": "[Bug]: A serialized JSON array on a MEDIA line attaches only the first file, while the same list with spaces attaches all",
+   "issue_created": "2026-10-02T16:03:07Z",
+   "pr": 163627,
+   "pr_title": "fix(media): attach every file a reply lists as a serialized JSON array on a MEDIA line",
+   "merged": "2026-10-02T17:21:11Z",
+   "fix": "4e9dec17f323e8d4839d3668bf25c138cb87be4e",
+   "lines": 41,
+   "files": [
+    "src/media/parse-output.ts",
+    "src/media/parse.test.ts"
+   ],
+   "tests": [
+    "src/media/parse.test.ts"
+   ],
+   "area": "src/media",
+   "author": "sxh313"
+  },
+  {
+   "issue": 145894,
+   "issue_title": "CLI root help prepares activation policy for every manifest owner",
+   "issue_created": "2026-09-12T10:30:12Z",
+   "pr": 145896,
+   "pr_title": "perf(plugins): reuse enablement preparation for CLI descriptors",
+   "merged": "2026-09-12T12:26:02Z",
+   "fix": "294fc4e18fc58e6515062eb10981c26d8bfd0e07",
+   "lines": 41,
+   "files": [
+    "src/plugins/cli-root-descriptors.ts",
+    "src/plugins/cli.test.ts"
+   ],
+   "tests": [
+    "src/plugins/cli.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "steipete"
+  },
+  {
+   "issue": 161929,
+   "issue_title": "Proxyline local HTTP probe crashes with \"defaultProtocol\" when an external proxy is configured (breaks status/doctor/update)",
+   "issue_created": "2026-09-30T14:45:05Z",
+   "pr": 161946,
+   "pr_title": "fix: local TLS Gateway health checks fail with a managed proxy",
+   "merged": "2026-09-30T16:37:15Z",
+   "fix": "649b19f8abab2d8cbd58678e00c87d167435c5ae",
+   "lines": 42,
+   "files": [
+    "docs/security/network-proxy.md",
+    "src/gateway/local-http-probe.test.ts",
+    "src/gateway/local-http-probe.ts"
+   ],
+   "tests": [
+    "src/gateway/local-http-probe.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "obviyus"
+  },
+  {
+   "issue": 150938,
+   "issue_title": "Activity recaps should skip Cron run sessions",
+   "issue_created": "2026-09-17T14:05:10Z",
+   "pr": 150965,
+   "pr_title": "fix(activity): skip Cron run recaps",
+   "merged": "2026-09-17T20:56:43Z",
+   "fix": "a9bcd3fa332ba482730f02d17ce80c1f75a97e11",
+   "lines": 42,
+   "files": [
+    "src/gateway/session-activity-summaries.test.ts",
+    "src/gateway/session-activity-summaries.ts"
+   ],
+   "tests": [
+    "src/gateway/session-activity-summaries.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "giodl73-repo"
+  },
+  {
+   "issue": 150402,
+   "issue_title": "Control UI shows one ACP task twice as Subagent and ACP",
+   "issue_created": "2026-09-17T00:23:41Z",
+   "pr": 153071,
+   "pr_title": "fix(agents): show spawned ACP tasks only once",
+   "merged": "2026-09-19T18:13:16Z",
+   "fix": "3f718b8930a372a2e589eff99e4d0a2ffbf0f635",
+   "lines": 42,
+   "files": [
+    "src/agents/subagents/spawn/acp-spawn.authority.test.ts",
+    "src/agents/subagents/spawn/acp-spawn.test.ts",
+    "src/agents/subagents/spawn/acp-spawn.ts"
+   ],
+   "tests": [
+    "src/agents/subagents/spawn/acp-spawn.authority.test.ts",
+    "src/agents/subagents/spawn/acp-spawn.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "obviyus"
+  },
+  {
+   "issue": 164257,
+   "issue_title": "[Bug]: Punctuated silent-reply prefixes are sent as streaming previews",
+   "issue_created": "2026-10-03T10:46:54Z",
+   "pr": 164259,
+   "pr_title": "fix: keep punctuated silent-reply fragments out of streaming previews",
+   "merged": "2026-10-03T18:10:49Z",
+   "fix": "f4dec048cfe0df9eb5b45469fe7d658f2110d598",
+   "lines": 43,
+   "files": [
+    "src/auto-reply/reply/agent-runner-presentation.test.ts",
+    "src/auto-reply/reply/agent-runner-presentation.ts"
+   ],
+   "tests": [
+    "src/auto-reply/reply/agent-runner-presentation.test.ts"
+   ],
+   "area": "src/auto-reply",
+   "author": "ooiuuii"
+  },
+  {
+   "issue": 164053,
+   "issue_title": "[Bug]: Mixed-script memory snippets sharing an English term are ranked as duplicates",
+   "issue_created": "2026-10-03T05:20:27Z",
+   "pr": 164062,
+   "pr_title": "fix(memory): keep distinct mixed-script memories in search results",
+   "merged": "2026-10-03T07:26:32Z",
+   "fix": "4ec53d97048f44e9ab21614c84307757f36d5947",
+   "lines": 43,
+   "files": [
+    "extensions/memory-core/src/memory/mmr.test.ts",
+    "extensions/memory-core/src/memory/tokenize.ts"
+   ],
+   "tests": [
+    "extensions/memory-core/src/memory/mmr.test.ts"
+   ],
+   "area": "extensions/memory-core",
+   "author": "harshitgupta31415"
+  },
+  {
+   "issue": 148994,
+   "issue_title": "[Bug]: skills info API-key setup command fails for dotted skill keys",
+   "issue_created": "2026-09-15T10:04:43Z",
+   "pr": 149026,
+   "pr_title": "fix(skills): preserve dotted keys in API-key setup hints",
+   "merged": "2026-09-15T18:23:32Z",
+   "fix": "6d158d08d0c21218d4baefaa926415d269d16d59",
+   "lines": 43,
+   "files": [
+    "src/cli/skills-cli.commands.test.ts",
+    "src/cli/skills-cli.format.ts"
+   ],
+   "tests": [
+    "src/cli/skills-cli.commands.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "zhangguiping-xydt"
+  },
+  {
+   "issue": 148498,
+   "issue_title": "[Bug]: show_widget misclassifies HTML payload when report is an empty object",
+   "issue_created": "2026-09-14T19:52:59Z",
+   "pr": 148570,
+   "pr_title": "fix(canvas): accept HTML payload when report is an empty object",
+   "merged": "2026-09-15T01:14:20Z",
+   "fix": "697bbe207f61b560699b3e99722b223540a7ad98",
+   "lines": 43,
+   "files": [
+    "src/canvas/widget-tool.report.test.ts",
+    "src/canvas/widget-tool.ts"
+   ],
+   "tests": [
+    "src/canvas/widget-tool.report.test.ts"
+   ],
+   "area": "src/canvas",
+   "author": "MertBasar0"
+  },
+  {
+   "issue": 158712,
+   "issue_title": "Windows: plugin catalog / model-catalog refresh never completes (mkdtemp ENOENT + repeated rebuilds) -> provider plugins cannot upgrade, WAL maintenance fails, turns aborted by state-lifecycle contention",
+   "issue_created": "2026-09-26T06:43:14Z",
+   "pr": 158769,
+   "pr_title": "fix(plugins): recover missing retained capture directories",
+   "merged": "2026-09-26T09:25:16Z",
+   "fix": "4543ce2515ef27e460d3545ac6c2675f483ad49c",
+   "lines": 44,
+   "files": [
+    "docs/plugins/architecture.md",
+    "src/plugins/plugin-source-capture-directory.ts",
+    "src/plugins/plugin-source-capture-recovery.test.ts"
+   ],
+   "tests": [
+    "src/plugins/plugin-source-capture-recovery.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "steipete"
+  },
+  {
+   "issue": 142069,
+   "issue_title": "[Bug]: OSC 9;4 progress includes unsupported label field",
+   "issue_created": "2026-09-08T09:23:49Z",
+   "pr": 142071,
+   "pr_title": "fix(terminal): show CLI progress in supported terminals",
+   "merged": "2026-09-08T12:39:20Z",
+   "fix": "21ad735be2f44143bcd2f53ec2ffa8c128e5ede2",
+   "lines": 44,
+   "files": [
+    "packages/terminal-core/src/osc-progress.test.ts",
+    "packages/terminal-core/src/osc-progress.ts"
+   ],
+   "tests": [
+    "packages/terminal-core/src/osc-progress.test.ts"
+   ],
+   "area": "packages/terminal-core",
+   "author": "Xuxyyy"
+  },
+  {
+   "issue": 166302,
+   "issue_title": "[Bug]: memory-wiki: digest prefilter admits only exact-phrase matches, so multi-term wiki searches always read the whole vault",
+   "issue_created": "2026-10-06T21:22:05Z",
+   "pr": 166355,
+   "pr_title": "fix(memory-wiki): avoid full vault reads for multi-term metadata searches",
+   "merged": "2026-10-07T00:22:37Z",
+   "fix": "3b6b191fab7e637368e7606f1c5b18723f7f4a79",
+   "lines": 47,
+   "files": [
+    "extensions/memory-wiki/src/query.reads.test.ts",
+    "extensions/memory-wiki/src/query.ts"
+   ],
+   "tests": [
+    "extensions/memory-wiki/src/query.reads.test.ts"
+   ],
+   "area": "extensions/memory-wiki",
+   "author": "obviyus"
+  },
+  {
+   "issue": 142616,
+   "issue_title": "[Bug] openai-compat /v1/chat/completions: session keys containing ULID-shaped tokens are permanently fenced from the second turn (SessionWorkStartChangedError surfaced as opaque 500)",
+   "issue_created": "2026-09-08T21:59:06Z",
+   "pr": 142746,
+   "pr_title": "fix(agents): preserve HTTP conversations with uppercase keys",
+   "merged": "2026-09-10T20:32:51Z",
+   "fix": "c1bb68a8305ae41e33f25de15eaf631c1cd3ce1a",
+   "lines": 47,
+   "files": [
+    "src/agents/command/session.exact-target.test.ts",
+    "src/agents/command/session.ts"
+   ],
+   "tests": [
+    "src/agents/command/session.exact-target.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "ruel225"
+  },
+  {
+   "issue": 166330,
+   "issue_title": "[Bug]: SQLite maintenance ownership checks stall the main thread with redundant snapshots",
+   "issue_created": "2026-10-06T22:56:12Z",
+   "pr": 166331,
+   "pr_title": "fix(sqlite): avoid main-thread stalls during maintenance lease checks",
+   "merged": "2026-10-07T01:16:32Z",
+   "fix": "ed49744796825e1ca4b82d57288bcad99ff29d5f",
+   "lines": 49,
+   "files": [
+    "src/state/openclaw-agent-db-maintenance-lease.ts",
+    "src/state/openclaw-agent-db-maintenance.test.ts"
+   ],
+   "tests": [
+    "src/state/openclaw-agent-db-maintenance.test.ts"
+   ],
+   "area": "src/state",
+   "author": "sasan1200"
+  },
+  {
+   "issue": 157826,
+   "issue_title": "[Bug]: Inline dreaming output is re-ingested because `isManagedDailyDreamingBoundary` ends the strip at the REM block's own `### Reflections` heading (orphaned since #77409 / #70332)",
+   "issue_created": "2026-09-25T02:27:07Z",
+   "pr": 157879,
+   "pr_title": "fix(memory-core): stop re-ingesting nested inline dreaming output",
+   "merged": "2026-09-25T04:51:52Z",
+   "fix": "ef93dd66005f3c91976a2bf062ad3bfb58cb0480",
+   "lines": 49,
+   "files": [
+    "extensions/memory-core/src/dreaming-phases.test.ts",
+    "extensions/memory-core/src/dreaming-phases.ts"
+   ],
+   "tests": [
+    "extensions/memory-core/src/dreaming-phases.test.ts"
+   ],
+   "area": "extensions/memory-core",
+   "author": "obviyus"
+  },
+  {
+   "issue": 153484,
+   "issue_title": "[Bug]: Empty env var resolves to literal variable name as credential",
+   "issue_created": "2026-09-20T06:21:54Z",
+   "pr": 155558,
+   "pr_title": "fix(auth): reject empty environment credentials",
+   "merged": "2026-09-23T05:31:30Z",
+   "fix": "59cdcf7c7f0044394348a069c752a6f7393ba866",
+   "lines": 49,
+   "files": [
+    "src/agents/sessions/resolve-config-value.test.ts",
+    "src/agents/sessions/resolve-config-value.ts"
+   ],
+   "tests": [
+    "src/agents/sessions/resolve-config-value.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "Alix-007"
+  },
+  {
+   "issue": 152921,
+   "issue_title": "[Bug]: Deeply nested tool-call args crash tool display metadata with RangeError",
+   "issue_created": "2026-09-19T14:01:31Z",
+   "pr": 152923,
+   "pr_title": "fix(agents): bound compact tool display depth for nested array args",
+   "merged": "2026-09-20T03:50:56Z",
+   "fix": "febdf18c12e7f0fd8d261924813e052a07a02c21",
+   "lines": 49,
+   "files": [
+    "docs/plugins/sdk-agent-harness/sessions-and-results.md",
+    "src/agents/tool-display-common.test.ts",
+    "src/agents/tool-display-common.ts"
+   ],
+   "tests": [
+    "src/agents/tool-display-common.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "wangmiao0668000666"
+  },
+  {
+   "issue": 149630,
+   "issue_title": "[Bug]: config file imports trim whitespace and read the wrong file",
+   "issue_created": "2026-09-16T03:18:16Z",
+   "pr": 149629,
+   "pr_title": "fix(config): read the exact filename when paths contain whitespace",
+   "merged": "2026-09-16T11:18:37Z",
+   "fix": "2cd0d1125882d0493034828e4de340e7c394fc9c",
+   "lines": 49,
+   "files": [
+    "docs/cli/config.md",
+    "src/cli/config-cli-input.ts",
+    "src/cli/config-cli.literal-file.integration.test.ts",
+    "src/cli/config-set-input.ts"
+   ],
+   "tests": [
+    "src/cli/config-cli.literal-file.integration.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "zhangguiping-xydt"
+  },
+  {
+   "issue": 145181,
+   "issue_title": "Share JSON extraction in the one-shot setup planner",
+   "issue_created": "2026-09-11T19:06:54Z",
+   "pr": 145186,
+   "pr_title": "refactor(system-agent): share setup planner JSON extraction",
+   "merged": "2026-09-11T23:53:22Z",
+   "fix": "5478669f2b0a7c28b0ffd0d36f57bd267ccb324f",
+   "lines": 49,
+   "files": [
+    "src/system-agent/assistant-prompts.ts",
+    "src/system-agent/assistant.test.ts"
+   ],
+   "tests": [
+    "src/system-agent/assistant.test.ts"
+   ],
+   "area": "src/system-agent",
+   "author": "steipete"
+  },
+  {
+   "issue": 144361,
+   "issue_title": "Warm plugin source-cache hits repeat filename normalization",
+   "issue_created": "2026-09-10T20:08:59Z",
+   "pr": 144362,
+   "pr_title": "perf(plugins): reuse warm source-cache records before path normalization",
+   "merged": "2026-09-10T21:22:59Z",
+   "fix": "dc0d0b09be873ebdced3054d30bc29b5aa9324fa",
+   "lines": 49,
+   "files": [
+    "src/plugins/plugin-cache.test.ts",
+    "src/plugins/plugin-cache.ts"
+   ],
+   "tests": [
+    "src/plugins/plugin-cache.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "steipete"
+  },
+  {
+   "issue": 142848,
+   "issue_title": "[Bug]: AGENTS.md policy digest silently drops non-Latin policy lines — \\b cannot match CJK",
+   "issue_created": "2026-09-09T05:12:34Z",
+   "pr": 142915,
+   "pr_title": "fix(agents): retain Traditional Chinese policy digest markers",
+   "merged": "2026-09-09T20:48:58Z",
+   "fix": "dfc9678a5168b5a866ad698617ad3677596e6e84",
+   "lines": 49,
+   "files": [
+    "src/agents/embedded-agent-helpers.buildbootstrapcontextfiles.test.ts",
+    "src/agents/embedded-agent-helpers/bootstrap.ts"
+   ],
+   "tests": [
+    "src/agents/embedded-agent-helpers.buildbootstrapcontextfiles.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "sunlit-deng"
+  },
+  {
+   "issue": 164256,
+   "issue_title": "[Bug]: TTS-only [[tts:text]] replies fail as incomplete turns starting in 2026.9.6",
+   "issue_created": "2026-10-03T10:46:52Z",
+   "pr": 164285,
+   "pr_title": "fix: speech-only replies fail when models include reasoning",
+   "merged": "2026-10-03T13:07:46Z",
+   "fix": "b12b4b98bb39f34ebdd907af49e3ad8fec771cb2",
+   "lines": 50,
+   "files": [
+    "docs/tools/tts/commands.md",
+    "src/agents/embedded-agent-runner/run/incomplete-turn-recovery.test.ts",
+    "src/agents/embedded-agent-runner/run/incomplete-turn-recovery.ts",
+    "src/agents/embedded-agent-runner/run/incomplete-turn-resolution.test.ts",
+    "src/agents/embedded-agent-runner/run/incomplete-turn-resolution.ts"
+   ],
+   "tests": [
+    "src/agents/embedded-agent-runner/run/incomplete-turn-recovery.test.ts",
+    "src/agents/embedded-agent-runner/run/incomplete-turn-resolution.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "obviyus"
+  },
+  {
+   "issue": 164091,
+   "issue_title": "[Bug]: Waiting serial tasks inherit the previous request context",
+   "issue_created": "2026-10-03T06:31:29Z",
+   "pr": 164105,
+   "pr_title": "fix(queue): queued operations inherit the previous request context",
+   "merged": "2026-10-03T08:26:04Z",
+   "fix": "5df82fa43619dff034f9f000d7cb3e6be5cfb0dd",
+   "lines": 50,
+   "files": [
+    "src/shared/bounded-serial-queue.test.ts",
+    "src/shared/bounded-serial-queue.ts"
+   ],
+   "tests": [
+    "src/shared/bounded-serial-queue.test.ts"
+   ],
+   "area": "src/shared",
+   "author": "harshitgupta31415"
+  },
+  {
+   "issue": 166816,
+   "issue_title": "[Bug]: config get advises a config set command the write guard always refuses for auto-managed meta paths",
+   "issue_created": "2026-10-07T23:31:20Z",
+   "pr": 166830,
+   "pr_title": "fix(config): stop recommending refused writes for managed metadata",
+   "merged": "2026-10-08T00:17:48Z",
+   "fix": "cf2ae3d66c25181d8170264bf00d9106d39415b3",
+   "lines": 51,
+   "files": [
+    "docs/cli/config.md",
+    "src/cli/config-cli.integration.test.ts",
+    "src/cli/config-cli.ts"
+   ],
+   "tests": [
+    "src/cli/config-cli.integration.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "obviyus"
+  },
+  {
+   "issue": 164323,
+   "issue_title": "[Bug]: local browser terminal under-advertises RGB colors on headless hosts",
+   "issue_created": "2026-10-03T13:34:36Z",
+   "pr": 164325,
+   "pr_title": "fix(terminal): preserve RGB colors in local browser sessions",
+   "merged": "2026-10-03T17:33:24Z",
+   "fix": "ee9127b79e98bc5b07ae7e61f7ce3611d620140c",
+   "lines": 52,
+   "files": [
+    "src/gateway/terminal/launch.test.ts",
+    "src/gateway/terminal/launch.ts"
+   ],
+   "tests": [
+    "src/gateway/terminal/launch.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "ooiuuii"
+  },
+  {
+   "issue": 162802,
+   "issue_title": "Codex session catalog: Gateway heap OOM ~4 min after start on a 739-agent state (resolveRequestOptions keeps a full config clone per agent)",
+   "issue_created": "2026-10-01T15:31:27Z",
+   "pr": 162912,
+   "pr_title": "fix(codex): prevent Gateway heap exhaustion with large agent fleets",
+   "merged": "2026-10-01T18:30:30Z",
+   "fix": "fd0124688db63ef6801ed5008551cf7db9e1a433",
+   "lines": 52,
+   "files": [
+    "extensions/codex/src/session-catalog-control.ts",
+    "extensions/codex/src/session-catalog-listing-cache.test.ts"
+   ],
+   "tests": [
+    "extensions/codex/src/session-catalog-listing-cache.test.ts"
+   ],
+   "area": "extensions/codex",
+   "author": "obviyus"
+  },
+  {
+   "issue": 156163,
+   "issue_title": "Cron model preflight has no retry and caches client-side timeouts for 5 min, skipping every cron run in the window",
+   "issue_created": "2026-09-23T04:09:57Z",
+   "pr": 156237,
+   "pr_title": "fix(cron): transient provider timeouts skip later scheduled runs",
+   "merged": "2026-09-23T12:21:13Z",
+   "fix": "0864fb6f86c9a5080f23b3125dba29d0db38427e",
+   "lines": 54,
+   "files": [
+    "docs/automation/cron-jobs/payloads.md",
+    "src/cron/isolated-agent/model-preflight.runtime.test.ts",
+    "src/cron/isolated-agent/model-preflight.runtime.ts"
+   ],
+   "tests": [
+    "src/cron/isolated-agent/model-preflight.runtime.test.ts"
+   ],
+   "area": "src/cron",
+   "author": "obviyus"
+  },
+  {
+   "issue": 141998,
+   "issue_title": "Telegram ingress drops later lines of multiline text-directive commands before the core boundary",
+   "issue_created": "2026-09-08T07:45:10Z",
+   "pr": 142008,
+   "pr_title": "fix(telegram): preserve multiline text-directive commands at ingress",
+   "merged": "2026-09-08T11:56:30Z",
+   "fix": "ef8d480609b332400e38da4733b3fb7960e92159",
+   "lines": 54,
+   "files": [
+    "extensions/telegram/src/bot-message-context.command-body.test.ts",
+    "extensions/telegram/src/bot-message-context.session.ts"
+   ],
+   "tests": [
+    "extensions/telegram/src/bot-message-context.command-body.test.ts"
+   ],
+   "area": "extensions/telegram",
+   "author": "wangmiao0668000666"
+  },
+  {
+   "issue": 158329,
+   "issue_title": "Memory: reduce repeated corpus scans during batched session indexing",
+   "issue_created": "2026-09-25T21:05:50Z",
+   "pr": 158364,
+   "pr_title": "improve(memory): speed up batched session indexing",
+   "merged": "2026-09-25T22:30:52Z",
+   "fix": "8d19854879f546864563de672a5d9208a5cc4594",
+   "lines": 58,
+   "files": [
+    "extensions/memory-core/src/memory/manager-session-sync-ops.ts",
+    "extensions/memory-core/src/memory/manager-session-update-race.test.ts"
+   ],
+   "tests": [
+    "extensions/memory-core/src/memory/manager-session-update-race.test.ts"
+   ],
+   "area": "extensions/memory-core",
+   "author": "steipete"
+  },
+  {
+   "issue": 155061,
+   "issue_title": "computer tool: blank target/node/environmentId from a schema-filling model fails every call",
+   "issue_created": "2026-09-21T17:49:23Z",
+   "pr": 155072,
+   "pr_title": "fix(computer): blank selectors prevent computer tool calls",
+   "merged": "2026-09-26T00:18:34Z",
+   "fix": "08f3c02abd655faeb9c4fd2cf7e3a5e50c3f2ad4",
+   "lines": 59,
+   "files": [
+    "src/agents/tools/computer-tool.node-resolution.test.ts",
+    "src/agents/tools/computer-tool.ts"
+   ],
+   "tests": [
+    "src/agents/tools/computer-tool.node-resolution.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "ceckert"
+  },
+  {
+   "issue": 148466,
+   "issue_title": "Single-frame node duplex messages incur an extra assembly copy",
+   "issue_created": "2026-09-14T18:51:50Z",
+   "pr": 148468,
+   "pr_title": "improve: reduce copying for single-frame node messages",
+   "merged": "2026-09-14T21:46:13Z",
+   "fix": "8a6d84578bd4940f83f72b5ea16610ce18ccd367",
+   "lines": 59,
+   "files": [
+    "src/infra/node-duplex-framing.test.ts",
+    "src/infra/node-duplex-framing.ts"
+   ],
+   "tests": [
+    "src/infra/node-duplex-framing.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "steipete"
+  },
+  {
+   "issue": 163700,
+   "issue_title": "[Bug]: channel mediaMaxMb set to 0 makes every attachment send fail with a 0-byte limit",
+   "issue_created": "2026-10-02T18:07:37Z",
+   "pr": 163701,
+   "pr_title": "fix: every attachment send fails when a channel mediaMaxMb is 0",
+   "merged": "2026-10-03T16:52:10Z",
+   "fix": "2850fb696cc4127d3d4e5404c224a709cd6fae17",
+   "lines": 60,
+   "files": [
+    "src/infra/outbound/message-action-params.test.ts",
+    "src/infra/outbound/message-action-params.ts"
+   ],
+   "tests": [
+    "src/infra/outbound/message-action-params.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "sxh313"
+  },
+  {
+   "issue": 155515,
+   "issue_title": "[Bug]: message dry-run receipt says Content sent and Do not retry for mixed text/location",
+   "issue_created": "2026-09-22T06:12:11Z",
+   "pr": 155537,
+   "pr_title": "fix(message): keep dry-run receipts delivery-neutral",
+   "merged": "2026-09-22T11:32:33Z",
+   "fix": "7d5fb7c2c307e73aa952959e08c2d07700559979",
+   "lines": 60,
+   "files": [
+    "src/agents/tools/message-tool-execution.ts",
+    "src/agents/tools/message-tool.test.ts"
+   ],
+   "tests": [
+    "src/agents/tools/message-tool.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "Alix-007"
+  },
+  {
+   "issue": 142208,
+   "issue_title": "[Bug]: Node preflight failure hint recommends versions that do not satisfy the printed engine range",
+   "issue_created": "2026-09-08T13:59:14Z",
+   "pr": 142322,
+   "pr_title": "fix(update): correct misleading Node compatibility guidance",
+   "merged": "2026-09-09T12:23:14Z",
+   "fix": "329c12d11475589ac06c4bc0c9bc8d197a47489f",
+   "lines": 61,
+   "files": [
+    "src/cli/update-cli.test.ts",
+    "src/cli/update-cli/update-command-service-plan.test.ts",
+    "src/cli/update-cli/update-command-service-plan.ts"
+   ],
+   "tests": [
+    "src/cli/update-cli.test.ts",
+    "src/cli/update-cli/update-command-service-plan.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "SunnyShu0925"
+  },
+  {
+   "issue": 155523,
+   "issue_title": "Memory indexing can reject a live database after a queued SQLite command",
+   "issue_created": "2026-09-22T06:24:15Z",
+   "pr": 155535,
+   "pr_title": "fix: keep memory indexing bound to its database when commands queue",
+   "merged": "2026-09-22T07:54:40Z",
+   "fix": "c1b84b46d2c628850e3b230f869366a7c58bb227",
+   "lines": 63,
+   "files": [
+    "src/infra/sqlite-worker-broker.test.ts",
+    "src/infra/sqlite-worker-client.ts"
+   ],
+   "tests": [
+    "src/infra/sqlite-worker-broker.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "shakkernerd"
+  },
+  {
+   "issue": 145497,
+   "issue_title": "Consolidate ACP session metadata reads",
+   "issue_created": "2026-09-12T01:31:56Z",
+   "pr": 145498,
+   "pr_title": "refactor(acp): share session metadata reads",
+   "merged": "2026-09-12T04:37:36Z",
+   "fix": "efa86b971d1b7c9084213b94434384f23541be12",
+   "lines": 63,
+   "files": [
+    "src/acp/runtime/session-meta.test.ts",
+    "src/acp/runtime/session-meta.ts"
+   ],
+   "tests": [
+    "src/acp/runtime/session-meta.test.ts"
+   ],
+   "area": "src/acp",
+   "author": "steipete"
+  },
+  {
+   "issue": 142373,
+   "issue_title": "Plugin command matching rebuilds temporary alias membership collections",
+   "issue_created": "2026-09-08T17:35:39Z",
+   "pr": 142374,
+   "pr_title": "refactor(plugins): avoid temporary command alias collections",
+   "merged": "2026-09-08T18:41:44Z",
+   "fix": "c96402b4f8043412af21d462013ddf8ac68a4b9d",
+   "lines": 63,
+   "files": [
+    "src/plugins/commands.test.ts",
+    "src/plugins/plugin-command-matcher.ts",
+    "src/plugins/plugin-command-runtime.test.ts"
+   ],
+   "tests": [
+    "src/plugins/commands.test.ts",
+    "src/plugins/plugin-command-runtime.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "steipete"
+  },
+  {
+   "issue": 161022,
+   "issue_title": "tool_call on a model-visible direct-only tool fails with 'Unknown tool id… Use tool_search' (unrecoverable misdirection)",
+   "issue_created": "2026-09-29T06:27:35Z",
+   "pr": 161055,
+   "pr_title": "fix: guide direct-only tool calls out of catalog recovery loops",
+   "merged": "2026-09-29T07:49:22Z",
+   "fix": "11f74c7ddfef9867861867410ac04435e6ef0926",
+   "lines": 64,
+   "files": [
+    "docs/tools/tool-search.md",
+    "src/agents/harness/prompt-tool-policy.ts",
+    "src/agents/tool-search-catalog.ts",
+    "src/agents/tool-search-types.ts",
+    "src/agents/tool-search.test.ts",
+    "src/agents/tool-search.ts"
+   ],
+   "tests": [
+    "src/agents/tool-search.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "obviyus"
+  },
+  {
+   "issue": 160095,
+   "issue_title": "[Bug]: acpx writes durable ACP wrappers with installedBinPath pointing into a disposable plugin capture dir; stale path never falls back",
+   "issue_created": "2026-09-28T04:13:00Z",
+   "pr": 160156,
+   "pr_title": "fix(acpx): fall back when a captured ACP adapter path is reclaimed",
+   "merged": "2026-09-28T06:25:13Z",
+   "fix": "3c1a919bb919d24f996106090533668045e343fa",
+   "lines": 64,
+   "files": [
+    "extensions/acpx/README.md",
+    "extensions/acpx/src/codex-auth-bridge.test.ts",
+    "extensions/acpx/src/codex-auth-bridge.ts"
+   ],
+   "tests": [
+    "extensions/acpx/src/codex-auth-bridge.test.ts"
+   ],
+   "area": "extensions/acpx",
+   "author": "Bruce-Yii"
+  },
+  {
+   "issue": 147674,
+   "issue_title": "Reduce local conversion work for long styled Slack messages",
+   "issue_created": "2026-09-14T01:38:10Z",
+   "pr": 147678,
+   "pr_title": "improve(markdown): speed up styled Slack message chunking",
+   "merged": "2026-09-14T02:25:58Z",
+   "fix": "e4075c6a102a1915506e477e8966d1a623ec2e79",
+   "lines": 64,
+   "files": [
+    "packages/markdown-core/src/render.crossing.test.ts",
+    "packages/markdown-core/src/render.ts"
+   ],
+   "tests": [
+    "packages/markdown-core/src/render.crossing.test.ts"
+   ],
+   "area": "packages/markdown-core",
+   "author": "steipete"
+  },
+  {
+   "issue": 148357,
+   "issue_title": "Avoid sorting all body lines for wiki search snippets",
+   "issue_created": "2026-09-14T15:58:30Z",
+   "pr": 148361,
+   "pr_title": "improve(memory-wiki): reduce work selecting search snippets",
+   "merged": "2026-09-14T17:27:37Z",
+   "fix": "6be595f0796223870ebd3a17b165cc1649a70174",
+   "lines": 66,
+   "files": [
+    "extensions/memory-wiki/src/query.test.ts",
+    "extensions/memory-wiki/src/query.ts"
+   ],
+   "tests": [
+    "extensions/memory-wiki/src/query.test.ts"
+   ],
+   "area": "extensions/memory-wiki",
+   "author": "steipete"
+  },
+  {
+   "issue": 142603,
+   "issue_title": "[Bug]: iMessage typing and read receipts stay disabled after bridge recovery",
+   "issue_created": "2026-09-08T21:39:23Z",
+   "pr": 142626,
+   "pr_title": "fix(imessage): restore feedback after bridge recovery",
+   "merged": "2026-09-11T22:29:00Z",
+   "fix": "0643c52885601181970bddf9aa02471d62237567",
+   "lines": 66,
+   "files": [
+    "extensions/imessage/src/monitor.last-route.test.ts",
+    "extensions/imessage/src/monitor/monitor-provider.ts"
+   ],
+   "tests": [
+    "extensions/imessage/src/monitor.last-route.test.ts"
+   ],
+   "area": "extensions/imessage",
+   "author": "omarshahine"
+  },
+  {
+   "issue": 153129,
+   "issue_title": "[Bug]: Talk consult run IDs change when their answers are saved",
+   "issue_created": "2026-09-19T19:37:32Z",
+   "pr": 153140,
+   "pr_title": "fix: keep Talk answers matched to their live runs",
+   "merged": "2026-09-19T20:54:39Z",
+   "fix": "a8046858b9eaf9e6c9f86c1d949b07c46b04bd26",
+   "lines": 68,
+   "files": [
+    "src/talk/agent-consult-runtime.storage.test.ts",
+    "src/talk/agent-consult-runtime.ts"
+   ],
+   "tests": [
+    "src/talk/agent-consult-runtime.storage.test.ts"
+   ],
+   "area": "src/talk",
+   "author": "shakkernerd"
+  },
+  {
+   "issue": 164471,
+   "issue_title": "DuckDuckGo web_search returns provider_error due to spoofed User-Agent triggering bot challenge",
+   "issue_created": "2026-10-03T19:04:45Z",
+   "pr": 164726,
+   "pr_title": "fix(duckduckgo): send an honest User-Agent instead of a spoofed browser UA",
+   "merged": "2026-10-07T04:46:26Z",
+   "fix": "51f4a70164cff99a8cf6ea34989e03ab1bb57884",
+   "lines": 69,
+   "files": [
+    "extensions/duckduckgo/src/ddg-client.test.ts",
+    "extensions/duckduckgo/src/ddg-client.ts"
+   ],
+   "tests": [
+    "extensions/duckduckgo/src/ddg-client.test.ts"
+   ],
+   "area": "extensions/duckduckgo",
+   "author": "takyyon"
+  },
+  {
+   "issue": 142454,
+   "issue_title": "Retire unused private follow-up queue prompt deduplication",
+   "issue_created": "2026-09-08T19:08:02Z",
+   "pr": 142455,
+   "pr_title": "refactor(queue): remove unused prompt deduplication mode",
+   "merged": "2026-09-08T19:25:33Z",
+   "fix": "35508363fc2d7c9df83aed3f665d055fe603a913",
+   "lines": 69,
+   "files": [
+    "src/auto-reply/reply/queue.dedupe.test.ts",
+    "src/auto-reply/reply/queue/drain.ts",
+    "src/auto-reply/reply/queue/enqueue.ts",
+    "src/auto-reply/reply/queue/types.ts"
+   ],
+   "tests": [
+    "src/auto-reply/reply/queue.dedupe.test.ts"
+   ],
+   "area": "src/auto-reply",
+   "author": "steipete"
+  },
+  {
+   "issue": 162734,
+   "issue_title": "[Bug]: Post-compaction AGENTS.md excerpts run past a top-level # heading and drop later sections",
+   "issue_created": "2026-10-01T13:38:17Z",
+   "pr": 162735,
+   "pr_title": "fix(compaction): post-compaction refresh pulls in H1 sections and drops later requested rules",
+   "merged": "2026-10-01T18:11:09Z",
+   "fix": "4bb8829340eb7ca82d0afc70bec5caf25d8d686d",
+   "lines": 70,
+   "files": [
+    "src/auto-reply/reply/post-compaction-context.test.ts",
+    "src/auto-reply/reply/post-compaction-context.ts"
+   ],
+   "tests": [
+    "src/auto-reply/reply/post-compaction-context.test.ts"
+   ],
+   "area": "src/auto-reply",
+   "author": "boeingchoco"
+  },
+  {
+   "issue": 153008,
+   "issue_title": "[Bug]: claimless ackDelivery can delete a delivery owned by another worker",
+   "issue_created": "2026-09-19T15:51:41Z",
+   "pr": 153083,
+   "pr_title": "fix: fence claimless ackDelivery against a live platform-send claim",
+   "merged": "2026-09-20T01:59:04Z",
+   "fix": "165099e7e9e0347db362417acb111e2fcd24dc2e",
+   "lines": 70,
+   "files": [
+    "src/infra/delivery-queue-sqlite-claim.kernel.ts",
+    "src/infra/outbound/delivery-queue-ack.kernel.ts",
+    "src/infra/outbound/delivery-queue.storage.test.ts"
+   ],
+   "tests": [
+    "src/infra/outbound/delivery-queue.storage.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "chelsealong"
+  },
+  {
+   "issue": 165118,
+   "issue_title": "Sidebar child-count badge counts archived children after bulk archive (2026.9.8, follow-up to #157068)",
+   "issue_created": "2026-10-04T21:29:30Z",
+   "pr": 165160,
+   "pr_title": "fix: sidebar child badges include archived sessions after refresh",
+   "merged": "2026-10-04T23:23:13Z",
+   "fix": "95d41954ea924b57bcf475c855a90022852dc9f2",
+   "lines": 71,
+   "files": [
+    "src/gateway/session-list-filters.ts",
+    "src/gateway/session-row-projection.list-page.test.ts",
+    "src/gateway/session-utils-list.ts",
+    "src/gateway/session-utils-row.ts"
+   ],
+   "tests": [
+    "src/gateway/session-row-projection.list-page.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "obviyus"
+  },
+  {
+   "issue": 158261,
+   "issue_title": "[Bug]: memory_search rejects snake_case args (min_score, max_results) from local models before any before_tool_call hook can normalize them",
+   "issue_created": "2026-09-25T18:50:42Z",
+   "pr": 158308,
+   "pr_title": "fix(memory): accept snake_case search arguments from local models",
+   "merged": "2026-09-25T23:05:06Z",
+   "fix": "c92648c50a3e0ca00855db2504cc526c8360e072",
+   "lines": 71,
+   "files": [
+    "extensions/memory-core/index.test.ts",
+    "extensions/memory-core/index.ts",
+    "extensions/memory-core/src/memory-tool-contract.ts",
+    "extensions/memory-core/src/tools.shared.ts",
+    "extensions/memory-core/src/tools.test.ts"
+   ],
+   "tests": [
+    "extensions/memory-core/index.test.ts",
+    "extensions/memory-core/src/tools.test.ts"
+   ],
+   "area": "extensions/memory-core",
+   "author": "obviyus"
+  },
+  {
+   "issue": 164847,
+   "issue_title": "sessions_search fails with \"Unknown agent id\" for acp.allowedAgents entries missing from agents.entries",
+   "issue_created": "2026-10-04T09:20:32Z",
+   "pr": 164897,
+   "pr_title": "fix(sessions): search transcripts for configured ACP owners",
+   "merged": "2026-10-04T12:44:22Z",
+   "fix": "33bf4664a0e9d4d84dfa797296e6b6c5b464d6e2",
+   "lines": 72,
+   "files": [
+    "src/gateway/server-methods/sessions-read.test.ts",
+    "src/gateway/server-methods/sessions-search-scope.ts"
+   ],
+   "tests": [
+    "src/gateway/server-methods/sessions-read.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "sunlit-deng"
+  },
+  {
+   "issue": 162582,
+   "issue_title": "[Bug]: `snapshotCache` in `src/agents/shell-snapshot.ts` is never evicted, so it retains one entry per distinct shell-snapshot key for the life of the process",
+   "issue_created": "2026-10-01T09:24:30Z",
+   "pr": 162967,
+   "pr_title": "fix(agents): bound shell snapshot memory in long-running Gateways",
+   "merged": "2026-10-01T21:08:03Z",
+   "fix": "24baf01d9c207acfc9968e74055387cc9dc14af8",
+   "lines": 75,
+   "files": [
+    "docs/tools/exec.md",
+    "src/agents/shell-snapshot.cache.test.ts",
+    "src/agents/shell-snapshot.ts"
+   ],
+   "tests": [
+    "src/agents/shell-snapshot.cache.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "steipete"
+  },
+  {
+   "issue": 145225,
+   "issue_title": "Repeated bundled-plugin directory lookups allocate selection keys",
+   "issue_created": "2026-09-11T20:10:51Z",
+   "pr": 145226,
+   "pr_title": "perf(plugins): avoid allocating bundled-directory cache keys",
+   "merged": "2026-09-11T22:42:27Z",
+   "fix": "e937d39dafc12535a232c10ebbd665bf3fd06cb3",
+   "lines": 75,
+   "files": [
+    "src/plugins/bundled-dir.test.ts",
+    "src/plugins/bundled-dir.ts",
+    "src/plugins/plugin-cache-metadata.ts"
+   ],
+   "tests": [
+    "src/plugins/bundled-dir.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "steipete"
+  },
+  {
+   "issue": 164362,
+   "issue_title": "Local TUI keeps the primary model during an in-flight fallback",
+   "issue_created": "2026-10-03T15:04:07Z",
+   "pr": 164364,
+   "pr_title": "fix(tui): show the active fallback in local sessions",
+   "merged": "2026-10-03T16:19:46Z",
+   "fix": "7ae1ec5a37b6bb807cfbc51e1e1be5542c25ac67",
+   "lines": 76,
+   "files": [
+    "src/agents/agent-command.live-model-switch.test.ts",
+    "src/agents/command/run-embedded-attempt.ts"
+   ],
+   "tests": [
+    "src/agents/agent-command.live-model-switch.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "ooiuuii"
+  },
+  {
+   "issue": 144245,
+   "issue_title": "Exercise session cleanup through its real writer queues",
+   "issue_created": "2026-09-10T17:40:37Z",
+   "pr": 144247,
+   "pr_title": "test: exercise session cleanup through real queues",
+   "merged": "2026-09-10T18:24:08Z",
+   "fix": "5e73c4a947e2e897039db1d5337e6815c06baeaa",
+   "lines": 76,
+   "files": [
+    "src/test-utils/session-state-cleanup.test.ts",
+    "src/test-utils/session-state-cleanup.ts"
+   ],
+   "tests": [
+    "src/test-utils/session-state-cleanup.test.ts"
+   ],
+   "area": "src/test-utils",
+   "author": "steipete"
+  },
+  {
+   "issue": 141835,
+   "issue_title": "[Bug]: `openclaw message send` unusable on explicit multi-agent fleets — AgentSelectionRequiredError advises a `--agent` flag the command does not have",
+   "issue_created": "2026-09-08T04:21:00Z",
+   "pr": 141886,
+   "pr_title": "fix(cli): name the System Agent remedy for message ownership",
+   "merged": "2026-09-08T07:38:17Z",
+   "fix": "0604bbce80797482228b275eaacec34614942731",
+   "lines": 76,
+   "files": [
+    "docs/cli/message.md",
+    "src/commands/message.test.ts",
+    "src/commands/message.ts"
+   ],
+   "tests": [
+    "src/commands/message.test.ts"
+   ],
+   "area": "src/commands",
+   "author": "Dreamer-HIT"
+  },
+  {
+   "issue": 149101,
+   "issue_title": "[Bug]: skills info marks unavailable alternatives as satisfied",
+   "issue_created": "2026-09-15T12:44:54Z",
+   "pr": 149132,
+   "pr_title": "fix(cli): skills info marks unavailable alternatives as satisfied",
+   "merged": "2026-09-15T20:18:37Z",
+   "fix": "34c2fdd662d3d9058c5bf37d07364dbb58bcc6ca",
+   "lines": 78,
+   "files": [
+    "src/cli/skills-cli.commands.test.ts",
+    "src/cli/skills-cli.format.ts"
+   ],
+   "tests": [
+    "src/cli/skills-cli.commands.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "LiuwqGit"
+  },
+  {
+   "issue": 144997,
+   "issue_title": "[Bug]: `openclaw mcp doctor` reports a stdio MCP server as ok when its `command` is a directory, but every launch fails with EACCES",
+   "issue_created": "2026-09-11T14:41:42Z",
+   "pr": 144998,
+   "pr_title": "fix(mcp): reject directory commands in doctor",
+   "merged": "2026-09-11T16:30:44Z",
+   "fix": "454467457f3ba31f7ba2b854bd17d0bf7bb4d249",
+   "lines": 78,
+   "files": [
+    "src/cli/mcp-cli.doctor-directory-command.test.ts",
+    "src/cli/mcp-cli.ts"
+   ],
+   "tests": [
+    "src/cli/mcp-cli.doctor-directory-command.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "masatohoshino"
+  },
+  {
+   "issue": 160397,
+   "issue_title": "Service reconciliation fails every update (SERVICE_DEFINITION_UNKNOWN) over installer-generated Environment.PATH",
+   "issue_created": "2026-09-28T11:32:56Z",
+   "pr": 160424,
+   "pr_title": "fix(service): preserve installer-managed PATH during reconciliation",
+   "merged": "2026-09-28T16:38:21Z",
+   "fix": "202336dcd5f7032bc53b23069220a2c51da44749",
+   "lines": 79,
+   "files": [
+    "docs/gateway/doctor/gateway-and-services.md",
+    "src/daemon/service-audit-preservation.ts",
+    "src/daemon/service-audit.definition-facts.test.ts"
+   ],
+   "tests": [
+    "src/daemon/service-audit.definition-facts.test.ts"
+   ],
+   "area": "src/daemon",
+   "author": "Ayushdevo"
+  },
+  {
+   "issue": 154736,
+   "issue_title": "[Bug] Native Ollama provider never populates the contextUsage anchor, so overflow prechecks use the character heuristic (~2x too high) and compact at ~45% of the real window",
+   "issue_created": "2026-09-21T10:55:37Z",
+   "pr": 154819,
+   "pr_title": "fix(ollama): preserve measured context for compaction prechecks",
+   "merged": "2026-09-21T16:19:08Z",
+   "fix": "d083a215e8f536d636b69937249ab2eecaa4ba11",
+   "lines": 79,
+   "files": [
+    "extensions/ollama/src/stream.runtime.ts",
+    "extensions/ollama/src/stream.test.ts"
+   ],
+   "tests": [
+    "extensions/ollama/src/stream.test.ts"
+   ],
+   "area": "extensions/ollama",
+   "author": "xydt-juyaohui"
+  },
+  {
+   "issue": 141802,
+   "issue_title": "Matrix reaction listings show blank labels in the CLI",
+   "issue_created": "2026-09-08T03:16:54Z",
+   "pr": 141811,
+   "pr_title": "fix(message): render Matrix reaction labels as plain text",
+   "merged": "2026-09-08T03:44:39Z",
+   "fix": "1323afea852fb07ac07e471f3b70601dd838c524",
+   "lines": 80,
+   "files": [
+    "docs/cli/message.md",
+    "src/commands/message-format.test.ts",
+    "src/commands/message-format.ts"
+   ],
+   "tests": [
+    "src/commands/message-format.test.ts"
+   ],
+   "area": "src/commands",
+   "author": "steipete"
+  },
+  {
+   "issue": 148259,
+   "issue_title": "Reduce pending-output trimming work for exec bursts",
+   "issue_created": "2026-09-14T12:48:50Z",
+   "pr": 148260,
+   "pr_title": "improve(exec): reduce queue trimming work for burst output",
+   "merged": "2026-09-14T14:05:17Z",
+   "fix": "6bc17a695f7e771c1a09d57f928f5d3314439a83",
+   "lines": 82,
+   "files": [
+    "src/agents/bash-process-registry.test.ts",
+    "src/agents/bash-process-registry.ts"
+   ],
+   "tests": [
+    "src/agents/bash-process-registry.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "steipete"
+  },
+  {
+   "issue": 145174,
+   "issue_title": "Reduce missing-command lookup overhead without caching misses",
+   "issue_created": "2026-09-11T19:03:59Z",
+   "pr": 145175,
+   "pr_title": "perf(skills): avoid errors for missing Unix binary candidates",
+   "merged": "2026-09-11T21:23:48Z",
+   "fix": "6a971911e062ceb3f36d2029f0a9745490f1e93d",
+   "lines": 82,
+   "files": [
+    "src/shared/config-eval.test.ts",
+    "src/shared/config-eval.ts"
+   ],
+   "tests": [
+    "src/shared/config-eval.test.ts"
+   ],
+   "area": "src/shared",
+   "author": "steipete"
+  },
+  {
+   "issue": 144721,
+   "issue_title": "[Bug]: Refreshing Plugins page returns 404 Not Found due to UI/plugin HTTP route collision (2026.9.4)",
+   "issue_created": "2026-09-11T06:01:54Z",
+   "pr": 144740,
+   "pr_title": "fix: refreshing the plugin catalog with a trailing slash returns 404",
+   "merged": "2026-09-11T16:36:47Z",
+   "fix": "2f10bf4f4e42dabe2687d84567bc6b633f2297b3",
+   "lines": 82,
+   "files": [
+    "src/gateway/control-ui-routing.test.ts",
+    "src/gateway/control-ui-routing.ts",
+    "src/gateway/control-ui.http.test.ts",
+    "src/gateway/server-http.control-ui.test.ts"
+   ],
+   "tests": [
+    "src/gateway/control-ui-routing.test.ts",
+    "src/gateway/control-ui.http.test.ts",
+    "src/gateway/server-http.control-ui.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "gokay-ai"
+  },
+  {
+   "issue": 149688,
+   "issue_title": "Context engine bootstrap reads the pending user turn, duplicating it and busting the prompt cache every run",
+   "issue_created": "2026-09-16T04:37:50Z",
+   "pr": 149690,
+   "pr_title": "fix: context engine bootstrap duplicates the pending user turn and busts the prompt cache every run",
+   "merged": "2026-09-16T09:39:25Z",
+   "fix": "f12690920c65f66692e004852f21fd3b03873584",
+   "lines": 83,
+   "files": [
+    "src/agents/embedded-agent-runner/run/attempt-session-prepare.ts",
+    "src/agents/embedded-agent-runner/run/attempt-session-replay.test.ts"
+   ],
+   "tests": [
+    "src/agents/embedded-agent-runner/run/attempt-session-replay.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "Marvinthebored"
+  },
+  {
+   "issue": 148491,
+   "issue_title": "Reply context repeatedly constructs timezone validators for history timestamps",
+   "issue_created": "2026-09-14T19:36:44Z",
+   "pr": 148492,
+   "pr_title": "improve: speed up reply context for configured timezones",
+   "merged": "2026-09-14T21:49:59Z",
+   "fix": "4847a2acbbc354fe05990e1bbaaf1666bc0ef38c",
+   "lines": 83,
+   "files": [
+    "src/infra/format-time/format-datetime.ts",
+    "src/infra/format-time/format-time.test.ts"
+   ],
+   "tests": [
+    "src/infra/format-time/format-time.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "steipete"
+  },
+  {
+   "issue": 143111,
+   "issue_title": "Installing a clawhub plugin: requires-capability-consent error sends users to an enable step that fails with 'Plugin not found'",
+   "issue_created": "2026-09-09T12:58:30Z",
+   "pr": 143125,
+   "pr_title": "fix(plugins): avoid dead-end capability consent recovery",
+   "merged": "2026-09-09T15:19:32Z",
+   "fix": "c4fa45b18c6c9e44b21117f4867d922aca8ca87f",
+   "lines": 84,
+   "files": [
+    "src/plugins/capability-consent.test.ts",
+    "src/plugins/capability-consent.ts",
+    "src/plugins/management-service.capability-consent.test.ts"
+   ],
+   "tests": [
+    "src/plugins/capability-consent.test.ts",
+    "src/plugins/management-service.capability-consent.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "LiuwqGit"
+  },
+  {
+   "issue": 154803,
+   "issue_title": "[Bug]: isContaminatedDreamingSnippet's AND-of-five-conditions filter lets REM reflection blocks pass as uncontaminated",
+   "issue_created": "2026-09-21T12:03:46Z",
+   "pr": 154994,
+   "pr_title": "fix(memory): keep generated REM reflections out of promotion rankings",
+   "merged": "2026-09-21T18:01:33Z",
+   "fix": "05f3f8928e2951c396ba74a73896786585620c5f",
+   "lines": 85,
+   "files": [
+    "extensions/memory-core/src/short-term-promotion-utils.ts",
+    "extensions/memory-core/src/short-term-promotion.test.ts"
+   ],
+   "tests": [
+    "extensions/memory-core/src/short-term-promotion.test.ts"
+   ],
+   "area": "extensions/memory-core",
+   "author": "chelsealong"
+  },
+  {
+   "issue": 152217,
+   "issue_title": "[Bug]: Tool and model latency histograms overflow above 10 seconds",
+   "issue_created": "2026-09-18T22:47:50Z",
+   "pr": 152226,
+   "pr_title": "fix(diagnostics-otel): retain buckets for slow tool and model calls",
+   "merged": "2026-09-18T23:56:47Z",
+   "fix": "a21ca3cebb5ff878ec3f62c2cd4f9a84c167a170",
+   "lines": 85,
+   "files": [
+    "extensions/diagnostics-otel/src/service-constants.ts",
+    "extensions/diagnostics-otel/src/service-metrics.ts",
+    "extensions/diagnostics-otel/src/service.duration-metrics.test.ts"
+   ],
+   "tests": [
+    "extensions/diagnostics-otel/src/service.duration-metrics.test.ts"
+   ],
+   "area": "extensions/diagnostics-otel",
+   "author": "bek91"
+  },
+  {
+   "issue": 142584,
+   "issue_title": "[Bug]: Session SQLite migration rejects hard-linked artifacts without identifying aliases or providing safe recovery guidance",
+   "issue_created": "2026-09-08T21:09:56Z",
+   "pr": 143195,
+   "pr_title": "fix(doctor): explain hard-linked session migration refusals",
+   "merged": "2026-09-09T16:53:44Z",
+   "fix": "6e15a5ba97f2ca4e150f297526206e8cc5219841",
+   "lines": 85,
+   "files": [
+    "docs/cli/doctor/sqlite-maintenance.md",
+    "src/commands/doctor-session-sqlite-artifact.ts",
+    "src/commands/doctor-session-sqlite.test.ts"
+   ],
+   "tests": [
+    "src/commands/doctor-session-sqlite.test.ts"
+   ],
+   "area": "src/commands",
+   "author": "steipete"
+  },
+  {
+   "issue": 147385,
+   "issue_title": "Bug: QA cleanup reports live worker threads as stopped after leader exit",
+   "issue_created": "2026-09-13T20:29:27Z",
+   "pr": 147386,
+   "pr_title": "fix(qa): stop live threads after their process leader exits",
+   "merged": "2026-09-13T21:11:44Z",
+   "fix": "dedbaa0c594dc8f9824dceb1e25ee03668c71985",
+   "lines": 86,
+   "files": [
+    "extensions/qa-lab/src/posix-process-group.test.ts",
+    "extensions/qa-lab/src/posix-process-group.ts",
+    "extensions/qa-lab/src/posix-process-stat.ts"
+   ],
+   "tests": [
+    "extensions/qa-lab/src/posix-process-group.test.ts"
+   ],
+   "area": "extensions/qa-lab",
+   "author": "vincentkoc"
+  },
+  {
+   "issue": 164149,
+   "issue_title": "[Bug]: Skill commands strip indentation and blank lines inside multiline arguments",
+   "issue_created": "2026-10-03T07:40:48Z",
+   "pr": 164151,
+   "pr_title": "fix(commands): preserve indentation inside multiline skill arguments",
+   "merged": "2026-10-03T15:58:12Z",
+   "fix": "01d4351e8f93665a95446ab0f5794de11a2e1f08",
+   "lines": 87,
+   "files": [
+    "src/auto-reply/commands-registry-normalize.skill-payload.test.ts",
+    "src/auto-reply/commands-registry-normalize.ts"
+   ],
+   "tests": [
+    "src/auto-reply/commands-registry-normalize.skill-payload.test.ts"
+   ],
+   "area": "src/auto-reply",
+   "author": "ooiuuii"
+  },
+  {
+   "issue": 143438,
+   "issue_title": "refactor(hooks): consolidate source precedence policy",
+   "issue_created": "2026-09-09T22:30:09Z",
+   "pr": 143439,
+   "pr_title": "refactor(hooks): consolidate source precedence policy",
+   "merged": "2026-09-09T22:53:05Z",
+   "fix": "b88aee49666148fcca52c2f02483cba85b2eb1b8",
+   "lines": 87,
+   "files": [
+    "src/hooks/policy.test.ts",
+    "src/hooks/policy.ts"
+   ],
+   "tests": [
+    "src/hooks/policy.test.ts"
+   ],
+   "area": "src/hooks",
+   "author": "steipete"
+  },
+  {
+   "issue": 159637,
+   "issue_title": "[Bug]: view_image forwards undecodable images verbatim; one truncated JPEG permanently breaks a session",
+   "issue_created": "2026-09-27T11:55:59Z",
+   "pr": 159668,
+   "pr_title": "fix: prevent corrupt viewed images from poisoning sessions",
+   "merged": "2026-09-27T14:57:04Z",
+   "fix": "63c680c3ffb254df2a473618dd8bd781ac389067",
+   "lines": 88,
+   "files": [
+    "src/agents/tool-images.ts",
+    "src/agents/tools/image-tool.result.ts",
+    "src/agents/tools/image-tool.test.ts"
+   ],
+   "tests": [
+    "src/agents/tools/image-tool.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "obviyus"
+  },
+  {
+   "issue": 145913,
+   "issue_title": "Model owner fallback repeats pattern matching and prefix preparation",
+   "issue_created": "2026-09-12T10:56:44Z",
+   "pr": 145914,
+   "pr_title": "perf(plugins): reuse model matches before prefix fallback",
+   "merged": "2026-09-12T12:36:11Z",
+   "fix": "bcd05342c0c1831498648f3fee28f2c5a553b60a",
+   "lines": 88,
+   "files": [
+    "src/plugins/providers.test.ts",
+    "src/plugins/providers.ts"
+   ],
+   "tests": [
+    "src/plugins/providers.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "steipete"
+  },
+  {
+   "issue": 145264,
+   "issue_title": "Transport replay preparation allocates avoidable intermediate arrays",
+   "issue_created": "2026-09-11T20:46:36Z",
+   "pr": 145265,
+   "pr_title": "perf(agents): compact transport replay messages in place",
+   "merged": "2026-09-11T22:20:14Z",
+   "fix": "c420724f845bbcee5450285ecf281a751addeddf",
+   "lines": 88,
+   "files": [
+    "src/agents/transport-message-transform.test.ts",
+    "src/agents/transport-message-transform.ts"
+   ],
+   "tests": [
+    "src/agents/transport-message-transform.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "steipete"
+  },
+  {
+   "issue": 149471,
+   "issue_title": "LiteLLM model discovery requests /v1/v1/models and fails when baseUrl ends in /v1",
+   "issue_created": "2026-09-15T22:17:13Z",
+   "pr": 149472,
+   "pr_title": "fix: LiteLLM model discovery fails with 404 when baseUrl ends in /v1",
+   "merged": "2026-09-16T02:50:50Z",
+   "fix": "b68264d1d7c3a62c4edf010b16e043622867418f",
+   "lines": 89,
+   "files": [
+    "extensions/litellm/index.test.ts",
+    "extensions/litellm/index.ts"
+   ],
+   "tests": [
+    "extensions/litellm/index.test.ts"
+   ],
+   "area": "extensions/litellm",
+   "author": "masatohoshino"
+  },
+  {
+   "issue": 163958,
+   "issue_title": "1",
+   "issue_created": "2026-10-03T02:23:01Z",
+   "pr": 164048,
+   "pr_title": "fix(workers): stale device-worker probes retry every minute after the node stops offering workers",
+   "merged": "2026-10-03T08:38:13Z",
+   "fix": "28f73eb9a5b3bac834701852d4464152ea70e2f8",
+   "lines": 91,
+   "files": [
+    "docs/nodes/session-hosting.md",
+    "src/gateway/server-worker-placement-startup.ts",
+    "src/gateway/worker-environments/placement-disk-space.test.ts",
+    "src/gateway/worker-environments/placement-disk-space.ts",
+    "src/gateway/worker-environments/placement-read-projection.worker.test.ts"
+   ],
+   "tests": [
+    "src/gateway/worker-environments/placement-disk-space.test.ts",
+    "src/gateway/worker-environments/placement-read-projection.worker.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "jayzhou2309"
+  },
+  {
+   "issue": 159746,
+   "issue_title": "[Bug]: active-memory recall-intent patterns missing Russian (RU) — default mode=escalate never fires for Russian users",
+   "issue_created": "2026-09-27T15:25:17Z",
+   "pr": 159785,
+   "pr_title": "fix(active-memory): recognize Russian recall intent",
+   "merged": "2026-09-27T20:08:46Z",
+   "fix": "b1d72427bfa7b437e5c980ef49849a753686e4c9",
+   "lines": 91,
+   "files": [
+    "extensions/active-memory/escalation.test.ts",
+    "extensions/active-memory/escalation.ts",
+    "extensions/active-memory/index.test.ts"
+   ],
+   "tests": [
+    "extensions/active-memory/escalation.test.ts",
+    "extensions/active-memory/index.test.ts"
+   ],
+   "area": "extensions/active-memory",
+   "author": "ericcaiwx-star"
+  },
+  {
+   "issue": 155397,
+   "issue_title": "[Bug]: Claude CLI turns persist session modelProvider as claude-cli, so doctor re-flags sessions after every turn",
+   "issue_created": "2026-09-22T03:30:59Z",
+   "pr": 155398,
+   "pr_title": "fix: doctor re-flags sessions as legacy routes after every Claude CLI turn",
+   "merged": "2026-09-22T12:22:54Z",
+   "fix": "425109cd6de58d225d90d6ac2d31c666fbae8806",
+   "lines": 91,
+   "files": [
+    "src/agents/cli-runner.ts",
+    "src/agents/cli-runner/cli-run-settlement.test.ts",
+    "src/agents/cli-runner/cli-run-settlement.ts"
+   ],
+   "tests": [
+    "src/agents/cli-runner/cli-run-settlement.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "hannnnn-l"
+  },
+  {
+   "issue": 142901,
+   "issue_title": "[Bug]: Docker image ships Workboard Control UI bundle as 0700, breaking arbitrary-UID runtimes",
+   "issue_created": "2026-09-09T06:46:31Z",
+   "pr": 142997,
+   "pr_title": "fix(plugins): publish readable Control UI generations",
+   "merged": "2026-09-09T12:52:48Z",
+   "fix": "e32f52577080043f065f347d33741deef1402a6d",
+   "lines": 91,
+   "files": [
+    "src/cli/plugins-control-ui-build.test.ts",
+    "src/cli/plugins-control-ui-build.ts"
+   ],
+   "tests": [
+    "src/cli/plugins-control-ui-build.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "ylcn91"
+  },
+  {
+   "issue": 166295,
+   "issue_title": "agents delete fails with CONFIG_INCLUDE_OWNERSHIP when agents.entries is an $include (collectInto treats undefined-valued keys as changes)",
+   "issue_created": "2026-10-06T21:05:42Z",
+   "pr": 166316,
+   "pr_title": "fix(agents): agents delete fails when agents.entries is an $include",
+   "merged": "2026-10-06T23:09:12Z",
+   "fix": "37272a081cf624b4f901182a981d3901572838a8",
+   "lines": 92,
+   "files": [
+    "src/config/include-write-boundary.test.ts",
+    "src/config/include-write-boundary.ts",
+    "src/config/mutate.agent-delete-include.test.ts"
+   ],
+   "tests": [
+    "src/config/include-write-boundary.test.ts",
+    "src/config/mutate.agent-delete-include.test.ts"
+   ],
+   "area": "src/config",
+   "author": "jayzhou2309"
+  },
+  {
+   "issue": 155171,
+   "issue_title": "Session SQLite migration recovery report (session-sqlite-1790020639197-34b5ed7a)",
+   "issue_created": "2026-09-21T20:22:09Z",
+   "pr": 155246,
+   "pr_title": "fix(doctor): skip GitHub issue draft for a clean session SQLite recovery",
+   "merged": "2026-09-22T12:14:29Z",
+   "fix": "86fc1df067b92eecf04490eeb39d760b37b28ed5",
+   "lines": 92,
+   "files": [
+    "src/commands/doctor-session-sqlite-recover-report.ts",
+    "src/commands/doctor-session-sqlite.failure-reports.test.ts"
+   ],
+   "tests": [
+    "src/commands/doctor-session-sqlite.failure-reports.test.ts"
+   ],
+   "area": "src/commands",
+   "author": "chelsealong"
+  },
+  {
+   "issue": 149569,
+   "issue_title": "[Bug]: logs --plain still emits ANSI colors in diagnostics",
+   "issue_created": "2026-09-16T01:30:33Z",
+   "pr": 149595,
+   "pr_title": "fix(logs): keep diagnostics plain when --plain is selected",
+   "merged": "2026-09-16T11:42:34Z",
+   "fix": "809c4dfc151906f3e021ac94049b647754ba9912",
+   "lines": 92,
+   "files": [
+    "src/cli/logs-cli.plain-color.test.ts",
+    "src/cli/logs-cli.ts"
+   ],
+   "tests": [
+    "src/cli/logs-cli.plain-color.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "LiuwqGit"
+  },
+  {
+   "issue": 166210,
+   "issue_title": "[Bug]: Local Comfy workflows with completed history and empty outputs poll until timeout",
+   "issue_created": "2026-10-06T17:10:47Z",
+   "pr": 166249,
+   "pr_title": "fix(comfy): report completed local workflows without outputs",
+   "merged": "2026-10-08T06:31:58Z",
+   "fix": "bc162d9e05d5e8c776c37fb832c493e6d7bb927e",
+   "lines": 94,
+   "files": [
+    "extensions/comfy/image-generation-provider.test.ts",
+    "extensions/comfy/workflow-history.ts",
+    "extensions/comfy/workflow-runtime.ts"
+   ],
+   "tests": [
+    "extensions/comfy/image-generation-provider.test.ts"
+   ],
+   "area": "extensions/comfy",
+   "author": "chelsealong"
+  },
+  {
+   "issue": 142524,
+   "issue_title": "[Bug]: Kimi Coding usage-limit 403 is reported as an auth failure (\"Re-authenticate the provider\") and latches the provider off",
+   "issue_created": "2026-09-08T20:25:31Z",
+   "pr": 142656,
+   "pr_title": "fix(kimi): classify quota exhaustion as rate limit",
+   "merged": "2026-09-09T02:46:51Z",
+   "fix": "5e30346432429d0b0dc555701f79fd9833f821c7",
+   "lines": 94,
+   "files": [
+    "docs/plugins/plugin-inventory.md",
+    "docs/plugins/reference/kimi.md",
+    "extensions/kimi-coding/README.md",
+    "extensions/kimi-coding/index.test.ts",
+    "extensions/kimi-coding/index.ts",
+    "extensions/kimi-coding/openclaw.plugin.json"
+   ],
+   "tests": [
+    "extensions/kimi-coding/index.test.ts"
+   ],
+   "area": "extensions/kimi-coding",
+   "author": "RileyJJY"
+  },
+  {
+   "issue": 142111,
+   "issue_title": "[Bug]: --url without --token/--password is framed as a CLI startup crash instead of the producer remedy",
+   "issue_created": "2026-09-08T10:21:10Z",
+   "pr": 142112,
+   "pr_title": "fix(cli): --url without credentials was framed as a CLI startup crash",
+   "merged": "2026-09-08T13:27:56Z",
+   "fix": "2730fa1189171de67e990f3c9a44bfe0adc8d42c",
+   "lines": 95,
+   "files": [
+    "src/cli/failure-output.test.ts",
+    "src/cli/failure-output.ts",
+    "src/cli/gateway-backed-exit.process.test.ts"
+   ],
+   "tests": [
+    "src/cli/failure-output.test.ts",
+    "src/cli/gateway-backed-exit.process.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "DasX"
+  },
+  {
+   "issue": 146796,
+   "issue_title": "perf: avoid repeated full wake scans during session-state notice bursts",
+   "issue_created": "2026-09-13T06:16:27Z",
+   "pr": 146818,
+   "pr_title": "improve(infra): reduce scheduling work for session notice bursts",
+   "merged": "2026-09-13T10:17:55Z",
+   "fix": "be3d809cf6908d5fda20a31586b3887c32d29bd1",
+   "lines": 96,
+   "files": [
+    "src/infra/heartbeat-wake.settlement.test.ts",
+    "src/infra/session-event-wake-concurrency.test.ts",
+    "src/infra/session-event-wake.ts"
+   ],
+   "tests": [
+    "src/infra/heartbeat-wake.settlement.test.ts",
+    "src/infra/session-event-wake-concurrency.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "steipete"
+  },
+  {
+   "issue": 142870,
+   "issue_title": "Durable context-engine commits lose the resolved model window and budget",
+   "issue_created": "2026-09-09T06:03:57Z",
+   "pr": 142871,
+   "pr_title": "fix: retain model budgets for durable context-engine turns",
+   "merged": "2026-09-11T02:44:40Z",
+   "fix": "d6997b6bbf2e269887f03bddae6a488d74908af2",
+   "lines": 96,
+   "files": [
+    "src/agents/cli-runner/cli-run-transcript.ts",
+    "src/agents/embedded-agent-runner/run/attempt-finalize.ts",
+    "src/agents/embedded-agent-runner/run/attempt-phase-lifecycle.test.ts",
+    "src/agents/embedded-agent-runner/run/model-setup.ownership.test.ts",
+    "src/agents/embedded-agent-runner/run/run-attempt-dispatch.ts",
+    "src/agents/embedded-agent-runner/run/runtime-preparation.ts",
+    "src/agents/embedded-agent-runner/run/types.ts",
+    "src/agents/harness/context-engine-turn-attempt.test.ts",
+    "src/agents/harness/context-engine-turn-attempt.ts",
+    "src/agents/harness/context-engine-turn-outbox.test.ts",
+    "src/agents/harness/context-engine-turn-outbox.ts",
+    "src/agents/harness/selection.test.ts",
+    "src/agents/harness/selection.ts"
+   ],
+   "tests": [
+    "src/agents/embedded-agent-runner/run/attempt-phase-lifecycle.test.ts",
+    "src/agents/embedded-agent-runner/run/model-setup.ownership.test.ts",
+    "src/agents/harness/context-engine-turn-attempt.test.ts",
+    "src/agents/harness/context-engine-turn-outbox.test.ts",
+    "src/agents/harness/selection.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "Marvinthebored"
+  },
+  {
+   "issue": 146080,
+   "issue_title": "[Bug]: Matrix-enabled selected Docker source builds fail the import guard",
+   "issue_created": "2026-09-12T15:07:18Z",
+   "pr": 146081,
+   "pr_title": "fix(matrix): prevent selected Docker build import failures",
+   "merged": "2026-09-12T16:33:05Z",
+   "fix": "5400e4144aad3a6645d310f877f266ab63a8cd11",
+   "lines": 97,
+   "files": [
+    "extensions/matrix/src/matrix/actions/client.test.ts",
+    "extensions/matrix/src/matrix/actions/client.ts",
+    "extensions/matrix/src/matrix/client.test.ts",
+    "extensions/matrix/src/matrix/client.ts"
+   ],
+   "tests": [
+    "extensions/matrix/src/matrix/actions/client.test.ts",
+    "extensions/matrix/src/matrix/client.test.ts"
+   ],
+   "area": "extensions/matrix",
+   "author": "vincentkoc"
+  },
+  {
+   "issue": 144675,
+   "issue_title": "[Feature]: Show the recorded container runtime in Fleet status",
+   "issue_created": "2026-09-11T04:51:56Z",
+   "pr": 144691,
+   "pr_title": "feat(fleet): show the recorded container runtime in status",
+   "merged": "2026-09-19T16:54:22Z",
+   "fix": "9e9ea746f4b3e1db2b5ced75fad972e994b57431",
+   "lines": 97,
+   "files": [
+    "docs/cli/fleet.md",
+    "src/cli/fleet-cli/commands.runtime.ts",
+    "src/cli/fleet-cli/commands.status-runtime.test.ts"
+   ],
+   "tests": [
+    "src/cli/fleet-cli/commands.status-runtime.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "Alix-007"
+  },
+  {
+   "issue": 162732,
+   "issue_title": "[Bug]: File-based usage footer stops updating after an atomic save",
+   "issue_created": "2026-10-01T13:37:56Z",
+   "pr": 162733,
+   "pr_title": "fix(usage): file-based usage footer stops updating after an atomic save",
+   "merged": "2026-10-01T17:29:54Z",
+   "fix": "e8dc33b3f7ded5243acdc80b600000129f1823f4",
+   "lines": 99,
+   "files": [
+    "src/auto-reply/usage-bar/template.test.ts",
+    "src/auto-reply/usage-bar/template.ts"
+   ],
+   "tests": [
+    "src/auto-reply/usage-bar/template.test.ts"
+   ],
+   "area": "src/auto-reply",
+   "author": "boeingchoco"
+  },
+  {
+   "issue": 144773,
+   "issue_title": "[Bug]: preserve malformed legacy sandbox registry when quarantine fails",
+   "issue_created": "2026-09-11T07:40:43Z",
+   "pr": 144787,
+   "pr_title": "fix(doctor): preserve legacy registry files when quarantine fails",
+   "merged": "2026-09-11T13:41:15Z",
+   "fix": "6a80a0b5e4ee9e2fe133f45985a75240420b01b8",
+   "lines": 99,
+   "files": [
+    "src/commands/doctor-sandbox-legacy-registry.test.ts",
+    "src/commands/doctor-sandbox-legacy-registry.ts"
+   ],
+   "tests": [
+    "src/commands/doctor-sandbox-legacy-registry.test.ts"
+   ],
+   "area": "src/commands",
+   "author": "Alix-007"
+  },
+  {
+   "issue": 143842,
+   "issue_title": "workboard dispatch stamps every ready card on every tick even when it starts no worker (metadata budget churn, evidence loss)",
+   "issue_created": "2026-09-10T07:48:06Z",
+   "pr": 149160,
+   "pr_title": "fix(workboard): preserve ready-card history on idle dispatch",
+   "merged": "2026-09-15T15:16:51Z",
+   "fix": "c7ee70c52d3d7f4f433b475daab05c3d7beaa98e",
+   "lines": 99,
+   "files": [
+    "docs/cli/workboard.md",
+    "docs/plugins/workboard.md",
+    "extensions/workboard/src/dispatcher.test.ts",
+    "extensions/workboard/src/store-core.ts",
+    "extensions/workboard/src/store.test.ts",
+    "extensions/workboard/src/store.ts"
+   ],
+   "tests": [
+    "extensions/workboard/src/dispatcher.test.ts",
+    "extensions/workboard/src/store.test.ts"
+   ],
+   "area": "extensions/workboard",
+   "author": "obviyus"
+  },
+  {
+   "issue": 149064,
+   "issue_title": "[Bug]: message read --message-id ignores the id and returns the channel's newest message",
+   "issue_created": "2026-09-15T12:11:00Z",
+   "pr": 149113,
+   "pr_title": "fix(discord): message read ignores --message-id and returns newest",
+   "merged": "2026-09-15T16:31:38Z",
+   "fix": "22a07e0abe7f885c1ece6a6c7676065a2e4813c7",
+   "lines": 100,
+   "files": [
+    "extensions/discord/src/actions/handle-action.test.ts",
+    "extensions/discord/src/actions/handle-action.ts",
+    "extensions/discord/src/actions/runtime.messaging.messages.ts",
+    "extensions/discord/src/actions/runtime.test.ts"
+   ],
+   "tests": [
+    "extensions/discord/src/actions/handle-action.test.ts",
+    "extensions/discord/src/actions/runtime.test.ts"
+   ],
+   "area": "extensions/discord",
+   "author": "DonnieFi"
+  },
+  {
+   "issue": 146017,
+   "issue_title": "[Bug]: Update candidate rehearsal drops gateway.auth.rateLimit and fails policy Doctor lint",
+   "issue_created": "2026-09-12T14:16:02Z",
+   "pr": 146071,
+   "pr_title": "fix(update): preserve auth policy in candidate rehearsals",
+   "merged": "2026-09-12T15:26:02Z",
+   "fix": "ab8f3cdc115410055869c6ee4793883e4437f41e",
+   "lines": 102,
+   "files": [
+    "docs/install/updating.md",
+    "src/infra/update-candidate-rehearsal.test.ts",
+    "src/infra/update-candidate-rehearsal.ts"
+   ],
+   "tests": [
+    "src/infra/update-candidate-rehearsal.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "steipete"
+  },
+  {
+   "issue": 153357,
+   "issue_title": "WS response timeout: CLI write action succeeds on gateway but response does not reach CLI",
+   "issue_created": "2026-09-20T02:07:42Z",
+   "pr": 153370,
+   "pr_title": "fix(gateway): timeout errors now say the request outcome is unknown when the call was already dispatched",
+   "merged": "2026-09-20T06:03:10Z",
+   "fix": "fdc62b9bbade33efcbbc7203cb9cace15584ca4f",
+   "lines": 104,
+   "files": [
+    "src/gateway/call.test.ts",
+    "src/gateway/call.ts",
+    "src/gateway/transport-error.ts"
+   ],
+   "tests": [
+    "src/gateway/call.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "LiuwqGit"
+  },
+  {
+   "issue": 147982,
+   "issue_title": "Simplify Gateway session-name precedence",
+   "issue_created": "2026-09-14T06:04:52Z",
+   "pr": 147984,
+   "pr_title": "refactor: simplify Gateway session-name precedence",
+   "merged": "2026-09-18T08:49:06Z",
+   "fix": "395588979accfa639d1ec18638c2e5399d585f07",
+   "lines": 106,
+   "files": [
+    "src/gateway/session-utils-display.ts",
+    "src/gateway/session-utils.test.ts"
+   ],
+   "tests": [
+    "src/gateway/session-utils.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "steipete"
+  },
+  {
+   "issue": 145892,
+   "issue_title": "Discord voice encoding copies complete PCM inputs before encoding",
+   "issue_created": "2026-09-12T10:29:52Z",
+   "pr": 145893,
+   "pr_title": "perf(discord): encode complete PCM frames without staging copies",
+   "merged": "2026-09-12T12:17:53Z",
+   "fix": "a39897f8cc6a9db3f086afde8199397f1027dd46",
+   "lines": 108,
+   "files": [
+    "extensions/discord/src/voice/audio.lifecycle.test.ts",
+    "extensions/discord/src/voice/audio.ts"
+   ],
+   "tests": [
+    "extensions/discord/src/voice/audio.lifecycle.test.ts"
+   ],
+   "area": "extensions/discord",
+   "author": "steipete"
+  },
+  {
+   "issue": 144476,
+   "issue_title": "exec auto-reviewer hard-caps output at 360 tokens → fails closed on long/complex commands",
+   "issue_created": "2026-09-10T23:08:48Z",
+   "pr": 144587,
+   "pr_title": "fix(exec): complex commands trigger human approval fallback due to reviewer token truncation",
+   "merged": "2026-09-13T00:04:39Z",
+   "fix": "9296e6895ace3930c491d7a04294d12ae0c60c1d",
+   "lines": 109,
+   "files": [
+    "src/agents/exec-auto-reviewer.test.ts",
+    "src/agents/exec-auto-reviewer.ts"
+   ],
+   "tests": [
+    "src/agents/exec-auto-reviewer.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "MasterSwords1"
+  },
+  {
+   "issue": 164937,
+   "issue_title": "[Bug]: CLI child invocation can switch releases after its launcher symlink changes",
+   "issue_created": "2026-10-04T13:54:22Z",
+   "pr": 164998,
+   "pr_title": "fix(cli): pin prepared child invocations to the launcher's resolved release",
+   "merged": "2026-10-04T16:07:02Z",
+   "fix": "c90b91b3e4c8962a9bb2491e96f62020f3290bed",
+   "lines": 111,
+   "files": [
+    "docs/tools/exec.md",
+    "src/infra/openclaw-cli-invocation.test.ts",
+    "src/infra/openclaw-cli-invocation.ts",
+    "src/infra/update-managed-service-handoff-command.test.ts",
+    "src/infra/update-managed-service-handoff.ts"
+   ],
+   "tests": [
+    "src/infra/openclaw-cli-invocation.test.ts",
+    "src/infra/update-managed-service-handoff-command.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "steipete"
+  },
+  {
+   "issue": 142244,
+   "issue_title": "Plugin-state live-row counts: extend the existing listing index",
+   "issue_created": "2026-09-08T14:44:28Z",
+   "pr": 142318,
+   "pr_title": "perf(plugin-state): cover live-row quota scans",
+   "merged": "2026-09-08T16:57:31Z",
+   "fix": "64f7a06ab3992c839355a9d14c40467c5b929b87",
+   "lines": 111,
+   "files": [
+    "docs/reference/database-schemas.md",
+    "src/state/openclaw-state-db.test.ts",
+    "src/state/openclaw-state-schema.sql",
+    "src/state/sqlite-query-plan.test.ts"
+   ],
+   "tests": [
+    "src/state/openclaw-state-db.test.ts",
+    "src/state/sqlite-query-plan.test.ts"
+   ],
+   "area": "src/state",
+   "author": "steipete"
+  },
+  {
+   "issue": 165416,
+   "issue_title": "[Bug]: Matrix attachment filenames become agent body text after successful media resolution",
+   "issue_created": "2026-10-05T07:27:21Z",
+   "pr": 165419,
+   "pr_title": "fix(matrix): keep attachment filenames out of agent body text",
+   "merged": "2026-10-05T09:47:41Z",
+   "fix": "7ca35034f9ec45d9cdbb67ef103bc1e7a25cdeb8",
+   "lines": 112,
+   "files": [
+    "extensions/matrix/src/matrix/monitor/handler-helpers.inbound-body.test.ts",
+    "extensions/matrix/src/matrix/monitor/handler-helpers.ts"
+   ],
+   "tests": [
+    "extensions/matrix/src/matrix/monitor/handler-helpers.inbound-body.test.ts"
+   ],
+   "area": "extensions/matrix",
+   "author": "ooiuuii"
+  },
+  {
+   "issue": 162854,
+   "issue_title": "[Feature]: search bounded prefixes of large local skill instructions",
+   "issue_created": "2026-10-01T16:53:12Z",
+   "pr": 162856,
+   "pr_title": "improve(skills): search bounded prefixes of large local instructions",
+   "merged": "2026-10-02T03:06:42Z",
+   "fix": "61b940ae26d3f2fbab97515a9cbd41fd35d7d4aa",
+   "lines": 112,
+   "files": [
+    "docs/tools/skills.md",
+    "src/agents/installed-skill-catalog.ts",
+    "src/agents/system-prompt-skills.ts",
+    "src/agents/system-prompt.skills-search.test.ts",
+    "src/agents/tools/installed-skill-catalog.test.ts"
+   ],
+   "tests": [
+    "src/agents/system-prompt.skills-search.test.ts",
+    "src/agents/tools/installed-skill-catalog.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "vincentkoc"
+  },
+  {
+   "issue": 141898,
+   "issue_title": "[Bug]: requester settlement can acknowledge only part of a required child batch",
+   "issue_created": "2026-09-08T05:38:19Z",
+   "pr": 141901,
+   "pr_title": "fix: reject incomplete requester child batches",
+   "merged": "2026-09-08T05:53:40Z",
+   "fix": "dd0cf9bedc43923fe2ba0c3c5f307970de88eaa6",
+   "lines": 113,
+   "files": [
+    "src/agents/subagents/registry/subagent-registry-lifecycle.test.ts",
+    "src/agents/subagents/registry/subagent-registry-requester-yield.test.ts",
+    "src/agents/subagents/registry/subagent-registry-requester-yield.ts"
+   ],
+   "tests": [
+    "src/agents/subagents/registry/subagent-registry-lifecycle.test.ts",
+    "src/agents/subagents/registry/subagent-registry-requester-yield.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "roboclaw-bot"
+  },
+  {
+   "issue": 163447,
+   "issue_title": "[Bug]: Comma-separated quoted MEDIA references deliver no attachment, while the same paths separated by spaces deliver both",
+   "issue_created": "2026-10-02T10:17:49Z",
+   "pr": 163448,
+   "pr_title": "fix(media): comma-separated quoted MEDIA references deliver no attachment",
+   "merged": "2026-10-02T11:31:16Z",
+   "fix": "0f5579749d739fce37483234f6aaf07c866cab20",
+   "lines": 115,
+   "files": [
+    "src/media/parse-output.ts",
+    "src/media/parse.test.ts"
+   ],
+   "tests": [
+    "src/media/parse.test.ts"
+   ],
+   "area": "src/media",
+   "author": "sxh313"
+  },
+  {
+   "issue": 156520,
+   "issue_title": "[Bug]: doctor reports 20k+ historical_transcript_deferred issues after successful SQLite migration",
+   "issue_created": "2026-09-23T13:08:03Z",
+   "pr": 156551,
+   "pr_title": "fix: summarize repeated Doctor historical archive warnings",
+   "merged": "2026-09-24T02:35:24Z",
+   "fix": "5603e967f97061a3086eafa632c5c438f0fea456",
+   "lines": 116,
+   "files": [
+    "docs/cli/doctor/sqlite-maintenance.md",
+    "src/commands/doctor-session-sqlite-warnings.ts",
+    "src/commands/doctor-session-transcripts.sqlite.test.ts",
+    "src/commands/doctor-session-transcripts.ts"
+   ],
+   "tests": [
+    "src/commands/doctor-session-transcripts.sqlite.test.ts"
+   ],
+   "area": "src/commands",
+   "author": "NianJiuZst"
+  },
+  {
+   "issue": 149255,
+   "issue_title": "Background image generation marks completed Codex child paused and drops parent result",
+   "issue_created": "2026-09-15T16:07:31Z",
+   "pr": 149368,
+   "pr_title": "fix(agents): deliver completed child results after background media",
+   "merged": "2026-09-15T21:14:46Z",
+   "fix": "1611ca6d16a91c98037fb21e9ba49e0d5b9f2731",
+   "lines": 116,
+   "files": [
+    "src/agents/openclaw-tools.media-yield.test.ts",
+    "src/agents/openclaw-tools.media-yield.ts",
+    "src/agents/openclaw-tools.ts",
+    "src/agents/openclaw-tools.tts-config.test.ts"
+   ],
+   "tests": [
+    "src/agents/openclaw-tools.media-yield.test.ts",
+    "src/agents/openclaw-tools.tts-config.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "obviyus"
+  },
+  {
+   "issue": 159452,
+   "issue_title": "[Bug]: Automatic daily/idle session reset drops `worktree` from the session entry — worker-placed session then fails every turn with \"dispatch requires a session-owned workspace\"",
+   "issue_created": "2026-09-27T05:33:25Z",
+   "pr": 159506,
+   "pr_title": "fix(sessions): preserve worktree binding through automatic rollover",
+   "merged": "2026-09-28T03:54:45Z",
+   "fix": "348ffd502a3bd63c9f8f03e0dfd93d41bff5412a",
+   "lines": 117,
+   "files": [
+    "src/auto-reply/reply/session.test.ts",
+    "src/auto-reply/reply/session.ts"
+   ],
+   "tests": [
+    "src/auto-reply/reply/session.test.ts"
+   ],
+   "area": "src/auto-reply",
+   "author": "chelsealong"
+  },
+  {
+   "issue": 156749,
+   "issue_title": "[Bug]: Extension relay Target.getTargets fails entirely while a non-debuggable tab (e.g. Chrome Web Store) is open",
+   "issue_created": "2026-09-23T20:22:47Z",
+   "pr": 156890,
+   "pr_title": "fix(browser): keep tabs usable while Chrome Web Store is open",
+   "merged": "2026-09-26T06:59:44Z",
+   "fix": "e71ceb0c3defc97d9d05eb0cb1cf883fde1eba19",
+   "lines": 118,
+   "files": [
+    "docs/tools/chrome-extension.md",
+    "extensions/browser/src/browser/extension-relay/relay-bridge.enumeration.test.ts",
+    "extensions/browser/src/browser/extension-relay/relay-bridge.ts"
+   ],
+   "tests": [
+    "extensions/browser/src/browser/extension-relay/relay-bridge.enumeration.test.ts"
+   ],
+   "area": "extensions/browser",
+   "author": "holny"
+  },
+  {
+   "issue": 142923,
+   "issue_title": "[Bug]: Packaged QA scenario CLI commands ignore the selected candidate",
+   "issue_created": "2026-09-09T07:24:40Z",
+   "pr": 142925,
+   "pr_title": "fix(qa): run packaged scenario CLI commands with the selected candidate",
+   "merged": "2026-09-09T07:59:40Z",
+   "fix": "cb3721d8407203b1400ed7e57f6fb5fadb1de139",
+   "lines": 118,
+   "files": [
+    "extensions/qa-lab/src/gateway-child-bootstrap.test.ts",
+    "extensions/qa-lab/src/gateway-child-lifecycle.test.ts",
+    "extensions/qa-lab/src/gateway-child.ts",
+    "extensions/qa-lab/src/qa-cli-process.ts",
+    "extensions/qa-lab/src/suite-runtime-agent-process.test.ts",
+    "extensions/qa-lab/src/suite-runtime-types.ts"
+   ],
+   "tests": [
+    "extensions/qa-lab/src/gateway-child-bootstrap.test.ts",
+    "extensions/qa-lab/src/gateway-child-lifecycle.test.ts",
+    "extensions/qa-lab/src/suite-runtime-agent-process.test.ts"
+   ],
+   "area": "extensions/qa-lab",
+   "author": "vincentkoc"
+  },
+  {
+   "issue": 145700,
+   "issue_title": "Slack reply preparation repeats unused table and chart scans",
+   "issue_created": "2026-09-12T06:24:56Z",
+   "pr": 145701,
+   "pr_title": "perf(slack): skip unused global table and chart scans",
+   "merged": "2026-09-12T07:05:40Z",
+   "fix": "77e3071509d8f28cf03ad4bc5825d69a23c97973",
+   "lines": 125,
+   "files": [
+    "extensions/slack/src/blocks-render.ts",
+    "extensions/slack/src/outbound-payload.test.ts",
+    "extensions/slack/src/reply-blocks.ts"
+   ],
+   "tests": [
+    "extensions/slack/src/outbound-payload.test.ts"
+   ],
+   "area": "extensions/slack",
+   "author": "steipete"
+  },
+  {
+   "issue": 166805,
+   "issue_title": "cron command announcements log [outbound/session] \"Failed to preserve outbound session creation policy … Session key does not contain an agent id\" on every delivery",
+   "issue_created": "2026-10-07T23:19:17Z",
+   "pr": 166836,
+   "pr_title": "fix(cron): stop policy warnings on command announcements",
+   "merged": "2026-10-08T00:41:30Z",
+   "fix": "eb266d242d26d07d3cf85d0de61f9dd7f1f729fc",
+   "lines": 126,
+   "files": [
+    "src/cron/delivery.session-policy.test.ts",
+    "src/cron/delivery.ts",
+    "src/cron/isolated-agent/delivery-dispatch-awareness.ts"
+   ],
+   "tests": [
+    "src/cron/delivery.session-policy.test.ts"
+   ],
+   "area": "src/cron",
+   "author": "obviyus"
+  },
+  {
+   "issue": 161278,
+   "issue_title": "[Bug]: diagnostics-otel: cron turns split into two root traces — empty message.processed plus separate harness.run tree",
+   "issue_created": "2026-09-29T16:22:42Z",
+   "pr": 161304,
+   "pr_title": "fix(cron): keep scheduled agent telemetry in one trace",
+   "merged": "2026-09-30T04:26:07Z",
+   "fix": "c531565364ab222dd4d67655d2d2afcbac1b97df",
+   "lines": 128,
+   "files": [
+    "docs/gateway/opentelemetry/spans-and-events.md",
+    "src/cron/isolated-agent/run.diagnostic-events.test.ts",
+    "src/cron/isolated-agent/run.ts"
+   ],
+   "tests": [
+    "src/cron/isolated-agent/run.diagnostic-events.test.ts"
+   ],
+   "area": "src/cron",
+   "author": "NianJiuZst"
+  },
+  {
+   "issue": 144349,
+   "issue_title": "Ordered CLI reasoning deltas repeatedly rebuild the full block order",
+   "issue_created": "2026-09-10T19:49:56Z",
+   "pr": 144350,
+   "pr_title": "perf(agents): append ordered CLI reasoning deltas incrementally",
+   "merged": "2026-09-10T20:27:54Z",
+   "fix": "d350476f4734f7de3ec65df5a88bd2b9861a60ed",
+   "lines": 131,
+   "files": [
+    "src/agents/cli-output-events.ts",
+    "src/agents/cli-output-reasoning.test.ts",
+    "src/agents/cli-runner/execute.supervisor-capture.test.ts"
+   ],
+   "tests": [
+    "src/agents/cli-output-reasoning.test.ts",
+    "src/agents/cli-runner/execute.supervisor-capture.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "steipete"
+  },
+  {
+   "issue": 145208,
+   "issue_title": "QA Lab still tests the retired Discord observation artifact",
+   "issue_created": "2026-09-11T19:31:14Z",
+   "pr": 145211,
+   "pr_title": "refactor(qa): finish retiring the standalone Discord artifact path",
+   "merged": "2026-09-11T21:15:05Z",
+   "fix": "f38aaa5c925d6945c7f08334a4c33244f19779b4",
+   "lines": 132,
+   "files": [
+    "extensions/qa-lab/src/live-transports/discord/discord-live.runtime.test.ts",
+    "extensions/qa-lab/src/live-transports/discord/discord-live.runtime.ts"
+   ],
+   "tests": [
+    "extensions/qa-lab/src/live-transports/discord/discord-live.runtime.test.ts"
+   ],
+   "area": "extensions/qa-lab",
+   "author": "steipete"
+  },
+  {
+   "issue": 145890,
+   "issue_title": "Feishu media save failures leave acquired response streams open",
+   "issue_created": "2026-09-12T10:29:09Z",
+   "pr": 145891,
+   "pr_title": "fix(feishu): close acquired media streams after failed saves",
+   "merged": "2026-09-12T12:20:41Z",
+   "fix": "63c3f29fa86de9ba6d12704adeb3709fca100987",
+   "lines": 134,
+   "files": [
+    "extensions/feishu/src/media-chunk-idle.ts",
+    "extensions/feishu/src/media-download.test.ts"
+   ],
+   "tests": [
+    "extensions/feishu/src/media-download.test.ts"
+   ],
+   "area": "extensions/feishu",
+   "author": "steipete"
+  },
+  {
+   "issue": 158320,
+   "issue_title": "Git updates fail when plugin rehearsal traverses abandoned runtime staging",
+   "issue_created": "2026-09-25T20:49:29Z",
+   "pr": 158338,
+   "pr_title": "fix: Git updates fail on abandoned plugin runtime staging",
+   "merged": "2026-09-26T00:17:42Z",
+   "fix": "8c29090d0aae9a43193b4868d89c8ab4c77ba69d",
+   "lines": 135,
+   "files": [
+    "docs/cli/update/how-updates-run.md",
+    "src/infra/update-candidate-plugin-tree.test.ts",
+    "src/infra/update-candidate-plugin-tree.ts",
+    "src/infra/update-runner-git-runtime.ts",
+    "src/infra/update-runtime-staging.ts"
+   ],
+   "tests": [
+    "src/infra/update-candidate-plugin-tree.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "jalehman"
+  },
+  {
+   "issue": 151905,
+   "issue_title": "Many active agent databases can delay I/O despite per-store write yielding",
+   "issue_created": "2026-09-18T15:25:34Z",
+   "pr": 151909,
+   "pr_title": "fix: keep I/O responsive across busy agent databases",
+   "merged": "2026-09-18T16:34:40Z",
+   "fix": "2bc458c66cbfbcea4035863acc50842c4b17f983",
+   "lines": 135,
+   "files": [
+    "src/shared/store-writer-queue.test.ts",
+    "src/shared/store-writer-queue.ts"
+   ],
+   "tests": [
+    "src/shared/store-writer-queue.test.ts"
+   ],
+   "area": "src/shared",
+   "author": "steipete"
+  },
+  {
+   "issue": 146786,
+   "issue_title": "Doctor changes current-session automations to isolated and breaks conversation delivery",
+   "issue_created": "2026-09-13T06:00:24Z",
+   "pr": 146794,
+   "pr_title": "fix: preserve scheduled conversation delivery after Doctor",
+   "merged": "2026-09-13T06:53:57Z",
+   "fix": "a614d683949b84e621d8aa6e3384bbf13d02dd21",
+   "lines": 135,
+   "files": [
+    "src/commands/doctor/cron/legacy-repair.test.ts",
+    "src/commands/doctor/cron/store-migration.session-target.test.ts",
+    "src/commands/doctor/cron/store-migration.ts"
+   ],
+   "tests": [
+    "src/commands/doctor/cron/legacy-repair.test.ts",
+    "src/commands/doctor/cron/store-migration.session-target.test.ts"
+   ],
+   "area": "src/commands",
+   "author": "fuller-stack-dev"
+  },
+  {
+   "issue": 154741,
+   "issue_title": "[Bug]: Teams skipped channel history is shared across distinct thread roots",
+   "issue_created": "2026-09-21T11:03:56Z",
+   "pr": 154825,
+   "pr_title": "fix(msteams): keep skipped messages within their channel thread",
+   "merged": "2026-09-21T14:30:53Z",
+   "fix": "2c65ce9ae0de1d06934fd88cd9a265d88603fe08",
+   "lines": 137,
+   "files": [
+    "extensions/msteams/src/monitor-handler.test-helpers.ts",
+    "extensions/msteams/src/monitor-handler/inbound-dispatch.ts",
+    "extensions/msteams/src/monitor-handler/inbound-facts.ts",
+    "extensions/msteams/src/monitor-handler/message-handler.history.test.ts",
+    "extensions/msteams/src/monitor-handler/message-handler.test-support.ts",
+    "extensions/msteams/src/monitor-handler/message-handler.ts"
+   ],
+   "tests": [
+    "extensions/msteams/src/monitor-handler/message-handler.history.test.ts"
+   ],
+   "area": "extensions/msteams",
+   "author": "NianJiuZst"
+  },
+  {
+   "issue": 149332,
+   "issue_title": "Bug: Bedrock rejects tool-returned images on GPT-5.6 Sol",
+   "issue_created": "2026-09-15T18:32:37Z",
+   "pr": 149336,
+   "pr_title": "fix(bedrock): preserve images returned by tools",
+   "merged": "2026-09-16T04:20:58Z",
+   "fix": "115522a65395b33d88d39656a2b73ac390cac024",
+   "lines": 137,
+   "files": [
+    "extensions/amazon-bedrock/stream.runtime.accounting-replay.test.ts",
+    "extensions/amazon-bedrock/stream.runtime.ts"
+   ],
+   "tests": [
+    "extensions/amazon-bedrock/stream.runtime.accounting-replay.test.ts"
+   ],
+   "area": "extensions/amazon-bedrock",
+   "author": "dclosefuturex"
+  },
+  {
+   "issue": 144334,
+   "issue_title": "Control UI asset tests duplicate filesystem behavior behind a production facade",
+   "issue_created": "2026-09-10T19:30:56Z",
+   "pr": 144335,
+   "pr_title": "refactor(ui): test asset resolution through the real filesystem",
+   "merged": "2026-09-10T20:04:37Z",
+   "fix": "9e161333d9174aeab98a5074996a87c2fba88fb1",
+   "lines": 137,
+   "files": [
+    "src/infra/control-ui-assets.fs.runtime.ts",
+    "src/infra/control-ui-assets.test.ts",
+    "src/infra/control-ui-assets.ts"
+   ],
+   "tests": [
+    "src/infra/control-ui-assets.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "steipete"
+  },
+  {
+   "issue": 157253,
+   "issue_title": "[Bug]: Discord typing does not return after sessions_yield resumes the parent (2026.9.6)",
+   "issue_created": "2026-09-24T11:51:54Z",
+   "pr": 157271,
+   "pr_title": "fix(discord): restore typing when yielded parents resume",
+   "merged": "2026-09-24T13:06:02Z",
+   "fix": "ace659ebb95033a170e1603f32baf20654366165",
+   "lines": 139,
+   "files": [
+    "extensions/discord/src/channel.test.ts",
+    "extensions/discord/src/channel.ts"
+   ],
+   "tests": [
+    "extensions/discord/src/channel.test.ts"
+   ],
+   "area": "extensions/discord",
+   "author": "obviyus"
+  },
+  {
+   "issue": 155437,
+   "issue_title": "[Bug]: Cancelling a SQLite snapshot during allocation prevents cleanup",
+   "issue_created": "2026-09-22T04:36:56Z",
+   "pr": 155447,
+   "pr_title": "fix: clean interrupted SQLite snapshot allocations",
+   "merged": "2026-09-22T05:49:29Z",
+   "fix": "5171c37c9f77d7d3449b08c62cb4d574c7c8f2fe",
+   "lines": 139,
+   "files": [
+    "src/infra/sqlite-snapshot-retirement.test.ts",
+    "src/infra/sqlite-snapshot-retirement.ts"
+   ],
+   "tests": [
+    "src/infra/sqlite-snapshot-retirement.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "shakkernerd"
+  },
+  {
+   "issue": 146442,
+   "issue_title": "[Bug]: Telegram accepts forum topic:0 while rejecting direct-topic:0",
+   "issue_created": "2026-09-12T20:44:07Z",
+   "pr": 162197,
+   "pr_title": "fix(telegram): sending to topic 0 delivers, then fails with a topic mismatch",
+   "merged": "2026-10-02T12:23:04Z",
+   "fix": "37ae73947bf07fc562ba935c4581283b4b80ecb2",
+   "lines": 139,
+   "files": [
+    "docs/channels/telegram/threads-and-sessions.md",
+    "extensions/telegram/src/reply-parameters.ts",
+    "extensions/telegram/src/send-actions.ts",
+    "extensions/telegram/src/send-context.ts",
+    "extensions/telegram/src/send-outbound.ts",
+    "extensions/telegram/src/send.history.test.ts",
+    "extensions/telegram/src/targets.test.ts",
+    "extensions/telegram/src/targets.ts"
+   ],
+   "tests": [
+    "extensions/telegram/src/send.history.test.ts",
+    "extensions/telegram/src/targets.test.ts"
+   ],
+   "area": "extensions/telegram",
+   "author": "adamczhang"
+  },
+  {
+   "issue": 145232,
+   "issue_title": "Tlon retains an unused private inbound media writer",
+   "issue_created": "2026-09-11T20:14:01Z",
+   "pr": 145234,
+   "pr_title": "refactor(tlon): remove unused private media writer",
+   "merged": "2026-09-11T21:46:03Z",
+   "fix": "4af5b436485a093d9cc946df31a82b75f4f7d2ad",
+   "lines": 142,
+   "files": [
+    "extensions/tlon/src/monitor/index.ts",
+    "extensions/tlon/src/monitor/media.test.ts",
+    "extensions/tlon/src/monitor/media.ts"
+   ],
+   "tests": [
+    "extensions/tlon/src/monitor/media.test.ts"
+   ],
+   "area": "extensions/tlon",
+   "author": "steipete"
+  },
+  {
+   "issue": 164024,
+   "issue_title": "[Bug]: Tool Search misses parameters inside composed schemas",
+   "issue_created": "2026-10-03T04:10:37Z",
+   "pr": 164032,
+   "pr_title": "fix: find tool parameters inside composed schemas",
+   "merged": "2026-10-03T05:10:12Z",
+   "fix": "805a5bea2dd702327752dc29980b503f58908083",
+   "lines": 143,
+   "files": [
+    "src/agents/tool-search-ranking.test.ts",
+    "src/agents/tool-search-ranking.ts"
+   ],
+   "tests": [
+    "src/agents/tool-search-ranking.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "harshitgupta31415"
+  },
+  {
+   "issue": 151085,
+   "issue_title": "[Bug]: Denied Matrix reads update direct-message account data",
+   "issue_created": "2026-09-17T19:21:13Z",
+   "pr": 151093,
+   "pr_title": "fix: keep Matrix reads from updating DM mappings",
+   "merged": "2026-09-17T21:22:29Z",
+   "fix": "3959d85cb2d0507e64c404cb9be5d93fae3c9078",
+   "lines": 143,
+   "files": [
+    "extensions/matrix/src/matrix/read-policy.test.ts",
+    "extensions/matrix/src/matrix/read-policy.ts",
+    "extensions/matrix/src/matrix/send/targets.test.ts",
+    "extensions/matrix/src/matrix/send/targets.ts"
+   ],
+   "tests": [
+    "extensions/matrix/src/matrix/read-policy.test.ts",
+    "extensions/matrix/src/matrix/send/targets.test.ts"
+   ],
+   "area": "extensions/matrix",
+   "author": "shakkernerd"
+  },
+  {
+   "issue": 153572,
+   "issue_title": "[Bug]: One retired plugin instance makes the bundled MCP loopback return 500 for every request after a config hot reload — CLI backends lose all OpenClaw tools until restart (2026.9.5)",
+   "issue_created": "2026-09-20T08:34:51Z",
+   "pr": 153673,
+   "pr_title": "fix: keep CLI tools available after plugin reload",
+   "merged": "2026-09-20T13:44:17Z",
+   "fix": "b7133beb10d0da2426284a3bd0882f81b4e0f678",
+   "lines": 144,
+   "files": [
+    "docs/gateway/cli-backends.md",
+    "src/gateway/mcp-http.plugin-reload.test.ts",
+    "src/gateway/mcp-http.ts"
+   ],
+   "tests": [
+    "src/gateway/mcp-http.plugin-reload.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "zhangguiping-xydt"
+  },
+  {
+   "issue": 163199,
+   "issue_title": "[Bug]: TUI clears unsent slash-prefixed drafts while disconnected",
+   "issue_created": "2026-10-02T03:02:24Z",
+   "pr": 163201,
+   "pr_title": "fix(tui): preserve unsent slash-prefixed drafts while disconnected",
+   "merged": "2026-10-03T23:00:52Z",
+   "fix": "96d4f9299fa4b6155e54890118e59dc7f054a6ab",
+   "lines": 147,
+   "files": [
+    "src/tui/tui-command-handlers.ts",
+    "src/tui/tui-input-history.test.ts",
+    "src/tui/tui-pty-harness.e2e.test.ts",
+    "src/tui/tui-pty-reconnect-test-support.ts",
+    "src/tui/tui-submit.ts",
+    "src/tui/tui.submit-handler.test.ts"
+   ],
+   "tests": [
+    "src/tui/tui-input-history.test.ts",
+    "src/tui/tui-pty-harness.e2e.test.ts",
+    "src/tui/tui.submit-handler.test.ts"
+   ],
+   "area": "src/tui",
+   "author": "ooiuuii"
+  },
+  {
+   "issue": 141897,
+   "issue_title": "[Bug]: forced reply cleanup can report delivery settled before it finishes",
+   "issue_created": "2026-09-08T05:38:18Z",
+   "pr": 141900,
+   "pr_title": "fix: keep reply delivery pending after forced slot release",
+   "merged": "2026-09-08T05:56:45Z",
+   "fix": "193b41c1c0475a70f6145bb7d007ce95b1afdf69",
+   "lines": 148,
+   "files": [
+    "src/auto-reply/reply/dispatch-from-config.owner-settlement.test.ts",
+    "src/auto-reply/reply/reply-run-registry.operation.ts",
+    "src/auto-reply/reply/reply-run-registry.registry.ts",
+    "src/auto-reply/reply/reply-run-registry.state.ts",
+    "src/auto-reply/reply/reply-run-registry.test.ts",
+    "src/auto-reply/reply/reply-run-registry.ts"
+   ],
+   "tests": [
+    "src/auto-reply/reply/dispatch-from-config.owner-settlement.test.ts",
+    "src/auto-reply/reply/reply-run-registry.test.ts"
+   ],
+   "area": "src/auto-reply",
+   "author": "roboclaw-bot"
+  },
+  {
+   "issue": 145609,
+   "issue_title": "Google: consolidate lazy provider loading ownership",
+   "issue_created": "2026-09-12T04:58:23Z",
+   "pr": 145614,
+   "pr_title": "refactor: centralize Google lazy provider loading",
+   "merged": "2026-09-12T06:10:56Z",
+   "fix": "a0946936c48530d2ecae247fe96e438d7ff00a1c",
+   "lines": 149,
+   "files": [
+    "extensions/google/index.ts",
+    "extensions/google/media-understanding-provider.ts",
+    "extensions/google/media-understanding-provider.video.test.ts",
+    "extensions/google/realtime-voice-lazy.ts"
+   ],
+   "tests": [
+    "extensions/google/media-understanding-provider.video.test.ts"
+   ],
+   "area": "extensions/google",
+   "author": "steipete"
+  },
+  {
+   "issue": 145762,
+   "issue_title": "Refactor: consolidate Buzz directory query and limit policy",
+   "issue_created": "2026-09-12T07:26:16Z",
+   "pr": 145763,
+   "pr_title": "refactor(buzz): share directory query and limit policy",
+   "merged": "2026-09-12T09:00:57Z",
+   "fix": "d1e3a9c4b47096350065113f8221bb701d6a8dff",
+   "lines": 151,
+   "files": [
+    "extensions/buzz/src/directory-config.ts",
+    "extensions/buzz/src/directory-contract.test.ts",
+    "extensions/buzz/src/directory-query.ts",
+    "extensions/buzz/src/directory-state.test.ts",
+    "extensions/buzz/src/directory-state.ts",
+    "extensions/buzz/src/directory.test.ts"
+   ],
+   "tests": [
+    "extensions/buzz/src/directory-contract.test.ts",
+    "extensions/buzz/src/directory-state.test.ts",
+    "extensions/buzz/src/directory.test.ts"
+   ],
+   "area": "extensions/buzz",
+   "author": "steipete"
+  },
+  {
+   "issue": 149788,
+   "issue_title": "[Bug]: Bash completion suggests options after the -- terminator",
+   "issue_created": "2026-09-16T06:04:45Z",
+   "pr": 149678,
+   "pr_title": "fix(cli): stop Bash flag completion after the option terminator",
+   "merged": "2026-09-16T16:30:12Z",
+   "fix": "2cb55600a06344cad0b558141c4b05ba59220b21",
+   "lines": 153,
+   "files": [
+    "docs/cli/completion.md",
+    "src/cli/completion-bash.ts",
+    "src/cli/completion-cli.bash.test.ts",
+    "src/cli/completion-command-tree.ts"
+   ],
+   "tests": [
+    "src/cli/completion-cli.bash.test.ts"
+   ],
+   "area": "src/cli",
+   "author": "zhangguiping-xydt"
+  },
+  {
+   "issue": 164967,
+   "issue_title": "[Bug]: doctor --fix exits 1 with EPERM fchmod when the state dir root is owned by another user (tightenPrivateDirChain chmod not best-effort)",
+   "issue_created": "2026-10-04T14:57:30Z",
+   "pr": 164990,
+   "pr_title": "fix(config): keep foreign-owned state roots writable instead of failing publication",
+   "merged": "2026-10-04T15:50:21Z",
+   "fix": "a6fba9293bf08a34940a27d9f7b20935fcccfd63",
+   "lines": 156,
+   "files": [
+    "docs/gateway/doctor/state-and-sessions.md",
+    "src/config/io.write-effects.test.ts",
+    "src/config/io.write-safety.ts",
+    "src/config/io.write.ts"
+   ],
+   "tests": [
+    "src/config/io.write-effects.test.ts"
+   ],
+   "area": "src/config",
+   "author": "steipete"
+  },
+  {
+   "issue": 155956,
+   "issue_title": "web_search auto-detect prefers Tavily env over Grok OAuth (order 30 vs 70) on 2026.9.5",
+   "issue_created": "2026-09-22T20:42:22Z",
+   "pr": 156048,
+   "pr_title": "fix(web-search): keep documented autoDetectOrder when the env snapshot picked a lower-priority provider",
+   "merged": "2026-09-23T04:32:37Z",
+   "fix": "1e18169ed84f716e9c56b5cddec338e4e45addb8",
+   "lines": 156,
+   "files": [
+    "src/web-search/runtime-autodetect-order.test.ts",
+    "src/web-search/runtime.ts"
+   ],
+   "tests": [
+    "src/web-search/runtime-autodetect-order.test.ts"
+   ],
+   "area": "src/web-search",
+   "author": "holny"
+  },
+  {
+   "issue": 149822,
+   "issue_title": "[Bug]: Gateway-initiated update stalls for 5 seconds every 30 seconds while the activation Doctor repairs state",
+   "issue_created": "2026-09-16T06:45:17Z",
+   "pr": 149823,
+   "pr_title": "fix: gateway update stalls repeatedly while the activation Doctor repairs state",
+   "merged": "2026-09-16T07:41:27Z",
+   "fix": "6175ab621197411ff9eda24ec97ed6ed604d08fb",
+   "lines": 156,
+   "files": [
+    "docs/cli/update/status-and-history.md",
+    "src/infra/update-runner-git-steps.test.ts",
+    "src/infra/update-runner-git-steps.ts"
+   ],
+   "tests": [
+    "src/infra/update-runner-git-steps.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "masatohoshino"
+  },
+  {
+   "issue": 142832,
+   "issue_title": "[Bug]: Discord voice notes arrive without their words in ambient channels",
+   "issue_created": "2026-09-09T04:38:09Z",
+   "pr": 142860,
+   "pr_title": "fix(discord): preserve ambient voice note transcripts",
+   "merged": "2026-09-09T14:10:42Z",
+   "fix": "cf53aac25d44305e6fa923076d8b6a18777e343c",
+   "lines": 156,
+   "files": [
+    "src/auto-reply/reply/prompt-prelude.test.ts",
+    "src/auto-reply/reply/prompt-prelude.ts"
+   ],
+   "tests": [
+    "src/auto-reply/reply/prompt-prelude.test.ts"
+   ],
+   "area": "src/auto-reply",
+   "author": "ericcaiwx-star"
+  },
+  {
+   "issue": 164842,
+   "issue_title": "[Bug]: 2026.9.8 upgrade blocked by V2 migration receipt without artifact identity",
+   "issue_created": "2026-10-04T08:50:20Z",
+   "pr": 164867,
+   "pr_title": "fix(doctor): import sessions from completed V2 receipts without artifact identity",
+   "merged": "2026-10-04T10:54:29Z",
+   "fix": "59a39dc89f54cf7df387f42b5a716bfff09fcc3a",
+   "lines": 159,
+   "files": [
+    "docs/cli/doctor/sqlite-maintenance.md",
+    "src/commands/doctor-session-sqlite-import.ts",
+    "src/commands/doctor-session-sqlite.pre-artifact.test.ts"
+   ],
+   "tests": [
+    "src/commands/doctor-session-sqlite.pre-artifact.test.ts"
+   ],
+   "area": "src/commands",
+   "author": "steipete"
+  },
+  {
+   "issue": 147975,
+   "issue_title": "channels list repeats missing-plugin policy checks for each catalog-only row",
+   "issue_created": "2026-09-14T06:02:52Z",
+   "pr": 147977,
+   "pr_title": "perf(cli): batch channel repair checks for list rows",
+   "merged": "2026-09-14T11:38:47Z",
+   "fix": "f5c8b6e43f49b2b4d80fae51958fa1317eed603e",
+   "lines": 160,
+   "files": [
+    "src/commands/channels.list.test.ts",
+    "src/commands/channels/list.ts"
+   ],
+   "tests": [
+    "src/commands/channels.list.test.ts"
+   ],
+   "area": "src/commands",
+   "author": "steipete"
+  },
+  {
+   "issue": 166562,
+   "issue_title": "[Bug]: block-streamed prose splits fitting emoji and accented characters",
+   "issue_created": "2026-10-07T10:54:59Z",
+   "pr": 166567,
+   "pr_title": "fix(streaming): keep fitting emoji and accents intact in prose replies",
+   "merged": "2026-10-07T12:48:33Z",
+   "fix": "627d16bbdb25db99aba3d90bda372aa9062ca176",
+   "lines": 161,
+   "files": [
+    "src/agents/embedded-agent-block-chunker.test.ts",
+    "src/agents/embedded-agent-block-chunker.ts",
+    "src/agents/embedded-agent-subscribe.subscribe-embedded-agent-session.subscribeembeddedagentsession.test.ts"
+   ],
+   "tests": [
+    "src/agents/embedded-agent-block-chunker.test.ts",
+    "src/agents/embedded-agent-subscribe.subscribe-embedded-agent-session.subscribeembeddedagentsession.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "rudycelekli"
+  },
+  {
+   "issue": 144882,
+   "issue_title": "[Bug]: Matrix migration failure can move an unrelated sibling file",
+   "issue_created": "2026-09-11T11:30:24Z",
+   "pr": 144883,
+   "pr_title": "fix(matrix): preserve unrelated files when migration fails",
+   "merged": "2026-09-11T13:30:18Z",
+   "fix": "76e718f0eeb6178454ec521bcd996d3b0e4259dd",
+   "lines": 161,
+   "files": [
+    "docs/channels/matrix-migration.md",
+    "extensions/matrix/src/matrix/client/storage.test.ts",
+    "extensions/matrix/src/matrix/client/storage.ts"
+   ],
+   "tests": [
+    "extensions/matrix/src/matrix/client/storage.test.ts"
+   ],
+   "area": "extensions/matrix",
+   "author": "steipete"
+  },
+  {
+   "issue": 150944,
+   "issue_title": "[Bug]: Gateway session fixtures leave transcript reconciliation pending",
+   "issue_created": "2026-09-17T14:18:31Z",
+   "pr": 150947,
+   "pr_title": "fix: drain transcript reconciliation before Gateway fixture cleanup",
+   "merged": "2026-09-17T15:37:19Z",
+   "fix": "6e40e0253cd7b42c455d24dd7ea2b53b8ebae006",
+   "lines": 166,
+   "files": [
+    "src/gateway/server.sessions.reclamation.test.ts",
+    "src/gateway/test-helpers.server-rpc.test.ts",
+    "src/gateway/test/server-sessions-resources.test-helpers.ts"
+   ],
+   "tests": [
+    "src/gateway/server.sessions.reclamation.test.ts",
+    "src/gateway/test-helpers.server-rpc.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "shakkernerd"
+  },
+  {
+   "issue": 160418,
+   "issue_title": "[Bug]: Deeply nested MCP tool result crashes `stableStringify` with RangeError",
+   "issue_created": "2026-09-28T11:57:21Z",
+   "pr": 160825,
+   "pr_title": "fix: deeply nested MCP tool results crash result projection",
+   "merged": "2026-09-30T01:17:40Z",
+   "fix": "452c808d5b1bab8bfb2f929035db422e6f71acf3",
+   "lines": 167,
+   "files": [
+    "src/agents/mcp-content.test.ts",
+    "src/agents/mcp-content.ts"
+   ],
+   "tests": [
+    "src/agents/mcp-content.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "wangmiao0668000666"
+  },
+  {
+   "issue": 148595,
+   "issue_title": "[Bug]: Installed plugin index fails manifest hashing with symlinked configured plugin roots",
+   "issue_created": "2026-09-14T23:09:36Z",
+   "pr": 148632,
+   "pr_title": "fix(plugins): restore manifest hashes for symlinked plugin roots",
+   "merged": "2026-09-15T05:55:13Z",
+   "fix": "b757ce0d5fd14a346fe0d5a02da31e886e65b49f",
+   "lines": 167,
+   "files": [
+    "src/plugins/installed-plugin-index.symlink.test.ts",
+    "src/plugins/manifest.ts"
+   ],
+   "tests": [
+    "src/plugins/installed-plugin-index.symlink.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "Patrick-Erichsen"
+  },
+  {
+   "issue": 144288,
+   "issue_title": "Provider policy lookup allocates temporary ownership sets and registry sorts",
+   "issue_created": "2026-09-10T18:38:05Z",
+   "pr": 144290,
+   "pr_title": "perf(plugins): avoid temporary collections in provider policy lookup",
+   "merged": "2026-09-10T19:02:17Z",
+   "fix": "a0a3bd0b6302b7f25f847cb9e9b356bec489fa36",
+   "lines": 167,
+   "files": [
+    "src/plugins/provider-public-artifacts.test.ts",
+    "src/plugins/provider-public-artifacts.ts"
+   ],
+   "tests": [
+    "src/plugins/provider-public-artifacts.test.ts"
+   ],
+   "area": "src/plugins",
+   "author": "steipete"
+  },
+  {
+   "issue": 148613,
+   "issue_title": "Executing private continuation timeout is persisted as generic failure",
+   "issue_created": "2026-09-14T23:36:11Z",
+   "pr": 148619,
+   "pr_title": "fix(gateway): preserve private continuation timeout receipts",
+   "merged": "2026-09-15T00:44:44Z",
+   "fix": "84e555b62690017a38438fbd1522e9ff759b9c51",
+   "lines": 170,
+   "files": [
+    "src/gateway/agent-turn/agent-run-admission-phase.ts",
+    "src/gateway/agent-turn/agent-run-user-turn.ts",
+    "src/gateway/chat-abort.ts",
+    "src/gateway/chat-abort.types.ts",
+    "src/gateway/server.private-completion.test.ts"
+   ],
+   "tests": [
+    "src/gateway/server.private-completion.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "fuller-stack-dev"
+  },
+  {
+   "issue": 145884,
+   "issue_title": "Cursor history projects ordinary transcript messages twice",
+   "issue_created": "2026-09-12T10:15:52Z",
+   "pr": 145885,
+   "pr_title": "perf(gateway): reuse ordinary history delta projections",
+   "merged": "2026-09-12T11:40:14Z",
+   "fix": "93a5d822750d726481ab2998e53b404d04e58b27",
+   "lines": 170,
+   "files": [
+    "src/gateway/chat-display-projection.core.ts",
+    "src/gateway/server-methods/chat-history-delta.ts",
+    "src/gateway/server.chat-history-cursor.test.ts",
+    "src/gateway/session-transcript-message.ts"
+   ],
+   "tests": [
+    "src/gateway/server.chat-history-cursor.test.ts"
+   ],
+   "area": "src/gateway",
+   "author": "steipete"
+  },
+  {
+   "issue": 144380,
+   "issue_title": "Valid Mac bundle identifiers are lost when unrelated plist data cannot be serialized",
+   "issue_created": "2026-09-10T20:22:08Z",
+   "pr": 144381,
+   "pr_title": "fix(macos): extract app bundle identifiers without full plist JSON",
+   "merged": "2026-09-10T20:54:57Z",
+   "fix": "83129f42703ff36ee68708f8fc0fa88eb7562a25",
+   "lines": 171,
+   "files": [
+    "src/infra/installed-apps.test.ts",
+    "src/infra/installed-apps.ts"
+   ],
+   "tests": [
+    "src/infra/installed-apps.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "steipete"
+  },
+  {
+   "issue": 154112,
+   "issue_title": "[Bug]: Discord video attachments classified as audio because duration_secs is checked before the video/* content type (regression from #138031 fix)",
+   "issue_created": "2026-09-20T22:02:50Z",
+   "pr": 155573,
+   "pr_title": "fix(discord): classify duration-bearing video attachments as video, not audio",
+   "merged": "2026-09-22T12:55:14Z",
+   "fix": "cf8c5724cbcae1d3bc6072a62bc82bee39662f0a",
+   "lines": 172,
+   "files": [
+    "extensions/discord/src/monitor/message-media.test.ts",
+    "extensions/discord/src/monitor/message-media.ts",
+    "extensions/discord/src/monitor/preflight-audio.test.ts",
+    "extensions/discord/src/monitor/preflight-audio.ts"
+   ],
+   "tests": [
+    "extensions/discord/src/monitor/message-media.test.ts",
+    "extensions/discord/src/monitor/preflight-audio.test.ts"
+   ],
+   "area": "extensions/discord",
+   "author": "YangManBOBO"
+  },
+  {
+   "issue": 159034,
+   "issue_title": "fix: source updates fail when retired workspace links remain",
+   "issue_created": "2026-09-26T16:32:39Z",
+   "pr": 159035,
+   "pr_title": "fix: retain updater runtime with retired workspace links",
+   "merged": "2026-09-26T18:17:39Z",
+   "fix": "31445e843ad8273908ade8ad9893fab4966435cb",
+   "lines": 174,
+   "files": [
+    "docs/cli/update.md",
+    "src/infra/update-candidate-plugin-tree.ts",
+    "src/infra/update-retained-runtime.test.ts"
+   ],
+   "tests": [
+    "src/infra/update-retained-runtime.test.ts"
+   ],
+   "area": "src/infra",
+   "author": "shakkernerd"
+  },
+  {
+   "issue": 158603,
+   "issue_title": "[Bug]: yielded batch's settle wake silently held (uncounted) while an unrelated older sibling from a prior turn is still running",
+   "issue_created": "2026-09-26T03:03:33Z",
+   "pr": 158642,
+   "pr_title": "fix(agents): deliver yielded batches independently of older children",
+   "merged": "2026-09-26T05:27:41Z",
+   "fix": "d919bfbb4d892ca2ec7ec9fe59f34a172ef91295",
+   "lines": 174,
+   "files": [
+    "docs/tools/subagents/announce.md",
+    "src/agents/subagents/announce/subagent-announce.requester-settle-cross-turn.test.ts",
+    "src/agents/subagents/announce/subagent-announce.requester-settle-fixture.test-support.ts",
+    "src/agents/subagents/announce/subagent-announce.requester-settle-message.ts",
+    "src/agents/subagents/announce/subagent-announce.requester-settle-results.test.ts",
+    "src/agents/subagents/announce/subagent-announce.requester-settle-wake.ts",
+    "src/agents/subagents/registry/subagent-registry-queries.ts",
+    "src/agents/subagents/registry/subagent-registry-read.ts"
+   ],
+   "tests": [
+    "src/agents/subagents/announce/subagent-announce.requester-settle-cross-turn.test.ts",
+    "src/agents/subagents/announce/subagent-announce.requester-settle-results.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "obviyus"
+  },
+  {
+   "issue": 161152,
+   "issue_title": "[Bug]: Bedrock memory embeddings: each chunk builds a new BedrockRuntimeClient and credential chain, and embedBatch is unbounded, so IMDS throttling fails the whole index (\"Could not load credentials from any providers\")",
+   "issue_created": "2026-09-29T11:00:49Z",
+   "pr": 161164,
+   "pr_title": "fix(bedrock): memory indexing fails under instance metadata throttling",
+   "merged": "2026-09-29T12:39:49Z",
+   "fix": "1fa3cf278eb87fc8ee1c1ec44f9fdd86d423bf8b",
+   "lines": 179,
+   "files": [
+    "docs/reference/memory-config.md",
+    "extensions/amazon-bedrock/aws-credential-refresh.test.ts",
+    "extensions/amazon-bedrock/embedding-provider.ts"
+   ],
+   "tests": [
+    "extensions/amazon-bedrock/aws-credential-refresh.test.ts"
+   ],
+   "area": "extensions/amazon-bedrock",
+   "author": "obviyus"
+  },
+  {
+   "issue": 152573,
+   "issue_title": "discord: /new and /reset skip every configured guild guard in guild channels, including enabled:false",
+   "issue_created": "2026-09-19T05:41:51Z",
+   "pr": 152991,
+   "pr_title": "fix(discord): stop /new and /reset from skipping guild guards",
+   "merged": "2026-09-20T01:56:42Z",
+   "fix": "0be25b288ca6899cefc33500174e56d26ebd0145",
+   "lines": 181,
+   "files": [
+    "extensions/discord/src/monitor/native-command.guild-guards.test.ts",
+    "extensions/discord/src/monitor/native-command.ts"
+   ],
+   "tests": [
+    "extensions/discord/src/monitor/native-command.guild-guards.test.ts"
+   ],
+   "area": "extensions/discord",
+   "author": "yetval"
+  },
+  {
+   "issue": 164568,
+   "issue_title": "[Bug]: Browser tool recommends host routing despite a configured node pin",
+   "issue_created": "2026-10-03T22:08:14Z",
+   "pr": 164575,
+   "pr_title": "fix(browser): host guidance conflicts with configured node routing",
+   "merged": "2026-10-04T01:04:56Z",
+   "fix": "b284ad2971f4ec4354e0d2143980502bb3418dae",
+   "lines": 184,
+   "files": [
+    "docs/tools/browser/agent-tools.md",
+    "extensions/browser/src/browser-tool-description.ts",
+    "extensions/browser/src/browser-tool.routing-guidance.test.ts"
+   ],
+   "tests": [
+    "extensions/browser/src/browser-tool.routing-guidance.test.ts"
+   ],
+   "area": "extensions/browser",
+   "author": "miguelbranco80"
+  },
+  {
+   "issue": 164309,
+   "issue_title": "[Bug]: Discord model picker emits invalid options for model IDs longer than 100 characters",
+   "issue_created": "2026-10-03T12:51:49Z",
+   "pr": 164311,
+   "pr_title": "fix(discord): keep long model IDs selectable",
+   "merged": "2026-10-03T21:50:52Z",
+   "fix": "93450db8d49703c2933b3b4d1a8c311923584a51",
+   "lines": 185,
+   "files": [
+    "extensions/discord/src/monitor/model-picker.state.ts",
+    "extensions/discord/src/monitor/model-picker.test.ts",
+    "extensions/discord/src/monitor/model-picker.view.ts",
+    "extensions/discord/src/monitor/native-command-model-picker-interaction.ts",
+    "extensions/discord/src/monitor/native-command.model-picker.test.ts"
+   ],
+   "tests": [
+    "extensions/discord/src/monitor/model-picker.test.ts",
+    "extensions/discord/src/monitor/native-command.model-picker.test.ts"
+   ],
+   "area": "extensions/discord",
+   "author": "ooiuuii"
+  },
+  {
+   "issue": 146210,
+   "issue_title": "Workboard statistics hydrate full cards for count-only reads",
+   "issue_created": "2026-09-12T16:44:57Z",
+   "pr": 146237,
+   "pr_title": "improve(workboard): aggregate statistics without loading cards",
+   "merged": "2026-09-12T17:36:34Z",
+   "fix": "7c4ec21c429998538a430670ce3dbf307690b1a1",
+   "lines": 186,
+   "files": [
+    "extensions/workboard/src/persistence-types.ts",
+    "extensions/workboard/src/sqlite-store.ts",
+    "extensions/workboard/src/store-core.ts",
+    "extensions/workboard/src/store-runtime.ts",
+    "extensions/workboard/src/store.test.ts",
+    "extensions/workboard/src/test/sqlite-store.ts"
+   ],
+   "tests": [
+    "extensions/workboard/src/store.test.ts"
+   ],
+   "area": "extensions/workboard",
+   "author": "steipete"
+  },
+  {
+   "issue": 144277,
+   "issue_title": "Avoid repeated copying of retained CLI output prefixes",
+   "issue_created": "2026-09-10T18:29:56Z",
+   "pr": 144278,
+   "pr_title": "perf(agents): reuse bounded CLI prefix capture",
+   "merged": "2026-09-10T18:51:37Z",
+   "fix": "a18d4e4962f5a6f5133301c6b4a7c96cb478e4a6",
+   "lines": 189,
+   "files": [
+    "src/agents/cli-runner/execute-process.ts",
+    "src/agents/cli-runner/execute.supervisor-capture.test.ts"
+   ],
+   "tests": [
+    "src/agents/cli-runner/execute.supervisor-capture.test.ts"
+   ],
+   "area": "src/agents",
+   "author": "steipete"
+  },
+  {
+   "issue": 143011,
+   "issue_title": "refactor(qa-lab): consolidate YAML validation diagnostics",
+   "issue_created": "2026-09-09T09:30:54Z",
+   "pr": 143016,
+   "pr_title": "refactor(qa-lab): share YAML validation diagnostics",
+   "merged": "2026-09-09T10:57:55Z",
+   "fix": "8a58d1247ef43ff645db4cedba4b6b90197b5070",
+   "lines": 196,
+   "files": [
+    "extensions/qa-lab/src/qa-yaml.ts",
+    "extensions/qa-lab/src/scenario-catalog.ts",
+    "extensions/qa-lab/src/scorecard-taxonomy.test.ts",
+    "extensions/qa-lab/src/scorecard-taxonomy.ts"
+   ],
+   "tests": [
+    "extensions/qa-lab/src/scorecard-taxonomy.test.ts"
+   ],
+   "area": "extensions/qa-lab",
+   "author": "vincentkoc"
+  }
+ ]
+}

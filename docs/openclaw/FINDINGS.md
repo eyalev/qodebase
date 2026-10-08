@@ -206,9 +206,37 @@ Data: `data/triage-score.json` → `agent_rounds` and `on_agent_subset.paired_vs
 - Cost: v1 on 200 $0.24, v1 + v2 on the new 100 $0.25; all rounds $0.50 API-equivalent at Haiku 5.5 rates, on the
   subscription (cap $1).
 
+## Phase 2c: why there is no OpenClaw fix lane (yet) (2026-10-08, manager's decision C)
+
+Prepared without model calls (`sim/openclaw/fixlane.mjs`, `closure.mjs`): **199 candidate fixes** from the mirrored
+data (closed issue, exactly one linked merged PR, < 200 lines, one area, adds or changes a test, no dependency or CI
+change), a full OpenClaw worktree and install on the laptop, and a fail-before / pass-after check per fix (the
+fix's test files alone on the base must fail; the whole fix diff on the base must pass). Kept for later:
+`data/fixlane-candidates.json`, `data/fixlane-verify*.jsonl` (verified fixes, per-parent and on one common base,
+main 2026-10-01 `c9a7893`): on that one base, **19 of the 28 fixes merged Oct 2-4 verified** (fail before, pass
+after), 8 did not apply cleanly to a 1-3 day old base, 1 failed after the fix too; per-parent, 7 of 19 verified
+before the lockfile problem below was understood).
+
+**The finding: a real monorepo does not fit a generic agent box.**
+- **One test pulls ~11,000 files.** The import closure of even a small extension's test is 11,020 files (57 npm
+  packages, 89 generated or subpath imports): every extension goes through the root `openclaw/plugin-sdk` barrel
+  into `src/agents`, `gateway`, `infra`, `config`, `plugins`. A core test (`src/agents`): 10,531. No standalone
+  cut-out under a few thousand files exists.
+- **Toolchain: Node ≥ 24.16 and a pnpm 12 workspace** (189 workspace projects). Our boxes and merger have Node 22
+  + npm.
+- **Install: 2.8 GB of node_modules, 10 min cold** (`pnpm install --frozen-lockfile --ignore-scripts` on the laptop),
+  2.5 min warm; and node_modules must match each base's lockfile (an install for a newer base made 10 of 19 older
+  fixes fail before any test ran).
+- **A single test file takes 3–60 s** through their vitest wrapper (sqlite lifecycle, compiled subprocesses).
+
+So to work on projects like this, **agent boxes need per-project toolchains and cached installs**: an install step
+per scenario (corepack pnpm), a Node 24 image, a shared package store or a snapshot with node_modules per base, and
+starters of ~10k+ files. That is option A, **post-contest work**. Until then OpenClaw stays a triage and landing study.
+
 ## What phase 2 should test next
 - Triage: give the agent the project's policy (CONTRIBUTING, the support/out-of-scope rules ClawSweeper
   applies) instead of more code reading; test on a fresh 100 again.
 - Duplicate rate over all closed issues from comment text (85 of a 900-issue pool were duplicates by comment,
   so the rate is far above GitHub's 0.1%; measure it properly).
-- The fix lane as in PLAN.md.
+- Post-contest (option A): fix lane on OpenClaw once boxes have per-project toolchains (Node 24, pnpm install step,
+  cached installs per base); the 199 candidates and the verified fixes are in data/.
