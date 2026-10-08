@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-08T14:18:41.860Z",
- "simVersion": "lab-0.8",
+ "generated": "2026-10-08T15:52:37.898Z",
+ "simVersion": "lab-0.9",
  "fit": {
-  "runs": 8,
+  "runs": 12,
   "from": [
    "lab-cafefamily-739a1-r1",
    "lab-cafefamily-08ce0-r1",
@@ -11,22 +11,26 @@
    "lab-portts-ec6ec-r1",
    "lab-bakery-712d7-r1",
    "lab-bakery-7fe05-r1",
-   "lab-portts-e62a6-r1b"
+   "lab-portts-e62a6-r1b",
+   "lab-bakery-bfe16-r2",
+   "lab-bakery-aa826-r2",
+   "lab-bakery-bfe16-r3",
+   "lab-bakery-aa826-r3"
   ],
   "coder": {
    "haiku": {
-    "tasks": 18,
-    "workMedS": 37.42,
+    "tasks": 36,
+    "workMedS": 230.489,
     "simWorkMedS": 28.799999999999997,
-    "usdPerS": 0.000591,
+    "usdPerS": 0.000167,
     "simUsdPerS": 0.00059
    },
    "opus": {
-    "tasks": 3,
-    "workMedS": 215.254,
+    "tasks": 5,
+    "workMedS": 452.007,
     "simWorkMedS": 67.19999999999999,
-    "usdPerS": 0.006075,
-    "simUsdPerS": 0.0065
+    "usdPerS": 0.007529,
+    "simUsdPerS": 0.0085
    }
   },
   "planner": {
@@ -38,7 +42,7 @@
     "hiddenShareMed": 0.14285714285714285
    },
    "opus": {
-    "runs": 6,
+    "runs": 10,
     "planMedS": 3.891,
     "simPlanS": 60,
     "tasksPlannedShare": 0.14,
@@ -46,15 +50,15 @@
    }
   },
   "actualOverPredicted": {
-   "wallS": 0.428927680798005,
-   "apiUsdStd": 0.14776119402985075,
-   "quality": 1.0691676436107855
+   "wallS": 0.625,
+   "apiUsdStd": 0.4683294663573086,
+   "quality": 1.0869565217391304
   },
   "actualOverNow": {
-   "simVersion": "lab-0.8",
-   "wallS": 0.9658703071672355,
-   "apiUsdStd": 0.8272540983606558,
-   "quality": 1.0896057347670252
+   "simVersion": "lab-0.9",
+   "wallS": 0.991304347826087,
+   "apiUsdStd": 0.9521739130434782,
+   "quality": 1.0869565217391304
   }
  },
  "runs": [
@@ -75,9 +79,9 @@
    },
    "now": {
     "wallS": 293,
-    "apiUsdStd": 0.18,
+    "apiUsdStd": 0.15,
     "quality": 37.5,
-    "simVersion": "lab-0.8"
+    "simVersion": "lab-0.9"
    },
    "wallS": 283,
    "wallSRaw": 283,
@@ -124,9 +128,9 @@
    },
    "now": {
     "wallS": 254,
-    "apiUsdStd": 0.18,
+    "apiUsdStd": 0.15,
     "quality": 43.8,
-    "simVersion": "lab-0.8"
+    "simVersion": "lab-0.9"
    },
    "wallS": 172,
    "wallSRaw": 172,
@@ -178,9 +182,9 @@
    },
    "now": {
     "wallS": 53,
-    "apiUsdStd": 0.31,
+    "apiUsdStd": 0.41,
     "quality": 75,
-    "simVersion": "lab-0.8"
+    "simVersion": "lab-0.9"
    },
    "wallS": 58,
    "wallSRaw": 58,
@@ -227,10 +231,10 @@
     "simVersion": "lab-0.4"
    },
    "now": {
-    "wallS": 283,
-    "apiUsdStd": 0.8,
+    "wallS": 304,
+    "apiUsdStd": 0.64,
     "quality": 81.3,
-    "simVersion": "lab-0.8"
+    "simVersion": "lab-0.9"
    },
    "wallS": null,
    "wallSRaw": 1431,
@@ -273,9 +277,9 @@
    },
    "now": {
     "wallS": 230,
-    "apiUsdStd": 1.47,
+    "apiUsdStd": 1.92,
     "quality": 91.7,
-    "simVersion": "lab-0.8"
+    "simVersion": "lab-0.9"
    },
    "wallS": 228,
    "wallSRaw": 228,
@@ -319,10 +323,10 @@
     "simVersion": "lab-0.7"
    },
    "now": {
-    "wallS": 755,
-    "apiUsdStd": 4.88,
+    "wallS": 505,
+    "apiUsdStd": 4.25,
     "quality": 92,
-    "simVersion": "lab-0.8"
+    "simVersion": "lab-0.9"
    },
    "wallS": 806,
    "wallSRaw": 806,
@@ -366,10 +370,10 @@
     "simVersion": "lab-0.7"
    },
    "now": {
-    "wallS": 1148,
-    "apiUsdStd": 2.81,
-    "quality": 89.3,
-    "simVersion": "lab-0.8"
+    "wallS": 829,
+    "apiUsdStd": 1.84,
+    "quality": 92.9,
+    "simVersion": "lab-0.9"
    },
    "wallS": 811,
    "wallSRaw": 811,
@@ -423,9 +427,9 @@
    },
    "now": {
     "wallS": 580,
-    "apiUsdStd": 1.64,
+    "apiUsdStd": 0.98,
     "quality": 83.7,
-    "simVersion": "lab-0.8"
+    "simVersion": "lab-0.9"
    },
    "wallS": null,
    "wallSRaw": 830,
@@ -449,6 +453,212 @@
     "cacheW": 1845673
    },
    "conflicts": 4,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-bfe16-r2",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "bakery",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 7,
+    "wallS": 1148,
+    "apiUsdStd": 2.81,
+    "quality": 89.3,
+    "simVersion": "lab-0.8"
+   },
+   "now": {
+    "wallS": 829,
+    "apiUsdStd": 1.84,
+    "quality": 92.9,
+    "simVersion": "lab-0.9"
+   },
+   "wallS": 1163,
+   "wallSRaw": 1163,
+   "planS": 51.791,
+   "usd": 1.522,
+   "usdRaw": 1.522,
+   "coderUsd": 1.065,
+   "tasksPlanned": 9,
+   "tasksLanded": 9,
+   "expectedTasks": 25,
+   "workS": [
+    355.261,
+    407.839,
+    476.53,
+    425.772,
+    379.217,
+    405.403,
+    838.276,
+    467.299,
+    196.094
+   ],
+   "workMedS": 407.839,
+   "quality": 91.7,
+   "qualityNoJudge": 97.1,
+   "hiddenShare": 0.9615384615384616,
+   "judge": 7,
+   "tokens": {
+    "in": 1668,
+    "out": 1187753,
+    "cacheR": 47886746,
+    "cacheW": 2314441
+   },
+   "conflicts": 1,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-aa826-r2",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "bakery",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 21,
+    "wallS": 744,
+    "apiUsdStd": 4.8,
+    "quality": 92,
+    "simVersion": "lab-0.8"
+   },
+   "now": {
+    "wallS": 505,
+    "apiUsdStd": 4.25,
+    "quality": 92,
+    "simVersion": "lab-0.9"
+   },
+   "wallS": 465,
+   "wallSRaw": 465,
+   "planS": 3.66,
+   "usd": 4.082,
+   "usdRaw": 4.082,
+   "coderUsd": 4.082,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 25,
+   "workS": [
+    452.007
+   ],
+   "workMedS": 452.007,
+   "quality": 96,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 8,
+   "tokens": {
+    "in": 72,
+    "out": 124250,
+    "cacheR": 2120224,
+    "cacheW": 146522
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-bfe16-r3",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "bakery",
+   "excluded": [
+    "wall (platform stall, length not recorded)"
+   ],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 7,
+    "wallS": 1148,
+    "apiUsdStd": 2.81,
+    "quality": 89.3,
+    "simVersion": "lab-0.8"
+   },
+   "now": {
+    "wallS": 829,
+    "apiUsdStd": 1.84,
+    "quality": 92.9,
+    "simVersion": "lab-0.9"
+   },
+   "wallS": null,
+   "wallSRaw": 2090,
+   "planS": 55.498,
+   "usd": 1.889,
+   "usdRaw": 1.889,
+   "coderUsd": 0.992,
+   "tasksPlanned": 9,
+   "tasksLanded": 9,
+   "expectedTasks": 25,
+   "workS": [
+    1539.118,
+    1522.909,
+    1573.663,
+    1826.043,
+    1536.74,
+    1504.599,
+    1592.208,
+    1453.754,
+    281.27
+   ],
+   "workMedS": 1536.74,
+   "quality": 91.7,
+   "qualityNoJudge": 97.1,
+   "hiddenShare": 0.9615384615384616,
+   "judge": 7,
+   "tokens": {
+    "in": 1794,
+    "out": 1009777,
+    "cacheR": 53247628,
+    "cacheW": 2360730
+   },
+   "conflicts": 4,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-aa826-r3",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "bakery",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 21,
+    "wallS": 744,
+    "apiUsdStd": 4.8,
+    "quality": 92,
+    "simVersion": "lab-0.8"
+   },
+   "now": {
+    "wallS": 505,
+    "apiUsdStd": 4.25,
+    "quality": 92,
+    "simVersion": "lab-0.9"
+   },
+   "wallS": 509,
+   "wallSRaw": 509,
+   "planS": 3.256,
+   "usd": 4.613,
+   "usdRaw": 4.613,
+   "coderUsd": 4.613,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 25,
+   "workS": [
+    497.846
+   ],
+   "workMedS": 497.846,
+   "quality": 93.7,
+   "qualityNoJudge": 97.1,
+   "hiddenShare": 0.9615384615384616,
+   "judge": 8,
+   "tokens": {
+    "in": 90,
+    "out": 135255,
+    "cacheR": 2733292,
+    "cacheW": 170077
+   },
+   "conflicts": 0,
    "bounces": 0
   }
  ],

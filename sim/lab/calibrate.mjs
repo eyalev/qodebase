@@ -34,13 +34,16 @@ const rows = lines.map((l) => {
   const now = l.baseline ? predict({}, l.scenario, { baseline: l.baseline }) : predict(l.variant, l.scenario);
   // Not fit on what a run says it cannot vouch for: wall time when a person had to step in (a
   // stall), cost when it is an upper bound (every token priced as Opus, run 11).
-  const wallOk = !(l.counts?.humanInterventions > 0);
+  // A platform stall is not the setup's time: subtract it when the line says how long (timings.stallS),
+  // else do not fit the wall time (stage-2 bakery swarm r3: a reviewer box that could not start).
+  const stallS = l.timings?.stallS ?? null;
+  const wallOk = !(l.counts?.humanInterventions > 0) && (stallS != null || !/platform stall/i.test(l.notes || ''));
   const usdOk = !/upper bound/i.test(l.cost?.pricedAs || '') && l.cost?.apiUsdStdLowerBound == null; // and not a lower bound (run 14b: the planner's box reported no cost)
   return {
-    id: l.id, variantKey: l.variantKey, baseline: l.baseline, scenario: l.scenario, excluded: [!wallOk && 'wall (human intervention)', !usdOk && 'cost (upper or lower bound)'].filter(Boolean),
+    id: l.id, variantKey: l.variantKey, baseline: l.baseline, scenario: l.scenario, excluded: [!wallOk && (/platform stall/i.test(l.notes || '') ? 'wall (platform stall, length not recorded)' : 'wall (human intervention)'), !usdOk && 'cost (upper or lower bound)'].filter(Boolean),
     planner: l.baseline === 'opus-alone' ? 'opus' : l.variant?.planner, coderModel: l.variant?.coderModel,
     pred: l.predicted, now: { wallS: now.wallS, apiUsdStd: now.apiUsdStd, quality: now.quality, simVersion: now.simVersion },
-    wallS: wallOk ? l.timings?.wallS : null, wallSRaw: l.timings?.wallS, planS: l.timings?.planAt && l.timings?.askAt ? (l.timings.planAt - l.timings.askAt) / 1000 : null,
+    wallS: wallOk ? l.timings?.wallS - (stallS || 0) : null, wallSRaw: l.timings?.wallS, planS: l.timings?.planAt && l.timings?.askAt ? (l.timings.planAt - l.timings.askAt) / 1000 : null,
     usd: usdOk ? usd : null, usdRaw: usd, coderUsd: usdOk ? (l.cost?.byRole?.coders?.apiUsdStd ?? null) : null, tasksPlanned: l.counts?.tasksPlanned, tasksLanded: l.counts?.tasksLanded, expectedTasks: SCENARIOS[l.scenario]?.tasks,
     workS: work, workMedS: med(work), quality: q.score, qualityNoJudge: qNoJudge, hiddenShare: q.hiddenTotal ? q.hiddenPass / q.hiddenTotal : null, judge: q.judgeScore,
     tokens: l.cost?.tokens, conflicts: l.counts?.conflicts, bounces: l.counts?.bounces,

@@ -17,7 +17,7 @@
 import { qualityScore } from './score.js';
 export { qualityScore }; // qb5's one quality formula (public/lab/score.js)
 
-export const SIM_VERSION = 'lab-0.8';
+export const SIM_VERSION = 'lab-0.9';
 
 // Knob names and values = the Landing flags and runs.jsonl `variant` (docs/lab/runs-schema.md).
 export const KNOBS = {
@@ -57,7 +57,7 @@ export function variantKey(variant, baseline = variant?.baseline ?? null) {
 export const SCENARIOS = {
   'cafe-family': { label: 'Make the cafe family-friendly', tasks: 7, depth: 2, pShared: 0.6, sharedFiles: 4, vague: 0.8, dupRisk: 0.05, difficulty: 1, hidden: 7, aloneS: 50 }, // dupRisk 0.3 -> 0.05: 0 duplicates in 11 tasks (stage 1, qb5)
   'port-ts': { label: 'Port a library to TypeScript', tasks: 21, depth: 3, pShared: 0.1, sharedFiles: 3, vague: 0.2, dupRisk: 0.05, difficulty: 1, hidden: 158, aloneS: 223 }, // aloneS: stage-1 run 13 (one Opus agent, 81 files); difficulty 1.3 -> 1: it passed 158/158
-  bakery: { label: 'Build a small bakery website with online orders', tasks: 25, depth: 3, pShared: 0.5, sharedFiles: 5, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 26, aloneS: 796 }, // aloneS: stage-1 run 15 (one Opus agent, 17 files, one commit); qb5's reference took ~795 s too
+  bakery: { label: 'Build a small bakery website with online orders', tasks: 25, depth: 3, pShared: 0.5, sharedFiles: 5, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 26, aloneS: 530 }, // aloneS: one Opus agent took 806 / 465 / 509 s (stage-1 run 15, stage-2 r2, r3): median 509 / 0.96 coverage
   club: { label: 'Build a booking app for a padel club', tasks: 47, depth: 2, pShared: 0.2, sharedFiles: 4, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 42, aloneS: 3600, aloneSMeasured: false }, // qb5 b33e7d3: wide job, shallow chain (foundations in the starter, 13 independent modules); tasks = geometric middle of 30-75; aloneS = the 60-min TARGET until qb5's timed reference build (after the Oct 12 reset)
   rename: { label: 'Rename X across the codebase + a dependent change', tasks: 20, depth: 3, pShared: 0.4, sharedFiles: 2, vague: 0.1, difficulty: 0.7, hidden: 10, aloneS: 300 }, // qb4 guess (backup scenario)
 };
@@ -78,7 +78,7 @@ export const CAL = {
   // Opus planner: cafe 5 of ~7, bakery 7 of ~25, port-ts 5 of ~21 (run 14) -> ~0.37; haiku ~0.8.
   grain: { haiku: 0.8, sonnet: 0.55, opus: 0.37 }, // sonnet assumed between
   // API $ per second of an agent working: $1.42 per reviewed change at Sonnet rates (measured).
-  usdPerS: { haiku: 0.00059, sonnet: 0.0043, opus: 0.0065 }, // API $ per agent-second: haiku measured (runs 1-2, incl. planner/router), sonnet measured (MEASUREMENTS run 1), opus measured (run 3, one run)
+  usdPerS: { haiku: 0.00059, sonnet: 0.0043, opus: 0.0085 }, // opus: median of the 5 opus-alone runs ($/s 0.005-0.009) // API $ per agent-second: haiku measured (runs 1-2, incl. planner/router), sonnet measured (MEASUREMENTS run 1), opus measured (run 3, one run)
   // A clear plan makes fewer wrong tasks: run 11 (opus planner, haiku coders, 3 haiku reviewers)
   // passed 6/7 like opus-alone, where haiku planner + haiku coders passed 1/7 and 3/7.
   plannerClarity: { haiku: 1, sonnet: 0.6, opus: 0.35, none: 1 }, // haiku/opus fitted on runs 1, 2, 11; sonnet assumed
@@ -86,13 +86,13 @@ export const CAL = {
   pVisible: 0.1, // share of defects the build/type check/own tests see: runs 1-3 had every floor green while 1-6 of 7 hidden tests failed. Was 0.5
   // Planner (one call): time, missed requirements, duplicate intents, missed dependency edges (x vague).
   planS: { haiku: 47, sonnet: 60, opus: 60 }, // ask to first task: haiku runs 1-2, opus run 16 (60 s); sonnet assumed
-  routerUsdPerTask: { haiku: 0.01, sonnet: 0.04, opus: 0.11 }, // the planner keeps coordinating: run 16 opus planner $0.78 for 7 tasks; haiku/sonnet assumed
+  routerUsdPerTask: { haiku: 0.005, sonnet: 0.008, opus: 0.01 }, // the planner keeps coordinating: bakery swarm planner $0.41-0.78 in total over 3 runs (plan included); was 0.11
   pMiss: { haiku: 0.37, sonnet: 0.2, opus: 0.08 }, // x vague: haiku fitted on runs 1-2 (3 and 8 tasks for a ~7-task prompt); sonnet/opus assumed. Was 0.15/0.08/0.04
   pDup: { haiku: 0.25, sonnet: 0.12, opus: 0.06 }, // assumed
   pEdgeMiss: { haiku: 0.3, sonnet: 0.15, opus: 0.08 }, // assumed (not scaled by vague)
   dedupeCatch: 0.85, dedupeS: 20, // assumed
   // Review: ~3 min per review (measured: reviewer agent ~3 min); catch rates assumed.
-  reviewMedS: 45, reviewSigma: 0.4, // assumed: the measured ~170 s review scaled to the measured task size (48/180); no reviewed run yet
+  reviewMedS: 75, reviewSigma: 0.4, // bakery swarm: reviewers $0.29-0.46 for 7-11 reviews = ~$0.045 each = ~75 Haiku-seconds (cost-fitted; review time itself not measured)
   pCatch: { haiku: 0.4, sonnet: 0.6, opus: 0.75 }, adversarialCatch: 1.35, adversarialTime: 1.8, pFalseAlarm: 0.05,
   fixFactor: 0.35, // fixing what review asked, share of the task's work (fast sim DEFAULTS)
   // Landing: per train 30 s + 5 s per extra change (sim/swarm); conflicts on shared files.
