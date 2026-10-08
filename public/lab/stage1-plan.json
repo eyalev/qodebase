@@ -475,9 +475,51 @@
   },
   {
    "order": 15,
-   "scenario": "port-ts",
+   "scenario": "bakery",
    "repetition": 1,
-   "why": "balance: opus planner + 12 haiku coders + 3 reviewers, intent",
+   "why": "bakery opus-alone: the biggest job (~13 min for one Opus agent); does one agent still win?",
+   "baseline": "opus-alone",
+   "variant": {
+    "planner": "none",
+    "coders": 1,
+    "coderModel": "opus",
+    "reviewers": 0,
+    "reviewerModel": "opus",
+    "reviewStyle": "read",
+    "policy": "ffa",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 1
+   },
+   "variantKey": "opus-alone",
+   "predicted": {
+    "landed": 23.2,
+    "wallS": 1096,
+    "apiUsdStd": 8.62,
+    "quality": 91.6,
+    "simVersion": "lab-0.7"
+   },
+   "range": {
+    "wallS": [
+     575,
+     2311
+    ],
+    "apiUsdStd": [
+     4.51,
+     18.22
+    ],
+    "quality": [
+     87.5,
+     96.4
+    ]
+   },
+   "predictedCumulativeUsd": 67.08
+  },
+  {
+   "order": 16,
+   "scenario": "bakery",
+   "repetition": 1,
+   "why": "bakery balance: opus planner + 12 haiku coders + 3 haiku reviewers, intent, train 4: where parallel should pay",
    "baseline": null,
    "variant": {
     "planner": "opus",
@@ -493,70 +535,27 @@
    },
    "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
    "predicted": {
-    "landed": 19.8,
-    "wallS": 744,
-    "apiUsdStd": 2.44,
-    "quality": 86.6,
+    "landed": 23.4,
+    "wallS": 2045,
+    "apiUsdStd": 7.59,
+    "quality": 86.1,
     "simVersion": "lab-0.7"
    },
    "range": {
     "wallS": [
-     594,
-     917
+     1670,
+     2281
     ],
     "apiUsdStd": [
-     1.94,
-     2.93
+     5.48,
+     8.6
     ],
     "quality": [
-     79,
-     91.7
+     75,
+     92.9
     ]
    },
-   "predictedCumulativeUsd": 8.85
-  },
-  {
-   "order": 16,
-   "scenario": "port-ts",
-   "repetition": 1,
-   "why": "github baseline",
-   "baseline": "github",
-   "variant": {
-    "planner": "sonnet",
-    "coders": 6,
-    "coderModel": "sonnet",
-    "reviewers": 1,
-    "reviewerModel": "sonnet",
-    "reviewStyle": "read",
-    "policy": "github",
-    "claims": false,
-    "dedupe": false,
-    "trainMax": 1
-   },
-   "variantKey": "github",
-   "predicted": {
-    "landed": 19.8,
-    "wallS": 1848,
-    "apiUsdStd": 34.38,
-    "quality": 92,
-    "simVersion": "lab-0.7"
-   },
-   "range": {
-    "wallS": [
-     1045,
-     2793
-    ],
-    "apiUsdStd": [
-     18.43,
-     48.91
-    ],
-    "quality": [
-     80.1,
-     100
-    ]
-   },
-   "predictedCumulativeUsd": 30.87,
-   "status": "HELD (qb4, 2026-10-08): predicted $34 of Sonnet would likely cross the +12-point weekly-meter guard (46% now, stop at 52%); github already has its evidence from cafe-family (run 12b). Needs the manager to release it."
+   "predictedCumulativeUsd": 74.67
   }
  ],
  "predictionsUpdated": "2026-10-08: lab-0.7 (calibrated on runs 1-3, 11 quality, 13) for orders 14-16",
@@ -568,5 +567,28 @@
   "guards": "unchanged: stop at $60 API-equiv for the stage or +12 points on the weekly meter (40% at approval)",
   "simVersion": "lab-0.4",
   "calibratedOn": "runs 1-3 (sim/lab/calibrate.mjs, public/lab/calibration.json)"
+ },
+ "droppedByReplan2": [
+  {
+   "order": 15,
+   "scenario": "port-ts",
+   "why": "balance: opus planner + 12 haiku coders + 3 reviewers, intent",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "status": "dropped (manager, after run 13): cafe github run 12b is the GitHub-style evidence; one port-ts swarm only"
+  },
+  {
+   "order": 16,
+   "scenario": "port-ts",
+   "why": "github baseline",
+   "variantKey": "github",
+   "status": "dropped (manager, after run 13): cafe github run 12b is the GitHub-style evidence; one port-ts swarm only"
+  }
+ ],
+ "replan2": {
+  "at": "2026-10-08",
+  "by": "manager s1007-1655 after run 13 (final)",
+  "plan": "14 port-ts opus planner + 6 haiku (one port-ts swarm only); 15 bakery opus-alone; 16 bakery balance; port-ts balance and github dropped",
+  "framing": "on small and medium jobs one strong agent wins; we test where parallel pays at bakery size",
+  "guards": "weekly meter stop at 52% (46% after run 13), $60 API-equiv"
  }
 }
