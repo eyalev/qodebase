@@ -646,8 +646,10 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       changes: changes.slice().reverse().map(({ remote, queuedAt, tries, redo, task, choreTaken, ...c }) => c),
       areas: [...areas.values()].sort((a, b) => (b.working + b.claimed) - (a.working + a.claimed) || a.path.localeCompare(b.path)),
       stats: { landedToday: today.length, inQueue: m.waiting.length + (m.running ? (trains.find((t) => t.id === m.running)?.changes.length || 0) : 0),
-        bounced: (m.bounces || []).filter((t) => now - t < DAY).length, replayed: today.filter((x) => x[2]).length,
-        // ^ running counters, not the newest 150 records (replayed went DOWN mid-run, qb7 2026-10-08)
+        bounced: Math.max((m.bounces || []).filter((t) => now - t < DAY).length, changes.filter((c) => c.events.some((e) => e.what === 'bounced' && now - e.t < DAY)).length),
+        replayed: Math.max(today.filter((x) => x[2]).length, changes.filter((c) => c.landedAt && now - c.landedAt < DAY && c.landing?.how && c.landing.how !== 'merged').length),
+        // ^ the higher of a running counter and the kept records: the records alone (newest 150)
+        //   went DOWN mid-run (qb7 2026-10-08); the counters alone miss landings before 2026-10-08 02:30.
         medianAskToLandS: lat.length ? Math.round(lat[Math.floor(lat.length / 2)]) : null },
     };
   }
