@@ -584,6 +584,8 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
 
   async view(slug: string) {
     const m = await this.#m(slug);
+    // Past its end time: over, even if no alarm came to say so (idle scripted agents arm none).
+    if (m.demo?.running && Date.now() > m.demo.endsAt + 5_000) await this.demoStop('time cap (seen by a view)');
     const changes = await this.#all();
     const trains = (await Promise.all(m.trains.slice(-12).map((id) => this.ctx.storage.get<Train>(`t:${id}`)))).filter(Boolean) as Train[];
     const byId = new Map(changes.map((c) => [c.id, c]));
