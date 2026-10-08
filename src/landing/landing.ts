@@ -390,10 +390,16 @@ export class Landing extends DurableObject<Env> {
     } catch (e) { err = String((e as Error)?.message || e); }
     const now = await this.#m();
     const i = now.outbox?.findIndex((x) => x.at === msg.at && x.to === msg.to) ?? -1;
-    if (i >= 0) { if (ok || msg.tries >= 2) now.outbox!.splice(i, 1); else now.outbox![i].tries++; }
-    log('landing', 'tell', { slug: m.slug, to: msg.to, ok, err, tries: msg.tries });
+    // A box that cannot start right now ("container connection temporarily unavailable") gets up
+    // to 8 tries (~10 min) and goes to the back of the line, so it never blocks the other messages
+    // (2 tries dropped a rebase request and stalled a lab run, 2026-10-08).
+    if (i >= 0) {
+      const [x] = now.outbox!.splice(i, 1);
+      if (!ok && x.tries < 7) now.outbox!.push({ ...x, tries: x.tries + 1 });
+    }
+    log('landing', 'tell', { slug: m.slug, to: msg.to, ok, err, tries: msg.tries, dropped: !ok && msg.tries >= 7 });
     await this.#saveMeta();
-    if (now.outbox?.length) await this.#arm(ok ? 1000 : 30_000);
+    if (now.outbox?.length) await this.#arm(ok ? 1000 : now.outbox.length > 1 ? 5_000 : 75_000);
   }
 
   /** Which waiting changes can go now: stacked ones only after their base. */
