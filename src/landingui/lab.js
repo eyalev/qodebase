@@ -148,9 +148,13 @@
     </section>`;
   }
   // What a score means, from qb5's scorer validation (docs/lab/scoring.md, 2026-10-08).
-  const ANCHORS = { 'cafe-family': [25, 94], 'port-ts': [8, 92] };
+  const ANCHORS = { 'cafe-family': [25, 94], 'port-ts': [8, 92], bakery: [8, 96] };
   // The reference solutions' scores include the judge (7 and 6 of 10); without it both are 100.
-  const anchors = () => { const a = ANCHORS[st.scenario]; return a ? `For this job, the untouched starting code scores ${a[0]} and a reference solution ${a[1]} (it passes every hidden test; the judge's opinion keeps it below 100).` : ''; };
+  // scenarios.json may carry {anchors: {starter, reference}} (qb5); these are the validated numbers until then.
+  const anchors = () => {
+    const sa = scenOf(st.scenario).anchors, a = sa ? [sa.starter, sa.reference] : ANCHORS[st.scenario];
+    return `${a ? `For this job, the untouched starting code scores ${a[0]} and a reference solution ${a[1]} (it passes every hidden test; the judge's opinion keeps it below 100). ` : ''}The judge's part varies by about 2 points between scorings of the same code.`;
+  };
   // ---- the simulation's picks (qb4's public/lab/stage0.json) -----------------------------------
   const WHY = { fastest: 'Fastest', cheapest: 'Cheapest', 'best balance': 'Best balance of time, cost and quality', 'best stacking': 'Best with stacking', 'best ffa': 'Best with free for all', 'best phases': 'Best in phases', 'best leads': 'Best with area leads' };
   // Stage 1 = the APPROVED list (public/lab/stage1-plan.json, the source of truth); a run is
