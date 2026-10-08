@@ -254,7 +254,9 @@
       by.get(k).runs.push(r);
     }
     return [...by.values()].map((g) => ({ ...g,
-      wallS: med(g.runs.map(runS)), stallS: g.runs.reduce((a, r) => a + (r.timings?.stallS || 0), 0), quality: med(g.runs.map((r) => r.quality?.score)), qTruly: med(g.runs.map((r) => r.quality?.scoreTrulyHidden)), usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
+      wallS: med(g.runs.map(runS)), stallS: g.runs.reduce((a, r) => a + (r.timings?.stallS || 0), 0), quality: med(g.runs.map((r) => r.quality?.score)), qTruly: med(g.runs.map((r) => r.quality?.scoreTrulyHidden)),
+      hidden: med(g.runs.map((r) => (r.quality?.hiddenTotal ? r.quality.hiddenPass / r.quality.hiddenTotal : null))),
+      hiddenOf: g.runs.find((r) => r.quality?.hiddenTotal)?.quality.hiddenTotal, usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
       pWallS: med(g.runs.map((r) => r.predicted?.wallS)), pQuality: med(g.runs.map((r) => r.predicted?.quality)), stage: Math.max(...g.runs.map((r) => r.stage || 0)) }));
   }
   function scatter(gs) {
@@ -291,27 +293,40 @@
     if (!vr.length) return null;
     return vr.slice().sort((a, b) => b.quality - a.quality || a.wallS - b.wallS || a.usd - b.usd)[0];
   }
-  // The leader counts the baselines too: if one Opus agent alone is ahead, the page says so.
-  const leaderOf = (gs) => gs.filter((g) => g.wallS != null && g.quality != null).sort((a, b) => b.quality - a.quality || a.wallS - b.wallS || (a.usd ?? 0) - (b.usd ?? 0))[0] || null;
+  // Ties (manager, 2026-10-08): the judge moves ~2 points between scorings of the same code, so two
+  // setups that pass the same share of hidden tests and differ by <= 4 points have the SAME quality;
+  // finish times within 15% are a tie too. Never present a tie as a win.
+  const qTie = (a, b) => Math.abs(a.quality - b.quality) <= 4 && (a.hidden == null || b.hidden == null || Math.abs(a.hidden - b.hidden) < 1e-9);
+  const tTie = (a, b) => Math.abs(a.wallS - b.wallS) <= 0.15 * Math.min(a.wallS, b.wallS);
+  const rank = (a, b) => (qTie(a, b) ? a.wallS - b.wallS || (a.usd ?? 0) - (b.usd ?? 0) : b.quality - a.quality);
+  const leaderOf = (gs) => gs.filter((g) => g.wallS != null && g.quality != null).sort(rank)[0] || null;
   function compare(gs) {
-    const lead = leaderOf(gs);
+    const ok = gs.filter((g) => g.wallS != null && g.quality != null).sort(rank);
+    const lead = ok[0];
     if (!lead) return '';
-    const one = (g) => `${esc(plain(g.variant, g.baseline))}: done in <b>${mins(g.wallS)}</b>, quality <b>${Math.round(g.quality)}/100</b>, <b>${usd(g.usd)}</b> at API prices`;
-    const n = (g) => `${g.runs.length} run${g.runs.length === 1 ? '' : 's'}`;
-    const bestMulti = bestOf(gs);
-    const others = gs.filter((g) => g !== lead && g.baseline && g.wallS != null);
-    const parts = [`<p><b>${gs.length > 1 ? 'Leading so far' : 'First result'}:</b> ${one(lead)} (${n(lead)}).</p>`];
-    if (lead.baseline && bestMulti) parts.push(`<p>Best setup with several agents: ${one(bestMulti)} (${n(bestMulti)}).</p>`);
+    const one = (g) => `${esc(plain(g.variant, g.baseline))}: done in <b>${mins(g.wallS)}</b>, quality <b>${Math.round(g.quality)}/100</b>, <b>${usd(g.usd)}</b> at API prices (${g.runs.length} run${g.runs.length === 1 ? '' : 's'})`;
+    const hid = (g) => (g.hidden != null && g.hiddenOf ? `${Math.round(g.hidden * g.hiddenOf)}/${g.hiddenOf} hidden tests` : null);
+    const parts = [];
+    const second = ok[1];
+    if (!second) parts.push(`<p><b>First result:</b> ${one(lead)}.</p>`);
+    else if (qTie(lead, second) && tTie(lead, second)) {
+      parts.push(`<p><b>Too close to call so far.</b> The same quality within the judge's noise${hid(lead) && hid(lead) === hid(second) ? ` (both passed ${hid(lead)})` : ''}, and finish times within 15% of each other:</p><p>${one(lead)}.</p><p>${one(second)}.</p>`);
+    } else {
+      parts.push(`<p><b>Leading so far:</b> ${one(lead)}.</p>`);
+      if (qTie(lead, second)) parts.push(`<p class="dim">${one(second)}. The same quality within the judge's noise${hid(lead) && hid(lead) === hid(second) ? ` (both passed ${hid(lead)})` : ''}; the difference is time${lead.usd != null && second.usd != null ? ' and cost' : ''}.</p>`);
+      else if (lead.baseline) { const bm = ok.find((g) => !g.baseline); if (bm) parts.push(`<p>Best setup with several agents: ${one(bm)}.</p>`); }
+    }
+    const shown = new Set([lead, second].filter(Boolean));
+    const others = ok.filter((g) => !shown.has(g) && g.baseline);
     const to = (g) => (g.runs.every((r) => r.status === 'timeout') ? ' (timed out)' : '');
     if (others.length) parts.push(`<p class="dim">Also: ${others.map((g) => `${esc(plain(g.variant, g.baseline))} ${mins(g.wallS)}${to(g)}, ${Math.round(g.quality)}/100, ${usd(g.usd)}`).join('; ')}.</p>`);
-    // How far off the simulation was on these runs (it is recalibrated from them).
     const rs = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded && r.predicted?.wallS && r.timings?.wallS && r.cost?.apiUsdStd);
     const tR = med(rs.map((r) => r.predicted.wallS / runS(r))), cR = med(rs.map((r) => r.predicted.apiUsdStd / r.cost.apiUsdStd));
     if (rs.length && (tR > 1.5 || tR < 0.67 || cR > 1.5 || cR < 0.67)) parts.push(`<p class="small dim">On these runs the simulation was off: it expected about ${tR.toFixed(1)}× the time and ${cR.toFixed(1)}× the cost that the runs took. It is recalibrated from real runs before the next ones.</p>`);
     return `<div class="cmp">${parts.join('')}</div>`;
   }
   function list(gs) {
-    const sorted = gs.slice().sort((a, b) => (b.quality ?? -1) - (a.quality ?? -1) || (a.wallS ?? 1e9) - (b.wallS ?? 1e9));
+    const sorted = gs.slice().sort((a, b) => (a.quality == null || b.quality == null || a.wallS == null || b.wallS == null ? (b.quality ?? -1) - (a.quality ?? -1) : rank(a, b)));
     return `<ul class="rows">${sorted.map((g) => {
       const on = st.open === g.key;
       return `<li class="${on ? 'open' : ''}"><button type="button" class="rw" data-open="${esc(g.key)}" aria-expanded="${on}"><i class="k ${g.baseline ? 'bl' : 'vr'}"></i><span class="t">${esc(plain(g.variant, g.baseline))}</span>
