@@ -187,7 +187,8 @@
    "swarm r1",
    "opus-alone r1",
    "swarm r2",
-   "swarm r3 (added: r1 stall)"
+   "swarm r3",
+   "opus-alone r2"
   ],
   "conditional": "opus-alone r2 ONLY if opus-alone r1 lands within ~15% of the swarm's time or quality, and the meter allows",
   "swarm": {
@@ -378,7 +379,7 @@
      ]
     },
     "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)",
-    "conditional": "run ONLY on qb4's call: if opus-alone r1 lands within ~15% of the swarm's time or quality, and the meter allows"
+    "conditional": "RELEASED by qb4 after opus r1: quality 88 vs swarm r1 92 (within ~15%; 4 points = the funnel tie threshold), and the sim at the measured size predicts opus ~15 min vs swarm ~18 min (~20% apart): one opus run cannot settle it. Run after swarm r3."
    },
    {
     "order": 5,
@@ -429,6 +430,7 @@
    "by": "Eyal (the manager session was gone)",
    "chose": "run club as is",
    "why": "the sim (lab-0.9) predicts the swarm loses at this size (0.6x) and still narrowly at 4x wider (0.82x): the limit is landing one change per ~60-100 s, not job size"
-  }
+  },
+  "measuredSize": "opus-alone r1 took 850 s on a box (qb5 subagent 881 s): club = ~850 one-Opus-box-s, not the 565 estimated from bakery's box/subagent ratio"
  }
 }
