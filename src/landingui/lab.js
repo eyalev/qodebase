@@ -223,21 +223,24 @@
     const X = (s) => L + ((W - L - R) * s) / xMax, Y = (q) => T + ((H - T - B) * (yMax - q)) / (yMax - yMin);
     const xt = [0, 1, 2, 3, 4].map((i) => Math.round((xMax / 60 / 4) * i)).filter((v, i, a) => a.indexOf(v) === i);
     const yt = []; for (let q = yMin; q <= 100; q += yMax - yMin > 40 ? 20 : 10) yt.push(q);
-    const best = bestOf(gs);
+    const best = gs.length > 1 ? leaderOf(gs) : null;
+    // Three layers: predictions under the points, labels over everything.
+    const ghosts = [], labels = [];
     const dots = gs.map((g, i) => {
       if (g.wallS == null || g.quality == null) return '';
       const x = X(g.wallS), y = Y(g.quality), on = st.open === g.key, cls = g.baseline ? 'bl' : 'vr';
       const ghost = g.pWallS != null && g.pQuality != null ? `<line class="pl" x1="${X(g.pWallS).toFixed(1)}" y1="${Y(g.pQuality).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/><circle class="pd" cx="${X(g.pWallS).toFixed(1)}" cy="${Y(g.pQuality).toFixed(1)}" r="4"/>` : '';
       const mark = g.baseline ? `<rect class="m ${cls}${on ? ' on' : ''}" x="${(x - 6).toFixed(1)}" y="${(y - 6).toFixed(1)}" width="12" height="12" rx="2"/>` : `<circle class="m ${cls}${on ? ' on' : ''}${g === best ? ' best' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"/>`;
       const left = x > W * 0.62;
-      const label = g.baseline || (g === best && gs.filter((x) => !x.baseline).length > 1) || on ? `<text class="dl" x="${(left ? x - 9 : x + 9).toFixed(1)}" y="${(y + 4).toFixed(1)}"${left ? ' text-anchor="end"' : ''}>${esc(g.baseline ? BASELINES[g.baseline]?.label : g === best ? 'Best so far' : plain(g.variant).split(',')[0])}</text>` : '';
-      return `<g class="pt" data-open="${esc(g.key)}" tabindex="0" role="button" aria-label="${esc(plain(g.variant, g.baseline))}: ${mins(g.wallS)}, quality ${Math.round(g.quality)}"><circle class="hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="16"/>${ghost}${mark}${label}</g>`;
+      const label = g.baseline || g === best || on ? `<text class="dl" x="${(left ? x - 9 : x + 9).toFixed(1)}" y="${(y + 4).toFixed(1)}"${left ? ' text-anchor="end"' : ''}>${esc(g.baseline ? BASELINES[g.baseline]?.label + (g === best ? ' (leading)' : '') : g === best ? 'Leading so far' : plain(g.variant).split(',')[0])}</text>` : '';
+      ghosts.push(ghost); labels.push(label);
+      return `<g class="pt" data-open="${esc(g.key)}" tabindex="0" role="button" aria-label="${esc(plain(g.variant, g.baseline))}: ${mins(g.wallS)}, quality ${Math.round(g.quality)}"><circle class="hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="16"/>${mark}</g>`;
     }).join('');
     return `<p class="ct">Quality (out of 100) by minutes to finish</p><svg class="sc-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="Each setup by time to finish and quality">
       ${yt.map((q) => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(q)}" y2="${Y(q)}"/><text class="ax" x="${L - 6}" y="${Y(q) + 4}" text-anchor="end">${q}</text>`).join('')}
       ${xt.map((m) => `<text class="ax" x="${X(m * 60)}" y="${H - 10}" text-anchor="middle">${m}</text>`).join('')}
       <text class="ax" x="${W - R}" y="${H}" text-anchor="end">minutes</text>
-      ${dots}</svg>
+      <g aria-hidden="true">${ghosts.join('')}</g>${dots}<g aria-hidden="true" style="pointer-events:none">${labels.join('')}</g></svg>
       <div class="key"><span><i class="k vr"></i>a setup (median of its runs)</span><span><i class="k bl"></i>baseline</span><span><i class="k pd"></i>what the simulation predicted</span></div>
       <p class="small dim">Up and to the left is better: higher quality in less time.</p>`;
   }
@@ -247,13 +250,23 @@
     if (!vr.length) return null;
     return vr.slice().sort((a, b) => b.quality - a.quality || a.wallS - b.wallS || a.usd - b.usd)[0];
   }
+  // The leader counts the baselines too: if one Opus agent alone is ahead, the page says so.
+  const leaderOf = (gs) => gs.filter((g) => g.wallS != null && g.quality != null).sort((a, b) => b.quality - a.quality || a.wallS - b.wallS || (a.usd ?? 0) - (b.usd ?? 0))[0] || null;
   function compare(gs) {
-    const best = bestOf(gs), oa = gs.find((g) => g.baseline === 'opus-alone'), gh = gs.find((g) => g.baseline === 'github');
-    if (!best) return '';
-    const vs = (b) => (b && b.wallS ? `${plain(null, b.baseline)}: ${mins(b.wallS)}, ${Math.round(b.quality)}/100, ${usd(b.usd)}` : null);
-    const lines = [vs(oa), vs(gh)].filter(Boolean);
-    const vr = gs.filter((g) => !g.baseline && g.quality != null).length;
-    return `<div class="cmp"><p><b>${vr > 1 ? 'Best so far' : 'First result'}:</b> ${esc(plain(best.variant))}. Done in <b>${mins(best.wallS)}</b>, quality <b>${Math.round(best.quality)}/100</b>, <b>${usd(best.usd)}</b> at API prices (median of ${best.runs.length} run${best.runs.length === 1 ? '' : 's'}).</p>${lines.length ? `<p class="dim">Compared with ${lines.map(esc).join('; ')}.</p>` : ''}</div>`;
+    const lead = leaderOf(gs);
+    if (!lead) return '';
+    const one = (g) => `${esc(plain(g.variant, g.baseline))}: done in <b>${mins(g.wallS)}</b>, quality <b>${Math.round(g.quality)}/100</b>, <b>${usd(g.usd)}</b> at API prices`;
+    const n = (g) => `${g.runs.length} run${g.runs.length === 1 ? '' : 's'}`;
+    const bestMulti = bestOf(gs);
+    const others = gs.filter((g) => g !== lead && g.baseline && g.wallS != null);
+    const parts = [`<p><b>${gs.length > 1 ? 'Leading so far' : 'First result'}:</b> ${one(lead)} (${n(lead)}).</p>`];
+    if (lead.baseline && bestMulti) parts.push(`<p>Best setup with several agents: ${one(bestMulti)} (${n(bestMulti)}).</p>`);
+    if (others.length) parts.push(`<p class="dim">Also: ${others.map((g) => `${esc(plain(g.variant, g.baseline))} ${mins(g.wallS)}, ${Math.round(g.quality)}/100, ${usd(g.usd)}`).join('; ')}.</p>`);
+    // How far off the simulation was on these runs (it is recalibrated from them).
+    const rs = RUNS.filter((r) => r.scenario === st.scenario && r.predicted?.wallS && r.timings?.wallS && r.cost?.apiUsdStd);
+    const tR = med(rs.map((r) => r.predicted.wallS / r.timings.wallS)), cR = med(rs.map((r) => r.predicted.apiUsdStd / r.cost.apiUsdStd));
+    if (rs.length && (tR > 1.5 || tR < 0.67 || cR > 1.5 || cR < 0.67)) parts.push(`<p class="small dim">On these runs the simulation was off: it expected about ${tR.toFixed(1)}× the time and ${cR.toFixed(1)}× the cost that the runs took. It is recalibrated from real runs before the next ones.</p>`);
+    return `<div class="cmp">${parts.join('')}</div>`;
   }
   function list(gs) {
     const sorted = gs.slice().sort((a, b) => (b.quality ?? -1) - (a.quality ?? -1) || (a.wallS ?? 1e9) - (b.wallS ?? 1e9));
@@ -297,7 +310,7 @@
     const NAMES = { 0: 'Simulation', 1: 'Small real runs', 2: 'More agents, more repetitions', 3: 'At scale' };
     return `<section class="sec" id="funnel"><h2>How setups are picked</h2>
       <p class="cap">Every combination is simulated for free; only the best few are run for real, each stage with its own budget.</p>
-      <ol class="funnel">${list.sort((a, b) => a.stage - b.stage).map((s) => `<li><b>Stage ${s.stage}: ${esc(NAMES[s.stage] || '')}</b><span>${s.setups ?? '?'} setup${s.setups === 1 ? '' : 's'}${s.runs != null && s.runs !== s.setups ? `, ${s.runs} runs` : ''}${s.kept != null ? `; ${s.kept} kept` : ''}${s.apiUsdStd ? `; ${usd(s.apiUsdStd)} at API prices` : ''}${s.usdReal ? `; ${usd(s.usdReal)} real spend` : ''}${s.quotaPctAccount ? `; ${s.quotaPctAccount}% of the weekly Claude quota (account-wide meter)` : ''}</span>${s.notes ? `<span class="dim">${esc(s.notes)}</span>` : ''}</li>`).join('')}</ol></section>`;
+      <ol class="funnel">${list.sort((a, b) => a.stage - b.stage).map((s) => `<li><b>Stage ${s.stage}: ${esc(NAMES[s.stage] || '')}</b><span>${s.setups != null ? Number(s.setups).toLocaleString('en-US') : '?'} setup${s.setups === 1 ? '' : 's'}${s.runs != null && s.runs !== s.setups ? `, ${Number(s.runs).toLocaleString('en-US')} ${s.stage === 0 ? 'simulated runs' : 'runs'}` : ''}${s.kept != null ? `; ${s.kept} kept` : ''}${s.apiUsdStd ? `; ${usd(s.apiUsdStd)} at API prices` : ''}${s.usdReal ? `; ${usd(s.usdReal)} real spend` : ''}${s.quotaPctAccount ? `; ${s.quotaPctAccount}% of the weekly Claude quota (account-wide meter)` : ''}</span>${s.notes ? `<span class="dim">${esc(s.notes)}</span>` : ''}</li>`).join('')}</ol></section>`;
   }
 
   // ---- render, events ----------------------------------------------------------------------------
