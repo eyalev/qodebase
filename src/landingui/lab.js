@@ -66,23 +66,25 @@
   const st = { scenario: Q.get('s') || 'cafe-family', v: {}, open: null, more: false };
   for (const [k, kb] of Object.entries(KNOBS)) st.v[k] = kb.def;
   try { const qv = JSON.parse(Q.get('v') || 'null'); if (qv) Object.assign(st.v, qv); } catch {}
-  let SIM = null, simErr = '', SCEN = [], RUNS = [], STAGES = [], STAGE0 = null, loaded = false;
+  let SIM = null, simErr = '', SCEN = [], RUNS = [], STAGES = [], STAGE0 = null, PLAN = null, loaded = false;
 
   async function load() {
     const sfx = MOCK ? '.mock' : '';
     const jl = (t) => t.split('\n').filter((l) => l.trim()).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
-    const [sc, runs, stages, s0] = await Promise.all([
+    const [sc, runs, stages, s0, plan] = await Promise.all([
       fetch(`${BASE}/scenarios.json`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
       fetch(`${BASE}/runs${sfx}.jsonl`, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then(jl).catch(() => []),
       fetch(`${BASE}/stages${sfx}.jsonl`, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then(jl).catch(() => []),
       fetch(`${BASE}/stage0.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch(`${BASE}/stage1-plan.json`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]);
-    STAGE0 = s0;
+    STAGE0 = s0; PLAN = plan;
     SCEN = sc.length ? sc : [
       { id: 'cafe-family', title: 'Make the café site family-friendly', about: 'A vague feature request on an existing site: the planner has to decide what it means.' },
       { id: 'port-ts', title: 'Port a library to TypeScript', about: 'uuid (a small, popular JavaScript library) ported file by file; its own tests must still pass.' },
     ];
-    RUNS = runs; STAGES = stages;
+    // stages.jsonl (qb6): 'summary' lines are the table; 'start' lines are the guard's baseline.
+    RUNS = runs; STAGES = stages.filter((x) => !x.event || x.event === 'summary');
     try {
       SIM = await import(`${BASE}/predict.js`);
       if (SIM.KNOBS) KNOBS = normKnobs(SIM.KNOBS);
@@ -149,19 +151,52 @@
   // The reference solutions' scores include the judge (7 and 6 of 10); without it both are 100.
   const anchors = () => { const a = ANCHORS[st.scenario]; return a ? `For this job, the untouched starting code scores ${a[0]} and a reference solution ${a[1]} (it passes every hidden test; the judge's opinion keeps it below 100).` : ''; };
   // ---- the simulation's picks (qb4's public/lab/stage0.json) -----------------------------------
-  const WHY = { fastest: 'Fastest', cheapest: 'Cheapest', 'best balance': 'Best balance of time, cost and quality', 'best stacking': 'Best with stacking' };
+  const WHY = { fastest: 'Fastest', cheapest: 'Cheapest', 'best balance': 'Best balance of time, cost and quality', 'best stacking': 'Best with stacking', 'best ffa': 'Best with free for all', 'best phases': 'Best in phases', 'best leads': 'Best with area leads' };
+  // Stage 1 = the APPROVED list (public/lab/stage1-plan.json, the source of truth); a run is
+  // done when runs.jsonl has its variantKey + repetition at stage 1.
+  const WHYB = { 'opus-alone': 'Baseline: one Opus agent alone', github: 'Baseline: GitHub-style' };
+  function planView() {
+    if (!PLAN?.runs?.length) return '';
+    const done = (p) => RUNS.find((r) => r.stage === PLAN.stage && r.scenario === p.scenario && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);
+    const total = PLAN.runs[PLAN.runs.length - 1]?.predictedCumulativeUsd;
+    const n = PLAN.runs.filter(done).length;
+    const g = PLAN.guards || {};
+    const rows = PLAN.runs.map((p) => {
+      const r = done(p), pr = p.predicted || {};
+      const real = r ? `<span class="act">Done: ${mins(r.timings?.wallS)}, ${r.quality?.score ?? '–'}/100, ${usd(r.cost?.apiUsdStd)}${r.links?.replay ? ` <a href="${esc(r.links.replay)}">replay</a>` : ''}</span>` : `<span class="dim">${n && PLAN.runs.indexOf(p) === n ? 'Next' : 'Waiting'}</span>`;
+      return `<li class="${r ? 'done' : ''}"><span class="no">${p.order}</span><span class="pb"><b>${esc(WHYB[p.baseline] || WHY[p.why] || p.why)}${p.repetition > 1 ? ', second run' : ''}</b>
+        <span>${esc(p.baseline ? BASELINES[p.baseline]?.about || '' : plain(p.variant))}</span>
+        <span class="dim">Predicted ${mins(pr.wallS)}, ${pr.quality != null ? Math.round(pr.quality) : '–'}/100, ${usd(pr.apiUsdStd)}</span>${real}</span></li>`;
+    }).join('');
+    return `<section class="sec" id="plan"><h2>Stage 1: being run now</h2>
+      <p class="cap">${PLAN.runs.length} real runs of “${esc(scenOf(PLAN.scenario).title)}”, cheapest first, with both baselines early so a stop still leaves a comparison. Predicted total about ${usd(total)} at API prices.${g.stopAtApiUsdStd ? ` It stops itself at ${usd(g.stopAtApiUsdStd)} or if the weekly Claude meter rises ${g.stopAtWeeklyMeterRisePts} points.` : ''} ${n} of ${PLAN.runs.length} done.</p>
+      <ol class="plan">${rows}</ol>${favouritesView()}</section>`;
+  }
+  // The simulation's picks that are not in the approved list (it was recalibrated after approval).
+  function favouritesView() {
+    const inPlan = new Set((PLAN?.runs || []).map((p) => p.variantKey));
+    const fav = (STAGE0?.picks || []).filter((p) => !inPlan.has(p.key));
+    if (!fav.length) return '';
+    const si = (STAGE0.scenarios || []).findIndex((x) => x.id === st.scenario);
+    return `<h3 class="fh">The simulation's current favourites (not yet run)</h3>
+      <p class="cap">${esc(STAGE0.picksChanged || 'The simulation was updated after stage 1 was approved, so its favourites moved.')} These are candidates for later stages.</p>
+      <ul class="picks">${fav.map((p) => { const per = si >= 0 ? p.per?.[si] : null; return `<li><b>${esc(WHY[p.why] || p.why)}</b><span>${esc(plain(p.variant))}</span>
+        ${per ? `<span class="nums"><span>${mins(per.wallS)}</span><span>${Math.round(per.q)}/100</span><span>${usd(per.usd)}</span></span>` : ''}
+        <button type="button" class="chipb" data-pick='${esc(JSON.stringify(p.variant))}'>Try this setup</button></li>`; }).join('')}</ul>`;
+  }
+  // Without an approved plan: the simulation's picks as proposals.
   function picksView() {
+    if (PLAN?.runs?.length) return planView();
     if (!STAGE0?.picks?.length) return '';
     const si = (STAGE0.scenarios || []).findIndex((x) => x.id === st.scenario);
-    const s1 = STAGE0.stage1;
     return `<section class="sec" id="picks"><h2>What the simulation suggests</h2>
-      <p class="cap">${Number(STAGE0.combos).toLocaleString('en-US')} setups simulated, ${STAGE0.seeds} times each, at no cost. These are proposed for the first real runs${s1 ? ` (${s1.runs} runs with the baselines, about ${usd(s1.apiUsdStd)} at API prices)` : ''}.</p>
+      <p class="cap">${Number(STAGE0.combos).toLocaleString('en-US')} setups simulated, ${STAGE0.seeds} times each, at no cost. Proposed for the first real runs.</p>
       <ul class="picks">${STAGE0.picks.map((p) => { const per = si >= 0 ? p.per?.[si] : null; return `<li><b>${esc(WHY[p.why] || p.why)}</b><span>${esc(plain(p.variant))}</span>
         ${per ? `<span class="nums"><span>${mins(per.wallS)}</span><span>${Math.round(per.q)}/100</span><span>${usd(per.usd)}</span></span>` : ''}
         <button type="button" class="chipb" data-pick='${esc(JSON.stringify(p.variant))}'>Try this setup</button></li>`; }).join('')}</ul></section>`;
   }
   function runForReal(me) {
-    const cmd = `node scripts/lab/run.mjs --scenario ${st.scenario} --variant '${JSON.stringify(st.v)}'`;
+    const cmd = `node --experimental-strip-types scripts/lab/run.mjs --scenario ${st.scenario} --variant '${JSON.stringify(st.v)}'`;
     return `<details class="real"><summary class="btn">Run for real</summary>
       <div class="realb"><p>Estimate: about <b>${me ? mins(me.wallS) : '?'}</b> and <b>${me ? usd(me.usd) : '?'}</b> at API prices (Claude runs on the subscription; containers are billed for real). The runner refuses to start over the stage budget.</p>
       <p class="small dim">For now runs start from the laptop. Copy this into a terminal in the qodebase folder:</p>
@@ -260,7 +295,7 @@
     const NAMES = { 0: 'Simulation', 1: 'Small real runs', 2: 'More agents, more repetitions', 3: 'At scale' };
     return `<section class="sec" id="funnel"><h2>How setups are picked</h2>
       <p class="cap">Every combination is simulated for free; only the best few are run for real, each stage with its own budget.</p>
-      <ol class="funnel">${list.sort((a, b) => a.stage - b.stage).map((s) => `<li><b>Stage ${s.stage}: ${esc(NAMES[s.stage] || '')}</b><span>${s.setups ?? '?'} setup${s.setups === 1 ? '' : 's'}${s.runs != null && s.runs !== s.setups ? `, ${s.runs} runs` : ''}${s.kept != null ? `; ${s.kept} kept` : ''}${s.usdReal ? `; ${usd(s.usdReal)} real spend` : ''}${s.quotaPctAccount ? `; ${s.quotaPctAccount}% of the weekly Claude quota (account-wide meter)` : ''}</span>${s.notes ? `<span class="dim">${esc(s.notes)}</span>` : ''}</li>`).join('')}</ol></section>`;
+      <ol class="funnel">${list.sort((a, b) => a.stage - b.stage).map((s) => `<li><b>Stage ${s.stage}: ${esc(NAMES[s.stage] || '')}</b><span>${s.setups ?? '?'} setup${s.setups === 1 ? '' : 's'}${s.runs != null && s.runs !== s.setups ? `, ${s.runs} runs` : ''}${s.kept != null ? `; ${s.kept} kept` : ''}${s.apiUsdStd ? `; ${usd(s.apiUsdStd)} at API prices` : ''}${s.usdReal ? `; ${usd(s.usdReal)} real spend` : ''}${s.quotaPctAccount ? `; ${s.quotaPctAccount}% of the weekly Claude quota (account-wide meter)` : ''}</span>${s.notes ? `<span class="dim">${esc(s.notes)}</span>` : ''}</li>`).join('')}</ol></section>`;
   }
 
   // ---- render, events ----------------------------------------------------------------------------
