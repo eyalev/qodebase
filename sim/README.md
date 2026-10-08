@@ -212,7 +212,7 @@ queue lands one change per 30 s.
 node sim/swarm/run.mjs --agents 10,100,1000 --policies ffa,phases,stack,intent   # ~6 min per run
 ```
 
-Four ways to run the swarm, same tasks, same seed:
+Four ways to run the swarm, same tasks, same seeds:
 
 - **Free-for-all**: any agent takes any open task on a branch from main, checks its own
   change, lands it; a task whose prerequisites have not landed fails its own check and is
@@ -226,28 +226,44 @@ Four ways to run the swarm, same tasks, same seed:
   codemods, and a git conflict at landing is resolved by re-running the codemod on the latest
   main (and checking it) instead of an agent redoing it.
 
-Seed 1 (hours to land all 140 tasks; wasted = agent time on attempts that did not land):
+Seeds 1-3, mean (lowest-highest): hours to land all 140 tasks, and agent time wasted on
+attempts that did not land. Useful work is 44-50 agent-hours in every run (the migration itself).
 
 | agents | Free-for-all | Phases (Bun) | Stacking | Stacking + intent |
 |---|---|---|---|---|
-| 10 | 13.3 h, 80 h wasted | 6.7 h, 0 wasted, main red 8% | 5.6 h, 2.0 h wasted | 5.7 h, 0 wasted |
-| 100 | 4.7 h, 151 h wasted | 3.9 h, 0, red 13% | 2.6 h, 9.9 h | 3.0 h, 0 |
-| 1,000 | 4.1 h, 130 h wasted | 2.6 h, 0, red 25% | 3.2 h, 10.1 h | 2.4 h, 0 |
+| 10 | 14.3 h (13.3-15.0), 90 h wasted | 6.4 h (5.9-6.7), 0 wasted, main red 12% | 5.7 h (5.3-6.1), 2.5 h wasted | 5.5 h (5.2-5.7), 0 wasted |
+| 100 | 4.2 h (3.7-4.7), 133 h | 3.1 h (2.4-3.9), 0, red 17% | 2.9 h (2.6-3.1), 9.1 h | 2.8 h (2.6-3.0), 0 |
+| 1,000 | 4.4 h (4.1-5.0), 129 h | 2.8 h (2.5-3.3), 0, red 17% | 3.4 h (3.0-3.9), 9.1 h | 2.8 h (2.4-3.4), 0 |
 
-Useful agent time is ~45 h in every run (the migration itself). In no run did a landing break
-the check on main except in phases, where breaking it inside a phase is the design.
+Only phases ever breaks the check on main (3-5 landings per run, inside phase 1: a module's
+move lands before the moves of what it imports); every other policy had 0 breaks in every seed.
+
+Trains of up to 8 in the merge queue (`--train 8`, qodebase's Landing DO size) and even an
+instant queue (`--landS 0`) change nothing (seeds 1-3):
+
+| | 100 agents | 1,000 agents |
+|---|---|---|
+| Free-for-all, trains of 8 | 4.3 h | 3.8 h |
+| Stacking, trains of 8 | 2.8 h | 3.3 h |
+| Stacking + intent, trains of 8 | 2.8 h | 2.8 h |
+| Stacking + intent, queue takes 0 s | | 2.8 h (each seed 30-43 s sooner than with a 30 s queue) |
+
+Trains averaged 1.1-1.3 changes: work arrives at the queue one change at a time, because each
+waits for the one it needs. The queue was never the limit.
 
 What it shows:
 - **Free-for-all burns 2-3× the work it does**: agents keep picking tasks whose prerequisites
-  have not landed, find out only at their own type check, and give them back. More agents make
-  it worse in absolute terms (151 h wasted at 100).
-- **Knowing the order is what matters, not how you merge.** Phases, stacking and intent all
-  waste little or nothing; they differ by how they pay for order: phases with idle agents at
-  the gates and a red main inside a phase, stacking with a short redo when a stack does not
-  merge, intent with nothing.
-- **Past ~100 agents, more agents do not help**: 140 tasks, a chain of 6, a serial merge
-  queue. 10 → 100 agents halves the time; 100 → 1,000 barely moves it (98% of 1,000 agents are
-  idle). The floor is the dependency chain (6 tasks × ~18 min) plus the queue (140 × 30 s).
+  have not landed, find out only at their own type check, and give them back (90-133 agent-h
+  wasted against ~45 useful).
+- **Knowing the order is what matters, not how you merge.** Phases, stacking and intent finish
+  within each other's seed spread; they differ in what they pay for the order: phases a red
+  main inside a phase and idle agents at the gates, stacking ~9 agent-h of redo when a stack
+  does not merge, intent nothing.
+- **Past ~100 agents, more agents do not help, and neither does a faster queue.** 10 → 100 agents
+  halves the time; 100 → 1,000 does not move it (98% of 1,000 agents idle). The floor is the
+  dependency chain: 6 tasks in a row at ~18 min each, and a shim deletion waits for the slowest
+  of all its importers. To go faster, make the chain shorter (smaller tasks on the critical
+  path, or one agent owning a whole chain), not the merge queue faster.
 - **The one shared file** (`jsr.json`, one line per module) merged cleanly in 48-76% of the
   cases where both sides changed it, against Bun's measured 84% (its hot files are big source
   files edited in different regions; ours is a list, like Hono's append lists at 20%).

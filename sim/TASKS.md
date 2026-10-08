@@ -43,7 +43,8 @@
 - [x] Judge: tsgo -p tsconfig.spec.json (tests included) --incremental: 0.3 s per check
 - [x] Engine sim/swarm/run.mjs: ffa / phases (Bun: shared tree + ownership + gates) / stack / intent; agent time 18 min median (Bun 3.3 commits/agent-h)
 - [x] Runs at 10 / 100 / 1,000 agents, seed 1 (table in sim/README.md); fixed on the way: shared-tree commits lost updates (applied at finish, committed 5 s later), stacks skipped the change being landed (most of stacking's waste), slow checks (import-resolution pre-scan before tsgo)
-- [ ] Seeds 2 and 3 at 10/100/1,000 running (sim/swarm/out/seeds-*.log, swarm.jsonl): is intent vs stack vs phases at 100/1,000 more than noise?
+- [x] Seeds 2 and 3: free-for-all clearly worst; phases / stacking / intent overlap on time within seed spread (differ on waste and red main). Seed-averaged table in sim/README.md, sent to qb5
+- [x] Trains of 8 (--train 8) and an instant queue (--landS 0) at 100/1,000, seeds 1-3: no change (trains average 1.1-1.3 changes; instant queue 30-43 s sooner). The floor is the dependency chain, not the queue
 - [x] Clean-merge cross-check: jsr.json (the only file changed on both sides) clean 48-76% vs Bun 84%: a list file, not big source files
 - [x] Bundles in the viewer (swarm stats, needs links, phase gates, readable folder names), screenshot gate 390/1440 light/dark, README section
 - [ ] Deploy: qb6 includes public/sim in its next contest deploy (manager: do not deploy forq myself)

@@ -59,6 +59,8 @@ const DEFAULTS = {
   landS: 30, // merge queue: one landing (merge + push)
   sharedCommitS: 5, // shared tree (phases): a commit
   gateS: 300, // phase gate: full check + tests before the next phase
+  train: 1, // merge queue: up to N changes per landing, tested together (qodebase's Landing DO uses 8)
+  trainPerChangeS: 5,
   maxAttempts: 40,
   maxHours: 48,
 };
@@ -134,7 +136,7 @@ export function runSwarm(opts, shared) {
   const cfg = { ...DEFAULTS, agents: 10, seed: 1, ...opts };
   const pol = POLICIES[cfg.policy];
   if (!pol) throw new Error(`policy: ${Object.keys(POLICIES).join(', ')}`);
-  const name = `swarm-${cfg.policy}-${cfg.agents}${cfg.seed === 1 ? '' : `-s${cfg.seed}`}`; // other seeds: robustness runs, not in the viewer's list
+  const name = `swarm-${cfg.policy}-${cfg.agents}${cfg.train > 1 ? `-t${cfg.train}` : ''}${cfg.landS !== DEFAULTS.landS ? `-q${cfg.landS}` : ''}${cfg.seed === 1 ? '' : `-s${cfg.seed}`}`; // other seeds: robustness runs, not in the viewer's list
   const { repo, check, root, mig, T0 } = shared;
   const rnd = mulberry32(cfg.seed);
   const normal = () => Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(2 * Math.PI * rnd());
@@ -155,10 +157,10 @@ export function runSwarm(opts, shared) {
   let main = { sha: root.sha, snap: root.snap };
   let mainNew = new Set(); // errors main has that the starting tree did not
   const history = [], series = [];
-  const m = { landed: 0, dropped: 0, conflicts: 0, blocked: 0, redos: 0, replayedOnLand: 0, breaks: 0, stackConflicts: 0, bothSides: 0, bothConflicted: 0, usefulS: 0, blockedS: 0, redoneS: 0, gateWaitS: 0 };
+  const m = { landed: 0, dropped: 0, conflicts: 0, blocked: 0, redos: 0, replayedOnLand: 0, breaks: 0, stackConflicts: 0, trains: 0, trainCars: 0, trainSplits: 0, trainBounced: 0, bothSides: 0, bothConflicted: 0, usefulS: 0, blockedS: 0, redoneS: 0, gateWaitS: 0 };
   let redS = 0, redFrom = null, phase = 1, gateOpen = true, finishS = null;
   const idle = new Set();
-  const queue = []; let queueBusy = false, landing = null;
+  const queue = []; let queueBusy = false, landing = [];
   const stateCount = Object.create(null);
   const ev = (x, what, extra) => x.events.push(extra !== undefined ? [Math.round(t), what, extra] : [Math.round(t), what]);
   const setState = (x, s) => { if (x.state) stateCount[x.state]--; x.state = s; if (s) stateCount[s] = (stateCount[s] || 0) + 1; if (s) ev(x, s); };
@@ -192,7 +194,7 @@ export function runSwarm(opts, shared) {
   function stackedBase(x) {
     // Needs that are queued but not landed, in queue order (a change is queued only after its own needs).
     // The change being landed right now is out of the queue but not landed yet: include it.
-    const pend = [...(landing ? [landing] : []), ...queue].filter((q) => x.needs.includes(q.id));
+    const pend = [...landing, ...queue].filter((q) => x.needs.includes(q.id));
     if (!pend.length) return { sha: main.sha, snap: main.snap, on: [] };
     if (pol.stack === 'replay') {
       let snap = main.snap;
@@ -274,11 +276,84 @@ export function runSwarm(opts, shared) {
   // ---- landing ----
   function pumpQueue() {
     if (queueBusy) return;
+    if (cfg.train > 1) return pumpTrain();
     const i = queue.findIndex((q) => q.needs.every((n) => byId(n).status === 'landed' || byId(n).status === 'dropped'));
     if (i < 0) return;
     const x = queue.splice(i, 1)[0];
-    queueBusy = true; landing = x;
-    at(cfg.landS, () => { queueBusy = false; landing = null; landFromQueue(x); pumpQueue(); });
+    queueBusy = true; landing = [x];
+    at(cfg.landS, () => { queueBusy = false; landing = []; landFromQueue(x); pumpQueue(); });
+  }
+  // Trains (cfg.train > 1): up to N ready changes in queue order, a change may ride behind a
+  // need in the same train; merged one after another onto the train's tip, ONE type check on
+  // the tip, one landing slot. If the tip fails, they land one at a time, each checked.
+  function pumpTrain() {
+    const train = [];
+    for (const q of queue) {
+      if (train.length >= cfg.train) break;
+      if (q.needs.every((n) => ['landed', 'dropped'].includes(byId(n).status) || train.some((x) => x.id === n))) train.push(q);
+    }
+    if (!train.length) return;
+    for (const x of train) queue.splice(queue.indexOf(x), 1);
+    queueBusy = true; landing = train;
+    at(cfg.landS + cfg.trainPerChangeS * (train.length - 1), () => { queueBusy = false; landing = []; landTrain(train); pumpQueue(); });
+  }
+  function bothSides(x, onto, conflicts) {
+    // Files this change touched that main also changed since its base: the denominator of
+    // "git merges a file changed on both sides cleanly" (Bun measured 0.84, calibration.json).
+    const both = x.files.filter((p) => x.base.snap.get(p) !== onto.snap.get(p));
+    m.bothSides += both.length; m.bothConflicted += both.filter((p) => conflicts.includes(p)).length;
+    if (both.length) trace({ event: 'both_sides', run: name, task: x.id, files: both, conflicts });
+  }
+  function bounce(x) {
+    // Redo: back to the backlog, first in line, redone on the new main.
+    m.redos++; m.redoneS += x.workS || 0;
+    x.status = 'todo'; x.redo = true; x.notBefore = t;
+    setState(x, 'claimWait');
+    wakeIdle();
+  }
+  // One change onto a tip: text merge, or (intent) its codemod replayed on a conflict.
+  function onto(x, tip) {
+    const r = repo.merge(tip.sha, x.commit, x.base.sha);
+    bothSides(x, tip, r.conflicts);
+    if (!r.conflicts.length) return { snap: repo.readTree(r.tree), how: 'merged' };
+    m.conflicts++; x.conflicts.push(...r.conflicts);
+    ev(x, 'conflict', r.conflicts.slice(0, 5));
+    if (pol.replayOnLand) {
+      const out = mig.apply(x, read(tip.snap));
+      if (out) { m.replayedOnLand++; x.files = [...out.keys()]; x.base = { ...tip }; return { snap: applyTo(tip.snap, out), how: 'replayed on main: no text merge' }; }
+      ev(x, 'replay found nothing to do');
+    }
+    return null;
+  }
+  function landTrain(train) {
+    let tip = { ...main };
+    const cars = [];
+    for (const x of train) {
+      if (x.needs.some((n) => train.includes(byId(n)) && !cars.some((c) => c.x.id === n))) { bounce(x); continue; } // its need fell off this train
+      const r = onto(x, tip);
+      if (!r) { bounce(x); continue; }
+      tip = { sha: repo.commit(repo.tree(r.snap), [tip.sha], `train: #${x.id}`, T0 + t * 1000), snap: r.snap };
+      cars.push({ x, ...r });
+    }
+    if (!cars.length) return;
+    m.trains++; m.trainCars += cars.length;
+    const bad = added(check.errors(main.snap), check.errors(tip.snap));
+    if (!bad.length) {
+      cars.forEach((c, i) => land(c.x, c.snap, cars.length > 1 ? `${c.how}, train of ${cars.length}` : c.how, i === cars.length - 1));
+      history[history.length - 1].ids = cars.map((c) => c.x.id);
+      history.splice(history.length - cars.length, cars.length - 1);
+      return;
+    }
+    // The tip fails: land one at a time on the real main, each checked; a breaking one bounces alone.
+    m.trainSplits++;
+    trace({ event: 'train_split', run: name, t: Math.round(t), cars: cars.map((c) => c.x.id), errors: bad.slice(0, 3) });
+    for (const c of cars) {
+      const r = onto(c.x, main);
+      if (!r) { bounce(c.x); continue; }
+      const b = added(check.errors(main.snap), check.errors(r.snap));
+      if (b.length) { m.trainBounced++; c.x.fails.push(...b.slice(0, 3)); ev(c.x, 'train check failed', b.slice(0, 3)); bounce(c.x); continue; }
+      land(c.x, r.snap, r.how);
+    }
   }
   function landFromQueue(x) {
     const r = repo.merge(main.sha, x.commit, x.base.sha);
@@ -305,11 +380,12 @@ export function runSwarm(opts, shared) {
     setState(x, 'claimWait');
     wakeIdle();
   }
-  function land(x, snap, how) {
+  // ci=false: a car in the middle of a train (the train's tip is what gets checked).
+  function land(x, snap, how, ci = true) {
     const before = mainNew;
     const sha = repo.commit(repo.tree(snap), [main.sha], `Land #${x.id} (${how}): ${x.text}`, T0 + t * 1000);
     main = { sha, snap };
-    mainNew = new Set(added(baseErrs, check.errors(snap)));
+    if (ci) mainNew = new Set(added(baseErrs, check.errors(snap)));
     const broke = added(before, mainNew);
     if (broke.length) { m.breaks++; x.fails.push(...broke.slice(0, 3)); ev(x, 'broke the check on main', broke.slice(0, 3)); }
     if (mainNew.size && redFrom == null) redFrom = t;
@@ -365,6 +441,7 @@ export function runSwarm(opts, shared) {
     tasks: tasks.length, landed: m.landed, dropped: m.dropped, finished: finishS != null && !m.dropped, finishS: Math.round(T),
     finalErrors: mainNew.size, conflicts: m.conflicts, blocked: m.blocked, redos: m.redos, replayedOnLand: m.replayedOnLand, stackConflicts: m.stackConflicts,
     bothSidesFiles: m.bothSides, pCleanBothSides: m.bothSides ? +(1 - m.bothConflicted / m.bothSides).toFixed(3) : null,
+    train: cfg.train, trains: m.trains, trainAvg: m.trains ? +(m.trainCars / m.trains).toFixed(1) : null, trainSplits: m.trainSplits, trainBounced: m.trainBounced,
     breaks: m.breaks, redS: Math.round(redS), redShare: +(redS / Math.max(T, 1)).toFixed(3), gateWaitS: Math.round(m.gateWaitS),
     usefulH: +(m.usefulS / 3600).toFixed(1), wastedH: +((m.blockedS + m.redoneS) / 3600).toFixed(1), blockedH: +(m.blockedS / 3600).toFixed(1), redoneH: +(m.redoneS / 3600).toFixed(1),
     idleShare: +(1 - (m.usefulS + m.blockedS + m.redoneS) / Math.max(agentS, 1)).toFixed(3),
@@ -396,7 +473,7 @@ export function runSwarm(opts, shared) {
 
 const summary = (name, stats) => {
   const h = (s) => `${(s / 3600).toFixed(1)} h`;
-  return `${name}: ${stats.finished ? 'done in' : 'NOT done after'} ${h(stats.finishS)}; ${stats.landed}/${stats.tasks} landed, ${stats.dropped} dropped; agent time useful ${stats.usefulH} h, wasted ${stats.wastedH} h (blocked ${stats.blockedH}, redone ${stats.redoneH}), idle ${Math.round(stats.idleShare * 100)}%; ${stats.conflicts} conflicts, ${stats.redos} redos, ${stats.replayedOnLand} replayed; files changed on both sides ${stats.bothSidesFiles}, clean ${stats.pCleanBothSides}; ${stats.breaks} landings broke the check, main red ${h(stats.redS)} (${Math.round(stats.redShare * 100)}%); gates ${h(stats.gateWaitS)}; ${stats.checks} type checks + ${stats.scans} import scans, ${stats.wallS} s`;
+  return `${name}: ${stats.finished ? 'done in' : 'NOT done after'} ${h(stats.finishS)}; ${stats.landed}/${stats.tasks} landed, ${stats.dropped} dropped; agent time useful ${stats.usefulH} h, wasted ${stats.wastedH} h (blocked ${stats.blockedH}, redone ${stats.redoneH}), idle ${Math.round(stats.idleShare * 100)}%; ${stats.conflicts} conflicts, ${stats.redos} redos, ${stats.replayedOnLand} replayed; files changed on both sides ${stats.bothSidesFiles}, clean ${stats.pCleanBothSides}; ${stats.breaks} landings broke the check, main red ${h(stats.redS)} (${Math.round(stats.redShare * 100)}%); gates ${h(stats.gateWaitS)};${stats.train > 1 ? ` trains of up to ${stats.train}: ${stats.trains}, avg ${stats.trainAvg}, ${stats.trainSplits} split;` : ''} ${stats.checks} type checks + ${stats.scans} import scans, ${stats.wallS} s`;
 };
 
 // ---- CLI ----
@@ -405,7 +482,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const policies = String(args.policies || Object.keys(POLICIES).join(',')).split(',');
   const agentsList = String(args.agents || '10,100,1000').split(',').map(Number);
   mkdirSync(OUT, { recursive: true }); mkdirSync(RUNS, { recursive: true });
-  const repoName = `hono-${agentsList.join('_')}.git`; // one repo per process: parallel runs never share loose objects
+  const repoName = args.repo || `hono-${agentsList.join("_")}${args.train ? `-t${args.train}` : ""}${args.landS != null ? `-q${args.landS}` : ""}.git`; // one repo per process: parallel runs never share loose objects
   const repo = openRepo(join(OUT, repoName));
   const { sha: honoSha, files } = seedFiles();
   const T0 = Date.parse('2026-10-08T09:00:00Z');
@@ -418,7 +495,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const indexPath = join(RUNS, 'index.json');
   const seeds = String(args.seed || 1).split(',').map(Number);
   for (const seed of seeds) for (const agents of agentsList) for (const policy of policies) {
-    const { bundle, stats, name } = runSwarm({ policy, agents, seed }, { repo, check, root, mig, T0, honoSha, repoName });
+    const { bundle, stats, name } = runSwarm({ policy, agents, seed, train: Number(args.train || 1), ...(args.landS != null ? { landS: Number(args.landS), trainPerChangeS: Number(args.landS) } : {}) }, { repo, check, root, mig, T0, honoSha, repoName });
     const json = JSON.stringify(bundle);
     appendFileSync(join(LOG, 'swarm.jsonl'), JSON.stringify({ ts: new Date().toISOString(), event: 'swarm_run', name, policy, agents, seed, ...stats }) + '\n');
     console.log(summary(name, stats));
