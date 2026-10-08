@@ -5,7 +5,7 @@
 // sweep to ~/.local/share/qbsim-bench/lab-stage0.jsonl.
 //
 //   node sim/lab/sweep.mjs [--seeds 5] [--scenarios cafe-family,port-ts] [--picks 6] [--budget <API-equiv $>] [--baseline-reps 1]
-import { writeFileSync, appendFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 'node:fs';
+import { writeFileSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -17,17 +17,9 @@ const ROOT = join(HERE, '../..');
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => { if (a.startsWith('--')) acc.push([a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : true]); return acc; }, []));
 const seeds = Number(args.seeds || 5);
 
-// Scenario profiles: qb5's scenario.json "profile" when it exists, else predict.js's starting guess.
+// Scenario profiles: predict.js SCENARIOS (qb5's scenario.json profiles, mapped there).
 function profiles() {
-  const ids = String(args.scenarios || 'cafe-family,port-ts').split(',');
-  return ids.map((id) => {
-    const f = join(ROOT, 'scripts/lab/scenarios', id, 'scenario.json');
-    if (existsSync(f)) {
-      const j = JSON.parse(readFileSync(f, 'utf8'));
-      if (j.profile) return { ...scenarioProfile(SCENARIOS[id] ? id : { id }), ...j.profile, id, source: `scripts/lab/scenarios/${id}/scenario.json (qb5)` };
-    }
-    return { ...scenarioProfile(id), id, source: 'public/lab/predict.js SCENARIOS (starting guess)' };
-  });
+  return String(args.scenarios || 'cafe-family,port-ts').split(',').map((id) => ({ ...scenarioProfile(id), id, source: `scripts/lab/scenarios/${id}/scenario.json (qb5), mapped in public/lab/predict.js` }));
 }
 
 // Every combo; with no reviewers the reviewer model and style do not matter (one of each).

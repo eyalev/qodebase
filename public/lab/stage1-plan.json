@@ -32,13 +32,13 @@
    },
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
    "predicted": {
-    "landed": 7,
-    "wallS": 565,
-    "apiUsdStd": 1.27,
-    "quality": 88.7,
-    "simVersion": "lab-0.1"
+    "landed": 6.2,
+    "wallS": 455,
+    "apiUsdStd": 1.09,
+    "quality": 83.4,
+    "simVersion": "lab-0.2"
    },
-   "predictedCumulativeUsd": 1.27
+   "predictedCumulativeUsd": 1.09
   },
   {
    "order": 2,
@@ -60,13 +60,13 @@
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
    "predicted": {
-    "landed": 7,
-    "wallS": 427,
-    "apiUsdStd": 1.4,
-    "quality": 84,
-    "simVersion": "lab-0.1"
+    "landed": 6.2,
+    "wallS": 401,
+    "apiUsdStd": 1.34,
+    "quality": 85,
+    "simVersion": "lab-0.2"
    },
-   "predictedCumulativeUsd": 2.67
+   "predictedCumulativeUsd": 2.43
   },
   {
    "order": 3,
@@ -88,13 +88,13 @@
    },
    "variantKey": "opus-alone",
    "predicted": {
-    "landed": 7.2,
-    "wallS": 2102,
-    "apiUsdStd": 19.25,
-    "quality": 93,
-    "simVersion": "lab-0.1"
+    "landed": 6,
+    "wallS": 1515,
+    "apiUsdStd": 13.89,
+    "quality": 88.1,
+    "simVersion": "lab-0.2"
    },
-   "predictedCumulativeUsd": 21.92
+   "predictedCumulativeUsd": 16.32
   },
   {
    "order": 4,
@@ -116,13 +116,13 @@
    },
    "variantKey": "github",
    "predicted": {
-    "landed": 7.4,
-    "wallS": 2518,
-    "apiUsdStd": 21.23,
-    "quality": 86.5,
-    "simVersion": "lab-0.1"
+    "landed": 6.4,
+    "wallS": 2920,
+    "apiUsdStd": 21.32,
+    "quality": 77.2,
+    "simVersion": "lab-0.2"
    },
-   "predictedCumulativeUsd": 43.15
+   "predictedCumulativeUsd": 37.64
   },
   {
    "order": 5,
@@ -144,13 +144,13 @@
    },
    "variantKey": "planner=opus;coders=3;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=0;trainMax=1",
    "predicted": {
-    "landed": 7.2,
-    "wallS": 613,
-    "apiUsdStd": 2.42,
-    "quality": 89.8,
-    "simVersion": "lab-0.1"
+    "landed": 6.6,
+    "wallS": 683,
+    "apiUsdStd": 2.08,
+    "quality": 81.4,
+    "simVersion": "lab-0.2"
    },
-   "predictedCumulativeUsd": 45.57
+   "predictedCumulativeUsd": 39.72
   },
   {
    "order": 6,
@@ -172,13 +172,13 @@
    },
    "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
    "predicted": {
-    "landed": 7.2,
-    "wallS": 767,
-    "apiUsdStd": 4,
-    "quality": 92.2,
-    "simVersion": "lab-0.1"
+    "landed": 6.4,
+    "wallS": 651,
+    "apiUsdStd": 3.28,
+    "quality": 90.6,
+    "simVersion": "lab-0.2"
    },
-   "predictedCumulativeUsd": 49.57
+   "predictedCumulativeUsd": 43
   },
   {
    "order": 7,
@@ -200,13 +200,13 @@
    },
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
    "predicted": {
-    "landed": 7,
-    "wallS": 565,
-    "apiUsdStd": 1.27,
-    "quality": 88.7,
-    "simVersion": "lab-0.1"
+    "landed": 6.2,
+    "wallS": 455,
+    "apiUsdStd": 1.09,
+    "quality": 83.4,
+    "simVersion": "lab-0.2"
    },
-   "predictedCumulativeUsd": 50.84
+   "predictedCumulativeUsd": 44.09
   },
   {
    "order": 8,
@@ -228,13 +228,13 @@
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
    "predicted": {
-    "landed": 7,
-    "wallS": 427,
-    "apiUsdStd": 1.4,
-    "quality": 84,
-    "simVersion": "lab-0.1"
+    "landed": 6.2,
+    "wallS": 401,
+    "apiUsdStd": 1.34,
+    "quality": 85,
+    "simVersion": "lab-0.2"
    },
-   "predictedCumulativeUsd": 52.24
+   "predictedCumulativeUsd": 45.43
   },
   {
    "order": 9,
@@ -256,13 +256,13 @@
    },
    "variantKey": "planner=opus;coders=3;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=0;trainMax=1",
    "predicted": {
-    "landed": 7.2,
-    "wallS": 613,
-    "apiUsdStd": 2.42,
-    "quality": 89.8,
-    "simVersion": "lab-0.1"
+    "landed": 6.6,
+    "wallS": 683,
+    "apiUsdStd": 2.08,
+    "quality": 81.4,
+    "simVersion": "lab-0.2"
    },
-   "predictedCumulativeUsd": 54.66
+   "predictedCumulativeUsd": 47.51
   },
   {
    "order": 10,
@@ -284,13 +284,14 @@
    },
    "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
    "predicted": {
-    "landed": 7.2,
-    "wallS": 767,
-    "apiUsdStd": 4,
-    "quality": 92.2,
-    "simVersion": "lab-0.1"
+    "landed": 6.4,
+    "wallS": 651,
+    "apiUsdStd": 3.28,
+    "quality": 90.6,
+    "simVersion": "lab-0.2"
    },
-   "predictedCumulativeUsd": 58.66
+   "predictedCumulativeUsd": 50.79
   }
- ]
+ ],
+ "predictionsUpdated": "2026-10-08: lab-0.2 (qb5 scenario profiles); variants and order unchanged (approved list)"
 }

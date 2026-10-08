@@ -14,7 +14,10 @@
 // sim/swarm, sim/bun/calibration.json) or "assumed" (to be replaced by sim/lab/calibrate.mjs
 // from public/lab/runs.jsonl). The output is an estimate, not a measurement.
 
-export const SIM_VERSION = 'lab-0.1';
+import { qualityScore } from './score.js';
+export { qualityScore }; // qb5's one quality formula (public/lab/score.js)
+
+export const SIM_VERSION = 'lab-0.2';
 
 // Knob names and values = the Landing flags and runs.jsonl `variant` (docs/lab/runs-schema.md).
 export const KNOBS = {
@@ -43,15 +46,16 @@ export function variantKey(variant, baseline = variant?.baseline ?? null) {
   return Object.keys(KNOBS).map((k) => `${k}=${typeof v[k] === 'boolean' ? (v[k] ? 1 : 0) : v[k]}`).join(';');
 }
 
-// Scenario profiles (qb5 owns the scenarios; these are starting guesses until qb5 sends theirs).
-// tasks: what a good plan splits it into; depth: longest chain of needs; pShared: share of
-// tasks touching a shared file (index.html, styles, package.json...); vague: how open the
-// prompt is (planner misses and duplicates scale with it); difficulty: defect rate and work
-// time multiplier; hidden: hidden acceptance tests.
+// Scenario profiles: qb5's scripts/lab/scenarios/<id>/scenario.json "profile" (2868ad1, first
+// guesses by qb5, to be measured in stage 1), mapped to the sim's fields: tasks = middle of
+// expectedTasks (geometric for a wide range), depth = dependencyDepth, pShared = sharedFileShare,
+// sharedFiles = how many, vague = vagueness (high 0.8 / low 0.2), dupRisk = duplicateIntentRisk
+// (for a Sonnet planner; other planners scale by CAL.pDup), hidden = hiddenTotal
+// (public/lab/scenarios.json). difficulty is qb4's guess (defects and work time multiplier).
 export const SCENARIOS = {
-  'cafe-family': { label: 'Make the cafe site family-friendly', tasks: 8, depth: 2, pShared: 0.6, sharedFiles: 2, vague: 0.8, difficulty: 1, hidden: 12 },
-  'port-ts': { label: 'Port a small JS library to TypeScript', tasks: 15, depth: 4, pShared: 0.3, sharedFiles: 3, vague: 0.2, difficulty: 1.3, hidden: 20 },
-  'rename': { label: 'Rename X across the codebase + a dependent change', tasks: 20, depth: 3, pShared: 0.4, sharedFiles: 2, vague: 0.1, difficulty: 0.7, hidden: 10 },
+  'cafe-family': { label: 'Make the cafe family-friendly', tasks: 7, depth: 2, pShared: 0.6, sharedFiles: 4, vague: 0.8, dupRisk: 0.3, difficulty: 1, hidden: 7 },
+  'port-ts': { label: 'Port a library to TypeScript', tasks: 21, depth: 3, pShared: 0.1, sharedFiles: 3, vague: 0.2, dupRisk: 0.05, difficulty: 1.3, hidden: 158 },
+  rename: { label: 'Rename X across the codebase + a dependent change', tasks: 20, depth: 3, pShared: 0.4, sharedFiles: 2, vague: 0.1, difficulty: 0.7, hidden: 10 }, // qb4 guess (backup scenario)
 };
 
 export const CAL = {
@@ -104,14 +108,6 @@ export function variantOf(v = {}, baseline = v.baseline ?? null) {
   if (baseline) { if (!BASELINES[baseline]) throw new Error(`unknown baseline ${baseline}`); return { ...BASELINES[baseline], baseline }; }
   return { ...DEFAULT_VARIANT, ...v, baseline: null };
 }
-// qb5's quality score, 0-100 (docs/lab/runs-schema.md): 60 x hidden pass rate + 20 x floor
-// (build/typecheck/ownTests, a third each) + 20 x judge/10; no judge: the other 80 rescaled to 100.
-export function qualityScore({ hiddenPass, hiddenTotal, build, typecheck, ownTests, judgeScore }) {
-  const hidden = hiddenTotal ? hiddenPass / hiddenTotal : 0;
-  const floor = ([build, typecheck, ownTests].filter(Boolean).length) / 3;
-  if (judgeScore == null) return +((60 * hidden + 20 * floor) / 80 * 100).toFixed(1);
-  return +(60 * hidden + 20 * floor + 2 * judgeScore).toFixed(1);
-}
 
 // One simulated run. -> { wallS, apiUsdStd, quality, landed, ... }
 export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
@@ -149,7 +145,8 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
   let work = tasks.filter((t) => !t.missed);
   // Duplicate intents: the vague prompt split into two tasks doing the same thing.
   const dups = [];
-  for (const t of work) if (!alone && rnd() < C.pDup[pm] * sc.vague) dups.push({ ...t, id: N + dups.length + 1, dupOf: t.id, needs: [...t.needs], plannedNeeds: [...t.plannedNeeds] });
+  const pDupHere = sc.dupRisk != null ? sc.dupRisk * C.pDup[pm] / C.pDup.sonnet : C.pDup[pm] * sc.vague;
+  for (const t of work) if (!alone && rnd() < pDupHere) dups.push({ ...t, id: N + dups.length + 1, dupOf: t.id, needs: [...t.needs], plannedNeeds: [...t.plannedNeeds] });
   let dedupeS = 0;
   if (v.dedupe) { dedupeS = C.dedupeS * (work.length + dups.length) / 4; usd.planner += dedupeS * C.usdPerS.haiku; }
   for (const d of dups) if (!(v.dedupe && rnd() < C.dedupeCatch)) work.push(d);
