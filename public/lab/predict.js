@@ -17,7 +17,7 @@
 import { qualityScore } from './score.js';
 export { qualityScore }; // qb5's one quality formula (public/lab/score.js)
 
-export const SIM_VERSION = 'lab-0.6';
+export const SIM_VERSION = 'lab-0.7';
 
 // Knob names and values = the Landing flags and runs.jsonl `variant` (docs/lab/runs-schema.md).
 export const KNOBS = {
@@ -56,7 +56,7 @@ export function variantKey(variant, baseline = variant?.baseline ?? null) {
 // scales every work time (coders and one-agent-alone). port-ts: 1 until stage-1 run 13 measures it.
 export const SCENARIOS = {
   'cafe-family': { label: 'Make the cafe family-friendly', tasks: 7, depth: 2, pShared: 0.6, sharedFiles: 4, vague: 0.8, dupRisk: 0.05, difficulty: 1, hidden: 7 }, // dupRisk 0.3 -> 0.05: 0 duplicates in 11 tasks (stage 1, qb5)
-  'port-ts': { label: 'Port a library to TypeScript', tasks: 21, depth: 3, pShared: 0.1, sharedFiles: 3, vague: 0.2, dupRisk: 0.05, difficulty: 1.3, hidden: 158 },
+  'port-ts': { label: 'Port a library to TypeScript', tasks: 21, depth: 3, pShared: 0.1, sharedFiles: 3, vague: 0.2, dupRisk: 0.05, difficulty: 1, hidden: 158, size: 3.2 }, // size fitted on stage-1 run 13 (one Opus agent, 81 files, 228 s); difficulty 1.3 -> 1: it passed 158/158
   bakery: { label: 'Build a small bakery website with online orders', tasks: 25, depth: 3, pShared: 0.5, sharedFiles: 5, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 26, size: 10.2 }, // qb5 682084f; size fitted so one agent alone takes ~795 s (qb5's reference: 392 + 403 s, one Opus agent) with this file's alone formula (30 s + 3 s x tasks x size); was 4.4 (my arithmetic, qb5 caught it)
   rename: { label: 'Rename X across the codebase + a dependent change', tasks: 20, depth: 3, pShared: 0.4, sharedFiles: 2, vague: 0.1, difficulty: 0.7, hidden: 10 }, // qb4 guess (backup scenario)
 };
@@ -69,6 +69,9 @@ export const CAL = {
   speed: { haiku: 0.6, sonnet: 1, opus: 1.4 }, // assumed ratios; haiku x 48 = 29 s measured
   // API $ per second of an agent working: $1.42 per reviewed change at Sonnet rates (measured).
   usdPerS: { haiku: 0.00059, sonnet: 0.0043, opus: 0.0079 }, // API $ per agent-second: haiku measured (runs 1-2, incl. planner/router), sonnet measured (MEASUREMENTS run 1), opus measured (run 3, one run)
+  // A clear plan makes fewer wrong tasks: run 11 (opus planner, haiku coders, 3 haiku reviewers)
+  // passed 6/7 like opus-alone, where haiku planner + haiku coders passed 1/7 and 3/7.
+  plannerClarity: { haiku: 1, sonnet: 0.6, opus: 0.35, none: 1 }, // haiku/opus fitted on runs 1, 2, 11; sonnet assumed
   pDefect: { haiku: 0.55, sonnet: 0.3, opus: 0.14 }, // per task, times difficulty: haiku fitted on runs 1-2 (hidden 1/7, 3/7 with 3 and 8 tasks), opus on run 3 (6/7); sonnet assumed between. Was 0.25/0.15/0.08
   pVisible: 0.1, // share of defects the build/type check/own tests see: runs 1-3 had every floor green while 1-6 of 7 hidden tests failed. Was 0.5
   // Planner (one call): time, missed requirements, duplicate intents, missed dependency edges (x vague).
@@ -231,7 +234,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
         if (x.givenBack >= C.maxGiveBacks) { x.st = 'dropped'; release(x); checkDone(); }
         push(C.backoffS + 1, pump); pump(); return;
       }
-      if (!wasFix) x.defect = rnd() < C.pDefect[model] * sc.difficulty;
+      if (!wasFix) x.defect = rnd() < C.pDefect[model] * sc.difficulty * C.plannerClarity[v.planner];
       if (alone) { if (x.defect && rnd() < C.aloneSelfCatch) x.defect = false; }
       if (!alone && v.reviewers > 0) { x.st = 'reviewWait'; reviewQ.push(x); pumpReview(); } else toMerge(x);
       pump();

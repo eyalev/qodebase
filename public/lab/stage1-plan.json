@@ -342,7 +342,8 @@
      87.5
     ]
    },
-   "predictedCumulativeUsd": 0.86
+   "predictedCumulativeUsd": 0.86,
+   "status": "done"
   },
   {
    "order": 12,
@@ -384,7 +385,8 @@
      100
     ]
    },
-   "predictedCumulativeUsd": 4.53
+   "predictedCumulativeUsd": 4.53,
+   "status": "done (12b: timeout at 75 min, 3/6 landed)"
   },
   {
    "order": 13,
@@ -426,7 +428,8 @@
      94
     ]
    },
-   "predictedCumulativeUsd": 5.63
+   "predictedCumulativeUsd": 5.63,
+   "status": "done"
   },
   {
    "order": 14,
@@ -449,23 +452,23 @@
    "variantKey": "planner=opus;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
    "predicted": {
     "landed": 19.8,
-    "wallS": 539,
-    "apiUsdStd": 1.34,
-    "quality": 44.5,
-    "simVersion": "lab-0.4"
+    "wallS": 738,
+    "apiUsdStd": 2.04,
+    "quality": 85.3,
+    "simVersion": "lab-0.7"
    },
    "range": {
     "wallS": [
-     435,
-     678
+     620,
+     855
     ],
     "apiUsdStd": [
-     1.07,
-     1.62
+     1.67,
+     2.32
     ],
     "quality": [
-     38.2,
-     49
+     77.9,
+     91
     ]
    },
    "predictedCumulativeUsd": 6.97
@@ -491,23 +494,23 @@
    "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
    "predicted": {
     "landed": 19.8,
-    "wallS": 630,
-    "apiUsdStd": 1.88,
-    "quality": 74.7,
-    "simVersion": "lab-0.4"
+    "wallS": 744,
+    "apiUsdStd": 2.44,
+    "quality": 86.6,
+    "simVersion": "lab-0.7"
    },
    "range": {
     "wallS": [
-     445,
-     826
+     594,
+     917
     ],
     "apiUsdStd": [
-     1.46,
-     2.25
+     1.94,
+     2.93
     ],
     "quality": [
-     69.1,
-     83.3
+     79,
+     91.7
     ]
    },
    "predictedCumulativeUsd": 8.85
@@ -532,30 +535,31 @@
    },
    "variantKey": "github",
    "predicted": {
-    "landed": 19.6,
-    "wallS": 1602,
-    "apiUsdStd": 22.02,
-    "quality": 81.9,
-    "simVersion": "lab-0.4"
+    "landed": 19.8,
+    "wallS": 1848,
+    "apiUsdStd": 34.38,
+    "quality": 92,
+    "simVersion": "lab-0.7"
    },
    "range": {
     "wallS": [
-     1112,
-     2360
+     1045,
+     2793
     ],
     "apiUsdStd": [
-     13.23,
-     32.84
+     18.43,
+     48.91
     ],
     "quality": [
-     70.3,
-     91.2
+     80.1,
+     100
     ]
    },
-   "predictedCumulativeUsd": 30.87
+   "predictedCumulativeUsd": 30.87,
+   "status": "HELD (qb4, 2026-10-08): predicted $34 of Sonnet would likely cross the +12-point weekly-meter guard (46% now, stop at 52%); github already has its evidence from cafe-family (run 12b). Needs the manager to release it."
   }
  ],
- "predictionsUpdated": "2026-10-08: lab-0.4 (calibrated on runs 1-3) for orders 11+; orders 1-3 keep the predictions recorded when they ran",
+ "predictionsUpdated": "2026-10-08: lab-0.7 (calibrated on runs 1-3, 11 quality, 13) for orders 14-16",
  "replan": {
   "at": "2026-10-08",
   "by": "manager s1007-1655 after the run-3 checkpoint",
