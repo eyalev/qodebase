@@ -258,7 +258,9 @@
     return [...by.values()].map((g) => ({ ...g,
       wallS: med(g.runs.map(runS)), stallS: g.runs.reduce((a, r) => a + (r.timings?.stallS || 0), 0), quality: med(g.runs.map((r) => r.quality?.score)), qTruly: med(g.runs.map((r) => r.quality?.scoreTrulyHidden)),
       hidden: med(g.runs.map((r) => (r.quality?.hiddenTotal ? r.quality.hiddenPass / r.quality.hiddenTotal : null))),
-      hiddenOf: g.runs.find((r) => r.quality?.hiddenTotal)?.quality.hiddenTotal, usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
+      hiddenOf: g.runs.find((r) => r.quality?.hiddenTotal)?.quality.hiddenTotal,
+      floor: Object.fromEntries(['build', 'typecheck', 'ownTests'].map((k) => [k, g.runs.every((r) => r.quality?.[k] !== false)])),
+      typeErrors: med(g.runs.map((r) => r.quality?.typeErrors)), usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
       pWallS: med(g.runs.map((r) => r.predicted?.wallS)), pQuality: med(g.runs.map((r) => r.predicted?.quality)), stage: Math.max(...g.runs.map((r) => r.stage || 0)) }));
   }
   function scatter(gs) {
@@ -304,6 +306,14 @@
   const leaderOf = (gs) => gs.filter((g) => g.wallS != null && g.quality != null).sort(rank)[0] || null;
   // One comparison in words (qb5/manager wording): quality as hidden tests passed (a judge-only gap
   // is a tie, never points), time as N times faster, cost as N% less.
+  // Concrete, judge-free reasons from the floor checks (qb5): build, type check, own tests.
+  function floorWords(w, l) {
+    const f = [];
+    if (w.floor?.typecheck && l.floor && !l.floor.typecheck) f.push(`its code type-checked cleanly (the other's had ${l.typeErrors != null ? `${Math.round(l.typeErrors)} type error${Math.round(l.typeErrors) === 1 ? '' : 's'}` : 'type errors'})`);
+    if (w.floor?.build && l.floor && !l.floor.build) f.push("it built and started (the other's did not)");
+    if (w.floor?.ownTests && l.floor && !l.floor.ownTests) f.push("its own tests passed (the other's did not)");
+    return f.join(' and ');
+  }
   function diffWords(a, b) {
     const nm = (g) => esc(plain(g.variant, g.baseline));
     const out = [];
@@ -313,9 +323,10 @@
       const [w, l, hw, hl] = ha > hb ? [a, b, ha, hb] : [b, a, hb, ha];
       // Beyond the hidden tests' own share (60 points) and the judge's noise, the build / type check / judge differ too.
       const rest = Math.abs(w.quality - l.quality) - (60 * (hw - hl)) / a.hiddenOf;
-      out.push(`${nm(w)} passed ${hw - hl} more hidden test${hw - hl === 1 ? '' : 's'} (${hw} against ${hl} of ${a.hiddenOf})${rest > 4 && w.quality > l.quality ? ` and scored higher overall (${Math.round(w.quality)} against ${Math.round(l.quality)})` : ''}.`);
+      const fw = rest > 4 && w.quality > l.quality ? floorWords(w, l) : '';
+      out.push(`${nm(w)} passed ${hw - hl} more hidden test${hw - hl === 1 ? '' : 's'} (${hw} against ${hl} of ${a.hiddenOf})${fw ? ` and ${fw}` : rest > 4 && w.quality > l.quality ? ` and scored higher overall (${Math.round(w.quality)} against ${Math.round(l.quality)})` : ''}.`);
     }
-    else out.push(`${nm(a.quality >= b.quality ? a : b)} scored higher (${Math.round(Math.max(a.quality, b.quality))} against ${Math.round(Math.min(a.quality, b.quality))}).`);
+    else { const [w, l] = a.quality >= b.quality ? [a, b] : [b, a]; const fw = floorWords(w, l); out.push(fw ? `${nm(w)}: ${fw}.` : `${nm(w)} scored higher (${Math.round(w.quality)} against ${Math.round(l.quality)}).`); }
     if (tTie(a, b)) out.push('They finished within 15% of each other.');
     else { const [f, sl] = a.wallS < b.wallS ? [a, b] : [b, a]; out.push(`${nm(f)} was ${(sl.wallS / f.wallS).toFixed(1)}× faster (${mins(f.wallS)} against ${mins(sl.wallS)}).`); }
     if (a.usd != null && b.usd != null && Math.abs(a.usd - b.usd) > 0.15 * Math.min(a.usd, b.usd)) {
