@@ -80,7 +80,8 @@
       fetch(`${BASE}/stage1-plan.json`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
       fetch(`${BASE}/stage2-plan.json`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]);
-    STAGE0 = s0; PLANS = [plan, plan2].filter((x) => x?.runs?.length);
+    // A plan can carry a second part (stage2-plan.json part2: its own runs and guards).
+    STAGE0 = s0; PLANS = [plan, plan2, plan2?.part2?.runs?.length ? { ...plan2.part2, stage: plan2.stage, part: 2 } : null].filter((x) => x?.runs?.length);
     SCEN = sc.length ? sc : [
       { id: 'cafe-family', title: 'Make the café site family-friendly', about: 'A vague feature request on an existing site: the planner has to decide what it means.' },
       { id: 'port-ts', title: 'Port a library to TypeScript', about: 'uuid (a small, popular JavaScript library) ported file by file; its own tests must still pass.' },
@@ -169,18 +170,21 @@
     const n = PLAN.runs.filter(done).length;
     const allDone = n + PLAN.runs.filter((p) => !done(p) && notCounted(p)).length >= PLAN.runs.length;
     const g = PLAN.guards || {};
+    const firstOpen = PLAN.runs.find((p) => !done(p) && !notCounted(p));
     const rows = PLAN.runs.map((p) => {
       const r = done(p), pr = p.predicted || {};
       const nc = !r && notCounted(p);
-      const real = nc ? `<span class="dim">Not counted: ${esc(nc.excluded)}</span>` : r ? `<span class="act">Done: ${mins(r.timings?.wallS)}, ${sc100(r.quality?.score)}/100, ${usd(r.cost?.apiUsdStd)}${r.links?.replay ? ` <a href="${esc(r.links.replay)}">replay</a>` : ''}</span>` : `<span class="dim">${n && PLAN.runs.indexOf(p) === n ? 'Next' : 'Waiting'}</span>`;
-      return `<li class="${r ? 'done' : ''}"><span class="no">${p.order}</span><span class="pb"><b>${esc(WHYB[p.baseline] || WHY[p.why] || p.why)}${p.repetition > 1 ? ', second run' : ''}</b>
+      const real = nc ? `<span class="dim">Not counted: ${esc(nc.excluded)}</span>` : r ? `<span class="act">Done: ${mins(r.timings?.wallS)}, ${sc100(r.quality?.score)}/100, ${usd(r.cost?.apiUsdStd)}${r.links?.replay ? ` <a href="${esc(r.links.replay)}">replay</a>` : ''}</span>` : `<span class="dim">${p === firstOpen ? 'Next' : 'Waiting'}</span>`;
+      const cond = p.conditional && !r ? '<span class="dim">Runs only if the first one-Opus-agent run comes within about 15% of the swarm.</span>' : '';
+      return `<li class="${r ? 'done' : ''}"><span class="no">${p.order}</span><span class="pb"><b>${esc(WHYB[p.baseline] || WHY[p.why] || (p.baseline ? '' : p.why.replace(/ repetition \d+( of \d+)?$/, '') === 'swarm' ? 'Swarm' : p.why))}${p.repetition > 1 ? `, run ${p.repetition}` : ''}</b>${cond}
         <span>${esc(p.baseline ? BASELINES[p.baseline]?.about || '' : plain(p.variant))}</span>
         <span class="dim">Predicted ${mins(pr.wallS)}, ${pr.quality != null ? Math.round(pr.quality) : '–'}/100, ${usd(pr.apiUsdStd)}</span>${real}</span></li>`;
     }).join('');
     const head = `Stage ${PLAN.stage}${PLAN.part ? `, part ${PLAN.part}` : ''}: ${allDone ? 'done' : 'being run now'}`;
     if (!active) return `<details class="oldplan"><summary>Stage ${PLAN.stage}${PLAN.part ? `, part ${PLAN.part}` : ''}: ${n} of ${PLAN.runs.length} runs counted</summary><ol class="plan">${rows}</ol></details>`;
-    const p2 = PLAN.part2;
-    const nextLine = p2 ? `<p class="small dim" style="margin-top:8px"><b>Next${p2.when ? ` (${esc(p2.when)})` : ''}:</b> ${esc(scenOf(p2.scenario).title || p2.scenario)}${p2.job ? `. ${esc(p2.job)}` : ''}</p>` : '';
+    // A second part without runs yet: name the job only (its notes are internal).
+    const p2 = PLAN.part2 && !PLAN.part2.runs?.length ? PLAN.part2 : null;
+    const nextLine = p2 ? `<p class="small dim" style="margin-top:8px"><b>Next:</b> ${esc(scenOf(p2.scenario).title || p2.scenario)}.</p>` : '';
     return `<h2>${esc(head)}</h2>
       <p class="cap">${PLAN.runs.length} real runs of ${[...new Set(PLAN.runs.map((p) => p.scenario || PLAN.scenario))].map((id) => `“${esc(scenOf(id).title)}” (${PLAN.runs.filter((p) => (p.scenario || PLAN.scenario) === id).length})`).join(', ')}, in this order. ${budgetLine(PLAN, allDone)} ${n} of ${PLAN.runs.length} done.</p>
       <ol class="plan">${rows}</ol>${nextLine}`;
@@ -194,7 +198,9 @@
       const guard = t.guardApiUsdStd ?? g.stopAtApiUsdStd;
       return `Spent so far ${usd(t.spentApiUsdStd)} at API prices${t.judgeApiUsdStd ? ` (plus ${usd(t.judgeApiUsdStd)} for the quality judge)` : ''}; ${t.toComeRuns?.length === 1 ? 'the one run still to come is' : `the ${t.toComeRuns?.length ?? ''} runs still to come are`} predicted at ${usd(t.toComeApiUsdStd)}, about ${usd(t.expectedTotalApiUsdStd)} in all${guard ? `, under the ${usd(guard)} stop` : ''}.${meterLine(g)}`;
     }
-    const spent = RUNS.filter((r) => r.stage === PLAN.stage).reduce((a, r) => a + (r.cost?.apiUsdStd || 0), 0);
+    // Only this plan's jobs: a stage can have parts with their own stops.
+    const jobs = new Set(PLAN.runs.map((p) => p.scenario || PLAN.scenario));
+    const spent = RUNS.filter((r) => r.stage === PLAN.stage && jobs.has(r.scenario)).reduce((a, r) => a + (r.cost?.apiUsdStd || 0), 0);
     const doneKeys = new Set(RUNS.filter((r) => r.stage === PLAN.stage && !r.excluded).map((r) => `${r.scenario}|${r.variantKey || vkey(r.variant || {}, r.baseline)}|${r.seed ?? 1}`));
     const next = PLAN.runs.find((p) => !doneKeys.has(`${p.scenario || PLAN.scenario}|${p.variantKey}|${p.repetition}`));
     const stop = g.stopAtApiUsdStd;
