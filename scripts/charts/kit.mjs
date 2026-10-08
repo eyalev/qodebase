@@ -85,7 +85,7 @@ export function tiles(f, box, items, cols) {
 }
 
 // A 100% bar split into parts, labels under the parts.
-export function split(f, x, y, w, h, parts, total, caption) {
+export function split(f, x, y, w, h, parts, total, caption, o = {}) {
   let out = text(x, y - 18, caption, { size: f.txt, weight: 600 }), cx = x;
   const P = f.tag !== '1920x1080';
   parts.forEach((p, i) => {
@@ -93,7 +93,7 @@ export function split(f, x, y, w, h, parts, total, caption) {
     out += rect(cx, y, pw, h, p.c, { rx: 4, title: `${p.label}: ${n(p.v)} (${Math.round(100 * p.v / total)}%)` });
     p.x = cx; p.w = pw; cx += pw + 3;
   });
-  if (P) { // phone: one line per part under the bar
+  if (P || o.list) { // phone (or o.list): one line per part under the bar
     parts.forEach((p, i) => { const ly = y + h + 30 + f.val * 0.8 + i * f.val * 1.3, share = `${Math.round(100 * p.v / total)}%`;
       out += `<rect x="${x}" y="${ly - f.val * 0.36 - 8}" width="16" height="16" rx="3" fill="var(--${p.c})"/>`
         + text(x + 28, ly, n(p.v), { size: f.val, weight: 600 }) + text(x + 150, ly, share, { size: f.val - 6, c: 'dim' })
