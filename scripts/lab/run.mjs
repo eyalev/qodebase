@@ -206,11 +206,53 @@ for (const r of state.costs || []) {
   if (r.kind === 'boxes') usdReal += r.usd || 0;
   if (r.kind === 'claude' && r.tokens) { tokens.in += r.tokens.in || 0; tokens.out += r.tokens.out || 0; tokens.cacheR += r.tokens.cr || 0; tokens.cacheW += (r.tokens.cw || 0) + (r.tokens.cw1h || 0); }
 }
-// Mixed models in one run: price all tokens at the run's most expensive model (conservative; v1).
-const top = ['opus', 'sonnet', 'haiku'].find((m) => [variant.planner, variant.coderModel, variant.reviewers ? variant.reviewerModel : null].includes(m)) || 'haiku';
-const [ri, ro, rc, rw] = RATES[top];
-const apiUsdStd = (tokens.in * ri + tokens.out * ro + tokens.cacheR * rc + tokens.cacheW * rw) / 1e6;
-const apiUsdHigh = top === 'haiku' ? apiUsdStd * 5 : apiUsdStd;   // the ledger cannot tell prompt size: Haiku's >100k tier as the high bound
+// Per role and model, from the boxes' own cost lines in Workers Observability (box.ts logs tokens
+// per model since e3d6be1) plus the merger's model replays (Landing 'replay_llm'). Each model is
+// priced at its own rates. Without those lines (boxes on older code) every token is priced at the
+// run's priciest model: an upper bound, said in notes.
+const priceOf = (model, t) => {
+  const k = /opus/.test(model) ? 'opus' : /sonnet/.test(model) ? 'sonnet' : 'haiku';
+  const [ri, ro, rc, rw] = RATES[k];
+  const std = ((t.in || 0) * ri + (t.out || 0) * ro + (t.cr || t.cacheR || 0) * rc + (t.cw1h || 0) * rw + (t.cw || 0) * ri * 1.25) / 1e6;
+  return { k, std, high: k === 'haiku' ? std * 5 : std };
+};
+async function telemetry(needle, fromMs) {
+  const acc = '887d7234a6b8d65ad355a4f6684cab67';
+  const tok = readFileSync(join(homedir(), '.config/forq-cf/api-token'), 'utf8').trim();
+  const out = [];
+  for (let offset = 0; offset < 4000; offset += 500) {
+    const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${acc}/workers/observability/telemetry/query`, { method: 'POST', signal: AbortSignal.timeout(60_000),
+      headers: { authorization: `Bearer ${tok}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ queryId: 'adhoc', timeframe: { from: fromMs, to: Date.now() }, view: 'events', limit: 500, offset, parameters: { needle: { value: needle, isRegex: false } } }) }).then((x) => x.json()).catch(() => null);
+    const ev = r?.result?.events?.events || [];
+    out.push(...ev.map((e) => e.source).filter((x) => x && typeof x === 'object'));
+    if (ev.length < 500) break;
+  }
+  return out;
+}
+const roleOf = (id) => (id.endsWith('--router') ? 'planner' : /--review\d*$/.test(id) ? 'reviewers' : 'coders');
+const byRole = { planner: null, coders: null, reviewers: null, merge: null, judge: null };
+let apiUsdStd = 0, apiUsdHigh = 0, pricedAs = 'per-model';
+const boxLines = (await telemetry(`${slug}--`, askAt - 10 * 60_000)).filter((x) => x.module === 'box' && x.event === 'costs' && String(x.agentId || '').startsWith(`${slug}--`) && x.tokens);
+const replayLines = (await telemetry('replay_llm', askAt - 10 * 60_000)).filter((x) => x.module === 'landing' && x.event === 'replay_llm' && x.slug === slug);
+const addRole = (role, model, t) => {
+  const p = priceOf(model, t);
+  const r = byRole[role] || (byRole[role] = { apiUsdStd: 0, apiUsdHigh: 0, models: {}, tokens: { in: 0, out: 0, cacheR: 0, cacheW: 0 } });
+  r.apiUsdStd += p.std; r.apiUsdHigh += p.high; r.models[p.k] = true;
+  r.tokens.in += t.in || 0; r.tokens.out += t.out || 0; r.tokens.cacheR += t.cr || t.cacheRead || 0; r.tokens.cacheW += (t.cw || 0) + (t.cw1h || 0) + (t.cacheWrite || 0);
+  apiUsdStd += p.std; apiUsdHigh += p.high;
+};
+for (const x of boxLines) for (const [model, t] of Object.entries(x.tokens)) addRole(roleOf(x.agentId), model, t);
+for (const x of replayLines) addRole('merge', x.model || 'haiku', { in: x.in, out: x.out, cr: x.cacheRead, cw: x.cacheWrite });
+if (!boxLines.length) {
+  // Upper bound: all tokens at the run's priciest model.
+  pricedAs = ['opus', 'sonnet', 'haiku'].find((m) => [variant.planner, variant.coderModel, variant.reviewers ? variant.reviewerModel : null].includes(m)) || 'haiku';
+  const p = priceOf(pricedAs, { in: tokens.in, out: tokens.out, cr: tokens.cacheR, cw1h: tokens.cacheW });
+  apiUsdStd = p.std; apiUsdHigh = p.high;
+  for (const k of Object.keys(byRole)) byRole[k] = null;
+}
+for (const r of Object.values(byRole)) if (r) { r.apiUsdStd = Math.round(r.apiUsdStd * 1000) / 1000; r.apiUsdHigh = Math.round(r.apiUsdHigh * 1000) / 1000; r.models = Object.keys(r.models); }
+log('cost_split', { project: slug, boxLines: boxLines.length, replayLines: replayLines.length, pricedAs, apiUsdStd, byRole: Object.fromEntries(Object.entries(byRole).map(([k, v]) => [k, v?.apiUsdStd ?? null])) });
 
 // Tasks and counts from the Landing records.
 const ev = (c, w) => c.events.filter((e) => e.what === w);
@@ -249,12 +291,13 @@ const out = {
   timings: { askAt, planAt: view.changes.length ? Math.min(...view.changes.map((c) => c.createdAt)) : null, firstLandAt: lands[0] ?? null, lastLandAt: lands[lands.length - 1] ?? null,
     wallS: lands.length ? Math.round((lands[lands.length - 1] - askAt) / 1000) : null, medianAskToLandS: view.stats?.medianAskToLandS ?? null },
   counts, tasks,
-  cost: { usdReal: Math.round(usdReal * 1000) / 1000, apiUsdStd: Math.round(apiUsdStd * 1000) / 1000, apiUsdHigh: Math.round(apiUsdHigh * 1000) / 1000, pricedAs: top, tokens,
-    // The ledger has no per-role split yet; the judge (qb5's scorer, counted to the lab, not the variant) is known.
-    byRole: { planner: null, coders: null, reviewers: null, merge: null, judge: quality?.judgeUsd != null ? { apiUsdStd: quality.judgeUsd } : null } },
+  cost: { usdReal: Math.round(usdReal * 1000) / 1000, apiUsdStd: Math.round(apiUsdStd * 1000) / 1000, apiUsdHigh: Math.round(apiUsdHigh * 1000) / 1000, pricedAs, tokens,
+    // judge = qb5's scorer: counted to the lab, not the variant (not in apiUsdStd).
+    byRole: { ...byRole, judge: quality?.judgeUsd != null ? { apiUsdStd: quality.judgeUsd } : null } },
   quality,
   links: { replay: `https://qodebase.app/p/eyal/${name}/work?replay=4`, app: `https://${name}--eyal.ttyview.dev/`, repo: `https://qodebase.app/p/eyal/${name}` },
-  notes: [scenarioId === 'port-ts' ? 'fetched validator.js during the run: unknown (box command logs not collected yet)' : '', opt('--notes', '')].filter(Boolean).join('; '),
+  notes: [scenarioId === 'port-ts' ? 'fetched validator.js during the run: unknown (box command logs not collected yet)' : '',
+    pricedAs !== 'per-model' ? `API-equivalent priced as ${pricedAs} for every token (upper bound: this run's boxes ran before per-model cost lines)` : '', opt('--notes', '')].filter(Boolean).join('; '),
 };
 appendFileSync(RUNS, JSON.stringify(out) + '\n');
 log('done', { project: slug, status, landed: counts.tasksLanded, wallS: out.timings.wallS, usdReal: out.cost.usdReal, apiUsdStd: out.cost.apiUsdStd, score: quality?.score ?? null });
