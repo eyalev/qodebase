@@ -112,6 +112,9 @@ var css = [
   '#talk-live:not(:empty){padding:4px 16px 8px}',
   '#talk-offer{display:none;gap:8px;align-items:center;padding:0 16px 8px;font-size:15px;flex-wrap:wrap}',
   '#talk-offer.on{display:flex}',
+  // A long quoted request stays three lines so Send / No stay on screen (qb8, 2026-10-08: a 900-character order pushed them off).
+  '#talk-offer>span{flex:1 1 100%;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}',
+  '#talk-offer{flex:none}',
   '.talk-chip{min-height:44px;padding:0 14px;border-radius:8px;border:0;background:var(--t-chip);color:var(--t-fg);font:500 15px var(--t-ff);cursor:pointer}',
   '.talk-chip.pri{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-form{display:flex;gap:8px;padding:8px 8px 8px 16px;border-top:1px solid var(--t-line);align-items:center}',
@@ -477,7 +480,9 @@ function changeRequest(c) {
     }, 'Fork');
     return done();
   }
-  offerOn('Send to ' + owner + '/' + name + '\u2019s agents: \u201c' + text + '\u201d?', function () { busy = true; sendChange(owner, name, text); }, 'Send');
+  // The confirm quotes the start of a long request (the whole text is what gets sent).
+  var quote = text.length > 160 ? text.slice(0, 150).replace(/\s+\S*$/, '') + '\u2026' : text;
+  offerOn('Send to ' + owner + '/' + name + '\u2019s agents: \u201c' + quote + '\u201d?', function () { busy = true; sendChange(owner, name, text); }, 'Send');
   done();
 }
 // ---- Questions about a project's code: qb1's ask box (a read-only Claude Code box on
