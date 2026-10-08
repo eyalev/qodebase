@@ -152,9 +152,12 @@
 
   // The other change in a collision or overlap: named in the detail (a full id or #short id),
   // else the newest change by another agent that landed on the same file before it.
+  // Short ids (#d4nqz7 or #104) to changes, built once per view; a full id is found by its short part.
+  let shortOf = null, shortMap = null;
+  const shorts = () => (shortOf === D ? shortMap : ((shortOf = D), (shortMap = new Map(D.changes.map((x) => [String(x.id).split('--').pop(), x])))));
   function otherOf(c, e, idx) {
     const d = e.detail || '';
-    for (const x of idx.values()) if (x.id !== c.id && (d.includes(x.id) || new RegExp(`#${String(x.id).split('--').pop().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(d))) return x;
+    for (const m of d.matchAll(/(?:--|#)([A-Za-z0-9]+)\b/g)) { const x = shorts().get(m[1]); if (x && x.id !== c.id) return x; }
     if (e.what !== 'conflict') return null;
     const paths = conflictPaths(c, e);
     return [...idx.values()].filter((x) => x.agent !== c.agent && x.landedAt && x.landedAt <= e.t && x.files.some((p) => paths.includes(p))).sort((a, b) => b.landedAt - a.landedAt)[0] || null;
