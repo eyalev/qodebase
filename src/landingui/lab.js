@@ -244,8 +244,10 @@
   }
 
   // ---- 2. results -------------------------------------------------------------------------------
-  // Time to compare = measured time minus a known platform stall (qb6's timings.stallS, reason in notes).
-  const runS = (r) => (r.timings?.wallS == null ? null : r.timings.wallS - (r.timings.stallS || 0));
+  // A run with a known platform stall (qb6's timings.stallS) is left out of time comparisons entirely:
+  // the stall overlapped other agents' work, so subtracting it means nothing (manager, 2026-10-08).
+  // Its quality and cost still count.
+  const runS = (r) => (r.timings?.wallS == null || r.timings.stallS ? null : r.timings.wallS);
   function groups() {
     const by = new Map();
     for (const r of RUNS.filter((x) => x.scenario === st.scenario && x.status !== 'failed' && !x.excluded)) {
@@ -313,7 +315,13 @@
       parts.push(`<p><b>Too close to call so far.</b> The same quality within the judge's noise${hid(lead) && hid(lead) === hid(second) ? ` (both passed ${hid(lead)})` : ''}, and finish times within 15% of each other:</p><p>${one(lead)}.</p><p>${one(second)}.</p>`);
     } else {
       parts.push(`<p><b>Leading so far:</b> ${one(lead)}.</p>`);
-      if (qTie(lead, second)) parts.push(`<p class="dim">${one(second)}. The same quality within the judge's noise${hid(lead) && hid(lead) === hid(second) ? ` (both passed ${hid(lead)})` : ''}; the difference is time${lead.usd != null && second.usd != null ? ' and cost' : ''}.</p>`);
+      if (qTie(lead, second)) {
+        const nm = (g) => esc(plain(g.variant, g.baseline));
+        const cheap = lead.usd != null && second.usd != null && Math.abs(lead.usd - second.usd) > 0.15 * Math.min(lead.usd, second.usd) ? (lead.usd < second.usd ? [lead, second] : [second, lead]) : null;
+        const ratio = cheap ? cheap[0].usd / cheap[1].usd : 1;
+        const costWords = !cheap ? '' : ratio > 0.4 && ratio < 0.6 ? 'about half as much' : `${Math.round((1 - ratio) * 100)}% less`;
+        parts.push(`<p>${one(second)}.</p><p class="dim">The same quality within the judge's noise${hid(lead) && hid(lead) === hid(second) ? ` (both passed ${hid(lead)})` : ''}. ${nm(lead)} was faster (${mins(lead.wallS)} against ${mins(second.wallS)})${cheap ? `; ${nm(cheap[0]) === nm(lead) ? 'it also cost less' : `${nm(cheap[0])} cost ${costWords}`} (${usd(cheap[0].usd)} against ${usd(cheap[1].usd)})` : ''}.</p>`);
+      }
       else if (lead.baseline) { const bm = ok.find((g) => !g.baseline); if (bm) parts.push(`<p>Best setup with several agents: ${one(bm)}.</p>`); }
     }
     const shown = new Set([lead, second].filter(Boolean));
@@ -343,9 +351,9 @@
         c.breaksOnMain ? `${c.breaksOnMain} broke main` : null, q.hiddenTotal ? `${q.hiddenPass}/${q.hiddenTotal} hidden tests` : null,
         q.trulyHiddenTotal ? `${q.trulyHiddenPass}/${q.trulyHiddenTotal} checks it could not look up` : null].filter(Boolean).join(', ');
       const status = r.status && r.status !== 'done' ? ` <span class="warn">${esc({ 'stopped-budget': 'stopped: budget', timeout: 'timed out', failed: 'failed' }[r.status] || r.status)}</span>` : '';
-      const stall = r.timings?.stallS ? ` <span class="dim">(measured ${mins(r.timings.wallS)}, of which ${mins(r.timings.stallS)} was a platform stall, not the setup)</span>` : '';
+      const stall = r.timings?.stallS ? ` <span class="dim">(a platform stall of ${mins(r.timings.stallS)}, not the setup; left out of time comparisons)</span>` : '';
       const th = q.scoreTrulyHidden != null ? ` <span class="dim">(${Math.round(q.scoreTrulyHidden)}/100 on the checks it could not look up)</span>` : '';
-      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(runS(r))}${stall}, ${sc100(q.score)}/100${th}, ${usd(r.cost?.apiUsdStd)}</span>
+      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(r.timings?.wallS)}${stall}, ${sc100(q.score)}/100${th}, ${usd(r.cost?.apiUsdStd)}</span>
         <span class="rw2">${esc(words)}.</span>${r.notes ? `<span class="rw2">${esc(r.notes)}</span>` : ''}
         <span class="lk">${r.links?.replay ? `<a href="${esc(r.links.replay)}">Watch the replay</a>` : ''}${r.links?.app ? `<a href="${esc(r.links.app)}" target="_blank" rel="noopener">The app it built</a>` : ''}${r.links?.repo ? `<a href="${esc(r.links.repo)}">The code</a>` : ''}</span></li>`;
     }).join('');
@@ -354,7 +362,8 @@
   function resultsView() {
     const gs = groups();
     const stalls = gs.filter((g) => g.stallS);
-    const stallNote = stalls.length ? `<p class="small dim">Times leave out known platform stalls (${stalls.map((g) => `${mins(g.stallS)} in ${esc(plain(g.variant, g.baseline))}`).join('; ')}); each run shows its measured time.</p>` : '';
+    const nStall = gs.reduce((a, g) => a + g.runs.filter((r) => r.timings?.stallS).length, 0);
+    const stallNote = nStall ? `<p class="small dim">${nStall === 1 ? 'One run' : `${nStall} runs`} hit a platform stall (${stalls.map((g) => esc(plain(g.variant, g.baseline))).join('; ')}): ${nStall === 1 ? 'it is' : 'they are'} left out of the time comparison but counted for quality and cost.</p>` : '';
     const truly = gs.some((g) => g.qTruly != null)
       ? '<p class="small dim">For the TypeScript port, the number in brackets is the score on checks the agents could not have found in the original library (type cases and structure), so copying the original does not earn them.</p>' : '';
     const n = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded).length;
