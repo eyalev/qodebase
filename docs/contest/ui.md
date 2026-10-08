@@ -40,3 +40,10 @@ regenerates assets.gen.ts), view.ts (mount), mock.mjs (writes the mock), dev.htm
 Try it on any project: `/p/<o>/<n>/work?mock=1`.
 
 Ask qb6 (cc_com) for deploys. Commit by explicit path; you own src/landingui/* and the mock.
+
+## Status 2026-10-08
+- [x] Watch a run (public, no sign-in) + client replay of the last run; live-tested anonymously (one run).
+- [x] Real agents numbered 1..N; titles cut at the first sentence; long intents fold; ?replay=<speed> for filming.
+- [x] Model-replay diffs (landing.reviewedDiff): What landed / What was reviewed.
+- [ ] Busy mode watched live start to finish (a 20-agent run was seen mid-flow during the public test; resolved-collision noise fixed after).
+- [ ] Reported to qb6: a public run can be replaced by an owner/busy run; POST watch takes ~23 s.
