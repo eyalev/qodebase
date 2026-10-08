@@ -137,7 +137,7 @@
   }
   // ---- plain-language sentences ---------------------------------------------------------
   function sentence(c, e, idx) {
-    const who = AG(c.agent), T = short(c);
+    const who = AG(c.agent), T = c.title || c.intent.slice(0, 60); // raw: callers escape
     let d = (e.detail || '').replace(/\bagent-(\d+)/gi, 'Agent $1');
     for (const x of idx.values()) if (d.includes(x.id)) d = d.split(x.id).join(`${AG(x.agent)}'s change`);
     const its = `${who}'s change`;
@@ -188,10 +188,10 @@
         <div class="prog"><i style="width:${pct.toFixed(1)}%;animation:none"></i></div>
         <div class="wa">${done ? '<button class="btn" type="button" data-watch="again">Replay again</button>' : speedChips(P.speed)}<button class="chipb" type="button" data-watch="live">Back to live</button></div></div>`;
     }
-    if (starting && Date.now() - starting < 25e3 && !(dm.running && D.changes.length)) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Starting a run…</b> The café site goes back to its first version and the agents get their tasks.</span></div></div>`;
+    if (starting && Date.now() - starting < 60e3 && !(dm.running && D.changes.length)) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Starting a run…</b> The café site goes back to its first version and the agents get their tasks.</span></div></div>`;
     if (dm.running) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Live run</b>${dm.startedAt ? `, started ${ago(dm.startedAt)}` : ''}${dm.endsAt ? `, ends in ${until(dm.endsAt)}` : ''}. ${dm.agents || ''} ${term('scripted', 'scripted agents')}; their commits, collisions and tests are real.</span></div>${ownerCtl(true)}</div>`;
     const left = W.maxPerDay ? Math.max(0, W.maxPerDay - (W.runsToday || 0)) : null;
-    return `<div class="watch"><div class="wt"><span><b>Watch a run.</b> ${dm.agents || 6} ${term('scripted', 'scripted agents')} change this café's website at once for about 5 minutes: real commits, real collisions, real tests.</span></div>
+    return `<div class="watch"><div class="wt"><span><b>Watch a run.</b> Six ${term('scripted', 'scripted agents')} change this café's website at once for about 5 minutes: real commits, real collisions, real tests.</span></div>
       ${limitNote ? `<p class="small dim">${esc(limitNote)}</p>` : ''}
       <div class="wa"><button class="btn" type="button" data-watch="start">Watch a run</button>${D.changes.length ? '<button class="chipb" type="button" data-watch="replay">Replay the last one</button>' : ''}${ownerCtl(false)}</div>
       ${left != null ? `<p class="small dim">${left} of ${W.maxPerDay} live runs left today.</p>` : ''}</div>`;
@@ -209,7 +209,7 @@
     const s = D.stats;
     // One row of words: the numbers support the picture below, they are not the picture.
     return `<div class="nums">
-      <span><b>${n0(s.landedToday)}</b> landed today</span>
+      <span><b>${n0(s.landedToday)}</b> landed ${D.mode === 'demo' ? 'in this run' : 'today'}</span>
       <span><b>${n0(s.inQueue)}</b> in ${term('queue', 'the line')}</span>
       <a href="#/replayed"><b>${n0(s.replayed)}</b> ${term('replay', 'replayed')}, not thrown away</a>
       <span><b>${s.medianAskToLandS ? secs(s.medianAskToLandS * 1000) : '–'}</b> ask to landed, typical</span></div>`;
@@ -286,7 +286,7 @@
   const collWords = (pairs) => {
     const open = pairs.filter((x) => !x.ok), ok = pairs.filter((x) => x.ok);
     return open.map((x) => `<span class="coll">${esc(x.words)}</span>`).join('')
-      + (ok.length === 1 ? `<span class="coll ok">${esc(ok[0].words)}</span>` : ok.length ? `<span class="coll ok">${ok.length} collisions just replayed and landed</span>` : '');
+      + (ok.length === 1 ? `<span class="coll ok">${esc(ok[0].words)}</span>` : ok.length ? `<span class="coll ok"><i class="zap ok" aria-hidden="true"></i> ${ok.length} collisions here in the last 90 s, all replayed</span>` : '');
   };
   function theMap() {
     const T = now(), idx = byId();
@@ -313,18 +313,23 @@
         // A resolved collision stays on the map for 90 s (green), then leaves: busy runs have hundreds.
         if (fixed && fixedAt < T - 90e3) continue;
         const pc = (x) => { const t = top.get(x.agent) || x; return chip(t, skey(t), home.get(x.agent) === a.path ? '' : ' past'); };
-        pairs.push({ ok: fixed, html: `<span class="pair${fixed ? ' ok' : ''}${p ? ' pl' : ''}"${p || ''}>${pc(c)}<i class="zap" aria-hidden="true"></i>${pc(o)}</span>`,
+        pairs.push({ ok: fixed, agents: [c.agent, o.agent], local: home.get(c.agent) === a.path || home.get(o.agent) === a.path, html: `<span class="pair${fixed ? ' ok' : ''}${p ? ' pl' : ''}"${p || ''}>${pc(c)}<i class="zap" aria-hidden="true"></i>${pc(o)}</span>`,
           words: `${AG(c.agent)} and ${AG(o.agent)} collided on ${conflictPaths(c, e).map((x) => x.split('/').pop()).join(', ')}${c.state === 'landed' ? '; replayed, landed' : fixed ? '; replayed' : c.state === 'replaying' ? '; replaying now' : ''}` });
       }
-      const singles = [...best.values()].filter((c) => !paired.has(c.agent)).sort((x, y) => RANK[skey(y)] - RANK[skey(x)]);
-      const chips = [...pairs.map((x) => x.html), ...singles.map((c) => chip(c, skey(c)))].join('');
+      // Draw open collisions always; resolved ones only when an agent lives here and there are
+      // at most two (a busy run replays dozens a minute: those become one line of words).
+      const okLocal = pairs.filter((x) => x.ok && x.local);
+      const drawn = [...pairs.filter((x) => !x.ok), ...(okLocal.length <= 2 ? okLocal : [])];
+      const inPair = new Set(drawn.flatMap((x) => x.agents));
+      const singles = [...best.values()].filter((c) => !inPair.has(c.agent)).sort((x, y) => RANK[skey(y)] - RANK[skey(x)]);
+      const chips = [...drawn.map((x) => x.html), ...singles.map((c) => chip(c, skey(c)))].join('');
       const n = best.size;
       const meta = a.recentLandings ? `${a.recentLandings} landed today` : '';
       if (!chips) { quiet.push(a.path); return ''; }
       return `<div class="area" data-go="#/area/${encodeURIComponent(a.path)}"><button class="nm" type="button" data-go="#/area/${encodeURIComponent(a.path)}">${esc(areaLabel(a.path))}<span class="meta">${meta}</span></button><span class="chips">${chips}</span>${collWords(pairs)}</div>`;
     }).join('')}${quiet.length ? `<p class="quiet">Quiet now: ${quiet.map((q) => `<a href="#/area/${encodeURIComponent(q)}" class="mono">${esc(areaLabel(q))}</a>`).join(', ')}</p>` : ''}</div>`;
   }
-  let firstPaint = true;
+  let firstPaint = true, diffTab = 'landed';
   function feed(limit) {
     const items = feedItems().slice(0, limit);
     const html = items.map((it) => {
@@ -343,9 +348,11 @@
   }
   function overview() {
     const act = D.changes.filter(active);
-    const agents = new Set(act.map((c) => c.agent)).size;
+    // A demo that has stopped leaves unfinished changes behind; nobody is working on them.
+    const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;
+    const agents = idleDemo ? 0 : new Set(act.map((c) => c.agent)).size;
     return `${demoStrip()}
-      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : `No agents are working on ${esc(NAME)} right now.${D.stats.landedToday ? ` ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed today.` : ''}`}</h2>
+      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : `No agents are working on ${esc(NAME)} right now.${D.stats.landedToday ? ` ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed ${D.mode === 'demo' ? 'in the last run' : 'today'}.` : ''}`}</h2>
       <p class="intro">Each agent is an AI working on its own ${term('fork', 'copy')} of the code. Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>
       ${numbers()}
       <section class="sec"><div class="sec-h"><h3>${term('queue', 'The line')}</h3><a href="#/line">Everything</a></div>
@@ -411,7 +418,13 @@
     const withWho = oc ? ` with ${AG(oc.agent)}'s ${ref(oc.id)}` : '';
     switch (skey(c)) {
       case 'landed':
-        if (/^replayed/.test(L?.how || '')) return `<div class="how"><b>Landed after a ${term('replay', 'replay')}</b><p>It ${term('collision', 'collided')}${withWho} on ${files(conf)}. Instead of sending it back, qodebase re-applied what it was meant to do on the newest code (${L.how === 'replayed-llm' ? 'an AI re-did the edit; the difference is shown below' : 'a fixed rule for this kind of file'}), tested it again, and it passed.</p></div>`;
+        if (/^replayed/.test(L?.how || '')) {
+          const rp = L.replay;
+          const how = L.how === 'replayed-llm'
+            ? `Instead of sending it back, an AI model${rp?.model ? `, <span class="mono">${esc(rp.model)}</span>,` : ''} re-did what it was meant to do on the newest code${rp?.ms ? ` in ${secs(rp.ms)}` : ''}${rp?.usd != null ? ` for $${rp.usd < 0.01 ? rp.usd.toFixed(4) : rp.usd.toFixed(2)}` : ''}. ${rp?.sameLinesAsReviewed ? 'Its lines came out the same as the reviewed ones.' : 'Its lines differ from the reviewed ones: compare both below.'} It was tested again and passed.`
+            : 'Instead of sending it back, qodebase re-applied what it was meant to do on the newest code, with a fixed rule for this kind of file. It was tested again and passed.';
+          return `<div class="how"><b>Landed after a ${term('replay', 'replay')}</b><p>It ${term('collision', 'collided')}${withWho} on ${files(conf)}. ${how}</p></div>`;
+        }
         if (L?.how === 'lead') return `<div class="how"><b>Landed with its ${term('lead', 'lead')}'s help</b><p>It ${term('collision', 'collided')}${withWho}${conf.length ? ` on ${files(conf)}` : ''}. No rule could replay this edit, so its lead redid it on the newest code; it passed the tests and joined main.</p></div>`;
         if (sentBack) return `<div class="how"><b>Landed on the second try</b><p>The first time, a test failed, so it was sent back and main stayed healthy. ${AG(c.agent)} fixed it, and it passed${L?.mainCommit ? `, joining main as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
         return `<div class="how"><b>Landed</b><p>It passed review and the tests, and joined main${L?.mainCommit ? ` as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
@@ -428,11 +441,15 @@
     const idx = byId(), c = idx.get(id);
     if (!c) return `<div class="drill">${crumbs([['Agents at work', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style="font-size:20px;margin-bottom:6px">${short(it)}</h2><p class="dim">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : '<p class="dim">This change is not in today\'s data.</p>'; })()}</div>`;
     const area = areaOf(c.files[0] || '.');
-    const story = c.events.map((e) => { const s = sentence(c, e, idx) || [{ working: `${AG(c.agent)} working`, reviewing: 'The reviewer is reading it', testing: 'Being tested with the newest main' }[e.what] || e.what, { alone: 'on its own', 'next train': '' }[e.detail] ?? e.detail]; return `<li><time>${hhmm(e.t)}</time><span>${esc(s[0])}${s[1] && s[1] !== short(c) ? `<span class="d">${esc(s[1])}</span>` : ''}</span></li>`; }).reverse().join('');
+    const story = c.events.map((e) => { const s = sentence(c, e, idx) || [{ working: `${AG(c.agent)} working`, reviewing: 'The reviewer is reading it', testing: 'Being tested with the newest main' }[e.what] || e.what, { alone: 'on its own', 'next train': '' }[e.detail] ?? e.detail]; return `<li><time>${hhmm(e.t)}</time><span>${esc(s[0])}${s[1] && s[1] !== (c.title || c.intent.slice(0, 60)) ? `<span class="d">${esc(s[1])}</span>` : ''}</span></li>`; }).reverse().join('');
     const stackOn = c.stackedOn && idx.get(c.stackedOn);
     const above = D.changes.filter((x) => x.stackedOn === c.id);
     const L = c.landing;
-    const diff = L?.diff?.length ? L.diff.map((d) => `<p class="mono" style="margin-top:12px"><a href="#/file/${encodeURIComponent(d.path)}">${esc(d.path)}</a></p><pre class="diff">${d.lines.map((l) => `<span class="${l[0] === '+' ? 'add' : l[0] === '-' ? 'del' : l === '…' ? 'gap' : ''}">${esc(l === '…' ? '  …' : l)}</span>`).join('')}</pre>`).join('') : '';
+    const diffHtml = (ds) => ds.map((d) => `<p class="mono" style="margin-top:12px"><a href="#/file/${encodeURIComponent(d.path)}">${esc(d.path)}</a></p><pre class="diff">${d.lines.map((l) => `<span class="${l[0] === '+' && !l.startsWith('+++') ? 'add' : l[0] === '-' && !l.startsWith('---') ? 'del' : l === '…' || l.startsWith('@@') ? 'gap' : ''}">${esc(l === '…' ? '  …' : l)}</span>`).join('')}</pre>`).join('');
+    // A model replay (qb6): what was reviewed (written on older code) next to what landed.
+    const two = L?.reviewedDiff?.length && L?.diff?.length;
+    const tabs = two ? `<div class="dtabs" role="tablist"><button type="button" role="tab" class="chipb" data-diff="landed" aria-pressed="${diffTab !== 'reviewed'}">What landed</button><button type="button" role="tab" class="chipb" data-diff="reviewed" aria-pressed="${diffTab === 'reviewed'}">What was reviewed</button></div>` : '';
+    const diff = L?.diff?.length ? tabs + diffHtml(two && diffTab === 'reviewed' ? L.reviewedDiff : L.diff) : '';
     const rv = c.review ? `<dt>${term('review', 'Review')}</dt><dd>${c.review.verdict === 'changes' ? 'Fixes asked' : c.review.verdict === 'auto' ? 'Approved (scripted)' : 'Approved'}${c.review.notes ? `<span class="dim small" style="display:block">${esc(c.review.notes)}</span>` : ''}</dd>` : '';
     return `<div class="drill">${crumbs([['Agents at work', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [ref(c.id)]])}
       <h2 style="font-size:20px;margin-bottom:6px">${short(c)}</h2>
@@ -449,7 +466,7 @@
         <dt>${term('fork', 'Its copy')}</dt><dd class="mono">${esc(c.fork)}</dd>
         ${L?.commit ? `<dt>Commit</dt><dd class="mono">${esc(L.commit.slice(0, 7))}${L.mainCommit ? ` landed as ${esc(L.mainCommit.slice(0, 7))}` : ''}</dd>` : ''}
       </dl></section>
-      ${diff ? `<section class="sec"><h3>The change</h3><p class="cap">Green lines were added, red lines removed.</p>${diff}</section>` : ''}</div>`;
+      ${diff ? `<section class="sec"><h3>The change</h3><p class="cap">Green lines were added, red lines removed.${two ? ' The reviewed version was written on older code; the replay re-did the same intent on the newest code.' : ''}</p>${diff}</section>` : ''}</div>`;
   }
   function viewLine() {
     return `<div class="drill">${crumbs([['Agents at work', '#/'], ['The line']])}
@@ -546,6 +563,8 @@
       if (!r.ok) { ap.disabled = false; toast('Could not merge it. Try again.'); } else { toast('Put in the line.'); tick(); }
       return;
     }
+    const dt = ev.target.closest('[data-diff]');
+    if (dt) { diffTab = dt.dataset.diff; render(); return; }
     const sp = ev.target.closest('[data-speed]');
     if (sp && P && P.replay) { const T = now(); P.speed = +sp.dataset.speed; P.wall0 = Date.now() - (T - P.start) / P.speed; tick(); return; }
     const wb = ev.target.closest('[data-watch]');
@@ -564,10 +583,13 @@
     if (what === 'again') { P.wall0 = Date.now(); return tick(); }
     if (what === 'replay') { const p = replayOf(D, 2); if (p) { P = p; tick(); } return; }
     btn.disabled = true;
+    // The server resets the café before it answers (~20 s): say so at once.
+    starting = Date.now(); limitNote = ''; render();
     const r = await fetch(`${API}/landing/watch`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch((e) => ({ ok: false, statusText: String(e) }));
     const j = r.ok ? await r.json().catch(() => ({})) : {};
     log('watch_reply', { status: r.status, state: j.state, why: j.why });
     if (j.state === 'running' || j.state === 'started') { P = null; limitNote = ''; starting = j.state === 'started' ? Date.now() : 0; return tick(); }
+    starting = 0;
     // No live run: say why, and replay the last one instead.
     limitNote = j.state === 'limit' ? `${LIMIT[j.why] || 'No live run can start right now.'}${j.nextAt ? ` The next one can start at ${hhmm(j.nextAt)}.` : ''} Here is a replay instead.` : 'Live runs are not available right now. Here is a replay instead.';
     const p = replayOf(D, 2);

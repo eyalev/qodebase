@@ -102,7 +102,8 @@
 .lw .pair.pl .zap{animation:lw-flash 1.8s ease-out both}
 .lw .coll{grid-column:1/-1;font-size:13px;color:var(--warn);line-height:1.35}
 .lw .coll.ok{color:var(--acc)}
-.lw .pair.ok .zap{background:var(--acc)}
+.lw .pair.ok .zap,.lw .coll .zap.ok{background:var(--acc)}
+.lw .coll .zap{vertical-align:middle;margin-right:2px}
 .lw .key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--dim);margin-top:10px}
 .lw .key>span{display:inline-flex;gap:6px;align-items:center}
 .lw .key .ag{width:16px;height:16px;cursor:default}
@@ -195,3 +196,6 @@
 .lw .watch .wa{display:flex;flex-wrap:wrap;gap:8px}
 .lw .watch .prog i{background:var(--acc)}
 .lw .chipb.sp[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+
+.lw .dtabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.lw .dtabs .chipb[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
