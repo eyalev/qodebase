@@ -128,3 +128,6 @@
 #lab .plan .act a{color:var(--acc)}
 #lab .fh{font-size:15px;font-weight:600;margin:20px 0 4px}
 #lab .runs.ex li{opacity:.7}
+#lab details.oldplan{margin-top:14px}
+#lab details.oldplan summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;display:flex;align-items:center;list-style:none}
+#lab details.oldplan summary::-webkit-details-marker{display:none}

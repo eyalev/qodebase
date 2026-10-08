@@ -67,19 +67,20 @@
   const st = { scenario: Q.get('s') || 'cafe-family', v: {}, open: null, more: false };
   for (const [k, kb] of Object.entries(KNOBS)) st.v[k] = kb.def;
   try { const qv = JSON.parse(Q.get('v') || 'null'); if (qv) Object.assign(st.v, qv); } catch {}
-  let SIM = null, simErr = '', SCEN = [], RUNS = [], STAGES = [], STAGE0 = null, PLAN = null, loaded = false;
+  let SIM = null, simErr = '', SCEN = [], RUNS = [], STAGES = [], STAGE0 = null, PLANS = [], loaded = false;
 
   async function load() {
     const sfx = MOCK ? '.mock' : '';
     const jl = (t) => t.split('\n').filter((l) => l.trim()).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
-    const [sc, runs, stages, s0, plan] = await Promise.all([
+    const [sc, runs, stages, s0, plan, plan2] = await Promise.all([
       fetch(`${BASE}/scenarios.json`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
       fetch(`${BASE}/runs${sfx}.jsonl`, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then(jl).catch(() => []),
       fetch(`${BASE}/stages${sfx}.jsonl`, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then(jl).catch(() => []),
       fetch(`${BASE}/stage0.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
       fetch(`${BASE}/stage1-plan.json`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch(`${BASE}/stage2-plan.json`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]);
-    STAGE0 = s0; PLAN = plan;
+    STAGE0 = s0; PLANS = [plan, plan2].filter((x) => x?.runs?.length);
     SCEN = sc.length ? sc : [
       { id: 'cafe-family', title: 'Make the café site family-friendly', about: 'A vague feature request on an existing site: the planner has to decide what it means.' },
       { id: 'port-ts', title: 'Port a library to TypeScript', about: 'uuid (a small, popular JavaScript library) ported file by file; its own tests must still pass.' },
@@ -160,12 +161,13 @@
   // Stage 1 = the APPROVED list (public/lab/stage1-plan.json, the source of truth); a run is
   // done when runs.jsonl has its variantKey + repetition at stage 1.
   const WHYB = { 'opus-alone': 'Baseline: one Opus agent alone', github: 'Baseline: GitHub-style' };
-  function planView() {
-    if (!PLAN?.runs?.length) return '';
+  // One stage's approved plan (stageN-plan.json). The newest plan is "being run now"; older ones fold away.
+  function planView(PLAN, active) {
     const notCounted = (p) => RUNS.find((r) => r.excluded && r.stage === PLAN.stage && r.scenario === p.scenario && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);
     const done = (p) => RUNS.find((r) => !r.excluded && r.stage === PLAN.stage && r.scenario === p.scenario && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);
     const total = PLAN.runs[PLAN.runs.length - 1]?.predictedCumulativeUsd;
     const n = PLAN.runs.filter(done).length;
+    const allDone = n + PLAN.runs.filter((p) => !done(p) && notCounted(p)).length >= PLAN.runs.length;
     const g = PLAN.guards || {};
     const rows = PLAN.runs.map((p) => {
       const r = done(p), pr = p.predicted || {};
@@ -175,28 +177,35 @@
         <span>${esc(p.baseline ? BASELINES[p.baseline]?.about || '' : plain(p.variant))}</span>
         <span class="dim">Predicted ${mins(pr.wallS)}, ${pr.quality != null ? Math.round(pr.quality) : '–'}/100, ${usd(pr.apiUsdStd)}</span>${real}</span></li>`;
     }).join('');
-    return `<section class="sec" id="plan"><h2>Stage 1: being run now</h2>
-      <p class="cap">${PLAN.runs.length} real runs of ${[...new Set(PLAN.runs.map((p) => p.scenario || PLAN.scenario))].map((id) => `“${esc(scenOf(id).title)}” (${PLAN.runs.filter((p) => (p.scenario || PLAN.scenario) === id).length})`).join(', ')}, in this order. ${budgetLine()} ${n} of ${PLAN.runs.length} done.</p>
-      <ol class="plan">${rows}</ol>${favouritesView()}</section>`;
+    const head = `Stage ${PLAN.stage}${PLAN.part ? `, part ${PLAN.part}` : ''}: ${allDone ? 'done' : 'being run now'}`;
+    if (!active) return `<details class="oldplan"><summary>Stage ${PLAN.stage}${PLAN.part ? `, part ${PLAN.part}` : ''}: ${n} of ${PLAN.runs.length} runs counted</summary><ol class="plan">${rows}</ol></details>`;
+    const p2 = PLAN.part2;
+    const nextLine = p2 ? `<p class="small dim" style="margin-top:8px"><b>Next${p2.when ? ` (${esc(p2.when)})` : ''}:</b> ${esc(scenOf(p2.scenario).title || p2.scenario)}${p2.job ? `. ${esc(p2.job)}` : ''}</p>` : '';
+    return `<h2>${esc(head)}</h2>
+      <p class="cap">${PLAN.runs.length} real runs of ${[...new Set(PLAN.runs.map((p) => p.scenario || PLAN.scenario))].map((id) => `“${esc(scenOf(id).title)}” (${PLAN.runs.filter((p) => (p.scenario || PLAN.scenario) === id).length})`).join(', ')}, in this order. ${budgetLine(PLAN, allDone)} ${n} of ${PLAN.runs.length} done.</p>
+      <ol class="plan">${rows}</ol>${nextLine}`;
   }
   // What the runner's guard compares (qb6): money already spent in the stage (API-equivalent,
   // excluded runs too: they were paid for) plus the next run's prediction, against the stop.
-  function budgetLine() {
+  function budgetLine(PLAN, allDone) {
     const g = PLAN.guards || {}, t = PLAN.totals;
     // qb4's totals block (stage1-plan.json) when present: spent + still to come against the guard.
     if (t && t.spentApiUsdStd != null) {
       const guard = t.guardApiUsdStd ?? g.stopAtApiUsdStd;
-      return `Spent so far ${usd(t.spentApiUsdStd)} at API prices${t.judgeApiUsdStd ? ` (plus ${usd(t.judgeApiUsdStd)} for the quality judge)` : ''}; ${t.toComeRuns?.length === 1 ? 'the one run still to come is' : `the ${t.toComeRuns?.length ?? ''} runs still to come are`} predicted at ${usd(t.toComeApiUsdStd)}, about ${usd(t.expectedTotalApiUsdStd)} in all${guard ? `, under the ${usd(guard)} stop` : ''}.${g.stopAtWeeklyMeterRisePts ? ` The stage also stops if the weekly Claude meter rises ${g.stopAtWeeklyMeterRisePts} points.` : ''}`;
+      return `Spent so far ${usd(t.spentApiUsdStd)} at API prices${t.judgeApiUsdStd ? ` (plus ${usd(t.judgeApiUsdStd)} for the quality judge)` : ''}; ${t.toComeRuns?.length === 1 ? 'the one run still to come is' : `the ${t.toComeRuns?.length ?? ''} runs still to come are`} predicted at ${usd(t.toComeApiUsdStd)}, about ${usd(t.expectedTotalApiUsdStd)} in all${guard ? `, under the ${usd(guard)} stop` : ''}.${meterLine(g)}`;
     }
     const spent = RUNS.filter((r) => r.stage === PLAN.stage).reduce((a, r) => a + (r.cost?.apiUsdStd || 0), 0);
     const doneKeys = new Set(RUNS.filter((r) => r.stage === PLAN.stage && !r.excluded).map((r) => `${r.scenario}|${r.variantKey || vkey(r.variant || {}, r.baseline)}|${r.seed ?? 1}`));
     const next = PLAN.runs.find((p) => !doneKeys.has(`${p.scenario || PLAN.scenario}|${p.variantKey}|${p.repetition}`));
     const stop = g.stopAtApiUsdStd;
-    return `Spent so far about ${usd(spent)} at API prices${stop ? ` of the ${usd(stop)} stop` : ''}${next?.predicted?.apiUsdStd != null ? `; the next run is predicted at ${usd(next.predicted.apiUsdStd)}` : ''}.${stop ? ` A run starts only if what is spent plus its prediction stays under ${usd(stop)}${g.stopAtWeeklyMeterRisePts ? `, and the stage stops if the weekly Claude meter rises ${g.stopAtWeeklyMeterRisePts} points` : ''}.` : ''}`;
+    const toCome = allDone ? null : t?.toComeApiUsdStd;
+    if (allDone) return `Spent ${usd(spent)} at API prices${stop ? ` (the stop was ${usd(stop)})` : ''}.`;
+    return `Spent so far about ${usd(spent)} at API prices${stop ? ` of the ${usd(stop)} stop` : ''}${toCome != null ? `; the runs still to come are predicted at ${usd(toCome)}` : next?.predicted?.apiUsdStd != null ? `; the next run is predicted at ${usd(next.predicted.apiUsdStd)}` : ''}.${stop ? ` A run starts only if what is spent plus its prediction stays under ${usd(stop)}.` : ''}${meterLine(g)}`;
   }
+  const meterLine = (g) => (g.stopAtWeeklyMeterPct ? ` It stops if the weekly Claude meter (account-wide) reaches ${g.stopAtWeeklyMeterPct}%.` : g.stopAtWeeklyMeterRisePts ? ` The stage also stops if the weekly Claude meter rises ${g.stopAtWeeklyMeterRisePts} points.` : '');
   // The simulation's picks that are not in the approved list (it was recalibrated after approval).
   function favouritesView() {
-    const inPlan = new Set((PLAN?.runs || []).map((p) => p.variantKey));
+    const inPlan = new Set(PLANS.flatMap((pl) => pl.runs.map((p) => p.variantKey)));
     const fav = (STAGE0?.picks || []).filter((p) => !inPlan.has(p.key));
     if (!fav.length) return '';
     const si = (STAGE0.scenarios || []).findIndex((x) => x.id === st.scenario);
@@ -208,7 +217,10 @@
   }
   // Without an approved plan: the simulation's picks as proposals.
   function picksView() {
-    if (PLAN?.runs?.length) return planView();
+    if (PLANS.length) {
+      const cur = PLANS[PLANS.length - 1];
+      return `<section class="sec" id="plan">${planView(cur, true)}${PLANS.slice(0, -1).reverse().map((pl) => planView(pl, false)).join('')}${favouritesView()}</section>`;
+    }
     if (!STAGE0?.picks?.length) return '';
     const si = (STAGE0.scenarios || []).findIndex((x) => x.id === st.scenario);
     return `<section class="sec" id="picks"><h2>What the simulation suggests</h2>
@@ -226,6 +238,8 @@
   }
 
   // ---- 2. results -------------------------------------------------------------------------------
+  // Time to compare = measured time minus a known platform stall (qb6's timings.stallS, reason in notes).
+  const runS = (r) => (r.timings?.wallS == null ? null : r.timings.wallS - (r.timings.stallS || 0));
   function groups() {
     const by = new Map();
     for (const r of RUNS.filter((x) => x.scenario === st.scenario && x.status !== 'failed' && !x.excluded)) {
@@ -234,7 +248,7 @@
       by.get(k).runs.push(r);
     }
     return [...by.values()].map((g) => ({ ...g,
-      wallS: med(g.runs.map((r) => r.timings?.wallS)), quality: med(g.runs.map((r) => r.quality?.score)), qTruly: med(g.runs.map((r) => r.quality?.scoreTrulyHidden)), usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
+      wallS: med(g.runs.map(runS)), stallS: g.runs.reduce((a, r) => a + (r.timings?.stallS || 0), 0), quality: med(g.runs.map((r) => r.quality?.score)), qTruly: med(g.runs.map((r) => r.quality?.scoreTrulyHidden)), usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
       pWallS: med(g.runs.map((r) => r.predicted?.wallS)), pQuality: med(g.runs.map((r) => r.predicted?.quality)), stage: Math.max(...g.runs.map((r) => r.stage || 0)) }));
   }
   function scatter(gs) {
@@ -286,7 +300,7 @@
     if (others.length) parts.push(`<p class="dim">Also: ${others.map((g) => `${esc(plain(g.variant, g.baseline))} ${mins(g.wallS)}${to(g)}, ${Math.round(g.quality)}/100, ${usd(g.usd)}`).join('; ')}.</p>`);
     // How far off the simulation was on these runs (it is recalibrated from them).
     const rs = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded && r.predicted?.wallS && r.timings?.wallS && r.cost?.apiUsdStd);
-    const tR = med(rs.map((r) => r.predicted.wallS / r.timings.wallS)), cR = med(rs.map((r) => r.predicted.apiUsdStd / r.cost.apiUsdStd));
+    const tR = med(rs.map((r) => r.predicted.wallS / runS(r))), cR = med(rs.map((r) => r.predicted.apiUsdStd / r.cost.apiUsdStd));
     if (rs.length && (tR > 1.5 || tR < 0.67 || cR > 1.5 || cR < 0.67)) parts.push(`<p class="small dim">On these runs the simulation was off: it expected about ${tR.toFixed(1)}× the time and ${cR.toFixed(1)}× the cost that the runs took. It is recalibrated from real runs before the next ones.</p>`);
     return `<div class="cmp">${parts.join('')}</div>`;
   }
@@ -308,22 +322,25 @@
         c.breaksOnMain ? `${c.breaksOnMain} broke main` : null, q.hiddenTotal ? `${q.hiddenPass}/${q.hiddenTotal} hidden tests` : null,
         q.trulyHiddenTotal ? `${q.trulyHiddenPass}/${q.trulyHiddenTotal} checks it could not look up` : null].filter(Boolean).join(', ');
       const status = r.status && r.status !== 'done' ? ` <span class="warn">${esc({ 'stopped-budget': 'stopped: budget', timeout: 'timed out', failed: 'failed' }[r.status] || r.status)}</span>` : '';
+      const stall = r.timings?.stallS ? ` <span class="dim">(measured ${mins(r.timings.wallS)}, of which ${mins(r.timings.stallS)} was a platform stall, not the setup)</span>` : '';
       const th = q.scoreTrulyHidden != null ? ` <span class="dim">(${Math.round(q.scoreTrulyHidden)}/100 on the checks it could not look up)</span>` : '';
-      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(r.timings?.wallS)}, ${sc100(q.score)}/100${th}, ${usd(r.cost?.apiUsdStd)}</span>
-        <span class="rw2">${esc(words)}.</span>
+      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(runS(r))}${stall}, ${sc100(q.score)}/100${th}, ${usd(r.cost?.apiUsdStd)}</span>
+        <span class="rw2">${esc(words)}.</span>${r.notes ? `<span class="rw2">${esc(r.notes)}</span>` : ''}
         <span class="lk">${r.links?.replay ? `<a href="${esc(r.links.replay)}">Watch the replay</a>` : ''}${r.links?.app ? `<a href="${esc(r.links.app)}" target="_blank" rel="noopener">The app it built</a>` : ''}${r.links?.repo ? `<a href="${esc(r.links.repo)}">The code</a>` : ''}</span></li>`;
     }).join('');
     return `<div class="det"><p class="small">${esc(about)}</p><ul class="runs">${runs}</ul></div>`;
   }
   function resultsView() {
     const gs = groups();
+    const stalls = gs.filter((g) => g.stallS);
+    const stallNote = stalls.length ? `<p class="small dim">Times leave out known platform stalls (${stalls.map((g) => `${mins(g.stallS)} in ${esc(plain(g.variant, g.baseline))}`).join('; ')}); each run shows its measured time.</p>` : '';
     const truly = gs.some((g) => g.qTruly != null)
       ? '<p class="small dim">For the TypeScript port, the number in brackets is the score on checks the agents could not have found in the original library (type cases and structure), so copying the original does not earn them.</p>' : '';
     const n = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded).length;
     const ex = RUNS.filter((r) => r.scenario === st.scenario && r.excluded);
     const exHtml = ex.length ? `<h3 class="fh">Not counted</h3><ul class="runs ex">${ex.map((r) => `<li><span class="rn">${esc(plain(r.variant || {}, r.baseline))}, run ${r.seed ?? ''}</span><span class="rw2">${esc(r.excluded)}</span>${r.links?.replay ? `<span class="lk"><a href="${esc(r.links.replay)}">Watch the replay</a></span>` : ''}</li>`).join('')}</ul>` : '';
     return `<section class="sec" id="results"><h2>Results so far</h2>
-      ${n ? `<p class="cap">${n} real run${n === 1 ? '' : 's'} of “${esc(scenOf(st.scenario).title)}”, ${gs.length} setup${gs.length === 1 ? '' : 's'}. Tap a dot or a row for its runs, the replay and the app it built.</p>${compare(gs)}<p class="small dim">${anchors()}</p>${scatter(gs)}${list(gs)}${truly}${exHtml}`
+      ${n ? `<p class="cap">${n} real run${n === 1 ? '' : 's'} of “${esc(scenOf(st.scenario).title)}”, ${gs.length} setup${gs.length === 1 ? '' : 's'}. Tap a dot or a row for its runs, the replay and the app it built.</p>${compare(gs)}<p class="small dim">${anchors()}</p>${scatter(gs)}${stallNote}${list(gs)}${truly}${exHtml}`
         : `<p class="dim">No real runs of this job yet. The simulation picks the setups worth running; they appear here as they finish.</p>`}
     </section>`;
   }
@@ -334,7 +351,7 @@
     const NAMES = { 0: 'Simulation', 1: 'Small real runs', 2: 'More agents, more repetitions', 3: 'At scale' };
     return `<section class="sec" id="funnel"><h2>How setups are picked</h2>
       <p class="cap">Every combination is simulated for free; only the best few are run for real, each stage with its own budget.</p>
-      <ol class="funnel">${list.sort((a, b) => a.stage - b.stage).map((s) => `<li><b>Stage ${s.stage}: ${esc(NAMES[s.stage] || '')}</b><span>${s.setups != null ? Number(s.setups).toLocaleString('en-US') : '?'} setup${s.setups === 1 ? '' : 's'}${s.runs != null && s.runs !== s.setups ? `, ${Number(s.runs).toLocaleString('en-US')} ${s.stage === 0 ? 'simulated runs' : 'runs'}` : ''}${s.kept != null ? `; ${s.kept} kept` : ''}${s.apiUsdStd ? `; ${usd(s.apiUsdStd)} at API prices` : ''}${s.usdReal ? `; ${usd(s.usdReal)} real spend` : ''}${s.quotaPctAccount ? `; ${s.quotaPctAccount}% of the weekly Claude quota (account-wide meter)` : ''}</span>${s.notes ? `<span class="dim">${esc(s.notes)}</span>` : ''}</li>`).join('')}</ol></section>`;
+      <ol class="funnel">${list.sort((a, b) => a.stage - b.stage).map((s) => `<li><b>Stage ${s.stage}: ${esc(NAMES[s.stage] || '')}</b><span>${[s.setups != null ? `${Number(s.setups).toLocaleString('en-US')} setup${s.setups === 1 ? '' : 's'}` : null, s.runs != null && s.runs !== s.setups ? `${Number(s.runs).toLocaleString('en-US')} ${s.stage === 0 ? 'simulated runs' : 'runs'}` : null].filter(Boolean).join(', ')}${s.kept != null ? `; ${s.kept} kept` : ''}${s.apiUsdStd ? `; ${usd(s.apiUsdStd)} at API prices` : ''}${s.usdReal ? `; ${usd(s.usdReal)} real spend` : ''}${s.quotaPctAccount ? `; ${s.quotaPctAccount}% of the weekly Claude quota (account-wide meter)` : ''}</span>${s.notes ? `<span class="dim">${esc(s.notes)}</span>` : ''}</li>`).join('')}</ol></section>`;
   }
 
   // ---- render, events ----------------------------------------------------------------------------
