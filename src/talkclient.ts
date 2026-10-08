@@ -394,7 +394,9 @@ function api(path, body) {
 
 // ---- The one entry point: a sentence --------------------------------------
 var preview = null;   // { text, cmd } from interim speech
+var lastText = '';
 function submit(text) {
+  lastText = String(text || '');
   trace('said', { text: text, spoken: lastSpoken, engine: lastSpoken ? S.engine : 'typed' });
   if (busy) return;
   busy = true; unmark(); offerOff();
@@ -460,7 +462,9 @@ function whatsGoingOn(text) {
 function changeRequest(c) {
   var parts = String(c.slug || '').split('.'), owner = parts[0], name = parts.slice(1).join('.');
   if (!owner || !name) { add('note', 'Which project? Say its name.'); return done(); }
-  var text = c.text;
+  // The whole request: the server decides on the first 300 characters only, so a long order (qb8's 900-character
+  // café list) would otherwise reach the router cut short.
+  var text = lastText && c.text && lastText.indexOf(String(c.text).slice(0, 60)) === 0 ? lastText : c.text;
   if (!c.mine) {
     add('ai', owner + '/' + name + ' is not yours. Fork it to get your own copy, then I can send the change to its agents.');
     offerOn('Fork ' + owner + '/' + name + '?', function () {

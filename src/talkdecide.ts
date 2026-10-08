@@ -198,6 +198,13 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
   const wc = answers.wants_change?.noul ?? 0;
   const changeP = answers.action?.probabilities?.change ?? 0;
   if (action.choice !== 'change' && !['status', 'explain', 'type', 'code'].includes(action.choice) && (wc >= 0.75 || (wc >= 0.55 && changeP >= 0.15))) action = { choice: 'change', p: wc };
+  // On a project page, an order that starts with a build verb is a change to this project (vocabulary in code):
+  // qb8's "Build these 12 café features at once, …" on /p/eyal/cafe-crew came out as "open a page" (p 0.42), and
+  // its Go tap navigated instead of sending. "Opening" the project the page already shows is never the answer
+  // when the sentence asks for something different either.
+  const onProject = currentSlug(s.path);
+  const order = /^\s*(please\s+|can you\s+|could you\s+|i want you to\s+|let'?s\s+)?(build|add|make|create|implement|fix|change|remove|delete|rename|give|put|update|improve|redesign|replace|write|refactor|start|turn)\b/i.test(utterance);
+  if (onProject && action.choice !== 'change' && !['status', 'explain', 'code', 'list'].includes(action.choice) && ((order && wc >= 0.4) || (action.choice === 'project' && wc >= 0.5))) action = { choice: 'change', p: Math.max(wc, action.p ?? 0) };
   // "Plan how to…", "how would we…", "why does…" ask for an answer about the code, not an edit (vocabulary in code).
   if (action.choice === 'change' && /^\s*(plan|how (would|should|could|do) (we|i|you)|why\b|what would it take|should (we|i))/i.test(utterance)) action = { choice: 'code', p: action.p };
   const base: Cmd = { mode: mode.choice, modeP: mode.p, op: 'none', p: action.p, risky: answers.risky?.noul ?? null, complete: answers.complete?.noul ?? null };
