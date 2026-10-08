@@ -79,7 +79,8 @@ type Meta = {
   demoForks?: string[];                 // every fork a scripted agent made (deleted on reset)
   failStreak?: number;
   demoBusyNext?: number;                // busy mode: the next generated task's index
-  landings?: [number, number][];
+  landings?: [number, number, number?][];   // [landedAt, ask-to-land s, replayed 0/1], last 2000: stats outlive pruned records
+  bounces?: number[];                       // times of the last 2000 bounces (same reason)
   outbox?: { to: string; text: string; tries: number; at: number }[];   // messages to real agents, sent from the alarm        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
 };
 
@@ -469,7 +470,7 @@ export class Landing extends DurableObject<Env> {
           if (how === 'replayed-handler') this.#ev(c, 'replayed', (rc.handled || []).map((h) => `${h.path} (${h.handler})`).join(', ') || 'on the latest code');
           if (how === 'replayed-llm' || how === 'lead') this.#ev(c, 'replayed', how === 'lead' ? `by ${c.lead || 'the lead'} on the latest code` : `by ${rc.llm?.model || 'a model'} on the latest code`);
           c.state = 'landed'; c.landedAt = Date.now(); delete c.redo;
-          (m.landings ||= []).push([c.landedAt, Math.round((c.landedAt - c.createdAt) / 1000)]);
+          (m.landings ||= []).push([c.landedAt, Math.round((c.landedAt - c.createdAt) / 1000), how && how !== 'merged' ? 1 : 0]);
           if (m.landings.length > 2000) m.landings.splice(0, m.landings.length - 2000);
           c.landing = { how, conflicts: rc.conflicts, diff: rc.diff || [], commit: rc.commit, mainCommit: r.mainAfter || null,
             ...(rc.reviewedDiff ? { reviewedDiff: rc.reviewedDiff } : {}),
@@ -478,6 +479,7 @@ export class Landing extends DurableObject<Env> {
           landed++;
         } else if (rc.bounced) {
           c.state = 'bounced';
+          (m.bounces ||= []).push(Date.now()); if (m.bounces.length > 2000) m.bounces.splice(0, m.bounces.length - 2000);
           c.landing = { how: null, conflicts: [], diff: [], commit: null, mainCommit: null };
           this.#ev(c, 'bounced', (rc.checks?.failures || []).slice(0, 2).join('; ') || rc.why || 'checks failed');
         } else if (rc.unhandled?.length || rc.conflicts.length) {
@@ -631,7 +633,6 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     }
     const today = (m.landings || []).filter(([t]) => now - t < DAY);
     const lat = today.map(([, s]) => s).sort((a, b) => a - b);
-    const recentEv = (w: What) => changes.filter((c) => c.events.some((e) => e.what === w && now - e.t < DAY)).length;
     return {
       now, mode: m.demo ? 'demo' : 'live', code: (this.env.CF_VERSION_METADATA?.id || '').slice(0, 8),
       demo: m.demo || m.flags.publicWatch ? { ...(m.demo || { running: false, agents: 0, speed: 1, startedAt: 0, endsAt: 0 }),
@@ -645,7 +646,9 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       changes: changes.slice().reverse().map(({ remote, queuedAt, tries, redo, task, choreTaken, ...c }) => c),
       areas: [...areas.values()].sort((a, b) => (b.working + b.claimed) - (a.working + a.claimed) || a.path.localeCompare(b.path)),
       stats: { landedToday: today.length, inQueue: m.waiting.length + (m.running ? (trains.find((t) => t.id === m.running)?.changes.length || 0) : 0),
-        bounced: recentEv('bounced'), replayed: recentEv('replayed'), medianAskToLandS: lat.length ? Math.round(lat[Math.floor(lat.length / 2)]) : null },
+        bounced: (m.bounces || []).filter((t) => now - t < DAY).length, replayed: today.filter((x) => x[2]).length,
+        // ^ running counters, not the newest 150 records (replayed went DOWN mid-run, qb7 2026-10-08)
+        medianAskToLandS: lat.length ? Math.round(lat[Math.floor(lat.length / 2)]) : null },
     };
   }
 
@@ -718,7 +721,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     const forks = m.demoForks || [];
     for (const id of m.order) await this.ctx.storage.delete(`c:${id}`);
     for (const id of m.trains) await this.ctx.storage.delete(`t:${id}`);
-    Object.assign(m, { waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [] });
+    Object.assign(m, { waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [], bounces: [] });
     const project = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
     using repo = await this.env.ARTIFACTS.get(project!.repo);
     const head = (await repo.log({ limit: 1 }))[0]?.hash || null;
@@ -750,7 +753,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     if (m.running) throw new Error('a train is running');
     for (const id of m.order) await this.ctx.storage.delete(`c:${id}`);
     for (const id of m.trains) await this.ctx.storage.delete(`t:${id}`);
-    this.#meta = { ...m, waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [], demo: m.demo && !m.demo.running ? null : m.demo };
+    this.#meta = { ...m, waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [], bounces: [], demo: m.demo && !m.demo.running ? null : m.demo };
     await this.#saveMeta();
   }
 
