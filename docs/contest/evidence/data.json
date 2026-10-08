@@ -271,7 +271,7 @@
   ]
  },
  "swarm": {
-  "source": "qb4's migration swarm, mean of seeds 1-3 (~/.local/share/qbsim-bench/swarm.jsonl; sim/README.md 'A migration swarm'; bundles public/sim/runs/swarm-*.json are seed 1)",
+  "source": "sim/README.md 'A migration swarm' (2e47a00): qb4's migration swarm, mean of seeds 1-3; bundles public/sim/runs/swarm-*.json are seed 1",
   "task": "move Hono's src/utils/ to src/lib/: 140 tasks (26 moves, 87 import rewrites, 27 shim deletions), real git, tsgo + tests on every change",
   "usefulH": 48,
   "policies": [
@@ -284,7 +284,7 @@
    "10": [
     [
      14.3,
-     90.5,
+     90,
      0
     ],
     [

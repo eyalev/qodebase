@@ -12,7 +12,7 @@ node docs/contest/evidence/build.mjs --png
 | `fastsim-100k` | At 100,000 agents, landing by intent moved 3.2× more changes than agent review | sim/README.md (k100 table) |
 | `realcode-500` | Real code, 500 agents: land by intent landed 3.5× more than review-then-merge | public/sim/runs/*-500.json |
 | `hono-ordering` | With 100 pull requests open at once, half had to wait for another. Git conflicts: none. | sim/hono/replay.mjs final run (commit 395cbb5: 16/40/48%, 0 conflicts at every wave; the earlier 1-3 came from an ordering bug). Says "almost none" by itself if any wave has a conflict |
-| `swarm-migration` | Free-for-all wasted 91 agent-hours; knowing the order finished in less than half the time (10 and 100 agents; replaces bun-swarm in the video) | qb4's migration swarm, mean of seeds 1-3 (~/.local/share/qbsim-bench/swarm.jsonl, sim/README.md) |
+| `swarm-migration` | Free-for-all wasted 90 agent-hours; knowing the order finished in less than half the time (10 and 100 agents; replaces bun-swarm in the video) | qb4's migration swarm, mean of seeds 1-3 (~/.local/share/qbsim-bench/swarm.jsonl, sim/README.md) |
 | `bun-swarm` | Bun's 64 agents worked mostly on one shared branch, files split between them | sim/bun/calibration.json |
 | `bun-merges` | Real agents: 1 merge in 6 had conflicts; agents wrote merged text for 68% of those files (not in the video) | sim/bun/calibration.json .merge_replay |
 | `cloudflare-500` | 500 agents on Cloudflare: git held up, our single merge queue was the limit | public/sim/runs/cloud-500.json, sim/cloud/README.md |
