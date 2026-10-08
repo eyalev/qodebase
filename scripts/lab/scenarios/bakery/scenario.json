@@ -1,0 +1,30 @@
+{
+ "id": "bakery",
+ "title": "Build a bakery website from scratch",
+ "prompt": "Build a website for a small bakery: menu, opening hours, online orders.",
+ "promptVersion": "1",
+ "scenarioVersion": "1",
+ "about": "A whole small product from an empty repo: menu with allergens and stock, ordering into 15-minute pickup slots, cancelling, Portuguese pages, an owner's admin area with CSV export, and a JSON API. Sized so one agent needs a long time and many agents can split it.",
+ "starter": "scripts/lab/scenarios/bakery/starter (a product brief in README.md, a stub server, one smoke test)",
+ "check": "node --test",
+ "hiddenTotal": 26,
+ "profile": {
+  "expectedTasks": [
+   18,
+   35
+  ],
+  "dependencyDepth": 3,
+  "dependencyChain": "storage + seed data -> API routes and validation -> pages and admin pages -> tests",
+  "sharedFileShare": 0.5,
+  "sharedFiles": [
+   "server.js",
+   "README.md",
+   "package.json",
+   "style.css",
+   "the page layout / translations"
+  ],
+  "vagueness": "medium",
+  "duplicateIntentRisk": 0.15,
+  "note": "first guesses by qb5; greenfield: all work starts from one stub file, so early tasks collide on server.js unless the plan sets up structure first"
+ }
+}

@@ -15,6 +15,7 @@ const HIDDEN = process.env.LAB_HIDDEN_DIR || join(homedir(), '<lab-hidden dir>')
 const MODEL = process.env.LAB_JUDGE_MODEL || 'sonnet';
 const RUBRIC = '1';
 const MAX_DIFF = 60_000;
+const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
 const diff = (a, b) => spawnSync('git', ['diff', '--no-index', '--no-color', '--', a, b], { encoding: 'utf8', maxBuffer: 64 << 20 }).stdout || '';
 const clip = (s, n) => (s.length > n ? s.slice(0, n) + `\n… (${s.length - n} more characters cut)` : s);
@@ -29,19 +30,23 @@ async function screenshots(dir, routes, out) {
   });
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
   const port = srv.address().port;
+  const shots = await shoot(routes.map((r) => ({ path: r.path, url: `http://127.0.0.1:${port}/#${r.path}` })), out);
+  srv.close();
+  return shots;
+}
+async function shoot(list, out) {
   const chrome = execFileSync('bash', ['-c', 'ls -d ~/.cache/ms-playwright/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell | sort -V | tail -1'], { encoding: 'utf8' }).trim();
   const shots = [];
-  for (const [i, r] of routes.entries()) {
+  for (const [i, r] of list.entries()) {
     const file = join(out, `page-${i}.png`);
     // async: the server answers on this event loop, so the browser must not block it
     await new Promise((resolve) => {
       const c = spawnSyncAsync(chrome, ['--disable-gpu', '--hide-scrollbars', '--window-size=390,1200', '--force-device-scale-factor=1',
-        `--user-data-dir=${join(out, 'profile')}`, `--screenshot=${file}`, '--virtual-time-budget=3000', `http://127.0.0.1:${port}/#${r.path}`], resolve);
+        `--user-data-dir=${join(out, 'profile')}`, `--screenshot=${file}`, '--virtual-time-budget=3000', r.url], resolve);
       void c;
     });
     if (existsSync(file)) shots.push({ path: r.path, file });
   }
-  srv.close();
   return shots;
 }
 function spawnSyncAsync(cmd, a, done) {
@@ -61,6 +66,40 @@ export async function judge({ scenario, dir }) {
     images = await screenshots(dir, routes, work);
     material = `## The change (diff against the starting site)\n${clip(d, MAX_DIFF)}\n\n## Every page, rendered\n${clip(pages, 30_000)}\n\n## Screenshots at 390 px\n` +
       images.map((s) => `- ${s.path}: ${s.file}`).join('\n');
+  } else if (scenario === 'bakery') {
+    // run it: fresh data, one order so the pages have something to show
+    const { spawn } = await import('node:child_process');
+    const net = await import('node:net');
+    const port = await new Promise((r) => { const s = net.createServer(); s.listen(0, () => { const p = s.address().port; s.close(() => r(p)); }); });
+    const base = `http://127.0.0.1:${port}`, pw = 'judge-pw', auth = 'Basic ' + Buffer.from('admin:' + pw).toString('base64');
+    const data = join(work, 'data'); mkdirSync(data, { recursive: true });
+    const proc = spawn('node', ['server.js'], { cwd: dir, env: { ...process.env, PORT: String(port), DATA_DIR: data, ADMIN_PASSWORD: pw }, stdio: 'ignore' });
+    let up = false;
+    for (let i = 0; i < 100 && !up; i++) { try { await fetch(base + '/'); up = true; } catch { await new Promise((r) => setTimeout(r, 100)); } }
+    let pages = '', orderId = null;
+    if (up) {
+      try {
+        const menu = await (await fetch(base + '/api/menu')).json();
+        const hours = await (await fetch(base + '/api/hours')).json();
+        const open = hours.find((h) => !h.closed);
+        const d = new Date(Date.now() + 86400_000 * (1 + ((DAYS.indexOf(open.day) - ((new Date().getDay() + 6) % 7) + 6) % 7)));
+        const o = await (await fetch(base + '/api/orders', { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: 'Inês Costa', phone: '+351 913 456 789', pickupAt: `${d.toISOString().slice(0, 10)}T${open.open.slice(0, 2) === '23' ? open.open : String(+open.open.slice(0, 2) + 1).padStart(2, '0') + open.open.slice(2)}`,
+            items: menu.filter((i) => i.available).slice(0, 2).map((i) => ({ id: i.id, qty: 2 })) }) })).json();
+        orderId = o?.id ?? null;
+      } catch {}
+      const paths = ['/', '/menu', '/order', ...(orderId != null ? [`/orders/${orderId}`] : [])];
+      for (const p of [...paths, '/admin', '/admin/menu', '/admin/hours']) {
+        const r = await fetch(base + p, { headers: p.startsWith('/admin') ? { authorization: auth } : {} });
+        pages += `### ${p} (${r.status})\n${(await r.text()).trim()}\n\n`;
+      }
+      images = await shoot(paths.map((p) => ({ path: p, url: base + p })), work);
+    }
+    proc.kill();
+    const tree = spawnSync('bash', ['-c', "find . -type f -not -path './node_modules/*' -not -path './.git/*' -not -path './__hidden__/*' | sort | xargs wc -l | tail -40"], { cwd: dir, encoding: 'utf8' }).stdout;
+    material = `## The product brief (README.md)\n${clip(readFileSync(join(dir, 'README.md'), 'utf8'), 8000)}\n\n## Files (lines)\n${tree}\n` +
+      (up ? `## Every page, rendered (admin pages with the password)\n${clip(pages, 40_000)}\n## Screenshots at 390 px\n` + images.map((s) => `- ${s.path}: ${s.file}`).join('\n')
+        : '## The server did not start (node server.js), so there are no pages to show.');
   } else if (scenario === 'port-ts') {
     const SAMPLE = ['index', 'lib/util/merge', 'lib/util/toString', 'lib/isEmail', 'lib/isURL', 'lib/isFQDN', 'lib/isIP', 'lib/isIn', 'lib/contains', 'lib/isAlpha', 'lib/toBoolean'];
     material = '## Sample of the port (original .js -> ported .ts)\n' + SAMPLE.map((m) => {

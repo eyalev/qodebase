@@ -81,6 +81,26 @@ try {
     const keepShare = keep.length ? keep.filter((r) => r.ok).length / keep.length : 0;
     result.hiddenPass = Math.floor(fam.filter((r) => r.ok).length * keepShare);
     result.failed = [...fam.filter((r) => !r.ok).map((r) => r.name), ...(fam.length ? [] : ['family: all (did not run)'])];
+  } else if (SCENARIO === 'bakery') {
+    // floor: every file parses; own tests pass AND there are at least 5 of them (greenfield:
+    // writing tests is part of the job); build = the server starts and serves / and the menu
+    const js = files(W, '.js').concat(files(W, '.mjs'));
+    const bad = js.filter((f) => run('node', ['--check', f], W).code !== 0);
+    result.typecheck = bad.length === 0;
+    if (bad.length) notes.push(`syntax errors in ${bad.map((f) => relative(W, f)).join(', ')}`);
+    const own = run('node', ['--test', '--test-reporter=tap'], W);
+    const ownCount = +(own.out.match(/^# tests (\d+)/m) || [])[1] || 0;
+    result.ownTests = own.code === 0 && ownCount >= 5;
+    result.ownTestCount = ownCount;
+    if (own.code === 0 && ownCount < 5) notes.push(`only ${ownCount} own tests`);
+    const t = run('node', ['--test', '--test-reporter=tap', join(HIDDEN, 'bakery/acceptance.test.mjs')], W, { LAB_REPO: W });
+    const res = tap(t.out, 0).filter((r) => r.name.startsWith('bakery:'));
+    result.build = !/server did not start/.test(t.out) && res.length > 0 && res.slice(0, 2).some((r) => r.ok);
+    if (!result.build) notes.push('the server did not start or serves no menu');
+    const total = (readFileSync(join(HIDDEN, 'bakery/acceptance.test.mjs'), 'utf8').match(/^test\(['"]bakery:/gm) || []).length;
+    result.hiddenTotal = total;
+    result.hiddenPass = res.filter((r) => r.ok).length;
+    result.failed = [...res.filter((r) => !r.ok).map((r) => r.name), ...(res.length < total ? [`bakery: ${total - res.length} did not run`] : [])];
   } else if (SCENARIO === 'port-ts') {
     const index = join(W, 'src/index.ts');
     const ported = existsSync(index);

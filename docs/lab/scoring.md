@@ -21,6 +21,7 @@ so hidden tests, judge rubrics and reference solutions never come here or into a
 | scenario | hidden | floor | judge |
 |---|---|---|---|
 | cafe-family | 7 family tests on the rendered pages (kids' menu, facilities, allergens, reachable, bookings, home, children's books), scaled by the share of 7 "nothing broken" checks still passing | build = the 7 "nothing broken" checks; typecheck = every file parses; own tests | Sonnet, rubric with 4 criteria, 390 px screenshots of every page |
+| bakery | 26 black-box tests over HTTP against the brief in the starter's README (menu, hours, orders + validation, slots and capacity, stock, cancelling, admin API + pages, Portuguese pages, CSV, escaping, persistence) | build = the server starts and serves the menu; typecheck = every file parses; own tests pass AND at least 5 of them | Sonnet, rubric with 4 criteria (customer, owner, craft, code), 390 px screenshots of the running site |
 | port-ts | 125 upstream behaviour tests (against src/index.ts only) + 29 type cases (19 must compile, 10 must be errors, i.e. not `any`) + 4 structure checks | build = src/index.ts loads; typecheck = strict tsc on src; own tests | Sonnet, rubric with 4 criteria, diff of 11 sample modules |
 
 **port-ts reports two numbers** (manager, 2026-10-08): `score` (all 158 hidden) and
@@ -30,11 +31,11 @@ upstream. Show them side by side; the runner notes whether a box fetched validat
 
 Validated 2026-10-08 before any real run:
 
-| | cafe-family | port-ts |
-|---|---|---|
-| untouched starter | 25 | 8.3 |
-| reference with one original page removed | 81 | |
-| reference solution | 94 (judge 7) | 92 (158/158, judge 6) |
+| | cafe-family | port-ts | bakery |
+|---|---|---|---|
+| untouched starter | 25 | 8.3 | 8.3 |
+| reference with one original page removed | 81 | | |
+| reference solution | 94 (judge 7) | 92 (158/158, judge 6) | 96 (26/26, judge 8) |
 
 Judge cost: ~$0.25 API-equivalent per call (Sonnet, subscription), ~11 s; counted in the
 lab budget as cost.byRole.judge, not in the variant's cost.
@@ -44,3 +45,12 @@ Corner Café (the demo seed with its 14 tasks); port-ts = PLAN scenario 3 on 48 
 validator.js 13.12.0 (MIT, 23.7k stars, plain JS, typings only on DefinitelyTyped, so no
 official TypeScript version to copy; uuid was dropped for that reason). `profile` in each
 scenario.json is qb4's input for the sim (first guesses until stage 1 measures them).
+
+**bakery** (PLAN scenario 1, added 2026-10-08 for stage 2): greenfield. The one-line prompt
+plus a product brief in the starter's README (stack, pages, JSON API) so that quality can be
+tested from outside. Sized for many agents: one Opus agent (a subagent, not a qodebase box)
+needed ~13 minutes for the reference (6.5 min for the first brief, 6.7 more after it was
+widened with allergens, slots, stock, cancelling, Portuguese pages and CSV), 2,355 lines.
+
+**Judge noise:** the same café reference got 7 and then 6 from the judge, so one judge
+call is worth about ±1 point (±2 quality points). Compare variants on several runs, not one.
