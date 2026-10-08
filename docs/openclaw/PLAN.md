@@ -29,10 +29,13 @@ star or open anything on their repo or ClawSweeper.
       readiness vs merge authority), each tied to what their data shows.
 
 ## Phase 2 — small real tests (ask the manager first; cheap models)
-- [ ] (added, no model) Do PR-scoped tests catch the hourly suite's breaks? Map new persistent
+- [x] (added, no model) Do PR-scoped tests catch the hourly suite's breaks? Map new persistent
       shard failures to that hour's commits/files. Decides whether scoped-union trains are real.
-- [ ] Triage lane: classify N=200 recent issues (close / duplicate of X / needs decision / fix) with
+      _Done 2026-10-08: 31/40 (78%, CI 62-88%) had a same-area change that hour; 254 requests._
+- [x] Triage lane: classify N=200 recent issues (close / duplicate of X / needs decision / fix) with
       Jev, Clef-flash and Haiku 5.5; compare with ClawSweeper's labels + actual outcomes as ground truth.
+      _Done 2026-10-08: Haiku 50% (43-57), Jev 40%, Clef-flash 36% vs ClawSweeper 94% (not independent);
+      text-only classifiers are no triage lane; next = a triage agent with repo + issue index. ~$0.09._
 - [ ] Fix lane: 10 small closed issues with exactly one linked merged PR that adds a failing test,
       pinned to the fix's parent commit, fixed by Haiku agents in qodebase (lab runner from qb6);
       score fail->pass, diff vs the real fix (blinded judge), time, cost.

@@ -79,8 +79,8 @@ Read as:
   cost and latency; it pays with a full suite that is red most hours.
 - **A merge queue only competes if a train runs the union of its changes' scoped tests**, not the full suite:
   then ~1.6x landing CI (still ~5% of their total CI) and ~20 min median wait buy a main that never takes a
-  caught break. Whether scoped tests catch the breaks the hourly suite finds is **unknown** (those breaks escaped
-  PR-scoped CI once already) — the key phase-2 question.
+  caught break. Phase 2a (below): for ~78% (CI 62–88%) of the hourly suite's breaks a change in the failing test's area
+  landed that hour, so scoped trains would plausibly catch most of them; the rest need land-then-verify.
 - **Land-then-verify** (their way + flaky-shard retry + bisect only failing shards + automatic revert) costs about
   what they pay today and keeps zero latency, but only cuts red hours ~20%: detection waits for the next run.
 - Not modeled: interaction breaks a train causes that no single PR would (handled the same as "bad"), runner
@@ -102,8 +102,53 @@ Read as:
    explicit "land despite red shard X" with who and why, not a silent bypass.
 7. **Evidence gate per change** (their `proof:` labels): attach to the change record, not a comment.
 
-## What phase 2 should test (needs the manager's go)
-- Do PR-scoped tests catch the hourly suite's breaks? Map each new persistent shard failure to the commits of that
-  hour and their files (needs job logs or shard→path map; still no model).
-- Duplicate rate from ClawSweeper's comments (text, read-only), then the triage lane vs ClawSweeper labels.
+## Phase 2a: would a train's scoped tests catch their breaks? (no model, 2026-10-08)
+
+`sim/openclaw/breaks.mjs`: 40 of the 202 new persistent shard failures (spread over the week, one per hour
+first), read the failing job's log for the failing test file (254 read-only REST requests), then looked at the
+commits that landed on main in that hour. Data: `data/breaks.jsonl`, `data/breaks-summary.json`.
+
+| verdict | breaks | |
+|---|---|---|
+| a change in the failing test's area landed that hour | **31 / 40 (78%, 95% CI 62–88%)** | 27 of 33 test breaks had a change in the test's own directory |
+| lane PR runs don't have (Windows, QA smoke, release driver) | 3 | a train would need these lanes too |
+| no failing test file (infra, build, timeout) | 4 | not a code break; flake handling, not a queue |
+| no change in the test's area that hour | 2 | indirect break; a scoped train misses it |
+
+Read as: **about three in four of the breaks their hourly suite finds sit next to a change from that same hour**,
+so a train that runs the union of its changes' changed-scope tests on the combined main would plausibly have
+caught them before landing (the PR itself passed the same tests on an older base: these are interaction /
+stale-base breaks, which is what a train tests). Upper bound: "area" is a directory match, not their real
+test-selection graph, and the commit in the area is a suspect, not a proven culprit. The scoped-queue row in
+the replay table stands with that caveat; ~22% (CI 12–38%) would still reach main and need land-then-verify.
+
+## Phase 2b: a text-only triage lane on 200 issues vs ClawSweeper (2026-10-08)
+
+`sim/openclaw/triage.mjs`: 200 issues created 09-08..09-28 with a clean outcome, 50 each: closed not planned,
+closed as duplicate (GitHub reason or a "duplicate of #N" comment), fixed by a PR/commit, open with
+`clawsweeper:needs-product-decision`. Classifiers see title + body only; one Choice question, wording
+`triage-v1` (in the script). Haiku 5.5 via `claude -p` on the subscription with a minimal harness
+(~1.3k tokens/call; Claude Code's default context was ~59k). Every call in `data/triage-calls.jsonl`.
+
+| classifier | accuracy vs outcome (95% CI) | agrees with ClawSweeper | recall close / dup / fix / decision | acts at p ≥ 0.8: n, accuracy | Brier | ms p50 | cost, 200 issues |
+|---|---|---|---|---|---|---|---|
+| Haiku 5.5 | **50%** (43–57) | 54% | 24 / 14 / 84 / 78% | 71, 62% (50–72) | 0.71 | 3,075 | $0.073 API-equiv (subscription) |
+| Jev | 40% (33–46) | 39% | 22 / 0 / 84 / 52% | 158, 44% (37–52) | 1.04 | 253 | $0.011 |
+| Clef-flash | 36% (29–42) | 31% | 12 / 0 / 94 / 36% | 93, 47% (38–57) | 0.95 | 421 | not priced (Workers AI, desk-bench gateway) |
+| ClawSweeper (its labels/closings) | 94% (90–97) of 170 it labelled | | | | | | 50–128 Codex workers |
+
+Chance is 25%. Read as: **a one-shot, text-only classifier is no triage lane for this project.** All three call
+most "close" issues a fix (support questions and already-fixed reports read like bugs) and miss duplicates almost
+entirely (they cannot see the other 6,000 issues). Jev's probabilities are poorly calibrated here (158 answers at
+p ≥ 0.8, 44% right). ClawSweeper's 94% is not independent (its own closings are part of the outcome), but its
+labels show why it works: `source-repro`, `not-repro-on-main`, `linked-pr-open` — it reads the code, checks main,
+and searches existing issues and PRs. **qodebase's triage lane has to be an agent with the repo and the issue
+index, not a classifier.** A cheap classifier can still sort decision vs fix as a first pass (Haiku: 78% / 84%
+recall) for routing to that agent. Spend for 2b: ~$0.09 (cap $2).
+
+## What phase 2 should test next
+- Triage as an agent: the same 200 issues, a Haiku agent with read access to main at the issue's date and a
+  search over earlier issues (dedupe = cluster lookup), scored the same way.
+- Duplicate rate over all closed issues from comment text (85 of a 900-issue pool were duplicates by comment,
+  so the rate is far above GitHub's 0.1%; measure it properly).
 - The fix lane as in PLAN.md.

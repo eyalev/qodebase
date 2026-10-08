@@ -1,0 +1,16 @@
+{
+ "breaks_total": 202,
+ "sampled": 40,
+ "verdicts": {
+  "same-area-change-landed": 31,
+  "platform-only": 3,
+  "no-change-in-area": 2,
+  "no-test-file (infra/timeout/build?)": 4
+ },
+ "requests": 254,
+ "of_test_breaks_same_dir_change": {
+  "n": 27,
+  "of": 33
+ },
+ "note": "same-area-change-landed = a changed-scope lane would plausibly have run the failing test on the culprit PR (upper bound: area, not import graph); no-change-in-area = scoped tests of that hour's changes would not select it; platform-only = Linux PR lanes do not run it"
+}
