@@ -561,6 +561,30 @@ docs/contest/landing.md; owner tab qb6). UI: src/landingui/ (qb7), view "Agents 
   eyal/cafe-lab (private test bench).
 - Cost: cloudcost gap `qodebase-landing` (local cloudcost settings).
 
+## Variants lab (qodebase.app/lab, docs/lab/PLAN.md, since 2026-10-08)
+
+Which way of running many agents wins, on real work. Schema: docs/lab/runs-schema.md
+(public/lab/runs.jsonl, one line per run; stages.jsonl `event:'summary'` per stage).
+Owners: qb6 runner + flags + baselines, qb4 sim/predict.js/plan, qb5 scenarios + scorer, qb7 page.
+- Runner (laptop): `node --experimental-strip-types scripts/lab/run.mjs --plan public/lab/stage1-plan.json --order N`
+  (or `--scenario <id> --variant '<json>' | --baseline opus-alone|github`). Fresh UNLISTED project
+  per run (eyal/lab-…), starter from qb5's scripts/lab/scenario.mjs (stable sha), the variant as
+  landing flags (verified before the request), router prompt with the policy's instructions
+  (opus-alone: one agent, no router), waits until settled, stops every box, scores on the laptop
+  with scripts/lab/score.mjs --judge (hidden tests live in a PRIVATE repo
+  $LAB_HIDDEN_DIR, never in this public repo or a box), appends the line.
+  Log: ~/.local/share/qodebase-lab/runner.jsonl. `--out public/lab/runs.smoke.jsonl` for tests.
+- Variant flags (`POST …/landing/flags`): plannerModel/coderModel/reviewerModel (haiku|sonnet|opus,
+  mapped to the 5.5 ids at box boot), reviewers 0-6 (0 = no review, approved automatically),
+  reviewStyle read|adversarial, policy intent|ffa|phases|stacking|leads|github (github/ffa: no
+  handlers, no replay, a conflict goes back to the agent to rebase; ffa also skips checks),
+  trainMax, claims, dedupe, unlisted, landing.
+- Guards: the plan's (API-equivalent total, weekly-meter rise; checked before every run, also
+  against the run's prediction); per run the Landing budget guard (priced at the priciest role model).
+- Prices (checked 2026-10-08, platform.claude.com pricing): Haiku 5.5 $0.10/$0.50 (x5 above 100k-token
+  prompts), Sonnet 5.5 $2/$10 (cache hit $0.10), Opus 5.5 $4/$20 (cache hit $0.20); no long-context tier
+  for Sonnet/Opus 5.5. Claude Code's own cost estimate lags new models: don't use it.
+
 ## Talk: speak or type to the app (src/talk*.ts, since 2026-10-06)
 
 A talk button on every signed-in UI page (`/talk.js`, injected by
