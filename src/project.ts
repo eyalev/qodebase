@@ -216,10 +216,15 @@ export class Project extends DurableObject<Env> {
     const token = (await repo.createToken('read', 3600)).plaintext;
     const job: BuildJob = { id: crypto.randomUUID().slice(0, 8), slug: info.slug, kind, repo: repoName, remote: agent ? agent.remote : info.remote,
       token, worker: appWorkerName(info.slug), alias: agent ? previewAlias(agent.id) : undefined, host: appHost(info.slug, this.env.APPS_DOMAIN), agentId, queuedAt: Date.now() };
+    // Re-read after the await: something else (an agent spawn, a state report) may have
+    // saved info meanwhile, and writing the copy read above would undo it (qb6 found this
+    // lost update in addAgent, 2026-10-08).
+    const fresh = await this.#need();
     const building: Deploy = { status: 'building', at: Date.now() };
-    if (agent) agent.preview = { ...agent.preview, ...building, error: undefined };
-    else info.app = { ...(info.app || {}), ...building, error: undefined, worker: job.worker };
-    await this.ctx.storage.put('info', info);
+    const fa = agentId ? fresh.agents.find((a) => a.id === agentId) : undefined;
+    if (fa) fa.preview = { ...fa.preview, ...building, error: undefined };
+    else if (!agentId) fresh.app = { ...(fresh.app || {}), ...building, error: undefined, worker: job.worker };
+    await this.ctx.storage.put('info', fresh);
     await this.env.BuildBox.get(this.env.BuildBox.idFromName(`${info.slug}--build`)).enqueue(job);
   }
 
