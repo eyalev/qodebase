@@ -1,0 +1,56 @@
+[
+ {
+  "id": "cafe-family",
+  "title": "Make the café family-friendly",
+  "prompt": "Make the cafe site family-friendly.",
+  "promptVersion": "1",
+  "scenarioVersion": "1",
+  "starter": "scripts/lab/scenarios/cafe-family/starter (Corner Café: the demo seed with its 14 tasks applied)",
+  "hiddenTotal": 7,
+  "about": "A vague feature request on a small existing website: the planner has to decide what family-friendly means and split it into changes.",
+  "profile": {
+   "expectedTasks": [
+    5,
+    10
+   ],
+   "dependencyDepth": 2,
+   "sharedFileShare": 0.6,
+   "sharedFiles": [
+    "src/routes.js",
+    "src/data/menu.js",
+    "src/pages/home.js",
+    "style.css"
+   ],
+   "vagueness": "high",
+   "duplicateIntentRisk": 0.3,
+   "note": "first guesses by qb5; replace with measured values after stage 1"
+  }
+ },
+ {
+  "id": "port-ts",
+  "title": "Port a library to TypeScript",
+  "prompt": "Port this library to TypeScript.",
+  "promptVersion": "1",
+  "scenarioVersion": "1",
+  "starter": "scripts/lab/scenarios/port-ts/starter (validator.js 13.12.0, 48 functions, 1,478 lines, 49 visible tests)",
+  "hiddenTotal": 158,
+  "about": "48 string validators from validator.js 13.12.0 (MIT), plain JavaScript with no official TypeScript version: every module has to become typed TypeScript without changing what it does.",
+  "profile": {
+   "expectedTasks": [
+    8,
+    54
+   ],
+   "dependencyDepth": 3,
+   "dependencyChain": "util/assertString, util/merge -> isFQDN, isIP, isByteLength -> isEmail, isURL; src/index last",
+   "sharedFileShare": 0.1,
+   "sharedFiles": [
+    "src/index.js",
+    "tsconfig.json",
+    "package.json"
+   ],
+   "vagueness": "low",
+   "duplicateIntentRisk": 0.05,
+   "note": "first guesses by qb5; replace with measured values after stage 1"
+  }
+ }
+]

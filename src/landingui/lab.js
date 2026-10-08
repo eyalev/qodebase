@@ -16,6 +16,7 @@
   const log = (event, extra) => { try { console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'lab', event, ...extra })); } catch {} };
   const mins = (s) => (s == null ? '–' : s < 90 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
   const usd = (x) => (x == null ? '–' : x < 0.1 ? `$${x.toFixed(3)}` : `$${x.toFixed(2)}`);
+  const sc100 = (x) => (x == null ? '–' : Math.round(x));
   const med = (a) => { const b = a.filter((x) => x != null).sort((x, y) => x - y); return b.length ? (b.length % 2 ? b[b.length >> 1] : (b[b.length / 2 - 1] + b[b.length / 2]) / 2) : null; };
 
   // ---- knobs (qb4's KNOBS from predict.js replace these when it loads) --------------------
@@ -163,7 +164,7 @@
     const g = PLAN.guards || {};
     const rows = PLAN.runs.map((p) => {
       const r = done(p), pr = p.predicted || {};
-      const real = r ? `<span class="act">Done: ${mins(r.timings?.wallS)}, ${r.quality?.score ?? '–'}/100, ${usd(r.cost?.apiUsdStd)}${r.links?.replay ? ` <a href="${esc(r.links.replay)}">replay</a>` : ''}</span>` : `<span class="dim">${n && PLAN.runs.indexOf(p) === n ? 'Next' : 'Waiting'}</span>`;
+      const real = r ? `<span class="act">Done: ${mins(r.timings?.wallS)}, ${sc100(r.quality?.score)}/100, ${usd(r.cost?.apiUsdStd)}${r.links?.replay ? ` <a href="${esc(r.links.replay)}">replay</a>` : ''}</span>` : `<span class="dim">${n && PLAN.runs.indexOf(p) === n ? 'Next' : 'Waiting'}</span>`;
       return `<li class="${r ? 'done' : ''}"><span class="no">${p.order}</span><span class="pb"><b>${esc(WHYB[p.baseline] || WHY[p.why] || p.why)}${p.repetition > 1 ? ', second run' : ''}</b>
         <span>${esc(p.baseline ? BASELINES[p.baseline]?.about || '' : plain(p.variant))}</span>
         <span class="dim">Predicted ${mins(pr.wallS)}, ${pr.quality != null ? Math.round(pr.quality) : '–'}/100, ${usd(pr.apiUsdStd)}</span>${real}</span></li>`;
@@ -229,7 +230,7 @@
       const ghost = g.pWallS != null && g.pQuality != null ? `<line class="pl" x1="${X(g.pWallS).toFixed(1)}" y1="${Y(g.pQuality).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/><circle class="pd" cx="${X(g.pWallS).toFixed(1)}" cy="${Y(g.pQuality).toFixed(1)}" r="4"/>` : '';
       const mark = g.baseline ? `<rect class="m ${cls}${on ? ' on' : ''}" x="${(x - 6).toFixed(1)}" y="${(y - 6).toFixed(1)}" width="12" height="12" rx="2"/>` : `<circle class="m ${cls}${on ? ' on' : ''}${g === best ? ' best' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"/>`;
       const left = x > W * 0.62;
-      const label = g.baseline || g === best || on ? `<text class="dl" x="${(left ? x - 9 : x + 9).toFixed(1)}" y="${(y + 4).toFixed(1)}"${left ? ' text-anchor="end"' : ''}>${esc(g.baseline ? BASELINES[g.baseline]?.label : g === best ? 'Best so far' : plain(g.variant).split(',')[0])}</text>` : '';
+      const label = g.baseline || (g === best && gs.filter((x) => !x.baseline).length > 1) || on ? `<text class="dl" x="${(left ? x - 9 : x + 9).toFixed(1)}" y="${(y + 4).toFixed(1)}"${left ? ' text-anchor="end"' : ''}>${esc(g.baseline ? BASELINES[g.baseline]?.label : g === best ? 'Best so far' : plain(g.variant).split(',')[0])}</text>` : '';
       return `<g class="pt" data-open="${esc(g.key)}" tabindex="0" role="button" aria-label="${esc(plain(g.variant, g.baseline))}: ${mins(g.wallS)}, quality ${Math.round(g.quality)}"><circle class="hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="16"/>${ghost}${mark}${label}</g>`;
     }).join('');
     return `<p class="ct">Quality (out of 100) by minutes to finish</p><svg class="sc-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="Each setup by time to finish and quality">
@@ -251,7 +252,8 @@
     if (!best) return '';
     const vs = (b) => (b && b.wallS ? `${plain(null, b.baseline)}: ${mins(b.wallS)}, ${Math.round(b.quality)}/100, ${usd(b.usd)}` : null);
     const lines = [vs(oa), vs(gh)].filter(Boolean);
-    return `<div class="cmp"><p><b>Best so far:</b> ${esc(plain(best.variant))}. Done in <b>${mins(best.wallS)}</b>, quality <b>${Math.round(best.quality)}/100</b>, <b>${usd(best.usd)}</b> at API prices (median of ${best.runs.length} run${best.runs.length === 1 ? '' : 's'}).</p>${lines.length ? `<p class="dim">Compared with ${lines.map(esc).join('; ')}.</p>` : ''}</div>`;
+    const vr = gs.filter((g) => !g.baseline && g.quality != null).length;
+    return `<div class="cmp"><p><b>${vr > 1 ? 'Best so far' : 'First result'}:</b> ${esc(plain(best.variant))}. Done in <b>${mins(best.wallS)}</b>, quality <b>${Math.round(best.quality)}/100</b>, <b>${usd(best.usd)}</b> at API prices (median of ${best.runs.length} run${best.runs.length === 1 ? '' : 's'}).</p>${lines.length ? `<p class="dim">Compared with ${lines.map(esc).join('; ')}.</p>` : ''}</div>`;
   }
   function list(gs) {
     const sorted = gs.slice().sort((a, b) => (b.quality ?? -1) - (a.quality ?? -1) || (a.wallS ?? 1e9) - (b.wallS ?? 1e9));
@@ -272,7 +274,7 @@
         q.trulyHiddenTotal ? `${q.trulyHiddenPass}/${q.trulyHiddenTotal} checks it could not look up` : null].filter(Boolean).join(', ');
       const status = r.status && r.status !== 'done' ? ` <span class="warn">${esc({ 'stopped-budget': 'stopped: budget', timeout: 'timed out', failed: 'failed' }[r.status] || r.status)}</span>` : '';
       const th = q.scoreTrulyHidden != null ? ` <span class="dim">(${Math.round(q.scoreTrulyHidden)}/100 on the checks it could not look up)</span>` : '';
-      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(r.timings?.wallS)}, ${q.score ?? '–'}/100${th}, ${usd(r.cost?.apiUsdStd)}</span>
+      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(r.timings?.wallS)}, ${sc100(q.score)}/100${th}, ${usd(r.cost?.apiUsdStd)}</span>
         <span class="rw2">${esc(words)}.</span>
         <span class="lk">${r.links?.replay ? `<a href="${esc(r.links.replay)}">Watch the replay</a>` : ''}${r.links?.app ? `<a href="${esc(r.links.app)}" target="_blank" rel="noopener">The app it built</a>` : ''}${r.links?.repo ? `<a href="${esc(r.links.repo)}">The code</a>` : ''}</span></li>`;
     }).join('');
@@ -284,7 +286,7 @@
       ? '<p class="small dim">For the TypeScript port, the number in brackets is the score on checks the agents could not have found in the original library (type cases and structure), so copying the original does not earn them.</p>' : '';
     const n = RUNS.filter((r) => r.scenario === st.scenario).length;
     return `<section class="sec" id="results"><h2>Results so far</h2>
-      ${n ? `<p class="cap">${n} real run${n === 1 ? '' : 's'} of “${esc(scenOf(st.scenario).title)}”, ${gs.length} setup${gs.length === 1 ? '' : 's'}. Tap a dot or a row for its runs, the replay and the app it built.</p>${compare(gs)}${scatter(gs)}${list(gs)}${truly}`
+      ${n ? `<p class="cap">${n} real run${n === 1 ? '' : 's'} of “${esc(scenOf(st.scenario).title)}”, ${gs.length} setup${gs.length === 1 ? '' : 's'}. Tap a dot or a row for its runs, the replay and the app it built.</p>${compare(gs)}<p class="small dim">${anchors()}</p>${scatter(gs)}${list(gs)}${truly}`
         : `<p class="dim">No real runs of this job yet. The simulation picks the setups worth running; they appear here as they finish.</p>`}
     </section>`;
   }

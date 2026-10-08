@@ -1,0 +1,1998 @@
+{
+ "simVersion": "lab-0.3",
+ "generated": "2026-10-08T09:49:34.685Z",
+ "seeds": 5,
+ "combos": 47880,
+ "sweepS": 25,
+ "scenarios": [
+  {
+   "id": "cafe-family",
+   "label": "Make the cafe family-friendly",
+   "source": "scripts/lab/scenarios/cafe-family/scenario.json (qb5), mapped in public/lab/predict.js",
+   "profile": {
+    "tasks": 7,
+    "depth": 2,
+    "pShared": 0.6,
+    "sharedFiles": 4,
+    "vague": 0.8,
+    "dupRisk": 0.3,
+    "difficulty": 1,
+    "hidden": 7
+   }
+  },
+  {
+   "id": "port-ts",
+   "label": "Port a library to TypeScript",
+   "source": "scripts/lab/scenarios/port-ts/scenario.json (qb5), mapped in public/lab/predict.js",
+   "profile": {
+    "tasks": 21,
+    "depth": 3,
+    "pShared": 0.1,
+    "sharedFiles": 3,
+    "vague": 0.2,
+    "dupRisk": 0.05,
+    "difficulty": 1.3,
+    "hidden": 158
+   }
+  }
+ ],
+ "baselines": [
+  {
+   "key": "opus-alone",
+   "variant": {
+    "planner": "none",
+    "coders": 1,
+    "coderModel": "opus",
+    "reviewers": 0,
+    "reviewerModel": "opus",
+    "reviewStyle": "read",
+    "policy": "ffa",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 1
+   },
+   "per": [
+    {
+     "wallS": 1515,
+     "usd": 13.89,
+     "q": 88.1,
+     "qMin": 75,
+     "wMax": 2357
+    },
+    {
+     "wallS": 5497,
+     "usd": 51,
+     "q": 98.5,
+     "qMin": 96.7,
+     "wMax": 6679
+    }
+   ]
+  },
+  {
+   "key": "github",
+   "variant": {
+    "planner": "sonnet",
+    "coders": 6,
+    "coderModel": "sonnet",
+    "reviewers": 1,
+    "reviewerModel": "sonnet",
+    "reviewStyle": "read",
+    "policy": "github",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 1
+   },
+   "per": [
+    {
+     "wallS": 2920,
+     "usd": 21.32,
+     "q": 77.2,
+     "qMin": 58.3,
+     "wMax": 3442
+    },
+    {
+     "wallS": 5217,
+     "usd": 99.07,
+     "q": 96.7,
+     "qMin": 95.1,
+     "wMax": 8653
+    }
+   ]
+  }
+ ],
+ "front": [
+  {
+   "key": "planner=haiku;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.202,
+    "usdRel": 0.099,
+    "quality": 87.3
+   }
+  },
+  {
+   "key": "planner=haiku;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.203,
+    "usdRel": 0.099,
+    "quality": 87.7
+   }
+  },
+  {
+   "key": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.211,
+    "usdRel": 0.098,
+    "quality": 85.2
+   }
+  },
+  {
+   "key": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.212,
+    "usdRel": 0.098,
+    "quality": 85.7
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.214,
+    "usdRel": 0.096,
+    "quality": 89.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.214,
+    "usdRel": 0.096,
+    "quality": 89.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.215,
+    "usdRel": 0.096,
+    "quality": 90
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.215,
+    "usdRel": 0.096,
+    "quality": 90
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.216,
+    "usdRel": 0.1,
+    "quality": 90.2
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.216,
+    "usdRel": 0.1,
+    "quality": 90.2
+   }
+  },
+  {
+   "key": "planner=haiku;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.219,
+    "usdRel": 0.078,
+    "quality": 87.8
+   }
+  },
+  {
+   "key": "planner=haiku;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.219,
+    "usdRel": 0.078,
+    "quality": 87.8
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.225,
+    "usdRel": 0.082,
+    "quality": 88.2
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.225,
+    "usdRel": 0.082,
+    "quality": 88.2
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.225,
+    "usdRel": 0.081,
+    "quality": 88.8
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.225,
+    "usdRel": 0.081,
+    "quality": 88.8
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.227,
+    "usdRel": 0.08,
+    "quality": 88.6
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.227,
+    "usdRel": 0.08,
+    "quality": 88.6
+   }
+  },
+  {
+   "key": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.228,
+    "usdRel": 0.08,
+    "quality": 88.4
+   }
+  },
+  {
+   "key": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.228,
+    "usdRel": 0.08,
+    "quality": 88.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.234,
+    "usdRel": 0.094,
+    "quality": 88.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.234,
+    "usdRel": 0.094,
+    "quality": 88.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.235,
+    "usdRel": 0.094,
+    "quality": 89.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.235,
+    "usdRel": 0.094,
+    "quality": 89.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.242,
+    "usdRel": 0.098,
+    "quality": 90.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.242,
+    "usdRel": 0.098,
+    "quality": 90.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.252,
+    "usdRel": 0.095,
+    "quality": 89.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.252,
+    "usdRel": 0.095,
+    "quality": 89.4
+   }
+  },
+  {
+   "key": "planner=haiku;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.257,
+    "usdRel": 0.081,
+    "quality": 89.3
+   }
+  },
+  {
+   "key": "planner=haiku;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.257,
+    "usdRel": 0.081,
+    "quality": 89.3
+   }
+  },
+  {
+   "key": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.265,
+    "usdRel": 0.082,
+    "quality": 89.5
+   }
+  },
+  {
+   "key": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.265,
+    "usdRel": 0.082,
+    "quality": 89.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=ffa;claims=1;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.277,
+    "usdRel": 0.118,
+    "quality": 90.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=ffa;claims=1;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.277,
+    "usdRel": 0.118,
+    "quality": 90.8
+   }
+  },
+  {
+   "key": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.278,
+    "usdRel": 0.079,
+    "quality": 88.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=ffa;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.279,
+    "usdRel": 0.117,
+    "quality": 91
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=ffa;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.279,
+    "usdRel": 0.117,
+    "quality": 91
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=3;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.285,
+    "usdRel": 0.073,
+    "quality": 89.2
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=3;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.285,
+    "usdRel": 0.073,
+    "quality": 89.2
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=24;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.289,
+    "usdRel": 0.159,
+    "quality": 91.5
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=24;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.289,
+    "usdRel": 0.159,
+    "quality": 91.5
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=12;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.29,
+    "usdRel": 0.139,
+    "quality": 91.5
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=12;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.29,
+    "usdRel": 0.139,
+    "quality": 91.5
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=24;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.29,
+    "usdRel": 0.14,
+    "quality": 91.7
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=24;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.29,
+    "usdRel": 0.14,
+    "quality": 91.7
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=ffa;claims=1;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.297,
+    "usdRel": 0.123,
+    "quality": 91.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=github;claims=1;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.297,
+    "usdRel": 0.123,
+    "quality": 91.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=ffa;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.305,
+    "usdRel": 0.129,
+    "quality": 91.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=github;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.305,
+    "usdRel": 0.129,
+    "quality": 91.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.31,
+    "usdRel": 0.093,
+    "quality": 90
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.31,
+    "usdRel": 0.093,
+    "quality": 90
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.32,
+    "usdRel": 0.161,
+    "quality": 91.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.32,
+    "usdRel": 0.161,
+    "quality": 91.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.32,
+    "usdRel": 0.161,
+    "quality": 91.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.32,
+    "usdRel": 0.161,
+    "quality": 91.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=3;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.323,
+    "usdRel": 0.095,
+    "quality": 90.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=3;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.323,
+    "usdRel": 0.095,
+    "quality": 90.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.325,
+    "usdRel": 0.373,
+    "quality": 92.7
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.325,
+    "usdRel": 0.373,
+    "quality": 92.7
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=sonnet;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.325,
+    "usdRel": 0.373,
+    "quality": 92.7
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=sonnet;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.325,
+    "usdRel": 0.373,
+    "quality": 92.7
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.329,
+    "usdRel": 0.093,
+    "quality": 90.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.329,
+    "usdRel": 0.093,
+    "quality": 90.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=1;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.331,
+    "usdRel": 0.091,
+    "quality": 90
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=1;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.334,
+    "usdRel": 0.093,
+    "quality": 91
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=1;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.334,
+    "usdRel": 0.093,
+    "quality": 91
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.334,
+    "usdRel": 0.092,
+    "quality": 92.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.334,
+    "usdRel": 0.092,
+    "quality": 92.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.337,
+    "usdRel": 0.092,
+    "quality": 91.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.337,
+    "usdRel": 0.169,
+    "quality": 92.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.337,
+    "usdRel": 0.169,
+    "quality": 92.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.337,
+    "usdRel": 0.169,
+    "quality": 92.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.337,
+    "usdRel": 0.169,
+    "quality": 92.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.339,
+    "usdRel": 0.384,
+    "quality": 93.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.339,
+    "usdRel": 0.384,
+    "quality": 93.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=sonnet;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.339,
+    "usdRel": 0.384,
+    "quality": 93.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=sonnet;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.339,
+    "usdRel": 0.384,
+    "quality": 93.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.344,
+    "usdRel": 0.091,
+    "quality": 90.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=3;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.36,
+    "usdRel": 0.087,
+    "quality": 90.7
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.361,
+    "usdRel": 0.165,
+    "quality": 92.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.361,
+    "usdRel": 0.165,
+    "quality": 92.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.361,
+    "usdRel": 0.165,
+    "quality": 92.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.361,
+    "usdRel": 0.165,
+    "quality": 92.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.361,
+    "usdRel": 0.165,
+    "quality": 92.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.361,
+    "usdRel": 0.165,
+    "quality": 92.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.367,
+    "usdRel": 0.175,
+    "quality": 92.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.367,
+    "usdRel": 0.175,
+    "quality": 92.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.367,
+    "usdRel": 0.175,
+    "quality": 92.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.367,
+    "usdRel": 0.175,
+    "quality": 92.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.368,
+    "usdRel": 0.168,
+    "quality": 93.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.368,
+    "usdRel": 0.168,
+    "quality": 93.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.368,
+    "usdRel": 0.168,
+    "quality": 93.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.368,
+    "usdRel": 0.168,
+    "quality": 93.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.374,
+    "usdRel": 0.169,
+    "quality": 94
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.374,
+    "usdRel": 0.169,
+    "quality": 94
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.374,
+    "usdRel": 0.174,
+    "quality": 94.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.374,
+    "usdRel": 0.174,
+    "quality": 94.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.374,
+    "usdRel": 0.174,
+    "quality": 94.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.374,
+    "usdRel": 0.174,
+    "quality": 94.1
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.378,
+    "usdRel": 0.175,
+    "quality": 94.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.378,
+    "usdRel": 0.175,
+    "quality": 94.4
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.379,
+    "usdRel": 0.16,
+    "quality": 92.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.379,
+    "usdRel": 0.16,
+    "quality": 92.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.379,
+    "usdRel": 0.16,
+    "quality": 92.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.379,
+    "usdRel": 0.16,
+    "quality": 92.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.379,
+    "usdRel": 0.16,
+    "quality": 92.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.379,
+    "usdRel": 0.16,
+    "quality": 92.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.386,
+    "usdRel": 0.16,
+    "quality": 92.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.386,
+    "usdRel": 0.16,
+    "quality": 92.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.386,
+    "usdRel": 0.16,
+    "quality": 92.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=3;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.393,
+    "usdRel": 0.092,
+    "quality": 91.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.399,
+    "usdRel": 0.167,
+    "quality": 93.2
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.399,
+    "usdRel": 0.167,
+    "quality": 93.2
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.399,
+    "usdRel": 0.167,
+    "quality": 93.2
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.399,
+    "usdRel": 0.167,
+    "quality": 93.2
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.406,
+    "usdRel": 0.167,
+    "quality": 93.2
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.406,
+    "usdRel": 0.167,
+    "quality": 93.2
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.406,
+    "usdRel": 0.167,
+    "quality": 93.2
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.406,
+    "usdRel": 0.167,
+    "quality": 93.2
+   }
+  },
+  {
+   "key": "planner=opus;coders=3;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.415,
+    "usdRel": 0.159,
+    "quality": 92.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=3;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.415,
+    "usdRel": 0.159,
+    "quality": 92.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.454,
+    "usdRel": 0.155,
+    "quality": 92.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.458,
+    "usdRel": 0.15,
+    "quality": 92.5
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=3;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.468,
+    "usdRel": 0.137,
+    "quality": 92.2
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=6;reviewerModel=sonnet;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.472,
+    "usdRel": 0.687,
+    "quality": 94.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=6;reviewerModel=sonnet;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.472,
+    "usdRel": 0.687,
+    "quality": 94.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=sonnet;reviewers=6;reviewerModel=sonnet;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.472,
+    "usdRel": 0.687,
+    "quality": 94.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=sonnet;reviewers=6;reviewerModel=sonnet;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.472,
+    "usdRel": 0.687,
+    "quality": 94.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=3;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.479,
+    "usdRel": 0.149,
+    "quality": 93.2
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.488,
+    "usdRel": 0.911,
+    "quality": 94.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.488,
+    "usdRel": 0.911,
+    "quality": 94.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=3;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.496,
+    "usdRel": 0.147,
+    "quality": 92.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.504,
+    "usdRel": 0.882,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.504,
+    "usdRel": 0.882,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.504,
+    "usdRel": 0.882,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=opus;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.52,
+    "usdRel": 0.876,
+    "quality": 94.8
+   }
+  },
+  {
+   "key": "planner=sonnet;coders=3;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=1;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.524,
+    "usdRel": 0.143,
+    "quality": 92.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.524,
+    "usdRel": 0.847,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.524,
+    "usdRel": 0.847,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.524,
+    "usdRel": 0.847,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=ffa;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 0.533,
+    "usdRel": 0.623,
+    "quality": 94.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=ffa;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 0.533,
+    "usdRel": 0.623,
+    "quality": 94.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.543,
+    "usdRel": 0.841,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.543,
+    "usdRel": 0.841,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.543,
+    "usdRel": 0.841,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.543,
+    "usdRel": 0.841,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.543,
+    "usdRel": 0.841,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.543,
+    "usdRel": 0.841,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.543,
+    "usdRel": 0.841,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.543,
+    "usdRel": 0.841,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=opus;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=1;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.543,
+    "usdRel": 0.841,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=3;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.56,
+    "usdRel": 0.513,
+    "quality": 94.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=3;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.56,
+    "usdRel": 0.513,
+    "quality": 94.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=3;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.56,
+    "usdRel": 0.513,
+    "quality": 94.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=sonnet;reviewers=3;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.56,
+    "usdRel": 0.513,
+    "quality": 94.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=sonnet;reviewers=3;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.56,
+    "usdRel": 0.513,
+    "quality": 94.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=sonnet;reviewers=3;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.56,
+    "usdRel": 0.513,
+    "quality": 94.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=sonnet;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.582,
+    "usdRel": 0.419,
+    "quality": 94.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=24;coderModel=sonnet;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.582,
+    "usdRel": 0.419,
+    "quality": 94.8
+   }
+  },
+  {
+   "key": "planner=haiku;coders=1;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.643,
+    "usdRel": 0.061,
+    "quality": 86.8
+   }
+  },
+  {
+   "key": "planner=haiku;coders=1;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=1;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.643,
+    "usdRel": 0.061,
+    "quality": 86.8
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 0.668,
+    "usdRel": 0.085,
+    "quality": 89.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.818,
+    "usdRel": 0.165,
+    "quality": 93.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.818,
+    "usdRel": 0.165,
+    "quality": 93.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.818,
+    "usdRel": 0.165,
+    "quality": 93.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=1",
+   "a": {
+    "wallRel": 0.824,
+    "usdRel": 0.163,
+    "quality": 93.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.824,
+    "usdRel": 0.163,
+    "quality": 93.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.824,
+    "usdRel": 0.163,
+    "quality": 93.3
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=haiku;reviewers=3;reviewerModel=sonnet;reviewStyle=adversarial;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "a": {
+    "wallRel": 0.959,
+    "usdRel": 0.67,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=haiku;reviewers=3;reviewerModel=sonnet;reviewStyle=adversarial;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 0.959,
+    "usdRel": 0.67,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=3;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=adversarial;policy=intent;claims=0;dedupe=1;trainMax=8",
+   "a": {
+    "wallRel": 1.213,
+    "usdRel": 0.224,
+    "quality": 94.6
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=sonnet;reviewers=6;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=0;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 1.254,
+    "usdRel": 0.492,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=sonnet;reviewers=6;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=0;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 1.254,
+    "usdRel": 0.492,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=sonnet;reviewers=6;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=0;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 1.254,
+    "usdRel": 0.492,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=sonnet;reviewers=6;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=1;dedupe=0;trainMax=1",
+   "a": {
+    "wallRel": 1.289,
+    "usdRel": 0.491,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=sonnet;reviewers=6;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=1;dedupe=0;trainMax=4",
+   "a": {
+    "wallRel": 1.289,
+    "usdRel": 0.491,
+    "quality": 94.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=1;coderModel=sonnet;reviewers=6;reviewerModel=haiku;reviewStyle=adversarial;policy=leads;claims=1;dedupe=0;trainMax=8",
+   "a": {
+    "wallRel": 1.289,
+    "usdRel": 0.491,
+    "quality": 94.9
+   }
+  }
+ ],
+ "picks": [
+  {
+   "key": "planner=haiku;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "why": "fastest",
+   "variant": {
+    "planner": "haiku",
+    "coders": 24,
+    "coderModel": "haiku",
+    "reviewers": 0,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "intent",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 4
+   },
+   "per": [
+    {
+     "wallS": 350,
+     "usd": 1.94,
+     "q": 82.5,
+     "qMin": 75,
+     "wMax": 419
+    },
+    {
+     "wallS": 854,
+     "usd": 6.36,
+     "q": 92,
+     "qMin": 81.2,
+     "wMax": 975
+    }
+   ],
+   "agg": {
+    "wallRel": 0.202,
+    "usdRel": 0.099,
+    "quality": 87.3,
+    "worstQ": 75
+   }
+  },
+  {
+   "key": "planner=haiku;coders=1;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "why": "cheapest",
+   "variant": {
+    "planner": "haiku",
+    "coders": 1,
+    "coderModel": "haiku",
+    "reviewers": 0,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "phases",
+    "claims": false,
+    "dedupe": true,
+    "trainMax": 1
+   },
+   "per": [
+    {
+     "wallS": 842,
+     "usd": 1.06,
+     "q": 83.4,
+     "qMin": 75,
+     "wMax": 1010
+    },
+    {
+     "wallS": 3289,
+     "usd": 4.35,
+     "q": 90.1,
+     "qMin": 77.1,
+     "wMax": 4046
+    }
+   ],
+   "agg": {
+    "wallRel": 0.643,
+    "usdRel": 0.061,
+    "quality": 86.8,
+    "worstQ": 75
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=1",
+   "why": "best balance",
+   "variant": {
+    "planner": "opus",
+    "coders": 12,
+    "coderModel": "haiku",
+    "reviewers": 3,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "leads",
+    "claims": false,
+    "dedupe": true,
+    "trainMax": 1
+   },
+   "per": [
+    {
+     "wallS": 663,
+     "usd": 3.46,
+     "q": 90.6,
+     "qMin": 87.5,
+     "wMax": 816
+    },
+    {
+     "wallS": 1577,
+     "usd": 11.13,
+     "q": 98.3,
+     "qMin": 95.1,
+     "wMax": 1921
+    }
+   ],
+   "agg": {
+    "wallRel": 0.378,
+    "usdRel": 0.175,
+    "quality": 94.4,
+    "worstQ": 87.5
+   }
+  },
+  {
+   "key": "planner=opus;coders=6;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=1;trainMax=4",
+   "why": "best stacking",
+   "variant": {
+    "planner": "opus",
+    "coders": 6,
+    "coderModel": "haiku",
+    "reviewers": 6,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "stacking",
+    "claims": true,
+    "dedupe": true,
+    "trainMax": 4
+   },
+   "per": [
+    {
+     "wallS": 704,
+     "usd": 3.27,
+     "q": 87.8,
+     "qMin": 85.9,
+     "wMax": 928
+    },
+    {
+     "wallS": 1353,
+     "usd": 10.44,
+     "q": 97.1,
+     "qMin": 93.5,
+     "wMax": 1461
+    }
+   ],
+   "agg": {
+    "wallRel": 0.361,
+    "usdRel": 0.165,
+    "quality": 92.4,
+    "worstQ": 85.9
+   }
+  },
+  {
+   "key": "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=ffa;claims=1;dedupe=1;trainMax=4",
+   "why": "best ffa",
+   "variant": {
+    "planner": "opus",
+    "coders": 12,
+    "coderModel": "haiku",
+    "reviewers": 0,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "ffa",
+    "claims": true,
+    "dedupe": true,
+    "trainMax": 4
+   },
+   "per": [
+    {
+     "wallS": 495,
+     "usd": 1.98,
+     "q": 88.1,
+     "qMin": 75,
+     "wMax": 590
+    },
+    {
+     "wallS": 1148,
+     "usd": 8.55,
+     "q": 94,
+     "qMin": 91.7,
+     "wMax": 1437
+    }
+   ],
+   "agg": {
+    "wallRel": 0.279,
+    "usdRel": 0.117,
+    "quality": 91,
+    "worstQ": 75
+   }
+  }
+ ],
+ "stage1": {
+  "scenario": "cafe-family",
+  "repetitions": 2,
+  "baselineRepetitions": 1,
+  "runs": 12,
+  "apiUsdStd": 58.6,
+  "picksUsd": 23.4,
+  "baselinesUsd": 35.2,
+  "budgetUsd": 60,
+  "variants": [
+   "planner=haiku;coders=24;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=0;trainMax=4",
+   "planner=haiku;coders=1;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=leads;claims=0;dedupe=1;trainMax=1",
+   "planner=opus;coders=6;coderModel=haiku;reviewers=6;reviewerModel=haiku;reviewStyle=read;policy=stacking;claims=1;dedupe=1;trainMax=4",
+   "planner=opus;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=ffa;claims=1;dedupe=1;trainMax=4",
+   "opus-alone",
+   "github"
+  ]
+ },
+ "rules": {
+  "minQuality": 70,
+  "robust": "worst seed on every scenario",
+  "frontier": "time and cost relative to each scenario median, quality 0-100",
+  "pool": "Haiku coders (stage 1)",
+  "perPolicyMax": 2,
+  "identicalPredictions": "skipped",
+  "repetitions": 2,
+  "budgetUsd": 60
+ },
+ "marginals": {
+  "planner": [
+   {
+    "value": "haiku",
+    "n": 15960,
+    "wallS": 3156,
+    "usd": 46.83,
+    "quality": 90.8
+   },
+   {
+    "value": "sonnet",
+    "n": 15960,
+    "wallS": 2857,
+    "usd": 41.78,
+    "quality": 91.9
+   },
+   {
+    "value": "opus",
+    "n": 15960,
+    "wallS": 2735,
+    "usd": 40.29,
+    "quality": 94
+   }
+  ],
+  "coders": [
+   {
+    "value": 1,
+    "n": 9576,
+    "wallS": 5277,
+    "usd": 40.95,
+    "quality": 92
+   },
+   {
+    "value": 3,
+    "n": 9576,
+    "wallS": 2787,
+    "usd": 41.35,
+    "quality": 91.9
+   },
+   {
+    "value": 6,
+    "n": 9576,
+    "wallS": 2449,
+    "usd": 43.36,
+    "quality": 91.8
+   },
+   {
+    "value": 12,
+    "n": 9576,
+    "wallS": 2346,
+    "usd": 44.19,
+    "quality": 92
+   },
+   {
+    "value": 24,
+    "n": 9576,
+    "wallS": 2307,
+    "usd": 44.27,
+    "quality": 92
+   }
+  ],
+  "coderModel": [
+   {
+    "value": "haiku",
+    "n": 15960,
+    "wallS": 2625,
+    "usd": 23.66,
+    "quality": 91.3
+   },
+   {
+    "value": "sonnet",
+    "n": 15960,
+    "wallS": 2910,
+    "usd": 39.42,
+    "quality": 92
+   },
+   {
+    "value": "opus",
+    "n": 15960,
+    "wallS": 3230,
+    "usd": 62.66,
+    "quality": 92.8
+   }
+  ],
+  "reviewers": [
+   {
+    "value": 0,
+    "n": 2520,
+    "wallS": 1330,
+    "usd": 16.68,
+    "quality": 89.4
+   },
+   {
+    "value": 1,
+    "n": 15120,
+    "wallS": 4641,
+    "usd": 47.48,
+    "quality": 92
+   },
+   {
+    "value": 3,
+    "n": 15120,
+    "wallS": 2565,
+    "usd": 43.05,
+    "quality": 92
+   },
+   {
+    "value": 6,
+    "n": 15120,
+    "wallS": 2276,
+    "usd": 42.74,
+    "quality": 92
+   }
+  ],
+  "reviewerModel": [
+   {
+    "value": "haiku",
+    "n": 17640,
+    "wallS": 2170,
+    "usd": 22.15,
+    "quality": 91.3
+   },
+   {
+    "value": "sonnet",
+    "n": 15120,
+    "wallS": 3105,
+    "usd": 41.28,
+    "quality": 92
+   },
+   {
+    "value": "opus",
+    "n": 15120,
+    "wallS": 3847,
+    "usd": 69.5,
+    "quality": 92.8
+   }
+  ],
+  "reviewStyle": [
+   {
+    "value": "read",
+    "n": 25200,
+    "wallS": 2350,
+    "usd": 37.27,
+    "quality": 91.7
+   },
+   {
+    "value": "adversarial",
+    "n": 22680,
+    "wallS": 3568,
+    "usd": 56.86,
+    "quality": 92.5
+   }
+  ],
+  "policy": [
+   {
+    "value": "intent",
+    "n": 10260,
+    "wallS": 2469,
+    "usd": 39.82,
+    "quality": 92.5
+   },
+   {
+    "value": "ffa",
+    "n": 10260,
+    "wallS": 3455,
+    "usd": 57.34,
+    "quality": 90.4
+   },
+   {
+    "value": "phases",
+    "n": 3420,
+    "wallS": 3090,
+    "usd": 36.3,
+    "quality": 92.4
+   },
+   {
+    "value": "stacking",
+    "n": 10260,
+    "wallS": 3053,
+    "usd": 42.6,
+    "quality": 90
+   },
+   {
+    "value": "leads",
+    "n": 10260,
+    "wallS": 2486,
+    "usd": 39.98,
+    "quality": 92.5
+   },
+   {
+    "value": "github",
+    "n": 3420,
+    "wallS": 3455,
+    "usd": 57.34,
+    "quality": 90.4
+   }
+  ],
+  "claims": [
+   {
+    "value": false,
+    "n": 23940,
+    "wallS": 2884,
+    "usd": 42.96,
+    "quality": 91.9
+   },
+   {
+    "value": true,
+    "n": 23940,
+    "wallS": 2922,
+    "usd": 42.48,
+    "quality": 92
+   }
+  ],
+  "dedupe": [
+   {
+    "value": false,
+    "n": 23940,
+    "wallS": 3166,
+    "usd": 45.09,
+    "quality": 91.7
+   },
+   {
+    "value": true,
+    "n": 23940,
+    "wallS": 2722,
+    "usd": 41.03,
+    "quality": 92.4
+   }
+  ],
+  "trainMax": [
+   {
+    "value": 1,
+    "n": 20520,
+    "wallS": 2996,
+    "usd": 42.58,
+    "quality": 91.9
+   },
+   {
+    "value": 4,
+    "n": 13680,
+    "wallS": 2829,
+    "usd": 42.82,
+    "quality": 91.9
+   },
+   {
+    "value": 8,
+    "n": 13680,
+    "wallS": 2829,
+    "usd": 42.82,
+    "quality": 91.9
+   }
+  ]
+ },
+ "picksAre": "the simulation's current favourites, NOT the run list: the runs being done are public/lab/stage1-plan.json (approved by the manager, source of truth)",
+ "picksChanged": "They changed after the approved list was made because the sim now uses the real scenario profiles from qb5 (task count, shared files, how vague the prompt is), and those variants are close enough that small profile changes reorder them, which is what stage 1 measures.",
+ "note": "Stage-0 predictions from public/lab/predict.js (no model calls). Every assumed number is in its CAL; real runs (public/lab/runs.jsonl) recalibrate it. Not a measurement."
+}
