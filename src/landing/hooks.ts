@@ -20,7 +20,7 @@ export async function onSpawn(env: Env, info: ProjectInfo, agent: Agent, o: { fi
 }
 
 /** `forq status pushed`: the fork's head and the files it changed since its base. */
-export async function onPushed(env: Env, ctx: ExecutionContext, info: ProjectInfo, agentId: string, note: string) {
+export async function onPushed(env: Env, ctx: ExecutionContext, info: ProjectInfo, agentId: string, note: string, pooled = false) {
   const a = info.agents.find((x) => x.id === agentId);
   if (!a) return;
   const tip = await head(env, ctx, a.fork);
@@ -30,7 +30,8 @@ export async function onPushed(env: Env, ctx: ExecutionContext, info: ProjectInf
   const L_ = L(env, info.slug);
   if (!(await L_.change(agentId))) await onSpawn(env, info, a, {});   // spawned before the system was on
   await L_.pushed(agentId, tip.commit, files, note || undefined);
-  await L_.reviewing(agentId);
+  if (pooled) await L_.queueReview(agentId);   // a free reviewer of the pool takes it (Landing alarm)
+  else await L_.reviewing(agentId);
 }
 
 export async function onVerdict(env: Env, slug: string, agentId: string, verdict: 'approved' | 'changes', notes: string) {

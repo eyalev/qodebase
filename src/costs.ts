@@ -13,7 +13,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
 
-export const PRICES_CHECKED = '2026-10-07';
+export const PRICES_CHECKED = '2026-10-08';
 /** USD per second. CPU is charged on active use only (we measure it from the cgroup). */
 export const CONTAINER = { gibSecond: 0.0000025, vcpuSecond: 0.00002, gbDiskSecond: 0.00000007 };
 /** USD per million tokens: input, 5-minute cache write, cache read, output. */
@@ -21,6 +21,10 @@ export const CONTAINER = { gibSecond: 0.0000025, vcpuSecond: 0.00002, gbDiskSeco
 export const CLAUDE: Record<string, { in: number; cw: number; cw1h: number; cr: number; out: number }> = {
   opus: { in: 4, cw: 5, cw1h: 8, cr: 0.2, out: 20 },        // Claude Opus 5.5
   sonnet: { in: 2, cw: 2.5, cw1h: 4, cr: 0.2, out: 10 },    // Claude Sonnet 5.5
+  // Claude Haiku 5.5 (platform.claude.com/docs/en/models/haiku-5-5/overview, checked 2026-10-08):
+  // $0.10 / $0.50 per MTok up to 100k-token prompts, 5x above. The ledger cannot tell a call's
+  // prompt size, so it is priced at the >100k tier (conservative). Before 'haiku': first match wins.
+  'haiku-5-5': { in: 0.5, cw: 0.625, cw1h: 1, cr: 0.05, out: 2.5 },
   haiku: { in: 1, cw: 1.25, cw1h: 2, cr: 0.1, out: 5 },     // Claude Haiku 4.5
   fable: { in: 10, cw: 12.5, cw1h: 20, cr: 0.25, out: 50 },  // Claude Fable 5.1
 };

@@ -206,7 +206,9 @@ async function wake(env: Env, agentId: string, apiBase: string) {
   const entries = await registry(env).list();
   const infos = await Promise.all(entries.map((e) => (e.slug === info.slug ? info : projectStub(env, e.slug).info().catch(() => null))));
   const awake: { id: string; slug: string; owner: string; role: string }[] = [];
-  await Promise.all(infos.flatMap((pi) => (pi ? [...pi.agents.map((a) => a.id), `${pi.slug}--router`, `${pi.slug}--review`] : [])
+  // A landing project's reviewer pool adds --review2, --review3… (src/landing/).
+  const pool = (pi: ProjectInfo) => (pi.landing ? [2, 3, 4].map((n) => `${pi.slug}--review${n}`) : []);
+  await Promise.all(infos.flatMap((pi) => (pi ? [...pi.agents.map((a) => a.id), `${pi.slug}--router`, `${pi.slug}--review`, ...pool(pi)] : [])
     .filter((id) => id !== agentId)
     .map(async (id) => {
       if (await boxStub(env, id).isAwake().catch(() => false)) awake.push({ id, slug: projectOf(id), owner: id.split('.')[0], role: roleOf(id) });
@@ -221,7 +223,7 @@ async function wake(env: Env, agentId: string, apiBase: string) {
   //    start (2026-10-03: a Build split into 4 agents filled the old cap of 5
   //    with the router, and all 4 reviews failed with "5 boxes already awake").
   const role = roleOf(agentId);
-  const max = Number(env.MAX_AWAKE_BOXES || 5);
+  const max = (await landingCaps(env, info.slug))?.awake || Number(env.MAX_AWAKE_BOXES || 5);
   if (role === 'agent' && awake.filter((b) => b.slug === info.slug && b.role === 'agent').length >= max) {
     return refuse('project cap', { max }, `${max} agents already awake in this project`);
   }
@@ -730,8 +732,10 @@ const app = {
           return json({ ok: true, awake, cc, idle: !awake || !/busy|thinking|working|running|tool|compact/i.test(cc) });
         }
         if (verb === 'review-dispatch' && request.method === 'POST' && me.admin) {
-          const b = await request.json() as { agent?: string };
-          const r = await dispatchReview(env, p, slug, apiBase, String(b.agent || ''));
+          const b = await request.json() as { agent?: string; reviewer?: string };
+          // reviewer: one of a landing project's pool (<slug>--review, --review2…); default the single one.
+          const rv = b.reviewer && new RegExp(`^${slug.replace('.', '\\.')}--review\\d*$`).test(b.reviewer) ? b.reviewer : undefined;
+          const r = await dispatchReview(env, p, slug, apiBase, String(b.agent || ''), rv);
           return json(r, r.ok ? 200 : r.busy ? 409 : 502);
         }
         if (verb === 'deliver' && request.method === 'POST' && me.admin) {
@@ -967,7 +971,7 @@ async function startReview(env: Env, p: DurableObjectStub<Project>, slug: string
 }
 
 /** Clear the reviewer and give it one review. Returns busy if it is mid-turn. */
-async function dispatchReview(env: Env, p: DurableObjectStub<Project>, slug: string, apiBase: string, next: string): Promise<{ ok: boolean; busy?: boolean; error?: string }> {
+async function dispatchReview(env: Env, p: DurableObjectStub<Project>, slug: string, apiBase: string, next: string, reviewer = `${slug}--review`): Promise<{ ok: boolean; busy?: boolean; error?: string }> {
   try {
     const info = await p.info();
     const ag = info?.agents.find((x) => x.id === next);
@@ -975,11 +979,11 @@ async function dispatchReview(env: Env, p: DurableObjectStub<Project>, slug: str
     // Fresh context per review: the reviewer once answered a new request from
     // its memory of the previous one and never looked at the new commit.
     // Wake first: a box restored from its snapshot resumes the old conversation.
-    const rbox = boxStub(env, `${slug}--review`);
+    const rbox = boxStub(env, reviewer);
     if (await rbox.isAwake()) {
       const cc = await rbox.ccStatus().catch(() => 'unknown');
       if (/busy|thinking|working|running|tool|compact/i.test(cc)) return { ok: false, busy: true, error: `reviewer is ${cc}` };
-    } else await wake(env, `${slug}--review`, apiBase).catch(() => null);
+    } else await wake(env, reviewer, apiBase).catch(() => null);
     await rbox.clearContext().catch(() => false);
     const text = [
       `Review agent ${next}${tip ? ` at commit ${tip.commit.slice(0, 7)} ("${tip.message}")` : ''}. This is a new review: ignore any earlier review of this agent.`,
@@ -987,7 +991,7 @@ async function dispatchReview(env: Env, p: DurableObjectStub<Project>, slug: str
       `You are the reviewer agent of this project (${slug.replace('.', '/')}). The agent id is ${next}.`,
       ...REVIEW_STEPS.map((x) => x.replaceAll('<agent-id>', next)),
     ].filter(Boolean).join('\n\n');
-    let r = await sendTo(env, `${slug}--review`, text, apiBase);
+    let r = await sendTo(env, reviewer, text, apiBase);
     // Confirm it landed: Claude Code should start working within ~15 s. If it
     // stays idle the text was lost; type it once more.
     if (r.ok) {
@@ -996,7 +1000,7 @@ async function dispatchReview(env: Env, p: DurableObjectStub<Project>, slug: str
         await new Promise((res) => setTimeout(res, 2000));
         started = /busy|thinking|working|running|tool/i.test(await rbox.ccStatus().catch(() => ''));
       }
-      if (!started) { log('review', 'resend', { slug, agent: next }); r = await sendTo(env, `${slug}--review`, text, apiBase); }
+      if (!started) { log('review', 'resend', { slug, agent: next }); r = await sendTo(env, reviewer, text, apiBase); }
     }
     log('review', 'dispatched', { slug, agent: next, ok: r.ok, err: r.error });
     if (!r.ok) await p.setVerdict(next, 'changes', `The reviewer could not start: ${r.error}. Review it yourself, or push again to retry.`);
@@ -1080,10 +1084,18 @@ async function overProjectLimit(env: Env, handle: string): Promise<string | null
   return n >= 10 ? 'You have 10 projects, the limit for now. Self-host qodebase for more.' : null;
 }
 
+/** A landing project's own caps (crew runs, src/landing/), or null for the instance's. */
+async function landingCaps(env: Env, slug: string): Promise<{ agents?: number; awake?: number } | null> {
+  const info = await projectStub(env, slug).info().catch(() => null);
+  if (!landingOn(info)) return null;
+  return (await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null))?.caps || null;
+}
+
 async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string, o: { files?: string[]; on?: string } = {}) {
   task = task.trim();
   if (!task || task.length > 4000) throw new Error('task required (max 4000 chars)');
-  const agent = await projectStub(env, slug).addAgent(task, o.on || undefined);
+  const caps = await landingCaps(env, slug);
+  const agent = await projectStub(env, slug).addAgent(task, o.on || undefined, caps?.agents);
   // The landing system (src/landing/hooks.ts): the change's record with its claims.
   const pinfo = await projectStub(env, slug).info();
   if (landingOn(pinfo)) await landingHooks.onSpawn(env, pinfo!, agent, o).catch((e) => log('landing', 'spawn_hook_failed', { id: agent.id, err: String(e) }));
@@ -1122,10 +1134,12 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     if (body.state === 'pushed') {
       // Worker projects: build the fork as a Preview first; buildDone starts the review.
       const ownerDeploys = isOwner(env, slug.split('.')[0]);
-      if ((await p.kindOf()) === 'worker' && ownerDeploys) ctx.waitUntil(p.requestBuild('preview', me.agentId).catch((e) => log('build', 'request_failed', { err: String(e) })));
-      else await startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId));   // awaited: see the review verb
       const pinfo = await p.info();
-      if (landingOn(pinfo)) await landingHooks.onPushed(env, ctx, pinfo!, me.agentId, String(body.note || '')).catch((e) => log('landing', 'push_hook_failed', { id: me.agentId, err: String(e) }));
+      // A landing project with a reviewer pool: Landing hands the review to a free reviewer.
+      const pooled = landingOn(pinfo) && ((await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null))?.reviewers || 1) > 1;
+      if ((await p.kindOf()) === 'worker' && ownerDeploys) ctx.waitUntil(p.requestBuild('preview', me.agentId).catch((e) => log('build', 'request_failed', { err: String(e) })));
+      else if (!pooled) await startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId));   // awaited: see the review verb
+      if (landingOn(pinfo)) await landingHooks.onPushed(env, ctx, pinfo!, me.agentId, String(body.note || ''), pooled).catch((e) => log('landing', 'push_hook_failed', { id: me.agentId, err: String(e) }));
     }
     return json({ ok: true });
   }

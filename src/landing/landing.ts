@@ -19,7 +19,10 @@ import type { Env } from '../env';
 import { log } from '../box';
 import type { MergeJob, MergeResult } from './merger';
 import { TASKS } from './demoproject';
-import { recordCost } from '../costs';
+import { recordCost, claudeUsd } from '../costs';
+import { pushSeed } from './demo';
+import { SEED } from './demoproject';
+import { pushAlert } from '../alert';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
   | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap';
@@ -53,9 +56,19 @@ type Demo = { running: boolean; agents: number; speed: number; startedAt: number
   publicRun?: boolean };
 type Meta = {
   slug: string; waiting: string[]; running: string | null; runningSince?: number;
-  flags: { llmReplay: boolean; agentModel?: string; replayModel?: string; publicWatch?: boolean }; demo: Demo | null;
+  flags: { llmReplay: boolean; agentModel?: string; replayModel?: string; publicWatch?: boolean;
+    /** This project's own caps (a crew run): open agents, awake change agents. */
+    caps?: { agents?: number; awake?: number };
+    /** Reviewer pool size (1 = the Project's single reviewer flow; 2+ = Landing's pool). */
+    reviewers?: number;
+    /** Hard budget for this project's boxes + Claude tokens (conservative pricing); halted = boxes stopped. */
+    budgetUsd?: number; halted?: boolean };
+  demo: Demo | null;
+  reviews?: { queue: string[]; busy: Record<string, { change: string; at: number; sends: number }> };
+  spent?: { usd: number; at: number; boxes: number; claude: number };
   watchLog?: { at: number; ip: string }[];   // Watch a run: starts in the last day (caps)
   watchStarting?: number;                    // a visitor's run is being set up (blocks a second one)
+  watchPrep?: { prevAgents: number };        // the alarm resets the café and starts the visitor's run
   tree?: { commit: string; files: string[]; at: number };
   order: string[];   // change ids, oldest first (capped)
   trains: string[];
@@ -170,6 +183,8 @@ export class Landing extends DurableObject<Env> {
 
   /** A verdict. 'auto' = the scripted demo review; approved demo changes queue at once. */
   async reviewed(id: string, verdict: 'approved' | 'changes' | 'auto', notes = '', thenQueue = false) {
+    const m0 = await this.#m();
+    if (m0.reviews) { let freed = false; for (const [rv, b] of Object.entries(m0.reviews.busy)) if (b.change === id) { delete m0.reviews.busy[rv]; freed = true; } if (freed) { await this.#saveMeta(); await this.#arm(500); } }
     const c = await this.#get(id); if (!c) return;
     c.review = { verdict, notes: notes.slice(0, 2000) };
     if (verdict === 'changes') { c.state = 'pushed'; this.#ev(c, 'changes-suggested', notes.split('\n')[0]); }
@@ -204,6 +219,7 @@ export class Landing extends DurableObject<Env> {
 
   async alarm() {
     const m = await this.#m();
+    if (m.watchPrep) await this.#prepareWatch().catch((e) => log('landing', 'watch_prep_failed', { err: String((e as Error)?.stack || e) }));
     log('landing', 'alarm', { slug: m.slug, running: m.running, waiting: m.waiting.length, failStreak: m.failStreak || 0 });
     try {
       if (m.running) {
@@ -214,8 +230,98 @@ export class Landing extends DurableObject<Env> {
       await this.#startTrain();
     } finally {
       await this.#deliver();
+      await this.#reviewTick().catch((e) => log('landing', 'review_tick_failed', { err: String(e) }));
+      await this.#budgetTick().catch((e) => log('landing', 'budget_tick_failed', { err: String(e) }));
       await this.#demoTick();
     }
+  }
+
+  // ---- reviewer pool (landing projects with flags.reviewers >= 2) --------------------
+  // The Project DO has one reviewer and one review at a time. A crew of 12 agents would
+  // wait 12 reviews in a row, so Landing hands pushed changes to the first free of N
+  // reviewer boxes (<slug>--review, --review2, …) through the Worker's review-dispatch verb,
+  // and watches each one: a review with no verdict after 8 min is handed out again, once.
+  #reviewers(m: Meta) { const n = Math.min(4, m.flags.reviewers || 1); return Array.from({ length: n }, (_, i) => `${m.slug}--review${i ? i + 1 : ''}`); }
+  poolOn() { return (this.#meta?.flags.reviewers || 1) > 1; }
+  async queueReview(id: string) {
+    const m = await this.#m();
+    const r = (m.reviews ||= { queue: [], busy: {} });
+    for (const [rv, b] of Object.entries(r.busy)) if (b.change === id) delete r.busy[rv];   // a new push supersedes
+    if (!r.queue.includes(id)) r.queue.push(id);
+    await this.#saveMeta();
+    await this.#arm(300);
+  }
+  async #reviewTick() {
+    const m = await this.#m();
+    if (!m.reviews || (m.flags.reviewers || 1) < 2) return;
+    const r = m.reviews, now = Date.now();
+    for (const [rv, b] of Object.entries(r.busy)) {
+      if (now - b.at < 8 * 60_000) continue;
+      delete r.busy[rv];
+      if (b.sends < 2) { r.queue.unshift(b.change); log('landing', 'review_resend', { slug: m.slug, change: b.change, reviewer: rv }); }
+      else { await this.reviewed(b.change, 'changes', 'The reviewer agent did not finish this review. Look at it yourself, or push again to retry.'); }
+    }
+    const free = this.#reviewers(m).filter((rv) => !r.busy[rv]);
+    const jobs: [string, string, number][] = [];
+    while (free.length && r.queue.length) {
+      const change = r.queue.shift()!;
+      const prev = Object.values(r.busy).find((b) => b.change === change);
+      if (prev) continue;
+      const rv = free.shift()!;
+      const sends = 1;
+      r.busy[rv] = { change, at: now, sends };
+      jobs.push([rv, change, sends]);
+    }
+    if (jobs.length) await this.#saveMeta();
+    const [owner, name] = m.slug.split('.');
+    await Promise.all(jobs.map(async ([rv, change]) => {
+      const res = await fetch(`${this.env.API_BASE}/api/p/${owner}/${name}/review-dispatch`, {
+        method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' },
+        body: JSON.stringify({ agent: change, reviewer: rv }), signal: AbortSignal.timeout(4 * 60_000),
+      }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }) as any);
+      log('landing', 'review_dispatch', { slug: m.slug, change, reviewer: rv, ok: res.ok, status: res.status });
+      if (!res.ok) {
+        const now2 = await this.#m();
+        if (now2.reviews?.busy[rv]?.change === change) { delete now2.reviews.busy[rv]; now2.reviews.queue.push(change); await this.#saveMeta(); }
+      } else {
+        const c = await this.#get(change); if (c) { this.#ev(c, 'reviewing', `by ${rv.split('--')[1]}`); await this.#put(c); }
+      }
+    }));
+    if (r.queue.length || Object.keys(r.busy).length) await this.#arm(jobs.length ? 15_000 : 30_000);
+  }
+
+  // ---- budget guard (flags.budgetUsd) --------------------------------------------------
+  // Spent = this project's box time + Claude tokens from the cost ledger, priced
+  // conservatively: every call at the model's >100k-prompt tier (costs.ts), so a pricing gap
+  // can only stop the run early, never late. At the budget: every box of the project stops.
+  // On Eyal's subscription these dollars are API-equivalent (quota use); real spend is box time.
+  async #budgetTick() {
+    const m = await this.#m();
+    if (!m.flags.budgetUsd || m.flags.halted) return;
+    const [owner, name] = m.slug.split('.');
+    const rows = (await this.env.Ledger.get(this.env.Ledger.idFromName(owner)).rows(2)).filter((x) => x.project === `${owner}/${name}` || x.project === m.slug);
+    let boxes = 0, claude = 0;
+    for (const x of rows) {
+      if (x.kind === 'boxes') boxes += x.usd || 0;
+      if (x.kind === 'claude' && x.tokens) {
+        // The project's box model from forq's price table (Haiku 5.5 at its >100k tier); no model
+        // set = Opus, the most expensive the boxes could run. Claude Code's own estimate is not
+        // used: its table lags new models (it priced Haiku 5.5 as Haiku 4.5, 2026-10-08).
+        claude += Math.max(claudeUsd(m.flags.agentModel || 'opus', x.tokens) ?? claudeUsd('opus', x.tokens) ?? 0, x.usd || 0);
+      }
+    }
+    m.spent = { usd: Math.round((boxes + claude) * 1000) / 1000, at: Date.now(), boxes: Math.round(boxes * 1000) / 1000, claude: Math.round(claude * 1000) / 1000 };
+    if (m.spent.usd >= m.flags.budgetUsd) await this.#halt(m, `budget reached: $${m.spent.usd} of $${m.flags.budgetUsd}`);
+    await this.#saveMeta();
+    if (!m.flags.halted) await this.#arm(60_000);
+  }
+  async #halt(m: Meta, why: string) {
+    m.flags.halted = true;
+    const p = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
+    const ids = [...(p?.agents || []).map((a) => a.id), `${m.slug}--router`, ...this.#reviewers({ ...m, flags: { ...m.flags, reviewers: 4 } })];
+    for (const id of ids) await fetch(`${this.env.API_BASE}/api/agents/${id}/stop`, { method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } }).catch(() => null);
+    log('landing', 'halted', { slug: m.slug, why, stopped: ids.length });
+    await pushAlert(this.env, `qodebase: ${m.slug} halted`, why, `https://${this.env.UI_HOST}/p/${m.slug.replace('.', '/')}/work`, 0).catch(() => {});
   }
 
   /** Messages to real agents (bounce: fix it; conflict: redo it; the router: decide). From
@@ -499,9 +605,10 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     return {
       now, mode: m.demo ? 'demo' : 'live', code: (this.env.CF_VERSION_METADATA?.id || '').slice(0, 8),
       demo: m.demo || m.flags.publicWatch ? { ...(m.demo || { running: false, agents: 0, speed: 1, startedAt: 0, endsAt: 0 }),
-        public: !!m.flags.publicWatch, runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 86400_000).length) } : null,
+        active: this.#active(m), public: !!m.flags.publicWatch, runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 86400_000).length) } : null,
       flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch },
-      watch: { enabled: !!m.flags.publicWatch, runsToday: (m.watchLog || []).filter((w) => now - w.at < 86400_000).length, maxPerDay: WATCH.perDay, running: !!m.demo?.running },
+      ...(m.flags.budgetUsd ? { budget: { usd: m.flags.budgetUsd, spent: m.spent?.usd ?? 0, halted: !!m.flags.halted, reviewers: m.flags.reviewers || 1 } } : {}),
+      watch: { enabled: !!m.flags.publicWatch, runsToday: (m.watchLog || []).filter((w) => now - w.at < 86400_000).length, maxPerDay: WATCH.perDay, running: this.#active(m) },
       queue: { trains: trains.map((t) => ({ id: t.id, state: t.state, changes: t.changes, startedAt: t.startedAt, endedAt: t.endedAt, checks: t.checks || { ok: false, ms: 0, failures: [] }, mainBefore: t.mainBefore, mainAfter: t.mainAfter, ...(t.note ? { note: t.note } : {}),
         // What was in the train, by name ("Landed: Add teas to the menu (scripted agent 4)").
         items: t.changes.map((id) => ({ id, title: byId.get(id)?.title || id, agent: byId.get(id)?.agent || '', outcome: t.outcomes?.[id] || (t.state === 'testing' ? 'testing' : null) })) })), waiting: m.waiting },
@@ -513,8 +620,15 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
   }
 
   // ---- demo mode (scripted agents, src/landing/demo.ts) ------------------------------
-  async demoStart(slug: string, agents: number, speed: number, mode: 'story' | 'busy' = 'story', o: { maxMs?: number; publicRun?: boolean } = {}) {
+  async demoStart(slug: string, agents: number, speed: number, mode: 'story' | 'busy' = 'story', o: { maxMs?: number; publicRun?: boolean; force?: boolean } = {}) {
     const m = await this.#m(slug);
+    // The judges' project (publicWatch on): a visitor's run is never preempted, and busy or
+    // filming runs belong on other projects (manager, 2026-10-08: a public run was replaced
+    // by a 20-agent busy run 50 s after a visitor started it).
+    if (!o.publicRun && !o.force) {
+      if (m.demo?.publicRun && this.#active(m)) throw new Error("a visitor's run is going on this project; it is never preempted");
+      if (m.flags.publicWatch && mode === 'busy') throw new Error('this is the public demo project: run busy mode on another project (cafe-lab, cafe-crew)');
+    }
     agents = Math.max(1, Math.min(mode === 'busy' ? DEMO_MAX_AGENTS : DEMO_MAX_STORY_AGENTS, Math.round(agents || 4)));
     speed = Math.max(0.5, Math.min(4, speed || 1));
     // Agents of a bigger earlier run that are still ticking would keep taking tasks.
@@ -542,7 +656,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
   async watchClaim(ip: string): Promise<{ state: 'running'; startedAt: number; endsAt: number; startedNow: false } | { state: 'limit'; reason: 'daily' | 'ip' | 'cooldown' | 'off'; retryAfterS: number } | { state: 'go' }> {
     const m = await this.#m();
     if (!m.flags.publicWatch) return { state: 'limit', reason: 'off', retryAfterS: 3600 };
-    if (m.demo?.running) return { state: 'running', startedAt: m.demo.startedAt, endsAt: m.demo.endsAt, startedNow: false };
+    if (m.demo && this.#active(m)) return { state: 'running', startedAt: m.demo.startedAt, endsAt: m.demo.endsAt, startedNow: false };
     const now = Date.now();
     if (m.watchStarting && now - m.watchStarting < 60_000) return { state: 'running', startedAt: m.watchStarting, endsAt: m.watchStarting + WATCH.maxMs, startedNow: false };
     const day = (m.watchLog || []).filter((w) => now - w.at < 86400_000);
@@ -553,10 +667,45 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     if (last && now - last.at < WATCH.ipCooldownS * 1000) return { state: 'limit', reason: 'cooldown', retryAfterS: Math.ceil((last.at + WATCH.ipCooldownS * 1000 - now) / 1000) };
     if (m.running) return { state: 'limit', reason: 'cooldown', retryAfterS: 30 };   // the last run's final train is still landing
     m.watchLog = [...day, { at: now, ip }]; m.watchStarting = now;
+    // Reply now, set up in the alarm (the reset took ~23 s before the reply, 2026-10-08).
+    m.watchPrep = { prevAgents: m.demo?.agents || 0 };
+    m.demo = { running: true, agents: WATCH.agents, speed: WATCH.speed, mode: 'story', startedAt: now, endsAt: now + WATCH.maxMs, publicRun: true };
     await this.#saveMeta();
+    await this.ctx.storage.setAlarm(Date.now() + 50);
     log('landing', 'watch_start', { slug: m.slug, ip: ip.replace(/[.:][^.:]*$/, '.x'), today: m.watchLog.length });
-    return { state: 'go' };
+    return { state: 'go', startedAt: now, endsAt: now + WATCH.maxMs } as any;
   }
+
+  /** The visitor's run, from the alarm: the café back to its first version, records cleared,
+   *  then the scripted agents start (the old run's forks are deleted after, off the clock). */
+  async #prepareWatch() {
+    const m = await this.#m();
+    const prep = m.watchPrep;
+    if (!prep || !m.demo) return;
+    delete m.watchPrep;
+    const demo = m.demo;
+    for (let i = 1; i <= Math.max(prep.prevAgents, demo.agents); i++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${m.slug}#${i}`)).stop().catch(() => {});
+    const forks = m.demoForks || [];
+    for (const id of m.order) await this.ctx.storage.delete(`c:${id}`);
+    for (const id of m.trains) await this.ctx.storage.delete(`t:${id}`);
+    Object.assign(m, { waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [] });
+    const project = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
+    using repo = await this.env.ARTIFACTS.get(project!.repo);
+    const head = (await repo.log({ limit: 1 }))[0]?.hash || null;
+    await pushSeed(project!.remote, (await repo.createToken('write', 600)).plaintext, SEED, head, 'Reset the demo to the first version (Watch a run)');
+    // The run's clock starts now that the café is ready.
+    demo.startedAt = Date.now(); demo.endsAt = demo.startedAt + WATCH.maxMs; delete m.watchStarting;
+    await this.#saveMeta();
+    for (let i = 1; i <= demo.agents; i++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${m.slug}#${i}`)).start(m.slug, i, demo.speed, demo.startedAt);
+    log('landing', 'watch_ready', { slug: m.slug, forksToDelete: forks.length });
+    for (let i = 0; i < forks.length; i += 10) await Promise.all(forks.slice(i, i + 10).map((f) => this.env.ARTIFACTS.delete(f).catch(() => false)));
+  }
+
+  /** Is a visitor's run going (reset/start by the owner must not preempt it)? */
+  async publicActive() { const m = await this.#m(); return !!m.demo?.publicRun && this.#active(m); }
+
+  /** A run is still going while its agents work OR its changes are still in line / landing. */
+  #active(m: Meta) { return !!m.demo?.running || m.waiting.length > 0 || !!m.running || !!m.watchPrep; }
 
   /** Version check after a deploy: a Durable Object that never went idle keeps the old code. */
   async version() { return this.env.CF_VERSION_METADATA?.id || null; }

@@ -34,7 +34,8 @@ export type RouterRequest = { text: string; at: number; state: 'waking' | 'sent'
 /** Where an imported project came from (GitHub metadata at import time). */
 export type ImportedFrom = { url: string; fullName: string; stars: number; license: string | null; branch: string };
 export type Role = 'agent' | 'router' | 'reviewer' | 'ask';
-export const roleOf = (id: string): Role => id.endsWith('--router') ? 'router' : id.endsWith('--review') ? 'reviewer' : id.endsWith('--ask') ? 'ask' : 'agent';
+// Reviewers: `<slug>--review`, plus `--review2`, `--review3`… in a landing project's reviewer pool (src/landing/).
+export const roleOf = (id: string): Role => id.endsWith('--router') ? 'router' : /--review\d*$/.test(id) ? 'reviewer' : id.endsWith('--ask') ? 'ask' : 'agent';
 export type ProjectInfo = {
   slug: string; owner: string; name: string; description: string;
   repo: string; remote: string; forkedFrom: string | null; createdAt: number;
@@ -151,9 +152,10 @@ export class Project extends DurableObject<Env> {
   }
 
   /** `fromAgent`: stack on another agent's unlanded work (fork its fork; base = its head). */
-  async addAgent(task: string, fromAgent?: string): Promise<Agent> {
+  async addAgent(task: string, fromAgent?: string, maxAgents?: number): Promise<Agent> {
     const info = await this.#need();
-    const max = Number(this.env.MAX_AGENTS_PER_PROJECT || 6);
+    // maxAgents: a landing project's own cap (landing flags.caps), else the instance's.
+    const max = maxAgents || Number(this.env.MAX_AGENTS_PER_PROJECT || 6);
     const live = info.agents.filter((a) => a.state === 'working' || a.state === 'pushed' || a.state === 'blocked');
     if (live.length >= max) throw new Error(`agent limit reached (${max} open per project)`);
     const id = `${info.slug}--${Math.random().toString(36).slice(2, 7)}`;

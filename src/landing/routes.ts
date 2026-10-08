@@ -41,13 +41,12 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
   if (verb === 'watch' && request.method === 'POST') {
     if (info.private) return json({ error: 'no such project' }, 404);
     const ip = request.headers.get('x-qb-ip') || request.headers.get('cf-connecting-ip') || 'unknown';
-    const c = await L.watchClaim(ip);
+    const c = await L.watchClaim(ip) as any;
     // Both spellings: state running|started|limit, why/reason, nextAt/retryAfterS.
     if (c.state === 'limit') return json({ ...c, why: c.reason, nextAt: Date.now() + c.retryAfterS * 1000 });
     if (c.state === 'running') return json(c);
-    await resetDemo(env, info, L);
-    const d = await L.demoStart(info.slug, WATCH.agents, WATCH.speed, 'story', { maxMs: WATCH.maxMs, publicRun: true });
-    return json({ state: 'started', startedAt: d.startedAt, endsAt: d.endsAt, startedNow: true, demo: d });
+    // Set up in Landing's alarm (reset + start, ~20 s): the reply does not wait for it.
+    return json({ state: 'started', startedAt: c.startedAt, endsAt: c.endsAt, startedNow: true, preparing: true });
   }
   if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
   if (verb === 'restart' && me.admin) {
@@ -68,6 +67,11 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
       const am = model(body.agentModel), rm = model(body.replayModel);
       return json(await L.setFlags(info.slug, { ...(typeof body.llmReplay === 'boolean' ? { llmReplay: body.llmReplay } : {}),
         ...(typeof body.publicWatch === 'boolean' ? { publicWatch: body.publicWatch } : {}),
+        // A crew run: caps {agents, awake}, reviewers (pool size, 1-4), budgetUsd (hard stop), halted:false to resume.
+        ...(body.caps && typeof body.caps === 'object' ? { caps: { agents: Math.min(16, Number((body.caps as any).agents) || 0) || undefined, awake: Math.min(16, Number((body.caps as any).awake) || 0) || undefined } } : body.caps === null ? { caps: undefined } : {}),
+        ...(Number(body.reviewers) >= 1 ? { reviewers: Math.min(4, Math.round(Number(body.reviewers))) } : {}),
+        ...(Number(body.budgetUsd) > 0 ? { budgetUsd: Math.min(20, Number(body.budgetUsd)) } : body.budgetUsd === null ? { budgetUsd: undefined } : {}),
+        ...(body.halted === false ? { halted: false } : {}),
         // agentModel: the model this project's agent boxes run on the owner's subscription (a cheap test);
         // replayModel: the model tier-2 replays use (default Haiku 5.5).
         ...(am ? { agentModel: am.ok } : {}), ...(rm ? { replayModel: rm.ok } : {}) }));
@@ -82,7 +86,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
     }
     if (verb === 'demo' && request.method === 'POST') {
       const action = String(body.action || '');
-      if (action === 'start') return json(await L.demoStart(info.slug, Number(body.agents) || 4, Number(body.speed) || 1, body.mode === 'busy' ? 'busy' : 'story'));
+      if (action === 'start') return json(await L.demoStart(info.slug, Number(body.agents) || 4, Number(body.speed) || 1, body.mode === 'busy' ? 'busy' : 'story', { force: body.force === true }));
       if (action === 'stop') return json(await L.demoStop());
       if (action === 'seed') {
         using repo = await env.ARTIFACTS.get(info.repo);
@@ -94,7 +98,10 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
         log('landing', 'demo_seed', { slug: info.slug, commit });
         return json({ ok: true, commit });
       }
-      if (action === 'reset') return json(await resetDemo(env, info, L));
+      if (action === 'reset') {
+        if (body.force !== true && (await L.publicActive())) return json({ error: "a visitor's run is going on this project; it is never preempted (force: true to override)" }, 409);
+        return json(await resetDemo(env, info, L));
+      }
       return json({ error: `action: start (mode story|busy, agents 1-${DEMO_MAX_AGENTS}, speed 0.5-4), stop, reset, seed` }, 400);
     }
   } catch (e) {
