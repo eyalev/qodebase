@@ -46,21 +46,27 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const meter = () => { try { const l = readFileSync(join(homedir(), '.claude/data/history.jsonl'), 'utf8').trim().split('\n').pop(); const d = JSON.parse(l); return { at: d.timestamp, weekly: d.weekly_all_pct, session: d.session_pct }; } catch { return null; } };
 
 // ---- inputs ----------------------------------------------------------------------------
-const scenarioId = opt('--scenario');
-const stage = Number(opt('--stage', '1'));
-const seed = Number(opt('--seed', '1'));
-const baseline = opt('--baseline', null);
+// --plan public/lab/stage1-plan.json --order N: the run comes from qb4's plan (variant, baseline,
+// predicted, guards); seed = how many earlier entries of the plan share its variantKey, plus one.
+const PLAN = opt('--plan') ? JSON.parse(readFileSync(join(ROOT, opt('--plan')), 'utf8')) : null;
+const entry = PLAN ? PLAN.runs.find((r) => r.order === Number(opt('--order'))) : null;
+if (PLAN && !entry) throw new Error(`no order ${opt('--order')} in the plan`);
+const scenarioId = opt('--scenario', PLAN?.scenario);
+const stage = Number(opt('--stage', String(PLAN?.stage ?? 1)));
+const seed = entry ? PLAN.runs.filter((r) => r.order <= entry.order && r.variantKey === entry.variantKey).length : Number(opt('--seed', '1'));
+const baseline = entry ? entry.baseline : opt('--baseline', null);
 const budget = Number(opt('--budget', '2'));
 const timeoutMin = Number(opt('--timeout', '40'));
 if (!scenarioId) { console.error('usage: run.mjs --scenario <id> [--variant JSON | --baseline opus-alone|github] [--stage N] [--seed N] [--budget usd] [--timeout min] [--dry]'); process.exit(2); }
 const SDIR = opt('--scenario-dir', join(ROOT, 'scripts/lab/scenarios', scenarioId));   // override: test a stand-in scenario
 const scenario = JSON.parse(readFileSync(join(SDIR, 'scenario.json'), 'utf8'));
 const prompt = (scenario.prompt || readFileSync(join(SDIR, 'prompt.txt'), 'utf8')).trim();
-const variant = { ...DEFAULT_VARIANT, ...(baseline ? BASELINES[baseline] : JSON.parse(opt('--variant', '{}'))) };
+const variant = { ...DEFAULT_VARIANT, ...(entry ? entry.variant : baseline ? BASELINES[baseline] : JSON.parse(opt('--variant', '{}'))) };
 if (baseline && !BASELINES[baseline]) throw new Error(`unknown baseline ${baseline}`);
 const key = variantKey(variant, baseline);
 const pred = predict(variant, scenario.profile ? { ...scenario.profile, id: scenarioId } : scenarioId, { baseline });
-const predicted = { landed: pred.landed, wallS: pred.wallS, apiUsdStd: pred.apiUsdStd, quality: pred.quality, simVersion: pred.simVersion };
+// The plan's predicted block wins (qb4 recalibrates it between checkpoints).
+const predicted = entry?.predicted || { landed: pred.landed, wallS: pred.wallS, apiUsdStd: pred.apiUsdStd, quality: pred.quality, simVersion: pred.simVersion };
 const hash = createHash('sha1').update(`${key}|${scenarioId}|${stage}`).digest('hex').slice(0, 5);
 const short = scenarioId.replace(/[^a-z0-9]/g, '').slice(0, 10);
 const name = `lab-${short}-${hash}-r${seed}`;   // NAME_RE: no '--', <= 39 chars
@@ -70,16 +76,17 @@ const slug = `eyal.${name}`;
 const RUNS = join(ROOT, opt('--out', 'public/lab/runs.jsonl'));   // --out public/lab/runs.smoke.jsonl for runner smoke tests
 const STAGES = join(ROOT, 'public/lab/stages.jsonl');
 const lines = existsSync(RUNS) ? readFileSync(RUNS, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
-const spent = lines.filter((l) => l.stage === stage).reduce((a, l) => ({ usdReal: a.usdReal + (l.cost?.usdReal || 0), apiUsdHigh: a.apiUsdHigh + (l.cost?.apiUsdHigh || 0) }), { usdReal: 0, apiUsdHigh: 0 });
-const cap = STAGE_CAPS[stage] || STAGE_CAPS[1];
+const spent = lines.filter((l) => l.stage === stage).reduce((a, l) => ({ usdReal: a.usdReal + (l.cost?.usdReal || 0), apiUsdHigh: a.apiUsdHigh + (l.cost?.apiUsdHigh || 0), apiUsdStd: a.apiUsdStd + (l.cost?.apiUsdStd || 0) }), { usdReal: 0, apiUsdHigh: 0, apiUsdStd: 0 });
+// The plan's guards replace the defaults: stop at its API-equivalent total or weekly-meter rise.
+const cap = PLAN?.guards ? { usdReal: (STAGE_CAPS[stage] || STAGE_CAPS[1]).usdReal, apiUsdHigh: Infinity, apiUsdStd: PLAN.guards.stopAtApiUsdStd, quotaPts: PLAN.guards.stopAtWeeklyMeterRisePts } : { apiUsdStd: Infinity, ...(STAGE_CAPS[stage] || STAGE_CAPS[1]) };
 const stageRows = existsSync(STAGES) ? readFileSync(STAGES, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((r) => r.stage === stage) : [];
 const startMeter = stageRows.find((r) => r.event === 'start')?.meter;
 const now = meter();
 const quotaUsed = startMeter && now ? now.weekly - startMeter.weekly : 0;
 log('plan', { scenario: scenarioId, stage, seed, baseline, variantKey: key, project: slug, predicted, spent, cap, quotaUsed, budget });
-if (spent.usdReal >= cap.usdReal || spent.apiUsdHigh >= cap.apiUsdHigh || quotaUsed >= cap.quotaPts) { log('stage_cap', { spent, cap, quotaUsed }); console.error('stage cap reached: not starting'); process.exit(3); }
+if (spent.usdReal >= cap.usdReal || spent.apiUsdHigh >= cap.apiUsdHigh || spent.apiUsdStd >= cap.apiUsdStd || quotaUsed >= cap.quotaPts) { log('stage_cap', { spent, cap, quotaUsed }); console.error('stage cap reached: not starting'); process.exit(3); }
 // Projected: the sim's estimate of this run must also fit (its numbers are stage-0 guesses until calibrated).
-if (spent.apiUsdHigh + (predicted.apiUsdStd || 0) > cap.apiUsdHigh && !has('--force')) { log('stage_cap_projected', { spent, predicted, cap }); console.error(`this run is predicted at $${predicted.apiUsdStd} API-equivalent: over the stage cap ($${cap.apiUsdHigh}); --force to run anyway`); process.exit(3); }
+if ((spent.apiUsdHigh + (predicted.apiUsdStd || 0) > cap.apiUsdHigh || spent.apiUsdStd + (predicted.apiUsdStd || 0) > cap.apiUsdStd) && !has('--force')) { log('stage_cap_projected', { spent, predicted, cap }); console.error(`this run is predicted at $${predicted.apiUsdStd} API-equivalent: over the stage cap ($${cap.apiUsdHigh}); --force to run anyway`); process.exit(3); }
 if (has('--dry')) process.exit(0);
 if (!startMeter) appendFileSync(STAGES, JSON.stringify({ stage, event: 'start', at: Date.now(), meter: now, label: 'account-wide cc-usage meter' }) + '\n');
 
@@ -89,13 +96,12 @@ if (existing && !existing.error) throw new Error(`${slug} exists: a run with thi
 const created = await api('POST', `/api/p/eyal/${name}/create`, { description: `Variants lab run: ${scenario.title || scenarioId}, ${baseline || key}` });
 const work = mkdtempSync(join(tmpdir(), 'qblab-'));
 const starter = join(work, 'starter');
-// The starter as one commit, fixed author and date: the same starter gives the same sha every run.
-const copy = (from, to) => { mkdirSync(to, { recursive: true }); for (const e of readdirSync(from)) { const a = join(from, e), b = join(to, e); if (statSync(a).isDirectory()) copy(a, b); else writeFileSync(b, readFileSync(a)); } };
-copy(join(SDIR, 'starter'), starter);
-const genv = { ...process.env, GIT_AUTHOR_NAME: 'qodebase lab', GIT_AUTHOR_EMAIL: 'lab@qodebase.app', GIT_COMMITTER_NAME: 'qodebase lab', GIT_COMMITTER_EMAIL: 'lab@qodebase.app', GIT_AUTHOR_DATE: '2026-10-08T00:00:00Z', GIT_COMMITTER_DATE: '2026-10-08T00:00:00Z' };
-const g = (cwd, ...a) => execFileSync('git', ['-c', 'init.defaultBranch=main', '-c', 'commit.gpgsign=false', ...a], { cwd, env: genv, encoding: 'utf8' }).trim();
-g(starter, 'init', '-q'); g(starter, 'add', '-A'); g(starter, 'commit', '-qm', `${scenario.title || scenarioId}: starter`);
-const scenarioCommit = g(starter, 'rev-parse', 'HEAD');
+const g = (cwd, ...a) => execFileSync('git', ['-c', 'init.defaultBranch=main', '-c', 'commit.gpgsign=false', ...a], { cwd, encoding: 'utf8' }).trim();
+// qb5's scenario builder: the starter as a git repo with one fixed-date commit (stable sha).
+const built = JSON.parse(execFileSync('node', ['--experimental-strip-types', '--no-warnings', join(ROOT, 'scripts/lab/scenario.mjs'), scenarioId, '--out', starter], { encoding: 'utf8' }).trim().split('\n').pop());
+const scenarioCommit = built.scenarioCommit;
+if (g(starter, 'rev-parse', 'HEAD') !== scenarioCommit) throw new Error('starter sha does not match scenario.mjs');
+Object.assign(scenario, { promptVersion: built.promptVersion, scenarioVersion: built.scenarioVersion, check: built.check });
 const tok = created.token.split('?')[0];
 g(starter, '-c', `http.extraHeader=Authorization: Basic ${Buffer.from(`x:${tok}`).toString('base64')}`, 'push', '-q', created.info.remote, 'HEAD:main');
 log('project', { project: slug, scenarioCommit });
@@ -108,7 +114,16 @@ const flags = {
   claims: !!variant.claims, dedupe: !!variant.dedupe, llmReplay: variant.policy === 'intent',
   coderModel: variant.coderModel, reviewerModel: variant.reviewerModel, ...(variant.planner !== 'none' ? { plannerModel: variant.planner } : {}),
 };
-await api('POST', `/api/p/eyal/${name}/landing/flags`, flags);
+// Right after a deploy an old Worker version can answer and drop flags it does not know (smoke run
+// 2026-10-08: landing/unlisted never set). Set them until the project reads them back.
+for (let i = 0; ; i++) {
+  await api('POST', `/api/p/eyal/${name}/landing/flags`, flags);
+  const back = await api('GET', `/api/p/eyal/${name}`);
+  const lf = (await api('GET', `/api/p/eyal/${name}/landing`)).flags || {};
+  if (back.landing && back.unlisted && lf.llmReplay === flags.llmReplay) break;
+  if (i >= 5) throw new Error('flags did not stick: ' + JSON.stringify({ landing: back.landing, unlisted: back.unlisted }));
+  await sleep(10_000);
+}
 
 // ---- the request ----------------------------------------------------------------------------
 const check = scenario.check || 'npm test';
@@ -205,7 +220,7 @@ try {
   g(work, '-c', `http.extraHeader=Authorization: Basic ${Buffer.from(`x:${t.token.split('?')[0]}`).toString('base64')}`, 'clone', '-q', t.remote, clone);
   const scorer = join(ROOT, 'scripts/lab/score.mjs');
   if (existsSync(scorer)) {
-    const r = spawnSync('node', ['--experimental-strip-types', scorer, '--scenario', scenarioId, '--repo', clone, ...(has('--judge') ? ['--judge'] : [])], { encoding: 'utf8', timeout: 15 * 60_000 });
+    const r = spawnSync('node', ['--experimental-strip-types', '--no-warnings', scorer, '--scenario', scenarioId, '--repo', clone, ...(has('--no-judge') ? [] : ['--judge'])], { encoding: 'utf8', timeout: 15 * 60_000 });
     const line = (r.stdout || '').trim().split('\n').filter(Boolean).pop();
     quality = line ? JSON.parse(line) : null;
     if (r.status === 2 || !quality) log('scorer_failed', { status: r.status, err: (r.stderr || '').slice(-400) });
@@ -219,10 +234,12 @@ const out = {
   timings: { askAt, planAt: view.changes.length ? Math.min(...view.changes.map((c) => c.createdAt)) : null, firstLandAt: lands[0] ?? null, lastLandAt: lands[lands.length - 1] ?? null,
     wallS: lands.length ? Math.round((lands[lands.length - 1] - askAt) / 1000) : null, medianAskToLandS: view.stats?.medianAskToLandS ?? null },
   counts, tasks,
-  cost: { usdReal: Math.round(usdReal * 1000) / 1000, apiUsdStd: Math.round(apiUsdStd * 1000) / 1000, apiUsdHigh: Math.round(apiUsdHigh * 1000) / 1000, pricedAs: top, tokens, byRole: null },
+  cost: { usdReal: Math.round(usdReal * 1000) / 1000, apiUsdStd: Math.round(apiUsdStd * 1000) / 1000, apiUsdHigh: Math.round(apiUsdHigh * 1000) / 1000, pricedAs: top, tokens,
+    // The ledger has no per-role split yet; the judge (qb5's scorer, counted to the lab, not the variant) is known.
+    byRole: { planner: null, coders: null, reviewers: null, merge: null, judge: quality?.judgeUsd != null ? { apiUsdStd: quality.judgeUsd } : null } },
   quality,
   links: { replay: `https://qodebase.app/p/eyal/${name}/work?replay=4`, app: `https://${name}--eyal.ttyview.dev/`, repo: `https://qodebase.app/p/eyal/${name}` },
-  notes: '',
+  notes: [scenarioId === 'port-ts' ? 'fetched validator.js during the run: unknown (box command logs not collected yet)' : '', opt('--notes', '')].filter(Boolean).join('; '),
 };
 appendFileSync(RUNS, JSON.stringify(out) + '\n');
 log('done', { project: slug, status, landed: counts.tasksLanded, wallS: out.timings.wallS, usdReal: out.cost.usdReal, apiUsdStd: out.cost.apiUsdStd, score: quality?.score ?? null });
