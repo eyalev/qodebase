@@ -276,7 +276,8 @@ export class Landing extends DurableObject<Env> {
   }
   async #reviewTick() {
     const m = await this.#m();
-    if (!m.reviews || (m.flags.reviewers || 1) < 2) return;
+    // A pool of one is a pool too (lab variants with policy set: index.ts sends them here, not to the Project's reviewer).
+    if (!m.reviews || !(m.flags.reviewers! >= 1)) return;
     const r = m.reviews, now = Date.now();
     const H = { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' };
     // A reviewer that went idle without a verdict (seen: it stopped right after its preview
