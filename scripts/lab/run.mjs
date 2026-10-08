@@ -36,8 +36,21 @@ const has = (k) => args.includes(k);
 // lab: <= $10 real, <= 15% of the weekly quota (the stage guard below reads the real meter).
 export const STAGE_CAPS = { 1: { usdReal: 2, apiUsdHigh: 15, quotaPts: 5 }, 2: { usdReal: 5, apiUsdHigh: 40, quotaPts: 8 }, 3: { usdReal: 3, apiUsdHigh: 25, quotaPts: 2 } };
 
+// Network retries: any method when the connection never opened (the server never saw it; run 2's
+// first try died on a connect timeout, 2026-10-08), reads also on other network errors.
+const NEVER_SENT = /UND_ERR_CONNECT_TIMEOUT|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|ENETUNREACH/;
 async function api(method, path, body) {
-  const r = await fetch(API + path, { signal: AbortSignal.timeout(120_000), method, headers: { 'x-forq-secret': SECRET, 'user-agent': 'forq-cli/1', 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+  let r;
+  for (let i = 0; ; i++) {
+    try { r = await fetch(API + path, { signal: AbortSignal.timeout(120_000), method, headers: { 'x-forq-secret': SECRET, 'user-agent': 'forq-cli/1', 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }); break; }
+    catch (e) {
+      const code = String(e?.cause?.code || e?.cause?.name || e?.name || '');
+      const retry = i < 5 && (NEVER_SENT.test(code) || method === 'GET');
+      log('api_retry', { method, path, code, try: i + 1, retry });
+      if (!retry) throw e;
+      await sleep(5000 * (i + 1));
+    }
+  }
   const t = await r.text(); let j; try { j = JSON.parse(t); } catch { j = { raw: t.slice(0, 300) }; }
   if (!r.ok) throw new Error(`${method} ${path}: ${r.status} ${JSON.stringify(j).slice(0, 300)}`);
   return j;
