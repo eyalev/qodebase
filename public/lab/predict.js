@@ -49,12 +49,13 @@ export function variantKey(variant, baseline = variant?.baseline ?? null) {
 // Scenario profiles: qb5's scripts/lab/scenarios/<id>/scenario.json "profile" (2868ad1, first
 // guesses by qb5, to be measured in stage 1), mapped to the sim's fields: tasks = middle of
 // expectedTasks (geometric for a wide range), depth = dependencyDepth, pShared = sharedFileShare,
-// sharedFiles = how many, vague = vagueness (high 0.8 / low 0.2), dupRisk = duplicateIntentRisk
+// sharedFiles = how many, vague = vagueness (high 0.8 / medium 0.5 / low 0.2), dupRisk = duplicateIntentRisk
 // (for a Sonnet planner; other planners scale by CAL.pDup), hidden = hiddenTotal
 // (public/lab/scenarios.json). difficulty is qb4's guess (defects and work time multiplier).
 export const SCENARIOS = {
   'cafe-family': { label: 'Make the cafe family-friendly', tasks: 7, depth: 2, pShared: 0.6, sharedFiles: 4, vague: 0.8, dupRisk: 0.05, difficulty: 1, hidden: 7 }, // dupRisk 0.3 -> 0.05: 0 duplicates in 11 tasks (stage 1, qb5)
   'port-ts': { label: 'Port a library to TypeScript', tasks: 21, depth: 3, pShared: 0.1, sharedFiles: 3, vague: 0.2, dupRisk: 0.05, difficulty: 1.3, hidden: 158 },
+  bakery: { label: 'Build a small bakery website with online orders', tasks: 25, depth: 3, pShared: 0.5, sharedFiles: 5, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 26 }, // qb5 682084f; one Opus subagent built the reference in ~13 min
   rename: { label: 'Rename X across the codebase + a dependent change', tasks: 20, depth: 3, pShared: 0.4, sharedFiles: 2, vague: 0.1, difficulty: 0.7, hidden: 10 }, // qb4 guess (backup scenario)
 };
 
