@@ -234,7 +234,14 @@ async function telemetry(needle, fromMs) {
 const roleOf = (id) => (id.endsWith('--router') ? 'planner' : /--review\d*$/.test(id) ? 'reviewers' : 'coders');
 const byRole = { planner: null, coders: null, reviewers: null, merge: null, judge: null };
 let apiUsdStd = 0, apiUsdHigh = 0, pricedAs = 'per-model';
-const boxLines = (await telemetry(`${slug}--`, askAt - 10 * 60_000)).filter((x) => x.module === 'box' && x.event === 'costs' && String(x.agentId || '').startsWith(`${slug}--`) && x.tokens);
+// Observability takes minutes to make new lines searchable (12b found none 75 s after the stop):
+// ask until the count holds for two reads, at most ~6 min.
+let boxLines = [];
+for (let i = 0, last = -1; i < 12; i++) {
+  boxLines = (await telemetry(`${slug}--`, askAt - 10 * 60_000)).filter((x) => x.module === 'box' && x.event === 'costs' && String(x.agentId || '').startsWith(`${slug}--`) && x.tokens);
+  if (boxLines.length && boxLines.length === last) break;
+  last = boxLines.length; await sleep(30_000);
+}
 const replayLines = (await telemetry('replay_llm', askAt - 10 * 60_000)).filter((x) => x.module === 'landing' && x.event === 'replay_llm' && x.slug === slug);
 const addRole = (role, model, t) => {
   const p = priceOf(model, t);
