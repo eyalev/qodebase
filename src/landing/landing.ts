@@ -330,7 +330,13 @@ export class Landing extends DurableObject<Env> {
       log('landing', 'review_dispatch', { slug: m.slug, change, reviewer: rv, ok: res.ok, status: res.status });
       if (!res.ok) {
         const now2 = await this.#m();
-        if (now2.reviews?.busy[rv]?.change === change) { delete now2.reviews.busy[rv]; now2.reviews.queue.push(change); await this.#saveMeta(); }
+        if (now2.reviews?.busy[rv]?.change === change) {
+          delete now2.reviews.busy[rv]; now2.reviews.queue.unshift(change);
+          // That reviewer's box could not start ('container connection temporarily unavailable'):
+          // rest it 2 min so the next try goes to another reviewer of the pool (2026-10-08).
+          (now2.reviews.coolUntil ||= {})[rv] = Date.now() + 120_000;
+          await this.#saveMeta();
+        }
       } else {
         const c = await this.#get(change); if (c) { this.#ev(c, 'reviewing', `by ${rv.split('--')[1]}`); await this.#put(c); }
       }
