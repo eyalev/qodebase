@@ -12,8 +12,11 @@ import { CAL, SCENARIOS, SIM_VERSION, predict, qualityScore } from '../../public
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '../..');
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => { if (a.startsWith('--')) acc.push([a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : true]); return acc; }, []));
-const lines = readFileSync(join(ROOT, args.runs || 'public/lab/runs.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l))
-  .filter((l) => l.status === 'done' && (args.stage == null || l.stage === Number(args.stage)));
+const all = readFileSync(join(ROOT, args.runs || 'public/lab/runs.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l))
+  .filter((l) => args.stage == null || l.stage === Number(args.stage));
+// "excluded": "<reason>" (docs/lab/runs-schema.md) = not the variant's result: listed, never fitted.
+const skipped = all.filter((l) => l.excluded || l.status !== 'done');
+const lines = all.filter((l) => !l.excluded && l.status === 'done');
 
 const med = (xs) => { const a = xs.filter((x) => x != null && Number.isFinite(x)).sort((x, y) => x - y); return a.length ? a[Math.floor((a.length - 1) / 2)] : null; };
 const sum = (xs) => xs.reduce((a, b) => a + (b || 0), 0);
@@ -44,7 +47,9 @@ const rows = lines.map((l) => {
   };
 });
 
-console.log(`${rows.length} real runs (sim now ${SIM_VERSION})\n`);
+console.log(`${rows.length} real runs fitted (sim now ${SIM_VERSION})`);
+for (const l of skipped) console.log(`  not fitted: ${l.id} (${l.scenario}, ${l.baseline || 'variant'}): ${l.excluded ? `excluded: ${l.excluded}` : `status ${l.status}`}`);
+console.log('');
 console.log(`run                         | wall s: at run time / now (${SIM_VERSION}) / real | API $: at run / now / real | quality (no judge): at run / now / real | tasks planned/expected`);
 for (const r of rows) {
   if (r.excluded.length) console.log(`  (${r.id}: not fitted: ${r.excluded.join(', ')}; raw wall ${fmt(r.wallSRaw)} s, raw $ ${fmt(r.usdRaw, 2)})`);
@@ -81,5 +86,5 @@ for (const [m, f] of Object.entries(fit.planner)) console.log(`  ${m}: plan ${fm
 console.log(`Actual / predicted at run time (median): wall ${fmt(fit.actualOverPredicted.wallS, 2)}x, API $ ${fmt(fit.actualOverPredicted.apiUsdStd, 2)}x, quality ${fmt(fit.actualOverPredicted.quality, 2)}x`);
 console.log(`Actual / predicted now (${SIM_VERSION}):        wall ${fmt(fit.actualOverNow.wallS, 2)}x, API $ ${fmt(fit.actualOverNow.apiUsdStd, 2)}x, quality ${fmt(fit.actualOverNow.quality, 2)}x`);
 
-writeFileSync(join(ROOT, 'public/lab/calibration.json'), JSON.stringify({ generated: new Date().toISOString(), simVersion: SIM_VERSION, fit, runs: rows }, null, 1));
+writeFileSync(join(ROOT, 'public/lab/calibration.json'), JSON.stringify({ generated: new Date().toISOString(), simVersion: SIM_VERSION, fit, runs: rows, notFitted: skipped.map((l) => ({ id: l.id, scenario: l.scenario, baseline: l.baseline, variantKey: l.variantKey, status: l.status, excluded: l.excluded || null })) }, null, 1));
 console.log('\nwrote public/lab/calibration.json');

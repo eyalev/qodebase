@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-08T12:32:46.451Z",
+ "generated": "2026-10-08T13:28:45.291Z",
  "simVersion": "lab-0.7",
  "fit": {
   "runs": 5,
@@ -294,6 +294,24 @@
    },
    "conflicts": 0,
    "bounces": 0
+  }
+ ],
+ "notFitted": [
+  {
+   "id": "lab-cafefamily-3e5c3-r1b",
+   "scenario": "cafe-family",
+   "baseline": "github",
+   "variantKey": "github",
+   "status": "timeout",
+   "excluded": null
+  },
+  {
+   "id": "lab-portts-e62a6-r1",
+   "scenario": "port-ts",
+   "baseline": null,
+   "variantKey": "planner=opus;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "status": "stopped-budget",
+   "excluded": "guard bug: stopped by a mis-priced budget guard (every token priced as Opus), not by the setup; not the port-ts swarm result"
   }
  ]
 }

@@ -87,7 +87,7 @@ export function pickStage1(rows, baselines, scen, { n = 6, stage1Scenario = 'caf
 export function funnelReal(lines, { keep = 3, stage = 1 } = {}) {
   const groups = new Map();
   for (const l of lines) {
-    if (l.stage !== stage || l.status !== 'done') continue;
+    if (l.stage !== stage || l.status !== 'done' || l.excluded) continue; // excluded: not the variant's result
     const k = l.variantKey || l.baseline;
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(l);
