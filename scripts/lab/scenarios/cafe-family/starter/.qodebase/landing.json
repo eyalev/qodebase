@@ -1,0 +1,8 @@
+{
+  "check": "node --test",
+  "list": [
+    "src/routes.js",
+    "src/data/menu.js",
+    "style.css"
+  ]
+}

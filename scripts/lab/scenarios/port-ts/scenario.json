@@ -1,0 +1,22 @@
+{
+ "id": "port-ts",
+ "title": "Port a library to TypeScript",
+ "prompt": "Port this library to TypeScript.",
+ "promptVersion": "1",
+ "scenarioVersion": "1",
+ "about": "48 string validators from validator.js 13.12.0 (MIT), plain JavaScript with no official TypeScript version: every module has to become typed TypeScript without changing what it does.",
+ "starter": "scripts/lab/scenarios/port-ts/starter (validator.js 13.12.0, 48 functions, 1,478 lines, 49 visible tests)",
+ "upstream": { "repo": "validatorjs/validator.js", "tag": "13.12.0", "license": "MIT", "stars": 23740 },
+ "check": "node --test",
+ "hiddenTotal": 158,
+ "profile": {
+  "expectedTasks": [8, 54],
+  "dependencyDepth": 3,
+  "dependencyChain": "util/assertString, util/merge -> isFQDN, isIP, isByteLength -> isEmail, isURL; src/index last",
+  "sharedFileShare": 0.1,
+  "sharedFiles": ["src/index.js", "tsconfig.json", "package.json"],
+  "vagueness": "low",
+  "duplicateIntentRisk": 0.05,
+  "note": "first guesses by qb5; replace with measured values after stage 1"
+ }
+}

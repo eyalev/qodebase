@@ -1,0 +1,13 @@
+body { font: 17px/1.5 Georgia, serif; margin: 0; color: #2b2118; background: #fbf6ef; }
+header { background: #6b3e26; padding: 12px 16px; }
+nav a { color: #fbf6ef; margin-right: 16px; text-decoration: none; }
+nav a[aria-current] { text-decoration: underline; }
+main { padding: 16px; max-width: 640px; }
+h1 { margin: 8px 0; }
+.price { float: right; }
+@media (prefers-color-scheme: dark) {
+  body { color: #f3e9dc; background: #1d1612; }
+  header { background: #3a2216; }
+}
+.badge { background: #d9ead3; color: #274e13; padding: 0 6px; border-radius: 4px; }
+footer { padding: 16px; font-size: 14px; opacity: .7; }

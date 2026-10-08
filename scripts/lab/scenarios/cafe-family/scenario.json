@@ -1,0 +1,20 @@
+{
+ "id": "cafe-family",
+ "title": "Make the café family-friendly",
+ "prompt": "Make the cafe site family-friendly.",
+ "promptVersion": "1",
+ "scenarioVersion": "1",
+ "about": "A vague feature request on a small existing website: the planner has to decide what family-friendly means and split it into changes.",
+ "starter": "scripts/lab/scenarios/cafe-family/starter (Corner Café: the demo seed with its 14 tasks applied)",
+ "check": "node --test",
+ "hiddenTotal": 7,
+ "profile": {
+  "expectedTasks": [5, 10],
+  "dependencyDepth": 2,
+  "sharedFileShare": 0.6,
+  "sharedFiles": ["src/routes.js", "src/data/menu.js", "src/pages/home.js", "style.css"],
+  "vagueness": "high",
+  "duplicateIntentRisk": 0.3,
+  "note": "first guesses by qb5; replace with measured values after stage 1"
+ }
+}
