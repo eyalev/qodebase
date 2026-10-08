@@ -13,6 +13,7 @@ import { Project, roleOf, type ProjectInfo, type Role } from './project';
 import { Registry, canSee, listFor, registry, type Entry } from './registry';
 import { BuildBox } from './build';
 import { mintRunPass, serveRun } from './run';
+import { labPage } from './landingui/labview';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
 import { catalogReadme } from './catalog';
@@ -332,6 +333,12 @@ const app = {
         const em = await sessionEmail(env, request);
         const u = em ? await userByEmail(env, em) : null;
         return html(withGlobal(aboutPage(!!env.SELF_HOST), 'home', 0, u?.handle || '', 'd'));
+      }
+      // Variants lab (qb7, docs/lab/PLAN.md): public; the lab's owner (eyal) also gets "Run for real".
+      if (url.pathname === '/lab' || url.pathname === '/lab/') {
+        const em = await sessionEmail(env, request);
+        const u = em ? await userByEmail(env, em) : null;
+        return html(withGlobal(labPage({ own: u?.handle === 'eyal' }), 'home', 0, u?.handle || '', 'd'));
       }
       if (url.pathname === '/privacy') return html(privacyPage());
       if (url.pathname === '/personal-agents' && env.CF_OAUTH_CLIENT_ID) return html(personalAgentsPage());
