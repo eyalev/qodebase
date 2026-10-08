@@ -40,6 +40,8 @@ sim/README.md, sim/cloud/README.md, and the challenge page https://www.cloudflar
       eyal/cafe-real (Claude Haiku 5.5, verified, 5.5 min); Talk steering; notes in the code browser.
 - [ ] Submission texts: draft 1 in docs/contest/submission.md; [final] lines after Oct 10.
 - [ ] README polish (quick start, screenshots, the measurements) on Oct 12.
+- [ ] Waiting on: variants lab results (docs/lab/PLAN.md, qb4-qb7) and OpenClaw FINDINGS.md (qb9)
+      -> README + submission lines. Video stays locked unless a result is ready and honest.
 - [ ] Hand each cut to the manager tab for review (cc_com send s1007-1655 or tell Eyal).
 ## Build (video/contest/)
 - `node video/contest/shoot-slides.mjs` → slides.html (1920x1080, numbers read from the run
