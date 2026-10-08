@@ -181,7 +181,13 @@ export class Landing extends DurableObject<Env> {
     if (!c) throw new Error('unknown change');
     c.commit = commit; c.files = files.slice(0, 200);
     let onMain = '';
-    if (base && base !== c.base && !c.stackedOn) { onMain = ` (now on main ${base.slice(0, 7)})`; c.base = base; }
+    if (base && base !== c.base) {
+      // hooks.onPushed chose it: the stacked-on change's commit, or (once that one landed) main.
+      const parent = c.stackedOn ? await this.#get(c.stackedOn) : null;
+      if (parent?.state === 'landed') c.stackedOn = null;
+      onMain = c.stackedOn ? ` (on ${c.stackedOn.split('--')[1]} ${base.slice(0, 7)})` : ` (now on main ${base.slice(0, 7)})`;
+      c.base = base;
+    }
     if (c.state === 'bounced' || c.state === 'with-lead' || c.state === 'working' || c.state === 'replaying') c.state = 'pushed';
     this.#ev(c, 'pushed', (note || `${files.length} file${files.length === 1 ? '' : 's'}`) + onMain);
     await this.#overlaps(c, c.files);

@@ -30,17 +30,24 @@ export async function onPushed(env: Env, ctx: ExecutionContext, info: ProjectInf
   // Where the agent's work meets main: after `forq sync-main` it is a newer main commit than the
   // fork point, and the change is only what lies on top of it. Diffing from the old fork point
   // re-applied main's own commits and conflicted forever (GitHub-style lab run, 2026-10-08).
-  // Stacked changes keep their base (the commit of the change they build on).
+  // A stacked change builds on the change it is stacked on: while that one has not landed, the base
+  // is its pushed commit (when this fork contains it); once it landed, the stack is over and the base
+  // is where the fork meets main like any other change. (Spawned stacked before the parent pushed,
+  // four port-ts changes kept the SEED as base and conflicted with their landed parent forever, 14b.)
   let base = a.base ? { commit: a.base.commit, tree: a.base.tree } : null;
-  if (!rec?.stackedOn) {
-    try {
-      using mainRepo = await env.ARTIFACTS.get(info.repo);
-      using forkRepo = await env.ARTIFACTS.get(a.fork);
+  try {
+    using mainRepo = await env.ARTIFACTS.get(info.repo);
+    using forkRepo = await env.ARTIFACTS.get(a.fork);
+    const forkLog = await forkRepo.log({ limit: 200 });
+    const parent = rec?.stackedOn ? await L_.change(rec.stackedOn) : null;
+    const onParent = parent && parent.state !== 'landed' && parent.commit ? forkLog.find((c) => c.hash === parent.commit) : undefined;
+    if (onParent) base = { commit: onParent.hash, tree: onParent.treeHash };
+    else {
       const onMain = new Set((await mainRepo.log({ limit: 200 })).map((c) => c.hash));
-      const meet = (await forkRepo.log({ limit: 200 })).find((c) => onMain.has(c.hash));
+      const meet = forkLog.find((c) => onMain.has(c.hash));
       if (meet && meet.hash !== base?.commit) base = { commit: meet.hash, tree: meet.treeHash };
-    } catch (e) { log('landing', 'merge_base_failed', { agentId, err: String(e) }); }
-  }
+    }
+  } catch (e) { log('landing', 'merge_base_failed', { agentId, err: String(e) }); }
   let files: string[] = [];
   if (base?.tree) files = (await diffTrees(env, ctx, info.repo, base.tree, a.fork, tip.tree).catch(() => [])).map((c) => c.path);
   if (!rec) await onSpawn(env, info, a, {});   // spawned before the system was on
