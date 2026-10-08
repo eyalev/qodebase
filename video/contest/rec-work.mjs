@@ -36,6 +36,7 @@ const CAFE = '/api/p/eyal/corner-cafe/landing';
 const BUSY_PROJECT = process.env.BUSY_PROJECT || 'eyal/cafe-busy';
 // Tap a change by its title on the "All changes" list (ids change with every run).
 async function openChange(r, title) {
+  r.clear();                         // the last sentence must not play over the list we pass through
   await go(r, '#/changes', 600); await top(r);
   await r.tap(r.page.locator('a', { hasText: title }).first(), { after: 1200 });
   await top(r); await r.sleep(500);
@@ -49,6 +50,47 @@ const CREW = `/api/p/${CREW_PROJECT}/landing`;
 const CREW_ASK = `Build these 12 café features at once, one agent each (start exactly 12 agents, spawn each with --files listing the files it changes): 1) Opening hours page (src/pages/hours.js, src/routes.js); 2) Contact page with the address (src/pages/contact.js, src/routes.js); 3) Events page (src/pages/events.js, src/routes.js); 4) add three cakes to the menu (src/data/menu.js); 5) add two teas to the menu (src/data/menu.js); 6) a 'vegan' badge on menu items (src/pages/menu.js, style.css); 7) a dark theme that follows the phone (style.css); 8) a footer with the address (index.html, style.css); 9) today's specials on the home page (src/pages/home.js); 10) show whole prices without cents, update the test (src/lib/format.js, test/site.test.js); 11) rename the café to Corner Café & Books (src/site.js); 12) a new tagline mentioning books (src/site.js). Tests: node --test. Don't merge: approved changes go to the merge queue by themselves.`;
 
 const SCENES = {
+  // 4b'. The crew run again, from qb7's client replay of its own events (?replay=4, renumbered
+  // agents 1..12; no new run). The Talk send itself stays from the real take (contest-crew).
+  async crewreplay() {
+    const r = narrated(await rig({ name: 'contest-crewreplay' }));
+    await r.open(`/p/${CREW_PROJECT}/work?replay=4`);
+    await r.focus({ y: 0 });
+    const t0 = Date.now();
+    await r.say('Here is that run again, replayed four times faster from its own record.');
+    await show(r, 'text=Where they work');
+    await r.say('Twelve agents write code at the same time. Three reviewer agents read every change.');
+    // Wait for the replay to reach its end (every change landed), narrating on the way.
+    const done = () => r.page.evaluate(() => /12 landed/.test(document.body.innerText)).catch(() => false);
+    let k = 0;
+    const lines = ['Approved changes join the line by themselves and land in tested trains.',
+      'Two agents changed the same line of the same file. An AI replayed the second one on the newest code, in nineteen seconds.'];
+    for (const l of lines) voSeconds(l);
+    while (!(await done()) && Date.now() - t0 < 6 * 60_000) {
+      if (k < lines.length && Date.now() - t0 > 25_000 + k * 25_000) { await show(r, k === 0 ? 'text=The line' : 'text=Where they work'); await r.say(lines[k++]); }
+      else await r.sleep(1000);
+    }
+    while (k < lines.length) { await show(r, 'text=The line'); await r.say(lines[k++]); }
+    await top(r); await r.sleep(600); await r.focus({ y: 0 });
+    await r.say('All twelve landed six minutes and forty-three seconds after the request, every one reviewed and tested.');
+    r.clear();
+    await go(r, '#/change/eyal.cafe-team--xkvo4', 1200); await top(r); await r.focus({ y: 0 });
+    await r.say('This is the one that collided. An AI model redid what it was meant to do on the newest code, in nineteen seconds, for about nine cents of model use.');
+    await may('reviewed', async () => {
+      const t = r.page.getByText(/What was reviewed/).first();
+      await t.evaluate((el) => el.scrollIntoView({ block: 'center' })); await r.sleep(500);
+      await r.focus(t); await r.tap(t, { after: 1200 });
+      await r.say('Its record shows the lines that landed next to the ones the reviewer approved.');
+    });
+    await may('notes', async () => {
+      r.clear();
+      const d = r.page.getByText(/^Details$/).first();
+      await d.evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'smooth' })); await r.sleep(800);
+      await r.focus(d);
+      await r.say("And the reviewer agent's notes stay in the record, next to the code.");
+    });
+    await r.end(null);
+  },
   // 4. Talk on a project page, up to the confirm. Taps No: the crew run itself was delivered via the
   // router API (qb6) because this take's Talk read the order as 'open a page' (fixed by qb2, 6a4c6f2).
   async talk() {

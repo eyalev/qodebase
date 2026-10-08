@@ -29,7 +29,13 @@ sim/README.md, sim/cloud/README.md, and the challenge page https://www.cloudflar
 - [x] Draft 3 review notes (2026-10-08): zoomed phone on 2x frames, cold-open count read from
       the page, swarm chart for Bun, close card links; busy on cafe-busy; judge take via Watch a run;
       crew run (12 real Haiku 5.5 agents) started by Talk.
-- [ ] (old) Still to film (placeholders in cut.py `todo`): busy mode for the cold open (20 scripted
+- [x] Draft 3 review (2026-10-08): cafe-team re-shot from qb7's client replay (?replay=4, agents
+      renumbered 1..12, no new run) after the real Talk send; captions end before the page changes and
+      the shot holds until the sentence ends (rig.clear(), clear_before_tap); every phone line checked
+      against its frames. Picture locked. Audio -16.6 LUFS, true peak -1.3 dBFS.
+- [x] Export: video/out/qodebase-contest.mp4 (CRF 18, 23 MB) and the upload copy
+      video/out/qodebase-contest-upload.mp4 (CRF 14, H.264 High 1080p30 + AAC, 28 MB, 7:35) + .srt.
+- [ ] (superseded) Still to film (placeholders in cut.py `todo`): busy mode for the cold open (20 scripted
       agents, ~46 landed/min, say scripted); the AI replay demo (7.8 s, ~1 cent); real agents on
       eyal/cafe-real (Claude Haiku 5.5, verified, 5.5 min); Talk steering; notes in the code browser.
 - [ ] Submission texts: draft 1 in docs/contest/submission.md; [final] lines after Oct 10.

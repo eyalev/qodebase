@@ -97,7 +97,7 @@ class Cut:
         self.vo_end = 0.0
         self.silent = os.path.splitext(out)[0] + '.video.mp4'
         self.ff = subprocess.Popen(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(FPS), '-i', '-',
-                                    '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-tune', 'stillimage', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
+                                    '-c:v', 'libx264', '-preset', 'slow', '-crf', os.environ.get('CRF', '18'), '-tune', 'stillimage', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
                                     '-r', str(FPS), '-movflags', '+faststart', self.silent], stdin=subprocess.PIPE)
 
     def emit(self, im, n=1):
@@ -176,7 +176,7 @@ class Cut:
             d.text((tx + 18, H - 180), badge, font=F_BADGE, fill=FG)
         return canvas, (px, py, ph_w, ph_h)
 
-    def phone(self, scene, max_wait=8.0, start=0, replace=None, speed_x=None, extra=None, squeeze=None):
+    def phone(self, scene, max_wait=8.0, start=0, replace=None, speed_x=None, extra=None, squeeze=None, clear_before_tap=None, end=None):
         """A rig recording (video/frames/contest-<scene>), captions from its say() events.
         A caption waits for the previous narration to finish (the picture holds still)."""
         src = os.path.join(VIDEO, 'frames', f'contest-{scene}')
@@ -196,11 +196,20 @@ class Cut:
         if sp and speed_x: sp['speed'] = speed_x
         if sp and extra:
             ev = sorted(ev + [{'t': sp['t'] + dt, 'type': 'caption', 'text': text} for dt, text in extra], key=lambda e: e['t'])
+        # clear_before_tap: for takes filmed before rig.clear() existed, end a caption this many
+        # seconds before the next tap (the page changes ~1.1 s before the tap that opens a change).
+        if clear_before_tap:
+            ev = sorted(ev + [{'t': e['t'] - clear_before_tap, 'type': 'clear'} for e in ev if e['type'] == 'tap'], key=lambda e: e['t'])
         caps = [e for e in ev if e['type'] == 'caption']
         # start: begin at the start-th caption (drops a part of the take that cannot be shown).
         if start: ev = [e for e in ev if e['t'] >= caps[start]['t'] - 0.3 or e['type'] == 'focus' and e['t'] >= caps[start]['t'] - 3]; caps = caps[start:]
+        # end: stop where the end-th caption (counted after start) would begin; the rest is dropped.
+        if end is not None:
+            stop_t = caps[end]['t'] - 0.3
+            ev = [e for e in ev if e['t'] < stop_t]; caps = caps[:end]
         t = caps[0]['t'] - 0.3 if caps else frames[0]['t']
         t1 = max(ev[-1]['t'], caps[-1]['t'] + hold(caps[-1]['text'])) if caps else frames[-1]['t']
+        if end is not None: t1 = stop_t
         for i, e in enumerate(ev):
             if e['type'] == 'speed' and float(e['speed']) > 1:
                 stop = next((x['t'] for x in ev[i + 1:] if x['type'] == 'speed'), t1)
@@ -224,8 +233,10 @@ class Cut:
                 elif e['type'] == 'focus':
                     # centre the window on y (CSS px), a third from its top so what follows shows too
                     pan_to = float(e['y']) * 2 - self.WIN / 3
-                elif e['type'] == 'tap' and caption:
-                    # A tap starts the next step: the sentence about the last one leaves with it.
+                elif e['type'] in ('tap', 'clear') and caption:
+                    # Hold the shot the sentence is about until its narration ends, then take the caption down.
+                    if canvas is not None and speed <= 1 and self.now() < self.vo_end + 0.2:
+                        self.emit(canvas, round((self.vo_end + 0.2 - self.now()) * FPS))
                     close_cue(); caption, open_cue = '', None
             while fi + 1 < len(frames) and frames[fi + 1]['t'] <= t: fi += 1
             f = frames[fi]['file']
@@ -310,13 +321,13 @@ def script(c):
 
     # 4. The product on the phone (~2:30 when filmed in full)
     c.chapter('On the phone')
-    c.phone('live', max_wait=60, replace={'All fourteen landed in 1 minutes': 'All fourteen landed in 77 seconds. Typical time from ask to landed: 26 seconds.'})   # eyal/corner-cafe, qb6's scripted run, x8 time-lapse
+    c.phone('live', max_wait=60, clear_before_tap=1.3, replace={'All fourteen landed in 1 minutes': 'All fourteen landed in 77 seconds. Typical time from ask to landed: 26 seconds.'})   # eyal/corner-cafe, qb6's scripted run, x8 time-lapse
     # eyal/cafe-crew: ONE request typed into Talk (delivered 01:18:47 UTC, confirmed by qb6) ->
     # 12 real Claude Haiku 5.5 agents + 3 reviewers (qb6). Numbers in the captions are read from the run.
-    # The run took 6:43 (qb6): the take's caption schedule (7 and 14 min) missed two lines, added here.
-    c.phone('crew', speed_x=13, squeeze=[(33, 70.3, 8, 'router waking the agents')], extra=[
-        (120, 'Approved changes join the line by themselves and land in tested trains.'),
-        (235, 'Two agents changed the same line of the same file. An AI replayed the second one on the newest code, in nineteen seconds.')])
+    # The Talk send and the router starting the agents, from the real take (01:32:19 UTC) ...
+    c.phone('crew', end=3, squeeze=[(33, 70.3, 8, 'router waking the agents')])
+    # ... then the same run from qb7's client replay (renumbered agents 1..12, replay=4), its AI replay and a review.
+    c.phone('crewreplay')
     c.slide('notes', ['Anyone can read it later, people and agents alike: git log shows why each change is there.'], after=2)
     c.slide('different', ['So this is not GitHub with agents on top. The unit is an intent with its record, and landing is automatic: a conflict is replayed, not bounced.'], after=2)
 

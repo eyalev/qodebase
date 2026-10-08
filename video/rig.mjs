@@ -142,6 +142,8 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
       mark('focus', { y });
       return true;
     },
+    /** The narrated step is over (the page is about to change): cut.py takes its caption down. */
+    clear() { mark('clear'); },
     /** A title card between sections (rendered by compose.py, ~2.5 s). */
     async chapter(title, sub = '') { mark('chapter', { title, sub }); await sleep(200); },
     /** Caption for what follows; holds long enough to read (≥ 1.2 s, 0.33 s/word). */
