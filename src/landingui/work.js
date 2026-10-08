@@ -32,7 +32,25 @@
   };
   const term = (k, text) => `<button class="term" type="button" data-gloss="${k}">${esc(text || GLOSS[k][0].toLowerCase())}</button>`;
 
-  const AG = (a) => { const m = /(\d+)\D*$/.exec(a || ''); return m && /agent/i.test(a) ? `Agent ${m[1]}` : String(a || 'an agent'); };
+  // Agents are numbered 1..N per project: a scripted agent keeps its own number, a real
+  // one (id like "agent 981l0") gets the next free number by when its first change started.
+  let numOf = null, numMap = null;
+  function agentNums() {
+    const src = P && P.replay ? P.base : D;
+    if (numOf === src && numMap) return numMap;
+    const m = new Map(), used = new Set();
+    const all = src ? [...src.changes].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)) : [];
+    for (const c of all) { const k = /^(?:scripted )?agent[- ](\d+)$/i.exec(c.agent || ''); if (k && !m.has(c.agent)) { m.set(c.agent, +k[1]); used.add(+k[1]); } }
+    let n = 1;
+    for (const c of all) if (!m.has(c.agent)) { while (used.has(n)) n++; m.set(c.agent, n); used.add(n); }
+    numOf = src; numMap = m; return m;
+  }
+  function agentNum(a) {
+    const m = agentNums();
+    if (!m.has(a)) { let n = 1; const used = new Set(m.values()); while (used.has(n)) n++; m.set(a, n); }
+    return m.get(a);
+  }
+  const AG = (a) => (a ? `Agent ${agentNum(a)}` : 'an agent');
   const leadName = (l) => { const x = (l || '').replace(/^agent-(\d+)/i, 'Agent $1'); return /^(scripted )?lead$/i.test(x) ? 'its lead' : x; };
   const ready = (c) => c.state === 'pushed' && c.review && c.review.verdict !== 'changes';
   const skey = (c) => (ready(c) ? 'ready' : c.state);
@@ -40,7 +58,9 @@
   const st = (c) => `<span class="st s-${skey(c)}"><i class="dot"></i><span class="w">${WORD[skey(c)] || esc(c.state)}</span></span>`;
   // Real ids are '<owner>.<name>--<id>': people see the short part.
   const ref = (id) => `#${esc(String(id).split('--').pop())}`;
-  const short = (c) => (c ? esc(c.title || c.intent.slice(0, 60)) : '');
+  // A real agent's title can be its whole task ("Add a page. Create src/pages/…"): keep the first sentence.
+  const title1 = (c) => { const t = c.title || c.intent || ''; const f = t.split(/(?<=[.!?])\s/)[0]; return f.length > 90 ? `${f.slice(0, 88)}…` : f; };
+  const short = (c) => (c ? esc(title1(c)) : '');
   const files = (ps) => ps.map((p) => `<span class="mono">${esc(p)}</span>`).join(', ');
 
   // ---- time --------------------------------------------------------------------
@@ -58,6 +78,9 @@
   // real run ("Watch a run" when no live run can start). P = {base, start, end, wall0, speed, loop}.
   const STATE = { asked: 'working', claimed: 'working', working: 'working', stacked: 'working', 'changes-suggested': 'working', pushed: 'pushed', approved: 'pushed', reviewing: 'reviewing', queued: 'queued', replayed: 'queued', testing: 'testing', landed: 'landed', bounced: 'bounced', replaying: 'replaying', 'with-lead': 'with-lead' };
   let P = null;
+  const QS = new URLSearchParams(location.search);
+  let REPLAY_ON_LOAD = QS.has('replay') ? 1 : 0;
+  const REPLAY_SPEED = Math.min(8, Math.max(0.5, +QS.get('replay') || 2));
   const MSPEED = Math.min(20, Math.max(0.25, +new URLSearchParams(location.search).get('mockspeed') || 1));
   const allEv = (c) => [...c.events, ...(c.future || [])];
   const countIf = (l, f) => l.filter(f).length;
@@ -113,6 +136,7 @@
     if (r.status === 404) { D = null; throw Object.assign(new Error('none'), { none: true }); }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     D = await r.json(); fetchedAt = Date.now();
+    if (REPLAY_ON_LOAD && D.changes.length) { REPLAY_ON_LOAD = 0; D.queue.trains = D.queue.trains.filter((t) => !t.note); P = replayOf(D, REPLAY_SPEED); D = playAt(P); return; }
     // Trains that failed for infrastructure reasons carry a note (qb6): not part of the story.
     D.queue.trains = D.queue.trains.filter((t) => !t.note);
   }
@@ -137,7 +161,7 @@
   }
   // ---- plain-language sentences ---------------------------------------------------------
   function sentence(c, e, idx) {
-    const who = AG(c.agent), T = c.title || c.intent.slice(0, 60); // raw: callers escape
+    const who = AG(c.agent), T = title1(c); // raw: callers escape
     let d = (e.detail || '').replace(/\bagent-(\d+)/gi, 'Agent $1');
     for (const x of idx.values()) if (d.includes(x.id)) d = d.split(x.id).join(`${AG(x.agent)}'s change`);
     const its = `${who}'s change`;
@@ -161,7 +185,7 @@
       case 'bounced': return [`${its} was sent back: a test failed`, T];
       case 'landed': {
         const rp = c.landing && /^replayed/.test(c.landing.how || '');
-        return rp ? [`${its} landed after a replay`, `${T}: it collided on ${(c.landing.conflicts || []).join(', ')}, was re-applied on the newest code, and passed the tests.`] : [`${its} landed on main`, T];
+        return rp ? [`${its} landed after a replay`, `${T.replace(/[.!?]+$/, '')}: it collided on ${(c.landing.conflicts || []).join(', ')}, was re-applied on the newest code, and passed the tests.`] : [`${its} landed on main`, T];
       }
       default: return [`${its}: ${e.what}`, d];
     }
@@ -184,7 +208,7 @@
     const speedChips = (on) => [1, 2, 4].map((x) => `<button class="chipb sp" type="button" data-speed="${x}" aria-pressed="${on === x}">${x}×</button>`).join('');
     if (P && P.replay) {
       const done = now() >= P.end - 1, pct = Math.min(100, (100 * (now() - P.start)) / (P.end - P.start));
-      return `<div class="watch"><div class="wt"><i class="live off"></i><span><b>Replay</b> of a run from ${hhmm(P.realStart)}: ${dm.agents || ''} ${term('scripted', 'scripted agents')}, sped up ${P.speed}×.${limitNote ? ` ${esc(limitNote)}` : ''}</span></div>
+      return `<div class="watch"><div class="wt"><i class="live off"></i><span><b>Replay</b> of a run from ${hhmm(P.realStart)}: ${P.base.mode === 'demo' ? `${dm.agents || ''} ${term('scripted', 'scripted agents')}` : `${new Set(P.base.changes.map((c) => c.agent)).size} AI ${term('agent', 'agents')}`}, sped up ${P.speed}×.${limitNote ? ` ${esc(limitNote)}` : ''}</span></div>
         <div class="prog"><i style="width:${pct.toFixed(1)}%;animation:none"></i></div>
         <div class="wa">${done ? '<button class="btn" type="button" data-watch="again">Replay again</button>' : speedChips(P.speed)}<button class="chipb" type="button" data-watch="live">Back to live</button></div></div>`;
     }
@@ -275,7 +299,7 @@
     return m;
   }
   const conflictPaths = (c, e) => (c.landing?.conflicts?.length ? c.landing.conflicts : (e.detail || '').split(':')[0].split(/,\s*/).filter((p) => /[./]/.test(p)));
-  const agNum = (a) => (/(\d+)\D*$/.exec(a || '') || [])[1] || (a || '?').slice(0, 2);
+  const agNum = (a) => String(agentNum(a));
   const RANK = { 'with-lead': 9, bounced: 8, replaying: 7, testing: 6, queued: 5, ready: 4, reviewing: 3, pushed: 2, working: 1, landed: 0 };
   // One chip per agent: its number, coloured by what its change is doing; tap opens the change.
   const chip = (c, k, extra = '') => {
@@ -437,11 +461,19 @@
       default: return '';
     }
   }
+  // A real agent's intent is its whole prompt, often ending in "Asked: <the person's request>".
+  // Show the first sentence; the full task and the request fold away.
+  function intentHtml(c) {
+    const [task, asked] = String(c.intent || '').split(/\n+\s*Asked:\s*/);
+    const first = task.split(/(?<=[.!?])\s/)[0];
+    const rest = task.slice(first.length).trim();
+    return `<p style="margin-top:4px">${esc(first)}</p>${rest ? `<details class="more"><summary>The agent's full task</summary><p>${esc(task)}</p></details>` : ''}${asked ? `<details class="more"><summary>The request it came from</summary><p>${esc(asked)}</p></details>` : ''}`;
+  }
   function viewChange(id) {
     const idx = byId(), c = idx.get(id);
     if (!c) return `<div class="drill">${crumbs([['Agents at work', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style="font-size:20px;margin-bottom:6px">${short(it)}</h2><p class="dim">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : '<p class="dim">This change is not in today\'s data.</p>'; })()}</div>`;
     const area = areaOf(c.files[0] || '.');
-    const story = c.events.map((e) => { const s = sentence(c, e, idx) || [{ working: `${AG(c.agent)} working`, reviewing: 'The reviewer is reading it', testing: 'Being tested with the newest main' }[e.what] || e.what, { alone: 'on its own', 'next train': '' }[e.detail] ?? e.detail]; return `<li><time>${hhmm(e.t)}</time><span>${esc(s[0])}${s[1] && s[1] !== (c.title || c.intent.slice(0, 60)) ? `<span class="d">${esc(s[1])}</span>` : ''}</span></li>`; }).reverse().join('');
+    const story = c.events.map((e) => { const s = sentence(c, e, idx) || [{ working: `${AG(c.agent)} working`, reviewing: 'The reviewer is reading it', testing: 'Being tested with the newest main' }[e.what] || e.what, { alone: 'on its own', 'next train': '' }[e.detail] ?? e.detail]; return `<li><time>${hhmm(e.t)}</time><span>${esc(s[0])}${s[1] && s[1] !== title1(c) ? `<span class="d">${esc(s[1])}</span>` : ''}</span></li>`; }).reverse().join('');
     const stackOn = c.stackedOn && idx.get(c.stackedOn);
     const above = D.changes.filter((x) => x.stackedOn === c.id);
     const L = c.landing;
@@ -456,7 +488,7 @@
       <div class="tags">${st(c)}<span>${AG(c.agent)}</span>${c.createdAt ? `<span>started ${ago(c.createdAt)}</span>` : ''}</div>
       ${progress(c)}
       <section class="sec" style="margin-top:16px">${howBox(c)}</section>
-      <section class="sec"><h3>What it was asked to do</h3><p style="margin-top:4px">${esc(c.intent)}</p></section>
+      <section class="sec"><h3>What it was asked to do</h3>${intentHtml(c)}</section>
       ${stackOn || above.length ? `<section class="sec"><h3>${term('stack', 'Stacked')}</h3><ul class="rows">${stackOn ? row(stackOn, 'This change builds on it, and lands after it') : ''}${above.map((x) => row(x, 'Builds on this change')).join('')}</ul></section>` : ''}
       <section class="sec"><h3>What happened</h3><ol class="story">${story}</ol></section>
       <section class="sec"><h3>Details</h3><dl class="kv" style="margin-top:6px">

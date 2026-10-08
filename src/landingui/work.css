@@ -199,3 +199,8 @@
 
 .lw .dtabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
 .lw .dtabs .chipb[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+
+.lw details.more{margin-top:6px;font-size:14px}
+.lw details.more summary{cursor:pointer;color:var(--acc);min-height:44px;display:flex;align-items:center;list-style:none}
+.lw details.more summary::-webkit-details-marker{display:none}
+.lw details.more p{color:var(--dim);white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 8px}
