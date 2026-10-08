@@ -302,6 +302,28 @@
   const tTie = (a, b) => Math.abs(a.wallS - b.wallS) <= 0.15 * Math.min(a.wallS, b.wallS);
   const rank = (a, b) => (qTie(a, b) ? a.wallS - b.wallS || (a.usd ?? 0) - (b.usd ?? 0) : b.quality - a.quality);
   const leaderOf = (gs) => gs.filter((g) => g.wallS != null && g.quality != null).sort(rank)[0] || null;
+  // One comparison in words (qb5/manager wording): quality as hidden tests passed (a judge-only gap
+  // is a tie, never points), time as N times faster, cost as N% less.
+  function diffWords(a, b) {
+    const nm = (g) => esc(plain(g.variant, g.baseline));
+    const out = [];
+    const ha = a.hidden != null && a.hiddenOf ? Math.round(a.hidden * a.hiddenOf) : null, hb = b.hidden != null && b.hiddenOf ? Math.round(b.hidden * b.hiddenOf) : null;
+    if (qTie(a, b)) out.push(`The same quality within the judge's noise${ha != null && ha === hb ? ` (both passed ${ha}/${a.hiddenOf} hidden tests)` : ''}.`);
+    else if (ha != null && hb != null && ha !== hb) {
+      const [w, l, hw, hl] = ha > hb ? [a, b, ha, hb] : [b, a, hb, ha];
+      // Beyond the hidden tests' own share (60 points) and the judge's noise, the build / type check / judge differ too.
+      const rest = Math.abs(w.quality - l.quality) - (60 * (hw - hl)) / a.hiddenOf;
+      out.push(`${nm(w)} passed ${hw - hl} more hidden test${hw - hl === 1 ? '' : 's'} (${hw} against ${hl} of ${a.hiddenOf})${rest > 4 && w.quality > l.quality ? ` and scored higher overall (${Math.round(w.quality)} against ${Math.round(l.quality)})` : ''}.`);
+    }
+    else out.push(`${nm(a.quality >= b.quality ? a : b)} scored higher (${Math.round(Math.max(a.quality, b.quality))} against ${Math.round(Math.min(a.quality, b.quality))}).`);
+    if (tTie(a, b)) out.push('They finished within 15% of each other.');
+    else { const [f, sl] = a.wallS < b.wallS ? [a, b] : [b, a]; out.push(`${nm(f)} was ${(sl.wallS / f.wallS).toFixed(1)}× faster (${mins(f.wallS)} against ${mins(sl.wallS)}).`); }
+    if (a.usd != null && b.usd != null && Math.abs(a.usd - b.usd) > 0.15 * Math.min(a.usd, b.usd)) {
+      const [c, e] = a.usd < b.usd ? [a, b] : [b, a], r = c.usd / e.usd;
+      out.push(`${nm(c)} cost ${r > 0.45 && r < 0.55 ? 'about half as much' : `${Math.round((1 - r) * 100)}% less`} (${usd(c.usd)} against ${usd(e.usd)}).`);
+    }
+    return out.join(' ');
+  }
   function compare(gs) {
     const ok = gs.filter((g) => g.wallS != null && g.quality != null).sort(rank);
     const lead = ok[0];
@@ -315,14 +337,8 @@
       parts.push(`<p><b>Too close to call so far.</b> The same quality within the judge's noise${hid(lead) && hid(lead) === hid(second) ? ` (both passed ${hid(lead)})` : ''}, and finish times within 15% of each other:</p><p>${one(lead)}.</p><p>${one(second)}.</p>`);
     } else {
       parts.push(`<p><b>Leading so far:</b> ${one(lead)}.</p>`);
-      if (qTie(lead, second)) {
-        const nm = (g) => esc(plain(g.variant, g.baseline));
-        const cheap = lead.usd != null && second.usd != null && Math.abs(lead.usd - second.usd) > 0.15 * Math.min(lead.usd, second.usd) ? (lead.usd < second.usd ? [lead, second] : [second, lead]) : null;
-        const ratio = cheap ? cheap[0].usd / cheap[1].usd : 1;
-        const costWords = !cheap ? '' : ratio > 0.4 && ratio < 0.6 ? 'about half as much' : `${Math.round((1 - ratio) * 100)}% less`;
-        parts.push(`<p>${one(second)}.</p><p class="dim">The same quality within the judge's noise${hid(lead) && hid(lead) === hid(second) ? ` (both passed ${hid(lead)})` : ''}. ${nm(lead)} was faster (${mins(lead.wallS)} against ${mins(second.wallS)})${cheap ? `; ${nm(cheap[0]) === nm(lead) ? 'it also cost less' : `${nm(cheap[0])} cost ${costWords}`} (${usd(cheap[0].usd)} against ${usd(cheap[1].usd)})` : ''}.</p>`);
-      }
-      else if (lead.baseline) { const bm = ok.find((g) => !g.baseline); if (bm) parts.push(`<p>Best setup with several agents: ${one(bm)}.</p>`); }
+      if (qTie(lead, second)) parts.push(`<p>${one(second)}.</p><p class="dim">${diffWords(lead, second)}</p>`);
+      else { const bm = lead.baseline ? ok.find((g) => !g.baseline) : second; if (bm) parts.push(`<p>${lead.baseline ? 'Best setup with several agents: ' : ''}${one(bm)}.</p><p class="dim">${diffWords(lead, bm)}</p>`); }
     }
     const shown = new Set([lead, second].filter(Boolean));
     const others = ok.filter((g) => !shown.has(g) && g.baseline);
