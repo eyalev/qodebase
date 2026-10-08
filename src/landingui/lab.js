@@ -176,8 +176,23 @@
         <span class="dim">Predicted ${mins(pr.wallS)}, ${pr.quality != null ? Math.round(pr.quality) : '–'}/100, ${usd(pr.apiUsdStd)}</span>${real}</span></li>`;
     }).join('');
     return `<section class="sec" id="plan"><h2>Stage 1: being run now</h2>
-      <p class="cap">${PLAN.runs.length} real runs of ${[...new Set(PLAN.runs.map((p) => p.scenario || PLAN.scenario))].map((id) => `“${esc(scenOf(id).title)}” (${PLAN.runs.filter((p) => (p.scenario || PLAN.scenario) === id).length})`).join(', ')}, in this order. Predicted total about ${usd(total)} at API prices.${g.stopAtApiUsdStd ? ` It stops itself at ${usd(g.stopAtApiUsdStd)} or if the weekly Claude meter rises ${g.stopAtWeeklyMeterRisePts} points.` : ''} ${n} of ${PLAN.runs.length} done.</p>
+      <p class="cap">${PLAN.runs.length} real runs of ${[...new Set(PLAN.runs.map((p) => p.scenario || PLAN.scenario))].map((id) => `“${esc(scenOf(id).title)}” (${PLAN.runs.filter((p) => (p.scenario || PLAN.scenario) === id).length})`).join(', ')}, in this order. ${budgetLine()} ${n} of ${PLAN.runs.length} done.</p>
       <ol class="plan">${rows}</ol>${favouritesView()}</section>`;
+  }
+  // What the runner's guard compares (qb6): money already spent in the stage (API-equivalent,
+  // excluded runs too: they were paid for) plus the next run's prediction, against the stop.
+  function budgetLine() {
+    const g = PLAN.guards || {}, t = PLAN.totals;
+    // qb4's totals block (stage1-plan.json) when present: spent + still to come against the guard.
+    if (t && t.spentApiUsdStd != null) {
+      const guard = t.guardApiUsdStd ?? g.stopAtApiUsdStd;
+      return `Spent so far ${usd(t.spentApiUsdStd)} at API prices${t.judgeApiUsdStd ? ` (plus ${usd(t.judgeApiUsdStd)} for the quality judge)` : ''}; the ${t.toComeRuns?.length ?? ''} run${t.toComeRuns?.length === 1 ? '' : 's'} still to come are predicted at ${usd(t.toComeApiUsdStd)}, about ${usd(t.expectedTotalApiUsdStd)} in all${guard ? `, under the ${usd(guard)} stop` : ''}.${g.stopAtWeeklyMeterRisePts ? ` The stage also stops if the weekly Claude meter rises ${g.stopAtWeeklyMeterRisePts} points.` : ''}`;
+    }
+    const spent = RUNS.filter((r) => r.stage === PLAN.stage).reduce((a, r) => a + (r.cost?.apiUsdStd || 0), 0);
+    const doneKeys = new Set(RUNS.filter((r) => r.stage === PLAN.stage && !r.excluded).map((r) => `${r.scenario}|${r.variantKey || vkey(r.variant || {}, r.baseline)}|${r.seed ?? 1}`));
+    const next = PLAN.runs.find((p) => !doneKeys.has(`${p.scenario || PLAN.scenario}|${p.variantKey}|${p.repetition}`));
+    const stop = g.stopAtApiUsdStd;
+    return `Spent so far about ${usd(spent)} at API prices${stop ? ` of the ${usd(stop)} stop` : ''}${next?.predicted?.apiUsdStd != null ? `; the next run is predicted at ${usd(next.predicted.apiUsdStd)}` : ''}.${stop ? ` A run starts only if what is spent plus its prediction stays under ${usd(stop)}${g.stopAtWeeklyMeterRisePts ? `, and the stage stops if the weekly Claude meter rises ${g.stopAtWeeklyMeterRisePts} points` : ''}.` : ''}`;
   }
   // The simulation's picks that are not in the approved list (it was recalibrated after approval).
   function favouritesView() {
