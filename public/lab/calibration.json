@@ -1,29 +1,31 @@
 {
- "generated": "2026-10-08T13:28:45.291Z",
- "simVersion": "lab-0.7",
+ "generated": "2026-10-08T14:00:51.402Z",
+ "simVersion": "lab-0.8",
  "fit": {
-  "runs": 5,
+  "runs": 7,
   "from": [
    "lab-cafefamily-739a1-r1",
    "lab-cafefamily-08ce0-r1",
    "lab-cafefamily-41305-r1",
    "lab-cafefamily-7eac1-r1",
-   "lab-portts-ec6ec-r1"
+   "lab-portts-ec6ec-r1",
+   "lab-bakery-712d7-r1",
+   "lab-bakery-7fe05-r1"
   ],
   "coder": {
    "haiku": {
-    "tasks": 11,
-    "workMedS": 28.883,
+    "tasks": 18,
+    "workMedS": 37.42,
     "simWorkMedS": 28.799999999999997,
-    "usdPerS": 0.000589,
+    "usdPerS": 0.000591,
     "simUsdPerS": 0.00059
    },
    "opus": {
-    "tasks": 2,
-    "workMedS": 49.578,
+    "tasks": 3,
+    "workMedS": 215.254,
     "simWorkMedS": 67.19999999999999,
-    "usdPerS": 0.0091,
-    "simUsdPerS": 0.0079
+    "usdPerS": 0.006075,
+    "simUsdPerS": 0.0065
    }
   },
   "planner": {
@@ -35,22 +37,22 @@
     "hiddenShareMed": 0.14285714285714285
    },
    "opus": {
-    "runs": 3,
+    "runs": 5,
     "planMedS": 3.891,
-    "simPlanS": 90,
+    "simPlanS": 60,
     "tasksPlannedShare": 0.14,
-    "hiddenShareMed": 0.8571428571428571
+    "hiddenShareMed": 0.9615384615384616
    }
   },
   "actualOverPredicted": {
    "wallS": 0.428927680798005,
-   "apiUsdStd": 0.13027522935779814,
-   "quality": 1.0136208853575484
+   "apiUsdStd": 0.14776119402985075,
+   "quality": 1.091703056768559
   },
   "actualOverNow": {
-   "simVersion": "lab-0.7",
-   "wallS": 0.90625,
-   "apiUsdStd": 0.9711538461538461,
+   "simVersion": "lab-0.8",
+   "wallS": 0.9206349206349206,
+   "apiUsdStd": 0.8410416666666667,
    "quality": 1.0905125408942202
   }
  },
@@ -71,16 +73,17 @@
     "simVersion": "lab-0.3"
    },
    "now": {
-    "wallS": 233,
-    "apiUsdStd": 0.11,
-    "quality": 49.4,
-    "simVersion": "lab-0.7"
+    "wallS": 293,
+    "apiUsdStd": 0.18,
+    "quality": 37.5,
+    "simVersion": "lab-0.8"
    },
    "wallS": 283,
    "wallSRaw": 283,
    "planS": 47.084,
    "usd": 0.142,
    "usdRaw": 0.142,
+   "coderUsd": null,
    "tasksPlanned": 3,
    "tasksLanded": 3,
    "expectedTasks": 7,
@@ -119,16 +122,17 @@
     "simVersion": "lab-0.3"
    },
    "now": {
-    "wallS": 160,
-    "apiUsdStd": 0.11,
-    "quality": 41.3,
-    "simVersion": "lab-0.7"
+    "wallS": 254,
+    "apiUsdStd": 0.18,
+    "quality": 43.8,
+    "simVersion": "lab-0.8"
    },
    "wallS": 172,
    "wallSRaw": 172,
    "planS": 69.878,
    "usd": 0.198,
    "usdRaw": 0.198,
+   "coderUsd": null,
    "tasksPlanned": 8,
    "tasksLanded": 8,
    "expectedTasks": 7,
@@ -172,16 +176,17 @@
     "simVersion": "lab-0.3"
    },
    "now": {
-    "wallS": 64,
-    "apiUsdStd": 0.47,
-    "quality": 78.7,
-    "simVersion": "lab-0.7"
+    "wallS": 63,
+    "apiUsdStd": 0.38,
+    "quality": 75,
+    "simVersion": "lab-0.8"
    },
    "wallS": 58,
    "wallSRaw": 58,
    "planS": 3.651,
    "usd": 0.39,
    "usdRaw": 0.39,
+   "coderUsd": null,
    "tasksPlanned": 1,
    "tasksLanded": 1,
    "expectedTasks": 7,
@@ -221,16 +226,17 @@
     "simVersion": "lab-0.4"
    },
    "now": {
-    "wallS": 294,
-    "apiUsdStd": 0.83,
-    "quality": 81.9,
-    "simVersion": "lab-0.7"
+    "wallS": 283,
+    "apiUsdStd": 0.8,
+    "quality": 81.3,
+    "simVersion": "lab-0.8"
    },
    "wallS": null,
    "wallSRaw": 1431,
    "planS": 42.842,
    "usd": null,
    "usdRaw": 9.994,
+   "coderUsd": null,
    "tasksPlanned": 5,
    "tasksLanded": 5,
    "expectedTasks": 7,
@@ -265,16 +271,17 @@
     "simVersion": "lab-0.4"
    },
    "now": {
-    "wallS": 268,
-    "apiUsdStd": 2.08,
+    "wallS": 234,
+    "apiUsdStd": 1.49,
     "quality": 91.7,
-    "simVersion": "lab-0.7"
+    "simVersion": "lab-0.8"
    },
    "wallS": 228,
    "wallSRaw": 228,
    "planS": 3.891,
    "usd": 2.02,
    "usdRaw": 2.02,
+   "coderUsd": 2.02,
    "tasksPlanned": 1,
    "tasksLanded": 1,
    "expectedTasks": 21,
@@ -291,6 +298,106 @@
     "out": 34634,
     "cacheR": 2617122,
     "cacheW": 100380
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-712d7-r1",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "bakery",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 23.2,
+    "wallS": 1096,
+    "apiUsdStd": 8.62,
+    "quality": 91.6,
+    "simVersion": "lab-0.7"
+   },
+   "now": {
+    "wallS": 744,
+    "apiUsdStd": 4.8,
+    "quality": 92,
+    "simVersion": "lab-0.8"
+   },
+   "wallS": 806,
+   "wallSRaw": 806,
+   "planS": 3.502,
+   "usd": 4.037,
+   "usdRaw": 4.037,
+   "coderUsd": 4.037,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 25,
+   "workS": [
+    796.426
+   ],
+   "workMedS": 796.426,
+   "quality": 96,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 8,
+   "tokens": {
+    "in": 118,
+    "out": 110298,
+    "cacheR": 3627798,
+    "cacheW": 138158
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-7fe05-r1",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "bakery",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 23.4,
+    "wallS": 2045,
+    "apiUsdStd": 7.59,
+    "quality": 86.1,
+    "simVersion": "lab-0.7"
+   },
+   "now": {
+    "wallS": 1148,
+    "apiUsdStd": 2.81,
+    "quality": 89.3,
+    "simVersion": "lab-0.8"
+   },
+   "wallS": 811,
+   "wallSRaw": 811,
+   "planS": 60.059,
+   "usd": 1.752,
+   "usdRaw": 1.752,
+   "coderUsd": 0.687,
+   "tasksPlanned": 7,
+   "tasksLanded": 7,
+   "expectedTasks": 25,
+   "workS": [
+    205.174,
+    216.798,
+    143.666,
+    90.228,
+    153.301,
+    110.413,
+    240.306
+   ],
+   "workMedS": 153.301,
+   "quality": 89.7,
+   "qualityNoJudge": 97.1,
+   "hiddenShare": 0.9615384615384616,
+   "judge": 6,
+   "tokens": {
+    "in": 952,
+    "out": 876061,
+    "cacheR": 29908686,
+    "cacheW": 1598052
    },
    "conflicts": 0,
    "bounces": 0

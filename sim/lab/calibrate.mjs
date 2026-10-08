@@ -41,7 +41,7 @@ const rows = lines.map((l) => {
     planner: l.baseline === 'opus-alone' ? 'opus' : l.variant?.planner, coderModel: l.variant?.coderModel,
     pred: l.predicted, now: { wallS: now.wallS, apiUsdStd: now.apiUsdStd, quality: now.quality, simVersion: now.simVersion },
     wallS: wallOk ? l.timings?.wallS : null, wallSRaw: l.timings?.wallS, planS: l.timings?.planAt && l.timings?.askAt ? (l.timings.planAt - l.timings.askAt) / 1000 : null,
-    usd: usdOk ? usd : null, usdRaw: usd, tasksPlanned: l.counts?.tasksPlanned, tasksLanded: l.counts?.tasksLanded, expectedTasks: SCENARIOS[l.scenario]?.tasks,
+    usd: usdOk ? usd : null, usdRaw: usd, coderUsd: usdOk ? (l.cost?.byRole?.coders?.apiUsdStd ?? null) : null, tasksPlanned: l.counts?.tasksPlanned, tasksLanded: l.counts?.tasksLanded, expectedTasks: SCENARIOS[l.scenario]?.tasks,
     workS: work, workMedS: med(work), quality: q.score, qualityNoJudge: qNoJudge, hiddenShare: q.hiddenTotal ? q.hiddenPass / q.hiddenTotal : null, judge: q.judgeScore,
     tokens: l.cost?.tokens, conflicts: l.counts?.conflicts, bounces: l.counts?.bounces,
   };
@@ -64,7 +64,9 @@ for (const [model, rs] of Object.entries(byModel('coderModel'))) {
   const workSum = sum(work);
   // Coder $ per second of work: the run's API $ (byRole is not filled yet, so planner + merge
   // ride along; small next to coders) over the summed coder work seconds.
-  fit.coder[model] = { tasks: work.length, workMedS: med(work), simWorkMedS: CAL.workMedS * CAL.speed[model], usdPerS: (() => { const ok = rs.filter((r) => r.usd != null); const ws = sum(ok.flatMap((r) => r.workS)); return ws ? +(sum(ok.map((r) => r.usd)) / ws).toFixed(6) : null; })(), simUsdPerS: CAL.usdPerS[model] };
+  fit.coder[model] = { tasks: work.length, workMedS: med(work), simWorkMedS: CAL.workMedS * CAL.speed[model], // Coder $ per work-second: the coders' own cost when the run has it per role (from run 12b on),
+    // else the whole run's (planner and merge ride along: an upper estimate).
+    usdPerS: (() => { const ok = rs.filter((r) => (r.coderUsd ?? r.usd) != null); const ws = sum(ok.flatMap((r) => r.workS)); return ws ? +(sum(ok.map((r) => r.coderUsd ?? r.usd)) / ws).toFixed(6) : null; })(), simUsdPerS: CAL.usdPerS[model] };
 }
 for (const [model, rs] of Object.entries(byModel('planner'))) {
   fit.planner[model] = {
