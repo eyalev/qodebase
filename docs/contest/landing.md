@@ -51,6 +51,9 @@ Local tests: `node --experimental-strip-types --test src/landing/*.test.mjs`.
       parallel reviewers from one request: 12/12 landed in 7 min 17 s, 0 bounced, 6 collisions (5
       handlers, 1 Haiku replay), main green with 12 notes; real spend $0.20 container time, API-equiv.
       $0.51 standard / $2.55 at the >100k tier; quota < 1%.
+- [x] TALK-STARTED CREW RUN (filmed): eyal/cafe-team, request via Talk 01:32:19 UTC, 12/12 landed by
+      01:39:02, 0 bounced, 7 collisions (6 handlers, 1 Haiku replay), real spend $0.16. Lesson: a router
+      given an identical request on a project where it was already done declines (cafe-crew): use a fresh project.
 Next: notes in the code browser (qb7 panel); README section.
 Keep existing behaviour working for projects without the flag. Coordinate src/project.ts edits
 with qb2 (cc_com) since qb1-3 work in src/ too.
