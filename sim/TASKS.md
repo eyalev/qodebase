@@ -61,6 +61,7 @@ Contest: deadline Oct 14; eligibility (US/Canada residents only) still unresolve
 ## 6. Variants lab, qb4's part (docs/lab/PLAN.md; schema docs/lab/runs-schema.md)
 - [x] public/lab/predict.js: stage-0 predictor (finite goal: planner -> task graph -> coders -> review -> landing policy; baselines), <1 ms, exports KNOBS / variantKey / qualityScore / BASELINES (d225f46)
 - [x] sim/lab/sweep.mjs + funnel.mjs: 47,880 combos x 2 scenarios x 5 seeds in ~65 s -> public/lab/stage0.json (frontier, picks, marginals)
-- [ ] Manager: stage-1 picks + budget (unbudgeted: 6 picks + baselines x2 = 16 runs, ~$217 API-equiv; with --budget 60 --baseline-reps 1: 4 picks x2 + baselines x1 = 10 runs, ~$59). "No reviewers" winning is an assumption (defect cost model), stage 1 must measure review value
+- [x] Manager approved option B (2026-10-08): run list + guards in public/lab/stage1-plan.json, sent to qb6. Was: stage-1 picks + budget (unbudgeted: 6 picks + baselines x2 = 16 runs, ~$217 API-equiv; with --budget 60 --baseline-reps 1: 4 picks x2 + baselines x1 = 10 runs, ~$59). "No reviewers" winning is an assumption (defect cost model), stage 1 must measure review value
 - [ ] Swap in qb5's scenario.json profiles when they land (sweep reads them automatically), rerun
+- [ ] CHECKPOINT after stage-1 run 3: predicted vs actual cost/time, recalibrate predict.js, tell the manager the correction (real 12-Haiku run cost $0.53 vs predicted $1.3-37), before run 4
 - [ ] sim/lab/calibrate.mjs from the first real runs.jsonl lines (work time, cost per task by model, catch rates, planner misses/dups) -> public/lab/calibration.json; predicted-vs-actual
