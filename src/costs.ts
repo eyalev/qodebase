@@ -20,7 +20,7 @@ export const CONTAINER = { gibSecond: 0.0000025, vcpuSecond: 0.00002, gbDiskSeco
 /** USD per million tokens: input, 5-minute and 1-hour cache writes, cache read, output. */
 export const CLAUDE: Record<string, { in: number; cw: number; cw1h: number; cr: number; out: number }> = {
   opus: { in: 4, cw: 5, cw1h: 8, cr: 0.2, out: 20 },        // Claude Opus 5.5
-  sonnet: { in: 2, cw: 2.5, cw1h: 4, cr: 0.2, out: 10 },    // Claude Sonnet 5.5
+  sonnet: { in: 2, cw: 2.5, cw1h: 4, cr: 0.1, out: 10 },    // Claude Sonnet 5.5 (cache hits 0.05x base: $0.10, pricing page checked 2026-10-08)
   // Claude Haiku 5.5 (platform.claude.com/docs/en/models/haiku-5-5/overview, checked 2026-10-08):
   // $0.10 / $0.50 per MTok up to 100k-token prompts, 5x above. The ledger cannot tell a call's
   // prompt size, so it is priced at the >100k tier (conservative). Before 'haiku': first match wins.
