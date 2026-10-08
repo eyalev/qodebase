@@ -257,7 +257,12 @@
   // A run with a known platform stall (qb6's timings.stallS) is left out of time comparisons entirely:
   // the stall overlapped other agents' work, so subtracting it means nothing (manager, 2026-10-08).
   // Its quality and cost still count.
-  const runS = (r) => (r.timings?.wallS == null || r.timings.stallS ? null : r.timings.wallS);
+  // Comparability per run (qb4, 2026-10-08). Time counts only with no person stepping in and no
+  // platform stall; cost only when it is exact (not an upper or lower bound).
+  const timeWhy = (r) => (r.counts?.humanInterventions > 0 ? 'a person had to step in during the run (a platform bug, since fixed)' : r.timings?.stallS || /PLATFORM STALL/i.test(r.notes || '') ? 'a platform stall' : null);
+  const costWhy = (r) => (/upper bound/i.test(r.cost?.pricedAs || '') ? 'only an upper bound is known' : r.cost?.apiUsdStdLowerBound != null ? 'only a lower bound is known' : null);
+  const runS = (r) => (r.timings?.wallS == null || timeWhy(r) ? null : r.timings.wallS);
+  const runUsd = (r) => (r.cost?.apiUsdStd == null || costWhy(r) ? null : r.cost.apiUsdStd);
   function groups() {
     const by = new Map();
     for (const r of RUNS.filter((x) => x.scenario === st.scenario && x.status !== 'failed' && !x.excluded)) {
@@ -271,7 +276,8 @@
       hiddenOf: g.runs.find((r) => r.quality?.hiddenTotal)?.quality.hiddenTotal,
       floor: Object.fromEntries(['build', 'typecheck', 'ownTests'].map((k) => [k, g.runs.every((r) => r.quality?.[k] !== false)])),
       typeErrors: med(g.runs.map((r) => r.quality?.typeErrors)),
-      real: med(g.runs.map((r) => r.cost?.usdReal)), usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
+      real: med(g.runs.map((r) => r.cost?.usdReal)), usd: med(g.runs.map(runUsd)),
+      timeNot: g.runs.every((r) => timeWhy(r)) ? timeWhy(g.runs[0]) : null, costNot: g.runs.every((r) => costWhy(r)) ? costWhy(g.runs[0]) : null,
       pWallS: med(g.runs.map((r) => r.predicted?.wallS)), pQuality: med(g.runs.map((r) => r.predicted?.quality)), stage: Math.max(...g.runs.map((r) => r.stage || 0)) }));
   }
   function scatter(gs) {
@@ -304,17 +310,17 @@
   }
   // Best = highest quality among the setups within 1.5x of the fastest time; ties: cheaper.
   function bestOf(gs) {
-    const vr = gs.filter((g) => !g.baseline && g.wallS != null && g.quality != null);
+    const vr = gs.filter((g) => !g.baseline && g.quality != null);
     if (!vr.length) return null;
-    return vr.slice().sort((a, b) => b.quality - a.quality || a.wallS - b.wallS || a.usd - b.usd)[0];
+    return vr.slice().sort((a, b) => b.quality - a.quality || (a.wallS ?? 1e9) - (b.wallS ?? 1e9) || (a.usd ?? 1e9) - (b.usd ?? 1e9))[0];
   }
   // Ties (manager, 2026-10-08): the judge moves ~2 points between scorings of the same code, so two
   // setups that pass the same share of hidden tests and differ by <= 4 points have the SAME quality;
   // finish times within 15% are a tie too. Never present a tie as a win.
   const qTie = (a, b) => Math.abs(a.quality - b.quality) <= 4 && (a.hidden == null || b.hidden == null || Math.abs(a.hidden - b.hidden) < 1e-9);
-  const tTie = (a, b) => Math.abs(a.wallS - b.wallS) <= 0.15 * Math.min(a.wallS, b.wallS);
-  const rank = (a, b) => (qTie(a, b) ? a.wallS - b.wallS || (a.usd ?? 0) - (b.usd ?? 0) : b.quality - a.quality);
-  const leaderOf = (gs) => gs.filter((g) => g.wallS != null && g.quality != null).sort(rank)[0] || null;
+  const tTie = (a, b) => a.wallS != null && b.wallS != null && Math.abs(a.wallS - b.wallS) <= 0.15 * Math.min(a.wallS, b.wallS);
+  const rank = (a, b) => (qTie(a, b) ? (a.wallS != null && b.wallS != null ? a.wallS - b.wallS : (a.wallS == null) - (b.wallS == null)) || (a.usd ?? 1e9) - (b.usd ?? 1e9) : b.quality - a.quality);
+  const leaderOf = (gs) => gs.filter((g) => g.quality != null).sort(rank)[0] || null;
   // One comparison in words (qb5/manager wording): quality as hidden tests passed (a judge-only gap
   // is a tie, never points), time as N times faster, cost as N% less.
   // Concrete, judge-free reasons from the floor checks (qb5): build, type check, own tests.
@@ -338,8 +344,11 @@
       out.push(`${nm(w)} passed ${hw - hl} more hidden test${hw - hl === 1 ? '' : 's'} (${hw} against ${hl} of ${a.hiddenOf})${fw ? ` and ${fw}` : rest > 4 && w.quality > l.quality ? ` and scored higher overall (${Math.round(w.quality)} against ${Math.round(l.quality)})` : ''}.`);
     }
     else { const [w, l] = a.quality >= b.quality ? [a, b] : [b, a]; const fw = floorWords(w, l); out.push(fw ? `${nm(w)}: ${fw}.` : `${nm(w)} scored higher (${Math.round(w.quality)} against ${Math.round(l.quality)}).`); }
-    if (tTie(a, b)) out.push('They finished within 15% of each other.');
+    const tNot = a.wallS == null || b.wallS == null, cNot = a.usd == null || b.usd == null;
+    if (tNot) out.push(`Time is not comparable: for ${nm(a.wallS == null ? a : b)}, ${(a.wallS == null ? a : b).timeNot || 'no usable time'}.`);
+    else if (tTie(a, b)) out.push('They finished within 15% of each other.');
     else { const [f, sl] = a.wallS < b.wallS ? [a, b] : [b, a]; out.push(`${nm(f)} was ${(sl.wallS / f.wallS).toFixed(1)}× faster (${mins(f.wallS)} against ${mins(sl.wallS)}).`); }
+    if (cNot) out.push(`Cost is not comparable: for ${nm(a.usd == null ? a : b)}, ${(a.usd == null ? a : b).costNot || 'no usable cost'}.`);
     if (a.usd != null && b.usd != null && Math.abs(a.usd - b.usd) > 0.15 * Math.min(a.usd, b.usd)) {
       const [c, e] = a.usd < b.usd ? [a, b] : [b, a], r = c.usd / e.usd;
       out.push(`${nm(c)} cost ${r > 0.45 && r < 0.55 ? 'about half as much' : `${Math.round((1 - r) * 100)}% less`} (${usd(c.usd)} against ${usd(e.usd)}).`);
@@ -349,10 +358,10 @@
     return out.join(' ');
   }
   function compare(gs) {
-    const ok = gs.filter((g) => g.wallS != null && g.quality != null).sort(rank);
+    const ok = gs.filter((g) => g.quality != null).sort(rank);
     const lead = ok[0];
     if (!lead) return '';
-    const one = (g) => `${esc(plain(g.variant, g.baseline))}: done in <b>${mins(g.wallS)}</b>, quality <b>${Math.round(g.quality)}/100</b>, <b>${usd(g.usd)}</b> at API prices (${g.runs.length} run${g.runs.length === 1 ? '' : 's'})`;
+    const one = (g) => `${esc(plain(g.variant, g.baseline))}: ${g.wallS != null ? `done in <b>${mins(g.wallS)}</b>` : 'time not comparable'}, quality <b>${Math.round(g.quality)}/100</b>, ${g.usd != null ? `<b>${usd(g.usd)}</b> at API prices` : 'cost not comparable'} (${g.runs.length} run${g.runs.length === 1 ? '' : 's'})`;
     const hid = (g) => (g.hidden != null && g.hiddenOf ? `${Math.round(g.hidden * g.hiddenOf)}/${g.hiddenOf} hidden tests` : null);
     const parts = [];
     const second = ok[1];
@@ -368,9 +377,9 @@
     const shown = new Set([lead, second].filter(Boolean));
     const others = ok.filter((g) => !shown.has(g) && g.baseline);
     const to = (g) => (g.runs.every((r) => r.status === 'timeout') ? ' (timed out)' : '');
-    if (others.length) parts.push(`<p class="dim">Also: ${others.map((g) => `${esc(plain(g.variant, g.baseline))} ${mins(g.wallS)}${to(g)}, ${Math.round(g.quality)}/100, ${usd(g.usd)}`).join('; ')}.</p>`);
-    const rs = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded && r.predicted?.wallS && r.timings?.wallS && r.cost?.apiUsdStd);
-    const tR = med(rs.map((r) => r.predicted.wallS / runS(r))), cR = med(rs.map((r) => r.predicted.apiUsdStd / r.cost.apiUsdStd));
+    if (others.length) parts.push(`<p class="dim">Also: ${others.map((g) => `${esc(plain(g.variant, g.baseline))} ${g.wallS != null ? mins(g.wallS) : 'time not comparable'}${to(g)}, ${Math.round(g.quality)}/100, ${g.usd != null ? usd(g.usd) : 'cost not comparable'}`).join('; ')}.</p>`);
+    const rs = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded && r.predicted?.wallS && runS(r) && runUsd(r));
+    const tR = med(rs.map((r) => r.predicted.wallS / runS(r))), cR = med(rs.map((r) => r.predicted.apiUsdStd / runUsd(r)));
     if (rs.length && (tR > 1.5 || tR < 0.67 || cR > 1.5 || cR < 0.67)) parts.push(`<p class="small dim">On these runs the simulation was off: it expected about ${tR.toFixed(1)}× the time and ${cR.toFixed(1)}× the cost that the runs took. It is recalibrated from real runs before the next ones.</p>`);
     return `<div class="cmp">${parts.join('')}</div>`;
   }
@@ -379,8 +388,8 @@
     return `<ul class="rows">${sorted.map((g) => {
       const on = st.open === g.key;
       return `<li class="${on ? 'open' : ''}"><button type="button" class="rw" data-open="${esc(g.key)}" aria-expanded="${on}"><i class="k ${g.baseline ? 'bl' : 'vr'}"></i><span class="t">${esc(plain(g.variant, g.baseline))}</span>
-        <span class="nums"><span>${mins(g.wallS)}</span><span>${g.quality == null ? '–' : Math.round(g.quality)}/100${g.qTruly != null ? ` <span class="dim">(${Math.round(g.qTruly)})</span>` : ''}</span><span>${usd(g.usd)}</span></span>
-        <span class="sub">${g.runs.length} run${g.runs.length === 1 ? '' : 's'}${g.runs.every((r) => r.status === 'timeout') ? ', timed out' : ''}, stage ${g.stage}${g.pWallS != null ? `; predicted ${mins(g.pWallS)}, ${Math.round(g.pQuality)}/100` : ''}</span></button>${on ? detail(g) : ''}</li>`;
+        <span class="nums"><span>${g.wallS != null ? mins(g.wallS) : 'time n/c'}</span><span>${g.quality == null ? '–' : Math.round(g.quality)}/100${g.qTruly != null ? ` <span class="dim">(${Math.round(g.qTruly)})</span>` : ''}</span><span>${g.usd != null ? usd(g.usd) : 'cost n/c'}</span></span>
+        <span class="sub">${g.runs.length} run${g.runs.length === 1 ? '' : 's'}${g.runs.every((r) => r.status === 'timeout') ? ', timed out' : ''}${g.timeNot ? `; time not comparable (${esc(g.timeNot)})` : ''}${g.costNot ? `; cost not comparable (${esc(g.costNot)})` : ''}, stage ${g.stage}${g.pWallS != null ? `; predicted ${mins(g.pWallS)}, ${Math.round(g.pQuality)}/100` : ''}</span></button>${on ? detail(g) : ''}</li>`;
     }).join('')}</ul>`;
   }
   function detail(g) {
@@ -392,9 +401,11 @@
         c.breaksOnMain ? `${c.breaksOnMain} broke main` : null, q.hiddenTotal ? `${q.hiddenPass}/${q.hiddenTotal} hidden tests` : null,
         q.trulyHiddenTotal ? `${q.trulyHiddenPass}/${q.trulyHiddenTotal} checks it could not look up` : null].filter(Boolean).join(', ');
       const status = r.status && r.status !== 'done' ? ` <span class="warn">${esc({ 'stopped-budget': 'stopped: budget', timeout: 'timed out', failed: 'failed' }[r.status] || r.status)}</span>` : '';
-      const stall = r.timings?.stallS ? ` <span class="dim">(a platform stall of ${mins(r.timings.stallS)}, not the setup; left out of time comparisons)</span>` : '';
+      const tw = timeWhy(r), cw = costWhy(r);
+      const stall = r.timings?.stallS ? ` <span class="dim">(a platform stall of ${mins(r.timings.stallS)}, not the setup; left out of time comparisons)</span>` : tw ? ` <span class="dim">(left out of time comparisons: ${esc(tw)})</span>` : '';
+      const cnote = cw ? ` <span class="dim">(cost left out: ${esc(cw)})</span>` : '';
       const th = q.scoreTrulyHidden != null ? ` <span class="dim">(${Math.round(q.scoreTrulyHidden)}/100 on the checks it could not look up)</span>` : '';
-      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(r.timings?.wallS)}${stall}, ${sc100(q.score)}/100${th}, ${usd(r.cost?.apiUsdStd)} at API prices${r.cost?.usdReal != null ? `, ${usd(r.cost.usdReal)} real` : ''}</span>
+      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(r.timings?.wallS)}${stall}, ${sc100(q.score)}/100${th}, ${usd(r.cost?.apiUsdStd)} at API prices${cnote}${r.cost?.usdReal != null ? `, ${usd(r.cost.usdReal)} real` : ''}</span>
         <span class="rw2">${esc(words)}.</span>${r.notes ? `<span class="rw2">${esc(r.notes)}</span>` : ''}
         <span class="lk">${r.links?.replay ? `<a href="${esc(r.links.replay)}">Watch the replay</a>` : ''}${r.links?.app ? `<a href="${esc(r.links.app)}" target="_blank" rel="noopener">The app it built</a>` : ''}${r.links?.repo ? `<a href="${esc(r.links.repo)}">The code</a>` : ''}</span></li>`;
     }).join('');
@@ -416,21 +427,25 @@
     </section>`;
   }
   function foundView() {
-    const rows = [];
+    const rows = []; let anyNc = false;
     for (const sc of SCEN) {
       const keep = st.scenario; st.scenario = sc.id; const gs = groups(); st.scenario = keep;
-      const oa = gs.find((g) => g.baseline === 'opus-alone' && g.wallS != null), sw = bestOf(gs.filter((g) => g.wallS != null));
+      const oa = gs.find((g) => g.baseline === 'opus-alone' && g.quality != null), sw = bestOf(gs);
       if (!oa || !sw) continue;
       const ha = oa.hidden != null && oa.hiddenOf ? Math.round(oa.hidden * oa.hiddenOf) : null, hs = sw.hidden != null && sw.hiddenOf ? Math.round(sw.hidden * sw.hiddenOf) : null;
-      const fast = tTie(oa, sw) ? 'Within 15%' : oa.wallS < sw.wallS ? `One agent, ${(sw.wallS / oa.wallS).toFixed(1)}×` : `Several, ${(oa.wallS / sw.wallS).toFixed(1)}×`;
-      const cost = oa.usd != null && sw.usd != null ? (sw.usd < oa.usd ? `Several, ${Math.round((1 - sw.usd / oa.usd) * 100)}% less` : `One agent, ${Math.round((1 - oa.usd / sw.usd) * 100)}% less`) : '–';
-      const qual = qTie(oa, sw) ? `Tie${ha != null && ha === hs ? ` (${ha}/${oa.hiddenOf})` : ''}` : ha != null && hs != null && ha !== hs ? `${ha > hs ? 'One agent' : 'Several'}, +${Math.abs(ha - hs)} hidden test${Math.abs(ha - hs) === 1 ? '' : 's'}` : `${oa.quality > sw.quality ? 'One agent' : 'Several'}`;
+      const SHORT = { 'a person had to step in during the run (a platform bug, since fixed)': 'a person stepped in', 'a platform stall': 'platform stall', 'only an upper bound is known': 'upper bound only', 'only a lower bound is known': 'lower bound only' };
+      const nc = (why) => `<span class="dim">Not comparable${why ? ` (${esc(SHORT[why] || why)})` : ''}</span>`;
+      if ((oa.wallS == null || sw.wallS == null) || (oa.usd == null || sw.usd == null)) anyNc = true;
+      const fast = oa.wallS == null || sw.wallS == null ? nc((oa.wallS == null ? oa : sw).timeNot) : tTie(oa, sw) ? 'Within 15%' : oa.wallS < sw.wallS ? `One agent, ${(sw.wallS / oa.wallS).toFixed(1)}×` : `Several, ${(oa.wallS / sw.wallS).toFixed(1)}×`;
+      const cost = oa.usd == null || sw.usd == null ? nc((oa.usd == null ? oa : sw).costNot) : sw.usd < oa.usd ? `Several, ${Math.round((1 - sw.usd / oa.usd) * 100)}% less` : `One agent, ${Math.round((1 - oa.usd / sw.usd) * 100)}% less`;
+      const tc = oa.floor?.typecheck && sw.floor && !sw.floor.typecheck ? '; several agents failed the strict type check' : sw.floor?.typecheck && oa.floor && !oa.floor.typecheck ? '; one agent failed the strict type check' : '';
+      const qual = (qTie(oa, sw) ? `Tie${ha != null && ha === hs ? ` (${ha}/${oa.hiddenOf})` : ''}` : ha != null && hs != null && ha !== hs ? `${ha > hs ? 'One agent' : 'Several'}, +${Math.abs(ha - hs)} hidden test${Math.abs(ha - hs) === 1 ? '' : 's'}` : `${oa.quality > sw.quality ? 'One agent' : 'Several'}`) + tc;
       rows.push(`<tr><th scope="row">${esc(sc.title)}${jobOpen(sc.id) ? ' <span class="dim">(running)</span>' : ''}</th><td>${fast}</td><td>${cost}</td><td>${qual}</td></tr>`);
     }
     if (!rows.length) return '';
     return `<section class="sec" id="found"><h2>What we found</h2>
-      <p class="cap">One Opus agent alone against the best setup with several agents, on each job (medians of the real runs; stalled runs left out of time).</p>
-      <div class="tw"><table class="found"><thead><tr><th scope="col">Job</th><th scope="col">Faster</th><th scope="col">Cheaper at API prices</th><th scope="col">Hidden tests</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></section>`;
+      <p class="cap">One Opus agent alone against the best setup with several agents, on each job (medians of the real runs; a run hit by a platform bug counts for quality but not for time or cost).</p>
+      <div class="tw"><table class="found"><thead><tr><th scope="col">Job</th><th scope="col">Faster</th><th scope="col">Cheaper at API prices</th><th scope="col">Hidden tests</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>${anyNc ? '<p class="small dim">Not comparable: those runs hit platform bugs that were fixed later (a person had to step in, or a stall), or their cost is only known as a bound. Their quality still counts.</p>' : ''}</section>`;
   }
   function funnelView() {
     const list = STAGES.slice();
