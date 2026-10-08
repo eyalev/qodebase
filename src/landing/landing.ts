@@ -305,6 +305,7 @@ export class Landing extends DurableObject<Env> {
       // or typed while the reviewer was still finishing its last turn, dry run 2026-10-08).
       if (now - b.at < 4 * 60_000) continue;
       delete r.busy[rv];
+      (r.coolUntil ||= {})[rv] = now + 120_000;   // the resend goes to another reviewer: this box may not start (stage 2 run 3)
       if (b.sends < 3) { r.queue.unshift(b.change); (r as any).sends = { ...((r as any).sends || {}), [b.change]: b.sends + 1 }; log('landing', 'review_resend', { slug: m.slug, change: b.change, reviewer: rv, sends: b.sends }); }
       else { await this.reviewed(b.change, 'changes', 'The reviewer agent did not finish this review. Look at it yourself, or push again to retry.'); }
     }
