@@ -9,14 +9,26 @@
  "check": "node --test",
  "hiddenTotal": 42,
  "profile": {
-  "expectedTasks": [30, 75],
+  "expectedTasks": [
+   30,
+   75
+  ],
   "dependencyDepth": 2,
   "dependencyChain": "foundations (in the starter) -> 13 modules, each on the foundations only; waitlist, calendar and reports also read bookings/lessons -> depth 2 at most",
   "sharedFileShare": 0.2,
-  "sharedFiles": ["public/style.css", "README.md", "test/helpers.js"],
+  "sharedFiles": [
+   "public/style.css",
+   "README.md",
+   "test/helpers.js"
+  ],
   "vagueness": "medium",
   "duplicateIntentRisk": 0.15,
-  "note": "qb5 first guesses; modules are separate files loaded automatically, so shared files are rare. Target: ~60 min for one Opus agent; measured after the Oct 12 reset"
+  "note": "qb5; measured 2026-10-08: one Opus subagent finished the whole brief in 881 s (14.7 min), far under the ~60-min target"
  },
- "anchors": { "starter": 16.7, "reference": null, "referenceJudge": null, "note": "reference built after the 2026-10-12 13:00 UTC reset (weekly meter)" }
+ "anchors": {
+  "starter": 16.7,
+  "reference": 94,
+  "referenceJudge": 7,
+  "note": "one Opus subagent built the reference in 14.7 min (one session); reference without the judge: 100"
+ }
 }
