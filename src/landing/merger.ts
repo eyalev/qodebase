@@ -35,7 +35,7 @@ export type MergeResult = {
 // git, node --test, an occasional npm install. Billed while awake only. Custom sizes need
 // at least 3 GiB per vCPU: 1 vCPU / 2 GiB was refused without an error and exec() kept
 // saying the container was not running (2026-10-07).
-const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 8000 };
+const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 6144 };   // disk <= 2x memory: Cloudflare refuses more (seen 2026-10-08 16:53)
 const IDLE_STOP_MS = 5 * 60_000;
 const MERGER_V = '2026-10-07c';   // shown by landing/state: which code a merger box runs
 const ENTRYPOINT = ['/bin/bash', '-c', 'chown 0:0 / 2>/dev/null; mkdir -p /m /opt/qb && exec sleep infinity'];

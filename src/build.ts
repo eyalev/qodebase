@@ -56,7 +56,7 @@ export async function excludeFromRunRoute(env: Env, host: string) {
 export type BuildResult = { id: string; kind: BuildJob['kind']; agentId?: string; ok: boolean; url?: string; commit?: string; error?: string; log: string; ms: number };
 
 const WRANGLER = 'wrangler@4.146.0';
-const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 8000 };
+const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 6144 };   // disk <= 2x memory: Cloudflare refuses more (seen 2026-10-08 16:53)
 const IDLE_STOP_MS = 5 * 60_000;
 const ENTRYPOINT = ['/bin/bash', '-c', 'chown 0:0 / 2>/dev/null; mkdir -p /build && exec sleep infinity'];
 

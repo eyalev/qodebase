@@ -23,7 +23,7 @@ const BUSY_MAX_MS = 4 * 60 * 60_000;
 const ALARM_EVERY_MS = 60_000;
 const SNAPSHOT_EVERY_MS = 15 * 60_000;
 const INACTIVITY_BACKSTOP_MS = 45 * 60_000;
-const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 8000 };
+const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 6144 };   // disk <= 2x memory: Cloudflare refuses more (seen 2026-10-08 16:53)
 /** Shell: exit 0 if Claude Code's input box is empty. The line just above the
  *  pane's last horizontal rule is the input's last line: a bare "❯" when empty.
  *  (A tall input pushes its top rule off screen, so do not look for two rules.) */
