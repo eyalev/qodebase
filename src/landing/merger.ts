@@ -25,6 +25,8 @@ export type MergeResult = {
   checks?: { ok: boolean; ms: number; failures: string[]; skipped?: boolean };
   changes: { id: string; landed: boolean; how: 'merged' | 'replayed-handler' | 'replayed-llm' | null; commit: string | null; files: string[]; conflicts: string[];
     unhandled: string[]; handled: { path: string; handler: string }[]; bounced: boolean; checks: { ok: boolean; failures: string[] } | null; why: string; llm?: LlmUse | null;
+    /** Model replays: the diff that was reviewed (on the older code), next to `diff` (what landed). */
+    reviewedDiff?: { path: string; lines: string[] }[] | null;
     diff: { path: string; lines: string[] }[] | null }[];
 };
 

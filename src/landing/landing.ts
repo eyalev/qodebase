@@ -27,7 +27,9 @@ export type Ev = { t: number; what: What; detail?: string };
 export type ChangeState = 'working' | 'pushed' | 'reviewing' | 'queued' | 'testing' | 'landed' | 'bounced' | 'replaying' | 'with-lead';
 export type Landing_ = { how: 'merged' | 'replayed-handler' | 'replayed-llm' | 'lead' | null; conflicts: string[]; diff: { path: string; lines: string[] }[]; commit: string | null; mainCommit: string | null;
   /** Tier 2: the model that redid it, its usage, and whether it changed the same lines as the reviewed change. */
-  replay?: { model: string; ms: number; usd: number | null; tokensIn: number; tokensOut: number; sameLinesAsReviewed: boolean | null } };
+  replay?: { model: string; ms: number; usd: number | null; tokensIn: number; tokensOut: number; sameLinesAsReviewed: boolean | null };
+  /** Diff-of-diffs: for a model replay, the diff that was reviewed (written on older code); `diff` is what landed. */
+  reviewedDiff?: { path: string; lines: string[] }[] };
 export type Change = {
   id: string; title: string; intent: string; agent: string; kind: 'agent' | 'demo';
   fork: string; remote: string; base: string | null; commit: string | null;
@@ -337,6 +339,7 @@ export class Landing extends DurableObject<Env> {
           (m.landings ||= []).push([c.landedAt, Math.round((c.landedAt - c.createdAt) / 1000)]);
           if (m.landings.length > 2000) m.landings.splice(0, m.landings.length - 2000);
           c.landing = { how, conflicts: rc.conflicts, diff: rc.diff || [], commit: rc.commit, mainCommit: r.mainAfter || null,
+            ...(rc.reviewedDiff ? { reviewedDiff: rc.reviewedDiff } : {}),
             ...(rc.llm ? { replay: { model: rc.llm.model, ms: rc.llm.ms, usd: rc.llm.usd, tokensIn: (rc.llm.in || 0) + (rc.llm.cacheRead || 0) + (rc.llm.cacheWrite || 0), tokensOut: rc.llm.out || 0, sameLinesAsReviewed: rc.llm.sameLines ?? null } } : {}) };
           this.#ev(c, 'landed', `${(rc.commit || '').slice(0, 7)} on main`);
           landed++;
