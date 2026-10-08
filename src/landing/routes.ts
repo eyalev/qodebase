@@ -40,7 +40,10 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
   // Watch a run: anyone, no sign-in, on projects with flags.publicWatch (eyal/corner-cafe). Caps in Landing.watchClaim.
   if (verb === 'watch' && request.method === 'POST') {
     if (info.private) return json({ error: 'no such project' }, 404);
-    const ip = request.headers.get('x-qb-ip') || request.headers.get('cf-connecting-ip') || 'unknown';
+    // Only cf-connecting-ip: Cloudflare sets it, and fromFront() (index.ts) moves a verified front
+    // request's x-qb-ip there. x-qb-ip itself could be sent by anyone straight to projectsbase.dev.
+    // The admin (laptop scripts, tests) gets its own bucket so tests don't spend the laptop IP's runs.
+    const ip = me.admin ? 'admin' : request.headers.get('cf-connecting-ip') || 'unknown';
     const c = await L.watchClaim(ip) as any;
     // Both spellings: state running|started|limit, why/reason, nextAt/retryAfterS.
     if (c.state === 'limit') return json({ ...c, why: c.reason, nextAt: Date.now() + c.retryAfterS * 1000 });
