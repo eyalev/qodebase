@@ -9,12 +9,26 @@
  "check": "node --test",
  "hiddenTotal": 7,
  "profile": {
-  "expectedTasks": [5, 10],
+  "expectedTasks": [
+   5,
+   10
+  ],
   "dependencyDepth": 2,
   "sharedFileShare": 0.6,
-  "sharedFiles": ["src/routes.js", "src/data/menu.js", "src/pages/home.js", "style.css"],
+  "sharedFiles": [
+   "src/routes.js",
+   "src/data/menu.js",
+   "src/pages/home.js",
+   "style.css"
+  ],
   "vagueness": "high",
   "duplicateIntentRisk": 0.3,
   "note": "first guesses by qb5; replace with measured values after stage 1"
+ },
+ "anchors": {
+  "starter": 25,
+  "reference": 94,
+  "referenceJudge": 7,
+  "note": "reference without the judge: 100"
  }
 }

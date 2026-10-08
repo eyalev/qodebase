@@ -17,8 +17,8 @@ const load = (id) => JSON.parse(readFileSync(join(DIR, id, 'scenario.json'), 'ut
 
 if (args.includes('--index')) {
   const list = readdirSync(DIR).filter((d) => existsSync(join(DIR, d, 'scenario.json'))).map(load)
-    .map(({ id, title, prompt, promptVersion, scenarioVersion, starter, hiddenTotal, about, profile }) =>
-      ({ id, title, prompt, promptVersion, scenarioVersion, starter, hiddenTotal, about, profile }));
+    .map(({ id, title, prompt, promptVersion, scenarioVersion, starter, hiddenTotal, about, profile, anchors }) =>
+      ({ id, title, prompt, promptVersion, scenarioVersion, starter, hiddenTotal, about, profile, anchors }));
   writeFileSync(join(HERE, '../../public/lab/scenarios.json'), JSON.stringify(list, null, 1) + '\n');
   console.log(`public/lab/scenarios.json: ${list.map((s) => s.id).join(', ')}`);
 } else {

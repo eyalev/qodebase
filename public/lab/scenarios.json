@@ -26,6 +26,12 @@
    "vagueness": "medium",
    "duplicateIntentRisk": 0.15,
    "note": "first guesses by qb5; greenfield: all work starts from one stub file, so early tasks collide on server.js unless the plan sets up structure first"
+  },
+  "anchors": {
+   "starter": 8.3,
+   "reference": 96,
+   "referenceJudge": 8,
+   "note": "one Opus agent built the reference in ~13 min"
   }
  },
  {
@@ -53,6 +59,12 @@
    "vagueness": "high",
    "duplicateIntentRisk": 0.3,
    "note": "first guesses by qb5; replace with measured values after stage 1"
+  },
+  "anchors": {
+   "starter": 25,
+   "reference": 94,
+   "referenceJudge": 7,
+   "note": "reference without the judge: 100"
   }
  },
  {
@@ -80,6 +92,12 @@
    "vagueness": "low",
    "duplicateIntentRisk": 0.05,
    "note": "first guesses by qb5; replace with measured values after stage 1"
+  },
+  "anchors": {
+   "starter": 8.3,
+   "reference": 92,
+   "referenceJudge": 6,
+   "note": "reference without the judge: 100; a Sonnet agent ported it"
   }
  }
 ]

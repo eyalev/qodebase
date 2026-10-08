@@ -26,5 +26,11 @@
   "vagueness": "medium",
   "duplicateIntentRisk": 0.15,
   "note": "first guesses by qb5; greenfield: all work starts from one stub file, so early tasks collide on server.js unless the plan sets up structure first"
+ },
+ "anchors": {
+  "starter": 8.3,
+  "reference": 96,
+  "referenceJudge": 8,
+  "note": "one Opus agent built the reference in ~13 min"
  }
 }
