@@ -186,7 +186,8 @@
   "order": [
    "swarm r1",
    "opus-alone r1",
-   "swarm r2"
+   "swarm r2",
+   "swarm r3 (added: r1 stall)"
   ],
   "conditional": "opus-alone r2 ONLY if opus-alone r1 lands within ~15% of the swarm's time or quality, and the meter allows",
   "swarm": {
@@ -378,6 +379,48 @@
     },
     "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)",
     "conditional": "run ONLY on qb4's call: if opus-alone r1 lands within ~15% of the swarm's time or quality, and the meter allows"
+   },
+   {
+    "order": 5,
+    "scenario": "club",
+    "repetition": 3,
+    "why": "swarm repetition 3 (manager): r1 lost ~1350 s to a platform stall (box size refused), so its time is not comparable; r3 gives club 2 clean swarm runs",
+    "baseline": null,
+    "variant": {
+     "planner": "opus",
+     "coders": 12,
+     "coderModel": "haiku",
+     "reviewers": 3,
+     "reviewerModel": "haiku",
+     "reviewStyle": "read",
+     "policy": "intent",
+     "claims": false,
+     "dedupe": true,
+     "trainMax": 4
+    },
+    "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+    "predicted": {
+     "landed": 17,
+     "wallS": 1024,
+     "apiUsdStd": 2.46,
+     "quality": 90.4,
+     "simVersion": "lab-0.9"
+    },
+    "range": {
+     "wallS": [
+      744,
+      1476
+     ],
+     "apiUsdStd": [
+      1.66,
+      3.06
+     ],
+     "quality": [
+      86.4,
+      92.2
+     ]
+    },
+    "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)"
    }
   ],
   "status": "GO (qb4, after Eyal chose: run club as is)",
