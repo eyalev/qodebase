@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- The README's "How it works" diagram, rendered to docs/img/readme-flow.png by
+     node video/contest/shoot-readme-flow.mjs (a PNG reads the same in every GitHub view). -->
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --fg:#111214; --dim:#6e737b; --acc:#17695a; --busy:#b7791f; --bad:#c2410c; --card:#fafafa; --line:#e2e4e8; }
+* { box-sizing:border-box; margin:0 }
+body { width:800px; background:#fff; font:400 26px/1.3 Geist, sans-serif; color:var(--fg); padding:28px; }
+.n { border-radius:14px; background:var(--card); box-shadow:inset 0 0 0 2px var(--line); padding:18px 22px; }
+.n b { font-weight:600 } .n span { color:var(--dim); font-size:22px; display:block; margin-top:4px }
+.row { display:flex; gap:14px } .row .n { flex:1 }
+.arrow { height:34px; display:flex; justify-content:center; align-items:center; color:var(--dim); font-size:26px }
+.acc { box-shadow:inset 0 0 0 3px var(--acc) } .acc b { color:var(--acc) }
+.side { display:grid; grid-template-columns:1fr 1fr; gap:14px }
+.busy { box-shadow:inset 0 0 0 3px var(--busy) } .bad { box-shadow:inset 0 0 0 3px var(--bad) }
+</style></head><body>
+<div class="n"><b>You: one request</b><span>typed or spoken, on the phone</span></div>
+<div class="arrow">↓</div>
+<div class="n"><b>Router agent</b><span>splits it into tasks, claims the files each will touch</span></div>
+<div class="arrow">↓</div>
+<div class="row"><div class="n"><b>Agent 1</b><span>own fork</span></div><div class="n"><b>Agent 2</b><span>own fork</span></div><div class="n"><b>Agent N</b><span>own fork</span></div></div>
+<div class="arrow">↓</div>
+<div class="n"><b>Reviewer agents</b><span>a verdict on every change, kept in its record</span></div>
+<div class="arrow">↓</div>
+<div class="n"><b>The line</b><span>the merge queue: a train of changes tested on the newest main</span></div>
+<div class="arrow">↓</div>
+<div class="side">
+  <div class="n busy"><b>Collided?</b><span>replay the reviewed intent on the newest main (rules, then an AI), test again</span></div>
+  <div class="n bad"><b>A test fails?</b><span>only that change goes back to its agent</span></div>
+</div>
+<div class="arrow">↓</div>
+<div class="n acc"><b>Lands on main</b><span>with a git note: intent, diff, review, tests</span></div>
+</body></html>

@@ -6,11 +6,7 @@
 
 **Watch it work, no sign-in:** open **https://qodebase.app/p/eyal/corner-cafe** and tap **Watch a run**. Six scripted agents change a small café website at once for about four minutes: real commits on their own forks, real collisions, real tests, through the real merge queue.
 
-<p>
-<img src="docs/img/readme-agents-at-work.jpg" width="250" alt="Agents at work: 20 agents changing one project, the line of changes being tested">
-<img src="docs/img/readme-ai-replay.jpg" width="250" alt="A change record: it collided with another agent's change, an AI model re-did it on the newest code in 19 seconds">
-<img src="docs/img/readme-talk.jpg" width="250" alt="Talk: one typed request for twelve features, confirmed before it is sent to the agents">
-</p>
+<img src="docs/img/readme-phones.jpg" width="720" alt="On the phone: 20 agents changing one project and the line of changes being tested; a change record where an AI re-did a collided change on the newest code in 19 seconds; Talk confirming one request for twelve features before it goes to the agents">
 
 ## With real AI agents
 
@@ -24,20 +20,7 @@ One request, typed into Talk on the phone (eyal/cafe-team, 2026-10-08):
 
 ## How it works
 
-```mermaid
-flowchart LR
-  R[You: one request<br>typed or spoken] --> RT[Router agent]
-  RT --> A1[Agent 1<br>own fork]
-  RT --> A2[Agent 2<br>own fork]
-  RT --> A3[Agent N<br>own fork]
-  A1 & A2 & A3 --> RV[Reviewer agents]
-  RV --> Q[The line:<br>merge queue]
-  Q --> T{Train tested<br>on newest main}
-  T -- passes --> M[main + git note]
-  T -- collides --> RP[Replay the intent<br>on newest main]
-  RP --> T
-  T -- a test fails --> B[That change<br>goes back]
-```
+<img src="docs/img/readme-flow.png" width="480" alt="One request, a router agent, agents on their own forks, reviewer agents, the line (merge queue) testing trains on the newest main; a collided change is replayed, a failing one goes back; landed changes carry a git note">
 
 - **A fork per agent.** Agents never share a working folder, so they never trip over each other.
 - **A record per change**: what it was meant to do, the diff, the reviewer's verdict, the tests. Kept with the code as git notes (`git log --notes=qodebase`), so the *why* survives.
@@ -79,15 +62,21 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 ## Built vs designed
 
-| built and running | designed, not built yet |
-|---|---|
-| fork per agent, router + reviewer agents | one merge queue per area of the code (one queue tops out at ~11 landings/s) |
-| change records, kept as git notes | git notes shown in the code browser (today: in each change's page and in git) |
-| merge queue with tested trains, a failing change bounces alone | a lead agent per area for conflicts no replay can solve: simulated (`sim/`), not built; today the owner decides, and the demo uses a scripted lead |
-| replay by rules; replay by AI behind a per-project switch | |
-| claims, stacking (`forq spawn --files … --on …`) | |
-| Talk: type or speak a request; Watch a run; replays of past runs | |
-| install your own copy into your Cloudflare account | |
+**Built and running**
+
+- a fork per agent; router and reviewer agents
+- change records, kept as git notes
+- the merge queue with tested trains; a failing change bounces alone
+- replay by rules; replay by AI behind a per-project switch
+- claims and stacking (`forq spawn --files … --on …`)
+- Talk (type or speak a request), Watch a run, replays of past runs
+- installing your own copy into your Cloudflare account
+
+**Designed or simulated, not built yet**
+
+- one merge queue per area of the code (one queue topped out at ~11 landings a second)
+- git notes shown in the code browser (today: on each change's page, and in git)
+- a lead agent per area for conflicts no replay can solve: simulated in `sim/`; today the owner decides, and the demo uses a scripted lead
 
 ## Lab results
 
