@@ -47,7 +47,7 @@
 - [x] Trains of 8 (--train 8) and an instant queue (--landS 0) at 100/1,000, seeds 1-3: no change (trains average 1.1-1.3 changes; instant queue 30-43 s sooner). The floor is the dependency chain, not the queue
 - [x] Clean-merge cross-check: jsr.json (the only file changed on both sides) clean 48-76% vs Bun 84%: a list file, not big source files
 - [x] Bundles in the viewer (swarm stats, needs links, phase gates, readable folder names), screenshot gate 390/1440 light/dark, README section
-- [ ] Deploy: qb6 includes public/sim in its next contest deploy (manager: do not deploy forq myself)
+- [x] Deploy: public/sim live since qb6 deployed 3e712ba (swarm bundles + viewer); later commits changed no public/sim files
 
 ## Handoff (2026-10-07 ~22:15): continued in tab qb4 (forq/claude4)
 Context for the next agent: sim/README.md (fast sim + real-code run), sim/cloud/README.md
