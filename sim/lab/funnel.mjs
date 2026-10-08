@@ -15,6 +15,7 @@
 //   it on another. Never on one run. Ask the manager before stage 2.
 
 export const MIN_Q = 70;
+export const QUALITY_TIE = 4; // quality points: smaller differences are ties (judge noise ~2 per run, qb5)
 
 const agg = (r, med) => {
   const n = r.per.length;
@@ -97,7 +98,8 @@ export function funnelReal(lines, { keep = 3, stage = 1 } = {}) {
     return { key, baseline: ls[0].baseline, n: ls.length, wall: s(vals((l) => l.timings?.wallS)), usd: s(vals((l) => l.cost?.apiUsdStd)), q: s(vals((l) => l.quality?.score)) };
   });
   // a beats b on an axis only if their ranges do not overlap (lower is better for wall/usd).
-  const better = (a, b, k, low) => (low ? a[k].max < b[k].min : a[k].min > b[k].max);
+  // Quality also needs a gap of QUALITY_TIE points: the judge alone moves a run ~2 points (qb5).
+  const better = (a, b, k, low) => (low ? a[k].max < b[k].min : a[k].min > b[k].max && (k !== 'q' || a[k].mean - b[k].mean >= QUALITY_TIE));
   const beats = (a, b) => {
     const wins = [better(a, b, 'wall', true), better(a, b, 'usd', true), better(a, b, 'q', false)].filter(Boolean).length;
     const losses = [better(b, a, 'wall', true), better(b, a, 'usd', true), better(b, a, 'q', false)].filter(Boolean).length;
