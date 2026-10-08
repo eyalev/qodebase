@@ -152,7 +152,7 @@
   // The reference solutions' scores include the judge (7 and 6 of 10); without it both are 100.
   // scenarios.json may carry {anchors: {starter, reference}} (qb5); these are the validated numbers until then.
   const anchors = () => {
-    const sa = scenOf(st.scenario).anchors, a = sa ? [sa.starter, sa.reference] : ANCHORS[st.scenario];
+    const sa = scenOf(st.scenario).anchors, a = sa ? [Math.round(sa.starter), Math.round(sa.reference)] : ANCHORS[st.scenario];
     return `${a ? `For this job, the untouched starting code scores ${a[0]} and a reference solution ${a[1]} (it passes every hidden test; the judge's opinion keeps it below 100). ` : ''}The judge's part varies by about 2 points between scorings of the same code.`;
   };
   // ---- the simulation's picks (qb4's public/lab/stage0.json) -----------------------------------
