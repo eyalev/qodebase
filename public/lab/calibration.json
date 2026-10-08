@@ -1,12 +1,13 @@
 {
- "generated": "2026-10-08T10:18:38.189Z",
- "simVersion": "lab-0.4",
+ "generated": "2026-10-08T10:52:41.602Z",
+ "simVersion": "lab-0.6",
  "fit": {
-  "runs": 3,
+  "runs": 4,
   "from": [
    "lab-cafefamily-739a1-r1",
    "lab-cafefamily-08ce0-r1",
-   "lab-cafefamily-41305-r1"
+   "lab-cafefamily-41305-r1",
+   "lab-cafefamily-7eac1-r1"
   ],
   "coder": {
    "haiku": {
@@ -33,7 +34,7 @@
     "hiddenShareMed": 0.14285714285714285
    },
    "opus": {
-    "runs": 1,
+    "runs": 2,
     "planMedS": 3.651,
     "simPlanS": 90,
     "tasksPlannedShare": 0.14,
@@ -46,7 +47,7 @@
    "quality": 0.6717647058823529
   },
   "actualOverNow": {
-   "simVersion": "lab-0.4",
+   "simVersion": "lab-0.6",
    "wallS": 1.075,
    "apiUsdStd": 1.2909090909090908,
    "quality": 1.1346886912325285
@@ -58,6 +59,7 @@
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
    "baseline": null,
    "scenario": "cafe-family",
+   "excluded": [],
    "planner": "haiku",
    "coderModel": "haiku",
    "pred": {
@@ -71,11 +73,13 @@
     "wallS": 233,
     "apiUsdStd": 0.11,
     "quality": 49.4,
-    "simVersion": "lab-0.4"
+    "simVersion": "lab-0.6"
    },
    "wallS": 283,
+   "wallSRaw": 283,
    "planS": 47.084,
    "usd": 0.142,
+   "usdRaw": 0.142,
    "tasksPlanned": 3,
    "tasksLanded": 3,
    "expectedTasks": 7,
@@ -103,6 +107,7 @@
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
    "baseline": null,
    "scenario": "cafe-family",
+   "excluded": [],
    "planner": "haiku",
    "coderModel": "haiku",
    "pred": {
@@ -116,11 +121,13 @@
     "wallS": 160,
     "apiUsdStd": 0.11,
     "quality": 41.3,
-    "simVersion": "lab-0.4"
+    "simVersion": "lab-0.6"
    },
    "wallS": 172,
+   "wallSRaw": 172,
    "planS": 69.878,
    "usd": 0.198,
+   "usdRaw": 0.198,
    "tasksPlanned": 8,
    "tasksLanded": 8,
    "expectedTasks": 7,
@@ -153,6 +160,7 @@
    "variantKey": "opus-alone",
    "baseline": "opus-alone",
    "scenario": "cafe-family",
+   "excluded": [],
    "planner": "opus",
    "coderModel": "opus",
    "pred": {
@@ -166,11 +174,13 @@
     "wallS": 64,
     "apiUsdStd": 0.47,
     "quality": 78.7,
-    "simVersion": "lab-0.4"
+    "simVersion": "lab-0.6"
    },
    "wallS": 58,
+   "wallSRaw": 58,
    "planS": 3.651,
    "usd": 0.39,
+   "usdRaw": 0.39,
    "tasksPlanned": 1,
    "tasksLanded": 1,
    "expectedTasks": 7,
@@ -189,6 +199,53 @@
     "cacheW": 26557
    },
    "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-cafefamily-7eac1-r1",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "cafe-family",
+   "excluded": [
+    "wall (human intervention)",
+    "cost (upper bound)"
+   ],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 6,
+    "wallS": 300,
+    "apiUsdStd": 0.86,
+    "quality": 68.8,
+    "simVersion": "lab-0.4"
+   },
+   "now": {
+    "wallS": 300,
+    "apiUsdStd": 0.86,
+    "quality": 68.8,
+    "simVersion": "lab-0.6"
+   },
+   "wallS": null,
+   "wallSRaw": 1431,
+   "planS": 42.842,
+   "usd": null,
+   "usdRaw": 9.994,
+   "tasksPlanned": 5,
+   "tasksLanded": 5,
+   "expectedTasks": 7,
+   "workS": [],
+   "workMedS": null,
+   "quality": 85.4,
+   "qualityNoJudge": 89.3,
+   "hiddenShare": 0.8571428571428571,
+   "judge": 7,
+   "tokens": {
+    "in": 638,
+    "out": 145759,
+    "cacheR": 13725659,
+    "cacheW": 541396
+   },
+   "conflicts": 3,
    "bounces": 0
   }
  ]

@@ -24,17 +24,21 @@ const rows = lines.map((l) => {
   const judgeUsd = l.cost?.byRole?.judge?.apiUsdStd || 0;
   const usd = (l.cost?.apiUsdStd ?? 0) - (l.cost?.byRole?.judge && l.cost.apiUsdStd >= judgeUsd + 0.0001 && l.cost.includesJudge ? judgeUsd : 0);
   const coderTasks = (l.tasks || []).filter((t) => (t.role || 'coder') === 'coder');
-  const work = coderTasks.map((t) => (t.pushAt && t.startAt ? (t.pushAt - t.startAt) / 1000 : null));
+  const work = (l.counts?.humanInterventions > 0 ? [] : coderTasks).map((t) => (t.pushAt && t.startAt ? (t.pushAt - t.startAt) / 1000 : null));
   const q = l.quality || {};
   // The sim predicts quality without a judge (no model to predict one); compare like with like.
   const qNoJudge = q.hiddenTotal ? qualityScore({ ...q, judgeScore: null }) : null;
   const now = l.baseline ? predict({}, l.scenario, { baseline: l.baseline }) : predict(l.variant, l.scenario);
+  // Not fit on what a run says it cannot vouch for: wall time when a person had to step in (a
+  // stall), cost when it is an upper bound (every token priced as Opus, run 11).
+  const wallOk = !(l.counts?.humanInterventions > 0);
+  const usdOk = !/upper bound/i.test(l.cost?.pricedAs || '');
   return {
-    id: l.id, variantKey: l.variantKey, baseline: l.baseline, scenario: l.scenario,
+    id: l.id, variantKey: l.variantKey, baseline: l.baseline, scenario: l.scenario, excluded: [!wallOk && 'wall (human intervention)', !usdOk && 'cost (upper bound)'].filter(Boolean),
     planner: l.baseline === 'opus-alone' ? 'opus' : l.variant?.planner, coderModel: l.variant?.coderModel,
     pred: l.predicted, now: { wallS: now.wallS, apiUsdStd: now.apiUsdStd, quality: now.quality, simVersion: now.simVersion },
-    wallS: l.timings?.wallS, planS: l.timings?.planAt && l.timings?.askAt ? (l.timings.planAt - l.timings.askAt) / 1000 : null,
-    usd, tasksPlanned: l.counts?.tasksPlanned, tasksLanded: l.counts?.tasksLanded, expectedTasks: SCENARIOS[l.scenario]?.tasks,
+    wallS: wallOk ? l.timings?.wallS : null, wallSRaw: l.timings?.wallS, planS: l.timings?.planAt && l.timings?.askAt ? (l.timings.planAt - l.timings.askAt) / 1000 : null,
+    usd: usdOk ? usd : null, usdRaw: usd, tasksPlanned: l.counts?.tasksPlanned, tasksLanded: l.counts?.tasksLanded, expectedTasks: SCENARIOS[l.scenario]?.tasks,
     workS: work, workMedS: med(work), quality: q.score, qualityNoJudge: qNoJudge, hiddenShare: q.hiddenTotal ? q.hiddenPass / q.hiddenTotal : null, judge: q.judgeScore,
     tokens: l.cost?.tokens, conflicts: l.counts?.conflicts, bounces: l.counts?.bounces,
   };
@@ -43,6 +47,7 @@ const rows = lines.map((l) => {
 console.log(`${rows.length} real runs (sim now ${SIM_VERSION})\n`);
 console.log(`run                         | wall s: at run time / now (${SIM_VERSION}) / real | API $: at run / now / real | quality (no judge): at run / now / real | tasks planned/expected`);
 for (const r of rows) {
+  if (r.excluded.length) console.log(`  (${r.id}: not fitted: ${r.excluded.join(', ')}; raw wall ${fmt(r.wallSRaw)} s, raw $ ${fmt(r.usdRaw, 2)})`);
   console.log(`${(r.baseline || r.id).padEnd(28)}| ${fmt(r.pred?.wallS).padStart(5)} / ${fmt(r.now.wallS).padStart(5)} / ${fmt(r.wallS).padEnd(5)} | ${fmt(r.pred?.apiUsdStd, 2).padStart(6)} / ${fmt(r.now.apiUsdStd, 2).padStart(5)} / ${fmt(r.usd, 3).padEnd(6)} | ${fmt(r.pred?.quality, 1).padStart(5)} / ${fmt(r.now.quality, 1).padStart(5)} / ${fmt(r.qualityNoJudge, 1).padEnd(5)} | ${fmt(r.tasksPlanned)} / ${fmt(r.expectedTasks)}`);
 }
 
@@ -54,7 +59,7 @@ for (const [model, rs] of Object.entries(byModel('coderModel'))) {
   const workSum = sum(work);
   // Coder $ per second of work: the run's API $ (byRole is not filled yet, so planner + merge
   // ride along; small next to coders) over the summed coder work seconds.
-  fit.coder[model] = { tasks: work.length, workMedS: med(work), simWorkMedS: CAL.workMedS * CAL.speed[model], usdPerS: workSum ? +(sum(rs.map((r) => r.usd)) / workSum).toFixed(6) : null, simUsdPerS: CAL.usdPerS[model] };
+  fit.coder[model] = { tasks: work.length, workMedS: med(work), simWorkMedS: CAL.workMedS * CAL.speed[model], usdPerS: (() => { const ok = rs.filter((r) => r.usd != null); const ws = sum(ok.flatMap((r) => r.workS)); return ws ? +(sum(ok.map((r) => r.usd)) / ws).toFixed(6) : null; })(), simUsdPerS: CAL.usdPerS[model] };
 }
 for (const [model, rs] of Object.entries(byModel('planner'))) {
   fit.planner[model] = {
