@@ -182,7 +182,7 @@
   "approved": "manager s1007-1655, 2026-10-08",
   "scenario": "club",
   "job": "~60 one-Opus-agent minutes, dependency depth ~3: foundations (storage, members/login, courts/slots) in the starter or pinned in the brief, the rest wide ('wide job, shallow chain': the honest best case for a swarm, said so when published)",
-  "when": "after the weekly reset (2026-10-12 13:00 UTC) and qb5's validated reference build",
+  "when": "NOW (Eyal via manager, 2026-10-08): after qb5 builds and validates the reference; qb4 sends predictions + GO",
   "order": [
    "swarm r1",
    "opus-alone r1",
@@ -203,8 +203,11 @@
   },
   "guards": {
    "stopAtApiUsdStd": 50,
-   "stopAtWeeklyMeter": "value at the reset + 15 points"
+   "stopAtWeeklyMeterPct": 70,
+   "meterAtApproval": "50%",
+   "checked": "before and during each run"
   },
-  "predicted": "pending: qb4 sends per-run predictions once qb5's reference time sets club's size (sim at 60 min, depth 3: swarm ~33 min / ~$11, opus-alone ~53 min / ~$21; 2 swarm + 1 opus ~$43)"
+  "predicted": "pending: qb4 sends per-run predictions once qb5's reference time sets club's size (sim at 60 min, depth 3: swarm ~33 min / ~$11, opus-alone ~53 min / ~$21; 2 swarm + 1 opus ~$43)",
+  "commitRunsJsonlAfterEachRun": true
  }
 }
