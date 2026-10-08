@@ -68,4 +68,4 @@ Contest: deadline Oct 14; eligibility (US/Canada residents only) still unresolve
 - [ ] Recalibrate after orders 11-16 (first port-ts runs, first reviewed run, first Sonnet coders via github)
 - [x] Stage 1 done except 14b: bakery is where parallel first pays (same time, <half the cost, ~6 points lower quality; one run each). Sim lab-0.8: 0.92x time, 0.84x cost, 1.09x quality on the 7 fitted runs
 - [ ] Stage 2 part 1 (approved): public/lab/stage2-plan.json, bakery swarm/opus x2 more each (order swarm, opus, swarm, opus) after 14b; meter stop 52%; recalibrate + 3-run comparison after
-- [ ] Stage 2 part 2 after the weekly reset (Oct 12 13:00 UTC): qb5 designs a 45-60 one-Opus-agent-minute job (sim: swarm ~2x faster there, ~half the cost)
+- [ ] Stage 2 part 2 after the weekly reset (Oct 12 13:00 UTC): qb5's 'club' at ~60 one-Opus-minutes, depth ~3 (manager); 2 reps each opus-alone vs swarm; predictions when qb5's reference time is in. Budget flag sent: ~$64 predicted vs $60 guard (manager to choose)
