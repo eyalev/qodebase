@@ -161,8 +161,11 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
     ccEnv = `CLAUDE_CODE_OAUTH_TOKEN=${env.CLAUDE_CODE_OAUTH_TOKEN}`; keyTail = env.CLAUDE_CODE_OAUTH_TOKEN.slice(-20); billing = 'sub';
     // A landing project can pin its boxes' model (landing flags.agentModel, e.g. Sonnet for a test).
     const pinfo = await projectStub(env, slug).info();
-    const lm = landingOn(pinfo) ? (await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null))?.agentModel : undefined;
-    if (lm) ccEnv += ` ANTHROPIC_MODEL=${lm}`;
+    // Lab variants pin a model per role (plannerModel = the router, reviewerModel, coderModel).
+    const lf = landingOn(pinfo) ? await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null) : null;
+    const role = roleOf(agentId);
+    const lm = lf ? (role === 'router' ? lf.plannerModel : role === 'reviewer' ? lf.reviewerModel : role === 'agent' ? lf.coderModel : undefined) || lf.agentModel : undefined;
+    if (lm) ccEnv += ` ANTHROPIC_MODEL=${modelId(lm)}`;
   } else {
     const u = await userByHandle(env, owner);
     if (!u?.apiKeyEnc) throw new Error(`${owner} has not added an Anthropic API key yet (Settings)`);
@@ -207,7 +210,7 @@ async function wake(env: Env, agentId: string, apiBase: string) {
   const infos = await Promise.all(entries.map((e) => (e.slug === info.slug ? info : projectStub(env, e.slug).info().catch(() => null))));
   const awake: { id: string; slug: string; owner: string; role: string }[] = [];
   // A landing project's reviewer pool adds --review2, --review3… (src/landing/).
-  const pool = (pi: ProjectInfo) => (pi.landing ? [2, 3, 4].map((n) => `${pi.slug}--review${n}`) : []);
+  const pool = (pi: ProjectInfo) => (pi.landing ? [2, 3, 4, 5, 6].map((n) => `${pi.slug}--review${n}`) : []);
   await Promise.all(infos.flatMap((pi) => (pi ? [...pi.agents.map((a) => a.id), `${pi.slug}--router`, `${pi.slug}--review`, ...pool(pi)] : [])
     .filter((id) => id !== agentId)
     .map(async (id) => {
@@ -732,10 +735,10 @@ const app = {
           return json({ ok: true, awake, cc, idle: !awake || !/busy|thinking|working|running|tool|compact/i.test(cc) });
         }
         if (verb === 'review-dispatch' && request.method === 'POST' && me.admin) {
-          const b = await request.json() as { agent?: string; reviewer?: string };
+          const b = await request.json() as { agent?: string; reviewer?: string; style?: string };
           // reviewer: one of a landing project's pool (<slug>--review, --review2…); default the single one.
           const rv = b.reviewer && new RegExp(`^${slug.replace('.', '\\.')}--review\\d*$`).test(b.reviewer) ? b.reviewer : undefined;
-          const r = await dispatchReview(env, p, slug, apiBase, String(b.agent || ''), rv);
+          const r = await dispatchReview(env, p, slug, apiBase, String(b.agent || ''), rv, b.style === 'adversarial' ? 'adversarial' : 'read');
           return json(r, r.ok ? 200 : r.busy ? 409 : 502);
         }
         if (verb === 'deliver' && request.method === 'POST' && me.admin) {
@@ -971,7 +974,7 @@ async function startReview(env: Env, p: DurableObjectStub<Project>, slug: string
 }
 
 /** Clear the reviewer and give it one review. Returns busy if it is mid-turn. */
-async function dispatchReview(env: Env, p: DurableObjectStub<Project>, slug: string, apiBase: string, next: string, reviewer = `${slug}--review`): Promise<{ ok: boolean; busy?: boolean; error?: string }> {
+async function dispatchReview(env: Env, p: DurableObjectStub<Project>, slug: string, apiBase: string, next: string, reviewer = `${slug}--review`, style: 'read' | 'adversarial' = 'read'): Promise<{ ok: boolean; busy?: boolean; error?: string }> {
   try {
     const info = await p.info();
     const ag = info?.agents.find((x) => x.id === next);
@@ -990,6 +993,8 @@ async function dispatchReview(env: Env, p: DurableObjectStub<Project>, slug: str
       ag?.note ? `The agent reports: ${ag.note}` : '',
       `You are the reviewer agent of this project (${slug.replace('.', '/')}). The agent id is ${next}.`,
       ...REVIEW_STEPS.map((x) => x.replaceAll('<agent-id>', next)),
+      // Lab variant reviewStyle 'adversarial': the review must try to break the change.
+      style === 'adversarial' ? 'ADVERSARIAL REVIEW: before your verdict, try to write ONE test that this change fails (an edge case, a wrong input, a missed requirement of the task). Run it. If it fails, the verdict is changes, with the test in your notes. Approve only if you tried and could not break it. Do not commit the test.' : '',
     ].filter(Boolean).join('\n\n');
     let r = await sendTo(env, reviewer, text, apiBase);
     // Confirm it landed: Claude Code should start working within ~15 s. If it
@@ -1085,6 +1090,9 @@ async function overProjectLimit(env: Env, handle: string): Promise<string | null
 }
 
 /** A landing project's own caps (crew runs, src/landing/), or null for the instance's. */
+/** Lab model names (haiku|sonnet|opus) to Claude Code model ids; full ids pass through. */
+const modelId = (m: string) => ({ haiku: 'claude-haiku-5-5', sonnet: 'claude-sonnet-5-5', opus: 'claude-opus-5-5' } as Record<string, string>)[m] || m;
+
 async function landingCaps(env: Env, slug: string): Promise<{ agents?: number; awake?: number } | null> {
   const info = await projectStub(env, slug).info().catch(() => null);
   if (!landingOn(info)) return null;
@@ -1136,10 +1144,13 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       const ownerDeploys = isOwner(env, slug.split('.')[0]);
       const pinfo = await p.info();
       // A landing project with a reviewer pool: Landing hands the review to a free reviewer.
-      const pooled = landingOn(pinfo) && ((await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null))?.reviewers || 1) > 1;
+      // reviewers explicitly set (lab variants, crew runs): 0 = no review at all, 1+ = Landing's pool.
+      const lfl = landingOn(pinfo) ? await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null) : null;
+      const pooled = typeof lfl?.reviewers === 'number' && lfl.reviewers >= 1 && (lfl.reviewers > 1 || !!lfl.policy);
+      const noReview = lfl?.reviewers === 0;
       if ((await p.kindOf()) === 'worker' && ownerDeploys) ctx.waitUntil(p.requestBuild('preview', me.agentId).catch((e) => log('build', 'request_failed', { err: String(e) })));
-      else if (!pooled) await startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId));   // awaited: see the review verb
-      if (landingOn(pinfo)) await landingHooks.onPushed(env, ctx, pinfo!, me.agentId, String(body.note || ''), pooled).catch((e) => log('landing', 'push_hook_failed', { id: me.agentId, err: String(e) }));
+      else if (!pooled && !noReview) await startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId));   // awaited: see the review verb
+      if (landingOn(pinfo)) await landingHooks.onPushed(env, ctx, pinfo!, me.agentId, String(body.note || ''), noReview ? 'none' : pooled).catch((e) => log('landing', 'push_hook_failed', { id: me.agentId, err: String(e) }));
     }
     return json({ ok: true });
   }

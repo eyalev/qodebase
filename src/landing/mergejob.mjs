@@ -125,7 +125,7 @@ function applyChange(c, cfg) {
     const unhandled = [];
     let lock = false;
     for (const p of conflicts) {
-      const h = handlerFor(p, cfg);
+      const h = job.handlers === false ? null : handlerFor(p, cfg);
       if (!h) { unhandled.push(p); continue; }
       if (h[0] === 'lockfile') { lock = true; handled.push({ path: p, handler: 'lockfile' }); continue; }
       const merged = h[1](show(`:1:${p}`), show(`:2:${p}`) ?? '', show(`:3:${p}`) ?? '');
@@ -198,7 +198,7 @@ function replay(c, base, before, conflicts, unhandled) {
 // ---- checks -----------------------------------------------------------------------
 let depsKey = '';
 function runChecks() {
-  if (!job.check) return { ok: true, ms: 0, failures: [], skipped: true };
+  if (!job.check || job.noChecks) return { ok: true, ms: 0, failures: [], skipped: true };
   const s = Date.now();
   // Dependencies once per lockfile/package.json version (node_modules is ignored by git clean).
   if (existsSync(join(DIR, 'package.json'))) {

@@ -50,6 +50,7 @@ export type ProjectInfo = {
   lastRequest?: RouterRequest;
   private?: boolean;   // owner-only everywhere (registry.ts canSee); its live app needs a signed pass (run.ts)
   landing?: boolean;   // shows 'Agents at work' as its main view (the landing system's demo, src/landing/)
+  unlisted?: boolean;  // reachable by link, not listed for others (registry Entry.unlisted): lab runs
 };
 
 export class Project extends DurableObject<Env> {
@@ -62,7 +63,7 @@ export class Project extends DurableObject<Env> {
     const e: Entry = { slug: info.slug, owner: info.owner, name: info.name, description: info.description,
       forkedFrom: info.forkedFrom, createdAt: info.createdAt, updatedAt: Date.now(),
       importedFrom: info.importedFrom ? { fullName: info.importedFrom.fullName, stars: info.importedFrom.stars, license: info.importedFrom.license } : undefined,
-      ...(info.private ? { private: true } : {}) };
+      ...(info.private ? { private: true } : {}), ...(info.unlisted ? { unlisted: true } : {}) };
     await registry(this.env).put(e);
   }
 
@@ -119,6 +120,13 @@ export class Project extends DurableObject<Env> {
     await this.#register(info);
     log('project', 'visibility', { slug: info.slug, private: v });
     return info;
+  }
+
+  /** Reachable by link but never listed for others (variants lab runs). */
+  async setUnlisted(v: boolean) {
+    const info = await this.#need();
+    if (v) info.unlisted = true; else delete info.unlisted;
+    await this.#register(info);
   }
 
   /** The landing system's view becomes this project's main view (qb6/qb7, src/landing/). */

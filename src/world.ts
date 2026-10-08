@@ -77,7 +77,7 @@ export const WORLD_CSS = `
 export type WorldTab = 'projects' | 'people';
 
 export function worldBody(tab: WorldTab, real: Entry[], signedIn: boolean, opts: { tag?: string; sort?: string } = {}) {
-  real = real.filter((e) => !e.private);   // Explore is public browsing; your private projects live under Yours
+  real = real.filter((e) => !e.private && !e.unlisted);   // unlisted: lab runs, reachable by link only   // Explore is public browsing; your private projects live under Yours
   const sub = (id: WorldTab, labelT: string) => `<a href="/${id === 'projects' ? '' : `?s=${id}`}" data-tab="${id}" class="${tab === id ? 'on' : ''}"${tab === id ? ' aria-current="page"' : ''}>${labelT}</a>`;
   const head = `<nav class="sub3" aria-label="Home">${sub('projects', 'Projects')}${sub('people', 'People')}</nav>`;
   // Both views are in the page; switching between them, and between categories and

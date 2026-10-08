@@ -68,14 +68,24 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
       // A model: an alias (sonnet, haiku, opus) or a full id (claude-haiku-5-5). null clears it.
       const model = (v: unknown) => (typeof v === 'string' && /^(sonnet|haiku|opus|claude-[a-z0-9-]{3,40})$/.test(v) ? { ok: v } : v === null ? { ok: undefined } : null);
       const am = model(body.agentModel), rm = model(body.replayModel);
+      if (typeof body.unlisted === 'boolean') await env.Project.get(env.Project.idFromName(info.slug)).setUnlisted(body.unlisted);
       return json(await L.setFlags(info.slug, { ...(typeof body.llmReplay === 'boolean' ? { llmReplay: body.llmReplay } : {}),
         ...(typeof body.publicWatch === 'boolean' ? { publicWatch: body.publicWatch } : {}),
         // A crew run: caps {agents, awake}, reviewers (pool size, 1-4), budgetUsd (hard stop), halted:false to resume.
         ...(body.caps && typeof body.caps === 'object' ? { caps: { agents: Math.min(16, Number((body.caps as any).agents) || 0) || undefined, awake: Math.min(16, Number((body.caps as any).awake) || 0) || undefined } } : body.caps === null ? { caps: undefined } : {}),
-        ...(Number(body.reviewers) >= 1 ? { reviewers: Math.min(4, Math.round(Number(body.reviewers))) } : {}),
+        ...(Number(body.reviewers) >= 0 && body.reviewers !== null && body.reviewers !== undefined && body.reviewers !== '' ? { reviewers: Math.min(6, Math.round(Number(body.reviewers))) } : {}),
         ...(Number(body.budgetUsd) > 0 ? { budgetUsd: Math.min(20, Number(body.budgetUsd)) } : body.budgetUsd === null ? { budgetUsd: undefined } : {}),
         ...(body.halted === false ? { halted: false } : {}),
         ...(typeof body.autoMerge === 'boolean' ? { autoMerge: body.autoMerge } : {}),
+        // Variants lab knobs (docs/lab/runs-schema.md).
+        ...(model(body.plannerModel) ? { plannerModel: model(body.plannerModel)!.ok } : {}),
+        ...(model(body.coderModel) ? { coderModel: model(body.coderModel)!.ok } : {}),
+        ...(model(body.reviewerModel) ? { reviewerModel: model(body.reviewerModel)!.ok } : {}),
+        ...(body.reviewStyle === 'read' || body.reviewStyle === 'adversarial' ? { reviewStyle: body.reviewStyle } : {}),
+        ...(['intent', 'ffa', 'phases', 'stacking', 'leads', 'github'].includes(String(body.policy)) ? { policy: body.policy as 'intent' } : {}),
+        ...(Number(body.trainMax) >= 1 ? { trainMax: Math.min(24, Math.round(Number(body.trainMax))) } : {}),
+        ...(typeof body.claims === 'boolean' ? { claims: body.claims } : {}),
+        ...(typeof body.dedupe === 'boolean' ? { dedupe: body.dedupe } : {}),
         // agentModel: the model this project's agent boxes run on the owner's subscription (a cheap test);
         // replayModel: the model tier-2 replays use (default Haiku 5.5).
         ...(am ? { agentModel: am.ok } : {}), ...(rm ? { replayModel: rm.ok } : {}) }));

@@ -95,3 +95,16 @@ test('main moved since the change forked: it lands on the newer main', () => {
   const r = run({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: null, changes: [c] });
   assert.equal(r.changes[0].landed, true);   // fetched after the move: lands on top
 });
+
+test('policy github/ffa: handlers off, a list-file collision is not replayed (it goes back to its agent)', () => {
+  const s = setup();
+  const changes = [
+    s.fork('a', (fw) => edit(fw, 'src/routes.js', (t) => t.replace(`  ['/about', 'about'],\n`, `  ['/about', 'about'],\n  ['/health', 'health'],\n`))),
+    s.fork('b', (fw) => edit(fw, 'src/routes.js', (t) => t.replace(`  ['/about', 'about'],\n`, `  ['/about', 'about'],\n  ['/pricing', 'pricing'],\n`))),
+  ];
+  const r = run({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', handlers: false, noChecks: true, changes });
+  const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
+  assert.equal(by.a.landed, true);
+  assert.equal(by.b.landed, false); assert.deepEqual(by.b.unhandled, ['src/routes.js']);
+  assert.equal(r.checks.skipped, true);
+});

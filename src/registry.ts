@@ -15,6 +15,7 @@ export type Entry = {
   updatedAt: number;     // last change to main that forq made or saw
   importedFrom?: { fullName: string; stars: number; license: string | null };
   private?: boolean;     // only its owner sees it anywhere (lists, pages, code, API, live app)
+  unlisted?: boolean;    // reachable by link, never listed for others (Explore, home, /api/projects): lab runs
 };
 
 export type CliPending = { userCode: string; exp: number; email?: string; label?: string };
@@ -118,5 +119,5 @@ export const registry = (env: Env) => env.Registry.get(env.Registry.idFromName('
 export const canSee = (e: { owner: string; private?: boolean } | null | undefined, handle: string, admin = false) => !!e && (!e.private || admin || (!!handle && e.owner === handle));
 /** The registry as one person may see it. */
 export async function listFor(env: Env, handle: string, admin = false): Promise<Entry[]> {
-  return (await registry(env).list()).filter((e) => canSee(e, handle, admin));
+  return (await registry(env).list()).filter((e) => canSee(e, handle, admin) && (!e.unlisted || e.owner === handle));
 }

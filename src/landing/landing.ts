@@ -64,7 +64,14 @@ type Meta = {
     /** Hard budget for this project's boxes + Claude tokens (conservative pricing); halted = boxes stopped. */
     budgetUsd?: number; halted?: boolean;
     /** A real agent's change the reviewer approves goes straight into the queue (no merge tap). */
-    autoMerge?: boolean };
+    autoMerge?: boolean;
+    // Variants lab (docs/lab/PLAN.md): models per role, review style, landing policy, train size.
+    plannerModel?: string; coderModel?: string; reviewerModel?: string;
+    reviewStyle?: 'read' | 'adversarial';
+    /** intent = handlers + AI replay (default); github/ffa = no handlers, no replay: a conflict goes back
+     *  to the agent to rebase (ffa also skips the checks); phases/stacking/leads = planner strategies (runner). */
+    policy?: 'intent' | 'ffa' | 'phases' | 'stacking' | 'leads' | 'github';
+    trainMax?: number; claims?: boolean; dedupe?: boolean };
   demo: Demo | null;
   reviews?: { queue: string[]; busy: Record<string, { change: string; at: number; sends: number; nudged?: number }>; coolUntil?: Record<string, number> };
   spent?: { usd: number; at: number; boxes: number; claude: number };
@@ -249,7 +256,7 @@ export class Landing extends DurableObject<Env> {
   // wait 12 reviews in a row, so Landing hands pushed changes to the first free of N
   // reviewer boxes (<slug>--review, --review2, …) through the Worker's review-dispatch verb,
   // and watches each one: a review with no verdict after 8 min is handed out again, once.
-  #reviewers(m: Meta) { const n = Math.min(4, m.flags.reviewers || 1); return Array.from({ length: n }, (_, i) => `${m.slug}--review${i ? i + 1 : ''}`); }
+  #reviewers(m: Meta) { const n = Math.min(6, m.flags.reviewers || 1); return Array.from({ length: n }, (_, i) => `${m.slug}--review${i ? i + 1 : ''}`); }
   poolOn() { return (this.#meta?.flags.reviewers || 1) > 1; }
   async queueReview(id: string) {
     const m = await this.#m();
@@ -301,7 +308,7 @@ export class Landing extends DurableObject<Env> {
     await Promise.all(jobs.map(async ([rv, change]) => {
       const res = await fetch(`${this.env.API_BASE}/api/p/${owner}/${name}/review-dispatch`, {
         method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' },
-        body: JSON.stringify({ agent: change, reviewer: rv }), signal: AbortSignal.timeout(4 * 60_000),
+        body: JSON.stringify({ agent: change, reviewer: rv, style: m.flags.reviewStyle || 'read' }), signal: AbortSignal.timeout(4 * 60_000),
       }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }) as any);
       log('landing', 'review_dispatch', { slug: m.slug, change, reviewer: rv, ok: res.ok, status: res.status });
       if (!res.ok) {
@@ -346,7 +353,7 @@ export class Landing extends DurableObject<Env> {
   async #halt(m: Meta, why: string) {
     m.flags.halted = true;
     const p = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
-    const ids = [...(p?.agents || []).map((a) => a.id), `${m.slug}--router`, ...this.#reviewers({ ...m, flags: { ...m.flags, reviewers: 4 } })];
+    const ids = [...(p?.agents || []).map((a) => a.id), `${m.slug}--router`, ...this.#reviewers({ ...m, flags: { ...m.flags, reviewers: 6 } })];
     for (const id of ids) await fetch(`${this.env.API_BASE}/api/agents/${id}/stop`, { method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } }).catch(() => null);
     log('landing', 'halted', { slug: m.slug, why, stopped: ids.length });
     await pushAlert(this.env, `qodebase: ${m.slug} halted`, why, `https://${this.env.UI_HOST}/p/${m.slug.replace('.', '/')}/work`, 0).catch(() => {});
@@ -380,7 +387,7 @@ export class Landing extends DurableObject<Env> {
     const m = await this.#m();
     const out: Change[] = [];
     for (const id of m.waiting) {
-      if (out.length >= TRAIN_MAX) break;
+      if (out.length >= (m.flags.trainMax || (m.flags.policy === 'ffa' ? 1 : TRAIN_MAX))) break;
       const c = await this.#get(id);
       if (!c || c.state !== 'queued') continue;
       if (c.stackedOn) {
@@ -404,7 +411,9 @@ export class Landing extends DurableObject<Env> {
     const train: Train = { id: `t${Date.now().toString(36)}`, state: 'testing', changes: picked.map((c) => c.id), startedAt: Date.now(), endedAt: null, checks: null, mainBefore: null, mainAfter: null };
     const job: MergeJob = { trainId: train.id, slug: m.slug, mainRemote: project.remote, mainToken, branch: project.importedFrom?.branch || null, changes: [],
       // Tier 2 runs on the owner's Claude subscription: only for the instance owner's projects (and the showcase).
-      ...(m.flags.llmReplay && !m.demo?.publicRun && (project.owner === this.env.OWNER_HANDLE || project.owner === 'forq') ? { llm: { model: m.flags.replayModel || DEFAULT_REPLAY_MODEL } } : {}) };
+      ...(m.flags.llmReplay && !m.demo?.publicRun && !this.#rebasePolicy(m) && (project.owner === this.env.OWNER_HANDLE || project.owner === 'forq') ? { llm: { model: m.flags.replayModel || DEFAULT_REPLAY_MODEL } } : {}),
+      // github / ffa: plain git only (no handlers), ffa also without checks.
+      ...(this.#rebasePolicy(m) ? { handlers: false, noChecks: m.flags.policy === 'ffa' } : {}) };
     for (const c of picked) {
       using fork = await this.env.ARTIFACTS.get(c.fork);
       // A stacked change's base is its parent's pushed commit; once the parent landed as a
@@ -541,6 +550,8 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     if (deploy && (await P.kindOf()) === 'worker') await P.requestBuild('deploy').catch((e) => log('landing', 'deploy_request_failed', { err: String(e) }));
   }
 
+  #rebasePolicy(m: Meta) { return m.flags.policy === 'github' || m.flags.policy === 'ffa'; }
+
   /** Tier 2 (LLM replay, flag) or tier 3 (the lead) for a real conflict. */
   async #escalate(c: Change, m: Meta) {
     if (c.kind === 'demo') {
@@ -550,6 +561,13 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       return;
     }
     const where = c.landing?.conflicts.join(', ') || 'shared files';
+    if (this.#rebasePolicy(m)) {
+      // GitHub-style: the conflict is the author's to fix. Back to the agent: rebase, push, review again.
+      c.state = 'bounced';
+      this.#ev(c, 'bounced', `conflict in ${where}: back to its agent to rebase on main`);
+      this.#tell(c.id, `qodebase merge queue: your change conflicts with main in ${where}. Rebase it on the latest main: run \`forq sync-main\`, resolve the conflicts keeping BOTH main's changes and your task, run the tests, then: forq status pushed "rebased on main"`);
+      return;
+    }
     if (m.flags.llmReplay) {
       // Tier 2: the change's own agent redoes its intent on today's main.
       c.state = 'replaying'; c.redo = 'llm';

@@ -17,7 +17,9 @@ export type MergeChange = { id: string; title: string; intent: string; agent: st
   base: string | null; commit: string | null; review: unknown };
 export type MergeJob = { trainId: string; slug: string; mainRemote: string; mainToken: string; branch: string | null; check?: string | null; changes: MergeChange[]; tries?: number;
   /** Tier 2: replay conflicting changes with this model (on the owner's Claude subscription). */
-  llm?: { model: string } };
+  llm?: { model: string };
+  /** Lab policies github/ffa: no tier-1 handlers (plain git); ffa also skips the checks. */
+  handlers?: boolean; noChecks?: boolean };
 export type LlmUse = { model: string; ms: number; turns: number | null; usd: number | null; in: number | null; out: number | null; cacheRead: number | null; cacheWrite: number | null; sameLines?: boolean; error?: string };
 export type MergeResult = {
   trainId: string; ok: boolean; error?: string; ms?: number; log?: string;
@@ -121,7 +123,7 @@ export class MergeBox extends DurableObject<Env> {
     try {
       await this.#ensureContainer();
       await this.#sh(`mkdir -p /opt/qb && printf '%s' "$JS" > /opt/qb/mergejob.mjs`, { JS: MERGEJOB });
-      const spec = { dir: `/m/${job.slug}`, mainRemote: job.mainRemote, mainToken: job.mainToken, branch: job.branch, check: job.check ?? null, changes: job.changes, llm: job.llm || null };
+      const spec = { dir: `/m/${job.slug}`, mainRemote: job.mainRemote, mainToken: job.mainToken, branch: job.branch, check: job.check ?? null, changes: job.changes, llm: job.llm || null, handlers: job.handlers !== false, noChecks: !!job.noChecks };
       // The Claude token only reaches the box for a tier-2 replay, as its own variable (never in JOB, never logged).
       const r = await this.#sh('node /opt/qb/mergejob.mjs 2>&1', { JOB: JSON.stringify(spec), HOME: '/root', ...(job.llm ? { QB_CLAUDE_TOKEN: this.env.CLAUDE_CODE_OAUTH_TOKEN } : {}) });
       const line = r.stdout.split('\n').find((l) => l.startsWith('QB_RESULT '));
