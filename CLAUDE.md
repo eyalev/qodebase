@@ -546,6 +546,19 @@ docs/contest/landing.md; owner tab qb6). UI: src/landingui/ (qb7), view "Agents 
   (scripted agents ticking every 1.5 s ran pre-deploy code for 3+ minutes, 2026-10-07;
   idle ones switch within a minute). Deploying a demo change: `stop`, wait until
   `landing/state` shows no agent alarms, then `start`.
+- **Real agents** (projects with `info.landing`): src/landing/hooks.ts records at spawn
+  (`forq spawn --files a,b` = claims, `--on <agent>` = stacked), push/verdict hooks, the merge tap
+  and `forq merge` queue the change; landed agents are marked merged; bounced agents and the
+  router are told through Landing's outbox (delivered from its alarm). `forq sync-main` rebases
+  an agent on main. Flags (`POST …/landing/flags`): `agentModel` (the boxes' model on the
+  subscription, e.g. claude-haiku-5-5), `llmReplay` + `replayModel` (tier 2 in the merger box,
+  default claude-haiku-5-5; `landing.reviewedDiff` vs `landing.diff` = diff-of-diffs),
+  `publicWatch` (Watch a run: anonymous `POST …/landing/watch`, caps in Landing.watchClaim).
+- After a deploy: `GET …/landing/restart` (admin) puts a project's Landing and MergeBox on the
+  deployed code; the view's `code` and the merger's `version` say which code answers. Don't poll
+  an object you want to go idle.
+- Projects: eyal/corner-cafe (public demo + Watch a run), eyal/cafe-real (real Haiku agents),
+  eyal/cafe-lab (private test bench).
 - Cost: cloudcost gap `qodebase-landing` (local cloudcost settings).
 
 ## Talk: speak or type to the app (src/talk*.ts, since 2026-10-06)

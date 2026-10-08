@@ -38,19 +38,16 @@ Local tests: `node --experimental-strip-types --test src/landing/*.test.mjs`.
 - [x] Records as git notes (refs/notes/qodebase; showing them in the code browser: todo) on landed commits (Artifacts supports notes) so "why" travels with the code.
 - [x] LAND BY INTENT tier 1 (package.json + list files verified live; lockfile regenerate tested only in code path): deterministic handlers for shared-file edits (lockfile regenerate,
       package.json deps, append to a list file such as routes/exports) -> reapply on latest main.
-- [ ] Tier 2: LLM replay (the change's agent or a merger agent reapplies the intent on today's code),
-      per-project flag, OFF by default; diff-of-diffs shown when it differs from what was reviewed.
-- [~] Tier 3: escalate to the area lead / the owner. (demo: scripted lead redo verified; real changes: state with-lead + owner named, no notification yet)
-- [~] CLAIMS (claims + overlap events + areas verified on demo; router `forq spawn --files` + `forq list` map: todo): router declares expected files at spawn; DO warns on overlap; `forq list` shows the map.
-- [~] STACKING (demo verified; `forq spawn --on` for real agents: todo): `forq spawn --on <agent>` forks from another agent's fork; queue lands stacks in order.
-- [x] DEMO MODE (café story, 4 agents; busy mode with generated tasks up to 20 agents: todo): scripted agents (Durable Objects, no LLM, no containers) on a demo project:
-      a scripted task list producing real commits on real forks (reuse sim/cloud/src/gitpush.js and
-      sim/real/project.mjs-style operations, or Hono-shaped edits), going through the REAL record,
-      queue, merger box and replay. Controls: start/stop, number of agents, speed. This is what
-      the video records, so it must look busy and be honest (labelled "scripted agents").
+- [x] Tier 2: LLM replay in the merger box (claude -p, default claude-haiku-5-5, flag llmReplay, OFF by default, owner's subscription only, never in public runs). Verified live 2026-10-08 on eyal/cafe-lab: site.js conflict redone in 9.7 s, ~90k tokens across turns. landing.reviewedDiff next to landing.diff = diff-of-diffs (UI: qb7).
+- [x] Tier 3: demo = scripted lead redo (verified); real = with-lead + the router is told through Landing's outbox (built, not yet seen live).
+- [x] CLAIMS: `forq spawn --files` verified live with real agents (eyal/cafe-real); overlap warnings capped at 3 per change; `forq list` shows claims.
+- [x] STACKING: demo verified; `forq spawn --on <agent>` built for real agents (not yet seen live).
+- [x] DEMO MODE: story (14 tasks), busy (generated, up to 24 agents, backpressure at 40 waiting, ~46 landings/min measured), WATCH A RUN (public, no sign-in, eyal/corner-cafe: 1 at a time, 10/day, 3/day + 5 min per IP).
 - [~] Docs: CLAUDE.md section [x], cloudcost gap qodebase-landing [x], README section [ ].
-Next (Oct 8-10): hooks so REAL agents get records + the queue (spawn/push/verdict/merge in
-index.ts, with qb2); busy demo mode + measured throughput for qb8; tier 2 (LLM replay, flag);
-notes in the code browser; `forq spawn --files/--on`; README.
+- [x] REAL AGENTS through the queue (info.landing projects): verified 2026-10-08 on eyal/cafe-real,
+      Haiku 5.5: 1 router request -> 2 agents -> reviewer -> merge taps -> one train -> landed with
+      records + git notes; ~$0.17 total (boxes $0.059 + Haiku tokens).
+- [ ] REAL CREW RUN (manager, 2026-10-08): eyal/cafe-crew, 12 Haiku agents, 3 reviewers, $5 hard stop, filmed by qb8.
+Next: notes in the code browser (qb7 panel); README section.
 Keep existing behaviour working for projects without the flag. Coordinate src/project.ts edits
 with qb2 (cc_com) since qb1-3 work in src/ too.
