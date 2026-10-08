@@ -201,7 +201,7 @@
   // ---- Watch a run (public, no sign-in; qb6's POST …/landing/watch) ----------------------
   let starting = 0, limitNote = '';
   const until = (t) => `<span data-until="${t}">${untilTxt(t)}</span>`;
-  const untilTxt = (t) => { const s = Math.max(0, Math.round((t - now()) / 1000)); return s < 60 ? `${s} s` : `${Math.ceil(s / 60)} min`; };
+  const untilTxt = (t) => { const s = Math.max(0, Math.round((t - now()) / 1000)); return s < 60 ? `${s} s` : `${Math.round(s / 60)} min`; };
   const LIMIT = { daily: 'Today\'s live runs are used up.', ip: 'You have started the most live runs for today.', cooldown: 'You started a run a few minutes ago.', running: 'A run is already going.', off: 'Live runs are switched off right now.' };
   function watchCard() {
     const W = D.watch || {}, dm = D.demo || {};
@@ -376,7 +376,7 @@
     const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;
     const agents = idleDemo ? 0 : new Set(act.map((c) => c.agent)).size;
     return `${demoStrip()}
-      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : `No agents are working on ${esc(NAME)} right now.${D.stats.landedToday ? ` ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed ${D.mode === 'demo' ? 'in the last run' : 'today'}.` : ''}`}</h2>
+      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : P && P.replay ? (now() >= P.end - 1 ? `The replay has ended: ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed.` : 'The replay is starting…') : `No agents are working on ${esc(NAME)} right now.${D.stats.landedToday ? ` ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed ${D.mode === 'demo' ? 'in the last run' : 'today'}.` : ''}`}</h2>
       <p class="intro">Each agent is an AI working on its own ${term('fork', 'copy')} of the code. Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>
       ${numbers()}
       <section class="sec"><div class="sec-h"><h3>${term('queue', 'The line')}</h3><a href="#/line">Everything</a></div>
