@@ -39,7 +39,8 @@ sim/README.md, sim/cloud/README.md, and the challenge page https://www.cloudflar
       agents, ~46 landed/min, say scripted); the AI replay demo (7.8 s, ~1 cent); real agents on
       eyal/cafe-real (Claude Haiku 5.5, verified, 5.5 min); Talk steering; notes in the code browser.
 - [ ] Submission texts: draft 1 in docs/contest/submission.md; [final] lines after Oct 10.
-- [ ] README polish (quick start, screenshots, the measurements) on Oct 12.
+- [x] README polish (2026-10-08, f1c4044), approved by the manager. Later only: the video link in
+      the top block once Eyal uploads it, and the lab/OpenClaw results section.
 - [ ] Waiting on: variants lab results (docs/lab/PLAN.md, qb4-qb7) and OpenClaw FINDINGS.md (qb9)
       -> README + submission lines. Video stays locked unless a result is ready and honest.
 - [ ] Hand each cut to the manager tab for review (cc_com send s1007-1655 or tell Eyal).
