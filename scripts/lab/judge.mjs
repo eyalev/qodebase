@@ -66,7 +66,7 @@ export async function judge({ scenario, dir }) {
     images = await screenshots(dir, routes, work);
     material = `## The change (diff against the starting site)\n${clip(d, MAX_DIFF)}\n\n## Every page, rendered\n${clip(pages, 30_000)}\n\n## Screenshots at 390 px\n` +
       images.map((s) => `- ${s.path}: ${s.file}`).join('\n');
-  } else if (scenario === 'bakery') {
+  } else if (scenario === 'bakery' || scenario === 'club') {
     // run it: fresh data, one order so the pages have something to show
     const { spawn } = await import('node:child_process');
     const net = await import('node:net');
@@ -77,7 +77,23 @@ export async function judge({ scenario, dir }) {
     let up = false;
     for (let i = 0; i < 100 && !up; i++) { try { await fetch(base + '/'); up = true; } catch { await new Promise((r) => setTimeout(r, 100)); } }
     let pages = '', orderId = null;
-    if (up) {
+    if (up && scenario === 'club') {
+      // a member with some balance and a booking, so the pages have something to show
+      try {
+        const j = (m, p, b, h = {}) => fetch(base + p, { method: m, headers: { 'content-type': 'application/json', ...h }, body: b && JSON.stringify(b) }).then((r) => r.json()).catch(() => ({}));
+        const mem = await j('POST', '/api/members', { name: 'Inês Costa', email: 'ines@judge.test', password: 'judge-pass-1' });
+        const { token } = await j('POST', '/api/login', { email: 'ines@judge.test', password: 'judge-pass-1' });
+        await j('POST', `/api/admin/members/${mem.id}/credit`, { amount: 60 }, { authorization: auth });
+        const d = new Date(Date.now() + 3 * 86400_000).toISOString().slice(0, 10);
+        await j('POST', '/api/bookings', { court: 'c2', date: d, time: '10:00' }, { authorization: 'Bearer ' + token });
+      } catch {}
+      const paths = ['/', '/availability', '/tournaments', '/shop', '/coaches', '/pt'];
+      for (const p of [...paths, '/admin', '/admin/rota', '/admin/shop', '/admin/reports']) {
+        const r = await fetch(base + p, { headers: p.startsWith('/admin') ? { authorization: auth } : {} });
+        pages += `### ${p} (${r.status})\n${(await r.text()).trim()}\n\n`;
+      }
+      images = await shoot(paths.map((p) => ({ path: p, url: base + p })), work);
+    } else if (up) {
       try {
         const menu = await (await fetch(base + '/api/menu')).json();
         const hours = await (await fetch(base + '/api/hours')).json();

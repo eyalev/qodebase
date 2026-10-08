@@ -81,9 +81,11 @@ try {
     const keepShare = keep.length ? keep.filter((r) => r.ok).length / keep.length : 0;
     result.hiddenPass = Math.floor(fam.filter((r) => r.ok).length * keepShare);
     result.failed = [...fam.filter((r) => !r.ok).map((r) => r.name), ...(fam.length ? [] : ['family: all (did not run)'])];
-  } else if (SCENARIO === 'bakery') {
-    // floor: every file parses; own tests pass AND there are at least 5 of them (greenfield:
-    // writing tests is part of the job); build = the server starts and serves / and the menu
+  } else if (SCENARIO === 'bakery' || SCENARIO === 'club') {
+    // black box over HTTP. floor: every file parses; own tests pass AND there are at least
+    // 5 of them (greenfield: writing tests is part of the job); build = the server starts
+    // and serves its basics (bakery: the first two hidden tests; club: the "core:" tests on
+    // the foundations the starter already has). Hidden = the "<scenario>:" tests.
     const js = files(W, '.js').concat(files(W, '.mjs'));
     const bad = js.filter((f) => run('node', ['--check', f], W).code !== 0);
     result.typecheck = bad.length === 0;
@@ -93,14 +95,17 @@ try {
     result.ownTests = own.code === 0 && ownCount >= 5;
     result.ownTestCount = ownCount;
     if (own.code === 0 && ownCount < 5) notes.push(`only ${ownCount} own tests`);
-    const t = run('node', ['--test', '--test-reporter=tap', join(HIDDEN, 'bakery/acceptance.test.mjs')], W, { LAB_REPO: W });
-    const res = tap(t.out, 0).filter((r) => r.name.startsWith('bakery:'));
-    result.build = !/server did not start/.test(t.out) && res.length > 0 && res.slice(0, 2).some((r) => r.ok);
-    if (!result.build) notes.push('the server did not start or serves no menu');
-    const total = (readFileSync(join(HIDDEN, 'bakery/acceptance.test.mjs'), 'utf8').match(/^test\(['"]bakery:/gm) || []).length;
+    const file = join(HIDDEN, SCENARIO, 'acceptance.test.mjs');
+    const t = run('node', ['--test', '--test-reporter=tap', file], W, { LAB_REPO: W });
+    const all = tap(t.out, 0), res = all.filter((r) => r.name.startsWith(SCENARIO + ':'));
+    const core = all.filter((r) => r.name.startsWith('core:'));
+    const started = !/server did not start/.test(t.out) && all.length > 0;
+    result.build = started && (SCENARIO === 'club' ? core.length > 0 && core.every((r) => r.ok) : res.slice(0, 2).some((r) => r.ok));
+    if (!result.build) notes.push(!started ? 'the server did not start' : SCENARIO === 'club' ? 'the basics do not work: ' + core.filter((r) => !r.ok).map((r) => r.name.slice(6)).join('; ') : 'the server serves no menu');
+    const total = (readFileSync(file, 'utf8').match(new RegExp(`^test\\(['"]${SCENARIO}:`, 'gm')) || []).length;
     result.hiddenTotal = total;
     result.hiddenPass = res.filter((r) => r.ok).length;
-    result.failed = [...res.filter((r) => !r.ok).map((r) => r.name), ...(res.length < total ? [`bakery: ${total - res.length} did not run`] : [])];
+    result.failed = [...res.filter((r) => !r.ok).map((r) => r.name), ...(res.length < total ? [`${SCENARIO}: ${total - res.length} did not run`] : [])];
   } else if (SCENARIO === 'port-ts') {
     const index = join(W, 'src/index.ts');
     const ported = existsSync(index);

@@ -1,0 +1,15 @@
+/* One stylesheet for every page. Phone first. */
+:root { --bg: #fff; --fg: #111; --dim: #666; --line: #ddd; --acc: #17695a; color-scheme: light dark; }
+@media (prefers-color-scheme: dark) { :root { --bg: #111; --fg: #eee; --dim: #999; --line: #333; --acc: #4fbf9f; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+header nav { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+main { padding: 16px; max-width: 720px; margin: 0 auto; }
+a { color: var(--acc); }
+label { display: block; margin: 12px 0; }
+input, select, button { font: inherit; min-height: 44px; }
+input, select { width: 100%; padding: 8px; }
+button { padding: 8px 16px; }
+.error { color: #b4322a; }
+table { border-collapse: collapse; width: 100%; }
+td, th { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: left; }

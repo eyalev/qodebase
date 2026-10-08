@@ -68,6 +68,39 @@
   }
  },
  {
+  "id": "club",
+  "title": "Build a padel club app",
+  "prompt": "Build a booking app for a padel club.",
+  "promptVersion": "1",
+  "scenarioVersion": "1",
+  "starter": "scripts/lab/scenarios/club/starter (foundations in lib/, modules/ empty, the brief in README.md, 3 tests)",
+  "hiddenTotal": 42,
+  "about": "The stage-2 big job: a wide product on ready-made foundations (storage, sign-in, courts, slots, prices, wallet, layout). 13 independent modules: bookings, member area, public pages, waitlist, notifications and calendar, blocks, coaches and lessons, tournaments, staff admin, reports, pro-shop, staff rota, each in English and Portuguese. A wide job with a shallow chain: the honest best case for many agents.",
+  "profile": {
+   "expectedTasks": [
+    30,
+    75
+   ],
+   "dependencyDepth": 2,
+   "dependencyChain": "foundations (in the starter) -> 13 modules, each on the foundations only; waitlist, calendar and reports also read bookings/lessons -> depth 2 at most",
+   "sharedFileShare": 0.2,
+   "sharedFiles": [
+    "public/style.css",
+    "README.md",
+    "test/helpers.js"
+   ],
+   "vagueness": "medium",
+   "duplicateIntentRisk": 0.15,
+   "note": "qb5 first guesses; modules are separate files loaded automatically, so shared files are rare. Target: ~60 min for one Opus agent; measured after the Oct 12 reset"
+  },
+  "anchors": {
+   "starter": 16.7,
+   "reference": null,
+   "referenceJudge": null,
+   "note": "reference built after the 2026-10-12 13:00 UTC reset (weekly meter)"
+  }
+ },
+ {
   "id": "port-ts",
   "title": "Port a library to TypeScript",
   "prompt": "Port this library to TypeScript.",
