@@ -4,6 +4,7 @@
 //   node sim/openclaw/fetch.mjs prs|issues [--since 2026-09-08] [--budget 1500]
 //   node sim/openclaw/fetch.mjs prs-days --from 2026-09-08 --to 2026-09-20  # same rows, by day (search),
 //        to run beside `prs` from the other end; dedupe by number when reading
+//   node sim/openclaw/fetch.mjs titles                # every issue's number/title/created (triage agent's search index)
 //   node sim/openclaw/fetch.mjs runs [--days 7]      # ci.yml workflow runs (REST)
 //   node sim/openclaw/fetch.mjs jobs [--sample 300] [--event schedule]  # jobs of a sample of runs (runner minutes)
 import { execFileSync } from 'node:child_process';
@@ -136,7 +137,7 @@ async function pages(kind, query, field) {
     fs.writeFileSync(cur, after || '');
     const oldest = nodes.at(-1)?.createdAt;
     console.error(`[${kind}] +${nodes.length} (total ${n}) oldest ${oldest} cost so far ${spent} remaining ${d.rateLimit?.remaining}`);
-    if (!conn.pageInfo.hasNextPage || (oldest && oldest < SINCE)) { fs.writeFileSync(cur + '.done', oldest || ''); break; }
+    if (!conn.pageInfo.hasNextPage || (kind !== 'titles' && oldest && oldest < SINCE)) { fs.writeFileSync(cur + '.done', oldest || ''); break; }
   }
   console.error(`[${kind}] stop: ${n} rows, spent ${spent}`);
 }
@@ -183,7 +184,11 @@ async function jobs() {
   console.error(`[jobs] spent ${spent}`);
 }
 
-if (cmd === 'prs') await pages('prs', PR_Q, 'pullRequests');
+const TITLES_Q = `query($o:String!,$n:String!,$after:String,$page:Int!){ rateLimit{cost remaining}
+ repository(owner:$o,name:$n){ issues(first:$page, after:$after, orderBy:{field:CREATED_AT, direction:ASC}){
+  pageInfo{hasNextPage endCursor} nodes{ number title createdAt } } } }`;
+if (cmd === 'titles') { args.push('--page', '100'); await pages('titles', TITLES_Q, 'issues'); }
+else if (cmd === 'prs') await pages('prs', PR_Q, 'pullRequests');
 else if (cmd === 'issues') await pages('issues', ISSUE_Q, 'issues');
 else if (cmd === 'prs-days') await prDays();
 else if (cmd === 'runs') await runs();
