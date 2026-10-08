@@ -92,12 +92,15 @@ const STAGES = join(ROOT, 'public/lab/stages.jsonl');
 const lines = existsSync(RUNS) ? readFileSync(RUNS, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
 const spent = lines.filter((l) => l.stage === stage).reduce((a, l) => ({ usdReal: a.usdReal + (l.cost?.usdReal || 0), apiUsdHigh: a.apiUsdHigh + (l.cost?.apiUsdHigh || 0), apiUsdStd: a.apiUsdStd + (l.cost?.apiUsdStd || 0) }), { usdReal: 0, apiUsdHigh: 0, apiUsdStd: 0 });
 // The plan's guards replace the defaults: stop at its API-equivalent total or weekly-meter rise.
-const cap = PLAN?.guards ? { usdReal: (STAGE_CAPS[stage] || STAGE_CAPS[1]).usdReal, apiUsdHigh: Infinity, apiUsdStd: PLAN.guards.stopAtApiUsdStd, quotaPts: PLAN.guards.stopAtWeeklyMeterRisePts } : { apiUsdStd: Infinity, ...(STAGE_CAPS[stage] || STAGE_CAPS[1]) };
+const cap = PLAN?.guards ? { usdReal: (STAGE_CAPS[stage] || STAGE_CAPS[1]).usdReal, apiUsdHigh: Infinity, apiUsdStd: PLAN.guards.stopAtApiUsdStd ?? Infinity, quotaPts: PLAN.guards.stopAtWeeklyMeterRisePts ?? Infinity } : { apiUsdStd: Infinity, ...(STAGE_CAPS[stage] || STAGE_CAPS[1]) };
 const stageRows = existsSync(STAGES) ? readFileSync(STAGES, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((r) => r.stage === stage) : [];
 const startMeter = stageRows.find((r) => r.event === 'start')?.meter;
 const now = meter();
 const quotaUsed = startMeter && now ? now.weekly - startMeter.weekly : 0;
 log('plan', { scenario: scenarioId, stage, seed, baseline, variantKey: key, project: slug, predicted, spent, cap, quotaUsed, budget });
+// An absolute meter stop (stage 2: 'hard stop if the weekly meter reaches 52%'), checked before and during the run.
+const meterStop = PLAN?.guards?.stopAtWeeklyMeterPct ?? null;
+if (meterStop != null && now && now.weekly >= meterStop) { log('stage_cap_meter', { weekly: now.weekly, meterStop }); console.error(`weekly meter at ${now.weekly}% >= ${meterStop}%: not starting`); process.exit(3); }
 if (spent.usdReal >= cap.usdReal || spent.apiUsdHigh >= cap.apiUsdHigh || spent.apiUsdStd >= cap.apiUsdStd || quotaUsed >= cap.quotaPts) { log('stage_cap', { spent, cap, quotaUsed }); console.error('stage cap reached: not starting'); process.exit(3); }
 // Projected: the sim's estimate of this run must also fit (its numbers are stage-0 guesses until calibrated).
 if ((spent.apiUsdHigh + (predicted.apiUsdStd || 0) > cap.apiUsdHigh || spent.apiUsdStd + (predicted.apiUsdStd || 0) > cap.apiUsdStd) && !has('--force')) { log('stage_cap_projected', { spent, predicted, cap }); console.error(`this run is predicted at $${predicted.apiUsdStd} API-equivalent: over the stage cap ($${cap.apiUsdHigh}); --force to run anyway`); process.exit(3); }
@@ -192,6 +195,8 @@ while (!COLLECT) {
   const agentsWorking = (p?.agents || []).filter((a) => a.state === 'working').length;
   log('poll', { project: slug, changes: view.changes.length, active, agentsWorking, landed: view.stats?.landedToday, spent: view.budget?.spent });
   if (view.budget?.halted) { status = 'stopped-budget'; break; }
+  const mNow = meterStop != null ? meter() : null;
+  if (mNow && mNow.weekly >= meterStop) { log('meter_stop', { weekly: mNow.weekly, meterStop }); status = 'stopped-budget'; break; }
   if (Date.now() > deadline) { status = 'timeout'; break; }
   // Settled: something landed, nothing active, no agent working, and no change for 3 minutes
   // (a router may still start a late agent; a bounced change may still be fixed).
