@@ -203,7 +203,7 @@ export class Landing extends DurableObject<Env> {
     const c = await this.#get(id); if (!c) return;
     c.review = { verdict, notes: notes.slice(0, 2000) };
     if (verdict === 'changes') { c.state = 'pushed'; this.#ev(c, 'changes-suggested', notes.split('\n')[0]); }
-    else { this.#ev(c, 'approved', verdict === 'auto' ? 'scripted review' : notes.split('\n')[0]); if (c.state === 'reviewing') c.state = 'pushed'; }
+    else { this.#ev(c, 'approved', verdict === 'auto' ? (notes.split('\n')[0] || 'scripted review') : notes.split('\n')[0]); if (c.state === 'reviewing') c.state = 'pushed'; }
     await this.#put(c);
     // A change its agent redid on the latest main (tier 2) was approved by the person once
     // already: approved again by the reviewer, it goes straight back in line.
