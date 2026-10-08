@@ -66,16 +66,18 @@
   const st = { scenario: Q.get('s') || 'cafe-family', v: {}, open: null, more: false };
   for (const [k, kb] of Object.entries(KNOBS)) st.v[k] = kb.def;
   try { const qv = JSON.parse(Q.get('v') || 'null'); if (qv) Object.assign(st.v, qv); } catch {}
-  let SIM = null, simErr = '', SCEN = [], RUNS = [], STAGES = [], loaded = false;
+  let SIM = null, simErr = '', SCEN = [], RUNS = [], STAGES = [], STAGE0 = null, loaded = false;
 
   async function load() {
     const sfx = MOCK ? '.mock' : '';
     const jl = (t) => t.split('\n').filter((l) => l.trim()).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
-    const [sc, runs, stages] = await Promise.all([
+    const [sc, runs, stages, s0] = await Promise.all([
       fetch(`${BASE}/scenarios.json`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
       fetch(`${BASE}/runs${sfx}.jsonl`, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then(jl).catch(() => []),
       fetch(`${BASE}/stages${sfx}.jsonl`, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then(jl).catch(() => []),
+      fetch(`${BASE}/stage0.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]);
+    STAGE0 = s0;
     SCEN = sc.length ? sc : [
       { id: 'cafe-family', title: 'Make the café site family-friendly', about: 'A vague feature request on an existing site: the planner has to decide what it means.' },
       { id: 'port-ts', title: 'Port a library to TypeScript', about: 'uuid (a small, popular JavaScript library) ported file by file; its own tests must still pass.' },
@@ -135,12 +137,27 @@
       <details class="more"${st.more ? ' open' : ''}><summary>More settings</summary><div class="knobs">${['reviewerModel', 'reviewStyle', 'claims', 'dedupe', 'trainMax'].filter((k) => k !== 'reviewerModel' || st.v.reviewers > 0).map(knobRow).join('')}</div></details>
       <div class="predbox" aria-live="polite">
         ${SIM ? `${sentence}${bars('Time to finish', rows('wallS'), mins, 'shorter is better')}${bars('Quality', rows('quality'), (x) => `${Math.round(x)}/100`, 'higher is better')}${bars('Cost at API prices', rows('usd'), usd, 'lower is better')}
-          <p class="small dim">Prediction by the lab's simulation${SIM.SIM_VERSION ? ` (${esc(SIM.SIM_VERSION)})` : ''}, calibrated on real runs. Quality is the hidden tests, the build and a judge, out of 100.</p>`
+          <p class="small dim">Prediction by the lab's simulation${SIM.SIM_VERSION ? ` (${esc(SIM.SIM_VERSION)})` : ''}, calibrated on real runs. Quality is the hidden tests, the build and a judge, out of 100. ${anchors()}</p>`
         : `<p class="dim">The simulation is not loaded yet, so there is no prediction to show.${MOCK ? '' : ''}</p>`}
       </div>
       ${OWN ? runForReal(me) : ''}
       ${me ? `<div class="pin" aria-hidden="true"><span>This setup</span><b>${mins(me.wallS)}</b><b>${Math.round(me.quality)}/100</b><b>${usd(me.usd)}</b></div>` : ''}
     </section>`;
+  }
+  // What a score means, from qb5's scorer validation (docs/lab/scoring.md, 2026-10-08).
+  const ANCHORS = { 'cafe-family': [25, 94], 'port-ts': [8, 92] };
+  const anchors = () => { const a = ANCHORS[st.scenario]; return a ? `For this job, the untouched starting code scores ${a[0]} and a complete hand-made solution ${a[1]}.` : ''; };
+  // ---- the simulation's picks (qb4's public/lab/stage0.json) -----------------------------------
+  const WHY = { fastest: 'Fastest', cheapest: 'Cheapest', 'best balance': 'Best balance of time, cost and quality', 'best stacking': 'Best with stacking' };
+  function picksView() {
+    if (!STAGE0?.picks?.length) return '';
+    const si = (STAGE0.scenarios || []).findIndex((x) => x.id === st.scenario);
+    const s1 = STAGE0.stage1;
+    return `<section class="sec" id="picks"><h2>What the simulation suggests</h2>
+      <p class="cap">${Number(STAGE0.combos).toLocaleString('en-US')} setups simulated, ${STAGE0.seeds} times each, at no cost. These are proposed for the first real runs${s1 ? ` (${s1.runs} runs with the baselines, about ${usd(s1.apiUsdStd)} at API prices)` : ''}.</p>
+      <ul class="picks">${STAGE0.picks.map((p) => { const per = si >= 0 ? p.per?.[si] : null; return `<li><b>${esc(WHY[p.why] || p.why)}</b><span>${esc(plain(p.variant))}</span>
+        ${per ? `<span class="nums"><span>${mins(per.wallS)}</span><span>${Math.round(per.q)}/100</span><span>${usd(per.usd)}</span></span>` : ''}
+        <button type="button" class="chipb" data-pick='${esc(JSON.stringify(p.variant))}'>Try this setup</button></li>`; }).join('')}</ul></section>`;
   }
   function runForReal(me) {
     const cmd = `node scripts/lab/run.mjs --scenario ${st.scenario} --variant '${JSON.stringify(st.v)}'`;
@@ -159,7 +176,7 @@
       by.get(k).runs.push(r);
     }
     return [...by.values()].map((g) => ({ ...g,
-      wallS: med(g.runs.map((r) => r.timings?.wallS)), quality: med(g.runs.map((r) => r.quality?.score)), usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
+      wallS: med(g.runs.map((r) => r.timings?.wallS)), quality: med(g.runs.map((r) => r.quality?.score)), qTruly: med(g.runs.map((r) => r.quality?.scoreTrulyHidden)), usd: med(g.runs.map((r) => r.cost?.apiUsdStd)),
       pWallS: med(g.runs.map((r) => r.predicted?.wallS)), pQuality: med(g.runs.map((r) => r.predicted?.quality)), stage: Math.max(...g.runs.map((r) => r.stage || 0)) }));
   }
   function scatter(gs) {
@@ -205,7 +222,7 @@
     return `<ul class="rows">${sorted.map((g) => {
       const on = st.open === g.key;
       return `<li class="${on ? 'open' : ''}"><button type="button" class="rw" data-open="${esc(g.key)}" aria-expanded="${on}"><i class="k ${g.baseline ? 'bl' : 'vr'}"></i><span class="t">${esc(plain(g.variant, g.baseline))}</span>
-        <span class="nums"><span>${mins(g.wallS)}</span><span>${g.quality == null ? '–' : Math.round(g.quality)}/100</span><span>${usd(g.usd)}</span></span>
+        <span class="nums"><span>${mins(g.wallS)}</span><span>${g.quality == null ? '–' : Math.round(g.quality)}/100${g.qTruly != null ? ` <span class="dim">(${Math.round(g.qTruly)})</span>` : ''}</span><span>${usd(g.usd)}</span></span>
         <span class="sub">${g.runs.length} run${g.runs.length === 1 ? '' : 's'}, stage ${g.stage}${g.pWallS != null ? `; predicted ${mins(g.pWallS)}, ${Math.round(g.pQuality)}/100` : ''}</span></button>${on ? detail(g) : ''}</li>`;
     }).join('')}</ul>`;
   }
@@ -215,9 +232,11 @@
       const c = r.counts || {}, q = r.quality || {};
       const words = [`${c.tasksLanded ?? '?'} of ${c.tasksPlanned ?? '?'} tasks landed`, c.conflicts ? `${c.conflicts} collision${c.conflicts === 1 ? '' : 's'}` : 'no collisions',
         (c.replaysHandler || 0) + (c.replaysLlm || 0) ? `${(c.replaysHandler || 0) + (c.replaysLlm || 0)} replayed` : null, c.bounces ? `${c.bounces} sent back` : null,
-        c.breaksOnMain ? `${c.breaksOnMain} broke main` : null, q.hiddenTotal ? `${q.hiddenPass}/${q.hiddenTotal} hidden tests` : null].filter(Boolean).join(', ');
+        c.breaksOnMain ? `${c.breaksOnMain} broke main` : null, q.hiddenTotal ? `${q.hiddenPass}/${q.hiddenTotal} hidden tests` : null,
+        q.trulyHiddenTotal ? `${q.trulyHiddenPass}/${q.trulyHiddenTotal} checks it could not look up` : null].filter(Boolean).join(', ');
       const status = r.status && r.status !== 'done' ? ` <span class="warn">${esc({ 'stopped-budget': 'stopped: budget', timeout: 'timed out', failed: 'failed' }[r.status] || r.status)}</span>` : '';
-      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(r.timings?.wallS)}, ${q.score ?? '–'}/100, ${usd(r.cost?.apiUsdStd)}</span>
+      const th = q.scoreTrulyHidden != null ? ` <span class="dim">(${Math.round(q.scoreTrulyHidden)}/100 on the checks it could not look up)</span>` : '';
+      return `<li><span class="rn">Run ${r.seed ?? ''}${status}</span><span class="rv">${mins(r.timings?.wallS)}, ${q.score ?? '–'}/100${th}, ${usd(r.cost?.apiUsdStd)}</span>
         <span class="rw2">${esc(words)}.</span>
         <span class="lk">${r.links?.replay ? `<a href="${esc(r.links.replay)}">Watch the replay</a>` : ''}${r.links?.app ? `<a href="${esc(r.links.app)}" target="_blank" rel="noopener">The app it built</a>` : ''}${r.links?.repo ? `<a href="${esc(r.links.repo)}">The code</a>` : ''}</span></li>`;
     }).join('');
@@ -225,18 +244,22 @@
   }
   function resultsView() {
     const gs = groups();
+    const truly = gs.some((g) => g.qTruly != null)
+      ? '<p class="small dim">For the TypeScript port, the number in brackets is the score on checks the agents could not have found in the original library (type cases and structure), so copying the original does not earn them.</p>' : '';
     const n = RUNS.filter((r) => r.scenario === st.scenario).length;
     return `<section class="sec" id="results"><h2>Results so far</h2>
-      ${n ? `<p class="cap">${n} real run${n === 1 ? '' : 's'} of “${esc(scenOf(st.scenario).title)}”, ${gs.length} setup${gs.length === 1 ? '' : 's'}. Tap a dot or a row for its runs, the replay and the app it built.</p>${compare(gs)}${scatter(gs)}${list(gs)}`
+      ${n ? `<p class="cap">${n} real run${n === 1 ? '' : 's'} of “${esc(scenOf(st.scenario).title)}”, ${gs.length} setup${gs.length === 1 ? '' : 's'}. Tap a dot or a row for its runs, the replay and the app it built.</p>${compare(gs)}${scatter(gs)}${list(gs)}${truly}`
         : `<p class="dim">No real runs of this job yet. The simulation picks the setups worth running; they appear here as they finish.</p>`}
     </section>`;
   }
   function funnelView() {
-    if (!STAGES.length) return '';
+    const list = STAGES.slice();
+    if (STAGE0 && !list.some((x) => x.stage === 0)) list.push({ stage: 0, setups: STAGE0.combos, runs: STAGE0.combos * STAGE0.seeds, kept: STAGE0.picks?.length, notes: 'Simulation only: every combination, no model calls.' });
+    if (!list.length) return '';
     const NAMES = { 0: 'Simulation', 1: 'Small real runs', 2: 'More agents, more repetitions', 3: 'At scale' };
     return `<section class="sec" id="funnel"><h2>How setups are picked</h2>
       <p class="cap">Every combination is simulated for free; only the best few are run for real, each stage with its own budget.</p>
-      <ol class="funnel">${STAGES.slice().sort((a, b) => a.stage - b.stage).map((s) => `<li><b>Stage ${s.stage}: ${esc(NAMES[s.stage] || '')}</b><span>${s.setups ?? '?'} setup${s.setups === 1 ? '' : 's'}${s.runs != null && s.runs !== s.setups ? `, ${s.runs} runs` : ''}${s.kept != null ? `; ${s.kept} kept` : ''}${s.usdReal ? `; ${usd(s.usdReal)} real spend` : ''}${s.quotaPctAccount ? `; ${s.quotaPctAccount}% of the weekly Claude quota (account-wide meter)` : ''}</span>${s.notes ? `<span class="dim">${esc(s.notes)}</span>` : ''}</li>`).join('')}</ol></section>`;
+      <ol class="funnel">${list.sort((a, b) => a.stage - b.stage).map((s) => `<li><b>Stage ${s.stage}: ${esc(NAMES[s.stage] || '')}</b><span>${s.setups ?? '?'} setup${s.setups === 1 ? '' : 's'}${s.runs != null && s.runs !== s.setups ? `, ${s.runs} runs` : ''}${s.kept != null ? `; ${s.kept} kept` : ''}${s.usdReal ? `; ${usd(s.usdReal)} real spend` : ''}${s.quotaPctAccount ? `; ${s.quotaPctAccount}% of the weekly Claude quota (account-wide meter)` : ''}</span>${s.notes ? `<span class="dim">${esc(s.notes)}</span>` : ''}</li>`).join('')}</ol></section>`;
   }
 
   // ---- render, events ----------------------------------------------------------------------------
@@ -246,7 +269,7 @@
     root.innerHTML = `${MOCK || RUNS.some((r) => r.mock) ? '<div class="mock"><b>Sample data.</b> These results are invented to show the page; real runs replace them.</div>' : ''}
       <h1>Variants lab</h1>
       <p class="lede">Is one strong agent better than many? How many, checked by whom, landing how? We predict every setup with a simulation, run the best ones on real jobs, and score what they built with tests the agents never saw.</p>
-      ${tryView()}${resultsView()}${funnelView()}`;
+      ${tryView()}${picksView()}${resultsView()}${funnelView()}`;
   }
   function setUrl() {
     const u = new URL(location.href); u.searchParams.set('s', st.scenario); u.searchParams.set('v', JSON.stringify(st.v)); history.replaceState(null, '', u);
@@ -254,6 +277,8 @@
   root.addEventListener('click', async (e) => {
     const o = e.target.closest('[data-k]');
     if (o) { st.v[o.dataset.k] = JSON.parse(o.dataset.val); setUrl(); render(); return; }
+    const pk = e.target.closest('[data-pick]');
+    if (pk) { Object.assign(st.v, JSON.parse(pk.dataset.pick)); setUrl(); render(); document.getElementById('try')?.scrollIntoView({ block: 'start' }); return; }
     const sc = e.target.closest('[data-scen]');
     if (sc) { st.scenario = sc.dataset.scen; st.open = null; setUrl(); render(); return; }
     const op = e.target.closest('[data-open]');
