@@ -105,9 +105,15 @@ if (has('--dry')) process.exit(0);
 if (!startMeter) appendFileSync(STAGES, JSON.stringify({ stage, event: 'start', at: Date.now(), meter: now, label: 'account-wide cc-usage meter' }) + '\n');
 
 // ---- project + starter ------------------------------------------------------------------------
-const existing = await api('GET', `/api/p/eyal/${name}`).catch(() => null);
-if (existing && !existing.error) throw new Error(`${slug} exists: a run with this variant/seed was already made (use another --seed)`);
-const created = await api('POST', `/api/p/eyal/${name}/create`, { description: `Variants lab run: ${scenario.title || scenarioId}, ${baseline || key}` });
+// --collect --ask-at <ms> --status <s>: rebuild the line of a run that already happened (its line was
+// lost) from the project as it is: no creation, no request, no watching; the scorer runs again.
+const COLLECT = has('--collect');
+let created = null;
+if (!COLLECT) {
+  const existing = await api('GET', `/api/p/eyal/${name}`).catch(() => null);
+  if (existing && !existing.error) throw new Error(`${slug} exists: a run with this variant/seed was already made (use another --seed)`);
+  created = await api('POST', `/api/p/eyal/${name}/create`, { description: `Variants lab run: ${scenario.title || scenarioId}, ${baseline || key}` });
+}
 const work = mkdtempSync(join(tmpdir(), 'qblab-'));
 const starter = join(work, 'starter');
 const g = (cwd, ...a) => execFileSync('git', ['-c', 'init.defaultBranch=main', '-c', 'commit.gpgsign=false', ...a], { cwd, encoding: 'utf8' }).trim();
@@ -116,8 +122,10 @@ const built = JSON.parse(execFileSync('node', ['--experimental-strip-types', '--
 const scenarioCommit = built.scenarioCommit;
 if (g(starter, 'rev-parse', 'HEAD') !== scenarioCommit) throw new Error('starter sha does not match scenario.mjs');
 Object.assign(scenario, { promptVersion: built.promptVersion, scenarioVersion: built.scenarioVersion, check: built.check });
-const tok = created.token.split('?')[0];
-g(starter, '-c', `http.extraHeader=Authorization: Basic ${Buffer.from(`x:${tok}`).toString('base64')}`, 'push', '-q', created.info.remote, 'HEAD:main');
+if (created) {
+  const tok = created.token.split('?')[0];
+  g(starter, '-c', `http.extraHeader=Authorization: Basic ${Buffer.from(`x:${tok}`).toString('base64')}`, 'push', '-q', created.info.remote, 'HEAD:main');
+}
 log('project', { project: slug, scenarioCommit });
 
 // ---- the variant as landing flags ----------------------------------------------------------
@@ -128,6 +136,7 @@ const flags = {
   claims: !!variant.claims, dedupe: !!variant.dedupe, llmReplay: variant.policy === 'intent',
   coderModel: variant.coderModel, reviewerModel: variant.reviewerModel, ...(variant.planner !== 'none' ? { plannerModel: variant.planner } : {}),
 };
+if (!COLLECT) {
 // Right after a deploy an old Worker version can answer and drop flags it does not know (smoke run
 // 2026-10-08: landing/unlisted never set). Set them until the project reads them back.
 for (let i = 0; ; i++) {
@@ -137,6 +146,7 @@ for (let i = 0; ; i++) {
   if (back.landing && back.unlisted && lf.llmReplay === flags.llmReplay) break;
   if (i >= 5) throw new Error('flags did not stick: ' + JSON.stringify({ landing: back.landing, unlisted: back.unlisted }));
   await sleep(10_000);
+}
 }
 
 // ---- the request ----------------------------------------------------------------------------
@@ -157,8 +167,9 @@ const routerText = [
   variant.dedupe ? 'Before starting agents, check that no two tasks do the same thing; merge duplicates into one task.' : '',
   policyText, `The project's checks: ${check}. Do not merge anything yourself.`,
 ].filter(Boolean).join('\n');
-const askAt = Date.now();
-if (variant.planner === 'none') {
+const askAt = COLLECT ? Number(opt('--ask-at')) : Date.now();
+if (COLLECT) { /* the request was made at askAt */ }
+else if (variant.planner === 'none') {
   // opus-alone: one strong agent gets the whole job, no planner, no reviewer.
   await api('POST', `/api/p/eyal/${name}/agents`, { task: `${prompt}\n\nYou are the only agent on this project: do the whole job yourself, in small commits, keep the project's checks green (${check}), push, then run: forq status pushed "<what you did>".` });
 } else {
@@ -168,9 +179,9 @@ log('asked', { project: slug, askAt, chars: routerText.length });
 
 // ---- watch until it settles -------------------------------------------------------------------
 const ACTIVE = ['working', 'pushed', 'reviewing', 'queued', 'testing', 'replaying'];
-let status = 'done', lastChangeAt = Date.now(), lastSig = '', view = null;
+let status = COLLECT ? opt('--status', 'done') : 'done', lastChangeAt = Date.now(), lastSig = '', view = null;
 const deadline = askAt + timeoutMin * 60_000;
-for (;;) {
+while (!COLLECT) {
   await sleep(20_000);
   view = await api('GET', `/api/p/eyal/${name}/landing`).catch((e) => { log('poll_failed', { err: String(e) }); return view; });
   const p = await api('GET', `/api/p/eyal/${name}`).catch(() => null);
@@ -217,20 +228,17 @@ const priceOf = (model, t) => {
   const std = ((t.in || 0) * ri + (t.out || 0) * ro + (t.cr || t.cacheR || 0) * rc + (t.cw1h || 0) * rw + (t.cw || 0) * ri * 1.25) / 1e6;
   return { k, std, high: k === 'haiku' ? std * 5 : std };
 };
-async function telemetry(needle, fromMs, event) {
+export async function telemetry(needle, fromMs, event) {
+  // One request, no 'offset': the API answers an offset with an error (that read as 'no lines' for
+  // runs 12b-14, 2026-10-08). The needle + event filter keep the result well under the limit.
   const acc = '887d7234a6b8d65ad355a4f6684cab67';
   const tok = readFileSync(join(homedir(), '.config/forq-cf/api-token'), 'utf8').trim();
-  const out = [];
-  for (let offset = 0; offset < 4000; offset += 500) {
-    const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${acc}/workers/observability/telemetry/query`, { method: 'POST', signal: AbortSignal.timeout(60_000),
-      headers: { authorization: `Bearer ${tok}`, 'content-type': 'application/json' },
-      // A field filter on the log's event name: lines are stored parsed, so a quoted-text needle never matches.
-      body: JSON.stringify({ queryId: 'adhoc', timeframe: { from: fromMs, to: Date.now() }, view: 'events', limit: 500, offset, parameters: { needle: { value: needle, isRegex: false }, ...(event ? { filters: [{ key: 'event', operation: 'eq', type: 'string', value: event }] } : {}) } }) }).then((x) => x.json()).catch(() => null);
-    const ev = r?.result?.events?.events || [];
-    out.push(...ev.map((e) => e.source).filter((x) => x && typeof x === 'object'));
-    if (ev.length < 500) break;
-  }
-  return out;
+  const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${acc}/workers/observability/telemetry/query`, { method: 'POST', signal: AbortSignal.timeout(60_000),
+    headers: { authorization: `Bearer ${tok}`, 'content-type': 'application/json' },
+    // A field filter on the log's event name: lines are stored parsed, so a quoted-text needle never matches.
+    body: JSON.stringify({ queryId: 'adhoc', timeframe: { from: fromMs, to: Date.now() }, view: 'events', limit: 2000, parameters: { needle: { value: needle, isRegex: false }, ...(event ? { filters: [{ key: 'event', operation: 'eq', type: 'string', value: event }] } : {}) } }) }).then((x) => x.json()).catch((e) => ({ error: String(e) }));
+  if (!r?.success) log('telemetry_failed', { needle, event, err: JSON.stringify(r?.errors || r?.error || r).slice(0, 300) });
+  return (r?.result?.events?.events || []).map((e) => e.source).filter((x) => x && typeof x === 'object');
 }
 const roleOf = (id) => (id.endsWith('--router') ? 'planner' : /--review\d*$/.test(id) ? 'reviewers' : 'coders');
 const byRole = { planner: null, coders: null, reviewers: null, merge: null, judge: null };
