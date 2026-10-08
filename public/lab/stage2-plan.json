@@ -181,7 +181,7 @@
  "part2": {
   "approved": "manager s1007-1655, 2026-10-08",
   "scenario": "club",
-  "job": "~60 one-Opus-agent minutes, dependency depth ~3: foundations (storage, members/login, courts/slots) in the starter or pinned in the brief, the rest wide ('wide job, shallow chain': the honest best case for a swarm, said so when published)",
+  "job": "AS IS (Eyal, 2026-10-08): qb5 reference 14.7 one-Opus-minutes (subagent), not the 60-min target; foundations in the starter. Framing: a 15-minute job on ready foundations",
   "when": "NOW (Eyal via manager, 2026-10-08): after qb5 builds and validates the reference; qb4 sends predictions + GO",
   "order": [
    "swarm r1",
@@ -231,26 +231,26 @@
     "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
     "predicted": {
      "landed": 17,
-     "wallS": 1946,
-     "apiUsdStd": 5.31,
-     "quality": 90.6,
+     "wallS": 1024,
+     "apiUsdStd": 2.46,
+     "quality": 90.4,
      "simVersion": "lab-0.9"
     },
     "range": {
      "wallS": [
-      1291,
-      3200
+      744,
+      1476
      ],
      "apiUsdStd": [
-      4.13,
-      6.62
+      1.66,
+      3.06
      ],
      "quality": [
-      88.5,
-      92.8
+      86.4,
+      92.2
      ]
     },
-    "predictionBasis": "PRELIMINARY: club size = the 60-min target; refreshed from qb5's timed reference before GO"
+    "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)"
    },
    {
     "order": 2,
@@ -273,26 +273,26 @@
     "variantKey": "opus-alone",
     "predicted": {
      "landed": 49,
-     "wallS": 3879,
-     "apiUsdStd": 32.93,
+     "wallS": 613,
+     "apiUsdStd": 5.17,
      "quality": 88.8,
      "simVersion": "lab-0.9"
     },
     "range": {
      "wallS": [
-      2704,
-      4993
+      429,
+      788
      ],
      "apiUsdStd": [
-      22.94,
-      42.4
+      3.6,
+      6.65
      ],
      "quality": [
       79.8,
       94.4
      ]
     },
-    "predictionBasis": "PRELIMINARY: club size = the 60-min target; refreshed from qb5's timed reference before GO"
+    "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)"
    },
    {
     "order": 3,
@@ -315,26 +315,26 @@
     "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
     "predicted": {
      "landed": 17,
-     "wallS": 1946,
-     "apiUsdStd": 5.31,
-     "quality": 90.6,
+     "wallS": 1024,
+     "apiUsdStd": 2.46,
+     "quality": 90.4,
      "simVersion": "lab-0.9"
     },
     "range": {
      "wallS": [
-      1291,
-      3200
+      744,
+      1476
      ],
      "apiUsdStd": [
-      4.13,
-      6.62
+      1.66,
+      3.06
      ],
      "quality": [
-      88.5,
-      92.8
+      86.4,
+      92.2
      ]
     },
-    "predictionBasis": "PRELIMINARY: club size = the 60-min target; refreshed from qb5's timed reference before GO"
+    "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)"
    },
    {
     "order": 4,
@@ -357,29 +357,35 @@
     "variantKey": "opus-alone",
     "predicted": {
      "landed": 49,
-     "wallS": 3879,
-     "apiUsdStd": 32.93,
+     "wallS": 613,
+     "apiUsdStd": 5.17,
      "quality": 88.8,
      "simVersion": "lab-0.9"
     },
     "range": {
      "wallS": [
-      2704,
-      4993
+      429,
+      788
      ],
      "apiUsdStd": [
-      22.94,
-      42.4
+      3.6,
+      6.65
      ],
      "quality": [
       79.8,
       94.4
      ]
     },
-    "predictionBasis": "PRELIMINARY: club size = the 60-min target; refreshed from qb5's timed reference before GO",
+    "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)",
     "conditional": "run ONLY on qb4's call: if opus-alone r1 lands within ~15% of the swarm's time or quality, and the meter allows"
    }
   ],
-  "status": "WAITING for qb5's validated reference build; no GO yet"
+  "status": "GO (qb4, after Eyal chose: run club as is)",
+  "scenarioCommit": "7828aef",
+  "decision": {
+   "by": "Eyal (the manager session was gone)",
+   "chose": "run club as is",
+   "why": "the sim (lab-0.9) predicts the swarm loses at this size (0.6x) and still narrowly at 4x wider (0.82x): the limit is landing one change per ~60-100 s, not job size"
+  }
  }
 }
