@@ -1,0 +1,273 @@
+{
+ "path": "/p/eyal/cafe-crew",
+ "title": "Agents at work · eyal/cafe-crew · qodebase",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "5 agents are changing cafe-crew right now."
+  },
+  {
+   "id": "h2",
+   "kind": "heading",
+   "text": "The line"
+  },
+  {
+   "id": "h3",
+   "kind": "heading",
+   "text": "Where they work"
+  },
+  {
+   "id": "h4",
+   "kind": "heading",
+   "text": "What just happened"
+  },
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase home",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "Explore",
+   "href": "/explore"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox (6)",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "Yours",
+   "href": "/mine"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "Build",
+   "href": "/build"
+  },
+  {
+   "id": "l6",
+   "kind": "link",
+   "text": "See all costs",
+   "href": "/costs"
+  },
+  {
+   "id": "l7",
+   "kind": "link",
+   "text": "Accounteyal: your name, API key, sign out",
+   "href": "/settings"
+  },
+  {
+   "id": "l8",
+   "kind": "link",
+   "text": "Import from GitHubBring a public repo in and change it with agents",
+   "href": "/import"
+  },
+  {
+   "id": "l9",
+   "kind": "link",
+   "text": "Command lineqb: qodebase from a terminal or an agent",
+   "href": "/cli"
+  },
+  {
+   "id": "l10",
+   "kind": "link",
+   "text": "AboutWhat qodebase is",
+   "href": "/about"
+  },
+  {
+   "id": "l11",
+   "kind": "link",
+   "text": "FeedbackSomething missing or broken? Tell us",
+   "href": "/feedback"
+  },
+  {
+   "id": "l12",
+   "kind": "link",
+   "text": "eyal / cafe-crew",
+   "href": "/p/eyal/cafe-crew"
+  },
+  {
+   "id": "l13",
+   "kind": "link",
+   "text": "Agents at work",
+   "href": "/p/eyal/cafe-crew/work"
+  },
+  {
+   "id": "l14",
+   "kind": "link",
+   "text": "5 (Changes)",
+   "href": "/p/eyal/cafe-crew/changes"
+  },
+  {
+   "id": "l15",
+   "kind": "link",
+   "text": "App",
+   "href": "/p/eyal/cafe-crew/app"
+  },
+  {
+   "id": "l16",
+   "kind": "link",
+   "text": "Code",
+   "href": "/p/eyal/cafe-crew/code/"
+  },
+  {
+   "id": "l17",
+   "kind": "link",
+   "text": "More",
+   "href": "/p/eyal/cafe-crew/more"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Your costs"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "Menu"
+  },
+  {
+   "id": "b3",
+   "kind": "button",
+   "text": "agents"
+  },
+  {
+   "id": "b4",
+   "kind": "button",
+   "text": "copy"
+  },
+  {
+   "id": "b5",
+   "kind": "button",
+   "text": "the line"
+  },
+  {
+   "id": "b6",
+   "kind": "button",
+   "text": "the main code"
+  },
+  {
+   "id": "b7",
+   "kind": "button",
+   "text": "the line"
+  },
+  {
+   "id": "b8",
+   "kind": "button",
+   "text": "replayed"
+  },
+  {
+   "id": "b9",
+   "kind": "button",
+   "text": "The line"
+  },
+  {
+   "id": "b10",
+   "kind": "button",
+   "text": "the main code"
+  },
+  {
+   "id": "b11",
+   "kind": "button",
+   "text": "replaying"
+  },
+  {
+   "id": "b12",
+   "kind": "button",
+   "text": "collided"
+  },
+  {
+   "id": "b13",
+   "kind": "button",
+   "text": "replayed"
+  },
+  {
+   "id": "b14",
+   "kind": "button",
+   "text": "top-level files (1 landed today)"
+  },
+  {
+   "id": "b15",
+   "kind": "button",
+   "text": "Agent 13: Waiting for review, Add a footer with the café's address to "
+  },
+  {
+   "id": "b16",
+   "kind": "button",
+   "text": "Agent 9: Waiting for review, Add a dark theme to the Corner Café site "
+  },
+  {
+   "id": "b17",
+   "kind": "button",
+   "text": "src (3 landed today)"
+  },
+  {
+   "id": "b18",
+   "kind": "button",
+   "text": "Agent 6: Waiting for review, Add a new tagline mentioning books to the"
+  },
+  {
+   "id": "b19",
+   "kind": "button",
+   "text": "Agent 8: Waiting for review, Rename the café to 'Corner Café & Books' "
+  },
+  {
+   "id": "b20",
+   "kind": "button",
+   "text": "src/data (2 landed today)"
+  },
+  {
+   "id": "b21",
+   "kind": "button",
+   "text": "Agent 66: Waiting for review, Add two teas to the menu of the Corner C"
+  },
+  {
+   "id": "b22",
+   "kind": "button",
+   "text": "Agent 8: Landed, Show a 'vegan' badge on vegan menu items in the Corne"
+  },
+  {
+   "id": "b23",
+   "kind": "button",
+   "text": "src/lib (1 landed today)"
+  },
+  {
+   "id": "b24",
+   "kind": "button",
+   "text": "Agent 7: Landed, Change price formatting in the Corner Café site so wh"
+  },
+  {
+   "id": "b25",
+   "kind": "button",
+   "text": "src/pages (5 landed today)"
+  },
+  {
+   "id": "b26",
+   "kind": "button",
+   "text": "Agent 8: Landed, Show today's specials on the home page of the Corner "
+  },
+  {
+   "id": "b27",
+   "kind": "button",
+   "text": "Agent 5: Landed, Add an events page to the Corner Café site. Create sr"
+  },
+  {
+   "id": "b28",
+   "kind": "button",
+   "text": "Send"
+  },
+  {
+   "id": "f1",
+   "kind": "field",
+   "text": "Ask for a change"
+  }
+ ]
+}

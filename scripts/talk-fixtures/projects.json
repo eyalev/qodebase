@@ -166,5 +166,11 @@
   "name": "calculator",
   "owner": "forq",
   "description": "A phone-first calculator: big keys, brackets, live result"
+ },
+ {
+  "slug": "eyal.cafe-crew",
+  "name": "cafe-crew",
+  "owner": "eyal",
+  "description": "A café website built by a crew of agents"
  }
 ]
