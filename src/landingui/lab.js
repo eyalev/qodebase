@@ -15,7 +15,7 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const log = (event, extra) => { try { console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'lab', event, ...extra })); } catch {} };
   const mins = (s) => (s == null ? '–' : s < 90 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
-  const usd = (x) => (x == null ? '–' : x < 0.1 ? `$${x.toFixed(3)}` : `$${x.toFixed(2)}`);
+  const usd = (x) => (x == null ? '–' : x === 0 ? '$0' : x < 0.1 ? `$${x.toFixed(3)}` : `$${x.toFixed(2)}`);
   const sc100 = (x) => (x == null ? '–' : Math.round(x));
   const med = (a) => { const b = a.filter((x) => x != null).sort((x, y) => x - y); return b.length ? (b.length % 2 ? b[b.length >> 1] : (b[b.length / 2 - 1] + b[b.length / 2]) / 2) : null; };
 
