@@ -17,7 +17,7 @@
 import { qualityScore } from './score.js';
 export { qualityScore }; // qb5's one quality formula (public/lab/score.js)
 
-export const SIM_VERSION = 'lab-0.5';
+export const SIM_VERSION = 'lab-0.6';
 
 // Knob names and values = the Landing flags and runs.jsonl `variant` (docs/lab/runs-schema.md).
 export const KNOBS = {
@@ -57,7 +57,7 @@ export function variantKey(variant, baseline = variant?.baseline ?? null) {
 export const SCENARIOS = {
   'cafe-family': { label: 'Make the cafe family-friendly', tasks: 7, depth: 2, pShared: 0.6, sharedFiles: 4, vague: 0.8, dupRisk: 0.05, difficulty: 1, hidden: 7 }, // dupRisk 0.3 -> 0.05: 0 duplicates in 11 tasks (stage 1, qb5)
   'port-ts': { label: 'Port a library to TypeScript', tasks: 21, depth: 3, pShared: 0.1, sharedFiles: 3, vague: 0.2, dupRisk: 0.05, difficulty: 1.3, hidden: 158 },
-  bakery: { label: 'Build a small bakery website with online orders', tasks: 25, depth: 3, pShared: 0.5, sharedFiles: 5, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 26, size: 4.4 }, // qb5 682084f; size: one Opus subagent built the reference in ~13 min (~31 s per task vs cafe's ~7)
+  bakery: { label: 'Build a small bakery website with online orders', tasks: 25, depth: 3, pShared: 0.5, sharedFiles: 5, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 26, size: 10.2 }, // qb5 682084f; size fitted so one agent alone takes ~795 s (qb5's reference: 392 + 403 s, one Opus agent) with this file's alone formula (30 s + 3 s x tasks x size); was 4.4 (my arithmetic, qb5 caught it)
   rename: { label: 'Rename X across the codebase + a dependent change', tasks: 20, depth: 3, pShared: 0.4, sharedFiles: 2, vague: 0.1, difficulty: 0.7, hidden: 10 }, // qb4 guess (backup scenario)
 };
 
