@@ -91,7 +91,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 - **Up to ~13-minute jobs, one Opus agent wins on speed and quality.** The crew comes within 4 quality points on the bakery job at ~57% lower cost, and 11 points lower on the port.
 - Haiku as the planner under-plans: quality 35 and 54 on the café.
 - GitHub-style (pull requests merged one at a time) timed out after an hour with 3 of 6 tasks landed.
-- Next: a wide, ~60-minute job (a club website), to find where a crew wins on speed.
+- Next: a club website, a 15-minute job on ready foundations. The simulator (fitted to these runs within ~5% on time and cost) predicts one Opus agent ~10 min vs the crew ~17 min: here a crew is limited by how fast changes land (one per ~60–100 s measured on the bakery), not by how many agents work. Runs pending.
 
 Quality is a 0–100 score from hidden tests, build checks and an AI judge ([`docs/lab/scoring.md`](docs/lab/scoring.md)). Costs are API-equivalent (the runs used a Claude subscription); the café crew's cost is an upper bound and not shown. Every run: [`public/lab/runs.jsonl`](public/lab/runs.jsonl); plan: [`docs/lab/`](docs/lab/).
 

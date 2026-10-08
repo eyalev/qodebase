@@ -58,8 +58,10 @@ We also measured which team shape works best (qodebase.app/lab, every run in
 (café 58 s, quality 85; TypeScript port 228 s, 92; bakery median 509 s, 96), while an Opus
 planner with a crew of Haiku agents comes within 4 quality points on the bakery job at ~57%
 lower API-equivalent cost (11 points lower on the port). Haiku planners under-plan (quality
-35-54), and a GitHub-style flow (pull requests merged one at a time) timed out. A wide,
-~60-minute job comes next, to find where a crew wins on speed.
+35-54), and a GitHub-style flow (pull requests merged one at a time) timed out. Next: a club website,
+a 15-minute job on ready foundations, where the simulator (fitted within ~5% on these runs)
+predicts one Opus agent ~10 min vs the crew ~17 min: a crew is limited by how fast changes
+land (one per ~60-100 s on the bakery), not by how many agents work.
 
 And we studied a very busy open-source repo, OpenClaw (30 days of public data,
 `docs/openclaw/FINDINGS.md`): with no merge queue, their flow is the cheapest and fastest at
