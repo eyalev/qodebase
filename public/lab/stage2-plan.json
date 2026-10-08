@@ -1,0 +1,186 @@
+{
+ "stage": 2,
+ "part": 1,
+ "approved": "manager s1007-1655, 2026-10-08: bakery x2 more repetitions each (3 runs per setup with stage 1 runs 15/16)",
+ "order": "swarm, opus, swarm, opus; after stage-1 run 14b finishes",
+ "guards": {
+  "stopAtWeeklyMeterPct": 52,
+  "stopAtApiUsdStd": 60,
+  "note": "hard stop if the weekly meter reaches 52% (account-wide)"
+ },
+ "runs": [
+  {
+   "order": 1,
+   "scenario": "bakery",
+   "repetition": 2,
+   "why": "swarm repetition 2 of 3",
+   "baseline": null,
+   "variant": {
+    "planner": "opus",
+    "coders": 12,
+    "coderModel": "haiku",
+    "reviewers": 3,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "intent",
+    "claims": false,
+    "dedupe": true,
+    "trainMax": 4
+   },
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "predicted": {
+    "landed": 7,
+    "wallS": 1148,
+    "apiUsdStd": 2.81,
+    "quality": 89.3,
+    "simVersion": "lab-0.8"
+   },
+   "range": {
+    "wallS": [
+     730,
+     1491
+    ],
+    "apiUsdStd": [
+     2.16,
+     3.1
+    ],
+    "quality": [
+     82.1,
+     95
+    ]
+   }
+  },
+  {
+   "order": 2,
+   "scenario": "bakery",
+   "repetition": 2,
+   "why": "opus-alone repetition 2 of 3",
+   "baseline": "opus-alone",
+   "variant": {
+    "planner": "none",
+    "coders": 1,
+    "coderModel": "opus",
+    "reviewers": 0,
+    "reviewerModel": "opus",
+    "reviewStyle": "read",
+    "policy": "ffa",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 1
+   },
+   "variantKey": "opus-alone",
+   "predicted": {
+    "landed": 21,
+    "wallS": 744,
+    "apiUsdStd": 4.8,
+    "quality": 92,
+    "simVersion": "lab-0.8"
+   },
+   "range": {
+    "wallS": [
+     431,
+     2279
+    ],
+    "apiUsdStd": [
+     2.77,
+     14.78
+    ],
+    "quality": [
+     87.5,
+     96.4
+    ]
+   }
+  },
+  {
+   "order": 3,
+   "scenario": "bakery",
+   "repetition": 3,
+   "why": "swarm repetition 3 of 3",
+   "baseline": null,
+   "variant": {
+    "planner": "opus",
+    "coders": 12,
+    "coderModel": "haiku",
+    "reviewers": 3,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "intent",
+    "claims": false,
+    "dedupe": true,
+    "trainMax": 4
+   },
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "predicted": {
+    "landed": 7,
+    "wallS": 1148,
+    "apiUsdStd": 2.81,
+    "quality": 89.3,
+    "simVersion": "lab-0.8"
+   },
+   "range": {
+    "wallS": [
+     730,
+     1491
+    ],
+    "apiUsdStd": [
+     2.16,
+     3.1
+    ],
+    "quality": [
+     82.1,
+     95
+    ]
+   }
+  },
+  {
+   "order": 4,
+   "scenario": "bakery",
+   "repetition": 3,
+   "why": "opus-alone repetition 3 of 3",
+   "baseline": "opus-alone",
+   "variant": {
+    "planner": "none",
+    "coders": 1,
+    "coderModel": "opus",
+    "reviewers": 0,
+    "reviewerModel": "opus",
+    "reviewStyle": "read",
+    "policy": "ffa",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 1
+   },
+   "variantKey": "opus-alone",
+   "predicted": {
+    "landed": 21,
+    "wallS": 744,
+    "apiUsdStd": 4.8,
+    "quality": 92,
+    "simVersion": "lab-0.8"
+   },
+   "range": {
+    "wallS": [
+     431,
+     2279
+    ],
+    "apiUsdStd": [
+     2.77,
+     14.78
+    ],
+    "quality": [
+     87.5,
+     96.4
+    ]
+   }
+  }
+ ],
+ "totals": {
+  "toComeApiUsdStd": 15.22,
+  "how": "predicted, lab-0.8 medians"
+ },
+ "part2": {
+  "when": "after the weekly reset (2026-10-12 13:00 UTC)",
+  "what": "a bigger job where the sim says the swarm wins on time",
+  "sizeAsked": "45-60 one-Opus-agent minutes (qb5 designs it)"
+ }
+}

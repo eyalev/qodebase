@@ -66,3 +66,6 @@ Contest: deadline Oct 14; eligibility (US/Canada residents only) still unresolve
 - [x] CHECKPOINT after stage-1 run 3: recalibrated (lab-0.4): actual/predicted went from 0.43x wall, 0.13x cost, 0.67x quality to 1.07x / 1.29x / 1.13x on runs 1-3. Manager re-planned stage 1 (orders 11-16: cafe balance + github, port-ts opus-alone / 6 haiku / 12 haiku + 3 reviewers / github), predicted $30.87
 - [x] sim/lab/calibrate.mjs -> public/lab/calibration.json (predicted at run time / now / real)
 - [ ] Recalibrate after orders 11-16 (first port-ts runs, first reviewed run, first Sonnet coders via github)
+- [x] Stage 1 done except 14b: bakery is where parallel first pays (same time, <half the cost, ~6 points lower quality; one run each). Sim lab-0.8: 0.92x time, 0.84x cost, 1.09x quality on the 7 fitted runs
+- [ ] Stage 2 part 1 (approved): public/lab/stage2-plan.json, bakery swarm/opus x2 more each (order swarm, opus, swarm, opus) after 14b; meter stop 52%; recalibrate + 3-run comparison after
+- [ ] Stage 2 part 2 after the weekly reset (Oct 12 13:00 UTC): qb5 designs a 45-60 one-Opus-agent-minute job (sim: swarm ~2x faster there, ~half the cost)
