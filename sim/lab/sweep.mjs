@@ -50,13 +50,15 @@ const sweepS = (performance.now() - t0) / 1000;
 
 const picks = pickStage1(rows, baselines, scen, { n: Number(args.picks || 6), ...(args.budget ? { budgetUsd: Number(args.budget) } : {}), ...(args['baseline-reps'] ? { baselineRepetitions: Number(args['baseline-reps']) } : {}) });
 
-// Per knob: the average effect of each value, all else averaged (what matters, in plain numbers).
+// Per knob: the median over every combo with that value (all else varied), per scenario
+// averaged over scenarios. Medians: a few slow corners must not set the picture (qb7).
+const med = (xs) => { const a = [...xs].sort((x, y) => x - y); return a[Math.floor(a.length / 2)]; };
 const marginals = {};
 for (const k of Object.keys(KNOBS)) {
   marginals[k] = KNOBS[k].values.map((x) => {
     const sel = rows.filter((r) => r.v[k] === x);
-    const avg = (f) => +(sel.reduce((s, r) => s + r.per.reduce((a, p) => a + f(p), 0) / r.per.length, 0) / sel.length).toFixed(2);
-    return { value: x, n: sel.length, wallS: Math.round(avg((p) => p.wallS)), usd: avg((p) => p.usd), quality: avg((p) => p.q) };
+    const m = (f) => scen.reduce((s, _, i) => s + med(sel.map((r) => f(r.per[i]))), 0) / scen.length;
+    return { value: x, n: sel.length, wallS: Math.round(m((p) => p.wallS)), usd: +m((p) => p.usd).toFixed(2), quality: +m((p) => p.q).toFixed(1) };
   });
 }
 const out = {
@@ -64,6 +66,8 @@ const out = {
   scenarios: scen.map(({ id, label, source, ...p }) => ({ id, label, source, profile: p })),
   baselines: baselines.map(({ key, v, per }) => ({ key, variant: v, per })),
   front: picks.front, picks: picks.picks, stage1: picks.stage1, rules: picks.rules, marginals,
+  picksAre: 'the simulation\'s current favourites, NOT the run list: the runs being done are public/lab/stage1-plan.json (approved by the manager, source of truth)',
+  picksChanged: 'They changed after the approved list was made because the sim now uses the real scenario profiles from qb5 (task count, shared files, how vague the prompt is), and those variants are close enough that small profile changes reorder them, which is what stage 1 measures.',
   note: 'Stage-0 predictions from public/lab/predict.js (no model calls). Every assumed number is in its CAL; real runs (public/lab/runs.jsonl) recalibrate it. Not a measurement.',
 };
 const json = JSON.stringify(out, null, 1);

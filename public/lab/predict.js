@@ -17,7 +17,7 @@
 import { qualityScore } from './score.js';
 export { qualityScore }; // qb5's one quality formula (public/lab/score.js)
 
-export const SIM_VERSION = 'lab-0.2';
+export const SIM_VERSION = 'lab-0.3';
 
 // Knob names and values = the Landing flags and runs.jsonl `variant` (docs/lab/runs-schema.md).
 export const KNOBS = {
@@ -208,7 +208,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
         // Given back: waiting for a prerequisite is not a failed attempt (swarm: no cap was ever hit at 40).
         n.givenBack++; wastedS += d; x.st = 'todo'; x.notBefore = t + C.backoffS; x.tries--; x.givenBack = (x.givenBack || 0) + 1;
         if (v.claims && x.shared && holder.get(x.shared) === x.id) holder.delete(x.shared);
-        if (x.givenBack >= C.maxGiveBacks) { x.st = 'dropped'; checkDone(); }
+        if (x.givenBack >= C.maxGiveBacks) { x.st = 'dropped'; release(x); checkDone(); }
         push(C.backoffS + 1, pump); pump(); return;
       }
       if (!wasFix) x.defect = rnd() < C.pDefect[model] * sc.difficulty;
@@ -286,7 +286,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
   }
   function bounce(x) {
     n.bounces++; x.st = 'todo'; x.notBefore = 0; wastedS += C.workMedS * C.redoFactor;
-    if (x.tries >= C.maxTries) { x.st = 'dropped'; checkDone(); }
+    if (x.tries >= C.maxTries) { x.st = 'dropped'; release(x); checkDone(); }
     pump();
   }
   function land(x) {
@@ -298,11 +298,16 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
     }
     checkDone(); pump(); pumpMerge();
   }
+  // A task that stops holding work (dropped) gives its claim back: a dropped task kept its claim
+  // and every task needing that file waited forever (found by qb7's skewed marginals).
+  function release(x) { if (x.shared && holder.get(x.shared) === x.id) holder.delete(x.shared); }
   function checkDone() { if (done == null && work.every((y) => ['landed', 'dropped'].includes(y.st))) done = t; }
 
   push(planS + dedupeS, pump);
   let guard = 0;
   while (heap.length && done == null && guard++ < 200000) { const e = pop(); t = e.t; e.fn(); }
+  // Not finished (event guard or nothing left to run): unlanded tasks count as dropped.
+  if (done == null) for (const x of work) if (!['landed', 'dropped'].includes(x.st)) x.st = 'dropped';
   const wallS = done ?? t;
 
   // ---- quality: hidden tests spread over the true tasks; the floor fails if a task never landed ----

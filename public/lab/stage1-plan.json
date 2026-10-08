@@ -36,7 +36,7 @@
     "wallS": 455,
     "apiUsdStd": 1.09,
     "quality": 83.4,
-    "simVersion": "lab-0.2"
+    "simVersion": "lab-0.3"
    },
    "predictedCumulativeUsd": 1.09
   },
@@ -64,7 +64,7 @@
     "wallS": 401,
     "apiUsdStd": 1.34,
     "quality": 85,
-    "simVersion": "lab-0.2"
+    "simVersion": "lab-0.3"
    },
    "predictedCumulativeUsd": 2.43
   },
@@ -92,7 +92,7 @@
     "wallS": 1515,
     "apiUsdStd": 13.89,
     "quality": 88.1,
-    "simVersion": "lab-0.2"
+    "simVersion": "lab-0.3"
    },
    "predictedCumulativeUsd": 16.32
   },
@@ -120,7 +120,7 @@
     "wallS": 2920,
     "apiUsdStd": 21.32,
     "quality": 77.2,
-    "simVersion": "lab-0.2"
+    "simVersion": "lab-0.3"
    },
    "predictedCumulativeUsd": 37.64
   },
@@ -148,7 +148,7 @@
     "wallS": 683,
     "apiUsdStd": 2.08,
     "quality": 81.4,
-    "simVersion": "lab-0.2"
+    "simVersion": "lab-0.3"
    },
    "predictedCumulativeUsd": 39.72
   },
@@ -176,7 +176,7 @@
     "wallS": 651,
     "apiUsdStd": 3.28,
     "quality": 90.6,
-    "simVersion": "lab-0.2"
+    "simVersion": "lab-0.3"
    },
    "predictedCumulativeUsd": 43
   },
@@ -204,7 +204,7 @@
     "wallS": 455,
     "apiUsdStd": 1.09,
     "quality": 83.4,
-    "simVersion": "lab-0.2"
+    "simVersion": "lab-0.3"
    },
    "predictedCumulativeUsd": 44.09
   },
@@ -232,7 +232,7 @@
     "wallS": 401,
     "apiUsdStd": 1.34,
     "quality": 85,
-    "simVersion": "lab-0.2"
+    "simVersion": "lab-0.3"
    },
    "predictedCumulativeUsd": 45.43
   },
@@ -260,7 +260,7 @@
     "wallS": 683,
     "apiUsdStd": 2.08,
     "quality": 81.4,
-    "simVersion": "lab-0.2"
+    "simVersion": "lab-0.3"
    },
    "predictedCumulativeUsd": 47.51
   },
@@ -288,10 +288,10 @@
     "wallS": 651,
     "apiUsdStd": 3.28,
     "quality": 90.6,
-    "simVersion": "lab-0.2"
+    "simVersion": "lab-0.3"
    },
    "predictedCumulativeUsd": 50.79
   }
  ],
- "predictionsUpdated": "2026-10-08: lab-0.2 (qb5 scenario profiles); variants and order unchanged (approved list)"
+ "predictionsUpdated": "2026-10-08: lab-0.3 (claims fix; qb5 scenario profiles); variants and order unchanged (approved list)"
 }
