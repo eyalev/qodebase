@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-08T15:52:37.898Z",
+ "generated": "2026-10-08T15:53:41.984Z",
  "simVersion": "lab-0.9",
  "fit": {
   "runs": 12,
@@ -562,9 +562,7 @@
    "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
    "baseline": null,
    "scenario": "bakery",
-   "excluded": [
-    "wall (platform stall, length not recorded)"
-   ],
+   "excluded": [],
    "planner": "opus",
    "coderModel": "haiku",
    "pred": {
@@ -580,7 +578,7 @@
     "quality": 92.9,
     "simVersion": "lab-0.9"
    },
-   "wallS": null,
+   "wallS": 1070,
    "wallSRaw": 2090,
    "planS": 55.498,
    "usd": 1.889,
