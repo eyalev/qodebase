@@ -557,6 +557,12 @@ docs/contest/landing.md; owner tab qb6). UI: src/landingui/ (qb7), view "Agents 
 - After a deploy: `GET …/landing/restart` (admin) puts a project's Landing and MergeBox on the
   deployed code; the view's `code` and the merger's `version` say which code answers. Don't poll
   an object you want to go idle.
+- Restart arms the alarm before aborting (an alarm cut by the abort is never retried: a run's
+  queue stood still). Reviewer pool: a reviewer whose dispatch fails, or whose review is resent
+  after 4 min, rests 2 min so the next try goes to another box (one box that could not start,
+  'container connection temporarily unavailable', held a run for 17 min, 2026-10-08).
+- Stacked changes: base = the parent's pushed commit until the parent lands, then where the fork
+  meets main (hooks.onPushed).
 - Projects: eyal/corner-cafe (public demo + Watch a run), eyal/cafe-real (real Haiku agents),
   eyal/cafe-lab (private test bench).
 - Cost: cloudcost gap `qodebase-landing` (local cloudcost settings).
@@ -580,7 +586,11 @@ Owners: qb6 runner + flags + baselines, qb4 sim/predict.js/plan, qb5 scenarios +
   handlers, no replay, a conflict goes back to the agent to rebase; ffa also skips checks),
   trainMax, claims, dedupe, unlisted, landing.
 - Guards: the plan's (API-equivalent total, weekly-meter rise; checked before every run, also
-  against the run's prediction); per run the Landing budget guard (priced at the priciest role model).
+  against the run's prediction; `stopAtWeeklyMeterPct` = absolute meter stop, also polled during a
+  run); per run the Landing budget guard (lab ledger rows are per model, `project:model`).
+- After each run the runner commits runs.jsonl by explicit path: never `git checkout` it (a run line
+  was lost that way). `--collect` rebuilds a line from a finished project; `scripts/lab/recost.mjs`
+  re-prices per model when the box cost lines cover >= 90% of the ledger's output tokens.
 - Prices (checked 2026-10-08, platform.claude.com pricing): Haiku 5.5 $0.10/$0.50 (x5 above 100k-token
   prompts), Sonnet 5.5 $2/$10 (cache hit $0.10), Opus 5.5 $4/$20 (cache hit $0.20); no long-context tier
   for Sonnet/Opus 5.5. Claude Code's own cost estimate lags new models: don't use it.
