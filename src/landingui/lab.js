@@ -146,7 +146,8 @@
   }
   // What a score means, from qb5's scorer validation (docs/lab/scoring.md, 2026-10-08).
   const ANCHORS = { 'cafe-family': [25, 94], 'port-ts': [8, 92] };
-  const anchors = () => { const a = ANCHORS[st.scenario]; return a ? `For this job, the untouched starting code scores ${a[0]} and a complete hand-made solution ${a[1]}.` : ''; };
+  // The reference solutions' scores include the judge (7 and 6 of 10); without it both are 100.
+  const anchors = () => { const a = ANCHORS[st.scenario]; return a ? `For this job, the untouched starting code scores ${a[0]} and a reference solution ${a[1]} (it passes every hidden test; the judge's opinion keeps it below 100).` : ''; };
   // ---- the simulation's picks (qb4's public/lab/stage0.json) -----------------------------------
   const WHY = { fastest: 'Fastest', cheapest: 'Cheapest', 'best balance': 'Best balance of time, cost and quality', 'best stacking': 'Best with stacking' };
   function picksView() {
