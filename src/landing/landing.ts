@@ -64,7 +64,7 @@ type Meta = {
     /** Hard budget for this project's boxes + Claude tokens (conservative pricing); halted = boxes stopped. */
     budgetUsd?: number; halted?: boolean };
   demo: Demo | null;
-  reviews?: { queue: string[]; busy: Record<string, { change: string; at: number; sends: number }> };
+  reviews?: { queue: string[]; busy: Record<string, { change: string; at: number; sends: number; nudged?: number }>; coolUntil?: Record<string, number> };
   spent?: { usd: number; at: number; boxes: number; claude: number };
   watchLog?: { at: number; ip: string }[];   // Watch a run: starts in the last day (caps)
   watchStarting?: number;                    // a visitor's run is being set up (blocks a second one)
@@ -184,7 +184,11 @@ export class Landing extends DurableObject<Env> {
   /** A verdict. 'auto' = the scripted demo review; approved demo changes queue at once. */
   async reviewed(id: string, verdict: 'approved' | 'changes' | 'auto', notes = '', thenQueue = false) {
     const m0 = await this.#m();
-    if (m0.reviews) { let freed = false; for (const [rv, b] of Object.entries(m0.reviews.busy)) if (b.change === id) { delete m0.reviews.busy[rv]; freed = true; } if (freed) { await this.#saveMeta(); await this.#arm(500); } }
+    if (m0.reviews) {
+      let freed = false;
+      for (const [rv, b] of Object.entries(m0.reviews.busy)) if (b.change === id) { delete m0.reviews.busy[rv]; (m0.reviews.coolUntil ||= {})[rv] = Date.now() + 25_000; freed = true; }
+      if (freed) { await this.#saveMeta(); await this.#arm(26_000); }
+    }
     const c = await this.#get(id); if (!c) return;
     c.review = { verdict, notes: notes.slice(0, 2000) };
     if (verdict === 'changes') { c.state = 'pushed'; this.#ev(c, 'changes-suggested', notes.split('\n')[0]); }
@@ -255,20 +259,36 @@ export class Landing extends DurableObject<Env> {
     const m = await this.#m();
     if (!m.reviews || (m.flags.reviewers || 1) < 2) return;
     const r = m.reviews, now = Date.now();
+    const H = { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' };
+    // A reviewer that went idle without a verdict (seen: it stopped right after its preview
+    // screenshot, dry run 2026-10-08) gets one nudge in the same conversation first.
     for (const [rv, b] of Object.entries(r.busy)) {
-      if (now - b.at < 8 * 60_000) continue;
+      if (b.nudged || now - b.at < 75_000) continue;
+      const st = await fetch(`${this.env.API_BASE}/api/agents/${rv}/state`, { headers: H }).then((x) => x.json() as Promise<{ awake?: boolean; cc?: string }>).catch(() => null);
+      if (!st?.awake || /busy|thinking|working|running|tool|compact/i.test(st.cc || '')) continue;
+      b.nudged = now;
+      await this.#saveMeta();
+      const ok = await fetch(`${this.env.API_BASE}/api/agents/${rv}/send`, { method: 'POST', headers: H,
+        body: JSON.stringify({ text: `You have not given your verdict on ${b.change} yet. Finish the review now: run  forq verdict ${b.change} approve "<one line>"  or  forq verdict ${b.change} changes "<what to fix>".` }) }).then((x) => x.ok).catch(() => false);
+      log('landing', 'review_nudge', { slug: m.slug, change: b.change, reviewer: rv, cc: st.cc, ok });
+    }
+    for (const [rv, b] of Object.entries(r.busy)) {
+      // Haiku reviews take 20-40 s: no verdict in 4 min means the hand-off was lost (a cold box,
+      // or typed while the reviewer was still finishing its last turn, dry run 2026-10-08).
+      if (now - b.at < 4 * 60_000) continue;
       delete r.busy[rv];
-      if (b.sends < 2) { r.queue.unshift(b.change); log('landing', 'review_resend', { slug: m.slug, change: b.change, reviewer: rv }); }
+      if (b.sends < 3) { r.queue.unshift(b.change); (r as any).sends = { ...((r as any).sends || {}), [b.change]: b.sends + 1 }; log('landing', 'review_resend', { slug: m.slug, change: b.change, reviewer: rv, sends: b.sends }); }
       else { await this.reviewed(b.change, 'changes', 'The reviewer agent did not finish this review. Look at it yourself, or push again to retry.'); }
     }
-    const free = this.#reviewers(m).filter((rv) => !r.busy[rv]);
+    // A reviewer that just gave a verdict is still finishing its turn: 25 s before the next one.
+    const free = this.#reviewers(m).filter((rv) => !r.busy[rv] && (r.coolUntil?.[rv] || 0) <= now);
     const jobs: [string, string, number][] = [];
     while (free.length && r.queue.length) {
       const change = r.queue.shift()!;
       const prev = Object.values(r.busy).find((b) => b.change === change);
       if (prev) continue;
       const rv = free.shift()!;
-      const sends = 1;
+      const sends = ((r as any).sends?.[change] as number) || 1;
       r.busy[rv] = { change, at: now, sends };
       jobs.push([rv, change, sends]);
     }
