@@ -162,19 +162,21 @@
   const WHYB = { 'opus-alone': 'Baseline: one Opus agent alone', github: 'Baseline: GitHub-style' };
   function planView() {
     if (!PLAN?.runs?.length) return '';
-    const done = (p) => RUNS.find((r) => r.stage === PLAN.stage && r.scenario === p.scenario && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);
+    const notCounted = (p) => RUNS.find((r) => r.excluded && r.stage === PLAN.stage && r.scenario === p.scenario && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);
+    const done = (p) => RUNS.find((r) => !r.excluded && r.stage === PLAN.stage && r.scenario === p.scenario && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);
     const total = PLAN.runs[PLAN.runs.length - 1]?.predictedCumulativeUsd;
     const n = PLAN.runs.filter(done).length;
     const g = PLAN.guards || {};
     const rows = PLAN.runs.map((p) => {
       const r = done(p), pr = p.predicted || {};
-      const real = r ? `<span class="act">Done: ${mins(r.timings?.wallS)}, ${sc100(r.quality?.score)}/100, ${usd(r.cost?.apiUsdStd)}${r.links?.replay ? ` <a href="${esc(r.links.replay)}">replay</a>` : ''}</span>` : `<span class="dim">${n && PLAN.runs.indexOf(p) === n ? 'Next' : 'Waiting'}</span>`;
+      const nc = !r && notCounted(p);
+      const real = nc ? `<span class="dim">Not counted: ${esc(nc.excluded)}</span>` : r ? `<span class="act">Done: ${mins(r.timings?.wallS)}, ${sc100(r.quality?.score)}/100, ${usd(r.cost?.apiUsdStd)}${r.links?.replay ? ` <a href="${esc(r.links.replay)}">replay</a>` : ''}</span>` : `<span class="dim">${n && PLAN.runs.indexOf(p) === n ? 'Next' : 'Waiting'}</span>`;
       return `<li class="${r ? 'done' : ''}"><span class="no">${p.order}</span><span class="pb"><b>${esc(WHYB[p.baseline] || WHY[p.why] || p.why)}${p.repetition > 1 ? ', second run' : ''}</b>
         <span>${esc(p.baseline ? BASELINES[p.baseline]?.about || '' : plain(p.variant))}</span>
         <span class="dim">Predicted ${mins(pr.wallS)}, ${pr.quality != null ? Math.round(pr.quality) : '–'}/100, ${usd(pr.apiUsdStd)}</span>${real}</span></li>`;
     }).join('');
     return `<section class="sec" id="plan"><h2>Stage 1: being run now</h2>
-      <p class="cap">${PLAN.runs.length} real runs of “${esc(scenOf(PLAN.scenario).title)}”, cheapest first, with both baselines early so a stop still leaves a comparison. Predicted total about ${usd(total)} at API prices.${g.stopAtApiUsdStd ? ` It stops itself at ${usd(g.stopAtApiUsdStd)} or if the weekly Claude meter rises ${g.stopAtWeeklyMeterRisePts} points.` : ''} ${n} of ${PLAN.runs.length} done.</p>
+      <p class="cap">${PLAN.runs.length} real runs of ${[...new Set(PLAN.runs.map((p) => p.scenario || PLAN.scenario))].map((id) => `“${esc(scenOf(id).title)}” (${PLAN.runs.filter((p) => (p.scenario || PLAN.scenario) === id).length})`).join(', ')}, in this order. Predicted total about ${usd(total)} at API prices.${g.stopAtApiUsdStd ? ` It stops itself at ${usd(g.stopAtApiUsdStd)} or if the weekly Claude meter rises ${g.stopAtWeeklyMeterRisePts} points.` : ''} ${n} of ${PLAN.runs.length} done.</p>
       <ol class="plan">${rows}</ol>${favouritesView()}</section>`;
   }
   // The simulation's picks that are not in the approved list (it was recalibrated after approval).
@@ -211,7 +213,7 @@
   // ---- 2. results -------------------------------------------------------------------------------
   function groups() {
     const by = new Map();
-    for (const r of RUNS.filter((x) => x.scenario === st.scenario && x.status !== 'failed')) {
+    for (const r of RUNS.filter((x) => x.scenario === st.scenario && x.status !== 'failed' && !x.excluded)) {
       const k = r.variantKey || vkey(r.variant || {}, r.baseline);
       if (!by.has(k)) by.set(k, { key: k, baseline: r.baseline, variant: r.variant, runs: [] });
       by.get(k).runs.push(r);
@@ -265,9 +267,10 @@
     const others = gs.filter((g) => g !== lead && g.baseline && g.wallS != null);
     const parts = [`<p><b>${gs.length > 1 ? 'Leading so far' : 'First result'}:</b> ${one(lead)} (${n(lead)}).</p>`];
     if (lead.baseline && bestMulti) parts.push(`<p>Best setup with several agents: ${one(bestMulti)} (${n(bestMulti)}).</p>`);
-    if (others.length) parts.push(`<p class="dim">Also: ${others.map((g) => `${esc(plain(g.variant, g.baseline))} ${mins(g.wallS)}, ${Math.round(g.quality)}/100, ${usd(g.usd)}`).join('; ')}.</p>`);
+    const to = (g) => (g.runs.every((r) => r.status === 'timeout') ? ' (timed out)' : '');
+    if (others.length) parts.push(`<p class="dim">Also: ${others.map((g) => `${esc(plain(g.variant, g.baseline))} ${mins(g.wallS)}${to(g)}, ${Math.round(g.quality)}/100, ${usd(g.usd)}`).join('; ')}.</p>`);
     // How far off the simulation was on these runs (it is recalibrated from them).
-    const rs = RUNS.filter((r) => r.scenario === st.scenario && r.predicted?.wallS && r.timings?.wallS && r.cost?.apiUsdStd);
+    const rs = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded && r.predicted?.wallS && r.timings?.wallS && r.cost?.apiUsdStd);
     const tR = med(rs.map((r) => r.predicted.wallS / r.timings.wallS)), cR = med(rs.map((r) => r.predicted.apiUsdStd / r.cost.apiUsdStd));
     if (rs.length && (tR > 1.5 || tR < 0.67 || cR > 1.5 || cR < 0.67)) parts.push(`<p class="small dim">On these runs the simulation was off: it expected about ${tR.toFixed(1)}× the time and ${cR.toFixed(1)}× the cost that the runs took. It is recalibrated from real runs before the next ones.</p>`);
     return `<div class="cmp">${parts.join('')}</div>`;
@@ -278,7 +281,7 @@
       const on = st.open === g.key;
       return `<li class="${on ? 'open' : ''}"><button type="button" class="rw" data-open="${esc(g.key)}" aria-expanded="${on}"><i class="k ${g.baseline ? 'bl' : 'vr'}"></i><span class="t">${esc(plain(g.variant, g.baseline))}</span>
         <span class="nums"><span>${mins(g.wallS)}</span><span>${g.quality == null ? '–' : Math.round(g.quality)}/100${g.qTruly != null ? ` <span class="dim">(${Math.round(g.qTruly)})</span>` : ''}</span><span>${usd(g.usd)}</span></span>
-        <span class="sub">${g.runs.length} run${g.runs.length === 1 ? '' : 's'}, stage ${g.stage}${g.pWallS != null ? `; predicted ${mins(g.pWallS)}, ${Math.round(g.pQuality)}/100` : ''}</span></button>${on ? detail(g) : ''}</li>`;
+        <span class="sub">${g.runs.length} run${g.runs.length === 1 ? '' : 's'}${g.runs.every((r) => r.status === 'timeout') ? ', timed out' : ''}, stage ${g.stage}${g.pWallS != null ? `; predicted ${mins(g.pWallS)}, ${Math.round(g.pQuality)}/100` : ''}</span></button>${on ? detail(g) : ''}</li>`;
     }).join('')}</ul>`;
   }
   function detail(g) {
@@ -301,9 +304,11 @@
     const gs = groups();
     const truly = gs.some((g) => g.qTruly != null)
       ? '<p class="small dim">For the TypeScript port, the number in brackets is the score on checks the agents could not have found in the original library (type cases and structure), so copying the original does not earn them.</p>' : '';
-    const n = RUNS.filter((r) => r.scenario === st.scenario).length;
+    const n = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded).length;
+    const ex = RUNS.filter((r) => r.scenario === st.scenario && r.excluded);
+    const exHtml = ex.length ? `<h3 class="fh">Not counted</h3><ul class="runs ex">${ex.map((r) => `<li><span class="rn">${esc(plain(r.variant || {}, r.baseline))}, run ${r.seed ?? ''}</span><span class="rw2">${esc(r.excluded)}</span>${r.links?.replay ? `<span class="lk"><a href="${esc(r.links.replay)}">Watch the replay</a></span>` : ''}</li>`).join('')}</ul>` : '';
     return `<section class="sec" id="results"><h2>Results so far</h2>
-      ${n ? `<p class="cap">${n} real run${n === 1 ? '' : 's'} of “${esc(scenOf(st.scenario).title)}”, ${gs.length} setup${gs.length === 1 ? '' : 's'}. Tap a dot or a row for its runs, the replay and the app it built.</p>${compare(gs)}<p class="small dim">${anchors()}</p>${scatter(gs)}${list(gs)}${truly}`
+      ${n ? `<p class="cap">${n} real run${n === 1 ? '' : 's'} of “${esc(scenOf(st.scenario).title)}”, ${gs.length} setup${gs.length === 1 ? '' : 's'}. Tap a dot or a row for its runs, the replay and the app it built.</p>${compare(gs)}<p class="small dim">${anchors()}</p>${scatter(gs)}${list(gs)}${truly}${exHtml}`
         : `<p class="dim">No real runs of this job yet. The simulation picks the setups worth running; they appear here as they finish.</p>`}
     </section>`;
   }

@@ -127,3 +127,4 @@
 #lab .plan .act{color:var(--fg)}
 #lab .plan .act a{color:var(--acc)}
 #lab .fh{font-size:15px;font-weight:600;margin:20px 0 4px}
+#lab .runs.ex li{opacity:.7}

@@ -1,5 +1,40 @@
 [
  {
+  "id": "bakery",
+  "title": "Build a bakery website from scratch",
+  "prompt": "Build a website for a small bakery: menu, opening hours, online orders.",
+  "promptVersion": "1",
+  "scenarioVersion": "1",
+  "starter": "scripts/lab/scenarios/bakery/starter (a product brief in README.md, a stub server, one smoke test)",
+  "hiddenTotal": 26,
+  "about": "A whole small product from an empty repo: menu with allergens and stock, ordering into 15-minute pickup slots, cancelling, Portuguese pages, an owner's admin area with CSV export, and a JSON API. Sized so one agent needs a long time and many agents can split it.",
+  "profile": {
+   "expectedTasks": [
+    18,
+    35
+   ],
+   "dependencyDepth": 3,
+   "dependencyChain": "storage + seed data -> API routes and validation -> pages and admin pages -> tests",
+   "sharedFileShare": 0.5,
+   "sharedFiles": [
+    "server.js",
+    "README.md",
+    "package.json",
+    "style.css",
+    "the page layout / translations"
+   ],
+   "vagueness": "medium",
+   "duplicateIntentRisk": 0.15,
+   "note": "first guesses by qb5; greenfield: all work starts from one stub file, so early tasks collide on server.js unless the plan sets up structure first"
+  },
+  "anchors": {
+   "starter": 8.3,
+   "reference": 96,
+   "referenceJudge": 8,
+   "note": "one Opus agent built the reference in ~13 min"
+  }
+ },
+ {
   "id": "cafe-family",
   "title": "Make the café family-friendly",
   "prompt": "Make the cafe site family-friendly.",
@@ -24,6 +59,12 @@
    "vagueness": "high",
    "duplicateIntentRisk": 0.3,
    "note": "first guesses by qb5; replace with measured values after stage 1"
+  },
+  "anchors": {
+   "starter": 25,
+   "reference": 94,
+   "referenceJudge": 7,
+   "note": "reference without the judge: 100"
   }
  },
  {
@@ -51,6 +92,12 @@
    "vagueness": "low",
    "duplicateIntentRisk": 0.05,
    "note": "first guesses by qb5; replace with measured values after stage 1"
+  },
+  "anchors": {
+   "starter": 8.3,
+   "reference": 92,
+   "referenceJudge": 6,
+   "note": "reference without the judge: 100; a Sonnet agent ported it"
   }
  }
 ]
