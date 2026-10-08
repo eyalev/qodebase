@@ -119,9 +119,10 @@ class Cut:
     def card(self, title, sub='', secs=3.0, say=None):
         im = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(im)
         d.text((160, 380), title, font=F_TITLE, fill=FG)
-        for i, line in enumerate(wrap(d, sub, F_SUB, 1550)):
-            d.text((160, 520 + i * 58), line, font=F_SUB, fill=DIM)
-        text = f'{title}. {sub}'.strip(' .') + '.'
+        lines = [l for part in sub.split('\n') for l in wrap(d, part, F_SUB, 1550)]
+        for i, line in enumerate(lines):
+            d.text((160, 520 + i * 62), line, font=F_SUB, fill=DIM)
+        text = f'{title}. ' + sub.replace('\n', ' ')
         if say: secs = max(secs, self.speak(say) + 0.6)
         self.cues.append((self.now(), self.now() + secs, say or text))
         self.emit(im, round(secs * FPS))
@@ -146,16 +147,28 @@ class Cut:
             self.cues.append((self.now(), self.now() + secs, text))
             self.emit(im, round(secs * FPS))
 
+    # The phone, zoomed: a window 760 px wide (40% of the frame) onto the 390 px screen, full
+    # height, showing ~510 of its 844 CSS px and panning to what the narration is about
+    # (manager review of draft 2: at full-screen size the UI text could not be read).
+    PX, PY, PW, PH = 120, 40, 760, H - 80
+    SRC_W = 780                                   # screencast width (390 CSS px at DPR 2)
+    WIN = round(PH * SRC_W / PW)                  # window height in screencast px
+
+    def _crop(self, shot, y0):
+        """The window of the screenshot that starts y0 screencast px from the top."""
+        y0 = max(0, min(shot.height - self.WIN, round(y0)))
+        return shot.crop((0, y0, self.SRC_W, y0 + self.WIN)).resize((self.PW, self.PH), Image.LANCZOS)
+
     def _phone_canvas(self, shot, caption, badge=None):
-        ph_h = H - 80; ph_w = round(ph_h * 390 / 844); px, py = 150, 40
+        px, py, ph_w, ph_h = self.PX, self.PY, self.PW, self.PH
         canvas = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(canvas)
-        d.rounded_rectangle((px - 3, py - 3, px + ph_w + 2, py + ph_h + 2), radius=39, outline=(70, 76, 84), width=2)
+        d.rounded_rectangle((px - 3, py - 3, px + ph_w + 2, py + ph_h + 2), radius=33, outline=(70, 76, 84), width=2)
         if shot is not None:
-            mask = Image.new('L', (ph_w, ph_h), 0); ImageDraw.Draw(mask).rounded_rectangle((0, 0, ph_w - 1, ph_h - 1), radius=36, fill=255)
-            canvas.paste(shot.resize((ph_w, ph_h), Image.LANCZOS), (px, py), mask)
-        tx = px + ph_w + 110; tw = W - tx - 120
+            mask = Image.new('L', (ph_w, ph_h), 0); ImageDraw.Draw(mask).rounded_rectangle((0, 0, ph_w - 1, ph_h - 1), radius=30, fill=255)
+            canvas.paste(shot, (px, py), mask)
+        tx = px + ph_w + 90; tw = W - tx - 100
         if self.chap: d.text((tx, 220), self.chap, font=F_CHAP, fill=ACC)
-        for i, line in enumerate(wrap(d, caption or '', F_CAP, tw)[:5]):
+        for i, line in enumerate(wrap(d, caption or '', F_CAP, tw)[:6]):
             d.text((tx, 290 + i * 62), line, font=F_CAP, fill=FG)
         if badge:
             bw = d.textlength(badge, font=F_BADGE) + 36
@@ -177,6 +190,8 @@ class Cut:
                 stop = next((x['t'] for x in ev[i + 1:] if x['type'] == 'speed'), t1)
                 e['speed'] = max(float(e['speed']), (stop - e['t']) / max_wait)
         fi, ei, caption, speed, label, since, cache, open_cue, canvas = 0, 0, '', 1.0, '', None, {}, None, None
+        pan_y, pan_to = 0.0, 0.0       # window top in screencast px; eased toward pan_to (~0.5 s)
+        ease = 1 - 2.718 ** (-1 / (FPS * 0.15))
         def close_cue():
             if open_cue: self.cues.append((open_cue[0], self.now(), open_cue[1]))
         while t <= t1:
@@ -190,14 +205,18 @@ class Cut:
                     self.speak(caption)
                 elif e['type'] == 'speed':
                     speed, label = float(e['speed']), e.get('label', ''); since = e['t'] if speed > 1 else None
+                elif e['type'] == 'focus':
+                    # centre the window on y (CSS px), a third from its top so what follows shows too
+                    pan_to = float(e['y']) * 2 - self.WIN / 3
                 elif e['type'] == 'tap' and caption:
                     # A tap starts the next step: the sentence about the last one leaves with it.
                     close_cue(); caption, open_cue = '', None
             while fi + 1 < len(frames) and frames[fi + 1]['t'] <= t: fi += 1
             f = frames[fi]['file']
             if f not in cache: cache.clear(); cache[f] = Image.open(os.path.join(src, f)).convert('RGB')
+            pan_y += (pan_to - pan_y) * ease
             badge = f'x{round(speed)}, {label}, real time {int((t - since) // 60)}:{int((t - since) % 60):02d}' if since else None
-            canvas = self._phone_canvas(cache[f], caption, badge)[0]
+            canvas = self._phone_canvas(self._crop(cache[f], pan_y), caption, badge)[0]
             self.emit(canvas)
             t += speed / FPS
         if canvas is not None and self.now() < self.vo_end + 0.5:
@@ -262,7 +281,8 @@ def script(c):
     c.chapter('What we measured')
     c.slide(EVID.format('hono-ordering'), ['Before building anything, we measured. We replayed the last 346 pull requests of Hono, a popular web framework, as if 100 were written at once.',
                                            'Half the pull requests needed another one to land first. Git conflicts: none. The problem is order.'], after=1.5)
-    c.slide(EVID.format('bun-swarm'), ["Bun's 64 AI agents worked mostly on one shared branch, with files split between them."], after=1)
+    c.slide(EVID.format('swarm-migration'), ["We also simulated moving a folder of Hono's real code with many agents. When they grab tasks in any order, they waste 90 agent-hours.",
+                                             'Knowing the order finishes in less than half the time, and with stacking and land by intent nothing is wasted and main never breaks.'], after=2)
     c.slide(EVID.format('realcode-500'), ['On a real codebase with 500 scripted agents, landing by intent got 3.5x as many changes in per hour as review-then-merge.'], after=1.5)
     c.slide(EVID.format('cloudflare-500'), ['On Cloudflare, 500 agents made 7,033 git pushes to Artifacts, 280 milliseconds each. Our one merge queue was the limit, so it gets split by area.'], after=1.5)
 
@@ -275,10 +295,10 @@ def script(c):
     # 4. The product on the phone (~2:30 when filmed in full)
     c.chapter('On the phone')
     c.phone('live', max_wait=60)   # eyal/corner-cafe, qb6's scripted run, x8 time-lapse
-    c.todo('AI replay demo (qb6): a collision a fixed rule cannot handle, replayed by an AI on the newest code, with the difference shown. Measured: 7.8 s, ~1 cent.',
-           ['When a fixed rule is not enough, an AI replays the intent on the newest code. Here it took eight seconds and about a cent.'], secs=14)
-    c.todo('Real agents on eyal/cafe-real: router request, 2 agents with claims, reviewed, one tested train, landed in 5.5 min; records as git notes.',
-           ['The same line works with real AI agents. Two Claude Haiku 5.5 agents took one request, were reviewed, and landed together in five and a half minutes.'], secs=18)
+    c.phone('real')                # eyal/cafe-real: two real Claude Haiku 5.5 agents, landed in one train
+    c.slide('notes', ['Anyone can read it later, people and agents alike: git log shows why each change is there.'], after=2)
+    c.todo('AI replay demo (qb6, not filmable yet): "New tagline with books" collides with the rename on src/site.js, replayed by an AI; its drill-down shows how, model, time, cost.',
+           ['When a fixed rule is not enough, an AI replays the intent on the newest code. Here it took eight seconds and about a cent.'], secs=12)
     c.todo('Talk: tap the mic on the project page, say "add a gift card page", the router opens an agent card.',
            ['And you steer it by talking to it, from your phone.'], secs=12)
     c.slide('different', ['So this is not GitHub with agents on top. The unit is an intent with its record, and landing is automatic: a conflict is replayed, not bounced.'], after=2)
@@ -292,7 +312,8 @@ def script(c):
     # 6. Close
     c.chapter('')
     c.slide('measured', ['We measured it, then built it.'], after=1)
-    c.card('qodebase.app', 'Open source: github.com/eyalev/qodebase', 4.0, say='qodebase dot app. Open source.')
+    c.card('qodebase.app', 'Watch a live run: qodebase.app/p/eyal/corner-cafe\nThe simulations: qodebase.app/sim\nOpen source: github.com/eyalev/qodebase', 6.0,
+           say='qodebase dot app. Watch a live run of the café, try the simulations, and read the code. It is all open source.')
 
 if __name__ == '__main__':
     if sys.argv[1:2] == ['--vo-seconds']:   # used by rec-*.mjs: hold each filmed step as long as its narration

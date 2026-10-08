@@ -1,8 +1,7 @@
 // Recording rig for forq's workflow videos (spec: ../docs/video-guide.md).
 //
 // A phone-size headless Chromium (390×844, DPR 2, touch) signed in as a forq
-// user. Frames come from CDP Page.startScreencast (crisp PNG/JPEG at 2×, only
-// when the screen changes) with timestamps; every narration step is an event
+// user. Frames come from CDP screenshots at 2x in a loop (~14 fps), with timestamps; every narration step is an event
 // in events.json. compose.py turns frames + events into the final mp4.
 //
 //   const r = await rig({ name: 'fork-and-agents', email: 'owner@example.com' });
@@ -72,13 +71,20 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
   const frames = [];
   const events = [];
   let n = 0;
-  cdp.on('Page.screencastFrame', async (f) => {
-    const file = `${String(n++).padStart(6, '0')}.jpg`;
-    writeFileSync(join(dir, file), Buffer.from(f.data, 'base64'));
-    frames.push({ t: f.metadata.timestamp, file });
-    cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }).catch(() => {});
-  });
-  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: width * 2, maxHeight: height * 2, everyNthFrame: 1 });
+  // Frames: CDP screenshots in a loop with an explicit 2x clip (~14 fps). Headless Chromium's
+  // Page.startScreencast only ever gave 1x frames (390x844), too soft once cut.py zooms the
+  // phone to 40% of the frame (2026-10-08). Timestamps are wall-clock, like the events.
+  let capturing = true;
+  const capture = (async () => {
+    while (capturing) {
+      try {
+        const r = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: 90, optimizeForSpeed: true, clip: { x: 0, y: 0, width, height, scale: 2 } });
+        const file = `${String(n++).padStart(6, '0')}.jpg`;
+        writeFileSync(join(dir, file), Buffer.from(r.data, 'base64'));
+        frames.push({ t: Date.now() / 1000, file });
+      } catch { await new Promise((res) => setTimeout(res, 50)); }   // mid-navigation: try again
+    }
+  })();
   const now = () => Date.now() / 1000;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const mark = (type, data = {}) => events.push({ t: now(), type, ...data });
@@ -121,6 +127,20 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
         frames.push({ t: now(), file });
       }
       await sleep(600);
+    },
+    /** Point the video's zoomed phone window at an element (or { y } in CSS px from the top
+     *  of the screen): cut.py pans there, eased. Viewport coordinates at this moment. */
+    async focus(target) {
+      let y;
+      if (target && typeof target === 'object' && 'y' in target) y = target.y;
+      else {
+        const loc = typeof target === 'string' ? page.locator(target).first() : target;
+        const box = await loc.boundingBox().catch(() => null);
+        if (!box) return false;
+        y = box.y + Math.min(box.height, 500) / 2;
+      }
+      mark('focus', { y });
+      return true;
     },
     /** A title card between sections (rendered by compose.py, ~2.5 s). */
     async chapter(title, sub = '') { mark('chapter', { title, sub }); await sleep(200); },
@@ -169,7 +189,7 @@ export async function rig({ name, email = 'owner@example.com', width = 390, heig
       if (card) mark('end', card);
       await sleep(300);
       clearInterval(keepAlive);
-      await cdp.send('Page.stopScreencast').catch(() => {});
+      capturing = false; await capture;
       frames.sort((a, b) => a.t - b.t);
       writeFileSync(join(dir, 'timeline.json'), JSON.stringify({ name, width, height, frames, events }, null, 1));
       await browser.close();

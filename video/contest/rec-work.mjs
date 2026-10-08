@@ -24,40 +24,144 @@ const top = (r) => r.page.evaluate(() => scrollTo({ top: 0 }));
 async function may(label, fn) {
   try { await fn(); } catch (e) { console.log(JSON.stringify({ event: 'shot_skipped', label, error: String(e.message).split('\n')[0] })); }
 }
+// Bring an element on screen (scroll the page, the screenshot only covers the viewport), then point the zoom at it.
+async function show(r, sel) {
+  await r.page.locator(sel).first().evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'smooth' })).catch(() => {});
+  await r.sleep(700);
+  await r.focus(sel);
+}
 const tapAny = (r, sel) => r.tap(r.page.locator(sel).first(), { after: 1500 });
 
 const CAFE = '/api/p/eyal/corner-cafe/landing';
+const BUSY_PROJECT = process.env.BUSY_PROJECT || 'eyal/cafe-busy';
 // Tap a change by its title on the "All changes" list (ids change with every run).
 async function openChange(r, title) {
   await go(r, '#/changes', 600); await top(r);
   await r.tap(r.page.locator('a', { hasText: title }).first(), { after: 1200 });
   await top(r); await r.sleep(500);
+  await r.focus({ y: 0 });   // title, progress, the "how it landed" box and the ask all fit the window
 }
 
+const CREW = '/api/p/eyal/cafe-crew/landing';
+const CREW_ASK = `Build these 12 café features at once, one agent each (start exactly 12 agents, spawn each with --files listing the files it changes): 1) Opening hours page (src/pages/hours.js, src/routes.js); 2) Contact page with the address (src/pages/contact.js, src/routes.js); 3) Events page (src/pages/events.js, src/routes.js); 4) add three cakes to the menu (src/data/menu.js); 5) add two teas to the menu (src/data/menu.js); 6) a 'vegan' badge on menu items (src/pages/menu.js, style.css); 7) a dark theme that follows the phone (style.css); 8) a footer with the address (index.html, style.css); 9) today's specials on the home page (src/pages/home.js); 10) show whole prices without cents, update the test (src/lib/format.js, test/site.test.js); 11) rename the café to Corner Café & Books (src/site.js); 12) a new tagline mentioning books (src/site.js). Tests: node --test. Don't merge: approved changes go to the merge queue by themselves.`;
+
 const SCENES = {
+  // 4. The crew: ONE request in Talk -> 12 real Claude Haiku 5.5 agents + 3 reviewers on eyal/cafe-crew
+  // (qb6, $5 budget stop). Real agents, real reviews, real collisions; time-lapse to landed.
+  async crew() {
+    const r = narrated(await rig({ name: 'contest-crew' }));
+    await r.open('/p/eyal/cafe-crew');
+    await r.focus({ y: 0 });
+    await r.say('Now real AI agents. One request, typed into Talk on the phone: twelve features for the café at once.');
+    await r.tap('#talk-fab', { after: 900 });
+    await r.page.locator('#talk-in').fill(CREW_ASK);
+    await r.focus('#talk-in');
+    await r.sleep(1200);
+    await r.tap('#talk-send', { after: 2500 });
+    const offered = await r.page.locator('#talk-offer .talk-chip.pri').first().waitFor({ timeout: 20000 }).then(() => true, () => false);
+    if (offered) {
+      await r.focus('#talk-offer');
+      await r.say('It asks once before it sends anything.');
+      await r.tap('#talk-offer .talk-chip.pri', { after: 3000 });
+    } else {
+      // Talk did not offer to send: the run must still start (qb6 is waiting on it); send it as the router composer would.
+      console.log(JSON.stringify({ event: 'talk_no_offer', text: (await r.page.locator('#talk-root').innerText().catch(() => '')).slice(0, 300) }));
+      await api('/api/p/eyal/cafe-crew/router', { method: 'POST', body: { text: CREW_ASK } });
+      await r.sleep(2000);
+    }
+    const t0 = Date.now();
+    console.log(JSON.stringify({ event: 'crew_sent', at: new Date().toISOString() }));
+    await r.focus({ y: 0 });
+    await r.say('The router agent splits it into twelve tasks and starts twelve Claude Haiku 5.5 agents, each on its own fork, each declaring the files it will touch.');
+    await r.open('/p/eyal/cafe-crew/work');
+    await r.focus({ y: 0 });
+    const SPEED = 24;
+    const timed = [
+      [0, 'Twelve agents write code at the same time. Three reviewer agents read every change.'],
+      [420, 'Approved changes join the line by themselves and land in tested trains.'],
+      [840, 'Two agents changed the same line of the same file. An AI replays the second one on the newest code.'],
+    ];
+    for (const [, text] of timed) voSeconds(text);
+    const where = ['text=Where they work', 'text=The line', 'text=The line'];
+    let stop = false;
+    const captions = (async () => { for (const [k, [at, text]] of timed.entries()) { while (!stop && Date.now() < t0 + at * 1000) await r.sleep(1000); if (stop) return; await show(r, where[k]); r.say(text); } })();
+    let finished = true;
+    try {
+      await r.waitFor(async () => { const d = await api(CREW); const ch = d.changes || []; return ch.length >= 12 && ch.every((c) => ['landed', 'bounced'].includes(c.state)) && ch.filter((c) => c.state === 'landed').length >= 10; },
+        { speed: SPEED, label: 'real agents', poll: 10000, timeout: 45 * 60_000 });
+    } catch (e) { finished = false; console.log(JSON.stringify({ event: 'crew_timeout', error: e.message })); }
+    stop = true; await captions;
+    const d = await api(CREW); const ch = d.changes || [];
+    const landed = ch.filter((c) => c.state === 'landed').length;
+    const mins = Math.round((Date.now() - t0) / 60000);
+    console.log(JSON.stringify({ event: 'crew_done', finished, landed, total: ch.length, mins, stats: d.stats }));
+    await top(r); await r.sleep(500); await r.focus({ y: 0 });
+    await r.say(`${landed} of ${ch.length} changes landed in ${mins} minutes, every one reviewed and tested.`);
+    const llm = ch.find((c) => c.landing?.how === 'replayed-llm');
+    if (llm) await may('llm', async () => { await openChange(r, llm.title.slice(0, 40)); await r.say('This one collided. The AI replayed what it was meant to do on the newest code, and the record shows exactly what changed and what it cost.'); });
+    const rev = ch.find((c) => c.review?.notes && c.state === 'landed');
+    if (rev) await may('review', async () => { await openChange(r, rev.title.slice(0, 40)); await r.say('And every record keeps the reviewer agent\'s notes, next to the code.'); });
+    await r.end(null);
+  },
+  // 0. Cold open on busy mode (qb6): 20 scripted agents, ~46 landings a minute. Never on
+  // corner-cafe: that is the judges' project (manager, 2026-10-08), busy mode is refused there.
+  async busy() {
+    const BUSY = `/api/p/${BUSY_PROJECT}/landing`;
+    await api(`${BUSY}/demo`, { method: 'POST', body: { action: 'reset' } });
+    await new Promise((res) => setTimeout(res, 4000));
+    await api(`${BUSY}/demo`, { method: 'POST', body: { action: 'start', mode: 'busy', agents: 20, speed: 2 } });
+    await new Promise((res) => setTimeout(res, 45_000));          // let it get busy before the camera rolls
+    const r = narrated(await rig({ name: 'contest-open' }));
+    await r.open(`/p/${BUSY_PROJECT}/work`);
+    await r.focus({ y: 0 });
+    const n = await r.page.evaluate(() => (/(\d+) agents? (?:are|is) changing/.exec(document.body.innerText) || [])[1]).catch(() => null);
+    await r.say(`${n || 'Twenty'} agents are changing one app at the same time. They're scripted, but every commit, collision and test is real.`);
+    await r.focus('text=Where they work');
+    await r.say('Their work waits in one line, is tested in trains, and joins the main code. No one has to step in.');
+    await r.end(null);
+    await api(`${BUSY}/demo`, { method: 'POST', body: { action: 'stop' } });
+  },
+  // 4. Real AI agents on eyal/cafe-real (qb6, Claude Haiku 5.5 verified): their two change records.
+  async real() {
+    const r = narrated(await rig({ name: 'contest-real' }));
+    await r.open('/p/eyal/cafe-real/work');
+    await r.focus({ y: 0 });
+    await r.say('The same line works with real AI agents. One request, two Claude Haiku 5.5 agents, each on its own fork.');
+    await may('oat', async () => { await openChange(r, 'Oat milk latte'); await r.say('Each change was reviewed, tested together with the other in one train, and landed, both right the first time.'); });
+    await may('gift', async () => { await openChange(r, 'Gift cards page'); await r.say('Its record, what it was asked, the review and the tests, is kept with the code as a git note.'); });
+    await r.end(null);
+  },
   // 4. The live scripted run on eyal/corner-cafe (qb6 demo mode): reset, start, time-lapse, then drill-downs.
   async live() {
-    await api(`${CAFE}/demo`, { method: 'POST', body: { action: 'reset' } });
-    await new Promise((res) => setTimeout(res, 4000));
     const r = narrated(await rig({ name: 'contest-live' }));
     await r.open('/p/eyal/corner-cafe/work');
-    await r.say('This is a real project on qodebase: a small café website. Four agents get fourteen tasks.');
-    await r.say("They're scripted for this video: real commits on real forks, through the real queue and tests, with no AI bills.");
-    await api(`${CAFE}/demo`, { method: 'POST', body: { action: 'start', agents: 4, speed: 2 } });
+    await r.focus({ y: 0 });
+    await r.say('This is a real project on qodebase: a small café website. Anyone can watch a run, no sign-in needed.');
+    // The judges' path: tap "Watch a run" (qb6, 5a32b6d). Fallback: start it through the admin API.
+    const watch = r.page.getByRole('button', { name: /watch a run/i }).first();
+    if (await watch.isVisible().catch(() => false)) { await r.focus(watch); await r.tap(watch, { after: 2500 }); }
+    else { console.log(JSON.stringify({ event: 'no_watch_button' })); await api(`${CAFE}/demo`, { method: 'POST', body: { action: 'start', agents: 6, speed: 2 } }); await r.sleep(2500); }
+    const st = await api(CAFE);
+    const agents = st.demo?.agents || st.run?.agents;
+    await r.focus({ y: 0 });
+    await r.say(`${agents ? `${agents} scripted agents` : 'Scripted agents'} get fourteen tasks: real commits on real forks, through the real queue and tests, with no AI bills.`);
     // Captions during the time-lapse, at source offsets that play ~10 s apart at x8.
-    const SPEED = 8, t0 = Date.now();
+    // A Watch-a-run run takes ~90 s real (qb6, 2x): x4, captions 32 s apart, so all three play while it runs.
+    const SPEED = 4, t0 = Date.now();
     const timed = [
       [0, 'Finished changes join the line and are tested together, in trains.'],
-      [85, 'Some collide on the same file. The queue replays them on the newest code instead of sending them back.'],
-      [170, 'One change breaks a test. Only that change bounces, and its agent fixes it.'],
+      [32, 'Some collide on the same file. The queue replays them on the newest code instead of sending them back.'],
+      [64, 'One change breaks a test. Only that change bounces, and its agent fixes it.'],
     ];
     for (const [, text] of timed) voSeconds(text);   // warm the narration cache now, not mid-run
-    const captions = (async () => { for (const [at, text] of timed) { const wait = t0 + at * 1000 - Date.now(); if (wait > 0) await r.sleep(wait); r.say(text); } })();
-    await r.waitFor(async () => ((await api(CAFE)).stats?.landedToday || 0) >= 14 && Date.now() - t0 > 200_000, { speed: SPEED, label: 'scripted run', poll: 4000, timeout: 12 * 60_000 });
+    // Where the zoomed window looks during each caption: the line, then the map, then the line.
+    const where = ['text=The line', 'text=Where they work', 'text=The line'];   // the map sits below the line
+    const captions = (async () => { for (const [k, [at, text]] of timed.entries()) { const wait = t0 + at * 1000 - Date.now(); if (wait > 0) await r.sleep(wait); await show(r, where[k]); r.say(text); } })();
+    await r.waitFor(async () => { const d = await api(CAFE); const ch = d.changes || []; return Date.now() - t0 > 75_000 && ch.length >= 14 && ch.every((c) => c.state === 'landed'); }, { speed: SPEED, label: 'scripted run', poll: 4000, timeout: 12 * 60_000 });
     await captions;
     const s = (await api(CAFE)).stats || {};
     console.log(JSON.stringify({ event: 'run_done', realS: Math.round((Date.now() - t0) / 1000), ...s }));
-    await top(r); await r.sleep(500);
+    await top(r); await r.sleep(500); await r.focus({ y: 0 });
     await r.say(`All fourteen landed in ${Math.round((Date.now() - t0) / 60000)} minutes. Typical time from ask to landed: ${s.medianAskToLandS} seconds.`);
     // Drill into one change of each kind, picked from this run's records (outcomes vary per run).
     const ch = (await api(CAFE)).changes || [];
@@ -83,8 +187,10 @@ const SCENES = {
   async open() {
     const r = narrated(await rig({ name: 'contest-open' }));
     await r.open(WORK);
-    await r.say('Ten agents are changing one app at the same time.');
-    await r.scroll('a[href="#/line"]', { offset: -140, after: 300 });
+    await r.focus({ y: 0 });
+    // Say the number the screen shows (draft 2 said "ten" over "6 agents are changing todo").
+    const n = await r.page.evaluate(() => (/(\d+) agents? (?:are|is) changing/.exec(document.body.innerText) || [])[1]).catch(() => null);
+    await r.say(n ? `${n} agents are changing one app at the same time.` : 'Many agents are changing one app at the same time.');
     await r.say('Their work waits in one line, is tested, and joins the main code. No one has to step in.');
     await r.end(null);
   },

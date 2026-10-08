@@ -25,6 +25,11 @@ wrong when many agents share one codebase, with no model calls:
   tests on every merge, the conflicts piled onto a few shared list files (routes,
   schema, package.json), and landing by intent got 3.5x as many changes in per hour as
   review-then-merge.
+- Simulating a real migration of Hono's code (moving `src/utils/` to `src/lib/`: 140 tasks
+  with a dependency chain, real git, type check and tests on every change), agents that
+  grab tasks in any order wasted 90 agent-hours; knowing the order finished in less than
+  half the time, and stacking with land by intent wasted nothing and never broke main
+  (10 agents, 3 seeds).
 - Run for real on Cloudflare, 500 agents (each a Durable Object with its own Artifacts
   fork) made 7,033 git pushes at 280 ms median; git held up, and our single merge queue
   was the limit.
@@ -42,6 +47,11 @@ qodebase is the platform built on those findings, used from a phone:
   sending the work back. What replay cannot do goes to the area's lead agent, then to you.
 - **Claims and stacking**: agents declare the files they will touch, so everyone sees who
   works where, and a change can build on one that has not landed yet.
+
+It works with real AI agents too: on eyal/cafe-real one request to the router started two
+Claude Haiku 5.5 agents with declared files; both changes were reviewed, tested together in
+one train and landed in 5.5 minutes, right the first time, their records attached as git
+notes (`git log --notes=qodebase`).
 
 So this is not GitHub with agents on top: the unit is an intent with its record, and
 landing is automatic. A person steers (by typing or talking to the project, from the
@@ -67,8 +77,18 @@ Everything runs on Cloudflare; there is no other server.
 fork. Signing in uses an emailed code; running agents needs your own Anthropic API key
 or Claude subscription token (Settings).
 
-**Watch the landing system:** https://qodebase.app/p/eyal/corner-cafe, tab Agents at work.
-[final: how a judge starts a scripted run, or a recorded run that replays]
+**Watch the landing system (no sign-in):** open https://qodebase.app/p/eyal/corner-cafe on a
+phone or desktop. On Agents at work, tap **Watch a run**: 6 scripted agents (no AI, labelled
+as such) work on a small café website, with real git commits on their own Artifacts forks.
+Their changes go through the real merge queue: shared-file collisions are replayed on the
+latest code, one change fails a test and is sent back, fixed and lands, two conflicting
+edits are redone by a scripted lead, and one change is stacked on another. A run takes
+about 4 minutes. If one is already running you watch it; limits: 10 runs a day, 3 per
+visitor; when none can start, the page replays the last run. Tap any agent, change or file
+to see why; underlined words open a one-line explanation. `?mock=1` plays sample data.
+
+**Real agents:** https://qodebase.app/p/eyal/cafe-real, Agents at work: the records of the
+two Claude Haiku 5.5 agents (starting runs there is owner-only).
 
 **Command line:** `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login`
 and `qb help`. Agents can read https://qodebase.app/llms.txt.
