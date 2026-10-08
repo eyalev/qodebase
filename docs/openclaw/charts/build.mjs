@@ -152,43 +152,63 @@ const C = [];
   });
 }
 
-// 6. triage: how often a text-only classifier's call matched what really happened
+// 6. triage, like for like: the 100 issues the triage agent also did (qb9: use on_agent_subset)
 {
-  const names = { haiku: 'Claude Haiku 5.5', jev: 'Jev', 'clef-flash': 'Clef-flash' };
-  const rows = Object.entries(triage.providers).map(([key, p]) => ({ key, label: names[key] || key, a: p.accuracy_vs_outcome, ms: p.ms_p50, p }))
-    .sort((a, b) => b.a.p - a.a.p);
-  const cs = triage.clawsweeper_vs_outcome, best = rows[0];
+  const sub = triage.on_agent_subset, perKind = sub.n / Object.keys(triage.outcome_mix).length;
+  const names = { 'haiku-agent': 'Haiku 5.5 agent (searches)', haiku: 'Haiku 5.5, text only', jev: 'Jev, text only', 'clef-flash': 'Clef-flash, text only' };
+  const short = { 'haiku-agent': 'Haiku agent', haiku: 'Haiku, text', jev: 'Jev, text', 'clef-flash': 'Clef-flash' };
+  const rows = ['haiku-agent', 'haiku', 'jev', 'clef-flash'].map((key) => {
+    const r = sub[key], dk = Math.round(r.recall.duplicate * perKind), [dlo, dhi] = wilson(dk, perKind);
+    return { key, label: names[key], short: short[key], acc: r.accuracy, dup: { k: dk, n: perKind, p: dk / perKind, lo: dlo, hi: dhi }, hi: key === 'haiku-agent' };
+  });
+  const agent = rows[0], textBest = Math.max(...rows.slice(1).map((r) => r.dup.p));
   const chance = 1 / Object.keys(triage.outcome_mix).length;
+  const pct = (v) => `${Math.round(100 * v)}%`;
   C.push({ name: 'openclaw-triage',
-    title: { L: [`Text-only triage got ${Math.round(100 * best.a.p)}% of ${triage.sample} OpenClaw issues right at`, 'best; duplicates were almost never found'],
-      P: [`Text-only triage got ${Math.round(100 * best.a.p)}%`, `of ${triage.sample} issues right at best;`, 'duplicates almost never found'] },
-    sub: { L: [`Call vs what really happened (${Object.keys(triage.outcome_mix).join(', ')}: 50 each); guessing gets ${Math.round(100 * chance)}%`],
-      P: ['Call vs what really happened,', `50 of each kind; guessing ${Math.round(100 * chance)}%`] },
-    source: `sim/openclaw/triage.mjs (qb9), ${triage.question_version}; bars = 95% intervals. ClawSweeper's calls also caused the outcome`,
-    dataSource: 'docs/openclaw/data/triage-score.json',
-    table: [['classifier', 'matched the outcome', '95% interval', 'duplicates found', 'median time', 'cost for 200'],
-      ...rows.map((r) => [r.label, `${Math.round(100 * r.a.p)}%`, `${Math.round(100 * r.a.lo)}-${Math.round(100 * r.a.hi)}%`, `${Math.round(100 * r.p.recall_per_outcome.duplicate.p)}%`, `${r.ms} ms`, r.p.cost_usd ? `$${r.p.cost_usd}` : r.p.cost_note]),
-      ['ClawSweeper (not independent)', `${Math.round(100 * cs.p)}%`, `${Math.round(100 * cs.lo)}-${Math.round(100 * cs.hi)}%`, '', '', '']],
+    title: { L: [`A triage agent that can search found ${pct(agent.dup.p)} of duplicates;`, `text-only triage found ${pct(textBest)} at most`],
+      P: ['A triage agent that', `can search found ${pct(agent.dup.p)}`, 'of duplicates; text-only', `${pct(textBest)} at most`] },
+    sub: { L: [`${sub.n} OpenClaw issues, ${perKind} of each kind. Overall it was right ${pct(agent.acc.p)} vs ${pct(rows[1].acc.p)}: not a clear difference`],
+      P: [`${sub.n} OpenClaw issues, ${perKind} of each`, `kind. Overall ${pct(agent.acc.p)} vs ${pct(rows[1].acc.p)}, not clear`] },
+    source: `sim/openclaw/triage.mjs (qb9), ${triage.question_version}; bars = 95% intervals; overall agent vs text-only Haiku, paired: p = 0.12`,
+    dataSource: 'docs/openclaw/data/triage-score.json: on_agent_subset (+ agent_detail)',
+    table: [['classifier', 'right overall', '95% interval', 'duplicates found', 'closes', 'fixes', 'decisions'],
+      ...rows.map((r) => { const rc = sub[r.key].recall; return [r.label, pct(r.acc.p), `${pct(r.acc.lo)}-${pct(r.acc.hi)}`, `${r.dup.k} of ${r.dup.n}`, pct(rc.close), pct(rc.fix), pct(rc.decision)]; }),
+      ['agent cost for 100', `$${triage.agent_detail.cost_usd_api_equiv} API-equivalent`, `${triage.agent_detail.turns_p50} turns (median)`, '', '', '', '']],
     body: (f, box) => {
-      const all = [...rows.map((r) => ({ label: r.label, a: r.a, note: `duplicates ${Math.round(100 * r.p.recall_per_outcome.duplicate.p)}%` })),
-        { label: 'ClawSweeper', a: cs, note: 'its calls caused the outcome', dim: true }];
-      const labelW = L(f) ? 420 : 0, tw = L(f) ? 640 : box.w - 170, rh = L(f) ? 108 : 150, top = box.y + (L(f) ? 10 : 40), th = 32;
-      const X = (p) => box.x + labelW + p * tw;
+      // two panels, one scale each (0-100%): right overall (guessing marked) and duplicates found
+      const panels = [{ title: 'Right overall', v: (r) => r.acc, mark: chance }, { title: 'Duplicates found', v: (r) => r.dup }];
       let out = '';
-      all.forEach((r, i) => {
-        const y = top + i * rh + (L(f) ? 0 : f.txt - 4), cy = y + th / 2;
-        out += L(f) ? text(box.x, cy + f.txt * 0.35, r.label, { size: f.txt - 4, c: r.dim ? 'dim' : 'fg', weight: r.dim ? 400 : 600 })
-          : text(box.x, y - 12, r.label, { size: f.txt - 8, c: r.dim ? 'dim' : 'fg', weight: r.dim ? 400 : 600 });
-        out += track(X(0), y, tw, th);
-        // guessing (one in four), marked on every row
-        out += `<line x1="${X(chance)}" x2="${X(chance)}" y1="${y - 6}" y2="${y + th + 6}" stroke="var(--dim)" stroke-width="2" stroke-dasharray="4 4"/>`;
-        out += rect(X(r.a.lo), y + 4, (r.a.hi - r.a.lo) * tw, th - 8, r.dim ? 'line' : 'bar', { title: `${r.label}: ${Math.round(100 * r.a.p)}% (${Math.round(100 * r.a.lo)}-${Math.round(100 * r.a.hi)}%)` });
-        out += `<circle cx="${X(r.a.p)}" cy="${cy}" r="13" fill="var(--${r.dim ? 'dim' : 'acc'})" stroke="var(--bg)" stroke-width="3"/>`;
-        out += text(X(0) + tw + 18, cy + (f.val - 6) * 0.35, `${Math.round(100 * r.a.p)}%`, { size: f.val - 6, weight: 600, c: r.dim ? 'dim' : 'fg' });
-        out += L(f) ? text(X(0) + tw + 140, cy + (f.txt - 10) * 0.35, r.note, { size: f.txt - 10, c: 'dim' })
-          : text(X(0), y + th + f.txt - 4, r.note, { size: f.txt - 12, c: 'dim' });
-      });
-      out += text(X(chance) - 8, top + all.length * rh + (L(f) ? -40 : f.txt - 10), 'dashed line: guessing', { size: f.src, c: 'dim', anchor: L(f) ? null : null });
+      const dot = (x, cy, hiRow) => `<circle cx="${x}" cy="${cy}" r="12" fill="var(--${hiRow ? 'acc' : 'dim'})" stroke="var(--bg)" stroke-width="3"/>`;
+      if (L(f)) {
+        const labelW = 510, gap = 60, pw = (box.w - labelW - gap) / 2, tw = pw - 120, rh = 86, th = 30;
+        panels.forEach((pn, k) => {
+          const px = box.x + labelW + k * (pw + gap);
+          out += text(px, box.y + 26, pn.title, { size: f.txt - 8, weight: 600 });
+          rows.forEach((r, i) => {
+            const y = box.y + 56 + i * rh, cy = y + th / 2, a = pn.v(r), X = (p) => px + p * tw;
+            if (k === 0) out += text(box.x, cy + (f.txt - 8) * 0.35, r.label, { size: f.txt - 8, c: r.hi ? 'fg' : 'dim', weight: r.hi ? 600 : 400 });
+            out += track(px, y, tw, th);
+            if (pn.mark) out += `<line x1="${X(pn.mark)}" x2="${X(pn.mark)}" y1="${y - 6}" y2="${y + th + 6}" stroke="var(--dim)" stroke-width="2" stroke-dasharray="4 4"/>`;
+            out += rect(X(a.lo), y + 4, (a.hi - a.lo) * tw, th - 8, 'bar', { title: `${r.label}, ${pn.title.toLowerCase()}: ${pct(a.p)} (${pct(a.lo)}-${pct(a.hi)})` }) + dot(X(a.p), cy, r.hi);
+            out += text(px + tw + 16, cy + (f.val - 8) * 0.35, pct(a.p), { size: f.val - 8, weight: 600, c: r.hi ? 'fg' : 'dim' });
+          });
+        });
+        out += text(box.x + labelW, box.y + 56 + rows.length * 86 + 20, 'dashed: guessing (one in four)', { size: f.src, c: 'dim' });
+      } else {
+        const ph = (box.h - 40) / 2;
+        panels.forEach((pn, k) => {
+          const py = box.y + k * (ph + 20), tw = box.w - 330, th = 26, rh = (ph - 50) / rows.length;
+          out += text(box.x, py + 30, pn.title, { size: f.txt - 8, weight: 600 });
+          rows.forEach((r, i) => {
+            const y = py + 52 + i * rh, cy = y + th / 2, a = pn.v(r), bx = box.x + 220, X = (p) => bx + p * tw;
+            out += text(box.x, cy + 10, r.short, { size: f.txt - 14, c: r.hi ? 'fg' : 'dim', weight: r.hi ? 600 : 400 });
+            out += track(bx, y, tw, th);
+            if (pn.mark) out += `<line x1="${X(pn.mark)}" x2="${X(pn.mark)}" y1="${y - 4}" y2="${y + th + 4}" stroke="var(--dim)" stroke-width="2" stroke-dasharray="4 4"/>`;
+            out += rect(X(a.lo), y + 3, (a.hi - a.lo) * tw, th - 6, 'bar') + dot(X(a.p), cy, r.hi);
+            out += text(bx + tw + 14, cy + 11, pct(a.p), { size: f.txt - 12, weight: 600, c: r.hi ? 'fg' : 'dim' });
+          });
+        });
+      }
       return out;
     },
   });
