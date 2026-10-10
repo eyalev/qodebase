@@ -1,0 +1,218 @@
+{
+ "n": {
+  "A": 3,
+  "D": 3
+ },
+ "measures": {
+  "wall_s": {
+   "label": "wall time (s)",
+   "A": {
+    "median": 354,
+    "min": 350,
+    "max": 355
+   },
+   "D": {
+    "median": 254,
+    "min": 231,
+    "max": 257
+   },
+   "p_D_vs_A": 0.1
+  },
+  "hidden_pass": {
+   "label": "hidden tests (of 30)",
+   "A": {
+    "median": 30,
+    "min": 30,
+    "max": 30
+   },
+   "D": {
+    "median": 30,
+    "min": 30,
+    "max": 30
+   },
+   "p_D_vs_A": 1
+  },
+  "agent_minutes": {
+   "label": "agent-minutes (all calls)",
+   "A": {
+    "median": 55.2,
+    "min": 54.4,
+    "max": 56.6
+   },
+   "D": {
+    "median": 38.4,
+    "min": 36.5,
+    "max": 40.1
+   },
+   "p_D_vs_A": 0.1
+  },
+  "wasted_agent_minutes": {
+   "label": "agent-minutes wasted (built then dropped)",
+   "A": {
+    "median": 8.7,
+    "min": 8.2,
+    "max": 10.6
+   },
+   "D": {
+    "median": 5.2,
+    "min": 2.4,
+    "max": 5.2
+   },
+   "p_D_vs_A": 0.1
+  },
+  "red_commits": {
+   "label": "red commits on main",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "D": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "p_D_vs_A": 1
+  },
+  "wasted_work_calls": {
+   "label": "wasted work (calls that built a task then dropped it)",
+   "A": {
+    "median": 11,
+    "min": 10,
+    "max": 14
+   },
+   "D": {
+    "median": 5,
+    "min": 3,
+    "max": 5
+   },
+   "p_D_vs_A": 0.1
+  },
+  "deferrals": {
+   "label": "deferrals (skipped before any work)",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "D": {
+    "median": 7,
+    "min": 4,
+    "max": 13
+   },
+   "p_D_vs_A": 0.1
+  },
+  "dup_pairs_both_separate": {
+   "label": "duplicate pairs built twice (of 5)",
+   "A": {
+    "median": 4,
+    "min": 3,
+    "max": 4
+   },
+   "D": {
+    "median": 4,
+    "min": 3,
+    "max": 4
+   },
+   "p_D_vs_A": 1
+  },
+  "same_task_twice_n": {
+   "label": "same task landed twice",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "D": {
+    "median": 0,
+    "min": 0,
+    "max": 2
+   },
+   "p_D_vs_A": 1
+  },
+  "conflicts": {
+   "label": "merge conflicts resolved",
+   "A": {
+    "median": 76,
+    "min": 73,
+    "max": 82
+   },
+   "D": {
+    "median": 94,
+    "min": 81,
+    "max": 95
+   },
+   "p_D_vs_A": 0.2
+  },
+  "rebase_aborts": {
+   "label": "rebases aborted",
+   "A": {
+    "median": 73,
+    "min": 71,
+    "max": 81
+   },
+   "D": {
+    "median": 2,
+    "min": 1,
+    "max": 6
+   },
+   "p_D_vs_A": 0.1
+  },
+  "resets_to_origin": {
+   "label": "resets to origin/main",
+   "A": {
+    "median": 84,
+    "min": 75,
+    "max": 91
+   },
+   "D": {
+    "median": 4,
+    "min": 1,
+    "max": 6
+   },
+   "p_D_vs_A": 0.1
+  },
+  "rejected_push_recoveries": {
+   "label": "rejected pushes recovered",
+   "A": {
+    "median": 103,
+    "min": 98,
+    "max": 105
+   },
+   "D": {
+    "median": 28,
+    "min": 26,
+    "max": 29
+   },
+   "p_D_vs_A": 0.1
+  },
+  "calls": {
+   "label": "agent calls",
+   "A": {
+    "median": 54,
+    "min": 53,
+    "max": 59
+   },
+   "D": {
+    "median": 51,
+    "min": 49,
+    "max": 57
+   },
+   "p_D_vs_A": 0.4
+  },
+  "usd_api_equiv": {
+   "label": "API-equiv $ (Haiku 5.5)",
+   "A": {
+    "median": 0.9515,
+    "min": 0.9288,
+    "max": 0.9861
+   },
+   "D": {
+    "median": 0.6745,
+    "min": 0.6496,
+    "max": 0.7348
+   },
+   "p_D_vs_A": 0.1
+  }
+ }
+}

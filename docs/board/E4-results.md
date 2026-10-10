@@ -23,12 +23,14 @@ Harness and measures: `sim/board-ab/run.mjs`; every run in `sim/board-ab/runs.js
 B and C ran on a frozen copy of board@2ff8b07 so later board changes could not move them mid-series;
 D on board@f3d36d3 (`who --recent`). Each run's row carries `board_version`.
 
-**Results** (median [min–max], exact two-sided Mann–Whitney, 5 vs 5):
+**Results, scenario 1** (textkit, 16 small tasks, 5 agents; median [min–max], exact two-sided Mann–Whitney, 5 vs 5):
 
 | measure | A (n=5) | B (n=5) | C (n=5) | D (n=5) | p B vs A | p C vs A | p D vs A | p D vs C |
 |---|---|---|---|---|---|---|---|---|
 | wall time (s) | 227 [224–263] | 219 [208–249] | 202 [183–305] | 200 [191–238] | 0.31 | 0.151 | 0.056 | 1 |
 | hidden tests (of 16) | 16 [16–16] | 16 [16–16] | 16 [16–16] | 16 [16–16] | 1 | 1 | 1 | 1 |
+| agent-minutes (all calls) | 18.2 [18.1–19.9] | 17.8 [17–19.4] | 16 [14.5–18.8] | 16.2 [15.1–17.9] | 0.087 | 0.048 | 0.008 | 0.881 |
+| agent-minutes wasted (built then dropped) | 4.1 [3–5.9] | 3.5 [2.3–4.2] | 1.2 [0.7–2.1] | 0.9 [0–2.4] | 0.135 | 0.008 | 0.008 | 0.444 |
 | red commits on main | 0 [0–1] | 0 [0–2] | 1 [0–2] | 0 [0–1] | 1 | 0.405 | 1 | 0.683 |
 | wasted work (calls that built a task then dropped it) | 7 [5–8] | 3 [3–7] | 2 [1–3] | 1 [0–4] | 0.119 | 0.008 | 0.008 | 0.397 |
 | deferrals (skipped before any work) | 0 [0–0] | 0 [0–1] | 6 [3–11] | 7 [3–11] | 0.444 | 0.008 | 0.008 | 1 |
@@ -73,3 +75,60 @@ files and commits are a useful floor but not enough on their own.
 task; duplicates matter more with longer tasks, where a dropped duplicate costs minutes, not seconds.
 Scored on the laptop; the 25-minute cap was never reached. Spend: 21 runs (incl. 1 smoke), $5.89
 API-equivalent on the subscription (cap $15); weekly meter 71% -> 72%.
+
+## Scale test: scenario 2, 30 bigger tasks, 10 agents (A vs D, 3 runs each, 2026-10-10)
+
+\`sim/board-ab/starter2\` (todokit: store + command registry, 30 multi-file tasks: a module + re-exports +
+tests + CHANGELOG, commands also in the registry and \`docs/COMMANDS.md\`); 5 duplicate pairs under other
+names and modules (T1/T23 dates/calendar, T2/T19 text/strings, T3/T21 tags/hashtags, T4/T20
+priority/urgency, T6/T22 stats/progress; T19 and T22 worded very differently), chains T1->T5->T13,
+T3->T8->T11, T7->T9, T6->T12, T1->T16, hot files as before. Hidden tests: lab-hidden/board-ab/tasks2.test.mjs
+(reference 30/30, starter 0/30). A pair counts as built twice when both tasks pass and neither module
+imports the other. \`node sim/board-ab/summary.mjs --scenario s2 --md\`:
+
+| measure | A (n=3) | D (n=3) | p D vs A | p D vs C |
+|---|---|---|---|---|
+| wall time (s) | 354 [350–355] | 254 [231–257] | 0.1 | - |
+| hidden tests (of 30) | 30 [30–30] | 30 [30–30] | 1 | - |
+| agent-minutes (all calls) | 55.2 [54.4–56.6] | 38.4 [36.5–40.1] | 0.1 | - |
+| agent-minutes wasted (built then dropped) | 8.7 [8.2–10.6] | 5.2 [2.4–5.2] | 0.1 | - |
+| red commits on main | 0 [0–1] | 0 [0–0] | 1 | - |
+| wasted work (calls that built a task then dropped it) | 11 [10–14] | 5 [3–5] | 0.1 | - |
+| deferrals (skipped before any work) | 0 [0–0] | 7 [4–13] | 0.1 | - |
+| duplicate pairs built twice (of 5) | 4 [3–4] | 4 [3–4] | 1 | - |
+| same task landed twice | 0 [0–1] | 0 [0–2] | 1 | - |
+| merge conflicts resolved | 76 [73–82] | 94 [81–95] | 0.2 | - |
+| rebases aborted | 73 [71–81] | 2 [1–6] | 0.1 | - |
+| resets to origin/main | 84 [75–91] | 4 [1–6] | 0.1 | - |
+| rejected pushes recovered | 103 [98–105] | 28 [26–29] | 0.1 | - |
+| agent calls | 54 [53–59] | 51 [49–57] | 0.4 | - |
+| API-equiv $ (Haiku 5.5) | 0.95 [0.93–0.99] | 0.67 [0.65–0.73] | 0.1 | - |
+
+With 3 vs 3, p = 0.1 is the smallest an exact two-sided Mann–Whitney can give: every measure below with
+p = 0.1 separated completely (all 3 D runs better than all 3 A runs).
+
+**The value grows with scale.** From 5 agents / 16 tasks to 10 agents / 30 tasks (A -> D):
+| | scenario 1 (5 agents) | scenario 2 (10 agents) |
+|---|---|---|
+| wall time | 227 -> 200 s (-12%) | 354 -> 254 s (**-28%**) |
+| agent-minutes | 18.2 -> 16.2 (-11%) | 55.2 -> 38.4 (**-30%**) |
+| agent-minutes wasted (built then dropped) | 4.1 -> 0.9 | 8.7 -> 5.2 |
+| API-equiv \$ per run | 0.32 -> 0.28 (-12%) | 0.95 -> 0.67 (**-29%**) |
+| rebases aborted / resets / rejected pushes | 22/24/34 -> 3/3/17 | 73/84/103 -> 2/4/28 |
+Without a board, git thrash grows faster than the team (aborts x3.3, rejected pushes x3 for 2x agents and
+~2x tasks); with it, it stays flat.
+
+**Duplicates under very different names are not solved by the board + rule.** In scenario 2 both A and D
+built 4 of 5 pairs twice (median). From the board log and commit times of the 3 D runs (15 pair cases):
+some pairs started within ~10 s of each other (10 agents choose at once at t = 0, before any claim is
+visible: T2/T19 started in the same second twice), but more were *seen and not recognised*: the second
+agent started 30–160 s after the first had claimed or even landed its twin (e.g. T21 50 s after T3 landed,
+T22 160 s after T6 landed) and still wrote its own copy. Only the dates/calendar pair (T23) was aliased
+reliably. Haiku agents applying a one-line "same meaning" rule catch close wording, not "hashtags" vs
+"tags" or "progress" vs "completion rate". In scenario 1 (closer wording) D did stop them (0/5).
+That points to dedupe *before* work: cluster the backlog into work units once (ClawSweeper's "cluster as
+work unit", docs/openclaw/FINDINGS.md) instead of asking each agent to judge, and staggered starts so the
+first claims are visible.
+
+**Spend (both scenarios):** 28 runs incl. 2 smoke runs, \$10.89 API-equivalent on the subscription
+(cap \$16); weekly meter 71% -> 73%.

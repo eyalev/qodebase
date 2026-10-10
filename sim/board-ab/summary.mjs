@@ -1,15 +1,17 @@
 // E4 summary: per condition median [min-max] of each measure over the reps in runs.jsonl, and an
 // exact two-sided Mann-Whitney U test of each board condition against A (n is small: 5 vs 5).
-//   node sim/board-ab/summary.mjs [--md]   (skips smoke runs, rep 0)
+//   node sim/board-ab/summary.mjs [--scenario s1|s2] [--md]   (skips smoke runs, rep 0)
 import fs from 'node:fs';
 import path from 'node:path';
 
 const HERE = path.dirname(new URL(import.meta.url).pathname);
-const runs = fs.readFileSync(path.join(HERE, 'runs.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((r) => r.rep > 0 && r.agents === 5);
+const SCEN = (() => { const i = process.argv.indexOf('--scenario'); return i >= 0 ? process.argv[i + 1] : 's1'; })();
+const runs = fs.readFileSync(path.join(HERE, 'runs.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l))
+  .filter((r) => r.rep > 0 && (r.scenario || 's1') === SCEN && r.agents === (SCEN === 's1' ? 5 : 10));
 const M = [
-  ['wall_s', 'wall time (s)'], ['hidden_pass', 'hidden tests (of 16)'], ['red_commits', 'red commits on main'],
+  ['wall_s', 'wall time (s)'], ['hidden_pass', `hidden tests (of ${SCEN === 's1' ? 16 : 30})`], ['agent_minutes', 'agent-minutes (all calls)'], ['wasted_agent_minutes', 'agent-minutes wasted (built then dropped)'], ['red_commits', 'red commits on main'],
   ['wasted_work_calls', 'wasted work (calls that built a task then dropped it)'], ['deferrals', 'deferrals (skipped before any work)'],
-  ['dup_pairs_both_separate', 'duplicate pairs built twice (of 4)'], ['same_task_twice_n', 'same task landed twice'],
+  ['dup_pairs_both_separate', `duplicate pairs built twice (of ${SCEN === 's1' ? 4 : 5})`], ['same_task_twice_n', 'same task landed twice'],
   ['conflicts', 'merge conflicts resolved'], ['rebase_aborts', 'rebases aborted'], ['resets_to_origin', 'resets to origin/main'],
   ['rejected_push_recoveries', 'rejected pushes recovered'], ['calls', 'agent calls'], ['usd_api_equiv', 'API-equiv $ (Haiku 5.5)'],
 ];
@@ -36,7 +38,7 @@ for (const [k, label] of M) {
   for (const c of conds.filter((c) => c !== 'A')) out.measures[k][`p_${c}_vs_A`] = mannWhitney(vals(c, k), vals('A', k));
   if (conds.includes('C') && conds.includes('D')) out.measures[k].p_D_vs_C = mannWhitney(vals('D', k), vals('C', k));
 }
-fs.writeFileSync(path.join(HERE, 'summary.json'), JSON.stringify(out, null, 1));
+fs.writeFileSync(path.join(HERE, SCEN === 's1' ? 'summary.json' : `summary-${SCEN}.json`), JSON.stringify(out, null, 1));
 if (process.argv.includes('--md')) {
   const fmt = (o) => (o.median == null ? '-' : `${+o.median.toFixed(o.median % 1 ? 2 : 0)} [${+o.min.toFixed(2)}–${+o.max.toFixed(2)}]`);
   console.log(`| measure | ${conds.map((c) => `${c} (n=${out.n[c]})`).join(' | ')} | ${conds.filter((c) => c !== 'A').map((c) => `p ${c} vs A`).join(' | ')} | p D vs C |`);

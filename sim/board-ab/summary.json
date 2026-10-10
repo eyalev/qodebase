@@ -60,6 +60,60 @@
    "p_D_vs_A": 1,
    "p_D_vs_C": 1
   },
+  "agent_minutes": {
+   "label": "agent-minutes (all calls)",
+   "A": {
+    "median": 18.2,
+    "min": 18.1,
+    "max": 19.9
+   },
+   "B": {
+    "median": 17.8,
+    "min": 17,
+    "max": 19.4
+   },
+   "C": {
+    "median": 16,
+    "min": 14.5,
+    "max": 18.8
+   },
+   "D": {
+    "median": 16.2,
+    "min": 15.1,
+    "max": 17.9
+   },
+   "p_B_vs_A": 0.087,
+   "p_C_vs_A": 0.048,
+   "p_D_vs_A": 0.008,
+   "p_D_vs_C": 0.881
+  },
+  "wasted_agent_minutes": {
+   "label": "agent-minutes wasted (built then dropped)",
+   "A": {
+    "median": 4.1,
+    "min": 3,
+    "max": 5.9
+   },
+   "B": {
+    "median": 3.5,
+    "min": 2.3,
+    "max": 4.2
+   },
+   "C": {
+    "median": 1.2,
+    "min": 0.7,
+    "max": 2.1
+   },
+   "D": {
+    "median": 0.9,
+    "min": 0,
+    "max": 2.4
+   },
+   "p_B_vs_A": 0.135,
+   "p_C_vs_A": 0.008,
+   "p_D_vs_A": 0.008,
+   "p_D_vs_C": 0.444
+  },
   "red_commits": {
    "label": "red commits on main",
    "A": {

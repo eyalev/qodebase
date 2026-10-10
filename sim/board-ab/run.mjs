@@ -13,6 +13,15 @@ const HERE = path.dirname(new URL(import.meta.url).pathname);
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const COND = opt('cond', 'A'), N = +opt('agents', 5), MINUTES = +opt('minutes', 25), REP = +opt('rep', 1);
+// Scenarios: s1 = textkit (16 small tasks), s2 = todokit (30 multi-file tasks, the scale test).
+const SCEN = opt('scenario', 's1');
+const S = {
+  s1: { starter: 'starter', hidden: 'tasks.test.mjs', tasks: 16, intents: [['T1', 'T9'], ['T2'], ['T3', 'T11'], ['T4'], ['T5', 'T13'], ['T6', 'T14'], ['T7'], ['T8'], ['T10'], ['T12'], ['T15'], ['T16']] },
+  s2: { starter: 'starter2', hidden: 'tasks2.test.mjs', tasks: 30,
+    // [task A, module A, task B, module B]: same intent under other names (T19 and T22 worded very differently).
+    pairs: [['T1', 'dates', 'T23', 'calendar'], ['T2', 'text', 'T19', 'strings'], ['T3', 'tags', 'T21', 'hashtags'], ['T4', 'priority', 'T20', 'urgency'], ['T6', 'stats', 'T22', 'progress']],
+    intents: [['T1', 'T23'], ['T2', 'T19'], ['T3', 'T21'], ['T4', 'T20'], ['T6', 'T22'], ...[5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 24, 25, 26, 27, 28, 29, 30].map((n) => [`T${n}`])] },
+}[SCEN];
 const MODEL = 'claude-haiku-5-5';
 // B and C run on the board as it was for their first reps (git 2ff8b07, frozen copy), so a later
 // board change cannot change those conditions mid-experiment; D uses the live board/ (who --recent).
@@ -20,9 +29,9 @@ const V1 = path.join(os.homedir(), '.local/share/qb9-board-ab/board-v1/board');
 const BOARD_DIR = COND === 'D' ? path.resolve(HERE, '../../board') : V1;
 const BOARD = path.join(BOARD_DIR, 'board.mjs');
 const HOOK = path.join(BOARD_DIR, 'hooks/board-hook.mjs');
-const HIDDEN = path.join(os.homedir(), '<lab-hidden dir>/board-ab/tasks.test.mjs');
+const HIDDEN = path.join(os.homedir(), '<lab-hidden dir>/board-ab', S.hidden);
 const ROOT = path.join(os.homedir(), '.local/share/qb9-board-ab');
-const RUN_ID = `${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}-${COND}-r${REP}`;
+const RUN_ID = `${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}-${SCEN === 's1' ? '' : SCEN + '-'}${COND}-r${REP}`;
 const DIR = path.join(ROOT, RUN_ID);
 // Haiku 5.5 $/1M (docs/lab prices, checked 2026-10-08). Calls are on the subscription; this is the API equivalent.
 const PRICE = { in: 0.10, out: 0.50, cacheR: 0.01, cacheW: 0.125 };
@@ -38,9 +47,9 @@ const STOP_AT = 77;
 function setup() {
   fs.mkdirSync(DIR, { recursive: true });
   const seed = path.join(DIR, 'seed');
-  fs.cpSync(path.join(HERE, 'starter'), seed, { recursive: true });
+  fs.cpSync(path.join(HERE, S.starter), seed, { recursive: true });
   const fixed = { GIT_AUTHOR_NAME: 'board-ab', GIT_AUTHOR_EMAIL: 'lab@qodebase.app', GIT_COMMITTER_NAME: 'board-ab', GIT_COMMITTER_EMAIL: 'lab@qodebase.app', GIT_AUTHOR_DATE: '2026-10-10T00:00:00Z', GIT_COMMITTER_DATE: '2026-10-10T00:00:00Z' };
-  sh('git', ['-c', 'init.defaultBranch=main', 'init', '-q'], seed); sh('git', ['add', '-A'], seed); sh('git', ['commit', '-qm', 'textkit starter (board-ab v1)'], seed, fixed);
+  sh('git', ['-c', 'init.defaultBranch=main', 'init', '-q'], seed); sh('git', ['add', '-A'], seed); sh('git', ['commit', '-qm', `${SCEN === 's1' ? 'textkit' : 'todokit'} starter (board-ab ${SCEN} v1)`], seed, fixed);
   const starterSha = sh('git', ['rev-parse', 'HEAD'], seed);
   sh('git', ['clone', '-q', '--bare', seed, path.join(DIR, 'origin.git')], DIR);
   for (let k = 1; k <= N; k++) {
@@ -68,7 +77,7 @@ function prompt(k) {
   // D = C, but the query also returns recently finished intents, plus one rule for same-meaning tasks
   // (manager, 2026-10-10, after the T3/T11 diagnosis: finished intents dropped out of 'who').
   const boardD = COND === 'D' ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who --recent 30m\` (what the others are doing and what they finished in the last 30 minutes). After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`. If a task someone claimed or finished means the same as one you are about to do (even under another name or task id), make yours a one-line alias of theirs once theirs is on main, or pick another task.\n` : '';
-  return `You are agent ${k} of ${N}, working at the same time as the others on this repository (textkit). Each agent works in its own clone and pushes to the same origin; you cannot talk to them.${board}${boardD}
+  return `You are agent ${k} of ${N}, working at the same time as the others on this repository (${SCEN === 's1' ? 'textkit' : 'todokit'}). Each agent works in its own clone and pushes to the same origin; you cannot talk to them.${board}${boardD}
 1. Run \`git pull --rebase\` first.
 2. Read BACKLOG.md and the code on main. Pick ONE task that you believe nobody has done yet.
 3. Implement it as the backlog says (code, re-export, a test, a CHANGELOG line) and run \`npm test\` until it is green.
@@ -141,7 +150,11 @@ function scoreIn(DIRX, NX, starterSha) { const DIR = DIRX, N = NX;
   // implementation, not an alias of the first.
   const src = fs.readdirSync(path.join(fin, 'src')).map((f) => fs.readFileSync(path.join(fin, 'src', f), 'utf8')).join('\n');
   const own = (name, other) => { const m = src.match(new RegExp(`function\\s+${name}\\s*\\([^)]*\\)\\s*\\{([\\s\\S]*?)\\n\\}`)) || src.match(new RegExp(`(?:const|let)\\s+${name}\\s*=\\s*\\(([^)]*)\\)\\s*=>([\\s\\S]*?);\\n`)); return !!m && !new RegExp(`\\b${other}\\s*\\(`).test(m[0]); };
-  const dupPairs = DUP_PAIRS.map(([ta, a, tb, b]) => ({ pair: `${ta}/${tb}`, [a]: hidden[ta] ?? false, [b]: hidden[tb] ?? false, both_separate: own(a, b) && own(b, a), alias: (hidden[ta] && hidden[tb]) && !(own(a, b) && own(b, a)) }));
+  // s2: a pair is built twice when both tasks pass and neither module imports or calls the other.
+  const modSrc = (m) => { const f = path.join(fin, 'src', m + '.js'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : null; };
+  const dupPairs = SCEN === 's2' ? S.pairs.map(([ta, ma, tb, mb]) => { const a = modSrc(ma), b = modSrc(mb); const linked = (x, m) => x != null && new RegExp(`from\\s+['"]\\./${m}(\\.js)?['"]`).test(x);
+      const sep = !!(hidden[ta] && hidden[tb] && a && b && !linked(a, mb) && !linked(b, ma)); return { pair: `${ta}/${tb}`, [ta]: hidden[ta] ?? false, [tb]: hidden[tb] ?? false, both_separate: sep, alias: !!(hidden[ta] && hidden[tb]) && !sep }; })
+    : DUP_PAIRS.map(([ta, a, tb, b]) => ({ pair: `${ta}/${tb}`, [a]: hidden[ta] ?? false, [b]: hidden[tb] ?? false, both_separate: own(a, b) && own(b, a), alias: (hidden[ta] && hidden[tb]) && !(own(a, b) && own(b, a)) }));
   // Git friction per agent, from each clone's reflog (newest first). A plain `git pull --rebase` with
   // nothing local is not friction; these are: a conflict resolved (rebase (continue)), a rebase given
   // up (abort), a hard reset to origin/main (local work dropped or redone), and a pull --rebase started
@@ -154,8 +167,8 @@ function scoreIn(DIRX, NX, starterSha) { const DIR = DIRX, N = NX;
       resets_to_origin: rl.filter((l) => /^reset: moving to origin\/main/.test(l)).length, rejected_push_recoveries: afterCommit };
   }
   const fsum = (k) => Object.values(friction).reduce((a, f) => a + f[k], 0);
-  const intents = [['T1', 'T9'], ['T2'], ['T3', 'T11'], ['T4'], ['T5', 'T13'], ['T6', 'T14'], ['T7'], ['T8'], ['T10'], ['T12'], ['T15'], ['T16']];
-  return { hidden_pass: Object.values(hidden).filter(Boolean).length, hidden_total: 16, intents_covered: intents.filter((g) => g.some((t) => hidden[t])).length, intents_total: 12, hidden,
+  const intents = S.intents;
+  return { hidden_pass: Object.values(hidden).filter(Boolean).length, hidden_total: S.tasks, intents_covered: intents.filter((g) => g.some((t) => hidden[t])).length, intents_total: intents.length, hidden,
     commits: commits.length, red_commits: red, final_green: commits.length ? commits.at(-1).green : true, same_task_twice: sameTaskTwice, dup_pairs: dupPairs,
     dup_pairs_both_separate: dupPairs.filter((d) => d.both_separate).length, friction, conflicts: fsum('conflicts'), rebase_aborts: fsum('aborts'), resets_to_origin: fsum('resets_to_origin'), rejected_push_recoveries: fsum('rejected_push_recoveries'),
     commits_by_agent: commits.reduce((m, c) => ((m[c.author] = (m[c.author] || 0) + 1), m), {}) };
@@ -165,7 +178,7 @@ function scoreIn(DIRX, NX, starterSha) { const DIR = DIRX, N = NX;
 // wasted work; a skip in < 10 turns is a deferral before any work (another agent had it). The split
 // is clean in the first runs: deferrals took 3-5 turns, dropped duplicates 14-58.
 const wasteOf = (calls) => { const w = calls.filter((c) => (c.status === 'skipped' || c.status === 'failed') && (c.turns ?? 0) >= 10); const d = calls.filter((c) => c.status === 'skipped' && (c.turns ?? 0) < 10);
-  return { wasted_work_calls: w.length, wasted_usd: +w.reduce((a, c) => a + (c.usd_api_equiv || 0), 0).toFixed(4), wasted_out_tokens: w.reduce((a, c) => a + (c.tokens?.out || 0), 0), deferrals: d.length }; };
+  return { agent_minutes: +(calls.reduce((a, c) => a + (c.ms || 0), 0) / 60000).toFixed(1), wasted_agent_minutes: +(w.reduce((a, c) => a + (c.ms || 0), 0) / 60000).toFixed(1), wasted_work_calls: w.length, wasted_usd: +w.reduce((a, c) => a + (c.usd_api_equiv || 0), 0).toFixed(4), wasted_out_tokens: w.reduce((a, c) => a + (c.tokens?.out || 0), 0), deferrals: d.length }; };
 
 // ---- rescore an existing run (no model): node run.mjs --rescore <run dir> ----
 if (opt('rescore', null)) {
@@ -194,7 +207,7 @@ await Promise.all(Array.from({ length: N }, (_, i) => agentLoop(i + 1, deadline)
 const wallS = Math.round((Date.now() - t0) / 1000);
 const calls = fs.readFileSync(path.join(DIR, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const sum = (f) => calls.reduce((a, c) => a + (f(c) || 0), 0);
-const result = { run: RUN_ID, cond: COND, board_version: COND === 'A' ? null : COND === 'D' ? sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
+const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : COND === 'D' ? sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
   calls: calls.length, ...wasteOf(calls), pushed: calls.filter((c) => c.status === 'pushed').length, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, all_done_calls: calls.filter((c) => c.status === 'all-done').length,
   tokens: { in: sum((c) => c.tokens.in), out: sum((c) => c.tokens.out), cacheR: sum((c) => c.tokens.cacheR), cacheW: sum((c) => c.tokens.cacheW) },
   usd_api_equiv: +sum((c) => c.usd_api_equiv).toFixed(4), usd_note: 'subscription; API-equivalent at Haiku 5.5 rates',
@@ -202,4 +215,4 @@ const result = { run: RUN_ID, cond: COND, board_version: COND === 'A' ? null : C
   ...score(starterSha) };
 fs.writeFileSync(path.join(DIR, 'result.json'), JSON.stringify(result, null, 1));
 fs.appendFileSync(path.join(HERE, 'runs.jsonl'), JSON.stringify(result) + '\n');
-console.log(JSON.stringify({ run: result.run, cond: COND, wall_s: wallS, hidden: `${result.hidden_pass}/16`, intents: `${result.intents_covered}/12`, red: result.red_commits, same_task_twice: result.same_task_twice.length, dup_pairs_both: result.dup_pairs_both_separate, conflicts: result.conflicts, aborts: result.rebase_aborts, resets: result.resets_to_origin, rejected: result.rejected_push_recoveries, skipped: result.skipped, wasted: result.wasted_work_calls, deferrals: result.deferrals, calls: result.calls, usd: result.usd_api_equiv }));
+console.log(JSON.stringify({ run: result.run, cond: COND, wall_s: wallS, hidden: `${result.hidden_pass}/${S.tasks}`, intents: `${result.intents_covered}/${S.intents.length}`, wasted_min: result.wasted_agent_minutes, agent_min: result.agent_minutes, red: result.red_commits, same_task_twice: result.same_task_twice.length, dup_pairs_both: result.dup_pairs_both_separate, conflicts: result.conflicts, aborts: result.rebase_aborts, resets: result.resets_to_origin, rejected: result.rejected_push_recoveries, skipped: result.skipped, wasted: result.wasted_work_calls, deferrals: result.deferrals, calls: result.calls, usd: result.usd_api_equiv }));
