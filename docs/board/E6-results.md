@@ -57,7 +57,14 @@ What held up from round 1:
 - **Cost:** agent-minutes −16%, cost −15%.
 
 What broke at 20 agents:
-- **Each E run lost 3–4 tasks; A lost none.** The losses: r1 T19, T33, T46, T55; r2 T3, T11, T30, T37; r3: one.
+- **Each E run lost 3–4 tasks; A lost none.** The losses:
+  - r1: T19, T33, T46, T55.
+  - r2: T3, T11, T30, T37.
+  - r3 (57/60):
+    - T29: the same pattern, with a live "in progress" claim by agent12, who never pushed; 4 other agents deferred
+      to it 6 times.
+    - T18 and T50: T18 landed without the add/done undo wiring, because `add` was not on main yet, and T50 builds
+      on it. A dependency-order slip, not the board.
 - **E's wall time was 1.7× A's** (976 s vs 579 s).
 
 Diagnosis (logs and transcripts of every agent, run directories under `~/.local/share/qb9-board-ab/`):
