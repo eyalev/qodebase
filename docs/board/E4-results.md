@@ -78,13 +78,13 @@ API-equivalent on the subscription (cap $15); weekly meter 71% -> 72%.
 
 ## Scale test: scenario 2, 30 bigger tasks, 10 agents (A vs D, 3 runs each, 2026-10-10)
 
-\`sim/board-ab/starter2\` (todokit: store + command registry, 30 multi-file tasks: a module + re-exports +
-tests + CHANGELOG, commands also in the registry and \`docs/COMMANDS.md\`); 5 duplicate pairs under other
+`sim/board-ab/starter2` (todokit: store + command registry, 30 multi-file tasks: a module + re-exports +
+tests + CHANGELOG, commands also in the registry and `docs/COMMANDS.md`); 5 duplicate pairs under other
 names and modules (T1/T23 dates/calendar, T2/T19 text/strings, T3/T21 tags/hashtags, T4/T20
 priority/urgency, T6/T22 stats/progress; T19 and T22 worded very differently), chains T1->T5->T13,
 T3->T8->T11, T7->T9, T6->T12, T1->T16, hot files as before. Hidden tests: lab-hidden/board-ab/tasks2.test.mjs
 (reference 30/30, starter 0/30). A pair counts as built twice when both tasks pass and neither module
-imports the other. \`node sim/board-ab/summary.mjs --scenario s2 --md\`:
+imports the other. `node sim/board-ab/summary.mjs --scenario s2 --md`:
 
 | measure | A (n=3) | D (n=3) | p D vs A | p D vs C |
 |---|---|---|---|---|
@@ -113,7 +113,7 @@ p = 0.1 separated completely (all 3 D runs better than all 3 A runs).
 | wall time | 227 -> 200 s (-12%) | 354 -> 254 s (**-28%**) |
 | agent-minutes | 18.2 -> 16.2 (-11%) | 55.2 -> 38.4 (**-30%**) |
 | agent-minutes wasted (built then dropped) | 4.1 -> 0.9 | 8.7 -> 5.2 |
-| API-equiv \$ per run | 0.32 -> 0.28 (-12%) | 0.95 -> 0.67 (**-29%**) |
+| API-equiv $ per run | 0.32 -> 0.28 (-12%) | 0.95 -> 0.67 (**-29%**) |
 | rebases aborted / resets / rejected pushes | 22/24/34 -> 3/3/17 | 73/84/103 -> 2/4/28 |
 Without a board, git thrash grows faster than the team (aborts x3.3, rejected pushes x3 for 2x agents and
 ~2x tasks); with it, it stays flat.
@@ -130,5 +130,5 @@ That points to dedupe *before* work: cluster the backlog into work units once (C
 work unit", docs/openclaw/FINDINGS.md) instead of asking each agent to judge, and staggered starts so the
 first claims are visible.
 
-**Spend (both scenarios):** 28 runs incl. 2 smoke runs, \$10.89 API-equivalent on the subscription
-(cap \$16); weekly meter 71% -> 73%.
+**Spend (both scenarios):** 28 runs incl. 2 smoke runs, $10.89 API-equivalent on the subscription
+(cap $16); weekly meter 71% -> 73%.
