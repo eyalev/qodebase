@@ -67,7 +67,14 @@ Round 1 (one run per cell, 6 Haiku coders, 0 reviewers), PRELIMINARY:
 | backlog, land by intent, board on | 619 s | 100 | 0 | 1.55 |
 | two teams, board off | 775 s | 100 | 4 | 1.79 |
 | two teams, board on + cross-list dedupe | 465 s | 97.5 | 0 | 1.22 |
-| backlog, plain git, board off / on | pending | | | |
+| backlog, plain git, board off | 948 s | 87.5 | 0 | 1.46 |
+| backlog, plain git, board on | 1012 s | 100 | 1 | 2.94 |
+
+Round 1 reading (n=1 per cell, no claims yet): two-teams is the clear case (twins 4 -> 0 as predicted; also -40% wall,
+-32% cost, which the sim did not predict). Backlog under land by intent: no duplicate win to show (board-off agents
+aliased all 5 twins themselves; the sim expected ~4 built twice). Plain git: the board cut neither time nor cost in
+this pair (+7% wall, 2x cost, 30 vs 17 bounces) but hidden 87.5 -> 100. Both plain-git runs were ~3.5x faster than
+predicted. Rounds 2-3 decide; round 3 may wait for the weekly reset (Oct 12 13:00 UTC).
 
 ## 4. Recommendation (to be confirmed by section 3)
 - Ship the board as a qodebase feature, on by default for projects with more than ~4 agents or more than one
