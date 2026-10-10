@@ -1,0 +1,4 @@
+{
+  "check": "node --test",
+  "list": ["CHANGELOG.md", "docs/COMMANDS.md", "src/index.js"]
+}

@@ -3,7 +3,7 @@
 // on a clone of the run's final main. Hidden acceptance tests are read from the private
 // lab-hidden repo ($LAB_HIDDEN_DIR), never from this public repo.
 //
-//   node scripts/lab/score.mjs --scenario <cafe-family|port-ts> --repo <clone> [--judge] [--app <url>]
+//   node scripts/lab/score.mjs --scenario <cafe-family|port-ts|bakery|club|backlog|two-teams> --repo <clone> [--judge] [--app <url>]
 //
 // Prints ONE JSON line, the runs.jsonl quality block (docs/lab/runs-schema.md):
 //   {hiddenPass, hiddenTotal, build, typecheck, ownTests, judgeScore, judgeModel, score,
@@ -30,7 +30,8 @@ const { NODE_TEST_CONTEXT, ...ENV } = process.env; // so nested `node --test` ru
 
 function fail(msg) { console.log(JSON.stringify({ scorer: SCORER, error: msg })); process.exit(2); }
 if (!SCENARIO || !REPO) fail('usage: --scenario <id> --repo <dir>');
-if (!existsSync(join(HIDDEN, SCENARIO))) fail(`no hidden tests for ${SCENARIO} in ${HIDDEN}`);
+const HIDDEN_DIR = SCENARIO === 'two-teams' ? 'backlog' : SCENARIO; // two-teams shares backlog's tests
+if (!existsSync(join(HIDDEN, HIDDEN_DIR))) fail(`no hidden tests for ${SCENARIO} in ${HIDDEN}`);
 
 const run = (cmd, a, cwd, env = {}) => {
   const r = spawnSync(cmd, a, { cwd, encoding: 'utf8', env: { ...ENV, ...env }, timeout: 180_000, maxBuffer: 64 << 20 });
@@ -106,6 +107,37 @@ try {
     result.hiddenTotal = total;
     result.hiddenPass = res.filter((r) => r.ok).length;
     result.failed = [...res.filter((r) => !r.ok).map((r) => r.name), ...(res.length < total ? [`${SCENARIO}: ${total - res.length} did not run`] : [])];
+  } else if (SCENARIO === 'backlog' || SCENARIO === 'two-teams') {
+    // The board scenarios (docs/board/PLAN2.md W4): todokit, 30 tasks, one hidden test each
+    // (lab-hidden/backlog, both scenarios). Quality is not what they measure (round 1: every run
+    // passed every test); the extra block is the duplicate work: of the five far-worded pairs, how
+    // many were BUILT TWICE (both pass, neither module imports the other: qb9's rule) vs aliased.
+    const js = files(W, '.js').concat(files(W, '.mjs'));
+    const bad = js.filter((f) => run('node', ['--check', f], W).code !== 0);
+    result.typecheck = bad.length === 0;
+    if (bad.length) notes.push(`syntax errors in ${bad.map((f) => relative(W, f)).join(', ')}`);
+    result.ownTests = run('node', ['--test'], W).code === 0;
+    const load = run('node', ['--input-type=module', '-e', `await import(${JSON.stringify(join(W, 'src/index.js'))});`], W);
+    result.build = load.code === 0;
+    if (!result.build) notes.push('src/index.js does not load: ' + (load.out.split('\n').find((l) => /Error/.test(l)) || ''));
+    const file = join(HIDDEN, 'backlog/acceptance.test.mjs');
+    const t = run('node', ['--test', '--test-reporter=tap', file], W, { LAB_REPO: W });
+    const hidden = {};
+    for (const m of t.out.matchAll(/^(not ok|ok) \d+ - (T\d+)/gm)) hidden[m[2]] = m[1] === 'ok';
+    const total = (readFileSync(file, 'utf8').match(/^test\(['"]T\d+/gm) || []).length;
+    result.hiddenTotal = total;
+    result.hiddenPass = Object.values(hidden).filter(Boolean).length;
+    result.failed = Object.entries(hidden).filter(([, ok]) => !ok).map(([k]) => k).concat(Object.keys(hidden).length < total ? [`${total - Object.keys(hidden).length} did not run`] : []);
+    const { pairs } = JSON.parse(readFileSync(join(HIDDEN, 'backlog/pairs.json'), 'utf8'));
+    const mod = (m) => { const f = join(W, 'src', m + '.js'); return existsSync(f) ? readFileSync(f, 'utf8') : null; };
+    const links = (src, m) => src != null && new RegExp(`from\\s+['"]\\./${m}(\\.js)?['"]`).test(src);
+    const rows = pairs.map(([ta, ma, tb, mb]) => {
+      const a = mod(ma), b = mod(mb), both = !!(hidden[ta] && hidden[tb]);
+      const twice = both && a != null && b != null && !links(a, mb) && !links(b, ma);
+      return { pair: `${ta}/${tb}`, modules: `${ma}/${mb}`, [ta]: !!hidden[ta], [tb]: !!hidden[tb], builtTwice: twice, aliased: both && !twice };
+    });
+    result.duplicates = { pairs: rows.length, builtTwice: rows.filter((r) => r.builtTwice).length, aliased: rows.filter((r) => r.aliased).length,
+      rows, rule: 'built twice = both tasks pass and neither module imports the other' };
   } else if (SCENARIO === 'port-ts') {
     const index = join(W, 'src/index.ts');
     const ported = existsSync(index);
@@ -191,7 +223,7 @@ try {
   } else {
     fail(`unknown scenario ${SCENARIO}`);
   }
-  if (args.includes('--judge')) {
+  if (args.includes('--judge') && existsSync(join(HIDDEN, SCENARIO, 'rubric.md'))) {
     const { judge } = await import('./judge.mjs');
     Object.assign(result, await judge({ scenario: SCENARIO, dir: W, app: opt('--app') }));
   }

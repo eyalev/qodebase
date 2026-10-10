@@ -1,0 +1,30 @@
+{
+ "id": "two-teams",
+ "title": "Two teams, one repo",
+ "prompt": "Team A: work through TEAM-A.md; give every coder the whole list and let each coder pick its own next task.",
+ "promptVersion": "1",
+ "scenarioVersion": "1",
+ "teams": [
+  { "id": "A", "backlog": "TEAM-A.md", "prompt": "Team A: work through TEAM-A.md; give every coder the whole list and let each coder pick its own next task." },
+  { "id": "B", "backlog": "TEAM-B.md", "prompt": "Team B: work through TEAM-B.md; give every coder the whole list and let each coder pick its own next task." }
+ ],
+ "router": "Board round 2, W4: TWO routers on one project, one per team, each with its own backlog file; neither sees the other's plan. Each router hands every coder of its team the whole team list and never assigns or dedupes. The 5 duplicate pairs all cross the teams (T1/T23, T2/T19, T3/T21, T4/T20, T6/T22), and so do dependencies (T16 needs T1).",
+ "about": "Two teams, each with its own list of 15 tasks, change one to-do library at the same time. Their lists overlap in meaning, not words: five tasks in team B ask for what team A builds under other names.",
+ "starter": "scripts/lab/scenarios/two-teams/starter (todokit, BACKLOG split into TEAM-A.md T1-T15 and TEAM-B.md T16-T30)",
+ "check": "node --test",
+ "hiddenTotal": 30,
+ "duplicatePairs": 5,
+ "measures": "hidden tests (1 per task, shared with backlog) + duplicates.builtTwice across the teams + the run's git/landing waste",
+ "profile": {
+  "expectedTasks": [28, 30],
+  "dependencyDepth": 2,
+  "dependencyChain": "team A helpers -> team B commands and twins (cross-team)",
+  "sharedFileShare": 0.9,
+  "sharedFiles": ["src/index.js", "CHANGELOG.md", "src/commands.js", "docs/COMMANDS.md"],
+  "vagueness": "low",
+  "duplicateIntentRisk": 0.33,
+  "teams": 2,
+  "note": "qb5; all 5 duplicate pairs and several dependencies cross the teams, so only something both teams see (the board) can catch them"
+ },
+ "anchors": { "starter": 25, "reference": 100, "referenceJudge": null, "note": "no judge; shares backlog's hidden tests" }
+}

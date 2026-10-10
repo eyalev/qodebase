@@ -1,0 +1,25 @@
+{
+ "id": "backlog",
+ "title": "Self-picked backlog",
+ "prompt": "Work through BACKLOG.md: give every coder the whole list and let each coder pick its own next task.",
+ "promptVersion": "1",
+ "scenarioVersion": "1",
+ "router": "Board round 2, W4 (docs/board/PLAN2.md): the router hands EVERY coder the whole BACKLOG.md and never assigns, splits or dedupes tasks; coders choose their own. That is what lets the board's value show: no planner removes the duplicates first.",
+ "about": "A to-do library with 30 tasks in one shared list, where coders pick their own work: 5 pairs of tasks are the same work worded far apart, some tasks need others first, and most touch the same few files.",
+ "starter": "scripts/lab/scenarios/backlog/starter (todokit from qb9's sim/board-ab starter2: store + command registry + 30-task BACKLOG.md)",
+ "check": "node --test",
+ "hiddenTotal": 30,
+ "duplicatePairs": 5,
+ "measures": "hidden tests (1 per task) + duplicates.builtTwice (of 5 far-worded pairs: both pass and neither module imports the other) + the run's git/landing waste",
+ "profile": {
+  "expectedTasks": [25, 30],
+  "dependencyDepth": 2,
+  "dependencyChain": "helpers (dates, tags, format) -> commands that use them (add, due, overdue, groups)",
+  "sharedFileShare": 0.9,
+  "sharedFiles": ["src/index.js", "CHANGELOG.md", "src/commands.js", "docs/COMMANDS.md"],
+  "vagueness": "low",
+  "duplicateIntentRisk": 0.33,
+  "note": "qb5; same starter and hidden tests as qb9's round-1 s2 (local claude -p): A built 3-4 of 5 pairs twice, E (dedupe) 0"
+ },
+ "anchors": { "starter": 25, "reference": 100, "referenceJudge": null, "note": "no judge for this scenario (it measures waste, not quality); reference = qb9's round-1 finished repos, 30/30" }
+}

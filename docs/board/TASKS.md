@@ -9,7 +9,7 @@ Round 2 (PLAN2.md, started 2026-10-10 17:00 UTC):
 - [ ] W2d deploy + live smoke on eyal/cafe-lab (qb6)
 - [ ] W3a 20 agents / 60 tasks Haiku A vs E x3 (qb9)
 - [ ] W3b Sonnet longer tasks A vs E x3 (qb9)
-- [ ] W4a lab scenario: self-pick backlog + two teams, hidden tests (qb5)
+- [x] W4a lab scenario: self-pick backlog + two teams, hidden tests (qb5): scenarios `backlog` (7b915e9) + `two-teams` (0ef85bb), 30 hidden tests + duplicates.builtTwice in score.mjs, validated on qb9 round-1 repos (A 4/4/3 pairs built twice, E 0/0/0); router hooks with qb6
 - [ ] W4b prediction (qb4): W3a A vs E predicted in sim.md (d); Cloudflare scenario waits for qb5 (W4a)
 - [ ] W4c Cloudflare runs board off vs on >= 3 each (qb6 runner)
 - [ ] W5 README / submission / lab page (qb8, qb7)
