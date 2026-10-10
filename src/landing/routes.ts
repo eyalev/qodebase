@@ -83,7 +83,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
         // A crew run: caps {agents, awake}, reviewers (pool size, 1-4), budgetUsd (hard stop), halted:false to resume.
         ...(body.caps && typeof body.caps === 'object' ? { caps: { agents: Math.min(16, Number((body.caps as any).agents) || 0) || undefined, awake: Math.min(16, Number((body.caps as any).awake) || 0) || undefined } } : body.caps === null ? { caps: undefined } : {}),
         ...(Number(body.reviewers) >= 0 && body.reviewers !== null && body.reviewers !== undefined && body.reviewers !== '' ? { reviewers: Math.min(6, Math.round(Number(body.reviewers))) } : {}),
-        ...(Number(body.budgetUsd) > 0 ? { budgetUsd: Math.min(20, Number(body.budgetUsd)) } : body.budgetUsd === null ? { budgetUsd: undefined } : {}),
+        ...(Number(body.budgetUsd) > 0 ? { budgetUsd: Math.min(50, Number(body.budgetUsd)) } : body.budgetUsd === null ? { budgetUsd: undefined } : {}),
         ...(body.halted === false ? { halted: false } : {}),
         ...(typeof body.autoMerge === 'boolean' ? { autoMerge: body.autoMerge } : {}),
         // Variants lab knobs (docs/lab/runs-schema.md).
