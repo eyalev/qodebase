@@ -216,3 +216,78 @@ use 20. If cost matters, AIMD or a small fixed team cuts cost by more than half.
 small team is that nobody has to pick the size, at the price of a slow ramp.
 
 W7 spend: $9.54 API-equiv (6 runs + the smoke). The weekly meter went 78% → 79%.
+
+## Scenario s4 (W3b): 8 Sonnet 5.5 agents, 16 longer tasks, board v3
+
+`sim/board-ab/starter4`: todokit 0.2, with scenario 2's 30 tasks already done, plus 16 bigger features:
+- a query language with precedence; iCalendar export and import with line folding;
+- a three-way merge; tables; natural-language dates; recurrence rules;
+- a dependency graph; time tracking; fuzzy search; persistence.
+
+Four far-worded duplicate pairs: T1/T13, T4/T14, T5/T15, T11/T16. Hidden tests: 16, reference 16/16, starter 0/16.
+
+**Sonnet takes under a minute per task, not 5–10.** A probe before the runs gave one real Sonnet call per task:
+- T4 (three-way merge): 34 s, 9 turns, ~$0.13.
+- T1 (query parser): 40 s, 13 turns, ~$0.16.
+
+Both passed the hidden tests first time. So these "longer" tasks are E4-sized for Sonnet, and a duplicate here costs
+under a minute, not minutes. The manager chose to run s4 as is; a scenario with ~10× larger tasks (s5) waits on these
+results.
+
+Settings: board v3, i.e. v2 plus the earliest-claim tie-break (`BOARD_TIEBREAK=1`, one prompt line: the earlier
+claim keeps a task). Also no-wait, 80 turns per call, 1 s stagger, 40-minute cap. A runs get the same prompt minus
+the board. 3 runs each, alternating.
+
+**Scoring fix:** the hidden T2 test and the reference both dropped the backslash before `;` in the escaped SUMMARY.
+The spec asks for `\;`, and every agent did it right. The test and reference were fixed (lab-hidden 0ed4747) and
+all 6 runs re-scored without the model: every run is 16/16. Before the fix, every run had read 15/16.
+
+| measure | A v3 (n=3) | E v3 (n=3) | p E v3 vs A 
+|---|---|---|---
+| wall time (s) | 275 [221–336] | 189 [185–201] | 0.1 
+| hidden tests (of 16) | 16 [16–16] | 16 [16–16] | 1 
+| agent-minutes (all calls) | 31.8 [26.2–37] | 20.2 [20.2–21.6] | 0.1 
+| agent-minutes wasted (built then dropped) | 4.4 [3.8–7.9] | 2.5 [0.9–4] | 0.2 
+| red commits on main | 2 [0–2] | 0 [0–1] | 0.4 
+| wasted work (calls that built a task then dropped it) | 7 [4–7] | 3 [1–7] | 0.4 
+| deferrals (skipped before any work) | 0 [0–0] | 8 [8–17] | 0.1 
+| calls cut at the turn cap | 0 [0–0] | 0 [0–0] | 1 
+| duplicate pairs built twice (of 4) | 0 [0–1] | 0 [0–0] | 1 
+| same task landed twice | 0 [0–0] | 0 [0–0] | 1 
+| merge conflicts resolved | 28 [20–29] | 39 [34–42] | 0.1 
+| rebases aborted | 21 [15–22] | 1 [0–1] | 0.1 
+| resets to origin/main | 22 [15–22] | 1 [0–1] | 0.1 
+| rejected pushes recovered | 43 [30–45] | 9 [8–11] | 0.1 
+| agent calls | 30 [28–31] | 35 [34–36] | 0.1 
+| API-equiv $ (Sonnet 5.5) | 7.54 [6.51–7.77] | 5.49 [4.93–5.9] | 0.1 
+
+E v3 against A:
+
+| measure | A | E v3 | change | p |
+|---|---|---|---|---|
+| wall time | 275 s | 189 s | −31% | 0.1 |
+| agent-minutes | 31.8 | 20.2 | −36% | 0.1 |
+| API-equiv cost | $7.54 | $5.49 | −27% | 0.1 |
+| hidden tests (of 16) | 16 | 16 | | 1 |
+| rejected pushes | 43 | 9 | | 0.1 |
+| aborted rebases | 21 | 1 | | 0.1 |
+| resets to origin/main | 22 | 1 | | 0.1 |
+
+- **Duplicates were not where the saving came from.** With no board, Sonnet aliased all four far-worded twins itself
+  in r1 and r2, and built one pair twice in r3. E's dedupe call found 4/4 pairs every run. Pairs built twice: A 0
+  [0–1], E 0.
+- **The saving is git contention:** far fewer rejected pushes, aborts and resets, so fewer and shorter calls'
+  worth of work.
+- **Tie-break:** no task was lost in any E v3 run. E had 8 [8–17] deferrals and A none. A green final main
+  everywhere; red commits A 2 [0–2], E 0 [0–1].
+- **Spend:** s4 $38.14 API-equiv for 6 Sonnet runs, against an estimate of $25–30; cache writes and reads dominate.
+  The weekly meter went 79% → 81%.
+
+### Round-2 local verdict (W3 + W7)
+
+With the fixed board ("finished" means on main; no waiting; earliest claim keeps a task):
+- **20 Haiku agents, 60 tasks:** −24% wall, −23% agent-minutes, −16% cost, duplicate pairs 9 → 0, same 60/60.
+- **8 Sonnet agents, 16 bigger tasks:** −31% wall, −36% agent-minutes, −27% cost, same 16/16.
+
+The v1 board at 20 agents lost 3–4 tasks per run, because it trusted unlanded "done": the fix was necessary, not
+cosmetic. Team size with the board is a cost-versus-time dial (W7).

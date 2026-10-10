@@ -37,7 +37,7 @@ const out = { n: Object.fromEntries(conds.map((c) => [c, vals(c, 'wall_s').lengt
 for (const [k, label] of M) {
   out.measures[k] = { label };
   for (const c of conds) { const v = vals(c, k); out.measures[k][c] = { median: med(v), min: Math.min(...v), max: Math.max(...v) }; }
-  const base = (c) => (conds.includes('A') ? 'A' : c.startsWith('E') ? (c.includes('v2') ? 'A v2' : 'A v1') : 'A v1');
+  const base = (c) => (conds.includes('A') ? 'A' : `A ${c.split(' ')[1]}`);   // same version (v1/v2/v3)
   for (const c of conds.filter((c) => !c.startsWith('A'))) out.measures[k][`p_${c}_vs_A`] = mannWhitney(vals(c, k), vals(base(c), k));
   if (conds.includes('E v2') && conds.includes('E v2 aimd')) out.measures[k]['p_aimd_vs_E20'] = mannWhitney(vals('E v2 aimd', k), vals('E v2', k));
   if (conds.includes('E v2') && conds.includes('E v2 n8')) out.measures[k]['p_n8_vs_E20'] = mannWhitney(vals('E v2 n8', k), vals('E v2', k));
