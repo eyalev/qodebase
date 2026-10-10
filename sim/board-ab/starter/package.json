@@ -1,0 +1,8 @@
+{
+  "name": "textkit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Small text and number helpers plus a command registry.",
+  "scripts": { "test": "node --test" }
+}
