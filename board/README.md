@@ -24,3 +24,29 @@ settings.json:
   "Stop": [{ "hooks": [{ "type": "command", "command": "node /abs/board/hooks/board-hook.mjs" }] }]
 } }
 ```
+
+## HTTP backend: the qb-board Worker
+
+`board/worker.mjs` (forq account, `https://qb-board.forqdev.workers.dev`, workers.dev only).
+- One SQLite Durable Object per board name.
+- Endpoints:
+  - `POST /b/<name>/events`
+  - `GET /b/<name>/who?me=&files=&area=`
+  - `GET /b/<name>/tail?n=`
+  - `GET /b/<name>/ws` (WebSocket; every new event is pushed)
+- Bearer token in `~/.config/qb-board/token` (chmod 600; the Worker secret `BOARD_TOKEN`).
+- The log keeps 7 days.
+
+Use it with:
+
+```sh
+BOARD_URL=https://qb-board.forqdev.workers.dev/b/<board> BOARD_TOKEN=$(cat ~/.config/qb-board/token)
+```
+
+Deploy:
+
+```sh
+CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler deploy -c board/wrangler.jsonc
+```
+
+Latency (E2): `docs/board/latency.md`.
