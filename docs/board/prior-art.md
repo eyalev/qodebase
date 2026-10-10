@@ -224,3 +224,8 @@ Note on social proof: these are references to borrow ideas from, not dependencie
 - Before building on code, check each one against the house bar.
 - Agent Mail Rust (185 stars), Foremerge (538), grite (21) and merge_train (1) are below it.
 - Beads, Gas Town, vibe-kanban and claude-flow are well above it.
+
+## 6. Added from a second search (s1010-1750, 2026-10-10)
+- **STORM** ([2605.20563](https://arxiv.org/abs/2605.20563), "Multi-agent Collaboration with State Management"): shared workspace that rejects stale-read writes at write time, plus intent comments; +18.7 on Commit0-Lite vs worktrees [doc, abstract].
+- **Crystal / Palantir** (Brun et al., ~2010): human-era workspace awareness and speculative merging of in-flight branches. The ancestor of "warn before the collision" [doc].
+- **Concurrency limits:** published advice is static (2-4 agents). [2603.21489](https://arxiv.org/abs/2603.21489) ("Effective Strategies for Asynchronous Software Engineering Agents") reports a score that peaks at 4 agents and falls at 8 [doc, per s1010-1750]. We found no adaptive controller that sets the number of agents from live thrash; that idea (AIMD on the board's thrash signal) is being tested in round 2.
