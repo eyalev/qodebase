@@ -10,7 +10,7 @@ Round 2 (PLAN2.md, started 2026-10-10 17:00 UTC):
 - [ ] W3a 20 agents / 60 tasks Haiku A vs E x3 (qb9)
 - [ ] W3b Sonnet longer tasks A vs E x3 (qb9)
 - [ ] W4a lab scenario: self-pick backlog + two teams, hidden tests (qb5)
-- [ ] W4b prediction (qb4)
+- [ ] W4b prediction (qb4): W3a A vs E predicted in sim.md (d); Cloudflare scenario waits for qb5 (W4a)
 - [ ] W4c Cloudflare runs board off vs on >= 3 each (qb6 runner)
 - [ ] W5 README / submission / lab page (qb8, qb7)
 - [ ] W6 FINDINGS2.md + report (manager)

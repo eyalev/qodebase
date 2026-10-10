@@ -202,3 +202,63 @@ Where it could be wrong:
   - Same-meaning recognition is a property of the wording, so a board plus a one-line rule can't be
     counted on for it. The fix the results point to is upstream: cluster the backlog into work units
     once, before any agent starts, and stagger the starts so the first claims are visible.
+
+## (d) Round 2: E in the sim, and a prediction for W3a (qb4, 2026-10-10, before the runs)
+
+**E added to `calls.mjs`** (D plus the two E changes): one dedupe call marks each twin pair with
+probability 0.97, whatever the wording (E4 scenario 2: 15 of 15 pairs over 3 runs). A marked twin waits
+for its partner like a need, then lands as a thin alias (half a call). Agent k starts at k × 5 s.
+The calibration rows for A to D did not change.
+
+Checked against scenario 2's real E (post-hoc inputs, 300 seeds):
+
+| measure | sim E | real E | sim D | real D |
+|---|---|---|---|---|
+| duplicate pairs built twice (of 5) | 0 [0–1] | 0 [0–0] | 3 | 4 |
+| wall time (s) | 319 | 268 | 316 | 254 |
+| agent-minutes | 40 | 38.5 | 41 | 38.4 |
+| wasted calls | 3 | 6 | 4 | 5 |
+| deferrals | 25 | 5 | 14 | 7 |
+| rejected pushes | 66 | 33 | 55 | 28 |
+
+Duplicates and cost match. Wall time runs ~20% long for both board conditions. Rejected pushes come out
+about 2× too high. Deferrals for E are 5× too high: real agents with the hint pick something else instead
+of waiting on the marked twin.
+
+### Prediction: qb9's W3a (20 agents, ~60 tasks, 10 far-worded pairs, A vs E)
+
+Inputs (assumed, since qb9's starter is not out yet):
+- scenario 2's task size (×1.6 E4's)
+- 12 needs (chains)
+- all 10 pairs worded far apart
+
+The bias-corrected column scales each sim number by real/sim from scenario 2's post-hoc check
+(A wall ×0.92, E ×0.84; agent time ×1.04 / ×0.96; A wasted ×0.52; rejected pushes A ×1.32, E ×0.5;
+E deferrals ×0.2).
+
+| measure | sim A | sim E | corrected A | corrected E | E vs A |
+|---|---|---|---|---|---|
+| wall time (s) | 464 [421–539] | 412 [367–485] | ~425 | ~345 | **−19%** (range −10 to −30%) |
+| agent-minutes (cost) | 128 | 100 | ~133 | ~96 | **−28%** |
+| duplicate pairs built twice (of 10) | 10 [8–10] | 0 [0–1] | 8–10 | 0–1 | the clearest effect |
+| wasted calls | 49 | 10 | ~25 | 10–20 | about −50% |
+| rejected pushes | 348 | 350 | ~460 | ~175 | about −60% |
+| deferrals | 0 | 64 | 0 | ~13 | |
+| D (no dedupe), for reference | wall 390 s, 98 min, **8 of 10 pairs twice** | | | | |
+
+What to expect:
+- **Duplicates are the result to watch.** Without the dedupe pass, far-worded pairs get built twice even
+  with a board: D still builds 8 of 10 pairs twice. E builds 0–1 of them. This holds in every variant
+  (6 of 10 pairs far, or tasks ×1.5 bigger).
+- **Cost drops about as much as at 10 agents** (−28% vs −29% real). The time gain stays around −20%
+  in the sim. At 10 agents the real gain was larger than the sim's (−28% vs −17%), because real
+  no-board agents fight git much harder. With 20 agents doing so, A could be worse still, so a real
+  wall gain beyond −30% would not surprise me.
+- **E's wall time may sit a little above D's** (sim 412 vs 390 s). The stagger costs 95 s at 20 agents
+  and waiting on marked twins also adds time. If real E comes in slower than a D control, that is the
+  reason, and a 2 s stagger would be the fix.
+- **Risk:** git contention on the hot files at 20 agents (A: ~460 rejected pushes). A run that stalls
+  goes out of the timing, as before.
+
+Reproduce: `node sim/board/calls.mjs w3a --seeds 300` (and `scale` for the scenario-2 rows); outputs go to
+`sim/board/out/calls-*.json` and `~/.local/share/qbsim-bench/board.jsonl`.

@@ -9,7 +9,8 @@
 // backlog.mjs let no-board agents see each other's claims for free.
 //
 // Conditions: A no board; B hooks only (files visible, not intents); C board `who` + stated intent;
-// D C + `who --recent` (finished intents) + "same meaning -> alias or pick another".
+// D C + `who --recent` (finished intents) + "same meaning -> alias or pick another";
+// E D + one dedupe call over the backlog before work (marks twin pairs: "make one a thin alias") + staggered starts.
 //
 //   node sim/board/calls.mjs calibrate [--seeds 400]   E4 (5 agents, 16 tasks) sim vs real
 //   node sim/board/calls.mjs scale [--seeds 400]       qb9's scale test (10 agents, ~30 tasks x4)
@@ -27,7 +28,7 @@ export const E4 = {
   pickS: 4, // pull + read before the pick is made (posts appear after this)
   rebaseMedS: 3, rebaseSigma: 0.5, // pull --rebase, fix the hot-file conflict, npm test, push again
   pushS: 2,
-  boardS: { B: 3, C: 6, D: 7 }, // the board's own time per call (E4 pushed-call medians: A 35, B 40, C 42, D 44 s)
+  boardS: { B: 3, C: 6, D: 7, E: 7 }, // the board's own time per call (E4 pushed-call medians: A 35, B 40, C 42, D 44 s)
   deferS: 9, // a call that saw the task taken and skipped it (E4: 7-11 s)
   allDoneS: 14, // the last call: "everything is on main"
   attractSigma: 0.5, // tasks are not picked uniformly: a shared taste (E4 A first picks: T6 6/25, T16 5/25)
@@ -43,6 +44,9 @@ export const E4 = {
   pSpotFiles: 0.95, // B: the hooks show only files: spots that the same task is taken from them
   collisionRetries: 0.7, // mean extra rejected pushes an agent fights through before dropping a task someone else landed
   pDropDupAtRebase: 0.5, // a twin landed while I built mine: dropped at rebase instead of landing both
+  pDedupe: 0.97, // E: the dedupe call marks a twin pair (E4 scenario 2: 15/15 pairs over 3 runs, far-worded ones included)
+  aliasWork: 0.5, // E: a marked twin built after its partner landed is a thin alias (shorter call)
+  staggerS: 5, // E: agent k starts at k x 5 s
 };
 
 function mulberry32(a) { return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -69,6 +73,10 @@ export function run(cond, seed = 1, over = {}) {
   // same-meaning recognition (on main, on the board, at rebase) is scaled by farRecognition for them.
   const far = new Set([...twins].slice(0, C.farPairs || 0));
   const sp = (it, p) => (far.has(it.unit) ? p * C.farRecognition : p);
+  const dLike = cond === 'D' || cond === 'E';
+  // E: the dedupe call marks pairs up front; a marked pair waits for its first half (like a need) and
+  // the second half lands as an alias, whatever the wording.
+  const marked = new Set(cond === 'E' ? [...twins].filter(() => rnd() < C.pDedupe) : []);
 
   // ---- state ----
   let head = 0; // main's commit count
@@ -91,15 +99,15 @@ export function run(cond, seed = 1, over = {}) {
     const spend = (dt, fn) => at(dt, () => { m.agentS += t - t0; fn(); });
     // What this agent believes is done: tasks on main, and twins it notices on main.
     const known = (it) => onMain(it) || (isTwin(it) && onMain(twinOf(it)) && it.spotMain) || spotMainD(it);
-    for (const it of items) if (it.spotMain == null && isTwin(it) && onMain(twinOf(it))) it.spotMain = rnd() < sp(it, C.pSpotMainDup);
+    for (const it of items) if (it.spotMain == null && isTwin(it) && onMain(twinOf(it))) it.spotMain = !marked.has(it.unit) && rnd() < sp(it, C.pSpotMainDup);
     // D: finished intents are on the board and the same-meaning rule applies to them
-    const spotMainD = (it) => cond === 'D' && isTwin(it) && onMain(twinOf(it)) && (it.spotD ??= rnd() < sp(it, C.pSpotRecentDup));
+    const spotMainD = (it) => dLike && !marked.has(it.unit) && isTwin(it) && onMain(twinOf(it)) && (it.spotD ??= rnd() < sp(it, C.pSpotRecentDup));
     const open = items.filter((it) => !known(it));
     if (!open.length) { m.allDone++; return spend(C.allDoneS, () => { a.done = true; a.endT = t; }); }
-    const ready = open.filter((it) => { const n = units[it.unit].need; return n == null || units[n].landed; });
+    const ready = open.filter((it) => { const n = units[it.unit].need; return (n == null || units[n].landed) && !(marked.has(it.unit) && !onMain(it) && twinOf(it) && !onMain(twinOf(it)) && it.id >= nUnits); });
     let pool = ready.length && rnd() < C.pReadyPref ? ready : open;
     const now = board ? nowPosts(a) : [];
-    const recent = cond === 'D' ? recentPosts(a) : [];
+    const recent = dLike ? recentPosts(a) : [];
     const avoid = (keep) => { const f = pool.filter(keep); if (f.length) pool = f; };
     // Without a board agents still spread out somewhat (they read main and the backlog at different
     // moments): with pImplicitAvoid a pick avoids a task someone is building, as if it could see it
@@ -107,13 +115,13 @@ export function run(cond, seed = 1, over = {}) {
     if (rnd() < C.pImplicitAvoid) { const busy = new Set([...building].filter(([k]) => k !== a.id).map(([, v]) => v)); avoid((x) => !busy.has(x.id)); }
     // B: the hooks feed the now-view (files only) into every prompt; C/D run `who` before choosing.
     if (cond === 'B' && rnd() < C.pSpotFiles) { const claimed = new Set(now.map((p) => p.item)); avoid((x) => !claimed.has(x.id)); }
-    if ((cond === 'C' || cond === 'D') && rnd() < C.pHeedBoard) {
+    if ((cond === 'C' || dLike) && rnd() < C.pHeedBoard) {
       const claimed = new Set(now.map((p) => p.item));
       avoid((x) => !claimed.has(x.id));
       // twins: C sees claims only; D also sees finished intents and has the same-meaning rule
-      const pTw = cond === 'D' ? C.pSpotRecentDup : C.pSpotNowDup;
+      const pTw = dLike ? C.pSpotRecentDup : C.pSpotNowDup;
       const shown = new Set([...now, ...recent].map((p) => p.item));
-      avoid((x) => !(isTwin(x) && shown.has(twinOf(x).id) && rnd() < sp(x, pTw)));
+      avoid((x) => !(isTwin(x) && shown.has(twinOf(x).id) && !(marked.has(x.unit) && onMain(twinOf(x))) && (marked.has(x.unit) || rnd() < sp(x, pTw))));
     }
     // At the end everything left is claimed on the board: C/D skip once (a deferral) and stop; B's
     // prompt shows the same now-view, so it stops (as "all done") when it notices the files are taken.
@@ -125,11 +133,12 @@ export function run(cond, seed = 1, over = {}) {
     const w = pool.map((it) => it.attract * Math.exp(C.agentNoise * normal()));
     const it = pool[w.indexOf(Math.max(...w))];
     // ---- C/D: the check after choosing (posting shows the claim): skip = a deferral call ----
-    if (cond === 'C' || cond === 'D') {
+    if (cond === 'C' || dLike) {
       const sameTask = now.some((p) => p.item === it.id);
       const twinShown = isTwin(it) && [...now, ...recent].some((p) => p.item === twinOf(it).id);
       let defer = sameTask;
-      if (!defer && twinShown) defer = rnd() < sp(it, cond === 'D' ? C.pSpotRecentDup : C.pSpotNowDup);
+      if (!defer && twinShown && marked.has(it.unit)) defer = !onMain(twinOf(it)); // marked: wait for the first half, then alias it
+      else if (!defer && twinShown) defer = rnd() < sp(it, dLike ? C.pSpotRecentDup : C.pSpotNowDup);
       if (defer) { m.deferrals++; return spend(C.deferS, () => call(a)); }
     }
     // ---- build ----
@@ -137,7 +146,9 @@ export function run(cond, seed = 1, over = {}) {
     const post = board ? { agent: a.id, item: it.id, t: t + C.pickS } : null;
     if (post) posts.push(post);
     const base = head;
-    const work = C.pickS + (C.boardS[cond] || 0) + logn(C.workMedS, C.workSigma);
+    const aliasNow = marked.has(it.unit) && isTwin(it) && onMain(twinOf(it));
+    if (aliasNow) it.alias = true;
+    const work = C.pickS + (C.boardS[cond] || 0) + logn(C.workMedS * (aliasNow ? C.aliasWork : 1), C.workSigma);
     const finishPost = () => { building.delete(a.id); if (post) post.end = t; };
     const tryPush = (myBase) => {
       if (onMain(it)) { // the same task landed while I built: push rejected, the rebase conflicts on my own
@@ -149,7 +160,7 @@ export function run(cond, seed = 1, over = {}) {
       if (isTwin(it) && onMain(twinOf(it)) && it.dropChecked == null) {
         it.dropChecked = true;
         // D's rule: "make yours a one-line alias of theirs once theirs is on main" (lands as an alias, not a second copy)
-        if (cond === 'D' && rnd() < sp(it, C.pSpotRecentDup)) it.alias = true;
+        if (marked.has(it.unit) || (dLike && rnd() < sp(it, C.pSpotRecentDup))) it.alias = true;
         else
         if (rnd() < C.pDropDupAtRebase) { m.wasted++; m.wastedS += t - t0; wastedStarts.push(t0); finishPost(); return spend(1, () => call(a)); }
       }
@@ -166,7 +177,7 @@ export function run(cond, seed = 1, over = {}) {
     };
     at(work, () => tryPush(base));
   }
-  agents.forEach((a) => at(rnd() * 3, () => call(a)));
+  agents.forEach((a, k) => at(cond === 'E' ? k * C.staggerS : rnd() * 3, () => call(a)));
   while (heap.length && heap[0].t < 4 * 3600) { const e = heap.shift(); t = e.t; e.fn(); }
   const wall = Math.max(...agents.map((a) => a.endT || t));
   return { cond, seed, wallS: Math.round(wall), ...m, wastedEarly: wastedStarts.filter((x) => x < wall / 2).length, agentS: Math.round(m.agentS), wastedS: Math.round(m.wastedS), unitsLeft: units.filter((u) => !u.landed).length };
@@ -210,7 +221,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       // (chains), and 4 of the 5 pairs worded far apart (only dates/calendar was aliased reliably).
       ['post-hoc: measured size, 6 needs, 4 far pairs', { agents: 10, tasks: 30, dupPairs: 5, needs: 6, workMedS: 26 * 1.6, farPairs: 4, farRecognition: 0.1 }],
     ];
-    for (const [label, over] of variants) for (const cond of 'AD') {
+    if (mode === 'w3a') variants.splice(0, variants.length,
+      // qb9's W3a (PLAN2.md): 20 agents, ~60 tasks, 10 far-worded pairs, chains + hot files; task size as scenario 2
+      ['W3a: 20 agents, 60 tasks, 10 far pairs, s2 size, 12 needs', { agents: 20, tasks: 60, dupPairs: 10, needs: 12, workMedS: 26 * 1.6, farPairs: 10, farRecognition: 0.1 }],
+      ['W3a: same, 6 of 10 pairs far', { agents: 20, tasks: 60, dupPairs: 10, needs: 12, workMedS: 26 * 1.6, farPairs: 6, farRecognition: 0.1 }],
+      ['W3a: same, x1.5 bigger tasks', { agents: 20, tasks: 60, dupPairs: 10, needs: 12, workMedS: 26 * 2.4, farPairs: 10, farRecognition: 0.1 }]);
+    for (const [label, over] of variants) for (const cond of (mode === 'scale' ? 'ADE' : 'ADE')) {
       const c = cell(cond, SEEDS, over); res.rows.push({ label, cond, over, sim: c });
       console.log(`${label} | ${cond} ` + KEYS.map((k) => `${k} ${fmt(c[k])}`).join(' | ') + ` | P(dup twice) ${c.pDupAny}${c.unfinished ? ` | unfinished ${c.unfinished}` : ''}`);
     }
