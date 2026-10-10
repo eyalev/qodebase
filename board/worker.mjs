@@ -51,9 +51,10 @@ export class Board extends DurableObject {
       return json(e);
     }
     if (verb === 'who') {
-      const since = Date.now() - TTL_MS;
+      const recent = Math.min(24 * 3_600_000, Number(url.searchParams.get('recent')) || 0);
+      const since = Date.now() - Math.max(TTL_MS, recent);
       const rows = this.sql.exec(`SELECT body FROM ev WHERE ts > ? ORDER BY ts`, since).toArray().map((r) => JSON.parse(r.body));
-      return json(nowView(rows, { me: url.searchParams.get('me'), files: url.searchParams.get('files') || '', area: url.searchParams.get('area') }));
+      return json(nowView(rows, { me: url.searchParams.get('me'), files: url.searchParams.get('files') || '', area: url.searchParams.get('area'), recent }));
     }
     if (verb === 'tail') {
       const n = Math.min(500, Math.max(1, Number(url.searchParams.get('n')) || 20));

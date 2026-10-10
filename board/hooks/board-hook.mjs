@@ -46,8 +46,9 @@ try {
   if (ev === 'UserPromptSubmit') {
     const intent = clip(input.prompt, 120);
     state.intent = intent; delete state.explicit; saveState();   // a new prompt = a new task
-    const [, rows] = await Promise.all([post('started', intent, []), b.who({ me: agent })]);
-    if (rows.length) out(ev, `Agent board — other agents working now (advisory, not locks):\n${rows.slice(0, 5).map(fmtRow).join('\n')}`);
+    const [, rows] = await Promise.all([post('started', intent, []), b.who({ me: agent, recent: 30 * 60_000 })]);
+    const live = rows.filter((r) => !r.done).slice(0, 5), done = rows.filter((r) => r.done).slice(0, 5);
+    if (live.length || done.length) out(ev, `Agent board (advisory, not locks):${live.length ? `\nWorking now:\n${live.map(fmtRow).join('\n')}` : ''}${done.length ? `\nFinished in the last 30 min:\n${done.map(fmtRow).join('\n')}` : ''}`);
   } else if (ev === 'PreToolUse' && /^(Edit|Write|MultiEdit)$/.test(input.tool_name || '')) {
     const file = rel(input.tool_input?.file_path);
     if (file) {
@@ -66,8 +67,19 @@ try {
   } else if (ev === 'PostToolUse' && input.tool_name === 'Bash') {
     const cmd = String(input.tool_input?.command || '');
     // Only the fact and the commit subject; never the command itself.
-    if (/\bgit\b[^|;&]*\bcommit\b/.test(cmd)) await post('committed', clip(git('log', '-1', '--format=%s'), 120), git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n').filter(Boolean));
-    else if (/\bgit\b[^|;&]*\bpush\b/.test(cmd)) await post('committed', clip(git('log', '-1', '--format=%s'), 120), [], 'pushed');
+    // A pull/rebase moves HEAD to other agents' commits (qb9: 'agent3 committed T11' that agent5 made), so:
+    // `git commit` posts only when HEAD is new since the last post AND was committed in the last 2 min;
+    // `git push` posts only when this agent has a committed-but-unpushed subject.
+    const head = git('rev-parse', 'HEAD'), fresh = Date.now() / 1000 - Number(git('log', '-1', '--format=%ct') || 0) < 120;
+    if (/(^|[;&|(]\s*)git\s+(-\S+\s+\S+\s+)*commit\b/.test(cmd) && head && head !== state.lastHead && fresh) {
+      const subject = clip(git('log', '-1', '--format=%s'), 120);
+      state.lastHead = head; state.unpushed = subject; saveState();
+      await post('committed', subject, git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n').filter(Boolean));
+    }
+    if (/(^|[;&|(]\s*)git\s+(-\S+\s+\S+\s+)*push\b/.test(cmd) && state.unpushed && !/rejected|error|fatal/i.test(JSON.stringify(input.tool_response || '').slice(0, 4000))) {
+      const subject = state.unpushed; delete state.unpushed; saveState();
+      await post('committed', subject, [], 'pushed');
+    }
   } else if (ev === 'Stop') {
     await post('done', intentNow(), []);
   }

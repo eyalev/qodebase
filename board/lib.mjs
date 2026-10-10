@@ -26,7 +26,34 @@ const touches = (a, b) => a === b || a.startsWith(b.replace(/\/?$/, '/')) || b.s
 
 /** The now-view: one row per live agent (last event within TTL), newest first, without `me`.
  *  `files` on a row = every file that agent named in the TTL window (not only its last event). */
-export function nowView(events, { me = null, files = [], area = null, now = Date.now(), ttl = TTL_MS } = {}) {
+export const parseDur = (s, d = 30 * 60_000) => { const m = String(s ?? '').match(/^(\d+(?:\.\d+)?)\s*(s|m|h)?$/); return m ? Number(m[1]) * { s: 1e3, m: 6e4, h: 36e5 }[m[2] || 'm'] : d; };
+const FINISHED = new Set(['done', 'committed', 'landed']);
+
+/** recent (ms): also list intents others finished (done/committed/landed) in that window, one row per
+ *  agent + intent, marked done:true, after the live rows (qb9: a task landed under another wording
+ *  15 s earlier was invisible once its agent moved on). */
+export function nowView(events, { me = null, files = [], area = null, now = Date.now(), ttl = TTL_MS, recent = 0 } = {}) {
+  const live = liveView(events, { me, now, ttl });
+  const done = [];
+  if (recent > 0) {
+    const seen = new Set(live.map((r) => `${r.agent}\n${r.intent}`));   // already shown as live
+    for (const e of [...events].sort((a, b) => b.ts - a.ts)) {
+      if (!e || now - e.ts > recent || e.agent === me || !FINISHED.has(e.kind) || !e.intent) continue;
+      const k = `${e.agent}\n${e.intent}`; if (seen.has(k)) continue; seen.add(k);
+      done.push({ ...e, done: true, ageS: Math.round((now - e.ts) / 1000) });
+    }
+  }
+  return filterRows([...live, ...done], files, area);
+}
+
+function filterRows(out, files, area) {
+  const want = normFiles(files);
+  if (want.length) out = out.filter((r) => r.files.some((f) => want.some((w) => touches(f, w))));
+  if (area) { const a = area.toLowerCase(); out = out.filter((r) => (r.intent || '').toLowerCase().includes(a) || r.files.some((f) => f.toLowerCase().includes(a))); }
+  return out;
+}
+
+function liveView(events, { me, now, ttl }) {
   const rows = new Map();
   for (const e of events) {
     if (!e || now - e.ts > ttl || e.agent === me) continue;
@@ -35,14 +62,10 @@ export function nowView(events, { me = null, files = [], area = null, now = Date
     for (const f of e.files || []) r.files.add(f);
     rows.set(e.agent, r);
   }
-  let out = [...rows.values()].map((r) => ({ ...r.last, files: [...r.files], ageS: Math.round((now - r.last.ts) / 1000) }));
-  const want = normFiles(files);
-  if (want.length) out = out.filter((r) => r.files.some((f) => want.some((w) => touches(f, w))));
-  if (area) { const a = area.toLowerCase(); out = out.filter((r) => (r.intent || '').toLowerCase().includes(a) || r.files.some((f) => f.toLowerCase().includes(a))); }
-  return out.sort((x, y) => y.ts - x.ts);
+  return [...rows.values()].map((r) => ({ ...r.last, files: [...r.files], ageS: Math.round((now - r.last.ts) / 1000) })).sort((x, y) => y.ts - x.ts);
 }
 
-export const fmtRow = (r) => `${r.agent} ${r.kind}${r.ageS != null ? ` ${r.ageS}s ago` : ''}: ${clip(r.intent, 90) || "-"}${r.files?.length ? ` [${r.files.slice(0, 5).join(', ')}${r.files.length > 5 ? ', …' : ''}]` : ''}${r.status ? ` (${r.status})` : ''}`;
+export const fmtRow = (r) => `${r.done ? 'FINISHED ' : ''}${r.agent} ${r.kind}${r.ageS != null ? ` ${r.ageS}s ago` : ''}: ${clip(r.intent, 90) || "-"}${r.files?.length ? ` [${r.files.slice(0, 5).join(', ')}${r.files.length > 5 ? ', …' : ''}]` : ''}${r.status ? ` (${r.status})` : ''}`;
 
 // Per-agent state shared by the hook and the CLI (the hook's debounce, and the agent's own intent).
 export const stateDir = (env = process.env) => env.BOARD_STATE_DIR || join(homedir(), '.cache', 'qb-board');
@@ -53,7 +76,7 @@ export function writeState(agent, st, env) { try { mkdirSync(stateDir(env), { re
 // ---- backends ------------------------------------------------------------------------------
 function fileBackend(path) {
   // Read only the tail: the now-view needs the last TTL window, not the whole history.
-  const readTail = (bytes = 512 * 1024) => {
+  const readTail = (bytes = 4 * 1024 * 1024) => {
     if (!existsSync(path)) return [];
     const fd = openSync(path, 'r');
     try {
@@ -87,7 +110,7 @@ function httpBackend(url, token) {
   };
   return {
     post: (e) => call('/events', { method: 'POST', body: JSON.stringify(e) }),
-    who: ({ me, files, area } = {}) => call(`/who?${new URLSearchParams({ ...(me ? { me } : {}), ...(files?.length ? { files: normFiles(files).join(',') } : {}), ...(area ? { area } : {}) })}`),
+    who: ({ me, files, area, recent } = {}) => call(`/who?${new URLSearchParams({ ...(me ? { me } : {}), ...(recent ? { recent: String(recent) } : {}), ...(files?.length ? { files: normFiles(files).join(',') } : {}), ...(area ? { area } : {}) })}`),
     tail: (n = 20) => call(`/tail?n=${n}`),
   };
 }

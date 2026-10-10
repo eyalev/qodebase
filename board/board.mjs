@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 // board post <kind> [--intent T] [--files a,b] [--status S]
-// board who [--files a,b] [--area X] [--json]     live agents (last 10 min), not yourself
+// board who [--files a,b] [--area X] [--recent 30m] [--json]  live agents (last 10 min), not yourself;
+//   --recent also lists what others finished (done/committed/landed) in that window, marked FINISHED
 // board tail [-n N] [--json]
 // Env: BOARD_AGENT (who you are), BOARD_FILE=<jsonl> or BOARD_URL=<…/b/<name>> + BOARD_TOKEN.
-import { backend, makeEvent, fmtRow, readState, writeState } from './lib.mjs';
+import { backend, makeEvent, fmtRow, readState, writeState, parseDur } from './lib.mjs';
 
 const [cmd, ...rest] = process.argv.slice(2);
 const opt = (k, d = null) => { const i = rest.indexOf(k); return i >= 0 && i + 1 < rest.length ? rest[i + 1] : d; };
 const has = (k) => rest.includes(k);
-const usage = () => { console.error('usage: board post <kind> [--intent T] [--files a,b] [--status S] | who [--files a,b] [--area X] [--json] | tail [-n N] [--json]\nenv: BOARD_AGENT, BOARD_FILE or BOARD_URL+BOARD_TOKEN'); process.exit(2); };
+const usage = () => { console.error('usage: board post <kind> [--intent T] [--files a,b] [--status S] | who [--files a,b] [--area X] [--recent 30m] [--json] | tail [-n N] [--json]\nenv: BOARD_AGENT, BOARD_FILE or BOARD_URL+BOARD_TOKEN'); process.exit(2); };
 
 const b = backend();
 if (!b || !cmd) usage();
@@ -21,7 +22,7 @@ try {
     if (kind === 'started' && e.intent) { const st = readState(me); st.explicit = e.intent; writeState(me, st); }
     console.log(has('--json') ? JSON.stringify(e) : 'posted');
   } else if (cmd === 'who') {
-    const rows = await b.who({ me, files: opt('--files', ''), area: opt('--area') });
+    const rows = await b.who({ me, files: opt('--files', ''), area: opt('--area'), recent: has('--recent') ? parseDur(opt('--recent'), 30 * 60_000) : 0 });
     if (has('--json')) console.log(JSON.stringify(rows));
     else console.log(rows.length ? rows.map(fmtRow).join('\n') : 'nobody else is live');
   } else if (cmd === 'tail') {
