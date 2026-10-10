@@ -317,7 +317,7 @@ async function main() {
       const r = results.get(c.id) || { id: c.id, ok: false, why: 'not applied' };
       const landedOk = r.ok && pushed;
       return { id: c.id, landed: landedOk, how: landedOk ? r.how : null, commit: landedOk ? r.commit : null, agentCommit: c.commit, files: r.files || [], conflicts: r.conflicts || [],
-        unhandled: r.unhandled || [], handled: r.handled || [], bounced: !!r.bounced, llm: r.llm || null, reviewedDiff: landedOk ? r.reviewedDiff || null : null, checks: r.checks || null, why: r.why || (r.ok && !pushed ? (stale ? 'main moved: retry' : 'push failed') : ''), diff: landedOk ? r.diff : null };
+        unhandled: r.unhandled || [], handled: r.handled || [], bounced: !!r.bounced, empty: !!r.empty, llm: r.llm || null, reviewedDiff: landedOk ? r.reviewedDiff || null : null, checks: r.checks || null, why: r.why || (r.ok && !pushed ? (stale ? 'main moved: retry' : 'push failed') : ''), diff: landedOk ? r.diff : null };
     }),
   };
   console.log('QB_RESULT ' + JSON.stringify(out));
