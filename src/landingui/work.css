@@ -221,7 +221,7 @@
 .lw .bh .dim{font-weight:400}
 .lw .bwarn,.lw .bdup{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:14px}
 .lw .bwarn li,.lw .bdup li{display:flex;gap:10px;align-items:baseline}
-.lw .hu{flex:none;display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:color-mix(in srgb,var(--busy) 18%,transparent);color:var(--busy);font-size:12px;font-weight:600;transform:translateY(2px)}
+.lw .hu{flex:none;display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--chip);color:var(--dim);font-size:12px;font-weight:600;transform:translateY(2px)}
 .lw .dupe{flex:none;display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:color-mix(in srgb,var(--acc) 15%,transparent);color:var(--acc);font-size:13px;font-weight:600;transform:translateY(2px)}
 .lw details.bdone{margin-top:8px}
 .lw details.bdone summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;display:flex;align-items:center;list-style:none}
@@ -230,3 +230,9 @@
 .lw .bh1{margin-top:4px}
 .lw .bwarn+.bh,.lw .bdup+.board,.lw .bwarn+.board{margin-top:12px}
 .lw .board{grid-template-columns:1fr}@media (min-width:1000px){.lw #board .board{grid-template-columns:1fr 1fr}}
+.lw .bnote{margin:-4px 0 6px}
+.lw .bwarn,.lw .bdup{max-width:62ch}
+.lw .bdup{margin-top:8px}
+.lw details.bdone summary::before{content:'';width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;margin-right:8px;transition:transform 120ms}
+.lw details.bdone[open] summary::before{transform:rotate(90deg)}
+@media (min-width:1000px){.lw #board .board{align-items:start}}
