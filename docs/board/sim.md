@@ -260,5 +260,20 @@ What to expect:
 - **Risk:** git contention on the hot files at 20 agents (A: ~460 rejected pushes). A run that stalls
   goes out of the timing, as before.
 
+**At qb9's ~1 s stagger** (19 s in total, `stagger_s` logged per run; manager, 2026-10-10), E with
+10 far pairs gives:
+
+| | E at 5 s (above) | E at 1 s |
+|---|---|---|
+| sim wall time | 412 [367–485] s | 384 [344–451] s |
+| corrected wall time | ~345 s | **~323 s, −24% vs A** |
+| corrected agent-minutes | ~96 | ~100, −25% vs A |
+| duplicate pairs built twice | 0 [0–1] | 0 [0–1] |
+| wasted calls | 10 | 12 |
+
+The tighter stagger wins back most of the stagger's wall time, and E ends up level with D (390 s).
+It costs a few more early collisions: 2 more wasted calls and ~3% more agent time. Duplicates do not
+change, because the dedupe pass does that work, not the stagger.
+
 Reproduce: `node sim/board/calls.mjs w3a --seeds 300` (and `scale` for the scenario-2 rows); outputs go to
 `sim/board/out/calls-*.json` and `~/.local/share/qbsim-bench/board.jsonl`.
