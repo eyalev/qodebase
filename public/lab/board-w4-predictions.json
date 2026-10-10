@@ -1,64 +1,65 @@
 {
- "generated": "2026-10-10T16:58:48.518Z",
+ "generated": "2026-10-10T16:59:54.140Z",
  "by": "qb4",
  "simVersion": "lab-0.11",
  "seeds": 200,
- "note": "Board round 2 W4b, written before the W4c runs (docs/board/sim.md (e)). The runner records the same numbers itself when the plan variant carries board (and crossDedupe for two-teams).",
+ "note": "Board round 2 W4b, written before the W4c runs (docs/board/sim.md (e)). The runner records the same numbers itself when the plan variant carries board (and crossDedupe for two-teams). Board-off twins calibrated to qb5s scorer on s2 (A 4,4,3 of 5).",
  "rows": [
   {
    "scenario": "backlog",
    "variant": {
     "planner": "haiku",
-    "coders": 6,
     "coderModel": "haiku",
-    "reviewers": 0,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 0,
+    "coders": 6,
     "board": false
    },
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
    "predicted": {
     "landed": 30,
-    "wallS": 731,
-    "apiUsdStd": 1.23,
+    "wallS": 721,
+    "apiUsdStd": 1.22,
     "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     612,
-     939
+     603,
+     1009
     ],
     "apiUsdStd": [
-     0.96,
-     1.58
+     1.01,
+     1.64
     ],
     "quality": [
-     87.5,
+     85,
      100
     ]
    },
-   "builtTwice": 5,
+   "builtTwice": 4.1,
    "samePickWasted": 1.2,
-   "bounces": 1.6
+   "bounces": 1.4,
+   "dropped": 0
   },
   {
    "scenario": "backlog",
    "variant": {
     "planner": "haiku",
-    "coders": 6,
     "coderModel": "haiku",
-    "reviewers": 0,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 0,
+    "coders": 6,
     "board": true
    },
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
@@ -72,7 +73,7 @@
    "range": {
     "wallS": [
      609,
-     1018
+     983
     ],
     "apiUsdStd": [
      1.09,
@@ -85,68 +86,70 @@
    },
    "builtTwice": 0.1,
    "samePickWasted": 0.5,
-   "bounces": 1.4
+   "bounces": 1.3,
+   "dropped": 0
   },
   {
    "scenario": "backlog",
    "variant": {
     "planner": "haiku",
-    "coders": 12,
     "coderModel": "haiku",
-    "reviewers": 0,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 0,
+    "coders": 12,
     "board": false
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
    "predicted": {
     "landed": 30,
-    "wallS": 711,
-    "apiUsdStd": 1.28,
+    "wallS": 694,
+    "apiUsdStd": 1.26,
     "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     598,
-     1057
+     603,
+     950
     ],
     "apiUsdStd": [
-     1.02,
-     1.6
+     1.01,
+     1.66
     ],
     "quality": [
-     85,
+     82.5,
      100
     ]
    },
-   "builtTwice": 5,
-   "samePickWasted": 2.7,
-   "bounces": 1.6
+   "builtTwice": 4.1,
+   "samePickWasted": 2.6,
+   "bounces": 1.3,
+   "dropped": 0
   },
   {
    "scenario": "backlog",
    "variant": {
     "planner": "haiku",
-    "coders": 12,
     "coderModel": "haiku",
-    "reviewers": 0,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 0,
+    "coders": 12,
     "board": true
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
    "predicted": {
     "landed": 30,
-    "wallS": 713,
+    "wallS": 715,
     "apiUsdStd": 1.29,
     "quality": 97.5,
     "simVersion": "lab-0.11"
@@ -158,7 +161,7 @@
     ],
     "apiUsdStd": [
      1.07,
-     1.67
+     1.79
     ],
     "quality": [
      85,
@@ -167,68 +170,70 @@
    },
    "builtTwice": 0.1,
    "samePickWasted": 1,
-   "bounces": 1.3
+   "bounces": 1.4,
+   "dropped": 0
   },
   {
    "scenario": "backlog",
    "variant": {
     "planner": "haiku",
-    "coders": 6,
     "coderModel": "haiku",
-    "reviewers": 1,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 1,
+    "coders": 6,
     "board": false
    },
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
    "predicted": {
     "landed": 30,
-    "wallS": 1840,
-    "apiUsdStd": 2.3,
+    "wallS": 1844,
+    "apiUsdStd": 2.29,
     "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     1534,
-     2285
+     1474,
+     2260
     ],
     "apiUsdStd": [
      1.93,
-     2.85
+     2.8
     ],
     "quality": [
-     90,
+     87.5,
      100
     ]
    },
-   "builtTwice": 5,
-   "samePickWasted": 1.5,
-   "bounces": 1.3
+   "builtTwice": 4.1,
+   "samePickWasted": 1.6,
+   "bounces": 1.5,
+   "dropped": 0
   },
   {
    "scenario": "backlog",
    "variant": {
     "planner": "haiku",
-    "coders": 6,
     "coderModel": "haiku",
-    "reviewers": 1,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 1,
+    "coders": 6,
     "board": true
    },
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
    "predicted": {
     "landed": 30,
-    "wallS": 1870,
+    "wallS": 1867,
     "apiUsdStd": 2.35,
     "quality": 97.5,
     "simVersion": "lab-0.11"
@@ -243,68 +248,70 @@
      2.71
     ],
     "quality": [
-     87.5,
+     90,
      100
     ]
    },
    "builtTwice": 0.1,
-   "samePickWasted": 0.5,
-   "bounces": 1.3
+   "samePickWasted": 0.6,
+   "bounces": 1.3,
+   "dropped": 0
   },
   {
    "scenario": "backlog",
    "variant": {
     "planner": "haiku",
-    "coders": 12,
     "coderModel": "haiku",
-    "reviewers": 1,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 1,
+    "coders": 12,
     "board": false
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
    "predicted": {
     "landed": 30,
-    "wallS": 1836,
-    "apiUsdStd": 2.35,
+    "wallS": 1844,
+    "apiUsdStd": 2.34,
     "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     1443,
-     2403
+     1457,
+     2481
     ],
     "apiUsdStd": [
-     1.99,
-     2.87
+     2.02,
+     2.84
     ],
     "quality": [
-     90,
+     87.5,
      100
     ]
    },
-   "builtTwice": 5,
+   "builtTwice": 4.1,
    "samePickWasted": 3.2,
-   "bounces": 1.6
+   "bounces": 1.5,
+   "dropped": 0
   },
   {
    "scenario": "backlog",
    "variant": {
     "planner": "haiku",
-    "coders": 12,
     "coderModel": "haiku",
-    "reviewers": 1,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 1,
+    "coders": 12,
     "board": true
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
@@ -318,7 +325,7 @@
    "range": {
     "wallS": [
      1412,
-     2323
+     2344
     ],
     "apiUsdStd": [
      2,
@@ -331,103 +338,106 @@
    },
    "builtTwice": 0.1,
    "samePickWasted": 1.1,
-   "bounces": 1.4
+   "bounces": 1.4,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 6,
     "coderModel": "haiku",
-    "reviewers": 0,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 0,
+    "coders": 6,
     "board": false
    },
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
    "predicted": {
     "landed": 30,
-    "wallS": 731,
-    "apiUsdStd": 1.38,
+    "wallS": 721,
+    "apiUsdStd": 1.37,
     "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     612,
-     939
+     603,
+     1009
     ],
     "apiUsdStd": [
-     1.11,
-     1.73
+     1.16,
+     1.79
     ],
     "quality": [
-     87.5,
+     85,
      100
     ]
    },
-   "builtTwice": 5,
+   "builtTwice": 4.1,
    "samePickWasted": 1.2,
-   "bounces": 1.6
+   "bounces": 1.4,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 6,
     "coderModel": "haiku",
-    "reviewers": 0,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 0,
+    "coders": 6,
     "board": true
    },
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
    "predicted": {
     "landed": 30,
-    "wallS": 741,
-    "apiUsdStd": 1.48,
-    "quality": 95,
+    "wallS": 748,
+    "apiUsdStd": 1.47,
+    "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     629,
-     965
+     651,
+     939
     ],
     "apiUsdStd": [
-     1.23,
-     1.72
+     1.26,
+     1.75
     ],
     "quality": [
      87.5,
      100
     ]
    },
-   "builtTwice": 4.6,
-   "samePickWasted": 0.4,
-   "bounces": 1.5
+   "builtTwice": 3.7,
+   "samePickWasted": 0.3,
+   "bounces": 1.5,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 6,
     "coderModel": "haiku",
-    "reviewers": 0,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 0,
+    "coders": 6,
     "board": true,
     "crossDedupe": true
    },
@@ -442,7 +452,7 @@
    "range": {
     "wallS": [
      614,
-     1023
+     988
     ],
     "apiUsdStd": [
      1.24,
@@ -455,62 +465,64 @@
    },
    "builtTwice": 0.1,
    "samePickWasted": 0.5,
-   "bounces": 1.4
+   "bounces": 1.3,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 12,
     "coderModel": "haiku",
-    "reviewers": 0,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 0,
+    "coders": 12,
     "board": false
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
    "predicted": {
     "landed": 30,
-    "wallS": 711,
-    "apiUsdStd": 1.43,
+    "wallS": 694,
+    "apiUsdStd": 1.41,
     "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     598,
-     1057
+     603,
+     950
     ],
     "apiUsdStd": [
-     1.17,
-     1.75
+     1.16,
+     1.81
     ],
     "quality": [
-     85,
+     82.5,
      100
     ]
    },
-   "builtTwice": 5,
-   "samePickWasted": 2.7,
-   "bounces": 1.6
+   "builtTwice": 4.1,
+   "samePickWasted": 2.6,
+   "bounces": 1.3,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 12,
     "coderModel": "haiku",
-    "reviewers": 0,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 0,
+    "coders": 12,
     "board": true
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
@@ -518,47 +530,48 @@
     "landed": 30,
     "wallS": 718,
     "apiUsdStd": 1.49,
-    "quality": 95,
+    "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     617,
-     978
+     616,
+     1038
     ],
     "apiUsdStd": [
-     1.24,
-     1.89
+     1.28,
+     1.81
     ],
     "quality": [
-     82.5,
+     87.5,
      100
     ]
    },
-   "builtTwice": 4.6,
-   "samePickWasted": 0.8,
-   "bounces": 1.5
+   "builtTwice": 3.7,
+   "samePickWasted": 0.9,
+   "bounces": 1.5,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 12,
     "coderModel": "haiku",
-    "reviewers": 0,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 0,
+    "coders": 12,
     "board": true,
     "crossDedupe": true
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
    "predicted": {
     "landed": 30,
-    "wallS": 718,
+    "wallS": 720,
     "apiUsdStd": 1.45,
     "quality": 97.5,
     "simVersion": "lab-0.11"
@@ -570,7 +583,7 @@
     ],
     "apiUsdStd": [
      1.23,
-     1.82
+     1.95
     ],
     "quality": [
      85,
@@ -579,110 +592,113 @@
    },
    "builtTwice": 0.1,
    "samePickWasted": 1,
-   "bounces": 1.3
+   "bounces": 1.4,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 6,
     "coderModel": "haiku",
-    "reviewers": 1,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 1,
+    "coders": 6,
     "board": false
    },
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
    "predicted": {
     "landed": 30,
-    "wallS": 1840,
-    "apiUsdStd": 2.45,
+    "wallS": 1844,
+    "apiUsdStd": 2.44,
     "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     1534,
-     2285
+     1474,
+     2260
     ],
     "apiUsdStd": [
      2.08,
-     3
+     2.95
+    ],
+    "quality": [
+     87.5,
+     100
+    ]
+   },
+   "builtTwice": 4.1,
+   "samePickWasted": 1.6,
+   "bounces": 1.5,
+   "dropped": 0
+  },
+  {
+   "scenario": "two-teams",
+   "variant": {
+    "planner": "haiku",
+    "coderModel": "haiku",
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "claims": false,
+    "dedupe": true,
+    "policy": "intent",
+    "trainMax": 8,
+    "reviewers": 1,
+    "coders": 6,
+    "board": true
+   },
+   "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
+   "predicted": {
+    "landed": 30,
+    "wallS": 1865,
+    "apiUsdStd": 2.54,
+    "quality": 97.5,
+    "simVersion": "lab-0.11"
+   },
+   "range": {
+    "wallS": [
+     1550,
+     2373
+    ],
+    "apiUsdStd": [
+     2.24,
+     3.12
     ],
     "quality": [
      90,
      100
     ]
    },
-   "builtTwice": 5,
-   "samePickWasted": 1.5,
-   "bounces": 1.3
-  },
-  {
-   "scenario": "two-teams",
-   "variant": {
-    "planner": "haiku",
-    "coders": 6,
-    "coderModel": "haiku",
-    "reviewers": 1,
-    "reviewerModel": "haiku",
-    "reviewStyle": "read",
-    "policy": "intent",
-    "claims": false,
-    "dedupe": true,
-    "trainMax": 8,
-    "board": true
-   },
-   "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
-   "predicted": {
-    "landed": 30,
-    "wallS": 1854,
-    "apiUsdStd": 2.55,
-    "quality": 97.5,
-    "simVersion": "lab-0.11"
-   },
-   "range": {
-    "wallS": [
-     1457,
-     2317
-    ],
-    "apiUsdStd": [
-     2.16,
-     2.98
-    ],
-    "quality": [
-     85,
-     100
-    ]
-   },
-   "builtTwice": 4.6,
+   "builtTwice": 3.7,
    "samePickWasted": 0.5,
-   "bounces": 1.4
+   "bounces": 1.4,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 6,
     "coderModel": "haiku",
-    "reviewers": 1,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 1,
+    "coders": 6,
     "board": true,
     "crossDedupe": true
    },
    "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
    "predicted": {
     "landed": 30,
-    "wallS": 1875,
+    "wallS": 1872,
     "apiUsdStd": 2.5,
     "quality": 97.5,
     "simVersion": "lab-0.11"
@@ -697,109 +713,112 @@
      2.86
     ],
     "quality": [
-     87.5,
+     90,
      100
     ]
    },
    "builtTwice": 0.1,
-   "samePickWasted": 0.5,
-   "bounces": 1.3
+   "samePickWasted": 0.6,
+   "bounces": 1.3,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 12,
     "coderModel": "haiku",
-    "reviewers": 1,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 1,
+    "coders": 12,
     "board": false
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8",
    "predicted": {
     "landed": 30,
-    "wallS": 1836,
-    "apiUsdStd": 2.5,
+    "wallS": 1844,
+    "apiUsdStd": 2.49,
     "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     1443,
-     2403
+     1457,
+     2481
     ],
     "apiUsdStd": [
-     2.14,
-     3.02
+     2.17,
+     2.99
     ],
     "quality": [
-     90,
+     87.5,
      100
     ]
    },
-   "builtTwice": 5,
+   "builtTwice": 4.1,
    "samePickWasted": 3.2,
-   "bounces": 1.6
+   "bounces": 1.5,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 12,
     "coderModel": "haiku",
-    "reviewers": 1,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 1,
+    "coders": 12,
     "board": true
    },
    "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=8;board=1",
    "predicted": {
     "landed": 30,
-    "wallS": 1862,
-    "apiUsdStd": 2.57,
+    "wallS": 1859,
+    "apiUsdStd": 2.54,
     "quality": 97.5,
     "simVersion": "lab-0.11"
    },
    "range": {
     "wallS": [
-     1456,
-     2405
+     1488,
+     2407
     ],
     "apiUsdStd": [
-     2.16,
-     3.18
+     2.18,
+     2.96
     ],
     "quality": [
      90,
      100
     ]
    },
-   "builtTwice": 4.6,
+   "builtTwice": 3.7,
    "samePickWasted": 1,
-   "bounces": 1.6
+   "bounces": 1.5,
+   "dropped": 0
   },
   {
    "scenario": "two-teams",
    "variant": {
     "planner": "haiku",
-    "coders": 12,
     "coderModel": "haiku",
-    "reviewers": 1,
     "reviewerModel": "haiku",
     "reviewStyle": "read",
-    "policy": "intent",
     "claims": false,
     "dedupe": true,
+    "policy": "intent",
     "trainMax": 8,
+    "reviewers": 1,
+    "coders": 12,
     "board": true,
     "crossDedupe": true
    },
@@ -814,7 +833,7 @@
    "range": {
     "wallS": [
      1417,
-     2328
+     2349
     ],
     "apiUsdStd": [
      2.15,
@@ -827,7 +846,344 @@
    },
    "builtTwice": 0.1,
    "samePickWasted": 1.1,
-   "bounces": 1.4
+   "bounces": 1.4,
+   "dropped": 0
+  },
+  {
+   "scenario": "backlog",
+   "variant": {
+    "planner": "haiku",
+    "coderModel": "haiku",
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "claims": false,
+    "dedupe": true,
+    "policy": "github",
+    "trainMax": 1,
+    "reviewers": 0,
+    "coders": 6,
+    "board": false
+   },
+   "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=github;claims=0;dedupe=1;trainMax=1",
+   "predicted": {
+    "landed": 29,
+    "wallS": 3508,
+    "apiUsdStd": 4.36,
+    "quality": 78.3,
+    "simVersion": "lab-0.11"
+   },
+   "range": {
+    "wallS": [
+     2461,
+     4867
+    ],
+    "apiUsdStd": [
+     2.33,
+     6.92
+    ],
+    "quality": [
+     68.3,
+     100
+    ]
+   },
+   "builtTwice": 3,
+   "samePickWasted": 14.5,
+   "bounces": 27.1,
+   "dropped": 1.1
+  },
+  {
+   "scenario": "backlog",
+   "variant": {
+    "planner": "haiku",
+    "coderModel": "haiku",
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "claims": false,
+    "dedupe": true,
+    "policy": "github",
+    "trainMax": 1,
+    "reviewers": 0,
+    "coders": 6,
+    "board": true
+   },
+   "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=github;claims=0;dedupe=1;trainMax=1;board=1",
+   "predicted": {
+    "landed": 30,
+    "wallS": 2912,
+    "apiUsdStd": 4.34,
+    "quality": 97.5,
+    "simVersion": "lab-0.11"
+   },
+   "range": {
+    "wallS": [
+     2276,
+     4195
+    ],
+    "apiUsdStd": [
+     2.73,
+     6.7
+    ],
+    "quality": [
+     75.8,
+     100
+    ]
+   },
+   "builtTwice": 0.1,
+   "samePickWasted": 4,
+   "bounces": 16.6,
+   "dropped": 0
+  },
+  {
+   "scenario": "backlog",
+   "variant": {
+    "planner": "haiku",
+    "coderModel": "haiku",
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "claims": false,
+    "dedupe": true,
+    "policy": "github",
+    "trainMax": 1,
+    "reviewers": 0,
+    "coders": 12,
+    "board": false
+   },
+   "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=github;claims=0;dedupe=1;trainMax=1",
+   "predicted": {
+    "landed": 29,
+    "wallS": 3497,
+    "apiUsdStd": 4.8,
+    "quality": 78.3,
+    "simVersion": "lab-0.11"
+   },
+   "range": {
+    "wallS": [
+     2550,
+     4851
+    ],
+    "apiUsdStd": [
+     2.94,
+     7.09
+    ],
+    "quality": [
+     63.3,
+     100
+    ]
+   },
+   "builtTwice": 2.9,
+   "samePickWasted": 22.1,
+   "bounces": 27.5,
+   "dropped": 1.2
+  },
+  {
+   "scenario": "backlog",
+   "variant": {
+    "planner": "haiku",
+    "coderModel": "haiku",
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "claims": false,
+    "dedupe": true,
+    "policy": "github",
+    "trainMax": 1,
+    "reviewers": 0,
+    "coders": 12,
+    "board": true
+   },
+   "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=github;claims=0;dedupe=1;trainMax=1;board=1",
+   "predicted": {
+    "landed": 30,
+    "wallS": 2876,
+    "apiUsdStd": 4.67,
+    "quality": 95,
+    "simVersion": "lab-0.11"
+   },
+   "range": {
+    "wallS": [
+     2231,
+     4118
+    ],
+    "apiUsdStd": [
+     2.95,
+     6.83
+    ],
+    "quality": [
+     75.8,
+     100
+    ]
+   },
+   "builtTwice": 0.1,
+   "samePickWasted": 6.8,
+   "bounces": 16.3,
+   "dropped": 0
+  },
+  {
+   "scenario": "backlog",
+   "variant": {
+    "planner": "haiku",
+    "coderModel": "haiku",
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "claims": false,
+    "dedupe": true,
+    "policy": "github",
+    "trainMax": 1,
+    "reviewers": 1,
+    "coders": 6,
+    "board": false
+   },
+   "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=github;claims=0;dedupe=1;trainMax=1",
+   "predicted": {
+    "landed": 29,
+    "wallS": 3608,
+    "apiUsdStd": 6.2,
+    "quality": 78.3,
+    "simVersion": "lab-0.11"
+   },
+   "range": {
+    "wallS": [
+     2514,
+     4844
+    ],
+    "apiUsdStd": [
+     4.21,
+     8.79
+    ],
+    "quality": [
+     70.8,
+     100
+    ]
+   },
+   "builtTwice": 3,
+   "samePickWasted": 14.8,
+   "bounces": 25.9,
+   "dropped": 1.1
+  },
+  {
+   "scenario": "backlog",
+   "variant": {
+    "planner": "haiku",
+    "coderModel": "haiku",
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "claims": false,
+    "dedupe": true,
+    "policy": "github",
+    "trainMax": 1,
+    "reviewers": 1,
+    "coders": 6,
+    "board": true
+   },
+   "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=github;claims=0;dedupe=1;trainMax=1;board=1",
+   "predicted": {
+    "landed": 30,
+    "wallS": 3008,
+    "apiUsdStd": 5.97,
+    "quality": 97.5,
+    "simVersion": "lab-0.11"
+   },
+   "range": {
+    "wallS": [
+     2372,
+     3807
+    ],
+    "apiUsdStd": [
+     4.23,
+     8.26
+    ],
+    "quality": [
+     73.3,
+     100
+    ]
+   },
+   "builtTwice": 0.1,
+   "samePickWasted": 4.3,
+   "bounces": 16.1,
+   "dropped": 0
+  },
+  {
+   "scenario": "backlog",
+   "variant": {
+    "planner": "haiku",
+    "coderModel": "haiku",
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "claims": false,
+    "dedupe": true,
+    "policy": "github",
+    "trainMax": 1,
+    "reviewers": 1,
+    "coders": 12,
+    "board": false
+   },
+   "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=github;claims=0;dedupe=1;trainMax=1",
+   "predicted": {
+    "landed": 29,
+    "wallS": 3535,
+    "apiUsdStd": 6.68,
+    "quality": 78.3,
+    "simVersion": "lab-0.11"
+   },
+   "range": {
+    "wallS": [
+     2517,
+     4934
+    ],
+    "apiUsdStd": [
+     4.71,
+     9.54
+    ],
+    "quality": [
+     68.3,
+     100
+    ]
+   },
+   "builtTwice": 3,
+   "samePickWasted": 23.6,
+   "bounces": 25.9,
+   "dropped": 1.1
+  },
+  {
+   "scenario": "backlog",
+   "variant": {
+    "planner": "haiku",
+    "coderModel": "haiku",
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "claims": false,
+    "dedupe": true,
+    "policy": "github",
+    "trainMax": 1,
+    "reviewers": 1,
+    "coders": 12,
+    "board": true
+   },
+   "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=1;reviewerModel=haiku;reviewStyle=read;policy=github;claims=0;dedupe=1;trainMax=1;board=1",
+   "predicted": {
+    "landed": 30,
+    "wallS": 3025,
+    "apiUsdStd": 6.41,
+    "quality": 97.5,
+    "simVersion": "lab-0.11"
+   },
+   "range": {
+    "wallS": [
+     2319,
+     4035
+    ],
+    "apiUsdStd": [
+     4.53,
+     9.53
+    ],
+    "quality": [
+     73.3,
+     100
+    ]
+   },
+   "builtTwice": 0.1,
+   "samePickWasted": 7.7,
+   "bounces": 16.9,
+   "dropped": 0.1
   }
  ]
 }

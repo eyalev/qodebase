@@ -295,7 +295,8 @@ What the flag does in the model (all numbers from `calls.mjs` / E4):
 - **Same-task picks:** without a board, 20% of picks build a task another coder is already building,
   and that copy is dropped at landing (s2 A: 11 of 54 calls). With the board it is 6%.
 - **Twins:**
-  - board off: all 5 pairs get built twice;
+  - board off: each twin is still reused by chance with probability 0.2, because its agent finds it on
+    main. That gives ~4 of 5 pairs built twice (qb5's scorer on s2: A 4, 4, 3; D 4);
   - board on, one list: the dedupe pass catches each pair with probability 0.97, and the twin becomes
     a thin alias (0.3 of a task) that waits for its partner;
   - two teams: only a dedupe pass that sees **both** lists (`crossDedupe`) catches them. With the board
@@ -307,17 +308,19 @@ Prediction (200 seeds; Haiku planner, coders and reviewer; land by intent, train
 
 | scenario | coders, reviewers | board off: wall / $ / pairs built twice | board on: wall / $ / pairs built twice |
 |---|---|---|---|
-| backlog | 12, 0 | 711 s / $1.28 / 5 | 713 s / $1.29 / 0.1 |
-| backlog | 12, 1 | ~1840 s / $2.35 / 5 | ~1855 s / $2.36 / 0.1 |
-| two-teams | 12, 0 | 711 s / $1.43 / 5 | 718 s / $1.49 / **4.6** (board only) · 718 s / $1.45 / 0.1 (`crossDedupe`) |
+| backlog, land by intent | 12, 0 | 694 s / $1.26 / 4.1 | 715 s / $1.29 / 0.1 |
+| backlog, land by intent | 12, 1 | ~1845 s / $2.34 / 4.1 | ~1855 s / $2.36 / 0.1 |
+| two-teams, land by intent | 12, 0 | 694 s / $1.41 / 4.1 | 718 s / $1.49 / **3.7** (board only) · 720 s / $1.45 / 0.1 (`crossDedupe`) |
+| **backlog, policy github** (trains of 1, a conflict goes back to the agent) | 12, 0 | 3497 s [2550–4851] / $4.80 / 2.9 + 1.2 dropped | **2876 s [2231–4118] / $4.67 / 0.1** |
+| backlog, policy github | 12, 1 | 3535 s / $6.68 / 3.0 + 1.1 dropped | 3025 s / $6.41 / 0.1 |
 
 The 6-coder rows are the same within 3%. All rows are in `public/lab/board-w4-predictions.json`.
 
 What this says, and why it differs from the local tests:
-- **Duplicates are the effect W4c can measure:** 5 of 5 pairs built twice with the board off, ~0 with
-  it on. That needs a dedupe pass over the list, and in two-teams a pass that sees both teams' lists.
+- **Duplicates are the effect W4c can measure:** ~4 of 5 pairs built twice with the board off (3–5),
+  ~0 with it on. That needs a dedupe pass over the list, and in two-teams a pass that sees both teams' lists.
   If W2b's dedupe only reads the list one router hands out, two-teams with the board on will still
-  build ~4–5 pairs twice. That would be the round-1 lesson again (seen but not recognised), not a
+  build ~4 pairs twice. That would be the round-1 lesson again (seen but not recognised), not a
   board failure.
 - **No time or cost gain on qodebase** (within ±3%; the ranges overlap completely). Locally, the board's
   −28% time and −29% cost came from git thrash: 103 rejected pushes and 73 aborted rebases in A. On
@@ -330,6 +333,14 @@ What this says, and why it differs from the local tests:
     queue can feed, or same-task collisions much more common than 20%. Without a board, qodebase
     agents see nothing until landing, so it could be higher. At 35% the board saves ~6% of cost and
     still no time.
+- **Under policy github the board does pay in time** (manager's added cell): −18% wall (3497 → 2876 s),
+  bounces 27 → 16, cost −3 to −4%.
+  - Every conflict goes back to the agent, so twins that are not aliased and same-task copies turn into
+    rebase rounds. This is the closest cell to the local git-push tests.
+  - With the board off, a twin that keeps bouncing is dropped after 8 tries (~1.2 a run), so
+    "built twice" reads lower (2.9), and one task may be missing on main.
+  - Predicted contrast: intent board-on ≈ board-off; github board-on ≈ −18%. That would mean the board
+    matters where the queue does not already absorb conflicts.
 - **Bounces and conflicts:** ~13 conflicts per run in both arms. Most are replayed by land-by-intent,
   leaving ~1.5 bounces. Twins that are not aliased add ~1 conflict each.
 - **Quality:** 30/30 expected in both arms (quality 97.5 is the formula's ceiling without a judge).

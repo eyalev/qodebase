@@ -122,6 +122,7 @@ export const CAL = {
   // Twins: the dedupe pass over a list catches a pair 0.97 (E4 E: 15/15), a far-worded pair seen only on
   // the board ~0.1 (s2: D built 4/5 twice). An alias is a thin call.
   pDedupeList: 0.97, pBoardFar: 0.1, aliasWork: 0.3, dedupeListS: 5,
+  pChanceAlias: 0.2, // no dedupe: an agent finds its twin already on main and reuses it (qb5's scorer on s2: A built 4, 4, 3 of 5 twice, D 4)
 };
 
 function mulberry32(a) {
@@ -197,7 +198,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
     if (v.board) { const ds = C.dedupeListS * (sc.teams || 1); dedupeS += ds; usd.planner += ds * C.usdPerS.haiku; }
     for (const t of twinsOf) {
       const tw = { ...t, id: N + dups.length + 1, dupOf: t.id, needs: [...t.needs], plannedNeeds: [...t.plannedNeeds], weight: 1 / N };
-      if (rnd() < pCatch) { tw.alias = true; tw.dupOf = null; tw.aliasOf = t.id; tw.needs.push(t.id); tw.plannedNeeds.push(t.id); }
+      if (rnd() < pCatch || rnd() < C.pChanceAlias) { tw.alias = true; tw.dupOf = null; tw.aliasOf = t.id; tw.needs.push(t.id); tw.plannedNeeds.push(t.id); }
       dups.push(tw); tasks.push(tw); work.push(tw);
     }
     if (sc.teams > 1) usd.planner += C.routerUsdPerTask[pm] * work.length; // a second router
