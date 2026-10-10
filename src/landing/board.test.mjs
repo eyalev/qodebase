@@ -2,7 +2,7 @@
 //   node --experimental-strip-types --test src/landing/board.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeBoardEvent, boardView, boardText, parseDedupe, backlogItems, dedupePrompt, BOARD_TTL_MS } from './board.ts';
+import { makeBoardEvent, boardView, boardText, parseDedupe, backlogItems, dedupePrompt, BOARD_TTL_MS, taskIds, claimHolders } from './board.ts';
 
 const T0 = 1_000_000_000;
 const ev = (agent, kind, intent, files, dt) => ({ ...makeBoardEvent({ agent, kind, intent, files }, T0 + dt * 1000) });
@@ -90,4 +90,15 @@ test('backlog items: ids from labels, list items without labels get an index', (
   const p = dedupePrompt(items);
   assert.match(p, /T1: \*\*T1\*\* titleCase/);
   assert.match(p, /"same"/);
+});
+
+test('claims: the earliest live claim keeps a task; later claimants are told; a dead holder does not count', () => {
+  assert.deepEqual(taskIds('T5: dueSoon and T12 overdue, T5 again'), ['T5', 'T12']);
+  const claims = { a: { ids: ['T5'], at: 100 }, b: { ids: ['T5'], at: 200 }, c: { ids: ['T5', 'T9'], at: 300 }, d: { ids: ['T9'], at: 50 } };
+  const live = new Set(['a', 'b', 'c']);   // d went silent
+  assert.deepEqual(claimHolders(claims, 'a', live), {}, 'first claimant keeps it');
+  assert.deepEqual(claimHolders(claims, 'b', live), { T5: 'a' });
+  assert.deepEqual(claimHolders(claims, 'c', live), { T5: 'a' }, 'T9: d is not live, so c holds it');
+  assert.deepEqual(claimHolders(claims, 'c', new Set(['a', 'd'])), { T5: 'a', T9: 'd' });
+  assert.deepEqual(claimHolders({}, 'x', live), {});
 });

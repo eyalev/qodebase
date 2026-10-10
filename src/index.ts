@@ -1177,7 +1177,8 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       const near = files.length ? (await L.boardWho({ me: name, files })).rows.filter((r) => !r.done) : [];
       const done = (await L.boardWho({ me: name, recent: 30 * 60_000 })).rows.filter((r) => r.done);
       const live = (await L.boardWho({ me: name })).rows.filter((r) => !near.some((x) => x.agent === r.agent));
-      return json({ ...e, others: boardText([...near, ...live.slice(0, Math.max(0, 8 - near.length)), ...done], (await L.boardWho({})).aliases, { live: 8, done: 8 }) });
+      const taken = Object.entries((e as { takenBy?: Record<string, string> }).takenBy || {});
+      return json({ ...e, ...(taken.length ? { taken: `Already claimed earlier by another agent: ${taken.map(([id, a]) => `${id} by ${a}`).join(', ')}. The earliest claim keeps the task: pick another one and announce it with forq intent.` } : {}), others: boardText([...near, ...live.slice(0, Math.max(0, 8 - near.length)), ...done], (await L.boardWho({})).aliases, { live: 8, done: 8 }) });
     }
     // dedupe: {stage: 'prompt', text} -> the items + the prompt the box runs through Haiku;
     //         {stage: 'answer', ids, answer, usage?} -> the pairs, stored as aliases on the board.

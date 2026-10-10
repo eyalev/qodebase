@@ -125,3 +125,24 @@ export function backlogItems(text: string): { id: string; text: string }[] {
 export function dedupePrompt(items: { id: string; text: string }[]) {
   return `Here is a project backlog. Some tasks ask for the same functionality under different names or wording. List every pair of tasks that are the same work (one of them could be a thin alias of the other). Answer with ONLY one JSON object: {"same": [["T3", "T21"], ...]} using the ids before the colons; {"same": []} if there are none.\n\n${items.map((i) => `${i.id}: ${i.text}`).join('\n')}`;
 }
+
+/** Task ids named in an intent ("T5: …", "ISSUE-12 and T7"). */
+export const taskIds = (intent: string) => [...new Set((String(intent || '').match(/\b[A-Z]{1,6}-?\d{1,4}\b/g) || []))].slice(0, 5);
+
+/** Who keeps a task when several agents claim it: the EARLIEST live claim (qb9 at 20 agents: five claimed
+ *  the last task at once, each yielded to the others, nobody did it). Returns, per task id of mine, the
+ *  holder when it is someone else. `claims` = each agent's stated ids and when; `live` = agents still working. */
+export function claimHolders(claims: Record<string, { ids: string[]; at: number }>, me: string, live: Set<string>): Record<string, string> {
+  const mine = claims[me];
+  const out: Record<string, string> = {};
+  if (!mine) return out;
+  for (const id of mine.ids) {
+    let best = { agent: me, at: mine.at };
+    for (const [agent, c] of Object.entries(claims)) {
+      if (agent === me || !live.has(agent) || !c.ids.includes(id)) continue;
+      if (c.at < best.at || (c.at === best.at && agent < best.agent)) best = { agent, at: c.at };
+    }
+    if (best.agent !== me) out[id] = best.agent;
+  }
+  return out;
+}

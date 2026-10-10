@@ -23,7 +23,7 @@ import { recordCost, claudeUsd } from '../costs';
 import { pushSeed } from './demo';
 import { SEED } from './demoproject';
 import { pushAlert } from '../alert';
-import { makeBoardEvent, boardView, boardText, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
+import { makeBoardEvent, boardView, boardText, taskIds, claimHolders, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
   | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap';
@@ -97,6 +97,7 @@ type Meta = {
   bounces?: number[];                       // times of the last 2000 bounces (same reason)
   outbox?: { to: string; text: string; tries: number; at: number }[];
   boardIntent?: Record<string, string>;     // board: each agent's stated intent (`forq intent`), newest 60
+  boardClaims?: Record<string, { ids: string[]; at: number }>;   // board: task ids each agent claimed, and when (earliest keeps it)
   aliases?: Alias[];                         // board: pairs the dedupe pass found to be the same work
   dedupeLists?: { by: string; at: number; items: { id: string; text: string }[] }[];   // every list a dedupe pass was given
   boardPosts?: number;                       // board: posts since the last prune   // messages to real agents, sent from the alarm        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
@@ -288,7 +289,20 @@ export class Landing extends DurableObject<Env> {
       if (add.length) { c.claims = [...c.claims, ...add].slice(0, 50); this.#ev(c, 'claimed', add.join(', ')); await this.#overlaps(c, add); }
     }
     if (c) { this.#ev(c, 'working', `intent: ${intent.slice(0, 200)}`); await this.#put(c); }
-    return this.boardPost({ agent: boardName(changeId), kind: 'started', intent, files, change: changeId, stated: true });
+    const name = boardName(changeId);
+    const m = await this.#m();
+    const ids = taskIds(intent);
+    if (m.flags.board && ids.length) {
+      const prev = m.boardClaims?.[name];
+      const bc = (m.boardClaims ||= {});
+      // Re-stating the same task keeps its original time; a new task is a new claim.
+      bc[name] = { ids, at: prev && prev.ids.join() === ids.join() ? prev.at : Date.now() };
+      const ks = Object.keys(bc); for (const k of ks.slice(0, Math.max(0, ks.length - 80))) delete bc[k];
+    }
+    const e = await this.boardPost({ agent: name, kind: 'started', intent, files, change: changeId, stated: true });
+    if ('off' in e || !ids.length) return e;
+    const live = new Set((await this.boardWho({})).rows.map((r) => r.agent));
+    return { ...e, takenBy: claimHolders(m.boardClaims || {}, name, live) };
   }
   /** `forq who`, the hook's context, the view: rows + aliases + the text an agent reads. */
   async boardWho(q: BoardQuery & { text?: boolean } = {}) {
@@ -935,7 +949,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     for (const id of m.order) await this.ctx.storage.delete(`c:${id}`);
     for (const id of m.trains) await this.ctx.storage.delete(`t:${id}`);
     if (m.flags.board) this.#bsql().exec(`DELETE FROM board`);
-    this.#meta = { ...m, aliases: [], boardIntent: {}, dedupeLists: [], waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [], bounces: [], demo: m.demo && !m.demo.running ? null : m.demo };
+    this.#meta = { ...m, aliases: [], boardIntent: {}, boardClaims: {}, dedupeLists: [], waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [], bounces: [], demo: m.demo && !m.demo.running ? null : m.demo };
     await this.#saveMeta();
   }
 
