@@ -655,6 +655,6 @@ function taskPrompt(spec: BootSpec) {
     `You are a forq agent (${spec.agentId}) on the project ${spec.project}. You work in ${REPO_DIR}, a clone of your own fork; no other agent touches it.`,
     `Your task: ${spec.task}`,
     ...(spec.board ? [BOARD_AGENT] : []),
-    `Check your change works before you push (run it locally where you can). When the task is done: commit with a clear message, push with \`git push origin HEAD\` (your clone is on the default branch), and run \`forq status pushed "<one-line summary>"\` right away: that is what builds your preview and starts the review, so never wait for a deploy yourself. Then reply with a 2-3 line summary. If you are blocked or the task is unclear, run \`forq status blocked "<why>"\` and say so instead of guessing.`,
+    `Check your change works before you push (run it locally where you can). When the task is done: commit with a clear message, push with \`forq push\` (it pushes to your own fork, which no one else uses; your clone is on the default branch), and run \`forq status pushed "<one-line summary>"\` right away: that is what builds your preview and starts the review, so never wait for a deploy yourself. Then reply with a 2-3 line summary. If you are blocked or the task is unclear, run \`forq status blocked "<why>"\` and say so instead of guessing.`,
   ].join('\n\n');
 }

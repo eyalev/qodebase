@@ -99,3 +99,21 @@ test('forq who / intent', async () => {
     assert.match(i.out, /on the board: T3 capitalizeWords\nOthers on the same files[\s\S]*LANDED a3 landed/);
   } finally { t.close(); }
 });
+
+test('forq push: force-pushes an agent fork, refuses the router', async () => {
+  const t = await setup(() => ({}));
+  try {
+    const remote = join(t.root, 'fork.git'); execFileSync('git', [...ID, 'init', '-q', '--bare', remote]);
+    execFileSync('git', [...ID, 'remote', 'add', 'origin', remote], { cwd: t.repo });
+    writeFileSync(join(t.repo, 'a.js'), '1'); execFileSync('git', [...ID, 'add', 'a.js'], { cwd: t.repo }); execFileSync('git', [...ID, 'commit', '-qm', 'one'], { cwd: t.repo });
+    execFileSync('git', [...ID, 'push', '-q', 'origin', 'HEAD:main'], { cwd: t.repo });
+    execFileSync('git', [...ID, 'commit', '-q', '--amend', '-m', 'one, rewritten'], { cwd: t.repo });   // a rewritten history (sync-main)
+    const r = await t.forq(['push']);
+    assert.equal(r.code, 0, r.err);
+    assert.equal(execFileSync('git', ['log', '-1', '--format=%s', 'main'], { cwd: remote, encoding: 'utf8' }).trim(), 'one, rewritten');
+    writeFileSync(join(t.run, 'agent-token'), 'eyal.lab--router.sig');
+    const rr = await t.forq(['push']);
+    assert.notEqual(rr.code, 0);
+    assert.match(rr.err, /for agents on their own fork/);
+  } finally { t.close(); }
+});

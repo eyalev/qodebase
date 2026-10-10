@@ -15,6 +15,8 @@ export const FORQ_CLI = String.raw`#!/usr/bin/env python3
   forq merge <agent-id>                         merge an agent's fork into main (router); on projects
                                                 with the merge queue it queues the change instead
   forq sync-main                                rebase your work on the latest main (agents)
+  forq push                                     push your work to your own fork (agents); after a
+                                                sync-main its history is rewritten, and this pushes anyway
   forq fetch-agent <agent-id>                   fetch an agent's work to review it (reviewer)
   forq verdict <agent-id> approve|changes "notes"   your review verdict (reviewer)
   forq who [--recent [30m]] [--files a,b] [--area X]
@@ -190,9 +192,19 @@ def main(argv):
         git('-c', auth, 'fetch', '-q', f['remote'], f'+refs/heads/{br}:refs/remotes/main/{br}')
         r = git('rebase', f'refs/remotes/main/{br}', check=False)
         if r.returncode:
-            sys.exit(f'forq: conflicts while rebasing on main. Resolve them keeping BOTH main\'s changes and your intent, then: git add -A && git rebase --continue && git push -f origin HEAD && forq status pushed "redone on the latest main"\n{r.stdout}{r.stderr}')
+            sys.exit(f'forq: conflicts while rebasing on main. Resolve them keeping BOTH main\'s changes and your intent, then: git add -A && git rebase --continue && forq push && forq status pushed "redone on the latest main"\n{r.stdout}{r.stderr}')
         git('push', '-q', '-f', 'origin', 'HEAD')
         print(f'rebased on main ({br}) and pushed. Run the tests, then: forq status pushed "redone on the latest main"')
+    elif v == 'push':
+        # An agent's fork is its own: after sync-main (a rebase) a plain push is refused and agents would not
+        # force-push without asking, so the run stalled with 'blocked' agents (board W4c r1d, 2026-10-10).
+        me = secret('agent-token').rsplit('.', 1)[0]   # <agent-id>.<hmac>
+        tail = me.split('--')[-1] if '--' in me else ''
+        if not tail or tail.startswith('router') or tail.startswith('review') or tail == 'ask':
+            sys.exit('forq push is for agents on their own fork; the router pushes main with git push')
+        r = git('push', '-q', '--force', 'origin', 'HEAD', check=False)
+        if r.returncode: sys.exit(f'forq: push failed:\n{r.stdout}{r.stderr}')
+        print('pushed to your fork. Now run: forq status pushed "<what you did>"')
     elif v == 'hook':
         board_hook()
     elif v == 'who':

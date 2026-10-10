@@ -805,6 +805,16 @@
    "project": "eyal.lab-backlog-44862-r1",
    "order": 2,
    "why": "pre-fix board (finished = pushed/queued too, fixed in 51e2eb1); its runner was stopped at 17:59 UTC but the router got the request through durable delivery and spawned 6 agents that ran unwatched (30 landed); boxes stopped 18:4x UTC. No runs.jsonl line; order 2 runs again as r1b on the fixed board."
+  },
+  {
+   "project": "eyal.lab-backlog-2f945-r1d",
+   "order": 1,
+   "why": "stalled 25 min: after forq sync-main a plain git push was refused and agents would not force-push their own fork without asking (blocked). Fixed with forq push. Runner stopped by hand; no runs.jsonl line."
+  },
+  {
+   "project": "eyal.lab-backlog-2f945-r1c",
+   "order": 1,
+   "why": "halted by the per-run budget (6x) with 2 agents still busy: not settled (line in runs.jsonl, status stopped-budget)"
   }
  ]
 }

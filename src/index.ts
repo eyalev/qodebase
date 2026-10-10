@@ -768,7 +768,7 @@ const app = {
           const b = await request.json() as { agent?: string };
           const a = info.agents.find((x) => x.id === b.agent);
           if (!a?.review?.notes) return json({ error: 'no review notes for that agent' }, 400);
-          const r = await sendTo(env, a.id, `The reviewer asked for changes:\n\n${a.review.notes}\n\nFix them, commit, push with \`git push origin HEAD\`, then run \`forq status pushed "<what you changed>"\`.`, apiBase);
+          const r = await sendTo(env, a.id, `The reviewer asked for changes:\n\n${a.review.notes}\n\nFix them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`, apiBase);
           if (r.ok) { await p.markReviewSent(a.id); await p.setState(a.id, 'working'); }
           return json(r, r.ok ? 200 : 502);
         }

@@ -233,7 +233,7 @@ export class Landing extends DurableObject<Env> {
       // Auto-merge projects (lab, crew runs): no person taps 'send to the agent', so the notes go
       // straight to the agent (a lab run waited 15 min on a change nobody passed on, 2026-10-08).
       if (m0.flags.autoMerge && c.kind === 'agent') {
-        this.#tell(c.id, `The reviewer asked for changes:\n\n${notes.slice(0, 3000)}\n\nFix them, commit, push with \`git push origin HEAD\`, then run \`forq status pushed "<what you changed>"\`.`);
+        this.#tell(c.id, `The reviewer asked for changes:\n\n${notes.slice(0, 3000)}\n\nFix them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`);
         await this.#saveMeta(); await this.#arm(500);
       }
     }

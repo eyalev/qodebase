@@ -168,10 +168,10 @@ const check = scenario.check || 'npm test';
 // one at a time; the router never assigns, splits or dedupes. Two teams = two routers on one project.
 const teams = scenario.teams || null;
 const selfPick = scenario.selfPick ?? !!(teams || /backlog/i.test(scenario.id || '') && /pick its own/i.test(prompt));
-const pickText = (file) => `Pick ONE task from ${file} that is not on main yet and that no other agent is doing. Do only that task, with its tests, keep \`${check}\` green, commit, push with \`git push origin HEAD\`, then run \`forq status pushed "<task id>: <title>"\` and stop. You will be told when it has landed; then you take the next one. If no task is left, reply "done".`;
+const pickText = (file) => `Pick ONE task from ${file} that is not on main yet and that no other agent is doing. Do only that task, with its tests, keep \`${check}\` green, commit, push with \`forq push\`, then run \`forq status pushed "<task id>: <title>"\` and stop. You will be told when it has landed; then you take the next one. If no task is left, reply "done".`;
 if (selfPick) {
   const file = teams ? 'your team\'s list (named in your task)' : (prompt.match(/\b[\w-]+\.md\b/) || ['BACKLOG.md'])[0];
-  flags.nextTask = `pick your next task from ${file} the same way (one that is not on main yet and that no other agent is doing; if none is left, reply "done" and stop), do it, push, and run forq status pushed "<task id>: <title>".`;
+  flags.nextTask = `pick your next task from ${file} the same way (one that is not on main yet and that no other agent is doing; if none is left, reply "done" and stop), do it, push with forq push, and run forq status pushed "<task id>: <title>".`;
   if (!COLLECT) await api('POST', `/api/p/eyal/${name}/landing/flags`, { nextTask: flags.nextTask });
 }
 const selfPickRouter = (file, n) => [
