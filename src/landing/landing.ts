@@ -649,8 +649,14 @@ export class Landing extends DurableObject<Env> {
           this.#ev(c, 'conflict', await this.#withWhom(c, rc.unhandled?.length ? rc.unhandled : rc.conflicts, r));
           c.landing = { how: null, conflicts: rc.unhandled?.length ? rc.unhandled : rc.conflicts, diff: [], commit: null, mainCommit: null };
           await this.#escalate(c, m);
+        } else if ((rc as { empty?: boolean }).empty) {
+          // Nothing new on top of main: the agent's work is already there (it redid a task another
+          // change had landed, W4c r1e). Closed as on main, not bounced; its agent takes its next task.
+          c.state = 'landed'; c.landedAt = c.landedAt || Date.now(); delete c.redo;
+          c.landing = { how: 'merged', conflicts: [], diff: [], commit: null, mainCommit: r.mainAfter || null };
+          this.#ev(c, 'landed', 'nothing new: already on main');
         } else {
-          // Not applied for another reason (fetch failed, empty): back in line once, then bounce.
+          // Not applied for another reason (fetch failed): back in line once, then bounce.
           if (c.tries < 3) { c.state = 'queued'; m.waiting.push(c.id); this.#ev(c, 'queued', rc.why || 'trying again'); }
           else { c.state = 'bounced'; this.#ev(c, 'bounced', rc.why || 'could not be applied'); }
         }
@@ -697,6 +703,11 @@ export class Landing extends DurableObject<Env> {
     for (const rc of r.changes) {
       const c = await this.#get(rc.id);
       if (!c || c.kind !== 'agent') continue;
+      if ((rc as { empty?: boolean }).empty && !rc.landed) {
+        await P.setState(c.id, 'merged', 'nothing new: already on main').catch(() => {});
+        if (m.flags.nextTask) this.#tell(c.id, `qodebase: your change "${c.title}" had nothing new: main already has it. Run \`forq sync-main\` first, then: ${m.flags.nextTask}`);
+        continue;
+      }
       if (rc.landed) {
         await P.setState(c.id, 'merged', `landed on main as ${(rc.commit || '').slice(0, 7)}`).catch((e) => log('landing', 'set_merged_failed', { id: c.id, err: String(e) })); deploy = true;
         if (m.flags.nextTask) this.#tell(c.id, `qodebase: your change "${c.title}" landed on main (${(rc.commit || '').slice(0, 7)}). Run \`forq sync-main\` first, then: ${m.flags.nextTask}`);

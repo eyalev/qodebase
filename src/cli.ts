@@ -192,7 +192,7 @@ def main(argv):
         git('-c', auth, 'fetch', '-q', f['remote'], f'+refs/heads/{br}:refs/remotes/main/{br}')
         r = git('rebase', f'refs/remotes/main/{br}', check=False)
         if r.returncode:
-            sys.exit(f'forq: conflicts while rebasing on main. Resolve them keeping BOTH main\'s changes and your intent, then: git add -A && git rebase --continue && forq push && forq status pushed "redone on the latest main"\n{r.stdout}{r.stderr}')
+            sys.exit(f'forq: conflicts while rebasing on main. Resolve them keeping BOTH main\'s changes and your intent (if main already has this commit\'s work, git rebase --skip is fine: it is your own fork, no approval needed), then: git add -A && git rebase --continue && forq push && forq status pushed "redone on the latest main"\n{r.stdout}{r.stderr}')
         git('push', '-q', '-f', 'origin', 'HEAD')
         print(f'rebased on main ({br}) and pushed. Run the tests, then: forq status pushed "redone on the latest main"')
     elif v == 'push':
