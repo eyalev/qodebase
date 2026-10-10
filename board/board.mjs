@@ -3,7 +3,7 @@
 // board who [--files a,b] [--area X] [--json]     live agents (last 10 min), not yourself
 // board tail [-n N] [--json]
 // Env: BOARD_AGENT (who you are), BOARD_FILE=<jsonl> or BOARD_URL=<…/b/<name>> + BOARD_TOKEN.
-import { backend, makeEvent, fmtRow } from './lib.mjs';
+import { backend, makeEvent, fmtRow, readState, writeState } from './lib.mjs';
 
 const [cmd, ...rest] = process.argv.slice(2);
 const opt = (k, d = null) => { const i = rest.indexOf(k); return i >= 0 && i + 1 < rest.length ? rest[i + 1] : d; };
@@ -17,6 +17,8 @@ try {
   if (cmd === 'post') {
     const kind = rest[0]?.startsWith('--') ? null : rest[0];
     const e = await b.post(makeEvent({ agent: me, kind, intent: opt('--intent'), files: opt('--files', ''), status: opt('--status') }));
+    // The agent said what it is doing: the hook's later editing/done posts use that, not the harness prompt.
+    if (kind === 'started' && e.intent) { const st = readState(me); st.explicit = e.intent; writeState(me, st); }
     console.log(has('--json') ? JSON.stringify(e) : 'posted');
   } else if (cmd === 'who') {
     const rows = await b.who({ me, files: opt('--files', ''), area: opt('--area') });

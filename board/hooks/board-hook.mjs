@@ -13,10 +13,10 @@ import { readFileSync, writeFileSync, mkdirSync, appendFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process';
 import { relative, isAbsolute, join } from 'node:path';
 import { homedir } from 'node:os';
-import { backend, makeEvent, fmtRow, clip } from '../lib.mjs';
+import { backend, makeEvent, fmtRow, clip, stateDir, readState, writeState } from '../lib.mjs';
 
 const EDIT_DEBOUNCE_MS = 30_000, WARN_EVERY_MS = 5 * 60_000;
-const STATE_DIR = process.env.BOARD_STATE_DIR || join(homedir(), '.cache', 'qb-board');
+const STATE_DIR = stateDir();
 const LOG = join(STATE_DIR, 'hook.jsonl');
 const log = (event, o = {}) => { try { appendFileSync(LOG, JSON.stringify({ ts: new Date().toISOString(), module: 'board-hook', event, ...o }) + '\n'); } catch {} };
 
@@ -33,9 +33,11 @@ const git = (...a) => { const r = spawnSync('git', a, { cwd, encoding: 'utf8', t
 const root = git('rev-parse', '--show-toplevel') || cwd;
 const rel = (p) => { if (!p) return null; const r = isAbsolute(p) ? relative(root, p) : p; return r.startsWith('..') ? p : r; };
 
-const stateFile = join(STATE_DIR, `${String(agent).replace(/[^\w.-]/g, '_')}.json`);
-const state = (() => { try { return JSON.parse(readFileSync(stateFile, 'utf8')); } catch { return { edits: {}, warned: {} }; } })();
-const saveState = () => { try { writeFileSync(stateFile, JSON.stringify(state)); } catch {} };
+const state = readState(agent);
+state.edits ||= {}; state.warned ||= {};
+const saveState = () => writeState(agent, state);
+// The agent's own `board post started --intent …` wins over the prompt text (qb9, 2026-10-10).
+const intentNow = () => state.explicit || state.intent || '';
 const out = (hookEventName, additionalContext) => { if (additionalContext) process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName, additionalContext } })); };
 const post = async (kind, intent, files, status) => { const t0 = Date.now(); await b.post(makeEvent({ agent, kind, intent, files, status })); log('posted', { agent, kind, ms: Date.now() - t0 }); };
 
@@ -43,14 +45,14 @@ try {
   if (!agent) process.exit(0);
   if (ev === 'UserPromptSubmit') {
     const intent = clip(input.prompt, 120);
-    state.intent = intent; saveState();
+    state.intent = intent; delete state.explicit; saveState();   // a new prompt = a new task
     const [, rows] = await Promise.all([post('started', intent, []), b.who({ me: agent })]);
     if (rows.length) out(ev, `Agent board — other agents working now (advisory, not locks):\n${rows.slice(0, 5).map(fmtRow).join('\n')}`);
   } else if (ev === 'PreToolUse' && /^(Edit|Write|MultiEdit)$/.test(input.tool_name || '')) {
     const file = rel(input.tool_input?.file_path);
     if (file) {
       const now = Date.now(), jobs = [];
-      if (!(now - (state.edits[file] || 0) < EDIT_DEBOUNCE_MS)) { state.edits[file] = now; jobs.push(post('editing', state.intent || '', [file])); }
+      if (!(now - (state.edits[file] || 0) < EDIT_DEBOUNCE_MS)) { state.edits[file] = now; jobs.push(post('editing', intentNow(), [file])); }
       const rows = await b.who({ me: agent, files: [file] });
       await Promise.all(jobs);
       if (rows.length && !(now - (state.warned[file] || 0) < WARN_EVERY_MS)) {
@@ -67,7 +69,7 @@ try {
     if (/\bgit\b[^|;&]*\bcommit\b/.test(cmd)) await post('committed', clip(git('log', '-1', '--format=%s'), 120), git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n').filter(Boolean));
     else if (/\bgit\b[^|;&]*\bpush\b/.test(cmd)) await post('committed', clip(git('log', '-1', '--format=%s'), 120), [], 'pushed');
   } else if (ev === 'Stop') {
-    await post('done', state.intent || '', []);
+    await post('done', intentNow(), []);
   }
 } catch (e) { log('error', { agent, ev, err: String(e?.message || e) }); }
 process.exit(0);

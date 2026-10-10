@@ -3,8 +3,9 @@
 //   BOARD_FILE=<path.jsonl>              local: one appended JSON line per event
 //   BOARD_URL=<https://…/b/<name>> + BOARD_TOKEN   HTTP: the qb-board Worker (board/worker.mjs)
 // Event: {ts, agent, kind, intent, files, status}. Agent from BOARD_AGENT.
-import { appendFileSync, readFileSync, existsSync, mkdirSync, openSync, readSync, fstatSync, closeSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { appendFileSync, writeFileSync, readFileSync, existsSync, mkdirSync, openSync, readSync, fstatSync, closeSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { homedir } from 'node:os';
 
 export const TTL_MS = 10 * 60_000;
 export const KINDS = ['started', 'editing', 'committed', 'blocked', 'landed', 'done', 'gave-up'];
@@ -42,6 +43,12 @@ export function nowView(events, { me = null, files = [], area = null, now = Date
 }
 
 export const fmtRow = (r) => `${r.agent} ${r.kind}${r.ageS != null ? ` ${r.ageS}s ago` : ''}: ${clip(r.intent, 90) || "-"}${r.files?.length ? ` [${r.files.slice(0, 5).join(', ')}${r.files.length > 5 ? ', …' : ''}]` : ''}${r.status ? ` (${r.status})` : ''}`;
+
+// Per-agent state shared by the hook and the CLI (the hook's debounce, and the agent's own intent).
+export const stateDir = (env = process.env) => env.BOARD_STATE_DIR || join(homedir(), '.cache', 'qb-board');
+export const statePath = (agent, env = process.env) => join(stateDir(env), `${String(agent).replace(/[^\w.-]/g, '_')}.json`);
+export function readState(agent, env) { try { return JSON.parse(readFileSync(statePath(agent, env), 'utf8')); } catch { return { edits: {}, warned: {} }; } }
+export function writeState(agent, st, env) { try { mkdirSync(stateDir(env), { recursive: true }); writeFileSync(statePath(agent, env), JSON.stringify(st)); } catch {} }
 
 // ---- backends ------------------------------------------------------------------------------
 function fileBackend(path) {
