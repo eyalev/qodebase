@@ -7,11 +7,11 @@ import path from 'node:path';
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const SCEN = (() => { const i = process.argv.indexOf('--scenario'); return i >= 0 ? process.argv[i + 1] : 's1'; })();
 const runs = fs.readFileSync(path.join(HERE, 'runs.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l))
-  .filter((r) => r.rep > 0 && (r.scenario || 's1') === SCEN && r.agents === (SCEN === 's1' ? 5 : 10));
+  .filter((r) => r.rep > 0 && (r.scenario || 's1') === SCEN && r.agents === ({ s1: 5, s2: 10, s3: 20 }[SCEN] ?? r.agents));
 const M = [
-  ['wall_s', 'wall time (s)'], ['hidden_pass', `hidden tests (of ${SCEN === 's1' ? 16 : 30})`], ['agent_minutes', 'agent-minutes (all calls)'], ['wasted_agent_minutes', 'agent-minutes wasted (built then dropped)'], ['red_commits', 'red commits on main'],
+  ['wall_s', 'wall time (s)'], ['hidden_pass', `hidden tests (of ${{ s1: 16, s2: 30, s3: 60 }[SCEN]})`], ['agent_minutes', 'agent-minutes (all calls)'], ['wasted_agent_minutes', 'agent-minutes wasted (built then dropped)'], ['red_commits', 'red commits on main'],
   ['wasted_work_calls', 'wasted work (calls that built a task then dropped it)'], ['deferrals', 'deferrals (skipped before any work)'],
-  ['dup_pairs_both_separate', `duplicate pairs built twice (of ${SCEN === 's1' ? 4 : 5})`], ['same_task_twice_n', 'same task landed twice'],
+  ['dup_pairs_both_separate', `duplicate pairs built twice (of ${{ s1: 4, s2: 5, s3: 10 }[SCEN]})`], ['same_task_twice_n', 'same task landed twice'],
   ['conflicts', 'merge conflicts resolved'], ['rebase_aborts', 'rebases aborted'], ['resets_to_origin', 'resets to origin/main'],
   ['rejected_push_recoveries', 'rejected pushes recovered'], ['calls', 'agent calls'], ['usd_api_equiv', 'API-equiv $ (Haiku 5.5)'],
 ];

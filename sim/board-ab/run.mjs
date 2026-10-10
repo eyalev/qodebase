@@ -21,7 +21,16 @@ const S = {
     // [task A, module A, task B, module B]: same intent under other names (T19 and T22 worded very differently).
     pairs: [['T1', 'dates', 'T23', 'calendar'], ['T2', 'text', 'T19', 'strings'], ['T3', 'tags', 'T21', 'hashtags'], ['T4', 'priority', 'T20', 'urgency'], ['T6', 'stats', 'T22', 'progress']],
     intents: [['T1', 'T23'], ['T2', 'T19'], ['T3', 'T21'], ['T4', 'T20'], ['T6', 'T22'], ...[5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 24, 25, 26, 27, 28, 29, 30].map((n) => [`T${n}`])] },
+  // s3 = todokit, 60 tasks (W3a, docs/board/PLAN2.md): s2's 30 + 30 more, 10 duplicate pairs (T51-T55 vs the
+  // far-worded T56-T60), chains (T34->T53, T36->T37, T38->T39, T33+T47->T48, T18->T50, T45->T46), hot files.
+  s3: { starter: 'starter3', hidden: 'tasks3.test.mjs', tasks: 60,
+    pairs: [['T1', 'dates', 'T23', 'calendar'], ['T2', 'text', 'T19', 'strings'], ['T3', 'tags', 'T21', 'hashtags'], ['T4', 'priority', 'T20', 'urgency'], ['T6', 'stats', 'T22', 'progress'],
+      ['T51', 'duration', 'T56', 'estimate'], ['T52', 'idlist', 'T57', 'ranges'], ['T53', 'week', 'T58', 'planner'], ['T54', 'wrap', 'T59', 'layout'], ['T55', 'plural', 'T60', 'english']] },
 }[SCEN];
+if (SCEN === 's3') { const paired = new Set(S.pairs.flatMap(([a, , b]) => [a, b])); S.intents = [...S.pairs.map(([a, , b]) => [a, b]), ...Array.from({ length: 60 }, (_, i) => `T${i + 1}`).filter((t) => !paired.has(t)).map((t) => [t])]; }
+// E's staggered start: agent k starts at (k-1) x STAGGER_MS. 5 s in E4; 1 s from W3a on (manager: keep the
+// total stagger ~20 s at 20 agents so E is not charged for the stagger). Recorded per run as stagger_s.
+const STAGGER_MS = +opt('stagger-ms', SCEN === 's3' ? 1000 : 5000);
 const MODEL = 'claude-haiku-5-5';
 // B and C run on the board as it was for their first reps (git 2ff8b07, frozen copy), so a later
 // board change cannot change those conditions mid-experiment; D uses the live board/ (who --recent).
@@ -39,9 +48,9 @@ const PRICE = { in: 0.10, out: 0.50, cacheR: 0.01, cacheW: 0.125 };
 const sh = (cmd, a, cwd, env) => execFileSync(cmd, a, { cwd, encoding: 'utf8', env: { ...process.env, ...env }, maxBuffer: 1 << 26 }).trim();
 const log = (f, o) => fs.appendFileSync(path.join(DIR, f), JSON.stringify({ ts: new Date().toISOString(), ...o }) + '\n');
 
-// ---- guard: the weekly meter (all LLM runs stop at 77%) ----
-function meter() { try { return JSON.parse(fs.readFileSync(path.join(os.homedir(), '.claude/data/latest.json'), 'utf8')).weekly_all_pct; } catch { return null; } }
-const STOP_AT = 77;
+// ---- guard: the weekly meter, newest line of history.jsonl (round 2: all LLM runs stop at 87%) ----
+function meter() { try { const t = fs.readFileSync(path.join(os.homedir(), '.claude/data/history.jsonl'), 'utf8').trimEnd(); return JSON.parse(t.slice(t.lastIndexOf('\n') + 1)).weekly_all_pct ?? null; } catch { return null; } }
+const STOP_AT = +opt('stop-at', 87);
 
 // ---- setup: one starter commit (fixed author/date), a bare origin, N clones ----
 function setup() {
@@ -143,7 +152,7 @@ function callAgent(k, iter) {
 
 async function agentLoop(k, deadline) {
   let iter = 0, idle = 0;
-  if (COND === 'E') await new Promise((r) => setTimeout(r, (k - 1) * 5000)); // staggered starts: agent k at (k-1)*5 s
+  if (COND === 'E') await new Promise((r) => setTimeout(r, (k - 1) * STAGGER_MS)); // staggered starts
   while (Date.now() < deadline) {
     const m = meter(); if (m != null && m >= STOP_AT) { log('events.jsonl', { event: 'meter-stop', agent: k, meter: m }); break; }
     const r = await callAgent(k, ++iter);
@@ -177,7 +186,7 @@ function scoreIn(DIRX, NX, starterSha) { const DIR = DIRX, N = NX;
   const own = (name, other) => { const m = src.match(new RegExp(`function\\s+${name}\\s*\\([^)]*\\)\\s*\\{([\\s\\S]*?)\\n\\}`)) || src.match(new RegExp(`(?:const|let)\\s+${name}\\s*=\\s*\\(([^)]*)\\)\\s*=>([\\s\\S]*?);\\n`)); return !!m && !new RegExp(`\\b${other}\\s*\\(`).test(m[0]); };
   // s2: a pair is built twice when both tasks pass and neither module imports or calls the other.
   const modSrc = (m) => { const f = path.join(fin, 'src', m + '.js'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : null; };
-  const dupPairs = SCEN === 's2' ? S.pairs.map(([ta, ma, tb, mb]) => { const a = modSrc(ma), b = modSrc(mb); const linked = (x, m) => x != null && new RegExp(`from\\s+['"]\\./${m}(\\.js)?['"]`).test(x);
+  const dupPairs = SCEN !== 's1' ? S.pairs.map(([ta, ma, tb, mb]) => { const a = modSrc(ma), b = modSrc(mb); const linked = (x, m) => x != null && new RegExp(`from\\s+['"]\\./${m}(\\.js)?['"]`).test(x);
       const sep = !!(hidden[ta] && hidden[tb] && a && b && !linked(a, mb) && !linked(b, ma)); return { pair: `${ta}/${tb}`, [ta]: hidden[ta] ?? false, [tb]: hidden[tb] ?? false, both_separate: sep, alias: !!(hidden[ta] && hidden[tb]) && !sep }; })
     : DUP_PAIRS.map(([ta, a, tb, b]) => ({ pair: `${ta}/${tb}`, [a]: hidden[ta] ?? false, [b]: hidden[tb] ?? false, both_separate: own(a, b) && own(b, a), alias: (hidden[ta] && hidden[tb]) && !(own(a, b) && own(b, a)) }));
   // Git friction per agent, from each clone's reflog (newest first). A plain `git pull --rebase` with
@@ -232,7 +241,7 @@ await Promise.all(Array.from({ length: N }, (_, i) => agentLoop(i + 1, deadline)
 const wallS = Math.round((Date.now() - t0) / 1000);
 const calls = fs.readFileSync(path.join(DIR, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const sum = (f) => calls.reduce((a, c) => a + (f(c) || 0), 0);
-const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : (COND === 'D' || COND === 'E') ? sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
+const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : (COND === 'D' || COND === 'E') ? sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, stagger_s: COND === 'E' ? +((N - 1) * STAGGER_MS / 1000).toFixed(1) : 0, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
   calls: calls.length, ...wasteOf(calls), pushed: calls.filter((c) => c.status === 'pushed').length, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, all_done_calls: calls.filter((c) => c.status === 'all-done').length,
   tokens: { in: sum((c) => c.tokens.in), out: sum((c) => c.tokens.out), cacheR: sum((c) => c.tokens.cacheR), cacheW: sum((c) => c.tokens.cacheW) },
   dedupe: DEDUPE, usd_api_equiv: +(sum((c) => c.usd_api_equiv) + (DEDUPE?.usd_api_equiv || 0)).toFixed(4), usd_note: 'subscription; API-equivalent at Haiku 5.5 rates',
