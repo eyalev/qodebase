@@ -567,6 +567,20 @@ docs/contest/landing.md; owner tab qb6). UI: src/landingui/ (qb7), view "Agents 
   eyal/cafe-lab (private test bench).
 - Cost: cloudcost gap `qodebase-landing` (local cloudcost settings).
 
+## Agent board (src/landing/board.ts, docs/board/PLAN2.md, since 2026-10-10)
+
+Who works on what, live, inside each project's Landing DO (SQLite table `board`, 24 h). Landing flag
+`board` (off by default; the lab A/Bs it), `crossDedupe`, `nextTask` (self-picked backlogs).
+- Posts: the platform at spawn/push/review/queue/land/bounce; the box hook (`forq hook`, installed in
+  /workspace/.claude/settings.json at boot only while the flag is on) on edits (file, debounced 30 s),
+  commits (subject + files), and it puts the board into the agent's context on each prompt.
+- Agents: `forq who [--recent [30m]] [--files a,b] [--area X]`, `forq intent "…" --files a,b` (reply
+  carries live work on those files + finished work), `forq dedupe <file>|"task"…` (one Haiku `claude -p`
+  in the box; credentials come from tmux because Claude Code keeps them out of its Bash tool's env).
+- People: `GET /api/p/<o>/<n>/landing/board?recent=30&files=&area=&tail=N`; `view()` has `board {rows, aliases}`.
+- A second router per project: `<slug>--router2` (two-teams scenario).
+- Tests: `src/landing/board.test.mjs`, `src/landing/boxhook.test.mjs` (the forq CLI against a stub API).
+
 ## Variants lab (qodebase.app/lab, docs/lab/PLAN.md, since 2026-10-08)
 
 Which way of running many agents wins, on real work. Schema: docs/lab/runs-schema.md

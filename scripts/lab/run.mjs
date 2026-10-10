@@ -34,7 +34,7 @@ const has = (k) => args.includes(k);
 // Stage caps: a stage stops itself (refuses to start a run) at these, real container dollars and
 // API-equivalent dollars at the >100k tier summed over the stage's lines in runs.jsonl. The whole
 // lab: <= $10 real, <= 15% of the weekly quota (the stage guard below reads the real meter).
-export const STAGE_CAPS = { 1: { usdReal: 2, apiUsdHigh: 15, quotaPts: 5 }, 2: { usdReal: 5, apiUsdHigh: 40, quotaPts: 8 }, 3: { usdReal: 3, apiUsdHigh: 25, quotaPts: 2 } };
+export const STAGE_CAPS = { 1: { usdReal: 2, apiUsdHigh: 15, quotaPts: 5 }, 2: { usdReal: 5, apiUsdHigh: 40, quotaPts: 8 }, 3: { usdReal: 3, apiUsdHigh: 25, quotaPts: 2 }, 4: { usdReal: 25, apiUsdHigh: 300, quotaPts: 12 } };   // 4 = board round 2 (W4c): real-money cap $30 for the round
 
 // Network retries: any method when the connection never opened (the server never saw it; run 2's
 // first try died on a connect timeout, 2026-10-08), reads also on other network errors.
