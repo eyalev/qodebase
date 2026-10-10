@@ -111,4 +111,58 @@ Diagnosis (logs and transcripts of every agent, run directories under `~/.local/
 - **`--max-turns 60`** for both A and E.
 - E v1 runs used a frozen copy of the board at f3d36d3 (`--board e1`), so the fix could not leak into them.
 
-### v2: A vs E x3 (pending)
+### v2: A vs E x3, fixed board + no-wait + 60 turns: E wins on time, cost and duplicates at equal quality
+
+| measure | A v1 (n=3) | A v2 (n=3) | E v1 (n=3) | E v2 (n=3) | p E v1 vs A | p E v2 vs A | p AIMD vs E20 / n8 vs E20 |
+|---|---|---|---|---|---|---|---|
+| wall time (s) | 579 [560–650] | 594 [545–660] | 976 [731–1019] | 451 [400–472] | 0.1 | 0.1 | - / - |
+| hidden tests (of 60) | 60 [60–60] | 60 [60–60] | 56 [56–57] | 60 [59–60] | 0.1 | 1 | - / - |
+| agent-minutes (all calls) | 168.1 [156.2–171.2] | 169.5 [155.6–172.5] | 141.7 [141.3–147.7] | 130.6 [121.7–137] | 0.1 | 0.1 | - / - |
+| agent-minutes wasted (built then dropped) | 36.5 [31.4–38.9] | 53.7 [43.1–57.7] | 23.4 [22.9–34.3] | 20.9 [19.2–22] | 0.2 | 0.1 | - / - |
+| red commits on main | 3 [0–3] | 0 [0–1] | 0 [0–5] | 3 [2–7] | 1 | 0.1 | - / - |
+| wasted work (calls that built a task then dropped it) | 37 [33–38] | 42 [34–46] | 28 [26–41] | 22 [20–24] | 0.7 | 0.1 | - / - |
+| deferrals (skipped before any work) | 0 [0–0] | 0 [0–0] | 26 [11–28] | 34 [18–37] | 0.1 | 0.1 | - / - |
+| calls cut at the turn cap | 21 [17–26] | 3 [1–6] | 19 [18–19] | 5 [5–6] | 0.6 | 0.5 | - / - |
+| duplicate pairs built twice (of 10) | 7 [4–9] | 9 [8–9] | 0 [0–1] | 0 [0–1] | 0.1 | 0.1 | - / - |
+| same task landed twice | 0 [0–0] | 1 [0–1] | 1 [0–2] | 0 [0–1] | 0.4 | 1 | - / - |
+| merge conflicts resolved | 239 [192–259] | 260 [245–284] | 275 [260–289] | 279 [258–318] | 0.1 | 0.7 | - / - |
+| rebases aborted | 203 [161–213] | 222 [201–236] | 9 [7–10] | 15 [8–15] | 0.1 | 0.1 | - / - |
+| resets to origin/main | 225 [172–236] | 236 [215–254] | 8 [8–8] | 14 [10–17] | 0.1 | 0.1 | - / - |
+| rejected pushes recovered | 264 [245–270] | 278 [262–280] | 52 [51–67] | 67 [66–72] | 0.1 | 0.1 | - / - |
+| agent calls | 128 [127–131] | 123 [112–124] | 131 [126–131] | 122 [116–126] | 1 | 1 | - / - |
+| API-equiv $ (Haiku 5.5) | 3.27 [3.1–3.29] | 3.26 [3.17–3.33] | 2.78 [2.67–2.87] | 2.73 [2.59–2.85] | 0.1 | 0.1 | - / - |
+
+E v2 against A v2 (same settings, alternating runs):
+
+| measure | A v2 | E v2 | change | p |
+|---|---|---|---|---|
+| wall time | 594 s | 451 s | −24% | 0.1 |
+| agent-minutes | 169.5 | 130.6 | −23% | |
+| API-equiv cost | $3.26 | $2.73 | −16% | |
+| hidden tests (of 60) | 60/60 | 60/60 (one run 59) | | 1 |
+| duplicate pairs built twice (of 10) | 9 | 0 | | |
+| wasted work calls | 42 | 22 | | |
+| wasted agent-minutes | 53.7 | 20.9 | −61% | |
+| rejected pushes | 278 | 67 | | |
+| aborted rebases | 222 | 15 | | |
+| resets to origin/main | 236 | 14 | | |
+
+Every p is 0.1, the smallest possible with 3 vs 3, except hidden tests (p = 1).
+
+The turn-cap cuts fell from about 20 to 3–5 per run. Against E v1 the wall time halved (976 → 451 s), and the lost tasks
+went from 3–4 per run to 0–1.
+
+Two watch items, both visible in the data:
+- **Red commits on main:** E v2 3 [2–7] vs A v2 0 [0–1], p 0.1. Every final main was green.
+  - The red commits are bad merges pushed without a test run: a re-export line duplicated by a rebase
+    (`Duplicate export of 'tagCompletion'`, `'normalizeTag' has already been declared`), and in r3 conflict markers in
+    `src/index.js`. A later commit repaired each.
+  - The likely mechanism: A agents give up on a conflict (222 aborts and 236 resets per run: they throw the merge away
+    and redo it on fresh main), while E agents resolve conflicts by hand (279 resolved, 15 aborts), and a hand merge
+    is sometimes pushed broken.
+  - In qodebase the landing queue's checks stop exactly this; the harness has no merge gate.
+- **The last task, by polite livelock:** in r3 T20 was the last open task. Agents 1, 3, 6, 13 and 19 all picked it at
+  once. Each saw the others' fresh claims and dropped it, and the other agents deferred to those claims (19 skips in
+  all). Nobody finished it.
+  - The board needs a tie-break: the earliest claim keeps the task, later ones yield.
+  - The 5-minute claim expiry did not help here, because the claimants kept posting edits.
