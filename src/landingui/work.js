@@ -393,6 +393,17 @@
     const shown = fs.slice(0, 3).map((f) => `<span class="mono">${esc(f)}</span>`).join(', ');
     return `<span class="bfiles">${shown}${fs.length > 3 ? ` <span class="dim">+${fs.length - 3} more</span>` : ''}</span>`;
   }
+  // A backlog line often carries its own file list ("T16 Recurrence: … in src/recur.js (test/x.js) src/index.js"):
+  // the files have their own line, so keep the words and cap the length.
+  function intentText(t) {
+    let x = String(t).replace(/\s*\(([^()]*\/[^()]*|[^()]*\.(js|mjs|ts|md|json|css|html))\)/g, '');
+    const words = x.trim().split(/\s+/);
+    const pathy = (w) => /\//.test(w) || /\.(js|mjs|cjs|ts|tsx|md|json|css|html|txt)[,;)]*$/i.test(w);
+    // Keep a file that is the object of the sentence ("Work through BACKLOG.md").
+    while (words.length > 1 && (pathy(words[words.length - 1]) || /^(in|and|,)$/i.test(words[words.length - 1])) && !/^(through|of|to|from|on|at|into|update|edit|fix)$/i.test(words[words.length - 2])) words.pop();
+    x = words.join(' ').replace(/[,;:]$/, '');
+    return x.length > 110 ? `${x.slice(0, 108).replace(/\s+\S*$/, '')}…` : x;
+  }
   function boardRow(r, sharedWith) {
     const w = boardWho(r.agent), [verb, k] = BKIND[r.kind] || [r.kind, 'working'];
     const href = w.c ? `#/change/${esc(w.c.id)}` : null;
@@ -402,7 +413,7 @@
       !r.done && WORKING.has(r.kind) && now() - r.ts > 120e3 ? `no news for <span data-since="${r.ts}">${secs(now() - r.ts)}</span>` : null,
       sharedWith?.length ? `same file as ${sharedWith.join(', ')}` : null].filter(Boolean);
     const body = `<span class="ag s-${k}" aria-hidden="true">${esc(w.num)}</span><span class="bb"><span class="bt1"><span><b>${esc(w.name)}</b> ${esc(verb)}</span><span class="dim small bwhen">${right}</span></span>
-      ${r.intent ? `<span class="bint">${esc(r.intent)}</span>` : ''}${boardFiles(r.files)}${notes.length ? `<span class="dim small">${notes.join('; ')}</span>` : ''}</span>`;
+      ${r.intent ? `<span class="bint">${esc(intentText(r.intent))}</span>` : ''}${boardFiles(r.files)}${notes.length ? `<span class="dim small">${notes.join('; ')}</span>` : ''}</span>`;
     return `<li>${href ? `<a href="${href}" class="brow">${body}</a>` : `<div class="brow">${body}</div>`}</li>`;
   }
   // A duplicate pair named by agent and task; null when a side cannot be named on this page.
@@ -419,7 +430,11 @@
     for (const r of live) for (const f of r.files || []) { if (!byFile.has(f)) byFile.set(f, new Set()); byFile.get(f).add(r.agent); }
     const shared = [...byFile].filter(([, a]) => a.size > 1);
     const others = (r) => [...new Set(shared.filter(([f, a]) => a.has(r.agent) && (r.files || []).includes(f)).flatMap(([, a]) => [...a].filter((x) => x !== r.agent)))].map((x) => boardWho(x).name);
-    const warn = shared.map(([f, a]) => { const ns = [...a].map((x) => boardWho(x).name); return `<li><span class="hu" aria-hidden="true">!</span><span>${ns.slice(0, -1).join(', ')} and ${ns[ns.length - 1]} are both changing <span class="mono">${esc(f)}</span>.</span></li>`; }).join('');
+    // Files changed by the same set of agents go on one line.
+    const groupsBySet = new Map();
+    for (const [f, a] of shared) { const k = [...a].sort().join('|'); if (!groupsBySet.has(k)) groupsBySet.set(k, { a: [...a], files: [] }); groupsBySet.get(k).files.push(f); }
+    const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+    const warn = [...groupsBySet.values()].sort((x, y) => y.a.length - x.a.length || y.files.length - x.files.length).map((g) => { const ns = g.a.map((x) => boardWho(x).name); return `<li><span class="hu" aria-hidden="true">!</span><span>${list(ns)} are ${ns.length > 2 ? 'all' : 'both'} changing ${list(g.files.map((f) => `<span class="mono">${esc(f)}</span>`))}.</span></li>`; }).join('');
     const al = D.board.aliases || [];
     const named = al.map(aliasNamed).filter(Boolean), unnamed = al.length - named.length;
     const dups = named.map((t) => `<li><span class="dupe" aria-hidden="true">=</span><span>${t}</span></li>`).join('')
@@ -432,7 +447,7 @@
       <p class="cap">Each agent says what it is doing and which files it touches, so the others can see it before they start.</p>
       <ul class="board">${first.map((r) => boardRow(r, others(r))).join('')}</ul>
       ${rest.length ? `<details class="bdone bmore"${boardMore ? ' open' : ''}><summary>Show ${rest.length} more working</summary><ul class="board">${rest.map((r) => boardRow(r, others(r))).join('')}</ul></details>` : ''}
-      ${warn ? `<p class="bh">Agents changing the same file</p><p class="small dim bnote">qodebase combines both changes when they finish.</p><ul class="bwarn">${warn}</ul>` : ''}
+      ${warn ? `<p class="bh">Agents changing the same file</p><p class="small dim bnote">qodebase combines their changes when they finish.</p><ul class="bwarn">${warn}</ul>` : ''}
       ${dups ? `<p class="bh">Same task asked twice</p><ul class="bdup">${dups}</ul>` : ''}
       ${doneFold}
     </section>`;
