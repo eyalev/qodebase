@@ -152,6 +152,27 @@
    "p_E_vs_A": 0.1,
    "p_E_vs_D": 1
   },
+  "cut_calls": {
+   "label": "calls cut at the turn cap",
+   "A": {
+    "median": null,
+    "min": null,
+    "max": null
+   },
+   "D": {
+    "median": null,
+    "min": null,
+    "max": null
+   },
+   "E": {
+    "median": null,
+    "min": null,
+    "max": null
+   },
+   "p_D_vs_A": null,
+   "p_E_vs_A": null,
+   "p_E_vs_D": null
+  },
   "dup_pairs_both_separate": {
    "label": "duplicate pairs built twice (of 5)",
    "A": {
