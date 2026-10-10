@@ -181,6 +181,8 @@ function replay(c, base, before, conflicts, unhandled) {
   const u = j.usage || {};
   const llm = { model: job.llm.model, ms: Date.now() - t, turns: j.num_turns ?? null, usd: j.total_cost_usd ?? null,
     in: u.input_tokens ?? null, out: u.output_tokens ?? null, cacheRead: u.cache_read_input_tokens ?? null, cacheWrite: u.cache_creation_input_tokens ?? null,
+    // Claude Code writes 1-hour cache (2x input, not 1.25x): the part of cacheWrite that is 1-hour (qb9, 2026-10-10).
+    cacheWrite1h: u.cache_creation?.ephemeral_1h_input_tokens ?? null,
     promptChars: prompt.length, exit: r.status, error: r.status === 0 && !j.is_error ? undefined : String(j.result || r.stderr || r.error || '').slice(0, 300) };
   say('replay', { id: c.id, ...llm });
   if (r.status !== 0 || j.is_error) { git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']); return { ok: false, llm, why: llm.error || `exit ${r.status}` }; }

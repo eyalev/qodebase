@@ -47,7 +47,7 @@ for (const d of lines.filter((l) => ids.includes(l.id))) {
     std += p.std; high += p.high;
   };
   for (const x of box) for (const [model, t] of Object.entries(x.tokens)) add(roleOf(x.agentId), model, t);
-  for (const x of replays) add('merge', x.model || 'haiku', { in: x.in, out: x.out, cr: x.cacheRead, cw: x.cacheWrite });
+  for (const x of replays) add('merge', x.model || 'haiku', { in: x.in, out: x.out, cr: x.cacheRead, cw: Math.max(0, (x.cacheWrite || 0) - (x.cacheWrite1h || 0)), cw1h: x.cacheWrite1h || 0 });
   for (const r of Object.values(byRole)) if (r) { r.apiUsdStd = Math.round(r.apiUsdStd * 1000) / 1000; r.apiUsdHigh = Math.round(r.apiUsdHigh * 1000) / 1000; }
   // Only when the lines cover the run: boxes on older code log no tokens, and a partial sum would
   // UNDER-state the cost (run 11: $0.04 from a few lines vs the ledger's 10x more output tokens).

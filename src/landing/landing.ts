@@ -646,7 +646,7 @@ export class Landing extends DurableObject<Env> {
       for (const rc of r.changes) if (rc.llm) {
         log('landing', 'replay_llm', { slug: m.slug, id: rc.id, landed: rc.landed, ...rc.llm });
         await recordCost(this.env, m.slug.split('.')[0], 'claude', m.slug, { usd: null, covered: false, billing: 'sub',
-          tokens: { in: rc.llm.in || 0, out: rc.llm.out || 0, cw: rc.llm.cacheWrite || 0, cr: rc.llm.cacheRead || 0 } });
+          tokens: { in: rc.llm.in || 0, out: rc.llm.out || 0, cw: Math.max(0, (rc.llm.cacheWrite || 0) - (rc.llm.cacheWrite1h || 0)), cw1h: rc.llm.cacheWrite1h || 0, cr: rc.llm.cacheRead || 0 } });
       }
       await this.#afterRealTrain(r);
     }

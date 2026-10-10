@@ -301,7 +301,7 @@ const addRole = (role, model, t) => {
   apiUsdStd += p.std; apiUsdHigh += p.high;
 };
 for (const x of boxLines) for (const [model, t] of Object.entries(x.tokens)) addRole(roleOf(x.agentId), model, t);
-for (const x of replayLines) addRole('merge', x.model || 'haiku', { in: x.in, out: x.out, cr: x.cacheRead, cw: x.cacheWrite });
+for (const x of replayLines) addRole('merge', x.model || 'haiku', { in: x.in, out: x.out, cr: x.cacheRead, cw: Math.max(0, (x.cacheWrite || 0) - (x.cacheWrite1h || 0)), cw1h: x.cacheWrite1h || 0 });
 if (!boxLines.length) {
   // Upper bound: all tokens at the run's priciest model.
   pricedAs = ['opus', 'sonnet', 'haiku'].find((m) => [variant.planner, variant.coderModel, variant.reviewers ? variant.reviewerModel : null].includes(m)) || 'haiku';

@@ -20,7 +20,7 @@ export type MergeJob = { trainId: string; slug: string; mainRemote: string; main
   llm?: { model: string };
   /** Lab policies github/ffa: no tier-1 handlers (plain git); ffa also skips the checks. */
   handlers?: boolean; noChecks?: boolean };
-export type LlmUse = { model: string; ms: number; turns: number | null; usd: number | null; in: number | null; out: number | null; cacheRead: number | null; cacheWrite: number | null; sameLines?: boolean; error?: string };
+export type LlmUse = { model: string; ms: number; turns: number | null; usd: number | null; in: number | null; out: number | null; cacheRead: number | null; cacheWrite: number | null; cacheWrite1h?: number | null; sameLines?: boolean; error?: string };
 export type MergeResult = {
   trainId: string; ok: boolean; error?: string; ms?: number; log?: string;
   branch?: string; mainBefore?: string; mainAfter?: string; pushed?: boolean; stale?: boolean; notesPushed?: boolean; solo?: boolean;
