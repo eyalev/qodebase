@@ -240,7 +240,9 @@ while (!COLLECT) {
   if (Date.now() > deadline) { status = 'timeout'; break; }
   // Settled: something landed, nothing active, no agent working, and no change for 3 minutes
   // (a router may still start a late agent; a bounced change may still be fixed).
-  if (view.changes.length && active === 0 && agentsWorking === 0 && busy === 0 && Date.now() - lastChangeAt > 3 * 60_000) break;
+  // Self-picked backlogs: an agent that never pushed (every task it tried was already claimed) stays 'working'
+  // in the Project forever (W4c order 10 ran to its cap that way), so there only the boxes' busy state counts.
+  if (view.changes.length && active === 0 && (selfPick || agentsWorking === 0) && busy === 0 && Date.now() - lastChangeAt > 3 * 60_000) break;
 }
 
 // ---- stop everything, collect ------------------------------------------------------------------
