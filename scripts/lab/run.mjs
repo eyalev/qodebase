@@ -247,7 +247,8 @@ while (!COLLECT) {
 const p = await api('GET', `/api/p/eyal/${name}`);
 const boxes = [...p.agents.map((a) => a.id), `${slug}--router`, `${slug}--router2`, ...['', '2', '3', '4', '5', '6'].map((n) => `${slug}--review${n}`)];
 await Promise.all(boxes.map((id) => api('POST', `/api/agents/${id}/stop`).catch(() => null)));
-await api('POST', `/api/p/eyal/${name}/landing/flags`, { caps: null, reviewers: 1, autoMerge: false }).catch(() => null);
+// nextTask cleared too: Landing's outbox would otherwise wake an agent with its next task after the stop.
+await api('POST', `/api/p/eyal/${name}/landing/flags`, { caps: null, reviewers: 1, autoMerge: false, nextTask: null }).catch(() => null);
 log('stopped', { project: slug, status, boxes: boxes.length });
 await sleep(75_000);   // boxes write their final costs to the ledger as they stop
 view = await api('GET', `/api/p/eyal/${name}/landing`);

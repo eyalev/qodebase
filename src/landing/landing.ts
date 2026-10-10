@@ -496,6 +496,8 @@ export class Landing extends DurableObject<Env> {
   #tell(to: string, text: string) { const m = this.#meta!; (m.outbox ||= []).push({ to, text, tries: 0, at: Date.now() }); }
   async #deliver() {
     const m = await this.#m();
+    // A halted project (budget, or the lab runner stopped it) wakes no box: its messages are dropped.
+    if (m.flags.halted && m.outbox?.length) { log('landing', 'tell_dropped_halted', { slug: m.slug, n: m.outbox.length }); m.outbox = []; await this.#saveMeta(); return; }
     const msg = m.outbox?.[0];
     if (!msg) return;
     let ok = false, err = '';
