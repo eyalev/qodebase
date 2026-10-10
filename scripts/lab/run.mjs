@@ -75,7 +75,7 @@ const seed = entry ? (entry.repetition ?? entry.seed ?? PLAN.runs.filter((r) => 
 const baseline = entry ? entry.baseline : opt('--baseline', null);
 // Landing's guard prices every token at the >100k tier (Haiku x5), so 6x the predicted API-equivalent; a $2
 // default halted board W4c run 1 at 24 of 30 tasks (2026-10-10).
-const budget = Number(opt('--budget', '0')) || Math.min(50, Math.max(2, Math.ceil(6 * ((entry?.predicted?.apiUsdStd) || 0))));
+const budget = Number(opt('--budget', '0')) || Math.min(50, Math.max(2, Math.ceil(15 * ((entry?.predicted?.apiUsdStd) || 0))));   // 15x std = 3x the prediction at the x5 tier (6x halted W4c r1c at 32 landings)
 const timeoutMin = Number(opt('--timeout', '0')) || Math.max(40, Math.ceil(2.5 * ((entry?.predicted?.wallS) || 0) / 60));   // github cells are predicted at ~58 min
 if (!scenarioId) { console.error('usage: run.mjs --scenario <id> [--variant JSON | --baseline opus-alone|github] [--stage N] [--seed N] [--budget usd] [--timeout min] [--dry]'); process.exit(2); }
 const SDIR = opt('--scenario-dir', join(ROOT, 'scripts/lab/scenarios', scenarioId));   // override: test a stand-in scenario
