@@ -107,6 +107,17 @@ def board_hook():
         try_api('POST', '/api/agent/board', {'kind': 'committed', 'status': g('log', '-1', '--format=%s')[:80],
             'files': [x for x in g('diff-tree', '--root', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n') if x][:20]})
 
+def dedupe_env():
+    """The nested claude -p's env. Claude Code keeps credentials out of its Bash tool's env (the pass
+    failed with api_error and 0 tokens from inside an agent, 2026-10-10), so take them from tmux, where
+    boot.sh put them. Never printed."""
+    env = {k: x for k, x in os.environ.items() if not (k == 'CLAUDECODE' or k.startswith('CLAUDE_CODE_SSE') or k in ('CLAUDE_CODE_ENTRYPOINT', 'ANTHROPIC_MODEL'))}
+    for k in ('CLAUDE_CODE_OAUTH_TOKEN', 'ANTHROPIC_API_KEY'):
+        if env.get(k): continue
+        p = subprocess.run(['tmux', 'show-environment', '-g', k], text=True, capture_output=True)
+        if p.returncode == 0 and p.stdout.startswith(k + '='): env[k] = p.stdout.strip()[len(k) + 1:]
+    return env
+
 def git(*a, check=True):
     p = subprocess.run(['git', *a], cwd=REPO, text=True, capture_output=True)
     if check and p.returncode: sys.exit(f'forq: git {" ".join(a[:2])} failed:\n{p.stdout}{p.stderr}')
@@ -218,7 +229,7 @@ def main(argv):
         c = subprocess.run(['claude', '-p', '--model', model, '--output-format', 'json', '--max-turns', '1', '--tools', '', '--setting-sources', '',
             '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.'], input=f['prompt'], text=True, capture_output=True, timeout=300,
             # Run from inside an agent's own Claude Code: its session variables must not reach the nested call.
-            env={k: x for k, x in os.environ.items() if not (k == 'CLAUDECODE' or k.startswith('CLAUDE_CODE_SSE') or k in ('CLAUDE_CODE_ENTRYPOINT', 'ANTHROPIC_MODEL'))})
+            env=dedupe_env())
         try: j = json.loads(c.stdout)
         except Exception: sys.exit(f'forq: the dedupe pass gave no answer: {(c.stderr or c.stdout)[-300:]}')
         if j.get('is_error') or '{' not in str(j.get('result') or ''): print(f"forq: the dedupe pass answered oddly: {str(j.get('result'))[:300]}", file=sys.stderr)
