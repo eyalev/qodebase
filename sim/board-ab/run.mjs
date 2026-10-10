@@ -30,13 +30,20 @@ const S = {
   s4: { starter: 'starter4', hidden: 'tasks4.test.mjs', tasks: 16,
     pairs: [['T1', 'query', 'T13', 'smartfilter'], ['T4', 'sync', 'T14', 'reconcile'], ['T5', 'table', 'T15', 'columns'], ['T11', 'fuzzy', 'T16', 'loose']],
     intents: [['T1', 'T13'], ['T4', 'T14'], ['T5', 'T15'], ['T11', 'T16'], ...[2, 3, 6, 7, 8, 9, 10, 12].map((n) => [`T${n}`])] },
+  // s5 = todokit 0.2 + 12 library-sized tasks (W3b s5, Sonnet; ~2.2x an s4 task by reference code size): 3 far-worded pairs
+  // T2/T10 cron, T4/T11 templates, T5/T12 semver; chain T6 -> T7 (config values use the expression evaluator).
+  s5: { starter: 'starter5', hidden: 'tasks5.test.mjs', tasks: 12,
+    pairs: [['T2', 'cron', 'T10', 'schedule'], ['T4', 'template', 'T11', 'mailmerge'], ['T5', 'semver', 'T12', 'compat']],
+    intents: [['T2', 'T10'], ['T4', 'T11'], ['T5', 'T12'], ...[1, 3, 6, 7, 8, 9].map((n) => [`T${n}`])] },
 }[SCEN];
 if (SCEN === 's3') { const paired = new Set(S.pairs.flatMap(([a, , b]) => [a, b])); S.intents = [...S.pairs.map(([a, , b]) => [a, b]), ...Array.from({ length: 60 }, (_, i) => `T${i + 1}`).filter((t) => !paired.has(t)).map((t) => [t])]; }
 // E's staggered start: agent k starts at (k-1) x STAGGER_MS. 5 s in E4; 1 s from W3a on (manager: keep the
 // total stagger ~20 s at 20 agents so E is not charged for the stagger). Recorded per run as stagger_s.
 const STAGGER_MS = +opt('stagger-ms', SCEN === 's3' ? 1000 : 5000);
 const MODEL = { haiku: 'claude-haiku-5-5', sonnet: 'claude-sonnet-5-5' }[opt('model', 'haiku')];
-const MAX_TURNS = opt('max-turns', MODEL.includes('sonnet') ? '80' : '40');
+const MAX_TURNS = opt('max-turns', SCEN === 's5' ? '150' : MODEL.includes('sonnet') ? '80' : '40');
+// One call's hard limit: 12 min, 30 min for s5's library-sized tasks.
+const CALL_MS = (SCEN === 's5' ? 30 : 12) * 60e3;
 // B and C run on the board as it was for their first reps (git 2ff8b07, frozen copy), so a later
 // board change cannot change those conditions mid-experiment; D uses the live board/ (who --recent).
 const V1 = path.join(os.homedir(), '.local/share/qb9-board-ab/board-v1/board');
@@ -118,7 +125,7 @@ function dedupePass(seed) {
 const NO_WAIT = args.includes('--no-wait');
 // Board v3 (manager, 2026-10-10, for W3b): the earliest claim of a task keeps it (BOARD_TIEBREAK=1 in board/lib.mjs
 // + one prompt line). On by default for s4 only, so W7 (s3) stays on the E v2 code path.
-const TIEBREAK = args.includes('--tiebreak') || (SCEN === 's4' && !args.includes('--no-tiebreak'));
+const TIEBREAK = args.includes('--tiebreak') || ((SCEN === 's4' || SCEN === 's5') && !args.includes('--no-tiebreak'));
 const PROMPT_VERSION = (NO_WAIT ? 'board-ab-v2-nowait' : 'board-ab-v1') + (TIEBREAK ? '+tiebreak' : '');
 function prompt(k) {
   // A = no board; B = hooks only (automatic posts: file names, commits); C = hooks + one instruction
@@ -152,7 +159,7 @@ function callAgent(k, iter) {
     const p = spawn('claude', a, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
     let out = '', err = '';
     p.stdout.on('data', (d) => (out += d)); p.stderr.on('data', (d) => (err += d));
-    const timer = setTimeout(() => p.kill('SIGTERM'), 12 * 60e3); // this child only, by its handle
+    const timer = setTimeout(() => p.kill('SIGTERM'), CALL_MS); // this child only, by its handle
     p.on('close', (code) => {
       clearTimeout(timer);
       let j = null; try { j = JSON.parse(out); } catch {}

@@ -1,0 +1,8 @@
+{
+  "name": "todokit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A small to-do list library with a command interface.",
+  "scripts": { "test": "node --test" }
+}
