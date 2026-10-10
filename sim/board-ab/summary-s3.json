@@ -1,7 +1,9 @@
 {
  "n": {
   "A v1": 3,
-  "E v1": 3
+  "A v2": 3,
+  "E v1": 3,
+  "E v2": 3
  },
  "measures": {
   "wall_s": {
@@ -11,16 +13,32 @@
     "min": 560,
     "max": 650
    },
+   "A v2": {
+    "median": 594,
+    "min": 545,
+    "max": 660
+   },
    "E v1": {
     "median": 976,
     "min": 731,
     "max": 1019
    },
-   "p_E v1_vs_A": 0.1
+   "E v2": {
+    "median": 451,
+    "min": 400,
+    "max": 472
+   },
+   "p_E v1_vs_A": 0.1,
+   "p_E v2_vs_A": 0.1
   },
   "hidden_pass": {
    "label": "hidden tests (of 60)",
    "A v1": {
+    "median": 60,
+    "min": 60,
+    "max": 60
+   },
+   "A v2": {
     "median": 60,
     "min": 60,
     "max": 60
@@ -30,7 +48,13 @@
     "min": 56,
     "max": 57
    },
-   "p_E v1_vs_A": 0.1
+   "E v2": {
+    "median": 60,
+    "min": 59,
+    "max": 60
+   },
+   "p_E v1_vs_A": 0.1,
+   "p_E v2_vs_A": 1
   },
   "agent_minutes": {
    "label": "agent-minutes (all calls)",
@@ -39,12 +63,23 @@
     "min": 156.2,
     "max": 171.2
    },
+   "A v2": {
+    "median": 169.5,
+    "min": 155.6,
+    "max": 172.5
+   },
    "E v1": {
     "median": 141.7,
     "min": 141.3,
     "max": 147.7
    },
-   "p_E v1_vs_A": 0.1
+   "E v2": {
+    "median": 130.6,
+    "min": 121.7,
+    "max": 137
+   },
+   "p_E v1_vs_A": 0.1,
+   "p_E v2_vs_A": 0.1
   },
   "wasted_agent_minutes": {
    "label": "agent-minutes wasted (built then dropped)",
@@ -53,12 +88,23 @@
     "min": 31.4,
     "max": 38.9
    },
+   "A v2": {
+    "median": 53.7,
+    "min": 43.1,
+    "max": 57.7
+   },
    "E v1": {
     "median": 23.4,
     "min": 22.9,
     "max": 34.3
    },
-   "p_E v1_vs_A": 0.2
+   "E v2": {
+    "median": 20.9,
+    "min": 19.2,
+    "max": 22
+   },
+   "p_E v1_vs_A": 0.2,
+   "p_E v2_vs_A": 0.1
   },
   "red_commits": {
    "label": "red commits on main",
@@ -67,12 +113,23 @@
     "min": 0,
     "max": 3
    },
+   "A v2": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
    "E v1": {
     "median": 0,
     "min": 0,
     "max": 5
    },
-   "p_E v1_vs_A": 1
+   "E v2": {
+    "median": 3,
+    "min": 2,
+    "max": 7
+   },
+   "p_E v1_vs_A": 1,
+   "p_E v2_vs_A": 0.1
   },
   "wasted_work_calls": {
    "label": "wasted work (calls that built a task then dropped it)",
@@ -81,16 +138,32 @@
     "min": 33,
     "max": 38
    },
+   "A v2": {
+    "median": 42,
+    "min": 34,
+    "max": 46
+   },
    "E v1": {
     "median": 28,
     "min": 26,
     "max": 41
    },
-   "p_E v1_vs_A": 0.7
+   "E v2": {
+    "median": 22,
+    "min": 20,
+    "max": 24
+   },
+   "p_E v1_vs_A": 0.7,
+   "p_E v2_vs_A": 0.1
   },
   "deferrals": {
    "label": "deferrals (skipped before any work)",
    "A v1": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "A v2": {
     "median": 0,
     "min": 0,
     "max": 0
@@ -100,7 +173,13 @@
     "min": 11,
     "max": 28
    },
-   "p_E v1_vs_A": 0.1
+   "E v2": {
+    "median": 34,
+    "min": 18,
+    "max": 37
+   },
+   "p_E v1_vs_A": 0.1,
+   "p_E v2_vs_A": 0.1
   },
   "cut_calls": {
    "label": "calls cut at the turn cap",
@@ -109,12 +188,23 @@
     "min": 17,
     "max": 26
    },
+   "A v2": {
+    "median": 3,
+    "min": 1,
+    "max": 6
+   },
    "E v1": {
     "median": 19,
     "min": 18,
     "max": 19
    },
-   "p_E v1_vs_A": 0.6
+   "E v2": {
+    "median": 5,
+    "min": 5,
+    "max": 6
+   },
+   "p_E v1_vs_A": 0.6,
+   "p_E v2_vs_A": 0.5
   },
   "dup_pairs_both_separate": {
    "label": "duplicate pairs built twice (of 10)",
@@ -123,12 +213,23 @@
     "min": 4,
     "max": 9
    },
+   "A v2": {
+    "median": 9,
+    "min": 8,
+    "max": 9
+   },
    "E v1": {
     "median": 0,
     "min": 0,
     "max": 1
    },
-   "p_E v1_vs_A": 0.1
+   "E v2": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "p_E v1_vs_A": 0.1,
+   "p_E v2_vs_A": 0.1
   },
   "same_task_twice_n": {
    "label": "same task landed twice",
@@ -137,12 +238,23 @@
     "min": 0,
     "max": 0
    },
+   "A v2": {
+    "median": 1,
+    "min": 0,
+    "max": 1
+   },
    "E v1": {
     "median": 1,
     "min": 0,
     "max": 2
    },
-   "p_E v1_vs_A": 0.4
+   "E v2": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "p_E v1_vs_A": 0.4,
+   "p_E v2_vs_A": 1
   },
   "conflicts": {
    "label": "merge conflicts resolved",
@@ -151,12 +263,23 @@
     "min": 192,
     "max": 259
    },
+   "A v2": {
+    "median": 260,
+    "min": 245,
+    "max": 284
+   },
    "E v1": {
     "median": 275,
     "min": 260,
     "max": 289
    },
-   "p_E v1_vs_A": 0.1
+   "E v2": {
+    "median": 279,
+    "min": 258,
+    "max": 318
+   },
+   "p_E v1_vs_A": 0.1,
+   "p_E v2_vs_A": 0.7
   },
   "rebase_aborts": {
    "label": "rebases aborted",
@@ -165,12 +288,23 @@
     "min": 161,
     "max": 213
    },
+   "A v2": {
+    "median": 222,
+    "min": 201,
+    "max": 236
+   },
    "E v1": {
     "median": 9,
     "min": 7,
     "max": 10
    },
-   "p_E v1_vs_A": 0.1
+   "E v2": {
+    "median": 15,
+    "min": 8,
+    "max": 15
+   },
+   "p_E v1_vs_A": 0.1,
+   "p_E v2_vs_A": 0.1
   },
   "resets_to_origin": {
    "label": "resets to origin/main",
@@ -179,12 +313,23 @@
     "min": 172,
     "max": 236
    },
+   "A v2": {
+    "median": 236,
+    "min": 215,
+    "max": 254
+   },
    "E v1": {
     "median": 8,
     "min": 8,
     "max": 8
    },
-   "p_E v1_vs_A": 0.1
+   "E v2": {
+    "median": 14,
+    "min": 10,
+    "max": 17
+   },
+   "p_E v1_vs_A": 0.1,
+   "p_E v2_vs_A": 0.1
   },
   "rejected_push_recoveries": {
    "label": "rejected pushes recovered",
@@ -193,12 +338,23 @@
     "min": 245,
     "max": 270
    },
+   "A v2": {
+    "median": 278,
+    "min": 262,
+    "max": 280
+   },
    "E v1": {
     "median": 52,
     "min": 51,
     "max": 67
    },
-   "p_E v1_vs_A": 0.1
+   "E v2": {
+    "median": 67,
+    "min": 66,
+    "max": 72
+   },
+   "p_E v1_vs_A": 0.1,
+   "p_E v2_vs_A": 0.1
   },
   "calls": {
    "label": "agent calls",
@@ -207,12 +363,23 @@
     "min": 127,
     "max": 131
    },
+   "A v2": {
+    "median": 123,
+    "min": 112,
+    "max": 124
+   },
    "E v1": {
     "median": 131,
     "min": 126,
     "max": 131
    },
-   "p_E v1_vs_A": 1
+   "E v2": {
+    "median": 122,
+    "min": 116,
+    "max": 126
+   },
+   "p_E v1_vs_A": 1,
+   "p_E v2_vs_A": 1
   },
   "usd_api_equiv": {
    "label": "API-equiv $ (Haiku 5.5)",
@@ -221,12 +388,23 @@
     "min": 3.1038,
     "max": 3.2864
    },
+   "A v2": {
+    "median": 3.2587,
+    "min": 3.1715,
+    "max": 3.3323
+   },
    "E v1": {
     "median": 2.7769,
     "min": 2.6692,
     "max": 2.8672
    },
-   "p_E v1_vs_A": 0.1
+   "E v2": {
+    "median": 2.7325,
+    "min": 2.5869,
+    "max": 2.8537
+   },
+   "p_E v1_vs_A": 0.1,
+   "p_E v2_vs_A": 0.1
   }
  }
 }
