@@ -375,6 +375,55 @@
     if (!list.length) return '';
     return `<section class="sec"><div class="sec-h"><h3>${OWN ? 'Needs you' : 'Waiting for the owner'}</h3></div><div class="needs">${list.map((c) => `<div class="need"><a href="#/change/${esc(c.id)}">${short(c)}<span class="sub">${ready(c) ? `${AG(c.agent)}, reviewed and ready` : `Collided on ${files(c.landing?.conflicts || [])}; ${esc(leadName(c.lead))} is on it`}</span></a>${ready(c) && OWN ? `<button class="btn" type="button" data-approve="${esc(c.id)}">Merge</button>` : ''}</div>`).join('')}</div></section>`;
   }
+  // ---- the agent board (qb6's board in the Landing DO, docs/board/PLAN2.md W2c) ---------------
+  // Who works on what now (stated task, files, since when), shared files, duplicates, recently finished.
+  // Rows key on the change id after '--'; times come from ts (never ageS), so a poll that only
+  // moves time does not rebuild the page.
+  const BKIND = { started: ['started', 'working'], editing: ['is editing', 'working'], committed: ['committed work', 'working'], pushed: ['sent it for review', 'pushed'],
+    reviewing: ['is being reviewed', 'reviewing'], approved: ['passed review', 'ready'], changes: ['was asked for changes', 'working'], queued: ['is in the line', 'queued'],
+    landed: ['landed', 'landed'], bounced: ['was sent back', 'bounced'], blocked: ['is blocked', 'bounced'], done: ['finished', 'landed'] };
+  let boardOpen = false, boardMore = false;
+  function boardWho(id) {
+    const c = D.changes.find((x) => String(x.id).split('--').pop() === String(id) || x.id === id);
+    return { c, name: AG(c ? c.agent : `board:${id}`), num: agNum(c ? c.agent : `board:${id}`) };
+  }
+  function boardFiles(fs) {
+    if (!fs?.length) return '';
+    const shown = fs.slice(0, 3).map((f) => `<span class="mono">${esc(f)}</span>`).join(', ');
+    return `<span class="bfiles">${shown}${fs.length > 3 ? ` <span class="dim">+${fs.length - 3} more</span>` : ''}</span>`;
+  }
+  function boardRow(r) {
+    const w = boardWho(r.agent), [verb, k] = BKIND[r.kind] || [r.kind, 'working'];
+    const href = w.c ? `#/change/${esc(w.c.id)}` : null;
+    // Right column: how long it has worked (live) or when it finished; "quiet" only when stale.
+    const right = r.done ? ago(r.ts) : w.c?.createdAt ? `for <span data-since="${w.c.createdAt}">${secs(now() - w.c.createdAt)}</span>` : ago(r.ts);
+    const quiet = !r.done && now() - r.ts > 120e3 ? `<span class="dim small">quiet for <span data-since="${r.ts}">${secs(now() - r.ts)}</span></span>` : '';
+    const body = `<span class="ag s-${k}" aria-hidden="true">${esc(w.num)}</span><span class="bb"><span class="bt1"><span><b>${esc(w.name)}</b> ${esc(verb)}</span><span class="dim small bwhen">${right}</span></span>
+      ${r.intent ? `<span class="bint">${esc(r.intent)}</span>` : ''}${boardFiles(r.files)}${r.status && !/^dedupe$/.test(r.status) && r.kind !== 'landed' ? `<span class="dim small">${esc(r.status)}</span>` : ''}${quiet}</span>`;
+    return `<li>${href ? `<a href="${href}" class="brow">${body}</a>` : `<div class="brow">${body}</div>`}</li>`;
+  }
+  function aliasLabel(x) {
+    const w = D.changes.find((c) => String(c.id).split('--').pop() === String(x));
+    if (w) return `${AG(w.agent)}'s task (“${short(w)}”)`;
+    return /^#?\d+$/.test(String(x)) ? `task ${String(x).startsWith('#') ? x : `#${x}`}` : `“${esc(x)}”`;
+  }
+  function boardView() {
+    if (!D.flags?.board || !D.board) return '';
+    const rows = D.board.rows || [], live = rows.filter((r) => !r.done), done = rows.filter((r) => r.done);
+    // Two live agents naming the same file: a heads-up (they may collide when combined).
+    const byFile = new Map();
+    for (const r of live) for (const f of r.files || []) { if (!byFile.has(f)) byFile.set(f, new Set()); byFile.get(f).add(r.agent); }
+    const shared = [...byFile].filter(([, a]) => a.size > 1);
+    const warn = shared.map(([f, a]) => { const ns = [...a].map((x) => boardWho(x).name); return `<li><span class="hu" aria-hidden="true">!</span><span>${ns.slice(0, -1).join(', ')} and ${ns[ns.length - 1]} both touch <span class="mono">${esc(f)}</span>.</span></li>`; }).join('');
+    const cap1 = (t) => t.replace(/^(<[^>]+>)?([a-z])/, (m, tag, ch) => (tag || '') + ch.toUpperCase());
+    const dups = (D.board.aliases || []).map((x) => `<li><span class="dupe" aria-hidden="true">=</span><span>${cap1(aliasLabel(x.a))} is the same as ${aliasLabel(x.b)}: merged into one, so it is done once.</span></li>`).join('');
+    return `<section class="sec" id="board"><div class="sec-h"><h3>Who's doing what</h3></div>
+      <p class="cap">Each agent says what it is doing and which files it touches, so the others can see it before they start.</p>
+      ${warn ? `<p class="bh bh1">Heads-up: shared files <span class="dim">(collisions there are ${term('replay', 'replayed')})</span></p><ul class="bwarn">${warn}</ul>` : ''}${dups ? `<p class="bh">Same task asked twice</p><ul class="bdup">${dups}</ul>` : ''}
+      ${live.length ? `<ul class="board">${live.slice(0, 6).map(boardRow).join('')}</ul>${live.length > 6 ? `<details class="bdone bmore"${boardMore ? ' open' : ''}><summary>${live.length - 6} more working</summary><ul class="board">${live.slice(6).map(boardRow).join('')}</ul></details>` : ''}` : '<p class="dim">No agent is working right now.</p>'}
+      ${done.length ? `<details class="bdone"${boardOpen ? ' open' : ''}><summary>Finished in the last 30 minutes (${done.length})</summary><ul class="board">${done.map(boardRow).join('')}</ul></details>` : ''}
+    </section>`;
+  }
   function overview() {
     const act = D.changes.filter(active);
     // A demo that has stopped leaves unfinished changes behind; nobody is working on them.
@@ -384,6 +433,7 @@
       <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : P && P.replay ? (now() >= P.end - 1 ? `The replay has ended: ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed.` : 'The replay is starting…') : `No agents are working on ${esc(NAME)} right now.${D.stats.landedToday ? ` ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed ${D.mode === 'demo' ? 'in the last run' : 'today'}.` : ''}`}</h2>
       <p class="intro">Each agent is an AI working on its own ${term('fork', 'copy')} of the code. Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>
       ${numbers()}
+      ${boardView()}
       <section class="sec"><div class="sec-h"><h3>${term('queue', 'The line')}</h3><a href="#/line">Everything</a></div>
         <p class="cap">Finished changes wait here and are tested together, then join ${term('main', 'the main code')}. Tap a change to see it.</p>${theLine(false)}</section>
       <div class="ov"><div class="col1">
@@ -586,6 +636,7 @@
   pop.className = 'lw-pop'; pop.id = 'lw-pop'; pop.setAttribute('popover', '');
   document.body.appendChild(pop);
   const toast = (t) => { const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; root.appendChild(e); setTimeout(() => e.remove(), 2600); };
+  root.addEventListener('toggle', (e) => { if (e.target.matches('details.bmore')) boardMore = e.target.open; else if (e.target.matches('details.bdone')) boardOpen = e.target.open; }, true);
   root.addEventListener('click', async (ev) => {
     const g = ev.target.closest('[data-gloss]');
     if (g) { ev.preventDefault(); ev.stopPropagation(); const [t, d] = GLOSS[g.dataset.gloss]; pop.innerHTML = `<button class="x" type="button" aria-label="Close" popovertarget="lw-pop" popovertargetaction="hide">×</button><b>${esc(t)}</b><p>${esc(d)}</p>`; pop.showPopover?.(); return; }
