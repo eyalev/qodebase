@@ -45,7 +45,7 @@ const BOARD = path.join(BOARD_DIR, 'board.mjs');
 const HOOK = path.join(BOARD_DIR, 'hooks/board-hook.mjs');
 const HIDDEN = path.join(os.homedir(), '<lab-hidden dir>/board-ab', S.hidden);
 const ROOT = path.join(os.homedir(), '.local/share/qb9-board-ab');
-const RUN_ID = `${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}-${SCEN === 's1' ? '' : SCEN + '-'}${COND}-r${REP}`;
+const RUN_ID = `${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}-${SCEN === 's1' ? '' : SCEN + '-'}${COND}${opt('aimd', null) ? '-aimd' : ''}-n${N}-r${REP}`;
 const DIR = path.join(ROOT, RUN_ID);
 // $/1M (docs/lab prices, checked 2026-10-08). Calls are on the subscription; this is the API equivalent.
 // Cache writes are 1-hour writes (usage.cache_creation.ephemeral_1h), 2x input: checked 2026-10-10 against
@@ -158,15 +158,37 @@ function callAgent(k, iter) {
   });
 }
 
+// ---- W7: congestion control (docs/board/sim.md (f)) ----
+// Every minute the harness measures thrash = rejected pushes + 3 x dropped work in that minute (rejected
+// pushes from the clones' reflogs, as in score(); dropped work = calls that ended skipped/failed after >= 10
+// turns) and logs it (event 'thrash', every run). With --aimd start,lo,hi it also sets a cap: thrash <= lo x
+// cap -> cap + 1; thrash > hi x cap -> cap halved (never below 2); else hold. Only the `cap` lowest-numbered
+// agents still working start calls; the others wait at their next call boundary (nobody is killed).
+const AIMD = opt('aimd', null) ? (([a, b, c]) => ({ start: +a, lo: +b, hi: +c }))(opt('aimd').split(',')) : null;
+let CAP = AIMD ? AIMD.start : N; const ACTIVE = new Set(); const capLog = [];
+const allowed = (k) => [...ACTIVE].sort((a, b) => a - b).indexOf(k) < CAP;
+function rejectedSoFar() { let n = 0; for (let k = 1; k <= N; k++) { try { const rl = sh('git', ['reflog', '--format=%gs'], path.join(DIR, `agent${k}`)).split('\n');
+  for (let i = 0; i < rl.length - 1; i++) if (/^pull --rebase \(start\)/.test(rl[i]) && /^(commit|rebase \(continue\))/.test(rl[i + 1])) n++; } catch {} } return n; }
+let droppedSoFar = 0;
+function controller(t0) { let lastRej = 0, lastDrop = 0, minute = 0;
+  return setInterval(() => { minute++; const rej = rejectedSoFar(), drop = droppedSoFar; const dr = rej - lastRej, dd = drop - lastDrop; lastRej = rej; lastDrop = drop;
+    const thrash = dr + 3 * dd; const before = CAP;
+    if (AIMD) { if (thrash <= AIMD.lo * CAP) CAP = Math.min(N, CAP + 1); else if (thrash > AIMD.hi * CAP) CAP = Math.max(2, Math.floor(CAP / 2)); }
+    const row = { minute, t_s: Math.round((Date.now() - t0) / 1000), thrash, rejected: dr, dropped: dd, cap_before: before, cap: CAP, active: ACTIVE.size, working: [...ACTIVE].filter(allowed).length };
+    capLog.push(row); log('events.jsonl', { event: 'thrash', ...row }); }, 60e3); }
+
 async function agentLoop(k, deadline) {
-  let iter = 0, idle = 0;
+  let iter = 0, idle = 0; ACTIVE.add(k);
   if (COND === 'E') await new Promise((r) => setTimeout(r, (k - 1) * STAGGER_MS)); // staggered starts
-  while (Date.now() < deadline) {
+  try { while (Date.now() < deadline) {
+    while (!allowed(k) && Date.now() < deadline) await new Promise((r) => setTimeout(r, 2000));
+    if (Date.now() >= deadline) break;
     const m = meter(); if (m != null && m >= STOP_AT) { log('events.jsonl', { event: 'meter-stop', agent: k, meter: m }); break; }
     const r = await callAgent(k, ++iter);
+    if ((r.status === 'skipped' || r.status === 'failed') && (r.turns ?? 0) >= 10) droppedSoFar++;
     if (r.status === 'all-done') break;
     if (r.status !== 'pushed') { if (++idle >= 3) break; } else idle = 0;
-  }
+  } } finally { ACTIVE.delete(k); }
 }
 
 // ---- scoring (no model): hidden tests, red main, duplicates, rebases ----
@@ -247,14 +269,16 @@ const starterSha = setup();
 const t0 = Date.now(); const deadline = t0 + MINUTES * 60e3;
 log('events.jsonl', { event: 'start', cond: COND, agents: N, minutes: MINUTES, rep: REP, meter: m0, prompt_version: PROMPT_VERSION, starter: starterSha });
 console.error(`[run] ${RUN_ID} cond ${COND}, ${N} agents, ${MINUTES} min, meter ${m0}%`);
+const ctl = controller(t0);
 await Promise.all(Array.from({ length: N }, (_, i) => agentLoop(i + 1, deadline)));
+clearInterval(ctl);
 const wallS = Math.round((Date.now() - t0) / 1000);
 const calls = fs.readFileSync(path.join(DIR, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const sum = (f) => calls.reduce((a, c) => a + (f(c) || 0), 0);
 const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : (COND === 'D' || COND === 'E') ? sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, stagger_s: COND === 'E' ? +((N - 1) * STAGGER_MS / 1000).toFixed(1) : 0, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
   calls: calls.length, ...wasteOf(calls), pushed: calls.filter((c) => c.status === 'pushed').length, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, all_done_calls: calls.filter((c) => c.status === 'all-done').length,
   tokens: { in: sum((c) => c.tokens.in), out: sum((c) => c.tokens.out), cacheR: sum((c) => c.tokens.cacheR), cacheW: sum((c) => c.tokens.cacheW) },
-  dedupe: DEDUPE, usd_api_equiv: +(sum((c) => c.usd_api_equiv) + (DEDUPE?.usd_api_equiv || 0)).toFixed(4), usd_note: `subscription; API-equivalent at ${MODEL} rates, 1h cache writes`, price: PRICE, max_turns: +MAX_TURNS,
+  dedupe: DEDUPE, usd_api_equiv: +(sum((c) => c.usd_api_equiv) + (DEDUPE?.usd_api_equiv || 0)).toFixed(4), usd_note: `subscription; API-equivalent at ${MODEL} rates, 1h cache writes`, price: PRICE, max_turns: +MAX_TURNS, aimd: AIMD, cap_log: capLog, cap_median: capLog.length ? [...capLog.map((r) => r.cap)].sort((a, b) => a - b)[Math.floor(capLog.length / 2)] : null,
   board_events: fs.existsSync(path.join(DIR, 'board.jsonl')) ? fs.readFileSync(path.join(DIR, 'board.jsonl'), 'utf8').split('\n').filter(Boolean).length : 0,
   ...score(starterSha) };
 fs.writeFileSync(path.join(DIR, 'result.json'), JSON.stringify(result, null, 1));
