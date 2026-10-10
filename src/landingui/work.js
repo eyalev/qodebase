@@ -383,7 +383,7 @@
     reviewing: ['is in review', 'reviewing'], approved: ['passed review', 'ready'], changes: ['was asked for changes', 'working'], queued: ['is in the line', 'queued'],
     landed: ['landed its work', 'landed'], bounced: ['was sent back', 'bounced'], blocked: ['is blocked', 'bounced'], done: ['finished', 'landed'] };
   const WORKING = new Set(['started', 'editing', 'committed', 'changes']);
-  let boardOpen = false, boardMore = false;
+  let boardOpen = false, boardMore = false, boardWMore = false;
   function boardWho(id) {
     const c = D.changes.find((x) => String(x.id).split('--').pop() === String(id) || x.id === id);
     return { c, name: AG(c ? c.agent : `board:${id}`), num: agNum(c ? c.agent : `board:${id}`) };
@@ -411,7 +411,7 @@
     // One dim line: the agent's own status note, "no news" only while it should be working, a shared file.
     const notes = [r.status && !/^dedupe$/.test(r.status) && r.kind !== 'landed' ? esc(r.status) : null,
       !r.done && WORKING.has(r.kind) && now() - r.ts > 120e3 ? `no news for <span data-since="${r.ts}">${secs(now() - r.ts)}</span>` : null,
-      sharedWith?.length ? `same file as ${sharedWith.join(', ')}` : null].filter(Boolean);
+      sharedWith?.length ? (sharedWith.all ? 'shares files with every other agent' : `same file as ${sharedWith.join(', ')}`) : null].filter(Boolean);
     const body = `<span class="ag s-${k}" aria-hidden="true">${esc(w.num)}</span><span class="bb"><span class="bt1"><span><b>${esc(w.name)}</b> ${esc(verb)}</span><span class="dim small bwhen">${right}</span></span>
       ${r.intent ? `<span class="bint">${esc(intentText(r.intent))}</span>` : ''}${boardFiles(r.files)}${notes.length ? `<span class="dim small">${notes.join('; ')}</span>` : ''}</span>`;
     return `<li>${href ? `<a href="${href}" class="brow">${body}</a>` : `<div class="brow">${body}</div>`}</li>`;
@@ -429,12 +429,18 @@
     const byFile = new Map();
     for (const r of live) for (const f of r.files || []) { if (!byFile.has(f)) byFile.set(f, new Set()); byFile.get(f).add(r.agent); }
     const shared = [...byFile].filter(([, a]) => a.size > 1);
-    const others = (r) => [...new Set(shared.filter(([f, a]) => a.has(r.agent) && (r.files || []).includes(f)).flatMap(([, a]) => [...a].filter((x) => x !== r.agent)))].map((x) => boardWho(x).name);
+    const others = (r) => {
+      const o = [...new Set(shared.filter(([f, a]) => a.has(r.agent) && (r.files || []).includes(f)).flatMap(([, a]) => [...a].filter((x) => x !== r.agent)))].map((x) => boardWho(x).name);
+      if (live.length > 2 && o.length === live.length - 1) o.all = true;
+      return o;
+    };
     // Files changed by the same set of agents go on one line.
     const groupsBySet = new Map();
     for (const [f, a] of shared) { const k = [...a].sort().join('|'); if (!groupsBySet.has(k)) groupsBySet.set(k, { a: [...a], files: [] }); groupsBySet.get(k).files.push(f); }
     const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
-    const warn = [...groupsBySet.values()].sort((x, y) => y.a.length - x.a.length || y.files.length - x.files.length).map((g) => { const ns = g.a.map((x) => boardWho(x).name); return `<li><span class="hu" aria-hidden="true">!</span><span>${list(ns)} are ${ns.length > 2 ? 'all' : 'both'} changing ${list(g.files.map((f) => `<span class="mono">${esc(f)}</span>`))}.</span></li>`; }).join('');
+    const warnAll = [...groupsBySet.values()].sort((x, y) => y.a.length - x.a.length || y.files.length - x.files.length).map((g) => { const ns = g.a.map((x) => boardWho(x).name); return `<li><span class="hu" aria-hidden="true">!</span><span>${live.length > 2 && ns.length === live.length ? `All ${ns.length} agents are` : `${list(ns)} are ${ns.length > 2 ? 'all' : 'both'}`} changing ${list(g.files.map((f) => `<span class="mono">${esc(f)}</span>`))}.</span></li>`; });
+    // The three biggest groups; the rest one tap away (a busy run shares a lot).
+    const warn = warnAll.slice(0, 3).join('') + (warnAll.length > 3 ? `</ul><details class="bdone bwmore"${boardWMore ? ' open' : ''}><summary>Show ${warnAll.length - 3} more</summary><ul class="bwarn">${warnAll.slice(3).join('')}</ul></details><ul class="bwarn">` : '');
     const al = D.board.aliases || [];
     const named = al.map(aliasNamed).filter(Boolean), unnamed = al.length - named.length;
     const dups = named.map((t) => `<li><span class="dupe" aria-hidden="true">=</span><span>${t}</span></li>`).join('')
@@ -664,7 +670,7 @@
   pop.className = 'lw-pop'; pop.id = 'lw-pop'; pop.setAttribute('popover', '');
   document.body.appendChild(pop);
   const toast = (t) => { const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; root.appendChild(e); setTimeout(() => e.remove(), 2600); };
-  root.addEventListener('toggle', (e) => { if (e.target.matches('details.bmore')) boardMore = e.target.open; else if (e.target.matches('details.bdone')) boardOpen = e.target.open; }, true);
+  root.addEventListener('toggle', (e) => { if (e.target.matches('details.bwmore')) boardWMore = e.target.open; else if (e.target.matches('details.bmore')) boardMore = e.target.open; else if (e.target.matches('details.bdone')) boardOpen = e.target.open; }, true);
   root.addEventListener('click', async (ev) => {
     const g = ev.target.closest('[data-gloss]');
     if (g) { ev.preventDefault(); ev.stopPropagation(); const [t, d] = GLOSS[g.dataset.gloss]; pop.innerHTML = `<button class="x" type="button" aria-label="Close" popovertarget="lw-pop" popovertargetaction="hide">×</button><b>${esc(t)}</b><p>${esc(d)}</p>`; pop.showPopover?.(); return; }
