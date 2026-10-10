@@ -7,7 +7,7 @@ Round 2 (PLAN2.md, started 2026-10-10 17:00 UTC):
 - [ ] W2b box hook + `forq who` in boxes + dedupe pass at planning (qb6)
 - [ ] W2c "Agents at work" shows the board live (qb7)
 - [ ] W2d deploy + live smoke on eyal/cafe-lab (qb6)
-- [ ] W3a 20 agents / 60 tasks Haiku A vs E x3 (qb9)
+- [ ] W3a 20 agents / 60 tasks Haiku A vs E x3 (qb9): harness + s3 starter + hidden tests done (dc2154b, lab-hidden 8a2943a; smoke dedupe 10/10); runs started 16:59 UTC
 - [ ] W3b Sonnet longer tasks A vs E x3 (qb9)
 - [x] W4a lab scenario: self-pick backlog + two teams, hidden tests (qb5): scenarios `backlog` (7b915e9) + `two-teams` (0ef85bb), 30 hidden tests + duplicates.builtTwice in score.mjs, validated on qb9 round-1 repos (A 4/4/3 pairs built twice, E 0/0/0); router hooks with qb6
 - [x] W4b prediction (qb4): W3a in sim.md (d); W4 board off vs on in sim.md (e) + predict.js lab-0.11 (scenarios backlog, two-teams; variant `board`, `crossDedupe`)
