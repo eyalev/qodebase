@@ -23,6 +23,7 @@ import { recordCost, claudeUsd } from '../costs';
 import { pushSeed } from './demo';
 import { SEED } from './demoproject';
 import { pushAlert } from '../alert';
+import { makeBoardEvent, boardView, boardText, BOARD_KEEP_MS, BOARD_TTL_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
   | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap';
@@ -71,7 +72,13 @@ type Meta = {
     /** intent = handlers + AI replay (default); github/ffa = no handlers, no replay: a conflict goes back
      *  to the agent to rebase (ffa also skips the checks); phases/stacking/leads = planner strategies (runner). */
     policy?: 'intent' | 'ffa' | 'phases' | 'stacking' | 'leads' | 'github';
-    trainMax?: number; claims?: boolean; dedupe?: boolean };
+    trainMax?: number; claims?: boolean; dedupe?: boolean;
+    /** The agent board (board.ts): platform + box-hook posts, `forq who`, the hook's context. Off unless set (lab A/B). */
+    board?: boolean;
+    /** Dedupe passes read every list handed out on this project (two teams), not only the caller's. */
+    crossDedupe?: boolean;
+    /** Self-picked backlogs: after its change lands, the agent is told to sync and take its next task (this text). */
+    nextTask?: string };
   demo: Demo | null;
   reviews?: { queue: string[]; busy: Record<string, { change: string; at: number; sends: number; nudged?: number }>; coolUntil?: Record<string, number> };
   spent?: { usd: number; at: number; boxes: number; claude: number };
@@ -88,7 +95,11 @@ type Meta = {
   demoBusyNext?: number;                // busy mode: the next generated task's index
   landings?: [number, number, number?][];   // [landedAt, ask-to-land s, replayed 0/1], last 2000: stats outlive pruned records
   bounces?: number[];                       // times of the last 2000 bounces (same reason)
-  outbox?: { to: string; text: string; tries: number; at: number }[];   // messages to real agents, sent from the alarm        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
+  outbox?: { to: string; text: string; tries: number; at: number }[];
+  boardIntent?: Record<string, string>;     // board: each agent's stated intent (`forq intent`), newest 60
+  aliases?: Alias[];                         // board: pairs the dedupe pass found to be the same work
+  dedupeLists?: { by: string; at: number; items: { id: string; text: string }[] }[];   // every list a dedupe pass was given
+  boardPosts?: number;                       // board: posts since the last prune   // messages to real agents, sent from the alarm        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
 };
 
 const TRAIN_MAX = 8;
@@ -100,6 +111,8 @@ export const DEFAULT_REPLAY_MODEL = 'claude-haiku-5-5';
 export const WATCH = { perDay: 40, perIpDay: 3, ipCooldownS: 300, agents: 6, speed: 2, maxMs: 5 * 60_000 };
 export const DEMO_MAX_AGENTS = 24, DEMO_MAX_MS = 20 * 60_000, DEMO_MAX_STORY_AGENTS = 12, BUSY_MAX_TASKS = 400, BUSY_MAX_WAITING = 40;
 const OPEN = (c: Change) => c.state !== 'landed';
+/** A change id's name on the board: what follows the project slug (`eyal.cafe--a3` -> `a3`). */
+export const boardName = (id: string) => id.includes('--') ? id.slice(id.indexOf('--') + 2) : id;
 
 export class Landing extends DurableObject<Env> {
   #meta: Meta | null = null;
@@ -147,6 +160,7 @@ export class Landing extends DurableObject<Env> {
     if (ch.kind === 'demo') m.demoForks = [...(m.demoForks || []), ch.fork];
     await this.#overlaps(ch, ch.claims);
     await this.#put(ch);
+    await this.#bpost(ch.id, 'started', ch.title, ch.claims, ch.stackedOn ? `stacked on ${boardName(ch.stackedOn)}` : '');
     await this.#prune();
     await this.#saveMeta();
     log('landing', 'recorded', { slug, id: ch.id, kind: ch.kind, claims: ch.claims.length, stackedOn: ch.stackedOn });
@@ -189,15 +203,19 @@ export class Landing extends DurableObject<Env> {
       c.base = base;
     }
     if (c.state === 'bounced' || c.state === 'with-lead' || c.state === 'working' || c.state === 'replaying') c.state = 'pushed';
+    // The same agent's next task (self-picked backlog): a new round for the same record.
+    if (c.state === 'landed' && commit !== c.landing?.commit) { c.state = 'pushed'; c.review = null; c.tries = 0; (c as any).rounds = ((c as any).rounds || 1) + 1; }
     this.#ev(c, 'pushed', (note || `${files.length} file${files.length === 1 ? '' : 's'}`) + onMain);
     await this.#overlaps(c, c.files);
     await this.#put(c);
+    await this.#bpost(c.id, 'pushed', '', c.files, (note || '').slice(0, 80));
     return c;
   }
 
   async reviewing(id: string) {
     const c = await this.#get(id); if (!c) return;
     c.state = 'reviewing'; this.#ev(c, 'reviewing'); await this.#put(c);
+    await this.#bpost(c.id, 'reviewing', '', c.files, '');
   }
 
   /** A verdict. 'auto' = the scripted demo review; approved demo changes queue at once. */
@@ -221,9 +239,91 @@ export class Landing extends DurableObject<Env> {
     }
     else { this.#ev(c, 'approved', verdict === 'auto' ? (notes.split('\n')[0] || 'scripted review') : notes.split('\n')[0]); if (c.state === 'reviewing') c.state = 'pushed'; }
     await this.#put(c);
+    await this.#bpost(c.id, verdict === 'changes' ? 'changes' : 'approved', '', c.files, verdict === 'auto' ? 'no review' : '');
     // A change its agent redid on the latest main (tier 2) was approved by the person once
     // already: approved again by the reviewer, it goes straight back in line.
     if ((thenQueue || c.redo === 'llm' || (m0.flags.autoMerge && c.kind === 'agent')) && verdict !== 'changes') await this.approve(id);
+  }
+
+  // ---- the agent board (board.ts, docs/board/PLAN2.md W2) ------------------------------
+  #boardReady = false;
+  #bsql() {
+    const sql = this.ctx.storage.sql;
+    if (!this.#boardReady) {
+      sql.exec(`CREATE TABLE IF NOT EXISTS board (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, agent TEXT NOT NULL, body TEXT NOT NULL)`);
+      sql.exec(`CREATE INDEX IF NOT EXISTS board_ts ON board(ts)`);
+      this.#boardReady = true;
+    }
+    return sql;
+  }
+  async boardOn() { return !!(await this.#m()).flags.board; }
+  /** A platform post (spawn/push/review/land/bounce): never throws, nothing when the board is off. */
+  async #bpost(changeId: string, kind: BoardKind, intent: string, files: string[], status: string) {
+    try { await this.boardPost({ agent: boardName(changeId), kind, intent, files, status, change: changeId }); }
+    catch (e) { log('landing', 'board_post_failed', { changeId, kind, err: String(e) }); }
+  }
+  /** One event (platform, the box hook, `forq intent`). No intent = the agent's stated one, else its change's title. */
+  async boardPost(o: { agent: string; kind: string; intent?: string; files?: string[] | string; status?: string; change?: string; stated?: boolean }) {
+    const m = await this.#m();
+    if (!m.flags.board) return { off: true };
+    let intent = o.intent || '';
+    if (o.stated && intent) {
+      const bi = (m.boardIntent ||= {}); delete bi[o.agent]; bi[o.agent] = intent.slice(0, 200);
+      const ks = Object.keys(bi); for (const k of ks.slice(0, Math.max(0, ks.length - 60))) delete bi[k];
+    }
+    if (!intent) intent = m.boardIntent?.[o.agent] || (o.change ? (await this.#get(o.change))?.title : '') || '';
+    const e = makeBoardEvent({ ...o, intent });
+    this.#bsql().exec(`INSERT INTO board (ts, agent, body) VALUES (?, ?, ?)`, e.ts, e.agent, JSON.stringify(e));
+    m.boardPosts = (m.boardPosts || 0) + 1;
+    if (m.boardPosts >= 200) { m.boardPosts = 0; this.#bsql().exec(`DELETE FROM board WHERE ts < ?`, Date.now() - BOARD_KEEP_MS); }
+    await this.#saveMeta();
+    return e;
+  }
+  /** `forq intent "<what I am doing>" [--files a,b]`: the agent's own words (a self-picked backlog item);
+   *  the files become claims on its change (overlap warnings as at spawn). */
+  async stateIntent(changeId: string, intent: string, files: string[]) {
+    const c = await this.#get(changeId);
+    if (c && files.length) {
+      const add = files.filter((f) => !c.claims.includes(f));
+      if (add.length) { c.claims = [...c.claims, ...add].slice(0, 50); this.#ev(c, 'claimed', add.join(', ')); await this.#overlaps(c, add); }
+    }
+    if (c) { this.#ev(c, 'working', `intent: ${intent.slice(0, 200)}`); await this.#put(c); }
+    return this.boardPost({ agent: boardName(changeId), kind: 'started', intent, files, change: changeId, stated: true });
+  }
+  /** `forq who`, the hook's context, the view: rows + aliases + the text an agent reads. */
+  async boardWho(q: BoardQuery & { text?: boolean } = {}) {
+    const m = await this.#m();
+    if (!m.flags.board) return { on: false, rows: [], aliases: [], text: '' };
+    const recent = Math.min(24 * 3_600_000, q.recent || 0);
+    const since = Date.now() - Math.max(BOARD_TTL_MS, recent);
+    const evs = this.#bsql().exec(`SELECT body FROM board WHERE ts > ? ORDER BY ts`, since).toArray().map((r) => JSON.parse(String(r.body)) as BoardEvent);
+    const rows = boardView(evs, { ...q, recent });
+    const aliases = m.aliases || [];
+    return { on: true, rows, aliases, text: boardText(rows, aliases, { recentMin: Math.round(recent / 60_000) || 30 }) };
+  }
+  async boardTail(n = 50) {
+    return this.#bsql().exec(`SELECT body FROM board ORDER BY id DESC LIMIT ?`, Math.min(500, Math.max(1, n))).toArray().map((r) => JSON.parse(String(r.body)) as BoardEvent).reverse();
+  }
+  /** A list handed to a dedupe pass. Returns what the pass should read: this list, plus (crossDedupe) every
+   *  other list handed out on the project, so two teams' twins are found (qb4's W4b prediction). */
+  async dedupeList(by: string, items: { id: string; text: string }[]) {
+    const m = await this.#m();
+    m.dedupeLists = [...(m.dedupeLists || []).filter((l) => l.by !== by), { by, at: Date.now(), items: items.slice(0, 200) }].slice(-6);
+    await this.#saveMeta();
+    if (!m.flags.crossDedupe) return items;
+    const seen = new Set<string>(), all: { id: string; text: string }[] = [];
+    for (const it of [...items, ...m.dedupeLists.filter((l) => l.by !== by).flatMap((l) => l.items)]) if (!seen.has(it.id)) { seen.add(it.id); all.push(it); }
+    return all.slice(0, 300);
+  }
+  /** The dedupe pass's pairs (a box ran it: `forq dedupe`). Replaces earlier pairs from the same list. */
+  async boardAliases(pairs: [string, string][], by: string) {
+    const m = await this.#m();
+    const now = Date.now();
+    const keep = (m.aliases || []).filter((x) => !pairs.some(([a, b]) => [a, b].includes(x.a) || [a, b].includes(x.b)));
+    m.aliases = [...keep, ...pairs.map(([a, b]) => ({ a, b, at: now, by }))].slice(-60);
+    await this.#saveMeta();
+    if (m.flags.board) await this.boardPost({ agent: by, kind: 'done', intent: `dedupe pass: ${pairs.length ? pairs.map(([a, b]) => `${a} = ${b}`).join(', ') : 'no duplicates'}`, status: 'dedupe' });
+    return m.aliases;
   }
 
   // ---- the queue ---------------------------------------------------------------
@@ -238,6 +338,7 @@ export class Landing extends DurableObject<Env> {
     c.state = 'queued'; c.queuedAt = Date.now();
     this.#ev(c, 'queued', m.waiting.length > 1 ? `${m.waiting.length - 1} ahead` : 'next train');
     await this.#put(c);
+    await this.#bpost(c.id, 'queued', '', c.files, '');
     await this.#saveMeta();
     await this.#arm(m.failStreak ? Math.min(300_000, 5000 * 2 ** (m.failStreak - 1)) : 300);
     return c;
@@ -384,7 +485,7 @@ export class Landing extends DurableObject<Env> {
   async #halt(m: Meta, why: string) {
     m.flags.halted = true;
     const p = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
-    const ids = [...(p?.agents || []).map((a) => a.id), `${m.slug}--router`, ...this.#reviewers({ ...m, flags: { ...m.flags, reviewers: 6 } })];
+    const ids = [...(p?.agents || []).map((a) => a.id), `${m.slug}--router`, `${m.slug}--router2`, ...this.#reviewers({ ...m, flags: { ...m.flags, reviewers: 6 } })];
     for (const id of ids) await fetch(`${this.env.API_BASE}/api/agents/${id}/stop`, { method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } }).catch(() => null);
     log('landing', 'halted', { slug: m.slug, why, stopped: ids.length });
     await pushAlert(this.env, `qodebase: ${m.slug} halted`, why, `https://${this.env.UI_HOST}/p/${m.slug.replace('.', '/')}/work`, 0).catch(() => {});
@@ -538,6 +639,7 @@ export class Landing extends DurableObject<Env> {
           else { c.state = 'bounced'; this.#ev(c, 'bounced', rc.why || 'could not be applied'); }
         }
         await this.#put(c);
+        if (c.state === 'landed' || c.state === 'bounced') await this.#bpost(c.id, c.state, '', c.files, c.state === 'landed' ? `${(c.landing?.commit || '').slice(0, 7)} on main` : 'sent back');
       }
       t.state = landed ? 'landed' : 'bounced';
       if (r.mainAfter) m.tree = undefined;   // re-read the file map on the next view
@@ -579,7 +681,10 @@ export class Landing extends DurableObject<Env> {
     for (const rc of r.changes) {
       const c = await this.#get(rc.id);
       if (!c || c.kind !== 'agent') continue;
-      if (rc.landed) { await P.setState(c.id, 'merged', `landed on main as ${(rc.commit || '').slice(0, 7)}`).catch((e) => log('landing', 'set_merged_failed', { id: c.id, err: String(e) })); deploy = true; }
+      if (rc.landed) {
+        await P.setState(c.id, 'merged', `landed on main as ${(rc.commit || '').slice(0, 7)}`).catch((e) => log('landing', 'set_merged_failed', { id: c.id, err: String(e) })); deploy = true;
+        if (m.flags.nextTask) this.#tell(c.id, `qodebase: your change "${c.title}" landed on main (${(rc.commit || '').slice(0, 7)}). Run \`forq sync-main\` first, then: ${m.flags.nextTask}`);
+      }
       else if (rc.bounced) this.#tell(c.id, `qodebase merge queue: your change did not pass the project's checks on the latest main, so it was sent back.
 Failures: ${(rc.checks?.failures || []).slice(0, 4).join(' | ') || rc.why}
 Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
@@ -703,7 +808,9 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       now, mode: m.demo ? 'demo' : 'live', code: (this.env.CF_VERSION_METADATA?.id || '').slice(0, 8),
       demo: m.demo || m.flags.publicWatch ? { ...(m.demo || { running: false, agents: 0, speed: 1, startedAt: 0, endsAt: 0 }),
         active: this.#active(m), public: !!m.flags.publicWatch, runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 86400_000).length) } : null,
-      flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch },
+      flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch, board: !!m.flags.board },
+      // The board (qb7's "who works on what"): working now + finished in the last 30 min + dedupe aliases.
+      ...(m.flags.board ? { board: await this.boardWho({ recent: 30 * 60_000 }).then(({ rows, aliases }) => ({ rows, aliases })) } : {}),
       ...(m.flags.budgetUsd ? { budget: { usd: m.flags.budgetUsd, spent: m.spent?.usd ?? 0, halted: !!m.flags.halted, reviewers: m.flags.reviewers || 1 } } : {}),
       watch: { enabled: !!m.flags.publicWatch, runsToday: (m.watchLog || []).filter((w) => now - w.at < 86400_000).length, maxPerDay: WATCH.perDay, running: this.#active(m) },
       queue: { trains: trains.map((t) => ({ id: t.id, state: t.state, changes: t.changes, startedAt: t.startedAt, endedAt: t.endedAt, checks: t.checks || { ok: false, ms: 0, failures: [] }, mainBefore: t.mainBefore, mainAfter: t.mainAfter, ...(t.note ? { note: t.note } : {}),
@@ -823,7 +930,8 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     if (m.running) throw new Error('a train is running');
     for (const id of m.order) await this.ctx.storage.delete(`c:${id}`);
     for (const id of m.trains) await this.ctx.storage.delete(`t:${id}`);
-    this.#meta = { ...m, waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [], bounces: [], demo: m.demo && !m.demo.running ? null : m.demo };
+    if (m.flags.board) this.#bsql().exec(`DELETE FROM board`);
+    this.#meta = { ...m, aliases: [], boardIntent: {}, dedupeLists: [], waiting: [], order: [], trains: [], tree: undefined, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [], bounces: [], demo: m.demo && !m.demo.running ? null : m.demo };
     await this.#saveMeta();
   }
 

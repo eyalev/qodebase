@@ -142,6 +142,9 @@ const flags = {
   caps: { agents: Math.max(1, variant.coders), awake: Math.max(1, variant.coders) },
   reviewers: variant.reviewers, reviewStyle: variant.reviewStyle, policy: variant.policy, trainMax: variant.trainMax,
   claims: !!variant.claims, dedupe: !!variant.dedupe, llmReplay: variant.policy === 'intent',
+  // Board round 2 (docs/board/PLAN2.md W4): the agent board on/off, dedupe across every list handed out,
+  // and for self-picked backlogs the "take your next task" message after each landing.
+  board: !!variant.board, crossDedupe: !!variant.crossDedupe, nextTask: null,
   coderModel: variant.coderModel, reviewerModel: variant.reviewerModel, ...(variant.planner !== 'none' ? { plannerModel: variant.planner } : {}),
 };
 if (!COLLECT) {
@@ -159,6 +162,22 @@ for (let i = 0; ; i++) {
 
 // ---- the request ----------------------------------------------------------------------------
 const check = scenario.check || 'npm test';
+// Self-picked backlogs (qb5's backlog / two-teams): every coder gets the whole list and picks its own tasks,
+// one at a time; the router never assigns, splits or dedupes. Two teams = two routers on one project.
+const teams = scenario.teams || null;
+const selfPick = scenario.selfPick ?? !!(teams || /backlog/i.test(scenario.id || '') && /pick its own/i.test(prompt));
+const pickText = (file) => `Pick ONE task from ${file} that is not on main yet and that no other agent is doing. Do only that task, with its tests, keep \`${check}\` green, commit, push with \`git push origin HEAD\`, then run \`forq status pushed "<task id>: <title>"\` and stop. You will be told when it has landed; then you take the next one. If no task is left, reply "done".`;
+if (selfPick) {
+  const file = teams ? 'your team\'s list (named in your task)' : (prompt.match(/\b[\w-]+\.md\b/) || ['BACKLOG.md'])[0];
+  flags.nextTask = `pick your next task from ${file} the same way (one that is not on main yet and that no other agent is doing; if none is left, reply "done" and stop), do it, push, and run forq status pushed "<task id>: <title>".`;
+  if (!COLLECT) await api('POST', `/api/p/eyal/${name}/landing/flags`, { nextTask: flags.nextTask });
+}
+const selfPickRouter = (file, n) => [
+  `How to work: start exactly ${n} agents now, all with the same task text:`,
+  `"Work through ${file}\n${pickText(file)}"`,
+  `Never assign, split or dedupe the tasks yourself: each agent picks its own. Do not start more agents later.`,
+  variant.board ? `Before you start them, run \`forq dedupe ${file}\` once (the board's dedupe pass; its pairs are shown to every agent).` : '',
+].filter(Boolean).join('\n');
 const policyText = {
   intent: 'Merging is automatic: approved changes go to the merge queue, which replays collisions on the latest code.',
   ffa: 'Each agent lands its own change as soon as it is approved; if main moved, the agent rebases (forq sync-main).',
@@ -167,7 +186,11 @@ const policyText = {
   stacking: 'When a task builds on another task that has not landed yet, start it stacked on that agent: forq spawn "<task>" --on <agent-id>.',
   leads: 'Group the tasks by area; for each area start one agent as the area LEAD whose task is to do its area\'s shared-file changes first, and tell the others in that area to build on its work (--on the lead).',
 }[variant.policy] || '';
-const routerText = [
+const routerText = selfPick ? [
+  teams ? teams[0].prompt : prompt, '',
+  selfPickRouter(teams ? teams[0].backlog : (prompt.match(/\b[\w-]+\.md\b/) || ['BACKLOG.md'])[0], teams ? Math.max(1, Math.floor(variant.coders / teams.length)) : variant.coders),
+  `The project's checks: ${check}. Do not merge anything yourself.`,
+].join('\n') : [
   prompt, '',
   `How to work: split this into at most ${variant.coders} tasks and start one agent per task (never more than ${variant.coders} at once).`,
   'Begin every task text with a short title line (under 60 characters) saying what it does; details after it.',
@@ -182,6 +205,13 @@ else if (variant.planner === 'none') {
   await api('POST', `/api/p/eyal/${name}/agents`, { task: `${prompt}\n\nYou are the only agent on this project: do the whole job yourself, in small commits, keep the project's checks green (${check}), push, then run: forq status pushed "<what you did>".` });
 } else {
   await api('POST', `/api/p/eyal/${name}/router`, { text: routerText });
+  // Two teams: the second team's router is its own box on the same project (<slug>--router2), told only its own list.
+  for (const [i, t] of (teams || []).slice(1).entries()) {
+    const text = [t.prompt, '', selfPickRouter(t.backlog, Math.max(1, Math.floor(variant.coders / teams.length))), `The project's checks: ${check}. Do not merge anything yourself.`].join('\n');
+    await sleep(20_000);   // the first router's dedupe pass goes first, so a cross-list pass sees both lists
+    const r = await api('POST', `/api/agents/${slug}--router${i + 2}/send`, { text }).catch((e) => ({ error: String(e) }));
+    log('asked_team', { team: t.id, router: `${slug}--router${i + 2}`, ok: !r?.error, err: r?.error });
+  }
 }
 log('asked', { project: slug, askAt, chars: routerText.length });
 
@@ -210,7 +240,7 @@ while (!COLLECT) {
 
 // ---- stop everything, collect ------------------------------------------------------------------
 const p = await api('GET', `/api/p/eyal/${name}`);
-const boxes = [...p.agents.map((a) => a.id), `${slug}--router`, ...['', '2', '3', '4', '5', '6'].map((n) => `${slug}--review${n}`)];
+const boxes = [...p.agents.map((a) => a.id), `${slug}--router`, `${slug}--router2`, ...['', '2', '3', '4', '5', '6'].map((n) => `${slug}--review${n}`)];
 await Promise.all(boxes.map((id) => api('POST', `/api/agents/${id}/stop`).catch(() => null)));
 await api('POST', `/api/p/eyal/${name}/landing/flags`, { caps: null, reviewers: 1, autoMerge: false }).catch(() => null);
 log('stopped', { project: slug, status, boxes: boxes.length });
@@ -289,7 +319,9 @@ const tasks = view.changes.map((c) => ({ id: c.id, needs: c.needs || [], role: '
   how: c.state === 'landed' ? ({ merged: 'merged', 'replayed-handler': 'handler', 'replayed-llm': 'llm', lead: 'lead' }[c.landing?.how] || 'merged') : 'bounced' }));
 const landed = view.changes.filter((c) => c.state === 'landed');
 const lands = landed.map((c) => c.landedAt).sort((a, b) => a - b);
-const counts = { tasksPlanned: view.changes.length, tasksLanded: landed.length, dupIntents: 0,
+const counts = { tasksPlanned: view.changes.length, tasksLanded: landed.length,
+  // self-picked backlogs: one agent lands several tasks in turn (each landing counts)
+  ...(selfPick ? { landings: view.stats?.landedToday ?? null } : {}), dupIntents: 0,
   conflicts: view.changes.filter((c) => ev(c, 'conflict').length).length,
   replaysHandler: landed.filter((c) => c.landing?.how === 'replayed-handler').length, replaysLlm: landed.filter((c) => c.landing?.how === 'replayed-llm').length,
   leads: landed.filter((c) => c.landing?.how === 'lead').length, bounces: view.changes.reduce((n, c) => n + ev(c, 'bounced').length, 0),

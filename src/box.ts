@@ -82,6 +82,7 @@ export type BootSpec = {
   bootEnv: string;      // boot.sh env (SBX_NAME, CC_ENV, …)
   billing?: 'sub' | 'api';   // whose Claude: a subscription (tokens only) or an API key (dollars)
   costCovered?: boolean;     // the boxes bill this instance's owner, not the person (hosted qodebase)
+  board?: boolean;           // the agent board is on (landing flag): Claude Code hooks call `forq hook`
 };
 export type BootResult = { ok: boolean; ms: number; from: string; error?: string };
 
@@ -258,9 +259,23 @@ PY
       printf '%s' "$AGENT_TOKEN" > /run/forq/agent-token
       printf '%s' "$API_BASE" > /run/forq/api
       printf '%s' "$FORQ_CLI" > /usr/local/bin/forq && chmod 755 /usr/local/bin/forq
+      # The agent board (src/landing/board.ts): Claude Code hooks post edits and commits and read the
+      # board into the context. Only while the project's board flag is on; removed again when it is off.
+      mkdir -p /workspace/.claude
+      python3 - "$BOARD" <<'PY'
+import json, sys
+p = '/workspace/.claude/settings.json'
+try: d = json.load(open(p))
+except Exception: d = {}
+h = {'type': 'command', 'command': 'forq hook', 'timeout': 6}
+hooks = {'UserPromptSubmit': [{'hooks': [h]}], 'PreToolUse': [{'matcher': 'Edit|Write|MultiEdit', 'hooks': [h]}], 'PostToolUse': [{'matcher': 'Bash', 'hooks': [h]}]}
+if sys.argv[1] == '1': d['hooks'] = hooks
+elif 'forq hook' in json.dumps(d.get('hooks', {})): d.pop('hooks', None)
+json.dump(d, open(p, 'w'))
+PY
       # An empty repo (a self-hosted copy's Build starts empty) has no commit to show yet.
       git -C ${REPO_DIR} log --oneline -1 2>/dev/null || echo '(empty repository)'`, { GIT_TOKEN: spec.gitToken, REMOTE: spec.remote, AGENT_ID: spec.agentId, UI_HOST: spec.uiHost,
-        AGENT_TOKEN: spec.agentToken, API_BASE: spec.apiBase, FORQ_CLI });
+        AGENT_TOKEN: spec.agentToken, API_BASE: spec.apiBase, FORQ_CLI, BOARD: spec.board && (spec.role === 'agent' || spec.role === 'router') ? '1' : '0' });
     log('box', 'repo_ready', { agentId: spec.agentId, exit: repo.exitCode, head: repo.stdout.trim().slice(-80), err: repo.stderr.slice(-300) });
     if (repo.exitCode !== 0) return { ok: false, ms: Date.now() - t0, from, error: `clone failed: ${repo.stderr.slice(-200)}` };
 
@@ -614,6 +629,11 @@ export const REVIEW_STEPS = [
       `Judge the change against the agent's own task (the "task:" line). The person's request ("asked:") may have been split across several agents, so parts of it that belong to other tasks are not missing from this one. Check: does it do what its task asked, does anything look broken or out of place, any obvious bug. Be brief and concrete. Then give your verdict with exactly one of: \`forq verdict <agent-id> approve "<one or two lines>"\` or \`forq verdict <agent-id> changes "<what to fix, specific>"\`. Never edit or push code yourself.`,
 ];
 
+/** The agent board's words in the prompts (board on). The hook already shows the board with each message
+ *  and warns on shared files; these say what to do with it (FINDINGS.md: intent + finished work + one rule). */
+export const BOARD_AGENT = `This project has an agent board: who works on what right now, and what was finished in the last 30 minutes (\`forq who --recent\`; it is also shown to you with each message). If you choose your own task (from a backlog or list), first run \`forq who --recent\`, then announce the one you take with \`forq intent "<task id + title>" --files <files you expect to change>\` before writing code. If a task someone else is doing or has finished means the same as yours, even under another name or id, or the board lists it as the same work, do not build it again: make yours a thin alias of theirs once theirs is on main, or pick another task.`;
+export const BOARD_ROUTER = `This project has an agent board (\`forq who --recent\`): every agent's task and files, live, and what finished in the last 30 minutes. When you hand out a task list or a backlog file, first run \`forq dedupe <file>\` (or \`forq dedupe "task" "task" ...\`) once: it finds tasks that are the same work under different names and shows those pairs to every agent on the board.`;
+
 function taskPrompt(spec: BootSpec) {
   if (spec.role === 'reviewer') {
     return [
@@ -626,6 +646,7 @@ function taskPrompt(spec: BootSpec) {
     return [
       `You are the router agent of the forq project ${spec.project}. ${REPO_DIR} is a clone of the project's main line (its default branch). You coordinate; agents do the work.`,
       `The person will message you from their phone. For each request: split it into independent tasks that touch different parts of the code where possible, and start one agent per task with \`forq spawn "<task>"\` (each agent gets its own fork and box; give it a complete, self-contained task). Small questions about the code you may answer yourself. Do not edit main yourself unless asked.`,
+      ...(spec.board ? [BOARD_ROUTER] : []),
       `\`forq list\` shows the agents and their notes. When asked to merge an agent: \`forq merge <agent-id>\`; if it reports a conflict, resolve it in ${REPO_DIR}, commit, \`git push origin HEAD\`, then \`forq merged <agent-id>\`. \`forq send <agent-id> "text"\` messages an agent. \`forq help\` for the rest.`,
       `Keep replies short; the person reads them on a phone. Reply now with one line saying you are ready.`,
     ].join('\n\n');
@@ -633,6 +654,7 @@ function taskPrompt(spec: BootSpec) {
   return [
     `You are a forq agent (${spec.agentId}) on the project ${spec.project}. You work in ${REPO_DIR}, a clone of your own fork; no other agent touches it.`,
     `Your task: ${spec.task}`,
+    ...(spec.board ? [BOARD_AGENT] : []),
     `Check your change works before you push (run it locally where you can). When the task is done: commit with a clear message, push with \`git push origin HEAD\` (your clone is on the default branch), and run \`forq status pushed "<one-line summary>"\` right away: that is what builds your preview and starts the review, so never wait for a deploy yourself. Then reply with a 2-3 line summary. If you are blocked or the task is unclear, run \`forq status blocked "<why>"\` and say so instead of guessing.`,
   ].join('\n\n');
 }

@@ -17,10 +17,17 @@ export const FORQ_CLI = String.raw`#!/usr/bin/env python3
   forq sync-main                                rebase your work on the latest main (agents)
   forq fetch-agent <agent-id>                   fetch an agent's work to review it (reviewer)
   forq verdict <agent-id> approve|changes "notes"   your review verdict (reviewer)
+  forq who [--recent [30m]] [--files a,b] [--area X]
+                                                the agent board: who works on what now (--recent: and
+                                                what others finished in that window)
+  forq intent "what you are doing" [--files a,b]  say on the board which task you took and its files
+  forq dedupe <file> | "task" "task" ...        one quick pass: which tasks are the same work (shown on
+                                                the board as aliases: build it once)
 """
-import json, os, subprocess, sys, urllib.request
+import json, os, re, subprocess, sys, time, urllib.parse, urllib.request
 
-RUN = '/run/forq'
+RUN = os.environ.get('FORQ_RUN', '/run/forq')   # tests point these elsewhere
+REPO = os.environ.get('FORQ_REPO', '/workspace/repo')
 def secret(n):
     try: return open(f'{RUN}/{n}').read().strip()
     except OSError: sys.exit(f'forq: {RUN}/{n} missing (box not booted by forq?)')
@@ -38,8 +45,70 @@ def api(method, path, body=None):
         except Exception: msg = e.reason
         sys.exit(f'forq: {msg} ({e.code})')
 
+def try_api(method, path, body=None, timeout=3):
+    """The hook's calls: short, and never an error (the hook must not get in the agent's way)."""
+    try:
+        req = urllib.request.Request(secret('api') + path, method=method, data=json.dumps(body).encode() if body is not None else None,
+            headers={'content-type': 'application/json', 'x-forq-agent': secret('agent-token'), 'user-agent': 'forq-cli/1'})
+        with urllib.request.urlopen(req, timeout=timeout) as r: return json.load(r)
+    except BaseException: return None
+
+def dur_ms(s, d=30 * 60_000):
+    m = re.match(r'^(\d+(?:\.\d+)?)\s*(s|m|h)?$', s or '')
+    return int(float(m.group(1)) * {'s': 1e3, 'm': 6e4, 'h': 36e5}[m.group(2) or 'm']) if m else d
+
+def board_hook():
+    """Claude Code hook (settings.json in the box, src/box.ts) for the agent board. Posts files and commits,
+    never command bodies or file contents; reads the board into the agent's context. Exits 0 always."""
+    try: inp = json.load(sys.stdin)
+    except Exception: return
+    sp = RUN + '/board-state.json'
+    try: st = json.load(open(sp))
+    except Exception: st = {}
+    now = time.time()
+    if st.get('offUntil', 0) > now: return
+    def save():
+        try: json.dump(st, open(sp, 'w'))
+        except Exception: pass
+    def out(ev, text):
+        if text: print(json.dumps({'hookSpecificOutput': {'hookEventName': ev, 'additionalContext': text}}))
+    ev, tool = inp.get('hook_event_name'), inp.get('tool_name') or ''
+    if ev == 'UserPromptSubmit':
+        r = try_api('GET', '/api/agent/who?recent=1800000')
+        if r is None: return
+        if r.get('on') is False: st['offUntil'] = now + 120; save(); return
+        if r.get('text'): out(ev, 'Agent board (who works on what in this project; advisory, not locks):\n' + r['text'])
+    elif ev == 'PreToolUse' and tool in ('Edit', 'Write', 'MultiEdit'):
+        f = (inp.get('tool_input') or {}).get('file_path') or ''
+        if f.startswith(REPO + '/'): f = f[len(REPO) + 1:]
+        if not f or f.startswith('/'): return
+        edits, warned = st.setdefault('edits', {}), st.setdefault('warned', {})
+        if now - edits.get(f, 0) < 30:
+            return
+        edits[f] = now
+        r = try_api('POST', '/api/agent/board', {'kind': 'editing', 'files': [f], 'who': True})
+        if r is not None and r.get('off'): st['offUntil'] = now + 120
+        rows = (r or {}).get('rows') or []
+        if rows and now - warned.get(f, 0) >= 300:
+            warned[f] = now
+            out(ev, f"Agent board: {f} was also touched in the last 10 min by:\n" + '\n'.join(x['line'] for x in rows[:3]) + "\nYour work lands through the merge queue either way; keep your change to this file small, or see: forq who --files " + f)
+        for m in (edits, warned):
+            for k in [k for k, t in m.items() if now - t > 3600]: del m[k]
+        save()
+    elif ev == 'PostToolUse' and tool == 'Bash':
+        cmd = str((inp.get('tool_input') or {}).get('command') or '')
+        if not re.search(r'(^|[;&|(]\s*)git\s+(-\S+\s+\S+\s+)*commit\b', cmd): return
+        g = lambda *a: subprocess.run(['git', *a], cwd=REPO, text=True, capture_output=True).stdout.strip()
+        head = g('rev-parse', 'HEAD')
+        try: fresh = now - int(g('log', '-1', '--format=%ct') or 0) < 120
+        except ValueError: fresh = False
+        if not head or head == st.get('lastHead') or not fresh: return
+        st['lastHead'] = head; save()
+        try_api('POST', '/api/agent/board', {'kind': 'committed', 'status': g('log', '-1', '--format=%s')[:80],
+            'files': [x for x in g('diff-tree', '--root', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n') if x][:20]})
+
 def git(*a, check=True):
-    p = subprocess.run(['git', *a], cwd='/workspace/repo', text=True, capture_output=True)
+    p = subprocess.run(['git', *a], cwd=REPO, text=True, capture_output=True)
     if check and p.returncode: sys.exit(f'forq: git {" ".join(a[:2])} failed:\n{p.stdout}{p.stderr}')
     return p
 
@@ -113,6 +182,49 @@ def main(argv):
             sys.exit(f'forq: conflicts while rebasing on main. Resolve them keeping BOTH main\'s changes and your intent, then: git add -A && git rebase --continue && git push -f origin HEAD && forq status pushed "redone on the latest main"\n{r.stdout}{r.stderr}')
         git('push', '-q', '-f', 'origin', 'HEAD')
         print(f'rebased on main ({br}) and pushed. Run the tests, then: forq status pushed "redone on the latest main"')
+    elif v == 'hook':
+        board_hook()
+    elif v == 'who':
+        q, it = {}, iter(rest)
+        for w in it:
+            if w == '--recent':
+                nx = rest[rest.index(w) + 1] if rest.index(w) + 1 < len(rest) and not rest[rest.index(w) + 1].startswith('--') else None
+                q['recent'] = dur_ms(nx)
+                if nx: next(it, None)
+            elif w == '--files': q['files'] = next(it, '')
+            elif w == '--area': q['area'] = next(it, '')
+        r = api('GET', '/api/agent/who?' + urllib.parse.urlencode(q))
+        if r.get('on') is False: print('the agent board is off in this project'); return
+        print(r.get('text') or 'nobody else is working on that right now')
+    elif v == 'intent':
+        files, words, it = [], [], iter(rest)
+        for w in it:
+            if w == '--files': files += [f for f in next(it, '').split(',') if f]
+            else: words.append(w)
+        if not words: sys.exit('usage: forq intent "what you are doing" [--files a,b]')
+        r = api('POST', '/api/agent/intent', {'intent': ' '.join(words), 'files': files})
+        if r.get('off'): print('the agent board is off in this project'); return
+        print('on the board: ' + ' '.join(words))
+        if r.get('others'): print('Others on the same files, or finished in the last 30 min (if one of these is the same work as yours, under any name, pick another task or make yours a thin alias of it):\n' + r['others'])
+    elif v == 'dedupe':
+        if not rest: sys.exit('usage: forq dedupe <file> | "task" "task" ...')
+        p = rest[0] if len(rest) == 1 else ''
+        if p and not os.path.isabs(p): p = os.path.join(REPO, p) if os.path.exists(os.path.join(REPO, p)) else p
+        text = open(p).read() if p and os.path.isfile(p) else '\n'.join('- ' + w for w in rest)
+        f = api('POST', '/api/agent/dedupe', {'stage': 'prompt', 'text': text})
+        if len(f.get('items') or []) < 2: print('fewer than two tasks: nothing to compare'); return
+        model = 'claude-haiku-5-5'
+        # No settings (so this box's own hooks do not fire inside the pass), no tools, one turn.
+        c = subprocess.run(['claude', '-p', '--model', model, '--output-format', 'json', '--max-turns', '1', '--tools', '', '--setting-sources', '',
+            '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.'], input=f['prompt'], text=True, capture_output=True, timeout=300)
+        try: j = json.loads(c.stdout)
+        except Exception: sys.exit(f'forq: the dedupe pass gave no answer: {(c.stderr or c.stdout)[-300:]}')
+        u = j.get('usage') or {}
+        r = api('POST', '/api/agent/dedupe', {'stage': 'answer', 'ids': [i['id'] for i in f['items']], 'answer': j.get('result') or '',
+            'usage': {'model': model, 'in': u.get('input_tokens', 0), 'out': u.get('output_tokens', 0), 'cr': u.get('cache_read_input_tokens', 0), 'cw': u.get('cache_creation_input_tokens', 0)}})
+        pairs = r.get('pairs') or []
+        print(f"{len(f['items'])} tasks, {len(pairs)} pair(s) of the same work" + (':' if pairs else ''))
+        for a, b in pairs: print(f'  {a} = {b}  (build it once; the other is a thin alias)')
     elif v == 'merged':
         api('POST', '/api/agent/merged', {'agent': rest[0]}); print('ok')
     else:

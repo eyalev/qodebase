@@ -33,7 +33,7 @@ import { withLook } from './look';
 import { Installs, installRoute } from './install';
 import { TalkLog, talkRoute } from './talk';
 import { TalkVoice } from './talkvoice';
-import { Ledger, costSummary, costsPage } from './costs';
+import { Ledger, costSummary, costsPage, recordCost } from './costs';
 import { bearerEmail, cliPublicRoute, cliUserRoute } from './cliauth';
 // mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
 import MA_TGZ from '../box/mobile-agent.tgz';
@@ -43,6 +43,8 @@ export { AgentBox, Project, Registry, BuildBox, Installs, TalkLog, Ledger, TalkV
 import { landingRoute } from './landing/routes';
 import * as landingHooks from './landing/hooks';
 import { landingOn } from './landing/hooks';
+import { boardName } from './landing/landing';
+import { backlogItems, dedupePrompt, parseDedupe, fmtBoardRow, boardText } from './landing/board';
 export { Landing } from './landing/landing';
 export { MergeBox } from './landing/merger';
 export { DemoAgent } from './landing/demo';
@@ -174,8 +176,10 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
     if (isClaudeToken(key)) { ccEnv = `CLAUDE_CODE_OAUTH_TOKEN=${key}`; keyTail = key.slice(-20); billing = 'sub'; }
     else { ccEnv = `ANTHROPIC_API_KEY=${key} ANTHROPIC_MODEL=${u.model || DEFAULT_API_MODEL}`; keyTail = key.slice(-20); billing = 'api'; }
   }
+  // The agent board (landing flag `board`): the box gets the hook and the prompts mention `forq who`.
+  const boardOn = landingOn(await projectStub(env, slug).info().catch(() => null)) && !!(await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null))?.board;
   return {
-    agentId, task: r.task, role: r.role, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token,
+    agentId, task: r.task, role: r.role, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token, board: boardOn,
     agentToken: await agentToken(env, agentId), apiBase, uiHost: env.UI_HOST, maRev: MA_REV.trim(),
     billing: billing === 'sub' ? 'sub' : 'api',
     // Hosted qodebase pays for other people's boxes; its owner and a self-hosted copy pay their own.
@@ -1141,6 +1145,52 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       if (c) { a.claims = [...new Set([...c.claims, ...c.files])]; a.landing = c.state; }
     }
     return json({ agents });
+  }
+  // The agent board (src/landing/board.ts) on landing projects: the box hook posts edits and commits,
+  // `forq who` asks, `forq intent` states the agent's own task, `forq dedupe` stores same-work pairs.
+  if (['board', 'who', 'intent', 'dedupe'].includes(verb)) {
+    const info = await p.info();
+    if (!landingOn(info)) return json({ on: false, off: true, rows: [], aliases: [], text: '' });
+    const L = env.Landing.get(env.Landing.idFromName(slug));
+    const name = boardName(me.agentId);
+    const b = body as Record<string, unknown>;
+    if (verb === 'who') {
+      const recent = Math.min(24 * 3_600_000, Number(url.searchParams.get('recent')) || 0);
+      return json(await L.boardWho({ me: name, recent, files: url.searchParams.get('files') || '', area: url.searchParams.get('area') }));
+    }
+    if (request.method !== 'POST' || (me.role !== 'agent' && me.role !== 'router')) return json({ error: 'agents and the router post to the board' }, 403);
+    if (verb === 'board') {
+      // Only what a hook may say: edits, commits, blocked. Platform events (pushed, landed…) come from the platform.
+      if (!['editing', 'committed', 'blocked', 'done'].includes(String(b.kind))) return json({ error: 'kind: editing|committed|blocked|done' }, 400);
+      const e = await L.boardPost({ agent: name, kind: String(b.kind), intent: b.intent ? String(b.intent) : '', files: Array.isArray(b.files) ? b.files.map(String) : String(b.files || ''), status: String(b.status || ''), change: me.agentId });
+      // who: true (the edit hook): the others who touched these files, in the same round trip.
+      if (b.who && !('off' in e)) return json({ ...e, rows: (await L.boardWho({ me: name, files: e.files })).rows.map((r) => ({ ...r, line: fmtBoardRow(r) })) });
+      return json(e);
+    }
+    if (verb === 'intent') {
+      const intent = String(b.intent || '').trim();
+      if (!intent) return json({ error: 'intent required' }, 400);
+      const files = (Array.isArray(b.files) ? b.files.map(String) : String(b.files || '').split(',')).map((f) => f.trim().replace(/^\.?\//, '')).filter(Boolean).slice(0, 20);
+      const e = await L.stateIntent(me.agentId, intent, files);
+      if ('off' in e) return json(e);
+      // The reply carries the conflicts (prior-art.md, Agent Mail): live work on these files + all finished work of the last 30 min.
+      const near = files.length ? (await L.boardWho({ me: name, files })).rows.filter((r) => !r.done) : [];
+      const done = (await L.boardWho({ me: name, recent: 30 * 60_000 })).rows.filter((r) => r.done);
+      const live = (await L.boardWho({ me: name })).rows.filter((r) => !near.some((x) => x.agent === r.agent));
+      return json({ ...e, others: boardText([...near, ...live.slice(0, Math.max(0, 8 - near.length)), ...done], (await L.boardWho({})).aliases, { live: 8, done: 8 }) });
+    }
+    // dedupe: {stage: 'prompt', text} -> the items + the prompt the box runs through Haiku;
+    //         {stage: 'answer', ids, answer, usage?} -> the pairs, stored as aliases on the board.
+    if (b.stage === 'prompt') { const items = await L.dedupeList(name, backlogItems(String(b.text || ''))); return json({ items, prompt: dedupePrompt(items) }); }
+    if (b.stage === 'answer') {
+      const pairs = parseDedupe(String(b.answer || ''), Array.isArray(b.ids) ? b.ids.map(String) : undefined);
+      const u = b.usage as { in?: number; out?: number; cr?: number; cw?: number; model?: string } | undefined;
+      if (u) ctx.waitUntil(recordCost(env, slug.split('.')[0], 'claude', `${slug.replace('.', '/')}:${u.model || 'claude-haiku-5-5'}`, { usd: null, covered: false, billing: 'sub',
+        tokens: { in: Number(u.in) || 0, out: Number(u.out) || 0, cw: Number(u.cw) || 0, cr: Number(u.cr) || 0 } }).catch(() => {}));
+      log('board', 'dedupe', { slug, by: name, pairs: pairs.length });
+      return json({ pairs, aliases: await L.boardAliases(pairs, name) });
+    }
+    return json({ error: 'stage: prompt|answer' }, 400);
   }
   if (verb === 'status' && me.role === 'agent') {
     if (!['working', 'pushed', 'blocked'].includes(body.state)) return json({ error: 'state: working|pushed|blocked' }, 400);

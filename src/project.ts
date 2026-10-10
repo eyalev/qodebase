@@ -35,7 +35,7 @@ export type RouterRequest = { text: string; at: number; state: 'waking' | 'sent'
 export type ImportedFrom = { url: string; fullName: string; stars: number; license: string | null; branch: string };
 export type Role = 'agent' | 'router' | 'reviewer' | 'ask';
 // Reviewers: `<slug>--review`, plus `--review2`, `--review3`… in a landing project's reviewer pool (src/landing/).
-export const roleOf = (id: string): Role => id.endsWith('--router') ? 'router' : /--review\d*$/.test(id) ? 'reviewer' : id.endsWith('--ask') ? 'ask' : 'agent';
+export const roleOf = (id: string): Role => /--router\d*$/.test(id) ? 'router' : /--review\d*$/.test(id) ? 'reviewer' : id.endsWith('--ask') ? 'ask' : 'agent';
 export type ProjectInfo = {
   slug: string; owner: string; name: string; description: string;
   repo: string; remote: string; forkedFrom: string | null; createdAt: number;

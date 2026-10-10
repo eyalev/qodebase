@@ -5,6 +5,7 @@
 //   POST /api/p/<o>/<n>/landing/demo        {action: 'start'|'stop'|'reset'|'seed', agents?, speed?, mode?: 'story'|'busy'} (owner)
 //   POST /api/p/<o>/<n>/landing/flags       {llmReplay?, agentModel?, replayModel?} (owner; models: alias or claude-… id, null clears)
 //   GET  /api/p/<o>/<n>/landing/state       merger box + alarm state (admin)
+//   GET  /api/p/<o>/<n>/landing/board       the agent board: ?recent=<min, default 30>&files=a,b&area=X&tail=N (anyone who can see the project)
 
 import type { Env } from '../env';
 import type { ProjectInfo } from '../project';
@@ -51,6 +52,13 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
     // Set up in Landing's alarm (reset + start, ~20 s): the reply does not wait for it.
     return json({ state: 'started', startedAt: c.startedAt, endsAt: c.endsAt, startedNow: true, preparing: true });
   }
+  // The board for people (`qb board`): who works on what now, what finished in the window, aliases.
+  if (verb === 'board' && request.method === 'GET') {
+    const u = new URL(request.url);
+    const recent = Math.min(24 * 60, Number(u.searchParams.get('recent') ?? 30) || 0) * 60_000;
+    const who = await L.boardWho({ recent, files: u.searchParams.get('files') || '', area: u.searchParams.get('area') });
+    return json(u.searchParams.has('tail') ? { ...who, tail: await L.boardTail(Number(u.searchParams.get('tail')) || 50) } : who);
+  }
   if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
   if (verb === 'restart' && me.admin) {
     // After a deploy: objects that never went idle keep the old code; this restarts them on the new one.
@@ -87,6 +95,9 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
         ...(Number(body.trainMax) >= 1 ? { trainMax: Math.min(24, Math.round(Number(body.trainMax))) } : {}),
         ...(typeof body.claims === 'boolean' ? { claims: body.claims } : {}),
         ...(typeof body.dedupe === 'boolean' ? { dedupe: body.dedupe } : {}),
+        ...(typeof body.board === 'boolean' ? { board: body.board } : {}),
+        ...(typeof body.crossDedupe === 'boolean' ? { crossDedupe: body.crossDedupe } : {}),
+        ...(typeof body.nextTask === 'string' ? { nextTask: body.nextTask.slice(0, 1000) || undefined } : body.nextTask === null ? { nextTask: undefined } : {}),
         // agentModel: the model this project's agent boxes run on the owner's subscription (a cheap test);
         // replayModel: the model tier-2 replays use (default Haiku 5.5).
         ...(am ? { agentModel: am.ok } : {}), ...(rm ? { replayModel: rm.ok } : {}) }));
