@@ -144,7 +144,7 @@ first claims are visible.
 - Wall time 268 s [253–321], agent-minutes 38.5, API-equiv $0.71: same as D (p 0.4–1). The dedupe saves
   duplicated code, not much time, because a duplicate here costs ~30 s of a Haiku call.
 - **Watch: red commits 3 [0–4] in E vs 0 in D** (p = 0.4, not significant): all 7 are pushes with
-  unresolved conflict markers in `src/index.js` (E r1: 4, r2: 3, r3: 0; A: 1 in 9 runs-worth, D: 0), fixed by
+  unresolved conflict markers in `src/index.js` (E r1: 4, r2: 3, r3: 0; A: 1 in its 3 runs, D: 0), fixed by
   a later commit. A plausible cause, not verified: an alias task now lands right after its twin and edits the
   next export line in the same hot file. A merge gate that runs the tests (qodebase's landing queue) would
   stop these; plain `git push` does not.
