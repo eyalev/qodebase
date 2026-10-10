@@ -5,7 +5,7 @@ Round 2 (PLAN2.md, started 2026-10-10 17:00 UTC):
 - [x] W1 prior art / novelty -> prior-art.md (manager research agent)
 - [x] W2a board in Landing DO: log, now, recent, who API, platform posts, flag `board` (qb6, 244a3cf)
 - [x] W2b box hook + `forq who`/`intent`/`dedupe` in boxes; dedupe reads every team's list with crossDedupe (qb6, 244a3cf..668aba4)
-- [ ] W2c "Agents at work" shows the board live (qb7)
+- [ ] W2c "Agents at work" shows the board live (qb7): built e407afa ("Who's doing what": now / shared-file heads-up / same task asked twice / finished), checked on fixtures + cafe-lab real data at 390+1440 light+dark; critique running; deploy via qb6 after the W4 A/B allows
 - [x] W2d deploy + live smoke on eyal/cafe-lab (qb6): spawn→intent→editing→committed→pushed→approved→queued→landed on the board; dedupe found the pair from the agent's shell
 - [ ] W3a 20 agents / 60 tasks Haiku A vs E x3 (qb9): harness + s3 starter + hidden tests done (dc2154b, lab-hidden 8a2943a; smoke dedupe 10/10); runs started 16:59 UTC
 - [ ] W3b Sonnet longer tasks A vs E x3 (qb9)
