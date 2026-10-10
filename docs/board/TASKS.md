@@ -2,7 +2,7 @@
 Round 1 (done, FINDINGS.md): E1a-E5 [x].
 
 Round 2 (PLAN2.md, started 2026-10-10 17:00 UTC):
-- [ ] W1 prior art / novelty -> prior-art.md (manager research agent)
+- [x] W1 prior art / novelty -> prior-art.md (manager research agent)
 - [ ] W2a board in Landing DO: log, now, recent, who API, platform posts, flag `board` (qb6)
 - [ ] W2b box hook + `forq who` in boxes + dedupe pass at planning (qb6)
 - [ ] W2c "Agents at work" shows the board live (qb7)
