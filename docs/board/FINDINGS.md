@@ -1,7 +1,7 @@
 # Agent board: findings (2026-10-10)
 
 Question (Eyal): would a central, fast "who is working on what" log help agents that work at once?
-**Answer: yes.** With 10 agents it made the same job 28% faster and 29% cheaper at equal quality.
+**Answer: yes.** With 10 agents it made the same job 28% faster and 28% cheaper at equal quality.
 Most of the gain comes from agents no longer fighting git. It helps only in a specific shape:
 - agents state their task;
 - the board remembers finished work;
@@ -42,7 +42,7 @@ Conditions:
 | rejected pushes | 34 | 24 | 16 | 17 |
 | work built, then dropped | 7 | 3 | 2 | 1 |
 | runs with a duplicate pair built twice | 4/5 | 4/5 | 3/5 | 0/5 |
-| API-equiv $ / run | 0.32 | 0.30 | 0.28 | 0.28 |
+| API-equiv $ / run | 0.37 | 0.34 | 0.31 | 0.32 |
 | wall time | 227 s | 219 s | 202 s | 200 s (n.s.) |
 
 **10 agents, 30 multi-file tasks, 3 runs each:**
@@ -52,7 +52,7 @@ Conditions:
 | hidden tests | 30/30 | 30/30 | 30/30 |
 | wall time | 354 s | **254 s (-28%)** | 268 s |
 | agent-minutes | 55.2 | 38.4 (-30%) | 38.5 |
-| API-equiv $ / run | 0.95 | 0.67 (-29%) | 0.71 |
+| API-equiv $ / run | 1.08 | 0.77 (-28%) | 0.82 |
 | rebases aborted / resets / rejected pushes | 73 / 84 / 103 | 2 / 4 / 28 | similar to D |
 | duplicate pairs built twice (of 5) | 4 | 4 | **0** |
 | red commits on main | 0-1 | 0 | 3 [0-4] (n.s.; see 4) |
@@ -62,8 +62,8 @@ With 3 runs each, p = 0.1 is the floor for this test, and the A-vs-D differences
 ## 3. What we learned
 
 1. **The value is less git fighting, and it grows with the number of agents.** Without a board, git thrash
-   roughly tripled when agents doubled. With one, it stayed flat. At 5 agents that saved 12% of cost;
-   at 10 it saved ~30% of time and cost. Agents back off early ("claimed by agent4, left it") or merge in
+   roughly tripled when agents doubled. With one, it stayed flat. At 5 agents that saved ~13% of cost;
+   at 10 it saved ~28% of time and cost. Agents back off early ("claimed by agent4, left it") or merge in
    place, instead of building, colliding at push, and redoing the work.
 2. **Quality did not change** at these sizes (every run passed every hidden test). The board is about
    waste and speed, not correctness.
@@ -87,7 +87,7 @@ With 3 runs each, p = 0.1 is the floor for this test, and the A-vs-D differences
    advance (the needed PR had started, often a day or more earlier, on the same files). About a quarter
    needed a direct push (lockfile, release), which a board sees only if pushes post too. ~5% were not
    visible.
-8. **The sim predicted the relative gains** (-25% time / -31% cost predicted vs -28% / -29% measured).
+8. **The sim predicted the relative gains** (-25% time / -31% cost predicted vs -28% / -28% measured).
    It overestimated how often agents recognise far-worded duplicates. It is now recalibrated, and
    it agrees: dedupe upstream.
 
@@ -113,6 +113,16 @@ Announcing it at spawn instead of at landing gives agents the board for free.
 - semantic matching on the board itself (Jev/Clef on new intents vs open ones), instead of a per-agent rule.
 
 ## Spend and guards
-- Real-agent runs: 32 runs (incl. 1 smoke), $13.04 API-equivalent on the subscription (cap $15).
+- Real-agent runs: 32 runs (incl. 1 smoke), $14.96 API-equivalent on the subscription (cap $15; first reported as $13.04, see the pricing note).
 - Cloudflare (DO + KV bench): cents; cloudcost gap `qb-board` added.
 - Weekly meter: 71% -> 73% (stop was 77%). The sims used no model calls.
+
+## Corrections (2026-10-10, round 2)
+- **Pricing:** the harness priced cache writes at 1.25x input (5-minute cache); Claude Code writes the
+  1-hour cache, 2x input (checked against Claude Code's own total on a Haiku and a Sonnet call). Every
+  cost above is re-priced from stored tokens (qb9, sim/board-ab/recost.mjs; runs.jsonl keeps
+  `usd_api_equiv_v1`). All conditions moved ~15% alike; the 10-agent saving is -28.4% (was -29.1%).
+- **At 20 agents the first board version did worse** (E6-results.md): a board that lists committed but
+  unlanded work as finished made agents skip tasks that never reached main (hidden 56/60 vs 60/60), and
+  "waits for" wording led one agent to `sleep`. Fixed in round 2: finished = on main only; no waiting.
+  The same flaw was in qodebase's built-in board and was fixed before its Cloudflare runs. See FINDINGS2.md.
