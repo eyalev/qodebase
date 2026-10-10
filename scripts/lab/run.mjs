@@ -251,8 +251,10 @@ await Promise.all(boxes.map((id) => api('POST', `/api/agents/${id}/stop`).catch(
 await api('POST', `/api/p/eyal/${name}/landing/flags`, { caps: null, reviewers: 1, autoMerge: false, nextTask: null }).catch(() => null);
 log('stopped', { project: slug, status, boxes: boxes.length });
 await sleep(75_000);   // boxes write their final costs to the ledger as they stop
-view = await api('GET', `/api/p/eyal/${name}/landing`);
-const state = await api('GET', `/api/p/eyal/${name}/landing/state`);
+// The final reads outlast a network outage (a 4-min one crashed W4c order 5 here, after it had settled).
+const patient = async (path) => { for (let i = 0; ; i++) { try { return await api('GET', path); } catch (e) { if (i >= 10) throw e; log('final_read_retry', { path, i, err: String(e).slice(0, 120) }); await sleep(60_000); } } };
+view = await patient(`/api/p/eyal/${name}/landing`);
+const state = await patient(`/api/p/eyal/${name}/landing/state`);
 
 // Cost: real = container time; tokens at the official rates (platform.claude.com/docs/en/about-claude/pricing,
 // checked 2026-10-08): per MTok input, output, cache read, 1-hour cache write. Only Haiku 5.5 has a
