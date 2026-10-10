@@ -38,7 +38,24 @@ const CLAIM = (e) => (e.kind === 'done' || e.kind === 'committed') && !LANDED(e)
 /** recent (ms): also list what others landed on main in that window (done:true, marked FINISHED), and their
  *  fresh unlanded claims (claim:true, marked SAYS DONE, NOT ON MAIN), one row per agent + intent, after the
  *  live rows (qb9: a task landed under another wording 15 s earlier was invisible once its agent moved on). */
-export function nowView(events, { me = null, files = [], area = null, now = Date.now(), ttl = TTL_MS, recent = 0 } = {}) {
+// v3 (opt-in, BOARD_TIEBREAK=1): each row also says since when that agent has claimed the task its intent names
+// (the first T<n> / #<n>), so two agents on the same task can tell who claimed first: the earliest keeps it.
+// (qb9 W3a v2 r3: five agents picked the last task at once, each yielded to the others, nobody landed it.)
+export const TIEBREAK = (env = (typeof process !== 'undefined' ? process.env : {})) => env?.BOARD_TIEBREAK === '1';
+export const taskId = (s) => (String(s || '').match(/\b(T\d+|#\d+)\b/) || [])[1] || null;
+function claimSince(events, now, ttl) {
+  const m = new Map();
+  for (const e of events) { if (!e || e.kind !== 'started' || now - e.ts > ttl) continue; const t = taskId(e.intent); if (!t) continue;
+    const k = `${e.agent}\n${t}`; if (!m.has(k) || e.ts < m.get(k)) m.set(k, e.ts); }
+  return m;
+}
+export function nowView(events, opts = {}) {
+  const rows = nowView2(events, opts);
+  if (!TIEBREAK(opts.env)) return rows;
+  const now = opts.now ?? Date.now(), since = claimSince(events, now, opts.ttl ?? TTL_MS);
+  return rows.map((r) => { const t = taskId(r.intent), ts = t && since.get(`${r.agent}\n${t}`); return ts && !r.done ? { ...r, claimTask: t, claimS: Math.round((now - ts) / 1000) } : r; });
+}
+function nowView2(events, { me = null, files = [], area = null, now = Date.now(), ttl = TTL_MS, recent = 0 } = {}) {
   const live = liveView(events, { me, now, ttl });
   const done = [], claims = [];
   if (recent > 0) {
@@ -79,7 +96,7 @@ function liveView(events, { me, now, ttl }) {
     .map((r) => ({ ...r.last, files: [...r.files], ageS: Math.round((now - r.last.ts) / 1000) })).sort((x, y) => y.ts - x.ts);
 }
 
-export const fmtRow = (r) => `${r.done ? 'FINISHED (on main) ' : r.claim ? 'SAYS DONE, NOT ON MAIN ' : ''}${r.agent} ${r.kind}${r.ageS != null ? ` ${r.ageS}s ago` : ''}: ${clip(r.intent, 90) || "-"}${r.files?.length ? ` [${r.files.slice(0, 5).join(', ')}${r.files.length > 5 ? ', …' : ''}]` : ''}${r.status ? ` (${r.status})` : ''}`;
+export const fmtRow = (r) => `${r.done ? 'FINISHED (on main) ' : r.claim ? 'SAYS DONE, NOT ON MAIN ' : ''}${r.agent} ${r.kind}${r.ageS != null ? ` ${r.ageS}s ago` : ''}: ${clip(r.intent, 90) || "-"}${r.files?.length ? ` [${r.files.slice(0, 5).join(', ')}${r.files.length > 5 ? ', …' : ''}]` : ''}${r.status ? ` (${r.status})` : ''}${r.claimTask ? ` (claimed ${r.claimTask} ${r.claimS}s ago)` : ''}`;
 
 // Per-agent state shared by the hook and the CLI (the hook's debounce, and the agent's own intent).
 export const stateDir = (env = process.env) => env.BOARD_STATE_DIR || join(homedir(), '.cache', 'qb-board');

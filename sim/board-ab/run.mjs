@@ -116,7 +116,10 @@ function dedupePass(seed) {
 // --no-wait (W3a diagnosis, 2026-10-10): agents slept up to 25 min in the background waiting for a stated
 // dependency, and claude -p waits for background tasks. Adds one prompt line and blocks sleep (opt-in, v2).
 const NO_WAIT = args.includes('--no-wait');
-const PROMPT_VERSION = NO_WAIT ? 'board-ab-v2-nowait' : 'board-ab-v1';
+// Board v3 (manager, 2026-10-10, for W3b): the earliest claim of a task keeps it (BOARD_TIEBREAK=1 in board/lib.mjs
+// + one prompt line). On by default for s4 only, so W7 (s3) stays on the E v2 code path.
+const TIEBREAK = args.includes('--tiebreak') || (SCEN === 's4' && !args.includes('--no-tiebreak'));
+const PROMPT_VERSION = (NO_WAIT ? 'board-ab-v2-nowait' : 'board-ab-v1') + (TIEBREAK ? '+tiebreak' : '');
 function prompt(k) {
   // A = no board; B = hooks only (automatic posts: file names, commits); C = hooks + one instruction
   // to state the picked task (manager, 2026-10-10: with claude -p the hook's 'started' text is this
@@ -124,7 +127,7 @@ function prompt(k) {
   const board = COND === 'C' ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who\`. After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`.\n` : '';
   // D = C, but the query also returns recently finished intents, plus one rule for same-meaning tasks
   // (manager, 2026-10-10, after the T3/T11 diagnosis: finished intents dropped out of 'who').
-  const boardD = (COND === 'D' || COND === 'E') ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who --recent 30m\` (what the others are doing and what they finished in the last 30 minutes). After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`. If a task someone claimed or finished means the same as one you are about to do (even under another name or task id), make yours a one-line alias of theirs once theirs is on main, or pick another task.\n` : '';
+  const boardD = (COND === 'D' || COND === 'E') ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who --recent 30m\` (what the others are doing and what they finished in the last 30 minutes). After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`. If a task someone claimed or finished means the same as one you are about to do (even under another name or task id), make yours a one-line alias of theirs once theirs is on main, or pick another task.${TIEBREAK ? ' If another agent claimed the same task before you did (the board shows "claimed T<n> <age> ago"), they keep it and you pick another task; if your claim is the earlier one, keep going.' : ''}\n` : '';
   return `You are agent ${k} of ${N}, working at the same time as the others on this repository (${SCEN === 's1' ? 'textkit' : 'todokit'}). Each agent works in its own clone and pushes to the same origin; you cannot talk to them.${board}${boardD}
 1. Run \`git pull --rebase\` first.
 2. Read BACKLOG.md and the code on main. Pick ONE task that you believe nobody has done yet.
@@ -143,6 +146,7 @@ function callAgent(k, iter) {
     if (NO_WAIT) a.push('--disallowedTools', 'Bash(sleep:*)');
     if (COND !== 'A') a.push('--settings', path.join(DIR, 'board-settings.json'));
     const env = { ...process.env, CLAUDE_NO_HOOKS: '1' };
+    if (COND !== 'A' && TIEBREAK) env.BOARD_TIEBREAK = '1';
     if (COND !== 'A') Object.assign(env, { BOARD_AGENT: `agent${k}`, BOARD_FILE: path.join(DIR, 'board.jsonl'), BOARD_STATE_DIR: path.join(DIR, 'board-state', `agent${k}`) });
     const t0 = Date.now();
     const p = spawn('claude', a, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
