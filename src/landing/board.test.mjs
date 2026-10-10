@@ -46,12 +46,30 @@ test('recent: finished work once per agent+intent, after the live rows; a landed
   assert.deepEqual(plain.map((r) => r.agent), ['a2'], 'landed a1 is not working now; without recent it is not listed');
   const rows = boardView(evs, { now, recent: 30 * 60_000 });
   assert.deepEqual(rows.map((r) => `${r.agent}:${r.done ? 'done' : 'live'}`), ['a2:live', 'a1:done']);
+  assert.ok(!rows.some((r) => r.agent === 'a2' && r.done), 'committed is not finished');
   assert.equal(rows[1].kind, 'landed');
   const txt = boardText(rows, [{ a: 'T3', b: 'T11', at: 0, by: 'x' }]);
-  assert.match(txt, /Working now:\na2 committed/);
-  assert.match(txt, /Finished in the last 30 min:\nFINISHED a1 landed/);
+  assert.match(txt, /Working now[^\n]*:\na2 committed/);
+  assert.match(txt, /Landed on main in the last 30 min:\nLANDED a1 landed/);
   assert.match(txt, /T3 = T11/);
   assert.equal(boardText([]), '');
+});
+
+test('only landed work is finished; pushed/queued/bounced stays live up to 45 min; silent agents expire', () => {
+  const evs = [
+    ev('p', 'started', 'slugify', ['s.js'], 0), ev('p', 'pushed', 'slugify', ['s.js'], 60),          // pushed, never landed
+    ev('b', 'started', 'tags', ['t.js'], 0), ev('b', 'bounced', 'tags', ['t.js'], 120),              // sent back
+    ev('s', 'started', 'stalled', ['x.js'], 0), ev('s', 'committed', 'stalled', ['x.js'], 30),       // went silent
+    ev('l', 'pushed', 'dates', ['d.js'], 0), ev('l', 'landed', 'dates', ['d.js'], 200),
+  ];
+  const rows = boardView(evs, { now: T0 + 20 * 60_000, recent: 30 * 60_000 });
+  const by = Object.fromEntries(rows.map((r) => [r.agent, r]));
+  assert.equal(by.p?.done, undefined, 'pushed is not FINISHED');
+  assert.equal(by.p?.kind, 'pushed', 'pushed stays live past the 10 min TTL');
+  assert.equal(by.b?.kind, 'bounced');
+  assert.equal(by.s, undefined, 'a silent agent expires after the TTL: its task is free again');
+  assert.equal(by.l?.done, true);
+  assert.equal(boardView(evs, { now: T0 + 50 * 60_000 }).length, 0, 'in flight ends at 45 min');
 });
 
 test('the TTL is 10 minutes', () => {

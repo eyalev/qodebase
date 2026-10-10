@@ -87,7 +87,7 @@ test('commit: posts the subject and files once per new commit, never the command
 
 test('forq who / intent', async () => {
   const t = await setup((c) => (c.url.startsWith('/api/agent/who') ? { on: true, text: 'Working now:\na2 x' }
-    : c.url === '/api/agent/intent' ? { ts: 1, others: 'Finished in the last 30 min:\nFINISHED a3 landed 2m ago: titleCase' } : {}));
+    : c.url === '/api/agent/intent' ? { ts: 1, others: 'Landed on main in the last 30 min:\nLANDED a3 landed 2m ago: titleCase' } : {}));
   try {
     const w = await t.forq(['who', '--recent', '10m', '--files', 'src/a.js']);
     assert.equal(w.out.trim(), 'Working now:\na2 x');
@@ -96,6 +96,6 @@ test('forq who / intent', async () => {
     assert.equal(t.calls[1].url, '/api/agent/who?recent=1800000');
     const i = await t.forq(['intent', 'T3', 'capitalizeWords', '--files', 'src/str.js']);
     assert.deepEqual(t.calls[2].body, { intent: 'T3 capitalizeWords', files: ['src/str.js'] });
-    assert.match(i.out, /on the board: T3 capitalizeWords\nOthers on the same files[\s\S]*FINISHED a3 landed/);
+    assert.match(i.out, /on the board: T3 capitalizeWords\nOthers on the same files[\s\S]*LANDED a3 landed/);
   } finally { t.close(); }
 });

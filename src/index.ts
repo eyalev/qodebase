@@ -1173,7 +1173,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       const files = (Array.isArray(b.files) ? b.files.map(String) : String(b.files || '').split(',')).map((f) => f.trim().replace(/^\.?\//, '')).filter(Boolean).slice(0, 20);
       const e = await L.stateIntent(me.agentId, intent, files);
       if ('off' in e) return json(e);
-      // The reply carries the conflicts (prior-art.md, Agent Mail): live work on these files + all finished work of the last 30 min.
+      // The reply carries the conflicts (prior-art.md, Agent Mail): live work on these files + everything landed in the last 30 min.
       const near = files.length ? (await L.boardWho({ me: name, files })).rows.filter((r) => !r.done) : [];
       const done = (await L.boardWho({ me: name, recent: 30 * 60_000 })).rows.filter((r) => r.done);
       const live = (await L.boardWho({ me: name })).rows.filter((r) => !near.some((x) => x.agent === r.agent));

@@ -23,7 +23,7 @@ import { recordCost, claudeUsd } from '../costs';
 import { pushSeed } from './demo';
 import { SEED } from './demoproject';
 import { pushAlert } from '../alert';
-import { makeBoardEvent, boardView, boardText, BOARD_KEEP_MS, BOARD_TTL_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
+import { makeBoardEvent, boardView, boardText, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
   | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap';
@@ -295,7 +295,7 @@ export class Landing extends DurableObject<Env> {
     const m = await this.#m();
     if (!m.flags.board) return { on: false, rows: [], aliases: [], text: '' };
     const recent = Math.min(24 * 3_600_000, q.recent || 0);
-    const since = Date.now() - Math.max(BOARD_TTL_MS, recent);
+    const since = Date.now() - Math.max(BOARD_TTL_MS, recent, IN_FLIGHT_MS);
     const evs = this.#bsql().exec(`SELECT body FROM board WHERE ts > ? ORDER BY ts`, since).toArray().map((r) => JSON.parse(String(r.body)) as BoardEvent);
     const rows = boardView(evs, { ...q, recent });
     const aliases = m.aliases || [];

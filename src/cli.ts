@@ -19,7 +19,7 @@ export const FORQ_CLI = String.raw`#!/usr/bin/env python3
   forq verdict <agent-id> approve|changes "notes"   your review verdict (reviewer)
   forq who [--recent [30m]] [--files a,b] [--area X]
                                                 the agent board: who works on what now (--recent: and
-                                                what others finished in that window)
+                                                what others landed on main in that window)
   forq intent "what you are doing" [--files a,b]  say on the board which task you took and its files
   forq dedupe <file> | "task" "task" ...        one quick pass: which tasks are the same work (shown on
                                                 the board as aliases: build it once)
@@ -216,7 +216,7 @@ def main(argv):
         r = api('POST', '/api/agent/intent', {'intent': ' '.join(words), 'files': files})
         if r.get('off'): print('the agent board is off in this project'); return
         print('on the board: ' + ' '.join(words))
-        if r.get('others'): print('Others on the same files, or finished in the last 30 min (if one of these is the same work as yours, under any name, pick another task or make yours a thin alias of it):\n' + r['others'])
+        if r.get('others'): print('Others on the same files, or landed on main in the last 30 min (if one of these is the same work as yours, under any name, pick another task or make yours a thin alias of it):\n' + r['others'])
     elif v == 'dedupe':
         if not rest: sys.exit('usage: forq dedupe <file> | "task" "task" ...')
         p = rest[0] if len(rest) == 1 else ''

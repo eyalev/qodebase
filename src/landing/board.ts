@@ -4,7 +4,8 @@
 //   EVENT   {ts, agent, kind, intent, files, status}: posted by the platform (spawn, push, review,
 //           land, bounce), by the hook in every box (edits -> files, commits) and by `forq intent`.
 //   NOW     one row per agent whose last event is under TTL (10 min) old, files = all it named then.
-//   RECENT  what others finished (pushed/committed/landed/done) in the window, once per agent+intent.
+//   RECENT  what others LANDED on main in the window, once per agent+intent (pushed/queued is not finished).
+//   IN FLIGHT an agent whose latest word is pushed/queued/bounced… stays in NOW for up to 45 min.
 //   ALIASES pairs the dedupe pass (`forq dedupe`, Haiku) found to be the same work.
 // Advisory only: nothing here blocks an agent; the merge queue stays the gate.
 
@@ -16,7 +17,13 @@ export type BoardEvent = { ts: number; agent: string; kind: BoardKind; intent: s
 export type BoardRow = BoardEvent & { ageS: number; done?: boolean };
 export type Alias = { a: string; b: string; at: number; by: string };
 
-const FINISHED = new Set<string>(['pushed', 'committed', 'landed', 'done', 'approved', 'queued']);
+// Finished = on main. Pushed/queued work that never landed must not read as done: at 20 agents others
+// skipped those tasks and 8 were never built (qb9, 2026-10-10).
+const FINISHED = new Set<string>(['landed']);
+// A change on its way to main (or sent back to its agent) is still someone's work after the TTL: it stays
+// in the now view, for up to IN_FLIGHT_MS, as long as that is the agent's latest word.
+const IN_FLIGHT = new Set<string>(['pushed', 'reviewing', 'approved', 'changes', 'queued', 'bounced']);
+export const IN_FLIGHT_MS = 45 * 60_000;
 
 export const clip = (s: unknown, n: number) => (s == null ? '' : String(s).replace(/\s+/g, ' ').trim().slice(0, n));
 export const normFiles = (files: unknown): string[] => (Array.isArray(files) ? files : String(files || '').split(','))
@@ -38,8 +45,13 @@ export type BoardQuery = { me?: string | null; files?: string[] | string; area?:
 export function boardView(events: BoardEvent[], q: BoardQuery = {}): BoardRow[] {
   const now = q.now ?? Date.now(), ttl = q.ttl ?? BOARD_TTL_MS, me = q.me || null;
   const rows = new Map<string, { last: BoardEvent; files: Set<string> }>();
+  const latest = new Map<string, BoardEvent>();
+  for (const e of events) if (e && (!latest.get(e.agent) || e.ts >= latest.get(e.agent)!.ts)) latest.set(e.agent, e);
   for (const e of events) {
-    if (!e || now - e.ts > ttl || e.agent === me) continue;
+    if (!e || e.agent === me) continue;
+    const last = latest.get(e.agent)!;
+    const keep = now - e.ts <= ttl || (IN_FLIGHT.has(last.kind) && now - last.ts <= IN_FLIGHT_MS && now - e.ts <= IN_FLIGHT_MS);
+    if (!keep) continue;
     const r = rows.get(e.agent) || { last: e, files: new Set<string>() };
     if (e.ts >= r.last.ts) r.last = e;
     for (const f of e.files || []) r.files.add(f);
@@ -63,7 +75,7 @@ export function boardView(events: BoardEvent[], q: BoardQuery = {}): BoardRow[] 
   return res;
 }
 
-export const fmtBoardRow = (r: BoardRow) => `${r.done ? 'FINISHED ' : ''}${r.agent} ${r.kind} ${fmtAge(r.ageS)}: ${clip(r.intent, 90) || '-'}`
+export const fmtBoardRow = (r: BoardRow) => `${r.done ? 'LANDED ' : ''}${r.agent} ${r.kind} ${fmtAge(r.ageS)}: ${clip(r.intent, 90) || '-'}`
   + `${r.files?.length ? ` [${r.files.slice(0, 5).join(', ')}${r.files.length > 5 ? ', …' : ''}]` : ''}${r.status ? ` (${r.status})` : ''}`;
 const fmtAge = (s: number) => (s < 90 ? `${s}s ago` : s < 5400 ? `${Math.round(s / 60)}m ago` : `${Math.round(s / 3600)}h ago`);
 
@@ -71,8 +83,8 @@ const fmtAge = (s: number) => (s < 90 ? `${s}s ago` : s < 5400 ? `${Math.round(s
 export function boardText(rows: BoardRow[], aliases: Alias[] = [], o: { live?: number; done?: number; recentMin?: number } = {}) {
   const live = rows.filter((r) => !r.done).slice(0, o.live ?? 5), done = rows.filter((r) => r.done).slice(0, o.done ?? 5);
   const parts: string[] = [];
-  if (live.length) parts.push(`Working now:\n${live.map(fmtBoardRow).join('\n')}`);
-  if (done.length) parts.push(`Finished in the last ${o.recentMin ?? 30} min:\n${done.map(fmtBoardRow).join('\n')}`);
+  if (live.length) parts.push(`Working now (pushed/queued = on its way to main, not done yet):\n${live.map(fmtBoardRow).join('\n')}`);
+  if (done.length) parts.push(`Landed on main in the last ${o.recentMin ?? 30} min:\n${done.map(fmtBoardRow).join('\n')}`);
   if (aliases.length) parts.push(`Same work under two names (dedupe pass): ${aliases.slice(0, 12).map((x) => `${x.a} = ${x.b}`).join('; ')}. Build it once; the other is a thin alias of it.`);
   return parts.join('\n');
 }
