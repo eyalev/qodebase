@@ -1,0 +1,269 @@
+{
+ "n": {
+  "A": 5,
+  "B": 5,
+  "C": 5
+ },
+ "measures": {
+  "wall_s": {
+   "label": "wall time (s)",
+   "A": {
+    "median": 227,
+    "min": 224,
+    "max": 263
+   },
+   "B": {
+    "median": 219,
+    "min": 208,
+    "max": 249
+   },
+   "C": {
+    "median": 202,
+    "min": 183,
+    "max": 305
+   },
+   "p_B_vs_A": 0.31,
+   "p_C_vs_A": 0.151
+  },
+  "hidden_pass": {
+   "label": "hidden tests (of 16)",
+   "A": {
+    "median": 16,
+    "min": 16,
+    "max": 16
+   },
+   "B": {
+    "median": 16,
+    "min": 16,
+    "max": 16
+   },
+   "C": {
+    "median": 16,
+    "min": 16,
+    "max": 16
+   },
+   "p_B_vs_A": 1,
+   "p_C_vs_A": 1
+  },
+  "red_commits": {
+   "label": "red commits on main",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "B": {
+    "median": 0,
+    "min": 0,
+    "max": 2
+   },
+   "C": {
+    "median": 1,
+    "min": 0,
+    "max": 2
+   },
+   "p_B_vs_A": 1,
+   "p_C_vs_A": 0.405
+  },
+  "wasted_work_calls": {
+   "label": "wasted work (calls that built a task then dropped it)",
+   "A": {
+    "median": 7,
+    "min": 5,
+    "max": 8
+   },
+   "B": {
+    "median": 3,
+    "min": 3,
+    "max": 7
+   },
+   "C": {
+    "median": 2,
+    "min": 1,
+    "max": 3
+   },
+   "p_B_vs_A": 0.119,
+   "p_C_vs_A": 0.008
+  },
+  "deferrals": {
+   "label": "deferrals (skipped before any work)",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "B": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "C": {
+    "median": 6,
+    "min": 3,
+    "max": 11
+   },
+   "p_B_vs_A": 0.444,
+   "p_C_vs_A": 0.008
+  },
+  "dup_pairs_both_separate": {
+   "label": "duplicate pairs built twice (of 4)",
+   "A": {
+    "median": 1,
+    "min": 0,
+    "max": 1
+   },
+   "B": {
+    "median": 1,
+    "min": 0,
+    "max": 1
+   },
+   "C": {
+    "median": 1,
+    "min": 0,
+    "max": 1
+   },
+   "p_B_vs_A": 1,
+   "p_C_vs_A": 1
+  },
+  "same_task_twice_n": {
+   "label": "same task landed twice",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "B": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "C": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "p_B_vs_A": 1,
+   "p_C_vs_A": 1
+  },
+  "conflicts": {
+   "label": "merge conflicts resolved",
+   "A": {
+    "median": 26,
+    "min": 24,
+    "max": 31
+   },
+   "B": {
+    "median": 37,
+    "min": 34,
+    "max": 48
+   },
+   "C": {
+    "median": 36,
+    "min": 29,
+    "max": 43
+   },
+   "p_B_vs_A": 0.008,
+   "p_C_vs_A": 0.032
+  },
+  "rebase_aborts": {
+   "label": "rebases aborted",
+   "A": {
+    "median": 22,
+    "min": 21,
+    "max": 25
+   },
+   "B": {
+    "median": 6,
+    "min": 4,
+    "max": 11
+   },
+   "C": {
+    "median": 3,
+    "min": 2,
+    "max": 4
+   },
+   "p_B_vs_A": 0.008,
+   "p_C_vs_A": 0.008
+  },
+  "resets_to_origin": {
+   "label": "resets to origin/main",
+   "A": {
+    "median": 24,
+    "min": 21,
+    "max": 28
+   },
+   "B": {
+    "median": 8,
+    "min": 4,
+    "max": 12
+   },
+   "C": {
+    "median": 3,
+    "min": 1,
+    "max": 4
+   },
+   "p_B_vs_A": 0.008,
+   "p_C_vs_A": 0.008
+  },
+  "rejected_push_recoveries": {
+   "label": "rejected pushes recovered",
+   "A": {
+    "median": 34,
+    "min": 30,
+    "max": 36
+   },
+   "B": {
+    "median": 24,
+    "min": 19,
+    "max": 27
+   },
+   "C": {
+    "median": 16,
+    "min": 16,
+    "max": 17
+   },
+   "p_B_vs_A": 0.008,
+   "p_C_vs_A": 0.008
+  },
+  "calls": {
+   "label": "agent calls",
+   "A": {
+    "median": 28,
+    "min": 27,
+    "max": 28
+   },
+   "B": {
+    "median": 26,
+    "min": 25,
+    "max": 30
+   },
+   "C": {
+    "median": 29,
+    "min": 26,
+    "max": 30
+   },
+   "p_B_vs_A": 0.143,
+   "p_C_vs_A": 0.238
+  },
+  "usd_api_equiv": {
+   "label": "API-equiv $ (Haiku 5.5)",
+   "A": {
+    "median": 0.3222,
+    "min": 0.3105,
+    "max": 0.3385
+   },
+   "B": {
+    "median": 0.3027,
+    "min": 0.2929,
+    "max": 0.3086
+   },
+   "C": {
+    "median": 0.2763,
+    "min": 0.2501,
+    "max": 0.2919
+   },
+   "p_B_vs_A": 0.008,
+   "p_C_vs_A": 0.008
+  }
+ }
+}

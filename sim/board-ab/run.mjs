@@ -14,8 +14,12 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const COND = opt('cond', 'A'), N = +opt('agents', 5), MINUTES = +opt('minutes', 25), REP = +opt('rep', 1);
 const MODEL = 'claude-haiku-5-5';
-const BOARD = path.resolve(HERE, '../../board/board.mjs');
-const HOOK = path.resolve(HERE, '../../board/hooks/board-hook.mjs');
+// B and C run on the board as it was for their first reps (git 2ff8b07, frozen copy), so a later
+// board change cannot change those conditions mid-experiment; D uses the live board/ (who --recent).
+const V1 = path.join(os.homedir(), '.local/share/qb9-board-ab/board-v1/board');
+const BOARD_DIR = COND === 'D' ? path.resolve(HERE, '../../board') : V1;
+const BOARD = path.join(BOARD_DIR, 'board.mjs');
+const HOOK = path.join(BOARD_DIR, 'hooks/board-hook.mjs');
 const HIDDEN = path.join(os.homedir(), '<lab-hidden dir>/board-ab/tasks.test.mjs');
 const ROOT = path.join(os.homedir(), '.local/share/qb9-board-ab');
 const RUN_ID = `${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}-${COND}-r${REP}`;
@@ -45,7 +49,7 @@ function setup() {
     sh('git', ['config', 'user.name', `agent${k}`], c); sh('git', ['config', 'user.email', `agent${k}@board-ab.local`], c);
     sh('git', ['config', 'pull.rebase', 'true'], c);
   }
-  if (COND === 'B' || COND === 'C') fs.writeFileSync(path.join(DIR, 'board-settings.json'), JSON.stringify({ hooks: {
+  if (COND === 'B' || COND === 'C' || COND === 'D') fs.writeFileSync(path.join(DIR, 'board-settings.json'), JSON.stringify({ hooks: {
     UserPromptSubmit: [{ hooks: [{ type: 'command', command: `node ${HOOK}` }] }],
     PreToolUse: [{ matcher: 'Edit|Write|MultiEdit', hooks: [{ type: 'command', command: `node ${HOOK}` }] }],
     PostToolUse: [{ matcher: 'Bash', hooks: [{ type: 'command', command: `node ${HOOK}` }] }],
@@ -61,7 +65,10 @@ function prompt(k) {
   // to state the picked task (manager, 2026-10-10: with claude -p the hook's 'started' text is this
   // harness prompt, not the task, so B shares only files).
   const board = COND === 'C' ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who\`. After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`.\n` : '';
-  return `You are agent ${k} of ${N}, working at the same time as the others on this repository (textkit). Each agent works in its own clone and pushes to the same origin; you cannot talk to them.${board}
+  // D = C, but the query also returns recently finished intents, plus one rule for same-meaning tasks
+  // (manager, 2026-10-10, after the T3/T11 diagnosis: finished intents dropped out of 'who').
+  const boardD = COND === 'D' ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who --recent 30m\` (what the others are doing and what they finished in the last 30 minutes). After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`. If a task someone claimed or finished means the same as one you are about to do (even under another name or task id), make yours a one-line alias of theirs once theirs is on main, or pick another task.\n` : '';
+  return `You are agent ${k} of ${N}, working at the same time as the others on this repository (textkit). Each agent works in its own clone and pushes to the same origin; you cannot talk to them.${board}${boardD}
 1. Run \`git pull --rebase\` first.
 2. Read BACKLOG.md and the code on main. Pick ONE task that you believe nobody has done yet.
 3. Implement it as the backlog says (code, re-export, a test, a CHANGELOG line) and run \`npm test\` until it is green.
@@ -76,9 +83,9 @@ function callAgent(k, iter) {
     const a = ['-p', '--model', MODEL, '--output-format', 'json', '--max-turns', '40', '--permission-mode', 'acceptEdits',
       '--allowedTools', 'Read', 'Edit', 'Write', 'Grep', 'Glob', 'Bash(git:*)', 'Bash(npm test)', 'Bash(npm test:*)', 'Bash(npm run test:*)', 'Bash(node:*)', 'Bash(ls:*)', 'Bash(cat:*)',
       '--setting-sources', '', '--strict-mcp-config'];
-    if (COND === 'B' || COND === 'C') a.push('--settings', path.join(DIR, 'board-settings.json'));
+    if (COND === 'B' || COND === 'C' || COND === 'D') a.push('--settings', path.join(DIR, 'board-settings.json'));
     const env = { ...process.env, CLAUDE_NO_HOOKS: '1' };
-    if (COND === 'B' || COND === 'C') Object.assign(env, { BOARD_AGENT: `agent${k}`, BOARD_FILE: path.join(DIR, 'board.jsonl'), BOARD_STATE_DIR: path.join(DIR, 'board-state', `agent${k}`) });
+    if (COND === 'B' || COND === 'C' || COND === 'D') Object.assign(env, { BOARD_AGENT: `agent${k}`, BOARD_FILE: path.join(DIR, 'board.jsonl'), BOARD_STATE_DIR: path.join(DIR, 'board-state', `agent${k}`) });
     const t0 = Date.now();
     const p = spawn('claude', a, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
     let out = '', err = '';
@@ -154,6 +161,12 @@ function scoreIn(DIRX, NX, starterSha) { const DIR = DIRX, N = NX;
     commits_by_agent: commits.reduce((m, c) => ((m[c.author] = (m[c.author] || 0) + 1), m), {}) };
 }
 
+// A skip after doing the work (>= 10 turns: built it, found it on main at push time, dropped it) is
+// wasted work; a skip in < 10 turns is a deferral before any work (another agent had it). The split
+// is clean in the first runs: deferrals took 3-5 turns, dropped duplicates 14-58.
+const wasteOf = (calls) => { const w = calls.filter((c) => (c.status === 'skipped' || c.status === 'failed') && (c.turns ?? 0) >= 10); const d = calls.filter((c) => c.status === 'skipped' && (c.turns ?? 0) < 10);
+  return { wasted_work_calls: w.length, wasted_usd: +w.reduce((a, c) => a + (c.usd_api_equiv || 0), 0).toFixed(4), wasted_out_tokens: w.reduce((a, c) => a + (c.tokens?.out || 0), 0), deferrals: d.length }; };
+
 // ---- rescore an existing run (no model): node run.mjs --rescore <run dir> ----
 if (opt('rescore', null)) {
   const RD = opt('rescore'); const prev = JSON.parse(fs.readFileSync(path.join(RD, 'result.json'), 'utf8'));
@@ -162,11 +175,11 @@ if (opt('rescore', null)) {
   globalThis.__DIR = RD;
   const calls = fs.readFileSync(path.join(RD, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
   const { rebases, rebases_total, ...keep } = prev;
-  const next = { ...keep, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, ...scoreIn(RD, prev.agents, starter), rescored: new Date().toISOString() };
+  const next = { ...keep, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, ...wasteOf(calls), ...scoreIn(RD, prev.agents, starter), rescored: new Date().toISOString() };
   fs.writeFileSync(path.join(RD, 'result.json'), JSON.stringify(next, null, 1));
   const lines = fs.readFileSync(path.join(HERE, 'runs.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).map((r) => (r.run === next.run ? next : r));
   fs.writeFileSync(path.join(HERE, 'runs.jsonl'), lines.map((r) => JSON.stringify(r)).join('\n') + '\n');
-  console.log(JSON.stringify({ run: next.run, hidden: next.hidden_pass, red: next.red_commits, conflicts: next.conflicts, aborts: next.rebase_aborts, resets: next.resets_to_origin, rejected: next.rejected_push_recoveries, skipped: next.skipped, dup_pairs_both: next.dup_pairs_both_separate, same_task_twice: next.same_task_twice.length }));
+  console.log(JSON.stringify({ run: next.run, wasted: next.wasted_work_calls, deferrals: next.deferrals, hidden: next.hidden_pass, red: next.red_commits, conflicts: next.conflicts, aborts: next.rebase_aborts, resets: next.resets_to_origin, rejected: next.rejected_push_recoveries, skipped: next.skipped, dup_pairs_both: next.dup_pairs_both_separate, same_task_twice: next.same_task_twice.length }));
   process.exit(0);
 }
 
@@ -181,12 +194,12 @@ await Promise.all(Array.from({ length: N }, (_, i) => agentLoop(i + 1, deadline)
 const wallS = Math.round((Date.now() - t0) / 1000);
 const calls = fs.readFileSync(path.join(DIR, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const sum = (f) => calls.reduce((a, c) => a + (f(c) || 0), 0);
-const result = { run: RUN_ID, cond: COND, agents: N, rep: REP, minutes_cap: MINUTES, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
-  calls: calls.length, pushed: calls.filter((c) => c.status === 'pushed').length, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, all_done_calls: calls.filter((c) => c.status === 'all-done').length,
+const result = { run: RUN_ID, cond: COND, board_version: COND === 'A' ? null : COND === 'D' ? sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
+  calls: calls.length, ...wasteOf(calls), pushed: calls.filter((c) => c.status === 'pushed').length, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, all_done_calls: calls.filter((c) => c.status === 'all-done').length,
   tokens: { in: sum((c) => c.tokens.in), out: sum((c) => c.tokens.out), cacheR: sum((c) => c.tokens.cacheR), cacheW: sum((c) => c.tokens.cacheW) },
   usd_api_equiv: +sum((c) => c.usd_api_equiv).toFixed(4), usd_note: 'subscription; API-equivalent at Haiku 5.5 rates',
   board_events: fs.existsSync(path.join(DIR, 'board.jsonl')) ? fs.readFileSync(path.join(DIR, 'board.jsonl'), 'utf8').split('\n').filter(Boolean).length : 0,
   ...score(starterSha) };
 fs.writeFileSync(path.join(DIR, 'result.json'), JSON.stringify(result, null, 1));
 fs.appendFileSync(path.join(HERE, 'runs.jsonl'), JSON.stringify(result) + '\n');
-console.log(JSON.stringify({ run: result.run, cond: COND, wall_s: wallS, hidden: `${result.hidden_pass}/16`, intents: `${result.intents_covered}/12`, red: result.red_commits, same_task_twice: result.same_task_twice.length, dup_pairs_both: result.dup_pairs_both_separate, conflicts: result.conflicts, aborts: result.rebase_aborts, resets: result.resets_to_origin, rejected: result.rejected_push_recoveries, skipped: result.skipped, calls: result.calls, usd: result.usd_api_equiv }));
+console.log(JSON.stringify({ run: result.run, cond: COND, wall_s: wallS, hidden: `${result.hidden_pass}/16`, intents: `${result.intents_covered}/12`, red: result.red_commits, same_task_twice: result.same_task_twice.length, dup_pairs_both: result.dup_pairs_both_separate, conflicts: result.conflicts, aborts: result.rebase_aborts, resets: result.resets_to_origin, rejected: result.rejected_push_recoveries, skipped: result.skipped, wasted: result.wasted_work_calls, deferrals: result.deferrals, calls: result.calls, usd: result.usd_api_equiv }));
