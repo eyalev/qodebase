@@ -441,6 +441,16 @@
     const warnAll = [...groupsBySet.values()].sort((x, y) => y.a.length - x.a.length || y.files.length - x.files.length).map((g) => { const ns = g.a.map((x) => boardWho(x).name); return `<li><span class="hu" aria-hidden="true">!</span><span>${live.length > 2 && ns.length === live.length ? `All ${ns.length} agents are` : `${list(ns)} are ${ns.length > 2 ? 'all' : 'both'}`} changing ${list(g.files.map((f) => `<span class="mono">${esc(f)}</span>`))}.</span></li>`; });
     // The three biggest groups; the rest one tap away (a busy run shares a lot).
     const warn = warnAll.slice(0, 3).join('') + (warnAll.length > 3 ? `</ul><details class="bdone bwmore"${boardWMore ? ' open' : ''}><summary>Show ${warnAll.length - 3} more</summary><ul class="bwarn">${warnAll.slice(3).join('')}</ul></details><ul class="bwarn">` : '');
+    // Two live agents on the same task right now (same backlog id like "T18", or the same words):
+    // the duplicate the board is there to catch.
+    const tkey = (t) => { const m = /^\s*([A-Z]{1,3}\d+)\b/.exec(t || ''); return m ? m[1] : intentText(t || '').toLowerCase().slice(0, 40); };
+    const byTask = new Map();
+    for (const r of live) { if (!r.intent || /^work through/i.test(r.intent)) continue; const k = tkey(r.intent); if (!byTask.has(k)) byTask.set(k, []); byTask.get(k).push(r); }
+    const sameNow = [...byTask.values()].filter((rs) => new Set(rs.map((r) => r.agent)).size > 1).map((rs) => {
+      const ns = [...new Set(rs.map((r) => boardWho(r.agent).name))];
+      const shortest = rs.map((r) => intentText(r.intent)).sort((a, b) => a.length - b.length)[0];
+      return `<li><span class="hu" aria-hidden="true">!</span><span>${list(ns)} are ${ns.length > 2 ? 'all' : 'both'} working on “${esc(shortest)}”.</span></li>`;
+    }).join('');
     const al = D.board.aliases || [];
     const named = al.map(aliasNamed).filter(Boolean), unnamed = al.length - named.length;
     const dups = named.map((t) => `<li><span class="dupe" aria-hidden="true">=</span><span>${t}</span></li>`).join('')
@@ -453,6 +463,7 @@
       <p class="cap">Each agent says what it is doing and which files it touches, so the others can see it before they start.</p>
       <ul class="board">${first.map((r) => boardRow(r, others(r))).join('')}</ul>
       ${rest.length ? `<details class="bdone bmore"${boardMore ? ' open' : ''}><summary>Show ${rest.length} more working</summary><ul class="board">${rest.map((r) => boardRow(r, others(r))).join('')}</ul></details>` : ''}
+      ${sameNow ? `<p class="bh">On the same task right now</p><ul class="bwarn">${sameNow}</ul>` : ''}
       ${warn ? `<p class="bh">Agents changing the same file</p><p class="small dim bnote">qodebase combines their changes when they finish.</p><ul class="bwarn">${warn}</ul>` : ''}
       ${dups ? `<p class="bh">Same task asked twice</p><ul class="bdup">${dups}</ul>` : ''}
       ${doneFold}
