@@ -349,33 +349,7 @@ What would prove the model wrong: board-on wall time more than 10% below board-o
 waste or queue contention is bigger on boxes than modelled), or two-teams with the board on catching
 3 or more pairs without `crossDedupe`.
 
-### Note added 2026-10-10, AFTER W4c run r1e (not part of the pre-registered prediction above)
-
-**The baseline differs from what the prediction assumed.** qb6's plan (`public/lab/board-w4-plan.json`)
-has `dedupe: true` in every cell, board off included. In backlog, the planner's dedupe pass already
-aliases the 5 pairs: r1e, board off, built 0 twice and aliased 5. The table above assumed board off
-meant no dedupe at all. The predictions above stand as written and are what W4c gets scored against.
-
-What the same sim says for a baseline with dedupe on (backlog, 12 Haiku coders, 200 seeds; board off =
-the dedupe pass with no board overhead and same-task picks at the board-off rate):
-
-| backlog | board off + dedupe: wall / $ / pairs twice / bounces | board on (as above) |
-|---|---|---|
-| land by intent, 0 reviewers | 696 s / $1.24 / 0.1 / 1.3 | 715 s / $1.29 / 0.1 / 1.4 |
-| land by intent, 1 reviewer | 1873 s / $2.31 / 0.1 / 1.3 | 1855 s / $2.36 / 0.1 / 1.4 |
-| policy github, 0 reviewers | 2887 s / $4.73 / 0.1 / 16.6 | 2876 s / $4.67 / 0.1 / 16.3 |
-| policy github, 1 reviewer | 3020 s / $6.50 / 0.1 / 16.5 | 3025 s / $6.41 / 0.1 / 16.9 |
-
-- **With dedupe in both arms, the sim expects no difference in backlog** on any measure, under either
-  policy. Both of the effects predicted above come from un-aliased twins: duplicates 4 → 0, and github's
-  −18% wall (twins bouncing). The dedupe pass removes those twins in both arms.
-  - What is left for the board is same-task picks, ~1–2 wasted copies per run. That is under the noise
-    at n = 3.
-- **two-teams is not affected, if each router's dedupe pass reads only its own team's list.** The pairs
-  cross the teams, so board off + dedupe still builds ~4 of 5 twice. The prediction there stands:
-  board alone 3.7, a cross-list dedupe 0.1.
-  - If r1e-style aliasing also shows up in two-teams with the board off, then the dedupe reads across
-    teams (or the agents recognise far-worded twins far better on boxes than in s2).
+*Note added 2026-10-10, after W4c run r1e:* r1e: agents themselves recognised all 5 twins already on main (sim assumed ~1 of 5).
 
 ## (f) W7: congestion control for agents (AIMD on the board's thrash), written before qb9's runs
 
