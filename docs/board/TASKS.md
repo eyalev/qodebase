@@ -1,13 +1,17 @@
-# Agent board experiments — tasks (manager s1007-1655, started 2026-10-10 12:20 UTC)
-- [x] E1a CLI + hook, local backend (qb6, pushed)
-- [x] E1b HTTP backend + Worker qb-board (qb6)
-- [x] E2 latency DO vs KV, measured (qb6)
-- [x] E3a Hono replay: announced intents vs "needs an earlier PR" (qb4)
-- [x] E3b scripted decentralized-backlog sim, board vs none (qb4)
-- [x] E4 scenario repo + backlog + hidden tests (qb9)
-- [x] E4 harness (claude -p Haiku agents, shared bare repo, hooks) (qb9)
-- [x] E4 runs A/B/C x5 (qb9, summary.json)
-- [x] E4 D x5, scale test A vs D x3, E (dedupe) x3 (qb9)
-- [x] E5 FINDINGS.md + recommendation (manager)
-Guard: LLM runs stop at weekly meter 77% (71% at start).
-Note: E4 conditions: A none / B hooks only (files) / C hooks + stated intent (CLI).
+# Agent board — tasks (manager s1007-1655)
+Round 1 (done, FINDINGS.md): E1a-E5 [x].
+
+Round 2 (PLAN2.md, started 2026-10-10 17:00 UTC):
+- [ ] W1 prior art / novelty -> prior-art.md (manager research agent)
+- [ ] W2a board in Landing DO: log, now, recent, who API, platform posts, flag `board` (qb6)
+- [ ] W2b box hook + `forq who` in boxes + dedupe pass at planning (qb6)
+- [ ] W2c "Agents at work" shows the board live (qb7)
+- [ ] W2d deploy + live smoke on eyal/cafe-lab (qb6)
+- [ ] W3a 20 agents / 60 tasks Haiku A vs E x3 (qb9)
+- [ ] W3b Sonnet longer tasks A vs E x3 (qb9)
+- [ ] W4a lab scenario: self-pick backlog + two teams, hidden tests (qb5)
+- [ ] W4b prediction (qb4)
+- [ ] W4c Cloudflare runs board off vs on >= 3 each (qb6 runner)
+- [ ] W5 README / submission / lab page (qb8, qb7)
+- [ ] W6 FINDINGS2.md + report (manager)
+Guard: LLM runs stop at weekly meter 87% (73% at start).
