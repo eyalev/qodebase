@@ -17,7 +17,7 @@
 import { qualityScore } from './score.js';
 export { qualityScore }; // qb5's one quality formula (public/lab/score.js)
 
-export const SIM_VERSION = 'lab-0.10';
+export const SIM_VERSION = 'lab-0.11';
 
 // Knob names and values = the Landing flags and runs.jsonl `variant` (docs/lab/runs-schema.md).
 export const KNOBS = {
@@ -43,7 +43,8 @@ export const BASELINES = {
 export function variantKey(variant, baseline = variant?.baseline ?? null) {
   if (baseline) return baseline;
   const v = { ...DEFAULT_VARIANT, ...variant };
-  return Object.keys(KNOBS).map((k) => `${k}=${typeof v[k] === 'boolean' ? (v[k] ? 1 : 0) : v[k]}`).join(';');
+  // board (round 2, W4) is not a KNOB so that every earlier run keeps its key: it appears only when on.
+  return Object.keys(KNOBS).map((k) => `${k}=${typeof v[k] === 'boolean' ? (v[k] ? 1 : 0) : v[k]}`).join(';') + (v.board ? ';board=1' : '');
 }
 
 // Scenario profiles: qb5's scripts/lab/scenarios/<id>/scenario.json "profile" (2868ad1, first
@@ -59,6 +60,12 @@ export const SCENARIOS = {
   'port-ts': { label: 'Port a library to TypeScript', tasks: 21, depth: 3, pShared: 0.1, sharedFiles: 3, vague: 0.2, dupRisk: 0.05, difficulty: 1, hidden: 158, aloneS: 223 }, // aloneS: stage-1 run 13 (one Opus agent, 81 files); difficulty 1.3 -> 1: it passed 158/158
   bakery: { label: 'Build a small bakery website with online orders', tasks: 25, depth: 3, pShared: 0.5, sharedFiles: 5, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 26, aloneS: 530 }, // aloneS: one Opus agent took 806 / 465 / 509 s (stage-1 run 15, stage-2 r2, r3): median 509 / 0.96 coverage
   club: { label: 'Build a booking app for a padel club', tasks: 47, depth: 2, pShared: 0.2, sharedFiles: 4, vague: 0.5, dupRisk: 0.15, difficulty: 1.2, hidden: 42, aloneS: 740 }, // qb5 7828aef: wide, shallow; one Opus agent on a box took 850 / 606 s (stage-2 club r1, r2): median 728 / ~0.98 coverage. (qb5's subagent reference: 881 s; bakery's box/subagent ratio 0.64 did NOT carry over)
+  // Board round 2, W4 (qb5 682e05f): coders self-pick from one shared list (the router never splits or dedupes);
+  // 30 tasks = 25 units + 5 far-worded twin pairs; qb9's todokit (s2), whose tasks took ~45 Haiku-s each
+  // (aloneS from 25 + 1.4 x aloneS / 30 = 45). Clear spec: 30/30 hidden in every local run (difficulty low).
+  // two-teams: two routers, the 5 pairs cross the teams.
+  backlog: { label: 'Self-picked backlog', tasks: 30, depth: 2, pShared: 0.9, sharedFiles: 4, vague: 0.1, dupRisk: 0, difficulty: 0.1, hidden: 30, aloneS: 430, selfPick: true, dupPairs: 5, farPairs: 5 },
+  'two-teams': { label: 'Two teams, one repo', tasks: 30, depth: 2, pShared: 0.9, sharedFiles: 4, vague: 0.1, dupRisk: 0, difficulty: 0.1, hidden: 30, aloneS: 430, selfPick: true, dupPairs: 5, farPairs: 5, teams: 2 },
   rename: { label: 'Rename X across the codebase + a dependent change', tasks: 20, depth: 3, pShared: 0.4, sharedFiles: 2, vague: 0.1, difficulty: 0.7, hidden: 10, aloneS: 300 }, // qb4 guess (backup scenario)
 };
 
@@ -108,6 +115,13 @@ export const CAL = {
   aloneSelfCatch: 0.3, // assumed
   maxTries: 8, // redos (conflict, failed check) before a task is dropped
   maxGiveBacks: 40, // given back because a prerequisite had not landed (sim/swarm)
+  // Board (round 2; docs/board/sim.md, sim/board/calls.mjs calibrated on E4 + the 10-agent scale test):
+  // self-picking coders without a board build the same task twice (s2 A: 11 wasted of 54 calls), with it
+  // far less (D 5, E 6 of ~52, those incl. twin drops). The board costs ~7 s a call (E4 pushed calls D vs A).
+  pSamePick: { off: 0.2, on: 0.06 }, boardS: 7,
+  // Twins: the dedupe pass over a list catches a pair 0.97 (E4 E: 15/15), a far-worded pair seen only on
+  // the board ~0.1 (s2: D built 4/5 twice). An alias is a thin call.
+  pDedupeList: 0.97, pBoardFar: 0.1, aliasWork: 0.3, dedupeListS: 5,
 };
 
 function mulberry32(a) {
@@ -121,7 +135,7 @@ function mulberry32(a) {
 
 export function scenarioProfile(s) {
   if (typeof s === 'string') { if (!SCENARIOS[s]) throw new Error(`unknown scenario ${s}`); return { id: s, ...SCENARIOS[s] }; }
-  return { id: s.id || 'custom', ...SCENARIOS['cafe-family'], ...s };
+  return { id: s.id || 'custom', ...(SCENARIOS[s.id] || SCENARIOS['cafe-family']), ...s };
 }
 export function variantOf(v = {}, baseline = v.baseline ?? null) {
   if (baseline) { if (!BASELINES[baseline]) throw new Error(`unknown baseline ${baseline}`); return { ...BASELINES[baseline], baseline }; }
@@ -137,11 +151,11 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
   const alone = v.baseline === 'opus-alone';
   const github = v.policy === 'github';
   const usd = { planner: 0, coders: 0, reviewers: 0, merge: 0 };
-  const n = { conflicts: 0, bounces: 0, replays: 0, leadMerges: 0, givenBack: 0, reviews: 0, reviewRejects: 0, breaksOnMain: 0, dupWork: 0, claimWaits: 0 };
+  const n = { conflicts: 0, bounces: 0, replays: 0, leadMerges: 0, givenBack: 0, reviews: 0, reviewRejects: 0, breaksOnMain: 0, dupWork: 0, claimWaits: 0, samePick: 0, builtTwice: 0 };
   let workS = 0, wastedS = 0, redS = 0, memberOf = null;
 
   // ---- the true task graph, then the plan ----
-  const N = Math.max(2, Math.round(sc.tasks * (0.8 + 0.4 * rnd())));
+  const N = sc.selfPick ? sc.tasks - (sc.dupPairs || 0) : Math.max(2, Math.round(sc.tasks * (0.8 + 0.4 * rnd()))); // self-pick: the list is fixed
   const levels = Math.max(1, Math.min(sc.depth, N));
   const tasks = [];
   for (let i = 0; i < N; i++) {
@@ -162,16 +176,33 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
     t.missed = rnd() < C.pMiss[pm] * sc.vague;
     t.plannedNeeds = t.needs.filter(() => rnd() >= C.pEdgeMiss[pm]);
   }
+  if (sc.selfPick) for (const t of tasks) { t.missed = false; t.plannedNeeds = [...t.needs]; } // the backlog states every task and its needs
   let work = tasks.filter((t) => !t.missed);
   // Duplicate intents: the vague prompt split into two tasks doing the same thing.
   const dups = [];
   const pDupHere = sc.dupRisk != null ? sc.dupRisk * C.pDup[pm] / C.pDup.sonnet : C.pDup[pm] * sc.vague;
-  for (const t of work) if (!alone && rnd() < pDupHere) dups.push({ ...t, id: N + dups.length + 1, dupOf: t.id, needs: [...t.needs], plannedNeeds: [...t.plannedNeeds] });
+  if (!sc.selfPick) for (const t of work) if (!alone && rnd() < pDupHere) dups.push({ ...t, id: N + dups.length + 1, dupOf: t.id, needs: [...t.needs], plannedNeeds: [...t.plannedNeeds] });
   let dedupeS = 0;
-  if (v.dedupe) { dedupeS = C.dedupeS * (work.length + dups.length) / 4; usd.planner += dedupeS * C.usdPerS.haiku; }
+  if (v.dedupe && !sc.selfPick) { dedupeS = C.dedupeS * (work.length + dups.length) / 4; usd.planner += dedupeS * C.usdPerS.haiku; }
   for (const d of dups) if (!(v.dedupe && rnd() < C.dedupeCatch)) work.push(d);
   const W = sc.aloneS ?? 60; // the job in one-Opus-agent seconds
-  for (const x of work) { x.members = [x.id]; x.weight = 1 / N; }
+  // Self-pick: the backlog lists dupPairs units twice under far-apart names. Board off: both get built.
+  // Board on: one dedupe pass over the list (two teams: only if it sees both lists, `crossDedupe`; else the
+  // board's finished intents + the same-meaning rule, pBoardFar) turns the second into a thin alias.
+  let builtTwiceIds = [];
+  if (sc.selfPick && !alone) {
+    const pool = [...work]; const twinsOf = [];
+    for (let i = 0; i < (sc.dupPairs || 0) && pool.length; i++) twinsOf.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+    const pCatch = !v.board ? 0 : (sc.teams > 1 && !v.crossDedupe) ? C.pBoardFar : C.pDedupeList;
+    if (v.board) { const ds = C.dedupeListS * (sc.teams || 1); dedupeS += ds; usd.planner += ds * C.usdPerS.haiku; }
+    for (const t of twinsOf) {
+      const tw = { ...t, id: N + dups.length + 1, dupOf: t.id, needs: [...t.needs], plannedNeeds: [...t.plannedNeeds], weight: 1 / N };
+      if (rnd() < pCatch) { tw.alias = true; tw.dupOf = null; tw.aliasOf = t.id; tw.needs.push(t.id); tw.plannedNeeds.push(t.id); }
+      dups.push(tw); tasks.push(tw); work.push(tw);
+    }
+    if (sc.teams > 1) usd.planner += C.routerUsdPerTask[pm] * work.length; // a second router
+  }
+  for (const x of work) { x.members = [x.id]; x.weight = (x.alias ? C.aliasWork : 1) / N; }
 
   // ---- one agent alone: the whole job in one pass, one commit (no split, no queue, no merges) ----
   if (alone) {
@@ -188,7 +219,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
   }
 
   // ---- the planner's grain: merge the fine tasks into k bigger ones, level by level ----
-  {
+  if (!sc.selfPick) {
     const k = Math.max(1, Math.min(work.length, Math.round(work.length * C.grain[pm] * (0.8 + 0.4 * rnd()))));
     if (k < work.length) {
       // Vertical slices: a planner bundles a piece with what it builds on (stage 1: the planners
@@ -263,6 +294,12 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
     freeCoders--; x.st = 'work'; x.tries++; if (x.startedAt == null) x.startedAt = t;
     const model = v.coderModel;
     let d = logn(C.taskFixedS + C.workRatio[model] * W * x.weight, C.workSigma);
+    if (v.board) d += C.boardS;
+    // Self-pick: another coder picked the same task at the same time; its copy is dropped at landing.
+    if (sc.selfPick && freeCoders > 1 && rnd() < C.pSamePick[v.board ? 'on' : 'off']) {
+      freeCoders--; n.samePick++; const d2 = d * (0.7 + 0.6 * rnd());
+      push(d2, () => { freeCoders++; workS += d2; wastedS += d2; usd.coders += d2 * C.usdPerS[model]; pump(); });
+    }
     if (x.fixing) d *= x.fixing; else if (x.tries > 1) d *= C.redoFactor;
     if (alone) d *= 0.8; // no hand-offs, but the context grows (costed below)
     // Base: main now (+ the needs it stacks on, for stacking/intent/leads).
@@ -363,7 +400,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
   }
   function land(x) {
     x.st = 'landed'; landed.add(x.id); x.landedAt = t;
-    if (x.dupOf) n.dupWork++;
+    if (x.dupOf) { n.dupWork++; if (sc.selfPick) n.builtTwice++; }
     if (x.shared) { sharedVersion.set(x.shared, (sharedVersion.get(x.shared) || 0) + 1); if (holder.get(x.shared) === x.id) holder.delete(x.shared); }
     if (v.policy === 'phases' && gateOpen && !work.some((y) => y.level === phase && !['landed', 'dropped'].includes(y.st))) {
       if (phase < maxLevel) { gateOpen = false; push(C.gateS, () => { phase++; gateOpen = true; pump(); }); }
@@ -384,7 +421,7 @@ export function simulate(variantIn, scenarioIn, seed = 1, cal = CAL, baseline) {
 
   // ---- quality: hidden tests spread over the true tasks; an escaped defect breaks one of them ----
   let passed = 0;
-  const per = sc.hidden / N;
+  const per = sc.hidden / tasks.length;
   for (const x of tasks) { const w = memberOf.get(x.id); if (!x.missed && w && w.st === 'landed') passed += per; }
   for (const w of work) if (w.st === 'landed' && w.defect) passed = Math.max(0, passed - per);
   const dropped = work.filter((x) => x.st === 'dropped').length;
@@ -410,7 +447,7 @@ export function predict(variant, scenario, { seeds = 5, cal, baseline } = {}) {
     mean: { wallS: Math.round(w.mean), apiUsdStd: +c.mean.toFixed(2), quality: +q.mean.toFixed(1) },
     variantKey: variantKey(variant, baseline ?? variant?.baseline ?? null), seeds,
     range: { wallS: [Math.round(w.min), Math.round(w.max)], apiUsdStd: [+c.min.toFixed(2), +c.max.toFixed(2)], quality: [q.min, q.max] },
-    counts: Object.fromEntries(['tasksPlanned', 'conflicts', 'bounces', 'replays', 'leadMerges', 'givenBack', 'reviews', 'reviewRejects', 'breaksOnMain', 'dupWork', 'missed', 'dropped'].map((k) => [k, +stat(k).mean.toFixed(1)])),
+    counts: Object.fromEntries(['tasksPlanned', 'conflicts', 'bounces', 'replays', 'leadMerges', 'givenBack', 'reviews', 'reviewRejects', 'breaksOnMain', 'dupWork', 'missed', 'dropped', 'samePick', 'builtTwice'].map((k) => [k, +stat(k).mean.toFixed(1)])),
     wastedS: Math.round(stat('wastedS').mean), redS: Math.round(stat('redS').mean),
   };
 }

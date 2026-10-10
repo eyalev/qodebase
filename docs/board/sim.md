@@ -277,3 +277,63 @@ change, because the dedupe pass does that work, not the stagger.
 
 Reproduce: `node sim/board/calls.mjs w3a --seeds 300` (and `scale` for the scenario-2 rows); outputs go to
 `sim/board/out/calls-*.json` and `~/.local/share/qbsim-bench/board.jsonl`.
+
+## (e) W4b: board off vs on, on Cloudflare (qodebase boxes + the landing queue), written before W4c runs
+
+**The model is the lab's own (`public/lab/predict.js`, lab-0.11),** so the runner records this
+prediction before every W4c run, the same way as for every other lab run. What was added:
+- The scenarios `backlog` and `two-teams` (qb5, 682e05f):
+  - 30 tasks: 25 units plus 5 twin pairs worded far apart;
+  - the backlog states every need;
+  - no planner splitting or dedupe;
+  - qb9's todokit task size (~45 Haiku-seconds a task, so `aloneS` 430);
+  - spec clear (30/30 hidden in every local run).
+- A `board` flag on the variant. It goes into `variantKey` as `;board=1` only when on, so old keys
+  don't change. `crossDedupe` is for two-teams.
+
+What the flag does in the model (all numbers from `calls.mjs` / E4):
+- **Same-task picks:** without a board, 20% of picks build a task another coder is already building,
+  and that copy is dropped at landing (s2 A: 11 of 54 calls). With the board it is 6%.
+- **Twins:**
+  - board off: all 5 pairs get built twice;
+  - board on, one list: the dedupe pass catches each pair with probability 0.97, and the twin becomes
+    a thin alias (0.3 of a task) that waits for its partner;
+  - two teams: only a dedupe pass that sees **both** lists (`crossDedupe`) catches them. With the board
+    alone (finished intents + the same-meaning rule) a far-worded pair is caught ~10% of the time
+    (s2: D built 4 of 5 twice).
+- **Overhead:** the board costs ~7 s a call.
+
+Prediction (200 seeds; Haiku planner, coders and reviewer; land by intent, trains of 8; medians):
+
+| scenario | coders, reviewers | board off: wall / $ / pairs built twice | board on: wall / $ / pairs built twice |
+|---|---|---|---|
+| backlog | 12, 0 | 711 s / $1.28 / 5 | 713 s / $1.29 / 0.1 |
+| backlog | 12, 1 | ~1840 s / $2.35 / 5 | ~1855 s / $2.36 / 0.1 |
+| two-teams | 12, 0 | 711 s / $1.43 / 5 | 718 s / $1.49 / **4.6** (board only) · 718 s / $1.45 / 0.1 (`crossDedupe`) |
+
+The 6-coder rows are the same within 3%. All rows are in `public/lab/board-w4-predictions.json`.
+
+What this says, and why it differs from the local tests:
+- **Duplicates are the effect W4c can measure:** 5 of 5 pairs built twice with the board off, ~0 with
+  it on. That needs a dedupe pass over the list, and in two-teams a pass that sees both teams' lists.
+  If W2b's dedupe only reads the list one router hands out, two-teams with the board on will still
+  build ~4–5 pairs twice. That would be the round-1 lesson again (seen but not recognised), not a
+  board failure.
+- **No time or cost gain on qodebase** (within ±3%; the ranges overlap completely). Locally, the board's
+  −28% time and −29% cost came from git thrash: 103 rejected pushes and 73 aborted rebases in A. On
+  qodebase every agent has its own fork and the landing queue lands changes one train at a time, so
+  that thrash isn't there to remove. Wall time is set by the queue (30 landings, ~60 s a train)
+  and, with one reviewer, by the reviewer (~45 s × 30).
+  - The 7 s per call the board costs about cancels what it saves: about 1.7 fewer same-task copies
+    and 5 aliases instead of 5 full twins.
+  - Three things would make it pay: Sonnet coders (a duplicate costs minutes), more agents than the
+    queue can feed, or same-task collisions much more common than 20%. Without a board, qodebase
+    agents see nothing until landing, so it could be higher. At 35% the board saves ~6% of cost and
+    still no time.
+- **Bounces and conflicts:** ~13 conflicts per run in both arms. Most are replayed by land-by-intent,
+  leaving ~1.5 bounces. Twins that are not aliased add ~1 conflict each.
+- **Quality:** 30/30 expected in both arms (quality 97.5 is the formula's ceiling without a judge).
+
+What would prove the model wrong: board-on wall time more than 10% below board-off (then same-task
+waste or queue contention is bigger on boxes than modelled), or two-teams with the board on catching
+3 or more pairs without `crossDedupe`.
