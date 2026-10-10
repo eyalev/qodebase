@@ -1,0 +1,14 @@
+// qb-board (docs/board/PLAN.md): forq account, workers.dev only.
+// Deploy: CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler deploy -c board/wrangler.jsonc
+{
+  "name": "qb-board",
+  "account_id": "887d7234a6b8d65ad355a4f6684cab67",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-09-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "durable_objects": { "bindings": [{ "name": "BOARD", "class_name": "Board" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Board"] }],
+  "kv_namespaces": [{ "binding": "BENCH_KV", "id": "522525bdd58248d48e28ef84264805e3" }]
+}
