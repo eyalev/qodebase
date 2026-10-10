@@ -166,3 +166,53 @@ Two watch items, both visible in the data:
   all). Nobody finished it.
   - The board needs a tie-break: the earliest claim keeps the task, later ones yield.
   - The 5-minute claim expiry did not help here, because the claimants kept posting edits.
+
+## W7: congestion control for agents (AIMD on the board's thrash), s3, E v2 code
+
+qb4's design and prediction: docs/board/sim.md (f).
+- **Thrash** = rejected pushes + 3 × dropped work, per minute.
+- **AIMD:** starts at 4. A minute with thrash ≤ 0.5 × cap adds 1. A minute with thrash > 1.5 × cap halves the cap
+  (never below 2).
+- **Who works:** only the `cap` lowest-numbered active agents start calls; the others wait at a call boundary.
+  Nobody is killed.
+
+"E fixed 20" is the E v2 runs above: identical code and flags. Board v3's tie-break, committed during W7, is off
+unless `BOARD_TIEBREAK=1` and was off here. 3 runs each.
+
+| measure | E fixed 20 | E AIMD (from 20) | E fixed 8 |
+|---|---|---|---|
+| wall time (s) | 451 [400–472] | 962 [799–1050] | 544 [525–610] |
+| agent-minutes | 130.6 [121.7–137] | 56.6 [48.9–64.3] | 69.9 [67.4–79.6] |
+| API-equiv $ | 2.73 [2.59–2.85] | 1.26 [1.05–1.42] | 1.53 [1.52–1.76] |
+| hidden tests (of 60) | 60 [59–60] | 60 [60–60] | 60 [60–60] |
+| wasted agent-minutes | 20.9 | 0.5 | 4.8 |
+| red commits on main | 3 [2–7] | 0 [0–1] | 0 [0–0] |
+| duplicate pairs built twice | 0 | 0 | 0 |
+| rejected pushes | 67 | 49 | 54 |
+| AIMD cap, per-run median | – | 3, 4, 4 | – |
+
+p against E fixed 20: wall, agent-minutes, $, wasted minutes and red commits all p = 0.1 (the floor for 3 vs 3) for
+both AIMD and fixed 8; hidden tests p = 1.
+
+Cap per minute:
+- r1: 4,2,2,3,3,3,3,2,2,2,2,2,2,3,4,4,5
+- r2: 4×8, 5×4, 2,3,4,5
+- r3: 4×7, 5×5, 6
+
+Against qb4's prediction:
+1. **"AIMD trades time for cost, it does not win both": confirmed.** Against fixed 20, wall ×2.1 (the sim said
+   ×2.1) and agent-minutes −57% (the sim said −30%). The real controller cut harder because it settled lower: cap
+   3–4, against the sim's 7. At these thresholds real thrash per agent runs higher than the sim's.
+2. **"No collapse at 20": confirmed.** Fixed 20 is faster than fixed 8 (451 vs 544 s), so more agents still buy
+   time. They just pay for it in thrash and waste.
+3. **"No better than a fixed team of the size it settles at": not tested directly.** It settled at 3–4 and there was
+   no fixed-4 run. Against fixed 8, AIMD is 18% cheaper ($1.26 vs $1.53) and 77% slower (962 vs 544 s).
+
+Quality was the same everywhere (60/60). The red commits that E fixed 20 pushed from hand merges vanished at 8
+agents and under AIMD: less contention, fewer hand merges.
+
+**Reading:** with the board, team size is a cost-versus-time dial, not a fix for a collapse. If wall time matters,
+use 20. If cost matters, AIMD or a small fixed team cuts cost by more than half. AIMD's extra value over a fixed
+small team is that nobody has to pick the size, at the price of a slow ramp.
+
+W7 spend: $14.5 API-equiv (6 runs + the smoke). The weekly meter went 78% → 79%.

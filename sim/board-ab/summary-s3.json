@@ -3,7 +3,9 @@
   "A v1": 3,
   "A v2": 3,
   "E v1": 3,
-  "E v2": 3
+  "E v2": 3,
+  "E v2 aimd": 3,
+  "E v2 n8": 3
  },
  "measures": {
   "wall_s": {
@@ -28,8 +30,22 @@
     "min": 400,
     "max": 472
    },
+   "E v2 aimd": {
+    "median": 962,
+    "min": 799,
+    "max": 1050
+   },
+   "E v2 n8": {
+    "median": 544,
+    "min": 525,
+    "max": 610
+   },
    "p_E v1_vs_A": 0.1,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.4,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "hidden_pass": {
    "label": "hidden tests (of 60)",
@@ -53,8 +69,22 @@
     "min": 59,
     "max": 60
    },
+   "E v2 aimd": {
+    "median": 60,
+    "min": 60,
+    "max": 60
+   },
+   "E v2 n8": {
+    "median": 60,
+    "min": 60,
+    "max": 60
+   },
    "p_E v1_vs_A": 0.1,
-   "p_E v2_vs_A": 1
+   "p_E v2_vs_A": 1,
+   "p_E v2 aimd_vs_A": 1,
+   "p_E v2 n8_vs_A": 1,
+   "p_aimd_vs_E20": 1,
+   "p_n8_vs_E20": 1
   },
   "agent_minutes": {
    "label": "agent-minutes (all calls)",
@@ -78,8 +108,22 @@
     "min": 121.7,
     "max": 137
    },
+   "E v2 aimd": {
+    "median": 56.6,
+    "min": 48.9,
+    "max": 64.3
+   },
+   "E v2 n8": {
+    "median": 69.9,
+    "min": 67.4,
+    "max": 79.6
+   },
    "p_E v1_vs_A": 0.1,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "wasted_agent_minutes": {
    "label": "agent-minutes wasted (built then dropped)",
@@ -103,8 +147,22 @@
     "min": 19.2,
     "max": 22
    },
+   "E v2 aimd": {
+    "median": 0.5,
+    "min": 0.5,
+    "max": 3.2
+   },
+   "E v2 n8": {
+    "median": 4.8,
+    "min": 3.6,
+    "max": 7.2
+   },
    "p_E v1_vs_A": 0.2,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "red_commits": {
    "label": "red commits on main",
@@ -128,8 +186,22 @@
     "min": 2,
     "max": 7
    },
+   "E v2 aimd": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "E v2 n8": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
    "p_E v1_vs_A": 1,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 1,
+   "p_E v2 n8_vs_A": 1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "wasted_work_calls": {
    "label": "wasted work (calls that built a task then dropped it)",
@@ -153,8 +225,22 @@
     "min": 20,
     "max": 24
    },
+   "E v2 aimd": {
+    "median": 1,
+    "min": 1,
+    "max": 6
+   },
+   "E v2 n8": {
+    "median": 5,
+    "min": 5,
+    "max": 10
+   },
    "p_E v1_vs_A": 0.7,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "deferrals": {
    "label": "deferrals (skipped before any work)",
@@ -178,8 +264,22 @@
     "min": 18,
     "max": 37
    },
+   "E v2 aimd": {
+    "median": 4,
+    "min": 1,
+    "max": 22
+   },
+   "E v2 n8": {
+    "median": 9,
+    "min": 8,
+    "max": 10
+   },
    "p_E v1_vs_A": 0.1,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.2,
+   "p_n8_vs_E20": 0.1
   },
   "cut_calls": {
    "label": "calls cut at the turn cap",
@@ -203,8 +303,22 @@
     "min": 5,
     "max": 6
    },
+   "E v2 aimd": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E v2 n8": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
    "p_E v1_vs_A": 0.6,
-   "p_E v2_vs_A": 0.5
+   "p_E v2_vs_A": 0.5,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "dup_pairs_both_separate": {
    "label": "duplicate pairs built twice (of 10)",
@@ -228,8 +342,22 @@
     "min": 0,
     "max": 1
    },
+   "E v2 aimd": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E v2 n8": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
    "p_E v1_vs_A": 0.1,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 1,
+   "p_n8_vs_E20": 1
   },
   "same_task_twice_n": {
    "label": "same task landed twice",
@@ -253,8 +381,22 @@
     "min": 0,
     "max": 1
    },
+   "E v2 aimd": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E v2 n8": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
    "p_E v1_vs_A": 0.4,
-   "p_E v2_vs_A": 1
+   "p_E v2_vs_A": 1,
+   "p_E v2 aimd_vs_A": 0.4,
+   "p_E v2 n8_vs_A": 0.4,
+   "p_aimd_vs_E20": 1,
+   "p_n8_vs_E20": 1
   },
   "conflicts": {
    "label": "merge conflicts resolved",
@@ -278,8 +420,22 @@
     "min": 258,
     "max": 318
    },
+   "E v2 aimd": {
+    "median": 85,
+    "min": 55,
+    "max": 95
+   },
+   "E v2 n8": {
+    "median": 144,
+    "min": 125,
+    "max": 165
+   },
    "p_E v1_vs_A": 0.1,
-   "p_E v2_vs_A": 0.7
+   "p_E v2_vs_A": 0.7,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "rebase_aborts": {
    "label": "rebases aborted",
@@ -303,8 +459,22 @@
     "min": 8,
     "max": 15
    },
+   "E v2 aimd": {
+    "median": 1,
+    "min": 0,
+    "max": 2
+   },
+   "E v2 n8": {
+    "median": 4,
+    "min": 4,
+    "max": 6
+   },
    "p_E v1_vs_A": 0.1,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "resets_to_origin": {
    "label": "resets to origin/main",
@@ -328,8 +498,22 @@
     "min": 10,
     "max": 17
    },
+   "E v2 aimd": {
+    "median": 2,
+    "min": 0,
+    "max": 2
+   },
+   "E v2 n8": {
+    "median": 6,
+    "min": 3,
+    "max": 6
+   },
    "p_E v1_vs_A": 0.1,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "rejected_push_recoveries": {
    "label": "rejected pushes recovered",
@@ -353,8 +537,22 @@
     "min": 66,
     "max": 72
    },
+   "E v2 aimd": {
+    "median": 49,
+    "min": 46,
+    "max": 50
+   },
+   "E v2 n8": {
+    "median": 54,
+    "min": 52,
+    "max": 59
+   },
    "p_E v1_vs_A": 0.1,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "calls": {
    "label": "agent calls",
@@ -378,8 +576,22 @@
     "min": 116,
     "max": 126
    },
+   "E v2 aimd": {
+    "median": 84,
+    "min": 81,
+    "max": 100
+   },
+   "E v2 n8": {
+    "median": 81,
+    "min": 80,
+    "max": 84
+   },
    "p_E v1_vs_A": 1,
-   "p_E v2_vs_A": 1
+   "p_E v2_vs_A": 1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   },
   "usd_api_equiv": {
    "label": "API-equiv $ (Haiku 5.5)",
@@ -403,8 +615,22 @@
     "min": 2.5869,
     "max": 2.8537
    },
+   "E v2 aimd": {
+    "median": 1.2562,
+    "min": 1.0548,
+    "max": 1.418
+   },
+   "E v2 n8": {
+    "median": 1.5341,
+    "min": 1.5159,
+    "max": 1.7605
+   },
    "p_E v1_vs_A": 0.1,
-   "p_E v2_vs_A": 0.1
+   "p_E v2_vs_A": 0.1,
+   "p_E v2 aimd_vs_A": 0.1,
+   "p_E v2 n8_vs_A": 0.1,
+   "p_aimd_vs_E20": 0.1,
+   "p_n8_vs_E20": 0.1
   }
  }
 }
