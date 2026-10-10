@@ -26,12 +26,17 @@ const S = {
   s3: { starter: 'starter3', hidden: 'tasks3.test.mjs', tasks: 60,
     pairs: [['T1', 'dates', 'T23', 'calendar'], ['T2', 'text', 'T19', 'strings'], ['T3', 'tags', 'T21', 'hashtags'], ['T4', 'priority', 'T20', 'urgency'], ['T6', 'stats', 'T22', 'progress'],
       ['T51', 'duration', 'T56', 'estimate'], ['T52', 'idlist', 'T57', 'ranges'], ['T53', 'week', 'T58', 'planner'], ['T54', 'wrap', 'T59', 'layout'], ['T55', 'plural', 'T60', 'english']] },
+  // s4 = todokit 0.2, 16 bigger tasks (W3b, Sonnet): 4 far-worded pairs T1/T13 query, T4/T14 sync, T5/T15 table, T11/T16 fuzzy.
+  s4: { starter: 'starter4', hidden: 'tasks4.test.mjs', tasks: 16,
+    pairs: [['T1', 'query', 'T13', 'smartfilter'], ['T4', 'sync', 'T14', 'reconcile'], ['T5', 'table', 'T15', 'columns'], ['T11', 'fuzzy', 'T16', 'loose']],
+    intents: [['T1', 'T13'], ['T4', 'T14'], ['T5', 'T15'], ['T11', 'T16'], ...[2, 3, 6, 7, 8, 9, 10, 12].map((n) => [`T${n}`])] },
 }[SCEN];
 if (SCEN === 's3') { const paired = new Set(S.pairs.flatMap(([a, , b]) => [a, b])); S.intents = [...S.pairs.map(([a, , b]) => [a, b]), ...Array.from({ length: 60 }, (_, i) => `T${i + 1}`).filter((t) => !paired.has(t)).map((t) => [t])]; }
 // E's staggered start: agent k starts at (k-1) x STAGGER_MS. 5 s in E4; 1 s from W3a on (manager: keep the
 // total stagger ~20 s at 20 agents so E is not charged for the stagger). Recorded per run as stagger_s.
 const STAGGER_MS = +opt('stagger-ms', SCEN === 's3' ? 1000 : 5000);
-const MODEL = 'claude-haiku-5-5';
+const MODEL = { haiku: 'claude-haiku-5-5', sonnet: 'claude-sonnet-5-5' }[opt('model', 'haiku')];
+const MAX_TURNS = opt('max-turns', MODEL.includes('sonnet') ? '80' : '40');
 // B and C run on the board as it was for their first reps (git 2ff8b07, frozen copy), so a later
 // board change cannot change those conditions mid-experiment; D uses the live board/ (who --recent).
 const V1 = path.join(os.homedir(), '.local/share/qb9-board-ab/board-v1/board');
@@ -42,8 +47,11 @@ const HIDDEN = path.join(os.homedir(), '<lab-hidden dir>/board-ab', S.hidden);
 const ROOT = path.join(os.homedir(), '.local/share/qb9-board-ab');
 const RUN_ID = `${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}-${SCEN === 's1' ? '' : SCEN + '-'}${COND}-r${REP}`;
 const DIR = path.join(ROOT, RUN_ID);
-// Haiku 5.5 $/1M (docs/lab prices, checked 2026-10-08). Calls are on the subscription; this is the API equivalent.
-const PRICE = { in: 0.10, out: 0.50, cacheR: 0.01, cacheW: 0.125 };
+// $/1M (docs/lab prices, checked 2026-10-08). Calls are on the subscription; this is the API equivalent.
+// Cache writes are 1-hour writes (usage.cache_creation.ephemeral_1h), 2x input: checked 2026-10-10 against
+// Claude Code's own total_cost_usd for Haiku and Sonnet (exact match). E4 used 1.25x until then (recost.mjs).
+const PRICES = { 'claude-haiku-5-5': { in: 0.10, out: 0.50, cacheR: 0.01, cacheW: 0.20 }, 'claude-sonnet-5-5': { in: 2, out: 10, cacheR: 0.10, cacheW: 4 } };
+const PRICE = PRICES[MODEL];
 
 const sh = (cmd, a, cwd, env) => execFileSync(cmd, a, { cwd, encoding: 'utf8', env: { ...process.env, ...env }, maxBuffer: 1 << 26 }).trim();
 const log = (f, o) => fs.appendFileSync(path.join(DIR, f), JSON.stringify({ ts: new Date().toISOString(), ...o }) + '\n');
@@ -85,10 +93,10 @@ function dedupePass(seed) {
   const f = path.join(seed, 'BACKLOG.md'); const backlog = fs.readFileSync(f, 'utf8');
   const q = `Here is a project backlog. Some tasks ask for the same functionality under different names or wording. List every pair of tasks that are the same work (one of them could be a thin alias of the other). Answer with ONLY one JSON object: {"same": [["T3", "T21"], ...]}.\n\n${backlog}`;
   const t0 = Date.now();
-  const r = require_spawnSync('claude', ['-p', '--model', MODEL, '--output-format', 'json', '--tools', '', '--max-turns', '1', '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.', '--setting-sources', '', '--strict-mcp-config'], { input: q, encoding: 'utf8', timeout: 180000, env: { ...process.env, CLAUDE_NO_HOOKS: '1' } });
+  const r = require_spawnSync('claude', ['-p', '--model', 'claude-haiku-5-5', '--output-format', 'json', '--tools', '', '--max-turns', '1', '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.', '--setting-sources', '', '--strict-mcp-config'], { input: q, encoding: 'utf8', timeout: 180000, env: { ...process.env, CLAUDE_NO_HOOKS: '1' } });
   let j = null, pairs = []; try { j = JSON.parse(r.stdout); pairs = JSON.parse(j.result.match(/\{[\s\S]*\}/)[0]).same || []; } catch {}
   const u = j?.usage || {};
-  const usd = ((u.input_tokens || 0) * PRICE.in + (u.output_tokens || 0) * PRICE.out + (u.cache_read_input_tokens || 0) * PRICE.cacheR + (u.cache_creation_input_tokens || 0) * PRICE.cacheW) / 1e6;
+  const HP = PRICES['claude-haiku-5-5']; const usd = ((u.input_tokens || 0) * HP.in + (u.output_tokens || 0) * HP.out + (u.cache_read_input_tokens || 0) * HP.cacheR + (u.cache_creation_input_tokens || 0) * HP.cacheW) / 1e6;
   const truth = (S.pairs || []).map(([a, , b]) => [a, b].sort().join('='));
   const got = [...new Set(pairs.filter((p) => Array.isArray(p) && p.length === 2).map((p) => p.map(String).sort().join('=')))];
   DEDUPE = { pairs: got, truth, correct: got.filter((p) => truth.includes(p)).length, false_pairs: got.filter((p) => !truth.includes(p)), missed: truth.filter((p) => !got.includes(p)), ms: Date.now() - t0, usd_api_equiv: +usd.toFixed(5), tokens: u };
@@ -122,7 +130,7 @@ If you believe every task in the backlog is already done on main, change nothing
 function callAgent(k, iter) {
   return new Promise((resolve) => {
     const cwd = path.join(DIR, `agent${k}`);
-    const a = ['-p', '--model', MODEL, '--output-format', 'json', '--max-turns', '40', '--permission-mode', 'acceptEdits',
+    const a = ['-p', '--model', MODEL, '--output-format', 'json', '--max-turns', MAX_TURNS, '--permission-mode', 'acceptEdits',
       '--allowedTools', 'Read', 'Edit', 'Write', 'Grep', 'Glob', 'Bash(git:*)', 'Bash(npm test)', 'Bash(npm test:*)', 'Bash(npm run test:*)', 'Bash(node:*)', 'Bash(ls:*)', 'Bash(cat:*)',
       '--setting-sources', '', '--strict-mcp-config'];
     if (COND !== 'A') a.push('--settings', path.join(DIR, 'board-settings.json'));
@@ -212,7 +220,9 @@ function scoreIn(DIRX, NX, starterSha) { const DIR = DIRX, N = NX;
 // wasted work; a skip in < 10 turns is a deferral before any work (another agent had it). The split
 // is clean in the first runs: deferrals took 3-5 turns, dropped duplicates 14-58.
 const wasteOf = (calls) => { const w = calls.filter((c) => (c.status === 'skipped' || c.status === 'failed') && (c.turns ?? 0) >= 10); const d = calls.filter((c) => c.status === 'skipped' && (c.turns ?? 0) < 10);
-  return { agent_minutes: +(calls.reduce((a, c) => a + (c.ms || 0), 0) / 60000).toFixed(1), wasted_agent_minutes: +(w.reduce((a, c) => a + (c.ms || 0), 0) / 60000).toFixed(1), wasted_work_calls: w.length, wasted_usd: +w.reduce((a, c) => a + (c.usd_api_equiv || 0), 0).toFixed(4), wasted_out_tokens: w.reduce((a, c) => a + (c.tokens?.out || 0), 0), deferrals: d.length }; };
+  return { agent_minutes: +(calls.reduce((a, c) => a + (c.ms || 0), 0) / 60000).toFixed(1), wasted_agent_minutes: +(w.reduce((a, c) => a + (c.ms || 0), 0) / 60000).toFixed(1), wasted_work_calls: w.length, wasted_usd: +w.reduce((a, c) => a + (c.usd_api_equiv || 0), 0).toFixed(4), wasted_out_tokens: w.reduce((a, c) => a + (c.tokens?.out || 0), 0), deferrals: d.length,
+    // calls cut by --max-turns (or with no JSON answer): counted apart, since one may still have pushed.
+    cut_calls: calls.filter((c) => c.status === 'unparsed' || c.status === 'no-output').length, cut_agent_minutes: +(calls.filter((c) => c.status === 'unparsed' || c.status === 'no-output').reduce((a, c) => a + (c.ms || 0), 0) / 60000).toFixed(1) }; };
 
 // ---- rescore an existing run (no model): node run.mjs --rescore <run dir> ----
 if (opt('rescore', null)) {
@@ -244,7 +254,7 @@ const sum = (f) => calls.reduce((a, c) => a + (f(c) || 0), 0);
 const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : (COND === 'D' || COND === 'E') ? sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, stagger_s: COND === 'E' ? +((N - 1) * STAGGER_MS / 1000).toFixed(1) : 0, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
   calls: calls.length, ...wasteOf(calls), pushed: calls.filter((c) => c.status === 'pushed').length, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, all_done_calls: calls.filter((c) => c.status === 'all-done').length,
   tokens: { in: sum((c) => c.tokens.in), out: sum((c) => c.tokens.out), cacheR: sum((c) => c.tokens.cacheR), cacheW: sum((c) => c.tokens.cacheW) },
-  dedupe: DEDUPE, usd_api_equiv: +(sum((c) => c.usd_api_equiv) + (DEDUPE?.usd_api_equiv || 0)).toFixed(4), usd_note: 'subscription; API-equivalent at Haiku 5.5 rates',
+  dedupe: DEDUPE, usd_api_equiv: +(sum((c) => c.usd_api_equiv) + (DEDUPE?.usd_api_equiv || 0)).toFixed(4), usd_note: `subscription; API-equivalent at ${MODEL} rates, 1h cache writes`, price: PRICE, max_turns: +MAX_TURNS,
   board_events: fs.existsSync(path.join(DIR, 'board.jsonl')) ? fs.readFileSync(path.join(DIR, 'board.jsonl'), 'utf8').split('\n').filter(Boolean).length : 0,
   ...score(starterSha) };
 fs.writeFileSync(path.join(DIR, 'result.json'), JSON.stringify(result, null, 1));
