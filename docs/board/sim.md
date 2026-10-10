@@ -101,18 +101,18 @@ parameters (in `E4` at the top of the file); the ones that matter were fitted on
 
 | E4, 5 agents, 16 tasks | A sim (real) | B sim (real) | C sim (real) | D sim (real) |
 |---|---|---|---|---|
-| wall time (s) | 220 (227) | 193 (219) | 194 (202) | 191 (200) |
+| wall time (s) | 219 (227) | 194 (219) | 195 (202) | 188 (200) |
 | wasted calls (built, then dropped) | 8 (7) | 3 (3) | 2 (2) | 1 (1) |
 | of them in the first half of the run | 4 (4) | 2 (2) | 1 | 0-1 |
 | deferrals | 0 (0) | 0 (0) | 6 (6) | 10 (7) |
 | duplicate pairs built twice (of 4) | 1 (1) | 2 (1) | 1 (1) | 0 (0) |
-| runs with any pair built twice | 87% (80%) | 83% (80%) | 80% (60%) | 3% (0%) |
+| runs with any pair built twice | 87% (80%) | 86% (80%) | 81% (60%) | 3% (0%) |
 | rejected pushes | 26 (34) | 21 (24) | 19 (16) | 18 (17) |
 | calls | 26 (28) | 22 (26) | 23 (29) | 26 (29) |
-| agent-seconds | 947 (1090) | 826 (1070) | 800 (960) | 809 (973) |
+| agent-seconds | 949 (1090) | 824 (1070) | 807 (960) | 797 (973) |
 
-Sim = median of 1000 seeds; real = median of 5 runs. The ratios fit: D/A wall 0.87 (real 0.88),
-D/A agent-seconds 0.85 (real 0.89).
+Sim = median of 1000 seeds; real = median of 5 runs. The ratios fit: D/A wall 0.86 (real 0.88),
+D/A agent-seconds 0.84 (real 0.89).
 
 Known misses:
 - absolute agent-seconds are ~15% low, so use the ratios;
