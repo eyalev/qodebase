@@ -348,3 +348,61 @@ What this says, and why it differs from the local tests:
 What would prove the model wrong: board-on wall time more than 10% below board-off (then same-task
 waste or queue contention is bigger on boxes than modelled), or two-teams with the board on catching
 3 or more pairs without `crossDedupe`.
+
+## (f) W7: congestion control for agents (AIMD on the board's thrash), written before qb9's runs
+
+**Model** (`sim/board/aimd.mjs`; the AIMD part is in `calls.mjs`, option `aimd`):
+- **Thrash** = rejected pushes + 3 × dropped work, per minute. The board sees all of it live.
+- **The controller** checks it every minute:
+  - thrash ≤ lo × cap: cap + 1 (a clean minute);
+  - thrash > hi × cap: cap halved (never below 2);
+  - otherwise the cap holds.
+- **Who works:** only the `cap` lowest-numbered agents still working start calls. The newest pause at
+  their next call boundary and wake when the cap allows.
+- **Setup:** start 4, qb9's s3 profile (20 agents, 60 tasks, 10 far-worded pairs, 12 needs, s2 task
+  size, 1 s stagger), 100 seeds, medians.
+- **Thresholds picked in the sim:** lo 1, hi 3 thrash per allowed agent per minute. That is the middle
+  of the sweep (lo 0.25–2, hi 1–6). Lower settles at cap 2–3, higher never cuts.
+- **Units:** "Agent-min" is all calls. $ ≈ $0.018 per Haiku agent-minute on `claude -p`
+  (E4: $0.71 for 38.5 agent-minutes).
+
+| | fixed 20 | AIMD (start 4, +1/min, halve; lo 1, hi 3) | change | AIMD's median cap | fixed at that size |
+|---|---|---|---|---|---|
+| **A, no board**: wall | 462 s | 1034 s [914–1214] | ×2.2 | 6 | fixed 6: 828 s |
+| A: agent-min / $ | 127 / ~$2.3 | 82 / ~$1.5 | −35% | | fixed 6: 77 |
+| A: pairs built twice (of 10) | 10 | 9 | | | |
+| **D, board**: wall | 388 s | 794 s [734–857] | ×2.0 | 7 | fixed 6: 779 s, 8: 635 s |
+| D: agent-min | 99 | 77 | −22% | | fixed 8: 75 |
+| D: pairs built twice | 8 | 8 | | | |
+| **E, board + dedupe**: wall | 387 s | 794 s [683–854] | ×2.1 | 7 | fixed 6: 735 s, 8: 583 s |
+| E: agent-min / $ | 105 / ~$1.9 | 73 / ~$1.3 | −30% | | fixed 8: 71 |
+| E: pairs built twice | 0 | 0 | | | |
+
+Faster control variants: a 20 s tick; TCP slow start (double the cap until the first spike, 30 s tick);
+looser thresholds. They all sit on the same line between the two columns. E with slow start and hi 6
+gives 458 s / 98 min; E with slow start and hi 4 gives 584 s / 84 min.
+
+**The prediction:**
+1. **AIMD trades time for cost. It does not win both.** Against a fixed 20 it cuts agent-minutes by
+   22–35% and roughly doubles wall time. Duplicates don't change: only the dedupe pass removes those.
+2. **It does no better than simply running a fixed team of the size it settles at (6–8 agents).**
+   Fixed 8 with E gives 583 s / 71 min, faster than AIMD's 794 s at the same cost. AIMD's ramp
+   (4 → 7 takes 3+ minutes of a ~7-minute job) and its pauses are pure overhead.
+3. **Why:** in the sim there is no congestion collapse. Each extra agent still shortens the wall time
+   (A: fixed 4, 6, 10, 14, 20 → 1118, 828, 609, 520, 462 s); it just pays more thrash for it. TCP's AIMD
+   wins when throughput *falls* past the knee. Here throughput only flattens.
+4. **The board moves the whole curve, which matters more than the controller.** At the same size,
+   E uses 18–25% fewer agent-minutes than A (fixed 10: 75 vs 91 min; fixed 20: 105 vs 127 min) and is
+   faster (508 vs 609 s; 387 vs 462 s).
+
+**What would prove this wrong (and make W7 a real feature):** fixed 20 slower than fixed ~8 in the real
+run, i.e. a collapse. arXiv 2603.21489's score peaks at 4 and falls at 8, but that is quality, not time.
+Real no-board agents fought git much harder than the sim (s2 A: 73 aborted rebases, 84 resets). At 20
+agents that could turn into a collapse, and then AIMD would beat fixed 20 on both time and cost.
+Suggested runs for qb9: E fixed 20, E AIMD, and **E fixed 8** as the control (also A fixed 20 vs A AIMD
+if the meter allows).
+
+**Thresholds in real counts:** the sim over-counts rejected pushes for board conditions about 2×
+(s2 post-hoc: D 55 vs 28 real), and under-counts them for A (×1.3). For E on real runs, use lo 0.5,
+hi 1.5 per agent per minute. Log the cap each minute (`cap`, `thrashPerMin`) so the run can be
+replayed here.

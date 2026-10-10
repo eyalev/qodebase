@@ -85,6 +85,12 @@ export function run(cond, seed = 1, over = {}) {
   const building = new Map(); // agent -> item id (truth, board or not)
   const m = { aliases: 0, wastedSame: 0, wastedS: 0, calls: 0, landed: 0, wasted: 0, deferrals: 0, rejected: 0, dupBuiltTwice: 0, sameTaskTwice: 0, allDone: 0, agentS: 0 };
   const agents = Array.from({ length: C.agents }, (_, i) => ({ id: i, done: false, endT: 0 }));
+  // W7, congestion control (AIMD): thrash = rejected pushes + 3 x dropped work, per minute. Every minute:
+  // thrash <= lo x cap -> cap + 1 (a clean minute); thrash > hi x cap -> cap halved (min `min`); else hold.
+  // Only the `cap` lowest-numbered agents still working may start a call; the others pause at their next
+  // call boundary (the newest pause first) and are woken when the cap allows.
+  const thrash = []; const A = C.aimd; let cap = A ? A.start : Infinity; let ss = !!A?.slowStart; m.capTrace = [];
+  const allowed = (a) => !A || agents.filter((x) => !x.done && x.id < a.id).length < cap;
   const heap = []; let seq = 0, t = 0;
   const at = (dt, fn) => { heap.push({ t: t + dt, s: seq++, fn }); heap.sort((a, b) => a.t - b.t || a.s - b.s); };
 
@@ -95,6 +101,8 @@ export function run(cond, seed = 1, over = {}) {
 
   function call(a) {
     if (a.done) return;
+    if (!allowed(a)) { a.paused = true; return; }
+    a.paused = false;
     m.calls++; const t0 = t;
     const spend = (dt, fn) => at(dt, () => { m.agentS += t - t0; fn(); });
     // What this agent believes is done: tasks on main, and twins it notices on main.
@@ -154,7 +162,7 @@ export function run(cond, seed = 1, over = {}) {
       if (onMain(it)) { // the same task landed while I built: push rejected, the rebase conflicts on my own
         // function, the agent fights it (abort, reset, retry: E4 A had ~3 aborts/resets per dropped task), then drops it
         const fights = 1 + Math.floor(rnd() * 2 * C.collisionRetries);
-        m.rejected += fights; m.wasted++; m.wastedSame++; m.wastedS += t - t0; wastedStarts.push(t0); finishPost();
+        m.rejected += fights; for (let k = 0; k < fights; k++) thrash.push(t); thrash.push(t, t, t); m.wasted++; m.wastedSame++; m.wastedS += t - t0; wastedStarts.push(t0); finishPost();
         return spend(fights * logn(C.rebaseMedS, C.rebaseSigma), () => call(a));
       }
       if (isTwin(it) && onMain(twinOf(it)) && it.dropChecked == null) {
@@ -162,9 +170,9 @@ export function run(cond, seed = 1, over = {}) {
         // D's rule: "make yours a one-line alias of theirs once theirs is on main" (lands as an alias, not a second copy)
         if (marked.has(it.unit) || (dLike && rnd() < sp(it, C.pSpotRecentDup))) it.alias = true;
         else
-        if (rnd() < C.pDropDupAtRebase) { m.wasted++; m.wastedS += t - t0; wastedStarts.push(t0); finishPost(); return spend(1, () => call(a)); }
+        if (rnd() < C.pDropDupAtRebase) { thrash.push(t, t, t); m.wasted++; m.wastedS += t - t0; wastedStarts.push(t0); finishPost(); return spend(1, () => call(a)); }
       }
-      if (head !== myBase) { m.rejected++; const rb = logn(C.rebaseMedS, C.rebaseSigma); const nb = head; return at(rb, () => tryPush(nb)); }
+      if (head !== myBase) { m.rejected++; thrash.push(t); const rb = logn(C.rebaseMedS, C.rebaseSigma); const nb = head; return at(rb, () => tryPush(nb)); }
       at(C.pushS, () => {
         if (head !== myBase) return tryPush(myBase); // someone pushed first
         head++; it.landed = true; m.landed++;
@@ -178,9 +186,21 @@ export function run(cond, seed = 1, over = {}) {
     at(work, () => tryPush(base));
   }
   agents.forEach((a, k) => at(cond === 'E' ? k * C.staggerS : rnd() * 3, () => call(a)));
+  if (A) {
+    const tick = () => {
+      if (agents.every((x) => x.done)) return;
+      const n = thrash.filter((x) => x > t - (A.tickS || 60)).length * 60 / (A.tickS || 60); // per minute
+      if (n > A.hi * cap) { cap = Math.max(A.min, Math.floor(cap / 2)); ss = false; } else if (n <= A.lo * cap) cap = Math.min(C.agents, ss ? cap * 2 : cap + A.add); // slowStart: double until the first spike (TCP)
+      m.capTrace.push(cap); m.capMax = Math.max(m.capMax || 0, cap);
+      for (const x of agents) if (x.paused && !x.done && allowed(x)) { x.paused = false; at(0, () => call(x)); }
+      at(A.tickS || 60, tick);
+    };
+    at(A.tickS || 60, tick);
+  }
   while (heap.length && heap[0].t < 4 * 3600) { const e = heap.shift(); t = e.t; e.fn(); }
   const wall = Math.max(...agents.map((a) => a.endT || t));
-  return { cond, seed, wallS: Math.round(wall), ...m, wastedEarly: wastedStarts.filter((x) => x < wall / 2).length, agentS: Math.round(m.agentS), wastedS: Math.round(m.wastedS), unitsLeft: units.filter((u) => !u.landed).length };
+  const capTrace = m.capTrace; delete m.capTrace;
+  return { cond, seed, capMed: capTrace.length ? [...capTrace].sort((a, b) => a - b)[capTrace.length >> 1] : null, wallS: Math.round(wall), ...m, wastedEarly: wastedStarts.filter((x) => x < wall / 2).length, agentS: Math.round(m.agentS), wastedS: Math.round(m.wastedS), unitsLeft: units.filter((u) => !u.landed).length };
 }
 
 // ---- E4 real numbers (medians, sim/board-ab summary + calls.jsonl) ----
