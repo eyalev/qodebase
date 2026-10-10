@@ -799,5 +799,12 @@
    },
    "builtTwiceExpected": 0.1
   }
+ ],
+ "excludedProjects": [
+  {
+   "project": "eyal.lab-backlog-44862-r1",
+   "order": 2,
+   "why": "pre-fix board (finished = pushed/queued too, fixed in 51e2eb1); its runner was stopped at 17:59 UTC but the router got the request through durable delivery and spawned 6 agents that ran unwatched (30 landed); boxes stopped 18:4x UTC. No runs.jsonl line; order 2 runs again as r1b on the fixed board."
+  }
  ]
 }
