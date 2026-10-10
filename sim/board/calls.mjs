@@ -36,6 +36,8 @@ export const E4 = {
   pHeedBoard: 0.92, // C/D: reads `who` first and picks an unclaimed task; otherwise picks, then sees the claim and skips (a deferral call)
   pReadyPref: 0.9, // prefer a task whose needs are on main
   pSpotMainDup: 0.9, // reading main, notices that a differently named twin already landed (A: 4 of 20 pairs built twice)
+  farPairs: 0, // twin pairs worded far apart ('hashtags' vs 'tags'): scenario 1 had none (D stopped all 4 pairs)
+  farRecognition: 0.1, // their recognition rates x this (scale test: A and D both built 4 of 5 pairs twice)
   pSpotNowDup: 0.5, // C/D: notices a twin in someone's posted intent (now)
   pSpotRecentDup: 0.95, // D: twin among recently finished intents + the same-meaning rule (D: 0 of 20)
   pSpotFiles: 0.95, // B: the hooks show only files: spots that the same task is taken from them
@@ -63,6 +65,10 @@ export function run(cond, seed = 1, over = {}) {
   for (const u of twins) items.push({ unit: u });
   items.forEach((it, i) => { it.id = i; it.attract = Math.exp(C.attractSigma * normal()); it.landed = false; });
   const isTwin = (it) => twins.has(it.unit);
+  // Wording distance: the first farPairs twin pairs are worded far apart ('hashtags' vs 'tags'); every
+  // same-meaning recognition (on main, on the board, at rebase) is scaled by farRecognition for them.
+  const far = new Set([...twins].slice(0, C.farPairs || 0));
+  const sp = (it, p) => (far.has(it.unit) ? p * C.farRecognition : p);
 
   // ---- state ----
   let head = 0; // main's commit count
@@ -85,9 +91,9 @@ export function run(cond, seed = 1, over = {}) {
     const spend = (dt, fn) => at(dt, () => { m.agentS += t - t0; fn(); });
     // What this agent believes is done: tasks on main, and twins it notices on main.
     const known = (it) => onMain(it) || (isTwin(it) && onMain(twinOf(it)) && it.spotMain) || spotMainD(it);
-    for (const it of items) if (it.spotMain == null && isTwin(it) && onMain(twinOf(it))) it.spotMain = rnd() < C.pSpotMainDup;
+    for (const it of items) if (it.spotMain == null && isTwin(it) && onMain(twinOf(it))) it.spotMain = rnd() < sp(it, C.pSpotMainDup);
     // D: finished intents are on the board and the same-meaning rule applies to them
-    const spotMainD = (it) => cond === 'D' && isTwin(it) && onMain(twinOf(it)) && (it.spotD ??= rnd() < C.pSpotRecentDup);
+    const spotMainD = (it) => cond === 'D' && isTwin(it) && onMain(twinOf(it)) && (it.spotD ??= rnd() < sp(it, C.pSpotRecentDup));
     const open = items.filter((it) => !known(it));
     if (!open.length) { m.allDone++; return spend(C.allDoneS, () => { a.done = true; a.endT = t; }); }
     const ready = open.filter((it) => { const n = units[it.unit].need; return n == null || units[n].landed; });
@@ -107,7 +113,7 @@ export function run(cond, seed = 1, over = {}) {
       // twins: C sees claims only; D also sees finished intents and has the same-meaning rule
       const pTw = cond === 'D' ? C.pSpotRecentDup : C.pSpotNowDup;
       const shown = new Set([...now, ...recent].map((p) => p.item));
-      avoid((x) => !(isTwin(x) && shown.has(twinOf(x).id) && rnd() < pTw));
+      avoid((x) => !(isTwin(x) && shown.has(twinOf(x).id) && rnd() < sp(x, pTw)));
     }
     // At the end everything left is claimed on the board: C/D skip once (a deferral) and stop; B's
     // prompt shows the same now-view, so it stops (as "all done") when it notices the files are taken.
@@ -123,7 +129,7 @@ export function run(cond, seed = 1, over = {}) {
       const sameTask = now.some((p) => p.item === it.id);
       const twinShown = isTwin(it) && [...now, ...recent].some((p) => p.item === twinOf(it).id);
       let defer = sameTask;
-      if (!defer && twinShown) defer = rnd() < (cond === 'D' ? C.pSpotRecentDup : C.pSpotNowDup);
+      if (!defer && twinShown) defer = rnd() < sp(it, cond === 'D' ? C.pSpotRecentDup : C.pSpotNowDup);
       if (defer) { m.deferrals++; return spend(C.deferS, () => call(a)); }
     }
     // ---- build ----
@@ -143,7 +149,7 @@ export function run(cond, seed = 1, over = {}) {
       if (isTwin(it) && onMain(twinOf(it)) && it.dropChecked == null) {
         it.dropChecked = true;
         // D's rule: "make yours a one-line alias of theirs once theirs is on main" (lands as an alias, not a second copy)
-        if (cond === 'D' && rnd() < C.pSpotRecentDup) it.alias = true;
+        if (cond === 'D' && rnd() < sp(it, C.pSpotRecentDup)) it.alias = true;
         else
         if (rnd() < C.pDropDupAtRebase) { m.wasted++; m.wastedS += t - t0; wastedStarts.push(t0); finishPost(); return spend(1, () => call(a)); }
       }
@@ -200,6 +206,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       ['10 agents, 30 tasks, 5 pairs, x4 work', { agents: 10, tasks: 30, dupPairs: 5, needs: 11, workMedS: 26 * 4 }],
       ['10 agents, 30 tasks, 5 pairs, x3 work', { agents: 10, tasks: 30, dupPairs: 5, needs: 11, workMedS: 26 * 3 }],
       ['10 agents, 30 tasks, 5 pairs, x5 work', { agents: 10, tasks: 30, dupPairs: 5, needs: 11, workMedS: 26 * 5 }],
+      // After the run (E4-results.md 'Scale test'): calls were ~1.6x E4's (61 vs 39 agent-s per call), 6 needs
+      // (chains), and 4 of the 5 pairs worded far apart (only dates/calendar was aliased reliably).
+      ['post-hoc: measured size, 6 needs, 4 far pairs', { agents: 10, tasks: 30, dupPairs: 5, needs: 6, workMedS: 26 * 1.6, farPairs: 4, farRecognition: 0.1 }],
     ];
     for (const [label, over] of variants) for (const cond of 'AD') {
       const c = cell(cond, SEEDS, over); res.rows.push({ label, cond, over, sim: c });

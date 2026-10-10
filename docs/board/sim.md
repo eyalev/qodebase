@@ -166,3 +166,39 @@ Where it could be wrong:
 - The rebase cost is held constant. Bigger tasks may conflict harder: at 3× the rebase time, both
   conditions get ~6% slower and rejected pushes rise (A ~70, D ~50).
 - The model has no failing tasks, no red main and no quality effect. E4 had none either.
+
+### Prediction vs actual (scale test, E4-results.md "Scale test", A vs D, 3 runs each)
+
+| measure | predicted A -> D | actual A -> D | matched? | post-hoc sim A -> D |
+|---|---|---|---|---|
+| wall time | 13.4 -> 10.0 min (**-25%**) | 5.9 -> 4.2 min (**-28%**) | relative yes; absolute 2.3x too long | 6.3 -> 5.3 min (-17%) |
+| agent time (≈ cost) | 109 -> 75 min (**-31%**) | 55 -> 38 min (**-30%**); $0.95 -> 0.67 (**-29%**) | relative yes | 53 -> 40 min (-24%) |
+| wasted calls | 20 -> 2 | 11 -> 5 | direction yes, size no | 21 -> 4 |
+| wasted agent-min | 53 -> 6 | 8.7 -> 5.2 | no | 22 -> 4.4 |
+| twin pairs built twice (of 5) | 2 -> 0 | **4 -> 4** | no | 4 -> 3 |
+| deferrals (D) | 37 [16-82] | 7 [4-13] | no, too high | 14 [9-31] |
+| rejected pushes | 58 -> 37 | 103 -> 28 | direction yes; both ends too mild | 79 -> 56 |
+| calls | 58 -> 68 | 54 -> 51 | roughly | 60 -> 48 |
+
+- **The headline matched:** wall time -25% predicted vs -28% measured, cost -31% vs -29/-30%. At 10
+  agents the board is a speed and cost win, not just a waste win.
+- **The absolute times did not.** The tasks were not 4x E4's: the calls were ~1.6x (61 vs 39 agent-s
+  per call). That was an input error, not a model error.
+- **The twins missed, and that is a model error.** The sim recognised a renamed twin 90% of the time on
+  main and 95% under D's rule. That was fitted on scenario 1's close wording (titleCase/capitalizeWords,
+  countWords/wordCount). Scenario 2's pairs are mostly far apart: tags/hashtags, priority/urgency,
+  completion rate/progress. Only dates/calendar was aliased reliably.
+- **Recalibrated by wording distance** (`farPairs`, `farRecognition` in `calls.mjs`): each pair is
+  close or far, and every recognition (on main, on the board, D's alias at rebase) for a far pair is
+  scaled by 0.1. With 4 of 5 pairs far, the post-hoc sim builds 4 pairs twice in A and 3 in D
+  (real 4 and 4). Scenario 1 stays fitted, since it had no far pairs.
+- **Inputs measured after the run** (post-hoc column): ×1.6 work, 6 needs (the chains), and 4 far pairs.
+  Three misses remain:
+  - Without a board the sim still has twice the real wasted calls (21 vs 11), and its drops cost
+    more (real drops were cheap: ~47 s a call).
+  - The sim's D waits less often but rebases far more than real D (56 rejected pushes vs 28).
+    Real D agents nearly stopped fighting git (2 aborts against A's 73), which the model doesn't
+    capture. That is also why the post-hoc wall-time gain (-17%) is smaller than the real one (-28%).
+  - Same-meaning recognition is a property of the wording, so a board plus a one-line rule can't be
+    counted on for it. The fix the results point to is upstream: cluster the backlog into work units
+    once, before any agent starts, and stagger the starts so the first claims are visible.
