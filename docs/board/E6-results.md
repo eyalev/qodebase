@@ -215,4 +215,4 @@ agents and under AIMD: less contention, fewer hand merges.
 use 20. If cost matters, AIMD or a small fixed team cuts cost by more than half. AIMD's extra value over a fixed
 small team is that nobody has to pick the size, at the price of a slow ramp.
 
-W7 spend: $14.5 API-equiv (6 runs + the smoke). The weekly meter went 78% → 79%.
+W7 spend: $9.54 API-equiv (6 runs + the smoke). The weekly meter went 78% → 79%.
