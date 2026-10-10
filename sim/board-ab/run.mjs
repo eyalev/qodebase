@@ -40,7 +40,11 @@ const MAX_TURNS = opt('max-turns', MODEL.includes('sonnet') ? '80' : '40');
 // B and C run on the board as it was for their first reps (git 2ff8b07, frozen copy), so a later
 // board change cannot change those conditions mid-experiment; D uses the live board/ (who --recent).
 const V1 = path.join(os.homedir(), '.local/share/qb9-board-ab/board-v1/board');
-const BOARD_DIR = (COND === 'D' || COND === 'E') ? path.resolve(HERE, '../../board') : V1;
+// E v1 (W3a r1-r3) ran on the board at f3d36d3, frozen here, so the round-2 fix (FINISHED = on origin/main)
+// cannot change it; --board live = the repo's board/ (E v2 on, record board_version).
+const E1 = path.join(os.homedir(), '.local/share/qb9-board-ab/board-e1/board');
+const BOARD_SEL = opt('board', COND === 'E' ? 'e1' : 'live');
+const BOARD_DIR = (COND === 'D' || COND === 'E') ? (BOARD_SEL === 'e1' ? E1 : path.resolve(HERE, '../../board')) : V1;
 const BOARD = path.join(BOARD_DIR, 'board.mjs');
 const HOOK = path.join(BOARD_DIR, 'hooks/board-hook.mjs');
 const HIDDEN = path.join(os.homedir(), '<lab-hidden dir>/board-ab', S.hidden);
@@ -109,7 +113,10 @@ function dedupePass(seed) {
 }
 
 // ---- the task prompt (versioned) ----
-const PROMPT_VERSION = 'board-ab-v1';
+// --no-wait (W3a diagnosis, 2026-10-10): agents slept up to 25 min in the background waiting for a stated
+// dependency, and claude -p waits for background tasks. Adds one prompt line and blocks sleep (opt-in, v2).
+const NO_WAIT = args.includes('--no-wait');
+const PROMPT_VERSION = NO_WAIT ? 'board-ab-v2-nowait' : 'board-ab-v1';
 function prompt(k) {
   // A = no board; B = hooks only (automatic posts: file names, commits); C = hooks + one instruction
   // to state the picked task (manager, 2026-10-10: with claude -p the hook's 'started' text is this
@@ -124,7 +131,7 @@ function prompt(k) {
 3. Implement it as the backlog says (code, re-export, a test, a CHANGELOG line) and run \`npm test\` until it is green.
 4. Commit with a message that starts with the task id, e.g. \`T5: add countWords\`, then \`git push\`. If the push is rejected, run \`git pull --rebase\`, fix any conflict, run \`npm test\` again and push again.
 5. End with ONLY one JSON line: {"task": "T5", "status": "pushed" | "skipped" | "failed", "note": "<short>"}.
-If you believe every task in the backlog is already done on main, change nothing and reply {"task": null, "status": "all-done"}.`;
+If you believe every task in the backlog is already done on main, change nothing and reply {"task": null, "status": "all-done"}.${NO_WAIT ? '\nNever wait for another agent (no sleeping or polling): if something your task needs is not on main yet, pick another task or end with status "skipped".' : ''}`;
 }
 
 function callAgent(k, iter) {
@@ -133,6 +140,7 @@ function callAgent(k, iter) {
     const a = ['-p', '--model', MODEL, '--output-format', 'json', '--max-turns', MAX_TURNS, '--permission-mode', 'acceptEdits',
       '--allowedTools', 'Read', 'Edit', 'Write', 'Grep', 'Glob', 'Bash(git:*)', 'Bash(npm test)', 'Bash(npm test:*)', 'Bash(npm run test:*)', 'Bash(node:*)', 'Bash(ls:*)', 'Bash(cat:*)',
       '--setting-sources', '', '--strict-mcp-config'];
+    if (NO_WAIT) a.push('--disallowedTools', 'Bash(sleep:*)');
     if (COND !== 'A') a.push('--settings', path.join(DIR, 'board-settings.json'));
     const env = { ...process.env, CLAUDE_NO_HOOKS: '1' };
     if (COND !== 'A') Object.assign(env, { BOARD_AGENT: `agent${k}`, BOARD_FILE: path.join(DIR, 'board.jsonl'), BOARD_STATE_DIR: path.join(DIR, 'board-state', `agent${k}`) });
@@ -275,7 +283,7 @@ clearInterval(ctl);
 const wallS = Math.round((Date.now() - t0) / 1000);
 const calls = fs.readFileSync(path.join(DIR, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const sum = (f) => calls.reduce((a, c) => a + (f(c) || 0), 0);
-const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : (COND === 'D' || COND === 'E') ? sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, stagger_s: COND === 'E' ? +((N - 1) * STAGGER_MS / 1000).toFixed(1) : 0, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
+const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : (COND === 'D' || COND === 'E') ? (BOARD_DIR === E1 ? 'f3d36d3 (frozen e1)' : sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) + (sh('git', ['status', '--porcelain', '--', 'board'], path.resolve(HERE, '../..')) ? '+dirty' : '')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, stagger_s: COND === 'E' ? +((N - 1) * STAGGER_MS / 1000).toFixed(1) : 0, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
   calls: calls.length, ...wasteOf(calls), pushed: calls.filter((c) => c.status === 'pushed').length, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, all_done_calls: calls.filter((c) => c.status === 'all-done').length,
   tokens: { in: sum((c) => c.tokens.in), out: sum((c) => c.tokens.out), cacheR: sum((c) => c.tokens.cacheR), cacheW: sum((c) => c.tokens.cacheW) },
   dedupe: DEDUPE, usd_api_equiv: +(sum((c) => c.usd_api_equiv) + (DEDUPE?.usd_api_equiv || 0)).toFixed(4), usd_note: `subscription; API-equivalent at ${MODEL} rates, 1h cache writes`, price: PRICE, max_turns: +MAX_TURNS, aimd: AIMD, cap_log: capLog, cap_median: capLog.length ? [...capLog.map((r) => r.cap)].sort((a, b) => a - b)[Math.floor(capLog.length / 2)] : null,

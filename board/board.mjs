@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // board post <kind> [--intent T] [--files a,b] [--status S]
 // board who [--files a,b] [--area X] [--recent 30m] [--json]  live agents (last 10 min), not yourself;
-//   --recent also lists what others finished (done/committed/landed) in that window, marked FINISHED
+//   --recent also lists what others landed on main in that window (FINISHED) and fresh claims of done that
+//   are not on main (SAYS DONE, NOT ON MAIN; dropped after 5 min as abandoned)
 // board tail [-n N] [--json]
 // Env: BOARD_AGENT (who you are), BOARD_FILE=<jsonl> or BOARD_URL=<…/b/<name>> + BOARD_TOKEN.
 import { backend, makeEvent, fmtRow, readState, writeState, parseDur } from './lib.mjs';

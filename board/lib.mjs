@@ -27,23 +27,35 @@ const touches = (a, b) => a === b || a.startsWith(b.replace(/\/?$/, '/')) || b.s
 /** The now-view: one row per live agent (last event within TTL), newest first, without `me`.
  *  `files` on a row = every file that agent named in the TTL window (not only its last event). */
 export const parseDur = (s, d = 30 * 60_000) => { const m = String(s ?? '').match(/^(\d+(?:\.\d+)?)\s*(s|m|h)?$/); return m ? Number(m[1]) * { s: 1e3, m: 6e4, h: 36e5 }[m[2] || 'm'] : d; };
-const FINISHED = new Set(['done', 'committed', 'landed']);
+// FINISHED = on main only (round 2, qb9's W3a diagnosis): a `landed` event, or a legacy `committed` with
+// status 'pushed'. A `done`/`committed` without it is only a claim ("says done, not on main"): at 20 agents,
+// commits stranded mid-rebase were announced as finished and 3-5 agents per task deferred to them for good.
+// A claim older than CLAIM_MS counts as abandoned and is not shown at all (also not as a live row).
+export const CLAIM_MS = 5 * 60_000;
+const LANDED = (e) => e.kind === 'landed' || (e.kind === 'committed' && e.status === 'pushed');
+const CLAIM = (e) => (e.kind === 'done' || e.kind === 'committed') && !LANDED(e);
 
-/** recent (ms): also list intents others finished (done/committed/landed) in that window, one row per
- *  agent + intent, marked done:true, after the live rows (qb9: a task landed under another wording
- *  15 s earlier was invisible once its agent moved on). */
+/** recent (ms): also list what others landed on main in that window (done:true, marked FINISHED), and their
+ *  fresh unlanded claims (claim:true, marked SAYS DONE, NOT ON MAIN), one row per agent + intent, after the
+ *  live rows (qb9: a task landed under another wording 15 s earlier was invisible once its agent moved on). */
 export function nowView(events, { me = null, files = [], area = null, now = Date.now(), ttl = TTL_MS, recent = 0 } = {}) {
   const live = liveView(events, { me, now, ttl });
-  const done = [];
+  const done = [], claims = [];
   if (recent > 0) {
-    const seen = new Set(live.map((r) => `${r.agent}\n${r.intent}`));   // already shown as live
-    for (const e of [...events].sort((a, b) => b.ts - a.ts)) {
-      if (!e || now - e.ts > recent || e.agent === me || !FINISHED.has(e.kind) || !e.intent) continue;
-      const k = `${e.agent}\n${e.intent}`; if (seen.has(k)) continue; seen.add(k);
-      done.push({ ...e, done: true, ageS: Math.round((now - e.ts) / 1000) });
+    const landed = new Set(), seen = new Set();
+    const sorted = [...events].filter(Boolean).sort((a, b) => b.ts - a.ts);
+    for (const e of sorted) if (LANDED(e) && e.intent) landed.add(`${e.agent}\n${e.intent}`);
+    for (const e of sorted) {
+      if (now - e.ts > recent || e.agent === me || !e.intent) continue;
+      const k = `${e.agent}\n${e.intent}`; if (seen.has(k)) continue;
+      if (LANDED(e)) { seen.add(k); done.push({ ...e, done: true, ageS: Math.round((now - e.ts) / 1000) }); }
+      else if (CLAIM(e) && !landed.has(k) && now - e.ts <= CLAIM_MS) { seen.add(k); claims.push({ ...e, claim: true, ageS: Math.round((now - e.ts) / 1000) }); }
     }
+    // a live row that only repeats a landed or claim row shown below is dropped
+    const shown = new Set([...done, ...claims].map((r) => `${r.agent}\n${r.intent}`));
+    return filterRows([...live.filter((r) => !shown.has(`${r.agent}\n${r.intent}`)), ...done, ...claims], files, area);
   }
-  return filterRows([...live, ...done], files, area);
+  return filterRows(live, files, area);
 }
 
 function filterRows(out, files, area) {
@@ -62,10 +74,12 @@ function liveView(events, { me, now, ttl }) {
     for (const f of e.files || []) r.files.add(f);
     rows.set(e.agent, r);
   }
-  return [...rows.values()].map((r) => ({ ...r.last, files: [...r.files], ageS: Math.round((now - r.last.ts) / 1000) })).sort((x, y) => y.ts - x.ts);
+  // An agent whose last word is an unlanded claim older than CLAIM_MS has stopped: not live.
+  return [...rows.values()].filter((r) => !(CLAIM(r.last) && now - r.last.ts > CLAIM_MS))
+    .map((r) => ({ ...r.last, files: [...r.files], ageS: Math.round((now - r.last.ts) / 1000) })).sort((x, y) => y.ts - x.ts);
 }
 
-export const fmtRow = (r) => `${r.done ? 'FINISHED ' : ''}${r.agent} ${r.kind}${r.ageS != null ? ` ${r.ageS}s ago` : ''}: ${clip(r.intent, 90) || "-"}${r.files?.length ? ` [${r.files.slice(0, 5).join(', ')}${r.files.length > 5 ? ', …' : ''}]` : ''}${r.status ? ` (${r.status})` : ''}`;
+export const fmtRow = (r) => `${r.done ? 'FINISHED (on main) ' : r.claim ? 'SAYS DONE, NOT ON MAIN ' : ''}${r.agent} ${r.kind}${r.ageS != null ? ` ${r.ageS}s ago` : ''}: ${clip(r.intent, 90) || "-"}${r.files?.length ? ` [${r.files.slice(0, 5).join(', ')}${r.files.length > 5 ? ', …' : ''}]` : ''}${r.status ? ` (${r.status})` : ''}`;
 
 // Per-agent state shared by the hook and the CLI (the hook's debounce, and the agent's own intent).
 export const stateDir = (env = process.env) => env.BOARD_STATE_DIR || join(homedir(), '.cache', 'qb-board');

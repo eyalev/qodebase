@@ -3,8 +3,9 @@
 //   UserPromptSubmit            post started (first 120 chars of the prompt); context = others' now-view (<= 5 lines)
 //   PreToolUse Edit|Write|MultiEdit  post editing <file> (once per file per 30 s); context = warning when another
 //                               live agent named that file in the last 10 min (once per file per 5 min)
-//   PostToolUse Bash            git commit -> post committed <subject>; git push -> post committed (status pushed)
-//   Stop                        post done
+//   PostToolUse Bash            git commit -> post committed <subject>; when that commit is on origin/main
+//                               (after any Bash command, e.g. a push) -> post landed <subject>
+//   Stop                        post done (a claim only: the others see FINISHED for landed work alone)
 // Never posts command bodies, tool output or file contents. Does nothing without BOARD_FILE / BOARD_URL.
 // It must never get in the agent's way: every failure is swallowed, and it exits 0.
 // Settings (settings.json "hooks"): command `node /path/to/board/hooks/board-hook.mjs` on UserPromptSubmit,
@@ -47,8 +48,8 @@ try {
     const intent = clip(input.prompt, 120);
     state.intent = intent; delete state.explicit; saveState();   // a new prompt = a new task
     const [, rows] = await Promise.all([post('started', intent, []), b.who({ me: agent, recent: 30 * 60_000 })]);
-    const live = rows.filter((r) => !r.done).slice(0, 5), done = rows.filter((r) => r.done).slice(0, 5);
-    if (live.length || done.length) out(ev, `Agent board (advisory, not locks):${live.length ? `\nWorking now:\n${live.map(fmtRow).join('\n')}` : ''}${done.length ? `\nFinished in the last 30 min:\n${done.map(fmtRow).join('\n')}` : ''}`);
+    const live = rows.filter((r) => !r.done && !r.claim).slice(0, 5), done = rows.filter((r) => r.done).slice(0, 5), claims = rows.filter((r) => r.claim).slice(0, 5);
+    if (live.length || done.length || claims.length) out(ev, `Agent board (advisory, not locks):${live.length ? `\nWorking now:\n${live.map(fmtRow).join('\n')}` : ''}${done.length ? `\nOn main (landed) in the last 30 min:\n${done.map(fmtRow).join('\n')}` : ''}${claims.length ? `\nSay they are done but it is NOT on main (dropped after 5 min):\n${claims.map(fmtRow).join('\n')}` : ''}`);
   } else if (ev === 'PreToolUse' && /^(Edit|Write|MultiEdit)$/.test(input.tool_name || '')) {
     const file = rel(input.tool_input?.file_path);
     if (file) {
@@ -76,9 +77,14 @@ try {
       state.lastHead = head; state.unpushed = subject; saveState();
       await post('committed', subject, git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n').filter(Boolean));
     }
-    if (/(^|[;&|(]\s*)git\s+(-\S+\s+\S+\s+)*push\b/.test(cmd) && state.unpushed && !/rejected|error|fatal/i.test(JSON.stringify(input.tool_response || '').slice(0, 4000))) {
+    // landed = the commit is on origin/main (checked, not inferred from the push's output): only that
+    // makes it FINISHED for the others (round 2: unlanded 'done' made agents skip work for good).
+    // (by subject + this clone's author among origin/main's newest commits: a rebase changes the hash, and a
+    // reset to origin/main must not count as landing the dropped commit)
+    const mine = git('config', 'user.email');
+    if (state.unpushed && mine && git('log', 'origin/main', '-n', '200', `--author=${mine}`, '--format=%s').split('\n').some((s) => clip(s, 120) === state.unpushed)) {
       const subject = state.unpushed; delete state.unpushed; saveState();
-      await post('committed', subject, [], 'pushed');
+      await post('landed', subject, git('diff-tree', '--no-commit-id', '--name-only', '-r', head).split('\n').filter(Boolean), 'on main');
     }
   } else if (ev === 'Stop') {
     await post('done', intentNow(), []);
