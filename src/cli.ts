@@ -216,11 +216,14 @@ def main(argv):
         model = 'claude-haiku-5-5'
         # No settings (so this box's own hooks do not fire inside the pass), no tools, one turn.
         c = subprocess.run(['claude', '-p', '--model', model, '--output-format', 'json', '--max-turns', '1', '--tools', '', '--setting-sources', '',
-            '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.'], input=f['prompt'], text=True, capture_output=True, timeout=300)
+            '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.'], input=f['prompt'], text=True, capture_output=True, timeout=300,
+            # Run from inside an agent's own Claude Code: its session variables must not reach the nested call.
+            env={k: x for k, x in os.environ.items() if not (k == 'CLAUDECODE' or k.startswith('CLAUDE_CODE_SSE') or k in ('CLAUDE_CODE_ENTRYPOINT', 'ANTHROPIC_MODEL'))})
         try: j = json.loads(c.stdout)
         except Exception: sys.exit(f'forq: the dedupe pass gave no answer: {(c.stderr or c.stdout)[-300:]}')
+        if j.get('is_error') or '{' not in str(j.get('result') or ''): print(f"forq: the dedupe pass answered oddly: {str(j.get('result'))[:300]}", file=sys.stderr)
         u = j.get('usage') or {}
-        r = api('POST', '/api/agent/dedupe', {'stage': 'answer', 'ids': [i['id'] for i in f['items']], 'answer': j.get('result') or '',
+        r = api('POST', '/api/agent/dedupe', {'stage': 'answer', 'ids': [i['id'] for i in f['items']], 'answer': j.get('result') or '', 'isError': bool(j.get('is_error')), 'exit': c.returncode,
             'usage': {'model': model, 'in': u.get('input_tokens', 0), 'out': u.get('output_tokens', 0), 'cr': u.get('cache_read_input_tokens', 0), 'cw': u.get('cache_creation_input_tokens', 0)}})
         pairs = r.get('pairs') or []
         print(f"{len(f['items'])} tasks, {len(pairs)} pair(s) of the same work" + (':' if pairs else ''))

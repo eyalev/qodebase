@@ -1187,7 +1187,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       const u = b.usage as { in?: number; out?: number; cr?: number; cw?: number; model?: string } | undefined;
       if (u) ctx.waitUntil(recordCost(env, slug.split('.')[0], 'claude', `${slug.replace('.', '/')}:${u.model || 'claude-haiku-5-5'}`, { usd: null, covered: false, billing: 'sub',
         tokens: { in: Number(u.in) || 0, out: Number(u.out) || 0, cw: Number(u.cw) || 0, cr: Number(u.cr) || 0 } }).catch(() => {}));
-      log('board', 'dedupe', { slug, by: name, pairs: pairs.length });
+      log('board', 'dedupe', { slug, by: name, pairs: pairs.length, ids: Array.isArray(b.ids) ? b.ids.length : null, isError: !!b.isError, exit: b.exit ?? null, answer: String(b.answer || '').slice(0, 300) });
       return json({ pairs, aliases: await L.boardAliases(pairs, name) });
     }
     return json({ error: 'stage: prompt|answer' }, 400);
