@@ -7,7 +7,9 @@ import path from 'node:path';
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const SCEN = (() => { const i = process.argv.indexOf('--scenario'); return i >= 0 ? process.argv[i + 1] : 's1'; })();
 const runs = fs.readFileSync(path.join(HERE, 'runs.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l))
-  .filter((r) => r.rep > 0 && (r.scenario || 's1') === SCEN && r.agents === ({ s1: 5, s2: 10, s3: 20, s4: 8 }[SCEN] ?? r.agents));
+  .filter((r) => r.rep > 0 && (r.scenario || 's1') === SCEN && (SCEN === 's3' || r.agents === ({ s1: 5, s2: 10, s4: 8 }[SCEN] ?? r.agents)));
+// Round 2: a 'condition' is cond + version (v2 = fixed board + no-wait + 60 turns) + AIMD + team size when not 20.
+for (const r of runs) if (SCEN === 's3' || SCEN === 's4') r.cond = `${r.cond}${r.prompt_version === 'board-ab-v2-nowait' ? ' v2' : ' v1'}${r.aimd ? ' aimd' : ''}${SCEN === 's3' && r.agents !== 20 ? ` n${r.agents}` : ''}`;
 const M = [
   ['wall_s', 'wall time (s)'], ['hidden_pass', `hidden tests (of ${{ s1: 16, s2: 30, s3: 60, s4: 16 }[SCEN]})`], ['agent_minutes', 'agent-minutes (all calls)'], ['wasted_agent_minutes', 'agent-minutes wasted (built then dropped)'], ['red_commits', 'red commits on main'],
   ['wasted_work_calls', 'wasted work (calls that built a task then dropped it)'], ['deferrals', 'deferrals (skipped before any work)'], ['cut_calls', 'calls cut at the turn cap'],
@@ -35,14 +37,17 @@ const out = { n: Object.fromEntries(conds.map((c) => [c, vals(c, 'wall_s').lengt
 for (const [k, label] of M) {
   out.measures[k] = { label };
   for (const c of conds) { const v = vals(c, k); out.measures[k][c] = { median: med(v), min: Math.min(...v), max: Math.max(...v) }; }
-  for (const c of conds.filter((c) => c !== 'A')) out.measures[k][`p_${c}_vs_A`] = mannWhitney(vals(c, k), vals('A', k));
+  const base = (c) => (conds.includes('A') ? 'A' : c.startsWith('E') ? (c.includes('v2') ? 'A v2' : 'A v1') : 'A v1');
+  for (const c of conds.filter((c) => !c.startsWith('A'))) out.measures[k][`p_${c}_vs_A`] = mannWhitney(vals(c, k), vals(base(c), k));
+  if (conds.includes('E v2') && conds.includes('E v2 aimd')) out.measures[k]['p_aimd_vs_E20'] = mannWhitney(vals('E v2 aimd', k), vals('E v2', k));
+  if (conds.includes('E v2') && conds.includes('E v2 n8')) out.measures[k]['p_n8_vs_E20'] = mannWhitney(vals('E v2 n8', k), vals('E v2', k));
   if (conds.includes('C') && conds.includes('D')) out.measures[k].p_D_vs_C = mannWhitney(vals('D', k), vals('C', k));
   if (conds.includes('D') && conds.includes('E')) out.measures[k].p_E_vs_D = mannWhitney(vals('E', k), vals('D', k));
 }
 fs.writeFileSync(path.join(HERE, SCEN === 's1' ? 'summary.json' : `summary-${SCEN}.json`), JSON.stringify(out, null, 1));
 if (process.argv.includes('--md')) {
   const fmt = (o) => (o.median == null ? '-' : `${+o.median.toFixed(o.median % 1 ? 2 : 0)} [${+o.min.toFixed(2)}–${+o.max.toFixed(2)}]`);
-  console.log(`| measure | ${conds.map((c) => `${c} (n=${out.n[c]})`).join(' | ')} | ${conds.filter((c) => c !== 'A').map((c) => `p ${c} vs A`).join(' | ')} | ${conds.includes('C') ? 'p D vs C' : 'p E vs D'} |`);
-  console.log(`|---|${conds.map(() => '---').join('|')}|${conds.filter((c) => c !== 'A').map(() => '---').join('|')}|---|`);
-  for (const [k, label] of M) console.log(`| ${label} | ${conds.map((c) => fmt(out.measures[k][c])).join(' | ')} | ${conds.filter((c) => c !== 'A').map((c) => out.measures[k][`p_${c}_vs_A`]).join(' | ')} | ${(conds.includes('C') ? out.measures[k].p_D_vs_C : out.measures[k].p_E_vs_D) ?? '-'} |`);
+  console.log(`| measure | ${conds.map((c) => `${c} (n=${out.n[c]})`).join(' | ')} | ${conds.filter((c) => !c.startsWith('A')).map((c) => `p ${c} vs A`).join(' | ')} | ${conds.includes('C') ? 'p D vs C' : SCEN === 's3' ? 'p AIMD vs E20 / n8 vs E20' : 'p E vs D'} |`);
+  console.log(`|---|${conds.map(() => '---').join('|')}|${conds.filter((c) => !c.startsWith('A')).map(() => '---').join('|')}|---|`);
+  for (const [k, label] of M) console.log(`| ${label} | ${conds.map((c) => fmt(out.measures[k][c])).join(' | ')} | ${conds.filter((c) => !c.startsWith('A')).map((c) => out.measures[k][`p_${c}_vs_A`]).join(' | ')} | ${conds.includes('C') ? out.measures[k].p_D_vs_C : SCEN === 's3' ? `${out.measures[k].p_aimd_vs_E20 ?? '-'} / ${out.measures[k].p_n8_vs_E20 ?? '-'}` : (out.measures[k].p_E_vs_D ?? '-')} |`);
 } else console.log(JSON.stringify(out, null, 1));
