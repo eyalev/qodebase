@@ -29,6 +29,13 @@ export class Board extends DurableObject {
   }
   async fetch(request) {
     const url = new URL(request.url), verb = url.pathname.split('/').pop();
+    if (verb === 'kvget') {   // E2: read KV from wherever this DO lives (placed by locationHint)
+      const k = url.searchParams.get('k'), ttl = Number(url.searchParams.get('ttl')) || undefined, t0 = Date.now();
+      const v = await this.env.BENCH_KV.get(k, ttl ? { cacheTtl: ttl } : undefined);
+      // where this DO really runs: the colo its own outbound request leaves from
+      this.colo ||= ((await (await fetch('https://www.cloudflare.com/cdn-cgi/trace')).text()).match(/colo=(\w+)/) || [])[1];
+      return json({ v, ms: Date.now() - t0, colo: this.colo });
+    }
     if (verb === 'ws') {
       if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'websocket only' }, 426);
       const [client, server] = Object.values(new WebSocketPair());
@@ -68,8 +75,10 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/') return new Response('qb-board\n');
     if (!(await authed(request, env))) return json({ error: 'unauthorized' }, 401);
-    const m = url.pathname.match(/^\/b\/([a-z0-9][a-z0-9._-]{0,63})\/(events|who|tail|ws)$/i);
-    if (m) return env.BOARD.get(env.BOARD.idFromName(m[1])).fetch(request);
+    const m = url.pathname.match(/^\/b\/([a-z0-9][a-z0-9._-]{0,63})\/(events|who|tail|ws|kvget)$/i);
+    // ?where=<locationHint> places a NEW board's DO in that region (E2 cross-location runs); later calls ignore it.
+    const where = url.searchParams.get('where');
+    if (m) return env.BOARD.get(env.BOARD.idFromName(m[1]), where ? { locationHint: where } : undefined).fetch(request);
     // ---- E2 bench: KV in the caller's colo ----
     if (url.pathname.startsWith('/bench/kv/')) {
       const k = url.searchParams.get('k') || 'k', t0 = Date.now();
