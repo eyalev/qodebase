@@ -4,7 +4,7 @@
 //   node sim/board-ab/run.mjs --cond A|B|C [--agents 5] [--minutes 25] [--rep 1]
 // Writes runs under ~/.local/share/qb9-board-ab/<run-id>/ (clones, calls.jsonl, result.json)
 // and one line per run to sim/board-ab/runs.jsonl. Hidden tests: lab-hidden/board-ab (private).
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn, execFileSync, spawnSync as require_spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -26,7 +26,7 @@ const MODEL = 'claude-haiku-5-5';
 // B and C run on the board as it was for their first reps (git 2ff8b07, frozen copy), so a later
 // board change cannot change those conditions mid-experiment; D uses the live board/ (who --recent).
 const V1 = path.join(os.homedir(), '.local/share/qb9-board-ab/board-v1/board');
-const BOARD_DIR = COND === 'D' ? path.resolve(HERE, '../../board') : V1;
+const BOARD_DIR = (COND === 'D' || COND === 'E') ? path.resolve(HERE, '../../board') : V1;
 const BOARD = path.join(BOARD_DIR, 'board.mjs');
 const HOOK = path.join(BOARD_DIR, 'hooks/board-hook.mjs');
 const HIDDEN = path.join(os.homedir(), '<lab-hidden dir>/board-ab', S.hidden);
@@ -49,6 +49,7 @@ function setup() {
   const seed = path.join(DIR, 'seed');
   fs.cpSync(path.join(HERE, S.starter), seed, { recursive: true });
   const fixed = { GIT_AUTHOR_NAME: 'board-ab', GIT_AUTHOR_EMAIL: 'lab@qodebase.app', GIT_COMMITTER_NAME: 'board-ab', GIT_COMMITTER_EMAIL: 'lab@qodebase.app', GIT_AUTHOR_DATE: '2026-10-10T00:00:00Z', GIT_COMMITTER_DATE: '2026-10-10T00:00:00Z' };
+  if (COND === 'E') dedupePass(seed);
   sh('git', ['-c', 'init.defaultBranch=main', 'init', '-q'], seed); sh('git', ['add', '-A'], seed); sh('git', ['commit', '-qm', `${SCEN === 's1' ? 'textkit' : 'todokit'} starter (board-ab ${SCEN} v1)`], seed, fixed);
   const starterSha = sh('git', ['rev-parse', 'HEAD'], seed);
   sh('git', ['clone', '-q', '--bare', seed, path.join(DIR, 'origin.git')], DIR);
@@ -58,13 +59,36 @@ function setup() {
     sh('git', ['config', 'user.name', `agent${k}`], c); sh('git', ['config', 'user.email', `agent${k}@board-ab.local`], c);
     sh('git', ['config', 'pull.rebase', 'true'], c);
   }
-  if (COND === 'B' || COND === 'C' || COND === 'D') fs.writeFileSync(path.join(DIR, 'board-settings.json'), JSON.stringify({ hooks: {
+  if (COND !== 'A') fs.writeFileSync(path.join(DIR, 'board-settings.json'), JSON.stringify({ hooks: {
     UserPromptSubmit: [{ hooks: [{ type: 'command', command: `node ${HOOK}` }] }],
     PreToolUse: [{ matcher: 'Edit|Write|MultiEdit', hooks: [{ type: 'command', command: `node ${HOOK}` }] }],
     PostToolUse: [{ matcher: 'Bash', hooks: [{ type: 'command', command: `node ${HOOK}` }] }],
     Stop: [{ hooks: [{ type: 'command', command: `node ${HOOK}` }] }],
   } }, null, 1));
   return starterSha;
+}
+
+// ---- E: one dedupe call reads the backlog once and marks likely duplicates in it ----
+// (manager, 2026-10-10: close the far-worded-duplicates gap with dedupe BEFORE work). One lean Haiku
+// call, no tools; the harness writes "(likely the same as Tx: ...)" after each paired task id.
+let DEDUPE = null;
+function dedupePass(seed) {
+  const f = path.join(seed, 'BACKLOG.md'); const backlog = fs.readFileSync(f, 'utf8');
+  const q = `Here is a project backlog. Some tasks ask for the same functionality under different names or wording. List every pair of tasks that are the same work (one of them could be a thin alias of the other). Answer with ONLY one JSON object: {"same": [["T3", "T21"], ...]}.\n\n${backlog}`;
+  const t0 = Date.now();
+  const r = require_spawnSync('claude', ['-p', '--model', MODEL, '--output-format', 'json', '--tools', '', '--max-turns', '1', '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.', '--setting-sources', '', '--strict-mcp-config'], { input: q, encoding: 'utf8', timeout: 180000, env: { ...process.env, CLAUDE_NO_HOOKS: '1' } });
+  let j = null, pairs = []; try { j = JSON.parse(r.stdout); pairs = JSON.parse(j.result.match(/\{[\s\S]*\}/)[0]).same || []; } catch {}
+  const u = j?.usage || {};
+  const usd = ((u.input_tokens || 0) * PRICE.in + (u.output_tokens || 0) * PRICE.out + (u.cache_read_input_tokens || 0) * PRICE.cacheR + (u.cache_creation_input_tokens || 0) * PRICE.cacheW) / 1e6;
+  const truth = (S.pairs || []).map(([a, , b]) => [a, b].sort().join('='));
+  const got = [...new Set(pairs.filter((p) => Array.isArray(p) && p.length === 2).map((p) => p.map(String).sort().join('=')))];
+  DEDUPE = { pairs: got, truth, correct: got.filter((p) => truth.includes(p)).length, false_pairs: got.filter((p) => !truth.includes(p)), missed: truth.filter((p) => !got.includes(p)), ms: Date.now() - t0, usd_api_equiv: +usd.toFixed(5), tokens: u };
+  let text = backlog;
+  for (const p of got) { const [a, b] = p.split('=');
+    for (const [x, y] of [[a, b], [b, a]]) text = text.replace(new RegExp(`(\\*\\*${x}\\*\\*)`), `$1 _(likely the same as ${y}: make one a thin alias of the other)_`); }
+  fs.writeFileSync(f, text);
+  fs.mkdirSync(DIR, { recursive: true }); log('events.jsonl', { event: 'dedupe', ...DEDUPE });
+  console.error(`[dedupe] ${got.join(' ')} (${DEDUPE.correct}/${truth.length} right, ${DEDUPE.false_pairs.length} wrong)`);
 }
 
 // ---- the task prompt (versioned) ----
@@ -76,7 +100,7 @@ function prompt(k) {
   const board = COND === 'C' ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who\`. After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`.\n` : '';
   // D = C, but the query also returns recently finished intents, plus one rule for same-meaning tasks
   // (manager, 2026-10-10, after the T3/T11 diagnosis: finished intents dropped out of 'who').
-  const boardD = COND === 'D' ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who --recent 30m\` (what the others are doing and what they finished in the last 30 minutes). After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`. If a task someone claimed or finished means the same as one you are about to do (even under another name or task id), make yours a one-line alias of theirs once theirs is on main, or pick another task.\n` : '';
+  const boardD = (COND === 'D' || COND === 'E') ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who --recent 30m\` (what the others are doing and what they finished in the last 30 minutes). After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`. If a task someone claimed or finished means the same as one you are about to do (even under another name or task id), make yours a one-line alias of theirs once theirs is on main, or pick another task.\n` : '';
   return `You are agent ${k} of ${N}, working at the same time as the others on this repository (${SCEN === 's1' ? 'textkit' : 'todokit'}). Each agent works in its own clone and pushes to the same origin; you cannot talk to them.${board}${boardD}
 1. Run \`git pull --rebase\` first.
 2. Read BACKLOG.md and the code on main. Pick ONE task that you believe nobody has done yet.
@@ -92,9 +116,9 @@ function callAgent(k, iter) {
     const a = ['-p', '--model', MODEL, '--output-format', 'json', '--max-turns', '40', '--permission-mode', 'acceptEdits',
       '--allowedTools', 'Read', 'Edit', 'Write', 'Grep', 'Glob', 'Bash(git:*)', 'Bash(npm test)', 'Bash(npm test:*)', 'Bash(npm run test:*)', 'Bash(node:*)', 'Bash(ls:*)', 'Bash(cat:*)',
       '--setting-sources', '', '--strict-mcp-config'];
-    if (COND === 'B' || COND === 'C' || COND === 'D') a.push('--settings', path.join(DIR, 'board-settings.json'));
+    if (COND !== 'A') a.push('--settings', path.join(DIR, 'board-settings.json'));
     const env = { ...process.env, CLAUDE_NO_HOOKS: '1' };
-    if (COND === 'B' || COND === 'C' || COND === 'D') Object.assign(env, { BOARD_AGENT: `agent${k}`, BOARD_FILE: path.join(DIR, 'board.jsonl'), BOARD_STATE_DIR: path.join(DIR, 'board-state', `agent${k}`) });
+    if (COND !== 'A') Object.assign(env, { BOARD_AGENT: `agent${k}`, BOARD_FILE: path.join(DIR, 'board.jsonl'), BOARD_STATE_DIR: path.join(DIR, 'board-state', `agent${k}`) });
     const t0 = Date.now();
     const p = spawn('claude', a, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
     let out = '', err = '';
@@ -119,6 +143,7 @@ function callAgent(k, iter) {
 
 async function agentLoop(k, deadline) {
   let iter = 0, idle = 0;
+  if (COND === 'E') await new Promise((r) => setTimeout(r, (k - 1) * 5000)); // staggered starts: agent k at (k-1)*5 s
   while (Date.now() < deadline) {
     const m = meter(); if (m != null && m >= STOP_AT) { log('events.jsonl', { event: 'meter-stop', agent: k, meter: m }); break; }
     const r = await callAgent(k, ++iter);
@@ -139,7 +164,7 @@ function scoreIn(DIRX, NX, starterSha) { const DIR = DIRX, N = NX;
   const tap = hidden.__out ?? execFileSync('node', ['--test', '--test-reporter=tap', HIDDEN], { cwd: DIR, env: { ...process.env, REPO: fin }, encoding: 'utf8' });
   hidden = {}; for (const m of tap.matchAll(/^(not ok|ok) \d+ - (T\d+)/gm)) hidden[m[2]] = m[1] === 'ok';
   // Every commit on main: who, which task, and does `npm test` pass there (red main).
-  const commits = sh('git', ['log', '--first-parent', '--reverse', '--format=%H\t%an\t%ct\t%s', `${starterSha}..HEAD`], fin).split('\n').filter(Boolean).map((l) => { const [sha, author, ct, subj] = l.split('\t'); return { sha, author, ct: +ct, subj, tasks: [...new Set(subj.match(/T\d+/g) || [])] }; });
+  const commits = sh('git', ['log', '--first-parent', '--reverse', '--format=%H\t%an\t%ct\t%s', `${starterSha}..HEAD`], fin).split('\n').filter(Boolean).map((l) => { const [sha, author, ct, subj] = l.split('\t'); return { sha, author, ct: +ct, subj, tasks: (subj.match(/^T\d+/) || []).slice(0, 1) }; }); // only the id the subject starts with: an alias commit names its twin too
   let red = 0;
   for (const c of commits) { sh('git', ['checkout', '-q', c.sha], fin); try { execFileSync('npm', ['test'], { cwd: fin, stdio: 'ignore', timeout: 120000 }); c.green = true; } catch { c.green = false; red++; } }
   sh('git', ['checkout', '-q', 'main'], fin);
@@ -184,7 +209,7 @@ const wasteOf = (calls) => { const w = calls.filter((c) => (c.status === 'skippe
 if (opt('rescore', null)) {
   const RD = opt('rescore'); const prev = JSON.parse(fs.readFileSync(path.join(RD, 'result.json'), 'utf8'));
   fs.rmSync(path.join(RD, 'final'), { recursive: true, force: true });
-  const starter = JSON.parse(fs.readFileSync(path.join(RD, 'events.jsonl'), 'utf8').split('\n')[0]).starter;
+  const starter = fs.readFileSync(path.join(RD, 'events.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).find((e) => e.event === 'start').starter;
   globalThis.__DIR = RD;
   const calls = fs.readFileSync(path.join(RD, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
   const { rebases, rebases_total, ...keep } = prev;
@@ -207,10 +232,10 @@ await Promise.all(Array.from({ length: N }, (_, i) => agentLoop(i + 1, deadline)
 const wallS = Math.round((Date.now() - t0) / 1000);
 const calls = fs.readFileSync(path.join(DIR, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const sum = (f) => calls.reduce((a, c) => a + (f(c) || 0), 0);
-const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : COND === 'D' ? sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
+const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : (COND === 'D' || COND === 'E') ? sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
   calls: calls.length, ...wasteOf(calls), pushed: calls.filter((c) => c.status === 'pushed').length, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, all_done_calls: calls.filter((c) => c.status === 'all-done').length,
   tokens: { in: sum((c) => c.tokens.in), out: sum((c) => c.tokens.out), cacheR: sum((c) => c.tokens.cacheR), cacheW: sum((c) => c.tokens.cacheW) },
-  usd_api_equiv: +sum((c) => c.usd_api_equiv).toFixed(4), usd_note: 'subscription; API-equivalent at Haiku 5.5 rates',
+  dedupe: DEDUPE, usd_api_equiv: +(sum((c) => c.usd_api_equiv) + (DEDUPE?.usd_api_equiv || 0)).toFixed(4), usd_note: 'subscription; API-equivalent at Haiku 5.5 rates',
   board_events: fs.existsSync(path.join(DIR, 'board.jsonl')) ? fs.readFileSync(path.join(DIR, 'board.jsonl'), 'utf8').split('\n').filter(Boolean).length : 0,
   ...score(starterSha) };
 fs.writeFileSync(path.join(DIR, 'result.json'), JSON.stringify(result, null, 1));

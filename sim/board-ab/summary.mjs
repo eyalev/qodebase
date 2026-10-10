@@ -37,11 +37,12 @@ for (const [k, label] of M) {
   for (const c of conds) { const v = vals(c, k); out.measures[k][c] = { median: med(v), min: Math.min(...v), max: Math.max(...v) }; }
   for (const c of conds.filter((c) => c !== 'A')) out.measures[k][`p_${c}_vs_A`] = mannWhitney(vals(c, k), vals('A', k));
   if (conds.includes('C') && conds.includes('D')) out.measures[k].p_D_vs_C = mannWhitney(vals('D', k), vals('C', k));
+  if (conds.includes('D') && conds.includes('E')) out.measures[k].p_E_vs_D = mannWhitney(vals('E', k), vals('D', k));
 }
 fs.writeFileSync(path.join(HERE, SCEN === 's1' ? 'summary.json' : `summary-${SCEN}.json`), JSON.stringify(out, null, 1));
 if (process.argv.includes('--md')) {
   const fmt = (o) => (o.median == null ? '-' : `${+o.median.toFixed(o.median % 1 ? 2 : 0)} [${+o.min.toFixed(2)}–${+o.max.toFixed(2)}]`);
-  console.log(`| measure | ${conds.map((c) => `${c} (n=${out.n[c]})`).join(' | ')} | ${conds.filter((c) => c !== 'A').map((c) => `p ${c} vs A`).join(' | ')} | p D vs C |`);
+  console.log(`| measure | ${conds.map((c) => `${c} (n=${out.n[c]})`).join(' | ')} | ${conds.filter((c) => c !== 'A').map((c) => `p ${c} vs A`).join(' | ')} | ${conds.includes('C') ? 'p D vs C' : 'p E vs D'} |`);
   console.log(`|---|${conds.map(() => '---').join('|')}|${conds.filter((c) => c !== 'A').map(() => '---').join('|')}|---|`);
-  for (const [k, label] of M) console.log(`| ${label} | ${conds.map((c) => fmt(out.measures[k][c])).join(' | ')} | ${conds.filter((c) => c !== 'A').map((c) => out.measures[k][`p_${c}_vs_A`]).join(' | ')} | ${out.measures[k].p_D_vs_C ?? '-'} |`);
+  for (const [k, label] of M) console.log(`| ${label} | ${conds.map((c) => fmt(out.measures[k][c])).join(' | ')} | ${conds.filter((c) => c !== 'A').map((c) => out.measures[k][`p_${c}_vs_A`]).join(' | ')} | ${(conds.includes('C') ? out.measures[k].p_D_vs_C : out.measures[k].p_E_vs_D) ?? '-'} |`);
 } else console.log(JSON.stringify(out, null, 1));

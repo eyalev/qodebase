@@ -1,7 +1,8 @@
 {
  "n": {
   "A": 3,
-  "D": 3
+  "D": 3,
+  "E": 3
  },
  "measures": {
   "wall_s": {
@@ -16,7 +17,14 @@
     "min": 231,
     "max": 257
    },
-   "p_D_vs_A": 0.1
+   "E": {
+    "median": 268,
+    "min": 253,
+    "max": 321
+   },
+   "p_D_vs_A": 0.1,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 0.4
   },
   "hidden_pass": {
    "label": "hidden tests (of 30)",
@@ -30,7 +38,14 @@
     "min": 30,
     "max": 30
    },
-   "p_D_vs_A": 1
+   "E": {
+    "median": 30,
+    "min": 30,
+    "max": 30
+   },
+   "p_D_vs_A": 1,
+   "p_E_vs_A": 1,
+   "p_E_vs_D": 1
   },
   "agent_minutes": {
    "label": "agent-minutes (all calls)",
@@ -44,7 +59,14 @@
     "min": 36.5,
     "max": 40.1
    },
-   "p_D_vs_A": 0.1
+   "E": {
+    "median": 38.5,
+    "min": 36,
+    "max": 44
+   },
+   "p_D_vs_A": 0.1,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 1
   },
   "wasted_agent_minutes": {
    "label": "agent-minutes wasted (built then dropped)",
@@ -58,7 +80,14 @@
     "min": 2.4,
     "max": 5.2
    },
-   "p_D_vs_A": 0.1
+   "E": {
+    "median": 4.1,
+    "min": 2.4,
+    "max": 7.1
+   },
+   "p_D_vs_A": 0.1,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 1
   },
   "red_commits": {
    "label": "red commits on main",
@@ -72,7 +101,14 @@
     "min": 0,
     "max": 0
    },
-   "p_D_vs_A": 1
+   "E": {
+    "median": 3,
+    "min": 0,
+    "max": 4
+   },
+   "p_D_vs_A": 1,
+   "p_E_vs_A": 0.4,
+   "p_E_vs_D": 0.4
   },
   "wasted_work_calls": {
    "label": "wasted work (calls that built a task then dropped it)",
@@ -86,7 +122,14 @@
     "min": 3,
     "max": 5
    },
-   "p_D_vs_A": 0.1
+   "E": {
+    "median": 6,
+    "min": 4,
+    "max": 9
+   },
+   "p_D_vs_A": 0.1,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 0.4
   },
   "deferrals": {
    "label": "deferrals (skipped before any work)",
@@ -100,7 +143,14 @@
     "min": 4,
     "max": 13
    },
-   "p_D_vs_A": 0.1
+   "E": {
+    "median": 5,
+    "min": 3,
+    "max": 18
+   },
+   "p_D_vs_A": 0.1,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 1
   },
   "dup_pairs_both_separate": {
    "label": "duplicate pairs built twice (of 5)",
@@ -114,7 +164,14 @@
     "min": 3,
     "max": 4
    },
-   "p_D_vs_A": 1
+   "E": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "p_D_vs_A": 1,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 0.1
   },
   "same_task_twice_n": {
    "label": "same task landed twice",
@@ -126,9 +183,16 @@
    "D": {
     "median": 0,
     "min": 0,
-    "max": 2
+    "max": 1
    },
-   "p_D_vs_A": 1
+   "E": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "p_D_vs_A": 1,
+   "p_E_vs_A": 1,
+   "p_E_vs_D": 1
   },
   "conflicts": {
    "label": "merge conflicts resolved",
@@ -142,7 +206,14 @@
     "min": 81,
     "max": 95
    },
-   "p_D_vs_A": 0.2
+   "E": {
+    "median": 93,
+    "min": 91,
+    "max": 97
+   },
+   "p_D_vs_A": 0.2,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 1
   },
   "rebase_aborts": {
    "label": "rebases aborted",
@@ -156,7 +227,14 @@
     "min": 1,
     "max": 6
    },
-   "p_D_vs_A": 0.1
+   "E": {
+    "median": 5,
+    "min": 3,
+    "max": 7
+   },
+   "p_D_vs_A": 0.1,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 0.4
   },
   "resets_to_origin": {
    "label": "resets to origin/main",
@@ -170,7 +248,14 @@
     "min": 1,
     "max": 6
    },
-   "p_D_vs_A": 0.1
+   "E": {
+    "median": 5,
+    "min": 4,
+    "max": 5
+   },
+   "p_D_vs_A": 0.1,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 0.9
   },
   "rejected_push_recoveries": {
    "label": "rejected pushes recovered",
@@ -184,7 +269,14 @@
     "min": 26,
     "max": 29
    },
-   "p_D_vs_A": 0.1
+   "E": {
+    "median": 33,
+    "min": 32,
+    "max": 37
+   },
+   "p_D_vs_A": 0.1,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 0.1
   },
   "calls": {
    "label": "agent calls",
@@ -198,7 +290,14 @@
     "min": 49,
     "max": 57
    },
-   "p_D_vs_A": 0.4
+   "E": {
+    "median": 53,
+    "min": 50,
+    "max": 58
+   },
+   "p_D_vs_A": 0.4,
+   "p_E_vs_A": 0.5,
+   "p_E_vs_D": 0.7
   },
   "usd_api_equiv": {
    "label": "API-equiv $ (Haiku 5.5)",
@@ -212,7 +311,14 @@
     "min": 0.6496,
     "max": 0.7348
    },
-   "p_D_vs_A": 0.1
+   "E": {
+    "median": 0.707,
+    "min": 0.6516,
+    "max": 0.7758
+   },
+   "p_D_vs_A": 0.1,
+   "p_E_vs_A": 0.1,
+   "p_E_vs_D": 0.7
   }
  }
 }

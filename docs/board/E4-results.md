@@ -86,23 +86,23 @@ T3->T8->T11, T7->T9, T6->T12, T1->T16, hot files as before. Hidden tests: lab-hi
 (reference 30/30, starter 0/30). A pair counts as built twice when both tasks pass and neither module
 imports the other. `node sim/board-ab/summary.mjs --scenario s2 --md`:
 
-| measure | A (n=3) | D (n=3) | p D vs A | p D vs C |
-|---|---|---|---|---|
-| wall time (s) | 354 [350–355] | 254 [231–257] | 0.1 | - |
-| hidden tests (of 30) | 30 [30–30] | 30 [30–30] | 1 | - |
-| agent-minutes (all calls) | 55.2 [54.4–56.6] | 38.4 [36.5–40.1] | 0.1 | - |
-| agent-minutes wasted (built then dropped) | 8.7 [8.2–10.6] | 5.2 [2.4–5.2] | 0.1 | - |
-| red commits on main | 0 [0–1] | 0 [0–0] | 1 | - |
-| wasted work (calls that built a task then dropped it) | 11 [10–14] | 5 [3–5] | 0.1 | - |
-| deferrals (skipped before any work) | 0 [0–0] | 7 [4–13] | 0.1 | - |
-| duplicate pairs built twice (of 5) | 4 [3–4] | 4 [3–4] | 1 | - |
-| same task landed twice | 0 [0–1] | 0 [0–2] | 1 | - |
-| merge conflicts resolved | 76 [73–82] | 94 [81–95] | 0.2 | - |
-| rebases aborted | 73 [71–81] | 2 [1–6] | 0.1 | - |
-| resets to origin/main | 84 [75–91] | 4 [1–6] | 0.1 | - |
-| rejected pushes recovered | 103 [98–105] | 28 [26–29] | 0.1 | - |
-| agent calls | 54 [53–59] | 51 [49–57] | 0.4 | - |
-| API-equiv $ (Haiku 5.5) | 0.95 [0.93–0.99] | 0.67 [0.65–0.73] | 0.1 | - |
+| measure | A (n=3) | D (n=3) | E (n=3) | p D vs A | p E vs A | p E vs D |
+|---|---|---|---|---|---|---|
+| wall time (s) | 354 [350–355] | 254 [231–257] | 268 [253–321] | 0.1 | 0.1 | 0.4 |
+| hidden tests (of 30) | 30 [30–30] | 30 [30–30] | 30 [30–30] | 1 | 1 | 1 |
+| agent-minutes (all calls) | 55.2 [54.4–56.6] | 38.4 [36.5–40.1] | 38.5 [36–44] | 0.1 | 0.1 | 1 |
+| agent-minutes wasted (built then dropped) | 8.7 [8.2–10.6] | 5.2 [2.4–5.2] | 4.1 [2.4–7.1] | 0.1 | 0.1 | 1 |
+| red commits on main | 0 [0–1] | 0 [0–0] | 3 [0–4] | 1 | 0.4 | 0.4 |
+| wasted work (calls that built a task then dropped it) | 11 [10–14] | 5 [3–5] | 6 [4–9] | 0.1 | 0.1 | 0.4 |
+| deferrals (skipped before any work) | 0 [0–0] | 7 [4–13] | 5 [3–18] | 0.1 | 0.1 | 1 |
+| duplicate pairs built twice (of 5) | 4 [3–4] | 4 [3–4] | 0 [0–0] | 1 | 0.1 | 0.1 |
+| same task landed twice | 0 [0–1] | 0 [0–1] | 0 [0–1] | 1 | 1 | 1 |
+| merge conflicts resolved | 76 [73–82] | 94 [81–95] | 93 [91–97] | 0.2 | 0.1 | 1 |
+| rebases aborted | 73 [71–81] | 2 [1–6] | 5 [3–7] | 0.1 | 0.1 | 0.4 |
+| resets to origin/main | 84 [75–91] | 4 [1–6] | 5 [4–5] | 0.1 | 0.1 | 0.9 |
+| rejected pushes recovered | 103 [98–105] | 28 [26–29] | 33 [32–37] | 0.1 | 0.1 | 0.1 |
+| agent calls | 54 [53–59] | 51 [49–57] | 53 [50–58] | 0.4 | 0.5 | 0.7 |
+| API-equiv $ (Haiku 5.5) | 0.95 [0.93–0.99] | 0.67 [0.65–0.73] | 0.71 [0.65–0.78] | 0.1 | 0.1 | 0.7 |
 
 With 3 vs 3, p = 0.1 is the smallest an exact two-sided Mann–Whitney can give: every measure below with
 p = 0.1 separated completely (all 3 D runs better than all 3 A runs).
@@ -130,5 +130,31 @@ That points to dedupe *before* work: cluster the backlog into work units once (C
 work unit", docs/openclaw/FINDINGS.md) instead of asking each agent to judge, and staggered starts so the
 first claims are visible.
 
-**Spend (both scenarios):** 28 runs incl. 2 smoke runs, $10.89 API-equivalent on the subscription
-(cap $16); weekly meter 71% -> 73%.
+## E: dedupe pass before work + staggered starts (scenario 2, 3 runs, 2026-10-10)
+
+**E = D + (1)** one Haiku call (lean harness, no tools) reads `BACKLOG.md` once per run and returns the
+"same work" pairs; the harness marks each paired task in the backlog the agents get:
+`**T21** _(likely the same as T3: make one a thin alias of the other)_`; **(2)** staggered starts, agent k at
+(k−1)×5 s. Everything else as D (hooks, `who --recent 30m`, the same-meaning rule).
+
+- **The dedupe call got the 5 pairs right in all 3 runs (5/5 correct, 0 wrong, 0 missed)**, plus the smoke
+  run: ~$0.002 and a few seconds per run.
+- **Duplicate pairs built twice: 0 of 5 in all 3 E runs vs 4 [3–4] in D** (p = 0.1, complete separation).
+  The twins land as thin aliases ("T21: add hashtag helpers as aliases of the T3 tag helpers").
+- Wall time 268 s [253–321], agent-minutes 38.5, API-equiv $0.71: same as D (p 0.4–1). The dedupe saves
+  duplicated code, not much time, because a duplicate here costs ~30 s of a Haiku call.
+- **Watch: red commits 3 [0–4] in E vs 0 in D** (p = 0.4, not significant): all 7 are pushes with
+  unresolved conflict markers in `src/index.js` (E r1: 4, r2: 3, r3: 0; A: 1 in 9 runs-worth, D: 0), fixed by
+  a later commit. A plausible cause, not verified: an alias task now lands right after its twin and edits the
+  next export line in the same hot file. A merge gate that runs the tests (qodebase's landing queue) would
+  stop these; plain `git push` does not.
+- Metric fix during E: "same task landed twice" counted every T-id in a commit subject, so an alias
+  commit ("T19 … aliases of T2") counted as a second T2. It now counts only the id the subject starts with;
+  all scenario-2 runs were rescored (A, D, E are all 0 [0–1]).
+
+**So the full recipe at scale is:** intent on the board + finished work in the query (D) for thrash, and a
+backlog dedupe pass before work (E) for duplicates under different names. Neither changes quality here;
+both pay off as the team grows.
+
+**Spend (all of E4):** 32 runs incl. 3 smoke runs, $13.04 API-equivalent on the subscription (cap $15);
+weekly meter 71% -> 73%.
