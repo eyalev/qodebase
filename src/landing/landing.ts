@@ -823,7 +823,9 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
         replayed: Math.max(today.filter((x) => x[2]).length, changes.filter((c) => c.landedAt && now - c.landedAt < DAY && c.landing?.how && c.landing.how !== 'merged').length),
         // ^ the higher of a running counter and the kept records: the records alone (newest 150)
         //   went DOWN mid-run (qb7 2026-10-08); the counters alone miss landings before 2026-10-08 02:30.
-        medianAskToLandS: lat.length ? Math.round(lat[Math.floor(lat.length / 2)]) : null },
+        medianAskToLandS: lat.length ? Math.round(lat[Math.floor(lat.length / 2)]) : null,
+        // every landing's time (last 300): one change can land several times (self-picked backlogs, the lab runner)
+        landTimes: (m.landings || []).slice(-300).map(([t]) => t) },
     };
   }
 

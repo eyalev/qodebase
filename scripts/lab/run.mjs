@@ -226,18 +226,21 @@ while (!COLLECT) {
   view = await api('GET', `/api/p/eyal/${name}/landing`).catch((e) => { log('poll_failed', { err: String(e) }); return view; });
   const p = await api('GET', `/api/p/eyal/${name}`).catch(() => null);
   if (!view) continue;
-  const sig = JSON.stringify(view.changes.map((c) => [c.id, c.state, c.events.length]));
+  // Self-picked backlogs: an agent doing its next task stays 'merged' in the Project, so ask each box
+  // whether its Claude is busy (the first W4c run settled with agents mid-task, 2026-10-10).
+  const busy = selfPick ? (await Promise.all((p?.agents || []).map((a) => api('GET', `/api/agents/${a.id}/state`).then((s) => !!s?.awake && /busy|thinking|working|running|tool|compact|esc to interrupt/i.test(s.cc || '')).catch(() => false)))).filter(Boolean).length : 0;
+  const sig = JSON.stringify([view.changes.map((c) => [c.id, c.state, c.events.length]), view.stats?.landedToday, busy]);
   if (sig !== lastSig) { lastSig = sig; lastChangeAt = Date.now(); }
   const active = view.changes.filter((c) => ACTIVE.includes(c.state)).length;
   const agentsWorking = (p?.agents || []).filter((a) => a.state === 'working').length;
-  log('poll', { project: slug, changes: view.changes.length, active, agentsWorking, landed: view.stats?.landedToday, spent: view.budget?.spent });
+  log('poll', { project: slug, changes: view.changes.length, active, agentsWorking, busy, landed: view.stats?.landedToday, spent: view.budget?.spent });
   if (view.budget?.halted) { status = 'stopped-budget'; break; }
   const mNow = meterStop != null ? meter() : null;
   if (mNow && mNow.weekly >= meterStop) { log('meter_stop', { weekly: mNow.weekly, meterStop }); status = 'stopped-budget'; break; }
   if (Date.now() > deadline) { status = 'timeout'; break; }
   // Settled: something landed, nothing active, no agent working, and no change for 3 minutes
   // (a router may still start a late agent; a bounced change may still be fixed).
-  if (view.changes.length && active === 0 && agentsWorking === 0 && Date.now() - lastChangeAt > 3 * 60_000) break;
+  if (view.changes.length && active === 0 && agentsWorking === 0 && busy === 0 && Date.now() - lastChangeAt > 3 * 60_000) break;
 }
 
 // ---- stop everything, collect ------------------------------------------------------------------
@@ -320,7 +323,8 @@ const tasks = view.changes.map((c) => ({ id: c.id, needs: c.needs || [], role: '
   pushAt: ev(c, 'pushed')[0]?.t ?? null, landAt: c.landedAt, tries: ev(c, 'pushed').length || 0, files: (c.files || []).length,
   how: c.state === 'landed' ? ({ merged: 'merged', 'replayed-handler': 'handler', 'replayed-llm': 'llm', lead: 'lead' }[c.landing?.how] || 'merged') : 'bounced' }));
 const landed = view.changes.filter((c) => c.state === 'landed');
-const lands = landed.map((c) => c.landedAt).sort((a, b) => a - b);
+// Self-picked backlogs land several tasks per change: every landing's time, from Landing's own counter.
+const lands = (selfPick && view.stats?.landTimes ? view.stats.landTimes.filter((t) => t >= askAt) : landed.map((c) => c.landedAt)).sort((a, b) => a - b);
 const counts = { tasksPlanned: view.changes.length, tasksLanded: landed.length,
   // self-picked backlogs: one agent lands several tasks in turn (each landing counts)
   ...(selfPick ? { landings: view.stats?.landedToday ?? null } : {}), dupIntents: 0,
