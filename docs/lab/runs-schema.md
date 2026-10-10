@@ -47,7 +47,11 @@ blocks are ms epoch too (subtract `timings.askAt` for "seconds from the request"
   // private repo, never in this one, never in a box). score 0-100 = 60 x hidden pass rate + 20 x floor
   // (build/typecheck/ownTests a third each) + 20 x judgeScore/10; no judge: the other 80 rescaled to 100.
   "quality": { "scorer": "1", "score": 0, "hiddenPass": 0, "hiddenTotal": 0, "failed": [], "build": true, "typecheck": true,
-               "ownTests": true, "judgeScore": 0, "judgeModel": "", "notes": "" },
+               "ownTests": true, "judgeScore": 0, "judgeModel": "", "notes": "",
+               // board scenarios only (backlog, two-teams; no judge there): the five far-worded duplicate
+               // pairs. builtTwice = both tasks pass their hidden test and neither module imports the other
+               // (qb9's rule); aliased = both pass and one imports the other. rows: one per pair.
+               "duplicates": { "pairs": 5, "builtTwice": 0, "aliased": 0, "rows": [], "rule": "" } },
   "links": { "replay": "https://qodebase.app/p/eyal/<id>/work?replay=4", "app": "https://<id>--eyal.ttyview.dev/", "repo": "https://qodebase.app/p/eyal/<id>" },
   "notes": ""
 }
