@@ -117,3 +117,30 @@ test('forq push: force-pushes an agent fork, refuses the router', async () => {
     assert.match(rr.err, /for agents on their own fork/);
   } finally { t.close(); }
 });
+
+test('forq sync-main: conflict says forq skip; forq skip drops the duplicate commit and pushes; a half-done rebase is aborted first', async () => {
+  const t = await setup((c) => (c.url === '/api/agent/main-info' ? { remote: join(t.root, 'main.git'), token: 'x', branch: 'main' } : {}));
+  try {
+    const g = (cwd, ...a) => execFileSync('git', [...ID, ...a], { cwd, encoding: 'utf8' }).trim();
+    const main = join(t.root, 'main.git'), fork = join(t.root, 'fork.git');
+    g(t.root, 'init', '-q', '--bare', main); g(t.root, 'init', '-q', '--bare', fork);
+    g(t.repo, 'remote', 'add', 'origin', fork);
+    writeFileSync(join(t.repo, 'dates.js'), 'base\n'); g(t.repo, 'add', '-A'); g(t.repo, 'commit', '-qm', 'seed');
+    g(t.repo, 'push', '-q', main, 'HEAD:main'); g(t.repo, 'push', '-q', 'origin', 'HEAD:main');
+    writeFileSync(join(t.repo, 'dates.js'), 'base\nparseDate = mine\n'); g(t.repo, 'commit', '-qam', 'T1 dates (mine)');
+    // another agent's T1 landed first, written differently
+    const w = join(t.root, 'w'); g(t.root, 'clone', '-q', main, w);
+    writeFileSync(join(w, 'dates.js'), 'base\nparseDate = theirs\n'); g(w, 'commit', '-qam', 'T1 dates (theirs)'); g(w, 'push', '-q', 'origin', 'HEAD:main');
+    const r = await t.forq(['sync-main']);
+    assert.notEqual(r.code, 0);
+    assert.match(r.err, /run: forq skip/);
+    // an earlier half-done rebase does not block a new sync-main: it is aborted and redone
+    const r2 = await t.forq(['sync-main']);
+    assert.match(r2.err, /run: forq skip/);
+    const s = await t.forq(['skip']);
+    assert.equal(s.code, 0, s.err);
+    assert.match(s.out, /dropped 1 commit/);
+    assert.equal(g(fork, 'log', '-1', '--format=%s', 'main'), 'T1 dates (theirs)');
+    assert.equal((await t.forq(['skip'])).code, 1, 'no rebase in progress');
+  } finally { t.close(); }
+});

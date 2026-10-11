@@ -15,6 +15,8 @@ export const FORQ_CLI = String.raw`#!/usr/bin/env python3
   forq merge <agent-id>                         merge an agent's fork into main (router); on projects
                                                 with the merge queue it queues the change instead
   forq sync-main                                rebase your work on the latest main (agents)
+  forq skip                                     during sync-main conflicts: drop your commit when main
+                                                already has its task, and go on
   forq push                                     push your work to your own fork (agents); after a
                                                 sync-main its history is rewritten, and this pushes anyway
   forq fetch-agent <agent-id>                   fetch an agent's work to review it (reviewer)
@@ -120,6 +122,27 @@ def dedupe_env():
         if p.returncode == 0 and p.stdout.startswith(k + '='): env[k] = p.stdout.strip()[len(k) + 1:]
     return env
 
+CONFLICT_MSG = ('forq: conflicts while rebasing on main. If main already has this commit\'s task (another change landed it), '
+    'run: forq skip (it drops that commit and goes on; your fork is yours alone, no approval needed). Otherwise resolve them '
+    'keeping BOTH main\'s changes and your intent, then: git add -A && git rebase --continue && forq push && forq status pushed "redone on the latest main"')
+
+def rebasing():
+    return os.path.isdir(os.path.join(REPO, '.git', 'rebase-merge')) or os.path.isdir(os.path.join(REPO, '.git', 'rebase-apply'))
+
+def on_main(commit, mref):
+    """Does main already contain this commit's change? Its diff, reversed, applies cleanly to main's tree."""
+    if git('rev-parse', '-q', '--verify', commit + '^', check=False).returncode: return False
+    patch = git('diff', '--binary', commit + '^', commit, check=False).stdout
+    if not patch.strip(): return True
+    idx = os.path.join(REPO, '.git', 'forq-onmain.idx')
+    env = {**os.environ, 'GIT_INDEX_FILE': idx}
+    try:
+        if subprocess.run(['git', 'read-tree', mref], cwd=REPO, env=env, capture_output=True).returncode: return False
+        return subprocess.run(['git', 'apply', '--cached', '--check', '-R'], cwd=REPO, env=env, input=patch, text=True, capture_output=True).returncode == 0
+    finally:
+        try: os.remove(idx)
+        except OSError: pass
+
 def git(*a, check=True):
     p = subprocess.run(['git', *a], cwd=REPO, text=True, capture_output=True)
     if check and p.returncode: sys.exit(f'forq: git {" ".join(a[:2])} failed:\n{p.stdout}{p.stderr}')
@@ -190,11 +213,35 @@ def main(argv):
         auth = f"http.extraHeader=Authorization: Bearer {f['token']}"
         br = f.get('branch') or 'main'
         git('-c', auth, 'fetch', '-q', f['remote'], f'+refs/heads/{br}:refs/remotes/main/{br}')
-        r = git('rebase', f'refs/remotes/main/{br}', check=False)
+        mref = f'refs/remotes/main/{br}'
+        # A rebase left half-done by an earlier sync-main is aborted first (agents stopped there, waiting for a
+        # person to run git rebase --skip: W4c orders 13 and 9).
+        if rebasing(): git('rebase', '--abort', check=False)
+        r = git('rebase', mref, check=False)
+        skipped = []
+        # A commit whose change main already contains (it landed under another commit, or another agent did the
+        # same task) is skipped here: its own diff reverses cleanly on main.
+        while r.returncode and rebasing() and len(skipped) < 50:
+            cur = git('rev-parse', 'REBASE_HEAD', check=False).stdout.strip()
+            if not cur or not on_main(cur, mref): break
+            skipped.append(cur[:7]); r = git('rebase', '--skip', check=False)
+        if skipped: print(f"skipped {len(skipped)} commit(s) main already has: {', '.join(skipped)}")
         if r.returncode:
-            sys.exit(f'forq: conflicts while rebasing on main. Resolve them keeping BOTH main\'s changes and your intent (if main already has this commit\'s work, git rebase --skip is fine: it is your own fork, no approval needed), then: git add -A && git rebase --continue && forq push && forq status pushed "redone on the latest main"\n{r.stdout}{r.stderr}')
+            sys.exit(CONFLICT_MSG + f'\n{r.stdout}{r.stderr}')
         git('push', '-q', '-f', 'origin', 'HEAD')
         print(f'rebased on main ({br}) and pushed. Run the tests, then: forq status pushed "redone on the latest main"')
+    elif v == 'skip':
+        # The agent's own call: main already has this commit's task (another change landed it), so drop it.
+        if not rebasing(): sys.exit('forq: no rebase in progress (run forq sync-main)')
+        mref = git('for-each-ref', '--format=%(refname)', 'refs/remotes/main/', check=False).stdout.split('\n')[0].strip()
+        r = git('rebase', '--skip', check=False); n = 1
+        while r.returncode and rebasing() and n < 50:
+            cur = git('rev-parse', 'REBASE_HEAD', check=False).stdout.strip()
+            if not cur or not mref or not on_main(cur, mref): break
+            n += 1; r = git('rebase', '--skip', check=False)
+        if r.returncode: sys.exit(CONFLICT_MSG + f'\n{r.stdout}{r.stderr}')
+        git('push', '-q', '-f', 'origin', 'HEAD')
+        print(f'dropped {n} commit(s) main already has; rebased on main and pushed. If nothing of yours is left, your task is already on main: forq status pushed "already on main"')
     elif v == 'push':
         # An agent's fork is its own: after sync-main (a rebase) a plain push is refused and agents would not
         # force-push without asking, so the run stalled with 'blocked' agents (board W4c r1d, 2026-10-10).
