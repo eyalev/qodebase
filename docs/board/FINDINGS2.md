@@ -76,6 +76,19 @@ aliased all 5 twins themselves; the sim expected ~4 built twice). Plain git: the
 this pair (+7% wall, 2x cost, 30 vs 17 bounces) but hidden 87.5 -> 100. Both plain-git runs were ~3.5x faster than
 predicted. Rounds 2-3 decide; round 3 may wait for the weekly reset (Oct 12 13:00 UTC).
 
+Round 2 (same cells; fixes between rounds applied to both conditions: merge job closes a redone duplicate as "already
+on main", settle uses "busy" only, refused claims post "gave-up"):
+
+| cell | wall off -> on | hidden off / on | pairs twice off -> on | API-equiv $ off -> on | bounces off -> on |
+|---|---|---|---|---|---|
+| backlog, land by intent | 980 -> 435 s | 100 / 100 | 0 -> 0 | 1.08 -> 1.32 | 5 -> 0 |
+| two teams | 852 -> 472 s | 100 / 100 | 4 -> 0 | 1.80 -> 1.60 | 5 -> 0 |
+| backlog, plain git | 1256 -> 1141 s | 100 / 97.5 | 1 -> 0 | 5.11 -> 4.74 | 29 -> 27 |
+
+Two rounds (n=2, no p-values yet): two teams: duplicates 4,4 -> 0,0 and wall -42%; backlog under land by intent:
+wall -41%, bounces 3,5 -> 0,0, no duplicate win (agents without the board aliased the twins themselves); plain git:
+about even on time, cost noisy. Round 3 running.
+
 ## 4. Recommendation (to be confirmed by section 3)
 - Ship the board as a qodebase feature, on by default for projects with more than ~4 agents or more than one
   planner/team. Its unique value inside qodebase is the cross-team duplicate check and the "who is on this file" view;
