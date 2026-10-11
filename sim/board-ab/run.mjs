@@ -47,7 +47,7 @@ const PROJECT = SCEN === 's1' ? 'textkit' : (SCEN === 's6' || SCEN === 's7') ? '
 if (SCEN === 's3') { const paired = new Set(S.pairs.flatMap(([a, , b]) => [a, b])); S.intents = [...S.pairs.map(([a, , b]) => [a, b]), ...Array.from({ length: 60 }, (_, i) => `T${i + 1}`).filter((t) => !paired.has(t)).map((t) => [t])]; }
 // E's staggered start: agent k starts at (k-1) x STAGGER_MS. 5 s in E4; 1 s from W3a on (manager: keep the
 // total stagger ~20 s at 20 agents so E is not charged for the stagger). Recorded per run as stagger_s.
-const STAGGER_MS = +opt('stagger-ms', SCEN === 's3' ? 1000 : 5000);
+const STAGGER_MS = +opt('stagger-ms', ['s3', 's6', 's7'].includes(SCEN) ? 1000 : 5000);
 const MODEL = { haiku: 'claude-haiku-5-5', sonnet: 'claude-sonnet-5-5' }[opt('model', 'haiku')];
 const MAX_TURNS = opt('max-turns', SCEN === 's5' ? '150' : MODEL.includes('sonnet') ? '80' : '40');
 // One call's hard limit: 12 min, 30 min for s5's library-sized tasks.
