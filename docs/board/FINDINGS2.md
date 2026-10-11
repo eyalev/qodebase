@@ -15,7 +15,9 @@ Round 1: `FINDINGS.md`. Plan: `PLAN2.md`. Data: `E6-results.md` (local), `public
   | 20 Haiku, 60 tasks | -24% | -23% | -16% | 9 -> 0 (of 10) |
   | 8 Sonnet, 16 bigger tasks | -31% | -36% | -27% | ~0 either way |
 
-  Every difference above reached p = 0.1, the floor for 3 vs 3 (no overlap between conditions).
+  Each row: no overlap between conditions (p = 0.1, the floor for 3 vs 3; not significant on its own). The same
+  direction with no overlap in four separate setups (10 Haiku, 20 Haiku, 8 Sonnet, Cloudflare two-teams) gives a
+  combined p ~ 0.02 (Fisher). Hidden tests are at ceiling, so "equal quality" means no difference detected.
 - **With Haiku the win is fewer duplicates and less git fighting; with Sonnet it is only less git fighting.** Sonnet
   recognised far-worded twin tasks by itself (0-1 of 4 built twice with no board). Git thrash fell 4-20x in every test
   (Sonnet: rejected pushes 43 -> 9, aborted rebases 21 -> 1).
@@ -110,8 +112,8 @@ wall -41%, bounces 3,5 -> 0,0, no duplicate win (agents without the board aliase
 about even on time, cost noisy. Round 3 running.
 
 ## 4. Recommendation
-- Ship the board as a qodebase feature, on by default for projects with more than ~4 agents or more than one
-  planner/team. Inside qodebase it pays most with more than one team or planner on a repo (duplicates gone, -40% wall,
+- Ship the board as a qodebase feature, on for projects with more than one
+  planner/team (where it measurably helped); elsewhere opt-in until the ablation (section 5) says more. Inside qodebase it pays most with more than one team or planner on a repo (duplicates gone, -40% wall,
   -22% cost) and speeds up a shared self-picked list (-46% wall). Open question: locally, with agents pushing to
   main with plain git, it cut time 24-31%; qodebase's plain-git policy showed no difference with 6 agents (its bounces
   are rebase conflicts the board does not touch). Team size and agent count likely matter; not yet tested there.
@@ -122,3 +124,29 @@ about even on time, cost noisy. Round 3 running.
 ## Spend (round 2, API-equivalent on the subscription)
 Local: 20-agent v1+v2 ~$35, congestion control $9.54, Sonnet $38.14. Cloudflare: see section 3. Weekly meter 73% ->
 82% by 21:30 UTC (stop 87%). Real money: Cloudflare boxes, a few dollars (cap $30).
+
+## 5. Adversarial review (2026-10-11) and what it changes
+A separate reviewer agent attacked this work; the manager verified the key points against code and raw runs.
+- **The tested thing is a bundle.** The board arm also got an upfront dedupe call that annotates the task list
+  (`sim/board-ab/run.mjs` ~l.130), a 1 s stagger and extra prompt lines (same-meaning rule, no-wait, tie-break).
+  The duplicate win comes from the dedupe pass (round 1: D without it still built 4 of 5 twice). Name it
+  "board + upfront duplicate check" until the ablation separates them.
+- **Mechanism.** In s3 v2, 32.8 of the 38.9 agent-minutes saved (~85%) were built-then-dropped work: agents stopped
+  building tasks someone else was already building. Merge conflicts resolved rose slightly (260 -> 279; s4 28 -> 39);
+  what fell were aborts and resets. "Less git fighting" was the wrong name for it.
+- **Baseline.** The no-board prompt has no task-split rule. A static split (agent k takes every Nth task) or an atomic
+  claim-next was not tested. Ablation queued first after the Oct 12 reset: s3 x3, arms A, A + dedupe-annotated list +
+  stagger + same prompt minus board, A + static split, E.
+- **Forking paths.** v2/v3 were tuned on s3 after v1 lost; s4 (Sonnet) is the only partly out-of-sample check.
+  E v1 r3 (202610101804-s3-E-n20-r3) already ran on board 2cdf4e6 (finished = landed) and still lost 3 tasks at
+  731 s, so the board fix alone did not cure v1: the no-wait line and the 60-turn cap mattered too. W7's fixed-20
+  arm (2cdf4e6) and its AIMD/fixed-8 arms (0180d50) were not interleaved; "identical code" was too strong.
+- **Cloudflare.** Excluded tries: 3 board-off, 1 board-on, each for a bug found while running. Under plain git, no
+  difference. Hence "on for multi-team projects", not "on by default".
+- **Prior art missed:** CooperBench (arXiv 2601.13295, ICLR 2026), real coding agents ~30% less successful when
+  cooperating. Added to prior-art.md.
+- **Implementation (qb6, after the reset):** task-id regex also matches ES2022/UTF8/SHA256; any agent can post alias
+  pairs; slow agents lose claims after 10 min silent; consider an atomic `forq next` in the Landing DO. The local
+  experiment hook posted the first 120 chars of the prompt as "started" (fix queued).
+- **Costs:** relative comparisons hold; absolute API-equivalent $ are understated ~10-30% where single requests
+  exceed 100k prompt tokens (similar share in both arms).
