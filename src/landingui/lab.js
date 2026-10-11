@@ -426,6 +426,55 @@
         : `<p class="dim">No real runs of this job yet. The simulation picks the setups worth running; they appear here as they finish.</p>`}
     </section>`;
   }
+  // ---- Agent board A/B (stage 4, docs/board/w4c-results.md): board off vs on, per setup ----------
+  // Exact two-sided Mann-Whitney for small samples (3 vs 3 -> smallest p 0.1).
+  function mwP(a, b) {
+    const all = [...a, ...b], n = a.length, U = (xs, ys) => xs.reduce((s, x) => s + ys.reduce((t, y) => t + (x > y ? 1 : x === y ? 0.5 : 0), 0), 0);
+    const u0 = Math.min(U(a, b), U(b, a));
+    let tot = 0, ext = 0;
+    const idx = all.map((_, i) => i);
+    const comb = (start, pick) => { if (pick.length === n) { const A = pick.map((i) => all[i]), B = idx.filter((i) => !pick.includes(i)).map((i) => all[i]); tot++; if (Math.min(U(A, B), U(B, A)) <= u0 + 1e-9) ext++; return; } for (let i = start; i < all.length; i++) comb(i + 1, [...pick, i]); };
+    comb(0, []);
+    return { p: ext / tot, u: u0, separated: u0 === 0 };
+  }
+  function boardABView() {
+    const rs = RUNS.filter((r) => r.stage === 4 && !r.excluded && r.variant && 'board' in r.variant);
+    if (!rs.length) return '';
+    const cells = new Map();
+    for (const r of rs) { const k = `${r.scenario}|${r.variant.policy}`; if (!cells.has(k)) cells.set(k, { scenario: r.scenario, policy: r.variant.policy, off: [], on: [] }); cells.get(k)[r.variant.board ? 'on' : 'off'].push(r); }
+    const label = (c) => `${c.scenario === 'two-teams' ? 'Two teams, one repo' : 'One shared issue list'}${c.policy === 'github' ? ', plain git (GitHub-style)' : ''}`;
+    const twice = (r) => r.quality?.duplicates?.builtTwice;
+    const pct = (a, b) => `${b < a ? '−' : '+'}${Math.abs(Math.round((1 - b / a) * 100))}%`;
+    const rows = [...cells.values()].filter((c) => c.off.length && c.on.length).map((c) => {
+      const tOff = c.off.map(runS).filter((x) => x != null), tOn = c.on.map(runS).filter((x) => x != null);
+      const uOff = c.off.map(runUsd).filter((x) => x != null), uOn = c.on.map(runUsd).filter((x) => x != null);
+      const dOff = c.off.map(twice).filter((x) => x != null), dOn = c.on.map(twice).filter((x) => x != null);
+      const hid = (xs) => { const h = xs.filter((r) => r.quality?.hiddenTotal); return h.length ? Math.round(100 * med(h.map((r) => r.quality.hiddenPass / r.quality.hiddenTotal))) : null; };
+      const cell = (a, b, fmt, test, noPct) => {
+        if (!a.length || !b.length) return '<span class="dim">–</span>';
+        const ma = med(a), mb = med(b), t = test ? mwP(a, b) : null;
+        const sig = t && t.separated && ma !== mb ? ' <span class="sep" title="every board-on run beat every board-off run">✓</span>' : '';
+        return `${fmt(ma)} → <b>${fmt(mb)}</b>${ma && ma !== mb && !noPct ? ` <span class="dim">${pct(ma, mb)}</span>` : ''}${sig}`;
+      };
+      const tests = [['time', tOff, tOn], ['cost', uOff, uOn], ['duplicates', dOff, dOn]].map(([k, a, b]) => (a.length && b.length ? [k, mwP(a, b), med(a), med(b)] : null)).filter(Boolean);
+      const better = tests.filter(([, t, a, b]) => t.separated && b < a).map(([k]) => k);
+      // Better in the median by > 15% but the runs overlap: say so, with the p.
+      const leaning = tests.filter(([k, t, a, b]) => !better.includes(k) && a > 0 && b < a * 0.85).map(([k, t]) => `${k === 'time' ? 'faster' : k === 'cost' ? 'cheaper' : 'fewer duplicates'} in the median, but not conclusive with ${c.off.length} runs each (p = ${t.p.toFixed(1)})`);
+      const bOff = c.off.map((r) => r.counts?.bounces).filter((x) => x != null), bOn = c.on.map((r) => r.counts?.bounces).filter((x) => x != null);
+      const bounceNote = bOn.length && bOn.every((x) => x === 0) && bOff.some((x) => x > 0) ? `No change was sent back with the board on (${bOff.join(', ')} with it off).` : '';
+      const note = [better.length ? `Every board-on run beat every board-off run on ${better.join(', ')} (exact test p = ${tests.find(([k]) => k === better[0])[1].p.toFixed(1)}, the smallest possible with ${c.off.length} runs each).` : '',
+        leaning.length ? `${leaning.join('; ').replace(/^./, (x) => x.toUpperCase())}.` : '', bounceNote].filter(Boolean).join(' ') || 'No clear difference with these runs.';
+      return `<div class="abc"><p class="abt"><b>${esc(label(c))}</b> <span class="dim small">${c.off.length} runs off, ${c.on.length} on</span></p>
+        <dl><dt>Time</dt><dd>${cell(tOff, tOn, mins, true)}</dd><dt>Cost at API prices</dt><dd>${cell(uOff, uOn, usd, true)}</dd>
+        <dt>Duplicate pairs built twice</dt><dd>${cell(dOff, dOn, (x) => `${Math.round(x)} of ${c.off[0].quality?.duplicates?.pairs ?? '?'}`, true, true)}</dd><dt>Hidden tests passed</dt><dd>${hid(c.off) ?? '–'}% → ${hid(c.on) ?? '–'}%</dd></dl>
+        <p class="dim small">${note}</p></div>`;
+    }).join('');
+    if (!rows) return '';
+    return `<section class="sec" id="board-ab"><h2>The agent board</h2>
+      <p class="cap">Agents pick their own tasks from a list (30 tasks, 5 of them asked twice in different words). With the board on, each agent says what it is doing and which files it touches, and a duplicate check merges repeated tasks. Board off against board on, 6 Haiku coding agents, medians of 3 real runs each.</p>
+      <p class="small dim">Each line reads board off → <b>board on</b>.</p><div class="abs">${rows}</div>
+      <p class="small dim">✓ = every board-on run did better than every board-off run. Plain git means a conflict sends the agent back to rebase; the board does not change that.</p></section>`;
+  }
   function foundView() {
     const rows = []; let anyNc = false;
     for (const sc of SCEN) {
@@ -464,7 +513,7 @@
     root.innerHTML = `${MOCK || RUNS.some((r) => r.mock) ? '<div class="mock"><b>Sample data.</b> These results are invented to show the page; real runs replace them.</div>' : ''}
       <h1>Variants lab</h1>
       <p class="lede">Is one strong agent better than many? How many, checked by whom, landing how? We predict every setup with a simulation, run the best ones on real jobs, and score what they built with tests the agents never saw.</p>
-      ${foundView()}${tryView()}${picksView()}${resultsView()}${funnelView()}`;
+      ${foundView()}${boardABView()}${tryView()}${picksView()}${resultsView()}${funnelView()}`;
   }
   function setUrl() {
     const u = new URL(location.href); u.searchParams.set('s', st.scenario); u.searchParams.set('v', JSON.stringify(st.v)); history.replaceState(null, '', u);
