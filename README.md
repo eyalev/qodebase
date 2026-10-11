@@ -96,7 +96,18 @@ Real Claude agents sharing one git repo on a laptop, pushing straight to main wi
 - Team size is a dial, not a speed-up: congestion control (like TCP, it settled at 3–4 agents) took 2.1× longer and cost 54% less.
 - Most parts exist elsewhere (MCP Agent Mail's leases, Beads' AI dedupe, Overstory's LLM merge tier, Claim Plane and Foremerge intents). We found no published A/B with real coding agents that reports wall time and cost for such a board, and no match for this combination ([`docs/board/prior-art.md`](docs/board/prior-art.md)).
 
-**Inside qodebase, on Cloudflare** (real boxes, the landing queue, board off vs on): *runs in progress; verified medians land here.*
+**Inside qodebase, on Cloudflare** (6 Haiku agents in real boxes, the landing queue, board off vs on, 3 runs per cell, medians):
+
+| | wall | cost | built twice (pairs of 5) |
+|---|---|---|---|
+| two teams on one repo (board on = one duplicate check across both lists) | 775 → 465 s (−40%, p = 0.1) | $1.80 → $1.41 (−22%, p = 0.1) | 4, 4, 3 → 0, 0, 1 (p = 0.1) |
+| one shared list, land by intent | 805 → 435 s (−46%, p = 0.2) | $1.44 → $1.34 (no clear difference) | 0 both |
+| one shared list, plain-git policy | 948 vs 1012 s: no difference | $3.06 vs $2.94: no difference | 1 both |
+
+- Hidden tests were the same with and without the board in every cell. With the board, no change bounced under land by intent (3, 5, 0 → 0, 0, 0).
+- Under qodebase's plain-git policy the board made no difference: its bounces are rebase conflicts the board does not touch.
+- The simulator's pre-registered prediction said the board would not save time under land by intent, so the −40% and −46% were a surprise. Without the board, agents on one shared list spotted the duplicate tasks already on main by themselves.
+- Real money $1.78 for the boxes; $42.6 API-equivalent cost on the subscription. Caveats: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md) section 3.
 
 Details: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md), [`docs/board/E6-results.md`](docs/board/E6-results.md).
 

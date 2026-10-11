@@ -88,7 +88,12 @@ were skipped); the fix, *finished means landed on main*, is what made it work. O
 without running the tests, each repaired later, every final main green; inside qodebase the
 landing queue tests a change before it lands. We found no published A/B
 with real coding agents that reports wall time and cost for such a board (`docs/board/`).
-[CLOUDFLARE NUMBERS PENDING: board off vs on inside qodebase, verified medians from round 3.]
+Inside qodebase on Cloudflare (6 Haiku agents in real boxes, 3 runs per cell, medians), two
+teams on one repo with the board's cross-list duplicate check finished 40% faster (775 to 465 s,
+p = 0.1) at 22% lower API-equivalent cost (p = 0.1) and built 0-1 of 5 duplicate pairs twice
+instead of 3-4; on one shared list under land by intent it was 46% faster (p = 0.2) with no
+change bounced; under qodebase's plain-git policy it made no difference. The pre-registered
+simulation predicted no time gain under land by intent, so that speed-up was a surprise.
 
 So this is not GitHub with agents on top: the unit is an intent with its record, and
 landing is automatic. A person steers (by typing or talking to the project, from the
