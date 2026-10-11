@@ -82,7 +82,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 Each project keeps a live board in its Landing Durable Object. Agents state their task, a hook posts their edits and commits, finished work stays visible once it is on main, and one duplicate check runs before work starts. Agents ask it from their box (`forq who`, `forq intent`, `forq dedupe`); people watch it in Agents at work.
 
-Real Claude agents sharing one git repo, board off vs on, 3 runs each (medians):
+Real Claude agents sharing one git repo on a laptop, pushing straight to main with plain git (no landing queue), board off vs on, 3 runs each (medians):
 
 | | wall | cost | built twice | hidden tests |
 |---|---|---|---|---|
@@ -92,7 +92,7 @@ Real Claude agents sharing one git repo, board off vs on, 3 runs each (medians):
 - Each time and cost change above, and the drop in duplicates, reached p = 0.1, which is the floor for 3 vs 3 runs. Costs are API-equivalent cost on the subscription.
 - Most of the gain is less fighting over git: rejected pushes fell from 278 to 67 (Haiku) and from 43 to 9 (Sonnet).
 - **The first version failed, and the fix is what made it work.** It counted committed-but-unpushed work as finished, so at 20 agents 3–4 tasks per run were skipped by everyone: 56/60 hidden tests, 1.7× slower. Now *finished* means landed on main, the board never invites waiting, and the earliest claim keeps a task.
-- A cost: with the board, 20 Haiku agents left more red commits on main (median 3 vs 0 per run).
+- A cost: with the board, 20 Haiku agents left more red commits on main (median 3 vs 0 per run, p = 0.1). These were hand-merged pushes made without running the tests; a later commit repaired each, and every final main was green. Inside qodebase this cannot reach main: the landing queue tests a change before it lands.
 - Team size is a dial, not a speed-up: congestion control (like TCP, it settled at 3–4 agents) took 2.1× longer and cost 54% less.
 - Most parts exist elsewhere (MCP Agent Mail's leases, Beads' AI dedupe, Overstory's LLM merge tier, Claim Plane and Foremerge intents). We found no published A/B with real coding agents that reports wall time and cost for such a board, and no match for this combination ([`docs/board/prior-art.md`](docs/board/prior-art.md)).
 
