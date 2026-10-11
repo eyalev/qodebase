@@ -299,10 +299,17 @@ export class Landing extends DurableObject<Env> {
       bc[name] = { ids, at: prev && prev.ids.join() === ids.join() ? prev.at : Date.now() };
       const ks = Object.keys(bc); for (const k of ks.slice(0, Math.max(0, ks.length - 80))) delete bc[k];
     }
-    const e = await this.boardPost({ agent: name, kind: 'started', intent, files, change: changeId, stated: true });
-    if ('off' in e || !ids.length) return e;
+    // Someone live claimed it first: this claim is refused, so it never shows as a second agent 'on' the
+    // task (qb7 saw a stale 'started' row for 10 min in W4c order 8); the claim is dropped.
     const live = new Set((await this.boardWho({})).rows.map((r) => r.agent));
-    return { ...e, takenBy: claimHolders(m.boardClaims || {}, name, live) };
+    const takenBy = m.flags.board && ids.length ? claimHolders(m.boardClaims || {}, name, live) : {};
+    if (Object.keys(takenBy).length) {
+      delete m.boardClaims![name]; await this.#saveMeta();
+      const e = await this.boardPost({ agent: name, kind: 'gave-up', intent, files, change: changeId, status: `claimed first by ${Object.values(takenBy).join(', ')}` });
+      return { ...e, takenBy };
+    }
+    const e = await this.boardPost({ agent: name, kind: 'started', intent, files, change: changeId, stated: true });
+    return 'off' in e ? e : { ...e, takenBy };
   }
   /** `forq who`, the hook's context, the view: rows + aliases + the text an agent reads. */
   async boardWho(q: BoardQuery & { text?: boolean } = {}) {
