@@ -12,7 +12,10 @@ import os from 'node:os';
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
-const COND = opt('cond', 'A'), N = +opt('agents', 5), MINUTES = +opt('minutes', 25), REP = +opt('rep', 1);
+const COND = opt('cond', 'A'), N = +opt('agents', 5), REP = +opt('rep', 1);
+// s6's 150 tasks took 31 min at 40 agents (W8 A40 r1); 8 or 20 agents need longer, so s6 runs with <= 20 agents get
+// at least 90 min whatever --minutes says (the queue passes 45 to all).
+const MINUTES = Math.max(+opt('minutes', 25), opt('scenario', 's1') === 's6' && N <= 20 ? 90 : 0);
 // Scenarios: s1 = textkit (16 small tasks), s2 = todokit (30 multi-file tasks, the scale test).
 const SCEN = opt('scenario', 's1');
 let S = {
