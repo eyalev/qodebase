@@ -15,7 +15,7 @@ Round 2 (PLAN2.md, started 2026-10-10 17:00 UTC):
 - [x] W4c Cloudflare runs board off vs on, 3 each x 6 cells (qb6): docs/board/w4c-results.md
 - [x] W7a congestion control (AIMD on board thrash) modelled + prediction before the runs: sim.md (f), sim/board/aimd.mjs (qb4)
 - [x] W7b real runs (qb9): AIMD wall x2.1, cost -54%, cap 3-4; fixed 8 wall +21%, cost -44%; no collapse at 20 (E6-results.md W7)
-- [ ] W7c compare with sim.md (f): collapse or not (qb4)
-- [ ] W5 README / submission / lab page (qb8, qb7): qb8 drafted the 'Agent board' section in README + submission from FINDINGS2 sections 1-2 / E6 (committed, not deployed); Cloudflare medians = placeholder until the manager confirms round 3
-- [ ] W6 FINDINGS2.md + report (manager)
+- [x] W7c compare with sim.md (f): collapse or not (qb4)
+- [x] W5 README / submission / lab page (qb8, qb7): qb8 drafted the 'Agent board' section in README + submission from FINDINGS2 sections 1-2 / E6 (committed, not deployed); Cloudflare medians = placeholder until the manager confirms round 3
+- [x] W6 FINDINGS2.md + report (manager)
 Guard: LLM runs stop at weekly meter 87% (73% at start).
