@@ -19,3 +19,11 @@ Round 2 (PLAN2.md, started 2026-10-10 17:00 UTC):
 - [x] W5 README / submission / lab page (qb8, qb7): qb8 drafted the 'Agent board' section in README + submission from FINDINGS2 sections 1-2 / E6 (committed, not deployed); Cloudflare medians = placeholder until the manager confirms round 3
 - [x] W6 FINDINGS2.md + report (manager)
 Guard: LLM runs stop at weekly meter 87% (73% at start).
+
+Round 3 (Eyal, 2026-10-11 ~04:00 UTC: "start the prediction and setup now, and do the runs as well"):
+- [ ] W8a throughput-probing controller (add agents while landings/min rise, step back when flat/falling, halve only on dropped work) modelled + prediction before runs (qb4, sim.md (g))
+- [ ] W8b real runs, Haiku, x3: fixed 8 / 20 / 40, controller with board, controller without board; long backlog; reuse identical earlier runs only if code+flags identical (qb9)
+- [ ] W9a dynamic workload: tasks arrive over the run (Poisson), incl. reworded duplicates of done/in-progress work; per-arrival dedupe vs upfront-only vs none; prediction first (qb4, sim.md (h))
+- [ ] W9b real runs x3 per condition, ~10 agents; then controller + arrivals combined if the meter allows (qb9)
+- [ ] W9c per-new-task dedupe in qodebase's board (qb6, after W9b shows it pays)
+Guard: stop at weekly meter 87% (83% at start); what doesn't fit continues after the Oct 12 13:00 UTC reset. s5 Sonnet stays armed for after the reset.
