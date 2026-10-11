@@ -67,7 +67,7 @@ git (`github` policy) about -18% wall.
 | cell | wall off -> on | API-equiv $ off -> on | pairs built twice (of 5) | bounces | hidden score |
 |---|---|---|---|---|---|
 | two teams, one repo (on = cross-list dedupe) | 775 -> 465 s (-40%, p 0.1) | 1.80 -> 1.41 (-22%, p 0.1) | 4,4,3 -> 0,0,1 (p 0.1) | 3,5,0 -> 1,0,0 | 100 / 100 |
-| shared issue list, land by intent | 805 -> 435 s (-46%, p 0.2) | 1.71 -> 1.34 (n.s.) | 0 -> 0 | 3,5,0 -> 0,0,0 | 100 / 100 |
+| shared issue list, land by intent | 805 -> 435 s (-46%, p 0.2) | 1.44 -> 1.34 (n.s.) | 0 -> 0 | 3,5,0 -> 0,0,0 | 100 / 100 |
 | shared issue list, plain git | 948 -> 1012 s (n.s.) | 3.06 -> 2.94 (n.s.) | 1 -> 1 | 23 -> 27 | 97.5 / 97.5 |
 
 Against the pre-registered prediction: duplicates right (two teams 4 -> 0 only with the cross-list pass; one slip when
@@ -111,8 +111,10 @@ about even on time, cost noisy. Round 3 running.
 
 ## 4. Recommendation
 - Ship the board as a qodebase feature, on by default for projects with more than ~4 agents or more than one
-  planner/team. Its unique value inside qodebase is the cross-team duplicate check and the "who is on this file" view;
-  its speed/cost value is largest where plain git does the landing.
+  planner/team. Inside qodebase it pays most with more than one team or planner on a repo (duplicates gone, -40% wall,
+  -22% cost) and speeds up a shared self-picked list (-46% wall). Open question: locally, with agents pushing to
+  main with plain git, it cut time 24-31%; qodebase's plain-git policy showed no difference with 6 agents (its bounces
+  are rebase conflicts the board does not touch). Team size and agent count likely matter; not yet tested there.
 - Keep the three rules of section 1 as invariants, with tests (they are now in `src/landing/*.test.mjs` and
   `board/`).
 - Offer team size as a cost/time dial; AIMD as an optional "cheap mode".
