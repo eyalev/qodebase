@@ -9,7 +9,7 @@ Round 2 (PLAN2.md, started 2026-10-10 17:00 UTC):
 - [x] W2d deploy + live smoke on eyal/cafe-lab (qb6): spawn→intent→editing→committed→pushed→approved→queued→landed on the board; dedupe found the pair from the agent's shell
 - [x] W3a 20 agents / 60 tasks Haiku A vs E x3 (qb9): v1 (3-4 tasks lost: board trusted unlanded done) -> fixed v2: wall -24%, cost -16%, dup 9->0, 60/60 (E6-results.md)
 - [x] W3b Sonnet longer tasks A vs E x3 (qb9): board v3, wall -31%, cost -27%, 16/16 both; Sonnet tasks <1 min each (s5 pending manager)
-- [ ] W3c s5 (12 library-sized tasks, ~2.2x s4) 8 Sonnet A vs E x3 (qb9): built + verified (0ea4228, lab-hidden b15434f); queued after W9b in chain3
+- [x] W3c (dropped by Eyal, 2026-10-11: budget) s5 (12 library-sized tasks, ~2.2x s4) 8 Sonnet A vs E x3 (qb9): built + verified (0ea4228, lab-hidden b15434f); queued after W9b in chain3
 - [x] W4a lab scenario: self-pick backlog + two teams, hidden tests (qb5): scenarios `backlog` (7b915e9) + `two-teams` (0ef85bb), 30 hidden tests + duplicates.builtTwice in score.mjs, validated on qb9 round-1 repos (A 4/4/3 pairs built twice, E 0/0/0); router hooks with qb6
 - [x] W4b prediction (qb4): W3a in sim.md (d); W4 board off vs on in sim.md (e) + predict.js lab-0.11 (scenarios backlog, two-teams; variant `board`, `crossDedupe`)
 - [x] W4c Cloudflare runs board off vs on, 3 each x 6 cells (qb6): docs/board/w4c-results.md
