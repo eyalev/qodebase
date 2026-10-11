@@ -78,6 +78,28 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 - git notes shown in the code browser (today: on each change's page, and in git)
 - a lead agent per area for conflicts no replay can solve: simulated in `sim/`; today the owner decides, and the demo uses a scripted lead
 
+## Agent board: who works on what
+
+Each project keeps a live board in its Landing Durable Object. Agents state their task, a hook posts their edits and commits, finished work stays visible once it is on main, and one duplicate check runs before work starts. Agents ask it from their box (`forq who`, `forq intent`, `forq dedupe`); people watch it in Agents at work.
+
+Real Claude agents sharing one git repo, board off vs on, 3 runs each (medians):
+
+| | wall | cost | built twice | hidden tests |
+|---|---|---|---|---|
+| 20 Haiku agents, 60 tasks | 594 → 451 s (−24%) | $3.26 → $2.73 (−16%) | 9 → 0 pairs of 10 | 60/60 both |
+| 8 Sonnet agents, 16 bigger tasks | 275 → 189 s (−31%) | $7.54 → $5.49 (−27%) | 0 either way | 16/16 both |
+
+- Each time and cost change above, and the drop in duplicates, reached p = 0.1, which is the floor for 3 vs 3 runs. Costs are API-equivalent cost on the subscription.
+- Most of the gain is less fighting over git: rejected pushes fell from 278 to 67 (Haiku) and from 43 to 9 (Sonnet).
+- **The first version failed, and the fix is what made it work.** It counted committed-but-unpushed work as finished, so at 20 agents 3–4 tasks per run were skipped by everyone: 56/60 hidden tests, 1.7× slower. Now *finished* means landed on main, the board never invites waiting, and the earliest claim keeps a task.
+- A cost: with the board, 20 Haiku agents left more red commits on main (median 3 vs 0 per run).
+- Team size is a dial, not a speed-up: congestion control (like TCP, it settled at 3–4 agents) took 2.1× longer and cost 54% less.
+- Most parts exist elsewhere (MCP Agent Mail's leases, Beads' AI dedupe, Overstory's LLM merge tier, Claim Plane and Foremerge intents). We found no published A/B with real coding agents that reports wall time and cost for such a board, and no match for this combination ([`docs/board/prior-art.md`](docs/board/prior-art.md)).
+
+**Inside qodebase, on Cloudflare** (real boxes, the landing queue, board off vs on): *runs in progress; verified medians land here.*
+
+Details: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md), [`docs/board/E6-results.md`](docs/board/E6-results.md).
+
 ## Lab results
 
 **Which team shape works best?** The same job given to one strong agent, and to a planner with a crew of cheaper agents, through qodebase's queue (live: https://qodebase.app/lab).

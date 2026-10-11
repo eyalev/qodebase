@@ -74,6 +74,19 @@ triage agent that reads the repo and the issue index was right on 61% of 200 iss
 text-only (p = 0.004), finding 66% of duplicates vs 14%; adding the project's own policy files
 to the prompt did not help.
 
+Agents also share a live board (who works on what), kept in each project's Landing Durable
+Object: they state their task, a hook posts their edits and commits, finished work counts only
+once it is on main, and one duplicate check runs before work starts. With real Claude agents
+sharing one git repo (board off vs on, 3 runs each, medians; p = 0.1, the floor at 3 vs 3):
+20 Haiku agents on 60 tasks finished 24% faster (594 to 451 s) at 16% lower API-equivalent cost on
+the subscription, built 0 of 10 duplicate pairs twice instead of 9, and passed all 60 hidden
+tests both ways; 8 Sonnet agents on 16 bigger tasks were 31% faster at 27% lower cost, 16/16
+both ways. The first version failed (it counted unpushed work as finished, and 3-4 tasks per run
+were skipped); the fix, *finished means landed on main*, is what made it work. One cost: the
+20-agent board runs left more red commits on main (median 3 vs 0). We found no published A/B
+with real coding agents that reports wall time and cost for such a board (`docs/board/`).
+[CLOUDFLARE NUMBERS PENDING: board off vs on inside qodebase, verified medians from round 3.]
+
 So this is not GitHub with agents on top: the unit is an intent with its record, and
 landing is automatic. A person steers (by typing or talking to the project, from the
 phone) and is asked only when something needs them.
