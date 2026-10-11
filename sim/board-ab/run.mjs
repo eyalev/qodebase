@@ -89,7 +89,7 @@ function setup() {
   fs.cpSync(path.join(HERE, S.starter), seed, { recursive: true });
   const fixed = { GIT_AUTHOR_NAME: 'board-ab', GIT_AUTHOR_EMAIL: 'lab@qodebase.app', GIT_COMMITTER_NAME: 'board-ab', GIT_COMMITTER_EMAIL: 'lab@qodebase.app', GIT_AUTHOR_DATE: '2026-10-10T00:00:00Z', GIT_COMMITTER_DATE: '2026-10-10T00:00:00Z' };
   if (TASKS_N) { const f = path.join(seed, 'BACKLOG.md'); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').split('\n').filter((l) => { const m = /^- \*\*T(\d+)\*\*/.exec(l); return !m || +m[1] <= TASKS_N; }).join('\n')); }
-  if (COND === 'E') dedupePass(seed);
+  if (COND === 'E' || COND === 'P') dedupePass(seed);   // P = 'A+' (ablation): the same annotated backlog, no board
   sh('git', ['-c', 'init.defaultBranch=main', 'init', '-q'], seed); sh('git', ['add', '-A'], seed); sh('git', ['commit', '-qm', `${PROJECT} starter (board-ab ${SCEN} v1)`], seed, fixed);
   const starterSha = sh('git', ['rev-parse', 'HEAD'], seed);
   sh('git', ['clone', '-q', '--bare', seed, path.join(DIR, 'origin.git')], DIR);
@@ -147,7 +147,9 @@ function prompt(k) {
   // D = C, but the query also returns recently finished intents, plus one rule for same-meaning tasks
   // (manager, 2026-10-10, after the T3/T11 diagnosis: finished intents dropped out of 'who').
   const boardD = (COND === 'D' || COND === 'E') ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who --recent 30m\` (what the others are doing and what they finished in the last 30 minutes). After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`. If a task someone claimed or finished means the same as one you are about to do (even under another name or task id), make yours a one-line alias of theirs once theirs is on main, or pick another task.${TIEBREAK ? ' If another agent claimed the same task before you did (the board shows "claimed T<n> <age> ago"), they keep it and you pick another task; if your claim is the earlier one, keep going.' : ''}\n` : '';
-  return `You are agent ${k} of ${N}, working at the same time as the others on this repository (${PROJECT}). Each agent works in its own clone and pushes to the same origin; you cannot talk to them.${board}${boardD}
+  // S = 'A-split' (ablation, manager 2026-10-11): a static split instead of a board.
+  const split = COND === 'S' ? `\nStatic rule for splitting the work: start with task T${k}, then take every ${N}th task after it (T${k}, T${k + N}, T${k + 2 * N}, …). Only when none of those is left take any other task.\n` : '';
+  return `You are agent ${k} of ${N}, working at the same time as the others on this repository (${PROJECT}). Each agent works in its own clone and pushes to the same origin; you cannot talk to them.${board}${boardD}${split}
 1. Run \`git pull --rebase\` first.
 2. Read BACKLOG.md and the code on main. Pick ONE task that you believe nobody has done yet.
 3. Implement it as the backlog says (code, re-export, a test, a CHANGELOG line) and run \`npm test\` until it is green.
@@ -280,7 +282,7 @@ const waitArrival = () => new Promise((res) => arrivalWaiters.push(res));
 
 async function agentLoop(k, deadline) {
   let iter = 0, idle = 0; ACTIVE.add(k);
-  if (COND === 'E') await new Promise((r) => setTimeout(r, (k - 1) * STAGGER_MS)); // staggered starts
+  if (COND === 'E' || COND === 'P') await new Promise((r) => setTimeout(r, (k - 1) * STAGGER_MS)); // staggered starts
   try { while (Date.now() < deadline) {
     while (!allowed(k) && Date.now() < deadline) await new Promise((r) => setTimeout(r, 2000));
     if (Date.now() >= deadline) break;
@@ -377,7 +379,7 @@ clearInterval(ctl);
 const wallS = Math.round((Date.now() - t0) / 1000);
 const calls = fs.readFileSync(path.join(DIR, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const sum = (f) => calls.reduce((a, c) => a + (f(c) || 0), 0);
-const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : (COND === 'D' || COND === 'E') ? (BOARD_DIR === E1 ? 'f3d36d3 (frozen e1)' : sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) + (sh('git', ['status', '--porcelain', '--', 'board'], path.resolve(HERE, '../..')) ? '+dirty' : '')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, stagger_s: COND === 'E' ? +((N - 1) * STAGGER_MS / 1000).toFixed(1) : 0, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
+const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : (COND === 'D' || COND === 'E') ? (BOARD_DIR === E1 ? 'f3d36d3 (frozen e1)' : sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) + (sh('git', ['status', '--porcelain', '--', 'board'], path.resolve(HERE, '../..')) ? '+dirty' : '')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, stagger_s: (COND === 'E' || COND === 'P') ? +((N - 1) * STAGGER_MS / 1000).toFixed(1) : 0, arm: { A: 'A', E: 'E', P: 'A+', S: 'A-split' }[COND] || COND, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
   calls: calls.length, ...wasteOf(calls), pushed: calls.filter((c) => c.status === 'pushed').length, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, all_done_calls: calls.filter((c) => c.status === 'all-done').length,
   tokens: { in: sum((c) => c.tokens.in), out: sum((c) => c.tokens.out), cacheR: sum((c) => c.tokens.cacheR), cacheW: sum((c) => c.tokens.cacheW) },
   dedupe: DEDUPE, usd_api_equiv: +(sum((c) => c.usd_api_equiv) + (DEDUPE?.usd_api_equiv || 0) + arrivalLog.reduce((a, x) => a + (x.dedupe?.usd_api_equiv || 0), 0)).toFixed(4),

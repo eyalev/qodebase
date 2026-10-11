@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Claude Code hook for the agent board (docs/board/PLAN.md). One script for every event:
-//   UserPromptSubmit            post started (first 120 chars of the prompt); context = others' now-view (<= 5 lines)
+//   UserPromptSubmit            post started (no text: never the prompt); context = others' now-view (<= 5 lines)
 //   PreToolUse Edit|Write|MultiEdit  post editing <file> (once per file per 30 s); context = warning when another
 //                               live agent named that file in the last 10 min (once per file per 5 min)
 //   PostToolUse Bash            git commit -> post committed <subject>; when that commit is on origin/main
@@ -45,9 +45,10 @@ const post = async (kind, intent, files, status) => { const t0 = Date.now(); awa
 try {
   if (!agent) process.exit(0);
   if (ev === 'UserPromptSubmit') {
-    const intent = clip(input.prompt, 120);
-    state.intent = intent; delete state.explicit; saveState();   // a new prompt = a new task
-    const [, rows] = await Promise.all([post('started', intent, []), b.who({ me: agent, recent: 30 * 60_000 })]);
+    // Never post the prompt text (manager, 2026-10-11): 'started' says only that a session began; the task comes
+    // from the agent's own `board post started --intent …`.
+    state.intent = ''; delete state.explicit; saveState();   // a new prompt = a new task
+    const [, rows] = await Promise.all([post('started', '', []), b.who({ me: agent, recent: 30 * 60_000 })]);
     const live = rows.filter((r) => !r.done && !r.claim).slice(0, 5), done = rows.filter((r) => r.done).slice(0, 5), claims = rows.filter((r) => r.claim).slice(0, 5);
     if (live.length || done.length || claims.length) out(ev, `Agent board (advisory, not locks):${live.length ? `\nWorking now:\n${live.map(fmtRow).join('\n')}` : ''}${done.length ? `\nOn main (landed) in the last 30 min:\n${done.map(fmtRow).join('\n')}` : ''}${claims.length ? `\nSay they are done but it is NOT on main (dropped after 5 min):\n${claims.map(fmtRow).join('\n')}` : ''}`);
   } else if (ev === 'PreToolUse' && /^(Edit|Write|MultiEdit)$/.test(input.tool_name || '')) {
