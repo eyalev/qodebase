@@ -381,7 +381,8 @@
   // moves time does not rebuild the page.
   const BKIND = { started: ['started', 'working'], editing: ['is editing', 'working'], committed: ['saved a step', 'working'], pushed: ['sent its work for review', 'pushed'],
     reviewing: ['is in review', 'reviewing'], approved: ['passed review', 'ready'], changes: ['was asked for changes', 'working'], queued: ['is in the line', 'queued'],
-    landed: ['landed its work', 'landed'], bounced: ['was sent back', 'bounced'], blocked: ['is blocked', 'bounced'], done: ['finished', 'landed'] };
+    landed: ['landed its work', 'landed'], bounced: ['was sent back', 'bounced'], blocked: ['is blocked', 'bounced'], done: ['finished', 'landed'],
+    'gave-up': ['stepped back from the task', 'pushed'] };
   const WORKING = new Set(['started', 'editing', 'committed', 'changes']);
   let boardOpen = false, boardMore = false, boardWMore = false;
   function boardWho(id) {
@@ -407,9 +408,10 @@
   function boardRow(r, sharedWith) {
     const w = boardWho(r.agent), [verb, k] = BKIND[r.kind] || [r.kind, 'working'];
     const href = w.c ? `#/change/${esc(w.c.id)}` : null;
-    const right = r.done ? ago(r.ts) : w.c?.createdAt ? `started ${ago(w.c.createdAt)}` : ago(r.ts);
+    const right = r.done || r.kind === 'gave-up' ? ago(r.ts) : w.c?.createdAt ? `started ${ago(w.c.createdAt)}` : ago(r.ts);
     // One dim line: the agent's own status note, "no news" only while it should be working, a shared file.
-    const notes = [r.status && !/^dedupe$/.test(r.status) && r.kind !== 'landed' ? esc(r.status) : null,
+    const named = (t) => String(t).replace(/\b(by|as|with)\s+([\w.]*--)?([a-z0-9]{4,8})\b/gi, (m, w, _p, id) => { const x = boardWho(id); return x.c || (D.board?.rows || []).some((q) => q.agent === id) ? `${w} ${x.name}` : m; });
+    const notes = [r.status && !/^dedupe$/.test(r.status) && r.kind !== 'landed' ? esc(named(r.status)) : null,
       !r.done && WORKING.has(r.kind) && now() - r.ts > 120e3 ? `no news for <span data-since="${r.ts}">${secs(now() - r.ts)}</span>` : null,
       sharedWith?.length ? (sharedWith.all ? 'shares files with every other agent' : `same file as ${sharedWith.join(', ')}`) : null].filter(Boolean);
     const body = `<span class="ag s-${k}" aria-hidden="true">${esc(w.num)}</span><span class="bb"><span class="bt1"><span><b>${esc(w.name)}</b> ${esc(verb)}</span><span class="dim small bwhen">${right}</span></span>
@@ -427,25 +429,27 @@
     const rows = D.board.rows || [], live = rows.filter((r) => !r.done), done = rows.filter((r) => r.done);
     // Two live agents changing the same file: noted on their rows and once below the list.
     const byFile = new Map();
-    for (const r of live) for (const f of r.files || []) { if (!byFile.has(f)) byFile.set(f, new Set()); byFile.get(f).add(r.agent); }
+    // An agent that stepped back (another claimed the task first) is not working on it.
+    const working = live.filter((r) => r.kind !== 'gave-up');
+    for (const r of working) for (const f of r.files || []) { if (!byFile.has(f)) byFile.set(f, new Set()); byFile.get(f).add(r.agent); }
     const shared = [...byFile].filter(([, a]) => a.size > 1);
     const others = (r) => {
       const o = [...new Set(shared.filter(([f, a]) => a.has(r.agent) && (r.files || []).includes(f)).flatMap(([, a]) => [...a].filter((x) => x !== r.agent)))].map((x) => boardWho(x).name);
-      if (live.length > 2 && o.length === live.length - 1) o.all = true;
+      if (working.length > 2 && o.length === working.length - 1) o.all = true;
       return o;
     };
     // Files changed by the same set of agents go on one line.
     const groupsBySet = new Map();
     for (const [f, a] of shared) { const k = [...a].sort().join('|'); if (!groupsBySet.has(k)) groupsBySet.set(k, { a: [...a], files: [] }); groupsBySet.get(k).files.push(f); }
     const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
-    const warnAll = [...groupsBySet.values()].sort((x, y) => y.a.length - x.a.length || y.files.length - x.files.length).map((g) => { const ns = g.a.map((x) => boardWho(x).name); return `<li><span class="hu" aria-hidden="true">!</span><span>${live.length > 2 && ns.length === live.length ? `All ${ns.length} agents are` : `${list(ns)} are ${ns.length > 2 ? 'all' : 'both'}`} changing ${list(g.files.map((f) => `<span class="mono">${esc(f)}</span>`))}.</span></li>`; });
+    const warnAll = [...groupsBySet.values()].sort((x, y) => y.a.length - x.a.length || y.files.length - x.files.length).map((g) => { const ns = g.a.map((x) => boardWho(x).name); return `<li><span class="hu" aria-hidden="true">!</span><span>${working.length > 2 && ns.length === working.length ? `All ${ns.length} agents are` : `${list(ns)} are ${ns.length > 2 ? 'all' : 'both'}`} changing ${list(g.files.map((f) => `<span class="mono">${esc(f)}</span>`))}.</span></li>`; });
     // The three biggest groups; the rest one tap away (a busy run shares a lot).
     const warn = warnAll.slice(0, 3).join('') + (warnAll.length > 3 ? `</ul><details class="bdone bwmore"${boardWMore ? ' open' : ''}><summary>Show ${warnAll.length - 3} more</summary><ul class="bwarn">${warnAll.slice(3).join('')}</ul></details><ul class="bwarn">` : '');
     // Two live agents on the same task right now (same backlog id like "T18", or the same words):
     // the duplicate the board is there to catch.
     const tkey = (t) => { const m = /^\s*([A-Z]{1,3}\d+)\b/.exec(t || ''); return m ? m[1] : intentText(t || '').toLowerCase().slice(0, 40); };
     const byTask = new Map();
-    for (const r of live) { if (!r.intent || /^work through/i.test(r.intent)) continue; const k = tkey(r.intent); if (!byTask.has(k)) byTask.set(k, []); byTask.get(k).push(r); }
+    for (const r of working) { if (!r.intent || /^work through/i.test(r.intent)) continue; const k = tkey(r.intent); if (!byTask.has(k)) byTask.set(k, []); byTask.get(k).push(r); }
     const sameNow = [...byTask.values()].filter((rs) => new Set(rs.map((r) => r.agent)).size > 1).map((rs) => {
       const ns = [...new Set(rs.map((r) => boardWho(r.agent).name))];
       const shortest = rs.map((r) => intentText(r.intent)).sort((a, b) => a.length - b.length)[0];
