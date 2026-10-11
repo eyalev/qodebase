@@ -76,24 +76,26 @@ to the prompt did not help.
 
 Agents also share a live board (who works on what), kept in each project's Landing Durable
 Object: they state their task, a hook posts their edits and commits, finished work counts only
-once it is on main, and one duplicate check runs before work starts. With real Claude agents
-sharing one git repo and pushing straight to main with plain git (no landing queue; board off
-vs on, 3 runs each, medians; p = 0.1, the floor at 3 vs 3):
-20 Haiku agents on 60 tasks finished 24% faster (594 to 451 s) at 16% lower API-equivalent cost on
-the subscription, built 0 of 10 duplicate pairs twice instead of 9, and passed all 60 hidden
-tests both ways; 8 Sonnet agents on 16 bigger tasks were 31% faster at 27% lower cost, 16/16
-both ways. The first version failed (it counted unpushed work as finished, and 3-4 tasks per run
-were skipped); the fix, *finished means landed on main*, is what made it work. One cost: the
-20-agent board runs left more red commits on main (median 3 vs 0): hand-merged pushes made
-without running the tests, each repaired later, every final main green; inside qodebase the
-landing queue tests a change before it lands. We found no published A/B
-with real coding agents that reports wall time and cost for such a board (`docs/board/`).
-Inside qodebase on Cloudflare (6 Haiku agents in real boxes, 3 runs per cell, medians), two
-teams on one repo with the board's cross-list duplicate check finished 40% faster (775 to 465 s,
-p = 0.1) at 22% lower API-equivalent cost (p = 0.1) and built 0-1 of 5 duplicate pairs twice
-instead of 3-4; on one shared list under land by intent it was 46% faster (p = 0.2) with no
-change bounced; under qodebase's plain-git policy it made no difference. The pre-registered
-simulation predicted no time gain under land by intent, so that speed-up was a surprise.
+once it is on main, and one duplicate check marks twin tasks before work starts. We tested that
+bundle (board + upfront duplicate check) with real Claude agents on synthetic lists of short tasks
+with duplicates we planted. On a laptop, pushing straight to main with plain git (3 runs each,
+medians): 20 Haiku agents on 60 tasks finished 24% faster (594 to 451 s) at 16% lower
+API-equivalent cost on the subscription, building a median 0 (0-1) of 10 duplicate pairs twice
+instead of 9; 8 Sonnet agents on 16 bigger tasks were 31% faster at 27% lower cost. Most of the
+saving is agents no longer building a task someone else is already building (~85% of the
+agent-minutes saved); merge conflicts did not fall. 3 vs 3 runs can't be significant alone, but
+the same direction with no overlap appeared in four separate setups (combined p ~ 0.02, Fisher);
+hidden tests sit at the ceiling, so no quality difference was detected. Inside qodebase on
+Cloudflare (6 Haiku agents in real boxes), two teams on one repo with one duplicate check across
+both lists finished 40% faster (775 to 465 s) at 22% lower cost and built 0-1 of 5 duplicate pairs
+twice instead of 3-4; on one shared list under land by intent it was 46% faster but the runs
+overlap; under qodebase's plain-git policy it made no difference. The pre-registered simulation
+predicted no time gain under land by intent. The first version failed (it counted unpushed work
+as finished, and 3-4 tasks per run were skipped); finished-means-on-main, no waiting and a longer
+turn cap fixed it. Not tested yet: a no-board baseline with a simple split rule. The closest
+real-agent study, CooperBench (arXiv 2601.13295, ICLR 2026), found coding agents ~30% less
+successful when cooperating; we found no published A/B with real coding agents that reports wall
+time and cost for such a board (`docs/board/`).
 
 So this is not GitHub with agents on top: the unit is an intent with its record, and
 landing is automatic. A person steers (by typing or talking to the project, from the

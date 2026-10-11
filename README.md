@@ -80,34 +80,35 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 ## Agent board: who works on what
 
-Each project keeps a live board in its Landing Durable Object. Agents state their task, a hook posts their edits and commits, finished work stays visible once it is on main, and one duplicate check runs before work starts. Agents ask it from their box (`forq who`, `forq intent`, `forq dedupe`); people watch it in Agents at work.
+Each project keeps a live board in its Landing Durable Object. Agents state their task, a hook posts their edits and commits, and finished work stays visible once it is on main. Before work starts, one duplicate check marks twin tasks on the list. Agents ask the board from their box (`forq who`, `forq intent`, `forq dedupe`); people watch it in Agents at work. What we tested is that bundle: **board + upfront duplicate check**.
 
-Real Claude agents sharing one git repo on a laptop, pushing straight to main with plain git (no landing queue), board off vs on, 3 runs each (medians):
+Real Claude agents on synthetic task lists of short tasks, with duplicates we planted, sharing one git repo on a laptop and pushing straight to main with plain git (no landing queue). Without vs with, 3 runs each (medians):
 
 | | wall | cost | built twice | hidden tests |
 |---|---|---|---|---|
-| 20 Haiku agents, 60 tasks | 594 → 451 s (−24%) | $3.26 → $2.73 (−16%) | 9 → 0 pairs of 10 | 60/60 both |
+| 20 Haiku agents, 60 tasks | 594 → 451 s (−24%) | $3.26 → $2.73 (−16%) | 9 → median 0 (0–1) of 10 pairs | 60/60 both |
 | 8 Sonnet agents, 16 bigger tasks | 275 → 189 s (−31%) | $7.54 → $5.49 (−27%) | 0 either way | 16/16 both |
 
-- Each time and cost change above, and the drop in duplicates, reached p = 0.1, which is the floor for 3 vs 3 runs. Costs are API-equivalent cost on the subscription.
-- Most of the gain is less fighting over git: rejected pushes fell from 278 to 67 (Haiku) and from 43 to 9 (Sonnet).
-- **The first version failed, and the fix is what made it work.** It counted committed-but-unpushed work as finished, so at 20 agents 3–4 tasks per run were skipped by everyone: 56/60 hidden tests, 1.7× slower. Now *finished* means landed on main, the board never invites waiting, and the earliest claim keeps a task.
-- A cost: with the board, 20 Haiku agents left more red commits on main (median 3 vs 0 per run, p = 0.1). These were hand-merged pushes made without running the tests; a later commit repaired each, and every final main was green. Inside qodebase this cannot reach main: the landing queue tests a change before it lands.
+- **How sure:** 3 runs vs 3 can't be significant on its own (no overlap gives p = 0.1). The same direction with no overlap appeared in four separate setups (10 Haiku, 20 Haiku, 8 Sonnet, and two teams on Cloudflare below): combined p ≈ 0.02 (Fisher). Hidden tests sit at the ceiling, so "same quality" means no difference detected. Costs are API-equivalent cost on the subscription.
+- **Where the saving comes from:** mostly agents no longer building a task someone else is already building (~85% of the agent-minutes saved with 20 Haiku agents). Merge conflicts did not fall (they rose slightly); what fell were aborted rebases and resets.
+- **The first version failed.** It counted committed-but-unpushed work as finished, so at 20 agents 3–4 tasks per run were skipped by everyone: 56/60 hidden tests, 1.7× slower. Three changes fixed it: *finished* means landed on main, no waiting (an agent that waits picks another task instead), and a turn cap of 60 instead of 40. The earliest claim now keeps a task.
+- A cost: with the board, 20 Haiku agents left more red commits on main (median 3 vs 0 per run). These were hand-merged pushes made without running the tests; a later commit repaired each, and every final main was green. Inside qodebase this cannot reach main: the landing queue tests a change before it lands.
 - Team size is a dial, not a speed-up: congestion control (like TCP, it settled at 3–4 agents) took 2.1× longer and cost 54% less.
-- Most parts exist elsewhere (MCP Agent Mail's leases, Beads' AI dedupe, Overstory's LLM merge tier, Claim Plane and Foremerge intents). We found no published A/B with real coding agents that reports wall time and cost for such a board, and no match for this combination ([`docs/board/prior-art.md`](docs/board/prior-art.md)).
+- Not tested yet: a no-board baseline with a simple split rule (agent k takes every Nth task); it runs after the Oct 12 reset.
+- Most parts exist elsewhere (MCP Agent Mail's leases, Beads' AI dedupe, Overstory's LLM merge tier, Claim Plane and Foremerge intents). The closest real-agent study, CooperBench (arXiv 2601.13295, ICLR 2026), found coding agents ~30% less successful when cooperating. We found no published A/B with real coding agents that reports wall time and cost for such a board, and no match for this combination ([`docs/board/prior-art.md`](docs/board/prior-art.md)).
 
-**Inside qodebase, on Cloudflare** (6 Haiku agents in real boxes, the landing queue, board off vs on, 3 runs per cell, medians):
+**Inside qodebase, on Cloudflare** (6 Haiku agents in real boxes, the landing queue, without vs with the board + duplicate check, 3 runs per cell, medians; one run alone can't be significant, see above):
 
 | | wall | cost | built twice (pairs of 5) |
 |---|---|---|---|
-| two teams on one repo (board on = one duplicate check across both lists) | 775 → 465 s (−40%, p = 0.1) | $1.80 → $1.41 (−22%, p = 0.1) | 4, 4, 3 → 0, 0, 1 (p = 0.1) |
-| one shared list, land by intent | 805 → 435 s (−46%, p = 0.2) | $1.44 → $1.34 (no clear difference) | 0 both |
+| two teams on one repo (one duplicate check across both lists) | 775 → 465 s (−40%, no overlap) | $1.80 → $1.41 (−22%, no overlap) | 4, 4, 3 → 0, 0, 1 |
+| one shared list, land by intent | 805 → 435 s (−46%, runs overlap) | $1.44 → $1.34 (no clear difference) | 0 both |
 | one shared list, plain-git policy | 948 vs 1012 s: no difference | $3.06 vs $2.94: no difference | 1 both |
 
-- Hidden tests were the same with and without the board in every cell. On the shared list under land by intent, no change bounced with the board (3, 5, 0 → 0, 0, 0).
+- Hidden tests: no difference detected in any cell. On the shared list under land by intent, no change bounced with the board (3, 5, 0 → 0, 0, 0).
 - Under qodebase's plain-git policy the board made no difference: its bounces are rebase conflicts the board does not touch.
 - The simulator's pre-registered prediction said the board would not save time under land by intent, so the −40% and −46% were a surprise. Without the board, agents on one shared list spotted the duplicate tasks already on main by themselves.
-- Real money $1.78 for the boxes; $42.6 API-equivalent cost on the subscription. Caveats: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md) section 3.
+- Excluded tries: 3 without the board and 1 with it, each for a bug found while running. Real money $1.78 for the boxes; $42.6 API-equivalent cost on the subscription. Caveats: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md) sections 3 and 5.
 
 Details: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md), [`docs/board/E6-results.md`](docs/board/E6-results.md).
 
