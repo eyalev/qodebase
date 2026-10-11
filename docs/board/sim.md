@@ -408,3 +408,123 @@ if the meter allows).
 (s2 post-hoc: D 55 vs 28 real), and under-counts them for A (×1.3). For E on real runs, use lo 0.5,
 hi 1.5 per agent per minute. Log the cap each minute (`cap`, `thrashPerMin`) so the run can be
 replayed here.
+
+## (g) W8a: a throughput-probing controller (BBR-like), written before qb9's W8b runs (qb4, 2026-10-11)
+
+**Recalibrated on the real s3 runs first** (E6-results.md). The sim was too optimistic about large teams. Real
+E fixed 8 → 20 cut wall time 17% for +87% agent-minutes; the sim had −34% for +48%. Two terms close that gap
+(`calls.mjs`):
+- `slowPerAgent` 0.04: one laptop runs every agent (`claude -p` + `npm test`), so a call takes 4% longer
+  per other agent building at that moment.
+- `rebasePerCommitS` 0.5: a rebase costs 0.5 s more per commit landed since its base.
+
+Work is ×1.1 E4's. Fit (sim vs real):
+
+| | sim wall / agent-min | real wall / agent-min |
+|---|---|---|
+| A 20 | 551 / 152 | 594 / 170 |
+| E 20 | 447 / 124 | 451 / 131 |
+| E 8 | 580 / 71 | 544 / 70 |
+
+The E4 calibration is unchanged (the new terms default to 0). `slowPerAgent` is specific to the laptop:
+on Cloudflare every agent has its own box.
+
+**The controller** (`calls.mjs` option `probe`; thresholds tuned in the sim; these are the ones qb9 should use):
+- start at **8** agents; every 30 s look at **landings per minute over the last 4 min**;
+- add **2**, wait **4 min**, compare with the 4 min before the add. Keep them if the rate rose by at least
+  **0.2 × 2 / previous cap**, i.e. the new agents earn at least 20% of an average agent's landings. Then add
+  2 more;
+- otherwise step back 2 and **hold 3 min**, then probe again;
+- while holding, landings down more than **25%** → one fewer;
+- **halve only when dropped work (built, then thrown away) exceeds 1 per active agent per minute**. Rejected
+  pushes never cut. A tighter drop rule (0.5) halved the no-board team 3 times a run, for nothing.
+- Why these numbers: 2-minute windows and steps of +1 were too noisy at ~5 landings a minute. That
+  controller stalled at 5–7 agents.
+
+**Long backlog** = 2.5× s3: 150 tasks, 25 far-worded pairs, 30 needs. Haiku, 100 seeds, medians.
+"wall × agent-min" is a single time-and-cost score; lower is better.
+
+| | wall (s) | agent-min | wasted min | pairs built twice | wall × agent-min |
+|---|---|---|---|---|---|
+| A fixed 8 | 1434 | 184 | 31 | 23 | **264k** (best A) |
+| A fixed 12 | 1195 | 224 | 46 | 23 | 268k |
+| A fixed 20 | 1052 | 317 | 84 | 23 | 333k |
+| A fixed 30 / 40 | 1031 / 1035 | 441 / 568 | 148 / 221 | 23 | 455k / 588k |
+| **A controller** (pool 20 or 40) | 1304–1322 | 217–220 | 45 | 23 | 283–291k, settles at **10** |
+| E fixed 8 | 1363 | 175 | 2 | 0 | 239k |
+| E fixed 12 | 1116 | 209 | 3 | 0 | **233k** (best E) |
+| E fixed 20 | 935 | 284 | 9 | 0 | 266k |
+| E fixed 30 / 40 | 872 / 858 | 385 / 493 | 18 / 33 | 0 | 336k / 423k |
+| **E controller** (pool 20 or 40) | 1177–1184 | 208–213 | 5–6 | 0 | 245–252k, settles at **12** |
+
+Prediction:
+1. **Without the board, 20–40 agents congest.** Wall time stops falling at ~20 (1052 → 1031 → 1035 s) while
+   agent-minutes nearly double (317 → 568) and wasted minutes go 84 → 221. It plateaus; it does not
+   collapse. Real A at 20 already had ~220 aborted rebases a run.
+2. **With the board the knee moves out** to ~30. Wall keeps falling to 858 s at 40, and waste stays small
+   (33 min at 40).
+3. **The controller finds the sweet spot by itself, within 5–10%.**
+   - With the board it settles at 12, the best fixed size by wall × agent-minutes (245k vs 233k).
+   - Without the board it settles at 10 (283k vs the best fixed 264k at 8).
+   - The pool (20 or 40 allowed) does not matter: it never runs up into the congestion.
+   - It does **not** find the fastest setting: that is fixed 30–40, at about twice the cost.
+4. **The board matters more than the controller.** At the same size E is 5–17% faster and uses 5–15%
+   fewer agent-minutes. Only the board (dedupe) stops duplicates: 23 of 25 pairs vs 0.
+5. **Expected W8b medians:** controller with board ≈ 1180 s / 210 agent-min, cap ~12; controller without
+   board ≈ 1310 s / 220, cap ~10; fixed 40 without board no faster than fixed 20.
+
+**Falsifiers:**
+- the controller settling below 8 or above 16;
+- fixed 40 clearly slower than fixed 20 (a true collapse: then the drop-halving rule earns its keep);
+- the controller more than 15% worse by wall × agent-minutes than the best fixed size.
+
+## (h) W9a: tasks that arrive during the run, written before qb9's W9b runs (qb4, 2026-10-11)
+
+**Model** (`calls.mjs` option `arrive`; `sim/board/arrivals.mjs`):
+- 10 agents, the s3-calibrated terms, 30 tasks at the start (5 far-worded pairs).
+- Then n tasks arrive at Poisson times. A share of them (dupShare) reword work already landed or being
+  built, worded far apart.
+- Conditions:
+  - **none:** no board, no dedupe;
+  - **board + upfront dedupe:** E, where only the starting list is deduped;
+  - **board + per-arrival dedupe:** each new task is checked against open, in-progress and landed work
+    (0.97). A twin of landed work is closed as done; a twin of open work is marked and later lands as an
+    alias.
+- Agents with nothing to do wait for the next task, without cost. **Each arrival wakes one waiting agent.**
+  Waking all of them sends the whole idle team at the one new task: in the sim that doubled E's wasted
+  minutes (26 vs 14). qb9's harness should wake one.
+
+200 seeds, medians [10–90%]:
+
+| arrivals | condition | wall (s) | agent-min | wasted min | pairs built twice | closed as dup |
+|---|---|---|---|---|---|---|
+| 30 over 10 min, 30% dups (~9) | none | 764 | 113 | 52 | 13 [10–16] | 0 |
+| | board + upfront | 717 | 87 | 14 | 6 [3–9] | 0 |
+| | **board + per-arrival** | 696 | **79** | 12 | **0 [0–1]** | 6 |
+| 30 over 10 min, 50% dups (~15) | none | 767 | 114 | 52 | 18 [14–22] | 0 |
+| | board + upfront | 718 | 87 | 16 | 10 [6–13] | 0 |
+| | **board + per-arrival** | 688 | **72** | 11 | **0 [0–1]** | 11 |
+| 60 over 20 min, 30% dups (~18) | none | 1364 | 202 | 115 | 21 [18–26] | 0 |
+| | board + upfront | 1330 | 131 | 27 | 13 [9–17] | 0 |
+| | **board + per-arrival** | 1305 | **111** | 21 | **0 [0–1]** | 15 |
+
+Prediction:
+1. **Wall time hardly moves** (−3 to −10% between conditions, inside the spread). The run ends when the
+   last task has arrived and been built, so cost and duplicates are the measures to read.
+2. **Upfront dedupe stops missing duplicates once work arrives late.** It still builds ~6–13 pairs twice:
+   the late twins are worded far apart, and the board alone recognises ~10% of them.
+3. **Per-arrival dedupe takes duplicates to ~0** and saves another 9–17% of agent-minutes over upfront
+   dedupe. More when more arrivals are duplicates: −9% at 30%, −17% at 50%.
+4. **Against none, per-arrival dedupe uses 30–45% fewer agent-minutes** and wastes ~5× less.
+5. **The per-arrival check costs one cheap call per arrival** (~$0.002, a few seconds; E4's dedupe call),
+   off the agents' critical path.
+
+**Falsifiers:**
+- upfront-only builds fewer than 3 late pairs twice (then agents recognise reworded late work far better
+  than in s2/s3);
+- per-arrival saves no agent-minutes over upfront.
+
+Reproduce:
+- `node sim/board/probe.mjs 100` (W8);
+- `node sim/board/arrivals.mjs 200` (W9);
+- `node sim/board/calls.mjs calibrate` (E4, unchanged).

@@ -89,7 +89,8 @@ export function run(cond, seed = 1, over = {}) {
   // thrash <= lo x cap -> cap + 1 (a clean minute); thrash > hi x cap -> cap halved (min `min`); else hold.
   // Only the `cap` lowest-numbered agents still working may start a call; the others pause at their next
   // call boundary (the newest pause first) and are woken when the cap allows.
-  const thrash = []; const A = C.aimd; let cap = A ? A.start : Infinity; let ss = !!A?.slowStart; m.capTrace = [];
+  let pending = C.arrive ? C.arrive.n : 0;
+  const thrash = [], lands = [], drops = []; const P = C.probe; const A = C.aimd || P; let cap = A ? A.start : Infinity; let ss = !!A?.slowStart; m.capTrace = [];
   const allowed = (a) => !A || agents.filter((x) => !x.done && x.id < a.id).length < cap;
   const heap = []; let seq = 0, t = 0;
   const at = (dt, fn) => { heap.push({ t: t + dt, s: seq++, fn }); heap.sort((a, b) => a.t - b.t || a.s - b.s); };
@@ -106,11 +107,12 @@ export function run(cond, seed = 1, over = {}) {
     m.calls++; const t0 = t;
     const spend = (dt, fn) => at(dt, () => { m.agentS += t - t0; fn(); });
     // What this agent believes is done: tasks on main, and twins it notices on main.
-    const known = (it) => onMain(it) || (isTwin(it) && onMain(twinOf(it)) && it.spotMain) || spotMainD(it);
+    const known = (it) => it.closed || onMain(it) || (isTwin(it) && onMain(twinOf(it)) && it.spotMain) || spotMainD(it);
     for (const it of items) if (it.spotMain == null && isTwin(it) && onMain(twinOf(it))) it.spotMain = !marked.has(it.unit) && rnd() < sp(it, C.pSpotMainDup);
     // D: finished intents are on the board and the same-meaning rule applies to them
     const spotMainD = (it) => dLike && !marked.has(it.unit) && isTwin(it) && onMain(twinOf(it)) && (it.spotD ??= rnd() < sp(it, C.pSpotRecentDup));
     const open = items.filter((it) => !known(it));
+    if (!open.length && pending > 0) { a.idle = true; m.calls--; return; } // W9: nothing open yet, more tasks coming: wait (free)
     if (!open.length) { m.allDone++; return spend(C.allDoneS, () => { a.done = true; a.endT = t; }); }
     const ready = open.filter((it) => { const n = units[it.unit].need; return (n == null || units[n].landed) && !(marked.has(it.unit) && !onMain(it) && twinOf(it) && !onMain(twinOf(it)) && it.id >= nUnits); });
     let pool = ready.length && rnd() < C.pReadyPref ? ready : open;
@@ -134,8 +136,10 @@ export function run(cond, seed = 1, over = {}) {
     // At the end everything left is claimed on the board: C/D skip once (a deferral) and stop; B's
     // prompt shows the same now-view, so it stops (as "all done") when it notices the files are taken.
     if (board && open.every((x) => now.some((p) => p.item === x.id))) {
-      if (cond !== 'B') { m.deferrals++; return spend(C.deferS, () => { a.done = true; a.endT = t; }); }
-      if (rnd() < C.pSpotFiles) { m.allDone++; return spend(C.allDoneS, () => { a.done = true; a.endT = t; }); }
+      // W9: more tasks are coming: wait for them instead of stopping
+      const stop = () => { if (pending > 0) a.idle = true; else { a.done = true; a.endT = t; } };
+      if (cond !== 'B') { m.deferrals++; return spend(C.deferS, stop); }
+      if (rnd() < C.pSpotFiles) { m.allDone++; return spend(C.allDoneS, stop); }
     }
     // the agent's pick: shared taste, its own noise
     const w = pool.map((it) => it.attract * Math.exp(C.agentNoise * normal()));
@@ -156,13 +160,14 @@ export function run(cond, seed = 1, over = {}) {
     const base = head;
     const aliasNow = marked.has(it.unit) && isTwin(it) && onMain(twinOf(it));
     if (aliasNow) it.alias = true;
-    const work = C.pickS + (C.boardS[cond] || 0) + logn(C.workMedS * (aliasNow ? C.aliasWork : 1), C.workSigma);
+    // W8: one laptop runs every agent (claude -p + npm test), so a call slows with the number building at once
+    const work = (C.pickS + (C.boardS[cond] || 0) + logn(C.workMedS * (aliasNow ? C.aliasWork : 1), C.workSigma)) * (1 + (C.slowPerAgent || 0) * Math.max(0, building.size - 1));
     const finishPost = () => { building.delete(a.id); if (post) post.end = t; };
     const tryPush = (myBase) => {
       if (onMain(it)) { // the same task landed while I built: push rejected, the rebase conflicts on my own
         // function, the agent fights it (abort, reset, retry: E4 A had ~3 aborts/resets per dropped task), then drops it
         const fights = 1 + Math.floor(rnd() * 2 * C.collisionRetries);
-        m.rejected += fights; for (let k = 0; k < fights; k++) thrash.push(t); thrash.push(t, t, t); m.wasted++; m.wastedSame++; m.wastedS += t - t0; wastedStarts.push(t0); finishPost();
+        m.rejected += fights; for (let k = 0; k < fights; k++) thrash.push(t); thrash.push(t, t, t); drops.push(t); m.wasted++; m.wastedSame++; m.wastedS += t - t0; wastedStarts.push(t0); finishPost();
         return spend(fights * logn(C.rebaseMedS, C.rebaseSigma), () => call(a));
       }
       if (isTwin(it) && onMain(twinOf(it)) && it.dropChecked == null) {
@@ -170,12 +175,12 @@ export function run(cond, seed = 1, over = {}) {
         // D's rule: "make yours a one-line alias of theirs once theirs is on main" (lands as an alias, not a second copy)
         if (marked.has(it.unit) || (dLike && rnd() < sp(it, C.pSpotRecentDup))) it.alias = true;
         else
-        if (rnd() < C.pDropDupAtRebase) { thrash.push(t, t, t); m.wasted++; m.wastedS += t - t0; wastedStarts.push(t0); finishPost(); return spend(1, () => call(a)); }
+        if (rnd() < C.pDropDupAtRebase) { thrash.push(t, t, t); drops.push(t); m.wasted++; m.wastedS += t - t0; wastedStarts.push(t0); finishPost(); return spend(1, () => call(a)); }
       }
-      if (head !== myBase) { m.rejected++; thrash.push(t); const rb = logn(C.rebaseMedS, C.rebaseSigma); const nb = head; return at(rb, () => tryPush(nb)); }
+      if (head !== myBase) { m.rejected++; thrash.push(t); const rb = logn(C.rebaseMedS + (C.rebasePerCommitS || 0) * (head - myBase), C.rebaseSigma); const nb = head; /* W8: more landed commits since my base = more to resolve */ return at(rb, () => tryPush(nb)); }
       at(C.pushS, () => {
         if (head !== myBase) return tryPush(myBase); // someone pushed first
-        head++; it.landed = true; m.landed++;
+        head++; it.landed = true; m.landed++; lands.push(t);
         const u = units[it.unit];
         if (u.landed && !it.alias) m.dupBuiltTwice++;
         if (it.alias) m.aliases++;
@@ -186,7 +191,62 @@ export function run(cond, seed = 1, over = {}) {
     at(work, () => tryPush(base));
   }
   agents.forEach((a, k) => at(cond === 'E' ? k * C.staggerS : rnd() * 3, () => call(a)));
-  if (A) {
+  // W9: tasks arrive during the run (Poisson, n over overS). dupShare of them reword a unit already landed or
+  // being built (worded far apart). E + perArrival: each arrival is checked against open + landed work (pDedupe):
+  // a twin of landed work is closed as done, a twin of open work is marked (waits, then lands as an alias).
+  if (C.arrive) {
+    const R = C.arrive; let at0 = 0;
+    for (let k = 0; k < R.n; k++) {
+      at0 += -Math.log(1 - rnd()) * R.overS / R.n;
+      at(at0, () => {
+        pending--;
+        const cands = units.filter((u) => u.landed || [...building.values()].some((id) => items[id].unit === u.id));
+        const it = { id: items.length, attract: Math.exp(C.attractSigma * normal()), landed: false, arrivedT: t };
+        if (cands.length && rnd() < R.dupShare) {
+          const u = cands[Math.floor(rnd() * cands.length)].id; it.unit = u; twins.add(u); far.add(u); m.dupArrivals = (m.dupArrivals || 0) + 1;
+          if (cond === 'E' && C.perArrivalDedupe && rnd() < C.pDedupe) { if (units[u].landed) { it.closed = true; m.closedAsDup = (m.closedAsDup || 0) + 1; } else marked.add(u); }
+        } else {
+          const u = { id: units.length, landed: false, landedBy: [] };
+          if (rnd() < C.needs / C.tasks) u.need = Math.floor(rnd() * units.length);
+          units.push(u); it.unit = u.id;
+        }
+        items.push(it);
+        // wake ONE waiting agent per arrival (C.wakeAll: every one, a thundering herd onto the one new task)
+        for (const a of agents) if (a.idle && !a.done) { a.idle = false; at(rnd() * 5, () => call(a)); if (!C.wakeAll) break; }
+        if (pending === 0) for (const a of agents) if (a.idle && !a.done) { a.idle = false; at(rnd() * 5, () => call(a)); } // the last arrival: everyone re-checks, then stops
+      });
+    }
+  }
+  // W8, a throughput-probing controller (BBR-like): add an agent, wait evalS, compare landings/min over the
+  // last windowS with the window before the add. Gain >= minGain -> keep it and add another; else step back one
+  // and hold holdS before probing again. While holding, landings falling by > fall -> one fewer. Dropped work
+  // (built then thrown away) > drop x cap per minute -> halve. Rejected pushes alone never cut.
+  if (P) {
+    const rate = (from, to) => lands.filter((x) => x > from && x <= to).length * 60 / (to - from);
+    let state = 'warm', since = t, ref = 0;
+    const tick = () => {
+      if (agents.every((x) => x.done)) return;
+      const W = P.windowS;
+      const dropsPerMin = drops.filter((x) => x > t - 60).length;
+      if (dropsPerMin > P.drop * cap && cap > P.min) { cap = Math.max(P.min, Math.floor(cap / 2)); state = 'hold'; since = t; ref = rate(t - W, t); m.halvings = (m.halvings || 0) + 1; }
+      else if (state === 'warm' && t - since >= P.evalS) { ref = rate(t - W, t); cap = Math.min(C.agents, cap + (P.step || 1)); state = 'eval'; since = t; }
+      else if (state === 'eval' && t - since >= P.evalS) {
+        const now = rate(t - W, t);
+        // keep the add when the new agents earn at least `eff` of the average agent's landings (ideal: 1)
+        const st = P.step || 1, before = cap - st;
+        if (now >= ref * (1 + (P.eff ?? 0.5) * st / Math.max(1, before))) { ref = now; cap = Math.min(C.agents, cap + st); since = t; }
+        else { cap = Math.max(P.min, cap - st); state = 'hold'; since = t; ref = now; }
+      } else if (state === 'hold') {
+        const now = rate(t - W, t);
+        if (ref > 0 && now < ref * (1 - P.fall)) { cap = Math.max(P.min, cap - 1); ref = now; since = t; }
+        else if (t - since >= P.holdS) { ref = now; cap = Math.min(C.agents, cap + (P.step || 1)); state = 'eval'; since = t; }
+      }
+      m.capTrace.push(cap); m.capMax = Math.max(m.capMax || 0, cap);
+      for (const x of agents) if (x.paused && !x.done && allowed(x)) { x.paused = false; at(0, () => call(x)); }
+      at(P.tickS, tick);
+    };
+    at(P.tickS, tick);
+  } else if (A) {
     const tick = () => {
       if (agents.every((x) => x.done)) return;
       const n = thrash.filter((x) => x > t - (A.tickS || 60)).length * 60 / (A.tickS || 60); // per minute
