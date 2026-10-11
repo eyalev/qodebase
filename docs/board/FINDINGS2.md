@@ -1,11 +1,11 @@
-# Agent board, round 2: findings (2026-10-10, draft while the Cloudflare runs finish)
+# Agent board, round 2: findings (2026-10-10/11)
 
 Question (Eyal, 17:00 UTC Oct 10): build the board into qodebase, prove with real data that it is worth it,
 on Cloudflare too, and find out whether it already exists.
 Round 1: `FINDINGS.md`. Plan: `PLAN2.md`. Data: `E6-results.md` (local), `public/lab/runs.jsonl` stage 4
 (Cloudflare), `sim.md` (d)-(f) (predictions written before the runs), `prior-art.md`.
 
-## Answer so far
+## Answer
 - **Yes, it is worth it, and it held at bigger sizes and with a stronger model**, once three bugs found in this round
   were fixed. With the fixed board, at equal hidden-test quality:
 
@@ -19,7 +19,10 @@ Round 1: `FINDINGS.md`. Plan: `PLAN2.md`. Data: `E6-results.md` (local), `public
 - **With Haiku the win is fewer duplicates and less git fighting; with Sonnet it is only less git fighting.** Sonnet
   recognised far-worded twin tasks by itself (0-1 of 4 built twice with no board). Git thrash fell 4-20x in every test
   (Sonnet: rejected pushes 43 -> 9, aborted rebases 21 -> 1).
-- **Inside qodebase (Cloudflare, real boxes, the landing queue):** see section 3 (runs in progress).
+- **Inside qodebase (Cloudflare, real boxes, the landing queue, 18 runs):** with two teams on one repo the board's
+  cross-list duplicate check stopped duplicate work (pairs built twice 4,4,3 -> 0,0,1) and runs finished 40% sooner and
+  22% cheaper (p = 0.1 each). With one shared issue list, runs finished 46% sooner (p = 0.2) and no change bounced.
+  Under plain git (no landing queue) it made no difference. Section 3.
 - **Novelty:** most parts exist (MCP Agent Mail leases, Overstory's LLM "reimagine" merge tier, Beads' AI dedupe,
   Claim Plane / Foremerge intents). The combination does not, and we found no published real-agent A/B of time and
   cost for such a board. `prior-art.md`.
@@ -51,7 +54,7 @@ All 60/60. With the board there was no congestion collapse (20 beat 8 on time), 
 trades time for cost, and it also removed the red commits (hand-merged pushes) that 20 agents made. Useful as a
 "cheap mode" dial, not as a speed-up. The sim predicted the x2.1 exactly; it expected the cap at ~7, it settled at 3-4.
 
-## 3. Inside qodebase, on Cloudflare (W4, in progress)
+## 3. Inside qodebase, on Cloudflare (W4, done: 18 runs, `w4c-results.md`)
 Board built into the Landing Durable Object: event log, now view (TTL), recently landed, file/area queries; posts from
 the platform (spawn/push/review/queue/land/bounce) and from a hook in every box; `forq who/intent/dedupe`;
 earliest-claim answer in `forq intent`; the live "Who's doing what" view (phone first).
@@ -59,7 +62,24 @@ Pre-registered prediction (qb4, `sim.md` (e)): on land-by-intent the board does 
 already absorbs conflicts); its value there is duplicates, and in two-teams only with a cross-list dedupe; under plain
 git (`github` policy) about -18% wall.
 
-Round 1 (one run per cell, 6 Haiku coders, 0 reviewers), PRELIMINARY:
+**Result, 6 Haiku coders, 0 reviewers, 3 runs per cell (medians; exact Mann-Whitney, 0.1 is the floor at 3 vs 3):**
+
+| cell | wall off -> on | API-equiv $ off -> on | pairs built twice (of 5) | bounces | hidden score |
+|---|---|---|---|---|---|
+| two teams, one repo (on = cross-list dedupe) | 775 -> 465 s (-40%, p 0.1) | 1.80 -> 1.41 (-22%, p 0.1) | 4,4,3 -> 0,0,1 (p 0.1) | 3,5,0 -> 1,0,0 | 100 / 100 |
+| shared issue list, land by intent | 805 -> 435 s (-46%, p 0.2) | 1.71 -> 1.34 (n.s.) | 0 -> 0 | 3,5,0 -> 0,0,0 | 100 / 100 |
+| shared issue list, plain git | 948 -> 1012 s (n.s.) | 3.06 -> 2.94 (n.s.) | 1 -> 1 | 23 -> 27 | 97.5 / 97.5 |
+
+Against the pre-registered prediction: duplicates right (two teams 4 -> 0 only with the cross-list pass; one slip when
+the pass found 4 of 5). Time wrong in the board's favour: no gain predicted under land by intent, measured -40 to -46%.
+Under plain git the predicted -18% did not appear (the bounces there are rebase conflicts the board does not touch).
+Board-off agents on one shared list recognised all 5 twins already on main themselves (the sim expected ~4 built twice).
+Caveats (w4c-results.md): 5 runs ended "timeout" from tail cleanup after all work had landed (wall = last landing,
+unaffected); 5 earlier tries were excluded for bugs found while running (budget guard tier, a stalled push, a stray
+unwatched run, settle while busy); two plain-git runs were collected after a laptop network outage.
+Spend: real money $1.78 (Cloudflare boxes), API-equivalent $42.6 on the subscription.
+
+Per-round detail. Round 1 (one run per cell, 6 Haiku coders, 0 reviewers), PRELIMINARY:
 
 | cell | wall | hidden score | pairs built twice (of 5) | API-equiv $ |
 |---|---|---|---|---|
@@ -89,7 +109,7 @@ Two rounds (n=2, no p-values yet): two teams: duplicates 4,4 -> 0,0 and wall -42
 wall -41%, bounces 3,5 -> 0,0, no duplicate win (agents without the board aliased the twins themselves); plain git:
 about even on time, cost noisy. Round 3 running.
 
-## 4. Recommendation (to be confirmed by section 3)
+## 4. Recommendation
 - Ship the board as a qodebase feature, on by default for projects with more than ~4 agents or more than one
   planner/team. Its unique value inside qodebase is the cross-team duplicate check and the "who is on this file" view;
   its speed/cost value is largest where plain git does the landing.
