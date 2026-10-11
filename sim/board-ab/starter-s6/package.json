@@ -1,0 +1,10 @@
+{
+  "name": "strkit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Small text, number and list helpers.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

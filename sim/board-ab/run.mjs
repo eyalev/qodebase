@@ -15,7 +15,7 @@ const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i
 const COND = opt('cond', 'A'), N = +opt('agents', 5), MINUTES = +opt('minutes', 25), REP = +opt('rep', 1);
 // Scenarios: s1 = textkit (16 small tasks), s2 = todokit (30 multi-file tasks, the scale test).
 const SCEN = opt('scenario', 's1');
-const S = {
+let S = {
   s1: { starter: 'starter', hidden: 'tasks.test.mjs', tasks: 16, intents: [['T1', 'T9'], ['T2'], ['T3', 'T11'], ['T4'], ['T5', 'T13'], ['T6', 'T14'], ['T7'], ['T8'], ['T10'], ['T12'], ['T15'], ['T16']] },
   s2: { starter: 'starter2', hidden: 'tasks2.test.mjs', tasks: 30,
     // [task A, module A, task B, module B]: same intent under other names (T19 and T22 worded very differently).
@@ -36,6 +36,14 @@ const S = {
     pairs: [['T2', 'cron', 'T10', 'schedule'], ['T4', 'template', 'T11', 'mailmerge'], ['T5', 'semver', 'T12', 'compat']],
     intents: [['T2', 'T10'], ['T4', 'T11'], ['T5', 'T12'], ...[1, 3, 6, 7, 8, 9].map((n) => [`T${n}`])] },
 }[SCEN];
+// s6 (W8 scale, 150 tasks) and s7 (W9 arrivals, 30 initial + 30 arriving) are generated (lab-hidden gen/gen.mjs):
+// the public starter is starter-<s>, the task metadata <s>.json (pairs, intents, arrival lines), hidden tests private.
+if (SCEN === 's6' || SCEN === 's7') { const meta = JSON.parse(fs.readFileSync(path.join(HERE, `${SCEN}.json`), 'utf8'));
+  S = { starter: `starter-${SCEN}`, hidden: `tasks-${SCEN}.test.mjs`, tasks: meta.tasks, pairs: meta.pairs, intents: meta.intents, arrivals: meta.arrivals || null }; }
+// --tasks N: only the first N backlog tasks (s6), so a run fits the meter.
+const TASKS_N = opt('tasks', null) ? +opt('tasks') : null;
+if (TASKS_N) { S.tasks = TASKS_N; S.intents = S.intents.map((g) => g.filter((t) => +t.slice(1) <= TASKS_N)).filter((g) => g.length); S.pairs = (S.pairs || []).filter(([a, , b]) => +a.slice(1) <= TASKS_N && +b.slice(1) <= TASKS_N); }
+const PROJECT = SCEN === 's1' ? 'textkit' : (SCEN === 's6' || SCEN === 's7') ? 'strkit' : 'todokit';
 if (SCEN === 's3') { const paired = new Set(S.pairs.flatMap(([a, , b]) => [a, b])); S.intents = [...S.pairs.map(([a, , b]) => [a, b]), ...Array.from({ length: 60 }, (_, i) => `T${i + 1}`).filter((t) => !paired.has(t)).map((t) => [t])]; }
 // E's staggered start: agent k starts at (k-1) x STAGGER_MS. 5 s in E4; 1 s from W3a on (manager: keep the
 // total stagger ~20 s at 20 agents so E is not charged for the stagger). Recorded per run as stagger_s.
@@ -77,8 +85,9 @@ function setup() {
   const seed = path.join(DIR, 'seed');
   fs.cpSync(path.join(HERE, S.starter), seed, { recursive: true });
   const fixed = { GIT_AUTHOR_NAME: 'board-ab', GIT_AUTHOR_EMAIL: 'lab@qodebase.app', GIT_COMMITTER_NAME: 'board-ab', GIT_COMMITTER_EMAIL: 'lab@qodebase.app', GIT_AUTHOR_DATE: '2026-10-10T00:00:00Z', GIT_COMMITTER_DATE: '2026-10-10T00:00:00Z' };
+  if (TASKS_N) { const f = path.join(seed, 'BACKLOG.md'); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').split('\n').filter((l) => { const m = /^- \*\*T(\d+)\*\*/.exec(l); return !m || +m[1] <= TASKS_N; }).join('\n')); }
   if (COND === 'E') dedupePass(seed);
-  sh('git', ['-c', 'init.defaultBranch=main', 'init', '-q'], seed); sh('git', ['add', '-A'], seed); sh('git', ['commit', '-qm', `${SCEN === 's1' ? 'textkit' : 'todokit'} starter (board-ab ${SCEN} v1)`], seed, fixed);
+  sh('git', ['-c', 'init.defaultBranch=main', 'init', '-q'], seed); sh('git', ['add', '-A'], seed); sh('git', ['commit', '-qm', `${PROJECT} starter (board-ab ${SCEN} v1)`], seed, fixed);
   const starterSha = sh('git', ['rev-parse', 'HEAD'], seed);
   sh('git', ['clone', '-q', '--bare', seed, path.join(DIR, 'origin.git')], DIR);
   for (let k = 1; k <= N; k++) {
@@ -135,7 +144,7 @@ function prompt(k) {
   // D = C, but the query also returns recently finished intents, plus one rule for same-meaning tasks
   // (manager, 2026-10-10, after the T3/T11 diagnosis: finished intents dropped out of 'who').
   const boardD = (COND === 'D' || COND === 'E') ? `\nThere is a shared board where agents say what they are working on. Before choosing a task, run \`node ${BOARD} who --recent 30m\` (what the others are doing and what they finished in the last 30 minutes). After choosing a task, run \`node ${BOARD} post started --intent "<task id + title>" --files <comma-separated files you expect to touch>\`. If a task someone claimed or finished means the same as one you are about to do (even under another name or task id), make yours a one-line alias of theirs once theirs is on main, or pick another task.${TIEBREAK ? ' If another agent claimed the same task before you did (the board shows "claimed T<n> <age> ago"), they keep it and you pick another task; if your claim is the earlier one, keep going.' : ''}\n` : '';
-  return `You are agent ${k} of ${N}, working at the same time as the others on this repository (${SCEN === 's1' ? 'textkit' : 'todokit'}). Each agent works in its own clone and pushes to the same origin; you cannot talk to them.${board}${boardD}
+  return `You are agent ${k} of ${N}, working at the same time as the others on this repository (${PROJECT}). Each agent works in its own clone and pushes to the same origin; you cannot talk to them.${board}${boardD}
 1. Run \`git pull --rebase\` first.
 2. Read BACKLOG.md and the code on main. Pick ONE task that you believe nobody has done yet.
 3. Implement it as the backlog says (code, re-export, a test, a CHANGELOG line) and run \`npm test\` until it is green.
@@ -189,12 +198,82 @@ const allowed = (k) => [...ACTIVE].sort((a, b) => a - b).indexOf(k) < CAP;
 function rejectedSoFar() { let n = 0; for (let k = 1; k <= N; k++) { try { const rl = sh('git', ['reflog', '--format=%gs'], path.join(DIR, `agent${k}`)).split('\n');
   for (let i = 0; i < rl.length - 1; i++) if (/^pull --rebase \(start\)/.test(rl[i]) && /^(commit|rebase \(continue\))/.test(rl[i + 1])) n++; } catch {} } return n; }
 let droppedSoFar = 0;
-function controller(t0) { let lastRej = 0, lastDrop = 0, minute = 0;
+// Landings = agents' commits that reached origin/main (first parent), counted per controller tick.
+function landingsSince(sec) { try { return sh('git', ['log', 'main', '--first-parent', '--format=%ct%x09%an', `--since=@${sec}`], path.join(DIR, 'origin.git')).split('\n').filter(Boolean).filter((l) => { const [ct, an] = l.split('\t'); return +ct > sec && an !== 'backlog-bot'; }).length; } catch { return 0; } }
+// W8 throughput probing (--probe [start]; qb4's sim.md (g), a6bbe06): start at 8 allowed agents; every 30 s compute
+// landings/min over the last 4 min. After a 4-min warm-up add 2, wait 4 min, keep them if the rate rose by >= 0.2 x 2 x
+// (rate before / cap before) (the 2 new agents earn >= 20% of an average agent), then add 2 more; else step back 2 and
+// hold 3 min, then probe again. While holding, landings down > 25% from the hold's start -> one fewer. Halve ONLY when
+// dropped work (built, then thrown away) exceeds 1 per active agent per minute; never on rejected pushes. Min 2.
+const PROBE = args.includes('--probe') ? { start: +(opt('probe', '8').match(/^\d+$/) ? opt('probe') : 8), add: 2, windowS: 240, earn: 0.2, holdS: 180, holdDrop: 0.25, dropPerAgent: 1 } : null;
+if (PROBE) CAP = Math.min(N, PROBE.start);
+const TICK_MS = (PROBE || SCEN === 's6') ? 30e3 : 60e3;
+const landHist = [], dropHist = []; const probe = { mode: 'warmup', until: null, rateBefore: null, capBefore: null, holdRate: null };
+const rateOver = (hist, sec, now) => hist.filter((x) => now - x.t <= sec * 1000).reduce((a, x) => a + x.n, 0) / (sec / 60);
+function probeStep(now, t0) {
+  const rate = rateOver(landHist, PROBE.windowS, now), drops = rateOver(dropHist, 60, now), working = [...ACTIVE].filter(allowed).length || CAP; let why = 'hold';
+  if (probe.until == null) probe.until = t0 + PROBE.windowS * 1000;
+  if (drops > PROBE.dropPerAgent * working) { CAP = Math.max(2, Math.floor(CAP / 2)); probe.mode = 'hold'; probe.until = now + PROBE.holdS * 1000; probe.holdRate = rate; why = 'dropped work > 1/agent/min: halve'; }
+  else if ((probe.mode === 'warmup' || probe.mode === 'hold') && now >= probe.until) { if (CAP < N) { probe.capBefore = CAP; probe.rateBefore = rate; CAP = Math.min(N, CAP + PROBE.add); probe.mode = 'probe'; probe.until = now + PROBE.windowS * 1000; why = `probe: +${PROBE.add}`; } else why = 'at max'; }
+  else if (probe.mode === 'warmup') why = 'warm-up';
+  else if (probe.mode === 'probe' && now >= probe.until) { const need = PROBE.earn * PROBE.add * probe.rateBefore / probe.capBefore;
+    if (rate - probe.rateBefore >= need) { probe.capBefore = CAP; probe.rateBefore = rate; CAP = Math.min(N, CAP + PROBE.add); probe.until = now + PROBE.windowS * 1000; why = `kept (+${(rate - probe.rateBefore).toFixed(2)} >= ${need.toFixed(2)}): +${PROBE.add}`; }
+    else { CAP = Math.max(2, probe.capBefore); probe.mode = 'hold'; probe.until = now + PROBE.holdS * 1000; probe.holdRate = rate; why = `added nothing (${(rate - probe.rateBefore).toFixed(2)} < ${need.toFixed(2)}): back to ${CAP}, hold`; } }
+  else if (probe.mode === 'hold' && probe.holdRate > 0 && rate < (1 - PROBE.holdDrop) * probe.holdRate) { CAP = Math.max(2, CAP - 1); probe.holdRate = rate; why = 'landings down > 25% while holding: -1'; }
+  return { landings_per_min: +rate.toFixed(2), drops_per_min: +drops.toFixed(2), mode: probe.mode, why };
+}
+function controller(t0) { let lastRej = 0, lastDrop = 0, minute = 0, lastTick = Math.floor(t0 / 1000);
   return setInterval(() => { minute++; const rej = rejectedSoFar(), drop = droppedSoFar; const dr = rej - lastRej, dd = drop - lastDrop; lastRej = rej; lastDrop = drop;
-    const thrash = dr + 3 * dd; const before = CAP;
+    const landings = landingsSince(lastTick); lastTick = Math.floor(Date.now() / 1000); const now = Date.now();
+    landHist.push({ t: now, n: landings }); dropHist.push({ t: now, n: dd });
+    const thrash = dr + 3 * dd; const before = CAP; let pr = null;
     if (AIMD) { if (thrash <= AIMD.lo * CAP) CAP = Math.min(N, CAP + 1); else if (thrash > AIMD.hi * CAP) CAP = Math.max(2, Math.floor(CAP / 2)); }
-    const row = { minute, t_s: Math.round((Date.now() - t0) / 1000), thrash, rejected: dr, dropped: dd, cap_before: before, cap: CAP, active: ACTIVE.size, working: [...ACTIVE].filter(allowed).length };
-    capLog.push(row); log('events.jsonl', { event: 'thrash', ...row }); }, 60e3); }
+    if (PROBE) pr = probeStep(now, t0); else if (TICK_MS === 30e3) pr = { landings_per_min: +rateOver(landHist, 240, now).toFixed(2), drops_per_min: +rateOver(dropHist, 60, now).toFixed(2) };
+    const row = { minute, t_s: Math.round((Date.now() - t0) / 1000), landings, thrash, rejected: dr, dropped: dd, cap_before: before, cap: CAP, active: ACTIVE.size, working: [...ACTIVE].filter(allowed).length, ...(pr || {}) };
+    capLog.push(row); log('events.jsonl', { event: 'thrash', ...row }); }, TICK_MS); }
+
+// ---- W9: tasks arriving during the run (s7). Times: exponential gaps (mean --arrival-gap-s), seeded per rep, the same
+// for every condition of a rep. Each arrival is appended to BACKLOG.md on origin by a harness clone (author backlog-bot).
+// With --arrival-dedupe (board + per-arrival dedupe) one Haiku call compares the new task with the open tasks and those
+// landed in the last 30 min, and the line is annotated like the upfront dedupe does.
+const ARRIVE = S.arrivals ? { gap: +opt('arrival-gap-s', 24), seed: REP * 1000 + 7, dedupe: args.includes('--arrival-dedupe') } : null;
+const arrivalLog = []; let pendingArrivals = ARRIVE ? S.arrivals.length : 0; let nextArrival = null; const arrivalWaiters = [];
+const rngA = (seed) => () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+function landedTasks(sinceSec = 0) { try { return sh('git', ['log', 'main', '--first-parent', '--format=%ct%x09%an%x09%s'], path.join(DIR, 'origin.git')).split('\n').filter(Boolean).map((l) => l.split('\t')).filter(([ct, an]) => an !== 'backlog-bot' && +ct >= sinceSec).map(([, , s]) => (s.match(/^T\d+/) || [])[0]).filter(Boolean); } catch { return []; } }
+function arrivalDedupe(item, backlogText) {
+  const lines = backlogText.split('\n').filter((l) => /^- \*\*T\d+\*\*/.test(l)); const everLanded = new Set(landedTasks()), recent = new Set(landedTasks(Math.floor(Date.now() / 1000) - 1800));
+  const cands = lines;   // qb4 (h): open + in progress + landed (every released task)
+  const q = `A new task was just added to a project backlog. Is it the same work as one of the existing tasks below (same behaviour under another name or wording)? Answer with ONLY one JSON object: {"same": "T12"} or {"same": null}.\n\nNew task:\n${item.line}\n\nExisting tasks (open, in progress or done):\n${cands.join('\n')}`;
+  const t0 = Date.now(); const r = require_spawnSync('claude', ['-p', '--model', 'claude-haiku-5-5', '--output-format', 'json', '--tools', '', '--max-turns', '1', '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.', '--setting-sources', '', '--strict-mcp-config'], { input: q, encoding: 'utf8', timeout: 120000, env: { ...process.env, CLAUDE_NO_HOOKS: '1' } });
+  let j = null, same = null; try { j = JSON.parse(r.stdout); same = JSON.parse(j.result.match(/\{[\s\S]*\}/)[0]).same || null; } catch {}
+  const u = j?.usage || {}, HP = PRICES['claude-haiku-5-5']; const usd = ((u.input_tokens || 0) * HP.in + (u.output_tokens || 0) * HP.out + (u.cache_read_input_tokens || 0) * HP.cacheR + (u.cache_creation_input_tokens || 0) * HP.cacheW) / 1e6;
+  // truth: the twin only if it is already in the backlog (released); an original that arrives before its twin has none
+  const released = new Set(lines.map((l) => /\*\*(T\d+)\*\*/.exec(l)[1]));
+  const truth = (S.pairs || []).filter(([a, , b]) => a === item.id || b === item.id).map(([a, , b]) => (a === item.id ? b : a)).filter((t) => released.has(t))[0] || null;
+  return { same, truth, landed: same ? everLanded.has(same) : null, recentLanded: recent.size, candidates: cands.length, ms: Date.now() - t0, usd_api_equiv: +usd.toFixed(5) };
+}
+async function arrivals(t0, deadline) {
+  if (!ARRIVE) return; const bot = path.join(DIR, 'bot'); sh('git', ['clone', '-q', path.join(DIR, 'origin.git'), bot], DIR);
+  sh('git', ['config', 'user.name', 'backlog-bot'], bot); sh('git', ['config', 'user.email', 'bot@board-ab.local'], bot);
+  const r = rngA(ARRIVE.seed); let at = 0;
+  for (const item of S.arrivals) {
+    at += -Math.log(1 - r()) * ARRIVE.gap; const wait = t0 + at * 1000 - Date.now(); if (wait > 0) await new Promise((res) => setTimeout(res, wait));
+    if (Date.now() >= deadline) break;
+    let line = item.line, dd = null;
+    for (let tries = 0; tries < 8; tries++) {
+      try { sh('git', ['fetch', '-q', 'origin'], bot); sh('git', ['reset', '-q', '--hard', 'origin/main'], bot);
+        const f = path.join(bot, 'BACKLOG.md'); const text = fs.readFileSync(f, 'utf8');
+        // a twin of landed work is closed as done; a twin of open work is marked as its alias (qb4 (h))
+        if (ARRIVE.dedupe && !dd) { dd = arrivalDedupe(item, text); if (dd.same) line = line.replace(/(\*\*T\d+\*\*)/, dd.landed ? `$1 _(closed: duplicate of ${dd.same}, which is already on main; nothing to do)_` : `$1 _(alias of ${dd.same}: make it a thin alias of ${dd.same} once that is on main)_`); }
+        fs.writeFileSync(f, text.replace(/\n*$/, '\n') + line + '\n'); sh('git', ['commit', '-qam', `backlog: ${item.id} arrives`], bot); sh('git', ['push', '-q', 'origin', 'HEAD:main'], bot); break;
+      } catch { await new Promise((res) => setTimeout(res, 500)); }
+    }
+    const row = { id: item.id, t_s: Math.round((Date.now() - t0) / 1000), dedupe: dd }; arrivalLog.push(row); log('events.jsonl', { event: 'arrival', ...row });
+    pendingArrivals--; arrivalWaiters.shift()?.();   // wake ONE waiting agent per arrival (qb4 (h): waking all doubled waste)
+  }
+  pendingArrivals = 0; for (const w of arrivalWaiters.splice(0)) w();
+}
+const waitArrival = () => new Promise((res) => arrivalWaiters.push(res));
 
 async function agentLoop(k, deadline) {
   let iter = 0, idle = 0; ACTIVE.add(k);
@@ -205,8 +284,9 @@ async function agentLoop(k, deadline) {
     const m = meter(); if (m != null && m >= STOP_AT) { log('events.jsonl', { event: 'meter-stop', agent: k, meter: m }); break; }
     const r = await callAgent(k, ++iter);
     if ((r.status === 'skipped' || r.status === 'failed') && (r.turns ?? 0) >= 10) droppedSoFar++;
-    if (r.status === 'all-done') break;
-    if (r.status !== 'pushed') { if (++idle >= 3) break; } else idle = 0;
+    const done = r.status === 'all-done' || (r.status !== 'pushed' && ++idle >= 3);
+    if (r.status === 'pushed') idle = 0;
+    if (done) { if (pendingArrivals > 0) { await waitArrival(); idle = 0; continue; } break; }
   } } finally { ACTIVE.delete(k); }
 }
 
@@ -220,11 +300,11 @@ function scoreIn(DIRX, NX, starterSha) { const DIR = DIRX, N = NX;
   let hidden = {};
   try { execFileSync('node', ['--test', '--test-reporter=tap', HIDDEN], { cwd: DIR, env: { ...process.env, REPO: fin }, encoding: 'utf8' }); } catch (e) { hidden.__out = e.stdout; }
   const tap = hidden.__out ?? execFileSync('node', ['--test', '--test-reporter=tap', HIDDEN], { cwd: DIR, env: { ...process.env, REPO: fin }, encoding: 'utf8' });
-  hidden = {}; for (const m of tap.matchAll(/^(not ok|ok) \d+ - (T\d+)/gm)) hidden[m[2]] = m[1] === 'ok';
+  hidden = {}; for (const m of tap.matchAll(/^(not ok|ok) \d+ - (T\d+)/gm)) if (+m[2].slice(1) <= S.tasks) hidden[m[2]] = m[1] === 'ok';
   // Every commit on main: who, which task, and does `npm test` pass there (red main).
   const commits = sh('git', ['log', '--first-parent', '--reverse', '--format=%H\t%an\t%ct\t%s', `${starterSha}..HEAD`], fin).split('\n').filter(Boolean).map((l) => { const [sha, author, ct, subj] = l.split('\t'); return { sha, author, ct: +ct, subj, tasks: (subj.match(/^T\d+/) || []).slice(0, 1) }; }); // only the id the subject starts with: an alias commit names its twin too
   let red = 0;
-  for (const c of commits) { sh('git', ['checkout', '-q', c.sha], fin); try { execFileSync('npm', ['test'], { cwd: fin, stdio: 'ignore', timeout: 120000 }); c.green = true; } catch { c.green = false; red++; } }
+  for (const c of commits.filter((x) => x.author !== 'backlog-bot'))   // the bot only appends to BACKLOG.md { sh('git', ['checkout', '-q', c.sha], fin); try { execFileSync('npm', ['test'], { cwd: fin, stdio: 'ignore', timeout: 120000 }); c.green = true; } catch { c.green = false; red++; } }
   sh('git', ['checkout', '-q', 'main'], fin);
   // Same task id landed by more than one agent = duplicated work.
   const byTask = {}; for (const c of commits) for (const t of c.tasks) (byTask[t] ||= new Set()).add(c.author);
@@ -289,7 +369,7 @@ const t0 = Date.now(); const deadline = t0 + MINUTES * 60e3;
 log('events.jsonl', { event: 'start', cond: COND, agents: N, minutes: MINUTES, rep: REP, meter: m0, prompt_version: PROMPT_VERSION, starter: starterSha });
 console.error(`[run] ${RUN_ID} cond ${COND}, ${N} agents, ${MINUTES} min, meter ${m0}%`);
 const ctl = controller(t0);
-await Promise.all(Array.from({ length: N }, (_, i) => agentLoop(i + 1, deadline)));
+await Promise.all([arrivals(t0, deadline), ...Array.from({ length: N }, (_, i) => agentLoop(i + 1, deadline))]);
 clearInterval(ctl);
 const wallS = Math.round((Date.now() - t0) / 1000);
 const calls = fs.readFileSync(path.join(DIR, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
@@ -297,7 +377,8 @@ const sum = (f) => calls.reduce((a, c) => a + (f(c) || 0), 0);
 const result = { run: RUN_ID, scenario: SCEN, cond: COND, board_version: COND === 'A' ? null : (COND === 'D' || COND === 'E') ? (BOARD_DIR === E1 ? 'f3d36d3 (frozen e1)' : sh('git', ['log', '-1', '--format=%h', '--', 'board'], path.resolve(HERE, '../..')) + (sh('git', ['status', '--porcelain', '--', 'board'], path.resolve(HERE, '../..')) ? '+dirty' : '')) : '2ff8b07 (frozen copy)', agents: N, rep: REP, minutes_cap: MINUTES, stagger_s: COND === 'E' ? +((N - 1) * STAGGER_MS / 1000).toFixed(1) : 0, wall_s: wallS, prompt_version: PROMPT_VERSION, model: MODEL, meter_start: m0, meter_end: meter(),
   calls: calls.length, ...wasteOf(calls), pushed: calls.filter((c) => c.status === 'pushed').length, skipped: calls.filter((c) => c.status === 'skipped').length, failed: calls.filter((c) => c.status === 'failed').length, all_done_calls: calls.filter((c) => c.status === 'all-done').length,
   tokens: { in: sum((c) => c.tokens.in), out: sum((c) => c.tokens.out), cacheR: sum((c) => c.tokens.cacheR), cacheW: sum((c) => c.tokens.cacheW) },
-  dedupe: DEDUPE, usd_api_equiv: +(sum((c) => c.usd_api_equiv) + (DEDUPE?.usd_api_equiv || 0)).toFixed(4), usd_note: `subscription; API-equivalent at ${MODEL} rates, 1h cache writes`, price: PRICE, max_turns: +MAX_TURNS, aimd: AIMD, cap_log: capLog, cap_median: capLog.length ? [...capLog.map((r) => r.cap)].sort((a, b) => a - b)[Math.floor(capLog.length / 2)] : null,
+  dedupe: DEDUPE, usd_api_equiv: +(sum((c) => c.usd_api_equiv) + (DEDUPE?.usd_api_equiv || 0) + arrivalLog.reduce((a, x) => a + (x.dedupe?.usd_api_equiv || 0), 0)).toFixed(4),
+  tasks_n: S.tasks, probe: PROBE, meter_stopped: fs.readFileSync(path.join(DIR, 'events.jsonl'), 'utf8').includes('"meter-stop"'), arrivals: ARRIVE ? { ...ARRIVE, log: arrivalLog, dedupe_calls: arrivalLog.filter((x) => x.dedupe).length, dedupe_right: arrivalLog.filter((x) => x.dedupe && x.dedupe.same === x.dedupe.truth).length, dedupe_false: arrivalLog.filter((x) => x.dedupe?.same && x.dedupe.same !== x.dedupe.truth).length, dedupe_missed: arrivalLog.filter((x) => x.dedupe && x.dedupe.truth && x.dedupe.same !== x.dedupe.truth).length } : null, usd_note: `subscription; API-equivalent at ${MODEL} rates, 1h cache writes`, price: PRICE, max_turns: +MAX_TURNS, aimd: AIMD, cap_log: capLog, cap_median: capLog.length ? [...capLog.map((r) => r.cap)].sort((a, b) => a - b)[Math.floor(capLog.length / 2)] : null,
   board_events: fs.existsSync(path.join(DIR, 'board.jsonl')) ? fs.readFileSync(path.join(DIR, 'board.jsonl'), 'utf8').split('\n').filter(Boolean).length : 0,
   ...score(starterSha) };
 fs.writeFileSync(path.join(DIR, 'result.json'), JSON.stringify(result, null, 1));

@@ -1,0 +1,156 @@
+# Backlog
+
+Each task: implement the function in its own module `src/<function name>.js` (named export), re-export it from
+`src/index.js` (one line per module, alphabetical), add a test in `test/`, and add a line to `CHANGELOG.md`.
+Keep `npm test` green. A task is done when its code is on `main`.
+
+- **T1** In `src/shiftBy1.js`: `shiftBy1(text)` moves every letter 1 place forward in the alphabet, wrapping around after z (and Z), keeping upper and lower case; every other character stays as it is.
+- **T2** In `src/everyNth2.js`: `everyNth2(text)` returns the characters at positions 0, 2, 4, … of the text, as a string.
+- **T3** In `src/pad2.js`: `pad2(n)` takes a non-negative integer and returns it as a string with leading zeros up to 2 digits (longer numbers unchanged).
+- **T4** In `src/chunks2.js`: `chunks2(arr)` splits an array into consecutive arrays of 2 elements; the last one may be shorter; an empty array gives `[]`.
+- **T5** In `src/firstWords1.js`: `firstWords1(text)` returns the first 1 word of the text (words are separated by any run of whitespace) joined by single spaces; fewer if the text has fewer.
+- **T6** In `src/toBase2.js`: `toBase2(n)` writes a non-negative integer in base 2 (digits 0-9 then lower-case letters).
+- **T7** In `src/multiplesOf2.js`: `multiplesOf2(n)` returns an array of the first n positive multiples of 2 (`[2, 4, …]`; `[]` for 0).
+- **T8** In `src/longWords2.js`: `longWords2(text)` counts the words with more than 2 letters, where a word is a maximal run of the letters a-z / A-Z.
+- **T9** In `src/roundTo2.js`: `roundTo2(x)` returns the multiple of 2 nearest to the number x; exactly half-way goes up (towards +∞).
+- **T10** In `src/echo2.js`: `echo2(text)` repeats every word 2 times (words separated by any whitespace) and joins all of them with single spaces.
+- **T11** In `src/clamp1.js`: `clamp1(x)` returns x limited to the range -1…1 (values below become -1, above become 1).
+- **T12** In `src/hardWrap3.js`: `hardWrap3(text)` inserts a newline after every 3 characters of the text (none at the very end).
+- **T13** In `src/maskTail1.js`: `maskTail1(s)` replaces every character with `*` except the last 1 (strings of 1 characters or fewer are unchanged).
+- **T14** In `src/rotateLeft1.js`: `rotateLeft1(arr)` returns a new array rotated left by 1 positions (by 1 modulo the length; an empty array stays empty).
+- **T15** In `src/ngrams2.js`: `ngrams2(text)` returns every substring of exactly 2 characters, in order of position (`[]` if the text is shorter).
+- **T16** In `src/shiftBy2.js`: `shiftBy2(text)` moves every letter 2 places forward in the alphabet, wrapping around after z (and Z), keeping upper and lower case; every other character stays as it is.
+- **T17** In `src/everyNth3.js`: `everyNth3(text)` returns the characters at positions 0, 3, 6, … of the text, as a string.
+- **T18** In `src/pad3.js`: `pad3(n)` takes a non-negative integer and returns it as a string with leading zeros up to 3 digits (longer numbers unchanged).
+- **T19** In `src/chunks3.js`: `chunks3(arr)` splits an array into consecutive arrays of 3 elements; the last one may be shorter; an empty array gives `[]`.
+- **T20** In `src/firstWords2.js`: `firstWords2(text)` returns the first 2 words of the text (words are separated by any run of whitespace) joined by single spaces; fewer if the text has fewer.
+- **T21** In `src/toBase3.js`: `toBase3(n)` writes a non-negative integer in base 3 (digits 0-9 then lower-case letters).
+- **T22** In `src/multiplesOf3.js`: `multiplesOf3(n)` returns an array of the first n positive multiples of 3 (`[3, 6, …]`; `[]` for 0).
+- **T23** In `src/longWords3.js`: `longWords3(text)` counts the words with more than 3 letters, where a word is a maximal run of the letters a-z / A-Z.
+- **T24** In `src/roundTo3.js`: `roundTo3(x)` returns the multiple of 3 nearest to the number x; exactly half-way goes up (towards +∞).
+- **T25** In `src/echo3.js`: `echo3(text)` repeats every word 3 times (words separated by any whitespace) and joins all of them with single spaces.
+- **T26** In `src/clamp2.js`: `clamp2(x)` returns x limited to the range -2…2 (values below become -2, above become 2).
+- **T27** In `src/hardWrap4.js`: `hardWrap4(text)` inserts a newline after every 4 characters of the text (none at the very end).
+- **T28** In `src/maskTail2.js`: `maskTail2(s)` replaces every character with `*` except the last 2 (strings of 2 characters or fewer are unchanged).
+- **T29** In `src/rotateLeft2.js`: `rotateLeft2(arr)` returns a new array rotated left by 2 positions (by 2 modulo the length; an empty array stays empty).
+- **T30** In `src/ngrams3.js`: `ngrams3(text)` returns every substring of exactly 3 characters, in order of position (`[]` if the text is shorter).
+- **T31** In `src/shiftBy3.js`: `shiftBy3(text)` moves every letter 3 places forward in the alphabet, wrapping around after z (and Z), keeping upper and lower case; every other character stays as it is.
+- **T32** In `src/everyNth4.js`: `everyNth4(text)` returns the characters at positions 0, 4, 8, … of the text, as a string.
+- **T33** In `src/pad4.js`: `pad4(n)` takes a non-negative integer and returns it as a string with leading zeros up to 4 digits (longer numbers unchanged).
+- **T34** In `src/chunks4.js`: `chunks4(arr)` splits an array into consecutive arrays of 4 elements; the last one may be shorter; an empty array gives `[]`.
+- **T35** In `src/firstWords3.js`: `firstWords3(text)` returns the first 3 words of the text (words are separated by any run of whitespace) joined by single spaces; fewer if the text has fewer.
+- **T36** In `src/toBase4.js`: `toBase4(n)` writes a non-negative integer in base 4 (digits 0-9 then lower-case letters).
+- **T37** In `src/multiplesOf4.js`: `multiplesOf4(n)` returns an array of the first n positive multiples of 4 (`[4, 8, …]`; `[]` for 0).
+- **T38** In `src/longWords4.js`: `longWords4(text)` counts the words with more than 4 letters, where a word is a maximal run of the letters a-z / A-Z.
+- **T39** In `src/roundTo4.js`: `roundTo4(x)` returns the multiple of 4 nearest to the number x; exactly half-way goes up (towards +∞).
+- **T40** In `src/echo4.js`: `echo4(text)` repeats every word 4 times (words separated by any whitespace) and joins all of them with single spaces.
+- **T41** In `src/clamp3.js`: `clamp3(x)` returns x limited to the range -3…3 (values below become -3, above become 3).
+- **T42** In `src/hardWrap5.js`: `hardWrap5(text)` inserts a newline after every 5 characters of the text (none at the very end).
+- **T43** In `src/maskTail3.js`: `maskTail3(s)` replaces every character with `*` except the last 3 (strings of 3 characters or fewer are unchanged).
+- **T44** In `src/rotateLeft3.js`: `rotateLeft3(arr)` returns a new array rotated left by 3 positions (by 3 modulo the length; an empty array stays empty).
+- **T45** In `src/ngrams4.js`: `ngrams4(text)` returns every substring of exactly 4 characters, in order of position (`[]` if the text is shorter).
+- **T46** In `src/shiftBy4.js`: `shiftBy4(text)` moves every letter 4 places forward in the alphabet, wrapping around after z (and Z), keeping upper and lower case; every other character stays as it is.
+- **T47** In `src/everyNth5.js`: `everyNth5(text)` returns the characters at positions 0, 5, 10, … of the text, as a string.
+- **T48** In `src/pad5.js`: `pad5(n)` takes a non-negative integer and returns it as a string with leading zeros up to 5 digits (longer numbers unchanged).
+- **T49** In `src/chunks5.js`: `chunks5(arr)` splits an array into consecutive arrays of 5 elements; the last one may be shorter; an empty array gives `[]`.
+- **T50** In `src/firstWords4.js`: `firstWords4(text)` returns the first 4 words of the text (words are separated by any run of whitespace) joined by single spaces; fewer if the text has fewer.
+- **T51** In `src/toBase5.js`: `toBase5(n)` writes a non-negative integer in base 5 (digits 0-9 then lower-case letters).
+- **T52** In `src/multiplesOf5.js`: `multiplesOf5(n)` returns an array of the first n positive multiples of 5 (`[5, 10, …]`; `[]` for 0).
+- **T53** In `src/longWords5.js`: `longWords5(text)` counts the words with more than 5 letters, where a word is a maximal run of the letters a-z / A-Z.
+- **T54** In `src/roundTo5.js`: `roundTo5(x)` returns the multiple of 5 nearest to the number x; exactly half-way goes up (towards +∞).
+- **T55** In `src/echo5.js`: `echo5(text)` repeats every word 5 times (words separated by any whitespace) and joins all of them with single spaces.
+- **T56** In `src/clamp4.js`: `clamp4(x)` returns x limited to the range -4…4 (values below become -4, above become 4).
+- **T57** In `src/hardWrap6.js`: `hardWrap6(text)` inserts a newline after every 6 characters of the text (none at the very end).
+- **T58** In `src/maskTail4.js`: `maskTail4(s)` replaces every character with `*` except the last 4 (strings of 4 characters or fewer are unchanged).
+- **T59** In `src/rotateLeft4.js`: `rotateLeft4(arr)` returns a new array rotated left by 4 positions (by 4 modulo the length; an empty array stays empty).
+- **T60** In `src/ngrams5.js`: `ngrams5(text)` returns every substring of exactly 5 characters, in order of position (`[]` if the text is shorter).
+- **T61** In `src/shiftBy5.js`: `shiftBy5(text)` moves every letter 5 places forward in the alphabet, wrapping around after z (and Z), keeping upper and lower case; every other character stays as it is.
+- **T62** In `src/everyNth6.js`: `everyNth6(text)` returns the characters at positions 0, 6, 12, … of the text, as a string.
+- **T63** In `src/pad6.js`: `pad6(n)` takes a non-negative integer and returns it as a string with leading zeros up to 6 digits (longer numbers unchanged).
+- **T64** In `src/chunks6.js`: `chunks6(arr)` splits an array into consecutive arrays of 6 elements; the last one may be shorter; an empty array gives `[]`.
+- **T65** In `src/firstWords5.js`: `firstWords5(text)` returns the first 5 words of the text (words are separated by any run of whitespace) joined by single spaces; fewer if the text has fewer.
+- **T66** In `src/toBase6.js`: `toBase6(n)` writes a non-negative integer in base 6 (digits 0-9 then lower-case letters).
+- **T67** In `src/multiplesOf6.js`: `multiplesOf6(n)` returns an array of the first n positive multiples of 6 (`[6, 12, …]`; `[]` for 0).
+- **T68** In `src/longWords6.js`: `longWords6(text)` counts the words with more than 6 letters, where a word is a maximal run of the letters a-z / A-Z.
+- **T69** In `src/roundTo6.js`: `roundTo6(x)` returns the multiple of 6 nearest to the number x; exactly half-way goes up (towards +∞).
+- **T70** In `src/echo6.js`: `echo6(text)` repeats every word 6 times (words separated by any whitespace) and joins all of them with single spaces.
+- **T71** In `src/clamp5.js`: `clamp5(x)` returns x limited to the range -5…5 (values below become -5, above become 5).
+- **T72** In `src/hardWrap7.js`: `hardWrap7(text)` inserts a newline after every 7 characters of the text (none at the very end).
+- **T73** In `src/maskTail5.js`: `maskTail5(s)` replaces every character with `*` except the last 5 (strings of 5 characters or fewer are unchanged).
+- **T74** In `src/rotateLeft5.js`: `rotateLeft5(arr)` returns a new array rotated left by 5 positions (by 5 modulo the length; an empty array stays empty).
+- **T75** In `src/ngrams6.js`: `ngrams6(text)` returns every substring of exactly 6 characters, in order of position (`[]` if the text is shorter).
+- **T76** In `src/shiftBy6.js`: `shiftBy6(text)` moves every letter 6 places forward in the alphabet, wrapping around after z (and Z), keeping upper and lower case; every other character stays as it is.
+- **T77** In `src/everyNth7.js`: `everyNth7(text)` returns the characters at positions 0, 7, 14, … of the text, as a string.
+- **T78** In `src/pad7.js`: `pad7(n)` takes a non-negative integer and returns it as a string with leading zeros up to 7 digits (longer numbers unchanged).
+- **T79** In `src/chunks7.js`: `chunks7(arr)` splits an array into consecutive arrays of 7 elements; the last one may be shorter; an empty array gives `[]`.
+- **T80** In `src/firstWords6.js`: `firstWords6(text)` returns the first 6 words of the text (words are separated by any run of whitespace) joined by single spaces; fewer if the text has fewer.
+- **T81** In `src/toBase7.js`: `toBase7(n)` writes a non-negative integer in base 7 (digits 0-9 then lower-case letters).
+- **T82** In `src/multiplesOf7.js`: `multiplesOf7(n)` returns an array of the first n positive multiples of 7 (`[7, 14, …]`; `[]` for 0).
+- **T83** In `src/longWords7.js`: `longWords7(text)` counts the words with more than 7 letters, where a word is a maximal run of the letters a-z / A-Z.
+- **T84** In `src/roundTo7.js`: `roundTo7(x)` returns the multiple of 7 nearest to the number x; exactly half-way goes up (towards +∞).
+- **T85** In `src/echo7.js`: `echo7(text)` repeats every word 7 times (words separated by any whitespace) and joins all of them with single spaces.
+- **T86** In `src/clamp6.js`: `clamp6(x)` returns x limited to the range -6…6 (values below become -6, above become 6).
+- **T87** In `src/hardWrap8.js`: `hardWrap8(text)` inserts a newline after every 8 characters of the text (none at the very end).
+- **T88** In `src/maskTail6.js`: `maskTail6(s)` replaces every character with `*` except the last 6 (strings of 6 characters or fewer are unchanged).
+- **T89** In `src/rotateLeft6.js`: `rotateLeft6(arr)` returns a new array rotated left by 6 positions (by 6 modulo the length; an empty array stays empty).
+- **T90** In `src/ngrams7.js`: `ngrams7(text)` returns every substring of exactly 7 characters, in order of position (`[]` if the text is shorter).
+- **T91** In `src/shiftBy7.js`: `shiftBy7(text)` moves every letter 7 places forward in the alphabet, wrapping around after z (and Z), keeping upper and lower case; every other character stays as it is.
+- **T92** In `src/everyNth8.js`: `everyNth8(text)` returns the characters at positions 0, 8, 16, … of the text, as a string.
+- **T93** In `src/pad8.js`: `pad8(n)` takes a non-negative integer and returns it as a string with leading zeros up to 8 digits (longer numbers unchanged).
+- **T94** In `src/chunks8.js`: `chunks8(arr)` splits an array into consecutive arrays of 8 elements; the last one may be shorter; an empty array gives `[]`.
+- **T95** In `src/firstWords7.js`: `firstWords7(text)` returns the first 7 words of the text (words are separated by any run of whitespace) joined by single spaces; fewer if the text has fewer.
+- **T96** In `src/toBase8.js`: `toBase8(n)` writes a non-negative integer in base 8 (digits 0-9 then lower-case letters).
+- **T97** In `src/multiplesOf8.js`: `multiplesOf8(n)` returns an array of the first n positive multiples of 8 (`[8, 16, …]`; `[]` for 0).
+- **T98** In `src/longWords8.js`: `longWords8(text)` counts the words with more than 8 letters, where a word is a maximal run of the letters a-z / A-Z.
+- **T99** In `src/roundTo8.js`: `roundTo8(x)` returns the multiple of 8 nearest to the number x; exactly half-way goes up (towards +∞).
+- **T100** In `src/echo8.js`: `echo8(text)` repeats every word 8 times (words separated by any whitespace) and joins all of them with single spaces.
+- **T101** In `src/clamp7.js`: `clamp7(x)` returns x limited to the range -7…7 (values below become -7, above become 7).
+- **T102** In `src/hardWrap9.js`: `hardWrap9(text)` inserts a newline after every 9 characters of the text (none at the very end).
+- **T103** In `src/maskTail7.js`: `maskTail7(s)` replaces every character with `*` except the last 7 (strings of 7 characters or fewer are unchanged).
+- **T104** In `src/rotateLeft7.js`: `rotateLeft7(arr)` returns a new array rotated left by 7 positions (by 7 modulo the length; an empty array stays empty).
+- **T105** In `src/ngrams8.js`: `ngrams8(text)` returns every substring of exactly 8 characters, in order of position (`[]` if the text is shorter).
+- **T106** In `src/shiftBy8.js`: `shiftBy8(text)` moves every letter 8 places forward in the alphabet, wrapping around after z (and Z), keeping upper and lower case; every other character stays as it is.
+- **T107** In `src/everyNth9.js`: `everyNth9(text)` returns the characters at positions 0, 9, 18, … of the text, as a string.
+- **T108** In `src/pad9.js`: `pad9(n)` takes a non-negative integer and returns it as a string with leading zeros up to 9 digits (longer numbers unchanged).
+- **T109** In `src/chunks9.js`: `chunks9(arr)` splits an array into consecutive arrays of 9 elements; the last one may be shorter; an empty array gives `[]`.
+- **T110** In `src/firstWords8.js`: `firstWords8(text)` returns the first 8 words of the text (words are separated by any run of whitespace) joined by single spaces; fewer if the text has fewer.
+- **T111** In `src/toBase9.js`: `toBase9(n)` writes a non-negative integer in base 9 (digits 0-9 then lower-case letters).
+- **T112** In `src/multiplesOf9.js`: `multiplesOf9(n)` returns an array of the first n positive multiples of 9 (`[9, 18, …]`; `[]` for 0).
+- **T113** In `src/longWords9.js`: `longWords9(text)` counts the words with more than 9 letters, where a word is a maximal run of the letters a-z / A-Z.
+- **T114** In `src/roundTo9.js`: `roundTo9(x)` returns the multiple of 9 nearest to the number x; exactly half-way goes up (towards +∞).
+- **T115** In `src/echo9.js`: `echo9(text)` repeats every word 9 times (words separated by any whitespace) and joins all of them with single spaces.
+- **T116** In `src/clamp8.js`: `clamp8(x)` returns x limited to the range -8…8 (values below become -8, above become 8).
+- **T117** In `src/hardWrap10.js`: `hardWrap10(text)` inserts a newline after every 10 characters of the text (none at the very end).
+- **T118** In `src/maskTail8.js`: `maskTail8(s)` replaces every character with `*` except the last 8 (strings of 8 characters or fewer are unchanged).
+- **T119** In `src/rotateLeft8.js`: `rotateLeft8(arr)` returns a new array rotated left by 8 positions (by 8 modulo the length; an empty array stays empty).
+- **T120** In `src/ngrams9.js`: `ngrams9(text)` returns every substring of exactly 9 characters, in order of position (`[]` if the text is shorter).
+- **T121** In `src/shiftBy9.js`: `shiftBy9(text)` moves every letter 9 places forward in the alphabet, wrapping around after z (and Z), keeping upper and lower case; every other character stays as it is.
+- **T122** In `src/everyNth10.js`: `everyNth10(text)` returns the characters at positions 0, 10, 20, … of the text, as a string.
+- **T123** In `src/pad10.js`: `pad10(n)` takes a non-negative integer and returns it as a string with leading zeros up to 10 digits (longer numbers unchanged).
+- **T124** In `src/chunks10.js`: `chunks10(arr)` splits an array into consecutive arrays of 10 elements; the last one may be shorter; an empty array gives `[]`.
+- **T125** In `src/firstWords9.js`: `firstWords9(text)` returns the first 9 words of the text (words are separated by any run of whitespace) joined by single spaces; fewer if the text has fewer.
+- **T126** In `src/toBase11.js`: `toBase11(n)` writes a non-negative integer in base 11 (digits 0-9 then lower-case letters).
+- **T127** In `src/multiplesOf11.js`: `multiplesOf11(n)` returns an array of the first n positive multiples of 11 (`[11, 22, …]`; `[]` for 0).
+- **T128** In `src/longWords10.js`: `longWords10(text)` counts the words with more than 10 letters, where a word is a maximal run of the letters a-z / A-Z.
+- **T129** In `src/roundTo10.js`: `roundTo10(x)` returns the multiple of 10 nearest to the number x; exactly half-way goes up (towards +∞).
+- **T130** In `src/echo10.js`: `echo10(text)` repeats every word 10 times (words separated by any whitespace) and joins all of them with single spaces.
+- **T131** In `src/clamp9.js`: `clamp9(x)` returns x limited to the range -9…9 (values below become -9, above become 9).
+- **T132** In `src/hardWrap11.js`: `hardWrap11(text)` inserts a newline after every 11 characters of the text (none at the very end).
+- **T133** In `src/maskTail9.js`: `maskTail9(s)` replaces every character with `*` except the last 9 (strings of 9 characters or fewer are unchanged).
+- **T134** In `src/rotateLeft9.js`: `rotateLeft9(arr)` returns a new array rotated left by 9 positions (by 9 modulo the length; an empty array stays empty).
+- **T135** In `src/ngrams10.js`: `ngrams10(text)` returns every substring of exactly 10 characters, in order of position (`[]` if the text is shorter).
+- **T136** In `src/shiftBy10.js`: `shiftBy10(text)` moves every letter 10 places forward in the alphabet, wrapping around after z (and Z), keeping upper and lower case; every other character stays as it is.
+- **T137** In `src/everyNth11.js`: `everyNth11(text)` returns the characters at positions 0, 11, 22, … of the text, as a string.
+- **T138** In `src/pad12.js`: `pad12(n)` takes a non-negative integer and returns it as a string with leading zeros up to 12 digits (longer numbers unchanged).
+- **T139** In `src/chunks11.js`: `chunks11(arr)` splits an array into consecutive arrays of 11 elements; the last one may be shorter; an empty array gives `[]`.
+- **T140** In `src/firstWords10.js`: `firstWords10(text)` returns the first 10 words of the text (words are separated by any run of whitespace) joined by single spaces; fewer if the text has fewer.
+- **T141** In `src/toBase16.js`: `toBase16(n)` writes a non-negative integer in base 16 (digits 0-9 then lower-case letters).
+- **T142** In `src/multiplesOf12.js`: `multiplesOf12(n)` returns an array of the first n positive multiples of 12 (`[12, 24, …]`; `[]` for 0).
+- **T143** In `src/longWords11.js`: `longWords11(text)` counts the words with more than 11 letters, where a word is a maximal run of the letters a-z / A-Z.
+- **T144** In `src/roundTo25.js`: `roundTo25(x)` returns the multiple of 25 nearest to the number x; exactly half-way goes up (towards +∞).
+- **T145** In `src/echo11.js`: `echo11(text)` repeats every word 11 times (words separated by any whitespace) and joins all of them with single spaces.
+- **T146** In `src/clamp10.js`: `clamp10(x)` returns x limited to the range -10…10 (values below become -10, above become 10).
+- **T147** In `src/hardWrap12.js`: `hardWrap12(text)` inserts a newline after every 12 characters of the text (none at the very end).
+- **T148** In `src/maskTail10.js`: `maskTail10(s)` replaces every character with `*` except the last 10 (strings of 10 characters or fewer are unchanged).
+- **T149** In `src/rotateLeft10.js`: `rotateLeft10(arr)` returns a new array rotated left by 10 positions (by 10 modulo the length; an empty array stays empty).
+- **T150** In `src/ngrams11.js`: `ngrams11(text)` returns every substring of exactly 11 characters, in order of position (`[]` if the text is shorter).
