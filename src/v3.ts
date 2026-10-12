@@ -140,6 +140,7 @@ export function liveChanges(c: Ctx) {
   return `<template id="needs" data-n="${needsOf(open).length}"></template>${estBar}${merged}${empty}${out.join('')}`;
 }
 
+const hostOf = (u: string) => { try { return new URL(u).host; } catch { return u; } };
 const SHOT_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.5h2.5L6 3.5h4l1.5 2H14v7.5H2z"/><circle cx="8" cy="9" r="2.3"/></svg>`;
 const PICK_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2.5l9.5 4-4 1.5-1.5 4z"/><path d="M8.5 8.5l4 4"/></svg>`;
 
@@ -154,8 +155,14 @@ function appView(c: Ctx) {
 <div class="pstrip" id="pstrip"${sel ? '' : ' hidden'}><span id="pword">${sel ? esc(sel.word) : ''}</span><button type="button" class="btn" id="pmerge"${sel?.state === 'ready' && !sel.auto ? '' : ' hidden'}>Merge</button></div>` : '';
   return {
     full: true,
-    action: app ? `${c.own ? `<button type="button" class="hact qbpick" id="qbpick" aria-pressed="false" aria-label="Pick an element in the app to add to your message">${PICK_ICON}<span>Pick</span></button><button type="button" class="hact qbpick" id="qbshot" aria-label="Take a screenshot of the app and add it to your message">${SHOT_ICON}<span>Shot</span></button>` : ''}<a class="hact" id="ext" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open the app in a new tab">${OPEN_ICON}</a>` : '',
-    body: `${picker}${app && c.own ? `<div class="pickhint" id="pickhint" hidden role="status"><span>Tap anything in the app to add it to your message.</span><button type="button" class="chipbtn" id="pickdone">Done</button></div>` : ''}${app ? `<iframe id="app" src="${esc(src)}" title="${esc(c.info.name)}"></iframe>` : noApp(c)}${c.own ? '' : `<div class="forkbar">${VISIT}${forkAction(c.info, c.me, c.forks.filter((e) => e.owner === c.me))}</div>`}`,
+    // Eyal, 2026-10-12: the running app must read as a VIEW of his app inside qodebase, so it sits in a framed
+    // card with its own strip (address, Pick, Shot, open); qodebase's controls stay outside the frame.
+    action: '',
+    body: `${picker}${app ? `<div class="appwrap"><div class="appframe" id="appframe"><div class="afbar">
+<a class="afurl" id="afurl" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open your app in a new tab">${esc(hostOf(src))}</a>
+<span class="afpick" id="pickhint" hidden role="status">Tap something in your app</span>
+${c.own ? `<button type="button" class="afb" id="qbpick" aria-pressed="false" aria-label="Pick an element in your app to add to your message">${PICK_ICON}<span>Pick</span></button><button type="button" class="afb" id="qbshot" aria-label="Take a screenshot of your app and add it to your message">${SHOT_ICON}<span>Shot</span></button><button type="button" class="afb afdone" id="pickdone" hidden>Done</button>` : ''}<a class="afb" id="ext" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open your app in a new tab">${OPEN_ICON}</a></div>
+<iframe id="app" src="${esc(src)}" title="${esc(c.info.name)}, your app"></iframe></div></div>` : noApp(c)}${c.own ? '' : `<div class="forkbar">${VISIT}${forkAction(c.info, c.me, c.forks.filter((e) => e.owner === c.me))}</div>`}`,
     js: `(function(){const f=document.getElementById('app'),x=document.getElementById('ext'),ps=document.getElementById('pstrip'),pm=document.getElementById('pmerge');let cur=null;
 // Pick (S2): the app host injects its picker only with ?__qbpick=1 (qb6); we switch it on and off by postMessage
 // to the app's origin and take picks only from that origin. Each pick becomes a chip in the composer (attach.js).
@@ -163,7 +170,8 @@ const pb=document.getElementById('qbpick'),ph=document.getElementById('pickhint'
 const appOrigin=()=>{try{return new URL(f.src).origin;}catch(e){return null;}};
 const withPick=(u)=>{try{const x=new URL(u);x.searchParams.set('__qbpick','1');return x.toString();}catch(e){return u;}};
 const say=(on)=>{const o=appOrigin();if(o&&f.contentWindow)f.contentWindow.postMessage({type:'qb-pick',on:on},o);};
-function setPick(on){picking=on;if(pb){pb.setAttribute('aria-pressed',String(on));pb.classList.toggle('on',on);}if(ph)ph.hidden=!on;
+const fr=document.getElementById('appframe'),au=document.getElementById('afurl'),pd=document.getElementById('pickdone'),sh=document.getElementById('qbshot');
+function setPick(on){picking=on;if(pb){pb.setAttribute('aria-pressed',String(on));pb.classList.toggle('on',on);pb.hidden=on;}if(ph)ph.hidden=!on;if(au)au.hidden=on;if(pd)pd.hidden=!on;if(sh)sh.hidden=on;if(fr)fr.classList.toggle('picking',on);
  if(on){if(!/[?&]__qbpick=1/.test(f.src)){f.addEventListener('load',()=>say(picking),{once:true});f.src=withPick(f.src);}else say(true);}else say(false);
  console.log(JSON.stringify({module:'pick',event:on?'on':'off'}));}
 if(pb)pb.addEventListener('click',()=>setPick(!picking));
@@ -183,7 +191,7 @@ if(sb2)sb2.addEventListener('click',async()=>{const lab=sb2.querySelector('span'
   if(pend)pend.done({id:d.id,name:'screenshot.png'});else if(window.qbAddAttachment)window.qbAddAttachment({id:d.id,name:'screenshot.png'});lab.textContent='Shot';}
  catch(err){lab.textContent='Shot';sb2.title=err.message;if(pend)pend.fail(err.message);const t=document.querySelector('form.ask textarea');if(t&&!t.value)t.placeholder=err.message;}
  sb2.disabled=false;});
-document.addEventListener('click',async(e)=>{const b=e.target.closest('[data-pick]');if(b){f.src=b.dataset.pick;if(x)x.href=b.dataset.pick;for(const o of document.querySelectorAll('[data-pick]'))o.classList.toggle('on',o===b);
+document.addEventListener('click',async(e)=>{const b=e.target.closest('[data-pick]');if(b){f.src=b.dataset.pick;if(x)x.href=b.dataset.pick;{const a=document.getElementById('afurl');if(a){a.href=b.dataset.pick;try{a.textContent=new URL(b.dataset.pick).host;}catch(_){}}}for(const o of document.querySelectorAll('[data-pick]'))o.classList.toggle('on',o===b);
  cur=b.dataset.id||null;if(ps){ps.hidden=!cur;document.getElementById('pword').textContent=b.dataset.word||'';pm.hidden=b.dataset.state!=='ready'||b.dataset.auto==='1';}
  history.replaceState(null,'',location.pathname+(b.dataset.agent?'?try='+b.dataset.agent:''));return;}
  if(e.target===pm){pm.disabled=true;pm.textContent='Merging';try{await post('merge',{agent:cur});location.href=location.pathname;}catch(err){pm.textContent=err.message;}}});
@@ -327,10 +335,19 @@ body.v3{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .h3 .nm b{font-weight:600}
 .hact{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--fg)}
 .hact .ico{width:18px;height:18px}
-.hact.qbpick{width:auto;gap:6px;padding:0 10px;border:0;border-radius:10px;background:none;font:inherit;font-size:14px;cursor:pointer}
-.hact.qbpick.on{background:var(--fg);color:var(--bg)}
-.pickhint{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line);font-size:14px}
-.pickhint span{flex:1}.pickhint .chipbtn{min-height:40px}
+/* The app as a framed view inside qodebase: a 8 px surround in --chip, the frame with a --line border and the app
+   preview radius (12 px, DESIGN.md), a strip on the frame with the address and the app's own controls. Pick mode:
+   the border takes the accent and the strip asks for a tap. */
+.appwrap{flex:1;min-height:0;display:flex;padding:8px;background:var(--chip)}
+.appframe{flex:1;min-height:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 1px var(--line),0 1px 3px rgba(0,0,0,.06)}
+.appframe.picking{box-shadow:0 0 0 2px var(--acc)}
+.afbar{flex:none;display:flex;align-items:center;gap:2px;min-height:44px;padding:0 4px 0 12px;border-bottom:1px solid var(--line);background:var(--card)}
+.afurl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--dim);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;padding:12px 0}
+.afpick{flex:1;font-size:14px;font-weight:600;color:var(--acc)}
+.afb{flex:none;display:inline-flex;align-items:center;gap:5px;min-width:44px;min-height:44px;justify-content:center;padding:0 8px;border:0;border-radius:10px;background:none;color:var(--fg);font:inherit;font-size:14px;cursor:pointer}
+.afb .ico{width:17px;height:17px}.afb:focus-visible,.afurl:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.afdone{background:var(--acc);color:var(--acc-fg)}
+.appframe iframe{flex:1;min-height:0;width:100%;border:0;display:block;background:#fff}
 .ico{width:14px;height:14px;flex:none}
 .view{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
 .view.full{display:flex;flex-direction:column;overflow:hidden}
