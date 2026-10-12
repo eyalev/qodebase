@@ -87,13 +87,15 @@ export async function ideaRoute(request: Request, env: Env, ctx: ExecutionContex
   const size = String(b.size || '') as IdeaSize;
   if (!(size in IDEA_SIZES)) return Response.json({ error: 'size: small | medium | large | huge' }, { status: 400 });
   const avoid = (Array.isArray(b.avoid) ? b.avoid : []).map((x) => String(x).slice(0, 60)).slice(0, 20);
-  const answer = (idea: Idea, model: string | null, fallback: boolean) =>
-    Response.json({ title: idea.title, prompt: idea.prompt, size, ...suggestion(idea.job), model, ...(fallback ? { fallback: true } : {}) }, { headers: { 'cache-control': 'no-store' } });
-  if (b.fast) return answer(pickCurated(size, avoid), null, true);
+  // why (with fallback): fast = asked for a curated one; limit = today's suggest/idea cap is used up; model = the model failed,
+  // timed out or gave an idea of the wrong size twice (qb7: the page says which).
+  const answer = (idea: Idea, model: string | null, why: 'fast' | 'limit' | 'model' | null) =>
+    Response.json({ title: idea.title, prompt: idea.prompt, size, ...suggestion(idea.job), model, ...(why ? { fallback: true, why } : {}) }, { headers: { 'cache-control': 'no-store' } });
+  if (b.fast) return answer(pickCurated(size, avoid), null, 'fast');
   const reg = registry(env);
   const mine = await reg.dayCount(`suggest:${handle}`, SUGGEST_CAPS.perPerson);
   const all = mine.ok ? await reg.dayCount('suggest:*', SUGGEST_CAPS.total) : mine;
-  if (!mine.ok || !all.ok) return answer(pickCurated(size, avoid), null, true);
+  if (!mine.ok || !all.ok) return answer(pickCurated(size, avoid), null, 'limit');
   const t0 = Date.now();
   let idea: Idea | null = null, tries = 0, err = '';
   while (!idea && tries < 2) {
@@ -110,5 +112,5 @@ export async function ideaRoute(request: Request, env: Env, ctx: ExecutionContex
   }
   ctx.waitUntil(recordCost(env, handle, 'ai', 'build idea', { usd: null, covered: true, billing: 'api' }));
   log('build', 'idea', { handle, size, ok: !!idea, tries, ms: Date.now() - t0, err: idea ? undefined : err });
-  return idea ? answer(idea, WAI, false) : answer(pickCurated(size, avoid), null, true);
+  return idea ? answer(idea, WAI, null) : answer(pickCurated(size, avoid), null, 'model');
 }
