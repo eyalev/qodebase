@@ -193,7 +193,7 @@ spot VMs (GCP, scripted agents, no model calls). Data: `sim/real/out/lanes.jsonl
    the 2,000 agents working. The 2 h figure (1,983) was still the warm-up. qb4 predicted 1,379 steady for this
    cell (sim.md (i)); this is within 8%.
 6. **Fewer, bigger lanes are worse.** With 8 lanes the coordinated lane is overloaded and falls to 540 an hour by
-   6 h, below one queue. Bigger coordinated trains (16 over every lane, qb4's main design) did not help either:
+   6 h, below one queue. Three seeds agree (last hour 540, 501, 734; mean 592), so this is structural, not noise. Bigger coordinated trains (16 over every lane, qb4's main design) did not help either:
    1,133.
 7. **Shared hot files cancel the gain.** With one shared `routes.ts` / `schema.ts` / `package.json`, 34% of changes
    are cross-area. 32 dependency-aware lanes then land 652 in the last hour at 2,000 agents, with 1,413 waiting
