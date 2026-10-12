@@ -8,6 +8,8 @@
 import { DurableObject } from 'cloudflare:workers';
 import { generate, randomOp, makeOp, check, lineDiff } from '../../real/project.mjs';
 import { Objects, push } from './gitpush.js';
+import { laneName } from './lanes.js';
+export { Lane } from './lanes.js';
 
 const ZERO = '0'.repeat(40);
 const log = (event, data) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'qbsim', event, ...data }));
@@ -21,6 +23,8 @@ export default {
     const run = env.RUN.get(env.RUN.idFromName('run'));
     if (url.pathname === '/status') return Response.json(await run.status());
     if (url.pathname === '/bundle') return Response.json(await run.bundle());
+    // Lanes (L3): every lane's numbers and per-step series.
+    if (url.pathname === '/report') return Response.json(await run.report());
     // A short-lived read token for main, to clone and check it with real git.
     if (url.pathname === '/clone') {
       if (request.headers.get('x-sim-key') !== env.SIM_KEY) return new Response('forbidden', { status: 403 });
@@ -86,6 +90,7 @@ export class Run extends DurableObject {
     if (!(await this.ensure())) return { error: 'no run' };
     this.s.phase = 'done'; this.s.m.errors.push('stopped by hand');
     await this.ctx.storage.deleteAlarm();
+    if (this.s.cfg.lanes) await Promise.all(this.laneKeys().map((k) => this.laneStub(k).stop().catch(() => {})));
     await this.persist();
     log('stopped', { runId: this.s.runId, ...this.summary() });
     return this.summary();
@@ -127,10 +132,13 @@ export class Run extends DurableObject {
   async start(opts) {
     if ((await this.ensure()) && this.s.phase !== 'done') return { error: 'a run is already going', status: this.summary() };
     const cfg = { agents: 20, minutes: 5, workMinS: 20, workMaxS: 60, trainEveryS: 5, trainMax: 200, seed: 1, forkConcurrency: 8, forkTries: 5, ...opts };
-    cfg.agents = Math.min(cfg.agents, 600); cfg.minutes = Math.min(cfg.minutes, 20); // hard caps (cost)
+    // Lanes mode (L3): lanes >= 1. Same workload for every lane count; see lanes.js.
+    if (cfg.lanes) Object.assign(cfg, { modules: 50, crossShare: 0.1, xEveryS: 15, xTrainMax: 50, door: 'cas', combineEveryS: 2, ...opts }, { lanes: Math.max(1, Math.min(cfg.lanes, cfg.modules ?? 50, 64)) });
+    cfg.agents = Math.min(cfg.agents, cfg.lanes ? 3000 : 600); cfg.minutes = Math.min(cfg.minutes, 20); // hard caps (cost)
+    cfg.forkConcurrency = Math.min(cfg.forkConcurrency, 32);
     const runId = `r${Date.now().toString(36)}`;
     const rnd = mulberry32(cfg.seed);
-    const files = generate({ modules: 50, filesPerModule: 8, rnd });
+    const files = generate({ modules: cfg.modules || 50, filesPerModule: 8, rnd });
     const objs = new Objects();
     const text = new Map();
     const snap = new Map();
@@ -153,12 +161,21 @@ export class Run extends DurableObject {
     };
     await this.ctx.storage.deleteAll();
     this.dirty.clear();
+    if (cfg.lanes) {
+      const t1 = Date.now(), all = [...files.entries()];
+      const ks = [...Array.from({ length: cfg.lanes }, (_, k) => k), ...(cfg.lanes > 1 ? ['X'] : []), ...(cfg.door === 'combine' ? ['C'] : [])];
+      await Promise.all(ks.map((k) => this.laneStub(k).init({ runId, k, n: cfg.lanes, cfg, main: { name: created.name, remote: created.remote, token: created.token }, files: all })));
+      log('lanes_ready', { runId, lanes: ks.length, ms: Date.now() - t1 });
+    }
     await this.persist();
     await this.ctx.storage.setAlarm(Date.now() + 10);
     return { runId, main: created.name, createMs, initialPush: pushed };
   }
 
   now() { return Math.round((Date.now() - (this.s.runFrom ?? this.s.startedAt)) / 1000); }
+  laneStub(k, runId = this.s?.runId) { return this.env.LANE.get(this.env.LANE.idFromName(laneName(runId, k))); }
+  laneKeys() { const n = this.s.cfg.lanes; return [...Array.from({ length: n }, (_, k) => k), ...(n > 1 ? ['X'] : []), ...(this.s.cfg.door === 'combine' ? ['C'] : [])]; }
+  async laneSummaries() { return (await Promise.all(this.laneKeys().map((k) => this.laneStub(k).summary().catch((e) => ({ lane: k, error: String(e) }))))).filter(Boolean); }
   ev(c, what, extra) { c.events.push(extra === undefined ? [this.now(), what] : [this.now(), what, extra]); this.touch(c); }
 
   async alarm() {
@@ -191,9 +208,25 @@ export class Run extends DurableObject {
       if (s.spawned < s.cfg.agents) return this.ctx.storage.setAlarm(Date.now() + 10);
       s.phase = 'run'; s.runFrom = Date.now(); s.deadline = Date.now() + s.cfg.minutes * 60_000;
       log('spawned', { runId: s.runId, forks: s.m.forks, errors: s.m.errors.length, spawnS: (Date.now() - s.startedAt) / 1000 });
+      if (s.cfg.lanes) await Promise.all(this.laneKeys().map((k) => this.laneStub(k).go({ runFrom: s.runFrom, deadline: s.deadline })));
       // Agents were told to wait for this.
       await Promise.all(Array.from({ length: s.cfg.agents }, (_, i) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${i}`)).go().catch(() => {})));
       return this.ctx.storage.setAlarm(Date.now() + s.cfg.trainEveryS * 1000);
+    }
+    if (s.cfg.lanes && (s.phase === 'run' || s.phase === 'drain')) {
+      // The lanes land by themselves; the run only watches them and ends the run.
+      const ls = await this.laneSummaries();
+      const sum = (f) => ls.reduce((a, l) => a + (l[f] || 0), 0);
+      s.series.push({ t: this.now(), landed: ls.filter((l) => l.lane !== 'C').reduce((a, l) => a + l.landed, 0), queue: sum('queue'), cas: sum('cas'), work: ls.reduce((a, l) => a + (l.states?.work || 0), 0) });
+      if (s.phase === 'run' && Date.now() > s.deadline) s.phase = 'drain';
+      const quiet = !sum('queue') && !sum('pending') && !ls.some((l) => l.states?.work || l.states?.handed || l.frozen);
+      if (s.phase === 'drain' && ((quiet && s.agentsDone >= s.m.forks) || Date.now() > s.deadline + 300_000)) {
+        s.phase = 'done';
+        await Promise.all(this.laneKeys().map((k) => this.laneStub(k).stop().catch(() => {})));
+        log('done', { runId: s.runId, lanes: s.cfg.lanes, landed: sum('landed'), cas: sum('cas'), queue: sum('queue') });
+        return;
+      }
+      return this.ctx.storage.setAlarm(Date.now() + 10_000);
     }
     if (s.phase === 'run' || s.phase === 'drain') {
       await this.train();
@@ -241,7 +274,8 @@ export class Run extends DurableObject {
     c.state = 'mergeWait'; this.ev(c, 'mergeWait');
     s.queue.push(id);
   }
-  async agentDone() { if (await this.ensure()) this.s.agentsDone++; }
+  // An agent of an earlier run can still be ticking: only this run's agents count.
+  async agentDone(runId) { if ((await this.ensure()) && (!runId || runId === this.s.runId)) this.s.agentsDone++; }
 
   // Land a train: replay each queued change's intent on main, test, chain the commits, one push.
   async train() {
@@ -313,7 +347,28 @@ export class Run extends DurableObject {
     const t = await (await this.env.ARTIFACTS.get(this.s.main.name)).createToken('read', 600);
     return { remote: this.s.main.remote, token: t.plaintext.split('?')[0] };
   }
-  async status() { return (await this.ensure()) ? this.summary() : { phase: 'idle' }; }
+  async status() {
+    if (!(await this.ensure())) return { phase: 'idle' };
+    if (!this.s.cfg.lanes) return this.summary();
+    const ls = await this.laneSummaries(), sum = (f) => ls.reduce((a, l) => a + (l[f] || 0), 0), min = Math.max(1 / 60, this.now() / 60);
+    const s = this.s;
+    const landedAll = ls.filter((l) => l.lane !== 'C').reduce((a, l) => a + l.landed, 0);
+    return { runId: s.runId, phase: s.phase, agents: s.cfg.agents, lanes: s.cfg.lanes, door: s.cfg.door, crossShare: s.cfg.crossShare, minutes: s.cfg.minutes, elapsedS: this.now(),
+      forks: s.m.forks, forkFailed: s.m.forkFailed, agentsDone: s.agentsDone,
+      tasks: sum('tasks'), cross: sum('cross'), landed: landedAll, landedPerHour: Math.round((landedAll / min) * 60), rounds: sum('rounds'), pending: sum('pending'), dropped: sum('dropped'), testFails: sum('testFails'),
+      queue: sum('queue'), mainPushes: sum('mainPushes'), mainPushFail: sum('mainPushFail'), cas: sum('cas'), busy: sum('busy'), refreshes: sum('refreshes'),
+      agentPushes: sum('agentPushes'), agentPushFail: sum('agentPushFail'), artifactsOps: s.m.artifactsOps + sum('artifactsOps') + sum('agentPushes'),
+      errors: ls.flatMap((l) => (l.errors || []).map((e) => `${l.lane}: ${e}`)).slice(0, 8).concat(s.m.errors.slice(0, 4)),
+      lanesBrief: ls.map((l) => ({ lane: l.lane, landed: l.landed, perH: l.landedPerHour, queue: l.queue, cas: l.cas, busy: l.busy, waitP50: l.waitSP50, waitP90: l.waitSP90, frozenMs: l.frozenMs })) };
+  }
+  async report() {
+    if (!(await this.ensure())) return { error: 'no run' };
+    const status = await this.status();
+    if (!this.s.cfg.lanes) return { status };
+    const lanes = await this.laneSummaries();
+    const series = await Promise.all(this.laneKeys().map((k) => this.laneStub(k).seriesOf().catch(() => null)));
+    return { status, cfg: this.s.cfg, lanes, runSeries: this.s.series, laneSeries: series.filter(Boolean), forkMsP50: this.summary().forkMsP50 };
+  }
 
   makeBundle() {
     const s = this.s; const sum = this.summary();
@@ -356,7 +411,7 @@ export class Agent extends DurableObject {
     const run = this.env.RUN.get(this.env.RUN.idFromName('run'));
     const root = await run.rootSha();
     const snap = await run.snapshot(root);
-    await this.ctx.storage.put('st', { i, cfg, forkName: fork.name, remote: fork.remote, token: fork.token, tip: root, snap, task: null, seed: i + 1 });
+    await this.ctx.storage.put('st', { i, runId, cfg, forkName: fork.name, remote: fork.remote, token: fork.token, tip: root, snap, task: null, seed: i + 1 });
     return { forkMs, retries };
   }
   async go() { await this.ctx.storage.setAlarm(Date.now() + Math.random() * 5000); }
@@ -365,9 +420,11 @@ export class Agent extends DurableObject {
     const st = await this.ctx.storage.get('st');
     if (!st) return; // its fork failed: this agent never started
     const run = this.env.RUN.get(this.env.RUN.idFromName('run'));
+    const lanes = st.cfg.lanes, lane = (k) => this.env.LANE.get(this.env.LANE.idFromName(laneName(st.runId, k)));
     if (!st.task) {
-      const task = await run.task(st.i);
-      if (!task) { await run.agentDone(); return; }
+      const task = lanes ? await lane(st.i % lanes).task(st.i).catch((e) => { console.log(JSON.stringify({ module: 'qbsim', event: 'task_error', agent: st.i, err: String(e) })); return 'retry'; }) : await run.task(st.i);
+      if (task === 'retry') return this.ctx.storage.setAlarm(Date.now() + 3000);
+      if (!task) { await run.agentDone(st.runId); return; }
       st.task = task;
       await this.ctx.storage.put('st', st);
       const work = (st.cfg.workMinS + Math.random() * (st.cfg.workMaxS - st.cfg.workMinS)) * 1000;
@@ -400,7 +457,8 @@ export class Agent extends DurableObject {
     }
     const ms = Date.now() - t0;
     if (r.ok) { st.tip = commitAfter || commit; st.snap = [...snap.entries()]; }
-    await run.submitted(st.task.id, { ok: r.ok, status: r.status, bytes: r.bytes, detail: r.detail, ms, commit });
+    if (lanes) await lane(st.task.to).submitted(st.task.id, { ok: r.ok, status: r.status, bytes: r.bytes, detail: r.detail, ms, commit });
+    else await run.submitted(st.task.id, { ok: r.ok, status: r.status, bytes: r.bytes, detail: r.detail, ms, commit });
     st.task = null;
     await this.ctx.storage.put('st', st);
     await this.ctx.storage.setAlarm(Date.now() + 500);

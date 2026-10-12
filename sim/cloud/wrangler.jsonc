@@ -12,8 +12,9 @@
   "durable_objects": {
     "bindings": [
       { "name": "RUN", "class_name": "Run" },
-      { "name": "AGENT", "class_name": "Agent" }
+      { "name": "AGENT", "class_name": "Agent" },
+      { "name": "LANE", "class_name": "Lane" }
     ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Run", "Agent"] }]
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Run", "Agent"] }, { "tag": "v2", "new_sqlite_classes": ["Lane"] }]
 }

@@ -58,6 +58,12 @@ export class Objects {
     };
     return write(root);
   }
+  // A tree from explicit entries [{name, mode: '40000' | '100644', sha}] (lanes overlay their dirs on main's tree).
+  treeOf(entries) {
+    const es = entries.map((e) => ({ ...e, key: e.mode === '40000' ? e.name + '/' : e.name }));
+    es.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+    return this.put('tree', concat(es.flatMap((e) => [enc.encode(`${e.mode} ${e.name}\0`), hexBytes(e.sha)])));
+  }
   commit(tree, parents, message, whenMs) {
     const who = `qodebase sim <sim@qodebase.app> ${Math.floor(whenMs / 1000)} +0000`;
     return this.put('commit', enc.encode([`tree ${tree}`, ...parents.map((p) => `parent ${p}`), `author ${who}`, `committer ${who}`, '', message, ''].join('\n')));
