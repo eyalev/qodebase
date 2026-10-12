@@ -1,0 +1,11 @@
+// Preview Worker for qb3's qodebase-redesign branch (see index.js). Delete after the review:
+//   CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler delete --name qodebase-redesign-preview
+{
+  "name": "qodebase-redesign-preview",
+  "account_id": "887d7234a6b8d65ad355a4f6684cab67",
+  "main": "index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "vars": { "ORIGIN": "projectsbase.dev" },
+  "services": [{ "binding": "FORQ", "service": "forq" }]
+}

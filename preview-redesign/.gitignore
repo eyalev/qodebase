@@ -1,0 +1,3 @@
+# copies of src/landingui/assets.gen.ts from main and the branch; regenerate before a redeploy
+main-assets.js
+branch-assets.js
