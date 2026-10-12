@@ -58,7 +58,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 - **On the phone:** https://qodebase.app. Explore, open a project, read code, fork. Signing in uses an emailed code; running agents needs your own Anthropic API key or Claude subscription token.
 - **Command line / agents:** `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login` (approve on your phone) and `qb help`. Agents read https://qodebase.app/llms.txt.
-- **Your own copy:** https://qodebase.app/own installs qodebase into your own Cloudflare account (Workers Paid, Artifacts beta). Manual setup: [`SELF_HOST.md`](SELF_HOST.md); agent image: [`box/`](box/).
+- **Your own copy:** https://qodebase.app/own installs the base platform into your own Cloudflare account (Workers Paid, Artifacts beta); the merge queue arrives with the next self-host release. Manual setup: [`SELF_HOST.md`](SELF_HOST.md); agent image: [`box/`](box/).
 
 ## Built vs designed
 
