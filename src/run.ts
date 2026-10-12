@@ -37,7 +37,9 @@ const deny = (status: number, msg: string, extra: Record<string, string> = {}) =
 
 export async function serveRun(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const cf = (request as any).cf || {};
-  if (cf.verifiedBotCategory || cf.botManagement?.verifiedBot) return deny(403, 'not for crawlers', { 'retry-after': '86400' });
+  // Our own screenshots (src/screenshot.ts) come from Cloudflare's browser, a verified bot: a signed header lets them in.
+  const shot = request.headers.get('x-qb-shot');
+  if ((cf.verifiedBotCategory || cf.botManagement?.verifiedBot) && !(shot && await checkRunPass(env, '__shot', shot))) return deny(403, 'not for crawlers', { 'retry-after': '86400' });
   if (request.method !== 'GET' && request.method !== 'HEAD') return deny(405, 'GET only');
   const url = new URL(request.url);
   if (url.pathname === '/robots.txt') return deny(200, 'User-agent: *\nDisallow: /\n');

@@ -34,6 +34,14 @@ export async function screenshotRoute(request: Request, env: Env, ctx: Execution
   const browser = await puppeteer.launch(env.BROWSER as any);
   try {
     const page = await browser.newPage();
+    // The run host turns crawlers away, and Cloudflare's browser is one: a short-lived signed header, only on
+    // requests to this app's own host (not to fonts or CDNs it loads).
+    const shotPass = await mintRunPass(env, '__shot');
+    await page.setRequestInterception(true);
+    page.on('request', (r: any) => {
+      let host = ''; try { host = new URL(r.url()).hostname; } catch {}
+      r.continue(host === target.hostname ? { headers: { ...r.headers(), 'x-qb-shot': shotPass } } : undefined);
+    });
     await page.setViewport({ width, height: Math.round(width * 844 / 390), deviceScaleFactor: 2 });
     await page.goto(target.toString(), { waitUntil: 'networkidle0', timeout: 20_000 });
     if (selector) await page.evaluate((sel: string) => {
