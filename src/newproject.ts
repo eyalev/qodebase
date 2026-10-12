@@ -96,7 +96,10 @@ ${needsKey ? `<p class="lede">Agents run on your own Anthropic API key. <a href=
  const suggest=(t)=>(t.toLowerCase().replace(/[^a-z0-9 ]+/g,' ').split(/\\s+/).filter((w,i,a)=>w&&!STOP.has(w)&&a.indexOf(w)===i).slice(0,3).join('-')||'my-app').slice(0,39);
  const clean=(n)=>n.toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/-{2,}/g,'-').replace(/^-+|-+$/g,'').slice(0,39);
  const url=()=>{$('purl').textContent=(clean(pname.value)||'my-app')+'--'+(ME||'you')+'.'+DOM;};
- const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({idea:pidea.value||idea.value,name:pname.value}))}catch{}};
+ // Build settings and the estimate from the home page (?preset=…&v=…&est=…), read once: brief() rewrites the URL to
+ // /build?step=brief, which dropped them before Start (they never reached /api/build). Kept in the draft for sign-in.
+ const q0=new URLSearchParams(location.search);let SETS=q0.get('preset')||q0.get('est')?{preset:q0.get('preset'),v:q0.get('v'),est:q0.get('est')}:null;
+ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({idea:pidea.value||idea.value,name:pname.value,sets:SETS}))}catch{}};
  // The small model behind /api/build/suggest also names the project (qb6: job.name, kebab, 2-3 words). Only while
  // Build settings are on for this viewer (the endpoint is gated the same way); a name the person typed always wins.
  async function nameFromModel(t){if(document.body.dataset.buildSettings!=='1')return;
@@ -125,13 +128,13 @@ ${needsKey ? `<p class="lede">Agents run on your own Anthropic API key. <a href=
  const fromHome=new URLSearchParams(location.search).get('idea');
  if(fromHome){idea.value=fromHome;pname.dataset.touched='';brief();}
  // Back from sign-in (or a reload): the brief, filled in.
- try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&d.idea&&new URLSearchParams(location.search).get('step')==='brief'){idea.value=d.idea;if(d.name){pname.value=d.name;pname.dataset.touched=1;}brief();}}catch{}
+ try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&d.idea&&new URLSearchParams(location.search).get('step')==='brief'){if(!SETS&&d.sets)SETS=d.sets;idea.value=d.idea;if(d.name){pname.value=d.name;pname.dataset.touched=1;}brief();}}catch{}
  $('go').onclick=async()=>{const name=clean(pname.value),prompt=pidea.value.trim(),err=$('err');
   if(!name){err.textContent='Give the project a name.';return;}if(!prompt){err.textContent='Say what to build.';return;}
   save();if(!ME){location.href='/login?next='+encodeURIComponent('/build?step=brief');return;}
   const b=$('go');b.disabled=true;b.textContent='Creating the project';err.textContent='';
-  const qs=new URLSearchParams(location.search);   // Build settings from the Adjust sheet (?preset=…&v=…), passed through as is
-  const r=await fetch('/api/build',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,prompt,private:(document.querySelector('input[name=vis]:checked')||{}).value==='private',...(qs.get('preset')?{settings:{preset:qs.get('preset'),v:qs.get('v')||undefined}}:{})})});
+  const qs=new URLSearchParams(SETS?Object.entries(SETS).filter(([,x])=>x):[]);   // Build settings + estimate from the home page, passed through as is
+  const r=await fetch('/api/build',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,prompt,private:(document.querySelector('input[name=vis]:checked')||{}).value==='private',...(qs.get('preset')?{settings:{preset:qs.get('preset'),v:qs.get('v')||undefined}}:{}),...(()=>{try{const e=JSON.parse(qs.get('est')||'null');return e&&Array.isArray(e.wallS)?{estimate:e}:{};}catch{return{};}})()})});
   const j=await r.json().catch(()=>({}));
   if(!r.ok){b.disabled=false;b.textContent='Start building';err.textContent=j.error||'Could not start';return;}
   try{localStorage.removeItem(KEY)}catch{}location.href=j.path;};

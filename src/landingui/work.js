@@ -591,6 +591,12 @@
       ${doneFold}
     </section>`;
   }
+  // Estimated vs elapsed while a project builds (estbar.js, bundled in front of this file by build.mjs).
+  function estTop() {
+    if (!D.estimate || !window.qbEstBar) return '';
+    if (!document.getElementById('estbar-css')) { const st = document.createElement('style'); st.id = 'estbar-css'; st.textContent = window.QB_ESTBAR_CSS; document.head.appendChild(st); }
+    return window.qbEstBar(D.estimate, D.progress, Date.now());
+  }
   function overview() {
     const act = D.changes.filter(active);
     // A demo that has stopped leaves unfinished changes behind; nobody is working on them.
@@ -775,13 +781,14 @@
     const h = decodeURIComponent(location.hash || '#/'); let m;
     termSeen = new Set();
     const html = (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
-      : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : overview();
+      : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
     termSeen = null;
     // Rebuild only when something other than a time changed, and never under a finger:
     // a rebuild mid-tap swallowed about one tap in six (critique, 2026-10-07).
-    const key = html.replace(/(data-(?:ago|since|until)="\d+">)[^<]*/g, '$1').replace(/animation-delay:-\d+ms/g, '');
+    const key = html.replace(/(data-(?:ago|since|until|eb-since)="\d+">)[^<]*/g, '$1').replace(/animation-delay:-\d+ms/g, '');
     if (key === lastKey || pressing) {
       root.querySelectorAll('[data-ago]').forEach((e) => { const v = agoTxt(+e.dataset.ago); if (e.textContent !== v) e.textContent = v; });
+      if (window.qbEstBarTick) window.qbEstBarTick();
       root.querySelectorAll('[data-since]').forEach((e) => { const v = secs(now() - +e.dataset.since); if (e.textContent !== v) e.textContent = v; });
       root.querySelectorAll('[data-until]').forEach((e) => { const v = untilTxt(+e.dataset.until); if (e.textContent !== v) e.textContent = v; });
       if (pressing) pendingRender = true;

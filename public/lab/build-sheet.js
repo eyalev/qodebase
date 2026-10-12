@@ -143,6 +143,13 @@
       }
       if (chip) chip.textContent = st.open ? '' : `${k === 'custom' ? 'Custom' : k === 'idea' ? 'For your idea' : PRESETS[k].name}: ${team(st.v)}${st.est && st.est !== 'error' ? `, about ${range(st.est.usd, usd)}` : ''}`;
     } else if (chip) chip.textContent = '';
+    // The estimate the person saw rides along (est), so the project page can show estimated vs elapsed (qb6 stores it).
+    const e = st.est;
+    if (e && e !== 'error' && !empty()) {
+      const i = document.createElement('input'); i.type = 'hidden'; i.name = 'est'; i.dataset.bs = '1';
+      i.value = JSON.stringify({ wallS: e.wallS, apiUsd: e.usd, basis: e.mine ? 'idea' : 'typical', basedOn: e.basedOn, simVersion: SIM?.SIM_VERSION || null });
+      form.appendChild(i);
+    }
     $('[data-reset]').hidden = isDefault;
   }
   function paint() {
