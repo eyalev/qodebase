@@ -932,7 +932,9 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     return {
       now, mode: m.demo ? 'demo' : 'live', code: (this.env.CF_VERSION_METADATA?.id || '').slice(0, 8),
       demo: m.demo || m.flags.publicWatch ? { ...(m.demo || { running: false, agents: 0, speed: 1, startedAt: 0, endsAt: 0 }),
-        active: this.#active(m), public: !!m.flags.publicWatch, runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 86400_000).length) } : null,
+        active: this.#active(m), public: !!m.flags.publicWatch,
+        // How many tasks the run has in all ('N of 14 landed'): the story's script; busy mode has no fixed list.
+        tasks: (m.demo?.mode || 'story') === 'busy' ? null : TASKS.length, runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 86400_000).length) } : null,
       flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch, board: !!m.flags.board },
       // Estimate vs elapsed (Build): absent when built without an estimate.
       ...(m.build ? await this.buildInfo() : {}),
