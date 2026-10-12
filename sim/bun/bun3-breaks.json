@@ -1,0 +1,126 @@
+{
+ "about": "BUN3 (A): real regressions in the tail of Bun's port (oven-sh/bun#30412), hand-sorted by qb5 on 2026-10-12 from 64 candidate commits (subjects matching fix-build words, or naming a culprit commit as dropped/reverted/removed/lost by). strict = the fix names its culprit and the message says something was lost or broken; borderline = a real build fix with no named culprit (culprit = the latest earlier tail commit sharing a file) or an unclear naming. compileDetectable = a cargo check of the touched crate would have failed on the culprit. Excluded (53): \"no source fix\" test notes (debug-build slowness), compiler-warning cleanups, fixes of port bugs with no earlier culprit, test fixture tuning.",
+ "entries": [
+  {
+   "kind": "strict",
+   "fix": "ed1a70f817",
+   "culprit": "e99311e584",
+   "culpritNamed": true,
+   "culpritPhase": "tail",
+   "compileDetectable": false,
+   "minutesToFix": 341,
+   "sharedFiles": 6,
+   "why": "test adjustments dropped by a blanket revert-to-main commit (tests, not compile)"
+  },
+  {
+   "kind": "strict",
+   "fix": "8d7da6bfd0",
+   "culprit": "5bddee1f68",
+   "culpritNamed": true,
+   "culpritPhase": "tail",
+   "compileDetectable": false,
+   "minutesToFix": 197,
+   "sharedFiles": 1,
+   "why": "ast_alloc bump chunk survived mi_heap_destroy (runtime crash in CI)"
+  },
+  {
+   "kind": "strict",
+   "fix": "92ac770368",
+   "culprit": "e549d61141",
+   "culpritNamed": true,
+   "culpritPhase": "tail",
+   "compileDetectable": false,
+   "minutesToFix": 7,
+   "sharedFiles": 0,
+   "why": "noalias defense re-applied, lost in the named commit (runtime)"
+  },
+  {
+   "kind": "strict",
+   "fix": "37458b2a6d",
+   "culprit": "f8659dca9c",
+   "culpritNamed": true,
+   "culpritPhase": "tail",
+   "compileDetectable": true,
+   "minutesToFix": 21,
+   "sharedFiles": 1,
+   "why": "use core::ffi::CStr removed but still used (compile error on linux)"
+  },
+  {
+   "kind": "strict",
+   "fix": "a7d7bd723f",
+   "culprit": "3a81288771",
+   "culpritNamed": true,
+   "culpritPhase": "tail",
+   "compileDetectable": false,
+   "minutesToFix": 11,
+   "sharedFiles": 1,
+   "why": "libuv poll patch: revert the named recv-probe change (runtime)"
+  },
+  {
+   "kind": "strict",
+   "fix": "a2ad8c094e",
+   "culprit": "8653dd1f1f",
+   "culpritNamed": true,
+   "culpritPhase": "tail",
+   "compileDetectable": false,
+   "minutesToFix": 44,
+   "sharedFiles": 3,
+   "why": "cross-thread arena fix in addError reverted by the named commit (runtime)"
+  },
+  {
+   "kind": "strict",
+   "fix": "0f5eb42172",
+   "culprit": "8653dd1f1f",
+   "culpritNamed": true,
+   "culpritPhase": "tail",
+   "compileDetectable": false,
+   "minutesToFix": 19,
+   "sharedFiles": 1,
+   "why": "String::max_length() check dropped by the named commit (runtime)"
+  },
+  {
+   "kind": "strict",
+   "fix": "54935d5551",
+   "culprit": "4a96db7b50",
+   "culpritNamed": true,
+   "culpritPhase": "tail",
+   "compileDetectable": true,
+   "minutesToFix": 9,
+   "sharedFiles": 1,
+   "why": "JSC:: qualifier missing on jsDynamicCast: build break named in the subject"
+  },
+  {
+   "kind": "borderline",
+   "fix": "fcbbb52f0b",
+   "culprit": "49f43d8f1c",
+   "culpritNamed": true,
+   "culpritPhase": "tail",
+   "compileDetectable": false,
+   "minutesToFix": 57,
+   "sharedFiles": 0,
+   "why": "'F07 dropped — same migration break as before': names a commit but unclear it caused a break"
+  },
+  {
+   "kind": "borderline",
+   "fix": "ddac3a67de",
+   "culprit": "76dd09cfb7",
+   "culpritNamed": false,
+   "culpritPhase": "tail",
+   "compileDetectable": true,
+   "minutesToFix": 11,
+   "sharedFiles": 4,
+   "why": "fix bun_runtime build (E0596): a real build break, culprit not named"
+  },
+  {
+   "kind": "borderline",
+   "fix": "71348ae713",
+   "culprit": "f8fd66c8e1",
+   "culpritNamed": false,
+   "culpritPhase": "tail",
+   "compileDetectable": false,
+   "minutesToFix": 31,
+   "sharedFiles": 1,
+   "why": "fix rust cross-target compilation after the nightly bump: a host per-crate check would not see it"
+  }
+ ]
+}
