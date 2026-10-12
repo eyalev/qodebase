@@ -14,6 +14,7 @@ const SECTION: Record<string, string> = { explore: 'Explore', inbox: 'Inbox', mi
 const MARK = `<svg viewBox="0 0 256 256" width="26" height="26" aria-hidden="true"><rect width="256" height="256" rx="56" fill="var(--acc)"/><circle cx="121" cy="110" r="48" fill="none" stroke="var(--acc-fg)" stroke-width="30"/><path d="M154 58h30v138h-30z" fill="var(--acc-fg)"/></svg>`;
 const LOCK = `<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>`;
 const MENU = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+const BELL = `<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20.5a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 const PLUS = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 
 export function siteHeader(o: HeaderOpts) {
@@ -24,7 +25,7 @@ export function siteHeader(o: HeaderOpts) {
     : SECTION[active] ? `<span class="hctx hsec">${SECTION[active]}</span>` : '';
   const initial = o.me ? esc(o.me.slice(0, 1).toUpperCase()) : '';
   const who = o.me
-    ? `<button type="button" class="hav" popovertarget="gmenupop" aria-label="Menu and account: ${esc(o.me)}${o.inbox ? `, ${o.inbox} in your inbox` : ''}">${initial}${o.inbox ? `<span class="hbadge">${o.inbox > 99 ? '99+' : o.inbox}</span>` : ''}</button>`
+    ? `<a class="hbell${o.inbox ? ' on' : ''}" href="/inbox" aria-label="Inbox${o.inbox ? `: ${o.inbox} need you` : ', nothing new'}">${BELL}${o.inbox ? `<span class="hbadge">${o.inbox > 99 ? '99+' : o.inbox}</span>` : ''}</a><button type="button" class="hav" popovertarget="gmenupop" aria-label="Menu and account: ${esc(o.me)}">${initial}</button>`
     : `<a class="hsignin" href="/login">Sign in</a>`;
   const item = (href: string, label: string, sub: string, on = false, extra = '') => `<a href="${href}"${on ? ' aria-current="page"' : ''}><b>${label}${extra}</b>${sub ? `<span>${sub}</span>` : ''}</a>`;
   const sheet = `<div id="gmenupop" class="gmenupop hsheet" popover>
@@ -61,6 +62,9 @@ export const HEADER_CSS = `
 .gtop2 .hplus,.gtop2 .gmenu{flex:none;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;border-radius:10px;background:none;color:var(--fg);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .gtop2 .hav{flex:none;position:relative;display:inline-grid;place-items:center;width:32px;height:32px;margin:0 10px 0 6px;padding:0;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;background:var(--chip);color:var(--fg);font:600 14px 'Geist',sans-serif;text-decoration:none;box-shadow:inset 0 0 0 1px var(--line)}
 .gtop2 .hav::after{content:'';position:absolute;inset:-6px}
+.gtop2 .hbell{flex:none;position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;color:var(--dim);text-decoration:none}
+.gtop2 .hbell.on{color:var(--fg)}
+.gtop2 .hbell .hbadge{top:4px;right:2px}
 .gtop2 .hbadge{position:absolute;top:-5px;right:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:4px;background:var(--warn);color:var(--acc-fg);font-size:11px;font-weight:600;line-height:18px;text-align:center;box-shadow:0 0 0 2px var(--bg)}
 .gtop2 .hsignin{flex:none;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;font-size:15px;color:var(--fg);text-decoration:none}
 .gmenupop.hsheet{max-height:calc(100dvh - var(--top-h) - 16px);overflow-y:auto;overscroll-behavior:contain}
