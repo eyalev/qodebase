@@ -135,9 +135,9 @@
     "MAX_AWAKE_BOXES": "5",
     // Every awake box on the account, every role, owner included: a ceiling on
     // what the containers can bill at once (~$0.027/h per 3 GiB box).
-    // Raised for real builds R4 (~20 agents + router + reviewers), 2026-10-12; back to 20 after R4/R5.
-    "MAX_TOTAL_AWAKE": "30",
-    "OWNER_MAX_CODERS": "24"
+    // Raised for the real-build flagship R5 (40 agents + router + 4 reviewers), 2026-10-13; back to 20 after R5.
+    "MAX_TOTAL_AWAKE": "50",
+    "OWNER_MAX_CODERS": "40"
   }
   // Secrets: CLAUDE_CODE_OAUTH_TOKEN (Eyal's subscription), ADMIN_SECRET,
   // CF_DEPLOY_TOKEN (Workers Scripts write; only BuildBox uses it), ISSUES_WEBHOOK_SECRET,
