@@ -148,6 +148,8 @@
     const ee = document.getElementById('bsest');
     if (ee) { const e = st.est; ee.textContent = e && e !== 'error' && !empty() ? `${range(e.wallS, mins)}, ${range(e.usd, usd)}${e.mine ? ' for your idea' : ''}` : ''; }
     try { sessionStorage.setItem('qb.bs', JSON.stringify({ open: st.open, v: st.v })); } catch {}
+    const ie = ideas?.querySelector('.id-est');
+    if (ie && !ideas.querySelector('.id-card').hidden) { const e = st.est, k = which(st.v); ie.textContent = e && e !== 'error' && !empty() ? `${range(e.wallS, mins)}, ${range(e.usd, usd)} at API prices. ${k === 'custom' ? 'Custom' : k === 'idea' ? 'For this idea' : PRESETS[k]?.name}: ${team(st.v)}. Based on ${e.basedOn} real lab runs.` : ''; }
     // The estimate the person saw rides along (est), so the project page can show estimated vs elapsed (qb6 stores it).
     const e = st.est;
     if (e && e !== 'error' && !empty()) {
@@ -195,6 +197,14 @@
   const paintSoon = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(); }); };
 
   let touched = false;   // a slider or preset moved while a suggestion was being read: the person's choice wins
+  // A suggestion (from /suggest, /idea, or suggestBuild in the page for a curated idea) becomes the sheet's
+  // settings and its estimate's job, unless the person moved something meanwhile.
+  function applySuggestion(prompt, sg, job, model, keepV) {
+    const pv = PRESETS[sg.preset]?.v;
+    const sv = pv ? { ...pv, ...(typeof sg.board === 'boolean' && pv.coders > 1 ? { board: sg.board } : {}) } : null;
+    st.sug = { state: 'done', prompt, job: sg.job || job, bucket: sg.bucket || null, preset: sg.preset, why: sg.why, model, v: sv };
+    if (sv && !keepV) st.v = { ...sv };
+  }
   async function suggest() {
     const prompt = idea();
     if (prompt.length < 4) { st.sug = { state: 'failed', prompt, error: 'Write your idea in the box above first.' }; paint(); form.querySelector('textarea')?.focus(); return; }
@@ -206,12 +216,7 @@
       log('suggest', { status: r.status, ms: Math.round(performance.now() - t0), job: d.job, preset: d.suggestion?.preset, bucket: d.suggestion?.bucket, model: d.model, fallback: d.fallback || false });
       if (!r.ok || d.fallback || !d.job) st.sug = { state: 'failed', prompt, error: r.status === 429 ? 'Suggestions are used up for today.' : r.status === 404 ? 'Suggestions are not available for your account yet.' : 'Could not read your idea right now.' };
       else if (!d.suggestion) st.sug = { state: 'unsure', prompt, job: d.job, model: d.model };
-      else {
-        const pv = PRESETS[d.suggestion.preset]?.v;
-        const sv = pv ? { ...pv, ...(typeof d.suggestion.board === 'boolean' && pv.coders > 1 ? { board: d.suggestion.board } : {}) } : null;
-        st.sug = { state: 'done', prompt, job: d.suggestion.job || d.job, bucket: d.suggestion.bucket || null, preset: d.suggestion.preset, why: d.suggestion.why, model: d.model, v: sv };
-        if (sv && !touched) st.v = { ...sv };
-      }
+      else applySuggestion(prompt, d.suggestion, d.job, d.model, touched);
     } catch (e) { log('suggest_failed', { error: String(e) }); st.sug = { state: 'failed', prompt, error: 'Could not reach qodebase.' }; }
     paint();
   }
@@ -276,6 +281,64 @@
   // A changed idea makes 'For my idea' stale: the chip asks again and the bars go back to a typical app.
   form.querySelector('textarea')?.addEventListener('input', () => paintSoon());
 
+  // ---- 'Need an idea?' (I3, Eyal 2026-10-12): size chips with their typical cost and time; a tap fills the box
+  // with an idea of that size (a curated one at once, the small model's when it answers: POST /api/build/idea, qb6)
+  // and applies that size's suggested settings; 'Another' rerolls. The idea's own estimate is the sheet's
+  // estimate, so a slider moved later updates it everywhere.
+  const SIZES = [['small', 'Small', 3], ['medium', 'Medium', 7], ['large', 'Large', 18], ['huge', 'Huge', 40]];
+  const FALLBACK_IDEAS = {
+    small: [{ title: 'Tip splitter', prompt: 'A tip calculator: enter the bill and the number of people, pick a tip percentage, see what each person pays.' }, { title: 'Habit check', prompt: 'A page with one habit and a button to mark today done, showing the current streak.' }],
+    medium: [{ title: 'Family shopping list', prompt: 'A shared shopping list for a family: add items, tick them off, group them by aisle, and clear what was bought.' }, { title: 'Recipe box', prompt: 'A recipe box: save recipes with ingredients and steps, search them, and scale the servings.' }],
+    large: [{ title: 'Trip planner', prompt: 'A trip planner for a family: trips with dates and places, a day-by-day plan, a packing list per person, and a shared budget.' }, { title: 'Club manager', prompt: 'A small sports club app: members, a weekly schedule, sign-ups for sessions with limits, and a page per member.' }],
+    huge: [{ title: 'Small shop', prompt: 'An online shop for a bakery: a menu with photos, a cart, checkout, an admin page for orders and stock, and order emails.' }, { title: 'Classroom', prompt: 'A classroom app: classes, assignments with due dates, submissions, grading with comments, and a parent view.' }],
+  };
+  const ideaPool = (k) => (SIM?.CURATED_IDEAS?.[k]?.length ? SIM.CURATED_IDEAS[k] : FALLBACK_IDEAS[k]);
+  let ideas = null, ideaSize = null, ideaSeq = 0, lastIdea = {};
+  function ideaEstimate(k) {
+    const tasks = SIM?.IDEA_SIZES?.[k]?.tasks || SIZES.find((x) => x[0] === k)[2];
+    try { const sg = SIM.suggestBuild({ tasks, overlap: 'some', difficulty: 'normal' }); const pv = PRESETS[sg.preset]?.v; const r = SIM.predictBuild(sg.job, toVariant({ ...pv, ...(typeof sg.board === 'boolean' && pv.coders > 1 ? { board: sg.board } : {}) })); return `${range(r.wallS, mins)}, ${range(r.apiUsd, usd)}`; } catch { return ''; }
+  }
+  function mountIdeas() {
+    if (ideas || !SIM?.suggestBuild) return;
+    ideas = document.createElement('section'); ideas.className = 'ideas'; ideas.setAttribute('aria-label', 'Need an idea?');
+    ideas.innerHTML = `<h2 class="id-h">Need an idea?</h2><p class="id-s">Pick a size: you get an idea that size, with the settings that suit it.</p>
+      <div class="id-sizes" role="group" aria-label="Size">${SIZES.map(([k, label]) => `<button type="button" class="id-size" data-size="${k}" aria-pressed="false"><b>${label}</b><small>${esc(ideaEstimate(k))}</small></button>`).join('')}</div>
+      <div class="id-card" hidden aria-live="polite"><div class="id-top"><b class="id-title"></b><span class="id-src"></span></div><p class="id-est"></p><button type="button" class="chipb id-again">Another</button></div>`;
+    form.after(ideas);
+    ideas.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-size]'); if (b) return pickIdea(b.dataset.size);
+      if (e.target.closest('.id-again') && ideaSize) pickIdea(ideaSize);
+    });
+  }
+  function showIdea(k, it, from) {
+    const ta = form.querySelector('textarea');
+    ta.value = it.prompt; ta.dispatchEvent(new Event('input', { bubbles: true }));
+    const tasks = it.job?.tasks || SIM?.IDEA_SIZES?.[k]?.tasks || SIZES.find((x) => x[0] === k)[2];
+    const sg = it.suggestion || SIM.suggestBuild({ tasks, overlap: it.job?.overlap || 'some', difficulty: it.job?.difficulty || 'normal' });
+    applySuggestion(it.prompt, sg, it.job || sg.job, it.model || null, false);
+    lastIdea[k] = it.title;
+    const card = ideas.querySelector('.id-card'); card.hidden = false;
+    card.querySelector('.id-title').textContent = it.title || 'An idea';
+    card.querySelector('.id-src').textContent = from === 'model' ? 'written by a small model' : 'from our list';
+    ideas.querySelectorAll('[data-size]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.size === k)));
+    paint();
+    log('idea', { size: k, from, title: it.title });
+  }
+  async function pickIdea(k) {
+    ideaSize = k; const my = ++ideaSeq;
+    const pool = ideaPool(k).filter((x) => x.title !== lastIdea[k]);
+    const cur = pool[Math.floor(Math.random() * pool.length)] || ideaPool(k)[0];
+    showIdea(k, cur, 'list');   // instant; the model's idea replaces it if it answers and the box is untouched
+    const shown = cur.prompt;
+    try {
+      const r = await fetch('/api/build/idea', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ size: k, seed: Math.floor(Math.random() * 1e6) }) });
+      const d = await r.json().catch(() => ({}));
+      log('idea_model', { status: r.status, size: k, title: d.title || null, fallback: !!d.fallback });
+      if (my !== ideaSeq || !r.ok || d.fallback || !d.prompt) return;
+      if (form.querySelector('textarea').value !== shown) return;   // the person edited it: keep theirs
+      showIdea(k, d, 'model');
+    } catch (e) { log('idea_failed', { error: String(e) }); }
+  }
   async function loadSim() {
     try {
       SIM = await import('/lab/predict.js');
@@ -292,5 +355,5 @@
   try { const saved = JSON.parse(sessionStorage.getItem('qb.bs') || 'null'); if (saved?.v && typeof saved.v.coders === 'number') st.v = { ...DEFAULT_V, ...saved.v }; if (saved?.open) { st.open = true; root.hidden = false; btn.setAttribute('aria-expanded', 'true'); } } catch {}
   btn.hidden = false; btn.setAttribute('aria-controls', 'bsheet'); if (!st.open) btn.setAttribute('aria-expanded', 'false');
   btn.addEventListener('click', () => toggle(root.hidden));
-  paint(); loadSim().then(paint);   // the row shows the estimate even while collapsed
+  paint(); loadSim().then(() => { mountIdeas(); paint(); });   // the row shows the estimate even while collapsed
 })();

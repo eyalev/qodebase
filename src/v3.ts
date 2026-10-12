@@ -838,6 +838,20 @@ export const LAND_CSS = `
 .askmic:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 body:has(.landask) #talk-fab{display:none!important}
 body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
+/* 'Need an idea?' (I3): size chips with each size's typical time and cost; the chosen idea's card carries its
+   own estimate, kept in step with the settings. */
+.ideas{margin:20px 0 4px}
+.id-h{font-size:16px;font-weight:600;margin:0}.id-s{margin:2px 0 10px;font-size:14px;color:var(--dim)}
+.id-sizes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.id-size{display:flex;flex-direction:column;gap:1px;text-align:left;border:0;border-radius:10px;background:var(--chip);color:var(--fg);min-height:52px;padding:6px 12px;font:inherit;cursor:pointer}
+.id-size b{font-size:15px;font-weight:600}.id-size small{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.id-size[aria-pressed="true"]{background:var(--fg);color:var(--bg)}.id-size[aria-pressed="true"] small{color:inherit;opacity:.75}
+.id-card{margin-top:10px;padding:12px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);display:grid;gap:6px}
+.id-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.id-title{font-size:16px}.id-src{font-size:12px;color:var(--dim)}
+.id-est{margin:0;font-size:14px;font-variant-numeric:tabular-nums}
+.id-again{justify-self:start;min-height:44px;padding:0 14px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);font:inherit;font-size:14px;cursor:pointer}
+.id-size:focus-visible,.id-again:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media (min-width:700px){.id-sizes{grid-template-columns:repeat(4,1fr)}}
 /* Build settings (B2/B4, behind BUILD_SETTINGS): 'Adjust' expands a section in place under Build it (Eyal: no
    modal). Preset chips, sliders with touch-sized thumbs, a board switch, outcome bars that move while you drag. */
 .bstoggle{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 12px;border:0;border-radius:12px;background:var(--chip);color:var(--fg);font:inherit;text-align:left;cursor:pointer}
@@ -851,7 +865,7 @@ body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 /* Expanded, the row is the header of one container that holds the whole section (Eyal: make it obvious what
    belongs to it): card background, hairline, card radius; the header sticks under the 48 px top bar. */
 .bsbox:has(>.bstoggle[aria-expanded="true"]){background:var(--card);border-radius:14px;box-shadow:inset 0 0 0 1px var(--line)}
-.bsbox>.bstoggle[aria-expanded="true"]{position:sticky;top:48px;z-index:3;border-radius:14px 14px 0 0;box-shadow:inset 0 0 0 1px var(--line),0 1px 0 var(--line)}
+.bsbox>.bstoggle[aria-expanded="true"]{position:sticky;top:var(--top-h,48px);z-index:3;border-radius:14px 14px 0 0;box-shadow:inset 0 0 0 1px var(--line),0 1px 0 var(--line)}
 .bsbox>.bsheet{padding:12px 12px 8px}
 .bstoggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.bst-c{transition:none}}
