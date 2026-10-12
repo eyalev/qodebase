@@ -3,6 +3,7 @@
 // pages inline (main's assets) for the branch's. Workers with Durable Objects get no preview URLs, hence this.
 import * as MAIN from './main-assets.js';
 import * as BRANCH from './branch-assets.js';
+import { HERO, HERO_CSS } from './branch-home.js';
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -16,6 +17,11 @@ export default {
     if (!(res.headers.get('content-type') || '').startsWith('text/html')) return res;
     let html = await res.text(), swapped = 0;
     for (const k of ['WORK_CSS', 'WORK_JS']) if (MAIN[k] && BRANCH[k] && html.includes(MAIN[k])) { html = html.split(MAIN[k]).join(BRANCH[k]); swapped++; }
+    // Home: the branch's hero (everything from the section start to the build form) and its CSS (qb3).
+    if (url.pathname === '/' && html.includes('<section class="land">') && html.includes('<form class="landask"')) {
+      const a = html.indexOf('<section class="land">'), b = html.indexOf('<form class="landask"');
+      html = html.slice(0, a) + HERO + html.slice(b); html = html.replace('</head>', `<style>${HERO_CSS}</style></head>`); swapped++;
+    }
     const h = new Headers(res.headers); h.set('x-preview-swapped', String(swapped)); h.delete('content-length');
     return new Response(html.replace('</title>', ' (redesign preview)</title>'), { status: res.status, headers: h });
   },
