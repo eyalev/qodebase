@@ -150,3 +150,23 @@ A separate reviewer agent attacked this work; the manager verified the key point
   experiment hook posted the first 120 chars of the prompt as "started" (fix queued).
 - **Costs:** relative comparisons hold; absolute API-equivalent $ are understated ~10-30% where single requests
   exceed 100k prompt tokens (similar share in both arms).
+
+## 6. Ablation: does the board beat simpler options? (2026-10-12, E7-results.md)
+s3, 20 Haiku agents, 60 tasks, 3 runs each, interleaved, all four arms rerun on the same code (medians, verified by the
+manager from runs.jsonl):
+
+| arm | wall | agent-minutes | API-equiv $ | duplicate pairs built twice (of 10) |
+|---|---|---|---|---|
+| A: no coordination | 558 s | 170 | 3.52 | 8 |
+| A+: upfront dedupe annotation + stagger + same prompt, no board | 505 s | 148 | 2.85 | 3 |
+| split: static rule, agent k takes every 20th task | 549 s [381-550] | 162 | 3.27 | 7 |
+| E: board + upfront dedupe | 443 s | 128 | 2.61 | 0 |
+
+- **The board beats dedupe + stagger alone** on agent-minutes, duplicates, wasted work and rejected pushes (p = 0.1 each);
+  wall and cost favour the board (p = 0.2). The annotated task list gets about half the gain; agents read "likely the
+  same as T3" and still build both unless the board also shows the twin taken or landed.
+- **Against a static split**, only duplicates (7 vs 0) and rejected pushes separate (p = 0.1). On time, agent-minutes
+  and cost the medians favour the board but the runs overlap (p 0.4-0.7); one split run was the fastest of all (381 s,
+  $2.46). The split removes git thrash (aborted rebases 244 -> 33) but cannot stop twins.
+- Reading: a split rule is a strong, free baseline for fighting over the same work; the board's unique value is that
+  duplicates stop (and it does not need tasks known and numbered up front, which W9 tests with tasks arriving mid-run).
