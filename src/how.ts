@@ -29,7 +29,7 @@ ${step('Every change keeps its record', 'What it was asked to do, the diff, the 
 <section class="hw-sec"><h2>What we measured</h2>
 <ul class="hw-nums">
 ${num('48%', "of Hono's last 346 pull requests needed another one to land first, when replayed as 100 at once. Git reported no conflicts. The problem is order.", 'Replay of real PRs, no model calls')}
-${num('3.5×', 'as many changes landed per hour with land by intent as with review-then-merge, on real code (403 files) with 500 agents.', 'Simulation with real git and tests')}
+${num('3.5×', 'as many changes landed per hour with land by intent as with review-then-merge, on real code (403 files) with 500 agents.', 'Simulation: scripted agents, real git and tests')}
 ${num('7,033', 'git pushes from 500 agents at once on Cloudflare, each a Durable Object with its own Artifacts copy, 280 ms median.', 'Run on Cloudflare')}
 </ul></section>
 <section class="hw-sec"><h2>See for yourself</h2>
