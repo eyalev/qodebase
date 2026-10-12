@@ -1,7 +1,7 @@
 # Different jobs need different ways to run agents (draft for /how, README, submission)
 
-Status: owner qb8. Vision, not built. Numbers as of FINDINGS2 §7-10 and qb6's verified L3 counts (2026-10-12); the L3 cells are in and
-the fix for L3's 20%-cross break are pending (qb6). The README section and the submission use these rows. Every number below is copied from the source in its row. Labels:
+Status: owner qb8. Vision, not built. Numbers as of FINDINGS2 §7-10 and qb6's verified L3 counts (2026-10-12); the L3 cells are in;
+the fix for L3's 20%-cross break is pending (qb6). The README section and the submission use these rows. Every number below is copied from the source in its row. Labels:
 - **measured** = real AI agents;
 - **replayed** = a real project's own history, scripted agents;
 - **simulated** = real git and real tests, scripted agents, no model calls.
