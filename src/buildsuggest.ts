@@ -24,9 +24,10 @@ export function suggestion(job: Job | null) {
   if (!job) return { job: null, suggestion: null, estimate: predictBuild(SMALL_APP, BUILD_PRESETS.balanced.variant) };
   const j = { tasks: job.tasks, overlap: job.overlap, difficulty: job.difficulty, label: job.summary };
   if (job.confidence < 0.4) return { job, suggestion: null, estimate: predictBuild(j, BUILD_PRESETS.balanced.variant) };
-  const s = suggestBuild(j) as { preset: string; why: string; board?: boolean };
+  const s = suggestBuild(j) as { preset: string; why: string; board?: boolean; bucket?: string; job?: typeof j };
   const variant = { ...BUILD_PRESETS[s.preset].variant, ...(s.board !== undefined ? { board: s.board } : {}) };
-  return { job, suggestion: s, estimate: predictBuild(j, variant) };
+  // The estimate on qb4's bucketed job (900f653), so the why, the facts and the estimate agree.
+  return { job, suggestion: s, estimate: predictBuild(s.job || j, variant) };
 }
 
 async function callModel(env: Env, prompt: string): Promise<{ text: string; model: string; usd: number | null; tokens?: { in: number; out: number } }> {
