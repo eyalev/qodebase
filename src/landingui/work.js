@@ -658,6 +658,9 @@
     if (!TLsrv || Date.now() - TLsrv.at > 10e3) loadTimeline();
     return full ? window.qbTimelineView(TL) : `<div class="tl-compact">${window.qbTimelineView(TL)}</div><p class="fmore"><a href="#/timeline">Open the timeline full width</a></p>`;
   }
+  // Who sees the timeline: the owner, or anyone on a project whose runs are public (Watch a run, like corner-cafe:
+  // its timeline endpoint answers anonymously too). Eyal shipped it 2026-10-12.
+  const tlOk = () => OWN || !!D?.watch?.enabled;
   let TLsrv = null, TLbusy = false;
   async function loadTimeline() {
     if (TLbusy || !API || MOCK) return; TLbusy = true;
@@ -679,7 +682,7 @@
     return `<div class="fit open">${statusStrip(live, isStarting)}
       <div class="fpipe">${pipeline()}</div>
       ${latestLine(isStarting)}
-      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${OWN ? tab('timeline', 'Timeline') : ''}</div>
+      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${tlOk() ? tab('timeline', 'Timeline') : ''}</div>
       <div class="fpanel">${OWN ? needsYou() : ''}${fitPanel(cur)}</div></div>
       ${belowFold()}`;
   }
@@ -863,7 +866,7 @@
     const h = decodeURIComponent(location.hash || '#/'); let m;
     termSeen = new Set();
     const html = (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
-      : h === '#/timeline' && OWN ? viewTimeline() : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
+      : h === '#/timeline' && tlOk() ? viewTimeline() : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
     termSeen = null;
     // Rebuild only when something other than a time changed, and never under a finger:
     // a rebuild mid-tap swallowed about one tap in six (critique, 2026-10-07).
