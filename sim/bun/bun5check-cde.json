@@ -1,0 +1,42 @@
+{
+ "seg": "cde",
+ "commits": 4082,
+ "namesDefined": 6991,
+ "namesAmbiguous": 2006,
+ "needs": 4471,
+ "needsSameCommit": 579,
+ "needsSameCrate": 2003,
+ "needsBothInModules": 3344,
+ "interfacesFirst": {
+  "met": 2655,
+  "violated": 1816,
+  "sameCrateMissingUse": 1240,
+  "otherCrateNotDep": 576,
+  "fileNotInModules": 975
+ },
+ "strict": {
+  "met": 3242,
+  "violated": 1229,
+  "sameCrate": 740,
+  "otherCrate": 489,
+  "fileNotInModules": 1127
+ },
+ "perFileReplay": {
+  "hunksApplied": 19272,
+  "failed": 0,
+  "filesSameAsHistory": 1221,
+  "filesDiffer": 0
+ },
+ "examples": {
+  "interfacesFirstViolated": [
+   "src/bun_core_macros/lib.rs uses tokens from src/jsc_macros/lib.rs (bun_core_macros -> bun_jsc_macros)",
+   "src/collections/multi_array_list.rs uses FooField from src/collections_macros/lib.rs (bun_collections -> null)",
+   "src/collections/multi_array_list.rs uses FooSliceExt from src/collections_macros/lib.rs (bun_collections -> null)",
+   "src/runtime/shell/interpreter.rs uses init_dupe_shell_state from src/runtime/shell/states/Subshell.rs (same crate)",
+   "src/runtime/shell/states/Binary.rs uses spawn_expr from src/runtime/shell/interpreter.rs (same crate)",
+   "src/runtime/shell/states/Stmt.rs uses spawn_expr from src/runtime/shell/interpreter.rs (same crate)",
+   "src/runtime/bake/dev_server/mod.rs uses init_impl from src/runtime/bake/dev_server/lifecycle.rs (same crate)",
+   "src/bundler/Chunk.rs uses bun_renamer from src/bundler/ungate_support.rs (same crate)"
+  ]
+ }
+}

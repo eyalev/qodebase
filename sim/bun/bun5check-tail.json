@@ -1,0 +1,42 @@
+{
+ "seg": "tail",
+ "commits": 1326,
+ "namesDefined": 2830,
+ "namesAmbiguous": 435,
+ "needs": 5361,
+ "needsSameCommit": 2566,
+ "needsSameCrate": 1360,
+ "needsBothInModules": 4594,
+ "interfacesFirst": {
+  "met": 4027,
+  "violated": 1334,
+  "sameCrateMissingUse": 858,
+  "otherCrateNotDep": 476,
+  "fileNotInModules": 425
+ },
+ "strict": {
+  "met": 3546,
+  "violated": 1815,
+  "sameCrate": 563,
+  "otherCrate": 1252,
+  "fileNotInModules": 767
+ },
+ "perFileReplay": {
+  "hunksApplied": 16786,
+  "failed": 0,
+  "filesSameAsHistory": 2176,
+  "filesDiffer": 4
+ },
+ "examples": {
+  "interfacesFirstViolated": [
+   "src/bun_alloc/lib.rs uses vec_from_iter_in from src/bun_alloc/MimallocArena.rs (same crate)",
+   "src/bun_alloc/lib.rs uses ArenaString from src/bun_alloc/MimallocArena.rs (same crate)",
+   "src/bun_alloc/lib.rs uses ArenaVecExt from src/bun_alloc/MimallocArena.rs (same crate)",
+   "src/logger/js_ast.rs uses ArenaVecExt from src/bun_alloc/MimallocArena.rs (null -> bun_alloc)",
+   "src/interchange/json.rs uses ArenaVecExt from src/bun_alloc/MimallocArena.rs (null -> bun_alloc)",
+   "src/interchange/json5.rs uses ArenaVecExt from src/bun_alloc/MimallocArena.rs (null -> bun_alloc)",
+   "src/interchange/toml/lexer.rs uses ArenaVecExt from src/bun_alloc/MimallocArena.rs (null -> bun_alloc)",
+   "src/interchange/toml/lexer.rs uses with_capacity_in from src/bun_alloc/MimallocArena.rs (null -> bun_alloc)"
+  ]
+ }
+}
