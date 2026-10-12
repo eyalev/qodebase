@@ -745,6 +745,16 @@ ${tryRow(entries)}
 <script>(function(){document.querySelectorAll('.land .browse').forEach((a)=>a.addEventListener('click',()=>a.classList.add('going')));
 addEventListener('pageshow',()=>document.querySelectorAll('.land .browse.going').forEach((a)=>a.classList.remove('going')));
 const f=document.querySelector('.landask'),t=f.querySelector('textarea');
+// Focus diagnostics (Eyal, 2026-10-12: on Android the keyboard opened by itself after scrolling down to Build
+// settings and back). Every focus/blur of the box: trusted?, the last touch/pointer events, a stack, the viewport;
+// console + one row in Workers Logs via Talk's log route (tool 'focusdiag', signed-in only).
+const last=[];['touchstart','touchend','pointerdown','pointerup','click','scroll'].forEach((k)=>addEventListener(k,(e)=>{last.push(k+(e.target&&e.target.id?'#'+e.target.id:e.target&&e.target.className&&typeof e.target.className==='string'?'.'+e.target.className.split(' ')[0]:'')+'@'+Math.round(performance.now()));if(last.length>8)last.shift();},{capture:true,passive:true}));
+const diag=(ev,e)=>{const row={ts:new Date().toISOString(),module:'homefocus',event:ev,trusted:e.isTrusted,last:last.slice(),vv:window.visualViewport?Math.round(visualViewport.height):null,y:Math.round(scrollY),boxTop:Math.round(t.getBoundingClientRect().top),stack:(new Error().stack||'').split(String.fromCharCode(10)).slice(2,6).join(' | ')};try{console.log(JSON.stringify(row));}catch(x){}
+try{fetch('/api/talk/log',{method:'POST',keepalive:true,credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({tool:'focusdiag',args:row,ok:true,path:location.pathname})}).catch(()=>{});}catch(x){}};
+t.addEventListener('focus',(e)=>diag('focus',e));t.addEventListener('blur',(e)=>diag('blur',e));
+// The box keeps focus after the keyboard is dismissed with Back; Android then re-shows the keyboard when it
+// comes back into view. Once the box is fully off screen, let go of focus so only a real tap can bring it back.
+if('IntersectionObserver' in window)new IntersectionObserver((es)=>{for(const x of es)if(!x.isIntersecting&&document.activeElement===t){diag('blur_offscreen',{isTrusted:false});t.blur();}},{threshold:0}).observe(t);
 (function(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition,m=document.getElementById('askmic');if(!SR||!m)return;m.hidden=false;let rec=null,base='';
 m.addEventListener('click',()=>{if(rec){rec.stop();return;}rec=new SR();rec.interimResults=true;rec.continuous=true;rec.lang=document.documentElement.lang||navigator.language||'en-US';base=t.value.trim();
 rec.onresult=(e)=>{let s='';for(let i=0;i<e.results.length;i++)s+=e.results[i][0].transcript;t.value=(base?base+' ':'')+s.trim();t.dispatchEvent(new Event('input',{bubbles:true}));};
@@ -763,6 +773,7 @@ export const LAND_CSS = `
 .askmic svg{width:22px;height:22px}.askmic.on{background:var(--warn);color:#fff}
 .askmic:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 body:has(.landask) #talk-fab{display:none!important}
+body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 /* Build settings (B2/B4, behind BUILD_SETTINGS): 'Adjust' expands a section in place under Build it (Eyal: no
    modal). Preset chips, sliders with touch-sized thumbs, a board switch, outcome bars that move while you drag. */
 .bsrow{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0}
