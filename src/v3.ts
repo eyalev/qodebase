@@ -804,6 +804,8 @@ body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 .bs-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-11px;border-radius:50%;background:var(--bg);box-shadow:0 0 0 2px var(--fg),0 1px 3px rgba(0,0,0,.25)}
 .bs-row input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radius:50%;background:var(--bg);box-shadow:0 0 0 2px var(--fg),0 1px 3px rgba(0,0,0,.25)}
 .bs-row input[type=range]:focus-visible{outline:none}
+.bs-row:has(input[type=range]){touch-action:pan-y}
+@media (pointer:coarse){.bs-row input[type=range]{pointer-events:none}}
 .bs-row input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 2px var(--fg),0 0 0 5px var(--acc)}
 .bs-sw{min-height:44px}
 .bs-switch{position:relative;width:52px;height:32px;border:0;border-radius:16px;background:var(--chip);cursor:pointer;padding:0;transition:background-color .15s}

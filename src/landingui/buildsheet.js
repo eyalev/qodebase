@@ -211,6 +211,36 @@
     if (st.v.coders === 1) st.v.board = false;
     paintSoon();
   });
+  // Touch: scroll and slide must be different gestures (Eyal, 2026-10-12: a page scroll that started on a slider
+  // changed it). On touch screens the native range takes no touches (CSS, pointer:coarse); this decides on the
+  // first move: horizontal (|dx| > 8 px and > |dy|) drags the value, vertical is left to the page (touch-action:
+  // pan-y), a tap on the track steps one toward the finger. Keyboard and mouse keep the native control.
+  root.querySelectorAll('.bs-row').forEach((row) => {
+    const r = row.querySelector('input[type=range]'); if (!r) return;
+    let g = null;   // { x, y, mode: null | 'slide' | 'scroll', v0 }
+    const valueAt = (x) => {
+      const b = r.getBoundingClientRect(), min = +r.min, max = +r.max, thumb = 28;
+      const f = Math.max(0, Math.min(1, (x - b.left - thumb / 2) / Math.max(1, b.width - thumb)));
+      return Math.round(min + f * (max - min));
+    };
+    const set = (v, kind) => { if (+r.value === v && kind === 'input') return; r.value = String(v); r.dispatchEvent(new Event(kind, { bubbles: true })); };
+    row.addEventListener('touchstart', (e) => { if (e.touches.length !== 1) return void (g = null); const t = e.touches[0]; g = { x: t.clientX, y: t.clientY, mode: null, v0: +r.value }; }, { passive: true });
+    row.addEventListener('touchmove', (e) => {
+      if (!g) return; const t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y;
+      if (!g.mode) { if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { g.mode = 'slide'; touched = true; } else if (Math.abs(dy) > 8) { g.mode = 'scroll'; log('slider_scroll', { k: r.dataset.k }); } }
+      if (g.mode === 'slide') { e.preventDefault(); set(valueAt(t.clientX), 'input'); }
+    }, { passive: false });
+    row.addEventListener('touchend', (e) => {
+      if (!g) return;
+      if (g.mode === 'slide') set(+r.value, 'change');
+      else if (!g.mode && (() => { const b = r.getBoundingClientRect(); return g.y >= b.top && g.y <= b.bottom; })()) {   // a tap on the track: one step toward the finger, never a jump
+        const v = valueAt(g.x), cur = +r.value;
+        if (v !== cur) { set(cur + (v > cur ? 1 : -1), 'input'); set(+r.value, 'change'); }
+      }
+      g = null;
+    });
+    row.addEventListener('touchcancel', () => { g = null; });
+  });
   root.addEventListener('change', (e) => { if (e.target.matches('input[type=range]')) log('slider', { k: e.target.dataset.k, v: st.v }); });
   root.addEventListener('click', (e) => {
     const c = e.target.closest('[data-preset]');
