@@ -56,12 +56,19 @@ const small = (o) => {
 test('lanes: every landing is counted in exactly one lane; shared hot files push work to the coordinated lane', () => {
   const shared = small({ lanes: 4 }), split = small({ lanes: 4, splitHot: true });
   for (const s of [shared, split]) {
-    assert.equal(s.laneLanded.length, 5);
+    assert.equal(s.laneLanded.length, 6); // 4 areas + root + coordinated
     assert.equal(s.laneLanded.reduce((a, b) => a + b, 0), s.landed);
     assert.ok(s.landed > 0 && s.doorBusy > 0 && s.doorBusy < 1);
     assert.ok(s.breaks <= s.mainChecksFailed);
   }
   assert.ok(shared.coordLanded / shared.landed > split.coordLanded / split.landed, `${shared.coordLanded}/${shared.landed} vs ${split.coordLanded}/${split.landed}`);
+});
+
+test('no claims: nothing deferred, and the coordinated lane holds the lanes it touches', () => {
+  const s = small({ lanes: 4, claims: false });
+  assert.equal(s.claims, false);
+  assert.equal(s.deferred, 0);
+  assert.ok(s.coordLanded > 0 && s.landed > s.coordLanded);
 });
 
 test('one lane has no door, no coordinated lane and no main check', () => {
@@ -72,12 +79,14 @@ test('one lane has no door, no coordinated lane and no main check', () => {
   assert.equal(s.mainChecksFailed, 0);
 });
 
-test('controller: caps start small, agents wait idle, and caps move', () => {
-  const s = small({ lanes: 2, controller: true, ctlStart: 2, ctlWindowS: 300 });
+test('controller: caps start small, agents park, and caps move', () => {
+  const s = small({ lanes: 2, controller: true, ctl: { start: 2, evalS: 300, windowS: 300, holdS: 300 } });
   assert.ok(s.idled > 0);
   assert.ok(s.avgWorking < 40);
-  assert.equal(s.caps.length, 3);
-  assert.ok(s.caps.some((c) => c !== 2));
+  assert.equal(s.caps.length, 4); // 2 areas + root + coordinated
+  assert.ok(s.capMax.some((c) => c > 2));
+  const pick = small({ lanes: 2, controller: true, ctlPick: true, ctl: { start: 2 } });
+  assert.ok(pick.deferred > 0 && pick.idled > 0);
   const free = small({ lanes: 2 });
   assert.equal(free.idled, 0);
   assert.equal(free.caps, null);

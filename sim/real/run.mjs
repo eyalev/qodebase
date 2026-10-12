@@ -50,18 +50,23 @@ function mulberry32(a) {
 }
 
 export function runReal(opts) {
-  // Lanes (L2, docs/board/TASKS.md): `lanes` > 1 gives every area (folders m % lanes) its own
-  // merge queue that tests only its area, plus a coordinated lane for changes that touch several
-  // areas or a root file (tested whole, coordTestFactor x slower). Every lane's train goes through
-  // one door onto main (a git merge + ref update, doorS each, one at a time); after it, main's full
+  // Lanes (L2, docs/board/TASKS.md; the same rules as qb4's L1 in public/sim/engine.js): `lanes` > 1
+  // cuts the code into areas (folders m % lanes, plus the root files as one more area), each with its
+  // own merge queue whose train tests only its area. A change whose files span areas goes to the
+  // coordinated lane: trains of up to coordBatch over at most coordMaxLanes areas, which wait until
+  // those lanes are idle, hold them, and test the whole repo (coordTestFactor x). Every train goes
+  // through one door onto main (a git merge + ref update, doorS, one at a time); then main's full
   // tests run (main CI): a cross-area break found there reverts the train and stops every lane.
-  // `controller`: per lane, a cap on agents working there; every ctlWindowS the cap grows x1.5
-  // while the lane's landings rise and the cap is in use, and shrinks x0.75 when they fall.
-  // Agents whose task falls in a full lane draw another; else they wait idle (cost nothing).
+  // `controller`: W8's probe per lane (and for the coordinated lane): a cap on agents working there,
+  // probed up in steps while landings rise, backed off when they fall or redos pile up. An agent
+  // whose task falls in a full lane parks WITH that task (ctlPick false, L1's honest default) or
+  // draws up to pickFree others first (ctlPick true). Parked agents cost nothing.
+  // `claims` false: no file claims (qodebase's Landing has none; L1's default).
   const cfg = { ...DEFAULTS, modules: 50, filesPerModule: 8, agents: 50, hours: 1, seed: 1,
-    lanes: 1, controller: false, splitHot: false, doorS: 0.5, doorPerChangeS: 0.05, coordTestFactor: 2,
-    ctlWindowS: 600, ctlStart: 4, ctlMin: 2, bundle: true, ...opts };
-  const pol = REAL_POLICIES[cfg.policy];
+    lanes: 1, controller: false, ctlPick: false, splitHot: false, claims: null, doorS: 0.5, doorPerChangeS: 0.05,
+    coordBatch: 4, coordMaxLanes: 8, coordTestFactor: 1.5, bundle: true, ...opts };
+  const C = { ...DEFAULTS.ctl, start: 8, step: 2, grow: 0.5, min: 1, tickS: 30, evalS: 900, windowS: 900, eff: 0.1, holdS: 900, fall: 0.25, drop: 1, ...(opts.ctl || {}) };
+  const pol = REAL_POLICIES[cfg.policy] && { ...REAL_POLICIES[cfg.policy], ...(cfg.claims === false ? { claims: false, pickFree: 0 } : {}) };
   if (!pol) throw new Error(`policy: ${Object.keys(REAL_POLICIES).join(', ')}`);
   const name = cfg.name || `${cfg.policy}-${cfg.agents}`;
   resetNames();
@@ -109,14 +114,17 @@ export function runReal(opts) {
   const leads = Array.from({ length: nLeads }, () => ({ busy: false, q: [], busyS: 0 }));
   let brokenUntil = -1;
   // ---- lanes ----
-  const N = cfg.lanes, X = N > 1 ? N : 0; // X = the coordinated lane (only with lanes > 1)
-  const lanes = Array.from({ length: N > 1 ? N + 1 : 1 }, (_, i) => ({ i, q: [], busy: false, landed: 0, trains: 0, working: 0,
-    cap: cfg.controller ? cfg.ctlStart : Infinity, winLanded: 0, prevRate: null, caps: [] }));
-  const laneOfPath = (p) => { if (N === 1) return 0; const mm = /^src\/m(\d+)\//.exec(p); return mm ? Number(mm[1]) % N : X; };
-  const laneOfFiles = (files) => { if (N === 1) return 0; const s = new Set(files.map(laneOfPath)); return s.size === 1 ? [...s][0] : X; };
-  const inScope = (l) => (f) => N === 1 || l === X || laneOfPath(f.split(':')[0]) === l;
+  // Units: areas 0..N-1 (folders), R = the root files' area, X = the coordinated lane (lanes > 1 only).
+  const N = cfg.lanes, R = N > 1 ? N : 0, X = N > 1 ? N + 1 : 0;
+  const lanes = Array.from({ length: N > 1 ? N + 2 : 1 }, (_, i) => ({ i, q: [], busy: false, locked: false, landed: 0, trains: 0, working: 0,
+    cap: cfg.controller ? C.start : Infinity, capMax: cfg.controller ? C.start : 0, state: 'warm', since: 0, ref: 0, lastStep: 0, landT: [], dropT: [], parked: [] }));
+  const areaOf = (p) => { if (N === 1) return 0; const mm = /^src\/m(\d+)\//.exec(p); return mm ? Number(mm[1]) % N : R; };
+  const areasOf = (files) => [...new Set(files.map(areaOf))];
+  const laneOfFiles = (files) => { if (N === 1) return 0; const s = areasOf(files); return s.length === 1 ? s[0] : s.length ? X : R; };
+  const inScope = (l) => (f) => N === 1 || l === X || areaOf(f.split(':')[0]) === l;
   const doorQ = []; let doorBusy = false, doorBusyS = 0;
-  const idle = []; // agents waiting for room in a lane (controller)
+  let coordBusy = false, coordWants = new Set();
+  const idle = []; // ctlPick: agents waiting for room in any lane
   const history = []; // main's commits
   const series = [];
   const m = { idled: 0, mainChecksFailed: 0, droppedWorkS: 0, revertedWorkS: 0, replayedOnLand: 0, landed: 0, conflicts: 0, testFails: 0, breaks: 0, reverts: 0, redos: 0, leadReplays: 0, dropped: 0, deferred: 0, disputes: 0, workS: 0, reworkS: 0, reviewS: 0, leadS: 0, gitMerges: 0 };
@@ -130,14 +138,20 @@ export function runReal(opts) {
   }
 
   const draw = () => randomOp(rnd, pickFile, reader(main.snap), { splitHot: cfg.splitHot });
-  const room = (c) => !cfg.controller || lanes[laneOfFiles(touched(c))].working < lanes[laneOfFiles(touched(c))].cap;
-  function newChange(agent) {
-    const c = { id: changes.length + 1, agent, op: draw(), created: t, events: [], state: null, tries: 0, files: [], conflicts: [], fails: [] };
-    // pickFree: if its files are claimed (or its lane is full), leave this one in the backlog and draw another.
-    if (pol.pickFree && (pol.claims || cfg.controller)) {
-      for (let i = 0; i < pol.pickFree && !((!pol.claims || claimable(c)) && room(c)); i++) { m.deferred++; c.op = draw(); }
+  const unitOf = (c) => lanes[laneOfFiles(touched(c))];
+  const room = (c) => !cfg.controller || unitOf(c).working < unitOf(c).cap;
+  function newChange(agent, parkedOp) {
+    const c = { id: changes.length + 1, agent, op: parkedOp || draw(), created: t, events: [], state: null, tries: 0, files: [], conflicts: [], fails: [] };
+    // pickFree: if its files are claimed (or, with ctlPick, its lane is full), leave this one in the backlog and draw another.
+    const pickForRoom = cfg.controller && cfg.ctlPick;
+    if (!parkedOp && (pol.claims && pol.pickFree || pickForRoom)) {
+      for (let i = 0; i < (pol.pickFree || 8) && !((!pol.claims || claimable(c)) && (!pickForRoom || room(c))); i++) { m.deferred++; c.op = draw(); }
     }
-    if (!room(c)) { m.idled++; idle.push(agent); return; } // every lane it drew is full: wait
+    if (!room(c)) { // its lane is full: park with the task (or, with ctlPick, wait for any lane)
+      m.idled++;
+      if (cfg.ctlPick) idle.push(agent); else unitOf(c).parked.push({ agent, op: c.op });
+      return;
+    }
     changes.push(c);
     c.slotLane = laneOfFiles(touched(c)); lanes[c.slotLane].working++;
     ev(c, 'asked', c.op.text);
@@ -187,8 +201,16 @@ export function runReal(opts) {
   // An agent's slot in its lane comes free: an idle agent tries again.
   function freeSlot(c) {
     if (c.slotLane == null) return;
-    lanes[c.slotLane].working--; c.slotLane = null;
-    if (idle.length) { const a = idle.shift(); at(1, () => newChange(a)); }
+    const u = lanes[c.slotLane];
+    u.working--; c.slotLane = null;
+    wake(1, u);
+  }
+  function wake(n, u) {
+    for (let i = 0; i < n; i++) {
+      if (cfg.ctlPick ? !idle.length : !u.parked.length) return;
+      const p = cfg.ctlPick ? { agent: idle.shift() } : u.parked.shift();
+      at(1 + i * 0.01, () => newChange(p.agent, p.op));
+    }
   }
   function drop(c, why) {
     m.dropped++;
@@ -281,14 +303,36 @@ export function runReal(opts) {
     });
   }
 
-  function toMerge(c) { setState(c, 'mergeWait'); const l = laneOfFiles(c.files); lanes[l].q.push(c); pumpMerge(l); }
+  function toMerge(c) {
+    setState(c, 'mergeWait');
+    const l = laneOfFiles(c.files);
+    if (N > 1 && l === X) { c.areas = areasOf(c.files); lanes[X].q.push(c); pumpCoord(); } else { lanes[l].q.push(c); pumpMerge(l); }
+  }
   function pumpMerge(l) {
     const lane = lanes[l];
-    if (lane.busy || !lane.q.length || brokenUntil > t) return;
+    if (lane.busy || lane.locked || coordWants.has(l) || !lane.q.length || brokenUntil > t) return;
     const batch = lane.q.splice(0, pol.batch);
     lane.busy = true;
-    const test = pol.trainTest ? cfg.trainTestS * (N > 1 && l === X ? cfg.coordTestFactor : 1) : 0;
-    at(cfg.mergeS + cfg.mergePerChangeS * batch.length + test, () => (N > 1 ? (doorQ.push({ l, batch }), pumpDoor()) : mergeBatch(batch, l)));
+    at(cfg.mergeS + cfg.mergePerChangeS * batch.length + (pol.trainTest ? cfg.trainTestS : 0), () => (N > 1 ? (doorQ.push({ l, batch }), pumpDoor()) : mergeBatch(batch, l)));
+  }
+  // The coordinated lane: waits until every lane its train touches is idle, holds them, tests the whole repo.
+  function pumpCoord() {
+    const lane = lanes[X];
+    if (N === 1 || coordBusy || !lane.q.length || brokenUntil > t) return;
+    const batch = [], union = new Set();
+    for (const c of lane.q) {
+      if (batch.length >= cfg.coordBatch) break;
+      const next = new Set([...union, ...c.areas]);
+      if (batch.length && next.size > cfg.coordMaxLanes) break;
+      batch.push(c); for (const a of c.areas) union.add(a);
+    }
+    coordWants = union;
+    if (![...union].every((a) => !lanes[a].busy)) return;
+    lane.q.splice(0, batch.length);
+    coordBusy = true; lane.busy = true;
+    for (const a of union) lanes[a].locked = true;
+    batch.held = [...union];
+    at(cfg.mergeS + cfg.mergePerChangeS * batch.length + (pol.trainTest ? cfg.trainTestS * cfg.coordTestFactor : 0), () => { doorQ.push({ l: X, batch }); pumpDoor(); });
   }
   // The door onto main: one lane's train at a time.
   function pumpDoor() {
@@ -298,9 +342,10 @@ export function runReal(opts) {
     doorBusy = true; doorBusyS += d;
     at(d, () => { doorBusy = false; mergeBatch(batch, l); pumpDoor(); });
   }
-  const pumpAll = () => { lanes.forEach((_, l) => pumpMerge(l)); pumpDoor(); };
+  const pumpAll = () => { pumpCoord(); for (let l = 0; l < lanes.length; l++) if (N === 1 || l !== X) pumpMerge(l); pumpDoor(); };
 
   function bounce(c, why, detail) {
+    if (c.slotLane != null) lanes[c.slotLane].dropT.push(t);
     // A conflict or a failed test: redo from intent, or hand it to the area lead.
     if (pol.onConflict === 'lead') return toLead(c, 'merge', detail);
     m.redos++;
@@ -310,6 +355,7 @@ export function runReal(opts) {
 
   function mergeBatch(batch, l) {
     lanes[l].busy = false; lanes[l].trains++;
+    if (N > 1 && l === X) { coordBusy = false; coordWants = new Set(); for (const a of batch.held) lanes[a].locked = false; }
     const scoped = (fails) => fails.filter(inScope(l)); // a lane's train tests only its own area
     let tip = main;
     const landedNow = [];
@@ -365,7 +411,7 @@ export function runReal(opts) {
     if (landedNow.length) {
       main = tip;
       history.push({ t: Math.round(t), sha: tip.sha, ids: landedNow.map((c) => c.id), kind: 'land' });
-      for (const c of landedNow) { land(c, tip.sha); lanes[l].landed++; lanes[l].winLanded++; }
+      for (const c of landedNow) { lanes[l].landed++; land(c, tip.sha); }
       // Without train tests, or with lanes (each tested only its area), main's own tests run after landing.
       if (!pol.trainTest || N > 1) {
         const fails = check(reader(main.snap), lister(main.snap));
@@ -377,6 +423,7 @@ export function runReal(opts) {
 
   function land(c, sha) {
     m.landed++;
+    if (c.slotLane != null) lanes[c.slotLane].landT.push(t);
     c.landedAt = Math.round(t); c.landSha = sha; c.lane = laneOfFiles(c.files);
     if (cfg.bundle) c.diff = c.files.map((p) => ({ p, lines: lineDiff(c.base.snap.has(p) ? repo.text(c.base.snap.get(p)) : '', repo.text(c.snap.get(p))) }));
     else { c.snap = null; c.base = null; } // big runs: keep memory flat
@@ -416,24 +463,30 @@ export function runReal(opts) {
 
   for (let a = 0; a < cfg.agents; a++) at(logn(cfg.bootS, 0.3) + rnd() * 30, () => newChange(a));
 
-  // The per-lane controller: add agents while the lane's landings rise.
+  // W8's probe per lane (L1's ctlUnit, same constants): grow the cap in steps while the lane's
+  // landings/min rise by at least eff per added agent, step back when they don't, back off on redos.
+  function ctlUnit(u) {
+    const W = C.windowS;
+    u.landT = u.landT.filter((x) => x > t - 2 * W); u.dropT = u.dropT.filter((x) => x > t - 60);
+    const now = (u.landT.filter((x) => x > t - W).length * 60) / W, before = u.cap;
+    const st = Math.max(C.step, Math.round(u.cap * C.grow));
+    if (u.dropT.length > C.drop * u.cap && u.cap > C.min) { u.cap = Math.max(C.min, Math.floor(u.cap / 2)); u.state = 'hold'; u.since = t; u.ref = now; }
+    else if (u.state === 'warm' && t - u.since >= C.evalS) { u.ref = now; u.cap += st; u.state = 'eval'; u.since = t; u.lastStep = st; }
+    else if (u.state === 'eval' && t - u.since >= C.evalS) {
+      const s0 = u.lastStep || st, b = u.cap - s0;
+      if (now >= u.ref * (1 + (C.eff * s0) / Math.max(1, b))) { u.ref = now; u.cap += st; u.since = t; u.lastStep = st; }
+      else { u.cap = Math.max(C.min, u.cap - s0); u.state = 'hold'; u.since = t; u.ref = now; }
+    } else if (u.state === 'hold') {
+      if (u.ref > 0 && now < u.ref * (1 - C.fall)) { u.cap = Math.max(C.min, u.cap - 1); u.ref = now; u.since = t; }
+      else if (t - u.since >= C.holdS) { u.ref = now; u.cap += st; u.state = 'eval'; u.since = t; u.lastStep = st; }
+    }
+    u.cap = Math.min(u.cap, cfg.agents);
+    u.capMax = Math.max(u.capMax, u.cap);
+    return Math.max(0, u.cap - before);
+  }
   if (cfg.controller) {
-    const tick = () => {
-      let added = 0;
-      for (const lane of lanes) {
-        const rate = lane.winLanded; lane.winLanded = 0;
-        const used = lane.working >= lane.cap * 0.8;
-        const before = lane.cap;
-        if (lane.prevRate == null || (rate > lane.prevRate * 1.05 && used)) lane.cap = Math.ceil(lane.cap * 1.5);
-        else if (rate < lane.prevRate * 0.9) lane.cap = Math.max(cfg.ctlMin, Math.floor(lane.cap * 0.75));
-        lane.prevRate = rate;
-        added += Math.max(0, lane.cap - before);
-        lane.caps.push(lane.cap);
-      }
-      for (let i = 0; i < added && idle.length; i++) { const a = idle.shift(); at(1 + i * 0.01, () => newChange(a)); }
-      at(cfg.ctlWindowS, tick);
-    };
-    at(cfg.ctlWindowS, tick);
+    const tick = () => { for (const u of lanes) { const up = ctlUnit(u); if (up) wake(up, u); } at(C.tickS, tick); };
+    at(C.tickS, tick);
   }
 
   const end = cfg.hours * 3600;
@@ -461,7 +514,8 @@ export function runReal(opts) {
     laneLanded: lanes.map((l) => l.landed), coordLanded: N > 1 ? lanes[X].landed : 0,
     doorBusy: +(doorBusyS / end).toFixed(3), mainChecksFailed: m.mainChecksFailed, idled: m.idled,
     avgWorking: workingN ? Math.round(workingSum / workingN) : 0,
-    caps: cfg.controller ? lanes.map((l) => l.cap) : null,
+    caps: cfg.controller ? lanes.map((l) => l.cap) : null, capMax: cfg.controller ? lanes.map((l) => l.capMax) : null,
+    parkedAtEnd: lanes.reduce((n, l) => n + l.parked.length, 0) + idle.length, claims: !!pol.claims,
     wasteShare: thinking ? +((m.reworkS + m.droppedWorkS + m.revertedWorkS) / thinking).toFixed(3) : 0,
     leads: nLeads, leadBusy: nLeads ? +(leads.reduce((s, l) => s + l.busyS, 0) / (end * nLeads)).toFixed(3) : null,
     wallS: +((performance.now() - wall0) / 1000).toFixed(1),
@@ -492,7 +546,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const indexPath = join(RUNS, 'index.json');
   const index = existsSync(indexPath) ? JSON.parse(readFileSync(indexPath, 'utf8')) : [];
   for (const policy of policies) {
-    const lanesOpt = args.lanes ? { lanes: Number(args.lanes), controller: !!args.controller, splitHot: !!args['split-hot'],
+    const lanesOpt = args.lanes ? { lanes: Number(args.lanes), controller: !!args.controller, ctlPick: !!args['ctl-pick'], splitHot: !!args['split-hot'],
+      ...(args.claims === 'off' ? { claims: false } : {}),
       ...(args.modules ? { modules: Number(args.modules) } : {}), bundle: !args['no-bundle'], ...(args.name ? { name: args.name } : {}) } : {};
     const { bundle, stats, name } = runReal({ policy, agents: Number(args.agents || 50), hours: Number(args.hours || 1), seed: Number(args.seed || 1), ...lanesOpt });
     if (args['no-bundle']) { // lanes grid: one stats line, no viewer bundle

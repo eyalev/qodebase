@@ -7,7 +7,8 @@
 //
 // The project grows with the agents (modules = agents / 10: 50 folders x 8 files at 500 agents,
 // 200 at 2,000), so files per agent stay the same; --modules N fixes it instead.
-// Policy: land by intent (the best single-queue policy of the 500-agent run).
+// Policy: land by intent (the best single-queue policy of the 500-agent run); --claims off|on
+// (default off: qodebase's Landing has no file claims, L1's default too).
 import { spawnSync } from 'node:child_process';
 import { rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -19,11 +20,11 @@ const list = (k, d) => String(args[k] ?? d).split(',');
 const out = args.out || join(HERE, 'out/lanes.jsonl');
 const hours = args.hours || 2, seeds = list('seed', '1'), policy = args.policy || 'intents';
 
-for (const agents of list('agents', '500')) for (const hot of list('hot', 'shared')) for (const ctl of list('controller', 'off')) for (const lanes of list('lanes', '1,8,32')) for (const seed of seeds) {
+for (const agents of list('agents', '500')) for (const claims of list('claims', 'off')) for (const hot of list('hot', 'shared')) for (const ctl of list('controller', 'off')) for (const lanes of list('lanes', '1,8,32')) for (const seed of seeds) {
   const modules = args.modules || Math.max(50, Math.round(agents / 10));
-  const name = `lanes-${policy}-a${agents}-l${lanes}-${hot}${ctl === 'on' ? '-ctl' : ''}-s${seed}`;
+  const name = `lanes-${policy}-a${agents}-l${lanes}-${hot}${claims === 'on' ? '-claims' : ''}${ctl === 'on' ? '-ctl' : ''}-s${seed}`;
   const r = spawnSync(process.execPath, ['--max-old-space-size=8192', join(HERE, 'run.mjs'), '--policy', policy, '--agents', agents, '--hours', String(hours), '--seed', seed,
-    '--lanes', lanes, '--modules', String(modules), '--no-bundle', '--name', name, '--out', out, ...(hot === 'split' ? ['--split-hot'] : []), ...(ctl === 'on' ? ['--controller'] : [])],
+    '--lanes', lanes, '--modules', String(modules), '--no-bundle', '--name', name, '--out', out, ...(hot === 'split' ? ['--split-hot'] : []), ...(claims === 'off' ? ['--claims', 'off'] : []), ...(ctl === 'on' ? ['--controller'] : [])],
   { stdio: ['ignore', 'inherit', 'pipe'], encoding: 'utf8' });
   if (r.status !== 0) { console.error(`${name} failed (${r.status}):\n${r.stderr.split('\n').filter((l) => !l.includes('simulated min')).join('\n')}`); process.exitCode = 1; }
   if (!args.keep) rmSync(join(HERE, 'out', `${name}.git`), { recursive: true, force: true });
