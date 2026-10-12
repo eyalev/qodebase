@@ -1,0 +1,496 @@
+{
+ "n": {
+  "A n40": 3,
+  "A probe": 3,
+  "E n40": 3,
+  "E probe": 3
+ },
+ "measures": {
+  "wall_s": {
+   "label": "wall time (s)",
+   "A n40": {
+    "median": 1964,
+    "min": 1875,
+    "max": 2141
+   },
+   "A probe": {
+    "median": 1711,
+    "min": 1689,
+    "max": 1783
+   },
+   "E n40": {
+    "median": 1388,
+    "min": 1325,
+    "max": 1544
+   },
+   "E probe": {
+    "median": 1284,
+    "min": 1271,
+    "max": 1470
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.4
+  },
+  "hidden_pass": {
+   "label": "hidden tests (of 150)",
+   "A n40": {
+    "median": 150,
+    "min": 150,
+    "max": 150
+   },
+   "A probe": {
+    "median": 150,
+    "min": 150,
+    "max": 150
+   },
+   "E n40": {
+    "median": 149,
+    "min": 148,
+    "max": 150
+   },
+   "E probe": {
+    "median": 150,
+    "min": 150,
+    "max": 150
+   },
+   "p_E n40_vs_A": 0.4,
+   "p_E probe_vs_A": 1,
+   "p_A_probe_vs_n40": 1,
+   "p_E_probe_vs_n40": 0.4
+  },
+  "cap_median": {
+   "label": "agents allowed (median over the run)",
+   "A n40": {
+    "median": 40,
+    "min": 40,
+    "max": 40
+   },
+   "A probe": {
+    "median": 10,
+    "min": 10,
+    "max": 10
+   },
+   "E n40": {
+    "median": 40,
+    "min": 40,
+    "max": 40
+   },
+   "E probe": {
+    "median": 10,
+    "min": 10,
+    "max": 12
+   },
+   "p_E n40_vs_A": 1,
+   "p_E probe_vs_A": 1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "cap_max": {
+   "label": "agents allowed (max)",
+   "A n40": {
+    "median": 40,
+    "min": 40,
+    "max": 40
+   },
+   "A probe": {
+    "median": 10,
+    "min": 10,
+    "max": 12
+   },
+   "E n40": {
+    "median": 40,
+    "min": 40,
+    "max": 40
+   },
+   "E probe": {
+    "median": 14,
+    "min": 12,
+    "max": 14
+   },
+   "p_E n40_vs_A": 1,
+   "p_E probe_vs_A": 0.2,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "agent_minutes": {
+   "label": "agent-minutes (all calls)",
+   "A n40": {
+    "median": 927,
+    "min": 923.7,
+    "max": 1026.7
+   },
+   "A probe": {
+    "median": 270.3,
+    "min": 252.7,
+    "max": 288.6
+   },
+   "E n40": {
+    "median": 816.6,
+    "min": 735,
+    "max": 909.2
+   },
+   "E probe": {
+    "median": 229.2,
+    "min": 222.2,
+    "max": 232.3
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "wasted_agent_minutes": {
+   "label": "agent-minutes wasted (built then dropped)",
+   "A n40": {
+    "median": 300.2,
+    "min": 293.7,
+    "max": 303.4
+   },
+   "A probe": {
+    "median": 48.7,
+    "min": 47.3,
+    "max": 49.3
+   },
+   "E n40": {
+    "median": 134.1,
+    "min": 128.5,
+    "max": 163.3
+   },
+   "E probe": {
+    "median": 20.8,
+    "min": 11.6,
+    "max": 24
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "red_commits": {
+   "label": "red commits on main",
+   "A n40": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "A probe": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E n40": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E probe": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "p_E n40_vs_A": 1,
+   "p_E probe_vs_A": 1,
+   "p_A_probe_vs_n40": 1,
+   "p_E_probe_vs_n40": 1
+  },
+  "wasted_work_calls": {
+   "label": "wasted work (calls that built a task then dropped it)",
+   "A n40": {
+    "median": 113,
+    "min": 113,
+    "max": 126
+   },
+   "A probe": {
+    "median": 44,
+    "min": 43,
+    "max": 44
+   },
+   "E n40": {
+    "median": 90,
+    "min": 89,
+    "max": 103
+   },
+   "E probe": {
+    "median": 26,
+    "min": 14,
+    "max": 29
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "deferrals": {
+   "label": "deferrals (skipped before any work)",
+   "A n40": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "A probe": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E n40": {
+    "median": 33,
+    "min": 19,
+    "max": 37
+   },
+   "E probe": {
+    "median": 7,
+    "min": 6,
+    "max": 11
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "cut_calls": {
+   "label": "calls cut at the turn cap",
+   "A n40": {
+    "median": 35,
+    "min": 27,
+    "max": 36
+   },
+   "A probe": {
+    "median": 1,
+    "min": 1,
+    "max": 2
+   },
+   "E n40": {
+    "median": 44,
+    "min": 40,
+    "max": 47
+   },
+   "E probe": {
+    "median": 1,
+    "min": 0,
+    "max": 4
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "dup_pairs_both_separate": {
+   "label": "duplicate pairs built twice (of undefined)",
+   "A n40": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "A probe": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E n40": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E probe": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "p_E n40_vs_A": 1,
+   "p_E probe_vs_A": 1,
+   "p_A_probe_vs_n40": 1,
+   "p_E_probe_vs_n40": 1
+  },
+  "same_task_twice_n": {
+   "label": "same task landed twice",
+   "A n40": {
+    "median": 11,
+    "min": 9,
+    "max": 12
+   },
+   "A probe": {
+    "median": 12,
+    "min": 10,
+    "max": 14
+   },
+   "E n40": {
+    "median": 1,
+    "min": 0,
+    "max": 1
+   },
+   "E probe": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.5,
+   "p_E_probe_vs_n40": 1
+  },
+  "conflicts": {
+   "label": "merge conflicts resolved",
+   "A n40": {
+    "median": 1136,
+    "min": 1099,
+    "max": 1213
+   },
+   "A probe": {
+    "median": 342,
+    "min": 284,
+    "max": 389
+   },
+   "E n40": {
+    "median": 1333,
+    "min": 1186,
+    "max": 1385
+   },
+   "E probe": {
+    "median": 452,
+    "min": 413,
+    "max": 453
+   },
+   "p_E n40_vs_A": 0.2,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "rebase_aborts": {
+   "label": "rebases aborted",
+   "A n40": {
+    "median": 437,
+    "min": 402,
+    "max": 504
+   },
+   "A probe": {
+    "median": 224,
+    "min": 191,
+    "max": 284
+   },
+   "E n40": {
+    "median": 32,
+    "min": 25,
+    "max": 35
+   },
+   "E probe": {
+    "median": 13,
+    "min": 6,
+    "max": 19
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "resets_to_origin": {
+   "label": "resets to origin/main",
+   "A n40": {
+    "median": 480,
+    "min": 449,
+    "max": 529
+   },
+   "A probe": {
+    "median": 253,
+    "min": 216,
+    "max": 319
+   },
+   "E n40": {
+    "median": 33,
+    "min": 22,
+    "max": 41
+   },
+   "E probe": {
+    "median": 12,
+    "min": 6,
+    "max": 20
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "rejected_push_recoveries": {
+   "label": "rejected pushes recovered",
+   "A n40": {
+    "median": 703,
+    "min": 685,
+    "max": 713
+   },
+   "A probe": {
+    "median": 429,
+    "min": 372,
+    "max": 461
+   },
+   "E n40": {
+    "median": 180,
+    "min": 180,
+    "max": 182
+   },
+   "E probe": {
+    "median": 143,
+    "min": 138,
+    "max": 145
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "calls": {
+   "label": "agent calls",
+   "A n40": {
+    "median": 356,
+    "min": 338,
+    "max": 367
+   },
+   "A probe": {
+    "median": 261,
+    "min": 259,
+    "max": 265
+   },
+   "E n40": {
+    "median": 313,
+    "min": 305,
+    "max": 316
+   },
+   "E probe": {
+    "median": 224,
+    "min": 210,
+    "max": 227
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  },
+  "usd_api_equiv": {
+   "label": "API-equiv $ (Haiku 5.5)",
+   "A n40": {
+    "median": 10.3139,
+    "min": 9.8193,
+    "max": 10.6374
+   },
+   "A probe": {
+    "median": 5.4087,
+    "min": 5.0932,
+    "max": 5.5102
+   },
+   "E n40": {
+    "median": 9.3888,
+    "min": 9.0321,
+    "max": 9.4281
+   },
+   "E probe": {
+    "median": 4.7316,
+    "min": 4.4722,
+    "max": 4.9843
+   },
+   "p_E n40_vs_A": 0.1,
+   "p_E probe_vs_A": 0.1,
+   "p_A_probe_vs_n40": 0.1,
+   "p_E_probe_vs_n40": 0.1
+  }
+ }
+}

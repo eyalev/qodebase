@@ -66,7 +66,59 @@ The board against the two ablations (exact Mann-Whitney, 3 vs 3):
 
 ## W8b: throughput-probing controller (s6, 150 generated tasks, Haiku)
 
-(pending)
+Arms, interleaved per rep, Haiku, v3 settings (no-wait, 60 turns, tiebreak), s6 = 150 generated tasks with no twins.
+- **A n40 / E n40:** a fixed team of 40, without and with the board (+ dedupe + stagger).
+- **A probe / E probe:** the throughput-probing controller from qb4's sim.md (g), allowed up to 40: start at 8; every
+  30 s look at landings/min over the last 4 min; add 2 and keep them only if they earn at least 20% of an average
+  agent, else go back and hold 3 min; -1 on a 25% fall while holding; halve only when dropped work exceeds 1 per
+  agent per minute; never below 2.
+
+A n40 r1 ran on 2026-10-11 with the same code and flags; the other 11 ran 2026-10-12 15:23–21:17 UTC, weekly meter
+12% → 24%. Table: `summary.mjs --scenario s6` (last column: probe vs n40 for A and for E).
+
+| measure | A n40 (n=3) | A probe (n=3) | E n40 (n=3) | E probe (n=3) | p E n40 vs A | p E probe vs A | p probe vs n40 (A / E) |
+|---|---|---|---|---|---|---|---|
+| wall time (s) | 1964 [1875–2141] | 1711 [1689–1783] | 1388 [1325–1544] | 1284 [1271–1470] | 0.1 | 0.1 | 0.1 / 0.4 |
+| hidden tests (of 150) | 150 [150–150] | 150 [150–150] | 149 [148–150] | 150 [150–150] | 0.4 | 1 | 1 / 0.4 |
+| agents allowed (median over the run) | 40 [40–40] | 10 [10–10] | 40 [40–40] | 10 [10–12] | 1 | 1 | 0.1 / 0.1 |
+| agents allowed (max) | 40 [40–40] | 10 [10–12] | 40 [40–40] | 14 [12–14] | 1 | 0.2 | 0.1 / 0.1 |
+| agent-minutes (all calls) | 927 [923.7–1026.7] | 270.3 [252.7–288.6] | 816.6 [735–909.2] | 229.2 [222.2–232.3] | 0.1 | 0.1 | 0.1 / 0.1 |
+| agent-minutes wasted (built then dropped) | 300.2 [293.7–303.4] | 48.7 [47.3–49.3] | 134.1 [128.5–163.3] | 20.8 [11.6–24] | 0.1 | 0.1 | 0.1 / 0.1 |
+| red commits on main | 0 [0–0] | 0 [0–0] | 0 [0–0] | 0 [0–0] | 1 | 1 | 1 / 1 |
+| wasted work (calls that built a task then dropped it) | 113 [113–126] | 44 [43–44] | 90 [89–103] | 26 [14–29] | 0.1 | 0.1 | 0.1 / 0.1 |
+| deferrals (skipped before any work) | 0 [0–1] | 0 [0–0] | 33 [19–37] | 7 [6–11] | 0.1 | 0.1 | 1 / 0.1 |
+| calls cut at the turn cap | 35 [27–36] | 1 [1–2] | 44 [40–47] | 1 [0–4] | 0.1 | 1 | 0.1 / 0.1 |
+| duplicate pairs built twice (of undefined) | 0 [0–0] | 0 [0–0] | 0 [0–0] | 0 [0–0] | 1 | 1 | 1 / 1 |
+| same task landed twice | 11 [9–12] | 12 [10–14] | 1 [0–1] | 0 [0–1] | 0.1 | 0.1 | 0.5 / 1 |
+| merge conflicts resolved | 1136 [1099–1213] | 342 [284–389] | 1333 [1186–1385] | 452 [413–453] | 0.2 | 0.1 | 0.1 / 0.1 |
+| rebases aborted | 437 [402–504] | 224 [191–284] | 32 [25–35] | 13 [6–19] | 0.1 | 0.1 | 0.1 / 0.1 |
+| resets to origin/main | 480 [449–529] | 253 [216–319] | 33 [22–41] | 12 [6–20] | 0.1 | 0.1 | 0.1 / 0.1 |
+| rejected pushes recovered | 703 [685–713] | 429 [372–461] | 180 [180–182] | 143 [138–145] | 0.1 | 0.1 | 0.1 / 0.1 |
+| agent calls | 356 [338–367] | 261 [259–265] | 313 [305–316] | 224 [210–227] | 0.1 | 0.1 | 0.1 / 0.1 |
+| API-equiv $ (Haiku 5.5) | 10.31 [9.82–10.64] | 5.41 [5.09–5.51] | 9.39 [9.03–9.43] | 4.73 [4.47–4.98] | 0.1 | 0.1 | 0.1 / 0.1 |
+
+What it says:
+- **The controller wins on everything that costs.** Against a fixed 40 it used a quarter of the agent-minutes
+  (A 270 vs 927, E 229 vs 817), about half the money (A $5.41 vs $10.31, E $4.73 vs $9.39) and a sixth of the
+  wasted work, with all 150 hidden tests passing (p 0.1 on each, both with and without the board).
+- **It was not slower.** Without the board it was faster (1711 vs 1964 s, p 0.1): 40 agents without coordination
+  spend their time rebasing (437 aborted rebases, 35 calls cut at the turn cap). With the board the two are level
+  (1284 vs 1388 s, p 0.4), so the board makes 40 agents survivable; the controller makes them unnecessary.
+- **Board + controller is the best arm** on wall time, agent-minutes, cost and thrash. The board's own effect at
+  the controller's team size: 1284 vs 1711 s, $4.73 vs $5.41 (p 0.1), and 0 vs 12 tasks landed twice.
+- **Where the controller settled:** without the board it never kept more than 10 (it tried 10 → 12 once and gave
+  them back); with the board it kept 12 and twice 14. Its tries are in `cap_log` per run.
+- **One halving, in E probe r2:** at 19 min dropped work passed 1 per agent per minute and the cap went 12 → 6 → 3 → 2
+  in 60 s, then probed back to 4. That run is the slowest of its arm (1470 s against 1271 and 1284), so the
+  halving rule cost about 3 minutes there.
+- **Log bug, decisions unaffected:** a "kept" line prints "+0.00 >= x" because the message is built after the
+  baseline is reset. The comparison itself uses the right numbers. Fixed after the queue ended (code frozen during
+  the runs).
+
+Against qb4's predictions (probe with board ~1180 s at cap ~12; without board ~1310 s at cap ~10): observed
+1284 s settling at 12–14, and 1711 s settling at 8–10. The caps match; both wall times are slower than predicted, the
+board-less arm by 30%, because qb4's model underweights how much a team of 8–10 without the board loses to rebases
+(224 aborted rebases per run). "Fixed 40 no faster than fixed 20" is tested by the controls below.
 
 ## W9b: tasks arriving during the run (s7, 10 agents)
 

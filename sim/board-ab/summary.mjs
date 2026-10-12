@@ -15,13 +15,20 @@ for (const r of runs) if (SCEN === 's3' || SCEN === 's4' || SCEN === 's5') r.con
 // W9 (s7): 'E' = board + upfront dedupe, 'E pa' = plus per-arrival dedupe. Tasks the harness closed as duplicates of
 // landed work were told "nothing to do", so their hidden tests (which want the twin's name) fail by design:
 // hidden_open counts failures among the tasks that were not closed.
+const med = (xs) => { const s = [...xs].sort((a, b) => a - b); const n = s.length; return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : null; };
+// W8 (s6): fixed team (n40, n20, n8) vs the throughput-probing controller (probe, starts at 8); cap over the run.
+if (SCEN === 's6') for (const r of runs) {
+  r.cond = `${r.cond} ${r.probe ? 'probe' : `n${r.agents}`}`;
+  const caps = (r.cap_log || []).map((c) => c.cap).filter((c) => c != null);
+  r.cap_median = med(caps); r.cap_max = caps.length ? Math.max(...caps) : null;
+}
 if (SCEN === 's7') for (const r of runs) {
   if (r.arrivals?.dedupe) r.cond = 'E pa';
   const closed = new Set((r.arrivals?.log || []).filter((a) => a.dedupe?.same && a.dedupe.landed).map((a) => a.id));
   r.closed_n = closed.size; r.hidden_open = Object.entries(r.hidden || {}).filter(([t, ok]) => !ok && !closed.has(t)).length;
 }
 const M = [
-  ['wall_s', 'wall time (s)'], ['hidden_pass', `hidden tests (of ${{ s1: 16, s2: 30, s3: 60, s4: 16, s5: 12, s7: 60 }[SCEN]})`], ...(SCEN === 's7' ? [['closed_n', 'arrivals closed as duplicates'], ['hidden_open', 'hidden tests failed among tasks not closed']] : []), ['agent_minutes', 'agent-minutes (all calls)'], ['wasted_agent_minutes', 'agent-minutes wasted (built then dropped)'], ['red_commits', 'red commits on main'],
+  ['wall_s', 'wall time (s)'], ['hidden_pass', `hidden tests (of ${{ s1: 16, s2: 30, s3: 60, s4: 16, s5: 12, s6: 150, s7: 60 }[SCEN]})`], ...(SCEN === 's6' ? [['cap_median', 'agents allowed (median over the run)'], ['cap_max', 'agents allowed (max)']] : []), ...(SCEN === 's7' ? [['closed_n', 'arrivals closed as duplicates'], ['hidden_open', 'hidden tests failed among tasks not closed']] : []), ['agent_minutes', 'agent-minutes (all calls)'], ['wasted_agent_minutes', 'agent-minutes wasted (built then dropped)'], ['red_commits', 'red commits on main'],
   ['wasted_work_calls', 'wasted work (calls that built a task then dropped it)'], ['deferrals', 'deferrals (skipped before any work)'], ['cut_calls', 'calls cut at the turn cap'],
   ['dup_pairs_both_separate', `duplicate pairs built twice (of ${{ s1: 4, s2: 5, s3: 10, s4: 4, s5: 3, s7: 10 }[SCEN]})`], ['same_task_twice_n', 'same task landed twice'],
   ['conflicts', 'merge conflicts resolved'], ['rebase_aborts', 'rebases aborted'], ['resets_to_origin', 'resets to origin/main'],
@@ -30,7 +37,6 @@ const M = [
 for (const r of runs) r.same_task_twice_n = (r.same_task_twice || []).length;
 const conds = [...new Set(runs.map((r) => r.cond))].sort();
 const vals = (c, k) => runs.filter((r) => r.cond === c).map((r) => r[k]).filter((v) => v != null);
-const med = (xs) => { const s = [...xs].sort((a, b) => a - b); const n = s.length; return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : null; };
 // Exact Mann-Whitney: enumerate every split of the pooled values (C(10,5) = 252), ties by mid-rank.
 function mannWhitney(a, b) {
   if (!a.length || !b.length) return null;
@@ -52,13 +58,14 @@ for (const [k, label] of M) {
   if (conds.includes('E v2') && conds.includes('E v2 aimd')) out.measures[k]['p_aimd_vs_E20'] = mannWhitney(vals('E v2 aimd', k), vals('E v2', k));
   if (conds.includes('E v2') && conds.includes('E v2 n8')) out.measures[k]['p_n8_vs_E20'] = mannWhitney(vals('E v2 n8', k), vals('E v2', k));
   if (conds.includes('C') && conds.includes('D')) out.measures[k].p_D_vs_C = mannWhitney(vals('D', k), vals('C', k));
+  for (const c of ['A', 'E']) if (conds.includes(`${c} probe`) && conds.includes(`${c} n40`)) out.measures[k][`p_${c}_probe_vs_n40`] = mannWhitney(vals(`${c} probe`, k), vals(`${c} n40`, k));
   if (conds.includes('E') && conds.includes('E pa')) out.measures[k].p_pa_vs_E = mannWhitney(vals('E pa', k), vals('E', k));
   if (conds.includes('D') && conds.includes('E')) out.measures[k].p_E_vs_D = mannWhitney(vals('E', k), vals('D', k));
 }
 fs.writeFileSync(path.join(HERE, SCEN === 's1' ? 'summary.json' : `summary-${SCEN}.json`), JSON.stringify(out, null, 1));
 if (process.argv.includes('--md')) {
   const fmt = (o) => (o.median == null ? '-' : `${+o.median.toFixed(o.median % 1 ? 2 : 0)} [${+o.min.toFixed(2)}–${+o.max.toFixed(2)}]`);
-  console.log(`| measure | ${conds.map((c) => `${c} (n=${out.n[c]})`).join(' | ')} | ${conds.filter((c) => !c.startsWith('A')).map((c) => `p ${c} vs A`).join(' | ')} | ${conds.includes('C') ? 'p D vs C' : SCEN === 's7' ? 'p E pa vs E' : SCEN === 's3' ? 'p AIMD vs E20 / n8 vs E20' : 'p E vs D'} |`);
+  console.log(`| measure | ${conds.map((c) => `${c} (n=${out.n[c]})`).join(' | ')} | ${conds.filter((c) => !c.startsWith('A')).map((c) => `p ${c} vs A`).join(' | ')} | ${conds.includes('C') ? 'p D vs C' : SCEN === 's7' ? 'p E pa vs E' : SCEN === 's6' ? 'p probe vs n40 (A / E)' : SCEN === 's3' ? 'p AIMD vs E20 / n8 vs E20' : 'p E vs D'} |`);
   console.log(`|---|${conds.map(() => '---').join('|')}|${conds.filter((c) => !c.startsWith('A')).map(() => '---').join('|')}|---|`);
-  for (const [k, label] of M) console.log(`| ${label} | ${conds.map((c) => fmt(out.measures[k][c])).join(' | ')} | ${conds.filter((c) => !c.startsWith('A')).map((c) => out.measures[k][`p_${c}_vs_A`]).join(' | ')} | ${conds.includes('C') ? out.measures[k].p_D_vs_C : SCEN === 's7' ? (out.measures[k].p_pa_vs_E ?? '-') : SCEN === 's3' ? `${out.measures[k].p_aimd_vs_E20 ?? '-'} / ${out.measures[k].p_n8_vs_E20 ?? '-'}` : (out.measures[k].p_E_vs_D ?? '-')} |`);
+  for (const [k, label] of M) console.log(`| ${label} | ${conds.map((c) => fmt(out.measures[k][c])).join(' | ')} | ${conds.filter((c) => !c.startsWith('A')).map((c) => out.measures[k][`p_${c}_vs_A`]).join(' | ')} | ${conds.includes('C') ? out.measures[k].p_D_vs_C : SCEN === 's7' ? (out.measures[k].p_pa_vs_E ?? '-') : SCEN === 's6' ? `${out.measures[k].p_A_probe_vs_n40 ?? '-'} / ${out.measures[k].p_E_probe_vs_n40 ?? '-'}` : SCEN === 's3' ? `${out.measures[k].p_aimd_vs_E20 ?? '-'} / ${out.measures[k].p_n8_vs_E20 ?? '-'}` : (out.measures[k].p_E_vs_D ?? '-')} |`);
 } else console.log(JSON.stringify(out, null, 1));

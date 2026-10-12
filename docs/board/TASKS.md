@@ -22,7 +22,7 @@ Guard: LLM runs stop at weekly meter 87% (73% at start).
 
 Round 3 (Eyal, 2026-10-11 ~04:00 UTC: "start the prediction and setup now, and do the runs as well"):
 - [x] W8a throughput-probing controller (add agents while landings/min rise, step back when flat/falling, halve only on dropped work) modelled + prediction before runs (qb4, sim.md (g)): sim.md (g), sim/board/probe.mjs
-- [ ] W8b real runs, Haiku, x3: fixed 8 / 20 / 40, controller with board, controller without board; long backlog; reuse identical earlier runs only if code+flags identical (qb9): harness + s6 (150 generated tasks) built 5db5093; runs queued (chain3), most after the Oct 12 reset
+- [ ] W8b real runs, Haiku, x3 (qb9): core done 2026-10-12 (A/E x fixed 40/probe, docs/board/E7-results.md); controls A8/A20 x2 running while the meter allows
 - [x] W9a dynamic workload: tasks arrive over the run (Poisson), incl. reworded duplicates of done/in-progress work; per-arrival dedupe vs upfront-only vs none; prediction first (qb4, sim.md (h)): sim.md (h), sim/board/arrivals.mjs
 - [x] W9b real runs x3 per condition, 10 agents (qb9): s7 (30 + 30 arrivals, 10 twin pairs), done 2026-10-12, docs/board/E7-results.md; combined controller + arrivals not run (budget)
 - [ ] W9c per-new-task dedupe in qodebase's board (qb6, after W9b shows it pays)
