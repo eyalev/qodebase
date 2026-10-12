@@ -63,7 +63,7 @@ export function runReal(opts) {
   // draws up to pickFree others first (ctlPick true). Parked agents cost nothing.
   // `claims` false: no file claims (qodebase's Landing has none; L1's default).
   const cfg = { ...DEFAULTS, modules: 50, filesPerModule: 8, agents: 50, hours: 1, seed: 1,
-    lanes: 1, controller: false, ctlPick: false, splitHot: false, claims: null, doorS: 0.5, doorPerChangeS: 0.05,
+    lanes: 1, reads: false, controller: false, ctlPick: false, splitHot: false, claims: null, doorS: 0.5, doorPerChangeS: 0.05,
     coordBatch: 4, coordMaxLanes: 8, coordTestFactor: 1.5, bundle: true, ...opts };
   const C = { ...DEFAULTS.ctl, start: 8, step: 2, grow: 0.5, min: 1, tickS: 30, evalS: 900, windowS: 900, eff: 0.1, holdS: 900, fall: 0.25, drop: 1, ...(opts.ctl || {}) };
   const pol = REAL_POLICIES[cfg.policy] && { ...REAL_POLICIES[cfg.policy], ...(cfg.claims === false ? { claims: false, pickFree: 0 } : {}) };
@@ -138,7 +138,10 @@ export function runReal(opts) {
   }
 
   const draw = () => randomOp(rnd, pickFile, reader(main.snap), { splitHot: cfg.splitHot });
-  const unitOf = (c) => lanes[laneOfFiles(touched(c))];
+  // reads: a change's lane also counts the files it calls into (addCall's target), so a call across
+  // areas goes through the coordinated lane instead of racing a rename in the other lane.
+  const scope = (c, files) => (cfg.reads && c.op.kind === 'addCall' && files.length ? [...files, c.op.args.target] : files);
+  const unitOf = (c) => lanes[laneOfFiles(scope(c, touched(c)))];
   const room = (c) => !cfg.controller || unitOf(c).working < unitOf(c).cap;
   function newChange(agent, parkedOp) {
     const c = { id: changes.length + 1, agent, op: parkedOp || draw(), created: t, events: [], state: null, tries: 0, files: [], conflicts: [], fails: [] };
@@ -153,7 +156,7 @@ export function runReal(opts) {
       return;
     }
     changes.push(c);
-    c.slotLane = laneOfFiles(touched(c)); lanes[c.slotLane].working++;
+    c.slotLane = laneOfFiles(scope(c, touched(c))); lanes[c.slotLane].working++;
     ev(c, 'asked', c.op.text);
     if (!pol.claims || tryClaim(c)) beginWork(c, logn(cfg.workMedS, cfg.workSigma), 'work');
     else { setState(c, 'claimWait'); claimWait.push(c); }
@@ -305,8 +308,8 @@ export function runReal(opts) {
 
   function toMerge(c) {
     setState(c, 'mergeWait');
-    const l = laneOfFiles(c.files);
-    if (N > 1 && l === X) { c.areas = areasOf(c.files); lanes[X].q.push(c); pumpCoord(); } else { lanes[l].q.push(c); pumpMerge(l); }
+    const l = laneOfFiles(scope(c, c.files));
+    if (N > 1 && l === X) { c.areas = areasOf(scope(c, c.files)); lanes[X].q.push(c); pumpCoord(); } else { lanes[l].q.push(c); pumpMerge(l); }
   }
   function pumpMerge(l) {
     const lane = lanes[l];
@@ -424,7 +427,7 @@ export function runReal(opts) {
   function land(c, sha) {
     m.landed++;
     if (c.slotLane != null) lanes[c.slotLane].landT.push(t);
-    c.landedAt = Math.round(t); c.landSha = sha; c.lane = laneOfFiles(c.files);
+    c.landedAt = Math.round(t); c.landSha = sha; c.lane = laneOfFiles(scope(c, c.files));
     if (cfg.bundle) c.diff = c.files.map((p) => ({ p, lines: lineDiff(c.base.snap.has(p) ? repo.text(c.base.snap.get(p)) : '', repo.text(c.snap.get(p))) }));
     else { c.snap = null; c.base = null; } // big runs: keep memory flat
     freeSlot(c);
@@ -435,8 +438,11 @@ export function runReal(opts) {
   }
 
   // Main went red: someone reverts the change (the merge queue waits meanwhile).
+  const breakKinds = Object.create(null); // what broke main, by kind (names stripped)
   function breakMain(c, fails, before, train = [c]) {
     m.breaks++;
+    for (const f of new Set(fails.map((x) => x.replace(/^[^:]+: /, '').replace(/\b\w*\d\w*\b/g, 'X').replace(/src\/\S+/g, 'F')))) breakKinds[f] = (breakKinds[f] || 0) + 1;
+    breakKinds[`train from ${N > 1 && train[0].lane === X ? 'the coordinated lane' : 'an area lane'}`] = (breakKinds[`train from ${N > 1 && train[0].lane === X ? 'the coordinated lane' : 'an area lane'}`] || 0) + 1;
     c.fails.push(...fails.slice(0, 3));
     ev(c, 'broke main', fails.slice(0, 3));
     const d = logn(cfg.fixMainMedS, 0.5);
@@ -510,7 +516,7 @@ export function runReal(opts) {
     disputes: m.disputes, gitMerges: m.gitMerges, reworkShare: thinking ? +(m.reworkS / thinking).toFixed(3) : 0,
     redShare: +(redS / end).toFixed(3), commits: history.length,
     cost: +((m.workS + m.reworkS + m.reviewS + m.leadS) * cfg.llmPerS).toFixed(2),
-    lanes: N, controller: !!cfg.controller, splitHot: !!cfg.splitHot, modules: cfg.modules,
+    lanes: N, reads: !!cfg.reads, controller: !!cfg.controller, splitHot: !!cfg.splitHot, modules: cfg.modules,
     laneLanded: lanes.map((l) => l.landed), coordLanded: N > 1 ? lanes[X].landed : 0,
     doorBusy: +(doorBusyS / end).toFixed(3), mainChecksFailed: m.mainChecksFailed, idled: m.idled,
     avgWorking: workingN ? Math.round(workingSum / workingN) : 0,
@@ -530,6 +536,7 @@ export function runReal(opts) {
     stats.coordQEnd = lastH.at(-1).coordQ; stats.parkedEnd = lastH.at(-1).parked;
   }
   stats.coordQByHour = Array.from({ length: Math.ceil(cfg.hours) }, (_, h) => series.find((x) => x.t >= (h + 1) * 3600 - 60)?.coordQ ?? null);
+  stats.breakKinds = breakKinds;
   stats.coordBatch = cfg.coordBatch; stats.coordMaxLanes = cfg.coordMaxLanes;
   stats.p50S = lat[Math.floor(lat.length * 0.5)] ?? null; stats.p90S = lat[Math.floor(lat.length * 0.9)] ?? null;
 
@@ -558,6 +565,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   for (const policy of policies) {
     const lanesOpt = args.lanes ? { lanes: Number(args.lanes), controller: !!args.controller, ctlPick: !!args['ctl-pick'], splitHot: !!args['split-hot'],
       ...(args.claims === 'off' ? { claims: false } : {}),
+      ...(args.reads ? { reads: true } : {}),
       ...(args['coord-batch'] ? { coordBatch: Number(args['coord-batch']) } : {}),
       ...(args['coord-max-lanes'] ? { coordMaxLanes: args['coord-max-lanes'] === 'all' ? Infinity : Number(args['coord-max-lanes']) } : {}),
       ...(args.modules ? { modules: Number(args.modules) } : {}), bundle: !args['no-bundle'], ...(args.name ? { name: args.name } : {}) } : {};
