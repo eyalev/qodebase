@@ -198,8 +198,11 @@ spot VMs (GCP, scripted agents, no model calls). Data: `sim/real/out/lanes.jsonl
 7. **Shared hot files cancel the gain.** With one shared `routes.ts` / `schema.ts` / `package.json`, 34% of changes
    are cross-area. 32 dependency-aware lanes then land 652 in the last hour at 2,000 agents, with 1,413 waiting
    in the coordinated queue. Splitting hot files per folder is a precondition, not an extra.
-8. **At 10,000 agents**, 8 dependency-aware lanes with a controller landed 2,124 in the last hour of 2 h, at $2.26
-   per change with ~340 agents working (one queue: 896, $13.25). This has no 6 h run, so read it as an upper bound.
+8. **At 10,000 agents (project 8,000 files)**, 32 dependency-aware lanes with a controller landed **7,433 in the last
+   hour** of 2 h: 8x one queue (896). Cost was $2.09 per change against $13.25, the median 9 min against 61, with
+   ~1,030 agents working. 8 such lanes landed 2,124 at $2.26. These are 2 h runs, with no 6 h run at this size. At
+   2,000 agents the 2 h figure overstated the 6 h one by 1.5x, so read these as upper bounds. The door onto main was
+   busy 27% of the time at 32 lanes, so it is the next door to watch at this scale.
 
 **Not covered:** one seed per cell, so differences under ~10% are noise. The project is synthetic (a small
 TypeScript tree with real git and real tests). The door's 0.5 s is an assumption. The controller is W8's probe as
