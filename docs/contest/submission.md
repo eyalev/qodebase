@@ -1,151 +1,70 @@
-# Submission texts (owner: qb8) — DRAFT 1, 2026-10-07
+# qodebase
 
-For Cloudflare's "Build the next GitHub" challenge (deadline 2026-10-14). Eyal submits.
-Lines marked **[final]** wait for numbers measured by Oct 10-12 (qb6 busy mode, final
-video length). Keep every claim to what is built (see docs/contest/storyboard.md,
-"Rules for every line").
-
-- **Project:** qodebase
 - **Live:** https://qodebase.app
 - **Code:** https://github.com/eyalev/qodebase (Apache-2.0)
-- **Video:** [final: link], 7:35
-- **Demo project:** https://qodebase.app/p/eyal/corner-cafe (Agents at work)
+- **Watch a run, no sign-in:** https://qodebase.app/p/eyal/corner-cafe
+- **Real agents:** https://qodebase.app/p/eyal/cafe-team
 
 ## Project vision
 
-AI agents now write code faster than people can review it, and one person can run
-dozens of them. Git and pull requests were built for the opposite: a few changes a day,
-each one read and merged by a person. Before building anything we measured what goes
-wrong when many agents share one codebase, with no model calls:
+Merge queues already exist (GitHub's merge queue, Graphite, Mergify, Bors), and so do multi-agent coding setups like Gas Town. They all treat a change as a diff: when it no longer applies, it goes back to its author. qodebase treats a change as an **intent with a record**. When it collides with what landed since, the queue **replays the reviewed intent on the newest main** instead of bouncing it, tests it, and lands it. New with that:
+- every agent works on **its own fork in Cloudflare Artifacts**;
+- each change's record (intent, diff, review, tests) stays with the code **as git notes**;
+- a live **board** shows which agent works on what;
+- we **measured** which team shapes work, with real agents.
 
-- Replaying the last 346 pull requests of Hono as if 100 had been written at once, 48%
-  needed another pull request to land first, and git reported no conflicts at all. The
-  problem is ordering, not merge conflicts.
-- On a generated 403-file TypeScript project with 500 scripted agents, real git and real
-  tests on every merge, the conflicts piled onto a few shared list files (routes,
-  schema, package.json), and landing by intent got 3.5x as many changes in per hour as
-  review-then-merge.
-- Simulating a real migration of Hono's code (moving `src/utils/` to `src/lib/`: 140 tasks
-  with a dependency chain, real git, type check and tests on every change), agents that
-  grab tasks in any order wasted 90 agent-hours; knowing the order finished in less than
-  half the time, and stacking with land by intent wasted nothing and never broke main
-  (10 agents, 3 seeds).
-- Run for real on Cloudflare, 500 agents (each a Durable Object with its own Artifacts
-  fork) made 7,033 git pushes at 280 ms median; git held up, and our single merge queue
-  was the limit.
+**The proof, with real agents.** One request, typed on the phone into the cafe-team project, started **12 Claude Haiku 5.5 agents**, each on its own fork, with 3 reviewer agents. **12 of 12 changes landed in 6 min 43 s.** **7 collided** with work that had landed first:
+- **6 were replayed by rules** on shared files (routes, the menu data, CSS);
+- **1 was a real conflict** (two edits to the same line), re-done by an AI on the newest code **in 19 s**: [the change and its record](https://qodebase.app/p/eyal/cafe-team/work#/change/eyal.cafe-team--xkvo4).
 
-qodebase is the platform built on those findings, used from a phone:
+Main ended with 13 commits, 12 git notes and green tests. Real spend was $0.16 of container time; the agents ran on a Claude subscription, about $0.53 at API prices.¹
 
-- **Every agent gets its own fork**, so agents never share a working tree.
-- **Every change carries a record**: its intent, the diff, the reviewer agent's verdict
-  and the tests. The record is kept with the code as git notes, so the why survives.
-- **A merge queue lands changes in trains**, tested together; a failing change bounces
-  alone and main never breaks.
-- **Land by intent**: when a change collides with what landed since, the queue re-applies
-  the reviewed intent on the newest code (deterministic handlers for shared files today;
-  an agent replay behind a per-project switch), tests it, and lands it, instead of
-  sending the work back. What replay cannot do goes to the area's lead agent, then to you.
-- **Claims and stacking**: agents declare the files they will touch, so everyone sees who
-  works where, and a change can build on one that has not landed yet.
+**Why we built it this way: we measured first.**
+- **Hono, real PRs, no model calls:** we replayed Hono's last 346 PRs as if 100 had been written at once. 48% needed another PR to land first, and git reported no conflicts at all. The problem is order, not conflicts.
+- **Simulation, scripted edits:** on a generated 403-file project with real git and tests, landing by intent got **3.5×** as many changes in per hour as review-then-merge.
+- **Simulated migration of Hono's code:** agents grabbing tasks in any order wasted 90 agent-hours. Knowing the order finished in less than half the time **at 10 agents**.
+- **500 agents on Cloudflare:** each was a Durable Object with its own Artifacts fork. They made 7,033 git pushes, 280 ms median. Git held up; our single merge queue was the limit. It reset three times, and a bug of ours caused 88 stale-ref rejections, since fixed.
 
-It works with real AI agents too: on eyal/cafe-real one request to the router started two
-Claude Haiku 5.5 agents with declared files; both changes were reviewed, tested together in
-one train and landed in 5.5 minutes, right the first time, their records attached as git
-notes (`git log --notes=qodebase`).
+**Which team shape works?** We gave the same job to one Opus agent and to an Opus planner with a crew of Haiku agents, through qodebase's queue (https://qodebase.app/lab). On the two jobs where the runs are comparable, one Opus agent was faster:
+- **bakery site:** 509 s vs 987 s; Opus passed 1 more of 26 hidden tests;
+- **club site:** 728 s vs 1,184 s; both passed all 42 hidden tests.
 
-We also measured which team shape works best (qodebase.app/lab, every run in
-`public/lab/runs.jsonl`): the same job given to one Opus agent and to an Opus planner with a
-crew of Haiku agents, through qodebase's queue. Across four jobs one Opus agent was faster and
-the crew cost about half, with quality the same or within one hidden test (though on the TypeScript port the crew's code
-also failed the strict type check): on the bakery site Opus took 509 s
-vs 987 s (1.9x) and passed 1 more of 26 hidden tests, and the crew cost 57% less; on the club
-site, a 15-minute job, 728 s vs 1,184 s (1.6x), 42/42 hidden tests for both, the crew 48% less
-(API-equivalent prices; runs stalled by the platform are left out of times). The crew is
-limited by how fast changes land (one per ~60-100 s), not by how many agents work: the
-simulator, fitted to these runs within ~5%, predicts it stays slower even on a job four times
-wider. Haiku planners under-plan (1 and 3 of 7 hidden tests on the café), and a GitHub-style
-flow (pull requests merged one at a time) timed out.
+The crew cost 57% and 48% less at standard API prices. At the >100k-token-prompt price the crew costs more than Opus. Times leave out runs stalled by the platform; with the stalled bakery run, Opus was 2.3× faster. A crew is limited by how fast changes land, not by how many agents work. Haiku planners under-planned.
 
-And we studied a very busy open-source repo, OpenClaw (30 days of public data,
-`docs/openclaw/FINDINGS.md`): with no merge queue, their flow is the cheapest and fastest at
-their pace; a queue running each train's scoped tests would cost ~1.6x their landing CI, and
-for ~78% of full-suite breaks a change in the failing test's area landed that hour. A Haiku
-triage agent that reads the repo and the issue index was right on 61% of 200 issues vs 50% for
-text-only (p = 0.004), finding 66% of duplicates vs 14%; adding the project's own policy files
-to the prompt did not help.
+**Agent board.** Agents state their task, edits are posted by a hook, and one duplicate check runs before work starts. With 20 Haiku agents it cut wall time 24% and cost 16% on synthetic task lists with duplicates we planted; with two teams on one repo inside qodebase, wall time fell 40% and duplicates built twice fell from 3-4 to 0-1 ([docs/board](https://github.com/eyalev/qodebase/tree/main/docs/board)).
 
-Agents also share a live board (who works on what), kept in each project's Landing Durable
-Object: they state their task, a hook posts their edits and commits, finished work counts only
-once it is on main, and one duplicate check marks twin tasks before work starts. We tested that
-bundle (board + upfront duplicate check) with real Claude agents on synthetic lists of short tasks
-with duplicates we planted. On a laptop, pushing straight to main with plain git (3 runs each,
-medians): 20 Haiku agents on 60 tasks finished 24% faster (594 to 451 s) at 16% lower
-API-equivalent cost on the subscription, building a median 0 (0-1) of 10 duplicate pairs twice
-instead of 9; 8 Sonnet agents on 16 bigger tasks were 31% faster at 27% lower cost. Most of the
-saving is agents no longer building a task someone else is already building (~85% of the
-agent-minutes saved); merge conflicts did not fall. 3 vs 3 runs can't be significant alone, but
-the same direction with no overlap appeared in four separate setups (combined p ~ 0.02, Fisher);
-hidden tests sit at the ceiling, so no quality difference was detected. Inside qodebase on
-Cloudflare (6 Haiku agents in real boxes), two teams on one repo with one duplicate check across
-both lists finished 40% faster (775 to 465 s) at 22% lower cost and built 0-1 of 5 duplicate pairs
-twice instead of 3-4; on one shared list under land by intent it was 46% faster but the runs
-overlap; under qodebase's plain-git policy it made no difference. The pre-registered simulation
-predicted no time gain under land by intent. The first version failed (it counted unpushed work
-as finished, and 3-4 tasks per run were skipped); finished-means-on-main, no waiting and a longer
-turn cap fixed it. Not tested yet: a no-board baseline with a simple split rule. The closest
-real-agent study, CooperBench (arXiv 2601.13295, ICLR 2026), found coding agents ~30% less
-successful when cooperating; we found no published A/B with real coding agents that reports wall
-time and cost for such a board (`docs/board/`).
+**OpenClaw.** In 30 days of OpenClaw's public data, their no-queue flow was the cheapest at their pace. A queue running each train's own scoped tests would cost ~1.6× their landing CI ([findings](https://github.com/eyalev/qodebase/blob/main/docs/openclaw/FINDINGS.md)).
 
-So this is not GitHub with agents on top: the unit is an intent with its record, and
-landing is automatic. A person steers (by typing or talking to the project, from the
-phone) and is asked only when something needs them.
+So this is not GitHub with agents on top: the unit is an intent with its record, and landing is automatic. A person steers from the phone and is asked only when something needs them.
+
+¹ An earlier, smaller run: [cafe-real](https://qodebase.app/p/eyal/cafe-real), 2 Haiku agents, no collisions.
 
 ## How we used Cloudflare
 
-Everything runs on Cloudflare; there is no other server.
+All our code runs on Cloudflare, with no servers of our own. The agents' model is Claude, served by Anthropic.
 
-| Cloudflare product | What it does in qodebase |
+| | |
 |---|---|
-| **Workers** | The whole site and API in one Worker; every project's live app on its own host, served straight from Artifacts at any commit or fork; Worker projects deployed with a preview per agent fork; a front Worker for the domain. |
-| **Durable Objects** (SQLite) | One per project (repo, agents, reviews, code search with FTS5), one Landing object per project (change records, claims, the merge queue as alarm-driven trains), one per agent box, scripted demo agents, Talk's voice sessions. |
-| **Artifacts** | Git for every project and one fork per agent, with a write token scoped to that fork; change records as git notes; import from GitHub. Our 500-agent run pushed to 500 forks at once. |
-| **Containers** | Agent boxes running Claude Code (snapshots, `durable_object` scheduling, idle stop) and the merger box that applies changes to the newest main, runs the tests and pushes trains. |
-| **Workers AI** + **AI Gateway** | Talk: speech to text (Whisper, Nova-3, Flux), spoken replies (Aura), a fast model that acts on the page; the video's narration (Aura-2). |
-| **Access**, **OAuth** | Sign-in; "Sign in with Cloudflare" to install your own copy of qodebase (or an agent) into your own account in a few minutes. |
-| **R2**, **Workers Logs**, **Issues** | Kept voice clips (7 days); observability; production errors of a project's app are sent to its router agent, which opens an agent to fix them. |
+| **Workers** | the site and API; every project's live app on its own address, served from Artifacts at any commit or fork |
+| **Durable Objects** | each project; its Landing object (change records, claims, the board, the merge queue as alarm-driven trains); every agent box; the scripted demo agents |
+| **Artifacts** | git: a repo per project, a fork per agent with a write token scoped to it, change records as git notes |
+| **Containers** | agent boxes running Claude Code; the merger box that replays changes on the newest main, runs the tests and pushes trains |
+| **Workers AI + AI Gateway** | speaking to the app, and the video's narration |
+| **Access, OAuth** | sign-in, and "Sign in with Cloudflare" |
 
 ## Instructions to run
 
-**Use it:** open https://qodebase.app on a phone. Explore projects, open one, read code,
-fork. Signing in uses an emailed code; running agents needs your own Anthropic API key
-or Claude subscription token (Settings).
+**Watch the landing system (no sign-in).** Open https://qodebase.app/p/eyal/corner-cafe on a phone or desktop and tap **Watch a run**. Six scripted agents (no AI) work on a small café website, with real commits on their own Artifacts forks. The changes go through the real merge queue and real tests.
+- **What's staged:** reviews are approved automatically, and the tasks are ordered so the story happens. You'll see shared-file collisions replayed, one change failing a test and coming back fixed, a conflict redone by a scripted lead, and one change stacked on another.
+- **Limits:** a run takes a few minutes, at 3 runs per visitor IP and 40 a day. When none can start, the page replays the last run.
+- **Reading it:** tap any agent, change or file to see why it happened.
 
-**Watch the landing system (no sign-in):** open https://qodebase.app/p/eyal/corner-cafe on a
-phone or desktop. On Agents at work, tap **Watch a run**: 6 scripted agents (no AI, labelled
-as such) work on a small café website, with real git commits on their own Artifacts forks.
-Their changes go through the real merge queue: shared-file collisions are replayed on the
-latest code, one change fails a test and is sent back, fixed and lands, two conflicting
-edits are redone by a scripted lead, and one change is stacked on another. A run takes
-about 4 minutes. If one is already running you watch it; limits: 40 runs a day, 3 per
-visitor; when none can start, the page replays the last run. Tap any agent, change or file
-to see why; underlined words open a one-line explanation. `?mock=1` plays sample data.
+**Real agents.** Open https://qodebase.app/p/eyal/cafe-team, Agents at work. These are the records of the 12-agent run.
 
-**Real agents:** https://qodebase.app/p/eyal/cafe-real, Agents at work: the records of the
-two Claude Haiku 5.5 agents (starting runs there is owner-only).
+**Use it.** Open https://qodebase.app and sign in with an emailed code. Running agents needs your own Anthropic API key or Claude subscription token. From a terminal: `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login` and `qb help`.
 
-**Command line:** `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login`
-and `qb help`. Agents can read https://qodebase.app/llms.txt.
-
-**Your own copy:** https://qodebase.app/own installs qodebase into your Cloudflare account
-(Workers Paid, Artifacts beta). Manual setup: `SELF_HOST.md` in the repo.
-
-**Reproduce the measurements (no model calls):**
+**Reproduce the measurements** (no model calls; details in `sim/README.md`):
 ```sh
-node sim/cli.mjs --preset k100 --hours 2            # fast sim, 100,000 agents
-node sim/real/run.mjs --all --agents 500 --hours 2  # real code, real git, 500 agents
-node sim/hono/replay.mjs --prs 500 --waves 1,10,50,100   # needs a clone of honojs/hono
-node sim/bun/analyze.mjs                            # needs a fetch of oven-sh/bun#30412
-node --test sim/engine.test.mjs
+node sim/real/run.mjs --all --agents 500 --hours 2         # simulation: real git, scripted edits
+node sim/hono/replay.mjs --prs 500 --waves 1,10,50,100     # needs a clone of honojs/hono
 ```
-The Cloudflare run: `sim/cloud/README.md`. Charts: `docs/contest/evidence/`.

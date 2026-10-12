@@ -4,17 +4,17 @@
 
 (Formerly forq: the code still uses that name inside — the Worker, the `forq` CLI in agent boxes, cookies, headers.)
 
-**Watch it work, no sign-in:** open **https://qodebase.app/p/eyal/corner-cafe** and tap **Watch a run**. Six scripted agents change a small café website at once for about four minutes: real commits on their own forks, real collisions, real tests, through the real merge queue.
+**Watch it work, no sign-in:** open **https://qodebase.app/p/eyal/corner-cafe** and tap **Watch a run**. Six scripted agents (no AI) change a small café website at once for a few minutes: real commits on their own forks, real collisions, real tests, through the real merge queue. It is staged: reviews are approved automatically and the tasks are ordered so the story happens. The run with real AI agents is below.
 
 <img src="docs/img/readme-phones.jpg" width="720" alt="On the phone: 20 agents changing one project and the line of changes being tested; a change record where an AI re-did a collided change on the newest code in 19 seconds; Talk confirming one request for twelve features before it goes to the agents">
 
 ## With real AI agents
 
-One request, typed into Talk on the phone (eyal/cafe-team, 2026-10-08):
+One request, typed on the phone ([eyal/cafe-team](https://qodebase.app/p/eyal/cafe-team), 2026-10-08):
 
 - **12 real Claude Haiku 5.5 agents**, each on its own fork, plus 3 reviewer agents
 - **12 of 12 changes landed in 6 min 43 s**, each reviewed once, none bounced
-- **7 collisions**: 6 replayed by rules on shared files, 1 real conflict (two edits to the same line) re-done by an AI on the newest code in 19 s
+- **7 collisions**: 6 replayed by rules on shared files, 1 real conflict (two edits to the same line) re-done by an AI on the newest code in 19 s ([the change and its record](https://qodebase.app/p/eyal/cafe-team/work#/change/eyal.cafe-team--xkvo4))
 - main: 13 commits, 12 git notes with the full record of each change, tests green
 - real spend: **$0.16** of container time (the agents ran on a Claude subscription; API-equivalent ~$0.53)
 
@@ -38,9 +38,9 @@ No model calls in any of these; every number has its script.
 | | finding |
 |---|---|
 | Hono's last 346 PRs, replayed as 100 at once | 48% needed another PR to land first; **0 git conflicts**. The problem is order. |
-| A real migration of Hono's code, many agents | grabbing tasks in any order wasted **90 agent-hours**; knowing the order finished in less than half the time; stacking + land by intent wasted nothing |
-| Real code (403 files), 500 scripted agents, real git + tests | land by intent landed **3.5×** as many changes per hour as review-then-merge |
-| 500 agents on Cloudflare (Durable Objects + Artifacts) | 7,033 pushes from 500 forks at once, 280 ms median; one merge queue was the limit |
+| A migration of Hono's code, many agents (simulation) | grabbing tasks in any order wasted **90 agent-hours**; knowing the order finished in less than half the time at 10 agents; stacking + land by intent wasted nothing |
+| Real code (403 files), 500 scripted agents, real git + tests (simulation, scripted edits) | land by intent landed **3.5×** as many changes per hour as review-then-merge |
+| 500 agents on Cloudflare (Durable Objects + Artifacts) | 7,033 pushes from 500 forks at once, 280 ms median; one merge queue was the limit (it reset three times, and a bug of ours caused 88 stale-ref rejections, since fixed) |
 
 Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`](docs/contest/evidence/), and the simulations to play with at https://qodebase.app/sim.
 
@@ -94,7 +94,7 @@ Real Claude agents on synthetic task lists of short tasks, with duplicates we pl
 - **The first version failed.** It counted committed-but-unpushed work as finished, so at 20 agents 3–4 tasks per run were skipped by everyone: 56/60 hidden tests, 1.7× slower. Three changes fixed it: *finished* means landed on main, no waiting (an agent that waits picks another task instead), and a turn cap of 60 instead of 40. The earliest claim now keeps a task.
 - A cost: with the board, 20 Haiku agents left more red commits on main (median 3 vs 0 per run). These were hand-merged pushes made without running the tests; a later commit repaired each, and every final main was green. Inside qodebase this cannot reach main: the landing queue tests a change before it lands.
 - Team size is a dial, not a speed-up: congestion control (like TCP, it settled at 3–4 agents) took 2.1× longer and cost 54% less.
-- Not tested yet: a no-board baseline with a simple split rule (agent k takes every Nth task); it runs after the Oct 12 reset.
+- Not tested yet: a no-board baseline with a simple split rule (agent k takes every Nth task).
 - Most parts exist elsewhere (MCP Agent Mail's leases, Beads' AI dedupe, Overstory's LLM merge tier, Claim Plane and Foremerge intents). The closest real-agent study, CooperBench (arXiv 2601.13295, ICLR 2026), found coding agents ~30% less successful when cooperating. We found no published A/B with real coding agents that reports wall time and cost for such a board, and no match for this combination ([`docs/board/prior-art.md`](docs/board/prior-art.md)).
 
 **Inside qodebase, on Cloudflare** (6 Haiku agents in real boxes, the landing queue, without vs with the board + duplicate check, 3 runs per cell, medians; one run alone can't be significant, see above):
@@ -118,17 +118,17 @@ Details: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md), [`docs/board/E6-r
 
 | job | one Opus agent | Opus planner + Haiku crew |
 |---|---|---|
-| café site, small | 58 s, 6/7 hidden tests, $0.39 | 1,431 s, 6/7 |
-| TypeScript port | 228 s, 158/158, $2.02 | 830 s, 157/158 and a failing strict type check, $0.85 |
 | bakery site (median of 3 runs) | 509 s, 26/26, $4.08 | 987 s, 25/26, $1.75 |
 | club site, a 15-minute job (median) | 728 s, 42/42, $5.71 | 1,184 s, 42/42, $2.96 |
 
-- **Across the jobs, one Opus agent was faster and the crew cost about half; quality was the same or within one hidden test, though the port crew's code also failed the strict type check.** Opus was 1.9× faster on the bakery and 1.6× on the club; the crew cost 57% and 48% less. Both passed every club test; on the bakery Opus passed 1 more.
+- **On the two comparable jobs, one Opus agent was faster and the crew cost about half.** Opus was 1.9× faster on the bakery and 1.6× on the club; the crew cost 57% and 48% less at standard API prices. At the >100k-token-prompt price the crew costs more than Opus. Both passed every club test; on the bakery Opus passed 1 more.
+- Times leave out runs stalled by the platform; with the stalled bakery run counted, Opus was 2.3× faster.
+- The café and the TypeScript port were also run, but their runs are not comparable (the lab page says why); the port crew's $0.85 is a lower bound.
 - **The crew is limited by how fast changes land** (one per ~60–100 s), not by how many agents work. The simulator, fitted to these runs within ~5%, predicts it stays slower even on a job four times wider; faster landing (shorter waits, bigger trains, more reviewers) is what would change that.
 - Haiku as the planner under-plans: 1 and 3 of 7 hidden tests on the café.
 - GitHub-style (pull requests merged one at a time) timed out after an hour with 3 of 6 tasks landed.
 
-Hidden tests are never in the agents' repo (for the port, 125 of the 158 are the upstream library's own public tests); the 0–100 scores, which add build checks and an AI judge, are in each run ([`docs/lab/scoring.md`](docs/lab/scoring.md)). Times leave out runs stalled by the platform (one bakery and one club crew run); quality and cost use every run. Costs are API-equivalent (the runs used a Claude subscription); the café crew's cost is an upper bound and not shown. Every run: [`public/lab/runs.jsonl`](public/lab/runs.jsonl); plan: [`docs/lab/`](docs/lab/).
+Hidden tests are never in the agents' repo; the 0–100 scores, which add build checks and an AI judge, are in each run ([`docs/lab/scoring.md`](docs/lab/scoring.md)). Times leave out runs stalled by the platform (one bakery and one club crew run); quality and cost use every run. Costs are API-equivalent at standard rates (the runs used a Claude subscription). Every run: [`public/lab/runs.jsonl`](public/lab/runs.jsonl); plan: [`docs/lab/`](docs/lab/).
 
 **OpenClaw, a very busy open-source repo** (30 days of public data; [`docs/openclaw/FINDINGS.md`](docs/openclaw/FINDINGS.md)):
 
