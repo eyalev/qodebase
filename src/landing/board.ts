@@ -176,3 +176,30 @@ export function pickNext(items: { id: string; text: string }[], o: { me: string;
   }
   return null;
 }
+
+// ---- W9c: a new task checked against work already under way or just landed (qb9's E7: 88/90 twins, 0 false) ----
+export type TwinCandidate = { change: string; title: string; state: string };
+
+/** The one-call pass for one NEW task against the candidates (open changes, landed in the last 30 min). */
+export function twinPrompt(cands: TwinCandidate[], task: string) {
+  const items = [...cands.map((c, i) => ({ id: `C${i + 1}`, text: c.title })), { id: 'NEW', text: clip(task, 300) }];
+  return { items, prompt: dedupePrompt(items) };
+}
+
+/** The candidate the NEW task is the same work as, or null (pairs not involving NEW are ignored). */
+export function parseTwin(answer: string, cands: TwinCandidate[]): TwinCandidate | null {
+  const ids = [...cands.map((_, i) => `C${i + 1}`), 'NEW'];
+  for (const [a, b] of parseDedupe(answer, ids)) {
+    const other = a === 'NEW' ? b : b === 'NEW' ? a : null;
+    if (other) return cands[Number(other.slice(1)) - 1] || null;
+  }
+  return null;
+}
+
+/** A twin is not closed (its own name is still expected, E7): it is handed out as a thin alias of the original. */
+export function aliasTask(task: string, twin: TwinCandidate) {
+  const where = twin.state === 'landed' ? 'already on main' : 'being built by another agent right now';
+  return `${task}\n\nNote from qodebase: this asks for the same thing as "${twin.title}" (change ${twin.change}, ${where}). Do not build it again. `
+    + `Make the smallest change that offers it under the name THIS task asks for: a thin alias of the existing work (one line where possible, `
+    + `waiting for it to land first if it has not: run forq sync-main to get it), plus a test that the name this task uses works. Then push and report as usual.`;
+}

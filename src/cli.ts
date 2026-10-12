@@ -120,6 +120,18 @@ def board_hook():
         try_api('POST', '/api/agent/board', {'kind': 'committed', 'status': g('log', '-1', '--format=%s')[:80],
             'files': [x for x in g('diff-tree', '--root', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n') if x][:20]})
 
+def haiku(prompt):
+    """One Haiku call (the dedupe and twin passes): no settings, so this box's own hooks do not fire inside it; no
+    tools; one turn. Returns (answer text, usage dict for the ledger, is_error, exit code)."""
+    model = 'claude-haiku-5-5'
+    c = subprocess.run(['claude', '-p', '--model', model, '--output-format', 'json', '--max-turns', '1', '--tools', '', '--setting-sources', '',
+        '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.'], input=prompt, text=True, capture_output=True, timeout=300,
+        env=dedupe_env())   # run from inside an agent's own Claude Code: its session variables must not reach the nested call
+    try: j = json.loads(c.stdout)
+    except Exception: return None, None, True, c.returncode
+    u = j.get('usage') or {}
+    return (j.get('result') or ''), {'model': model, 'in': u.get('input_tokens', 0), 'out': u.get('output_tokens', 0), 'cr': u.get('cache_read_input_tokens', 0), 'cw': u.get('cache_creation_input_tokens', 0)}, bool(j.get('is_error')), c.returncode
+
 def dedupe_env():
     """The nested claude -p's env. Claude Code keeps credentials out of its Bash tool's env (the pass
     failed with api_error and 0 tokens from inside an agent, 2026-10-10), so take them from tmux, where
@@ -177,7 +189,18 @@ def main(argv):
             elif w == '--on': on = next(it, None)
             else: words.append(w)
         if not words: sys.exit('usage: forq spawn "task" [--files a,b] [--on <agent-id>]')
-        body = {'task': ' '.join(words)}
+        task = ' '.join(words)
+        # W9c: on a board project, one quick pass checks the new task against work under way or just landed. A twin is
+        # not dropped: it goes out as "a thin alias of <the original> under this task's name" (its name is still wanted).
+        tw = try_api('POST', '/api/agent/twin', {'stage': 'prompt', 'task': task}, timeout=10)
+        if tw and tw.get('items') and len(tw['items']) > 1:
+            ans, usage, err, code = haiku(tw['prompt'])
+            if ans is not None:
+                t = try_api('POST', '/api/agent/twin', {'stage': 'answer', 'task': task, 'answer': ans, 'usage': usage}, timeout=10)
+                if t and t.get('twin'):
+                    task = t['task']
+                    print(f"same work as {t['twin']['change']} (\"{t['twin']['title'][:60]}\"): handed out as a thin alias of it")
+        body = {'task': task}
         if files: body['files'] = files
         if on: body['on'] = on
         a = api('POST', '/api/agent/spawn', body); print(f"started {a['id']}" + (f" (stacked on {on})" if on else ''))
@@ -307,18 +330,10 @@ def main(argv):
         text = open(p).read() if p and os.path.isfile(p) else '\n'.join('- ' + w for w in rest)
         f = api('POST', '/api/agent/dedupe', {'stage': 'prompt', 'text': text})
         if len(f.get('items') or []) < 2: print('fewer than two tasks: nothing to compare'); return
-        model = 'claude-haiku-5-5'
-        # No settings (so this box's own hooks do not fire inside the pass), no tools, one turn.
-        c = subprocess.run(['claude', '-p', '--model', model, '--output-format', 'json', '--max-turns', '1', '--tools', '', '--setting-sources', '',
-            '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.'], input=f['prompt'], text=True, capture_output=True, timeout=300,
-            # Run from inside an agent's own Claude Code: its session variables must not reach the nested call.
-            env=dedupe_env())
-        try: j = json.loads(c.stdout)
-        except Exception: sys.exit(f'forq: the dedupe pass gave no answer: {(c.stderr or c.stdout)[-300:]}')
-        if j.get('is_error') or '{' not in str(j.get('result') or ''): print(f"forq: the dedupe pass answered oddly: {str(j.get('result'))[:300]}", file=sys.stderr)
-        u = j.get('usage') or {}
-        r = api('POST', '/api/agent/dedupe', {'stage': 'answer', 'ids': [i['id'] for i in f['items']], 'answer': j.get('result') or '', 'isError': bool(j.get('is_error')), 'exit': c.returncode,
-            'usage': {'model': model, 'in': u.get('input_tokens', 0), 'out': u.get('output_tokens', 0), 'cr': u.get('cache_read_input_tokens', 0), 'cw': u.get('cache_creation_input_tokens', 0)}})
+        ans, usage, err, code = haiku(f['prompt'])
+        if ans is None: sys.exit('forq: the dedupe pass gave no answer')
+        if err or '{' not in ans: print(f"forq: the dedupe pass answered oddly: {ans[:300]}", file=sys.stderr)
+        r = api('POST', '/api/agent/dedupe', {'stage': 'answer', 'ids': [i['id'] for i in f['items']], 'answer': ans, 'isError': err, 'exit': code, 'usage': usage})
         pairs = r.get('pairs') or []
         print(f"{len(f['items'])} tasks, {len(pairs)} pair(s) of the same work" + (':' if pairs else ''))
         for a, b in pairs: print(f'  {a} = {b}  (build it once; the other is a thin alias)')

@@ -24,7 +24,7 @@ import { pushSeed } from './demo';
 import { SEED } from './demoproject';
 import { pushAlert } from '../alert';
 import { apiUsdOf, type BuildEstimate } from '../buildsettings';
-import { makeBoardEvent, boardView, boardText, taskIds, knownTaskIds, claimHolders, pickNext, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
+import { makeBoardEvent, boardView, boardText, taskIds, knownTaskIds, claimHolders, pickNext, type TwinCandidate, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
   | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap';
@@ -290,6 +290,15 @@ export class Landing extends DurableObject<Env> {
     await this.#saveMeta();
     return e;
   }
+  /** W9c: work a new task may repeat: open agent changes and those landed in the last 30 min (newest first). */
+  async twinCandidates(): Promise<{ on: boolean; cands: TwinCandidate[] }> {
+    const m = await this.#m();
+    if (!m.flags.board) return { on: false, cands: [] };
+    const now = Date.now();
+    const cs = (await this.#all()).filter((c) => c.kind === 'agent' && (c.state !== 'landed' || now - (c.landedAt || 0) < 30 * 60_000));
+    return { on: true, cands: cs.slice(-40).reverse().map((c) => ({ change: c.id, title: (m.boardIntent?.[boardName(c.id)] || c.title).slice(0, 200), state: c.state })) };
+  }
+
   /** `forq intent "<what I am doing>" [--files a,b]`: the agent's own words (a self-picked backlog item);
    *  the files become claims on its change (overlap warnings as at spawn). */
   async stateIntent(changeId: string, intent: string, files: string[]) {

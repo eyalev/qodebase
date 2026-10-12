@@ -137,3 +137,19 @@ test('forq next: first free task in list order; skips done, live claims and alia
   assert.equal(pickNext(items, { ...base, me: 'c', claims, live: new Set(['b']) }).id, 'T2', 'a dead holder frees its task');
   assert.equal(pickNext(items, { ...base, me: 'c', claims, done: new Set(['T1', 'T2', 'T3', 'T5']) }), null);
 });
+
+test('W9c twins: one pass per new task against open/landed work; a twin becomes an alias task, never closed', async () => {
+  const { twinPrompt, parseTwin, aliasTask } = await import('./board.ts');
+  const cands = [{ change: 'eyal.app--a1', title: 'titleCase(s) in src/text.js', state: 'landed' }, { change: 'eyal.app--a2', title: 'Due dates', state: 'pushed' }];
+  const { items, prompt } = twinPrompt(cands, 'capitalizeWords: upper-case the first letter of every word');
+  assert.deepEqual(items.map((i) => i.id), ['C1', 'C2', 'NEW']);
+  assert.match(prompt, /NEW: capitalizeWords/);
+  assert.equal(parseTwin('{"same":[["NEW","C1"]]}', cands).change, 'eyal.app--a1');
+  assert.equal(parseTwin('{"same":[["C2","NEW"]]}', cands).change, 'eyal.app--a2');
+  assert.equal(parseTwin('{"same":[["C1","C2"]]}', cands), null, 'a pair without NEW is not about this task');
+  assert.equal(parseTwin('{"same":[]}', cands), null);
+  assert.equal(parseTwin('garbage', cands), null);
+  const t = aliasTask('capitalizeWords: …', cands[0]);
+  assert.match(t, /same thing as "titleCase\(s\) in src\/text\.js" \(change eyal\.app--a1, already on main\)[\s\S]*thin alias[\s\S]*test that the name this task uses works/);
+  assert.match(aliasTask('x', cands[1]), /being built by another agent right now[\s\S]*forq sync-main/);
+});

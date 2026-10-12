@@ -49,7 +49,7 @@ import { landingRoute } from './landing/routes';
 import * as landingHooks from './landing/hooks';
 import { landingOn } from './landing/hooks';
 import { boardName } from './landing/landing';
-import { backlogItems, dedupePrompt, parseDedupe, fmtBoardRow, boardText } from './landing/board';
+import { backlogItems, dedupePrompt, parseDedupe, fmtBoardRow, boardText, twinPrompt, parseTwin, aliasTask, type TwinCandidate } from './landing/board';
 export { Landing } from './landing/landing';
 export { MergeBox } from './landing/merger';
 export { DemoAgent } from './landing/demo';
@@ -1265,6 +1265,21 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     if (!isAttachId(id) || !env.ATTACH) return json({ error: 'no such attachment' }, 404);
     const o = await env.ATTACH.get(attachKey(slug, id));
     return o ? new Response(o.body, { headers: { 'content-type': o.httpMetadata?.contentType || 'application/octet-stream' } }) : json({ error: 'no such attachment' }, 404);
+  }
+  // W9c: the router's new task checked against work under way / just landed (src/landing/board.ts twinPrompt).
+  if (verb === 'twin' && request.method === 'POST') {
+    if (me.role !== 'router') return json({ error: 'the router checks its new tasks' }, 403);
+    const b = body as Record<string, unknown>;
+    const { on, cands } = await env.Landing.get(env.Landing.idFromName(slug)).twinCandidates().catch(() => ({ on: false, cands: [] as TwinCandidate[] }));
+    const task = String(b.task || '').slice(0, 4000);
+    if (!on || !cands.length || !task) return json({ on, items: [] });
+    if (b.stage === 'prompt') return json({ on, ...twinPrompt(cands, task) });
+    const twin = parseTwin(String(b.answer || ''), cands);
+    const u = b.usage as { in?: number; out?: number; cr?: number; cw?: number; model?: string } | undefined;
+    if (u) ctx.waitUntil(recordCost(env, slug.split('.')[0], 'claude', `${slug.replace('.', '/')}:${u.model || 'claude-haiku-5-5'}`, { usd: null, covered: false, billing: 'sub',
+      tokens: { in: Number(u.in) || 0, out: Number(u.out) || 0, cw: Number(u.cw) || 0, cr: Number(u.cr) || 0 } }).catch(() => {}));
+    log('board', 'twin', { slug, twin: twin?.change || null, candidates: cands.length });
+    return json({ twin, task: twin ? aliasTask(task, twin) : task });
   }
   if (['board', 'who', 'intent', 'dedupe', 'tasks', 'next'].includes(verb)) {
     const info = await p.info();

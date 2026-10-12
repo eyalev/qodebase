@@ -27,8 +27,8 @@ async function setup(answer) {
   writeFileSync(join(run, 'agent-token'), 'eyal.lab--a1.sig');
   const cli = join(root, 'forq'); writeFileSync(cli, FORQ_CLI);
   execFileSync('git', [...ID, 'init', '-q'], { cwd: repo });
-  const forq = (args, stdin) => new Promise((res) => {
-    const p = spawn('python3', [cli, ...args], { env: { ...process.env, FORQ_RUN: run, FORQ_REPO: repo } });
+  const forq = (args, stdin, env = {}) => new Promise((res) => {
+    const p = spawn('python3', [cli, ...args], { env: { ...process.env, FORQ_RUN: run, FORQ_REPO: repo, ...env } });
     let out = '', err = ''; p.stdout.on('data', (d) => (out += d)); p.stderr.on('data', (d) => (err += d));
     p.on('close', (code) => res({ code, out, err })); p.stdin.end(stdin ? JSON.stringify(stdin) : '');
   });
@@ -178,5 +178,30 @@ test('forq next and forq tasks', async () => {
     const tk = await t.forq(['tasks', 'BACKLOG.md']);
     assert.match(tk.out, /registered 30 task ids/);
     assert.equal(t.calls.at(-1).body.text, '- T1 a\n');
+  } finally { t.close(); }
+});
+
+test('forq spawn: a twin of running/landed work goes out as an alias task (W9c); no twin, no check, or the board off: the task as typed', async () => {
+  let twinOn = true;
+  const t = await setup((c) => {
+    if (c.url === '/api/agent/twin') return !twinOn ? { on: false, items: [] }
+      : c.body.stage === 'prompt' ? { on: true, items: [{ id: 'C1', text: 'titleCase' }, { id: 'NEW', text: 'x' }], prompt: 'P' }
+      : { twin: { change: 'eyal.lab--a1', title: 'titleCase' }, task: 'ALIAS TASK' };
+    if (c.url === '/api/agent/spawn') return { id: 'eyal.lab--b2' };
+    return {};
+  });
+  try {
+    const bin = join(t.root, 'bin'); mkdirSync(bin);
+    writeFileSync(join(bin, 'claude'), '#!/bin/sh\ncat >/dev/null\necho \'{"result":"{\\"same\\":[[\\"NEW\\",\\"C1\\"]]}","usage":{"input_tokens":5,"output_tokens":3}}\'\n', { mode: 0o755 });
+    const PATH = `${bin}:${process.env.PATH}`;
+    const r = await t.forq(['spawn', 'capitalizeWords'], null, { PATH });
+    assert.equal(r.code, 0, r.err);
+    assert.match(r.out, /same work as eyal\.lab--a1[\s\S]*started eyal\.lab--b2/);
+    const spawnCall = t.calls.find((c) => c.url === '/api/agent/spawn');
+    assert.equal(spawnCall.body.task, 'ALIAS TASK');
+    assert.equal(t.calls.find((c) => c.body?.stage === 'answer').body.usage.in, 5, 'the pass\'s tokens go to the ledger');
+    twinOn = false;
+    await t.forq(['spawn', 'a new page'], null, { PATH });
+    assert.equal(t.calls.filter((c) => c.url === '/api/agent/spawn').at(-1).body.task, 'a new page');
   } finally { t.close(); }
 });
