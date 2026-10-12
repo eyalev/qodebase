@@ -222,7 +222,7 @@ function probeStep(now, t0) {
   else if ((probe.mode === 'warmup' || probe.mode === 'hold') && now >= probe.until) { if (CAP < N) { probe.capBefore = CAP; probe.rateBefore = rate; CAP = Math.min(N, CAP + PROBE.add); probe.mode = 'probe'; probe.until = now + PROBE.windowS * 1000; why = `probe: +${PROBE.add}`; } else why = 'at max'; }
   else if (probe.mode === 'warmup') why = 'warm-up';
   else if (probe.mode === 'probe' && now >= probe.until) { const need = PROBE.earn * PROBE.add * probe.rateBefore / probe.capBefore;
-    if (rate - probe.rateBefore >= need) { probe.capBefore = CAP; probe.rateBefore = rate; CAP = Math.min(N, CAP + PROBE.add); probe.until = now + PROBE.windowS * 1000; why = `kept (+${(rate - probe.rateBefore).toFixed(2)} >= ${need.toFixed(2)}): +${PROBE.add}`; }
+    if (rate - probe.rateBefore >= need) { why = `kept (+${(rate - probe.rateBefore).toFixed(2)} >= ${need.toFixed(2)}): +${PROBE.add}`; probe.capBefore = CAP; probe.rateBefore = rate; CAP = Math.min(N, CAP + PROBE.add); probe.until = now + PROBE.windowS * 1000; }   // message before the baseline moves (round 3 logged +0.00)
     else { CAP = Math.max(2, probe.capBefore); probe.mode = 'hold'; probe.until = now + PROBE.holdS * 1000; probe.holdRate = rate; why = `added nothing (${(rate - probe.rateBefore).toFixed(2)} < ${need.toFixed(2)}): back to ${CAP}, hold`; } }
   else if (probe.mode === 'hold' && probe.holdRate > 0 && rate < (1 - PROBE.holdDrop) * probe.holdRate) { CAP = Math.max(2, CAP - 1); probe.holdRate = rate; why = 'landings down > 25% while holding: -1'; }
   return { landings_per_min: +rate.toFixed(2), drops_per_min: +drops.toFixed(2), mode: probe.mode, why };

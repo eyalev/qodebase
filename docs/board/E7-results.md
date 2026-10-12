@@ -118,7 +118,13 @@ What it says:
 Against qb4's predictions (probe with board ~1180 s at cap ~12; without board ~1310 s at cap ~10): observed
 1284 s settling at 12–14, and 1711 s settling at 8–10. The caps match; both wall times are slower than predicted, the
 board-less arm by 30%, because qb4's model underweights how much a team of 8–10 without the board loses to rebases
-(224 aborted rebases per run). "Fixed 40 no faster than fixed 20" is tested by the controls below.
+(224 aborted rebases per run). "Fixed 40 no faster than fixed 20" was not tested: see Controls.
+
+**Controls (fixed 8 and 20, planned x2): one run.** A n8 r1 ran (2026-10-12 21:17–21:48 UTC, meter 24% → 25%); the
+queue's hard stop (25 points above the post-reset meter) then refused A n20 r1, and nothing after it ran. A n8 is in
+the table above (n=1): 1862 s, 228 agent-minutes, $4.63, 150/150. One run proves little, but it reads as the
+controller's case: a fixed 8 costs what the controller costs and is about as fast as a fixed 40 (1862 vs 1964 s),
+while the controller without the board, at 8–10, was faster than both (1711 s). Fixed 20 has no run in round 3.
 
 ## W9b: tasks arriving during the run (s7, 10 agents)
 

@@ -1,6 +1,7 @@
 {
  "n": {
   "A n40": 3,
+  "A n8": 1,
   "A probe": 3,
   "E n40": 3,
   "E probe": 3
@@ -12,6 +13,11 @@
     "median": 1964,
     "min": 1875,
     "max": 2141
+   },
+   "A n8": {
+    "median": 1862,
+    "min": 1862,
+    "max": 1862
    },
    "A probe": {
     "median": 1711,
@@ -36,6 +42,11 @@
   "hidden_pass": {
    "label": "hidden tests (of 150)",
    "A n40": {
+    "median": 150,
+    "min": 150,
+    "max": 150
+   },
+   "A n8": {
     "median": 150,
     "min": 150,
     "max": 150
@@ -67,6 +78,11 @@
     "min": 40,
     "max": 40
    },
+   "A n8": {
+    "median": 8,
+    "min": 8,
+    "max": 8
+   },
    "A probe": {
     "median": 10,
     "min": 10,
@@ -93,6 +109,11 @@
     "median": 40,
     "min": 40,
     "max": 40
+   },
+   "A n8": {
+    "median": 8,
+    "min": 8,
+    "max": 8
    },
    "A probe": {
     "median": 10,
@@ -121,6 +142,11 @@
     "min": 923.7,
     "max": 1026.7
    },
+   "A n8": {
+    "median": 228,
+    "min": 228,
+    "max": 228
+   },
    "A probe": {
     "median": 270.3,
     "min": 252.7,
@@ -148,6 +174,11 @@
     "min": 293.7,
     "max": 303.4
    },
+   "A n8": {
+    "median": 29.5,
+    "min": 29.5,
+    "max": 29.5
+   },
    "A probe": {
     "median": 48.7,
     "min": 47.3,
@@ -171,6 +202,11 @@
   "red_commits": {
    "label": "red commits on main",
    "A n40": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "A n8": {
     "median": 0,
     "min": 0,
     "max": 0
@@ -202,6 +238,11 @@
     "min": 113,
     "max": 126
    },
+   "A n8": {
+    "median": 31,
+    "min": 31,
+    "max": 31
+   },
    "A probe": {
     "median": 44,
     "min": 43,
@@ -228,6 +269,11 @@
     "median": 0,
     "min": 0,
     "max": 1
+   },
+   "A n8": {
+    "median": 0,
+    "min": 0,
+    "max": 0
    },
    "A probe": {
     "median": 0,
@@ -256,6 +302,11 @@
     "min": 27,
     "max": 36
    },
+   "A n8": {
+    "median": 4,
+    "min": 4,
+    "max": 4
+   },
    "A probe": {
     "median": 1,
     "min": 1,
@@ -279,6 +330,11 @@
   "dup_pairs_both_separate": {
    "label": "duplicate pairs built twice (of undefined)",
    "A n40": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "A n8": {
     "median": 0,
     "min": 0,
     "max": 0
@@ -310,6 +366,11 @@
     "min": 9,
     "max": 12
    },
+   "A n8": {
+    "median": 6,
+    "min": 6,
+    "max": 6
+   },
    "A probe": {
     "median": 12,
     "min": 10,
@@ -336,6 +397,11 @@
     "median": 1136,
     "min": 1099,
     "max": 1213
+   },
+   "A n8": {
+    "median": 242,
+    "min": 242,
+    "max": 242
    },
    "A probe": {
     "median": 342,
@@ -364,6 +430,11 @@
     "min": 402,
     "max": 504
    },
+   "A n8": {
+    "median": 233,
+    "min": 233,
+    "max": 233
+   },
    "A probe": {
     "median": 224,
     "min": 191,
@@ -390,6 +461,11 @@
     "median": 480,
     "min": 449,
     "max": 529
+   },
+   "A n8": {
+    "median": 259,
+    "min": 259,
+    "max": 259
    },
    "A probe": {
     "median": 253,
@@ -418,6 +494,11 @@
     "min": 685,
     "max": 713
    },
+   "A n8": {
+    "median": 349,
+    "min": 349,
+    "max": 349
+   },
    "A probe": {
     "median": 429,
     "min": 372,
@@ -445,6 +526,11 @@
     "min": 338,
     "max": 367
    },
+   "A n8": {
+    "median": 216,
+    "min": 216,
+    "max": 216
+   },
    "A probe": {
     "median": 261,
     "min": 259,
@@ -471,6 +557,11 @@
     "median": 10.3139,
     "min": 9.8193,
     "max": 10.6374
+   },
+   "A n8": {
+    "median": 4.6278,
+    "min": 4.6278,
+    "max": 4.6278
    },
    "A probe": {
     "median": 5.4087,
