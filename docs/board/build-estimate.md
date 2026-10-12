@@ -38,6 +38,13 @@ predictBuild(SMALL_APP, BUILD_PRESETS.balanced.variant)
   - otherwise "Fewer misses / About like / More misses than Balanced" (the sim, ±2 points).
 
   `notes` adds what the lab saw for the reviewers, planner and board knobs.
+- **Monotonic in reviewers** (2026-10-12): each change is reviewed once, so going from 0 to 1 reviewer adds review
+  time and cost once. After that more reviewers only shorten the wait for a free one: cost and quality never fall,
+  and time never drops below the no-review time but can shrink from 1 to 3 reviewers. `quality` compares a
+  one-coder setup with Fastest (never "better than Fastest") and a team with Balanced. It reads "Not measured in
+  the lab." when no lab run had this coder model with the same review on/off. `qualityGuess` holds the sim's
+  direction anyway. Pass `reviewerModel` explicitly, since the lab default is Sonnet (never measured, ~3x the
+  cost of Haiku reviews).
 - **`BUILD_PRESETS`**: `fastest`, `balanced` and `cheapest`, each `{ label, variant, why }`. Each `why` holds for any job size (checked at 3, 8, 25 and 60 tasks). All three were
   run for real (sameSetup 7, 7, 1).
 - **Recalibrate after new runs:** `node sim/lab/estimate-cal.mjs` rewrites `public/lab/estimate-cal.js`.

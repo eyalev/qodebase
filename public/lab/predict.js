@@ -490,25 +490,64 @@ const sameSetup = (key) => (EST_CAL.rows || []).filter((r) => r.key === key).len
 
 // -> { wallS: [lo, hi], apiUsd: [lo, hi], basedOn, sameSetup, quality, notes, simVersion }
 // basedOn = real lab runs the range rests on; sameSetup = how many of them used exactly this setup.
+// Memo: the Adjust sheet re-asks on every slider move.
+const BUILD_MEMO = new Map();
+function cachedPredict(variant, sc, baseline) {
+  const k = `${baseline || ''}|${variantKey(variant, baseline)}|${sc.tasks}|${sc.pShared}|${sc.difficulty}`;
+  if (!BUILD_MEMO.has(k)) { if (BUILD_MEMO.size > 500) BUILD_MEMO.clear(); BUILD_MEMO.set(k, predict(variant, sc, { seeds: 15, baseline })); }
+  return BUILD_MEMO.get(k);
+}
+// Was this kind of setup run in the lab? One agent alone; or a team with this coder model, with or without review.
+function measured(v) {
+  const rows = EST_CAL.rows || [];
+  if (v.baseline === 'opus-alone') return rows.some((r) => r.key === 'opus-alone');
+  return rows.some((r) => {
+    if (r.key === 'opus-alone') return false;
+    const kv = Object.fromEntries(r.key.split(';').map((x) => x.split('=')));
+    return kv.coderModel === v.coderModel && (+kv.reviewers > 0) === (v.reviewers > 0);
+  });
+}
+
+// -> { wallS: [lo, hi], apiUsd: [lo, hi], basedOn, sameSetup, agentTasks, quality, qualityMeasured, notes, simVersion, job }
+// basedOn = real lab runs the range rests on; sameSetup = how many of them used exactly this setup.
+// Monotonic in reviewers (qb7, 2026-10-12): each change is reviewed once, so reviewers add review time and cost
+// once (0 -> 1) and after that only shorten the wait for a free reviewer. So over the same variant with
+// 0..r reviewers: cost never falls (running max), quality never falls (running max), and time is at least the
+// no-review time, else the best of 1..r (sim noise would otherwise make 2 reviewers cheaper than 1).
 export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced.variant) {
   const sc = jobProfile(job);
   const baseline = variantIn?.baseline ?? null;
-  const p = predict(variantIn, sc, { seeds: 15, baseline });
-  const ref = baseline || variantKey(variantIn) !== variantKey(BUILD_PRESETS.balanced.variant)
-    ? predict(BUILD_PRESETS.balanced.variant, sc, { seeds: 15 }) : p;
-  const w = EST_CAL.wall, c = EST_CAL.cost;
   const v = variantOf(variantIn, baseline);
+  let p = cachedPredict(variantIn, sc, baseline);
+  if (!baseline && v.reviewers > 0) {
+    const at = (r) => cachedPredict({ ...variantIn, reviewers: r }, sc, null);
+    let cost = 0, q = 0, wall = Infinity;
+    for (let r = 0; r <= v.reviewers; r++) { const x = at(r); cost = Math.max(cost, x.apiUsdStd); q = Math.max(q, x.quality); if (r > 0) wall = Math.min(wall, x.wallS); }
+    p = { ...p, apiUsdStd: cost, quality: q, wallS: Math.max(at(0).wallS, wall) };
+  }
+  // Quality is compared with the nearest preset: one coder (alone or with reviewers) against Fastest, a team
+  // against Balanced.
+  const solo = baseline === 'opus-alone' || v.coders === 1;
+  const refName = solo ? 'Fastest' : 'Balanced';
+  const refVariant = solo ? BUILD_PRESETS.fastest.variant : BUILD_PRESETS.balanced.variant;
+  const isRef = variantKey(variantIn, baseline) === variantKey(refVariant, refVariant.baseline ?? null);
+  const ref = isRef ? p : cachedPredict(refVariant, sc, refVariant.baseline ?? null);
+  const w = EST_CAL.wall, c = EST_CAL.cost;
   const notes = [];
   if (baseline === 'opus-alone') notes.push('One agent: no merges, nothing to coordinate.');
   else {
     if (v.reviewers === 0) notes.push('No reviewer: a mistake that the build does not catch lands as is.');
-    else notes.push(`${v.reviewers} reviewer${v.reviewers > 1 ? 's' : ''}: more reviewers, fewer misses, a little slower.`);
+    else notes.push('Each change is reviewed once: more reviewers only shorten the wait for one.');
+    if (v.coders === 1) notes.push('One coder in a team still pays for a planner and reviews: Fastest skips both.');
     if (v.planner === 'haiku') notes.push('A Haiku planner missed requirements on vague prompts in the lab.');
     if (v.board) notes.push('Board on: fewer pieces built twice when tasks overlap.');
     else if (sc.pShared >= 0.7) notes.push('Many tasks touch the same files: the board helps here.');
   }
+  const qualityMeasured = measured(v);
   const dq = p.quality - ref.quality;
-  const quality = baseline === 'opus-alone' ? 'Fewest misses in the lab.' : ref === p ? 'The lab\'s middle setting.' : dq > 2 ? 'Fewer misses than Balanced.' : dq < -2 ? 'More misses than Balanced.' : 'About like Balanced.';
+  const direction = baseline === 'opus-alone' ? 'Fewest misses in the lab.' : isRef ? 'The lab\'s middle setting.'
+    // Never better than Fastest: one Opus agent is the lab's measured best, and a sim edge over it is not evidence.
+    : dq > 2 && !solo ? `Fewer misses than ${refName}.` : dq < -2 ? `More misses than ${refName}.` : `About like ${refName}.`;
   return {
     wallS: [roundS(p.wallS * w.p10), roundS(p.wallS * w.p90)],
     apiUsd: [roundUsd(p.apiUsdStd * c.p10), roundUsd(p.apiUsdStd * c.p90)],
@@ -516,7 +555,8 @@ export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced
     // The planner bundles pieces into fewer agent tasks (Opus ~0.37 of the pieces, Haiku ~0.8: stage 1); the
     // router spawns one agent per task, so agents beyond `agentTasks` never start: the coders knob is a cap.
     agentTasks: baseline ? 1 : Math.max(1, Math.round(p.counts.tasksPlanned)),
-    quality, notes, simVersion: SIM_VERSION, job: { tasks: sc.tasks, overlap: sc.pShared, difficulty: sc.difficulty, label: sc.label },
+    quality: qualityMeasured ? direction : 'Not measured in the lab.', qualityGuess: direction, qualityMeasured,
+    notes, simVersion: SIM_VERSION, job: { tasks: sc.tasks, overlap: sc.pShared, difficulty: sc.difficulty, label: sc.label },
   };
 }
 
