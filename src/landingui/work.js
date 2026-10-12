@@ -178,7 +178,7 @@
       case 'working': return null;
       case 'pushed': return [`${who} finished and sent it for review`, T];
       case 'reviewing': return null;
-      case 'approved': return [`${its} passed review`, T];
+      case 'approved': return [c.review?.verdict === 'auto' || /scripted/i.test(e.detail || '') ? `${its} was auto-approved (scripted)` : `${its} passed review`, T];
       case 'changes-suggested': return [`The reviewer asked ${who} for a fix`, d || (c.review && c.review.notes)];
       case 'queued': return [`${its} joined the line`, T];
       case 'testing': return null; // trains say this once for all their changes
@@ -207,6 +207,14 @@
   const until = (t) => `<span data-until="${t}">${untilTxt(t)}</span>`;
   const untilTxt = (t) => { const s = Math.max(0, Math.round((t - now()) / 1000)); return s < 60 ? `${s} s` : `${Math.round(s / 60)} min`; };
   const LIMIT = { daily: 'Today\'s live runs are used up.', ip: 'You have started the most live runs for today.', cooldown: 'You started a run a few minutes ago.', running: 'A run is already going.', off: 'Live runs are switched off right now.' };
+  // How long a run really takes: the last run's start to its last landing (corner-cafe: ~2 min at speed 2).
+  function runLen() {
+    const lt = D.stats?.landTimes?.length ? D.stats.landTimes : D.changes.map((c) => c.landedAt).filter(Boolean);
+    const st = D.demo?.startedAt, end = lt.length ? Math.max(...lt) : null;
+    if (!st || !end || end < st) return ', in a few minutes';
+    const m = Math.max(1, Math.round((end - st) / 60e3));
+    return `, in about ${m} minute${m === 1 ? '' : 's'}`;
+  }
   function watchCard() {
     const W = D.watch || {}, dm = D.demo || {};
     const speedChips = (on) => [1, 2, 4].map((x) => `<button class="chipb sp" type="button" data-speed="${x}" aria-pressed="${on === x}">${x}×</button>`).join('');
@@ -217,9 +225,11 @@
         <div class="wa">${done ? '<button class="btn" type="button" data-watch="again">Replay again</button>' : speedChips(P.speed)}<button class="chipb" type="button" data-watch="live">Back to live</button></div></div>`;
     }
     if (starting && Date.now() - starting < 60e3 && !(dm.running && D.changes.length)) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Starting a run…</b> The café site goes back to its first version and the agents get their tasks.</span></div></div>`;
-    if (dm.running) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Live run</b>${dm.startedAt ? `, started ${ago(dm.startedAt)}` : ''}${dm.endsAt ? (dm.mode === 'busy' ? `, runs until its tasks are done (at most ${until(dm.endsAt)} more)` : `, ends in ${until(dm.endsAt)}`) : ''}. ${dm.agents || ''} ${term('scripted', 'scripted agents')}; their commits, collisions and tests are real.</span></div>${ownerCtl(true)}</div>`;
+    // The cap (endsAt) is not when a run ends: it ends when the queue empties (qb6). Say what is happening instead.
+    const allIn = dm.running && D.changes.length && D.changes.every((c) => c.state === 'landed' || c.state === 'bounced') && !D.queue.trains.some((t) => t.state === 'testing');
+    if (dm.running) return `<div class="watch"><div class="wt"><i class="live"></i><span><b>Live run</b>${dm.startedAt ? `, started ${ago(dm.startedAt)}` : ''}${allIn ? '. Everything has landed; the run is finishing' : ''}. ${dm.agents || ''} ${term('scripted', 'scripted agents')}; their commits, collisions and tests are real.</span></div>${ownerCtl(true)}</div>`;
     const left = W.maxPerDay ? Math.max(0, W.maxPerDay - (W.runsToday || 0)) : null;
-    return `<div class="watch"><div class="wt"><span><b>Watch a run.</b> Six ${term('scripted', 'scripted agents')} change this café's website at once for about 5 minutes: real commits, real collisions, real tests.</span></div>
+    return `<div class="watch"><div class="wt"><span><b>Watch a run.</b> Six ${term('scripted', 'scripted agents')} change this café's website at once${runLen()}: real commits, real collisions, real tests.</span></div>
       ${limitNote ? `<p class="small dim">${esc(limitNote)}</p>` : ''}
       <div class="wa"><button class="btn" type="button" data-watch="start">Watch a run</button>${D.changes.length ? '<button class="chipb" type="button" data-watch="replay">Replay the last one</button>' : ''}${ownerCtl(false)}</div>
       ${left != null ? `<p class="small dim">${left} of ${W.maxPerDay} live runs left today.</p>` : ''}</div>`;
@@ -235,13 +245,28 @@
   }
   function numbers() {
     // The server's counters can start after a run began (qb6, 2026-10-08): never show fewer than the records here.
-    const s = { ...D.stats, landedToday: Math.max(D.stats.landedToday || 0, countIf(D.changes, (c) => c.state === 'landed')), replayed: Math.max(D.stats.replayed || 0, countIf(D.changes, hasEv('replayed'))) };
+    const s = { ...D.stats, replayed: Math.max(D.stats.replayed || 0, countIf(D.changes, hasEv('replayed'))) };
+    const L = landedWords();
     // One row of words: the numbers support the picture below, they are not the picture.
     return `<div class="nums">
-      <span><b>${n0(s.landedToday)}</b> landed ${D.mode === 'demo' ? 'in this run' : 'today'}</span>
+      <span>${L.html}</span>
       <span><b>${n0(s.inQueue)}</b> in ${term('queue', 'the line')}</span>
       <a href="#/replayed"><b>${n0(s.replayed)}</b> ${term('replay', 'replayed')}, not thrown away</a>
-      <span><b>${s.medianAskToLandS ? secs(s.medianAskToLandS * 1000) : '–'}</b> ask to landed, typical</span></div>`;
+      ${s.medianAskToLandS ? `<span><b>${secs(s.medianAskToLandS * 1000)}</b> ask to landed, typical</span>` : ''}</div>`;
+  }
+  // "Landed" over a real time window (review #10: "N landed today" showed on runs 108 h old).
+  // A demo counts its own run; anything else counts landings in the last 24 h, else says when the last one was.
+  function landedWords() {
+    const lt = (D.stats?.landTimes?.length ? D.stats.landTimes : D.changes.map((c) => c.landedAt).filter(Boolean)).filter(Boolean);
+    const last = lt.length ? Math.max(...lt) : null;
+    if (D.mode === 'demo') {
+      const n = Math.max(D.stats.landedToday || 0, countIf(D.changes, (c) => c.state === 'landed'));
+      const live = D.demo?.running;
+      return { n, html: `<b>${n0(n)}</b> landed ${live ? 'in this run' : `in the last run${last ? ` (${ago(last)})` : ''}`}`, short: live ? 'in this run' : 'in the last run' };
+    }
+    const day = lt.filter((t) => t > now() - 24 * 3600e3).length;
+    if (day || !last) return { n: day, html: `<b>${n0(day)}</b> landed in the last 24 hours`, short: 'in the last 24 hours' };
+    return { n: 0, html: `<b>${n0(lt.length)}</b> landed, the last one ${ago(last)}`, short: null, total: lt.length, last };
   }
   // Things that just happened pulse once. innerHTML is replaced every tick, so an animation
   // keeps its place with a negative delay = how long ago it was first seen.
@@ -353,7 +378,7 @@
       const singles = [...best.values()].filter((c) => !inPair.has(c.agent)).sort((x, y) => RANK[skey(y)] - RANK[skey(x)]);
       const chips = [...drawn.map((x) => x.html), ...singles.map((c) => chip(c, skey(c)))].join('');
       const n = best.size;
-      const meta = a.recentLandings ? `${a.recentLandings} landed today` : '';
+      const meta = a.recentLandings ? `${a.recentLandings} landed` : '';
       if (!chips) { quiet.push(a.path); return ''; }
       return `<div class="area" data-go="#/area/${encodeURIComponent(a.path)}"><button class="nm" type="button" data-go="#/area/${encodeURIComponent(a.path)}">${esc(areaLabel(a.path))}<span class="meta">${meta}</span></button><span class="chips">${chips}</span>${collWords(pairs)}</div>`;
     }).join('')}${quiet.length ? `<p class="quiet">Quiet now: ${quiet.map((q) => `<a href="#/area/${encodeURIComponent(q)}" class="mono">${esc(areaLabel(q))}</a>`).join(', ')}</p>` : ''}</div>`;
@@ -479,8 +504,8 @@
     const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;
     const agents = idleDemo ? 0 : new Set(act.map((c) => c.agent)).size;
     return `${demoStrip()}
-      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : P && P.replay ? (now() >= P.end - 1 ? `The replay has ended: ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed.` : 'The replay is starting…') : `No agents are working on ${esc(NAME)} right now.${D.stats.landedToday ? ` ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed ${D.mode === 'demo' ? 'in the last run' : 'today'}.` : ''}`}</h2>
-      <p class="intro">Each agent is an AI working on its own ${term('fork', 'copy')} of the code. Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>
+      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : P && P.replay ? (now() >= P.end - 1 ? `The replay has ended: ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed.` : 'The replay is starting…') : `No agents are working on ${esc(NAME)} right now.${(() => { const L = landedWords(); return L.short && L.n ? ` ${n0(L.n)} change${L.n === 1 ? '' : 's'} landed ${L.short}.` : ''; })()}`}</h2>
+      <p class="intro">${D.mode === 'demo' ? `Each agent here is ${term('scripted', 'scripted')} (it follows a script instead of an AI model) and works on its own ${term('fork', 'copy')} of the code.` : `Each agent is an AI working on its own ${term('fork', 'copy')} of the code.`} Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>
       ${numbers()}
       ${boardView()}
       <section class="sec"><div class="sec-h"><h3>${term('queue', 'The line')}</h3><a href="#/line">Everything</a></div>
@@ -512,12 +537,12 @@
       const k = marks.get(p);
       const tag = k === 'x' ? '<span class="st s-bounced"><span class="w">collided</span></span>' : k === 'w' ? '<span class="st s-working"><i class="dot"></i>being changed</span>' : k === 'l' ? '<span class="st s-landed"><span class="w">just landed</span></span>' : '';
       const dk = { x: 'bounced', w: 'working', l: 'landed', c: 'pushed' }[k] || 'none';
-      return `<li><a href="#/file/${encodeURIComponent(p)}"><i class="dot s-${dk}"${dk === 'none' ? ' style="visibility:hidden"' : ''}></i><span class="t mono">${esc(p.slice(isRoot(path) ? 0 : path.length + 1))}</span>${tag || '<span></span>'}<span class="sub">${now_.length ? `${[...new Set(now_)].join(', ')} on it now` : 'nobody on it now'}; ${on.length} change${on.length === 1 ? '' : 's'} today</span></a></li>`;
+      return `<li><a href="#/file/${encodeURIComponent(p)}"><i class="dot s-${dk}"${dk === 'none' ? ' style="visibility:hidden"' : ''}></i><span class="t mono">${esc(p.slice(isRoot(path) ? 0 : path.length + 1))}</span>${tag || '<span></span>'}<span class="sub">${now_.length ? `${[...new Set(now_)].join(', ')} on it now` : 'nobody on it now'}; ${on.length} change${on.length === 1 ? '' : 's'}</span></a></li>`;
     }).join('');
     return `<div class="drill">${crumbs([['Agents at work', '#/'], [areaLabel(path)]])}
-      <div class="tags"><span>${n0(a.files)} file${a.files === 1 ? '' : 's'}</span><span>${a.claimed} ${term('claim', 'claimed')} now</span><span>${a.recentLandings} landed today</span><span>${a.recentConflicts} ${term('collision', 'collisions')} today</span></div>
-      <section class="sec" style="margin-top:8px"><h3>Changes here</h3>${touch.length ? `<ul class="rows">${sortC(touch).map((c) => row(c)).join('')}</ul>` : '<p class="dim">No changes here today.</p>'}</section>
-      <section class="sec"><h3>Files being touched</h3><p class="cap">Only files someone changed or claimed today.</p>${fl ? `<ul class="rows">${fl}</ul>` : '<p class="dim">None.</p>'}</section></div>`;
+      <div class="tags"><span>${n0(a.files)} file${a.files === 1 ? '' : 's'}</span><span>${a.claimed} ${term('claim', 'claimed')} now</span><span>${a.recentLandings} landed</span><span>${a.recentConflicts} ${term('collision', a.recentConflicts === 1 ? 'collision' : 'collisions')}</span></div>
+      <section class="sec" style="margin-top:8px"><h3>Changes here</h3>${touch.length ? `<ul class="rows">${sortC(touch).map((c) => row(c)).join('')}</ul>` : '<p class="dim">No changes here yet.</p>'}</section>
+      <section class="sec"><h3>Files being touched</h3><p class="cap">Only files someone changed or claimed.</p>${fl ? `<ul class="rows">${fl}</ul>` : '<p class="dim">None.</p>'}</section></div>`;
   }
   function viewFile(p) {
     const area = areaOf(p);
@@ -525,7 +550,7 @@
     const coll = D.changes.flatMap((c) => c.events.filter((e) => e.what === 'conflict' && (c.landing?.conflicts || c.files).includes(p)).map((e) => ({ c, e }))).sort((a, b) => b.e.t - a.e.t);
     return `<div class="drill">${crumbs([['Agents at work', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [p.split('/').pop()]])}
       <p class="mono dim">${esc(p)}</p>
-      <section class="sec" style="margin-top:12px"><h3>Changes to this file</h3>${on.length ? `<ul class="rows">${on.map((c) => row(c, `${AG(c.agent)}${(c.claims || []).includes(p) && !c.files.includes(p) ? ', claimed only' : ''}`)).join('')}</ul>` : '<p class="dim">None today.</p>'}</section>
+      <section class="sec" style="margin-top:12px"><h3>Changes to this file</h3>${on.length ? `<ul class="rows">${on.map((c) => row(c, `${AG(c.agent)}${(c.claims || []).includes(p) && !c.files.includes(p) ? ', claimed only' : ''}`)).join('')}</ul>` : '<p class="dim">None yet.</p>'}</section>
       ${coll.length ? `<section class="sec"><h3>${term('collision', 'Collisions')} here</h3><ul class="rows">${coll.map(({ c, e }) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-bounced"></i><span class="t">${short(c)}</span><time>${ago(e.t)}</time><span class="sub">${esc(e.detail || '')}</span></a></li>`).join('')}</ul></section>` : ''}</div>`;
   }
   function progress(c) {
@@ -555,7 +580,7 @@
         }
         if (L?.how === 'lead') return `<div class="how"><b>Landed with its ${term('lead', 'lead')}'s help</b><p>It ${term('collision', 'collided')}${withWho}${conf.length ? ` on ${files(conf)}` : ''}. No rule could replay this edit, so its lead redid it on the newest code; it passed the tests and joined main.</p></div>`;
         if (sentBack) return `<div class="how"><b>Landed on the second try</b><p>The first time, a test failed, so it was sent back and main stayed healthy. ${AG(c.agent)} fixed it, and it passed${L?.mainCommit ? `, joining main as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
-        return `<div class="how"><b>Landed</b><p>It passed review and the tests, and joined main${L?.mainCommit ? ` as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
+        return `<div class="how"><b>Landed</b><p>It ${c.review?.verdict === 'auto' ? 'was auto-approved (scripted), passed the tests' : 'passed review and the tests'}, and joined main${L?.mainCommit ? ` as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
       case 'replaying': return `<div class="how busy"><b>Replaying now</b><p>It ${term('collision', 'collided')}${withWho} on ${files(conf.length ? conf : (ce?.detail || '').split(':')[0].split(', '))}. qodebase is re-applying its intent on the newest code instead of throwing the work away.</p></div>`;
       case 'with-lead': return `<div class="how warn"><b>Waiting for its ${term('lead', 'lead')}</b><p>It collided${withWho} on ${files(conf)}. No rule could replay this edit${D.flags && D.flags.llmReplay === false ? ' and AI replay is off for this project' : ''}, so ${esc(leadName(c.lead) || 'the lead')} decides how to combine both.</p></div>`;
       case 'bounced': { const tr = D.queue.trains.find((t) => t.changes.includes(c.id) && t.state === 'bounced'); return `<div class="how warn"><b>Sent back</b><p>A test failed when it was tested with the newest main, so it did not land and main stayed healthy. ${AG(c.agent)} gets the failure and fixes it.</p>${tr ? `<p class="mono" style="margin-top:6px">${esc(tr.checks.failures.join('\n'))}</p>` : ''}</div>`; }
@@ -575,7 +600,7 @@
   }
   function viewChange(id) {
     const idx = byId(), c = idx.get(id);
-    if (!c) return `<div class="drill">${crumbs([['Agents at work', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style="font-size:20px;margin-bottom:6px">${short(it)}</h2><p class="dim">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : '<p class="dim">This change is not in today\'s data.</p>'; })()}</div>`;
+    if (!c) return `<div class="drill">${crumbs([['Agents at work', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style="font-size:20px;margin-bottom:6px">${short(it)}</h2><p class="dim">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : '<p class="dim">This change is not in the data shown here.</p>'; })()}</div>`;
     const area = areaOf(c.files[0] || '.');
     const story = c.events.map((e) => { const s = sentence(c, e, idx) || [{ working: `${AG(c.agent)} working`, reviewing: 'The reviewer is reading it', testing: 'Being tested with the newest main' }[e.what] || e.what, { alone: 'on its own', 'next train': '' }[e.detail] ?? e.detail]; return `<li><time>${hhmm(e.t)}</time><span>${esc(s[0])}${s[1] && s[1] !== title1(c) ? `<span class="d">${esc(s[1])}</span>` : ''}</span></li>`; }).reverse().join('');
     const stackOn = c.stackedOn && idx.get(c.stackedOn);
@@ -611,7 +636,7 @@
   function viewFeed() { return `<div class="drill">${crumbs([['Agents at work', '#/'], ['What happened']])}${feed(200)}</div>`; }
   function viewReplayed() {
     const l = D.changes.filter((c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying')).sort((a, b) => b.createdAt - a.createdAt);
-    return `<div class="drill">${crumbs([['Agents at work', '#/'], ['Replayed']])}<p class="cap" style="margin-top:4px">${GLOSS.replay[1]}</p>${l.length ? `<ul class="rows">${l.map((c) => row(c)).join('')}</ul>` : '<p class="dim">None in today\'s data yet.</p>'}${D.stats.replayed > l.length ? `<p class="cap" style="margin-top:8px">${n0(D.stats.replayed)} today in all; the ones above are the recent ones.</p>` : ''}</div>`;
+    return `<div class="drill">${crumbs([['Agents at work', '#/'], ['Replayed']])}<p class="cap" style="margin-top:4px">${GLOSS.replay[1]}</p>${l.length ? `<ul class="rows">${l.map((c) => row(c)).join('')}</ul>` : '<p class="dim">None yet.</p>'}${D.stats.replayed > l.length ? `<p class="cap" style="margin-top:8px">${n0(D.stats.replayed)} in all; the ones above are the recent ones.</p>` : ''}</div>`;
   }
   function viewChanges() {
     const groups = [['Needs a decision', ['with-lead', 'ready']], ['On the way', ['bounced', 'replaying', 'testing', 'queued', 'reviewing', 'pushed']], ['Working', ['working']], ['Landed', ['landed']]];
