@@ -124,7 +124,7 @@ export function liveChanges(c: Ctx) {
   const accent = accentOf([...open].sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state)));
   // Estimated vs elapsed (qb6 stores the estimate shown at Build; /lab/est-bar.js draws it and ticks the clock).
   const est = (info as { estimate?: { startedAt?: number } }).estimate;
-  const estBar = est?.startedAt ? `<div class="estmount" data-estbar="${esc(JSON.stringify({ e: est, p: (info as { progress?: unknown }).progress || null }))}"></div><script src="/lab/est-bar.js" defer></script>` : '';
+  const estBar = est?.startedAt ? `<div class="estmount" data-estbar="${esc(JSON.stringify({ e: est, p: (info as { progress?: unknown }).progress || null, b: (info as { billing?: string | null }).billing || null }))}"></div><script src="/lab/est-bar.js" defer></script>` : '';
   const out = groups.map((g, i) => {
     const you = !g.text ? '' : fromIssues(g.text)
       ? `<div class="you sys"><b>Cloudflare Issues reported an error</b>${esc(g.text.replace(/^Production error from Cloudflare Issues:\s*/, '').slice(0, 220))}</div>`
@@ -371,7 +371,7 @@ function moreMenu(c: Ctx) {
   const extra = VIEWS.filter((v) => !tabs.includes(v.id) && v.id !== 'more' && v.id !== 'changes' && v.when(c) && (v.desc || v.id === 'readme'))
     .map((v) => (v.id === 'readme' ? { ...v, desc: 'The project\'s README and other documents' } : v));
   return `${c.own ? visibilityRow(c) : ''}<div class="menu">${extra.map((v) => `<a class="mi" href="${c.base}/${v.id}">${v.icon}<span><b>${v.label}</b><span>${v.desc}</span></span></a>`).join('')}
-<a class="mi" href="/settings">${ICONS.about}<span><b>Account</b><span>Your name${c.own ? '' : ', your Anthropic API key'}, sign out</span></span></a>
+<a class="mi" href="/settings">${ICONS.about}<span><b>Account</b><span>Your name${c.own ? '' : ', your Claude plan'}, sign out</span></span></a>
 <a class="mi" href="/">${ICONS.app}<span><b>All projects</b><span>Your projects and Explore</span></span></a>
 <a class="mi" href="/feedback" data-fb>${ICONS.changes}<span><b>Feedback</b><span>Something missing, confusing or broken? Tell us.</span></span></a></div>`;
 }
@@ -629,7 +629,7 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 .ptop{position:sticky;top:0;z-index:20;margin:0 0 8px}
 @media (min-width:900px){.tabbar{right:auto;top:0;bottom:0;width:80px}body{padding-bottom:0;padding-left:80px}}
 .badge{position:absolute}</style>`;
-    return html.replace('</head>', `${css}</head>`).replace(/<body([^>]*)>/, `<body$1>${tabBar(pc, 'code', n, true)}`).replace('</body>', `${globalBar('projects', g.inbox, me)}</body>`);
+    return html.replace('</head>', () => `${css}</head>`).replace(/<body([^>]*)>/, (_m, a) => `<body${a}>${tabBar(pc, 'code', n, true)}`).replace('</body>', () => `${globalBar('projects', g.inbox, me)}</body>`);
   }
   if (g.nav === 'd') {
     const css = `<style>${V3_CSS.slice(V3_CSS.indexOf('/* Tab bar'))}${NAV_CSS}
@@ -638,7 +638,7 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 .gtop{margin:0 0 8px}
 @media (min-width:900px){.tabbar{right:auto;top:48px;bottom:0;width:80px}body{padding-bottom:0;padding-left:80px}.gtop{margin-left:-80px}}
 .badge{position:absolute}.gtop .badge{position:static}</style>`;
-    return html.replace('</head>', `${css}</head>`).replace(/<body([^>]*)>/, `<body$1>${globalTop(own ? 'projects' : 'explore', g.inbox, me, { owner: info.owner, ownerLabel: ownerLabel(info.owner), name: info.name, href: `/p/${info.owner}/${info.name}`, private: !!info.private })}`).replace('</body>', `${tabBar(pc, 'code', n)}</body>`);
+    return html.replace('</head>', () => `${css}</head>`).replace(/<body([^>]*)>/, (_m, a) => `<body${a}>${globalTop(own ? 'projects' : 'explore', g.inbox, me, { owner: info.owner, ownerLabel: ownerLabel(info.owner), name: info.name, href: `/p/${info.owner}/${info.name}`, private: !!info.private })}`).replace('</body>', () => `${tabBar(pc, 'code', n)}</body>`);
   }
   const bar = tabBar(pc, 'code', n);
   const css = `<style>${V3_CSS.slice(V3_CSS.indexOf('/* Tab bar'))}
@@ -646,7 +646,7 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 @media (min-width:900px){.tabbar{right:auto;top:0;bottom:0;width:80px}body{padding-bottom:0;padding-left:80px}}
 .badge{position:absolute}</style>`;
-  return html.replace('</head>', `${css}</head>`).replace('</body>', `${bar}</body>`);
+  return html.replace('</head>', () => `${css}</head>`).replace('</body>', () => `${bar}</body>`);
 }
 
 /** Sample data for /design-fixture on the views host. */
@@ -821,14 +821,16 @@ document.addEventListener('click',async(e)=>{
 export function withGlobal(html: string, tab: HomeTab, inbox: number, me: string, nav: Nav = 'a') {
   if (nav === 'd') {
     const css = `<style>${NAV_CSS}.gtop{margin:0 0 8px}</style>`;
-    return html.replace('</head>', `${css}</head>`).replace(/<body([^>]*)>/, `<body$1>${globalTop(tab, inbox, me)}`);
+    // Function replacements: the header's own script holds '$' strings, and in a replacement string "$'" means "the rest
+    // of the page" (Settings and Costs came out with the page pasted into the cost script: two SyntaxErrors).
+    return html.replace('</head>', () => `${css}</head>`).replace(/<body([^>]*)>/, (_m, a) => `<body${a}>${globalTop(tab, inbox, me)}`);
   }
   const css = `<style>${V3_CSS.slice(V3_CSS.indexOf('/* Tab bar'))}${NAV_CSS}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30}
 body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 @media (min-width:900px){.tabbar{right:auto;top:0;bottom:0;width:80px}body{padding-bottom:0;padding-left:80px}}
 .badge{position:absolute}</style>`;
-  return html.replace('</head>', `${css}</head>`).replace('</body>', `${globalBar(tab, inbox, me)}</body>`);
+  return html.replace('</head>', () => `${css}</head>`).replace('</body>', () => `${globalBar(tab, inbox, me)}</body>`);
 }
 
 

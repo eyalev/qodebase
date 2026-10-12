@@ -10,6 +10,7 @@
 // The brief is assembled on the page, not by a model: no paid call for visitors.
 
 import { JOIN_SPEECH } from './speechjoin';
+import { connectPlan } from './connectplan';
 
 export const STARTER = 'forq.blank';
 
@@ -43,6 +44,7 @@ export const BUILD_CSS = `
 .brief textarea{min-height:90px;background:var(--bg);font-size:16px}
 .brief .fld+.fld{margin-top:12px}
 .brief .url{font-size:13px;color:var(--dim);margin:4px 0 0;overflow-wrap:anywhere}
+#go:disabled{background:var(--chip);color:var(--dim);opacity:1}
 .steps3{margin:0 0 16px;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
 .steps3 li{display:flex;gap:10px;font-size:15px}
 .steps3 li b{flex:none;width:22px;height:22px;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center;font-size:12px}
@@ -79,12 +81,12 @@ export function buildBody(me: string, needsKey: boolean, runDomain: string) {
 <fieldset class="fld vis"><legend>Who can see it</legend>
 <label><input type="radio" name="vis" value="public" checked><span><b>Public</b>Anyone can see it, try it and fork it</span></label>
 <label><input type="radio" name="vis" value="private"><span><b>Private</b>Only you: the project, its code and its app</span></label></fieldset></div>
+${needsKey ? connectPlan('build') : ''}
 <ol class="steps3"><li><b>1</b>A new project is created${me ? ` under ${esc(me)}` : ''}, with its own code and history.</li>
 <li><b>2</b>Its router agent plans the work and starts an agent for each part.</li>
 <li><b>3</b>A reviewer agent checks every change in a preview before it goes live.</li>
 <li><b>4</b>You watch it happen, try the result, and ask for more changes any time.</li></ol>
-${needsKey ? `<p class="lede">Agents run on your own Anthropic API key. <a href="/settings">Add it in Settings</a> first; your idea stays here.</p>` : ''}
-<button class="btn" id="go" style="width:100%"${needsKey ? ' disabled' : ''}>${me ? 'Start building' : 'Sign in to start building'}</button>
+<button class="btn" id="go" style="width:100%"${needsKey ? ' disabled' : ''}>${needsKey ? 'Connect your plan above first' : me ? 'Start building' : 'Sign in to start building'}</button>
 <p class="err" id="err" role="status"></p></section></div>
 <script>
 (function(){
@@ -129,6 +131,7 @@ ${needsKey ? `<p class="lede">Agents run on your own Anthropic API key. <a href=
  if(fromHome){idea.value=fromHome;pname.dataset.touched='';brief();}
  // Back from sign-in (or a reload): the brief, filled in.
  try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&d.idea&&new URLSearchParams(location.search).get('step')==='brief'){if(!SETS&&d.sets)SETS=d.sets;idea.value=d.idea;if(d.name){pname.value=d.name;pname.dataset.touched=1;}brief();}}catch{}
+ document.addEventListener('qb:connected',()=>{const g=$('go');g.disabled=false;g.textContent='Start building';});
  $('go').onclick=async()=>{const name=clean(pname.value),prompt=pidea.value.trim(),err=$('err');
   if(!name){err.textContent='Give the project a name.';return;}if(!prompt){err.textContent='Say what to build.';return;}
   save();if(!ME){location.href='/login?next='+encodeURIComponent('/build?step=brief');return;}
@@ -136,6 +139,7 @@ ${needsKey ? `<p class="lede">Agents run on your own Anthropic API key. <a href=
   const qs=new URLSearchParams(SETS?Object.entries(SETS).filter(([,x])=>x):[]);   // Build settings + estimate from the home page, passed through as is
   const r=await fetch('/api/build',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,prompt,private:(document.querySelector('input[name=vis]:checked')||{}).value==='private',...(qs.get('preset')?{settings:{preset:qs.get('preset'),v:qs.get('v')||undefined}}:{}),...(()=>{try{const e=JSON.parse(qs.get('est')||'null');return e&&Array.isArray(e.wallS)?{estimate:e}:{};}catch{return{};}})()})});
   const j=await r.json().catch(()=>({}));
+  if(j.need==='key'){history.replaceState(null,'','/build?step=brief#connect');location.reload();return;}   // no usable key (qb6): the connect step, idea kept in the draft
   if(!r.ok){b.disabled=false;b.textContent='Start building';err.textContent=j.error||'Could not start';return;}
   try{localStorage.removeItem(KEY)}catch{}location.href=j.path;};
 })();

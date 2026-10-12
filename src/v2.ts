@@ -346,7 +346,7 @@ export function noApp(o: ProjectArgs) {
   return `<div class="noapp">This project has no web page to show.</div>`;
 }
 
-export const keyNote = `<p class="empty">Agents run on your own Anthropic API key. <a href="/settings">Add it in Settings</a>.</p>`;
+export const keyNote = `<p class="empty">Agents need Claude to work. <a href="/settings#connect">Connect your Claude plan</a> (or an API key) once.</p>`;
 
 // ---- Variant A: the app is the page -----------------------------------------
 

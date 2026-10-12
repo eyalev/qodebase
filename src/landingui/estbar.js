@@ -2,7 +2,7 @@
 // was shown next to the real clock and cost). One function, used by the Changes page and 'Agents at work':
 //   window.qbEstBar(estimate, progress, now) -> HTML string ('' when the project was built without an estimate)
 // estimate: { startedAt, wallS:[lo,hi], apiUsd:[lo,hi], basis:'typical'|'idea', basedOn }
-// progress: { spentUsd, settledAt, actualWallS, actualUsd }   (qb6 stores both at /api/build and on settle)
+// progress: { spentUsd, settledAt, actualWallS, actualUsd, billing?:'sub'|'api' }   (qb6 stores both at /api/build and on settle)
 // Elapsed text carries data-since so the pages' 1 s clock can tick it without a rebuild.
 (() => {
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -16,7 +16,7 @@
     const max = Math.max(hi * 1.3, value * 1.08, 1);
     return `<div class="eb-track ${cls}" aria-hidden="true"><i class="eb-band" style="left:${pct(lo, max)};width:${pct(hi - lo, max)}"></i><i class="eb-fill" style="width:${pct(value, max)}"></i></div>`;
   }
-  window.qbEstBar = function (est, prog, now = Date.now()) {
+  window.qbEstBar = function (est, prog, now = Date.now(), billing = null) {
     if (!est || !Array.isArray(est.wallS) || !est.startedAt) return '';
     const p = prog || {}, done = !!p.settledAt;
     const el = done ? (p.actualWallS ?? (p.settledAt - est.startedAt) / 1000) : (now - est.startedAt) / 1000;
@@ -25,14 +25,16 @@
       : el > hi ? 'Taking longer than expected' : el >= lo ? 'Within the expected range' : 'On track';
     const late = el > hi;
     const cost = done ? p.actualUsd : p.spentUsd;
-    const costRow = Array.isArray(est.apiUsd) ? `<div class="eb-row"><span class="eb-k">${done ? 'Cost' : 'Cost so far'}</span>${cost == null ? '<span class="eb-k">not known yet</span>' : `<b>${usd(cost)}</b>`}<span class="eb-x">expected ${span(est.apiUsd, usd)}</span></div>
+    // On the person's Claude plan (qb6: billing 'sub'), the dollars are what the same work costs at API prices.
+    const plan = (billing || p.billing || est.billing) === 'sub';   // qb6: info.billing, next to estimate/progress
+    const costRow = Array.isArray(est.apiUsd) ? `<div class="eb-row"><span class="eb-k">${plan ? (done ? 'API-equivalent' : 'API-equivalent so far') : done ? 'Cost' : 'Cost so far'}</span>${cost == null ? '<span class="eb-k">not known yet</span>' : `<b>${usd(cost)}</b>`}<span class="eb-x">expected ${span(est.apiUsd, usd)}</span></div>
       ${cost == null ? '' : bar(cost, est.apiUsd[0], est.apiUsd[1], cost > est.apiUsd[1] ? 'eb-late' : '')}` : '';
     return `<section class="estbar${late ? ' eb-over' : ''}" aria-label="Estimated and actual time and cost">
       <div class="eb-row"><span class="eb-k">${done ? 'Took' : 'Elapsed'}</span><b${done ? '' : ` data-eb-since="${est.startedAt}"`}>${clock(el)}</b><span class="eb-x">expected ${span(est.wallS, mins)}</span></div>
       ${bar(el, lo, hi, late ? 'eb-late' : '')}
       <p class="eb-state">${esc(state)}</p>
       ${costRow}
-      <p class="eb-src">Estimate for ${est.basis === 'idea' ? 'your idea, as the small model read it' : 'a typical small app'}${est.basedOn ? `, from ${est.basedOn} real lab runs` : ''}; cost at API prices.</p>
+      <p class="eb-src">Estimate for ${est.basis === 'idea' ? 'your idea, as the small model read it' : 'a typical small app'}${est.basedOn ? `, from ${est.basedOn} real lab runs` : ''}${plan ? '. Runs on your Claude plan (not billed by qodebase); the dollars are API prices for the same work.' : '; cost at API prices.'}</p>
     </section>`;
   };
   // Tick every elapsed clock on the page once a second (no rebuild).
@@ -55,7 +57,7 @@
     const els = document.querySelectorAll('[data-estbar]:not([data-eb-done])');
     if (!els.length) return;
     if (!document.getElementById('estbar-css')) { const st = document.createElement('style'); st.id = 'estbar-css'; st.textContent = window.QB_ESTBAR_CSS; document.head.appendChild(st); }
-    els.forEach((el) => { try { const d = JSON.parse(el.dataset.estbar); el.innerHTML = window.qbEstBar(d.e, d.p); } catch (e) { console.log(JSON.stringify({ module: 'estbar', event: 'mount_failed', error: String(e) })); } el.dataset.ebDone = '1'; });
+    els.forEach((el) => { try { const d = JSON.parse(el.dataset.estbar); el.innerHTML = window.qbEstBar(d.e, d.p, Date.now(), d.b || null); } catch (e) { console.log(JSON.stringify({ module: 'estbar', event: 'mount_failed', error: String(e) })); } el.dataset.ebDone = '1'; });
   }
   const start = () => { mount(); new MutationObserver(mount).observe(document.body, { childList: true, subtree: true }); setInterval(window.qbEstBarTick, 1000); };
   if (document.body) start(); else addEventListener('DOMContentLoaded', start);

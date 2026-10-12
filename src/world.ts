@@ -84,7 +84,7 @@ export function worldBody(tab: WorldTab, real: Entry[], signedIn: boolean, opts:
   // sorts, happens in place (no request), keeping the URL in step.
   const body = `<section data-panel="projects"${tab === 'projects' ? '' : ' hidden'}>${catalogBody(real, { cat: opts.tag, sort: opts.sort })}</section>
 <section data-panel="people"${tab === 'people' ? '' : ' hidden'}>${peopleBody(real)}</section>`;
-  return `${head}${body}${signedIn ? '' : '<p class="empty" style="margin-top:20px"><a href="/login">Sign in</a> to import projects, fork them and run agents with your own Anthropic API key.</p>'}
+  return `${head}${body}${signedIn ? '' : '<p class="empty" style="margin-top:20px"><a href="/login">Sign in</a> to import projects, fork them and run agents on your own Claude plan or API key.</p>'}
 <script>${HOME_JS}</script>${SPECULATE}`;
 }
 

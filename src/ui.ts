@@ -8,6 +8,7 @@ import { markdown } from './md';
 import { MAX_IMPORT_KB } from './github';
 import { SHEET_CSS, SHEET_HTML, SHEET_JS, previewTabs, shortId } from './sheet';
 import { runUrl } from './runurl';
+import { connectPlan } from './connectplan';
 
 export const esc = (s: string) => String(s ?? '').replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]!));
 export const STEPS = [14 * 24, 3 * 24, 24, 3];   // freshbar horizon: empty after 14 days
@@ -194,7 +195,7 @@ ${overview.importing
       ? `<p class="note">No web page to show: qodebase looks for an index.html at the root and in demo/, docs/, public/, dist/, www/, site/ and examples/. The code is below, and agents can still work on it.</p>`
       : `<div class="pbar"><div class="ptabs" id="ptabs">${previewTabs(info, runBase)}</div><a class="pext" id="pext" href="${app}" target="_blank" rel="noopener">Open in new tab</a></div>
 <div class="preview"><iframe src="${app}" title="${esc(info.name)} app" loading="lazy"></iframe></div>`}
-${own && o.needsKey ? `<h2>Agents</h2><p class="note">Agents here run Claude Code with your own Anthropic API key. <a href="/settings">Add your key in Settings</a> to start one.</p>` : ''}${own && !o.needsKey ? `<h2>Agents</h2>
+${own && o.needsKey ? `<h2>Agents</h2><p class="note">Agents need Claude to work. <a href="/settings#connect">Connect your Claude plan</a> (or an API key) once to start one.</p>` : ''}${own && !o.needsKey ? `<h2>Agents</h2>
 <form class="composer" id="ask"><textarea name="text" placeholder="Tell the router agent what to change. It splits the work and starts one agent per task." required enterkeyhint="send"></textarea>
 <div class="bar"><button class="btn">Send</button></div></form>
 <div id="agents">${o.agentsHtml}</div>${SHEET_HTML}` : ''}${own ? ''
@@ -394,20 +395,18 @@ ${d?.url ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.ur
 <pre style="background:var(--card);border-radius:12px;padding:12px;overflow:auto;font:12px/1.5 'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word">${esc(d?.log || 'No log.')}</pre>`);
 }
 
-export function settingsPage(u: { handle: string; email: string; apiKeyTail?: string; apiKeyCheckedAt?: number; model?: string }, owner: boolean, projects: number, welcome: boolean, cli: { id: string; label: string; createdAt: number; usedAt: number }[] = []) {
+export function settingsPage(u: { handle: string; email: string; apiKeyTail?: string; apiKeyCheckedAt?: number; apiKeyKind?: 'plan' | 'api'; keyFailed?: { at: number; why: string }; model?: string }, owner: boolean, projects: number, welcome: boolean, cli: { id: string; label: string; createdAt: number; usedAt: number }[] = []) {
   const keyBlock = owner
     ? `<p class="desc">Your agents run on this instance's Claude subscription. No API key needed.</p>`
-    : `${u.apiKeyTail ? `<p class="desc">Key ending in <b>…${esc(u.apiKeyTail)}</b>, checked ${freshTag(u.apiKeyCheckedAt || 0, Date.now(), STEPS)}. Your agents run on it with ${esc(({ 'claude-sonnet-5-5': 'Sonnet 5.5', 'claude-opus-5-5': 'Opus 5.5', 'claude-sonnet-5': 'Sonnet 5' } as Record<string, string>)[u.model || 'claude-sonnet-5-5'] || u.model || 'Sonnet 5.5')}.</p>` : `<p class="desc">Agents run Claude Code with your own Anthropic API key. You pay Anthropic directly; qodebase measured about $1–2 per finished, reviewed change on Sonnet.</p>`}
-<form class="composer" id="keyf"><input class="field" name="key" type="password" autocomplete="off" placeholder="sk-ant-…" aria-label="Anthropic API key">
-<div class="bar"><button class="btn">${u.apiKeyTail ? 'Replace key' : 'Save key'}</button>${u.apiKeyTail ? '<button type="button" class="chipbtn" id="rmkey">Remove</button>' : ''}</div></form>
-<p class="note">The key is checked with one call to Anthropic, stored encrypted, and only used to start Claude Code in your projects' boxes. Get one at <a href="https://console.anthropic.com/settings/keys" rel="noopener" target="_blank">console.anthropic.com</a>. Have a Claude subscription instead? Run <code>claude setup-token</code> on your computer and paste the token it prints (sk-ant-oat…): your agents then run on your subscription.</p>`;
+    // The Claude-plan onboarding (src/connectplan.ts): connected state, Replace, Remove, or the three steps.
+    : connectPlan('settings', { kind: u.apiKeyKind || (u.apiKeyTail ? 'api' : undefined), tail: u.apiKeyTail, checkedAt: u.apiKeyCheckedAt, failed: u.keyFailed });
   return shell('Settings · qodebase', `<a class="back" href="/">Explore</a>
 <h1>${welcome ? 'Welcome to qodebase' : 'Settings'}</h1>
-${welcome ? `<p class="desc">You are signed in. ${[projects ? '' : 'Pick the name your projects live under', owner ? '' : 'add your Anthropic API key', 'then fork something from Explore'].filter(Boolean).join(', ').replace(/^./, (c) => c.toUpperCase())}.</p>` : ''}
+${welcome ? `<p class="desc">You are signed in. ${[projects ? '' : 'Pick the name your projects live under', owner ? '' : 'connect your Claude plan', 'then fork something from Explore'].filter(Boolean).join(', ').replace(/^./, (c) => c.toUpperCase())}.</p>` : ''}
 <h2>Your name</h2>
 <form class="composer" id="hf"><input class="field" name="handle" value="${esc(u.handle)}" ${projects ? 'disabled' : ''} autocapitalize="none" spellcheck="false" aria-label="Handle">
 ${projects ? `<p class="note">You own ${projects} project${projects > 1 ? 's' : ''} under this name, so it stays.</p>` : '<div class="bar"><button class="btn">Save name</button></div>'}</form>
-<h2>Anthropic API key</h2>${keyBlock}
+<h2>Claude for your agents</h2>${keyBlock}
 <p class="err" id="msg" role="status"></p>
 <h2>Command line</h2>
 <p class="desc">${cli.length ? `Signed-in CLIs (last used):` : `No CLI signed in.`} <a href="/cli">Install qb</a> to use qodebase from a terminal or an agent.</p>
@@ -420,9 +419,7 @@ const msg=document.getElementById('msg');
 // (a refused key was easy to miss there, seen in the sign-up video).
 async function call(url,method,body,form){if(form)form.after(msg);msg.classList.remove('bad');const r=await fetch(url,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok){msg.textContent=j.error||'Failed';msg.classList.add('bad');return null;}return j;}
 const hf=document.getElementById('hf');if(hf)hf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Saving';if(await call('/api/me/handle','POST',{handle:hf.handle.value},hf))location.reload();};
-const kf=document.getElementById('keyf');if(kf)kf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Checking the key with Anthropic';if(await call('/api/me/key','POST',{key:kf.key.value},kf))location.reload();};
 document.querySelectorAll('[data-revoke]').forEach((b)=>b.onclick=async()=>{if(await call('/api/cli/revoke','POST',{id:b.dataset.revoke},b.parentElement))location.reload();});
-const rm=document.getElementById('rmkey');if(rm)rm.onclick=async()=>{if(await call('/api/me/key','DELETE'))location.reload();};
 </script>`);
 }
 
@@ -447,7 +444,7 @@ ${li('Open source', '<a href="https://github.com/eyalev/qodebase" target="_blank
 </ul>
 <h2>What it costs</h2>
 <ul class="abl">
-${li('Agents run Claude Code', 'On your Anthropic API key or your Claude subscription, added in Settings. You pay Anthropic directly.')}
+${li('Agents run Claude Code', 'The real Claude Code, on your own Claude plan (Pro or Max) or an Anthropic API key, connected in Settings. Plan use counts toward your plan\'s limits; qodebase does not bill it.')}
 ${li('About $1–2 a change', 'One finished, reviewed change on Sonnet with an API key, measured in October 2026.')}
 ${selfHost ? '' : li('Your own copy', "Needs Cloudflare's Workers Paid plan: $5 a month for the whole account.")}
 </ul>
@@ -461,10 +458,10 @@ ${selfHost ? '' : li('Your own copy', "Needs Cloudflare's Workers Paid plan: $5 
 export function privacyPage() {
   return shell('Privacy · qodebase', `<a class="back" href="/">Explore</a>
 <h1>Privacy</h1>
-<p class="desc">What qodebase stores: your email address and the name you choose; your Anthropic API key, encrypted, used only to start Claude Code in your projects' containers; the projects, forks and agent conversations you create. Projects are public to read.</p>
+<p class="desc">What qodebase stores: your email address and the name you choose; your Claude plan token or Anthropic API key, encrypted, used only to start Claude Code in your projects' containers; the projects, forks and agent conversations you create. Projects are public to read.</p>
 <p class="desc">Private projects: only you see them on qodebase (the project, its code, its live app and its agents). Their code is still stored in this instance's Cloudflare account, so whoever runs the instance can technically read it; for code only you can reach, <a href="/own">get your own qodebase</a>.</p>
 <p class="desc">Sign-in is handled by Cloudflare Access: with your Google account, or with a one-time code sent to your email. With Google, qodebase receives only your email address from Google, nothing else from your account. qodebase sets one cookie, to keep you signed in.</p>
 <p class="desc">Visits are counted with our own analytics (kstats), sent to qodebase itself and not to a third party: the pages you open, the buttons and links you tap, the kind of device and the country. Your IP address is used once to make a visitor code that changes every day, and is not stored. No ad trackers.</p>
 <p class="desc">The <a href="/feedback">feedback form</a> keeps your message, the page you sent it from, the kind of device, and your email only if you give one.</p>
-<p class="desc">Your agents' requests go to Anthropic under your key and Anthropic's terms. To delete your account and data, write to hello@kapps.dev.</p>`);
+<p class="desc">Your agents' requests go to Anthropic under your Claude plan or API key and Anthropic's terms. To delete your account and data, write to hello@kapps.dev.</p>`);
 }
