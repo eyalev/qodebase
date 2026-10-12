@@ -96,6 +96,8 @@
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "forq" }],
   // Images the person attaches to a request (src/attach.ts); lifecycle rule expire-30d deletes them after 30 days.
   "r2_buckets": [{ "binding": "ATTACH", "bucket_name": "qodebase-attachments" }],
+  // Cloudflare Browser Rendering: App view screenshots (src/screenshot.ts); 10 browser-hours/month included, then $0.09/h.
+  "browser": { "binding": "BROWSER" },
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
   "ai": { "binding": "AI" },
   "services": [{ "binding": "TALK", "service": "qodebase-talk" }],

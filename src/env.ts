@@ -35,6 +35,8 @@ export interface Env {
   ARTIFACTS: Artifacts;
   /** Attached images (src/attach.ts); absent on a self-hosted copy without the bucket. */
   ATTACH?: R2Bucket;
+  /** Browser Rendering (screenshots, src/screenshot.ts). */
+  BROWSER?: Fetcher;
   ACCESS_TEAM_DOMAIN: string;
   ACCESS_AUD: string;
   HANDLES: string;            // JSON {email: handle}

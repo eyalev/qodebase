@@ -54,3 +54,16 @@ export function attachedLines(rest: string, fetched: string[], failed: string[])
   if (failed.length) lines.push(`(${failed.length} attached image${failed.length === 1 ? '' : 's'} could not be copied into your box.)`);
   return lines.join('\n\n');
 }
+
+// ---- S3: which URL a screenshot may open ----
+/** The URL to shoot: the project's own app (main or an `ag-<id>--` fork host) on the run host, else null. */
+export function shotTarget(raw: unknown, main: string | undefined): URL | null {
+  if (!main) return null;
+  let u: URL;
+  try { u = new URL(typeof raw === 'string' && raw ? raw : `https://${main}/`); } catch { return null; }
+  if (u.protocol !== 'https:') return null;
+  if (u.hostname !== main && !(u.hostname.startsWith('ag-') && u.hostname.endsWith(`--${main}`))) return null;
+  u.searchParams.delete('__qbpick');
+  return u;
+}
+

@@ -21,6 +21,7 @@ import { STARTER, buildPayload } from './newproject';
 import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, cleanEstimate, DEFAULT_PLAN } from './buildsettings';
 import { suggestRoute } from './buildsuggest';
 import { withPicker } from './picker';
+import { screenshotRoute } from './screenshot';
 import { ATTACH_TYPES, ATTACH_MAX, newAttachId, isAttachId, attachKey, composeMessage, parseMarker, attachedLines } from './attach';
 import { buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
@@ -455,6 +456,13 @@ const app = {
           return new Response(o.body, { headers: { 'content-type': o.httpMetadata?.contentType || 'application/octet-stream', 'cache-control': 'private, max-age=86400' } });
         }
         return json({ error: 'POST an image, or GET …/attach/<id>' }, 405);
+      }
+      // Screenshot of the project's running app (src/screenshot.ts), stored as an attachment: owner only.
+      if ((m = path.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/screenshot$/)) && request.method === 'POST') {
+        const info0 = await projectStub(env, slugOf(m[1], m[2])).info();
+        if (!info0) return json({ error: 'no such project' }, 404);
+        if (info0.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
+        return screenshotRoute(request, env, ctx, info0, me.handle || info0.owner);
       }
       // Turn an existing project over to automatic landing (owner): the merge queue on, approved changes land by
       // themselves, and every change already pushed goes into the queue now (Eyal's first build sat at 'Ready to merge').

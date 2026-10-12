@@ -1,7 +1,7 @@
 // Visual context (S1/S2): message composition, the attachment marker, ids. node --experimental-strip-types --test src/attach.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { newAttachId, isAttachId, composeMessage, parseMarker, attachedLines, attachKey } from './attach.ts';
+import { newAttachId, isAttachId, composeMessage, parseMarker, attachedLines, attachKey, shotTarget } from './attach.ts';
 
 test('ids: 12 chars + the type\'s extension; only images', () => {
   const id = newAttachId('image/png');
@@ -28,4 +28,12 @@ test('the box sees file paths instead of the marker', () => {
   const t = attachedLines('do it', ['abcdefghijkl.png'], ['mnopqrstuvwx.jpg']);
   assert.match(t, /do it\n\nAttached image from the person \(open it with your Read tool[^\n]*\n- \/workspace\/attachments\/abcdefghijkl\.png\n\n\(1 attached image could not be copied/);
   assert.equal(attachedLines('x', [], []), 'x');
+});
+
+test('screenshots open only the project\'s own app or its agents\' previews', () => {
+  assert.equal(shotTarget(undefined, 'todo--eyal.ttyview.dev').href, 'https://todo--eyal.ttyview.dev/');
+  assert.equal(shotTarget('https://todo--eyal.ttyview.dev/a.html?__qbpick=1&x=1', 'todo--eyal.ttyview.dev').href, 'https://todo--eyal.ttyview.dev/a.html?x=1');
+  assert.ok(shotTarget('https://ag-k3j9--todo--eyal.ttyview.dev/', 'todo--eyal.ttyview.dev'));
+  for (const bad of ['https://evil.com/', 'http://todo--eyal.ttyview.dev/', 'https://todo--bob.ttyview.dev/', 'https://x.todo--eyal.ttyview.dev.evil.com/', 'nope'])
+    assert.equal(shotTarget(bad, 'todo--eyal.ttyview.dev'), null, bad);
 });
