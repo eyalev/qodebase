@@ -789,6 +789,7 @@ export const LAND_CSS = `
 .bs-track i{position:absolute;top:0;bottom:0;border-radius:4px;background:var(--fg);transition:left .12s,width .12s}
 .bs-ends{grid-column:1/-1;display:flex;justify-content:space-between;font-size:12px;color:var(--dim)}
 .bs-meter{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.bs-meter.bs-unmeasured i{background:repeating-linear-gradient(45deg,var(--line) 0 4px,transparent 4px 8px)}
 .bs-meter i{height:6px;border-radius:3px;background:var(--line);transition:background-color .12s}.bs-meter i.on{background:var(--fg)}
 .bs-noest .bs-track,.bs-noest .bs-meter{display:none}
 .bs-src{margin:0;font-size:13px;color:var(--dim)}

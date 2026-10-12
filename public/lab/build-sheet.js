@@ -55,9 +55,9 @@
       <label class="bs-row"><span class="bs-rl">Agents</span><b class="bs-rv" data-out="coders"></b>
         <input type="range" min="1" max="12" step="1" data-k="coders" aria-describedby="bs-hc"></label>
       <p class="bs-hint" id="bs-hc">With more than one, an Opus planner splits the work and each agent builds a piece on its own copy.</p>
-      <label class="bs-row"><span class="bs-rl">Review depth <span class="bs-sub">quality</span></span><b class="bs-rv" data-out="reviewers"></b>
+      <label class="bs-row"><span class="bs-rl">Reviewers <span class="bs-sub">quality</span></span><b class="bs-rv" data-out="reviewers"></b>
         <input type="range" min="0" max="3" step="1" data-k="reviewers" aria-describedby="bs-hr"></label>
-      <p class="bs-hint" id="bs-hr">Reviewers read each change before it can land: fewer misses, a bit slower.</p>
+      <p class="bs-hint" id="bs-hr"></p>
       <label class="bs-row"><span class="bs-rl">Agent model <span class="bs-sub">cost per agent</span></span><b class="bs-rv" data-out="coderModel"></b>
         <input type="range" min="0" max="2" step="1" data-k="coderModel" aria-describedby="bs-hm"></label>
       <p class="bs-hint" id="bs-hm"></p>
@@ -84,7 +84,7 @@
     try {
       const j = jobNow();
       const r = SIM.predictBuild(j || SIM.SMALL_APP, toVariant(st.v));
-      return r && { wallS: r.wallS, usd: r.apiUsd, basedOn: r.basedOn, same: r.sameSetup, quality: r.quality, notes: r.notes || [], mine: !!j, tasks: r.job?.tasks, agentTasks: r.agentTasks };
+      return r && { wallS: r.wallS, usd: r.apiUsd, basedOn: r.basedOn, same: r.sameSetup, quality: r.quality, notes: r.notes || [], mine: !!j, tasks: r.job?.tasks, agentTasks: r.agentTasks, measured: r.qualityMeasured !== false, guess: r.qualityGuess };
     } catch (e) { log('estimate_failed', { error: String(e), v: st.v }); return 'error'; }
   }
   const bucketWords = () => (st.sug?.bucket && jobNow() ? `${st.sug.bucket.replace(/ pieces?$/, '')} pieces of work` : null);
@@ -105,10 +105,12 @@
     out('cost').textContent = range(e.usd, usd);
     const seg = (el, r, lo, hi) => { const a = pos(r[0], lo, hi), b = pos(r[1], lo, hi); el.style.left = `${a}%`; el.style.width = `${Math.max(3, b - a)}%`; };
     seg($('[data-bar="time"] i'), e.wallS, 30, 3600); seg($('[data-bar="cost"] i'), e.usd, 0.1, 10);
-    const q = (QUALITY.find(([re]) => re.test(e.quality)) || [0, 2])[1];
+    // A setup the lab never ran: no meter, the words say so; qb4's guess goes in the small print.
+    const q = e.measured ? (QUALITY.find(([re]) => re.test(e.quality)) || [0, 2])[1] : 0;
     out('quality').textContent = e.quality.replace(/\.$/, '');
+    $('[data-bar="quality"]').classList.toggle('bs-unmeasured', !e.measured);
     root.querySelectorAll('[data-bar="quality"] i').forEach((el, i) => el.classList.toggle('on', i < q));
-    out('src').textContent = `${e.mine ? `For your idea as the small model read it (${bucketWords() || `about ${e.tasks} pieces of work`}).` : `For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet.`} Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}. ${e.notes.join(' ')} With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.`;
+    out('src').textContent = `${e.mine ? `For your idea as the small model read it (${bucketWords() || `about ${e.tasks} pieces of work`}).` : `For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet.`} Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}.${!e.measured && e.guess ? ` Quality guess: ${e.guess.replace(/\.$/, '').toLowerCase()}.` : ''} ${e.notes.join(' ')} With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.`;
   }
   function paintWhy() {
     const g = st.sug, w = $('.bs-why'), k = which(st.v);
@@ -148,7 +150,7 @@
     $('[data-k="reviewers"]').value = v.reviewers; out('reviewers').textContent = REVIEW_W[v.reviewers];
     $('[data-k="coderModel"]').value = MODELS.indexOf(v.coderModel); out('coderModel').textContent = M[v.coderModel];
     $('#bs-hm').textContent = `${M[v.coderModel]} is ${MODEL_COST[v.coderModel]}.`;
-    $('#bs-hr').textContent = v.reviewers && v.coders === 1 ? 'With a reviewer, the one agent works as a planned team: an Opus planner, the agent and its reviewer.' : 'Reviewers read each change before it can land: fewer misses, a bit slower.';
+    $('#bs-hr').textContent = v.reviewers && v.coders === 1 ? 'With a reviewer, the one agent works as a planned team: an Opus planner, the agent and its reviewer.' : 'Each change is read once before it lands: fewer misses. More reviewers only cut the wait for a free one.';
     const sw = $('[data-k="board"]'); sw.setAttribute('aria-checked', String(v.board)); sw.disabled = v.coders === 1;
     $('#bs-hb').textContent = v.coders === 1 ? 'Needs more than one agent.' : 'Agents say what they are doing and which files they touch, so nothing is built twice.';
     root.querySelectorAll('input[type=range]').forEach((r) => r.style.setProperty('--p', `${((r.value - r.min) / (r.max - r.min)) * 100}%`));
