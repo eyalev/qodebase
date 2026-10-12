@@ -3,6 +3,7 @@
 // rail on desktop). Views are a small registry: a new one is one entry here.
 // Why: docs/design-v2.md ("Views").
 
+import { siteHeader, type HeaderCtx } from './header';
 import { JOIN_SPEECH } from './speechjoin';
 import type { Entry } from './registry';
 import type { ProjectInfo } from './project';
@@ -473,8 +474,8 @@ export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record
   const home = g.nav === 'a'
     ? `<a class="home back" href="/" aria-label="All projects${g.inbox ? `, ${g.inbox} need you` : ''}">${CHEV}qodebase${g.inbox ? `<span class="hbadge">${g.inbox}</span>` : ''}</a>`
     : `<a class="home" href="/" aria-label="All projects">qodebase</a>`;
-  return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · qodebase`, `${g.nav === 'd' ? globalTop(own ? 'projects' : 'explore', g.inbox, me) : ''}
-<header class="h3${g.nav === 'd' ? ' sub' : ''}">${g.nav === 'd' ? '' : home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(ownerLabel(info.owner))} /</span> <b>${esc(info.name)}</b>${info.private ? ` <span class="priv" title="Private: only you">${LOCK}</span>` : ''}</a>${r.action || ''}</header>
+  return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · qodebase`, `${g.nav === 'd' ? globalTop(own ? 'projects' : 'explore', g.inbox, me, { owner: info.owner, ownerLabel: ownerLabel(info.owner), name: info.name, href: c.base, private: !!info.private, action: r.action || '' }) : ''}
+${g.nav === 'd' ? '' : `<header class="h3">${home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(ownerLabel(info.owner))} /</span> <b>${esc(info.name)}</b>${info.private ? ` <span class="priv" title="Private: only you">${LOCK}</span>` : ''}</a>${r.action || ''}</header>`}
 ${g.nav === 'b' ? tabBar(c, id, needs, true) : ''}
 <main class="view${r.full ? ' full' : ''}" id="view">${r.body}</main>${r.compose || (own ? askBox(c) : '')}
 ${g.nav === 'b' ? globalBar('projects', g.inbox, me) : tabBar(c, id, needs)}
@@ -724,19 +725,9 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 
 
 /** D: the site-wide tabs as a strip at the top: forq, then Projects, Inbox, Explore, Account. */
-export function globalTop(active: HomeTab, inbox: number, me: string) {
-  // Home is the world (the same for everyone); your own projects are under Yours.
-  // The forq mark is the way home (2026-10-04: Home became a calm start page and the
-  // catalogue moved to Explore, without adding a tab to a full bar).
-  // Account lives in the ☰ menu when signed in: with it in the bar, Build fell off a
-  // 390 px screen (2026-10-06).
-  const tabs: [HomeTab, string, string][] = me
-    ? [['explore', 'Explore', '/explore'], ['inbox', 'Inbox', '/inbox'], ['mine', 'Yours', '/mine']]
-    : [['explore', 'Explore', '/explore'], ['account', 'Sign in', '/login']];
-  if (active === 'projects') active = 'mine';
-  // Build: the call to action on every page, signed in or not (Eyal, 2026-10-03).
-  return `<nav class="gtop" aria-label="qodebase"><a class="mark" href="/" aria-label="qodebase home"><svg class="markq" viewBox="0 0 256 256" width="24" height="24" aria-hidden="true"><rect width="256" height="256" rx="56" fill="var(--acc)"/><circle cx="121" cy="110" r="48" fill="none" stroke="var(--acc-fg)" stroke-width="30"/><path d="M154 58h30v138h-30z" fill="var(--acc-fg)"/></svg><span class="markt">qodebase</span></a>${tabs.map(([id, labelT, href]) =>
-    `<a href="${href}" class="g${id === active ? ' on' : ''}${href === '/login' ? ' signin' : ''}"${id === active ? ' aria-current="page"' : ''}>${labelT}${id === 'inbox' && inbox ? `<span class="badge">${inbox}</span>` : ''}</a>`).join('')}<a class="btn gbuild" href="/build"${active === 'build' ? ' aria-current="page"' : ''}>Build</a>${me ? COST_CHIP : ''}${gmenu(me, active)}</nav>`;
+export function globalTop(active: HomeTab, inbox: number, me: string, ctx?: HeaderCtx) {
+  // The site header (src/header.ts, qb3 2026-10-12): mark, owner / project or the section, +, avatar, ☰ sheet.
+  return siteHeader({ active, inbox, me, ctx });
 }
 
 /** Costs (src/costs.ts): today's amount in the header; tap for 7 days, 30-day estimate, link. */
