@@ -844,3 +844,36 @@ not ordered that way.
 - **A better design would combine the two.** Ownership of line ranges (claims at range granularity) to prevent
   collisions, plus a lane-level check instead of none. The sim suggests that keeps Bun's speed if the lane check
   is fast relative to work. That is a cell to try (BUN3), not a result.
+
+### (i) L1 prediction vs L2 actual (qb5's sim/real lanes, e45fbdf, sim/real/out/lanes.jsonl; 2026-10-12)
+
+L2 used real git and real tests, one seed per cell. Landed per hour, 2,000 agents unless noted:
+
+| cell | predicted (L1, shaped like L2) | measured (L2) | |
+|---|---|---|---|
+| one queue, 500 / 2,000 / 10,000 agents | 818–850, saturated | 851–896 at all three | held (within 5–9%) |
+| 32 lanes, root files split, steady state | 1,379 | 1,271 (6 h, last hour; dependency-aware lanes + controller, main never red) | held (−8%) |
+| 8 lanes, root files split, steady state | 1,191 | 540 (6 h, last hour; same design) | **missed (2.2× too high)** |
+| 8 lanes, big coordinated trains | 1,558 | 1,133 | missed (1.4× too high) |
+| shared root files vs split | lanes worse than one queue when shared | "shared hot files cancel the gain; split is a precondition" | held |
+| 2 h runs overstate the cross-area cells | up to 2× | "without a controller the coordinated queue grows by hundreds an hour; 2 h averages overstate" | held |
+
+**What L1 did not model, and L2 found:**
+- **Lane-local tests break main.** Lanes that test only their own area left main red 20–88% of the time. Every
+  break was a call into another area racing a rename there. L1's breaks are a flat 0.3% per change with no
+  cross-area semantics, so it could not see this.
+- **The fix is dependency-aware lanes.** A change that calls into another area counts as cross-area, and lanes
+  test their reverse dependencies. That gave 0 breaks in all 26 such cells, but raised the coordinated share at
+  8 lanes from ~4% to 15%.
+
+**The 8-lane miss is not explained by the cross share alone.** Re-running L1's L2-shaped model with L2's measured
+15% gives 1,269 an hour at 8 lanes (last hour of 6 h, 3 seeds: 952, 984, 1,871).
+
+Candidates, not yet isolated:
+- **L2's door onto main:** one train at a time.
+- **Main's full tests after every landing.**
+- **Slower lane tests:** testing reverse dependencies makes each lane's test longer.
+- **Noise:** one seed's last hour swings ±40% in L1, and L2 has one seed per cell.
+
+The 32-lane design that L2 recommends (dependency-aware, controller) matched within 8%. The 8-lane cells need 3+
+seeds before the miss is read as structural.
