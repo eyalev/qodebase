@@ -178,7 +178,7 @@
     $('#bs-hm').textContent = `${M[v.coderModel]} is ${MODEL_COST[v.coderModel]}.`;
     $('#bs-hr').textContent = v.reviewers && v.coders === 1 ? 'With a reviewer, the one agent works as a planned team: an Opus planner, the agent and its reviewer.' : 'Each change is read once before it lands: fewer misses. More reviewers only cut the wait for a free one.';
     const sw = $('[data-k="board"]'); sw.setAttribute('aria-checked', String(v.board)); sw.disabled = v.coders === 1;
-    $('#bs-hb').textContent = v.coders === 1 ? 'Needs more than one agent.' : 'Agents say what they are doing and which files they touch, so nothing is built twice.';
+    $('#bs-hb').textContent = v.coders === 1 ? 'Needs more than one agent.' : 'Shows who is on what and warns when two agents touch the same files.';
     root.querySelectorAll('input[type=range]').forEach((r) => r.style.setProperty('--p', `${((r.value - r.min) / (r.max - r.min)) * 100}%`));
     paintOut(); paintWhy(); paintForm();
   }

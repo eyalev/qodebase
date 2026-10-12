@@ -60,8 +60,9 @@
   const AG = (a) => (a ? `Agent ${agentNum(a)}` : 'an agent');
   const leadName = (l) => { const x = (l || '').replace(/^agent-(\d+)/i, 'Agent $1'); return /^(scripted )?lead$/i.test(x) ? 'its lead' : x; };
   const ready = (c) => c.state === 'pushed' && c.review && c.review.verdict !== 'changes';
-  const skey = (c) => (ready(c) ? 'ready' : c.state);
-  const WORD = { working: 'Working', pushed: 'Waiting for review', ready: 'Ready to merge', reviewing: 'Being reviewed', queued: 'In line', testing: 'Being tested', landed: 'Landed', bounced: 'Sent back', replaying: 'Replaying', 'with-lead': 'With its lead' };
+  // A stopped run (R1: the owner or the budget halted every box) shows its unfinished changes as halted, not working.
+  const skey = (c) => (D?.run?.stopped && !['landed', 'bounced'].includes(c.state) ? 'halted' : ready(c) ? 'ready' : c.state);
+  const WORD = { working: 'Working', pushed: 'Waiting for review', ready: 'Ready to merge', reviewing: 'Being reviewed', queued: 'In line', testing: 'Being tested', landed: 'Landed', bounced: 'Sent back', halted: 'Halted', replaying: 'Replaying', 'with-lead': 'With its lead' };
   const st = (c) => `<span class="st s-${skey(c)}"><i class="dot"></i><span class="w">${WORD[skey(c)] || esc(c.state)}</span></span>`;
   // Real ids are '<owner>.<name>--<id>': people see the short part.
   const ref = (id) => `#${esc(String(id).split('--').pop())}`;
@@ -608,6 +609,29 @@
   const elTxt = (t) => { const s = Math.max(0, Math.floor((now() - t) / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   const COLS = [['work', 'Working', (c) => c.state === 'working' || c.state === 'bounced'], ['rev', 'Review', (c) => ['pushed', 'reviewing'].includes(c.state) || ready(c)],
     ['line', 'In line', (c) => ['queued', 'testing', 'replaying', 'with-lead'].includes(c.state) && !ready(c)], ['done', 'Landed', (c) => c.state === 'landed']];
+  // R1 (Eyal, 2026-10-12): the owner's brakes for a real run. Pause = no new tasks or trains, agents finish what they
+  // are on; Stop all = every box halts (asks once more inline: a browser confirm() would block the page); Resume
+  // clears either. Server (qb6): view().run {paused, pausedAt, stopped, stoppedAt, stoppedWhy}; POST
+  // …/landing/{pause,resume,stop}, each answers the new run object. stoppedWhy also carries budget stops.
+  let stopAsk = 0;
+  const RUN = () => D.run || {};
+  function runCtl(live) {
+    const c = RUN();
+    if (!OWN || MOCK || D.mode === 'demo' || (P && P.replay)) return '';
+    if (!live && !c.paused && !c.stopped) return '';
+    const at = (t) => (t ? ` at ${hhmm(t)}` : '');
+    if (c.stopped) {
+      const why = !c.stoppedWhy || /owner/.test(c.stoppedWhy) ? `Stopped by you${at(c.stoppedAt)}. Every agent was halted.` : `Stopped${at(c.stoppedAt)}, ${c.stoppedWhy.replace(/:\s*(.+)$/, ' ($1)')}. Every agent was halted.`;
+      return `<div class="sacts sctl" role="group" aria-label="Run controls"><button class="chipb" type="button" data-ctl="resume">Resume</button></div><p class="snote sctl-n">${esc(why)} Resume wakes them on their next message.</p>`;
+    }
+    const asking = stopAsk && Date.now() - stopAsk < 10e3;
+    const btns = asking
+      ? `<button class="btn danger" type="button" data-ctl="stop">Stop every agent</button><button class="chipb" type="button" data-ctl="cancel">Keep going</button>`
+      : `<button class="chipb" type="button" data-ctl="${c.paused ? 'resume' : 'pause'}">${c.paused ? 'Resume' : 'Pause'}</button><button class="chipb danger" type="button" data-ctl="ask">Stop all</button>`;
+    const note = asking ? 'Stop all halts every box now. Work an agent has not pushed is lost.'
+      : c.paused ? `Paused by you${at(c.pausedAt)}. No new tasks or merges start; agents finish what they are on.` : '';
+    return `<div class="sacts sctl" role="group" aria-label="Run controls">${btns}</div>${note ? `<p class="snote sctl-n">${note}</p>` : ''}`;
+  }
   function statusStrip(live, isStarting) {
     const dm = D.demo || {}, W = D.watch || {}, replay = P && P.replay;
     const landed = countIf(D.changes, (c) => c.state === 'landed');
@@ -619,9 +643,10 @@
     const left = W.maxPerDay ? Math.max(0, W.maxPerDay - (W.runsToday || 0)) : null;
     const acts = replay ? `<div class="sacts">${now() >= P.end - 1 ? '<button class="btn" type="button" data-watch="again">Replay again</button>' : speedChips(P.speed)}<button class="chipb" type="button" data-watch="live">Back to live</button></div>`
       : idle && !MOCK && D.watch?.enabled ? `<div class="sacts"><button class="btn" type="button" data-watch="start">Watch a run</button>${D.changes.length ? '<button class="chipb" type="button" data-watch="replay">Replay the last one</button>' : ''}${ownerCtl(false)}</div>${limitNote ? `<p class="snote">${esc(limitNote)}</p>` : left != null ? `<p class="snote">${left} of ${W.maxPerDay} live runs left today.</p>` : ''}`
-      : live && OWN && !MOCK && D.mode === 'demo' ? `<div class="sacts">${ownerCtl(true)}</div>` : '';
-    return `<div class="sstrip"><p class="skick"><i class="live${live || isStarting ? '' : ' off'}"></i><span>${kick}</span>${tm ? `<span class="stm">${tm}</span>` : ''}</p>
-      <p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>${acts}</div>`;
+      : live && OWN && !MOCK && D.mode === 'demo' ? `<div class="sacts">${ownerCtl(true)}</div>` : ''
+    const ctl = runCtl(live);
+    return `<div class="sstrip"><p class="skick"><i class="live${(live || isStarting) && !RUN().paused && !RUN().stopped ? '' : ' off'}"></i><span>${kick}${RUN().stopped ? ', stopped' : RUN().paused ? ', paused' : ''}</span>${tm ? `<span class="stm">${tm}</span>` : ''}</p>
+      <p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>${acts}${ctl}</div>`;
   }
   function pipeline() {
     const rp = (c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying');
@@ -631,7 +656,7 @@
       return `<div class="pcol ${k}"><p class="ph"><span>${label}</span><b>${cs.length}</b></p><div class="pchips${cs.length > 6 ? ' many' : ''}">${chips}</div></div>`;
     }).join('');
     const anyRp = D.changes.some(rp), anyBad = D.changes.some((c) => c.state === 'with-lead' || c.state === 'bounced');
-    return `<div class="pipe">${cols}</div>${anyRp || anyBad ? `<p class="pkey">${anyRp ? '<span><i class="pc rp mini"></i>collided, then redone on the newest code</span>' : ''}${anyBad ? '<span><i class="pc bad mini"></i>sent back or waiting</span>' : ''}</p>` : ''}`;
+    return `<div class="pipe${RUN().stopped ? ' halted' : ''}">${cols}</div>${anyRp || anyBad ? `<p class="pkey">${anyRp ? '<span><i class="pc rp mini"></i>collided, then redone on the newest code</span>' : ''}${anyBad ? '<span><i class="pc bad mini"></i>sent back or waiting</span>' : ''}</p>` : ''}`;
   }
   function latestLine(isStarting) {
     if (isStarting) return '<p class="slast2">The café site goes back to its first version and the agents get their tasks.</p>';
@@ -901,7 +926,9 @@
       const before = new Map();
       if (same) root.querySelectorAll('[data-car]').forEach((e) => before.set(e.dataset.car, e.getBoundingClientRect()));
       const ps = root.querySelector('.fpanel')?.scrollTop || 0;
+      const ctlF = document.activeElement?.closest?.('.sctl') ? document.activeElement.dataset.ctl : null;   // keep focus on the run controls
       root.innerHTML = html;
+      if (ctlF) (root.querySelector(`[data-ctl="${ctlF}"]`) || root.querySelector('.sctl button'))?.focus({ preventScroll: true });
       const pn = root.querySelector('.fpanel'); if (pn && ps) pn.scrollTop = ps;
       if (TL && root.querySelector('.tl') && window.qbTimelineMount) window.qbTimelineMount(root, TL);
       fitSize();
@@ -958,6 +985,21 @@
       if (!r.ok) { sbb.disabled = false; toast(j.error || 'Could not send it back. Try again.'); return; }
       delete sbDraft[id]; const ta = root.querySelector(`.sb-note[data-sb="${CSS.escape(id)}"]`); if (ta) ta.value = '';
       sbb.disabled = false; toast('Sent back. The agent is on it.'); tick(); return;
+    }
+    const cb = ev.target.closest('[data-ctl]');
+    if (cb) {
+      const act = cb.dataset.ctl;
+      if (act === 'ask') { stopAsk = Date.now(); render(); root.querySelector('[data-ctl="stop"]')?.focus(); setTimeout(render, 10.1e3); return; }
+      if (act === 'stop' && !(stopAsk && Date.now() - stopAsk < 10e3)) { stopAsk = 0; render(); return; }   // a confirm left on screen too long
+      if (act === 'cancel') { stopAsk = 0; render(); return; }
+      stopAsk = 0; cb.disabled = true;
+      const r = await fetch(`${API}/landing/${act}`, { method: 'POST' }).catch((e) => ({ ok: false, statusText: String(e) }));
+      const j = r.json ? await r.json().catch(() => ({})) : {};
+      log('control', { action: act, ok: r.ok, status: r.status });
+      if (!r.ok) { cb.disabled = false; toast(j.error || 'Could not do that. Try again.'); render(); return; }
+      if (j && typeof j.paused === 'boolean') D.run = j; else if (j.run) D.run = j.run;
+      toast(act === 'pause' ? 'Paused. Agents finish what they are on.' : act === 'resume' ? 'Going again.' : 'Stopping every agent.');
+      tick(); return;
     }
     const wb = ev.target.closest('[data-watch]');
     if (wb) { if (wb.dataset.home) location.hash = '#/'; watch(wb.dataset.watch, wb); return; }

@@ -300,6 +300,10 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .sbar2 i{display:block;height:100%;background:var(--acc);transition:width 220ms ease}
 .lw .sacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .lw .snote{font-size:13px;color:var(--dim);margin:0}
+.lw .chipb.danger{color:var(--warn)}.lw .btn.danger{background:var(--warn);color:var(--bg)}
+.lw .snote.sctl-n{color:var(--fg)}
+.lw .s-halted .dot,.lw .dot.s-halted{background:var(--dim)}.lw .ag.s-halted{background:var(--dim);color:var(--bg)}
+.lw .pipe.halted .pcol.work .pc,.lw .pipe.halted .pcol.line .pc{background:var(--dim);color:var(--bg)}
 .lw .fpipe{display:flex;flex-direction:column;gap:6px}
 .lw .fit.open .pkey{display:none}
 .lw .fit.open .slast2{-webkit-line-clamp:2}
