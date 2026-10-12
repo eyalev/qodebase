@@ -241,3 +241,6 @@
 .lw details.bdone summary::before{content:'';width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;margin-right:8px;transition:transform 120ms}
 .lw details.bdone[open] summary::before{transform:rotate(90deg)}
 @media (min-width:1000px){.lw #board .board{align-items:start}}
+
+/* Design pass (2026-10-12): one accent button per screen; on a project page that is Watch a run, so the header's Build steps down to a chip. */
+body:has(.lw .watch) .gbuild{background:var(--chip);color:var(--fg)}

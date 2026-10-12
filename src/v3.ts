@@ -720,7 +720,7 @@ function landBody(entries: Entry[], selfHost = false) {
   // Review #3 (2026-10-12): lead with the coordination demo, then the lab and the sim; the builder stays below.
   const watch = selfHost ? '' : `<a class="watchtop" href="/p/eyal/corner-cafe"><span class="wt1">A demo you can start, no sign-in</span>
 <b>Watch 6 scripted agents change one app at once</b>
-<span class="wt2">When two agents edit the same lines, the later edit is redone on the newest code instead of being thrown away, and nothing lands untested. Real commits and tests, no AI cost. About 2 minutes.</span></a>
+<span class="wt2">When two agents edit the same lines, the later edit is redone on the newest code instead of being thrown away, and nothing lands untested. Real commits and tests, no AI cost. About 2 minutes.</span><span class="wtgo">Watch a run</span></a>
 <nav class="watchmore" aria-label="The evidence"><a href="/lab">The lab: which way of running agents wins</a><a href="/sim/">The simulation: up to 100,000 agents</a></nav>`;
   return `<section class="land">
 ${watch}
@@ -734,7 +734,7 @@ ${watch}
 </form>
 <nav class="doors" aria-label="More">
 ${selfHost ? '' : `<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account.</small></span></a>
-<a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>OpenClaw, Hermes, T3 Code and more.</small></span></a>`}
+<a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>An AI assistant that runs in your own Cloudflare account.</small></span></a>`}
 <a class="browse own" href="/explore"><span>Explore public projects<small>Apps and code others have shared.</small></span></a>
 </nav>
 ${tryRow(entries)}
@@ -801,6 +801,8 @@ export const LAND_CSS = `
 .watchtop b{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--acc)}
 .watchtop .wt1{font-size:13px;color:var(--dim)}
 .watchtop .wt2{font-size:14px;color:var(--dim)}
+/* Design pass (2026-10-12): the card looked like text; a visible button says it starts something. Chip, not accent: Build it is the page's one green button. */
+.watchtop .wtgo{justify-self:start;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;margin-top:8px;border-radius:10px;background:var(--chip);color:var(--fg);font-size:15px;font-weight:500;box-shadow:inset 0 0 0 1px var(--line)}
 .watchmore{display:flex;flex-wrap:wrap;gap:0 16px;margin:0 0 28px}
 .watchmore a{min-height:44px;display:inline-flex;align-items:center;font-size:14px;color:var(--acc);text-decoration:underline;text-underline-offset:3px}
 @media (hover:hover){.watchtop:hover{background:var(--chip)}}
