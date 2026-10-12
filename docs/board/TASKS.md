@@ -78,3 +78,4 @@ GitHub-shaped, agent-first (Eyal, 2026-10-12: "yes, build items 2-5" of docs/con
 - [ ] G3 file view: 'Changed by N changes, M collisions' -> that file's changes by intent (blame by intent) (qb3)
 - [ ] G4 Asks per project: router requests + board tasks with state, agent, duplicates/aliases (the agent-age issues list) (qb3 UI, qb6 endpoint)
 - [ ] G5 'Ask for changes' on a change record: the owner's own note sends the change back to its agent (extends the fix verb) (qb6 server, qb7 UI)
+- [ ] BUN5 re-cut by module (Eyal, 2026-10-12): merge consecutive commits on the same lines into one task per module (port + compile + test as one owner's task), module order from the real crate/module structure (use/mod/import graph), re-run 64/640/6,400 agents; same calibration; prediction first (qb4 sim), then real-patch check of the critical path on a VM if useful (qb5). Question: did the decomposition, not the agent count, set Bun's speed?
