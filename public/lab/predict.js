@@ -462,7 +462,7 @@ import EST_CAL from './estimate-cal.js';
 // The three presets, each one a setup the lab has run for real (public/lab/runs.jsonl).
 export const BUILD_PRESETS = {
   fastest: { label: 'Fastest', variant: { baseline: 'opus-alone' },
-    why: 'One Opus agent does it all. In the lab it finished first and scored highest on every app; on the bigger apps it cost 2-2.5x a team.' },
+    why: 'One Opus agent does it all. In the lab it finished first where time could be compared (2 of 4 jobs), with the same quality or within one hidden test; on the bigger apps it cost 2-2.5x a team.' },
   balanced: { label: 'Balanced', variant: { planner: 'opus', coders: 12, coderModel: 'haiku', reviewers: 3, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4 },
     why: 'An Opus planner, 12 Haiku coders and 3 Haiku reviewers. On the lab\'s bigger apps: about half the cost of Fastest, slower, nearly the same quality. On small jobs the saving shrinks or reverses.' },
   cheapest: { label: 'Cheapest', variant: { planner: 'opus', coders: 6, coderModel: 'haiku', reviewers: 0, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4 },
@@ -558,8 +558,8 @@ export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced
   }
   const qualityMeasured = measured(v);
   const dq = p.quality - ref.quality;
-  const direction = baseline === 'opus-alone' ? 'Fewest misses in the lab.' : isRef ? 'The lab\'s middle setting.'
-    // Never better than Fastest: one Opus agent is the lab's measured best, and a sim edge over it is not evidence.
+  const direction = baseline === 'opus-alone' ? 'About the same quality as a team in the lab.' : isRef ? 'The lab\'s middle setting.'
+    // Never better than Fastest: in the lab a team matched one Opus agent at best (same, or one hidden test apart), so a sim edge over it is not evidence.
     : dq > 2 && !solo ? `Fewer misses than ${refName}.` : dq < -2 ? `More misses than ${refName}.` : `About like ${refName}.`;
   const floor = BUILD_FLOOR[baseline === 'opus-alone' ? 'alone' : 'team'];
   const wallMid = Math.max(p.wallS, floor.mid);
@@ -600,7 +600,7 @@ export function suggestBuild(jobIn = SMALL_APP) {
   if (bucket.small || x <= 1.5) {
     // The words follow this job's numbers: 'small' only for the two small buckets.
     const cost = x <= 1.05 ? 'costs about the same as a team or less' : x <= 1.25 ? 'costs a little more than a team' : `costs about ${x.toFixed(1)}x a team`;
-    return out({ preset: 'fastest', why: `${bucket.small ? 'A small job: o' : 'O'}ne agent is quickest and best here, and ${cost}.` });
+    return out({ preset: 'fastest', why: `${bucket.small ? 'A small job: o' : 'O'}ne agent is likely quickest here, at about a team's quality, and ${cost}.` });
   }
   if (sc.difficulty <= 0.7 && sc.pShared < 0.7) return out({ preset: 'cheapest', why: 'Many simple, separate pieces: a Haiku crew does them for the least.' });
   const share = 1 / x;

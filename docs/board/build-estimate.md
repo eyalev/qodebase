@@ -33,7 +33,7 @@ predictBuild(SMALL_APP, BUILD_PRESETS.balanced.variant)
 - **`sameSetup`**: how many of those runs used exactly this setup. Say "based on N real runs" with
   `basedOn`. When `sameSetup` is 0, say the setup itself was not run in the lab.
 - **`quality`**: a direction only, never a number:
-  - "Fewest misses in the lab." for one agent;
+  - "About the same quality as a team in the lab." for one agent;
   - "The lab's middle setting." for Balanced;
   - otherwise "Fewer misses / About like / More misses than Balanced" (the sim, ±2 points).
 
