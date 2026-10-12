@@ -1,0 +1,387 @@
+{
+ "n": {
+  "A": 3,
+  "E": 3,
+  "E pa": 3
+ },
+ "measures": {
+  "wall_s": {
+   "label": "wall time (s)",
+   "A": {
+    "median": 670,
+    "min": 537,
+    "max": 716
+   },
+   "E": {
+    "median": 668,
+    "min": 587,
+    "max": 749
+   },
+   "E pa": {
+    "median": 664,
+    "min": 542,
+    "max": 758
+   },
+   "p_E_vs_A": 1,
+   "p_E pa_vs_A": 1,
+   "p_pa_vs_E": 1
+  },
+  "hidden_pass": {
+   "label": "hidden tests (of 60)",
+   "A": {
+    "median": 60,
+    "min": 60,
+    "max": 60
+   },
+   "E": {
+    "median": 60,
+    "min": 58,
+    "max": 60
+   },
+   "E pa": {
+    "median": 54,
+    "min": 54,
+    "max": 55
+   },
+   "p_E_vs_A": 1,
+   "p_E pa_vs_A": 0.1,
+   "p_pa_vs_E": 0.1
+  },
+  "closed_n": {
+   "label": "arrivals closed as duplicates",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E pa": {
+    "median": 6,
+    "min": 5,
+    "max": 6
+   },
+   "p_E_vs_A": 1,
+   "p_E pa_vs_A": 0.1,
+   "p_pa_vs_E": 0.1
+  },
+  "hidden_open": {
+   "label": "hidden tests failed among tasks not closed",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E": {
+    "median": 0,
+    "min": 0,
+    "max": 2
+   },
+   "E pa": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "p_E_vs_A": 1,
+   "p_E pa_vs_A": 1,
+   "p_pa_vs_E": 1
+  },
+  "agent_minutes": {
+   "label": "agent-minutes (all calls)",
+   "A": {
+    "median": 86.5,
+    "min": 76.6,
+    "max": 96.7
+   },
+   "E": {
+    "median": 84.6,
+    "min": 74,
+    "max": 88.6
+   },
+   "E pa": {
+    "median": 71.6,
+    "min": 69.3,
+    "max": 74.5
+   },
+   "p_E_vs_A": 0.7,
+   "p_E pa_vs_A": 0.1,
+   "p_pa_vs_E": 0.2
+  },
+  "wasted_agent_minutes": {
+   "label": "agent-minutes wasted (built then dropped)",
+   "A": {
+    "median": 20.3,
+    "min": 14.3,
+    "max": 25.3
+   },
+   "E": {
+    "median": 14.7,
+    "min": 12.6,
+    "max": 18.4
+   },
+   "E pa": {
+    "median": 9.9,
+    "min": 6.6,
+    "max": 11.1
+   },
+   "p_E_vs_A": 0.4,
+   "p_E pa_vs_A": 0.1,
+   "p_pa_vs_E": 0.1
+  },
+  "red_commits": {
+   "label": "red commits on main",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E pa": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "p_E_vs_A": 1,
+   "p_E pa_vs_A": 1,
+   "p_pa_vs_E": 1
+  },
+  "wasted_work_calls": {
+   "label": "wasted work (calls that built a task then dropped it)",
+   "A": {
+    "median": 27,
+    "min": 19,
+    "max": 31
+   },
+   "E": {
+    "median": 24,
+    "min": 22,
+    "max": 27
+   },
+   "E pa": {
+    "median": 17,
+    "min": 12,
+    "max": 20
+   },
+   "p_E_vs_A": 0.8,
+   "p_E pa_vs_A": 0.2,
+   "p_pa_vs_E": 0.1
+  },
+  "deferrals": {
+   "label": "deferrals (skipped before any work)",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "E": {
+    "median": 42,
+    "min": 37,
+    "max": 44
+   },
+   "E pa": {
+    "median": 34,
+    "min": 32,
+    "max": 44
+   },
+   "p_E_vs_A": 0.1,
+   "p_E pa_vs_A": 0.1,
+   "p_pa_vs_E": 0.5
+  },
+  "cut_calls": {
+   "label": "calls cut at the turn cap",
+   "A": {
+    "median": 0,
+    "min": 0,
+    "max": 1
+   },
+   "E": {
+    "median": 1,
+    "min": 0,
+    "max": 2
+   },
+   "E pa": {
+    "median": 0,
+    "min": 0,
+    "max": 0
+   },
+   "p_E_vs_A": 0.7,
+   "p_E pa_vs_A": 1,
+   "p_pa_vs_E": 0.4
+  },
+  "dup_pairs_both_separate": {
+   "label": "duplicate pairs built twice (of 10)",
+   "A": {
+    "median": 10,
+    "min": 10,
+    "max": 10
+   },
+   "E": {
+    "median": 4,
+    "min": 2,
+    "max": 4
+   },
+   "E pa": {
+    "median": 1,
+    "min": 0,
+    "max": 2
+   },
+   "p_E_vs_A": 0.1,
+   "p_E pa_vs_A": 0.1,
+   "p_pa_vs_E": 0.2
+  },
+  "same_task_twice_n": {
+   "label": "same task landed twice",
+   "A": {
+    "median": 1,
+    "min": 0,
+    "max": 2
+   },
+   "E": {
+    "median": 0,
+    "min": 0,
+    "max": 2
+   },
+   "E pa": {
+    "median": 1,
+    "min": 0,
+    "max": 3
+   },
+   "p_E_vs_A": 1,
+   "p_E pa_vs_A": 1,
+   "p_pa_vs_E": 0.7
+  },
+  "conflicts": {
+   "label": "merge conflicts resolved",
+   "A": {
+    "median": 157,
+    "min": 128,
+    "max": 183
+   },
+   "E": {
+    "median": 146,
+    "min": 127,
+    "max": 172
+   },
+   "E pa": {
+    "median": 122,
+    "min": 105,
+    "max": 136
+   },
+   "p_E_vs_A": 0.7,
+   "p_E pa_vs_A": 0.2,
+   "p_pa_vs_E": 0.2
+  },
+  "rebase_aborts": {
+   "label": "rebases aborted",
+   "A": {
+    "median": 86,
+    "min": 74,
+    "max": 148
+   },
+   "E": {
+    "median": 8,
+    "min": 4,
+    "max": 9
+   },
+   "E pa": {
+    "median": 10,
+    "min": 7,
+    "max": 10
+   },
+   "p_E_vs_A": 0.1,
+   "p_E pa_vs_A": 0.1,
+   "p_pa_vs_E": 0.3
+  },
+  "resets_to_origin": {
+   "label": "resets to origin/main",
+   "A": {
+    "median": 90,
+    "min": 80,
+    "max": 169
+   },
+   "E": {
+    "median": 8,
+    "min": 5,
+    "max": 11
+   },
+   "E pa": {
+    "median": 10,
+    "min": 9,
+    "max": 11
+   },
+   "p_E_vs_A": 0.1,
+   "p_E pa_vs_A": 0.1,
+   "p_pa_vs_E": 0.5
+  },
+  "rejected_push_recoveries": {
+   "label": "rejected pushes recovered",
+   "A": {
+    "median": 179,
+    "min": 154,
+    "max": 220
+   },
+   "E": {
+    "median": 62,
+    "min": 57,
+    "max": 63
+   },
+   "E pa": {
+    "median": 56,
+    "min": 52,
+    "max": 60
+   },
+   "p_E_vs_A": 0.1,
+   "p_E pa_vs_A": 0.1,
+   "p_pa_vs_E": 0.2
+  },
+  "calls": {
+   "label": "agent calls",
+   "A": {
+    "median": 116,
+    "min": 109,
+    "max": 126
+   },
+   "E": {
+    "median": 135,
+    "min": 127,
+    "max": 150
+   },
+   "E pa": {
+    "median": 127,
+    "min": 122,
+    "max": 135
+   },
+   "p_E_vs_A": 0.1,
+   "p_E pa_vs_A": 0.2,
+   "p_pa_vs_E": 0.5
+  },
+  "usd_api_equiv": {
+   "label": "API-equiv $ (Haiku 5.5)",
+   "A": {
+    "median": 1.7331,
+    "min": 1.5451,
+    "max": 1.917
+   },
+   "E": {
+    "median": 1.8546,
+    "min": 1.6747,
+    "max": 1.9816
+   },
+   "E pa": {
+    "median": 1.6029,
+    "min": 1.5648,
+    "max": 1.6828
+   },
+   "p_E_vs_A": 0.7,
+   "p_E pa_vs_A": 0.7,
+   "p_pa_vs_E": 0.2
+  }
+ }
+}

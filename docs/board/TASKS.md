@@ -24,7 +24,7 @@ Round 3 (Eyal, 2026-10-11 ~04:00 UTC: "start the prediction and setup now, and d
 - [x] W8a throughput-probing controller (add agents while landings/min rise, step back when flat/falling, halve only on dropped work) modelled + prediction before runs (qb4, sim.md (g)): sim.md (g), sim/board/probe.mjs
 - [ ] W8b real runs, Haiku, x3: fixed 8 / 20 / 40, controller with board, controller without board; long backlog; reuse identical earlier runs only if code+flags identical (qb9): harness + s6 (150 generated tasks) built 5db5093; runs queued (chain3), most after the Oct 12 reset
 - [x] W9a dynamic workload: tasks arrive over the run (Poisson), incl. reworded duplicates of done/in-progress work; per-arrival dedupe vs upfront-only vs none; prediction first (qb4, sim.md (h)): sim.md (h), sim/board/arrivals.mjs
-- [ ] W9b real runs x3 per condition, ~10 agents; then controller + arrivals combined if the meter allows (qb9): s7 (30 + 30 arrivals, 10 twin pairs) built 5db5093; queued after W8b
+- [x] W9b real runs x3 per condition, 10 agents (qb9): s7 (30 + 30 arrivals, 10 twin pairs), done 2026-10-12, docs/board/E7-results.md; combined controller + arrivals not run (budget)
 - [ ] W9c per-new-task dedupe in qodebase's board (qb6, after W9b shows it pays)
 Guard: stop at weekly meter 87% (83% at start); what doesn't fit continues after the Oct 12 13:00 UTC reset. s5 Sonnet stays armed for after the reset.
 - [x] W10 review fixes in qodebase (qb6): task ids only from registered lists, aliases/lists router-only, heartbeat keeps claims live, atomic `forq next` behind flag claimNext (+ runner knob claimNext); 27 tests
