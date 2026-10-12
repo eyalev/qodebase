@@ -49,3 +49,8 @@ Screenshots + pick an element in the app (Eyal, 2026-10-12 ~16:00 UTC):
 - [ ] S2 "Pick" on the App view: tap an element in the running app -> chip with what it is (text, tag, CSS selector, short outerHTML), outlined; via a small picker script the app host injects only in pick mode (postMessage) (qb6 inject, qb7 UI)
 - [ ] S3 "Screenshot" button: Cloudflare Browser Rendering captures the app at 390 px (with the picked element outlined) and attaches it (qb6); cloudcost line the day it ships
 - [ ] S4 mark up a screenshot: circle/arrow/highlight on the attached image before sending (qb7), after S1-S3
+
+Idea generator by project size (Eyal, 2026-10-12 ~17:40 UTC):
+- [ ] I1 sizes = the predictor's buckets: Small (1-4 pieces), Medium (5-11), Large (12-29), Huge (30+), each with its typical time/cost from predictBuild; curated list of ~8 ideas per size, phone-relevant, varied domains (qb4)
+- [ ] I2 POST /api/build/idea {size, seed?} -> {title, prompt, size, job facts} in one small-model call (Workers AI like suggest), validated against the size; caps like suggest; curated fallback on any failure (qb6)
+- [ ] I3 UI under the box: 'Need an idea?' + size chips (Small/Medium/Large/Huge, each with ~time/~cost) + 'Another'; picking fills the box and applies the suggested settings (same path as Suggest, no second call), settings row updates (qb7)
