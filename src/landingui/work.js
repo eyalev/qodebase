@@ -398,7 +398,7 @@
   function needsYou() {
     const list = D.changes.filter((c) => ready(c) || c.state === 'with-lead');
     if (!list.length) return '';
-    return `<section class="sec"><div class="sec-h"><h3>${OWN ? 'Needs you' : 'Waiting for the owner'}</h3></div><div class="needs">${list.map((c) => `<div class="need"><a href="#/change/${esc(c.id)}">${short(c)}<span class="sub">${ready(c) ? `${AG(c.agent)}, reviewed and ready` : `Collided on ${files(c.landing?.conflicts || [])}; ${esc(leadName(c.lead))} is on it`}</span></a>${ready(c) && OWN ? `<button class="btn" type="button" data-approve="${esc(c.id)}">Merge</button>` : ''}</div>`).join('')}</div></section>`;
+    return `<section class="sec"><div class="sec-h"><h3>${OWN ? 'Needs you' : 'Waiting for the owner'}</h3></div><div class="needs">${list.map((c) => `<div class="need"><a href="#/change/${esc(c.id)}">${short(c)}<span class="sub">${ready(c) ? `${AG(c.agent)}, ${c.review?.verdict === 'auto' ? 'auto-approved (scripted) and ready' : 'reviewed and ready'}` : `Collided on ${files(c.landing?.conflicts || [])}; ${esc(leadName(c.lead))} is on it`}</span></a>${ready(c) && OWN ? `<button class="btn" type="button" data-approve="${esc(c.id)}">Merge</button>` : ''}</div>`).join('')}</div></section>`;
   }
   // ---- the agent board (qb6's board in the Landing DO, docs/board/PLAN2.md W2c) ---------------
   // Who works on what now (stated task, files, since when), shared files, duplicates, recently finished.
@@ -431,7 +431,9 @@
     return x.length > 110 ? `${x.slice(0, 108).replace(/\s+\S*$/, '')}…` : x;
   }
   function boardRow(r, sharedWith) {
-    const w = boardWho(r.agent), [verb, k] = BKIND[r.kind] || [r.kind, 'working'];
+    const w = boardWho(r.agent);
+    let [verb, k] = BKIND[r.kind] || [r.kind, 'working'];
+    if (r.kind === 'approved' && (w.c?.review?.verdict === 'auto' || D.mode === 'demo')) verb = 'was auto-approved (scripted)';
     const href = w.c ? `#/change/${esc(w.c.id)}` : null;
     const right = r.done || r.kind === 'gave-up' ? ago(r.ts) : w.c?.createdAt ? `started ${ago(w.c.createdAt)}` : ago(r.ts);
     // One dim line: the agent's own status note, "no news" only while it should be working, a shared file.

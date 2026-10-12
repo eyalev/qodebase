@@ -718,9 +718,9 @@ export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, 
  *  assistant, explore) and the try-changing row. */
 function landBody(entries: Entry[], selfHost = false) {
   // Review #3 (2026-10-12): lead with the coordination demo, then the lab and the sim; the builder stays below.
-  const watch = selfHost ? '' : `<a class="watchtop" href="/p/eyal/corner-cafe"><span class="wt1"><i class="live" aria-hidden="true"></i>Live demo, no sign-in</span>
-<b>Watch 6 agents change one app at once</b>
-<span class="wt2">Real git: collisions replayed instead of thrown away, a merge queue that tests before anything lands, every change explained. About 2 minutes.</span></a>
+  const watch = selfHost ? '' : `<a class="watchtop" href="/p/eyal/corner-cafe"><span class="wt1">A demo you can start, no sign-in</span>
+<b>Watch 6 scripted agents change one app at once</b>
+<span class="wt2">When two agents edit the same lines, the later edit is redone on the newest code instead of being thrown away, and nothing lands untested. Real commits and tests, no AI cost. About 2 minutes.</span></a>
 <nav class="watchmore" aria-label="The evidence"><a href="/lab">The lab: which way of running agents wins</a><a href="/sim/">The simulation: up to 100,000 agents</a></nav>`;
   return `<section class="land">
 ${watch}
@@ -744,13 +744,12 @@ t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('
 }
 
 export const LAND_CSS = `
-.watchtop{display:grid;gap:4px;margin:0 0 10px;padding:14px 16px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--fg);text-decoration:none;transition:background-color .12s}
-.watchtop b{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25}
-.watchtop .wt1{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--acc)}
-.watchtop .live{width:8px;height:8px;border-radius:50%;background:var(--acc);flex:none}
+.watchtop{display:grid;gap:4px;margin:0 0 10px;padding:14px 16px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;transition:background-color .12s}
+.watchtop b{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--acc)}
+.watchtop .wt1{font-size:13px;color:var(--dim)}
 .watchtop .wt2{font-size:14px;color:var(--dim)}
 .watchmore{display:flex;flex-wrap:wrap;gap:0 16px;margin:0 0 28px}
-.watchmore a{min-height:44px;display:inline-flex;align-items:center;font-size:14px;color:var(--acc)}
+.watchmore a{min-height:44px;display:inline-flex;align-items:center;font-size:14px;color:var(--acc);text-decoration:underline;text-underline-offset:3px}
 @media (hover:hover){.watchtop:hover{background:var(--chip)}}
 .land{max-width:560px;margin:0 auto;padding:5vh 0 24px}
 .land h1{font-size:34px;line-height:1.15;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;text-wrap:balance}
