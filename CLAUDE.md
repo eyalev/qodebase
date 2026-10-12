@@ -566,6 +566,14 @@ docs/contest/landing.md; owner tab qb6). UI: src/landingui/ (qb7), view "Agents 
 - Projects: eyal/corner-cafe (public demo + Watch a run), eyal/cafe-real (real Haiku agents),
   eyal/cafe-lab (private test bench).
 - Cost: cloudcost gap `qodebase-landing` (local cloudcost settings).
+- **Run timeline** (T1, src/landing/timeline.ts): `GET …/landing/timeline` (owner, or anyone on a publicWatch project) =
+  lanes + spans + marks + critical path + totals, built from change events and trains; the merge job and MergeBox time
+  their phases (box queue, cold/warm wake, fetch, apply/replay, checks, notes, push) and keep them on each train, with each
+  fetch's own ms. What it showed first (2026-10-12): fetching was most of a train. Fixes: a warm box remembers main's branch
+  and fetches main + notes + forks at once (forks after main only on a shallow clone); each fork is **prefetched** into
+  `refs/qb/p/<id>` at the agent's push and again at approve (only when the box is awake with a clone; read token per fork;
+  never into a working tree), and the train skips forks it already has. Watch run: median train 5.5 s -> 2.9 s, fetch per
+  train 3.8 s -> 1.6 s, merger busy 54 s -> 33 s; warm trains fetch in ~0.6 s.
 
 ## Agent board (src/landing/board.ts, docs/board/PLAN2.md, since 2026-10-10)
 
