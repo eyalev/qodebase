@@ -20,6 +20,7 @@ import { catalogReadme } from './catalog';
 import { STARTER, buildPayload } from './newproject';
 import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, cleanEstimate, DEFAULT_PLAN } from './buildsettings';
 import { suggestRoute } from './buildsuggest';
+import { ATTACH_TYPES, ATTACH_MAX, newAttachId, isAttachId, attachKey, composeMessage, parseMarker, attachedLines } from './attach';
 import { buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
@@ -315,6 +316,14 @@ async function sendTo(env: Env, agentId: string, text: string, apiBase: string) 
     if (!b.ok) return { ok: false, error: b.error || 'the box did not start' };
   }
   await box.touch(agentId);
+  // Attached images (src/attach.ts): the box downloads them first, the text then names where they are.
+  const mk = parseMarker(text);
+  if (mk) {
+    const got = mk.slug === projectOf(agentId) ? await box.fetchAttachments(mk.ids).catch((e) => ({ fetched: [] as string[], error: String(e) })) : { fetched: [] as string[] };
+    const failed = mk.ids.filter((id) => !got.fetched.includes(id));
+    log('attach', 'to_box', { agentId, fetched: got.fetched.length, failed: failed.length });
+    text = attachedLines(mk.rest, got.fetched, failed);
+  }
   return box.send(text);
 }
 
@@ -418,6 +427,31 @@ const app = {
       if ((m = path.match(/^\/(?:api\/)?p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/|$)/))) {
         const e = await registry(env).get(slugOf(m[1], m[2]));
         if (e && !canSee(e, me.handle, me.admin)) return path.startsWith('/api/') ? json({ error: 'no such project' }, 404) : new Response('No such project', { status: 404 });
+      }
+      // Attached images (src/attach.ts): upload and read back, the project's owner only.
+      if ((m = path.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/attach(?:\/([a-z0-9.]+))?$/))) {
+        const slug = slugOf(m[1], m[2]);
+        const info0 = await projectStub(env, slug).info();
+        if (!info0) return json({ error: 'no such project' }, 404);
+        if (info0.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
+        if (!env.ATTACH) return json({ error: 'attachments are not set up on this copy' }, 501);
+        if (request.method === 'POST' && !m[3]) {
+          const type = (request.headers.get('content-type') || '').split(';')[0].trim();
+          const id = newAttachId(type);
+          if (!id) return json({ error: `an image: ${Object.keys(ATTACH_TYPES).join(', ')}` }, 415);
+          const body = await request.arrayBuffer();
+          if (!body.byteLength || body.byteLength > ATTACH_MAX) return json({ error: `an image of at most ${ATTACH_MAX / 1048576} MB` }, 413);
+          const name = (request.headers.get('x-file-name') || id).replace(/[^\w. -]/g, '').slice(0, 80) || id;
+          await env.ATTACH.put(attachKey(slug, id), body, { httpMetadata: { contentType: type }, customMetadata: { name, by: me.handle } });
+          log('attach', 'stored', { slug, id, size: body.byteLength, type });
+          return json({ id, name, type, size: body.byteLength, url: `/api/p/${m[1]}/${m[2]}/attach/${id}` });
+        }
+        if (request.method === 'GET' && m[3] && isAttachId(m[3])) {
+          const o = await env.ATTACH.get(attachKey(slug, m[3]));
+          if (!o) return json({ error: 'gone (attachments are kept 30 days)' }, 404);
+          return new Response(o.body, { headers: { 'content-type': o.httpMetadata?.contentType || 'application/octet-stream', 'cache-control': 'private, max-age=86400' } });
+        }
+        return json({ error: 'POST an image, or GET …/attach/<id>' }, 405);
       }
       // Turn an existing project over to automatic landing (owner): the merge queue on, approved changes land by
       // themselves, and every change already pushed goes into the queue now (Eyal's first build sat at 'Ready to merge').
@@ -777,10 +811,12 @@ const app = {
           return json(await spawn(env, ctx, slug, String(b.task || ''), apiBase));
         }
         if (verb === 'router' && request.method === 'POST') {
-          const b = await request.json() as { text?: string };
+          const b = await request.json() as { text?: string; attachments?: unknown; context?: unknown };
           const text = String(b.text || '').trim();
           if (!text || text.length > 8000) return json({ error: 'say something (max 8000 chars)' }, 400);
-          return json(await askRouter(env, ctx, p, slug, text, apiBase));
+          // Attached images and picked elements (src/attach.ts) ride along; the page quotes the person's words.
+          const msg = composeMessage(text, slug, b.attachments, b.context);
+          return json(await askRouter(env, ctx, p, slug, msg.text, apiBase, text));
         }
         if (verb === 'deploy' && request.method === 'POST') {
           const b = await request.json().catch(() => ({})) as { agent?: string };
@@ -855,9 +891,9 @@ const app = {
         if (verb === 'wake') return json(await wake(env, id, apiBase));
         if (verb === 'stop') { await box.letGo('manual'); return json(await box.state()); }
         if (verb === 'send') {
-          const { text } = await request.json() as { text?: string };
+          const { text, attachments, context } = await request.json() as { text?: string; attachments?: unknown; context?: unknown };
           if (!text) return json({ error: 'text required' }, 400);
-          return json(await sendTo(env, id, text, apiBase));
+          return json(await sendTo(env, id, composeMessage(text, projectOf(id), attachments, context).text, apiBase));
         }
         if (verb === 'exec' && me.admin) return json(await box.adminExec(await request.text()));
         if (verb === 'reset' && me.admin) { await box.destroy(); return json(await wake(env, id, apiBase)); }
@@ -1203,6 +1239,13 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
   }
   // The agent board (src/landing/board.ts) on landing projects: the box hook posts edits and commits,
   // `forq who` asks, `forq intent` states the agent's own task, `forq dedupe` stores same-work pairs.
+  // The box downloads an image attached to a message for it (sendTo -> AgentBox.fetchAttachments).
+  if (verb === 'attachment') {
+    const id = url.searchParams.get('id') || '';
+    if (!isAttachId(id) || !env.ATTACH) return json({ error: 'no such attachment' }, 404);
+    const o = await env.ATTACH.get(attachKey(slug, id));
+    return o ? new Response(o.body, { headers: { 'content-type': o.httpMetadata?.contentType || 'application/octet-stream' } }) : json({ error: 'no such attachment' }, 404);
+  }
   if (['board', 'who', 'intent', 'dedupe', 'tasks', 'next'].includes(verb)) {
     const info = await p.info();
     if (!landingOn(info)) return json({ on: false, off: true, rows: [], aliases: [], text: '' });

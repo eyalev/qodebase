@@ -33,6 +33,8 @@ export interface Env {
   OWNER_HANDLE: string;          // runs on the Claude subscription; everyone else brings an API key
   OTHERS_MAX_AWAKE: string;      // awake boxes per non-owner user (their containers bill this account)        // Workers Observability read: an issue's occurrences for the router agent
   ARTIFACTS: Artifacts;
+  /** Attached images (src/attach.ts); absent on a self-hosted copy without the bucket. */
+  ATTACH?: R2Bucket;
   ACCESS_TEAM_DOMAIN: string;
   ACCESS_AUD: string;
   HANDLES: string;            // JSON {email: handle}

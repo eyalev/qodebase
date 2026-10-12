@@ -611,6 +611,18 @@ walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}
     } catch (e) { log('box', 'costs_failed', { err: String(e) }); }
   }
 
+  /** Attached images for the next message (src/attach.ts): downloaded with this box's own agent token into
+   *  /workspace/attachments. Returns the ids that arrived. */
+  async fetchAttachments(ids: string[]): Promise<{ fetched: string[] }> {
+    const safe = ids.filter((id) => /^[a-z0-9]{12}\.(png|jpg|webp|gif)$/.test(id));
+    if (!safe.length) return { fetched: [] };
+    const r = await this.#sh(`mkdir -p /workspace/attachments && cd /workspace/attachments && for id in $IDS; do
+      curl -sfS --max-time 30 -A forq-cli/1 -H "x-forq-agent: $(cat /run/forq/agent-token)" "$(cat /run/forq/api)/api/agent/attachment?id=$id" -o "$id" && [ -s "$id" ] && echo "OK $id"; done`, { IDS: safe.join(' ') });
+    const fetched = [...r.stdout.matchAll(/^OK (\S+)$/gm)].map((x) => x[1]);
+    log('box', 'attachments', { ids: safe.length, fetched: fetched.length, err: r.stderr.slice(-200) || undefined });
+    return { fetched };
+  }
+
   async adminExec(cmd: string) {
     if (!this.c.running) return { error: 'not running' };
     return this.#sh(cmd);
