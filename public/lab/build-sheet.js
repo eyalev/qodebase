@@ -55,7 +55,7 @@
     try {
       const j = jobNow();
       const r = SIM.predictBuild(j ? { tasks: j.tasks, overlap: j.overlap, difficulty: j.difficulty, label: 'your idea' } : SIM.SMALL_APP, toVariant(st.v));
-      return r && { wallS: r.wallS, usd: r.apiUsd, basedOn: r.basedOn, same: r.sameSetup, quality: r.quality, notes: r.notes || [], mine: !!j, tasks: r.job?.tasks };
+      return r && { wallS: r.wallS, usd: r.apiUsd, basedOn: r.basedOn, same: r.sameSetup, quality: r.quality, notes: r.notes || [], mine: !!j, tasks: r.job?.tasks, bucket: j && st.sug?.bucket };
     } catch (e) { log('estimate_failed', { error: String(e), v: st.v }); return 'error'; }
   }
   // What the sheet ticks: a preset whose team matches, the board aside (a suggestion can turn it on). What it
@@ -73,7 +73,7 @@
     const e = st.est;
     if (!e || e === 'error') return '';
     return `<div class="bs-est"><p class="bs-q">${esc(e.quality)}${e.notes.length ? ` ${esc(e.notes.join(' '))}` : ''}</p>
-      <p class="bs-src">${e.mine ? `For your idea, as the small model read it (about ${e.tasks} pieces of work).` : `For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet.`} Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}. With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.</p></div>`;
+      <p class="bs-src">${e.mine ? `For your idea, as the small model read it (${e.bucket ? `${e.bucket.replace(/ pieces?$/, '')} pieces of work` : `about ${e.tasks} pieces of work`}).` : `For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet.`} Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}. With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.</p></div>`;
   }
   function estLine() {
     if (st.estState === 'loading') return 'Estimating…';
@@ -87,7 +87,7 @@
     const btn = (label) => `<button type="button" class="bs-sugb" data-suggest${txt.length < 4 ? ' disabled' : ''}>${label}</button>${txt.length < 4 ? '<p class="bs-src">Write your idea first, then come back. <button type="button" class="bs-link" data-write>Write it now</button></p>' : ''}`;
     if (!g || g.prompt !== txt) return `<div class="bs-sug">${btn('Suggest settings for my idea')}${g && g.prompt !== txt && txt ? '<p class="bs-src">Your idea changed since the last suggestion.</p>' : ''}</div>`;
     if (g.state === 'failed') return `<div class="bs-sug"><p class="bs-src">${esc(g.error || 'Could not read your idea right now.')} Pick a preset yourself.</p>${g.retry ? btn('Try again') : ''}</div>`;
-    const j = g.job, facts = j ? `About ${j.tasks} pieces of work, ${OVERLAP_W[j.overlap] || j.overlap}, ${DIFF_W[j.difficulty] || j.difficulty}.` : '';
+    const j = g.job, facts = j ? `${g.bucket ? `${g.bucket.replace(/ pieces?$/, '')} pieces of work` : `About ${j.tasks} pieces of work`}, ${OVERLAP_W[j.overlap] || j.overlap}, ${DIFF_W[j.difficulty] || j.difficulty}.` : '';
     const head = g.state === 'unsure' ? '<p class="bs-q">The small model was not sure what this needs. Pick a preset yourself; the estimate below uses what it read.</p>'
       : `<p class="bs-q"><b>Suggested: ${esc(PRESETS[g.preset]?.name || g.preset)}.</b> ${esc(g.why)}</p>`;
     return `<div class="bs-sug bs-sugd">${head}${facts ? `<p class="bs-src">${esc(facts)} Read by ${esc(modelName(g.model))}, which can be wrong.</p>` : ''}</div>`;
@@ -105,7 +105,9 @@
       else {
         const pv = PRESETS[d.suggestion.preset]?.v;
         const sv = pv ? { ...pv, ...(typeof d.suggestion.board === 'boolean' && pv.coders > 1 ? { board: d.suggestion.board } : {}) } : null;
-        st.sug = { state: 'done', prompt, job: d.job, preset: d.suggestion.preset, why: d.suggestion.why, model: d.model, v: sv };
+        // qb4 900f653: the suggestion carries the bucketed job (pieces on a log scale): the why, the facts and
+        // every estimate use it, so they agree and a re-read of the same idea gives the same answer.
+        st.sug = { state: 'done', prompt, job: d.suggestion.job || d.job, bucket: d.suggestion.bucket || null, preset: d.suggestion.preset, why: d.suggestion.why, model: d.model, v: sv };
         if (sv && !touched) st.v = { ...sv };   // a preset tapped while it was reading wins
       }
     } catch (e) { log('suggest_failed', { error: String(e) }); st.sug = { state: 'failed', prompt, retry: true, error: 'Could not reach qodebase.' }; }
