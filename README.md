@@ -76,7 +76,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 **Designed or simulated, not built yet**
 
-- one merge queue per area of the code (one queue topped out at ~11 landings a second)
+- one merge queue per area of the code (lanes): simulated and run with scripted agents on Cloudflare, see below
 - git notes shown in the code browser (today: on each change's page, and in git)
 - a lead agent per area for conflicts no replay can solve: simulated in `sim/`; today the owner decides, and the demo uses a scripted lead
 
@@ -95,7 +95,7 @@ Real Claude agents on synthetic task lists of short tasks, with duplicates we pl
 - **Where the saving comes from:** mostly agents no longer building a task someone else is already building (~85% of the agent-minutes saved with 20 Haiku agents). Merge conflicts did not fall (they rose slightly); what fell were aborted rebases and resets.
 - **The first version failed.** It counted committed-but-unpushed work as finished, so at 20 agents 3–4 tasks per run were skipped by everyone: 56/60 hidden tests, 1.7× slower. Three changes fixed it: *finished* means landed on main, no waiting (an agent that waits picks another task instead), and a turn cap of 60 instead of 40. The earliest claim now keeps a task.
 - A cost: with the board, 20 Haiku agents left more red commits on main (median 3 vs 0 per run). These were hand-merged pushes made without running the tests; a later commit repaired each, and every final main was green. Inside qodebase this cannot reach main: the landing queue tests a change before it lands.
-- Team size is a dial, not a speed-up: congestion control (like TCP, it settled at 3–4 agents) took 2.1× longer and cost 54% less.
+- **Growing the team** (150 tasks, Haiku, 3 runs each): a controller that adds agents while landings per minute rise, and steps back when they don't, settled at 10–14 agents. Against a fixed team of 40 it used about a quarter of the agent-minutes and about half the cost, and was not slower. Controller + board was the best arm (1,284 s, $4.73, 150/150 hidden tests in every run). The comparison with fixed teams of 8 and 20 was cut by the weekly usage stop, so whether the controller finds the best fixed size is untested ([`FINDINGS2.md`](docs/board/FINDINGS2.md) §8).
 - Against simpler options (20 Haiku agents, 3 runs each): the same agents with the duplicate annotation but no board, and a static split rule (agent k takes every 20th task). The board was the only setup with no duplicate built twice (0 vs 3 and 7 of 10 pairs) and had the lowest median time and cost (443 s, $2.61 vs 505 and 549 s, $2.85 and $3.27); against the split rule, time and cost overlap (one split run was the fastest of all).
 - Most parts exist elsewhere (MCP Agent Mail's leases, Beads' AI dedupe, Overstory's LLM merge tier, Claim Plane and Foremerge intents). The closest real-agent study, CooperBench (arXiv 2601.13295, ICLR 2026), found coding agents ~30% less successful when cooperating. We found no published A/B with real coding agents that reports wall time and cost for such a board, and no match for this combination ([`docs/board/prior-art.md`](docs/board/prior-art.md)).
 
@@ -138,6 +138,31 @@ Hidden tests are never in the agents' repo; the 0–100 scores, which add build 
 - A queue that tests each train's own scoped tests would cost ~1.6× their landing CI with an ~18-minute median wait; for ~78% of full-suite breaks, a change in the failing test's area landed that hour, so scoped trains would plausibly catch them.
 - Triage: a Haiku agent that reads the repo and the issue index was right on 61% of 200 issues vs 50% for text-only (p = 0.004), and found 66% of duplicates vs 14%.
 - Putting the project's own triage policy files into the prompt did not help (55% vs 58.5%, p = 0.13).
+
+## Different jobs need different ways to run agents
+
+No one way of running agents won everywhere. What won, by the shape of the job:
+
+| the job | what won | how we know |
+|---|---|---|
+| small-to-mid apps (bakery, club) | one strong agent: 1.9× and 1.6× faster than a planner + crew; the crew cost about half | measured, real agents, 2–3 runs each ([Lab results](#lab-results)) |
+| a shared task list with duplicates | board + duplicate check: the only setup with no duplicate built twice | measured, 20 Haiku agents, 3 runs each ([Agent board](#agent-board-who-works-on-what)) |
+| tasks arriving during the run | a duplicate check on every new task: 88 of 90 classified right; pairs built twice 10 → 4 (board) → 1 | measured, 10 Haiku agents, 3 runs each |
+| how many agents | a controller that grows the team while landings rise: ~¼ the agent-minutes of 40 fixed agents, not slower | measured, Haiku, 3 runs each |
+| a chain-shaped port (Bun's Zig→Rust) | land at once, check right after, fix forward | replayed: Bun's real patches |
+| thousands of agents on one codebase | dependency-aware lanes with a controller per lane | simulated with real git and tests; scripted agents on Cloudflare |
+
+**Scaling to thousands: lanes** (a landing queue per area of the code; [`sim/README.md`](sim/README.md) "Lanes", [`FINDINGS2.md`](docs/board/FINDINGS2.md) §9):
+- **One queue has a ceiling:** ~830–900 changes landed an hour in both simulators, at 500, 2,000 and 10,000 agents alike. Past that, more agents only add wait and cost.
+- **Lanes need dependency-aware testing.** Lanes that test only their own area left main red 20–88% of the time. Counting calls into other areas and testing what imports from an area gave 0 breaks in 26 cells. Hot shared files must be split, and each lane needs a controller.
+- **Real git, scripted agents, one run per cell:** at 2,000 agents over 6 h, 32 lanes landed 1,271 an hour against 896 for one queue (1.4×), median wait 10 min against 130. At 10,000 agents over 2 h, 7,433 against 896 (8×); a 2 h figure overstated the 6 h one by 1.5× at 2,000 agents, so read it as an upper bound. 8 lanes did worse than one queue.
+- **On Cloudflare** (Durable Objects + Artifacts, scripted agents, 2,000 agents for 10 minutes): 8 lanes landed 30,066 changes against 14,336 for one lane, median wait 7 s against 500 s, and main stayed whole and passed its tests in both. The 8-lane count is the run's own tally; checking it change by change against main is in progress. At 500 agents one lane and eight landed the same (~7,530): the work, not the queue, was the limit. The 16- and 32-lane cells are pending.
+
+**Bun's Zig→Rust port** (~64 Claude agents, 6,755 commits; [`sim/bun/README.md`](sim/bun/README.md), [`FINDINGS2.md`](docs/board/FINDINGS2.md) §10):
+- **Replayed on Bun's real patches:** its commits are chains (89% edit lines an earlier commit wrote), so 640 agents finish no sooner than 64 (26.3 vs 26.2 h). A check that blocks each commit costs 23–92% more time; the same check right after landing, fixing forward, keeps 26.2 h and cuts the time a crate stays broken by 59–73% (breaks in the middle phases are modelled).
+- **Re-cut by module, interfaces first** (simulated from Bun's real structure, with the module order checked against the names Bun's real patches use across files; not replayed): 3.4–5.2 h at 64 agents, 5–8× faster than the replay. The chains were mostly how the work was cut.
+
+**Next: choose per job.** The plan is an orchestrator that profiles a job (pieces, overlap, hot files, chains, check time), picks from this toolbox starting from what was measured, pilots on a simulation or a replay of the repo's own history when the stakes are high, adapts live when a queue saturates, and learns from its estimates across projects, within the person's choice of speed, cost or safety. This is a direction, not built.
 
 ## More
 

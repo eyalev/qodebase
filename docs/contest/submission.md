@@ -21,20 +21,19 @@ Merge queues already exist (GitHub's merge queue, Graphite, Mergify, Bors), and 
 Main ended with 13 commits, 12 git notes and green tests. Real spend was $0.16 of container time; the agents ran on a Claude subscription, about $0.53 at API prices.¹
 
 **Why we built it this way: we measured first.**
-- **Hono, real PRs, no model calls:** we replayed Hono's last 346 PRs as if 100 had been written at once. 48% needed another PR to land first, and git reported no conflicts at all. The problem is order, not conflicts.
+- **Hono, real PRs, no model calls:** Hono's last 346 PRs replayed as if 100 were written at once: 48% needed another PR to land first; git reported no conflicts. The problem is order.
 - **Simulation, scripted edits:** on a generated 403-file project with real git and tests, landing by intent got **3.5×** as many changes in per hour as review-then-merge.
 - **Simulated migration of Hono's code:** agents grabbing tasks in any order wasted 90 agent-hours. Knowing the order finished in less than half the time **at 10 agents**.
-- **500 agents on Cloudflare:** each was a Durable Object with its own Artifacts fork. They made 7,033 git pushes, 280 ms median. Git held up; our single merge queue was the limit. It reset three times, and a bug of ours caused 88 stale-ref rejections, since fixed.
+- **500 agents on Cloudflare** (a Durable Object and an Artifacts fork each): 7,033 git pushes, 280 ms median; our single merge queue was the limit (it reset three times; a bug of ours caused 88 stale-ref rejections, since fixed).
 
-**Which team shape works?** We gave the same job to one Opus agent and to an Opus planner with a crew of Haiku agents, through qodebase's queue (https://qodebase.app/lab). On the two jobs where the runs are comparable, one Opus agent was faster:
-- **bakery site:** 509 s vs 987 s; Opus passed 1 more of 26 hidden tests;
-- **club site:** 728 s vs 1,184 s; both passed all 42 hidden tests.
+**Different jobs need different ways to run agents.** What won, by the shape of the job:
+- **Small-to-mid apps** (bakery and club sites, [lab](https://qodebase.app/lab), real agents, 2-3 runs each): one Opus agent was faster than an Opus planner with a Haiku crew (509 vs 987 s; 728 vs 1,184 s), with hidden tests within one of each other. The crew cost about half at standard API prices, more at the >100k-token price. Stalled runs left out (with one, Opus was 2.3× faster).
+- **Shared task lists** (real Haiku agents, 3 runs each): a live **board** plus one duplicate check was the only setup with no duplicate built twice (vs a static split rule or the check alone; on time and cost it overlaps the split rule). With two teams on one repo inside qodebase, wall time fell 40%.
+- **Team size** (150 tasks, Haiku, 3 runs each): a controller that adds agents while landings rise used a quarter of the agent-minutes and half the cost of 40 fixed agents, not slower (fixed teams of 8 and 20 untested).
+- **Thousands of agents** (simulated, real git and tests, scripted agents): one queue tops out near 830-900 landings an hour. Lanes per code area need dependency-aware tests (without, main was red 20-88% of the time); then 32 lanes held 1.4× one queue at 2,000 agents over 6 h. On Cloudflare, 2,000 scripted agents for 10 minutes: 8 lanes landed 30,066 changes vs 14,336 for one, median wait 7 s vs 500 s, main whole (the 8-lane count is being re-checked per change).
+- **Bun's Zig→Rust port** (replayed on its real patches): its commits are chains, so 640 agents are no faster than 64; checking right after landing and fixing forward kept 26.2 h and cut broken time 59-73%. Re-cut by module, interfaces first (simulated from Bun's real structure, not replayed): 3.4-5.2 h.
 
-The crew cost 57% and 48% less at standard API prices. At the >100k-token-prompt price the crew costs more than Opus. Times leave out runs stalled by the platform; with the stalled bakery run, Opus was 2.3× faster. A crew is limited by how fast changes land, not by how many agents work. Haiku planners under-planned.
-
-**Agent board.** Agents state their task, edits are posted by a hook, and one duplicate check runs before work starts. With 20 Haiku agents it cut wall time 24% and cost 16% on synthetic task lists with duplicates we planted; with two teams on one repo inside qodebase, wall time fell 40% and duplicates built twice fell from 3-4 to 0-1. Against a static split rule or the duplicate annotation alone, it was the only setup with no duplicate built twice; on time and cost it overlaps the split rule ([docs/board](https://github.com/eyalev/qodebase/tree/main/docs/board)).
-
-**OpenClaw.** In 30 days of OpenClaw's public data, their no-queue flow was the cheapest at their pace. A queue running each train's own scoped tests would cost ~1.6× their landing CI ([findings](https://github.com/eyalev/qodebase/blob/main/docs/openclaw/FINDINGS.md)).
+**Next:** an orchestrator that profiles each job, picks from this toolbox, pilots on a simulation or a replay of the repo's history when stakes are high, and adapts when a queue saturates. A direction, not built.
 
 So this is not GitHub with agents on top: the unit is an intent with its record, and landing is automatic. A person steers from the phone and is asked only when something needs them.
 
