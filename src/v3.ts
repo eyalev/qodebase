@@ -432,8 +432,12 @@ h3{font-size:13px;font-weight:600;color:var(--dim);margin:24px 0 8px}
 /* Tab bar: bottom on a phone, a left rail on a desktop. */
 .tabbar{flex:none;display:flex;border-top:1px solid var(--line);background:var(--bg);padding-bottom:env(safe-area-inset-bottom)}
 .tab{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;color:var(--dim);font-size:12px;font-weight:500}
-.tab.on{color:var(--fg)}
-.tab.on svg{stroke-width:2.2}
+/* The active tab is unmistakable, phone-native (Material 3 / iOS): accent icon + label, label weight up, a soft
+   accent pill behind the icon; others muted. The pill's padding is there in every state, so nothing moves. */
+.tab>svg{box-sizing:content-box;width:22px;height:22px;padding:4px 18px;border-radius:16px;transition:background-color .15s,color .15s}
+.tab.on{color:var(--acc);font-weight:650}
+.tab.on>svg{background:color-mix(in srgb,var(--acc) 16%,transparent);stroke-width:2.2}
+@media (prefers-reduced-motion:reduce){.tab>svg{transition:none}}
 .badge{position:absolute;top:6px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;font-weight:600;line-height:18px;text-align:center;font-variant-numeric:tabular-nums}
 body.typing .tabbar{display:none}
 @media (min-width:900px){
