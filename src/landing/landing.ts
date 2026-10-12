@@ -111,8 +111,9 @@ const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER
 const TRAIN_STUCK_MS = 12 * 60_000;
 /** Tier 2's default model: short prompts, a fraction of a cent each (2026-10-08: Haiku 5.5). */
 export const DEFAULT_REPLAY_MODEL = 'claude-haiku-5-5';
-/** Watch a run (public, no sign-in): one at a time, 40 a day (judges in many timezones, manager 2026-10-08), 3 a day and one per 5 min per IP. */
-export const WATCH = { perDay: 40, perIpDay: 3, ipCooldownS: 300, agents: 6, speed: 2, maxMs: 5 * 60_000 };
+/** Watch a run (public, no sign-in): one at a time, 40 a day (judges in many timezones, manager 2026-10-08), 10 a day
+ *  and one per 2 min per IP (judges behind one office IP shared 3 a day, review #8, 2026-10-12). */
+export const WATCH = { perDay: 40, perIpDay: 10, ipCooldownS: 120, agents: 6, speed: 2, maxMs: 5 * 60_000 };
 export const DEMO_MAX_AGENTS = 24, DEMO_MAX_MS = 20 * 60_000, DEMO_MAX_STORY_AGENTS = 12, BUSY_MAX_TASKS = 400, BUSY_MAX_WAITING = 40;
 const OPEN = (c: Change) => c.state !== 'landed';
 /** A change id's name on the board: what follows the project slug (`eyal.cafe--a3` -> `a3`). */
@@ -722,6 +723,7 @@ export class Landing extends DurableObject<Env> {
     else if (m.outbox?.length) await this.#arm(500);
     log('landing', 'next_alarm', { slug: m.slug, inMs: ((await this.ctx.storage.getAlarm()) || 0) - Date.now(), failStreak: m.failStreak });
     await this.#notifyDemo(t);
+    if (await this.#storyDone(m)) await this.demoStop('every task landed');
   }
 
   /** 'src/x.js with <id>': the change that last landed on that file since this one's base
@@ -979,6 +981,16 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     for (let i = 0; i < forks.length; i += 10) await Promise.all(forks.slice(i, i + 10).map((f) => this.env.ARTIFACTS.delete(f).catch(() => false)));
   }
 
+  /** The café story is over: every task was handed out, every change landed, nothing waits or runs. A Watch run
+   *  then ends at once instead of showing 'ends in 3 min' over a finished board (review #7, 2026-10-12). */
+  async #storyDone(m: Meta) {
+    if (!m.demo?.running || m.demo.mode === 'busy' || m.waiting.length || m.running) return false;
+    const taken = m.demoTaken || {};
+    if (!TASKS.every((t) => taken[t.key] && !taken[t.key].startsWith('pending:'))) return false;
+    const cs = (await Promise.all(TASKS.map((t) => this.#get(taken[t.key])))).filter(Boolean) as Change[];
+    return cs.length === TASKS.length && cs.every((c) => c.state === 'landed');
+  }
+
   /** Is a visitor's run going (reset/start by the owner must not preempt it)? */
   async publicActive() { const m = await this.#m(); return !!m.demo?.publicRun && this.#active(m); }
 
@@ -1010,6 +1022,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     const m = await this.#m();
     if (!m.demo?.running) return;
     if (Date.now() > m.demo.endsAt) { await this.demoStop('time cap (20 min)'); return; }
+    if (await this.#storyDone(m)) { await this.demoStop('every task landed'); return; }
     await this.#arm(60_000);
   }
 

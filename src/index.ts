@@ -328,7 +328,7 @@ const app = {
       const cf = (request as any).cf || {};
       if (url.pathname === '/robots.txt') return new Response('User-agent: *\nDisallow: /p/\nDisallow: /import\nDisallow: /api/\nDisallow: /a/\nDisallow: /login\n', { headers: { 'content-type': 'text/plain' } });
       if (url.pathname === '/icon.svg') return new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#17695a"/><circle cx="121" cy="110" r="48" fill="none" stroke="#fff" stroke-width="30"/><path d="M154 58h30v138h-30z" fill="#fff"/></svg>', { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' } });
-      if (url.pathname === '/version.json') return json({ name: 'forq', version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
+      if (url.pathname === '/version.json') return json({ name: 'qodebase', version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
       if (url.pathname === '/health.json') return health(env, ctx, url.origin);
       if (url.pathname === '/e') return kstatsForward(request, env, ctx);
       if (url.pathname === '/feedback') return feedback(request, env);

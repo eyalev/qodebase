@@ -194,8 +194,10 @@ export async function health(env: BaselineEnv, ctx: ExecutionContext, origin: st
   try {
     const entries = await registry(env).list();
     const infos = await Promise.all(entries.map((e) => env.Project.get(env.Project.idFromName(e.slug)).info().catch(() => null)));
-    // Only deploys forq runs (owner's and showcase); others' are refused by design.
-    const failed = infos.filter((i) => i?.kind === 'worker' && i.app?.status === 'failed' && (i.owner === env.OWNER_HANDLE || i.owner === 'forq')).map((i) => i!.slug);
+    // Only the instance owner's own app deploys, failed in the last 7 days. The forq.* projects are template
+    // mirrors (forq/forq, container-agents, pi-durable) that were never meant to deploy as apps: they read
+    // 'bad' on the public health page for nothing (review #14, 2026-10-12).
+    const failed = infos.filter((i) => i?.kind === 'worker' && i.app?.status === 'failed' && i.owner === env.OWNER_HANDLE && Date.now() - (i.app.at || 0) < 7 * 86400_000).map((i) => i!.slug);
     checks.push({ id: 'builds', label: 'Worker app deploys', status: failed.length ? 'bad' : 'ok', detail: failed.length ? `${failed.length} failed: ${failed.slice(0, 3).join(', ')}` : `${infos.filter((i) => i?.kind === 'worker').length} live`, at });
   } catch (err) {
     checks.push({ id: 'builds', label: 'Worker app deploys', status: 'unknown', detail: `could not read: ${String(err).slice(0, 80)}`, at });

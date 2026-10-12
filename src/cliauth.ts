@@ -178,17 +178,35 @@ or with --json. Projects are named owner/name. Another instance: --host <url> or
 - \`qb merge <owner/name> <agent-id>\` — merge an agent's fork into main
 - \`qb files <owner/name>\`, \`qb search <owner/name> "<text>"\` — read code without cloning
 - \`qb installs\` — your own AI assistants (installed into YOUR Cloudflare account) and the ones you can install
-- \`qb install <agents-starter|openclaw|pi|t3code|mobile-agent|hermes> [--name n] [--account id]\` — installs one; the first time it prints one link where a person lets qodebase into their Cloudflare account, then waits and prints the assistant's URL (locked to that person by Cloudflare Access). An existing name for the same agent updates it in place (keeps its data); a name used by a different agent is refused. Without a token it starts qb login first
+- \`qb install <agents-starter|openclaw|pi|t3code|mobile-agent|hermes|qodebase> [--name n] [--account id]\` — installs one (pi = Cloudflare's official Pi harness example; qodebase = your own copy of this site, landing system included; needs Workers Paid and Artifacts, in beta); the first time it prints one link where a person lets qodebase into their Cloudflare account, then waits and prints the assistant's URL (locked to that person by Cloudflare Access). An existing name for the same agent updates it in place (keeps its data); a name used by a different agent is refused. Without a token it starts qb login first
 - \`qb uninstall <name> --yes\` — deletes an installed assistant: its Worker and data, its Access app, the record (\`removed: true\` in qb installs = its Worker was deleted elsewhere)
 - \`qb clone <owner/name> [dir]\` — git clone (a short-lived token: write for your own projects, read otherwise)
 - \`qb open <owner/name>\` — the project's page and live app URLs
 - \`qb tokens\`, \`qb revoke <id>\`, \`qb logout\`
+
+## Many agents on one project: landing, claims, the board
+
+Projects with the landing system on (the "Agents at work" view) never merge by hand: an approved change waits in a
+merge queue; the merger applies it to the LATEST main, replays clashes in shared files (lists, package.json,
+changelogs) by rule or by its own agent, runs the project's check (\`.qodebase/landing.json\`), and lands it, or sends
+it back to its agent. \`qb merge\` on such a project queues the change.
+
+Inside an agent's box, the \`forq\` command (the router and agents run it):
+- \`forq spawn "<task>" --files a,b\` — start an agent with CLAIMS (the files it expects to change: overlaps are warned
+  on both changes); \`--on <agent-id>\` stacks it on another agent's unlanded work (it lands after it)
+- \`forq who [--recent [30m]] [--files a,b]\` — the agent board: who works on what right now, and what landed recently
+- \`forq intent "<task id + title>" --files a,b\` — say which task you took; the earliest claim of a task keeps it
+- \`forq next\` — (projects with atomic claims) take the next free task of the registered list
+- \`forq tasks <file>\`, \`forq dedupe <file>\` — (router) register a task list; one quick pass that finds tasks that are
+  the same work under different names
+- \`forq sync-main\`, \`forq skip\`, \`forq push\`, \`forq status pushed "<what>"\` — rebase on main, drop a commit main
+  already has, push your own fork, hand the change to review and the queue
 
 ## HTTP API
 
 Everything qb does is HTTP with \`authorization: Bearer qb_…\` on ${origin}:
 GET /api/projects, GET /api/p/<owner>/<name>, POST /api/build {prompt,name,private}, POST /api/import {repo,private}, POST /api/p/<o>/<n>/visibility {private},
 POST /api/p/<o>/<n>/fork, /router {text}, /agents {task}, /merge {agent}, /git-token,
-GET /api/p/<o>/<n>/files, /search?q=, GET|POST|DELETE /api/installs {template,name,account} (409 + approve_url until Cloudflare is connected), GET /personal-agents/i/<id>.json, GET /api/agents/<id>/state, /conversation, POST /api/agents/<id>/send {text}.
+GET /api/p/<o>/<n>/files, /search?q=, GET /api/p/<o>/<n>/landing (changes, queue, trains, board), /landing/board?recent=30&files=a,b, GET|POST|DELETE /api/installs {template,name,account} (409 + approve_url until Cloudflare is connected), GET /personal-agents/i/<id>.json, GET /api/agents/<id>/state, /conversation, POST /api/agents/<id>/send {text}.
 `;
 }
