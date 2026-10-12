@@ -528,3 +528,187 @@ Reproduce:
 - `node sim/board/probe.mjs 100` (W8);
 - `node sim/board/arrivals.mjs 200` (W9);
 - `node sim/board/calls.mjs calibrate` (E4, unchanged).
+
+## (i) L1: one landing door vs many lanes, 10 to 10,000 agents (qb4, 2026-10-12, before L2/L3 run)
+
+The thesis (docs/board/TASKS.md "Lanes"): many agents are limited by one landing door, so give each area of the
+code its own landing lane, a throughput controller per lane, design the hot shared files out, and send changes
+that span areas through a slower coordinated lane. This is the fast sim's prediction, zero tokens.
+
+**Model** (`public/sim/engine.js`, opt-in `lanes`; with lanes off it gives the same output as before, checked):
+- **The repo.** A big monorepo: 20,000 files in 500 areas of 40 files.
+- **qodebase's landing.** Every change is reviewed. Trains of up to 16 changes are tested together (60 s).
+  A conflict is replayed on the new main, else it goes to the area lead. No file claims, no people.
+- **Lanes.** N lanes are areas of whole modules, balanced by how often they change. Each lane has its own
+  queue, its own hot files (package.json-like, designed per area) and its own red/green main.
+- **Cross-area changes.** A cross change cannot land in one lane. It goes to the coordinated lane, which waits
+  until every lane it touches is idle, holds them, and lands with a 1.5× test. Main design: trains of up to 16
+  cross changes, over as many lanes as they touch.
+- **Controller (hold mode).** It is W8's probe per lane, with 15-minute windows, because a change takes about
+  8–10 minutes here. An agent whose lane is full parks with its task, and a parked agent costs no box.
+- **How areas are hit.** Zipf 1 means a few hot areas: the busiest area gets 15% of all changes. Zipf 0.5
+  means the areas were drawn evenly.
+- **Runs.** 16 simulated hours, measured over the last 8. Two seeds per cell, 832 cells, 392 s on 10 cores.
+
+Measuring the first 4 hours overstated the cross-area cells by up to 2×: agents keep piling into the
+coordinated queue for hours.
+
+**Steady state, landed per hour** (fixed = every agent works; ctl = per-lane controller, % of agents awake):
+
+| setup | 100 agents | 1,000 | 10,000 | saturates at |
+|---|---|---|---|---|
+| one queue | 401 | 818 | 820 | ~300 agents, ~830/h |
+| 4 lanes, no cross | 408 | 3,256 | 3,230 | ~1,000 |
+| 16 lanes, no cross, hot areas | 403 | 4,027 | 6,076 | ~10,000 |
+| 16 lanes, no cross, even areas | 407 | 4,040 | 12,881 | ~3,000 |
+| 256 lanes, no cross, hot areas | 405 | 4,052 | 5,851 | ~3,000 |
+| 64 / 256 lanes, no cross, even areas | 403 | 4,055 | **40,191 / 40,322** | not reached (demand-bound) |
+| 16 lanes, 5% cross, hot / even | 403 / 401 | 2,141 / 3,612 | 3,508 / 4,554 | ~10,000 |
+| 256 lanes, 5% cross, hot / even | 407 / 403 | 2,336 / 4,046 | 3,015 / 9,104 | ~10,000 |
+| 16 lanes, 20% cross, hot / even | 412 / 405 | 1,074 / 1,797 | 2,126 / 2,273 | ~10,000 |
+| 256 lanes, 20% cross, hot / even | 404 / 401 | 1,134 / 2,005 | 1,332 / 1,856 | ~1,000-3,000 |
+| 256 lanes, 5% cross, even, **ctl** | 404 | 4,058 (91% awake) | 11,221 (28% awake) | |
+| 256 lanes, no cross, hot, **ctl** | 406 | 4,058 (90%) | 6,551 (44%) | |
+| one queue, **ctl** | 386 | 807 (62%) | 791 (13%) | |
+
+Per change, at 10,000 agents:
+- **Collisions:** 0.3–0.9 per landed change, more with fewer lanes (one queue 0.86, 256 lanes 0.5).
+- **Wasted work:** stays at 8.4–9.8% of agent time everywhere (replays absorb most collisions).
+- **Broken main:** 3.7% of the time with one queue, 0.05–3.6% of a lane's time with 16–256 lanes. Lanes land
+  more, so they break more often, but each break stops only its own lane.
+- **Cost:** $2.0–2.6 per change, highest when agents wait longest.
+- **Median time from asking to landing:** 11.7 h with one queue at 10,000 agents; about 9–14 min with 64–256 lanes.
+
+**Predictions:**
+1. **One door saturates at about 300 agents and 830 changes an hour** (16 changes per 63 s train). More agents
+   only lengthen the line: the median time to land goes from minutes to 11.7 h at 10,000 agents.
+2. **Lanes multiply the door until the hottest area fills its own lane.** With a few hot areas (the busiest
+   gets 15% of changes), that cap is about 6,000 an hour: 16, 64 and 256 lanes all stop at 5,850–6,800 (with or without the controller). With
+   areas drawn evenly, 64–256 lanes reach 40,000 an hour at 10,000 agents and still rise (demand-bound),
+   48× one queue. **Splitting hot areas matters more than adding lanes.**
+3. **Cross-area changes set the ceiling: about the coordinated lane's rate ÷ the cross share.**
+   - At 5% cross, the best case is 9,000–11,000 an hour (even areas), 3,000–3,500 with hot areas.
+   - At 20% cross, every lane count lands only 1,200–2,300 an hour (1.5–2.7× one queue), saturating by
+     1,000–3,000 agents.
+   - Small coordinated trains (4 changes over at most 8 lanes) never drain their queue: 1,150–2,300 an hour.
+     Per-lane locks for cross changes are worse still: they convoy (16 lanes, 20% cross, 10,000 agents:
+     106 an hour).
+   - **Ordering is the price:** a cross change can only land with every lane it touches held.
+4. **The controller lands about the same with far fewer agents.**
+   - It stays within −20%…+23% of fixed throughput. At 10,000 agents it keeps 13–90% of them awake (one
+     queue: 13%).
+   - The gain is agents and boxes. Cost per change stays about $2–3, because model time is per change.
+   - In "pick" mode (an agent draws a task in a lane with room) 256 lanes at 5% cross reach 13,243 an hour
+     vs 2,849 in hold mode. That changes which work gets done, and only holds while the backlog has work
+     elsewhere.
+5. **People did not show as a ceiling in these cells.** With 5% of changes needing a person's approval, the
+   total was 2,900 vs 3,000 without (5% cross). The 2 people approve about 80 an hour, so risky changes wait in
+   their own line. This is an inference: the sim does not report that line's length.
+6. **File claims are a ceiling of their own.** With claims on and one queue, 78% of 10,000 agents wait for a
+   claim. With lanes plus claims, the 5%-cross cells rose 1.4–3.1× (likely because the claims policy redraws
+   blocked work, as pick mode does; not isolated).
+
+**Falsifiers for L2/L3:**
+- one queue saturates below 200 or above 600 agents;
+- lanes with no cross-area changes beat the hottest area's cap (about 1 / that area's share × one lane);
+- 20% cross lands more than 4× one queue at steady state;
+- the controller loses more than 30% of fixed throughput at steady state.
+
+### For qb5's L2 (sim/real with lanes): the same model shaped like that project
+
+The cells are shaped like L2:
+- agents/10 folders of 8 files (400 files at 500 agents, 1,600 at 2,000), on the same 1/(i+1) curve: the
+  busiest folder gets 22% (500) or 17% (2,000) of changes;
+- **cross share measured from sim/real's own randomOp** (5,000 draws): 34% of changes are cross-area with
+  the root files shared, 8.5% with them split per folder;
+- L2's coordinated lane: trains of 4 over at most 8 lanes, tests ×1.5. L2 also has a door onto main and main's
+  tests after each landing; this model has neither.
+
+`sim/lanes/l2-cells.jsonl` holds 3 seeds per cell; `node sim/lanes-l2.mjs` reproduces it.
+
+| agents | lanes | root files | 2 h run (2nd hour) | steady state (16 h) | steady, big coordinated trains |
+|---|---|---|---|---|---|
+| 500 | 1 | - | 850 | 818 | |
+| 500 | 8 | shared | 457 | 347 | 592 |
+| 500 | 8 | split | 1,172 | 989 | 1,148 |
+| 500 | 32 | shared | 516 | 371 | 598 |
+| 500 | 32 | split | 846 | 1,075 | 1,233 |
+| 2,000 | 1 | - | 802 | 824 | |
+| 2,000 | 8 | shared | 1,345 | 351 | 988 |
+| 2,000 | 8 | split | 2,430 | 1,191 | 1,558 |
+| 2,000 | 32 | shared | 937 | 364 | 896 |
+| 2,000 | 32 | split | 2,851 | 1,379 | 1,467 |
+
+With the controller (2 h / steady): 500 agents, 1 lane: 460 / 819; 2,000, 32 lanes split: 2,558 / 1,239 (13–34%
+of agents awake).
+
+Predictions for L2:
+- **With shared root files, lanes do worse than one queue at steady state** (350–370 vs ~820 an hour): 34% of
+  changes queue for the coordinated lane. Big coordinated trains help (590–990), but beat one queue only at
+  2,000 agents with 8 lanes (988 vs 824).
+- **With split root files, lanes beat one queue by 1.2–1.9×** (990–1,560 an hour, the high end with big
+  coordinated trains). The busiest folder and the 8.5% cross share cap it.
+- **A 2 h run overstates the cross-area cells by up to 2×** (2,000 agents, 32 lanes, split: 2,851 at 2 h vs
+  1,379 steady) while agents are still piling into the coordinated queue.
+- **A 2 h run understates the controller**, which spends most of 2 h growing from 8 (1 lane: 460 at 2 h, 819
+  steady).
+
+### For qb6's L3 (lanes on Cloudflare, sim/cloud): worked out from the 500-agent run's measurements
+
+This is a different machine from the fast sim. Scripted agents work 20–60 s, have no review, push to their
+fork, and take the next task without waiting. Trains run every trainEveryS. The numbers come from cloud-500
+(sim/cloud/README.md):
+- one queue Durable Object overloaded at about 11 changes a second (~40,000 an hour);
+- main pushes took 400 ms median, agent pushes 280 ms.
+
+Modules are drawn by the harness's `floor(-ln(1-u)·8)`, so module 0 gets 11.8%. Lane k owns modules m % N, so
+lane 0 carries this share of the in-lane changes:
+
+| lanes | 1 | 2 | 4 | 8 | 16 | 32 | 50 |
+|---|---|---|---|---|---|---|---|
+| lane 0's share | 100% | 53% | 30% | 19% | 14% | 12% | 12% |
+
+With 100 modules, the same formula gives the same shares. More modules do not flatten the hot spot unless the
+draw changes.
+
+The working:
+- **Demand** is about agents ÷ 40.5 s: 500 agents send 12.3 a second (44,000 an hour), 2,000 send 49 a second
+  (178,000).
+- **Per lane**, landed = min(that lane's demand, ~11 a second).
+- **The total** is min(demand, 11 ÷ lane 0's share, lane X's cap ÷ cross share).
+- **Lane X's cap** is min(11 a second, trainMax ÷ xEveryS).
+
+| agents | lanes | predicted landed/h | lane 0 | quietest lane | what limits it |
+|---|---|---|---|---|---|
+| 500 | 1 | 35,000–40,000, with overload resets (as cloud-500) | all | | the one Durable Object |
+| 500 | 8 | ~44,000 (demand) | ~8,200 (2.3/s, 21% busy) | ~3,400 | the agents |
+| 2,000 | 1 | ~40,000, then overload and resets | all | | the one Durable Object |
+| 2,000 | 4 | ~132,000 | ~40,000 (saturated) | | lane 0 |
+| 2,000 | 8 | 150,000–178,000 | ~33,000 (9.1/s, 83% busy: the edge) | ~14,000 | lane 0 |
+| 2,000 | 16 / 32 | ~178,000 (demand) | ~24,000 / ~21,000 | | the agents, and the main ref (below) |
+
+**Freezes.** Each lane X landing freezes the lanes it touches. At 2,000 agents a train touches nearly every
+lane, and its replay, test and push take about 2–3 s. With xEveryS 10, that freezes lanes ~25% of the time,
+which tips lane 0 at 8 lanes into saturation (~150,000 an hour). At 20% cross, 2,000 agents put 9.8 a second
+into lane X: xEveryS 30 caps it at 6.7 a second (trainMax 200), so the total is ≤ ~120,000 an hour.
+
+**The main ref (compare-and-swap) becomes the visible limit before landings do.**
+- Pushes per second = N ÷ trainEveryS + 1 ÷ xEveryS, each about 0.4 s plus a re-read of about 0.3 s when stale.
+- With trainEveryS 10, I predict stale pushes at ~25% of main pushes with 8 lanes, ~50% with 16, and over 70%
+  with 32 (the ref is busy more than 100% of the time).
+- Landed per hour holds, because trains carry up to 200 changes, but each lane pushes less often and latency
+  rises. Each stale retry also costs Artifacts operations.
+
+Caveats:
+- 11 a second per object was measured while that object also handed out tasks and took hand-ins for 500 agents.
+  If one object still hands out every task, at 2,000 agents it gets about 49 task calls plus 49 hand-ins a
+  second, and it becomes the door again. Hand out tasks per lane too.
+- Agents push to their forks at 49 a second at 2,000 agents, 4× cloud-500's 12 a second (0.1% failed then).
+  Artifacts has not been measured at that rate.
+
+Cells worth running:
+- **500 agents:** 1 vs 8 lanes at 5% cross: 35–40k with resets vs ~44k, no resets.
+- **2,000 agents (100 modules):** 1, 8, 16 and 32 lanes at 5% cross, xEveryS 10.
+  - The landed curve should flatten at 16 or more lanes, while stale pushes keep rising.
+  - 8 lanes should sit at lane 0's edge.
+- **One 20%-cross cell at 16 lanes:** lane X's cap shows there.
