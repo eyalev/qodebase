@@ -176,10 +176,10 @@
 .tl-brush .tl-conc{position:absolute;inset:3px 4px;display:flex;align-items:flex-end;gap:1px}
 .tl-conc i{flex:1;background:color-mix(in srgb,var(--acc) 55%,transparent);border-radius:1px;min-height:1px}
 .tl-win{position:absolute;top:0;bottom:0;border-radius:6px;box-shadow:inset 0 0 0 2px var(--fg);background:color-mix(in srgb,var(--fg) 6%,transparent);pointer-events:none}
-.tl-scroll{overflow-x:auto;overscroll-behavior-x:contain;border-radius:10px;box-shadow:inset 0 0 0 1px var(--line);touch-action:pan-x pan-y}
+.tl-scroll{overflow-x:auto;overscroll-behavior-x:contain;border-radius:14px;background:var(--card);border:1px solid var(--frame,var(--line));touch-action:pan-x pan-y}
 .tl-canvas{min-width:100%;position:relative}
 .tl-row{display:flex;min-height:30px;border-bottom:1px solid var(--line)}.tl-row:last-child{border-bottom:0}
-.tl-lab{flex:none;box-sizing:border-box;width:84px;position:sticky;left:0;z-index:2;display:flex;align-items:center;padding:0 8px;font-size:12px;background:var(--bg);box-shadow:1px 0 0 var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-lab{flex:none;box-sizing:border-box;width:84px;position:sticky;left:0;z-index:2;display:flex;align-items:center;padding:0 8px;font-size:12px;background:var(--card);box-shadow:1px 0 0 var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tl-sub .tl-lab{padding-left:16px;color:var(--dim)}
 .tl-folded .tl-sub{display:none}.tl-agg{display:none}.tl-folded .tl-agg{display:block}
 .tl-fold{border:0;background:none;padding:0;font:inherit;font-size:12px;font-weight:600;color:var(--fg);cursor:pointer;min-height:30px}
