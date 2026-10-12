@@ -681,9 +681,11 @@ export class Landing extends DurableObject<Env> {
       if (Date.now() - last < STALL_MS || nudges >= 2) continue;
       // Claude working right now = still at it (a long task). Asleep, or awake and idle, is stalled (a box only sleeps
       // after 5 idle minutes, so 'asleep only' could not fire before ~5 min; lastActive moves only on requests).
-      const st = await fetch(`${this.env.API_BASE}/api/agents/${c.id}/busy`, { headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } })
+      // POST: the per-box verbs answer GET with {error:'POST only'}, which read as 'not busy' and nudged working agents (R5:
+      // 12 nudges). Anything but a clear busy:false counts as busy.
+      const st = await fetch(`${this.env.API_BASE}/api/agents/${c.id}/busy`, { method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } })
         .then((r) => r.json() as Promise<{ busy?: boolean }>).catch(() => ({ busy: true }));
-      if (st.busy) continue;
+      if (st.busy !== false) continue;
       (c as { nudges?: number }).nudges = nudges + 1;
       this.#ev(c, 'working', `nudged: nothing pushed for ${Math.round((Date.now() - last) / 60_000)} min and its agent was idle`);
       await this.#put(c);
