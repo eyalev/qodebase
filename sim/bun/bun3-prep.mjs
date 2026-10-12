@@ -4,6 +4,11 @@
 //
 //   node sim/bun/bun3-prep.mjs --repo /opt/bun --seg cde|tail --out sim/bun/out/bun3-cde.json.gz
 //
+// A segment is a stretch of the PR branch's FIRST-PARENT chain, every commit on it in order (phases overlapped
+// on that branch: b's last commits sit between c's first ones), merges included as one patch against their first
+// parent. cde: from the first phase-c commit to the last phase-e commit. tail: from there to the PR head (the
+// green phase). So the 1-agent replay in history order must end exactly on history's files.
+//
 // Writes { seg, base, files: {path: text at base | null}, final: {path: text after the segment's last
 // commit, in history}, tasks: [{ sha, parent, phase, at, subject, crates, diffs: [{ path, binary, hunks:
 // [{ os, ol, ns, nl, lines }] }] }] } where lines are the hunk's lines with their ' ', '-', '+' prefix (-U3).
@@ -21,10 +26,14 @@ const PHASES = SEG === 'cde' ? ['c', 'd', 'e'] : [SEG];
 const git = (args, input) => execFileSync('git', ['-C', REPO, ...args], { maxBuffer: 1 << 30, input }).toString();
 
 const D = JSON.parse(readFileSync(join(HERE, 'tasks.json'), 'utf8'));
-const short = D.tasks.filter((t) => PHASES.includes(t.phase)).sort((a, b) => a.at - b.at);
-// full shas, parents and subjects in one call
-const info = git(['log', '--no-walk=unsorted', '--format=%H %P%x09%s', ...short.map((t) => t.sha)]).trim().split('\n');
-const byShort = new Map(info.map((l) => { const [hp, s] = l.split('\t'); const [h, p] = hp.split(' '); return [h.slice(0, 10), { sha: h, parent: p, subject: s }]; }));
+const phaseOf = new Map(D.tasks.map((t) => [t.sha, t.phase]));
+const cde = D.tasks.filter((t) => ['c', 'd', 'e'].includes(t.phase)).sort((a, b) => a.at - b.at);
+const firstC = cde.find((t) => t.phase === 'c'), lastE = cde.filter((t) => t.phase === 'e').at(-1);
+const [from, to] = SEG === 'cde' ? [`${firstC.sha}^`, lastE.sha] : [lastE.sha, 'refs/pr/30412'];
+const chain = git(['rev-list', '--reverse', '--first-parent', `${from}..${to}`]).trim().split('\n');
+const info = git(['log', '--no-walk=unsorted', '--format=%H %P%x09%ct%x09%s', ...chain]).trim().split('\n');
+const byShort = new Map(info.map((l) => { const [hp, ct, s] = l.split('\t'); const [h, ...ps] = hp.split(' '); return [h, { sha: h, parent: ps[0], merge: ps.length > 1, at: +ct, subject: s }]; }));
+const short = chain.map((h) => { const i = byShort.get(h); return { sha: h, at: i.at, phase: i.merge ? 'merge' : (phaseOf.get(h.slice(0, 10)) ?? 'other') }; });
 
 const crateOf = (p) => { const m = /^src\/([^/]+)\//.exec(p); return m ? m[1] : p.split('/')[0]; };
 function parseDiff(text) {
@@ -43,7 +52,7 @@ function parseDiff(text) {
 
 const tasks = [];
 for (const t of short) {
-  const i = byShort.get(t.sha);
+  const i = byShort.get(t.sha); // first parent: a merge is one patch
   if (!i) { console.error('missing', t.sha); continue; }
   const diffs = parseDiff(git(['diff', '-U3', '--no-color', '--no-renames', '--no-ext-diff', i.parent, i.sha]));
   tasks.push({ sha: i.sha, parent: i.parent, phase: t.phase, at: t.at, subject: i.subject, crates: [...new Set(diffs.map((d) => crateOf(d.path)))], diffs });

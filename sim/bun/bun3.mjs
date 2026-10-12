@@ -80,7 +80,11 @@ export function run(data, opts = {}) {
     const full = (s) => tasks.find((t) => t.sha.startsWith(s))?.sha;
     for (const e of B) { const c = full(e.culprit), f = full(e.fix); if (c && f) { culpritOf.set(c, { ...e, fixSha: f }); fixOf.set(f, c); } }
   }
-  const groups = data.seg === 'cde' && !cfg.noGates ? [['c', 'd'], ['e']] : [[...new Set(tasks.map((t) => t.phase))]];
+  // cde: everything before the first phase-e commit (c, d and the b/untagged commits between them), a 15-min full
+  // check, then the rest. tail: one group.
+  const firstE = tasks.findIndex((x) => x.phase === 'e');
+  for (const x of tasks) x.group = data.seg === 'cde' && !cfg.noGates && firstE >= 0 && x.i >= firstE ? 1 : 0;
+  const groups = data.seg === 'cde' && !cfg.noGates ? [0, 1] : [0];
 
   // event loop
   const heap = []; let seq = 0, t = 0;
@@ -95,7 +99,7 @@ export function run(data, opts = {}) {
   const m = { landed: 0, conflicts: 0, lostHunks: 0, reworkS: 0, workS: 0, checkS: 0, caught: 0, breaks: 0, redCrateS: 0, landedOnRed: 0, idleS: 0, fixS: 0 };
   let groupTasks = [];
   function openGroup() {
-    groupTasks = tasks.filter((x) => groups[g].includes(x.phase));
+    groupTasks = tasks.filter((x) => x.group === groups[g]);
     open = groupTasks.slice(); landedInGroup = 0; pump();
   }
   const ready = (x) => x.claims.every((c) => !held.has(c)) && (!fixOf.has(x.sha) || landedSet.has(fixOf.get(x.sha)));
@@ -168,7 +172,7 @@ export function run(data, opts = {}) {
   let same = 0, differ = 0;
   for (const [p, want] of Object.entries(data.final)) { const got = tree.get(p); const g2 = got == null ? null : got.join('\n'); if (g2 === want) same++; else differ++; }
   const hours = (done ?? t) / 3600;
-  return { method: cfg.method, agents: cfg.validate ? 1 : cfg.agents, seed: cfg.seed, seg: data.seg, breaks: cfg.breaks || 'none', borderline: !!cfg.borderline, checkS: cfg.method === 'check' ? cfg.checkS : 0,
+  return { method: cfg.method, agents: cfg.validate ? 1 : cfg.agents, seed: cfg.seed, seg: data.seg, breakModel: cfg.breaks || 'none', borderline: !!cfg.borderline, checkS: cfg.method === 'check' ? cfg.checkS : 0,
     hours: +hours.toFixed(2), landed: m.landed, of: tasks.length, conflicts: m.conflicts, lostHunks: m.lostHunks,
     reworkShare: +((m.reworkS + m.fixS) / (m.workS + m.reworkS + m.fixS + m.checkS)).toFixed(4), checkShare: +(m.checkS / (m.workS + m.reworkS + m.fixS + m.checkS)).toFixed(4),
     agentHours: +((m.workS + m.reworkS + m.fixS + m.checkS) / 3600).toFixed(1), breaks: m.breaks, caught: m.caught,
