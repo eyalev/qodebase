@@ -19,6 +19,8 @@ export function ownPage(installReady: boolean): string {
 <li>Agents run on your own Claude account or Anthropic API key</li>
 <li>Locked to you by Cloudflare sign-in</li>
 <li>Needs Cloudflare's Workers Paid plan: <a href="${PLAN}" target="_blank" rel="noopener">$5 a month for the whole account${EXT}</a></li>
+<li>Needs Cloudflare Artifacts (git storage), in beta: your account must have access to it</li>
+<li>Includes the merge queue and the agent board, so many agents can work on one project</li>
 </ul>
 <div class="ownact">${action}</div>
 <p class="desc small">It is open source: <a href="https://github.com/eyalev/qodebase" target="_blank" rel="noopener">github.com/eyalev/qodebase${EXT}</a></p>
