@@ -272,7 +272,8 @@ if(live&&!location.pathname.startsWith('/design-fixture')){document.addEventList
 async function post(verb,body){const r=await fetch(API+'/'+verb,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body||{})});const j=await r.json().catch(()=>({}));return r.ok?j:Promise.reject(new Error(j.error||'Failed'));}
 async function ask(text){window.forqAsked&&window.forqAsked(text);
  if(live){const p=live.querySelector('.plan');const h='<div class="plan busy">Sending <span data-since="'+Date.now()+'">0s</span></div>';if(p)p.outerHTML=h;else live.insertAdjacentHTML('afterbegin',h);tick();}
- try{await post('router',{text});poll();return true;}catch(e){const p=live&&live.querySelector('.plan');if(p){p.className='plan bad';p.textContent=e.message;}else{const ta=document.querySelector('form.ask textarea');if(ta)ta.placeholder=e.message;}return false;}}
+ try{let x=window.forqAskExtra?window.forqAskExtra():{};for(let w=0;x.wait&&w<120;w++){await new Promise((r)=>setTimeout(r,250));x=window.forqAskExtra();}if(x.wait)throw new Error('An image is still uploading; try again in a moment.');
+ await post('router',{text,...x});window.forqAskSent&&window.forqAskSent();poll();return true;}catch(e){const p=live&&live.querySelector('.plan');if(p){p.className='plan bad';p.textContent=e.message;}else{const ta=document.querySelector('form.ask textarea');if(ta)ta.placeholder=e.message;}return false;}}
 document.addEventListener('keydown',(e)=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-open]')){e.preventDefault();e.target.click();}});
 // Trying a change: the app shows its preview under a strip that says so.
 const frame=document.getElementById('app'),ext=document.getElementById('ext'),tbar=document.getElementById('trybar');
@@ -293,7 +294,7 @@ for(const f of document.querySelectorAll('form.ask')){
  if(sb)sb.addEventListener('pointerdown',(e)=>{if(document.activeElement===ta)e.preventDefault();});
  // A suggested change (from the home page's Try row) is waiting in the box, not sent.
  const sug=new URLSearchParams(location.search).get('ask');if(sug&&!ta.value){ta.value=sug.slice(0,500);grow();}
- f.onsubmit=async(e)=>{e.preventDefault();const t=ta.value.trim();if(!t)return;ta.value='';grow();if(!(await ask(t))){ta.value=t;grow();}else if(window.forqAskedGo)location.href=window.forqAskedGo;};}
+ f.onsubmit=async(e)=>{e.preventDefault();const t=ta.value.trim()||(window.forqAskDefault?window.forqAskDefault():'');if(!t)return;ta.value='';grow();if(!(await ask(t))){ta.value=t;grow();}else if(window.forqAskedGo)location.href=window.forqAskedGo;};}
 document.addEventListener('click',async(e)=>{
  const o=!e.target.closest('.fresh')&&e.target.closest('[data-open]');if(o){const r=o.closest('.chg');const on=r.classList.toggle('open');o.setAttribute('aria-expanded',on);on?openIds.add(r.dataset.id):openIds.delete(r.dataset.id);return;}
  const t=e.target.closest('[data-try]');if(t){forqTry(t.dataset.try,t.dataset.title,t.dataset.agent,t.dataset.state);return;}
