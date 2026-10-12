@@ -67,6 +67,40 @@ export function applyDiff(cur, d) {
   return { lines: out, ok: r.ok, lost: r.lost };
 }
 
+// Content dependencies from history, like git blame: replay the segment in history order keeping, for every line,
+// the commit that last wrote it. A commit depends on the writers of the lines its hunks remove or keep as context
+// (the lines `git apply` needs). Returns deps[i] = array of earlier task indices.
+export function blameDeps(data) {
+  const files = new Map(), deps = data.tasks.map(() => new Set());
+  const get = (p) => { if (!files.has(p)) { const s = data.files[p]; files.set(p, s == null ? null : { lines: s.split('\n'), who: s.split('\n').map(() => -1) }); } return files.get(p); };
+  data.tasks.forEach((t, i) => {
+    for (const d of t.diffs) {
+      if (d.binary || !d.hunks.length) continue;
+      let f = get(d.path);
+      if (f == null) { const r = applyDiff(null, d); if (r.lines) files.set(d.path, { lines: r.lines, who: r.lines.map(() => i) }); continue; }
+      let delta = 0;
+      for (const h of d.hunks) {
+        const old = h.lines.filter((l) => l[0] === ' ' || l[0] === '-').map((l) => l.slice(1));
+        const want = Math.max(0, (h.ol === 0 ? h.os : h.os - 1) + delta);
+        const fits = (a) => a >= 0 && a + old.length <= f.lines.length && old.every((l, k) => f.lines[a + k] === l);
+        let at = fits(want) ? want : -1;
+        for (let dd = 1; at < 0 && dd <= f.lines.length; dd++) { if (fits(want - dd)) at = want - dd; else if (fits(want + dd)) at = want + dd; }
+        if (at < 0) continue; // history order always fits (validated); be safe
+        const nl = [], nw = []; let k = 0;
+        for (const l of h.lines) {
+          if (l[0] === ' ') { const w = f.who[at + k]; if (w >= 0 && w !== i) deps[i].add(w); nl.push(l.slice(1)); nw.push(w); k++; }
+          else if (l[0] === '-') { const w = f.who[at + k]; if (w >= 0 && w !== i) deps[i].add(w); k++; }
+          else if (l[0] === '+') { nl.push(l.slice(1)); nw.push(i); }
+        }
+        f.lines.splice(at, old.length, ...nl); f.who.splice(at, old.length, ...nw);
+        delta = at - (h.ol === 0 ? h.os : h.os - 1) + (nl.length - old.length);
+      }
+      if (d.hunks.length === 1 && d.hunks[0].ns === 0 && d.hunks[0].nl === 0) files.set(d.path, null);
+    }
+  });
+  return deps.map((s) => [...s]);
+}
+
 export function load(path) { return JSON.parse(gunzipSync(readFileSync(path)).toString()); }
 
 export function run(data, opts = {}) {
@@ -127,7 +161,10 @@ export function run(data, opts = {}) {
   const prefix = new Map(); // file -> how many of its commits, in history order, have all landed
   const landedI = new Set();
   const earlierLanded = (x) => x.diffs.every((d) => (prefix.get(d.path) || 0) >= x.pos.get(d.path));
-  const ready = (x) => x.claims.every((c) => !held.has(c)) && (!fixOf.has(x.sha) || landedSet.has(fixOf.get(x.sha))) && (!x.waitEarlier || earlierLanded(x));
+  // order: 'content' (default) = a commit waits for the commits that wrote the lines it edits (blameDeps)
+  const deps = cfg.order === 'none' ? tasks.map(() => []) : (data._deps ??= blameDeps(data));
+  const depsLanded = (x) => deps[x.i].every((j) => landedI.has(j));
+  const ready = (x) => depsLanded(x) && x.claims.every((c) => !held.has(c)) && (!fixOf.has(x.sha) || landedSet.has(fixOf.get(x.sha))) && (!x.waitEarlier || earlierLanded(x));
   function pump() {
     while (free > 0) {
       let k = -1;
@@ -209,7 +246,9 @@ export function run(data, opts = {}) {
   const binary = new Set(tasks.flatMap((x) => x.diffs.filter((d) => d.binary).map((d) => d.path)));
   for (const [p, want] of Object.entries(data.final)) { if (binary.has(p)) continue; const got = tree.get(p); const g2 = got == null ? null : got.join('\n'); if (g2 === want) same++; else differ++; }
   const hours = (done ?? t) / 3600;
+  const chain = []; deps.forEach((ds, i) => { chain[i] = 1 + Math.max(0, ...ds.map((j) => chain[j])); });
   return { method: cfg.method, agents: cfg.validate ? 1 : cfg.agents, seed: cfg.seed, seg: data.seg, breakModel: cfg.breaks || 'none', borderline: !!cfg.borderline, checkS: cfg.method === 'check' ? cfg.checkS : 0,
+    order: cfg.order || 'content', workMedS: cfg.workMedS, depShare: +(deps.filter((d) => d.length).length / tasks.length).toFixed(3), longestChain: Math.max(...chain),
     hours: +hours.toFixed(2), landed: m.landed, of: tasks.length, conflicts: m.conflicts, conflictTasks: m.conflictTasks, lostHunks: m.lostHunks,
     reworkShare: +((m.reworkS + m.fixS) / (m.workS + m.reworkS + m.fixS + m.checkS)).toFixed(4), checkShare: +(m.checkS / (m.workS + m.reworkS + m.fixS + m.checkS)).toFixed(4),
     agentHours: +((m.workS + m.reworkS + m.fixS + m.checkS) / 3600).toFixed(1), breaks: m.breaks, caught: m.caught,
@@ -220,7 +259,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const a = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
   const has = (k) => process.argv.includes(`--${k}`);
   const data = load(a('data'));
-  const r = run(data, { method: a('method', 'bun'), agents: Number(a('agents', 64)), seed: Number(a('seed', 1)), checkS: Number(a('checkS', 60)),
+  const r = run(data, { method: a('method', 'bun'), agents: Number(a('agents', 64)), seed: Number(a('seed', 1)), checkS: Number(a('checkS', 60)), workMedS: Number(a('workMedS', DEFAULTS.workMedS)), order: a('order', 'content'),
     breaks: a('breaks', data.seg === 'cde' ? 'model' : 'real'), borderline: has('borderline'), validate: has('validate'), noGates: has('no-gates') });
   console.log(JSON.stringify(r));
   if (a('out')) appendFileSync(a('out'), JSON.stringify({ ts: new Date().toISOString(), ...r }) + '\n');

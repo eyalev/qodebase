@@ -45,9 +45,19 @@ test('a commit that edits code an earlier commit writes waits for it, is redone,
   ] };
   let sawConflict = false;
   for (let seed = 1; seed <= 30; seed++) {
-    const r = run(d2, { method: 'bun', agents: 2, seed, touchesPerRange: 1 });
+    const r = run(d2, { method: 'bun', agents: 2, seed, touchesPerRange: 1, order: 'none' });
     assert.equal(r.filesDiffer, 0, `seed ${seed}`); assert.equal(r.landed, 2); assert.equal(r.lostHunks, 0);
     if (r.conflicts) sawConflict = true;
   }
   assert.ok(sawConflict, 'some seed lands p2 first');
+});
+
+import { blameDeps } from './bun3.mjs';
+test('blame dependencies: p2 edits the line p1 wrote, so with content order p2 never lands first', () => {
+  const d3 = { seg: 'tail', files: { 'src/a/x.rs': 'a\n' }, final: { 'src/a/x.rs': 'a\nB\n' }, tasks: [
+    { sha: 'p1', phase: 'tail', crates: ['a'], diffs: [{ path: 'src/a/x.rs', hunks: [H(1, 1, 1, 2, [' a', '+b'])] }] },
+    { sha: 'p2', phase: 'tail', crates: ['a'], diffs: [{ path: 'src/a/x.rs', hunks: [H(2, 1, 2, 1, ['-b', '+B'])] }] },
+  ] };
+  assert.deepEqual(blameDeps(d3), [[], [0]]);
+  for (let seed = 1; seed <= 30; seed++) { const r = run(d3, { method: 'bun', agents: 2, seed, touchesPerRange: 1 }); assert.equal(r.conflicts, 0); assert.equal(r.filesDiffer, 0); }
 });
