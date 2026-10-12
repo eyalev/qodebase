@@ -594,6 +594,13 @@ const app = {
         const page = settingsPage(u, onSubscription(env, u.handle), mine, url.searchParams.has('welcome'), await registry(env).cliTokens(u.email));
         return html(tabsNav ? withGlobal(page, 'account', (await globalOf()).inbox, u.handle, ui as Nav) : page);
       }
+      // Is a Claude plan or API key connected (qb7: the phone tab re-checks after the person connected on a computer)? No secrets.
+      if (path === '/api/me/key' && request.method === 'GET') {
+        const u = await userByEmail(env, me.email || '');
+        if (!u) return json({ error: 'Sign in first' }, 401);
+        const kind = onSubscription(env, u.handle) ? 'plan' : u.apiKeyEnc ? (u.apiKeyKind || 'api') : null;
+        return json({ kind, tail: u.apiKeyEnc ? u.apiKeyTail || null : null, ...(u.keyFailed ? { failed: u.keyFailed } : {}) });
+      }
       if (path.startsWith('/api/me/') && request.method !== 'GET') {
         const u = await userByEmail(env, me.email || '');
         if (!u) return json({ error: 'Sign in first' }, 401);
