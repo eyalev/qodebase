@@ -17,6 +17,7 @@
   // One list for the page: every composer shows the same chips (the App view and Changes share a session).
   const items = [];   // { key, kind:'image'|'pick', state:'up'|'ok'|'err', id?, thumb?, name?, pick? }
   let seq = 0;
+  const PEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 10-10-3-3L5 16z"/></svg>';
   const IMG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>';
 
   async function shrink(file) {
@@ -31,9 +32,10 @@
     const out = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.85));
     return out ? new File([out], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : file;
   }
-  async function upload(file) {
-    const it = { key: ++seq, kind: 'image', state: 'up', name: file.name, thumb: URL.createObjectURL(file) };
-    items.push(it); paint();
+  async function upload(file, into) {
+    const it = into || { key: ++seq, kind: 'image', state: 'up', name: file.name, thumb: URL.createObjectURL(file) };
+    if (into) { if (it.thumb?.startsWith('blob:')) URL.revokeObjectURL(it.thumb); Object.assign(it, { state: 'up', thumb: URL.createObjectURL(file), id: undefined }); } else items.push(it);
+    paint();
     try {
       const f = await shrink(file);
       if (f.size > MAX_BYTES) throw new Error('That image is too big (over 8 MB).');
@@ -73,7 +75,8 @@
 
   function chip(it) {
     if (it.kind === 'pick') return `<span class="qa-chip qa-pick" title="${esc(it.pick.selector)}"><span class="qa-tag">&lt;${esc(it.pick.tag)}&gt;</span><span class="qa-t">${esc(it.pick.text || it.pick.selector)}</span><button type="button" class="qa-x" data-qa-rm="${it.key}" aria-label="Remove this element">&times;</button></span>`;
-    return `<span class="qa-chip qa-img${it.state === 'err' ? ' qa-err' : ''}"${it.state === 'err' ? ` title="${esc(it.error)}"` : ''}><img src="${esc(it.thumb)}" alt=""><span class="qa-t">${it.state === 'up' ? 'Uploading\u2026' : it.state === 'err' ? esc(it.error) : esc(it.name || 'image')}</span><button type="button" class="qa-x" data-qa-rm="${it.key}" aria-label="Remove this image">&times;</button></span>`;
+    const img = it.state === 'ok' ? `<button type="button" class="qa-edit" data-qa-edit="${it.key}" aria-label="Draw on this image"><img src="${esc(it.thumb)}" alt=""><i aria-hidden="true">${PEN}</i></button>` : `<img src="${esc(it.thumb)}" alt="">`;
+    return `<span class="qa-chip qa-img${it.state === 'err' ? ' qa-err' : ''}"${it.state === 'err' ? ` title="${esc(it.error)}"` : ''}>${img}<span class="qa-t">${it.state === 'up' ? 'Uploading\u2026' : it.state === 'err' ? esc(it.error) : esc(it.name || 'image')}</span><button type="button" class="qa-x" data-qa-rm="${it.key}" aria-label="Remove this image">&times;</button></span>`;
   }
   function paint() {
     document.querySelectorAll('form.ask').forEach((f) => {
@@ -89,6 +92,55 @@
       if (sb && ta && !ta.value.trim()) sb.className = `send ${items.some((x) => x.state === 'ok') ? 'btn' : 'chipbtn'}`;
     });
   }
+  // S4: draw a circle or an arrow on an attached image before sending. Full screen; the drawing is flattened into
+  // a new image at the original size, uploaded, and replaces the chip's attachment.
+  async function draw(it) {
+    if (!it) return;
+    const src = new Image(); src.crossOrigin = 'use-credentials'; src.src = it.thumb;
+    try { await src.decode(); } catch (e) { log('draw_load_failed', { error: String(e) }); return; }
+    const W = src.naturalWidth, H = src.naturalHeight, lw = Math.max(4, Math.round(Math.max(W, H) / 160));
+    // The marks belong to the image, not the theme: the light theme's --warn red, with a white edge so they read on
+    // dark and light screenshots alike.
+    const RED = '#b42d1f', EDGE = 'rgba(255,255,255,.9)';
+    const shapes = []; let tool = 'circle', cur = null;
+    const ov = document.createElement('div'); ov.className = 'qa-draw'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Draw on the image');
+    ov.innerHTML = `<div class="qa-dbar"><button type="button" class="qa-db" data-d="cancel">Cancel</button><span class="qa-tools" role="radiogroup" aria-label="Tool"><button type="button" class="qa-db" role="radio" data-t="circle" aria-checked="true">Circle</button><button type="button" class="qa-db" role="radio" data-t="arrow" aria-checked="false">Arrow</button></span><button type="button" class="qa-db" data-d="undo" disabled>Undo</button><button type="button" class="qa-db qa-done" data-d="done">Done</button></div><div class="qa-dwrap"><canvas></canvas></div><p class="qa-dhint">Drag on the image to draw.</p>`;
+    document.body.appendChild(ov); document.body.classList.add('qa-drawing');
+    const cv = ov.querySelector('canvas'), wrap = ov.querySelector('.qa-dwrap'); cv.width = W; cv.height = H;
+    const g = cv.getContext('2d');
+    const fit = () => { const k = Math.min(wrap.clientWidth / W, wrap.clientHeight / H); cv.style.width = `${Math.floor(W * k)}px`; cv.style.height = `${Math.floor(H * k)}px`; };
+    fit(); addEventListener('resize', fit);
+    const paintShape = (c, sh) => { stroke(c, sh, EDGE, lw * 1.8); stroke(c, sh, RED, lw); };
+    const stroke = (c, sh, col, lw) => {
+      c.strokeStyle = col; c.fillStyle = col; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
+      if (sh.t === 'circle') { c.beginPath(); c.ellipse((sh.x0 + sh.x1) / 2, (sh.y0 + sh.y1) / 2, Math.max(4, Math.abs(sh.x1 - sh.x0) / 2), Math.max(4, Math.abs(sh.y1 - sh.y0) / 2), 0, 0, Math.PI * 2); c.stroke(); return; }
+      const a = Math.atan2(sh.y1 - sh.y0, sh.x1 - sh.x0), hl = lw * 4;
+      c.beginPath(); c.moveTo(sh.x0, sh.y0); c.lineTo(sh.x1, sh.y1); c.stroke();
+      c.beginPath(); c.moveTo(sh.x1, sh.y1); c.lineTo(sh.x1 - hl * Math.cos(a - 0.45), sh.y1 - hl * Math.sin(a - 0.45)); c.lineTo(sh.x1 - hl * Math.cos(a + 0.45), sh.y1 - hl * Math.sin(a + 0.45)); c.closePath(); c.fill();
+    };
+    const redraw = () => { g.drawImage(src, 0, 0, W, H); shapes.concat(cur ? [cur] : []).forEach((sh) => paintShape(g, sh)); ov.querySelector('[data-d="undo"]').disabled = !shapes.length; };
+    redraw();
+    const at = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height) }; };
+    cv.addEventListener('pointerdown', (e) => { cv.setPointerCapture(e.pointerId); const p = at(e); cur = { t: tool, x0: p.x, y0: p.y, x1: p.x, y1: p.y }; });
+    cv.addEventListener('pointermove', (e) => { if (!cur) return; const p = at(e); cur.x1 = p.x; cur.y1 = p.y; redraw(); });
+    const end = () => { if (!cur) return; if (Math.hypot(cur.x1 - cur.x0, cur.y1 - cur.y0) > lw * 2) shapes.push(cur); cur = null; redraw(); };
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', () => { cur = null; redraw(); });
+    const close = () => { removeEventListener('resize', fit); ov.remove(); document.body.classList.remove('qa-drawing'); };
+    ov.addEventListener('click', async (e) => {
+      const t = e.target.closest('[data-t]'); if (t) { tool = t.dataset.t; ov.querySelectorAll('[data-t]').forEach((b) => b.setAttribute('aria-checked', String(b === t))); return; }
+      const d = e.target.closest('[data-d]')?.dataset.d;
+      if (d === 'cancel') return close();
+      if (d === 'undo') { shapes.pop(); return redraw(); }
+      if (d === 'done') {
+        if (!shapes.length) return close();
+        const blob = await new Promise((r) => cv.toBlob(r, 'image/jpeg', 0.9));
+        close(); log('drawn', { shapes: shapes.length, w: W, h: H });
+        if (blob) upload(new File([blob], (it.name || 'image').replace(/\.\w+$/, '') + '-marked.jpg', { type: 'image/jpeg' }), it);
+      }
+    });
+    document.addEventListener('keydown', function k(e) { if (e.key === 'Escape' && ov.isConnected) { close(); document.removeEventListener('keydown', k); } });
+    ov.querySelector('[data-t="circle"]').focus();
+  }
   function mount(f) {
     if (f.dataset.qa) return; f.dataset.qa = '1';
     const ta = f.querySelector('textarea'); if (!ta) return;
@@ -101,7 +153,7 @@
     inp.addEventListener('change', () => { const fs = [...inp.files].slice(0, MAX_FILES - items.filter((x) => x.kind === 'image').length); inp.value = ''; fs.forEach(upload); });
     // A screenshot pasted into the box attaches too (desktop).
     ta.addEventListener('paste', (e) => { const fs = [...(e.clipboardData?.files || [])].filter((x) => x.type.startsWith('image/')); if (fs.length) { e.preventDefault(); fs.forEach(upload); } });
-    row.addEventListener('click', (e) => { const x = e.target.closest('[data-qa-rm]'); if (x) remove(+x.dataset.qaRm); });
+    row.addEventListener('click', (e) => { const x = e.target.closest('[data-qa-rm]'); if (x) return remove(+x.dataset.qaRm); const ed = e.target.closest('[data-qa-edit]'); if (ed) draw(items.find((i) => i.key === +ed.dataset.qaEdit)); });
   }
   const css = document.createElement('style');
   css.textContent = `form.ask.qa-on{flex-wrap:wrap}
@@ -115,7 +167,20 @@ form.ask .qa-chips[hidden]{display:none}
 .qa-x{flex:none;width:36px;height:36px;border:0;border-radius:8px;background:none;color:var(--dim);font-size:20px;line-height:1;cursor:pointer}
 .qa-add{flex:none;align-self:flex-end;width:44px;height:44px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer;margin-right:6px}
 .qa-add svg{width:22px;height:22px}.qa-add:disabled{opacity:.4}
-.qa-add:focus-visible,.qa-x:focus-visible{outline:2px solid var(--acc);outline-offset:2px}`;
+.qa-add:focus-visible,.qa-x:focus-visible,.qa-edit:focus-visible,.qa-db:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.qa-edit{position:relative;flex:none;border:0;padding:0;background:none;cursor:pointer;border-radius:6px}
+.qa-edit i{position:absolute;right:-4px;bottom:-4px;width:18px;height:18px;border-radius:50%;background:var(--fg);color:var(--bg);display:flex;align-items:center;justify-content:center}
+.qa-edit i svg{width:11px;height:11px}
+body.qa-drawing{overflow:hidden}
+.qa-draw{position:fixed;inset:0;z-index:2147483600;background:var(--bg);color:var(--fg);display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.qa-dbar{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.qa-tools{display:flex;gap:4px;margin:0 auto}
+.qa-db{min-height:44px;min-width:44px;padding:0 12px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);font:inherit;font-size:14px;cursor:pointer}
+.qa-db[aria-checked="true"]{background:var(--fg);color:var(--bg)}.qa-db:disabled{opacity:.4}
+.qa-done{background:var(--acc);color:var(--acc-fg,#fff)}
+.qa-dwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:12px}
+.qa-dwrap canvas{touch-action:none;border-radius:8px;box-shadow:0 0 0 1px var(--line)}
+.qa-dhint{margin:0;padding:8px 12px 12px;text-align:center;font-size:13px;color:var(--dim)}`;
   document.head.appendChild(css);
   const all = () => document.querySelectorAll('form.ask').forEach(mount);
   all(); new MutationObserver(all).observe(document.body, { childList: true, subtree: true });
