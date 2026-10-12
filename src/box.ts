@@ -492,7 +492,8 @@ PY
   async alarm(): Promise<void> {
     if (((await this.ctx.storage.get<string[]>('askQueue')) || []).length) await this.#runAsks();
     if (this.c.running) await this.ctx.storage.put('aliveAt', Date.now());
-    if (this.c.running && Date.now() - ((await this.ctx.storage.get<number>('costFrom')) || Date.now()) > 10 * 60_000) await this.#collectCosts();
+    // Every 3 min (was 10): the estimate-vs-elapsed bar shows the spend while a short build runs, not after it.
+    if (this.c.running && Date.now() - ((await this.ctx.storage.get<number>('costFrom')) || Date.now()) > 3 * 60_000) await this.#collectCosts();
     const agentId = await this.ctx.storage.get<string>('agentId');
     if (!this.c.running) { log('box', 'alarm_not_running', { agentId }); return; }
     const idle = Date.now() - ((await this.ctx.storage.get<number>('lastActive')) || 0);
