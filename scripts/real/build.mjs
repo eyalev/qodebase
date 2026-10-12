@@ -2,7 +2,7 @@
 // owner. An idea of a size (POST /api/build/idea), the estimate the Build sheet would show for the chosen settings
 // (predictBuild, the page's own code), POST /api/build (private), then the Landing budget. Prints the project's links.
 //   node scripts/real/build.mjs --size small|medium|large|huge --preset default|balanced|cheapest|custom
-//        [--v '{"coders":20,...}'] --budget 3 [--name real-x] [--dry]
+//        [--v '{"coders":20,...}'] --budget 3 [--name real-x] [--avoid 'Title A,Title B'] [--dry]
 // Admin header (acts as eyal): ~/.config/forq/admin-secret. Log: ~/.local/share/qodebase-real/builds.jsonl
 import { readFileSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -19,7 +19,8 @@ mkdirSync(dirname(LOG), { recursive: true });
 const log = (event, data) => { const l = JSON.stringify({ ts: new Date().toISOString(), event, ...data }); appendFileSync(LOG, l + '\n'); console.log(l); };
 const call = async (path, body) => { const r = await fetch(API + path, { method: body ? 'POST' : 'GET', headers: H, ...(body ? { body: JSON.stringify(body) } : {}) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(`${path} ${r.status}: ${JSON.stringify(j).slice(0, 300)}`); return j; };
 
-const idea = await call('/api/build/idea', { size });
+const avoid = (arg('avoid', '') || '').split(',').map((x) => x.trim()).filter(Boolean);   // titles already built
+const idea = await call('/api/build/idea', { size, ...(avoid.length ? { avoid } : {}) });
 log('idea', { size, title: idea.title, tasks: idea.job?.tasks, model: idea.model, fallback: !!idea.fallback });
 // The settings and the variant the estimate uses: the page's mapping (default = one Opus agent = Fastest).
 const variant = preset === 'custom' ? JSON.parse(arg('v', '{}')) : preset === 'default' ? BUILD_PRESETS.fastest.variant : BUILD_PRESETS[preset].variant;
