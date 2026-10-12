@@ -70,7 +70,7 @@ export function applyDiff(cur, d) {
 // Content dependencies from history, like git blame: replay the segment in history order keeping, for every line,
 // the commit that last wrote it. A commit depends on the writers of the lines its hunks remove or keep as context
 // (the lines `git apply` needs). Returns deps[i] = array of earlier task indices.
-export function blameDeps(data) {
+export function blameDeps(data, { context = true } = {}) {
   const files = new Map(), deps = data.tasks.map(() => new Set());
   const get = (p) => { if (!files.has(p)) { const s = data.files[p]; files.set(p, s == null ? null : { lines: s.split('\n'), who: s.split('\n').map(() => -1) }); } return files.get(p); };
   data.tasks.forEach((t, i) => {
@@ -88,7 +88,7 @@ export function blameDeps(data) {
         if (at < 0) continue; // history order always fits (validated); be safe
         const nl = [], nw = []; let k = 0;
         for (const l of h.lines) {
-          if (l[0] === ' ') { const w = f.who[at + k]; if (w >= 0 && w !== i) deps[i].add(w); nl.push(l.slice(1)); nw.push(w); k++; }
+          if (l[0] === ' ') { const w = f.who[at + k]; if (context && w >= 0 && w !== i) deps[i].add(w); nl.push(l.slice(1)); nw.push(w); k++; }
           else if (l[0] === '-') { const w = f.who[at + k]; if (w >= 0 && w !== i) deps[i].add(w); k++; }
           else if (l[0] === '+') { nl.push(l.slice(1)); nw.push(i); }
         }
@@ -162,7 +162,8 @@ export function run(data, opts = {}) {
   const landedI = new Set();
   const earlierLanded = (x) => x.diffs.every((d) => (prefix.get(d.path) || 0) >= x.pos.get(d.path));
   // order: 'content' (default) = a commit waits for the commits that wrote the lines it edits (blameDeps)
-  const deps = cfg.order === 'none' ? tasks.map(() => []) : (data._deps ??= blameDeps(data));
+  // 'removed' = only the lines it removes or rewrites (what it builds on); 'content' also counts context lines.
+  const deps = cfg.order === 'none' ? tasks.map(() => []) : cfg.order === 'removed' ? (data._depsR ??= blameDeps(data, { context: false })) : (data._deps ??= blameDeps(data));
   const depsLanded = (x) => deps[x.i].every((j) => landedI.has(j));
   const ready = (x) => depsLanded(x) && x.claims.every((c) => !held.has(c)) && (!fixOf.has(x.sha) || landedSet.has(fixOf.get(x.sha))) && (!x.waitEarlier || earlierLanded(x));
   function pump() {
