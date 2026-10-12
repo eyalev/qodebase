@@ -679,7 +679,7 @@
     return `<div class="fit open">${statusStrip(live, isStarting)}
       <div class="fpipe">${pipeline()}</div>
       ${latestLine(isStarting)}
-      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${tab('timeline', 'Timeline')}</div>
+      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${OWN ? tab('timeline', 'Timeline') : ''}</div>
       <div class="fpanel">${OWN ? needsYou() : ''}${fitPanel(cur)}</div></div>
       ${belowFold()}`;
   }
@@ -863,7 +863,7 @@
     const h = decodeURIComponent(location.hash || '#/'); let m;
     termSeen = new Set();
     const html = (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
-      : h === '#/timeline' ? viewTimeline() : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
+      : h === '#/timeline' && OWN ? viewTimeline() : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
     termSeen = null;
     // Rebuild only when something other than a time changed, and never under a finger:
     // a rebuild mid-tap swallowed about one tap in six (critique, 2026-10-07).
