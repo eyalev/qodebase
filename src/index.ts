@@ -31,7 +31,7 @@ import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './gi
 import { DEFAULT_API_MODEL, isClaudeToken, onSubscription, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
 import { importPage } from './ui';
 import { allFiles, blob, diffTrees, forkBase, head, resolvePath, tree } from './code';
-import { changesPage, dirPage, filePage, type ChangeText } from './codeui';
+import { changesPage, dirPage, filePage, type ChangeText, type FileWhy } from './codeui';
 import { startingPage } from './pages';
 import { personalAgentsPage } from './personal';
 import { ownPage } from './own';
@@ -833,12 +833,12 @@ const app = {
           return json(await spawn(env, ctx, slug, String(b.task || ''), apiBase));
         }
         if (verb === 'router' && request.method === 'POST') {
-          const b = await request.json() as { text?: string; attachments?: unknown; context?: unknown };
+          const b = await request.json() as { text?: string; attachments?: unknown; context?: unknown; from?: string };
           const text = String(b.text || '').trim();
           if (!text || text.length > 8000) return json({ error: 'say something (max 8000 chars)' }, 400);
           // Attached images and picked elements (src/attach.ts) ride along; the page quotes the person's words.
           const msg = composeMessage(text, slug, b.attachments, b.context);
-          return json(await askRouter(env, ctx, p, slug, msg.text, apiBase, text));
+          return json(await askRouter(env, ctx, p, slug, msg.text, apiBase, text, b.from === 'talk' ? 'talk' : 'person'));
         }
         if (verb === 'deploy' && request.method === 'POST') {
           const b = await request.json().catch(() => ({})) as { agent?: string };
@@ -885,7 +885,7 @@ const app = {
           if (!a) return json({ error: 'unknown agent' }, 404);
           // Landing projects: the merge tap queues the change (src/landing/), no router turn.
           if (landingOn(info)) return json({ queued: true, change: await landingHooks.onMerge(env, slug, a.id) });
-          return json(await askRouter(env, ctx, p, slug, `Merge agent ${a.id} into the project's main line: run \`forq merge ${a.id}\` and tell me the result in one line.`, apiBase, `Merge ${a.id.split('--')[1]}`));
+          return json(await askRouter(env, ctx, p, slug, `Merge agent ${a.id} into the project's main line: run \`forq merge ${a.id}\` and tell me the result in one line.`, apiBase, `Merge ${a.id.split('--')[1]}`, 'merge'));
         }
       }
 
@@ -1041,7 +1041,22 @@ async function codeRoute(env: Env, ctx: ExecutionContext, info: ProjectInfo, v: 
     return html(dirPage({ info, v, path: dir, entries, readme, rev }));
   }
   const file = await blob(env, ctx, repo, e.hash, clean);
-  return html(filePage({ info, v, path: clean, file, rev, runUrl: runUrl(runBase, repo, clean) }));
+  return html(filePage({ info, v, path: clean, file, rev, runUrl: runUrl(runBase, repo, clean), why: !v && info.landing ? await fileWhy(env, info, clean) : null }));
+}
+
+/** Blame by intent (G3): the change records that touched a file on main, from the Landing DO; one read, never throws. */
+async function fileWhy(env: Env, info: ProjectInfo, path: string): Promise<FileWhy | null> {
+  try {
+    const view: any = await env.Landing.get(env.Landing.idFromName(info.slug)).view(info.slug);
+    const on = (view.changes || []).filter((c: any) => (c.files || []).includes(path));
+    if (!on.length) return null;
+    const collided = on.filter((c: any) => (c.landing?.conflicts || []).includes(path) || (c.events || []).some((e: any) => e.what === 'conflict' && String(e.detail || '').split(':')[0].includes(path)));
+    const title = (c: any) => String(c.title || c.intent || '').split(/(?<=[.!?])\s/)[0].slice(0, 80);
+    return { changes: on.length, collisions: collided.length, titles: on.map(title).filter(Boolean), href: `/p/${info.owner}/${info.name}/work#/file/${encodeURIComponent(path)}` };
+  } catch (err) {
+    console.log(JSON.stringify({ event: 'file_why_failed', slug: info.slug, path, error: String(err) }));
+    return null;
+  }
 }
 
 async function changesRoute(env: Env, ctx: ExecutionContext, info: ProjectInfo, short: string, runBase: string) {
@@ -1072,10 +1087,10 @@ const html = (body: string) => new Response(body, { headers: { 'content-type': '
 /** Hand text to the router agent. Recorded first and answered at once; waking
  *  (6-20 s) and delivery happen in the background, and the page shows each
  *  phase from the project's lastRequest. */
-async function askRouter(env: Env, ctx: ExecutionContext, p: DurableObjectStub<Project>, slug: string, text: string, apiBase: string, shown = text) {
+async function askRouter(env: Env, ctx: ExecutionContext, p: DurableObjectStub<Project>, slug: string, text: string, apiBase: string, shown = text, from: RouterRequest['from'] = 'person') {
   const at = Date.now();
   // `shown` is what the page quotes as "You": the person's words, not forq's instruction to the router.
-  await p.setRequest({ text: shown, payload: text === shown ? undefined : text, at, state: 'waking', sentAt: undefined, error: undefined, attempts: 0 });
+  await p.setRequest({ text: shown, payload: text === shown ? undefined : text, at, state: 'waking', sentAt: undefined, error: undefined, attempts: 0, from });
   // Delivered from the project DO's alarm (Project.scheduleDelivery), which survives this request.
   await p.scheduleDelivery();
   return { ok: true, at };
@@ -1184,7 +1199,7 @@ async function issuesHook(request: Request, env: Env, ctx: ExecutionContext): Pr
     occ ? `The failing requests, from the issue's occurrences (dynamic path parts are shown as REDACTED by Cloudflare):\n${occ}` : 'The occurrences could not be fetched.',
     `First reproduce it: send the SAME request to the live URL with curl (same method, path and headers as above; a plain GET is not a WebSocket upgrade), trying realistic values where the path says REDACTED, until you get the same status, and read the response body. Only then decide the cause from the code. If you cannot reproduce it, say so rather than picking a theory. Start one agent with \`forq spawn\` to fix it, giving it the exact failing request, what the response showed, and the cause. If an agent is already working on this error with a different theory, tell it with \`forq send\`. Reply with one line saying what you found and did.`,
   ].join('\n\n');
-  const r = await askRouter(env, ctx, p, e.slug, ask, env.API_BASE, `Production error from Cloudflare Issues: ${title}`);
+  const r = await askRouter(env, ctx, p, e.slug, ask, env.API_BASE, `Production error from Cloudflare Issues: ${title}`, 'issues');
   log('issues', 'routed', { worker, slug: e.slug });
   return json({ routed: e.slug, ...r });
 }

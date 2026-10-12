@@ -42,6 +42,10 @@ export const CODE_CSS = `<style>
 .ls a:last-child{border-bottom:0}
 .ls .k{width:16px;flex:none;color:var(--dim);font-family:'Geist',sans-serif;font-size:13px;text-align:center}
 .ls .dir{font-weight:600}
+.fwhy{display:grid;gap:2px;margin:8px 0;padding:10px 12px;min-height:44px;border-radius:14px;background:var(--card);box-shadow:inset 3px 0 0 var(--acc),inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none}
+.fwhy b{font-weight:600;font-size:15px;color:var(--acc)}
+.fwhy span{font-size:13px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (hover:hover){.fwhy:hover{background:var(--chip)}}
 .fmeta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:var(--dim);font-size:13px;margin:8px 0}
 .fmeta .chipbtn{min-height:36px;padding:0 12px;font-size:14px}
 .code{background:var(--card);border-radius:12px;overflow:auto;font:12.5px/1.55 'JetBrains Mono',monospace;-webkit-text-size-adjust:100%}
@@ -146,7 +150,9 @@ ${o.readme ? `<h2>README</h2><div class="md">${markdown(o.readme)}</div>` : ''}`
 
 const LANG: Record<string, string> = { js: 'javascript', mjs: 'javascript', cjs: 'javascript', ts: 'typescript', tsx: 'typescript', jsx: 'javascript', json: 'json', html: 'xml', htm: 'xml', xml: 'xml', svg: 'xml', css: 'css', scss: 'scss', md: 'markdown', py: 'python', rb: 'ruby', go: 'go', rs: 'rust', java: 'java', kt: 'kotlin', sh: 'bash', yml: 'yaml', yaml: 'yaml', toml: 'ini', c: 'c', h: 'c', cpp: 'cpp', php: 'php', sql: 'sql' };
 
-export function filePage(o: { info: ProjectInfo; v: string; path: string; file: Blob; rev: Head | null; runUrl: string }) {
+/** Blame by intent, file level (github-parity G3): which recorded changes touched this file and how many collided on it. */
+export type FileWhy = { changes: number; collisions: number; titles: string[]; href: string };
+export function filePage(o: { info: ProjectInfo; v: string; path: string; file: Blob; rev: Head | null; runUrl: string; why?: FileWhy | null }) {
   const { info, v, path, file } = o;
   const name = path.split('/').pop() || path;
   const ext = (name.split('.').pop() || '').toLowerCase();
@@ -162,6 +168,7 @@ export function filePage(o: { info: ProjectInfo; v: string; path: string; file: 
   } else body = codeBlock(file.text, LANG[ext]);
   const lines = file.text ? file.text.split('\n').length : 0;
   return shell(`${name} · code · qodebase`, `${head(info, v, path, name, o.rev)}${crumbs(info, path, v)}
+${o.why && o.why.changes ? `<a class="fwhy" href="${esc(o.why.href)}"><b>Changed by ${o.why.changes} change${o.why.changes === 1 ? '' : 's'}${o.why.collisions ? `, ${o.why.collisions} collision${o.why.collisions === 1 ? '' : 's'}` : ''}</b><span>${esc(o.why.titles.slice(0, 3).join(', '))}${o.why.titles.length > 3 ? ` and ${o.why.titles.length - 3} more` : ''}</span></a>` : ''}
 <div class="fmeta"><span>${size}</span>${lines ? `<span>${lines} lines</span>` : ''}${actions}</div>${body}`);
 }
 
