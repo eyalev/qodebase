@@ -762,6 +762,9 @@ body.bs-on{overflow:hidden}
 .bs-sug{margin:0 0 12px}.bs-sug p{margin:0}.bs-sug .bs-src{margin-top:6px}
 .bs-sugb{width:100%;min-height:44px;border:0;border-radius:12px;background:var(--chip);color:var(--fg);font:inherit;font-size:15px;font-weight:500;cursor:pointer}
 .bs-sugb:disabled{opacity:.5;cursor:default}
+.bs-sug{min-height:44px}.bs-sugb:focus-visible,.bs-link:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.bs-link{border:0;background:none;padding:0;color:var(--acc);font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:44px}
+.bs-tag{font-size:12px;font-weight:500;color:var(--acc);margin-left:6px}
 .bs-sugd{padding:12px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line)}.bs-sugd:focus{outline:none}
 .bs-presets{display:grid;gap:8px}
 .bs-p{display:flex;flex-direction:column;gap:2px;text-align:left;border:0;cursor:pointer;background:var(--card);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:10px 12px;min-height:44px;font:inherit}

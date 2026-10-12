@@ -37,6 +37,8 @@
   const modelName = (m) => (!m ? 'a small model' : /haiku/i.test(m) ? 'a small model (Claude Haiku)' : /glm/i.test(m) ? 'a small model (GLM-4.7 Flash on Cloudflare)' : `a small model (${m.replace(/^@cf\/[^/]+\//, '')})`);
   const OVERLAP_W = { low: 'pieces mostly separate', some: 'some pieces touch the same files', high: 'many pieces touch the same files' };
   const DIFF_W = { easy: 'easy', normal: 'normal difficulty', hard: 'hard' };
+  let touched = false;   // a preset or knob tapped while a suggestion was being read
+  const sugV = () => (st.sug?.state === 'done' && st.sug.v && st.sug.prompt === idea() ? st.sug.v : null);
   const jobNow = () => (st.sug?.job && st.sug.prompt === idea() ? st.sug.job : null);
   let SIM = null;
 
@@ -62,7 +64,7 @@
   const M = { haiku: 'Haiku', sonnet: 'Sonnet', opus: 'Opus' };
   const alone = (v) => v.coders === 1 && v.coderModel === 'opus' && !v.reviewers;
   const team = (v) => (alone(v) ? 'one Opus agent' : `${v.coders} ${M[v.coderModel]} agent${v.coders === 1 ? '' : 's'} and an Opus planner${v.reviewers ? `, ${v.reviewers} reviewer${v.reviewers === 1 ? '' : 's'}` : ''}${v.board ? ', shared board' : ''}`);
-  const summary = (key, v, e) => `${key === 'custom' ? (presetLook(v) !== 'custom' ? PRESETS[presetLook(v)].name : 'Custom') : PRESETS[key].name}: ${team(v)}${e && e !== 'error' ? `, about ${range(e.usd, usd)}` : ''}`;
+  const summary = (key, v, e) => `${key === 'custom' ? (presetLook(v) !== 'custom' ? `${PRESETS[presetLook(v)].name} with the board ${v.board ? 'on' : 'off'}` : 'Custom') : PRESETS[key].name}: ${team(v)}${e && e !== 'error' ? `, about ${range(e.usd, usd)}${e.mine ? ' for this idea' : ''}` : ''}`;
 
   // The estimate's details (scroll with the sheet) and its one line (in the sticky footer, next to the button).
   function estHtml() {
@@ -76,12 +78,12 @@
     if (st.estState === 'loading') return 'Estimating…';
     const e = st.est;
     if (!e || e === 'error') return `${e === 'error' ? 'No estimate right now.' : 'No estimate yet.'} You can still build with these settings.`;
-    return `${e.mine ? 'Your idea: about' : 'About'} <b>${range(e.wallS, mins)}</b> and <b>${range(e.usd, usd)}</b> at API prices`;
+    return `${e.mine ? (st.sug?.state === 'unsure' ? 'Rough guess for your idea: about' : 'Your idea: about') : 'About'} <b>${range(e.wallS, mins)}</b> and <b>${range(e.usd, usd)}</b> at API prices`;
   }
   function sugHtml() {
     const g = st.sug, txt = idea();
     if (g?.state === 'reading') return '<div class="bs-sug"><p class="bs-src" aria-live="polite">Reading your idea…</p></div>';
-    const btn = (label) => `<button type="button" class="bs-sugb" data-suggest${txt.length < 4 ? ' disabled' : ''}>${label}</button>${txt.length < 4 ? '<p class="bs-src">Write your idea in the box first.</p>' : ''}`;
+    const btn = (label) => `<button type="button" class="bs-sugb" data-suggest${txt.length < 4 ? ' disabled' : ''}>${label}</button>${txt.length < 4 ? '<p class="bs-src">Write your idea first, then come back. <button type="button" class="bs-link" data-write>Write it now</button></p>' : ''}`;
     if (!g || g.prompt !== txt) return `<div class="bs-sug">${btn('Suggest settings for my idea')}${g && g.prompt !== txt && txt ? '<p class="bs-src">Your idea changed since the last suggestion.</p>' : ''}</div>`;
     if (g.state === 'failed') return `<div class="bs-sug"><p class="bs-src">${esc(g.error || 'Could not read your idea right now.')} Pick a preset yourself.</p>${g.retry ? btn('Try again') : ''}</div>`;
     const j = g.job, facts = j ? `About ${j.tasks} pieces of work, ${OVERLAP_W[j.overlap] || j.overlap}, ${DIFF_W[j.difficulty] || j.difficulty}.` : '';
@@ -91,7 +93,7 @@
   }
   async function suggest() {
     const prompt = idea();
-    st.sug = { state: 'reading', prompt }; render();
+    st.sug = { state: 'reading', prompt }; touched = false; render();
     const t0 = performance.now();
     try {
       const r = await fetch('/api/build/suggest', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt }) });
@@ -100,9 +102,10 @@
       if (!r.ok || d.fallback || !d.job) st.sug = { state: 'failed', prompt, retry: r.status !== 429 && r.status !== 404, error: r.status === 429 ? 'Suggestions are used up for today.' : r.status === 404 ? 'Suggestions are not available for your account yet.' : 'Could not read your idea right now.' };
       else if (!d.suggestion) st.sug = { state: 'unsure', prompt, job: d.job, model: d.model };
       else {
-        st.sug = { state: 'done', prompt, job: d.job, preset: d.suggestion.preset, why: d.suggestion.why, model: d.model };
         const pv = PRESETS[d.suggestion.preset]?.v;
-        if (pv) st.v = { ...pv, ...(typeof d.suggestion.board === 'boolean' && pv.coders > 1 ? { board: d.suggestion.board } : {}) };
+        const sv = pv ? { ...pv, ...(typeof d.suggestion.board === 'boolean' && pv.coders > 1 ? { board: d.suggestion.board } : {}) } : null;
+        st.sug = { state: 'done', prompt, job: d.job, preset: d.suggestion.preset, why: d.suggestion.why, model: d.model, v: sv };
+        if (sv && !touched) st.v = { ...sv };   // a preset tapped while it was reading wins
       }
     } catch (e) { log('suggest_failed', { error: String(e) }); st.sug = { state: 'failed', prompt, retry: true, error: 'Could not reach qodebase.' }; }
     recompute();
@@ -115,7 +118,7 @@
         <div class="bs-head"><h2 id="bs-t">Who builds it</h2><button type="button" class="bs-x" data-close aria-label="Close">×</button></div>
         ${sugHtml()}
         ${Object.keys(PRESETS).length ? '' : st.estState === 'loading' ? '<p class="bs-src">Loading the presets…</p>' : '<p class="bs-src">The presets did not load. Fine-tune below, or build with the default.</p>'}
-        <div class="bs-presets" role="radiogroup" aria-label="Presets">${Object.entries(PRESETS).map(([k, p]) => `<button type="button" role="radio" class="bs-p" data-preset="${k}" aria-checked="${key === k}"><b>${esc(p.label)}</b><span>${esc(p.why)}</span></button>`).join('')}</div>
+        <div class="bs-presets" role="radiogroup" aria-label="Presets">${Object.entries(PRESETS).map(([k, p]) => `<button type="button" role="radio" class="bs-p" data-preset="${k}" aria-checked="${key === k}"><b>${esc(p.label)}${sugV() && st.sug.preset === k ? ' <span class="bs-tag">suggested</span>' : ''}</b><span>${esc(p.why)}</span></button>`).join('')}</div>
         <details class="bs-fine"${(key === 'custom' && Object.keys(PRESETS).length) || st.fineOpen ? ' open' : ''}><summary>Fine-tune${key === 'custom' ? ' (custom)' : ''}</summary>
           <div class="bs-knobs">${KNOBS.map(([n, label, vals, word]) => `<div class="bs-k"><span class="bs-kl">${esc(label)}${GLOSS[n] ? ` <button type="button" class="bs-g" data-gloss="${n}" aria-label="What is ${esc(label.toLowerCase())}?">?</button>` : ''}</span><span class="bs-opts" role="group" aria-label="${esc(label)}">${vals.map((x) => `<button type="button" class="bs-o" data-k="${n}" data-val='${esc(JSON.stringify(x))}' aria-pressed="${st.v[n] === x}"${n === 'board' && st.v.coders === 1 ? ' disabled' : ''}>${esc(word(x))}</button>`).join('')}</span></div>`).join('')}</div>
           ${st.glossOpen ? `<p class="small dim bs-gl">${esc(GLOSS[st.glossOpen])}</p>` : ''}
@@ -133,7 +136,7 @@
     if (inside || !root.contains(document.activeElement)) (sel && root.querySelector(sel) || root.querySelector('.bs-p[aria-checked="true"]') || root.querySelector('.bs-x'))?.focus();
   }
   function open() {
-    st.v = st.applied ? { ...st.applied.v } : { ...DEFAULT_V };
+    st.v = st.applied ? { ...st.applied.v } : sugV() ? { ...sugV() } : { ...DEFAULT_V };
     root.hidden = false; document.body.classList.add('bs-on');
     if (!SIM) { st.estState = 'loading'; render(); loadSim().then(recompute); } else recompute();
     requestAnimationFrame(() => { root.classList.add('open'); (root.querySelector('.bs-p[aria-checked="true"]') || root.querySelector('.bs-x'))?.focus(); });
@@ -150,18 +153,20 @@
     const add = (name, value) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = name; i.value = value; i.dataset.bs = '1'; form.appendChild(i); };
     add('preset', key); add('v', JSON.stringify(st.v));
     if (chip) chip.textContent = summary(key, st.v, st.est);
+    st.applied.prompt = idea(); st.applied.text = chip?.textContent || '';
     log('apply', { key, v: st.v });
     close();
   }
   root.addEventListener('click', (e) => {
     if (e.target.closest('[data-close]')) return close();
     const p = e.target.closest('[data-preset]');
-    if (p) { st.v = { ...PRESETS[p.dataset.preset].v }; return recompute(); }
+    if (p) { const k2 = p.dataset.preset; touched = true; st.v = { ...(sugV() && st.sug.preset === k2 ? sugV() : PRESETS[k2].v) }; return recompute(); }
     const k = e.target.closest('[data-k]');
-    if (k) { st.v[k.dataset.k] = JSON.parse(k.dataset.val); if (st.v.coders === 1) st.v.board = false; st.fineOpen = true; return recompute(); }
+    if (k) { touched = true; st.v[k.dataset.k] = JSON.parse(k.dataset.val); if (st.v.coders === 1) st.v.board = false; st.fineOpen = true; return recompute(); }
     const g = e.target.closest('[data-gloss]');
     if (g) { st.glossOpen = st.glossOpen === g.dataset.gloss ? null : g.dataset.gloss; st.fineOpen = true; return render(); }
     if (e.target.closest('[data-suggest]')) return suggest();
+    if (e.target.closest('[data-write]')) { close(); setTimeout(() => form.querySelector('textarea')?.focus(), 230); return; }
     if (e.target.closest('[data-apply]')) return apply(false);
     if (e.target.closest('[data-reset]')) { st.v = { ...DEFAULT_V }; recompute(); root.querySelector('.bs-p[aria-checked="true"]')?.focus(); return; }
   });
@@ -175,6 +180,11 @@
     if (!f.length) return;
     if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
     else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  });
+  // The chosen line's cost was for the idea as it was: drop it once the idea changes.
+  form.querySelector('textarea')?.addEventListener('input', () => {
+    const chip = document.getElementById('bschosen');
+    if (chip && st.applied) chip.textContent = idea() === st.applied.prompt ? st.applied.text : summary(st.applied.key, st.applied.v, null);
   });
   // Shown only when the server turned Build settings on for this viewer (qb6: <body data-build-settings="1">).
   const btn = document.getElementById('bsopen');
