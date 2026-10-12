@@ -197,6 +197,7 @@
       case 'replayed': return [`${its} replayed cleanly and went back in line`, T];
       case 'with-lead': return [`${its} needs ${leadName(c.lead) || 'its lead'} to decide`, d];
       case 'bounced': return [`${its} was sent back: a test failed`, T];
+      case 'sent back': case 'sent-back': case 'sendback': return [`${its} was sent back by ${e.by === 'owner' || !e.by ? 'you' : esc(e.by)}`, d];
       case 'landed': {
         const rp = c.landing && /^replayed/.test(c.landing.how || '');
         return rp ? [`${its} landed after a replay`, `${T.replace(/[.!?]+$/, '')}: it collided on ${(c.landing.conflicts || []).join(', ')}, was re-applied on the newest code, and passed the tests.`] : [`${its} landed on main`, T];
@@ -790,6 +791,17 @@
     const rest = task.slice(first.length).trim();
     return `<p style="margin-top:4px">${esc(first)}</p>${rest ? `<details class="more"><summary>The agent's full task</summary><p>${esc(task)}</p></details>` : ''}${asked ? `<details class="more"><summary>The request it came from</summary><p>${esc(asked)}</p></details>` : ''}`;
   }
+  // G5 'Ask for changes': the owner's own note sends the change back to its agent (qb6: POST …/landing/sendback).
+  const sbDraft = {};
+  const writing = () => !!document.activeElement?.matches?.('.sb-note');
+  root.addEventListener('input', (e) => { const t = e.target.closest('.sb-note'); if (t) sbDraft[t.dataset.sb] = t.value; });
+  root.addEventListener('focusout', (e) => { if (e.target.closest?.('.sb-note') && pendingRender) { pendingRender = false; setTimeout(render, 50); } });
+  function sendBackBox(c) {
+    if (!OWN || ['landed', 'working'].includes(c.state) || D.mode === 'demo') return '';
+    return `<section class="sec sb"><h3>Ask for changes</h3><p class="cap">Your note goes to ${AG(c.agent)}, who changes it and sends it for review again.</p>
+      <textarea class="sb-note" data-sb="${esc(c.id)}" rows="2" maxlength="2000" placeholder="What should change?" aria-label="What should change?">${esc(sbDraft[c.id] || '')}</textarea>
+      <button type="button" class="btn sb-send" data-sendback="${esc(c.id)}">Send back to ${AG(c.agent)}</button></section>`;
+  }
   function viewChange(id) {
     const idx = byId(), c = idx.get(id);
     if (!c) return `<div class="drill">${crumbs([['Agents at work', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style="font-size:20px;margin-bottom:6px">${short(it)}</h2><p class="dim">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : gone(); })()}</div>`;
@@ -819,6 +831,7 @@
         <dt>${term('fork', 'Its copy')}</dt><dd class="mono">${esc(c.fork)}</dd>
         ${L?.commit ? `<dt>Commit</dt><dd class="mono">${esc(L.commit.slice(0, 7))}${L.mainCommit ? ` landed as ${esc(L.mainCommit.slice(0, 7))}` : ''}</dd>` : ''}
       </dl></section>
+      ${sendBackBox(c)}
       ${diff ? `<section class="sec"><h3>The change</h3><p class="cap">Green lines were added, red lines removed.${two ? ' The reviewed version was written on older code; the replay re-did the same intent on the newest code.' : ''}</p>${diff}</section>` : ''}</div>`;
   }
   function viewLine() {
@@ -871,13 +884,14 @@
     // Rebuild only when something other than a time changed, and never under a finger:
     // a rebuild mid-tap swallowed about one tap in six (critique, 2026-10-07).
     const key = html.replace(/(data-(?:ago|since|until|eb-since|el)="\d+">)[^<]*/g, '$1').replace(/animation-delay:-\d+ms/g, '');
-    if (key === lastKey || pressing) {
+    // Never rebuild under a finger, nor while the owner is writing a note to an agent (G5).
+    if (key === lastKey || pressing || writing()) {
       root.querySelectorAll('[data-ago]').forEach((e) => { const v = agoTxt(+e.dataset.ago); if (e.textContent !== v) e.textContent = v; });
       if (window.qbEstBarTick) window.qbEstBarTick();
       root.querySelectorAll('[data-since]').forEach((e) => { const v = secs(now() - +e.dataset.since); if (e.textContent !== v) e.textContent = v; });
       root.querySelectorAll('[data-el]').forEach((e) => { const v = elTxt(+e.dataset.el); if (e.textContent !== v) e.textContent = v; });
       root.querySelectorAll('[data-until]').forEach((e) => { const v = untilTxt(+e.dataset.until); if (e.textContent !== v) e.textContent = v; });
-      if (pressing) pendingRender = true;
+      if (pressing || writing()) pendingRender = true;
     } else {
       lastKey = key;
       // The line moves: cars glide from waiting to the train, and a landed train flies into main (FLIP).
@@ -931,6 +945,18 @@
     if (dt) { diffTab = dt.dataset.diff; render(); return; }
     const sp = ev.target.closest('[data-speed]');
     if (sp && P && P.replay) { const T = now(); P.speed = +sp.dataset.speed; P.wall0 = Date.now() - (T - P.start) / P.speed; tick(); return; }
+    const sbb = ev.target.closest('[data-sendback]');
+    if (sbb) {
+      const id = sbb.dataset.sendback, note = (sbDraft[id] || '').trim();
+      if (!note) { root.querySelector(`.sb-note[data-sb="${CSS.escape(id)}"]`)?.focus(); toast('Write what should change first.'); return; }
+      sbb.disabled = true;
+      const r = await fetch(`${API}/landing/sendback`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, note }) }).catch(() => ({ ok: false }));
+      const j = r.json ? await r.json().catch(() => ({})) : {};
+      log('sendback', { id, ok: r.ok, status: r.status, chars: note.length });
+      if (!r.ok) { sbb.disabled = false; toast(j.error || 'Could not send it back. Try again.'); return; }
+      delete sbDraft[id]; const ta = root.querySelector(`.sb-note[data-sb="${CSS.escape(id)}"]`); if (ta) ta.value = '';
+      sbb.disabled = false; toast('Sent back. The agent is on it.'); tick(); return;
+    }
     const wb = ev.target.closest('[data-watch]');
     if (wb) { if (wb.dataset.home) location.hash = '#/'; watch(wb.dataset.watch, wb); return; }
     const dm = ev.target.closest('[data-demo]');
