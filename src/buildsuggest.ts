@@ -12,7 +12,7 @@ import { suggestBuild, predictBuild, BUILD_PRESETS, SMALL_APP } from '../public/
 import { recordCost, claudeUsd } from './costs';
 import { registry } from './registry';
 import { log } from './box';
-import { SUGGEST_SYSTEM, parseJob, type Job } from './buildsettings';
+import { SUGGEST_SYSTEM, parseJob, type Job, IDEA_SYSTEM, parseIdea, pickCurated, IDEA_SIZES, type IdeaSize, type Idea } from './buildsettings';
 
 export const SUGGEST_CAPS = { perPerson: 40, total: 1000 };
 const HAIKU = 'claude-haiku-5-5';
@@ -74,4 +74,41 @@ export async function suggestRoute(request: Request, env: Env, ctx: ExecutionCon
   if (job) ctx.waitUntil(caches.default.put(key, new Response(JSON.stringify({ job, model }), { headers: { 'content-type': 'application/json', 'cache-control': 's-maxage=86400' } })));
   log('build', 'suggest', { handle, model, ms, ok: !!job, err: err || undefined, tasks: job?.tasks, confidence: job?.confidence });
   return Response.json({ ...suggestion(job), model: model || null, ms, ...(err ? { fallback: true } : {}) }, { headers: { 'cache-control': 'no-store' } });
+}
+
+// ---- I2: "Need an idea?" -------------------------------------------------------------
+//   POST /api/build/idea {size: small|medium|large|huge, avoid?: [titles], fast?: true}
+//     -> {title, prompt, size, job, suggestion, estimate, model, fallback?}
+// One model call (Workers AI through the gateway, like /suggest) returns the idea AND its job facts, so applying
+// it needs no second call. The facts must land in the requested size's bucket: one retry, else a curated idea.
+// fast: a curated idea at once (first paint), no model. Caps shared with /suggest; a Ledger row per model call.
+export async function ideaRoute(request: Request, env: Env, ctx: ExecutionContext, handle: string): Promise<Response> {
+  const b = await request.json().catch(() => ({})) as { size?: string; avoid?: unknown; fast?: boolean };
+  const size = String(b.size || '') as IdeaSize;
+  if (!(size in IDEA_SIZES)) return Response.json({ error: 'size: small | medium | large | huge' }, { status: 400 });
+  const avoid = (Array.isArray(b.avoid) ? b.avoid : []).map((x) => String(x).slice(0, 60)).slice(0, 20);
+  const answer = (idea: Idea, model: string | null, fallback: boolean) =>
+    Response.json({ title: idea.title, prompt: idea.prompt, size, ...suggestion(idea.job), model, ...(fallback ? { fallback: true } : {}) }, { headers: { 'cache-control': 'no-store' } });
+  if (b.fast) return answer(pickCurated(size, avoid), null, true);
+  const reg = registry(env);
+  const mine = await reg.dayCount(`suggest:${handle}`, SUGGEST_CAPS.perPerson);
+  const all = mine.ok ? await reg.dayCount('suggest:*', SUGGEST_CAPS.total) : mine;
+  if (!mine.ok || !all.ok) return answer(pickCurated(size, avoid), null, true);
+  const t0 = Date.now();
+  let idea: Idea | null = null, tries = 0, err = '';
+  while (!idea && tries < 2) {
+    tries++;
+    try {
+      const signal = AbortSignal.timeout(6000);
+      const run = (env.AI as any).run(WAI, { messages: [{ role: 'system', content: IDEA_SYSTEM(size, avoid) }, { role: 'user', content: `One ${size} idea, please. (${crypto.randomUUID().slice(0, 8)})` }],
+        max_tokens: 400, temperature: 0.9, chat_template_kwargs: { enable_thinking: false } }, env.TALK_GATEWAY ? { gateway: { id: env.TALK_GATEWAY } } : {});
+      const res: any = await Promise.race([run, new Promise((_, no) => signal.addEventListener('abort', () => no(new Error('timeout'))))]);
+      const text = res?.choices?.[0]?.message?.content ?? res?.response ?? '';
+      idea = parseIdea(typeof text === 'string' ? text : JSON.stringify(text), size);
+      if (!idea) err = `not a ${size} idea: ${String(text).slice(0, 100)}`;
+    } catch (e) { err = String((e as Error)?.message || e).slice(0, 120); }
+  }
+  ctx.waitUntil(recordCost(env, handle, 'ai', 'build idea', { usd: null, covered: true, billing: 'api' }));
+  log('build', 'idea', { handle, size, ok: !!idea, tries, ms: Date.now() - t0, err: idea ? undefined : err });
+  return idea ? answer(idea, WAI, false) : answer(pickCurated(size, avoid), null, true);
 }

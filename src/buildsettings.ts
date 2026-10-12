@@ -156,3 +156,84 @@ export function apiUsdOf(rows: { kind: string; project: string; tokens?: { in?: 
   }
   return n ? Math.round(usd * 1000) / 1000 : null;
 }
+
+// ---- I2: "Need an idea?" by size (docs/board/TASKS.md I1-I3). Sizes = the predictor's buckets. ----
+export type IdeaSize = 'small' | 'medium' | 'large' | 'huge';
+export const IDEA_SIZES: Record<IdeaSize, { lo: number; hi: number; words: string }> = {
+  small: { lo: 1, hi: 4, words: 'a one-screen tool or a small change: 1-4 pieces of work' },
+  medium: { lo: 5, hi: 11, words: 'a small app with a few screens: 5-11 pieces of work' },
+  large: { lo: 12, hi: 29, words: 'a full app or site with many features: 12-29 pieces of work' },
+  huge: { lo: 30, hi: 80, words: 'a big product with many parts: 30 or more pieces of work' },
+};
+export type Idea = { title: string; prompt: string; job: Job };
+const J = (tasks: number, overlap: Job['overlap'], difficulty: Job['difficulty'], summary: string, name: string): Job =>
+  ({ tasks, overlap, difficulty, vague: false, summary, confidence: 0.8, name });
+/** Hand-written ideas per size: the instant first paint, and the fallback when the model fails or misses the size. */
+export const CURATED_IDEAS: Record<IdeaSize, Idea[]> = {
+  small: [
+    { title: 'Tip splitter', prompt: 'A page that splits a restaurant bill: enter the total, the tip percent and how many people, and see what each person pays.', job: J(2, 'low', 'easy', 'A bill and tip splitter on one page.', 'tip-splitter') },
+    { title: 'Click counter', prompt: 'A single page with a big button that counts taps, a reset button, and the count kept after a reload.', job: J(1, 'low', 'easy', 'A tap counter that remembers its count.', 'tap-counter') },
+    { title: 'Pomodoro timer', prompt: 'A 25-minute focus timer with a 5-minute break, start/pause/reset, and a sound when time is up.', job: J(3, 'low', 'easy', 'A focus timer with breaks and a sound.', 'pomodoro-timer') },
+    { title: 'Dice roller', prompt: 'Roll one to six dice with a tap, show the faces and the total, and keep the last ten rolls.', job: J(2, 'low', 'easy', 'A dice roller with a short history.', 'dice-roller') },
+    { title: 'Unit converter', prompt: 'Convert between kilometres and miles, kilograms and pounds, and Celsius and Fahrenheit as you type.', job: J(3, 'low', 'easy', 'A live unit converter for three kinds of units.', 'unit-converter') },
+    { title: 'Password maker', prompt: 'Make a random password with a length slider and switches for digits and symbols, with a copy button.', job: J(2, 'low', 'easy', 'A random password generator with options.', 'password-maker') },
+    { title: 'Water tracker', prompt: 'Tap to add a glass of water, see today against a goal of eight, and start fresh each day.', job: J(3, 'low', 'easy', 'A daily water counter with a goal.', 'water-tracker') },
+    { title: 'Countdown', prompt: 'Count down the days, hours and minutes to a date I pick, with the event name on top.', job: J(2, 'low', 'easy', 'A countdown to a chosen date.', 'event-countdown') },
+  ],
+  medium: [
+    { title: 'Shopping list', prompt: 'A shared shopping list: add items with a quantity, tick them off, group them by aisle, and clear the ticked ones.', job: J(6, 'some', 'normal', 'A shopping list with aisles and ticking.', 'shopping-list') },
+    { title: 'Habit tracker', prompt: 'Track three daily habits: tick each day, see a streak and a month calendar per habit, and add or rename habits.', job: J(7, 'some', 'normal', 'A habit tracker with streaks and a calendar.', 'habit-tracker') },
+    { title: 'Recipe box', prompt: 'Save recipes with ingredients and steps, scale the servings, search by name, and mark favourites.', job: J(8, 'some', 'normal', 'A recipe box with scaling and search.', 'recipe-box') },
+    { title: 'Quiz game', prompt: 'A quiz with ten multiple-choice questions, a score at the end, a timer per question, and a way to add my own questions.', job: J(7, 'some', 'normal', 'A timed quiz with custom questions.', 'quiz-game') },
+    { title: 'Expense notes', prompt: 'Note expenses with an amount, a category and a date, see totals per category this month, and export a CSV.', job: J(8, 'some', 'normal', 'An expense log with monthly totals and CSV.', 'expense-notes') },
+    { title: 'Reading list', prompt: 'Keep a list of books to read, reading and done, with notes and a star rating, and sort by date or rating.', job: J(6, 'some', 'easy', 'A reading list with states, notes and ratings.', 'reading-list') },
+    { title: 'Workout log', prompt: 'Log workouts as exercises with sets and reps, see past sessions, and a chart of one exercise over time.', job: J(8, 'some', 'normal', 'A workout log with history and a chart.', 'workout-log') },
+    { title: 'Flashcards', prompt: 'Make decks of flashcards, study them with flip and know/don\'t-know, and repeat the ones I missed.', job: J(7, 'some', 'normal', 'Flashcard decks with spaced repeats.', 'flashcards') },
+  ],
+  large: [
+    { title: 'Bakery website', prompt: 'A bakery website: menu with photos, a cart, checkout, an order admin page, opening hours, and email confirmations.', job: J(16, 'some', 'normal', 'A bakery site with cart, checkout and admin.', 'bakery-shop') },
+    { title: 'Family trip planner', prompt: 'Plan family trips: destinations, a day-by-day plan, a packing list per person, a shared budget, and a map of the stops.', job: J(18, 'some', 'normal', 'A trip planner with days, packing, budget and map.', 'family-trip-planner') },
+    { title: 'Club manager', prompt: 'A sports club app: members, teams, a training calendar, attendance, fees paid or due, and news posts.', job: J(20, 'some', 'normal', 'A club app for members, training and fees.', 'club-manager') },
+    { title: 'Event booking', prompt: 'List events, book seats with a seat map, see my bookings, cancel, and an organiser view with sales per event.', job: J(16, 'some', 'hard', 'Event listings with seat booking and sales.', 'event-booking') },
+    { title: 'Home inventory', prompt: 'Keep track of things at home: rooms, items with photos and value, warranties with reminders, and a printable list for insurance.', job: J(14, 'some', 'normal', 'A home inventory with warranties and reports.', 'home-inventory') },
+    { title: 'Class dashboard', prompt: 'A teacher\'s dashboard: classes, students, assignments with due dates, grades, and a progress chart per student.', job: J(18, 'some', 'normal', 'A class dashboard for assignments and grades.', 'class-dashboard') },
+    { title: 'Plant care', prompt: 'Track house plants: watering and feeding schedules, reminders, photos over time, and care notes per species.', job: J(12, 'some', 'normal', 'A plant care tracker with schedules and photos.', 'plant-care') },
+    { title: 'Job tracker', prompt: 'Track job applications: companies, stages from applied to offer, interview dates, notes, and a weekly summary.', job: J(13, 'some', 'normal', 'A job application tracker with stages.', 'job-tracker') },
+  ],
+  huge: [
+    { title: 'Small online shop', prompt: 'An online shop: catalogue with categories and search, product pages, cart, checkout, accounts, order history, stock admin, discounts, and sales reports.', job: J(36, 'high', 'hard', 'A full online shop with admin and reports.', 'online-shop') },
+    { title: 'Clinic booking system', prompt: 'A clinic system: doctors and their hours, patient booking and reminders, patient records, a waiting room screen, invoices, and an admin dashboard.', job: J(40, 'high', 'hard', 'A clinic booking and records system.', 'clinic-booking') },
+    { title: 'Learning platform', prompt: 'A course platform: courses with lessons and videos, quizzes, progress per learner, certificates, a teacher area for building courses, and discussions.', job: J(45, 'high', 'hard', 'A course platform with quizzes and certificates.', 'learning-platform') },
+    { title: 'Restaurant system', prompt: 'A restaurant system: menu, table orders from the phone, a kitchen screen, payments, reservations, stock, and daily reports.', job: J(38, 'high', 'hard', 'A restaurant ordering and kitchen system.', 'restaurant-system') },
+    { title: 'Community forum', prompt: 'A community forum: categories, threads and replies, accounts with profiles, mentions and notifications, moderation tools, and search.', job: J(34, 'high', 'normal', 'A forum with profiles, notifications and moderation.', 'community-forum') },
+    { title: 'Project tracker', prompt: 'A team project tracker: projects, tasks on a board, assignees, due dates, comments, files, a calendar, and weekly reports.', job: J(36, 'high', 'normal', 'A team project tracker with board and reports.', 'project-tracker') },
+    { title: 'Fitness studio app', prompt: 'A fitness studio app: class schedule, booking with waitlists, memberships and payments, trainer pages, check-in, and member stats.', job: J(32, 'high', 'normal', 'A studio app for classes, members and payments.', 'fitness-studio') },
+    { title: 'Event festival app', prompt: 'A festival app: lineup and stages, a personal schedule, a map, tickets with QR codes, news alerts, and an organiser back office.', job: J(34, 'high', 'normal', 'A festival app with lineup, tickets and back office.', 'festival-app') },
+  ],
+};
+
+/** A curated idea of this size, not one of `avoid` (titles) when possible. */
+export function pickCurated(size: IdeaSize, avoid: string[] = [], rnd = Math.random): Idea {
+  const all = CURATED_IDEAS[size], fresh = all.filter((i) => !avoid.includes(i.title));
+  const pool = fresh.length ? fresh : all;
+  return pool[Math.floor(rnd() * pool.length) % pool.length];
+}
+
+export const IDEA_SYSTEM = (size: IdeaSize, avoid: string[]) => `You invent one thing a person could build with a team of coding agents, of a given size. Answer with ONE JSON object only, no prose:
+{"title":"<2-4 words>","prompt":"<what to build, 1-3 plain sentences a non-programmer would write, phone-friendly, concrete features>",
+"tasks":<integer: pieces of work a careful planner would split it into, one page / one feature / one module each>,
+"overlap":"low"|"some"|"high","difficulty":"easy"|"normal"|"hard","vague":false,"summary":"<one sentence, <=120 chars>","confidence":<0-1>,
+"name":"<2-3 lowercase words joined by hyphens>"}
+The size must be: ${IDEA_SIZES[size].words}, so "tasks" must be between ${IDEA_SIZES[size].lo} and ${IDEA_SIZES[size].hi}.
+Something ordinary people want (a household, a club, a small business, a hobby), not developer tools.${avoid.length ? ` Not any of: ${avoid.slice(0, 12).join('; ')}.` : ''}`;
+
+/** The model's idea, or null: a valid job in the requested bucket, a title and a prompt. */
+export function parseIdea(text: string, size: IdeaSize): Idea | null {
+  const job = parseJob(text);
+  if (!job) return null;
+  const { lo, hi } = IDEA_SIZES[size];
+  if (job.tasks < lo || job.tasks > hi) return null;
+  let j: any; try { j = JSON.parse(String(text).match(/\{[\s\S]*\}/)![0]); } catch { return null; }
+  const title = String(j.title || '').replace(/\s+/g, ' ').trim().slice(0, 40), prompt = String(j.prompt || '').replace(/\s+/g, ' ').trim().slice(0, 600);
+  return title.length >= 3 && prompt.length >= 20 ? { title, prompt, job } : null;
+}

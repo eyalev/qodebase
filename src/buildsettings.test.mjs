@@ -87,3 +87,19 @@ test('default Build (no Adjust): one Opus agent, the merge queue on, landing by 
   const f = planFlags(DEFAULT_PLAN);
   assert.deepEqual([f.autoMerge, f.reviewers, f.policy, f.coderModel, f.caps.agents], [true, 0, 'intent', 'opus', 1], 'intent policy: tests run before landing (ffa would skip them)');
 });
+
+test('I2 ideas: 8 curated per size, each in its bucket; picks avoid recent titles; the model\'s idea must land in the bucket', async () => {
+  const { CURATED_IDEAS, IDEA_SIZES, pickCurated, parseIdea, IDEA_SYSTEM } = await import('./buildsettings.ts');
+  for (const [size, list] of Object.entries(CURATED_IDEAS)) {
+    assert.equal(list.length, 8, size);
+    for (const i of list) { assert.ok(i.job.tasks >= IDEA_SIZES[size].lo && i.job.tasks <= IDEA_SIZES[size].hi, `${size}: ${i.title}`); assert.ok(i.job.name && i.prompt.length > 20); }
+  }
+  const avoid = CURATED_IDEAS.small.slice(0, 7).map((i) => i.title);
+  assert.equal(pickCurated('small', avoid, () => 0).title, CURATED_IDEAS.small[7].title);
+  assert.ok(pickCurated('small', CURATED_IDEAS.small.map((i) => i.title)), 'all avoided: still one');
+  const ok = '{"title":"Garden planner","prompt":"Plan a vegetable garden: beds, what grows where, watering reminders.","tasks":7,"overlap":"some","difficulty":"normal","vague":false,"summary":"A garden planner.","confidence":0.8,"name":"garden-planner"}';
+  assert.equal(parseIdea(ok, 'medium').title, 'Garden planner');
+  assert.equal(parseIdea(ok, 'small'), null, '7 pieces is not small');
+  assert.equal(parseIdea(ok.replace('"title":"Garden planner",', ''), 'medium'), null, 'no title');
+  assert.match(IDEA_SYSTEM('large', ['Bakery website']), /between 12 and 29[\s\S]*Not any of: Bakery website/);
+});

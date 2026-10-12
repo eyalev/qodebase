@@ -20,7 +20,7 @@ import { previewTabs } from './sheet';
 import { catalogReadme } from './catalog';
 import { STARTER, buildPayload } from './newproject';
 import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, cleanEstimate, DEFAULT_PLAN } from './buildsettings';
-import { suggestRoute } from './buildsuggest';
+import { suggestRoute, ideaRoute } from './buildsuggest';
 import { withPicker } from './picker';
 import { screenshotRoute } from './screenshot';
 import { ATTACH_TYPES, ATTACH_MAX, newAttachId, isAttachId, attachKey, composeMessage, parseMarker, attachedLines } from './attach';
@@ -616,6 +616,10 @@ const app = {
         if (q.trim().length < 2) return json({ repos: [] });
         const r = await searchRepos(q, ctx);
         return Array.isArray(r) ? json({ repos: r }) : json(r, r.status);
+      }
+      if (path === '/api/build/idea' && request.method === 'POST') {
+        if (!me.handle || !buildSettingsOn(env.BUILD_SETTINGS, me.handle, env.OWNER_HANDLE)) return json({ error: 'not available' }, 404);
+        return ideaRoute(request, env, ctx, me.handle);
       }
       if (path === '/api/build/suggest' && request.method === 'POST') {
         if (!me.handle || !buildSettingsOn(env.BUILD_SETTINGS, me.handle, env.OWNER_HANDLE)) return json({ error: 'not available' }, 404);
