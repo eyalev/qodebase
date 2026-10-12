@@ -80,3 +80,11 @@ GitHub-shaped, agent-first (Eyal, 2026-10-12: "yes, build items 2-5" of docs/con
 - [ ] G5 'Ask for changes' on a change record: the owner's own note sends the change back to its agent (extends the fix verb) (qb6 server, qb7 UI)
 - [x] BUN5 re-cut by module (Eyal, 2026-10-12): merge consecutive commits on the same lines into one task per module (port + compile + test as one owner's task), module order from the real crate/module structure (use/mod/import graph), re-run 64/640/6,400 agents; same calibration; prediction first (qb4 sim), then real-patch check of the critical path on a VM if useful (qb5). Question: did the decomposition, not the agent count, set Bun's speed? Done 2026-10-12 (qb4): sim.md (k); interfaces-first 3.4-5.2 h at 64 agents (5-8x faster than BUN3), flat past 64; strict 89 h (74% of work in one use-cycle)
 - [ ] EV1 Artifacts event subscriptions -> a Cloudflare Queue -> the Worker's queue() handler -> Landing/board/timeline: any push (agent or a person's plain git push) is recorded; pushes to a fork of a project with landing on can join the queue; cloudcost line for the Queue (qb6, Eyal 2026-10-12)
+
+Real builds, staircase (Eyal, 2026-10-12 ~22:00 UTC: "go for it"); meter stop for these: 35% (manager's pick, Eyal can change); every run has a Landing budget (halts all boxes) and an owner Stop button:
+- [ ] R0 board ON by default for team presets (Balanced, Cheapest), off for Fastest; estimate note 'board effect not measured for planned teams' (qb7 + qb4)
+- [ ] R1 Stop/Pause for the owner on Agents at work: Pause = no new tasks/trains; Stop = halt (stop every box); visible while a run goes (qb6 + qb7)
+- [ ] R2 small: 'Need an idea? Small' default Build (one Opus agent), budget $3 — checks the default path end to end (estimate bar, auto-land, timeline, Asks)
+- [ ] R3 large: a Large idea with Balanced (Opus planner + 12 Haiku + 3 reviewers, board on), budget $8
+- [ ] R4 20 real agents (Huge idea), budget $12 — checks container limits at that scale
+- [ ] R5 flagship 40-60 real agents, budget $30, only if R4 is clean; made public for judges at the end if good (Eyal decides)
