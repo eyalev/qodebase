@@ -52,7 +52,7 @@ type Snap = { id: string; size: number; name?: string };
 // instance's base (Registry 'baseSnap'); every later box starts from it. Bump SETUP_V
 // when the script changes: old bases are then ignored. Chromium (the reviewer's phone
 // screenshots) is left out of v1: 300 MB more per base.
-const MANAGED_IMAGE = 'cloudflare/debian-trixie';
+export const MANAGED_IMAGE = 'cloudflare/debian-trixie';
 const SETUP_V = 1;
 const MA_BASE_REF = '9aa1a4d82a79';
 const MANAGED_SETUP = String.raw`set -e

@@ -23,7 +23,7 @@ c.assets = { directory: './public' };
 // The bundle names its extra modules <hash>-<file>: the text ones must not be read as JS.
 c.rules = [
   { type: 'Data', globs: ['**/*.tgz'], fallthrough: false },
-  { type: 'Text', globs: ['**/*.rev', '**/*-qb.mjs', '**/*-box-api.mjs', '**/*-boot.sh'], fallthrough: false },
+  { type: 'Text', globs: ['**/*.rev', '**/*-qb.mjs', '**/*-box-api.mjs', '**/*-boot.sh', '**/*-mergejob.mjs'], fallthrough: false },
 ];
 fs.writeFileSync(`${OUT}/wrangler.base.json`, JSON.stringify(c, null, 1));
 fs.mkdirSync(`${OUT}/run`, { recursive: true });

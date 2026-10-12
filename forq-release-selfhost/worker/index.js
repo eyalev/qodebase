@@ -86,7 +86,7 @@ var __callDispose = (stack, error62, hasError) => {
   return next();
 };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/buffer_utils.js
+// ../node_modules/jose/dist/webapi/lib/buffer_utils.js
 function concat(...buffers) {
   const size = buffers.reduce((acc, { length }) => acc + length, 0), buf = new Uint8Array(size);
   let i2 = 0;
@@ -124,7 +124,7 @@ function decodeBase64(encoded, url2 = false) {
 }
 var encoder, decoder, strictDecoder, MAX_INT32, NON_ASCII;
 var init_buffer_utils = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/buffer_utils.js"() {
+  "../node_modules/jose/dist/webapi/lib/buffer_utils.js"() {
     encoder = new TextEncoder();
     decoder = new TextDecoder();
     strictDecoder = new TextDecoder("utf-8", { fatal: true });
@@ -136,10 +136,10 @@ var init_buffer_utils = __esm({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/util/errors.js
+// ../node_modules/jose/dist/webapi/util/errors.js
 var JOSEError, JWTClaimValidationFailed, JWTExpired, JOSEAlgNotAllowed, JOSENotSupported, JWSInvalid, JWTInvalid, JWKSInvalid, JWKSNoMatchingKey, JWKSMultipleMatchingKeys, JWKSTimeout, JWSSignatureVerificationFailed;
 var init_errors = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/util/errors.js"() {
+  "../node_modules/jose/dist/webapi/util/errors.js"() {
     JOSEError = class extends Error {
       static {
         __name(this, "JOSEError");
@@ -256,7 +256,7 @@ var init_errors = __esm({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/util/base64url.js
+// ../node_modules/jose/dist/webapi/util/base64url.js
 function decode(input2) {
   try {
     return decodeBase64(typeof input2 == "string" ? input2 : decoder.decode(input2), true);
@@ -266,14 +266,14 @@ function decode(input2) {
 }
 var invalid;
 var init_base64url = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/util/base64url.js"() {
+  "../node_modules/jose/dist/webapi/util/base64url.js"() {
     init_buffer_utils();
     invalid = "The input to be decoded is not correctly encoded.";
     __name(decode, "decode");
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/validate.js
+// ../node_modules/jose/dist/webapi/lib/validate.js
 function isObject(input2) {
   if (typeof input2 != "object" || input2 === null || Object.prototype.toString.call(input2) !== "[object Object]")
     return false;
@@ -353,7 +353,7 @@ function validateB64(protectedHeader, extensions) {
 }
 var JWS_RECOGNIZED;
 var init_validate = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/validate.js"() {
+  "../node_modules/jose/dist/webapi/lib/validate.js"() {
     init_errors();
     init_base64url();
     init_buffer_utils();
@@ -370,7 +370,7 @@ var init_validate = __esm({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/key.js
+// ../node_modules/jose/dist/webapi/lib/key.js
 async function prepareKey(entry, key, usage) {
   const { alg, secret } = entry, privateKey = usage === "decrypt" || usage === "sign";
   if (secret && key instanceof Uint8Array)
@@ -467,7 +467,7 @@ async function rawKey(key, expected, usage, extractable = false) {
 }
 var tag, jwkMatchesOp, cache, nist, isCryptoKey, isKeyObject, isKeyLike, unusable;
 var init_key = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/key.js"() {
+  "../node_modules/jose/dist/webapi/lib/key.js"() {
     init_validate();
     init_base64url();
     init_errors();
@@ -518,7 +518,7 @@ var init_key = __esm({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/key_descriptor.js
+// ../node_modules/jose/dist/webapi/lib/key_descriptor.js
 function table(entries) {
   const out = { __proto__: null };
   for (const alg in entries)
@@ -526,12 +526,12 @@ function table(entries) {
   return out;
 }
 var init_key_descriptor = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/key_descriptor.js"() {
+  "../node_modules/jose/dist/webapi/lib/key_descriptor.js"() {
     __name(table, "table");
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/jws_algorithms.js
+// ../node_modules/jose/dist/webapi/lib/jws_algorithms.js
 function hmac(bits) {
   const subtle = { name: "HMAC", hash: `SHA-${bits}` };
   return { kty: ["oct"], secret: true, subtle, signing: subtle, usages: sig };
@@ -582,7 +582,7 @@ function jwsAlgorithm(alg) {
 }
 var sig, JWS;
 var init_jws_algorithms = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/jws_algorithms.js"() {
+  "../node_modules/jose/dist/webapi/lib/jws_algorithms.js"() {
     init_errors();
     init_key_descriptor();
     sig = [["verify"], ["sign"]];
@@ -614,7 +614,7 @@ var init_jws_algorithms = __esm({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/jws_verify.js
+// ../node_modules/jose/dist/webapi/lib/jws_verify.js
 function prepareVerify(options) {
   return [options && validateAlgorithms("algorithms", options.algorithms), options?.crit];
 }
@@ -666,7 +666,7 @@ async function verifyCompact(jws, shared, key) {
   return verifySignature({ payload, protected: protectedHeader, signature }, shared, key, encodeCompactUnencodedPayload);
 }
 var init_jws_verify = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/jws_verify.js"() {
+  "../node_modules/jose/dist/webapi/lib/jws_verify.js"() {
     init_jws_algorithms();
     init_errors();
     init_buffer_utils();
@@ -680,7 +680,7 @@ var init_jws_verify = __esm({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/jwt_claims_set.js
+// ../node_modules/jose/dist/webapi/lib/jwt_claims_set.js
 function invalidDuration() {
   throw new TypeError("Invalid time period format");
 }
@@ -751,7 +751,7 @@ function validateClaimsSet(protectedHeader, encodedPayload, options = {}) {
 }
 var epoch, multipliers, REGEX, checkFailed, normalizeTyp, checkAudiencePresence;
 var init_jwt_claims_set = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/lib/jwt_claims_set.js"() {
+  "../node_modules/jose/dist/webapi/lib/jwt_claims_set.js"() {
     init_errors();
     init_buffer_utils();
     init_validate();
@@ -780,7 +780,7 @@ var init_jwt_claims_set = __esm({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/jwt/verify.js
+// ../node_modules/jose/dist/webapi/jwt/verify.js
 async function jwtVerify(jwt2, key, options) {
   const [verified, b642] = await verifyCompact(jwt2, prepareVerify(options), key);
   if (!b642)
@@ -789,7 +789,7 @@ async function jwtVerify(jwt2, key, options) {
   return { ...verified, payload };
 }
 var init_verify = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/jwt/verify.js"() {
+  "../node_modules/jose/dist/webapi/jwt/verify.js"() {
     init_jws_verify();
     init_jwt_claims_set();
     init_errors();
@@ -797,7 +797,7 @@ var init_verify = __esm({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/jwks/local.js
+// ../node_modules/jose/dist/webapi/jwks/local.js
 function isUsableJWK(jwk, entry, alg, kid) {
   const { kty, key_ops: keyOps, ext, kid: jwkKid, alg: jwkAlg, use, crv } = jwk;
   return (ext === void 0 || typeof ext == "boolean") && (keyOps === void 0 || Array.isArray(keyOps) && keyOps.every((operation, index) => typeof operation == "string" && keyOps.indexOf(operation) === index) && keyOps.includes("verify")) && entry.kty.includes(kty) && (kid === void 0 || typeof kid == "string" && kid === jwkKid) && (jwkAlg === void 0 ? kty !== "AKP" : alg === jwkAlg) && (use === void 0 || use === "sig") && (!entry.crv || crv === entry.crv);
@@ -851,7 +851,7 @@ function createLocalJWKSet(jwks2) {
   });
 }
 var init_local = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/jwks/local.js"() {
+  "../node_modules/jose/dist/webapi/jwks/local.js"() {
     init_key();
     init_jws_algorithms();
     init_errors();
@@ -862,7 +862,7 @@ var init_local = __esm({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/jwks/remote.js
+// ../node_modules/jose/dist/webapi/jwks/remote.js
 function isCloudflareWorkers() {
   return typeof WebSocketPair < "u" || typeof navigator < "u" && true || typeof EdgeRuntime < "u" && EdgeRuntime === "vercel";
 }
@@ -907,13 +907,13 @@ function createRemoteJWKSet(url2, options) {
   }
   const reload = /* @__PURE__ */ __name(async () => {
     if (pendingFetch && isCloudflareWorkers() && (pendingFetch = void 0), !pendingFetch) {
-      const sequence = ++reloadSequence, current = pendingFetch = fetchJwks(href, headers, AbortSignal.timeout(timeoutDuration), fetchImpl).then((json5) => {
-        const next = createLocalJWKSet(json5);
+      const sequence = ++reloadSequence, current = pendingFetch = fetchJwks(href, headers, AbortSignal.timeout(timeoutDuration), fetchImpl).then((json6) => {
+        const next = createLocalJWKSet(json6);
         if (sequence <= appliedSequence)
           return;
         local = next;
         const updatedAt = Date.now();
-        cache2 && (cache2.uat = updatedAt, cache2.jwks = json5), jwksTimestamp = updatedAt, appliedSequence = sequence;
+        cache2 && (cache2.uat = updatedAt, cache2.jwks = json6), jwksTimestamp = updatedAt, appliedSequence = sequence;
       }).finally(() => {
         pendingFetch === current && (pendingFetch = void 0);
       });
@@ -954,7 +954,7 @@ function createRemoteJWKSet(url2, options) {
 }
 var USER_AGENT, customFetch, jwksCache;
 var init_remote = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/jwks/remote.js"() {
+  "../node_modules/jose/dist/webapi/jwks/remote.js"() {
     init_errors();
     init_local();
     init_validate();
@@ -969,17 +969,17 @@ var init_remote = __esm({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/index.js
+// ../node_modules/jose/dist/webapi/index.js
 var init_webapi = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/jose/dist/webapi/index.js"() {
+  "../node_modules/jose/dist/webapi/index.js"() {
     init_verify();
     init_remote();
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/mimetext/node_modules/mime-db/db.json
+// ../node_modules/mimetext/node_modules/mime-db/db.json
 var require_db = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/mimetext/node_modules/mime-db/db.json"(exports2, module) {
+  "../node_modules/mimetext/node_modules/mime-db/db.json"(exports2, module) {
     module.exports = {
       "application/1d-interleaved-parityfec": {
         source: "iana"
@@ -9502,9 +9502,9 @@ var require_db = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/mimetext/node_modules/mime-db/index.js
+// ../node_modules/mimetext/node_modules/mime-db/index.js
 var require_mime_db = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/mimetext/node_modules/mime-db/index.js"(exports2, module) {
+  "../node_modules/mimetext/node_modules/mime-db/index.js"(exports2, module) {
     module.exports = require_db();
   }
 });
@@ -9517,9 +9517,9 @@ var require_path = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/mimetext/node_modules/mime-types/index.js
+// ../node_modules/mimetext/node_modules/mime-types/index.js
 var require_mime_types = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/mimetext/node_modules/mime-types/index.js"(exports2) {
+  "../node_modules/mimetext/node_modules/mime-types/index.js"(exports2) {
     "use strict";
     var db = require_mime_db();
     var extname = require_path().extname;
@@ -9612,9 +9612,9 @@ var require_mime_types = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/fails.js
+// ../node_modules/core-js-pure/internals/fails.js
 var require_fails = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/fails.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/fails.js"(exports2, module) {
     "use strict";
     module.exports = function(exec) {
       try {
@@ -9626,9 +9626,9 @@ var require_fails = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-bind-native.js
+// ../node_modules/core-js-pure/internals/function-bind-native.js
 var require_function_bind_native = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-bind-native.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/function-bind-native.js"(exports2, module) {
     "use strict";
     var fails = require_fails();
     module.exports = !fails(function() {
@@ -9639,9 +9639,9 @@ var require_function_bind_native = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-uncurry-this.js
+// ../node_modules/core-js-pure/internals/function-uncurry-this.js
 var require_function_uncurry_this = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-uncurry-this.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/function-uncurry-this.js"(exports2, module) {
     "use strict";
     var NATIVE_BIND = require_function_bind_native();
     var FunctionPrototype = Function.prototype;
@@ -9655,18 +9655,18 @@ var require_function_uncurry_this = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/object-is-prototype-of.js
+// ../node_modules/core-js-pure/internals/object-is-prototype-of.js
 var require_object_is_prototype_of = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/object-is-prototype-of.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/object-is-prototype-of.js"(exports2, module) {
     "use strict";
     var uncurryThis = require_function_uncurry_this();
     module.exports = uncurryThis({}.isPrototypeOf);
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/global-this.js
+// ../node_modules/core-js-pure/internals/global-this.js
 var require_global_this = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/global-this.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/global-this.js"(exports2, module) {
     "use strict";
     var check2 = /* @__PURE__ */ __name(function(it) {
       return it && it.Math === Math && it;
@@ -9680,9 +9680,9 @@ var require_global_this = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-apply.js
+// ../node_modules/core-js-pure/internals/function-apply.js
 var require_function_apply = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-apply.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/function-apply.js"(exports2, module) {
     "use strict";
     var NATIVE_BIND = require_function_bind_native();
     var FunctionPrototype = Function.prototype;
@@ -9694,9 +9694,9 @@ var require_function_apply = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/classof-raw.js
+// ../node_modules/core-js-pure/internals/classof-raw.js
 var require_classof_raw = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/classof-raw.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/classof-raw.js"(exports2, module) {
     "use strict";
     var uncurryThis = require_function_uncurry_this();
     var toString = uncurryThis({}.toString);
@@ -9707,9 +9707,9 @@ var require_classof_raw = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-uncurry-this-clause.js
+// ../node_modules/core-js-pure/internals/function-uncurry-this-clause.js
 var require_function_uncurry_this_clause = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-uncurry-this-clause.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/function-uncurry-this-clause.js"(exports2, module) {
     "use strict";
     var classofRaw = require_classof_raw();
     var uncurryThis = require_function_uncurry_this();
@@ -9719,9 +9719,9 @@ var require_function_uncurry_this_clause = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-callable.js
+// ../node_modules/core-js-pure/internals/is-callable.js
 var require_is_callable = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-callable.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/is-callable.js"(exports2, module) {
     "use strict";
     var documentAll = typeof document == "object" && document.all;
     module.exports = typeof documentAll == "undefined" && documentAll !== void 0 ? function(argument) {
@@ -9732,9 +9732,9 @@ var require_is_callable = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/descriptors.js
+// ../node_modules/core-js-pure/internals/descriptors.js
 var require_descriptors = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/descriptors.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/descriptors.js"(exports2, module) {
     "use strict";
     var fails = require_fails();
     module.exports = !fails(function() {
@@ -9745,9 +9745,9 @@ var require_descriptors = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-call.js
+// ../node_modules/core-js-pure/internals/function-call.js
 var require_function_call = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-call.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/function-call.js"(exports2, module) {
     "use strict";
     var NATIVE_BIND = require_function_bind_native();
     var call = Function.prototype.call;
@@ -9757,9 +9757,9 @@ var require_function_call = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/object-property-is-enumerable.js
+// ../node_modules/core-js-pure/internals/object-property-is-enumerable.js
 var require_object_property_is_enumerable = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/object-property-is-enumerable.js"(exports2) {
+  "../node_modules/core-js-pure/internals/object-property-is-enumerable.js"(exports2) {
     "use strict";
     var $propertyIsEnumerable = {}.propertyIsEnumerable;
     var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
@@ -9771,9 +9771,9 @@ var require_object_property_is_enumerable = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/create-property-descriptor.js
+// ../node_modules/core-js-pure/internals/create-property-descriptor.js
 var require_create_property_descriptor = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/create-property-descriptor.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/create-property-descriptor.js"(exports2, module) {
     "use strict";
     module.exports = function(bitmap, value) {
       return {
@@ -9786,9 +9786,9 @@ var require_create_property_descriptor = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/indexed-object.js
+// ../node_modules/core-js-pure/internals/indexed-object.js
 var require_indexed_object = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/indexed-object.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/indexed-object.js"(exports2, module) {
     "use strict";
     var uncurryThis = require_function_uncurry_this();
     var fails = require_fails();
@@ -9803,9 +9803,9 @@ var require_indexed_object = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-null-or-undefined.js
+// ../node_modules/core-js-pure/internals/is-null-or-undefined.js
 var require_is_null_or_undefined = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-null-or-undefined.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/is-null-or-undefined.js"(exports2, module) {
     "use strict";
     module.exports = function(it) {
       return it === null || it === void 0;
@@ -9813,9 +9813,9 @@ var require_is_null_or_undefined = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/require-object-coercible.js
+// ../node_modules/core-js-pure/internals/require-object-coercible.js
 var require_require_object_coercible = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/require-object-coercible.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/require-object-coercible.js"(exports2, module) {
     "use strict";
     var isNullOrUndefined = require_is_null_or_undefined();
     var $TypeError = TypeError;
@@ -9826,9 +9826,9 @@ var require_require_object_coercible = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-indexed-object.js
+// ../node_modules/core-js-pure/internals/to-indexed-object.js
 var require_to_indexed_object = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-indexed-object.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/to-indexed-object.js"(exports2, module) {
     "use strict";
     var IndexedObject = require_indexed_object();
     var requireObjectCoercible = require_require_object_coercible();
@@ -9838,9 +9838,9 @@ var require_to_indexed_object = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-object.js
+// ../node_modules/core-js-pure/internals/is-object.js
 var require_is_object = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-object.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/is-object.js"(exports2, module) {
     "use strict";
     var isCallable = require_is_callable();
     module.exports = function(it) {
@@ -9849,17 +9849,17 @@ var require_is_object = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/path.js
+// ../node_modules/core-js-pure/internals/path.js
 var require_path2 = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/path.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/path.js"(exports2, module) {
     "use strict";
     module.exports = {};
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/get-built-in.js
+// ../node_modules/core-js-pure/internals/get-built-in.js
 var require_get_built_in = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/get-built-in.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/get-built-in.js"(exports2, module) {
     "use strict";
     var path2 = require_path2();
     var globalThis2 = require_global_this();
@@ -9873,9 +9873,9 @@ var require_get_built_in = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/environment-user-agent.js
+// ../node_modules/core-js-pure/internals/environment-user-agent.js
 var require_environment_user_agent = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/environment-user-agent.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/environment-user-agent.js"(exports2, module) {
     "use strict";
     var globalThis2 = require_global_this();
     var navigator2 = globalThis2.navigator;
@@ -9884,9 +9884,9 @@ var require_environment_user_agent = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/environment-v8-version.js
+// ../node_modules/core-js-pure/internals/environment-v8-version.js
 var require_environment_v8_version = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/environment-v8-version.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/environment-v8-version.js"(exports2, module) {
     "use strict";
     var globalThis2 = require_global_this();
     var userAgent = require_environment_user_agent();
@@ -9911,9 +9911,9 @@ var require_environment_v8_version = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/symbol-constructor-detection.js
+// ../node_modules/core-js-pure/internals/symbol-constructor-detection.js
 var require_symbol_constructor_detection = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/symbol-constructor-detection.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/symbol-constructor-detection.js"(exports2, module) {
     "use strict";
     var V8_VERSION = require_environment_v8_version();
     var fails = require_fails();
@@ -9927,18 +9927,18 @@ var require_symbol_constructor_detection = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/use-symbol-as-uid.js
+// ../node_modules/core-js-pure/internals/use-symbol-as-uid.js
 var require_use_symbol_as_uid = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/use-symbol-as-uid.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/use-symbol-as-uid.js"(exports2, module) {
     "use strict";
     var NATIVE_SYMBOL = require_symbol_constructor_detection();
     module.exports = NATIVE_SYMBOL && !Symbol.sham && typeof Symbol.iterator == "symbol";
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-symbol.js
+// ../node_modules/core-js-pure/internals/is-symbol.js
 var require_is_symbol = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-symbol.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/is-symbol.js"(exports2, module) {
     "use strict";
     var getBuiltIn = require_get_built_in();
     var isCallable = require_is_callable();
@@ -9954,9 +9954,9 @@ var require_is_symbol = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/try-to-string.js
+// ../node_modules/core-js-pure/internals/try-to-string.js
 var require_try_to_string = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/try-to-string.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/try-to-string.js"(exports2, module) {
     "use strict";
     var $String = String;
     module.exports = function(argument) {
@@ -9969,9 +9969,9 @@ var require_try_to_string = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/a-callable.js
+// ../node_modules/core-js-pure/internals/a-callable.js
 var require_a_callable = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/a-callable.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/a-callable.js"(exports2, module) {
     "use strict";
     var isCallable = require_is_callable();
     var tryToString = require_try_to_string();
@@ -9983,9 +9983,9 @@ var require_a_callable = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/get-method.js
+// ../node_modules/core-js-pure/internals/get-method.js
 var require_get_method = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/get-method.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/get-method.js"(exports2, module) {
     "use strict";
     var aCallable = require_a_callable();
     var isNullOrUndefined = require_is_null_or_undefined();
@@ -9996,9 +9996,9 @@ var require_get_method = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/ordinary-to-primitive.js
+// ../node_modules/core-js-pure/internals/ordinary-to-primitive.js
 var require_ordinary_to_primitive = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/ordinary-to-primitive.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/ordinary-to-primitive.js"(exports2, module) {
     "use strict";
     var call = require_function_call();
     var isCallable = require_is_callable();
@@ -10014,17 +10014,17 @@ var require_ordinary_to_primitive = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-pure.js
+// ../node_modules/core-js-pure/internals/is-pure.js
 var require_is_pure = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-pure.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/is-pure.js"(exports2, module) {
     "use strict";
     module.exports = true;
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/define-global-property.js
+// ../node_modules/core-js-pure/internals/define-global-property.js
 var require_define_global_property = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/define-global-property.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/define-global-property.js"(exports2, module) {
     "use strict";
     var globalThis2 = require_global_this();
     var defineProperty = Object.defineProperty;
@@ -10039,9 +10039,9 @@ var require_define_global_property = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/shared-store.js
+// ../node_modules/core-js-pure/internals/shared-store.js
 var require_shared_store = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/shared-store.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/shared-store.js"(exports2, module) {
     "use strict";
     var IS_PURE = require_is_pure();
     var globalThis2 = require_global_this();
@@ -10058,9 +10058,9 @@ var require_shared_store = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/shared.js
+// ../node_modules/core-js-pure/internals/shared.js
 var require_shared = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/shared.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/shared.js"(exports2, module) {
     "use strict";
     var store = require_shared_store();
     var create = Object.create || Object;
@@ -10070,9 +10070,9 @@ var require_shared = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-object.js
+// ../node_modules/core-js-pure/internals/to-object.js
 var require_to_object = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-object.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/to-object.js"(exports2, module) {
     "use strict";
     var requireObjectCoercible = require_require_object_coercible();
     var $Object = Object;
@@ -10082,9 +10082,9 @@ var require_to_object = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/has-own-property.js
+// ../node_modules/core-js-pure/internals/has-own-property.js
 var require_has_own_property = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/has-own-property.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/has-own-property.js"(exports2, module) {
     "use strict";
     var uncurryThis = require_function_uncurry_this();
     var toObject = require_to_object();
@@ -10095,9 +10095,9 @@ var require_has_own_property = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/uid.js
+// ../node_modules/core-js-pure/internals/uid.js
 var require_uid = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/uid.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/uid.js"(exports2, module) {
     "use strict";
     var uncurryThis = require_function_uncurry_this();
     var id = 0;
@@ -10109,9 +10109,9 @@ var require_uid = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/well-known-symbol.js
+// ../node_modules/core-js-pure/internals/well-known-symbol.js
 var require_well_known_symbol = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/well-known-symbol.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/well-known-symbol.js"(exports2, module) {
     "use strict";
     var globalThis2 = require_global_this();
     var shared = require_shared();
@@ -10131,9 +10131,9 @@ var require_well_known_symbol = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-primitive.js
+// ../node_modules/core-js-pure/internals/to-primitive.js
 var require_to_primitive = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-primitive.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/to-primitive.js"(exports2, module) {
     "use strict";
     var call = require_function_call();
     var isObject3 = require_is_object();
@@ -10159,9 +10159,9 @@ var require_to_primitive = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-property-key.js
+// ../node_modules/core-js-pure/internals/to-property-key.js
 var require_to_property_key = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-property-key.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/to-property-key.js"(exports2, module) {
     "use strict";
     var toPrimitive = require_to_primitive();
     var isSymbol = require_is_symbol();
@@ -10172,9 +10172,9 @@ var require_to_property_key = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/document-create-element.js
+// ../node_modules/core-js-pure/internals/document-create-element.js
 var require_document_create_element = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/document-create-element.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/document-create-element.js"(exports2, module) {
     "use strict";
     var globalThis2 = require_global_this();
     var isObject3 = require_is_object();
@@ -10186,9 +10186,9 @@ var require_document_create_element = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/ie8-dom-define.js
+// ../node_modules/core-js-pure/internals/ie8-dom-define.js
 var require_ie8_dom_define = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/ie8-dom-define.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/ie8-dom-define.js"(exports2, module) {
     "use strict";
     var DESCRIPTORS = require_descriptors();
     var fails = require_fails();
@@ -10203,9 +10203,9 @@ var require_ie8_dom_define = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/object-get-own-property-descriptor.js
+// ../node_modules/core-js-pure/internals/object-get-own-property-descriptor.js
 var require_object_get_own_property_descriptor = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/object-get-own-property-descriptor.js"(exports2) {
+  "../node_modules/core-js-pure/internals/object-get-own-property-descriptor.js"(exports2) {
     "use strict";
     var DESCRIPTORS = require_descriptors();
     var call = require_function_call();
@@ -10228,9 +10228,9 @@ var require_object_get_own_property_descriptor = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-forced.js
+// ../node_modules/core-js-pure/internals/is-forced.js
 var require_is_forced = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/is-forced.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/is-forced.js"(exports2, module) {
     "use strict";
     var fails = require_fails();
     var isCallable = require_is_callable();
@@ -10249,9 +10249,9 @@ var require_is_forced = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-bind-context.js
+// ../node_modules/core-js-pure/internals/function-bind-context.js
 var require_function_bind_context = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-bind-context.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/function-bind-context.js"(exports2, module) {
     "use strict";
     var uncurryThis = require_function_uncurry_this_clause();
     var aCallable = require_a_callable();
@@ -10266,9 +10266,9 @@ var require_function_bind_context = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/v8-prototype-define-bug.js
+// ../node_modules/core-js-pure/internals/v8-prototype-define-bug.js
 var require_v8_prototype_define_bug = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/v8-prototype-define-bug.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/v8-prototype-define-bug.js"(exports2, module) {
     "use strict";
     var DESCRIPTORS = require_descriptors();
     var fails = require_fails();
@@ -10282,9 +10282,9 @@ var require_v8_prototype_define_bug = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/an-object.js
+// ../node_modules/core-js-pure/internals/an-object.js
 var require_an_object = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/an-object.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/an-object.js"(exports2, module) {
     "use strict";
     var isObject3 = require_is_object();
     var $String = String;
@@ -10296,9 +10296,9 @@ var require_an_object = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/object-define-property.js
+// ../node_modules/core-js-pure/internals/object-define-property.js
 var require_object_define_property = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/object-define-property.js"(exports2) {
+  "../node_modules/core-js-pure/internals/object-define-property.js"(exports2) {
     "use strict";
     var DESCRIPTORS = require_descriptors();
     var IE8_DOM_DEFINE = require_ie8_dom_define();
@@ -10342,9 +10342,9 @@ var require_object_define_property = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/create-non-enumerable-property.js
+// ../node_modules/core-js-pure/internals/create-non-enumerable-property.js
 var require_create_non_enumerable_property = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/create-non-enumerable-property.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/create-non-enumerable-property.js"(exports2, module) {
     "use strict";
     var DESCRIPTORS = require_descriptors();
     var definePropertyModule = require_object_define_property();
@@ -10358,9 +10358,9 @@ var require_create_non_enumerable_property = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/export.js
+// ../node_modules/core-js-pure/internals/export.js
 var require_export = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/export.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/export.js"(exports2, module) {
     "use strict";
     var globalThis2 = require_global_this();
     var apply = require_function_apply();
@@ -10434,9 +10434,9 @@ var require_export = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-string-tag-support.js
+// ../node_modules/core-js-pure/internals/to-string-tag-support.js
 var require_to_string_tag_support = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-string-tag-support.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/to-string-tag-support.js"(exports2, module) {
     "use strict";
     var wellKnownSymbol = require_well_known_symbol();
     var TO_STRING_TAG = wellKnownSymbol("toStringTag");
@@ -10446,9 +10446,9 @@ var require_to_string_tag_support = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/classof.js
+// ../node_modules/core-js-pure/internals/classof.js
 var require_classof = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/classof.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/classof.js"(exports2, module) {
     "use strict";
     var TO_STRING_TAG_SUPPORT = require_to_string_tag_support();
     var isCallable = require_is_callable();
@@ -10472,9 +10472,9 @@ var require_classof = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-string.js
+// ../node_modules/core-js-pure/internals/to-string.js
 var require_to_string = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/to-string.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/to-string.js"(exports2, module) {
     "use strict";
     var classof = require_classof();
     var $String = String;
@@ -10485,17 +10485,17 @@ var require_to_string = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/whitespaces.js
+// ../node_modules/core-js-pure/internals/whitespaces.js
 var require_whitespaces = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/whitespaces.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/whitespaces.js"(exports2, module) {
     "use strict";
     module.exports = "	\n\v\f\r \xA0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF";
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/string-trim.js
+// ../node_modules/core-js-pure/internals/string-trim.js
 var require_string_trim = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/string-trim.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/string-trim.js"(exports2, module) {
     "use strict";
     var uncurryThis = require_function_uncurry_this();
     var requireObjectCoercible = require_require_object_coercible();
@@ -10504,11 +10504,11 @@ var require_string_trim = __commonJS({
     var replace = uncurryThis("".replace);
     var ltrim = RegExp("^[" + whitespaces + "]+");
     var rtrim = RegExp("(^|[^" + whitespaces + "])[" + whitespaces + "]+$");
-    var createMethod = /* @__PURE__ */ __name(function(TYPE) {
+    var createMethod = /* @__PURE__ */ __name(function(TYPE2) {
       return function($this) {
         var string4 = toString(requireObjectCoercible($this));
-        if (TYPE & 1) string4 = replace(string4, ltrim, "");
-        if (TYPE & 2) string4 = replace(string4, rtrim, "$1");
+        if (TYPE2 & 1) string4 = replace(string4, ltrim, "");
+        if (TYPE2 & 2) string4 = replace(string4, rtrim, "$1");
         return string4;
       };
     }, "createMethod");
@@ -10526,9 +10526,9 @@ var require_string_trim = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-name.js
+// ../node_modules/core-js-pure/internals/function-name.js
 var require_function_name = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/function-name.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/function-name.js"(exports2, module) {
     "use strict";
     var DESCRIPTORS = require_descriptors();
     var hasOwn = require_has_own_property();
@@ -10546,9 +10546,9 @@ var require_function_name = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/string-trim-forced.js
+// ../node_modules/core-js-pure/internals/string-trim-forced.js
 var require_string_trim_forced = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/string-trim-forced.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/string-trim-forced.js"(exports2, module) {
     "use strict";
     var PROPER_FUNCTION_NAME = require_function_name().PROPER;
     var fails = require_fails();
@@ -10562,9 +10562,9 @@ var require_string_trim_forced = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/modules/es.string.trim.js
+// ../node_modules/core-js-pure/modules/es.string.trim.js
 var require_es_string_trim = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/modules/es.string.trim.js"() {
+  "../node_modules/core-js-pure/modules/es.string.trim.js"() {
     "use strict";
     var $ = require_export();
     var $trim = require_string_trim().trim;
@@ -10577,9 +10577,9 @@ var require_es_string_trim = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/get-built-in-prototype-method.js
+// ../node_modules/core-js-pure/internals/get-built-in-prototype-method.js
 var require_get_built_in_prototype_method = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/internals/get-built-in-prototype-method.js"(exports2, module) {
+  "../node_modules/core-js-pure/internals/get-built-in-prototype-method.js"(exports2, module) {
     "use strict";
     var globalThis2 = require_global_this();
     var path2 = require_path2();
@@ -10594,9 +10594,9 @@ var require_get_built_in_prototype_method = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/es/string/virtual/trim.js
+// ../node_modules/core-js-pure/es/string/virtual/trim.js
 var require_trim = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/es/string/virtual/trim.js"(exports2, module) {
+  "../node_modules/core-js-pure/es/string/virtual/trim.js"(exports2, module) {
     "use strict";
     require_es_string_trim();
     var getBuiltInPrototypeMethod = require_get_built_in_prototype_method();
@@ -10604,9 +10604,9 @@ var require_trim = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/es/instance/trim.js
+// ../node_modules/core-js-pure/es/instance/trim.js
 var require_trim2 = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/es/instance/trim.js"(exports2, module) {
+  "../node_modules/core-js-pure/es/instance/trim.js"(exports2, module) {
     "use strict";
     var isPrototypeOf = require_object_is_prototype_of();
     var method = require_trim();
@@ -10618,49 +10618,49 @@ var require_trim2 = __commonJS({
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/stable/instance/trim.js
+// ../node_modules/core-js-pure/stable/instance/trim.js
 var require_trim3 = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/stable/instance/trim.js"(exports2, module) {
+  "../node_modules/core-js-pure/stable/instance/trim.js"(exports2, module) {
     "use strict";
     var parent = require_trim2();
     module.exports = parent;
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/actual/instance/trim.js
+// ../node_modules/core-js-pure/actual/instance/trim.js
 var require_trim4 = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/actual/instance/trim.js"(exports2, module) {
+  "../node_modules/core-js-pure/actual/instance/trim.js"(exports2, module) {
     "use strict";
     var parent = require_trim3();
     module.exports = parent;
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/full/instance/trim.js
+// ../node_modules/core-js-pure/full/instance/trim.js
 var require_trim5 = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/full/instance/trim.js"(exports2, module) {
+  "../node_modules/core-js-pure/full/instance/trim.js"(exports2, module) {
     "use strict";
     var parent = require_trim4();
     module.exports = parent;
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/features/instance/trim.js
+// ../node_modules/core-js-pure/features/instance/trim.js
 var require_trim6 = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/core-js-pure/features/instance/trim.js"(exports2, module) {
+  "../node_modules/core-js-pure/features/instance/trim.js"(exports2, module) {
     "use strict";
     module.exports = require_trim5();
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/@babel/runtime-corejs3/core-js/instance/trim.js
+// ../node_modules/@babel/runtime-corejs3/core-js/instance/trim.js
 var require_trim7 = __commonJS({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/@babel/runtime-corejs3/core-js/instance/trim.js"(exports2, module) {
+  "../node_modules/@babel/runtime-corejs3/core-js/instance/trim.js"(exports2, module) {
     module.exports = require_trim6();
   }
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/mimetext/dist/mimetext.node.es.js
+// ../node_modules/mimetext/dist/mimetext.node.es.js
 var mimetext_node_es_exports = {};
 __export(mimetext_node_es_exports, {
   MIMEMessage: () => d,
@@ -10676,7 +10676,7 @@ function u() {
 }
 var t, import_trim, n, i, a, r, o, d, h;
 var init_mimetext_node_es = __esm({
-  "../../../../../../..~/projects/personal/2026-10/forq/node_modules/mimetext/dist/mimetext.node.es.js"() {
+  "../node_modules/mimetext/dist/mimetext.node.es.js"() {
     t = __toESM(require_mime_types(), 1);
     import_trim = __toESM(require_trim7(), 1);
     n = class extends Error {
@@ -11146,15 +11146,33 @@ var FORQ_CLI = String.raw`#!/usr/bin/env python3
 
   forq status <working|pushed|blocked> "note"   report your state (agents)
   forq list                                     this project's agents
-  forq spawn "task"                             start an agent on its own fork (router)
+  forq spawn "task" [--files a,b] [--on <agent-id>]
+                                                start an agent on its own fork (router); --files claims
+                                                the files it expects to change, --on stacks it on
+                                                another agent's unlanded work
   forq send <agent-id> "text"                   message an agent (router)
-  forq merge <agent-id>                         merge an agent's fork into main (router)
+  forq merge <agent-id>                         merge an agent's fork into main (router); on projects
+                                                with the merge queue it queues the change instead
+  forq sync-main                                rebase your work on the latest main (agents)
+  forq skip                                     during sync-main conflicts: drop your commit when main
+                                                already has its task, and go on
+  forq push                                     push your work to your own fork (agents); after a
+                                                sync-main its history is rewritten, and this pushes anyway
   forq fetch-agent <agent-id>                   fetch an agent's work to review it (reviewer)
   forq verdict <agent-id> approve|changes "notes"   your review verdict (reviewer)
+  forq who [--recent [30m]] [--files a,b] [--area X]
+                                                the agent board: who works on what now (--recent: and
+                                                what others landed on main in that window)
+  forq intent "what you are doing" [--files a,b]  say on the board which task you took and its files
+  forq next                                     take the next free task of the project's list (when on)
+  forq tasks <file>                             register a task list (router)
+  forq dedupe <file> | "task" "task" ...        one quick pass: which tasks are the same work (shown on
+                                                the board as aliases: build it once)
 """
-import json, os, subprocess, sys, urllib.request
+import json, os, re, subprocess, sys, time, urllib.parse, urllib.request
 
-RUN = '/run/forq'
+RUN = os.environ.get('FORQ_RUN', '/run/forq')   # tests point these elsewhere
+REPO = os.environ.get('FORQ_REPO', '/workspace/repo')
 def secret(n):
     try: return open(f'{RUN}/{n}').read().strip()
     except OSError: sys.exit(f'forq: {RUN}/{n} missing (box not booted by forq?)')
@@ -11172,8 +11190,109 @@ def api(method, path, body=None):
         except Exception: msg = e.reason
         sys.exit(f'forq: {msg} ({e.code})')
 
+def try_api(method, path, body=None, timeout=3):
+    """The hook's calls: short, and never an error (the hook must not get in the agent's way)."""
+    try:
+        req = urllib.request.Request(secret('api') + path, method=method, data=json.dumps(body).encode() if body is not None else None,
+            headers={'content-type': 'application/json', 'x-forq-agent': secret('agent-token'), 'user-agent': 'forq-cli/1'})
+        with urllib.request.urlopen(req, timeout=timeout) as r: return json.load(r)
+    except BaseException: return None
+
+def dur_ms(s, d=30 * 60_000):
+    m = re.match(r'^(\d+(?:\.\d+)?)\s*(s|m|h)?$', s or '')
+    return int(float(m.group(1)) * {'s': 1e3, 'm': 6e4, 'h': 36e5}[m.group(2) or 'm']) if m else d
+
+def board_hook():
+    """Claude Code hook (settings.json in the box, src/box.ts) for the agent board. Posts files and commits,
+    never command bodies or file contents; reads the board into the agent's context. Exits 0 always."""
+    try: inp = json.load(sys.stdin)
+    except Exception: return
+    sp = RUN + '/board-state.json'
+    try: st = json.load(open(sp))
+    except Exception: st = {}
+    now = time.time()
+    if st.get('offUntil', 0) > now: return
+    def save():
+        try: json.dump(st, open(sp, 'w'))
+        except Exception: pass
+    def out(ev, text):
+        if text: print(json.dumps({'hookSpecificOutput': {'hookEventName': ev, 'additionalContext': text}}))
+    ev, tool = inp.get('hook_event_name'), inp.get('tool_name') or ''
+    if ev == 'UserPromptSubmit':
+        r = try_api('GET', '/api/agent/who?recent=1800000')
+        if r is None: return
+        if r.get('on') is False: st['offUntil'] = now + 120; save(); return
+        if r.get('text'): out(ev, 'Agent board (who works on what in this project; advisory, not locks):\n' + r['text'])
+    elif ev == 'PreToolUse' and tool in ('Edit', 'Write', 'MultiEdit'):
+        f = (inp.get('tool_input') or {}).get('file_path') or ''
+        if f.startswith(REPO + '/'): f = f[len(REPO) + 1:]
+        if not f or f.startswith('/'): return
+        edits, warned = st.setdefault('edits', {}), st.setdefault('warned', {})
+        if now - edits.get(f, 0) < 30:
+            return
+        edits[f] = now
+        r = try_api('POST', '/api/agent/board', {'kind': 'editing', 'files': [f], 'who': True})
+        if r is not None and r.get('off'): st['offUntil'] = now + 120
+        rows = (r or {}).get('rows') or []
+        if rows and now - warned.get(f, 0) >= 300:
+            warned[f] = now
+            out(ev, f"Agent board: {f} was also touched in the last 10 min by:\n" + '\n'.join(x['line'] for x in rows[:3]) + "\nYour work lands through the merge queue either way; keep your change to this file small, or see: forq who --files " + f)
+        for m in (edits, warned):
+            for k in [k for k, t in m.items() if now - t > 3600]: del m[k]
+        save()
+    elif ev == 'PostToolUse':
+        # Heartbeat on any tool use, at most every 2 min: keeps this agent and its claim live while it works
+        # without posting (a slow agent lost its claim after 10 silent minutes).
+        if now - st.get('alive', 0) >= 120:
+            st['alive'] = now; save()
+            r = try_api('POST', '/api/agent/board', {'kind': 'alive'})
+            if r is not None and r.get('off'): st['offUntil'] = now + 120; save(); return
+        if tool != 'Bash': return
+        cmd = str((inp.get('tool_input') or {}).get('command') or '')
+        if not re.search(r'(^|[;&|(]\s*)git\s+(-\S+\s+\S+\s+)*commit\b', cmd): return
+        g = lambda *a: subprocess.run(['git', *a], cwd=REPO, text=True, capture_output=True).stdout.strip()
+        head = g('rev-parse', 'HEAD')
+        try: fresh = now - int(g('log', '-1', '--format=%ct') or 0) < 120
+        except ValueError: fresh = False
+        if not head or head == st.get('lastHead') or not fresh: return
+        st['lastHead'] = head; save()
+        try_api('POST', '/api/agent/board', {'kind': 'committed', 'status': g('log', '-1', '--format=%s')[:80],
+            'files': [x for x in g('diff-tree', '--root', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n') if x][:20]})
+
+def dedupe_env():
+    """The nested claude -p's env. Claude Code keeps credentials out of its Bash tool's env (the pass
+    failed with api_error and 0 tokens from inside an agent, 2026-10-10), so take them from tmux, where
+    boot.sh put them. Never printed."""
+    env = {k: x for k, x in os.environ.items() if not (k == 'CLAUDECODE' or k.startswith('CLAUDE_CODE_SSE') or k in ('CLAUDE_CODE_ENTRYPOINT', 'ANTHROPIC_MODEL'))}
+    for k in ('CLAUDE_CODE_OAUTH_TOKEN', 'ANTHROPIC_API_KEY'):
+        if env.get(k): continue
+        p = subprocess.run(['tmux', 'show-environment', '-g', k], text=True, capture_output=True)
+        if p.returncode == 0 and p.stdout.startswith(k + '='): env[k] = p.stdout.strip()[len(k) + 1:]
+    return env
+
+CONFLICT_MSG = ('forq: conflicts while rebasing on main. If main already has this commit\'s task (another change landed it), '
+    'run: forq skip (it drops that commit and goes on; your fork is yours alone, no approval needed). Otherwise resolve them '
+    'keeping BOTH main\'s changes and your intent, then: git add -A && git rebase --continue && forq push && forq status pushed "redone on the latest main"')
+
+def rebasing():
+    return os.path.isdir(os.path.join(REPO, '.git', 'rebase-merge')) or os.path.isdir(os.path.join(REPO, '.git', 'rebase-apply'))
+
+def on_main(commit, mref):
+    """Does main already contain this commit's change? Its diff, reversed, applies cleanly to main's tree."""
+    if git('rev-parse', '-q', '--verify', commit + '^', check=False).returncode: return False
+    patch = git('diff', '--binary', commit + '^', commit, check=False).stdout
+    if not patch.strip(): return True
+    idx = os.path.join(REPO, '.git', 'forq-onmain.idx')
+    env = {**os.environ, 'GIT_INDEX_FILE': idx}
+    try:
+        if subprocess.run(['git', 'read-tree', mref], cwd=REPO, env=env, capture_output=True).returncode: return False
+        return subprocess.run(['git', 'apply', '--cached', '--check', '-R'], cwd=REPO, env=env, input=patch, text=True, capture_output=True).returncode == 0
+    finally:
+        try: os.remove(idx)
+        except OSError: pass
+
 def git(*a, check=True):
-    p = subprocess.run(['git', *a], cwd='/workspace/repo', text=True, capture_output=True)
+    p = subprocess.run(['git', *a], cwd=REPO, text=True, capture_output=True)
     if check and p.returncode: sys.exit(f'forq: git {" ".join(a[:2])} failed:\n{p.stdout}{p.stderr}')
     return p
 
@@ -11187,15 +11306,28 @@ def main(argv):
         for a in api('GET', '/api/agent/list')['agents']:
             print(f"{a['id']}  [{a['state']}]  {a['task'][:70]}")
             if a.get('note'): print(f"    note: {a['note'][:200]}")
+            if a.get('claims'): print(f"    claims: {', '.join(a['claims'][:12])}")
+            if a.get('landing'): print(f"    queue: {a['landing']}")
     elif v == 'spawn':
-        if not rest: sys.exit('usage: forq spawn "task"')
-        a = api('POST', '/api/agent/spawn', {'task': ' '.join(rest)}); print(f"started {a['id']}")
+        files, on, words = [], None, []
+        it = iter(rest)
+        for w in it:
+            if w == '--files': files += [f for f in next(it, '').split(',') if f]
+            elif w == '--on': on = next(it, None)
+            else: words.append(w)
+        if not words: sys.exit('usage: forq spawn "task" [--files a,b] [--on <agent-id>]')
+        body = {'task': ' '.join(words)}
+        if files: body['files'] = files
+        if on: body['on'] = on
+        a = api('POST', '/api/agent/spawn', body); print(f"started {a['id']}" + (f" (stacked on {on})" if on else ''))
     elif v == 'send':
         if len(rest) < 2: sys.exit('usage: forq send <agent-id> "text"')
         print(api('POST', '/api/agent/send', {'agent': rest[0], 'text': ' '.join(rest[1:])}))
     elif v == 'merge':
         if not rest: sys.exit('usage: forq merge <agent-id>')
         f = api('GET', '/api/agent/merge-info?agent=' + rest[0])
+        if f.get('queued'):
+            print(f"queued {rest[0]} for the merge queue: it lands on main once it passes the checks (state: {f.get('state')})"); return
         # The default branch is not always main (GitHub imports keep master, gh-pages…).
         br = git('symbolic-ref', '--short', 'refs/remotes/origin/HEAD', check=False).stdout.strip().split('/', 1)[-1] or 'main'
         git('checkout', '-q', br); git('pull', '-q', '--ff-only', 'origin', br)
@@ -11224,6 +11356,111 @@ def main(argv):
         c = git('rev-parse', f'refs/agents/{rest[0]}', check=False).stdout.strip()
         if not c: sys.exit(f'forq: run "forq fetch-agent {rest[0]}" first')
         api('POST', '/api/agent/verdict', {'agent': rest[0], 'verdict': rest[1], 'notes': ' '.join(rest[2:]), 'commit': c}); print('ok')
+    elif v == 'sync-main':
+        f = api('GET', '/api/agent/main-info')
+        auth = f"http.extraHeader=Authorization: Bearer {f['token']}"
+        br = f.get('branch') or 'main'
+        git('-c', auth, 'fetch', '-q', f['remote'], f'+refs/heads/{br}:refs/remotes/main/{br}')
+        mref = f'refs/remotes/main/{br}'
+        # A rebase left half-done by an earlier sync-main is aborted first (agents stopped there, waiting for a
+        # person to run git rebase --skip: W4c orders 13 and 9).
+        if rebasing(): git('rebase', '--abort', check=False)
+        r = git('rebase', mref, check=False)
+        skipped = []
+        # A commit whose change main already contains (it landed under another commit, or another agent did the
+        # same task) is skipped here: its own diff reverses cleanly on main.
+        while r.returncode and rebasing() and len(skipped) < 50:
+            cur = git('rev-parse', 'REBASE_HEAD', check=False).stdout.strip()
+            if not cur or not on_main(cur, mref): break
+            skipped.append(cur[:7]); r = git('rebase', '--skip', check=False)
+        if skipped: print(f"skipped {len(skipped)} commit(s) main already has: {', '.join(skipped)}")
+        if r.returncode:
+            sys.exit(CONFLICT_MSG + f'\n{r.stdout}{r.stderr}')
+        git('push', '-q', '-f', 'origin', 'HEAD')
+        print(f'rebased on main ({br}) and pushed. Run the tests, then: forq status pushed "redone on the latest main"')
+    elif v == 'skip':
+        # The agent's own call: main already has this commit's task (another change landed it), so drop it.
+        if not rebasing(): sys.exit('forq: no rebase in progress (run forq sync-main)')
+        mref = git('for-each-ref', '--format=%(refname)', 'refs/remotes/main/', check=False).stdout.split('\n')[0].strip()
+        r = git('rebase', '--skip', check=False); n = 1
+        while r.returncode and rebasing() and n < 50:
+            cur = git('rev-parse', 'REBASE_HEAD', check=False).stdout.strip()
+            if not cur or not mref or not on_main(cur, mref): break
+            n += 1; r = git('rebase', '--skip', check=False)
+        if r.returncode: sys.exit(CONFLICT_MSG + f'\n{r.stdout}{r.stderr}')
+        git('push', '-q', '-f', 'origin', 'HEAD')
+        print(f'dropped {n} commit(s) main already has; rebased on main and pushed. If nothing of yours is left, your task is already on main: forq status pushed "already on main"')
+    elif v == 'push':
+        # An agent's fork is its own: after sync-main (a rebase) a plain push is refused and agents would not
+        # force-push without asking, so the run stalled with 'blocked' agents (board W4c r1d, 2026-10-10).
+        me = secret('agent-token').rsplit('.', 1)[0]   # <agent-id>.<hmac>
+        tail = me.split('--')[-1] if '--' in me else ''
+        if not tail or tail.startswith('router') or tail.startswith('review') or tail == 'ask':
+            sys.exit('forq push is for agents on their own fork; the router pushes main with git push')
+        r = git('push', '-q', '--force', 'origin', 'HEAD', check=False)
+        if r.returncode: sys.exit(f'forq: push failed:\n{r.stdout}{r.stderr}')
+        print('pushed to your fork. Now run: forq status pushed "<what you did>"')
+    elif v == 'next':
+        r = api('POST', '/api/agent/next', {})
+        if r.get('off'): sys.exit('forq next is off in this project: pick a task yourself')
+        if r.get('error'): sys.exit('forq: ' + r['error'])
+        if r.get('none'): print('no task left: every task is done or taken. Reply "done".'); return
+        print(f"your task{' (still yours)' if r.get('again') else ''}: {r['id']}: {r['text']}")
+        if r.get('aliases'): print(f"also add {', '.join(r['aliases'])} as a thin alias of it: the same work under another name")
+        print('It is reserved for you: no other agent gets it. When it has landed, run forq next again.')
+    elif v == 'tasks':
+        if not rest: sys.exit('usage: forq tasks <file>   (router: register the task list for forq next and claims)')
+        p = rest[0] if os.path.isabs(rest[0]) else os.path.join(REPO, rest[0])
+        if not os.path.isfile(p): sys.exit(f'forq: no such file {rest[0]}')
+        r = api('POST', '/api/agent/tasks', {'text': open(p).read()})
+        print(f"registered {r.get('ids', 0)} task ids ({r.get('items', 0)} items) from {rest[0]}")
+    elif v == 'hook':
+        board_hook()
+    elif v == 'who':
+        q, it = {}, iter(rest)
+        for w in it:
+            if w == '--recent':
+                nx = rest[rest.index(w) + 1] if rest.index(w) + 1 < len(rest) and not rest[rest.index(w) + 1].startswith('--') else None
+                q['recent'] = dur_ms(nx)
+                if nx: next(it, None)
+            elif w == '--files': q['files'] = next(it, '')
+            elif w == '--area': q['area'] = next(it, '')
+        r = api('GET', '/api/agent/who?' + urllib.parse.urlencode(q))
+        if r.get('on') is False: print('the agent board is off in this project'); return
+        print(r.get('text') or 'nobody else is working on that right now')
+    elif v == 'intent':
+        files, words, it = [], [], iter(rest)
+        for w in it:
+            if w == '--files': files += [f for f in next(it, '').split(',') if f]
+            else: words.append(w)
+        if not words: sys.exit('usage: forq intent "what you are doing" [--files a,b]')
+        r = api('POST', '/api/agent/intent', {'intent': ' '.join(words), 'files': files})
+        if r.get('off'): print('the agent board is off in this project'); return
+        print('on the board: ' + ' '.join(words))
+        if r.get('taken'): print(r['taken'])
+        if r.get('others'): print('Others on the same files, or landed on main in the last 30 min (if one of these is the same work as yours, under any name, pick another task or make yours a thin alias of it):\n' + r['others'])
+    elif v == 'dedupe':
+        if not rest: sys.exit('usage: forq dedupe <file> | "task" "task" ...')
+        p = rest[0] if len(rest) == 1 else ''
+        if p and not os.path.isabs(p): p = os.path.join(REPO, p) if os.path.exists(os.path.join(REPO, p)) else p
+        text = open(p).read() if p and os.path.isfile(p) else '\n'.join('- ' + w for w in rest)
+        f = api('POST', '/api/agent/dedupe', {'stage': 'prompt', 'text': text})
+        if len(f.get('items') or []) < 2: print('fewer than two tasks: nothing to compare'); return
+        model = 'claude-haiku-5-5'
+        # No settings (so this box's own hooks do not fire inside the pass), no tools, one turn.
+        c = subprocess.run(['claude', '-p', '--model', model, '--output-format', 'json', '--max-turns', '1', '--tools', '', '--setting-sources', '',
+            '--system-prompt', 'You find duplicate tasks in a backlog. Answer with one JSON object only.'], input=f['prompt'], text=True, capture_output=True, timeout=300,
+            # Run from inside an agent's own Claude Code: its session variables must not reach the nested call.
+            env=dedupe_env())
+        try: j = json.loads(c.stdout)
+        except Exception: sys.exit(f'forq: the dedupe pass gave no answer: {(c.stderr or c.stdout)[-300:]}')
+        if j.get('is_error') or '{' not in str(j.get('result') or ''): print(f"forq: the dedupe pass answered oddly: {str(j.get('result'))[:300]}", file=sys.stderr)
+        u = j.get('usage') or {}
+        r = api('POST', '/api/agent/dedupe', {'stage': 'answer', 'ids': [i['id'] for i in f['items']], 'answer': j.get('result') or '', 'isError': bool(j.get('is_error')), 'exit': c.returncode,
+            'usage': {'model': model, 'in': u.get('input_tokens', 0), 'out': u.get('output_tokens', 0), 'cr': u.get('cache_read_input_tokens', 0), 'cw': u.get('cache_creation_input_tokens', 0)}})
+        pairs = r.get('pairs') or []
+        print(f"{len(f['items'])} tasks, {len(pairs)} pair(s) of the same work" + (':' if pairs else ''))
+        for a, b in pairs: print(f'  {a} = {b}  (build it once; the other is a thin alias)')
     elif v == 'merged':
         api('POST', '/api/agent/merged', {'agent': rest[0]}); print('ok')
     else:
@@ -11335,22 +11572,26 @@ var Registry = class extends DurableObject {
 var registry = /* @__PURE__ */ __name((env) => env.Registry.get(env.Registry.idFromName("main")), "registry");
 var canSee = /* @__PURE__ */ __name((e2, handle, admin = false) => !!e2 && (!e2.private || admin || !!handle && e2.owner === handle), "canSee");
 async function listFor(env, handle, admin = false) {
-  return (await registry(env).list()).filter((e2) => canSee(e2, handle, admin));
+  return (await registry(env).list()).filter((e2) => canSee(e2, handle, admin) && (!e2.unlisted || e2.owner === handle));
 }
 __name(listFor, "listFor");
 
 // ../src/costs.ts
 import { DurableObject as DurableObject2 } from "cloudflare:workers";
-var PRICES_CHECKED = "2026-10-07";
+var PRICES_CHECKED = "2026-10-08";
 var CONTAINER = { gibSecond: 25e-7, vcpuSecond: 2e-5, gbDiskSecond: 7e-8 };
 var CLAUDE = {
-  opus: { in: 4, cw: 5, cr: 0.2, out: 20 },
+  opus: { in: 4, cw: 5, cw1h: 8, cr: 0.2, out: 20 },
   // Claude Opus 5.5
-  sonnet: { in: 2, cw: 2.5, cr: 0.2, out: 10 },
-  // Claude Sonnet 5.5
-  haiku: { in: 1, cw: 1.25, cr: 0.1, out: 5 },
+  sonnet: { in: 2, cw: 2.5, cw1h: 4, cr: 0.1, out: 10 },
+  // Claude Sonnet 5.5 (cache hits 0.05x base: $0.10, pricing page checked 2026-10-08)
+  // Claude Haiku 5.5 (platform.claude.com/docs/en/models/haiku-5-5/overview, checked 2026-10-08):
+  // $0.10 / $0.50 per MTok up to 100k-token prompts, 5x above. The ledger cannot tell a call's
+  // prompt size, so it is priced at the >100k tier (conservative). Before 'haiku': first match wins.
+  "haiku-5-5": { in: 0.5, cw: 0.625, cw1h: 1, cr: 0.05, out: 2.5 },
+  haiku: { in: 1, cw: 1.25, cw1h: 2, cr: 0.1, out: 5 },
   // Claude Haiku 4.5
-  fable: { in: 10, cw: 12.5, cr: 0.25, out: 50 }
+  fable: { in: 10, cw: 12.5, cw1h: 20, cr: 0.25, out: 50 }
   // Claude Fable 5.1
 };
 var day = /* @__PURE__ */ __name((t2 = Date.now()) => new Date(t2).toISOString().slice(0, 10), "day");
@@ -11359,7 +11600,7 @@ function claudeUsd(model, t2) {
   const k2 = modelKey(model);
   if (!k2) return null;
   const p = CLAUDE[k2];
-  return (t2.in * p.in + t2.cw * p.cw + t2.cr * p.cr + t2.out * p.out) / 1e6;
+  return (t2.in * p.in + t2.cw * p.cw + (t2.cw1h || 0) * p.cw1h + t2.cr * p.cr + t2.out * p.out) / 1e6;
 }
 __name(claudeUsd, "claudeUsd");
 var boxUsd = /* @__PURE__ */ __name((seconds, cpuSeconds, gib, diskGb) => seconds * (gib * CONTAINER.gibSecond + diskGb * CONTAINER.gbDiskSecond) + cpuSeconds * CONTAINER.vcpuSecond, "boxUsd");
@@ -11370,7 +11611,7 @@ var Ledger = class extends DurableObject2 {
   async add(kind, project, row2, at = Date.now()) {
     const key = `d:${day(at)}:${kind}:${project}`;
     const old = await this.ctx.storage.get(key) || { usd: 0, covered: row2.covered };
-    const sumT = /* @__PURE__ */ __name((a2, b) => a2 || b ? { in: (a2?.in || 0) + (b?.in || 0), out: (a2?.out || 0) + (b?.out || 0), cw: (a2?.cw || 0) + (b?.cw || 0), cr: (a2?.cr || 0) + (b?.cr || 0) } : void 0, "sumT");
+    const sumT = /* @__PURE__ */ __name((a2, b) => a2 || b ? { in: (a2?.in || 0) + (b?.in || 0), out: (a2?.out || 0) + (b?.out || 0), cw: (a2?.cw || 0) + (b?.cw || 0), cw1h: (a2?.cw1h || 0) + (b?.cw1h || 0), cr: (a2?.cr || 0) + (b?.cr || 0) } : void 0, "sumT");
     await this.ctx.storage.put(key, {
       usd: old.usd === null || row2.usd === null ? null : old.usd + row2.usd,
       covered: row2.covered,
@@ -11408,7 +11649,7 @@ async function costSummary(env, handle) {
     const out = { total: blank(), byKind: {} };
     for (const r2 of rows.filter(pred)) {
       for (const t3 of [out.total, out.byKind[r2.kind] ||= blank()]) {
-        if (r2.billing === "sub") t3.subTokens += (r2.tokens?.in || 0) + (r2.tokens?.out || 0) + (r2.tokens?.cw || 0) + (r2.tokens?.cr || 0);
+        if (r2.billing === "sub") t3.subTokens += (r2.tokens?.in || 0) + (r2.tokens?.out || 0) + (r2.tokens?.cw || 0) + (r2.tokens?.cw1h || 0) + (r2.tokens?.cr || 0);
         else if (r2.usd === null) t3.unknown = true;
         else if (r2.covered) t3.covered += r2.usd;
         else t3.usd += r2.usd;
@@ -11430,7 +11671,7 @@ function costsPage(s2, selfHost) {
   const days = [...new Set(s2.rows.map((r2) => r2.date))].map((d2) => {
     const rs = s2.rows.filter((r2) => r2.date === d2);
     return `<details class="cday"><summary><b>${d2}</b><span>${usd(rs.reduce((a2, r2) => a2 + (!r2.covered && r2.usd ? r2.usd : 0), 0))}</span></summary>
-${rs.map((r2) => `<div class="crow"><span>${esc3(KIND_LABEL[r2.kind] || r2.kind)}${r2.project ? `<i>${esc3(r2.project)}</i>` : ""}</span><span>${r2.billing === "sub" ? fmtTok((r2.tokens?.in || 0) + (r2.tokens?.out || 0) + (r2.tokens?.cw || 0) + (r2.tokens?.cr || 0)) : r2.usd === null ? "not priced" : usd(r2.usd)}${r2.covered ? "<i>covered</i>" : ""}${r2.seconds ? `<i>${Math.round(r2.seconds / 60)} min awake</i>` : ""}</span></div>`).join("")}</details>`;
+${rs.map((r2) => `<div class="crow"><span>${esc3(KIND_LABEL[r2.kind] || r2.kind)}${r2.project ? `<i>${esc3(r2.project)}</i>` : ""}</span><span>${r2.billing === "sub" ? fmtTok((r2.tokens?.in || 0) + (r2.tokens?.out || 0) + (r2.tokens?.cw || 0) + (r2.tokens?.cw1h || 0) + (r2.tokens?.cr || 0)) : r2.usd === null ? "not priced" : usd(r2.usd)}${r2.covered ? "<i>covered</i>" : ""}${r2.seconds ? `<i>${Math.round(r2.seconds / 60)} min awake</i>` : ""}</span></div>`).join("")}</details>`;
   }).join("") || '<p class="desc">Nothing yet. Costs appear here once your agents run.</p>';
   return shell("Costs \xB7 qodebase", `<h1>Costs</h1>
 <div class="csum"><div><span>Today</span><b>${usd(s2.today.total.usd)}</b></div><div><span>Last 7 days</span><b>${usd(s2.week.total.usd)}</b></div><div><span>Next 30 days</span><b>${usd(s2.month.usd)}</b><small>estimate at this week's pace</small></div></div>
@@ -11458,7 +11699,7 @@ var BUSY_MAX_MS = 4 * 60 * 6e4;
 var ALARM_EVERY_MS = 6e4;
 var SNAPSHOT_EVERY_MS = 15 * 6e4;
 var INACTIVITY_BACKSTOP_MS = 45 * 6e4;
-var INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 8e3 };
+var INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 6144 };
 var INPUT_EMPTY_SH = String.raw`tmux capture-pane -p -t claude | python3 -c "
 import sys
 L=[l.rstrip() for l in sys.stdin.read().splitlines()]
@@ -11618,7 +11859,14 @@ var AgentBox = class extends DurableObject3 {
       }
       await this.c.setInactivityTimeout(INACTIVITY_BACKSTOP_MS);
       this.#watchExit(spec.agentId, from);
-      await this.ctx.storage.put({ costFrom: Date.now(), cpuLast: 0, costOwner: spec.project.split("/")[0], costProject: spec.project, costBilling: spec.billing || "api", costCovered: !!spec.costCovered });
+      const st = await this.ctx.storage.get(["costFrom", "aliveAt", "costOwner", "costProject", "costCovered"]);
+      const lostFrom = st.get("costFrom"), aliveAt = st.get("aliveAt");
+      if (lostFrom && aliveAt && aliveAt > lostFrom && st.get("costOwner")) {
+        const sec = (aliveAt - lostFrom) / 1e3;
+        await recordCost(this.env, st.get("costOwner"), "boxes", st.get("costProject") || "", { usd: boxUsd(sec, 0, INSTANCE.memoryMib / 1024, INSTANCE.diskMb / 1e3), covered: !!st.get("costCovered"), seconds: sec });
+        log("box", "costs_recovered", { agentId: spec.agentId, seconds: Math.round(sec) });
+      }
+      await this.ctx.storage.put({ costFrom: Date.now(), aliveAt: Date.now(), cpuLast: 0, costOwner: spec.project.split("/")[0], costProject: spec.project, costBilling: spec.billing || "api", costCovered: !!spec.costCovered });
     }
     if (this.env.BOX_IMAGE === "managed") {
       const st = await this.#setup(spec.agentId);
@@ -11650,6 +11898,20 @@ PY
       printf '%s' "$AGENT_TOKEN" > /run/forq/agent-token
       printf '%s' "$API_BASE" > /run/forq/api
       printf '%s' "$FORQ_CLI" > /usr/local/bin/forq && chmod 755 /usr/local/bin/forq
+      # The agent board (src/landing/board.ts): Claude Code hooks post edits and commits and read the
+      # board into the context. Only while the project's board flag is on; removed again when it is off.
+      mkdir -p /workspace/.claude
+      python3 - "$BOARD" <<'PY'
+import json, sys
+p = '/workspace/.claude/settings.json'
+try: d = json.load(open(p))
+except Exception: d = {}
+h = {'type': 'command', 'command': 'forq hook', 'timeout': 6}
+hooks = {'UserPromptSubmit': [{'hooks': [h]}], 'PreToolUse': [{'matcher': 'Edit|Write|MultiEdit', 'hooks': [h]}], 'PostToolUse': [{'matcher': '*', 'hooks': [h]}]}
+if sys.argv[1] == '1': d['hooks'] = hooks
+elif 'forq hook' in json.dumps(d.get('hooks', {})): d.pop('hooks', None)
+json.dump(d, open(p, 'w'))
+PY
       # An empty repo (a self-hosted copy's Build starts empty) has no commit to show yet.
       git -C ${REPO_DIR} log --oneline -1 2>/dev/null || echo '(empty repository)'`, {
       GIT_TOKEN: spec.gitToken,
@@ -11658,7 +11920,8 @@ PY
       UI_HOST: spec.uiHost,
       AGENT_TOKEN: spec.agentToken,
       API_BASE: spec.apiBase,
-      FORQ_CLI
+      FORQ_CLI,
+      BOARD: spec.board && (spec.role === "agent" || spec.role === "router") ? "1" : "0"
     });
     log("box", "repo_ready", { agentId: spec.agentId, exit: repo.exitCode, head: repo.stdout.trim().slice(-80), err: repo.stderr.slice(-300) });
     if (repo.exitCode !== 0) return { ok: false, ms: Date.now() - t0, from, error: `clone failed: ${repo.stderr.slice(-200)}` };
@@ -11827,6 +12090,7 @@ PY
   async letGo(why) {
     if (!this.c.running) return;
     await this.#collectCosts();
+    await this.ctx.storage.delete("costFrom");
     const snap = await this.snapshot(why);
     if (!snap) {
       await this.ctx.storage.setAlarm(Date.now() + ALARM_EVERY_MS);
@@ -11846,6 +12110,7 @@ PY
   }
   async alarm() {
     if ((await this.ctx.storage.get("askQueue") || []).length) await this.#runAsks();
+    if (this.c.running) await this.ctx.storage.put("aliveAt", Date.now());
     if (this.c.running && Date.now() - (await this.ctx.storage.get("costFrom") || Date.now()) > 10 * 6e4) await this.#collectCosts();
     const agentId = await this.ctx.storage.get("agentId");
     if (!this.c.running) {
@@ -11881,7 +12146,8 @@ PY
     return this.c.getTcpPort(port).fetch(new Request(`http://container${url2.pathname}${url2.search}`, new Request(request, { headers })));
   }
   // ---- the ask box (<slug>--ask): Claude Code answers questions about the project ----
-  // Read-only clone (a read token), `claude -p` in plan mode (it reads, never edits), on
+  // Read-only clone (a read token), `claude -p` with the edit tools disallowed (plan mode
+  // ignored --model and ran Sonnet for every question, 2026-10-07), on
   // the owner's own Claude (subscription token or API key, from the box's tmux env).
   // Runs from the alarm so a long answer outlives the request that asked.
   async startAsk(id, question, spec, model = "opus") {
@@ -11896,14 +12162,15 @@ PY
   async #runAsks() {
     const spec = await this.ctx.storage.get("askSpec");
     const ids = await this.ctx.storage.get("askQueue") || [];
-    await this.ctx.storage.put("askQueue", []);
     if (!spec || !ids.length) return;
+    await this.ctx.storage.setAlarm(Date.now() + 6e4);
     const up = await this.ensureUp(spec);
     for (const id of ids) {
       const a2 = await this.ctx.storage.get(`ask:${id}`);
       if (!a2) continue;
       if (!up.ok) {
         await this.ctx.storage.put(`ask:${id}`, { ...a2, state: "failed", error: up.error || "the box did not start" });
+        await this.ctx.storage.put("askQueue", (await this.ctx.storage.get("askQueue") || []).filter((x) => x !== id));
         continue;
       }
       await this.ctx.storage.put(`ask:${id}`, { ...a2, state: "running", startedAt: Date.now() });
@@ -11915,12 +12182,13 @@ Question: ${a2.question}`;
       const r2 = await this.#sh(`cd ${REPO_DIR} 2>/dev/null || cd /workspace
 git pull -q --ff-only 2>/dev/null
 eval "$(tmux show-environment -g 2>/dev/null | grep -E '^(CLAUDE_CODE_OAUTH_TOKEN|ANTHROPIC_API_KEY|ANTHROPIC_MODEL)=' | sed 's/^/export /')"
-IS_SANDBOX=1 timeout 300 claude -p "$Q" --permission-mode plan --model "$MODEL" --output-format text 2>&1 | tail -c 20000`, { Q: prompt, MODEL: ["opus", "sonnet", "haiku"].includes(a2.model || "") ? a2.model : "opus" }).catch((e2) => ({ exitCode: 1, stdout: "", stderr: String(e2) }));
+IS_SANDBOX=1 timeout 300 claude -p "$Q" --model "$MODEL" --disallowedTools Edit Write NotebookEdit --output-format text 2>&1 | tail -c 20000`, { Q: prompt, MODEL: ["opus", "sonnet", "haiku"].includes(a2.model || "") ? a2.model : "opus" }).catch((e2) => ({ exitCode: 1, stdout: "", stderr: String(e2) }));
       const answer = r2.stdout.trim();
       const ok = r2.exitCode === 0 && !!answer;
       await this.ctx.storage.put(`ask:${id}`, { ...a2, state: ok ? "done" : "failed", answer: ok ? answer : void 0, error: ok ? void 0 : (answer || r2.stderr || "no answer").slice(-400), ms: Date.now() - t0 });
       log("box", "ask_done", { agentId: spec.agentId, id, ok, ms: Date.now() - t0, chars: answer.length });
       await this.touch(spec.agentId);
+      await this.ctx.storage.put("askQueue", (await this.ctx.storage.get("askQueue") || []).filter((x) => x !== id));
     }
   }
   /** Adds this box's costs since the last call to its owner's ledger: awake seconds and
@@ -11936,10 +12204,9 @@ IS_SANDBOX=1 timeout 300 claude -p "$Q" --permission-mode plan --model "$MODEL" 
 node -e '
 const fs=require("fs"),p=require("path");const since=process.argv[1]||"";let last=since;const m={};
 function walk(d){let e;try{e=fs.readdirSync(d,{withFileTypes:true})}catch{return}for(const f of e){const q=p.join(d,f.name);if(f.isDirectory())walk(q);else if(f.name.endsWith(".jsonl")){
-for(const line of fs.readFileSync(q,"utf8").split("
-")){if(!line.includes(""usage""))continue;let o;try{o=JSON.parse(line)}catch{continue}
+for(const line of fs.readFileSync(q,"utf8").split("\n")){if(!line.includes("\"usage\""))continue;let o;try{o=JSON.parse(line)}catch{continue}
 const ts=o.timestamp||"";if(!ts||ts<=since)continue;const u=o.message&&o.message.usage;if(!u)continue;const k=o.message.model||"unknown";
-const t=m[k]||(m[k]={in:0,out:0,cw:0,cr:0});t.in+=u.input_tokens||0;t.out+=u.output_tokens||0;t.cw+=u.cache_creation_input_tokens||0;t.cr+=u.cache_read_input_tokens||0;if(ts>last)last=ts}}}}
+const t=m[k]||(m[k]={in:0,out:0,cw:0,cw1h:0,cr:0});const cc=u.cache_creation||{};const h1=cc.ephemeral_1h_input_tokens||0;t.in+=u.input_tokens||0;t.out+=u.output_tokens||0;t.cw1h+=h1;t.cw+=Math.max(0,(u.cache_creation_input_tokens||0)-h1);t.cr+=u.cache_read_input_tokens||0;if(ts>last)last=ts}}}}
 walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}))' "$CURSOR"`, { CURSOR: st.get("costCursor") || "" });
       const cpuNow = Number((r2.stdout.match(/CPU=(\d+)/) || [])[1] || 0) / 1e6;
       const usage = JSON.parse((r2.stdout.match(/USAGE=(.*)/) || [])[1] || '{"m":{},"last":""}');
@@ -11947,10 +12214,11 @@ walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}
       const covered = !!st.get("costCovered"), billing = st.get("costBilling") || "api", project = st.get("costProject") || "";
       await recordCost(this.env, owner, "boxes", project, { usd: boxUsd(seconds, cpuSeconds, INSTANCE.memoryMib / 1024, INSTANCE.diskMb / 1e3), covered, seconds, cpuSeconds });
       for (const [model, t2] of Object.entries(usage.m)) {
-        await recordCost(this.env, owner, "claude", project, { usd: billing === "sub" ? null : claudeUsd(model, t2), covered: false, tokens: t2, billing });
+        const proj = /\/lab-/.test(project) ? `${project}:${model}` : project;
+        await recordCost(this.env, owner, "claude", proj, { usd: billing === "sub" ? null : claudeUsd(model, t2), covered: false, tokens: t2, billing });
       }
       await this.ctx.storage.put({ costFrom: now, cpuLast: cpuNow, ...usage.last ? { costCursor: usage.last } : {} });
-      log("box", "costs", { agentId: await this.ctx.storage.get("agentId"), seconds: Math.round(seconds), cpuSeconds: Math.round(cpuSeconds), models: Object.keys(usage.m) });
+      log("box", "costs", { agentId: await this.ctx.storage.get("agentId"), seconds: Math.round(seconds), cpuSeconds: Math.round(cpuSeconds), models: Object.keys(usage.m), tokens: usage.m });
     } catch (e2) {
       log("box", "costs_failed", { err: String(e2) });
     }
@@ -11969,6 +12237,8 @@ var REVIEW_STEPS = [
   `For each review: run \`forq fetch-agent <agent-id>\` (it fetches the agent's work into refs/agents/<agent-id> and prints its task, where it started and its preview URL). Read the change with \`git diff <base> refs/agents/<agent-id>\`. If the project has a web page, look at the agent's preview at phone size: \`chromium --headless=new --hide-scrollbars --window-size=390,844 --screenshot=/tmp/<agent-id>.png <preview-url>\`, then open that PNG with your Read tool and look at it.`,
   `Judge the change against the agent's own task (the "task:" line). The person's request ("asked:") may have been split across several agents, so parts of it that belong to other tasks are not missing from this one. Check: does it do what its task asked, does anything look broken or out of place, any obvious bug. Be brief and concrete. Then give your verdict with exactly one of: \`forq verdict <agent-id> approve "<one or two lines>"\` or \`forq verdict <agent-id> changes "<what to fix, specific>"\`. Never edit or push code yourself.`
 ];
+var BOARD_AGENT = `This project has an agent board: who works on what right now, and what landed on main in the last 30 minutes (\`forq who --recent\`; it is also shown to you with each message). If you choose your own task (from a backlog or list), first run \`forq who --recent\`, then announce the one you take with \`forq intent "<task id + title>" --files <files you expect to change>\` before writing code. If a task someone else is doing or has finished means the same as yours, even under another name or id, or the board lists it as the same work, do not build it again: make yours a thin alias of theirs once theirs is on main, or pick another task. When two agents claim the same task, the EARLIEST claim keeps it: \`forq intent\` tells you if someone claimed it before you (then pick another); if you claimed first, keep going even when others claim it after you.`;
+var BOARD_ROUTER = `This project has an agent board (\`forq who --recent\`): every agent's task and files, live, and what landed on main in the last 30 minutes. When you hand out a task list or a backlog file, first run \`forq dedupe <file>\` (or \`forq dedupe "task" "task" ...\`) once: it finds tasks that are the same work under different names and shows those pairs to every agent on the board.`;
 function taskPrompt(spec) {
   if (spec.role === "reviewer") {
     return [
@@ -11981,6 +12251,7 @@ function taskPrompt(spec) {
     return [
       `You are the router agent of the forq project ${spec.project}. ${REPO_DIR} is a clone of the project's main line (its default branch). You coordinate; agents do the work.`,
       `The person will message you from their phone. For each request: split it into independent tasks that touch different parts of the code where possible, and start one agent per task with \`forq spawn "<task>"\` (each agent gets its own fork and box; give it a complete, self-contained task). Small questions about the code you may answer yourself. Do not edit main yourself unless asked.`,
+      ...spec.board ? [BOARD_ROUTER] : [],
       `\`forq list\` shows the agents and their notes. When asked to merge an agent: \`forq merge <agent-id>\`; if it reports a conflict, resolve it in ${REPO_DIR}, commit, \`git push origin HEAD\`, then \`forq merged <agent-id>\`. \`forq send <agent-id> "text"\` messages an agent. \`forq help\` for the rest.`,
       `Keep replies short; the person reads them on a phone. Reply now with one line saying you are ready.`
     ].join("\n\n");
@@ -11988,7 +12259,8 @@ function taskPrompt(spec) {
   return [
     `You are a forq agent (${spec.agentId}) on the project ${spec.project}. You work in ${REPO_DIR}, a clone of your own fork; no other agent touches it.`,
     `Your task: ${spec.task}`,
-    `Check your change works before you push (run it locally where you can). When the task is done: commit with a clear message, push with \`git push origin HEAD\` (your clone is on the default branch), and run \`forq status pushed "<one-line summary>"\` right away: that is what builds your preview and starts the review, so never wait for a deploy yourself. Then reply with a 2-3 line summary. If you are blocked or the task is unclear, run \`forq status blocked "<why>"\` and say so instead of guessing.`
+    ...spec.board ? [BOARD_AGENT] : [],
+    `Check your change works before you push (run it locally where you can). When the task is done: commit with a clear message, push with \`forq push\` (it pushes to your own fork, which no one else uses; your clone is on the default branch), and run \`forq status pushed "<one-line summary>"\` right away: that is what builds your preview and starts the review, so never wait for a deploy yourself. Then reply with a 2-3 line summary. If you are blocked or the task is unclear, run \`forq status blocked "<why>"\` and say so instead of guessing.`
   ].join("\n\n");
 }
 __name(taskPrompt, "taskPrompt");
@@ -12705,11 +12977,11 @@ async function withBaseline(request, env, res) {
 __name(withBaseline, "withBaseline");
 async function shareTags(env, host, path2, rawTitle, desc) {
   const title = rawTitle.replace(/\s*·\s*qodebase(\s*\([A-D]\))?\s*$/, "").trim() || "qodebase";
-  const page = `https://${host}${path2}`;
+  const page2 = `https://${host}${path2}`;
   const tags = [
     `<meta property="og:site_name" content="qodebase">`,
     `<meta property="og:title" content="${esc5(title)}">`,
-    `<meta property="og:url" content="${esc5(page)}">`,
+    `<meta property="og:url" content="${esc5(page2)}">`,
     `<meta property="og:type" content="website">`
   ];
   if (desc) tags.push(`<meta property="og:description" content="${esc5(desc)}">`);
@@ -12799,18 +13071,18 @@ ${body}
 }
 __name(feedbackPage, "feedbackPage");
 async function feedback(request, env) {
-  const page = /* @__PURE__ */ __name((o3, status2 = 200) => new Response(feedbackPage(o3), { status: status2, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } }), "page");
+  const page2 = /* @__PURE__ */ __name((o3, status2 = 200) => new Response(feedbackPage(o3), { status: status2, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } }), "page");
   const url2 = new URL(request.url);
-  if (request.method === "GET") return page({ from: safeFrom(url2.searchParams.get("from")) });
+  if (request.method === "GET") return page2({ from: safeFrom(url2.searchParams.get("from")) });
   if (request.method !== "POST") return new Response(null, { status: 405 });
   const f = await request.formData().catch(() => null);
   const get = /* @__PURE__ */ __name((k2) => String(f?.get(k2) ?? "").trim(), "get");
   const o2 = { from: safeFrom(get("from")), kind: KINDS.some(([v]) => v === get("kind")) ? get("kind") : "other", msg: get("msg").slice(0, 5e3), email: get("email").slice(0, 200) };
   if (get("website")) {
     log3("feedback_honeypot", { from: o2.from });
-    return page({ from: o2.from, done: true });
+    return page2({ from: o2.from, done: true });
   }
-  if (!o2.msg) return page({ ...o2, error: "Write a message first." }, 400);
+  if (!o2.msg) return page2({ ...o2, error: "Write a message first." }, 400);
   const self2 = get("self") === "1";
   const body = { project: "forq", kind: o2.kind, msg: o2.msg, email: o2.email || void 0, page: `https://${request.headers.get("x-forq-host") || url2.hostname}${o2.from}`, loc: "en", dev: device(request.headers.get("user-agent") || ""), self: self2 };
   let r2 = null;
@@ -12821,12 +13093,12 @@ async function feedback(request, env) {
   }
   if (r2?.ok) {
     log3("feedback_stored", { kind: o2.kind, self: self2 });
-    return page({ from: o2.from, done: true });
+    return page2({ from: o2.from, done: true });
   }
   log3("feedback_store_failed", { status: r2?.status ?? 0, body: r2 ? (await r2.text().catch(() => "")).slice(0, 200) : "" });
   await pushAlert(env, "qodebase feedback NOT stored", `${o2.kind} from ${o2.email || "no email"} on ${o2.from}:
 ${o2.msg}`, body.page, 1);
-  return page({ ...o2, error: "It did not go through on our side. Your text is still here: try again, or email hello@kapps.dev." }, 502);
+  return page2({ ...o2, error: "It did not go through on our side. Your text is still here: try again, or email hello@kapps.dev." }, 502);
 }
 __name(feedback, "feedback");
 async function health(env, ctx, origin) {
@@ -12877,7 +13149,7 @@ async function excludeFromRunRoute(env, host) {
 }
 __name(excludeFromRunRoute, "excludeFromRunRoute");
 var WRANGLER = "wrangler@4.146.0";
-var INSTANCE2 = { vcpu: 1, memoryMib: 3072, diskMb: 8e3 };
+var INSTANCE2 = { vcpu: 1, memoryMib: 3072, diskMb: 6144 };
 var IDLE_STOP_MS = 5 * 6e4;
 var ENTRYPOINT2 = ["/bin/bash", "-c", "chown 0:0 / 2>/dev/null; mkdir -p /build && exec sleep infinity"];
 var SANITIZE = String.raw`
@@ -13117,7 +13389,7 @@ fs.writeFileSync(process.env.R+'/run/wrangler.json',JSON.stringify(c));console.l
 };
 
 // ../src/project.ts
-var roleOf = /* @__PURE__ */ __name((id) => id.endsWith("--router") ? "router" : id.endsWith("--review") ? "reviewer" : id.endsWith("--ask") ? "ask" : "agent", "roleOf");
+var roleOf = /* @__PURE__ */ __name((id) => /--router\d*$/.test(id) ? "router" : /--review\d*$/.test(id) ? "reviewer" : id.endsWith("--ask") ? "ask" : "agent", "roleOf");
 var Project = class extends DurableObject5 {
   static {
     __name(this, "Project");
@@ -13136,7 +13408,8 @@ var Project = class extends DurableObject5 {
       createdAt: info.createdAt,
       updatedAt: Date.now(),
       importedFrom: info.importedFrom ? { fullName: info.importedFrom.fullName, stars: info.importedFrom.stars, license: info.importedFrom.license } : void 0,
-      ...info.private ? { private: true } : {}
+      ...info.private ? { private: true } : {},
+      ...info.unlisted ? { unlisted: true } : {}
     };
     await registry(this.env).put(e2);
   }
@@ -13229,6 +13502,20 @@ var Project = class extends DurableObject5 {
     log("project", "visibility", { slug: info.slug, private: v });
     return info;
   }
+  /** Reachable by link but never listed for others (variants lab runs). */
+  async setUnlisted(v) {
+    const info = await this.#need();
+    if (v) info.unlisted = true;
+    else delete info.unlisted;
+    await this.#register(info);
+  }
+  /** The landing system's view becomes this project's main view (qb6/qb7, src/landing/). */
+  async setLanding(v) {
+    const info = await this.#need();
+    if (v) info.landing = true;
+    else delete info.landing;
+    await this.ctx.storage.put("info", info);
+  }
   /** Owner override of the previewed page: a folder ('demo/') or a file ('demo.html'). */
   async setEntry(entry) {
     const info = await this.#need();
@@ -13263,37 +13550,47 @@ var Project = class extends DurableObject5 {
       __callDispose(_stack, _error2, _hasError);
     }
   }
-  async addAgent(task) {
-    var _stack = [];
+  /** `fromAgent`: stack on another agent's unlanded work (fork its fork; base = its head). */
+  async addAgent(task, fromAgent, maxAgents) {
+    const info = await this.#need();
+    const max = maxAgents || Number(this.env.MAX_AGENTS_PER_PROJECT || 6);
+    const live = info.agents.filter((a2) => a2.state === "working" || a2.state === "pushed" || a2.state === "blocked");
+    if (live.length + this.#spawning >= max) throw new Error(`agent limit reached (${max} open per project)`);
+    this.#spawning++;
     try {
-      const info = await this.#need();
-      const max = Number(this.env.MAX_AGENTS_PER_PROJECT || 6);
-      const live = info.agents.filter((a2) => a2.state === "working" || a2.state === "pushed" || a2.state === "blocked");
-      if (live.length >= max) throw new Error(`agent limit reached (${max} open per project)`);
-      const id = `${info.slug}--${Math.random().toString(36).slice(2, 7)}`;
-      const repo = __using(_stack, await this.env.ARTIFACTS.get(info.repo));
-      const baseC = (await repo.log({ limit: 1 }).catch(() => []))[0];
-      const forked = await repo.fork(id, { description: task.slice(0, 200), defaultBranchOnly: true });
-      const agent = {
-        id,
-        task,
-        fork: forked.name,
-        remote: forked.remote,
-        createdAt: Date.now(),
-        state: "working",
-        request: info.lastRequest && Date.now() - info.lastRequest.at < 30 * 6e4 ? info.lastRequest.text.slice(0, 1e3) : void 0,
-        base: baseC ? { commit: baseC.hash, tree: baseC.treeHash } : void 0
-      };
-      info.agents.push(agent);
-      await this.ctx.storage.put("info", info);
-      log("project", "agent_added", { slug: info.slug, id });
-      return agent;
-    } catch (_) {
-      var _error2 = _, _hasError = true;
+      var _stack = [];
+      try {
+        const id = `${info.slug}--${Math.random().toString(36).slice(2, 7)}`;
+        const from = fromAgent ? info.agents.find((a2) => a2.id === fromAgent) : void 0;
+        if (fromAgent && !from) throw new Error(`no agent ${fromAgent} in this project`);
+        const repo = __using(_stack, await this.env.ARTIFACTS.get(from ? from.fork : info.repo));
+        const baseC = (await repo.log({ limit: 1 }).catch(() => []))[0];
+        const forked = await repo.fork(id, { description: task.slice(0, 200), defaultBranchOnly: true });
+        const agent = {
+          id,
+          task,
+          fork: forked.name,
+          remote: forked.remote,
+          createdAt: Date.now(),
+          state: "working",
+          request: info.lastRequest && Date.now() - info.lastRequest.at < 30 * 6e4 ? info.lastRequest.text.slice(0, 1e3) : void 0,
+          base: baseC ? { commit: baseC.hash, tree: baseC.treeHash } : void 0
+        };
+        const now = await this.#need();
+        now.agents.push(agent);
+        await this.ctx.storage.put("info", now);
+        log("project", "agent_added", { slug: now.slug, id });
+        return agent;
+      } catch (_) {
+        var _error2 = _, _hasError = true;
+      } finally {
+        __callDispose(_stack, _error2, _hasError);
+      }
     } finally {
-      __callDispose(_stack, _error2, _hasError);
+      this.#spawning--;
     }
   }
+  #spawning = 0;
   /** Remote + write token for what a box clones: its fork, or main for the router. */
   async boxRepo(agentId, ttlS = 7 * 86400) {
     var _stack2 = [];
@@ -13346,10 +13643,12 @@ var Project = class extends DurableObject5 {
         agentId,
         queuedAt: Date.now()
       };
+      const fresh = await this.#need();
       const building = { status: "building", at: Date.now() };
-      if (agent) agent.preview = { ...agent.preview, ...building, error: void 0 };
-      else info.app = { ...info.app || {}, ...building, error: void 0, worker: job.worker };
-      await this.ctx.storage.put("info", info);
+      const fa = agentId ? fresh.agents.find((a2) => a2.id === agentId) : void 0;
+      if (fa) fa.preview = { ...fa.preview, ...building, error: void 0 };
+      else if (!agentId) fresh.app = { ...fresh.app || {}, ...building, error: void 0, worker: job.worker };
+      await this.ctx.storage.put("info", fresh);
       await this.env.BuildBox.get(this.env.BuildBox.idFromName(`${info.slug}--build`)).enqueue(job);
     } catch (_) {
       var _error2 = _, _hasError = true;
@@ -13958,6 +14257,404 @@ function withHeaders(r2, head3) {
   return out;
 }
 __name(withHeaders, "withHeaders");
+
+// ../src/landingui/assets.gen.ts
+var WORK_JS = "// \"Agents at work\" (qb7, docs/contest/ui.md): many agents changing one project at once,\n// for people who are not programmers. Overview first (numbers in words, the merge queue as\n// a train, a map of who works where, a feed of plain sentences); tap anything to drill down\n// (area -> file -> change). Hash routes, so Back always works.\n// Mount: <div id=\"lw\" data-src=\"<GET /landing URL>\" data-name=\"hono\" [data-own] [data-mock] [data-api=\"/api/p/o/n\"]>\n// Data: the qb6/qb7 contract in docs/contest/PLAN.md. data-mock plays public/landing-mock.json.\n(() => {\n  const root = document.getElementById('lw');\n  if (!root) return;\n  const NAME = root.dataset.name || 'this project', OWN = 'own' in root.dataset, API = root.dataset.api || '';\n  // ?mock=1 on any project plays the sample data instead of the real endpoint.\n  const MOCK = 'mock' in root.dataset || new URLSearchParams(location.search).has('mock');\n  const SRC = MOCK && !('mock' in root.dataset) ? '/landing-mock.json' : root.dataset.src;\n  const esc = (s) => String(s ?? '').replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[c]);\n  const n0 = (x) => Math.round(x).toLocaleString('en-US');\n  const log = (event, extra) => { try { console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'landingui', event, ...extra })); } catch {} };\n\n  // ---- words -----------------------------------------------------------------\n  const GLOSS = {\n    agent: ['Agent', 'An AI that writes code. Here every agent works on its own copy of the project, so two agents never type into the same file at the same time.'],\n    fork: ['Fork', 'An agent\\'s own copy of the project. It works there, and its change is copied back into the main code only after it passes.'],\n    main: ['Main', 'The real, shared version of the code: what the app runs. Changes \"land\" when they are added to it.'],\n    queue: ['The line (merge queue)', 'Finished changes wait here to be tested together, a few at a time, before they join the main code. If the tests fail, the change is sent back and main stays healthy.'],\n    train: ['Train', 'A group of changes from the line that are tested together. If the tests pass, they all land at once.'],\n    collision: ['Collision (conflict)', 'Two agents changed the same lines of the same file. Usually the second one has to start over. Here it does not have to: see \"replayed\".'],\n    replay: ['Replayed', 'When a change collides with newer code, qodebase re-applies what the change was meant to do (its intent) on the newest version, instead of throwing the work away. Then it is tested again.'],\n    claim: ['Claim', 'Before an agent starts, it says which files it expects to touch. Others can see the claims and avoid stepping on each other.'],\n    stack: ['Stacked', 'A change that builds on another change that has not landed yet. They land in order.'],\n    lead: ['Lead', 'When no rule can replay a change, it goes to a lead (an agent or a person responsible for that part of the code) who decides how to combine both changes.'],\n    review: ['Review', 'Another agent reads the change and approves it or asks for fixes before it can join the line.'],\n    scripted: ['Scripted agents', 'In this demo the agents follow a script instead of calling an AI model, so it costs nothing to run. Everything else is real: real git commits on real forks, real collisions, real tests.'],\n  };\n  const term = (k, text) => `<button class=\"term\" type=\"button\" data-gloss=\"${k}\">${esc(text || GLOSS[k][0].toLowerCase())}</button>`;\n\n  // Agents are numbered 1..N per project: a scripted agent keeps its own number, a real\n  // one (id like \"agent 981l0\") gets the next free number by when its first change started.\n  let numOf = null, numMap = null;\n  function agentNums() {\n    const src = P && P.replay ? P.base : D;\n    if (numOf === src && numMap) return numMap;\n    const m = new Map(), used = new Set();\n    const all = src ? [...src.changes].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)) : [];\n    for (const c of all) { const k = /^(?:scripted )?agent[- ](\\d+)$/i.exec(c.agent || ''); if (k && !m.has(c.agent)) { m.set(c.agent, +k[1]); used.add(+k[1]); } }\n    let n = 1;\n    for (const c of all) if (!m.has(c.agent)) { while (used.has(n)) n++; m.set(c.agent, n); used.add(n); }\n    numOf = src; numMap = m; return m;\n  }\n  function agentNum(a) {\n    const m = agentNums();\n    if (!m.has(a)) { let n = 1; const used = new Set(m.values()); while (used.has(n)) n++; m.set(a, n); }\n    return m.get(a);\n  }\n  const AG = (a) => (a ? `Agent ${agentNum(a)}` : 'an agent');\n  const leadName = (l) => { const x = (l || '').replace(/^agent-(\\d+)/i, 'Agent $1'); return /^(scripted )?lead$/i.test(x) ? 'its lead' : x; };\n  const ready = (c) => c.state === 'pushed' && c.review && c.review.verdict !== 'changes';\n  const skey = (c) => (ready(c) ? 'ready' : c.state);\n  const WORD = { working: 'Working', pushed: 'Waiting for review', ready: 'Ready to merge', reviewing: 'Being reviewed', queued: 'In line', testing: 'Being tested', landed: 'Landed', bounced: 'Sent back', replaying: 'Replaying', 'with-lead': 'With its lead' };\n  const st = (c) => `<span class=\"st s-${skey(c)}\"><i class=\"dot\"></i><span class=\"w\">${WORD[skey(c)] || esc(c.state)}</span></span>`;\n  // Real ids are '<owner>.<name>--<id>': people see the short part.\n  const ref = (id) => `#${esc(String(id).split('--').pop())}`;\n  // A real agent's title can be its whole task (\"Add a page. Create src/pages/\u2026\"): keep the first sentence.\n  const title1 = (c) => { const t = c.title || c.intent || ''; const f = t.split(/(?<=[.!?])\\s/)[0]; return f.length > 90 ? `${f.slice(0, 88)}\u2026` : f; };\n  const short = (c) => (c ? esc(title1(c)) : '');\n  const files = (ps) => ps.map((p) => `<span class=\"mono\">${esc(p)}</span>`).join(', ');\n\n  // ---- time --------------------------------------------------------------------\n  let D = null, fetchedAt = 0;\n  const now = () => (D ? D.now + (Date.now() - fetchedAt) * (P ? P.speed : 1) : Date.now());\n  const agoTxt = (t) => { const s = Math.max(0, Math.round((now() - t) / 1000)); return s < 5 ? 'just now' : s < 60 ? `${s} s ago` : s < 3600 ? `${Math.floor(s / 60)} min ago` : `${Math.floor(s / 3600)} h ago`; };\n  // Times are spans the tick updates in place (render() ignores their text when deciding to rebuild).\n  const ago = (t) => `<span data-ago=\"${t}\">${agoTxt(t)}</span>`;\n  const since = (t) => `<span data-since=\"${t}\">${secs(now() - t)}</span>`;\n  const secs = (ms) => (ms < 90e3 ? `${Math.round(ms / 1000)} s` : `${Math.round(ms / 60e3)} min`);\n  const hhmm = (t) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });\n\n  // ---- playback: a run revealed over time from its own events and train times ---------\n  // Used for the mock (looping, its `future` events) and for replaying the last finished\n  // real run (\"Watch a run\" when no live run can start). P = {base, start, end, wall0, speed, loop}.\n  const STATE = { asked: 'working', claimed: 'working', working: 'working', stacked: 'working', 'changes-suggested': 'working', pushed: 'pushed', approved: 'pushed', reviewing: 'reviewing', queued: 'queued', replayed: 'queued', testing: 'testing', landed: 'landed', bounced: 'bounced', replaying: 'replaying', 'with-lead': 'with-lead' };\n  let P = null;\n  const QS = new URLSearchParams(location.search);\n  let REPLAY_ON_LOAD = QS.has('replay') ? 1 : 0;\n  const REPLAY_SPEED = Math.min(8, Math.max(0.5, +QS.get('replay') || 2));\n  const MSPEED = Math.min(20, Math.max(0.25, +new URLSearchParams(location.search).get('mockspeed') || 1));\n  const allEv = (c) => [...c.events, ...(c.future || [])];\n  const countIf = (l, f) => l.filter(f).length;\n  const hasEv = (what) => (c) => c.events.some((e) => e.what === what);\n  function playAt(P) {\n    const { base } = P, span = P.end - P.start, el = (Date.now() - P.wall0) * P.speed;\n    const T = P.start + (P.loop ? el % span : Math.min(el, span));\n    const changes = base.changes.map((c) => {\n      const ev = allEv(c).filter((e) => e.t <= T);\n      if (!ev.length) return null;\n      const state = ev.reduce((x, e) => STATE[e.what] || x, 'working');\n      const landed = ev.find((e) => e.what === 'landed');\n      const rv = ev.some((e) => e.what === 'approved' || e.what === 'changes-suggested') ? c.review : null;\n      const landing = c.landing ? { ...c.landing, how: landed ? (c.landing.how || 'merged') : null, mainCommit: landed ? c.landing.mainCommit : null } : null;\n      return { ...c, events: ev, state, review: rv, landing: ['pushed', 'working', 'reviewing'].includes(state) && !landed ? null : landing, landedAt: landed ? landed.t : null, lead: state === 'with-lead' ? c.lead : null };\n    }).filter(Boolean);\n    const trains = (base.mock?.trains || base.queue.trains).filter((t) => t.startedAt <= T).map((t) => {\n      const testing = t.endedAt == null || T < t.endedAt;\n      const fin = t.state && t.state !== 'testing' ? t.state : t.checks?.ok === false ? 'bounced' : 'landed';\n      return { ...t, state: testing ? 'testing' : fin, items: t.items && (testing ? t.items.map((i) => ({ ...i, outcome: 'testing' })) : t.items) };\n    });\n    const inTrain = new Set(trains.filter((t) => t.state === 'testing').flatMap((t) => t.changes));\n    const lastQ = (c) => [...c.events].reverse().find((e) => e.what === 'queued' || e.what === 'replayed')?.t || 0;\n    const waiting = changes.filter((c) => c.state === 'queued' && !inTrain.has(c.id)).sort((x, y) => lastQ(x) - lastQ(y)).map((c) => c.id);\n    // Today's totals: whatever the snapshot counted outside these changes, plus what has happened by T.\n    const bs = base.stats, isL = (c) => c.state === 'landed';\n    return { ...base, now: T, changes, queue: { trains, waiting },\n      demo: base.demo ? { ...base.demo, running: T < P.end } : base.demo,\n      // (a counter that began after the run counts less than the records: never below zero)\n      stats: { ...bs, landedToday: Math.max(0, bs.landedToday - countIf(base.changes, isL)) + countIf(changes, isL), inQueue: waiting.length + inTrain.size,\n        replayed: Math.max(0, bs.replayed - countIf(base.changes, hasEv('replayed'))) + countIf(changes, hasEv('replayed')),\n        bounced: Math.max(0, bs.bounced - countIf(base.changes, hasEv('bounced'))) + countIf(changes, hasEv('bounced')) } };\n  }\n  const mockPlay = (m) => ({ base: m, start: m.now + m.mock.playS[0] * 1000, end: m.now + m.mock.playS[1] * 1000, wall0: Date.now(), speed: MSPEED, loop: true, mock: true });\n  function replayOf(d0, speed = 1) {\n    const ts = [...new Set(d0.changes.flatMap((c) => allEv(c).map((e) => e.t)).concat(d0.queue.trains.flatMap((t) => [t.startedAt, t.endedAt].filter(Boolean))))].sort((a, b) => a - b);\n    if (!ts.length) return null;\n    // Quiet stretches (a lead redoing a change minutes later) shrink to 12 s, so a replay never idles.\n    const GAP = 12e3, W = [ts[0]];\n    for (let i = 1; i < ts.length; i++) W.push(W[i - 1] + Math.min(ts[i] - ts[i - 1], GAP));\n    const warp = (t) => { if (t == null) return t; let lo = 0, hi = ts.length - 1; if (t <= ts[0]) return t; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (ts[m] <= t) lo = m; else hi = m - 1; } return W[lo] + Math.min(t - ts[lo], GAP); };\n    const d = { ...d0,\n      changes: d0.changes.map((c) => ({ ...c, createdAt: warp(c.createdAt), landedAt: warp(c.landedAt), events: allEv(c).map((e) => ({ ...e, t: warp(e.t) })), future: undefined })),\n      queue: { ...d0.queue, trains: d0.queue.trains.map((t) => ({ ...t, startedAt: warp(t.startedAt), endedAt: warp(t.endedAt) })) } };\n    return { base: d, start: W[0] - 2000, end: W[W.length - 1] + 4000, wall0: Date.now(), speed, loop: false, replay: true, realStart: ts[0] };\n  }\n\n  // ---- data ----------------------------------------------------------------------\n  let failures = 0;\n  async function load() {\n    if (MOCK && !P) P = mockPlay(await fetch(SRC, { cache: 'no-store' }).then((r) => r.json()));\n    if (P) { D = playAt(P); fetchedAt = Date.now(); return; }\n    const r = await fetch(SRC, { cache: 'no-store', credentials: 'same-origin' });\n    if (r.status === 404) { D = null; throw Object.assign(new Error('none'), { none: true }); }\n    if (!r.ok) throw new Error(`HTTP ${r.status}`);\n    D = await r.json(); fetchedAt = Date.now();\n    if (REPLAY_ON_LOAD && D.changes.length) { REPLAY_ON_LOAD = 0; D.queue.trains = D.queue.trains.filter((t) => !t.note); P = replayOf(D, REPLAY_SPEED); D = playAt(P); return; }\n    // Trains that failed for infrastructure reasons carry a note (qb6): not part of the story.\n    D.queue.trains = D.queue.trains.filter((t) => !t.note);\n  }\n  let idxOf = null, idxMap = null;\n  const byId = () => (idxOf === D ? idxMap : ((idxOf = D), (idxMap = new Map(D.changes.map((c) => [c.id, c])))));\n  const isRoot = (p) => p === '.' || p === '/' || p === '';\n  const areaOf = (p) => {\n    const a = D.areas.map((x) => x.path).filter((x) => !isRoot(x) && (p === x || p.startsWith(`${x}/`))).sort((x, y) => y.length - x.length)[0];\n    return a || (p.includes('/') ? p.split('/')[0] : (D.areas.find((x) => isRoot(x.path))?.path ?? '.'));\n  };\n  const areaLabel = (p) => (isRoot(p) ? 'top-level files' : p);\n  const active = (c) => !['landed', 'bounced'].includes(c.state);\n\n  // The other change in a collision or overlap: named in the detail (a full id or #short id),\n  // else the newest change by another agent that landed on the same file before it.\n  // Short ids (#d4nqz7 or #104) to changes, built once per view; a full id is found by its short part.\n  let shortOf = null, shortMap = null;\n  const shorts = () => (shortOf === D ? shortMap : ((shortOf = D), (shortMap = new Map(D.changes.map((x) => [String(x.id).split('--').pop(), x])))));\n  function otherOf(c, e, idx) {\n    const d = e.detail || '';\n    for (const m of d.matchAll(/(?:--|#)([A-Za-z0-9]+)\\b/g)) { const x = shorts().get(m[1]); if (x && x.id !== c.id) return x; }\n    if (e.what !== 'conflict') return null;\n    const paths = conflictPaths(c, e);\n    return [...idx.values()].filter((x) => x.agent !== c.agent && x.landedAt && x.landedAt <= e.t && x.files.some((p) => paths.includes(p))).sort((a, b) => b.landedAt - a.landedAt)[0] || null;\n  }\n  // ---- plain-language sentences ---------------------------------------------------------\n  function sentence(c, e, idx) {\n    const who = AG(c.agent), T = title1(c); // raw: callers escape\n    let d = (e.detail || '').replace(/\\bagent-(\\d+)/gi, 'Agent $1');\n    for (const x of idx.values()) if (d.includes(x.id)) d = d.split(x.id).join(`${AG(x.agent)}'s change`);\n    const its = `${who}'s change`;\n    const oc = otherOf(c, e, idx);\n    switch (e.what) {\n      case 'asked': return [`${who} started a change`, T];\n      case 'claimed': return [`${who} claimed the files it will change`, d];\n      case 'overlap': return [`Heads-up: ${who} and ${oc ? AG(oc.agent) : 'another agent'} plan to touch the same file`, d];\n      case 'stacked': return [`${who} is building on ${c.stackedOn && idx.get(c.stackedOn) ? AG(idx.get(c.stackedOn).agent) + \"'s change\" : 'another change'} before it lands`, T];\n      case 'working': return null;\n      case 'pushed': return [`${who} finished and sent it for review`, T];\n      case 'reviewing': return null;\n      case 'approved': return [`${its} passed review`, T];\n      case 'changes-suggested': return [`The reviewer asked ${who} for a fix`, d || (c.review && c.review.notes)];\n      case 'queued': return [`${its} joined the line`, T];\n      case 'testing': return null; // trains say this once for all their changes\n      case 'conflict': return [`${its} collided with ${oc ? `${AG(oc.agent)}'s` : 'newer code'}`, d];\n      case 'replaying': return [`Replaying ${its} on the newest code instead of sending it back`, d];\n      case 'replayed': return [`${its} replayed cleanly and went back in line`, T];\n      case 'with-lead': return [`${its} needs ${leadName(c.lead) || 'its lead'} to decide`, d];\n      case 'bounced': return [`${its} was sent back: a test failed`, T];\n      case 'landed': {\n        const rp = c.landing && /^replayed/.test(c.landing.how || '');\n        return rp ? [`${its} landed after a replay`, `${T.replace(/[.!?]+$/, '')}: it collided on ${(c.landing.conflicts || []).join(', ')}, was re-applied on the newest code, and passed the tests.`] : [`${its} landed on main`, T];\n      }\n      default: return [`${its}: ${e.what}`, d];\n    }\n  }\n  function feedItems() {\n    const idx = byId(), out = [];\n    for (const c of D.changes) for (const e of c.events) { const s = sentence(c, e, idx); if (s) out.push({ t: e.t, c, e, s }); }\n    for (const tr of D.queue.trains) out.push({ t: tr.startedAt, train: tr, s: [tr.changes.length > 1 ? `Testing ${tr.changes.length} changes together` : 'Testing one change', `${tr.changes.map((id) => { const x = idx.get(id) || (tr.items || []).find((i) => i.id === id); return x ? AG(x.agent) : ref(id); }).join(', ')}, on the newest main`], key: `${tr.id}s` });\n    return out.sort((a, b) => b.t - a.t);\n  }\n\n  // ---- overview -------------------------------------------------------------------------------\n  // ---- Watch a run (public, no sign-in; qb6's POST \u2026/landing/watch) ----------------------\n  let starting = 0, limitNote = '';\n  const until = (t) => `<span data-until=\"${t}\">${untilTxt(t)}</span>`;\n  const untilTxt = (t) => { const s = Math.max(0, Math.round((t - now()) / 1000)); return s < 60 ? `${s} s` : `${Math.round(s / 60)} min`; };\n  const LIMIT = { daily: 'Today\\'s live runs are used up.', ip: 'You have started the most live runs for today.', cooldown: 'You started a run a few minutes ago.', running: 'A run is already going.', off: 'Live runs are switched off right now.' };\n  function watchCard() {\n    const W = D.watch || {}, dm = D.demo || {};\n    const speedChips = (on) => [1, 2, 4].map((x) => `<button class=\"chipb sp\" type=\"button\" data-speed=\"${x}\" aria-pressed=\"${on === x}\">${x}\xD7</button>`).join('');\n    if (P && P.replay) {\n      const done = now() >= P.end - 1, pct = Math.min(100, (100 * (now() - P.start)) / (P.end - P.start));\n      return `<div class=\"watch\"><div class=\"wt\"><i class=\"live off\"></i><span><b>Replay</b> of a run from ${hhmm(P.realStart)}: ${P.base.mode === 'demo' ? `${dm.agents || ''} ${term('scripted', 'scripted agents')}` : `${new Set(P.base.changes.map((c) => c.agent)).size} AI ${term('agent', 'agents')}`}, sped up ${P.speed}\xD7.${limitNote ? ` ${esc(limitNote)}` : ''}</span></div>\n        <div class=\"prog\"><i style=\"width:${pct.toFixed(1)}%;animation:none\"></i></div>\n        <div class=\"wa\">${done ? '<button class=\"btn\" type=\"button\" data-watch=\"again\">Replay again</button>' : speedChips(P.speed)}<button class=\"chipb\" type=\"button\" data-watch=\"live\">Back to live</button></div></div>`;\n    }\n    if (starting && Date.now() - starting < 60e3 && !(dm.running && D.changes.length)) return `<div class=\"watch\"><div class=\"wt\"><i class=\"live\"></i><span><b>Starting a run\u2026</b> The caf\xE9 site goes back to its first version and the agents get their tasks.</span></div></div>`;\n    if (dm.running) return `<div class=\"watch\"><div class=\"wt\"><i class=\"live\"></i><span><b>Live run</b>${dm.startedAt ? `, started ${ago(dm.startedAt)}` : ''}${dm.endsAt ? (dm.mode === 'busy' ? `, runs until its tasks are done (at most ${until(dm.endsAt)} more)` : `, ends in ${until(dm.endsAt)}`) : ''}. ${dm.agents || ''} ${term('scripted', 'scripted agents')}; their commits, collisions and tests are real.</span></div>${ownerCtl(true)}</div>`;\n    const left = W.maxPerDay ? Math.max(0, W.maxPerDay - (W.runsToday || 0)) : null;\n    return `<div class=\"watch\"><div class=\"wt\"><span><b>Watch a run.</b> Six ${term('scripted', 'scripted agents')} change this caf\xE9's website at once for about 5 minutes: real commits, real collisions, real tests.</span></div>\n      ${limitNote ? `<p class=\"small dim\">${esc(limitNote)}</p>` : ''}\n      <div class=\"wa\"><button class=\"btn\" type=\"button\" data-watch=\"start\">Watch a run</button>${D.changes.length ? '<button class=\"chipb\" type=\"button\" data-watch=\"replay\">Replay the last one</button>' : ''}${ownerCtl(false)}</div>\n      ${left != null ? `<p class=\"small dim\">${left} of ${W.maxPerDay} live runs left today.</p>` : ''}</div>`;\n  }\n  const ownerCtl = (on) => (OWN && !MOCK ? `<button class=\"chipb\" type=\"button\" data-demo=\"${on ? 'stop' : 'start'}\">${on ? 'Stop' : 'Start (owner)'}</button>` : '');\n  function demoStrip() {\n    if (!MOCK && (D.watch?.enabled || (P && P.replay))) return watchCard();\n    if (MOCK) return `<div class=\"demo\"><i class=\"live\"></i><span><b>Sample data</b>, played in a loop: how ${term('scripted', 'scripted agents')} look at work on a project.</span></div>`;\n    if (D.mode !== 'demo') return '';\n    const on = !D.demo || D.demo.running;\n    const ctl = OWN && !MOCK ? `<button class=\"chipb\" type=\"button\" data-demo=\"${on ? 'stop' : 'start'}\">${on ? 'Stop' : 'Start'}</button>` : '';\n    return `<div class=\"demo\"><i class=\"live${on ? '' : ' off'}\"></i><span><b>${D.demo?.mode === 'busy' ? 'Busy demo' : 'Demo'}</b> with ${D.demo ? D.demo.agents : ''} ${term('scripted', 'scripted agents')}. Commits, collisions and tests are real.${on ? '' : ' Not running now.'}</span>${ctl}</div>`;\n  }\n  function numbers() {\n    // The server's counters can start after a run began (qb6, 2026-10-08): never show fewer than the records here.\n    const s = { ...D.stats, landedToday: Math.max(D.stats.landedToday || 0, countIf(D.changes, (c) => c.state === 'landed')), replayed: Math.max(D.stats.replayed || 0, countIf(D.changes, hasEv('replayed'))) };\n    // One row of words: the numbers support the picture below, they are not the picture.\n    return `<div class=\"nums\">\n      <span><b>${n0(s.landedToday)}</b> landed ${D.mode === 'demo' ? 'in this run' : 'today'}</span>\n      <span><b>${n0(s.inQueue)}</b> in ${term('queue', 'the line')}</span>\n      <a href=\"#/replayed\"><b>${n0(s.replayed)}</b> ${term('replay', 'replayed')}, not thrown away</a>\n      <span><b>${s.medianAskToLandS ? secs(s.medianAskToLandS * 1000) : '\u2013'}</b> ask to landed, typical</span></div>`;\n  }\n  // Things that just happened pulse once. innerHTML is replaced every tick, so an animation\n  // keeps its place with a negative delay = how long ago it was first seen.\n  const firstSeen = new Map();\n  const PULSE = 1800;\n  function pulse(key) {\n    if (!firstSeen.has(key)) firstSeen.set(key, firstPaint ? -1e9 : Date.now());\n    const age = Date.now() - firstSeen.get(key);\n    return age < PULSE ? ` style=\"animation-delay:-${age}ms\"` : null;\n  }\n  // A change by id: from the view's changes, else the train's own items (busy runs keep only\n  // the newest 150 changes in the view).\n  const look = (id, t) => byId().get(id) || (t?.items || []).find((x) => x.id === id) || D.queue.trains.flatMap((x) => x.items || []).find((x) => x.id === id) || null;\n  const car = (c, id) => `<button class=\"car${c && c.state === 'replaying' ? ' rp' : ''}\" type=\"button\" data-car=\"${esc(id)}\" data-go=\"#/change/${esc(id)}\" aria-label=\"${c ? `${AG(c.agent)}: ${short(c)}` : `Change ${esc(id)}`}\">${c ? AG(c.agent) : ref(id)}<small>${c ? short(c) : ''}</small></button>`;\n  // A long line shows its front and a \"+N more\" that opens the whole line.\n  const capped = (cars, max) => (cars.length <= max ? cars.join('') : cars.slice(0, max).join('') + `<a class=\"car more\" href=\"#/line\">+${cars.length - max}<small>more</small></a>`);\n  function theLine(full) {\n    const idx = byId();\n    const testing = D.queue.trains.filter((t) => t.state === 'testing');\n    const replaying = D.changes.filter((c) => c.state === 'replaying');\n    const parts = testing.map((t) => {\n      const lk = (id) => look(id, t);\n      const el = now() - t.startedAt, typical = 42e3, sp = P ? P.speed : 1;\n      return `<div class=\"train\"><div class=\"cars\">${capped(t.changes.map((id) => car(lk(id), id)), full ? 99 : 8)}</div><div class=\"prog\"><i style=\"animation-duration:${Math.round(typical / sp)}ms;animation-delay:-${Math.round(Math.min(el, typical - 1) / sp)}ms\"></i></div><div class=\"lbl\"><b>Being tested</b> ${since(t.startedAt)}</div></div>`;\n    });\n    const wait = [...D.queue.waiting.map((id) => car(idx.get(id), id)), ...replaying.map((c) => car(c, c.id))];\n    if (wait.length) parts.push(`<div class=\"wait\"><div class=\"cars\">${capped(wait, full ? 999 : 10)}</div><div class=\"lbl\">${D.queue.waiting.length} waiting${replaying.length ? `, ${replaying.length} replaying` : ''}</div></div>`);\n    const lastLand = D.queue.trains.filter((t) => t.state === 'landed').sort((x, y) => y.endedAt - x.endedAt)[0];\n    const landP = lastLand ? pulse(`train:${lastLand.id}`) : null;\n    const track = parts.length || landP ? `<div class=\"track\" aria-label=\"The line, front first\"><div class=\"stop${landP ? ' pl' : ''}\"${landP || ''}><b>main</b>lands here</div>${parts.join('')}</div>` : '<p class=\"empty-line\">The line is empty. Finished changes wait here to be tested.</p>';\n    const done = D.queue.trains.filter((t) => t.state !== 'testing').sort((a, b) => b.endedAt - a.endedAt).slice(0, full ? 50 : 3);\n    // What landed, by name: \"Add oat milk to the menu (Agent 4)\".\n    const what = (ids, t) => ids.map((id) => { const c = look(id, t); return c ? `<a href=\"#/change/${esc(id)}\">${short(c)}</a> (${AG(c.agent)})` : `<a href=\"#/change/${esc(id)}\">${ref(id)}</a>`; }).join(', ');\n    // One row per outcome. train.items (qb6) says each change's outcome: a train can land\n    // some changes and send one back; without items the train's state is everyone's.\n    const res = done.flatMap((t) => {\n      const by = { landed: [], bounced: [], back: [] };\n      if (t.items?.length) for (const it of t.items) (it.outcome === 'landed' ? by.landed : it.outcome === 'bounced' ? by.bounced : by.back).push(it.id);\n      else (t.state === 'landed' ? by.landed : by.bounced).push(...t.changes);\n      const when = `<span class=\"dim small\">${ago(t.endedAt)}</span>`, rows = [];\n      if (by.landed.length) {\n        const rp = by.landed.filter((id) => /^replayed/.test(idx.get(id)?.landing?.how || ''));\n        rows.push(`<li><i class=\"dot s-landed\"></i><span>Landed${by.landed.length > 1 ? ` ${by.landed.length} changes` : ''}: ${what(by.landed, t)}${rp.length ? `, ${rp.length === by.landed.length ? '' : rp.length + ' '}after a ${term('replay', 'replay')}` : ''}; tests passed</span>${when}</li>`);\n      }\n      if (by.bounced.length) rows.push(`<li><i class=\"dot s-bounced\"></i><span>Sent back: ${what(by.bounced, t)}. A test failed, so main stayed healthy.${t.checks?.failures?.[0] ? `<span class=\"dim small\" style=\"display:block\">${esc(t.checks.failures[0].split(' \u203A ').pop())}</span>` : ''}</span>${when}</li>`);\n      if (by.back.length) rows.push(`<li><i class=\"dot s-replaying\"></i><span>Back in line after a ${term('collision', 'collision')}: ${what(by.back, t)}</span>${when}</li>`);\n      return rows;\n    }).join('');\n    return `<div class=\"line\">${track}${res ? `<ul class=\"results\">${res}</ul>` : ''}</div>`;\n  }\n  function fileMarks() {\n    // Per file: working (w), claimed (c), collided recently (x), landed recently (l).\n    const m = new Map(), T = now(), put = (p, k) => { const o = { l: 1, c: 2, w: 3, x: 4 }; if (!m.has(p) || o[k] > o[m.get(p)]) m.set(p, k); };\n    for (const c of D.changes) {\n      if (c.state === 'landed' && c.landedAt > T - 10 * 60e3) c.files.forEach((p) => put(p, 'l'));\n      if (active(c)) (c.claims || []).forEach((p) => put(p, c.state === 'working' ? 'w' : 'c'));\n      // A collision that was replayed (or landed) since is no longer red.\n      for (const e of c.events) if (e.what === 'conflict' && e.t > T - 10 * 60e3) conflictPaths(c, e).forEach((p) => put(p, c.state === 'landed' || c.events.some((x) => x.t >= e.t && x.what === 'replayed') ? 'l' : 'x'));\n    }\n    return m;\n  }\n  const conflictPaths = (c, e) => (c.landing?.conflicts?.length ? c.landing.conflicts : (e.detail || '').split(':')[0].split(/,\\s*/).filter((p) => /[./]/.test(p)));\n  const agNum = (a) => String(agentNum(a));\n  const RANK = { 'with-lead': 9, bounced: 8, replaying: 7, testing: 6, queued: 5, ready: 4, reviewing: 3, pushed: 2, working: 1, landed: 0 };\n  // One chip per agent: its number, coloured by what its change is doing; tap opens the change.\n  const chip = (c, k, extra = '') => {\n    const p = k === 'landed' ? pulse(`land:${c.id}`) : null;\n    return `<button class=\"ag s-${k}${p ? ' pl' : ''}${extra}\" type=\"button\"${p || ''} data-go=\"#/change/${esc(c.id)}\" aria-label=\"${AG(c.agent)}: ${WORD[k]}, ${short(c)}\">${esc(agNum(c.agent))}</button>`;\n  };\n  const mapKey = () => `<div class=\"key top\"><span><i class=\"ag s-working\"></i>working</span><span><i class=\"ag s-reviewing\"></i>in review</span><span><i class=\"ag s-ready\"></i>ready to merge</span><span><i class=\"ag s-queued\"></i>in the line or being tested</span><span><i class=\"ag s-replaying\"></i>${term('replay', 'replaying')}</span><span><i class=\"ag s-bounced\"></i>sent back or stuck</span><span><i class=\"ag s-landed\"></i>just landed</span><span><i class=\"zap\"></i><span>${term('collision', 'collided')}</span></span><span><i class=\"zap ok\"></i><span>collided, then ${term('replay', 'replayed')}</span></span></div>`;\n  const collWords = (pairs) => {\n    const open = pairs.filter((x) => !x.ok), ok = pairs.filter((x) => x.ok);\n    return open.map((x) => `<span class=\"coll\">${esc(x.words)}</span>`).join('')\n      + (ok.length === 1 ? `<span class=\"coll ok\">${esc(ok[0].words)}</span>` : ok.length ? `<span class=\"coll ok\"><i class=\"zap ok\" aria-hidden=\"true\"></i> ${ok.length} collisions here in the last 90 s, all replayed</span>` : '');\n  };\n  function theMap() {\n    const T = now(), idx = byId();\n    // Each agent shows once: in the area of its most important change's first file.\n    const shown = D.changes.filter((c) => active(c) || (c.state === 'landed' && c.landedAt > T - 90e3));\n    const top = new Map();\n    for (const c of shown) { const o = top.get(c.agent); if (!o || RANK[skey(c)] > RANK[skey(o)]) top.set(c.agent, c); }\n    const home = new Map([...top].map(([ag, c]) => [ag, areaOf(c.files[0] || (c.claims || [])[0] || '.')]));\n    const quiet = [];\n    return `<div class=\"map\">${D.areas.map((a) => {\n      const inArea = (c) => [...c.files, ...(c.claims || [])].some((p) => areaOf(p) === a.path);\n      // Agents here: active changes, and ones that landed in the last 90 s.\n      const best = new Map([...top].filter(([ag]) => home.get(ag) === a.path));\n      // Collisions in this area in the last 10 min, drawn between the two agents.\n      const pairs = [], paired = new Set();\n      for (const c of D.changes) for (const e of c.events) {\n        if (e.what !== 'conflict' || e.t < T - 10 * 60e3 || !conflictPaths(c, e).some((p) => areaOf(p) === a.path)) continue;\n        const o = otherOf(c, e, idx);\n        if (!o || paired.has(c.agent) || paired.has(o.agent)) continue;\n        paired.add(c.agent); paired.add(o.agent);\n        const p = pulse(`x:${c.id}:${e.t}`);\n        const fixedAt = c.events.find((x) => x.t >= e.t && (x.what === 'replayed' || x.what === 'landed'))?.t ?? (c.state === 'landed' ? c.landedAt : null);\n        const fixed = fixedAt != null;\n        // A resolved collision stays on the map for 90 s (green), then leaves: busy runs have hundreds.\n        if (fixed && fixedAt < T - 90e3) continue;\n        const pc = (x) => { const t = top.get(x.agent) || x; return chip(t, skey(t), home.get(x.agent) === a.path ? '' : ' past'); };\n        pairs.push({ ok: fixed, agents: [c.agent, o.agent], local: home.get(c.agent) === a.path || home.get(o.agent) === a.path, html: `<span class=\"pair${fixed ? ' ok' : ''}${p ? ' pl' : ''}\"${p || ''}>${pc(c)}<i class=\"zap\" aria-hidden=\"true\"></i>${pc(o)}</span>`,\n          words: `${AG(c.agent)} and ${AG(o.agent)} collided on ${conflictPaths(c, e).map((x) => x.split('/').pop()).join(', ')}${c.state === 'landed' ? '; replayed, landed' : fixed ? '; replayed' : c.state === 'replaying' ? '; replaying now' : ''}` });\n      }\n      // Draw open collisions always; resolved ones only when an agent lives here and there are\n      // at most two (a busy run replays dozens a minute: those become one line of words).\n      const okLocal = pairs.filter((x) => x.ok && x.local);\n      const drawn = [...pairs.filter((x) => !x.ok), ...(okLocal.length <= 2 ? okLocal : [])];\n      const inPair = new Set(drawn.flatMap((x) => x.agents));\n      const singles = [...best.values()].filter((c) => !inPair.has(c.agent)).sort((x, y) => RANK[skey(y)] - RANK[skey(x)]);\n      const chips = [...drawn.map((x) => x.html), ...singles.map((c) => chip(c, skey(c)))].join('');\n      const n = best.size;\n      const meta = a.recentLandings ? `${a.recentLandings} landed today` : '';\n      if (!chips) { quiet.push(a.path); return ''; }\n      return `<div class=\"area\" data-go=\"#/area/${encodeURIComponent(a.path)}\"><button class=\"nm\" type=\"button\" data-go=\"#/area/${encodeURIComponent(a.path)}\">${esc(areaLabel(a.path))}<span class=\"meta\">${meta}</span></button><span class=\"chips\">${chips}</span>${collWords(pairs)}</div>`;\n    }).join('')}${quiet.length ? `<p class=\"quiet\">Quiet now: ${quiet.map((q) => `<a href=\"#/area/${encodeURIComponent(q)}\" class=\"mono\">${esc(areaLabel(q))}</a>`).join(', ')}</p>` : ''}</div>`;\n  }\n  let firstPaint = true, diffTab = 'landed';\n  function feed(limit) {\n    const items = feedItems().slice(0, limit);\n    const html = items.map((it) => {\n      const k = it.key || `${it.c.id}:${it.e.what}:${it.t}`;\n      const fresh = pulse(`feed:${k}`);\n      const href = it.c ? `#/change/${esc(it.c.id)}` : '#/line';\n      const cls = it.c ? `s-${STATE[it.e.what] === 'pushed' && it.e.what === 'approved' ? 'ready' : it.e.what === 'conflict' ? 'bounced' : STATE[it.e.what] || 'working'}` : 's-testing';\n      return `<li${fresh ? ` class=\"new\"${fresh}` : ''}><a href=\"${href}\"><i class=\"dot ${cls}\"></i><span class=\"t\">${esc(it.s[0])}</span><time>${ago(it.t)}</time>${it.s[1] ? `<span class=\"sub\">${esc(it.s[1])}</span>` : ''}</a></li>`;\n    }).join('');\n    return html ? `<ul class=\"feed\">${html}</ul>` : '<p class=\"dim\">Nothing has happened yet.</p>';\n  }\n  function needsYou() {\n    const list = D.changes.filter((c) => ready(c) || c.state === 'with-lead');\n    if (!list.length) return '';\n    return `<section class=\"sec\"><div class=\"sec-h\"><h3>${OWN ? 'Needs you' : 'Waiting for the owner'}</h3></div><div class=\"needs\">${list.map((c) => `<div class=\"need\"><a href=\"#/change/${esc(c.id)}\">${short(c)}<span class=\"sub\">${ready(c) ? `${AG(c.agent)}, reviewed and ready` : `Collided on ${files(c.landing?.conflicts || [])}; ${esc(leadName(c.lead))} is on it`}</span></a>${ready(c) && OWN ? `<button class=\"btn\" type=\"button\" data-approve=\"${esc(c.id)}\">Merge</button>` : ''}</div>`).join('')}</div></section>`;\n  }\n  // ---- the agent board (qb6's board in the Landing DO, docs/board/PLAN2.md W2c) ---------------\n  // Who works on what now (stated task, files, since when), shared files, duplicates, recently finished.\n  // Rows key on the change id after '--'; times come from ts (never ageS), so a poll that only\n  // moves time does not rebuild the page.\n  const BKIND = { started: ['started', 'working'], editing: ['is editing', 'working'], committed: ['saved a step', 'working'], pushed: ['sent its work for review', 'pushed'],\n    reviewing: ['is in review', 'reviewing'], approved: ['passed review', 'ready'], changes: ['was asked for changes', 'working'], queued: ['is in the line', 'queued'],\n    landed: ['landed its work', 'landed'], bounced: ['was sent back', 'bounced'], blocked: ['is blocked', 'bounced'], done: ['finished', 'landed'],\n    'gave-up': ['stepped back from the task', 'pushed'] };\n  const WORKING = new Set(['started', 'editing', 'committed', 'changes']);\n  let boardOpen = false, boardMore = false, boardWMore = false;\n  function boardWho(id) {\n    const c = D.changes.find((x) => String(x.id).split('--').pop() === String(id) || x.id === id);\n    return { c, name: AG(c ? c.agent : `board:${id}`), num: agNum(c ? c.agent : `board:${id}`) };\n  }\n  function boardFiles(fs) {\n    if (!fs?.length) return '';\n    const shown = fs.slice(0, 3).map((f) => `<span class=\"mono\">${esc(f)}</span>`).join(', ');\n    return `<span class=\"bfiles\">${shown}${fs.length > 3 ? ` <span class=\"dim\">+${fs.length - 3} more</span>` : ''}</span>`;\n  }\n  // A backlog line often carries its own file list (\"T16 Recurrence: \u2026 in src/recur.js (test/x.js) src/index.js\"):\n  // the files have their own line, so keep the words and cap the length.\n  function intentText(t) {\n    let x = String(t).replace(/\\s*\\(([^()]*\\/[^()]*|[^()]*\\.(js|mjs|ts|md|json|css|html))\\)/g, '');\n    const words = x.trim().split(/\\s+/);\n    const pathy = (w) => /\\//.test(w) || /\\.(js|mjs|cjs|ts|tsx|md|json|css|html|txt)[,;)]*$/i.test(w);\n    // Keep a file that is the object of the sentence (\"Work through BACKLOG.md\").\n    while (words.length > 1 && (pathy(words[words.length - 1]) || /^(in|and|,)$/i.test(words[words.length - 1])) && !/^(through|of|to|from|on|at|into|update|edit|fix)$/i.test(words[words.length - 2])) words.pop();\n    x = words.join(' ').replace(/[,;:]$/, '');\n    return x.length > 110 ? `${x.slice(0, 108).replace(/\\s+\\S*$/, '')}\u2026` : x;\n  }\n  function boardRow(r, sharedWith) {\n    const w = boardWho(r.agent), [verb, k] = BKIND[r.kind] || [r.kind, 'working'];\n    const href = w.c ? `#/change/${esc(w.c.id)}` : null;\n    const right = r.done || r.kind === 'gave-up' ? ago(r.ts) : w.c?.createdAt ? `started ${ago(w.c.createdAt)}` : ago(r.ts);\n    // One dim line: the agent's own status note, \"no news\" only while it should be working, a shared file.\n    const named = (t) => String(t).replace(/\\b(by|as|with)\\s+([\\w.]*--)?([a-z0-9]{4,8})\\b/gi, (m, w, _p, id) => { const x = boardWho(id); return x.c || (D.board?.rows || []).some((q) => q.agent === id) ? `${w} ${x.name}` : m; });\n    const notes = [r.status && !/^dedupe$/.test(r.status) && r.kind !== 'landed' ? esc(named(r.status)) : null,\n      !r.done && WORKING.has(r.kind) && now() - r.ts > 120e3 ? `no news for <span data-since=\"${r.ts}\">${secs(now() - r.ts)}</span>` : null,\n      sharedWith?.length ? (sharedWith.all ? 'shares files with every other agent' : `same file as ${sharedWith.join(', ')}`) : null].filter(Boolean);\n    const body = `<span class=\"ag s-${k}\" aria-hidden=\"true\">${esc(w.num)}</span><span class=\"bb\"><span class=\"bt1\"><span><b>${esc(w.name)}</b> ${esc(verb)}</span><span class=\"dim small bwhen\">${right}</span></span>\n      ${r.intent ? `<span class=\"bint\">${esc(intentText(r.intent))}</span>` : ''}${boardFiles(r.files)}${notes.length ? `<span class=\"dim small\">${notes.join('; ')}</span>` : ''}</span>`;\n    return `<li>${href ? `<a href=\"${href}\" class=\"brow\">${body}</a>` : `<div class=\"brow\">${body}</div>`}</li>`;\n  }\n  // A duplicate pair named by agent and task; null when a side cannot be named on this page.\n  function aliasNamed(x) {\n    const f = (id) => D.changes.find((c) => String(c.id).split('--').pop() === String(id));\n    const a = f(x.a), b = f(x.b);\n    return a && b ? `${AG(a.agent)}'s task (\u201C${short(a)}\u201D) was folded into ${AG(b.agent)}'s (\u201C${short(b)}\u201D), so it is done once.` : null;\n  }\n  function boardView() {\n    if (!D.flags?.board || !D.board) return '';\n    const rows = D.board.rows || [], live = rows.filter((r) => !r.done), done = rows.filter((r) => r.done);\n    // Two live agents changing the same file: noted on their rows and once below the list.\n    const byFile = new Map();\n    // An agent that stepped back (another claimed the task first) is not working on it.\n    const working = live.filter((r) => r.kind !== 'gave-up');\n    for (const r of working) for (const f of r.files || []) { if (!byFile.has(f)) byFile.set(f, new Set()); byFile.get(f).add(r.agent); }\n    const shared = [...byFile].filter(([, a]) => a.size > 1);\n    const others = (r) => {\n      const o = [...new Set(shared.filter(([f, a]) => a.has(r.agent) && (r.files || []).includes(f)).flatMap(([, a]) => [...a].filter((x) => x !== r.agent)))].map((x) => boardWho(x).name);\n      if (working.length > 2 && o.length === working.length - 1) o.all = true;\n      return o;\n    };\n    // Files changed by the same set of agents go on one line.\n    const groupsBySet = new Map();\n    for (const [f, a] of shared) { const k = [...a].sort().join('|'); if (!groupsBySet.has(k)) groupsBySet.set(k, { a: [...a], files: [] }); groupsBySet.get(k).files.push(f); }\n    const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);\n    const warnAll = [...groupsBySet.values()].sort((x, y) => y.a.length - x.a.length || y.files.length - x.files.length).map((g) => { const ns = g.a.map((x) => boardWho(x).name); return `<li><span class=\"hu\" aria-hidden=\"true\">!</span><span>${working.length > 2 && ns.length === working.length ? `All ${ns.length} agents are` : `${list(ns)} are ${ns.length > 2 ? 'all' : 'both'}`} changing ${list(g.files.map((f) => `<span class=\"mono\">${esc(f)}</span>`))}.</span></li>`; });\n    // The three biggest groups; the rest one tap away (a busy run shares a lot).\n    const warn = warnAll.slice(0, 3).join('') + (warnAll.length > 3 ? `</ul><details class=\"bdone bwmore\"${boardWMore ? ' open' : ''}><summary>Show ${warnAll.length - 3} more</summary><ul class=\"bwarn\">${warnAll.slice(3).join('')}</ul></details><ul class=\"bwarn\">` : '');\n    // Two live agents on the same task right now (same backlog id like \"T18\", or the same words):\n    // the duplicate the board is there to catch.\n    const tkey = (t) => { const m = /^\\s*([A-Z]{1,3}\\d+)\\b/.exec(t || ''); return m ? m[1] : intentText(t || '').toLowerCase().slice(0, 40); };\n    const byTask = new Map();\n    for (const r of working) { if (!r.intent || /^work through/i.test(r.intent)) continue; const k = tkey(r.intent); if (!byTask.has(k)) byTask.set(k, []); byTask.get(k).push(r); }\n    const sameNow = [...byTask.values()].filter((rs) => new Set(rs.map((r) => r.agent)).size > 1).map((rs) => {\n      const ns = [...new Set(rs.map((r) => boardWho(r.agent).name))];\n      const shortest = rs.map((r) => intentText(r.intent)).sort((a, b) => a.length - b.length)[0];\n      return `<li><span class=\"hu\" aria-hidden=\"true\">!</span><span>${list(ns)} are ${ns.length > 2 ? 'all' : 'both'} working on \u201C${esc(shortest)}\u201D.</span></li>`;\n    }).join('');\n    const al = D.board.aliases || [];\n    const named = al.map(aliasNamed).filter(Boolean), unnamed = al.length - named.length;\n    const dups = named.map((t) => `<li><span class=\"dupe\" aria-hidden=\"true\">=</span><span>${t}</span></li>`).join('')\n      + (unnamed ? `<li><span class=\"dupe\" aria-hidden=\"true\">=</span><span>The duplicate check found ${unnamed} task${unnamed === 1 ? '' : 's'} asked twice in a task list and merged ${unnamed === 1 ? 'it' : 'them'}, so each is done once.</span></li>` : '');\n    const doneFold = done.length ? `<details class=\"bdone\"${boardOpen ? ' open' : ''}><summary>${live.length ? 'Show what finished' : 'Show what finished'} in the last 30 minutes (${done.length})</summary><ul class=\"board\">${done.map((r) => boardRow(r)).join('')}</ul></details>` : '';\n    if (!live.length) return `<section class=\"sec\" id=\"board\"><div class=\"sec-h\"><h3>Who's doing what</h3></div>\n      <p class=\"dim\">No agent is working right now.${done.length ? '' : ' When agents work here, each one shows what it is doing and which files it touches.'}</p>${dups ? `<ul class=\"bdup\">${dups}</ul>` : ''}${doneFold}</section>`;\n    const first = live.length <= 7 ? live : live.slice(0, 6), rest = live.length <= 7 ? [] : live.slice(6);\n    return `<section class=\"sec\" id=\"board\"><div class=\"sec-h\"><h3>Who's doing what</h3></div>\n      <p class=\"cap\">Each agent says what it is doing and which files it touches, so the others can see it before they start.</p>\n      <ul class=\"board\">${first.map((r) => boardRow(r, others(r))).join('')}</ul>\n      ${rest.length ? `<details class=\"bdone bmore\"${boardMore ? ' open' : ''}><summary>Show ${rest.length} more working</summary><ul class=\"board\">${rest.map((r) => boardRow(r, others(r))).join('')}</ul></details>` : ''}\n      ${sameNow ? `<p class=\"bh\">On the same task right now</p><ul class=\"bwarn\">${sameNow}</ul>` : ''}\n      ${warn ? `<p class=\"bh\">Agents changing the same file</p><p class=\"small dim bnote\">qodebase combines their changes when they finish.</p><ul class=\"bwarn\">${warn}</ul>` : ''}\n      ${dups ? `<p class=\"bh\">Same task asked twice</p><ul class=\"bdup\">${dups}</ul>` : ''}\n      ${doneFold}\n    </section>`;\n  }\n  function overview() {\n    const act = D.changes.filter(active);\n    // A demo that has stopped leaves unfinished changes behind; nobody is working on them.\n    const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;\n    const agents = idleDemo ? 0 : new Set(act.map((c) => c.agent)).size;\n    return `${demoStrip()}\n      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : P && P.replay ? (now() >= P.end - 1 ? `The replay has ended: ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed.` : 'The replay is starting\u2026') : `No agents are working on ${esc(NAME)} right now.${D.stats.landedToday ? ` ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed ${D.mode === 'demo' ? 'in the last run' : 'today'}.` : ''}`}</h2>\n      <p class=\"intro\">Each agent is an AI working on its own ${term('fork', 'copy')} of the code. Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>\n      ${numbers()}\n      ${boardView()}\n      <section class=\"sec\"><div class=\"sec-h\"><h3>${term('queue', 'The line')}</h3><a href=\"#/line\">Everything</a></div>\n        <p class=\"cap\">Finished changes wait here and are tested together, then join ${term('main', 'the main code')}. Tap a change to see it.</p>${theLine(false)}</section>\n      <div class=\"ov\"><div class=\"col1\">\n        <section class=\"sec\"><div class=\"sec-h\"><h3>Where they work</h3><a href=\"#/changes\">All changes</a></div>\n          <p class=\"cap\">Each circle is an agent, in the part of the code it is changing. Tap one to see its change.</p>${mapKey()}${theMap()}</section>\n      </div><div class=\"col2\">\n        ${needsYou()}\n        <section class=\"sec\"><div class=\"sec-h\"><h3>What just happened</h3><a href=\"#/feed\">All</a></div>${feed(8)}</section>\n      </div></div>`;\n  }\n\n  // ---- drill-downs -----------------------------------------------------------------------\n  const crumbs = (items) => `<nav class=\"crumbs\" aria-label=\"Where you are\">${items.map(([l, h], i) => (h ? `<a href=\"${h}\">${esc(l)}</a>` : `<b>${esc(l)}</b>`) + (i < items.length - 1 ? '<span class=\"sep\">/</span>' : '')).join('')}</nav>`;\n  const row = (c, sub) => `<li><a href=\"#/change/${esc(c.id)}\"><i class=\"dot s-${skey(c)}\"></i><span class=\"t\">${short(c)}</span><span class=\"st s-${skey(c)}\"><span class=\"w\">${WORD[skey(c)]}</span></span><span class=\"sub\">${sub ?? `${AG(c.agent)}, ${ago(c.events[c.events.length - 1]?.t || c.createdAt)}`} <span class=\"num-id\">${ref(c.id)}</span></span></a></li>`;\n  const ORDERED = ['with-lead', 'ready', 'bounced', 'replaying', 'testing', 'queued', 'reviewing', 'pushed', 'working', 'landed'];\n  const sortC = (l) => l.slice().sort((a, b) => ORDERED.indexOf(skey(a)) - ORDERED.indexOf(skey(b)) || (b.createdAt || 0) - (a.createdAt || 0));\n\n  function viewArea(path) {\n    const a = D.areas.find((x) => x.path === path);\n    if (!a) return overview();\n    const touch = D.changes.filter((c) => [...c.files, ...(c.claims || [])].some((p) => areaOf(p) === path));\n    const marks = fileMarks();\n    const paths = [...new Set(touch.flatMap((c) => [...c.files, ...(c.claims || [])]).filter((p) => areaOf(p) === path))].sort();\n    const fl = paths.map((p) => {\n      const on = D.changes.filter((c) => c.files.includes(p) || (c.claims || []).includes(p));\n      const now_ = on.filter(active).map((c) => AG(c.agent));\n      const k = marks.get(p);\n      const tag = k === 'x' ? '<span class=\"st s-bounced\"><span class=\"w\">collided</span></span>' : k === 'w' ? '<span class=\"st s-working\"><i class=\"dot\"></i>being changed</span>' : k === 'l' ? '<span class=\"st s-landed\"><span class=\"w\">just landed</span></span>' : '';\n      const dk = { x: 'bounced', w: 'working', l: 'landed', c: 'pushed' }[k] || 'none';\n      return `<li><a href=\"#/file/${encodeURIComponent(p)}\"><i class=\"dot s-${dk}\"${dk === 'none' ? ' style=\"visibility:hidden\"' : ''}></i><span class=\"t mono\">${esc(p.slice(isRoot(path) ? 0 : path.length + 1))}</span>${tag || '<span></span>'}<span class=\"sub\">${now_.length ? `${[...new Set(now_)].join(', ')} on it now` : 'nobody on it now'}; ${on.length} change${on.length === 1 ? '' : 's'} today</span></a></li>`;\n    }).join('');\n    return `<div class=\"drill\">${crumbs([['Agents at work', '#/'], [areaLabel(path)]])}\n      <div class=\"tags\"><span>${n0(a.files)} file${a.files === 1 ? '' : 's'}</span><span>${a.claimed} ${term('claim', 'claimed')} now</span><span>${a.recentLandings} landed today</span><span>${a.recentConflicts} ${term('collision', 'collisions')} today</span></div>\n      <section class=\"sec\" style=\"margin-top:8px\"><h3>Changes here</h3>${touch.length ? `<ul class=\"rows\">${sortC(touch).map((c) => row(c)).join('')}</ul>` : '<p class=\"dim\">No changes here today.</p>'}</section>\n      <section class=\"sec\"><h3>Files being touched</h3><p class=\"cap\">Only files someone changed or claimed today.</p>${fl ? `<ul class=\"rows\">${fl}</ul>` : '<p class=\"dim\">None.</p>'}</section></div>`;\n  }\n  function viewFile(p) {\n    const area = areaOf(p);\n    const on = sortC(D.changes.filter((c) => c.files.includes(p) || (c.claims || []).includes(p)));\n    const coll = D.changes.flatMap((c) => c.events.filter((e) => e.what === 'conflict' && (c.landing?.conflicts || c.files).includes(p)).map((e) => ({ c, e }))).sort((a, b) => b.e.t - a.e.t);\n    return `<div class=\"drill\">${crumbs([['Agents at work', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [p.split('/').pop()]])}\n      <p class=\"mono dim\">${esc(p)}</p>\n      <section class=\"sec\" style=\"margin-top:12px\"><h3>Changes to this file</h3>${on.length ? `<ul class=\"rows\">${on.map((c) => row(c, `${AG(c.agent)}${(c.claims || []).includes(p) && !c.files.includes(p) ? ', claimed only' : ''}`)).join('')}</ul>` : '<p class=\"dim\">None today.</p>'}</section>\n      ${coll.length ? `<section class=\"sec\"><h3>${term('collision', 'Collisions')} here</h3><ul class=\"rows\">${coll.map(({ c, e }) => `<li><a href=\"#/change/${esc(c.id)}\"><i class=\"dot s-bounced\"></i><span class=\"t\">${short(c)}</span><time>${ago(e.t)}</time><span class=\"sub\">${esc(e.detail || '')}</span></a></li>`).join('')}</ul></section>` : ''}</div>`;\n  }\n  function progress(c) {\n    // Five steps a person understands: working, review, in line, tested, landed.\n    const k = skey(c), ev = new Set(c.events.map((e) => e.what));\n    const at = { working: 0, pushed: 1, reviewing: 1, ready: 1, queued: 2, replaying: 2, 'with-lead': 2, testing: 3, bounced: 3, landed: 5 }[k] ?? 0;\n    const cls = (i) => (i < at ? 'on' : i === at ? (k === 'bounced' || k === 'with-lead' ? 'bad' : k === 'ready' ? 'on' : 'now') : '');\n    const lbl = ['Working', 'Review', 'In line', 'Tested', 'Landed'];\n    return `<div class=\"steps\" aria-hidden=\"true\">${lbl.map((_, i) => `<i class=\"${cls(i)}\"></i>`).join('')}</div><div class=\"stepl\" aria-hidden=\"true\">${lbl.map((l) => `<span>${l}</span>`).join('')}</div>${ev.has('replayed') && k !== 'landed' ? '' : ''}`;\n  }\n  function howBox(c) {\n    const L = c.landing, idx = byId();\n    const ce = [...c.events].reverse().find((e) => e.what === 'conflict');\n    const conf = L?.conflicts?.length ? L.conflicts : ce ? conflictPaths(c, ce) : [];\n    const sentBack = c.events.some((e) => e.what === 'bounced');\n    const sha = (x) => `<span class=\"mono\">${esc(String(x).slice(0, 7))}</span>`;\n    const oc = ce && otherOf(c, ce, idx);\n    const withWho = oc ? ` with ${AG(oc.agent)}'s ${ref(oc.id)}` : '';\n    switch (skey(c)) {\n      case 'landed':\n        if (/^replayed/.test(L?.how || '')) {\n          const rp = L.replay;\n          const how = L.how === 'replayed-llm'\n            ? `Instead of sending it back, an AI model${rp?.model ? `, <span class=\"mono\">${esc(rp.model)}</span>,` : ''} re-did what it was meant to do on the newest code${rp?.ms ? ` in ${secs(rp.ms)}` : ''}${rp?.usd != null ? ` for $${rp.usd < 0.01 ? rp.usd.toFixed(4) : rp.usd.toFixed(2)}` : ''}. ${rp?.sameLinesAsReviewed ? 'Its lines came out the same as the reviewed ones.' : 'Its lines differ from the reviewed ones: compare both below.'} It was tested again and passed.`\n            : 'Instead of sending it back, qodebase re-applied what it was meant to do on the newest code, with a fixed rule for this kind of file. It was tested again and passed.';\n          return `<div class=\"how\"><b>Landed after a ${term('replay', 'replay')}</b><p>It ${term('collision', 'collided')}${withWho} on ${files(conf)}. ${how}</p></div>`;\n        }\n        if (L?.how === 'lead') return `<div class=\"how\"><b>Landed with its ${term('lead', 'lead')}'s help</b><p>It ${term('collision', 'collided')}${withWho}${conf.length ? ` on ${files(conf)}` : ''}. No rule could replay this edit, so its lead redid it on the newest code; it passed the tests and joined main.</p></div>`;\n        if (sentBack) return `<div class=\"how\"><b>Landed on the second try</b><p>The first time, a test failed, so it was sent back and main stayed healthy. ${AG(c.agent)} fixed it, and it passed${L?.mainCommit ? `, joining main as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;\n        return `<div class=\"how\"><b>Landed</b><p>It passed review and the tests, and joined main${L?.mainCommit ? ` as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;\n      case 'replaying': return `<div class=\"how busy\"><b>Replaying now</b><p>It ${term('collision', 'collided')}${withWho} on ${files(conf.length ? conf : (ce?.detail || '').split(':')[0].split(', '))}. qodebase is re-applying its intent on the newest code instead of throwing the work away.</p></div>`;\n      case 'with-lead': return `<div class=\"how warn\"><b>Waiting for its ${term('lead', 'lead')}</b><p>It collided${withWho} on ${files(conf)}. No rule could replay this edit${D.flags && D.flags.llmReplay === false ? ' and AI replay is off for this project' : ''}, so ${esc(leadName(c.lead) || 'the lead')} decides how to combine both.</p></div>`;\n      case 'bounced': { const tr = D.queue.trains.find((t) => t.changes.includes(c.id) && t.state === 'bounced'); return `<div class=\"how warn\"><b>Sent back</b><p>A test failed when it was tested with the newest main, so it did not land and main stayed healthy. ${AG(c.agent)} gets the failure and fixes it.</p>${tr ? `<p class=\"mono\" style=\"margin-top:6px\">${esc(tr.checks.failures.join('\\n'))}</p>` : ''}</div>`; }\n      case 'testing': { const tr = D.queue.trains.find((t) => t.changes.includes(c.id) && t.state === 'testing'); return `<div class=\"how busy\"><b>Being tested</b><p>${tr && tr.changes.length > 1 ? `Together with ${tr.changes.filter((x) => x !== c.id).map((x) => `<a href=\"#/change/${esc(x)}\">${ref(x)}</a>`).join(', ')}, as one ${term('train', 'train')}` : 'On its own'}, on the newest main${tr ? `, for ${since(tr.startedAt)}` : ''}.</p></div>`; }\n      case 'queued': return `<div class=\"how busy\"><b>In ${term('queue', 'the line')}</b><p>${D.queue.waiting.indexOf(c.id) >= 0 ? `Number ${D.queue.waiting.indexOf(c.id) + 1} in line.` : ''} It will be tested together with the changes next to it.${c.stackedOn ? ` It lands after ${ref(c.stackedOn)}, which it builds on.` : ''}</p></div>`;\n      case 'ready': return `<div class=\"how\"><b>Ready to merge</b><p>It passed ${term('review', 'review')}. ${OWN ? 'Merge puts it in the line.' : 'The owner merges it into the line.'}</p>${OWN ? `<p style=\"margin-top:10px\"><button class=\"btn\" type=\"button\" data-approve=\"${esc(c.id)}\">Merge</button></p>` : ''}</div>`;\n      default: return '';\n    }\n  }\n  // A real agent's intent is its whole prompt, often ending in \"Asked: <the person's request>\".\n  // Show the first sentence; the full task and the request fold away.\n  function intentHtml(c) {\n    const [task, asked] = String(c.intent || '').split(/\\n+\\s*Asked:\\s*/);\n    const first = task.split(/(?<=[.!?])\\s/)[0];\n    const rest = task.slice(first.length).trim();\n    return `<p style=\"margin-top:4px\">${esc(first)}</p>${rest ? `<details class=\"more\"><summary>The agent's full task</summary><p>${esc(task)}</p></details>` : ''}${asked ? `<details class=\"more\"><summary>The request it came from</summary><p>${esc(asked)}</p></details>` : ''}`;\n  }\n  function viewChange(id) {\n    const idx = byId(), c = idx.get(id);\n    if (!c) return `<div class=\"drill\">${crumbs([['Agents at work', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style=\"font-size:20px;margin-bottom:6px\">${short(it)}</h2><p class=\"dim\">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : '<p class=\"dim\">This change is not in today\\'s data.</p>'; })()}</div>`;\n    const area = areaOf(c.files[0] || '.');\n    const story = c.events.map((e) => { const s = sentence(c, e, idx) || [{ working: `${AG(c.agent)} working`, reviewing: 'The reviewer is reading it', testing: 'Being tested with the newest main' }[e.what] || e.what, { alone: 'on its own', 'next train': '' }[e.detail] ?? e.detail]; return `<li><time>${hhmm(e.t)}</time><span>${esc(s[0])}${s[1] && s[1] !== title1(c) ? `<span class=\"d\">${esc(s[1])}</span>` : ''}</span></li>`; }).reverse().join('');\n    const stackOn = c.stackedOn && idx.get(c.stackedOn);\n    const above = D.changes.filter((x) => x.stackedOn === c.id);\n    const L = c.landing;\n    const diffHtml = (ds) => ds.map((d) => `<p class=\"mono\" style=\"margin-top:12px\"><a href=\"#/file/${encodeURIComponent(d.path)}\">${esc(d.path)}</a></p><pre class=\"diff\">${d.lines.map((l) => `<span class=\"${l[0] === '+' && !l.startsWith('+++') ? 'add' : l[0] === '-' && !l.startsWith('---') ? 'del' : l === '\u2026' || l.startsWith('@@') ? 'gap' : ''}\">${esc(l === '\u2026' ? '  \u2026' : l)}</span>`).join('')}</pre>`).join('');\n    // A model replay (qb6): what was reviewed (written on older code) next to what landed.\n    const two = L?.reviewedDiff?.length && L?.diff?.length;\n    const tabs = two ? `<div class=\"dtabs\" role=\"tablist\"><button type=\"button\" role=\"tab\" class=\"chipb\" data-diff=\"landed\" aria-pressed=\"${diffTab !== 'reviewed'}\">What landed</button><button type=\"button\" role=\"tab\" class=\"chipb\" data-diff=\"reviewed\" aria-pressed=\"${diffTab === 'reviewed'}\">What was reviewed</button></div>` : '';\n    const diff = L?.diff?.length ? tabs + diffHtml(two && diffTab === 'reviewed' ? L.reviewedDiff : L.diff) : '';\n    const rv = c.review ? `<dt>${term('review', 'Review')}</dt><dd>${c.review.verdict === 'changes' ? 'Fixes asked' : c.review.verdict === 'auto' ? 'Approved (scripted)' : 'Approved'}${c.review.notes ? `<span class=\"dim small\" style=\"display:block\">${esc(c.review.notes)}</span>` : ''}</dd>` : '';\n    return `<div class=\"drill\">${crumbs([['Agents at work', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [ref(c.id)]])}\n      <h2 style=\"font-size:20px;margin-bottom:6px\">${short(c)}</h2>\n      <div class=\"tags\">${st(c)}<span>${AG(c.agent)}</span>${c.createdAt ? `<span>started ${ago(c.createdAt)}</span>` : ''}</div>\n      ${progress(c)}\n      <section class=\"sec\" style=\"margin-top:16px\">${howBox(c)}</section>\n      <section class=\"sec\"><h3>What it was asked to do</h3>${intentHtml(c)}</section>\n      ${stackOn || above.length ? `<section class=\"sec\"><h3>${term('stack', 'Stacked')}</h3><ul class=\"rows\">${stackOn ? row(stackOn, 'This change builds on it, and lands after it') : ''}${above.map((x) => row(x, 'Builds on this change')).join('')}</ul></section>` : ''}\n      <section class=\"sec\"><h3>What happened</h3><ol class=\"story\">${story}</ol></section>\n      <section class=\"sec\"><h3>Details</h3><dl class=\"kv\" style=\"margin-top:6px\">\n        <dt>Files</dt><dd>${c.files.map((p) => `<a class=\"mono\" href=\"#/file/${encodeURIComponent(p)}\">${esc(p)}</a>`).join('<br>')}</dd>\n        ${(c.claims || []).some((p) => !c.files.includes(p)) ? `<dt>${term('claim', 'Claimed')}</dt><dd>${files(c.claims.filter((p) => !c.files.includes(p)))}</dd>` : ''}\n        ${rv}\n        <dt>${term('fork', 'Its copy')}</dt><dd class=\"mono\">${esc(c.fork)}</dd>\n        ${L?.commit ? `<dt>Commit</dt><dd class=\"mono\">${esc(L.commit.slice(0, 7))}${L.mainCommit ? ` landed as ${esc(L.mainCommit.slice(0, 7))}` : ''}</dd>` : ''}\n      </dl></section>\n      ${diff ? `<section class=\"sec\"><h3>The change</h3><p class=\"cap\">Green lines were added, red lines removed.${two ? ' The reviewed version was written on older code; the replay re-did the same intent on the newest code.' : ''}</p>${diff}</section>` : ''}</div>`;\n  }\n  function viewLine() {\n    return `<div class=\"drill\">${crumbs([['Agents at work', '#/'], ['The line']])}\n      <p class=\"cap\" style=\"margin-top:4px\">${GLOSS.queue[1]} Changes tested together are a ${term('train', 'train')}: if the tests pass, they all land at once.</p>${theLine(true)}</div>`;\n  }\n  function viewFeed() { return `<div class=\"drill\">${crumbs([['Agents at work', '#/'], ['What happened']])}${feed(200)}</div>`; }\n  function viewReplayed() {\n    const l = D.changes.filter((c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying')).sort((a, b) => b.createdAt - a.createdAt);\n    return `<div class=\"drill\">${crumbs([['Agents at work', '#/'], ['Replayed']])}<p class=\"cap\" style=\"margin-top:4px\">${GLOSS.replay[1]}</p>${l.length ? `<ul class=\"rows\">${l.map((c) => row(c)).join('')}</ul>` : '<p class=\"dim\">None in today\\'s data yet.</p>'}${D.stats.replayed > l.length ? `<p class=\"cap\" style=\"margin-top:8px\">${n0(D.stats.replayed)} today in all; the ones above are the recent ones.</p>` : ''}</div>`;\n  }\n  function viewChanges() {\n    const groups = [['Needs a decision', ['with-lead', 'ready']], ['On the way', ['bounced', 'replaying', 'testing', 'queued', 'reviewing', 'pushed']], ['Working', ['working']], ['Landed', ['landed']]];\n    return `<div class=\"drill\">${crumbs([['Agents at work', '#/'], ['All changes']])}${groups.map(([h, ks]) => { const l = sortC(D.changes.filter((c) => ks.includes(skey(c)))); return l.length ? `<section class=\"sec\" style=\"margin-top:12px\"><h3>${h} <span class=\"dim\">${l.length}</span></h3><ul class=\"rows\">${l.map((c) => row(c)).join('')}</ul></section>` : ''; }).join('')}</div>`;\n  }\n\n  // ---- render, poll -----------------------------------------------------------------------------\n  root.classList.add('lw');\n  let lastKey = '', lastHash = null, lastNow = 0, pressing = false, pendingRender = false;\n  root.addEventListener('pointerdown', () => { pressing = true; });\n  const release = () => { pressing = false; if (pendingRender) { pendingRender = false; setTimeout(render, 350); } };\n  addEventListener('pointerup', release); addEventListener('pointercancel', release);\n  function flip(before) {\n    const idx = byId(), stop = root.querySelector('.stop')?.getBoundingClientRect();\n    const ease = 'cubic-bezier(.2,.7,.2,1)';\n    root.querySelectorAll('[data-car]').forEach((e) => {\n      const o = before.get(e.dataset.car), n = e.getBoundingClientRect();\n      if (!o) { e.animate([{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: ease }); return; }\n      const dx = o.left - n.left, dy = o.top - n.top;\n      if (Math.abs(dx) + Math.abs(dy) > 1) e.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 800, easing: ease });\n    });\n    for (const [id, o] of before) {\n      if (root.querySelector(`[data-car=\"${CSS.escape(id)}\"]`) || !stop) continue;\n      const c = idx.get(id), landed = c && c.state === 'landed';\n      const g = document.createElement('div');\n      g.className = 'lw-ghost'; g.textContent = `#${id}`;\n      Object.assign(g.style, { position: 'fixed', left: `${o.left}px`, top: `${o.top}px`, width: `${o.width}px`, height: `${o.height}px`, margin: 0, zIndex: 40, pointerEvents: 'none' });\n      document.body.appendChild(g);\n      const to = landed ? `translate(${stop.left + stop.width / 2 - o.left - o.width / 2}px,${stop.top + stop.height / 2 - o.top - o.height / 2}px) scale(.4)` : 'translateY(16px) scale(.8)';\n      g.animate([{ transform: 'none', opacity: 1 }, { transform: to, opacity: 0 }], { duration: landed ? 900 : 600, easing: ease, fill: 'forwards' }).finished.then(() => g.remove(), () => g.remove());\n    }\n  }\n  function render() {\n    if (!D) return;\n    const h = decodeURIComponent(location.hash || '#/'); let m;\n    const html = (m = /^#\\/area\\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\\/file\\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\\/change\\/(.+)$/.exec(h)) ? viewChange(m[1])\n      : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : overview();\n    // Rebuild only when something other than a time changed, and never under a finger:\n    // a rebuild mid-tap swallowed about one tap in six (critique, 2026-10-07).\n    const key = html.replace(/(data-(?:ago|since|until)=\"\\d+\">)[^<]*/g, '$1').replace(/animation-delay:-\\d+ms/g, '');\n    if (key === lastKey || pressing) {\n      root.querySelectorAll('[data-ago]').forEach((e) => { const v = agoTxt(+e.dataset.ago); if (e.textContent !== v) e.textContent = v; });\n      root.querySelectorAll('[data-since]').forEach((e) => { const v = secs(now() - +e.dataset.since); if (e.textContent !== v) e.textContent = v; });\n      root.querySelectorAll('[data-until]').forEach((e) => { const v = untilTxt(+e.dataset.until); if (e.textContent !== v) e.textContent = v; });\n      if (pressing) pendingRender = true;\n    } else {\n      lastKey = key;\n      // The line moves: cars glide from waiting to the train, and a landed train flies into main (FLIP).\n      const same = h === lastHash && D.now >= lastNow && !matchMedia('(prefers-reduced-motion: reduce)').matches;\n      const before = new Map();\n      if (same) root.querySelectorAll('[data-car]').forEach((e) => before.set(e.dataset.car, e.getBoundingClientRect()));\n      root.innerHTML = html;\n      if (same && before.size) flip(before);\n    }\n    lastNow = D.now;\n    firstPaint = false;\n    if (h !== lastHash) { const sc = root.closest('.view') || document.scrollingElement; if (lastHash !== null && sc) sc.scrollTop = 0; lastHash = h; }\n  }\n  let timer = null;\n  async function tick() {\n    clearTimeout(timer);\n    try { await load(); failures = 0; render(); } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (e.none) { root.innerHTML = `<h2>No agents at work here yet.</h2><p class=\"dim\">When agents work on ${esc(NAME)} at the same time, this page shows where they work, the line their changes wait in, and how each one landed. <a href=\"?mock=1\">See it with sample data</a>.</p>`; return; }\n      if (!D) root.innerHTML = `<p class=\"dim\">Could not load the agents (${esc(e.message)}). Retrying\u2026</p>`; }\n    if (!document.hidden) timer = setTimeout(tick, P ? Math.max(250, 1000 / P.speed) : Math.min(30e3, 2000 * 2 ** Math.min(failures, 4)));\n  }\n  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });\n  addEventListener('hashchange', render);\n\n  // ---- taps -------------------------------------------------------------------------------\n  const pop = document.createElement('div');\n  pop.className = 'lw-pop'; pop.id = 'lw-pop'; pop.setAttribute('popover', '');\n  document.body.appendChild(pop);\n  const toast = (t) => { const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; root.appendChild(e); setTimeout(() => e.remove(), 2600); };\n  root.addEventListener('toggle', (e) => { if (e.target.matches('details.bwmore')) boardWMore = e.target.open; else if (e.target.matches('details.bmore')) boardMore = e.target.open; else if (e.target.matches('details.bdone')) boardOpen = e.target.open; }, true);\n  root.addEventListener('click', async (ev) => {\n    const g = ev.target.closest('[data-gloss]');\n    if (g) { ev.preventDefault(); ev.stopPropagation(); const [t, d] = GLOSS[g.dataset.gloss]; pop.innerHTML = `<button class=\"x\" type=\"button\" aria-label=\"Close\" popovertarget=\"lw-pop\" popovertargetaction=\"hide\">\xD7</button><b>${esc(t)}</b><p>${esc(d)}</p>`; pop.showPopover?.(); return; }\n    const go = ev.target.closest('[data-go]');\n    if (go) { location.hash = go.dataset.go; return; }\n    const ap = ev.target.closest('[data-approve]');\n    if (ap) {\n      if (MOCK) { toast('Mock data: in a real project this puts the change in the line.'); return; }\n      ap.disabled = true;\n      const r = await fetch(`${API}/landing/approve`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: ap.dataset.approve }) }).catch((e) => ({ ok: false, statusText: String(e) }));\n      log('approve', { id: ap.dataset.approve, ok: r.ok });\n      if (!r.ok) { ap.disabled = false; toast('Could not merge it. Try again.'); } else { toast('Put in the line.'); tick(); }\n      return;\n    }\n    const dt = ev.target.closest('[data-diff]');\n    if (dt) { diffTab = dt.dataset.diff; render(); return; }\n    const sp = ev.target.closest('[data-speed]');\n    if (sp && P && P.replay) { const T = now(); P.speed = +sp.dataset.speed; P.wall0 = Date.now() - (T - P.start) / P.speed; tick(); return; }\n    const wb = ev.target.closest('[data-watch]');\n    if (wb) { watch(wb.dataset.watch, wb); return; }\n    const dm = ev.target.closest('[data-demo]');\n    if (dm) {\n      dm.disabled = true;\n      const r = await fetch(`${API}/landing/demo`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: dm.dataset.demo }) }).catch(() => ({ ok: false }));\n      log('demo', { action: dm.dataset.demo, ok: r.ok });\n      if (!r.ok) { dm.disabled = false; toast('Could not change the demo.'); } else tick();\n    }\n  });\n  async function watch(what, btn) {\n    log('watch', { what });\n    if (what === 'live') { P = null; limitNote = ''; return tick(); }\n    if (what === 'again') { P.wall0 = Date.now(); return tick(); }\n    if (what === 'replay') { const p = replayOf(D, 2); if (p) { P = p; tick(); } return; }\n    btn.disabled = true;\n    // The server resets the caf\xE9 before it answers (~20 s): say so at once.\n    starting = Date.now(); limitNote = ''; render();\n    const r = await fetch(`${API}/landing/watch`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch((e) => ({ ok: false, statusText: String(e) }));\n    const j = r.ok ? await r.json().catch(() => ({})) : {};\n    log('watch_reply', { status: r.status, state: j.state, why: j.why });\n    if (j.state === 'running' || j.state === 'started') { P = null; limitNote = ''; starting = j.state === 'started' ? Date.now() : 0; return tick(); }\n    starting = 0;\n    // No live run: say why, and replay the last one instead.\n    limitNote = j.state === 'limit' ? `${LIMIT[j.why] || 'No live run can start right now.'}${j.nextAt ? ` The next one can start at ${hhmm(j.nextAt)}.` : ''} Here is a replay instead.` : 'Live runs are not available right now. Here is a replay instead.';\n    const p = replayOf(D, 2);\n    if (p) P = p; else { btn.disabled = false; toast(limitNote.replace(' Here is a replay instead.', '')); }\n    tick();\n  }\n  tick();\n})();\n";
+var WORK_CSS = `/* "Agents at work" (qb7, docs/contest/ui.md). Tokens only (DESIGN.md); --warn from design v2. */
+.lw{max-width:1120px;margin:0 auto;padding:12px 16px 32px;font-variant-numeric:tabular-nums}
+.lw *{box-sizing:border-box}
+.lw p{margin:0}
+.lw a{color:var(--acc)}
+.lw button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+.lw .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;overflow-wrap:anywhere}
+.lw .dim{color:var(--dim)}
+.lw .small{font-size:13px}
+.lw h2{font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.25;margin:4px 0 12px}
+.lw h3{font-size:15px;font-weight:600;color:var(--fg);letter-spacing:-.01em;margin:0}
+.lw .sec{margin-top:24px}
+.lw .sec-h{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+.lw .sec-h h3{flex:1}
+.lw .sec-h a{font-size:14px;text-decoration:none;min-height:44px;display:inline-flex;align-items:center;margin:-12px 0}
+.lw .cap{font-size:13px;color:var(--dim);margin-bottom:10px;max-width:62ch}
+
+/* Demo strip */
+.lw .demo{display:flex;align-items:center;gap:10px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:8px 8px 8px 12px;font-size:13px;color:var(--dim)}
+.lw .demo span{flex:1}
+.lw .demo b{color:var(--fg);font-weight:500}
+.lw .live{width:8px;height:8px;border-radius:50%;background:var(--acc);flex:none}
+.lw .live.off{background:var(--dim)}
+
+/* Terms with a gloss (popover outside the re-rendered root) */
+.lw .term{background:none;border:0;padding:0;cursor:help;text-decoration:underline dotted color-mix(in srgb,var(--dim) 70%,transparent);text-underline-offset:3px;font-weight:inherit}
+.lw-pop{margin:auto auto 16px;max-width:min(92vw,420px);border:0;border-radius:14px;background:var(--bg);color:var(--fg);box-shadow:0 0 0 1px var(--line),0 12px 40px rgba(0,0,0,.18);padding:16px;font:400 15px/1.45 Geist,sans-serif}
+.lw-pop::backdrop{background:rgba(0,0,0,.25)}
+.lw-pop b{display:block;font-weight:600;margin-bottom:4px}
+.lw-pop p{margin:0;color:var(--fg)}
+.lw-pop .x{float:right;margin:-8px -8px 0 8px;width:44px;height:44px;border:0;background:none;color:var(--dim);font-size:20px;cursor:pointer}
+
+/* Numbers: one row of words */
+.lw .nums{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;color:var(--dim)}
+.lw .nums b{font-size:17px;font-weight:600;color:var(--fg);letter-spacing:-.01em}
+.lw .nums a{color:var(--dim);text-decoration:none}
+.lw .nums a b{color:var(--acc)}
+.lw .num-id{color:var(--dim);font-size:12px}
+
+/* State dot + word */
+.lw .dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none;background:var(--dim)}
+.lw .st{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.lw .s-working .dot,.lw .dot.s-working{background:var(--busy)}
+.lw .s-replaying .dot,.lw .dot.s-replaying{background:repeating-linear-gradient(135deg,var(--busy) 0 2px,transparent 2px 4px);box-shadow:inset 0 0 0 1px var(--busy)}
+.lw .s-pushed .dot,.lw .dot.s-pushed{background:none;box-shadow:inset 0 0 0 1.5px var(--dim)}
+.lw .s-ready .dot,.lw .dot.s-ready{background:none;box-shadow:inset 0 0 0 2px var(--acc)}
+.lw .s-reviewing .dot,.lw .dot.s-reviewing{background:color-mix(in srgb,var(--fg) 45%,transparent)}
+.lw .s-queued .dot,.lw .dot.s-queued,.lw .s-testing .dot,.lw .dot.s-testing{background:var(--fg)}
+.lw .s-landed .dot,.lw .dot.s-landed{background:var(--acc)}
+.lw .s-bounced .dot,.lw .dot.s-bounced,.lw .s-with-lead .dot,.lw .dot.s-with-lead{background:var(--warn)}
+.lw .s-bounced .w,.lw .s-with-lead .w{color:var(--warn);font-weight:500}
+.lw .s-landed .w{color:var(--acc);font-weight:500}
+
+/* The line (merge queue) */
+.lw .line{background:var(--card);border-radius:14px;box-shadow:inset 0 0 0 1px var(--line);padding:14px}
+.lw .track{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;padding-bottom:2px}
+.lw .track::-webkit-scrollbar{display:none}
+.lw .stop{flex:none;align-self:flex-start;min-height:76px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;width:64px;border-radius:10px;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--acc);font-size:13px;font-weight:500;padding:6px 4px;text-align:center}
+.lw .stop b{font-size:14px;font-weight:600}
+.lw .train{flex:0 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px;border-radius:10px;padding:6px;box-shadow:inset 0 0 0 1.5px var(--fg);background:var(--bg);min-width:0}
+.lw .train .cars,.lw .wait .cars{display:flex;flex-wrap:wrap;gap:4px}
+.lw .train .lbl,.lw .wait .lbl{font-size:13px;color:var(--dim);white-space:nowrap;padding:0 2px}
+.lw .train .lbl b{color:var(--fg);font-weight:500}
+.lw .prog{height:3px;border-radius:2px;background:var(--chip);overflow:hidden}
+.lw .prog i{display:block;height:100%;background:var(--fg)}
+.lw .wait{flex:1 1 120px;min-width:0;display:flex;flex-direction:column;gap:6px;padding:6px 2px}
+.lw .wait .cars{flex-wrap:wrap}
+.lw .car{flex:none;display:flex;flex-direction:column;justify-content:center;min-width:52px;max-width:104px;height:48px;border-radius:8px;border:0;padding:0 8px;cursor:pointer;background:var(--fg);color:var(--bg);font-size:13px;font-weight:500;text-align:left;line-height:1.15}
+.lw .car small{font-size:12px;font-weight:400;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:88px}
+.lw .wait .car{background:var(--chip);color:var(--fg)}
+.lw .car.rp{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--busy) 25%,transparent) 0 4px,var(--chip) 4px 8px);color:var(--fg)}
+.lw .empty-line{font-size:14px;color:var(--dim);padding:10px 4px}
+.lw .results{list-style:none;margin:10px 0 0;padding:0}
+.lw .results li{display:flex;gap:8px;align-items:baseline;font-size:14px;padding:6px 0;box-shadow:inset 0 1px 0 var(--line)}
+.lw .results li .dot{transform:translateY(-1px)}
+.lw .results li span:nth-child(2){flex:1;min-width:0}
+
+/* Map of the codebase: areas with the agents in them */
+.lw .intro{font-size:15px;color:var(--dim);margin:-4px 0 16px;max-width:62ch}
+.lw .map{display:grid;gap:6px}
+.lw .area{display:grid;grid-template-columns:minmax(0,38%) 1fr;align-items:center;gap:6px 10px;background:var(--card);border-radius:12px;box-shadow:inset 0 0 0 1px var(--line);padding:8px 10px;cursor:pointer;min-width:0;transition:background-color 120ms}
+.lw .area .nm{display:flex;flex-direction:column;justify-content:center;background:none;border:0;padding:0;min-height:44px;min-width:0;text-align:left;cursor:pointer;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;overflow:hidden}
+.lw .area .nm>*{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lw .area .nm .meta{font:400 13px Geist,sans-serif;color:var(--dim)}
+.lw .quiet{font-size:13px;color:var(--dim);margin:4px 2px 0}
+.lw .quiet a{color:var(--dim)}
+.lw .chips{display:flex;flex-wrap:wrap;gap:6px}
+.lw .ag{position:relative;flex:none;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;border:0;padding:0;cursor:pointer;font:600 13px/1 Geist,sans-serif;background:var(--chip);color:var(--fg)}
+.lw .ag::before{content:'';position:absolute;inset:-6px}
+.lw .ag.s-working{background:var(--busy);color:#111214}
+.lw .ag.s-pushed,.lw .ag.s-reviewing{background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--dim)}
+.lw .ag.s-ready{background:var(--bg);box-shadow:inset 0 0 0 2px var(--acc);color:var(--acc)}
+.lw .ag.s-queued,.lw .ag.s-testing{background:var(--fg);color:var(--bg)}
+.lw .ag.s-replaying{background:repeating-linear-gradient(135deg,var(--busy) 0 3px,color-mix(in srgb,var(--busy) 45%,var(--bg)) 3px 6px);color:var(--fg)}
+.lw .ag.s-bounced,.lw .ag.s-with-lead{background:var(--warn);color:var(--acc-fg)}
+.lw .ag.s-landed{background:var(--acc);color:var(--acc-fg)}
+.lw .ag.past{background:none;box-shadow:none;border:1.5px dashed var(--dim);color:var(--dim)}
+.lw .ag.pl::after{content:'';position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 3px var(--acc);animation:lw-ring 1.8s ease-out both}
+.lw .pair{display:inline-flex;align-items:center;border-radius:20px;position:relative}
+.lw .zap{display:inline-block;width:14px;height:3px;background:var(--warn);border-radius:2px}
+.lw .pair.pl{animation:lw-shake 1.8s ease-out both}
+.lw .pair.pl .zap{animation:lw-flash 1.8s ease-out both}
+.lw .coll{grid-column:1/-1;font-size:13px;color:var(--warn);line-height:1.35}
+.lw .coll.ok{color:var(--acc)}
+.lw .pair.ok .zap,.lw .coll .zap.ok{background:var(--acc)}
+.lw .coll .zap{vertical-align:middle;margin-right:2px}
+.lw .key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--dim);margin-top:10px}
+.lw .key>span{display:inline-flex;gap:6px;align-items:center}
+.lw .key .ag{width:16px;height:16px;cursor:default}
+.lw .key .ag::before{display:none}
+.lw .key .zap{width:14px}
+.lw .key .zap.ok{background:var(--acc)}
+.lw .key.top{margin:0 0 10px}
+@keyframes lw-ring{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(2.2)}}
+@keyframes lw-shake{0%,30%,100%{transform:none}5%,15%,25%{transform:translateX(-2px)}10%,20%{transform:translateX(2px)}}
+@keyframes lw-flash{0%,40%{box-shadow:0 0 0 3px color-mix(in srgb,var(--warn) 35%,transparent)}100%{box-shadow:none}}
+.lw .stop.pl{animation:lw-stop 1.8s ease-out both}
+@keyframes lw-stop{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 60%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+.lw .prog i{width:0;animation:lw-prog linear forwards}
+@keyframes lw-prog{to{width:96%}}
+.lw-ghost{display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--acc);color:var(--acc-fg);font:500 13px Geist,sans-serif}
+
+/* Feed and lists */
+.lw .feed,.lw .rows{list-style:none;margin:0;padding:0}
+.lw .feed li,.lw .rows li{box-shadow:inset 0 -1px 0 var(--line)}
+.lw .feed li:last-child,.lw .rows li:last-child{box-shadow:none}
+.lw .feed a,.lw .rows a,.lw .rows .it{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:baseline;padding:10px 0;min-height:44px;color:var(--fg);text-decoration:none;font-size:15px}
+.lw .feed .dot,.lw .rows .dot{transform:translateY(-1px)}
+.lw .feed time,.lw .rows time{font-size:13px;color:var(--dim);white-space:nowrap}
+.lw .feed .sub,.lw .rows .sub{grid-column:2/-1;font-size:13px;color:var(--dim);overflow-wrap:anywhere;min-width:0}
+.lw .rows .t{min-width:0;overflow-wrap:anywhere}
+.lw .new{animation:lw-new 1.8s ease-out both}
+@keyframes lw-new{from{background:color-mix(in srgb,var(--acc) 12%,transparent)}to{background:transparent}}
+@media (prefers-reduced-motion:reduce){.lw .new,.lw .ag.pl::after,.lw .pair.pl,.lw .pair.pl .zap,.lw .stop.pl{animation:none}}
+
+/* Needs you */
+.lw .needs{display:grid;gap:8px}
+.lw .need{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;box-shadow:inset 0 0 0 1px var(--line);padding:8px 8px 8px 12px}
+.lw .need a{flex:1;min-width:0;color:var(--fg);text-decoration:none;font-size:15px}
+.lw .need a .sub{display:block;font-size:13px;color:var(--dim)}
+.lw .btn{font-weight:500;border:0;cursor:pointer;background:var(--acc);color:var(--acc-fg);border-radius:10px;min-height:44px;padding:0 16px;flex:none}
+.lw .chipb{border:0;cursor:pointer;background:var(--chip);color:var(--fg);border-radius:10px;min-height:44px;padding:0 14px;flex:none;font-size:14px}
+.lw .btn:disabled,.lw .chipb:disabled{opacity:.5;cursor:default}
+
+/* Drill-down */
+.lw .crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:0 6px;font-size:14px;margin:0 0 8px}
+.lw .crumbs a{text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+.lw .crumbs .sep{color:var(--dim)}
+.lw .crumbs b{font-weight:500;overflow-wrap:anywhere}
+.lw .card{background:var(--card);border-radius:14px;box-shadow:inset 0 0 0 1px var(--line);padding:14px}
+.lw .tags{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:4px 0 12px;font-size:13px;color:var(--dim)}
+.lw .tag{display:inline-block;font-size:12px;padding:1px 6px;border-radius:4px;background:var(--chip);color:var(--fg);white-space:nowrap}
+.lw .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:4px 0 6px}
+.lw .steps i{height:4px;border-radius:2px;background:var(--chip)}
+.lw .steps i.on{background:var(--acc)}
+.lw .steps i.now{background:var(--busy)}
+.lw .steps i.bad{background:var(--warn)}
+.lw .stepl{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;font-size:13px;color:var(--dim)}
+.lw .how{border-radius:12px;padding:12px 14px;background:color-mix(in srgb,var(--acc) 8%,var(--card));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 30%,var(--line))}
+.lw .how.warn{background:color-mix(in srgb,var(--warn) 7%,var(--card));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 30%,var(--line))}
+.lw .how.busy{background:color-mix(in srgb,var(--busy) 8%,var(--card));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--busy) 30%,var(--line))}
+.lw .how b{display:block;font-weight:600;margin-bottom:2px}
+.lw .story{list-style:none;margin:0;padding:0;font-size:14px}
+.lw .story li{display:grid;grid-template-columns:62px 1fr;gap:8px;padding:7px 0;box-shadow:inset 0 -1px 0 var(--line)}
+.lw .story li:last-child{box-shadow:none}
+.lw .story time{color:var(--dim)}
+.lw .story .d{display:block;color:var(--dim);font-size:13px;overflow-wrap:anywhere}
+.lw .story li>span{min-width:0}
+.lw .car.more{background:none;box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none}
+.lw pre.diff{margin:6px 0 0;padding:8px 0;background:var(--bg);border-radius:12px;box-shadow:inset 0 0 0 1px var(--line);overflow-x:auto;font:12px/1.55 'JetBrains Mono',ui-monospace,monospace}
+.lw pre.diff span{display:block;padding:0 12px;white-space:pre}
+.lw pre.diff .add{background:color-mix(in srgb,var(--acc) 14%,transparent)}
+.lw pre.diff .del{background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.lw pre.diff .gap{color:var(--dim)}
+.lw dl.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}
+.lw dl.kv dt{color:var(--dim)}
+.lw dl.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.lw .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);border-radius:10px;padding:10px 14px;font-size:14px;z-index:50;max-width:90vw}
+
+@media (hover:hover){.lw .area:hover{background:var(--chip)}.lw .feed a:hover,.lw .rows a:hover{background:color-mix(in srgb,var(--chip) 60%,transparent)}.lw .car:hover{filter:brightness(1.12)}}
+
+/* Wider screens: overview in two columns, drill-downs in a reading column */
+
+@media (min-width:1000px){
+  .lw .ov{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 32px;align-items:start}
+  .lw .ov .col2>.sec:first-child{margin-top:0}
+  .lw .car{height:56px;font-size:15px;max-width:160px}.lw .car small{font-size:13px;max-width:140px}.lw .stop{min-height:92px;width:96px;font-size:14px}.lw .stop b{font-size:16px}
+  .lw .drill{max-width:760px}
+}
+
+/* Watch a run (public) */
+.lw .watch{display:grid;gap:10px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:14px;padding:12px 12px 12px 14px}
+.lw .watch .wt{display:flex;gap:10px;align-items:baseline;font-size:15px}
+.lw .watch .wt .live{transform:translateY(-1px)}
+.lw .watch .wt b{font-weight:600}
+.lw .watch .wa{display:flex;flex-wrap:wrap;gap:8px}
+.lw .watch .prog i{background:var(--acc)}
+.lw .chipb.sp[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+
+.lw .dtabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.lw .dtabs .chipb[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+
+.lw details.more{margin-top:6px;font-size:14px}
+.lw details.more summary{cursor:pointer;color:var(--acc);min-height:44px;display:flex;align-items:center;list-style:none}
+.lw details.more summary::-webkit-details-marker{display:none}
+.lw details.more p{color:var(--dim);white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 8px}
+
+/* Who's doing what (the agent board) */
+.lw .board{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.lw .brow{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:10px 12px;color:var(--fg);text-decoration:none}
+.lw a.brow{transition:background-color 120ms}
+.lw .brow .ag{cursor:inherit}
+.lw .bb{display:grid;gap:1px;min-width:0;font-size:14px}
+.lw .bt1{display:flex;gap:8px;align-items:baseline}
+.lw .bt1>span:first-child{flex:1;min-width:0}
+.lw .bt1 b{font-weight:600}
+.lw .bwhen{flex:none;white-space:nowrap}
+.lw .bint{font-size:15px;overflow-wrap:anywhere}
+.lw .bfiles{font-size:13px;color:var(--dim);overflow-wrap:anywhere}
+.lw .bh{font-size:13px;font-weight:600;margin:14px 0 6px}
+.lw .bh .dim{font-weight:400}
+.lw .bwarn,.lw .bdup{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:14px}
+.lw .bwarn li,.lw .bdup li{display:flex;gap:10px;align-items:baseline}
+.lw .hu{flex:none;display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--chip);color:var(--dim);font-size:12px;font-weight:600;transform:translateY(2px)}
+.lw .dupe{flex:none;display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:color-mix(in srgb,var(--acc) 15%,transparent);color:var(--acc);font-size:13px;font-weight:600;transform:translateY(2px)}
+.lw details.bdone{margin-top:8px}
+.lw details.bdone summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;display:flex;align-items:center;list-style:none}
+.lw details.bdone summary::-webkit-details-marker{display:none}
+@media (hover:hover){.lw a.brow:hover{background:var(--chip)}}
+.lw .bh1{margin-top:4px}
+.lw .bwarn+.bh,.lw .bdup+.board,.lw .bwarn+.board{margin-top:12px}
+.lw .board{grid-template-columns:1fr}@media (min-width:1000px){.lw #board .board{grid-template-columns:1fr 1fr}}
+.lw .bnote{margin:-4px 0 6px}
+.lw .bwarn,.lw .bdup{max-width:62ch}
+.lw .bdup{margin-top:8px}
+.lw details.bdone summary::before{content:'';width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;margin-right:8px;transition:transform 120ms}
+.lw details.bdone[open] summary::before{transform:rotate(90deg)}
+@media (min-width:1000px){.lw #board .board{align-items:start}}
+`;
+var LAB_JS = "// Variants lab (qb7, docs/lab/PLAN.md): which way of running many agents wins, for whom.\n// 1) Try a setup: scenario + knobs -> instant prediction from qb4's simulation\n//    (public/lab/predict.js), next to the two baselines. The owner gets \"Run for real\":\n//    the estimate and the runner command (v0; a queue comes after stage 1).\n// 2) Results: public/lab/runs.jsonl (docs/lab/runs-schema.md), one dot per setup (median of\n//    its repetitions) on time x quality, predicted vs actual, tap -> runs, replay, the app.\n// 3) The funnel: public/lab/stages.jsonl. ?mock=1 reads the *.mock.jsonl sample files.\n(() => {\n  const root = document.getElementById('lab');\n  if (!root) return;\n  const OWN = 'own' in root.dataset;\n  const Q = new URLSearchParams(location.search);\n  const MOCK = Q.has('mock');\n  const BASE = root.dataset.base || '/lab'; // where runs.jsonl, stages.jsonl, scenarios.json and predict.js live\n  const esc = (s) => String(s ?? '').replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[c]);\n  const log = (event, extra) => { try { console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'lab', event, ...extra })); } catch {} };\n  const mins = (s) => (s == null ? '\u2013' : s < 90 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);\n  const usd = (x) => (x == null ? '\u2013' : x === 0 ? '$0' : x < 0.1 ? `$${x.toFixed(3)}` : `$${x.toFixed(2)}`);\n  const sc100 = (x) => (x == null ? '\u2013' : Math.round(x));\n  const med = (a) => { const b = a.filter((x) => x != null).sort((x, y) => x - y); return b.length ? (b.length % 2 ? b[b.length >> 1] : (b[b.length / 2 - 1] + b[b.length / 2]) / 2) : null; };\n\n  // ---- knobs (qb4's KNOBS from predict.js replace these when it loads) --------------------\n  let KNOBS = {\n    coders: { label: 'Coding agents', values: [1, 3, 6, 12, 24], def: 6 },\n    coderModel: { label: 'Coder model', values: ['haiku', 'sonnet', 'opus'], def: 'haiku' },\n    planner: { label: 'Planner model', values: ['haiku', 'sonnet', 'opus'], def: 'sonnet' },\n    reviewers: { label: 'Reviewers', values: [0, 1, 3, 6], def: 1 },\n    reviewerModel: { label: 'Reviewer model', values: ['haiku', 'sonnet', 'opus'], def: 'haiku' },\n    reviewStyle: { label: 'How reviewers check', values: ['read', 'adversarial'], def: 'read' },\n    policy: { label: 'How changes land', values: ['intent', 'phases', 'stacking', 'leads', 'ffa'], def: 'intent' },\n    claims: { label: 'Claims', values: [true, false], def: true },\n    dedupe: { label: 'Duplicate check', values: [true, false], def: true },\n    trainMax: { label: 'Changes tested together', values: [1, 4, 8, 16], def: 8 },\n  };\n  const WORDS = {\n    reviewStyle: { read: 'Read the change', adversarial: 'Try to break it' },\n    policy: { intent: 'Land by intent', phases: 'In phases', stacking: 'Stacking', leads: 'Area leads', ffa: 'Free for all', github: 'GitHub-style' },\n    claims: { true: 'On', false: 'Off' }, dedupe: { true: 'On', false: 'Off' },\n    model: { haiku: 'Haiku', sonnet: 'Sonnet', opus: 'Opus', none: 'none' },\n  };\n  const GLOSS = {\n    intent: 'When two changes collide, the later one is re-applied on the newest code instead of being sent back.',\n    phases: 'Changes land in planned phases; later tasks start only after the earlier phase has landed.',\n    stacking: 'A change can build on another one that has not landed yet; they land in order.',\n    leads: 'Each part of the code has a lead agent who combines collisions there.',\n    ffa: 'Every change lands as soon as it is ready; collisions are left to whoever comes next.',\n    adversarial: 'The reviewer must try to write a test that fails before it approves.',\n    claims: 'Agents say which files they will touch, so others can avoid them.',\n    dedupe: 'Before work starts, tasks that ask for the same thing are merged into one.',\n    trainMax: 'Finished changes are tested together in groups of this size before landing.',\n  };\n  const BASELINES = {\n    'opus-alone': { label: 'One Opus agent alone', about: 'One Opus agent gets the whole request: no planner, no split, no reviewer.' },\n    github: { label: 'GitHub-style', about: 'One pull request per agent; any conflict sends it back to rebase. No replays.' },\n  };\n  const mdl = (m) => WORDS.model[m] || m;\n  const plain = (v, baseline) => {\n    if (baseline) return BASELINES[baseline]?.label || baseline;\n    const parts = [`${v.coders} ${mdl(v.coderModel)} coder${v.coders === 1 ? '' : 's'}`, v.planner && v.planner !== 'none' ? `${mdl(v.planner)} planner` : null,\n      v.reviewers ? `${v.reviewers} reviewer${v.reviewers === 1 ? '' : 's'}${v.reviewStyle === 'adversarial' ? ' who try to break it' : ''}` : 'no reviewer',\n      (WORDS.policy[v.policy] || v.policy).toLowerCase()];\n    return parts.filter(Boolean).join(', ');\n  };\n  const vkey = (v, b) => (SIM?.variantKey ? SIM.variantKey(v, b) : b ? b : `${v.planner}/${v.coders}x${v.coderModel}/r${v.reviewers}${String(v.reviewStyle)[0]}/${v.policy}${v.claims ? '+c' : ''}${v.dedupe ? '+d' : ''}/t${v.trainMax}`);\n\n  // ---- state ------------------------------------------------------------------------------------\n  const st = { scenario: Q.get('s') || 'cafe-family', v: {}, open: null, more: false };\n  for (const [k, kb] of Object.entries(KNOBS)) st.v[k] = kb.def;\n  try { const qv = JSON.parse(Q.get('v') || 'null'); if (qv) Object.assign(st.v, qv); } catch {}\n  let SIM = null, simErr = '', SCEN = [], RUNS = [], STAGES = [], STAGE0 = null, PLANS = [], loaded = false;\n\n  async function load() {\n    const sfx = MOCK ? '.mock' : '';\n    const jl = (t) => t.split('\\n').filter((l) => l.trim()).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);\n    const [sc, runs, stages, s0, plan, plan2] = await Promise.all([\n      fetch(`${BASE}/scenarios.json`).then((r) => (r.ok ? r.json() : [])).catch(() => []),\n      fetch(`${BASE}/runs${sfx}.jsonl`, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then(jl).catch(() => []),\n      fetch(`${BASE}/stages${sfx}.jsonl`, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then(jl).catch(() => []),\n      fetch(`${BASE}/stage0.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null),\n      fetch(`${BASE}/stage1-plan.json`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),\n      fetch(`${BASE}/stage2-plan.json`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),\n    ]);\n    // A plan can carry a second part (stage2-plan.json part2: its own runs and guards).\n    STAGE0 = s0; PLANS = [plan, plan2, plan2?.part2?.runs?.length ? { ...plan2.part2, stage: plan2.stage, part: 2 } : null].filter((x) => x?.runs?.length);\n    SCEN = sc.length ? sc : [\n      { id: 'cafe-family', title: 'Make the caf\xE9 site family-friendly', about: 'A vague feature request on an existing site: the planner has to decide what it means.' },\n      { id: 'port-ts', title: 'Port a library to TypeScript', about: 'uuid (a small, popular JavaScript library) ported file by file; its own tests must still pass.' },\n    ];\n    // stages.jsonl (qb6): 'summary' lines are the table; 'start' lines are the guard's baseline.\n    RUNS = runs; STAGES = stages.filter((x) => !x.event || x.event === 'summary');\n    try {\n      SIM = await import(`${BASE}/predict.js`);\n      if (SIM.KNOBS) KNOBS = normKnobs(SIM.KNOBS);\n      // GitHub-style is a baseline, not a landing choice.\n      if (KNOBS.policy) KNOBS.policy = { ...KNOBS.policy, values: KNOBS.policy.values.filter((x) => x !== 'github') };\n      if (SIM.DEFAULT_VARIANT && !Q.get('v')) Object.assign(st.v, SIM.DEFAULT_VARIANT);\n    } catch (e) { SIM = null; simErr = String(e.message || e); log('predict_missing', { error: simErr }); }\n    loaded = true;\n    log('loaded', { scenarios: SCEN.length, runs: RUNS.length, stages: STAGES.length, sim: !!SIM, mock: MOCK });\n  }\n  // qb4's KNOBS may be {name: {values, default, label}}: keep ours for anything missing.\n  function normKnobs(k) {\n    const out = { ...KNOBS };\n    for (const [n, x] of Object.entries(k || {})) if (x && Array.isArray(x.values)) out[n] = { label: x.label || KNOBS[n]?.label || n, values: x.values, def: x.default ?? x.def ?? x.values[0] };\n    return out;\n  }\n  function predict(v, baseline) {\n    if (!SIM?.predict) return null;\n    try {\n      const variant = baseline ? { ...(SIM.BASELINES?.[baseline] || v) } : { ...v };\n      const p = SIM.predict(variant, st.scenario, baseline ? { baseline } : {});\n      return p && { wallS: p.wallS, usd: p.apiUsdStd, quality: p.quality, landed: p.landed, range: p.range || null };\n    } catch (e) { log('predict_failed', { error: String(e) }); return null; }\n  }\n\n  // ---- 1. try a setup ---------------------------------------------------------------------------\n  const scenOf = (id) => SCEN.find((s) => s.id === id) || { id, title: id };\n  function knobRow(name) {\n    const kb = KNOBS[name]; if (!kb) return '';\n    const word = (x) => (/Model$|^planner$/.test(name) ? mdl(x) : WORDS[name]?.[x] ?? String(x));\n    const g = GLOSS[name] ? ` <button class=\"gl\" type=\"button\" data-gloss=\"${name}\" aria-label=\"What is this?\">?</button>` : '';\n    return `<div class=\"knob\"><span class=\"kl\">${esc(kb.label)}${g}</span><span class=\"opts\" role=\"group\" aria-label=\"${esc(kb.label)}\">${kb.values.map((x) => `<button type=\"button\" class=\"opt\" data-k=\"${name}\" data-val='${esc(JSON.stringify(x))}' aria-pressed=\"${String(st.v[name] === x)}\">${esc(word(x))}</button>`).join('')}</span></div>`;\n  }\n  function bars(title, rows, fmt, better) {\n    const max = Math.max(...rows.map((r) => r.val || 0), 1e-9);\n    return `<div class=\"bars\"><div class=\"bt\">${esc(title)} <span class=\"dim\">${better}</span></div>${rows.map((r) => `<div class=\"br ${r.cls}\"><span class=\"bn\">${esc(r.label)}</span><span class=\"bw\"><i style=\"width:${r.val == null ? 0 : Math.max(2, (100 * r.val) / max).toFixed(1)}%\"></i></span><span class=\"bv\">${r.val == null ? '\u2013' : fmt(r.val)}</span></div>`).join('')}</div>`;\n  }\n  function tryView() {\n    const sc = scenOf(st.scenario);\n    const me = predict(st.v), oa = predict(null, 'opus-alone'), gh = predict(null, 'github');\n    const rows = (k) => [{ label: 'This setup', cls: 'me', val: me?.[k] }, { label: 'One Opus agent alone', cls: 'b1', val: oa?.[k] }, { label: 'GitHub-style', cls: 'b2', val: gh?.[k] }];\n    let sentence = '';\n    if (me) {\n      const vs = oa && oa.wallS ? ` That is ${(oa.wallS / me.wallS).toFixed(1)}\xD7 ${oa.wallS >= me.wallS ? 'faster' : 'slower'} than one Opus agent alone, at ${(me.usd / (oa.usd || 1)).toFixed(1)}\xD7 the cost.` : '';\n      const rg = me.range?.wallS ? ` <span class=\"dim\">(likely ${mins(me.range.wallS[0])} to ${mins(me.range.wallS[1])})</span>` : '';\n      sentence = `<p class=\"pred\">Predicted: done in <b>${mins(me.wallS)}</b>${rg}, quality <b>${Math.round(me.quality)}/100</b>, <b>${usd(me.usd)}</b> at API prices.${vs}</p>`;\n    }\n    return `<section class=\"sec\" id=\"try\"><h2>Try a setup</h2>\n      <p class=\"cap\">Pick a job and how the agents should work. A simulation predicts the result at once; the best setups are then run for real.</p>\n      <div class=\"scen\" role=\"group\" aria-label=\"Scenario\">${SCEN.map((s) => `<button type=\"button\" class=\"sc\" data-scen=\"${esc(s.id)}\" aria-pressed=\"${String(s.id === st.scenario)}\"><b>${esc(s.title)}</b>${s.about ? `<span>${esc(s.about)}</span>` : ''}</button>`).join('')}</div>\n      <div class=\"knobs\">${['coders', 'coderModel', 'planner', 'reviewers', 'policy'].map(knobRow).join('')}</div>\n      <details class=\"more\"${st.more ? ' open' : ''}><summary>More settings</summary><div class=\"knobs\">${['reviewerModel', 'reviewStyle', 'claims', 'dedupe', 'trainMax'].filter((k) => k !== 'reviewerModel' || st.v.reviewers > 0).map(knobRow).join('')}</div></details>\n      <div class=\"predbox\" aria-live=\"polite\">\n        ${SIM ? `${sentence}${bars('Time to finish', rows('wallS'), mins, 'shorter is better')}${bars('Quality', rows('quality'), (x) => `${Math.round(x)}/100`, 'higher is better')}${bars('Cost at API prices', rows('usd'), usd, 'lower is better')}\n          <p class=\"small dim\">Prediction by the lab's simulation${SIM.SIM_VERSION ? ` (${esc(SIM.SIM_VERSION)})` : ''}, calibrated on real runs. Quality is the hidden tests, the build and a judge, out of 100. ${anchors()}</p>`\n        : `<p class=\"dim\">The simulation is not loaded yet, so there is no prediction to show.${MOCK ? '' : ''}</p>`}\n      </div>\n      ${OWN ? runForReal(me) : ''}\n      ${me ? `<div class=\"pin\" aria-hidden=\"true\"><span>This setup</span><b>${mins(me.wallS)}</b><b>${Math.round(me.quality)}/100</b><b>${usd(me.usd)}</b></div>` : ''}\n    </section>`;\n  }\n  // What a score means, from qb5's scorer validation (docs/lab/scoring.md, 2026-10-08).\n  const ANCHORS = { 'cafe-family': [25, 94], 'port-ts': [8, 92], bakery: [8, 96] };\n  // The reference solutions' scores include the judge (7 and 6 of 10); without it both are 100.\n  // scenarios.json may carry {anchors: {starter, reference}} (qb5); these are the validated numbers until then.\n  const anchors = () => {\n    const sa = scenOf(st.scenario).anchors, a = sa ? [Math.round(sa.starter), Math.round(sa.reference)] : ANCHORS[st.scenario];\n    return `${a ? `For this job, the untouched starting code scores ${a[0]} and a reference solution ${a[1]} (it passes every hidden test; the judge's opinion keeps it below 100). ` : ''}The judge's part varies by about 2 points between scorings of the same code.`;\n  };\n  // ---- the simulation's picks (qb4's public/lab/stage0.json) -----------------------------------\n  const WHY = { fastest: 'Fastest', cheapest: 'Cheapest', 'best balance': 'Best balance of time, cost and quality', 'best stacking': 'Best with stacking', 'best ffa': 'Best with free for all', 'best phases': 'Best in phases', 'best leads': 'Best with area leads' };\n  // Stage 1 = the APPROVED list (public/lab/stage1-plan.json, the source of truth); a run is\n  // done when runs.jsonl has its variantKey + repetition at stage 1.\n  const WHYB = { 'opus-alone': 'Baseline: one Opus agent alone', github: 'Baseline: GitHub-style' };\n  const dropped = (p) => /^dropped/i.test(p.status || '');\n  // A job is finished when no planned run for it is still open (not done, not dropped, not excluded).\n  function jobOpen(id) {\n    for (const pl of PLANS) for (const p of pl.runs) {\n      if ((p.scenario || pl.scenario) !== id || dropped(p) || /^done/i.test(p.status || '')) continue;\n      const hit = RUNS.find((r) => r.stage === pl.stage && r.scenario === id && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);\n      if (!hit) return true;\n    }\n    return false;\n  }\n  // One stage's approved plan (stageN-plan.json). The newest plan is \"being run now\"; older ones fold away.\n  function planView(PLAN, active) {\n    const notCounted = (p) => RUNS.find((r) => r.excluded && r.stage === PLAN.stage && r.scenario === p.scenario && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);\n    const done = (p) => RUNS.find((r) => !r.excluded && r.stage === PLAN.stage && r.scenario === p.scenario && (r.variantKey || vkey(r.variant || {}, r.baseline)) === p.variantKey && (r.seed ?? 1) === p.repetition);\n    const total = PLAN.runs[PLAN.runs.length - 1]?.predictedCumulativeUsd;\n    const n = PLAN.runs.filter(done).length;\n    const allDone = n + PLAN.runs.filter((p) => !done(p) && (notCounted(p) || dropped(p))).length >= PLAN.runs.length;\n    const g = PLAN.guards || {};\n    const firstOpen = PLAN.runs.find((p) => !done(p) && !notCounted(p) && !dropped(p));\n    const rows = PLAN.runs.map((p) => {\n      const r = done(p), pr = p.predicted || {};\n      const nc = !r && notCounted(p);\n      const real = !r && dropped(p) ? '<span class=\"dim\">Dropped: the plan changed after the first results.</span>' : nc ? `<span class=\"dim\">Not counted: ${esc(nc.excluded)}</span>` : r ? `<span class=\"act\">Done: ${mins(r.timings?.wallS)}, ${sc100(r.quality?.score)}/100, ${usd(r.cost?.apiUsdStd)}${r.links?.replay ? ` <a href=\"${esc(r.links.replay)}\">replay</a>` : ''}</span>` : `<span class=\"dim\">${p === firstOpen ? 'Next' : 'Waiting'}</span>`;\n      const cond = p.conditional && !r ? '<span class=\"dim\">Runs only if the first one-Opus-agent run comes within about 15% of the swarm.</span>' : '';\n      return `<li class=\"${r ? 'done' : ''}\"><span class=\"no\">${p.order}</span><span class=\"pb\"><b>${esc(WHYB[p.baseline] || WHY[p.why] || (p.baseline ? '' : p.why.replace(/ repetition \\d+( of \\d+)?$/, '') === 'swarm' ? 'Swarm' : p.why))}${p.repetition > 1 ? `, run ${p.repetition}` : ''}</b>${cond}\n        <span>${esc(p.baseline ? BASELINES[p.baseline]?.about || '' : plain(p.variant))}</span>\n        <span class=\"dim\">Predicted ${mins(pr.wallS)}, ${pr.quality != null ? Math.round(pr.quality) : '\u2013'}/100, ${usd(pr.apiUsdStd)}</span>${real}</span></li>`;\n    }).join('');\n    const head = `Stage ${PLAN.stage}${PLAN.part ? `, part ${PLAN.part}` : ''}: ${allDone ? 'done' : 'being run now'}`;\n    if (!active) return `<details class=\"oldplan\"><summary>Stage ${PLAN.stage}${PLAN.part ? `, part ${PLAN.part}` : ''}: ${n} of ${PLAN.runs.length} runs counted</summary><ol class=\"plan\">${rows}</ol></details>`;\n    // A second part without runs yet: name the job only (its notes are internal).\n    const p2 = PLAN.part2 && !PLAN.part2.runs?.length ? PLAN.part2 : null;\n    const nextLine = p2 ? `<p class=\"small dim\" style=\"margin-top:8px\"><b>Next:</b> ${esc(scenOf(p2.scenario).title || p2.scenario)}.</p>` : '';\n    return `<h2>${esc(head)}</h2>\n      <p class=\"cap\">${PLAN.runs.length} real runs of ${[...new Set(PLAN.runs.map((p) => p.scenario || PLAN.scenario))].map((id) => `\u201C${esc(scenOf(id).title)}\u201D (${PLAN.runs.filter((p) => (p.scenario || PLAN.scenario) === id).length})`).join(', ')}, in this order. ${budgetLine(PLAN, allDone)} ${n} of ${PLAN.runs.length} done.</p>\n      <ol class=\"plan\">${rows}</ol>${nextLine}`;\n  }\n  // What the runner's guard compares (qb6): money already spent in the stage (API-equivalent,\n  // excluded runs too: they were paid for) plus the next run's prediction, against the stop.\n  function budgetLine(PLAN, allDone) {\n    const g = PLAN.guards || {}, t = PLAN.totals;\n    // qb4's totals block (stage1-plan.json) when present: spent + still to come against the guard.\n    if (t && t.spentApiUsdStd != null) {\n      const guard = t.guardApiUsdStd ?? g.stopAtApiUsdStd;\n      return `Spent so far ${usd(t.spentApiUsdStd)} at API prices${t.judgeApiUsdStd ? ` (plus ${usd(t.judgeApiUsdStd)} for the quality judge)` : ''}; ${t.toComeRuns?.length === 1 ? 'the one run still to come is' : `the ${t.toComeRuns?.length ?? ''} runs still to come are`} predicted at ${usd(t.toComeApiUsdStd)}, about ${usd(t.expectedTotalApiUsdStd)} in all${guard ? `, under the ${usd(guard)} stop` : ''}.${meterLine(g)}`;\n    }\n    // Only this plan's jobs: a stage can have parts with their own stops.\n    const jobs = new Set(PLAN.runs.map((p) => p.scenario || PLAN.scenario));\n    const spent = RUNS.filter((r) => r.stage === PLAN.stage && jobs.has(r.scenario)).reduce((a, r) => a + (r.cost?.apiUsdStd || 0), 0);\n    const doneKeys = new Set(RUNS.filter((r) => r.stage === PLAN.stage && !r.excluded).map((r) => `${r.scenario}|${r.variantKey || vkey(r.variant || {}, r.baseline)}|${r.seed ?? 1}`));\n    const next = PLAN.runs.find((p) => !doneKeys.has(`${p.scenario || PLAN.scenario}|${p.variantKey}|${p.repetition}`));\n    const stop = g.stopAtApiUsdStd;\n    const toCome = allDone ? null : t?.toComeApiUsdStd;\n    if (allDone) return `Spent ${usd(spent)} at API prices${stop ? ` (the stop was ${usd(stop)})` : ''}.`;\n    return `Spent so far about ${usd(spent)} at API prices${stop ? ` of the ${usd(stop)} stop` : ''}${toCome != null ? `; the runs still to come are predicted at ${usd(toCome)}` : next?.predicted?.apiUsdStd != null ? `; the next run is predicted at ${usd(next.predicted.apiUsdStd)}` : ''}.${stop ? ` A run starts only if what is spent plus its prediction stays under ${usd(stop)}.` : ''}${meterLine(g)}`;\n  }\n  const meterLine = (g) => (g.stopAtWeeklyMeterPct ? ` It stops if the weekly Claude meter (account-wide) reaches ${g.stopAtWeeklyMeterPct}%.` : g.stopAtWeeklyMeterRisePts ? ` The stage also stops if the weekly Claude meter rises ${g.stopAtWeeklyMeterRisePts} points.` : '');\n  // The simulation's picks that are not in the approved list (it was recalibrated after approval).\n  function favouritesView() {\n    const inPlan = new Set(PLANS.flatMap((pl) => pl.runs.map((p) => p.variantKey)));\n    const fav = (STAGE0?.picks || []).filter((p) => !inPlan.has(p.key));\n    if (!fav.length) return '';\n    const si = (STAGE0.scenarios || []).findIndex((x) => x.id === st.scenario);\n    return `<h3 class=\"fh\">The simulation's current favourites (not yet run)</h3>\n      <p class=\"cap\">${esc(STAGE0.picksChanged || 'The simulation was updated after stage 1 was approved, so its favourites moved.')} These are candidates for later stages.</p>\n      <ul class=\"picks\">${fav.map((p) => { const per = si >= 0 ? p.per?.[si] : null; return `<li><b>${esc(WHY[p.why] || p.why)}</b><span>${esc(plain(p.variant))}</span>\n        ${per ? `<span class=\"nums\"><span>${mins(per.wallS)}</span><span>${Math.round(per.q)}/100</span><span>${usd(per.usd)}</span></span>` : ''}\n        <button type=\"button\" class=\"chipb\" data-pick='${esc(JSON.stringify(p.variant))}'>Try this setup</button></li>`; }).join('')}</ul>`;\n  }\n  // Without an approved plan: the simulation's picks as proposals.\n  function picksView() {\n    if (PLANS.length) {\n      const cur = PLANS[PLANS.length - 1];\n      return `<section class=\"sec\" id=\"plan\">${planView(cur, true)}${PLANS.slice(0, -1).reverse().map((pl) => planView(pl, false)).join('')}${favouritesView()}</section>`;\n    }\n    if (!STAGE0?.picks?.length) return '';\n    const si = (STAGE0.scenarios || []).findIndex((x) => x.id === st.scenario);\n    return `<section class=\"sec\" id=\"picks\"><h2>What the simulation suggests</h2>\n      <p class=\"cap\">${Number(STAGE0.combos).toLocaleString('en-US')} setups simulated, ${STAGE0.seeds} times each, at no cost. Proposed for the first real runs.</p>\n      <ul class=\"picks\">${STAGE0.picks.map((p) => { const per = si >= 0 ? p.per?.[si] : null; return `<li><b>${esc(WHY[p.why] || p.why)}</b><span>${esc(plain(p.variant))}</span>\n        ${per ? `<span class=\"nums\"><span>${mins(per.wallS)}</span><span>${Math.round(per.q)}/100</span><span>${usd(per.usd)}</span></span>` : ''}\n        <button type=\"button\" class=\"chipb\" data-pick='${esc(JSON.stringify(p.variant))}'>Try this setup</button></li>`; }).join('')}</ul></section>`;\n  }\n  function runForReal(me) {\n    const cmd = `node --experimental-strip-types scripts/lab/run.mjs --scenario ${st.scenario} --variant '${JSON.stringify(st.v)}'`;\n    return `<details class=\"real\"><summary class=\"btn\">Run for real</summary>\n      <div class=\"realb\"><p>Estimate: about <b>${me ? mins(me.wallS) : '?'}</b> and <b>${me ? usd(me.usd) : '?'}</b> at API prices (Claude runs on the subscription; containers are billed for real). The runner refuses to start over the stage budget.</p>\n      <p class=\"small dim\">For now runs start from the laptop. Copy this into a terminal in the qodebase folder:</p>\n      <pre class=\"cmd\"><code>${esc(cmd)}</code></pre><button type=\"button\" class=\"chipb\" data-copy=\"${esc(cmd)}\">Copy command</button></div></details>`;\n  }\n\n  // ---- 2. results -------------------------------------------------------------------------------\n  // A run with a known platform stall (qb6's timings.stallS) is left out of time comparisons entirely:\n  // the stall overlapped other agents' work, so subtracting it means nothing (manager, 2026-10-08).\n  // Its quality and cost still count.\n  // Comparability per run (qb4, 2026-10-08). Time counts only with no person stepping in and no\n  // platform stall; cost only when it is exact (not an upper or lower bound).\n  const timeWhy = (r) => (r.counts?.humanInterventions > 0 ? 'a person had to step in during the run (a platform bug, since fixed)' : r.timings?.stallS || /PLATFORM STALL/i.test(r.notes || '') ? 'a platform stall' : null);\n  const costWhy = (r) => (/upper bound/i.test(r.cost?.pricedAs || '') ? 'only an upper bound is known' : r.cost?.apiUsdStdLowerBound != null ? 'only a lower bound is known' : null);\n  const runS = (r) => (r.timings?.wallS == null || timeWhy(r) ? null : r.timings.wallS);\n  const runUsd = (r) => (r.cost?.apiUsdStd == null || costWhy(r) ? null : r.cost.apiUsdStd);\n  function groups() {\n    const by = new Map();\n    for (const r of RUNS.filter((x) => x.scenario === st.scenario && x.status !== 'failed' && !x.excluded)) {\n      const k = r.variantKey || vkey(r.variant || {}, r.baseline);\n      if (!by.has(k)) by.set(k, { key: k, baseline: r.baseline, variant: r.variant, runs: [] });\n      by.get(k).runs.push(r);\n    }\n    return [...by.values()].map((g) => ({ ...g,\n      wallS: med(g.runs.map(runS)), stallS: g.runs.reduce((a, r) => a + (r.timings?.stallS || 0), 0), quality: med(g.runs.map((r) => r.quality?.score)), qTruly: med(g.runs.map((r) => r.quality?.scoreTrulyHidden)),\n      hidden: med(g.runs.map((r) => (r.quality?.hiddenTotal ? r.quality.hiddenPass / r.quality.hiddenTotal : null))),\n      hiddenOf: g.runs.find((r) => r.quality?.hiddenTotal)?.quality.hiddenTotal,\n      floor: Object.fromEntries(['build', 'typecheck', 'ownTests'].map((k) => [k, g.runs.every((r) => r.quality?.[k] !== false)])),\n      typeErrors: med(g.runs.map((r) => r.quality?.typeErrors)),\n      real: med(g.runs.map((r) => r.cost?.usdReal)), usd: med(g.runs.map(runUsd)),\n      timeNot: g.runs.every((r) => timeWhy(r)) ? timeWhy(g.runs[0]) : null, costNot: g.runs.every((r) => costWhy(r)) ? costWhy(g.runs[0]) : null,\n      pWallS: med(g.runs.map((r) => r.predicted?.wallS)), pQuality: med(g.runs.map((r) => r.predicted?.quality)), stage: Math.max(...g.runs.map((r) => r.stage || 0)) }));\n  }\n  function scatter(gs) {\n    const W = 340, H = 250, L = 36, B = 34, T = 18, R = 10;\n    const xs = gs.flatMap((g) => [g.wallS, g.pWallS]).filter((x) => x != null), ys = gs.flatMap((g) => [g.quality, g.pQuality]).filter((x) => x != null);\n    const xMax = Math.max(60, ...xs) * 1.08, yMin = Math.max(0, Math.floor((Math.min(...ys, 100) - 8) / 10) * 10), yMax = 100;\n    const X = (s) => L + ((W - L - R) * s) / xMax, Y = (q) => T + ((H - T - B) * (yMax - q)) / (yMax - yMin);\n    const xt = [0, 1, 2, 3, 4].map((i) => Math.round((xMax / 60 / 4) * i)).filter((v, i, a) => a.indexOf(v) === i);\n    const yt = []; for (let q = yMin; q <= 100; q += yMax - yMin > 40 ? 20 : 10) yt.push(q);\n    const best = gs.length > 1 ? leaderOf(gs) : null;\n    // Three layers: predictions under the points, labels over everything.\n    const ghosts = [], labels = [];\n    const dots = gs.map((g, i) => {\n      if (g.wallS == null || g.quality == null) return '';\n      const x = X(g.wallS), y = Y(g.quality), on = st.open === g.key, cls = g.baseline ? 'bl' : 'vr';\n      const ghost = g.pWallS != null && g.pQuality != null ? `<line class=\"pl\" x1=\"${X(g.pWallS).toFixed(1)}\" y1=\"${Y(g.pQuality).toFixed(1)}\" x2=\"${x.toFixed(1)}\" y2=\"${y.toFixed(1)}\"/><circle class=\"pd\" cx=\"${X(g.pWallS).toFixed(1)}\" cy=\"${Y(g.pQuality).toFixed(1)}\" r=\"4\"/>` : '';\n      const mark = g.baseline ? `<rect class=\"m ${cls}${on ? ' on' : ''}\" x=\"${(x - 6).toFixed(1)}\" y=\"${(y - 6).toFixed(1)}\" width=\"12\" height=\"12\" rx=\"2\"/>` : `<circle class=\"m ${cls}${on ? ' on' : ''}${g === best ? ' best' : ''}\" cx=\"${x.toFixed(1)}\" cy=\"${y.toFixed(1)}\" r=\"6\"/>`;\n      const left = x > W * 0.62;\n      const label = g.baseline || g === best || on ? `<text class=\"dl\" x=\"${(left ? x - 9 : x + 9).toFixed(1)}\" y=\"${(y + 4).toFixed(1)}\"${left ? ' text-anchor=\"end\"' : ''}>${esc(g.baseline ? BASELINES[g.baseline]?.label + (g === best ? ' (leading)' : '') : g === best ? 'Leading so far' : plain(g.variant).split(',')[0])}</text>` : '';\n      ghosts.push(ghost); labels.push(label);\n      return `<g class=\"pt\" data-open=\"${esc(g.key)}\" tabindex=\"0\" role=\"button\" aria-label=\"${esc(plain(g.variant, g.baseline))}: ${mins(g.wallS)}, quality ${Math.round(g.quality)}\"><circle class=\"hit\" cx=\"${x.toFixed(1)}\" cy=\"${y.toFixed(1)}\" r=\"16\"/>${mark}</g>`;\n    }).join('');\n    return `<p class=\"ct\">Quality (out of 100) by minutes to finish</p><svg class=\"sc-plot\" viewBox=\"0 0 ${W} ${H}\" role=\"img\" aria-label=\"Each setup by time to finish and quality\">\n      ${yt.map((q) => `<line class=\"grid\" x1=\"${L}\" x2=\"${W - R}\" y1=\"${Y(q)}\" y2=\"${Y(q)}\"/><text class=\"ax\" x=\"${L - 6}\" y=\"${Y(q) + 4}\" text-anchor=\"end\">${q}</text>`).join('')}\n      ${xt.map((m) => `<text class=\"ax\" x=\"${X(m * 60)}\" y=\"${H - 10}\" text-anchor=\"middle\">${m}</text>`).join('')}\n      <text class=\"ax\" x=\"${W - R}\" y=\"${H}\" text-anchor=\"end\">minutes</text>\n      <g aria-hidden=\"true\">${ghosts.join('')}</g>${dots}<g aria-hidden=\"true\" style=\"pointer-events:none\">${labels.join('')}</g></svg>\n      <div class=\"key\"><span><i class=\"k vr\"></i>a setup (median of its runs)</span><span><i class=\"k bl\"></i>baseline</span><span><i class=\"k pd\"></i>what the simulation predicted</span></div>\n      <p class=\"small dim\">Up and to the left is better: higher quality in less time.</p>`;\n  }\n  // Best = highest quality among the setups within 1.5x of the fastest time; ties: cheaper.\n  function bestOf(gs) {\n    const vr = gs.filter((g) => !g.baseline && g.quality != null);\n    if (!vr.length) return null;\n    return vr.slice().sort((a, b) => b.quality - a.quality || (a.wallS ?? 1e9) - (b.wallS ?? 1e9) || (a.usd ?? 1e9) - (b.usd ?? 1e9))[0];\n  }\n  // Ties (manager, 2026-10-08): the judge moves ~2 points between scorings of the same code, so two\n  // setups that pass the same share of hidden tests and differ by <= 4 points have the SAME quality;\n  // finish times within 15% are a tie too. Never present a tie as a win.\n  const qTie = (a, b) => Math.abs(a.quality - b.quality) <= 4 && (a.hidden == null || b.hidden == null || Math.abs(a.hidden - b.hidden) < 1e-9);\n  const tTie = (a, b) => a.wallS != null && b.wallS != null && Math.abs(a.wallS - b.wallS) <= 0.15 * Math.min(a.wallS, b.wallS);\n  const rank = (a, b) => (qTie(a, b) ? (a.wallS != null && b.wallS != null ? a.wallS - b.wallS : (a.wallS == null) - (b.wallS == null)) || (a.usd ?? 1e9) - (b.usd ?? 1e9) : b.quality - a.quality);\n  const leaderOf = (gs) => gs.filter((g) => g.quality != null).sort(rank)[0] || null;\n  // One comparison in words (qb5/manager wording): quality as hidden tests passed (a judge-only gap\n  // is a tie, never points), time as N times faster, cost as N% less.\n  // Concrete, judge-free reasons from the floor checks (qb5): build, type check, own tests.\n  function floorWords(w, l) {\n    const f = [];\n    if (w.floor?.typecheck && l.floor && !l.floor.typecheck) f.push(`its code type-checked cleanly (the other's had ${l.typeErrors != null ? `${Math.round(l.typeErrors)} type error${Math.round(l.typeErrors) === 1 ? '' : 's'}` : 'type errors'})`);\n    if (w.floor?.build && l.floor && !l.floor.build) f.push(\"it built and started (the other's did not)\");\n    if (w.floor?.ownTests && l.floor && !l.floor.ownTests) f.push(\"its own tests passed (the other's did not)\");\n    return f.join(' and ');\n  }\n  function diffWords(a, b) {\n    const nm = (g) => esc(plain(g.variant, g.baseline));\n    const out = [];\n    const ha = a.hidden != null && a.hiddenOf ? Math.round(a.hidden * a.hiddenOf) : null, hb = b.hidden != null && b.hiddenOf ? Math.round(b.hidden * b.hiddenOf) : null;\n    if (qTie(a, b)) out.push(`The same quality within the judge's noise${ha != null && ha === hb ? ` (both passed ${ha}/${a.hiddenOf} hidden tests)` : ''}.`);\n    else if (ha != null && hb != null && ha !== hb) {\n      const [w, l, hw, hl] = ha > hb ? [a, b, ha, hb] : [b, a, hb, ha];\n      // Beyond the hidden tests' own share (60 points) and the judge's noise, the build / type check / judge differ too.\n      const rest = Math.abs(w.quality - l.quality) - (60 * (hw - hl)) / a.hiddenOf;\n      const fw = rest > 4 && w.quality > l.quality ? floorWords(w, l) : '';\n      out.push(`${nm(w)} passed ${hw - hl} more hidden test${hw - hl === 1 ? '' : 's'} (${hw} against ${hl} of ${a.hiddenOf})${fw ? ` and ${fw}` : rest > 4 && w.quality > l.quality ? ` and scored higher overall (${Math.round(w.quality)} against ${Math.round(l.quality)})` : ''}.`);\n    }\n    else { const [w, l] = a.quality >= b.quality ? [a, b] : [b, a]; const fw = floorWords(w, l); out.push(fw ? `${nm(w)}: ${fw}.` : `${nm(w)} scored higher (${Math.round(w.quality)} against ${Math.round(l.quality)}).`); }\n    const tNot = a.wallS == null || b.wallS == null, cNot = a.usd == null || b.usd == null;\n    if (tNot) out.push(`Time is not comparable: for ${nm(a.wallS == null ? a : b)}, ${(a.wallS == null ? a : b).timeNot || 'no usable time'}.`);\n    else if (tTie(a, b)) out.push('They finished within 15% of each other.');\n    else { const [f, sl] = a.wallS < b.wallS ? [a, b] : [b, a]; out.push(`${nm(f)} was ${(sl.wallS / f.wallS).toFixed(1)}\xD7 faster (${mins(f.wallS)} against ${mins(sl.wallS)}).`); }\n    if (cNot) out.push(`Cost is not comparable: for ${nm(a.usd == null ? a : b)}, ${(a.usd == null ? a : b).costNot || 'no usable cost'}.`);\n    if (a.usd != null && b.usd != null && Math.abs(a.usd - b.usd) > 0.15 * Math.min(a.usd, b.usd)) {\n      const [c, e] = a.usd < b.usd ? [a, b] : [b, a], r = c.usd / e.usd;\n      out.push(`${nm(c)} cost ${r > 0.45 && r < 0.55 ? 'about half as much' : `${Math.round((1 - r) * 100)}% less`} (${usd(c.usd)} against ${usd(e.usd)}).`);\n    }\n    // What is actually billed: containers (Claude runs on the subscription).\n    if (a.real != null && b.real != null && (a.real || b.real)) out.push(`Real spend on containers: ${usd(a.real)} against ${usd(b.real)}.`);\n    return out.join(' ');\n  }\n  function compare(gs) {\n    const ok = gs.filter((g) => g.quality != null).sort(rank);\n    const lead = ok[0];\n    if (!lead) return '';\n    const one = (g) => `${esc(plain(g.variant, g.baseline))}: ${g.wallS != null ? `done in <b>${mins(g.wallS)}</b>` : 'time not comparable'}, quality <b>${Math.round(g.quality)}/100</b>, ${g.usd != null ? `<b>${usd(g.usd)}</b> at API prices` : 'cost not comparable'} (${g.runs.length} run${g.runs.length === 1 ? '' : 's'})`;\n    const hid = (g) => (g.hidden != null && g.hiddenOf ? `${Math.round(g.hidden * g.hiddenOf)}/${g.hiddenOf} hidden tests` : null);\n    const parts = [];\n    const second = ok[1];\n    const sf = jobOpen(st.scenario) ? ' so far' : '';\n    if (!second) parts.push(`<p><b>${sf ? 'First result' : 'Result'}:</b> ${one(lead)}.</p>`);\n    else if (qTie(lead, second) && tTie(lead, second)) {\n      parts.push(`<p><b>Too close to call${sf}.</b> The same quality within the judge's noise${hid(lead) && hid(lead) === hid(second) ? ` (both passed ${hid(lead)})` : ''}, and finish times within 15% of each other:</p><p>${one(lead)}.</p><p>${one(second)}.</p>`);\n    } else {\n      parts.push(`<p><b>${sf ? 'Leading so far' : 'Result'}:</b> ${one(lead)}.</p>`);\n      if (qTie(lead, second)) parts.push(`<p>${one(second)}.</p><p class=\"dim\">${diffWords(lead, second)}</p>`);\n      else { const bm = lead.baseline ? ok.find((g) => !g.baseline) : second; if (bm) parts.push(`<p>${lead.baseline ? 'Best setup with several agents: ' : ''}${one(bm)}.</p><p class=\"dim\">${diffWords(lead, bm)}</p>`); }\n    }\n    const shown = new Set([lead, second].filter(Boolean));\n    const others = ok.filter((g) => !shown.has(g) && g.baseline);\n    const to = (g) => (g.runs.every((r) => r.status === 'timeout') ? ' (timed out)' : '');\n    if (others.length) parts.push(`<p class=\"dim\">Also: ${others.map((g) => `${esc(plain(g.variant, g.baseline))} ${g.wallS != null ? mins(g.wallS) : 'time not comparable'}${to(g)}, ${Math.round(g.quality)}/100, ${g.usd != null ? usd(g.usd) : 'cost not comparable'}`).join('; ')}.</p>`);\n    const rs = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded && r.predicted?.wallS && runS(r) && runUsd(r));\n    const tR = med(rs.map((r) => r.predicted.wallS / runS(r))), cR = med(rs.map((r) => r.predicted.apiUsdStd / runUsd(r)));\n    if (rs.length && (tR > 1.5 || tR < 0.67 || cR > 1.5 || cR < 0.67)) parts.push(`<p class=\"small dim\">On these runs the simulation was off: it expected about ${tR.toFixed(1)}\xD7 the time and ${cR.toFixed(1)}\xD7 the cost that the runs took. It is recalibrated from real runs before the next ones.</p>`);\n    return `<div class=\"cmp\">${parts.join('')}</div>`;\n  }\n  function list(gs) {\n    const sorted = gs.slice().sort((a, b) => (a.quality == null || b.quality == null || a.wallS == null || b.wallS == null ? (b.quality ?? -1) - (a.quality ?? -1) : rank(a, b)));\n    return `<ul class=\"rows\">${sorted.map((g) => {\n      const on = st.open === g.key;\n      return `<li class=\"${on ? 'open' : ''}\"><button type=\"button\" class=\"rw\" data-open=\"${esc(g.key)}\" aria-expanded=\"${on}\"><i class=\"k ${g.baseline ? 'bl' : 'vr'}\"></i><span class=\"t\">${esc(plain(g.variant, g.baseline))}</span>\n        <span class=\"nums\"><span>${g.wallS != null ? mins(g.wallS) : 'time n/c'}</span><span>${g.quality == null ? '\u2013' : Math.round(g.quality)}/100${g.qTruly != null ? ` <span class=\"dim\">(${Math.round(g.qTruly)})</span>` : ''}</span><span>${g.usd != null ? usd(g.usd) : 'cost n/c'}</span></span>\n        <span class=\"sub\">${g.runs.length} run${g.runs.length === 1 ? '' : 's'}${g.runs.every((r) => r.status === 'timeout') ? ', timed out' : ''}${g.timeNot ? `; time not comparable (${esc(g.timeNot)})` : ''}${g.costNot ? `; cost not comparable (${esc(g.costNot)})` : ''}, stage ${g.stage}${g.pWallS != null ? `; predicted ${mins(g.pWallS)}, ${Math.round(g.pQuality)}/100` : ''}</span></button>${on ? detail(g) : ''}</li>`;\n    }).join('')}</ul>`;\n  }\n  function detail(g) {\n    const about = g.baseline ? BASELINES[g.baseline]?.about : `Planner ${mdl(g.variant.planner)}; ${g.variant.coders} ${mdl(g.variant.coderModel)} coders; ${g.variant.reviewers} reviewer${g.variant.reviewers === 1 ? '' : 's'} (${WORDS.reviewStyle[g.variant.reviewStyle] || g.variant.reviewStyle}); ${WORDS.policy[g.variant.policy] || g.variant.policy}; claims ${g.variant.claims ? 'on' : 'off'}; duplicate check ${g.variant.dedupe ? 'on' : 'off'}; up to ${g.variant.trainMax} tested together.`;\n    const runs = g.runs.slice().sort((a, b) => (a.seed || 0) - (b.seed || 0)).map((r) => {\n      const c = r.counts || {}, q = r.quality || {};\n      const words = [`${c.tasksLanded ?? '?'} of ${c.tasksPlanned ?? '?'} tasks landed`, c.conflicts ? `${c.conflicts} collision${c.conflicts === 1 ? '' : 's'}` : 'no collisions',\n        (c.replaysHandler || 0) + (c.replaysLlm || 0) ? `${(c.replaysHandler || 0) + (c.replaysLlm || 0)} replayed` : null, c.bounces ? `${c.bounces} sent back` : null,\n        c.breaksOnMain ? `${c.breaksOnMain} broke main` : null, q.hiddenTotal ? `${q.hiddenPass}/${q.hiddenTotal} hidden tests` : null,\n        q.trulyHiddenTotal ? `${q.trulyHiddenPass}/${q.trulyHiddenTotal} checks it could not look up` : null].filter(Boolean).join(', ');\n      const status = r.status && r.status !== 'done' ? ` <span class=\"warn\">${esc({ 'stopped-budget': 'stopped: budget', timeout: 'timed out', failed: 'failed' }[r.status] || r.status)}</span>` : '';\n      const tw = timeWhy(r), cw = costWhy(r);\n      const stall = r.timings?.stallS ? ` <span class=\"dim\">(a platform stall of ${mins(r.timings.stallS)}, not the setup; left out of time comparisons)</span>` : tw ? ` <span class=\"dim\">(left out of time comparisons: ${esc(tw)})</span>` : '';\n      const cnote = cw ? ` <span class=\"dim\">(cost left out: ${esc(cw)})</span>` : '';\n      const th = q.scoreTrulyHidden != null ? ` <span class=\"dim\">(${Math.round(q.scoreTrulyHidden)}/100 on the checks it could not look up)</span>` : '';\n      return `<li><span class=\"rn\">Run ${r.seed ?? ''}${status}</span><span class=\"rv\">${mins(r.timings?.wallS)}${stall}, ${sc100(q.score)}/100${th}, ${usd(r.cost?.apiUsdStd)} at API prices${cnote}${r.cost?.usdReal != null ? `, ${usd(r.cost.usdReal)} real` : ''}</span>\n        <span class=\"rw2\">${esc(words)}.</span>${r.notes ? `<span class=\"rw2\">${esc(r.notes)}</span>` : ''}\n        <span class=\"lk\">${r.links?.replay ? `<a href=\"${esc(r.links.replay)}\">Watch the replay</a>` : ''}${r.links?.app ? `<a href=\"${esc(r.links.app)}\" target=\"_blank\" rel=\"noopener\">The app it built</a>` : ''}${r.links?.repo ? `<a href=\"${esc(r.links.repo)}\">The code</a>` : ''}</span></li>`;\n    }).join('');\n    return `<div class=\"det\"><p class=\"small\">${esc(about)}</p><ul class=\"runs\">${runs}</ul></div>`;\n  }\n  function resultsView() {\n    const gs = groups();\n    const stalls = gs.filter((g) => g.stallS);\n    const nStall = gs.reduce((a, g) => a + g.runs.filter((r) => r.timings?.stallS).length, 0);\n    const stallNote = nStall ? `<p class=\"small dim\">${nStall === 1 ? 'One run' : `${nStall} runs`} hit a platform stall (${stalls.map((g) => esc(plain(g.variant, g.baseline))).join('; ')}): ${nStall === 1 ? 'it is' : 'they are'} left out of the time comparison but counted for quality and cost.</p>` : '';\n    const truly = gs.some((g) => g.qTruly != null)\n      ? '<p class=\"small dim\">For the TypeScript port, the number in brackets is the score on checks the agents could not have found in the original library (type cases and structure), so copying the original does not earn them.</p>' : '';\n    const n = RUNS.filter((r) => r.scenario === st.scenario && !r.excluded).length;\n    const ex = RUNS.filter((r) => r.scenario === st.scenario && r.excluded);\n    const exHtml = ex.length ? `<h3 class=\"fh\">Not counted</h3><ul class=\"runs ex\">${ex.map((r) => `<li><span class=\"rn\">${esc(plain(r.variant || {}, r.baseline))}, run ${r.seed ?? ''}</span><span class=\"rw2\">${esc(r.excluded)}</span>${r.links?.replay ? `<span class=\"lk\"><a href=\"${esc(r.links.replay)}\">Watch the replay</a></span>` : ''}</li>`).join('')}</ul>` : '';\n    return `<section class=\"sec\" id=\"results\"><h2>${jobOpen(st.scenario) ? 'Results so far' : 'Results'}</h2>\n      ${n ? `<p class=\"cap\">${n} real run${n === 1 ? '' : 's'} of \u201C${esc(scenOf(st.scenario).title)}\u201D, ${gs.length} setup${gs.length === 1 ? '' : 's'}. Tap a dot or a row for its runs, the replay and the app it built.</p>${compare(gs)}<p class=\"small dim\">${anchors()}</p>${scatter(gs)}${stallNote}${list(gs)}${truly}${exHtml}`\n        : `<p class=\"dim\">No real runs of this job yet. The simulation picks the setups worth running; they appear here as they finish.</p>`}\n    </section>`;\n  }\n  // ---- Agent board A/B (stage 4, docs/board/w4c-results.md): board off vs on, per setup ----------\n  // Exact two-sided Mann-Whitney for small samples (3 vs 3 -> smallest p 0.1).\n  function mwP(a, b) {\n    const all = [...a, ...b], n = a.length, U = (xs, ys) => xs.reduce((s, x) => s + ys.reduce((t, y) => t + (x > y ? 1 : x === y ? 0.5 : 0), 0), 0);\n    const u0 = Math.min(U(a, b), U(b, a));\n    let tot = 0, ext = 0;\n    const idx = all.map((_, i) => i);\n    const comb = (start, pick) => { if (pick.length === n) { const A = pick.map((i) => all[i]), B = idx.filter((i) => !pick.includes(i)).map((i) => all[i]); tot++; if (Math.min(U(A, B), U(B, A)) <= u0 + 1e-9) ext++; return; } for (let i = start; i < all.length; i++) comb(i + 1, [...pick, i]); };\n    comb(0, []);\n    return { p: ext / tot, u: u0, separated: u0 === 0 };\n  }\n  function boardABView() {\n    const rs = RUNS.filter((r) => r.stage === 4 && !r.excluded && r.variant && 'board' in r.variant);\n    if (!rs.length) return '';\n    const cells = new Map();\n    for (const r of rs) { const k = `${r.scenario}|${r.variant.policy}`; if (!cells.has(k)) cells.set(k, { scenario: r.scenario, policy: r.variant.policy, off: [], on: [] }); cells.get(k)[r.variant.board ? 'on' : 'off'].push(r); }\n    const label = (c) => `${c.scenario === 'two-teams' ? 'Two teams, one repo' : 'One shared issue list'}${c.policy === 'github' ? ', plain git (GitHub-style)' : ''}`;\n    const twice = (r) => r.quality?.duplicates?.builtTwice;\n    const pct = (a, b) => `${b < a ? '\u2212' : '+'}${Math.abs(Math.round((1 - b / a) * 100))}%`;\n    const rows = [...cells.values()].filter((c) => c.off.length && c.on.length).map((c) => {\n      const tOff = c.off.map(runS).filter((x) => x != null), tOn = c.on.map(runS).filter((x) => x != null);\n      const uOff = c.off.map(runUsd).filter((x) => x != null), uOn = c.on.map(runUsd).filter((x) => x != null);\n      const dOff = c.off.map(twice).filter((x) => x != null), dOn = c.on.map(twice).filter((x) => x != null);\n      const hid = (xs) => { const h = xs.filter((r) => r.quality?.hiddenTotal); return h.length ? Math.round(100 * med(h.map((r) => r.quality.hiddenPass / r.quality.hiddenTotal))) : null; };\n      const cell = (a, b, fmt, test, noPct) => {\n        if (!a.length || !b.length) return '<span class=\"dim\">\u2013</span>';\n        const ma = med(a), mb = med(b), t = test ? mwP(a, b) : null;\n        const sig = t && t.separated && ma !== mb ? ' <span class=\"sep\" title=\"every board-on run beat every board-off run\">\u2713</span>' : '';\n        return `${fmt(ma)} \u2192 <b>${fmt(mb)}</b>${ma && ma !== mb && !noPct ? ` <span class=\"dim\">${pct(ma, mb)}</span>` : ''}${sig}`;\n      };\n      const tests = [['time', tOff, tOn], ['cost', uOff, uOn], ['duplicates', dOff, dOn]].map(([k, a, b]) => (a.length && b.length ? [k, mwP(a, b), med(a), med(b)] : null)).filter(Boolean);\n      const better = tests.filter(([, t, a, b]) => t.separated && b < a).map(([k]) => k);\n      // Better in the median by > 15% but the runs overlap: say so, with the p.\n      const leaning = tests.filter(([k, t, a, b]) => !better.includes(k) && a > 0 && b < a * 0.85).map(([k, t]) => `${k === 'time' ? 'faster' : k === 'cost' ? 'cheaper' : 'fewer duplicates'} in the median, but not conclusive with ${c.off.length} runs each (p = ${t.p.toFixed(1)})`);\n      const bOff = c.off.map((r) => r.counts?.bounces).filter((x) => x != null), bOn = c.on.map((r) => r.counts?.bounces).filter((x) => x != null);\n      const bounceNote = bOn.length && bOn.every((x) => x === 0) && bOff.some((x) => x > 0) ? `No change was sent back with the board on (${bOff.join(', ')} with it off).` : '';\n      const note = [better.length ? `Every board-on run beat every board-off run on ${better.join(', ')} (exact test p = ${tests.find(([k]) => k === better[0])[1].p.toFixed(1)}, the smallest possible with ${c.off.length} runs each).` : '',\n        leaning.length ? `${leaning.join('; ').replace(/^./, (x) => x.toUpperCase())}.` : '', bounceNote].filter(Boolean).join(' ') || 'No clear difference with these runs.';\n      return `<div class=\"abc\"><p class=\"abt\"><b>${esc(label(c))}</b> <span class=\"dim small\">${c.off.length} runs off, ${c.on.length} on</span></p>\n        <dl><dt>Time</dt><dd>${cell(tOff, tOn, mins, true)}</dd><dt>Cost at API prices</dt><dd>${cell(uOff, uOn, usd, true)}</dd>\n        <dt>Duplicate pairs built twice</dt><dd>${cell(dOff, dOn, (x) => `${Math.round(x)} of ${c.off[0].quality?.duplicates?.pairs ?? '?'}`, true, true)}</dd><dt>Hidden tests passed</dt><dd>${hid(c.off) ?? '\u2013'}% \u2192 ${hid(c.on) ?? '\u2013'}%</dd></dl>\n        <p class=\"dim small\">${note}</p></div>`;\n    }).join('');\n    if (!rows) return '';\n    return `<section class=\"sec\" id=\"board-ab\"><h2>The agent board</h2>\n      <p class=\"cap\">Agents pick their own tasks from a list (30 tasks, 5 of them asked twice in different words). With the board on, each agent says what it is doing and which files it touches, and a duplicate check merges repeated tasks. Board off against board on, 6 Haiku coding agents, medians of 3 real runs each.</p>\n      <p class=\"small dim\">Each line reads board off \u2192 <b>board on</b>.</p><div class=\"abs\">${rows}</div>\n      <p class=\"small dim\">\u2713 = every board-on run did better than every board-off run. Plain git means a conflict sends the agent back to rebase; the board does not change that.</p></section>`;\n  }\n  function foundView() {\n    const rows = []; let anyNc = false;\n    for (const sc of SCEN) {\n      const keep = st.scenario; st.scenario = sc.id; const gs = groups(); st.scenario = keep;\n      const oa = gs.find((g) => g.baseline === 'opus-alone' && g.quality != null), sw = bestOf(gs);\n      if (!oa || !sw) continue;\n      const ha = oa.hidden != null && oa.hiddenOf ? Math.round(oa.hidden * oa.hiddenOf) : null, hs = sw.hidden != null && sw.hiddenOf ? Math.round(sw.hidden * sw.hiddenOf) : null;\n      const SHORT = { 'a person had to step in during the run (a platform bug, since fixed)': 'a person stepped in', 'a platform stall': 'platform stall', 'only an upper bound is known': 'upper bound only', 'only a lower bound is known': 'lower bound only' };\n      const nc = (why) => `<span class=\"dim\">Not comparable${why ? ` (${esc(SHORT[why] || why)})` : ''}</span>`;\n      if ((oa.wallS == null || sw.wallS == null) || (oa.usd == null || sw.usd == null)) anyNc = true;\n      const fast = oa.wallS == null || sw.wallS == null ? nc((oa.wallS == null ? oa : sw).timeNot) : tTie(oa, sw) ? 'Within 15%' : oa.wallS < sw.wallS ? `One agent, ${(sw.wallS / oa.wallS).toFixed(1)}\xD7` : `Several, ${(oa.wallS / sw.wallS).toFixed(1)}\xD7`;\n      const cost = oa.usd == null || sw.usd == null ? nc((oa.usd == null ? oa : sw).costNot) : sw.usd < oa.usd ? `Several, ${Math.round((1 - sw.usd / oa.usd) * 100)}% less` : `One agent, ${Math.round((1 - oa.usd / sw.usd) * 100)}% less`;\n      const tc = oa.floor?.typecheck && sw.floor && !sw.floor.typecheck ? '; several agents failed the strict type check' : sw.floor?.typecheck && oa.floor && !oa.floor.typecheck ? '; one agent failed the strict type check' : '';\n      const qual = (qTie(oa, sw) ? `Tie${ha != null && ha === hs ? ` (${ha}/${oa.hiddenOf})` : ''}` : ha != null && hs != null && ha !== hs ? `${ha > hs ? 'One agent' : 'Several'}, +${Math.abs(ha - hs)} hidden test${Math.abs(ha - hs) === 1 ? '' : 's'}` : `${oa.quality > sw.quality ? 'One agent' : 'Several'}`) + tc;\n      rows.push(`<tr><th scope=\"row\">${esc(sc.title)}${jobOpen(sc.id) ? ' <span class=\"dim\">(running)</span>' : ''}</th><td>${fast}</td><td>${cost}</td><td>${qual}</td></tr>`);\n    }\n    if (!rows.length) return '';\n    return `<section class=\"sec\" id=\"found\"><h2>What we found</h2>\n      <p class=\"cap\">One Opus agent alone against the best setup with several agents, on each job (medians of the real runs; a run hit by a platform bug counts for quality but not for time or cost).</p>\n      <div class=\"tw\"><table class=\"found\"><thead><tr><th scope=\"col\">Job</th><th scope=\"col\">Faster</th><th scope=\"col\">Cheaper at API prices</th><th scope=\"col\">Hidden tests</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>${anyNc ? '<p class=\"small dim\">Not comparable: those runs hit platform bugs that were fixed later (a person had to step in, or a stall), or their cost is only known as a bound. Their quality still counts.</p>' : ''}</section>`;\n  }\n  function funnelView() {\n    const list = STAGES.slice();\n    if (STAGE0 && !list.some((x) => x.stage === 0)) list.push({ stage: 0, setups: STAGE0.combos, runs: STAGE0.combos * STAGE0.seeds, kept: STAGE0.picks?.length, notes: 'Simulation only: every combination, no model calls.' });\n    if (!list.length) return '';\n    const NAMES = { 0: 'Simulation', 1: 'Small real runs', 2: 'More agents, more repetitions', 3: 'At scale' };\n    return `<section class=\"sec\" id=\"funnel\"><h2>How setups are picked</h2>\n      <p class=\"cap\">Every combination is simulated for free; only the best few are run for real, each stage with its own budget.</p>\n      <ol class=\"funnel\">${list.sort((a, b) => a.stage - b.stage).map((s) => `<li><b>Stage ${s.stage}: ${esc(NAMES[s.stage] || '')}</b><span>${[s.setups != null ? `${Number(s.setups).toLocaleString('en-US')} setup${s.setups === 1 ? '' : 's'}` : null, s.runs != null && s.runs !== s.setups ? `${Number(s.runs).toLocaleString('en-US')} ${s.stage === 0 ? 'simulated runs' : 'runs'}` : null].filter(Boolean).join(', ')}${s.kept != null ? `; ${s.kept} kept` : ''}${s.apiUsdStd ? `; ${usd(s.apiUsdStd)} at API prices` : ''}${s.usdReal ? `; ${usd(s.usdReal)} real spend` : ''}${s.quotaPctAccount ? `; ${s.quotaPctAccount}% of the weekly Claude quota (account-wide meter)` : ''}</span>${s.notes ? `<span class=\"dim\">${esc(s.notes)}</span>` : ''}</li>`).join('')}</ol></section>`;\n  }\n\n  // ---- render, events ----------------------------------------------------------------------------\n  const pop = document.createElement('div'); pop.className = 'lab-pop'; pop.id = 'lab-pop'; pop.setAttribute('popover', ''); document.body.appendChild(pop);\n  function render() {\n    if (!loaded) { root.innerHTML = '<p class=\"dim\">Loading the lab\u2026</p>'; return; }\n    root.innerHTML = `${MOCK || RUNS.some((r) => r.mock) ? '<div class=\"mock\"><b>Sample data.</b> These results are invented to show the page; real runs replace them.</div>' : ''}\n      <h1>Variants lab</h1>\n      <p class=\"lede\">Is one strong agent better than many? How many, checked by whom, landing how? We predict every setup with a simulation, run the best ones on real jobs, and score what they built with tests the agents never saw.</p>\n      ${foundView()}${boardABView()}${tryView()}${picksView()}${resultsView()}${funnelView()}`;\n  }\n  function setUrl() {\n    const u = new URL(location.href); u.searchParams.set('s', st.scenario); u.searchParams.set('v', JSON.stringify(st.v)); history.replaceState(null, '', u);\n  }\n  root.addEventListener('click', async (e) => {\n    const o = e.target.closest('[data-k]');\n    if (o) { st.v[o.dataset.k] = JSON.parse(o.dataset.val); setUrl(); render(); return; }\n    const pk = e.target.closest('[data-pick]');\n    if (pk) { Object.assign(st.v, JSON.parse(pk.dataset.pick)); setUrl(); render(); document.getElementById('try')?.scrollIntoView({ block: 'start' }); return; }\n    const sc = e.target.closest('[data-scen]');\n    if (sc) { st.scenario = sc.dataset.scen; st.open = null; setUrl(); render(); return; }\n    const op = e.target.closest('[data-open]');\n    if (op) { st.open = st.open === op.dataset.open ? null : op.dataset.open; render(); if (st.open) root.querySelector('.rows li.open')?.scrollIntoView({ block: 'nearest' }); return; }\n    const g = e.target.closest('[data-gloss]');\n    if (g) { pop.innerHTML = `<b>${esc(KNOBS[g.dataset.gloss]?.label || '')}</b><p>${esc(GLOSS[g.dataset.gloss])}</p>`; pop.showPopover?.(); return; }\n    const cp = e.target.closest('[data-copy]');\n    if (cp) { try { await navigator.clipboard.writeText(cp.dataset.copy); cp.textContent = 'Copied'; } catch { cp.textContent = 'Select and copy it above'; } }\n  });\n  root.addEventListener('toggle', (e) => { if (e.target.matches('details.more')) st.more = e.target.open; }, true);\n  root.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('g.pt')) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); } });\n  render();\n  load().then(render, (e) => { log('load_failed', { error: String(e) }); root.innerHTML = '<p class=\"dim\">Could not load the lab. Try again later.</p>'; });\n})();\n";
+var LAB_CSS = `/* Variants lab (qb7). Tokens only (DESIGN.md). Charts: accent = this setup / a setup; the
+   baselines are a neutral with a hatch and squares, always labelled (validated 2026-10-08:
+   accent vs neutral dE 37 normal, 34 CVD; neutral relies on labels). */
+#lab{--ctx:color-mix(in srgb,var(--dim) 45%,var(--bg));font-variant-numeric:tabular-nums}
+#lab *{box-sizing:border-box}
+#lab p{margin:0}
+#lab h1{font-size:26px;font-weight:600;letter-spacing:-.02em;margin:8px 0 6px}
+#lab h2{font-size:19px;font-weight:600;letter-spacing:-.015em;margin:0 0 4px}
+#lab .lede{color:var(--dim);font-size:15px;max-width:60ch}
+#lab .sec{margin-top:28px}
+#lab .cap{font-size:14px;color:var(--dim);margin-bottom:12px;max-width:60ch}
+#lab .dim{color:var(--dim)}
+#lab .small{font-size:13px}
+#lab button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+#lab .mock{background:color-mix(in srgb,var(--busy) 10%,var(--card));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--busy) 35%,var(--line));border-radius:12px;padding:10px 12px;font-size:14px;margin:4px 0 8px}
+#lab .mock b{font-weight:600}
+
+/* Scenario cards */
+#lab .scen{display:grid;gap:8px;margin-bottom:14px}
+#lab .sc{display:flex;flex-direction:column;gap:2px;text-align:left;border:0;cursor:pointer;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:10px 12px;min-height:44px;transition:background-color 120ms}
+#lab .sc b{font-weight:600;font-size:15px}
+#lab .sc span{font-size:13px;color:var(--dim)}
+#lab .sc[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--fg)}
+
+/* Knobs */
+#lab .knobs{display:grid;gap:10px;margin-bottom:14px}
+#lab .knob{display:grid;gap:4px}
+#lab .kl{font-size:13px;color:var(--dim);display:flex;align-items:center;gap:6px}
+#lab .gl{width:22px;height:22px;border-radius:50%;border:0;background:var(--chip);color:var(--dim);font-size:12px;cursor:pointer;position:relative;padding:0}
+#lab .gl::before{content:'';position:absolute;inset:-11px}
+#lab .opts{display:flex;flex-wrap:wrap;gap:6px}
+#lab .opt{border:0;cursor:pointer;background:var(--chip);border-radius:10px;min-height:40px;padding:0 12px;font-size:14px;transition:background-color 120ms}
+#lab .opt[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+
+/* Prediction */
+#lab .predbox{background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:14px;padding:14px;display:grid;gap:14px}
+#lab .pred{font-size:15px}
+#lab .pred b{font-weight:600}
+#lab .bars{display:grid;gap:4px}
+#lab .bt{font-size:13px;font-weight:600}
+#lab .bt .dim{font-weight:400}
+#lab .br{display:grid;grid-template-columns:minmax(0,9.5em) 1fr auto;gap:8px;align-items:center;font-size:13px}
+#lab .bn{color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#lab .br.me .bn{color:var(--fg);font-weight:500}
+#lab .bw{height:12px;border-radius:2px}
+#lab .bw i{display:block;height:100%;border-radius:0 4px 4px 0;background:var(--ctx);background-image:repeating-linear-gradient(135deg,transparent 0 3px,color-mix(in srgb,var(--bg) 55%,transparent) 3px 5px)}
+#lab .br.me .bw i{background:var(--acc)}
+#lab .bv{min-width:4.5em;text-align:right}
+
+/* Run for real (owner) */
+#lab .real{margin-top:12px}
+#lab .real summary{list-style:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+#lab .real summary::-webkit-details-marker{display:none}
+#lab .btn{font-weight:500;border:0;background:var(--acc);color:var(--acc-fg);border-radius:10px;min-height:44px;padding:0 18px}
+#lab .chipb{border:0;cursor:pointer;background:var(--chip);border-radius:10px;min-height:44px;padding:0 14px;font-size:14px}
+#lab .realb{display:grid;gap:8px;margin-top:10px}
+#lab .cmd{margin:0;padding:10px 12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;overflow-x:auto;font:12.5px/1.5 'JetBrains Mono',ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Results */
+#lab .cmp{display:grid;gap:4px;font-size:15px;margin-bottom:12px}
+#lab .cmp b{font-weight:600}
+#lab .sc-plot{width:100%;height:auto;display:block;overflow:visible}
+#lab .sc-plot .grid{stroke:var(--line);stroke-width:1}
+#lab .sc-plot .ax{fill:var(--dim);font-size:11px}
+#lab .sc-plot .hit{fill:transparent}
+#lab .sc-plot .pt{cursor:pointer;outline:none}
+#lab .sc-plot .m.vr{fill:var(--acc);stroke:var(--bg);stroke-width:2}
+#lab .sc-plot .m.bl{fill:var(--fg);stroke:var(--bg);stroke-width:2}
+#lab .sc-plot .m.best{stroke:var(--acc);stroke-width:3;fill:var(--acc);paint-order:stroke}
+#lab .sc-plot .m.on{stroke:var(--fg);stroke-width:2.5}
+#lab .sc-plot .pd{fill:none;stroke:var(--dim);stroke-width:1.5;stroke-dasharray:2 2}
+#lab .sc-plot .pl{stroke:var(--dim);stroke-width:1;stroke-dasharray:2 3}
+#lab .sc-plot .dl{fill:var(--fg);font-size:11.5px;paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
+#lab .sc-plot .pt:focus-visible .m{stroke:var(--fg);stroke-width:3}
+#lab .key{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--dim);margin:6px 0 2px}
+#lab .key span{display:inline-flex;align-items:center;gap:6px}
+#lab .k{display:inline-block;width:10px;height:10px;flex:none}
+#lab .k.vr{border-radius:50%;background:var(--acc)}
+#lab .k.bl{border-radius:2px;background:var(--fg)}
+#lab .k.pd{border-radius:50%;border:1.5px dashed var(--dim)}
+#lab .rows{list-style:none;margin:12px 0 0;padding:0}
+#lab .rows>li{box-shadow:inset 0 -1px 0 var(--line)}
+#lab .rw{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline;width:100%;text-align:left;border:0;background:none;cursor:pointer;padding:10px 0;min-height:44px}
+#lab .rw .k{transform:translateY(-1px)}
+#lab .rw .t{font-size:15px}
+#lab .rw .nums{grid-column:2;display:flex;gap:14px;font-size:14px}
+#lab .rw .sub{grid-column:2;font-size:13px;color:var(--dim)}
+#lab .det{padding:0 0 12px 20px;display:grid;gap:8px}
+#lab .runs{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#lab .runs li{display:grid;gap:2px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+#lab .runs .rn{font-weight:600}
+#lab .runs .rw2{color:var(--dim);font-size:13px}
+#lab .runs .lk{display:flex;flex-wrap:wrap;gap:4px 14px}
+#lab .runs .lk a{color:var(--acc);min-height:32px;display:inline-flex;align-items:center}
+#lab .warn{color:var(--warn);font-weight:500}
+
+/* Funnel */
+#lab .funnel{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:none}
+#lab .funnel li{display:grid;gap:2px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+#lab .funnel b{font-weight:600}
+
+.lab-pop{margin:auto auto 16px;max-width:min(92vw,420px);border:0;border-radius:14px;background:var(--bg);color:var(--fg);box-shadow:0 0 0 1px var(--line),0 12px 40px rgba(0,0,0,.18);padding:16px;font:400 15px/1.45 Geist,sans-serif}
+.lab-pop::backdrop{background:rgba(0,0,0,.25)}
+.lab-pop b{display:block;font-weight:600;margin-bottom:4px}
+.lab-pop p{margin:0}
+@media (hover:hover){#lab .sc:hover,#lab .opt:hover{background:var(--line)}#lab .opt[aria-pressed="true"]:hover{background:var(--fg)}#lab .rw:hover .t{color:var(--acc)}}
+@media (min-width:640px){#lab .scen{grid-template-columns:1fr 1fr}#lab .knobs{grid-template-columns:1fr 1fr;gap:12px 20px}}
+
+#lab details.more{margin:-4px 0 14px}
+#lab details.more summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;display:flex;align-items:center;list-style:none}
+#lab details.more summary::-webkit-details-marker{display:none}
+#lab .pin{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom));z-index:5;display:flex;gap:12px;align-items:baseline;margin-top:12px;background:var(--fg);color:var(--bg);border-radius:12px;padding:10px 14px;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+#lab .pin span{flex:1;opacity:.75}
+#lab .pin b{font-weight:600}
+#lab .ct{font-size:13px;font-weight:600;margin:4px 0 2px}
+#lab .picks{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#lab .picks li{display:grid;gap:4px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+#lab .picks b{font-weight:600}
+#lab .picks .nums{display:flex;gap:14px}
+#lab .picks .chipb{justify-self:start;min-height:40px}
+#lab .plan{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#lab .plan li{display:grid;grid-template-columns:28px 1fr;gap:10px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+#lab .plan .no{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--chip);font-weight:600;font-size:13px}
+#lab .plan li.done .no{background:var(--acc);color:var(--acc-fg)}
+#lab .plan .pb{display:grid;gap:2px;min-width:0}
+#lab .plan b{font-weight:600}
+#lab .plan .act{color:var(--fg)}
+#lab .plan .act a{color:var(--acc)}
+#lab .fh{font-size:15px;font-weight:600;margin:20px 0 4px}
+#lab .runs.ex li{opacity:.7}
+#lab details.oldplan{margin-top:14px}
+#lab details.oldplan summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;display:flex;align-items:center;list-style:none}
+#lab details.oldplan summary::-webkit-details-marker{display:none}
+#lab .tw{overflow-x:auto;margin:0 -2px}
+#lab table.found{width:100%;border-collapse:collapse;font-size:14px}
+#lab table.found th,#lab table.found td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+#lab table.found thead th{font-size:13px;font-weight:500;color:var(--dim)}
+#lab table.found tbody th{font-weight:500}
+#lab table.found tr.bnote-row td{padding-top:0;border-bottom:1px solid var(--line)}
+#lab table.found tr:has(+ tr.bnote-row) th,#lab table.found tr:has(+ tr.bnote-row) td{border-bottom:0}
+#lab .sep{color:var(--acc);font-weight:600}
+#lab .abs{display:grid;gap:8px;margin-top:8px}
+#lab .abc{display:grid;gap:8px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:12px 14px}
+#lab .abt b{font-weight:600}
+#lab .abc dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;font-size:14px}
+#lab .abc dt{color:var(--dim)}
+#lab .abc dd{margin:0;text-align:right;white-space:nowrap}
+#lab .abc dd b{font-weight:600}
+`;
+
+// ../src/landingui/labview.ts
+function labPage(o2) {
+  return shell("Variants lab \xB7 qodebase", `<style>${LAB_CSS}</style><div id="lab"${o2.own ? " data-own" : ""}></div><script>${LAB_JS}<\/script>`);
+}
+__name(labPage, "labPage");
 
 // ../src/catalog.json
 var catalog_default = {
@@ -17576,7 +18273,7 @@ var WORLD_CSS = `
 @media (hover:hover){.pc:hover{background:var(--chip)}}
 `;
 function worldBody(tab, real, signedIn, opts = {}) {
-  real = real.filter((e2) => !e2.private);
+  real = real.filter((e2) => !e2.private && !e2.unlisted);
   const sub = /* @__PURE__ */ __name((id, labelT) => `<a href="/${id === "projects" ? "" : `?s=${id}`}" data-tab="${id}" class="${tab === id ? "on" : ""}"${tab === id ? ' aria-current="page"' : ""}>${labelT}</a>`, "sub");
   const head3 = `<nav class="sub3" aria-label="Home">${sub("projects", "Projects")}${sub("people", "People")}</nav>`;
   const body = `<section data-panel="projects"${tab === "projects" ? "" : " hidden"}>${catalogBody(real, { cat: opts.tag, sort: opts.sort })}</section>
@@ -17622,6 +18319,15 @@ var HOME_JS = String.raw`(function(){
  addEventListener('popstate',()=>{st=read();apply(false);});
  document.querySelector('.cats a.on')?.scrollIntoView({inline:'center',block:'nearest'});
 })();`;
+
+// ../src/landingui/view.ts
+var esc7 = /* @__PURE__ */ __name((s2) => s2.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]), "esc");
+function workBody(o2) {
+  const api = `/api/p/${encodeURIComponent(o2.owner)}/${encodeURIComponent(o2.name)}`;
+  return `<style>${WORK_CSS}</style><div id="lw" data-src="${o2.mock ? "/landing-mock.json" : `${api}/landing`}" data-api="${esc7(api)}" data-name="${esc7(o2.name)}"${o2.own ? " data-own" : ""}${o2.mock ? " data-mock" : ""}></div>`;
+}
+__name(workBody, "workBody");
+var workJs = /* @__PURE__ */ __name(() => WORK_JS, "workJs");
 
 // ../src/v2.ts
 var uiOf = /* @__PURE__ */ __name((request) => {
@@ -18287,7 +18993,7 @@ function fixtureData(runBase, mode) {
 __name(fixtureData, "fixtureData");
 
 // ../src/v3.ts
-var VIEW_IDS = ["readme", "changes", "app", "code", "history", "more", "agents", "errors"];
+var VIEW_IDS = ["readme", "changes", "app", "code", "history", "more", "agents", "errors", "work"];
 function docRank(path2) {
   const name = path2.split("/").pop();
   const base = name.replace(/\.[a-z]+$/i, "").toUpperCase();
@@ -18313,7 +19019,8 @@ var ICONS = {
   agents: I('<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 4v4M9 13h.01M15 13h.01"/>'),
   errors: I('<path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/>'),
   about: I('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/>'),
-  readme: I('<path d="M5 4h10l4 4v12H5z"/><path d="M14 4v5h5M8.5 13h7M8.5 16.5h5"/>')
+  readme: I('<path d="M5 4h10l4 4v12H5z"/><path d="M14 4v5h5M8.5 13h7M8.5 16.5h5"/>'),
+  work: I('<rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/>')
 };
 var needsOf = /* @__PURE__ */ __name((open2) => open2.filter((c) => primary(c)), "needsOf");
 var FOOT = `<p class="foot3"><a href="/about">About</a><a href="/privacy">Privacy</a><a href="/feedback" data-fb>Feedback</a></p>
@@ -18439,7 +19146,8 @@ ${chips}${doc}${cur ? `<p class="srcl"><a href="/p/${info.owner}/${info.name}/co
 }
 __name(readmeView, "readmeView");
 function moreMenu(c) {
-  const extra = VIEWS.filter((v) => !v.tab && v.when(c));
+  const tabs = tabsFor(c).map((v) => v.id);
+  const extra = VIEWS.filter((v) => !tabs.includes(v.id) && v.id !== "more" && v.id !== "changes" && v.when(c) && (v.desc || v.id === "readme")).map((v) => v.id === "readme" ? { ...v, desc: "The project's README and other documents" } : v);
   return `${c.own ? visibilityRow(c) : ""}<div class="menu">${extra.map((v) => `<a class="mi" href="${c.base}/${v.id}">${v.icon}<span><b>${v.label}</b><span>${v.desc}</span></span></a>`).join("")}
 <a class="mi" href="/settings">${ICONS.about}<span><b>Account</b><span>Your name${c.own ? "" : ", your Anthropic API key"}, sign out</span></span></a>
 <a class="mi" href="/">${ICONS.app}<span><b>All projects</b><span>Your projects and Explore</span></span></a>
@@ -18471,10 +19179,20 @@ var VIEWS = [
   { id: "more", label: "More", icon: ICONS.more, tab: true, when: /* @__PURE__ */ __name((c) => c.own, "when"), render: moreView },
   { id: "history", label: "History", icon: ICONS.history, desc: "Merged changes, commits, deploys and forks, by day", when: /* @__PURE__ */ __name(() => true, "when"), render: historyView },
   { id: "agents", label: "Agents", icon: ICONS.agents, desc: "The router, the reviewer and each change's agent: chat or terminal", when: /* @__PURE__ */ __name((c) => c.own, "when"), render: agentsView },
+  // Agents at work (qb7, src/landingui): many agents at once, the merge queue, who works where.
+  {
+    id: "work",
+    label: "Agents at work",
+    icon: ICONS.work,
+    desc: "Every agent changing the project at once: where they work, the line their changes wait in, how each landed",
+    when: /* @__PURE__ */ __name(() => true, "when"),
+    render: /* @__PURE__ */ __name((c) => ({ body: workBody({ owner: c.info.owner, name: c.info.name, own: c.own }), js: workJs() }), "render")
+  },
   { id: "errors", label: "Errors", icon: ICONS.errors, desc: "Production errors from Cloudflare Issues and the fixes they started", when: /* @__PURE__ */ __name((c) => c.worker, "when"), render: errorsView }
 ];
 function tabsFor(c) {
-  return c.own ? VIEWS.filter((v) => v.tab && v.when(c)) : VIEWS.filter((v) => ["readme", "app", "code", "history"].includes(v.id));
+  const tabs = c.own ? VIEWS.filter((v) => v.tab && v.when(c)) : VIEWS.filter((v) => ["readme", "app", "code", "history"].includes(v.id));
+  return c.info.landing ? tabs.map((v) => v.id === "readme" ? VIEWS.find((x) => x.id === "work") : v) : tabs;
 }
 __name(tabsFor, "tabsFor");
 function tabBar(c, active, needs, top2 = false) {
@@ -18600,7 +19318,7 @@ function projectV3(o2) {
   const worker = (o2.overview.kind ?? info.kind) === "worker";
   const { open: open2, done } = changesOf(info, o2.status, o2.runBase);
   const c = { ...o2, own: own2, worker, base: o2.base || `/p/${info.owner}/${info.name}`, status: o2.status, router: o2.router, reviewer: o2.reviewer, open: open2, done, plan: planningOf(info, o2.router), tryAgent: o2.tryAgent, docs: o2.docs };
-  let id = o2.view || "readme";
+  let id = o2.view || (info.landing ? "work" : "readme");
   let v = VIEWS.find((x) => x.id === id && x.when(c) && x.render);
   if (!v) {
     id = "readme";
@@ -19426,12 +20144,12 @@ if(C.length)document.getElementById('sum').innerHTML=C.length+' file'+(C.length>
 __name(changesPage, "changesPage");
 
 // ../src/pages.ts
-var esc7 = /* @__PURE__ */ __name((s2) => s2.replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[c]), "esc");
+var esc8 = /* @__PURE__ */ __name((s2) => s2.replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[c]), "esc");
 var startingPage = /* @__PURE__ */ __name((name, error62) => new Response(
-  `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Starting ${esc7(name)}</title>
+  `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Starting ${esc8(name)}</title>
 <body style="margin:0;height:100dvh;display:flex;align-items:center;justify-content:center;background:#141516;color:#e8e8e6;font:15px system-ui;padding:0 16px">
-<div style="text-align:center"><div style="font-weight:600">Starting ${esc7(name)}\u2026</div><div id="el" style="margin-top:8px;font-size:20px;font-variant-numeric:tabular-nums">0s</div>
-<div id="sub" style="margin-top:6px;font-size:13px;color:#9a9da2">${error62 ? esc7(error62) : "usually ready in a few seconds"}</div></div>
+<div style="text-align:center"><div style="font-weight:600">Starting ${esc8(name)}\u2026</div><div id="el" style="margin-top:8px;font-size:20px;font-variant-numeric:tabular-nums">0s</div>
+<div id="sub" style="margin-top:6px;font-size:13px;color:#9a9da2">${error62 ? esc8(error62) : "usually ready in a few seconds"}</div></div>
 <script>const t0=Date.now(),el=document.getElementById('el'),sub=document.getElementById('sub');
 setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);el.textContent=s+'s';if(s>20&&!${JSON.stringify(!!error62)})sub.textContent='the first start on a new host downloads the image (a couple of minutes)';},500);
 (async function poll(){try{const r=await fetch(location.href,{cache:'no-store',headers:{accept:'text/html'}});if(r.ok){location.replace(location.href);return;}}catch{}setTimeout(poll,2500);})();<\/script></body>`,
@@ -19522,32 +20240,32 @@ button.btn{border:0;cursor:pointer;font:600 15px 'Geist',sans-serif;width:100%;j
 .small{font-size:13px;color:var(--dim)}
 .linkbtn{background:none;border:0;color:var(--acc);font:inherit;padding:0;cursor:pointer;min-height:44px}
 `;
-var esc8 = /* @__PURE__ */ __name((s2) => s2.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]), "esc");
+var esc9 = /* @__PURE__ */ __name((s2) => s2.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]), "esc");
 function installPage(st) {
-  if (st.kind === "error") return shell3("Could not connect \xB7 qodebase", `<h1>That did not work</h1><p class="err">${esc8(st.text)}</p><div class="btns"><a class="btn pri wide" href="${esc8(st.next)}">Back</a></div>`);
-  if (st.kind === "connect") return shell3(`Install ${st.template.title} \xB7 qodebase`, `<h1>Install ${esc8(st.template.title)}</h1>
+  if (st.kind === "error") return shell3("Could not connect \xB7 qodebase", `<h1>That did not work</h1><p class="err">${esc9(st.text)}</p><div class="btns"><a class="btn pri wide" href="${esc9(st.next)}">Back</a></div>`);
+  if (st.kind === "connect") return shell3(`Install ${st.template.title} \xB7 qodebase`, `<h1>Install ${esc9(st.template.title)}</h1>
 <ul class="pts"><li>It goes into <b>your</b> Cloudflare account</li><li>qodebase asks Cloudflare for permission once</li><li>No GitHub, no keys to copy</li></ul>
-<div class="btns"><a class="btn pri wide" href="${esc8(st.startHref)}">Sign in with Cloudflare</a></div>
+<div class="btns"><a class="btn pri wide" href="${esc9(st.startHref)}">Sign in with Cloudflare</a></div>
 <p class="small">No account yet? You can make one on the same screen. You can take qodebase's access back any time in your Cloudflare profile.</p>`);
   const many = st.accounts.length > 1;
-  return shell3(`Install ${st.template.title} \xB7 qodebase`, `<h1>Install ${esc8(st.template.title)}</h1>
-${st.error ? `<p class="err">${esc8(st.error)}</p>` : ""}
+  return shell3(`Install ${st.template.title} \xB7 qodebase`, `<h1>Install ${esc9(st.template.title)}</h1>
+${st.error ? `<p class="err">${esc9(st.error)}</p>` : ""}
 <form method="post">
 <div class="field"><label for="name">Name</label>
-<input id="name" name="name" value="${esc8(st.name)}" required pattern="[a-z][a-z0-9-]{1,38}[a-z0-9]" autocapitalize="none" autocomplete="off" spellcheck="false" inputmode="url">
+<input id="name" name="name" value="${esc9(st.name)}" required pattern="[a-z][a-z0-9-]{1,38}[a-z0-9]" autocapitalize="none" autocomplete="off" spellcheck="false" inputmode="url">
 <span class="hint">Lowercase letters, numbers and dashes. It becomes the address.</span></div>
-${many ? `<div class="field"><label for="account">Cloudflare account</label><select id="account" name="account">${st.accounts.map((a2) => `<option value="${esc8(a2.id)}">${esc8(a2.name)}</option>`).join("")}</select></div>` : `<input type="hidden" name="account" value="${esc8(st.accounts[0]?.id || "")}"><p class="small">Into ${esc8(st.accounts[0]?.name || "")}</p>`}
+${many ? `<div class="field"><label for="account">Cloudflare account</label><select id="account" name="account">${st.accounts.map((a2) => `<option value="${esc9(a2.id)}">${esc9(a2.name)}</option>`).join("")}</select></div>` : `<input type="hidden" name="account" value="${esc9(st.accounts[0]?.id || "")}"><p class="small">Into ${esc9(st.accounts[0]?.name || "")}</p>`}
 <div class="btns"><button class="btn pri" type="submit">Install</button></div>
 </form>
 <form method="post" action="/connect/cf/disconnect?next=/personal-agents"><button class="linkbtn" type="submit">Disconnect Cloudflare</button></form>`);
 }
 __name(installPage, "installPage");
 function installProgressPage(v) {
-  const body = `<h1 id="h">${v.url ? `${esc8(v.name)} is ready` : v.error ? "Install stopped" : `Installing ${esc8(v.name)}`}</h1>
-<p class="small">${esc8(v.title)} into ${esc8(v.accountName)}</p>
+  const body = `<h1 id="h">${v.url ? `${esc9(v.name)} is ready` : v.error ? "Install stopped" : `Installing ${esc9(v.name)}`}</h1>
+<p class="small">${esc9(v.title)} into ${esc9(v.accountName)}</p>
 ${v.url || v.error ? "" : `<p class="small">Usually under a minute. You can leave this page; it keeps going.</p>`}
-<ul class="steps" id="steps">${v.steps.map((s2) => `<li><span class="dot ${esc8(s2.state)}"></span><div><div class="t">${esc8(s2.label)}</div>${s2.note ? `<div class="n">${esc8(s2.note)}</div>` : ""}</div></li>`).join("")}</ul>
-<div id="end">${v.url ? `<div class="btns"><a class="btn pri wide" href="${esc8(v.url)}">Open ${esc8(v.title)}</a></div><p class="addr">${esc8(v.url)}</p><p class="small">It is locked to you, so the first time you open it Cloudflare asks you to sign in once more. Choose <b>Cloudflare</b> (quickest if this browser is signed in to the Cloudflare dashboard) or <b>get a code by email</b>.</p>${v.extra ? `<div class="btns"><a class="btn sec wide" href="${esc8(v.extra.href)}">${esc8(v.extra.text)}</a></div>` : ""}<p class="small">Only you can open it. The first visit asks you to sign in with Cloudflare.${v.wakes ? " The first start takes about a minute; after that it sleeps when idle and wakes in seconds." : ""}</p>` : v.error ? `<p class="err">${esc8(v.error)}</p>${v.fix ? `<div class="btns"><a class="btn pri wide" href="${esc8(v.fix.href)}">${esc8(v.fix.text)}</a></div>` : ""}<div class="btns"><a class="btn sec wide" href="/personal-agents">Back</a></div>${v.log ? `<details><summary>Details</summary><pre class="addr" style="white-space:pre-wrap">${esc8(v.log)}</pre></details>` : ""}` : ""}</div>`;
+<ul class="steps" id="steps">${v.steps.map((s2) => `<li><span class="dot ${esc9(s2.state)}"></span><div><div class="t">${esc9(s2.label)}</div>${s2.note ? `<div class="n">${esc9(s2.note)}</div>` : ""}</div></li>`).join("")}</ul>
+<div id="end">${v.url ? `<div class="btns"><a class="btn pri wide" href="${esc9(v.url)}">Open ${esc9(v.title)}</a></div><p class="addr">${esc9(v.url)}</p><p class="small">It is locked to you, so the first time you open it Cloudflare asks you to sign in once more. Choose <b>Cloudflare</b> (quickest if this browser is signed in to the Cloudflare dashboard) or <b>get a code by email</b>.</p>${v.extra ? `<div class="btns"><a class="btn sec wide" href="${esc9(v.extra.href)}">${esc9(v.extra.text)}</a></div>` : ""}<p class="small">Only you can open it. The first visit asks you to sign in with Cloudflare.${v.wakes ? " The first start takes about a minute; after that it sleeps when idle and wakes in seconds." : ""}</p>` : v.error ? `<p class="err">${esc9(v.error)}</p>${v.fix ? `<div class="btns"><a class="btn pri wide" href="${esc9(v.fix.href)}">${esc9(v.fix.text)}</a></div>` : ""}<div class="btns"><a class="btn sec wide" href="/personal-agents">Back</a></div>${v.log ? `<details><summary>Details</summary><pre class="addr" style="white-space:pre-wrap">${esc9(v.log)}</pre></details>` : ""}` : ""}</div>`;
   const poll = v.url || v.error ? "" : `<script>
 (function(){var t=setInterval(function(){fetch(location.pathname+'.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){
 if(v.url||v.error){clearInterval(t);location.reload();return}
@@ -20218,7 +20936,7 @@ var Installs = class extends DurableObject6 {
     for (const b of buckets) {
       const base = `/accounts/${accountId}/r2/buckets/${b}`;
       if ((await cf(token, base)).status === 404) continue;
-      for (let page = 0; page < 20; page++) {
+      for (let page2 = 0; page2 < 20; page2++) {
         const list = await cf(token, `${base}/objects?per_page=1000`);
         const keys = (list.result || []).map((o2) => o2.key);
         if (!keys.length) break;
@@ -20544,6 +21262,7 @@ var ACTIONS = {
   scroll: "Scroll to or show a section of this page (by its heading), or scroll to the top or bottom",
   explain: "Explain, describe or show around the page the person is looking at",
   change: 'Ask for a change in one of the projects: add, fix, change, improve or remove a feature in an app or its code ("in my todo app add due dates", "make the timer chime louder", "fix the dark mode")',
+  list: 'List or name their projects ("list my projects", "what projects do I have", "show me some of my projects")',
   code: `Answer a question about a project's CODE that needs reading it: how something works or is stored, where something is, why it is built a certain way, or a plan for how to change it ("how are tasks stored in my todo app", "why does the timer use a worker", "plan how to add accounts")`,
   status: "Say what is going on across their projects: what their agents are doing, what is ready to merge or review, what changed today or this week, what needs them",
   none: "No action in the app"
@@ -20654,6 +21373,7 @@ function buildQuestions(utterance, s2, projects) {
     mode: choice("Is the sentence a request to do something in the app, a question or conversation to answer, both, or not a request?", MODES),
     action: choice("If it asks to do something in the app, what kind of thing?", ACTIONS),
     complete: noul("The sentence is a finished request or question, not cut off in the middle."),
+    greeting: noul('The sentence is a greeting, thanks, goodbye or small talk to the assistant ("hi", "hello there", "thanks", "how are you", "good morning"), not a request.'),
     wants_change: noul("The sentence asks for something in an app or project to be different: a feature added, fixed, changed, improved or removed (not just opening or looking at it)."),
     risky: noul("Doing what the sentence asks would delete a project or an account, merge, publish, make something public or private, sign out, revoke, uninstall, disconnect, or spend money. Asking the agents to change, add or remove something inside an app is NOT risky (it only proposes a change).")
   };
@@ -20682,8 +21402,15 @@ var pick = /* @__PURE__ */ __name((a2, min = 0) => {
 }, "pick");
 function resolve(answers, cands, s2, projects, utterance) {
   const cmd = resolveAction(answers, cands, s2, projects, utterance);
+  const hello = /^\s*(hi|hello|hey|hiya|yo|howdy|good (morning|afternoon|evening|night)|thanks|thank you|cheers|how are you|what'?s up|bye|goodbye)\b/i.test(utterance) || (answers.greeting?.noul ?? 0) >= 0.6;
+  if (hello && cmd.op === "none") {
+    const own2 = projects.filter((p) => p.mine).sort((a2, b) => (b.updatedAt || 0) - (a2.updatedAt || 0))[0];
+    return { ...cmd, mode: "none", greet: true, example: own2 ? own2.name.replace(/-/g, " ") : void 0 };
+  }
   const home = s2.items.find((i2) => i2.kind === "link" && i2.href === "/");
   if (home && cmd.mode !== "ask" && /\b(go|take me|back to the|bring me) home\b|\bhome ?page\b|^home$/i.test(utterance.trim())) return { ...cmd, mode: cmd.mode === "none" ? "act" : cmd.mode, op: "go", href: "/", label: home.text, target: home.id };
+  const words2 = utterance.trim().replace(/[.!?,]+$/g, "").split(/\s+/).filter(Boolean);
+  if (cmd.mode === "none" && cmd.op === "go" && cmd.href && words2.length <= 3 && (cmd.p ?? 0) >= 0.3 && !hello) return { ...cmd, mode: "act", why: `${cmd.why || ""}; a bare place name opens it` };
   if (cmd.op !== "none" || cmd.mode === "ask" || cmd.mode === "none") return cmd;
   const l = s2.items.find((i2) => i2.id === pick(answers.link, 0.5));
   return l?.href ? { ...cmd, op: "go", href: l.href, label: l.text, target: l.id, why: `${cmd.why}; used the link` } : cmd;
@@ -20695,6 +21422,9 @@ function resolveAction(answers, cands, s2, projects, utterance) {
   const wc = answers.wants_change?.noul ?? 0;
   const changeP = answers.action?.probabilities?.change ?? 0;
   if (action.choice !== "change" && !["status", "explain", "type", "code"].includes(action.choice) && (wc >= 0.75 || wc >= 0.55 && changeP >= 0.15)) action = { choice: "change", p: wc };
+  const onProject = currentSlug(s2.path);
+  const order = /^\s*(please\s+|can you\s+|could you\s+|i want you to\s+|let'?s\s+)?(build|add|make|create|implement|fix|change|remove|delete|rename|give|put|update|improve|redesign|replace|write|refactor|start|turn)\b/i.test(utterance);
+  if (onProject && action.choice !== "change" && (order && wc >= 0.4 && !["explain", "code", "list"].includes(action.choice) || action.choice === "project" && wc >= 0.5)) action = { choice: "change", p: Math.max(wc, action.p ?? 0) };
   if (action.choice === "change" && /^\s*(plan|how (would|should|could|do) (we|i|you)|why\b|what would it take|should (we|i))/i.test(utterance)) action = { choice: "code", p: action.p };
   const base = { mode: mode.choice, modeP: mode.p, op: "none", p: action.p, risky: answers.risky?.noul ?? null, complete: answers.complete?.noul ?? null };
   const item = /* @__PURE__ */ __name((id) => s2.items.find((i2) => i2.id === id) || null, "item");
@@ -20744,6 +21474,12 @@ function resolveAction(answers, cands, s2, projects, utterance) {
       return { ...base, op: "explain" };
     case "status":
       return { ...base, op: "status" };
+    case "list": {
+      const mine = projects.filter((p) => p.mine).sort((a2, b) => (b.updatedAt || 0) - (a2.updatedAt || 0));
+      const all = (s2.projects?.length ? s2.projects : mine).filter((p) => p.mine);
+      const names = (mine.length ? mine : all).map((p) => p.name.replace(/-/g, " "));
+      return { ...base, op: "list", text: names.slice(0, 6).join(", "), href: "/mine", label: "your projects", target: String(names.length) };
+    }
     case "code": {
       const cur = currentSlug(s2.path);
       const p = projects.find((x) => x.id === pick(answers.project, 0.3)) || projects.find((x) => x.slug === cur);
@@ -20827,15 +21563,58 @@ function get(k, d) { try { var v = ls.getItem(KEY + k); return v == null ? d : v
 function set(k, v) { try { ls.setItem(KEY + k, v); } catch (e) {} }
 function sget(k, d) { try { var v = ss.getItem(KEY + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
 function sset(k, v) { try { ss.setItem(KEY + k, JSON.stringify(v)); } catch (e) {} }
-function logEv(event, data) { try { console.log(JSON.stringify(Object.assign({ ts: new Date().toISOString(), module: 'talk', event: event }, data || {}))); } catch (e) {} }
+function logEv(event, data) { try { console.log(JSON.stringify(Object.assign({ ts: new Date().toISOString(), module: 'talk', event: event }, data || {}))); } catch (e) {} trace(event, data); }
+// ---- Experience trace (the owner only, /api/talk/trace): every step, batched, sent on leaving a page.
+var tq = [], tOn = false, tTimer = null, VERSION = '';
+var tsid = (function () { try { var v = ss.getItem(KEY + 'sid'); if (!v) { v = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); ss.setItem(KEY + 'sid', v); } return v; } catch (e) { return 'nosid'; } })();
+function trace(ev, data) {
+  if (!tOn && tq.length > 300) return;
+  var r = { ts: Date.now(), ev: ev, path: location.pathname };
+  for (var k in data || {}) { var v = data[k]; r[k] = typeof v === 'string' ? v.slice(0, 400) : v; }
+  tq.push(r);
+  if (tOn && !tTimer) tTimer = setTimeout(traceFlush, 4000);
+}
+function traceFlush(beacon) {
+  clearTimeout(tTimer); tTimer = null;
+  if (!tOn || !tq.length) return;
+  var body = JSON.stringify({ sid: tsid, events: tq.splice(0, 200) });
+  try { if (beacon && navigator.sendBeacon) { navigator.sendBeacon('/api/talk/trace', new Blob([body], { type: 'application/json' })); return; } } catch (e) {}
+  fetch('/api/talk/trace', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+  if (tq.length) tTimer = setTimeout(traceFlush, 1000);
+}
+function traceStart() {
+  tOn = true;
+  var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {};
+  trace('page', { version: VERSION || undefined, title: document.title, w: window.innerWidth, h: window.innerHeight, nav: nav.type, load_ms: nav.duration ? Math.round(nav.duration) : undefined });
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest && e.target.closest('a, button, [role=button], input, textarea, summary');
+    if (!t) return;
+    trace('tap', { what: t.tagName.toLowerCase(), id: t.id || undefined, talk: !!t.closest('#talk-root') || undefined, label: (t.getAttribute('aria-label') || t.innerText || t.value || t.placeholder || '').trim().replace(/\s+/g, ' ').slice(0, 80), href: t.getAttribute('href') || undefined });
+  }, true);
+  document.addEventListener('submit', function (e) { trace('submit', { form: (e.target && (e.target.id || e.target.getAttribute('action'))) || '' }); }, true);
+  document.addEventListener('visibilitychange', function () { trace('visibility', { state: document.visibilityState }); if (document.visibilityState === 'hidden') traceFlush(true); });
+  window.addEventListener('pagehide', function () { trace('leave', {}); traceFlush(true); });
+  window.addEventListener('error', function (e) { trace('js_error', { msg: String(e.message || ''), src: String(e.filename || '').split('/').pop(), line: e.lineno }); });
+  window.addEventListener('unhandledrejection', function (e) { trace('js_rejection', { msg: String(e.reason && (e.reason.message || e.reason)) }); });
+  traceFlush();
+}
 
 var S = {
-  engine: get('engine', ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) ? 'native' : 'whisper'),
+  engine: get('engine2', 'live'),   // live (Deepgram Nova-3 live words + Whisper on the whole clip, like tmux-web; default) | native | whisper
   lang: get('lang', 'en'),
   voice: get('voice', 'off'),           // spoken replies: off | aura-1 | aura-2 | phone (off by default)
   speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
   when: get('when', 'voice'),           // voice (only when I spoke) | always
+  speed: Number(get('speed', '1.25')) || 1.25,   // reply speed, pitch kept (Ask's Jarvis default)
+  pause: get('pause', '2500'),          // mic 'pause': send after this many ms of quiet
+  mic: get('mic', 'send'),              // how the mic works: send (tap, speak, tap Send, like tmux-web; default) | pause (sends when I stop) | hold | conv (conversation)
+  whisper: get('whisper', 'on'),        // re-read the whole clip with Whisper before sending (Deepgram live only)
+  keep: get('keepmic', 'open'),
+  clips: get('clips', 'off'),           // owner only: keep my recordings for debugging (7 days); off by default         // open = keep the mic ready while Talk is open (first words never lost) | use = only while speaking
 };
+// Aura-2 is the default voice since 2026-10-07 (Eyal): devices that had Aura-1 only because it was the default move once.
+try { if (!ls.getItem(KEY + 'v2')) { if (ls.getItem(KEY + 'voice-on') === 'aura-1') ls.setItem(KEY + 'voice-on', 'aura-2'); if (S.voice === 'aura-1') { S.voice = 'aura-2'; S.speaker = ''; ls.setItem(KEY + 'voice', 'aura-2'); ls.removeItem(KEY + 'speaker'); } ls.setItem(KEY + 'v2', '1'); } } catch (e) {}
+var CLIPS = false;   // the owner may keep recordings (set from /api/talk/me)
 var LANGS = { en: 'en-US', he: 'he-IL', auto: 'en-US' };
 var me = null, busy = false, listening = false, lastSpoken = false;
 var hist = sget('log', []);             // [{who:'you'|'app'|'ai'|'note', text}]
@@ -20846,18 +21625,30 @@ var css = [
   '#talk-root{--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);font:16px/1.45 var(--t-ff);color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
   '#talk-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483000;width:52px;height:52px;border-radius:12px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer;transition:background-color .12s}',
   '#talk-fab svg{width:24px;height:24px}',
+  '#talk-ver{position:fixed;z-index:2147483000;font:11px/1 var(--t-ff);color:var(--t-dim);font-variant-numeric:tabular-nums;pointer-events:none;text-align:center;width:72px}',
+  '#talk-root.open #talk-ver{display:none}',
+  '#talk-head .ver{font-size:11px;color:var(--t-dim);font-variant-numeric:tabular-nums}',
   '#talk-fab.on{background:#b42d1f}',
   '#talk-root.open #talk-fab{display:none}',
-  '#talk-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483001;background:var(--t-bg);border-top:1px solid var(--t-line);border-radius:12px 12px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.14);transform:translateY(105%);transition:transform .22s ease;max-height:62dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}',
+  '#talk-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483001;background:var(--t-bg);border-top:1px solid var(--t-line);border-radius:12px 12px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.14);transform:translateY(105%);transition:transform .22s ease,height .22s ease;height:var(--talk-h,62dvh);max-height:92dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}',
+  '#talk-sheet.drag{transition:none}',
+  '#talk-root.bar #talk-sheet{height:auto}',
+  '#talk-root.bar #talk-log,#talk-root.bar #talk-set{display:none!important}',
+  '#talk-grab{display:flex;align-items:center;justify-content:center;height:20px;margin:0;padding:0;border:0;background:transparent;width:100%;cursor:grab;touch-action:none}',
+  '#talk-grab i{display:block;width:36px;height:4px;border-radius:2px;background:var(--t-line)}',
+  '#talk-head{cursor:pointer}',
+  '#talk-peek{display:none;padding:0 16px 8px;font-size:15px;color:var(--t-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}',
+  '#talk-root.bar #talk-peek:not(:empty){display:block}',
   '#talk-root.open #talk-sheet{transform:none}',
   '@media (min-width:720px){#talk-sheet{left:auto;right:16px;bottom:16px;width:420px;border:1px solid var(--t-line);border-radius:12px}}',
-  '#talk-head{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 16px;border-bottom:1px solid var(--t-line)}',
+  '#talk-head{display:flex;align-items:center;gap:8px;padding:0 8px 8px 16px;border-bottom:1px solid var(--t-line)}',
+  '#talk-root.bar #talk-head{border-bottom:0}',
   '#talk-head b{font-weight:600;font-size:15px;flex:1}',
   '#talk-head .st{font-size:13px;color:var(--t-dim);font-variant-numeric:tabular-nums}',
   '.talk-ib{width:44px;height:44px;border:0;border-radius:8px;background:transparent;color:var(--t-fg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}',
   '.talk-ib svg{width:20px;height:20px}',
   '@media (hover:hover){.talk-ib:hover{background:var(--t-chip)}}',
-  '#talk-log{overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-height:64px;overscroll-behavior:contain}',
+  '#talk-log{overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-height:64px;overscroll-behavior:contain;flex:1 1 auto}',
   '#talk-log .you{align-self:flex-end;background:var(--t-acc);color:var(--t-accfg);padding:8px 12px;border-radius:12px;max-width:85%;font-size:15px}',
   '#talk-log .ai{align-self:flex-start;font-size:15px;max-width:92%;white-space:pre-line}',
   '#talk-log .app,#talk-log .note{align-self:flex-start;font-size:13px;color:var(--t-dim)}',
@@ -20866,17 +21657,27 @@ var css = [
   '#talk-live:not(:empty){padding:4px 16px 8px}',
   '#talk-offer{display:none;gap:8px;align-items:center;padding:0 16px 8px;font-size:15px;flex-wrap:wrap}',
   '#talk-offer.on{display:flex}',
+  // A long quoted request stays three lines so Send / No stay on screen (qb8, 2026-10-08: a 900-character order pushed them off).
+  '#talk-offer>span{flex:1 1 100%;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}',
+  '#talk-offer{flex:none}',
   '.talk-chip{min-height:44px;padding:0 14px;border-radius:8px;border:0;background:var(--t-chip);color:var(--t-fg);font:500 15px var(--t-ff);cursor:pointer}',
   '.talk-chip.pri{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-form{display:flex;gap:8px;padding:8px 8px 8px 16px;border-top:1px solid var(--t-line);align-items:center}',
-  '#talk-in{flex:1;min-width:0;height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);padding:0 12px;font:16px var(--t-ff);outline:none}',
+  '#talk-form{align-items:flex-end!important}',
+  '#talk-in{flex:1;min-width:0;min-height:44px;max-height:35dvh;height:44px;resize:none;overflow-y:auto;box-sizing:border-box;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);padding:10px 12px;font:16px/22px var(--t-ff);outline:none;display:block}',
+  '#talk-in.live{border-color:var(--t-acc);box-shadow:inset 0 0 0 1px var(--t-acc)}',
+  '#talk-send{width:44px;height:44px;border-radius:8px;border:0;background:var(--t-chip);color:var(--t-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}',
+  '#talk-send svg{width:22px;height:22px}',
+  '#talk-send.ready{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-in:focus{border-color:var(--t-acc)}',
   '#talk-mic{width:44px;height:44px;border-radius:8px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}',
   '#talk-mic svg{width:22px;height:22px}',
   '#talk-mic.on{background:#b42d1f}',
   '.talk-ib.on{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-set{display:none;padding:12px 16px;border-bottom:1px solid var(--t-line);gap:12px;flex-direction:column;font-size:15px}',
-  '#talk-root.settings #talk-set{display:flex}',
+  '#talk-root.settings #talk-set{display:flex;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}',
+  '#talk-root.settings #talk-log,#talk-root.settings #talk-live,#talk-root.settings #talk-offer,#talk-root.settings #talk-peek{display:none!important}',
+  '#talk-root.settings.bar #talk-sheet{height:var(--talk-h,62dvh)}',
   '#talk-set label{display:flex;flex-direction:column;gap:4px;color:var(--t-dim);font-size:13px}',
   '#talk-set select{height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);font:16px var(--t-ff);padding:0 8px}',
   '.talk-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}',
@@ -20896,7 +21697,10 @@ var ICON = {
   send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
 };
 
-var root, sheet, logEl, live, offer, inp, micBtn, fab, stEl, spk, convBtn;
+var root, sheet, logEl, live, offer, inp, micBtn, sendBtn, fab, stEl, spk, convBtn, peek;
+// The input grows with what you say or type (up to a third of the screen), then scrolls to the newest words.
+function fitInp() { if (!inp) return; inp.style.height = 'auto'; inp.style.height = Math.max(44, inp.scrollHeight + 2) + 'px'; inp.scrollTop = inp.scrollHeight; if (sendBtn) sendBtn.classList.toggle('ready', !!inp.value.trim() || listening); }
+function setInp(v) { inp.value = v; fitInp(); }
 function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
 
 function build() {
@@ -20904,7 +21708,7 @@ function build() {
   root = el('div', { id: 'talk-root' });
   // The page's own font (it changes with the site's look), for every Talk control too.
   root.style.setProperty('--t-ff', getComputedStyle(document.body).fontFamily || 'sans-serif');
-  fab = el('button', { id: 'talk-fab', type: 'button', 'aria-label': 'Talk to qodebase' }, ICON.mic);
+  fab = el('button', { id: 'talk-fab', type: 'button', 'aria-label': 'Talk to qodebase (tap to open, hold to speak)', title: 'Tap to open, hold to speak' }, ICON.mic);
   sheet = el('section', { id: 'talk-sheet', 'aria-label': 'Talk' });
   var head = el('div', { id: 'talk-head' });
   head.innerHTML = '<b>Talk</b><span class="st" id="talk-st"></span>';
@@ -20916,29 +21720,78 @@ function build() {
   head.appendChild(convBtn); head.appendChild(spk); head.appendChild(gear); head.appendChild(close);
   var setp = el('div', { id: 'talk-set' });
   setp.innerHTML =
-    '<label>Dictation<select id="talk-s-engine"><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
+    '<label>Dictation<select id="talk-s-engine"><option value="live">Deepgram live (Cloudflare): words as you speak</option><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
+    '<label>How the mic works<select id="talk-s-mic"><option value="send">Tap the mic, speak, tap Send (like tmux-web)</option><option value="pause">Tap the mic; it sends when I stop talking</option><option value="hold">Hold the mic while I talk; letting go sends</option><option value="conv">Conversation: it keeps listening and talks back</option></select></label>' +
+    '<label>Send after a pause of<select id="talk-s-pause"><option value="1500">1.5 s</option><option value="2500">2.5 s</option><option value="4000">4 s</option></select></label>' +
+    '<label>Check the words with Whisper<select id="talk-s-whisper"><option value="on">On: the whole recording is read again (steadier, about 1.5 s)</option><option value="off">Off: send the live words right away</option></select></label>' +
+    '<label>Microphone<select id="talk-s-keep"><option value="open">Ready while Talk is open (your first words are never lost)</option><option value="use">Only while I speak</option></select></label>' +
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
-    '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-1">Natural voice (Cloudflare Aura)</option><option value="aura-2">Richer voice (Aura 2, twice the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
+    '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
     '<label>Voice<select id="talk-s-speaker"></select></label>' +
+    '<label>Speed<select id="talk-s-speed"><option value="1">1\u00d7</option><option value="1.1">1.1\u00d7</option><option value="1.15">1.15\u00d7</option><option value="1.25">1.25\u00d7</option><option value="1.4">1.4\u00d7</option><option value="1.6">1.6\u00d7</option></select></label>' +
     '<label>Speak<select id="talk-s-when"><option value="voice">When I talked</option><option value="always">Always</option></select></label>' +
-    '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>';
+    (CLIPS ? '<label>Keep my recordings (only you can hear them, deleted after 7 days)<select id="talk-s-clips"><option value="off">Off</option><option value="on">On, for debugging</option></select></label>' : '') +
+    '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>' +
+    '<button type="button" class="talk-chip pri" id="talk-s-done">Done</button>';
   logEl = el('div', { id: 'talk-log', 'aria-live': 'polite' });
   live = el('div', { id: 'talk-live' });
   offer = el('div', { id: 'talk-offer' });
   var form = el('form', { id: 'talk-form' });
-  inp = el('input', { id: 'talk-in', type: 'text', enterkeyhint: 'send', autocomplete: 'off', placeholder: 'Say or type: open my calculator', 'aria-label': 'Talk to qodebase' });
+  inp = el('textarea', { id: 'talk-in', rows: '1', enterkeyhint: 'send', autocomplete: 'off', placeholder: 'Say or type: open my calculator', 'aria-label': 'Talk to qodebase' });
   micBtn = el('button', { id: 'talk-mic', type: 'button', 'aria-label': 'Speak' }, ICON.mic);
-  form.appendChild(inp); form.appendChild(micBtn);
-  sheet.appendChild(head); sheet.appendChild(setp); sheet.appendChild(logEl); sheet.appendChild(live); sheet.appendChild(offer); sheet.appendChild(form);
+  sendBtn = el('button', { id: 'talk-send', type: 'submit', 'aria-label': 'Send' }, ICON.send);
+  form.appendChild(inp); form.appendChild(micBtn); form.appendChild(sendBtn);
+  inp.addEventListener('input', function () { fitInp(); });
+  inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
+  var grab = el('button', { id: 'talk-grab', type: 'button', 'aria-label': 'Drag to resize Talk, tap to fold it to a bar' }, '<i></i>');
+  peek = el('div', { id: 'talk-peek' });
+  sheet.appendChild(grab); sheet.appendChild(head); sheet.appendChild(setp); sheet.appendChild(peek); sheet.appendChild(logEl); sheet.appendChild(live); sheet.appendChild(offer); sheet.appendChild(form);
+  var h0 = Number(get('h', 0)); if (h0 > 0) sheet.style.setProperty('--talk-h', h0 + 'px');
+  if (get('sheet', 'open') === 'bar') root.classList.add('bar');
+  // Tap the header (not its buttons) or the last line to fold to a bar / unfold.
+  head.addEventListener('click', function (e) { if (e.target.closest('button')) return; setSheet(root.classList.contains('bar') ? 'open' : 'bar'); });
+  peek.addEventListener('click', function () { setSheet('open'); });
+  dragHandle(grab);
+  if (VERSION) {
+    var vb = el('div', { id: 'talk-ver', 'aria-hidden': 'true' }); vb.textContent = VERSION; root.appendChild(vb);
+    var vh = el('span', { class: 'ver' }); vh.textContent = VERSION; head.querySelector('b').after(vh);
+  }
+  placeFab(); window.addEventListener('resize', placeFab); setTimeout(placeFab, 600);
   root.appendChild(fab); root.appendChild(sheet);
   document.body.appendChild(root);
   stEl = document.getElementById('talk-st');
 
-  fab.addEventListener('click', function () { unlockAudio(); open(true); if (S.engine === 'native' || S.engine === 'whisper') startListen(); });
+  // Tap: show Talk (no recording). Hold: push-to-talk (records while held, sends on release).
+  var pttTimer = null, ptt = false;
+  fab.addEventListener('pointerdown', function () { unlockAudio(); ptt = false; pttTimer = setTimeout(function () { ptt = true; open(true); startListen(); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} }, 350); });
+  var pttEnd = function () { clearTimeout(pttTimer); if (ptt && listening) stopListen(false, true); };
+  fab.addEventListener('pointerup', pttEnd); fab.addEventListener('pointercancel', pttEnd); fab.addEventListener('pointerleave', pttEnd);
+  fab.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  fab.addEventListener('click', function () { if (ptt) { ptt = false; return; } unlockAudio(); open(true); });
   close.addEventListener('click', function () { stopListen(true); open(false); });
-  gear.addEventListener('click', function () { root.classList.toggle('settings'); });
-  micBtn.addEventListener('click', function () { unlockAudio(); if (vc) { vc.toggleMute(); return; } if (listening) stopListen(false); else startListen(); });
-  form.addEventListener('submit', function (e) { e.preventDefault(); unlockAudio(); var v = inp.value.trim(); if (!v) return; inp.value = ''; if (vc) { vcActive(); vc.sendText(v); return; } lastSpoken = false; submit(v); });
+  gear.addEventListener('click', function () { var on = root.classList.toggle('settings'); if (on) setp.scrollTop = 0; trace('settings', { open: on }); });
+  // The mic follows "How the mic works": send (tap, speak, tap Send), pause (sends when you stop), hold, conv.
+  var holdT = null, held = false;
+  micBtn.addEventListener('pointerdown', function () { if (S.mic !== 'hold' || vc || listening) return; unlockAudio(); held = false; holdT = setTimeout(function () { held = true; startListen(); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} }, 150); });
+  var holdEnd = function () { clearTimeout(holdT); if (S.mic === 'hold' && held && listening) { trace('mic', { how: 'release' }); stopListen(false, true); } };
+  micBtn.addEventListener('pointerup', holdEnd); micBtn.addEventListener('pointercancel', holdEnd); micBtn.addEventListener('pointerleave', holdEnd);
+  micBtn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  micBtn.addEventListener('click', function () {
+    unlockAudio();
+    if (S.mic === 'hold') { if (held) { held = false; return; } if (!listening) status('Hold the mic while you talk'); return; }
+    if (S.mic === 'conv') { if (vc) endConversation('you'); else startConversation(); return; }
+    if (vc) { vc.toggleMute(); return; }
+    if (listening) { trace('mic', { how: 'stop-tap', mode: S.mic }); stopListen(false, S.mic === 'pause'); } else startListen();
+  });
+  form.addEventListener('submit', function (e) {
+    e.preventDefault(); unlockAudio();
+    // Send while listening: stop, let Whisper check the words, then send them.
+    if (listening && dcOn) { trace('mic', { how: 'send-tap' }); stopListen(false, true); return; }
+    if (listening) { stopListen(false); return; }
+    var v = inp.value.trim(); if (!v) return; setInp('');
+    if (vc) { vcActive(); vc.sendText(v); return; }
+    lastSpoken = false; submit(v);
+  });
   var se = document.getElementById('talk-s-engine'), sl = document.getElementById('talk-s-lang'), sv = document.getElementById('talk-s-voice'), sk = document.getElementById('talk-s-speaker'), sw = document.getElementById('talk-s-when');
   se.value = S.engine; sl.value = S.lang; sv.value = S.voice; sw.value = S.when;
   var fillSpeakers = function () {
@@ -20947,15 +21800,29 @@ function build() {
     if (list.indexOf(S.speaker) < 0) S.speaker = list[0] || '';
     sk.value = S.speaker; sk.parentNode.style.display = list.length ? '' : 'none';
     sw.parentNode.style.display = S.voice === 'off' ? 'none' : '';
+    var spd = document.getElementById('talk-s-speed'); if (spd) spd.parentNode.style.display = S.voice === 'phone' ? 'none' : '';
   };
   fillSpeakers();
   sv.onchange = function () { S.voice = sv.value; set('voice', S.voice); if (S.voice !== 'off') set('voice-on', S.voice); fillSpeakers(); set('speaker', S.speaker); voiceBtn(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how I sound.'); } };
   sk.onchange = function () { S.speaker = sk.value; set('speaker', S.speaker); unlockAudio(); lastSpoken = true; say('This is how I sound.'); };
   sw.onchange = function () { S.when = sw.value; set('when', S.when); };
-  spk.addEventListener('click', function () { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-1') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); if (S.voice === 'off') stopSpeaking(); });
+  var spz = document.getElementById('talk-s-pause'); spz.value = S.pause === 'tap' ? '2500' : S.pause;
+  spz.onchange = function () { S.pause = spz.value; set('pause', S.pause); trace('setting', { pause: S.pause }); };
+  var sclp = document.getElementById('talk-s-clips');
+  if (sclp) { sclp.value = S.clips; sclp.onchange = function () { S.clips = sclp.value; set('clips', S.clips); trace('setting', { clips: S.clips }); }; }
+  var smic = document.getElementById('talk-s-mic'), swh = document.getElementById('talk-s-whisper'), skp = document.getElementById('talk-s-keep');
+  var showMic = function () { spz.parentNode.style.display = S.mic === 'pause' ? '' : 'none'; swh.parentNode.style.display = S.engine === 'live' && S.mic !== 'conv' ? '' : 'none'; micBtn.setAttribute('aria-label', S.mic === 'hold' ? 'Hold to speak' : S.mic === 'conv' ? 'Start a conversation' : 'Speak'); };
+  smic.value = S.mic; swh.value = S.whisper; skp.value = S.keep; showMic();
+  smic.onchange = function () { S.mic = smic.value; set('mic', S.mic); trace('setting', { mic: S.mic }); showMic(); };
+  swh.onchange = function () { S.whisper = swh.value; set('whisper', S.whisper); trace('setting', { whisper: S.whisper }); };
+  skp.onchange = function () { S.keep = skp.value; set('keepmic', S.keep); trace('setting', { keep: S.keep }); if (S.keep === 'open') warmMic(); else releaseMic(); };
+  var sspd = document.getElementById('talk-s-speed'); sspd.value = String(S.speed);
+  sspd.onchange = function () { S.speed = Number(sspd.value) || 1.25; set('speed', String(S.speed)); trace('setting', { speed: S.speed }); vcVoice(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how fast I talk.'); } };
+  spk.addEventListener('click', function () { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-2') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); if (S.voice === 'off') stopSpeaking(); });
   voiceBtn();
-  se.onchange = function () { S.engine = se.value; set('engine', S.engine); };
+  se.onchange = function () { S.engine = se.value; set('engine2', S.engine); trace('setting', { engine: S.engine }); if (S.engine === 'live') dcWarm(); showMic(); };
   sl.onchange = function () { S.lang = sl.value; set('lang', S.lang); };
+  document.getElementById('talk-s-done').onclick = function () { root.classList.remove('settings'); trace('settings', { open: false }); };
   document.getElementById('talk-s-clear').onclick = function () { hist = []; chatHist = []; sset('log', hist); sset('chat', chatHist); render(); root.classList.remove('settings'); };
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && root.classList.contains('open')) { stopListen(true); open(false); }
@@ -20963,7 +21830,57 @@ function build() {
   render();
 }
 
-function open(on) { root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+function open(on) { if (on && S.engine === 'live' && me) { dcWarm(); warmMic(); } if (!on) releaseMic(); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+// Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is.
+function placeFab() {
+  if (!fab) return;
+  // Walk up from the bottom edge: each short bar touching the one below (fixed, sticky, or a page
+  // that lays out as a full-height column, like a project page's tabs + "Ask for a change") lifts the button.
+  var y = window.innerHeight, lift = 0;
+  for (var n = 0; n < 4; n++) {
+    var top = null;
+    [0.15, 0.5].forEach(function (fx) {
+      var e = document.elementFromPoint(Math.round(window.innerWidth * fx), y - 4);
+      var bar = null;
+      for (; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
+        if (root.contains(e)) { bar = null; break; }
+        var r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+        var pinned = cs.position === 'fixed' || cs.position === 'sticky' || e.parentElement === document.body;
+        if (pinned && r.height < window.innerHeight * 0.3 && Math.abs(r.bottom - y) < 3) { bar = e; break; }
+      }
+      if (bar) { var t = bar.getBoundingClientRect().top; top = top === null ? t : Math.min(top, t); }
+    });
+    if (top === null) break;
+    lift = window.innerHeight - top; y = top;
+  }
+  fab.style.bottom = 'calc(' + (lift ? Math.round(lift) + 12 : 16) + 'px + env(safe-area-inset-bottom))';
+  var vb = document.getElementById('talk-ver');
+  if (vb) { vb.style.right = '6px'; vb.style.bottom = 'calc(' + (lift ? Math.round(lift) : 0) + 'px + 2px + env(safe-area-inset-bottom))'; }
+}
+// open (the conversation, at the height they chose) | bar (header + input only, the page shows). Per device.
+function setSheet(st) { trace('sheet', { state: st, h: Math.round(sheet.getBoundingClientRect().height) }); root.classList.toggle('bar', st === 'bar'); set('sheet', st); if (st === 'open') setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 60); }
+// The handle: drag to any height (remembered), low enough folds to the bar, to the bottom closes; a tap folds/unfolds.
+function dragHandle(g) {
+  var y0 = 0, h0 = 0, moved = false, on = false;
+  g.addEventListener('pointerdown', function (e) { on = true; moved = false; y0 = e.clientY; h0 = sheet.getBoundingClientRect().height; g.setPointerCapture(e.pointerId); });
+  g.addEventListener('pointermove', function (e) {
+    if (!on) return;
+    var dy = y0 - e.clientY;
+    if (!moved && Math.abs(dy) < 6) return;
+    if (!moved) { moved = true; sheet.classList.add('drag'); root.classList.remove('bar'); }
+    var h = Math.max(96, Math.min(window.innerHeight * 0.92, h0 + dy));
+    sheet.style.setProperty('--talk-h', h + 'px');
+  });
+  var end = function (e) {
+    if (!on) return; on = false; sheet.classList.remove('drag');
+    if (!moved) return setSheet(root.classList.contains('bar') ? 'open' : 'bar');
+    var h = sheet.getBoundingClientRect().height;
+    if (h < 110) { stopListen(true); open(false); sheet.style.setProperty('--talk-h', (Number(get('h', 0)) || window.innerHeight * 0.62) + 'px'); return; }
+    if (h < 200) { sheet.style.setProperty('--talk-h', (Number(get('h', 0)) || window.innerHeight * 0.62) + 'px'); return setSheet('bar'); }
+    set('h', Math.round(h)); setSheet('open');
+  };
+  g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+}
 function status(t) { stEl.textContent = t || ''; }
 function add(who, text, links) { if (run && who !== 'you') run.texts.push(String(text)); hist.push({ who: who, text: String(text), links: links || undefined }); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
 function render() {
@@ -20973,6 +21890,8 @@ function render() {
     h.textContent = 'Try: “open my calculator”, “show me the code of the timer”, “what is this page?”, “build a habit tracker”.';
     logEl.appendChild(h);
   }
+  var lastMsg = hist.length ? hist[hist.length - 1] : null;
+  if (peek) peek.textContent = lastMsg && lastMsg.who !== 'you' ? String(lastMsg.text).replace(/\s+/g, ' ') : '';
   hist.forEach(function (m) {
     var d = el('div', { class: m.who });
     // Answers from the code reader come as light markdown: show it as plain lines.
@@ -21023,7 +21942,10 @@ function api(path, body) {
 
 // ---- The one entry point: a sentence --------------------------------------
 var preview = null;   // { text, cmd } from interim speech
+var lastText = '';
 function submit(text) {
+  lastText = String(text || '');
+  trace('said', { text: text, spoken: lastSpoken, engine: lastSpoken ? S.engine : 'typed' });
   if (busy) return;
   busy = true; unmark(); offerOff();
   add('you', text);
@@ -21041,8 +21963,16 @@ function submit(text) {
       if (c.op === 'go' && c.href) offerOn('Take me to ' + (c.label || 'that page') + '?', function () { act(c); });
       return done();
     }
+    if (c.greet) { var hi = greeting(c.example); add('ai', hi); say(hi); return done(); }
     if (c.mode === 'none') { add('note', (c.complete || 0) < 0.5 ? 'Sounds cut off. Say it again?' : 'I did not catch a request there.'); return done(); }
     if (c.op === 'status') return whatsGoingOn(text);
+    if (c.op === 'list') {
+      var n = Number(c.target) || 0;
+      var line = n ? 'You have ' + n + ' project' + (n === 1 ? '' : 's') + '. The latest: ' + c.text + '.' : 'You have no projects yet. Say what you want to build.';
+      add('ai', line); say(line);
+      if (n && location.pathname !== '/mine') { sset('last', 'your projects'); setTimeout(function () { act({ op: 'go', href: '/mine', label: 'your projects' }); }, 400); return; }
+      return done();
+    }
     if (c.op === 'change') return changeRequest(c);
     if (c.op === 'code') return codeQuestion(c);
     var acts = (c.mode === 'act' || c.mode === 'both') && c.op !== 'none' && c.op !== 'explain';
@@ -21058,6 +21988,11 @@ function submit(text) {
   }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'decide', err: String(e) }); done(); });
 }
 function done() { busy = false; status(''); finish(); }
+// A greeting or small talk: a friendly line and three things to try, one with their own project.
+function greeting(example) {
+  var p = example || 'todo';
+  return 'Hi! I can find things, open your projects, and answer questions about them. Try \u201cwhat\u2019s going on\u201d, \u201copen my ' + p + '\u201d, or \u201chow does my ' + p + ' work?\u201d';
+}
 
 // ---- "What's going on": real data across their projects (/api/talk/status, no model).
 function whatsGoingOn(text) {
@@ -21075,7 +22010,9 @@ function whatsGoingOn(text) {
 function changeRequest(c) {
   var parts = String(c.slug || '').split('.'), owner = parts[0], name = parts.slice(1).join('.');
   if (!owner || !name) { add('note', 'Which project? Say its name.'); return done(); }
-  var text = c.text;
+  // The whole request: the server decides on the first 300 characters only, so a long order (qb8's 900-character
+  // café list) would otherwise reach the router cut short.
+  var text = lastText && c.text && lastText.indexOf(String(c.text).slice(0, 60)) === 0 ? lastText : c.text;
   if (!c.mine) {
     add('ai', owner + '/' + name + ' is not yours. Fork it to get your own copy, then I can send the change to its agents.');
     offerOn('Fork ' + owner + '/' + name + '?', function () {
@@ -21088,7 +22025,9 @@ function changeRequest(c) {
     }, 'Fork');
     return done();
   }
-  offerOn('Send to ' + owner + '/' + name + '\u2019s agents: \u201c' + text + '\u201d?', function () { busy = true; sendChange(owner, name, text); }, 'Send');
+  // The confirm quotes the start of a long request (the whole text is what gets sent).
+  var quote = text.length > 160 ? text.slice(0, 150).replace(/\s+\S*$/, '') + '\u2026' : text;
+  offerOn('Send to ' + owner + '/' + name + '\u2019s agents: \u201c' + quote + '\u201d?', function () { busy = true; sendChange(owner, name, text); }, 'Send');
   done();
 }
 // ---- Questions about a project's code: qb1's ask box (a read-only Claude Code box on
@@ -21117,7 +22056,8 @@ function codeQuestion(c) {
         stop();
         logEv('code_answer', { project: owner + '/' + name, model: j.model || model, ms: Date.now() - t0, box_ms: j.ms, tries: tries });
         chatHist.push({ role: 'user', content: c.text }); chatHist.push({ role: 'assistant', content: j.answer || '' }); chatHist = chatHist.slice(-12); sset('chat', chatHist);
-        add('ai', j.answer || 'No answer came back.'); speakOut(j.answer || '');
+        // In a conversation the agent speaks it and the transcript shows it: add it here only when typing.
+        if (vc) speakOut(j.answer || 'No answer came back.'); else { add('ai', j.answer || 'No answer came back.'); say(j.answer || ''); }
         return done();
       }
       if (j.state === 'failed') {
@@ -21159,6 +22099,11 @@ function act(c, withPreview) {
   var target = c.target && byId(c.target);
   var go = function () {
     unmark();
+    if (c.op === 'go' && String(c.href).replace(/\/$/, '') === (location.pathname + location.search).replace(/\/$/, '')) {
+      // Already here: a reload would drop the conversation and repeat the page for nothing.
+      add('app', 'You are on ' + (c.label || 'that page') + '.');
+      return done();
+    }
     if (c.op === 'go') {
       add('app', 'Opening ' + (c.label || c.href) + '…');
       sset('last', c.label || c.href);
@@ -21205,12 +22150,13 @@ function offerSubmit(t) {
 function offerOn(text, yes, yesLabel) {
   if (run) run.texts.push(text);
   offer.innerHTML = '';
-  var s = el('span'); s.textContent = text;
+  var s = el('span'); s.textContent = text || '';
   var y = el('button', { type: 'button', class: 'talk-chip pri' }); y.textContent = yesLabel || 'Go';
   var n = el('button', { type: 'button', class: 'talk-chip' }); n.textContent = 'No';
   y.onclick = function () { offerOff(); yes(); };
   n.onclick = function () { offerOff(); };
-  offer.appendChild(s); offer.appendChild(y); offer.appendChild(n);
+  if (text) offer.appendChild(s);   // in a conversation the question is spoken (and in the log): buttons only
+  offer.appendChild(y); offer.appendChild(n);
   offer.classList.add('on');
 }
 function offerOff() { offer.classList.remove('on'); offer.innerHTML = ''; }
@@ -21282,7 +22228,8 @@ function say(text) {
   unlockAudio();
   var t0 = Date.now();
   player.src = '/api/talk/tts?model=' + encodeURIComponent(S.voice) + '&speaker=' + encodeURIComponent(S.speaker || '') + '&text=' + encodeURIComponent(t);
-  player.onplaying = function () { logEv('speak_start', { chars: t.length, ms_first: Date.now() - t0 }); };
+  try { player.playbackRate = S.speed; player.preservesPitch = true; player.defaultPlaybackRate = S.speed; } catch (e) {}
+  player.onplaying = function () { try { player.playbackRate = S.speed; } catch (e) {} logEv('speak_start', { chars: t.length, ms_first: Date.now() - t0, speed: S.speed }); };
   player.onerror = function () { logEv('speak_error', { chars: t.length }); phoneSay(t); };
   var p = player.play();
   if (p && p.catch) p.catch(function (e) { logEv('speak_blocked', { err: String(e) }); phoneSay(t); });
@@ -21293,20 +22240,24 @@ var rec = null, mr = null, chunks = [], stream = null, t0 = 0, tick = null, inte
 function setListening(on) {
   listening = on;
   micBtn.classList.toggle('on', on); micBtn.innerHTML = on ? ICON.stop : ICON.mic;
+  if (inp) { inp.classList.toggle('live', on); inp.placeholder = on ? 'Listening\u2026' : 'Say or type: open my calculator'; fitInp(); }
   micBtn.setAttribute('aria-label', on ? 'Stop' : 'Speak');
   clearInterval(tick);
   if (on) { t0 = Date.now(); tick = setInterval(function () { status('Listening ' + Math.floor((Date.now() - t0) / 1000) + 's'); }, 250); status('Listening'); }
   else if (!busy) status('');
 }
 function startListen() {
+  trace('listen_start', { engine: S.engine, lang: S.lang, listening: listening, busy: busy });
   if (listening || busy) return;
   stopSpeaking();   // talking over the reply stops it
   offerOff(); live.textContent = '';
+  if (S.engine === 'live') return startLive();
   if (S.engine === 'native') return startNative();
   return startWhisper();
 }
-function stopListen(cancel) {
+function stopListen(cancel, send) {
   if (!listening) return;
+  if (dcOn) return liveStop(cancel, send);
   if (rec) { if (cancel) rec.abort(); else rec.stop(); }
   if (mr) { if (cancel) { chunks = []; mr.onstop = null; } try { mr.stop(); } catch (e) {} }
   if (cancel) { setListening(false); live.textContent = ''; unmark(); }
@@ -21540,12 +22491,156 @@ function publishTools() {
   window.dispatchEvent(new Event('webmcp:ready'));
 }
 
+// ---- Deepgram live dictation (push-to-talk): the mic streams to the TalkVoice agent in dictate
+// mode; Flux shows the words as they are said and ends the turn when the sentence is done (a pause
+// to think does not end it); the words then go through the usual Talk flow. Kept connected while
+// Talk is open so the mic starts at once; billed only while listening.
+var dc = null, dcReady = false, dcOn = false, dcText = '', dcT0 = 0, dcBuf = [], dcQuiet = null;
+// What was said so far: the finished pieces plus the one being said now.
+function dcSaid(interim) { return dcBuf.concat(interim ? [interim] : []).join(' ').replace(/\s+/g, ' ').trim(); }
+function dcArm() { clearTimeout(dcQuiet); if (S.mic === 'pause' && S.pause !== 'tap' && dcOn) dcQuiet = setTimeout(function () { if (dcOn) { trace('dc_stop', { how: 'quiet', pieces: dcBuf.length, ms: Date.now() - dcT0 }); liveFinish('', true); } }, Number(S.pause) || 2500); }
+function dcWarm(cb) {
+  if (dc && dcReady) return cb && cb();
+  if (dc) { if (cb) dc.__wait = (dc.__wait || []).concat(cb); return; }
+  loadKit(function () {
+    var t0 = Date.now();
+    dc = new window.TalkVoiceKit.VoiceClient({ agent: 'TalkVoice', name: me, silenceDurationMs: 900 });
+    dc.__wait = cb ? [cb] : [];
+    dc.addEventListener('connectionchange', function (on) {
+      dcReady = !!on; logEv('dc_connection', { on: on, ms: Date.now() - t0 });
+      if (!on) trace('dc_disconnect', { listening: dcOn });
+      if (on) { try { dc.sendJSON({ type: 'mode', dictate: true, lang: S.lang }); } catch (e) {} var w = dc.__wait || []; dc.__wait = []; w.forEach(function (f) { f(); }); }
+    });
+    dc.addEventListener('interimtranscript', function (t) { if (dcOn) trace('dc_interim', { text: t || '', ms: Date.now() - dcT0 }); if (dcOn && t) { dcText = t; setInp(dcBase + dcSaid(t)); clearTimeout(dcQuiet); } });
+    dc.addEventListener('statuschange', function (st) { trace('dc_status', { status: st, on: dcOn, ms: dcT0 ? Date.now() - dcT0 : undefined }); });
+    dc.addEventListener('voiceerror', function (e) { trace('dc_voiceerror', { e: e && (e.code || e.message || String(e)) }); });
+    dc.addEventListener('audiolevelchange', function (lv) { if (dcOn && lv > 0.05 && !dc.__heardSound) { dc.__heardSound = 1; trace('dc_sound', { level: Math.round(lv * 100) / 100, ms: Date.now() - dcT0 }); } });
+    dc.addEventListener('custommessage', function (d) {
+      if (!d || d.type !== 'talk-dictated') return;
+      // Flux ended a turn: keep it and keep listening (a pause to think is not the end), send after the quiet.
+      if (!dcOn) return;
+      dcBuf.push(String(d.text || '').trim()); dcText = ''; setInp(dcBase + dcSaid(''));
+      logEv('dc_piece', { text: String(d.text || ''), pieces: dcBuf.length, ms: Date.now() - dcT0 });
+      dcArm();
+    });
+    dc.addEventListener('error', function (e) { if (e && !/no response generated/i.test(String(e))) logEv('dc_error', { err: String(e) }); });
+    dc.connect();
+  });
+}
+// The whole clip, recorded on the phone from the tap (like tmux-web): Deepgram's live words can miss
+// the start (the call takes ~0.8 s to begin) and mishear names; Whisper reads the clip at the end and
+// its text replaces the live words.
+var clip = null, clipChunks = [], clipStream = null, clipT0 = 0, warmP = null;
+function micOpts() { return { audio: { echoCancellation: true, noiseSuppression: true } }; }
+// "Microphone: ready while Talk is open": the stream is opened when Talk opens (only if the mic was
+// already allowed, so no permission prompt pops up) and kept until Talk closes, so a tap records at once.
+function warmMic() {
+  if (S.keep !== 'open' || S.engine !== 'live' || clipStream || warmP || !navigator.mediaDevices) return;
+  var go = function () {
+    var t = Date.now();
+    warmP = navigator.mediaDevices.getUserMedia(micOpts()).then(function (st) { warmP = null; if (!root.classList.contains('open')) { st.getTracks().forEach(function (x) { x.stop(); }); return; } clipStream = st; trace('mic_warm', { ms: Date.now() - t }); }).catch(function (e) { warmP = null; trace('mic_warm_error', { err: String(e) }); });
+  };
+  try { navigator.permissions.query({ name: 'microphone' }).then(function (r) { if (r.state === 'granted') go(); }, function () {}); } catch (e) {}
+}
+function releaseMic() { if (clipStream && !clip) { clipStream.getTracks().forEach(function (x) { x.stop(); }); clipStream = null; trace('mic_release', {}); } }
+function clipStart(ready) {
+  clipChunks = []; clipT0 = Date.now();
+  if (!navigator.mediaDevices || !window.MediaRecorder) return ready && ready();
+  var begin = function (st) {
+    if (!listening) { if (S.keep !== 'open') st.getTracks().forEach(function (x) { x.stop(); }); return; }
+    clipStream = st;
+    var type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].filter(function (x) { return MediaRecorder.isTypeSupported(x); })[0] || '';
+    clip = new MediaRecorder(st, type ? { mimeType: type } : {});
+    clip.ondataavailable = function (e) { if (e.data && e.data.size) clipChunks.push(e.data); };
+    clip.start(250);
+    trace('rec_start', { ms: Date.now() - clipT0, warm: !!warmUsed });
+    if (ready) ready();
+  };
+  var warmUsed = !!(clipStream && clipStream.active);
+  if (warmUsed) return begin(clipStream);
+  (warmP || navigator.mediaDevices.getUserMedia(micOpts())).then(function (st) { begin(st || clipStream); }).catch(function (e) { trace('rec_error', { err: String(e) }); if (ready) ready(); });
+}
+// Owner only, when "Keep my recordings" is on: the clip goes to the Talk Worker's bucket (7 days) with what was
+// heard live and what was sent, and its key lands in the trace (scripts/talk-trace.mjs --clip <key> plays it back).
+function keepClip(blob, m) {
+  if (!CLIPS || S.clips !== 'on' || !blob || blob.size < 800) return;
+  var q = '?sid=' + encodeURIComponent(tsid || '') + '&path=' + encodeURIComponent(location.pathname) + '&live=' + encodeURIComponent((m.live || '').slice(0, 400)) + '&final=' + encodeURIComponent((m.final || '').slice(0, 400)) + '&how=' + encodeURIComponent(m.how || '');
+  fetch('/api/talk/clip' + q, { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type || 'audio/webm' }, body: blob })
+    .then(function (r) { return r.json(); }).then(function (j) { trace('clip_saved', { key: j.key, bytes: blob.size, err: j.error }); })
+    .catch(function (e) { trace('clip_error', { err: String(e) }); });
+}
+function clipStop(cb) {
+  var r = clip, st = clipStream; clip = null;
+  if (!r) { if (cb) cb(null); return; }
+  r.onstop = function () {
+    if (S.keep !== 'open' || !root.classList.contains('open')) { if (st) st.getTracks().forEach(function (x) { x.stop(); }); clipStream = null; }
+    if (cb) cb(new Blob(clipChunks, { type: r.mimeType || 'audio/webm' }));
+  };
+  try { r.stop(); } catch (e) { if (cb) cb(null); }
+}
+var dcBase = '';
+function startLive() {
+  setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); live.textContent = '';
+  dcBase = inp.value.trim() ? inp.value.trim() + ' ' : '';   // speak more after typing: the words are added
+  clipStart(function () { if (listening) status('Listening, speak'); });
+  dcWarm(function () {
+    if (!listening) return;
+    dcOn = true; dcT0 = Date.now(); dc.__heardSound = 0;
+    try { dc.sendJSON({ type: 'mode', dictate: true, lang: S.lang }); } catch (e) {}
+    dc.startCall().then(function () { logEv('dc_start', {}); })
+      .catch(function (e) { dcOn = false; setListening(false); clipStop(null); add('note', 'Could not start the microphone: ' + (e && e.message || e)); });
+  });
+}
+function liveFinish(text, sendIt) {
+  if (!dcOn) return;
+  dcOn = false; clearTimeout(dcQuiet);
+  try { dc.endCall(); } catch (e) {}
+  setListening(false); live.textContent = '';
+  var t = (dcSaid(text || dcText) || '').trim();
+  logEv('dc_final', { chars: t.length, pieces: dcBuf.length, ms: Date.now() - dcT0 });
+  dcBuf = [];
+  var sent = false;
+  var base = dcBase;
+  function send(final, how, extra) {
+    if (sent) return; sent = true; status('');
+    trace('dc_whisper', Object.assign({ how: how, live: t, final: final, send: !!sendIt }, extra || {}));
+    keepClip(clipBlob, { live: t, final: final || '', how: how });
+    var all = (base + (final || '')).trim();
+    if (!sendIt) { setInp(all); if (!final) status('I did not hear anything'); return; }   // tap, speak, tap Send: the words wait in the box
+    setInp('');
+    if (all) { lastSpoken = true; submit(all); } else add('note', 'I did not hear anything.');
+  }
+  setInp((base + t).trim());
+  var clipBlob = null;
+  clipStop(function (blob) {
+    clipBlob = blob;
+    if (S.whisper === 'off' || !blob || blob.size < 2000) return send(t, S.whisper === 'off' ? 'live-only' : 'live', { bytes: blob ? blob.size : 0 });
+    status('Checking the words\u2026');
+    var w0 = Date.now();
+    setTimeout(function () { send(t, 'live-timeout', { bytes: blob.size }); }, 6000);
+    fetch('/api/talk/transcribe?names=1&lang=' + encodeURIComponent(S.lang), { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type }, body: blob })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { send((j && j.text) || t, j && j.text ? 'whisper' : 'live', { bytes: blob.size, whisper_ms: Date.now() - w0, err: j && j.error }); })
+      .catch(function (e) { send(t, 'live-error', { err: String(e) }); });
+  });
+}
+function liveStop(cancel, sendIt) {
+  if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} clipStop(null); setListening(false); live.textContent = ''; return; }
+  // Stopped by hand (tap, or releasing the button): send what was heard, including the piece being said.
+  trace('dc_stop', { how: 'hand', pieces: dcBuf.length, interim: dcText, ms: Date.now() - dcT0 });
+  status('Finishing\u2026');
+  var t = dcText;
+  setTimeout(function () { if (dcOn) liveFinish(t, sendIt); }, 600);
+}
+
 // ---- Conversation (phase 2): mic streamed to the TalkVoice agent (src/talkvoice.ts)
 // over a WebSocket with Cloudflare's voice client (/talk-voice.js); Flux hears and
 // ends turns, the agent decides and speaks, this page does what it says.
 var vc = null, vcSeen = 0, vcStatus = 'idle', vcLast = 0, vcIdle = null, vcLinks = null, vcPending = null;
 var VC_QUIET_MS = 30000;
-function speakOut(text) { if (vc) { try { vc.sendJSON({ type: 'say', text: spoken(text) }); } catch (e) {} } else say(text); }
+// In a conversation send the answer as written (the transcript shows its lines and lists); the agent cleans it for the voice.
+function vcVoice() { if (vc) try { vc.sendJSON({ type: 'voice', model: S.voice === 'aura-1' ? 'aura-1' : 'aura-2', speaker: S.voice === 'aura-1' || S.voice === 'aura-2' ? S.speaker : '', speed: S.speed }); } catch (e) {} }
+function speakOut(text) { if (vc) { try { vc.sendJSON({ type: 'say', text: String(text || '').slice(0, 1500) }); } catch (e) {} } else say(text); }
 function vcActive() { vcLast = Date.now(); }
 function loadKit(cb) {
   if (window.TalkVoiceKit) return cb();
@@ -21566,26 +22661,21 @@ function startConversation() {
       logEv('vc_connection', { on: on, ms: Date.now() - t0 });
       if (!on || !vc) return;
       vcScreen();
-      if (S.voice === 'aura-1' || S.voice === 'aura-2') vc.sendJSON({ type: 'voice', model: S.voice, speaker: S.speaker });
+      vcVoice();
       vc.startCall().then(function () { sset('call', true); vcActive(); }).catch(function (e) { add('note', 'Could not start: ' + (e && e.message || e)); endConversation('error'); });
     });
     vc.addEventListener('statuschange', function (st) {
       vcStatus = st; vcActive();
+      if (st === 'listening' || st === 'idle') vcFlush(vc.transcript || [], true);
       status(st === 'listening' ? 'Listening' : st === 'thinking' ? 'Thinking\u2026' : st === 'speaking' ? 'Speaking' : '');
       fab.classList.toggle('on', st !== 'idle');
     });
     vc.addEventListener('interimtranscript', function (t) { live.textContent = t || ''; if (t) vcActive(); });
-    vc.addEventListener('transcriptchange', function (msgs) {
-      for (var i = vcSeen; i < msgs.length; i++) {
-        var m = msgs[i];
-        if (m.role === 'user') { live.textContent = ''; add('you', m.text); }
-        else if (m.text) { add('ai', m.text, vcLinks || undefined); vcLinks = null; }
-      }
-      vcSeen = msgs.length; vcActive();
-    });
+    vc.addEventListener('transcriptchange', function (msgs) { vcFlush(msgs, false); vcActive(); });
     vc.addEventListener('custommessage', function (d) { onVoiceMsg(d); });
-    vc.addEventListener('turnmetrics', function (t) { logEv('vc_turn', { outcome: t.outcome, total_ms: t.turnTotalMs }); });
-    vc.addEventListener('error', function (e) { if (e) { add('note', String(e)); logEv('vc_error', { err: String(e) }); } });
+    vc.addEventListener('turnmetrics', function (t) { var m = { outcome: t.outcome, total_ms: t.turnTotalMs }; for (var k in t) if (/Ms$/.test(k) && typeof t[k] === 'number') m[k] = Math.round(t[k]); logEv('vc_turn', m); });
+    // Silence is a choice (filler, a fragment, talk to someone else): the kit reports it as an error; keep it out of the sheet.
+    vc.addEventListener('error', function (e) { if (!e) return; logEv('vc_error', { err: String(e) }); if (!/no response generated/i.test(String(e))) add('note', String(e)); });
     vc.addEventListener('voiceerror', function (e) { logEv('vc_voiceerror', { e: e && (e.code || e.message || String(e)) }); });
     vc.addEventListener('mutechange', function (m) { micBtn.classList.toggle('on', !m); micBtn.innerHTML = m ? ICON.mic : ICON.stop; });
     vc.connect();
@@ -21595,6 +22685,16 @@ function startConversation() {
       if (vc && vcStatus === 'listening' && !live.textContent && Date.now() - vcLast > VC_QUIET_MS) endConversation('quiet');
     }, 2000);
   });
+}
+// The assistant's reply streams in: add it to the log once its turn is over, not while empty.
+function vcFlush(msgs, final) {
+  for (var i = vcSeen; i < msgs.length; i++) {
+    var m = msgs[i];
+    if (m.role !== 'user' && i === msgs.length - 1 && !final) break;
+    if (m.role === 'user') { live.textContent = ''; add('you', m.text); }
+    else if (m.text) { add('ai', m.text, vcLinks || undefined); vcLinks = null; }
+    vcSeen = i + 1;
+  }
 }
 function endConversation(why) {
   clearInterval(vcIdle);
@@ -21617,6 +22717,7 @@ function vcNavigate(c) {
 }
 function onVoiceMsg(d) {
   if (!d || typeof d !== 'object') return;
+  logEv('vc_msg', { type: d.type, op: d.cmd && d.cmd.op, mode: d.cmd && d.cmd.mode, offer: !!(d.cmd && d.cmd.offer), heard: d.type === 'talk-heard' ? d.text : undefined, actions: d.actions ? d.actions.map(function (a) { return a.name; }) : undefined });
   vcActive();
   if (d.type === 'talk-ready') { vcSeen = vc ? vc.transcript.length : 0; return; }
   if (d.type === 'talk-end') return endConversation(d.why || 'minutes');
@@ -21628,15 +22729,16 @@ function onVoiceMsg(d) {
       if (a.name === 'show') showSeq((a.args && a.args.ids) || []);
       else if (a.name === 'press') { var b = byId(a.args.id); if (b) b.click(); }
       else if (a.name === 'type_into') { var f = byId(a.args.id); if (f) { typeInto(f, String(a.args.text || '')); offerSubmit(f); } }
-      else if (a.name === 'go') { var to = String(a.args.to || ''); var l = byId(to); var href = l ? l.getAttribute('href') : (to.charAt(0) === '/' ? to : null); if (href) vcNavigate({ op: 'go', href: href, label: l ? (l.innerText || href).split('\n')[0] : href }); }
+      // A page the answer chose by itself is offered, not opened: in a conversation nobody is watching the screen.
+      else if (a.name === 'go') { var to = String(a.args.to || ''); var l = byId(to); var href = l ? l.getAttribute('href') : (to.charAt(0) === '/' ? to : null); if (href) { var g = { op: 'go', href: href, label: l ? (l.innerText || href).split('\n')[0] : href }; offerOn('Open ' + g.label + '?', function () { vcNavigate(g); }); } }
     });
     return;
   }
   if (d.type !== 'talk-cmd' || !d.cmd) return;
   var c = d.cmd;
   if (c.refused) { if (c.op === 'go' && c.href) offerOn('Take me to ' + (c.label || 'that page') + '?', function () { vcNavigate(c); }); return; }
-  if (c.offer) { vcPending = c; offerOn('Maybe: ' + describe(c) + '?', function () { vcPending = null; vcNavigate(c); }); return; }
-  if (c.op === 'change') { vcPending = c; offerOn(c.mine ? 'Send to ' + c.label + '\u2019s agents?' : 'Fork ' + c.label + '?', function () { vcPending = null; voiceChange(c); }, c.mine ? 'Send' : 'Fork'); return; }
+  if (c.offer) { vcPending = c; offerOn('', function () { vcPending = null; vcNavigate(c); }); return; }
+  if (c.op === 'change') { vcPending = c; offerOn('', function () { vcPending = null; voiceChange(c); }, c.mine ? 'Send' : 'Fork'); return; }
   if (c.op === 'code') return codeQuestion(c);
   if (c.op === 'go' || c.op === 'back') return vcNavigate(c);
   act(c);
@@ -21656,6 +22758,9 @@ function voiceChange(c) {
 fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
   if (!j.signedIn) return;
   me = j.handle;
+  if (j.version && j.version.sha) VERSION = j.version.sha + (j.version.built ? ' ' + new Date(j.version.built).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '') + (j.version.talk && j.version.talk !== j.version.sha ? ' talk ' + j.version.talk : '');
+  if (j.trace) traceStart(); else tq = [];
+  CLIPS = !!j.clips;
   build();
   publishTools();
   // Coming back from a navigation Talk made: show the sheet, finish any pending question.
@@ -21679,7 +22784,7 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
 // ../src/talkvoicejs.gen.ts
 var TALK_VOICE_JS = '"use strict";(()=>{var he=Object.defineProperty;var ce=(s,t,i)=>t in s?he(s,t,{enumerable:!0,configurable:!0,writable:!0,value:i}):s[t]=i;var l=(s,t,i)=>ce(s,typeof t!="symbol"?t+"":t,i);function yt(s,t){if(t.has(s))throw new TypeError("Cannot initialize the same private elements twice on an object")}function h(s,t,i){yt(s,t),t.set(s,i)}function a(s,t,i){if(typeof s=="function"?s===t:s.has(t))return arguments.length<3?t:i;throw new TypeError("Private element is not present on this object")}function r(s,t,i){return s.set(a(s,t),i),i}function e(s,t){return s.get(a(s,t))}function at(s,t){yt(s,t),t.add(s)}var Gt=class extends Error{constructor(s,t={}){super(s),this.name="VoiceProviderError",t.code!==void 0&&(this.code=t.code),t.status!==void 0&&(this.status=t.status),t.closeCode!==void 0&&(this.closeCode=t.closeCode),t.closeReason!==void 0&&(this.closeReason=t.closeReason),t.wasClean!==void 0&&(this.wasClean=t.wasClean)}};function ot(s,t){return s instanceof Error?s:new Error(t)}var le=160,ue=/(^|_)(audio|body|contents?|exceptions?|messages?|prompts?|query|results?|stack|text|tokens?|tools?|transcripts?|arguments?)(_|$)/i;function ct(s,t=le){let i=s.replace(/\\s+/g," ").trim();return i.length<=t?i:`${i.slice(0,t-1)}\\u2026`}function de(s){let t={name:ct(s.name||"Error"),message:ct(s.message||"Unknown error")};return s instanceof Gt&&(s.code!==void 0&&(t.code=s.code),s.status!==void 0&&(t.status=s.status),s.closeCode!==void 0&&(t.closeCode=s.closeCode),s.closeReason!==void 0&&(t.closeReason=ct(s.closeReason)),s.wasClean!==void 0&&(t.wasClean=s.wasClean)),t}function pe(s){if(!s)return;let t={};for(let[i,n]of Object.entries(s))ue.test(i)||(t[i]=n instanceof Error?de(n):typeof n=="string"?ct(n):n);return Object.keys(t).length>0?t:void 0}function fe(s,t,i=Date.now()){let n=pe(t);return{event:s,timestamp:i,...n?{data:n}:{}}}var ht=new WeakMap,bt=new WeakSet,$t=class{constructor(){at(this,bt),h(this,ht,!1)}setEnabled(s){r(ht,this,s)}emit(s,t){e(ht,this)&&a(bt,this,Vt).call(this,"client",fe(s,t))}receive(s){e(ht,this)&&a(bt,this,Vt).call(this,"server",s)}};function Vt(s,t){try{console.info(`[voice:${s}] ${t.event}`,{timestamp:t.timestamp,...t.data??{}})}catch{}}(!globalThis.EventTarget||!globalThis.Event)&&console.error(`\n  PartySocket requires a global \'EventTarget\' class to be available!\n  You can polyfill this global by adding this to your code before any partysocket imports: \n  \n  \\`\\`\\`\n  import \'partysocket/event-target-polyfill\';\n  \\`\\`\\`\n  Please file an issue at https://github.com/partykit/partykit if you\'re still having trouble.\n`);var qt=class extends Event{constructor(t,i){super("error",i);l(this,"message");l(this,"error");this.message=t.message,this.error=t}},Bt=class extends Event{constructor(t=1e3,i="",n){super("close",n);l(this,"code");l(this,"reason");l(this,"wasClean",!0);this.code=t,this.reason=i}},kt={Event,ErrorEvent:qt,CloseEvent:Bt};function _e(s,t){if(!s)throw new Error(t)}function me(s){return new s.constructor(s.type,s)}function ge(s){return"data"in s?new MessageEvent(s.type,s):"code"in s||"reason"in s?new Bt(s.code||1999,s.reason||"unknown reason",s):"error"in s?new qt(s.error,s):new Event(s.type,s)}var ve=typeof process<"u"&&typeof process.versions?.node<"u",we=typeof navigator<"u"&&navigator.product==="ReactNative",lt=ve||we?ge:me,U={maxReconnectionDelay:1e4,minReconnectionDelay:3e3,minUptime:5e3,reconnectionDelayGrowFactor:1.3,connectionTimeout:4e3,maxRetries:Number.POSITIVE_INFINITY,maxEnqueuedMessages:Number.POSITIVE_INFINITY,startClosed:!1,debug:!1},jt=!1;function ye(){}var Jt=class N extends EventTarget{constructor(i,n,c={}){super();l(this,"_ws");l(this,"_retryCount",-1);l(this,"_uptimeTimeout");l(this,"_connectTimeout");l(this,"_shouldReconnect",!0);l(this,"_connectLock",!1);l(this,"_binaryType","blob");l(this,"_closeCalled",!1);l(this,"_didWarnAboutClosedSend",!1);l(this,"_messageQueue",[]);l(this,"_debugLogger",console.log.bind(console));l(this,"_url");l(this,"_protocols");l(this,"_options");l(this,"onclose",null);l(this,"onerror",null);l(this,"onmessage",null);l(this,"onopen",null);l(this,"_handleOpen",i=>{this._debug("open event");let{minUptime:n=U.minUptime}=this._options;clearTimeout(this._connectTimeout),this._uptimeTimeout=setTimeout(()=>this._acceptOpen(),n),_e(this._ws,"WebSocket is not defined"),this._ws.binaryType=this._binaryType,this._messageQueue.forEach(c=>{this._ws?.send(c)}),this._messageQueue=[],this.onopen&&this.onopen(i),this.dispatchEvent(lt(i))});l(this,"_handleMessage",i=>{this._debug("message event"),this.onmessage&&this.onmessage(i),this.dispatchEvent(lt(i))});l(this,"_handleError",i=>{this._debug("error event",i.message),this._disconnect(void 0,i.message==="TIMEOUT"?"timeout":void 0),this.onerror&&this.onerror(i),this._debug("exec error listeners"),this.dispatchEvent(lt(i)),this._connect()});l(this,"_handleClose",i=>{this._debug("close event"),this._clearTimeouts(),this._options.shouldReconnectOnClose&&!this._options.shouldReconnectOnClose(i)&&(this._shouldReconnect=!1),this._shouldReconnect&&this._connect(),this.onclose&&this.onclose(i),this.dispatchEvent(lt(i))});this._url=i,this._protocols=n,this._options=c,this._options.startClosed&&(this._shouldReconnect=!1),this._options.debugLogger&&(this._debugLogger=this._options.debugLogger),this._connect()}static get CONNECTING(){return 0}static get OPEN(){return 1}static get CLOSING(){return 2}static get CLOSED(){return 3}get CONNECTING(){return N.CONNECTING}get OPEN(){return N.OPEN}get CLOSING(){return N.CLOSING}get CLOSED(){return N.CLOSED}get binaryType(){return this._ws?this._ws.binaryType:this._binaryType}set binaryType(i){this._binaryType=i,this._ws&&(this._ws.binaryType=i)}get retryCount(){return Math.max(this._retryCount,0)}get bufferedAmount(){return this._messageQueue.reduce((i,n)=>(typeof n=="string"?i+=n.length:n instanceof Blob?i+=n.size:i+=n.byteLength,i),0)+(this._ws?this._ws.bufferedAmount:0)}get extensions(){return this._ws?this._ws.extensions:""}get protocol(){return this._ws?this._ws.protocol:""}get readyState(){return this._closeCalled?N.CLOSED:this._ws?this._ws.readyState:this._options.startClosed?N.CLOSED:N.CONNECTING}get url(){return this._ws?this._ws.url:""}get shouldReconnect(){return this._shouldReconnect}close(i=1e3,n){if(this._closeCalled=!0,this._shouldReconnect=!1,this._clearTimeouts(),!this._ws){this._debug("close enqueued: no ws instance");return}if(this._ws.readyState===this.CLOSED||this._ws.readyState===this.CLOSING){this._debug("close: already closing or closed");return}this._disconnect(i,n)}reconnect(i,n){this._shouldReconnect=!0,this._closeCalled=!1,this._didWarnAboutClosedSend=!1,this._retryCount=-1,!this._ws||this._ws.readyState===this.CLOSED||this._ws.readyState===this.CLOSING?this._connect():(this._disconnect(i,n),this._connect())}send(i){if(this._ws&&this._ws.readyState===this.OPEN)return this._debug("send",i),this._ws.send(i),!0;this._closeCalled&&!this._didWarnAboutClosedSend&&(this._didWarnAboutClosedSend=!0,console.warn("ReconnectingWebSocket: send() was called after close(). The message has been buffered, but it will only be delivered if reconnect() is called on this socket. If this socket has been discarded, the message is lost \\u2014 this usually means a stale socket reference is being used."));let{maxEnqueuedMessages:n=U.maxEnqueuedMessages}=this._options;return this._messageQueue.length<n&&(this._debug("enqueue",i),this._messageQueue.push(i)),!1}drainQueuedMessages(){let i=this._messageQueue;return this._messageQueue=[],i}_debug(...i){this._options.debug&&this._debugLogger("RWS>",...i)}_getNextDelay(){let{reconnectionDelayGrowFactor:i=U.reconnectionDelayGrowFactor,minReconnectionDelay:n=U.minReconnectionDelay,maxReconnectionDelay:c=U.maxReconnectionDelay}=this._options,d=0;return this._retryCount>0&&(d=n*i**(this._retryCount-1),d>c&&(d=c)),this._debug("next delay",d),d}_wait(){return new Promise(i=>{setTimeout(i,this._getNextDelay())})}_getNextProtocols(i){if(!i)return Promise.resolve(null);if(typeof i=="string"||Array.isArray(i))return Promise.resolve(i);if(typeof i=="function"){let n=i();if(!n)return Promise.resolve(null);if(typeof n=="string"||Array.isArray(n))return Promise.resolve(n);if(n.then)return n}throw Error("Invalid protocols")}_getNextUrl(i){if(typeof i=="string")return Promise.resolve(i);if(typeof i=="function"){let n=i();if(typeof n=="string")return Promise.resolve(n);if(n.then)return n}throw Error("Invalid URL")}_connect(){if(this._connectLock||!this._shouldReconnect)return;this._connectLock=!0;let{maxRetries:i=U.maxRetries,connectionTimeout:n=U.connectionTimeout}=this._options;if(this._retryCount>=i){this._debug("max retries reached",this._retryCount,">=",i),this._connectLock=!1;return}this._retryCount++,this._debug("connect",this._retryCount),this._removeListeners(),this._wait().then(()=>Promise.all([this._getNextUrl(this._url),this._getNextProtocols(this._protocols||null)])).then(([c,d])=>{if(this._closeCalled){this._connectLock=!1;return}!this._options.WebSocket&&typeof WebSocket>"u"&&!jt&&(console.error(`\\u203C\\uFE0F No WebSocket implementation available. You should define options.WebSocket. \n\nFor example, if you\'re using node.js, run \\`npm install ws\\`, and then in your code:\n\nimport PartySocket from \'partysocket\';\nimport WS from \'ws\';\n\nconst partysocket = new PartySocket({\n  host: "127.0.0.1:1999",\n  room: "test-room",\n  WebSocket: WS\n});\n\n`),jt=!0);let w=this._options.WebSocket||WebSocket;this._debug("connect",{url:c,protocols:d}),this._ws=d?new w(c,d):new w(c),this._ws.binaryType=this._binaryType,this._connectLock=!1,this._addListeners(),this._connectTimeout=setTimeout(()=>this._handleTimeout(),n)}).catch(c=>{this._connectLock=!1,this._handleError(new kt.ErrorEvent(Error(c.message),this))})}_handleTimeout(){this._debug("timeout event"),this._handleError(new kt.ErrorEvent(Error("TIMEOUT"),this))}_disconnect(i=1e3,n){if(this._clearTimeouts(),!!this._ws){this._removeListeners();try{(this._ws.readyState===this.OPEN||this._ws.readyState===this.CONNECTING)&&this._ws.close(i,n),this._handleClose(new kt.CloseEvent(i,n,this))}catch{}}}_acceptOpen(){this._debug("accept open"),this._retryCount=0}_removeListeners(){this._ws&&(this._debug("removeListeners"),this._ws.removeEventListener("open",this._handleOpen),this._ws.removeEventListener("close",this._handleClose),this._ws.removeEventListener("message",this._handleMessage),this._ws.removeEventListener("error",this._handleError),this._ws.addEventListener("error",ye))}_addListeners(){this._ws&&(this._debug("addListeners"),this._ws.addEventListener("open",this._handleOpen),this._ws.addEventListener("close",this._handleClose),this._ws.addEventListener("message",this._handleMessage),this._ws.addEventListener("error",this._handleError))}_clearTimeouts(){clearTimeout(this._connectTimeout),clearTimeout(this._uptimeTimeout)}};var be=s=>s[1]!==null&&s[1]!==void 0;function ke(){if(crypto?.randomUUID)return crypto.randomUUID();let s=Date.now(),t=performance?.now&&performance.now()*1e3||0;return"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(i){let n=Math.random()*16;return s>0?(n=(s+n)%16|0,s=Math.floor(s/16)):(n=(t+n)%16|0,t=Math.floor(t/16)),(i==="x"?n:n&3|8).toString(16)})}function Qt(s,t,i={}){let{host:n,path:c,protocol:d,room:w,party:M,basePath:A,prefix:O,query:$}=s,_=n.replace(/^(http|https|ws|wss):\\/\\//,"");if(_.endsWith("/")&&(_=_.slice(0,-1)),c?.startsWith("/"))throw new Error("path must not start with a slash");let Dt=M??"main",Lt=c?`/${c}`:"",At=d||(_.startsWith("localhost:")||_.startsWith("127.0.0.1:")||_.startsWith("192.168.")||_.startsWith("10.")||_.startsWith("172.")&&_.split(".")[1]>="16"&&_.split(".")[1]<="31"||_.startsWith("[::ffff:7f00:1]:")?t:`${t}s`),Ut=`${At}://${_}/${A||`${O||"parties"}/${Dt}/${w}`}${Lt}`,Ft=(oe={})=>`${Ut}?${new URLSearchParams([...Object.entries(i),...Object.entries(oe).filter(be)])}`,ae=typeof $=="function"?async()=>Ft(await $()):Ft($);return{host:_,path:Lt,room:w,name:Dt,protocol:At,partyUrl:Ut,urlProvider:ae}}var Ht=class extends Jt{constructor(t){let i=zt(t);super(i.urlProvider,i.protocols,i.socketOptions);l(this,"_pk");l(this,"_pkurl");l(this,"name");l(this,"room");l(this,"host");l(this,"path");l(this,"basePath");if(this.partySocketOptions=t,this.setWSProperties(i),!t.startClosed&&!this.room&&!this.basePath)throw this.close(),new Error("Either room or basePath must be provided to connect. Use startClosed: true to create a socket and set them via updateProperties before calling reconnect().");t.disableNameValidation||(t.party?.includes("/")&&console.warn(`PartySocket: party name "${t.party}" contains forward slash which may cause routing issues. Consider using a name without forward slashes or set disableNameValidation: true to bypass this warning.`),t.room?.includes("/")&&console.warn(`PartySocket: room name "${t.room}" contains forward slash which may cause routing issues. Consider using a name without forward slashes or set disableNameValidation: true to bypass this warning.`))}updateProperties(t){let i=zt({...this.partySocketOptions,...t,host:t.host??this.host,room:t.room??this.room,path:t.path??this.path,basePath:t.basePath??this.basePath});this._url=i.urlProvider,this._protocols=i.protocols,this._options=i.socketOptions,this.setWSProperties(i)}setWSProperties(t){let{_pk:i,_pkurl:n,name:c,room:d,host:w,path:M,basePath:A}=t;this._pk=i,this._pkurl=n,this.name=c,this.room=d,this.host=w,this.path=M,this.basePath=A}reconnect(t,i){if(!this.host)throw new Error("The host must be set before connecting, use `updateProperties` method to set it or pass it to the constructor.");if(!this.room&&!this.basePath)throw new Error("The room (or basePath) must be set before connecting, use `updateProperties` method to set it or pass it to the constructor.");super.reconnect(t,i)}get id(){return this._pk}get roomUrl(){return this._pkurl}static async fetch(t,i){let n=Qt(t,"http"),c=typeof n.urlProvider=="string"?n.urlProvider:await n.urlProvider();return(t.fetch??fetch)(c,i)}};function zt(s){let{id:t,host:i,path:n,party:c,room:d,protocol:w,query:M,protocols:A,...O}=s,$=t||ke(),_=Qt(s,"ws",{_pk:$});return{_pk:$,_pkurl:_.partyUrl,name:_.name,room:_.room,host:_.host,path:_.path,basePath:s.basePath,protocols:A,socketOptions:O,urlProvider:_.urlProvider}}function Me(s){if(s===s.toUpperCase()&&s!==s.toLowerCase())return s.toLowerCase().replace(/_/g,"-");let t=s.replace(/[A-Z]/g,i=>`-${i.toLowerCase()}`);return t=t.startsWith("-")?t.slice(1):t,t.replace(/_/g,"-").replace(/-$/,"")}var Yt="Audio output device selection is not supported in this browser.",Kt="Could not switch audio output device.",Ce=`\nclass AudioCaptureProcessor extends AudioWorkletProcessor {\n  constructor() {\n    super();\n    this.buffer = [];\n    this.sampleRate = sampleRate;\n    this.targetRate = 16000;\n    this.ratio = this.sampleRate / this.targetRate;\n  }\n\n  process(inputs) {\n    const input = inputs[0];\n    if (!input || !input[0]) return true;\n\n    const channelData = input[0];\n\n    // Linear interpolation resampling (e.g. 48kHz \\u2192 16kHz).\n    // Nearest-neighbor (picking every Nth sample) introduces aliasing\n    // artifacts, especially on sibilants (s, f, th). Linear interpolation\n    // blends adjacent samples, acting as a basic low-pass filter.\n    for (let i = 0; i < channelData.length; i += this.ratio) {\n      const idx = Math.floor(i);\n      const frac = i - idx;\n      if (idx + 1 < channelData.length) {\n        this.buffer.push(channelData[idx] * (1 - frac) + channelData[idx + 1] * frac);\n      } else if (idx < channelData.length) {\n        this.buffer.push(channelData[idx]);\n      }\n    }\n\n    if (this.buffer.length >= 1600) {\n      const chunk = new Float32Array(this.buffer);\n      this.port.postMessage({ type: \'audio\', samples: chunk }, [chunk.buffer]);\n      this.buffer = [];\n    }\n\n    return true;\n  }\n}\n\nregisterProcessor(\'audio-capture-processor\', AudioCaptureProcessor);\n`;function Te(s){let t=new ArrayBuffer(s.length*2),i=new DataView(t);for(let n=0;n<s.length;n++){let c=Math.max(-1,Math.min(1,s[n]));i.setInt16(n*2,c<0?c*32768:c*32767,!0)}return t}function Ee(s){let t=0;for(let i=0;i<s.length;i++)t+=s[i]*s[i];return Math.sqrt(t/s.length)}var C=new WeakMap,j=new WeakMap,Se=class{constructor(s){h(this,C,null),h(this,j,void 0),this.onopen=null,this.onclose=null,this.onerror=null,this.onmessage=null,r(j,this,s)}get connected(){return e(C,this)?.readyState===WebSocket.OPEN}sendJSON(s){e(C,this)?.readyState===WebSocket.OPEN&&e(C,this).send(JSON.stringify(s))}sendBinary(s){e(C,this)?.readyState===WebSocket.OPEN&&e(C,this).send(s)}connect(){if(e(C,this))return;let s=new Ht({party:Me(e(j,this).agent),room:e(j,this).name??"default",host:e(j,this).host??window.location.host,prefix:"agents",query:e(j,this).query});s.onopen=()=>this.onopen?.(),s.onclose=t=>this.onclose?.(t?{code:t.code,reason:t.reason,wasClean:t.wasClean}:void 0),s.onerror=t=>this.onerror?.(t),s.onmessage=t=>{this.onmessage?.(t.data)},r(C,this,s)}disconnect(){e(C,this)?.close(),r(C,this,null)}},q=new WeakMap,m=new WeakMap,Y=new WeakMap,Ct=new WeakMap,K=new WeakMap,T=new WeakMap,Q=new WeakMap,v=new WeakMap,z=new WeakMap,Tt=new WeakMap,pt=new WeakMap,ft=new WeakMap,B=new WeakMap,Et=new WeakMap,E=new WeakMap,R=new WeakMap,W=new WeakMap,f=new WeakMap,st=new WeakMap,it=new WeakMap,St=new WeakMap,Wt=new WeakMap,xt=new WeakMap,Pt=new WeakMap,_t=new WeakMap,p=new WeakMap,g=new WeakMap,b=new WeakMap,mt=new WeakMap,X=new WeakMap,Z=new WeakMap,y=new WeakMap,I=new WeakMap,S=new WeakMap,L=new WeakMap,V=new WeakMap,x=new WeakMap,tt=new WeakMap,et=new WeakMap,k=new WeakMap,nt=new WeakMap,F=new WeakMap,wt=new WeakMap,J=new WeakMap,D=new WeakMap,rt=new WeakMap,P=new WeakMap,G=new WeakMap,H=new WeakMap,o=new WeakSet,se=class{constructor(s){at(this,o),h(this,q,"idle"),h(this,m,[]),h(this,Y,null),h(this,Ct,null),h(this,K,0),h(this,T,!1),h(this,Q,!1),h(this,v,null),h(this,z,null),h(this,Tt,null),h(this,pt,null),h(this,ft,16e3),h(this,B,null),h(this,Et,null),h(this,E,!1),h(this,R,0),h(this,W,!1),h(this,f,new $t),h(this,st,!1),h(this,it,null),h(this,St,void 0),h(this,Wt,void 0),h(this,xt,void 0),h(this,Pt,void 0),h(this,_t,void 0),h(this,p,null),h(this,g,void 0),h(this,b,null),h(this,mt,!1),h(this,X,null),h(this,Z,null),h(this,y,null),h(this,I,!1),h(this,S,[]),h(this,L,!1),h(this,V,!1),h(this,x,new Set),h(this,tt,0),h(this,et,null),h(this,k,null),h(this,nt,null),h(this,F,null),h(this,wt,!1),h(this,J,void 0),h(this,D,0),h(this,rt,0),h(this,P,0),h(this,G,0),h(this,H,new Map),r(g,this,s),r(St,this,s.silenceThreshold??.04),r(Wt,this,s.silenceDurationMs??500),r(xt,this,s.interruptThreshold??.05),r(Pt,this,s.interruptChunks??2),r(_t,this,s.maxTranscriptMessages??200),r(J,this,s.outputDeviceId??"default")}get status(){return e(q,this)}get transcript(){return e(m,this)}get metrics(){return e(Y,this)}get turnMetrics(){return e(Ct,this)}get audioLevel(){return e(K,this)}get isMuted(){return e(T,this)}get connected(){return e(Q,this)}get error(){return e(v,this)}get outputDeviceError(){return e(z,this)}get interimTranscript(){return e(B,this)}get serverProtocolVersion(){return e(Et,this)}addEventListener(s,t){let i=e(H,this).get(s);i||(i=new Set,e(H,this).set(s,i)),i.add(t)}removeEventListener(s,t){e(H,this).get(s)?.delete(t)}connect(){if(e(p,this))return;let s=e(g,this).transport??new Se({agent:e(g,this).agent,name:e(g,this).name,host:e(g,this).host,query:e(g,this).query});s.onopen=()=>{r(Q,this,!0),r(v,this,null),s.sendJSON({type:"hello",protocol_version:1}),a(o,this,u).call(this,"connectionchange",!0),a(o,this,u).call(this,"error",null),e(E,this)&&(r(W,this,!1),s.sendJSON({type:"start_call"}))},s.onclose=t=>{e(f,this).emit("connection.closed",{...t?.code===void 0?{}:{code:t.code},clean:t?.wasClean??!1}),r(Q,this,!1),a(o,this,dt).call(this),a(o,this,u).call(this,"connectionchange",!1),a(o,this,u).call(this,"connectiondiagnostic",{type:"close",...t})},s.onerror=t=>{e(f,this).emit("connection.error",{error:ot(t,"Connection failed")}),a(o,this,u).call(this,"connectiondiagnostic",{type:"error",cause:t}),r(v,this,"Connection lost. Reconnecting..."),a(o,this,u).call(this,"error",e(v,this))},s.onmessage=t=>{typeof t=="string"?a(o,this,xe).call(this,t):t instanceof Blob?t.arrayBuffer().then(i=>{a(o,this,Zt).call(this,i.byteLength),e(S,this).push(i),a(o,this,ee).call(this)}):t instanceof ArrayBuffer&&(a(o,this,Zt).call(this,t.byteLength),e(S,this).push(t),a(o,this,ee).call(this))},r(p,this,s),s.connect()}disconnect(){this.endCall(),e(f,this).emit("connection.disconnecting"),e(p,this)?.disconnect(),r(p,this,null),r(Q,this,!1),a(o,this,u).call(this,"connectionchange",!1)}async startCall(){var s;if(!e(p,this)?.connected){r(v,this,"Cannot start call: not connected. Call connect() first."),a(o,this,u).call(this,"error",e(v,this));return}if(e(E,this))return;a(o,this,dt).call(this);let t=r(R,this,(s=e(R,this),++s));r(E,this,!0),r(W,this,!1),r(v,this,null),r(Y,this,null),a(o,this,u).call(this,"error",null),a(o,this,u).call(this,"metricschange",null);let i={type:"start_call"};e(g,this).preferredFormat&&(i.preferred_format=e(g,this).preferredFormat),e(f,this).emit("call.starting"),e(p,this).sendJSON(i);let n=await a(o,this,Rt).call(this);a(o,this,Mt).call(this,t)||(await a(o,this,ie).call(this,n),!a(o,this,Mt).call(this,t)&&(e(g,this).audioInput?(e(f,this).emit("microphone.starting",{source:"custom"}),e(g,this).audioInput.onAudioLevel=c=>a(o,this,ne).call(this,c),e(g,this).audioInput.onAudioData=c=>{e(p,this)?.connected&&!e(T,this)&&e(p,this).sendBinary(c)},await e(g,this).audioInput.start(),e(f,this).emit("microphone.ready",{source:"custom"})):await a(o,this,Re).call(this),a(o,this,Mt).call(this,t)||e(f,this).emit("call.local_ready")))}endCall(){var s;let t=e(E,this);r(R,this,(s=e(R,this),s++,s)),r(E,this,!1),r(W,this,!1),e(p,this)?.connected&&e(p,this).sendJSON({type:"end_call"}),a(o,this,Nt).call(this),a(o,this,dt).call(this),r(q,this,"idle"),a(o,this,u).call(this,"statuschange","idle"),t&&e(f,this).emit("call.ended",{reason:"requested"})}toggleMute(){r(T,this,!e(T,this)),e(T,this)&&(r(K,this,0),a(o,this,u).call(this,"audiolevelchange",0)),e(T,this)&&e(I,this)&&(r(I,this,!1),e(y,this)&&(clearTimeout(e(y,this)),r(y,this,null)),e(p,this)?.connected&&e(p,this).sendJSON({type:"end_of_speech"})),a(o,this,u).call(this,"mutechange",e(T,this))}sendText(s){e(p,this)?.connected&&e(p,this).sendJSON({type:"text_message",text:s})}sendJSON(s){e(p,this)?.connected&&e(p,this).sendJSON(s)}async setOutputDevice(s){var t;r(J,this,s??"default");let i=r(D,this,(t=e(D,this),++t));e(k,this)&&await a(o,this,gt).call(this,e(k,this),i)}get lastCustomMessage(){return e(Tt,this)}get audioFormat(){return e(pt,this)}get sampleRate(){return e(ft,this)}};function u(s,t){let i=e(H,this).get(s);if(i)for(let n of i)n(t)}function Xt(){e(m,this).length>e(_t,this)&&r(m,this,e(m,this).slice(-e(_t,this)))}function ut(s){e(z,this)!==s&&(r(z,this,s),a(o,this,u).call(this,"outputdeviceerror",s))}function dt(){r(B,this,null),a(o,this,u).call(this,"interimtranscript",null)}function We(s){return e(E,this)&&e(R,this)===s}function Mt(s){return a(o,this,We).call(this,s)?!1:(e(E,this)||a(o,this,Nt).call(this),!0)}function Nt(){e(g,this).audioInput?(e(g,this).audioInput.stop(),e(g,this).audioInput.onAudioLevel=null,e(g,this).audioInput.onAudioData=null):a(o,this,Ie).call(this),a(o,this,vt).call(this),a(o,this,Pe).call(this),a(o,this,re).call(this)}function Zt(s){e(st,this)||(r(st,this,!0),e(f,this).emit("audio.received",{bytes:s,...e(it,this)===null?{}:{turn_id:e(it,this)}}))}function xe(s){let t;try{t=JSON.parse(s)}catch{return}switch(t.type){case"welcome":{let n=(typeof t.diagnostics=="object"&&t.diagnostics!==null?t.diagnostics:null)?.browser_console===!0;e(f,this).setEnabled(n),n&&e(f,this).emit("connection.ready",{protocol_version:t.protocol_version}),r(Et,this,t.protocol_version),t.protocol_version!==1&&console.warn(`[VoiceClient] Protocol version mismatch: client=1, server=${t.protocol_version}`);break}case"diagnostic":if(typeof t.event=="string"&&typeof t.timestamp=="number"&&Number.isFinite(t.timestamp)){let n=typeof t.data=="object"&&t.data!==null?t.data:void 0;t.event==="audio.first_sent"&&typeof n?.turn_id=="string"&&(r(it,this,n.turn_id),r(st,this,!1)),e(f,this).receive({event:t.event,timestamp:t.timestamp,...n===void 0?{}:{data:n}})}break;case"audio_config":r(W,this,!0),r(pt,this,t.format),r(ft,this,typeof t.sampleRate=="number"&&t.sampleRate>0?t.sampleRate:16e3);break;case"status":if(r(q,this,t.status),(t.status==="thinking"||t.status==="speaking")&&(r(st,this,!1),t.status==="thinking"&&r(it,this,null)),t.status==="idle"&&e(E,this)){var i;if(!(e(W,this)||e(v,this)!==null)){a(o,this,u).call(this,"statuschange",e(q,this));break}r(R,this,(i=e(R,this),i++,i)),r(E,this,!1),r(W,this,!1),a(o,this,Nt).call(this),a(o,this,dt).call(this)}t.status==="listening"?(r(W,this,!0),r(v,this,null),a(o,this,u).call(this,"error",null)):(t.status==="thinking"||t.status==="speaking")&&r(W,this,!0),a(o,this,u).call(this,"statuschange",e(q,this));break;case"transcript_interim":r(B,this,t.text),a(o,this,u).call(this,"interimtranscript",e(B,this));break;case"playback_interrupt":a(o,this,vt).call(this,"server_interrupt");break;case"transcript":r(B,this,null),a(o,this,u).call(this,"interimtranscript",null),t.role==="user"&&e(L,this)&&a(o,this,vt).call(this,"user_utterance"),r(m,this,[...e(m,this),{role:t.role,text:t.text,timestamp:Date.now()}]),a(o,this,Xt).call(this),a(o,this,u).call(this,"transcriptchange",e(m,this));break;case"transcript_start":r(m,this,[...e(m,this),{role:"assistant",text:"",timestamp:Date.now()}]),a(o,this,Xt).call(this),a(o,this,u).call(this,"transcriptchange",e(m,this));break;case"transcript_delta":{if(e(m,this).length===0)break;let n=[...e(m,this)],c=n[n.length-1];c.role==="assistant"&&(n[n.length-1]={...c,text:c.text+t.text},r(m,this,n),a(o,this,u).call(this,"transcriptchange",e(m,this)));break}case"transcript_end":{if(e(m,this).length===0)break;let n=[...e(m,this)],c=n[n.length-1];c.role==="assistant"&&(n[n.length-1]={...c,text:t.text},r(m,this,n),a(o,this,u).call(this,"transcriptchange",e(m,this)));break}case"metrics":r(Y,this,{llm_ms:t.llm_ms,tts_ms:t.tts_ms,first_audio_ms:t.first_audio_ms,total_ms:t.total_ms}),a(o,this,u).call(this,"metricschange",e(Y,this));break;case"turn_metrics":{let{type:n,...c}=t,d=c;r(Ct,this,d),a(o,this,u).call(this,"turnmetrics",d);break}case"completion_outcome":{let n={code:t.code,stage:"llm",...t.finishReason!==void 0?{finishReason:t.finishReason}:{},partialOutput:t.partialOutput};a(o,this,u).call(this,"completionoutcome",n);break}case"error":{let n={message:t.message,...t.code!==void 0?{code:t.code}:{},...t.stage!==void 0?{stage:t.stage}:{},...t.retryable!==void 0?{retryable:t.retryable}:{}};r(v,this,n.message),a(o,this,u).call(this,"voiceerror",n),a(o,this,u).call(this,"error",e(v,this));break}default:r(Tt,this,t),a(o,this,u).call(this,"custommessage",t);break}}async function Rt(){return e(b,this)||r(b,this,new AudioContext({sampleRate:48e3})),e(b,this).state==="suspended"&&await e(b,this).resume(),e(b,this)}function Pe(){e(b,this)&&(a(o,this,It).call(this),e(b,this).close().catch(()=>{}),r(b,this,null),r(mt,this,!1))}async function ie(s){if(e(F,this))return e(F,this);if(e(nt,this))return e(nt,this);if(e(wt,this))return s.destination;let t=e(rt,this),i=a(o,this,Oe).call(this,s,t);r(F,this,i);try{return await i}finally{e(F,this)===i&&r(F,this,null)}}async function Oe(s,t){try{let i=s.createMediaStreamDestination(),n=new Audio;return n.autoplay=!0,n.srcObject=i.stream,r(k,this,n),r(nt,this,i),await a(o,this,gt).call(this,n,e(D,this)),a(o,this,te).call(this,n,t)?(await n.play(),a(o,this,te).call(this,n,t)?i:(a(o,this,Ot).call(this,n),s.destination)):(a(o,this,Ot).call(this,n),s.destination)}catch(i){return console.warn("[VoiceClient] HTMLAudioElement playback output unavailable; using default AudioContext destination.",i),a(o,this,It).call(this),r(wt,this,!0),s.destination}}function te(s,t){return e(k,this)===s&&e(rt,this)===t}async function gt(s,t){let i=e(J,this),n=s.setSinkId;if(!n){if(i==="default"){a(o,this,ut).call(this,null);return}a(o,this,ut).call(this,Yt);return}try{if(await n.call(s,i),t!==e(D,this)||i!==e(J,this)){e(k,this)===s&&await a(o,this,gt).call(this,s,e(D,this));return}(e(z,this)===Yt||e(z,this)===Kt)&&a(o,this,ut).call(this,null)}catch{if(t!==e(D,this)||i!==e(J,this)){e(k,this)===s&&await a(o,this,gt).call(this,s,e(D,this));return}a(o,this,ut).call(this,Kt)}}function It(){var s;r(rt,this,(s=e(rt,this),s++,s)),e(k,this)&&(a(o,this,Ot).call(this,e(k,this)),r(k,this,null)),r(nt,this,null),r(F,this,null),r(wt,this,!1)}function Ot(s){s.pause(),s.srcObject=null}async function Ne(s,t){try{let i=await a(o,this,Rt).call(this),n;if(e(pt,this)==="pcm16"){let M=new Int16Array(s);n=i.createBuffer(1,M.length,e(ft,this));let A=n.getChannelData(0);for(let O=0;O<M.length;O++)A[O]=M[O]/32768}else n=await i.decodeAudioData(s.slice(0));if(t!==e(P,this))return;e(k,this)&&e(x,this).size===0&&e(et,this)!==null&&i.currentTime-e(et,this)>.3&&a(o,this,It).call(this);let c=await a(o,this,ie).call(this,i);if(t!==e(P,this))return;let d=i.createBufferSource();d.buffer=n,d.connect(c),e(x,this).add(d),d.onended=()=>{e(x,this).delete(d),t===e(P,this)&&!e(V,this)&&e(x,this).size===0&&e(S,this).length===0&&(r(L,this,!1),e(f,this).emit("playback.completed"))};let w=Math.max(i.currentTime,e(tt,this));r(tt,this,w+n.duration),r(et,this,e(tt,this)),d.start(w)}catch(i){e(f,this).emit("playback.error",{error:ot(i,"Playback failed")}),console.error("[VoiceClient] Audio playback error:",i)}}async function ee(){if(e(V,this)||e(S,this).length===0)return;r(V,this,!0),r(L,this,!0),e(f,this).emit("playback.started",{chunks:e(S,this).length});let s=e(P,this);for(;s===e(P,this)&&e(S,this).length>0;){let t=e(S,this).shift();await a(o,this,Ne).call(this,t,s)}s===e(P,this)&&(r(V,this,!1),e(x,this).size===0&&r(L,this,!1))}function vt(s="stopped"){var t;let i=e(L,this)||e(V,this)||e(S,this).length>0||e(x,this).size>0;r(P,this,(t=e(P,this),t++,t));let n=[...e(x,this)];e(x,this).clear();for(let c of n)try{c.stop()}catch{}r(S,this,[]),r(L,this,!1),r(V,this,!1),r(tt,this,0),r(et,this,e(b,this)?e(b,this).currentTime:null),i&&e(f,this).emit("playback.stopped",{reason:s})}async function Re(){e(f,this).emit("microphone.starting",{source:"browser"});try{let s=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:{ideal:48e3},channelCount:1,echoCancellation:!0,noiseSuppression:!0,autoGainControl:!0}});r(Z,this,s);let t=await a(o,this,Rt).call(this);if(!e(mt,this)){let c=new Blob([Ce],{type:"application/javascript"}),d=URL.createObjectURL(c);await t.audioWorklet.addModule(d),URL.revokeObjectURL(d),r(mt,this,!0)}let i=t.createMediaStreamSource(s),n=new AudioWorkletNode(t,"audio-capture-processor");r(X,this,n),n.port.onmessage=c=>{if(c.data.type==="audio"&&!e(T,this)){let d=c.data.samples,w=Ee(d),M=Te(d);e(p,this)?.connected&&e(p,this).sendBinary(M),a(o,this,ne).call(this,w)}},i.connect(n),n.connect(t.destination),e(f,this).emit("microphone.ready",{source:"browser"})}catch(s){e(f,this).emit("microphone.error",{error:ot(s,"Microphone failed")}),console.error("[VoiceClient] Mic error:",s),r(v,this,"Microphone access denied. Please allow microphone access and try again."),a(o,this,u).call(this,"error",e(v,this))}}function Ie(){let s=e(X,this)!==null||e(Z,this)!==null;e(X,this)?.disconnect(),r(X,this,null),e(Z,this)?.getTracks().forEach(t=>t.stop()),r(Z,this,null),s&&e(f,this).emit("microphone.stopped"),a(o,this,re).call(this)}function ne(s){if(!e(T,this)){if(r(K,this,s),a(o,this,u).call(this,"audiolevelchange",s),e(L,this)&&s>e(xt,this)){var t;r(G,this,(t=e(G,this),t++,t)),e(G,this)>=e(Pt,this)&&(e(f,this).emit("speech.interrupt_detected"),a(o,this,vt).call(this,"speech_interrupt"),r(G,this,0),e(p,this)?.connected&&e(p,this).sendJSON({type:"interrupt"}))}else r(G,this,0);s>e(St,this)?(e(I,this)||(r(I,this,!0),e(f,this).emit("speech.started"),e(p,this)?.connected&&e(p,this).sendJSON({type:"start_of_speech"})),e(y,this)&&(clearTimeout(e(y,this)),r(y,this,null))):e(I,this)&&(e(y,this)||r(y,this,setTimeout(()=>{r(I,this,!1),r(y,this,null),e(f,this).emit("speech.ended"),e(p,this)?.connected&&e(p,this).sendJSON({type:"end_of_speech"})},e(Wt,this))))}}function re(){e(y,this)&&(clearTimeout(e(y,this)),r(y,this,null)),r(I,this,!1),r(G,this,0),r(K,this,0),a(o,this,u).call(this,"audiolevelchange",0)}globalThis.TalkVoiceKit={VoiceClient:se};})();\n';
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/utils.js
+// ../node_modules/agents/dist/utils.js
 var INTERNAL_JS_STUB_PROPS = /* @__PURE__ */ new Set([
   "toJSON",
   "then",
@@ -21706,7 +22811,7 @@ function camelCaseToKebabCase(str) {
 }
 __name(camelCaseToKebabCase, "camelCaseToKebabCase");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/agent-routing.js
+// ../node_modules/agents/dist/agent-routing.js
 var namespaceMapCache = /* @__PURE__ */ new WeakMap();
 var bindingNameCache = /* @__PURE__ */ new WeakMap();
 var DEFAULT_ROUTING_RETRY_OPTIONS = {
@@ -21853,16 +22958,16 @@ async function routeAgentRequest(request, env, options) {
   const getOptions = durableObjectGetOptions(options);
   request = mutableRequest(request);
   const className = bindingNames[namespaceName];
-  const route = {
+  const route2 = {
     className,
     name
   };
   if (isWebSocket) {
-    const requestOrResponse = await options?.onBeforeConnect?.(request, route);
+    const requestOrResponse = await options?.onBeforeConnect?.(request, route2);
     if (requestOrResponse instanceof Request) request = mutableRequest(requestOrResponse);
     else if (requestOrResponse instanceof Response) return requestOrResponse;
   } else {
-    const requestOrResponse = await options?.onBeforeRequest?.(request, route);
+    const requestOrResponse = await options?.onBeforeRequest?.(request, route2);
     if (requestOrResponse instanceof Request) request = mutableRequest(requestOrResponse);
     else if (requestOrResponse instanceof Response) return withCorsHeaders(requestOrResponse);
   }
@@ -21884,7 +22989,7 @@ async function getAgentByName(namespace, name, options) {
 }
 __name(getAgentByName, "getAgentByName");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/agent-tool-types.js
+// ../node_modules/agents/dist/agent-tool-types.js
 var AGENT_TOOL_MILESTONE_PART = "data-agent-milestone";
 function isAgentToolLifecycleChunk(body) {
   if (!body.includes("data-agent-progress") && !body.includes("data-agent-milestone")) return false;
@@ -21897,7 +23002,7 @@ function isAgentToolLifecycleChunk(body) {
 }
 __name(isAgentToolLifecycleChunk, "isAgentToolLifecycleChunk");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/current-agent-DhoDkSnH.js
+// ../node_modules/agents/dist/current-agent-DhoDkSnH.js
 import { AsyncLocalStorage } from "node:async_hooks";
 var __DO_NOT_USE_WILL_BREAK__agentContext = new AsyncLocalStorage();
 function getCurrentAgent() {
@@ -21930,7 +23035,7 @@ function runWithoutCurrentAgent(operation) {
 }
 __name(runWithoutCurrentAgent, "runWithoutCurrentAgent");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/callable-decorator.js
+// ../node_modules/agents/dist/callable-decorator.js
 var callableMetadata = /* @__PURE__ */ new WeakMap();
 function getCallableMetadata(method) {
   return callableMetadata.get(method);
@@ -21962,7 +23067,7 @@ function decoratedMethods(host) {
 }
 __name(decoratedMethods, "decoratedMethods");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/email.js
+// ../node_modules/agents/dist/email.js
 var DEFAULT_MAX_AGE_SECONDS = 720 * 60 * 60;
 async function computeAgentSignature(secret, agentName, agentId, timestamp) {
   const encoder2 = new TextEncoder();
@@ -21991,7 +23096,7 @@ async function signAgentHeaders(secret, agentName, agentId) {
 }
 __name(signAgentHeaders, "signAgentHeaders");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/classPrivateFieldGet2-DZBYAB34.js
+// ../node_modules/agents/dist/classPrivateFieldGet2-DZBYAB34.js
 function _checkPrivateRedeclaration(e2, t2) {
   if (t2.has(e2)) throw new TypeError("Cannot initialize the same private elements twice on an object");
 }
@@ -22014,7 +23119,7 @@ function _classPrivateFieldGet2(s2, a2) {
 }
 __name(_classPrivateFieldGet2, "_classPrivateFieldGet2");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/cloudflare-Dzvc7V2N.js
+// ../node_modules/agents/dist/cloudflare-Dzvc7V2N.js
 import { AsyncLocalStorage as AsyncLocalStorage2 } from "node:async_hooks";
 import * as cloudflareWorkers from "cloudflare:workers";
 var invocationScope = new AsyncLocalStorage2();
@@ -22195,7 +23300,7 @@ function resolveCloudflareSpanRuntime(runtime2) {
 __name(resolveCloudflareSpanRuntime, "resolveCloudflareSpanRuntime");
 var tracer = createTracer(runtime);
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/sub-routing.js
+// ../node_modules/agents/dist/sub-routing.js
 function parseSubAgentPath(url2, options) {
   const parts = new URL(url2).pathname.split("/").filter(Boolean);
   for (let i2 = 0; i2 < parts.length; i2++) {
@@ -22228,13 +23333,13 @@ function resolveClassName(segment, knownClasses) {
 }
 __name(resolveClassName, "resolveClassName");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/classPrivateMethodInitSpec-qMjJ6sHQ.js
+// ../node_modules/agents/dist/classPrivateMethodInitSpec-qMjJ6sHQ.js
 function _classPrivateMethodInitSpec(e2, a2) {
   _checkPrivateRedeclaration(e2, a2), a2.add(e2);
 }
 __name(_classPrivateMethodInitSpec, "_classPrivateMethodInitSpec");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/email-send.js
+// ../node_modules/agents/dist/email-send.js
 async function sendAgentEmail(options, identity) {
   if (!options.binding) throw new Error("binding is required. Pass your send_email binding, e.g. this.sendEmail({ binding: this.env.EMAIL, ... }).");
   const headers = {
@@ -22262,14 +23367,14 @@ async function sendAgentEmail(options, identity) {
 }
 __name(sendAgentEmail, "sendAgentEmail");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/transport-protocol-BxyngQ_R.js
+// ../node_modules/agents/dist/transport-protocol-BxyngQ_R.js
 var CAPNWEB_TRANSPORT_SEND = "__cf_agent_send";
 function isCapnWebTransportUpgrade(request) {
   return request.headers.get("Upgrade")?.toLowerCase() === "websocket" && new URL(request.url).searchParams.get("__agents_transport") === "capnweb";
 }
 __name(isCapnWebTransportUpgrade, "isCapnWebTransportUpgrade");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/capability-B4WbF81e.js
+// ../node_modules/agents/dist/capability-B4WbF81e.js
 var installedServices = /* @__PURE__ */ new WeakMap();
 var LifecycleCapability = class {
   static {
@@ -22303,7 +23408,7 @@ function lifecycleCapabilityId(capability) {
 }
 __name(lifecycleCapabilityId, "lifecycleCapabilityId");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/diagnostics-BzvaX2UT.js
+// ../node_modules/agents/dist/diagnostics-BzvaX2UT.js
 import { channel } from "node:diagnostics_channel";
 var channels = {
   state: channel("agents:state"),
@@ -22345,7 +23450,7 @@ function publishDiagnosticsEvent(event) {
 }
 __name(publishDiagnosticsEvent, "publishDiagnosticsEvent");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/retries.js
+// ../node_modules/agents/dist/retries.js
 function resolveRetryConfig(retry, defaults) {
   return {
     maxAttempts: retry?.maxAttempts ?? defaults.maxAttempts,
@@ -22446,7 +23551,7 @@ function isPlatformTransientError(error62) {
 }
 __name(isPlatformTransientError, "isPlatformTransientError");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/sql-error.js
+// ../node_modules/agents/dist/sql-error.js
 var SqlError = class extends Error {
   static {
     __name(this, "SqlError");
@@ -22459,14 +23564,14 @@ var SqlError = class extends Error {
   }
 };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/lifecycle-CFu6OV03.js
+// ../node_modules/agents/dist/lifecycle-CFu6OV03.js
 import { AsyncLocalStorage as AsyncLocalStorage3 } from "node:async_hooks";
 import "cloudflare:workers";
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/nanoid/url-alphabet/index.js
+// ../node_modules/nanoid/url-alphabet/index.js
 var urlAlphabet = "useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict";
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/nanoid/index.browser.js
+// ../node_modules/nanoid/index.browser.js
 var nanoid = /* @__PURE__ */ __name((size = 21) => {
   let id = "";
   let bytes = crypto.getRandomValues(new Uint8Array(size |= 0));
@@ -22476,7 +23581,7 @@ var nanoid = /* @__PURE__ */ __name((size = 21) => {
   return id;
 }, "nanoid");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/lifecycle-CFu6OV03.js
+// ../node_modules/agents/dist/lifecycle-CFu6OV03.js
 var _resolveCapabilities = /* @__PURE__ */ new WeakMap();
 var _capabilities$1 = /* @__PURE__ */ new WeakMap();
 var _startPromise = /* @__PURE__ */ new WeakMap();
@@ -23715,7 +24820,7 @@ async function _resolveJobDispatch(owner) {
 }
 __name(_resolveJobDispatch, "_resolveJobDispatch");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/capnweb/dist/index-workers.js
+// ../node_modules/capnweb/dist/index-workers.js
 import * as cfw from "cloudflare:workers";
 var WORKERS_MODULE_SYMBOL = /* @__PURE__ */ Symbol("workers-module");
 globalThis[WORKERS_MODULE_SYMBOL] = cfw;
@@ -26809,7 +27914,7 @@ streamImpl.createWritableStreamFromHook = createWritableStreamFromHook;
 streamImpl.createReadableStreamHook = ReadableStreamStubHook.create;
 var newWebSocketRpcSession = newWebSocketRpcSession$1;
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/websockets-Ci-LZFHH.js
+// ../node_modules/agents/dist/websockets-Ci-LZFHH.js
 import { RpcTarget as RpcTarget$12 } from "cloudflare:workers";
 var CF_READONLY_KEY = "_cf_readonly";
 var CF_NO_PROTOCOL_KEY = "_cf_no_protocol";
@@ -27710,7 +28815,7 @@ async function _dispatchCallable(name, invoke, connection) {
 }
 __name(_dispatchCallable, "_dispatchCallable");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/invoker-CHMnoxIA.js
+// ../node_modules/agents/dist/invoker-CHMnoxIA.js
 function isLegacyResultSchema(value) {
   return typeof value?.parse === "function";
 }
@@ -27732,7 +28837,7 @@ function callV2Tool(client, params, schemaOrOptions, options) {
 }
 __name(callV2Tool, "callV2Tool");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/mcp/client/do-oauth-client-provider.js
+// ../node_modules/agents/dist/mcp/client/do-oauth-client-provider.js
 import { AsyncLocalStorage as AsyncLocalStorage4 } from "node:async_hooks";
 var STATE_EXPIRATION_MS = 600 * 1e3;
 var codeVerifierStateStorage = new AsyncLocalStorage4();
@@ -28028,7 +29133,7 @@ var DurableObjectOAuthClientProvider = class {
   }
 };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/external.js
+// ../node_modules/zod/v4/classic/external.js
 var external_exports = {};
 __export(external_exports, {
   $brand: () => $brand,
@@ -28291,7 +29396,7 @@ __export(external_exports, {
   xor: () => xor
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/index.js
+// ../node_modules/zod/v4/core/index.js
 var core_exports2 = {};
 __export(core_exports2, {
   $ZodAny: () => $ZodAny,
@@ -28608,7 +29713,7 @@ __export(core_exports2, {
   withParser: () => withParser
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/util.js
+// ../node_modules/zod/v4/core/util.js
 var util_exports = {};
 __export(util_exports, {
   BIGINT_FORMAT_RANGES: () => BIGINT_FORMAT_RANGES,
@@ -28638,7 +29743,7 @@ __export(util_exports, {
   defineLazy: () => defineLazy,
   defineLazyInternal: () => defineLazyInternal,
   derived: () => derived,
-  esc: () => esc9,
+  esc: () => esc10,
   escapeRegex: () => escapeRegex,
   explicitlyAborted: () => explicitlyAborted,
   extend: () => extend,
@@ -28898,10 +30003,10 @@ function randomString(length = 10) {
   return str;
 }
 __name(randomString, "randomString");
-function esc9(str) {
+function esc10(str) {
   return JSON.stringify(str);
 }
-__name(esc9, "esc");
+__name(esc10, "esc");
 function slugify(input2) {
   return input2.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
 }
@@ -29532,7 +30637,7 @@ function constantCatch(value) {
 }
 __name(constantCatch, "constantCatch");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/core.js
+// ../node_modules/zod/v4/core/core.js
 var _a;
 var NEVER = /* @__PURE__ */ Object.freeze({
   status: "aborted"
@@ -29669,7 +30774,7 @@ function config(newConfig) {
 }
 __name(config, "config");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/errors.js
+// ../node_modules/zod/v4/core/errors.js
 function _getMessage() {
   const internals = this._zod;
   internals.message ?? (internals.message = JSON.stringify(internals.def, jsonStringifyReplacer, 2));
@@ -29869,7 +30974,7 @@ function prettifyError(error62) {
 }
 __name(prettifyError, "prettifyError");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/parse.js
+// ../node_modules/zod/v4/core/parse.js
 function finalizeParams(callee, params) {
   return { callee: params?.callee ?? callee, Err: params?.Err };
 }
@@ -30032,7 +31137,7 @@ var _safeDecodeAsync = /* @__PURE__ */ __name((_Err) => async (schema, value, _c
 }, "_safeDecodeAsync");
 var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync($ZodRealError);
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/regexes.js
+// ../node_modules/zod/v4/core/regexes.js
 var regexes_exports = {};
 __export(regexes_exports, {
   anyString: () => anyString,
@@ -30212,7 +31317,7 @@ var sha512_hex = /^[0-9a-fA-F]{128}$/;
 var sha512_base64 = /* @__PURE__ */ fixedBase64(86, "==");
 var sha512_base64url = /* @__PURE__ */ fixedBase64url(86);
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/checks.js
+// ../node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a3;
   inst._zod ?? (inst._zod = {});
@@ -30689,7 +31794,7 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/doc.js
+// ../node_modules/zod/v4/core/doc.js
 var Doc = class {
   static {
     __name(this, "Doc");
@@ -30733,14 +31838,14 @@ ${content.join("\n")}
   }
 };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/versions.js
+// ../node_modules/zod/v4/core/versions.js
 var version = {
   major: 4,
   minor: 6,
   patch: 5
 };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/schemas.js
+// ../node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a3;
   inst ?? (inst = {});
@@ -31770,7 +32875,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
       if (key === "__proto__")
         continue;
       const id = ids[key];
-      const k2 = typeof key === "symbol" ? `syms[${syms.indexOf(key)}]` : esc9(key);
+      const k2 = typeof key === "symbol" ? `syms[${syms.indexOf(key)}]` : esc10(key);
       const isPresent = `${k2} in input`;
       const schema = shape[key];
       const optin = schema?._zod?.optin;
@@ -33197,7 +34302,7 @@ function handleRefineResult(result, payload, input2, inst) {
 }
 __name(handleRefineResult, "handleRefineResult");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/memoizer.js
+// ../node_modules/zod/v4/core/memoizer.js
 var $ZodCyclicError = class extends Error {
   static {
     __name(this, "$ZodCyclicError");
@@ -33485,7 +34590,7 @@ function isBackEdge(ctx, value) {
 }
 __name(isBackEdge, "isBackEdge");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/index.js
+// ../node_modules/zod/v4/locales/index.js
 var locales_exports = {};
 __export(locales_exports, {
   ar: () => ar_default,
@@ -33553,7 +34658,7 @@ __export(locales_exports, {
   zhTW: () => zh_TW_default
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ar.js
+// ../node_modules/zod/v4/locales/ar.js
 var error = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u062D\u0631\u0641", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" },
@@ -33667,7 +34772,7 @@ function ar_default() {
 }
 __name(ar_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/az.js
+// ../node_modules/zod/v4/locales/az.js
 var error2 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "simvol", verb: "olmal\u0131d\u0131r" },
@@ -33780,7 +34885,7 @@ function az_default() {
 }
 __name(az_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/be.js
+// ../node_modules/zod/v4/locales/be.js
 function getBelarusianPlural(count, one, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
@@ -33952,7 +35057,7 @@ function be_default() {
 }
 __name(be_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/bg.js
+// ../node_modules/zod/v4/locales/bg.js
 var error4 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0441\u0438\u043C\u0432\u043E\u043B\u0430", verb: "\u0434\u0430 \u0441\u044A\u0434\u044A\u0440\u0436\u0430" },
@@ -34080,7 +35185,7 @@ function bg_default() {
 }
 __name(bg_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/bn.js
+// ../node_modules/zod/v4/locales/bn.js
 var error5 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0985\u0995\u09CD\u09B7\u09B0", verb: "\u09A5\u09BE\u0995\u09A4\u09C7 \u09B9\u09AC\u09C7" },
@@ -34196,7 +35301,7 @@ function bn_default() {
 }
 __name(bn_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ca.js
+// ../node_modules/zod/v4/locales/ca.js
 var error6 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "car\xE0cters", verb: "contenir" },
@@ -34312,7 +35417,7 @@ function ca_default() {
 }
 __name(ca_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ckb.js
+// ../node_modules/zod/v4/locales/ckb.js
 var error7 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u067E\u06CC\u062A", verb: "\u0628\u06CE\u062A" },
@@ -34447,7 +35552,7 @@ function ckb_default() {
 }
 __name(ckb_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/cs.js
+// ../node_modules/zod/v4/locales/cs.js
 var error8 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "znak\u016F", verb: "m\xEDt" },
@@ -34566,7 +35671,7 @@ function cs_default() {
 }
 __name(cs_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/da.js
+// ../node_modules/zod/v4/locales/da.js
 var error9 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "tegn", verb: "havde" },
@@ -34689,7 +35794,7 @@ function da_default() {
 }
 __name(da_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/de.js
+// ../node_modules/zod/v4/locales/de.js
 var error10 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "Zeichen", verb: "zu haben" },
@@ -34805,7 +35910,7 @@ function de_default() {
 }
 __name(de_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/el.js
+// ../node_modules/zod/v4/locales/el.js
 var error11 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u03C7\u03B1\u03C1\u03B1\u03BA\u03C4\u03AE\u03C1\u03B5\u03C2", verb: "\u03BD\u03B1 \u03AD\u03C7\u03B5\u03B9" },
@@ -34920,7 +36025,7 @@ function el_default() {
 }
 __name(el_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/en.js
+// ../node_modules/zod/v4/locales/en.js
 var error12 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "characters", verb: "to have" },
@@ -35048,7 +36153,7 @@ function en_default() {
 }
 __name(en_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/eo.js
+// ../node_modules/zod/v4/locales/eo.js
 var error13 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "karaktrojn", verb: "havi" },
@@ -35165,7 +36270,7 @@ function eo_default() {
 }
 __name(eo_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/es.js
+// ../node_modules/zod/v4/locales/es.js
 var error14 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "caracteres", verb: "tener" },
@@ -35304,7 +36409,7 @@ function es_default() {
 }
 __name(es_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/fa.js
+// ../node_modules/zod/v4/locales/fa.js
 var error15 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u06A9\u0627\u0631\u0627\u06A9\u062A\u0631", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" },
@@ -35426,7 +36531,7 @@ function fa_default() {
 }
 __name(fa_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/fi.js
+// ../node_modules/zod/v4/locales/fi.js
 var error16 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "merkki\xE4", subject: "merkkijonon" },
@@ -35546,7 +36651,7 @@ function fi_default() {
 }
 __name(fi_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/fr.js
+// ../node_modules/zod/v4/locales/fr.js
 var error17 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "caract\xE8res", verb: "avoir" },
@@ -35678,7 +36783,7 @@ function fr_default() {
 }
 __name(fr_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/fr-CA.js
+// ../node_modules/zod/v4/locales/fr-CA.js
 var error18 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "caract\xE8res", verb: "avoir" },
@@ -35793,7 +36898,7 @@ function fr_CA_default() {
 }
 __name(fr_CA_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/gu.js
+// ../node_modules/zod/v4/locales/gu.js
 var error19 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0A85\u0A95\u0ACD\u0AB7\u0AB0", verb: "\u0AB9\u0ACB\u0AB5\u0ABE \u0A9C\u0ACB\u0A88\u0A8F" },
@@ -35909,7 +37014,7 @@ function gu_default() {
 }
 __name(gu_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/he.js
+// ../node_modules/zod/v4/locales/he.js
 var error20 = /* @__PURE__ */ __name(() => {
   const TypeNames = {
     string: { label: "\u05DE\u05D7\u05E8\u05D5\u05D6\u05EA", gender: "f" },
@@ -36112,7 +37217,7 @@ function he_default() {
 }
 __name(he_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/hi.js
+// ../node_modules/zod/v4/locales/hi.js
 var error21 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0905\u0915\u094D\u0937\u0930", verb: "\u0930\u0916\u0928\u0947 \u0915\u0947 \u0932\u093F\u090F" },
@@ -36226,7 +37331,7 @@ function hi_default() {
 }
 __name(hi_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/hr.js
+// ../node_modules/zod/v4/locales/hr.js
 var error22 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "znakova", verb: "imati" },
@@ -36355,7 +37460,7 @@ function hr_default() {
 }
 __name(hr_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/hu.js
+// ../node_modules/zod/v4/locales/hu.js
 var error23 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "karakter", verb: "legyen" },
@@ -36471,7 +37576,7 @@ function hu_default() {
 }
 __name(hu_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/hy.js
+// ../node_modules/zod/v4/locales/hy.js
 function getArmenianPlural(count, one, many) {
   return Math.abs(count) === 1 ? one : many;
 }
@@ -36634,7 +37739,7 @@ function hy_default() {
 }
 __name(hy_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/id.js
+// ../node_modules/zod/v4/locales/id.js
 var error25 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "karakter", verb: "memiliki" },
@@ -36748,7 +37853,7 @@ function id_default() {
 }
 __name(id_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/is.js
+// ../node_modules/zod/v4/locales/is.js
 var error26 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "stafi", verb: "a\xF0 hafa" },
@@ -36865,7 +37970,7 @@ function is_default() {
 }
 __name(is_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/it.js
+// ../node_modules/zod/v4/locales/it.js
 var error27 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "caratteri", verb: "avere" },
@@ -36981,7 +38086,7 @@ function it_default() {
 }
 __name(it_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ja.js
+// ../node_modules/zod/v4/locales/ja.js
 var error28 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u6587\u5B57", verb: "\u3067\u3042\u308B" },
@@ -37096,7 +38201,7 @@ function ja_default() {
 }
 __name(ja_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ka.js
+// ../node_modules/zod/v4/locales/ka.js
 var error29 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u10E1\u10D8\u10DB\u10D1\u10DD\u10DA\u10DD", verb: "\u10E3\u10DC\u10D3\u10D0 \u10E8\u10D4\u10D8\u10EA\u10D0\u10D5\u10D3\u10D4\u10E1" },
@@ -37216,7 +38321,7 @@ function ka_default() {
 }
 __name(ka_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/km.js
+// ../node_modules/zod/v4/locales/km.js
 var error30 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u178F\u17BD\u17A2\u1780\u17D2\u179F\u179A", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" },
@@ -37334,13 +38439,13 @@ function km_default() {
 }
 __name(km_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/kh.js
+// ../node_modules/zod/v4/locales/kh.js
 function kh_default() {
   return km_default();
 }
 __name(kh_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/kn.js
+// ../node_modules/zod/v4/locales/kn.js
 var error31 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0C85\u0C95\u0CCD\u0CB7\u0CB0\u0C97\u0CB3\u0CC1", verb: "\u0CB9\u0CCA\u0C82\u0CA6\u0CB2\u0CC1" },
@@ -37458,7 +38563,7 @@ function kn_default() {
 }
 __name(kn_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ko.js
+// ../node_modules/zod/v4/locales/ko.js
 var error32 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\uBB38\uC790", verb: "to have" },
@@ -37577,7 +38682,7 @@ function ko_default() {
 }
 __name(ko_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/lt.js
+// ../node_modules/zod/v4/locales/lt.js
 var capitalizeFirstCharacter = /* @__PURE__ */ __name((text) => {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }, "capitalizeFirstCharacter");
@@ -37788,7 +38893,7 @@ function lt_default() {
 }
 __name(lt_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/mk.js
+// ../node_modules/zod/v4/locales/mk.js
 var error34 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0437\u043D\u0430\u0446\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" },
@@ -37905,7 +39010,7 @@ function mk_default() {
 }
 __name(mk_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ms.js
+// ../node_modules/zod/v4/locales/ms.js
 var error35 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "aksara", verb: "mempunyai" },
@@ -38020,7 +39125,7 @@ function ms_default() {
 }
 __name(ms_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ne.js
+// ../node_modules/zod/v4/locales/ne.js
 var error36 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0905\u0915\u094D\u0937\u0930", verb: "\u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B" },
@@ -38134,7 +39239,7 @@ function ne_default() {
 }
 __name(ne_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/nl.js
+// ../node_modules/zod/v4/locales/nl.js
 var error37 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "tekens", verb: "heeft" },
@@ -38252,7 +39357,7 @@ function nl_default() {
 }
 __name(nl_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/nn.js
+// ../node_modules/zod/v4/locales/nn.js
 var error38 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "teikn", verb: "\xE5 ha" },
@@ -38368,7 +39473,7 @@ function nn_default() {
 }
 __name(nn_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/no.js
+// ../node_modules/zod/v4/locales/no.js
 var error39 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "tegn", verb: "\xE5 ha" },
@@ -38484,7 +39589,7 @@ function no_default() {
 }
 __name(no_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ota.js
+// ../node_modules/zod/v4/locales/ota.js
 var error40 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "harf", verb: "olmal\u0131d\u0131r" },
@@ -38601,7 +39706,7 @@ function ota_default() {
 }
 __name(ota_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ps.js
+// ../node_modules/zod/v4/locales/ps.js
 var error41 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u062A\u0648\u06A9\u064A", verb: "\u0648\u0644\u0631\u064A" },
@@ -38723,7 +39828,7 @@ function ps_default() {
 }
 __name(ps_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/pl.js
+// ../node_modules/zod/v4/locales/pl.js
 var error42 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "znak\xF3w", verb: "mie\u0107" },
@@ -38840,7 +39945,7 @@ function pl_default() {
 }
 __name(pl_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/pt.js
+// ../node_modules/zod/v4/locales/pt.js
 var error43 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "caracteres" },
@@ -38987,7 +40092,7 @@ function pt_default() {
 }
 __name(pt_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/pt-BR.js
+// ../node_modules/zod/v4/locales/pt-BR.js
 var error44 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "caracteres" },
@@ -39135,7 +40240,7 @@ function pt_BR_default() {
 }
 __name(pt_BR_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ro.js
+// ../node_modules/zod/v4/locales/ro.js
 var error45 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "caractere", verb: "s\u0103 aib\u0103" },
@@ -39260,7 +40365,7 @@ function ro_default() {
 }
 __name(ro_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ru.js
+// ../node_modules/zod/v4/locales/ru.js
 function getRussianPlural(count, one, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
@@ -39432,7 +40537,7 @@ function ru_default() {
 }
 __name(ru_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/sk.js
+// ../node_modules/zod/v4/locales/sk.js
 var error47 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "znakov", verb: "ma\u0165" },
@@ -39551,7 +40656,7 @@ function sk_default() {
 }
 __name(sk_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/sl.js
+// ../node_modules/zod/v4/locales/sl.js
 var error48 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "znakov", verb: "imeti" },
@@ -39668,7 +40773,7 @@ function sl_default() {
 }
 __name(sl_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/sv.js
+// ../node_modules/zod/v4/locales/sv.js
 var error49 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "tecken", verb: "att ha" },
@@ -39786,7 +40891,7 @@ function sv_default() {
 }
 __name(sv_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ta.js
+// ../node_modules/zod/v4/locales/ta.js
 var error50 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0B8E\u0BB4\u0BC1\u0BA4\u0BCD\u0BA4\u0BC1\u0B95\u0BCD\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" },
@@ -39904,7 +41009,7 @@ function ta_default() {
 }
 __name(ta_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/tg.js
+// ../node_modules/zod/v4/locales/tg.js
 var error51 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0430\u043B\u043E\u043C\u0430\u0442", verb: "\u0434\u043E\u0448\u0442\u0430 \u0431\u043E\u0448\u0430\u0434" },
@@ -40023,7 +41128,7 @@ function tg_default() {
 }
 __name(tg_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/th.js
+// ../node_modules/zod/v4/locales/th.js
 var error52 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0E15\u0E31\u0E27\u0E2D\u0E31\u0E01\u0E29\u0E23", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" },
@@ -40141,7 +41246,7 @@ function th_default() {
 }
 __name(th_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/tk.js
+// ../node_modules/zod/v4/locales/tk.js
 var error53 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "simwol", verb: "bolmaly" },
@@ -40251,7 +41356,7 @@ function tk_default() {
 }
 __name(tk_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/tr.js
+// ../node_modules/zod/v4/locales/tr.js
 var error54 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "karakter", verb: "olmal\u0131" },
@@ -40364,7 +41469,7 @@ function tr_default() {
 }
 __name(tr_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/uk.js
+// ../node_modules/zod/v4/locales/uk.js
 var error55 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u0441\u0438\u043C\u0432\u043E\u043B\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" },
@@ -40480,13 +41585,13 @@ function uk_default() {
 }
 __name(uk_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ua.js
+// ../node_modules/zod/v4/locales/ua.js
 function ua_default() {
   return uk_default();
 }
 __name(ua_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/ur.js
+// ../node_modules/zod/v4/locales/ur.js
 var error56 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u062D\u0631\u0648\u0641", verb: "\u06C1\u0648\u0646\u0627" },
@@ -40604,7 +41709,7 @@ function ur_default() {
 }
 __name(ur_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/uz.js
+// ../node_modules/zod/v4/locales/uz.js
 var error57 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "belgi", verb: "bo\u2018lishi kerak" },
@@ -40720,7 +41825,7 @@ function uz_default() {
 }
 __name(uz_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/vi.js
+// ../node_modules/zod/v4/locales/vi.js
 var error58 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "k\xFD t\u1EF1", verb: "c\xF3" },
@@ -40836,7 +41941,7 @@ function vi_default() {
 }
 __name(vi_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/zh-CN.js
+// ../node_modules/zod/v4/locales/zh-CN.js
 var error59 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u5B57\u7B26", verb: "\u5305\u542B" },
@@ -40953,7 +42058,7 @@ function zh_CN_default() {
 }
 __name(zh_CN_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/zh-TW.js
+// ../node_modules/zod/v4/locales/zh-TW.js
 var error60 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\u5B57\u5143", verb: "\u64C1\u6709" },
@@ -41068,7 +42173,7 @@ function zh_TW_default() {
 }
 __name(zh_TW_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/locales/yo.js
+// ../node_modules/zod/v4/locales/yo.js
 var error61 = /* @__PURE__ */ __name(() => {
   const Sizable = {
     string: { unit: "\xE0mi", verb: "n\xED" },
@@ -41183,7 +42288,7 @@ function yo_default() {
 }
 __name(yo_default, "default");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/registries.js
+// ../node_modules/zod/v4/core/registries.js
 var _a2;
 var $output = /* @__PURE__ */ Symbol("ZodOutput");
 var $input = /* @__PURE__ */ Symbol("ZodInput");
@@ -41237,7 +42342,7 @@ __name(registry2, "registry");
 (_a2 = globalThis).__zod_globalRegistry ?? (_a2.__zod_globalRegistry = registry2());
 var globalRegistry = globalThis.__zod_globalRegistry;
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/compile.js
+// ../node_modules/zod/v4/core/compile.js
 var INVALID = /* @__PURE__ */ Symbol.for("zod.compile.invalid");
 var FALLBACK_FLAG = /* @__PURE__ */ Symbol.for("zod.compile.fallback");
 var ZodCompileAsyncError = class extends Error {
@@ -41638,7 +42743,7 @@ function generatePropertiesChecks(doc, ctx, def, accessor) {
   doc.write(`if (${accessor} == null) return INVALID;`);
   const shape = def.shape;
   for (const key of Reflect.ownKeys(shape)) {
-    const keyExpr = typeof key === "symbol" ? addConstant(ctx, key) : esc9(key);
+    const keyExpr = typeof key === "symbol" ? addConstant(ctx, key) : esc10(key);
     const inputVar = newVar(ctx);
     doc.write(`const ${inputVar} = ${accessor}[${keyExpr}];`);
     compileChild(doc, ctx, shape[key], inputVar, false);
@@ -41818,16 +42923,16 @@ function generateStringFormatCheck(doc, ctx, def, accessor, needsValue = true) {
       doc.write(`if (${accessor} !== ${accessor}.toUpperCase()) return INVALID;`);
       break;
     case "includes":
-      doc.write(`if (!${accessor}.includes(${esc9(def.includes)})) return INVALID;`);
+      doc.write(`if (!${accessor}.includes(${esc10(def.includes)})) return INVALID;`);
       break;
     case "starts_with": {
       const prefix = def.prefix;
-      doc.write(`if (${accessor}.slice(0, ${prefix.length}) !== ${esc9(prefix)}) return INVALID;`);
+      doc.write(`if (${accessor}.slice(0, ${prefix.length}) !== ${esc10(prefix)}) return INVALID;`);
       break;
     }
     case "ends_with": {
       const suffix = def.suffix;
-      doc.write(`if (${accessor}.slice(-${suffix.length}) !== ${esc9(suffix)}) return INVALID;`);
+      doc.write(`if (${accessor}.slice(-${suffix.length}) !== ${esc10(suffix)}) return INVALID;`);
       break;
     }
     default: {
@@ -42045,8 +43150,8 @@ function generateObjectCheck(doc, ctx, schema, accessor, buildsValue = true) {
   const keys = Object.keys(shape);
   const symbolKeys = Object.getOwnPropertySymbols(shape);
   const allKeys = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
-  const keyExpr = /* @__PURE__ */ __name((k2) => typeof k2 === "symbol" ? addConstant(ctx, k2) : esc9(k2), "keyExpr");
-  const propKey = /* @__PURE__ */ __name((k2) => typeof k2 === "symbol" ? `[${keyExpr(k2)}]` : esc9(k2), "propKey");
+  const keyExpr = /* @__PURE__ */ __name((k2) => typeof k2 === "symbol" ? addConstant(ctx, k2) : esc10(k2), "keyExpr");
+  const propKey = /* @__PURE__ */ __name((k2) => typeof k2 === "symbol" ? `[${keyExpr(k2)}]` : esc10(k2), "propKey");
   const propShape = shape;
   if (keys.includes("__proto__")) {
     throw new ZodCompileUnsupportedError('object shape key "__proto__"');
@@ -42090,7 +43195,7 @@ function generateObjectCheck(doc, ctx, schema, accessor, buildsValue = true) {
   if (catchall) {
     const catchallType = catchall._zod.def.type;
     if (catchallType === "never") {
-      const condition = keys.map((k2) => `k !== ${esc9(k2)}`).join(" && ") || "true";
+      const condition = keys.map((k2) => `k !== ${esc10(k2)}`).join(" && ") || "true";
       doc.write(`for (const k in ${accessor}) {`);
       doc.indented((d2) => {
         d2.write(`if (${condition}) return INVALID;`);
@@ -42365,7 +43470,7 @@ function generateLiteralCheck(doc, ctx, schema, accessor) {
     return accessor;
   }
   if (typeof value === "string") {
-    doc.write(`if (${accessor} !== ${esc9(value)}) return INVALID;`);
+    doc.write(`if (${accessor} !== ${esc10(value)}) return INVALID;`);
   } else if (typeof value === "number" || typeof value === "boolean") {
     doc.write(`if (${accessor} !== ${value}) return INVALID;`);
   } else if (value === null) {
@@ -42574,7 +43679,7 @@ function generateDiscriminatedUnionCheck(doc, ctx, def, accessor) {
   }
   const discVar = newVar(ctx);
   const outputVar = newVar(ctx);
-  doc.write(`const ${discVar} = ${accessor}?.[${esc9(def.discriminator)}];`);
+  doc.write(`const ${discVar} = ${accessor}?.[${esc10(def.discriminator)}];`);
   doc.write(`let ${outputVar};`);
   let firstBranch = true;
   const claimed = /* @__PURE__ */ new Set();
@@ -42605,7 +43710,7 @@ function generateDiscriminatedUnionCheck(doc, ctx, def, accessor) {
 __name(generateDiscriminatedUnionCheck, "generateDiscriminatedUnionCheck");
 function literalEquality(ctx, accessor, value) {
   if (typeof value === "string")
-    return `${accessor} === ${esc9(value)}`;
+    return `${accessor} === ${esc10(value)}`;
   if (typeof value === "number") {
     if (Number.isNaN(value))
       return `Number.isNaN(${accessor})`;
@@ -42741,7 +43846,7 @@ function emitOwnKeys(doc, ctx, accessor, kVar, body, onSymbol) {
 __name(emitOwnKeys, "emitOwnKeys");
 function literalPropertyKey(ctx, key) {
   if (typeof key === "string")
-    return esc9(key);
+    return esc10(key);
   return addConstant(ctx, key);
 }
 __name(literalPropertyKey, "literalPropertyKey");
@@ -42919,7 +44024,7 @@ function generateTransformCheck(doc, ctx, schema, accessor) {
 }
 __name(generateTransformCheck, "generateTransformCheck");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/api.js
+// ../node_modules/zod/v4/core/api.js
 function snapshotChecks(def) {
   if (def.checks)
     def.checks = [...def.checks];
@@ -44096,7 +45201,7 @@ function _stringFormat(Class2, format2, fnOrRegex, _params = {}) {
 }
 __name(_stringFormat, "_stringFormat");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/to-json-schema.js
+// ../node_modules/zod/v4/core/to-json-schema.js
 function assignProps(target, ...sources) {
   for (const source of sources) {
     for (const key of Reflect.ownKeys(source)) {
@@ -44134,13 +45239,13 @@ function initializeContext(params) {
   };
 }
 __name(initializeContext, "initializeContext");
-function handleUnrepresentable(schema, ctx, json5, params, message2) {
+function handleUnrepresentable(schema, ctx, json6, params, message2) {
   const result = typeof ctx.unrepresentable === "function" ? ctx.unrepresentable({ zodSchema: schema, path: params.path, message: message2 }) : ctx.unrepresentable;
   if (result === "any")
     return false;
   if (result === void 0 || result === "throw")
     throw new Error(message2);
-  Object.assign(json5, result);
+  Object.assign(json6, result);
   return true;
 }
 __name(handleUnrepresentable, "handleUnrepresentable");
@@ -44383,12 +45488,12 @@ function foldObjects(members2) {
   return folded;
 }
 __name(foldObjects, "foldObjects");
-function foldIntersection(json5) {
-  const allOf = json5.allOf;
+function foldIntersection(json6) {
+  const allOf = json6.allOf;
   if (!Array.isArray(allOf) || allOf.length < 2)
     return;
   for (const key of FOLDABLE_KEYS)
-    if (key in json5)
+    if (key in json6)
       return;
   const unions = allOf.filter((m) => UNION_KEYS.some((k2) => Array.isArray(m[k2])));
   let folded = null;
@@ -44407,8 +45512,8 @@ function foldIntersection(json5) {
   }
   if (!folded)
     return;
-  delete json5.allOf;
-  assignProps(json5, folded);
+  delete json6.allOf;
+  assignProps(json6, folded);
 }
 __name(foldIntersection, "foldIntersection");
 function finalize(ctx, schema) {
@@ -44491,20 +45596,20 @@ function finalize(ctx, schema) {
     if (ctx.intersections.length) {
       const carriers = /* @__PURE__ */ new Map();
       for (const seen of ctx.seen.values()) {
-        for (const json5 of [seen.schema, seen.def]) {
-          const allOf = json5?.allOf;
+        for (const json6 of [seen.schema, seen.def]) {
+          const allOf = json6?.allOf;
           if (!Array.isArray(allOf))
             continue;
           const existing = carriers.get(allOf);
           if (existing)
-            existing.push(json5);
+            existing.push(json6);
           else
-            carriers.set(allOf, [json5]);
+            carriers.set(allOf, [json6]);
         }
       }
       for (const allOf of ctx.intersections) {
-        for (const json5 of carriers.get(allOf) ?? [])
-          foldIntersection(json5);
+        for (const json6 of carriers.get(allOf) ?? [])
+          foldIntersection(json6);
       }
     }
   }
@@ -44638,7 +45743,7 @@ var createStandardJSONSchemaMethod = /* @__PURE__ */ __name((schema, io, process
   return finalize(ctx, schema);
 }, "createStandardJSONSchemaMethod");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/json-schema-processors.js
+// ../node_modules/zod/v4/core/json-schema-processors.js
 var narrowMin = /* @__PURE__ */ __name((agg, key, value) => {
   if (agg[key] === void 0 || value > agg[key])
     agg[key] = value;
@@ -44742,29 +45847,29 @@ var exactPatterns = /* @__PURE__ */ new Map([
 ]);
 var exactPattern = /* @__PURE__ */ __name((p) => exactPatterns.get(p) ?? p, "exactPattern");
 var stringProcessor = /* @__PURE__ */ __name((schema, ctx, _json, _params) => {
-  const json5 = _json;
-  json5.type = "string";
+  const json6 = _json;
+  json6.type = "string";
   const { minimum, maximum, format: format2, patterns, contentEncoding, laxFormat } = aggregateChecks(schema);
   if (typeof minimum === "number")
-    json5.minLength = minimum;
+    json6.minLength = minimum;
   if (typeof maximum === "number")
-    json5.maxLength = maximum;
+    json6.maxLength = maximum;
   if (format2) {
-    json5.format = formatMap[format2] ?? format2;
-    if (json5.format === "")
-      delete json5.format;
+    json6.format = formatMap[format2] ?? format2;
+    if (json6.format === "")
+      delete json6.format;
     if (format2 === "time" || laxFormat) {
-      delete json5.format;
+      delete json6.format;
     }
   }
   if (contentEncoding)
-    json5.contentEncoding = contentEncoding;
+    json6.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
     const patternList = [...patterns].map(exactPattern);
     if (patternList.length === 1)
-      json5.pattern = patternList[0].source;
+      json6.pattern = patternList[0].source;
     else if (patternList.length > 1) {
-      json5.allOf = [
+      json6.allOf = [
         ...patternList.map((regex2) => ({
           ...ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0" ? { type: "string" } : {},
           pattern: regex2.source
@@ -44774,31 +45879,31 @@ var stringProcessor = /* @__PURE__ */ __name((schema, ctx, _json, _params) => {
   }
 }, "stringProcessor");
 var numberProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
-  const json5 = _json;
+  const json6 = _json;
   const { minimum, maximum, multipleOf, exclusiveMaximum, exclusiveMinimum, isInt } = aggregateChecks(schema);
-  json5.type = isInt ? "integer" : "number";
+  json6.type = isInt ? "integer" : "number";
   const exMin = typeof exclusiveMinimum === "number" && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
   const exMax = typeof exclusiveMaximum === "number" && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
   const legacy = ctx.target === "draft-04" || ctx.target === "openapi-3.0";
   if (exMin) {
     if (legacy) {
-      json5.minimum = exclusiveMinimum;
-      json5.exclusiveMinimum = true;
+      json6.minimum = exclusiveMinimum;
+      json6.exclusiveMinimum = true;
     } else {
-      json5.exclusiveMinimum = exclusiveMinimum;
+      json6.exclusiveMinimum = exclusiveMinimum;
     }
   } else if (typeof minimum === "number") {
-    json5.minimum = minimum;
+    json6.minimum = minimum;
   }
   if (exMax) {
     if (legacy) {
-      json5.maximum = exclusiveMaximum;
-      json5.exclusiveMaximum = true;
+      json6.maximum = exclusiveMaximum;
+      json6.exclusiveMaximum = true;
     } else {
-      json5.exclusiveMaximum = exclusiveMaximum;
+      json6.exclusiveMaximum = exclusiveMaximum;
     }
   } else if (typeof maximum === "number") {
-    json5.maximum = maximum;
+    json6.maximum = maximum;
   }
   if (multipleOf) {
     const divisors = /* @__PURE__ */ new Set();
@@ -44806,75 +45911,75 @@ var numberProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
       if (Number.isFinite(divisor) && divisor !== 0)
         divisors.add(Math.abs(divisor));
       else
-        handleUnrepresentable(schema, ctx, json5, params, `A multipleOf divisor of ${divisor} cannot be represented in JSON Schema`);
+        handleUnrepresentable(schema, ctx, json6, params, `A multipleOf divisor of ${divisor} cannot be represented in JSON Schema`);
     }
     const [first, ...rest] = divisors;
     if (first !== void 0)
-      json5.multipleOf = first;
+      json6.multipleOf = first;
     if (rest.length)
-      json5.allOf = [...json5.allOf ?? [], ...rest.map((m) => ({ multipleOf: m }))];
+      json6.allOf = [...json6.allOf ?? [], ...rest.map((m) => ({ multipleOf: m }))];
   }
 }, "numberProcessor");
-var booleanProcessor = /* @__PURE__ */ __name((_schema, _ctx2, json5, _params) => {
-  json5.type = "boolean";
+var booleanProcessor = /* @__PURE__ */ __name((_schema, _ctx2, json6, _params) => {
+  json6.type = "boolean";
 }, "booleanProcessor");
-var bigintProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "BigInt cannot be represented in JSON Schema");
+var bigintProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "BigInt cannot be represented in JSON Schema");
 }, "bigintProcessor");
-var symbolProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "Symbols cannot be represented in JSON Schema");
+var symbolProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "Symbols cannot be represented in JSON Schema");
 }, "symbolProcessor");
-var nullProcessor = /* @__PURE__ */ __name((_schema, ctx, json5, _params) => {
+var nullProcessor = /* @__PURE__ */ __name((_schema, ctx, json6, _params) => {
   if (ctx.target === "openapi-3.0") {
-    json5.type = "string";
-    json5.nullable = true;
-    json5.enum = [null];
+    json6.type = "string";
+    json6.nullable = true;
+    json6.enum = [null];
   } else {
-    json5.type = "null";
+    json6.type = "null";
   }
 }, "nullProcessor");
-var undefinedProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "Undefined cannot be represented in JSON Schema");
+var undefinedProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "Undefined cannot be represented in JSON Schema");
 }, "undefinedProcessor");
-var voidProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "Void cannot be represented in JSON Schema");
+var voidProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "Void cannot be represented in JSON Schema");
 }, "voidProcessor");
-var neverProcessor = /* @__PURE__ */ __name((_schema, _ctx2, json5, _params) => {
-  json5.not = {};
+var neverProcessor = /* @__PURE__ */ __name((_schema, _ctx2, json6, _params) => {
+  json6.not = {};
 }, "neverProcessor");
 var anyProcessor = /* @__PURE__ */ __name((_schema, _ctx2, _json, _params) => {
 }, "anyProcessor");
 var unknownProcessor = /* @__PURE__ */ __name((_schema, _ctx2, _json, _params) => {
 }, "unknownProcessor");
-var dateProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "Date cannot be represented in JSON Schema");
+var dateProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "Date cannot be represented in JSON Schema");
 }, "dateProcessor");
-var enumProcessor = /* @__PURE__ */ __name((schema, _ctx2, json5, _params) => {
+var enumProcessor = /* @__PURE__ */ __name((schema, _ctx2, json6, _params) => {
   const def = schema._zod.def;
   const values = getEnumValues(def.entries);
   if (values.length === 0) {
-    json5.not = {};
+    json6.not = {};
     return;
   }
   if (values.every((v) => typeof v === "number"))
-    json5.type = "number";
+    json6.type = "number";
   if (values.every((v) => typeof v === "string"))
-    json5.type = "string";
-  json5.enum = values;
+    json6.type = "string";
+  json6.enum = values;
 }, "enumProcessor");
-var literalProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
+var literalProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
   const def = schema._zod.def;
   if (def.values.length === 0) {
-    json5.not = {};
+    json6.not = {};
     return;
   }
   const vals = [];
   for (const val of def.values) {
     if (val === void 0) {
-      if (handleUnrepresentable(schema, ctx, json5, params, "Literal `undefined` cannot be represented in JSON Schema"))
+      if (handleUnrepresentable(schema, ctx, json6, params, "Literal `undefined` cannot be represented in JSON Schema"))
         return;
     } else if (typeof val === "bigint") {
-      if (handleUnrepresentable(schema, ctx, json5, params, "BigInt literals cannot be represented in JSON Schema"))
+      if (handleUnrepresentable(schema, ctx, json6, params, "BigInt literals cannot be represented in JSON Schema"))
         return;
       vals.push(Number(val));
     } else {
@@ -44884,37 +45989,37 @@ var literalProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
   if (vals.length === 0) {
   } else if (vals.length === 1) {
     const val = vals[0];
-    json5.type = val === null ? "null" : typeof val;
+    json6.type = val === null ? "null" : typeof val;
     if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
-      json5.enum = [val];
+      json6.enum = [val];
     } else {
-      json5.const = val;
+      json6.const = val;
     }
   } else {
     if (vals.every((v) => typeof v === "number"))
-      json5.type = "number";
+      json6.type = "number";
     if (vals.every((v) => typeof v === "string"))
-      json5.type = "string";
+      json6.type = "string";
     if (vals.every((v) => typeof v === "boolean"))
-      json5.type = "boolean";
+      json6.type = "boolean";
     if (vals.every((v) => v === null))
-      json5.type = "null";
-    json5.enum = vals;
+      json6.type = "null";
+    json6.enum = vals;
   }
 }, "literalProcessor");
-var nanProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "NaN cannot be represented in JSON Schema");
+var nanProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "NaN cannot be represented in JSON Schema");
 }, "nanProcessor");
-var templateLiteralProcessor = /* @__PURE__ */ __name((schema, _ctx2, json5, _params) => {
-  const _json = json5;
+var templateLiteralProcessor = /* @__PURE__ */ __name((schema, _ctx2, json6, _params) => {
+  const _json = json6;
   const pattern = schema._zod.pattern;
   if (!pattern)
     throw new Error("Pattern not found in template literal");
   _json.type = "string";
   _json.pattern = pattern.source;
 }, "templateLiteralProcessor");
-var fileProcessor = /* @__PURE__ */ __name((schema, _ctx2, json5, _params) => {
-  const _json = json5;
+var fileProcessor = /* @__PURE__ */ __name((schema, _ctx2, json6, _params) => {
+  const _json = json6;
   _json.type = "string";
   _json.format = "binary";
   _json.contentEncoding = "binary";
@@ -44932,34 +46037,34 @@ var fileProcessor = /* @__PURE__ */ __name((schema, _ctx2, json5, _params) => {
   else
     _json.anyOf = mime.map((m) => ({ contentMediaType: m }));
 }, "fileProcessor");
-var successProcessor = /* @__PURE__ */ __name((_schema, _ctx2, json5, _params) => {
-  json5.type = "boolean";
+var successProcessor = /* @__PURE__ */ __name((_schema, _ctx2, json6, _params) => {
+  json6.type = "boolean";
 }, "successProcessor");
-var customProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "Custom types cannot be represented in JSON Schema");
+var customProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "Custom types cannot be represented in JSON Schema");
 }, "customProcessor");
-var functionProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "Function types cannot be represented in JSON Schema");
+var functionProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "Function types cannot be represented in JSON Schema");
 }, "functionProcessor");
-var transformProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "Transforms cannot be represented in JSON Schema");
+var transformProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "Transforms cannot be represented in JSON Schema");
 }, "transformProcessor");
-var mapProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "Map cannot be represented in JSON Schema");
+var mapProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "Map cannot be represented in JSON Schema");
 }, "mapProcessor");
-var setProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
-  handleUnrepresentable(schema, ctx, json5, params, "Set cannot be represented in JSON Schema");
+var setProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
+  handleUnrepresentable(schema, ctx, json6, params, "Set cannot be represented in JSON Schema");
 }, "setProcessor");
 var arrayProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
-  const json5 = _json;
+  const json6 = _json;
   const def = schema._zod.def;
   const { minimum, maximum } = aggregateChecks(schema);
   if (typeof minimum === "number")
-    json5.minItems = minimum;
+    json6.minItems = minimum;
   if (typeof maximum === "number")
-    json5.maxItems = maximum;
-  json5.type = "array";
-  json5.items = processSchema(def.element, ctx, {
+    json6.maxItems = maximum;
+  json6.type = "array";
+  json6.items = processSchema(def.element, ctx, {
     ...params,
     path: [...params.path, "items"]
   });
@@ -44976,17 +46081,17 @@ function inputOptin(schema) {
 }
 __name(inputOptin, "inputOptin");
 var objectProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
-  const json5 = _json;
+  const json6 = _json;
   const def = schema._zod.def;
   const shape = def.shape;
   const symbolKeys = Object.getOwnPropertySymbols(shape);
-  if (symbolKeys.length && handleUnrepresentable(schema, ctx, json5, params, "Symbol keys cannot be represented in JSON Schema")) {
+  if (symbolKeys.length && handleUnrepresentable(schema, ctx, json6, params, "Symbol keys cannot be represented in JSON Schema")) {
     return;
   }
-  json5.type = "object";
-  json5.properties = {};
+  json6.type = "object";
+  json6.properties = {};
   for (const key in shape) {
-    assignProp(json5.properties, key, processSchema(shape[key], ctx, {
+    assignProp(json6.properties, key, processSchema(shape[key], ctx, {
       ...params,
       path: [...params.path, "properties", key]
     }));
@@ -44999,21 +46104,21 @@ var objectProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
     }
   }
   if (requiredKeys.length > 0) {
-    json5.required = requiredKeys;
+    json6.required = requiredKeys;
   }
   if (def.catchall?._zod.def.type === "never") {
-    json5.additionalProperties = false;
+    json6.additionalProperties = false;
   } else if (!def.catchall) {
     if (ctx.io === "output")
-      json5.additionalProperties = false;
+      json6.additionalProperties = false;
   } else if (def.catchall) {
-    json5.additionalProperties = processSchema(def.catchall, ctx, {
+    json6.additionalProperties = processSchema(def.catchall, ctx, {
       ...params,
       path: [...params.path, "additionalProperties"]
     });
   }
 }, "objectProcessor");
-var unionProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
+var unionProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
   const def = schema._zod.def;
   const isExclusive = def.inclusive === false;
   const options = def.options.map((x, i2) => processSchema(x, ctx, {
@@ -45021,12 +46126,12 @@ var unionProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
     path: [...params.path, isExclusive ? "oneOf" : "anyOf", i2]
   }));
   if (isExclusive) {
-    json5.oneOf = options;
+    json6.oneOf = options;
   } else {
-    json5.anyOf = options;
+    json6.anyOf = options;
   }
 }, "unionProcessor");
-var intersectionProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
+var intersectionProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
   const def = schema._zod.def;
   const a2 = processSchema(def.left, ctx, {
     ...params,
@@ -45041,13 +46146,13 @@ var intersectionProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) 
     ...isSimpleIntersection(a2) ? a2.allOf : [a2],
     ...isSimpleIntersection(b) ? b.allOf : [b]
   ];
-  json5.allOf = allOf;
+  json6.allOf = allOf;
   ctx.intersections.push(allOf);
 }, "intersectionProcessor");
 var tupleProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
-  const json5 = _json;
+  const json6 = _json;
   const def = schema._zod.def;
-  json5.type = "array";
+  json6.type = "array";
   const prefixPath = ctx.target === "draft-2020-12" ? "prefixItems" : "items";
   const restPath = ctx.target === "draft-2020-12" ? "items" : ctx.target === "openapi-3.0" ? "items" : "additionalItems";
   const prefixItems = def.items.map((x, i2) => processSchema(x, ctx, {
@@ -45069,70 +46174,70 @@ var tupleProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
   const maxItems = def.items.length;
   const isClosed = !def.rest;
   if (ctx.target === "draft-2020-12") {
-    json5.prefixItems = prefixItems;
+    json6.prefixItems = prefixItems;
     if (isClosed) {
-      json5.items = false;
+      json6.items = false;
     } else if (rest) {
-      json5.items = rest;
+      json6.items = rest;
     }
     if (minItems > 0)
-      json5.minItems = minItems;
+      json6.minItems = minItems;
     if (isClosed)
-      json5.maxItems = maxItems;
+      json6.maxItems = maxItems;
   } else if (ctx.target === "openapi-3.0") {
-    json5.items = {
+    json6.items = {
       anyOf: prefixItems
     };
     if (rest) {
-      json5.items.anyOf.push(rest);
+      json6.items.anyOf.push(rest);
     }
     if (minItems > 0)
-      json5.minItems = minItems;
+      json6.minItems = minItems;
     if (isClosed)
-      json5.maxItems = maxItems;
+      json6.maxItems = maxItems;
   } else {
-    json5.items = prefixItems;
+    json6.items = prefixItems;
     if (isClosed) {
-      json5.additionalItems = false;
+      json6.additionalItems = false;
     } else if (rest) {
-      json5.additionalItems = rest;
+      json6.additionalItems = rest;
     }
     if (minItems > 0)
-      json5.minItems = minItems;
+      json6.minItems = minItems;
     if (isClosed)
-      json5.maxItems = maxItems;
+      json6.maxItems = maxItems;
   }
   const { minimum, maximum } = aggregateChecks(schema);
   if (typeof minimum === "number")
-    json5.minItems = minimum;
+    json6.minItems = minimum;
   if (typeof maximum === "number")
-    json5.maxItems = maximum;
+    json6.maxItems = maximum;
 }, "tupleProcessor");
-function stringifyKeyNames(bySchema, json5, visited) {
-  if (json5.$ref) {
-    if (visited.has(json5))
-      return json5;
-    visited.add(json5);
-    const def = bySchema.get(json5)?.def;
+function stringifyKeyNames(bySchema, json6, visited) {
+  if (json6.$ref) {
+    if (visited.has(json6))
+      return json6;
+    visited.add(json6);
+    const def = bySchema.get(json6)?.def;
     if (!def)
-      return json5;
+      return json6;
     const inlined = stringifyKeyNames(bySchema, def, visited);
-    return inlined === def ? json5 : inlined;
+    return inlined === def ? json6 : inlined;
   }
   for (const keyword of ["anyOf", "oneOf"]) {
-    const branches = json5[keyword];
+    const branches = json6[keyword];
     if (!Array.isArray(branches))
       continue;
     const mapped = branches.map((branch) => stringifyKeyNames(bySchema, branch, visited));
     if (mapped.some((branch, i2) => branch !== branches[i2]))
-      json5 = { ...json5, [keyword]: mapped };
+      json6 = { ...json6, [keyword]: mapped };
   }
-  const types = Array.isArray(json5.type) ? json5.type : [json5.type];
+  const types = Array.isArray(json6.type) ? json6.type : [json6.type];
   const numericType = !types.includes("string") && types.some((t2) => t2 === "number" || t2 === "integer");
-  const values = json5.enum ?? (json5.const !== void 0 ? [json5.const] : void 0);
+  const values = json6.enum ?? (json6.const !== void 0 ? [json6.const] : void 0);
   if (!numericType && !values?.some((v) => typeof v === "number"))
-    return json5;
-  const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format: format2, id, ...rest } = json5;
+    return json6;
+  const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format: format2, id, ...rest } = json6;
   if (rest.enum)
     rest.enum = rest.enum.map((v) => typeof v === "number" ? String(v) : v);
   else if (typeof rest.const === "number")
@@ -45174,9 +46279,9 @@ function rewriteKeyNames(ctx) {
 }
 __name(rewriteKeyNames, "rewriteKeyNames");
 var recordProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
-  const json5 = _json;
+  const json6 = _json;
   const def = schema._zod.def;
-  json5.type = "object";
+  json6.type = "object";
   const keyType = def.keyType;
   const patterns = aggregateChecks(keyType).patterns;
   if (def.mode === "loose" && patterns && patterns.size > 0) {
@@ -45184,13 +46289,13 @@ var recordProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
       ...params,
       path: [...params.path, "patternProperties", "*"]
     });
-    json5.patternProperties = {};
+    json6.patternProperties = {};
     for (const pattern of patterns) {
-      assignProp(json5.patternProperties, exactPattern(pattern).source, valueSchema);
+      assignProp(json6.patternProperties, exactPattern(pattern).source, valueSchema);
     }
   } else {
     if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
-      json5.propertyNames = processSchema(def.keyType, ctx, {
+      json6.propertyNames = processSchema(def.keyType, ctx, {
         ...params,
         path: [...params.path, "propertyNames"]
       });
@@ -45202,7 +46307,7 @@ var recordProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
       }
       pending.push(schema);
     }
-    json5.additionalProperties = processSchema(def.valueType, ctx, {
+    json6.additionalProperties = processSchema(def.valueType, ctx, {
       ...params,
       path: [...params.path, "additionalProperties"]
     });
@@ -45212,19 +46317,19 @@ var recordProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
   if (keyValues && !def.partial && !omittableOnInput) {
     const validKeyValues = [...keyValues].filter((v) => typeof v === "string" || typeof v === "number");
     if (validKeyValues.length > 0) {
-      json5.required = validKeyValues.map(String);
+      json6.required = validKeyValues.map(String);
     }
   }
 }, "recordProcessor");
-var nullableProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
+var nullableProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
   const def = schema._zod.def;
   const inner = processSchema(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   if (ctx.target === "openapi-3.0") {
     seen.ref = def.innerType;
-    json5.nullable = true;
+    json6.nullable = true;
   } else {
-    json5.anyOf = [inner, { type: "null" }];
+    json6.anyOf = [inner, { type: "null" }];
   }
 }, "nullableProcessor");
 var nonoptionalProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
@@ -45234,7 +46339,7 @@ var nonoptionalProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) =
   seen.ref = def.innerType;
 }, "nonoptionalProcessor");
 var UNREPRESENTABLE_DEFAULT = /* @__PURE__ */ Symbol();
-function serializeDefaultValue(value, schema, ctx, json5, params) {
+function serializeDefaultValue(value, schema, ctx, json6, params) {
   let unrepresentable = false;
   const serialized = JSON.stringify(value, (_, val) => {
     if (typeof val !== "bigint")
@@ -45244,31 +46349,31 @@ function serializeDefaultValue(value, schema, ctx, json5, params) {
   });
   if (!unrepresentable)
     return JSON.parse(serialized);
-  handleUnrepresentable(schema, ctx, json5, params, "BigInt defaults cannot be represented in JSON Schema");
+  handleUnrepresentable(schema, ctx, json6, params, "BigInt defaults cannot be represented in JSON Schema");
   return UNREPRESENTABLE_DEFAULT;
 }
 __name(serializeDefaultValue, "serializeDefaultValue");
-var defaultProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
+var defaultProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
   const def = schema._zod.def;
   processSchema(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
-  const value = serializeDefaultValue(def.defaultValue, schema, ctx, json5, params);
+  const value = serializeDefaultValue(def.defaultValue, schema, ctx, json6, params);
   if (value !== UNREPRESENTABLE_DEFAULT)
-    json5.default = value;
+    json6.default = value;
 }, "defaultProcessor");
-var prefaultProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
+var prefaultProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
   const def = schema._zod.def;
   processSchema(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   if (ctx.io !== "input")
     return;
-  const value = serializeDefaultValue(def.defaultValue, schema, ctx, json5, params);
+  const value = serializeDefaultValue(def.defaultValue, schema, ctx, json6, params);
   if (value !== UNREPRESENTABLE_DEFAULT)
-    json5._prefault = value;
+    json6._prefault = value;
 }, "prefaultProcessor");
-var catchProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
+var catchProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
   const def = schema._zod.def;
   processSchema(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
@@ -45277,10 +46382,10 @@ var catchProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
   try {
     catchValue = def.catchValue(void 0);
   } catch {
-    handleUnrepresentable(schema, ctx, json5, params, "Dynamic catch values are not supported in JSON Schema");
+    handleUnrepresentable(schema, ctx, json6, params, "Dynamic catch values are not supported in JSON Schema");
     return;
   }
-  json5.default = catchValue;
+  json6.default = catchValue;
 }, "catchProcessor");
 var pipeProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
   const def = schema._zod.def;
@@ -45290,12 +46395,12 @@ var pipeProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
   const seen = ctx.seen.get(schema);
   seen.ref = innerType;
 }, "pipeProcessor");
-var readonlyProcessor = /* @__PURE__ */ __name((schema, ctx, json5, params) => {
+var readonlyProcessor = /* @__PURE__ */ __name((schema, ctx, json6, params) => {
   const def = schema._zod.def;
   processSchema(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
-  json5.readOnly = true;
+  json6.readOnly = true;
 }, "readonlyProcessor");
 var promiseProcessor = /* @__PURE__ */ __name((schema, ctx, _json, params) => {
   const def = schema._zod.def;
@@ -45392,7 +46497,7 @@ function toJSONSchema(input2, params) {
 }
 __name(toJSONSchema, "toJSONSchema");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/json-schema-generator.js
+// ../node_modules/zod/v4/core/json-schema-generator.js
 var JSONSchemaGenerator = class {
   static {
     __name(this, "JSONSchemaGenerator");
@@ -45473,10 +46578,10 @@ var JSONSchemaGenerator = class {
   }
 };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/json-schema.js
+// ../node_modules/zod/v4/core/json-schema.js
 var json_schema_exports = {};
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/schemas.js
+// ../node_modules/zod/v4/classic/schemas.js
 var schemas_exports2 = {};
 __export(schemas_exports2, {
   ZodAny: () => ZodAny,
@@ -45657,7 +46762,7 @@ __export(schemas_exports2, {
   xor: () => xor
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/checks.js
+// ../node_modules/zod/v4/classic/checks.js
 var checks_exports2 = {};
 __export(checks_exports2, {
   endsWith: () => _endsWith,
@@ -45692,7 +46797,7 @@ __export(checks_exports2, {
   uppercase: () => _uppercase
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/errors.js
+// ../node_modules/zod/v4/classic/errors.js
 var _installedErrorProtos = /* @__PURE__ */ new WeakSet([Object.prototype, Error.prototype]);
 function _lazyMethod(proto, key, make) {
   Object.defineProperty(proto, key, {
@@ -45739,7 +46844,7 @@ var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, void 0
   Parent: Error
 });
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/parse.js
+// ../node_modules/zod/v4/classic/parse.js
 var parse2 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
@@ -45753,7 +46858,7 @@ var safeDecode2 = /* @__PURE__ */ _safeDecode(ZodRealError);
 var safeEncodeAsync2 = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
 var safeDecodeAsync2 = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/schemas.js
+// ../node_modules/zod/v4/classic/schemas.js
 function _ensureDefaultLocale() {
   if (!globalConfig.localeError)
     config(en_default());
@@ -45944,7 +47049,7 @@ var _ZodString = /* @__PURE__ */ $constructor(
   (inst, def) => {
     $ZodString.init(inst, def);
     ZodType.init(inst, def);
-    inst._zod.processJSONSchema = (ctx, json5, params) => stringProcessor(inst, ctx, json5, params);
+    inst._zod.processJSONSchema = (ctx, json6, params) => stringProcessor(inst, ctx, json6, params);
   },
   /* @__PURE__ */ util_exports.derived({
     format: /* @__PURE__ */ __name((inst) => aggregateChecks(inst).format ?? null, "format"),
@@ -46322,8 +47427,8 @@ function currencyCode2(_params) {
 }
 __name(currencyCode2, "currencyCode");
 function hash(alg, params) {
-  const enc3 = params?.enc ?? "hex";
-  const format2 = `${alg}_${enc3}`;
+  const enc5 = params?.enc ?? "hex";
+  const format2 = `${alg}_${enc5}`;
   const regex2 = regexes_exports[format2];
   if (!regex2)
     throw new Error(`Unrecognized hash format: ${format2}`);
@@ -46335,7 +47440,7 @@ var ZodNumber = /* @__PURE__ */ $constructor(
   (inst, def) => {
     $ZodNumber.init(inst, def);
     ZodType.init(inst, def);
-    inst._zod.processJSONSchema = (ctx, json5, params) => numberProcessor(inst, ctx, json5, params);
+    inst._zod.processJSONSchema = (ctx, json6, params) => numberProcessor(inst, ctx, json6, params);
     inst.isFinite = true;
   },
   /* @__PURE__ */ util_exports.derived({
@@ -46431,7 +47536,7 @@ __name(uint32, "uint32");
 var ZodBoolean = /* @__PURE__ */ $constructor("ZodBoolean", (inst, def) => {
   $ZodBoolean.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => booleanProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => booleanProcessor(inst, ctx, json6, params);
 });
 function boolean2(params) {
   return _boolean(ZodBoolean, params);
@@ -46442,7 +47547,7 @@ var ZodBigInt = /* @__PURE__ */ $constructor(
   (inst, def) => {
     $ZodBigInt.init(inst, def);
     ZodType.init(inst, def);
-    inst._zod.processJSONSchema = (ctx, json5, params) => bigintProcessor(inst, ctx, json5, params);
+    inst._zod.processJSONSchema = (ctx, json6, params) => bigintProcessor(inst, ctx, json6, params);
   },
   /* @__PURE__ */ util_exports.derived({
     minValue: /* @__PURE__ */ __name((inst) => aggregateChecks(inst).minimum ?? null, "minValue"),
@@ -46503,7 +47608,7 @@ __name(uint64, "uint64");
 var ZodSymbol = /* @__PURE__ */ $constructor("ZodSymbol", (inst, def) => {
   $ZodSymbol.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => symbolProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => symbolProcessor(inst, ctx, json6, params);
 });
 function symbol(params) {
   return _symbol(ZodSymbol, params);
@@ -46512,7 +47617,7 @@ __name(symbol, "symbol");
 var ZodUndefined = /* @__PURE__ */ $constructor("ZodUndefined", (inst, def) => {
   $ZodUndefined.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => undefinedProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => undefinedProcessor(inst, ctx, json6, params);
 });
 function _undefined3(params) {
   return _undefined2(ZodUndefined, params);
@@ -46521,7 +47626,7 @@ __name(_undefined3, "_undefined");
 var ZodNull = /* @__PURE__ */ $constructor("ZodNull", (inst, def) => {
   $ZodNull.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => nullProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => nullProcessor(inst, ctx, json6, params);
 });
 function _null3(params) {
   return _null2(ZodNull, params);
@@ -46530,7 +47635,7 @@ __name(_null3, "_null");
 var ZodAny = /* @__PURE__ */ $constructor("ZodAny", (inst, def) => {
   $ZodAny.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => anyProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => anyProcessor(inst, ctx, json6, params);
 });
 function any() {
   return _any(ZodAny);
@@ -46539,7 +47644,7 @@ __name(any, "any");
 var ZodUnknown = /* @__PURE__ */ $constructor("ZodUnknown", (inst, def) => {
   $ZodUnknown.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => unknownProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => unknownProcessor(inst, ctx, json6, params);
 });
 function unknown() {
   return _unknown(ZodUnknown);
@@ -46548,7 +47653,7 @@ __name(unknown, "unknown");
 var ZodNever = /* @__PURE__ */ $constructor("ZodNever", (inst, def) => {
   $ZodNever.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => neverProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => neverProcessor(inst, ctx, json6, params);
 });
 function never(params) {
   return _never(ZodNever, params);
@@ -46557,7 +47662,7 @@ __name(never, "never");
 var ZodVoid = /* @__PURE__ */ $constructor("ZodVoid", (inst, def) => {
   $ZodVoid.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => voidProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => voidProcessor(inst, ctx, json6, params);
 });
 function _void2(params) {
   return _void(ZodVoid, params);
@@ -46568,7 +47673,7 @@ var ZodDate = /* @__PURE__ */ $constructor(
   (inst, def) => {
     $ZodDate.init(inst, def);
     ZodType.init(inst, def);
-    inst._zod.processJSONSchema = (ctx, json5, params) => dateProcessor(inst, ctx, json5, params);
+    inst._zod.processJSONSchema = (ctx, json6, params) => dateProcessor(inst, ctx, json6, params);
     inst.min = (value, params) => inst.check(_gte(value, params));
     inst.max = (value, params) => inst.check(_lte(value, params));
   },
@@ -46591,7 +47696,7 @@ var ZodArray = /* @__PURE__ */ $constructor("ZodArray", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodArray.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => arrayProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => arrayProcessor(inst, ctx, json6, params);
   inst.element = def.element;
 }, {
   min(n2, params) {
@@ -46623,7 +47728,7 @@ var ZodObject = /* @__PURE__ */ $constructor("ZodObject", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodObjectJIT.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => objectProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => objectProcessor(inst, ctx, json6, params);
   util_exports.installLazyProp(inst, "shape", (self2) => self2._zod.def.shape, false);
 }, {
   keyof() {
@@ -46699,7 +47804,7 @@ __name(looseObject, "looseObject");
 var ZodUnion = /* @__PURE__ */ $constructor("ZodUnion", (inst, def) => {
   $ZodUnion.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => unionProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => unionProcessor(inst, ctx, json6, params);
   inst.options = def.options;
 });
 function union(options, params) {
@@ -46713,7 +47818,7 @@ __name(union, "union");
 var ZodXor = /* @__PURE__ */ $constructor("ZodXor", (inst, def) => {
   ZodUnion.init(inst, def);
   $ZodXor.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => unionProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => unionProcessor(inst, ctx, json6, params);
   inst.options = def.options;
 });
 function xor(options, params) {
@@ -46741,7 +47846,7 @@ __name(discriminatedUnion, "discriminatedUnion");
 var ZodIntersection = /* @__PURE__ */ $constructor("ZodIntersection", (inst, def) => {
   $ZodIntersection.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => intersectionProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => intersectionProcessor(inst, ctx, json6, params);
 });
 function intersection(left, right) {
   return new ZodIntersection({
@@ -46755,7 +47860,7 @@ var ZodTuple = /* @__PURE__ */ $constructor("ZodTuple", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodTuple.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => tupleProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => tupleProcessor(inst, ctx, json6, params);
 }, {
   rest(rest) {
     return this.clone({
@@ -46789,7 +47894,7 @@ var ZodRecord = /* @__PURE__ */ $constructor("ZodRecord", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodRecord.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => recordProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => recordProcessor(inst, ctx, json6, params);
   inst.keyType = def.keyType;
   inst.valueType = def.valueType;
 });
@@ -46834,7 +47939,7 @@ var ZodMap = /* @__PURE__ */ $constructor("ZodMap", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodMap.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => mapProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => mapProcessor(inst, ctx, json6, params);
   inst.keyType = def.keyType;
   inst.valueType = def.valueType;
   inst.min = (...args) => inst.check(_minSize(...args));
@@ -46855,7 +47960,7 @@ var ZodSet = /* @__PURE__ */ $constructor("ZodSet", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodSet.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => setProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => setProcessor(inst, ctx, json6, params);
   inst.min = (...args) => inst.check(_minSize(...args));
   inst.nonempty = (params) => inst.check(_minSize(1, params));
   inst.max = (...args) => inst.check(_maxSize(...args));
@@ -46872,7 +47977,7 @@ __name(set, "set");
 var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   $ZodEnum.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => enumProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => enumProcessor(inst, ctx, json6, params);
   inst.enum = def.entries;
   inst.options = [...inst._zod.values];
   const keys = new Set(Object.keys(def.entries));
@@ -46927,7 +48032,7 @@ __name(nativeEnum, "nativeEnum");
 var ZodLiteral = /* @__PURE__ */ $constructor("ZodLiteral", (inst, def) => {
   $ZodLiteral.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => literalProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => literalProcessor(inst, ctx, json6, params);
   inst.values = new Set(def.values);
   Object.defineProperty(inst, "value", {
     get() {
@@ -46949,7 +48054,7 @@ __name(literal, "literal");
 var ZodFile = /* @__PURE__ */ $constructor("ZodFile", (inst, def) => {
   $ZodFile.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => fileProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => fileProcessor(inst, ctx, json6, params);
   inst.min = (size, params) => inst.check(_minSize(size, params));
   inst.max = (size, params) => inst.check(_maxSize(size, params));
   inst.mime = (types, params) => inst.check(_mime(Array.isArray(types) ? types : [types], params));
@@ -46962,7 +48067,7 @@ var ZodTransform = /* @__PURE__ */ $constructor("ZodTransform", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodTransform.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => transformProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => transformProcessor(inst, ctx, json6, params);
   inst._zod.parse = (payload, _ctx2) => {
     if (_ctx2.direction === "backward") {
       throw new $ZodEncodeError(inst.constructor.name);
@@ -47002,7 +48107,7 @@ __name(transform, "transform");
 var ZodOptional = /* @__PURE__ */ $constructor("ZodOptional", (inst, def) => {
   $ZodOptional.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => optionalProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => optionalProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function optional(innerType) {
@@ -47015,7 +48120,7 @@ __name(optional, "optional");
 var ZodExactOptional = /* @__PURE__ */ $constructor("ZodExactOptional", (inst, def) => {
   $ZodExactOptional.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => optionalProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => optionalProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function exactOptional(innerType) {
@@ -47028,7 +48133,7 @@ __name(exactOptional, "exactOptional");
 var ZodNullable = /* @__PURE__ */ $constructor("ZodNullable", (inst, def) => {
   $ZodNullable.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => nullableProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => nullableProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function nullable(innerType) {
@@ -47045,7 +48150,7 @@ __name(nullish2, "nullish");
 var ZodDefault = /* @__PURE__ */ $constructor("ZodDefault", (inst, def) => {
   $ZodDefault.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => defaultProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => defaultProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.innerType;
   inst.removeDefault = inst.unwrap;
 });
@@ -47062,7 +48167,7 @@ __name(_default2, "_default");
 var ZodPrefault = /* @__PURE__ */ $constructor("ZodPrefault", (inst, def) => {
   $ZodPrefault.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => prefaultProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => prefaultProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function prefault(innerType, defaultValue) {
@@ -47078,7 +48183,7 @@ __name(prefault, "prefault");
 var ZodNonOptional = /* @__PURE__ */ $constructor("ZodNonOptional", (inst, def) => {
   $ZodNonOptional.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => nonoptionalProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => nonoptionalProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function nonoptional(innerType, params) {
@@ -47092,7 +48197,7 @@ __name(nonoptional, "nonoptional");
 var ZodSuccess = /* @__PURE__ */ $constructor("ZodSuccess", (inst, def) => {
   $ZodSuccess.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => successProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => successProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function success(innerType) {
@@ -47105,7 +48210,7 @@ __name(success, "success");
 var ZodCatch = /* @__PURE__ */ $constructor("ZodCatch", (inst, def) => {
   $ZodCatch.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => catchProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => catchProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.innerType;
   inst.removeCatch = inst.unwrap;
 });
@@ -47120,7 +48225,7 @@ __name(_catch2, "_catch");
 var ZodNaN = /* @__PURE__ */ $constructor("ZodNaN", (inst, def) => {
   $ZodNaN.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => nanProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => nanProcessor(inst, ctx, json6, params);
 });
 function nan(params) {
   return _nan(ZodNaN, params);
@@ -47129,7 +48234,7 @@ __name(nan, "nan");
 var ZodPipe = /* @__PURE__ */ $constructor("ZodPipe", (inst, def) => {
   $ZodPipe.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => pipeProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => pipeProcessor(inst, ctx, json6, params);
   inst.in = def.in;
   inst.out = def.out;
 });
@@ -47174,7 +48279,7 @@ var ZodPreprocess = /* @__PURE__ */ $constructor("ZodPreprocess", (inst, def) =>
 var ZodReadonly = /* @__PURE__ */ $constructor("ZodReadonly", (inst, def) => {
   $ZodReadonly.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => readonlyProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => readonlyProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function readonly(innerType) {
@@ -47187,7 +48292,7 @@ __name(readonly, "readonly");
 var ZodTemplateLiteral = /* @__PURE__ */ $constructor("ZodTemplateLiteral", (inst, def) => {
   $ZodTemplateLiteral.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => templateLiteralProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => templateLiteralProcessor(inst, ctx, json6, params);
 });
 function templateLiteral(parts, params) {
   return new ZodTemplateLiteral({
@@ -47200,7 +48305,7 @@ __name(templateLiteral, "templateLiteral");
 var ZodLazy = /* @__PURE__ */ $constructor("ZodLazy", (inst, def) => {
   $ZodLazy.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => lazyProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => lazyProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.getter();
 });
 function lazy(getter) {
@@ -47213,7 +48318,7 @@ __name(lazy, "lazy");
 var ZodPromise = /* @__PURE__ */ $constructor("ZodPromise", (inst, def) => {
   $ZodPromise.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => promiseProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => promiseProcessor(inst, ctx, json6, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function promise(innerType) {
@@ -47226,7 +48331,7 @@ __name(promise, "promise");
 var ZodFunction = /* @__PURE__ */ $constructor("ZodFunction", (inst, def) => {
   $ZodFunction.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => functionProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => functionProcessor(inst, ctx, json6, params);
 });
 function _function(params) {
   return new ZodFunction({
@@ -47239,7 +48344,7 @@ __name(_function, "_function");
 var ZodCustom = /* @__PURE__ */ $constructor("ZodCustom", (inst, def) => {
   $ZodCustom.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json5, params) => customProcessor(inst, ctx, json5, params);
+  inst._zod.processJSONSchema = (ctx, json6, params) => customProcessor(inst, ctx, json6, params);
 });
 function check(fn) {
   const ch = new $ZodCheck({
@@ -47315,7 +48420,7 @@ function preprocess(fn, schema) {
 }
 __name(preprocess, "preprocess");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/compat.js
+// ../node_modules/zod/v4/classic/compat.js
 var ZodIssueCode = {
   invalid_type: "invalid_type",
   too_big: "too_big",
@@ -47343,7 +48448,7 @@ var ZodFirstPartyTypeKind;
 /* @__PURE__ */ (function(ZodFirstPartyTypeKind2) {
 })(ZodFirstPartyTypeKind || (ZodFirstPartyTypeKind = {}));
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/iso.js
+// ../node_modules/zod/v4/classic/iso.js
 var iso_exports = {};
 __export(iso_exports, {
   ZodISODate: () => ZodISODate,
@@ -47372,7 +48477,7 @@ function duration2(params) {
 }
 __name(duration2, "duration");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/from-json-schema.js
+// ../node_modules/zod/v4/classic/from-json-schema.js
 var z = {
   ...schemas_exports2,
   ...checks_exports2,
@@ -48118,7 +49223,7 @@ function fromJSONSchema(schema, params) {
 }
 __name(fromJSONSchema, "fromJSONSchema");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/core/visit.js
+// ../node_modules/zod/v4/core/visit.js
 var RESOLVING = /* @__PURE__ */ Symbol("z.visit/resolving");
 function visit(schema, fnOrHandlers) {
   const fn = typeof fnOrHandlers === "function" ? fnOrHandlers : (node2, rewritten) => {
@@ -48276,7 +49381,7 @@ function visit(schema, fnOrHandlers) {
 }
 __name(visit, "visit");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/deep-partial.js
+// ../node_modules/zod/v4/classic/deep-partial.js
 function deepPartial(schema) {
   return visit(schema, {
     object: /* @__PURE__ */ __name((s2) => s2.partial(), "object"),
@@ -48289,7 +49394,7 @@ function deepPartial(schema) {
 }
 __name(deepPartial, "deepPartial");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/in-out.js
+// ../node_modules/zod/v4/classic/in-out.js
 function withChecks(side, checks) {
   if (!checks?.length)
     return side;
@@ -48324,7 +49429,7 @@ function output(schema) {
 }
 __name(output, "output");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/zod/v4/classic/coerce.js
+// ../node_modules/zod/v4/classic/coerce.js
 var coerce_exports = {};
 __export(coerce_exports, {
   bigint: () => bigint3,
@@ -48354,7 +49459,7 @@ function date4(params) {
 }
 __name(date4, "date");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/@modelcontextprotocol/client/dist/chunk-Br0eD_fh.mjs
+// ../node_modules/@modelcontextprotocol/client/dist/chunk-Br0eD_fh.mjs
 var __create2 = Object.create;
 var __defProp2 = Object.defineProperty;
 var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
@@ -48394,7 +49499,7 @@ var __toESM2 = /* @__PURE__ */ __name((mod, isNodeMode, target) => (target = mod
   enumerable: true
 }) : target, mod)), "__toESM");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/@modelcontextprotocol/client/dist/dialects-BOhdv1Fc.mjs
+// ../node_modules/@modelcontextprotocol/client/dist/dialects-BOhdv1Fc.mjs
 var DRAFT_2020_12_URIS = /* @__PURE__ */ new Set(["https://json-schema.org/draft/2020-12/schema", "http://json-schema.org/draft/2020-12/schema"]);
 var DRAFT_2019_09_URIS = /* @__PURE__ */ new Set(["https://json-schema.org/draft/2019-09/schema", "http://json-schema.org/draft/2019-09/schema"]);
 var DRAFT_07_URIS = /* @__PURE__ */ new Set(["https://json-schema.org/draft-07/schema", "http://json-schema.org/draft-07/schema"]);
@@ -48413,7 +49518,7 @@ function declaredDialect(schema, remedy) {
 }
 __name(declaredDialect, "declaredDialect");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/@modelcontextprotocol/core/dist/auth-CUe6YdwF.mjs
+// ../node_modules/@modelcontextprotocol/core/dist/auth-CUe6YdwF.mjs
 var LATEST_PROTOCOL_VERSION = "2025-11-25";
 var SUPPORTED_PROTOCOL_VERSIONS = [
   LATEST_PROTOCOL_VERSION,
@@ -49351,7 +50456,7 @@ var OAuthTokenRevocationRequestSchema = object({
   token_type_hint: string2().optional()
 }).strip();
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/@modelcontextprotocol/client/dist/src-D_zzAWoS.mjs
+// ../node_modules/@modelcontextprotocol/client/dist/src-D_zzAWoS.mjs
 var BRANDS = /* @__PURE__ */ Symbol.for("mcp.sdk.errorBrands");
 function stampErrorBrands(instance, ctor) {
   const brands = /* @__PURE__ */ new Set();
@@ -50457,8 +51562,8 @@ function buildSchemas2025() {
   return memo$1 ??= build$1();
 }
 __name(buildSchemas2025, "buildSchemas2025");
-function isNonObjectJsonSchemaRoot(json5) {
-  return json5["type"] !== "object";
+function isNonObjectJsonSchemaRoot(json6) {
+  return json6["type"] !== "object";
 }
 __name(isNonObjectJsonSchemaRoot, "isNonObjectJsonSchemaRoot");
 var REF_REWRITE_DATA_POSITION_KEYS = /* @__PURE__ */ new Set([
@@ -54160,7 +55265,7 @@ function preloadSchemas() {
 }
 __name(preloadSchemas, "preloadSchemas");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/@modelcontextprotocol/client/dist/cfWorkerProvider-BylNJ1R5.mjs
+// ../node_modules/@modelcontextprotocol/client/dist/cfWorkerProvider-BylNJ1R5.mjs
 function deepCompareStrict(a2, b) {
   const typeofa = typeof a2;
   if (typeofa !== typeof b) return false;
@@ -55098,11 +56203,11 @@ var CfWorkerJsonSchemaValidator = class {
   }
 };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/@modelcontextprotocol/client/dist/shimsWorkerd.mjs
+// ../node_modules/@modelcontextprotocol/client/dist/shimsWorkerd.mjs
 preloadSchemas();
 var CORS_IS_POSSIBLE = false;
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/pkce-challenge/dist/index.browser.js
+// ../node_modules/pkce-challenge/dist/index.browser.js
 var crypto2;
 crypto2 = globalThis.crypto;
 async function getRandomValues(size) {
@@ -55148,7 +56253,7 @@ async function pkceChallenge(length) {
 }
 __name(pkceChallenge, "pkceChallenge");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/eventsource-parser/dist/index.js
+// ../node_modules/eventsource-parser/dist/index.js
 var ParseError = class extends Error {
   static {
     __name(this, "ParseError");
@@ -55338,7 +56443,7 @@ function isEventPrefix(chunk, i2, firstCharCode) {
 }
 __name(isEventPrefix, "isEventPrefix");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/eventsource/dist/index.js
+// ../node_modules/eventsource/dist/index.js
 var ErrorEvent2 = class extends Event {
   static {
     __name(this, "ErrorEvent");
@@ -55645,7 +56750,7 @@ function getBaseURL() {
 }
 __name(getBaseURL, "getBaseURL");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/eventsource-parser/dist/stream.js
+// ../node_modules/eventsource-parser/dist/stream.js
 var EventSourceParserStream = class extends TransformStream {
   static {
     __name(this, "EventSourceParserStream");
@@ -55673,7 +56778,7 @@ var EventSourceParserStream = class extends TransformStream {
   }
 };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/@modelcontextprotocol/client/dist/index.mjs
+// ../node_modules/@modelcontextprotocol/client/dist/index.mjs
 var OAuthClientFlowError = class extends Error {
   static {
     __name(this, "OAuthClientFlowError");
@@ -56438,11 +57543,11 @@ async function executeTokenRequest(authorizationServerUrl, { metadata, tokenRequ
     body: tokenRequestParams
   });
   if (!response.ok) throw await parseErrorResponse(response);
-  const json5 = await response.json();
+  const json6 = await response.json();
   try {
-    return OAuthTokensSchema.parse(json5);
+    return OAuthTokensSchema.parse(json6);
   } catch (parseError) {
-    if (typeof json5 === "object" && json5 !== null && "error" in json5) throw await parseErrorResponse(JSON.stringify(json5));
+    if (typeof json6 === "object" && json6 !== null && "error" in json6) throw await parseErrorResponse(JSON.stringify(json6));
     throw parseError;
   }
 }
@@ -56974,14 +58079,14 @@ var ClientResponseCache = class {
   }
 };
 function encodeCacheValue(value) {
-  let json5;
+  let json6;
   try {
-    json5 = JSON.stringify(value);
+    json6 = JSON.stringify(value);
   } catch (error62) {
     throw new TypeError(`cache value is not JSON-serializable: ${error62 instanceof Error ? error62.message : String(error62)}`);
   }
-  if (typeof json5 !== "string") throw new TypeError("cache value is not JSON-serializable: it has no JSON representation");
-  return json5;
+  if (typeof json6 !== "string") throw new TypeError("cache value is not JSON-serializable: it has no JSON representation");
+  return json6;
 }
 __name(encodeCacheValue, "encodeCacheValue");
 var AUTH_SEAM = /* @__PURE__ */ Symbol.for("mcp.authSeamEscape");
@@ -58172,7 +59277,7 @@ var Client = class extends Protocol {
     }, options);
     const hit = await this._serveFromCache("prompts/list", void 0, options);
     if (hit !== void 0) return hit;
-    return this._listAllPages("prompts/list", params, options, (acc, page) => acc.prompts.push(...page.prompts));
+    return this._listAllPages("prompts/list", params, options, (acc, page2) => acc.prompts.push(...page2.prompts));
   }
   /**
   * Lists available resources.
@@ -58211,7 +59316,7 @@ var Client = class extends Protocol {
     }, options);
     const hit = await this._serveFromCache("resources/list", void 0, options);
     if (hit !== void 0) return hit;
-    return this._listAllPages("resources/list", params, options, (acc, page) => acc.resources.push(...page.resources));
+    return this._listAllPages("resources/list", params, options, (acc, page2) => acc.resources.push(...page2.resources));
   }
   /**
   * Lists available resource URI templates for dynamic resources.
@@ -58236,7 +59341,7 @@ var Client = class extends Protocol {
     }, options);
     const hit = await this._serveFromCache("resources/templates/list", void 0, options);
     if (hit !== void 0) return hit;
-    return this._listAllPages("resources/templates/list", params, options, (acc, page) => acc.resourceTemplates.push(...page.resourceTemplates));
+    return this._listAllPages("resources/templates/list", params, options, (acc, page2) => acc.resourceTemplates.push(...page2.resourceTemplates));
   }
   /**
   * Walk every page of a paginated list verb, aggregate, and write ONE
@@ -58276,15 +59381,15 @@ var Client = class extends Protocol {
         listMaxPages: this._listMaxPages
       });
       seen.add(cursor);
-      const page = await this.request({
+      const page2 = await this.request({
         method,
         params: {
           ...baseParams,
           cursor
         }
       }, options);
-      append(acc, page);
-      cursor = page.nextCursor;
+      append(acc, page2);
+      cursor = page2.nextCursor;
       pages++;
     }
     delete acc.nextCursor;
@@ -58802,16 +59907,16 @@ var Client = class extends Protocol {
       return { tools: [] };
     }
     if (params?.cursor !== void 0) {
-      const page = await this.request({
+      const page2 = await this.request({
         method: "tools/list",
         params
       }, options);
-      this._excludeInvalidXMcpHeaderTools(page);
-      return page;
+      this._excludeInvalidXMcpHeaderTools(page2);
+      return page2;
     }
     const hit = await this._serveFromCache("tools/list", void 0, options);
     if (hit !== void 0) return hit;
-    return this._listAllPages("tools/list", params, options, (acc, page) => acc.tools.push(...page.tools), (acc) => this._excludeInvalidXMcpHeaderTools(acc));
+    return this._listAllPages("tools/list", params, options, (acc, page2) => acc.tools.push(...page2.tools), (acc) => this._excludeInvalidXMcpHeaderTools(acc));
   }
   /**
   * SEP-2243 (protocol revision 2026-07-28): a Streamable HTTP client MUST
@@ -59708,7 +60813,7 @@ var StreamableHTTPClientTransport = class {
   }
 };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
+// ../node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
 var RELATED_TASK_META_KEY2 = "io.modelcontextprotocol/related-task";
 var JSONRPC_VERSION2 = "2.0";
 var AssertObjectSchema = custom((v) => v !== null && (typeof v === "object" || typeof v === "function"));
@@ -61190,7 +62295,7 @@ var ServerResultSchema2 = union([
   CreateTaskResultSchema2
 ]);
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/client-fyQrLGkD.js
+// ../node_modules/agents/dist/client-fyQrLGkD.js
 function toDisposable(fn) {
   return { dispose: fn };
 }
@@ -61253,57 +62358,57 @@ async function raceWithSignal(promise2, signal) {
 __name(raceWithSignal, "raceWithSignal");
 async function fetchMcpTools(client, options) {
   let aggregate = [];
-  let page = { tools: [] };
+  let page2 = { tools: [] };
   do {
-    const params = { cursor: page.nextCursor };
-    page = await (options.probing ? client.request({
+    const params = { cursor: page2.nextCursor };
+    page2 = await (options.probing ? client.request({
       method: "tools/list",
       params
     }) : client.listTools(params)).catch(options.onCapabilityError({ tools: [] }, "tools/list"));
-    aggregate = aggregate.concat(page.tools);
-  } while (page.nextCursor);
+    aggregate = aggregate.concat(page2.tools);
+  } while (page2.nextCursor);
   return aggregate;
 }
 __name(fetchMcpTools, "fetchMcpTools");
 async function fetchMcpResources(client, options) {
   let aggregate = [];
-  let page = { resources: [] };
+  let page2 = { resources: [] };
   do {
-    const params = { cursor: page.nextCursor };
-    page = await (options.probing ? client.request({
+    const params = { cursor: page2.nextCursor };
+    page2 = await (options.probing ? client.request({
       method: "resources/list",
       params
     }) : client.listResources(params)).catch(options.onCapabilityError({ resources: [] }, "resources/list"));
-    aggregate = aggregate.concat(page.resources);
-  } while (page.nextCursor);
+    aggregate = aggregate.concat(page2.resources);
+  } while (page2.nextCursor);
   return aggregate;
 }
 __name(fetchMcpResources, "fetchMcpResources");
 async function fetchMcpPrompts(client, options) {
   let aggregate = [];
-  let page = { prompts: [] };
+  let page2 = { prompts: [] };
   do {
-    const params = { cursor: page.nextCursor };
-    page = await (options.probing ? client.request({
+    const params = { cursor: page2.nextCursor };
+    page2 = await (options.probing ? client.request({
       method: "prompts/list",
       params
     }) : client.listPrompts(params)).catch(options.onCapabilityError({ prompts: [] }, "prompts/list"));
-    aggregate = aggregate.concat(page.prompts);
-  } while (page.nextCursor);
+    aggregate = aggregate.concat(page2.prompts);
+  } while (page2.nextCursor);
   return aggregate;
 }
 __name(fetchMcpPrompts, "fetchMcpPrompts");
 async function fetchMcpResourceTemplates(client, options) {
   let aggregate = [];
-  let page = { resourceTemplates: [] };
+  let page2 = { resourceTemplates: [] };
   do {
-    const params = { cursor: page.nextCursor };
-    page = await (options.probing ? client.request({
+    const params = { cursor: page2.nextCursor };
+    page2 = await (options.probing ? client.request({
       method: "resources/templates/list",
       params
     }) : client.listResourceTemplates(params)).catch(options.onCapabilityError({ resourceTemplates: [] }, "resources/templates/list"));
-    aggregate = aggregate.concat(page.resourceTemplates);
-  } while (page.nextCursor);
+    aggregate = aggregate.concat(page2.resourceTemplates);
+  } while (page2.nextCursor);
   return aggregate;
 }
 __name(fetchMcpResourceTemplates, "fetchMcpResourceTemplates");
@@ -63447,13 +64552,13 @@ function getNamespacedData(mcpClients, type) {
 }
 __name(getNamespacedData, "getNamespacedData");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/observability/index.js
+// ../node_modules/agents/dist/observability/index.js
 import { subscribe as subscribe$1, unsubscribe } from "node:diagnostics_channel";
 var genericObservability = { emit(event) {
   publishDiagnosticsEvent(event);
 } };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/cron-schedule/dist/utils.js
+// ../node_modules/cron-schedule/dist/utils.js
 function extractDateElements(date6) {
   return {
     second: date6.getSeconds(),
@@ -63478,7 +64583,7 @@ function getDaysBetweenWeekdays(weekday1, weekday2) {
 }
 __name(getDaysBetweenWeekdays, "getDaysBetweenWeekdays");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/cron-schedule/dist/cron.js
+// ../node_modules/cron-schedule/dist/cron.js
 var Cron = class {
   static {
     __name(this, "Cron");
@@ -63763,7 +64868,7 @@ var Cron = class {
   }
 };
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/cron-schedule/dist/cron-parser.js
+// ../node_modules/cron-schedule/dist/cron-parser.js
 var secondConstraint = {
   min: 0,
   max: 59
@@ -63909,7 +65014,7 @@ function parseCronExpression(cronExpression) {
 }
 __name(parseCronExpression, "parseCronExpression");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/scheduler-DZ3xQfeK.js
+// ../node_modules/agents/dist/scheduler-DZ3xQfeK.js
 var MAX_INTERVAL_SECONDS = 720 * 60 * 60;
 function isRecurring(timing) {
   return timing.type === "cron" || timing.type === "interval";
@@ -64490,7 +65595,7 @@ function _emitCreated(result) {
 }
 __name(_emitCreated, "_emitCreated");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/queue-BB-zfIYF.js
+// ../node_modules/agents/dist/queue-BB-zfIYF.js
 var queueCallbackResolvers = /* @__PURE__ */ new WeakMap();
 function setQueueCallbackResolver(queue, resolver) {
   queueCallbackResolvers.set(queue, resolver);
@@ -64865,7 +65970,7 @@ function _emit2(type, payload) {
 }
 __name(_emit2, "_emit");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/tasks-68DESxf0.js
+// ../node_modules/agents/dist/tasks-68DESxf0.js
 var NonRetryableError = class extends Error {
   static {
     __name(this, "NonRetryableError");
@@ -64922,16 +66027,16 @@ var MAX_SERIALIZED_BYTES = 1048576;
 var utf8 = new TextEncoder();
 function serializeTaskValue(value, context) {
   if (value === void 0) return null;
-  let json5;
+  let json6;
   try {
-    json5 = JSON.stringify(value);
+    json6 = JSON.stringify(value);
   } catch (error62) {
     throw new TaskSerializationError(context, error62 instanceof Error ? error62.message : String(error62));
   }
-  if (json5 === void 0) throw new TaskSerializationError(context, `value of type ${typeof value} has no JSON representation`);
-  const bytes = utf8.encode(json5).byteLength;
+  if (json6 === void 0) throw new TaskSerializationError(context, `value of type ${typeof value} has no JSON representation`);
+  const bytes = utf8.encode(json6).byteLength;
   if (bytes > 1048576) throw new TaskSerializationError(context, `serialized size ${bytes} bytes exceeds the ${MAX_SERIALIZED_BYTES}-byte limit`);
-  return json5;
+  return json6;
 }
 __name(serializeTaskValue, "serializeTaskValue");
 function deserializeTaskValue(stored) {
@@ -66325,7 +67430,7 @@ function _emit3(type, payload) {
 }
 __name(_emit3, "_emit");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/state/index.js
+// ../node_modules/agents/dist/state/index.js
 var STATE_SCHEMA_VERSION_KEY = "cf_agents:state_schema_version";
 var CURRENT_STATE_SCHEMA_VERSION = 1;
 var STATE_ROW_ID = "cf_state_row_id";
@@ -66435,7 +67540,7 @@ function _ensureTable2() {
 }
 __name(_ensureTable2, "_ensureTable");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/src-BZeu-SCD.js
+// ../node_modules/agents/dist/src-BZeu-SCD.js
 import { AsyncLocalStorage as AsyncLocalStorage5 } from "node:async_hooks";
 import { DurableObject as DurableObject7, RpcTarget, exports } from "cloudflare:workers";
 import { EmailMessage } from "cloudflare:email";
@@ -71178,8 +72283,8 @@ var Agent = class Agent2 extends DurableObject7 {
     if (typeof input2 === "string") return input2.slice(0, 500);
     if (input2 === null || input2 === void 0) return input2;
     try {
-      const json5 = JSON.stringify(input2);
-      return json5.length > 500 ? `${json5.slice(0, 497)}...` : json5;
+      const json6 = JSON.stringify(input2);
+      return json6.length > 500 ? `${json6.slice(0, 497)}...` : json6;
     } catch {
       return String(input2).slice(0, 500);
     }
@@ -71319,8 +72424,8 @@ var Agent = class Agent2 extends DurableObject7 {
   }
   _stringifyAgentToolOutput(output2) {
     if (output2 === void 0) return null;
-    const json5 = JSON.stringify(output2);
-    return json5 === void 0 ? null : json5;
+    const json6 = JSON.stringify(output2);
+    return json6 === void 0 ? null : json6;
   }
   _broadcastAgentToolEvent(parentToolCallId, sequence, event, replay, connection) {
     const message2 = {
@@ -73311,6 +74416,25 @@ var TalkLog = class extends DurableObject8 {
     await this.ctx.storage.put({ [me]: a2 + n2, [all]: b + n2 });
     return { ok: true, left: Math.min(CAPS[kind].me - a2 - n2, CAPS[kind].all - b - n2) };
   }
+  // ---- Experience trace (the owner's own use only): what happened, step by step, per tab session.
+  #traceReady = false;
+  #trace() {
+    if (!this.#traceReady) {
+      this.ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS trace (ts INTEGER, handle TEXT, sid TEXT, ev TEXT, data TEXT)");
+      this.#traceReady = true;
+    }
+    return this.ctx.storage.sql;
+  }
+  async addTrace(handle, sid, rows) {
+    const sql = this.#trace();
+    const n2 = sql.exec("SELECT COUNT(*) AS n FROM trace WHERE handle = ?", handle).one().n;
+    if (n2 > 2e4) return { ok: false, n: n2 };
+    for (const r2 of rows) sql.exec("INSERT INTO trace (ts, handle, sid, ev, data) VALUES (?, ?, ?, ?, ?)", r2.ts, handle, sid, r2.ev, r2.data);
+    return { ok: true, n: n2 + rows.length };
+  }
+  async readTrace(handle, since3, limit) {
+    return this.#trace().exec("SELECT ts, sid, ev, data FROM trace WHERE handle = ? AND ts > ? ORDER BY ts LIMIT ?", handle, since3, limit).toArray();
+  }
   async counts(who2) {
     const out = {};
     for (const k2 of Object.keys(CAPS)) out[k2] = await this.ctx.storage.get(`${k2}:${who2}`) || 0;
@@ -73350,7 +74474,7 @@ function cleanScreen(b) {
 __name(cleanScreen, "cleanScreen");
 async function projectsFor(env, who2) {
   const list = await listFor(env, who2?.handle || "", !!who2?.admin);
-  return list.slice(0, 400).map((e2, i2) => ({ id: `p${i2 + 1}`, slug: e2.slug, name: e2.name, owner: e2.owner, description: String(e2.description || "").slice(0, 120), mine: !!who2 && e2.owner === who2.handle }));
+  return list.slice(0, 400).map((e2, i2) => ({ id: `p${i2 + 1}`, slug: e2.slug, name: e2.name, owner: e2.owner, description: String(e2.description || "").slice(0, 120), mine: !!who2 && e2.owner === who2.handle, updatedAt: e2.updatedAt || 0 }));
 }
 __name(projectsFor, "projectsFor");
 async function decideCore(env, who2, body) {
@@ -73360,7 +74484,9 @@ async function decideCore(env, who2, body) {
   const budget = await talkLog(env).take("decide", who2.handle);
   if (!budget.ok) return { ok: false, http: 429, error: "budget", why: "Talk has reached today's limit. It resets at midnight UTC." };
   const s2 = { ...cleanScreen(body.screen), me: who2.handle };
-  const projects = candidateProjects(utterance, await projectsFor(env, who2), 24, currentSlug(s2.path));
+  const allProjects = await projectsFor(env, who2);
+  const projects = candidateProjects(utterance, allProjects, 24, currentSlug(s2.path));
+  s2.projects = allProjects.filter((p) => p.mine);
   const { questions, cands } = buildQuestions(utterance, s2, projects);
   const state = stateText(utterance, s2, projects);
   const tm = Date.now();
@@ -73489,9 +74615,18 @@ async function transcribe(request, env, who2, url2) {
   let b642 = "";
   const bytes = new Uint8Array(buf);
   for (let i2 = 0; i2 < bytes.length; i2 += 32768) b642 += String.fromCharCode(...bytes.subarray(i2, i2 + 32768));
+  let prompt = "";
+  if (url2.searchParams.get("names") === "1") {
+    const names = (await projectsFor(env, who2).catch(() => [])).filter((p) => p.mine).sort((a2, b) => (b.updatedAt || 0) - (a2.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, " "));
+    if (names.length) prompt = "qodebase. My projects: " + [...new Set(names)].slice(0, 40).join(", ") + ".";
+  }
   try {
-    const res = await env.AI.run(STT_MODEL, { audio: btoa(b642), ...lang === "en" || lang === "he" ? { language: lang } : {}, vad_filter: true }, aiOpts(env));
-    const text = String(res?.text || "").trim();
+    const res = await env.AI.run(STT_MODEL, { audio: btoa(b642), ...lang === "en" || lang === "he" ? { language: lang } : {}, vad_filter: true, ...prompt ? { initial_prompt: prompt } : {} }, aiOpts(env));
+    let text = String(res?.text || "").trim();
+    if (prompt && text && (prompt.includes(text) || /^qodebase\. my projects:/i.test(text))) {
+      log4("stt_prompt_echo", { level: "warn", handle: who2.handle, text: text.slice(0, 200) });
+      text = "";
+    }
     log4("stt", { level: "info", handle: who2.handle, bytes: buf.byteLength, lang, ms: Date.now() - t0, chars: text.length, detected: res?.transcription_info?.language });
     return json3({ text, ms: Date.now() - t0 });
   } catch (e2) {
@@ -73569,7 +74704,7 @@ async function tts(request, env, ctx, who2, url2) {
   const t0 = Date.now();
   const text = String(url2.searchParams.get("text") || "").replace(/\s+/g, " ").trim().slice(0, 600);
   if (!text) return json3({ error: "empty" }, 400);
-  const model = VOICES[url2.searchParams.get("model") || ""] ? url2.searchParams.get("model") : "aura-1";
+  const model = VOICES[url2.searchParams.get("model") || ""] ? url2.searchParams.get("model") : "aura-2";
   const v = VOICES[model];
   const speaker = v.speakers.includes(url2.searchParams.get("speaker") || "") ? url2.searchParams.get("speaker") : v.def;
   const hash2 = [...new Uint8Array(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(`${model}|${speaker}|${text}`)))].map((b2) => b2.toString(16).padStart(2, "0")).join("");
@@ -73621,7 +74756,51 @@ async function talkRoute(request, env, _ctx2, url2, who2) {
   if (!env.AI) return json3({ error: "off", why: "Talk is not set up on this copy (no AI binding)." }, 404);
   if (url2.pathname === "/api/talk/me") {
     if (!who2) return json3({ signedIn: false });
-    return json3({ signedIn: true, handle: who2.handle, used: await talkLog(env).counts(who2.handle), caps: CAPS });
+    const owner = isOwner(env, who2.handle);
+    let site = null;
+    try {
+      site = JSON.parse(request.headers.get("x-talk-site") || "null");
+    } catch {
+    }
+    const own2 = { sha: env.CF_VERSION_METADATA?.tag || null, built: env.CF_VERSION_METADATA?.timestamp || null };
+    const v = owner ? site?.sha ? { sha: site.sha, built: site.built, talk: own2.sha } : own2 : void 0;
+    return json3({ signedIn: true, handle: who2.handle, used: await talkLog(env).counts(who2.handle), caps: CAPS, trace: owner, clips: owner && !!env.CLIPS, version: v });
+  }
+  if (url2.pathname === "/api/talk/trace") {
+    if (!who2 || !isOwner(env, who2.handle)) return json3({ error: "forbidden" }, 403);
+    const day3 = /^\d{4}-\d{2}-\d{2}$/.test(url2.searchParams.get("day") || "") ? url2.searchParams.get("day") : (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+    const stub = env.TalkLog.get(env.TalkLog.idFromName(day3));
+    if (request.method === "GET") return json3({ day: day3, rows: await stub.readTrace(who2.handle, Number(url2.searchParams.get("since")) || 0, Math.min(5e3, Number(url2.searchParams.get("limit")) || 2e3)) });
+    const b = await request.json().catch(() => null);
+    const sid = String(b?.sid || "").slice(0, 40);
+    const rows = (Array.isArray(b?.events) ? b.events : []).slice(0, 200).map((e2) => {
+      const { ts, ev, ...rest } = e2 || {};
+      return { ts: Number(ts) || Date.now(), ev: String(ev || "").slice(0, 40), data: JSON.stringify(rest).slice(0, 2e3) };
+    }).filter((r2) => r2.ev);
+    return json3(rows.length ? await env.TalkLog.get(env.TalkLog.idFromName((/* @__PURE__ */ new Date()).toISOString().slice(0, 10))).addTrace(who2.handle, sid, rows) : { ok: true, n: 0 });
+  }
+  if (url2.pathname === "/api/talk/clip") {
+    if (!who2 || !isOwner(env, who2.handle) || !env.CLIPS) return json3({ error: "forbidden" }, 403);
+    if (request.method === "POST") {
+      const buf = await request.arrayBuffer();
+      if (buf.byteLength < 800 || buf.byteLength > 8e6) return json3({ error: "size" }, 413);
+      const type = (request.headers.get("content-type") || "audio/webm").split(";")[0];
+      const ext = /mp4/.test(type) ? "m4a" : /ogg/.test(type) ? "ogg" : "webm";
+      const q = /* @__PURE__ */ __name((k2, n2 = 500) => String(url2.searchParams.get(k2) || "").slice(0, n2), "q");
+      const key2 = `${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}/${Date.now()}-${q("sid", 40).replace(/[^\w-]/g, "") || "x"}.${ext}`;
+      await env.CLIPS.put(key2, buf, { httpMetadata: { contentType: type }, customMetadata: { handle: who2.handle, path: q("path", 200), live: q("live"), final: q("final"), how: q("how", 20) } });
+      log4("clip_saved", { level: "info", handle: who2.handle, key: key2, bytes: buf.byteLength });
+      return json3({ key: key2 });
+    }
+    const key = url2.searchParams.get("key");
+    if (key) {
+      const o2 = await env.CLIPS.get(key);
+      if (!o2) return json3({ error: "gone", why: "Not found (recordings are deleted after 7 days)." }, 404);
+      return new Response(o2.body, { headers: { "content-type": o2.httpMetadata?.contentType || "audio/webm", "cache-control": "private, no-store", "x-talk-meta": JSON.stringify(o2.customMetadata || {}) } });
+    }
+    const day3 = /^\d{4}-\d{2}-\d{2}$/.test(url2.searchParams.get("day") || "") ? url2.searchParams.get("day") : (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+    const list = await env.CLIPS.list({ prefix: day3 + "/", limit: 500, include: ["customMetadata"] });
+    return json3({ day: day3, clips: list.objects.map((o2) => ({ key: o2.key, bytes: o2.size, at: o2.uploaded, ...o2.customMetadata || {} })) });
   }
   if (!who2) return json3({ error: "signin", why: "Sign in to talk to qodebase." }, 401);
   if (url2.pathname === "/api/talk/tts" && request.method === "GET") return tts(request, env, _ctx2, who2, url2);
@@ -73639,7 +74818,7 @@ async function talkRoute(request, env, _ctx2, url2, who2) {
 }
 __name(talkRoute, "talkRoute");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/voice/errors.js
+// ../node_modules/agents/dist/voice/errors.js
 var MAX_CLIENT_MESSAGE_LENGTH = 300;
 var VoiceProviderError = class extends Error {
   static {
@@ -73676,7 +74855,7 @@ function logVoiceError(options) {
 }
 __name(logVoiceError, "logVoiceError");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/diagnostics-C4jcz3VK.js
+// ../node_modules/agents/dist/diagnostics-C4jcz3VK.js
 var MAX_STRING_LENGTH = 160;
 var PRIVATE_KEY = /(^|_)(audio|body|contents?|exceptions?|messages?|prompts?|query|results?|stack|text|tokens?|tools?|transcripts?|arguments?)(_|$)/i;
 function boundedString(value, maxLength = MAX_STRING_LENGTH) {
@@ -74009,7 +75188,7 @@ function _completeReasoning(outcome) {
 }
 __name(_completeReasoning, "_completeReasoning");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/text-segment-joiner-BtAFQSA_.js
+// ../node_modules/agents/dist/text-segment-joiner-BtAFQSA_.js
 var _hasText = /* @__PURE__ */ new WeakMap();
 var _lastTextEndedWithWhitespace = /* @__PURE__ */ new WeakMap();
 var _needsBoundarySpace = /* @__PURE__ */ new WeakMap();
@@ -74062,7 +75241,7 @@ function textFromChunk(chunk) {
 }
 __name(textFromChunk, "textFromChunk");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/text-stream-CpdiKrJB.js
+// ../node_modules/agents/dist/text-stream-CpdiKrJB.js
 var SENTENCE_TERMINATORS = /* @__PURE__ */ new Set([
   ".",
   "!",
@@ -74270,12 +75449,12 @@ function parseLine(line2) {
   const trimmed = line2.trim();
   if (!trimmed) return null;
   if (trimmed.startsWith("data:")) {
-    const json5 = trimmed.slice(5).trim();
-    if (json5 === "[DONE]") return "DONE";
+    const json6 = trimmed.slice(5).trim();
+    if (json6 === "[DONE]") return "DONE";
     try {
-      return JSON.parse(json5);
+      return JSON.parse(json6);
     } catch {
-      console.warn("[voice] Skipping malformed SSE data:", json5);
+      console.warn("[voice] Skipping malformed SSE data:", json6);
       return null;
     }
   }
@@ -74290,42 +75469,7 @@ function parseLine(line2) {
 }
 __name(parseLine, "parseLine");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/voice/workers-ai.js
-var _ai = /* @__PURE__ */ new WeakMap();
-var _model = /* @__PURE__ */ new WeakMap();
-var _speaker = /* @__PURE__ */ new WeakMap();
-var WorkersAITTS = class {
-  static {
-    __name(this, "WorkersAITTS");
-  }
-  constructor(ai, options) {
-    _classPrivateFieldInitSpec(this, _ai, void 0);
-    _classPrivateFieldInitSpec(this, _model, void 0);
-    _classPrivateFieldInitSpec(this, _speaker, void 0);
-    _classPrivateFieldSet2(_ai, this, ai);
-    _classPrivateFieldSet2(_model, this, options?.model ?? "@cf/deepgram/aura-1");
-    _classPrivateFieldSet2(_speaker, this, options?.speaker ?? "asteria");
-  }
-  async synthesize(text, signal) {
-    const response = await _classPrivateFieldGet2(_ai, this).run(_classPrivateFieldGet2(_model, this), {
-      text,
-      speaker: _classPrivateFieldGet2(_speaker, this)
-    }, {
-      returnRawResponse: true,
-      ...signal ? { signal } : {}
-    });
-    if (!response.ok) {
-      logVoiceError({
-        component: "WorkersAITTS",
-        stage: "synthesize",
-        message: "Workers AI TTS request failed",
-        error: new VoiceProviderError("Workers AI TTS request failed", { status: response.status })
-      });
-      return null;
-    }
-    return await response.arrayBuffer();
-  }
-};
+// ../node_modules/agents/dist/voice/workers-ai.js
 var _ai2 = /* @__PURE__ */ new WeakMap();
 var _sampleRate = /* @__PURE__ */ new WeakMap();
 var _eotThreshold = /* @__PURE__ */ new WeakMap();
@@ -74570,8 +75714,240 @@ function _handleMessage(event) {
   }
 }
 __name(_handleMessage, "_handleMessage");
+var _ai3 = /* @__PURE__ */ new WeakMap();
+var _sampleRate2 = /* @__PURE__ */ new WeakMap();
+var _language = /* @__PURE__ */ new WeakMap();
+var _endpointingMs = /* @__PURE__ */ new WeakMap();
+var _utteranceEndMs = /* @__PURE__ */ new WeakMap();
+var _smartFormat = /* @__PURE__ */ new WeakMap();
+var _punctuate = /* @__PURE__ */ new WeakMap();
+var _keyterms2 = /* @__PURE__ */ new WeakMap();
+var WorkersAINova3STT = class {
+  static {
+    __name(this, "WorkersAINova3STT");
+  }
+  constructor(ai, options) {
+    _classPrivateFieldInitSpec(this, _ai3, void 0);
+    _classPrivateFieldInitSpec(this, _sampleRate2, void 0);
+    _classPrivateFieldInitSpec(this, _language, void 0);
+    _classPrivateFieldInitSpec(this, _endpointingMs, void 0);
+    _classPrivateFieldInitSpec(this, _utteranceEndMs, void 0);
+    _classPrivateFieldInitSpec(this, _smartFormat, void 0);
+    _classPrivateFieldInitSpec(this, _punctuate, void 0);
+    _classPrivateFieldInitSpec(this, _keyterms2, void 0);
+    _classPrivateFieldSet2(_ai3, this, ai);
+    _classPrivateFieldSet2(_sampleRate2, this, options?.sampleRate ?? 16e3);
+    _classPrivateFieldSet2(_language, this, options?.language ?? "en");
+    _classPrivateFieldSet2(_endpointingMs, this, options?.endpointingMs ?? 300);
+    _classPrivateFieldSet2(_utteranceEndMs, this, options?.utteranceEndMs ?? 1e3);
+    _classPrivateFieldSet2(_smartFormat, this, options?.smartFormat ?? true);
+    _classPrivateFieldSet2(_punctuate, this, options?.punctuate ?? true);
+    _classPrivateFieldSet2(_keyterms2, this, options?.keyterms);
+  }
+  createSession(options) {
+    return new Nova3Session(_classPrivateFieldGet2(_ai3, this), {
+      sampleRate: _classPrivateFieldGet2(_sampleRate2, this),
+      language: _classPrivateFieldGet2(_language, this),
+      endpointingMs: _classPrivateFieldGet2(_endpointingMs, this),
+      utteranceEndMs: _classPrivateFieldGet2(_utteranceEndMs, this),
+      smartFormat: _classPrivateFieldGet2(_smartFormat, this),
+      punctuate: _classPrivateFieldGet2(_punctuate, this),
+      keyterms: _classPrivateFieldGet2(_keyterms2, this)
+    }, options);
+  }
+};
+var _onInterim2 = /* @__PURE__ */ new WeakMap();
+var _onUtterance2 = /* @__PURE__ */ new WeakMap();
+var _onFatalError2 = /* @__PURE__ */ new WeakMap();
+var _ws2 = /* @__PURE__ */ new WeakMap();
+var _connected2 = /* @__PURE__ */ new WeakMap();
+var _closed22 = /* @__PURE__ */ new WeakMap();
+var _fatalReported2 = /* @__PURE__ */ new WeakMap();
+var _pendingChunks2 = /* @__PURE__ */ new WeakMap();
+var _ready22 = /* @__PURE__ */ new WeakMap();
+var _resolveReady2 = /* @__PURE__ */ new WeakMap();
+var _rejectReady2 = /* @__PURE__ */ new WeakMap();
+var _finalizedSegments = /* @__PURE__ */ new WeakMap();
+var _Nova3Session_brand = /* @__PURE__ */ new WeakSet();
+var Nova3Session = class {
+  static {
+    __name(this, "Nova3Session");
+  }
+  constructor(ai, config2, options) {
+    _classPrivateMethodInitSpec(this, _Nova3Session_brand);
+    _classPrivateFieldInitSpec(this, _onInterim2, void 0);
+    _classPrivateFieldInitSpec(this, _onUtterance2, void 0);
+    _classPrivateFieldInitSpec(this, _onFatalError2, void 0);
+    _classPrivateFieldInitSpec(this, _ws2, null);
+    _classPrivateFieldInitSpec(this, _connected2, false);
+    _classPrivateFieldInitSpec(this, _closed22, false);
+    _classPrivateFieldInitSpec(this, _fatalReported2, false);
+    _classPrivateFieldInitSpec(this, _pendingChunks2, []);
+    _classPrivateFieldInitSpec(this, _ready22, void 0);
+    _classPrivateFieldInitSpec(this, _resolveReady2, null);
+    _classPrivateFieldInitSpec(this, _rejectReady2, null);
+    _classPrivateFieldInitSpec(this, _finalizedSegments, []);
+    _classPrivateFieldSet2(_onInterim2, this, options?.onInterim);
+    _classPrivateFieldSet2(_onUtterance2, this, options?.onUtterance);
+    _classPrivateFieldSet2(_onFatalError2, this, options?.onFatalError);
+    _classPrivateFieldSet2(_ready22, this, new Promise((resolve2, reject) => {
+      _classPrivateFieldSet2(_resolveReady2, this, resolve2);
+      _classPrivateFieldSet2(_rejectReady2, this, reject);
+    }));
+    _classPrivateFieldGet2(_ready22, this).catch(() => {
+    });
+    _assertClassBrand(_Nova3Session_brand, this, _connect22).call(this, ai, config2);
+  }
+  waitUntilReady() {
+    return _classPrivateFieldGet2(_ready22, this);
+  }
+  feed(chunk) {
+    if (_classPrivateFieldGet2(_closed22, this)) return;
+    if (_classPrivateFieldGet2(_connected2, this) && _classPrivateFieldGet2(_ws2, this)) _classPrivateFieldGet2(_ws2, this).send(chunk);
+    else _classPrivateFieldGet2(_pendingChunks2, this).push(chunk);
+  }
+  close() {
+    if (_classPrivateFieldGet2(_closed22, this)) return;
+    _classPrivateFieldSet2(_closed22, this, true);
+    _classPrivateFieldSet2(_pendingChunks2, this, []);
+    if (_classPrivateFieldGet2(_ws2, this)) {
+      try {
+        _classPrivateFieldGet2(_ws2, this).close();
+      } catch {
+      }
+      _classPrivateFieldSet2(_ws2, this, null);
+    }
+    _classPrivateFieldSet2(_connected2, this, false);
+    _assertClassBrand(_Nova3Session_brand, this, _resolveReadiness2).call(this);
+  }
+};
+async function _connect22(ai, config2) {
+  try {
+    const input2 = {
+      encoding: "linear16",
+      sample_rate: String(config2.sampleRate),
+      language: config2.language,
+      interim_results: "true",
+      vad_events: "true",
+      endpointing: String(config2.endpointingMs),
+      utterance_end_ms: String(config2.utteranceEndMs),
+      smart_format: String(config2.smartFormat),
+      punctuate: String(config2.punctuate)
+    };
+    if (config2.keyterms?.length) input2.keyterm = config2.keyterms;
+    const resp = await ai.run("@cf/deepgram/nova-3", input2, { websocket: true });
+    if (_classPrivateFieldGet2(_closed22, this)) {
+      const ws2 = resp.webSocket;
+      if (ws2) {
+        ws2.accept();
+        ws2.close();
+      }
+      _assertClassBrand(_Nova3Session_brand, this, _resolveReadiness2).call(this);
+      return;
+    }
+    const ws = resp.webSocket;
+    if (!ws) {
+      const error62 = /* @__PURE__ */ new Error("Workers AI Nova-3 STT did not return a WebSocket");
+      logVoiceError({
+        component: "Nova3STT",
+        stage: "connection",
+        message: "Nova-3 STT WebSocket upgrade failed",
+        error: error62
+      });
+      _assertClassBrand(_Nova3Session_brand, this, _reportFatal2).call(this, error62);
+      _assertClassBrand(_Nova3Session_brand, this, _rejectReadiness2).call(this, error62);
+      return;
+    }
+    ws.accept();
+    _classPrivateFieldSet2(_ws2, this, ws);
+    _classPrivateFieldSet2(_connected2, this, true);
+    ws.addEventListener("message", (event) => {
+      _assertClassBrand(_Nova3Session_brand, this, _handleMessage2).call(this, event);
+    });
+    ws.addEventListener("close", () => {
+      _classPrivateFieldSet2(_connected2, this, false);
+      if (_classPrivateFieldGet2(_closed22, this)) return;
+      const error62 = /* @__PURE__ */ new Error("Workers AI Nova-3 STT WebSocket closed unexpectedly");
+      logVoiceError({
+        component: "Nova3STT",
+        stage: "websocket_close",
+        message: "Nova-3 STT WebSocket closed unexpectedly",
+        error: error62
+      });
+      _assertClassBrand(_Nova3Session_brand, this, _reportFatal2).call(this, error62);
+    });
+    ws.addEventListener("error", (event) => {
+      const error62 = new Error("Workers AI Nova-3 STT WebSocket error", { cause: event });
+      logVoiceError({
+        component: "Nova3STT",
+        stage: "websocket",
+        message: "Nova-3 STT WebSocket error",
+        error: error62
+      });
+      _classPrivateFieldSet2(_connected2, this, false);
+      _assertClassBrand(_Nova3Session_brand, this, _reportFatal2).call(this, error62);
+    });
+    for (const chunk of _classPrivateFieldGet2(_pendingChunks2, this)) ws.send(chunk);
+    _classPrivateFieldSet2(_pendingChunks2, this, []);
+    _assertClassBrand(_Nova3Session_brand, this, _resolveReadiness2).call(this);
+  } catch (error62) {
+    const voiceError = toVoiceError(error62, "Nova-3 STT connection failed");
+    logVoiceError({
+      component: "Nova3STT",
+      stage: "connection",
+      message: "Nova-3 STT connection failed",
+      error: voiceError
+    });
+    _assertClassBrand(_Nova3Session_brand, this, _reportFatal2).call(this, voiceError);
+    _assertClassBrand(_Nova3Session_brand, this, _rejectReadiness2).call(this, voiceError);
+  }
+}
+__name(_connect22, "_connect2");
+function _resolveReadiness2() {
+  const resolve2 = _classPrivateFieldGet2(_resolveReady2, this);
+  if (!resolve2) return;
+  _classPrivateFieldSet2(_resolveReady2, this, null);
+  _classPrivateFieldSet2(_rejectReady2, this, null);
+  resolve2();
+}
+__name(_resolveReadiness2, "_resolveReadiness2");
+function _rejectReadiness2(reason) {
+  const reject = _classPrivateFieldGet2(_rejectReady2, this);
+  if (!reject) return;
+  _classPrivateFieldSet2(_resolveReady2, this, null);
+  _classPrivateFieldSet2(_rejectReady2, this, null);
+  reject(reason);
+}
+__name(_rejectReadiness2, "_rejectReadiness2");
+function _reportFatal2(error62) {
+  if (_classPrivateFieldGet2(_closed22, this) || _classPrivateFieldGet2(_fatalReported2, this)) return;
+  _classPrivateFieldSet2(_fatalReported2, this, true);
+  _classPrivateFieldGet2(_onFatalError2, this)?.call(this, error62);
+}
+__name(_reportFatal2, "_reportFatal2");
+function _handleMessage2(event) {
+  if (_classPrivateFieldGet2(_closed22, this)) return;
+  try {
+    const data = typeof event.data === "string" ? JSON.parse(event.data) : null;
+    if (!data) return;
+    if (data.type === "Results") {
+      const transcript = data.channel?.alternatives?.[0]?.transcript ?? "";
+      if (data.is_final && transcript) _classPrivateFieldGet2(_finalizedSegments, this).push(transcript);
+      if (data.speech_final) {
+        const fullTranscript = _classPrivateFieldGet2(_finalizedSegments, this).join(" ").trim();
+        _classPrivateFieldSet2(_finalizedSegments, this, []);
+        if (fullTranscript) _classPrivateFieldGet2(_onUtterance2, this)?.call(this, fullTranscript);
+      } else if (!data.is_final && transcript) {
+        const display = _classPrivateFieldGet2(_finalizedSegments, this).length > 0 ? _classPrivateFieldGet2(_finalizedSegments, this).join(" ") + " " + transcript : transcript;
+        _classPrivateFieldGet2(_onInterim2, this)?.call(this, display);
+      }
+    }
+  } catch {
+  }
+}
+__name(_handleMessage2, "_handleMessage2");
 
-// ../../../../../../..~/projects/personal/2026-10/forq/node_modules/agents/dist/voice/index.js
+// ../node_modules/agents/dist/voice/index.js
 function isConnectionTeardownError(err) {
   if (typeof err !== "object" || err === null) return false;
   const e2 = err;
@@ -74592,8 +75968,8 @@ function runBackground(label2, fn) {
 }
 __name(runBackground, "runBackground");
 function sendVoiceJSON(connection, data, _logPrefix, _skipLog = false) {
-  const json5 = JSON.stringify(data);
-  connection.send(json5);
+  const json6 = JSON.stringify(data);
+  connection.send(json6);
 }
 __name(sendVoiceJSON, "sendVoiceJSON");
 var _audioBuffers = /* @__PURE__ */ new WeakMap();
@@ -75941,9 +77317,57 @@ function eagerAsyncIterable(source) {
 }
 __name(eagerAsyncIterable, "eagerAsyncIterable");
 
+// ../src/stretch.ts
+function stretchPcm16(input2, sampleRate, speed) {
+  if (!(speed > 0) || Math.abs(speed - 1) < 0.01 || input2.length < sampleRate / 10) return input2;
+  const frame = Math.round(sampleRate * 0.03);
+  const hop = Math.round(frame / 2);
+  const seek = Math.round(sampleRate * 0.012);
+  const inHop = hop * speed;
+  const outLen = Math.ceil(input2.length / speed) + frame;
+  const out = new Float32Array(outLen);
+  const norm = new Float32Array(outLen);
+  const win = new Float32Array(frame);
+  for (let i2 = 0; i2 < frame; i2++) win[i2] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i2 / (frame - 1));
+  let prev = 0;
+  for (let o2 = 0, k2 = 0; o2 + frame < outLen; o2 += hop, k2++) {
+    const nominal = Math.round(k2 * inHop);
+    if (nominal + frame >= input2.length) break;
+    let best = nominal;
+    if (k2 > 0) {
+      const target = prev + hop;
+      let bestScore = -Infinity;
+      const lo = Math.max(0, nominal - seek), hi = Math.min(input2.length - frame - 1, nominal + seek);
+      for (let c = lo; c <= hi; c += 2) {
+        let score = 0;
+        for (let i2 = 0; i2 < hop; i2 += 4) score += input2[c + i2] * input2[Math.min(input2.length - 1, target + i2)];
+        if (score > bestScore) {
+          bestScore = score;
+          best = c;
+        }
+      }
+    }
+    for (let i2 = 0; i2 < frame; i2++) {
+      out[o2 + i2] += input2[best + i2] * win[i2];
+      norm[o2 + i2] += win[i2];
+    }
+    prev = best;
+  }
+  let end = outLen;
+  while (end > 0 && norm[end - 1] === 0) end--;
+  const res = new Int16Array(end);
+  for (let i2 = 0; i2 < end; i2++) {
+    const v = norm[i2] > 1e-3 ? out[i2] / norm[i2] : 0;
+    res[i2] = v > 32767 ? 32767 : v < -32768 ? -32768 : v;
+  }
+  return res;
+}
+__name(stretchPcm16, "stretchPcm16");
+
 // ../src/talkvoice.ts
 var log5 = /* @__PURE__ */ __name((event, data = {}) => console.log(JSON.stringify({ ts: (/* @__PURE__ */ new Date()).toISOString(), module: "talkvoice", event, ...data })), "log");
 var FLUX_USD_PER_MIN = 77e-4;
+var NOVA3_USD_PER_MIN = 92e-4;
 var AURA_USD_PER_1K = { "@cf/deepgram/aura-1": 0.015, "@cf/deepgram/aura-2-en": 0.03 };
 var SPEAKERS = {
   "@cf/deepgram/aura-1": ["helios", "angus", "arcas", "orion", "orpheus", "perseus", "zeus", "athena", "asteria", "luna", "hera", "stella"],
@@ -75975,7 +77399,57 @@ function line(c) {
   }
 }
 __name(line, "line");
-var VoiceAgent = withVoice(Agent);
+var PCM_RATE = 24e3;
+var VoiceAgent = withVoice(Agent, { audioFormat: "pcm16", sampleRate: PCM_RATE });
+var AuraTTS = class {
+  constructor(ai, model, speaker, speed) {
+    this.ai = ai;
+    this.model = model;
+    this.speaker = speaker;
+    this.speed = speed;
+  }
+  ai;
+  model;
+  speaker;
+  speed;
+  static {
+    __name(this, "AuraTTS");
+  }
+  async #one(text) {
+    const t0 = Date.now();
+    const r2 = await this.ai.run(this.model, { text, speaker: this.speaker, encoding: "linear16", container: "none", sample_rate: PCM_RATE }, { returnRawResponse: true });
+    const buf = r2 instanceof Response ? await r2.arrayBuffer() : r2 instanceof ReadableStream ? await new Response(r2).arrayBuffer() : r2;
+    if (!buf || buf.byteLength < 2) return null;
+    const pcm = new Int16Array(buf, 0, buf.byteLength >> 1);
+    const out = stretchPcm16(pcm, PCM_RATE, this.speed);
+    log5("tts", { model: this.model, chars: text.length, speed: this.speed, in_s: Math.round(pcm.length / PCM_RATE * 10) / 10, out_s: Math.round(out.length / PCM_RATE * 10) / 10, ms: Date.now() - t0 });
+    return out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength);
+  }
+  async synthesize(text, _signal) {
+    return this.#one(text);
+  }
+  /** Sentence by sentence, each one made while the one before plays. */
+  async *synthesizeStream(text, signal) {
+    const parts = String(text || "").match(/[^.!?]+[.!?]+["”’)]*\s*|[^.!?]+$/g)?.map((p) => p.trim()).filter(Boolean) || [];
+    const chunks = [];
+    for (const p of parts) {
+      if (chunks.length && chunks[chunks.length - 1].length < 24) chunks[chunks.length - 1] += " " + p;
+      else chunks.push(p);
+    }
+    if (chunks.length && chunks[0].length > 60) {
+      const m = /^(.{20,}?[:;,])\s+(.{12,})$/s.exec(chunks[0]);
+      if (m) chunks.splice(0, 1, m[1], m[2]);
+    }
+    let next = chunks.length ? this.#one(chunks[0]) : null;
+    for (let i2 = 0; i2 < chunks.length; i2++) {
+      if (signal?.aborted) return;
+      const cur = next;
+      next = i2 + 1 < chunks.length ? this.#one(chunks[i2 + 1]) : null;
+      const audio = await cur;
+      if (audio && !signal?.aborted) yield audio;
+    }
+  }
+};
 var TalkVoice = class extends VoiceAgent {
   static {
     __name(this, "TalkVoice");
@@ -75983,14 +77457,21 @@ var TalkVoice = class extends VoiceAgent {
   constructor(ctx, env) {
     super(ctx, env);
     this.transcriber = new WorkersAIFluxSTT(gatewayed(env), { keyterms: ["qodebase", "Talk", "fork", "merge", "router"] });
-    this.tts = new WorkersAITTS(gatewayed(env), { model: "@cf/deepgram/aura-1", speaker: "helios" });
+    this.tts = new AuraTTS(gatewayed(env), "@cf/deepgram/aura-2-en", "draco", 1.25);
   }
-  #ttsModel = "@cf/deepgram/aura-1";
+  #ttsModel = "@cf/deepgram/aura-2-en";
   #screen = null;
   #pageText = "";
   #pending = null;
   // a command waiting for a spoken yes / no
   #callStart = 0;
+  #dictLang = /* @__PURE__ */ new Map();
+  // connection → dictation language ('en' | 'he' | 'auto')
+  #keyterms = [];
+  // the person's project names, for Nova-3's keyterm biasing
+  #callDictate = false;
+  #dictate = /* @__PURE__ */ new Set();
+  // connections in dictation (push-to-talk): Flux hears, the page gets the words, nothing is spoken
   get #who() {
     return { handle: this.name, admin: false };
   }
@@ -75999,6 +77480,12 @@ var TalkVoice = class extends VoiceAgent {
   }
   #cost(usd2, project = "") {
     if (usd2 > 0) return recordCost(this.env, this.name, "voice", project, { usd: usd2, covered: this.#covered });
+  }
+  /** The owner's experience trace, server side (what the agent heard and did), next to the page's events. */
+  #trace(ev, data = {}) {
+    if (!isOwner(this.env, this.name)) return;
+    const rows = [{ ts: Date.now(), ev, data: JSON.stringify({ path: this.#screen?.path, ...data }).slice(0, 2e3) }];
+    this.ctx.waitUntil(talkLog(this.env).addTrace(this.name, "agent", rows).catch(() => null));
   }
   #send(connection, data) {
     try {
@@ -76014,18 +77501,42 @@ var TalkVoice = class extends VoiceAgent {
     }
     return true;
   }
+  async onInterrupt(_connection3) {
+    this.#trace("srv_interrupt", {});
+  }
+  // Push-to-talk dictation hears with Nova-3 (Deepgram's dictation model, keyterms = your project
+  // names), like tmux-web; a conversation keeps Flux, which knows when a turn ends.
+  createTranscriber(connection) {
+    if (!this.#dictate.has(connection.id)) return void 0;
+    const lang = this.#dictLang.get(connection.id) || "en";
+    const keyterms = ["qodebase", "Talk", "fork", "merge", "router", ...this.#keyterms].slice(0, 80);
+    this.#trace("srv_stt", { model: "nova-3", lang, keyterms: keyterms.length });
+    return new WorkersAINova3STT(this.env.AI, { keyterms, language: lang === "en" ? "en" : "multi", endpointingMs: 300, utteranceEndMs: 1e3 });
+  }
+  async #loadKeyterms() {
+    try {
+      const ps = await projectsFor(this.env, this.#who);
+      this.#keyterms = [...new Set(ps.filter((p) => p.mine).sort((a2, b) => (b.updatedAt || 0) - (a2.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, " ")))].slice(0, 60);
+    } catch (e2) {
+      log5("keyterms_error", { err: String(e2) });
+    }
+  }
   async onCallStart(connection) {
+    this.#callDictate = this.#dictate.has(connection.id);
     this.#callStart = Date.now();
     this.#send(connection, { type: "talk-ready" });
     log5("call_start", { handle: this.name });
+    this.#trace("srv_call_start", { dictate: this.#dictate.has(connection.id) });
   }
   async onCallEnd(_connection3) {
     if (!this.#callStart) return;
     const sec = Math.round((Date.now() - this.#callStart) / 1e3);
     this.#callStart = 0;
     await talkLog(this.env).take("voice_sec", this.name, Math.max(0, sec - 1)).catch(() => null);
-    await this.#cost(sec / 60 * FLUX_USD_PER_MIN);
-    log5("call_end", { handle: this.name, seconds: sec, flux_usd: Math.round(sec / 60 * FLUX_USD_PER_MIN * 1e5) / 1e5 });
+    const rate = this.#callDictate ? NOVA3_USD_PER_MIN : FLUX_USD_PER_MIN;
+    await this.#cost(sec / 60 * rate);
+    this.#trace("srv_call_end", { seconds: sec, model: this.#callDictate ? "nova-3" : "flux" });
+    log5("call_end", { handle: this.name, seconds: sec, model: this.#callDictate ? "nova-3" : "flux", stt_usd: Math.round(sec / 60 * rate * 1e5) / 1e5 });
   }
   /** Non-voice messages from the page: what it shows, voice settings, and words to say (late answers). */
   async onMessage(connection, message2) {
@@ -76035,28 +77546,54 @@ var TalkVoice = class extends VoiceAgent {
     } catch {
       return;
     }
+    if (m?.type === "mode") {
+      if (m.dictate) {
+        this.#dictate.add(connection.id);
+        this.#dictLang.set(connection.id, String(m.lang || "en"));
+        if (!this.#keyterms.length) await this.#loadKeyterms();
+      } else {
+        this.#dictate.delete(connection.id);
+        this.#dictLang.delete(connection.id);
+      }
+      return;
+    }
     if (m?.type === "screen") {
       this.#screen = m.screen || null;
       this.#pageText = String(m.pageText || "").slice(0, 5e3);
       return;
     }
     if (m?.type === "voice") {
-      const model = m.model === "aura-2" ? "@cf/deepgram/aura-2-en" : "@cf/deepgram/aura-1";
+      const model = m.model === "aura-1" ? "@cf/deepgram/aura-1" : "@cf/deepgram/aura-2-en";
       const speaker = SPEAKERS[model].includes(m.speaker) ? m.speaker : SPEAKERS[model][0];
       this.#ttsModel = model;
-      this.tts = new WorkersAITTS(gatewayed(this.env), { model, speaker });
+      const speed = Math.min(2, Math.max(0.7, Number(m.speed) || 1.25));
+      this.tts = new AuraTTS(gatewayed(this.env), model, speaker, speed);
       return;
     }
     if (m?.type === "say" && m.text) {
-      const text = String(m.text).slice(0, 600);
+      const text = String(m.text).slice(0, 1500);
       await this.speak(connection, text);
     }
   }
+  // The kit speaks a plain string in one go (Aura-2 made the whole reply before its first word: 6.4 s);
+  // a streamed reply goes sentence by sentence, each made while the one before plays. '' stays a silence.
   async onTurn(transcript, context) {
+    const reply = await this.#turn(transcript, context);
+    return reply ? (async function* () {
+      yield reply;
+    })() : reply;
+  }
+  async #turn(transcript, context) {
     const t0 = Date.now();
     const connection = context.connection;
     const said = String(transcript || "").trim();
     if (!said) return "";
+    this.#trace("srv_heard", { text: said, dictate: this.#dictate.has(connection.id) });
+    if (this.#dictate.has(connection.id)) {
+      this.#send(connection, { type: "talk-dictated", text: said });
+      log5("dictated", { handle: this.name, chars: said.length });
+      return "";
+    }
     const used = this.#callStart ? Math.round((Date.now() - this.#callStart) / 1e3) : 0;
     const budget = await talkLog(this.env).take("voice_sec", this.name, 0);
     if (!budget.ok || used > budget.left) {
@@ -76083,12 +77620,35 @@ var TalkVoice = class extends VoiceAgent {
     if (!r2.ok) return r2.why || "Something went wrong there.";
     const c = r2.cmd;
     await this.#cost(32e-5);
-    log5("turn", { handle: this.name, mode: c.mode, op: c.op, p: c.p, risky: c.risky, decide_ms: Date.now() - t0 });
+    log5("turn", { handle: this.name, said, path: this.#screen?.path, mode: c.mode, op: c.op, p: c.p, risky: c.risky, why: c.why, decide_ms: Date.now() - t0 });
     if ((c.risky || 0) >= 0.5) {
       this.#send(connection, { type: "talk-cmd", cmd: { ...c, refused: true } });
       return "That would change or remove something, so I'll leave the doing to you.";
     }
-    if (c.mode === "none") return "";
+    if (c.greet) {
+      const p = c.example || "todo";
+      return `Hi! I can find things, open your projects, and answer questions about them. Try asking what's going on, or say open my ${p}.`;
+    }
+    if (c.mode === "none") {
+      const words2 = said.split(/\s+/).filter(Boolean).length;
+      if ((c.op === "code" || c.op === "status") && words2 >= 3) c.mode = "ask";
+      else if (c.op === "change" && words2 >= 3) c.mode = "act";
+      else if (!["none", "explain"].includes(c.op) && (c.p ?? 0) >= 0.3 && words2 >= 3) {
+        this.#pending = c;
+        this.#send(connection, { type: "talk-cmd", cmd: { ...c, offer: true } });
+        log5("turn_rescued", { handle: this.name, said, op: c.op, as: "offer" });
+        return `Did you mean ${line(c).replace(/\.$/, "").toLowerCase() || "that"}?`;
+      } else {
+        log5("turn_unclear", { handle: this.name, said, op: c.op, p: c.p, words: words2 });
+        return words2 >= 3 ? "Sorry, I didn't catch that. Say it again?" : "";
+      }
+      log5("turn_rescued", { handle: this.name, said, op: c.op, as: c.mode });
+    }
+    if (c.op === "list") {
+      const n2 = Number(c.target) || 0;
+      if (n2 && this.#screen?.path !== "/mine") this.#send(connection, { type: "talk-cmd", cmd: { ...c, op: "go", href: "/mine", label: "your projects" } });
+      return n2 ? `You have ${n2} projects. The latest are ${c.text}.` : "You have no projects yet. Say what you want to build.";
+    }
     if (c.op === "status") {
       const s2 = await statusCore(this.env, this.#who, { utterance: said });
       if (!s2.ok) return s2.why || "I could not look just now.";
@@ -76122,18 +77682,2518 @@ var TalkVoice = class extends VoiceAgent {
     log5("answer", { handle: this.name, ms: Date.now() - t0, reply_len: (ch.reply || "").length, actions: (ch.actions || []).map((a2) => a2.name) });
     return ch.reply || "";
   }
-  /** Every spoken reply is charged as Aura characters (the kit synthesizes it next). */
+  /** What the voice says: no markdown, links or file paths, at most ~3 sentences (the transcript keeps the full text).
+   *  Every spoken reply is charged as Aura characters. */
   async beforeSynthesize(text, _connection3) {
-    await this.#cost(text.length / 1e3 * (AURA_USD_PER_1K[this.#ttsModel] || 0.015));
-    return text;
+    let t2 = String(text || "").replace(/https?:\/\/\S+/g, "").replace(/[`*#_]/g, "").replace(/\(?\b[\w.-]+\/[\w./-]+\.[a-z]{1,5}(:\d+)?\)?/gi, "").replace(/^\s*[-•]\s+/gm, "").replace(/\s+([,.])/g, "$1").replace(/\s+/g, " ").trim();
+    if (t2.length > 600) {
+      const cut = t2.slice(0, 600);
+      const i2 = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("? "), cut.lastIndexOf("! "));
+      t2 = i2 > 200 ? cut.slice(0, i2 + 1) : cut;
+    }
+    await this.#cost(t2.length / 1e3 * (AURA_USD_PER_1K[this.#ttsModel] || 0.015));
+    return t2;
   }
 };
 
 // ../src/index.ts
 import MA_TGZ from "./8569221bf067334f0605d74e2f82bbaeea407027-mobile-agent.tgz";
 import MA_REV from "./03797df4c2fa76c8d38f994f31f763c57b4be342-mobile-agent.rev";
+
+// ../src/landing/demoproject.ts
+var SEED = {
+  "README.md": `# Corner Caf\xE9
+
+A tiny website for a caf\xE9, built by agents on qodebase. Pages live in \`src/pages\`,
+the list of pages in \`src/routes.js\`, the menu in \`src/data/menu.js\`.
+Tests: \`node --test\`.
+`,
+  "package.json": JSON.stringify({ name: "corner-cafe", private: true, type: "module", scripts: { test: "node --test" } }, null, 2) + "\n",
+  ".qodebase/landing.json": JSON.stringify({ check: "node --test", list: ["src/routes.js", "src/data/menu.js", "style.css"] }, null, 2) + "\n",
+  "index.html": `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Corner Caf\xE9</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><nav id="nav"></nav></header>
+  <main id="page"></main>
+  <script type="module" src="app.js"><\/script>
+</body>
+</html>
+`,
+  "app.js": `import { routes } from './src/routes.js';
+import { site } from './src/site.js';
+
+function show() {
+  const path = location.hash.slice(1) || '/';
+  const route = routes.find((r) => r.path === path) || routes[0];
+  document.title = \`\${route.title} \xB7 \${site.name}\`;
+  document.getElementById('nav').innerHTML = routes
+    .map((r) => \`<a href="#\${r.path}"\${r === route ? ' aria-current="page"' : ''}>\${r.title}</a>\`).join('');
+  document.getElementById('page').innerHTML = route.page(site);
+}
+addEventListener('hashchange', show);
+show();
+`,
+  "style.css": `body { font: 17px/1.5 Georgia, serif; margin: 0; color: #2b2118; background: #fbf6ef; }
+header { background: #6b3e26; padding: 12px 16px; }
+nav a { color: #fbf6ef; margin-right: 16px; text-decoration: none; }
+nav a[aria-current] { text-decoration: underline; }
+main { padding: 16px; max-width: 640px; }
+h1 { margin: 8px 0; }
+.price { float: right; }
+`,
+  "src/site.js": `export const site = { name: 'Corner Caf\xE9', tagline: 'Coffee and cake since 1998' };
+`,
+  "src/routes.js": `import home from './pages/home.js';
+import menu from './pages/menu.js';
+
+export const routes = [
+  { path: '/', title: 'Home', page: home },
+  { path: '/menu', title: 'Menu', page: menu },
+];
+`,
+  "src/pages/home.js": `export default (site) => \`
+  <h1>\${site.name}</h1>
+  <p>\${site.tagline}</p>
+\`;
+`,
+  "src/pages/menu.js": `import { menu } from '../data/menu.js';
+import { price } from '../lib/format.js';
+
+export default () => \`
+  <h1>Menu</h1>
+  <ul>
+    \${menu.map((item) => \`<li>\${item.name} <span class="price">\${price(item.price)}</span></li>\`).join('')}
+  </ul>
+\`;
+`,
+  "src/data/menu.js": `export const menu = [
+  { name: 'Espresso', price: 1.2 },
+  { name: 'Cappuccino', price: 2.5 },
+  { name: 'Croissant', price: 1.8 },
+];
+`,
+  "src/lib/format.js": `export const price = (n) => \`\u20AC\${n.toFixed(2)}\`;
+`,
+  "test/site.test.js": `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { routes } from '../src/routes.js';
+import { site } from '../src/site.js';
+import { price } from '../src/lib/format.js';
+
+test('every page renders a heading', () => {
+  for (const r of routes) assert.match(r.page(site), /<h1>/, r.path);
+});
+test('every page has its own path', () => {
+  assert.equal(new Set(routes.map((r) => r.path)).size, routes.length);
+});
+test('prices show euros and cents', () => {
+  assert.equal(price(1.2), '\u20AC1.20');
+  assert.equal(price(3), '\u20AC3.00');
+});
+`
+};
+var page = /* @__PURE__ */ __name((name, title, body) => ({ path: `src/pages/${name}.js`, create: `export default () => \`
+  <h1>${title}</h1>
+${body}\`;
+` }), "page");
+var route = /* @__PURE__ */ __name((name, title) => [
+  { path: "src/routes.js", after: "import menu from './pages/menu.js';", insert: `import ${name} from './pages/${name}.js';` },
+  { path: "src/routes.js", after: "{ path: '/menu', title: 'Menu', page: menu },", insert: `  { path: '/${name}', title: '${title}', page: ${name} },` }
+], "route");
+var TASKS = [
+  {
+    key: "hours",
+    title: "Add an Opening hours page",
+    intent: "Add a page with the opening hours (Mon-Fri 7-19, Sat-Sun 8-17) and link it in the menu bar.",
+    claims: ["src/pages/hours.js", "src/routes.js"],
+    edits: [page("hours", "Opening hours", "  <p>Monday to Friday: 7:00 to 19:00</p>\n  <p>Saturday and Sunday: 8:00 to 17:00</p>\n"), ...route("hours", "Hours")]
+  },
+  {
+    key: "contact",
+    title: "Add a Contact page",
+    intent: "Add a Contact page with the address and phone number, linked in the menu bar.",
+    claims: ["src/pages/contact.js", "src/routes.js"],
+    edits: [page("contact", "Find us", "  <p>12 Rua das Flores, Lisbon</p>\n  <p>+351 21 000 0000</p>\n"), ...route("contact", "Contact")]
+  },
+  {
+    key: "cakes",
+    title: "Add three cakes to the menu",
+    intent: "Add carrot cake, pastel de nata and brownie to the menu.",
+    claims: ["src/data/menu.js"],
+    edits: [{ path: "src/data/menu.js", before: "];", insert: "  { name: 'Carrot cake', price: 3.2 },\n  { name: 'Pastel de nata', price: 1.4 },\n  { name: 'Brownie', price: 2.9 }," }]
+  },
+  {
+    key: "teas",
+    title: "Add teas to the menu",
+    intent: "Add green tea and chai latte to the menu.",
+    claims: ["src/data/menu.js"],
+    edits: [{ path: "src/data/menu.js", before: "];", insert: "  { name: 'Green tea', price: 1.9 },\n  { name: 'Chai latte', price: 3.1 }," }]
+  },
+  {
+    key: "rounder",
+    title: "Show round prices without cents",
+    intent: "Show \u20AC3 instead of \u20AC3.00 when a price is a whole number.",
+    claims: ["src/lib/format.js"],
+    // The first try drops the cents everywhere and breaks a test; the fix keeps them when needed.
+    edits: [{ path: "src/lib/format.js", re: "export const price = .*", to: "export const price = (n) => `\u20AC${Math.round(n)}`;" }],
+    fix: [
+      { path: "src/lib/format.js", re: "export const price = .*", to: "export const price = (n) => (Number.isInteger(n) ? `\u20AC${n}` : `\u20AC${n.toFixed(2)}`);" },
+      { path: "test/site.test.js", re: "assert.equal\\(price\\(3\\), '\u20AC3.00'\\);", to: "assert.equal(price(3), '\u20AC3');" }
+    ],
+    fixNote: "keep cents unless the price is whole; update the test"
+  },
+  {
+    key: "dark",
+    title: "Add a dark theme",
+    intent: "Follow the phone's dark mode: dark background, light text.",
+    claims: ["style.css"],
+    edits: [{ path: "style.css", append: "@media (prefers-color-scheme: dark) {\n  body { color: #f3e9dc; background: #1d1612; }\n  header { background: #3a2216; }\n}\n" }]
+  },
+  {
+    key: "rename",
+    title: "Rename to Corner Caf\xE9 & Books",
+    intent: 'The caf\xE9 now sells books: rename it to "Corner Caf\xE9 & Books".',
+    claims: ["src/site.js"],
+    edits: [{ path: "src/site.js", re: "name: '[^']*'", to: "name: 'Corner Caf\xE9 & Books'" }]
+  },
+  {
+    key: "tagline",
+    title: "New tagline with books",
+    intent: 'Change the tagline to "Coffee, cake and good books since 1998".',
+    claims: ["src/site.js"],
+    edits: [{ path: "src/site.js", re: "tagline: '[^']*'", to: "tagline: 'Coffee, cake and good books since 1998'" }]
+  },
+  {
+    key: "badges",
+    title: "Mark vegan items on the menu",
+    intent: 'Show a small "vegan" badge next to vegan items.',
+    claims: ["src/pages/menu.js", "style.css"],
+    edits: [
+      { path: "src/pages/menu.js", re: "\\$\\{item\\.name\\} <span", to: "${item.name}${item.vegan ? ' <small class=\"badge\">vegan</small>' : ''} <span" },
+      { path: "style.css", append: ".badge { background: #d9ead3; color: #274e13; padding: 0 6px; border-radius: 4px; }\n" }
+    ]
+  },
+  {
+    key: "reservations",
+    title: "Add a Reservations page",
+    intent: "Add a Reservations page explaining how to book a table.",
+    claims: ["src/pages/reservations.js", "src/routes.js"],
+    edits: [page("reservations", "Book a table", "  <p>Tables for up to 8 people. Call us or write below.</p>\n"), ...route("reservations", "Book")]
+  },
+  {
+    key: "resform",
+    title: "Add a booking form",
+    intent: "Add a booking form (name, day, people) to the Reservations page.",
+    stackOn: "reservations",
+    claims: ["src/pages/reservations.js"],
+    edits: [{ path: "src/pages/reservations.js", after: "Tables for up to 8 people", insert: '  <form><label>Name <input name="name"></label> <label>Day <input type="date" name="day"></label> <label>People <input type="number" min="1" max="8" name="people"></label> <button>Book</button></form>' }]
+  },
+  {
+    key: "specials",
+    title: "Today's specials on the home page",
+    intent: "Show today's specials on the home page.",
+    claims: ["src/pages/home.js"],
+    edits: [{ path: "src/pages/home.js", after: "<p>${site.tagline}</p>", insert: "  <h2>Today's specials</h2>\n  <p>Pumpkin soup, and lemon tart with every coffee.</p>" }]
+  },
+  {
+    key: "footer",
+    title: "Add a footer",
+    intent: "Add a footer with the address and a note that the site was built by agents.",
+    claims: ["index.html", "style.css"],
+    edits: [
+      { path: "index.html", after: '<main id="page"></main>', insert: "  <footer>12 Rua das Flores, Lisbon \xB7 built by agents on qodebase</footer>" },
+      { path: "style.css", append: "footer { padding: 16px; font-size: 14px; opacity: .7; }\n" }
+    ]
+  },
+  {
+    key: "vegan-data",
+    title: "Mark the vegan items",
+    intent: "Mark the vegan items in the menu data so the badge shows.",
+    claims: ["src/data/menu.js"],
+    edits: [{ path: "src/data/menu.js", re: "\\{ name: 'Espresso', price: 1.2 \\}", to: "{ name: 'Espresso', price: 1.2, vegan: true }" }]
+  }
+];
+function applyEdits(files, edits) {
+  const changed = /* @__PURE__ */ new Set();
+  for (const e2 of edits) {
+    if ("create" in e2) {
+      files.set(e2.path, e2.create);
+      changed.add(e2.path);
+      continue;
+    }
+    const text = files.get(e2.path);
+    if (text == null) throw new Error(`${e2.path} does not exist`);
+    let out;
+    if ("append" in e2) out = text + (text.endsWith("\n") ? "" : "\n") + e2.append;
+    else if ("re" in e2) {
+      const re = new RegExp(e2.re);
+      if (!re.test(text)) throw new Error(`${e2.path}: nothing matches ${e2.re}`);
+      out = text.replace(re, () => e2.to);
+    } else {
+      const lines = text.split("\n");
+      const anchor2 = "after" in e2 ? e2.after : e2.before;
+      let i2 = -1;
+      if ("after" in e2) i2 = lines.findIndex((l) => l.includes(anchor2));
+      else for (let k2 = lines.length - 1; k2 >= 0 && i2 < 0; k2--) if (lines[k2].includes(anchor2)) i2 = k2;
+      if (i2 < 0) throw new Error(`${e2.path}: no line with ${anchor2}`);
+      lines.splice("after" in e2 ? i2 + 1 : i2, 0, ...e2.insert.split("\n"));
+      out = lines.join("\n");
+    }
+    if (out !== text) {
+      files.set(e2.path, out);
+      changed.add(e2.path);
+    }
+  }
+  return [...changed];
+}
+__name(applyEdits, "applyEdits");
+var ITEMS3 = [
+  "Oat milk latte",
+  "Flat white",
+  "Cortado",
+  "Iced coffee",
+  "Hot chocolate",
+  "Matcha latte",
+  "Earl grey",
+  "Mint tea",
+  "Lemonade",
+  "Orange juice",
+  "Banana bread",
+  "Lemon tart",
+  "Cheesecake",
+  "Apple pie",
+  "Scone",
+  "Muffin",
+  "Cinnamon roll",
+  "Bagel",
+  "Toast and jam",
+  "Granola bowl",
+  "Avocado toast",
+  "Tomato soup",
+  "Quiche",
+  "Ham sandwich",
+  "Hummus plate",
+  "Fruit salad",
+  "Brownie bite",
+  "Almond croissant",
+  "Chocolate cookie",
+  "Pastel de feij\xE3o",
+  "Bolo de arroz",
+  "Queijada",
+  "Mocha",
+  "Macchiato",
+  "Affogato",
+  "Chai",
+  "Rooibos",
+  "Ginger shot",
+  "Smoothie",
+  "Yogurt pot"
+];
+var PAGES = [
+  "events",
+  "gallery",
+  "jobs",
+  "about",
+  "faq",
+  "gift-cards",
+  "catering",
+  "press",
+  "wifi",
+  "kids",
+  "loyalty",
+  "news",
+  "team",
+  "suppliers",
+  "books",
+  "music",
+  "workshops",
+  "terrace",
+  "parking",
+  "allergens"
+];
+var SHADES = ["#8a5a44", "#4f6d3a", "#7a4e8c", "#2f6f73", "#a0522d", "#5b6b8c", "#946b2d", "#6d4c41"];
+var PRICED = ["Espresso", "Cappuccino", "Croissant"];
+var slugTitle = /* @__PURE__ */ __name((s2) => s2.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" "), "slugTitle");
+var ident = /* @__PURE__ */ __name((s2) => s2.replace(/-(\w)/g, (_, c) => c.toUpperCase()), "ident");
+function busyTask(i2) {
+  const key = `busy:${i2}`;
+  const pick3 = i2 * 7919 % 100;
+  const round = Math.floor(i2 / 20);
+  if (pick3 < 8) {
+    const item = PRICED[Math.floor(i2 / 2) % PRICED.length];
+    const price = (1 + i2 * 37 % 300 / 100).toFixed(2);
+    return {
+      key,
+      title: `New price for ${item}: \u20AC${price}`,
+      intent: `Change the price of ${item} to \u20AC${price}.`,
+      claims: ["src/data/menu.js"],
+      workS: 8,
+      edits: [{ path: "src/data/menu.js", re: `\\{ name: '${item}', price: [0-9.]+`, to: `{ name: '${item}', price: ${price}` }]
+    };
+  }
+  if (pick3 < 45) {
+    const name = ITEMS3[i2 % ITEMS3.length] + (round ? ` ${round + 1}` : "");
+    const price = (1 + i2 * 53 % 400 / 100).toFixed(2);
+    return {
+      key,
+      title: `Add ${name} to the menu`,
+      intent: `Add ${name} (\u20AC${price}) to the menu.`,
+      claims: ["src/data/menu.js"],
+      workS: 8,
+      edits: [{ path: "src/data/menu.js", before: "];", insert: `  { name: '${name.replace(/'/g, "\\'")}', price: ${price} },` }]
+    };
+  }
+  if (pick3 < 75) {
+    const slug = PAGES[i2 % PAGES.length] + (round ? `-${round + 1}` : "");
+    const name = ident(slug.replace(/^(\d)/, "p$1"));
+    const broken = pick3 >= 70;
+    const page2 = { path: `src/pages/${slug}.js`, create: `export default () => \`
+  ${broken ? "" : `<h1>${slugTitle(slug)}</h1>
+  `}<p>Coming soon.</p>
+\`;
+` };
+    return {
+      key,
+      title: `Add a ${slugTitle(slug)} page`,
+      intent: `Add a ${slugTitle(slug)} page, linked in the menu bar.`,
+      claims: [page2.path, "src/routes.js"],
+      workS: 10,
+      edits: [
+        page2,
+        { path: "src/routes.js", after: "import menu from './pages/menu.js';", insert: `import ${name} from './pages/${slug}.js';` },
+        { path: "src/routes.js", after: "{ path: '/menu', title: 'Menu', page: menu },", insert: `  { path: '/${slug}', title: '${slugTitle(slug)}', page: ${name} },` }
+      ],
+      ...broken ? { fix: [{ path: page2.path, re: "<p>Coming soon.</p>", to: `<h1>${slugTitle(slug)}</h1>
+  <p>Coming soon.</p>` }], fixNote: "add the missing heading" } : {}
+    };
+  }
+  const shade = SHADES[i2 % SHADES.length];
+  const cls = `tone-${i2}`;
+  return {
+    key,
+    title: `Add a ${shade} accent style`,
+    intent: `Add a .${cls} style with the ${shade} accent.`,
+    claims: ["style.css"],
+    workS: 6,
+    edits: [{ path: "style.css", append: `.${cls} { color: ${shade}; }
+` }]
+  };
+}
+__name(busyTask, "busyTask");
+function taskByKey(key) {
+  if (key.startsWith("busy:")) return busyTask(Number(key.slice(5)));
+  return TASKS.find((t2) => t2.key === key);
+}
+__name(taskByKey, "taskByKey");
+
+// ../src/landing/demo.ts
+import { DurableObject as DurableObject9 } from "cloudflare:workers";
+
+// ../sim/cloud/src/gitpush.js
+var enc3 = new TextEncoder();
+function sha1(bytes) {
+  const ml = bytes.length, words2 = (ml + 8 >> 6) + 1, w = new Uint32Array(words2 * 16);
+  for (let i2 = 0; i2 < ml; i2++) w[i2 >> 2] |= bytes[i2] << 24 - i2 % 4 * 8;
+  w[ml >> 2] |= 128 << 24 - ml % 4 * 8;
+  w[words2 * 16 - 1] = ml * 8;
+  w[words2 * 16 - 2] = Math.floor(ml * 8 / 2 ** 32);
+  let h0 = 1732584193, h1 = 4023233417, h2 = 2562383102, h3 = 271733878, h4 = 3285377520;
+  const x = new Uint32Array(80);
+  for (let b = 0; b < words2 * 16; b += 16) {
+    for (let i2 = 0; i2 < 16; i2++) x[i2] = w[b + i2];
+    for (let i2 = 16; i2 < 80; i2++) {
+      const v = x[i2 - 3] ^ x[i2 - 8] ^ x[i2 - 14] ^ x[i2 - 16];
+      x[i2] = v << 1 | v >>> 31;
+    }
+    let a2 = h0, bb = h1, c = h2, d2 = h3, e2 = h4;
+    for (let i2 = 0; i2 < 80; i2++) {
+      const f = i2 < 20 ? bb & c | ~bb & d2 : i2 < 40 ? bb ^ c ^ d2 : i2 < 60 ? bb & c | bb & d2 | c & d2 : bb ^ c ^ d2;
+      const k2 = i2 < 20 ? 1518500249 : i2 < 40 ? 1859775393 : i2 < 60 ? 2400959708 : 3395469782;
+      const tmp = (a2 << 5 | a2 >>> 27) + f + e2 + k2 + x[i2] >>> 0;
+      e2 = d2;
+      d2 = c;
+      c = bb << 30 | bb >>> 2;
+      bb = a2;
+      a2 = tmp;
+    }
+    h0 = h0 + a2 >>> 0;
+    h1 = h1 + bb >>> 0;
+    h2 = h2 + c >>> 0;
+    h3 = h3 + d2 >>> 0;
+    h4 = h4 + e2 >>> 0;
+  }
+  return [h0, h1, h2, h3, h4].map((v) => (v >>> 0).toString(16).padStart(8, "0")).join("");
+}
+__name(sha1, "sha1");
+var hexBytes = /* @__PURE__ */ __name((hex3) => Uint8Array.from(hex3.match(/../g), (h2) => parseInt(h2, 16)), "hexBytes");
+function concat2(parts) {
+  const n2 = parts.reduce((s2, p) => s2 + p.length, 0), out = new Uint8Array(n2);
+  let o2 = 0;
+  for (const p of parts) {
+    out.set(p, o2);
+    o2 += p.length;
+  }
+  return out;
+}
+__name(concat2, "concat");
+var Objects = class {
+  static {
+    __name(this, "Objects");
+  }
+  constructor() {
+    this.map = /* @__PURE__ */ new Map();
+  }
+  put(type, body) {
+    const sha2 = sha1(concat2([enc3.encode(`${type} ${body.length}\0`), body]));
+    if (!this.map.has(sha2)) this.map.set(sha2, { type, body });
+    return sha2;
+  }
+  blob(text) {
+    return this.put("blob", enc3.encode(text));
+  }
+  // snapshot: Map(path -> blob sha) -> root tree sha (every subtree is stored too)
+  tree(snapshot) {
+    const root = /* @__PURE__ */ new Map();
+    for (const [p, sha2] of snapshot) {
+      const parts = p.split("/");
+      let node2 = root;
+      for (let i2 = 0; i2 < parts.length - 1; i2++) {
+        if (!node2.has(parts[i2])) node2.set(parts[i2], /* @__PURE__ */ new Map());
+        node2 = node2.get(parts[i2]);
+      }
+      node2.set(parts[parts.length - 1], sha2);
+    }
+    const write = /* @__PURE__ */ __name((node2) => {
+      const entries = [...node2.entries()].map(([name, v]) => v instanceof Map ? { name, mode: "40000", sha: write(v), key: name + "/" } : { name, mode: "100644", sha: v, key: name });
+      entries.sort((a2, b) => a2.key < b.key ? -1 : a2.key > b.key ? 1 : 0);
+      return this.put("tree", concat2(entries.flatMap((e2) => [enc3.encode(`${e2.mode} ${e2.name}\0`), hexBytes(e2.sha)])));
+    }, "write");
+    return write(root);
+  }
+  commit(tree2, parents, message2, whenMs) {
+    const who2 = `qodebase sim <sim@qodebase.app> ${Math.floor(whenMs / 1e3)} +0000`;
+    return this.put("commit", enc3.encode([`tree ${tree2}`, ...parents.map((p) => `parent ${p}`), `author ${who2}`, `committer ${who2}`, "", message2, ""].join("\n")));
+  }
+};
+async function deflate(bytes) {
+  const s2 = new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate"));
+  return new Uint8Array(await new Response(s2).arrayBuffer());
+}
+__name(deflate, "deflate");
+var TYPE = { commit: 1, tree: 2, blob: 3 };
+async function pack(objects) {
+  const parts = [enc3.encode("PACK"), new Uint8Array([0, 0, 0, 2]), new Uint8Array(new Uint32Array([objects.length]).buffer).reverse()];
+  for (const { type, body: body2 } of objects) {
+    let size = body2.length;
+    const head3 = [TYPE[type] << 4 | size & 15];
+    size >>= 4;
+    while (size) {
+      head3[head3.length - 1] |= 128;
+      head3.push(size & 127);
+      size >>= 7;
+    }
+    parts.push(new Uint8Array(head3), await deflate(body2));
+  }
+  const body = concat2(parts);
+  return concat2([body, hexBytes(sha1(body))]);
+}
+__name(pack, "pack");
+function pktLine(s2) {
+  const b = enc3.encode(s2);
+  return concat2([enc3.encode((b.length + 4).toString(16).padStart(4, "0")), b]);
+}
+__name(pktLine, "pktLine");
+async function push({ remote, token, branch = "main", oldSha, newSha, objs }) {
+  const body = concat2([pktLine(`${oldSha} ${newSha} refs/heads/${branch}\0report-status agent=qodebase-sim
+`), enc3.encode("0000"), await pack(objs)]);
+  const res = await fetch(`${remote.replace(/\/$/, "")}/git-receive-pack`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-git-receive-pack-request",
+      accept: "application/x-git-receive-pack-result",
+      authorization: `Basic ${btoa(`x:${token.split("?")[0]}`)}`,
+      "user-agent": "git/2.43.0 qodebase-sim"
+    },
+    body
+  });
+  const text = await res.text();
+  const ok = res.ok && /unpack ok/.test(text) && new RegExp(`ok refs/heads/${branch}`).test(text);
+  return { ok, status: res.status, bytes: body.length, detail: ok ? "" : text.slice(0, 300) };
+}
+__name(push, "push");
+
+// ../src/landing/demo.ts
+var TASK = { get: /* @__PURE__ */ __name((key) => taskByKey(key), "get") };
+var enc4 = new TextEncoder();
+var DemoAgent = class extends DurableObject9 {
+  static {
+    __name(this, "DemoAgent");
+  }
+  async #st() {
+    return await this.ctx.storage.get("st") || null;
+  }
+  /** A stop lives in its own key: an alarm step that was running when stop() came would
+   *  otherwise save its copy of the state over it (stray agents, 2026-10-08). */
+  async #save(s2) {
+    if (await this.ctx.storage.get("stopped")) s2.stopped = true;
+    await this.ctx.storage.put("st", s2);
+  }
+  #landing(slug) {
+    return this.env.Landing.get(this.env.Landing.idFromName(slug));
+  }
+  #name(s2) {
+    return `scripted agent ${s2.n}`;
+  }
+  async start(slug, n2, speed, runId) {
+    await this.ctx.storage.delete("stopped");
+    await this.#save({ slug, n: n2, speed, runId, stopped: false, job: null });
+    await this.ctx.storage.setAlarm(Date.now() + 800 + n2 * 1800 / speed);
+  }
+  /** For landing/state: what this agent is doing, its next alarm, its last error. */
+  async peek() {
+    return { st: await this.#st(), alarm: await this.ctx.storage.getAlarm() };
+  }
+  async stop() {
+    await this.ctx.storage.put("stopped", true);
+    const s2 = await this.#st();
+    if (!s2) return;
+    s2.stopped = true;
+    await this.#save(s2);
+    await this.ctx.storage.deleteAlarm();
+  }
+  /** Landing: a change of mine bounced or needs the lead. Only wakes the agent sooner:
+   *  the chore itself comes from Landing.demoNext (never written here, see there). */
+  async nudge(_changeId, _state3) {
+    const s2 = await this.#st();
+    if (!s2 || s2.stopped || s2.job) return;
+    await this.ctx.storage.setAlarm(Date.now() + 1500 / s2.speed);
+  }
+  async alarm() {
+    const s2 = await this.#st();
+    if (!s2 || s2.stopped || await this.ctx.storage.get("stopped")) return;
+    s2.lastAlarm = Date.now();
+    const L2 = this.#landing(s2.slug);
+    const d2 = await L2.demoState();
+    if (!d2.running || d2.startedAt !== s2.runId) {
+      s2.stopped = true;
+      await this.#save(s2);
+      return;
+    }
+    try {
+      if (s2.job) await this.#advance(s2);
+      else await this.#next(s2);
+    } catch (e2) {
+      log("demo", "agent_error", { slug: s2.slug, n: s2.n, job: s2.job?.changeId, err: String(e2?.stack || e2).slice(0, 500) });
+      s2.lastError = { at: Date.now(), err: String(e2?.stack || e2).slice(0, 800) };
+      if (s2.job) {
+        s2.job.fails = (s2.job.fails || 0) + 1;
+        if (s2.job.fails > 3) s2.job = null;
+      }
+      await this.#save(s2);
+      await this.ctx.storage.setAlarm(Date.now() + 5e3);
+      return;
+    }
+    await this.#save(s2);
+    if (s2.stopped) return;
+    if (s2.job) await this.ctx.storage.setAlarm(Math.max(Date.now() + 500, s2.job.until));
+    else await this.ctx.storage.setAlarm(Date.now() + 3e3 / s2.speed);
+  }
+  /** Pick up a fix or redo first, else the next task of the script. */
+  async #next(s2) {
+    const L2 = this.#landing(s2.slug);
+    const pick3 = await L2.demoNext(s2.n, s2.runId);
+    if (!pick3) return;
+    if (pick3.stop) {
+      s2.stopped = true;
+      log("demo", "agent_stale_stopped", { slug: s2.slug, n: s2.n, runId: s2.runId });
+      return;
+    }
+    const p = pick3.chore ? { changeId: pick3.id, kind: pick3.chore } : null;
+    if (p) {
+      const c = await L2.change(p.changeId);
+      if (!c || !c.task) return;
+      const task2 = TASK.get(c.task);
+      if (p.kind === "fix") {
+        if (!task2.fix) return;
+        s2.job = { kind: "fix", changeId: c.id, key: task2.key, fork: c.fork, remote: c.remote, base: c.base, until: Date.now() + this.#dur(s2, 0.5, task2), stage: "work" };
+        await L2.note(c.id, "working", task2.fixNote || "fixing it");
+      } else {
+        var _stack = [];
+        try {
+          const project = await this.env.Project.get(this.env.Project.idFromName(s2.slug)).info();
+          const main = __using(_stack, await this.env.ARTIFACTS.get(project.repo));
+          const head3 = (await main.log({ limit: 1 }))[0];
+          const name = `${c.id}l${Math.random().toString(36).slice(2, 4)}`;
+          const f = await this.#fork(main, name, `lead redo: ${task2.title}`);
+          await L2.rebase(c.id, f.name, f.remote, head3.hash);
+          s2.job = { kind: "redo", changeId: c.id, key: task2.key, fork: f.name, remote: f.remote, base: head3.hash, until: Date.now() + this.#dur(s2, 0.5, task2), stage: "work" };
+          await L2.note(c.id, "working", "the scripted lead is redoing it on the latest code");
+        } catch (_) {
+          var _error2 = _, _hasError = true;
+        } finally {
+          __callDispose(_stack, _error2, _hasError);
+        }
+      }
+      return;
+    }
+    const task = TASK.get(pick3.key);
+    const id = `${s2.slug}--d${s2.n}${Math.random().toString(36).slice(2, 6)}`;
+    let fork, base;
+    if (pick3.stackOn) {
+      var _stack2 = [];
+      try {
+        const parent = __using(_stack2, await this.env.ARTIFACTS.get(pick3.stackOn.fork));
+        fork = await this.#fork(parent, id, task.title);
+        base = pick3.stackOn.commit;
+      } catch (_2) {
+        var _error3 = _2, _hasError2 = true;
+      } finally {
+        __callDispose(_stack2, _error3, _hasError2);
+      }
+    } else {
+      var _stack3 = [];
+      try {
+        const project = await this.env.Project.get(this.env.Project.idFromName(s2.slug)).info();
+        const main = __using(_stack3, await this.env.ARTIFACTS.get(project.repo));
+        base = (await main.log({ limit: 1 }))[0]?.hash || null;
+        fork = await this.#fork(main, id, task.title);
+      } catch (_3) {
+        var _error4 = _3, _hasError3 = true;
+      } finally {
+        __callDispose(_stack3, _error4, _hasError3);
+      }
+    }
+    await L2.record(s2.slug, {
+      id,
+      title: task.title,
+      intent: task.intent,
+      agent: this.#name(s2),
+      kind: "demo",
+      fork: fork.name,
+      remote: fork.remote,
+      base,
+      claims: task.claims,
+      stackedOn: pick3.stackOn?.id || null,
+      task: task.key
+    }, s2.runId);
+    s2.job = { kind: "task", changeId: id, key: task.key, fork: fork.name, remote: fork.remote, base, until: Date.now() + this.#dur(s2, 1, task), stage: "work" };
+    log("demo", "task_started", { slug: s2.slug, n: s2.n, id, task: task.key, stackedOn: pick3.stackOn?.id });
+  }
+  #dur(s2, k2, t2) {
+    return (t2.workS ? t2.workS * (0.6 + Math.random() * 0.8) : 18 + Math.random() * 22) * k2 * 1e3 / s2.speed;
+  }
+  async #fork(repo, name, description) {
+    for (let i2 = 0; ; i2++) {
+      try {
+        const f = await repo.fork(name, { description: description.slice(0, 200), defaultBranchOnly: true });
+        return { name: f.name, remote: f.remote };
+      } catch (e2) {
+        if (i2 >= 3) throw e2;
+        await new Promise((r2) => setTimeout(r2, 1500 * (i2 + 1)));
+      }
+    }
+  }
+  async #advance(s2) {
+    const j = s2.job;
+    if (Date.now() < j.until) return;
+    const L2 = this.#landing(s2.slug);
+    if (j.stage === "work") {
+      const task = TASK.get(j.key);
+      const edits = j.kind === "fix" ? task.fix : task.edits;
+      const r2 = await this.#commit(j.fork, j.remote, edits, s2, j.kind === "fix" ? `Fix: ${task.fixNote || task.title}` : task.title, task.intent);
+      await L2.pushed(j.changeId, r2.commit, r2.files, j.kind === "fix" ? `fixed: ${task.fixNote}` : j.kind === "redo" ? "redone on the latest code" : void 0);
+      await L2.reviewing(j.changeId);
+      j.stage = "review";
+      j.until = Date.now() + 5e3 / s2.speed;
+      return;
+    }
+    await L2.reviewed(j.changeId, j.kind === "redo" ? "approved" : "auto", j.kind === "redo" ? "redone by the scripted lead on the latest code" : "", true);
+    s2.job = null;
+  }
+  /** Make `edits` on the fork's files and push one commit. Returns the commit and changed paths. */
+  async #commit(forkName, remote, edits, s2, title, intent) {
+    var _stack = [];
+    try {
+      const repo = __using(_stack, await this.env.ARTIFACTS.get(forkName));
+      const head3 = (await repo.log({ limit: 1 }))[0];
+      if (!head3) throw new Error("empty fork");
+      const snap = /* @__PURE__ */ new Map();
+      const walk = /* @__PURE__ */ __name(async (hash2, prefix) => {
+        const entries = await repo.readTree(hash2) || [];
+        await Promise.all(entries.map((e2) => e2.type === "tree" ? walk(e2.hash, `${prefix}${e2.name}/`) : (snap.set(prefix + e2.name, e2.hash), Promise.resolve())));
+      }, "walk");
+      await walk(head3.treeHash, "");
+      const files = /* @__PURE__ */ new Map();
+      for (const p of new Set(edits.map((e2) => e2.path))) {
+        const h2 = snap.get(p);
+        if (h2) {
+          const b = await repo.readBlob(h2);
+          if (b) files.set(p, await b.text());
+        }
+      }
+      const changed = applyEdits(files, edits);
+      const objs = new Objects();
+      for (const p of changed) snap.set(p, objs.blob(files.get(p)));
+      const tree2 = objs.tree(snap);
+      const when = Math.floor(Date.now() / 1e3);
+      const who2 = `${this.#name(s2)} <agent-${s2.n}@demo.qodebase.app> ${when} +0000`;
+      const commit = objs.put("commit", enc4.encode([
+        `tree ${tree2}`,
+        `parent ${head3.hash}`,
+        `author ${who2}`,
+        `committer ${who2}`,
+        "",
+        `${title}
+
+${intent}
+
+(scripted agent: qodebase demo mode, no model)`,
+        ""
+      ].join("\n")));
+      const token = (await repo.createToken("write", 600)).plaintext;
+      const r2 = await push({ remote, token, branch: "main", oldSha: head3.hash, newSha: commit, objs: [...objs.map.values()] });
+      if (!r2.ok) throw new Error(`push to ${forkName} failed: ${r2.status} ${r2.detail}`);
+      log("demo", "pushed", { fork: forkName, commit: commit.slice(0, 8), files: changed, bytes: r2.bytes });
+      return { commit, files: changed };
+    } catch (_) {
+      var _error2 = _, _hasError = true;
+    } finally {
+      __callDispose(_stack, _error2, _hasError);
+    }
+  }
+};
+async function pushSeed(remote, token, files, parent, message2) {
+  const objs = new Objects();
+  const snap = /* @__PURE__ */ new Map();
+  for (const [p, t2] of Object.entries(files)) snap.set(p, objs.blob(t2));
+  const tree2 = objs.tree(snap);
+  const when = Math.floor(Date.now() / 1e3);
+  const who2 = `qodebase demo <demo@qodebase.app> ${when} +0000`;
+  const commit = objs.put("commit", enc4.encode([`tree ${tree2}`, ...parent ? [`parent ${parent}`] : [], `author ${who2}`, `committer ${who2}`, "", message2, ""].join("\n")));
+  const r2 = await push({ remote, token, branch: "main", oldSha: parent || "0".repeat(40), newSha: commit, objs: [...objs.map.values()] });
+  if (!r2.ok) throw new Error(`seed push failed: ${r2.status} ${r2.detail}`);
+  return commit;
+}
+__name(pushSeed, "pushSeed");
+
+// ../src/landing/landing.ts
+import { DurableObject as DurableObject10 } from "cloudflare:workers";
+
+// ../src/landing/board.ts
+var BOARD_TTL_MS = 10 * 6e4;
+var BOARD_KEEP_MS = 24 * 36e5;
+var BOARD_KINDS = ["started", "editing", "committed", "pushed", "reviewing", "approved", "changes", "queued", "landed", "bounced", "blocked", "done", "gave-up", "alive"];
+var FINISHED = /* @__PURE__ */ new Set(["landed"]);
+var IN_FLIGHT = /* @__PURE__ */ new Set(["pushed", "reviewing", "approved", "changes", "queued", "bounced"]);
+var IN_FLIGHT_MS = 45 * 6e4;
+var clip = /* @__PURE__ */ __name((s2, n2) => s2 == null ? "" : String(s2).replace(/\s+/g, " ").trim().slice(0, n2), "clip");
+var normFiles = /* @__PURE__ */ __name((files) => (Array.isArray(files) ? files : String(files || "").split(",")).map((f) => String(f).trim().replace(/^\.?\//, "")).filter(Boolean).slice(0, 20).map((f) => f.slice(0, 200)), "normFiles");
+function makeBoardEvent(o2, now = Date.now()) {
+  const agent = clip(o2.agent, 64);
+  if (!agent) throw new Error("board: no agent");
+  if (!BOARD_KINDS.includes(String(o2.kind))) throw new Error(`board: kind must be one of ${BOARD_KINDS.join(", ")}`);
+  return { ts: now, agent, kind: o2.kind, intent: clip(o2.intent, 200), files: normFiles(o2.files), status: clip(o2.status, 80), ...o2.change ? { change: clip(o2.change, 120) } : {} };
+}
+__name(makeBoardEvent, "makeBoardEvent");
+var touches = /* @__PURE__ */ __name((a2, b) => a2 === b || a2.startsWith(b.replace(/\/?$/, "/")) || b.startsWith(a2.replace(/\/?$/, "/")), "touches");
+function boardView(events, q = {}) {
+  const now = q.now ?? Date.now(), ttl = q.ttl ?? BOARD_TTL_MS, me = q.me || null;
+  const last = /* @__PURE__ */ new Map(), seen = /* @__PURE__ */ new Map(), startedAt = /* @__PURE__ */ new Map();
+  for (const e2 of events) {
+    if (!e2 || e2.agent === me) continue;
+    seen.set(e2.agent, Math.max(seen.get(e2.agent) || 0, e2.ts));
+    if (e2.kind === "alive") continue;
+    if (!last.get(e2.agent) || e2.ts >= last.get(e2.agent).ts) last.set(e2.agent, e2);
+    if (e2.kind === "started") startedAt.set(e2.agent, Math.max(startedAt.get(e2.agent) || 0, e2.ts));
+  }
+  const rows = /* @__PURE__ */ new Map();
+  for (const [agent, l] of last) {
+    const keep = now - seen.get(agent) <= ttl || IN_FLIGHT.has(l.kind) && now - l.ts <= IN_FLIGHT_MS;
+    if (keep) rows.set(agent, { last: l, files: /* @__PURE__ */ new Set() });
+  }
+  for (const e2 of events) {
+    const r2 = e2 && rows.get(e2.agent);
+    if (!r2 || e2.kind === "alive") continue;
+    if (now - e2.ts <= ttl || e2.ts >= (startedAt.get(e2.agent) || Infinity) && now - e2.ts <= IN_FLIGHT_MS) for (const f of e2.files || []) r2.files.add(f);
+  }
+  const live = [...rows.values()].filter((r2) => r2.last.kind !== "landed" && r2.last.kind !== "done" && r2.last.kind !== "gave-up").map((r2) => ({ ...r2.last, files: [...r2.files], ageS: Math.round((now - r2.last.ts) / 1e3) })).sort((x, y) => y.ts - x.ts);
+  const out = [...live];
+  if ((q.recent || 0) > 0) {
+    const seen2 = new Set(live.map((r2) => `${r2.agent}
+${r2.intent}`));
+    for (const e2 of [...events].sort((a2, b) => b.ts - a2.ts)) {
+      if (!e2 || now - e2.ts > q.recent || e2.agent === me || !FINISHED.has(e2.kind) || !e2.intent) continue;
+      const k2 = `${e2.agent}
+${e2.intent}`;
+      if (seen2.has(k2)) continue;
+      seen2.add(k2);
+      out.push({ ...e2, done: true, ageS: Math.round((now - e2.ts) / 1e3) });
+    }
+  }
+  const want = normFiles(q.files);
+  let res = want.length ? out.filter((r2) => r2.files.some((f) => want.some((w) => touches(f, w)))) : out;
+  if (q.area) {
+    const a2 = q.area.toLowerCase();
+    res = res.filter((r2) => r2.intent.toLowerCase().includes(a2) || r2.files.some((f) => f.toLowerCase().includes(a2)));
+  }
+  return res;
+}
+__name(boardView, "boardView");
+var fmtBoardRow = /* @__PURE__ */ __name((r2) => `${r2.done ? "LANDED " : ""}${r2.agent} ${r2.kind} ${fmtAge(r2.ageS)}: ${clip(r2.intent, 90) || "-"}${r2.files?.length ? ` [${r2.files.slice(0, 5).join(", ")}${r2.files.length > 5 ? ", \u2026" : ""}]` : ""}${r2.status ? ` (${r2.status})` : ""}`, "fmtBoardRow");
+var fmtAge = /* @__PURE__ */ __name((s2) => s2 < 90 ? `${s2}s ago` : s2 < 5400 ? `${Math.round(s2 / 60)}m ago` : `${Math.round(s2 / 3600)}h ago`, "fmtAge");
+function boardText(rows, aliases = [], o2 = {}) {
+  const live = rows.filter((r2) => !r2.done).slice(0, o2.live ?? 5), done = rows.filter((r2) => r2.done).slice(0, o2.done ?? 5);
+  const parts = [];
+  if (live.length) parts.push(`Working now (pushed/queued = on its way to main, not done yet):
+${live.map(fmtBoardRow).join("\n")}`);
+  if (done.length) parts.push(`Landed on main in the last ${o2.recentMin ?? 30} min:
+${done.map(fmtBoardRow).join("\n")}`);
+  if (aliases.length) parts.push(`Same work under two names (dedupe pass): ${aliases.slice(0, 12).map((x) => `${x.a} = ${x.b}`).join("; ")}. Build it once; the other is a thin alias of it.`);
+  return parts.join("\n");
+}
+__name(boardText, "boardText");
+function parseDedupe(text, known) {
+  const m = String(text || "").match(/\{[\s\S]*\}/);
+  if (!m) return [];
+  let j;
+  try {
+    j = JSON.parse(m[0]);
+  } catch {
+    return [];
+  }
+  const ok = known ? new Set(known) : null;
+  const out = [], seen = /* @__PURE__ */ new Set();
+  for (const p of Array.isArray(j?.same) ? j.same : []) {
+    if (!Array.isArray(p) || p.length < 2) continue;
+    const [a2, b] = [clip(p[0], 40), clip(p[1], 40)];
+    if (!a2 || !b || a2 === b || ok && (!ok.has(a2) || !ok.has(b))) continue;
+    const k2 = [a2, b].sort().join("\n");
+    if (seen.has(k2)) continue;
+    seen.add(k2);
+    out.push([a2, b]);
+  }
+  return out;
+}
+__name(parseDedupe, "parseDedupe");
+function backlogItems(text) {
+  const out = [];
+  const ID = /^\**([A-Z]{1,6}-?\d{1,4})\**(?=[:.)\s-]|$)/;
+  for (const raw of String(text || "").split("\n")) {
+    const t2 = raw.trim();
+    const l = t2.replace(/^(?:[-*+]\s+(?:\[[ xX]\]\s+)?|\d+[.)]\s+)/, "").trim();
+    if (!l || l === t2 && !ID.test(l)) continue;
+    const label2 = l.match(ID)?.[1];
+    out.push({ id: label2 || `#${out.length + 1}`, text: l.slice(0, 300) });
+  }
+  return out.slice(0, 200);
+}
+__name(backlogItems, "backlogItems");
+function dedupePrompt(items) {
+  return `Here is a project backlog. Some tasks ask for the same functionality under different names or wording. List every pair of tasks that are the same work (one of them could be a thin alias of the other). Answer with ONLY one JSON object: {"same": [["T3", "T21"], ...]} using the ids before the colons; {"same": []} if there are none.
+
+${items.map((i2) => `${i2.id}: ${i2.text}`).join("\n")}`;
+}
+__name(dedupePrompt, "dedupePrompt");
+var taskIds = /* @__PURE__ */ __name((intent, known) => [...new Set(String(intent || "").match(/\b[A-Z]{1,6}-?\d{1,4}\b/g) || [])].filter((id) => known.has(id)).slice(0, 5), "taskIds");
+var knownTaskIds = /* @__PURE__ */ __name((lists = []) => new Set(lists.flatMap((l) => l.items.map((i2) => i2.id)).filter((id) => !id.startsWith("#"))), "knownTaskIds");
+function claimHolders(claims, me, live) {
+  const mine = claims[me];
+  const out = {};
+  if (!mine) return out;
+  for (const id of mine.ids) {
+    let best = { agent: me, at: mine.at };
+    for (const [agent, c] of Object.entries(claims)) {
+      if (agent === me || !live.has(agent) || !c.ids.includes(id)) continue;
+      if (c.at < best.at || c.at === best.at && agent < best.agent) best = { agent, at: c.at };
+    }
+    if (best.agent !== me) out[id] = best.agent;
+  }
+  return out;
+}
+__name(claimHolders, "claimHolders");
+function pickNext(items, o2) {
+  const mine = o2.claims[o2.me]?.ids.find((id) => !o2.done.has(id));
+  const byId = new Map(items.map((i2) => [i2.id, i2]));
+  const alsoOf = /* @__PURE__ */ __name((id) => (o2.aliases || []).filter((x) => x.a === id).map((x) => x.b), "alsoOf");
+  if (mine && byId.has(mine)) return { ...byId.get(mine), aliases: alsoOf(mine), again: true };
+  const held = new Set(Object.entries(o2.claims).filter(([a2]) => a2 !== o2.me && o2.live.has(a2)).flatMap(([, c]) => c.ids));
+  const seconds = new Set((o2.aliases || []).map((x) => x.b));
+  for (const it of items) {
+    if (o2.done.has(it.id) || held.has(it.id) || seconds.has(it.id)) continue;
+    return { ...it, aliases: alsoOf(it.id), again: false };
+  }
+  return null;
+}
+__name(pickNext, "pickNext");
+
+// ../src/landing/landing.ts
+var TRAIN_MAX = 8;
+var KEEP_CHANGES = 150;
+var KEEP_TRAINS = 40;
+var EVENTS_PER_CHANGE = 40;
+var OVERLAPS_PER_CHANGE = 3;
+var TRAIN_STUCK_MS = 12 * 6e4;
+var DEFAULT_REPLAY_MODEL = "claude-haiku-5-5";
+var WATCH = { perDay: 40, perIpDay: 3, ipCooldownS: 300, agents: 6, speed: 2, maxMs: 5 * 6e4 };
+var DEMO_MAX_AGENTS = 24;
+var DEMO_MAX_MS = 20 * 6e4;
+var DEMO_MAX_STORY_AGENTS = 12;
+var BUSY_MAX_TASKS = 400;
+var BUSY_MAX_WAITING = 40;
+var OPEN = /* @__PURE__ */ __name((c) => c.state !== "landed", "OPEN");
+var boardName = /* @__PURE__ */ __name((id) => id.includes("--") ? id.slice(id.indexOf("--") + 2) : id, "boardName");
+var Landing = class extends DurableObject10 {
+  static {
+    __name(this, "Landing");
+  }
+  #meta = null;
+  async #m(slug) {
+    if (!this.#meta) this.#meta = await this.ctx.storage.get("meta") || null;
+    if (!this.#meta) {
+      if (!slug) throw new Error("landing: no project yet");
+      this.#meta = { slug, waiting: [], running: null, flags: { llmReplay: false }, demo: null, order: [], trains: [] };
+      await this.ctx.storage.put("meta", this.#meta);
+    }
+    return this.#meta;
+  }
+  async #saveMeta() {
+    await this.ctx.storage.put("meta", this.#meta);
+  }
+  async #get(id) {
+    return await this.ctx.storage.get(`c:${id}`) || null;
+  }
+  async #put(c) {
+    while (c.events.length > EVENTS_PER_CHANGE) {
+      const i2 = c.events.findIndex((e2) => e2.what === "overlap");
+      c.events.splice(i2 >= 0 ? i2 : c.events.findIndex((e2, k2) => k2 > 0 || e2.what !== "asked"), 1);
+    }
+    await this.ctx.storage.put(`c:${c.id}`, c);
+  }
+  #ev(c, what, detail2) {
+    c.events.push({ t: Date.now(), what, ...detail2 ? { detail: detail2.slice(0, 300) } : {} });
+  }
+  async #all() {
+    const m = await this.#m();
+    const got = await this.ctx.storage.get(m.order.map((id) => `c:${id}`));
+    return m.order.map((id) => got.get(`c:${id}`)).filter(Boolean);
+  }
+  // ---- the record --------------------------------------------------------------
+  /** A new change: at spawn (real agents) or when a scripted agent picks a task. */
+  async record(slug, c, runId) {
+    const m = await this.#m(slug);
+    if (c.kind === "demo" && (!m.demo?.running || m.demo.startedAt !== runId)) throw new Error("stale demo run: this scripted agent belongs to an earlier run");
+    const ch = {
+      ...c,
+      title: (c.title || c.intent.split("\n")[0]).slice(0, 60),
+      intent: c.intent.slice(0, 4e3),
+      commit: null,
+      state: "working",
+      files: [],
+      claims: c.claims || [],
+      needs: c.needs || [],
+      provides: c.provides || [],
+      stackedOn: c.stackedOn || null,
+      events: [],
+      review: null,
+      landing: null,
+      lead: null,
+      createdAt: Date.now(),
+      landedAt: null,
+      tries: 0
+    };
+    this.#ev(ch, "asked", ch.title);
+    if (ch.stackedOn) this.#ev(ch, "stacked", `on ${ch.stackedOn}`);
+    if (ch.claims.length) this.#ev(ch, "claimed", ch.claims.join(", "));
+    this.#ev(ch, "working");
+    m.order.push(ch.id);
+    if (ch.task) m.demoTaken = { ...m.demoTaken || {}, [ch.task]: ch.id };
+    if (ch.kind === "demo") m.demoForks = [...m.demoForks || [], ch.fork];
+    await this.#overlaps(ch, ch.claims);
+    await this.#put(ch);
+    await this.#bpost(ch.id, "started", ch.title, ch.claims, ch.stackedOn ? `stacked on ${boardName(ch.stackedOn)}` : "");
+    await this.#prune();
+    await this.#saveMeta();
+    log("landing", "recorded", { slug, id: ch.id, kind: ch.kind, claims: ch.claims.length, stackedOn: ch.stackedOn });
+    return ch;
+  }
+  /** Warn when this change's files or claims overlap another open change's. At most
+   *  OVERLAPS_PER_CHANGE warnings each, and the other change hears of it only while it is
+   *  still being worked on: in busy mode every menu change warned every other one (13,253
+   *  events in 6 minutes, pushing the real events out of each change's history). */
+  async #overlaps(ch, paths) {
+    if (!paths.length) return;
+    const count = /* @__PURE__ */ __name((c) => c.events.filter((e2) => e2.what === "overlap").length, "count");
+    if (count(ch) >= OVERLAPS_PER_CHANGE) return;
+    for (const o2 of await this.#all()) {
+      if (o2.id === ch.id || !OPEN(o2) || o2.id === ch.stackedOn || o2.stackedOn === ch.id) continue;
+      const theirs = /* @__PURE__ */ new Set([...o2.claims, ...o2.files]);
+      const shared = paths.filter((p) => theirs.has(p));
+      if (!shared.length || ch.events.some((e2) => e2.what === "overlap" && e2.detail?.includes(o2.id))) continue;
+      this.#ev(ch, "overlap", `${shared.slice(0, 3).join(", ")} with ${o2.id}`);
+      if ((o2.state === "working" || o2.state === "pushed") && count(o2) < OVERLAPS_PER_CHANGE) {
+        this.#ev(o2, "overlap", `${shared.slice(0, 3).join(", ")} with ${ch.id}`);
+        await this.#put(o2);
+      }
+      if (count(ch) >= OVERLAPS_PER_CHANGE) break;
+    }
+  }
+  /** The agent pushed (its fork's head). Files = what it changed since its base. */
+  async pushed(id, commit, files, note, base) {
+    const c = await this.#get(id);
+    if (!c) throw new Error("unknown change");
+    c.commit = commit;
+    c.files = files.slice(0, 200);
+    let onMain = "";
+    if (base && base !== c.base) {
+      const parent = c.stackedOn ? await this.#get(c.stackedOn) : null;
+      if (parent?.state === "landed") c.stackedOn = null;
+      onMain = c.stackedOn ? ` (on ${c.stackedOn.split("--")[1]} ${base.slice(0, 7)})` : ` (now on main ${base.slice(0, 7)})`;
+      c.base = base;
+    }
+    if (c.state === "bounced" || c.state === "with-lead" || c.state === "working" || c.state === "replaying") c.state = "pushed";
+    if (c.state === "landed" && commit !== c.landing?.commit) {
+      c.state = "pushed";
+      c.review = null;
+      c.tries = 0;
+      c.rounds = (c.rounds || 1) + 1;
+    }
+    this.#ev(c, "pushed", (note || `${files.length} file${files.length === 1 ? "" : "s"}`) + onMain);
+    await this.#overlaps(c, c.files);
+    await this.#put(c);
+    await this.#bpost(c.id, "pushed", "", c.files, (note || "").slice(0, 80));
+    return c;
+  }
+  async reviewing(id) {
+    const c = await this.#get(id);
+    if (!c) return;
+    c.state = "reviewing";
+    this.#ev(c, "reviewing");
+    await this.#put(c);
+    await this.#bpost(c.id, "reviewing", "", c.files, "");
+  }
+  /** A verdict. 'auto' = the scripted demo review; approved demo changes queue at once. */
+  async reviewed(id, verdict, notes = "", thenQueue = false) {
+    const m0 = await this.#m();
+    if (m0.reviews) {
+      let freed = false;
+      for (const [rv, b] of Object.entries(m0.reviews.busy)) if (b.change === id) {
+        delete m0.reviews.busy[rv];
+        (m0.reviews.coolUntil ||= {})[rv] = Date.now() + 25e3;
+        freed = true;
+      }
+      if (freed) {
+        await this.#saveMeta();
+        await this.#arm(26e3);
+      }
+    }
+    const c = await this.#get(id);
+    if (!c) return;
+    c.review = { verdict, notes: notes.slice(0, 2e3) };
+    if (verdict === "changes") {
+      c.state = "pushed";
+      this.#ev(c, "changes-suggested", notes.split("\n")[0]);
+      if (m0.flags.autoMerge && c.kind === "agent") {
+        this.#tell(c.id, `The reviewer asked for changes:
+
+${notes.slice(0, 3e3)}
+
+Fix them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`);
+        await this.#saveMeta();
+        await this.#arm(500);
+      }
+    } else {
+      this.#ev(c, "approved", verdict === "auto" ? notes.split("\n")[0] || "scripted review" : notes.split("\n")[0]);
+      if (c.state === "reviewing") c.state = "pushed";
+    }
+    await this.#put(c);
+    await this.#bpost(c.id, verdict === "changes" ? "changes" : "approved", "", c.files, verdict === "auto" ? "no review" : "");
+    if ((thenQueue || c.redo === "llm" || m0.flags.autoMerge && c.kind === "agent") && verdict !== "changes") await this.approve(id);
+  }
+  // ---- the agent board (board.ts, docs/board/PLAN2.md W2) ------------------------------
+  #boardReady = false;
+  #bsql() {
+    const sql = this.ctx.storage.sql;
+    if (!this.#boardReady) {
+      sql.exec(`CREATE TABLE IF NOT EXISTS board (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, agent TEXT NOT NULL, body TEXT NOT NULL)`);
+      sql.exec(`CREATE INDEX IF NOT EXISTS board_ts ON board(ts)`);
+      this.#boardReady = true;
+    }
+    return sql;
+  }
+  async boardOn() {
+    return !!(await this.#m()).flags.board;
+  }
+  /** A platform post (spawn/push/review/land/bounce): never throws, nothing when the board is off. */
+  async #bpost(changeId, kind, intent, files, status2) {
+    try {
+      await this.boardPost({ agent: boardName(changeId), kind, intent, files, status: status2, change: changeId });
+    } catch (e2) {
+      log("landing", "board_post_failed", { changeId, kind, err: String(e2) });
+    }
+  }
+  /** One event (platform, the box hook, `forq intent`). No intent = the agent's stated one, else its change's title. */
+  async boardPost(o2) {
+    const m = await this.#m();
+    if (!m.flags.board) return { off: true };
+    let intent = o2.intent || "";
+    if (o2.stated && intent) {
+      const bi = m.boardIntent ||= {};
+      delete bi[o2.agent];
+      bi[o2.agent] = intent.slice(0, 200);
+      const ks = Object.keys(bi);
+      for (const k2 of ks.slice(0, Math.max(0, ks.length - 60))) delete bi[k2];
+    }
+    if (!intent) intent = m.boardIntent?.[o2.agent] || (o2.change ? (await this.#get(o2.change))?.title : "") || "";
+    const e2 = makeBoardEvent({ ...o2, intent });
+    this.#bsql().exec(`INSERT INTO board (ts, agent, body) VALUES (?, ?, ?)`, e2.ts, e2.agent, JSON.stringify(e2));
+    m.boardPosts = (m.boardPosts || 0) + 1;
+    if (m.boardPosts >= 200) {
+      m.boardPosts = 0;
+      this.#bsql().exec(`DELETE FROM board WHERE ts < ?`, Date.now() - BOARD_KEEP_MS);
+    }
+    await this.#saveMeta();
+    return e2;
+  }
+  /** `forq intent "<what I am doing>" [--files a,b]`: the agent's own words (a self-picked backlog item);
+   *  the files become claims on its change (overlap warnings as at spawn). */
+  async stateIntent(changeId, intent, files) {
+    const c = await this.#get(changeId);
+    if (c && files.length) {
+      const add = files.filter((f) => !c.claims.includes(f));
+      if (add.length) {
+        c.claims = [...c.claims, ...add].slice(0, 50);
+        this.#ev(c, "claimed", add.join(", "));
+        await this.#overlaps(c, add);
+      }
+    }
+    if (c) {
+      this.#ev(c, "working", `intent: ${intent.slice(0, 200)}`);
+      await this.#put(c);
+    }
+    const name = boardName(changeId);
+    const m = await this.#m();
+    const ids = taskIds(intent, knownTaskIds(m.dedupeLists));
+    if (m.flags.board && ids.length) {
+      const prev = m.boardClaims?.[name];
+      const bc = m.boardClaims ||= {};
+      bc[name] = { ids, at: prev && prev.ids.join() === ids.join() ? prev.at : Date.now() };
+      const ks = Object.keys(bc);
+      for (const k2 of ks.slice(0, Math.max(0, ks.length - 80))) delete bc[k2];
+    }
+    const live = new Set((await this.boardWho({})).rows.map((r2) => r2.agent));
+    const takenBy = m.flags.board && ids.length ? claimHolders(m.boardClaims || {}, name, live) : {};
+    if (Object.keys(takenBy).length) {
+      delete m.boardClaims[name];
+      await this.#saveMeta();
+      const e3 = await this.boardPost({ agent: name, kind: "gave-up", intent, files, change: changeId, status: `claimed first by ${Object.values(takenBy).join(", ")}` });
+      return { ...e3, takenBy };
+    }
+    const e2 = await this.boardPost({ agent: name, kind: "started", intent, files, change: changeId, stated: true });
+    return "off" in e2 ? e2 : { ...e2, takenBy };
+  }
+  /** `forq who`, the hook's context, the view: rows + aliases + the text an agent reads. */
+  async boardWho(q = {}) {
+    const m = await this.#m();
+    if (!m.flags.board) return { on: false, rows: [], aliases: [], text: "" };
+    const recent = Math.min(24 * 36e5, q.recent || 0);
+    const since3 = Date.now() - Math.max(BOARD_TTL_MS, recent, IN_FLIGHT_MS);
+    const evs = this.#bsql().exec(`SELECT body FROM board WHERE ts > ? ORDER BY ts`, since3).toArray().map((r2) => JSON.parse(String(r2.body)));
+    const rows = boardView(evs, { ...q, recent });
+    const aliases = m.aliases || [];
+    return { on: true, rows, aliases, text: boardText(rows, aliases, { recentMin: Math.round(recent / 6e4) || 30 }) };
+  }
+  async boardTail(n2 = 50) {
+    return this.#bsql().exec(`SELECT body FROM board ORDER BY id DESC LIMIT ?`, Math.min(500, Math.max(1, n2))).toArray().map((r2) => JSON.parse(String(r2.body))).reverse();
+  }
+  /** A list handed to a dedupe pass. Returns what the pass should read: this list, plus (crossDedupe) every
+   *  other list handed out on the project, so two teams' twins are found (qb4's W4b prediction). */
+  /** The change landed: the task ids its agent claimed are done and the claim is released. */
+  #claimDone(m, changeId) {
+    const name = boardName(changeId), cl = m.boardClaims?.[name];
+    if (!cl) return;
+    m.tasksDone = [.../* @__PURE__ */ new Set([...m.tasksDone || [], ...cl.ids])].slice(-500);
+    delete m.boardClaims[name];
+  }
+  /** \`forq next\` (flag claimNext): one atomic step in this single-threaded object, so two agents asking at the
+   *  same moment never get the same task (the tie-break and TTL races of advisory claims cannot happen). */
+  async claimNextTask(changeId) {
+    const m = await this.#m();
+    if (!m.flags.claimNext) return { off: true };
+    const items = (m.dedupeLists || []).flatMap((l) => l.items).filter((i2, k2, a2) => !i2.id.startsWith("#") && a2.findIndex((x) => x.id === i2.id) === k2);
+    if (!items.length) return { error: "no task list registered: the router runs forq tasks <file> (or forq dedupe <file>) first" };
+    const name = boardName(changeId);
+    const live = new Set((await this.boardWho({})).rows.map((r2) => r2.agent));
+    live.add(name);
+    const pick3 = pickNext(items, { me: name, done: new Set(m.tasksDone || []), claims: m.boardClaims || {}, live, aliases: m.aliases });
+    if (!pick3) return { none: true };
+    if (!pick3.again) {
+      (m.boardClaims ||= {})[name] = { ids: [pick3.id], at: Date.now() };
+      await this.#saveMeta();
+      const c = await this.#get(changeId);
+      if (c) {
+        this.#ev(c, "working", `next: ${pick3.id}`);
+        await this.#put(c);
+      }
+      if (m.flags.board) await this.boardPost({ agent: name, kind: "started", intent: `${pick3.id}: ${pick3.text}`.slice(0, 200), change: changeId, stated: true });
+    }
+    log("landing", "next", { slug: m.slug, agent: name, task: pick3.id, again: pick3.again, left: items.length - (m.tasksDone || []).length });
+    return pick3;
+  }
+  async dedupeList(by, items) {
+    const m = await this.#m();
+    m.dedupeLists = [...(m.dedupeLists || []).filter((l) => l.by !== by), { by, at: Date.now(), items: items.slice(0, 200) }].slice(-6);
+    await this.#saveMeta();
+    if (!m.flags.crossDedupe) return items;
+    const seen = /* @__PURE__ */ new Set(), all = [];
+    for (const it of [...items, ...m.dedupeLists.filter((l) => l.by !== by).flatMap((l) => l.items)]) if (!seen.has(it.id)) {
+      seen.add(it.id);
+      all.push(it);
+    }
+    return all.slice(0, 300);
+  }
+  /** The dedupe pass's pairs (a box ran it: `forq dedupe`). Replaces earlier pairs from the same list. */
+  async boardAliases(pairs, by) {
+    const m = await this.#m();
+    const now = Date.now();
+    const keep = (m.aliases || []).filter((x) => !pairs.some(([a2, b]) => [a2, b].includes(x.a) || [a2, b].includes(x.b)));
+    m.aliases = [...keep, ...pairs.map(([a2, b]) => ({ a: a2, b, at: now, by }))].slice(-60);
+    await this.#saveMeta();
+    if (m.flags.board) await this.boardPost({ agent: by, kind: "done", intent: `dedupe pass: ${pairs.length ? pairs.map(([a2, b]) => `${a2} = ${b}`).join(", ") : "no duplicates"}`, status: "dedupe" });
+    return m.aliases;
+  }
+  // ---- the queue ---------------------------------------------------------------
+  /** The merge tap: approved → waits for the next train. */
+  async approve(id) {
+    const m = await this.#m();
+    const c = await this.#get(id);
+    if (!c) throw new Error("unknown change");
+    if (!c.commit) throw new Error("nothing pushed yet");
+    if (c.state === "landed") return c;
+    if (!m.waiting.includes(id)) m.waiting.push(id);
+    c.state = "queued";
+    c.queuedAt = Date.now();
+    this.#ev(c, "queued", m.waiting.length > 1 ? `${m.waiting.length - 1} ahead` : "next train");
+    await this.#put(c);
+    await this.#bpost(c.id, "queued", "", c.files, "");
+    await this.#saveMeta();
+    await this.#arm(m.failStreak ? Math.min(3e5, 5e3 * 2 ** (m.failStreak - 1)) : 300);
+    return c;
+  }
+  async #arm(ms) {
+    const now = await this.ctx.storage.getAlarm();
+    if (!now || now > Date.now() + ms) await this.ctx.storage.setAlarm(Date.now() + ms);
+  }
+  async alarm() {
+    const m = await this.#m();
+    if (m.watchPrep) await this.#prepareWatch().catch((e2) => log("landing", "watch_prep_failed", { err: String(e2?.stack || e2) }));
+    log("landing", "alarm", { slug: m.slug, running: m.running, waiting: m.waiting.length, failStreak: m.failStreak || 0 });
+    try {
+      if (m.running) {
+        if (Date.now() - (m.runningSince || 0) > TRAIN_STUCK_MS) await this.#trainLost("no result from the merger box in 12 min");
+        else {
+          await this.#arm(3e4);
+          return;
+        }
+      }
+      await this.#startTrain();
+    } finally {
+      await this.#deliver();
+      await this.#reviewTick().catch((e2) => log("landing", "review_tick_failed", { err: String(e2) }));
+      await this.#budgetTick().catch((e2) => log("landing", "budget_tick_failed", { err: String(e2) }));
+      await this.#demoTick();
+    }
+  }
+  // ---- reviewer pool (landing projects with flags.reviewers >= 2) --------------------
+  // The Project DO has one reviewer and one review at a time. A crew of 12 agents would
+  // wait 12 reviews in a row, so Landing hands pushed changes to the first free of N
+  // reviewer boxes (<slug>--review, --review2, …) through the Worker's review-dispatch verb,
+  // and watches each one: a review with no verdict after 8 min is handed out again, once.
+  #reviewers(m) {
+    const n2 = Math.min(6, m.flags.reviewers || 1);
+    return Array.from({ length: n2 }, (_, i2) => `${m.slug}--review${i2 ? i2 + 1 : ""}`);
+  }
+  poolOn() {
+    return (this.#meta?.flags.reviewers || 1) > 1;
+  }
+  async queueReview(id) {
+    const m = await this.#m();
+    const r2 = m.reviews ||= { queue: [], busy: {} };
+    for (const [rv, b] of Object.entries(r2.busy)) if (b.change === id) delete r2.busy[rv];
+    if (!r2.queue.includes(id)) r2.queue.push(id);
+    await this.#saveMeta();
+    await this.#arm(300);
+  }
+  async #reviewTick() {
+    const m = await this.#m();
+    if (!m.reviews || !(m.flags.reviewers >= 1)) return;
+    const r2 = m.reviews, now = Date.now();
+    const H = { "x-forq-secret": this.env.ADMIN_SECRET, "user-agent": "forq-internal/1", "content-type": "application/json" };
+    for (const [rv, b] of Object.entries(r2.busy)) {
+      if (b.nudged || now - b.at < 75e3) continue;
+      const st = await fetch(`${this.env.API_BASE}/api/agents/${rv}/state`, { headers: H }).then((x) => x.json()).catch(() => null);
+      if (!st?.awake || /busy|thinking|working|running|tool|compact/i.test(st.cc || "")) continue;
+      b.nudged = now;
+      await this.#saveMeta();
+      const ok = await fetch(`${this.env.API_BASE}/api/agents/${rv}/send`, {
+        method: "POST",
+        headers: H,
+        body: JSON.stringify({ text: `You have not given your verdict on ${b.change} yet. Finish the review now: run  forq verdict ${b.change} approve "<one line>"  or  forq verdict ${b.change} changes "<what to fix>".` })
+      }).then((x) => x.ok).catch(() => false);
+      log("landing", "review_nudge", { slug: m.slug, change: b.change, reviewer: rv, cc: st.cc, ok });
+    }
+    for (const [rv, b] of Object.entries(r2.busy)) {
+      if (now - b.at < 4 * 6e4) continue;
+      delete r2.busy[rv];
+      (r2.coolUntil ||= {})[rv] = now + 12e4;
+      if (b.sends < 3) {
+        r2.queue.unshift(b.change);
+        r2.sends = { ...r2.sends || {}, [b.change]: b.sends + 1 };
+        log("landing", "review_resend", { slug: m.slug, change: b.change, reviewer: rv, sends: b.sends });
+      } else {
+        await this.reviewed(b.change, "changes", "The reviewer agent did not finish this review. Look at it yourself, or push again to retry.");
+      }
+    }
+    const free = this.#reviewers(m).filter((rv) => !r2.busy[rv] && (r2.coolUntil?.[rv] || 0) <= now);
+    const jobs = [];
+    while (free.length && r2.queue.length) {
+      const change = r2.queue.shift();
+      const prev = Object.values(r2.busy).find((b) => b.change === change);
+      if (prev) continue;
+      const rv = free.shift();
+      const sends = r2.sends?.[change] || 1;
+      r2.busy[rv] = { change, at: now, sends };
+      jobs.push([rv, change, sends]);
+    }
+    if (jobs.length) await this.#saveMeta();
+    const [owner, name] = m.slug.split(".");
+    await Promise.all(jobs.map(async ([rv, change]) => {
+      const res = await fetch(`${this.env.API_BASE}/api/p/${owner}/${name}/review-dispatch`, {
+        method: "POST",
+        headers: { "x-forq-secret": this.env.ADMIN_SECRET, "user-agent": "forq-internal/1", "content-type": "application/json" },
+        body: JSON.stringify({ agent: change, reviewer: rv, style: m.flags.reviewStyle || "read" }),
+        signal: AbortSignal.timeout(4 * 6e4)
+      }).catch((e2) => ({ ok: false, status: 0, text: /* @__PURE__ */ __name(async () => String(e2), "text") }));
+      log("landing", "review_dispatch", { slug: m.slug, change, reviewer: rv, ok: res.ok, status: res.status });
+      if (!res.ok) {
+        const now2 = await this.#m();
+        if (now2.reviews?.busy[rv]?.change === change) {
+          delete now2.reviews.busy[rv];
+          now2.reviews.queue.unshift(change);
+          (now2.reviews.coolUntil ||= {})[rv] = Date.now() + 12e4;
+          await this.#saveMeta();
+        }
+      } else {
+        const c = await this.#get(change);
+        if (c) {
+          this.#ev(c, "reviewing", `by ${rv.split("--")[1]}`);
+          await this.#put(c);
+        }
+      }
+    }));
+    if (r2.queue.length || Object.keys(r2.busy).length) await this.#arm(jobs.length ? 15e3 : 3e4);
+  }
+  // ---- budget guard (flags.budgetUsd) --------------------------------------------------
+  // Spent = this project's box time + Claude tokens from the cost ledger, priced
+  // conservatively: every call at the model's >100k-prompt tier (costs.ts), so a pricing gap
+  // can only stop the run early, never late. At the budget: every box of the project stops.
+  // On Eyal's subscription these dollars are API-equivalent (quota use); real spend is box time.
+  async #budgetTick() {
+    const m = await this.#m();
+    if (!m.flags.budgetUsd || m.flags.halted) return;
+    const [owner, name] = m.slug.split(".");
+    const rows = (await this.env.Ledger.get(this.env.Ledger.idFromName(owner)).rows(2)).filter((x) => x.project === `${owner}/${name}` || x.project === m.slug || x.project.startsWith(`${owner}/${name}:`));
+    let boxes = 0, claude = 0;
+    for (const x of rows) {
+      if (x.kind === "boxes") boxes += x.usd || 0;
+      if (x.kind === "claude" && x.tokens) {
+        const full = /* @__PURE__ */ __name((s2) => ({ haiku: "claude-haiku-5-5", sonnet: "claude-sonnet-5-5", opus: "claude-opus-5-5" })[s2] || s2, "full");
+        const roleModels = [m.flags.plannerModel, m.flags.coderModel, m.flags.reviewers ? m.flags.reviewerModel : void 0, m.flags.agentModel].filter(Boolean).map(full);
+        const priciest = roleModels.length ? roleModels.reduce((a2, b) => (claudeUsd(b, x.tokens) ?? Infinity) > (claudeUsd(a2, x.tokens) ?? Infinity) ? b : a2) : "opus";
+        const rowModel = x.project.includes(":") ? x.project.slice(x.project.lastIndexOf(":") + 1) : "";
+        claude += Math.max(claudeUsd(rowModel || priciest, x.tokens) ?? claudeUsd("opus", x.tokens) ?? 0, x.usd || 0);
+      }
+    }
+    const total = boxes + claude;
+    if (m.spentBase === void 0) m.spentBase = total;
+    const run = Math.max(0, total - m.spentBase);
+    m.spent = { usd: Math.round(run * 1e3) / 1e3, at: Date.now(), boxes: Math.round(boxes * 1e3) / 1e3, claude: Math.round(claude * 1e3) / 1e3 };
+    if (m.spent.usd >= m.flags.budgetUsd) await this.#halt(m, `budget reached: $${m.spent.usd} of $${m.flags.budgetUsd}`);
+    await this.#saveMeta();
+    if (!m.flags.halted) await this.#arm(6e4);
+  }
+  async #halt(m, why) {
+    m.flags.halted = true;
+    const p = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
+    const ids = [...(p?.agents || []).map((a2) => a2.id), `${m.slug}--router`, `${m.slug}--router2`, ...this.#reviewers({ ...m, flags: { ...m.flags, reviewers: 6 } })];
+    for (const id of ids) await fetch(`${this.env.API_BASE}/api/agents/${id}/stop`, { method: "POST", headers: { "x-forq-secret": this.env.ADMIN_SECRET, "user-agent": "forq-internal/1" } }).catch(() => null);
+    log("landing", "halted", { slug: m.slug, why, stopped: ids.length });
+    await pushAlert(this.env, `qodebase: ${m.slug} halted`, why, `https://${this.env.UI_HOST}/p/${m.slug.replace(".", "/")}/work`, 0).catch(() => {
+    });
+  }
+  /** Messages to real agents (bounce: fix it; conflict: redo it; the router: decide). From
+   *  the alarm, never from a request: waking a box can take longer than a request lives. */
+  #tell(to, text) {
+    const m = this.#meta;
+    (m.outbox ||= []).push({ to, text, tries: 0, at: Date.now() });
+  }
+  async #deliver() {
+    const m = await this.#m();
+    if (m.flags.halted && m.outbox?.length) {
+      log("landing", "tell_dropped_halted", { slug: m.slug, n: m.outbox.length });
+      m.outbox = [];
+      await this.#saveMeta();
+      return;
+    }
+    const msg = m.outbox?.[0];
+    if (!msg) return;
+    let ok = false, err = "";
+    try {
+      const r2 = await fetch(`${this.env.API_BASE}/api/agents/${msg.to}/send`, {
+        method: "POST",
+        headers: { "x-forq-secret": this.env.ADMIN_SECRET, "user-agent": "forq-internal/1", "content-type": "application/json" },
+        body: JSON.stringify({ text: msg.text }),
+        signal: AbortSignal.timeout(4 * 6e4)
+      });
+      const j = await r2.json().catch(() => ({}));
+      ok = r2.ok && j.ok !== false;
+      err = j.error || (r2.ok ? "" : `HTTP ${r2.status}`);
+    } catch (e2) {
+      err = String(e2?.message || e2);
+    }
+    const now = await this.#m();
+    const i2 = now.outbox?.findIndex((x) => x.at === msg.at && x.to === msg.to) ?? -1;
+    if (i2 >= 0) {
+      const [x] = now.outbox.splice(i2, 1);
+      if (!ok && x.tries < 7) now.outbox.push({ ...x, tries: x.tries + 1 });
+    }
+    log("landing", "tell", { slug: m.slug, to: msg.to, ok, err, tries: msg.tries, dropped: !ok && msg.tries >= 7 });
+    await this.#saveMeta();
+    if (now.outbox?.length) await this.#arm(ok ? 1e3 : now.outbox.length > 1 ? 5e3 : 75e3);
+  }
+  /** Which waiting changes can go now: stacked ones only after their base. */
+  async #pick() {
+    const m = await this.#m();
+    const out = [];
+    for (const id of m.waiting) {
+      if (out.length >= (m.flags.trainMax || (m.flags.policy === "ffa" ? 1 : TRAIN_MAX))) break;
+      const c = await this.#get(id);
+      if (!c || c.state !== "queued") continue;
+      if (c.stackedOn) {
+        const base = await this.#get(c.stackedOn);
+        if (base && base.state !== "landed" && !out.some((x) => x.id === base.id)) continue;
+      }
+      out.push(c);
+    }
+    return out;
+  }
+  async #startTrain() {
+    var _stack2 = [];
+    try {
+      const m = await this.#m();
+      m.waiting = (await Promise.all(m.waiting.map((id) => this.#get(id)))).filter((c) => c && c.state === "queued").map((c) => c.id);
+      const picked = await this.#pick();
+      if (!picked.length) {
+        await this.#saveMeta();
+        return;
+      }
+      const project = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
+      if (!project) throw new Error("no such project");
+      const main = __using(_stack2, await this.env.ARTIFACTS.get(project.repo));
+      const mainToken = (await main.createToken("write", 1800)).plaintext;
+      const train = { id: `t${Date.now().toString(36)}`, state: "testing", changes: picked.map((c) => c.id), startedAt: Date.now(), endedAt: null, checks: null, mainBefore: null, mainAfter: null };
+      const job = {
+        trainId: train.id,
+        slug: m.slug,
+        mainRemote: project.remote,
+        mainToken,
+        branch: project.importedFrom?.branch || null,
+        changes: [],
+        // Tier 2 runs on the owner's Claude subscription: only for the instance owner's projects (and the showcase).
+        ...m.flags.llmReplay && !m.demo?.publicRun && !this.#rebasePolicy(m) && (project.owner === this.env.OWNER_HANDLE || project.owner === "forq") ? { llm: { model: m.flags.replayModel || DEFAULT_REPLAY_MODEL } } : {},
+        // github / ffa: plain git only (no handlers), ffa also without checks.
+        ...this.#rebasePolicy(m) ? { handlers: false, noChecks: m.flags.policy === "ffa" } : {}
+      };
+      for (const c of picked) {
+        var _stack = [];
+        try {
+          const fork = __using(_stack, await this.env.ARTIFACTS.get(c.fork));
+          job.changes.push({
+            id: c.id,
+            title: c.title,
+            intent: c.intent,
+            agent: c.agent,
+            fork: c.fork,
+            remote: c.remote,
+            token: (await fork.createToken("read", 1800)).plaintext,
+            base: c.base,
+            commit: c.commit,
+            review: c.review
+          });
+          c.state = "testing";
+          c.tries++;
+          this.#ev(c, "testing", picked.length > 1 ? `in a train of ${picked.length}` : "alone");
+          await this.#put(c);
+        } catch (_) {
+          var _error2 = _, _hasError = true;
+        } finally {
+          __callDispose(_stack, _error2, _hasError);
+        }
+      }
+      m.waiting = m.waiting.filter((id) => !train.changes.includes(id));
+      m.running = train.id;
+      m.runningSince = Date.now();
+      m.trains.push(train.id);
+      await this.ctx.storage.put(`t:${train.id}`, train);
+      await this.#saveMeta();
+      await this.env.MergeBox.get(this.env.MergeBox.idFromName(`${m.slug}--merge`)).enqueue(job);
+      log("landing", "train_started", { slug: m.slug, train: train.id, changes: train.changes });
+      await this.#arm(3e4);
+    } catch (_2) {
+      var _error3 = _2, _hasError2 = true;
+    } finally {
+      __callDispose(_stack2, _error3, _hasError2);
+    }
+  }
+  async #trainLost(why) {
+    const m = await this.#m();
+    const t2 = await this.ctx.storage.get(`t:${m.running}`);
+    log("landing", "train_lost", { slug: m.slug, train: m.running, why });
+    if (t2) {
+      t2.state = "bounced";
+      t2.endedAt = Date.now();
+      t2.note = why;
+      await this.ctx.storage.put(`t:${t2.id}`, t2);
+      for (const id of t2.changes.slice().reverse()) {
+        const c = await this.#get(id);
+        if (c && c.state === "testing") {
+          c.state = "queued";
+          this.#ev(c, "queued", "train interrupted, trying again");
+          await this.#put(c);
+          m.waiting.unshift(id);
+        }
+      }
+    }
+    m.running = null;
+    await this.#saveMeta();
+  }
+  /** The MergeBox's report on a train. */
+  async trainDone(r2) {
+    const m = await this.#m();
+    const t2 = await this.ctx.storage.get(`t:${r2.trainId}`);
+    if (!t2 || m.running !== r2.trainId) {
+      log("landing", "train_result_ignored", { slug: m.slug, train: r2.trainId, running: m.running });
+      return;
+    }
+    t2.endedAt = Date.now();
+    t2.mainBefore = r2.mainBefore || null;
+    t2.mainAfter = r2.mainAfter || null;
+    t2.checks = r2.checks ? { ok: !!r2.checks.ok, ms: r2.checks.ms || 0, failures: r2.checks.failures || [] } : null;
+    m.running = null;
+    m.failStreak = !r2.ok ? (m.failStreak || 0) + 1 : 0;
+    if (!r2.ok || r2.stale) {
+      t2.state = "bounced";
+      t2.note = r2.error || (r2.stale ? "main moved during the train; running it again" : "merger failed");
+      for (const id of t2.changes.slice().reverse()) {
+        const c = await this.#get(id);
+        if (c && c.state === "testing") {
+          c.state = "queued";
+          this.#ev(c, "queued", t2.note);
+          await this.#put(c);
+          m.waiting.unshift(id);
+        }
+      }
+    } else {
+      let landed = 0;
+      t2.outcomes = {};
+      for (const rc of r2.changes) {
+        const c = await this.#get(rc.id);
+        if (!c) continue;
+        t2.outcomes[rc.id] = rc.landed ? "landed" : rc.bounced ? "bounced" : rc.unhandled?.length || rc.conflicts.length ? "conflict" : "retry";
+        c.files = rc.files?.length ? rc.files : c.files;
+        if (rc.landed) {
+          const how = c.redo === "lead" ? "lead" : c.redo === "llm" ? "replayed-llm" : rc.how;
+          if (rc.conflicts.length) this.#ev(c, "conflict", await this.#withWhom(c, rc.conflicts, r2));
+          if (how === "replayed-handler") this.#ev(c, "replayed", (rc.handled || []).map((h2) => `${h2.path} (${h2.handler})`).join(", ") || "on the latest code");
+          if (how === "replayed-llm" || how === "lead") this.#ev(c, "replayed", how === "lead" ? `by ${c.lead || "the lead"} on the latest code` : `by ${rc.llm?.model || "a model"} on the latest code`);
+          c.state = "landed";
+          c.landedAt = Date.now();
+          delete c.redo;
+          this.#claimDone(m, c.id);
+          (m.landings ||= []).push([c.landedAt, Math.round((c.landedAt - c.createdAt) / 1e3), how && how !== "merged" ? 1 : 0]);
+          if (m.landings.length > 2e3) m.landings.splice(0, m.landings.length - 2e3);
+          c.landing = {
+            how,
+            conflicts: rc.conflicts,
+            diff: rc.diff || [],
+            commit: rc.commit,
+            mainCommit: r2.mainAfter || null,
+            ...rc.reviewedDiff ? { reviewedDiff: rc.reviewedDiff } : {},
+            ...rc.llm ? { replay: { model: rc.llm.model, ms: rc.llm.ms, usd: rc.llm.usd, tokensIn: (rc.llm.in || 0) + (rc.llm.cacheRead || 0) + (rc.llm.cacheWrite || 0), tokensOut: rc.llm.out || 0, sameLinesAsReviewed: rc.llm.sameLines ?? null } } : {}
+          };
+          this.#ev(c, "landed", `${(rc.commit || "").slice(0, 7)} on main`);
+          landed++;
+        } else if (rc.bounced) {
+          c.state = "bounced";
+          (m.bounces ||= []).push(Date.now());
+          if (m.bounces.length > 2e3) m.bounces.splice(0, m.bounces.length - 2e3);
+          c.landing = { how: null, conflicts: [], diff: [], commit: null, mainCommit: null };
+          this.#ev(c, "bounced", (rc.checks?.failures || []).slice(0, 2).join("; ") || rc.why || "checks failed");
+        } else if (rc.unhandled?.length || rc.conflicts.length) {
+          this.#ev(c, "conflict", await this.#withWhom(c, rc.unhandled?.length ? rc.unhandled : rc.conflicts, r2));
+          c.landing = { how: null, conflicts: rc.unhandled?.length ? rc.unhandled : rc.conflicts, diff: [], commit: null, mainCommit: null };
+          await this.#escalate(c, m);
+        } else if (rc.empty) {
+          c.state = "landed";
+          c.landedAt = c.landedAt || Date.now();
+          delete c.redo;
+          this.#claimDone(m, c.id);
+          c.landing = { how: "merged", conflicts: [], diff: [], commit: null, mainCommit: r2.mainAfter || null };
+          this.#ev(c, "landed", "nothing new: already on main");
+        } else {
+          if (c.tries < 3) {
+            c.state = "queued";
+            m.waiting.push(c.id);
+            this.#ev(c, "queued", rc.why || "trying again");
+          } else {
+            c.state = "bounced";
+            this.#ev(c, "bounced", rc.why || "could not be applied");
+          }
+        }
+        await this.#put(c);
+        if (c.state === "landed" || c.state === "bounced") await this.#bpost(c.id, c.state, "", c.files, c.state === "landed" ? `${(c.landing?.commit || "").slice(0, 7)} on main` : "sent back");
+      }
+      t2.state = landed ? "landed" : "bounced";
+      if (r2.mainAfter) m.tree = void 0;
+      for (const rc of r2.changes) if (rc.llm) {
+        log("landing", "replay_llm", { slug: m.slug, id: rc.id, landed: rc.landed, ...rc.llm });
+        await recordCost(this.env, m.slug.split(".")[0], "claude", m.slug, {
+          usd: null,
+          covered: false,
+          billing: "sub",
+          tokens: { in: rc.llm.in || 0, out: rc.llm.out || 0, cw: Math.max(0, (rc.llm.cacheWrite || 0) - (rc.llm.cacheWrite1h || 0)), cw1h: rc.llm.cacheWrite1h || 0, cr: rc.llm.cacheRead || 0 }
+        });
+      }
+      await this.#afterRealTrain(r2);
+    }
+    await this.ctx.storage.put(`t:${t2.id}`, t2);
+    await this.#saveMeta();
+    log("landing", "train_done", { slug: m.slug, train: t2.id, state: t2.state, ms: Date.now() - t2.startedAt, checks: t2.checks?.ok, main: r2.mainAfter, ok: r2.ok, error: r2.error, failStreak: m.failStreak, waiting: m.waiting.length });
+    if (m.waiting.length) await this.#arm(m.failStreak ? Math.min(3e5, 5e3 * 2 ** (m.failStreak - 1)) : 500);
+    else if (m.outbox?.length) await this.#arm(500);
+    log("landing", "next_alarm", { slug: m.slug, inMs: (await this.ctx.storage.getAlarm() || 0) - Date.now(), failStreak: m.failStreak });
+    await this.#notifyDemo(t2);
+  }
+  /** 'src/x.js with <id>': the change that last landed on that file since this one's base
+   *  (earlier in this train, else the newest landed change that touched it). */
+  async #withWhom(c, paths, r2) {
+    const earlier = r2.changes.slice(0, r2.changes.findIndex((x) => x.id === c.id)).filter((x) => x.landed).reverse();
+    const landed = (await this.#all()).filter((o2) => o2.id !== c.id && o2.state === "landed" && (o2.landedAt || 0) >= c.createdAt).sort((a2, b) => (b.landedAt || 0) - (a2.landedAt || 0));
+    return paths.map((p) => {
+      const other = earlier.find((x) => x.files.includes(p))?.id || landed.find((o2) => o2.files.includes(p))?.id;
+      return other ? `${p} with ${other}` : p;
+    }).join(", ");
+  }
+  /** Real agents: landed ones are merged in the Project (and a Worker project redeploys);
+   *  bounced ones are told why. Conflicts are handled in #escalate. */
+  async #afterRealTrain(r2) {
+    const m = await this.#m();
+    const P = this.env.Project.get(this.env.Project.idFromName(m.slug));
+    let deploy = false;
+    for (const rc of r2.changes) {
+      const c = await this.#get(rc.id);
+      if (!c || c.kind !== "agent") continue;
+      if (rc.empty && !rc.landed) {
+        await P.setState(c.id, "merged", "nothing new: already on main").catch(() => {
+        });
+        if (m.flags.nextTask) this.#tell(c.id, `qodebase: your change "${c.title}" had nothing new: main already has it. Run \`forq sync-main\` first, then: ${m.flags.nextTask}`);
+        continue;
+      }
+      if (rc.landed) {
+        await P.setState(c.id, "merged", `landed on main as ${(rc.commit || "").slice(0, 7)}`).catch((e2) => log("landing", "set_merged_failed", { id: c.id, err: String(e2) }));
+        deploy = true;
+        if (m.flags.nextTask) this.#tell(c.id, `qodebase: your change "${c.title}" landed on main (${(rc.commit || "").slice(0, 7)}). Run \`forq sync-main\` first, then: ${m.flags.nextTask}`);
+      } else if (rc.bounced) this.#tell(c.id, `qodebase merge queue: your change did not pass the project's checks on the latest main, so it was sent back.
+Failures: ${(rc.checks?.failures || []).slice(0, 4).join(" | ") || rc.why}
+Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
+    }
+    if (deploy && await P.kindOf() === "worker") await P.requestBuild("deploy").catch((e2) => log("landing", "deploy_request_failed", { err: String(e2) }));
+    if (deploy) {
+      const landedTitles = r2.changes.filter((x) => x.landed).map((x) => x.id);
+      const info = await P.info().catch(() => null);
+      for (const a2 of info?.agents || []) {
+        if (a2.state !== "blocked" || landedTitles.includes(a2.id)) continue;
+        const what = (await Promise.all(landedTitles.map((id) => this.#get(id)))).filter(Boolean).map((c) => `"${c.title}"`).join(", ");
+        this.#tell(a2.id, `qodebase: main moved: ${what} landed (${(r2.mainAfter || "").slice(0, 7)}). If you were waiting for it, run \`forq sync-main\` to rebase on the latest main and continue your task; then push and run: forq status pushed "<what you did>".`);
+      }
+    }
+  }
+  #rebasePolicy(m) {
+    return m.flags.policy === "github" || m.flags.policy === "ffa";
+  }
+  /** Tier 2 (LLM replay, flag) or tier 3 (the lead) for a real conflict. */
+  async #escalate(c, m) {
+    if (c.kind === "demo") {
+      c.state = "with-lead";
+      c.lead = "scripted lead";
+      c.redo = "lead";
+      this.#ev(c, "with-lead", "the scripted lead will redo it on the latest code");
+      return;
+    }
+    const where = c.landing?.conflicts.join(", ") || "shared files";
+    if (this.#rebasePolicy(m)) {
+      c.state = "bounced";
+      this.#ev(c, "bounced", `conflict in ${where}: back to its agent to rebase on main`);
+      this.#tell(c.id, `qodebase merge queue: your change conflicts with main in ${where}. Rebase it on the latest main: run \`forq sync-main\`, resolve the conflicts keeping BOTH main's changes and your task, run the tests, then: forq status pushed "rebased on main"`);
+      return;
+    }
+    if (m.flags.llmReplay) {
+      c.state = "replaying";
+      c.redo = "llm";
+      this.#ev(c, "replaying", "its agent is asked to redo the change on the latest main");
+      this.#tell(c.id, `qodebase merge queue: main changed under your change and it conflicts in ${where}. Redo your task on the latest main: run \`forq sync-main\` (it rebases your work on main; resolve any conflict keeping BOTH main's changes and your intent), run the tests, push, then: forq status pushed "redone on the latest main"`);
+      return;
+    }
+    c.state = "with-lead";
+    c.lead = (await this.env.Project.get(this.env.Project.idFromName(m.slug)).info())?.owner || null;
+    this.#ev(c, "with-lead", `${c.lead || "the owner"} decides: conflict in ${where}`);
+    this.#tell(`${m.slug}--router`, `qodebase merge queue: agent ${c.id} ("${c.title}") conflicts with main in ${where}. Ask it to redo the change on the latest main (forq send ${c.id} "run forq sync-main, redo your change on it, push"), or tell the person it needs a decision.`);
+  }
+  async flags() {
+    const m = await this.ctx.storage.get("meta") || null;
+    return m?.flags || { llmReplay: false };
+  }
+  async setFlags(slug, flags) {
+    const m = await this.#m(slug);
+    if ("budgetUsd" in flags) {
+      delete m.spentBase;
+      delete m.spent;
+      await this.ctx.storage.setAlarm(Date.now() + 1e3);
+    }
+    m.flags = { ...m.flags, ...flags };
+    await this.#saveMeta();
+    return m.flags;
+  }
+  async #prune() {
+    const m = await this.#m();
+    while (m.order.length > KEEP_CHANGES) {
+      const id = m.order[0];
+      const c = await this.#get(id);
+      if (c && OPEN(c)) break;
+      m.order.shift();
+      await this.ctx.storage.delete(`c:${id}`);
+    }
+    while (m.trains.length > KEEP_TRAINS) {
+      const t2 = m.trains.shift();
+      if (t2 !== m.running) await this.ctx.storage.delete(`t:${t2}`);
+    }
+  }
+  // ---- the view (contract) -------------------------------------------------------
+  async #files() {
+    const m = await this.#m();
+    if (m.tree && Date.now() - m.tree.at < 10 * 6e4) return m.tree.files;
+    const project = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
+    if (!project) return [];
+    try {
+      var _stack = [];
+      try {
+        const repo = __using(_stack, await this.env.ARTIFACTS.get(project.repo));
+        const head3 = (await repo.log({ limit: 1 }))[0];
+        if (!head3) return [];
+        const files = [];
+        const walk = /* @__PURE__ */ __name(async (hash2, prefix, depth) => {
+          const entries = await repo.readTree(hash2) || [];
+          const dirs = [];
+          for (const e2 of entries) {
+            if (files.length >= 2e3) return;
+            if (e2.type === "tree") {
+              if (depth < 6 && !/^(node_modules|\.git|vendor)$/.test(e2.name)) dirs.push(walk(e2.hash, `${prefix}${e2.name}/`, depth + 1));
+            } else files.push(prefix + e2.name);
+          }
+          await Promise.all(dirs);
+        }, "walk");
+        await walk(head3.treeHash, "", 0);
+        m.tree = { commit: head3.hash, files, at: Date.now() };
+        await this.#saveMeta();
+        return files;
+      } catch (_) {
+        var _error2 = _, _hasError = true;
+      } finally {
+        __callDispose(_stack, _error2, _hasError);
+      }
+    } catch (e2) {
+      log("landing", "tree_failed", { slug: m.slug, err: String(e2).slice(0, 200) });
+      return m.tree?.files || [];
+    }
+  }
+  async view(slug) {
+    const m = await this.#m(slug);
+    if (m.demo?.running && Date.now() > m.demo.endsAt + 5e3) await this.demoStop("time cap (seen by a view)");
+    const changes = await this.#all();
+    const trains = (await Promise.all(m.trains.slice(-12).map((id) => this.ctx.storage.get(`t:${id}`)))).filter(Boolean);
+    const byId = new Map(changes.map((c) => [c.id, c]));
+    const files = await this.#files();
+    const areaOf = /* @__PURE__ */ __name((p) => {
+      const d2 = p.split("/").slice(0, -1);
+      return d2.length ? d2.slice(0, 2).join("/") : "/";
+    }, "areaOf");
+    const areas = /* @__PURE__ */ new Map();
+    const area = /* @__PURE__ */ __name((p) => {
+      const k2 = areaOf(p);
+      let a2 = areas.get(k2);
+      if (!a2) areas.set(k2, a2 = { path: k2, files: 0, working: 0, claimed: 0, recentConflicts: 0, recentLandings: 0 });
+      return a2;
+    }, "area");
+    for (const f of files) area(f).files++;
+    const DAY = 864e5, now = Date.now();
+    for (const c of changes) {
+      const open2 = OPEN(c);
+      for (const k2 of new Set(c.files.map(areaOf))) {
+        const a2 = area(k2 === "/" ? "x" : `${k2}/x`);
+        if (open2) a2.working++;
+        if (c.landedAt && now - c.landedAt < DAY) a2.recentLandings++;
+      }
+      for (const k2 of new Set(c.claims.map(areaOf))) if (open2) area(k2 === "/" ? "x" : `${k2}/x`).claimed++;
+      for (const e2 of c.events) if (e2.what === "conflict" && now - e2.t < DAY) {
+        for (const p of (e2.detail || "").split(", ")) if (p) area(p).recentConflicts++;
+      }
+    }
+    const today = (m.landings || []).filter(([t2]) => now - t2 < DAY);
+    const lat = today.map(([, s2]) => s2).sort((a2, b) => a2 - b);
+    return {
+      now,
+      mode: m.demo ? "demo" : "live",
+      code: (this.env.CF_VERSION_METADATA?.id || "").slice(0, 8),
+      demo: m.demo || m.flags.publicWatch ? {
+        ...m.demo || { running: false, agents: 0, speed: 1, startedAt: 0, endsAt: 0 },
+        active: this.#active(m),
+        public: !!m.flags.publicWatch,
+        runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 864e5).length)
+      } : null,
+      flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch, board: !!m.flags.board },
+      // The board (qb7's "who works on what"): working now + finished in the last 30 min + dedupe aliases.
+      ...m.flags.board ? { board: await this.boardWho({ recent: 30 * 6e4 }).then(({ rows, aliases }) => ({ rows, aliases })) } : {},
+      ...m.flags.budgetUsd ? { budget: { usd: m.flags.budgetUsd, spent: m.spent?.usd ?? 0, halted: !!m.flags.halted, reviewers: m.flags.reviewers || 1 } } : {},
+      watch: { enabled: !!m.flags.publicWatch, runsToday: (m.watchLog || []).filter((w) => now - w.at < 864e5).length, maxPerDay: WATCH.perDay, running: this.#active(m) },
+      queue: { trains: trains.map((t2) => ({
+        id: t2.id,
+        state: t2.state,
+        changes: t2.changes,
+        startedAt: t2.startedAt,
+        endedAt: t2.endedAt,
+        checks: t2.checks || { ok: false, ms: 0, failures: [] },
+        mainBefore: t2.mainBefore,
+        mainAfter: t2.mainAfter,
+        ...t2.note ? { note: t2.note } : {},
+        // What was in the train, by name ("Landed: Add teas to the menu (scripted agent 4)").
+        items: t2.changes.map((id) => ({ id, title: byId.get(id)?.title || id, agent: byId.get(id)?.agent || "", outcome: t2.outcomes?.[id] || (t2.state === "testing" ? "testing" : null) }))
+      })), waiting: m.waiting },
+      changes: changes.slice().reverse().map(({ remote, queuedAt, tries, redo, task, choreTaken, ...c }) => c),
+      areas: [...areas.values()].sort((a2, b) => b.working + b.claimed - (a2.working + a2.claimed) || a2.path.localeCompare(b.path)),
+      stats: {
+        landedToday: today.length,
+        inQueue: m.waiting.length + (m.running ? trains.find((t2) => t2.id === m.running)?.changes.length || 0 : 0),
+        bounced: Math.max((m.bounces || []).filter((t2) => now - t2 < DAY).length, changes.filter((c) => c.events.some((e2) => e2.what === "bounced" && now - e2.t < DAY)).length),
+        replayed: Math.max(today.filter((x) => x[2]).length, changes.filter((c) => c.landedAt && now - c.landedAt < DAY && c.landing?.how && c.landing.how !== "merged").length),
+        // ^ the higher of a running counter and the kept records: the records alone (newest 150)
+        //   went DOWN mid-run (qb7 2026-10-08); the counters alone miss landings before 2026-10-08 02:30.
+        medianAskToLandS: lat.length ? Math.round(lat[Math.floor(lat.length / 2)]) : null,
+        // every landing's time (last 300): one change can land several times (self-picked backlogs, the lab runner)
+        landTimes: (m.landings || []).slice(-300).map(([t2]) => t2)
+      }
+    };
+  }
+  // ---- demo mode (scripted agents, src/landing/demo.ts) ------------------------------
+  async demoStart(slug, agents, speed, mode = "story", o2 = {}) {
+    const m = await this.#m(slug);
+    if (!o2.publicRun && !o2.force) {
+      if (m.demo?.publicRun && this.#active(m)) throw new Error("a visitor's run is going on this project; it is never preempted");
+      if (m.flags.publicWatch && mode === "busy") throw new Error("this is the public demo project: run busy mode on another project (cafe-lab, cafe-crew)");
+    }
+    agents = Math.max(1, Math.min(mode === "busy" ? DEMO_MAX_AGENTS : DEMO_MAX_STORY_AGENTS, Math.round(agents || 4)));
+    speed = Math.max(0.5, Math.min(4, speed || 1));
+    if (m.demo && m.demo.agents > agents) for (let i2 = agents + 1; i2 <= m.demo.agents; i2++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${slug}#${i2}`)).stop().catch(() => {
+    });
+    m.demo = { running: true, agents, speed, mode, startedAt: Date.now(), endsAt: Date.now() + Math.min(DEMO_MAX_MS, o2.maxMs || DEMO_MAX_MS), ...o2.publicRun ? { publicRun: true } : {} };
+    delete m.watchStarting;
+    await this.#saveMeta();
+    for (let i2 = 1; i2 <= agents; i2++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${slug}#${i2}`)).start(slug, i2, speed, m.demo.startedAt);
+    await this.#arm(6e4);
+    log("landing", "demo_start", { slug, agents, speed, mode });
+    return m.demo;
+  }
+  async demoStop(why = "stopped") {
+    const m = await this.#m();
+    if (!m.demo) return null;
+    for (let i2 = 1; i2 <= m.demo.agents; i2++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${m.slug}#${i2}`)).stop().catch(() => {
+    });
+    m.demo = { ...m.demo, running: false, stoppedAt: Date.now() };
+    await this.#saveMeta();
+    log("landing", "demo_stop", { slug: m.slug, why });
+    return m.demo;
+  }
+  /** Watch a run: may this visitor start one now? Records the start atomically (one DO). */
+  async watchClaim(ip) {
+    const m = await this.#m();
+    if (!m.flags.publicWatch) return { state: "limit", reason: "off", retryAfterS: 3600 };
+    if (m.demo && this.#active(m)) return { state: "running", startedAt: m.demo.startedAt, endsAt: m.demo.endsAt, startedNow: false };
+    const now = Date.now();
+    if (m.watchStarting && now - m.watchStarting < 6e4) return { state: "running", startedAt: m.watchStarting, endsAt: m.watchStarting + WATCH.maxMs, startedNow: false };
+    const day3 = (m.watchLog || []).filter((w) => now - w.at < 864e5);
+    if (day3.length >= WATCH.perDay) return { state: "limit", reason: "daily", retryAfterS: Math.ceil((day3[0].at + 864e5 - now) / 1e3) };
+    const mine = day3.filter((w) => w.ip === ip);
+    if (mine.length >= WATCH.perIpDay) return { state: "limit", reason: "ip", retryAfterS: Math.ceil((mine[0].at + 864e5 - now) / 1e3) };
+    const last = mine[mine.length - 1];
+    if (last && now - last.at < WATCH.ipCooldownS * 1e3) return { state: "limit", reason: "cooldown", retryAfterS: Math.ceil((last.at + WATCH.ipCooldownS * 1e3 - now) / 1e3) };
+    if (m.running) return { state: "limit", reason: "cooldown", retryAfterS: 30 };
+    m.watchLog = [...day3, { at: now, ip }];
+    m.watchStarting = now;
+    m.watchPrep = { prevAgents: m.demo?.agents || 0 };
+    m.demo = { running: true, agents: WATCH.agents, speed: WATCH.speed, mode: "story", startedAt: now, endsAt: now + WATCH.maxMs, publicRun: true };
+    await this.#saveMeta();
+    await this.ctx.storage.setAlarm(Date.now() + 50);
+    log("landing", "watch_start", { slug: m.slug, ip: ip.replace(/[.:][^.:]*$/, ".x"), today: m.watchLog.length });
+    return { state: "go", startedAt: now, endsAt: now + WATCH.maxMs };
+  }
+  /** The visitor's run, from the alarm: the café back to its first version, records cleared,
+   *  then the scripted agents start (the old run's forks are deleted after, off the clock). */
+  async #prepareWatch() {
+    var _stack = [];
+    try {
+      const m = await this.#m();
+      const prep = m.watchPrep;
+      if (!prep || !m.demo) return;
+      delete m.watchPrep;
+      const demo = m.demo;
+      for (let i2 = 1; i2 <= Math.max(prep.prevAgents, demo.agents); i2++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${m.slug}#${i2}`)).stop().catch(() => {
+      });
+      const forks = m.demoForks || [];
+      for (const id of m.order) await this.ctx.storage.delete(`c:${id}`);
+      for (const id of m.trains) await this.ctx.storage.delete(`t:${id}`);
+      Object.assign(m, { waiting: [], order: [], trains: [], tree: void 0, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [], bounces: [] });
+      const project = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
+      const repo = __using(_stack, await this.env.ARTIFACTS.get(project.repo));
+      const head3 = (await repo.log({ limit: 1 }))[0]?.hash || null;
+      await pushSeed(project.remote, (await repo.createToken("write", 600)).plaintext, SEED, head3, "Reset the demo to the first version (Watch a run)");
+      demo.startedAt = Date.now();
+      demo.endsAt = demo.startedAt + WATCH.maxMs;
+      delete m.watchStarting;
+      await this.#saveMeta();
+      for (let i2 = 1; i2 <= demo.agents; i2++) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${m.slug}#${i2}`)).start(m.slug, i2, demo.speed, demo.startedAt);
+      log("landing", "watch_ready", { slug: m.slug, forksToDelete: forks.length });
+      for (let i2 = 0; i2 < forks.length; i2 += 10) await Promise.all(forks.slice(i2, i2 + 10).map((f) => this.env.ARTIFACTS.delete(f).catch(() => false)));
+    } catch (_) {
+      var _error2 = _, _hasError = true;
+    } finally {
+      __callDispose(_stack, _error2, _hasError);
+    }
+  }
+  /** Is a visitor's run going (reset/start by the owner must not preempt it)? */
+  async publicActive() {
+    const m = await this.#m();
+    return !!m.demo?.publicRun && this.#active(m);
+  }
+  /** A run is still going while its agents work OR its changes are still in line / landing. */
+  #active(m) {
+    return !!m.demo?.running || m.waiting.length > 0 || !!m.running || !!m.watchPrep;
+  }
+  /** Version check after a deploy: a Durable Object that never went idle keeps the old code. */
+  async version() {
+    return this.env.CF_VERSION_METADATA?.id || null;
+  }
+  /** Restart this object on the deployed code (admin, src/landing/routes.ts 'restart'). */
+  /** Restart on the deployed code. Arms the alarm first: an alarm cut by the abort is not retried,
+   *  and a run's queue sat still for minutes after a restart (stage 2, 2026-10-08). */
+  async restart() {
+    await this.ctx.storage.setAlarm(Date.now() + 2e3);
+    this.ctx.abort("restart on the deployed code");
+  }
+  async demoForks() {
+    return (await this.#m()).demoForks || [];
+  }
+  /** Forget every record (demo reset). Main is reset separately by the demo. */
+  async clear() {
+    const m = await this.#m();
+    if (m.running) throw new Error("a train is running");
+    for (const id of m.order) await this.ctx.storage.delete(`c:${id}`);
+    for (const id of m.trains) await this.ctx.storage.delete(`t:${id}`);
+    if (m.flags.board) this.#bsql().exec(`DELETE FROM board`);
+    this.#meta = { ...m, aliases: [], boardIntent: {}, boardClaims: {}, dedupeLists: [], waiting: [], order: [], trains: [], tree: void 0, demoTaken: {}, demoForks: [], demoBusyNext: 0, landings: [], bounces: [], demo: m.demo && !m.demo.running ? null : m.demo };
+    await this.#saveMeta();
+  }
+  /** The demo's hard cap (20 min) and keep-alive: checked on every alarm. */
+  async #demoTick() {
+    const m = await this.#m();
+    if (!m.demo?.running) return;
+    if (Date.now() > m.demo.endsAt) {
+      await this.demoStop("time cap (20 min)");
+      return;
+    }
+    await this.#arm(6e4);
+  }
+  /** Tell the scripted agents what happened to their changes (bounced → fix, lead → redo). */
+  async #notifyDemo(t2) {
+    const m = await this.#m();
+    if (!m.demo?.running) return;
+    for (const id of t2.changes) {
+      const c = await this.#get(id);
+      if (!c || c.kind !== "demo" || c.state !== "bounced" && c.state !== "with-lead") continue;
+      const n2 = Number(c.agent.match(/(\d+)$/)?.[1] || 0);
+      if (n2) await this.env.DemoAgent.get(this.env.DemoAgent.idFromName(`${m.slug}#${n2}`)).nudge(c.id, c.state).catch((e2) => log("landing", "demo_nudge_failed", { id, err: String(e2) }));
+    }
+  }
+  /** For scripted agents: the change, and whether the demo still runs. */
+  async demoState() {
+    const m = await this.#m();
+    return { running: !!m.demo?.running, speed: m.demo?.speed || 1, startedAt: m.demo?.startedAt || 0, mode: m.demo?.mode || "story" };
+  }
+  async change(id) {
+    return this.#get(id);
+  }
+  /** The next task of the script for scripted agent n (one task per change, in order; a
+   *  stacked task only once the change it builds on has pushed). Null when none is ready. */
+  async demoNext(n2, runId) {
+    const m = await this.#m();
+    if (!m.demo?.running || m.demo.startedAt !== runId || n2 > m.demo.agents) return { key: "", stop: true };
+    for (const c of await this.#all()) {
+      if (c.kind !== "demo" || c.agent !== `scripted agent ${n2}` || c.state !== "bounced" && c.state !== "with-lead") continue;
+      const mark = `${c.state}@${c.tries}`;
+      if (c.choreTaken === mark) continue;
+      c.choreTaken = mark;
+      await this.#put(c);
+      log("landing", "demo_chore", { slug: m.slug, n: n2, id: c.id, chore: c.state === "bounced" ? "fix" : "redo" });
+      return { key: c.task || "", chore: c.state === "bounced" ? "fix" : "redo", id: c.id };
+    }
+    if (m.demo?.mode === "busy") {
+      const i2 = m.demoBusyNext || 0;
+      if (i2 >= BUSY_MAX_TASKS) return null;
+      if (m.waiting.length >= BUSY_MAX_WAITING) return null;
+      m.demoBusyNext = i2 + 1;
+      await this.#saveMeta();
+      return { key: `busy:${i2}` };
+    }
+    const taken = m.demoTaken || (m.demoTaken = {});
+    for (const t2 of TASKS) {
+      const v = taken[t2.key];
+      if (v && !(v.startsWith("pending:") && Date.now() - Number(v.slice(8)) > 12e4)) continue;
+      let stackOn;
+      if (t2.stackOn) {
+        const pid = taken[t2.stackOn];
+        const parent = pid && !pid.startsWith("pending:") ? await this.#get(pid) : null;
+        if (!parent?.commit) continue;
+        stackOn = { id: parent.id, fork: parent.fork, commit: parent.commit };
+      }
+      taken[t2.key] = `pending:${Date.now()}`;
+      await this.#saveMeta();
+      log("landing", "demo_task", { slug: m.slug, n: n2, task: t2.key });
+      return { key: t2.key, ...stackOn ? { stackOn } : {} };
+    }
+    return null;
+  }
+  /** A plain-words event on a change (scripted agents say what they are doing). */
+  async note(id, what, detail2) {
+    const c = await this.#get(id);
+    if (!c) return;
+    if (what === "working" && c.state !== "landed") c.state = "working";
+    this.#ev(c, what, detail2);
+    await this.#put(c);
+  }
+  /** The change now lives on another fork (the lead redid it on a fresh fork of main). */
+  async rebase(id, fork, remote, base) {
+    const c = await this.#get(id);
+    if (!c) throw new Error("unknown change");
+    c.fork = fork;
+    c.remote = remote;
+    c.base = base;
+    c.commit = null;
+    c.stackedOn = null;
+    await this.#put(c);
+    if (c.kind === "demo") {
+      const m = await this.#m();
+      m.demoForks = [...m.demoForks || [], fork];
+      await this.#saveMeta();
+    }
+  }
+};
+
+// ../src/landing/routes.ts
+var json4 = /* @__PURE__ */ __name((v, status2 = 200) => Response.json(v, { status: status2, headers: { "cache-control": "no-store" } }), "json");
+var landingStub = /* @__PURE__ */ __name((env, slug) => env.Landing.get(env.Landing.idFromName(slug)), "landingStub");
+async function resetDemo(env, info, L2) {
+  var _stack = [];
+  try {
+    const repo = __using(_stack, await env.ARTIFACTS.get(info.repo));
+    const head3 = (await repo.log({ limit: 1 }).catch(() => []))[0]?.hash || null;
+    await L2.demoStop("reset");
+    const forks = await L2.demoForks();
+    await L2.clear();
+    const token = (await repo.createToken("write", 600)).plaintext;
+    const commit = await pushSeed(info.remote, token, SEED, head3, "Reset the demo to the first version");
+    let deleted = 0;
+    for (let i2 = 0; i2 < forks.length; i2 += 10)
+      deleted += (await Promise.all(forks.slice(i2, i2 + 10).map((f) => env.ARTIFACTS.delete(f).catch(() => false)))).filter(Boolean).length;
+    log("landing", "demo_reset", { slug: info.slug, commit, forksDeleted: deleted });
+    return { ok: true, commit, forksDeleted: deleted };
+  } catch (_) {
+    var _error2 = _, _hasError = true;
+  } finally {
+    __callDispose(_stack, _error2, _hasError);
+  }
+}
+__name(resetDemo, "resetDemo");
+async function landingRoute(request, env, info, verb, me) {
+  const L2 = landingStub(env, info.slug);
+  if (verb === "" && request.method === "GET") return json4(await L2.view(info.slug));
+  if (verb === "watch" && request.method === "POST") {
+    if (info.private) return json4({ error: "no such project" }, 404);
+    const ip = me.admin ? "admin" : request.headers.get("cf-connecting-ip") || "unknown";
+    const c = await L2.watchClaim(ip);
+    if (c.state === "limit") return json4({ ...c, why: c.reason, nextAt: Date.now() + c.retryAfterS * 1e3 });
+    if (c.state === "running") return json4(c);
+    return json4({ state: "started", startedAt: c.startedAt, endsAt: c.endsAt, startedNow: true, preparing: true });
+  }
+  if (verb === "board" && request.method === "GET") {
+    const u2 = new URL(request.url);
+    const recent = Math.min(24 * 60, Number(u2.searchParams.get("recent") ?? 30) || 0) * 6e4;
+    const who2 = await L2.boardWho({ recent, files: u2.searchParams.get("files") || "", area: u2.searchParams.get("area") });
+    return json4(u2.searchParams.has("tail") ? { ...who2, tail: await L2.boardTail(Number(u2.searchParams.get("tail")) || 50) } : who2);
+  }
+  if (info.owner !== me.handle && !me.admin) return json4({ error: "not your project" }, 403);
+  if (verb === "restart" && me.admin) {
+    let merger = null;
+    try {
+      merger = (await env.MergeBox.get(env.MergeBox.idFromName(`${info.slug}--merge`)).state()).version || null;
+    } catch {
+    }
+    const before = { landing: await L2.version().catch(() => null), merger };
+    await L2.restart().catch(() => {
+    });
+    await env.MergeBox.get(env.MergeBox.idFromName(`${info.slug}--merge`)).restart().catch(() => {
+    });
+    return json4({ before, now: env.CF_VERSION_METADATA?.id || null });
+  }
+  const body = request.method === "POST" ? await request.json().catch(() => ({})) : {};
+  try {
+    if (verb === "approve" && request.method === "POST") return json4(await L2.approve(String(body.id || "")));
+    if (verb === "flags" && request.method === "POST") {
+      const model = /* @__PURE__ */ __name((v) => typeof v === "string" && /^(sonnet|haiku|opus|claude-[a-z0-9-]{3,40})$/.test(v) ? { ok: v } : v === null ? { ok: void 0 } : null, "model");
+      const am = model(body.agentModel), rm = model(body.replayModel);
+      if (typeof body.unlisted === "boolean") await env.Project.get(env.Project.idFromName(info.slug)).setUnlisted(body.unlisted);
+      if (typeof body.landing === "boolean") await env.Project.get(env.Project.idFromName(info.slug)).setLanding(body.landing);
+      return json4(await L2.setFlags(info.slug, {
+        ...typeof body.llmReplay === "boolean" ? { llmReplay: body.llmReplay } : {},
+        ...typeof body.publicWatch === "boolean" ? { publicWatch: body.publicWatch } : {},
+        // A crew run: caps {agents, awake}, reviewers (pool size, 1-4), budgetUsd (hard stop), halted:false to resume.
+        ...body.caps && typeof body.caps === "object" ? { caps: { agents: Math.min(16, Number(body.caps.agents) || 0) || void 0, awake: Math.min(16, Number(body.caps.awake) || 0) || void 0 } } : body.caps === null ? { caps: void 0 } : {},
+        ...Number(body.reviewers) >= 0 && body.reviewers !== null && body.reviewers !== void 0 && body.reviewers !== "" ? { reviewers: Math.min(6, Math.round(Number(body.reviewers))) } : {},
+        ...Number(body.budgetUsd) > 0 ? { budgetUsd: Math.min(50, Number(body.budgetUsd)) } : body.budgetUsd === null ? { budgetUsd: void 0 } : {},
+        ...body.halted === false ? { halted: false } : {},
+        ...typeof body.autoMerge === "boolean" ? { autoMerge: body.autoMerge } : {},
+        // Variants lab knobs (docs/lab/runs-schema.md).
+        ...model(body.plannerModel) ? { plannerModel: model(body.plannerModel).ok } : {},
+        ...model(body.coderModel) ? { coderModel: model(body.coderModel).ok } : {},
+        ...model(body.reviewerModel) ? { reviewerModel: model(body.reviewerModel).ok } : {},
+        ...body.reviewStyle === "read" || body.reviewStyle === "adversarial" ? { reviewStyle: body.reviewStyle } : {},
+        ...["intent", "ffa", "phases", "stacking", "leads", "github"].includes(String(body.policy)) ? { policy: body.policy } : {},
+        ...Number(body.trainMax) >= 1 ? { trainMax: Math.min(24, Math.round(Number(body.trainMax))) } : {},
+        ...typeof body.claims === "boolean" ? { claims: body.claims } : {},
+        ...typeof body.dedupe === "boolean" ? { dedupe: body.dedupe } : {},
+        ...typeof body.board === "boolean" ? { board: body.board } : {},
+        ...typeof body.crossDedupe === "boolean" ? { crossDedupe: body.crossDedupe } : {},
+        ...typeof body.claimNext === "boolean" ? { claimNext: body.claimNext } : {},
+        ...typeof body.nextTask === "string" ? { nextTask: body.nextTask.slice(0, 1e3) || void 0 } : body.nextTask === null ? { nextTask: void 0 } : {},
+        // agentModel: the model this project's agent boxes run on the owner's subscription (a cheap test);
+        // replayModel: the model tier-2 replays use (default Haiku 5.5).
+        ...am ? { agentModel: am.ok } : {},
+        ...rm ? { replayModel: rm.ok } : {}
+      }));
+    }
+    if (verb === "state" && me.admin) {
+      const v = await L2.view(info.slug);
+      const agents = [];
+      for (let i2 = 1; i2 <= (v.demo?.agents || 0); i2++) agents.push(await env.DemoAgent.get(env.DemoAgent.idFromName(`${info.slug}#${i2}`)).peek());
+      const costs = (await env.Ledger.get(env.Ledger.idFromName(info.owner)).rows(2).catch(() => [])).filter((r2) => r2.project.includes(info.name));
+      return json4({ merger: await env.MergeBox.get(env.MergeBox.idFromName(`${info.slug}--merge`)).state(), agents, costs });
+    }
+    if (verb === "demo" && request.method === "POST") {
+      const action = String(body.action || "");
+      if (action === "start") return json4(await L2.demoStart(info.slug, Number(body.agents) || 4, Number(body.speed) || 1, body.mode === "busy" ? "busy" : "story", { force: body.force === true }));
+      if (action === "stop") return json4(await L2.demoStop());
+      if (action === "seed") {
+        var _stack = [];
+        try {
+          const repo = __using(_stack, await env.ARTIFACTS.get(info.repo));
+          const head3 = (await repo.log({ limit: 1 }).catch(() => []))[0]?.hash || null;
+          if (head3) return json4({ error: "not empty: use reset" }, 400);
+          const token = (await repo.createToken("write", 600)).plaintext;
+          const commit = await pushSeed(info.remote, token, SEED, null, "Corner Caf\xE9: the first version");
+          await env.Project.get(env.Project.idFromName(info.slug)).setLanding(true);
+          log("landing", "demo_seed", { slug: info.slug, commit });
+          return json4({ ok: true, commit });
+        } catch (_) {
+          var _error2 = _, _hasError = true;
+        } finally {
+          __callDispose(_stack, _error2, _hasError);
+        }
+      }
+      if (action === "reset") {
+        if (body.force !== true && await L2.publicActive()) return json4({ error: "a visitor's run is going on this project; it is never preempted (force: true to override)" }, 409);
+        return json4(await resetDemo(env, info, L2));
+      }
+      return json4({ error: `action: start (mode story|busy, agents 1-${DEMO_MAX_AGENTS}, speed 0.5-4), stop, reset, seed` }, 400);
+    }
+  } catch (e2) {
+    return json4({ error: String(e2?.message || e2) }, 400);
+  }
+  return json4({ error: "unknown landing verb" }, 404);
+}
+__name(landingRoute, "landingRoute");
+
+// ../src/landing/hooks.ts
+var landingOn = /* @__PURE__ */ __name((info) => !!info?.landing, "landingOn");
+var L = /* @__PURE__ */ __name((env, slug) => env.Landing.get(env.Landing.idFromName(slug)), "L");
+async function onSpawn(env, info, agent, o2) {
+  await L(env, info.slug).record(info.slug, {
+    id: agent.id,
+    title: agent.task.split("\n")[0].slice(0, 60),
+    intent: agent.request ? `${agent.task}
+
+Asked: ${agent.request}` : agent.task,
+    agent: `agent ${agent.id.split("--")[1]}`,
+    kind: "agent",
+    fork: agent.fork,
+    remote: agent.remote,
+    base: agent.base?.commit || null,
+    claims: (o2.files || []).map((f) => f.trim().replace(/^\.?\//, "")).filter(Boolean).slice(0, 50),
+    stackedOn: o2.on || null
+  });
+}
+__name(onSpawn, "onSpawn");
+async function onPushed(env, ctx, info, agentId, note, pooled = false) {
+  const a2 = info.agents.find((x) => x.id === agentId);
+  if (!a2) return;
+  const tip = await head(env, ctx, a2.fork);
+  if (!tip) return;
+  const L_ = L(env, info.slug);
+  const rec = await L_.change(agentId);
+  let base = a2.base ? { commit: a2.base.commit, tree: a2.base.tree } : null;
+  try {
+    var _stack = [];
+    try {
+      const mainRepo = __using(_stack, await env.ARTIFACTS.get(info.repo));
+      const forkRepo = __using(_stack, await env.ARTIFACTS.get(a2.fork));
+      const forkLog = await forkRepo.log({ limit: 200 });
+      const parent = rec?.stackedOn ? await L_.change(rec.stackedOn) : null;
+      const onParent = parent && parent.state !== "landed" && parent.commit ? forkLog.find((c) => c.hash === parent.commit) : void 0;
+      if (onParent) base = { commit: onParent.hash, tree: onParent.treeHash };
+      else {
+        const onMain = new Set((await mainRepo.log({ limit: 200 })).map((c) => c.hash));
+        const meet = forkLog.find((c) => onMain.has(c.hash));
+        if (meet && meet.hash !== base?.commit) base = { commit: meet.hash, tree: meet.treeHash };
+      }
+    } catch (_) {
+      var _error2 = _, _hasError = true;
+    } finally {
+      __callDispose(_stack, _error2, _hasError);
+    }
+  } catch (e2) {
+    log("landing", "merge_base_failed", { agentId, err: String(e2) });
+  }
+  let files = [];
+  if (base?.tree) files = (await diffTrees(env, ctx, info.repo, base.tree, a2.fork, tip.tree).catch(() => [])).map((c) => c.path);
+  if (!rec) await onSpawn(env, info, a2, {});
+  await L_.pushed(agentId, tip.commit, files, note || void 0, base?.commit);
+  if (pooled === "none") await L_.reviewed(agentId, "auto", "no reviewer in this variant", true);
+  else if (pooled) await L_.queueReview(agentId);
+  else await L_.reviewing(agentId);
+}
+__name(onPushed, "onPushed");
+async function onVerdict(env, slug, agentId, verdict, notes) {
+  await L(env, slug).reviewed(agentId, verdict, notes);
+}
+__name(onVerdict, "onVerdict");
+async function onMerge(env, slug, agentId) {
+  const c = await L(env, slug).approve(agentId);
+  log("landing", "merge_tap", { slug, agentId, state: c.state });
+  return c;
+}
+__name(onMerge, "onMerge");
+
+// ../src/landing/merger.ts
+import { DurableObject as DurableObject11 } from "cloudflare:workers";
+import MERGEJOB from "./2035ee865ec5be7ed21b404714303f31103f75a0-mergejob.mjs";
+var INSTANCE3 = { vcpu: 1, memoryMib: 3072, diskMb: 6144 };
+var IDLE_STOP_MS2 = 5 * 6e4;
+var MERGER_V = "2026-10-07c";
+var ENTRYPOINT3 = ["/bin/bash", "-c", "chown 0:0 / 2>/dev/null; mkdir -p /m /opt/qb && exec sleep infinity"];
+var MergeBox = class extends DurableObject11 {
+  static {
+    __name(this, "MergeBox");
+  }
+  get c() {
+    return this.ctx.container;
+  }
+  async #sh(cmd, env = {}) {
+    const p = await this.c.exec(["bash", "-c", cmd], { env });
+    const o2 = await p.output();
+    const dec = new TextDecoder();
+    return { exitCode: o2.exitCode, stdout: dec.decode(o2.stdout), stderr: dec.decode(o2.stderr) };
+  }
+  async enqueue(job) {
+    const q = await this.ctx.storage.get("queue") || [];
+    q.push(job);
+    await this.ctx.storage.put("queue", q);
+    await this.ctx.storage.setAlarm(Date.now() + 100);
+    log("merger", "queued", { slug: job.slug, train: job.trainId, changes: job.changes.length, depth: q.length });
+  }
+  async alarm() {
+    const q = await this.ctx.storage.get("queue") || [];
+    const stale = await this.ctx.storage.get("running");
+    if (stale) {
+      await this.ctx.storage.delete("running");
+      if ((stale.tries || 0) < 2) {
+        q.unshift({ ...stale, tries: (stale.tries || 0) + 1 });
+        log("merger", "resumed", { train: stale.trainId, tries: (stale.tries || 0) + 1 });
+      } else await this.#report(stale.slug, { trainId: stale.trainId, ok: false, error: "the merger was interrupted three times", changes: [] });
+    }
+    const job = q.shift();
+    if (!job) {
+      const last = await this.ctx.storage.get("lastJob") || 0;
+      if (this.c.running && Date.now() - last > IDLE_STOP_MS2) {
+        await this.c.destroy().catch(() => {
+        });
+        log("merger", "idle_stop", {});
+      } else if (this.c.running) await this.ctx.storage.setAlarm(Date.now() + 6e4);
+      return;
+    }
+    await this.ctx.storage.put({ queue: q, running: job });
+    const result = await this.#run(job);
+    await this.ctx.storage.delete("running");
+    await this.ctx.storage.put("lastJob", Date.now());
+    if (!result.ok && /Network connection lost|temporarily unavailable/i.test(result.error || "") && (job.tries || 0) < 2) {
+      q.unshift({ ...job, tries: (job.tries || 0) + 1 });
+      await this.ctx.storage.put("queue", q);
+      await this.ctx.storage.setAlarm(Date.now() + 5e3);
+      return;
+    }
+    await this.#report(job.slug, result);
+    await this.ctx.storage.setAlarm(Date.now() + (q.length ? 100 : 6e4));
+  }
+  async #report(slug, r2) {
+    await this.ctx.storage.put("last", { ...r2, at: Date.now() });
+    try {
+      await this.env.Landing.get(this.env.Landing.idFromName(slug)).trainDone(r2);
+    } catch (e2) {
+      log("merger", "report_failed", { slug, train: r2.trainId, err: String(e2) });
+    }
+  }
+  async #ensureContainer() {
+    if (this.c.running) {
+      try {
+        await this.#sh("true");
+        return;
+      } catch {
+        try {
+          await this.c.destroy();
+        } catch {
+        }
+      }
+    }
+    const t0 = Date.now();
+    const managed = this.env.BOX_IMAGE === "managed";
+    try {
+      this.c.start({ instance: INSTANCE3, enableInternet: true, entrypoint: ENTRYPOINT3, image: managed ? MANAGED_IMAGE : this.c.images.computer });
+    } catch (e2) {
+      log("merger", "start_threw", { err: String(e2), stack: String(e2?.stack || ""), running: !!this.c.running, image: !!this.c.images?.computer });
+      throw e2;
+    }
+    const note = /* @__PURE__ */ __name((event, err) => {
+      log("merger", event, { err: err === void 0 ? void 0 : String(err).slice(0, 400) });
+      this.ctx.storage.put("containerEvents", [{ at: Date.now(), event, err: err === void 0 ? null : String(err).slice(0, 400) }]).catch(() => {
+      });
+    }, "note");
+    try {
+      this.c.monitor().then(() => note("container_exited"), (e2) => note("container_failed", e2));
+    } catch (e2) {
+      note("monitor_threw", e2);
+    }
+    for (let i2 = 0; ; i2++) {
+      try {
+        await this.#sh("true");
+        break;
+      } catch (e2) {
+        if (i2 === 0 || i2 % 10 === 9) log("merger", "container_not_ready", { tries: i2 + 1, ms: Date.now() - t0, err: String(e2).slice(0, 200), running: !!this.c.running });
+        if (Date.now() - t0 > 9e4) throw e2;
+        await new Promise((r2) => setTimeout(r2, 1e3));
+      }
+    }
+    if (managed) {
+      const g = await this.#sh("command -v git >/dev/null || { apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates >/dev/null; }; git --version; node --version");
+      log("merger", "managed_setup", { exit: g.exitCode, out: g.stdout.trim().slice(0, 120), err: g.stderr.slice(-300), ms: Date.now() - t0 });
+      if (g.exitCode !== 0) throw new Error(`merger setup failed: ${g.stderr.slice(-200)}`);
+    }
+    log("merger", "container_started", { ms: Date.now() - t0, managed });
+  }
+  async #run(job) {
+    const t0 = Date.now();
+    try {
+      await this.#ensureContainer();
+      await this.#sh(`mkdir -p /opt/qb && printf '%s' "$JS" > /opt/qb/mergejob.mjs`, { JS: MERGEJOB });
+      const spec = { dir: `/m/${job.slug}`, mainRemote: job.mainRemote, mainToken: job.mainToken, branch: job.branch, check: job.check ?? null, changes: job.changes, llm: job.llm || null, handlers: job.handlers !== false, noChecks: !!job.noChecks };
+      const r2 = await this.#sh("node /opt/qb/mergejob.mjs 2>&1", { JOB: JSON.stringify(spec), HOME: "/root", ...job.llm ? { QB_CLAUDE_TOKEN: this.env.CLAUDE_CODE_OAUTH_TOKEN } : {} });
+      const line2 = r2.stdout.split("\n").find((l) => l.startsWith("QB_RESULT "));
+      const progress = r2.stdout.split("\n").filter((l) => l && !l.startsWith("QB_RESULT ")).slice(-60).join("\n");
+      const clean = /* @__PURE__ */ __name((s2) => [job.mainToken, ...job.changes.map((c) => c.token), ...job.llm ? [this.env.CLAUDE_CODE_OAUTH_TOKEN] : []].filter(Boolean).reduce((a2, t2) => a2.replaceAll(t2.split("?")[0], "***"), s2), "clean");
+      if (!line2) {
+        log("merger", "no_result", { train: job.trainId, exit: r2.exitCode, tail: clean(progress).slice(-800) });
+        return { trainId: job.trainId, ok: false, error: "the merge job printed no result", log: clean(progress), changes: [] };
+      }
+      const out = JSON.parse(line2.slice(10));
+      log("merger", "train_done", {
+        slug: job.slug,
+        train: job.trainId,
+        ok: out.ok,
+        pushed: out.pushed,
+        stale: out.stale,
+        notes: out.notesPushed,
+        solo: out.solo,
+        ms: Date.now() - t0,
+        changes: (out.changes || []).map((c) => ({ id: c.id, landed: c.landed, how: c.how, conflicts: c.conflicts, bounced: c.bounced, why: c.why }))
+      });
+      return { trainId: job.trainId, ...out, changes: out.changes || [], log: clean(progress) };
+    } catch (e2) {
+      log("merger", "error", { train: job.trainId, err: String(e2?.stack || e2).slice(0, 600) });
+      return { trainId: job.trainId, ok: false, error: String(e2?.message || e2), log: String(e2?.stack || e2).slice(0, 2e3), changes: [], ms: Date.now() - t0 };
+    }
+  }
+  async restart() {
+    await this.c.destroy().catch(() => {
+    });
+    this.ctx.abort("restart on the deployed code");
+  }
+  async state() {
+    return {
+      code: MERGER_V,
+      version: this.env.CF_VERSION_METADATA?.id || null,
+      instance: INSTANCE3,
+      containerEvents: await this.ctx.storage.get("containerEvents"),
+      running: !!this.ctx.container?.running,
+      queue: (await this.ctx.storage.get("queue") || []).map((j) => j.trainId),
+      busy: (await this.ctx.storage.get("running"))?.trainId || null,
+      last: await this.ctx.storage.get("last"),
+      alarm: await this.ctx.storage.getAlarm()
+    };
+  }
+};
+
+// ../src/index.ts
 var jwks = null;
-var json4 = /* @__PURE__ */ __name((data, status2 = 200) => Response.json(data, { status: status2 }), "json");
+var json5 = /* @__PURE__ */ __name((data, status2 = 200) => Response.json(data, { status: status2 }), "json");
 var projectStub = /* @__PURE__ */ __name((env, slug) => env.Project.get(env.Project.idFromName(slug)), "projectStub");
 var boxStub = /* @__PURE__ */ __name((env, agentId) => env.AgentBox.get(env.AgentBox.idFromName(agentId)), "boxStub");
 var INLINE_BOOT_MS = 12e3;
@@ -76230,6 +80290,11 @@ async function bootSpec(env, agentId, apiBase) {
     ccEnv = `CLAUDE_CODE_OAUTH_TOKEN=${env.CLAUDE_CODE_OAUTH_TOKEN}`;
     keyTail = env.CLAUDE_CODE_OAUTH_TOKEN.slice(-20);
     billing = "sub";
+    const pinfo = await projectStub(env, slug).info();
+    const lf = landingOn(pinfo) ? await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null) : null;
+    const role = roleOf(agentId);
+    const lm = lf ? (role === "router" ? lf.plannerModel : role === "reviewer" ? lf.reviewerModel : role === "agent" ? lf.coderModel : void 0) || lf.agentModel : void 0;
+    if (lm) ccEnv += ` ANTHROPIC_MODEL=${modelId(lm)}`;
   } else {
     const u2 = await userByHandle(env, owner);
     if (!u2?.apiKeyEnc) throw new Error(`${owner} has not added an Anthropic API key yet (Settings)`);
@@ -76244,6 +80309,7 @@ async function bootSpec(env, agentId, apiBase) {
       billing = "api";
     }
   }
+  const boardOn = landingOn(await projectStub(env, slug).info().catch(() => null)) && !!(await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null))?.board;
   return {
     agentId,
     task: r2.task,
@@ -76251,6 +80317,7 @@ async function bootSpec(env, agentId, apiBase) {
     project: slug.replace(".", "/"),
     remote: r2.remote,
     gitToken: r2.token,
+    board: boardOn,
     agentToken: await agentToken(env, agentId),
     apiBase,
     uiHost: env.UI_HOST,
@@ -76281,13 +80348,14 @@ async function wake(env, agentId, apiBase) {
   const entries = await registry(env).list();
   const infos = await Promise.all(entries.map((e2) => e2.slug === info.slug ? info : projectStub(env, e2.slug).info().catch(() => null)));
   const awake = [];
-  await Promise.all(infos.flatMap((pi) => (pi ? [...pi.agents.map((a2) => a2.id), `${pi.slug}--router`, `${pi.slug}--review`] : []).filter((id) => id !== agentId).map(async (id) => {
+  const pool = /* @__PURE__ */ __name((pi) => pi.landing ? [2, 3, 4, 5, 6].map((n2) => `${pi.slug}--review${n2}`) : [], "pool");
+  await Promise.all(infos.flatMap((pi) => (pi ? [...pi.agents.map((a2) => a2.id), `${pi.slug}--router`, `${pi.slug}--review`, ...pool(pi)] : []).filter((id) => id !== agentId).map(async (id) => {
     if (await boxStub(env, id).isAwake().catch(() => false)) awake.push({ id, slug: projectOf(id), owner: id.split(".")[0], role: roleOf(id) });
   })));
   const total = Number(env.MAX_TOTAL_AWAKE || 20);
   if (awake.length >= total) return refuse("account cap", { total, awake: awake.length }, `qodebase is busy: ${total} boxes are awake across all projects. Try again in a few minutes`);
   const role = roleOf(agentId);
-  const max = Number(env.MAX_AWAKE_BOXES || 5);
+  const max = (await landingCaps(env, info.slug))?.awake || Number(env.MAX_AWAKE_BOXES || 5);
   if (role === "agent" && awake.filter((b) => b.slug === info.slug && b.role === "agent").length >= max) {
     return refuse("project cap", { max }, `${max} agents already awake in this project`);
   }
@@ -76381,7 +80449,7 @@ var app = {
       const cf2 = request.cf || {};
       if (url2.pathname === "/robots.txt") return new Response("User-agent: *\nDisallow: /p/\nDisallow: /import\nDisallow: /api/\nDisallow: /a/\nDisallow: /login\n", { headers: { "content-type": "text/plain" } });
       if (url2.pathname === "/icon.svg") return new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#17695a"/><circle cx="121" cy="110" r="48" fill="none" stroke="#fff" stroke-width="30"/><path d="M154 58h30v138h-30z" fill="#fff"/></svg>', { headers: { "content-type": "image/svg+xml", "cache-control": "public, max-age=86400" } });
-      if (url2.pathname === "/version.json") return json4({ name: "forq", version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
+      if (url2.pathname === "/version.json") return json5({ name: "forq", version: env.CF_VERSION_METADATA?.id || null, at: env.CF_VERSION_METADATA?.timestamp || null });
       if (url2.pathname === "/health.json") return health(env, ctx, url2.origin);
       if (url2.pathname === "/e") return kstatsForward(request, env, ctx);
       if (url2.pathname === "/feedback") return feedback(request, env);
@@ -76389,6 +80457,11 @@ var app = {
         const em = await sessionEmail(env, request);
         const u2 = em ? await userByEmail(env, em) : null;
         return html3(withGlobal(aboutPage(!!env.SELF_HOST), "home", 0, u2?.handle || "", "d"));
+      }
+      if (url2.pathname === "/lab" || url2.pathname === "/lab/") {
+        const em = await sessionEmail(env, request);
+        const u2 = em ? await userByEmail(env, em) : null;
+        return html3(withGlobal(labPage({ own: u2?.handle === "eyal" }), "home", 0, u2?.handle || "", "d"));
       }
       if (url2.pathname === "/privacy") return html3(privacyPage());
       if (url2.pathname === "/personal-agents" && env.CF_OAUTH_CLIENT_ID) return html3(personalAgentsPage());
@@ -76399,7 +80472,16 @@ var app = {
       }
       if (url2.pathname === "/talk.js" || url2.pathname === "/talk-voice.js" || url2.pathname.startsWith("/api/talk/") || url2.pathname.startsWith("/agents/talk-voice/")) {
         const w = await who(request, env);
-        const r2 = await talkRoute(request, env, ctx, url2, w?.kind === "user" && !w.anon ? { handle: w.handle, admin: w.admin } : null);
+        const me2 = w?.kind === "user" && !w.anon ? { handle: w.handle, admin: w.admin } : null;
+        if (env.TALK) {
+          const h2 = new Headers(request.headers);
+          h2.delete("x-talk-who");
+          h2.delete("x-talk-site");
+          if (me2) h2.set("x-talk-who", JSON.stringify(me2));
+          if (env.CF_VERSION_METADATA?.tag) h2.set("x-talk-site", JSON.stringify({ sha: env.CF_VERSION_METADATA.tag, built: env.CF_VERSION_METADATA.timestamp }));
+          return env.TALK.fetch(new Request(url2.toString(), { method: request.method, headers: h2, body: request.body, redirect: "manual", ...request.body ? { duplex: "half" } : {} }));
+        }
+        const r2 = await talkRoute(request, env, ctx, url2, me2);
         if (r2) return r2;
       }
       if (url2.pathname.startsWith("/api/cli/") || url2.pathname.startsWith("/cli") || url2.pathname === "/llms.txt") {
@@ -76424,13 +80506,14 @@ var app = {
     if (url2.pathname === "/login" && url2.hostname === env.UI_HOST) return loginRoute(request, env, url2);
     if (url2.pathname === "/logout") return new Response(null, { status: 302, headers: { location: "/", "set-cookie": clearCookie() } });
     const me = await who(request, env);
-    if (!me) return json4({ error: "unauthorized" }, 401);
+    if (!me) return json5({ error: "unauthorized" }, 401);
     if (me.kind === "user" && me.anon) {
       const p0 = url2.pathname;
-      const needsUser = request.method !== "GET" && request.method !== "HEAD" || p0 === "/api/costs" || p0 === "/cli/login" || p0.startsWith("/api/cli/") || p0.startsWith("/a/") || p0.endsWith("/agents-html") || p0.startsWith("/api/github") || p0 === "/settings" || p0.startsWith("/api/me");
+      const anonPost = request.method === "POST" && /^\/api\/p\/[a-z0-9-]+\/[a-z0-9-]+\/landing\/watch$/.test(p0);
+      const needsUser = request.method !== "GET" && request.method !== "HEAD" && !anonPost || p0 === "/api/costs" || p0 === "/cli/login" || p0.startsWith("/api/cli/") || p0.startsWith("/a/") || p0.endsWith("/agents-html") || p0.startsWith("/api/github") || p0 === "/settings" || p0.startsWith("/api/me");
       if (needsUser) {
         const login = `/login?next=${encodeURIComponent(request.method === "GET" ? p0 + url2.search : request.headers.get("referer") ? new URL(request.headers.get("referer")).pathname : "/")}`;
-        return request.method === "GET" && (request.headers.get("accept") || "").includes("text/html") ? new Response(null, { status: 302, headers: { location: login } }) : json4({ error: "Sign in first", login }, 401);
+        return request.method === "GET" && (request.headers.get("accept") || "").includes("text/html") ? new Response(null, { status: 302, headers: { location: login } }) : json5({ error: "Sign in first", login }, 401);
       }
     }
     const path2 = url2.pathname;
@@ -76445,7 +80528,11 @@ var app = {
       let m;
       if (m = path2.match(/^\/(?:api\/)?p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/|$)/)) {
         const e2 = await registry(env).get(slugOf(m[1], m[2]));
-        if (e2 && !canSee(e2, me.handle, me.admin)) return path2.startsWith("/api/") ? json4({ error: "no such project" }, 404) : new Response("No such project", { status: 404 });
+        if (e2 && !canSee(e2, me.handle, me.admin)) return path2.startsWith("/api/") ? json5({ error: "no such project" }, 404) : new Response("No such project", { status: 404 });
+      }
+      if (m = path2.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/landing(?:\/([a-z-]+))?$/)) {
+        const info = await projectStub(env, slugOf(m[1], m[2])).info();
+        return info ? landingRoute(request, env, info, m[3] || "", me) : json5({ error: "no such project" }, 404);
       }
       const ui = uiFor(request, env);
       const views = ui === "a" || ui === "b" || ui === "c" || ui === "d";
@@ -76517,43 +80604,43 @@ var app = {
         const u2 = await userByEmail(env, me.email || "");
         if (!u2) return new Response(null, { status: 302, headers: { location: "/login?next=/settings" } });
         const mine = (await listFor(env, me.handle, me.admin)).filter((e2) => e2.owner === u2.handle).length;
-        const page = settingsPage(u2, onSubscription(env, u2.handle), mine, url2.searchParams.has("welcome"), await registry(env).cliTokens(u2.email));
-        return html3(tabsNav ? withGlobal(page, "account", (await globalOf()).inbox, u2.handle, ui) : page);
+        const page2 = settingsPage(u2, onSubscription(env, u2.handle), mine, url2.searchParams.has("welcome"), await registry(env).cliTokens(u2.email));
+        return html3(tabsNav ? withGlobal(page2, "account", (await globalOf()).inbox, u2.handle, ui) : page2);
       }
       if (path2.startsWith("/api/me/") && request.method !== "GET") {
         const u2 = await userByEmail(env, me.email || "");
-        if (!u2) return json4({ error: "Sign in first" }, 401);
+        if (!u2) return json5({ error: "Sign in first" }, 401);
         if (path2 === "/api/me/key" && request.method === "POST") {
           const { key } = await request.json();
           const k2 = String(key || "").trim();
           const c = await checkApiKey(k2);
-          if (!c.ok) return json4({ error: c.error }, 400);
+          if (!c.ok) return json5({ error: c.error }, 400);
           await registry(env).putUser({ ...u2, apiKeyEnc: await encryptKey(env, k2), apiKeyTail: k2.slice(-4), apiKeyCheckedAt: Date.now() });
           log("auth", "api_key_saved", { handle: u2.handle });
-          return json4({ ok: true, tail: k2.slice(-4) });
+          return json5({ ok: true, tail: k2.slice(-4) });
         }
         if (path2 === "/api/me/key" && request.method === "DELETE") {
           const { apiKeyEnc, apiKeyTail, apiKeyCheckedAt, ...rest } = u2;
           await registry(env).putUser(rest);
-          return json4({ ok: true });
+          return json5({ ok: true });
         }
         if (path2 === "/api/me/handle" && request.method === "POST") {
           const { handle } = await request.json();
-          if ((await listFor(env, me.handle, me.admin)).some((e2) => e2.owner === u2.handle)) return json4({ error: "You already own projects under this name, so it cannot change." }, 400);
+          if ((await listFor(env, me.handle, me.admin)).some((e2) => e2.owner === u2.handle)) return json5({ error: "You already own projects under this name, so it cannot change." }, 400);
           const r2 = await claimHandle(env, u2.email, String(handle || ""));
-          if (!r2.ok) return json4({ error: r2.error }, 400);
+          if (!r2.ok) return json5({ error: r2.error }, 400);
           await registry(env).putUser({ ...u2, handle: r2.user.handle });
-          return json4({ ok: true, handle: r2.user.handle });
+          return json5({ ok: true, handle: r2.user.handle });
         }
       }
       if (path2 === "/api/projects" && request.method === "GET") {
         const owner = url2.searchParams.get("owner") || (url2.searchParams.has("mine") ? me.handle : "");
         const list = (await listFor(env, me.handle, me.admin)).filter((e2) => !owner || e2.owner === owner);
-        return json4({ projects: list.slice(0, 500).map((e2) => ({ ...e2, path: `/p/${e2.owner}/${e2.name}`, live: runUrl(runBase, e2.slug) })) });
+        return json5({ projects: list.slice(0, 500).map((e2) => ({ ...e2, path: `/p/${e2.owner}/${e2.name}`, live: runUrl(runBase, e2.slug) })) });
       }
       if (path2 === "/api/costs" && me.handle) {
         const c = await costSummary(env, me.handle);
-        return json4({ today: c.today, week: c.week, month: c.month, pricesChecked: c.pricesChecked });
+        return json5({ today: c.today, week: c.week, month: c.month, pricesChecked: c.pricesChecked });
       }
       if (path2 === "/costs") {
         if (!me.handle) return new Response(null, { status: 302, headers: { location: "/login?next=/costs" } });
@@ -76564,25 +80651,25 @@ var app = {
         const ref = parseRepoRef(q);
         if (ref) {
           const r3 = await getRepo(ref, ctx);
-          return "error" in r3 ? json4(r3, r3.status) : json4({ repos: [r3], exact: true });
+          return "error" in r3 ? json5(r3, r3.status) : json5({ repos: [r3], exact: true });
         }
-        if (q.trim().length < 2) return json4({ repos: [] });
+        if (q.trim().length < 2) return json5({ repos: [] });
         const r2 = await searchRepos(q, ctx);
-        return Array.isArray(r2) ? json4({ repos: r2 }) : json4(r2, r2.status);
+        return Array.isArray(r2) ? json5({ repos: r2 }) : json5(r2, r2.status);
       }
       if (path2 === "/api/build" && request.method === "POST") {
-        if (!me.handle) return json4({ error: "Sign in first" }, 401);
+        if (!me.handle) return json5({ error: "Sign in first" }, 401);
         const b = await request.json().catch(() => ({}));
         const prompt = String(b.prompt || "").trim().slice(0, 3e3);
-        if (prompt.length < 4) return json4({ error: "Say what to build" }, 400);
-        if (!onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json4({ error: "Add your Anthropic API key in Settings first" }, 400);
+        if (prompt.length < 4) return json5({ error: "Say what to build" }, 400);
+        if (!onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json5({ error: "Add your Anthropic API key in Settings first" }, 400);
         const tooMany = await overProjectLimit(env, me.handle);
-        if (tooMany) return json4({ error: tooMany }, 400);
+        if (tooMany) return json5({ error: tooMany }, 400);
         const starter = await projectStub(env, STARTER).info();
         const base = nameFor(String(b.name || "")) || "my-app";
         let name = base;
         for (let i2 = 2; await registry(env).get(slugOf(me.handle, name)); i2++) name = `${base.slice(0, 35)}-${i2}`;
-        if (!NAME_RE.test(name)) return json4({ error: "That name does not work; use letters, digits and dashes" }, 400);
+        if (!NAME_RE.test(name)) return json5({ error: "That name does not work; use letters, digits and dashes" }, 400);
         const slug = slugOf(me.handle, name);
         const p = projectStub(env, slug);
         const desc = prompt.split("\n")[0].slice(0, 140);
@@ -76591,19 +80678,19 @@ var app = {
         if (b.private) await p.setPrivate(true);
         await askRouter(env, ctx, p, slug, buildPayload(prompt, !starter), apiBase, prompt);
         log("build", "started", { slug, chars: prompt.length });
-        return json4({ ok: true, slug, path: `/p/${me.handle}/${name}/changes` });
+        return json5({ ok: true, slug, path: `/p/${me.handle}/${name}/changes` });
       }
       if (path2 === "/api/import" && request.method === "POST") {
         const b = await request.json();
         const ref = parseRepoRef(String(b.repo || ""));
-        if (!ref) return json4({ error: "give a GitHub URL or owner/repo" }, 400);
+        if (!ref) return json5({ error: "give a GitHub URL or owner/repo" }, 400);
         const gh = await getRepo(ref, ctx);
-        if ("error" in gh) return json4(gh, gh.status);
-        if (gh.private) return json4({ error: "private repos cannot be imported" }, 400);
-        if (gh.sizeKb > MAX_IMPORT_KB) return json4({ error: `${gh.fullName} is ${Math.round(gh.sizeKb / 1024)} MB; qodebase imports up to ${MAX_IMPORT_KB / 1024} MB` }, 400);
+        if ("error" in gh) return json5(gh, gh.status);
+        if (gh.private) return json5({ error: "private repos cannot be imported" }, 400);
+        if (gh.sizeKb > MAX_IMPORT_KB) return json5({ error: `${gh.fullName} is ${Math.round(gh.sizeKb / 1024)} MB; qodebase imports up to ${MAX_IMPORT_KB / 1024} MB` }, 400);
         const owner = me.admin && b.as ? b.as : me.handle;
         const tooMany = await overProjectLimit(env, owner);
-        if (tooMany) return json4({ error: tooMany }, 400);
+        if (tooMany) return json5({ error: tooMany }, 400);
         let name = nameFor(gh.name);
         for (let i2 = 2; await registry(env).get(slugOf(owner, name)); i2++) name = `${nameFor(gh.name).slice(0, 35)}-${i2}`;
         const info = await projectStub(env, slugOf(owner, name)).createImported(
@@ -76613,7 +80700,7 @@ var app = {
           gh.description
         );
         if (b.private) await projectStub(env, info.slug).setPrivate(true);
-        return json4({ ...info, private: !!b.private, path: `/p/${owner}/${name}` });
+        return json5({ ...info, private: !!b.private, path: `/p/${owner}/${name}` });
       }
       if (m = path2.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/build-log$/)) {
         const info = await projectStub(env, slugOf(m[1], m[2])).info();
@@ -76622,7 +80709,7 @@ var app = {
         const a2 = ag ? info.agents.find((x) => x.id.split("--")[1] === ag) : void 0;
         return html3(buildLogPage(info, a2 ? `Preview of agent ${ag}` : "Live app (main)", a2 ? a2.preview : info.app));
       }
-      if (views && (m = path2.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(readme|changes|app|history|more|agents|errors|about))?\/?$/))) {
+      if (views && (m = path2.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(readme|changes|app|history|more|agents|errors|about|work))?\/?$/))) {
         const slug = slugOf(m[1], m[2]);
         const p = projectStub(env, slug);
         const info = await p.info();
@@ -76684,7 +80771,7 @@ var app = {
       if (m = path2.match(/^\/a\/([a-z0-9.-]+--[a-z0-9]+)(\/.*)?$/)) {
         const id = m[1];
         const info = await projectStub(env, projectOf(id)).info();
-        if (!info || info.owner !== me.handle && !me.admin) return json4({ error: "not your project" }, 403);
+        if (!info || info.owner !== me.handle && !me.admin) return json5({ error: "not your project" }, 403);
         return agentProxy(request, env, ctx, id, m[2] || "/", url2, apiBase);
       }
       if (m = path2.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/([a-z-]+))?$/)) {
@@ -76692,176 +80779,178 @@ var app = {
         const slug = slugOf(owner, name);
         const p = projectStub(env, slug);
         if (verb === "create" && request.method === "POST") {
-          if (!me.admin) return json4({ error: "admin only" }, 403);
+          if (!me.admin) return json5({ error: "admin only" }, 403);
           const b = await request.json().catch(() => ({}));
-          return json4(await p.create(owner, name, b.description || ""));
+          return json5(await p.create(owner, name, b.description || ""));
         }
         const info = await p.info();
-        if (!info) return json4({ error: "no such project" }, 404);
-        if (verb === "" && request.method === "GET") return json4(info);
+        if (!info) return json5({ error: "no such project" }, 404);
+        if (verb === "" && request.method === "GET") return json5(info);
         if (verb === "fork" && request.method === "POST") {
-          if (info.owner === me.handle) return json4({ error: "this is already yours" }, 400);
+          if (info.owner === me.handle) return json5({ error: "this is already yours" }, 400);
           const tooMany = await overProjectLimit(env, me.handle);
-          if (tooMany) return json4({ error: tooMany }, 400);
+          if (tooMany) return json5({ error: tooMany }, 400);
           let newName = info.name;
           for (let i2 = 2; await registry(env).get(slugOf(me.handle, newName)); i2++) newName = `${info.name}-${i2}`;
-          if (!NAME_RE.test(newName)) return json4({ error: "name too long" }, 400);
+          if (!NAME_RE.test(newName)) return json5({ error: "name too long" }, 400);
           const fi = await projectStub(env, slugOf(me.handle, newName)).createFork(me.handle, newName, info);
-          return json4({ ...fi, path: `/p/${fi.owner}/${fi.name}/changes` });
+          return json5({ ...fi, path: `/p/${fi.owner}/${fi.name}/changes` });
         }
         if (verb === "files") {
           const repo = versionRepo(info, url2.searchParams.get("v") || "");
-          if (!repo) return json4({ error: "unknown version" }, 404);
+          if (!repo) return json5({ error: "unknown version" }, 404);
           const rev = await head(env, ctx, repo);
-          if (!rev) return json4({ files: [] });
+          if (!rev) return json5({ files: [] });
           const r2 = await allFiles(env, ctx, repo, rev.tree);
-          return json4({ files: r2.files.map((f) => f.path), truncated: r2.truncated });
+          return json5({ files: r2.files.map((f) => f.path), truncated: r2.truncated });
         }
         if (verb === "search") {
           const repo = versionRepo(info, url2.searchParams.get("v") || "");
-          if (!repo) return json4({ error: "unknown version" }, 404);
+          if (!repo) return json5({ error: "unknown version" }, 404);
           const rev = await head(env, ctx, repo);
-          if (!rev) return json4({ results: [] });
-          return json4(await p.searchCode(repo, rev.tree, (url2.searchParams.get("q") || "").slice(0, 200)));
+          if (!rev) return json5({ results: [] });
+          return json5(await p.searchCode(repo, rev.tree, (url2.searchParams.get("q") || "").slice(0, 200)));
         }
         if (verb === "git-token" && request.method === "POST") {
-          if (!me.handle) return json4({ error: "Sign in first" }, 401);
+          if (!me.handle) return json5({ error: "Sign in first" }, 401);
           const mine = info.owner === me.handle;
           log("cli", "git_token", { slug, handle: me.handle, write: mine });
-          return json4({ ...await p.gitToken(mine ? "write" : "read"), write: mine });
+          return json5({ ...await p.gitToken(mine ? "write" : "read"), write: mine });
         }
-        if (info.owner !== me.handle && !me.admin) return json4({ error: "not your project" }, 403);
-        if (verb === "main-token" && request.method === "POST" && me.admin) return json4(await p.mainToken());
+        if (info.owner !== me.handle && !me.admin) return json5({ error: "not your project" }, 403);
+        if (verb === "main-token" && request.method === "POST" && me.admin) return json5(await p.mainToken());
         if (verb === "ask" && request.method === "POST") {
           const b = await request.json().catch(() => ({}));
           const question = String(b.question || "").trim().slice(0, 2e3);
           const model = ["opus", "sonnet", "haiku"].includes(String(b.model)) ? String(b.model) : "opus";
-          if (question.length < 3) return json4({ error: "Ask a question" }, 400);
+          if (question.length < 3) return json5({ error: "Ask a question" }, 400);
           const askId = `${slug}--ask`;
           const id = crypto.randomUUID().replace(/-/g, "").slice(0, 10);
           await boxStub(env, askId).startAsk(id, question, await bootSpec(env, askId, apiBase), model);
-          return json4({ id, model, result: `/api/p/${owner}/${name}/ask-result?id=${id}` });
+          return json5({ id, model, result: `/api/p/${owner}/${name}/ask-result?id=${id}` });
         }
         if (verb === "ask-result") {
           const r2 = await boxStub(env, `${slug}--ask`).askResult(url2.searchParams.get("id") || "");
-          return r2 ? json4(r2) : json4({ error: "no such question" }, 404);
+          return r2 ? json5(r2) : json5({ error: "no such question" }, 404);
         }
         if (verb === "visibility" && request.method === "POST") {
           const b = await request.json().catch(() => ({}));
           const ni = await p.setPrivate(!!b.private);
-          return json4({ ok: true, private: !!ni.private });
+          return json5({ ok: true, private: !!ni.private });
         }
         if (verb === "entry" && request.method === "POST") {
           const b = await request.json();
           await p.setEntry(b.entry === null ? null : String(b.entry ?? ""));
-          return json4({ ok: true, entry: (await p.info())?.entry });
+          return json5({ ok: true, entry: (await p.info())?.entry });
         }
         if (verb === "touch" && request.method === "POST" && me.admin) {
           await registry(env).touch(slug);
-          return json4({ ok: true });
+          return json5({ ok: true });
         }
         if (verb === "agents-html") {
           ctx.waitUntil(startReview(env, p, slug, apiBase, () => p.requeueStale()));
         }
         if (verb === "agents-html" && ["a", "b", "c", "d"].includes(uiFor(request, env) || "")) {
           const st = await statusesOf(env, info);
-          return json4({ html: liveV3(url2.searchParams.get("view") || "changes", { info, me: me.handle, runBase, ...st, entry: void 0, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: "" }) });
+          return json5({ html: liveV3(url2.searchParams.get("view") || "changes", { info, me: me.handle, runBase, ...st, entry: void 0, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: "" }) });
         }
-        if (verb === "agents-html") return json4({ html: await renderAgents(env, info, runBase, uiFor(request, env)), tabs: previewTabs(info, runBase) });
+        if (verb === "agents-html") return json5({ html: await renderAgents(env, info, runBase, uiFor(request, env)), tabs: previewTabs(info, runBase) });
         if (verb === "agents" && request.method === "POST") {
           const b = await request.json();
-          return json4(await spawn(env, ctx, slug, String(b.task || ""), apiBase));
+          return json5(await spawn(env, ctx, slug, String(b.task || ""), apiBase));
         }
         if (verb === "router" && request.method === "POST") {
           const b = await request.json();
           const text = String(b.text || "").trim();
-          if (!text || text.length > 8e3) return json4({ error: "say something (max 8000 chars)" }, 400);
-          return json4(await askRouter(env, ctx, p, slug, text, apiBase));
+          if (!text || text.length > 8e3) return json5({ error: "say something (max 8000 chars)" }, 400);
+          return json5(await askRouter(env, ctx, p, slug, text, apiBase));
         }
         if (verb === "deploy" && request.method === "POST") {
           const b = await request.json().catch(() => ({}));
           await p.requestBuild(b.agent ? "preview" : "deploy", b.agent);
-          return json4({ ok: true });
+          return json5({ ok: true });
         }
-        if (verb === "build-state" && me.admin) return json4(await env.BuildBox.get(env.BuildBox.idFromName(`${slug}--build`)).state());
+        if (verb === "build-state" && me.admin) return json5(await env.BuildBox.get(env.BuildBox.idFromName(`${slug}--build`)).state());
         if (verb === "reviewer-state" && request.method === "POST" && me.admin) {
           const rb = boxStub(env, `${slug}--review`);
           const awake = await rb.isAwake();
           const cc = awake ? await rb.ccStatus().catch(() => "unknown") : "asleep";
-          return json4({ ok: true, awake, cc, idle: !awake || !/busy|thinking|working|running|tool|compact/i.test(cc) });
+          return json5({ ok: true, awake, cc, idle: !awake || !/busy|thinking|working|running|tool|compact/i.test(cc) });
         }
         if (verb === "review-dispatch" && request.method === "POST" && me.admin) {
           const b = await request.json();
-          const r2 = await dispatchReview(env, p, slug, apiBase, String(b.agent || ""));
-          return json4(r2, r2.ok ? 200 : r2.busy ? 409 : 502);
+          const rv = b.reviewer && new RegExp(`^${slug.replace(".", "\\.")}--review\\d*$`).test(b.reviewer) ? b.reviewer : void 0;
+          const r2 = await dispatchReview(env, p, slug, apiBase, String(b.agent || ""), rv, b.style === "adversarial" ? "adversarial" : "read");
+          return json5(r2, r2.ok ? 200 : r2.busy ? 409 : 502);
         }
         if (verb === "deliver" && request.method === "POST" && me.admin) {
           const b = await request.json();
           const r2 = await deliverToRouter(env, p, slug, Number(b.at), apiBase);
-          return json4(r2, r2.ok ? 200 : 502);
+          return json5(r2, r2.ok ? 200 : 502);
         }
         if (verb === "review" && request.method === "POST") {
           const b = await request.json();
-          if (!info.agents.some((x) => x.id === b.agent)) return json4({ error: "unknown agent" }, 404);
+          if (!info.agents.some((x) => x.id === b.agent)) return json5({ error: "unknown agent" }, 404);
           await startReview(env, p, slug, apiBase, () => p.queueReview(b.agent));
-          return json4({ ok: true });
+          return json5({ ok: true });
         }
         if (verb === "fix" && request.method === "POST") {
           const b = await request.json();
           const a2 = info.agents.find((x) => x.id === b.agent);
-          if (!a2?.review?.notes) return json4({ error: "no review notes for that agent" }, 400);
+          if (!a2?.review?.notes) return json5({ error: "no review notes for that agent" }, 400);
           const r2 = await sendTo(env, a2.id, `The reviewer asked for changes:
 
 ${a2.review.notes}
 
-Fix them, commit, push with \`git push origin HEAD\`, then run \`forq status pushed "<what you changed>"\`.`, apiBase);
+Fix them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`, apiBase);
           if (r2.ok) {
             await p.markReviewSent(a2.id);
             await p.setState(a2.id, "working");
           }
-          return json4(r2, r2.ok ? 200 : 502);
+          return json5(r2, r2.ok ? 200 : 502);
         }
         if (verb === "merge" && request.method === "POST") {
           const b = await request.json();
           const a2 = info.agents.find((x) => x.id === b.agent);
-          if (!a2) return json4({ error: "unknown agent" }, 404);
-          return json4(await askRouter(env, ctx, p, slug, `Merge agent ${a2.id} into the project's main line: run \`forq merge ${a2.id}\` and tell me the result in one line.`, apiBase, `Merge ${a2.id.split("--")[1]}`));
+          if (!a2) return json5({ error: "unknown agent" }, 404);
+          if (landingOn(info)) return json5({ queued: true, change: await onMerge(env, slug, a2.id) });
+          return json5(await askRouter(env, ctx, p, slug, `Merge agent ${a2.id} into the project's main line: run \`forq merge ${a2.id}\` and tell me the result in one line.`, apiBase, `Merge ${a2.id.split("--")[1]}`));
         }
       }
       if (m = path2.match(/^\/api\/agents\/([a-z0-9.-]+--[a-z0-9]+)\/([a-z]+)$/)) {
         const [, id, verb] = m;
         const info = await projectStub(env, projectOf(id)).info();
-        if (!info || info.owner !== me.handle && !me.admin) return json4({ error: "not your project" }, 403);
+        if (!info || info.owner !== me.handle && !me.admin) return json5({ error: "not your project" }, 403);
         const box = boxStub(env, id);
-        if (verb === "state") return json4({ ...await box.state(), ...await boxStatus(env, id, true) });
+        if (verb === "state") return json5({ ...await box.state(), ...await boxStatus(env, id, true) });
         if (verb === "conversation") {
-          if (!await box.isAwake()) return json4({ asleep: true });
+          if (!await box.isAwake()) return json5({ asleep: true });
           ctx.waitUntil(box.touch(id).catch(() => {
           }));
           const [conv, cc] = await Promise.all([
             box.fetch(new Request("https://container/api/conversation?session=claude&tail=200", { headers: { "x-forq-port": "7681" } })),
             box.ccStatus().catch(() => "unknown")
           ]);
-          if (conv.status === 404) return json4({ messages: [], status: cc });
-          if (!conv.ok) return json4({ error: `conversation ${conv.status}` }, 502);
+          if (conv.status === 404) return json5({ messages: [], status: cc });
+          if (!conv.ok) return json5({ error: `conversation ${conv.status}` }, 502);
           const j = await conv.json();
-          return json4({ messages: j.messages, status: cc });
+          return json5({ messages: j.messages, status: cc });
         }
-        if (request.method !== "POST") return json4({ error: "POST only" }, 405);
-        if (verb === "wake") return json4(await wake(env, id, apiBase));
+        if (request.method !== "POST") return json5({ error: "POST only" }, 405);
+        if (verb === "wake") return json5(await wake(env, id, apiBase));
         if (verb === "stop") {
           await box.letGo("manual");
-          return json4(await box.state());
+          return json5(await box.state());
         }
         if (verb === "send") {
           const { text } = await request.json();
-          if (!text) return json4({ error: "text required" }, 400);
-          return json4(await sendTo(env, id, text, apiBase));
+          if (!text) return json5({ error: "text required" }, 400);
+          return json5(await sendTo(env, id, text, apiBase));
         }
-        if (verb === "exec" && me.admin) return json4(await box.adminExec(await request.text()));
+        if (verb === "exec" && me.admin) return json5(await box.adminExec(await request.text()));
         if (verb === "reset" && me.admin) {
           await box.destroy();
-          return json4(await wake(env, id, apiBase));
+          return json5(await wake(env, id, apiBase));
         }
       }
       if (path2 === "/api/admin/delete" && request.method === "POST" && me.admin) {
@@ -76875,12 +80964,12 @@ Fix them, commit, push with \`git push origin HEAD\`, then run \`forq status pus
           await projectStub(env, b.project).wipe();
         }
         const ok = b.repo ? await env.ARTIFACTS.delete(b.repo).catch((e2) => String(e2)) : null;
-        return json4({ deleted: ok });
+        return json5({ deleted: ok });
       }
-      return json4({ error: "not found" }, 404);
+      return json5({ error: "not found" }, 404);
     } catch (e2) {
       log("api", "error", { path: path2, err: String(e2), stack: e2?.stack });
-      return json4({ error: String(e2?.message || e2) }, 500);
+      return json5({ error: String(e2?.message || e2) }, 500);
     }
   }
 };
@@ -77019,26 +81108,28 @@ async function startReview(env, p, slug, apiBase, step, deferred = false) {
   }
 }
 __name(startReview, "startReview");
-async function dispatchReview(env, p, slug, apiBase, next) {
+async function dispatchReview(env, p, slug, apiBase, next, reviewer = `${slug}--review`, style = "read") {
   try {
     const info = await p.info();
     const ag = info?.agents.find((x) => x.id === next);
     const tip = ag ? await head(env, { waitUntil() {
     }, passThroughOnException() {
     } }, ag.fork).catch(() => null) : null;
-    const rbox = boxStub(env, `${slug}--review`);
+    const rbox = boxStub(env, reviewer);
     if (await rbox.isAwake()) {
       const cc = await rbox.ccStatus().catch(() => "unknown");
       if (/busy|thinking|working|running|tool|compact/i.test(cc)) return { ok: false, busy: true, error: `reviewer is ${cc}` };
-    } else await wake(env, `${slug}--review`, apiBase).catch(() => null);
+    } else await wake(env, reviewer, apiBase).catch(() => null);
     await rbox.clearContext().catch(() => false);
     const text = [
       `Review agent ${next}${tip ? ` at commit ${tip.commit.slice(0, 7)} ("${tip.message}")` : ""}. This is a new review: ignore any earlier review of this agent.`,
       ag?.note ? `The agent reports: ${ag.note}` : "",
       `You are the reviewer agent of this project (${slug.replace(".", "/")}). The agent id is ${next}.`,
-      ...REVIEW_STEPS.map((x) => x.replaceAll("<agent-id>", next))
+      ...REVIEW_STEPS.map((x) => x.replaceAll("<agent-id>", next)),
+      // Lab variant reviewStyle 'adversarial': the review must try to break the change.
+      style === "adversarial" ? "ADVERSARIAL REVIEW: before your verdict, try to write ONE test that this change fails (an edge case, a wrong input, a missed requirement of the task). Run it. If it fails, the verdict is changes, with the test in your notes. Approve only if you tried and could not break it. Do not commit the test." : ""
     ].filter(Boolean).join("\n\n");
-    let r2 = await sendTo(env, `${slug}--review`, text, apiBase);
+    let r2 = await sendTo(env, reviewer, text, apiBase);
     if (r2.ok) {
       let started = false;
       for (let i2 = 0; i2 < 8 && !started; i2++) {
@@ -77047,7 +81138,7 @@ async function dispatchReview(env, p, slug, apiBase, next) {
       }
       if (!started) {
         log("review", "resend", { slug, agent: next });
-        r2 = await sendTo(env, `${slug}--review`, text, apiBase);
+        r2 = await sendTo(env, reviewer, text, apiBase);
       }
     }
     log("review", "dispatched", { slug, agent: next, ok: r2.ok, err: r2.error });
@@ -77062,7 +81153,7 @@ __name(dispatchReview, "dispatchReview");
 async function issuesHook(request, env, ctx) {
   if (!env.ISSUES_WEBHOOK_SECRET || request.headers.get("cf-webhook-auth") !== env.ISSUES_WEBHOOK_SECRET) {
     log("issues", "rejected", { hasHeader: request.headers.has("cf-webhook-auth") });
-    return json4({ error: "unauthorized" }, 401);
+    return json5({ error: "unauthorized" }, 401);
   }
   const raw = await request.text();
   let body = {};
@@ -77075,13 +81166,13 @@ async function issuesHook(request, env, ctx) {
   const worker = (raw.match(/forq-app-[a-z0-9-]+/) || [])[0];
   if (!worker) {
     log("issues", "no_worker", {});
-    return json4({ ok: true, ignored: "no forq-app worker named (a test message?)" });
+    return json5({ ok: true, ignored: "no forq-app worker named (a test message?)" });
   }
   const entries = await registry(env).list();
   const e2 = entries.find((x) => appWorkerName(x.slug) === worker);
   if (!e2) {
     log("issues", "unknown_worker", { worker });
-    return json4({ ok: true, ignored: `no project deploys as ${worker}` });
+    return json5({ ok: true, ignored: `no project deploys as ${worker}` });
   }
   const p = projectStub(env, e2.slug);
   const text = String(body.text || body.data?.text || body.message || raw).slice(0, 3e3);
@@ -77099,7 +81190,7 @@ ${occ}` : "The occurrences could not be fetched.",
   ].join("\n\n");
   const r2 = await askRouter(env, ctx, p, e2.slug, ask, env.API_BASE, `Production error from Cloudflare Issues: ${title}`);
   log("issues", "routed", { worker, slug: e2.slug });
-  return json4({ routed: e2.slug, ...r2 });
+  return json5({ routed: e2.slug, ...r2 });
 }
 __name(issuesHook, "issuesHook");
 async function issueOccurrences(env, issueId) {
@@ -77136,10 +81227,20 @@ async function overProjectLimit(env, handle) {
   return n2 >= 10 ? "You have 10 projects, the limit for now. Self-host qodebase for more." : null;
 }
 __name(overProjectLimit, "overProjectLimit");
-async function spawn(env, ctx, slug, task, apiBase) {
+var modelId = /* @__PURE__ */ __name((m) => ({ haiku: "claude-haiku-5-5", sonnet: "claude-sonnet-5-5", opus: "claude-opus-5-5" })[m] || m, "modelId");
+async function landingCaps(env, slug) {
+  const info = await projectStub(env, slug).info().catch(() => null);
+  if (!landingOn(info)) return null;
+  return (await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null))?.caps || null;
+}
+__name(landingCaps, "landingCaps");
+async function spawn(env, ctx, slug, task, apiBase, o2 = {}) {
   task = task.trim();
   if (!task || task.length > 4e3) throw new Error("task required (max 4000 chars)");
-  const agent = await projectStub(env, slug).addAgent(task);
+  const caps = await landingCaps(env, slug);
+  const agent = await projectStub(env, slug).addAgent(task, o2.on || void 0, caps?.agents);
+  const pinfo = await projectStub(env, slug).info();
+  if (landingOn(pinfo)) await onSpawn(env, pinfo, agent, o2).catch((e2) => log("landing", "spawn_hook_failed", { id: agent.id, err: String(e2) }));
   ctx.waitUntil(wake(env, agent.id, apiBase).then((r2) => log("api", "agent_boot", { id: agent.id, ...r2 })).catch((e2) => log("api", "agent_boot_failed", { id: agent.id, err: String(e2), stack: e2?.stack })));
   return agent;
 }
@@ -77157,65 +81258,147 @@ async function agentApi(request, env, ctx, me, url2, apiBase) {
   }));
   if (verb === "list") {
     const info = await p.info();
-    return json4({ agents: (info?.agents || []).map(({ id, task, state, note }) => ({ id, task, state, note })) });
+    const agents = (info?.agents || []).map(({ id, task, state, note }) => ({ id, task, state, note }));
+    if (landingOn(info)) for (const a2 of agents) {
+      const c = await env.Landing.get(env.Landing.idFromName(slug)).change(String(a2.id)).catch(() => null);
+      if (c) {
+        a2.claims = [.../* @__PURE__ */ new Set([...c.claims, ...c.files])];
+        a2.landing = c.state;
+      }
+    }
+    return json5({ agents });
+  }
+  if (["board", "who", "intent", "dedupe", "tasks", "next"].includes(verb)) {
+    const info = await p.info();
+    if (!landingOn(info)) return json5({ on: false, off: true, rows: [], aliases: [], text: "" });
+    const L2 = env.Landing.get(env.Landing.idFromName(slug));
+    const name = boardName(me.agentId);
+    const b = body;
+    if (verb === "who") {
+      const recent = Math.min(24 * 36e5, Number(url2.searchParams.get("recent")) || 0);
+      return json5(await L2.boardWho({ me: name, recent, files: url2.searchParams.get("files") || "", area: url2.searchParams.get("area") }));
+    }
+    if (request.method !== "POST" || me.role !== "agent" && me.role !== "router") return json5({ error: "agents and the router post to the board" }, 403);
+    if (verb === "board") {
+      if (!["editing", "committed", "blocked", "done", "alive"].includes(String(b.kind))) return json5({ error: "kind: editing|committed|blocked|done|alive" }, 400);
+      const e2 = await L2.boardPost({ agent: name, kind: String(b.kind), intent: b.intent ? String(b.intent) : "", files: Array.isArray(b.files) ? b.files.map(String) : String(b.files || ""), status: String(b.status || ""), change: me.agentId });
+      if (b.who && !("off" in e2)) return json5({ ...e2, rows: (await L2.boardWho({ me: name, files: e2.files })).rows.map((r2) => ({ ...r2, line: fmtBoardRow(r2) })) });
+      return json5(e2);
+    }
+    if (verb === "intent") {
+      const intent = String(b.intent || "").trim();
+      if (!intent) return json5({ error: "intent required" }, 400);
+      const files = (Array.isArray(b.files) ? b.files.map(String) : String(b.files || "").split(",")).map((f) => f.trim().replace(/^\.?\//, "")).filter(Boolean).slice(0, 20);
+      const e2 = await L2.stateIntent(me.agentId, intent, files);
+      if ("off" in e2) return json5(e2);
+      const near = files.length ? (await L2.boardWho({ me: name, files })).rows.filter((r2) => !r2.done) : [];
+      const done = (await L2.boardWho({ me: name, recent: 30 * 6e4 })).rows.filter((r2) => r2.done);
+      const live = (await L2.boardWho({ me: name })).rows.filter((r2) => !near.some((x) => x.agent === r2.agent));
+      const taken = Object.entries(e2.takenBy || {});
+      return json5({ ...e2, ...taken.length ? { taken: `Already claimed earlier by another agent: ${taken.map(([id, a2]) => `${id} by ${a2}`).join(", ")}. The earliest claim keeps the task: pick another one and announce it with forq intent.` } : {}, others: boardText([...near, ...live.slice(0, Math.max(0, 8 - near.length)), ...done], (await L2.boardWho({})).aliases, { live: 8, done: 8 }) });
+    }
+    if (verb === "next") {
+      if (me.role !== "agent") return json5({ error: "forq next is for agents" }, 403);
+      return json5(await L2.claimNextTask(me.agentId));
+    }
+    if (me.role !== "router") return json5({ error: "only the router registers task lists and runs the dedupe pass" }, 403);
+    if (verb === "tasks") {
+      const items = backlogItems(String(b.text || ""));
+      await L2.dedupeList(name, items);
+      log("board", "tasks", { slug, by: name, items: items.length });
+      return json5({ items: items.length, ids: items.filter((i2) => !i2.id.startsWith("#")).length });
+    }
+    if (b.stage === "prompt") {
+      const items = await L2.dedupeList(name, backlogItems(String(b.text || "")));
+      return json5({ items, prompt: dedupePrompt(items) });
+    }
+    if (b.stage === "answer") {
+      const pairs = parseDedupe(String(b.answer || ""), Array.isArray(b.ids) ? b.ids.map(String) : void 0);
+      const u2 = b.usage;
+      if (u2) ctx.waitUntil(recordCost(env, slug.split(".")[0], "claude", `${slug.replace(".", "/")}:${u2.model || "claude-haiku-5-5"}`, {
+        usd: null,
+        covered: false,
+        billing: "sub",
+        tokens: { in: Number(u2.in) || 0, out: Number(u2.out) || 0, cw: Number(u2.cw) || 0, cr: Number(u2.cr) || 0 }
+      }).catch(() => {
+      }));
+      log("board", "dedupe", { slug, by: name, pairs: pairs.length, ids: Array.isArray(b.ids) ? b.ids.length : null, isError: !!b.isError, exit: b.exit ?? null, answer: String(b.answer || "").slice(0, 300) });
+      return json5({ pairs, aliases: await L2.boardAliases(pairs, name) });
+    }
+    return json5({ error: "stage: prompt|answer" }, 400);
   }
   if (verb === "status" && me.role === "agent") {
-    if (!["working", "pushed", "blocked"].includes(body.state)) return json4({ error: "state: working|pushed|blocked" }, 400);
+    if (!["working", "pushed", "blocked"].includes(body.state)) return json5({ error: "state: working|pushed|blocked" }, 400);
     await p.setState(me.agentId, body.state, String(body.note || ""));
     if (body.state === "pushed") {
       const ownerDeploys = isOwner(env, slug.split(".")[0]);
+      const pinfo = await p.info();
+      const lfl = landingOn(pinfo) ? await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null) : null;
+      const pooled = typeof lfl?.reviewers === "number" && lfl.reviewers >= 1 && (lfl.reviewers > 1 || !!lfl.policy);
+      const noReview = lfl?.reviewers === 0;
       if (await p.kindOf() === "worker" && ownerDeploys) ctx.waitUntil(p.requestBuild("preview", me.agentId).catch((e2) => log("build", "request_failed", { err: String(e2) })));
-      else await startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId));
+      else if (!pooled && !noReview) await startReview(env, p, slug, apiBase, () => p.queueReview(me.agentId));
+      if (landingOn(pinfo)) await onPushed(env, ctx, pinfo, me.agentId, String(body.note || ""), noReview ? "none" : pooled).catch((e2) => log("landing", "push_hook_failed", { id: me.agentId, err: String(e2) }));
     }
-    return json4({ ok: true });
+    return json5({ ok: true });
+  }
+  if (verb === "main-info" && me.role === "agent") {
+    const t2 = await p.gitToken("read");
+    return json5({ remote: t2.remote, token: t2.token, branch: t2.branch });
   }
   if (me.role === "reviewer") {
     if (verb === "review-info") {
       const agent = url2.searchParams.get("agent") || "";
-      if (projectOf(agent) !== slug) return json4({ error: "not an agent of this project" }, 400);
+      if (projectOf(agent) !== slug) return json5({ error: "not an agent of this project" }, 400);
       const r2 = await p.reviewInfo(agent);
-      return json4({ ...r2, preview: r2.previewUrl || `https://${env.RUN_HOST}/${agent}/${r2.entry}` });
+      return json5({ ...r2, preview: r2.previewUrl || `https://${env.RUN_HOST}/${agent}/${r2.entry}` });
     }
     if (verb === "verdict") {
-      if (projectOf(body.agent || "") !== slug) return json4({ error: "not an agent of this project" }, 400);
-      if (!["approve", "changes"].includes(body.verdict)) return json4({ error: "verdict: approve|changes" }, 400);
+      if (projectOf(body.agent || "") !== slug) return json5({ error: "not an agent of this project" }, 400);
+      if (!["approve", "changes"].includes(body.verdict)) return json5({ error: "verdict: approve|changes" }, 400);
       const info = await p.info();
       const ag = info?.agents.find((x) => x.id === body.agent);
       const tip = ag ? await head(env, ctx, ag.fork).catch(() => null) : null;
       if (tip && body.commit && tip.commit !== body.commit) {
         log("review", "stale_verdict", { agent: body.agent, reviewed: String(body.commit).slice(0, 8), latest: tip.commit.slice(0, 8) });
-        return json4({ error: `you reviewed ${String(body.commit).slice(0, 7)} but the agent's latest push is ${tip.commit.slice(0, 7)}: run \`forq fetch-agent ${body.agent}\` and review again` }, 409);
+        return json5({ error: `you reviewed ${String(body.commit).slice(0, 7)} but the agent's latest push is ${tip.commit.slice(0, 7)}: run \`forq fetch-agent ${body.agent}\` and review again` }, 409);
       }
       await startReview(env, p, slug, apiBase, () => p.setVerdict(body.agent, body.verdict === "approve" ? "approved" : "changes", String(body.notes || "")), true);
-      return json4({ ok: true });
+      if (landingOn(info)) await onVerdict(env, slug, body.agent, body.verdict === "approve" ? "approved" : "changes", String(body.notes || "")).catch((e2) => log("landing", "verdict_hook_failed", { err: String(e2) }));
+      return json5({ ok: true });
     }
-    return json4({ error: "the reviewer can fetch-agent and verdict" }, 403);
+    return json5({ error: "the reviewer can fetch-agent and verdict" }, 403);
   }
-  if (me.role !== "router") return json4({ error: "only the router agent can do that" }, 403);
+  if (me.role !== "router") return json5({ error: "only the router agent can do that" }, 403);
   if (verb === "spawn") {
-    return json4(await spawn(env, ctx, slug, String(body.task || ""), apiBase));
+    const b = body;
+    return json5(await spawn(env, ctx, slug, String(b.task || ""), apiBase, { files: Array.isArray(b.files) ? b.files.map(String) : void 0, on: b.on ? String(b.on) : void 0 }));
   }
   if (verb === "send") {
-    if (projectOf(body.agent || "") !== slug) return json4({ error: "not an agent of this project" }, 400);
-    return json4(await sendTo(env, body.agent, String(body.text || ""), apiBase));
+    if (projectOf(body.agent || "") !== slug) return json5({ error: "not an agent of this project" }, 400);
+    return json5(await sendTo(env, body.agent, String(body.text || ""), apiBase));
   }
   if (verb === "merge-info") {
     const agent = url2.searchParams.get("agent") || "";
-    if (projectOf(agent) !== slug) return json4({ error: "not an agent of this project" }, 400);
-    return json4(await p.forkForMerge(agent));
+    if (projectOf(agent) !== slug) return json5({ error: "not an agent of this project" }, 400);
+    if (landingOn(await p.info())) {
+      const c = await onMerge(env, slug, agent);
+      return json5({ queued: true, state: c.state });
+    }
+    return json5(await p.forkForMerge(agent));
   }
   if (verb === "merged") {
-    if (projectOf(body.agent || "") !== slug) return json4({ error: "not an agent of this project" }, 400);
+    if (projectOf(body.agent || "") !== slug) return json5({ error: "not an agent of this project" }, 400);
     await p.setState(body.agent, "merged");
     if (await p.kindOf() === "worker") ctx.waitUntil(p.requestBuild("deploy").catch((e2) => log("build", "request_failed", { err: String(e2) })));
-    return json4({ ok: true });
+    return json5({ ok: true });
   }
-  return json4({ error: "unknown verb" }, 404);
+  return json5({ error: "unknown verb" }, 404);
 }
 __name(agentApi, "agentApi");
 async function agentProxy(request, env, ctx, agentId, rest, url2, apiBase) {
   if (rest === "/" || rest === "/agent") return Response.redirect(`${url2.origin}/a/${agentId}/agent/${url2.search}`, 302);
-  if (!rest.startsWith("/agent/")) return json4({ error: "not found" }, 404);
+  if (!rest.startsWith("/agent/")) return json5({ error: "not found" }, 404);
   const sub = rest.slice("/agent".length);
   const box = boxStub(env, agentId);
   ctx.waitUntil(box.touch(agentId).catch(() => {
@@ -77248,8 +81431,11 @@ __name(agentProxy, "agentProxy");
 export {
   AgentBox,
   BuildBox,
+  DemoAgent,
   Installs,
+  Landing,
   Ledger,
+  MergeBox,
   Project,
   Registry,
   TalkLog,

@@ -12,6 +12,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { Env } from '../env';
 import { log } from '../box';
 import MERGEJOB from './mergejob.mjs';
+import { MANAGED_IMAGE } from '../box';
 
 export type MergeChange = { id: string; title: string; intent: string; agent: string; fork: string; remote: string; token: string;
   base: string | null; commit: string | null; review: unknown };
@@ -98,7 +99,9 @@ export class MergeBox extends DurableObject<Env> {
       try { await this.#sh('true'); return; } catch { try { await this.c.destroy(); } catch {} }
     }
     const t0 = Date.now();
-    try { this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: this.c.images.computer }); }
+    // A self-hosted copy (BOX_IMAGE=managed) has no registry image: Cloudflare's managed Debian image, git added below.
+    const managed = this.env.BOX_IMAGE === 'managed';
+    try { this.c.start({ instance: INSTANCE, enableInternet: true, entrypoint: ENTRYPOINT, image: managed ? MANAGED_IMAGE : this.c.images.computer }); }
     catch (e) { log('merger', 'start_threw', { err: String(e), stack: String((e as Error)?.stack || ''), running: !!this.c.running, image: !!this.c.images?.computer }); throw e; }
     // Why a container stopped or never started shows up only here.
     const note = (event: string, err?: unknown) => { log('merger', event, { err: err === undefined ? undefined : String(err).slice(0, 400) });
@@ -115,7 +118,13 @@ export class MergeBox extends DurableObject<Env> {
         await new Promise((r) => setTimeout(r, 1000));
       }
     }
-    log('merger', 'container_started', { ms: Date.now() - t0 });
+    if (managed) {
+      // The managed image has Node but not git (mergejob.mjs needs both): installed once per container start.
+      const g = await this.#sh('command -v git >/dev/null || { apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates >/dev/null; }; git --version; node --version');
+      log('merger', 'managed_setup', { exit: g.exitCode, out: g.stdout.trim().slice(0, 120), err: g.stderr.slice(-300), ms: Date.now() - t0 });
+      if (g.exitCode !== 0) throw new Error(`merger setup failed: ${g.stderr.slice(-200)}`);
+    }
+    log('merger', 'container_started', { ms: Date.now() - t0, managed });
   }
 
   async #run(job: MergeJob): Promise<MergeResult> {

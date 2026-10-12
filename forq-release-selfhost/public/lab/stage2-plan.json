@@ -1,0 +1,436 @@
+{
+ "stage": 2,
+ "part": 1,
+ "approved": "manager s1007-1655, 2026-10-08: bakery x2 more repetitions each (3 runs per setup with stage 1 runs 15/16)",
+ "order": "swarm, opus, swarm, opus; after stage-1 run 14b finishes",
+ "guards": {
+  "stopAtWeeklyMeterPct": 52,
+  "stopAtApiUsdStd": 60,
+  "note": "hard stop if the weekly meter reaches 52% (account-wide)"
+ },
+ "runs": [
+  {
+   "order": 1,
+   "scenario": "bakery",
+   "repetition": 2,
+   "why": "swarm repetition 2 of 3",
+   "baseline": null,
+   "variant": {
+    "planner": "opus",
+    "coders": 12,
+    "coderModel": "haiku",
+    "reviewers": 3,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "intent",
+    "claims": false,
+    "dedupe": true,
+    "trainMax": 4
+   },
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "predicted": {
+    "landed": 7,
+    "wallS": 1148,
+    "apiUsdStd": 2.81,
+    "quality": 89.3,
+    "simVersion": "lab-0.8"
+   },
+   "range": {
+    "wallS": [
+     730,
+     1491
+    ],
+    "apiUsdStd": [
+     2.16,
+     3.1
+    ],
+    "quality": [
+     82.1,
+     95
+    ]
+   }
+  },
+  {
+   "order": 2,
+   "scenario": "bakery",
+   "repetition": 2,
+   "why": "opus-alone repetition 2 of 3",
+   "baseline": "opus-alone",
+   "variant": {
+    "planner": "none",
+    "coders": 1,
+    "coderModel": "opus",
+    "reviewers": 0,
+    "reviewerModel": "opus",
+    "reviewStyle": "read",
+    "policy": "ffa",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 1
+   },
+   "variantKey": "opus-alone",
+   "predicted": {
+    "landed": 21,
+    "wallS": 744,
+    "apiUsdStd": 4.8,
+    "quality": 92,
+    "simVersion": "lab-0.8"
+   },
+   "range": {
+    "wallS": [
+     431,
+     2279
+    ],
+    "apiUsdStd": [
+     2.77,
+     14.78
+    ],
+    "quality": [
+     87.5,
+     96.4
+    ]
+   }
+  },
+  {
+   "order": 3,
+   "scenario": "bakery",
+   "repetition": 3,
+   "why": "swarm repetition 3 of 3",
+   "baseline": null,
+   "variant": {
+    "planner": "opus",
+    "coders": 12,
+    "coderModel": "haiku",
+    "reviewers": 3,
+    "reviewerModel": "haiku",
+    "reviewStyle": "read",
+    "policy": "intent",
+    "claims": false,
+    "dedupe": true,
+    "trainMax": 4
+   },
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "predicted": {
+    "landed": 7,
+    "wallS": 1148,
+    "apiUsdStd": 2.81,
+    "quality": 89.3,
+    "simVersion": "lab-0.8"
+   },
+   "range": {
+    "wallS": [
+     730,
+     1491
+    ],
+    "apiUsdStd": [
+     2.16,
+     3.1
+    ],
+    "quality": [
+     82.1,
+     95
+    ]
+   }
+  },
+  {
+   "order": 4,
+   "scenario": "bakery",
+   "repetition": 3,
+   "why": "opus-alone repetition 3 of 3",
+   "baseline": "opus-alone",
+   "variant": {
+    "planner": "none",
+    "coders": 1,
+    "coderModel": "opus",
+    "reviewers": 0,
+    "reviewerModel": "opus",
+    "reviewStyle": "read",
+    "policy": "ffa",
+    "claims": false,
+    "dedupe": false,
+    "trainMax": 1
+   },
+   "variantKey": "opus-alone",
+   "predicted": {
+    "landed": 21,
+    "wallS": 744,
+    "apiUsdStd": 4.8,
+    "quality": 92,
+    "simVersion": "lab-0.8"
+   },
+   "range": {
+    "wallS": [
+     431,
+     2279
+    ],
+    "apiUsdStd": [
+     2.77,
+     14.78
+    ],
+    "quality": [
+     87.5,
+     96.4
+    ]
+   }
+  }
+ ],
+ "totals": {
+  "toComeApiUsdStd": 15.22,
+  "how": "predicted, lab-0.8 medians"
+ },
+ "part2": {
+  "approved": "manager s1007-1655, 2026-10-08",
+  "scenario": "club",
+  "job": "AS IS (Eyal, 2026-10-08): qb5 reference 14.7 one-Opus-minutes (subagent), not the 60-min target; foundations in the starter. Framing: a 15-minute job on ready foundations",
+  "when": "NOW (Eyal via manager, 2026-10-08): after qb5 builds and validates the reference; qb4 sends predictions + GO",
+  "order": [
+   "swarm r1",
+   "opus-alone r1",
+   "swarm r2",
+   "swarm r3",
+   "opus-alone r2"
+  ],
+  "conditional": "opus-alone r2 ONLY if opus-alone r1 lands within ~15% of the swarm's time or quality, and the meter allows",
+  "swarm": {
+   "planner": "opus",
+   "coders": 12,
+   "coderModel": "haiku",
+   "reviewers": 3,
+   "reviewerModel": "haiku",
+   "reviewStyle": "read",
+   "policy": "intent",
+   "claims": false,
+   "dedupe": true,
+   "trainMax": 4
+  },
+  "guards": {
+   "stopAtApiUsdStd": 50,
+   "stopAtWeeklyMeterPct": 70,
+   "meterAtApproval": "50%",
+   "checked": "before and during each run"
+  },
+  "predicted": "pending: qb4 sends per-run predictions once qb5's reference time sets club's size (sim at 60 min, depth 3: swarm ~33 min / ~$11, opus-alone ~53 min / ~$21; 2 swarm + 1 opus ~$43)",
+  "commitRunsJsonlAfterEachRun": true,
+  "runs": [
+   {
+    "order": 1,
+    "scenario": "club",
+    "repetition": 1,
+    "why": "swarm repetition 1",
+    "baseline": null,
+    "variant": {
+     "planner": "opus",
+     "coders": 12,
+     "coderModel": "haiku",
+     "reviewers": 3,
+     "reviewerModel": "haiku",
+     "reviewStyle": "read",
+     "policy": "intent",
+     "claims": false,
+     "dedupe": true,
+     "trainMax": 4
+    },
+    "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+    "predicted": {
+     "landed": 17,
+     "wallS": 1024,
+     "apiUsdStd": 2.46,
+     "quality": 90.4,
+     "simVersion": "lab-0.9"
+    },
+    "range": {
+     "wallS": [
+      744,
+      1476
+     ],
+     "apiUsdStd": [
+      1.66,
+      3.06
+     ],
+     "quality": [
+      86.4,
+      92.2
+     ]
+    },
+    "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)"
+   },
+   {
+    "order": 2,
+    "scenario": "club",
+    "repetition": 1,
+    "why": "opus-alone repetition 1",
+    "baseline": "opus-alone",
+    "variant": {
+     "planner": "none",
+     "coders": 1,
+     "coderModel": "opus",
+     "reviewers": 0,
+     "reviewerModel": "opus",
+     "reviewStyle": "read",
+     "policy": "ffa",
+     "claims": false,
+     "dedupe": false,
+     "trainMax": 1
+    },
+    "variantKey": "opus-alone",
+    "predicted": {
+     "landed": 49,
+     "wallS": 613,
+     "apiUsdStd": 5.17,
+     "quality": 88.8,
+     "simVersion": "lab-0.9"
+    },
+    "range": {
+     "wallS": [
+      429,
+      788
+     ],
+     "apiUsdStd": [
+      3.6,
+      6.65
+     ],
+     "quality": [
+      79.8,
+      94.4
+     ]
+    },
+    "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)"
+   },
+   {
+    "order": 3,
+    "scenario": "club",
+    "repetition": 2,
+    "why": "swarm repetition 2",
+    "baseline": null,
+    "variant": {
+     "planner": "opus",
+     "coders": 12,
+     "coderModel": "haiku",
+     "reviewers": 3,
+     "reviewerModel": "haiku",
+     "reviewStyle": "read",
+     "policy": "intent",
+     "claims": false,
+     "dedupe": true,
+     "trainMax": 4
+    },
+    "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+    "predicted": {
+     "landed": 17,
+     "wallS": 1024,
+     "apiUsdStd": 2.46,
+     "quality": 90.4,
+     "simVersion": "lab-0.9"
+    },
+    "range": {
+     "wallS": [
+      744,
+      1476
+     ],
+     "apiUsdStd": [
+      1.66,
+      3.06
+     ],
+     "quality": [
+      86.4,
+      92.2
+     ]
+    },
+    "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)"
+   },
+   {
+    "order": 4,
+    "scenario": "club",
+    "repetition": 2,
+    "why": "opus-alone repetition 2",
+    "baseline": "opus-alone",
+    "variant": {
+     "planner": "none",
+     "coders": 1,
+     "coderModel": "opus",
+     "reviewers": 0,
+     "reviewerModel": "opus",
+     "reviewStyle": "read",
+     "policy": "ffa",
+     "claims": false,
+     "dedupe": false,
+     "trainMax": 1
+    },
+    "variantKey": "opus-alone",
+    "predicted": {
+     "landed": 49,
+     "wallS": 613,
+     "apiUsdStd": 5.17,
+     "quality": 88.8,
+     "simVersion": "lab-0.9"
+    },
+    "range": {
+     "wallS": [
+      429,
+      788
+     ],
+     "apiUsdStd": [
+      3.6,
+      6.65
+     ],
+     "quality": [
+      79.8,
+      94.4
+     ]
+    },
+    "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)",
+    "conditional": "RELEASED by qb4 after opus r1: quality 88 vs swarm r1 92 (within ~15%; 4 points = the funnel tie threshold), and the sim at the measured size predicts opus ~15 min vs swarm ~18 min (~20% apart): one opus run cannot settle it. Run after swarm r3."
+   },
+   {
+    "order": 5,
+    "scenario": "club",
+    "repetition": 3,
+    "why": "swarm repetition 3 (manager): r1 lost ~1350 s to a platform stall (box size refused), so its time is not comparable; r3 gives club 2 clean swarm runs",
+    "baseline": null,
+    "variant": {
+     "planner": "opus",
+     "coders": 12,
+     "coderModel": "haiku",
+     "reviewers": 3,
+     "reviewerModel": "haiku",
+     "reviewStyle": "read",
+     "policy": "intent",
+     "claims": false,
+     "dedupe": true,
+     "trainMax": 4
+    },
+    "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+    "predicted": {
+     "landed": 17,
+     "wallS": 1024,
+     "apiUsdStd": 2.46,
+     "quality": 90.4,
+     "simVersion": "lab-0.9"
+    },
+    "range": {
+     "wallS": [
+      744,
+      1476
+     ],
+     "apiUsdStd": [
+      1.66,
+      3.06
+     ],
+     "quality": [
+      86.4,
+      92.2
+     ]
+    },
+    "predictionBasis": "club size 565 one-Opus-box-seconds (qb5 reference 881 s subagent x 0.64)"
+   }
+  ],
+  "status": "GO (qb4, after Eyal chose: run club as is)",
+  "scenarioCommit": "7828aef",
+  "decision": {
+   "by": "Eyal (the manager session was gone)",
+   "chose": "run club as is",
+   "why": "the sim (lab-0.9) predicts the swarm loses at this size (0.6x) and still narrowly at 4x wider (0.82x): the limit is landing one change per ~60-100 s, not job size"
+  },
+  "measuredSize": "opus-alone r1 took 850 s on a box (qb5 subagent 881 s): club = ~850 one-Opus-box-s, not the 565 estimated from bakery's box/subagent ratio"
+ }
+}

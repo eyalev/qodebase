@@ -1,0 +1,945 @@
+{
+ "generated": "2026-10-08T18:52:38.619Z",
+ "simVersion": "lab-0.10",
+ "fit": {
+  "runs": 17,
+  "from": [
+   "lab-cafefamily-739a1-r1",
+   "lab-cafefamily-08ce0-r1",
+   "lab-cafefamily-41305-r1",
+   "lab-cafefamily-7eac1-r1",
+   "lab-portts-ec6ec-r1",
+   "lab-bakery-712d7-r1",
+   "lab-bakery-7fe05-r1",
+   "lab-portts-e62a6-r1b",
+   "lab-bakery-bfe16-r2",
+   "lab-bakery-aa826-r2",
+   "lab-bakery-bfe16-r3",
+   "lab-bakery-aa826-r3",
+   "lab-club-40f21-r1",
+   "lab-club-5db67-r1",
+   "lab-club-40f21-r2",
+   "lab-club-40f21-r3",
+   "lab-club-5db67-r2"
+  ],
+  "coder": {
+   "haiku": {
+    "tasks": 60,
+    "workMedS": 205.174,
+    "simWorkMedS": 28.799999999999997,
+    "usdPerS": 0.000332,
+    "simUsdPerS": 0.00059
+   },
+   "opus": {
+    "tasks": 7,
+    "workMedS": 497.846,
+    "simWorkMedS": 67.19999999999999,
+    "usdPerS": 0.00771,
+    "simUsdPerS": 0.0085
+   }
+  },
+  "planner": {
+   "haiku": {
+    "runs": 2,
+    "planMedS": 47.084,
+    "simPlanS": 47,
+    "tasksPlannedShare": 0.43,
+    "hiddenShareMed": 0.14285714285714285
+   },
+   "opus": {
+    "runs": 15,
+    "planMedS": 42.842,
+    "simPlanS": 60,
+    "tasksPlannedShare": 0.24,
+    "hiddenShareMed": 1
+   }
+  },
+  "actualOverPredicted": {
+   "wallS": 0.7354014598540146,
+   "apiUsdStd": 0.8504166666666667,
+   "quality": 1.091703056768559
+  },
+  "actualOverNow": {
+   "simVersion": "lab-0.10",
+   "wallS": 1.007920792079208,
+   "apiUsdStd": 0.977027027027027,
+   "quality": 1.0869565217391304
+  }
+ },
+ "runs": [
+  {
+   "id": "lab-cafefamily-739a1-r1",
+   "variantKey": "planner=haiku;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=phases;claims=0;dedupe=1;trainMax=1",
+   "baseline": null,
+   "scenario": "cafe-family",
+   "excluded": [],
+   "planner": "haiku",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 6.2,
+    "wallS": 455,
+    "apiUsdStd": 1.09,
+    "quality": 83.4,
+    "simVersion": "lab-0.3"
+   },
+   "now": {
+    "wallS": 293,
+    "apiUsdStd": 0.15,
+    "quality": 37.5,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 283,
+   "wallSRaw": 283,
+   "planS": 47.084,
+   "usd": 0.142,
+   "usdRaw": 0.142,
+   "coderUsd": null,
+   "tasksPlanned": 3,
+   "tasksLanded": 3,
+   "expectedTasks": 7,
+   "workS": [
+    26.852,
+    230.489,
+    37.42
+   ],
+   "workMedS": 37.42,
+   "quality": 34.6,
+   "qualityNoJudge": 35.7,
+   "hiddenShare": 0.14285714285714285,
+   "judge": 3,
+   "tokens": {
+    "in": 218,
+    "out": 80774,
+    "cacheR": 5067561,
+    "cacheW": 254204
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-cafefamily-08ce0-r1",
+   "variantKey": "planner=haiku;coders=12;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "cafe-family",
+   "excluded": [],
+   "planner": "haiku",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 6.2,
+    "wallS": 401,
+    "apiUsdStd": 1.34,
+    "quality": 85,
+    "simVersion": "lab-0.3"
+   },
+   "now": {
+    "wallS": 254,
+    "apiUsdStd": 0.15,
+    "quality": 43.8,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 172,
+   "wallSRaw": 172,
+   "planS": 69.878,
+   "usd": 0.198,
+   "usdRaw": 0.198,
+   "coderUsd": null,
+   "tasksPlanned": 8,
+   "tasksLanded": 8,
+   "expectedTasks": 7,
+   "workS": [
+    33.568,
+    28.883,
+    84.652,
+    21.611,
+    27.829,
+    28.014,
+    29.528,
+    28.234
+   ],
+   "workMedS": 28.234,
+   "quality": 53.7,
+   "qualityNoJudge": 57.1,
+   "hiddenShare": 0.42857142857142855,
+   "judge": 4,
+   "tokens": {
+    "in": 360,
+    "out": 120213,
+    "cacheR": 7828572,
+    "cacheW": 300021
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-cafefamily-41305-r1",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "cafe-family",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 6,
+    "wallS": 1515,
+    "apiUsdStd": 13.89,
+    "quality": 88.1,
+    "simVersion": "lab-0.3"
+   },
+   "now": {
+    "wallS": 53,
+    "apiUsdStd": 0.41,
+    "quality": 75,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 58,
+   "wallSRaw": 58,
+   "planS": 3.651,
+   "usd": 0.39,
+   "usdRaw": 0.39,
+   "coderUsd": null,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 7,
+   "workS": [
+    49.578
+   ],
+   "workMedS": 49.578,
+   "quality": 85.4,
+   "qualityNoJudge": 89.3,
+   "hiddenShare": 0.8571428571428571,
+   "judge": 7,
+   "tokens": {
+    "in": 24,
+    "out": 5225,
+    "cacheR": 363313,
+    "cacheW": 26557
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-cafefamily-7eac1-r1",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "cafe-family",
+   "excluded": [
+    "wall (human intervention)",
+    "cost (upper or lower bound)"
+   ],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 6,
+    "wallS": 300,
+    "apiUsdStd": 0.86,
+    "quality": 68.8,
+    "simVersion": "lab-0.4"
+   },
+   "now": {
+    "wallS": 304,
+    "apiUsdStd": 0.64,
+    "quality": 81.3,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": null,
+   "wallSRaw": 1431,
+   "planS": 42.842,
+   "usd": null,
+   "usdRaw": 9.994,
+   "coderUsd": null,
+   "tasksPlanned": 5,
+   "tasksLanded": 5,
+   "expectedTasks": 7,
+   "workS": [],
+   "workMedS": null,
+   "quality": 85.4,
+   "qualityNoJudge": 89.3,
+   "hiddenShare": 0.8571428571428571,
+   "judge": 7,
+   "tokens": {
+    "in": 638,
+    "out": 145759,
+    "cacheR": 13725659,
+    "cacheW": 541396
+   },
+   "conflicts": 3,
+   "bounces": 0
+  },
+  {
+   "id": "lab-portts-ec6ec-r1",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "port-ts",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 19.8,
+    "wallS": 144,
+    "apiUsdStd": 1.1,
+    "quality": 89.4,
+    "simVersion": "lab-0.4"
+   },
+   "now": {
+    "wallS": 230,
+    "apiUsdStd": 1.92,
+    "quality": 91.7,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 228,
+   "wallSRaw": 228,
+   "planS": 3.891,
+   "usd": 2.02,
+   "usdRaw": 2.02,
+   "coderUsd": 2.02,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 21,
+   "workS": [
+    215.254
+   ],
+   "workMedS": 215.254,
+   "quality": 92,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 6,
+   "tokens": {
+    "in": 102,
+    "out": 34634,
+    "cacheR": 2617122,
+    "cacheW": 100380
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-712d7-r1",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "bakery",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 23.2,
+    "wallS": 1096,
+    "apiUsdStd": 8.62,
+    "quality": 91.6,
+    "simVersion": "lab-0.7"
+   },
+   "now": {
+    "wallS": 505,
+    "apiUsdStd": 4.25,
+    "quality": 92,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 806,
+   "wallSRaw": 806,
+   "planS": 3.502,
+   "usd": 4.037,
+   "usdRaw": 4.037,
+   "coderUsd": 4.037,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 25,
+   "workS": [
+    796.426
+   ],
+   "workMedS": 796.426,
+   "quality": 96,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 8,
+   "tokens": {
+    "in": 118,
+    "out": 110298,
+    "cacheR": 3627798,
+    "cacheW": 138158
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-7fe05-r1",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "bakery",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 23.4,
+    "wallS": 2045,
+    "apiUsdStd": 7.59,
+    "quality": 86.1,
+    "simVersion": "lab-0.7"
+   },
+   "now": {
+    "wallS": 829,
+    "apiUsdStd": 1.84,
+    "quality": 92.9,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 811,
+   "wallSRaw": 811,
+   "planS": 60.059,
+   "usd": 1.752,
+   "usdRaw": 1.752,
+   "coderUsd": 0.687,
+   "tasksPlanned": 7,
+   "tasksLanded": 7,
+   "expectedTasks": 25,
+   "workS": [
+    205.174,
+    216.798,
+    143.666,
+    90.228,
+    153.301,
+    110.413,
+    240.306
+   ],
+   "workMedS": 153.301,
+   "quality": 89.7,
+   "qualityNoJudge": 97.1,
+   "hiddenShare": 0.9615384615384616,
+   "judge": 6,
+   "tokens": {
+    "in": 952,
+    "out": 876061,
+    "cacheR": 29908686,
+    "cacheW": 1598052
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-portts-e62a6-r1b",
+   "variantKey": "planner=opus;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "port-ts",
+   "excluded": [
+    "wall (human intervention)",
+    "cost (upper or lower bound)"
+   ],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 19.8,
+    "wallS": 738,
+    "apiUsdStd": 2.04,
+    "quality": 85.3,
+    "simVersion": "lab-0.7"
+   },
+   "now": {
+    "wallS": 580,
+    "apiUsdStd": 0.98,
+    "quality": 83.7,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": null,
+   "wallSRaw": 830,
+   "planS": 64.183,
+   "usd": null,
+   "usdRaw": 0.85,
+   "coderUsd": null,
+   "tasksPlanned": 5,
+   "tasksLanded": 5,
+   "expectedTasks": 21,
+   "workS": [],
+   "workMedS": null,
+   "quality": 81,
+   "qualityNoJudge": 91.2,
+   "hiddenShare": 0.9936708860759493,
+   "judge": 4,
+   "tokens": {
+    "in": 1152,
+    "out": 792158,
+    "cacheR": 45364866,
+    "cacheW": 1845673
+   },
+   "conflicts": 4,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-bfe16-r2",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "bakery",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 7,
+    "wallS": 1148,
+    "apiUsdStd": 2.81,
+    "quality": 89.3,
+    "simVersion": "lab-0.8"
+   },
+   "now": {
+    "wallS": 829,
+    "apiUsdStd": 1.84,
+    "quality": 92.9,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 1163,
+   "wallSRaw": 1163,
+   "planS": 51.791,
+   "usd": 1.522,
+   "usdRaw": 1.522,
+   "coderUsd": 1.065,
+   "tasksPlanned": 9,
+   "tasksLanded": 9,
+   "expectedTasks": 25,
+   "workS": [
+    355.261,
+    407.839,
+    476.53,
+    425.772,
+    379.217,
+    405.403,
+    838.276,
+    467.299,
+    196.094
+   ],
+   "workMedS": 407.839,
+   "quality": 91.7,
+   "qualityNoJudge": 97.1,
+   "hiddenShare": 0.9615384615384616,
+   "judge": 7,
+   "tokens": {
+    "in": 1668,
+    "out": 1187753,
+    "cacheR": 47886746,
+    "cacheW": 2314441
+   },
+   "conflicts": 1,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-aa826-r2",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "bakery",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 21,
+    "wallS": 744,
+    "apiUsdStd": 4.8,
+    "quality": 92,
+    "simVersion": "lab-0.8"
+   },
+   "now": {
+    "wallS": 505,
+    "apiUsdStd": 4.25,
+    "quality": 92,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 465,
+   "wallSRaw": 465,
+   "planS": 3.66,
+   "usd": 4.082,
+   "usdRaw": 4.082,
+   "coderUsd": 4.082,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 25,
+   "workS": [
+    452.007
+   ],
+   "workMedS": 452.007,
+   "quality": 96,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 8,
+   "tokens": {
+    "in": 72,
+    "out": 124250,
+    "cacheR": 2120224,
+    "cacheW": 146522
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-bfe16-r3",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "bakery",
+   "excluded": [
+    "wall (platform stall)"
+   ],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 7,
+    "wallS": 1148,
+    "apiUsdStd": 2.81,
+    "quality": 89.3,
+    "simVersion": "lab-0.8"
+   },
+   "now": {
+    "wallS": 829,
+    "apiUsdStd": 1.84,
+    "quality": 92.9,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": null,
+   "wallSRaw": 2090,
+   "planS": 55.498,
+   "usd": 1.889,
+   "usdRaw": 1.889,
+   "coderUsd": 0.992,
+   "tasksPlanned": 9,
+   "tasksLanded": 9,
+   "expectedTasks": 25,
+   "workS": [
+    1539.118,
+    1522.909,
+    1573.663,
+    1826.043,
+    1536.74,
+    1504.599,
+    1592.208,
+    1453.754,
+    281.27
+   ],
+   "workMedS": 1536.74,
+   "quality": 91.7,
+   "qualityNoJudge": 97.1,
+   "hiddenShare": 0.9615384615384616,
+   "judge": 7,
+   "tokens": {
+    "in": 1794,
+    "out": 1009777,
+    "cacheR": 53247628,
+    "cacheW": 2360730
+   },
+   "conflicts": 4,
+   "bounces": 0
+  },
+  {
+   "id": "lab-bakery-aa826-r3",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "bakery",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 21,
+    "wallS": 744,
+    "apiUsdStd": 4.8,
+    "quality": 92,
+    "simVersion": "lab-0.8"
+   },
+   "now": {
+    "wallS": 505,
+    "apiUsdStd": 4.25,
+    "quality": 92,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 509,
+   "wallSRaw": 509,
+   "planS": 3.256,
+   "usd": 4.613,
+   "usdRaw": 4.613,
+   "coderUsd": 4.613,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 25,
+   "workS": [
+    497.846
+   ],
+   "workMedS": 497.846,
+   "quality": 93.7,
+   "qualityNoJudge": 97.1,
+   "hiddenShare": 0.9615384615384616,
+   "judge": 8,
+   "tokens": {
+    "in": 90,
+    "out": 135255,
+    "cacheR": 2733292,
+    "cacheW": 170077
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-club-40f21-r1",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "club",
+   "excluded": [
+    "wall (platform stall)"
+   ],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 17,
+    "wallS": 1024,
+    "apiUsdStd": 2.46,
+    "quality": 90.4,
+    "simVersion": "lab-0.9"
+   },
+   "now": {
+    "wallS": 968,
+    "apiUsdStd": 2.71,
+    "quality": 92,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": null,
+   "wallSRaw": 1616,
+   "planS": 92.285,
+   "usd": 2.867,
+   "usdRaw": 2.867,
+   "coderUsd": 1.523,
+   "tasksPlanned": 12,
+   "tasksLanded": 12,
+   "expectedTasks": 47,
+   "workS": [],
+   "workMedS": null,
+   "quality": 92,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 6,
+   "tokens": {
+    "in": 1992,
+    "out": 1943378,
+    "cacheR": 66881320,
+    "cacheW": 3961845
+   },
+   "conflicts": 0,
+   "bounces": 2
+  },
+  {
+   "id": "lab-club-5db67-r1",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "club",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 49,
+    "wallS": 613,
+    "apiUsdStd": 5.17,
+    "quality": 88.8,
+    "simVersion": "lab-0.9"
+   },
+   "now": {
+    "wallS": 702,
+    "apiUsdStd": 5.92,
+    "quality": 90.6,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 850,
+   "wallSRaw": 850,
+   "planS": 4.144,
+   "usd": 5.784,
+   "usdRaw": 5.784,
+   "coderUsd": 5.784,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 47,
+   "workS": [
+    836.871
+   ],
+   "workMedS": 836.871,
+   "quality": 88,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 4,
+   "tokens": {
+    "in": 140,
+    "out": 152872,
+    "cacheR": 5586028,
+    "cacheW": 201133
+   },
+   "conflicts": 0,
+   "bounces": 0
+  },
+  {
+   "id": "lab-club-40f21-r2",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "club",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 17,
+    "wallS": 1024,
+    "apiUsdStd": 2.46,
+    "quality": 90.4,
+    "simVersion": "lab-0.9"
+   },
+   "now": {
+    "wallS": 968,
+    "apiUsdStd": 2.71,
+    "quality": 92,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 1263,
+   "wallSRaw": 1263,
+   "planS": 96.356,
+   "usd": 2.963,
+   "usdRaw": 2.963,
+   "coderUsd": 1.479,
+   "tasksPlanned": 12,
+   "tasksLanded": 12,
+   "expectedTasks": 47,
+   "workS": [
+    167.616,
+    236.728,
+    176.999,
+    134.784,
+    454.583,
+    307.87,
+    171.873,
+    122.978,
+    207.235,
+    189.611,
+    150.415,
+    340.227
+   ],
+   "workMedS": 176.999,
+   "quality": 92,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 6,
+   "tokens": {
+    "in": 2134,
+    "out": 1971801,
+    "cacheR": 70562146,
+    "cacheW": 4185143
+   },
+   "conflicts": 0,
+   "bounces": 3
+  },
+  {
+   "id": "lab-club-40f21-r3",
+   "variantKey": "planner=opus;coders=12;coderModel=haiku;reviewers=3;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "baseline": null,
+   "scenario": "club",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "haiku",
+   "pred": {
+    "landed": 17,
+    "wallS": 1024,
+    "apiUsdStd": 2.46,
+    "quality": 90.4,
+    "simVersion": "lab-0.9"
+   },
+   "now": {
+    "wallS": 968,
+    "apiUsdStd": 2.71,
+    "quality": 92,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 1104,
+   "wallSRaw": 1104,
+   "planS": 66.24,
+   "usd": 3.01,
+   "usdRaw": 3.01,
+   "coderUsd": 1.791,
+   "tasksPlanned": 12,
+   "tasksLanded": 12,
+   "expectedTasks": 47,
+   "workS": [
+    219.653,
+    270.014,
+    184.121,
+    148.904,
+    222.165,
+    330.844,
+    173.087,
+    112.472,
+    203.708,
+    160.388,
+    151.947,
+    362.086
+   ],
+   "workMedS": 184.121,
+   "quality": 94,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 7,
+   "tokens": {
+    "in": 2238,
+    "out": 1933500,
+    "cacheR": 74560113,
+    "cacheW": 4265043
+   },
+   "conflicts": 0,
+   "bounces": 2
+  },
+  {
+   "id": "lab-club-5db67-r2",
+   "variantKey": "opus-alone",
+   "baseline": "opus-alone",
+   "scenario": "club",
+   "excluded": [],
+   "planner": "opus",
+   "coderModel": "opus",
+   "pred": {
+    "landed": 49,
+    "wallS": 613,
+    "apiUsdStd": 5.17,
+    "quality": 88.8,
+    "simVersion": "lab-0.9"
+   },
+   "now": {
+    "wallS": 702,
+    "apiUsdStd": 5.92,
+    "quality": 90.6,
+    "simVersion": "lab-0.10"
+   },
+   "wallS": 606,
+   "wallSRaw": 606,
+   "planS": 3.763,
+   "usd": 5.633,
+   "usdRaw": 5.633,
+   "coderUsd": 5.633,
+   "tasksPlanned": 1,
+   "tasksLanded": 1,
+   "expectedTasks": 47,
+   "workS": [
+    596.582
+   ],
+   "workMedS": 596.582,
+   "quality": 94,
+   "qualityNoJudge": 100,
+   "hiddenShare": 1,
+   "judge": 7,
+   "tokens": {
+    "in": 132,
+    "out": 157661,
+    "cacheR": 4932579,
+    "cacheW": 186588
+   },
+   "conflicts": 0,
+   "bounces": 0
+  }
+ ],
+ "notFitted": [
+  {
+   "id": "lab-cafefamily-3e5c3-r1b",
+   "scenario": "cafe-family",
+   "baseline": "github",
+   "variantKey": "github",
+   "status": "timeout",
+   "excluded": null
+  },
+  {
+   "id": "lab-portts-e62a6-r1",
+   "scenario": "port-ts",
+   "baseline": null,
+   "variantKey": "planner=opus;coders=6;coderModel=haiku;reviewers=0;reviewerModel=haiku;reviewStyle=read;policy=intent;claims=0;dedupe=1;trainMax=4",
+   "status": "stopped-budget",
+   "excluded": "guard bug: stopped by a mis-priced budget guard (every token priced as Opus), not by the setup; not the port-ts swarm result"
+  }
+ ]
+}

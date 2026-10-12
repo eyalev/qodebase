@@ -20,6 +20,10 @@
   {
    "class_name": "AgentBox",
    "scheduling_policy": "durable_object"
+  },
+  {
+   "class_name": "MergeBox",
+   "scheduling_policy": "durable_object"
   }
  ],
  "durable_objects": {
@@ -55,6 +59,18 @@
    {
     "name": "Ledger",
     "class_name": "Ledger"
+   },
+   {
+    "name": "Landing",
+    "class_name": "Landing"
+   },
+   {
+    "name": "MergeBox",
+    "class_name": "MergeBox"
+   },
+   {
+    "name": "DemoAgent",
+    "class_name": "DemoAgent"
    }
   ]
  },
@@ -101,6 +117,14 @@
    "new_sqlite_classes": [
     "TalkVoice"
    ]
+  },
+  {
+   "tag": "v8",
+   "new_sqlite_classes": [
+    "Landing",
+    "MergeBox",
+    "DemoAgent"
+   ]
   }
  ],
  "rules": [
@@ -117,7 +141,8 @@
     "**/*.rev",
     "**/*-qb.mjs",
     "**/*-box-api.mjs",
-    "**/*-boot.sh"
+    "**/*-boot.sh",
+    "**/*-mergejob.mjs"
    ],
    "fallthrough": false
   }

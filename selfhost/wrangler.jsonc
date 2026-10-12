@@ -18,7 +18,8 @@
   "assets": { "directory": "../public" },
   "containers": [
     { "class_name": "BuildBox", "scheduling_policy": "durable_object" },
-    { "class_name": "AgentBox", "scheduling_policy": "durable_object" }
+    { "class_name": "AgentBox", "scheduling_policy": "durable_object" },
+    { "class_name": "MergeBox", "scheduling_policy": "durable_object" }
   ],
   "durable_objects": {
     "bindings": [
@@ -29,7 +30,11 @@
       { "name": "Installs", "class_name": "Installs" },
       { "name": "TalkLog", "class_name": "TalkLog" },
       { "name": "TalkVoice", "class_name": "TalkVoice" },
-      { "name": "Ledger", "class_name": "Ledger" }
+      { "name": "Ledger", "class_name": "Ledger" },
+      // The landing system (merge queue, merger box, scripted demo agents) and the agent board.
+      { "name": "Landing", "class_name": "Landing" },
+      { "name": "MergeBox", "class_name": "MergeBox" },
+      { "name": "DemoAgent", "class_name": "DemoAgent" }
     ]
   },
   "migrations": [
@@ -39,13 +44,15 @@
     { "tag": "v4", "new_sqlite_classes": ["Installs"] },
     { "tag": "v5", "new_sqlite_classes": ["TalkLog"] },
     { "tag": "v6", "new_sqlite_classes": ["Ledger"] },
-    { "tag": "v7", "new_sqlite_classes": ["TalkVoice"] }
+    { "tag": "v7", "new_sqlite_classes": ["TalkVoice"] },
+    { "tag": "v8", "new_sqlite_classes": ["Landing", "MergeBox", "DemoAgent"] }
   ],
   "rules": [
     { "type": "Data", "globs": ["**/*.tgz"], "fallthrough": true },
     { "type": "Text", "globs": ["**/*.rev"], "fallthrough": true },
     { "type": "Text", "globs": ["**/qb.mjs"], "fallthrough": true },
-    { "type": "Text", "globs": ["**/boot.sh", "**/box-api.mjs"], "fallthrough": true }
+    { "type": "Text", "globs": ["**/boot.sh", "**/box-api.mjs"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/mergejob.mjs"], "fallthrough": true }
   ],
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "qodebase" }],
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
