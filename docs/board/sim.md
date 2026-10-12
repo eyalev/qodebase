@@ -972,6 +972,19 @@ real.
 
 ### (k) results (2026-10-12, `node sim/bun/modules.mjs --graph` then `--sweep`; sim/bun/modules.json, sim/bun/bun5-sweep.jsonl)
 
+**Label: simulated from Bun's real structure, not replayed.** The tasks, files, commit counts, crates, modules and
+`use` edges are real, and the work times are BUN3's calibration. The interface/body split and the module order are
+modelled.
+
+A real-patch replay cannot check this, for two reasons:
+- Bun's patches were not cut into interfaces and bodies.
+- Replaying each file's commits in that file's own history order always rebuilds the file exactly, in any order
+  between modules: hunks depend only on their own file. So "the tree ends equal to history, with 0 cross-module
+  conflicts" holds by construction and carries no information.
+
+What owner-per-module could really break is compiling against dependencies at an earlier state. Checking that
+needs Bun's toolchain and a `cargo check` per step, out of scope here as it was for BUN3.
+
 **The structure, from the tip's code:**
 - 108 crates, 1,160 modules reached from the crates' `lib.rs`, 9,881 `use` edges (a median module uses 5 others,
   p90 20).
@@ -1018,5 +1031,5 @@ No falsifier fired: interfaces-first stayed under 13 h, and 640 agents were not 
 - **"Interface = 10–30% of a module" is an assumption.** The result moves 3.4–5.2 h across that range, never near
   26 h.
 - **Order from `use` lines is an approximation** of what must exist first.
-- **Not checked with real patches.** A real-patch check of the critical path (does each module's chain apply when
-  replayed module by module, with interfaces first?) is BUN3's machinery; I'll offer it to qb5.
+- **Not checked with real patches, and a text replay could not check it** (see the label above). Only a
+  compile check per step could.
