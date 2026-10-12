@@ -54,7 +54,7 @@
 .lw .s-landed .w{color:var(--acc);font-weight:500}
 
 /* The line (merge queue) */
-.lw .line{background:var(--card);border-radius:14px;box-shadow:inset 0 0 0 1px var(--line);padding:14px}
+.lw .line{padding:4px 0 0}   /* no frame: the tiles inside are the boxes (design pass: no nested boxes) */
 .lw .track{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;padding-bottom:2px}
 .lw .track::-webkit-scrollbar{display:none}
 .lw .stop{flex:none;align-self:flex-start;min-height:76px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;width:64px;border-radius:10px;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--acc);font-size:13px;font-weight:500;padding:6px 4px;text-align:center}

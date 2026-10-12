@@ -30,7 +30,14 @@
     review: ['Review', 'Another agent reads the change and approves it or asks for fixes before it can join the line.'],
     scripted: ['Scripted agents', 'In this demo the agents follow a script instead of calling an AI model, so it costs nothing to run. Everything else is real: real git commits on real forks, real collisions, real tests.'],
   };
-  const term = (k, text) => `<button class="term" type="button" data-gloss="${k}">${esc(text || GLOSS[k][0].toLowerCase())}</button>`;
+  // A glossary word is tappable (dotted underline) only the first time it shows in a view; later it is plain
+  // text, so a page is not a field of dotted lines (design pass, 2026-10-12).
+  let termSeen = null;
+  const term = (k, text) => {
+    const words = esc(text || GLOSS[k][0].toLowerCase());
+    if (termSeen) { if (termSeen.has(k)) return words; termSeen.add(k); }
+    return `<button class="term" type="button" data-gloss="${k}">${words}</button>`;
+  };
 
   // Agents are numbered 1..N per project: a scripted agent keeps its own number, a real
   // one (id like "agent 981l0") gets the next free number by when its first change started.
@@ -283,6 +290,12 @@
     if (!st || !end || end < st) return ', in a few minutes';
     const m = Math.max(1, Math.round((end - st) / 60e3));
     return `, in about ${m} minute${m === 1 ? '' : 's'}`;
+  }
+  // A change link from an earlier run (the demo resets the café each run, so old links in a write-up dead-end).
+  function gone() {
+    const demo = D.mode === 'demo';
+    return `<p>${demo ? 'This change was from an earlier run; each new run starts the café again.' : 'This change is no longer in this project\'s recent history.'}</p>
+      <div class="wa">${demo && D.watch?.enabled ? '<button class="btn" type="button" data-watch="start" data-home="1">Watch a run</button>' : ''}<a class="chipb" href="#/">See the latest run</a></div>`;
   }
   function watchCard() {
     const W = D.watch || {}, dm = D.demo || {};
@@ -688,7 +701,7 @@
   }
   function viewChange(id) {
     const idx = byId(), c = idx.get(id);
-    if (!c) return `<div class="drill">${crumbs([['Agents at work', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style="font-size:20px;margin-bottom:6px">${short(it)}</h2><p class="dim">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : '<p class="dim">This change is not in the data shown here.</p>'; })()}</div>`;
+    if (!c) return `<div class="drill">${crumbs([['Agents at work', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style="font-size:20px;margin-bottom:6px">${short(it)}</h2><p class="dim">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : gone(); })()}</div>`;
     const area = areaOf(c.files[0] || '.');
     const story = c.events.map((e) => { const s = sentence(c, e, idx) || [{ working: `${AG(c.agent)} working`, reviewing: 'The reviewer is reading it', testing: 'Being tested with the newest main' }[e.what] || e.what, { alone: 'on its own', 'next train': '' }[e.detail] ?? e.detail]; return `<li><time>${hhmm(e.t)}</time><span>${esc(s[0])}${s[1] && s[1] !== title1(c) ? `<span class="d">${esc(s[1])}</span>` : ''}</span></li>`; }).reverse().join('');
     const stackOn = c.stackedOn && idx.get(c.stackedOn);
@@ -760,8 +773,10 @@
   function render() {
     if (!D) return;
     const h = decodeURIComponent(location.hash || '#/'); let m;
+    termSeen = new Set();
     const html = (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
       : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : overview();
+    termSeen = null;
     // Rebuild only when something other than a time changed, and never under a finger:
     // a rebuild mid-tap swallowed about one tap in six (critique, 2026-10-07).
     const key = html.replace(/(data-(?:ago|since|until)="\d+">)[^<]*/g, '$1').replace(/animation-delay:-\d+ms/g, '');
@@ -818,7 +833,7 @@
     const sp = ev.target.closest('[data-speed]');
     if (sp && P && P.replay) { const T = now(); P.speed = +sp.dataset.speed; P.wall0 = Date.now() - (T - P.start) / P.speed; tick(); return; }
     const wb = ev.target.closest('[data-watch]');
-    if (wb) { watch(wb.dataset.watch, wb); return; }
+    if (wb) { if (wb.dataset.home) location.hash = '#/'; watch(wb.dataset.watch, wb); return; }
     const dm = ev.target.closest('[data-demo]');
     if (dm) {
       dm.disabled = true;
