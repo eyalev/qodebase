@@ -628,41 +628,41 @@ export function ideaSizes() {
   return ideaSizesMemo;
 }
 
-// ---- the adaptive orchestrator's label (manager, 2026-10-12): what kind of job is this, which strategy fits it
-// from what we measured, and what the builder actually runs today. Facts: the suggest/idea job facts
-// ({tasks, overlap, difficulty, summary}) plus an optional kind: 'build' | 'port' | 'sweep' (qb6 can ask the model
-// for it). Without kind, a word rule on the summary decides port/sweep, and `from` says so.
-// -> { type, strategy, runs: {preset, board?}, inBuilder, why, evidence, from }
-// inBuilder: does the builder run that strategy today (false: it runs `runs`, the nearest preset, and says so).
-// from: 'facts' (kind given), 'words' (port/sweep from the summary), 'size' (pieces alone).
-const PORT_WORDS = /\b(port|migrat\w*|convert\w*|rewrite\w* (it |this )?in|translate\w*|from \w+ to \w+)\b/i;
-const SWEEP_WORDS = /\b(rename\w*|every file|across (the )?(code|repo|codebase)|codemod|sweep|bulk|upgrade all|replace all)\b/i;
-export function jobType(facts = SMALL_APP) {
-  const s = suggestBuild(facts);
-  const runs = { preset: s.preset, ...(s.board !== undefined ? { board: s.board } : {}) };
-  const kind = facts.kind || (PORT_WORDS.test(facts.summary || '') ? 'port' : SWEEP_WORDS.test(facts.summary || '') ? 'sweep' : 'build');
-  const from = facts.kind ? 'facts' : kind === 'build' ? 'size' : 'words';
-  if (kind === 'port') return { type: 'port', from, runs: { preset: 'fastest' }, inBuilder: false,
-    strategy: 'Agents own line ranges, every change lands at once, a check runs behind it and failures are fixed forward.',
-    why: 'In a port most changes build on lines an earlier change wrote, so extra agents mostly wait. The builder runs one strong agent today; the owned-ranges method is measured, not built.',
-    evidence: 'Bun port replay (BUN3): 89% of commits depend on earlier lines, 640 agents no faster than 64; checking behind the commit kept the time and cut broken-build time 59-73%.' };
-  if (kind === 'sweep') return { type: 'sweep', from, runs, inBuilder: s.preset !== 'fastest',
-    strategy: 'Many agents, each owning its files; the merge queue replays each change on the newest main.',
-    why: s.preset === 'fastest'
-      ? 'A sweep is many small, separate edits of the same kind. At this size one agent is still quicker, so the builder runs one.'
-      : 'A sweep is many small, separate edits of the same kind: they split well, and replaying an edit on the new main settles most collisions.',
-    evidence: 'Real-code run (sim/real, 500 scripted agents): 972 of 976 conflicts replayed cleanly on the new main.' };
-  const b = bucketOf(jobProfile(facts).tasks);
-  if (b.small) return { type: 'small app', from, runs, inBuilder: true,
-    strategy: 'One strong agent builds it all.',
-    why: 'Small jobs finish soonest with one Opus agent, at about a team\'s quality.',
+// ---- the adaptive orchestrator's label (manager + qb7, 2026-10-12): what kind of job this is, the strategy the
+// builder will run for it (never one it cannot run) and why, from the suggest/idea job facts and suggestBuild's pick.
+// jobType(job, suggestion?) -> { type, label, strategy, why, preset, board?, better?, evidence, from }
+//   type: 'small-app' | 'app' | 'big-app' | 'shared-list' | 'port' | 'sweep'
+//   strategy/why: what the builder runs and the short reason (qb7 shows "Looks like: <label>. Strategy: <strategy> (<why>).")
+//   better: a strategy we measured that the builder does not run yet (lanes, owned ranges + check behind); may be absent
+//   from: 'kind' (job.kind said port/sweep) or 'size'. Port and sweep come ONLY from job.kind, never guessed.
+const STRATEGY = { fastest: 'one strong agent', balanced: 'an Opus planner with a reviewed Haiku team', cheapest: 'an Opus planner and a Haiku crew, no reviewer' };
+export function jobType(job = SMALL_APP, suggestion = null) {
+  const s = suggestion || suggestBuild(job);
+  const preset = s.preset, board = s.board;
+  const strategy = STRATEGY[preset] + (board ? ' with the board on' : '');
+  const base = { preset, ...(board !== undefined ? { board } : {}), strategy };
+  const b = bucketOf(jobProfile(job).tasks);
+  const overlapHigh = jobProfile(job).pShared >= 0.7;
+  if (job.kind === 'port') return { ...base, type: 'port', from: 'kind', label: 'a port of existing code',
+    why: preset === 'fastest' ? 'in a port most changes build on earlier ones, so extra agents mostly wait'
+      : 'a team at about half the cost of one agent, though changes that build on each other still wait for each other',
+    better: 'agents owning line ranges, each change landing at once with its check behind it',
+    evidence: 'Bun port replay (BUN3): 89% of commits depend on earlier lines; 640 agents no faster than 64.' };
+  if (job.kind === 'sweep') return { ...base, type: 'sweep', from: 'kind', label: 'one change across many files',
+    why: preset === 'fastest' ? 'at this size one agent is still quickest' : 'many small, separate edits split well, and the queue replays each on the newest main',
+    evidence: 'Real-code run (sim/real): 972 of 976 conflicts replayed cleanly on the new main.' };
+  if (b.small) return { ...base, type: 'small-app', from: 'size', label: 'a new small app',
+    why: preset === 'fastest' ? 'fastest in the lab, at about a team\'s quality' : s.why,
     evidence: 'Lab: one agent finished first where time could be compared (2 of 4 jobs), same quality or within one hidden test.' };
-  if (!b.size || b.tasks < 30) return { type: 'mid-size app', from, runs, inBuilder: true,
-    strategy: runs.board ? 'A reviewed team with the board and a duplicate check, because its pieces overlap.' : 'A reviewed team that splits the pieces.',
-    why: s.why,
-    evidence: runs.board ? 'Board runs and sims (sim.md (d)-(h)): a duplicate check before work stops pieces being built twice when they overlap.' : 'Lab: on the bigger apps a team cost about half of one agent.' };
-  return { type: 'big app', from, runs, inBuilder: false,
-    strategy: 'Landing lanes by area that test what depends on each change, with a throughput controller per lane; lanes start when one merge queue saturates.',
-    why: 'Past a few hundred agents one merge queue is the limit. The builder runs a reviewed team of up to 12 coders today; lanes are measured in simulations, not built.',
-    evidence: 'L1-L2: one queue saturates near 300 agents (~880 landed/h); 32 dependency-aware lanes + controller landed 1.4x one queue with 0 breaks.' };
+  if (board || overlapHigh) return { ...base, type: 'shared-list', from: 'size', label: 'an app whose pieces overlap',
+    why: board ? 'the board shows who works on what, so pieces are not built twice' : s.why,
+    evidence: 'Board runs and sims (sim.md (d)-(h)): a duplicate check before work stops pieces being built twice.' };
+  if (b.tasks < 30) return { ...base, type: 'app', from: 'size', label: 'a mid-size app',
+    why: preset === 'balanced' ? 'about half the cost of one agent on the lab\'s bigger apps' : preset === 'cheapest' ? 'many simple, separate pieces' : 'one agent is still quickest here',
+    evidence: 'Lab stage 1: on the bigger apps a team cost about half of one agent.' };
+  return { ...base, type: 'big-app', from: 'size', label: 'a big app',
+    why: preset === 'fastest' ? 'one agent is still quickest here' : preset === 'cheapest' ? 'many simple, separate pieces: a Haiku crew does them for the least'
+      : 'a team costs about half of one agent on big apps; the builder runs up to 12 coders',
+    better: 'landing lanes by area that test what depends on each change, with a controller per lane',
+    evidence: 'L1-L2: one queue saturates near 300 agents; 32 dependency-aware lanes + controller landed 1.4x one queue with 0 breaks.' };
 }

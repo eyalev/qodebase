@@ -116,26 +116,22 @@ Only tiny jobs change (a team on 2 pieces: 3 to 8 min; one agent: 50 s to 2 min)
 `REAL_BUILDS` in predict.js lists each real build used. At 3+ finished builds, refit the floor from them
 (Workers Logs: module `build`, events `started` and `build_settled`).
 
-## jobType(facts): the adaptive orchestrator's label (2026-10-12)
+## jobType(job, suggestion): the adaptive orchestrator's label (2026-10-12, qb7's contract)
 
-`jobType(facts)` in `public/lab/predict.js` turns the suggest/idea job facts into
-`{type, strategy, runs, inBuilder, why, evidence, from}`:
-- `type`: small app, mid-size app, big app, port or sweep;
-- `strategy`: what we measured works for that type;
-- `runs`: the preset the builder actually uses today (suggestBuild's);
-- `inBuilder`: whether the builder runs that strategy today.
+`jobType(job, suggestion?)` in `public/lab/predict.js` returns
+`{type, label, strategy, why, preset, board?, better?, evidence, from}`. The page shows
+"Looks like: <label>. Strategy: <strategy> (<why>)."
+- `strategy` is always what the builder runs: the preset `suggestBuild` picked, in words.
+- `better` is a measured strategy the builder does not run yet. It is never shown as a promise.
 
-| type | when | strategy (evidence) | the builder today |
-|---|---|---|---|
-| small app | 1-11 pieces | one strong agent (lab) | Fastest: yes |
-| mid-size app | 12-29 pieces | a reviewed team; board + duplicate check when pieces overlap (board runs, sim.md (d)-(h)) | Balanced (board on with overlap): yes |
-| big app | 30+ pieces | dependency-aware lanes + per-lane controller once one queue saturates (L1-L2) | no: Balanced, up to 12 coders |
-| port | kind 'port' or port words | owned line ranges, land at once, check behind, fix forward (BUN3) | no: Fastest (extra agents mostly wait on chains) |
-| sweep | kind 'sweep' or sweep words | many agents owning files, replay on the newest main (sim/real) | yes, unless the size says Fastest |
+| type | when | label | strategy (builder) | better (measured, not built) |
+|---|---|---|---|---|
+| small-app | 1-11 pieces | a new small app | one strong agent | |
+| shared-list | 12+ pieces, board on or high overlap | an app whose pieces overlap | team with the board on | |
+| app | 12-29 pieces | a mid-size app | the preset's team | |
+| big-app | 30+ pieces | a big app | the preset's team (up to 12 coders) | dependency-aware lanes + per-lane controller (L1-L2) |
+| port | `job.kind === 'port'` only | a port of existing code | the preset (one agent at small sizes) | owned line ranges, land at once, check behind (BUN3) |
+| sweep | `job.kind === 'sweep'` only | one change across many files | the preset | |
 
-`from` says how the type was decided:
-- **facts:** `kind` was given;
-- **words:** a word rule on the summary found port or sweep words;
-- **size:** the piece count alone.
-
-qb6 can add `"kind": "build"|"port"|"sweep"` to the suggest/idea JSON so the word rule is only a fallback.
+Port and sweep come only from `job.kind`, never guessed from words. qb6 can add `"kind": "build"|"port"|"sweep"` to
+the suggest/idea JSON.
