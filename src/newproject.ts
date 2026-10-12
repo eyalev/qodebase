@@ -9,6 +9,8 @@
 // forks from its first minute) and hands the words to the project's router agent.
 // The brief is assembled on the page, not by a model: no paid call for visitors.
 
+import { JOIN_SPEECH } from './speechjoin';
+
 export const STARTER = 'forq.blank';
 
 /** What the router agent is told, around the person's own words. */
@@ -98,11 +100,12 @@ ${needsKey ? `<p class="lede">Agents run on your own Anthropic API key. <a href=
  $('back').onclick=()=>{idea.value=pidea.value;$('s2').hidden=true;$('s1').hidden=false;history.replaceState(null,'','/build');idea.focus();};
  pname.addEventListener('input',()=>{pname.dataset.touched=1;url();save();});pidea.addEventListener('input',save);
  // Speak: the browser's own speech recognition (Chrome on Android and desktop); hidden where there is none.
+ ${JOIN_SPEECH}
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition,mic=$('mic');
  if(SR){mic.hidden=false;let rec=null,base='';
   mic.onclick=()=>{if(rec){rec.stop();return;}
    rec=new SR();rec.interimResults=true;rec.continuous=false;rec.lang=navigator.language||'en-US';base=idea.value?idea.value.trim()+' ':'';
-   rec.onresult=(e)=>{let t='';for(const r of e.results)t+=r[0].transcript;idea.value=base+t;};
+   rec.onresult=(e)=>{idea.value=base+joinSpeech(e.results);};
    rec.onend=()=>{rec=null;mic.classList.remove('on');mic.querySelector('span').textContent='Speak';};
    rec.onerror=()=>{};rec.start();mic.classList.add('on');mic.querySelector('span').textContent='Listening';};}
  // From the home page's box (/build?idea=…): straight to the brief.

@@ -3,6 +3,7 @@
 // rail on desktop). Views are a small registry: a new one is one entry here.
 // Why: docs/design-v2.md ("Views").
 
+import { JOIN_SPEECH } from './speechjoin';
 import type { Entry } from './registry';
 import type { ProjectInfo } from './project';
 import type { BoxStatus, Overview } from './ui';
@@ -755,9 +756,10 @@ t.addEventListener('focus',(e)=>diag('focus',e));t.addEventListener('blur',(e)=>
 // The box keeps focus after the keyboard is dismissed with Back; Android then re-shows the keyboard when it
 // comes back into view. Once the box is fully off screen, let go of focus so only a real tap can bring it back.
 if('IntersectionObserver' in window)new IntersectionObserver((es)=>{for(const x of es)if(!x.isIntersecting&&document.activeElement===t){diag('blur_offscreen',{isTrusted:false});t.blur();}},{threshold:0}).observe(t);
+${JOIN_SPEECH}
 (function(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition,m=document.getElementById('askmic');if(!SR||!m)return;m.hidden=false;let rec=null,base='';
-m.addEventListener('click',()=>{if(rec){rec.stop();return;}rec=new SR();rec.interimResults=true;rec.continuous=true;rec.lang=document.documentElement.lang||navigator.language||'en-US';base=t.value.trim();
-rec.onresult=(e)=>{let s='';for(let i=0;i<e.results.length;i++)s+=e.results[i][0].transcript;t.value=(base?base+' ':'')+s.trim();t.dispatchEvent(new Event('input',{bubbles:true}));};
+m.addEventListener('click',()=>{if(rec){rec.stop();return;}rec=new SR();rec.interimResults=true;rec.continuous=!/Android/i.test(navigator.userAgent);rec.lang=document.documentElement.lang||navigator.language||'en-US';base=t.value.trim();
+rec.onresult=(e)=>{const s=joinSpeech(e.results);t.value=(base?base+' ':'')+s;t.dispatchEvent(new Event('input',{bubbles:true}));};
 rec.onend=()=>{rec=null;m.classList.remove('on');m.setAttribute('aria-pressed','false');m.setAttribute('aria-label','Speak your idea');};rec.onerror=()=>{};
 try{rec.start();m.classList.add('on');m.setAttribute('aria-pressed','true');m.setAttribute('aria-label','Stop listening');}catch(e){rec=null;}});})();
 if(document.body.dataset.buildSettings==='1'){const s=document.createElement('script');s.src='/lab/build-sheet.js';document.head.appendChild(s);}
