@@ -155,7 +155,8 @@ export function apiUsdOf(rows: { kind: string; project: string; tokens?: { in?: 
     if (r.kind !== 'claude' || !r.tokens || !(r.project === project || r.project.startsWith(project + ':'))) continue;
     const m = r.project.includes(':') ? r.project.slice(r.project.lastIndexOf(':') + 1) : fallback;
     const k = /opus/.test(m) ? 'opus' : /sonnet/.test(m) ? 'sonnet' : 'haiku';
-    const [i, o, cr, cw, cw1h] = RATES[k], t = r.tokens;
+    const long = /haiku-5-5@long/.test(m) ? 5 : 1;   // a call above 100k prompt tokens (box.ts files it under <model>@long)
+    const [i, o, cr, cw, cw1h] = RATES[k].map((x) => x * long) as typeof RATES[string], t = r.tokens;
     usd += ((t.in || 0) * i + (t.out || 0) * o + (t.cr || 0) * cr + (t.cw || 0) * cw + (t.cw1h || 0) * cw1h) / 1e6; n++;
   }
   return n ? Math.round(usd * 1000) / 1000 : null;

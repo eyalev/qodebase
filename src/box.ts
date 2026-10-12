@@ -592,7 +592,7 @@ node -e '
 const fs=require("fs"),p=require("path");const since=process.argv[1]||"";let last=since;const m={};
 function walk(d){let e;try{e=fs.readdirSync(d,{withFileTypes:true})}catch{return}for(const f of e){const q=p.join(d,f.name);if(f.isDirectory())walk(q);else if(f.name.endsWith(".jsonl")){
 for(const line of fs.readFileSync(q,"utf8").split("\n")){if(!line.includes("\"usage\""))continue;let o;try{o=JSON.parse(line)}catch{continue}
-const ts=o.timestamp||"";if(!ts||ts<=since)continue;const u=o.message&&o.message.usage;if(!u)continue;const k=o.message.model||"unknown";
+const ts=o.timestamp||"";if(!ts||ts<=since)continue;const u=o.message&&o.message.usage;if(!u)continue;const pr=(u.input_tokens||0)+(u.cache_read_input_tokens||0)+(u.cache_creation_input_tokens||0);const k=(o.message.model||"unknown")+(pr>100000&&/haiku-5-5/.test(o.message.model||"")?"@long":"");
 const t=m[k]||(m[k]={in:0,out:0,cw:0,cw1h:0,cr:0});const cc=u.cache_creation||{};const h1=cc.ephemeral_1h_input_tokens||0;t.in+=u.input_tokens||0;t.out+=u.output_tokens||0;t.cw1h+=h1;t.cw+=Math.max(0,(u.cache_creation_input_tokens||0)-h1);t.cr+=u.cache_read_input_tokens||0;if(ts>last)last=ts}}}}
 walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}))' "$CURSOR"`, { CURSOR: (st.get('costCursor') as string) || '' });
       const cpuNow = Number((r.stdout.match(/CPU=(\d+)/) || [])[1] || 0) / 1e6;

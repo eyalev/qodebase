@@ -124,3 +124,11 @@ test('job.kind for qb4\'s jobType: port | sweep only when the model says so, els
   assert.equal(parseIdea(JSON.stringify({ title: 'Garden planner', prompt: 'Plan a garden with beds and watering reminders kept on the phone.', tasks: 7, overlap: 'some', difficulty: 'normal', confidence: 0.8, name: 'garden-planner', kind: 'port' }), 'medium').job.kind, 'build');
   for (const list of Object.values(CURATED_IDEAS)) for (const i of list) assert.equal(i.job.kind, 'build');
 });
+
+test('pricing tiers: a Haiku 5.5 call above 100k prompt tokens (filed as <model>@long) costs 5x a normal one', async () => {
+  const { apiUsdOf } = await import('./buildsettings.ts');
+  const t = { in: 1e6, out: 1e6, cr: 0, cw: 0, cw1h: 0 };
+  assert.equal(apiUsdOf([{ kind: 'claude', project: 'eyal/x:claude-haiku-5-5', tokens: t }], 'eyal/x'), 0.6);
+  const rows = [{ kind: 'claude', project: 'eyal/x:claude-haiku-5-5', tokens: t }, { kind: 'claude', project: 'eyal/x:claude-haiku-5-5@long', tokens: t }];
+  assert.equal(apiUsdOf(rows, 'eyal/x'), 3.6);
+});

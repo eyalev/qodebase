@@ -134,6 +134,7 @@ import { landedEntry, type LandedEntry } from './landed';
 
 const TRAIN_MAX = 8;
 const STALL_MS = 12 * 60_000, STALL_TICK_MS = 3 * 60_000;
+const GUARD_MARGIN = 1.2, GUARD_MARGIN_UNNAMED = 1.5;
 const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER_CHANGE = 3;
 const TRAIN_STUCK_MS = 12 * 60_000;
 /** Tier 2's default model: short prompts, a fraction of a cent each (2026-10-08: Haiku 5.5). */
@@ -770,9 +771,10 @@ export class Landing extends DurableObject<Env> {
   }
 
   // ---- budget guard (flags.budgetUsd) --------------------------------------------------
-  // Spent = this project's box time + Claude tokens from the cost ledger, priced
-  // conservatively: every call at the model's >100k-prompt tier (costs.ts), so a pricing gap
-  // can only stop the run early, never late. At the budget: every box of the project stops.
+  // Spent = this project's box time + Claude tokens from the cost ledger. Each call is priced at the tier its own prompt
+  // falls in (box.ts files calls above 100k prompt tokens under <model>@long), plus a 20% margin; a row without a model
+  // (older boxes) at the project's priciest model plus 50%. Until 2026-10-12 every Haiku call was priced at the long
+  // tier: 5x, so a 20-agent build read ~3x its real cost (R4). At the budget: every box of the project stops.
   // On Eyal's subscription these dollars are API-equivalent (quota use); real spend is box time.
   async #budgetTick() {
     const m = await this.#m();
@@ -793,7 +795,8 @@ export class Landing extends DurableObject<Env> {
         const priciest = roleModels.length ? roleModels.reduce((a, b) => ((claudeUsd(b, x.tokens!) ?? Infinity) > (claudeUsd(a, x.tokens!) ?? Infinity) ? b : a)) : 'opus';
         // A row that names its model (lab projects, box.ts) is priced at that model; otherwise the priciest.
         const rowModel = x.project.includes(':') ? x.project.slice(x.project.lastIndexOf(':') + 1) : '';
-        claude += Math.max(claudeUsd(rowModel || priciest, x.tokens) ?? claudeUsd('opus', x.tokens) ?? 0, x.usd || 0);
+        const margin = rowModel ? GUARD_MARGIN : GUARD_MARGIN_UNNAMED;
+        claude += Math.max((claudeUsd(rowModel || priciest, x.tokens) ?? claudeUsd('opus', x.tokens) ?? 0) * margin, x.usd || 0);
       }
     }
     const total = boxes + claude;
@@ -801,7 +804,7 @@ export class Landing extends DurableObject<Env> {
     if (m.spentBase === undefined) m.spentBase = total;
     const run = Math.max(0, total - m.spentBase);
     m.spent = { usd: Math.round(run * 1000) / 1000, at: Date.now(), boxes: Math.round(boxes * 1000) / 1000, claude: Math.round(claude * 1000) / 1000 };
-    if (m.spent.usd >= m.flags.budgetUsd) await this.#halt(m, `budget reached: $${m.spent.usd} of $${m.flags.budgetUsd}`);
+    if (m.spent.usd >= m.flags.budgetUsd) await this.#halt(m, `budget reached: $${m.spent.usd} of $${m.flags.budgetUsd} (each call priced at its own prompt-size tier + 20%; rows without a model at the priciest + 50%; box time as measured)`);
     await this.#saveMeta();
     if (!m.flags.halted) await this.#arm(60_000);
   }

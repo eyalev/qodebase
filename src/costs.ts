@@ -22,13 +22,16 @@ export const CLAUDE: Record<string, { in: number; cw: number; cw1h: number; cr: 
   opus: { in: 4, cw: 5, cw1h: 8, cr: 0.2, out: 20 },        // Claude Opus 5.5
   sonnet: { in: 2, cw: 2.5, cw1h: 4, cr: 0.1, out: 10 },    // Claude Sonnet 5.5 (cache hits 0.05x base: $0.10, pricing page checked 2026-10-08)
   // Claude Haiku 5.5 (platform.claude.com/docs/en/models/haiku-5-5/overview, checked 2026-10-08):
-  // $0.10 / $0.50 per MTok up to 100k-token prompts, 5x above. The ledger cannot tell a call's
-  // prompt size, so it is priced at the >100k tier (conservative). Before 'haiku': first match wins.
-  'haiku-5-5': { in: 0.5, cw: 0.625, cw1h: 1, cr: 0.05, out: 2.5 },
+  // $0.10 / $0.50 per MTok up to 100k-token prompts, 5x above. Since 2026-10-12 the boxes file each call by its own
+  // prompt size: calls above 100k go to `<model>@long` (box.ts). First match wins, so the long tier comes first.
+  'haiku-5-5@long': { in: 0.5, cw: 0.625, cw1h: 1, cr: 0.05, out: 2.5 },
+  'haiku-5-5': { in: 0.1, cw: 0.125, cw1h: 0.2, cr: 0.01, out: 0.5 },
   haiku: { in: 1, cw: 1.25, cw1h: 2, cr: 0.1, out: 5 },     // Claude Haiku 4.5
   fable: { in: 10, cw: 12.5, cw1h: 20, cr: 0.25, out: 50 },  // Claude Fable 5.1
 };
 export const WORKERS_AI_PER_1K_NEURONS = 0.011;
+/** Calls whose prompt (input + cache reads + cache writes) is above this are priced at the long-context tier. */
+export const LONG_PROMPT = 100_000;
 
 export type Kind = 'boxes' | 'claude' | 'voice' | 'ai' | 'browser';
 export type Tokens = { in: number; out: number; cw: number; cw1h?: number; cr: number };
@@ -76,18 +79,24 @@ export async function recordCost(env: Env, handle: string, kind: Kind, project: 
   try { if (handle) await ledger(env, handle).add(kind, project, row); } catch (e) { console.log(JSON.stringify({ module: 'costs', event: 'record_failed', handle, kind, err: String(e) })); }
 }
 
+/** What a plan (setup-token) row's tokens would cost at API prices: the Claude-plan onboarding shows it next to
+ *  "on your Claude plan (not billed by qodebase)". Claude rows are kept per model (`<project>:<model>`); a row with
+ *  no known model gives null. Never charged, only shown. */
+export const subApiUsd = (r: { kind: string; project: string; tokens?: Tokens; billing?: string }) =>
+  r.billing === 'sub' && r.kind === 'claude' && r.tokens ? claudeUsd(r.project.split(':').slice(1).join(':'), { cw1h: 0, ...r.tokens }) : null;
+
 /** today / last 7 days / 30-day estimate, split by kind; what the person pays vs what is covered. */
 export async function costSummary(env: Env, handle: string) {
   const rows = await ledger(env, handle).rows(30);
   const today = day();
   const week = new Set([...Array(7)].map((_, i) => day(Date.now() - i * 86400_000)));
-  const blank = () => ({ usd: 0, covered: 0, subTokens: 0, unknown: false });
+  const blank = () => ({ usd: 0, covered: 0, subTokens: 0, subApiUsd: 0, unknown: false });
   type Row = (typeof rows)[number];
   const sum = (pred: (r: Row) => boolean) => {
     const out = { total: blank(), byKind: {} as Record<string, ReturnType<typeof blank>> };
     for (const r of rows.filter(pred)) {
       for (const t of [out.total, (out.byKind[r.kind] ||= blank())]) {
-        if (r.billing === 'sub') t.subTokens += (r.tokens?.in || 0) + (r.tokens?.out || 0) + (r.tokens?.cw || 0) + (r.tokens?.cw1h || 0) + (r.tokens?.cr || 0);
+        if (r.billing === 'sub') { t.subTokens += (r.tokens?.in || 0) + (r.tokens?.out || 0) + (r.tokens?.cw || 0) + (r.tokens?.cw1h || 0) + (r.tokens?.cr || 0); t.subApiUsd += subApiUsd(r) || 0; }
         else if (r.usd === null) t.unknown = true;
         else if (r.covered) t.covered += r.usd;
         else t.usd += r.usd;
@@ -108,17 +117,17 @@ const KIND_LABEL: Record<string, string> = { boxes: 'Agent boxes', claude: 'Clau
 const fmtTok = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n)) + ' tokens';
 
 export function costsPage(s: Awaited<ReturnType<typeof costSummary>>, selfHost: boolean) {
-  const cell = (t: { usd: number; covered: number; subTokens: number; unknown: boolean }) =>
-    `${usd(t.usd)}${t.covered ? `<small>+ ${usd(t.covered)} covered by qodebase</small>` : ''}${t.subTokens ? `<small>+ ${fmtTok(t.subTokens)} on your Claude plan</small>` : ''}${t.unknown ? '<small>some not priced</small>' : ''}`;
-  const kinds = Object.keys(KIND_LABEL).map((k) => `<tr><td>${KIND_LABEL[k]}</td><td>${cell(s.today.byKind[k] || { usd: 0, covered: 0, subTokens: 0, unknown: false })}</td><td>${cell(s.week.byKind[k] || { usd: 0, covered: 0, subTokens: 0, unknown: false })}</td></tr>`).join('');
+  const cell = (t: { usd: number; covered: number; subTokens: number; subApiUsd?: number; unknown: boolean }) =>
+    `${usd(t.usd)}${t.covered ? `<small>+ ${usd(t.covered)} covered by qodebase</small>` : ''}${t.subTokens ? `<small>+ ${fmtTok(t.subTokens)} on your Claude plan (not billed by qodebase)${t.subApiUsd ? `, ${usd(t.subApiUsd)} at API prices` : ''}</small>` : ''}${t.unknown ? '<small>some not priced</small>' : ''}`;
+  const kinds = Object.keys(KIND_LABEL).map((k) => `<tr><td>${KIND_LABEL[k]}</td><td>${cell(s.today.byKind[k] || { usd: 0, covered: 0, subTokens: 0, subApiUsd: 0, unknown: false })}</td><td>${cell(s.week.byKind[k] || { usd: 0, covered: 0, subTokens: 0, subApiUsd: 0, unknown: false })}</td></tr>`).join('');
   const days = [...new Set(s.rows.map((r) => r.date))].map((d) => {
     const rs = s.rows.filter((r) => r.date === d);
     return `<details class="cday"><summary><b>${d}</b><span>${usd(rs.reduce((a, r) => a + (!r.covered && r.usd ? r.usd : 0), 0))}</span></summary>
-${rs.map((r) => `<div class="crow"><span>${esc(KIND_LABEL[r.kind] || r.kind)}${r.project ? `<i>${esc(r.project)}</i>` : ''}</span><span>${r.billing === 'sub' ? fmtTok((r.tokens?.in || 0) + (r.tokens?.out || 0) + (r.tokens?.cw || 0) + (r.tokens?.cw1h || 0) + (r.tokens?.cr || 0)) : r.usd === null ? 'not priced' : usd(r.usd)}${r.covered ? '<i>covered</i>' : ''}${r.seconds ? `<i>${Math.round(r.seconds / 60)} min awake</i>` : ''}</span></div>`).join('')}</details>`;
+${rs.map((r) => `<div class="crow"><span>${esc(KIND_LABEL[r.kind] || r.kind)}${r.project ? `<i>${esc(r.project)}</i>` : ''}</span><span>${r.billing === 'sub' ? `${fmtTok((r.tokens?.in || 0) + (r.tokens?.out || 0) + (r.tokens?.cw || 0) + (r.tokens?.cw1h || 0) + (r.tokens?.cr || 0))}<i>on your Claude plan${subApiUsd(r) ? `, ${usd(subApiUsd(r)!)} at API prices` : ''}</i>` : r.usd === null ? 'not priced' : usd(r.usd)}${r.covered ? '<i>covered</i>' : ''}${r.seconds ? `<i>${Math.round(r.seconds / 60)} min awake</i>` : ''}</span></div>`).join('')}</details>`;
   }).join('') || '<p class="desc">Nothing yet. Costs appear here once your agents run.</p>';
   return shell('Costs · qodebase', `<h1>Costs</h1>
 <div class="csum"><div><span>Today</span><b>${usd(s.today.total.usd)}</b></div><div><span>Last 7 days</span><b>${usd(s.week.total.usd)}</b></div><div><span>Next 30 days</span><b>${usd(s.month.usd)}</b><small>estimate at this week's pace</small></div></div>
-<p class="desc">What you pay. ${selfHost ? 'This copy runs in your Cloudflare account, so its boxes and voice bill you.' : 'On qodebase.app the agent boxes and voice bill qodebase, shown as covered, so you can still see them.'} On a Claude subscription there is no per-use charge: you see tokens against your plan instead.</p>
+<p class="desc">What you pay. ${selfHost ? 'This copy runs in your Cloudflare account, so its boxes and voice bill you.' : 'On qodebase.app the agent boxes and voice bill qodebase, shown as covered, so you can still see them.'} On your Claude plan there is no per-use charge from qodebase: your agents' tokens count toward your plan's limits, counted by Anthropic, and the dollars beside them are what the same work would cost at API prices.</p>
 <table class="ctab"><tr><th></th><th>Today</th><th>7 days</th></tr>${kinds}</table>
 <h2>By day</h2>${days}
 <h2>How it is measured</h2>
