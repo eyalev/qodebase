@@ -720,7 +720,7 @@ function landBody(entries: Entry[], selfHost = false) {
   // Redesign (qb3, branch qodebase-redesign, 2026-10-12): the promise first, then the demo as a picture of the idea
   // (a collision that is replayed, not bounced: Retool's "headline, then the real product"), then the evidence as two doors.
   const watch = selfHost ? '' : `<a class="watchtop" href="/p/eyal/corner-cafe"><span class="wt1">A demo you can start, no sign-in. About 2 minutes.</span>
-<b>Watch 6 agents change one app at once</b>
+<b>Watch 6 scripted agents change one app at once</b>
 <span class="wtpic" aria-hidden="true"><span class="wtrow"><i class="wa1">2</i><i class="wa2">4</i><span>both changed <span class="wtf">style.css</span></span></span><span class="wttags"><span class="x">collided</span><span>replayed</span><span>tested</span><span class="ok">landed</span></span></span>
 <span class="wt2">When two agents edit the same lines, the later edit is redone on the newest code instead of being thrown away, and nothing lands untested. Real commits and tests, no AI cost.</span><span class="wtgo">Watch a run</span></a>
 <nav class="watchmore" aria-label="The evidence"><a href="/lab"><b>The lab</b><span>Which way of running agents wins, on real jobs</span></a><a href="/sim/"><b>The simulation</b><span>Up to 100,000 agents, measured</span></a></nav>`;
@@ -827,7 +827,7 @@ body:has(.landask) #talk-fab{display:none!important}
 .watchtop .wtrow>span{margin-left:4px}
 .watchtop .wtf{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px}
 .watchtop .wttags{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start}
-.watchtop .wtpic .wttags span{display:inline-block;height:auto;line-height:1.4;min-height:0;font-size:12px;padding:2px 6px;border-radius:4px;background:var(--chip);color:var(--fg)}
+.watchtop .wtpic .wttags span{display:inline-block;flex:none;height:auto;line-height:1.4;min-height:0;font-size:12px;padding:2px 6px;border-radius:4px;background:var(--chip);color:var(--fg)}
 .watchtop .wtpic .wttags .x{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
 .watchtop .wtpic .wttags .ok{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
 .land .watchmore{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 24px}
