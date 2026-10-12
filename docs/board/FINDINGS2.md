@@ -191,8 +191,9 @@ Throughput-probing controller (start 8, add 2 while landings/min rise, step back
 
 The controller used about a quarter of the agent-minutes and about half the cost of 40 agents, and was not slower
 (faster without the board; overlapping with it). Controller + board was the best arm overall. The fast sim predicted the
-caps (~10 / ~12) but was optimistic on wall (1,310 / 1,180 s predicted). The fixed 8/20 comparison teams were cut by the
-weekly-meter stop, so 'the controller finds the best fixed size' is untested here.
+caps (~10 / ~12) but was optimistic on wall (1,310 / 1,180 s predicted). Of the fixed comparison teams only one run fit before the
+weekly-meter stop: fixed 8, no board, 1,862 s, $4.63, 150/150 (about as fast as fixed 40, slower than the controller's
+1,711 s, similar cost). Fixed 20 was not run, so 'the controller finds the best fixed size' stays untested.
 
 ## 9. Scaling to thousands: lanes (L1 fast sim, L2 real git, L3 Cloudflare pending)
 - **One queue has a ceiling** (~830-900 landed/h in both sims, at 500, 2,000 and 10,000 agents); past ~300 agents
