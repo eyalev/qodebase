@@ -642,7 +642,9 @@ const app = {
         const all = await listFor(env, me.handle, me.admin);
         const own = info.owner === me.handle;
         const st = own ? await statusesOf(env, info) : { status: {}, router: { awake: false, cc: 'asleep' }, reviewer: { awake: false, cc: 'asleep' } };
-        return html(projectV3({ info, entry: all.find((e) => e.slug === slug)!, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
+        // Estimate vs elapsed (Build): the Changes tab reads info.estimate / info.progress.
+        const bi0 = await env.Landing.get(env.Landing.idFromName(slug)).buildInfo().catch(() => null);
+        return html(projectV3({ info: bi0 ? { ...info, ...bi0 } : info, entry: all.find((e) => e.slug === slug)!, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
           me: me.handle, runBase, liveHtml: '', view: m[3] === 'about' ? 'readme' : (m[3] as ViewId) || null, tryAgent: url.searchParams.get('try') || undefined, ...st,
           docs: !m[3] || m[3] === 'readme' || m[3] === 'about' ? await docsOf(env, ctx, info, url.searchParams.get('doc')) : undefined,
           g: await globalOf(all),
@@ -766,7 +768,8 @@ const app = {
         }
         if (verb === 'agents-html' && ['a', 'b', 'c', 'd'].includes(uiFor(request, env) || '')) {
           const st = await statusesOf(env, info);
-          return json({ html: liveV3(url.searchParams.get('view') || 'changes', { info, me: me.handle, runBase, ...st, entry: undefined as unknown as Entry, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: '' }) });
+          const bi1 = await env.Landing.get(env.Landing.idFromName(info.slug)).buildInfo().catch(() => null);
+          return json({ html: liveV3(url.searchParams.get('view') || 'changes', { info: bi1 ? { ...info, ...bi1 } : info, me: me.handle, runBase, ...st, entry: undefined as unknown as Entry, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: '' }) });
         }
         if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase, uiFor(request, env)), tabs: previewTabs(info, runBase) });
         if (verb === 'agents' && request.method === 'POST') {
