@@ -185,7 +185,7 @@
       case 'changes-suggested': return [`The reviewer asked ${who} for a fix`, d || (c.review && c.review.notes)];
       case 'queued': return [`${its} joined the line`, T];
       case 'testing': return null; // trains say this once for all their changes
-      case 'conflict': return [`${its} collided with ${oc ? `${AG(oc.agent)}'s` : 'newer code'}`, d];
+      case 'conflict': return [`${its} collided with ${oc ? (oc.agent === c.agent ? 'its own earlier change' : `${AG(oc.agent)}'s`) : 'newer code'}`, d];
       case 'replaying': return [`Replaying ${its} on the newest code instead of sending it back`, d];
       case 'replayed': return [`${its} replayed cleanly and went back in line`, T];
       case 'with-lead': return [`${its} needs ${leadName(c.lead) || 'its lead'} to decide`, d];
@@ -223,7 +223,8 @@
       let kind, text;
       if (ev.has('conflict')) {
         kind = 'collision';
-        const pair = `${AG(c.agent)}${oc ? ` and ${AG(oc.agent)}` : ''} both changed ${paths.length ? files(paths) : 'the same file'}.`;
+        const where = paths.length ? files(paths) : 'the same file';
+        const pair = oc && oc.agent === c.agent ? `${AG(c.agent)}'s change met its own earlier change on ${where}.` : `${AG(c.agent)}${oc ? ` and ${AG(oc.agent)}` : ''} both changed ${where}.`;
         text = c.state === 'with-lead' ? `<b>Collision, waiting for its lead.</b> ${pair} No rule could redo it, so ${esc(leadName(c.lead) || 'its lead')} decides.`
           : ev.has('replayed') || ev.has('replaying') ? `<b>Collision, replayed.</b> ${pair} Instead of sending ${AG(c.agent)} back, its change was redone on the newest code.`
           : `<b>Collision.</b> ${pair}`;
@@ -584,7 +585,7 @@
     const agents = idleDemo ? 0 : new Set(act.map((c) => c.agent)).size;
     // Design pass (2026-10-12): while a run starts the banner says so, so the headline must not say "No agents";
     // idle, lead with what the last run did (replays first: they are the point), "nobody working" goes under it.
-    const isStarting = !(P && P.replay) && starting && Date.now() - starting < 60e3 && !(D.demo?.running && D.changes.length);
+    const isStarting = !(P && P.replay) && ((starting && Date.now() - starting < 60e3 && !(D.demo?.running && D.changes.length)) || (D.mode === 'demo' && D.demo?.running && !agents && !D.changes.some((c) => c.state === 'landed')));
     const L0 = landedWords(), rep0 = Math.max(D.stats.replayed || 0, countIf(D.changes, hasEv('replayed')));
     const idleHead = !agents && !(P && P.replay) && !isStarting && L0.short && L0.n;
     return `${demoStrip()}
@@ -655,7 +656,7 @@
     const sentBack = c.events.some((e) => e.what === 'bounced');
     const sha = (x) => `<span class="mono">${esc(String(x).slice(0, 7))}</span>`;
     const oc = ce && otherOf(c, ce, idx);
-    const withWho = oc ? ` with ${AG(oc.agent)}'s ${ref(oc.id)}` : '';
+    const withWho = oc ? (oc.agent === c.agent ? ` with its own earlier change ${ref(oc.id)}` : ` with ${AG(oc.agent)}'s ${ref(oc.id)}`) : '';
     switch (skey(c)) {
       case 'landed':
         if (/^replayed/.test(L?.how || '')) {
