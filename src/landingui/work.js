@@ -204,6 +204,70 @@
     return out.sort((a, b) => b.t - a.t);
   }
 
+
+  // ---- Design pass (qb3, 2026-10-12): the scoreboard and the headline feed --------------------------
+  // Mobbin refs: delivery tracking (Swiggy, Glovo: one bar + one sentence; talabat, Replit: a stage strip) and agent
+  // run logs (Devin: events as headlines; Perplexity: routine steps folded; Grab: Ongoing above Recent).
+  const STAGE = [['working', 'working', (c) => c.state === 'working'], ['review', 'review', (c) => ['pushed', 'reviewing'].includes(c.state) || ready(c)],
+    ['line', 'in line', (c) => ['queued', 'testing', 'replaying', 'with-lead'].includes(c.state) && !ready(c)], ['landed', 'landed', (c) => c.state === 'landed']];
+  const HEAD = new Set(['conflict', 'replaying', 'replayed', 'with-lead', 'bounced']);
+  // One headline per change that collided or was sent back (its latest such moment), plus each train that landed.
+  function headlines() {
+    const idx = byId(), out = [];
+    for (const c of D.changes) {
+      const hs = c.events.filter((e) => HEAD.has(e.what) || (e.what === 'landed' && c.events.some((x) => HEAD.has(x.what))));
+      if (!hs.length) continue;
+      const ev = new Set(c.events.map((e) => e.what)), last = hs[hs.length - 1];
+      const ce = [...c.events].reverse().find((e) => e.what === 'conflict'), oc = ce && otherOf(c, ce, idx);
+      const paths = ce ? conflictPaths(c, ce) : [];
+      let kind, text;
+      if (ev.has('conflict')) {
+        kind = 'collision';
+        const pair = `${AG(c.agent)}${oc ? ` and ${AG(oc.agent)}` : ''} both changed ${paths.length ? files(paths) : 'the same file'}.`;
+        text = c.state === 'with-lead' ? `<b>Collision, waiting for its lead.</b> ${pair} No rule could redo it, so ${esc(leadName(c.lead) || 'its lead')} decides.`
+          : ev.has('replayed') || ev.has('replaying') ? `<b>Collision, replayed.</b> ${pair} Instead of sending ${AG(c.agent)} back, its change was redone on the newest code.`
+          : `<b>Collision.</b> ${pair}`;
+      } else { kind = 'back'; text = `<b>Sent back.</b> ${AG(c.agent)}'s change failed a test, so main stayed healthy.${c.state === 'landed' ? ' It was fixed and landed.' : ` ${AG(c.agent)} is fixing it.`}`; }
+      const tags = kind === 'collision' ? [['x', 'collided'], ev.has('replaying') || ev.has('replayed') ? ['', ev.has('replayed') ? 'replayed' : 'replaying'] : null, c.state === 'with-lead' ? ['', 'with its lead'] : null, ev.has('testing') && (ev.has('replayed') || c.state === 'landed') ? ['', 'tested'] : null, c.state === 'landed' ? ['ok', 'landed'] : null].filter(Boolean) : [];
+      out.push({ t: (c.state === 'landed' && c.landedAt) || last.t, c, kind, text, tags, key: `h:${c.id}:${last.what}` });
+    }
+    for (const tr of D.queue.trains) {
+      if (tr.state !== 'landed' || !tr.endedAt) continue;
+      const cs = tr.changes.map((id) => idx.get(id)).filter(Boolean);
+      const names = [...new Set(cs.map((c) => agentNum(c.agent)))].sort((a, b) => a - b);
+      out.push({ t: tr.endedAt, kind: 'train', key: `t:${tr.id}`,
+        text: tr.changes.length > 1 ? `<b>${tr.changes.length} changes landed together.</b> ${names.length === 1 ? `Agent ${names[0]}` : `Agents ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`}; tests passed${tr.checks?.ms ? ` in ${secs(tr.checks.ms)}` : ''}.` : `<b>Landed.</b> ${cs[0] ? AG(cs[0].agent) : 'One change'}; tests passed${tr.checks?.ms ? ` in ${secs(tr.checks.ms)}` : ''}.`,
+        sub: cs.map((c) => short(c)).join(', ') });
+    }
+    return out.sort((a, b) => b.t - a.t);
+  }
+  function scoreboard() {
+    const live = D.changes.filter((c) => !(D.mode === 'demo' && D.demo && !D.demo.running) || c.state === 'landed');
+    const n = STAGE.map(([k, l, f]) => [k, l, countIf(live, f)]);
+    const rep = countIf(D.changes, hasEv('replayed'));
+    const landed = n[3][2], total = D.changes.length;
+    const h = headlines()[0];
+    return `<div class="score">
+      ${total ? `<div class="sbar" role="img" aria-label="${landed} of ${total} changes landed"><i style="width:${((100 * landed) / total).toFixed(1)}%"></i></div><p class="sbl">${n0(landed)} of ${n0(total)} change${total === 1 ? '' : 's'} landed</p>` : ''}
+      <div class="stages">${n.map(([k, l, v]) => `<div class="stg${v ? '' : ' z'}${k === 'landed' && v ? ' k' : ''}"><b><i class="dot s-${k === 'review' ? 'reviewing' : k === 'line' ? 'queued' : k}"></i>${n0(v)}</b><span>${l}</span></div>`).join('')}<a class="stg${rep ? ' k' : ' z'}" href="#/replayed"><b><i class="dot s-replaying"></i>${n0(rep)}</b><span>${term('replay', 'replayed')}</span></a></div>
+      ${h ? `<p class="slast">${h.text.replace(/<b>[^<]*<\/b>\s*/, '')} <span class="meta">${ago(h.t)}</span></p>` : ''}
+    </div>`;
+  }
+  function rightNow() {
+    const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;
+    const act = idleDemo ? [] : D.changes.filter(active).sort((a, b) => ORDERED.indexOf(skey(a)) - ORDERED.indexOf(skey(b)));
+    if (!act.length) return '';
+    const by = new Map(); for (const c of act) if (!by.has(c.agent)) by.set(c.agent, c);
+    const all = [...by.values()], more = all.length - 5;
+    return `<section class="sec"><div class="sec-h"><h3>Right now</h3>${more > 0 ? `<a href="#/changes">All ${all.length}</a>` : ''}</div><ul class="now">${all.slice(0, 5).map((c) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${skey(c)}"></i><b>${AG(c.agent)}</b><span class="t">${short(c)}</span><span class="w">${WORD[skey(c)]}</span></a></li>`).join('')}</ul></section>`;
+  }
+  function headFeed(limit) {
+    const hs = headlines().slice(0, limit), shown = new Set(hs.filter((h) => h.c).map((h) => h.c.id));
+    const routine = feedItems().filter((it) => !(it.c && HEAD.has(it.e.what)) && !(it.c && it.e.what === 'landed' && shown.has(it.c.id))).length;
+    const cards = hs.map((h) => { const fresh = pulse(`hf:${h.key}`);
+      return `<a class="hev${h.kind === 'train' ? '' : ' w'}${fresh ? ' new' : ''}"${fresh} href="${h.c ? `#/change/${esc(h.c.id)}` : '#/line'}"><p>${h.text}</p>${h.tags?.length ? `<span class="htags">${h.tags.map(([c, l]) => `<span class="${c}">${l}</span>`).join('')}</span>` : ''}<span class="meta"><span>${h.c ? short(h.c) : h.sub || ''}</span>${ago(h.t)}</span></a>`; }).join('');
+    return `${cards || '<p class="dim">No collisions or landings yet.</p>'}${routine ? `<a class="fold" href="#/feed"><span>${routine} routine step${routine === 1 ? '' : 's'}</span><span class="meta">reviews, joining the line</span></a>` : ''}`;
+  }
   // ---- overview -------------------------------------------------------------------------------
   // ---- Watch a run (public, no sign-in; qb6's POST …/landing/watch) ----------------------
   let starting = 0, limitNote = '';
@@ -339,7 +403,16 @@
     const p = k === 'landed' ? pulse(`land:${c.id}`) : null;
     return `<button class="ag s-${k}${p ? ' pl' : ''}${extra}" type="button"${p || ''} data-go="#/change/${esc(c.id)}" aria-label="${AG(c.agent)}: ${WORD[k]}, ${short(c)}">${esc(agNum(c.agent))}</button>`;
   };
-  const mapKey = () => `<div class="key top"><span><i class="ag s-working"></i>working</span><span><i class="ag s-reviewing"></i>in review</span><span><i class="ag s-ready"></i>ready to merge</span><span><i class="ag s-queued"></i>in the line or being tested</span><span><i class="ag s-replaying"></i>${term('replay', 'replaying')}</span><span><i class="ag s-bounced"></i>sent back or stuck</span><span><i class="ag s-landed"></i>just landed</span><span><i class="zap"></i><span>${term('collision', 'collided')}</span></span><span><i class="zap ok"></i><span>collided, then ${term('replay', 'replayed')}</span></span></div>`;
+  // Design pass: the legend sits under the map and lists only the marks on it.
+  const mapKey = () => {
+    const has = new Set(D.changes.map(skey)), anyC = D.changes.some(hasEv('conflict')), anyR = D.changes.some(hasEv('replayed'));
+    const items = [['working', 'working'], ['reviewing', 'in review'], ['pushed', null], ['ready', 'ready to merge'], ['queued', 'in the line or being tested'], ['testing', null], ['replaying', term('replay', 'replaying')], ['bounced', 'sent back or stuck'], ['with-lead', null], ['landed', 'just landed']];
+    const seen = (k) => has.has(k) || (k === 'reviewing' && has.has('pushed')) || (k === 'queued' && has.has('testing')) || (k === 'bounced' && has.has('with-lead'));
+    const parts = items.filter(([k, l]) => l && seen(k)).map(([k, l]) => `<span><i class="ag s-${k}"></i>${l}</span>`);
+    if (anyC) parts.push(`<span><i class="zap"></i><span>${term('collision', 'collided')}</span></span>`);
+    if (anyR) parts.push(`<span><i class="zap ok"></i><span>collided, then ${term('replay', 'replayed')}</span></span>`);
+    return parts.length ? `<div class="key under">${parts.join('')}</div>` : '';
+  };
   const collWords = (pairs) => {
     const open = pairs.filter((x) => !x.ok), ok = pairs.filter((x) => x.ok);
     return open.map((x) => `<span class="coll">${esc(x.words)}</span>`).join('')
@@ -514,18 +587,19 @@
     const L0 = landedWords(), rep0 = Math.max(D.stats.replayed || 0, countIf(D.changes, hasEv('replayed')));
     const idleHead = !agents && !(P && P.replay) && !isStarting && L0.short && L0.n;
     return `${demoStrip()}
-      <h2>${isStarting ? 'The run is starting: the agents are getting their tasks.' : idleHead ? `${n0(L0.n)} change${L0.n === 1 ? '' : 's'} landed ${L0.short}${rep0 ? `, ${n0(rep0)} replayed instead of sent back` : ''}.` : agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : P && P.replay ? (now() >= P.end - 1 ? `The replay has ended: ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed.` : 'The replay is starting…') : `No agents are working on ${esc(NAME)} right now.${(() => { const L = landedWords(); return L.short && L.n ? ` ${n0(L.n)} change${L.n === 1 ? '' : 's'} landed ${L.short}.` : ''; })()}`}</h2>${idleHead ? `<p class="idle">No agents are working on ${esc(NAME)} right now.</p>` : ''}
-      <p class="intro">${D.mode === 'demo' ? `Each agent here is ${term('scripted', 'scripted')} (it follows a script instead of an AI model) and works on its own ${term('fork', 'copy')} of the code.` : `Each agent is an AI working on its own ${term('fork', 'copy')} of the code.`} Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>
-      ${numbers()}
+      <h2>${isStarting ? 'The run is starting: the agents are getting their tasks.' : idleHead ? `${n0(L0.n)} change${L0.n === 1 ? '' : 's'} landed ${L0.short}${rep0 ? `, ${n0(rep0)} replayed instead of sent back` : ''}.` : agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : P && P.replay ? (now() >= P.end - 1 ? `The replay has ended: ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed.` : 'The replay is starting…') : `No agents are working on ${esc(NAME)} right now.${(() => { const L = landedWords(); return L.short && L.n ? ` ${n0(L.n)} change${L.n === 1 ? '' : 's'} landed ${L.short}.` : ''; })()}`}</h2>${idleHead && !D.demo?.running ? `<p class="idle">No agents are working on ${esc(NAME)} right now.</p>` : ''}
+      <details class="howto"${agents ? '' : ' open'}><summary>How this works</summary><p class="intro">${D.mode === 'demo' ? `Each agent here is ${term('scripted', 'scripted')} (it follows a script instead of an AI model) and works on its own ${term('fork', 'copy')} of the code.` : `Each agent is an AI working on its own ${term('fork', 'copy')} of the code.`} Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p></details>
+      ${agents || (D.demo?.running && D.changes.length) ? scoreboard() : numbers()}
       ${boardView()}
       <section class="sec"><div class="sec-h"><h3>${term('queue', 'The line')}</h3><a href="#/line">Everything</a></div>
         <p class="cap">Finished changes wait here and are tested together, then join ${term('main', 'the main code')}. Tap a change to see it.</p>${theLine(false)}</section>
       <div class="ov"><div class="col1">
         <section class="sec"><div class="sec-h"><h3>Where they work</h3><a href="#/changes">All changes</a></div>
-          <p class="cap">Each circle is an agent, in the part of the code it is changing. Tap one to see its change.</p>${mapKey()}${theMap()}</section>
+          <p class="cap">Each circle is an agent, in the part of the code it is changing. Tap one to see its change.</p>${theMap()}${mapKey()}</section>
       </div><div class="col2">
+        ${rightNow()}
         ${needsYou()}
-        <section class="sec"><div class="sec-h"><h3>What just happened</h3><a href="#/feed">All</a></div>${feed(8)}</section>
+        <section class="sec"><div class="sec-h"><h3>What just happened</h3><a href="#/feed">Every step</a></div>${headFeed(6)}</section>
       </div></div>`;
   }
 

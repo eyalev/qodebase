@@ -245,3 +245,47 @@
 
 /* Design pass (2026-10-12): one accent button per screen; on a project page that is Watch a run, so the header's Build steps down to a chip. */
 body:has(.lw .watch) .gbuild{background:var(--chip);color:var(--fg)}
+
+/* Design pass (qb3, 2026-10-12, branch qodebase-redesign): scoreboard, Right now, headline feed */
+.lw .score{background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:14px;padding:14px;margin:0 0 16px}
+.lw .sbar{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
+.lw .sbar i{display:block;height:100%;background:var(--acc);transition:width 220ms ease}
+.lw .sbl{font-size:13px;color:var(--dim);margin:6px 0 12px;font-variant-numeric:tabular-nums}
+.lw .stages{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.lw .stg{background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);border-radius:10px;padding:8px 6px;color:var(--fg);text-decoration:none;min-width:0}
+.lw .stg b{display:flex;align-items:center;gap:5px;font-size:22px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.lw .stg b .dot{flex:none}
+.lw .stg span{display:block;font-size:12px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lw .stg.z b{color:var(--dim)}
+.lw .stg.k{box-shadow:inset 0 0 0 1.5px var(--acc)}
+.lw .stg.k b{color:var(--acc)}
+.lw .slast{font-size:15px;margin:12px 0 0;padding-top:12px;box-shadow:inset 0 1px 0 var(--line)}
+.lw .slast .meta{font-size:13px;color:var(--dim);white-space:nowrap}
+.lw .now{list-style:none;margin:0;padding:0}
+.lw .now li{box-shadow:inset 0 -1px 0 var(--line)}
+.lw .now li:last-child{box-shadow:none}
+.lw .now a{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px;align-items:center;min-height:44px;color:var(--fg);text-decoration:none;font-size:15px}
+.lw .now b{font-weight:600}
+.lw .now .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lw .now .w{font-size:13px;color:var(--dim);white-space:nowrap}
+.lw .hev{display:block;position:relative;border-radius:14px;box-shadow:inset 3px 0 0 var(--acc),inset 0 0 0 1px var(--line);padding:12px 12px 12px 16px;margin-bottom:8px;color:var(--fg);text-decoration:none}
+.lw .hev.w{box-shadow:inset 3px 0 0 var(--warn),inset 0 0 0 1px var(--line)}
+.lw .hev p{font-size:15px;margin:0}
+.lw .hev p b{font-weight:600}
+.lw .hev .meta{display:flex;gap:12px;justify-content:space-between;margin-top:6px;font-size:13px;color:var(--dim)}
+.lw .hev .meta>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lw .htags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.lw .htags span{font-size:12px;padding:2px 6px;border-radius:4px;background:var(--chip)}
+.lw .htags .x{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
+.lw .htags .ok{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+.lw .fold{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0 12px;border-radius:10px;background:var(--chip);color:var(--fg);text-decoration:none;font-size:15px}
+.lw .fold .meta{font-size:13px;color:var(--dim)}
+@media (hover:hover){.lw .hev:hover,.lw .now a:hover{background:color-mix(in srgb,var(--chip) 60%,transparent)}}
+.lw .howto{margin:-4px 0 16px}
+.lw .howto summary{display:inline-flex;align-items:center;min-height:44px;font-size:15px;color:var(--acc);cursor:pointer;list-style:none}
+.lw .howto summary::-webkit-details-marker{display:none}
+.lw .howto[open] summary{color:var(--dim)}
+.lw .howto .intro{margin:0}
+.lw .map+.key,.lw .map~.mkey{margin-top:10px}
+.lw .key.under{margin:10px 0 0}
+.lw .hev .meta>[data-ago]{white-space:nowrap;flex:none}
