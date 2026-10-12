@@ -15,8 +15,8 @@ export const path = (slug: string) => `/p/${slug.replace('.', '/')}`;
 export const label = (slug: string) => slug.replace('.', ' / ');
 
 const CSS = `
-:root{--bg:#fff;--card:#fafafa;--chip:#f3f4f6;--line:#ececef;--fg:#111214;--dim:#6e737b;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;--warn:#b42d1f;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#0c0d0e;--card:#141517;--chip:#1c1d20;--line:#222428;--fg:#ececee;--dim:#9a9fa6;--acc:#4fbf9f;--acc-fg:#0c0d0e;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}}
+:root{--bg:#fff;--card:#fafafa;--chip:#f3f4f6;--line:#ececef;--frame:#d9dbe0;--fg:#111214;--dim:#6e737b;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;--warn:#b42d1f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0c0d0e;--card:#141517;--chip:#1c1d20;--line:#222428;--frame:#34373d;--fg:#ececee;--dim:#9a9fa6;--acc:#4fbf9f;--acc-fg:#0c0d0e;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 input:focus,textarea:focus{outline:none;border-color:var(--acc)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
 a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}

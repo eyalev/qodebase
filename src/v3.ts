@@ -141,6 +141,8 @@ export function liveChanges(c: Ctx) {
 }
 
 const hostOf = (u: string) => { try { return new URL(u).host; } catch { return u; } };
+/** The frame's address: the app's host, or for an agent's fork ('ag-<id>--name--owner…') whose version it is. */
+const addrOf = (u: string) => { const h = hostOf(u); const m = /^ag-([a-z0-9]+)--/.exec(h); return m ? `Agent ${m[1]}'s version` : h; };
 const SHOT_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.5h2.5L6 3.5h4l1.5 2H14v7.5H2z"/><circle cx="8" cy="9" r="2.3"/></svg>`;
 const PICK_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2.5l9.5 4-4 1.5-1.5 4z"/><path d="M8.5 8.5l4 4"/></svg>`;
 
@@ -159,7 +161,7 @@ function appView(c: Ctx) {
     // card with its own strip (address, Pick, Shot, open); qodebase's controls stay outside the frame.
     action: '',
     body: `${picker}${app ? `<div class="appwrap"><div class="appframe" id="appframe"><div class="afbar">
-<a class="afurl" id="afurl" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open your app in a new tab">${esc(hostOf(src))}</a>
+<a class="afurl" id="afurl" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open your app in a new tab" title="${esc(hostOf(src))}"><span>${esc(addrOf(src))}</span></a>
 <span class="afpick" id="pickhint" hidden role="status">Tap something in your app</span>
 ${c.own ? `<button type="button" class="afb" id="qbpick" aria-pressed="false" aria-label="Pick an element in your app to add to your message">${PICK_ICON}<span>Pick</span></button><button type="button" class="afb" id="qbshot" aria-label="Take a screenshot of your app and add it to your message">${SHOT_ICON}<span>Shot</span></button><button type="button" class="afb afdone" id="pickdone" hidden>Done</button>` : ''}<a class="afb" id="ext" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open your app in a new tab">${OPEN_ICON}</a></div>
 <iframe id="app" src="${esc(src)}" title="${esc(c.info.name)}, your app"></iframe></div></div>` : noApp(c)}${c.own ? '' : `<div class="forkbar">${VISIT}${forkAction(c.info, c.me, c.forks.filter((e) => e.owner === c.me))}</div>`}`,
@@ -191,7 +193,7 @@ if(sb2)sb2.addEventListener('click',async()=>{const lab=sb2.querySelector('span'
   if(pend)pend.done({id:d.id,name:'screenshot.png'});else if(window.qbAddAttachment)window.qbAddAttachment({id:d.id,name:'screenshot.png'});lab.textContent='Shot';}
  catch(err){lab.textContent='Shot';sb2.title=err.message;if(pend)pend.fail(err.message);const t=document.querySelector('form.ask textarea');if(t&&!t.value)t.placeholder=err.message;}
  sb2.disabled=false;});
-document.addEventListener('click',async(e)=>{const b=e.target.closest('[data-pick]');if(b){f.src=b.dataset.pick;if(x)x.href=b.dataset.pick;{const a=document.getElementById('afurl');if(a){a.href=b.dataset.pick;try{a.textContent=new URL(b.dataset.pick).host;}catch(_){}}}for(const o of document.querySelectorAll('[data-pick]'))o.classList.toggle('on',o===b);
+document.addEventListener('click',async(e)=>{const b=e.target.closest('[data-pick]');if(b){f.src=b.dataset.pick;if(x)x.href=b.dataset.pick;{const a=document.getElementById('afurl');if(a){a.href=b.dataset.pick;try{const h=new URL(b.dataset.pick).host,m=/^ag-([a-z0-9]+)--/.exec(h);a.title=h;a.firstElementChild.textContent=m?'Agent '+m[1]+"'s version":h;}catch(_){}}}for(const o of document.querySelectorAll('[data-pick]'))o.classList.toggle('on',o===b);
  cur=b.dataset.id||null;if(ps){ps.hidden=!cur;document.getElementById('pword').textContent=b.dataset.word||'';pm.hidden=b.dataset.state!=='ready'||b.dataset.auto==='1';}
  history.replaceState(null,'',location.pathname+(b.dataset.agent?'?try='+b.dataset.agent:''));return;}
  if(e.target===pm){pm.disabled=true;pm.textContent='Merging';try{await post('merge',{agent:cur});location.href=location.pathname;}catch(err){pm.textContent=err.message;}}});
@@ -339,12 +341,13 @@ body.v3{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
    preview radius (12 px, DESIGN.md), a strip on the frame with the address and the app's own controls. Pick mode:
    the border takes the accent and the strip asks for a tap. */
 .appwrap{flex:1;min-height:0;display:flex;padding:8px;background:var(--chip)}
-.appframe{flex:1;min-height:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 1px var(--line),0 1px 3px rgba(0,0,0,.06)}
+.appframe{flex:1;min-height:0;width:100%;max-width:1200px;margin:0 auto;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 1px var(--frame)}
 .appframe.picking{box-shadow:0 0 0 2px var(--acc)}
-.afbar{flex:none;display:flex;align-items:center;gap:2px;min-height:44px;padding:0 4px 0 12px;border-bottom:1px solid var(--line);background:var(--card)}
-.afurl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--dim);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;padding:12px 0}
+.afbar{flex:none;display:flex;align-items:center;gap:4px;min-height:52px;padding:4px 4px 4px 12px;border-bottom:1px solid var(--frame);background:var(--chip)}
+.afurl{flex:1;min-width:0;min-height:44px;display:flex;align-items:center;overflow:hidden;font-size:13px;color:var(--dim)}
+.afurl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline;text-decoration-color:var(--dim);text-underline-offset:3px}
 .afpick{flex:1;font-size:14px;font-weight:600;color:var(--acc)}
-.afb{flex:none;display:inline-flex;align-items:center;gap:5px;min-width:44px;min-height:44px;justify-content:center;padding:0 8px;border:0;border-radius:10px;background:none;color:var(--fg);font:inherit;font-size:14px;cursor:pointer}
+.afb{flex:none;display:inline-flex;align-items:center;gap:6px;min-width:44px;min-height:44px;justify-content:center;padding:0 8px;border:0;border-radius:10px;background:none;color:var(--fg);font:inherit;font-size:14px;cursor:pointer}
 .afb .ico{width:17px;height:17px}.afb:focus-visible,.afurl:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
 .afdone{background:var(--acc);color:var(--acc-fg)}
 .appframe iframe{flex:1;min-height:0;width:100%;border:0;display:block;background:#fff}

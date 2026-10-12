@@ -12,6 +12,7 @@ none of its chrome.
 | `--card` | `#fafafa` | `#141517` | rows, cards, inputs |
 | `--chip` | `#f3f4f6` | `#1c1d20` | tags, secondary buttons |
 | `--line` | `#ececef` | `#222428` | hairlines |
+| `--frame` | `#d9dbe0` | `#34373d` | the edge of a framed app preview (a hairline that must read against `--chip`) |
 | `--fg` | `#111214` | `#ececee` | text |
 | `--dim` | `#6e737b` | `#9a9fa6` | secondary text |
 | `--acc` | `#17695a` | `#4fbf9f` | one accent: primary buttons, links, live dots |
