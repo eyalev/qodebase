@@ -43,3 +43,9 @@ Build settings + estimate (Eyal, 2026-10-12 ~14:00 UTC: "Yes"). Default "Build i
 - [ ] B3 wiring: Build applies the chosen variant (landing on, flags like the lab runner), behind flag buildSettings (qb6)
 - [ ] B4 assistant: "Suggest settings for my prompt": one Haiku call -> task estimate + preset + one-line why (qb4 + qb6), v1.5
 - [ ] B5 manager live check, then flag on (or stays off)
+
+Screenshots + pick an element in the app (Eyal, 2026-10-12 ~16:00 UTC):
+- [ ] S1 attach images (gallery/camera) to the composer, several, removable chips; stored in R2; sent with the request; the agent's box gets the files and the prompt names them (qb6 server, qb7 UI)
+- [ ] S2 "Pick" on the App view: tap an element in the running app -> chip with what it is (text, tag, CSS selector, short outerHTML), outlined; via a small picker script the app host injects only in pick mode (postMessage) (qb6 inject, qb7 UI)
+- [ ] S3 "Screenshot" button: Cloudflare Browser Rendering captures the app at 390 px (with the picked element outlined) and attaches it (qb6); cloudcost line the day it ships
+- [ ] S4 mark up a screenshot: circle/arrow/highlight on the attached image before sending (qb7), after S1-S3
