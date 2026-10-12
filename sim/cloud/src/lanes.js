@@ -216,6 +216,11 @@ export class Lane extends DurableObject {
     const s = this.s;
     let snap = new Map(s.snap);
     const landed = [], changed = new Set();
+    // Failures already in this lane's view before the train are not the change's fault (and must never be: one stale
+    // read copy once failed every change of every lane, 2026-10-12). Counted separately; should stay 0.
+    const tget = (sn) => (p) => (sn.has(p) ? s.text.get(sn.get(p)) : null);
+    const before = new Set(check(tget(snap), () => snap.keys()));
+    if (before.size) { s.m.viewFails = (s.m.viewFails || 0) + 1; s.m.viewFailSample = [...before].slice(0, 3); }
     for (const n of ids) {
       const c = s.changes[n - 1];
       const op = makeOp(c.opKind, c.opArgs);
@@ -226,7 +231,7 @@ export class Lane extends DurableObject {
       if (outside.length) { s.m.dropped++; c.state = 'dropped'; this.ev(c, 'dropped', `now needs files outside this lane: ${outside.slice(0, 3).join(', ')}`); s.m.outside = (s.m.outside || 0) + 1; continue; }
       const next = new Map(snap);
       for (const [p, t] of out) { const h = objs.blob(t); s.text.set(h, t); next.set(p, h); }
-      const fails = check((p) => (next.has(p) ? s.text.get(next.get(p)) : null), () => next.keys());
+      const fails = check(tget(next), () => next.keys()).filter((f) => !before.has(f));
       if (fails.length) {
         s.m.testFails++; s.m.dropped++; c.state = 'dropped'; this.ev(c, 'train tests failed', fails.slice(0, 3));
         (s.m.failSamples ||= []).push({ id: c.id, op: c.opKind, files: c.files, fails: fails.slice(0, 2) }); if (s.m.failSamples.length > 8) s.m.failSamples.shift();
@@ -262,10 +267,13 @@ export class Lane extends DurableObject {
     s.m.mainPushFail++; s.m.errors.push('main push: stale or busy 10 times');
     return { ok: false };
   }
-  finish(landed, snap, res) {
+  /** A train's files into the lane's snapshot. Only the files it changed: X may have updated other files (a thaw)
+   *  while the train ran, and writing back the whole copy taken at its start lost them (2026-10-12). */
+  adopt(snap, changed) { for (const p of changed) this.s.snap.set(p, snap.get(p)); }
+  finish(landed, snap, res, changed) {
     const s = this.s;
     if (!res.ok) { for (const c of landed.slice().reverse()) { c.state = 'mergeWait'; s.queue.unshift(c.n); } return; }
-    s.snap = snap;
+    this.adopt(snap, changed);
     for (const c of landed) {
       c.state = 'landed'; c.landedAt = this.now(); s.m.landed++;
       if (c.queuedAt != null) s.m.waitS.push(c.landedAt - c.queuedAt);
@@ -284,7 +292,7 @@ export class Lane extends DurableObject {
     const { snap, changed, landed } = this.replay(ids, objs, own);
     if (!landed.length) return;
     if (s.cfg.door === 'combine') return this.hand(objs, snap, changed, landed);
-    this.finish(landed, snap, await this.land(objs, snap, changed, landed));
+    this.finish(landed, snap, await this.land(objs, snap, changed, landed), changed);
   }
   // ---- door 'combine': a lane hands its tested train to the main door (C), which puts every lane's trains into
   // one commit per round. C never replays or tests (areas are disjoint; cross changes went through X). ----
@@ -293,7 +301,7 @@ export class Lane extends DurableObject {
     const { modTree, files } = moduleTrees(objs, snap, changed);
     const r = await this.stub('C').handoff({ from: s.k, ids: landed.map((c) => c.n), mods: [...modTree], files: [...files], objects: [...objs.map].map(([sha, o]) => [sha, o.type, o.body]) });
     if (!r?.ok) { for (const c of landed.slice().reverse()) { c.state = 'mergeWait'; s.queue.unshift(c.n); } s.m.errors.push(`handoff: ${r?.error || 'failed'}`.slice(0, 160)); return; }
-    s.snap = snap;
+    this.adopt(snap, changed);
     for (const c of landed) { c.state = 'handed'; c.handedAt = this.now(); this.ev(c, 'handed to the main door'); }
     s.m.handed = (s.m.handed || 0) + landed.length;
     if (++s.m.trains % 10 === 0) { const live = new Set(s.snap.values()); for (const h of s.text.keys()) if (!live.has(h)) s.text.delete(h); }
@@ -388,9 +396,12 @@ export class Lane extends DurableObject {
     try {
       out = this.replay(ids, objs, own);
       if (out.landed.length && s.cfg.door === 'combine') { await this.hand(objs, out.snap, out.changed, out.landed); res = { ok: out.landed.every((c) => c.state === 'handed') }; }
-      else if (out.landed.length) { res = await this.land(objs, out.snap, out.changed, out.landed); this.finish(out.landed, out.snap, res); }
+      else if (out.landed.length) { res = await this.land(objs, out.snap, out.changed, out.landed); this.finish(out.landed, out.snap, res, out.changed); }
     } finally {
-      const files = res.ok ? [...out.changed].map((p) => [p, s.text.get(s.snap.get(p))]) : [];
+      // Every lane gets the frozen lanes' whole current files, not only what X changed: a lane that saw X's new file
+      // next to an old copy of its neighbour (renamed meanwhile inside the frozen lane) failed every change after that.
+      const paths = new Set([...handed.flatMap((h) => h.map(([p]) => p)), ...(res.ok ? out.changed : [])]);
+      const files = [...paths].map((p) => [p, s.text.get(s.snap.get(p))]).filter(([, t]) => t != null);
       const all = Array.from({ length: s.n }, (_, l) => l);
       await Promise.all(all.map((l) => (lanes.has(l) || files.length ? this.stub(l).thaw({ files, unfreeze: lanes.has(l) }) : null)));
       s.m.xHoldMs = (s.m.xHoldMs || 0) + (Date.now() - t0);
@@ -410,7 +421,7 @@ export class Lane extends DurableObject {
       cas: s.m.cas, busy: s.m.busy || 0, refreshes: s.m.refreshes, waitSP50: pct(s.m.waitS, 0.5), waitSP90: pct(s.m.waitS, 0.9), frozenMs: s.m.frozenMs, freezes: s.m.freezes, xHoldMs: s.m.xHoldMs || 0,
       handed: s.m.handed || 0, handoffs: s.m.handoffs || 0, rounds: s.m.rounds || 0, pending: (s.pending || []).length, perRoundP50: pct(s.m.perRound || [], 0.5),
       agentPushes: s.m.agentPushes || 0, agentPushFail: s.m.agentPushFail || 0, artifactsOps: s.m.artifactsOps, restores: s.m.restores || 0,
-      errors: s.m.errors.slice(0, 5), errorCount: s.m.errors.length, failSamples: s.m.failSamples || [],
+      errors: s.m.errors.slice(0, 5), errorCount: s.m.errors.length, failSamples: s.m.failSamples || [], viewFails: s.m.viewFails || 0, viewFailSample: s.m.viewFailSample || [],
     };
   }
   async seriesOf() { return (await this.ensure()) ? { lane: this.s.tag, series: this.s.series } : null; }

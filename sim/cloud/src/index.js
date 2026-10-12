@@ -355,7 +355,7 @@ export class Run extends DurableObject {
     const landedAll = ls.filter((l) => l.lane !== 'C').reduce((a, l) => a + l.landed, 0);
     return { runId: s.runId, phase: s.phase, agents: s.cfg.agents, lanes: s.cfg.lanes, door: s.cfg.door, crossShare: s.cfg.crossShare, minutes: s.cfg.minutes, elapsedS: this.now(),
       forks: s.m.forks, forkFailed: s.m.forkFailed, agentsDone: s.agentsDone,
-      tasks: sum('tasks'), cross: sum('cross'), landed: landedAll, landedPerHour: Math.round((landedAll / min) * 60), rounds: sum('rounds'), pending: sum('pending'), dropped: sum('dropped'), testFails: sum('testFails'),
+      tasks: sum('tasks'), cross: sum('cross'), landed: landedAll, landedPerHour: Math.round((landedAll / min) * 60), rounds: sum('rounds'), pending: sum('pending'), dropped: sum('dropped'), testFails: sum('testFails'), viewFails: sum('viewFails'),
       queue: sum('queue'), mainPushes: sum('mainPushes'), mainPushFail: sum('mainPushFail'), cas: sum('cas'), busy: sum('busy'), refreshes: sum('refreshes'),
       agentPushes: sum('agentPushes'), agentPushFail: sum('agentPushFail'), artifactsOps: s.m.artifactsOps + sum('artifactsOps') + sum('agentPushes'),
       errors: ls.flatMap((l) => (l.errors || []).map((e) => `${l.lane}: ${e}`)).slice(0, 8).concat(s.m.errors.slice(0, 4)),
