@@ -789,9 +789,9 @@ function landBody(entries: Entry[], selfHost = false) {
 <form class="landask" action="/build" method="get">
 <div class="askbox"><textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button type="button" class="askmic" id="askmic" hidden aria-label="Speak your idea" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
-<button class="btn" type="submit">Build it</button>
-<p class="bsrow"><span id="bschosen" aria-live="polite"></span><button type="button" class="bsopen" id="bsopen" hidden>Adjust</button></p>
+<button type="button" class="bstoggle" id="bsopen" hidden aria-expanded="false"><svg class="bst-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="bst-main"><span id="bschosen">Fastest: one Opus agent</span><span id="bsest" class="bst-est" aria-live="polite"></span></span><svg class="bst-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
 <div id="bsheet" class="bsheet" hidden></div>
+<button class="btn" type="submit">Build it</button>
 </form>
 ${how}
 <nav class="doors" aria-label="More">
@@ -836,10 +836,17 @@ body:has(.landask) #talk-fab{display:none!important}
 body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 /* Build settings (B2/B4, behind BUILD_SETTINGS): 'Adjust' expands a section in place under Build it (Eyal: no
    modal). Preset chips, sliders with touch-sized thumbs, a board switch, outcome bars that move while you drag. */
-.bsrow{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0}
-.bsrow #bschosen{flex:1;font-size:13px;color:var(--dim)}
-.bsopen{border:0;background:none;color:var(--acc);font:inherit;font-size:15px;min-height:44px;padding:0 4px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-.bsheet{display:grid;gap:14px;padding:14px 0 4px;border-top:1px solid var(--line)}
+.bstoggle{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 12px;border:0;border-radius:12px;background:var(--chip);color:var(--fg);font:inherit;text-align:left;cursor:pointer}
+.bstoggle[hidden]{display:none}
+.bst-i{flex:none;width:20px;height:20px;color:var(--dim)}
+.bst-main{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px}
+#bschosen{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.bst-est{flex:none;font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
+.bst-c{flex:none;width:20px;height:20px;color:var(--dim);transition:transform .15s}
+.bstoggle[aria-expanded="true"] .bst-c{transform:rotate(180deg)}
+.bstoggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.bst-c{transition:none}}
+.bsheet{display:grid;gap:14px;padding:4px 0 6px}
 .bsheet[hidden]{display:none}
 .bs-chips{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .bs-chip{display:flex;flex-direction:column;justify-content:center;gap:1px;text-align:left;border:0;cursor:pointer;background:var(--chip);color:var(--fg);border-radius:10px;min-height:52px;padding:6px 12px;font:inherit;font-size:14px}
@@ -887,7 +894,7 @@ body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 .bsheet:not(.bs-empty) .bs-wait,.bs-empty .bs-est,.bs-empty .bs-src{display:none}
 .bs-foot{margin:0}
 .bs-link{border:0;background:none;padding:0;color:var(--dim);font:inherit;font-size:14px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:44px}
-.bs-chip:focus-visible,.bs-switch:focus-visible,.bs-link:focus-visible,.bsopen:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.bs-chip:focus-visible,.bs-switch:focus-visible,.bs-link:focus-visible,.bstoggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.bs-track i,.bs-meter i,.bs-switch,.bs-switch i{transition:none}}
 .watchtop{display:grid;gap:4px;margin:0 0 10px;padding:14px 16px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;transition:background-color .12s}
 .watchtop b{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--acc)}

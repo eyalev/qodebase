@@ -140,8 +140,12 @@
       for (const [name, value] of [['preset', exact || 'custom'], ['v', JSON.stringify(st.v)]]) {
         const i = document.createElement('input'); i.type = 'hidden'; i.name = name; i.value = value; i.dataset.bs = '1'; form.appendChild(i);
       }
-      if (chip) chip.textContent = st.open ? '' : `${k === 'custom' ? 'Custom' : k === 'idea' ? 'For your idea' : PRESETS[k].name}: ${team(st.v)}${st.est && st.est !== 'error' ? `, about ${range(st.est.usd, usd)}` : ''}`;
-    } else if (chip) chip.textContent = '';
+    }
+    // The settings row says the current choice in one line, and once there is text, about how long and how much.
+    if (chip) { const k = which(st.v); chip.textContent = `${k === 'custom' ? 'Custom' : k === 'idea' ? 'For your idea' : PRESETS[k]?.name || 'Fastest'}: ${team(st.v)}`; }
+    const ee = document.getElementById('bsest');
+    if (ee) { const e = st.est; ee.textContent = e && e !== 'error' && !empty() ? `~${mins((e.wallS[0] + e.wallS[1]) / 2)}, ~${usd((e.usd[0] + e.usd[1]) / 2)}` : ''; }
+    try { sessionStorage.setItem('qb.bs', JSON.stringify({ open: st.open, v: st.v })); } catch {}
     // The estimate the person saw rides along (est), so the project page can show estimated vs elapsed (qb6 stores it).
     const e = st.est;
     if (e && e !== 'error' && !empty()) {
@@ -268,7 +272,7 @@
     if (i < 0) return; e.preventDefault(); cs[(i + (e.key === 'ArrowRight' ? 1 : cs.length - 1)) % cs.length].focus();
   });
   // A changed idea makes 'For my idea' stale: the chip asks again and the bars go back to a typical app.
-  form.querySelector('textarea')?.addEventListener('input', () => { if (st.open || st.sug) paintSoon(); });
+  form.querySelector('textarea')?.addEventListener('input', () => paintSoon());
 
   async function loadSim() {
     try {
@@ -276,13 +280,15 @@
       PRESETS = Object.fromEntries(Object.entries(SIM.BUILD_PRESETS || {}).map(([k, p]) => [k, { name: p.label, why: p.why, v: toV(p.variant) }]));
     } catch (e) { SIM = null; log('predict_missing', { error: String(e) }); }
   }
+  // The settings row between the box and Build it is a toggle: tap expands the controls in place, tap again
+  // collapses (Eyal, 2026-10-12). Open state and choice are kept for the session.
   function toggle(open) {
     st.open = open; root.hidden = !open; btn.setAttribute('aria-expanded', String(open));
-    btn.textContent = open ? 'Hide settings' : 'Adjust';
     paint();
-    if (open && !SIM) loadSim().then(paint);
     log(open ? 'open' : 'close', {});
   }
-  btn.hidden = false; btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-controls', 'bsheet');
+  try { const saved = JSON.parse(sessionStorage.getItem('qb.bs') || 'null'); if (saved?.v && typeof saved.v.coders === 'number') st.v = { ...DEFAULT_V, ...saved.v }; if (saved?.open) { st.open = true; root.hidden = false; btn.setAttribute('aria-expanded', 'true'); } } catch {}
+  btn.hidden = false; btn.setAttribute('aria-controls', 'bsheet'); if (!st.open) btn.setAttribute('aria-expanded', 'false');
   btn.addEventListener('click', () => toggle(root.hidden));
+  paint(); loadSim().then(paint);   // the row shows the estimate even while collapsed
 })();
