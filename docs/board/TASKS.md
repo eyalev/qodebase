@@ -67,8 +67,8 @@ Run timeline (Eyal, 2026-10-12 ~19:00 UTC): one view of a whole run as a trace/G
 - [ ] T3 works on corner-cafe demo runs, real builds and lab runs; preview link for Eyal before deploy
 
 Bun migration simulation (Eyal, 2026-10-12 ~19:50 UTC: go): coordination of Bun's real Zig->Rust port (oven-sh/bun#30412, ~64 Claude agents, 6,755 commits) re-run with qodebase's ways of landing; work mocked, structure real (file tree, task stream, phases, rates from sim/bun/calibration.json).
-- [ ] BUN1 build: Bun's tree + task stream (tasks from commit subjects/phases, files touched, gates between phases), agent work times from Bun's rates; prediction written first (qb4)
-- [ ] BUN2 runs at 64 / 640 / 6,400 agents: Bun's own method (one shared branch, file/line-range ownership) vs one merge queue vs lanes by area + per-lane controller vs lanes + hottest files split; measure time to finish, agent-hours, collisions, idle, where phase gates cap it (qb4)
+- [x] BUN1 build: Bun's tree + task stream (tasks from commit subjects/phases, files touched, gates between phases), agent work times from Bun's rates; prediction written first (qb4)
+- [x] BUN2 runs at 64 / 640 / 6,400 agents: Bun's own method (one shared branch, file/line-range ownership) vs one merge queue vs lanes by area + per-lane controller vs lanes + hottest files split; measure time to finish, agent-hours, collisions, idle, where phase gates cap it (qb4). Done 2026-10-12: sim.md (j) prediction + results; bun's own method fastest (31-36 h), one queue 73-89 h, lanes+split best queue design (55 h at 640); gates cost ~1/3, ownership granularity is the main cap
 - [ ] BUN3 optional real-git replay of the winning setup on a VM (qb5, after L2)
 - [ ] BUN4 write-up: a /how card + README/submission lines (manager, qb8)
 Where it runs: a small trial at nice 19 on the laptop for a time estimate; the full sweep on the laptop after qb9's W8 ends (~23:00 UTC) if it's < 1 h, else on a VM (L2's VMs free up first; the project's 32-vCPU cap is full now).

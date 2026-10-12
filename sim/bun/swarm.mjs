@@ -68,7 +68,7 @@ export function run(opts = {}) {
   const T = DATA.tasks.map((t, id) => {
     const keys = t.f.map((f) => f * R + (parts[f] > 1 ? hash(t.sha + f) % parts[f] : 0));
     const lanes = [...new Set(t.f.map((f) => crateOf[f]))];
-    return { id, g: GROUPS.findIndex((g) => g.includes(t.phase)), keys, nF: t.f.length, lanes, deps: 0, next: [], state: 'blocked',
+    return { id, g: cfg.noGates ? 0 : GROUPS.findIndex((g) => g.includes(t.phase)), keys, nF: t.f.length, lanes, deps: 0, next: [], state: 'blocked',
       workS: logn(cfg.workMedS * (1 + cfg.perFileLog * Math.log(Math.max(1, t.f.length))), cfg.workSigma), base: null };
   });
   // within-phase chains on file regions (mass edits neither wait nor are waited for)
@@ -244,7 +244,7 @@ export function run(opts = {}) {
   }
   const hours = t / 3600;
   return {
-    method, agents, dep: cfg.dep, ctl: useLanes ? cfg.ctlOn !== false : null, seed: cfg.seed || 1,
+    method, agents, dep: cfg.dep, gates: !cfg.noGates, ctl: useLanes ? cfg.ctlOn !== false : null, seed: cfg.seed || 1,
     finishedH: +hours.toFixed(2), done: m.landed === T.length, landed: m.landed,
     agentHours: +(m.busyS / 3600).toFixed(1), reworkH: +(m.reworkS / 3600).toFixed(1),
     idleShare: +(1 - m.busyS / Math.max(1, agents * t)).toFixed(3),
@@ -268,4 +268,24 @@ if (args.calibrate) {
     const mean = (f) => (rs.reduce((s, r) => s + f(r), 0) / rs.length).toFixed(1);
     console.log(`touchesPerRange ${tpr} workMedS ${w}: c+d ${mean((r) => r.phaseH['c+d'])} h (real d 9.7), e ${mean((r) => r.phaseH.e)} h (real 4.9), b ${mean((r) => r.phaseH.b)} h (real 26), idle ${mean((r) => r.idleShare * 100)}%`);
   }
+}
+
+// The sweep: every method at 64 / 640 / 6,400 agents (3 seeds), the controller off as well for lane methods,
+// unlimited agents (64,000) and no gates (how much the gates cap), and the rejected chain model for the record.
+if (args.sweep) {
+  const out = args.out || join(HERE, 'sweep.jsonl');
+  mkdirSync(dirname(out), { recursive: true });
+  const cells = [];
+  for (const method of ['bun', 'queue', 'lanes', 'split', 'fine']) {
+    for (const agents of [64, 640, 6400]) for (const seed of [1, 2, 3]) {
+      cells.push({ method, agents, seed });
+      if (method !== 'bun' && method !== 'queue') cells.push({ method, agents, seed, ctlOn: false });
+      cells.push({ method, agents, seed, noGates: true });
+    }
+    cells.push({ method, agents: 64000, seed: 1 }, { method, agents: 64000, seed: 1, noGates: true });
+    for (const agents of [64, 640, 6400]) cells.push({ method, agents, seed: 1, dep: 'chain' });
+  }
+  const t0 = Date.now();
+  for (const c of cells) appendFileSync(out, JSON.stringify({ ...run(c), ctlOn: c.ctlOn !== false }) + '\n');
+  console.log(`${cells.length} cells in ${((Date.now() - t0) / 1000).toFixed(1)} s -> ${out}`);
 }

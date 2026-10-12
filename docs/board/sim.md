@@ -775,3 +775,72 @@ orders work by the gates only. That is the **best case for speed-up**; real chai
 - finer areas finish more than 25% faster than lanes by crate;
 - 6,400 agents finish more than 2× faster than 640 in any method (gates-only ordering is the best case, so that
   would mean gates are not the cap).
+
+### (j) results: the sweep (2026-10-12, 142 cells in 37 s, `node sim/bun/swarm.mjs --sweep`, sim/bun/sweep.jsonl)
+
+Means of 3 seeds. Times are hours to finish all 6,479 tasks; collisions are per landed task; rework is the
+share of agent-hours.
+
+| method | 64 agents | 640 | 6,400 | unlimited (64k) | agent-hours (640) | collisions (640) | rework (640) |
+|---|---|---|---|---|---|---|---|
+| bun (shared tree, line-range ownership) | **36.4** | **31.1** | **31.1** | 31.1 | **1,148** | 0 | 0% |
+| one merge queue | 72.6 | 88.7 | 89.2 | 87.4 | 1,702 | 1.16 | 33% |
+| lanes by crate | 87.0 | 66.7 | 67.1 | 67.8 | 1,632 | 1.02 | 30% |
+| lanes + hottest files split | 77.7 | **55.0** | 58.2 | 59.2 | 1,544 | 0.83 | 26% |
+| lanes + split + src/runtime by module | 78.4 | 62.7 | 63.5 | 62.7 | 1,571 | 0.89 | 28% |
+
+Notes on the table:
+- **Controller.** Lane cells are shown with the per-lane controller. Without it they are within ±5% (for example
+  lanes at 640: 63.6 h without, 66.7 h with); in this sim it neither helps nor hurts.
+- **Idle.** Above 640 agents, more than 95% of agent time is idle in every method.
+- **Breaks.** Bun's shared tree lands ~66 build breaks unchecked (1% per commit). The queue methods catch 90% of
+  theirs before landing.
+
+**What caps the speed-up.**
+- **The gates cost about a third, not most of it.** Bun's method with no gates finishes in 27.6 h at 64 agents
+  and 21.0 h at 6,400, against 36.4 h and 31.1 h with gates. The queue methods barely notice the gates: their
+  own queues are the limit (one queue: 68.7 h with no gates vs 72.6 h with them, at 64).
+- **Ownership is the main cap for Bun's method.** With unlimited agents and no gates it still takes 21 h: tasks
+  that need the same line range wait for each other. With ranges five times finer (1 edit per range vs the
+  fitted 10) that floor halves to 10.8 h. Work-time spread matters less (no spread: 17.1 h).
+- **Bun's method scales only as far as ownership gets finer.** The granularity was fitted at 64 agents, so the
+  data cannot say how fine it can get with more agents.
+- **Agents beyond 640 do nothing** in any method: 6,400 is never faster than 640.
+
+**Against the prediction:**
+1. **Held:** Bun's method fastest and flat (36 → 31 h).
+2. **Held:** one queue slower at every size, 73–89 h. Rework 27–33% (predicted 30–35%); collisions 0.8–1.2 per
+   task (predicted ≈1.1). It **gets worse with more agents** (73 → 89 h): more changes wait longer, so more of
+   them collide.
+3. **Partly wrong.** Lanes by crate are **slower than the queue at 64 agents** (87 vs 73 h): the runtime lane
+   and the coordinated lane carry most of the work, and a crowd of only 64 cannot fill the other lanes. From 640
+   agents they beat the queue by about 25% (67 vs 89 h), not "barely".
+4. **Wrong.** Splitting the hottest files cuts collisions (−19%) **and** time (−13% to −18%): split is the best of
+   the lane methods (55 h at 640).
+5. **Held.** Finer areas do not rescue lanes. They are better than plain lanes (63 vs 67 h) but worse than split
+   alone (63 vs 55 h), because the cross-area share rises from 38% to 57%.
+6. **Half right.** The gates cap less than I said (about a third). Ownership and the queues cap more.
+7. **Held.** Bun's speed comes from having no check per commit; the queue methods pay about 30% rework for
+   checking every change.
+
+None of the falsifiers fired:
+- the queue never beats Bun's method;
+- finer areas are only 6% faster than lanes;
+- 6,400 agents are never 2× faster than 640.
+
+**Phase b, honestly.** The sim runs b in 5–8 h; Bun took 26 h. Bun ran b as sequential steps (b0/b1/b2) with
+probably fewer agents, so b was not agent-bound. Every method's total here is about 20 h shorter than a replay of
+Bun's real schedule would be. That shifts all methods equally and does not change their order.
+
+**Rejected dependency model, for the record.** If each edit waits for the previous edit to the same file range,
+every method takes 146–517 h, and Bun's method at 64 agents is 6.6× slower than the real port. The real work was
+not ordered that way.
+
+**What it means for qodebase.**
+- **On a migration like Bun's, one shared tree with fine-grained ownership beat every merge-queue design:** about
+  half the time and about 30% fewer agent-hours.
+- **The queue designs' cost is rework** from long waits plus one landing door. Lanes help from ~640 agents only
+  when the hottest files are split.
+- **A better design would combine the two.** Ownership of line ranges (claims at range granularity) to prevent
+  collisions, plus a lane-level check instead of none. The sim suggests that keeps Bun's speed if the lane check
+  is fast relative to work. That is a cell to try (BUN3), not a result.
