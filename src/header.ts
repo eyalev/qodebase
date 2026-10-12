@@ -21,7 +21,7 @@ export function siteHeader(o: HeaderOpts) {
   const active = o.active === 'projects' ? 'mine' : o.active;
   const c = o.ctx;
   const ctx = c
-    ? `<a class="hctx${(c.ownerLabel || c.owner).length + c.name.length > 22 ? ' hlong' : ''}" href=""${esc(c.href)}" title="${esc(`${c.ownerLabel || c.owner} / ${c.name}`)}"><span class="ho">${esc(c.ownerLabel || c.owner)}</span><span class="hs">/</span><b class="hn">${esc(c.name)}</b>${c.private ? `<span class="hp" title="Private: only you">${LOCK}</span>` : ''}</a>`
+    ? `<a class="hctx${(c.ownerLabel || c.owner).length + c.name.length > 22 ? ' hlong' : ''}" href="${esc(c.href)}" title="${esc(`${c.ownerLabel || c.owner} / ${c.name}`)}"><span class="ho">${esc(c.ownerLabel || c.owner)}</span><span class="hs">/</span><b class="hn">${esc(c.name)}</b>${c.private ? `<span class="hp" title="Private: only you">${LOCK}</span>` : ''}</a>`
     : SECTION[active] ? `<span class="hctx hsec">${SECTION[active]}</span>` : '';
   const initial = o.me ? esc(o.me.slice(0, 1).toUpperCase()) : '';
   const who = o.me

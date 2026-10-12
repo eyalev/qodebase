@@ -725,6 +725,13 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 
 
 /** D: the site-wide tabs as a strip at the top: forq, then Projects, Inbox, Explore, Account. */
+/** Which view a project URL really renders: a view the viewer may not see (Changes, More, Agents when signed out)
+ *  falls back to Readme in projectV3, so the caller must load the README for it too (github-parity.md bug 2). */
+export function viewShown(view: string | null, own: boolean, info: ProjectInfo): string {
+  const id = view === 'about' ? 'readme' : view || 'readme';
+  const c = { own, worker: info.kind === 'worker', info } as unknown as Ctx;
+  return VIEWS.find((x) => x.id === id && x.when(c) && x.render) ? id : 'readme';
+}
 export function globalTop(active: HomeTab, inbox: number, me: string, ctx?: HeaderCtx) {
   // The site header (src/header.ts, qb3 2026-10-12): mark, owner / project or the section, +, avatar, ☰ sheet.
   return siteHeader({ active, inbox, me, ctx });

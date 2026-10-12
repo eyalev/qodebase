@@ -24,7 +24,7 @@ import { suggestRoute, ideaRoute } from './buildsuggest';
 import { withPicker } from './picker';
 import { screenshotRoute } from './screenshot';
 import { ATTACH_TYPES, ATTACH_MAX, newAttachId, isAttachId, attachKey, composeMessage, parseMarker, attachedLines } from './attach';
-import { buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
+import { viewShown, buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
@@ -702,7 +702,7 @@ const app = {
         const bi0 = await env.Landing.get(env.Landing.idFromName(slug)).pageExtras().catch(() => null);
         return html(projectV3({ info: bi0 ? { ...info, ...bi0 } : info, entry: all.find((e) => e.slug === slug)!, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
           me: me.handle, runBase, liveHtml: '', view: m[3] === 'about' ? 'readme' : (m[3] as ViewId) || null, tryAgent: url.searchParams.get('try') || undefined, ...st,
-          docs: !m[3] || m[3] === 'readme' || m[3] === 'about' ? await docsOf(env, ctx, info, url.searchParams.get('doc')) : undefined,
+          docs: viewShown(m[3] || null, own, info) === 'readme' ? await docsOf(env, ctx, info, url.searchParams.get('doc')) : undefined,
           g: await globalOf(all),
           needsKey: own && !onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc }));
       }
