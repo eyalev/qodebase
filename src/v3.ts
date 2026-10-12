@@ -793,8 +793,8 @@ function landBody(entries: Entry[], selfHost = false) {
 <form class="landask" action="/build" method="get">
 <div class="askbox"><textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button type="button" class="askmic" id="askmic" hidden aria-label="Speak your idea" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
-<button type="button" class="bstoggle" id="bsopen" hidden aria-expanded="false"><svg class="bst-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="bst-main"><span id="bschosen">Fastest: one Opus agent</span><span id="bsest" class="bst-est" aria-live="polite"></span></span><svg class="bst-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-<div id="bsheet" class="bsheet" hidden></div>
+<div class="bsbox"><button type="button" class="bstoggle" id="bsopen" hidden aria-expanded="false"><svg class="bst-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="bst-main"><span id="bschosen">Fastest: one Opus agent</span><span id="bsest" class="bst-est" aria-live="polite"></span></span><svg class="bst-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+<div id="bsheet" class="bsheet" hidden></div></div>
 <button class="btn" type="submit">Build it</button>
 </form>
 ${how}
@@ -847,10 +847,15 @@ body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 #bschosen{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
 .bst-est{font-size:13px;color:var(--fg);opacity:.8;font-variant-numeric:tabular-nums}.bst-est:empty{display:none}
 .bst-c{flex:none;width:20px;height:20px;color:var(--dim);transition:transform .15s}
-.bstoggle[aria-expanded="true"] .bst-c{transform:rotate(180deg)}
+.bstoggle[aria-expanded="true"] .bst-c{transform:rotate(90deg)}
+/* Expanded, the row is the header of one container that holds the whole section (Eyal: make it obvious what
+   belongs to it): card background, hairline, card radius; the header sticks under the 48 px top bar. */
+.bsbox:has(>.bstoggle[aria-expanded="true"]){background:var(--card);border-radius:14px;box-shadow:inset 0 0 0 1px var(--line)}
+.bsbox>.bstoggle[aria-expanded="true"]{position:sticky;top:48px;z-index:3;border-radius:14px 14px 0 0;box-shadow:inset 0 0 0 1px var(--line),0 1px 0 var(--line)}
+.bsbox>.bsheet{padding:12px 12px 8px}
 .bstoggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.bst-c{transition:none}}
-.bsheet{display:grid;gap:14px;padding:4px 0 6px}
+.bsheet{display:grid;gap:14px}
 .bsheet[hidden]{display:none}
 .bs-chips{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .bs-chip{display:flex;flex-direction:column;justify-content:center;gap:1px;text-align:left;border:0;cursor:pointer;background:var(--chip);color:var(--fg);border-radius:10px;min-height:52px;padding:6px 12px;font:inherit;font-size:14px}
