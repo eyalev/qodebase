@@ -172,7 +172,7 @@ What it says:
 3. **On Bun's real regressions a compile check barely matters.** Of the 4 in the window, a crate check catches 1;
    the others were runtime or test regressions that only tests or review find. A blocking check even raises real
    red minutes (15 to 16-26), because everything runs slower while those regressions wait for their fix.
-   (Borderline included: the same pattern, 17 to 23-35 red crate-minutes, async 14-15.)
+   (Borderline included: the same pattern, 17 to 23-35 red crate-minutes blocking, 16-17 async.)
 
 Not covered: the c+d+e breaks are a model, not history. The tail is not agent-bound in reality (it ran ~7 days
 with pauses), so only its relative times mean anything. A conflict that remains after 3 redos is applied as far
