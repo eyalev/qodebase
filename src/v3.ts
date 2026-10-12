@@ -270,9 +270,11 @@ load();setInterval(function(){if(!document.hidden)load()},15000);
 type Landed = { id: string; title?: string; intent?: string; agent?: string; verdict?: 'approved' | 'auto' | 'changes' | null; reviewer?: string; replayed?: boolean; how?: 'clean' | 'handler' | 'model' | null; stackedOn?: string; landedAt?: number };
 /** G2: the one-line 'why' under a landed commit: its intent, how it was reviewed, how it landed (qb6's info.landed). */
 function whyLine(l: Landed) {
-  const intent = (l.intent || l.title || '').replace(/\s+/g, ' ').trim();
+  // The intent often starts with the title itself: say only what the title does not.
+  const ttl = (l.title || '').replace(/[.\s]+$/, ''), raw = (l.intent || '').replace(/\s+/g, ' ').trim();
+  const intent = ttl && raw.toLowerCase().startsWith(ttl.toLowerCase()) ? raw.slice(ttl.length).replace(/^[.:;,\s]+/, '') : raw;
   const short = intent.length > 110 ? `${intent.slice(0, 107).replace(/\s+\S*$/, '')}…` : intent;
-  const rv = l.verdict === 'auto' ? 'auto-approved (scripted)' : l.verdict === 'approved' ? `reviewed${l.reviewer ? ` by ${l.reviewer}` : ''}` : l.verdict === 'changes' ? 'landed after a requested fix' : '';
+  const rv = l.verdict === 'auto' ? 'auto-approved (scripted)' : l.verdict === 'approved' ? `reviewed${l.reviewer && !/^(review|reviewer|r:reviewer)$/i.test(l.reviewer) ? ` by ${l.reviewer}` : ''}` : l.verdict === 'changes' ? 'landed after a requested fix' : '';
   const how = l.replayed || l.how === 'handler' || l.how === 'model' ? `replayed on the newest code${l.how === 'model' ? ' by a model' : ''}` : '';
   return [short && `Why: ${short}`, rv, how].filter(Boolean).join('; ');
 }
