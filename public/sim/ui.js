@@ -11,7 +11,8 @@ const state = {
   preset: PRESETS[store.get('preset')] ? store.get('preset') : 'today',
   policy: POLICIES[store.get('policy')] ? store.get('policy') : 'hybrid',
   speed: Number(store.get('speed', 60)) || 60,
-  playing: false, last: null,
+  // Autoplay on open (design pass item 1, 2026-10-12): the page used to open on dashes and an empty chart.
+  playing: true, last: null,
 };
 
 // ---- colours from the tokens ----
@@ -84,9 +85,12 @@ function simCfg() {
   const p = PRESETS[state.preset];
   return { seed: 1, policy: state.policy, repos: p.repos, agentsPerRepo: p.agentsPerRepo, files: p.files };
 }
+let opened = false;
 function restart() {
   layout = null;
-  worker.postMessage({ cmd: 'start', cfg: simCfg() });
+  // The first open starts 30 simulated minutes in (warmS), so the numbers and the chart are already there.
+  worker.postMessage({ cmd: 'start', cfg: { ...simCfg(), warmS: opened ? 0 : 1800 } });
+  opened = true;
   worker.postMessage({ cmd: 'speed', speed: state.speed });
   if (state.playing) worker.postMessage({ cmd: 'play' });
 }
@@ -154,7 +158,7 @@ const niceMax = (v) => { if (v <= 0) return 1; const p = 10 ** Math.floor(Math.l
 
 function drawChart(series) {
   const H = 160, [g, W] = canvasCtx($('chart'), H);
-  if (series.length < 3) { axisText(g, 'Press Play: the chart fills as simulated time passes.', 0, 20); return; }
+  if (series.length < 3) { axisText(g, 'The chart fills as simulated time passes.', 0, 20); return; }
   const rate = [], wait = [];
   let j = 0;
   for (let i = 0; i < series.length; i++) {
