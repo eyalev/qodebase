@@ -11,7 +11,9 @@
 
 export const BOARD_TTL_MS = 10 * 60_000;
 export const BOARD_KEEP_MS = 24 * 3_600_000;
-export const BOARD_KINDS = ['started', 'editing', 'committed', 'pushed', 'reviewing', 'approved', 'changes', 'queued', 'landed', 'bounced', 'blocked', 'done', 'gave-up'] as const;
+// 'alive' = the box hook's heartbeat on any tool use: it keeps an agent (and its claim) live while it works
+// without posting (a slow agent lost its claim after 10 silent minutes), and is never shown as a row's kind.
+export const BOARD_KINDS = ['started', 'editing', 'committed', 'pushed', 'reviewing', 'approved', 'changes', 'queued', 'landed', 'bounced', 'blocked', 'done', 'gave-up', 'alive'] as const;
 export type BoardKind = typeof BOARD_KINDS[number];
 export type BoardEvent = { ts: number; agent: string; kind: BoardKind; intent: string; files: string[]; status: string; change?: string };
 export type BoardRow = BoardEvent & { ageS: number; done?: boolean };
@@ -44,18 +46,25 @@ export type BoardQuery = { me?: string | null; files?: string[] | string; area?:
 /** The now view (+ recent finished work when `recent` > 0), without `me`, newest first. */
 export function boardView(events: BoardEvent[], q: BoardQuery = {}): BoardRow[] {
   const now = q.now ?? Date.now(), ttl = q.ttl ?? BOARD_TTL_MS, me = q.me || null;
-  const rows = new Map<string, { last: BoardEvent; files: Set<string> }>();
-  const latest = new Map<string, BoardEvent>();
-  for (const e of events) if (e && (!latest.get(e.agent) || e.ts >= latest.get(e.agent)!.ts)) latest.set(e.agent, e);
+  // Per agent: its latest real word (not a heartbeat), when it was last seen at all, and its current task's start.
+  const last = new Map<string, BoardEvent>(), seen = new Map<string, number>(), startedAt = new Map<string, number>();
   for (const e of events) {
     if (!e || e.agent === me) continue;
-    const last = latest.get(e.agent)!;
-    const keep = now - e.ts <= ttl || (IN_FLIGHT.has(last.kind) && now - last.ts <= IN_FLIGHT_MS && now - e.ts <= IN_FLIGHT_MS);
-    if (!keep) continue;
-    const r = rows.get(e.agent) || { last: e, files: new Set<string>() };
-    if (e.ts >= r.last.ts) r.last = e;
-    for (const f of e.files || []) r.files.add(f);
-    rows.set(e.agent, r);
+    seen.set(e.agent, Math.max(seen.get(e.agent) || 0, e.ts));
+    if (e.kind === 'alive') continue;
+    if (!last.get(e.agent) || e.ts >= last.get(e.agent)!.ts) last.set(e.agent, e);
+    if (e.kind === 'started') startedAt.set(e.agent, Math.max(startedAt.get(e.agent) || 0, e.ts));
+  }
+  const rows = new Map<string, { last: BoardEvent; files: Set<string> }>();
+  for (const [agent, l] of last) {
+    const keep = now - seen.get(agent)! <= ttl || (IN_FLIGHT.has(l.kind) && now - l.ts <= IN_FLIGHT_MS);
+    if (keep) rows.set(agent, { last: l, files: new Set<string>() });
+  }
+  // files = what the agent named in the TTL window, or since it started its current task (at most 45 min back)
+  for (const e of events) {
+    const r = e && rows.get(e.agent);
+    if (!r || e.kind === 'alive') continue;
+    if (now - e.ts <= ttl || (e.ts >= (startedAt.get(e.agent) || Infinity) && now - e.ts <= IN_FLIGHT_MS)) for (const f of e.files || []) r.files.add(f);
   }
   // An agent whose last word is "landed"/"done" is not working any more: it shows as finished.
   const live: BoardRow[] = [...rows.values()].filter((r) => r.last.kind !== 'landed' && r.last.kind !== 'done' && r.last.kind !== 'gave-up')
@@ -127,7 +136,11 @@ export function dedupePrompt(items: { id: string; text: string }[]) {
 }
 
 /** Task ids named in an intent ("T5: …", "ISSUE-12 and T7"). */
-export const taskIds = (intent: string) => [...new Set((String(intent || '').match(/\b[A-Z]{1,6}-?\d{1,4}\b/g) || []))].slice(0, 5);
+/** Task ids named in an intent, counted only when they are ids of a task list registered on the project
+ *  (the review: the bare pattern also matched ES2022, UTF8, SHA256, V8). No list known = no ids. */
+export const taskIds = (intent: string, known: Set<string>) => [...new Set((String(intent || '').match(/\b[A-Z]{1,6}-?\d{1,4}\b/g) || []))].filter((id) => known.has(id)).slice(0, 5);
+/** The ids of every registered list (a list item without its own label, '#3', is not claimable by name). */
+export const knownTaskIds = (lists: { items: { id: string }[] }[] = []) => new Set(lists.flatMap((l) => l.items.map((i) => i.id)).filter((id) => !id.startsWith('#')));
 
 /** Who keeps a task when several agents claim it: the EARLIEST live claim (qb9 at 20 agents: five claimed
  *  the last task at once, each yielded to the others, nobody did it). Returns, per task id of mine, the
@@ -145,4 +158,21 @@ export function claimHolders(claims: Record<string, { ids: string[]; at: number 
     if (best.agent !== me) out[id] = best.agent;
   }
   return out;
+}
+
+/** `forq next` (atomic claim, flag claimNext): the first task, in list order, that is not done, not held by
+ *  another live agent, and not the second name of an alias pair (whoever builds its first name adds the alias).
+ *  The caller's own unfinished claim comes back unchanged, so asking twice never takes a second task. */
+export function pickNext(items: { id: string; text: string }[], o: { me: string; done: Set<string>; claims: Record<string, { ids: string[]; at: number }>; live: Set<string>; aliases?: Alias[] }) {
+  const mine = o.claims[o.me]?.ids.find((id) => !o.done.has(id));
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const alsoOf = (id: string) => (o.aliases || []).filter((x) => x.a === id).map((x) => x.b);
+  if (mine && byId.has(mine)) return { ...byId.get(mine)!, aliases: alsoOf(mine), again: true };
+  const held = new Set(Object.entries(o.claims).filter(([a]) => a !== o.me && o.live.has(a)).flatMap(([, c]) => c.ids));
+  const seconds = new Set((o.aliases || []).map((x) => x.b));
+  for (const it of items) {
+    if (o.done.has(it.id) || held.has(it.id) || seconds.has(it.id)) continue;
+    return { ...it, aliases: alsoOf(it.id), again: false };
+  }
+  return null;
 }

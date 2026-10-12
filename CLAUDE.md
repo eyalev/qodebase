@@ -579,6 +579,12 @@ Who works on what, live, inside each project's Landing DO (SQLite table `board`,
   in the box; credentials come from tmux because Claude Code keeps them out of its Bash tool's env).
 - People: `GET /api/p/<o>/<n>/landing/board?recent=30&files=&area=&tail=N`; `view()` has `board {rows, aliases}`.
 - A second router per project: `<slug>--router2` (two-teams scenario).
+- After the adversarial review (W10, 2026-10-12): task ids count only when a registered list has them
+  (`forq tasks <file>` or `forq dedupe <file>`, router only; ES2022/SHA256 are not claims); only the router
+  registers lists and alias pairs (agents get 403); the hook posts an `alive` heartbeat on any tool use (at
+  most every 2 min), so a slow agent keeps its claim; flag `claimNext` = atomic `forq next` (pickNext in
+  board.ts: first task not done, not held by a live agent, not an alias's second name; asking twice returns
+  the same task; a landed change marks its claim done). Two-teams: forq next hands out the union of lists.
 - Tests: `src/landing/board.test.mjs`, `src/landing/boxhook.test.mjs` (the forq CLI against a stub API).
 
 ## Variants lab (qodebase.app/lab, docs/lab/PLAN.md, since 2026-10-08)

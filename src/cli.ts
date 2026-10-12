@@ -25,6 +25,8 @@ export const FORQ_CLI = String.raw`#!/usr/bin/env python3
                                                 the agent board: who works on what now (--recent: and
                                                 what others landed on main in that window)
   forq intent "what you are doing" [--files a,b]  say on the board which task you took and its files
+  forq next                                     take the next free task of the project's list (when on)
+  forq tasks <file>                             register a task list (router)
   forq dedupe <file> | "task" "task" ...        one quick pass: which tasks are the same work (shown on
                                                 the board as aliases: build it once)
 """
@@ -99,7 +101,14 @@ def board_hook():
         for m in (edits, warned):
             for k in [k for k, t in m.items() if now - t > 3600]: del m[k]
         save()
-    elif ev == 'PostToolUse' and tool == 'Bash':
+    elif ev == 'PostToolUse':
+        # Heartbeat on any tool use, at most every 2 min: keeps this agent and its claim live while it works
+        # without posting (a slow agent lost its claim after 10 silent minutes).
+        if now - st.get('alive', 0) >= 120:
+            st['alive'] = now; save()
+            r = try_api('POST', '/api/agent/board', {'kind': 'alive'})
+            if r is not None and r.get('off'): st['offUntil'] = now + 120; save(); return
+        if tool != 'Bash': return
         cmd = str((inp.get('tool_input') or {}).get('command') or '')
         if not re.search(r'(^|[;&|(]\s*)git\s+(-\S+\s+\S+\s+)*commit\b', cmd): return
         g = lambda *a: subprocess.run(['git', *a], cwd=REPO, text=True, capture_output=True).stdout.strip()
@@ -252,6 +261,20 @@ def main(argv):
         r = git('push', '-q', '--force', 'origin', 'HEAD', check=False)
         if r.returncode: sys.exit(f'forq: push failed:\n{r.stdout}{r.stderr}')
         print('pushed to your fork. Now run: forq status pushed "<what you did>"')
+    elif v == 'next':
+        r = api('POST', '/api/agent/next', {})
+        if r.get('off'): sys.exit('forq next is off in this project: pick a task yourself')
+        if r.get('error'): sys.exit('forq: ' + r['error'])
+        if r.get('none'): print('no task left: every task is done or taken. Reply "done".'); return
+        print(f"your task{' (still yours)' if r.get('again') else ''}: {r['id']}: {r['text']}")
+        if r.get('aliases'): print(f"also add {', '.join(r['aliases'])} as a thin alias of it: the same work under another name")
+        print('It is reserved for you: no other agent gets it. When it has landed, run forq next again.')
+    elif v == 'tasks':
+        if not rest: sys.exit('usage: forq tasks <file>   (router: register the task list for forq next and claims)')
+        p = rest[0] if os.path.isabs(rest[0]) else os.path.join(REPO, rest[0])
+        if not os.path.isfile(p): sys.exit(f'forq: no such file {rest[0]}')
+        r = api('POST', '/api/agent/tasks', {'text': open(p).read()})
+        print(f"registered {r.get('ids', 0)} task ids ({r.get('items', 0)} items) from {rest[0]}")
     elif v == 'hook':
         board_hook()
     elif v == 'who':

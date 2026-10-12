@@ -1148,7 +1148,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
   }
   // The agent board (src/landing/board.ts) on landing projects: the box hook posts edits and commits,
   // `forq who` asks, `forq intent` states the agent's own task, `forq dedupe` stores same-work pairs.
-  if (['board', 'who', 'intent', 'dedupe'].includes(verb)) {
+  if (['board', 'who', 'intent', 'dedupe', 'tasks', 'next'].includes(verb)) {
     const info = await p.info();
     if (!landingOn(info)) return json({ on: false, off: true, rows: [], aliases: [], text: '' });
     const L = env.Landing.get(env.Landing.idFromName(slug));
@@ -1161,7 +1161,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     if (request.method !== 'POST' || (me.role !== 'agent' && me.role !== 'router')) return json({ error: 'agents and the router post to the board' }, 403);
     if (verb === 'board') {
       // Only what a hook may say: edits, commits, blocked. Platform events (pushed, landed…) come from the platform.
-      if (!['editing', 'committed', 'blocked', 'done'].includes(String(b.kind))) return json({ error: 'kind: editing|committed|blocked|done' }, 400);
+      if (!['editing', 'committed', 'blocked', 'done', 'alive'].includes(String(b.kind))) return json({ error: 'kind: editing|committed|blocked|done|alive' }, 400);
       const e = await L.boardPost({ agent: name, kind: String(b.kind), intent: b.intent ? String(b.intent) : '', files: Array.isArray(b.files) ? b.files.map(String) : String(b.files || ''), status: String(b.status || ''), change: me.agentId });
       // who: true (the edit hook): the others who touched these files, in the same round trip.
       if (b.who && !('off' in e)) return json({ ...e, rows: (await L.boardWho({ me: name, files: e.files })).rows.map((r) => ({ ...r, line: fmtBoardRow(r) })) });
@@ -1179,6 +1179,19 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       const live = (await L.boardWho({ me: name })).rows.filter((r) => !near.some((x) => x.agent === r.agent));
       const taken = Object.entries((e as { takenBy?: Record<string, string> }).takenBy || {});
       return json({ ...e, ...(taken.length ? { taken: `Already claimed earlier by another agent: ${taken.map(([id, a]) => `${id} by ${a}`).join(', ')}. The earliest claim keeps the task: pick another one and announce it with forq intent.` } : {}), others: boardText([...near, ...live.slice(0, Math.max(0, 8 - near.length)), ...done], (await L.boardWho({})).aliases, { live: 8, done: 8 }) });
+    }
+    if (verb === 'next') {
+      if (me.role !== 'agent') return json({ error: 'forq next is for agents' }, 403);
+      return json(await L.next(me.agentId));
+    }
+    // Task lists and alias pairs come only from the router (the planner): an agent posting pairs could make
+    // others skip real work (adversarial review, 2026-10-11).
+    if (me.role !== 'router') return json({ error: 'only the router registers task lists and runs the dedupe pass' }, 403);
+    if (verb === 'tasks') {
+      const items = backlogItems(String(b.text || ''));
+      await L.dedupeList(name, items);
+      log('board', 'tasks', { slug, by: name, items: items.length });
+      return json({ items: items.length, ids: items.filter((i) => !i.id.startsWith('#')).length });
     }
     // dedupe: {stage: 'prompt', text} -> the items + the prompt the box runs through Haiku;
     //         {stage: 'answer', ids, answer, usage?} -> the pairs, stored as aliases on the board.

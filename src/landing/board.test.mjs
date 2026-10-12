@@ -2,7 +2,7 @@
 //   node --experimental-strip-types --test src/landing/board.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeBoardEvent, boardView, boardText, parseDedupe, backlogItems, dedupePrompt, BOARD_TTL_MS, taskIds, claimHolders } from './board.ts';
+import { makeBoardEvent, boardView, boardText, parseDedupe, backlogItems, dedupePrompt, BOARD_TTL_MS, taskIds, knownTaskIds, claimHolders, pickNext } from './board.ts';
 
 const T0 = 1_000_000_000;
 const ev = (agent, kind, intent, files, dt) => ({ ...makeBoardEvent({ agent, kind, intent, files }, T0 + dt * 1000) });
@@ -93,7 +93,7 @@ test('backlog items: ids from labels, list items without labels get an index', (
 });
 
 test('claims: the earliest live claim keeps a task; later claimants are told; a dead holder does not count', () => {
-  assert.deepEqual(taskIds('T5: dueSoon and T12 overdue, T5 again'), ['T5', 'T12']);
+  assert.deepEqual(taskIds('T5: dueSoon and T12 overdue, T5 again', new Set(['T5', 'T12'])), ['T5', 'T12']);
   const claims = { a: { ids: ['T5'], at: 100 }, b: { ids: ['T5'], at: 200 }, c: { ids: ['T5', 'T9'], at: 300 }, d: { ids: ['T9'], at: 50 } };
   const live = new Set(['a', 'b', 'c']);   // d went silent
   assert.deepEqual(claimHolders(claims, 'a', live), {}, 'first claimant keeps it');
@@ -101,4 +101,39 @@ test('claims: the earliest live claim keeps a task; later claimants are told; a 
   assert.deepEqual(claimHolders(claims, 'c', live), { T5: 'a' }, 'T9: d is not live, so c holds it');
   assert.deepEqual(claimHolders(claims, 'c', new Set(['a', 'd'])), { T5: 'a', T9: 'd' });
   assert.deepEqual(claimHolders({}, 'x', live), {});
+});
+
+test('task ids count only when a registered list has them (not ES2022, UTF8, SHA256, V8)', () => {
+  const known = knownTaskIds([{ items: [{ id: 'T5' }, { id: 'T12' }, { id: '#3' }] }]);
+  assert.deepEqual([...known].sort(), ['T12', 'T5'], "an unlabelled item ('#3') is not claimable by name");
+  assert.deepEqual(taskIds('T5 target ES2022, UTF8 strings, SHA256 ids, V8 flags', known), ['T5']);
+  assert.deepEqual(taskIds('T5: x', new Set()), [], 'no list registered: no claims');
+  assert.deepEqual(knownTaskIds(), new Set());
+});
+
+test('heartbeats keep a slow agent (and its claim) live without changing its row', () => {
+  const evs = [ev('slow', 'started', 'T5 big task', ['a.js'], 0), { ...ev('slow', 'alive', '', [], 900), kind: 'alive' }];
+  const rows = boardView(evs, { now: T0 + 1000 * 1000 });
+  assert.equal(rows.length, 1, 'alive 100 s ago keeps it live although its last word is 1000 s old');
+  assert.equal(rows[0].kind, 'started');
+  assert.equal(rows[0].intent, 'T5 big task');
+  assert.deepEqual(rows[0].files, ['a.js'], 'files of its current task stay');
+  assert.equal(boardView(evs, { now: T0 + 1600 * 1000 }).length, 0, 'no heartbeat for 10 min: gone, its task is free');
+  assert.equal(boardView([{ ...ev('x', 'alive', '', [], 0), kind: 'alive' }], { now: T0 + 1000 }).length, 0, 'a heartbeat alone is no row');
+});
+
+test('forq next: first free task in list order; skips done, live claims and alias second names; same task when asked twice', () => {
+  const items = ['T1', 'T2', 'T3', 'T4', 'T5'].map((id) => ({ id, text: `${id} text` }));
+  const aliases = [{ a: 'T2', b: 'T4', at: 0, by: 'router' }];
+  const base = { done: new Set(['T1']), live: new Set(['a', 'b']), aliases };
+  let claims = { a: { ids: ['T2'], at: 1 } };
+  const n1 = pickNext(items, { ...base, me: 'b', claims });
+  assert.equal(n1.id, 'T3', 'T1 done, T2 held by a live agent');
+  assert.equal(n1.again, false);
+  claims = { ...claims, b: { ids: ['T3'], at: 2 } };
+  assert.equal(pickNext(items, { ...base, me: 'b', claims }).id, 'T3', 'asking again returns the same task');
+  assert.equal(pickNext(items, { ...base, me: 'c', claims }).id, 'T5', 'T4 is the alias of T2: never handed out alone');
+  assert.deepEqual(pickNext(items, { ...base, me: 'a', claims }).aliases, ['T4'], 'the builder of T2 also adds the alias T4');
+  assert.equal(pickNext(items, { ...base, me: 'c', claims, live: new Set(['b']) }).id, 'T2', 'a dead holder frees its task');
+  assert.equal(pickNext(items, { ...base, me: 'c', claims, done: new Set(['T1', 'T2', 'T3', 'T5']) }), null);
 });

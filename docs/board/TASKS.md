@@ -27,3 +27,4 @@ Round 3 (Eyal, 2026-10-11 ~04:00 UTC: "start the prediction and setup now, and d
 - [ ] W9b real runs x3 per condition, ~10 agents; then controller + arrivals combined if the meter allows (qb9): s7 (30 + 30 arrivals, 10 twin pairs) built 5db5093; queued after W8b
 - [ ] W9c per-new-task dedupe in qodebase's board (qb6, after W9b shows it pays)
 Guard: stop at weekly meter 87% (83% at start); what doesn't fit continues after the Oct 12 13:00 UTC reset. s5 Sonnet stays armed for after the reset.
+- [x] W10 review fixes in qodebase (qb6): task ids only from registered lists, aliases/lists router-only, heartbeat keeps claims live, atomic `forq next` behind flag claimNext (+ runner knob claimNext); 27 tests

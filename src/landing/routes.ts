@@ -97,6 +97,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
         ...(typeof body.dedupe === 'boolean' ? { dedupe: body.dedupe } : {}),
         ...(typeof body.board === 'boolean' ? { board: body.board } : {}),
         ...(typeof body.crossDedupe === 'boolean' ? { crossDedupe: body.crossDedupe } : {}),
+        ...(typeof body.claimNext === 'boolean' ? { claimNext: body.claimNext } : {}),
         ...(typeof body.nextTask === 'string' ? { nextTask: body.nextTask.slice(0, 1000) || undefined } : body.nextTask === null ? { nextTask: undefined } : {}),
         // agentModel: the model this project's agent boxes run on the owner's subscription (a cheap test);
         // replayModel: the model tier-2 replays use (default Haiku 5.5).

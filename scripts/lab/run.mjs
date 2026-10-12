@@ -147,6 +147,8 @@ const flags = {
   // Board round 2 (docs/board/PLAN2.md W4): the agent board on/off, dedupe across every list handed out,
   // and for self-picked backlogs the "take your next task" message after each landing.
   board: !!variant.board, crossDedupe: !!variant.crossDedupe, nextTask: null,
+  // claimNext (W10): atomic claims, `forq next` hands out tasks instead of agents picking them
+  claimNext: !!variant.claimNext,
   coderModel: variant.coderModel, reviewerModel: variant.reviewerModel, ...(variant.planner !== 'none' ? { plannerModel: variant.planner } : {}),
 };
 if (!COLLECT) {
@@ -168,10 +170,10 @@ const check = scenario.check || 'npm test';
 // one at a time; the router never assigns, splits or dedupes. Two teams = two routers on one project.
 const teams = scenario.teams || null;
 const selfPick = scenario.selfPick ?? !!(teams || /backlog/i.test(scenario.id || '') && /pick its own/i.test(prompt));
-const pickText = (file) => `Pick ONE task from ${file} that is not on main yet and that no other agent is doing. Do only that task, with its tests, keep \`${check}\` green, commit, push with \`forq push\`, then run \`forq status pushed "<task id>: <title>"\` and stop. You will be told when it has landed; then you take the next one. If no task is left, reply "done".`;
+const pickText = (file) => variant.claimNext ? `Run \`forq next\` to get your task (it is reserved for you; no other agent gets it). Do only that task, with its tests, keep \`${check}\` green, commit, push with \`forq push\`, then run \`forq status pushed "<task id>: <title>"\` and stop. You will be told when it has landed; then run \`forq next\` again. If it says no task is left, reply "done".` : `Pick ONE task from ${file} that is not on main yet and that no other agent is doing. Do only that task, with its tests, keep \`${check}\` green, commit, push with \`forq push\`, then run \`forq status pushed "<task id>: <title>"\` and stop. You will be told when it has landed; then you take the next one. If no task is left, reply "done".`;
 if (selfPick) {
   const file = teams ? 'your team\'s list (named in your task)' : (prompt.match(/\b[\w-]+\.md\b/) || ['BACKLOG.md'])[0];
-  flags.nextTask = `pick your next task from ${file} the same way (one that is not on main yet and that no other agent is doing; if none is left, reply "done" and stop), do it, push with forq push, and run forq status pushed "<task id>: <title>".`;
+  flags.nextTask = variant.claimNext ? 'run forq next and do the task it gives you the same way (if it says no task is left, reply "done" and stop).' : `pick your next task from ${file} the same way (one that is not on main yet and that no other agent is doing; if none is left, reply "done" and stop), do it, push with forq push, and run forq status pushed "<task id>: <title>".`;
   if (!COLLECT) await api('POST', `/api/p/eyal/${name}/landing/flags`, { nextTask: flags.nextTask });
 }
 const selfPickRouter = (file, n) => [
@@ -179,6 +181,7 @@ const selfPickRouter = (file, n) => [
   `"Work through ${file}\n${pickText(file)}"`,
   `Never assign, split or dedupe the tasks yourself: each agent picks its own. Do not start more agents later.`,
   variant.board ? `Before you start them, run \`forq dedupe ${file}\` once (the board's dedupe pass; its pairs are shown to every agent).` : '',
+  variant.claimNext && !variant.board ? `Before you start them, run \`forq tasks ${file}\` once (it registers the list that forq next hands out).` : '',
 ].filter(Boolean).join('\n');
 const policyText = {
   intent: 'Merging is automatic: approved changes go to the merge queue, which replays collisions on the latest code.',

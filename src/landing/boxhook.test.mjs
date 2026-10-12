@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { FORQ_CLI } from '../cli.ts';
@@ -75,13 +75,15 @@ test('commit: posts the subject and files once per new commit, never the command
     writeFileSync(join(t.repo, 'a.js'), '1'); execFileSync('git', [...ID, 'add', 'a.js'], { cwd: t.repo });
     execFileSync('git', [...ID, 'commit', '-qm', 'Add a'], { cwd: t.repo });
     const bash = { hook_event_name: 'PostToolUse', tool_name: 'Bash', tool_input: { command: 'cd x && git commit -qm "Add a" --author=TOKEN123' } };
+    const posts = () => t.calls.filter((c) => c.body?.kind !== 'alive');
     await t.forq(['hook'], bash);
-    assert.equal(t.calls.length, 1);
-    assert.deepEqual(t.calls[0].body, { kind: 'committed', status: 'Add a', files: ['a.js'] });
+    assert.equal(posts().length, 1);
+    assert.deepEqual(posts()[0].body, { kind: 'committed', status: 'Add a', files: ['a.js'] });
     await t.forq(['hook'], bash);
-    assert.equal(t.calls.length, 1, 'same HEAD: no second post');
+    assert.equal(posts().length, 1, 'same HEAD: no second post');
     await t.forq(['hook'], { ...bash, tool_input: { command: 'git pull --rebase' } });
-    assert.equal(t.calls.length, 1, 'not a commit: nothing');
+    assert.equal(posts().length, 1, 'not a commit: nothing');
+    assert.equal(t.calls.filter((c) => c.body?.kind === 'alive').length, 1, 'one heartbeat for three tool uses within 2 min');
   } finally { t.close(); }
 });
 
@@ -142,5 +144,39 @@ test('forq sync-main: conflict says forq skip; forq skip drops the duplicate com
     assert.match(s.out, /dropped 1 commit/);
     assert.equal(g(fork, 'log', '-1', '--format=%s', 'main'), 'T1 dates (theirs)');
     assert.equal((await t.forq(['skip'])).code, 1, 'no rebase in progress');
+  } finally { t.close(); }
+});
+
+test('heartbeat: any tool use posts alive at most every 2 min; an off board stops it', async () => {
+  let off = false;
+  const t = await setup((c) => (off ? { off: true } : { ts: 1 }));
+  try {
+    const read = { hook_event_name: 'PostToolUse', tool_name: 'Read', tool_input: { file_path: '/x' } };
+    await t.forq(['hook'], read); await t.forq(['hook'], read);
+    assert.deepEqual(t.calls.map((c) => c.body), [{ kind: 'alive' }]);
+    const st = JSON.parse(readFileSync(join(t.run, 'board-state.json'), 'utf8')); st.alive -= 121; writeFileSync(join(t.run, 'board-state.json'), JSON.stringify(st));
+    off = true;
+    await t.forq(['hook'], read);
+    assert.equal(t.calls.length, 2, 'after 2 min: another heartbeat');
+    await t.forq(['hook'], { hook_event_name: 'UserPromptSubmit', prompt: 'x' });
+    assert.equal(t.calls.length, 2, 'the board said off: the hook stays quiet for 2 min');
+  } finally { t.close(); }
+});
+
+test('forq next and forq tasks', async () => {
+  let ans = { id: 'T3', text: 'T3 dates helper', aliases: ['T21'], again: false };
+  const t = await setup((c) => (c.url === '/api/agent/next' ? ans : c.url === '/api/agent/tasks' ? { items: 31, ids: 30 } : {}));
+  try {
+    const r = await t.forq(['next']);
+    assert.equal(t.calls[0].method, 'POST');
+    assert.match(r.out, /your task: T3: T3 dates helper\nalso add T21 as a thin alias/);
+    ans = { none: true };
+    assert.match((await t.forq(['next'])).out, /no task left/);
+    ans = { off: true };
+    assert.notEqual((await t.forq(['next'])).code, 0);
+    writeFileSync(join(t.repo, 'BACKLOG.md'), '- T1 a\n');
+    const tk = await t.forq(['tasks', 'BACKLOG.md']);
+    assert.match(tk.out, /registered 30 task ids/);
+    assert.equal(t.calls.at(-1).body.text, '- T1 a\n');
   } finally { t.close(); }
 });

@@ -23,7 +23,7 @@ import { recordCost, claudeUsd } from '../costs';
 import { pushSeed } from './demo';
 import { SEED } from './demoproject';
 import { pushAlert } from '../alert';
-import { makeBoardEvent, boardView, boardText, taskIds, claimHolders, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
+import { makeBoardEvent, boardView, boardText, taskIds, knownTaskIds, claimHolders, pickNext, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
   | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap';
@@ -77,6 +77,8 @@ type Meta = {
     board?: boolean;
     /** Dedupe passes read every list handed out on this project (two teams), not only the caller's. */
     crossDedupe?: boolean;
+    /** Atomic claims: \`forq next\` hands each agent the next free task of the registered lists (pickNext). */
+    claimNext?: boolean;
     /** Self-picked backlogs: after its change lands, the agent is told to sync and take its next task (this text). */
     nextTask?: string };
   demo: Demo | null;
@@ -99,7 +101,8 @@ type Meta = {
   boardIntent?: Record<string, string>;     // board: each agent's stated intent (`forq intent`), newest 60
   boardClaims?: Record<string, { ids: string[]; at: number }>;   // board: task ids each agent claimed, and when (earliest keeps it)
   aliases?: Alias[];                         // board: pairs the dedupe pass found to be the same work
-  dedupeLists?: { by: string; at: number; items: { id: string; text: string }[] }[];   // every list a dedupe pass was given
+  dedupeLists?: { by: string; at: number; items: { id: string; text: string }[] }[];   // every task list registered (forq dedupe / forq tasks)
+  tasksDone?: string[];                      // task ids whose claiming change landed (claims, forq next)
   boardPosts?: number;                       // board: posts since the last prune   // messages to real agents, sent from the alarm        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
 };
 
@@ -291,7 +294,7 @@ export class Landing extends DurableObject<Env> {
     if (c) { this.#ev(c, 'working', `intent: ${intent.slice(0, 200)}`); await this.#put(c); }
     const name = boardName(changeId);
     const m = await this.#m();
-    const ids = taskIds(intent);
+    const ids = taskIds(intent, knownTaskIds(m.dedupeLists));
     if (m.flags.board && ids.length) {
       const prev = m.boardClaims?.[name];
       const bc = (m.boardClaims ||= {});
@@ -327,6 +330,37 @@ export class Landing extends DurableObject<Env> {
   }
   /** A list handed to a dedupe pass. Returns what the pass should read: this list, plus (crossDedupe) every
    *  other list handed out on the project, so two teams' twins are found (qb4's W4b prediction). */
+  /** The change landed: the task ids its agent claimed are done and the claim is released. */
+  #claimDone(m: Meta, changeId: string) {
+    const name = boardName(changeId), cl = m.boardClaims?.[name];
+    if (!cl) return;
+    m.tasksDone = [...new Set([...(m.tasksDone || []), ...cl.ids])].slice(-500);
+    delete m.boardClaims![name];
+  }
+
+  /** \`forq next\` (flag claimNext): one atomic step in this single-threaded object, so two agents asking at the
+   *  same moment never get the same task (the tie-break and TTL races of advisory claims cannot happen). */
+  async next(changeId: string) {
+    const m = await this.#m();
+    if (!m.flags.claimNext) return { off: true as const };
+    const items = (m.dedupeLists || []).flatMap((l) => l.items).filter((i, k, a) => !i.id.startsWith('#') && a.findIndex((x) => x.id === i.id) === k);
+    if (!items.length) return { error: 'no task list registered: the router runs forq tasks <file> (or forq dedupe <file>) first' };
+    const name = boardName(changeId);
+    const live = new Set((await this.boardWho({})).rows.map((r) => r.agent));
+    live.add(name);
+    const pick = pickNext(items, { me: name, done: new Set(m.tasksDone || []), claims: m.boardClaims || {}, live, aliases: m.aliases });
+    if (!pick) return { none: true as const };
+    if (!pick.again) {
+      (m.boardClaims ||= {})[name] = { ids: [pick.id], at: Date.now() };
+      await this.#saveMeta();
+      const c = await this.#get(changeId);
+      if (c) { this.#ev(c, 'working', `next: ${pick.id}`); await this.#put(c); }
+      if (m.flags.board) await this.boardPost({ agent: name, kind: 'started', intent: `${pick.id}: ${pick.text}`.slice(0, 200), change: changeId, stated: true });
+    }
+    log('landing', 'next', { slug: m.slug, agent: name, task: pick.id, again: pick.again, left: items.length - (m.tasksDone || []).length });
+    return pick;
+  }
+
   async dedupeList(by: string, items: { id: string; text: string }[]) {
     const m = await this.#m();
     m.dedupeLists = [...(m.dedupeLists || []).filter((l) => l.by !== by), { by, at: Date.now(), items: items.slice(0, 200) }].slice(-6);
@@ -639,7 +673,7 @@ export class Landing extends DurableObject<Env> {
           if (rc.conflicts.length) this.#ev(c, 'conflict', await this.#withWhom(c, rc.conflicts, r));
           if (how === 'replayed-handler') this.#ev(c, 'replayed', (rc.handled || []).map((h) => `${h.path} (${h.handler})`).join(', ') || 'on the latest code');
           if (how === 'replayed-llm' || how === 'lead') this.#ev(c, 'replayed', how === 'lead' ? `by ${c.lead || 'the lead'} on the latest code` : `by ${rc.llm?.model || 'a model'} on the latest code`);
-          c.state = 'landed'; c.landedAt = Date.now(); delete c.redo;
+          c.state = 'landed'; c.landedAt = Date.now(); delete c.redo; this.#claimDone(m, c.id);
           (m.landings ||= []).push([c.landedAt, Math.round((c.landedAt - c.createdAt) / 1000), how && how !== 'merged' ? 1 : 0]);
           if (m.landings.length > 2000) m.landings.splice(0, m.landings.length - 2000);
           c.landing = { how, conflicts: rc.conflicts, diff: rc.diff || [], commit: rc.commit, mainCommit: r.mainAfter || null,
@@ -659,7 +693,7 @@ export class Landing extends DurableObject<Env> {
         } else if ((rc as { empty?: boolean }).empty) {
           // Nothing new on top of main: the agent's work is already there (it redid a task another
           // change had landed, W4c r1e). Closed as on main, not bounced; its agent takes its next task.
-          c.state = 'landed'; c.landedAt = c.landedAt || Date.now(); delete c.redo;
+          c.state = 'landed'; c.landedAt = c.landedAt || Date.now(); delete c.redo; this.#claimDone(m, c.id);
           c.landing = { how: 'merged', conflicts: [], diff: [], commit: null, mainCommit: r.mainAfter || null };
           this.#ev(c, 'landed', 'nothing new: already on main');
         } else {

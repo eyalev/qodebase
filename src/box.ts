@@ -268,7 +268,7 @@ p = '/workspace/.claude/settings.json'
 try: d = json.load(open(p))
 except Exception: d = {}
 h = {'type': 'command', 'command': 'forq hook', 'timeout': 6}
-hooks = {'UserPromptSubmit': [{'hooks': [h]}], 'PreToolUse': [{'matcher': 'Edit|Write|MultiEdit', 'hooks': [h]}], 'PostToolUse': [{'matcher': 'Bash', 'hooks': [h]}]}
+hooks = {'UserPromptSubmit': [{'hooks': [h]}], 'PreToolUse': [{'matcher': 'Edit|Write|MultiEdit', 'hooks': [h]}], 'PostToolUse': [{'matcher': '*', 'hooks': [h]}]}
 if sys.argv[1] == '1': d['hooks'] = hooks
 elif 'forq hook' in json.dumps(d.get('hooks', {})): d.pop('hooks', None)
 json.dump(d, open(p, 'w'))
