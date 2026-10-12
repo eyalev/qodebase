@@ -291,23 +291,32 @@ function placeFab() {
   if (!fab) return;
   // Walk up from the bottom edge: each short bar touching the one below (fixed, sticky, or a page
   // that lays out as a full-height column, like a project page's tabs + "Ask for a change") lifts the button.
+  // A dock inset from the edge (bottom: 8px) counts too: probes at 4/12/20 px and 20 px tolerance, also at the
+  // button's own side (qb7, 2026-10-12: a home-page dock with bottom:8px was covered by the button).
   var y = window.innerHeight, lift = 0;
   for (var n = 0; n < 4; n++) {
     var top = null;
-    [0.15, 0.5].forEach(function (fx) {
-      var e = document.elementFromPoint(Math.round(window.innerWidth * fx), y - 4);
-      var bar = null;
-      for (; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
-        if (root.contains(e)) { bar = null; break; }
-        var r = e.getBoundingClientRect(), cs = getComputedStyle(e);
-        var pinned = cs.position === 'fixed' || cs.position === 'sticky' || e.parentElement === document.body;
-        if (pinned && r.height < window.innerHeight * 0.3 && Math.abs(r.bottom - y) < 3) { bar = e; break; }
-      }
-      if (bar) { var t = bar.getBoundingClientRect().top; top = top === null ? t : Math.min(top, t); }
+    [0.15, 0.5, 0.85].forEach(function (fx) {
+      [4, 12, 20].forEach(function (dy) {
+        var e = document.elementFromPoint(Math.round(window.innerWidth * fx), y - dy);
+        var bar = null;
+        for (; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
+          if (root.contains(e)) { bar = null; break; }
+          var r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+          var pinned = cs.position === 'fixed' || cs.position === 'sticky' || e.parentElement === document.body;
+          if (pinned && r.height < window.innerHeight * 0.3 && y - r.bottom > -3 && y - r.bottom < 20) { bar = e; break; }
+        }
+        if (bar) { var t = bar.getBoundingClientRect().top; top = top === null ? t : Math.min(top, t); }
+      });
     });
     if (top === null) break;
     lift = window.innerHeight - top; y = top;
   }
+  // A page can name its docks: [data-talk-dock] near the bottom always lifts the button above it.
+  [].forEach.call(document.querySelectorAll('[data-talk-dock]'), function (d) {
+    var r = d.getBoundingClientRect();
+    if (r.height > 0 && r.bottom > window.innerHeight - 48 && r.top < window.innerHeight) lift = Math.max(lift, window.innerHeight - r.top);
+  });
   fab.style.bottom = 'calc(' + (lift ? Math.round(lift) + 12 : 16) + 'px + env(safe-area-inset-bottom))';
   var vb = document.getElementById('talk-ver');
   if (vb) { vb.style.right = '6px'; vb.style.bottom = 'calc(' + (lift ? Math.round(lift) : 0) + 'px + 2px + env(safe-area-inset-bottom))'; }
