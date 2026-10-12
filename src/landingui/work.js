@@ -197,7 +197,7 @@
   function feedItems() {
     const idx = byId(), out = [];
     for (const c of D.changes) for (const e of c.events) { const s = sentence(c, e, idx); if (s) out.push({ t: e.t, c, e, s }); }
-    for (const tr of D.queue.trains) out.push({ t: tr.startedAt, train: tr, s: [tr.changes.length > 1 ? `Testing ${tr.changes.length} changes together` : 'Testing one change', `${tr.changes.map((id) => { const x = idx.get(id) || (tr.items || []).find((i) => i.id === id); return x ? AG(x.agent) : ref(id); }).join(', ')}, on the newest main`], key: `${tr.id}s` });
+    for (const tr of D.queue.trains) out.push({ t: tr.startedAt, train: tr, s: [tr.changes.length > 1 ? `Testing ${tr.changes.length} changes together` : 'Testing one change', `${(() => { const n = new Map(); for (const id of tr.changes) { const x = idx.get(id) || (tr.items || []).find((i) => i.id === id), k = x ? AG(x.agent) : ref(id); n.set(k, (n.get(k) || 0) + 1); } return [...n].map(([k, c]) => (c > 1 ? `${k} (${c} changes)` : k)).join(', '); })()}, on the newest main`], key: `${tr.id}s` });
     return out.sort((a, b) => b.t - a.t);
   }
 

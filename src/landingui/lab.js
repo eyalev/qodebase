@@ -475,17 +475,25 @@
       <p class="small dim">Each line reads board off → <b>board on</b>.</p><div class="abs">${rows}</div>
       <p class="small dim">✓ = every board-on run did better than every board-off run. Plain git means a conflict sends the agent back to rebase; the board does not change that.</p></section>`;
   }
-  // Board time change per shared-work setup (the summary card quotes these, never a typed number).
-  function boardTimes() {
-    const rs = RUNS.filter((r) => r.stage === 4 && !r.excluded && r.variant && 'board' in r.variant && r.variant.policy !== 'github');
+  // Board time per setup, in words for the summary card (qb7's review: never merge a conclusive result with an
+  // inconclusive one, and never drop a setup). Conclusive = every board-on run beat every board-off run (mwP separated).
+  function boardWords() {
+    const rs = RUNS.filter((r) => r.stage === 4 && !r.excluded && r.variant && 'board' in r.variant);
     const cells = new Map();
-    for (const r of rs) { const k = r.scenario; if (!cells.has(k)) cells.set(k, { off: [], on: [] }); const t = runS(r); if (t != null) cells.get(k)[r.variant.board ? 'on' : 'off'].push(t); }
-    return [...cells.values()].filter((c) => c.off.length && c.on.length && med(c.on) < med(c.off)).map((c) => Math.round((1 - med(c.on) / med(c.off)) * 100));
+    for (const r of rs) { const k = `${r.scenario}|${r.variant.policy}`; if (!cells.has(k)) cells.set(k, { scenario: r.scenario, policy: r.variant.policy, off: [], on: [] }); const t = runS(r); if (t != null) cells.get(k)[r.variant.board ? 'on' : 'off'].push(t); }
+    const name = (c) => (c.policy === 'github' ? 'with plain git' : c.scenario === 'two-teams' ? 'with two teams in one repo' : 'on one shared list');
+    const out = [...cells.values()].filter((c) => c.off.length && c.on.length).map((c) => {
+      const a = med(c.off), b = med(c.on), pc = Math.round((1 - b / a) * 100), t = mwP(c.off, c.on);
+      if (t.separated && b < a) return { w: 0, s: `${name(c)}, the agent board made every run faster (median −${pc}%)` };
+      if (b < a * 0.85) return { w: 1, s: `${name(c)} −${pc}%, not conclusive with ${Math.min(c.off.length, c.on.length)} runs` };
+      return { w: 2, s: `${name(c)}, no clear difference` };
+    }).sort((x, y) => x.w - y.w).map((x) => x.s);
+    return out.length ? `${out.join('; ').replace(/^./, (x) => x.toUpperCase())}.` : '';
   }
   // What we found (design pass, manager 2026-10-12): one balanced summary card, then one compare card per job.
   // The tie rules above (qTie, tTie) decide every cell; a not-comparable cell spans both columns.
   function foundView() {
-    const cards = []; let anyNc = false; const oneFaster = [], cheaper = [];
+    const cards = [], comparable = []; let anyNc = false;
     const SHORT = { 'a person had to step in during the run (a platform bug, since fixed)': 'a person stepped in', 'a platform stall': 'platform stall', 'only an upper bound is known': 'upper bound only', 'only a lower bound is known': 'lower bound only' };
     for (const sc of SCEN) {
       const keep = st.scenario; st.scenario = sc.id; const gs = groups(); st.scenario = keep;
@@ -500,14 +508,15 @@
       let time;
       if (oa.wallS == null || sw.wallS == null) time = nc((oa.wallS == null ? oa : sw).timeNot);
       else if (tTie(oa, sw)) time = both('Within 15%');
-      else { const one = oa.wallS < sw.wallS, x = one ? sw.wallS / oa.wallS : oa.wallS / sw.wallS; time = side(one, `${x.toFixed(1)}× faster`); (one ? wins.one : wins.sev).push('faster'); if (one) oneFaster.push(sc.title); }
+      else { const one = oa.wallS < sw.wallS, x = one ? sw.wallS / oa.wallS : oa.wallS / sw.wallS; time = side(one, `${x.toFixed(1)}× faster`); (one ? wins.one : wins.sev).push('faster'); }
       let cost;
       if (oa.usd == null || sw.usd == null) cost = nc((oa.usd == null ? oa : sw).costNot);
-      else { const sev = sw.usd < oa.usd, pc = Math.round((sev ? 1 - sw.usd / oa.usd : 1 - oa.usd / sw.usd) * 100); cost = side(!sev, `${pc}% less`); (sev ? wins.sev : wins.one).push(`${pc}% cheaper`); if (sev) cheaper.push(pc); }
+      else { const sev = sw.usd < oa.usd, pc = Math.round((sev ? 1 - sw.usd / oa.usd : 1 - oa.usd / sw.usd) * 100); cost = side(!sev, `${pc}% less`); (sev ? wins.sev : wins.one).push(`${pc}% cheaper`); }
       let qual;
       if (qTie(oa, sw)) qual = both(`Tie${ha != null && ha === hs ? `, ${ha} of ${oa.hiddenOf}` : ''}`);
       else if (ha != null && hs != null && ha !== hs) { const one = ha > hs, d = Math.abs(ha - hs); qual = side(one, `+${d} passed`); (one ? wins.one : wins.sev).push(`+${d} hidden test${d === 1 ? '' : 's'}`); }
       else { const one = oa.quality > sw.quality; qual = side(one, 'better'); (one ? wins.one : wins.sev).push('better quality'); }
+      if (oa.wallS != null && sw.wallS != null && oa.usd != null && sw.usd != null) comparable.push({ oneFaster: !tTie(oa, sw) && oa.wallS < sw.wallS, cheaperPct: sw.usd < oa.usd ? Math.round((1 - sw.usd / oa.usd) * 100) : null });
       const tc = oa.floor?.typecheck && sw.floor && !sw.floor.typecheck ? 'Several agents failed the strict type check.' : sw.floor?.typecheck && oa.floor && !oa.floor.typecheck ? 'One agent failed the strict type check.' : '';
       const verdict = [wins.one.length ? `<b>One agent:</b> ${wins.one.join(', ')}.` : '', wins.sev.length ? `<b>Several:</b> ${wins.sev.join(', ')}.` : '', !wins.one.length && !wins.sev.length ? '<b>Too close to call</b> on what can be compared.' : '', tc].filter(Boolean).join(' ');
       cards.push(`<div class="cmp"><h3>${esc(sc.title)}${jobOpen(sc.id) ? ' <span class="dim">(running)</span>' : ''}</h3>
@@ -516,9 +525,10 @@
         <p class="verdict">${verdict}</p></div>`);
     }
     if (!cards.length) return '';
-    const bt = boardTimes(), range = (xs) => (Math.min(...xs) === Math.max(...xs) ? `${xs[0]}%` : `${Math.min(...xs)}–${Math.max(...xs)}%`);
-    const sum = [oneFaster.length ? `One strong agent finished first on ${oneFaster.length} of ${cards.length} jobs${cheaper.length ? `, while several agents cost ${range(cheaper)} less` : ''}.` : '',
-      bt.length ? `When many agents share the work (two teams, one task list), the agent board made them ${range(bt)} faster in the median.` : ''].filter(Boolean).join(' ');
+    const range = (xs) => (Math.min(...xs) === Math.max(...xs) ? `${xs[0]}%` : `${Math.min(...xs)}–${Math.max(...xs)}%`);
+    const cmpJobs = comparable.length, oneFirst = comparable.filter((x) => x.oneFaster).length, chp = comparable.filter((x) => x.cheaperPct != null).map((x) => x.cheaperPct);
+    const first = !cmpJobs ? '' : `Where time and cost can be compared (${cmpJobs} of ${cards.length} jobs), ${oneFirst === cmpJobs ? 'one strong agent finished first' : oneFirst ? `one strong agent finished first on ${oneFirst}` : 'several agents finished first'}${chp.length ? ` and several agents cost ${range(chp)} less` : ''}.`;
+    const sum = [first, boardWords()].filter(Boolean).join(' ');
     return `<section class="sec" id="found"><h2>What we found</h2>
       ${sum ? `<div class="sum"><p>${sum}</p><p class="dim small">Medians of real runs. Details below and under <a href="#board-ab">The agent board</a>.</p></div>` : ''}
       <p class="cap">One Opus agent alone against the best setup with several agents, on each job; cost at API prices. A run hit by a platform bug counts for quality but not for time or cost.</p>
