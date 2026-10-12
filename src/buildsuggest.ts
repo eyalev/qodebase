@@ -55,7 +55,7 @@ export async function suggestRoute(request: Request, env: Env, ctx: ExecutionCon
   // The same prompt gets the same answer for a day: temperature 0 alone still read one bakery prompt as 12 or 20
   // tasks (manager, 2026-10-12), which flipped the preset. Memo per colo by prompt hash; a fallback is not kept.
   const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(prompt.toLowerCase().replace(/\s+/g, ' '))))].map((x) => x.toString(16).padStart(2, '0')).join('');
-  const key = new Request(`https://suggest.qodebase.internal/${hash}`);
+  const key = new Request(`https://suggest.qodebase.internal/v2/${hash}`);   // v2: answers carry job.name
   const hit = await caches.default.match(key).catch(() => undefined);
   if (hit) { const j = await hit.json() as { job: Job; model: string }; log('build', 'suggest', { handle, cached: true, tasks: j.job.tasks }); return Response.json({ ...suggestion(j.job), model: j.model, ms: 0, cached: true }, { headers: { 'cache-control': 'no-store' } }); }
   const reg = registry(env);

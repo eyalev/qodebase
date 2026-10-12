@@ -1,7 +1,7 @@
 // Build settings (B3): presets and custom knobs -> a plan -> landing flags. node --experimental-strip-types --test src/buildsettings.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, parseJob, SUGGEST_SYSTEM } from './buildsettings.ts';
+import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, parseJob, SUGGEST_SYSTEM, cleanName } from './buildsettings.ts';
 
 const O = { maxCoders: 12 };
 
@@ -57,4 +57,13 @@ test('B4: the model\'s job answer is parsed strictly; anything off is null (the 
   for (const bad of ['no json', '{"tasks":0,"overlap":"some","difficulty":"normal","confidence":0.5}', '{"tasks":5,"overlap":"lots","difficulty":"normal","confidence":0.5}',
     '{"tasks":5,"overlap":"low","difficulty":"normal","confidence":2}', '{"tasks":5,"overlap":"low","difficulty":"normal"}']) assert.equal(parseJob(bad), null, bad);
   assert.match(SUGGEST_SYSTEM, /ONE JSON object only/);
+});
+
+test('job.name: kebab-case, 2-3 words, no word twice; a bad name is left out', () => {
+  assert.equal(cleanName('Family Trip Planner'), 'family-trip-planner');
+  assert.equal(cleanName('help-help-trips planner app'), 'help-trips-planner');
+  assert.equal(cleanName('!!'), undefined);
+  assert.equal(parseJob('{"tasks":5,"overlap":"low","difficulty":"easy","confidence":0.8,"name":"Family_Trip planner"}').name, 'family-trip-planner');
+  assert.equal('name' in parseJob('{"tasks":5,"overlap":"low","difficulty":"easy","confidence":0.8}'), false);
+  assert.match(SUGGEST_SYSTEM, /"name"/);
 });

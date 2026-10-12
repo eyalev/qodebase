@@ -87,9 +87,19 @@ export const SUGGEST_SYSTEM = `You size software jobs for a team of coding agent
 "difficulty":"easy"|"normal"|"hard" (easy: copy, styling, CRUD; hard: algorithms, auth, payments, concurrency, migrations),
 "vague":true|false (true if key requirements are left to guesswork),
 "summary":"<one plain sentence, at most 120 characters>",
+"name":"<a project name: 2-3 lowercase words joined by hyphens, from the core noun phrase of what is built, e.g. family-trip-planner; no verbs like want/build/help, no word twice>",
 "confidence":<0-1>}`;
 
-export type Job = { tasks: number; overlap: 'low' | 'some' | 'high'; difficulty: 'easy' | 'normal' | 'hard'; vague: boolean; summary: string; confidence: number };
+export type Job = { tasks: number; overlap: 'low' | 'some' | 'high'; difficulty: 'easy' | 'normal' | 'hard'; vague: boolean; summary: string; confidence: number; name?: string };
+
+/** The model's project name, cleaned: lowercase kebab, 2-3 words, no word twice, <= 30 chars; else undefined. */
+export function cleanName(v: unknown): string | undefined {
+  const words = String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+  const out: string[] = [];
+  for (const w of words) if (!out.includes(w) && out.length < 3) out.push(w);
+  const name = out.join('-').slice(0, 30).replace(/-+$/, '');
+  return out.length >= 1 && name.length >= 3 ? name : undefined;
+}
 
 /** The model's answer as a job, or null (any field missing or out of range). */
 export function parseJob(text: string): Job | null {
@@ -101,6 +111,7 @@ export function parseJob(text: string): Job | null {
   if (!['low', 'some', 'high'].includes(j.overlap) || !['easy', 'normal', 'hard'].includes(j.difficulty)) return null;
   const confidence = Number(j.confidence);
   if (!(confidence >= 0 && confidence <= 1)) return null;
-  return { tasks, overlap: j.overlap, difficulty: j.difficulty, vague: j.vague === true, summary: String(j.summary || '').replace(/\s+/g, ' ').trim().slice(0, 120), confidence };
+  const name = cleanName(j.name);
+  return { tasks, overlap: j.overlap, difficulty: j.difficulty, vague: j.vague === true, summary: String(j.summary || '').replace(/\s+/g, ' ').trim().slice(0, 120), confidence, ...(name ? { name } : {}) };
 }
 
