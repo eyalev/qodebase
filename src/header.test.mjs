@@ -39,3 +39,15 @@ test('every attribute value is closed (no empty href, no doubled quotes)', () =>
     assert.doesNotMatch(h, /=""[^ >]/, 'an attribute was opened twice');
   }
 });
+
+test("survives being inserted with a string replacement (no $' $& $` $1 in the output)", () => {
+  // withGlobal/withTabs once did html.replace(/<body…>/, `<body$1>${header}`): the cost script's '$' became "$'",
+  // which pastes the rest of the page into the script (qb7, 2026-10-13).
+  for (const o of [{ active: 'build', inbox: 5, me: 'eyal', ctx }, { active: 'explore', inbox: 0, me: 'eyal' }, { active: 'home', inbox: 0, me: '' }]) {
+    const h = siteHeader(o);
+    assert.doesNotMatch(h, /\$['&`\d]/);
+    const page = '<html><body class="x"><main>page</main></body></html>';
+    assert.equal(page.replace(/<body([^>]*)>/, `<body$1>${h}`), page.replace(/<body([^>]*)>/, (_m, a) => `<body${a}>${h}`));
+  }
+  assert.match(siteHeader({ active: 'build', inbox: 0, me: 'eyal' }), /'\\x24'\+n\.toFixed\(2\)/);
+});

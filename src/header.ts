@@ -42,7 +42,7 @@ ${o.selfHost ? '' : item('/how', 'How it works', '')}
 ${item('/about', 'About', '')}
 ${item('/feedback', 'Feedback', '')}
 </div>`;
-  const costJs = o.me && !o.selfHost ? `<script>(function(){var e=document.querySelector('[data-hcost]');if(!e||e.dataset.on)return;e.dataset.on=1;fetch('/api/costs',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(c){if(!c)return;var n=c.today.total.usd;e.textContent=n>0&&n<0.005?'<$0.01':'$'+n.toFixed(2)}).catch(function(){})})();</script>` : '';
+  const costJs = o.me && !o.selfHost ? `<script>(function(){var e=document.querySelector('[data-hcost]');if(!e||e.dataset.on)return;e.dataset.on=1;fetch('/api/costs',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(c){if(!c)return;var n=c.today.total.usd;e.textContent=n>0&&n<0.005?'<\\x240.01':'\\x24'+n.toFixed(2)}).catch(function(){})})();</script>` : '';
   return `<nav class="gtop gtop2" aria-label="qodebase"><a class="mark" href="/" aria-label="qodebase home">${MARK}</a>${ctx}<span class="hsp"></span>${c?.action || ''}${active === 'build' || c ? '' : `<a class="hplus" href="/build" aria-label="Build something new">${PLUS}</a>`}${who}${o.me ? '' : `<button type="button" class="gmenu" popovertarget="gmenupop" aria-label="Menu">${MENU}</button>`}${sheet}</nav><style>${HEADER_CSS}</style>${costJs}`;
 }
 
