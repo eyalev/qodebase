@@ -245,7 +245,7 @@
       const cs = tr.changes.map((id) => idx.get(id)).filter(Boolean);
       const names = [...new Set(cs.map((c) => agentNum(c.agent)))].sort((a, b) => a - b);
       out.push({ t: tr.endedAt, kind: 'train', key: `t:${tr.id}`,
-        text: tr.changes.length > 1 ? `<b>${tr.changes.length} changes landed together.</b> ${names.length === 1 ? `Agent ${names[0]}` : `Agents ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`}; tests passed${tr.checks?.ms ? ` in ${secs(tr.checks.ms)}` : ''}.` : `<b>Landed.</b> ${cs[0] ? AG(cs[0].agent) : 'One change'}; tests passed${tr.checks?.ms ? ` in ${secs(tr.checks.ms)}` : ''}.`,
+        text: tr.changes.length > 1 ? `<b>${tr.changes.length} changes landed together.</b> ${names.length === 1 ? `Agent ${names[0]}` : `Agents ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`}; tests passed${tr.checks?.ms ? (tr.checks.ms < 1000 ? ' in under a second' : ` in ${secs(tr.checks.ms)}`) : ''}.` : `<b>Landed.</b> ${cs[0] ? AG(cs[0].agent) : 'One change'}; tests passed${tr.checks?.ms ? (tr.checks.ms < 1000 ? ' in under a second' : ` in ${secs(tr.checks.ms)}`) : ''}.`,
         sub: cs.map((c) => short(c)).join(', ') });
     }
     return out.sort((a, b) => b.t - a.t);
@@ -262,20 +262,20 @@
       ${h ? `<p class="slast">${h.text.replace(/<b>[^<]*<\/b>\s*/, '')} <span class="meta">${ago(h.t)}</span></p>` : ''}
     </div>`;
   }
-  function rightNow() {
+  function rightNow(all) {
     const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;
     const act = idleDemo ? [] : D.changes.filter(active).sort((a, b) => ORDERED.indexOf(skey(a)) - ORDERED.indexOf(skey(b)));
     if (!act.length) return '';
     const by = new Map(); for (const c of act) if (!by.has(c.agent)) by.set(c.agent, c);
-    const all = [...by.values()], more = all.length - 5;
-    return `<section class="sec"><div class="sec-h"><h3>Right now</h3>${more > 0 ? `<a href="#/changes">All ${all.length}</a>` : ''}</div><ul class="now">${all.slice(0, 5).map((c) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${skey(c)}"></i><b>${AG(c.agent)}</b><span class="t">${short(c)}</span><span class="w">${WORD[skey(c)]}</span></a></li>`).join('')}</ul></section>`;
+    const list = [...by.values()], more = all ? 0 : list.length - 5;
+    return `<section class="sec"><div class="sec-h"><h3>Right now</h3>${more > 0 ? `<a href="#/changes">All ${list.length}</a>` : ''}</div><ul class="now">${list.slice(0, all ? 99 : 5).map((c) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${skey(c)}"></i><b>${AG(c.agent)}</b><span class="t">${short(c)}</span><span class="w">${WORD[skey(c)]}</span></a></li>`).join('')}</ul></section>`;
   }
-  function headFeed(limit) {
+  function headFeed(limit, noFold) {
     const hs = headlines().slice(0, limit), shown = new Set(hs.filter((h) => h.c).map((h) => h.c.id));
     const routine = feedItems().filter((it) => !(it.c && HEAD.has(it.e.what)) && !(it.c && it.e.what === 'landed' && shown.has(it.c.id))).length;
     const cards = hs.map((h) => { const fresh = pulse(`hf:${h.key}`);
       return `<a class="hev${h.kind === 'train' || h.ok ? '' : ' w'}${fresh ? ' new' : ''}"${fresh} href="${h.c ? `#/change/${esc(h.c.id)}` : '#/line'}"><p>${h.text}</p>${h.tags?.length ? `<span class="htags">${h.tags.map(([c, l]) => `<span class="${c}">${l}</span>`).join('')}</span>` : ''}<span class="meta"><span>${h.c ? short(h.c) : h.sub || ''}</span>${ago(h.t)}</span></a>`; }).join('');
-    return `${cards || '<p class="dim">No collisions or landings yet.</p>'}${routine ? `<a class="fold" href="#/feed"><span>${routine} routine step${routine === 1 ? '' : 's'}</span><span class="meta">reviews, joining the line</span></a>` : ''}`;
+    return `${cards || '<p class="dim">No collisions or landings yet.</p>'}${routine && !noFold ? `<a class="fold" href="#/feed"><span>${routine} routine step${routine === 1 ? '' : 's'}</span><span class="meta">reviews, joining the line</span></a>` : ''}`;
   }
   // ---- overview -------------------------------------------------------------------------------
   // ---- Watch a run (public, no sign-in; qb6's POST …/landing/watch) ----------------------
@@ -597,32 +597,80 @@
     if (!document.getElementById('estbar-css')) { const st = document.createElement('style'); st.id = 'estbar-css'; st.textContent = window.QB_ESTBAR_CSS; document.head.appendChild(st); }
     return window.qbEstBar(D.estimate, D.progress, Date.now());
   }
+  // ---- One screen (Eyal, 2026-10-12: "everything should fit inside one phone screen ... WITHOUT SCROLLING") --------
+  // A status strip, the pipeline as the picture (one chip per change, moving Working -> Review -> In line -> Landed),
+  // the latest key event, and Agents | Line | Events tabs whose panel scrolls inside its own box. fitSize() sizes
+  // the block to the visible part of .view after every rebuild. Refs (design-log forq-20261012-3): Swiggy/Waymo/Fitbit
+  // (one status, one bar, one sentence), Perplexity (one row per running step).
+  let fitTab = null;
+  // The run's clock as m:ss (its own attribute: other tickers rewrite [data-since]).
+  const elTxt = (t) => { const s = Math.max(0, Math.floor((now() - t) / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  const COLS = [['work', 'Working', (c) => c.state === 'working' || c.state === 'bounced'], ['rev', 'Review', (c) => ['pushed', 'reviewing'].includes(c.state) || ready(c)],
+    ['line', 'In line', (c) => ['queued', 'testing', 'replaying', 'with-lead'].includes(c.state) && !ready(c)], ['done', 'Landed', (c) => c.state === 'landed']];
+  function statusStrip(live, isStarting) {
+    const dm = D.demo || {}, W = D.watch || {}, replay = P && P.replay;
+    const landed = countIf(D.changes, (c) => c.state === 'landed');
+    const total = Math.max(dm.tasks || 0, D.changes.length), idle = !live && !replay && !isStarting;
+    const kick = MOCK ? 'Sample data, played in a loop' : replay ? `Replay of a run from ${hhmm(P.realStart)}, ${P.speed}× speed` : D.mode === 'demo' ? 'Scripted demo: real git, real tests, no AI' : 'Real AI agents';
+    const tm = replay ? '' : live && dm.startedAt ? `<span data-el="${dm.startedAt}">${elTxt(dm.startedAt)}</span>` : '';
+    const head = isStarting ? 'Starting the run' : idle ? (landed ? `${n0(landed)} of ${n0(total)} landed in the last run` : 'Nothing has run yet') : `${n0(landed)} of ${n0(total || landed)} landed`;
+    const speedChips = (on) => [1, 2, 4].map((x) => `<button class="chipb sp" type="button" data-speed="${x}" aria-pressed="${on === x}">${x}×</button>`).join('');
+    const left = W.maxPerDay ? Math.max(0, W.maxPerDay - (W.runsToday || 0)) : null;
+    const acts = replay ? `<div class="sacts">${now() >= P.end - 1 ? '<button class="btn" type="button" data-watch="again">Replay again</button>' : speedChips(P.speed)}<button class="chipb" type="button" data-watch="live">Back to live</button></div>`
+      : idle && !MOCK && D.watch?.enabled ? `<div class="sacts"><button class="btn" type="button" data-watch="start">Watch a run</button>${D.changes.length ? '<button class="chipb" type="button" data-watch="replay">Replay the last one</button>' : ''}${ownerCtl(false)}</div>${limitNote ? `<p class="snote">${esc(limitNote)}</p>` : left != null ? `<p class="snote">${left} of ${W.maxPerDay} live runs left today.</p>` : ''}`
+      : live && OWN && !MOCK && D.mode === 'demo' ? `<div class="sacts">${ownerCtl(true)}</div>` : '';
+    return `<div class="sstrip"><p class="skick"><i class="live${live || isStarting ? '' : ' off'}"></i><span>${kick}</span>${tm ? `<span class="stm">${tm}</span>` : ''}</p>
+      <p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>${acts}</div>`;
+  }
+  function pipeline() {
+    const rp = (c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying');
+    const cols = COLS.map(([k, label, f]) => {
+      const cs = D.changes.filter(f).sort((a, b) => agentNum(a.agent) - agentNum(b.agent));
+      const chips = cs.map((c) => `<a class="pc${rp(c) ? ' rp' : ''}${c.state === 'with-lead' || c.state === 'bounced' ? ' bad' : ''}${c.state === 'testing' ? ' test' : ''}" href="#/change/${esc(c.id)}" title="${AG(c.agent)}: ${short(c)}" aria-label="${AG(c.agent)}: ${short(c)}, ${WORD[skey(c)]}">${agentNum(c.agent)}</a>`).join('');
+      return `<div class="pcol ${k}"><p class="ph"><span>${label}</span><b>${cs.length}</b></p><div class="pchips${cs.length > 6 ? ' many' : ''}">${chips}</div></div>`;
+    }).join('');
+    const anyRp = D.changes.some(rp), anyBad = D.changes.some((c) => c.state === 'with-lead' || c.state === 'bounced');
+    return `<div class="pipe">${cols}</div>${anyRp || anyBad ? `<p class="pkey">${anyRp ? '<span><i class="pc rp mini"></i>collided, then redone on the newest code</span>' : ''}${anyBad ? '<span><i class="pc bad mini"></i>sent back or waiting</span>' : ''}</p>` : ''}`;
+  }
+  function latestLine(isStarting) {
+    if (isStarting) return '<p class="slast2">The café site goes back to its first version and the agents get their tasks.</p>';
+    const idle = D.mode === 'demo' && D.demo && !D.demo.running && !(P && P.replay);
+    if (idle) { const rp = countIf(D.changes, hasEv('replayed')); return rp ? `<p class="slast2">${n0(rp)} of them collided and were redone on the newest code instead of being sent back.</p>` : ''; }
+    const h = headlines()[0];
+    if (h) return `<p class="slast2">${h.text} <span class="meta">${ago(h.t)}</span></p>`;
+    const f = feedItems()[0];
+    return f ? `<p class="slast2">${esc(f.s[0])} <span class="meta">${ago(f.t)}</span></p>` : '';
+  }
+  function fitPanel() {
+    if (fitTab === 'agents') { const r = rightNow(true); return r || `<p class="dim">No agent is working right now.${D.changes.length ? ' <a href="#/changes">All changes</a>' : ''}</p>`; }
+    if (fitTab === 'line') return theLine(false);
+    if (fitTab === 'events') return `${headFeed(8, true)}<p class="fmore"><a href="#/feed">Every step</a></p>`;
+    return '';
+  }
   function overview() {
     const act = D.changes.filter(active);
-    // A demo that has stopped leaves unfinished changes behind; nobody is working on them.
     const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;
     const agents = idleDemo ? 0 : new Set(act.map((c) => c.agent)).size;
-    // Design pass (2026-10-12): while a run starts the banner says so, so the headline must not say "No agents";
-    // idle, lead with what the last run did (replays first: they are the point), "nobody working" goes under it.
     const isStarting = !(P && P.replay) && ((starting && Date.now() - starting < 60e3 && !(D.demo?.running && D.changes.length)) || (D.mode === 'demo' && D.demo?.running && !agents && !D.changes.some((c) => c.state === 'landed')));
-    const L0 = landedWords(), rep0 = Math.max(D.stats.replayed || 0, countIf(D.changes, hasEv('replayed')));
-    const idleHead = !agents && !(P && P.replay) && !isStarting && L0.short && L0.n;
-    return `${demoStrip()}
-      <h2>${isStarting ? 'The run is starting: the agents are getting their tasks.' : idleHead ? `${n0(L0.n)} change${L0.n === 1 ? '' : 's'} landed ${L0.short}${rep0 ? `, ${n0(rep0)} replayed instead of sent back` : ''}.` : agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : P && P.replay ? (now() >= P.end - 1 ? `The replay has ended: ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed.` : 'The replay is starting…') : `No agents are working on ${esc(NAME)} right now.${(() => { const L = landedWords(); return L.short && L.n ? ` ${n0(L.n)} change${L.n === 1 ? '' : 's'} landed ${L.short}.` : ''; })()}`}</h2>${idleHead && !D.demo?.running ? `<p class="idle">No agents are working on ${esc(NAME)} right now.</p>` : ''}
-      <details class="howto"${agents ? '' : ' open'}><summary>How this works</summary><p class="intro">${D.mode === 'demo' ? `Each agent here is ${term('scripted', 'scripted')} (it follows a script instead of an AI model) and works on its own ${term('fork', 'copy')} of the code.` : `Each agent is an AI working on its own ${term('fork', 'copy')} of the code.`} Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p></details>
-      ${agents || (D.demo?.running && D.changes.length) ? scoreboard() : numbers()}
-      ${boardView()}
-      <section class="sec"><div class="sec-h"><h3>${term('queue', 'The line')}</h3><a href="#/line">Everything</a></div>
-        <p class="cap">Finished changes wait here and are tested together, then join ${term('main', 'the main code')}. Tap a change to see it.</p>${theLine(false)}</section>
-      <div class="ov"><div class="col1">
-        <section class="sec"><div class="sec-h"><h3>Where they work</h3><a href="#/changes">All changes</a></div>
-          <p class="cap">Each circle is an agent, in the part of the code it is changing. Tap one to see its change.</p>${theMap()}${mapKey()}</section>
-      </div><div class="col2">
-        ${rightNow()}
-        ${needsYou()}
-        <section class="sec"><div class="sec-h"><h3>What just happened</h3><a href="#/feed">Every step</a></div>${headFeed(6)}</section>
-      </div></div>`;
+    const live = D.mode === 'demo' ? !!D.demo?.running || (MOCK && agents > 0) : agents > 0;
+    const tab = (k, l) => `<button type="button" class="ftab" data-fittab="${k}" aria-pressed="${fitTab === k}">${l}</button>`;
+    return `<div class="fit${fitTab ? ' open' : ''}">${statusStrip(live, isStarting)}
+      <div class="fpipe">${pipeline()}</div>
+      ${latestLine(isStarting)}
+      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}<a class="fhow" href="/how">How it works</a></div>
+      ${fitTab ? `<div class="fpanel">${OWN ? needsYou() : ''}${fitPanel()}</div>` : ''}</div>`;
   }
+  function fitSize() {
+    const f = root.querySelector('.fit'), v = root.closest('.view');
+    if (!f || !v) return;
+    f.style.height = '';
+    const top = f.getBoundingClientRect().top - v.getBoundingClientRect().top + v.scrollTop;
+    let h = Math.max(360, v.clientHeight - top - 8);
+    f.style.height = `${h}px`;
+    const over = v.scrollHeight - v.clientHeight;
+    if (over > 0) f.style.height = `${Math.max(360, h - over)}px`;
+  }
+  addEventListener('resize', () => fitSize());
 
   // ---- drill-downs -----------------------------------------------------------------------
   const crumbs = (items) => `<nav class="crumbs" aria-label="Where you are">${items.map(([l, h], i) => (h ? `<a href="${h}">${esc(l)}</a>` : `<b>${esc(l)}</b>`) + (i < items.length - 1 ? '<span class="sep">/</span>' : '')).join('')}</nav>`;
@@ -785,11 +833,12 @@
     termSeen = null;
     // Rebuild only when something other than a time changed, and never under a finger:
     // a rebuild mid-tap swallowed about one tap in six (critique, 2026-10-07).
-    const key = html.replace(/(data-(?:ago|since|until|eb-since)="\d+">)[^<]*/g, '$1').replace(/animation-delay:-\d+ms/g, '');
+    const key = html.replace(/(data-(?:ago|since|until|eb-since|el)="\d+">)[^<]*/g, '$1').replace(/animation-delay:-\d+ms/g, '');
     if (key === lastKey || pressing) {
       root.querySelectorAll('[data-ago]').forEach((e) => { const v = agoTxt(+e.dataset.ago); if (e.textContent !== v) e.textContent = v; });
       if (window.qbEstBarTick) window.qbEstBarTick();
       root.querySelectorAll('[data-since]').forEach((e) => { const v = secs(now() - +e.dataset.since); if (e.textContent !== v) e.textContent = v; });
+      root.querySelectorAll('[data-el]').forEach((e) => { const v = elTxt(+e.dataset.el); if (e.textContent !== v) e.textContent = v; });
       root.querySelectorAll('[data-until]').forEach((e) => { const v = untilTxt(+e.dataset.until); if (e.textContent !== v) e.textContent = v; });
       if (pressing) pendingRender = true;
     } else {
@@ -798,7 +847,10 @@
       const same = h === lastHash && D.now >= lastNow && !matchMedia('(prefers-reduced-motion: reduce)').matches;
       const before = new Map();
       if (same) root.querySelectorAll('[data-car]').forEach((e) => before.set(e.dataset.car, e.getBoundingClientRect()));
+      const ps = root.querySelector('.fpanel')?.scrollTop || 0;
       root.innerHTML = html;
+      const pn = root.querySelector('.fpanel'); if (pn && ps) pn.scrollTop = ps;
+      fitSize();
       if (same && before.size) flip(before);
     }
     lastNow = D.now;
@@ -824,6 +876,8 @@
   root.addEventListener('click', async (ev) => {
     const g = ev.target.closest('[data-gloss]');
     if (g) { ev.preventDefault(); ev.stopPropagation(); const [t, d] = GLOSS[g.dataset.gloss]; pop.innerHTML = `<button class="x" type="button" aria-label="Close" popovertarget="lw-pop" popovertargetaction="hide">×</button><b>${esc(t)}</b><p>${esc(d)}</p>`; pop.showPopover?.(); return; }
+    const ft = ev.target.closest('[data-fittab]');
+    if (ft) { fitTab = fitTab === ft.dataset.fittab ? null : ft.dataset.fittab; lastKey = null; render(); return; }
     const go = ev.target.closest('[data-go]');
     if (go) { location.hash = go.dataset.go; return; }
     const ap = ev.target.closest('[data-approve]');

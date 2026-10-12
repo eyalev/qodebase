@@ -289,3 +289,50 @@ body:has(.lw .watch) .gbuild{background:var(--chip);color:var(--fg)}
 .lw .map+.key,.lw .map~.mkey{margin-top:10px}
 .lw .key.under{margin:10px 0 0}
 .lw .hev .meta>[data-ago]{white-space:nowrap;flex:none}
+
+/* One screen (qb3, 2026-10-12, Eyal: the whole run fits one phone screen, no page scroll) */
+.lw .fit{display:flex;flex-direction:column;gap:10px;min-height:360px;overflow:hidden}
+.lw .sstrip{flex:none;display:grid;gap:6px}
+.lw .skick{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);margin:0}
+.lw .skick .stm{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--fg);font-weight:500}
+.lw .shead{font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.15;margin:0;font-variant-numeric:tabular-nums}
+.lw .sbar2{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
+.lw .sbar2 i{display:block;height:100%;background:var(--acc);transition:width 220ms ease}
+.lw .sacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.lw .snote{font-size:13px;color:var(--dim);margin:0}
+.lw .fpipe{flex:0 1 auto;min-height:96px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.lw .fit.open .fpipe{max-height:32%}
+.lw .fit.open .pkey{display:none}
+.lw .fit.open .slast2{-webkit-line-clamp:1}
+.lw .pipe{flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;min-height:0}
+.lw .pcol{display:flex;flex-direction:column;min-height:112px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:10px;padding:8px 6px;overflow:hidden}
+.lw .pcol.done{box-shadow:inset 0 0 0 1.5px var(--acc)}
+.lw .ph{display:flex;justify-content:space-between;align-items:baseline;gap:4px;margin:0 0 6px;font-size:12px;color:var(--dim)}
+.lw .ph b{font-size:15px;color:var(--fg);font-variant-numeric:tabular-nums}
+.lw .pcol.done .ph b{color:var(--acc)}
+.lw .pchips{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;overflow:hidden}
+.lw .pc{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;font-size:13px;font-weight:600;text-decoration:none;color:var(--fg);background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--dim);flex:none}
+.lw .pcol.work .pc{background:var(--busy);color:var(--acc-fg);box-shadow:none}
+.lw .pcol.line .pc{background:var(--fg);color:var(--bg);box-shadow:none}
+.lw .pcol.line .pc.test{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--fg)}
+.lw .pcol.done .pc{background:var(--acc);color:var(--acc-fg);box-shadow:none}
+.lw .pc.rp{position:relative}
+.lw .pc.rp::after{content:'';position:absolute;right:-2px;top:-2px;width:10px;height:10px;border-radius:50%;background:repeating-linear-gradient(135deg,var(--busy) 0 2px,var(--bg) 2px 4px);box-shadow:0 0 0 1.5px var(--bg)}
+.lw .pc.bad{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--warn)}
+.lw .pkey{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;font-size:12px;color:var(--dim)}
+.lw .pkey span{display:inline-flex;align-items:center;gap:6px}
+.lw .pc.mini{width:12px;height:12px;background:var(--acc)}
+.lw .pc.mini.bad{background:var(--bg)}
+.lw .slast2{flex:none;font-size:15px;line-height:1.35;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lw .slast2 .meta{font-size:13px;color:var(--dim)}
+.lw .ftabs{flex:none;display:flex;gap:4px;align-items:center}
+.lw .ftab{min-height:40px;padding:0 14px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);font:500 14px Geist,sans-serif;cursor:pointer;transition:background-color 120ms}
+.lw .ftab[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.lw .fhow{margin-left:auto;font-size:13px;color:var(--acc);min-height:40px;display:inline-flex;align-items:center}
+.lw .fpanel{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain;box-shadow:inset 0 1px 0 var(--line);padding-top:8px}
+.lw .fpanel .sec{margin:0}
+.lw .fmore{margin:8px 0 0;font-size:14px}
+.lw .fmore a{color:var(--acc)}
+.lw .pchips.many{gap:3px}
+.lw .pchips.many .pc{width:19px;height:19px;font-size:11px}
+.lw .pchips.many .pc.rp::after{width:8px;height:8px}
