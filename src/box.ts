@@ -223,6 +223,7 @@ export class AgentBox extends DurableObject<Env> {
         log('box', 'costs_recovered', { agentId: spec.agentId, seconds: Math.round(sec) });
       }
       // Awake time and CPU from now; Claude tokens since the last read (cursor kept).
+      await this.ctx.storage.delete('authFailReported');   // a fresh boot (maybe with a new key) watches again
       await this.ctx.storage.put({ costFrom: Date.now(), aliveAt: Date.now(), cpuLast: 0, costOwner: spec.project.split('/')[0], costProject: spec.project, costBilling: spec.billing || 'api', costCovered: !!spec.costCovered });
     }
 
@@ -609,7 +610,24 @@ walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}
       await this.ctx.storage.put({ costFrom: now, cpuLast: cpuNow, ...(usage.last ? { costCursor: usage.last } : {}) });
       // tokens per model: the variants lab prices each role at its own model (scripts/lab/run.mjs reads these lines).
       log('box', 'costs', { agentId: await this.ctx.storage.get<string>('agentId'), seconds: Math.round(seconds), cpuSeconds: Math.round(cpuSeconds), models: Object.keys(usage.m), tokens: usage.m });
+      await this.#authCheck(owner);
     } catch (e) { log('box', 'costs_failed', { err: String(e) }); }
+  }
+
+  /** Subscription only (2026-10-12): when Claude Code in this box says its sign-in no longer works, report it once. A
+   *  person's own key is marked failed (all their boxes stop, none start until they connect again; nothing falls back);
+   *  the instance owner's subscription only logs and alerts. */
+  async #authCheck(owner: string) {
+    if (await this.ctx.storage.get('authFailReported')) return;
+    const pane = await this.#sh(`tmux capture-pane -p -t claude 2>/dev/null | tail -25`).catch(() => null);
+    const m = pane?.stdout.match(/(OAuth token (?:has expired|revoked)|Invalid API key|Please run \/login|authentication_error|Invalid bearer token|Credit balance is too low)/i);
+    if (!m) return;
+    await this.ctx.storage.put('authFailReported', Date.now());
+    const agentId = await this.ctx.storage.get<string>('agentId');
+    log('box', 'auth_failed', { agentId, owner, said: m[1] });
+    if (owner === this.env.OWNER_HANDLE || owner === 'forq') return;
+    await fetch(`${this.env.API_BASE}/api/admin/key-failed`, { method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' },
+      body: JSON.stringify({ handle: owner, why: `Claude said: ${m[1]}` }) }).catch((e) => log('box', 'auth_fail_report_failed', { err: String(e) }));
   }
 
   /** Attached images for the next message (src/attach.ts): downloaded with this box's own agent token into

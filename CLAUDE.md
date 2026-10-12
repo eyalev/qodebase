@@ -188,6 +188,41 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
   the DO is running in the box at that moment (an `exec` stream): its result is lost.
   BuildBox jobs resume and ask-box questions retry for that reason.
 
+## Claude sign-in: whose Claude runs what (audit 2026-10-12)
+
+Rules: `~/.claude/docs/claude-subscription-policy.md` (Anthropic, Oct 2026). Allowed: a platform runs the real,
+unmodified `claude` binary and the person signs in with their OWN plan. Not allowed: our own agent loop calling the API
+with a plan token; anyone's work on someone else's subscription. Audited (file:line evidence in the qb6 session,
+2026-10-12):
+- **One decision point:** `bootSpec()` (index.ts) picks every box's credential from the project slug's owner, never
+  the requester. Instance owner (`onSubscription` = OWNER_HANDLE or the reserved `forq` handle, auth.ts) -> the env
+  `CLAUDE_CODE_OAUTH_TOKEN`; anyone else -> their own stored key (setup-token -> `CLAUDE_CODE_OAUTH_TOKEN`, API key ->
+  `ANTHROPIC_API_KEY`). No key -> refused. Agents, routers, reviewers (all pool reviewers), the ask box and `forq
+  dedupe` (reads the box's own tmux env) all get it from there.
+- **Nobody else's work on the owner's subscription:** the merger's model replay (tier 2, `QB_CLAUDE_TOKEN`) runs only
+  for OWNER_HANDLE / `forq` projects and never for a public Watch run; Watch-a-run agents are scripted (no model, no
+  container); Talk uses Workers AI only; installs get their own OWNER_HANDLE and no Claude secrets; ask/landing/flags
+  routes are owner-only.
+- **Plan tokens only through the binary:** every use is `claude` (interactive in tmux) or `claude -p` (ask box, merger
+  replay, dedupe, the paste check). The binary is installed unmodified (box/Dockerfile: claude.ai/install.sh; managed
+  image: `npm i -g @anthropic-ai/claude-code`); nothing patches it. The only direct Messages API call is
+  buildsuggest.ts with qodebase's own API KEY (Workers AI when unset), never a plan token.
+- **No auth method removed:** nothing unsets `ANTHROPIC_API_KEY` or other auth vars, no flag disables a method. Fixed
+  2026-10-12: the merger replay set `ANTHROPIC_API_KEY=''` when none was given; it now passes only what it has.
+- **Subscription only (2026-10-12):** no fallback anywhere (a person's work never moves to another key or anyone's
+  plan). A box that sees Claude Code's auth error (`OAuth token has expired`, `Invalid API key`, `/login`, …) reports
+  once (box.ts `#authCheck`): the person's key is marked `keyFailed`, all their boxes stop (`stopUserBoxes`), none
+  start until they connect again (bootSpec refuses), Build answers `{need:'key'}`, pages carry `data-needs-key`.
+  The owner's own subscription only logs (`auth_failed`).
+- **The paste:** `POST /api/me/key {key}` -> `{ok, tail, kind: plan|api}`. API keys: one `/v1/models` call. Plan tokens:
+  one tiny `claude -p` in BuildBox `keycheck` (throwaway HOME, the token only in that process's env, never logged).
+  Stored AES-GCM (`KEY_ENC_SECRET`); `DELETE /api/me/key` removes it. Saving or deleting stops the person's awake
+  boxes, so none keeps running on the old key.
+- **Grey, as for Amp:** we store a pasted setup-token (encrypted). `forq dedupe` reads the credential from the box's
+  tmux env because Claude Code keeps it out of its Bash tool's env (same person's credential, same box).
+- **Still open:** the ask box keeps its boot spec (with the credential) in its Durable Object storage for queued asks;
+  `boot.env` sits under /run/opendev (not verified to be tmpfs; boot.sh deletes CC_ENV from it right after start).
+
 ## Import from GitHub
 
 - `/import` page; `/api/github/search?q=` (search or exact `owner/repo`/URL);

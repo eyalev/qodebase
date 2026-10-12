@@ -22,6 +22,11 @@ export type User = {
   apiKeyEnc?: string;      // base64(iv | ciphertext)
   apiKeyTail?: string;     // last 4 characters, for display
   apiKeyCheckedAt?: number;
+  /** plan = a Claude plan sign-in (claude setup-token), only ever used by the claude binary; api = an Anthropic API key. */
+  apiKeyKind?: 'plan' | 'api';
+  /** Their key stopped working (a box saw Claude Code's auth error): their boxes were stopped and none start until they
+   *  paste a new one. Subscription only: nothing falls back to another key or anyone else's plan. */
+  keyFailed?: { at: number; why: string };
   model?: string;          // Claude Code model for their boxes (API-key users)
 };
 

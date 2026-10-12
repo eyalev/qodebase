@@ -180,7 +180,9 @@ function replay(c, base, before, conflicts, unhandled) {
   const r = spawnSync('claude', ['-p', prompt, '--model', job.llm.model, '--output-format', 'json', '--permission-mode', 'acceptEdits',
     '--allowedTools', 'Read,Edit,Write,Glob,Grep', '--max-turns', '12'], {
     cwd: DIR, encoding: 'utf8', timeout: 240_000, maxBuffer: 16 << 20,
-    env: { ...process.env, IS_SANDBOX: '1', CLAUDE_CODE_OAUTH_TOKEN: process.env.QB_CLAUDE_TOKEN || '', ANTHROPIC_API_KEY: process.env.QB_ANTHROPIC_KEY || '', JOB: '' } });
+    // Only the credential we were given; no auth variable is blanked or removed (Anthropic's 2026-10 rule; the replay
+    // used to set ANTHROPIC_API_KEY='' when none was given).
+    env: { ...process.env, IS_SANDBOX: '1', ...(process.env.QB_CLAUDE_TOKEN ? { CLAUDE_CODE_OAUTH_TOKEN: process.env.QB_CLAUDE_TOKEN } : {}), ...(process.env.QB_ANTHROPIC_KEY ? { ANTHROPIC_API_KEY: process.env.QB_ANTHROPIC_KEY } : {}), JOB: '' } });
   let j = {}; try { j = JSON.parse(r.stdout || '{}'); } catch {}
   const u = j.usage || {};
   const llm = { model: job.llm.model, ms: Date.now() - t, turns: j.num_turns ?? null, usd: j.total_cost_usd ?? null,

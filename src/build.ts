@@ -163,6 +163,27 @@ export class BuildBox extends DurableObject<Env> {
   }
 
   /** A finished job's result, if this builder still has it. */
+  /** Is a pasted Claude plan token (claude setup-token) good? One tiny `claude -p` with it, through the real binary in
+   *  a throwaway HOME (a plan token is only ever used by the claude binary: Anthropic's rule, 2026-10). Never logged. */
+  async checkClaude(token: string): Promise<{ ok: boolean; error?: string; ms: number }> {
+    const t0 = Date.now();
+    try {
+      await this.#ensureContainer(() => {});
+      const r = await this.#sh(`H=$(mktemp -d); cd "$H"; HOME="$H" timeout 90 claude -p 'Reply with exactly the word OK.' --model claude-haiku-5-5 --max-turns 1 --output-format json 2>&1; rc=$?; rm -rf "$H"; exit $rc`, { CLAUDE_CODE_OAUTH_TOKEN: token });
+      let j: { is_error?: boolean; result?: string } = {};
+      try { j = JSON.parse(r.stdout.slice(r.stdout.indexOf('{'))); } catch {}
+      const out = (j.result || r.stdout || r.stderr || '').replace(token, '***').slice(0, 300);
+      const ok = r.exitCode === 0 && !j.is_error && /\bOK\b/.test(j.result || '');
+      log('auth', 'plan_check', { ok, exit: r.exitCode, ms: Date.now() - t0, said: ok ? undefined : out.slice(0, 160) });
+      if (ok) return { ok: true, ms: Date.now() - t0 };
+      const why = /expired/i.test(out) ? 'This sign-in has expired: run claude setup-token again and paste the new token.'
+        : /invalid|401|authentication|login/i.test(out) ? 'Claude did not accept this token. Run claude setup-token again and paste the whole token.'
+        : /limit|quota|rate/i.test(out) ? 'Claude accepted the token but your plan is at its usage limit right now; try again later.'
+        : `Claude could not use this token (${out.slice(0, 120)}).`;
+      return { ok: false, error: why, ms: Date.now() - t0 };
+    } catch (e) { return { ok: false, error: `Could not check the token right now (${String((e as Error)?.message || e).slice(0, 100)}); try again.`, ms: Date.now() - t0 }; }
+  }
+
   async result(id: string): Promise<BuildResult | null> {
     return (await this.ctx.storage.get<BuildResult>(`result:${id}`)) || null;
   }

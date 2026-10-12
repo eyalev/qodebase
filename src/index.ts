@@ -161,6 +161,29 @@ async function loginRoute(request: Request, env: Env, url: URL): Promise<Respons
   return new Response(null, { status: 302, headers: { location: next, 'set-cookie': await sessionCookie(env, email), 'cache-control': 'no-store' } });
 }
 
+/** Who pays a project's Claude: 'sub' = a Claude plan (the instance owner's, or the person's own setup-token: not billed
+ *  by qodebase), 'api' = the person's own API key, null = none connected (qb7's estimate bar). */
+async function billingOf(env: Env, owner: string): Promise<'sub' | 'api' | null> {
+  if (onSubscription(env, owner)) return 'sub';
+  const u = await userByHandle(env, owner).catch(() => null);
+  if (!u?.apiKeyEnc || u.keyFailed) return null;
+  return u.apiKeyKind === 'plan' || (!u.apiKeyKind && u.apiKeyTail && (await decryptKey(env, u.apiKeyEnc).then(isClaudeToken).catch(() => false))) ? 'sub' : 'api';
+}
+
+/** Stop every awake box of one person's projects (their key changed, was deleted, or stopped working). Returns how many. */
+async function stopUserBoxes(env: Env, handle: string, why: string): Promise<number> {
+  const entries = (await registry(env).list()).filter((e) => e.slug.split('.')[0] === handle);
+  let n = 0;
+  for (const e of entries) {
+    const pi = await projectStub(env, e.slug).info().catch(() => null);
+    if (!pi) continue;
+    const ids = [...pi.agents.map((a) => a.id), `${pi.slug}--router`, `${pi.slug}--router2`, `${pi.slug}--review`, `${pi.slug}--ask`, ...[2, 3, 4, 5, 6].map((k) => `${pi.slug}--review${k}`)];
+    for (const id of ids) if (await boxStub(env, id).isAwake().catch(() => false)) { await boxStub(env, id).letGo(why).catch(() => {}); n++; }
+  }
+  log('auth', 'user_boxes_stopped', { handle, why, n });
+  return n;
+}
+
 async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<BootSpec> {
   const slug = projectOf(agentId);
   const r = await projectStub(env, slug).boxRepo(agentId);
@@ -180,6 +203,8 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
   } else {
     const u = await userByHandle(env, owner);
     if (!u?.apiKeyEnc) throw new Error(`${owner} has not added an Anthropic API key yet (Settings)`);
+    // Subscription only: a key that stopped working stops their boxes; nothing falls back to another key or plan.
+    if (u.keyFailed) throw new Error(`${owner}'s Claude sign-in stopped working (${u.keyFailed.why}): connect it again in Settings`);
     const key = await decryptKey(env, u.apiKeyEnc);
     if (isClaudeToken(key)) { ccEnv = `CLAUDE_CODE_OAUTH_TOKEN=${key}`; keyTail = key.slice(-20); billing = 'sub'; }
     else { ccEnv = `ANTHROPIC_API_KEY=${key} ANTHROPIC_MODEL=${u.model || DEFAULT_API_MODEL}`; keyTail = key.slice(-20); billing = 'api'; }
@@ -577,13 +602,24 @@ const app = {
           const k = String(key || '').trim();
           const c = await checkApiKey(k);
           if (!c.ok) return json({ error: c.error }, 400);
-          await registry(env).putUser({ ...u, apiKeyEnc: await encryptKey(env, k), apiKeyTail: k.slice(-4), apiKeyCheckedAt: Date.now() });
-          log('auth', 'api_key_saved', { handle: u.handle });
-          return json({ ok: true, tail: k.slice(-4) });
+          // A plan token (claude setup-token) is checked with one tiny run of the real claude binary; never by an API call.
+          const kind: 'plan' | 'api' = isClaudeToken(k) ? 'plan' : 'api';
+          if (kind === 'plan') {
+            const pc = await env.BuildBox.get(env.BuildBox.idFromName('keycheck')).checkClaude(k);
+            if (!pc.ok) return json({ error: pc.error }, 400);
+          }
+          const { keyFailed, ...clean } = u;
+          await registry(env).putUser({ ...clean, apiKeyEnc: await encryptKey(env, k), apiKeyTail: k.slice(-4), apiKeyCheckedAt: Date.now(), apiKeyKind: kind });
+          // Boxes still running on the previous key keep it until they sleep: stop them now.
+          ctx.waitUntil(stopUserBoxes(env, u.handle, 'key changed'));
+          log('auth', 'api_key_saved', { handle: u.handle, kind, hadFailed: !!keyFailed });
+          return json({ ok: true, tail: k.slice(-4), kind });
         }
         if (path === '/api/me/key' && request.method === 'DELETE') {
-          const { apiKeyEnc, apiKeyTail, apiKeyCheckedAt, ...rest } = u;
+          const { apiKeyEnc, apiKeyTail, apiKeyCheckedAt, apiKeyKind, keyFailed, ...rest } = u;
           await registry(env).putUser(rest);
+          ctx.waitUntil(stopUserBoxes(env, u.handle, 'key deleted'));
+          log('auth', 'api_key_deleted', { handle: u.handle });
           return json({ ok: true });
         }
         if (path === '/api/me/handle' && request.method === 'POST') {
@@ -632,7 +668,11 @@ const app = {
         const b = await request.json().catch(() => ({})) as { name?: string; prompt?: string; private?: boolean; settings?: unknown; estimate?: unknown };
         const prompt = String(b.prompt || '').trim().slice(0, 3000);
         if (prompt.length < 4) return json({ error: 'Say what to build' }, 400);
-        if (!onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json({ error: 'Add your Anthropic API key in Settings first' }, 400);
+        if (!onSubscription(env, me.handle)) {
+          const bu = await userByHandle(env, me.handle);
+          if (!bu?.apiKeyEnc) return json({ error: 'Connect your Claude plan or add an Anthropic API key first', need: 'key' }, 400);
+          if (bu.keyFailed) return json({ error: `Your Claude sign-in stopped working (${bu.keyFailed.why}). Connect it again first.`, need: 'key' }, 400);
+        }
         const tooMany = await overProjectLimit(env, me.handle);
         if (tooMany) return json({ error: tooMany }, 400);
         // A self-hosted copy has no forq/blank starter: its new projects start empty and
@@ -701,7 +741,7 @@ const app = {
         const own = info.owner === me.handle;
         const st = own ? await statusesOf(env, info) : { status: {}, router: { awake: false, cc: 'asleep' }, reviewer: { awake: false, cc: 'asleep' } };
         // Estimate vs elapsed (Build): the Changes tab reads info.estimate / info.progress.
-        const bi0 = await env.Landing.get(env.Landing.idFromName(slug)).pageExtras().catch(() => null);
+        const bi0 = { ...(await env.Landing.get(env.Landing.idFromName(slug)).pageExtras().catch(() => null)), billing: await billingOf(env, slug.split('.')[0]) };
         return html(projectV3({ info: bi0 ? { ...info, ...bi0 } : info, entry: all.find((e) => e.slug === slug)!, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
           me: me.handle, runBase, liveHtml: '', view: m[3] === 'about' ? 'readme' : (m[3] as ViewId) || null, tryAgent: url.searchParams.get('try') || undefined, ...st,
           docs: viewShown(m[3] || null, own, info) === 'readme' ? await docsOf(env, ctx, info, url.searchParams.get('doc')) : undefined,
@@ -755,7 +795,7 @@ const app = {
         if (!info) return json({ error: 'no such project' }, 404);
         if (verb === '' && request.method === 'GET') {
           // Estimate vs elapsed (Build): the estimate shown and the progress, when the project was built with one.
-          const bi = await env.Landing.get(env.Landing.idFromName(slug)).pageExtras().catch(() => null);
+          const bi = { ...(await env.Landing.get(env.Landing.idFromName(slug)).pageExtras().catch(() => null)), billing: await billingOf(env, slug.split('.')[0]) };
           return json(bi ? { ...info, ...bi } : info);
         }
         if (verb === 'fork' && request.method === 'POST') {
@@ -834,7 +874,7 @@ const app = {
         }
         if (verb === 'agents-html' && ['a', 'b', 'c', 'd'].includes(uiFor(request, env) || '')) {
           const st = await statusesOf(env, info);
-          const bi1 = await env.Landing.get(env.Landing.idFromName(info.slug)).pageExtras().catch(() => null);
+          const bi1 = { ...(await env.Landing.get(env.Landing.idFromName(info.slug)).pageExtras().catch(() => null)), billing: await billingOf(env, info.owner) };
           return json({ html: liveV3(url.searchParams.get('view') || 'changes', { info: bi1 ? { ...info, ...bi1 } : info, me: me.handle, runBase, ...st, entry: undefined as unknown as Entry, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: '' }) });
         }
         if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase, uiFor(request, env)), tabs: previewTabs(info, runBase) });
@@ -955,6 +995,18 @@ const app = {
         const rows = await env.Ledger.get(env.Ledger.idFromName(handle)).rows(Math.min(30, Number(url.searchParams.get('days')) || 7));
         return json({ handle, rows: proj ? rows.filter((r) => r.project === proj || r.project.startsWith(`${proj}:`) || r.project === proj.replace('/', '.')) : rows });
       }
+      // A box saw Claude Code's auth error for a person's own key (box.ts): mark it failed, stop all their boxes.
+      if (path === '/api/admin/key-failed' && request.method === 'POST' && me.admin) {
+        const b = await request.json() as { handle?: string; why?: string };
+        const handle = String(b.handle || '');
+        if (!handle || onSubscription(env, handle)) return json({ ok: false, error: 'not a key owner' }, 400);
+        const ku = await userByHandle(env, handle);
+        if (!ku?.apiKeyEnc) return json({ ok: false, error: 'no key' }, 404);
+        if (!ku.keyFailed) await registry(env).putUser({ ...ku, keyFailed: { at: Date.now(), why: String(b.why || 'Claude rejected the sign-in').slice(0, 200) } });
+        const stopped = await stopUserBoxes(env, handle, 'key failed');
+        log('auth', 'key_failed', { handle, why: b.why, stopped });
+        return json({ ok: true, stopped });
+      }
       if (path === '/api/admin/delete' && request.method === 'POST' && me.admin) {
         const b = await request.json() as { repo?: string; box?: string; project?: string };
         if (b.box) await boxStub(env, b.box).destroy();
@@ -994,6 +1046,14 @@ export default {
       const w = await who(request, env).catch(() => null);
       if (w?.kind === 'user' && !w.anon && buildSettingsOn(env.BUILD_SETTINGS, w.handle, env.OWNER_HANDLE))
         res = new HTMLRewriter().on('body', { element(e) { e.setAttribute('data-build-settings', '1'); } }).transform(res);
+    }
+    // Claude-plan onboarding (qb7): a signed-in person with no usable key gets data-needs-key, so Build opens the connect step.
+    if ((res.headers.get('content-type') || '').startsWith('text/html')) {
+      const w = await who(request, env).catch(() => null);
+      if (w?.kind === 'user' && !w.anon && !onSubscription(env, w.handle)) {
+        const ku = await userByHandle(env, w.handle).catch(() => null);
+        if (!ku?.apiKeyEnc || ku.keyFailed) res = new HTMLRewriter().on('body', { element(e) { e.setAttribute('data-needs-key', '1'); } }).transform(res);
+      }
     }
     return withLook(res);   // the site-wide look layer (src/look.ts)
   },
