@@ -111,6 +111,73 @@ median (p90 67). A merge brings p50 3 / p90 12 commits and p50 14 / p90 148 file
   e549d61 race", "restore ... dropped by e99311e584". Resolving whole conflicts by
   `--theirs` was the main way work got lost.
 
+## BUN3: ownership plus a fast check, replayed with Bun's real patches (2026-10-12)
+
+`sim/bun/bun3.mjs` replays Bun's port with its **real patches** applied to real file contents.
+`bun3-prep.mjs` exports them on a VM with a full clone. A segment is a stretch of the PR branch's first-parent chain:
+- **c+d+e:** 4,082 commits, from the first phase-c commit to the last phase-e commit.
+- **tail:** 1,326 commits, from there to the PR head. This is the phase where the build was green.
+
+Replayed by one agent in history order, both end on history's files: c+d+e matches 1,221 of 1,221 files, the tail
+2,168 of 2,171 (9 binaries are not replayed). That checks the method.
+
+The setup:
+- **Agents.** Scripted, no model calls.
+- **Ownership.** Line-range parts, as in qb4's fit.
+- **Dependencies.** A commit waits for the commits that wrote the lines it edits. These come from a `git blame`-like
+  pass over the history.
+- **Calibration.** 65 s median per commit makes Bun's method at 64 agents take 26.2 h for c+d+e (real: 25.3 h).
+
+Three methods:
+- **bun:** commit straight onto the shared tree, no check.
+- **check:** a per-crate check of 30, 60 or 120 s before every commit.
+- **async:** the same check runs behind the commit. The commit lands at once; a failure is fixed forward.
+
+**What the real content shows first.** Bun's commits were chains, not independent tasks:
+- 89% of c+d+e commits edit lines an earlier commit wrote (79% counting only removed or rewritten lines).
+- The longest chain is 322 commits.
+- In random order under range ownership, 82% of commits would not apply.
+
+That is why 640 agents finish no sooner than 64 (26.3 h vs 26.2 h): every method here is bound by the chain, not
+by agents.
+
+**Breaks.**
+- **c+d+e: no usable signal from history.** Phase d *is* "fix N compile errors": the port did not compile until d
+  ended, so main was red by design. Breaks there are **modelled**: 1% of commits, 90% detectable by a crate check,
+  600 s to fix when nobody checks.
+- **tail: real regressions, hand-sorted** in `sim/bun/bun3-breaks.json`. Of 64 candidate commits, 8 are strict (the
+  fix names its culprit), 3 are borderline, and 53 are excluded with the reason. 4 strict ones have culprit and fix
+  inside the window. Only 2 of the 8 strict (and 1 borderline) are compile errors a crate check could catch; the
+  rest are runtime or test regressions.
+
+Means of 3 seeds, 64 agents (640 is within 1%). Red crate-minutes = minutes a crate stayed broken on main, summed
+over crates. Data: `sim/bun/bun3-sweep.jsonl` (126 cells).
+
+| method | c+d+e hours | red crate-min (modelled) | commits landed on a red crate | tail hours | tail red crate-min (real, strict) | caught (tail) |
+|---|---|---|---|---|---|---|
+| bun (no check) | 26.2 | 660 | 1,082 | 7.1 | 15 | 0 of 4 |
+| check 30 s before each commit | 32.1 (+23%) | 43 | 140 | 8.4 (+18%) | 16 | 1 |
+| check 60 s | 38.1 (+45%) | 60 | 35 | 9.7 (+37%) | 20 | 1 |
+| check 120 s | 50.2 (+92%) | 60 | 81 | 12.5 (+76%) | 26 | 1 |
+| check 30 s behind the commit (async) | 26.2 (+0%) | 178 | 326 | 7.1 | 14 | 1 |
+| check 60 s, async | 26.2 | 210 | 401 | 7.1 | 14 | 1 |
+| check 120 s, async | 26.2 | 271 | 519 | 7.1 | 15 | 1 |
+
+What it says:
+1. **A check that blocks each commit is expensive on chain-shaped work.** Every commit sits on a dependency chain,
+   so the check is paid once per link: +23% time at 30 s, +92% at 120 s. It also does not fall with more agents.
+2. **The same check run behind the commit keeps Bun's speed** and cuts modelled broken-crate time by 59-73% (660 to
+   178-271 minutes). It cuts commits landed on a red crate by half to two thirds. Blocking checks cut both further
+   (about -93%), at that time cost.
+3. **On Bun's real regressions a compile check barely matters.** Of the 4 in the window, a crate check catches 1;
+   the others were runtime or test regressions that only tests or review find. A blocking check even raises real
+   red minutes (15 to 16-26), because everything runs slower while those regressions wait for their fix.
+   (Borderline included: the same pattern, 17 to 23-35 red crate-minutes, async 14-15.)
+
+Not covered: the c+d+e breaks are a model, not history. The tail is not agent-bound in reality (it ran ~7 days
+with pauses), so only its relative times mean anything. A conflict that remains after 3 redos is applied as far
+as it fits, which leaves 4-6 files differing from history at the end of the parallel runs.
+
 ## What it means for our policies
 
 - **Ownership instead of branches for the bulk.** The phase with the most agents
