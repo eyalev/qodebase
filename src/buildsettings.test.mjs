@@ -1,0 +1,60 @@
+// Build settings (B3): presets and custom knobs -> a plan -> landing flags. node --experimental-strip-types --test src/buildsettings.test.mjs
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, parseJob, SUGGEST_SYSTEM } from './buildsettings.ts';
+
+const O = { maxCoders: 12 };
+
+test('the flag: off, owner only, all; never for anonymous', () => {
+  assert.equal(buildSettingsOn(undefined, 'eyal', 'eyal'), false);
+  assert.equal(buildSettingsOn('off', 'eyal', 'eyal'), false);
+  assert.equal(buildSettingsOn('owner', 'eyal', 'eyal'), true);
+  assert.equal(buildSettingsOn('owner', 'bob', 'eyal'), false);
+  assert.equal(buildSettingsOn('all', 'bob', 'eyal'), true);
+  assert.equal(buildSettingsOn('all', null, 'eyal'), false);
+});
+
+test('no settings or unknown input: today\'s default (null)', () => {
+  for (const s of [undefined, null, 'balanced', {}, { preset: 'nope' }, { preset: 'custom' }, { preset: 'custom', v: 'x' }]) assert.equal(resolveBuildPlan(s, O), null, JSON.stringify(s));
+});
+
+test('presets: fastest = one Opus agent; balanced and cheapest = crews as in the lab', () => {
+  assert.deepEqual(resolveBuildPlan({ preset: 'fastest' }, O), { kind: 'single', model: 'opus', preset: 'fastest' });
+  const b = resolveBuildPlan({ preset: 'balanced' }, O);
+  assert.deepEqual([b.kind, b.planner, b.coders, b.coderModel, b.reviewers, b.board], ['crew', 'opus', 12, 'haiku', 3, false]);
+  const c = resolveBuildPlan({ preset: 'cheapest' }, O);
+  assert.deepEqual([c.coders, c.reviewers], [6, 0]);
+  assert.equal(resolveBuildPlan({ preset: 'balanced' }, { maxCoders: 6 }).coders, 6, 'others are capped at the instance limit');
+});
+
+test('custom knobs are validated and clamped', () => {
+  const p = resolveBuildPlan({ preset: 'custom', v: { planner: 'gpt', coders: 99, coderModel: 'sonnet', reviewers: -2, board: true, trainMax: 'x' } }, O);
+  assert.deepEqual([p.planner, p.coders, p.coderModel, p.reviewers, p.board, p.trainMax], ['opus', 12, 'sonnet', 0, true, 4]);
+  assert.equal(resolveBuildPlan({ preset: 'custom', v: { board: 'yes' } }, O).board, false, 'board only when exactly true');
+  assert.equal(resolveBuildPlan({ preset: 'custom', v: { planner: 'none', coderModel: 'sonnet' } }, O).kind, 'single');
+});
+
+test('flags as the lab runner sets them; the router and single-agent texts', () => {
+  const f = planFlags(resolveBuildPlan({ preset: 'balanced' }, O));
+  assert.deepEqual([f.autoMerge, f.reviewers, f.policy, f.plannerModel, f.coderModel, f.caps.agents, f.board], [true, 3, 'intent', 'opus', 'haiku', 12, false]);
+  const s = planFlags(resolveBuildPlan({ preset: 'fastest' }, O));
+  assert.deepEqual([s.reviewers, s.coderModel, s.caps.agents], [0, 'opus', 1]);
+  assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /at most 6 tasks/);
+  assert.match(singleTask('a todo app', true), /EMPTY project[\s\S]*only agent[\s\S]*a todo app[\s\S]*forq push/);
+});
+
+test('the sheet contract (qb7): v as a URL JSON string; 1 opus coder with 0 reviewers = one agent; reviewers use the coders\' model', () => {
+  const fast = resolveBuildPlan({ preset: 'custom', v: JSON.stringify({ planner: 'opus', coders: 1, coderModel: 'opus', reviewers: 0, board: false }) }, O);
+  assert.deepEqual(fast, { kind: 'single', model: 'opus', preset: 'custom' });
+  const c = resolveBuildPlan({ preset: 'custom', v: '{"planner":"opus","coders":4,"coderModel":"sonnet","reviewers":2,"board":true}' }, O);
+  assert.deepEqual([c.kind, c.coders, c.coderModel, c.reviewerModel, c.reviewers, c.board], ['crew', 4, 'sonnet', 'sonnet', 2, true]);
+  assert.equal(resolveBuildPlan({ preset: 'custom', v: '{not json' }, O), null);
+});
+
+test('B4: the model\'s job answer is parsed strictly; anything off is null (the page falls back to a small app)', () => {
+  const ok = parseJob('Here: {"v":1,"tasks":14.4,"overlap":"some","difficulty":"normal","vague":false,"summary":"  A bakery   site ","confidence":0.7}');
+  assert.deepEqual(ok, { tasks: 14, overlap: 'some', difficulty: 'normal', vague: false, summary: 'A bakery site', confidence: 0.7 });
+  for (const bad of ['no json', '{"tasks":0,"overlap":"some","difficulty":"normal","confidence":0.5}', '{"tasks":5,"overlap":"lots","difficulty":"normal","confidence":0.5}',
+    '{"tasks":5,"overlap":"low","difficulty":"normal","confidence":2}', '{"tasks":5,"overlap":"low","difficulty":"normal"}']) assert.equal(parseJob(bad), null, bad);
+  assert.match(SUGGEST_SYSTEM, /ONE JSON object only/);
+});

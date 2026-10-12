@@ -18,6 +18,8 @@ import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectP
 import { previewTabs } from './sheet';
 import { catalogReadme } from './catalog';
 import { STARTER, buildPayload } from './newproject';
+import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask } from './buildsettings';
+import { suggestRoute } from './buildsuggest';
 import { buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
@@ -540,9 +542,13 @@ const app = {
         const r = await searchRepos(q, ctx);
         return Array.isArray(r) ? json({ repos: r }) : json(r, r.status);
       }
+      if (path === '/api/build/suggest' && request.method === 'POST') {
+        if (!me.handle || !buildSettingsOn(env.BUILD_SETTINGS, me.handle, env.OWNER_HANDLE)) return json({ error: 'not available' }, 404);
+        return suggestRoute(request, env, ctx, me.handle);
+      }
       if (path === '/api/build' && request.method === 'POST') {
         if (!me.handle) return json({ error: 'Sign in first' }, 401);
-        const b = await request.json().catch(() => ({})) as { name?: string; prompt?: string; private?: boolean };
+        const b = await request.json().catch(() => ({})) as { name?: string; prompt?: string; private?: boolean; settings?: unknown };
         const prompt = String(b.prompt || '').trim().slice(0, 3000);
         if (prompt.length < 4) return json({ error: 'Say what to build' }, 400);
         if (!onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json({ error: 'Add your Anthropic API key in Settings first' }, 400);
@@ -561,8 +567,17 @@ const app = {
         if (starter) await p.createFork(me.handle, name, starter, desc, true);
         else await p.create(me.handle, name, desc);
         if (b.private) await p.setPrivate(true);
-        await askRouter(env, ctx, p, slug, buildPayload(prompt, !starter), apiBase, prompt);
-        log('build', 'started', { slug, chars: prompt.length });
+        // Build settings (Adjust): only with the flag on for this person; otherwise (and with no settings) today's Build.
+        const plan = buildSettingsOn(env.BUILD_SETTINGS, me.handle, env.OWNER_HANDLE)
+          ? resolveBuildPlan(b.settings, { maxCoders: isOwner(env, me.handle) ? 12 : Number(env.MAX_AGENTS_PER_PROJECT) || 6 }) : null;
+        if (plan) {
+          await p.setLanding(true);
+          await env.Landing.get(env.Landing.idFromName(slug)).setFlags(slug, planFlags(plan));
+          // One agent with the whole job (Fastest); an empty project (self-host) goes through the router, told to start one.
+          if (plan.kind === 'single' && starter) await spawn(env, ctx, slug, singleTask(prompt, false), apiBase);
+          else await askRouter(env, ctx, p, slug, buildPayload(prompt, !starter) + '\n\n' + (plan.kind === 'crew' ? crewRules(plan) : 'Start exactly ONE agent with the whole job; do not split it.'), apiBase, prompt);
+        } else await askRouter(env, ctx, p, slug, buildPayload(prompt, !starter), apiBase, prompt);
+        log('build', 'started', { slug, chars: prompt.length, plan: plan ? { kind: plan.kind, preset: plan.preset, ...(plan.kind === 'crew' ? { coders: plan.coders, reviewers: plan.reviewers, board: plan.board } : {}) } : null });
         return json({ ok: true, slug, path: `/p/${me.handle}/${name}/changes` });
       }
       if (path === '/api/import' && request.method === 'POST') {
@@ -847,6 +862,12 @@ export default {
     const u = new URL(request.url);
     if (!isUiHost(env, u.hostname)) return res;
     res = await withBaseline(request, env, res);
+    // Build settings (flag BUILD_SETTINGS): pages say whether this viewer may adjust a Build (the Adjust link).
+    if (env.BUILD_SETTINGS && env.BUILD_SETTINGS !== 'off' && (res.headers.get('content-type') || '').startsWith('text/html')) {
+      const w = await who(request, env).catch(() => null);
+      if (w?.kind === 'user' && !w.anon && buildSettingsOn(env.BUILD_SETTINGS, w.handle, env.OWNER_HANDLE))
+        res = new HTMLRewriter().on('body', { element(e) { e.setAttribute('data-build-settings', '1'); } }).transform(res);
+    }
     return withLook(res);   // the site-wide look layer (src/look.ts)
   },
 } satisfies ExportedHandler<Env>;

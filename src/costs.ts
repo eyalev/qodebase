@@ -30,7 +30,7 @@ export const CLAUDE: Record<string, { in: number; cw: number; cw1h: number; cr: 
 };
 export const WORKERS_AI_PER_1K_NEURONS = 0.011;
 
-export type Kind = 'boxes' | 'claude' | 'voice';
+export type Kind = 'boxes' | 'claude' | 'voice' | 'ai';
 export type Tokens = { in: number; out: number; cw: number; cw1h?: number; cr: number };
 export type CostRow = { usd: number | null; covered: boolean; tokens?: Tokens; seconds?: number; cpuSeconds?: number; billing?: 'api' | 'sub' };
 
@@ -104,7 +104,7 @@ export async function costSummary(env: Env, handle: string) {
 // ---- the /costs page --------------------------------------------------------------
 import { esc, shell } from './ui';
 const usd = (n: number) => (n < 0.005 && n > 0 ? '<$0.01' : `$${n.toFixed(2)}`);
-const KIND_LABEL: Record<string, string> = { boxes: 'Agent boxes', claude: 'Claude', voice: 'Talk and voice' };
+const KIND_LABEL: Record<string, string> = { boxes: 'Agent boxes', claude: 'Claude', voice: 'Talk and voice', ai: 'Build suggestions' };
 const fmtTok = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n)) + ' tokens';
 
 export function costsPage(s: Awaited<ReturnType<typeof costSummary>>, selfHost: boolean) {

@@ -108,6 +108,15 @@ export class Registry extends DurableObject<Env> {
     if (b) await this.ctx.storage.put('baseSnap', b); else await this.ctx.storage.delete('baseSnap');
   }
 
+  /** A per-day counter (Build suggestion caps): counts one use unless the day's limit is reached. */
+  async dayCount(key: string, limit: number): Promise<{ ok: boolean; n: number }> {
+    const k = `dc:${new Date().toISOString().slice(0, 10)}:${key}`;
+    const n = (await this.ctx.storage.get<number>(k)) || 0;
+    if (n >= limit) return { ok: false, n };
+    await this.ctx.storage.put(k, n + 1);
+    return { ok: true, n: n + 1 };
+  }
+
   async remove(slug: string): Promise<void> {
     await this.ctx.storage.delete(`p:${slug}`);
   }

@@ -118,6 +118,8 @@
     "API_BASE": "https://forq.forqdev.workers.dev",
     // Hard caps (the durable_object policy has no max_instances).
     "MAX_AGENTS_PER_PROJECT": "6",
+    // Build settings (Adjust on Build, src/buildsettings.ts): off | owner | all. "all" only after the Oct 14 checks.
+    "BUILD_SETTINGS": "owner",
     // Runs on the Claude subscription; everyone else brings an Anthropic API key.
     "OWNER_HANDLE": "eyal",
     // Awake boxes per other user (their containers bill this account).

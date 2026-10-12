@@ -114,7 +114,8 @@ ${needsKey ? `<p class="lede">Agents run on your own Anthropic API key. <a href=
   if(!name){err.textContent='Give the project a name.';return;}if(!prompt){err.textContent='Say what to build.';return;}
   save();if(!ME){location.href='/login?next='+encodeURIComponent('/build?step=brief');return;}
   const b=$('go');b.disabled=true;b.textContent='Creating the project';err.textContent='';
-  const r=await fetch('/api/build',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,prompt,private:(document.querySelector('input[name=vis]:checked')||{}).value==='private'})});
+  const qs=new URLSearchParams(location.search);   // Build settings from the Adjust sheet (?preset=…&v=…), passed through as is
+  const r=await fetch('/api/build',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,prompt,private:(document.querySelector('input[name=vis]:checked')||{}).value==='private',...(qs.get('preset')?{settings:{preset:qs.get('preset'),v:qs.get('v')||undefined}}:{})})});
   const j=await r.json().catch(()=>({}));
   if(!r.ok){b.disabled=false;b.textContent='Start building';err.textContent=j.error||'Could not start';return;}
   try{localStorage.removeItem(KEY)}catch{}location.href=j.path;};
