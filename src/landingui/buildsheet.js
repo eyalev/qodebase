@@ -217,7 +217,7 @@
       const r = await fetch('/api/build/suggest', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt }) });
       const d = await r.json().catch(() => ({}));
       log('suggest', { status: r.status, ms: Math.round(performance.now() - t0), job: d.job, preset: d.suggestion?.preset, bucket: d.suggestion?.bucket, model: d.model, fallback: d.fallback || false });
-      if (!r.ok || d.fallback || !d.job) st.sug = { state: 'failed', prompt, error: r.status === 429 ? 'Suggestions are used up for today.' : r.status === 404 ? 'Suggestions are not available for your account yet.' : 'Could not read your idea right now.' };
+      if (!r.ok || d.fallback || !d.job) st.sug = { state: 'failed', prompt, error: r.status === 429 ? 'Suggest can\'t run: today\'s limit for reading ideas is reached.' : r.status === 404 ? 'Suggestions are not available for your account yet.' : d.fallback ? 'Suggest can\'t run: the model didn\'t answer.' : 'Could not read your idea right now.' };
       else if (!d.suggestion) st.sug = { state: 'unsure', prompt, job: d.job, model: d.model };
       else applySuggestion(prompt, d.suggestion, d.job, d.model, touched);
     } catch (e) { log('suggest_failed', { error: String(e) }); st.sug = { state: 'failed', prompt, error: 'Could not reach qodebase.' }; }
@@ -308,6 +308,11 @@
       if (e.target.closest('.id-again') && ideaSize) pickIdea(ideaSize);
     });
   }
+  // Where the idea came from, honestly (manager, 2026-10-12: the shared daily cap ran out and ideas fell back to the
+  // curated list without a word). why: qb6's reason on a fallback ('limit' | 'model'); 'wait' while the model writes.
+  const SRC = { model: 'Written by a small model', wait: 'From our list while the model writes one', limit: 'From our list: today\'s limit for generated ideas is reached', fail: 'From our list: the model didn\'t answer', list: 'From our list: no generated idea right now' };
+  const srcOf = (d) => (d.fallback ? (d.why === 'limit' ? 'limit' : d.why === 'model' ? 'fail' : 'list') : 'model');
+  const setSrc = (w) => { const el = ideas.querySelector('.id-src'); el.textContent = SRC[w] || ''; el.dataset.src = w; };
   function showIdea(k, it, from) {
     const ta = form.querySelector('textarea');
     ta.value = it.prompt; ta.dispatchEvent(new Event('input', { bubbles: true }));
@@ -317,7 +322,7 @@
     if (it.title) (lastIdea[k] = lastIdea[k] || []).includes(it.title) || lastIdea[k].push(it.title);
     const card = ideas.querySelector('.id-card'); card.hidden = false;
     card.querySelector('.id-title').textContent = it.title || 'An idea';
-    card.querySelector('.id-src').textContent = from === 'model' ? 'written by a small model' : 'from our list';
+    setSrc(from);
     ideas.querySelectorAll('[data-size]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.size === k)));
     paint();
     log('idea', { size: k, from, title: it.title });
@@ -333,17 +338,18 @@
     try {   // a curated idea at once (no model), then the small model's
       const { r, d } = await ask(k, { fast: true, avoid });
       if (my !== ideaSeq) return;
-      if (r.ok && d.prompt) { showIdea(k, d, 'list'); shown = d.prompt; }
+      if (r.ok && d.prompt) { showIdea(k, d, 'wait'); shown = d.prompt; }
       else if (r.status === 429) { title.textContent = 'Ideas are used up for today.'; return; }
     } catch (e) { log('idea_fast_failed', { error: String(e) }); }
     try {
       const { r, d } = await ask(k, { avoid: (lastIdea[k] || []).slice(-12) });
-      log('idea_model', { status: r.status, size: k, title: d.title || null, fallback: !!d.fallback });
-      if (my !== ideaSeq || !r.ok || !d.prompt) { if (!shown && my === ideaSeq) title.textContent = 'Could not get an idea right now.'; return; }
-      if (d.fallback && shown) return;   // the model did not answer in time: keep the curated one
-      if (shown && form.querySelector('textarea').value !== shown) return;   // the person edited it: keep theirs
-      showIdea(k, d, d.fallback ? 'list' : 'model');
-    } catch (e) { log('idea_failed', { error: String(e) }); if (!shown && my === ideaSeq) title.textContent = 'Could not reach qodebase.'; }
+      log('idea_model', { status: r.status, size: k, title: d.title || null, fallback: !!d.fallback, why: d.why || null });
+      if (my !== ideaSeq) return;
+      if (!r.ok || !d.prompt) { if (shown) setSrc('fail'); else title.textContent = 'Could not get an idea right now.'; return; }
+      if (d.fallback && shown) return setSrc(srcOf(d));   // no generated idea: keep the curated one and say why
+      if (shown && form.querySelector('textarea').value !== shown) return setSrc(d.fallback ? srcOf(d) : 'list');   // the person edited it: keep theirs
+      showIdea(k, d, srcOf(d));
+    } catch (e) { log('idea_failed', { error: String(e) }); if (my === ideaSeq) { if (shown) setSrc('fail'); else title.textContent = 'Could not reach qodebase.'; } }
   }
   async function loadSim() {
     try {
