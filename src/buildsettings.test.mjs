@@ -67,3 +67,16 @@ test('job.name: kebab-case, 2-3 words, no word twice; a bad name is left out', (
   assert.equal('name' in parseJob('{"tasks":5,"overlap":"low","difficulty":"easy","confidence":0.8}'), false);
   assert.match(SUGGEST_SYSTEM, /"name"/);
 });
+
+test('estimate vs elapsed: the shown estimate is checked and stamped; spend is priced at the lab rates per row model', async () => {
+  const { cleanEstimate, apiUsdOf } = await import('./buildsettings.ts');
+  const plan = resolveBuildPlan({ preset: 'cheapest' }, O);
+  const e = cleanEstimate({ wallS: [300, 720], apiUsd: [0.6, 0.9], basis: 'idea', basedOn: 25, simVersion: 'lab-0.12', extra: 'x' }, plan, 1000);
+  assert.deepEqual(e, { startedAt: 1000, wallS: [300, 720], apiUsd: [0.6, 0.9], preset: 'cheapest', v: { coders: 6, coderModel: 'haiku', reviewers: 0, board: false }, basis: 'idea', basedOn: 25, simVersion: 'lab-0.12' });
+  for (const bad of [null, {}, { wallS: [5, 1], apiUsd: [0, 1] }, { wallS: [1, 2], apiUsd: [-1, 1] }, { wallS: [1, 2, 3], apiUsd: [0, 1] }]) assert.equal(cleanEstimate(bad, plan), null);
+  assert.equal(cleanEstimate({ wallS: [1, 2], apiUsd: [0, 1] }, null).preset, null, 'a default build (no plan) still keeps its estimate');
+  const rows = [{ kind: 'claude', project: 'eyal/app:claude-haiku-5-5', tokens: { in: 1e6, out: 1e6 } }, { kind: 'claude', project: 'eyal/app', tokens: { out: 1e5 } },
+    { kind: 'boxes', project: 'eyal/app', tokens: { in: 1e9 } }, { kind: 'claude', project: 'eyal/other', tokens: { in: 1e6 } }];
+  assert.equal(apiUsdOf(rows, 'eyal/app'), 0.6 + 2, 'haiku 1M in + 1M out = $0.60; the unnamed row at opus: 100k out = $2');
+  assert.equal(apiUsdOf([], 'eyal/app'), null, 'no token rows yet: unknown, not $0');
+});

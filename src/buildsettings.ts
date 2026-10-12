@@ -115,3 +115,40 @@ export function parseJob(text: string): Job | null {
   return { tasks, overlap: j.overlap, difficulty: j.difficulty, vague: j.vague === true, summary: String(j.summary || '').replace(/\s+/g, ' ').trim().slice(0, 120), confidence, ...(name ? { name } : {}) };
 }
 
+
+// ---- the estimate shown at Build, and what the build really took (estimate vs elapsed bar) ----
+export type BuildEstimate = { startedAt: number; wallS: [number, number]; apiUsd: [number, number]; preset: string | null;
+  v: { coders?: number; coderModel?: string; reviewers?: number; board?: boolean } | null; basis: 'typical' | 'idea'; basedOn: number | null; simVersion: string | null };
+
+/** The estimate the page showed, as sent with the build: numbers checked, nothing else kept. Null when absent or bad. */
+export function cleanEstimate(e: unknown, plan: BuildPlan | null, now = Date.now()): BuildEstimate | null {
+  if (!e || typeof e !== 'object') return null;
+  const o = e as Record<string, unknown>;
+  const pair = (x: unknown, max: number): [number, number] | null => {
+    if (!Array.isArray(x) || x.length !== 2) return null;
+    const [a, b] = x.map(Number);
+    return Number.isFinite(a) && Number.isFinite(b) && a >= 0 && b >= a && b <= max ? [a, b] : null;
+  };
+  const wallS = pair(o.wallS, 7 * 86400), apiUsd = pair(o.apiUsd, 1000);
+  if (!wallS || !apiUsd) return null;
+  return { startedAt: now, wallS, apiUsd, preset: plan?.preset || null,
+    v: plan ? (plan.kind === 'single' ? { coders: 1, coderModel: plan.model, reviewers: 0, board: false } : { coders: plan.coders, coderModel: plan.coderModel, reviewers: plan.reviewers, board: plan.board }) : null,
+    basis: o.basis === 'idea' ? 'idea' : 'typical', basedOn: Number.isFinite(Number(o.basedOn)) ? Math.round(Number(o.basedOn)) : null,
+    simVersion: typeof o.simVersion === 'string' ? o.simVersion.slice(0, 40) : null };
+}
+
+/** API-price cost of a project's Claude token rows (the Ledger), at the lab's standard rates, so it compares with
+ *  the estimate (predict.js prices the same way). A row names its model (`owner/name:model`); else `fallback`. */
+const RATES: Record<string, [number, number, number, number, number]> = {   // per MTok: in, out, cache read, 5-min write, 1-h write
+  haiku: [0.10, 0.50, 0.01, 0.125, 0.20], sonnet: [2, 10, 0.10, 2.5, 4], opus: [4, 20, 0.20, 5, 8] };
+export function apiUsdOf(rows: { kind: string; project: string; tokens?: { in?: number; out?: number; cr?: number; cw?: number; cw1h?: number } }[], project: string, fallback = 'opus') {
+  let usd = 0, n = 0;
+  for (const r of rows) {
+    if (r.kind !== 'claude' || !r.tokens || !(r.project === project || r.project.startsWith(project + ':'))) continue;
+    const m = r.project.includes(':') ? r.project.slice(r.project.lastIndexOf(':') + 1) : fallback;
+    const k = /opus/.test(m) ? 'opus' : /sonnet/.test(m) ? 'sonnet' : 'haiku';
+    const [i, o, cr, cw, cw1h] = RATES[k], t = r.tokens;
+    usd += ((t.in || 0) * i + (t.out || 0) * o + (t.cr || 0) * cr + (t.cw || 0) * cw + (t.cw1h || 0) * cw1h) / 1e6; n++;
+  }
+  return n ? Math.round(usd * 1000) / 1000 : null;
+}

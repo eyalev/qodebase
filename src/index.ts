@@ -18,7 +18,7 @@ import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectP
 import { previewTabs } from './sheet';
 import { catalogReadme } from './catalog';
 import { STARTER, buildPayload } from './newproject';
-import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask } from './buildsettings';
+import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, cleanEstimate } from './buildsettings';
 import { suggestRoute } from './buildsuggest';
 import { buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
@@ -548,7 +548,7 @@ const app = {
       }
       if (path === '/api/build' && request.method === 'POST') {
         if (!me.handle) return json({ error: 'Sign in first' }, 401);
-        const b = await request.json().catch(() => ({})) as { name?: string; prompt?: string; private?: boolean; settings?: unknown };
+        const b = await request.json().catch(() => ({})) as { name?: string; prompt?: string; private?: boolean; settings?: unknown; estimate?: unknown };
         const prompt = String(b.prompt || '').trim().slice(0, 3000);
         if (prompt.length < 4) return json({ error: 'Say what to build' }, 400);
         if (!onSubscription(env, me.handle) && !(await userByHandle(env, me.handle))?.apiKeyEnc) return json({ error: 'Add your Anthropic API key in Settings first' }, 400);
@@ -577,7 +577,10 @@ const app = {
           if (plan.kind === 'single' && starter) await spawn(env, ctx, slug, singleTask(prompt, false), apiBase);
           else await askRouter(env, ctx, p, slug, buildPayload(prompt, !starter) + '\n\n' + (plan.kind === 'crew' ? crewRules(plan) : 'Start exactly ONE agent with the whole job; do not split it.'), apiBase, prompt);
         } else await askRouter(env, ctx, p, slug, buildPayload(prompt, !starter), apiBase, prompt);
-        log('build', 'started', { slug, chars: prompt.length, plan: plan ? { kind: plan.kind, preset: plan.preset, ...(plan.kind === 'crew' ? { coders: plan.coders, reviewers: plan.reviewers, board: plan.board } : {}) } : null });
+        // The estimate the page showed (estimate vs elapsed bar), stamped with the start.
+        const est = buildSettingsOn(env.BUILD_SETTINGS, me.handle, env.OWNER_HANDLE) ? cleanEstimate(b.estimate, plan) : null;
+        if (est) await env.Landing.get(env.Landing.idFromName(slug)).setBuild(slug, est);
+        log('build', 'started', { slug, chars: prompt.length, estimate: est ? { wallS: est.wallS, apiUsd: est.apiUsd, basis: est.basis } : null, plan: plan ? { kind: plan.kind, preset: plan.preset, ...(plan.kind === 'crew' ? { coders: plan.coders, reviewers: plan.reviewers, board: plan.board } : {}) } : null });
         return json({ ok: true, slug, path: `/p/${me.handle}/${name}/changes` });
       }
       if (path === '/api/import' && request.method === 'POST') {
@@ -666,7 +669,11 @@ const app = {
         }
         const info = await p.info();
         if (!info) return json({ error: 'no such project' }, 404);
-        if (verb === '' && request.method === 'GET') return json(info);
+        if (verb === '' && request.method === 'GET') {
+          // Estimate vs elapsed (Build): the estimate shown and the progress, when the project was built with one.
+          const bi = await env.Landing.get(env.Landing.idFromName(slug)).buildInfo().catch(() => null);
+          return json(bi ? { ...info, ...bi } : info);
+        }
         if (verb === 'fork' && request.method === 'POST') {
           if (info.owner === me.handle) return json({ error: 'this is already yours' }, 400);
           const tooMany = await overProjectLimit(env, me.handle);

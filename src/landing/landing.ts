@@ -23,6 +23,7 @@ import { recordCost, claudeUsd } from '../costs';
 import { pushSeed } from './demo';
 import { SEED } from './demoproject';
 import { pushAlert } from '../alert';
+import { apiUsdOf, type BuildEstimate } from '../buildsettings';
 import { makeBoardEvent, boardView, boardText, taskIds, knownTaskIds, claimHolders, pickNext, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
@@ -105,7 +106,9 @@ type Meta = {
   boardClaims?: Record<string, { ids: string[]; at: number }>;   // board: task ids each agent claimed, and when (earliest keeps it)
   aliases?: Alias[];                         // board: pairs the dedupe pass found to be the same work
   dedupeLists?: { by: string; at: number; items: { id: string; text: string }[] }[];   // every task list registered (forq dedupe / forq tasks)
-  tasksDone?: string[];                      // task ids whose claiming change landed (claims, forq next)
+  tasksDone?: string[];
+  /** The estimate shown at Build (estimate vs elapsed bar) and, once the build settled, what it really took. */
+  build?: BuildEstimate & { actual?: { settledAt: number; actualWallS: number; actualUsd: number | null } };                      // task ids whose claiming change landed (claims, forq next)
   boardPosts?: number;                       // board: posts since the last prune   // messages to real agents, sent from the alarm        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
 };
 
@@ -383,6 +386,36 @@ export class Landing extends DurableObject<Env> {
     await this.#saveMeta();
     if (m.flags.board) await this.boardPost({ agent: by, kind: 'done', intent: `dedupe pass: ${pairs.length ? pairs.map(([a, b]) => `${a} = ${b}`).join(', ') : 'no duplicates'}`, status: 'dedupe' });
     return m.aliases;
+  }
+
+  // ---- estimate vs elapsed (Build) ------------------------------------------------
+  async setBuild(slug: string, e: BuildEstimate) { const m = await this.#m(slug); m.build = e; await this.#saveMeta(); }
+  #progressMemo: { at: number; v: unknown } | null = null;
+  /** {estimate, progress} for the project page and Agents at work; null when built without an estimate.
+   *  Settled = every agent merged and nothing new for 3 min (as the lab runner settles); recorded once. */
+  async buildInfo(): Promise<{ estimate: BuildEstimate; progress: { spentUsd: number | null; settledAt: number | null; actualWallS: number | null; actualUsd: number | null } } | null> {
+    const m = await this.#m();
+    const b = m.build;
+    if (!b) return null;
+    const estimate = { startedAt: b.startedAt, wallS: b.wallS, apiUsd: b.apiUsd, preset: b.preset, v: b.v, basis: b.basis, basedOn: b.basedOn, simVersion: b.simVersion };
+    if (b.actual) return { estimate, progress: { spentUsd: b.actual.actualUsd, settledAt: b.actual.settledAt, actualWallS: b.actual.actualWallS, actualUsd: b.actual.actualUsd } };
+    if (this.#progressMemo && Date.now() - this.#progressMemo.at < 15_000) return { estimate, progress: this.#progressMemo.v as any };
+    const [owner, name] = m.slug.split('.');
+    const rows = await this.env.Ledger.get(this.env.Ledger.idFromName(owner)).rows(3).catch(() => []);
+    const spentUsd = apiUsdOf(rows as any, `${owner}/${name}`, b.v?.coderModel || 'opus');
+    const info = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info().catch(() => null);
+    const agents = info?.agents || [];
+    const last = Math.max(0, ...agents.map((a) => a.noteAt || 0));
+    let progress = { spentUsd, settledAt: null as number | null, actualWallS: null as number | null, actualUsd: null as number | null };
+    if (agents.length && agents.every((a) => a.state === 'merged') && last > b.startedAt && Date.now() - last > 3 * 60_000) {
+      b.actual = { settledAt: last, actualWallS: Math.round((last - b.startedAt) / 1000), actualUsd: spentUsd };
+      await this.#saveMeta();
+      // One line per finished build, to recalibrate the predictor on real builds later (Workers Logs, event build_settled).
+      log('build', 'build_settled', { slug: m.slug, estimate, actual: b.actual, agents: agents.length });
+      progress = { spentUsd, settledAt: last, actualWallS: b.actual.actualWallS, actualUsd: spentUsd };
+    }
+    this.#progressMemo = { at: Date.now(), v: progress };
+    return { estimate, progress };
   }
 
   // ---- the queue ---------------------------------------------------------------
@@ -883,6 +916,8 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       demo: m.demo || m.flags.publicWatch ? { ...(m.demo || { running: false, agents: 0, speed: 1, startedAt: 0, endsAt: 0 }),
         active: this.#active(m), public: !!m.flags.publicWatch, runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 86400_000).length) } : null,
       flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch, board: !!m.flags.board },
+      // Estimate vs elapsed (Build): absent when built without an estimate.
+      ...(m.build ? await this.buildInfo() : {}),
       // The board (qb7's "who works on what"): working now + finished in the last 30 min + dedupe aliases.
       ...(m.flags.board ? { board: await this.boardWho({ recent: 30 * 60_000 }).then(({ rows, aliases }) => ({ rows, aliases })) } : {}),
       ...(m.flags.budgetUsd ? { budget: { usd: m.flags.budgetUsd, spent: m.spent?.usd ?? 0, halted: !!m.flags.halted, reviewers: m.flags.reviewers || 1 } } : {}),
