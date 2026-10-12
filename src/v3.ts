@@ -759,6 +759,10 @@ body.bs-on{overflow:hidden}
 .bs-head{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);padding:10px 0 6px}
 .bs-head h2{font-size:18px;font-weight:600;margin:0}
 .bs-x{border:0;background:none;color:var(--dim);font-size:26px;width:44px;height:44px;margin-right:-10px;cursor:pointer}
+.bs-sug{margin:0 0 12px}.bs-sug p{margin:0}.bs-sug .bs-src{margin-top:6px}
+.bs-sugb{width:100%;min-height:44px;border:0;border-radius:12px;background:var(--chip);color:var(--fg);font:inherit;font-size:15px;font-weight:500;cursor:pointer}
+.bs-sugb:disabled{opacity:.5;cursor:default}
+.bs-sugd{padding:12px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line)}.bs-sugd:focus{outline:none}
 .bs-presets{display:grid;gap:8px}
 .bs-p{display:flex;flex-direction:column;gap:2px;text-align:left;border:0;cursor:pointer;background:var(--card);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:10px 12px;min-height:44px;font:inherit}
 .bs-p b{font-weight:600;font-size:15px}.bs-p span{font-size:13px;color:var(--dim)}

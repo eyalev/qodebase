@@ -30,7 +30,15 @@
   const GLOSS = { coders: 'With more than one agent, an Opus planner splits the work and each agent builds a piece on its own copy of the code.', board: 'Each agent says what it is doing and which files it touches, and repeated tasks are merged, so agents do not build the same thing twice.', reviewers: 'Another agent reads each change before it can land.' };
 
   const DEFAULT_V = { planner: 'opus', coders: 1, coderModel: 'opus', reviewers: 0, board: false };   // what Build does without the sheet
-  const st = { v: { ...DEFAULT_V }, est: null, estState: 'idle', applied: null };
+  const st = { v: { ...DEFAULT_V }, est: null, estState: 'idle', applied: null, sug: null };
+  // B4: 'Suggest settings for my prompt' (POST /api/build/suggest, owner-only while the flag is 'owner'). sug =
+  // { state: 'reading'|'done'|'unsure'|'failed', prompt, job, preset, why, model, error }. While it matches the
+  // box's text, every estimate is for that job instead of a typical small app.
+  const idea = () => (form.querySelector('textarea')?.value || '').trim();
+  const modelName = (m) => (!m ? 'a small model' : /haiku/i.test(m) ? 'a small model (Claude Haiku)' : /glm/i.test(m) ? 'a small model (GLM-4.7 Flash on Cloudflare)' : `a small model (${m.replace(/^@cf\/[^/]+\//, '')})`);
+  const OVERLAP_W = { low: 'pieces mostly separate', some: 'some pieces touch the same files', high: 'many pieces touch the same files' };
+  const DIFF_W = { easy: 'easy', normal: 'normal difficulty', hard: 'hard' };
+  const jobNow = () => (st.sug?.job && st.sug.prompt === idea() ? st.sug.job : null);
   let SIM = null;
 
   async function loadSim() {
@@ -43,15 +51,19 @@
   function estimate() {
     if (!SIM?.predictBuild) return null;
     try {
-      const r = SIM.predictBuild(SIM.SMALL_APP, toVariant(st.v));
-      return r && { wallS: r.wallS, usd: r.apiUsd, basedOn: r.basedOn, same: r.sameSetup, quality: r.quality, notes: r.notes || [], job: r.job?.label || 'a small app', tasks: r.job?.tasks };
+      const j = jobNow();
+      const r = SIM.predictBuild(j ? { tasks: j.tasks, overlap: j.overlap, difficulty: j.difficulty, label: 'your idea' } : SIM.SMALL_APP, toVariant(st.v));
+      return r && { wallS: r.wallS, usd: r.apiUsd, basedOn: r.basedOn, same: r.sameSetup, quality: r.quality, notes: r.notes || [], mine: !!j, tasks: r.job?.tasks };
     } catch (e) { log('estimate_failed', { error: String(e), v: st.v }); return 'error'; }
   }
+  // What the sheet ticks: a preset whose team matches, the board aside (a suggestion can turn it on). What it
+  // sends is presetOf: exact, else 'custom' with v, so the board choice reaches the server.
+  const presetLook = (v) => Object.keys(PRESETS).find((k) => KNOBS.every(([n]) => n === 'board' || PRESETS[k].v[n] === v[n])) || 'custom';
   const presetOf = (v) => Object.keys(PRESETS).find((k) => KNOBS.every(([n]) => PRESETS[k].v[n] === v[n])) || 'custom';
   const M = { haiku: 'Haiku', sonnet: 'Sonnet', opus: 'Opus' };
   const alone = (v) => v.coders === 1 && v.coderModel === 'opus' && !v.reviewers;
   const team = (v) => (alone(v) ? 'one Opus agent' : `${v.coders} ${M[v.coderModel]} agent${v.coders === 1 ? '' : 's'} and an Opus planner${v.reviewers ? `, ${v.reviewers} reviewer${v.reviewers === 1 ? '' : 's'}` : ''}${v.board ? ', shared board' : ''}`);
-  const summary = (key, v, e) => `${key === 'custom' ? 'Custom' : PRESETS[key].name}: ${team(v)}${e && e !== 'error' ? `, about ${range(e.usd, usd)}` : ''}`;
+  const summary = (key, v, e) => `${key === 'custom' ? (presetLook(v) !== 'custom' ? PRESETS[presetLook(v)].name : 'Custom') : PRESETS[key].name}: ${team(v)}${e && e !== 'error' ? `, about ${range(e.usd, usd)}` : ''}`;
 
   // The estimate's details (scroll with the sheet) and its one line (in the sticky footer, next to the button).
   function estHtml() {
@@ -59,19 +71,50 @@
     const e = st.est;
     if (!e || e === 'error') return '';
     return `<div class="bs-est"><p class="bs-q">${esc(e.quality)}${e.notes.length ? ` ${esc(e.notes.join(' '))}` : ''}</p>
-      <p class="bs-src">For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet. Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}. With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.</p></div>`;
+      <p class="bs-src">${e.mine ? `For your idea, as the small model read it (about ${e.tasks} pieces of work).` : `For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet.`} Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}. With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.</p></div>`;
   }
   function estLine() {
     if (st.estState === 'loading') return 'Estimating…';
     const e = st.est;
     if (!e || e === 'error') return `${e === 'error' ? 'No estimate right now.' : 'No estimate yet.'} You can still build with these settings.`;
-    return `About <b>${range(e.wallS, mins)}</b> and <b>${range(e.usd, usd)}</b> at API prices`;
+    return `${e.mine ? 'Your idea: about' : 'About'} <b>${range(e.wallS, mins)}</b> and <b>${range(e.usd, usd)}</b> at API prices`;
+  }
+  function sugHtml() {
+    const g = st.sug, txt = idea();
+    if (g?.state === 'reading') return '<div class="bs-sug"><p class="bs-src" aria-live="polite">Reading your idea…</p></div>';
+    const btn = (label) => `<button type="button" class="bs-sugb" data-suggest${txt.length < 4 ? ' disabled' : ''}>${label}</button>${txt.length < 4 ? '<p class="bs-src">Write your idea in the box first.</p>' : ''}`;
+    if (!g || g.prompt !== txt) return `<div class="bs-sug">${btn('Suggest settings for my idea')}${g && g.prompt !== txt && txt ? '<p class="bs-src">Your idea changed since the last suggestion.</p>' : ''}</div>`;
+    if (g.state === 'failed') return `<div class="bs-sug"><p class="bs-src">${esc(g.error || 'Could not read your idea right now.')} Pick a preset yourself.</p>${g.retry ? btn('Try again') : ''}</div>`;
+    const j = g.job, facts = j ? `About ${j.tasks} pieces of work, ${OVERLAP_W[j.overlap] || j.overlap}, ${DIFF_W[j.difficulty] || j.difficulty}.` : '';
+    const head = g.state === 'unsure' ? '<p class="bs-q">The small model was not sure what this needs. Pick a preset yourself; the estimate below uses what it read.</p>'
+      : `<p class="bs-q"><b>Suggested: ${esc(PRESETS[g.preset]?.name || g.preset)}.</b> ${esc(g.why)}</p>`;
+    return `<div class="bs-sug bs-sugd">${head}${facts ? `<p class="bs-src">${esc(facts)} Read by ${esc(modelName(g.model))}, which can be wrong.</p>` : ''}</div>`;
+  }
+  async function suggest() {
+    const prompt = idea();
+    st.sug = { state: 'reading', prompt }; render();
+    const t0 = performance.now();
+    try {
+      const r = await fetch('/api/build/suggest', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt }) });
+      const d = await r.json().catch(() => ({}));
+      log('suggest', { status: r.status, ms: Math.round(performance.now() - t0), job: d.job, preset: d.suggestion?.preset, model: d.model, fallback: d.fallback || false });
+      if (!r.ok || d.fallback || !d.job) st.sug = { state: 'failed', prompt, retry: r.status !== 429 && r.status !== 404, error: r.status === 429 ? 'Suggestions are used up for today.' : r.status === 404 ? 'Suggestions are not available for your account yet.' : 'Could not read your idea right now.' };
+      else if (!d.suggestion) st.sug = { state: 'unsure', prompt, job: d.job, model: d.model };
+      else {
+        st.sug = { state: 'done', prompt, job: d.job, preset: d.suggestion.preset, why: d.suggestion.why, model: d.model };
+        const pv = PRESETS[d.suggestion.preset]?.v;
+        if (pv) st.v = { ...pv, ...(typeof d.suggestion.board === 'boolean' && pv.coders > 1 ? { board: d.suggestion.board } : {}) };
+      }
+    } catch (e) { log('suggest_failed', { error: String(e) }); st.sug = { state: 'failed', prompt, retry: true, error: 'Could not reach qodebase.' }; }
+    recompute();
+    root.querySelector('.bs-sug')?.setAttribute('tabindex', '-1'); root.querySelector('.bs-sug')?.focus();
   }
   function render() {
-    const key = presetOf(st.v);
+    const key = presetLook(st.v);
     root.innerHTML = `<div class="bs-scrim" data-close></div>
       <div class="bs-panel" role="dialog" aria-modal="true" aria-labelledby="bs-t">
         <div class="bs-head"><h2 id="bs-t">Who builds it</h2><button type="button" class="bs-x" data-close aria-label="Close">×</button></div>
+        ${sugHtml()}
         ${Object.keys(PRESETS).length ? '' : st.estState === 'loading' ? '<p class="bs-src">Loading the presets…</p>' : '<p class="bs-src">The presets did not load. Fine-tune below, or build with the default.</p>'}
         <div class="bs-presets" role="radiogroup" aria-label="Presets">${Object.entries(PRESETS).map(([k, p]) => `<button type="button" role="radio" class="bs-p" data-preset="${k}" aria-checked="${key === k}"><b>${esc(p.label)}</b><span>${esc(p.why)}</span></button>`).join('')}</div>
         <details class="bs-fine"${(key === 'custom' && Object.keys(PRESETS).length) || st.fineOpen ? ' open' : ''}><summary>Fine-tune${key === 'custom' ? ' (custom)' : ''}</summary>
@@ -119,6 +162,7 @@
     if (k) { st.v[k.dataset.k] = JSON.parse(k.dataset.val); if (st.v.coders === 1) st.v.board = false; st.fineOpen = true; return recompute(); }
     const g = e.target.closest('[data-gloss]');
     if (g) { st.glossOpen = st.glossOpen === g.dataset.gloss ? null : g.dataset.gloss; st.fineOpen = true; return render(); }
+    if (e.target.closest('[data-suggest]')) return suggest();
     if (e.target.closest('[data-apply]')) return apply(false);
     if (e.target.closest('[data-reset]')) { st.v = { ...DEFAULT_V }; recompute(); root.querySelector('.bs-p[aria-checked="true"]')?.focus(); return; }
   });
