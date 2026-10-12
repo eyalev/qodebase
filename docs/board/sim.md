@@ -919,3 +919,53 @@ What still stands from (j):
 - lanes by crate do not fit Bun's port, and finer areas do not rescue them;
 - phase b is not agent-bound;
 - above ~640 agents nothing improves (BUN3: already above 64).
+
+## (k) BUN5: is Bun's chain a property of porting, or of how the work was cut? (qb4, 2026-10-12, before the runs)
+
+BUN3 found Bun's commits are content chains (89% edit lines an earlier commit wrote, longest 322), so 640 agents
+finish c+d+e no sooner than 64 (26.2 h, real 25.3 h). BUN5 re-cuts the same work: **one owner's task per Rust
+module (file)**. That merges the port, make-it-compile and test fixes for a file into one agent, so every content
+chain (chains are per line, hence per file) runs inside one agent with no handoffs.
+
+Ordering comes from the real module structure (`use`/`mod` in the tip's 1,448 `.rs` files; crate edges from
+`Cargo.toml`). Work time per module task = the sum of its commits' times (BUN3's calibration: 65 s median per
+commit × (1 + 0.3 ln files), lognormal 0.6), each commit's time split across the files it touched.
+
+Two orderings:
+- **interfaces-first:** each module's interface (20% of its work) is written first, and waits only for the
+  interfaces of the crates its crate depends on (the crate graph has no cycles). The rest of the module waits for
+  the interfaces of the modules it uses.
+- **strict:** a module waits until every module it uses is completely done. The cycles inside a crate are merged
+  into one task, which one agent must do in sequence.
+
+**Data before any run** (same c..e window as BUN3: 4,097 commits, 1,221 files):
+- **Total work:** ~119 agent-hours. Spread perfectly over 64 agents that is 1.9 h; BUN3 took 26.2 h, so its agents
+  were busy ~7% of the time.
+- **Biggest single module:** `runtime/bake/DevServer.rs` at ~2.2 h. Next: `bundle_v2.rs` 1.9 h, `Blob.rs` 1.7 h,
+  `server_body.rs` 1.7 h.
+
+**Predictions:**
+1. **Interfaces-first finishes c+d+e in ~5–7 h at 64 agents, 4–5× faster than BUN3's 26.2 h.** The critical path is
+   the interface layers through the crate graph (~0.3–0.5 h per layer) plus the biggest module's remaining 80%
+   (~1.8 h).
+2. **640 and 6,400 agents gain little over 64** (≤ 20%). The work spread over 64 agents (~1.9 h) is already
+   shorter than the critical path. Most parallelism appears right after the interfaces: hundreds of modules at
+   once for a short while.
+3. **Strict ordering is no better than BUN3, likely worse.** The modules inside a crate use each other in cycles,
+   so whole crates merge into single tasks, and `src/runtime` (~57% of the work) becomes one agent's serial job.
+4. **Agent-hours ≈ 119** in both orderings, against BUN3's 64 agents × 26.2 h mostly waiting. No collisions:
+   owners never share a file.
+
+So **the chain is mostly how the work was cut, if a port can be cut interfaces-first.** If it cannot, the chain is
+real.
+
+**Caveats** (as the manager asked):
+- **No handoff cost.** Merging a file's commits assumes one agent could do them in sequence, without the
+  re-reading a handoff costs, and that it would take as long as the many agents did.
+- **Module order from imports is an approximation.** `use` lines show what a module needs, not when; "interface =
+  20% of the work" is an assumption (sensitivity 10–30%).
+- **Bun did do a draft port first** (phase a, 100-file batches), which plays the role of interfaces here.
+
+**Falsifiers:**
+- interfaces-first takes more than 13 h at 64 agents (less than 2× BUN3);
+- 640 agents are more than 1.5× faster than 64 (then work, not the critical path, binds).
