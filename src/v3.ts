@@ -274,9 +274,9 @@ load();setInterval(function(){if(!document.hidden)load()},15000);
 
 type Landed = { id: string; title?: string; intent?: string; agent?: string; verdict?: 'approved' | 'auto' | 'changes' | null; reviewer?: string; replayed?: boolean; how?: 'clean' | 'handler' | 'model' | null; stackedOn?: string; landedAt?: number };
 /** G2: the one-line 'why' under a landed commit: its intent, how it was reviewed, how it landed (qb6's info.landed). */
-function whyLine(l: Landed) {
+function whyLine(l: Landed, shown?: string) {
   // The intent often starts with the title itself: say only what the title does not.
-  const ttl = (l.title || '').replace(/[.\s]+$/, ''), raw = (l.intent || '').replace(/\s+/g, ' ').trim().replace(/^In \/workspace\/repo[^,]*,\s*/i, '');
+  const ttl = (shown || l.title || '').replace(/[.\s]+$/, ''), raw = (l.intent || '').replace(/\s+/g, ' ').trim().replace(/^In \/workspace\/repo[^,]*,\s*/i, '');
   // Only a whole first sentence equal to the title goes (titles are often the intent cut mid-word: keep it then).
   const m = /^(.+?[.!?])\s+(.*)$/.exec(raw);
   const intent = m && ttl && m[1].replace(/[.!?]+$/, '').trim().toLowerCase() === ttl.toLowerCase() ? m[2] : raw;
@@ -293,13 +293,13 @@ function historyView(c: Ctx) {
   const byId = new Map(Object.values(landed).map((l) => [l.id, l] as const));
   const lookup = (hash: string) => landed[hash] || Object.entries(landed).find(([k]) => k.startsWith(hash) || hash.startsWith(k))?.[1];
   const record = (id: string) => `/p/${c.info.owner}/${c.info.name}/work#/change/${encodeURIComponent(id)}`;
-  for (const ch of c.done) if (byId.has(ch.a.id)) { const l = byId.get(ch.a.id)!; items.push({ at: l.landedAt || ch.a.noteAt || ch.a.createdAt, html: `<a class="hrow" href="${record(ch.a.id)}"><span class="k">Landed</span><span class="t">${esc(ch.title)}</span><span class="why">${esc(whyLine(l))}</span></a>` }); } else items.push({ at: ch.a.noteAt || ch.a.createdAt, html: `<span class="k">Merged</span><span class="t">${esc(ch.title)}</span><a class="sub" href="/p/${c.info.owner}/${c.info.name}/changes/${shortId(ch.a.id)}">See the code</a>` });
+  for (const ch of c.done) if (byId.has(ch.a.id)) { const l = byId.get(ch.a.id)!; items.push({ at: l.landedAt || ch.a.noteAt || ch.a.createdAt, html: `<a class="hrow" href="${record(ch.a.id)}"><span class="k">Landed</span><span class="t">${esc(ch.title)}</span><span class="why">${esc(whyLine(l, ch.title))}</span></a>` }); } else items.push({ at: ch.a.noteAt || ch.a.createdAt, html: `<span class="k">Merged</span><span class="t">${esc(ch.title)}</span><a class="sub" href="/p/${c.info.owner}/${c.info.name}/changes/${shortId(ch.a.id)}">See the code</a>` });
   for (const cm of c.overview.commits) {
     if (/^Merge /.test(cm.message)) continue;
     const l = lookup(cm.hash);
     if (l && c.done.some((ch) => ch.a.id === l.id)) continue;   // already listed as its change, above
     items.push({ at: cm.at, html: l
-      ? `<a class="hrow" href="${record(l.id)}"><span class="k">Commit</span><span class="t">${esc(cm.message)}</span><span class="why">${esc(whyLine(l))}</span><code class="sub">${esc(cm.hash.slice(0, 7))}</code></a>`
+      ? `<a class="hrow" href="${record(l.id)}"><span class="k">Commit</span><span class="t">${esc(cm.message)}</span><span class="why">${esc(whyLine(l, cm.message))}</span><code class="sub">${esc(cm.hash.slice(0, 7))}</code></a>`
       : `<span class="k">Commit</span><span class="t">${esc(cm.message)}</span><code class="sub">${esc(cm.hash.slice(0, 7))}</code>` });
   }
   const dep = c.overview.app ?? c.info.app;
