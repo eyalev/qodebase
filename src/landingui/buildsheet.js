@@ -42,12 +42,13 @@
   // ---- markup, built once; a drag only updates text, bars and inputs ----
   root.innerHTML = `
     <div class="bs-chips" role="radiogroup" aria-label="Presets">
-      <button type="button" role="radio" class="bs-chip" data-preset="fastest" aria-checked="true">Fastest</button>
-      <button type="button" role="radio" class="bs-chip" data-preset="balanced" aria-checked="false">Balanced</button>
-      <button type="button" role="radio" class="bs-chip" data-preset="cheapest" aria-checked="false">Cheapest</button>
-      <button type="button" role="radio" class="bs-chip" data-preset="idea" aria-checked="false">For my idea</button>
-      <span class="bs-custom" hidden>Custom</span>
+      <button type="button" role="radio" class="bs-chip" data-preset="fastest" aria-checked="true"><b>Fastest</b><small></small></button>
+      <button type="button" role="radio" class="bs-chip" data-preset="balanced" aria-checked="false"><b>Balanced</b><small></small></button>
+      <button type="button" role="radio" class="bs-chip" data-preset="cheapest" aria-checked="false"><b>Cheapest</b><small></small></button>
+      <button type="button" role="radio" class="bs-chip" data-preset="idea" aria-checked="false">Suggest from my idea</button>
+      <span class="bs-chip bs-custom" aria-current="true" hidden>Custom: your own mix</span>
     </div>
+    <p class="bs-hint bs-ideahint" hidden>Write your idea in the box above first; a small model reads it and suggests settings.</p>
     <p class="bs-why" aria-live="polite"></p>
     <div class="bs-sl">
       <label class="bs-row"><span class="bs-rl">Agents</span><b class="bs-rv" data-out="coders"></b>
@@ -64,11 +65,11 @@
       <p class="bs-hint" id="bs-hb"></p>
     </div>
     <div class="bs-out" aria-live="polite">
-      <div class="bs-bar"><span class="bs-bl">Time</span><b data-out="time"></b><div class="bs-track" data-bar="time"><i></i></div><span class="bs-ends"><span>30 s</span><span>1 h</span></span></div>
-      <div class="bs-bar"><span class="bs-bl">Cost at API prices</span><b data-out="cost"></b><div class="bs-track" data-bar="cost"><i></i></div><span class="bs-ends"><span>$0.10</span><span>$10</span></span></div>
+      <div class="bs-bar"><span class="bs-bl">Time</span><b data-out="time"></b><div class="bs-track" data-bar="time"><i></i></div></div>
+      <div class="bs-bar"><span class="bs-bl">Cost at API prices</span><b data-out="cost"></b><div class="bs-track" data-bar="cost"><i></i></div></div>
       <div class="bs-bar"><span class="bs-bl">Quality</span><b data-out="quality"></b><div class="bs-meter" data-bar="quality"><i></i><i></i><i></i><i></i></div></div>
-      <p class="bs-src" data-out="src"></p>
     </div>
+    <p class="bs-src" data-out="src"></p>
     <p class="bs-foot"><button type="button" class="bs-link" data-reset hidden>Back to the default</button></p>`;
   const $ = (sel) => root.querySelector(sel);
   const out = (k) => root.querySelector(`[data-out="${k}"]`);
@@ -97,7 +98,7 @@
     }
     const cap = e.agentTasks, v = st.v;
     $('#bs-hc').textContent = v.coders === 1 ? 'One agent builds everything. With more, an Opus planner splits the work and each agent builds a piece on its own copy.'
-      : cap && v.coders > cap ? `The planner splits this into about ${cap} task${cap === 1 ? '' : 's'}, so more than ${cap} agent${cap === 1 ? '' : 's'} won't start: this is a limit, not a crew size.`
+      : cap && v.coders > cap ? `A limit, not a crew size: the planner splits this into about ${cap} task${cap === 1 ? '' : 's'}, so about ${cap} agent${cap === 1 ? '' : 's'} will work.`
       : `Up to ${v.coders} agents at once, each on its own copy${cap ? `; the planner makes about ${cap} tasks` : ''}.`;
     out('time').textContent = range(e.wallS, mins);
     out('cost').textContent = range(e.usd, usd);
@@ -137,17 +138,33 @@
     const v = st.v, k = which(v);
     root.querySelectorAll('.bs-chip').forEach((c) => c.setAttribute('aria-checked', String(c.dataset.preset === k)));
     const ideaChip = $('[data-preset="idea"]');
-    ideaChip.textContent = sugV() ? `For my idea: ${PRESETS[st.sug.preset]?.name || st.sug.preset}` : st.sug?.state === 'reading' ? 'Reading…' : 'For my idea';
+    ideaChip.textContent = sugV() ? `For my idea: ${PRESETS[st.sug.preset]?.name || st.sug.preset}` : st.sug?.state === 'reading' ? 'Reading your idea…' : 'Suggest from my idea';
     ideaChip.disabled = st.sug?.state === 'reading';
+    $('.bs-ideahint').hidden = !!sugV() || idea().length >= 4;
     $('.bs-custom').hidden = k !== 'custom';
-    $('[data-k="coders"]').value = v.coders; out('coders').textContent = v.coders === 1 ? '1 agent' : `${v.coders} agents`;
+    paintPrices();
+    $('[data-k="coders"]').value = v.coders; out('coders').textContent = v.coders === 1 ? '1 agent' : `up to ${v.coders}`;
     $('[data-k="reviewers"]').value = v.reviewers; out('reviewers').textContent = REVIEW_W[v.reviewers];
     $('[data-k="coderModel"]').value = MODELS.indexOf(v.coderModel); out('coderModel').textContent = M[v.coderModel];
     $('#bs-hm').textContent = `${M[v.coderModel]} is ${MODEL_COST[v.coderModel]}.`;
+    $('#bs-hr').textContent = v.reviewers && v.coders === 1 ? 'With a reviewer, the one agent works as a planned team: an Opus planner, the agent and its reviewer.' : 'Reviewers read each change before it can land: fewer misses, a bit slower.';
     const sw = $('[data-k="board"]'); sw.setAttribute('aria-checked', String(v.board)); sw.disabled = v.coders === 1;
     $('#bs-hb').textContent = v.coders === 1 ? 'Needs more than one agent.' : 'Agents say what they are doing and which files they touch, so nothing is built twice.';
     root.querySelectorAll('input[type=range]').forEach((r) => r.style.setProperty('--p', `${((r.value - r.min) / (r.max - r.min)) * 100}%`));
     paintOut(); paintWhy(); paintForm();
+  }
+  // Each preset chip carries its cost for the current job (one estimate per preset, again only when the job changes).
+  let priced = null;
+  function paintPrices() {
+    if (!SIM?.predictBuild) return;
+    const j = jobNow(), key = JSON.stringify(j);
+    if (priced === key) return;
+    priced = key;
+    for (const [k, p] of Object.entries(PRESETS)) {
+      let t = '';
+      try { const r = SIM.predictBuild(j || SIM.SMALL_APP, toVariant(p.v)); t = range(r.apiUsd, usd); } catch {}
+      const sm = root.querySelector(`[data-preset="${k}"] small`); if (sm) sm.textContent = t;
+    }
   }
   // predictBuild takes ~60 ms: during a drag, at most one estimate per frame.
   let raf = 0;
