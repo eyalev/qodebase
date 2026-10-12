@@ -603,6 +603,11 @@ export class Landing extends DurableObject<Env> {
     if (m.flags.halted) { m.flags.halted = false; delete m.flags.haltedAt; delete m.flags.haltedWhy; m.spentBase = undefined; }   // a budget counts again from now
     if (was.paused || was.stopped) {
       this.#tell(`${m.slug}--router`, `qodebase: the owner resumed this project. Carry on with the work you were planning.`);
+      // Stop all stopped every box: agents mid-task have to be told to go on, or they sit idle (R3, 2026-10-12).
+      if (was.stopped) for (const id of m.order) {
+        const c = await this.#get(id);
+        if (c && c.kind === 'agent' && (c.state === 'working' || c.state === 'replaying')) this.#tell(c.id, `qodebase: this project was stopped and has been resumed. Continue your task where you left off; when done, commit, push with \`forq push\` and run \`forq status pushed "<what you did>"\`.`);
+      }
       await this.#saveMeta(); await this.#arm(500);
       log('landing', 'resumed', { slug: m.slug, by, ...was });
     }
