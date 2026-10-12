@@ -37,3 +37,17 @@ test('new files keep their trailing newline, deletions become null, no-newline m
   assert.deepEqual(applyDiff(['a', 'b'], { hunks: [H(2, 1, 2, 1, ['-b', '\\ No newline at end of file', '+b'])] }).lines, ['a', 'b', '']);
   assert.deepEqual(applyDiff(['a', 'b', ''], { hunks: [H(2, 1, 2, 1, ['-b', '+c', '\\ No newline at end of file'])] }).lines, ['a', 'c']);
 });
+
+test('a commit that edits code an earlier commit writes waits for it, is redone, and the tree still ends on history', () => {
+  const d2 = { seg: 'tail', files: { 'src/a/x.rs': 'a\n' }, final: { 'src/a/x.rs': 'a\nB\n' }, tasks: [
+    { sha: 'p1', phase: 'tail', crates: ['a'], diffs: [{ path: 'src/a/x.rs', hunks: [H(1, 1, 1, 2, [' a', '+b'])] }] },
+    { sha: 'p2', phase: 'tail', crates: ['a'], diffs: [{ path: 'src/a/x.rs', hunks: [H(2, 1, 2, 1, ['-b', '+B'])] }] },
+  ] };
+  let sawConflict = false;
+  for (let seed = 1; seed <= 30; seed++) {
+    const r = run(d2, { method: 'bun', agents: 2, seed, touchesPerRange: 1 });
+    assert.equal(r.filesDiffer, 0, `seed ${seed}`); assert.equal(r.landed, 2); assert.equal(r.lostHunks, 0);
+    if (r.conflicts) sawConflict = true;
+  }
+  assert.ok(sawConflict, 'some seed lands p2 first');
+});

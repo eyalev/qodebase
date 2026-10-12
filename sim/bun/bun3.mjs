@@ -114,13 +114,20 @@ export function run(data, opts = {}) {
   const held = new Set(); let free = cfg.validate ? 1 : cfg.agents, g = 0, open = [], landedInGroup = 0, commitBusy = false;
   const commitQ = [], landedSet = new Set();
   const red = new Map(); // crate -> { since, until(null = until fix), culprit }
-  const m = { landed: 0, conflicts: 0, lostHunks: 0, reworkS: 0, workS: 0, checkS: 0, caught: 0, breaks: 0, redCrateS: 0, landedOnRed: 0, idleS: 0, fixS: 0 };
+  const m = { landed: 0, conflicts: 0, conflictTasks: 0, lostHunks: 0, reworkS: 0, workS: 0, checkS: 0, caught: 0, breaks: 0, redCrateS: 0, landedOnRed: 0, idleS: 0, fixS: 0 };
   let groupTasks = [];
   function openGroup() {
     groupTasks = tasks.filter((x) => x.group === groups[g]);
     open = groupTasks.slice(); landedInGroup = 0; pump();
   }
-  const ready = (x) => x.claims.every((c) => !held.has(c)) && (!fixOf.has(x.sha) || landedSet.has(fixOf.get(x.sha)));
+  // A commit whose patch does not fit the tree (it edits code an earlier commit writes) waits until every earlier
+  // commit on its files has landed (per-file prefix of history order), then is redone (reworkF x its work).
+  const byFile = new Map();
+  for (const x of tasks) { x.pos = new Map(); for (const d of x.diffs) { if (!byFile.has(d.path)) byFile.set(d.path, []); const l = byFile.get(d.path); if (l.at(-1) !== x.i) l.push(x.i); x.pos.set(d.path, l.length - 1); } }
+  const prefix = new Map(); // file -> how many of its commits, in history order, have all landed
+  const landedI = new Set();
+  const earlierLanded = (x) => x.diffs.every((d) => (prefix.get(d.path) || 0) >= x.pos.get(d.path));
+  const ready = (x) => x.claims.every((c) => !held.has(c)) && (!fixOf.has(x.sha) || landedSet.has(fixOf.get(x.sha))) && (!x.waitEarlier || earlierLanded(x));
   function pump() {
     while (free > 0) {
       let k = -1;
@@ -130,8 +137,10 @@ export function run(data, opts = {}) {
       const x = open.splice(k, 1)[0]; free--;
       for (const c of x.claims) held.add(c);
       x.start = t;
-      const w = x.work + (cfg.method === 'check' ? cfg.checkS : 0);
-      m.workS += x.work; if (cfg.method === 'check') m.checkS += cfg.checkS;
+      const job = x.waitEarlier ? x.work * cfg.reworkF : x.work;
+      const w = job + (cfg.method === 'check' ? cfg.checkS : 0);
+      if (x.waitEarlier) m.reworkS += job; else m.workS += job;
+      if (cfg.method === 'check') m.checkS += cfg.checkS;
       at(w, () => { commitQ.push(x); pumpCommit(); });
     }
   }
@@ -153,19 +162,32 @@ export function run(data, opts = {}) {
       m.caught++; const d = x.work * cfg.fixF; m.fixS += d;
       return at(d + cfg.checkS, () => { commitQ.push(x); pumpCommit(); });
     }
-    // apply the real patch to the tree as it is now
+    // apply the real patch to the tree as it is now: all files or none
+    const results = [];
     let conflict = false;
     for (const d of x.diffs) {
-      if (d.binary) continue;
-      if (!d.hunks.length) continue;
-      const cur = tree.get(d.path) ?? null;
-      const r = applyDiff(cur, d);
-      if (!r.ok) { conflict = true; m.lostHunks += r.lost; }
-      if (r.lines !== null || r.ok) tree.set(d.path, r.lines); // a failed apply onto a missing file keeps it missing
+      if (d.binary || !d.hunks.length) continue;
+      const r = applyDiff(tree.get(d.path) ?? null, d);
+      if (!r.ok) conflict = true;
+      results.push([d.path, r]);
     }
-    if (conflict) { m.conflicts++; const d = x.work * cfg.reworkF; m.reworkS += d; x.reworked = (x.reworked || 0) + 1; }
+    if (conflict) {
+      m.conflicts++; if (!x.tries) m.conflictTasks++;
+      x.tries = (x.tries || 0) + 1;
+      if (x.tries <= 3) { // back to the backlog: wait for the earlier commits on its files, then redo it
+        x.waitEarlier = true;
+        for (const c of x.claims) held.delete(c);
+        free++;
+        let lo = 0, hi = open.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (open[mid].i < x.i) lo = mid + 1; else hi = mid; }
+        open.splice(lo, 0, x);
+        return pump();
+      }
+      for (const [, r] of results) m.lostHunks += r.lost; // after 3 tries: what fits lands, the rest is lost work
+    }
+    for (const [p, r] of results) if (r.lines !== null || r.ok) tree.set(p, r.lines);
     const finish = () => {
-      m.landed++; landedInGroup++; landedSet.add(x.sha); x.landedAt = t;
+      m.landed++; landedInGroup++; landedSet.add(x.sha); landedI.add(x.i); x.landedAt = t;
+      for (const d of x.diffs) { const l = byFile.get(d.path); let k = prefix.get(d.path) || 0; while (k < l.length && landedI.has(l[k])) k++; prefix.set(d.path, k); }
       for (const c of x.claims) held.delete(c);
       free++;
       for (const cr of x.crateSet) if (red.has(cr)) m.landedOnRed++;
@@ -174,7 +196,7 @@ export function run(data, opts = {}) {
       if (landedInGroup === groupTasks.length) { g++; if (g < groups.length) at(cfg.gateS, openGroup); else done = t; }
       pump();
     };
-    if (conflict) at(x.work * cfg.reworkF, finish); else finish();
+    finish();
   }
   function heal(culprit) { for (const [cr, r] of red) if (r.culprit === culprit) { m.redCrateS += t - r.since; red.delete(cr); } }
 
@@ -188,7 +210,7 @@ export function run(data, opts = {}) {
   for (const [p, want] of Object.entries(data.final)) { if (binary.has(p)) continue; const got = tree.get(p); const g2 = got == null ? null : got.join('\n'); if (g2 === want) same++; else differ++; }
   const hours = (done ?? t) / 3600;
   return { method: cfg.method, agents: cfg.validate ? 1 : cfg.agents, seed: cfg.seed, seg: data.seg, breakModel: cfg.breaks || 'none', borderline: !!cfg.borderline, checkS: cfg.method === 'check' ? cfg.checkS : 0,
-    hours: +hours.toFixed(2), landed: m.landed, of: tasks.length, conflicts: m.conflicts, lostHunks: m.lostHunks,
+    hours: +hours.toFixed(2), landed: m.landed, of: tasks.length, conflicts: m.conflicts, conflictTasks: m.conflictTasks, lostHunks: m.lostHunks,
     reworkShare: +((m.reworkS + m.fixS) / (m.workS + m.reworkS + m.fixS + m.checkS)).toFixed(4), checkShare: +(m.checkS / (m.workS + m.reworkS + m.fixS + m.checkS)).toFixed(4),
     agentHours: +((m.workS + m.reworkS + m.fixS + m.checkS) / 3600).toFixed(1), breaks: m.breaks, caught: m.caught,
     redCrateMin: Math.round(m.redCrateS / 60), landedOnRed: m.landedOnRed, filesSameAsHistory: same, filesDiffer: differ, binaryNotReplayed: binary.size };
