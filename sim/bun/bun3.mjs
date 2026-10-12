@@ -19,6 +19,8 @@
 // --breaks model (cde: MODELLED, p 0.01 per commit, red for 600 s; history has no breaks there: main did not compile
 // until the end of d). check: the per-crate check fails on a culprit that is compileDetectable (real) or with
 // pCatch 0.9 (model) when the break is in a crate the commit touches: the agent fixes it (0.35 x work), nothing turns red.
+// --method async: the same check runs BEHIND the commit (it lands at once): a detectable break is red for checkS plus
+// the author's fix (0.35 x work), instead of until someone notices (real fix / 600 s model); no wait on the chain.
 import { readFileSync, appendFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { dirname, join } from 'node:path';
@@ -229,7 +231,16 @@ export function run(data, opts = {}) {
       for (const c of x.claims) held.delete(c);
       free++;
       for (const cr of x.crateSet) if (red.has(cr)) m.landedOnRed++;
-      if (br) { m.breaks++; for (const cr of x.crateSet) if (!red.has(cr)) red.set(cr, { since: t, culprit: x.sha, until: br.model ? t + cfg.fixMainS : null }); if (br.model) at(cfg.fixMainS, () => heal(x.sha)); }
+      if (br) {
+        m.breaks++;
+        // async: the commit lands at once, the per-crate check runs behind it; a detectable break turns its crates
+        // red only until the check fails (checkS) and its author fixes forward (fixF x work)
+        const caughtBehind = cfg.method === 'async' && br.compileDetectable;
+        const until = caughtBehind ? cfg.checkS + x.work * cfg.fixF : br.model ? cfg.fixMainS : null;
+        if (caughtBehind) { m.caught++; m.fixS += x.work * cfg.fixF; }
+        for (const cr of x.crateSet) if (!red.has(cr)) red.set(cr, { since: t, culprit: x.sha });
+        if (until != null) at(until, () => heal(x.sha));
+      }
       if (fixOf.has(x.sha)) heal(fixOf.get(x.sha));
       if (landedInGroup === groupTasks.length) { g++; if (g < groups.length) at(cfg.gateS, openGroup); else done = t; }
       pump();
@@ -248,7 +259,7 @@ export function run(data, opts = {}) {
   for (const [p, want] of Object.entries(data.final)) { if (binary.has(p)) continue; const got = tree.get(p); const g2 = got == null ? null : got.join('\n'); if (g2 === want) same++; else differ++; }
   const hours = (done ?? t) / 3600;
   const chain = []; deps.forEach((ds, i) => { chain[i] = 1 + Math.max(0, ...ds.map((j) => chain[j])); });
-  return { method: cfg.method, agents: cfg.validate ? 1 : cfg.agents, seed: cfg.seed, seg: data.seg, breakModel: cfg.breaks || 'none', borderline: !!cfg.borderline, checkS: cfg.method === 'check' ? cfg.checkS : 0,
+  return { method: cfg.method, agents: cfg.validate ? 1 : cfg.agents, seed: cfg.seed, seg: data.seg, breakModel: cfg.breaks || 'none', borderline: !!cfg.borderline, checkS: cfg.method === 'bun' ? 0 : cfg.checkS,
     order: cfg.order || 'content', workMedS: cfg.workMedS, depShare: +(deps.filter((d) => d.length).length / tasks.length).toFixed(3), longestChain: Math.max(...chain),
     hours: +hours.toFixed(2), landed: m.landed, of: tasks.length, conflicts: m.conflicts, conflictTasks: m.conflictTasks, lostHunks: m.lostHunks,
     reworkShare: +((m.reworkS + m.fixS) / (m.workS + m.reworkS + m.fixS + m.checkS)).toFixed(4), checkShare: +(m.checkS / (m.workS + m.reworkS + m.fixS + m.checkS)).toFixed(4),
