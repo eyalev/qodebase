@@ -63,7 +63,7 @@ All our code runs on Cloudflare, with no servers of our own. The agents' model i
 
 **Use it.** Open https://qodebase.app and sign in with an emailed code. Running agents needs your own Anthropic API key or Claude subscription token. From a terminal: `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login` and `qb help`.
 
-**Your own copy.** https://qodebase.app/own installs qodebase, merge queue and board included, into your own Cloudflare account in about a minute and a half (needs Workers Paid and Cloudflare Artifacts, in beta). A fresh copy ran the café story with all 14 changes landing through its own queue.
+**Your own copy.** https://qodebase.app/own installs qodebase, merge queue and board included, into your own Cloudflare account in about 85 seconds (needs Workers Paid and Cloudflare Artifacts, in beta). A fresh copy ran the café story with all 14 changes landing through its own queue.
 
 **Reproduce the measurements** (no model calls; details in `sim/README.md`):
 ```sh
