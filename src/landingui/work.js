@@ -251,7 +251,7 @@
     return `<div class="nums">
       <span>${L.html}</span>
       <span><b>${n0(s.inQueue)}</b> in ${term('queue', 'the line')}</span>
-      <a href="#/replayed"><b>${n0(s.replayed)}</b> ${term('replay', 'replayed')}, not thrown away</a>
+      <a href="#/replayed"${s.replayed ? '' : ' class="z"'}><b>${n0(s.replayed)}</b> ${term('replay', 'replayed')}, not thrown away</a>
       ${s.medianAskToLandS ? `<span><b>${secs(s.medianAskToLandS * 1000)}</b> ask to landed, typical</span>` : ''}</div>`;
   }
   // "Landed" over a real time window (review #10: "N landed today" showed on runs 108 h old).
@@ -505,8 +505,13 @@
     // A demo that has stopped leaves unfinished changes behind; nobody is working on them.
     const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;
     const agents = idleDemo ? 0 : new Set(act.map((c) => c.agent)).size;
+    // Design pass (2026-10-12): while a run starts the banner says so, so the headline must not say "No agents";
+    // idle, lead with what the last run did (replays first: they are the point), "nobody working" goes under it.
+    const isStarting = !(P && P.replay) && starting && Date.now() - starting < 60e3 && !(D.demo?.running && D.changes.length);
+    const L0 = landedWords(), rep0 = Math.max(D.stats.replayed || 0, countIf(D.changes, hasEv('replayed')));
+    const idleHead = !agents && !(P && P.replay) && !isStarting && L0.short && L0.n;
     return `${demoStrip()}
-      <h2>${agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : P && P.replay ? (now() >= P.end - 1 ? `The replay has ended: ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed.` : 'The replay is starting…') : `No agents are working on ${esc(NAME)} right now.${(() => { const L = landedWords(); return L.short && L.n ? ` ${n0(L.n)} change${L.n === 1 ? '' : 's'} landed ${L.short}.` : ''; })()}`}</h2>
+      <h2>${isStarting ? 'The run is starting: the agents are getting their tasks.' : idleHead ? `${n0(L0.n)} change${L0.n === 1 ? '' : 's'} landed ${L0.short}${rep0 ? `, ${n0(rep0)} replayed instead of sent back` : ''}.` : agents ? `${agents} ${term('agent', agents === 1 ? 'agent' : 'agents')} ${agents === 1 ? 'is' : 'are'} changing ${esc(NAME)}${P && P.replay ? ' in this replay' : ' right now'}.` : P && P.replay ? (now() >= P.end - 1 ? `The replay has ended: ${n0(D.stats.landedToday)} change${D.stats.landedToday === 1 ? '' : 's'} landed.` : 'The replay is starting…') : `No agents are working on ${esc(NAME)} right now.${(() => { const L = landedWords(); return L.short && L.n ? ` ${n0(L.n)} change${L.n === 1 ? '' : 's'} landed ${L.short}.` : ''; })()}`}</h2>${idleHead ? `<p class="idle">No agents are working on ${esc(NAME)} right now.</p>` : ''}
       <p class="intro">${D.mode === 'demo' ? `Each agent here is ${term('scripted', 'scripted')} (it follows a script instead of an AI model) and works on its own ${term('fork', 'copy')} of the code.` : `Each agent is an AI working on its own ${term('fork', 'copy')} of the code.`} Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}.</p>
       ${numbers()}
       ${boardView()}
@@ -560,8 +565,10 @@
     const k = skey(c), ev = new Set(c.events.map((e) => e.what));
     const at = { working: 0, pushed: 1, reviewing: 1, ready: 1, queued: 2, replaying: 2, 'with-lead': 2, testing: 3, bounced: 3, landed: 5 }[k] ?? 0;
     const cls = (i) => (i < at ? 'on' : i === at ? (k === 'bounced' || k === 'with-lead' ? 'bad' : k === 'ready' ? 'on' : 'now') : '');
-    const lbl = ['Working', 'Review', 'In line', 'Tested', 'Landed'];
-    return `<div class="steps" aria-hidden="true">${lbl.map((_, i) => `<i class="${cls(i)}"></i>`).join('')}</div><div class="stepl" aria-hidden="true">${lbl.map((l) => `<span>${l}</span>`).join('')}</div>${ev.has('replayed') && k !== 'landed' ? '' : ''}`;
+    // Design pass (2026-10-12): a collision shows on the bar itself, a --warn tick on the in-line step, labelled.
+    const hit = ev.has('conflict') ? (ev.has('replayed') ? 'Replayed' : 'Collided') : '';
+    const lbl = ['Working', 'Review', hit || 'In line', 'Tested', 'Landed'];
+    return `<div class="steps" aria-hidden="true">${lbl.map((_, i) => `<i class="${cls(i)}${hit && i === 2 ? ' hit' : ''}"></i>`).join('')}</div><div class="stepl" aria-hidden="true">${lbl.map((l, i) => `<span${hit && i === 2 ? ' class="hit"' : ''}>${l}</span>`).join('')}</div>`;
   }
   function howBox(c) {
     const L = c.landing, idx = byId();
