@@ -56,7 +56,7 @@ All our code runs on Cloudflare, with no servers of our own. The agents' model i
 
 **Watch the landing system (no sign-in).** Open https://qodebase.app/p/eyal/corner-cafe on a phone or desktop and tap **Watch a run**. Six scripted agents (no AI) work on a small café website, with real commits on their own Artifacts forks. The changes go through the real merge queue and real tests.
 - **What's staged:** reviews are approved automatically, and the tasks are ordered so the story happens. You'll see shared-file collisions replayed, one change failing a test and coming back fixed, a conflict redone by a scripted lead, and one change stacked on another.
-- **Limits:** a run takes a few minutes, at 3 runs per visitor IP and 40 a day. When none can start, the page replays the last run.
+- **Limits:** a run takes a few minutes and ends once every task has landed. Each visitor IP gets 10 runs a day, 2 minutes apart, and 40 a day in all. When none can start, the page replays the last run.
 - **Reading it:** tap any agent, change or file to see why it happened.
 
 **Real agents.** Open https://qodebase.app/p/eyal/cafe-team, Agents at work. These are the records of the 12-agent run.
