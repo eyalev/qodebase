@@ -10,6 +10,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AGENT_RE, NAME_RE, appWorkerName, frontHosts, isUiHost, uiHosts, projectOf, slugOf, type Env } from './env';
 import { AgentBox, log, REVIEW_STEPS, type BootSpec } from './box';
 import { buildAsks } from './landing/asks';
+import { handleArtifactsBatch } from './events';
 import { Project, roleOf, type ProjectInfo, type Role, type RouterRequest } from './project';
 import { Registry, canSee, listFor, registry, type Entry } from './registry';
 import { BuildBox } from './build';
@@ -797,7 +798,7 @@ const app = {
           const last = info.lastRequest;
           const reqs = info.requests?.length ? info.requests : last ? [{ text: last.text, at: last.at, from: last.from }] : [];
           return json(buildAsks({ requests: reqs.map((r) => ({ ...r, state: last && r.at === last.at ? last.state : 'sent' })),
-            changes: ld?.changes || [], lists: ld?.lists || [], done: ld?.done || [], claims: ld?.claims || {}, aliases: ld?.aliases || [] }));
+            changes: ld?.changes || [], lists: ld?.lists || [], done: ld?.done || [], claims: ld?.claims || {}, aliases: ld?.aliases || [], gitPushes: ld?.gitPushes || [] }));
         }
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());
@@ -972,6 +973,8 @@ const app = {
 // Every HTML page on the UI host (and the variants) leaves through the
 // baseline rewriter: kstats tag and share-card tags (src/baseline.ts).
 export default {
+  // Artifacts events (events.ts): pushes to project mains + project repo lifecycle, from queue forq-artifacts-events.
+  async queue(batch: MessageBatch<unknown>, env: Env): Promise<void> { await handleArtifactsBatch(batch, env); },
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     request = fromFront(request, env);
     let res = await app.fetch(request, env, ctx);

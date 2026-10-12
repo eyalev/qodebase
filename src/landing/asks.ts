@@ -4,13 +4,14 @@
 //   GET /api/p/<o>/<n>/asks   (anyone who can see the project)
 // { asks: [{ id, text, from, at, state, changes: [changeId], changeStates: {id: state}, duplicateOf?, aliases? }], counts }
 //   from:  person (typed or Build) | talk | issues (Cloudflare Issues) | board (a task list the router registered) |
-//          script (a scripted demo task, corner-cafe: no router there, so each scripted change is its own ask)
+//          script (a scripted demo task, corner-cafe: no router there, so each scripted change is its own ask) |
+//          git (a person pushed to main over git, from the Artifacts push events)
 //   state: planning (nothing started yet) | working | in-line (pushed, in review or in the merge queue) | landed |
 //          bounced | mixed (all finished, some landed and some bounced)
 // A router request's changes = the change records created after it and before the next request (the router splits
 // a request into changes right after it); a board task's changes = the agents that claimed it.
 
-export type AskFrom = 'person' | 'talk' | 'issues' | 'board' | 'script';
+export type AskFrom = 'person' | 'talk' | 'issues' | 'board' | 'script' | 'git';
 export type AskState = 'planning' | 'working' | 'in-line' | 'landed' | 'bounced' | 'mixed';
 export type Ask = { id: string; text: string; from: AskFrom; at: number; state: AskState; changes: string[];
   changeStates: Record<string, string>; duplicateOf?: string; aliases?: string[]; delivery?: string };
@@ -19,6 +20,7 @@ export type AsksInput = {
   changes: { id: string; title: string; state: string; createdAt: number; agent?: string; kind?: string }[];
   lists: { by: string; at: number; items: { id: string; text: string }[] }[];
   done: string[]; claims: Record<string, { ids: string[]; at: number }>; aliases: { a: string; b: string }[];
+  gitPushes?: { at: number; by: string; after: string; n: number; message: string }[];
 };
 
 const OPEN_WORK = new Set(['working', 'replaying', 'with-lead']);
@@ -67,6 +69,9 @@ export function buildAsks(inp: AsksInput): { asks: Ask[]; counts: Record<AskStat
       ...(alias.has(it.id) ? { duplicateOf: `t:${alias.get(it.id)}` } : {}),
       ...(same.length ? { aliases: same.map((s) => inp.lists.flatMap((x) => x.items).find((x) => x.id === s)?.text || s) } : {}) });
   }
+  // A person's push to main over git (events.ts): already on main, so landed; the text says who and what.
+  for (const g of inp.gitPushes || [])
+    asks.push({ id: `g:${g.after.slice(0, 12)}`, text: `${g.message || `${g.n} commit${g.n === 1 ? '' : 's'}`} (pushed by ${g.by} via git)`, from: 'git', at: g.at, state: 'landed', changes: [], changeStates: {} });
   // Scripted demo changes have no request and no list: each is its own ask (the café's task script).
   const covered = new Set(asks.flatMap((a) => a.changes));
   for (const c of inp.changes) if (c.kind === 'demo' && !covered.has(c.id))

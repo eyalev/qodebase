@@ -16,7 +16,7 @@ export type TlPhase = 'plan' | 'work' | 'wait_review' | 'review' | 'wait_merge' 
   | 'wait_box' | 'wake' | 'fetch' | 'apply' | 'replay' | 'checks' | 'push' | 'notes';
 export type TlLane = { id: string; group: 'planner' | 'agents' | 'reviewers' | 'queue' | 'merger' | 'main'; label: string; agent?: string };
 export type TlSpan = { id: string; lane: string; phase: TlPhase; start: number; end: number; open?: true; change?: string; train?: string; label?: string; detail?: string };
-export type TlMark = { lane: 'main'; at: number; change: string; kind: 'landed' | 'bounced'; train?: string };
+export type TlMark = { lane: 'main'; at: number; change: string; kind: 'landed' | 'bounced' | 'git' | 'repo'; train?: string; by?: string; label?: string };
 export type Timeline = {
   v: 1; run: { start: number; end: number; now: number; label: string; kind: 'demo' | 'build' | 'lab' | 'project'; open: boolean };
   lanes: TlLane[]; spans: TlSpan[]; marks: TlMark[]; critical: string[]; totals: Record<string, number>;
@@ -26,6 +26,10 @@ export type TlInput = {
   changes: Change[]; trains: Train[];
   request?: { at: number; sentAt?: number; text?: string } | null;
   kind: Timeline['run']['kind'];
+  /** A person's pushes to main over git: marks on main (kind 'git'). */
+  gitPushes?: { at: number; by: string; after: string; message: string }[];
+  /** Repo events from the account stream (imported, forked by a person, …): marks on main (kind 'repo'). */
+  repoEvents?: { at: number; kind: string; text: string }[];
 };
 
 /** What each change event starts (null: the event only adds detail to the span it falls in). */
@@ -117,6 +121,8 @@ export function buildTimeline(inp: TlInput): Timeline {
     byTrain.set(t.id, own);
     for (const m of marks) if (t.changes.includes(m.change) && t.endedAt && Math.abs(m.at - t.endedAt) < 60_000) m.train = t.id;
   }
+  for (const g of inp.gitPushes || []) if (g.at >= since) marks.push({ lane: 'main', at: g.at, change: g.after.slice(0, 12), kind: 'git', by: g.by, label: g.message });
+  for (const r of inp.repoEvents || []) if (r.at >= since) marks.push({ lane: 'main', at: r.at, change: '', kind: 'repo', label: r.text });
   if (marks.length) lane({ id: 'main', group: 'main', label: 'main' });
 
   // Critical path: the last landing, its train (queue + merger rows) and its change's own spans.

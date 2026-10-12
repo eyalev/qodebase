@@ -96,6 +96,8 @@
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "forq" }],
   // Images the person attaches to a request (src/attach.ts); lifecycle rule expire-30d deletes them after 30 days.
   "r2_buckets": [{ "binding": "ATTACH", "bucket_name": "qodebase-attachments" }],
+  // Artifacts events: pushes to project mains + project repo lifecycle (src/events.ts). Queues bills 3 ops per message.
+  "queues": { "consumers": [{ "queue": "forq-artifacts-events", "max_batch_size": 25, "max_batch_timeout": 2, "max_retries": 3 }] },
   // Cloudflare Browser Rendering: App view screenshots (src/screenshot.ts); 10 browser-hours/month included, then $0.09/h.
   "browser": { "binding": "BROWSER" },
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
@@ -119,6 +121,8 @@
     "APPS_DOMAIN": "ttyview.dev",
     "APPS_ZONE_ID": "784f54acf330324763b9749cc76bc871",
     "ACCOUNT_ID": "887d7234a6b8d65ad355a4f6684cab67",
+    // Artifacts events (src/events.ts): queue forq-artifacts-events; token CF_EVENTS_TOKEN is a secret (Queues Write).
+    "EVENTS_QUEUE_ID": "4ca6198cc6294a66b450926aea09dbcd",
     "API_BASE": "https://forq.forqdev.workers.dev",
     // Hard caps (the durable_object policy has no max_instances).
     "MAX_AGENTS_PER_PROJECT": "6",

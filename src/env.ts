@@ -24,6 +24,8 @@ export interface Env {
   CF_OAUTH_CLIENT_ID: string;      // forq's "Sign in with Cloudflare" OAuth client (src/install.ts)
   CF_OAUTH_CLIENT_SECRET: string;
   ACCOUNT_ID: string;
+  /** Artifacts push events (events.ts): a Queues-Write token (secret) and the queue's id (var). */
+  CF_EVENTS_TOKEN?: string; EVENTS_QUEUE_ID?: string;
   CF_DEPLOY_TOKEN: string;      // Workers Scripts write only; BuildBox passes it to one wrangler command at a time
   API_BASE: string;             // this Worker on workers.dev (DOs call back into it)
   ISSUES_WEBHOOK_SECRET: string; // Cloudflare Notifications sends it as cf-webhook-auth

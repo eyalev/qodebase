@@ -25,6 +25,7 @@ import { SEED } from './demoproject';
 import { pushAlert } from '../alert';
 import { apiUsdOf, type BuildEstimate } from '../buildsettings';
 import { buildTimeline, type Timeline } from './timeline';
+import { subscribePush, unsubscribe, eligibleSlug, type PushEv } from '../events';
 import { makeBoardEvent, boardView, boardText, taskIds, knownTaskIds, claimHolders, pickNext, type TwinCandidate, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
@@ -115,6 +116,14 @@ type Meta = {
   build?: BuildEstimate & { actual?: { settledAt: number; actualWallS: number; actualUsd: number | null } };                      // task ids whose claiming change landed (claims, forq next)
   /** G2 History: each landed change by its commit on main (and the train's tip), newest 300; built once from the records. */
   landedIdx?: Record<string, LandedEntry>;
+  /** Artifacts 'pushed' subscriptions this project holds (repo -> subscription id): its main + open agents' forks. */
+  evsubs?: Record<string, string>;
+  /** Pushes to main by a person over git (events.ts), newest 50: the board, Asks and the timeline show them. */
+  gitPushes?: { at: number; by: string; ref: string; after: string; n: number; message: string }[];
+  /** Account-level repo events about this project (created, imported, forked by a person, deleted), newest 50. */
+  repoEvents?: { at: number; kind: string; text: string }[];
+  /** repo@sha of pushes already handled (a queue delivers at least once). */
+  gitSeen?: string[];
   boardPosts?: number;                       // board: posts since the last prune   // messages to real agents, sent from the alarm        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
 };
 
@@ -184,7 +193,77 @@ export class Landing extends DurableObject<Env> {
     await this.#prune();
     await this.#saveMeta();
     log('landing', 'recorded', { slug, id: ch.id, kind: ch.kind, claims: ch.claims.length, stackedOn: ch.stackedOn });
+    // Push events for the project's main (once): a person's plain git push to main then shows up. Not for agent forks
+    // (forq push reports those; Eyal/manager 2026-10-12), never for lab projects (eyal.lab-*) or the demo.
+    if (ch.kind === 'agent' && eligibleSlug(m.slug)) this.ctx.waitUntil(this.#subscribe([m.slug]).catch((e) => log('landing', 'subscribe_error', { err: String(e).slice(0, 200) })));
     return ch;
+  }
+
+  async #subscribe(repos: string[]) {
+    const m = await this.#m();
+    let changed = false;
+    for (const repo of repos) {
+      if (!repo || m.evsubs?.[repo]) continue;
+      const r = await subscribePush(this.env, repo);
+      if (r.id) { (m.evsubs ||= {})[repo] = r.id; changed = true; }
+    }
+    if (changed) await this.#saveMeta();
+  }
+  async #unsubscribe(repo: string) {
+    const m = await this.#m(), id = m.evsubs?.[repo];
+    if (!id) return;
+    delete m.evsubs![repo];
+    await this.#saveMeta();
+    await unsubscribe(this.env, id, repo);
+  }
+
+  /** An account-level repo event about this project (events.ts): a board row and a timeline mark. Idempotent by key. */
+  async repoEvent(ev: { slug: string; key: string; at: number; kind: string; text: string; by?: string }) {
+    const m = await this.#m(ev.slug);
+    if ((m.gitSeen ||= []).includes(ev.key)) return 'seen';
+    m.gitSeen.push(ev.key); if (m.gitSeen.length > 200) m.gitSeen.splice(0, m.gitSeen.length - 200);
+    (m.repoEvents ||= []).push({ at: ev.at, kind: ev.kind, text: ev.text });
+    if (m.repoEvents.length > 50) m.repoEvents.splice(0, m.repoEvents.length - 50);
+    await this.boardPost({ agent: ev.by || 'qodebase', kind: 'done', intent: ev.text, status: ev.kind }).catch(() => {});
+    await this.#saveMeta();
+    return 'noted';
+  }
+
+  /** A push to one of this project's repos (events.ts, from the Artifacts queue). Idempotent by repo@sha. */
+  async gitPushed(ev: PushEv & { change: string | null }) {
+    const m = await this.#m();
+    const key = `${ev.repo}@${ev.after}`;
+    if ((m.gitSeen ||= []).includes(key)) return 'seen';
+    m.gitSeen.push(key); if (m.gitSeen.length > 200) m.gitSeen.splice(0, m.gitSeen.length - 200);
+    const who = ev.by.name.split('<')[0].trim().slice(0, 60) || 'someone';
+    let out = 'noted';
+    if (ev.change) {
+      const c = await this.#get(ev.change);
+      if (!c) out = 'no such change';
+      else if (c.commit === ev.after) out = 'known';                     // forq push already recorded this commit
+      else if (ev.by.kind === 'lander' || ev.by.kind === 'platform') out = 'platform';
+      else if (c.state === 'landed' || c.state === 'testing') {
+        this.#ev(c, 'pushed', `${ev.n} commit${ev.n === 1 ? '' : 's'} via git by ${who}, not taken: the change is ${c.state === 'testing' ? 'in a train' : 'already landed'}`);
+        await this.#put(c); out = 'not taken';
+      } else {
+        // A push nobody reported (a person over git, or an agent that skipped forq push): the change follows its fork.
+        c.commit = ev.after;
+        this.#ev(c, 'pushed', `via git by ${ev.by.kind === 'agent' ? 'its agent' : who}${ev.message ? `: ${ev.message}` : ''}`);
+        await this.#put(c);
+        if (ev.by.kind === 'person') await this.#bpost(c.id, 'pushed', '', c.files, `pushed by ${who} via git`).catch(() => {});
+        if (c.fork && c.remote) this.ctx.waitUntil(this.#prefetch(m.slug, c).catch(() => {}));
+        out = 'refreshed';
+      }
+    } else if (ev.by.kind === 'person') {
+      // Main moved outside the queue: someone pushed over git.
+      (m.gitPushes ||= []).push({ at: ev.at, by: who, ref: ev.ref, after: ev.after, n: ev.n, message: ev.message });
+      if (m.gitPushes.length > 50) m.gitPushes.splice(0, m.gitPushes.length - 50);
+      m.tree = undefined;
+      await this.boardPost({ agent: who, kind: 'pushed', intent: ev.message || `${ev.n} commit${ev.n === 1 ? '' : 's'}`, status: `pushed by ${who} via git` }).catch(() => {});
+      out = 'main by a person';
+    } else out = ev.by.kind;   // the merge queue's own pushes are recorded by trainDone
+    await this.#saveMeta();
+    return out;
   }
 
   /** Warn when this change's files or claims overlap another open change's. At most
@@ -495,7 +574,7 @@ export class Landing extends DurableObject<Env> {
     if (!m) return null;
     if (!this.#meta) this.#meta = m;
     const changes = (await Promise.all(m.order.map((id) => this.#get(id)))).filter(Boolean).map((c) => ({ id: c!.id, title: c!.title, state: c!.state, createdAt: c!.createdAt, agent: c!.agent, kind: c!.kind }));
-    return { changes, lists: m.dedupeLists || [], done: m.tasksDone || [], claims: m.boardClaims || {}, aliases: (m.aliases || []).map((a) => ({ a: a.a, b: a.b })) };
+    return { changes, lists: m.dedupeLists || [], done: m.tasksDone || [], claims: m.boardClaims || {}, aliases: (m.aliases || []).map((a) => ({ a: a.a, b: a.b })), gitPushes: m.gitPushes || [] };
   }
 
   /** The merge tap: approved → waits for the next train. */
@@ -984,7 +1063,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     const trains = (await Promise.all(m.trains.map((id) => this.ctx.storage.get<Train>(`t:${id}`)))).filter(Boolean) as Train[];
     const kind = m.demo ? 'demo' : /\.lab-/.test(m.slug) ? 'lab' : m.build ? 'build' : 'project';
     const since = opts.since ?? (m.demo ? m.demo.startedAt - 1000 : m.build ? m.build.startedAt - 60_000 : null);
-    return buildTimeline({ slug: m.slug, now: Date.now(), since, changes, trains, request: opts.request || null, kind });
+    return buildTimeline({ slug: m.slug, now: Date.now(), since, changes, trains, request: opts.request || null, kind, gitPushes: m.gitPushes || [], repoEvents: m.repoEvents || [] });
   }
 
   async view(slug: string) {
