@@ -948,6 +948,13 @@ const app = {
         }
         return json({ builds: rows });
       }
+      // The cost Ledger's raw daily rows for one person (and optionally one project): token columns per model row,
+      // for the predictor's refit after real builds (qb4, 2026-10-12). Admin only.
+      if (path === '/api/admin/ledger' && request.method === 'GET' && me.admin) {
+        const handle = url.searchParams.get('handle') || me.handle || '', proj = url.searchParams.get('project') || '';
+        const rows = await env.Ledger.get(env.Ledger.idFromName(handle)).rows(Math.min(30, Number(url.searchParams.get('days')) || 7));
+        return json({ handle, rows: proj ? rows.filter((r) => r.project === proj || r.project.startsWith(`${proj}:`) || r.project === proj.replace('/', '.')) : rows });
+      }
       if (path === '/api/admin/delete' && request.method === 'POST' && me.admin) {
         const b = await request.json() as { repo?: string; box?: string; project?: string };
         if (b.box) await boxStub(env, b.box).destroy();
