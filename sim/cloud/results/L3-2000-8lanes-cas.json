@@ -1,0 +1,4982 @@
+{
+ "cell": "2000-8lanes-cas",
+ "cfg": {
+  "agents": 2000,
+  "minutes": 10,
+  "workMinS": 20,
+  "workMaxS": 60,
+  "trainEveryS": 10,
+  "trainMax": 200,
+  "seed": 1,
+  "forkConcurrency": 32,
+  "forkTries": 5,
+  "crossShare": 0.05,
+  "xEveryS": 10,
+  "lanes": 8,
+  "door": "cas",
+  "modules": 100,
+  "xTrainMax": 50,
+  "combineEveryS": 2
+ },
+ "ranAt": "2026-10-12T21:33:56.875Z",
+ "wallS": 1066,
+ "verify": {
+  "fsck": "ok",
+  "files": 803,
+  "testFails": 0,
+  "firstFails": [],
+  "commits": 471,
+  "perLane": {
+   "L5": 51,
+   "L4": 52,
+   "L3": 53,
+   "L1": 53,
+   "L2": 54,
+   "X": 52,
+   "L6": 52,
+   "L7": 51,
+   "L0": 52,
+   "other": 1
+  },
+  "doorCount": 0,
+  "landedIds": 30134,
+  "dupIds": 0
+ },
+ "status": {
+  "runId": "rmv5rrlwu",
+  "phase": "done",
+  "agents": 2000,
+  "lanes": 8,
+  "door": "cas",
+  "crossShare": 0.05,
+  "minutes": 10,
+  "elapsedS": 687,
+  "forks": 2000,
+  "forkFailed": 0,
+  "agentsDone": 2000,
+  "tasks": 30238,
+  "cross": 936,
+  "landed": 30134,
+  "landedPerHour": 157907,
+  "rounds": 0,
+  "pending": 0,
+  "dropped": 104,
+  "testFails": 0,
+  "viewFails": 0,
+  "queue": 0,
+  "mainPushes": 599,
+  "mainPushFail": 1,
+  "cas": 104,
+  "busy": 25,
+  "refreshes": 519,
+  "agentPushes": 30238,
+  "agentPushFail": 0,
+  "artifactsOps": 34933,
+  "errors": [
+   "L5: main push: stale or busy 10 times"
+  ],
+  "lanesBrief": [
+   {
+    "lane": "L0",
+    "landed": 3672,
+    "perH": 19242,
+    "queue": 0,
+    "cas": 4,
+    "busy": 0,
+    "waitP50": 6,
+    "waitP90": 14,
+    "frozenMs": 104631
+   },
+   {
+    "lane": "L1",
+    "landed": 3695,
+    "perH": 19362,
+    "queue": 0,
+    "cas": 4,
+    "busy": 0,
+    "waitP50": 7,
+    "waitP90": 14,
+    "frozenMs": 110872
+   },
+   {
+    "lane": "L2",
+    "landed": 3668,
+    "perH": 19221,
+    "queue": 0,
+    "cas": 13,
+    "busy": 1,
+    "waitP50": 7,
+    "waitP90": 12,
+    "frozenMs": 93184
+   },
+   {
+    "lane": "L3",
+    "landed": 3608,
+    "perH": 18907,
+    "queue": 0,
+    "cas": 2,
+    "busy": 2,
+    "waitP50": 7,
+    "waitP90": 14,
+    "frozenMs": 97162
+   },
+   {
+    "lane": "L4",
+    "landed": 3678,
+    "perH": 19273,
+    "queue": 0,
+    "cas": 9,
+    "busy": 7,
+    "waitP50": 7,
+    "waitP90": 15,
+    "frozenMs": 95055
+   },
+   {
+    "lane": "L5",
+    "landed": 3633,
+    "perH": 19038,
+    "queue": 0,
+    "cas": 4,
+    "busy": 8,
+    "waitP50": 7,
+    "waitP90": 16,
+    "frozenMs": 95575
+   },
+   {
+    "lane": "L6",
+    "landed": 3675,
+    "perH": 19258,
+    "queue": 0,
+    "cas": 10,
+    "busy": 5,
+    "waitP50": 7,
+    "waitP90": 14,
+    "frozenMs": 97544
+   },
+   {
+    "lane": "L7",
+    "landed": 3630,
+    "perH": 19022,
+    "queue": 0,
+    "cas": 7,
+    "busy": 2,
+    "waitP50": 7,
+    "waitP90": 15,
+    "frozenMs": 100693
+   },
+   {
+    "lane": "X",
+    "landed": 875,
+    "perH": 4585,
+    "queue": 0,
+    "cas": 51,
+    "busy": 0,
+    "waitP50": 8,
+    "waitP90": 13,
+    "frozenMs": 0
+   }
+  ]
+ },
+ "lanes": [
+  {
+   "lane": "L0",
+   "mods": 13,
+   "phase": "done",
+   "frozen": false,
+   "tasks": 3757,
+   "cross": 80,
+   "registered": 3683,
+   "landed": 3672,
+   "landedPerHour": 19242,
+   "dropped": 11,
+   "testFails": 0,
+   "outside": 9,
+   "queue": 0,
+   "states": {},
+   "trains": 52,
+   "mainPushes": 56,
+   "mainPushFail": 0,
+   "mainPushMsP50": 311,
+   "mainPushMsP90": 480,
+   "cas": 4,
+   "busy": 0,
+   "refreshes": 56,
+   "waitSP50": 6,
+   "waitSP90": 14,
+   "frozenMs": 104631,
+   "freezes": 48,
+   "xHoldMs": 0,
+   "handed": 0,
+   "handoffs": 0,
+   "rounds": 0,
+   "pending": 0,
+   "perRoundP50": null,
+   "agentPushes": 3683,
+   "agentPushFail": 0,
+   "artifactsOps": 280,
+   "restores": 1,
+   "errors": [],
+   "errorCount": 0,
+   "failSamples": [],
+   "viewFails": 0,
+   "viewFailSample": []
+  },
+  {
+   "lane": "L1",
+   "mods": 13,
+   "phase": "done",
+   "frozen": false,
+   "tasks": 3805,
+   "cross": 106,
+   "registered": 3702,
+   "landed": 3695,
+   "landedPerHour": 19362,
+   "dropped": 7,
+   "testFails": 0,
+   "outside": 5,
+   "queue": 0,
+   "states": {},
+   "trains": 53,
+   "mainPushes": 57,
+   "mainPushFail": 0,
+   "mainPushMsP50": 278,
+   "mainPushMsP90": 474,
+   "cas": 4,
+   "busy": 0,
+   "refreshes": 57,
+   "waitSP50": 7,
+   "waitSP90": 14,
+   "frozenMs": 110872,
+   "freezes": 51,
+   "xHoldMs": 0,
+   "handed": 0,
+   "handoffs": 0,
+   "rounds": 0,
+   "pending": 0,
+   "perRoundP50": null,
+   "agentPushes": 3702,
+   "agentPushFail": 0,
+   "artifactsOps": 285,
+   "restores": 1,
+   "errors": [],
+   "errorCount": 0,
+   "failSamples": [],
+   "viewFails": 0,
+   "viewFailSample": []
+  },
+  {
+   "lane": "L2",
+   "mods": 13,
+   "phase": "done",
+   "frozen": false,
+   "tasks": 3776,
+   "cross": 100,
+   "registered": 3677,
+   "landed": 3668,
+   "landedPerHour": 19221,
+   "dropped": 9,
+   "testFails": 0,
+   "outside": 7,
+   "queue": 0,
+   "states": {},
+   "trains": 54,
+   "mainPushes": 68,
+   "mainPushFail": 0,
+   "mainPushMsP50": 394,
+   "mainPushMsP90": 832,
+   "cas": 13,
+   "busy": 1,
+   "refreshes": 63,
+   "waitSP50": 7,
+   "waitSP90": 12,
+   "frozenMs": 93184,
+   "freezes": 45,
+   "xHoldMs": 0,
+   "handed": 0,
+   "handoffs": 0,
+   "rounds": 0,
+   "pending": 0,
+   "perRoundP50": null,
+   "agentPushes": 3677,
+   "agentPushFail": 0,
+   "artifactsOps": 320,
+   "restores": 1,
+   "errors": [],
+   "errorCount": 0,
+   "failSamples": [],
+   "viewFails": 0,
+   "viewFailSample": []
+  },
+  {
+   "lane": "L3",
+   "mods": 13,
+   "phase": "done",
+   "frozen": false,
+   "tasks": 3756,
+   "cross": 145,
+   "registered": 3615,
+   "landed": 3608,
+   "landedPerHour": 18907,
+   "dropped": 7,
+   "testFails": 0,
+   "outside": 5,
+   "queue": 0,
+   "states": {},
+   "trains": 53,
+   "mainPushes": 57,
+   "mainPushFail": 0,
+   "mainPushMsP50": 369,
+   "mainPushMsP90": 732,
+   "cas": 2,
+   "busy": 2,
+   "refreshes": 55,
+   "waitSP50": 7,
+   "waitSP90": 14,
+   "frozenMs": 97162,
+   "freezes": 47,
+   "xHoldMs": 0,
+   "handed": 0,
+   "handoffs": 0,
+   "rounds": 0,
+   "pending": 0,
+   "perRoundP50": null,
+   "agentPushes": 3615,
+   "agentPushFail": 0,
+   "artifactsOps": 277,
+   "restores": 1,
+   "errors": [],
+   "errorCount": 0,
+   "failSamples": [],
+   "viewFails": 0,
+   "viewFailSample": []
+  },
+  {
+   "lane": "L4",
+   "mods": 12,
+   "phase": "done",
+   "frozen": false,
+   "tasks": 3799,
+   "cross": 119,
+   "registered": 3683,
+   "landed": 3678,
+   "landedPerHour": 19273,
+   "dropped": 5,
+   "testFails": 0,
+   "outside": 1,
+   "queue": 0,
+   "states": {},
+   "trains": 52,
+   "mainPushes": 68,
+   "mainPushFail": 0,
+   "mainPushMsP50": 309,
+   "mainPushMsP90": 553,
+   "cas": 9,
+   "busy": 7,
+   "refreshes": 62,
+   "waitSP50": 7,
+   "waitSP90": 15,
+   "frozenMs": 95055,
+   "freezes": 43,
+   "xHoldMs": 0,
+   "handed": 0,
+   "handoffs": 0,
+   "rounds": 0,
+   "pending": 0,
+   "perRoundP50": null,
+   "agentPushes": 3683,
+   "agentPushFail": 0,
+   "artifactsOps": 316,
+   "restores": 1,
+   "errors": [],
+   "errorCount": 0,
+   "failSamples": [],
+   "viewFails": 0,
+   "viewFailSample": []
+  },
+  {
+   "lane": "L5",
+   "mods": 12,
+   "phase": "done",
+   "frozen": false,
+   "tasks": 3789,
+   "cross": 145,
+   "registered": 3645,
+   "landed": 3633,
+   "landedPerHour": 19038,
+   "dropped": 12,
+   "testFails": 0,
+   "outside": 10,
+   "queue": 0,
+   "states": {},
+   "trains": 51,
+   "mainPushes": 63,
+   "mainPushFail": 1,
+   "mainPushMsP50": 407,
+   "mainPushMsP90": 763,
+   "cas": 4,
+   "busy": 8,
+   "refreshes": 56,
+   "waitSP50": 7,
+   "waitSP90": 16,
+   "frozenMs": 95575,
+   "freezes": 43,
+   "xHoldMs": 0,
+   "handed": 0,
+   "handoffs": 0,
+   "rounds": 0,
+   "pending": 0,
+   "perRoundP50": null,
+   "agentPushes": 3645,
+   "agentPushFail": 0,
+   "artifactsOps": 287,
+   "restores": 1,
+   "errors": [
+    "main push: stale or busy 10 times"
+   ],
+   "errorCount": 1,
+   "failSamples": [],
+   "viewFails": 0,
+   "viewFailSample": []
+  },
+  {
+   "lane": "L6",
+   "mods": 12,
+   "phase": "done",
+   "frozen": false,
+   "tasks": 3805,
+   "cross": 118,
+   "registered": 3688,
+   "landed": 3675,
+   "landedPerHour": 19258,
+   "dropped": 13,
+   "testFails": 0,
+   "outside": 9,
+   "queue": 0,
+   "states": {},
+   "trains": 52,
+   "mainPushes": 67,
+   "mainPushFail": 0,
+   "mainPushMsP50": 354,
+   "mainPushMsP90": 889,
+   "cas": 10,
+   "busy": 5,
+   "refreshes": 61,
+   "waitSP50": 7,
+   "waitSP90": 14,
+   "frozenMs": 97544,
+   "freezes": 45,
+   "xHoldMs": 0,
+   "handed": 0,
+   "handoffs": 0,
+   "rounds": 0,
+   "pending": 0,
+   "perRoundP50": null,
+   "agentPushes": 3688,
+   "agentPushFail": 0,
+   "artifactsOps": 311,
+   "restores": 1,
+   "errors": [],
+   "errorCount": 0,
+   "failSamples": [],
+   "viewFails": 0,
+   "viewFailSample": []
+  },
+  {
+   "lane": "L7",
+   "mods": 12,
+   "phase": "done",
+   "frozen": false,
+   "tasks": 3751,
+   "cross": 123,
+   "registered": 3636,
+   "landed": 3630,
+   "landedPerHour": 19022,
+   "dropped": 6,
+   "testFails": 0,
+   "outside": 6,
+   "queue": 0,
+   "states": {},
+   "trains": 51,
+   "mainPushes": 60,
+   "mainPushFail": 0,
+   "mainPushMsP50": 308,
+   "mainPushMsP90": 478,
+   "cas": 7,
+   "busy": 2,
+   "refreshes": 57,
+   "waitSP50": 7,
+   "waitSP90": 15,
+   "frozenMs": 100693,
+   "freezes": 46,
+   "xHoldMs": 0,
+   "handed": 0,
+   "handoffs": 0,
+   "rounds": 0,
+   "pending": 0,
+   "perRoundP50": null,
+   "agentPushes": 3636,
+   "agentPushFail": 0,
+   "artifactsOps": 288,
+   "restores": 1,
+   "errors": [],
+   "errorCount": 0,
+   "failSamples": [],
+   "viewFails": 0,
+   "viewFailSample": []
+  },
+  {
+   "lane": "X",
+   "mods": 0,
+   "phase": "done",
+   "frozen": false,
+   "tasks": 0,
+   "cross": 0,
+   "registered": 909,
+   "landed": 875,
+   "landedPerHour": 4585,
+   "dropped": 34,
+   "testFails": 0,
+   "outside": 0,
+   "queue": 0,
+   "states": {},
+   "trains": 52,
+   "mainPushes": 103,
+   "mainPushFail": 0,
+   "mainPushMsP50": 510,
+   "mainPushMsP90": 850,
+   "cas": 51,
+   "busy": 0,
+   "refreshes": 52,
+   "waitSP50": 8,
+   "waitSP90": 13,
+   "frozenMs": 0,
+   "freezes": 0,
+   "xHoldMs": 122062,
+   "handed": 0,
+   "handoffs": 0,
+   "rounds": 0,
+   "pending": 0,
+   "perRoundP50": null,
+   "agentPushes": 909,
+   "agentPushFail": 0,
+   "artifactsOps": 311,
+   "restores": 1,
+   "errors": [],
+   "errorCount": 0,
+   "failSamples": [],
+   "viewFails": 0,
+   "viewFailSample": []
+  }
+ ],
+ "runSeries": [
+  {
+   "t": 17,
+   "landed": 0,
+   "queue": 0,
+   "cas": 0,
+   "work": 2000
+  },
+  {
+   "t": 27,
+   "landed": 0,
+   "queue": 62,
+   "cas": 0,
+   "work": 1983
+  },
+  {
+   "t": 37,
+   "landed": 159,
+   "queue": 370,
+   "cas": 17,
+   "work": 1980
+  },
+  {
+   "t": 47,
+   "landed": 664,
+   "queue": 363,
+   "cas": 19,
+   "work": 1966
+  },
+  {
+   "t": 57,
+   "landed": 1195,
+   "queue": 424,
+   "cas": 20,
+   "work": 1979
+  },
+  {
+   "t": 67,
+   "landed": 1733,
+   "queue": 159,
+   "cas": 22,
+   "work": 1976
+  },
+  {
+   "t": 78,
+   "landed": 2345,
+   "queue": 162,
+   "cas": 23,
+   "work": 1978
+  },
+  {
+   "t": 88,
+   "landed": 2811,
+   "queue": 249,
+   "cas": 26,
+   "work": 1973
+  },
+  {
+   "t": 98,
+   "landed": 3224,
+   "queue": 301,
+   "cas": 27,
+   "work": 1970
+  },
+  {
+   "t": 108,
+   "landed": 3689,
+   "queue": 319,
+   "cas": 28,
+   "work": 1975
+  },
+  {
+   "t": 118,
+   "landed": 4185,
+   "queue": 283,
+   "cas": 29,
+   "work": 1977
+  },
+  {
+   "t": 128,
+   "landed": 4655,
+   "queue": 301,
+   "cas": 33,
+   "work": 1975
+  },
+  {
+   "t": 138,
+   "landed": 5021,
+   "queue": 519,
+   "cas": 35,
+   "work": 1967
+  },
+  {
+   "t": 148,
+   "landed": 5689,
+   "queue": 308,
+   "cas": 38,
+   "work": 1975
+  },
+  {
+   "t": 158,
+   "landed": 6163,
+   "queue": 314,
+   "cas": 39,
+   "work": 1979
+  },
+  {
+   "t": 168,
+   "landed": 6735,
+   "queue": 315,
+   "cas": 40,
+   "work": 1976
+  },
+  {
+   "t": 178,
+   "landed": 7175,
+   "queue": 334,
+   "cas": 41,
+   "work": 1974
+  },
+  {
+   "t": 188,
+   "landed": 7718,
+   "queue": 286,
+   "cas": 41,
+   "work": 1980
+  },
+  {
+   "t": 198,
+   "landed": 8058,
+   "queue": 375,
+   "cas": 42,
+   "work": 1977
+  },
+  {
+   "t": 208,
+   "landed": 8661,
+   "queue": 292,
+   "cas": 44,
+   "work": 1974
+  },
+  {
+   "t": 218,
+   "landed": 9052,
+   "queue": 462,
+   "cas": 45,
+   "work": 1974
+  },
+  {
+   "t": 230,
+   "landed": 9695,
+   "queue": 311,
+   "cas": 47,
+   "work": 1970
+  },
+  {
+   "t": 240,
+   "landed": 10241,
+   "queue": 276,
+   "cas": 48,
+   "work": 1967
+  },
+  {
+   "t": 250,
+   "landed": 10751,
+   "queue": 257,
+   "cas": 48,
+   "work": 1969
+  },
+  {
+   "t": 260,
+   "landed": 11187,
+   "queue": 329,
+   "cas": 50,
+   "work": 1985
+  },
+  {
+   "t": 270,
+   "landed": 11650,
+   "queue": 361,
+   "cas": 51,
+   "work": 1979
+  },
+  {
+   "t": 280,
+   "landed": 12169,
+   "queue": 268,
+   "cas": 53,
+   "work": 1977
+  },
+  {
+   "t": 290,
+   "landed": 12656,
+   "queue": 344,
+   "cas": 54,
+   "work": 1981
+  },
+  {
+   "t": 300,
+   "landed": 13184,
+   "queue": 271,
+   "cas": 54,
+   "work": 1978
+  },
+  {
+   "t": 310,
+   "landed": 13616,
+   "queue": 295,
+   "cas": 55,
+   "work": 1963
+  },
+  {
+   "t": 320,
+   "landed": 14085,
+   "queue": 318,
+   "cas": 57,
+   "work": 1976
+  },
+  {
+   "t": 330,
+   "landed": 14681,
+   "queue": 211,
+   "cas": 58,
+   "work": 1973
+  },
+  {
+   "t": 341,
+   "landed": 15013,
+   "queue": 247,
+   "cas": 59,
+   "work": 1973
+  },
+  {
+   "t": 351,
+   "landed": 15498,
+   "queue": 385,
+   "cas": 62,
+   "work": 1968
+  },
+  {
+   "t": 361,
+   "landed": 16046,
+   "queue": 391,
+   "cas": 63,
+   "work": 1967
+  },
+  {
+   "t": 372,
+   "landed": 16464,
+   "queue": 364,
+   "cas": 63,
+   "work": 1974
+  },
+  {
+   "t": 382,
+   "landed": 16983,
+   "queue": 355,
+   "cas": 64,
+   "work": 1977
+  },
+  {
+   "t": 393,
+   "landed": 17546,
+   "queue": 315,
+   "cas": 67,
+   "work": 1973
+  },
+  {
+   "t": 403,
+   "landed": 18069,
+   "queue": 335,
+   "cas": 69,
+   "work": 1980
+  },
+  {
+   "t": 413,
+   "landed": 18565,
+   "queue": 336,
+   "cas": 70,
+   "work": 1985
+  },
+  {
+   "t": 423,
+   "landed": 19020,
+   "queue": 304,
+   "cas": 70,
+   "work": 1969
+  },
+  {
+   "t": 434,
+   "landed": 19480,
+   "queue": 386,
+   "cas": 72,
+   "work": 1967
+  },
+  {
+   "t": 444,
+   "landed": 20129,
+   "queue": 324,
+   "cas": 74,
+   "work": 1970
+  },
+  {
+   "t": 454,
+   "landed": 20656,
+   "queue": 274,
+   "cas": 76,
+   "work": 1968
+  },
+  {
+   "t": 464,
+   "landed": 21107,
+   "queue": 288,
+   "cas": 77,
+   "work": 1981
+  },
+  {
+   "t": 474,
+   "landed": 21588,
+   "queue": 359,
+   "cas": 78,
+   "work": 1978
+  },
+  {
+   "t": 484,
+   "landed": 21967,
+   "queue": 347,
+   "cas": 78,
+   "work": 1974
+  },
+  {
+   "t": 494,
+   "landed": 22434,
+   "queue": 511,
+   "cas": 79,
+   "work": 1979
+  },
+  {
+   "t": 504,
+   "landed": 22988,
+   "queue": 453,
+   "cas": 81,
+   "work": 1975
+  },
+  {
+   "t": 514,
+   "landed": 23583,
+   "queue": 343,
+   "cas": 83,
+   "work": 1978
+  },
+  {
+   "t": 524,
+   "landed": 24053,
+   "queue": 273,
+   "cas": 83,
+   "work": 1966
+  },
+  {
+   "t": 534,
+   "landed": 24559,
+   "queue": 360,
+   "cas": 85,
+   "work": 1979
+  },
+  {
+   "t": 544,
+   "landed": 24942,
+   "queue": 471,
+   "cas": 86,
+   "work": 1971
+  },
+  {
+   "t": 554,
+   "landed": 25547,
+   "queue": 305,
+   "cas": 87,
+   "work": 1972
+  },
+  {
+   "t": 564,
+   "landed": 26054,
+   "queue": 323,
+   "cas": 87,
+   "work": 1968
+  },
+  {
+   "t": 576,
+   "landed": 26455,
+   "queue": 202,
+   "cas": 91,
+   "work": 1970
+  },
+  {
+   "t": 586,
+   "landed": 27059,
+   "queue": 312,
+   "cas": 92,
+   "work": 1972
+  },
+  {
+   "t": 597,
+   "landed": 27601,
+   "queue": 213,
+   "cas": 95,
+   "work": 1977
+  },
+  {
+   "t": 607,
+   "landed": 28032,
+   "queue": 331,
+   "cas": 96,
+   "work": 1651
+  },
+  {
+   "t": 618,
+   "landed": 28545,
+   "queue": 287,
+   "cas": 97,
+   "work": 1188
+  },
+  {
+   "t": 628,
+   "landed": 29080,
+   "queue": 254,
+   "cas": 99,
+   "work": 689
+  },
+  {
+   "t": 638,
+   "landed": 29591,
+   "queue": 176,
+   "cas": 99,
+   "work": 324
+  },
+  {
+   "t": 648,
+   "landed": 29822,
+   "queue": 153,
+   "cas": 102,
+   "work": 84
+  },
+  {
+   "t": 658,
+   "landed": 30052,
+   "queue": 70,
+   "cas": 103,
+   "work": 2
+  },
+  {
+   "t": 668,
+   "landed": 30132,
+   "queue": 0,
+   "cas": 104,
+   "work": 0
+  }
+ ],
+ "laneSeries": [
+  {
+   "lane": "L0",
+   "series": [
+    {
+     "t": 10,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 20,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 32,
+     "landed": 26,
+     "queue": 16,
+     "cas": 1,
+     "frozenMs": 0
+    },
+    {
+     "t": 42,
+     "landed": 87,
+     "queue": 4,
+     "cas": 1,
+     "frozenMs": 1587
+    },
+    {
+     "t": 52,
+     "landed": 160,
+     "queue": 3,
+     "cas": 1,
+     "frozenMs": 3340
+    },
+    {
+     "t": 63,
+     "landed": 236,
+     "queue": 1,
+     "cas": 1,
+     "frozenMs": 5631
+    },
+    {
+     "t": 73,
+     "landed": 289,
+     "queue": 3,
+     "cas": 1,
+     "frozenMs": 8248
+    },
+    {
+     "t": 83,
+     "landed": 343,
+     "queue": 1,
+     "cas": 1,
+     "frozenMs": 9737
+    },
+    {
+     "t": 95,
+     "landed": 395,
+     "queue": 6,
+     "cas": 1,
+     "frozenMs": 11167
+    },
+    {
+     "t": 105,
+     "landed": 395,
+     "queue": 80,
+     "cas": 1,
+     "frozenMs": 11167
+    },
+    {
+     "t": 115,
+     "landed": 533,
+     "queue": 3,
+     "cas": 1,
+     "frozenMs": 12667
+    },
+    {
+     "t": 126,
+     "landed": 600,
+     "queue": 1,
+     "cas": 1,
+     "frozenMs": 15127
+    },
+    {
+     "t": 136,
+     "landed": 659,
+     "queue": 1,
+     "cas": 1,
+     "frozenMs": 15127
+    },
+    {
+     "t": 147,
+     "landed": 727,
+     "queue": 2,
+     "cas": 1,
+     "frozenMs": 15127
+    },
+    {
+     "t": 157,
+     "landed": 783,
+     "queue": 2,
+     "cas": 1,
+     "frozenMs": 16670
+    },
+    {
+     "t": 167,
+     "landed": 842,
+     "queue": 4,
+     "cas": 1,
+     "frozenMs": 18116
+    },
+    {
+     "t": 177,
+     "landed": 842,
+     "queue": 67,
+     "cas": 1,
+     "frozenMs": 18116
+    },
+    {
+     "t": 188,
+     "landed": 968,
+     "queue": 5,
+     "cas": 1,
+     "frozenMs": 19667
+    },
+    {
+     "t": 198,
+     "landed": 1025,
+     "queue": 0,
+     "cas": 1,
+     "frozenMs": 21689
+    },
+    {
+     "t": 209,
+     "landed": 1084,
+     "queue": 5,
+     "cas": 1,
+     "frozenMs": 24471
+    },
+    {
+     "t": 220,
+     "landed": 1149,
+     "queue": 6,
+     "cas": 1,
+     "frozenMs": 27243
+    },
+    {
+     "t": 230,
+     "landed": 1215,
+     "queue": 7,
+     "cas": 1,
+     "frozenMs": 29542
+    },
+    {
+     "t": 241,
+     "landed": 1288,
+     "queue": 2,
+     "cas": 1,
+     "frozenMs": 31137
+    },
+    {
+     "t": 251,
+     "landed": 1288,
+     "queue": 57,
+     "cas": 1,
+     "frozenMs": 31137
+    },
+    {
+     "t": 261,
+     "landed": 1409,
+     "queue": 3,
+     "cas": 1,
+     "frozenMs": 32768
+    },
+    {
+     "t": 272,
+     "landed": 1469,
+     "queue": 6,
+     "cas": 1,
+     "frozenMs": 34671
+    },
+    {
+     "t": 282,
+     "landed": 1543,
+     "queue": 4,
+     "cas": 1,
+     "frozenMs": 37353
+    },
+    {
+     "t": 292,
+     "landed": 1598,
+     "queue": 4,
+     "cas": 1,
+     "frozenMs": 38785
+    },
+    {
+     "t": 303,
+     "landed": 1657,
+     "queue": 2,
+     "cas": 1,
+     "frozenMs": 41616
+    },
+    {
+     "t": 313,
+     "landed": 1657,
+     "queue": 69,
+     "cas": 1,
+     "frozenMs": 41616
+    },
+    {
+     "t": 323,
+     "landed": 1783,
+     "queue": 8,
+     "cas": 1,
+     "frozenMs": 43965
+    },
+    {
+     "t": 334,
+     "landed": 1847,
+     "queue": 4,
+     "cas": 1,
+     "frozenMs": 45801
+    },
+    {
+     "t": 344,
+     "landed": 1910,
+     "queue": 2,
+     "cas": 1,
+     "frozenMs": 47311
+    },
+    {
+     "t": 355,
+     "landed": 1969,
+     "queue": 6,
+     "cas": 1,
+     "frozenMs": 48986
+    },
+    {
+     "t": 365,
+     "landed": 2034,
+     "queue": 8,
+     "cas": 1,
+     "frozenMs": 51536
+    },
+    {
+     "t": 376,
+     "landed": 2097,
+     "queue": 2,
+     "cas": 1,
+     "frozenMs": 54385
+    },
+    {
+     "t": 386,
+     "landed": 2097,
+     "queue": 53,
+     "cas": 1,
+     "frozenMs": 54385
+    },
+    {
+     "t": 396,
+     "landed": 2215,
+     "queue": 1,
+     "cas": 1,
+     "frozenMs": 56106
+    },
+    {
+     "t": 407,
+     "landed": 2274,
+     "queue": 3,
+     "cas": 1,
+     "frozenMs": 59511
+    },
+    {
+     "t": 417,
+     "landed": 2342,
+     "queue": 3,
+     "cas": 1,
+     "frozenMs": 60919
+    },
+    {
+     "t": 427,
+     "landed": 2402,
+     "queue": 0,
+     "cas": 1,
+     "frozenMs": 64376
+    },
+    {
+     "t": 437,
+     "landed": 2402,
+     "queue": 66,
+     "cas": 1,
+     "frozenMs": 64376
+    },
+    {
+     "t": 449,
+     "landed": 2525,
+     "queue": 11,
+     "cas": 2,
+     "frozenMs": 67284
+    },
+    {
+     "t": 460,
+     "landed": 2593,
+     "queue": 7,
+     "cas": 2,
+     "frozenMs": 69103
+    },
+    {
+     "t": 470,
+     "landed": 2657,
+     "queue": 5,
+     "cas": 2,
+     "frozenMs": 70680
+    },
+    {
+     "t": 480,
+     "landed": 2710,
+     "queue": 6,
+     "cas": 2,
+     "frozenMs": 73255
+    },
+    {
+     "t": 491,
+     "landed": 2777,
+     "queue": 8,
+     "cas": 2,
+     "frozenMs": 76274
+    },
+    {
+     "t": 501,
+     "landed": 2777,
+     "queue": 73,
+     "cas": 2,
+     "frozenMs": 76274
+    },
+    {
+     "t": 511,
+     "landed": 2901,
+     "queue": 5,
+     "cas": 2,
+     "frozenMs": 79849
+    },
+    {
+     "t": 522,
+     "landed": 2968,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 82975
+    },
+    {
+     "t": 532,
+     "landed": 3026,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 84651
+    },
+    {
+     "t": 543,
+     "landed": 3086,
+     "queue": 6,
+     "cas": 2,
+     "frozenMs": 88023
+    },
+    {
+     "t": 553,
+     "landed": 3156,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 90123
+    },
+    {
+     "t": 563,
+     "landed": 3156,
+     "queue": 54,
+     "cas": 2,
+     "frozenMs": 90123
+    },
+    {
+     "t": 575,
+     "landed": 3271,
+     "queue": 10,
+     "cas": 3,
+     "frozenMs": 93865
+    },
+    {
+     "t": 585,
+     "landed": 3330,
+     "queue": 2,
+     "cas": 3,
+     "frozenMs": 95719
+    },
+    {
+     "t": 596,
+     "landed": 3402,
+     "queue": 9,
+     "cas": 4,
+     "frozenMs": 97486
+    },
+    {
+     "t": 607,
+     "landed": 3473,
+     "queue": 5,
+     "cas": 4,
+     "frozenMs": 99173
+    },
+    {
+     "t": 617,
+     "landed": 3533,
+     "queue": 5,
+     "cas": 4,
+     "frozenMs": 99173
+    },
+    {
+     "t": 628,
+     "landed": 3586,
+     "queue": 7,
+     "cas": 4,
+     "frozenMs": 100793
+    },
+    {
+     "t": 638,
+     "landed": 3586,
+     "queue": 50,
+     "cas": 4,
+     "frozenMs": 100793
+    },
+    {
+     "t": 648,
+     "landed": 3662,
+     "queue": 2,
+     "cas": 4,
+     "frozenMs": 103267
+    },
+    {
+     "t": 658,
+     "landed": 3672,
+     "queue": 0,
+     "cas": 4,
+     "frozenMs": 104631
+    },
+    {
+     "t": 668,
+     "landed": 3672,
+     "queue": 0,
+     "cas": 4,
+     "frozenMs": 104631
+    }
+   ]
+  },
+  {
+   "lane": "L1",
+   "series": [
+    {
+     "t": 10,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 20,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 31,
+     "landed": 16,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 41,
+     "landed": 73,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 2555
+    },
+    {
+     "t": 51,
+     "landed": 145,
+     "queue": 5,
+     "cas": 0,
+     "frozenMs": 4257
+    },
+    {
+     "t": 62,
+     "landed": 224,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 6530
+    },
+    {
+     "t": 72,
+     "landed": 282,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 9118
+    },
+    {
+     "t": 82,
+     "landed": 340,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 10591
+    },
+    {
+     "t": 92,
+     "landed": 340,
+     "queue": 55,
+     "cas": 0,
+     "frozenMs": 10591
+    },
+    {
+     "t": 103,
+     "landed": 465,
+     "queue": 2,
+     "cas": 0,
+     "frozenMs": 11997
+    },
+    {
+     "t": 113,
+     "landed": 528,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 13539
+    },
+    {
+     "t": 123,
+     "landed": 588,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 15821
+    },
+    {
+     "t": 134,
+     "landed": 650,
+     "queue": 1,
+     "cas": 0,
+     "frozenMs": 18782
+    },
+    {
+     "t": 145,
+     "landed": 716,
+     "queue": 8,
+     "cas": 0,
+     "frozenMs": 20745
+    },
+    {
+     "t": 155,
+     "landed": 716,
+     "queue": 63,
+     "cas": 0,
+     "frozenMs": 20745
+    },
+    {
+     "t": 165,
+     "landed": 838,
+     "queue": 5,
+     "cas": 0,
+     "frozenMs": 22268
+    },
+    {
+     "t": 175,
+     "landed": 900,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 23789
+    },
+    {
+     "t": 186,
+     "landed": 966,
+     "queue": 4,
+     "cas": 0,
+     "frozenMs": 25363
+    },
+    {
+     "t": 196,
+     "landed": 1027,
+     "queue": 4,
+     "cas": 0,
+     "frozenMs": 27212
+    },
+    {
+     "t": 206,
+     "landed": 1101,
+     "queue": 4,
+     "cas": 0,
+     "frozenMs": 29965
+    },
+    {
+     "t": 217,
+     "landed": 1164,
+     "queue": 1,
+     "cas": 0,
+     "frozenMs": 32717
+    },
+    {
+     "t": 227,
+     "landed": 1164,
+     "queue": 58,
+     "cas": 0,
+     "frozenMs": 32717
+    },
+    {
+     "t": 237,
+     "landed": 1275,
+     "queue": 4,
+     "cas": 0,
+     "frozenMs": 34979
+    },
+    {
+     "t": 247,
+     "landed": 1337,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 36665
+    },
+    {
+     "t": 258,
+     "landed": 1393,
+     "queue": 5,
+     "cas": 0,
+     "frozenMs": 38294
+    },
+    {
+     "t": 268,
+     "landed": 1470,
+     "queue": 2,
+     "cas": 0,
+     "frozenMs": 40010
+    },
+    {
+     "t": 278,
+     "landed": 1527,
+     "queue": 4,
+     "cas": 0,
+     "frozenMs": 42651
+    },
+    {
+     "t": 289,
+     "landed": 1588,
+     "queue": 2,
+     "cas": 0,
+     "frozenMs": 44055
+    },
+    {
+     "t": 299,
+     "landed": 1588,
+     "queue": 64,
+     "cas": 0,
+     "frozenMs": 44055
+    },
+    {
+     "t": 310,
+     "landed": 1707,
+     "queue": 4,
+     "cas": 0,
+     "frozenMs": 46876
+    },
+    {
+     "t": 320,
+     "landed": 1775,
+     "queue": 5,
+     "cas": 0,
+     "frozenMs": 49305
+    },
+    {
+     "t": 330,
+     "landed": 1841,
+     "queue": 5,
+     "cas": 0,
+     "frozenMs": 51420
+    },
+    {
+     "t": 341,
+     "landed": 1897,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 52875
+    },
+    {
+     "t": 351,
+     "landed": 1953,
+     "queue": 7,
+     "cas": 0,
+     "frozenMs": 54495
+    },
+    {
+     "t": 361,
+     "landed": 1953,
+     "queue": 76,
+     "cas": 0,
+     "frozenMs": 54495
+    },
+    {
+     "t": 371,
+     "landed": 2088,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 57011
+    },
+    {
+     "t": 382,
+     "landed": 2146,
+     "queue": 2,
+     "cas": 0,
+     "frozenMs": 59359
+    },
+    {
+     "t": 392,
+     "landed": 2209,
+     "queue": 2,
+     "cas": 0,
+     "frozenMs": 61077
+    },
+    {
+     "t": 402,
+     "landed": 2275,
+     "queue": 4,
+     "cas": 0,
+     "frozenMs": 64212
+    },
+    {
+     "t": 413,
+     "landed": 2343,
+     "queue": 2,
+     "cas": 0,
+     "frozenMs": 65583
+    },
+    {
+     "t": 423,
+     "landed": 2343,
+     "queue": 56,
+     "cas": 0,
+     "frozenMs": 65583
+    },
+    {
+     "t": 433,
+     "landed": 2451,
+     "queue": 4,
+     "cas": 0,
+     "frozenMs": 69012
+    },
+    {
+     "t": 444,
+     "landed": 2515,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 72012
+    },
+    {
+     "t": 455,
+     "landed": 2581,
+     "queue": 2,
+     "cas": 0,
+     "frozenMs": 73847
+    },
+    {
+     "t": 465,
+     "landed": 2645,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 75333
+    },
+    {
+     "t": 475,
+     "landed": 2710,
+     "queue": 2,
+     "cas": 0,
+     "frozenMs": 77857
+    },
+    {
+     "t": 485,
+     "landed": 2710,
+     "queue": 61,
+     "cas": 0,
+     "frozenMs": 77857
+    },
+    {
+     "t": 496,
+     "landed": 2823,
+     "queue": 6,
+     "cas": 0,
+     "frozenMs": 80857
+    },
+    {
+     "t": 507,
+     "landed": 2886,
+     "queue": 12,
+     "cas": 1,
+     "frozenMs": 84501
+    },
+    {
+     "t": 517,
+     "landed": 2949,
+     "queue": 3,
+     "cas": 1,
+     "frozenMs": 87342
+    },
+    {
+     "t": 528,
+     "landed": 3024,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 88981
+    },
+    {
+     "t": 538,
+     "landed": 3024,
+     "queue": 74,
+     "cas": 2,
+     "frozenMs": 88981
+    },
+    {
+     "t": 549,
+     "landed": 3150,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 92323
+    },
+    {
+     "t": 560,
+     "landed": 3207,
+     "queue": 2,
+     "cas": 2,
+     "frozenMs": 94741
+    },
+    {
+     "t": 570,
+     "landed": 3268,
+     "queue": 7,
+     "cas": 3,
+     "frozenMs": 98491
+    },
+    {
+     "t": 581,
+     "landed": 3340,
+     "queue": 5,
+     "cas": 3,
+     "frozenMs": 100280
+    },
+    {
+     "t": 592,
+     "landed": 3395,
+     "queue": 6,
+     "cas": 4,
+     "frozenMs": 102012
+    },
+    {
+     "t": 602,
+     "landed": 3468,
+     "queue": 2,
+     "cas": 4,
+     "frozenMs": 103670
+    },
+    {
+     "t": 612,
+     "landed": 3468,
+     "queue": 57,
+     "cas": 4,
+     "frozenMs": 103670
+    },
+    {
+     "t": 623,
+     "landed": 3575,
+     "queue": 14,
+     "cas": 4,
+     "frozenMs": 106530
+    },
+    {
+     "t": 633,
+     "landed": 3634,
+     "queue": 5,
+     "cas": 4,
+     "frozenMs": 108229
+    },
+    {
+     "t": 644,
+     "landed": 3671,
+     "queue": 0,
+     "cas": 4,
+     "frozenMs": 108229
+    },
+    {
+     "t": 654,
+     "landed": 3689,
+     "queue": 0,
+     "cas": 4,
+     "frozenMs": 109470
+    },
+    {
+     "t": 664,
+     "landed": 3695,
+     "queue": 0,
+     "cas": 4,
+     "frozenMs": 110872
+    }
+   ]
+  },
+  {
+   "lane": "L2",
+   "series": [
+    {
+     "t": 10,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 20,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 35,
+     "landed": 23,
+     "queue": 26,
+     "cas": 4,
+     "frozenMs": 0
+    },
+    {
+     "t": 45,
+     "landed": 23,
+     "queue": 71,
+     "cas": 4,
+     "frozenMs": 0
+    },
+    {
+     "t": 55,
+     "landed": 173,
+     "queue": 6,
+     "cas": 4,
+     "frozenMs": 1706
+    },
+    {
+     "t": 66,
+     "landed": 254,
+     "queue": 3,
+     "cas": 4,
+     "frozenMs": 3523
+    },
+    {
+     "t": 76,
+     "landed": 296,
+     "queue": 0,
+     "cas": 4,
+     "frozenMs": 6227
+    },
+    {
+     "t": 87,
+     "landed": 349,
+     "queue": 4,
+     "cas": 4,
+     "frozenMs": 7725
+    },
+    {
+     "t": 97,
+     "landed": 413,
+     "queue": 6,
+     "cas": 4,
+     "frozenMs": 9146
+    },
+    {
+     "t": 107,
+     "landed": 473,
+     "queue": 7,
+     "cas": 4,
+     "frozenMs": 10647
+    },
+    {
+     "t": 118,
+     "landed": 546,
+     "queue": 6,
+     "cas": 5,
+     "frozenMs": 10647
+    },
+    {
+     "t": 130,
+     "landed": 597,
+     "queue": 12,
+     "cas": 6,
+     "frozenMs": 10647
+    },
+    {
+     "t": 142,
+     "landed": 663,
+     "queue": 15,
+     "cas": 8,
+     "frozenMs": 12035
+    },
+    {
+     "t": 153,
+     "landed": 746,
+     "queue": 8,
+     "cas": 8,
+     "frozenMs": 13377
+    },
+    {
+     "t": 163,
+     "landed": 811,
+     "queue": 3,
+     "cas": 8,
+     "frozenMs": 15227
+    },
+    {
+     "t": 174,
+     "landed": 875,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 16738
+    },
+    {
+     "t": 185,
+     "landed": 931,
+     "queue": 7,
+     "cas": 8,
+     "frozenMs": 18328
+    },
+    {
+     "t": 195,
+     "landed": 994,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 20207
+    },
+    {
+     "t": 205,
+     "landed": 1068,
+     "queue": 4,
+     "cas": 8,
+     "frozenMs": 22980
+    },
+    {
+     "t": 215,
+     "landed": 1068,
+     "queue": 58,
+     "cas": 8,
+     "frozenMs": 22980
+    },
+    {
+     "t": 227,
+     "landed": 1183,
+     "queue": 13,
+     "cas": 9,
+     "frozenMs": 25772
+    },
+    {
+     "t": 237,
+     "landed": 1255,
+     "queue": 4,
+     "cas": 9,
+     "frozenMs": 27059
+    },
+    {
+     "t": 248,
+     "landed": 1317,
+     "queue": 5,
+     "cas": 9,
+     "frozenMs": 28780
+    },
+    {
+     "t": 259,
+     "landed": 1381,
+     "queue": 6,
+     "cas": 9,
+     "frozenMs": 30458
+    },
+    {
+     "t": 269,
+     "landed": 1441,
+     "queue": 3,
+     "cas": 9,
+     "frozenMs": 32216
+    },
+    {
+     "t": 280,
+     "landed": 1493,
+     "queue": 4,
+     "cas": 9,
+     "frozenMs": 34876
+    },
+    {
+     "t": 290,
+     "landed": 1557,
+     "queue": 3,
+     "cas": 9,
+     "frozenMs": 36331
+    },
+    {
+     "t": 300,
+     "landed": 1557,
+     "queue": 61,
+     "cas": 9,
+     "frozenMs": 36331
+    },
+    {
+     "t": 311,
+     "landed": 1681,
+     "queue": 12,
+     "cas": 9,
+     "frozenMs": 39178
+    },
+    {
+     "t": 322,
+     "landed": 1743,
+     "queue": 5,
+     "cas": 9,
+     "frozenMs": 41095
+    },
+    {
+     "t": 332,
+     "landed": 1803,
+     "queue": 4,
+     "cas": 9,
+     "frozenMs": 43370
+    },
+    {
+     "t": 343,
+     "landed": 1873,
+     "queue": 6,
+     "cas": 9,
+     "frozenMs": 44872
+    },
+    {
+     "t": 353,
+     "landed": 1933,
+     "queue": 5,
+     "cas": 9,
+     "frozenMs": 46538
+    },
+    {
+     "t": 364,
+     "landed": 1995,
+     "queue": 6,
+     "cas": 9,
+     "frozenMs": 49115
+    },
+    {
+     "t": 375,
+     "landed": 2060,
+     "queue": 5,
+     "cas": 9,
+     "frozenMs": 52171
+    },
+    {
+     "t": 387,
+     "landed": 2119,
+     "queue": 9,
+     "cas": 11,
+     "frozenMs": 52171
+    },
+    {
+     "t": 398,
+     "landed": 2188,
+     "queue": 11,
+     "cas": 12,
+     "frozenMs": 52171
+    },
+    {
+     "t": 408,
+     "landed": 2254,
+     "queue": 9,
+     "cas": 12,
+     "frozenMs": 54148
+    },
+    {
+     "t": 420,
+     "landed": 2322,
+     "queue": 6,
+     "cas": 12,
+     "frozenMs": 55655
+    },
+    {
+     "t": 431,
+     "landed": 2391,
+     "queue": 13,
+     "cas": 13,
+     "frozenMs": 59168
+    },
+    {
+     "t": 442,
+     "landed": 2465,
+     "queue": 4,
+     "cas": 13,
+     "frozenMs": 62097
+    },
+    {
+     "t": 452,
+     "landed": 2527,
+     "queue": 9,
+     "cas": 13,
+     "frozenMs": 63959
+    },
+    {
+     "t": 463,
+     "landed": 2586,
+     "queue": 4,
+     "cas": 13,
+     "frozenMs": 65476
+    },
+    {
+     "t": 473,
+     "landed": 2586,
+     "queue": 68,
+     "cas": 13,
+     "frozenMs": 65476
+    },
+    {
+     "t": 484,
+     "landed": 2710,
+     "queue": 16,
+     "cas": 13,
+     "frozenMs": 68019
+    },
+    {
+     "t": 495,
+     "landed": 2787,
+     "queue": 7,
+     "cas": 13,
+     "frozenMs": 71115
+    },
+    {
+     "t": 506,
+     "landed": 2847,
+     "queue": 6,
+     "cas": 13,
+     "frozenMs": 71115
+    },
+    {
+     "t": 516,
+     "landed": 2914,
+     "queue": 5,
+     "cas": 13,
+     "frozenMs": 74006
+    },
+    {
+     "t": 526,
+     "landed": 2914,
+     "queue": 62,
+     "cas": 13,
+     "frozenMs": 74006
+    },
+    {
+     "t": 537,
+     "landed": 3039,
+     "queue": 10,
+     "cas": 13,
+     "frozenMs": 75662
+    },
+    {
+     "t": 548,
+     "landed": 3100,
+     "queue": 4,
+     "cas": 13,
+     "frozenMs": 78074
+    },
+    {
+     "t": 558,
+     "landed": 3160,
+     "queue": 3,
+     "cas": 13,
+     "frozenMs": 78074
+    },
+    {
+     "t": 569,
+     "landed": 3232,
+     "queue": 6,
+     "cas": 13,
+     "frozenMs": 81852
+    },
+    {
+     "t": 580,
+     "landed": 3291,
+     "queue": 6,
+     "cas": 13,
+     "frozenMs": 83661
+    },
+    {
+     "t": 590,
+     "landed": 3359,
+     "queue": 3,
+     "cas": 13,
+     "frozenMs": 85417
+    },
+    {
+     "t": 600,
+     "landed": 3359,
+     "queue": 66,
+     "cas": 13,
+     "frozenMs": 85417
+    },
+    {
+     "t": 611,
+     "landed": 3473,
+     "queue": 11,
+     "cas": 13,
+     "frozenMs": 87119
+    },
+    {
+     "t": 622,
+     "landed": 3548,
+     "queue": 6,
+     "cas": 13,
+     "frozenMs": 90276
+    },
+    {
+     "t": 632,
+     "landed": 3605,
+     "queue": 4,
+     "cas": 13,
+     "frozenMs": 91918
+    },
+    {
+     "t": 643,
+     "landed": 3644,
+     "queue": 3,
+     "cas": 13,
+     "frozenMs": 91918
+    },
+    {
+     "t": 653,
+     "landed": 3663,
+     "queue": 1,
+     "cas": 13,
+     "frozenMs": 93184
+    },
+    {
+     "t": 664,
+     "landed": 3668,
+     "queue": 0,
+     "cas": 13,
+     "frozenMs": 93184
+    }
+   ]
+  },
+  {
+   "lane": "L3",
+   "series": [
+    {
+     "t": 10,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 20,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 32,
+     "landed": 24,
+     "queue": 19,
+     "cas": 1,
+     "frozenMs": 0
+    },
+    {
+     "t": 43,
+     "landed": 103,
+     "queue": 6,
+     "cas": 1,
+     "frozenMs": 866
+    },
+    {
+     "t": 53,
+     "landed": 166,
+     "queue": 7,
+     "cas": 1,
+     "frozenMs": 2728
+    },
+    {
+     "t": 64,
+     "landed": 247,
+     "queue": 6,
+     "cas": 1,
+     "frozenMs": 5046
+    },
+    {
+     "t": 74,
+     "landed": 299,
+     "queue": 5,
+     "cas": 1,
+     "frozenMs": 7666
+    },
+    {
+     "t": 85,
+     "landed": 353,
+     "queue": 3,
+     "cas": 1,
+     "frozenMs": 9165
+    },
+    {
+     "t": 95,
+     "landed": 425,
+     "queue": 8,
+     "cas": 1,
+     "frozenMs": 10592
+    },
+    {
+     "t": 105,
+     "landed": 425,
+     "queue": 55,
+     "cas": 1,
+     "frozenMs": 10592
+    },
+    {
+     "t": 117,
+     "landed": 541,
+     "queue": 9,
+     "cas": 1,
+     "frozenMs": 12092
+    },
+    {
+     "t": 127,
+     "landed": 610,
+     "queue": 3,
+     "cas": 1,
+     "frozenMs": 13355
+    },
+    {
+     "t": 137,
+     "landed": 667,
+     "queue": 4,
+     "cas": 1,
+     "frozenMs": 16423
+    },
+    {
+     "t": 148,
+     "landed": 728,
+     "queue": 8,
+     "cas": 1,
+     "frozenMs": 18392
+    },
+    {
+     "t": 158,
+     "landed": 796,
+     "queue": 2,
+     "cas": 1,
+     "frozenMs": 19945
+    },
+    {
+     "t": 169,
+     "landed": 855,
+     "queue": 7,
+     "cas": 1,
+     "frozenMs": 21388
+    },
+    {
+     "t": 180,
+     "landed": 920,
+     "queue": 2,
+     "cas": 1,
+     "frozenMs": 22944
+    },
+    {
+     "t": 190,
+     "landed": 920,
+     "queue": 51,
+     "cas": 1,
+     "frozenMs": 22944
+    },
+    {
+     "t": 200,
+     "landed": 1024,
+     "queue": 12,
+     "cas": 1,
+     "frozenMs": 24796
+    },
+    {
+     "t": 211,
+     "landed": 1099,
+     "queue": 7,
+     "cas": 1,
+     "frozenMs": 27504
+    },
+    {
+     "t": 221,
+     "landed": 1163,
+     "queue": 4,
+     "cas": 1,
+     "frozenMs": 30541
+    },
+    {
+     "t": 232,
+     "landed": 1215,
+     "queue": 5,
+     "cas": 1,
+     "frozenMs": 32812
+    },
+    {
+     "t": 242,
+     "landed": 1267,
+     "queue": 4,
+     "cas": 1,
+     "frozenMs": 34390
+    },
+    {
+     "t": 253,
+     "landed": 1328,
+     "queue": 9,
+     "cas": 1,
+     "frozenMs": 36030
+    },
+    {
+     "t": 263,
+     "landed": 1328,
+     "queue": 77,
+     "cas": 1,
+     "frozenMs": 36030
+    },
+    {
+     "t": 275,
+     "landed": 1460,
+     "queue": 18,
+     "cas": 2,
+     "frozenMs": 37782
+    },
+    {
+     "t": 285,
+     "landed": 1530,
+     "queue": 5,
+     "cas": 2,
+     "frozenMs": 39380
+    },
+    {
+     "t": 296,
+     "landed": 1592,
+     "queue": 5,
+     "cas": 2,
+     "frozenMs": 40961
+    },
+    {
+     "t": 306,
+     "landed": 1647,
+     "queue": 5,
+     "cas": 2,
+     "frozenMs": 43858
+    },
+    {
+     "t": 317,
+     "landed": 1718,
+     "queue": 3,
+     "cas": 2,
+     "frozenMs": 46180
+    },
+    {
+     "t": 327,
+     "landed": 1785,
+     "queue": 3,
+     "cas": 2,
+     "frozenMs": 48307
+    },
+    {
+     "t": 338,
+     "landed": 1842,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 49779
+    },
+    {
+     "t": 348,
+     "landed": 1842,
+     "queue": 52,
+     "cas": 2,
+     "frozenMs": 49779
+    },
+    {
+     "t": 359,
+     "landed": 1953,
+     "queue": 14,
+     "cas": 2,
+     "frozenMs": 51424
+    },
+    {
+     "t": 369,
+     "landed": 2019,
+     "queue": 3,
+     "cas": 2,
+     "frozenMs": 53341
+    },
+    {
+     "t": 380,
+     "landed": 2071,
+     "queue": 9,
+     "cas": 2,
+     "frozenMs": 56398
+    },
+    {
+     "t": 391,
+     "landed": 2139,
+     "queue": 6,
+     "cas": 2,
+     "frozenMs": 58124
+    },
+    {
+     "t": 401,
+     "landed": 2189,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 61280
+    },
+    {
+     "t": 411,
+     "landed": 2189,
+     "queue": 69,
+     "cas": 2,
+     "frozenMs": 61280
+    },
+    {
+     "t": 422,
+     "landed": 2322,
+     "queue": 10,
+     "cas": 2,
+     "frozenMs": 62660
+    },
+    {
+     "t": 432,
+     "landed": 2375,
+     "queue": 11,
+     "cas": 2,
+     "frozenMs": 65883
+    },
+    {
+     "t": 443,
+     "landed": 2441,
+     "queue": 7,
+     "cas": 2,
+     "frozenMs": 68816
+    },
+    {
+     "t": 453,
+     "landed": 2498,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 70669
+    },
+    {
+     "t": 464,
+     "landed": 2559,
+     "queue": 5,
+     "cas": 2,
+     "frozenMs": 72171
+    },
+    {
+     "t": 474,
+     "landed": 2559,
+     "queue": 59,
+     "cas": 2,
+     "frozenMs": 72171
+    },
+    {
+     "t": 485,
+     "landed": 2677,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 74719
+    },
+    {
+     "t": 496,
+     "landed": 2737,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 76948
+    },
+    {
+     "t": 506,
+     "landed": 2800,
+     "queue": 7,
+     "cas": 2,
+     "frozenMs": 76948
+    },
+    {
+     "t": 517,
+     "landed": 2865,
+     "queue": 11,
+     "cas": 2,
+     "frozenMs": 76948
+    },
+    {
+     "t": 527,
+     "landed": 2934,
+     "queue": 6,
+     "cas": 2,
+     "frozenMs": 78632
+    },
+    {
+     "t": 537,
+     "landed": 2934,
+     "queue": 56,
+     "cas": 2,
+     "frozenMs": 78632
+    },
+    {
+     "t": 548,
+     "landed": 3050,
+     "queue": 10,
+     "cas": 2,
+     "frozenMs": 82028
+    },
+    {
+     "t": 559,
+     "landed": 3124,
+     "queue": 8,
+     "cas": 2,
+     "frozenMs": 84364
+    },
+    {
+     "t": 570,
+     "landed": 3182,
+     "queue": 5,
+     "cas": 2,
+     "frozenMs": 88164
+    },
+    {
+     "t": 580,
+     "landed": 3237,
+     "queue": 7,
+     "cas": 2,
+     "frozenMs": 90000
+    },
+    {
+     "t": 591,
+     "landed": 3304,
+     "queue": 6,
+     "cas": 2,
+     "frozenMs": 91767
+    },
+    {
+     "t": 601,
+     "landed": 3304,
+     "queue": 68,
+     "cas": 2,
+     "frozenMs": 91767
+    },
+    {
+     "t": 613,
+     "landed": 3427,
+     "queue": 7,
+     "cas": 2,
+     "frozenMs": 93475
+    },
+    {
+     "t": 623,
+     "landed": 3491,
+     "queue": 8,
+     "cas": 2,
+     "frozenMs": 95421
+    },
+    {
+     "t": 634,
+     "landed": 3545,
+     "queue": 3,
+     "cas": 2,
+     "frozenMs": 97162
+    },
+    {
+     "t": 645,
+     "landed": 3581,
+     "queue": 4,
+     "cas": 2,
+     "frozenMs": 97162
+    },
+    {
+     "t": 655,
+     "landed": 3603,
+     "queue": 0,
+     "cas": 2,
+     "frozenMs": 97162
+    },
+    {
+     "t": 665,
+     "landed": 3608,
+     "queue": 0,
+     "cas": 2,
+     "frozenMs": 97162
+    }
+   ]
+  },
+  {
+   "lane": "L4",
+   "series": [
+    {
+     "t": 10,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 20,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 35,
+     "landed": 25,
+     "queue": 32,
+     "cas": 2,
+     "frozenMs": 0
+    },
+    {
+     "t": 45,
+     "landed": 117,
+     "queue": 5,
+     "cas": 2,
+     "frozenMs": 1704
+    },
+    {
+     "t": 55,
+     "landed": 117,
+     "queue": 72,
+     "cas": 2,
+     "frozenMs": 1704
+    },
+    {
+     "t": 67,
+     "landed": 259,
+     "queue": 18,
+     "cas": 4,
+     "frozenMs": 4006
+    },
+    {
+     "t": 78,
+     "landed": 317,
+     "queue": 4,
+     "cas": 4,
+     "frozenMs": 6376
+    },
+    {
+     "t": 88,
+     "landed": 387,
+     "queue": 2,
+     "cas": 4,
+     "frozenMs": 7866
+    },
+    {
+     "t": 98,
+     "landed": 454,
+     "queue": 1,
+     "cas": 4,
+     "frozenMs": 9289
+    },
+    {
+     "t": 109,
+     "landed": 507,
+     "queue": 1,
+     "cas": 4,
+     "frozenMs": 10769
+    },
+    {
+     "t": 121,
+     "landed": 568,
+     "queue": 16,
+     "cas": 5,
+     "frozenMs": 10769
+    },
+    {
+     "t": 131,
+     "landed": 568,
+     "queue": 77,
+     "cas": 5,
+     "frozenMs": 10769
+    },
+    {
+     "t": 141,
+     "landed": 701,
+     "queue": 3,
+     "cas": 5,
+     "frozenMs": 13749
+    },
+    {
+     "t": 152,
+     "landed": 765,
+     "queue": 2,
+     "cas": 5,
+     "frozenMs": 15961
+    },
+    {
+     "t": 162,
+     "landed": 837,
+     "queue": 3,
+     "cas": 5,
+     "frozenMs": 17555
+    },
+    {
+     "t": 172,
+     "landed": 892,
+     "queue": 2,
+     "cas": 5,
+     "frozenMs": 18999
+    },
+    {
+     "t": 183,
+     "landed": 944,
+     "queue": 1,
+     "cas": 5,
+     "frozenMs": 20558
+    },
+    {
+     "t": 193,
+     "landed": 1007,
+     "queue": 2,
+     "cas": 5,
+     "frozenMs": 22421
+    },
+    {
+     "t": 204,
+     "landed": 1080,
+     "queue": 5,
+     "cas": 5,
+     "frozenMs": 25184
+    },
+    {
+     "t": 214,
+     "landed": 1080,
+     "queue": 55,
+     "cas": 5,
+     "frozenMs": 25184
+    },
+    {
+     "t": 225,
+     "landed": 1201,
+     "queue": 5,
+     "cas": 5,
+     "frozenMs": 27955
+    },
+    {
+     "t": 235,
+     "landed": 1266,
+     "queue": 2,
+     "cas": 5,
+     "frozenMs": 30274
+    },
+    {
+     "t": 246,
+     "landed": 1314,
+     "queue": 2,
+     "cas": 5,
+     "frozenMs": 31858
+    },
+    {
+     "t": 257,
+     "landed": 1365,
+     "queue": 9,
+     "cas": 6,
+     "frozenMs": 31858
+    },
+    {
+     "t": 267,
+     "landed": 1443,
+     "queue": 4,
+     "cas": 6,
+     "frozenMs": 31858
+    },
+    {
+     "t": 278,
+     "landed": 1513,
+     "queue": 8,
+     "cas": 6,
+     "frozenMs": 31858
+    },
+    {
+     "t": 288,
+     "landed": 1513,
+     "queue": 72,
+     "cas": 6,
+     "frozenMs": 31858
+    },
+    {
+     "t": 298,
+     "landed": 1636,
+     "queue": 7,
+     "cas": 6,
+     "frozenMs": 33286
+    },
+    {
+     "t": 309,
+     "landed": 1691,
+     "queue": 1,
+     "cas": 6,
+     "frozenMs": 33286
+    },
+    {
+     "t": 319,
+     "landed": 1757,
+     "queue": 8,
+     "cas": 6,
+     "frozenMs": 35645
+    },
+    {
+     "t": 330,
+     "landed": 1823,
+     "queue": 7,
+     "cas": 6,
+     "frozenMs": 37800
+    },
+    {
+     "t": 341,
+     "landed": 1875,
+     "queue": 11,
+     "cas": 8,
+     "frozenMs": 39263
+    },
+    {
+     "t": 352,
+     "landed": 1950,
+     "queue": 4,
+     "cas": 8,
+     "frozenMs": 40907
+    },
+    {
+     "t": 362,
+     "landed": 2015,
+     "queue": 3,
+     "cas": 8,
+     "frozenMs": 43463
+    },
+    {
+     "t": 372,
+     "landed": 2015,
+     "queue": 57,
+     "cas": 8,
+     "frozenMs": 43463
+    },
+    {
+     "t": 383,
+     "landed": 2125,
+     "queue": 6,
+     "cas": 8,
+     "frozenMs": 46315
+    },
+    {
+     "t": 393,
+     "landed": 2191,
+     "queue": 4,
+     "cas": 8,
+     "frozenMs": 48127
+    },
+    {
+     "t": 404,
+     "landed": 2249,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 51292
+    },
+    {
+     "t": 415,
+     "landed": 2309,
+     "queue": 7,
+     "cas": 8,
+     "frozenMs": 51292
+    },
+    {
+     "t": 425,
+     "landed": 2309,
+     "queue": 73,
+     "cas": 8,
+     "frozenMs": 51292
+    },
+    {
+     "t": 436,
+     "landed": 2446,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 54770
+    },
+    {
+     "t": 446,
+     "landed": 2505,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 57127
+    },
+    {
+     "t": 457,
+     "landed": 2569,
+     "queue": 0,
+     "cas": 8,
+     "frozenMs": 58991
+    },
+    {
+     "t": 467,
+     "landed": 2631,
+     "queue": 2,
+     "cas": 8,
+     "frozenMs": 60492
+    },
+    {
+     "t": 477,
+     "landed": 2686,
+     "queue": 2,
+     "cas": 8,
+     "frozenMs": 63044
+    },
+    {
+     "t": 487,
+     "landed": 2686,
+     "queue": 58,
+     "cas": 8,
+     "frozenMs": 63044
+    },
+    {
+     "t": 498,
+     "landed": 2802,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 66074
+    },
+    {
+     "t": 508,
+     "landed": 2869,
+     "queue": 7,
+     "cas": 8,
+     "frozenMs": 69674
+    },
+    {
+     "t": 519,
+     "landed": 2939,
+     "queue": 2,
+     "cas": 8,
+     "frozenMs": 72560
+    },
+    {
+     "t": 530,
+     "landed": 2983,
+     "queue": 7,
+     "cas": 8,
+     "frozenMs": 74245
+    },
+    {
+     "t": 540,
+     "landed": 2983,
+     "queue": 80,
+     "cas": 8,
+     "frozenMs": 74245
+    },
+    {
+     "t": 550,
+     "landed": 3123,
+     "queue": 12,
+     "cas": 8,
+     "frozenMs": 77619
+    },
+    {
+     "t": 561,
+     "landed": 3184,
+     "queue": 2,
+     "cas": 8,
+     "frozenMs": 79216
+    },
+    {
+     "t": 571,
+     "landed": 3247,
+     "queue": 4,
+     "cas": 8,
+     "frozenMs": 83060
+    },
+    {
+     "t": 582,
+     "landed": 3306,
+     "queue": 4,
+     "cas": 8,
+     "frozenMs": 84867
+    },
+    {
+     "t": 592,
+     "landed": 3377,
+     "queue": 2,
+     "cas": 8,
+     "frozenMs": 86618
+    },
+    {
+     "t": 603,
+     "landed": 3450,
+     "queue": 6,
+     "cas": 8,
+     "frozenMs": 88307
+    },
+    {
+     "t": 613,
+     "landed": 3450,
+     "queue": 51,
+     "cas": 8,
+     "frozenMs": 88307
+    },
+    {
+     "t": 625,
+     "landed": 3551,
+     "queue": 9,
+     "cas": 9,
+     "frozenMs": 91201
+    },
+    {
+     "t": 635,
+     "landed": 3618,
+     "queue": 2,
+     "cas": 9,
+     "frozenMs": 91201
+    },
+    {
+     "t": 646,
+     "landed": 3663,
+     "queue": 1,
+     "cas": 9,
+     "frozenMs": 93776
+    },
+    {
+     "t": 656,
+     "landed": 3676,
+     "queue": 0,
+     "cas": 9,
+     "frozenMs": 95055
+    },
+    {
+     "t": 666,
+     "landed": 3678,
+     "queue": 0,
+     "cas": 9,
+     "frozenMs": 95055
+    }
+   ]
+  },
+  {
+   "lane": "L5",
+   "series": [
+    {
+     "t": 10,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 20,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 35,
+     "landed": 0,
+     "queue": 53,
+     "cas": 2,
+     "frozenMs": 0
+    },
+    {
+     "t": 46,
+     "landed": 105,
+     "queue": 5,
+     "cas": 2,
+     "frozenMs": 1711
+    },
+    {
+     "t": 56,
+     "landed": 105,
+     "queue": 82,
+     "cas": 2,
+     "frozenMs": 1711
+    },
+    {
+     "t": 66,
+     "landed": 252,
+     "queue": 7,
+     "cas": 2,
+     "frozenMs": 4004
+    },
+    {
+     "t": 77,
+     "landed": 303,
+     "queue": 2,
+     "cas": 2,
+     "frozenMs": 6859
+    },
+    {
+     "t": 87,
+     "landed": 366,
+     "queue": 1,
+     "cas": 2,
+     "frozenMs": 8350
+    },
+    {
+     "t": 98,
+     "landed": 429,
+     "queue": 7,
+     "cas": 2,
+     "frozenMs": 8350
+    },
+    {
+     "t": 108,
+     "landed": 493,
+     "queue": 1,
+     "cas": 2,
+     "frozenMs": 9850
+    },
+    {
+     "t": 120,
+     "landed": 560,
+     "queue": 8,
+     "cas": 3,
+     "frozenMs": 12123
+    },
+    {
+     "t": 130,
+     "landed": 560,
+     "queue": 79,
+     "cas": 3,
+     "frozenMs": 12123
+    },
+    {
+     "t": 140,
+     "landed": 697,
+     "queue": 5,
+     "cas": 3,
+     "frozenMs": 15100
+    },
+    {
+     "t": 151,
+     "landed": 751,
+     "queue": 2,
+     "cas": 3,
+     "frozenMs": 17234
+    },
+    {
+     "t": 161,
+     "landed": 807,
+     "queue": 4,
+     "cas": 3,
+     "frozenMs": 18798
+    },
+    {
+     "t": 172,
+     "landed": 865,
+     "queue": 4,
+     "cas": 3,
+     "frozenMs": 20220
+    },
+    {
+     "t": 182,
+     "landed": 927,
+     "queue": 6,
+     "cas": 3,
+     "frozenMs": 21779
+    },
+    {
+     "t": 192,
+     "landed": 998,
+     "queue": 2,
+     "cas": 3,
+     "frozenMs": 23634
+    },
+    {
+     "t": 202,
+     "landed": 998,
+     "queue": 56,
+     "cas": 3,
+     "frozenMs": 23634
+    },
+    {
+     "t": 213,
+     "landed": 1105,
+     "queue": 7,
+     "cas": 3,
+     "frozenMs": 26408
+    },
+    {
+     "t": 224,
+     "landed": 1178,
+     "queue": 8,
+     "cas": 3,
+     "frozenMs": 29246
+    },
+    {
+     "t": 234,
+     "landed": 1234,
+     "queue": 3,
+     "cas": 3,
+     "frozenMs": 29246
+    },
+    {
+     "t": 245,
+     "landed": 1305,
+     "queue": 3,
+     "cas": 3,
+     "frozenMs": 30833
+    },
+    {
+     "t": 256,
+     "landed": 1369,
+     "queue": 5,
+     "cas": 3,
+     "frozenMs": 32498
+    },
+    {
+     "t": 266,
+     "landed": 1419,
+     "queue": 3,
+     "cas": 3,
+     "frozenMs": 34231
+    },
+    {
+     "t": 276,
+     "landed": 1419,
+     "queue": 62,
+     "cas": 3,
+     "frozenMs": 34231
+    },
+    {
+     "t": 287,
+     "landed": 1571,
+     "queue": 6,
+     "cas": 3,
+     "frozenMs": 36895
+    },
+    {
+     "t": 297,
+     "landed": 1627,
+     "queue": 5,
+     "cas": 3,
+     "frozenMs": 36895
+    },
+    {
+     "t": 308,
+     "landed": 1685,
+     "queue": 8,
+     "cas": 3,
+     "frozenMs": 39995
+    },
+    {
+     "t": 318,
+     "landed": 1747,
+     "queue": 6,
+     "cas": 3,
+     "frozenMs": 42360
+    },
+    {
+     "t": 329,
+     "landed": 1811,
+     "queue": 9,
+     "cas": 3,
+     "frozenMs": 44505
+    },
+    {
+     "t": 340,
+     "landed": 1875,
+     "queue": 6,
+     "cas": 3,
+     "frozenMs": 45966
+    },
+    {
+     "t": 350,
+     "landed": 1932,
+     "queue": 7,
+     "cas": 3,
+     "frozenMs": 45966
+    },
+    {
+     "t": 360,
+     "landed": 1932,
+     "queue": 64,
+     "cas": 3,
+     "frozenMs": 45966
+    },
+    {
+     "t": 372,
+     "landed": 2056,
+     "queue": 7,
+     "cas": 3,
+     "frozenMs": 48507
+    },
+    {
+     "t": 382,
+     "landed": 2122,
+     "queue": 7,
+     "cas": 3,
+     "frozenMs": 50679
+    },
+    {
+     "t": 393,
+     "landed": 2189,
+     "queue": 4,
+     "cas": 3,
+     "frozenMs": 52437
+    },
+    {
+     "t": 403,
+     "landed": 2244,
+     "queue": 8,
+     "cas": 3,
+     "frozenMs": 55587
+    },
+    {
+     "t": 414,
+     "landed": 2315,
+     "queue": 5,
+     "cas": 3,
+     "frozenMs": 55587
+    },
+    {
+     "t": 424,
+     "landed": 2315,
+     "queue": 71,
+     "cas": 3,
+     "frozenMs": 55587
+    },
+    {
+     "t": 434,
+     "landed": 2437,
+     "queue": 6,
+     "cas": 3,
+     "frozenMs": 59062
+    },
+    {
+     "t": 445,
+     "landed": 2496,
+     "queue": 3,
+     "cas": 3,
+     "frozenMs": 62726
+    },
+    {
+     "t": 455,
+     "landed": 2559,
+     "queue": 6,
+     "cas": 3,
+     "frozenMs": 62726
+    },
+    {
+     "t": 466,
+     "landed": 2616,
+     "queue": 3,
+     "cas": 3,
+     "frozenMs": 64241
+    },
+    {
+     "t": 477,
+     "landed": 2679,
+     "queue": 3,
+     "cas": 3,
+     "frozenMs": 66779
+    },
+    {
+     "t": 487,
+     "landed": 2679,
+     "queue": 59,
+     "cas": 3,
+     "frozenMs": 66779
+    },
+    {
+     "t": 500,
+     "landed": 2796,
+     "queue": 20,
+     "cas": 4,
+     "frozenMs": 69789
+    },
+    {
+     "t": 510,
+     "landed": 2884,
+     "queue": 9,
+     "cas": 4,
+     "frozenMs": 71511
+    },
+    {
+     "t": 521,
+     "landed": 2928,
+     "queue": 6,
+     "cas": 4,
+     "frozenMs": 74573
+    },
+    {
+     "t": 531,
+     "landed": 3002,
+     "queue": 7,
+     "cas": 4,
+     "frozenMs": 74573
+    },
+    {
+     "t": 542,
+     "landed": 3054,
+     "queue": 5,
+     "cas": 4,
+     "frozenMs": 77959
+    },
+    {
+     "t": 552,
+     "landed": 3054,
+     "queue": 57,
+     "cas": 4,
+     "frozenMs": 77959
+    },
+    {
+     "t": 563,
+     "landed": 3167,
+     "queue": 15,
+     "cas": 4,
+     "frozenMs": 80034
+    },
+    {
+     "t": 573,
+     "landed": 3242,
+     "queue": 7,
+     "cas": 4,
+     "frozenMs": 82797
+    },
+    {
+     "t": 584,
+     "landed": 3295,
+     "queue": 7,
+     "cas": 4,
+     "frozenMs": 84637
+    },
+    {
+     "t": 595,
+     "landed": 3361,
+     "queue": 4,
+     "cas": 4,
+     "frozenMs": 86389
+    },
+    {
+     "t": 606,
+     "landed": 3428,
+     "queue": 7,
+     "cas": 4,
+     "frozenMs": 88087
+    },
+    {
+     "t": 616,
+     "landed": 3498,
+     "queue": 4,
+     "cas": 4,
+     "frozenMs": 90973
+    },
+    {
+     "t": 626,
+     "landed": 3498,
+     "queue": 59,
+     "cas": 4,
+     "frozenMs": 90973
+    },
+    {
+     "t": 637,
+     "landed": 3595,
+     "queue": 6,
+     "cas": 4,
+     "frozenMs": 92594
+    },
+    {
+     "t": 648,
+     "landed": 3623,
+     "queue": 1,
+     "cas": 4,
+     "frozenMs": 94157
+    },
+    {
+     "t": 658,
+     "landed": 3631,
+     "queue": 0,
+     "cas": 4,
+     "frozenMs": 94157
+    },
+    {
+     "t": 668,
+     "landed": 3633,
+     "queue": 0,
+     "cas": 4,
+     "frozenMs": 95575
+    }
+   ]
+  },
+  {
+   "lane": "L6",
+   "series": [
+    {
+     "t": 10,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 20,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 35,
+     "landed": 24,
+     "queue": 36,
+     "cas": 4,
+     "frozenMs": 0
+    },
+    {
+     "t": 47,
+     "landed": 117,
+     "queue": 8,
+     "cas": 5,
+     "frozenMs": 1679
+    },
+    {
+     "t": 57,
+     "landed": 117,
+     "queue": 81,
+     "cas": 5,
+     "frozenMs": 1679
+    },
+    {
+     "t": 67,
+     "landed": 261,
+     "queue": 8,
+     "cas": 5,
+     "frozenMs": 3954
+    },
+    {
+     "t": 78,
+     "landed": 316,
+     "queue": 7,
+     "cas": 6,
+     "frozenMs": 6295
+    },
+    {
+     "t": 90,
+     "landed": 382,
+     "queue": 9,
+     "cas": 6,
+     "frozenMs": 7798
+    },
+    {
+     "t": 100,
+     "landed": 451,
+     "queue": 6,
+     "cas": 6,
+     "frozenMs": 9225
+    },
+    {
+     "t": 111,
+     "landed": 513,
+     "queue": 3,
+     "cas": 6,
+     "frozenMs": 10704
+    },
+    {
+     "t": 121,
+     "landed": 577,
+     "queue": 7,
+     "cas": 6,
+     "frozenMs": 12982
+    },
+    {
+     "t": 131,
+     "landed": 577,
+     "queue": 62,
+     "cas": 6,
+     "frozenMs": 12982
+    },
+    {
+     "t": 141,
+     "landed": 696,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 15944
+    },
+    {
+     "t": 152,
+     "landed": 765,
+     "queue": 6,
+     "cas": 6,
+     "frozenMs": 17981
+    },
+    {
+     "t": 162,
+     "landed": 825,
+     "queue": 8,
+     "cas": 6,
+     "frozenMs": 19570
+    },
+    {
+     "t": 173,
+     "landed": 900,
+     "queue": 7,
+     "cas": 6,
+     "frozenMs": 21009
+    },
+    {
+     "t": 183,
+     "landed": 954,
+     "queue": 3,
+     "cas": 6,
+     "frozenMs": 22555
+    },
+    {
+     "t": 194,
+     "landed": 1014,
+     "queue": 7,
+     "cas": 6,
+     "frozenMs": 24396
+    },
+    {
+     "t": 205,
+     "landed": 1090,
+     "queue": 3,
+     "cas": 6,
+     "frozenMs": 27143
+    },
+    {
+     "t": 215,
+     "landed": 1090,
+     "queue": 61,
+     "cas": 6,
+     "frozenMs": 27143
+    },
+    {
+     "t": 226,
+     "landed": 1220,
+     "queue": 15,
+     "cas": 6,
+     "frozenMs": 29895
+    },
+    {
+     "t": 236,
+     "landed": 1284,
+     "queue": 9,
+     "cas": 6,
+     "frozenMs": 32351
+    },
+    {
+     "t": 247,
+     "landed": 1349,
+     "queue": 1,
+     "cas": 6,
+     "frozenMs": 33991
+    },
+    {
+     "t": 257,
+     "landed": 1403,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 35614
+    },
+    {
+     "t": 267,
+     "landed": 1461,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 37329
+    },
+    {
+     "t": 278,
+     "landed": 1525,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 39970
+    },
+    {
+     "t": 288,
+     "landed": 1525,
+     "queue": 67,
+     "cas": 6,
+     "frozenMs": 39970
+    },
+    {
+     "t": 299,
+     "landed": 1647,
+     "queue": 9,
+     "cas": 6,
+     "frozenMs": 41373
+    },
+    {
+     "t": 310,
+     "landed": 1709,
+     "queue": 13,
+     "cas": 7,
+     "frozenMs": 43344
+    },
+    {
+     "t": 321,
+     "landed": 1778,
+     "queue": 7,
+     "cas": 7,
+     "frozenMs": 45846
+    },
+    {
+     "t": 331,
+     "landed": 1844,
+     "queue": 5,
+     "cas": 7,
+     "frozenMs": 48031
+    },
+    {
+     "t": 341,
+     "landed": 1883,
+     "queue": 3,
+     "cas": 7,
+     "frozenMs": 48031
+    },
+    {
+     "t": 352,
+     "landed": 1960,
+     "queue": 6,
+     "cas": 7,
+     "frozenMs": 49651
+    },
+    {
+     "t": 363,
+     "landed": 2025,
+     "queue": 4,
+     "cas": 7,
+     "frozenMs": 49651
+    },
+    {
+     "t": 373,
+     "landed": 2025,
+     "queue": 59,
+     "cas": 7,
+     "frozenMs": 49651
+    },
+    {
+     "t": 384,
+     "landed": 2146,
+     "queue": 11,
+     "cas": 7,
+     "frozenMs": 52468
+    },
+    {
+     "t": 395,
+     "landed": 2216,
+     "queue": 2,
+     "cas": 7,
+     "frozenMs": 54436
+    },
+    {
+     "t": 405,
+     "landed": 2271,
+     "queue": 1,
+     "cas": 7,
+     "frozenMs": 57693
+    },
+    {
+     "t": 415,
+     "landed": 2328,
+     "queue": 7,
+     "cas": 7,
+     "frozenMs": 59071
+    },
+    {
+     "t": 426,
+     "landed": 2390,
+     "queue": 3,
+     "cas": 7,
+     "frozenMs": 62494
+    },
+    {
+     "t": 437,
+     "landed": 2450,
+     "queue": 7,
+     "cas": 8,
+     "frozenMs": 62494
+    },
+    {
+     "t": 447,
+     "landed": 2527,
+     "queue": 6,
+     "cas": 8,
+     "frozenMs": 62494
+    },
+    {
+     "t": 458,
+     "landed": 2583,
+     "queue": 4,
+     "cas": 8,
+     "frozenMs": 64747
+    },
+    {
+     "t": 468,
+     "landed": 2638,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 66265
+    },
+    {
+     "t": 480,
+     "landed": 2696,
+     "queue": 7,
+     "cas": 8,
+     "frozenMs": 68804
+    },
+    {
+     "t": 490,
+     "landed": 2760,
+     "queue": 7,
+     "cas": 8,
+     "frozenMs": 71814
+    },
+    {
+     "t": 500,
+     "landed": 2760,
+     "queue": 68,
+     "cas": 8,
+     "frozenMs": 71814
+    },
+    {
+     "t": 511,
+     "landed": 2890,
+     "queue": 14,
+     "cas": 8,
+     "frozenMs": 75372
+    },
+    {
+     "t": 522,
+     "landed": 2961,
+     "queue": 6,
+     "cas": 8,
+     "frozenMs": 78449
+    },
+    {
+     "t": 533,
+     "landed": 3008,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 80155
+    },
+    {
+     "t": 543,
+     "landed": 3071,
+     "queue": 6,
+     "cas": 8,
+     "frozenMs": 83507
+    },
+    {
+     "t": 554,
+     "landed": 3153,
+     "queue": 9,
+     "cas": 8,
+     "frozenMs": 85579
+    },
+    {
+     "t": 564,
+     "landed": 3153,
+     "queue": 68,
+     "cas": 8,
+     "frozenMs": 85579
+    },
+    {
+     "t": 575,
+     "landed": 3268,
+     "queue": 18,
+     "cas": 8,
+     "frozenMs": 89308
+    },
+    {
+     "t": 586,
+     "landed": 3338,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 91503
+    },
+    {
+     "t": 596,
+     "landed": 3408,
+     "queue": 9,
+     "cas": 8,
+     "frozenMs": 91503
+    },
+    {
+     "t": 607,
+     "landed": 3466,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 93196
+    },
+    {
+     "t": 617,
+     "landed": 3528,
+     "queue": 5,
+     "cas": 8,
+     "frozenMs": 93196
+    },
+    {
+     "t": 628,
+     "landed": 3593,
+     "queue": 7,
+     "cas": 8,
+     "frozenMs": 94792
+    },
+    {
+     "t": 640,
+     "landed": 3633,
+     "queue": 6,
+     "cas": 10,
+     "frozenMs": 94792
+    },
+    {
+     "t": 650,
+     "landed": 3633,
+     "queue": 38,
+     "cas": 10,
+     "frozenMs": 94792
+    },
+    {
+     "t": 660,
+     "landed": 3675,
+     "queue": 0,
+     "cas": 10,
+     "frozenMs": 96033
+    }
+   ]
+  },
+  {
+   "lane": "L7",
+   "series": [
+    {
+     "t": 10,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 20,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 34,
+     "landed": 19,
+     "queue": 29,
+     "cas": 3,
+     "frozenMs": 0
+    },
+    {
+     "t": 44,
+     "landed": 19,
+     "queue": 95,
+     "cas": 3,
+     "frozenMs": 0
+    },
+    {
+     "t": 54,
+     "landed": 174,
+     "queue": 5,
+     "cas": 3,
+     "frozenMs": 1709
+    },
+    {
+     "t": 65,
+     "landed": 248,
+     "queue": 3,
+     "cas": 3,
+     "frozenMs": 4138
+    },
+    {
+     "t": 75,
+     "landed": 300,
+     "queue": 2,
+     "cas": 3,
+     "frozenMs": 6777
+    },
+    {
+     "t": 86,
+     "landed": 356,
+     "queue": 7,
+     "cas": 4,
+     "frozenMs": 8273
+    },
+    {
+     "t": 96,
+     "landed": 429,
+     "queue": 6,
+     "cas": 4,
+     "frozenMs": 8273
+    },
+    {
+     "t": 107,
+     "landed": 495,
+     "queue": 4,
+     "cas": 4,
+     "frozenMs": 9757
+    },
+    {
+     "t": 117,
+     "landed": 495,
+     "queue": 58,
+     "cas": 4,
+     "frozenMs": 9757
+    },
+    {
+     "t": 128,
+     "landed": 611,
+     "queue": 11,
+     "cas": 5,
+     "frozenMs": 12057
+    },
+    {
+     "t": 138,
+     "landed": 677,
+     "queue": 6,
+     "cas": 5,
+     "frozenMs": 15150
+    },
+    {
+     "t": 149,
+     "landed": 743,
+     "queue": 6,
+     "cas": 5,
+     "frozenMs": 15150
+    },
+    {
+     "t": 159,
+     "landed": 795,
+     "queue": 2,
+     "cas": 5,
+     "frozenMs": 16704
+    },
+    {
+     "t": 170,
+     "landed": 862,
+     "queue": 5,
+     "cas": 5,
+     "frozenMs": 18340
+    },
+    {
+     "t": 180,
+     "landed": 909,
+     "queue": 5,
+     "cas": 5,
+     "frozenMs": 19893
+    },
+    {
+     "t": 190,
+     "landed": 909,
+     "queue": 68,
+     "cas": 5,
+     "frozenMs": 19893
+    },
+    {
+     "t": 201,
+     "landed": 1038,
+     "queue": 4,
+     "cas": 6,
+     "frozenMs": 21754
+    },
+    {
+     "t": 212,
+     "landed": 1105,
+     "queue": 3,
+     "cas": 6,
+     "frozenMs": 23387
+    },
+    {
+     "t": 222,
+     "landed": 1166,
+     "queue": 2,
+     "cas": 6,
+     "frozenMs": 26226
+    },
+    {
+     "t": 232,
+     "landed": 1226,
+     "queue": 2,
+     "cas": 6,
+     "frozenMs": 28514
+    },
+    {
+     "t": 243,
+     "landed": 1284,
+     "queue": 2,
+     "cas": 6,
+     "frozenMs": 30120
+    },
+    {
+     "t": 253,
+     "landed": 1348,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 31751
+    },
+    {
+     "t": 263,
+     "landed": 1348,
+     "queue": 68,
+     "cas": 6,
+     "frozenMs": 31751
+    },
+    {
+     "t": 274,
+     "landed": 1470,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 33698
+    },
+    {
+     "t": 285,
+     "landed": 1532,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 33698
+    },
+    {
+     "t": 295,
+     "landed": 1578,
+     "queue": 3,
+     "cas": 6,
+     "frozenMs": 35156
+    },
+    {
+     "t": 305,
+     "landed": 1650,
+     "queue": 6,
+     "cas": 6,
+     "frozenMs": 38033
+    },
+    {
+     "t": 316,
+     "landed": 1712,
+     "queue": 4,
+     "cas": 6,
+     "frozenMs": 40361
+    },
+    {
+     "t": 326,
+     "landed": 1768,
+     "queue": 4,
+     "cas": 6,
+     "frozenMs": 42506
+    },
+    {
+     "t": 336,
+     "landed": 1768,
+     "queue": 63,
+     "cas": 6,
+     "frozenMs": 42506
+    },
+    {
+     "t": 347,
+     "landed": 1886,
+     "queue": 6,
+     "cas": 6,
+     "frozenMs": 43993
+    },
+    {
+     "t": 357,
+     "landed": 1939,
+     "queue": 6,
+     "cas": 6,
+     "frozenMs": 45511
+    },
+    {
+     "t": 368,
+     "landed": 2017,
+     "queue": 1,
+     "cas": 6,
+     "frozenMs": 48173
+    },
+    {
+     "t": 378,
+     "landed": 2070,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 51042
+    },
+    {
+     "t": 389,
+     "landed": 2133,
+     "queue": 3,
+     "cas": 6,
+     "frozenMs": 52769
+    },
+    {
+     "t": 399,
+     "landed": 2133,
+     "queue": 60,
+     "cas": 6,
+     "frozenMs": 52769
+    },
+    {
+     "t": 410,
+     "landed": 2251,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 55932
+    },
+    {
+     "t": 420,
+     "landed": 2314,
+     "queue": 3,
+     "cas": 6,
+     "frozenMs": 57516
+    },
+    {
+     "t": 431,
+     "landed": 2383,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 61033
+    },
+    {
+     "t": 441,
+     "landed": 2453,
+     "queue": 2,
+     "cas": 6,
+     "frozenMs": 63932
+    },
+    {
+     "t": 452,
+     "landed": 2516,
+     "queue": 2,
+     "cas": 6,
+     "frozenMs": 65794
+    },
+    {
+     "t": 462,
+     "landed": 2516,
+     "queue": 48,
+     "cas": 6,
+     "frozenMs": 65794
+    },
+    {
+     "t": 472,
+     "landed": 2634,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 67298
+    },
+    {
+     "t": 483,
+     "landed": 2697,
+     "queue": 1,
+     "cas": 6,
+     "frozenMs": 69486
+    },
+    {
+     "t": 493,
+     "landed": 2769,
+     "queue": 3,
+     "cas": 6,
+     "frozenMs": 72593
+    },
+    {
+     "t": 504,
+     "landed": 2823,
+     "queue": 1,
+     "cas": 6,
+     "frozenMs": 76189
+    },
+    {
+     "t": 514,
+     "landed": 2823,
+     "queue": 57,
+     "cas": 6,
+     "frozenMs": 76189
+    },
+    {
+     "t": 524,
+     "landed": 2941,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 79069
+    },
+    {
+     "t": 535,
+     "landed": 3001,
+     "queue": 5,
+     "cas": 6,
+     "frozenMs": 80977
+    },
+    {
+     "t": 545,
+     "landed": 3075,
+     "queue": 3,
+     "cas": 6,
+     "frozenMs": 84397
+    },
+    {
+     "t": 556,
+     "landed": 3135,
+     "queue": 2,
+     "cas": 6,
+     "frozenMs": 86511
+    },
+    {
+     "t": 566,
+     "landed": 3193,
+     "queue": 12,
+     "cas": 7,
+     "frozenMs": 86511
+    },
+    {
+     "t": 576,
+     "landed": 3193,
+     "queue": 66,
+     "cas": 7,
+     "frozenMs": 86511
+    },
+    {
+     "t": 587,
+     "landed": 3323,
+     "queue": 7,
+     "cas": 7,
+     "frozenMs": 88334
+    },
+    {
+     "t": 597,
+     "landed": 3377,
+     "queue": 4,
+     "cas": 7,
+     "frozenMs": 90348
+    },
+    {
+     "t": 608,
+     "landed": 3441,
+     "queue": 5,
+     "cas": 7,
+     "frozenMs": 92045
+    },
+    {
+     "t": 618,
+     "landed": 3495,
+     "queue": 1,
+     "cas": 7,
+     "frozenMs": 94937
+    },
+    {
+     "t": 629,
+     "landed": 3554,
+     "queue": 5,
+     "cas": 7,
+     "frozenMs": 96551
+    },
+    {
+     "t": 639,
+     "landed": 3554,
+     "queue": 41,
+     "cas": 7,
+     "frozenMs": 96551
+    },
+    {
+     "t": 649,
+     "landed": 3622,
+     "queue": 1,
+     "cas": 7,
+     "frozenMs": 99030
+    },
+    {
+     "t": 659,
+     "landed": 3630,
+     "queue": 0,
+     "cas": 7,
+     "frozenMs": 99030
+    }
+   ]
+  },
+  {
+   "lane": "X",
+   "series": [
+    {
+     "t": 10,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 20,
+     "landed": 0,
+     "queue": 0,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 33,
+     "landed": 2,
+     "queue": 3,
+     "cas": 0,
+     "frozenMs": 0
+    },
+    {
+     "t": 45,
+     "landed": 20,
+     "queue": 3,
+     "cas": 1,
+     "frozenMs": 0
+    },
+    {
+     "t": 57,
+     "landed": 38,
+     "queue": 2,
+     "cas": 2,
+     "frozenMs": 0
+    },
+    {
+     "t": 70,
+     "landed": 56,
+     "queue": 3,
+     "cas": 3,
+     "frozenMs": 0
+    },
+    {
+     "t": 82,
+     "landed": 71,
+     "queue": 4,
+     "cas": 4,
+     "frozenMs": 0
+    },
+    {
+     "t": 94,
+     "landed": 87,
+     "queue": 5,
+     "cas": 5,
+     "frozenMs": 0
+    },
+    {
+     "t": 106,
+     "landed": 102,
+     "queue": 1,
+     "cas": 6,
+     "frozenMs": 0
+    },
+    {
+     "t": 118,
+     "landed": 111,
+     "queue": 2,
+     "cas": 7,
+     "frozenMs": 0
+    },
+    {
+     "t": 132,
+     "landed": 132,
+     "queue": 4,
+     "cas": 8,
+     "frozenMs": 0
+    },
+    {
+     "t": 144,
+     "landed": 145,
+     "queue": 2,
+     "cas": 9,
+     "frozenMs": 0
+    },
+    {
+     "t": 155,
+     "landed": 166,
+     "queue": 2,
+     "cas": 10,
+     "frozenMs": 0
+    },
+    {
+     "t": 167,
+     "landed": 184,
+     "queue": 2,
+     "cas": 11,
+     "frozenMs": 0
+    },
+    {
+     "t": 178,
+     "landed": 199,
+     "queue": 4,
+     "cas": 12,
+     "frozenMs": 0
+    },
+    {
+     "t": 190,
+     "landed": 221,
+     "queue": 4,
+     "cas": 13,
+     "frozenMs": 0
+    },
+    {
+     "t": 203,
+     "landed": 237,
+     "queue": 8,
+     "cas": 14,
+     "frozenMs": 0
+    },
+    {
+     "t": 216,
+     "landed": 257,
+     "queue": 4,
+     "cas": 15,
+     "frozenMs": 0
+    },
+    {
+     "t": 228,
+     "landed": 271,
+     "queue": 1,
+     "cas": 16,
+     "frozenMs": 0
+    },
+    {
+     "t": 240,
+     "landed": 290,
+     "queue": 3,
+     "cas": 17,
+     "frozenMs": 0
+    },
+    {
+     "t": 252,
+     "landed": 312,
+     "queue": 1,
+     "cas": 18,
+     "frozenMs": 0
+    },
+    {
+     "t": 264,
+     "landed": 331,
+     "queue": 0,
+     "cas": 19,
+     "frozenMs": 0
+    },
+    {
+     "t": 277,
+     "landed": 345,
+     "queue": 2,
+     "cas": 20,
+     "frozenMs": 0
+    },
+    {
+     "t": 288,
+     "landed": 361,
+     "queue": 2,
+     "cas": 21,
+     "frozenMs": 0
+    },
+    {
+     "t": 301,
+     "landed": 375,
+     "queue": 3,
+     "cas": 22,
+     "frozenMs": 0
+    },
+    {
+     "t": 313,
+     "landed": 397,
+     "queue": 2,
+     "cas": 23,
+     "frozenMs": 0
+    },
+    {
+     "t": 325,
+     "landed": 415,
+     "queue": 3,
+     "cas": 24,
+     "frozenMs": 0
+    },
+    {
+     "t": 337,
+     "landed": 434,
+     "queue": 5,
+     "cas": 25,
+     "frozenMs": 0
+    },
+    {
+     "t": 348,
+     "landed": 457,
+     "queue": 2,
+     "cas": 26,
+     "frozenMs": 0
+    },
+    {
+     "t": 361,
+     "landed": 474,
+     "queue": 4,
+     "cas": 27,
+     "frozenMs": 0
+    },
+    {
+     "t": 374,
+     "landed": 501,
+     "queue": 7,
+     "cas": 28,
+     "frozenMs": 0
+    },
+    {
+     "t": 387,
+     "landed": 519,
+     "queue": 1,
+     "cas": 29,
+     "frozenMs": 0
+    },
+    {
+     "t": 400,
+     "landed": 539,
+     "queue": 4,
+     "cas": 30,
+     "frozenMs": 0
+    },
+    {
+     "t": 412,
+     "landed": 558,
+     "queue": 2,
+     "cas": 31,
+     "frozenMs": 0
+    },
+    {
+     "t": 425,
+     "landed": 572,
+     "queue": 1,
+     "cas": 32,
+     "frozenMs": 0
+    },
+    {
+     "t": 439,
+     "landed": 584,
+     "queue": 8,
+     "cas": 33,
+     "frozenMs": 0
+    },
+    {
+     "t": 451,
+     "landed": 604,
+     "queue": 1,
+     "cas": 34,
+     "frozenMs": 0
+    },
+    {
+     "t": 462,
+     "landed": 622,
+     "queue": 1,
+     "cas": 35,
+     "frozenMs": 0
+    },
+    {
+     "t": 474,
+     "landed": 644,
+     "queue": 5,
+     "cas": 36,
+     "frozenMs": 0
+    },
+    {
+     "t": 488,
+     "landed": 666,
+     "queue": 4,
+     "cas": 37,
+     "frozenMs": 0
+    },
+    {
+     "t": 502,
+     "landed": 683,
+     "queue": 9,
+     "cas": 38,
+     "frozenMs": 0
+    },
+    {
+     "t": 515,
+     "landed": 706,
+     "queue": 5,
+     "cas": 39,
+     "frozenMs": 0
+    },
+    {
+     "t": 527,
+     "landed": 727,
+     "queue": 4,
+     "cas": 40,
+     "frozenMs": 0
+    },
+    {
+     "t": 540,
+     "landed": 750,
+     "queue": 0,
+     "cas": 41,
+     "frozenMs": 0
+    },
+    {
+     "t": 552,
+     "landed": 768,
+     "queue": 4,
+     "cas": 42,
+     "frozenMs": 0
+    },
+    {
+     "t": 566,
+     "landed": 782,
+     "queue": 5,
+     "cas": 43,
+     "frozenMs": 0
+    },
+    {
+     "t": 578,
+     "landed": 799,
+     "queue": 2,
+     "cas": 44,
+     "frozenMs": 0
+    },
+    {
+     "t": 590,
+     "landed": 814,
+     "queue": 5,
+     "cas": 45,
+     "frozenMs": 0
+    },
+    {
+     "t": 602,
+     "landed": 836,
+     "queue": 2,
+     "cas": 46,
+     "frozenMs": 0
+    },
+    {
+     "t": 615,
+     "landed": 849,
+     "queue": 5,
+     "cas": 47,
+     "frozenMs": 0
+    },
+    {
+     "t": 627,
+     "landed": 861,
+     "queue": 3,
+     "cas": 48,
+     "frozenMs": 0
+    },
+    {
+     "t": 639,
+     "landed": 867,
+     "queue": 3,
+     "cas": 49,
+     "frozenMs": 0
+    },
+    {
+     "t": 650,
+     "landed": 873,
+     "queue": 0,
+     "cas": 50,
+     "frozenMs": 0
+    },
+    {
+     "t": 662,
+     "landed": 875,
+     "queue": 0,
+     "cas": 51,
+     "frozenMs": 0
+    }
+   ]
+  }
+ ],
+ "forkMsP50": 2592
+}

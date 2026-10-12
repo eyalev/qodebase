@@ -270,7 +270,7 @@ export class Lane extends DurableObject {
   /** A train's files into the lane's snapshot. Only the files it changed: X may have updated other files (a thaw)
    *  while the train ran, and writing back the whole copy taken at its start lost them (2026-10-12). */
   adopt(snap, changed) { for (const p of changed) this.s.snap.set(p, snap.get(p)); }
-  finish(landed, snap, res, changed) {
+  async finish(landed, snap, res, changed) {
     const s = this.s;
     if (!res.ok) { for (const c of landed.slice().reverse()) { c.state = 'mergeWait'; s.queue.unshift(c.n); } return; }
     this.adopt(snap, changed);
@@ -282,6 +282,7 @@ export class Lane extends DurableObject {
     if (s.m.waitS.length > 4000) s.m.waitS = s.m.waitS.slice(-2000);
     // Drop texts no longer in the snapshot (memory).
     if (++s.m.trains % 10 === 0) { const live = new Set(s.snap.values()); for (const h of s.text.keys()) if (!live.has(h)) s.text.delete(h); }
+    await this.persist();   // main moved: save before anything else can reset this object
   }
   async train() {
     const s = this.s;
@@ -292,7 +293,7 @@ export class Lane extends DurableObject {
     const { snap, changed, landed } = this.replay(ids, objs, own);
     if (!landed.length) return;
     if (s.cfg.door === 'combine') return this.hand(objs, snap, changed, landed);
-    this.finish(landed, snap, await this.land(objs, snap, changed, landed), changed);
+    await this.finish(landed, snap, await this.land(objs, snap, changed, landed), changed);
   }
   // ---- door 'combine': a lane hands its tested train to the main door (C), which puts every lane's trains into
   // one commit per round. C never replays or tests (areas are disjoint; cross changes went through X). ----
@@ -305,6 +306,10 @@ export class Lane extends DurableObject {
     for (const c of landed) { c.state = 'handed'; c.handedAt = this.now(); this.ev(c, 'handed to the main door'); }
     s.m.handed = (s.m.handed || 0) + landed.length;
     if (++s.m.trains % 10 === 0) { const live = new Set(s.snap.values()); for (const h of s.text.keys()) if (!live.has(h)) s.text.delete(h); }
+    // Saved now, not at the end of the alarm: the handoff cannot be taken back, and a reset in between brought this
+    // lane back with its files from before the train; X's next train then put an old routes.ts on main (x20 cell,
+    // 2026-10-12: 2 test failures on main, 19 resets that run).
+    await this.persist();
   }
   async landedInMain({ ids, commit, ms }) {
     await this.ensure();
@@ -316,6 +321,7 @@ export class Lane extends DurableObject {
       this.ev(c, 'landed', `${commit.slice(0, 7)} (main door push ${ms} ms)`);
     }
     if (s.m.waitS.length > 4000) s.m.waitS = s.m.waitS.slice(-2000);
+    await this.persist();   // a lost 'landed' left the lanes' count 51 short of main's in the x20 cell
   }
   async handoff(h) {
     await this.ensure();
@@ -323,6 +329,7 @@ export class Lane extends DurableObject {
     s.pending = s.pending || [];
     s.pending.push(h);
     s.m.handoffs = (s.m.handoffs || 0) + 1;
+    await this.persist();   // accepted = kept: a handoff only in memory was lost with a reset
     return { ok: true };
   }
   async combine() {
@@ -338,7 +345,9 @@ export class Lane extends DurableObject {
     for (let attempt = 0; attempt < 10; attempt++) {
       if (!s.base) await this.refreshBase();
       const { tree, root, src } = overlay(objs, s.base, modTree, files);
-      const commit = objs.commit(tree, [s.base.tip], `C: land ${round.map((h) => `${h.from === 'X' ? 'X' : `L${h.from}`}x${h.ids.length}`).join(' ')}`, Date.now());
+      // Every change id in the message (#L3-17 …), so a clone of main can check each landing (verify.mjs).
+      const tag = (h) => (h.from === 'X' ? 'X' : `L${h.from}`);
+      const commit = objs.commit(tree, [s.base.tip], `C: land ${round.map((h) => `${tag(h)}x${h.ids.length}`).join(' ')}\n\n${round.flatMap((h) => h.ids.map((n) => `#${tag(h)}-${n}`)).join(' ')}`, Date.now());
       const t0 = Date.now();
       const r = await push({ remote: s.main.remote, token: s.main.token, oldSha: s.base.tip, newSha: commit, objs: [...objs.map.values()] });
       s.m.mainPushes++; s.m.artifactsOps++;
@@ -346,6 +355,7 @@ export class Lane extends DurableObject {
         const ms = Date.now() - t0;
         s.m.mainPushMs.push(ms); if (s.m.mainPushMs.length > 2000) s.m.mainPushMs = s.m.mainPushMs.slice(-1000);
         s.base = { tip: commit, root, src };
+        await this.persist();   // main moved with this round: saved before the lanes are told
         const byLane = new Map();
         for (const h of round) byLane.set(h.from, [...(byLane.get(h.from) || []), ...h.ids]);
         await Promise.all([...byLane].map(([l, ids]) => this.stub(l).landedInMain({ ids, commit, ms }).catch((e) => s.m.errors.push(`notify ${l}: ${e}`.slice(0, 160)))));
@@ -396,7 +406,7 @@ export class Lane extends DurableObject {
     try {
       out = this.replay(ids, objs, own);
       if (out.landed.length && s.cfg.door === 'combine') { await this.hand(objs, out.snap, out.changed, out.landed); res = { ok: out.landed.every((c) => c.state === 'handed') }; }
-      else if (out.landed.length) { res = await this.land(objs, out.snap, out.changed, out.landed); this.finish(out.landed, out.snap, res, out.changed); }
+      else if (out.landed.length) { res = await this.land(objs, out.snap, out.changed, out.landed); await this.finish(out.landed, out.snap, res, out.changed); }
     } finally {
       // Every lane gets the frozen lanes' whole current files, not only what X changed: a lane that saw X's new file
       // next to an old copy of its neighbour (renamed meanwhile inside the frozen lane) failed every change after that.

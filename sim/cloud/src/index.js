@@ -28,7 +28,7 @@ export default {
     // A short-lived read token for main, to clone and check it with real git.
     if (url.pathname === '/clone') {
       if (request.headers.get('x-sim-key') !== env.SIM_KEY) return new Response('forbidden', { status: 403 });
-      return Response.json(await run.cloneToken());
+      return Response.json(await run.cloneToken(url.searchParams.get('run')));
     }
     if (url.pathname === '/forget' && request.method === 'POST') {
       if (request.headers.get('x-sim-key') !== env.SIM_KEY) return new Response('forbidden', { status: 403 });
@@ -342,10 +342,13 @@ export class Run extends DurableObject {
       restores: s.m.restores || 0, resyncs: s.m.resyncs || 0, artifactsOpsCounted: s.m.artifactsOps, errors: s.m.errors.slice(0, 10), errorCount: s.m.errors.length,
     };
   }
-  async cloneToken() {
+  // A short read token for main; ?run=<runId> for an earlier run's main (re-verifying finished cells).
+  async cloneToken(run) {
     if (!(await this.ensure())) return { error: 'no run' };
-    const t = await (await this.env.ARTIFACTS.get(this.s.main.name)).createToken('read', 600);
-    return { remote: this.s.main.remote, token: t.plaintext.split('?')[0] };
+    const name = run && /^r[a-z0-9]+$/.test(run) ? `${run}-main` : this.s.main.name;
+    const t = await (await this.env.ARTIFACTS.get(name)).createToken('read', 600);
+    // Same namespace, so an earlier main's address is this one's with the name swapped.
+    return { remote: this.s.main.remote.replace(this.s.main.name, name), token: t.plaintext.split('?')[0] };
   }
   async status() {
     if (!(await this.ensure())) return { phase: 'idle' };
