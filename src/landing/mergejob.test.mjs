@@ -108,3 +108,21 @@ test('policy github/ffa: handlers off, a list-file collision is not replayed (it
   assert.equal(by.b.landed, false); assert.deepEqual(by.b.unhandled, ['src/routes.js']);
   assert.equal(r.checks.skipped, true);
 });
+
+test('a shallow main (an import from GitHub is depth 1): the train fetches and lands', () => {
+  const s = setup();
+  // a second commit, then a depth-1 copy of main stands in for an imported repo in Artifacts
+  const w2 = join(s.root, 'w2'); g(s.root, 'clone', '-q', s.main, w2);
+  write(w2, { 'README.md': 'hi\n' }); g(w2, 'add', '-A'); g(w2, 'commit', '-qm', 'second'); g(w2, 'push', '-q', 'origin', 'HEAD:main');
+  const shallow = join(s.root, 'shallow.git');
+  g(s.root, 'clone', '-q', '--bare', '--depth', '1', `file://${s.main}`, shallow);
+  assert.ok(readFileSync(join(shallow, 'shallow'), 'utf8').trim(), 'the stand-in import is shallow');
+  const base = g(shallow, 'rev-parse', 'main');
+  const f = join(s.root, 'sf.git'); g(s.root, 'clone', '-q', '--bare', '--depth', '1', `file://${shallow}`, f);
+  const fw = join(s.root, 'w-sf'); g(s.root, 'clone', '-q', `file://${f}`, fw);
+  write(fw, { 'src/new.js': 'export const x = 1;\n' }); g(fw, 'add', '-A'); g(fw, 'commit', '-qm', 'sf'); g(fw, 'push', '-q', 'origin', 'HEAD:main');
+  const change = { id: 'sf', title: 'change sf', intent: 'add new.js', remote: f, token: null, base, commit: g(fw, 'rev-parse', 'HEAD') };
+  const r = run({ dir: join(s.root, 'merger'), mainRemote: shallow, mainToken: null, check: 'node --test', changes: [change] });
+  assert.equal(r.ok, true, JSON.stringify(r).slice(0, 600));
+  assert.equal(r.changes[0].landed, true, JSON.stringify(r.changes[0]).slice(0, 600));
+});

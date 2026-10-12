@@ -80073,7 +80073,7 @@ __name(onMerge, "onMerge");
 
 // ../src/landing/merger.ts
 import { DurableObject as DurableObject11 } from "cloudflare:workers";
-import MERGEJOB from "./f40e48dde8d2dc8cd9d60e936da48843e6ef5339-mergejob.mjs";
+import MERGEJOB from "./957bea98cfa432e66efad356605db7a0555385a1-mergejob.mjs";
 var INSTANCE3 = { vcpu: 1, memoryMib: 3072, diskMb: 6144 };
 var IDLE_STOP_MS2 = 5 * 6e4;
 var MERGER_V = "2026-10-07c";

@@ -236,7 +236,9 @@ async function main() {
   if (!existsSync(join(DIR, '.git'))) { mkdirSync(DIR, { recursive: true }); git(['init', '-q']); }
   const sym = git(['ls-remote', '--symref', job.mainRemote, 'HEAD'], { tok: job.mainToken }).out;
   const branch = job.branch || (sym.match(/ref: refs\/heads\/(\S+)\s+HEAD/) || [])[1] || 'main';
-  const f = git(['fetch', '--no-tags', job.mainRemote, `+refs/heads/${branch}:refs/qb/main`], { tok: job.mainToken });
+  // --update-shallow: an imported repo is shallow (depth 1), and without it git refuses the ref ('shallow roots are
+  // not allowed to be updated', exit 0, no ref): every train of an imported project bounced (self-host check, 2026-10-12).
+  const f = git(['fetch', '--update-shallow', '--no-tags', job.mainRemote, `+refs/heads/${branch}:refs/qb/main`], { tok: job.mainToken });
   // A fetch that exited 0 without writing the ref (seen on a self-hosted copy, 2026-10-12): say what the remote
   // advertised and what git printed, instead of failing later on rev-parse with no clue.
   if (git(['rev-parse', '-q', '--verify', 'refs/qb/main'], { ok: true }).code !== 0) {
@@ -245,7 +247,7 @@ async function main() {
     say('main_fetch_no_ref', { branch, sym: sym.slice(0, 200), fetchOut: (f.out + '\n' + f.err).slice(0, 600), lsRemote: (ls.out || ls.err).slice(0, 600), git: v });
     throw new Error(`main fetch wrote no ref (branch ${branch}; ${v}); remote refs: ${(ls.out || ls.err).replace(/\s+/g, ' ').slice(0, 300)}; fetch said: ${(f.out + ' ' + f.err).replace(/\s+/g, ' ').slice(0, 300)}`);
   }
-  git(['fetch', '-q', '--no-tags', job.mainRemote, '+refs/notes/qodebase:refs/notes/qodebase'], { tok: job.mainToken, ok: true });
+  git(['fetch', '-q', '--update-shallow', '--no-tags', job.mainRemote, '+refs/notes/qodebase:refs/notes/qodebase'], { tok: job.mainToken, ok: true });
   const mainBefore = git(['rev-parse', 'refs/qb/main']).out;
   say('main', { branch, mainBefore });
   const cfg = (() => { try { return JSON.parse(show(`${mainBefore}:.qodebase/landing.json`) || '{}'); } catch { return {}; } })();
@@ -254,7 +256,7 @@ async function main() {
   const fetched = [];
   const results = new Map();
   // Every fork at once: one at a time took ~1 s each, 8.7 s of an 11.7 s train (2026-10-08).
-  const fetches = await Promise.all(job.changes.map((c) => gitAsync(['fetch', '-q', '--no-tags', '--no-write-fetch-head', c.remote, `+HEAD:refs/qb/c/${c.id}`], c.token)));
+  const fetches = await Promise.all(job.changes.map((c) => gitAsync(['fetch', '-q', '--update-shallow', '--no-tags', '--no-write-fetch-head', c.remote, `+HEAD:refs/qb/c/${c.id}`], c.token)));
   say('fetched', { forks: job.changes.length, ms: Date.now() - t0 });
   for (const [k, c] of job.changes.entries()) {
     const f = fetches[k];
