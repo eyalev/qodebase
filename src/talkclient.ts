@@ -604,7 +604,7 @@ function projPost(owner, name, verb, body) {
 }
 function sendChange(owner, name, text) {
   status('Sending\u2026');
-  projPost(owner, name, 'router', { text: text }).then(function (r) {
+  projPost(owner, name, 'router', { text: text, from: 'talk' }).then(function (r) {
     logEv('change', { project: owner + '/' + name, ok: !r.error, err: r.error || null });
     if (r.error) { add('note', 'Could not send it: ' + r.error); return done(); }
     add('app', 'Sent to ' + owner + '/' + name + '\u2019s agents. Opening its Changes\u2026');
