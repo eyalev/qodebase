@@ -1033,3 +1033,43 @@ No falsifier fired: interfaces-first stayed under 13 h, and 640 agents were not 
 - **Order from `use` lines is an approximation** of what must exist first.
 - **Not checked with real patches, and a text replay could not check it** (see the label above). Only a
   compile check per step could.
+
+### (k) checked against the real patches: names a module needs from other files (qb5, sim/bun/bun5check-*.json)
+
+qb5 read every real c+d+e commit's added Rust lines. For each one, it listed the names the commit defines
+(fn/struct/enum/trait/type/const/static/union/mod/macro_rules) and the names it uses from another file. Each such
+use is a **need** on that other file; 4,471 in all. Names that existed before the segment, or are defined in 2+
+files, were skipped. Matching is lexical, so needs are an upper bound. The per-file sanity check passed: 19,272
+hunks applied, 0 failed, 1,221 of 1,221 files equal to history.
+
+Missed needs (the order would start X's body before the name exists):
+
+| order | all needs | both files in modules.json (3,344) |
+|---|---|---|
+| strict (whole used modules first) | 27% | **3%** |
+| interfaces-first, direct uses only (the (k) model) | 41% | **25%** |
+
+Most of interfaces-first's misses are in the same crate without a direct `use` edge (1,240), likely re-exports
+through `lib.rs` and glob uses. Another 576 are in a crate that is not a dependency, mostly files the tip no
+longer has. So the tip's `use` graph captures the real needs well (strict misses 3%); "direct uses only" is too
+thin.
+
+**Fix, and what it costs** (`scope` in modules.mjs, 3 seeds, 64 agents):
+
+| interfaces-first, a body waits for… | interface 10% | 20% | 30% |
+|---|---|---|---|
+| the interfaces it uses directly (as in (k)) | 3.41 h | 4.29 h | 5.18 h |
+| every interface in its own crate | 3.40 h | 4.29 h | 5.18 h |
+| every interface in the codebase (two phases) | 3.41 h | 4.31 h | 5.21 h |
+
+A crate's interfaces are short and written in parallel, so the stricter waits cost almost nothing. In the
+two-phase order (all interfaces, then all bodies) no body starts before any name another file defines, as long as
+defined names belong to interfaces. The **5–8× speed-up over BUN3 survives the name check.**
+
+The open assumptions are unchanged:
+- **Interfaces can be written first**, and they are 10–30% of the work.
+- **One owner per file has no handoff cost.**
+
+**Label, updated:** *simulated from Bun's real structure; the module order was checked against the names Bun's
+real patches use across files (strict order misses 3%; two-phase interfaces-first meets them by construction at
+no time cost); not replayed.*

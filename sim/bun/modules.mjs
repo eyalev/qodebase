@@ -92,7 +92,7 @@ if (args.graph) {
 
 // ---------------- the sim ----------------
 export function run(opts = {}) {
-  const cfg = { order: 'interfaces', agents: 64, seed: 1, workMedS: 65, workSigma: 0.6, perFileLog: 0.3, phi: 0.2, finalCheckS: 900, ...opts };
+  const cfg = { order: 'interfaces', scope: 'uses', agents: 64, seed: 1, workMedS: 65, workSigma: 0.6, perFileLog: 0.3, phi: 0.2, finalCheckS: 900, ...opts };
   const D = JSON.parse(readFileSync(join(HERE, 'tasks.json'), 'utf8'));
   const G = JSON.parse(readFileSync(join(HERE, 'modules.json'), 'utf8'));
   let a = cfg.seed >>> 0 || 1;
@@ -131,6 +131,12 @@ export function run(opts = {}) {
     for (const f of files) { const c = crateOf(f); if (c) edge(I.get(f), barrier.get(c)); }
     for (const f of files) { const c = crateOf(f); if (!c) continue; for (const d of G.crates[c].deps) edge(barrier.get(d), I.get(f)); }
     for (const f of files) for (const u of M[f]?.uses || []) if (I.has(u)) edge(I.get(u), Im.get(f));
+    // scope 'crate' (after qb5's name check, sim/bun/bun5check-*.json): a body also waits for every interface in its
+    // own crate. 'uses' (direct use edges only) missed 1,240 same-crate needs, mostly names reached through
+    // re-exports or glob uses.
+    if (cfg.scope === 'crate') for (const f of files) { const c = crateOf(f); if (c) edge(barrier.get(c), Im.get(f)); }
+    // scope 'all': no body starts before every interface exists (two phases: all interfaces, then all bodies)
+    if (cfg.scope === 'all') { const all = add({ kind: 'barrier', crate: '*', s: 0 }); for (const f of files) { edge(I.get(f), all); edge(all, Im.get(f)); } }
   } else {
     // strict: a module waits for every module it uses to be done; cycles merged (Tarjan) into one owner's task.
     const nodes = files, idx = new Map(nodes.map((f, i) => [f, i]));
@@ -178,7 +184,7 @@ export function run(opts = {}) {
   }
   const finishedS = t + cfg.finalCheckS;
   const biggest = Math.max(...T.map((x) => x.s));
-  return { order: cfg.order, agents: cfg.agents, seed: cfg.seed, phi: cfg.order === 'interfaces' ? cfg.phi : null,
+  return { order: cfg.order, scope: cfg.order === 'interfaces' ? cfg.scope : null, agents: cfg.agents, seed: cfg.seed, phi: cfg.order === 'interfaces' ? cfg.phi : null,
     finishedH: +(finishedS / 3600).toFixed(2), criticalPathH: +((critical + cfg.finalCheckS) / 3600).toFixed(2),
     agentHours: +(busyS / 3600).toFixed(1), widthMax: maxBusy, tasks: T.filter((x) => x.s > 0).length, commits, files: files.length,
     biggestTaskH: +(biggest / 3600).toFixed(2), idleShare: +(1 - busyS / (cfg.agents * t || 1)).toFixed(3), vsBun3: +(26.2 / (finishedS / 3600)).toFixed(2) };
@@ -191,6 +197,7 @@ if (args.one) {
 if (args.sweep) {
   const out = join(HERE, 'bun5-sweep.jsonl');
   for (const order of ['interfaces', 'strict']) for (const agents of [64, 640, 6400, 1e6]) for (const seed of [1, 2, 3])
-    for (const phi of order === 'interfaces' ? [0.1, 0.2, 0.3] : [null]) appendFileSync(out, JSON.stringify(run({ order, agents, seed, ...(phi ? { phi } : {}) })) + '\n');
+    for (const phi of order === 'interfaces' ? [0.1, 0.2, 0.3] : [null]) for (const scope of order === 'interfaces' ? ['uses', 'crate', 'all'] : ['uses'])
+      appendFileSync(out, JSON.stringify(run({ order, agents, seed, scope, ...(phi ? { phi } : {}) })) + '\n');
   console.log('->', out);
 }
