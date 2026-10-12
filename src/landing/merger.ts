@@ -35,6 +35,8 @@ export type MergeResult = {
    *  start, cold or warm, upload) then the merge job's (fetch-main, fetch-forks, apply/replay per change, checks, notes, push). */
   phases?: [string, number, number, string?][];
   cold?: boolean;
+  /** Each fetch's own ms (main, notes, every fork) and how they ran. */
+  fetchMs?: { main: number; notes: number; forks: number[]; warm: boolean; shallow: boolean; parallel: boolean };
 };
 
 // git, node --test, an occasional npm install. Billed while awake only. Custom sizes need

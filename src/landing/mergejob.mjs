@@ -35,10 +35,11 @@ function git(args, { tok, input, ok = false } = {}) {
 // The same, without blocking: for fetching many forks at once (each git takes its own ref).
 function gitAsync(args, tok) {
   return new Promise((resolve) => {
+    const s = Date.now();
     const p = spawn('git', [...ID, ...auth(tok), ...args], { cwd: DIR });
     let out = '', err = '';
     p.stdout.on('data', (d) => { out += d; }); p.stderr.on('data', (d) => { err += d; });
-    p.on('close', (code) => resolve({ code, out: out.trimEnd(), err: err.trimEnd() }));
+    p.on('close', (code) => resolve({ code, out: out.trimEnd(), err: err.trimEnd(), ms: Date.now() - s }));
     p.on('error', (e) => resolve({ code: -1, out: '', err: String(e) }));
   });
 }
@@ -258,7 +259,7 @@ async function main() {
   const early = warm && !shallow ? forkFetch() : null;
   // --update-shallow: an imported repo is shallow (depth 1), and without it git refuses the ref ('shallow roots are
   // not allowed to be updated', exit 0, no ref): every train of an imported project bounced (self-host check, 2026-10-12).
-  const [f] = await Promise.all([
+  const [f, fn] = await Promise.all([
     gitAsync(['fetch', '--update-shallow', '--no-tags', job.mainRemote, `+refs/heads/${branch}:refs/qb/main`], job.mainToken),
     gitAsync(['fetch', '-q', '--no-tags', job.mainRemote, '+refs/notes/qodebase:refs/notes/qodebase'], job.mainToken),
   ]);
@@ -283,7 +284,9 @@ async function main() {
   const tForks = Date.now();
   const fetches = await (early || forkFetch());
   phase(early ? 'fetch-all' : 'fetch-forks', early ? tF : tForks);
-  say('fetched', { forks: job.changes.length, warm, shallow, parallel: !!early, ms: Date.now() - t0 });
+  // Each fetch's own time (why a warm fetch still took ~3 s in the box, 2026-10-12).
+  const fetchMs = { main: f.ms, notes: fn.ms, forks: fetches.map((x) => x.ms), warm, shallow, parallel: !!early };
+  say('fetched', { forks: job.changes.length, ...fetchMs, ms: Date.now() - t0 });
   for (const [k, c] of job.changes.entries()) {
     const f = fetches[k];
     if (f.code !== 0) { results.set(c.id, { id: c.id, ok: false, conflicts: [], why: 'could not fetch its fork: ' + f.err.slice(0, 200) }); continue; }
@@ -360,7 +363,7 @@ async function main() {
     if (pushed) { const tNP = Date.now(); notesPushed = git(['push', '-q', '-f', job.mainRemote, 'refs/notes/qodebase:refs/notes/qodebase'], { tok: job.mainToken, ok: true }).code === 0; phase('push-notes', tNP); }
   }
   const out = {
-    ok: true, branch, mainBefore, mainAfter, pushed, stale, pushErr, notesPushed, solo, checks, ms: Date.now() - t0, phases: PH,
+    ok: true, branch, mainBefore, mainAfter, pushed, stale, pushErr, notesPushed, solo, checks, ms: Date.now() - t0, phases: PH, fetchMs,
     changes: job.changes.map((c) => {
       const r = results.get(c.id) || { id: c.id, ok: false, why: 'not applied' };
       const landedOk = r.ok && pushed;

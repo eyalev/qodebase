@@ -53,7 +53,8 @@ export type Train = { id: string; state: 'testing' | 'landed' | 'bounced'; chang
   /** What happened to each change in this train (set when the merger reports). */
   outcomes?: Record<string, 'landed' | 'bounced' | 'conflict' | 'retry'>;
   /** Timeline (T1): the merger's phases [name, start, end, change?] and whether its box had to start. */
-  phases?: [string, number, number, string?][]; cold?: boolean };
+  phases?: [string, number, number, string?][]; cold?: boolean;
+  fetchMs?: { main: number; notes: number; forks: number[]; warm: boolean; shallow: boolean; parallel: boolean } };
 type Demo = { running: boolean; agents: number; speed: number; startedAt: number; endsAt: number; stoppedAt?: number;
   /** story = the café's 14 tasks; busy = an endless stream of small colliding changes. */
   mode?: 'story' | 'busy';
@@ -710,6 +711,7 @@ export class Landing extends DurableObject<Env> {
     t.endedAt = Date.now(); t.mainBefore = r.mainBefore || null; t.mainAfter = r.mainAfter || null;
     if (r.phases?.length) t.phases = r.phases.slice(0, 80);
     if (r.cold !== undefined) t.cold = r.cold;
+    if (r.fetchMs) t.fetchMs = r.fetchMs;
     t.checks = r.checks ? { ok: !!r.checks.ok, ms: r.checks.ms || 0, failures: r.checks.failures || [] } : null;
     m.running = null;
     m.failStreak = !r.ok ? (m.failStreak || 0) + 1 : 0;
