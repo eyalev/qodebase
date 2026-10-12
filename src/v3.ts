@@ -132,7 +132,8 @@ export function liveChanges(c: Ctx) {
     return `${you}${g.changes.map((ch) => changeRow(info, ch, now, accent)).join('')}${tail}`;
   });
   if (q && isMerge(q.text)) out.push(planningHtml(plan, q));
-  const merged = done.length ? `<a class="older" href="${c.base}/history">${done.length} merged change${done.length > 1 ? 's' : ''} in History</a>` : '';
+  const landedWord = (info as { autoLand?: boolean }).autoLand ? 'landed' : 'merged';
+  const merged = done.length ? `<a class="older" href="${c.base}/history">${done.length} ${landedWord} change${done.length > 1 ? 's' : ''} in History</a>` : '';
   // A copy you just made: say it is yours and what to do with it.
   const fresh = info.forkedFrom && !info.agents.length && !q;
   const empty = !out.join('').trim() ? fresh ? `<div class="hello"><b>This is your copy.</b><p>Forked from <a href="/p/${esc(info.forkedFrom!.replace('.', '/'))}">${esc(info.forkedFrom!.replace('.', ' / '))}</a>. Say what to change below, in plain words: qodebase splits it into tasks, an agent does each one, and a reviewer checks it before you merge. The original is not touched.</p></div>` : `<div class="hello"><b>Nothing in progress.</b><p>Ask for a change in plain words. qodebase splits it into tasks, an agent does each one on its own fork, and a reviewer checks it before you merge.</p></div>` : '';
@@ -308,6 +309,9 @@ h3{font-size:13px;font-weight:600;color:var(--dim);margin:24px 0 8px}
 /* Changes: a scroller that starts at the bottom without script (column-reverse). */
 .thread{height:100%;overflow-y:auto;display:flex;flex-direction:column-reverse;overscroll-behavior:contain}
 .tin{display:flex;flex-direction:column;gap:10px;padding:16px 12px 12px;max-width:760px;width:100%;margin:0 auto}
+/* The estimate bar sits at the top of the view while the conversation stays at the bottom (the thread stacks
+   from the bottom, so without this the bar floated mid-screen above a gap). */
+.tin:has(.estmount){min-height:100%}.tin .estmount{margin-bottom:auto}
 .tin>*{flex:none}
 .you{align-self:flex-end;max-width:86%;background:var(--chip);color:var(--fg);border-radius:12px 12px 4px 12px;padding:10px 14px;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:8px}
 .you.sys{align-self:stretch;max-width:none;background:none;border:1px solid var(--line);border-radius:12px;font-size:14px}
