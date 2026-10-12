@@ -717,15 +717,17 @@ export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, 
  *  line, the build box above the fold, then three doors (your own qodebase, your own AI
  *  assistant, explore) and the try-changing row. */
 function landBody(entries: Entry[], selfHost = false) {
-  // Review #3 (2026-10-12): lead with the coordination demo, then the lab and the sim; the builder stays below.
-  const watch = selfHost ? '' : `<a class="watchtop" href="/p/eyal/corner-cafe"><span class="wt1">A demo you can start, no sign-in</span>
-<b>Watch 6 scripted agents change one app at once</b>
-<span class="wt2">When two agents edit the same lines, the later edit is redone on the newest code instead of being thrown away, and nothing lands untested. Real commits and tests, no AI cost. About 2 minutes.</span><span class="wtgo">Watch a run</span></a>
-<nav class="watchmore" aria-label="The evidence"><a href="/lab">The lab: which way of running agents wins</a><a href="/sim/">The simulation: up to 100,000 agents</a></nav>`;
+  // Redesign (qb3, branch qodebase-redesign, 2026-10-12): the promise first, then the demo as a picture of the idea
+  // (a collision that is replayed, not bounced: Retool's "headline, then the real product"), then the evidence as two doors.
+  const watch = selfHost ? '' : `<a class="watchtop" href="/p/eyal/corner-cafe"><span class="wt1">A demo you can start, no sign-in. About 2 minutes.</span>
+<b>Watch 6 agents change one app at once</b>
+<span class="wtpic" aria-hidden="true"><span class="wtrow"><i class="wa1">2</i><i class="wa2">4</i><span>both changed <span class="wtf">style.css</span></span></span><span class="wttags"><span class="x">collided</span><span>replayed</span><span>tested</span><span class="ok">landed</span></span></span>
+<span class="wt2">When two agents edit the same lines, the later edit is redone on the newest code instead of being thrown away, and nothing lands untested. Real commits and tests, no AI cost.</span><span class="wtgo">Watch a run</span></a>
+<nav class="watchmore" aria-label="The evidence"><a href="/lab"><b>The lab</b><span>Which way of running agents wins, on real jobs</span></a><a href="/sim/"><b>The simulation</b><span>Up to 100,000 agents, measured</span></a></nav>`;
   return `<section class="land">
-${watch}
 <h1>Own your codebase.</h1>
 <p class="lede">Describe it. Agents build it. The code is yours to keep.</p>
+${watch}
 <form class="landask" action="/build" method="get">
 <div class="askbox"><textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button type="button" class="askmic" id="askmic" hidden aria-label="Speak your idea" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
@@ -818,6 +820,20 @@ body:has(.landask) #talk-fab{display:none!important}
 .watchtop b{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--acc)}
 .watchtop .wt1{font-size:13px;color:var(--dim)}
 .watchtop .wt2{font-size:14px;color:var(--dim)}
+.watchtop .wtpic{display:grid;gap:8px;margin:6px 0 4px;padding:10px 12px;border-radius:10px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)}
+.watchtop .wtrow{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--fg)}
+.watchtop .wtrow i{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;font-style:normal;font-size:13px;font-weight:600;background:var(--busy);color:var(--acc-fg)}
+.watchtop .wtrow i.wa2{background:var(--fg);color:var(--bg);margin-left:-10px;box-shadow:0 0 0 2px var(--bg)}
+.watchtop .wtrow>span{margin-left:4px}
+.watchtop .wtf{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px}
+.watchtop .wttags{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start}
+.watchtop .wtpic .wttags span{display:inline-block;height:auto;line-height:1.4;min-height:0;font-size:12px;padding:2px 6px;border-radius:4px;background:var(--chip);color:var(--fg)}
+.watchtop .wtpic .wttags .x{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
+.watchtop .wtpic .wttags .ok{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+.land .watchmore{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 24px}
+.land .watchmore a{display:grid;gap:2px;padding:12px 14px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;min-height:44px}
+.land .watchmore b{font-size:15px;font-weight:600}
+.land .watchmore span{font-size:13px;color:var(--dim);line-height:1.35}
 /* Design pass (2026-10-12): the card looked like text; a visible button says it starts something. Chip, not accent: Build it is the page's one green button. */
 .watchtop .wtgo{justify-self:start;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;margin-top:8px;border-radius:10px;background:var(--chip);color:var(--fg);font-size:15px;font-weight:500;box-shadow:inset 0 0 0 1px var(--line)}
 .watchmore{display:flex;flex-wrap:wrap;gap:0 16px;margin:0 0 28px}
