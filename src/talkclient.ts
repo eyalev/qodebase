@@ -188,8 +188,18 @@ function wireComposers() {
     b.type = 'button'; b.className = 'talk-cmic'; b.setAttribute('aria-label', 'Speak (hold for Talk)'); b.innerHTML = ICON.mic;
     var send = f.querySelector('.send, button[type=submit], button:not([type])');
     if (send && send.parentNode) send.parentNode.insertBefore(b, send); else f.appendChild(b);
-    var sync = function () { var has = !!ta.value.trim() || (listening && cInto === ta); f.classList.toggle('talk-hassend-on', has); f.classList.toggle('talk-hassend-off', !has); };
+    // Empty: the mic. Text: the page's Send. Listening into this box: stop AND Send (tap the mic, speak, tap Send).
+    var sync = function () {
+      var live = listening && cInto === ta, has = !!ta.value.trim();
+      f.classList.toggle('talk-hassend-on', has && !live); f.classList.toggle('talk-hassend-off', !has && !live);
+    };
     ta.addEventListener('input', sync); sync(); f.__talkSync = sync;
+    // Send while listening: stop, let Whisper check the words, then send them with the page's own Send.
+    f.addEventListener('submit', function (e) {
+      if (!(listening && cInto === ta)) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      trace('cmic', { how: 'send-while-listening' }); f.__sendAfter = 1; stopListen(false, false);
+    }, true);
     var lp = null, long = false;
     b.addEventListener('pointerdown', function () { long = false; lp = setTimeout(function () { long = true; trace('cmic', { how: 'long' }); open(true); }, 550); });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { b.addEventListener(ev, function () { clearTimeout(lp); }); });
@@ -1123,7 +1133,11 @@ function liveFinish(text, sendIt) {
     trace('dc_whisper', Object.assign({ how: how, live: t, final: final, send: !!sendIt }, extra || {}));
     keepClip(clipBlob, { live: t, final: final || '', how: how });
     var all = (base + (final || '')).trim();
-    if (cInto) { setInp(all); var cf = cInto.closest('form'); cInto = null; cMic = null; if (cf && cf.__talkSync) cf.__talkSync(); return; }   // the page's composer: its own Send sends
+    if (cInto) {
+      setInp(all); var cf = cInto.closest('form'); cInto = null; cMic = null; if (cf && cf.__talkSync) cf.__talkSync();
+      if (cf && cf.__sendAfter) { cf.__sendAfter = 0; if (all) { trace('cmic', { how: 'sent', chars: all.length }); if (cf.requestSubmit) cf.requestSubmit(); else cf.dispatchEvent(new Event('submit', { cancelable: true })); } }
+      return;
+    }   // the page's composer: its own Send sends
     if (!sendIt) { setInp(all); if (!final) status('I did not hear anything'); return; }   // tap, speak, tap Send: the words wait in the box
     setInp('');
     if (all) { lastSpoken = true; submit(all); } else add('note', 'I did not hear anything.');
