@@ -10,12 +10,12 @@ FINDINGS2 update. Every number below is copied from the source in its row. Label
 
 | the job | what won | how we know | source |
 |---|---|---|---|
-| A small app, a few pieces (bakery and club sites) | **One strong agent.** One Opus agent finished 1.9× and 1.6× faster than an Opus planner with a Haiku crew; the crew cost about half at standard API prices | measured, 3 runs each | [/lab](https://qodebase.app/lab), README "Lab results" |
+| Small-to-mid apps (bakery and club sites, 15-minute jobs with several pieces) | **One strong agent.** One Opus agent finished 1.9× and 1.6× faster than an Opus planner with a Haiku crew; the crew cost about half at standard API prices | measured, 2-3 runs each | [/lab](https://qodebase.app/lab), README "Lab results" |
 | A shared task list with hidden duplicates (60 tasks, 20 agents) | **Board + duplicate check up front.** The only setup with no duplicate built twice (0 of 10 pairs, against 3 for the check alone, 7 for a static split, 8 with nothing); lowest median time and cost (443 s, $2.61) | measured, 20 Haiku agents, 3 runs each | docs/board/FINDINGS2.md §6 |
 | Tasks that arrive during the run | **A duplicate check on every new task.** 88 of 90 arrivals classified right; pairs built twice fell from 10 to 4 (board) to 1 | measured, 10 Haiku agents, 3 runs each | docs/board/E7-results.md W9b |
 | Two teams on one repo | **The board's cross-list check.** 40% less wall time, 22% cheaper, pairs built twice 4,4,3 → 0,0,1 | measured inside qodebase on Cloudflare, 3 runs each | docs/board/FINDINGS2.md §3 |
-| A chain-shaped port (Bun's Zig→Rust: 89% of commits edit lines an earlier commit wrote) | **Ownership of line ranges, land at once, check behind the commit, fix forward.** Kept Bun's 26.2 h and cut broken-crate time 59-73%; a check that blocks each commit cost +23% (30 s) to +92% (120 s); more agents than 64 bought nothing | replayed with Bun's real patches | sim/bun/README.md BUN3 |
-| A big codebase, thousands of agents | **Dependency-aware lanes with a controller per lane.** At 2,000 agents after 6 h: 1,271 landed an hour against 896 for one queue, median wait 10 min against 130, main never red. Lanes that test only their own area left main red 20-88% of the time | simulated, one seed per cell | sim/README.md "Lanes" (L3 on Cloudflare: pending) |
+| A chain-shaped port (Bun's Zig→Rust: 89% of commits edit lines an earlier commit wrote) | **Ownership of line ranges, land at once, check behind the commit, fix forward.** Kept Bun's 26.2 h and cut broken-crate time 59-73%; a check that blocks each commit cost +23% (30 s) to +92% (120 s); more agents than 64 bought nothing | replayed: Bun's real patches; breaks in the middle phases modelled | sim/bun/README.md BUN3 |
+| A big codebase, thousands of agents | **Dependency-aware lanes with a controller per lane.** At 2,000 agents after 6 h: 1,271 landed an hour against 896 for one queue, median wait 10 min against 130, main never red. Lanes that test only their own area left main red 20-88% of the time | simulated: real git and real tests, scripted agents, one run per cell | sim/README.md "Lanes" (L3 on Cloudflare: pending) |
 | When to switch | **Queue saturation.** One queue lands ~850-900 changes an hour at 500, 2,000 and 10,000 agents alike; past that, more agents only lengthen the wait | simulated | sim/README.md "Lanes" |
 
 ## The adaptive loop (one paragraph, /how)
@@ -32,7 +32,7 @@ as options.
 ## Submission / README paragraph
 
 **Next: choose the way to run agents per job.** What we measured says no one way wins. One strong agent was faster
-on small sites; a board with a duplicate check was the only setup that stopped duplicate work on shared task lists;
+on small-to-mid sites; a board with a duplicate check was the only setup that stopped duplicate work on shared task lists;
 Bun's chain-shaped port, replayed with its real patches, kept its speed only when checks ran behind each commit
 instead of blocking it; and in simulation at 2,000 agents one merge queue capped out near 900 changes an hour, where
 dependency-aware lanes with a controller each landed 1,271. So the plan is an orchestrator that profiles the job,
