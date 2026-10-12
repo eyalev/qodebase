@@ -643,7 +643,7 @@ const app = {
         const own = info.owner === me.handle;
         const st = own ? await statusesOf(env, info) : { status: {}, router: { awake: false, cc: 'asleep' }, reviewer: { awake: false, cc: 'asleep' } };
         // Estimate vs elapsed (Build): the Changes tab reads info.estimate / info.progress.
-        const bi0 = await env.Landing.get(env.Landing.idFromName(slug)).buildInfo().catch(() => null);
+        const bi0 = await env.Landing.get(env.Landing.idFromName(slug)).pageExtras().catch(() => null);
         return html(projectV3({ info: bi0 ? { ...info, ...bi0 } : info, entry: all.find((e) => e.slug === slug)!, forks: all.filter((e) => e.forkedFrom === slug), overview: await p.overview(),
           me: me.handle, runBase, liveHtml: '', view: m[3] === 'about' ? 'readme' : (m[3] as ViewId) || null, tryAgent: url.searchParams.get('try') || undefined, ...st,
           docs: !m[3] || m[3] === 'readme' || m[3] === 'about' ? await docsOf(env, ctx, info, url.searchParams.get('doc')) : undefined,
@@ -697,7 +697,7 @@ const app = {
         if (!info) return json({ error: 'no such project' }, 404);
         if (verb === '' && request.method === 'GET') {
           // Estimate vs elapsed (Build): the estimate shown and the progress, when the project was built with one.
-          const bi = await env.Landing.get(env.Landing.idFromName(slug)).buildInfo().catch(() => null);
+          const bi = await env.Landing.get(env.Landing.idFromName(slug)).pageExtras().catch(() => null);
           return json(bi ? { ...info, ...bi } : info);
         }
         if (verb === 'fork' && request.method === 'POST') {
@@ -768,7 +768,7 @@ const app = {
         }
         if (verb === 'agents-html' && ['a', 'b', 'c', 'd'].includes(uiFor(request, env) || '')) {
           const st = await statusesOf(env, info);
-          const bi1 = await env.Landing.get(env.Landing.idFromName(info.slug)).buildInfo().catch(() => null);
+          const bi1 = await env.Landing.get(env.Landing.idFromName(info.slug)).pageExtras().catch(() => null);
           return json({ html: liveV3(url.searchParams.get('view') || 'changes', { info: bi1 ? { ...info, ...bi1 } : info, me: me.handle, runBase, ...st, entry: undefined as unknown as Entry, forks: [], overview: { commits: [], files: [], readme: null }, liveHtml: '' }) });
         }
         if (verb === 'agents-html') return json({ html: await renderAgents(env, info, runBase, uiFor(request, env)), tabs: previewTabs(info, runBase) });

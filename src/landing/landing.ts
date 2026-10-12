@@ -388,6 +388,15 @@ export class Landing extends DurableObject<Env> {
     return m.aliases;
   }
 
+  /** What the project page adds to its info: autoLand (the merge queue lands changes by itself: no Merge buttons)
+   *  and, when the project was built with one, the estimate and progress. Never creates the object's state. */
+  async pageExtras() {
+    const m = (await this.ctx.storage.get<Meta>('meta')) || null;
+    if (!m) return { autoLand: false };
+    if (!this.#meta) this.#meta = m;
+    return { autoLand: !!m.flags.autoMerge, ...(m.build ? await this.buildInfo() : {}) };
+  }
+
   // ---- estimate vs elapsed (Build) ------------------------------------------------
   async setBuild(slug: string, e: BuildEstimate) { const m = await this.#m(slug); m.build = e; await this.#saveMeta(); }
   #progressMemo: { at: number; v: unknown } | null = null;
