@@ -8,7 +8,7 @@ video length). Keep every claim to what is built (see docs/contest/storyboard.md
 - **Project:** qodebase
 - **Live:** https://qodebase.app
 - **Code:** https://github.com/eyalev/qodebase (Apache-2.0)
-- **Video:** [final: link], 5-7 min
+- **Video:** [final: link], 7:35
 - **Demo project:** https://qodebase.app/p/eyal/corner-cafe (Agents at work)
 
 ## Project vision
@@ -127,7 +127,7 @@ as such) work on a small café website, with real git commits on their own Artif
 Their changes go through the real merge queue: shared-file collisions are replayed on the
 latest code, one change fails a test and is sent back, fixed and lands, two conflicting
 edits are redone by a scripted lead, and one change is stacked on another. A run takes
-about 4 minutes. If one is already running you watch it; limits: 10 runs a day, 3 per
+about 4 minutes. If one is already running you watch it; limits: 40 runs a day, 3 per
 visitor; when none can start, the page replays the last run. Tap any agent, change or file
 to see why; underlined words open a one-line explanation. `?mock=1` plays sample data.
 
