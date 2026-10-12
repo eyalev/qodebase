@@ -9,7 +9,8 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const clock = (s) => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60), h = Math.floor(m / 60); return h ? `${h}:${String(m % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` : `${m}:${String(s % 60).padStart(2, '0')}`; };
   const mins = (s) => (s < 90 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
-  const span = (r, f) => (f(r[0]) === f(r[1]) ? f(r[0]) : `${f(r[0])} to ${f(r[1])}`);
+  // '5 to 12 min', '50 s to 3 min', '$0.68 to $0.92'
+  const span = (r, f) => { const a = f(r[0]), b = f(r[1]); if (a === b) return a; const u = / (s|min)$/.exec(a); return u && b.endsWith(u[0]) ? `${a.slice(0, -u[0].length)} to ${b}` : `${a} to ${b}`; };
   const usd = (x) => (x < 10 ? `$${x.toFixed(2)}` : `$${Math.round(x)}`);
   const pct = (x, max) => `${Math.max(0, Math.min(100, (x / max) * 100)).toFixed(1)}%`;
   function bar(value, lo, hi, cls) {
@@ -25,7 +26,7 @@
       : el > hi ? 'Taking longer than expected' : el >= lo ? 'Within the expected range' : 'On track';
     const late = el > hi;
     const cost = done ? p.actualUsd : p.spentUsd;
-    const costRow = Array.isArray(est.apiUsd) ? `<div class="eb-row"><span class="eb-k">${done ? 'Cost' : 'Cost so far'}</span><b>${cost == null ? 'not known yet' : usd(cost)}</b><span class="eb-x">expected ${span(est.apiUsd, usd)}</span></div>
+    const costRow = Array.isArray(est.apiUsd) ? `<div class="eb-row"><span class="eb-k">${done ? 'Cost' : 'Cost so far'}</span>${cost == null ? '<span class="eb-k">not known yet</span>' : `<b>${usd(cost)}</b>`}<span class="eb-x">expected ${span(est.apiUsd, usd)}</span></div>
       ${cost == null ? '' : bar(cost, est.apiUsd[0], est.apiUsd[1], cost > est.apiUsd[1] ? 'eb-late' : '')}` : '';
     return `<section class="estbar${late ? ' eb-over' : ''}" aria-label="Estimated and actual time and cost">
       <div class="eb-row"><span class="eb-k">${done ? 'Took' : 'Elapsed'}</span><b${done ? '' : ` data-eb-since="${est.startedAt}"`}>${clock(el)}</b><span class="eb-x">expected ${span(est.wallS, mins)}</span></div>
@@ -48,4 +49,15 @@
 .estbar .eb-late .eb-fill{background:var(--busy)}
 .estbar .eb-state{margin:0;font-size:14px}.estbar.eb-over .eb-state{color:var(--busy);font-weight:600}
 .estbar .eb-src{margin:0;font-size:12px;color:var(--dim)}`;
+  // Pages rendered on the server (the Changes tab, re-fetched while it polls) leave <div data-estbar='{"e":…,"p":…}'>;
+  // this fills each one, again after every refresh, and ticks the clocks.
+  if (window.__qbEstBarAuto) return; window.__qbEstBarAuto = 1;
+  function mount() {
+    const els = document.querySelectorAll('[data-estbar]:not([data-eb-done])');
+    if (!els.length) return;
+    if (!document.getElementById('estbar-css')) { const st = document.createElement('style'); st.id = 'estbar-css'; st.textContent = window.QB_ESTBAR_CSS; document.head.appendChild(st); }
+    els.forEach((el) => { try { const d = JSON.parse(el.dataset.estbar); el.innerHTML = window.qbEstBar(d.e, d.p); } catch (e) { console.log(JSON.stringify({ module: 'estbar', event: 'mount_failed', error: String(e) })); } el.dataset.ebDone = '1'; });
+  }
+  const start = () => { mount(); new MutationObserver(mount).observe(document.body, { childList: true, subtree: true }); setInterval(window.qbEstBarTick, 1000); };
+  if (document.body) start(); else addEventListener('DOMContentLoaded', start);
 })();

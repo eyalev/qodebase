@@ -119,6 +119,9 @@ export function liveChanges(c: Ctx) {
   const q = info.lastRequest;
   if (q && !isMerge(q.text) && !groups.some((g) => g.text === q.text) && (q.state !== 'sent' || plan.line || Date.now() - q.at < 15 * 60_000)) groups.push({ text: q.text, at: q.at, changes: [] });
   const accent = accentOf([...open].sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state)));
+  // Estimated vs elapsed (qb6 stores the estimate shown at Build; /lab/est-bar.js draws it and ticks the clock).
+  const est = (info as { estimate?: { startedAt?: number } }).estimate;
+  const estBar = est?.startedAt ? `<div class="estmount" data-estbar="${esc(JSON.stringify({ e: est, p: (info as { progress?: unknown }).progress || null }))}"></div><script src="/lab/est-bar.js" defer></script>` : '';
   const out = groups.map((g, i) => {
     const you = !g.text ? '' : fromIssues(g.text)
       ? `<div class="you sys"><b>Cloudflare Issues reported an error</b>${esc(g.text.replace(/^Production error from Cloudflare Issues:\s*/, '').slice(0, 220))}</div>`
@@ -132,7 +135,7 @@ export function liveChanges(c: Ctx) {
   // A copy you just made: say it is yours and what to do with it.
   const fresh = info.forkedFrom && !info.agents.length && !q;
   const empty = !out.join('').trim() ? fresh ? `<div class="hello"><b>This is your copy.</b><p>Forked from <a href="/p/${esc(info.forkedFrom!.replace('.', '/'))}">${esc(info.forkedFrom!.replace('.', ' / '))}</a>. Say what to change below, in plain words: qodebase splits it into tasks, an agent does each one, and a reviewer checks it before you merge. The original is not touched.</p></div>` : `<div class="hello"><b>Nothing in progress.</b><p>Ask for a change in plain words. qodebase splits it into tasks, an agent does each one on its own fork, and a reviewer checks it before you merge.</p></div>` : '';
-  return `<template id="needs" data-n="${needsOf(open).length}"></template>${merged}${empty}${out.join('')}${legend(open.length)}`;
+  return `<template id="needs" data-n="${needsOf(open).length}"></template>${estBar}${merged}${empty}${out.join('')}${legend(open.length)}`;
 }
 
 /** App: the running app, with a picker for Live or any change you can try. */
