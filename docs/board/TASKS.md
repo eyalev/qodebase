@@ -72,3 +72,9 @@ Bun migration simulation (Eyal, 2026-10-12 ~19:50 UTC: go): coordination of Bun'
 - [ ] BUN3 optional real-git replay of the winning setup on a VM (qb5, after L2)
 - [ ] BUN4 write-up: a /how card + README/submission lines (manager, qb8)
 Where it runs: a small trial at nice 19 on the laptop for a time estimate; the full sweep on the laptop after qb9's W8 ends (~23:00 UTC) if it's < 1 h, else on a VM (L2's VMs free up first; the project's 32-vCPU cap is full now).
+
+GitHub-shaped, agent-first (Eyal, 2026-10-12: "yes, build items 2-5" of docs/contest/github-parity.md), target live Oct 13 18:00 UTC:
+- [ ] G2 History: each landed commit opens its change record (intent, review, tests, how it landed), one-line 'why' under each commit (qb7 UI, qb6 data)
+- [ ] G3 file view: 'Changed by N changes, M collisions' -> that file's changes by intent (blame by intent) (qb3)
+- [ ] G4 Asks per project: router requests + board tasks with state, agent, duplicates/aliases (the agent-age issues list) (qb3 UI, qb6 endpoint)
+- [ ] G5 'Ask for changes' on a change record: the owner's own note sends the change back to its agent (extends the fix verb) (qb6 server, qb7 UI)
