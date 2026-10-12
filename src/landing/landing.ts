@@ -28,7 +28,7 @@ import { buildTimeline, type Timeline } from './timeline';
 import { makeBoardEvent, boardView, boardText, taskIds, knownTaskIds, claimHolders, pickNext, type TwinCandidate, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
-  | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap';
+  | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap' | 'sent-back';
 export type Ev = { t: number; what: What; detail?: string };
 export type ChangeState = 'working' | 'pushed' | 'reviewing' | 'queued' | 'testing' | 'landed' | 'bounced' | 'replaying' | 'with-lead';
 export type Landing_ = { how: 'merged' | 'replayed-handler' | 'replayed-llm' | 'lead' | null; conflicts: string[]; diff: { path: string; lines: string[] }[]; commit: string | null; mainCommit: string | null;
@@ -113,8 +113,13 @@ type Meta = {
   tasksDone?: string[];
   /** The estimate shown at Build (estimate vs elapsed bar) and, once the build settled, what it really took. */
   build?: BuildEstimate & { actual?: { settledAt: number; actualWallS: number; actualUsd: number | null } };                      // task ids whose claiming change landed (claims, forq next)
+  /** G2 History: each landed change by its commit on main (and the train's tip), newest 300; built once from the records. */
+  landedIdx?: Record<string, LandedEntry>;
   boardPosts?: number;                       // board: posts since the last prune   // messages to real agents, sent from the alarm        // [landedAt, ask-to-land s] of the last 2000 landings: stats outlive pruned records                  // trains in a row the merger could not run: back off
 };
+
+export { landedEntry, type LandedEntry } from './landed';
+import { landedEntry, type LandedEntry } from './landed';
 
 const TRAIN_MAX = 8;
 const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER_CHANGE = 3;
@@ -410,7 +415,12 @@ export class Landing extends DurableObject<Env> {
     const m = (await this.ctx.storage.get<Meta>('meta')) || null;
     if (!m) return { autoLand: false };
     if (!this.#meta) this.#meta = m;
-    return { autoLand: !!m.flags.autoMerge, ...(m.build ? await this.buildInfo() : {}) };
+    if (!m.landedIdx) {   // built once from the records (landings before 2026-10-12 had no index)
+      m.landedIdx = {};
+      for (const id of m.order) { const c = await this.#get(id); if (c?.state === 'landed') this.#index(m, c); }
+      await this.#saveMeta();
+    }
+    return { autoLand: !!m.flags.autoMerge, landed: m.landedIdx, ...(m.build ? await this.buildInfo() : {}) };
   }
 
   // ---- estimate vs elapsed (Build) ------------------------------------------------
@@ -448,6 +458,44 @@ export class Landing extends DurableObject<Env> {
     using fork = await this.env.ARTIFACTS.get(c.fork);
     const token = (await fork.createToken('read', 600)).plaintext;
     await this.env.MergeBox.get(this.env.MergeBox.idFromName(`${slug}--merge`)).prefetch(slug, [{ id: c.id, remote: c.remote, token, commit: c.commit! }]);
+  }
+
+  #index(m: Meta, c: Change) {
+    const idx = (m.landedIdx ||= {}), e = landedEntry(c);
+    for (const sha of [c.landing?.commit, c.landing?.mainCommit]) if (sha && !(sha in idx && sha === c.landing?.mainCommit)) idx[sha] = e;
+    const keys = Object.keys(idx);
+    if (keys.length > 300) for (const k of keys.sort((a, b) => idx[a].landedAt - idx[b].landedAt).slice(0, keys.length - 300)) delete idx[k];
+  }
+
+  /** G5: the owner sends a change back to its agent with their own note (the record shows 'sent back' + the note).
+   *  The change leaves the queue and goes back to working; the note reaches the agent through the outbox. */
+  async sendBack(id: string, note: string, by: string) {
+    const m = await this.#m();
+    const c = await this.#get(id);
+    if (!c) return { ok: false, status: 404, error: 'unknown change' };
+    if (c.kind !== 'agent') return { ok: false, status: 400, error: 'a scripted demo agent cannot take notes' };
+    if (c.state === 'landed') return { ok: false, status: 409, error: 'already landed: ask the router for a new change instead' };
+    if (c.state === 'testing') return { ok: false, status: 409, error: 'it is in a train right now: try again in a minute' };
+    const text = note.trim().slice(0, 4000);
+    if (!text) return { ok: false, status: 400, error: 'write what to change' };
+    m.waiting = m.waiting.filter((x) => x !== id);
+    c.state = 'working'; c.review = null; delete c.redo;
+    this.#ev(c, 'sent-back', text.slice(0, 300));
+    await this.#put(c);
+    this.#tell(c.id, `The project's owner (${by}) asked for changes:\n\n${text}\n\nMake them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`);
+    await this.#saveMeta(); await this.#arm(500);
+    await this.#bpost(c.id, 'changes', '', c.files, 'sent back by the owner').catch(() => {});
+    log('landing', 'sent_back', { slug: m.slug, id, by, chars: text.length });
+    return { ok: true, state: 'working' as const };
+  }
+
+  /** G4 Asks: what Landing knows (change states, board lists, claims, aliases); asks.ts builds the list. */
+  async asksData() {
+    const m = (await this.ctx.storage.get<Meta>('meta')) || null;
+    if (!m) return null;
+    if (!this.#meta) this.#meta = m;
+    const changes = (await Promise.all(m.order.map((id) => this.#get(id)))).filter(Boolean).map((c) => ({ id: c!.id, title: c!.title, state: c!.state, createdAt: c!.createdAt, agent: c!.agent }));
+    return { changes, lists: m.dedupeLists || [], done: m.tasksDone || [], claims: m.boardClaims || {}, aliases: (m.aliases || []).map((a) => ({ a: a.a, b: a.b })) };
   }
 
   /** The merge tap: approved → waits for the next train. */
@@ -753,6 +801,7 @@ export class Landing extends DurableObject<Env> {
             ...(rc.reviewedDiff ? { reviewedDiff: rc.reviewedDiff } : {}),
             ...(rc.llm ? { replay: { model: rc.llm.model, ms: rc.llm.ms, usd: rc.llm.usd, tokensIn: (rc.llm.in || 0) + (rc.llm.cacheRead || 0) + (rc.llm.cacheWrite || 0), tokensOut: rc.llm.out || 0, sameLinesAsReviewed: rc.llm.sameLines ?? null } } : {}) };
           this.#ev(c, 'landed', `${(rc.commit || '').slice(0, 7)} on main`);
+          this.#index(m, c);
           landed++;
         } else if (rc.bounced) {
           c.state = 'bounced';

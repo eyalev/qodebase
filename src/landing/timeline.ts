@@ -30,7 +30,7 @@ export type TlInput = {
 
 /** What each change event starts (null: the event only adds detail to the span it falls in). */
 const STARTS: Partial<Record<Ev['what'], TlPhase | 'end'>> = {
-  asked: 'work', working: 'work', 'changes-suggested': 'work', replaying: 'work',
+  asked: 'work', working: 'work', 'changes-suggested': 'work', replaying: 'work', 'sent-back': 'work',
   pushed: 'wait_review', reviewing: 'review', approved: 'wait_merge', queued: 'wait_queue', testing: 'train',
   'with-lead': 'wait_lead', landed: 'end', bounced: 'end',
 };
@@ -88,7 +88,7 @@ export function buildTimeline(inp: TlInput): Timeline {
       if (cur && cur.phase === p && p === 'work' && e.what === 'working') continue;   // asked -> working: same work
       close(e.t);
       const by = e.what === 'reviewing' ? /^by (\S+)/.exec(e.detail || '')?.[1] : undefined;
-      cur = { phase: p, start: e.t, ...(e.what === 'changes-suggested' ? { label: `fixing: ${c.title}` } : e.what === 'replaying' ? { label: `redo: ${c.title}` } : {}), ...(by ? { reviewer: by } : {}) };
+      cur = { phase: p, start: e.t, ...(e.what === 'changes-suggested' ? { label: `fixing: ${c.title}` } : e.what === 'sent-back' ? { label: `sent back by the owner: ${c.title}`, } : e.what === 'replaying' ? { label: `redo: ${c.title}` } : {}), ...(by ? { reviewer: by } : {}) };
     }
     if (cur) {
       const c2: { phase: TlPhase; start: number; label?: string; reviewer?: string } = cur;

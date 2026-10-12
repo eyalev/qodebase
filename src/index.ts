@@ -9,7 +9,8 @@ import { withBaseline, kstatsForward, feedback, health } from './baseline';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AGENT_RE, NAME_RE, appWorkerName, frontHosts, isUiHost, uiHosts, projectOf, slugOf, type Env } from './env';
 import { AgentBox, log, REVIEW_STEPS, type BootSpec } from './box';
-import { Project, roleOf, type ProjectInfo, type Role } from './project';
+import { buildAsks } from './landing/asks';
+import { Project, roleOf, type ProjectInfo, type Role, type RouterRequest } from './project';
 import { Registry, canSee, listFor, registry, type Entry } from './registry';
 import { BuildBox } from './build';
 import { mintRunPass, serveRun } from './run';
@@ -690,7 +691,7 @@ const app = {
         return html(buildLogPage(info, a ? `Preview of agent ${ag}` : 'Live app (main)', a ? a.preview : info.app));
       }
       // ---- design v3 (views): /p/<o>/<n>[/<view>] on the views host
-      if (views && (m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(readme|changes|app|history|more|agents|errors|about|work))?\/?$/))) {
+      if (views && (m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(readme|changes|app|history|more|agents|errors|about|work|asks))?\/?$/))) {
         const slug = slugOf(m[1], m[2]);
         const p = projectStub(env, slug);
         const info = await p.info();
@@ -790,6 +791,14 @@ const app = {
           log('cli', 'git_token', { slug, handle: me.handle, write: mine });
           return json({ ...(await p.gitToken(mine ? 'write' : 'read')), write: mine });
         }
+        // G4 Asks: every request the router got and every board task, with what became of it (src/landing/asks.ts).
+        if (verb === 'asks' && request.method === 'GET') {
+          const ld = await env.Landing.get(env.Landing.idFromName(slug)).asksData().catch(() => null);
+          const last = info.lastRequest;
+          const reqs = info.requests?.length ? info.requests : last ? [{ text: last.text, at: last.at, from: last.from }] : [];
+          return json(buildAsks({ requests: reqs.map((r) => ({ ...r, state: last && r.at === last.at ? last.state : 'sent' })),
+            changes: ld?.changes || [], lists: ld?.lists || [], done: ld?.done || [], claims: ld?.claims || {}, aliases: ld?.aliases || [] }));
+        }
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());
         // Ask Claude (the ask box, src/box.ts): owner-only, read-only, on the owner's Claude.
@@ -872,8 +881,15 @@ const app = {
           return json({ ok: true });
         }
         if (verb === 'fix' && request.method === 'POST') {
-          const b = await request.json() as { agent?: string };
+          const b = await request.json() as { agent?: string; notes?: string };
           const a = info.agents.find((x) => x.id === b.agent);
+          // G5: the owner's own note ("Ask for changes"): on a landing project through Landing (record + outbox).
+          if (a && typeof b.notes === 'string' && b.notes.trim()) {
+            if (landingOn(info)) { const r = await env.Landing.get(env.Landing.idFromName(slug)).sendBack(a.id, b.notes, me.handle || 'owner'); return json(r, r.ok ? 200 : (r as { status?: number }).status || 400); }
+            const r = await sendTo(env, a.id, `The project's owner asked for changes:\n\n${b.notes.trim().slice(0, 4000)}\n\nMake them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`, apiBase);
+            if (r.ok) await p.setState(a.id, 'working');
+            return json(r, r.ok ? 200 : 502);
+          }
           if (!a?.review?.notes) return json({ error: 'no review notes for that agent' }, 400);
           const r = await sendTo(env, a.id, `The reviewer asked for changes:\n\n${a.review.notes}\n\nFix them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`, apiBase);
           if (r.ok) { await p.markReviewSent(a.id); await p.setState(a.id, 'working'); }

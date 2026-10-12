@@ -29,6 +29,8 @@ export type Deploy = { status: 'building' | 'live' | 'failed'; url?: string; com
 export type Review = { state: 'queued' | 'reviewing' | 'approved' | 'changes' | 'sent'; notes?: string; at: number; commit?: string };
 /** The last thing the person asked the router agent, and how far delivery got. */
 export type RouterRequest = { text: string; at: number; state: 'waking' | 'sent' | 'failed'; sentAt?: number; error?: string;
+  /** Who asked (G4 Asks): person (typed / Build), talk, issues (Cloudflare Issues), merge (forq's own merge turn). */
+  from?: 'person' | 'talk' | 'issues' | 'merge';
   /** What is actually typed to the router agent, when it differs from `text` (what the page quotes). */
   payload?: string; attempts?: number };
 /** Where an imported project came from (GitHub metadata at import time). */
@@ -48,6 +50,8 @@ export type ProjectInfo = {
   app?: Deploy & { worker: string };
   agents: Agent[];
   lastRequest?: RouterRequest;
+  /** Every request the router got, newest 60 (G4 Asks): the words shown to the person, who asked, when. */
+  requests?: { text: string; at: number; from?: RouterRequest['from'] }[];
   private?: boolean;   // owner-only everywhere (registry.ts canSee); its live app needs a signed pass (run.ts)
   landing?: boolean;   // shows 'Agents at work' as its main view (the landing system's demo, src/landing/)
   unlisted?: boolean;  // reachable by link, not listed for others (registry Entry.unlisted): lab runs
@@ -330,6 +334,11 @@ export class Project extends DurableObject<Env> {
   async setRequest(patch: Partial<RouterRequest>) {
     const info = await this.#need();
     info.lastRequest = { ...(info.lastRequest || { text: '', at: Date.now(), state: 'waking' }), ...patch } as RouterRequest;
+    // A new request (askRouter sets text + at + state 'waking'): kept in the history the Asks list reads.
+    if (patch.text !== undefined && patch.at && patch.state === 'waking') {
+      (info.requests ||= []).push({ text: patch.text.slice(0, 1000), at: patch.at, ...(patch.from ? { from: patch.from } : {}) });
+      if (info.requests.length > 60) info.requests.splice(0, info.requests.length - 60);
+    }
     await this.ctx.storage.put('info', info);
   }
 
