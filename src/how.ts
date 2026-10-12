@@ -20,7 +20,7 @@ export function howPage(selfHost = false) {
 ${demo}
 <section class="hw-sec"><h2>Land by intent</h2>
 <ul class="hw-steps">
-${step('Every agent works on its own copy', 'Agents never edit the same files at the same time, so nobody overwrites anybody.')}
+${step('Every agent works on its own copy', 'Each agent edits its own copy of the code, so nobody overwrites anybody while they work.')}
 ${step('Finished work waits in one line', 'Changes are tested together before they join the main code. Nothing lands untested.')}
 ${step('A collision is redone, not sent back', 'When two changes touch the same lines, the later one is applied again on the newest code, from what it was asked to do. The agent keeps working.')}
 ${step('Every change keeps its record', 'What it was asked to do, the diff, the review and the tests, stored with the code in git.')}
