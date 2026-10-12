@@ -729,7 +729,9 @@ ${watch}
 <form class="landask" action="/build" method="get">
 <textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button class="btn" type="submit">Build it</button>
+<p class="bsrow"><span id="bschosen" aria-live="polite"></span><button type="button" class="bsopen" id="bsopen" hidden>Adjust</button></p>
 </form>
+<div id="bsheet" class="bsheet" hidden></div>
 <nav class="doors" aria-label="More">
 ${selfHost ? '' : `<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account.</small></span></a>
 <a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>OpenClaw, Hermes, T3 Code and more.</small></span></a>`}
@@ -740,10 +742,43 @@ ${tryRow(entries)}
 <script>(function(){document.querySelectorAll('.land .browse').forEach((a)=>a.addEventListener('click',()=>a.classList.add('going')));
 addEventListener('pageshow',()=>document.querySelectorAll('.land .browse.going').forEach((a)=>a.classList.remove('going')));
 const f=document.querySelector('.landask'),t=f.querySelector('textarea');
+if(document.body.dataset.buildSettings==='1'){const s=document.createElement('script');s.src='/lab/build-sheet.js';document.head.appendChild(s);}
 t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();if(t.value.trim())f.requestSubmit();}});})();</script>`;
 }
 
 export const LAND_CSS = `
+/* Build settings (B2, behind BUILD_SETTINGS): the Adjust link and its bottom sheet. Knob buttons as on /lab. */
+.bsrow{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0;min-height:0}
+.bsrow #bschosen{flex:1;font-size:13px;color:var(--dim)}
+.bsopen{border:0;background:none;color:var(--acc);font:inherit;font-size:15px;min-height:44px;padding:0 4px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.bsheet{position:fixed;inset:0;z-index:50}
+.bs-scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .2s}
+.bs-panel{position:absolute;left:0;right:0;bottom:0;max-height:88dvh;overflow:auto;overscroll-behavior:contain;background:var(--bg);color:var(--fg);border-radius:16px 16px 0 0;box-shadow:0 0 0 1px var(--line);padding:4px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .22s ease-out}
+.bsheet.open .bs-scrim{opacity:1}.bsheet.open .bs-panel{transform:none}
+body.bs-on{overflow:hidden}
+.bs-head{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);padding:10px 0 6px}
+.bs-head h2{font-size:18px;font-weight:600;margin:0}
+.bs-x{border:0;background:none;color:var(--dim);font-size:26px;width:44px;height:44px;margin-right:-10px;cursor:pointer}
+.bs-presets{display:grid;gap:8px}
+.bs-p{display:flex;flex-direction:column;gap:2px;text-align:left;border:0;cursor:pointer;background:var(--card);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:10px 12px;min-height:44px;font:inherit}
+.bs-p b{font-weight:600;font-size:15px}.bs-p span{font-size:13px;color:var(--dim)}
+.bs-p[aria-checked="true"]{box-shadow:inset 0 0 0 2px var(--fg)}
+.bs-fine{margin:12px 0 0}.bs-fine summary{min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:15px;list-style:none}.bs-fine summary::-webkit-details-marker{display:none}
+.bs-fine summary::after{content:'';width:7px;height:7px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);transform:rotate(45deg) translateY(-2px);transition:transform .15s}.bs-fine[open] summary::after{transform:rotate(-135deg) translateY(-1px)}
+.bs-knobs{display:grid;gap:10px}.bs-k{display:grid;gap:4px}
+.bs-kl{font-size:13px;color:var(--dim);display:flex;align-items:center;gap:6px}
+.bs-g{width:22px;height:22px;border-radius:50%;border:0;background:var(--chip);color:var(--dim);font-size:12px;cursor:pointer;position:relative;padding:0}
+.bs-g::before{content:'';position:absolute;inset:-11px}
+.bs-opts{display:flex;flex-wrap:wrap;gap:6px}
+.bs-o{border:0;cursor:pointer;background:var(--chip);color:var(--fg);border-radius:10px;min-height:40px;padding:0 12px;font:inherit;font-size:14px}
+.bs-o[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.bs-gl{font-size:13px;color:var(--dim);margin:8px 0 0}
+.bs-est{margin:14px 0 0;padding:12px;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+.bs-est p{margin:0}.bs-e1{font-size:15px}.bs-q{font-size:14px;margin-top:6px!important}.bs-src{font-size:13px;color:var(--dim);margin-top:6px!important}
+.bs-foot{display:flex;flex-direction:column;gap:8px;margin-top:14px}.bs-foot .btn{min-height:48px;font-size:16px}
+.bs-foot .chipbtn{min-height:44px;border:0;background:none;color:var(--dim);font:inherit;font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+@media (min-width:700px){.bs-panel{left:50%;right:auto;width:560px;bottom:auto;top:50%;transform:translate(-50%,-46%);opacity:0;border-radius:16px;transition:transform .2s,opacity .2s}.bsheet.open .bs-panel{transform:translate(-50%,-50%);opacity:1}.bs-knobs{grid-template-columns:1fr 1fr;gap:12px 20px}}
+@media (prefers-reduced-motion:reduce){.bs-panel,.bs-scrim{transition:none}}
 .watchtop{display:grid;gap:4px;margin:0 0 10px;padding:14px 16px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;transition:background-color .12s}
 .watchtop b{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--acc)}
 .watchtop .wt1{font-size:13px;color:var(--dim)}
