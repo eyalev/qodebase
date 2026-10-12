@@ -135,6 +135,76 @@ escalating those costs a round trip each; replaying the intent costs nothing, so
 queue keeps moving. The train tests are what make replay safe (10 replays/merges were
 caught breaking the build and bounced).
 
+## Lanes: many landing doors on real code (`sim/real/`, L2, 2026-10-12)
+
+The question (docs/board/TASKS.md "Lanes"): with hundreds or thousands of agents, is the limit one landing door,
+and do many doors (a queue per area of the code) fix it? Same real-code run as above (real git, real tests,
+scripted agents, land by intent, no file claims), with qb4's L1 rules ported (docs/board/sim.md (i)):
+
+- **Lanes.** The code is cut into areas (folders `m % lanes`, plus the root files as one more area). Each area has
+  its own merge queue, and its train tests only that area.
+- **Coordinated lane.** A change whose files span areas goes here: trains of 4 over at most 8 areas. It waits until
+  those lanes are idle, holds them, and tests the whole repo (1.5x slower).
+- **One door onto main.** A git merge plus ref update, 0.5 s per train, one at a time. After every landing, main's
+  full tests run. A break found there reverts the train and stops every lane until it is fixed.
+- **Controller (optional).** W8's probe per lane: an agent cap that grows while the lane's landings rise. Agents
+  whose lane is full wait with their task and cost nothing.
+- **Hot files split (optional).** Each folder gets its own `routes.ts` / `fields.ts`; `package.json` stays shared.
+- **Dependency-aware lanes (optional).** `--reads`: a call into another area counts that area, so the change goes
+  through the coordinated lane. `--rdeps`: a lane's tests also cover what imports from its area.
+
+The project grows with the crowd: agents / 10 folders x 8 files (400 files at 500 agents, 1,600 at 2,000, 8,000
+at 10,000). Seed 1, one run per cell, 2 simulated hours unless marked 6 h. "Last hour" is landings in the final
+hour, because cross-heavy cells are still filling their coordinated queue at 2 h (qb4's warning). Runs used two
+spot VMs (GCP, scripted agents, no model calls). Data: `sim/real/out/lanes.jsonl` (62 cells). Rerun one cell:
+`node sim/real/run.mjs --policy intents --agents 2000 --hours 2 --lanes 32 --modules 200 --claims off --split-hot
+--reads --rdeps --controller --no-bundle --name x --out x.jsonl`; the grid: `node sim/real/lanes.mjs`.
+
+**2,000 agents, hot files split per folder:**
+
+| setup | landed/h (2 h) | last hour | main red | median ask→land | $ per change | agents working |
+|---|---|---|---|---|---|---|
+| one queue | 857 | 896 | 0% | 61 min | 4.11 | 1,982 |
+| 8 lanes, each tests its own area | 1,407 | 1,004 | 43% | 38 min | 3.23 | 1,982 |
+| 32 lanes, each tests its own area | 1,305 | 408 | 88% | 23 min | 3.47 | 1,982 |
+| 32 lanes, dependency-aware | 2,547 | 1,390 | 0% | 11 min | 2.68 | 1,983 |
+| 32 lanes, dependency-aware + controller | 1,900 | 1,983 | 0% | 9 min | 2.04 | 372 |
+| **6 h:** one queue | 874 | 896 | 0% | 130 min | 2.66 | 1,994 |
+| **6 h:** 32 lanes, dependency-aware + controller | 1,427 | **1,271** | 0% | 10 min | 2.02 | 378 |
+| **6 h:** the same, coordinated trains of 16 over every lane | 1,355 | 1,133 | 0% | 12 min | 2.40 | 1,110 |
+| **6 h:** 8 lanes, dependency-aware + controller | 729 | 540 | 0% | 12 min | 2.32 | 319 |
+
+**What it shows:**
+
+1. **One door is a hard ceiling.** One queue lands ~850-900 changes an hour at 500, 2,000 and 10,000 agents alike
+   (trains of 16 behind a 60 s test). More agents only lengthen the wait (median 32 min at 500, 61 at 2,000, 130
+   after 6 h) and the work stuck in front of the door: at 10,000 agents each landed change cost $13.25 in agent
+   time, against $2.42 at 500.
+2. **Lanes that test only their own area break main.** Every break was the same kind: a call into another area
+   landed while a rename there landed in another lane ("X is not exported by F"). Neither lane's tests could see
+   it. Main was red 20-88% of the time, and every break stopped every lane.
+3. **Dependency-aware lanes fix that completely.** Counting calls into other areas, and testing what imports from
+   the area, gave 0 breaks in all 26 such cells.
+4. **The coordinated lane is the next door.** Without a controller its queue grows by hundreds an hour (1,186
+   waiting after 2 h at 32 lanes), so the 2 h average overstates. In the last hour 32 dependency-aware lanes land
+   1,390, not 2,547.
+5. **With a controller per lane, 32 lanes hold about 1.4x one queue in steady state.** After 6 h they land 1,271 an
+   hour against 896, at a median of 10 min instead of 130 and $2.02 per change instead of $2.66, with only ~380 of
+   the 2,000 agents working. The 2 h figure (1,983) was still the warm-up. qb4 predicted 1,379 steady for this
+   cell (sim.md (i)); this is within 8%.
+6. **Fewer, bigger lanes are worse.** With 8 lanes the coordinated lane is overloaded and falls to 540 an hour by
+   6 h, below one queue. Bigger coordinated trains (16 over every lane, qb4's main design) did not help either:
+   1,133.
+7. **Shared hot files cancel the gain.** With one shared `routes.ts` / `schema.ts` / `package.json`, 34% of changes
+   are cross-area. 32 dependency-aware lanes then land 652 in the last hour at 2,000 agents, with 1,413 waiting
+   in the coordinated queue. Splitting hot files per folder is a precondition, not an extra.
+8. **At 10,000 agents**, 8 dependency-aware lanes with a controller landed 2,124 in the last hour of 2 h, at $2.26
+   per change with ~340 agents working (one queue: 896, $13.25). This has no 6 h run, so read it as an upper bound.
+
+**Not covered:** one seed per cell, so differences under ~10% are noise. The project is synthetic (a small
+TypeScript tree with real git and real tests). The door's 0.5 s is an assumption. The controller is W8's probe as
+it is, not tuned for lanes.
+
 ## Calibration from a real agent swarm (`sim/bun/`)
 
 Bun's Zig→Rust port (oven-sh/bun#30412, 6,755 commits by ~64 Claude agents in 11 days),
