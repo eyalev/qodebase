@@ -712,3 +712,66 @@ Cells worth running:
   - The landed curve should flatten at 16 or more lanes, while stale pushes keep rising.
   - 8 lanes should sit at lane 0's edge.
 - **One 20%-cross cell at 16 lanes:** lane X's cap shows there.
+
+## (j) BUN: re-running the coordination of Bun's Zig→Rust port at 64 / 640 / 6,400 agents (qb4, 2026-10-12, before the sweep)
+
+Bun's port (oven-sh/bun#30412, sim/bun/README.md) is the one large real multi-agent history we have: 6,479 commits
+by ~64 Claude agents. `sim/bun/swarm.mjs` replays its **structure** with the work mocked:
+- **Tasks:** one per real non-merge commit, with the real files (`sim/bun/tasks.json`, 3,056 files, from the
+  blobless clone).
+- **Phase gates:** a | b | c+d | e | tail (f, g, h and untagged). The next group opens when every task of the last
+  one has landed and a 15-minute full check has passed.
+- **Work times:** fitted so that Bun's own method at 64 agents takes the real phase times.
+
+Four methods, plus the variant the manager asked for:
+- **bun:** one shared tree. Agents own the line ranges they edit and commit straight onto the branch, with no
+  per-commit check.
+- **queue:** a fork per agent and one merge queue: trains of 16, a full `cargo check` (5 min).
+- **lanes:** a queue per crate (`src/<crate>`, a 2-minute check). Changes spanning crates go through a
+  coordinated lane that holds the lanes it touches. A controller runs per lane.
+- **split:** lanes plus the hottest 1% of files split into parts.
+- **fine:** split plus `src/runtime` cut into its modules (finer areas than crates; the manager's request).
+
+**Calibration (already run).** Line ranges of about 10 edits each and a 400 s median per commit make Bun's method
+at 64 agents take about 9 h for c+d (real d 9.7 h) and about 5.7 h for e (real 4.9 h). Phase b does **not** fit
+(sim ~5 h, real 26 h): Bun ran it as b0/b1/b2 steps, so it was not agent-bound. b's sim time is a lower bound.
+A stricter dependency model, where each edit waits for the previous edit to the same file range, was **rejected
+by the same calibration**: Bun's method at 64 agents then takes 64 h for c+d and 39 h for e. So within a phase the
+real work was mostly not ordered by file. The data cannot show dependency depth above 64 agents, so the sweep
+orders work by the gates only. That is the **best case for speed-up**; real chains can only slow the bigger crowds.
+
+**Data that decides it** (from tasks.json):
+- **One crate dominates:** `src/runtime` is in 57% of commits.
+- **Many commits span crates:** 38% overall (d 27%, e 48%); 34% if module roots and manifests are left out.
+- **Finer areas cut both ways:** splitting `src/runtime` by module drops the busiest area to 18%, but raises the
+  cross share to 57%.
+- **The merge replay gives the conflict rate:** a file changed on both sides merged cleanly 84% of the time.
+
+**Predictions** (from the calibration and about a dozen debug cells; the full sweep follows in (j) results):
+1. **Bun's method stays about the fastest, and barely gains from more agents:** about 36 h at 64 agents, about 31
+   h at 6,400. It has no check per commit, so nothing queues. More agents mostly wait on ranges other agents
+   own, then on the gates and the longest tasks.
+2. **One merge queue is slower than Bun's method at every size:** about 60–90 h. A queue with a 5-minute full
+   check lands at most about 190 changes an hour, below Bun's real peak of 214 commits an hour with 64 agents.
+   Long waits make about one conflict per task (≈1.1 collisions per landed change), so 30–35% of agent-hours are
+   rework.
+3. **Lanes by crate barely beat the queue** (about 60–70 h). `src/runtime` carries 57% of the work through one
+   lane, and 38% of changes need the coordinated lane, which holds every crate they touch.
+4. **Splitting the hottest files cuts collisions but not time.** Time is set by the queues and the coordinated
+   lane, not by conflicts.
+5. **Finer areas (runtime by module) do not rescue lanes.** The busiest lane falls from 57% to 18%, but cross-area
+   changes rise from 38% to 57%, so the coordinated lane carries more. Expect within ±10% of lanes.
+6. **The gates cap everything.** Five gated groups plus 4 × 15-minute checks set a floor even with unlimited
+   agents: each group takes at least its longest task plus its landing. Above ~640 agents more agents add only
+   idle time (idle > 95% at 6,400 in every method).
+7. **Where the methods differ is the price of speed.**
+   - **Bun's method:** no collisions or rework, because ownership prevents them. Its cost is a shared tree with
+     no check per commit: the ~1% of commits that break the build are found by the next full check, or by an
+     agent stuck in it.
+   - **Queue methods:** they check every change but pay 30–35% rework.
+
+**Falsifiers:**
+- the queue beats Bun's method at 640 agents;
+- finer areas finish more than 25% faster than lanes by crate;
+- 6,400 agents finish more than 2× faster than 640 in any method (gates-only ordering is the best case, so that
+  would mean gates are not the cap).
