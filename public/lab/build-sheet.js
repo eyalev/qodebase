@@ -15,7 +15,7 @@
   const log = (event, extra) => { try { console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'buildsheet', event, ...extra })); } catch {} };
   const mins = (s) => (s < 90 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
   const usd = (x) => (x < 10 ? `$${x.toFixed(2)}` : `$${Math.round(x)}`);
-  const range = (r, f) => (!r ? '–' : f(r[0]) === f(r[1]) ? f(r[0]) : `${f(r[0])} to ${f(r[1])}`);
+  const range = (r, f) => { if (!r) return '–'; const a = f(r[0]), b = f(r[1]); if (a === b) return a; const u = / (s|min)$/.exec(a); return u && b.endsWith(u[0]) ? `${a.slice(0, -u[0].length)} to ${b}` : `${a} to ${b}`; };
   const idea = () => (form.querySelector('textarea')?.value || '').trim();
 
   const MODELS = ['haiku', 'sonnet', 'opus'], M = { haiku: 'Haiku', sonnet: 'Sonnet', opus: 'Opus' };
@@ -71,6 +71,7 @@
       <div class="bs-bar"><span class="bs-bl">Time</span><b data-out="time"></b><div class="bs-track" data-bar="time"><i></i></div></div>
       <div class="bs-bar"><span class="bs-bl">Cost at API prices</span><b data-out="cost"></b><div class="bs-track" data-bar="cost"><i></i></div></div>
       <div class="bs-bar"><span class="bs-bl">Quality</span><b data-out="quality"></b><div class="bs-meter" data-bar="quality"><i></i><i></i><i></i><i></i></div></div>
+      <button type="submit" class="btn bs-build">Build it</button>
     </div>
     <p class="bs-src" data-out="src"></p>
     <p class="bs-foot"><button type="button" class="bs-link" data-reset hidden>Back to the default</button></p>`;
@@ -145,7 +146,7 @@
     // The settings row says the current choice in one line, and once there is text, about how long and how much.
     if (chip) { const k = which(st.v); chip.textContent = `${k === 'custom' ? 'Custom' : k === 'idea' ? 'For your idea' : PRESETS[k]?.name || 'Fastest'}: ${team(st.v)}`; }
     const ee = document.getElementById('bsest');
-    if (ee) { const e = st.est; ee.textContent = e && e !== 'error' && !empty() ? `~${mins((e.wallS[0] + e.wallS[1]) / 2)}, ~${usd((e.usd[0] + e.usd[1]) / 2)}` : ''; }
+    if (ee) { const e = st.est; ee.textContent = e && e !== 'error' && !empty() ? `${range(e.wallS, mins)}, ${range(e.usd, usd)}${e.mine ? ' for your idea' : ''}` : ''; }
     try { sessionStorage.setItem('qb.bs', JSON.stringify({ open: st.open, v: st.v })); } catch {}
     // The estimate the person saw rides along (est), so the project page can show estimated vs elapsed (qb6 stores it).
     const e = st.est;

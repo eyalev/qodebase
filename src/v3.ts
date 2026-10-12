@@ -839,9 +839,9 @@ body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 .bstoggle{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 12px;border:0;border-radius:12px;background:var(--chip);color:var(--fg);font:inherit;text-align:left;cursor:pointer}
 .bstoggle[hidden]{display:none}
 .bst-i{flex:none;width:20px;height:20px;color:var(--dim)}
-.bst-main{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px}
-#bschosen{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
-.bst-est{flex:none;font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
+.bst-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+#bschosen{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.bst-est{font-size:13px;color:var(--fg);opacity:.8;font-variant-numeric:tabular-nums}.bst-est:empty{display:none}
 .bst-c{flex:none;width:20px;height:20px;color:var(--dim);transition:transform .15s}
 .bstoggle[aria-expanded="true"] .bst-c{transform:rotate(180deg)}
 .bstoggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -878,7 +878,8 @@ body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 .bs-switch i{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
 .bs-switch{box-shadow:inset 0 0 0 1px var(--line)}.bs-switch[aria-checked="true"]{background:var(--acc);box-shadow:none}.bs-switch[aria-checked="true"] i{transform:translateX(20px)}
 .bs-switch:disabled{opacity:.4;cursor:default}
-.bs-out{display:grid;gap:8px;padding:10px 12px;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line),0 -6px 12px -6px rgba(0,0,0,.12);position:sticky;bottom:8px;z-index:2}
+.bs-out{display:grid;gap:8px;padding:10px 12px;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line),0 0 0 8px var(--bg);position:sticky;bottom:8px;z-index:2}
+.bs-build{min-height:44px;font-size:16px;margin-top:2px}
 .bs-bar{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline}
 .bs-bl{font-size:13px;color:var(--dim)}.bs-bar b{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
 .bs-track{grid-column:1/-1;position:relative;height:6px;border-radius:3px;background:var(--line)}
