@@ -229,7 +229,8 @@
           : `<b>Collision.</b> ${pair}`;
       } else { kind = 'back'; text = `<b>Sent back.</b> ${AG(c.agent)}'s change failed a test, so main stayed healthy.${c.state === 'landed' ? ' It was fixed and landed.' : ` ${AG(c.agent)} is fixing it.`}`; }
       const tags = kind === 'collision' ? [['x', 'collided'], ev.has('replaying') || ev.has('replayed') ? ['', ev.has('replayed') ? 'replayed' : 'replaying'] : null, c.state === 'with-lead' ? ['', 'with its lead'] : null, ev.has('testing') && (ev.has('replayed') || c.state === 'landed') ? ['', 'tested'] : null, c.state === 'landed' ? ['ok', 'landed'] : null].filter(Boolean) : [];
-      out.push({ t: (c.state === 'landed' && c.landedAt) || last.t, c, kind, text, tags, key: `h:${c.id}:${last.what}` });
+      const ok = kind === 'collision' && (ev.has('replayed') || c.state === 'landed') && c.state !== 'with-lead';  // a replayed collision is the success: accent edge, the 'collided' tag stays warn
+      out.push({ t: (c.state === 'landed' && c.landedAt) || last.t, c, kind, ok, text, tags, key: `h:${c.id}:${last.what}` });
     }
     for (const tr of D.queue.trains) {
       if (tr.state !== 'landed' || !tr.endedAt) continue;
@@ -265,7 +266,7 @@
     const hs = headlines().slice(0, limit), shown = new Set(hs.filter((h) => h.c).map((h) => h.c.id));
     const routine = feedItems().filter((it) => !(it.c && HEAD.has(it.e.what)) && !(it.c && it.e.what === 'landed' && shown.has(it.c.id))).length;
     const cards = hs.map((h) => { const fresh = pulse(`hf:${h.key}`);
-      return `<a class="hev${h.kind === 'train' ? '' : ' w'}${fresh ? ' new' : ''}"${fresh} href="${h.c ? `#/change/${esc(h.c.id)}` : '#/line'}"><p>${h.text}</p>${h.tags?.length ? `<span class="htags">${h.tags.map(([c, l]) => `<span class="${c}">${l}</span>`).join('')}</span>` : ''}<span class="meta"><span>${h.c ? short(h.c) : h.sub || ''}</span>${ago(h.t)}</span></a>`; }).join('');
+      return `<a class="hev${h.kind === 'train' || h.ok ? '' : ' w'}${fresh ? ' new' : ''}"${fresh} href="${h.c ? `#/change/${esc(h.c.id)}` : '#/line'}"><p>${h.text}</p>${h.tags?.length ? `<span class="htags">${h.tags.map(([c, l]) => `<span class="${c}">${l}</span>`).join('')}</span>` : ''}<span class="meta"><span>${h.c ? short(h.c) : h.sub || ''}</span>${ago(h.t)}</span></a>`; }).join('');
     return `${cards || '<p class="dim">No collisions or landings yet.</p>'}${routine ? `<a class="fold" href="#/feed"><span>${routine} routine step${routine === 1 ? '' : 's'}</span><span class="meta">reviews, joining the line</span></a>` : ''}`;
   }
   // ---- overview -------------------------------------------------------------------------------

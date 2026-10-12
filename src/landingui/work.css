@@ -274,10 +274,10 @@ body:has(.lw .watch) .gbuild{background:var(--chip);color:var(--fg)}
 .lw .hev p b{font-weight:600}
 .lw .hev .meta{display:flex;gap:12px;justify-content:space-between;margin-top:6px;font-size:13px;color:var(--dim)}
 .lw .hev .meta>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lw .htags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
-.lw .htags span{font-size:12px;padding:2px 6px;border-radius:4px;background:var(--chip)}
-.lw .htags .x{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
-.lw .htags .ok{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+.lw .htags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;align-items:flex-start}
+.lw .hev .htags span{display:inline-block;flex:none;height:auto;min-height:0;line-height:1.4;font-size:12px;padding:2px 6px;border-radius:4px;background:var(--chip)}
+.lw .hev .htags .x{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
+.lw .hev .htags .ok{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
 .lw .fold{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0 12px;border-radius:10px;background:var(--chip);color:var(--fg);text-decoration:none;font-size:15px}
 .lw .fold .meta{font-size:13px;color:var(--dim)}
 @media (hover:hover){.lw .hev:hover,.lw .now a:hover{background:color-mix(in srgb,var(--chip) 60%,transparent)}}
