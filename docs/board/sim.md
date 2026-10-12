@@ -877,3 +877,35 @@ Candidates, not yet isolated:
 
 The 32-lane design that L2 recommends (dependency-aware, controller) matched within 8%. The 8-lane cells need 3+
 seeds before the miss is read as structural.
+
+### (j) addendum: what BUN3 (qb5, b89a003, real patches on real content) overturns
+
+BUN3 replayed Bun's real patches and rebuilt the history exactly (c+d+e: 1,221 of 1,221 files; tail: 2,168 of
+2,171). It found that **Bun's commits are chains**:
+- 89% of c+d+e commits edit lines an earlier commit wrote; the longest chain is 322 commits;
+- 82% would not apply in random parallel order;
+- so 640 agents finish no sooner than 64 (26.3 vs 26.2 h; calibrated, real c+d+e 25.3 h).
+
+That changes four things in (j):
+- **"Bun's method scales from 36 to 31 h" is an artifact of ordering by gates only.** With the real chains, adding
+  agents above 64 buys nothing.
+- **"Ownership granularity is the main cap" is wrong.** The cap is the content chain, so finer ranges cannot help.
+- **My rejection of the chain model was right about my model but wrong about Bun.** My chains (per file range, at
+  ~400 s per task) were 6.6× too slow. BUN3's chains run on content with ~65 s per commit (Bun's mainline commits
+  were 9 s apart at the median) and fit within 4%. Short tasks hid the chains from my fit: a gates-only model can
+  match the 64-agent times while getting the structure wrong. **Lesson:** calibrating total time at one crowd size
+  does not identify the dependency structure; it needs content (BUN3) or a second crowd size.
+- **The method ranking needs re-reading.**
+  - With chains, every blocking check sits on the critical path. qb5 measured +23% (30 s check) to +92% (120 s)
+    time for a blocking per-crate check.
+  - So a merge queue with a 5-minute full check would be far slower than (j)'s 73–89 h. (j)'s ranking (Bun's
+    method fastest, one queue slowest) stands, and the gap widens.
+  - The design BUN3 points to is **land at once, check behind the commit, fix forward**. It kept Bun's 26.2 h and
+    cut red crate-minutes by 59–73%.
+  - Real tail regressions were mostly runtime or test failures (a compile check catches 1 of 4).
+
+What still stands from (j):
+- the data facts (src/runtime 57%, 38% cross-crate);
+- lanes by crate do not fit Bun's port, and finer areas do not rescue them;
+- phase b is not agent-bound;
+- above ~640 agents nothing improves (BUN3: already above 64).
