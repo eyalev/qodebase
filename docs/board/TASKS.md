@@ -39,7 +39,7 @@ Contest fixes from the judge-style review (2026-10-12; findings outside the repo
 
 Build settings + estimate (Eyal, 2026-10-12 ~14:00 UTC: "Yes"). Default "Build it" unchanged; "Adjust" opens presets + knobs with a live estimate; optional assistant suggests settings from the prompt. Behind a flag; on for everyone only if it passes 390/1440 checks by Oct 14 12:00 UTC.
 - [x] B1 predictor for builds: predict.js takes (task count, overlap, difficulty) + variant -> time/cost ranges, "based on N runs"; quality only as a direction (qb4): predictBuild/BUILD_PRESETS/suggestBuild in public/lab/predict.js, docs/board/build-estimate.md
-- [ ] B2 UI: "Adjust" sheet under Build it: 3 presets (Fastest / Balanced / Cheapest) + agents, agent model, reviewers, board; live estimate; phone first (qb7)
+- [x] B2 UI: "Adjust" sheet under Build it: 3 presets (Fastest / Balanced / Cheapest) + agents, agent model, reviewers, board; live estimate; phone first (qb7) — done 7148956 + ac80c90 (critique fixed); waits for B3 + the flag
 - [ ] B3 wiring: Build applies the chosen variant (landing on, flags like the lab runner), behind flag buildSettings (qb6)
 - [ ] B4 assistant: "Suggest settings for my prompt": one Haiku call -> task estimate + preset + one-line why (qb4 + qb6), v1.5
 - [ ] B5 manager live check, then flag on (or stays off)
