@@ -98,6 +98,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
         ...(typeof body.board === 'boolean' ? { board: body.board } : {}),
         ...(typeof body.crossDedupe === 'boolean' ? { crossDedupe: body.crossDedupe } : {}),
         ...(typeof body.claimNext === 'boolean' ? { claimNext: body.claimNext } : {}),
+        ...(typeof body.keep === 'boolean' ? { keep: body.keep } : {}),
         ...(typeof body.nextTask === 'string' ? { nextTask: body.nextTask.slice(0, 1000) || undefined } : body.nextTask === null ? { nextTask: undefined } : {}),
         // agentModel: the model this project's agent boxes run on the owner's subscription (a cheap test);
         // replayModel: the model tier-2 replays use (default Haiku 5.5).
@@ -113,6 +114,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
     }
     if (verb === 'demo' && request.method === 'POST') {
       const action = String(body.action || '');
+      if (action !== 'stop' && (await L.flags()).keep) return json({ error: "this project's records are kept as published evidence (flag keep): no demo here" }, 409);
       if (action === 'start') return json(await L.demoStart(info.slug, Number(body.agents) || 4, Number(body.speed) || 1, body.mode === 'busy' ? 'busy' : 'story', { force: body.force === true }));
       if (action === 'stop') return json(await L.demoStop());
       if (action === 'seed') {

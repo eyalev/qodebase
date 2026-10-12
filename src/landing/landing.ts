@@ -79,6 +79,9 @@ type Meta = {
     crossDedupe?: boolean;
     /** Atomic claims: \`forq next\` hands each agent the next free task of the registered lists (pickNext). */
     claimNext?: boolean;
+    /** Records kept as published evidence (eyal/cafe-team, linked from the README): no demo reset, seed or Watch,
+     *  never pruned. Only an explicit keep:false lifts it. */
+    keep?: boolean;
     /** Self-picked backlogs: after its change lands, the agent is told to sync and take its next task (this text). */
     nextTask?: string };
   demo: Demo | null;
@@ -816,6 +819,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
 
   async #prune() {
     const m = await this.#m();
+    if (m.flags.keep) return;   // published evidence: every record stays
     while (m.order.length > KEEP_CHANGES) {
       const id = m.order[0];
       const c = await this.#get(id);
@@ -935,7 +939,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
   /** Watch a run: may this visitor start one now? Records the start atomically (one DO). */
   async watchClaim(ip: string): Promise<{ state: 'running'; startedAt: number; endsAt: number; startedNow: false } | { state: 'limit'; reason: 'daily' | 'ip' | 'cooldown' | 'off'; retryAfterS: number } | { state: 'go' }> {
     const m = await this.#m();
-    if (!m.flags.publicWatch) return { state: 'limit', reason: 'off', retryAfterS: 3600 };
+    if (!m.flags.publicWatch || m.flags.keep) return { state: 'limit', reason: 'off', retryAfterS: 3600 };
     if (m.demo && this.#active(m)) return { state: 'running', startedAt: m.demo.startedAt, endsAt: m.demo.endsAt, startedNow: false };
     const now = Date.now();
     if (m.watchStarting && now - m.watchStarting < 60_000) return { state: 'running', startedAt: m.watchStarting, endsAt: m.watchStarting + WATCH.maxMs, startedNow: false };
@@ -1009,6 +1013,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
   /** Forget every record (demo reset). Main is reset separately by the demo. */
   async clear() {
     const m = await this.#m();
+    if (m.flags.keep) throw new Error("this project's records are kept as published evidence (flag keep)");
     if (m.running) throw new Error('a train is running');
     for (const id of m.order) await this.ctx.storage.delete(`c:${id}`);
     for (const id of m.trains) await this.ctx.storage.delete(`t:${id}`);
