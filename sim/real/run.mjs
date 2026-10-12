@@ -63,7 +63,7 @@ export function runReal(opts) {
   // draws up to pickFree others first (ctlPick true). Parked agents cost nothing.
   // `claims` false: no file claims (qodebase's Landing has none; L1's default).
   const cfg = { ...DEFAULTS, modules: 50, filesPerModule: 8, agents: 50, hours: 1, seed: 1,
-    lanes: 1, reads: false, controller: false, ctlPick: false, splitHot: false, claims: null, doorS: 0.5, doorPerChangeS: 0.05,
+    lanes: 1, reads: false, rdeps: false, controller: false, ctlPick: false, splitHot: false, claims: null, doorS: 0.5, doorPerChangeS: 0.05,
     coordBatch: 4, coordMaxLanes: 8, coordTestFactor: 1.5, bundle: true, ...opts };
   const C = { ...DEFAULTS.ctl, start: 8, step: 2, grow: 0.5, min: 1, tickS: 30, evalS: 900, windowS: 900, eff: 0.1, holdS: 900, fall: 0.25, drop: 1, ...(opts.ctl || {}) };
   const pol = REAL_POLICIES[cfg.policy] && { ...REAL_POLICIES[cfg.policy], ...(cfg.claims === false ? { claims: false, pickFree: 0 } : {}) };
@@ -121,7 +121,10 @@ export function runReal(opts) {
   const areaOf = (p) => { if (N === 1) return 0; const mm = /^src\/m(\d+)\//.exec(p); return mm ? Number(mm[1]) % N : R; };
   const areasOf = (files) => [...new Set(files.map(areaOf))];
   const laneOfFiles = (files) => { if (N === 1) return 0; const s = areasOf(files); return s.length === 1 ? s[0] : s.length ? X : R; };
-  const inScope = (l) => (f) => N === 1 || l === X || areaOf(f.split(':')[0]) === l;
+  // rdeps: a lane's tests also cover what imports from its area (the failure names a target there),
+  // like a build tool testing the reverse dependencies of what changed.
+  const inScope = (l) => (f) => N === 1 || l === X || areaOf(f.split(':')[0]) === l
+    || (cfg.rdeps && [...f.matchAll(/(?:by|from missing) (src\/\S+)/g)].some((mm) => areaOf(mm[1]) === l));
   const doorQ = []; let doorBusy = false, doorBusyS = 0;
   let coordBusy = false, coordWants = new Set();
   const idle = []; // ctlPick: agents waiting for room in any lane
@@ -516,7 +519,7 @@ export function runReal(opts) {
     disputes: m.disputes, gitMerges: m.gitMerges, reworkShare: thinking ? +(m.reworkS / thinking).toFixed(3) : 0,
     redShare: +(redS / end).toFixed(3), commits: history.length,
     cost: +((m.workS + m.reworkS + m.reviewS + m.leadS) * cfg.llmPerS).toFixed(2),
-    lanes: N, reads: !!cfg.reads, controller: !!cfg.controller, splitHot: !!cfg.splitHot, modules: cfg.modules,
+    lanes: N, reads: !!cfg.reads, rdeps: !!cfg.rdeps, controller: !!cfg.controller, splitHot: !!cfg.splitHot, modules: cfg.modules,
     laneLanded: lanes.map((l) => l.landed), coordLanded: N > 1 ? lanes[X].landed : 0,
     doorBusy: +(doorBusyS / end).toFixed(3), mainChecksFailed: m.mainChecksFailed, idled: m.idled,
     avgWorking: workingN ? Math.round(workingSum / workingN) : 0,
@@ -565,7 +568,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   for (const policy of policies) {
     const lanesOpt = args.lanes ? { lanes: Number(args.lanes), controller: !!args.controller, ctlPick: !!args['ctl-pick'], splitHot: !!args['split-hot'],
       ...(args.claims === 'off' ? { claims: false } : {}),
-      ...(args.reads ? { reads: true } : {}),
+      ...(args.reads ? { reads: true } : {}), ...(args.rdeps ? { rdeps: true } : {}),
       ...(args['coord-batch'] ? { coordBatch: Number(args['coord-batch']) } : {}),
       ...(args['coord-max-lanes'] ? { coordMaxLanes: args['coord-max-lanes'] === 'all' ? Infinity : Number(args['coord-max-lanes']) } : {}),
       ...(args.modules ? { modules: Number(args.modules) } : {}), bundle: !args['no-bundle'], ...(args.name ? { name: args.name } : {}) } : {};
