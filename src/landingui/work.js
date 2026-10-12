@@ -602,7 +602,7 @@
   // the latest key event, and Agents | Line | Events tabs whose panel scrolls inside its own box. fitSize() sizes
   // the block to the visible part of .view after every rebuild. Refs (design-log forq-20261012-3): Swiggy/Waymo/Fitbit
   // (one status, one bar, one sentence), Perplexity (one row per running step).
-  let fitTab = null;
+  let fitTab = null; // the person's choice; null = the default for the state (critique: no blank panel)
   // The run's clock as m:ss (its own attribute: other tickers rewrite [data-since]).
   const elTxt = (t) => { const s = Math.max(0, Math.floor((now() - t) / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   const COLS = [['work', 'Working', (c) => c.state === 'working' || c.state === 'bounced'], ['rev', 'Review', (c) => ['pushed', 'reviewing'].includes(c.state) || ready(c)],
@@ -612,7 +612,7 @@
     const landed = countIf(D.changes, (c) => c.state === 'landed');
     const total = Math.max(dm.tasks || 0, D.changes.length), idle = !live && !replay && !isStarting;
     const kick = MOCK ? 'Sample data, played in a loop' : replay ? `Replay of a run from ${hhmm(P.realStart)}, ${P.speed}× speed` : D.mode === 'demo' ? 'Scripted demo: real git, real tests, no AI' : 'Real AI agents';
-    const tm = replay ? '' : live && dm.startedAt ? `<span data-el="${dm.startedAt}">${elTxt(dm.startedAt)}</span>` : '';
+    const tm = replay ? '' : live && dm.startedAt ? `running <span data-el="${dm.startedAt}">${elTxt(dm.startedAt)}</span>` : '';
     const head = isStarting ? 'Starting the run' : idle ? (landed ? `${n0(landed)} of ${n0(total)} landed in the last run` : 'Nothing has run yet') : `${n0(landed)} of ${n0(total || landed)} landed`;
     const speedChips = (on) => [1, 2, 4].map((x) => `<button class="chipb sp" type="button" data-speed="${x}" aria-pressed="${on === x}">${x}×</button>`).join('');
     const left = W.maxPerDay ? Math.max(0, W.maxPerDay - (W.runsToday || 0)) : null;
@@ -626,7 +626,7 @@
     const rp = (c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying');
     const cols = COLS.map(([k, label, f]) => {
       const cs = D.changes.filter(f).sort((a, b) => agentNum(a.agent) - agentNum(b.agent));
-      const chips = cs.map((c) => `<a class="pc${rp(c) ? ' rp' : ''}${c.state === 'with-lead' || c.state === 'bounced' ? ' bad' : ''}${c.state === 'testing' ? ' test' : ''}" href="#/change/${esc(c.id)}" title="${AG(c.agent)}: ${short(c)}" aria-label="${AG(c.agent)}: ${short(c)}, ${WORD[skey(c)]}">${agentNum(c.agent)}</a>`).join('');
+      const chips = cs.map((c) => `<span class="pc${rp(c) ? ' rp' : ''}${c.state === 'with-lead' || c.state === 'bounced' ? ' bad' : ''}${c.state === 'testing' ? ' test' : ''}" title="${AG(c.agent)}: ${short(c)}">${agentNum(c.agent)}</span>`).join('');
       return `<div class="pcol ${k}"><p class="ph"><span>${label}</span><b>${cs.length}</b></p><div class="pchips${cs.length > 6 ? ' many' : ''}">${chips}</div></div>`;
     }).join('');
     const anyRp = D.changes.some(rp), anyBad = D.changes.some((c) => c.state === 'with-lead' || c.state === 'bounced');
@@ -641,10 +641,10 @@
     const f = feedItems()[0];
     return f ? `<p class="slast2">${esc(f.s[0])} <span class="meta">${ago(f.t)}</span></p>` : '';
   }
-  function fitPanel() {
-    if (fitTab === 'agents') { const r = rightNow(true); return r || `<p class="dim">No agent is working right now.${D.changes.length ? ' <a href="#/changes">All changes</a>' : ''}</p>`; }
-    if (fitTab === 'line') return theLine(false);
-    if (fitTab === 'events') return `${headFeed(8, true)}<p class="fmore"><a href="#/feed">Every step</a></p>`;
+  function fitPanel(tab) {
+    if (tab === 'agents') { const r = rightNow(true); return r || (D.changes.length ? `<ul class="now">${sortC(D.changes).map((c) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${skey(c)}"></i><b>${AG(c.agent)}</b><span class="t">${short(c)}</span><span class="w">${WORD[skey(c)]}</span></a></li>`).join('')}</ul>` : '<p class="dim">No agent has worked here yet.</p>'); }
+    if (tab === 'line') return theLine(false);
+    if (tab === 'events') return `${headFeed(8, true)}<p class="fmore"><a href="#/feed">Every step</a></p>`;
     return '';
   }
   function overview() {
@@ -653,12 +653,13 @@
     const agents = idleDemo ? 0 : new Set(act.map((c) => c.agent)).size;
     const isStarting = !(P && P.replay) && ((starting && Date.now() - starting < 60e3 && !(D.demo?.running && D.changes.length)) || (D.mode === 'demo' && D.demo?.running && !agents && !D.changes.some((c) => c.state === 'landed')));
     const live = D.mode === 'demo' ? !!D.demo?.running || (MOCK && agents > 0) : agents > 0;
-    const tab = (k, l) => `<button type="button" class="ftab" data-fittab="${k}" aria-pressed="${fitTab === k}">${l}</button>`;
-    return `<div class="fit${fitTab ? ' open' : ''}">${statusStrip(live, isStarting)}
+    const cur = fitTab || (live || isStarting ? 'agents' : 'events');
+    const tab = (k, l) => `<button type="button" class="ftab" data-fittab="${k}" aria-pressed="${cur === k}">${l}</button>`;
+    return `<div class="fit open">${statusStrip(live, isStarting)}
       <div class="fpipe">${pipeline()}</div>
       ${latestLine(isStarting)}
       <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}<a class="fhow" href="/how">How it works</a></div>
-      ${fitTab ? `<div class="fpanel">${OWN ? needsYou() : ''}${fitPanel()}</div>` : ''}</div>`;
+      <div class="fpanel">${OWN ? needsYou() : ''}${fitPanel(cur)}</div></div>`;
   }
   function fitSize() {
     const f = root.querySelector('.fit'), v = root.closest('.view');
@@ -877,7 +878,7 @@
     const g = ev.target.closest('[data-gloss]');
     if (g) { ev.preventDefault(); ev.stopPropagation(); const [t, d] = GLOSS[g.dataset.gloss]; pop.innerHTML = `<button class="x" type="button" aria-label="Close" popovertarget="lw-pop" popovertargetaction="hide">×</button><b>${esc(t)}</b><p>${esc(d)}</p>`; pop.showPopover?.(); return; }
     const ft = ev.target.closest('[data-fittab]');
-    if (ft) { fitTab = fitTab === ft.dataset.fittab ? null : ft.dataset.fittab; lastKey = null; render(); return; }
+    if (ft) { fitTab = ft.dataset.fittab; lastKey = null; render(); return; }
     const go = ev.target.closest('[data-go]');
     if (go) { location.hash = go.dataset.go; return; }
     const ap = ev.target.closest('[data-approve]');
