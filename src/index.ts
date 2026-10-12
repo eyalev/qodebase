@@ -911,6 +911,15 @@ const app = {
       }
 
       // ---- admin: delete a repo (cleanup)
+      // Every Build's estimate and, once settled, what it really took (Landing meta, durable): for refitting the predictor.
+      if (path === '/api/admin/build-estimates' && me.admin) {
+        const rows = [];
+        for (const e of await registry(env).list()) {
+          const x = await env.Landing.get(env.Landing.idFromName(e.slug)).pageExtras().catch(() => null) as { estimate?: unknown; progress?: unknown } | null;
+          if (x?.estimate) rows.push({ slug: e.slug, estimate: x.estimate, progress: x.progress });
+        }
+        return json({ builds: rows });
+      }
       if (path === '/api/admin/delete' && request.method === 'POST' && me.admin) {
         const b = await request.json() as { repo?: string; box?: string; project?: string };
         if (b.box) await boxStub(env, b.box).destroy();
