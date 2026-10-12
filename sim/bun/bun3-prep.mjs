@@ -53,7 +53,7 @@ const base = tasks[0].parent, last = tasks.at(-1).sha;
 const paths = [...new Set(tasks.flatMap((t) => t.diffs.map((d) => d.path)))];
 function contents(rev) {
   const out = {};
-  const r = execFileSync('git', ['-C', REPO, 'cat-file', '--batch'], { input: paths.map((p) => `${rev}:${p}`).join('\n') + '\n', maxBuffer: 1 << 31 });
+  const r = execFileSync('git', ['-C', REPO, 'cat-file', '--batch'], { input: paths.map((p) => `${rev}:${p}`).join('\n') + '\n', maxBuffer: 2 ** 32 });
   let off = 0;
   for (const p of paths) {
     const nl = r.indexOf(10, off), head = r.subarray(off, nl).toString();
