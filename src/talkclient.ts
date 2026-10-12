@@ -182,15 +182,17 @@ function wireComposers() {
     var ta = f.querySelector('textarea, input[type=text]');
     if (!ta || !f.getClientRects().length) return;
     any = true;
-    if (f.__talk) return;
+    if (f.__talk) { if (f.__talkSync) f.__talkSync(); return; }   // re-check: attachments can change without an input event
     f.__talk = 1;
     var b = document.createElement('button');
     b.type = 'button'; b.className = 'talk-cmic'; b.setAttribute('aria-label', 'Speak (hold for Talk)'); b.innerHTML = ICON.mic;
-    var send = f.querySelector('.send, button[type=submit], button:not([type])');
+    // The page's own Send: .send first (an attach button can come earlier in the row, qb7's S1).
+    var send = f.querySelector('.send') || f.querySelector('button[type=submit]') || f.querySelector('button:not([type])');
     if (send && send.parentNode) send.parentNode.insertBefore(b, send); else f.appendChild(b);
     // Empty: the mic. Text: the page's Send. Listening into this box: stop AND Send (tap the mic, speak, tap Send).
     var sync = function () {
-      var live = listening && cInto === ta, has = !!ta.value.trim();
+      // Attached images count as something to send (qb7's chips: [data-talk-attachment] or data-talk-has="1" on the form).
+      var live = listening && cInto === ta, has = !!ta.value.trim() || f.dataset.talkHas === '1' || !!f.querySelector('[data-talk-attachment]');
       f.classList.toggle('talk-hassend-on', has && !live); f.classList.toggle('talk-hassend-off', !has && !live);
     };
     ta.addEventListener('input', sync); sync(); f.__talkSync = sync;
