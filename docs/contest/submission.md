@@ -1,5 +1,6 @@
 # qodebase
 
+- **How it works (demo, lab, measurements):** https://qodebase.app/how
 - **Live:** https://qodebase.app
 - **Code:** https://github.com/eyalev/qodebase (Apache-2.0)
 - **Watch a run, no sign-in:** https://qodebase.app/p/eyal/corner-cafe

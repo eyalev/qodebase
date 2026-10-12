@@ -4,6 +4,8 @@
 
 (Formerly forq: the code still uses that name inside — the Worker, the `forq` CLI in agent boxes, cookies, headers.)
 
+**How it works, with the demo, the measurements and the simulations:** https://qodebase.app/how
+
 **Watch it work, no sign-in:** open **https://qodebase.app/p/eyal/corner-cafe** and tap **Watch a run**. Six scripted agents (no AI) change a small café website at once for a few minutes: real commits on their own forks, real collisions, real tests, through the real merge queue. It is staged: reviews are approved automatically and the tasks are ordered so the story happens. The run with real AI agents is below.
 
 <img src="docs/img/readme-phones.jpg" width="720" alt="On the phone: 20 agents changing one project and the line of changes being tested; a change record where an AI re-did a collided change on the newest code in 19 seconds; Talk confirming one request for twelve features before it goes to the agents">
@@ -42,7 +44,7 @@ No model calls in any of these; every number has its script.
 | Real code (403 files), 500 scripted agents, real git + tests (simulation, scripted edits) | land by intent landed **3.5×** as many changes per hour as review-then-merge |
 | 500 agents on Cloudflare (Durable Objects + Artifacts) | 7,033 pushes from 500 forks at once, 280 ms median; one merge queue was the limit (it reset three times, and a bug of ours caused 88 stale-ref rejections, since fixed) |
 
-Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`](docs/contest/evidence/), and the simulations to play with at https://qodebase.app/sim.
+Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`](docs/contest/evidence/), and the simulations to play with at https://qodebase.app/sim (all linked from https://qodebase.app/how).
 
 ## Built on Cloudflare
 
