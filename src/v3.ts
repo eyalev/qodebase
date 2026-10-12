@@ -857,7 +857,7 @@ function landBody(entries: Entry[], selfHost = false) {
 <form class="landask" action="/build" method="get">
 <div class="askbox"><textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button type="button" class="askmic" id="askmic" hidden aria-label="Speak your idea" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
-<div class="bsbox"><button type="button" class="bstoggle" id="bsopen" hidden aria-expanded="false"><svg class="bst-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="bst-main"><span id="bschosen">Fastest: one Opus agent</span><span id="bsest" class="bst-est" aria-live="polite"></span></span><svg class="bst-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+<div class="bsbox"><p class="bs-job" id="bsjob" hidden aria-live="polite"></p><button type="button" class="bstoggle" id="bsopen" hidden aria-expanded="false"><svg class="bst-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="bst-main"><span id="bschosen">Fastest: one Opus agent</span><span id="bsest" class="bst-est" aria-live="polite"></span></span><svg class="bst-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
 <div id="bsheet" class="bsheet" hidden></div></div>
 <button class="btn" type="submit">Build it</button>
 </form>
@@ -920,6 +920,7 @@ body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
    modal). Preset chips, sliders with touch-sized thumbs, a board switch, outcome bars that move while you drag. */
 .bstoggle{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 12px;border:0;border-radius:12px;background:var(--chip);color:var(--fg);font:inherit;text-align:left;cursor:pointer}
 .bstoggle[hidden]{display:none}
+.bs-job{margin:0 0 6px;font-size:14px;color:var(--dim)}.bs-job b{color:var(--fg);font-weight:600}
 .bst-i{flex:none;width:20px;height:20px;color:var(--dim)}
 .bst-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 #bschosen{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}

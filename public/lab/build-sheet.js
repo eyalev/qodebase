@@ -148,6 +148,10 @@
     const ee = document.getElementById('bsest');
     if (ee) { const e = st.est; ee.textContent = e && e !== 'error' && !empty() ? `${range(e.wallS, mins)}, ${range(e.usd, usd)}${e.mine ? ' for your idea' : ''}` : ''; }
     try { sessionStorage.setItem('qb.bs', JSON.stringify({ open: st.open, v: st.v })); } catch {}
+    // The detected job type and the strategy picked (qb4's jobType from the suggest facts), once a job is known.
+    const jb = document.getElementById('bsjob');
+    if (jb) { let t = null; try { if (SIM?.jobType && jobNow() && st.sug?.preset) t = SIM.jobType(jobNow(), st.sug); } catch (e) { log('jobtype_failed', { error: String(e) }); }
+      jb.hidden = !t; if (t) jb.innerHTML = `Looks like: <b>${esc(t.label)}</b>. Strategy: <b>${esc(t.strategy)}</b>${t.why ? ` (${esc(t.why)})` : ''}.`; }
     const ie = ideas?.querySelector('.id-est');
     if (ie && !ideas.querySelector('.id-card').hidden) { const e = st.est, k = which(st.v); ie.textContent = e && e !== 'error' && !empty() ? `${range(e.wallS, mins)}, ${range(e.usd, usd)} at API prices. ${k === 'custom' ? 'Custom' : k === 'idea' ? 'For this idea' : PRESETS[k]?.name}: ${team(st.v)}. Based on ${e.basedOn} real lab runs.` : ''; }
     // The estimate the person saw rides along (est), so the project page can show estimated vs elapsed (qb6 stores it).
