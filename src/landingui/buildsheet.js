@@ -1,194 +1,223 @@
-// "Adjust" sheet under the home page's Build box (qb7, docs/board/TASKS.md B2). Behind flag buildSettings.
-// Build stays one tap with today's default; Adjust opens a sheet: 3 presets + knobs + a live estimate.
-// The choice rides on the form as hidden inputs (preset, v) for qb6's B3 wiring. Estimate: qb4's
-// predictBuild() in /lab/predict.js (B1, docs/board/build-estimate.md). The form sends v = {planner, coders,
-// coderModel, reviewers, board}; qb6's server clamps it and ignores it when the flag is off for the viewer.
+// Build settings under the home page's Build box (qb7, docs/board/TASKS.md B2 + B4). Behind flag BUILD_SETTINGS.
+// Eyal, 2026-10-12: no modal. 'Adjust' expands a section in place: a row of presets (Fastest / Balanced /
+// Cheapest / for my idea), sliders (agents, review depth, agent model) and a board switch, and outcome bars
+// (time, cost, quality direction) that move while you drag. Picking a preset moves the sliders; moving a slider
+// makes it Custom. The choice rides on the form as preset + v = {planner, coders, coderModel, reviewers, board}
+// (qb6's B3 clamps it and ignores it unless the flag is on for the viewer). Estimates: qb4's predictBuild in
+// /lab/predict.js; suggestions: POST /api/build/suggest (qb6, B4), bucketed by qb4 so a re-read agrees.
 (() => {
   const form = document.querySelector('.landask');
   const root = document.getElementById('bsheet');
-  if (!form || !root) return;
+  const btn = document.getElementById('bsopen');
+  if (!form || !root || !btn || document.body.dataset.buildSettings !== '1') return;
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const log = (event, extra) => { try { console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'buildsheet', event, ...extra })); } catch {} };
   const mins = (s) => (s < 90 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
   const usd = (x) => (x < 10 ? `$${x.toFixed(2)}` : `$${Math.round(x)}`);
   const range = (r, f) => (!r ? '–' : f(r[0]) === f(r[1]) ? f(r[0]) : `${f(r[0])} to ${f(r[1])}`);
-
-  // Presets: qb4's BUILD_PRESETS (label, variant, why), mapped onto the sheet's four knobs. Until they load: none.
-  let PRESETS = {};
-  const toV = (variant) => (variant.baseline === 'opus-alone' ? { planner: 'opus', coders: 1, coderModel: 'opus', reviewers: 0, board: false }
-    : { planner: variant.planner || 'opus', coders: variant.coders, coderModel: variant.coderModel, reviewers: variant.reviewers || 0, board: !!variant.board });
-  // Back to the lab's variant: one Opus agent with no reviewer is the opus-alone baseline (Fastest).
-  const toVariant = (v) => (v.coders === 1 && v.coderModel === 'opus' && !v.reviewers ? { baseline: 'opus-alone' }
-    : { planner: v.planner, coders: v.coders, coderModel: v.coderModel, reviewers: v.reviewers, reviewerModel: v.coderModel, reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4, board: v.board });
-  const KNOBS = [
-    ['coders', 'Agents', [1, 3, 6, 12], (x) => String(x)],
-    ['coderModel', 'Agent model', ['haiku', 'sonnet', 'opus'], (x) => ({ haiku: 'Haiku', sonnet: 'Sonnet', opus: 'Opus' })[x]],
-    ['reviewers', 'Reviewers', [0, 1, 3], (x) => (x ? String(x) : 'None')],
-    ['board', 'Shared board', [true, false], (x) => (x ? 'On' : 'Off')],
-  ];
-  const GLOSS = { coders: 'With more than one agent, an Opus planner splits the work and each agent builds a piece on its own copy of the code.', board: 'Each agent says what it is doing and which files it touches, and repeated tasks are merged, so agents do not build the same thing twice.', reviewers: 'Another agent reads each change before it can land.' };
-
-  const DEFAULT_V = { planner: 'opus', coders: 1, coderModel: 'opus', reviewers: 0, board: false };   // what Build does without the sheet
-  const st = { v: { ...DEFAULT_V }, est: null, estState: 'idle', applied: null, sug: null };
-  // B4: 'Suggest settings for my prompt' (POST /api/build/suggest, owner-only while the flag is 'owner'). sug =
-  // { state: 'reading'|'done'|'unsure'|'failed', prompt, job, preset, why, model, error }. While it matches the
-  // box's text, every estimate is for that job instead of a typical small app.
   const idea = () => (form.querySelector('textarea')?.value || '').trim();
-  const modelName = (m) => (!m ? 'a small model' : /haiku/i.test(m) ? 'a small model (Claude Haiku)' : /glm/i.test(m) ? 'a small model (GLM-4.7 Flash on Cloudflare)' : `a small model (${m.replace(/^@cf\/[^/]+\//, '')})`);
+
+  const MODELS = ['haiku', 'sonnet', 'opus'], M = { haiku: 'Haiku', sonnet: 'Sonnet', opus: 'Opus' };
+  const MODEL_COST = { haiku: 'the cheapest per agent', sonnet: 'about 20x Haiku per agent', opus: 'about 40x Haiku per agent' };
+  const REVIEW_W = ['none', '1 reviewer', '2 reviewers', '3 reviewers'];
+  const DEFAULT_V = { planner: 'opus', coders: 1, coderModel: 'opus', reviewers: 0, board: false };   // what Build does untouched
   const OVERLAP_W = { low: 'pieces mostly separate', some: 'some pieces touch the same files', high: 'many pieces touch the same files' };
   const DIFF_W = { easy: 'easy', normal: 'normal difficulty', hard: 'hard' };
-  let touched = false;   // a preset or knob tapped while a suggestion was being read
+
+  let SIM = null, PRESETS = {};
+  const st = { v: { ...DEFAULT_V }, sug: null, open: false, est: null };
+  const toV = (variant) => (variant.baseline === 'opus-alone' ? { ...DEFAULT_V }
+    : { planner: variant.planner || 'opus', coders: variant.coders, coderModel: variant.coderModel, reviewers: variant.reviewers || 0, board: !!variant.board });
+  // One Opus agent with no reviewer is the lab's opus-alone baseline (Fastest); anything else is a team.
+  const alone = (v) => v.coders === 1 && v.coderModel === 'opus' && !v.reviewers;
+  const toVariant = (v) => (alone(v) ? { baseline: 'opus-alone' }
+    : { planner: v.planner, coders: v.coders, coderModel: v.coderModel, reviewers: v.reviewers, reviewerModel: v.coderModel, reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4, board: v.board });
+  const same = (a, b) => !!a && !!b && ['coders', 'coderModel', 'reviewers', 'board'].every((k) => a[k] === b[k]);
   const sugV = () => (st.sug?.state === 'done' && st.sug.v && st.sug.prompt === idea() ? st.sug.v : null);
   const jobNow = () => (st.sug?.job && st.sug.prompt === idea() ? st.sug.job : null);
-  let SIM = null;
+  // Which chip is lit: the suggestion, a preset whose settings match exactly, or Custom.
+  const which = (v) => (sugV() && same(v, sugV()) ? 'idea' : Object.keys(PRESETS).find((k) => same(v, PRESETS[k].v)) || 'custom');
+  const team = (v) => (alone(v) ? 'one Opus agent' : `${v.coders} ${M[v.coderModel]} agent${v.coders === 1 ? '' : 's'} and an Opus planner${v.reviewers ? `, ${v.reviewers} reviewer${v.reviewers === 1 ? '' : 's'}` : ''}${v.board ? ', shared board' : ''}`);
 
-  async function loadSim() {
-    try {
-      SIM = await import('/lab/predict.js');
-      PRESETS = Object.fromEntries(Object.entries(SIM.BUILD_PRESETS || {}).map(([k, p]) => [k, { label: k === 'fastest' ? `${p.label} (default)` : p.label, name: p.label, why: p.why, v: toV(p.variant) }]));
-    } catch (e) { SIM = null; log('predict_missing', { error: String(e) }); }
-  }
-  // One estimate for the current settings. Ranges only; quality as a direction.
+  // ---- markup, built once; a drag only updates text, bars and inputs ----
+  root.innerHTML = `
+    <div class="bs-chips" role="radiogroup" aria-label="Presets">
+      <button type="button" role="radio" class="bs-chip" data-preset="fastest" aria-checked="true">Fastest</button>
+      <button type="button" role="radio" class="bs-chip" data-preset="balanced" aria-checked="false">Balanced</button>
+      <button type="button" role="radio" class="bs-chip" data-preset="cheapest" aria-checked="false">Cheapest</button>
+      <button type="button" role="radio" class="bs-chip" data-preset="idea" aria-checked="false">For my idea</button>
+      <span class="bs-custom" hidden>Custom</span>
+    </div>
+    <p class="bs-why" aria-live="polite"></p>
+    <div class="bs-sl">
+      <label class="bs-row"><span class="bs-rl">Agents</span><b class="bs-rv" data-out="coders"></b>
+        <input type="range" min="1" max="12" step="1" data-k="coders" aria-describedby="bs-hc"></label>
+      <p class="bs-hint" id="bs-hc">With more than one, an Opus planner splits the work and each agent builds a piece on its own copy.</p>
+      <label class="bs-row"><span class="bs-rl">Review depth <span class="bs-sub">quality</span></span><b class="bs-rv" data-out="reviewers"></b>
+        <input type="range" min="0" max="3" step="1" data-k="reviewers" aria-describedby="bs-hr"></label>
+      <p class="bs-hint" id="bs-hr">Reviewers read each change before it can land: fewer misses, a bit slower.</p>
+      <label class="bs-row"><span class="bs-rl">Agent model <span class="bs-sub">cost per agent</span></span><b class="bs-rv" data-out="coderModel"></b>
+        <input type="range" min="0" max="2" step="1" data-k="coderModel" aria-describedby="bs-hm"></label>
+      <p class="bs-hint" id="bs-hm"></p>
+      <div class="bs-row bs-sw"><span class="bs-rl" id="bs-bl">Shared board</span>
+        <button type="button" role="switch" class="bs-switch" data-k="board" aria-checked="false" aria-labelledby="bs-bl" aria-describedby="bs-hb"><i></i></button></div>
+      <p class="bs-hint" id="bs-hb"></p>
+    </div>
+    <div class="bs-out" aria-live="polite">
+      <div class="bs-bar"><span class="bs-bl">Time</span><b data-out="time"></b><div class="bs-track" data-bar="time"><i></i></div><span class="bs-ends"><span>30 s</span><span>1 h</span></span></div>
+      <div class="bs-bar"><span class="bs-bl">Cost at API prices</span><b data-out="cost"></b><div class="bs-track" data-bar="cost"><i></i></div><span class="bs-ends"><span>$0.10</span><span>$10</span></span></div>
+      <div class="bs-bar"><span class="bs-bl">Quality</span><b data-out="quality"></b><div class="bs-meter" data-bar="quality"><i></i><i></i><i></i><i></i></div></div>
+      <p class="bs-src" data-out="src"></p>
+    </div>
+    <p class="bs-foot"><button type="button" class="bs-link" data-reset hidden>Back to the default</button></p>`;
+  const $ = (sel) => root.querySelector(sel);
+  const out = (k) => root.querySelector(`[data-out="${k}"]`);
+
+  // Log-scale position of a value between lo and hi, in percent.
+  const pos = (x, lo, hi) => Math.max(0, Math.min(100, (Math.log(Math.max(x, lo) / lo) / Math.log(hi / lo)) * 100));
+  // predictBuild's quality is a direction in words; the meter shows the same direction, never a score.
+  const QUALITY = [[/fewest/i, 4], [/fewer/i, 3], [/middle|about like/i, 2], [/more misses/i, 1]];
   function estimate() {
     if (!SIM?.predictBuild) return null;
     try {
       const j = jobNow();
-      const r = SIM.predictBuild(j ? { tasks: j.tasks, overlap: j.overlap, difficulty: j.difficulty, label: 'your idea' } : SIM.SMALL_APP, toVariant(st.v));
-      return r && { wallS: r.wallS, usd: r.apiUsd, basedOn: r.basedOn, same: r.sameSetup, quality: r.quality, notes: r.notes || [], mine: !!j, tasks: r.job?.tasks, bucket: j && st.sug?.bucket };
+      const r = SIM.predictBuild(j || SIM.SMALL_APP, toVariant(st.v));
+      return r && { wallS: r.wallS, usd: r.apiUsd, basedOn: r.basedOn, same: r.sameSetup, quality: r.quality, notes: r.notes || [], mine: !!j, tasks: r.job?.tasks, agentTasks: r.agentTasks };
     } catch (e) { log('estimate_failed', { error: String(e), v: st.v }); return 'error'; }
   }
-  // What the sheet ticks: a preset whose team matches, the board aside (a suggestion can turn it on). What it
-  // sends is presetOf: exact, else 'custom' with v, so the board choice reaches the server.
-  const presetLook = (v) => Object.keys(PRESETS).find((k) => KNOBS.every(([n]) => n === 'board' || PRESETS[k].v[n] === v[n])) || 'custom';
-  const presetOf = (v) => Object.keys(PRESETS).find((k) => KNOBS.every(([n]) => PRESETS[k].v[n] === v[n])) || 'custom';
-  const M = { haiku: 'Haiku', sonnet: 'Sonnet', opus: 'Opus' };
-  const alone = (v) => v.coders === 1 && v.coderModel === 'opus' && !v.reviewers;
-  const team = (v) => (alone(v) ? 'one Opus agent' : `${v.coders} ${M[v.coderModel]} agent${v.coders === 1 ? '' : 's'} and an Opus planner${v.reviewers ? `, ${v.reviewers} reviewer${v.reviewers === 1 ? '' : 's'}` : ''}${v.board ? ', shared board' : ''}`);
-  const summary = (key, v, e) => `${key === 'custom' ? (presetLook(v) !== 'custom' ? `${PRESETS[presetLook(v)].name} with the board ${v.board ? 'on' : 'off'}` : 'Custom') : PRESETS[key].name}: ${team(v)}${e && e !== 'error' ? `, about ${range(e.usd, usd)}${e.mine ? ' for this idea' : ''}` : ''}`;
+  const bucketWords = () => (st.sug?.bucket && jobNow() ? `${st.sug.bucket.replace(/ pieces?$/, '')} pieces of work` : null);
+  function paintOut() {
+    const e = estimate();
+    st.est = e;
+    root.classList.toggle('bs-noest', !e || e === 'error');
+    if (!e || e === 'error') {
+      for (const k of ['time', 'cost', 'quality']) out(k).textContent = '';
+      out('src').textContent = SIM || e === 'error' ? 'No estimate right now. You can still build with these settings.' : 'Loading the estimate…';
+      return;
+    }
+    const cap = e.agentTasks, v = st.v;
+    $('#bs-hc').textContent = v.coders === 1 ? 'One agent builds everything. With more, an Opus planner splits the work and each agent builds a piece on its own copy.'
+      : cap && v.coders > cap ? `The planner splits this into about ${cap} task${cap === 1 ? '' : 's'}, so more than ${cap} agent${cap === 1 ? '' : 's'} won't start: this is a limit, not a crew size.`
+      : `Up to ${v.coders} agents at once, each on its own copy${cap ? `; the planner makes about ${cap} tasks` : ''}.`;
+    out('time').textContent = range(e.wallS, mins);
+    out('cost').textContent = range(e.usd, usd);
+    const seg = (el, r, lo, hi) => { const a = pos(r[0], lo, hi), b = pos(r[1], lo, hi); el.style.left = `${a}%`; el.style.width = `${Math.max(3, b - a)}%`; };
+    seg($('[data-bar="time"] i'), e.wallS, 30, 3600); seg($('[data-bar="cost"] i'), e.usd, 0.1, 10);
+    const q = (QUALITY.find(([re]) => re.test(e.quality)) || [0, 2])[1];
+    out('quality').textContent = e.quality.replace(/\.$/, '');
+    root.querySelectorAll('[data-bar="quality"] i').forEach((el, i) => el.classList.toggle('on', i < q));
+    out('src').textContent = `${e.mine ? `For your idea as the small model read it (${bucketWords() || `about ${e.tasks} pieces of work`}).` : `For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet.`} Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}. ${e.notes.join(' ')} With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.`;
+  }
+  function paintWhy() {
+    const g = st.sug, w = $('.bs-why'), k = which(st.v);
+    if (g?.state === 'reading') return void (w.textContent = 'Reading your idea…');
+    if (g && g.prompt === idea()) {
+      if (g.state === 'failed') return void (w.textContent = `${g.error} Pick a preset or drag the sliders.`);
+      const j = g.job, facts = j ? ` ${bucketWords() || `About ${j.tasks} pieces of work`}, ${OVERLAP_W[j.overlap] || j.overlap}, ${DIFF_W[j.difficulty] || j.difficulty}. Read by ${g.model && /haiku/i.test(g.model) ? 'a small model (Claude Haiku)' : 'a small model (GLM-4.7 Flash on Cloudflare)'}, which can be wrong.` : '';
+      if (g.state === 'unsure') return void (w.textContent = `The small model was not sure what this needs; pick yourself, the bars use what it read.${facts}`);
+      if (k === 'idea') return void (w.innerHTML = `<b>For your idea: ${esc(PRESETS[g.preset]?.name || g.preset)}${g.v?.board && !PRESETS[g.preset]?.v.board ? ' with the board on' : ''}.</b> ${esc(g.why)}${esc(facts)}`);
+    }
+    w.textContent = k === 'custom' ? 'Your own mix. The bars below show what to expect.' : PRESETS[k]?.why || '';
+  }
+  // The form carries the choice; untouched (the default) adds nothing, so Build sends exactly what it always did.
+  function paintForm() {
+    form.querySelectorAll('input[data-bs]').forEach((i) => i.remove());
+    const chip = document.getElementById('bschosen');
+    const isDefault = same(st.v, DEFAULT_V);
+    if (!isDefault) {
+      const exact = Object.keys(PRESETS).find((p) => same(st.v, PRESETS[p].v)), k = which(st.v);
+      for (const [name, value] of [['preset', exact || 'custom'], ['v', JSON.stringify(st.v)]]) {
+        const i = document.createElement('input'); i.type = 'hidden'; i.name = name; i.value = value; i.dataset.bs = '1'; form.appendChild(i);
+      }
+      if (chip) chip.textContent = st.open ? '' : `${k === 'custom' ? 'Custom' : k === 'idea' ? 'For your idea' : PRESETS[k].name}: ${team(st.v)}${st.est && st.est !== 'error' ? `, about ${range(st.est.usd, usd)}` : ''}`;
+    } else if (chip) chip.textContent = '';
+    $('[data-reset]').hidden = isDefault;
+  }
+  function paint() {
+    const v = st.v, k = which(v);
+    root.querySelectorAll('.bs-chip').forEach((c) => c.setAttribute('aria-checked', String(c.dataset.preset === k)));
+    const ideaChip = $('[data-preset="idea"]');
+    ideaChip.textContent = sugV() ? `For my idea: ${PRESETS[st.sug.preset]?.name || st.sug.preset}` : st.sug?.state === 'reading' ? 'Reading…' : 'For my idea';
+    ideaChip.disabled = st.sug?.state === 'reading';
+    $('.bs-custom').hidden = k !== 'custom';
+    $('[data-k="coders"]').value = v.coders; out('coders').textContent = v.coders === 1 ? '1 agent' : `${v.coders} agents`;
+    $('[data-k="reviewers"]').value = v.reviewers; out('reviewers').textContent = REVIEW_W[v.reviewers];
+    $('[data-k="coderModel"]').value = MODELS.indexOf(v.coderModel); out('coderModel').textContent = M[v.coderModel];
+    $('#bs-hm').textContent = `${M[v.coderModel]} is ${MODEL_COST[v.coderModel]}.`;
+    const sw = $('[data-k="board"]'); sw.setAttribute('aria-checked', String(v.board)); sw.disabled = v.coders === 1;
+    $('#bs-hb').textContent = v.coders === 1 ? 'Needs more than one agent.' : 'Agents say what they are doing and which files they touch, so nothing is built twice.';
+    root.querySelectorAll('input[type=range]').forEach((r) => r.style.setProperty('--p', `${((r.value - r.min) / (r.max - r.min)) * 100}%`));
+    paintOut(); paintWhy(); paintForm();
+  }
+  // predictBuild takes ~60 ms: during a drag, at most one estimate per frame.
+  let raf = 0;
+  const paintSoon = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(); }); };
 
-  // The estimate's details (scroll with the sheet) and its one line (in the sticky footer, next to the button).
-  function estHtml() {
-    if (st.estState === 'loading') return '';
-    const e = st.est;
-    if (!e || e === 'error') return '';
-    return `<div class="bs-est"><p class="bs-q">${esc(e.quality)}${e.notes.length ? ` ${esc(e.notes.join(' '))}` : ''}</p>
-      <p class="bs-src">${e.mine ? `For your idea, as the small model read it (${e.bucket ? `${e.bucket.replace(/ pieces?$/, '')} pieces of work` : `about ${e.tasks} pieces of work`}).` : `For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet.`} Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}. With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.</p></div>`;
-  }
-  function estLine() {
-    if (st.estState === 'loading') return 'Estimating…';
-    const e = st.est;
-    if (!e || e === 'error') return `${e === 'error' ? 'No estimate right now.' : 'No estimate yet.'} You can still build with these settings.`;
-    return `${e.mine ? (st.sug?.state === 'unsure' ? 'Rough guess for your idea: about' : 'Your idea: about') : 'About'} <b>${range(e.wallS, mins)}</b> and <b>${range(e.usd, usd)}</b> at API prices`;
-  }
-  function sugHtml() {
-    const g = st.sug, txt = idea();
-    if (g?.state === 'reading') return '<div class="bs-sug"><p class="bs-src" aria-live="polite">Reading your idea…</p></div>';
-    const btn = (label) => `<button type="button" class="bs-sugb" data-suggest${txt.length < 4 ? ' disabled' : ''}>${label}</button>${txt.length < 4 ? '<p class="bs-src">Write your idea first, then come back. <button type="button" class="bs-link" data-write>Write it now</button></p>' : ''}`;
-    if (!g || g.prompt !== txt) return `<div class="bs-sug">${btn('Suggest settings for my idea')}${g && g.prompt !== txt && txt ? '<p class="bs-src">Your idea changed since the last suggestion.</p>' : ''}</div>`;
-    if (g.state === 'failed') return `<div class="bs-sug"><p class="bs-src">${esc(g.error || 'Could not read your idea right now.')} Pick a preset yourself.</p>${g.retry ? btn('Try again') : ''}</div>`;
-    const j = g.job, facts = j ? `${g.bucket ? `${g.bucket.replace(/ pieces?$/, '')} pieces of work` : `About ${j.tasks} pieces of work`}, ${OVERLAP_W[j.overlap] || j.overlap}, ${DIFF_W[j.difficulty] || j.difficulty}.` : '';
-    const head = g.state === 'unsure' ? '<p class="bs-q">The small model was not sure what this needs. Pick a preset yourself; the estimate below uses what it read.</p>'
-      : `<p class="bs-q"><b>Suggested: ${esc(PRESETS[g.preset]?.name || g.preset)}.</b> ${esc(g.why)}</p>`;
-    return `<div class="bs-sug bs-sugd">${head}${facts ? `<p class="bs-src">${esc(facts)} Read by ${esc(modelName(g.model))}, which can be wrong.</p>` : ''}</div>`;
-  }
+  let touched = false;   // a slider or preset moved while a suggestion was being read: the person's choice wins
   async function suggest() {
     const prompt = idea();
-    st.sug = { state: 'reading', prompt }; touched = false; render();
+    if (prompt.length < 4) { st.sug = { state: 'failed', prompt, error: 'Write your idea in the box above first.' }; paint(); form.querySelector('textarea')?.focus(); return; }
+    st.sug = { state: 'reading', prompt }; touched = false; paint();
     const t0 = performance.now();
     try {
       const r = await fetch('/api/build/suggest', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt }) });
       const d = await r.json().catch(() => ({}));
-      log('suggest', { status: r.status, ms: Math.round(performance.now() - t0), job: d.job, preset: d.suggestion?.preset, model: d.model, fallback: d.fallback || false });
-      if (!r.ok || d.fallback || !d.job) st.sug = { state: 'failed', prompt, retry: r.status !== 429 && r.status !== 404, error: r.status === 429 ? 'Suggestions are used up for today.' : r.status === 404 ? 'Suggestions are not available for your account yet.' : 'Could not read your idea right now.' };
+      log('suggest', { status: r.status, ms: Math.round(performance.now() - t0), job: d.job, preset: d.suggestion?.preset, bucket: d.suggestion?.bucket, model: d.model, fallback: d.fallback || false });
+      if (!r.ok || d.fallback || !d.job) st.sug = { state: 'failed', prompt, error: r.status === 429 ? 'Suggestions are used up for today.' : r.status === 404 ? 'Suggestions are not available for your account yet.' : 'Could not read your idea right now.' };
       else if (!d.suggestion) st.sug = { state: 'unsure', prompt, job: d.job, model: d.model };
       else {
         const pv = PRESETS[d.suggestion.preset]?.v;
         const sv = pv ? { ...pv, ...(typeof d.suggestion.board === 'boolean' && pv.coders > 1 ? { board: d.suggestion.board } : {}) } : null;
-        // qb4 900f653: the suggestion carries the bucketed job (pieces on a log scale): the why, the facts and
-        // every estimate use it, so they agree and a re-read of the same idea gives the same answer.
         st.sug = { state: 'done', prompt, job: d.suggestion.job || d.job, bucket: d.suggestion.bucket || null, preset: d.suggestion.preset, why: d.suggestion.why, model: d.model, v: sv };
-        if (sv && !touched) st.v = { ...sv };   // a preset tapped while it was reading wins
+        if (sv && !touched) st.v = { ...sv };
       }
-    } catch (e) { log('suggest_failed', { error: String(e) }); st.sug = { state: 'failed', prompt, retry: true, error: 'Could not reach qodebase.' }; }
-    recompute();
-    root.querySelector('.bs-sug')?.setAttribute('tabindex', '-1'); root.querySelector('.bs-sug')?.focus();
+    } catch (e) { log('suggest_failed', { error: String(e) }); st.sug = { state: 'failed', prompt, error: 'Could not reach qodebase.' }; }
+    paint();
   }
-  function render() {
-    const key = presetLook(st.v);
-    root.innerHTML = `<div class="bs-scrim" data-close></div>
-      <div class="bs-panel" role="dialog" aria-modal="true" aria-labelledby="bs-t">
-        <div class="bs-head"><h2 id="bs-t">Who builds it</h2><button type="button" class="bs-x" data-close aria-label="Close">×</button></div>
-        ${sugHtml()}
-        ${Object.keys(PRESETS).length ? '' : st.estState === 'loading' ? '<p class="bs-src">Loading the presets…</p>' : '<p class="bs-src">The presets did not load. Fine-tune below, or build with the default.</p>'}
-        <div class="bs-presets" role="radiogroup" aria-label="Presets">${Object.entries(PRESETS).map(([k, p]) => `<button type="button" role="radio" class="bs-p" data-preset="${k}" aria-checked="${key === k}"><b>${esc(p.label)}${sugV() && st.sug.preset === k ? ' <span class="bs-tag">suggested</span>' : ''}</b><span>${esc(p.why)}</span></button>`).join('')}</div>
-        <details class="bs-fine"${(key === 'custom' && Object.keys(PRESETS).length) || st.fineOpen ? ' open' : ''}><summary>Fine-tune${key === 'custom' ? ' (custom)' : ''}</summary>
-          <div class="bs-knobs">${KNOBS.map(([n, label, vals, word]) => `<div class="bs-k"><span class="bs-kl">${esc(label)}${GLOSS[n] ? ` <button type="button" class="bs-g" data-gloss="${n}" aria-label="What is ${esc(label.toLowerCase())}?">?</button>` : ''}</span><span class="bs-opts" role="group" aria-label="${esc(label)}">${vals.map((x) => `<button type="button" class="bs-o" data-k="${n}" data-val='${esc(JSON.stringify(x))}' aria-pressed="${st.v[n] === x}"${n === 'board' && st.v.coders === 1 ? ' disabled' : ''}>${esc(word(x))}</button>`).join('')}</span></div>`).join('')}</div>
-          ${st.glossOpen ? `<p class="small dim bs-gl">${esc(GLOSS[st.glossOpen])}</p>` : ''}
-        </details>
-        ${estHtml()}
-        ${key === 'fastest' ? '' : '<button type="button" class="bs-reset" data-reset>Back to the default</button>'}
-        <div class="bs-foot"><p class="bs-line" aria-live="polite">${estLine()}</p><button type="button" class="btn" data-apply>Use these settings</button></div>
-      </div>`;
-  }
-  // Re-rendering replaces the buttons: keep focus on the same control.
-  function recompute() {
-    const f = document.activeElement, inside = f && root.contains(f);
-    const sel = inside ? (f.dataset.preset ? `[data-preset="${f.dataset.preset}"]` : f.dataset.k ? `[data-k="${f.dataset.k}"][data-val='${f.dataset.val}']` : null) : null;
-    st.est = estimate(); st.estState = 'done'; render();
-    if (inside || !root.contains(document.activeElement)) (sel && root.querySelector(sel) || root.querySelector('.bs-p[aria-checked="true"]') || root.querySelector('.bs-x'))?.focus();
-  }
-  function open() {
-    st.v = st.applied ? { ...st.applied.v } : sugV() ? { ...sugV() } : { ...DEFAULT_V };
-    root.hidden = false; document.body.classList.add('bs-on');
-    if (!SIM) { st.estState = 'loading'; render(); loadSim().then(recompute); } else recompute();
-    requestAnimationFrame(() => { root.classList.add('open'); (root.querySelector('.bs-p[aria-checked="true"]') || root.querySelector('.bs-x'))?.focus(); });
-    log('open', {});
-  }
-  function close() { root.classList.remove('open'); document.body.classList.remove('bs-on'); setTimeout(() => { root.hidden = true; }, 220); document.getElementById('bsopen')?.focus(); }
-  // The choice rides on the form: preset + v (qb6's B3 reads them on /build).
-  function apply(def) {
-    form.querySelectorAll('input[data-bs]').forEach((i) => i.remove());
-    const chip = document.getElementById('bschosen');
-    const key = presetOf(st.v);
-    if (def || key === 'fastest') { st.applied = null; if (chip) chip.textContent = ''; log('apply_default', {}); return close(); }
-    st.applied = { key, v: { ...st.v } };
-    const add = (name, value) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = name; i.value = value; i.dataset.bs = '1'; form.appendChild(i); };
-    add('preset', key); add('v', JSON.stringify(st.v));
-    if (chip) chip.textContent = summary(key, st.v, st.est);
-    st.applied.prompt = idea(); st.applied.text = chip?.textContent || '';
-    log('apply', { key, v: st.v });
-    close();
-  }
+
+  root.addEventListener('input', (e) => {
+    const r = e.target.closest('input[type=range]'); if (!r) return;
+    const k = r.dataset.k, n = Number(r.value);
+    touched = true;
+    st.v = { ...st.v, [k]: k === 'coderModel' ? MODELS[n] : n };
+    if (st.v.coders === 1) st.v.board = false;
+    paintSoon();
+  });
+  root.addEventListener('change', (e) => { if (e.target.matches('input[type=range]')) log('slider', { k: e.target.dataset.k, v: st.v }); });
   root.addEventListener('click', (e) => {
-    if (e.target.closest('[data-close]')) return close();
-    const p = e.target.closest('[data-preset]');
-    if (p) { const k2 = p.dataset.preset; touched = true; st.v = { ...(sugV() && st.sug.preset === k2 ? sugV() : PRESETS[k2].v) }; return recompute(); }
-    const k = e.target.closest('[data-k]');
-    if (k) { touched = true; st.v[k.dataset.k] = JSON.parse(k.dataset.val); if (st.v.coders === 1) st.v.board = false; st.fineOpen = true; return recompute(); }
-    const g = e.target.closest('[data-gloss]');
-    if (g) { st.glossOpen = st.glossOpen === g.dataset.gloss ? null : g.dataset.gloss; st.fineOpen = true; return render(); }
-    if (e.target.closest('[data-suggest]')) return suggest();
-    if (e.target.closest('[data-write]')) { close(); setTimeout(() => form.querySelector('textarea')?.focus(), 230); return; }
-    if (e.target.closest('[data-apply]')) return apply(false);
-    if (e.target.closest('[data-reset]')) { st.v = { ...DEFAULT_V }; recompute(); root.querySelector('.bs-p[aria-checked="true"]')?.focus(); return; }
+    const c = e.target.closest('[data-preset]');
+    if (c) {
+      const k = c.dataset.preset;
+      if (k === 'idea') { if (!sugV()) return void suggest(); st.v = { ...sugV() }; }
+      else if (PRESETS[k]) { touched = true; st.v = { ...PRESETS[k].v }; }
+      log('preset', { k }); return paint();
+    }
+    const sw = e.target.closest('[data-k="board"]');
+    if (sw && !sw.disabled) { touched = true; st.v = { ...st.v, board: !st.v.board }; return paint(); }
+    if (e.target.closest('[data-reset]')) { st.v = { ...DEFAULT_V }; log('reset', {}); return paint(); }
   });
-  // Fine-tune remembers only a real tap (a toggle event also fires when a render opens it).
-  root.addEventListener('click', (e) => { const sm = e.target.closest('.bs-fine > summary'); if (sm) st.fineOpen = !sm.parentElement.open; }, true);
-  document.addEventListener('keydown', (e) => {
-    if (root.hidden) return;
-    if (e.key === 'Escape') return close();
-    if (e.key !== 'Tab') return;
-    const f = [...root.querySelectorAll('button:not([disabled]), summary')].filter((x) => x.offsetParent);
-    if (!f.length) return;
-    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
-    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  // Arrow keys move between the preset chips (a radio group).
+  $('.bs-chips').addEventListener('keydown', (e) => {
+    if (!/^Arrow(Left|Right)$/.test(e.key)) return;
+    const cs = [...root.querySelectorAll('.bs-chip:not([disabled])')], i = cs.indexOf(document.activeElement);
+    if (i < 0) return; e.preventDefault(); cs[(i + (e.key === 'ArrowRight' ? 1 : cs.length - 1)) % cs.length].focus();
   });
-  // The chosen line's cost was for the idea as it was: drop it once the idea changes.
-  form.querySelector('textarea')?.addEventListener('input', () => {
-    const chip = document.getElementById('bschosen');
-    if (chip && st.applied) chip.textContent = idea() === st.applied.prompt ? st.applied.text : summary(st.applied.key, st.applied.v, null);
-  });
-  // Shown only when the server turned Build settings on for this viewer (qb6: <body data-build-settings="1">).
-  const btn = document.getElementById('bsopen');
-  if (btn && document.body.dataset.buildSettings === '1') { btn.hidden = false; btn.addEventListener('click', open); }
+  // A changed idea makes 'For my idea' stale: the chip asks again and the bars go back to a typical app.
+  form.querySelector('textarea')?.addEventListener('input', () => { if (st.sug) paintSoon(); });
+
+  async function loadSim() {
+    try {
+      SIM = await import('/lab/predict.js');
+      PRESETS = Object.fromEntries(Object.entries(SIM.BUILD_PRESETS || {}).map(([k, p]) => [k, { name: p.label, why: p.why, v: toV(p.variant) }]));
+    } catch (e) { SIM = null; log('predict_missing', { error: String(e) }); }
+  }
+  function toggle(open) {
+    st.open = open; root.hidden = !open; btn.setAttribute('aria-expanded', String(open));
+    btn.textContent = open ? 'Hide settings' : 'Adjust';
+    paint();
+    if (open && !SIM) loadSim().then(paint);
+    log(open ? 'open' : 'close', {});
+  }
+  btn.hidden = false; btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-controls', 'bsheet');
+  btn.addEventListener('click', () => toggle(root.hidden));
 })();
