@@ -23,8 +23,8 @@ import {
   md,
 } from './v2';
 
-export type ViewId = 'readme' | 'changes' | 'app' | 'code' | 'history' | 'more' | 'agents' | 'errors' | 'work';
-export const VIEW_IDS: ViewId[] = ['readme', 'changes', 'app', 'code', 'history', 'more', 'agents', 'errors', 'work'];
+export type ViewId = 'readme' | 'changes' | 'app' | 'code' | 'history' | 'more' | 'agents' | 'errors' | 'work' | 'asks';
+export const VIEW_IDS: ViewId[] = ['readme', 'changes', 'app', 'code', 'history', 'more', 'agents', 'errors', 'work', 'asks'];
 
 /** The project's documents (README first) and the one being read. */
 export type Docs = { list: { path: string; label: string }[]; current: string | null; text: string | null };
@@ -65,6 +65,7 @@ const ICONS = {
   app: I('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/>'),
   code: I('<path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>'),
   history: I('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+  asks: I('<path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="m3.5 6.5 1.2 1.2 2.3-2.4M3.5 12l1.2 1.2 2.3-2.4"/><circle cx="5" cy="17.5" r="1.3"/>'),
   more: I('<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'),
   agents: I('<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 4v4M9 13h.01M15 13h.01"/>'),
   errors: I('<path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/>'),
@@ -203,6 +204,69 @@ if(${JSON.stringify(sel?.a.id || '')})cur=${JSON.stringify(sel?.a.id || '')};})(
 }
 
 /** History: what happened to the project, newest first, by day. */
+/** Asks (github-parity G4): the agent-age issues list. The page fetches GET …/asks (qb6; anonymous on watch
+ *  projects like /landing) and draws one row per ask: a state dot, the text, who asked, how many changes it became,
+ *  duplicates folded under the ask they repeat. Tap a row for its changes (each opens its record in Agents at work). */
+function asksView(c: Ctx) {
+  const api = `/api/p/${encodeURIComponent(c.info.owner)}/${encodeURIComponent(c.info.name)}`;
+  return { body: `<div class="pad asks"><h2 class="ah">Asks</h2><p class="lede">Every request the agents got, from a person, from Talk or from Cloudflare Issues, and every task on the list they share. Repeats are marked, so the same thing is not built twice.</p>
+<div class="afil" role="group" aria-label="Show"></div><ul class="alist" id="alist"><li class="aempty">Loading the asks…</li></ul></div>
+<style>${ASKS_CSS}</style><script>${ASKS_JS.replace('%API%', api).replace('%BASE%', c.base)}</script>` };
+}
+const ASKS_CSS = `.asks .ah{font-size:22px;font-weight:600;letter-spacing:-.02em;margin:4px 0 6px}
+.afil{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.afil button{min-height:40px;padding:0 12px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);font:500 14px 'Geist',sans-serif;cursor:pointer}
+.afil button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.afil b{font-variant-numeric:tabular-nums;margin-left:4px;font-weight:600}
+.alist{list-style:none;margin:0;padding:0}
+.alist>li{box-shadow:inset 0 -1px 0 var(--line)}
+.alist>li:last-child{box-shadow:none}
+.arow{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:baseline;width:100%;padding:12px 0;min-height:44px;border:0;background:none;color:var(--fg);font:inherit;text-align:left;cursor:pointer}
+.arow .t{font-size:15px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.arow .w{font-size:13px;color:var(--dim);white-space:nowrap}
+.arow .m{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--dim)}
+.adot{width:9px;height:9px;border-radius:50%;background:var(--dim);transform:translateY(-1px)}
+.adot.working{background:var(--busy)}.adot.in-line{background:var(--fg)}.adot.landed{background:var(--acc)}.adot.bounced{background:var(--warn)}.adot.planning{background:transparent;box-shadow:inset 0 0 0 1.5px var(--dim)}
+.adup{font-size:13px;color:var(--dim);margin:-4px 0 10px 19px}
+.adup b{font-weight:500;color:var(--fg)}
+.achg{list-style:none;margin:0 0 12px 19px;padding:0}
+.achg a{display:flex;gap:8px;align-items:center;min-height:44px;color:var(--acc);text-decoration:none;font-size:14px}
+.achg .w{color:var(--dim);font-size:13px;margin-left:auto}
+.aempty{padding:16px 0;color:var(--dim);font-size:15px}
+@media (hover:hover){.arow:hover{background:color-mix(in srgb,var(--chip) 60%,transparent)}}`;
+const ASKS_JS = `(function(){
+var API='%API%',BASE='%BASE%',list=document.getElementById('alist'),fil=document.querySelector('.afil'),data=null,show='all',open={},titles=null;
+var FROM={person:'A person',talk:'Talk',issues:'Cloudflare Issues',board:'The task list'};
+var WORD={planning:'Planning',working:'Working','in-line':'In line',landed:'Landed',bounced:'Sent back',mixed:'In progress',pushed:'In review',reviewing:'In review',queued:'In line',testing:'Being tested',replaying:'Replaying','with-lead':'With its lead'};
+// Change titles come from the landing view, fetched once, the first time a row is opened.
+function loadTitles(){if(titles)return;titles={};fetch(API+'/landing',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(j){(j&&j.changes||[]).forEach(function(c){titles[c.id]=String(c.title||c.intent||'').split('. ')[0]});render()}).catch(function(){})}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function ago(t){if(!t)return'';var s=Math.max(0,Math.round((Date.now()-t)/1000));return s<60?'just now':s<3600?Math.floor(s/60)+' min ago':s<86400?Math.floor(s/3600)+' h ago':Math.floor(s/86400)+' d ago'}
+function open_(a){return a.state!=='landed'}
+function render(){
+ if(!data){return}
+ var asks=data.asks||[],byId={};asks.forEach(function(a){byId[a.id]=a});
+ var dups=asks.filter(function(a){return a.duplicateOf});
+ var main=asks.filter(function(a){return!a.duplicateOf});
+ var n={all:main.length,open:main.filter(open_).length,landed:main.filter(function(a){return a.state==='landed'}).length,dups:dups.length};
+ fil.innerHTML=[['all','All'],['open','Open'],['landed','Landed'],['dups','Repeats']].filter(function(x){return x[0]!=='dups'||n.dups}).map(function(x){return'<button type="button" data-f="'+x[0]+'" aria-pressed="'+(show===x[0])+'">'+x[1]+'<b>'+n[x[0]]+'</b></button>'}).join('');
+ var rows=show==='dups'?dups:main.filter(function(a){return show==='all'||(show==='open'?open_(a):a.state==='landed')});
+ if(!rows.length){list.innerHTML='<li class="aempty">'+(asks.length?'Nothing here.':'No asks recorded yet. Requests to the router and tasks on the list show up here.')+'</li>';return}
+ list.innerHTML=rows.sort(function(a,b){return(b.at||0)-(a.at||0)}).map(function(a){
+  var ch=a.changes||[],reps=asks.filter(function(d){return d.duplicateOf===a.id});
+  var meta=[FROM[a.from]||a.from||'',ch.length?ch.length+' change'+(ch.length===1?'':'s'):'',ago(a.at)].filter(Boolean).map(function(x){return'<span>'+esc(x)+'</span>'}).join('');
+  var dupOf=a.duplicateOf&&byId[a.duplicateOf]?'<p class="adup">Same as <b>'+esc(byId[a.duplicateOf].text)+'</b></p>':'';
+  var repl=reps.length&&!(a.aliases||[]).length?'<p class="adup">Asked again '+reps.length+'×'+(reps[0].text&&reps[0].text!==a.text?' as <b>'+esc(reps[0].text)+'</b>':'')+'</p>':'';
+  var al=(a.aliases||[]).length?'<p class="adup">Also called <b>'+(a.aliases||[]).map(esc).join('</b>, <b>')+'</b></p>':'';
+  var cs=a.changeStates||{};var chl=open[a.id]&&ch.length?'<ul class="achg">'+ch.map(function(c){var id=typeof c==='string'?c:c.id,t=(titles&&titles[id])||'',w=WORD[cs[id]]||cs[id]||'';return'<li><a href="'+BASE+'/work#/change/'+encodeURIComponent(id)+'">'+esc(t||('#'+String(id).split('--').pop()))+'<span class="w">'+esc(w)+'</span></a></li>'}).join('')+'</ul>':'';
+  return'<li><button type="button" class="arow" data-a="'+esc(a.id)+'" aria-expanded="'+!!open[a.id]+'"><i class="adot '+esc(a.state||'')+'"></i><span class="t">'+esc(a.text)+'</span><span class="w">'+esc(a.delivery==='failed'?'Not delivered':a.delivery==='waking'?'Waking the router':(WORD[a.state]||''))+'</span><span class="m">'+meta+'</span></button>'+dupOf+repl+al+chl+'</li>'}).join('');
+}
+fil.addEventListener('click',function(e){var b=e.target.closest('[data-f]');if(b){show=b.dataset.f;render()}});
+list.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(b){open[b.dataset.a]=!open[b.dataset.a];loadTitles();render()}});
+function load(){fetch(API+'/asks',{cache:'no-store'}).then(function(r){if(r.status===404)return{asks:[],missing:true};return r.ok?r.json():null}).then(function(j){if(!j){list.innerHTML='<li class="aempty">Could not load the asks. Pull to refresh.</li>';return}data=j;render()}).catch(function(e){console.log(JSON.stringify({event:'asks_load_failed',error:String(e)}))})}
+load();setInterval(function(){if(!document.hidden)load()},15000);
+})();`;
+
 function historyView(c: Ctx) {
   const now = Date.now();
   type Item = { at: number; html: string };
@@ -305,12 +369,14 @@ const VIEWS: View[] = [
   // Agents at work (qb7, src/landingui): many agents at once, the merge queue, who works where.
   { id: 'work', label: 'Agents at work', short: 'Agents', icon: ICONS.work, desc: 'Every agent changing the project at once: where they work, the line their changes wait in, how each landed', when: () => true,
     render: (c) => ({ body: workBody({ owner: c.info.owner, name: c.info.name, own: c.own }), js: workJs() }) },
+  // Asks (G4, qb3): every request the agents got and every task on the board, with state, agent and duplicates.
+  { id: 'asks', label: 'Asks', icon: ICONS.asks, desc: 'Every request the agents got and every task on the list: state, agents, duplicates', when: (c) => !!c.info.landing, render: asksView },
   { id: 'errors', label: 'Errors', icon: ICONS.errors, desc: 'Production errors from Cloudflare Issues and the fixes they started', when: (c) => c.worker, render: errorsView },
 ];
 
 /** Tabs for this person: the owner's five, or a visitor's four (History instead of Changes and More). */
 function tabsFor(c: Ctx) {
-  const tabs = c.own ? VIEWS.filter((v) => v.tab && v.when(c)) : VIEWS.filter((v) => ['readme', 'app', 'code', 'history'].includes(v.id));
+  const tabs = c.own ? VIEWS.filter((v) => v.tab && v.when(c)) : VIEWS.filter((v) => ['readme', 'app', 'code', ...(c.info.landing ? ['asks'] : []), 'history'].includes(v.id));
   // A landing-system project (qb6/qb7) leads with Agents at work in Readme's place; Readme stays under More.
   return c.info.landing ? tabs.map((v) => (v.id === 'readme' ? VIEWS.find((x) => x.id === 'work')! : v)) : tabs;
 }
