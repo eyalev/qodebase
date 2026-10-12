@@ -168,6 +168,9 @@
     const who = AG(c.agent), T = title1(c); // raw: callers escape
     let d = (e.detail || '').replace(/\bagent-(\d+)/gi, 'Agent $1');
     for (const x of idx.values()) if (d.includes(x.id)) d = d.split(x.id).join(`${AG(x.agent)}'s change`);
+    // After-critique (2026-10-12): an id from an earlier run stays raw ("with eyal.corner-cafe--d36d5d"); show it short,
+    // and never leave "#" in front of a name ("#Agent 3's change").
+    d = d.replace(/#?\b[\w-]+\.[\w-]+--([a-z0-9]{4,})\b/gi, '#$1').replace(/#(Agent \d+)/g, '$1');
     const its = `${who}'s change`;
     const oc = otherOf(c, e, idx);
     switch (e.what) {
@@ -568,7 +571,7 @@
     // Design pass (2026-10-12): a collision shows on the bar itself, a --warn tick on the in-line step, labelled.
     const hit = ev.has('conflict') ? (ev.has('replayed') ? 'Replayed' : 'Collided') : '';
     const lbl = ['Working', 'Review', hit || 'In line', 'Tested', 'Landed'];
-    return `<div class="steps" aria-hidden="true">${lbl.map((_, i) => `<i class="${cls(i)}${hit && i === 2 ? ' hit' : ''}"></i>`).join('')}</div><div class="stepl" aria-hidden="true">${lbl.map((l, i) => `<span${hit && i === 2 ? ' class="hit"' : ''}>${l}</span>`).join('')}</div>`;
+    return `<div class="steps" aria-hidden="true">${lbl.map((_, i) => `<i class="${cls(i)}${hit && i === 2 ? ' hit' : ''}"></i>`).join('')}</div><div class="stepl" aria-hidden="true">${lbl.map((l, i) => `<span${hit && i === 2 ? ` class="hit${hit === 'Replayed' ? ' ok' : ''}"` : ''}>${l}</span>`).join('')}</div>`;
   }
   function howBox(c) {
     const L = c.landing, idx = byId();

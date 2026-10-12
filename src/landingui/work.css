@@ -160,6 +160,7 @@
 .lw .steps i.hit{position:relative}
 .lw .steps i.hit::after{content:'';position:absolute;left:50%;top:-3px;width:4px;height:10px;margin-left:-2px;border-radius:2px;background:var(--warn);box-shadow:0 0 0 2px var(--bg)}
 .lw .stepl .hit{color:var(--warn);font-weight:500}
+.lw .stepl .hit.ok{color:var(--acc)}
 .lw .stepl{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;font-size:13px;color:var(--dim)}
 .lw .how{border-radius:14px;padding:12px 14px 12px 17px;background:var(--card);box-shadow:inset 3px 0 0 var(--acc),inset 0 0 0 1px var(--line)}
 .lw .how.warn{box-shadow:inset 3px 0 0 var(--warn),inset 0 0 0 1px var(--line)}
