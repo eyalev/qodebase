@@ -220,8 +220,10 @@ with a plan token; anyone's work on someone else's subscription. Audited (file:l
   boxes, so none keeps running on the old key.
 - **Grey, as for Amp:** we store a pasted setup-token (encrypted). `forq dedupe` reads the credential from the box's
   tmux env because Claude Code keeps it out of its Bash tool's env (same person's credential, same box).
-- **Still open:** the ask box keeps its boot spec (with the credential) in its Durable Object storage for queued asks;
-  `boot.env` sits under /run/opendev (not verified to be tmpfs; boot.sh deletes CC_ENV from it right after start).
+- **Closed 2026-10-12:** the ask box keeps its boot spec (credential + tokens) AES-GCM-encrypted at rest
+  (`askSpecEnc`, same key store as pasted keys; an older clear spec is sealed on first read). `boot.env` lives on
+  tmpfs (verified on a live box: /run, /run/opendev, /run/forq are tmpfs; `/tmp/boot.env` is a link into it) and
+  holds no CC_ENV after start (boot.sh deletes the line; checked: 0 lines).
 
 ## Import from GitHub
 

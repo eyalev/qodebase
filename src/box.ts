@@ -11,6 +11,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
 import { FORQ_CLI } from './cli';
 import { registry } from './registry';
+import { encryptKey, decryptKey } from './auth';
 import { boxUsd, claudeUsd, recordCost, type Tokens } from './costs';
 // The image's own files, for boxes that set themselves up (BOX_IMAGE=managed).
 import BOOT_SH from '../box/boot.sh';
@@ -537,15 +538,25 @@ PY
   // Runs from the alarm so a long answer outlives the request that asked.
   async startAsk(id: string, question: string, spec: BootSpec, model = 'opus') {
     const q = (await this.ctx.storage.get<string[]>('askQueue')) || [];
-    await this.ctx.storage.put({ [`ask:${id}`]: { state: 'queued', question, model, at: Date.now() }, askQueue: [...q, id], askSpec: spec });
+    // The boot spec carries the owner's Claude credential (bootEnv's CC_ENV) and tokens: kept encrypted at rest, like
+    // the key store (auth.ts AES-GCM), and opened only when an ask runs (manager, 2026-10-12).
+    await this.ctx.storage.put({ [`ask:${id}`]: { state: 'queued', question, model, at: Date.now() }, askQueue: [...q, id], askSpecEnc: await encryptKey(this.env, JSON.stringify(spec)) });
+    await this.ctx.storage.delete('askSpec');
     await this.ctx.storage.setAlarm(Date.now() + 50);
     log('box', 'ask_queued', { agentId: spec.agentId, id, chars: question.length });
   }
   async askResult(id: string) {
     return (await this.ctx.storage.get<Record<string, unknown>>(`ask:${id}`)) || null;
   }
+  async #askSpec(): Promise<BootSpec | undefined> {
+    const enc = await this.ctx.storage.get<string>('askSpecEnc');
+    if (enc) return JSON.parse(await decryptKey(this.env, enc)) as BootSpec;
+    const old = await this.ctx.storage.get<BootSpec>('askSpec');   // stored in the clear before 2026-10-12: seal it now
+    if (old) { await this.ctx.storage.put('askSpecEnc', await encryptKey(this.env, JSON.stringify(old))); await this.ctx.storage.delete('askSpec'); }
+    return old;
+  }
   async #runAsks() {
-    const spec = await this.ctx.storage.get<BootSpec>('askSpec');
+    const spec = await this.#askSpec();
     const ids = (await this.ctx.storage.get<string[]>('askQueue')) || [];
     if (!spec || !ids.length) return;
     // A question leaves the queue only once answered: a forq deploy restarts this object
