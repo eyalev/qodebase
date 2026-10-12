@@ -133,6 +133,7 @@ export { landedEntry, type LandedEntry } from './landed';
 import { landedEntry, type LandedEntry } from './landed';
 
 const TRAIN_MAX = 8;
+const STALL_MS = 12 * 60_000, STALL_TICK_MS = 3 * 60_000;
 const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER_CHANGE = 3;
 const TRAIN_STUCK_MS = 12 * 60_000;
 /** Tier 2's default model: short prompts, a fraction of a cent each (2026-10-08: Haiku 5.5). */
@@ -659,7 +660,35 @@ export class Landing extends DurableObject<Env> {
       await this.#reviewTick().catch((e) => log('landing', 'review_tick_failed', { err: String(e) }));
       await this.#budgetTick().catch((e) => log('landing', 'budget_tick_failed', { err: String(e) }));
       await this.#demoTick();
+      await this.#stallTick().catch((e) => log('landing', 'stall_tick_failed', { err: String(e) }));
     }
+  }
+
+  // ---- stalled agents (R3, 2026-10-12) -------------------------------------------------
+  // An agent can go quiet with its work done but not pushed: its box idle-stops and the change sits in 'working' for good
+  // (R3's last change, 25 min, until it was nudged by hand; it pushed in a minute). Every few minutes, a real agent's
+  // change with no event for STALL_MS whose box is asleep gets a nudge through the outbox, at most twice.
+  async #stallTick() {
+    const m = await this.#m();
+    if (m.flags.halted || m.flags.paused) return;
+    let open = 0;
+    for (const id of m.order) {
+      const c = await this.#get(id);
+      if (!c || c.kind !== 'agent' || (c.state !== 'working' && c.state !== 'replaying')) continue;
+      open++;
+      const last = c.events.at(-1)?.t || c.createdAt, nudges = (c as { nudges?: number }).nudges || 0;
+      if (Date.now() - last < STALL_MS || nudges >= 2) continue;
+      const st = await fetch(`${this.env.API_BASE}/api/agents/${c.id}/state`, { headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } })
+        .then((r) => r.json() as Promise<{ running?: boolean }>).catch(() => ({ running: true }));
+      if (st.running) continue;   // awake = still at it (a long task); only a sleeping box is stalled
+      (c as { nudges?: number }).nudges = nudges + 1;
+      this.#ev(c, 'working', `nudged: nothing pushed for ${Math.round((Date.now() - last) / 60_000)} min and its box was asleep`);
+      await this.#put(c);
+      this.#tell(c.id, `qodebase: your task "${c.title}" has not been pushed yet. Check what you have, finish it, commit, push with \`forq push\`, then run \`forq status pushed "<what you did>"\`. If it is already done, just push and report.`);
+      await this.#saveMeta();
+      log('landing', 'stall_nudge', { slug: m.slug, id: c.id, idleMin: Math.round((Date.now() - last) / 60_000), nudge: nudges + 1 });
+    }
+    if (open) await this.#arm(STALL_TICK_MS);
   }
 
   // ---- reviewer pool (landing projects with flags.reviewers >= 2) --------------------
