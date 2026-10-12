@@ -106,7 +106,7 @@ What it says:
   (1284 vs 1388 s, p 0.4), so the board makes 40 agents survivable; the controller makes them unnecessary.
 - **Board + controller is the best arm** on wall time, agent-minutes, cost and thrash. The board's own effect at
   the controller's team size: 1284 vs 1711 s, $4.73 vs $5.41 (p 0.1), and 0 vs 12 tasks landed twice.
-- **Where the controller settled:** without the board it never kept more than 10 (it tried 10 → 12 once and gave
+- **Where the controller settled:** without the board it held 8–10 (in one run it kept 12 for 4 minutes, then gave
   them back); with the board it kept 12 and twice 14. Its tries are in `cap_log` per run.
 - **One halving, in E probe r2:** at 19 min dropped work passed 1 per agent per minute and the cap went 12 → 6 → 3 → 2
   in 60 s, then probed back to 4. That run is the slowest of its arm (1470 s against 1271 and 1284), so the
