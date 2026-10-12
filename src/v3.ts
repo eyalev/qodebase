@@ -52,7 +52,7 @@ export type Ctx = ProjectArgs & {
 };
 
 type View = {
-  id: ViewId; label: string; icon: string; tab?: boolean; desc?: string;
+  id: ViewId; label: string; short?: string; icon: string; tab?: boolean; desc?: string;
   when: (c: Ctx) => boolean;
   href?: (c: Ctx) => string;
   render?: (c: Ctx) => { body: string; action?: string; compose?: string; js?: string; poll?: boolean; full?: boolean };
@@ -93,7 +93,7 @@ export type Global = { nav: Nav; inbox: number };
  *  view, not only Changes (Eyal, 2026-10-04: after forking he landed on the README
  *  and could not tell how to change anything); sent from another view, it goes on to
  *  Changes, where the work shows. */
-const askBox = (c: Ctx) => c.needsKey ? `<div class="compose">${keyNote}</div>` : `<div class="compose"><form class="ask"><textarea rows="1" placeholder="Ask for a change" enterkeyhint="send" aria-label="Ask for a change"></textarea>${SEND}</form></div>`;
+const askBox = (c: Ctx) => c.needsKey ? `<div class="compose">${keyNote}</div>` : `<div class="compose"><form class="ask"><textarea rows="1" placeholder="Ask for a change" enterkeyhint="send" aria-label="Ask for a change"></textarea>${SEND}</form></div>${c.own ? '<script src="/lab/attach.js" defer></script>' : ''}`;
 
 /** Changes: what is in progress, as a conversation, newest at the bottom. */
 function changesView(c: Ctx) {
@@ -263,7 +263,7 @@ const VIEWS: View[] = [
   { id: 'history', label: 'History', icon: ICONS.history, desc: 'Merged changes, commits, deploys and forks, by day', when: () => true, render: historyView },
   { id: 'agents', label: 'Agents', icon: ICONS.agents, desc: 'The router, the reviewer and each change\'s agent: chat or terminal', when: (c) => c.own, render: agentsView },
   // Agents at work (qb7, src/landingui): many agents at once, the merge queue, who works where.
-  { id: 'work', label: 'Agents at work', icon: ICONS.work, desc: 'Every agent changing the project at once: where they work, the line their changes wait in, how each landed', when: () => true,
+  { id: 'work', label: 'Agents at work', short: 'Agents', icon: ICONS.work, desc: 'Every agent changing the project at once: where they work, the line their changes wait in, how each landed', when: () => true,
     render: (c) => ({ body: workBody({ owner: c.info.owner, name: c.info.name, own: c.own }), js: workJs() }) },
   { id: 'errors', label: 'Errors', icon: ICONS.errors, desc: 'Production errors from Cloudflare Issues and the fixes they started', when: (c) => c.worker, render: errorsView },
 ];
@@ -283,7 +283,7 @@ export function tabBar(c: Pick<Ctx, 'own' | 'base' | 'worker' | 'info'> & Partia
     // More opens a sheet over the current view; a second tap closes it (Eyal, 2026-10-02).
     if (v.id === 'more') return `<a href="${href}" class="tab${on ? ' on' : ''}" data-more aria-expanded="false" aria-controls="moresheet">${v.icon}<span>${v.label}</span></a>`;
     const badge = v.id === 'changes' && needs ? `<span class="badge" id="badge">${needs}</span>` : v.id === 'changes' ? '<span class="badge" id="badge" hidden></span>' : '';
-    return `<a href="${href}" class="tab${on ? ' on' : ''}"${on ? ' aria-current="page"' : ''}>${v.icon}${badge}<span>${v.label}</span></a>`;
+    return `<a href="${href}" class="tab${on ? ' on' : ''}"${on ? ' aria-current="page"' : ''}${v.short ? ` aria-label="${v.label}"` : ''}>${v.icon}${badge}<span>${v.short || v.label}</span></a>`;
   }).join('')}</nav>`;
 }
 
