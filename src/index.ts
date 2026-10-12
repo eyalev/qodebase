@@ -18,7 +18,7 @@ import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectP
 import { previewTabs } from './sheet';
 import { catalogReadme } from './catalog';
 import { STARTER, buildPayload } from './newproject';
-import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, cleanEstimate } from './buildsettings';
+import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, cleanEstimate, DEFAULT_PLAN } from './buildsettings';
 import { suggestRoute } from './buildsuggest';
 import { buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
@@ -179,9 +179,11 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
     else { ccEnv = `ANTHROPIC_API_KEY=${key} ANTHROPIC_MODEL=${u.model || DEFAULT_API_MODEL}`; keyTail = key.slice(-20); billing = 'api'; }
   }
   // The agent board (landing flag `board`): the box gets the hook and the prompts mention `forq who`.
-  const boardOn = landingOn(await projectStub(env, slug).info().catch(() => null)) && !!(await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null))?.board;
+  const lfl = landingOn(await projectStub(env, slug).info().catch(() => null)) ? await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null) : null;
+  const boardOn = !!lfl?.board;
+  const autoLand = !!lfl?.autoMerge;   // the merge queue lands approved changes itself: the router never asks to merge
   return {
-    agentId, task: r.task, role: r.role, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token, board: boardOn,
+    agentId, task: r.task, role: r.role, project: slug.replace('.', '/'), remote: r.remote, gitToken: r.token, board: boardOn, autoLand,
     agentToken: await agentToken(env, agentId), apiBase, uiHost: env.UI_HOST, maRev: MA_REV.trim(),
     billing: billing === 'sub' ? 'sub' : 'api',
     // Hosted qodebase pays for other people's boxes; its owner and a self-hosted copy pay their own.
@@ -417,6 +419,27 @@ const app = {
         const e = await registry(env).get(slugOf(m[1], m[2]));
         if (e && !canSee(e, me.handle, me.admin)) return path.startsWith('/api/') ? json({ error: 'no such project' }, 404) : new Response('No such project', { status: 404 });
       }
+      // Turn an existing project over to automatic landing (owner): the merge queue on, approved changes land by
+      // themselves, and every change already pushed goes into the queue now (Eyal's first build sat at 'Ready to merge').
+      if ((m = path.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/landing\/adopt$/)) && request.method === 'POST') {
+        const slug = slugOf(m[1], m[2]);
+        const P = projectStub(env, slug);
+        const info0 = await P.info();
+        if (!info0) return json({ error: 'no such project' }, 404);
+        if (info0.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
+        await P.setLanding(true);
+        await env.Landing.get(env.Landing.idFromName(slug)).setFlags(slug, { autoMerge: true });
+        const info = (await P.info())!;
+        const queued: string[] = [];
+        for (const a of info.agents.filter((x) => x.state === 'pushed')) {
+          await landingHooks.onPushed(env, ctx, info, a.id, a.note || '', 'none').catch((e) => log('landing', 'adopt_failed', { id: a.id, err: String(e) }));
+          queued.push(a.id);
+        }
+        // The router may be waiting for a 'merge' it will never get: tell it.
+        if (info.agents.length) ctx.waitUntil(sendTo(env, `${slug}--router`, 'Merging is automatic now: approved changes land through the merge queue by themselves. Never ask the person to merge; keep going until the request is done and report progress briefly.', apiBase).catch(() => null));
+        log('landing', 'adopt', { slug, queued });
+        return json({ ok: true, landing: true, autoMerge: true, queued });
+      }
       // The landing system (qb6, src/landing/routes.ts): /api/p/<o>/<n>/landing[/<verb>].
       if ((m = path.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/landing(?:\/([a-z-]+))?$/))) {
         const info = await projectStub(env, slugOf(m[1], m[2])).info();
@@ -568,8 +591,9 @@ const app = {
         else await p.create(me.handle, name, desc);
         if (b.private) await p.setPrivate(true);
         // Build settings (Adjust): only with the flag on for this person; otherwise (and with no settings) today's Build.
-        const plan = buildSettingsOn(env.BUILD_SETTINGS, me.handle, env.OWNER_HANDLE)
-          ? resolveBuildPlan(b.settings, { maxCoders: isOwner(env, me.handle) ? 12 : Number(env.MAX_AGENTS_PER_PROJECT) || 6 }) : null;
+        // Adjust settings (flag on for this person) or, by default, one Opus agent with the merge queue landing on its own.
+        const plan = (buildSettingsOn(env.BUILD_SETTINGS, me.handle, env.OWNER_HANDLE)
+          ? resolveBuildPlan(b.settings, { maxCoders: isOwner(env, me.handle) ? 12 : Number(env.MAX_AGENTS_PER_PROJECT) || 6 }) : null) || DEFAULT_PLAN;
         if (plan) {
           await p.setLanding(true);
           await env.Landing.get(env.Landing.idFromName(slug)).setFlags(slug, planFlags(plan));

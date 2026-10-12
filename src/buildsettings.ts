@@ -53,9 +53,13 @@ export function resolveBuildPlan(s: unknown, o: { maxCoders: number }): BuildPla
   };
 }
 
+/** A Build with no Adjust settings (Eyal, 2026-10-12: "Everything should be automated by default… like the Claude
+ *  Code experience on this laptop"): one Opus agent, the merge queue on, approved changes land on their own. */
+export const DEFAULT_PLAN: BuildPlan = { kind: 'single', model: 'opus', preset: 'default' };
+
 /** Landing flags for a plan (as the lab runner sets them; POST …/landing/flags shape). */
 export function planFlags(plan: BuildPlan) {
-  if (plan.kind === 'single') return { autoMerge: true, reviewers: 0, coderModel: plan.model, agentModel: plan.model, policy: 'ffa' as const, trainMax: 1, caps: { agents: 1, awake: 1 } };
+  if (plan.kind === 'single') return { autoMerge: true, reviewers: 0, coderModel: plan.model, agentModel: plan.model, policy: 'intent' as const, llmReplay: true, trainMax: 1, caps: { agents: 1, awake: 1 } };
   return {
     autoMerge: true, reviewers: plan.reviewers, reviewStyle: 'read' as const, policy: 'intent' as const, llmReplay: true,
     plannerModel: plan.planner, coderModel: plan.coderModel, reviewerModel: plan.reviewerModel, trainMax: plan.trainMax,

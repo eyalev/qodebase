@@ -80,3 +80,10 @@ test('estimate vs elapsed: the shown estimate is checked and stamped; spend is p
   assert.equal(apiUsdOf(rows, 'eyal/app'), 0.6 + 2, 'haiku 1M in + 1M out = $0.60; the unnamed row at opus: 100k out = $2');
   assert.equal(apiUsdOf([], 'eyal/app'), null, 'no token rows yet: unknown, not $0');
 });
+
+test('default Build (no Adjust): one Opus agent, the merge queue on, landing by itself with its checks', async () => {
+  const { DEFAULT_PLAN } = await import('./buildsettings.ts');
+  assert.deepEqual(DEFAULT_PLAN, { kind: 'single', model: 'opus', preset: 'default' });
+  const f = planFlags(DEFAULT_PLAN);
+  assert.deepEqual([f.autoMerge, f.reviewers, f.policy, f.coderModel, f.caps.agents], [true, 0, 'intent', 'opus', 1], 'intent policy: tests run before landing (ffa would skip them)');
+});
