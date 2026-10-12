@@ -496,7 +496,7 @@ export function runReal(opts) {
     if (t - lastSample >= 60) {
       lastSample = t;
       workingSum += lanes.reduce((s, l) => s + l.working, 0); workingN++;
-      series.push({ t: Math.round(t), landed: m.landed, conflicts: m.conflicts, testFails: m.testFails, red: brokenUntil > t ? 1 : 0, states: { ...stateCount } });
+      series.push({ t: Math.round(t), landed: m.landed, coordQ: N > 1 ? lanes[X].q.length : 0, parked: lanes.reduce((n, l) => n + l.parked.length, 0) + idle.length, conflicts: m.conflicts, testFails: m.testFails, red: brokenUntil > t ? 1 : 0, states: { ...stateCount } });
     }
     if (performance.now() - lastLog > 5000) { lastLog = performance.now(); process.stderr.write(`  ${name}: ${Math.round(t / 60)} of ${cfg.hours * 60} simulated min, ${m.landed} landed, ${m.gitMerges} git merges\n`); }
   }
@@ -521,6 +521,16 @@ export function runReal(opts) {
     wallS: +((performance.now() - wall0) / 1000).toFixed(1),
   };
   const lat = changes.filter((c) => c.landedAt != null).map((c) => c.landedAt - c.created).sort((a, b) => a - b);
+  // The last hour (qb4: a 2 h run overstates cross-heavy cells while the coordinated queue still grows).
+  const lastH = series.filter((x) => x.t >= end - 3600);
+  if (lastH.length && cfg.hours >= 1) {
+    const atStart = series.filter((x) => x.t <= end - 3600).at(-1)?.landed ?? 0;
+    stats.landedLastHour = m.landed - atStart;
+    stats.coordQLastHour = Math.round(lastH.reduce((a, x) => a + x.coordQ, 0) / lastH.length);
+    stats.coordQEnd = lastH.at(-1).coordQ; stats.parkedEnd = lastH.at(-1).parked;
+  }
+  stats.coordQByHour = Array.from({ length: Math.ceil(cfg.hours) }, (_, h) => series.find((x) => x.t >= (h + 1) * 3600 - 60)?.coordQ ?? null);
+  stats.coordBatch = cfg.coordBatch; stats.coordMaxLanes = cfg.coordMaxLanes;
   stats.p50S = lat[Math.floor(lat.length * 0.5)] ?? null; stats.p90S = lat[Math.floor(lat.length * 0.9)] ?? null;
 
   const bundle = {
@@ -548,6 +558,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   for (const policy of policies) {
     const lanesOpt = args.lanes ? { lanes: Number(args.lanes), controller: !!args.controller, ctlPick: !!args['ctl-pick'], splitHot: !!args['split-hot'],
       ...(args.claims === 'off' ? { claims: false } : {}),
+      ...(args['coord-batch'] ? { coordBatch: Number(args['coord-batch']) } : {}),
+      ...(args['coord-max-lanes'] ? { coordMaxLanes: args['coord-max-lanes'] === 'all' ? Infinity : Number(args['coord-max-lanes']) } : {}),
       ...(args.modules ? { modules: Number(args.modules) } : {}), bundle: !args['no-bundle'], ...(args.name ? { name: args.name } : {}) } : {};
     const { bundle, stats, name } = runReal({ policy, agents: Number(args.agents || 50), hours: Number(args.hours || 1), seed: Number(args.seed || 1), ...lanesOpt });
     if (args['no-bundle']) { // lanes grid: one stats line, no viewer bundle
