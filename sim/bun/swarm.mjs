@@ -17,7 +17,7 @@
 // and queued again. Breaks: p 0.01 per change; a check catches 90% (back to fix), the rest turn the lane red.
 //   node sim/bun/swarm.mjs --one 'method=bun,agents=64'      one cell
 //   node sim/bun/swarm.mjs --calibrate                        Bun's method at 64 vs the real phase times
-//   node sim/bun/swarm.mjs --sweep [--out sim/bun/out/sweep.jsonl]
+//   node sim/bun/swarm.mjs --sweep [--out sim/bun/sweep.jsonl]
 import { readFileSync, appendFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
