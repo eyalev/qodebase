@@ -875,8 +875,18 @@ Candidates, not yet isolated:
 - **Slower lane tests:** testing reverse dependencies makes each lane's test longer.
 - **Noise:** one seed's last hour swings ±40% in L1, and L2 has one seed per cell.
 
-The 32-lane design that L2 recommends (dependency-aware, controller) matched within 8%. The 8-lane cells need 3+
-seeds before the miss is read as structural.
+The 32-lane design that L2 recommends (dependency-aware, controller) matched within 8%.
+
+**Update: the 8-lane miss is structural** (qb5, 3 seeds, last hour of 6 h: 540, 501, 734; mean 592, below one
+queue's 896). In both models the coordinated lane holds all 8 of 8 lanes, so that cannot be the difference: L1
+still gives about 1,270. What L1 lacks is the rest of L2's machinery:
+- the door onto main (one train at a time);
+- main's full tests after every landing;
+- reverse-dependency tests in each lane.
+
+L2's coordinated queue was still growing at 6 h (116–288 waiting). The lesson for the write-up: with few lanes,
+the coordinated lane plus serial landing on main eats the gain. 32 dependency-aware lanes are the design that
+holds (1.4× one queue).
 
 ### (j) addendum: what BUN3 (qb5, b89a003, real patches on real content) overturns
 
