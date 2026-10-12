@@ -44,7 +44,7 @@ export function variantKey(variant, baseline = variant?.baseline ?? null) {
   if (baseline) return baseline;
   const v = { ...DEFAULT_VARIANT, ...variant };
   // board (round 2, W4) is not a KNOB so that every earlier run keeps its key: it appears only when on.
-  return Object.keys(KNOBS).map((k) => `${k}=${typeof v[k] === 'boolean' ? (v[k] ? 1 : 0) : v[k]}`).join(';') + (v.board ? ';board=1' : '');
+  return Object.keys(KNOBS).map((k) => `${k}=${typeof v[k] === 'boolean' ? (v[k] ? 1 : 0) : v[k]}`).join(';') + (v.board ? ';board=1' : '') + (v.claimNext ? ';claimNext=1' : '');
 }
 
 // Scenario profiles: qb5's scripts/lab/scenarios/<id>/scenario.json "profile" (2868ad1, first
