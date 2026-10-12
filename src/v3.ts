@@ -140,6 +140,7 @@ export function liveChanges(c: Ctx) {
   return `<template id="needs" data-n="${needsOf(open).length}"></template>${estBar}${merged}${empty}${out.join('')}`;
 }
 
+const SHOT_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.5h2.5L6 3.5h4l1.5 2H14v7.5H2z"/><circle cx="8" cy="9" r="2.3"/></svg>`;
 const PICK_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2.5l9.5 4-4 1.5-1.5 4z"/><path d="M8.5 8.5l4 4"/></svg>`;
 
 /** App: the running app, with a picker for Live or any change you can try. */
@@ -153,7 +154,7 @@ function appView(c: Ctx) {
 <div class="pstrip" id="pstrip"${sel ? '' : ' hidden'}><span id="pword">${sel ? esc(sel.word) : ''}</span><button type="button" class="btn" id="pmerge"${sel?.state === 'ready' && !sel.auto ? '' : ' hidden'}>Merge</button></div>` : '';
   return {
     full: true,
-    action: app ? `${c.own ? `<button type="button" class="hact qbpick" id="qbpick" aria-pressed="false" aria-label="Pick an element in the app to add to your message">${PICK_ICON}<span>Pick</span></button>` : ''}<a class="hact" id="ext" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open the app in a new tab">${OPEN_ICON}</a>` : '',
+    action: app ? `${c.own ? `<button type="button" class="hact qbpick" id="qbpick" aria-pressed="false" aria-label="Pick an element in the app to add to your message">${PICK_ICON}<span>Pick</span></button><button type="button" class="hact qbpick" id="qbshot" aria-label="Take a screenshot of the app and add it to your message">${SHOT_ICON}<span>Shot</span></button>` : ''}<a class="hact" id="ext" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open the app in a new tab">${OPEN_ICON}</a>` : '',
     body: `${picker}${app && c.own ? `<div class="pickhint" id="pickhint" hidden role="status"><span>Tap anything in the app to add it to your message.</span><button type="button" class="chipbtn" id="pickdone">Done</button></div>` : ''}${app ? `<iframe id="app" src="${esc(src)}" title="${esc(c.info.name)}"></iframe>` : noApp(c)}${c.own ? '' : `<div class="forkbar">${VISIT}${forkAction(c.info, c.me, c.forks.filter((e) => e.owner === c.me))}</div>`}`,
     js: `(function(){const f=document.getElementById('app'),x=document.getElementById('ext'),ps=document.getElementById('pstrip'),pm=document.getElementById('pmerge');let cur=null;
 // Pick (S2): the app host injects its picker only with ?__qbpick=1 (qb6); we switch it on and off by postMessage
@@ -167,9 +168,21 @@ function setPick(on){picking=on;if(pb){pb.setAttribute('aria-pressed',String(on)
  console.log(JSON.stringify({module:'pick',event:on?'on':'off'}));}
 if(pb)pb.addEventListener('click',()=>setPick(!picking));
 document.getElementById('pickdone')?.addEventListener('click',()=>setPick(false));
+let lastSel=null;
 addEventListener('message',(e)=>{const d=e.data;if(!d||d.type!=='qb-picked'||e.origin!==appOrigin())return;
- console.log(JSON.stringify({module:'pick',event:'picked',selector:d.selector,tag:d.tag}));
+ console.log(JSON.stringify({module:'pick',event:'picked',selector:d.selector,tag:d.tag}));lastSel=d.selector||null;
  if(window.qbAddPick)window.qbAddPick(d);});
+// Screenshot (S3): Cloudflare Browser Rendering on the server (qb6) shoots the app at 390 px, the last picked
+// element outlined, and keeps it as an attachment; it becomes an image chip like a photo.
+const sb2=document.getElementById('qbshot');
+if(sb2)sb2.addEventListener('click',async()=>{const lab=sb2.querySelector('span');sb2.disabled=true;lab.textContent='Shooting\u2026';
+ const url=(()=>{try{const x=new URL(f.src);x.searchParams.delete('__qbpick');return x.toString();}catch(e){return f.src;}})();
+ try{const r=await fetch(API+'/screenshot',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:url,selector:lastSel||undefined,width:390})});const d=await r.json().catch(()=>({}));
+  console.log(JSON.stringify({module:'shot',event:'done',status:r.status,id:d.id||null}));
+  if(!r.ok||!d.id)throw new Error(d.error||('Screenshot failed ('+r.status+')'));
+  if(window.qbAddAttachment)window.qbAddAttachment({id:d.id,name:'screenshot.png'});lab.textContent='Shot';}
+ catch(err){lab.textContent='Shot';sb2.title=err.message;const t=document.querySelector('form.ask textarea');if(t&&!t.value)t.placeholder=err.message;}
+ sb2.disabled=false;});
 document.addEventListener('click',async(e)=>{const b=e.target.closest('[data-pick]');if(b){f.src=b.dataset.pick;if(x)x.href=b.dataset.pick;for(const o of document.querySelectorAll('[data-pick]'))o.classList.toggle('on',o===b);
  cur=b.dataset.id||null;if(ps){ps.hidden=!cur;document.getElementById('pword').textContent=b.dataset.word||'';pm.hidden=b.dataset.state!=='ready'||b.dataset.auto==='1';}
  history.replaceState(null,'',location.pathname+(b.dataset.agent?'?try='+b.dataset.agent:''));return;}
