@@ -126,3 +126,27 @@ test('a shallow main (an import from GitHub is depth 1): the train fetches and l
   assert.equal(r.ok, true, JSON.stringify(r).slice(0, 600));
   assert.equal(r.changes[0].landed, true, JSON.stringify(r.changes[0]).slice(0, 600));
 });
+
+test('a warm merger box: three trains in a row on one clone, main moving under it; every landing on main, main whole', () => {
+  const s = setup();
+  const dir = join(s.root, 'merger');
+  const job = (c) => ({ dir, mainRemote: s.main, mainToken: null, check: 'npm test', changes: [c] });
+  const r1 = run(job(s.fork('w1', (fw) => write(fw, { 'w1.txt': 'one\n' }))));
+  assert.equal(r1.changes[0].landed, true);
+  assert.ok(r1.phases.some((p) => p[0] === 'ls-remote'), 'cold: looks the branch up');
+  // Someone else moves main between trains (another lane, a person): the warm clone must not miss it.
+  const w = join(s.root, 'mover'); g(s.root, 'clone', '-q', s.main, w);
+  write(w, { 'm.txt': 'm\n' }); g(w, 'add', '-A'); g(w, 'commit', '-qm', 'm'); g(w, 'push', '-q', 'origin', 'HEAD:main');
+  const r2 = run(job(s.fork('w2', (fw) => write(fw, { 'w2.txt': 'two\n' }))));
+  assert.equal(r2.changes[0].landed, true);
+  assert.ok(!r2.phases.some((p) => p[0] === 'ls-remote'), 'warm: branch remembered');
+  assert.ok(r2.phases.some((p) => p[0] === 'fetch-all'), 'warm, not shallow: main and forks fetched together');
+  const r3 = run(job(s.fork('w3', (fw) => edit(fw, 'src/math.js', (t) => t.replace('return a + b;', 'return b + a;')))));
+  assert.equal(r3.changes[0].landed, true);
+  assert.equal(r3.mainBefore, r2.mainAfter, 'train 3 starts from train 2\'s main');
+  const check = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, check);
+  for (const f of ['w1.txt', 'w2.txt', 'm.txt']) assert.ok(readFileSync(join(check, f), 'utf8'));
+  assert.match(readFileSync(join(check, 'src/math.js'), 'utf8'), /return b \+ a;/);
+  execFileSync('git', ['fsck', '--strict'], { cwd: s.main });
+  assert.equal(g(s.main, 'rev-parse', 'main'), r3.mainAfter);
+});

@@ -237,12 +237,32 @@ function diffOf(from, to) {
 // ---- the train --------------------------------------------------------------------
 async function main() {
   const tMain = Date.now();
-  if (!existsSync(join(DIR, '.git'))) { mkdirSync(DIR, { recursive: true }); git(['init', '-q']); }
-  const sym = git(['ls-remote', '--symref', job.mainRemote, 'HEAD'], { tok: job.mainToken }).out;
-  const branch = job.branch || (sym.match(/ref: refs\/heads\/(\S+)\s+HEAD/) || [])[1] || 'main';
+  const warm = existsSync(join(DIR, '.git'));
+  if (!warm) { mkdirSync(DIR, { recursive: true }); git(['init', '-q']); }
+  // Warm box (T1 finding, 2026-10-12: fetching main was 4.4 s of each train, three round trips one after another):
+  // main's branch is looked up once per box and remembered; main, the notes and (unless the clone is shallow,
+  // where parallel fetches fight over .git/shallow) the agents' forks are fetched at the same time.
+  const branchFile = join(DIR, '.git', 'qb-branch');
+  const known = !job.branch && existsSync(branchFile) ? readFileSync(branchFile, 'utf8').split('\n') : null;
+  let sym = '', branch = job.branch || (known && known[0] === job.mainRemote ? known[1] : null);
+  if (!branch) {
+    const tL = Date.now();
+    sym = git(['ls-remote', '--symref', job.mainRemote, 'HEAD'], { tok: job.mainToken }).out;
+    branch = (sym.match(/ref: refs\/heads\/(\S+)\s+HEAD/) || [])[1] || 'main';
+    phase('ls-remote', tL);
+    try { writeFileSync(branchFile, `${job.mainRemote}\n${branch}\n`); } catch {}
+  }
+  const shallow = warm && git(['rev-parse', '--is-shallow-repository'], { ok: true }).out === 'true';
+  const forkFetch = () => Promise.all(job.changes.map((c) => gitAsync(['fetch', '-q', '--update-shallow', '--no-tags', '--no-write-fetch-head', c.remote, `+HEAD:refs/qb/c/${c.id}`], c.token)));
+  const tF = Date.now();
+  const early = warm && !shallow ? forkFetch() : null;
   // --update-shallow: an imported repo is shallow (depth 1), and without it git refuses the ref ('shallow roots are
   // not allowed to be updated', exit 0, no ref): every train of an imported project bounced (self-host check, 2026-10-12).
-  const f = git(['fetch', '--update-shallow', '--no-tags', job.mainRemote, `+refs/heads/${branch}:refs/qb/main`], { tok: job.mainToken });
+  const [f] = await Promise.all([
+    gitAsync(['fetch', '--update-shallow', '--no-tags', job.mainRemote, `+refs/heads/${branch}:refs/qb/main`], job.mainToken),
+    gitAsync(['fetch', '-q', '--no-tags', job.mainRemote, '+refs/notes/qodebase:refs/notes/qodebase'], job.mainToken),
+  ]);
+  if (f.code !== 0) throw new Error(`git fetch failed (${f.code}): ${(f.err || f.out).slice(0, 600)}`);
   // A fetch that exited 0 without writing the ref (seen on a self-hosted copy, 2026-10-12): say what the remote
   // advertised and what git printed, instead of failing later on rev-parse with no clue.
   if (git(['rev-parse', '-q', '--verify', 'refs/qb/main'], { ok: true }).code !== 0) {
@@ -251,9 +271,8 @@ async function main() {
     say('main_fetch_no_ref', { branch, sym: sym.slice(0, 200), fetchOut: (f.out + '\n' + f.err).slice(0, 600), lsRemote: (ls.out || ls.err).slice(0, 600), git: v });
     throw new Error(`main fetch wrote no ref (branch ${branch}; ${v}); remote refs: ${(ls.out || ls.err).replace(/\s+/g, ' ').slice(0, 300)}; fetch said: ${(f.out + ' ' + f.err).replace(/\s+/g, ' ').slice(0, 300)}`);
   }
-  git(['fetch', '-q', '--update-shallow', '--no-tags', job.mainRemote, '+refs/notes/qodebase:refs/notes/qodebase'], { tok: job.mainToken, ok: true });
   const mainBefore = git(['rev-parse', 'refs/qb/main']).out;
-  phase('fetch-main', tMain);
+  if (!early) phase('fetch-main', tF);
   say('main', { branch, mainBefore });
   const cfg = (() => { try { return JSON.parse(show(`${mainBefore}:.qodebase/landing.json`) || '{}'); } catch { return {}; } })();
   if (!job.check && cfg.check) job.check = cfg.check;
@@ -262,9 +281,9 @@ async function main() {
   const results = new Map();
   // Every fork at once: one at a time took ~1 s each, 8.7 s of an 11.7 s train (2026-10-08).
   const tForks = Date.now();
-  const fetches = await Promise.all(job.changes.map((c) => gitAsync(['fetch', '-q', '--update-shallow', '--no-tags', '--no-write-fetch-head', c.remote, `+HEAD:refs/qb/c/${c.id}`], c.token)));
-  phase('fetch-forks', tForks);
-  say('fetched', { forks: job.changes.length, ms: Date.now() - t0 });
+  const fetches = await (early || forkFetch());
+  phase(early ? 'fetch-all' : 'fetch-forks', early ? tF : tForks);
+  say('fetched', { forks: job.changes.length, warm, shallow, parallel: !!early, ms: Date.now() - t0 });
   for (const [k, c] of job.changes.entries()) {
     const f = fetches[k];
     if (f.code !== 0) { results.set(c.id, { id: c.id, ok: false, conflicts: [], why: 'could not fetch its fork: ' + f.err.slice(0, 200) }); continue; }
