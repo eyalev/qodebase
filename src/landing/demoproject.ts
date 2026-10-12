@@ -171,7 +171,7 @@ export const TASKS: Task[] = [
     claims: ['index.html', 'style.css'],
     edits: [{ path: 'index.html', after: '<main id="page"></main>', insert: '  <footer>12 Rua das Flores, Lisbon · built by agents on qodebase</footer>' },
       { path: 'style.css', append: 'footer { padding: 16px; font-size: 14px; opacity: .7; }\n' }] },
-  { key: 'vegan-data', title: 'Mark the vegan items', intent: 'Mark the vegan items in the menu data so the badge shows.',
+  { key: 'vegan-data', title: 'Tag the vegan drinks in the menu data', intent: 'Tag the vegan drinks in the menu data (vegan: true) so the menu\'s vegan badge shows them.',
     claims: ['src/data/menu.js'],
     edits: [{ path: 'src/data/menu.js', re: "\\{ name: 'Espresso', price: 1.2 \\}", to: "{ name: 'Espresso', price: 1.2, vegan: true }" }] },
 ];
