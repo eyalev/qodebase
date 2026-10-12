@@ -33,3 +33,9 @@ test('asks: state of a set of changes', () => {
   assert.equal(stateOf(['bounced']), 'bounced');
   assert.equal(stateOf(['landed', 'bounced']), 'mixed');
 });
+
+test('asks: scripted demo changes (no request, no list) are asks of their own', () => {
+  const out = buildAsks({ requests: [], lists: [], done: [], claims: {}, aliases: [],
+    changes: [{ id: 'e.c--d1', title: 'Menu prices', state: 'landed', createdAt: 5, kind: 'demo' }, { id: 'e.c--d2', title: 'Hours', state: 'queued', createdAt: 6, kind: 'demo' }] });
+  assert.deepEqual(out.asks.map((a) => [a.id, a.from, a.state, a.text]), [['c:e.c--d2', 'script', 'in-line', 'Hours'], ['c:e.c--d1', 'script', 'landed', 'Menu prices']]);
+});

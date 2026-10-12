@@ -92,9 +92,12 @@ export const SUGGEST_SYSTEM = `You size software jobs for a team of coding agent
 "vague":true|false (true if key requirements are left to guesswork),
 "summary":"<one plain sentence, at most 120 characters>",
 "name":"<a project name: 2-3 lowercase words joined by hyphens, from the core noun phrase of what is built, e.g. family-trip-planner; no verbs like want/build/help, no word twice>",
+"kind":"build"|"port"|"sweep" (port: rewrite existing code into another language or framework; sweep: one kind of change applied across many files, like a rename or an upgrade; build: anything else),
 "confidence":<0-1>}`;
 
-export type Job = { tasks: number; overlap: 'low' | 'some' | 'high'; difficulty: 'easy' | 'normal' | 'hard'; vague: boolean; summary: string; confidence: number; name?: string };
+export type Job = { tasks: number; overlap: 'low' | 'some' | 'high'; difficulty: 'easy' | 'normal' | 'hard'; vague: boolean; summary: string; confidence: number; name?: string;
+  /** qb4's jobType (predict.js): port = rewrite into another language/framework, sweep = one change across many files. Model-given, default build. */
+  kind?: 'build' | 'port' | 'sweep' };
 
 /** The model's project name, cleaned: lowercase kebab, 2-3 words, no word twice, <= 30 chars; else undefined. */
 export function cleanName(v: unknown): string | undefined {
@@ -116,7 +119,8 @@ export function parseJob(text: string): Job | null {
   const confidence = Number(j.confidence);
   if (!(confidence >= 0 && confidence <= 1)) return null;
   const name = cleanName(j.name);
-  return { tasks, overlap: j.overlap, difficulty: j.difficulty, vague: j.vague === true, summary: String(j.summary || '').replace(/\s+/g, ' ').trim().slice(0, 120), confidence, ...(name ? { name } : {}) };
+  const kind = j.kind === 'port' || j.kind === 'sweep' ? j.kind : 'build';
+  return { tasks, overlap: j.overlap, difficulty: j.difficulty, vague: j.vague === true, summary: String(j.summary || '').replace(/\s+/g, ' ').trim().slice(0, 120), confidence, ...(name ? { name } : {}), kind };
 }
 
 
@@ -167,7 +171,7 @@ export const IDEA_SIZES: Record<IdeaSize, { lo: number; hi: number; words: strin
 };
 export type Idea = { title: string; prompt: string; job: Job };
 const J = (tasks: number, overlap: Job['overlap'], difficulty: Job['difficulty'], summary: string, name: string): Job =>
-  ({ tasks, overlap, difficulty, vague: false, summary, confidence: 0.8, name });
+  ({ tasks, overlap, difficulty, vague: false, summary, confidence: 0.8, name, kind: 'build' });
 /** Hand-written ideas per size: the instant first paint, and the fallback when the model fails or misses the size.
  *  GENERATED from docs/board/static-ideas.json (qb4, fc71712: static, single-user, data in the browser); edit that file and
  *  regenerate, don't edit here. */
@@ -239,6 +243,7 @@ export function parseIdea(text: string, size: IdeaSize): Idea | null {
   if (!job) return null;
   const { lo, hi } = IDEA_SIZES[size];
   if (job.tasks < lo || job.tasks > hi) return null;
+  job.kind = 'build';   // ideas are new apps (curated ideas too)
   let j: any; try { j = JSON.parse(String(text).match(/\{[\s\S]*\}/)![0]); } catch { return null; }
   const title = String(j.title || '').replace(/\s+/g, ' ').trim().slice(0, 40), prompt = String(j.prompt || '').replace(/\s+/g, ' ').trim().slice(0, 600);
   if (NEEDS_SERVER.test(prompt) || NEEDS_SERVER.test(title)) return null;

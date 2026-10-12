@@ -3,19 +3,20 @@
 // Landing's change records + board lists.
 //   GET /api/p/<o>/<n>/asks   (anyone who can see the project)
 // { asks: [{ id, text, from, at, state, changes: [changeId], changeStates: {id: state}, duplicateOf?, aliases? }], counts }
-//   from:  person (typed or Build) | talk | issues (Cloudflare Issues) | board (a task list the router registered)
+//   from:  person (typed or Build) | talk | issues (Cloudflare Issues) | board (a task list the router registered) |
+//          script (a scripted demo task, corner-cafe: no router there, so each scripted change is its own ask)
 //   state: planning (nothing started yet) | working | in-line (pushed, in review or in the merge queue) | landed |
 //          bounced | mixed (all finished, some landed and some bounced)
 // A router request's changes = the change records created after it and before the next request (the router splits
 // a request into changes right after it); a board task's changes = the agents that claimed it.
 
-export type AskFrom = 'person' | 'talk' | 'issues' | 'board';
+export type AskFrom = 'person' | 'talk' | 'issues' | 'board' | 'script';
 export type AskState = 'planning' | 'working' | 'in-line' | 'landed' | 'bounced' | 'mixed';
 export type Ask = { id: string; text: string; from: AskFrom; at: number; state: AskState; changes: string[];
   changeStates: Record<string, string>; duplicateOf?: string; aliases?: string[]; delivery?: string };
 export type AsksInput = {
   requests: { text: string; at: number; from?: string; state?: string }[];
-  changes: { id: string; title: string; state: string; createdAt: number; agent?: string }[];
+  changes: { id: string; title: string; state: string; createdAt: number; agent?: string; kind?: string }[];
   lists: { by: string; at: number; items: { id: string; text: string }[] }[];
   done: string[]; claims: Record<string, { ids: string[]; at: number }>; aliases: { a: string; b: string }[];
 };
@@ -66,6 +67,10 @@ export function buildAsks(inp: AsksInput): { asks: Ask[]; counts: Record<AskStat
       ...(alias.has(it.id) ? { duplicateOf: `t:${alias.get(it.id)}` } : {}),
       ...(same.length ? { aliases: same.map((s) => inp.lists.flatMap((x) => x.items).find((x) => x.id === s)?.text || s) } : {}) });
   }
+  // Scripted demo changes have no request and no list: each is its own ask (the café's task script).
+  const covered = new Set(asks.flatMap((a) => a.changes));
+  for (const c of inp.changes) if (c.kind === 'demo' && !covered.has(c.id))
+    asks.push({ id: `c:${c.id}`, text: c.title, from: 'script', at: c.createdAt, state: stateOf([c.state]), changes: [c.id], changeStates: { [c.id]: c.state } });
   asks.sort((a, b) => b.at - a.at);
   const counts = { planning: 0, working: 0, 'in-line': 0, landed: 0, bounced: 0, mixed: 0 } as Record<AskState, number>;
   for (const a of asks) counts[a.state]++;

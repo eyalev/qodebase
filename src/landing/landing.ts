@@ -494,7 +494,7 @@ export class Landing extends DurableObject<Env> {
     const m = (await this.ctx.storage.get<Meta>('meta')) || null;
     if (!m) return null;
     if (!this.#meta) this.#meta = m;
-    const changes = (await Promise.all(m.order.map((id) => this.#get(id)))).filter(Boolean).map((c) => ({ id: c!.id, title: c!.title, state: c!.state, createdAt: c!.createdAt, agent: c!.agent }));
+    const changes = (await Promise.all(m.order.map((id) => this.#get(id)))).filter(Boolean).map((c) => ({ id: c!.id, title: c!.title, state: c!.state, createdAt: c!.createdAt, agent: c!.agent, kind: c!.kind }));
     return { changes, lists: m.dedupeLists || [], done: m.tasksDone || [], claims: m.boardClaims || {}, aliases: (m.aliases || []).map((a) => ({ a: a.a, b: a.b })) };
   }
 

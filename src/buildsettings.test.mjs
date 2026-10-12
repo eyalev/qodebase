@@ -53,7 +53,7 @@ test('the sheet contract (qb7): v as a URL JSON string; 1 opus coder with 0 revi
 
 test('B4: the model\'s job answer is parsed strictly; anything off is null (the page falls back to a small app)', () => {
   const ok = parseJob('Here: {"v":1,"tasks":14.4,"overlap":"some","difficulty":"normal","vague":false,"summary":"  A bakery   site ","confidence":0.7}');
-  assert.deepEqual(ok, { tasks: 14, overlap: 'some', difficulty: 'normal', vague: false, summary: 'A bakery site', confidence: 0.7 });
+  assert.deepEqual(ok, { tasks: 14, overlap: 'some', difficulty: 'normal', vague: false, summary: 'A bakery site', confidence: 0.7, kind: 'build' });
   for (const bad of ['no json', '{"tasks":0,"overlap":"some","difficulty":"normal","confidence":0.5}', '{"tasks":5,"overlap":"lots","difficulty":"normal","confidence":0.5}',
     '{"tasks":5,"overlap":"low","difficulty":"normal","confidence":2}', '{"tasks":5,"overlap":"low","difficulty":"normal"}']) assert.equal(parseJob(bad), null, bad);
   assert.match(SUGGEST_SYSTEM, /ONE JSON object only/);
@@ -111,4 +111,16 @@ test('ideas are static, single-user apps: the rule is in the prompt, and server-
   assert.equal(parseIdea(base('An online shop with accounts, checkout and email receipts.'), 'huge'), null);
   assert.ok(parseIdea(base('A shop catalogue kept on the phone: products, stock, sales charts, CSV import and export, printable price lists.'), 'huge'));
   for (const [size, list] of Object.entries(CURATED_IDEAS)) for (const i of list) assert.ok(!NEEDS_SERVER.test(i.prompt), `${size}: ${i.title} needs a server: ${i.prompt}`);
+});
+
+test('job.kind for qb4\'s jobType: port | sweep only when the model says so, else build; ideas are builds', async () => {
+  const { parseJob, parseIdea, CURATED_IDEAS, SUGGEST_SYSTEM } = await import('./buildsettings.ts');
+  const j = (kind) => JSON.stringify({ tasks: 6, overlap: 'some', difficulty: 'normal', vague: false, summary: 's', confidence: 0.8, name: 'x-y', ...(kind ? { kind } : {}) });
+  assert.equal(parseJob(j('port')).kind, 'port');
+  assert.equal(parseJob(j('sweep')).kind, 'sweep');
+  assert.equal(parseJob(j('refactor')).kind, 'build');
+  assert.equal(parseJob(j()).kind, 'build');
+  assert.match(SUGGEST_SYSTEM, /"kind":"build"\|"port"\|"sweep"/);
+  assert.equal(parseIdea(JSON.stringify({ title: 'Garden planner', prompt: 'Plan a garden with beds and watering reminders kept on the phone.', tasks: 7, overlap: 'some', difficulty: 'normal', confidence: 0.8, name: 'garden-planner', kind: 'port' }), 'medium').job.kind, 'build');
+  for (const list of Object.values(CURATED_IDEAS)) for (const i of list) assert.equal(i.job.kind, 'build');
 });
