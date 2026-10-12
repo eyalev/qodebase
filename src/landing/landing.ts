@@ -70,6 +70,8 @@ type Meta = {
     reviewers?: number;
     /** Hard budget for this project's boxes + Claude tokens (conservative pricing); halted = boxes stopped. */
     budgetUsd?: number; halted?: boolean;
+    /** R1 owner controls: paused = no new spawns, no new trains, the router holds; halted (above) = Stop all. */
+    paused?: boolean; pausedAt?: number; pausedBy?: string; haltedAt?: number; haltedWhy?: string;
     /** A real agent's change the reviewer approves goes straight into the queue (no merge tap). */
     autoMerge?: boolean;
     // Variants lab (docs/lab/PLAN.md): models per role, review style, landing policy, train size.
@@ -423,6 +425,7 @@ export class Landing extends DurableObject<Env> {
   }
   /** `forq who`, the hook's context, the view: rows + aliases + the text an agent reads. */
   async boardWho(q: BoardQuery & { text?: boolean } = {}) {
+    if (!this.#meta && !(await this.ctx.storage.get<Meta>('meta'))) return { on: false, rows: [], aliases: [], text: '' };   // no landing here (was a 500)
     const m = await this.#m();
     if (!m.flags.board) return { on: false, rows: [], aliases: [], text: '' };
     const recent = Math.min(24 * 3_600_000, q.recent || 0);
@@ -575,6 +578,40 @@ export class Landing extends DurableObject<Env> {
     if (!this.#meta) this.#meta = m;
     const changes = (await Promise.all(m.order.map((id) => this.#get(id)))).filter(Boolean).map((c) => ({ id: c!.id, title: c!.title, state: c!.state, createdAt: c!.createdAt, agent: c!.agent, kind: c!.kind }));
     return { changes, lists: m.dedupeLists || [], done: m.tasksDone || [], claims: m.boardClaims || {}, aliases: (m.aliases || []).map((a) => ({ a: a.a, b: a.b })), gitPushes: m.gitPushes || [] };
+  }
+
+  // ---- R1: owner controls (pause / resume / stop all) ------------------------------
+  runState() {
+    const f = this.#meta!.flags;
+    return { paused: !!f.paused, ...(f.paused ? { pausedAt: f.pausedAt, pausedBy: f.pausedBy } : {}), stopped: !!f.halted, ...(f.halted ? { stoppedAt: f.haltedAt, stoppedWhy: f.haltedWhy } : {}) };
+  }
+  async isPaused() { const m = (await this.ctx.storage.get<Meta>('meta')) || null; return !!(m?.flags.paused || m?.flags.halted); }
+  async pause(by: string) {
+    const m = await this.#m();
+    if (!m.flags.paused) {
+      m.flags.paused = true; m.flags.pausedAt = Date.now(); m.flags.pausedBy = by;
+      this.#tell(`${m.slug}--router`, `qodebase: the owner paused this project. Do not spawn agents or start new work until you are told it resumed; agents already working may finish and push.`);
+      await this.#saveMeta(); await this.#arm(500);
+      log('landing', 'paused', { slug: m.slug, by });
+    }
+    return this.runState();
+  }
+  async resume(by: string) {
+    const m = await this.#m();
+    const was = { paused: !!m.flags.paused, stopped: !!m.flags.halted };
+    delete m.flags.paused; delete m.flags.pausedAt; delete m.flags.pausedBy;
+    if (m.flags.halted) { m.flags.halted = false; delete m.flags.haltedAt; delete m.flags.haltedWhy; m.spentBase = undefined; }   // a budget counts again from now
+    if (was.paused || was.stopped) {
+      this.#tell(`${m.slug}--router`, `qodebase: the owner resumed this project. Carry on with the work you were planning.`);
+      await this.#saveMeta(); await this.#arm(500);
+      log('landing', 'resumed', { slug: m.slug, by, ...was });
+    }
+    return this.runState();
+  }
+  async stopAll(by: string) {
+    const m = await this.#m();
+    if (!m.flags.halted) { await this.#halt(m, `stopped by the owner (${by})`); await this.#saveMeta(); }
+    return this.runState();
   }
 
   /** The merge tap: approved → waits for the next train. */
@@ -735,7 +772,7 @@ export class Landing extends DurableObject<Env> {
     if (!m.flags.halted) await this.#arm(60_000);
   }
   async #halt(m: Meta, why: string) {
-    m.flags.halted = true;
+    m.flags.halted = true; m.flags.haltedAt = Date.now(); m.flags.haltedWhy = why;
     const p = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
     const ids = [...(p?.agents || []).map((a) => a.id), `${m.slug}--router`, `${m.slug}--router2`, ...this.#reviewers({ ...m, flags: { ...m.flags, reviewers: 6 } })];
     for (const id of ids) await fetch(`${this.env.API_BASE}/api/agents/${id}/stop`, { method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } }).catch(() => null);
@@ -793,6 +830,7 @@ export class Landing extends DurableObject<Env> {
 
   async #startTrain() {
     const m = await this.#m();
+    if (m.flags.paused || m.flags.halted) return;   // R1: queued changes wait while the owner has paused or stopped
     m.waiting = (await Promise.all(m.waiting.map((id) => this.#get(id)))).filter((c) => c && c.state === 'queued').map((c) => c!.id);
     const picked = await this.#pick();
     if (!picked.length) { await this.#saveMeta(); return; }
@@ -1094,6 +1132,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
         // How many tasks the run has in all ('N of 14 landed'): the story's script; busy mode has no fixed list.
         tasks: (m.demo?.mode || 'story') === 'busy' ? null : TASKS.length, runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 86400_000).length) } : null,
       flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch, board: !!m.flags.board },
+      run: this.runState(),
       // Estimate vs elapsed (Build): absent when built without an estimate.
       ...(m.build ? await this.buildInfo() : {}),
       // The board (qb7's "who works on what"): working now + finished in the last 30 min + dedupe aliases.

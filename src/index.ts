@@ -1437,6 +1437,8 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
   if (me.role !== 'router') return json({ error: 'only the router agent can do that' }, 403);
   if (verb === 'spawn') {
     const b = body as Record<string, unknown>;
+    // R1: the owner paused or stopped this project: no new agents until they resume.
+    if (await env.Landing.get(env.Landing.idFromName(slug)).isPaused().catch(() => false)) return json({ error: 'paused by the owner: no new agents until the project is resumed' }, 409);
     return json(await spawn(env, ctx, slug, String(b.task || ''), apiBase, { files: Array.isArray(b.files) ? b.files.map(String) : undefined, on: b.on ? String(b.on) : undefined }));
   }
   if (verb === 'send') {

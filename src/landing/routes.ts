@@ -8,6 +8,7 @@
 //   GET  /api/p/<o>/<n>/landing/board       the agent board: ?recent=<min, default 30>&files=a,b&area=X&tail=N (anyone who can see the project)
 //   GET  /api/p/<o>/<n>/landing/timeline    the run as a trace: lanes, spans, marks, critical path (timeline.ts; owner or publicWatch)
 //   POST /api/p/<o>/<n>/landing/sendback    {id, note}: the owner sends a change back to its agent with their note (G5)
+//   POST /api/p/<o>/<n>/landing/{pause,resume,stop}  owner controls (R1): view().run says which is on
 
 import type { Env } from '../env';
 import type { ProjectInfo } from '../project';
@@ -70,6 +71,11 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
     return tl ? json(tl) : json({ error: 'not your project' }, 403);
   }
   if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
+  // R1 owner controls: pause (no new spawns or trains, router holds), resume, stop all (every box stops).
+  if ((verb === 'pause' || verb === 'resume' || verb === 'stop') && request.method === 'POST') {
+    const by = me.handle || 'owner';
+    return json(verb === 'pause' ? await L.pause(by) : verb === 'resume' ? await L.resume(by) : await L.stopAll(by));
+  }
   // G5 Ask for changes: the owner's note sends a change back to its agent (Landing.sendBack).
   if (verb === 'sendback' && request.method === 'POST') {
     const b = await request.json().catch(() => ({})) as { id?: string; note?: string };
