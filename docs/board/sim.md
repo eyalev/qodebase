@@ -969,3 +969,54 @@ real.
 **Falsifiers:**
 - interfaces-first takes more than 13 h at 64 agents (less than 2× BUN3);
 - 640 agents are more than 1.5× faster than 64 (then work, not the critical path, binds).
+
+### (k) results (2026-10-12, `node sim/bun/modules.mjs --graph` then `--sweep`; sim/bun/modules.json, sim/bun/bun5-sweep.jsonl)
+
+**The structure, from the tip's code:**
+- 108 crates, 1,160 modules reached from the crates' `lib.rs`, 9,881 `use` edges (a median module uses 5 others,
+  p90 20).
+- The crate graph is **25 layers deep**.
+- The c..e window touched 1,221 files. 852 of its 1,123 `.rs` files are reachable modules at the tip; the rest
+  were renamed or deleted before the tip, and keep their crate (by directory) with no `use` edges.
+- The re-cut has 4,080 commits in 1,221 one-owner tasks.
+
+Three seeds; times include a final 15-minute full check:
+
+| ordering | 64 agents | 640 | 6,400 | unlimited | critical path | most at work at once | biggest task | vs BUN3's 26.2 h |
+|---|---|---|---|---|---|---|---|---|
+| interfaces-first, interface = 10% of a module | 3.41 h | 3.40 | 3.40 | 3.40 | 3.40 h | 482 | 2.03 h | **7.7× faster** |
+| interfaces-first, 20% | **4.29 h** | 4.29 | 4.29 | 4.29 | 4.29 h | 452 | 1.81 h | **6.1× faster** |
+| interfaces-first, 30% | 5.18 h | 5.18 | 5.18 | 5.18 | 5.18 h | 444 | 1.58 h | 5.1× faster |
+| strict (wait for used modules to finish) | 89.1 h | 89.1 | 89.1 | 89.1 | 89.1 h | 396 | 87.6 h | 3.4× slower |
+
+Agent-hours are 118 in every cell: the same work, now with no waiting on handoffs.
+
+**Against the prediction:**
+1. **Better than predicted.** Interfaces-first takes 3.4–5.2 h at 64 agents, 5–8× faster than BUN3 (predicted
+   5–7 h, 4–5×). The critical path is the interface layers through the 25-deep crate graph plus the biggest
+   module's remaining work.
+2. **Held.** 640 and 6,400 agents gain nothing over 64: the run is exactly its critical path at every size. At
+   most 444–482 modules are worked at once, right after the interfaces.
+3. **Held, and worse than said.** Strict ordering takes 89 h, 3.4× slower than BUN3: the modules use each other in
+   cycles, and **74% of all the work** falls into one cycle that one owner must do in sequence.
+4. **Held.** About 118 agent-hours.
+
+No falsifier fired: interfaces-first stayed under 13 h, and 640 agents were not faster than 64.
+
+**Answer.**
+- **Bun's chain is mostly how the work was cut, provided the port can be cut interfaces-first.** Give each
+  module one owner, so the per-file chains stay inside one agent. Order modules by the crate graph, interfaces
+  before bodies. The same work then finishes about 6× sooner, and 64 agents are already enough.
+- **Without interfaces-first it is worse than Bun's own way.** The use graph is so cyclic that "finish what you
+  depend on first" serialises three quarters of the port.
+- **Bun's actual method sat between the two.** Phase a's draft port acted as interfaces, but the work was then
+  cut per error, not per module.
+
+**Caveats** (repeated, because they carry the result):
+- **One owner per module assumes no handoff cost** and that one agent works through a module's commits as fast as
+  many did.
+- **"Interface = 10–30% of a module" is an assumption.** The result moves 3.4–5.2 h across that range, never near
+  26 h.
+- **Order from `use` lines is an approximation** of what must exist first.
+- **Not checked with real patches.** A real-patch check of the critical path (does each module's chain apply when
+  replayed module by module, with interfaces first?) is BUN3's machinery; I'll offer it to qb5.
