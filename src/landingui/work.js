@@ -642,10 +642,12 @@
     const f = feedItems()[0];
     return f ? `<p class="slast2">${esc(f.s[0])} <span class="meta">${ago(f.t)}</span></p>` : '';
   }
+  // qb3's Asks view (G4): /p/<o>/<n>/asks, next to this page's /work.
+  const asksUrl = () => { const m = /^(\/p\/[^/]+\/[^/]+)\//.exec(location.pathname); return m ? `${m[1]}/asks` : ''; };
   function fitPanel(tab) {
     if (tab === 'agents') { const r = rightNow(true); return r || (D.changes.length ? `<ul class="now">${sortC(D.changes).map((c) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${skey(c)}"></i><b>${AG(c.agent)}</b><span class="t">${short(c)}</span><span class="w">${WORD[skey(c)]}</span></a></li>`).join('')}</ul>` : '<p class="dim">No agent has worked here yet.</p>'); }
     if (tab === 'line') return theLine(false);
-    if (tab === 'events') return `${headFeed(8, true)}<p class="fmore"><a href="#/feed">Every step</a></p>`;
+    if (tab === 'events') return `${headFeed(8, true)}<p class="fmore"><a href="#/feed">Every step</a>${asksUrl() ? ` <a href="${asksUrl()}">All asks</a>` : ''}</p>`;
     if (tab === 'timeline') return timelineHtml(false);
     return '';
   }
