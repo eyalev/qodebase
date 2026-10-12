@@ -518,21 +518,34 @@ export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced
 }
 
 // B4: the prompt analysis (one Haiku call, docs/board/build-estimate.md) returns only the job; the preset is
-// chosen here, in code, from the estimates, so the model never picks a setting. -> { preset, why }
-export function suggestBuild(job = SMALL_APP) {
+// chosen here, in code, from the estimates, so the model never picks a setting.
+// Stable across readings (qb6, 2026-10-12: the same bakery prompt read as 20, 12, 20, 20 pieces): the piece count
+// goes into log-scale buckets ~2.5x wide and the decision and its words use the bucket's middle, so a +-40%
+// wobble in the reading mostly stays inside one bucket. Show `job` (bucketed) and estimate from it.
+export const TASK_BUCKETS = [
+  { max: 4, tasks: 3, label: '1-4 pieces', small: true },
+  { max: 11, tasks: 7, label: '5-11 pieces', small: true },
+  { max: 29, tasks: 18, label: '12-29 pieces', small: false, size: 'A mid-size job' },
+  { max: Infinity, tasks: 40, label: '30 or more pieces', small: false, size: 'A big job' },
+];
+export const bucketOf = (n) => TASK_BUCKETS.find((b) => Math.round(n) <= b.max);
+// -> { preset, why, board?, bucket, job }
+export function suggestBuild(jobIn = SMALL_APP) {
+  const bucket = bucketOf(jobProfile(jobIn).tasks);
+  const job = { ...jobIn, tasks: bucket.tasks, bucket: bucket.label };
   const sc = jobProfile(job);
   const f = predictBuild(job, BUILD_PRESETS.fastest.variant), b = predictBuild(job, BUILD_PRESETS.balanced.variant);
-  if (sc.tasks <= 10 || f.apiUsd[1] <= 1.5 * b.apiUsd[1]) {
-    // The words follow this job's numbers (qb7's critique): 'small' only at <= 10 pieces; the cost clause from
-    // the two estimates' midpoints.
-    const fm = (f.apiUsd[0] + f.apiUsd[1]) / 2, bm = (b.apiUsd[0] + b.apiUsd[1]) / 2;
-    const x = fm / bm;
+  const mid = (r) => (r.apiUsd[0] + r.apiUsd[1]) / 2;
+  const x = mid(f) / mid(b);
+  const out = (o) => ({ ...o, bucket: bucket.label, job });
+  if (bucket.small || x <= 1.5) {
+    // The words follow this job's numbers: 'small' only for the two small buckets.
     const cost = x <= 1.05 ? 'costs about the same as a team or less' : x <= 1.25 ? 'costs a little more than a team' : `costs about ${x.toFixed(1)}x a team`;
-    return { preset: 'fastest', why: `${sc.tasks <= 10 ? 'A small job: o' : 'O'}ne agent is quickest and best here, and ${cost}.` };
+    return out({ preset: 'fastest', why: `${bucket.small ? 'A small job: o' : 'O'}ne agent is quickest and best here, and ${cost}.` });
   }
-  if (sc.difficulty <= 0.7 && sc.pShared < 0.7) return { preset: 'cheapest', why: 'Many simple, separate pieces: a Haiku crew does them for the least.' };
-  const share = ((b.apiUsd[0] + b.apiUsd[1]) / (f.apiUsd[0] + f.apiUsd[1]));
-  const part = share <= 0.4 ? 'well under half' : share <= 0.6 ? 'about half' : share <= 0.8 ? 'about two thirds' : 'a little less than';
-  const of = part === 'a little less than' ? `${part} the cost of one agent` : `at ${part} the cost of one agent`;
-  return { preset: 'balanced', board: sc.pShared >= 0.7, why: sc.pShared >= 0.7 ? `A big job whose pieces overlap: a team with the board on, ${of}.` : `A big job: a reviewed team, ${of}.` };
+  if (sc.difficulty <= 0.7 && sc.pShared < 0.7) return out({ preset: 'cheapest', why: 'Many simple, separate pieces: a Haiku crew does them for the least.' });
+  const share = 1 / x;
+  const part = share <= 0.4 ? 'at well under half' : share <= 0.6 ? 'at about half' : share <= 0.8 ? 'at about two thirds' : 'a little below';
+  const of = `${part} the cost of one agent`;
+  return out({ preset: 'balanced', board: sc.pShared >= 0.7, why: sc.pShared >= 0.7 ? `${bucket.size} whose pieces overlap: a team with the board on, ${of}.` : `${bucket.size}: a reviewed team, ${of}.` });
 }

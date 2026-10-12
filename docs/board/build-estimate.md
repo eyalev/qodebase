@@ -78,7 +78,14 @@ Then:
 
 Bad or missing JSON, or a timeout (keep it short, 4 s): fall back to `SMALL_APP` and no suggestion.
 
-`suggestBuild`'s rules:
-- **fastest** when `tasks` ≤ 10, or when one agent costs at most 1.5× Balanced's high end;
+**Stable across readings** (2026-10-12: the same bakery prompt was read as 20, 12, 20 and 20 pieces).
+`suggestBuild` puts the piece count into log-scale buckets about 2.5× wide: 1–4, 5–11, 12–29 and 30+.
+It decides, and writes its `why`, from the bucket's middle (3, 7, 18, 40), and returns that bucketed `job`
+plus a `bucket` label ("12-29 pieces"). **Show the bucket label and estimate from the returned `job`**, so the
+words, the job facts and the estimate all agree. A ±40% wobble mostly stays inside one bucket; only readings
+on either side of 11/12 or 29/30 can still flip.
+
+`suggestBuild`'s rules (on the bucket):
+- **fastest** for the two small buckets, or when one agent costs at most 1.5× Balanced (midpoints);
 - **cheapest** when the job is easy and has low overlap;
 - **balanced** otherwise, with the board on when overlap is high.
