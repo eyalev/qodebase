@@ -58,6 +58,12 @@
     log('pick', { selector: p.selector }); paint();
     document.querySelector('form.ask textarea')?.focus({ preventScroll: true });
   };
+  // A chip that waits for something slow (a screenshot takes ~20 s): spinner now, the image when it arrives.
+  window.qbPendingAttachment = (label) => {
+    const it = { key: ++seq, kind: 'image', state: 'up', name: label || 'Working\u2026', thumb: '' }; items.push(it); paint();
+    return { done: (d) => { Object.assign(it, { state: 'ok', id: d.id, name: d.name || 'screenshot.png', thumb: d.thumb || `${API}/attach/${d.id}` }); paint(); },
+      fail: (msg) => { Object.assign(it, { state: 'err', error: msg }); paint(); } };
+  };
   window.qbAddAttachment = (d) => { items.push({ key: ++seq, kind: 'image', state: 'ok', id: d.id, name: d.name || 'screenshot', thumb: d.thumb || `${API}/attach/${d.id}` }); paint(); };
   // What v2's ask() sends with the text; null while an upload is still running (Send waits).
   window.forqAskExtra = () => {
@@ -75,8 +81,8 @@
 
   function chip(it) {
     if (it.kind === 'pick') return `<span class="qa-chip qa-pick" title="${esc(it.pick.selector)}"><span class="qa-tag">&lt;${esc(it.pick.tag)}&gt;</span><span class="qa-t">${esc(it.pick.text || it.pick.selector)}</span><button type="button" class="qa-x" data-qa-rm="${it.key}" aria-label="Remove this element">&times;</button></span>`;
-    const img = it.state === 'ok' ? `<button type="button" class="qa-edit" data-qa-edit="${it.key}" aria-label="Draw on this image"><img src="${esc(it.thumb)}" alt=""><i aria-hidden="true">${PEN}</i></button>` : `<img src="${esc(it.thumb)}" alt="">`;
-    return `<span class="qa-chip qa-img${it.state === 'err' ? ' qa-err' : ''}"${it.state === 'err' ? ` title="${esc(it.error)}"` : ''}>${img}<span class="qa-t">${it.state === 'up' ? 'Uploading\u2026' : it.state === 'err' ? esc(it.error) : esc(it.name || 'image')}</span><button type="button" class="qa-x" data-qa-rm="${it.key}" aria-label="Remove this image">&times;</button></span>`;
+    const img = it.state === 'up' ? `<span class="qa-spin" role="img" aria-label="Working">${it.thumb ? `<img src="${esc(it.thumb)}" alt="">` : ''}<i></i></span>` : it.state === 'ok' ? `<button type="button" class="qa-edit" data-qa-edit="${it.key}" aria-label="Draw on this image"><img src="${esc(it.thumb)}" alt=""><i aria-hidden="true">${PEN}</i></button>` : `<img src="${esc(it.thumb)}" alt="">`;
+    return `<span class="qa-chip qa-img${it.state === 'err' ? ' qa-err' : ''}"${it.state === 'err' ? ` title="${esc(it.error)}"` : ''}>${img}<span class="qa-t">${it.state === 'up' ? (it.thumb ? 'Uploading\u2026' : esc(it.name)) : it.state === 'err' ? esc(it.error) : esc(it.name || 'image')}</span><button type="button" class="qa-x" data-qa-rm="${it.key}" aria-label="Remove this image">&times;</button></span>`;
   }
   function paint() {
     document.querySelectorAll('form.ask').forEach((f) => {
@@ -168,6 +174,9 @@ form.ask .qa-chips[hidden]{display:none}
 .qa-add{flex:none;align-self:flex-end;width:44px;height:44px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer;margin-right:6px}
 .qa-add svg{width:22px;height:22px}.qa-add:disabled{opacity:.4}
 .qa-add:focus-visible,.qa-x:focus-visible,.qa-edit:focus-visible,.qa-db:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.qa-spin{position:relative;flex:none;width:36px;height:36px;border-radius:6px;background:var(--line);overflow:hidden}
+.qa-spin img{opacity:.5}.qa-spin i{position:absolute;inset:8px;border-radius:50%;border:2.5px solid var(--dim);border-top-color:transparent;animation:qa-r .8s linear infinite}
+@keyframes qa-r{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.qa-spin i{animation-duration:2.4s}}
 .qa-edit{position:relative;flex:none;border:0;padding:0;background:none;cursor:pointer;border-radius:6px}
 .qa-edit i{position:absolute;right:-4px;bottom:-4px;width:18px;height:18px;border-radius:50%;background:var(--fg);color:var(--bg);display:flex;align-items:center;justify-content:center}
 .qa-edit i svg{width:11px;height:11px}

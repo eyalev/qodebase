@@ -175,13 +175,13 @@ addEventListener('message',(e)=>{const d=e.data;if(!d||d.type!=='qb-picked'||e.o
 // Screenshot (S3): Cloudflare Browser Rendering on the server (qb6) shoots the app at 390 px, the last picked
 // element outlined, and keeps it as an attachment; it becomes an image chip like a photo.
 const sb2=document.getElementById('qbshot');
-if(sb2)sb2.addEventListener('click',async()=>{const lab=sb2.querySelector('span');sb2.disabled=true;lab.textContent='Shooting\u2026';
+if(sb2)sb2.addEventListener('click',async()=>{const lab=sb2.querySelector('span');sb2.disabled=true;lab.textContent='Shooting\u2026';const pend=window.qbPendingAttachment?window.qbPendingAttachment('Taking a screenshot…'):null;
  const url=(()=>{try{const x=new URL(f.src);x.searchParams.delete('__qbpick');return x.toString();}catch(e){return f.src;}})();
  try{const r=await fetch(API+'/screenshot',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:url,selector:lastSel||undefined,width:390})});const d=await r.json().catch(()=>({}));
   console.log(JSON.stringify({module:'shot',event:'done',status:r.status,id:d.id||null}));
   if(!r.ok||!d.id)throw new Error(d.error||('Screenshot failed ('+r.status+')'));
-  if(window.qbAddAttachment)window.qbAddAttachment({id:d.id,name:'screenshot.png'});lab.textContent='Shot';}
- catch(err){lab.textContent='Shot';sb2.title=err.message;const t=document.querySelector('form.ask textarea');if(t&&!t.value)t.placeholder=err.message;}
+  if(pend)pend.done({id:d.id,name:'screenshot.png'});else if(window.qbAddAttachment)window.qbAddAttachment({id:d.id,name:'screenshot.png'});lab.textContent='Shot';}
+ catch(err){lab.textContent='Shot';sb2.title=err.message;if(pend)pend.fail(err.message);const t=document.querySelector('form.ask textarea');if(t&&!t.value)t.placeholder=err.message;}
  sb2.disabled=false;});
 document.addEventListener('click',async(e)=>{const b=e.target.closest('[data-pick]');if(b){f.src=b.dataset.pick;if(x)x.href=b.dataset.pick;for(const o of document.querySelectorAll('[data-pick]'))o.classList.toggle('on',o===b);
  cur=b.dataset.id||null;if(ps){ps.hidden=!cur;document.getElementById('pword').textContent=b.dataset.word||'';pm.hidden=b.dataset.state!=='ready'||b.dataset.auto==='1';}
