@@ -24,6 +24,7 @@ import { pushSeed } from './demo';
 import { SEED } from './demoproject';
 import { pushAlert } from '../alert';
 import { apiUsdOf, type BuildEstimate } from '../buildsettings';
+import { buildTimeline, type Timeline } from './timeline';
 import { makeBoardEvent, boardView, boardText, taskIds, knownTaskIds, claimHolders, pickNext, type TwinCandidate, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
@@ -50,7 +51,9 @@ export type Change = {
 export type Train = { id: string; state: 'testing' | 'landed' | 'bounced'; changes: string[]; startedAt: number; endedAt: number | null;
   checks: { ok: boolean; ms: number; failures: string[] } | null; mainBefore: string | null; mainAfter: string | null; note?: string;
   /** What happened to each change in this train (set when the merger reports). */
-  outcomes?: Record<string, 'landed' | 'bounced' | 'conflict' | 'retry'> };
+  outcomes?: Record<string, 'landed' | 'bounced' | 'conflict' | 'retry'>;
+  /** Timeline (T1): the merger's phases [name, start, end, change?] and whether its box had to start. */
+  phases?: [string, number, number, string?][]; cold?: boolean };
 type Demo = { running: boolean; agents: number; speed: number; startedAt: number; endsAt: number; stoppedAt?: number;
   /** story = the café's 14 tasks; busy = an endless stream of small colliding changes. */
   mode?: 'story' | 'busy';
@@ -705,6 +708,8 @@ export class Landing extends DurableObject<Env> {
     const t = await this.ctx.storage.get<Train>(`t:${r.trainId}`);
     if (!t || m.running !== r.trainId) { log('landing', 'train_result_ignored', { slug: m.slug, train: r.trainId, running: m.running }); return; }
     t.endedAt = Date.now(); t.mainBefore = r.mainBefore || null; t.mainAfter = r.mainAfter || null;
+    if (r.phases?.length) t.phases = r.phases.slice(0, 80);
+    if (r.cold !== undefined) t.cold = r.cold;
     t.checks = r.checks ? { ok: !!r.checks.ok, ms: r.checks.ms || 0, failures: r.checks.failures || [] } : null;
     m.running = null;
     m.failStreak = !r.ok ? (m.failStreak || 0) + 1 : 0;
@@ -906,6 +911,18 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       await this.#saveMeta();
       return files;
     } catch (e) { log('landing', 'tree_failed', { slug: m.slug, err: String(e).slice(0, 200) }); return m.tree?.files || []; }
+  }
+
+  /** Run timeline (T1, timeline.ts). null = not shown to this viewer (owner, or anyone on a publicWatch project).
+   *  Window: `since`, else the current demo run, else the current build, else everything kept. */
+  async timeline(opts: { slug: string; owner: boolean; since?: number | null; request?: { at: number; sentAt?: number; text?: string } | null }): Promise<Timeline | null> {
+    const m = await this.#m(opts.slug);
+    if (!opts.owner && !m.flags.publicWatch) return null;
+    const changes = (await Promise.all(m.order.map((id) => this.#get(id)))).filter(Boolean) as Change[];
+    const trains = (await Promise.all(m.trains.map((id) => this.ctx.storage.get<Train>(`t:${id}`)))).filter(Boolean) as Train[];
+    const kind = m.demo ? 'demo' : /\.lab-/.test(m.slug) ? 'lab' : m.build ? 'build' : 'project';
+    const since = opts.since ?? (m.demo ? m.demo.startedAt - 1000 : m.build ? m.build.startedAt - 60_000 : null);
+    return buildTimeline({ slug: m.slug, now: Date.now(), since, changes, trains, request: opts.request || null, kind });
   }
 
   async view(slug: string) {

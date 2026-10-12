@@ -16,7 +16,7 @@ import { MANAGED_IMAGE } from '../box';
 
 export type MergeChange = { id: string; title: string; intent: string; agent: string; fork: string; remote: string; token: string;
   base: string | null; commit: string | null; review: unknown };
-export type MergeJob = { trainId: string; slug: string; mainRemote: string; mainToken: string; branch: string | null; check?: string | null; changes: MergeChange[]; tries?: number;
+export type MergeJob = { trainId: string; enqueuedAt?: number; slug: string; mainRemote: string; mainToken: string; branch: string | null; check?: string | null; changes: MergeChange[]; tries?: number;
   /** Tier 2: replay conflicting changes with this model (on the owner's Claude subscription). */
   llm?: { model: string };
   /** Lab policies github/ffa: no tier-1 handlers (plain git); ffa also skips the checks. */
@@ -31,6 +31,10 @@ export type MergeResult = {
     /** Model replays: the diff that was reviewed (on the older code), next to `diff` (what landed). */
     reviewedDiff?: { path: string; lines: string[] }[] | null;
     diff: { path: string; lines: string[] }[] | null }[];
+  /** Timeline (T1): [phase, start ms, end ms, change id?]: the box's own (wait in the box's queue, wake = container
+   *  start, cold or warm, upload) then the merge job's (fetch-main, fetch-forks, apply/replay per change, checks, notes, push). */
+  phases?: [string, number, number, string?][];
+  cold?: boolean;
 };
 
 // git, node --test, an occasional npm install. Billed while awake only. Custom sizes need
@@ -38,7 +42,7 @@ export type MergeResult = {
 // saying the container was not running (2026-10-07).
 const INSTANCE = { vcpu: 1, memoryMib: 3072, diskMb: 6144 };   // disk <= 2x memory: Cloudflare refuses more (seen 2026-10-08 16:53)
 const IDLE_STOP_MS = 5 * 60_000;
-const MERGER_V = '2026-10-07c';   // shown by landing/state: which code a merger box runs
+const MERGER_V = '2026-10-12t';   // shown by landing/state: which code a merger box runs
 const ENTRYPOINT = ['/bin/bash', '-c', 'chown 0:0 / 2>/dev/null; mkdir -p /m /opt/qb && exec sleep infinity'];
 
 export class MergeBox extends DurableObject<Env> {
@@ -53,7 +57,7 @@ export class MergeBox extends DurableObject<Env> {
 
   async enqueue(job: MergeJob) {
     const q = (await this.ctx.storage.get<MergeJob[]>('queue')) || [];
-    q.push(job);
+    q.push({ ...job, enqueuedAt: Date.now() });
     await this.ctx.storage.put('queue', q);
     await this.ctx.storage.setAlarm(Date.now() + 100);
     log('merger', 'queued', { slug: job.slug, train: job.trainId, changes: job.changes.length, depth: q.length });
@@ -94,9 +98,10 @@ export class MergeBox extends DurableObject<Env> {
     catch (e) { log('merger', 'report_failed', { slug, train: r.trainId, err: String(e) }); }
   }
 
-  async #ensureContainer() {
+  /** Returns true when the container had to be started (a cold start). */
+  async #ensureContainer(): Promise<boolean> {
     if (this.c.running) {
-      try { await this.#sh('true'); return; } catch { try { await this.c.destroy(); } catch {} }
+      try { await this.#sh('true'); return false; } catch { try { await this.c.destroy(); } catch {} }
     }
     const t0 = Date.now();
     // A self-hosted copy (BOX_IMAGE=managed) has no registry image: Cloudflare's managed Debian image, git added below.
@@ -125,13 +130,20 @@ export class MergeBox extends DurableObject<Env> {
       if (g.exitCode !== 0) throw new Error(`merger setup failed: ${g.stderr.slice(-200)}`);
     }
     log('merger', 'container_started', { ms: Date.now() - t0, managed });
+    return true;
   }
 
   async #run(job: MergeJob): Promise<MergeResult> {
     const t0 = Date.now();
+    const ph: [string, number, number, string?][] = [];
+    if (job.enqueuedAt && t0 - job.enqueuedAt > 50) ph.push(['box-queue', job.enqueuedAt, t0]);
+    let cold = false;
     try {
-      await this.#ensureContainer();
+      cold = await this.#ensureContainer();
+      ph.push([cold ? 'wake-cold' : 'wake', t0, Date.now()]);
+      const tU = Date.now();
       await this.#sh(`mkdir -p /opt/qb && printf '%s' "$JS" > /opt/qb/mergejob.mjs`, { JS: MERGEJOB });
+      ph.push(['upload', tU, Date.now()]);
       const spec = { dir: `/m/${job.slug}`, mainRemote: job.mainRemote, mainToken: job.mainToken, branch: job.branch, check: job.check ?? null, changes: job.changes, llm: job.llm || null, handlers: job.handlers !== false, noChecks: !!job.noChecks };
       // The Claude token only reaches the box for a tier-2 replay, as its own variable (never in JOB, never logged).
       const r = await this.#sh('node /opt/qb/mergejob.mjs 2>&1', { JOB: JSON.stringify(spec), HOME: '/root', ...(job.llm ? { QB_CLAUDE_TOKEN: this.env.CLAUDE_CODE_OAUTH_TOKEN } : {}) });
@@ -139,14 +151,14 @@ export class MergeBox extends DurableObject<Env> {
       const progress = r.stdout.split('\n').filter((l) => l && !l.startsWith('QB_RESULT ')).slice(-60).join('\n');
       // Tokens never reach the log: the job prints none, but be sure.
       const clean = (s: string) => [job.mainToken, ...job.changes.map((c) => c.token), ...(job.llm ? [this.env.CLAUDE_CODE_OAUTH_TOKEN] : [])].filter(Boolean).reduce((a, t) => a.replaceAll(t.split('?')[0], '***'), s);
-      if (!line) { log('merger', 'no_result', { train: job.trainId, exit: r.exitCode, tail: clean(progress).slice(-800) }); return { trainId: job.trainId, ok: false, error: 'the merge job printed no result', log: clean(progress), changes: [] }; }
+      if (!line) { log('merger', 'no_result', { train: job.trainId, exit: r.exitCode, tail: clean(progress).slice(-800) }); return { trainId: job.trainId, ok: false, error: 'the merge job printed no result', log: clean(progress), changes: [], cold, phases: ph }; }
       const out = JSON.parse(line.slice(10));
       log('merger', 'train_done', { slug: job.slug, train: job.trainId, ok: out.ok, pushed: out.pushed, stale: out.stale, notes: out.notesPushed, solo: out.solo, ms: Date.now() - t0,
         changes: (out.changes || []).map((c: any) => ({ id: c.id, landed: c.landed, how: c.how, conflicts: c.conflicts, bounced: c.bounced, why: c.why })) });
-      return { trainId: job.trainId, ...out, changes: out.changes || [], log: clean(progress) };
+      return { trainId: job.trainId, ...out, changes: out.changes || [], log: clean(progress), cold, phases: [...ph, ...(out.phases || [])] };
     } catch (e) {
       log('merger', 'error', { train: job.trainId, err: String((e as Error)?.stack || e).slice(0, 600) });
-      return { trainId: job.trainId, ok: false, error: String((e as Error)?.message || e), log: String((e as Error)?.stack || e).slice(0, 2000), changes: [], ms: Date.now() - t0 };
+      return { trainId: job.trainId, ok: false, error: String((e as Error)?.message || e), log: String((e as Error)?.stack || e).slice(0, 2000), changes: [], ms: Date.now() - t0, cold, phases: ph };
     }
   }
 

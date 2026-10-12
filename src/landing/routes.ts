@@ -6,6 +6,7 @@
 //   POST /api/p/<o>/<n>/landing/flags       {llmReplay?, agentModel?, replayModel?} (owner; models: alias or claude-… id, null clears)
 //   GET  /api/p/<o>/<n>/landing/state       merger box + alarm state (admin)
 //   GET  /api/p/<o>/<n>/landing/board       the agent board: ?recent=<min, default 30>&files=a,b&area=X&tail=N (anyone who can see the project)
+//   GET  /api/p/<o>/<n>/landing/timeline    the run as a trace: lanes, spans, marks, critical path (timeline.ts; owner or publicWatch)
 
 import type { Env } from '../env';
 import type { ProjectInfo } from '../project';
@@ -58,6 +59,14 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
     const recent = Math.min(24 * 60, Number(u.searchParams.get('recent') ?? 30) || 0) * 60_000;
     const who = await L.boardWho({ recent, files: u.searchParams.get('files') || '', area: u.searchParams.get('area') });
     return json(u.searchParams.has('tail') ? { ...who, tail: await L.boardTail(Number(u.searchParams.get('tail')) || 50) } : who);
+  }
+  // Run timeline (T1): the owner, or anyone on a publicWatch project (Landing decides).
+  if (verb === 'timeline' && request.method === 'GET') {
+    const sinceQ = Number(new URL(request.url).searchParams.get('since')) || null;
+    const q = info.lastRequest;
+    const tl = await L.timeline({ slug: info.slug, owner: info.owner === me.handle || !!me.admin, since: sinceQ,
+      request: q ? { at: q.at, ...(q.sentAt ? { sentAt: q.sentAt } : {}), text: q.text } : null });
+    return tl ? json(tl) : json({ error: 'not your project' }, 403);
   }
   if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
   if (verb === 'restart' && me.admin) {

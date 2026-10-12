@@ -19,6 +19,9 @@ import { join } from 'node:path';
 const job = JSON.parse(process.env.JOB || readFileSync(process.argv[2] || '/dev/stdin', 'utf8'));
 const DIR = job.dir;
 const t0 = Date.now();
+// Timeline (T1): every phase of the job as [name, start ms, end ms, change id?], reported with the result.
+const PH = [];
+const phase = (name, s, id) => { PH.push(id ? [name, s, Date.now(), id] : [name, s, Date.now()]); };
 const say = (event, data = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'mergejob', event, ...data }));
 // Artifacts tokens are `art_v2_…?expires=…`: git auth is Basic with the part before `?`.
 const auth = (tok) => (tok ? ['-c', `http.extraHeader=Authorization: Basic ${Buffer.from(`x:${tok.split('?')[0]}`).toString('base64')}`] : []);
@@ -233,6 +236,7 @@ function diffOf(from, to) {
 
 // ---- the train --------------------------------------------------------------------
 async function main() {
+  const tMain = Date.now();
   if (!existsSync(join(DIR, '.git'))) { mkdirSync(DIR, { recursive: true }); git(['init', '-q']); }
   const sym = git(['ls-remote', '--symref', job.mainRemote, 'HEAD'], { tok: job.mainToken }).out;
   const branch = job.branch || (sym.match(/ref: refs\/heads\/(\S+)\s+HEAD/) || [])[1] || 'main';
@@ -249,6 +253,7 @@ async function main() {
   }
   git(['fetch', '-q', '--update-shallow', '--no-tags', job.mainRemote, '+refs/notes/qodebase:refs/notes/qodebase'], { tok: job.mainToken, ok: true });
   const mainBefore = git(['rev-parse', 'refs/qb/main']).out;
+  phase('fetch-main', tMain);
   say('main', { branch, mainBefore });
   const cfg = (() => { try { return JSON.parse(show(`${mainBefore}:.qodebase/landing.json`) || '{}'); } catch { return {}; } })();
   if (!job.check && cfg.check) job.check = cfg.check;
@@ -256,7 +261,9 @@ async function main() {
   const fetched = [];
   const results = new Map();
   // Every fork at once: one at a time took ~1 s each, 8.7 s of an 11.7 s train (2026-10-08).
+  const tForks = Date.now();
   const fetches = await Promise.all(job.changes.map((c) => gitAsync(['fetch', '-q', '--update-shallow', '--no-tags', '--no-write-fetch-head', c.remote, `+HEAD:refs/qb/c/${c.id}`], c.token)));
+  phase('fetch-forks', tForks);
   say('fetched', { forks: job.changes.length, ms: Date.now() - t0 });
   for (const [k, c] of job.changes.entries()) {
     const f = fetches[k];
@@ -272,12 +279,16 @@ async function main() {
   reset(mainBefore);
   let applied = [];
   for (const c of fetched) {
+    const tA = Date.now();
     const r = applyChange(c, cfg);
+    phase(r.llm ? 'replay-llm' : r.how === 'replayed-handler' ? 'replay' : 'apply', tA, c.id);
     results.set(c.id, r);
     say('applied', { id: c.id, ok: r.ok, how: r.how, conflicts: r.conflicts, why: r.why });
     if (r.ok) applied.push(c);
   }
+  const tC = Date.now();
   let checks = applied.length ? runChecks() : { ok: true, ms: 0, failures: [] };
+  if (applied.length && !checks.skipped) phase('checks', tC);
   say('checks', { train: applied.map((c) => c.id), ...checks });
   let solo = false;
   if (!checks.ok && applied.length > 1) {
@@ -288,9 +299,13 @@ async function main() {
     // Every change gets another try, not only those that applied: one that collided
     // with a change now bounced may apply cleanly without it.
     for (const c of fetched.filter((x) => !results.get(x.id)?.empty)) {
+      const tS = Date.now();
       const r = applyChange(c, cfg);
+      phase('apply', tS, c.id);
       if (!r.ok) { results.set(c.id, r); continue; }
+      const tSC = Date.now();
       const ch = runChecks();
+      phase('checks-solo', tSC, c.id);
       say('solo_checks', { id: c.id, ...ch });
       if (ch.ok) { keep.push(c); results.set(c.id, { ...r, checks: ch }); }
       else { results.set(c.id, { ...r, ok: false, bounced: true, checks: ch, why: 'checks failed' }); git(['reset', '-q', '--hard', r.before]); }
@@ -305,6 +320,7 @@ async function main() {
 
   // Records as git notes, then one push.
   const landed = applied.map((c) => results.get(c.id));
+  const tN = Date.now();
   for (const r of landed) {
     const c = job.changes.find((x) => x.id === r.id);
     r.diff = diffOf(r.before, r.commit);
@@ -312,17 +328,20 @@ async function main() {
       how: r.how, handled: r.handled, review: c.review || null, ...(r.llm ? { replay: { model: r.llm.model, sameLinesAsReviewed: r.llm.sameLines } } : {}), checks: { ok: true }, landedBy: 'qodebase merge queue', at: new Date().toISOString() };
     git(['notes', '--ref=qodebase', 'add', '-f', '-F', '-', r.commit], { input: JSON.stringify(note, null, 2) + '\n' });
   }
+  if (landed.length) phase('notes', tN);
   let mainAfter = mainBefore, pushed = false, stale = false, notesPushed = false, pushErr = '';
   if (landed.length) {
+    const tP = Date.now();
     const tip = git(['rev-parse', 'HEAD']).out;
     // Plain push (not force): if main moved meanwhile, it is refused and the train runs again.
     const p = git(['push', '-q', job.mainRemote, `${tip}:refs/heads/${branch}`], { tok: job.mainToken, ok: true });
     if (p.code === 0) { pushed = true; mainAfter = tip; }
     else { pushErr = p.err.slice(0, 400); stale = /rejected|non-fast-forward|fetch first|stale/i.test(p.err); }
-    if (pushed) notesPushed = git(['push', '-q', '-f', job.mainRemote, 'refs/notes/qodebase:refs/notes/qodebase'], { tok: job.mainToken, ok: true }).code === 0;
+    phase('push', tP);
+    if (pushed) { const tNP = Date.now(); notesPushed = git(['push', '-q', '-f', job.mainRemote, 'refs/notes/qodebase:refs/notes/qodebase'], { tok: job.mainToken, ok: true }).code === 0; phase('push-notes', tNP); }
   }
   const out = {
-    ok: true, branch, mainBefore, mainAfter, pushed, stale, pushErr, notesPushed, solo, checks, ms: Date.now() - t0,
+    ok: true, branch, mainBefore, mainAfter, pushed, stale, pushErr, notesPushed, solo, checks, ms: Date.now() - t0, phases: PH,
     changes: job.changes.map((c) => {
       const r = results.get(c.id) || { id: c.id, ok: false, why: 'not applied' };
       const landedOk = r.ok && pushed;
@@ -333,4 +352,4 @@ async function main() {
   console.log('QB_RESULT ' + JSON.stringify(out));
 }
 
-main().catch((e) => { say('error', { err: String(e?.stack || e) }); console.log('QB_RESULT ' + JSON.stringify({ ok: false, error: String(e?.message || e).slice(0, 600), ms: Date.now() - t0 })); });
+main().catch((e) => { say('error', { err: String(e?.stack || e) }); console.log('QB_RESULT ' + JSON.stringify({ ok: false, error: String(e?.message || e).slice(0, 600), ms: Date.now() - t0, phases: PH })); });
