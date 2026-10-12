@@ -37,7 +37,7 @@ predictBuild(SMALL_APP, BUILD_PRESETS.balanced.variant)
   - otherwise "Fewer misses / About like / More misses than Balanced" (the sim, ±2 points).
 
   `notes` adds what the lab saw for the reviewers, planner and board knobs.
-- **`BUILD_PRESETS`**: `fastest`, `balanced` and `cheapest`, each `{ label, variant, why }`. All three were
+- **`BUILD_PRESETS`**: `fastest`, `balanced` and `cheapest`, each `{ label, variant, why }`. Each `why` holds for any job size (checked at 3, 8, 25 and 60 tasks). All three were
   run for real (sameSetup 7, 7, 1).
 - **Recalibrate after new runs:** `node sim/lab/estimate-cal.mjs` rewrites `public/lab/estimate-cal.js`.
   Commit it, then deploy.

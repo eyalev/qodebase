@@ -462,11 +462,11 @@ import EST_CAL from './estimate-cal.js';
 // The three presets, each one a setup the lab has run for real (public/lab/runs.jsonl).
 export const BUILD_PRESETS = {
   fastest: { label: 'Fastest', variant: { baseline: 'opus-alone' },
-    why: 'One Opus agent does it all. In the lab it finished first on every app and scored highest, and cost the most (2-2.5x a team on the bigger apps).' },
+    why: 'One Opus agent does it all. In the lab it finished first and scored highest on every app; on the bigger apps it cost 2-2.5x a team.' },
   balanced: { label: 'Balanced', variant: { planner: 'opus', coders: 12, coderModel: 'haiku', reviewers: 3, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4 },
-    why: 'An Opus planner, 12 Haiku coders and 3 Haiku reviewers. In the lab: about half the cost of Fastest, slower, nearly the same quality.' },
+    why: 'An Opus planner, 12 Haiku coders and 3 Haiku reviewers. On the lab\'s bigger apps: about half the cost of Fastest, slower, nearly the same quality. On small jobs the saving shrinks or reverses.' },
   cheapest: { label: 'Cheapest', variant: { planner: 'opus', coders: 6, coderModel: 'haiku', reviewers: 0, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4 },
-    why: 'An Opus planner and 6 Haiku coders, no reviewer. The cheapest of the three, and more misses get through.' },
+    why: 'An Opus planner and 6 Haiku coders, no reviewer. Cheapest of the three on most jobs (on very small ones a single agent can cost less), and more misses get through.' },
 };
 
 // job: { tasks: 1-80 (pieces of work), overlap: 'low'|'some'|'high' or 0-1 (how much the pieces touch the same
