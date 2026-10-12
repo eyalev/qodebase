@@ -103,3 +103,12 @@ test('I2 ideas: 8 curated per size, each in its bucket; picks avoid recent title
   assert.equal(parseIdea(ok.replace('"title":"Garden planner",', ''), 'medium'), null, 'no title');
   assert.match(IDEA_SYSTEM('large', ['Bakery website']), /between 12 and 29[\s\S]*Not any of: Bakery website/);
 });
+
+test('ideas are static, single-user apps: the rule is in the prompt, and server-needing ideas are refused', async () => {
+  const { IDEA_SYSTEM, parseIdea, NEEDS_SERVER, CURATED_IDEAS } = await import('./buildsettings.ts');
+  assert.match(IDEA_SYSTEM('huge', []), /static web app[\s\S]*No server, no accounts[\s\S]*import\/export/);
+  const base = (prompt) => JSON.stringify({ title: 'Shop', prompt, tasks: 40, overlap: 'some', difficulty: 'normal', vague: false, summary: 's', confidence: 0.8, name: 'shop' });
+  assert.equal(parseIdea(base('An online shop with accounts, checkout and email receipts.'), 'huge'), null);
+  assert.ok(parseIdea(base('A shop catalogue kept on the phone: products, stock, sales charts, CSV import and export, printable price lists.'), 'huge'));
+  for (const [size, list] of Object.entries(CURATED_IDEAS)) for (const i of list) assert.ok(!NEEDS_SERVER.test(i.prompt), `${size}: ${i.title} needs a server: ${i.prompt}`);
+});
