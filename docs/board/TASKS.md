@@ -28,3 +28,11 @@ Round 3 (Eyal, 2026-10-11 ~04:00 UTC: "start the prediction and setup now, and d
 - [ ] W9c per-new-task dedupe in qodebase's board (qb6, after W9b shows it pays)
 Guard: stop at weekly meter 87% (83% at start); what doesn't fit continues after the Oct 12 13:00 UTC reset. s5 Sonnet stays armed for after the reset.
 - [x] W10 review fixes in qodebase (qb6): task ids only from registered lists, aliases/lists router-only, heartbeat keeps claims live, atomic `forq next` behind flag claimNext (+ runner knob claimNext); 27 tests
+
+Contest fixes from the judge-style review (2026-10-12; findings outside the repo: ~/.local/share/qodebase-review/FINDINGS.md), due Oct 13 18:00 UTC:
+- [ ] C1 /own installs an Oct 7 release without Landing/MergeBox/board: rebuild + one fresh install test, or reword (qb6)
+- [ ] C2 home page: card to corner-cafe Watch a run + Lab/Sim; unlist forq.* and stale projects (qb7)
+- [ ] C3 demo honesty: 'auto-approved (scripted)', real run length, end run when queue empty, 'landed today' window (qb7, qb6)
+- [ ] C4 submission rewrite ~900 words: originality first vs existing merge queues; cafe-team as real-agent proof; lab/sim wording (qb8)
+- [ ] C5 per-IP watch cap, /health.json, install script 'pi', llms.txt (qb6)
+- [ ] C6 manager re-checks everything live at 390 px before Eyal submits
