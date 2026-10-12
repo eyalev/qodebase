@@ -6,6 +6,11 @@
 // it is "redo from intent" (what a lead or a redo does) instead of a text merge.
 
 export const HOT = ['src/routes.ts', 'src/schema.ts', 'package.json'];
+// Shared list files: the global ones, and with the hot files split per area (splitHot)
+// each folder's own routes.ts / fields.ts. Never claimed: appends to a list are replayed.
+export const isHot = (p) => HOT.includes(p) || /^src\/m\d+\/(routes|fields)\.ts$/.test(p);
+const routesOf = (file) => file.replace(/f\d+\.ts$/, 'routes.ts');
+const fieldsOf = (file) => file.replace(/f\d+\.ts$/, 'fields.ts');
 
 const FIELD_WORDS = ['email', 'avatar', 'locale', 'timezone', 'plan', 'role', 'bio', 'phone', 'company', 'title', 'country', 'city',
   'website', 'twitter', 'github', 'theme', 'currency', 'birthday', 'pronouns', 'status', 'score', 'credits', 'referrer', 'source'];
@@ -48,13 +53,15 @@ function relImport(fromPath, toPath) {
 }
 
 // The function in a slot ("a" = first export of the file) — slots survive renames.
-function slotName(text, slot) {
+export function slotName(text, slot) {
   const ex = parseFile(text).exports;
   return ex[SLOTS.indexOf(slot)]?.name ?? null;
 }
 
 // ---- generator ----
-export function generate({ modules = 50, filesPerModule = 8, rnd }) {
+// splitHot: no global routes/schema; every folder has its own routes.ts and fields.ts
+// (the hot shared files "designed out"); package.json stays global.
+export function generate({ modules = 50, filesPerModule = 8, rnd, splitHot = false }) {
   const files = new Map();
   const all = [];
   for (let m = 0; m < modules; m++) for (let f = 0; f < filesPerModule; f++) all.push([m, f]);
@@ -77,7 +84,14 @@ export function generate({ modules = 50, filesPerModule = 8, rnd }) {
     files.set(p, body.join('\n'));
   }
   const routeFiles = all.filter(() => rnd() < 0.5);
-  files.set('src/routes.ts', [
+  if (splitHot) {
+    for (let mi = 0; mi < modules; mi++) {
+      const rp = `src/m${mi}/routes.ts`, mine = routeFiles.filter(([m]) => m === mi);
+      files.set(rp, [`// ${rp}`, ...mine.map(([m, f]) => `import { m${m}f${f}a } from '${relImport(rp, filePath(m, f))}';`), '',
+        'export const routes = [', ...mine.map(([m, f]) => `  ['/m${m}/f${f}/a', m${m}f${f}a],`), '];', ''].join('\n'));
+      files.set(`src/m${mi}/fields.ts`, [`// src/m${mi}/fields.ts`, 'export const fields = [', "  'id',", '];', ''].join('\n'));
+    }
+  } else files.set('src/routes.ts', [
     '// src/routes.ts',
     ...routeFiles.map(([m, f]) => `import { m${m}f${f}a } from '${relImport('src/routes.ts', filePath(m, f))}';`),
     '',
@@ -86,7 +100,7 @@ export function generate({ modules = 50, filesPerModule = 8, rnd }) {
     '];',
     '',
   ].join('\n'));
-  files.set('src/schema.ts', ['// src/schema.ts', 'export const fields = [', "  'id',", "  'name',", "  'created',", '];', ''].join('\n'));
+  if (!splitHot) files.set('src/schema.ts', ['// src/schema.ts', 'export const fields = [', "  'id',", "  'name',", "  'created',", '];', ''].join('\n'));
   files.set('package.json', ['{', '  "name": "simapp",', '  "dependencies": {', ...DEPS.map((d, i) => `    "${d}": "^1.${i}.0"${i < DEPS.length - 1 ? ',' : ''}`), '  }', '}', ''].join('\n'));
   return files;
 }
@@ -127,17 +141,17 @@ export function makeOp(kind, args) {
       },
     }),
     // New exported function, registered as a route (touches the hot routes file).
-    addFunction: ({ file, name }) => ({
+    addFunction: ({ file, name, routesFile = 'src/routes.ts' }) => ({
       text: `Add ${name} to ${file} and route /${name}`,
       apply(get) {
-        const t = get(file), r = get('src/routes.ts'); if (t == null || r == null) return null;
+        const t = get(file), r = get(routesFile); if (t == null || r == null) return null;
         if (parseFile(t).exports.some((e) => e.name === name)) return null;
         const out = new Map();
         out.set(file, t.replace(/\n*$/, '\n') + `\nexport function ${name}(x: number) {\n  return x + 1;\n}\n`);
-        let routes = addImport(r, name, relImport('src/routes.ts', file));
+        let routes = addImport(r, name, relImport(routesFile, file));
         routes = insertBeforeClose(routes, `  ['/${name}', ${name}],`);
         if (!routes) return null;
-        out.set('src/routes.ts', routes);
+        out.set(routesFile, routes);
         return out;
       },
     }),
@@ -172,13 +186,13 @@ export function makeOp(kind, args) {
         return new Map([[file, lines.join('\n')]]);
       },
     }),
-    addField: ({ field }) => ({
-      text: `Add the ${field} field to the schema`,
+    addField: ({ field, fieldsFile = 'src/schema.ts' }) => ({
+      text: `Add the ${field} field to ${fieldsFile === 'src/schema.ts' ? 'the schema' : fieldsFile}`,
       apply(get) {
-        const s = get('src/schema.ts'); if (s == null) return null;
+        const s = get(fieldsFile); if (s == null) return null;
         if (s.includes(`'${field}'`)) return null;
         const out = insertBeforeClose(s, `  '${field}',`);
-        return out ? new Map([['src/schema.ts', out]]) : null;
+        return out ? new Map([[fieldsFile, out]]) : null;
       },
     }),
     bumpDep: ({ dep, version }) => ({
@@ -195,8 +209,9 @@ export function makeOp(kind, args) {
 }
 
 let nameSeq = 0;
+export const resetNames = () => { nameSeq = 0; };
 // Pick an operation against the current main. `pickFile()` returns a module file (Zipf-busy).
-export function randomOp(rnd, pickFile, get) {
+export function randomOp(rnd, pickFile, get, { splitHot = false } = {}) {
   const u = rnd();
   const slot = SLOTS[Math.floor(rnd() * 3)];
   const file = pickFile();
@@ -205,13 +220,13 @@ export function randomOp(rnd, pickFile, get) {
     let target = pickFile(); if (target === file) target = pickFile();
     return makeOp('addCall', { file, slot, target, targetSlot: SLOTS[Math.floor(rnd() * 3)] });
   }
-  if (u < 0.75) return makeOp('addFunction', { file, name: `${file.slice(4, -3).replace('/', '')}n${++nameSeq}` });
+  if (u < 0.75) return makeOp('addFunction', { file, name: `${file.slice(4, -3).replace('/', '')}n${++nameSeq}`, ...(splitHot ? { routesFile: routesOf(file) } : {}) });
   if (u < 0.83) {
     const cur = slotName(get(file) || '', slot) || 'fn';
     return makeOp('rename', { file, slot, to: `${cur.replace(/V\d+$/, '')}V${++nameSeq}` });
   }
   // Mostly new fields; sometimes two agents want the same one (a real duplicate).
-  if (u < 0.93) return makeOp('addField', { field: `${FIELD_WORDS[Math.floor(rnd() * FIELD_WORDS.length)]}${rnd() < 0.1 ? '' : ++nameSeq}` });
+  if (u < 0.93) return makeOp('addField', { field: `${FIELD_WORDS[Math.floor(rnd() * FIELD_WORDS.length)]}${rnd() < 0.1 ? '' : ++nameSeq}`, ...(splitHot ? { fieldsFile: fieldsOf(file) } : {}) });
   return makeOp('bumpDep', { dep: DEPS[Math.floor(rnd() * DEPS.length)], version: `^${1 + Math.floor(rnd() * 3)}.${Math.floor(rnd() * 20)}.${Math.floor(rnd() * 10)}` });
 }
 
@@ -238,14 +253,20 @@ export function check(get, paths) {
       else if (!exportsOf.get(target).has(im.name)) fails.push(`${p}: ${im.name} is not exported by ${target}`);
     }
   }
-  const routes = get('src/routes.ts') || '';
+  // Route paths are unique across every routes file; fields are unique per list file.
   const pathsSeen = new Set();
-  for (const mm of routes.matchAll(/\['(\/[^']+)', (\w+)\]/g)) {
-    if (pathsSeen.has(mm[1])) fails.push(`src/routes.ts: route ${mm[1]} twice`);
-    pathsSeen.add(mm[1]);
+  for (const p of ps) {
+    if (!/(^|\/)routes\.ts$/.test(p)) continue;
+    for (const mm of get(p).matchAll(/\['(\/[^']+)', (\w+)\]/g)) {
+      if (pathsSeen.has(mm[1])) fails.push(`${p}: route ${mm[1]} twice`);
+      pathsSeen.add(mm[1]);
+    }
   }
-  const fields = [...(get('src/schema.ts') || '').matchAll(/'(\w+)'/g)].map((x) => x[1]);
-  if (new Set(fields).size !== fields.length) fails.push('src/schema.ts: a field twice');
+  for (const p of ps) {
+    if (!/(^|\/)(schema|fields)\.ts$/.test(p)) continue;
+    const fields = [...get(p).matchAll(/'(\w+)'/g)].map((x) => x[1]);
+    if (new Set(fields).size !== fields.length) fails.push(`${p}: a field twice`);
+  }
   try { JSON.parse(get('package.json')); } catch { fails.push('package.json: not valid JSON'); }
   return fails;
 }

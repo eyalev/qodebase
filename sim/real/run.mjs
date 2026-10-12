@@ -11,7 +11,7 @@ import { rmSync, mkdirSync, writeFileSync, readFileSync, existsSync, appendFileS
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFAULTS } from '../../public/sim/engine.js';
-import { generate, randomOp, check, lineDiff, HOT } from './project.mjs';
+import { generate, randomOp, check, lineDiff, isHot, resetNames } from './project.mjs';
 import { openRepo } from './git.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -50,10 +50,21 @@ function mulberry32(a) {
 }
 
 export function runReal(opts) {
-  const cfg = { ...DEFAULTS, modules: 50, filesPerModule: 8, agents: 50, hours: 1, seed: 1, ...opts };
+  // Lanes (L2, docs/board/TASKS.md): `lanes` > 1 gives every area (folders m % lanes) its own
+  // merge queue that tests only its area, plus a coordinated lane for changes that touch several
+  // areas or a root file (tested whole, coordTestFactor x slower). Every lane's train goes through
+  // one door onto main (a git merge + ref update, doorS each, one at a time); after it, main's full
+  // tests run (main CI): a cross-area break found there reverts the train and stops every lane.
+  // `controller`: per lane, a cap on agents working there; every ctlWindowS the cap grows x1.5
+  // while the lane's landings rise and the cap is in use, and shrinks x0.75 when they fall.
+  // Agents whose task falls in a full lane draw another; else they wait idle (cost nothing).
+  const cfg = { ...DEFAULTS, modules: 50, filesPerModule: 8, agents: 50, hours: 1, seed: 1,
+    lanes: 1, controller: false, splitHot: false, doorS: 0.5, doorPerChangeS: 0.05, coordTestFactor: 2,
+    ctlWindowS: 600, ctlStart: 4, ctlMin: 2, bundle: true, ...opts };
   const pol = REAL_POLICIES[cfg.policy];
   if (!pol) throw new Error(`policy: ${Object.keys(REAL_POLICIES).join(', ')}`);
   const name = cfg.name || `${cfg.policy}-${cfg.agents}`;
+  resetNames();
   const rnd = mulberry32(cfg.seed);
   const normal = () => Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(2 * Math.PI * rnd());
   const logn = (med, sigma) => med * Math.exp(sigma * normal());
@@ -66,7 +77,7 @@ export function runReal(opts) {
   const repo = openRepo(gitDir);
 
   // ---- the project ----
-  const files0 = generate({ modules: cfg.modules, filesPerModule: cfg.filesPerModule, rnd });
+  const files0 = generate({ modules: cfg.modules, filesPerModule: cfg.filesPerModule, rnd, splitHot: cfg.splitHot });
   const snap0 = new Map([...files0].map(([p, text]) => [p, repo.blob(text)]));
   const root = repo.commit(repo.tree(snap0), [], 'Initial project (generated)', T0);
   let main = { sha: root, snap: snap0 };
@@ -96,10 +107,19 @@ export function runReal(opts) {
   const humanQ = []; let humansFree = cfg.humansPerRepo;
   const nLeads = pol.leads ? Math.max(1, Math.ceil(cfg.agents / cfg.leadSpan)) : 0;
   const leads = Array.from({ length: nLeads }, () => ({ busy: false, q: [], busyS: 0 }));
-  const mq = []; let mergeBusy = false, brokenUntil = -1;
+  let brokenUntil = -1;
+  // ---- lanes ----
+  const N = cfg.lanes, X = N > 1 ? N : 0; // X = the coordinated lane (only with lanes > 1)
+  const lanes = Array.from({ length: N > 1 ? N + 1 : 1 }, (_, i) => ({ i, q: [], busy: false, landed: 0, trains: 0, working: 0,
+    cap: cfg.controller ? cfg.ctlStart : Infinity, winLanded: 0, prevRate: null, caps: [] }));
+  const laneOfPath = (p) => { if (N === 1) return 0; const mm = /^src\/m(\d+)\//.exec(p); return mm ? Number(mm[1]) % N : X; };
+  const laneOfFiles = (files) => { if (N === 1) return 0; const s = new Set(files.map(laneOfPath)); return s.size === 1 ? [...s][0] : X; };
+  const inScope = (l) => (f) => N === 1 || l === X || laneOfPath(f.split(':')[0]) === l;
+  const doorQ = []; let doorBusy = false, doorBusyS = 0;
+  const idle = []; // agents waiting for room in a lane (controller)
   const history = []; // main's commits
   const series = [];
-  const m = { replayedOnLand: 0, landed: 0, conflicts: 0, testFails: 0, breaks: 0, reverts: 0, redos: 0, leadReplays: 0, dropped: 0, deferred: 0, disputes: 0, workS: 0, reworkS: 0, reviewS: 0, leadS: 0, gitMerges: 0 };
+  const m = { idled: 0, mainChecksFailed: 0, droppedWorkS: 0, revertedWorkS: 0, replayedOnLand: 0, landed: 0, conflicts: 0, testFails: 0, breaks: 0, reverts: 0, redos: 0, leadReplays: 0, dropped: 0, deferred: 0, disputes: 0, workS: 0, reworkS: 0, reviewS: 0, leadS: 0, gitMerges: 0 };
   let redS = 0, redFrom = 0;
 
   const ev = (c, what, extra) => c.events.push(extra ? [Math.round(t), what, extra] : [Math.round(t), what]);
@@ -109,14 +129,17 @@ export function runReal(opts) {
     ev(c, s);
   }
 
+  const draw = () => randomOp(rnd, pickFile, reader(main.snap), { splitHot: cfg.splitHot });
+  const room = (c) => !cfg.controller || lanes[laneOfFiles(touched(c))].working < lanes[laneOfFiles(touched(c))].cap;
   function newChange(agent) {
-    let op = randomOp(rnd, pickFile, reader(main.snap));
-    const c = { id: changes.length + 1, agent, op, created: t, events: [], state: null, tries: 0, files: [], conflicts: [], fails: [] };
-    changes.push(c);
-    // pickFree: if its files are claimed, leave this one in the backlog and draw another.
-    if (pol.claims && pol.pickFree) {
-      for (let i = 0; i < pol.pickFree && !claimable(c); i++) { m.deferred++; c.op = randomOp(rnd, pickFile, reader(main.snap)); }
+    const c = { id: changes.length + 1, agent, op: draw(), created: t, events: [], state: null, tries: 0, files: [], conflicts: [], fails: [] };
+    // pickFree: if its files are claimed (or its lane is full), leave this one in the backlog and draw another.
+    if (pol.pickFree && (pol.claims || cfg.controller)) {
+      for (let i = 0; i < pol.pickFree && !((!pol.claims || claimable(c)) && room(c)); i++) { m.deferred++; c.op = draw(); }
     }
+    if (!room(c)) { m.idled++; idle.push(agent); return; } // every lane it drew is full: wait
+    changes.push(c);
+    c.slotLane = laneOfFiles(touched(c)); lanes[c.slotLane].working++;
     ev(c, 'asked', c.op.text);
     if (!pol.claims || tryClaim(c)) beginWork(c, logn(cfg.workMedS, cfg.workSigma), 'work');
     else { setState(c, 'claimWait'); claimWait.push(c); }
@@ -128,12 +151,12 @@ export function runReal(opts) {
     return out ? [...out.keys()] : [];
   }
   function claimable(c) {
-    return touched(c).every((p) => HOT.includes(p) || !claims.has(p) || claims.get(p) === c.id);
+    return touched(c).every((p) => isHot(p) || !claims.has(p) || claims.get(p) === c.id);
   }
   function tryClaim(c) {
     if (!pol.claims) return true;
     if (!claimable(c)) return false;
-    c.claimed = touched(c).filter((p) => !HOT.includes(p));
+    c.claimed = touched(c).filter((p) => !isHot(p));
     for (const p of c.claimed) claims.set(p, c.id);
     return true;
   }
@@ -161,8 +184,16 @@ export function runReal(opts) {
     return true;
   }
 
+  // An agent's slot in its lane comes free: an idle agent tries again.
+  function freeSlot(c) {
+    if (c.slotLane == null) return;
+    lanes[c.slotLane].working--; c.slotLane = null;
+    if (idle.length) { const a = idle.shift(); at(1, () => newChange(a)); }
+  }
   function drop(c, why) {
     m.dropped++;
+    if (c.workDur) m.droppedWorkS += c.workDur;
+    freeSlot(c);
     ev(c, 'dropped', why);
     if (c.state) stateCount[c.state]--;
     c.state = 'dropped';
@@ -250,13 +281,24 @@ export function runReal(opts) {
     });
   }
 
-  function toMerge(c) { setState(c, 'mergeWait'); mq.push(c); pumpMerge(); }
-  function pumpMerge() {
-    if (mergeBusy || !mq.length || brokenUntil > t) return;
-    const batch = mq.splice(0, pol.batch);
-    mergeBusy = true;
-    at(cfg.mergeS + cfg.mergePerChangeS * batch.length + (pol.trainTest ? cfg.trainTestS : 0), () => mergeBatch(batch));
+  function toMerge(c) { setState(c, 'mergeWait'); const l = laneOfFiles(c.files); lanes[l].q.push(c); pumpMerge(l); }
+  function pumpMerge(l) {
+    const lane = lanes[l];
+    if (lane.busy || !lane.q.length || brokenUntil > t) return;
+    const batch = lane.q.splice(0, pol.batch);
+    lane.busy = true;
+    const test = pol.trainTest ? cfg.trainTestS * (N > 1 && l === X ? cfg.coordTestFactor : 1) : 0;
+    at(cfg.mergeS + cfg.mergePerChangeS * batch.length + test, () => (N > 1 ? (doorQ.push({ l, batch }), pumpDoor()) : mergeBatch(batch, l)));
   }
+  // The door onto main: one lane's train at a time.
+  function pumpDoor() {
+    if (doorBusy || !doorQ.length || brokenUntil > t) return;
+    const { l, batch } = doorQ.shift();
+    const d = cfg.doorS + cfg.doorPerChangeS * batch.length;
+    doorBusy = true; doorBusyS += d;
+    at(d, () => { doorBusy = false; mergeBatch(batch, l); pumpDoor(); });
+  }
+  const pumpAll = () => { lanes.forEach((_, l) => pumpMerge(l)); pumpDoor(); };
 
   function bounce(c, why, detail) {
     // A conflict or a failed test: redo from intent, or hand it to the area lead.
@@ -266,8 +308,9 @@ export function runReal(opts) {
     beginWork(c, c.workDur * cfg.redoFactor, 'rework');
   }
 
-  function mergeBatch(batch) {
-    mergeBusy = false;
+  function mergeBatch(batch, l) {
+    lanes[l].busy = false; lanes[l].trains++;
+    const scoped = (fails) => fails.filter(inScope(l)); // a lane's train tests only its own area
     let tip = main;
     const landedNow = [];
     for (const c of batch) {
@@ -282,7 +325,7 @@ export function runReal(opts) {
       } else {
         snap = repo.readTree(r.tree);
         if (pol.trainTest) {
-          const fails = check(reader(snap), lister(snap));
+          const fails = scoped(check(reader(snap), lister(snap)));
           if (fails.length) {
             m.testFails++;
             c.fails.push(...fails.slice(0, 3));
@@ -303,7 +346,7 @@ export function runReal(opts) {
         if (out && out.size) {
           const rs = new Map(tip.snap);
           for (const [p, text] of out) rs.set(p, repo.blob(text));
-          const fails = check(reader(rs), lister(rs));
+          const fails = scoped(check(reader(rs), lister(rs)));
           if (!fails.length) {
             m.replayedOnLand++;
             c.base = tip; c.files = [...out.keys()]; c.snap = rs;
@@ -322,20 +365,22 @@ export function runReal(opts) {
     if (landedNow.length) {
       main = tip;
       history.push({ t: Math.round(t), sha: tip.sha, ids: landedNow.map((c) => c.id), kind: 'land' });
-      for (const c of landedNow) land(c, tip.sha);
-      // Without train tests, main is only tested after landing.
-      if (!pol.trainTest) {
+      for (const c of landedNow) { land(c, tip.sha); lanes[l].landed++; lanes[l].winLanded++; }
+      // Without train tests, or with lanes (each tested only its area), main's own tests run after landing.
+      if (!pol.trainTest || N > 1) {
         const fails = check(reader(main.snap), lister(main.snap));
-        if (fails.length) breakMain(landedNow[landedNow.length - 1], fails, history[history.length - 2]);
+        if (fails.length) { m.mainChecksFailed++; breakMain(landedNow[landedNow.length - 1], fails, history[history.length - 2], landedNow); }
       }
     }
-    pumpMerge();
+    pumpAll();
   }
 
   function land(c, sha) {
     m.landed++;
-    c.landedAt = Math.round(t); c.landSha = sha;
-    c.diff = c.files.map((p) => ({ p, lines: lineDiff(c.base.snap.has(p) ? repo.text(c.base.snap.get(p)) : '', repo.text(c.snap.get(p))) }));
+    c.landedAt = Math.round(t); c.landSha = sha; c.lane = laneOfFiles(c.files);
+    if (cfg.bundle) c.diff = c.files.map((p) => ({ p, lines: lineDiff(c.base.snap.has(p) ? repo.text(c.base.snap.get(p)) : '', repo.text(c.snap.get(p))) }));
+    else { c.snap = null; c.base = null; } // big runs: keep memory flat
+    freeSlot(c);
     if (c.state) stateCount[c.state]--;
     c.state = 'landed'; ev(c, 'landed', sha.slice(0, 7));
     releaseClaims(c);
@@ -343,7 +388,7 @@ export function runReal(opts) {
   }
 
   // Main went red: someone reverts the change (the merge queue waits meanwhile).
-  function breakMain(c, fails, before) {
+  function breakMain(c, fails, before, train = [c]) {
     m.breaks++;
     c.fails.push(...fails.slice(0, 3));
     ev(c, 'broke main', fails.slice(0, 3));
@@ -358,21 +403,46 @@ export function runReal(opts) {
       const sha = repo.commit(treeSha, [main.sha], `Revert #${c.id}: ${fails[0]}`, T0 + t * 1000);
       main = { sha, snap: repo.readTree(treeSha) };
       history.push({ t: Math.round(t), sha, ids: [c.id], kind: 'revert' });
-      // Its agent has moved on; the change goes back to the backlog.
-      c.landedAt = null; c.reverted = true; c.state = 'reverted'; m.landed--;
-      ev(c, 'reverted: back to the backlog');
-      pumpMerge();
+      // Its agents have moved on; the changes go back to the backlog. With lanes the whole
+      // train is reverted (main goes back to before it); without, the train is one change.
+      for (const x of N > 1 ? train : [c]) {
+        x.landedAt = null; x.reverted = true; x.state = 'reverted'; m.landed--; m.revertedWorkS += x.workDur || 0;
+        if (x.lane != null) lanes[x.lane].landed--;
+        ev(x, 'reverted: back to the backlog');
+      }
+      pumpAll();
     });
   }
 
   for (let a = 0; a < cfg.agents; a++) at(logn(cfg.bootS, 0.3) + rnd() * 30, () => newChange(a));
 
+  // The per-lane controller: add agents while the lane's landings rise.
+  if (cfg.controller) {
+    const tick = () => {
+      let added = 0;
+      for (const lane of lanes) {
+        const rate = lane.winLanded; lane.winLanded = 0;
+        const used = lane.working >= lane.cap * 0.8;
+        const before = lane.cap;
+        if (lane.prevRate == null || (rate > lane.prevRate * 1.05 && used)) lane.cap = Math.ceil(lane.cap * 1.5);
+        else if (rate < lane.prevRate * 0.9) lane.cap = Math.max(cfg.ctlMin, Math.floor(lane.cap * 0.75));
+        lane.prevRate = rate;
+        added += Math.max(0, lane.cap - before);
+        lane.caps.push(lane.cap);
+      }
+      for (let i = 0; i < added && idle.length; i++) { const a = idle.shift(); at(1 + i * 0.01, () => newChange(a)); }
+      at(cfg.ctlWindowS, tick);
+    };
+    at(cfg.ctlWindowS, tick);
+  }
+
   const end = cfg.hours * 3600;
-  let lastSample = -1e9, nEvents = 0, lastLog = performance.now();
+  let lastSample = -1e9, nEvents = 0, lastLog = performance.now(), workingSum = 0, workingN = 0;
   while (heap.length && heap[0].t <= end) {
     const e = pop(); t = e.t; e.fn(); nEvents++;
     if (t - lastSample >= 60) {
       lastSample = t;
+      workingSum += lanes.reduce((s, l) => s + l.working, 0); workingN++;
       series.push({ t: Math.round(t), landed: m.landed, conflicts: m.conflicts, testFails: m.testFails, red: brokenUntil > t ? 1 : 0, states: { ...stateCount } });
     }
     if (performance.now() - lastLog > 5000) { lastLog = performance.now(); process.stderr.write(`  ${name}: ${Math.round(t / 60)} of ${cfg.hours * 60} simulated min, ${m.landed} landed, ${m.gitMerges} git merges\n`); }
@@ -387,6 +457,12 @@ export function runReal(opts) {
     disputes: m.disputes, gitMerges: m.gitMerges, reworkShare: thinking ? +(m.reworkS / thinking).toFixed(3) : 0,
     redShare: +(redS / end).toFixed(3), commits: history.length,
     cost: +((m.workS + m.reworkS + m.reviewS + m.leadS) * cfg.llmPerS).toFixed(2),
+    lanes: N, controller: !!cfg.controller, splitHot: !!cfg.splitHot, modules: cfg.modules,
+    laneLanded: lanes.map((l) => l.landed), coordLanded: N > 1 ? lanes[X].landed : 0,
+    doorBusy: +(doorBusyS / end).toFixed(3), mainChecksFailed: m.mainChecksFailed, idled: m.idled,
+    avgWorking: workingN ? Math.round(workingSum / workingN) : 0,
+    caps: cfg.controller ? lanes.map((l) => l.cap) : null,
+    wasteShare: thinking ? +((m.reworkS + m.droppedWorkS + m.revertedWorkS) / thinking).toFixed(3) : 0,
     leads: nLeads, leadBusy: nLeads ? +(leads.reduce((s, l) => s + l.busyS, 0) / (end * nLeads)).toFixed(3) : null,
     wallS: +((performance.now() - wall0) / 1000).toFixed(1),
   };
@@ -416,7 +492,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const indexPath = join(RUNS, 'index.json');
   const index = existsSync(indexPath) ? JSON.parse(readFileSync(indexPath, 'utf8')) : [];
   for (const policy of policies) {
-    const { bundle, stats, name } = runReal({ policy, agents: Number(args.agents || 50), hours: Number(args.hours || 1), seed: Number(args.seed || 1) });
+    const lanesOpt = args.lanes ? { lanes: Number(args.lanes), controller: !!args.controller, splitHot: !!args['split-hot'],
+      ...(args.modules ? { modules: Number(args.modules) } : {}), bundle: !args['no-bundle'], ...(args.name ? { name: args.name } : {}) } : {};
+    const { bundle, stats, name } = runReal({ policy, agents: Number(args.agents || 50), hours: Number(args.hours || 1), seed: Number(args.seed || 1), ...lanesOpt });
+    if (args['no-bundle']) { // lanes grid: one stats line, no viewer bundle
+      if (args.out) appendFileSync(args.out, JSON.stringify({ ts: new Date().toISOString(), event: 'lanes_run', name, policy, agents: bundle.meta.agents, hours: bundle.meta.hours, seed: bundle.meta.seed, stats }) + '\n');
+      console.log(`${name}: ${stats.landed} landed (${stats.landedPerHour}/h), lanes ${stats.lanes}, coordinated ${stats.coordLanded}, ${stats.conflicts} conflicts, ${stats.breaks} broke main, waste ${stats.wasteShare}, working ${stats.avgWorking}, door ${stats.doorBusy}, p50 ${Math.round((stats.p50S || 0) / 60)} min, $${stats.cost}, ${stats.wallS} s`);
+      continue;
+    }
     const json = JSON.stringify(bundle);
     writeFileSync(join(RUNS, `${name}.json`), json);
     const entry = { name, policy, label: bundle.meta.label, agents: bundle.meta.agents, hours: bundle.meta.hours, stats, bytes: json.length };

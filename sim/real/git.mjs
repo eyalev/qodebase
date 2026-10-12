@@ -59,6 +59,7 @@ export function openRepo(dir) {
       return write('tree', body);
     };
     const sha = writeNode(root);
+    if (treeCache.size > 3000) treeCache.clear(); // big runs: thousands of 1,600-file snapshots
     treeCache.set(sha, new Map(snapshot));
     return sha;
   }
