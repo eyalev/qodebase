@@ -170,3 +170,52 @@ manager from runs.jsonl):
   $2.46). The split removes git thrash (aborted rebases 244 -> 33) but cannot stop twins.
 - Reading: a split rule is a strong, free baseline for fighting over the same work; the board's unique value is that
   duplicates stop (and it does not need tasks known and numbered up front, which W9 tests with tasks arriving mid-run).
+
+## 7. Tasks arriving during the run (W9b, E7-results.md)
+10 Haiku agents, 30 tasks at start + 30 arriving over the run (8 reworded twins), 3 runs each (medians):
+none / board + upfront check / board + a check on every new task: pairs built twice 10 / 4 / 1; agent-minutes
+86.5 / 84.6 / 71.6; wall flat (~665 s: the last arrival sets the finish). The per-arrival check was right on 88 of
+90 arrivals, 0 false. Its runs scored 54/60 hidden: every failure is a twin the harness CLOSED as 'nothing to do'
+while the test expected the twin's own name. Lesson, now in qodebase (W9c): a twin is handed out as 'add a
+one-line alias of the original under this name', never closed.
+
+## 8. Growing the team (W8, E7-results.md; 150 tasks, Haiku, 40-agent pool)
+Throughput-probing controller (start 8, add 2 while landings/min rise, step back otherwise, halve only on dropped
+work). Medians of 3 rounds where complete (round 3 controller arms pending at writing):
+
+| | wall | API-equiv $ | agent-minutes | hidden |
+|---|---|---|---|---|
+| 40 agents, no board | 1,964 s | 10.31 | 927 | 150/150 |
+| 40 agents, board | 1,388 s | 9.39 | 817 | 148-150 |
+| controller, no board (settles ~10) | 1,689-1,711 s (2 runs) | 5.09-5.51 | 253-289 | 150 |
+| controller + board (settles ~10) | 1,284-1,470 s (2 runs) | 4.73-4.98 | 222-229 | 150 |
+
+Without the board, 40 agents jam: the controller at ~10 was faster and about half the cost. With the board, 40
+agents are faster than without it; the controller + board was the fastest and cheapest setup in both rounds so far.
+
+## 9. Scaling to thousands: lanes (L1 fast sim, L2 real git, L3 Cloudflare pending)
+- **One queue has a ceiling** (~830-900 landed/h in both sims, at 500, 2,000 and 10,000 agents); past ~300 agents
+  more agents only add wait (median 61 min at 2,000, 130 after 6 h) and cost ($13.25/change at 10,000, real git).
+- **Lanes (a landing queue per area) scale only with three conditions:** dependency-aware testing (lanes that test
+  only their own area left main red 20-88% of the time; counting calls into other areas + testing reverse
+  dependencies: 0 breaks in 26 cells), hot shared files split, and a controller per lane (the coordinated lane for
+  cross-area changes otherwise becomes the next door).
+- **Real git (L2, scripted agents, real tests, one run per cell):** 2,000 agents, 6 h steady state, 32 lanes +
+  controllers: 1,271/h vs 896 (1.4x; the fast sim predicted 1,379), median wait 10 vs 130 min, $2.02 vs $2.66 per
+  change, ~380 agents awake. 10,000 agents, 2 h (upper bound): 7,433/h vs 896 (8x), $2.09 vs $13.25, 9 vs 61 min.
+  8 lanes was worse than one queue (coordinated lane overloaded). Cross-area share caps everything: at 20% cross,
+  lanes give 1.5-2.7x at any lane count (fast sim).
+- **Cloudflare (L3):** 500 agents: 1 lane and 8 lanes both ~7,530 landed in 10 min (demand-bound; lanes only add
+  main-ref compare-and-swap misses, 24% as predicted); main whole in every cell. 2,000-agent cells pending.
+
+## 10. Bun's Zig->Rust port (BUN2-BUN5; sim/bun, sim.md (j)-(k))
+- **Replayed on Bun's real patches** (one agent in history order ends on history's exact files): the port's
+  commits are chains (89% edit lines an earlier commit wrote, longest 322), so 640 agents = 64 (26.3 vs 26.2 h;
+  real 25.3 h). A blocking per-crate check costs +23% to +92% time; the same check run right after landing (fix
+  forward) keeps 26.2 h and cuts broken-crate time 59-73% (middle-phase breaks modelled, labelled). On the real
+  green-phase regressions, a compile check caught 1 of 4.
+- **Re-cut by module, interfaces first (simulated from Bun's real structure, module order checked against the
+  names the real patches use across files; not replayed):** 3.4-5.2 h at 64 agents, 5-8x faster than the replay;
+  no gain from more agents (~450 modules at most in parallel). Strict order (wait for finished modules) 89 h: the use
+  graph is cyclic. The chain was mostly how the work was cut.
+- One merge queue with a 5-min full check is the wrong tool for a chain-shaped port (73-89 h in the fast sim).
