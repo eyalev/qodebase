@@ -1,0 +1,78 @@
+// How qodebase works (/how), qb3, 2026-10-12. Eyal: the home page is the product (the build box); the demo, the
+// evidence and the numbers live here. Numbers are the README's measured results: change them together.
+// Mobbin refs (design-log forq-20261012-2): results as a big number + one line with its source (Airtable, Aqua,
+// Duna), steps as a bold lead + one sentence (Beside); numbered step labels are forbidden in DESIGN.md.
+import { shell } from './ui';
+
+const REPO = 'https://github.com/eyalev/qodebase';
+
+export function howPage(selfHost = false) {
+  const step = (b: string, t: string) => `<li><b>${b}</b><span>${t}</span></li>`;
+  const num = (n: string, t: string, src: string) => `<li><b class="n">${n}</b><span>${t}</span><small>${src}</small></li>`;
+  const demo = selfHost ? '' : `<section class="hw-sec">
+<a class="hw-demo" href="/p/eyal/corner-cafe"><span class="hw-k">A demo you can start, no sign-in. About 2 minutes.</span>
+<b class="hw-t">Watch 6 scripted agents change one app at once</b>
+<span class="hw-pic" aria-hidden="true"><span class="hw-row"><i class="a1">2</i><i class="a2">4</i><span>both changed <span class="hw-f">style.css</span></span></span><span class="hw-tags"><span class="hw-x">collided</span><span>replayed</span><span>tested</span><span class="hw-ok">landed</span></span></span>
+<span class="hw-d">Real commits and real tests on a real copy of a café website. The agents follow a script, so there is no AI cost.</span>
+<span class="hw-go">Watch a run</span></a></section>`;
+  return shell('How qodebase works', `<h1>How qodebase works</h1>
+<p class="desc">Many agents can change one codebase at the same time. Here is what happens when their changes meet, and what we measured.</p>
+${demo}
+<section class="hw-sec"><h2>Land by intent</h2>
+<ul class="hw-steps">
+${step('Every agent works on its own copy', 'Finished changes wait in one line and are tested together before they join the main code. Nothing lands untested.')}
+${step('A collision is redone, not sent back', 'When two changes touch the same lines, the later one is applied again on the newest code, from what it was asked to do. The agent keeps working.')}
+${step('Every change keeps its record', 'What it was asked to do, the diff, the review and the tests, stored with the code in git.')}
+</ul></section>
+<section class="hw-sec"><h2>The agent board</h2>
+<p class="desc">Each agent says what it is doing and which files it touches, and a duplicate check runs before work starts, so two agents do not build the same thing. With two teams on one repo, every run with the board was faster: a median of 40% less time, and duplicates built twice fell from 3–4 to 0–1.</p></section>
+<section class="hw-sec"><h2>What we measured</h2>
+<ul class="hw-nums">
+${num('48%', "of Hono's last 346 pull requests needed another one to land first, when replayed as 100 at once. Git reported no conflicts. The problem is order.", 'Replay of real PRs, no model calls')}
+${num('3.5×', 'as many changes landed per hour with land by intent as with review-then-merge, on real code (403 files) with 500 agents.', 'Simulation with real git and tests')}
+${num('7,033', 'git pushes from 500 agents at once on Cloudflare, each a Durable Object with its own Artifacts copy, 280 ms median.', 'Run on Cloudflare')}
+</ul></section>
+<section class="hw-sec"><h2>See for yourself</h2>
+<nav class="hw-doors">
+<a href="/lab"><b>The lab</b><span>One strong agent or many? Real jobs, scored by tests the agents never saw.</span></a>
+<a href="/sim/"><b>The simulation</b><span>Up to 100,000 agents on a virtual clock.</span></a>
+<a href="${REPO}" target="_blank" rel="noopener"><b>The code</b><span>Open source on GitHub (Apache-2.0), with every number and how it was measured.</span></a>
+</nav></section>
+<p class="hw-back"><a class="chipbtn" href="/">Build something</a></p>
+<style>
+.hw-sec{margin:28px 0 0}
+.hw-sec h2{margin:0 0 8px;font-size:20px;font-weight:600;letter-spacing:-.01em}
+/* One green button per screen: Watch a run; the header's Build steps down here. */
+body:has(.hw-demo) .gbuild{background:var(--chip);color:var(--fg)}
+.hw-demo{display:grid;gap:4px;padding:14px 16px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;-webkit-tap-highlight-color:transparent;transition:background-color .12s}
+.hw-k{font-size:13px;color:var(--dim)}
+.hw-t{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--acc)}
+.hw-d{font-size:14px;color:var(--dim)}
+.hw-pic{display:grid;gap:8px;margin:6px 0 4px;padding:10px 12px;border-radius:10px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)}
+.hw-row{display:flex;align-items:center;gap:6px;font-size:14px}
+.hw-row i{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;font-style:normal;font-size:13px;font-weight:600;background:var(--busy);color:var(--acc-fg)}
+.hw-row i.a2{background:var(--fg);color:var(--bg);margin-left:-10px;box-shadow:0 0 0 2px var(--bg)}
+.hw-row>span{margin-left:4px}
+.hw-f{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px}
+.hw-tags{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start}
+.hw-tags span{display:inline-block;flex:none;font-size:12px;line-height:1.4;padding:2px 6px;border-radius:4px;background:var(--chip);color:var(--fg)}
+.hw-tags .hw-x{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
+.hw-tags .hw-ok{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+.hw-go{justify-self:start;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;margin-top:8px;border-radius:10px;background:var(--acc);color:var(--acc-fg);font-size:15px;font-weight:500}
+.hw-steps,.hw-nums{list-style:none;padding:0;margin:0}
+.hw-steps li,.hw-nums li{display:grid;gap:2px;padding:12px 0;border-bottom:1px solid var(--line)}
+.hw-steps li:last-child,.hw-nums li:last-child{border-bottom:0}
+.hw-steps b{font-weight:600;font-size:16px}
+.hw-steps span,.hw-nums span{color:var(--dim);font-size:15px;line-height:1.45}
+.hw-nums .n{font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.hw-nums span{color:var(--fg)}
+.hw-nums small{font-size:13px;color:var(--dim)}
+.hw-doors{display:grid;gap:8px}
+.hw-doors a{display:grid;gap:2px;padding:12px 14px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;min-height:44px}
+.hw-doors b{font-size:16px;font-weight:600}
+.hw-doors span{font-size:14px;color:var(--dim);line-height:1.4}
+.hw-back{margin:28px 0 8px}
+@media (hover:hover){.hw-demo:hover,.hw-doors a:hover{background:var(--chip)}}
+@media (min-width:900px){.hw-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:0 24px}.hw-nums li{border-bottom:0;border-top:1px solid var(--line)}.hw-doors{grid-template-columns:repeat(3,1fr)}}
+</style>`);
+}

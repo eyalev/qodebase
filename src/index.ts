@@ -14,6 +14,7 @@ import { Registry, canSee, listFor, registry, type Entry } from './registry';
 import { BuildBox } from './build';
 import { mintRunPass, serveRun } from './run';
 import { labPage } from './landingui/labview';
+import { howPage } from './how';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
 import { catalogReadme } from './catalog';
@@ -354,6 +355,12 @@ const app = {
         const em = await sessionEmail(env, request);
         const u = em ? await userByEmail(env, em) : null;
         return html(withGlobal(aboutPage(!!env.SELF_HOST), 'home', 0, u?.handle || '', 'd'));
+      }
+      if (url.pathname === '/how' || url.pathname === '/how/') {
+        // How qodebase works (qb3, 2026-10-12): the demo, land by intent, the board, the numbers; home stays the product.
+        const em = await sessionEmail(env, request);
+        const u = em ? await userByEmail(env, em) : null;
+        return html(withGlobal(howPage(!!env.SELF_HOST), 'home', 0, u?.handle || '', 'd'));
       }
       // Variants lab (qb7, docs/lab/PLAN.md): public; the lab's owner (eyal) also gets "Run for real".
       if (url.pathname === '/lab' || url.pathname === '/lab/') {
