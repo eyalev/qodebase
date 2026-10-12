@@ -89,7 +89,7 @@
     const S = summary(T), runMs = T.run.end - T.run.start;
     if (!T.criticalChange && T.critical?.length) { const cs = T.spans.find((x) => T.critical.includes(x.id) && x.change && x.label); if (cs) T.criticalChange = cs.label; }
     const used = new Set(T.spans.map((s) => s.lane).concat(T.marks.map((m) => m.lane)));
-    const lanes = T.lanes.filter((l) => used.has(l.id)).map((l) => ({ ...l, label: String(l.label || l.id).replace(/^scripted agent (\d+)$/i, 'Agent $1').replace(/^r:reviewer$/, 'Reviewer') }));
+    const lanes = T.lanes.filter((l) => used.has(l.id)).map((l) => ({ ...l, label: String(l.label || l.id).replace(/^scripted agent (\d+)$/i, 'Agent $1').replace(/^r:reviewer$/, 'Reviewer').replace(/\s*\(.*\)$/, '') }));
     const crit = new Set(T.critical || []);
     const pct = (t) => `${(((t - T.run.start) / runMs) * 100).toFixed(3)}%`;
     const wid = (s) => `${Math.max(0.15, ((s.end - s.start) / runMs) * 100).toFixed(3)}%`;
