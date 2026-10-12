@@ -522,7 +522,17 @@ export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced
 export function suggestBuild(job = SMALL_APP) {
   const sc = jobProfile(job);
   const f = predictBuild(job, BUILD_PRESETS.fastest.variant), b = predictBuild(job, BUILD_PRESETS.balanced.variant);
-  if (sc.tasks <= 10 || f.apiUsd[1] <= 1.5 * b.apiUsd[1]) return { preset: 'fastest', why: 'A small job: one agent is quickest and best, and costs little more.' };
+  if (sc.tasks <= 10 || f.apiUsd[1] <= 1.5 * b.apiUsd[1]) {
+    // The words follow this job's numbers (qb7's critique): 'small' only at <= 10 pieces; the cost clause from
+    // the two estimates' midpoints.
+    const fm = (f.apiUsd[0] + f.apiUsd[1]) / 2, bm = (b.apiUsd[0] + b.apiUsd[1]) / 2;
+    const x = fm / bm;
+    const cost = x <= 1.05 ? 'costs about the same as a team or less' : x <= 1.25 ? 'costs a little more than a team' : `costs about ${x.toFixed(1)}x a team`;
+    return { preset: 'fastest', why: `${sc.tasks <= 10 ? 'A small job: o' : 'O'}ne agent is quickest and best here, and ${cost}.` };
+  }
   if (sc.difficulty <= 0.7 && sc.pShared < 0.7) return { preset: 'cheapest', why: 'Many simple, separate pieces: a Haiku crew does them for the least.' };
-  return { preset: 'balanced', board: sc.pShared >= 0.7, why: sc.pShared >= 0.7 ? 'A big job whose pieces overlap: a team with the board on, at about half the cost of one agent.' : 'A big job: a reviewed team at about half the cost of one agent.' };
+  const share = ((b.apiUsd[0] + b.apiUsd[1]) / (f.apiUsd[0] + f.apiUsd[1]));
+  const part = share <= 0.4 ? 'well under half' : share <= 0.6 ? 'about half' : share <= 0.8 ? 'about two thirds' : 'a little less than';
+  const of = part === 'a little less than' ? `${part} the cost of one agent` : `at ${part} the cost of one agent`;
+  return { preset: 'balanced', board: sc.pShared >= 0.7, why: sc.pShared >= 0.7 ? `A big job whose pieces overlap: a team with the board on, ${of}.` : `A big job: a reviewed team, ${of}.` };
 }
