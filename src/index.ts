@@ -7,7 +7,7 @@
 
 import { withBaseline, kstatsForward, feedback, health } from './baseline';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-import { AGENT_RE, NAME_RE, appWorkerName, frontHosts, isUiHost, projectOf, slugOf, type Env } from './env';
+import { AGENT_RE, NAME_RE, appWorkerName, frontHosts, isUiHost, uiHosts, projectOf, slugOf, type Env } from './env';
 import { AgentBox, log, REVIEW_STEPS, type BootSpec } from './box';
 import { Project, roleOf, type ProjectInfo, type Role } from './project';
 import { Registry, canSee, listFor, registry, type Entry } from './registry';
@@ -20,6 +20,7 @@ import { catalogReadme } from './catalog';
 import { STARTER, buildPayload } from './newproject';
 import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, cleanEstimate, DEFAULT_PLAN } from './buildsettings';
 import { suggestRoute } from './buildsuggest';
+import { withPicker } from './picker';
 import { ATTACH_TYPES, ATTACH_MAX, newAttachId, isAttachId, attachKey, composeMessage, parseMarker, attachedLines } from './attach';
 import { buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
@@ -333,7 +334,9 @@ const app = {
     // The run host serves apps. A self-hosted copy's run host also carries the boxes'
     // API calls (/api/…: no repo path starts so, repo names have a dot), because its
     // UI host is behind Access.
-    if ((url.hostname === env.RUN_HOST || url.hostname.endsWith(`.${env.RUN_HOST}`)) && !(env.SELF_HOST && url.pathname.startsWith('/api/'))) return serveRun(request, env, ctx);
+    // The picker (src/picker.ts) only on ?__qbpick=1 pages, for the App view's Pick (S2).
+    if ((url.hostname === env.RUN_HOST || url.hostname.endsWith(`.${env.RUN_HOST}`)) && !(env.SELF_HOST && url.pathname.startsWith('/api/')))
+      return withPicker(request, await serveRun(request, env, ctx), [...uiHosts(env), ...(env.UI_VARIANT_HOSTS || '').split(',').map((h) => h.trim()).filter(Boolean)].map((h) => `https://${h}`));
     // Cloudflare Issues → Notifications webhook. Its own auth (cf-webhook-auth), before the user/agent auth.
     if (url.pathname === '/api/hooks/issues' && request.method === 'POST') return issuesHook(request, env, ctx);
     // Public-site basics (baseline): about, privacy, robots, version, health.
