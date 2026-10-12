@@ -49,6 +49,24 @@ export function applyHunks(lines, hunks) {
   return { lines: out, ok, lost };
 }
 
+// One file's diff onto its current lines (null = no such file). Files are split on '\n', so a file ending in a
+// newline ends with ''. Handles new files, deletions (the result is null) and "\ No newline at end of file".
+export function applyDiff(cur, d) {
+  let oldNoNL = false, newNoNL = false;
+  for (const h of d.hunks) h.lines.forEach((l, i) => { if (l[0] !== '\\') return; const prev = h.lines[i - 1] || ' '; if (prev[0] !== '+') oldNoNL = true; if (prev[0] !== '-') newNoNL = true; });
+  const deleted = d.hunks.length === 1 && d.hunks[0].ns === 0 && d.hunks[0].nl === 0;
+  if (cur == null) {
+    if (d.hunks.length === 1 && d.hunks[0].os === 0) { const add = d.hunks[0].lines.filter((l) => l[0] === '+').map((l) => l.slice(1)); return { lines: newNoNL ? add : [...add, ''], ok: true, lost: 0 }; }
+    return { lines: null, ok: false, lost: d.hunks.length };
+  }
+  const r = applyHunks(cur, d.hunks);
+  if (deleted && r.ok) return { lines: null, ok: true, lost: 0 };
+  let out = r.lines;
+  if (oldNoNL && !newNoNL && out.at(-1) !== '') out = [...out, ''];
+  if (!oldNoNL && newNoNL && out.at(-1) === '') out = out.slice(0, -1);
+  return { lines: out, ok: r.ok, lost: r.lost };
+}
+
 export function load(path) { return JSON.parse(gunzipSync(readFileSync(path)).toString()); }
 
 export function run(data, opts = {}) {
@@ -139,15 +157,11 @@ export function run(data, opts = {}) {
     let conflict = false;
     for (const d of x.diffs) {
       if (d.binary) continue;
-      const cur = tree.get(d.path);
       if (!d.hunks.length) continue;
-      if (cur == null) { // new file (or apply onto missing): take the patch's new side
-        if (d.hunks.length === 1 && d.hunks[0].os === 0) { tree.set(d.path, d.hunks[0].lines.filter((l) => l[0] === '+').map((l) => l.slice(1))); continue; }
-        conflict = true; m.lostHunks += d.hunks.length; continue;
-      }
-      const r = applyHunks(cur, d.hunks);
+      const cur = tree.get(d.path) ?? null;
+      const r = applyDiff(cur, d);
       if (!r.ok) { conflict = true; m.lostHunks += r.lost; }
-      tree.set(d.path, r.lines);
+      if (r.lines !== null || r.ok) tree.set(d.path, r.lines); // a failed apply onto a missing file keeps it missing
     }
     if (conflict) { m.conflicts++; const d = x.work * cfg.reworkF; m.reworkS += d; x.reworked = (x.reworked || 0) + 1; }
     const finish = () => {
@@ -170,13 +184,14 @@ export function run(data, opts = {}) {
   for (const [, r] of red) m.redCrateS += t - r.since; // never healed
   // compare with history's files at the end
   let same = 0, differ = 0;
-  for (const [p, want] of Object.entries(data.final)) { const got = tree.get(p); const g2 = got == null ? null : got.join('\n'); if (g2 === want) same++; else differ++; }
+  const binary = new Set(tasks.flatMap((x) => x.diffs.filter((d) => d.binary).map((d) => d.path)));
+  for (const [p, want] of Object.entries(data.final)) { if (binary.has(p)) continue; const got = tree.get(p); const g2 = got == null ? null : got.join('\n'); if (g2 === want) same++; else differ++; }
   const hours = (done ?? t) / 3600;
   return { method: cfg.method, agents: cfg.validate ? 1 : cfg.agents, seed: cfg.seed, seg: data.seg, breakModel: cfg.breaks || 'none', borderline: !!cfg.borderline, checkS: cfg.method === 'check' ? cfg.checkS : 0,
     hours: +hours.toFixed(2), landed: m.landed, of: tasks.length, conflicts: m.conflicts, lostHunks: m.lostHunks,
     reworkShare: +((m.reworkS + m.fixS) / (m.workS + m.reworkS + m.fixS + m.checkS)).toFixed(4), checkShare: +(m.checkS / (m.workS + m.reworkS + m.fixS + m.checkS)).toFixed(4),
     agentHours: +((m.workS + m.reworkS + m.fixS + m.checkS) / 3600).toFixed(1), breaks: m.breaks, caught: m.caught,
-    redCrateMin: Math.round(m.redCrateS / 60), landedOnRed: m.landedOnRed, filesSameAsHistory: same, filesDiffer: differ };
+    redCrateMin: Math.round(m.redCrateS / 60), landedOnRed: m.landedOnRed, filesSameAsHistory: same, filesDiffer: differ, binaryNotReplayed: binary.size };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

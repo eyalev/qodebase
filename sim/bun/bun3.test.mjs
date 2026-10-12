@@ -28,3 +28,12 @@ test('history order ends on history\'s files; more agents finish sooner with the
   const c = run(data, { method: 'check', agents: 3, checkS: 60 });
   assert.ok(c.checkShare > 0 && c.hours > p.hours);
 });
+
+import { applyDiff } from './bun3.mjs';
+test('new files keep their trailing newline, deletions become null, no-newline markers are honoured', () => {
+  assert.deepEqual(applyDiff(null, { hunks: [H(0, 0, 1, 2, ['+a', '+b'])] }).lines, ['a', 'b', '']);
+  assert.deepEqual(applyDiff(null, { hunks: [H(0, 0, 1, 1, ['+a', '\\ No newline at end of file'])] }).lines, ['a']);
+  assert.equal(applyDiff(['a', 'b', ''], { hunks: [H(1, 2, 0, 0, ['-a', '-b'])] }).lines, null);
+  assert.deepEqual(applyDiff(['a', 'b'], { hunks: [H(2, 1, 2, 1, ['-b', '\\ No newline at end of file', '+b'])] }).lines, ['a', 'b', '']);
+  assert.deepEqual(applyDiff(['a', 'b', ''], { hunks: [H(2, 1, 2, 1, ['-b', '+c', '\\ No newline at end of file'])] }).lines, ['a', 'c']);
+});
