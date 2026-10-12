@@ -20,17 +20,20 @@ export function howPage(selfHost = false) {
 ${demo}
 <section class="hw-sec"><h2>Land by intent</h2>
 <ul class="hw-steps">
-${step('Every agent works on its own copy', 'Finished changes wait in one line and are tested together before they join the main code. Nothing lands untested.')}
+${step('Every agent works on its own copy', 'Agents never edit the same files at the same time, so nobody overwrites anybody.')}
+${step('Finished work waits in one line', 'Changes are tested together before they join the main code. Nothing lands untested.')}
 ${step('A collision is redone, not sent back', 'When two changes touch the same lines, the later one is applied again on the newest code, from what it was asked to do. The agent keeps working.')}
 ${step('Every change keeps its record', 'What it was asked to do, the diff, the review and the tests, stored with the code in git.')}
 </ul></section>
 <section class="hw-sec"><h2>The agent board</h2>
-<p class="desc">Each agent says what it is doing and which files it touches, and a duplicate check runs before work starts, so two agents do not build the same thing. With two teams on one repo, every run with the board was faster: a median of 40% less time, and duplicates built twice fell from 3–4 to 0–1.</p></section>
+<ul class="hw-nums one">${num('40% less time', 'with two teams on one repo: every run with the board was faster, and tasks built twice fell from 3–4 to 0–1.', '6 Claude Haiku agents, 3 runs with the board and 3 without, on qodebase')}</ul>
+<p class="desc">Each agent says what it is doing and which files it touches, and a duplicate check runs before work starts, so two agents do not build the same thing.</p></section>
 <section class="hw-sec"><h2>What we measured</h2>
 <ul class="hw-nums">
-${num('48%', "of Hono's last 346 pull requests needed another one to land first, when replayed as 100 at once. Git reported no conflicts. The problem is order.", 'Replay of real PRs, no model calls')}
-${num('3.5×', 'as many changes landed per hour with land by intent as with review-then-merge, on real code (403 files) with 500 agents.', 'Simulation: scripted agents, real git and tests')}
-${num('7,033', 'git pushes from 500 agents at once on Cloudflare, each a Durable Object with its own Artifacts copy, 280 ms median.', 'Run on Cloudflare')}
+${num('12 of 12', 'changes landed in 6 min 43 s from one request on the phone: 12 Claude agents, 7 collisions, none sent back. $0.16 of container time.', 'Real AI agents (Claude Haiku), eyal/cafe-team')}
+${num('48%', "of the last 346 pull requests of Hono (a popular open-source web framework) needed another one to land first, when replayed as 100 at once. Git reported no conflicts. The problem is order.", 'Replay of real PRs, no model calls')}
+${num('3.5×', 'as many changes landed per hour with land by intent as when each change waits for review and merges one at a time, on real code (403 files) with 500 scripted agents.', 'Simulation: scripted agents, real git and tests')}
+${num('7,033', 'git pushes from 500 agents at once, each with its own copy of the code, 280 ms median.', 'Run on Cloudflare: Durable Objects + Artifacts')}
 </ul></section>
 <section class="hw-sec"><h2>See for yourself</h2>
 <nav class="hw-doors">
@@ -48,7 +51,7 @@ body:has(.hw-demo) .gbuild{background:var(--chip);color:var(--fg)}
 .hw-k{font-size:13px;color:var(--dim)}
 .hw-t{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--acc)}
 .hw-d{font-size:14px;color:var(--dim)}
-.hw-pic{display:grid;gap:8px;margin:6px 0 4px;padding:10px 12px;border-radius:10px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)}
+.hw-pic{display:grid;gap:8px;margin:6px 0 4px}
 .hw-row{display:flex;align-items:center;gap:6px;font-size:14px}
 .hw-row i{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;font-style:normal;font-size:13px;font-weight:600;background:var(--busy);color:var(--acc-fg)}
 .hw-row i.a2{background:var(--fg);color:var(--bg);margin-left:-10px;box-shadow:0 0 0 2px var(--bg)}
@@ -64,6 +67,7 @@ body:has(.hw-demo) .gbuild{background:var(--chip);color:var(--fg)}
 .hw-steps li:last-child,.hw-nums li:last-child{border-bottom:0}
 .hw-steps b{font-weight:600;font-size:16px}
 .hw-steps span,.hw-nums span{color:var(--dim);font-size:15px;line-height:1.45}
+.hw-nums.one li{padding-top:4px}
 .hw-nums .n{font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
 .hw-nums span{color:var(--fg)}
 .hw-nums small{font-size:13px;color:var(--dim)}
@@ -73,6 +77,6 @@ body:has(.hw-demo) .gbuild{background:var(--chip);color:var(--fg)}
 .hw-doors span{font-size:14px;color:var(--dim);line-height:1.4}
 .hw-back{margin:28px 0 8px}
 @media (hover:hover){.hw-demo:hover,.hw-doors a:hover{background:var(--chip)}}
-@media (min-width:900px){.hw-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:0 24px}.hw-nums li{border-bottom:0;border-top:1px solid var(--line)}.hw-doors{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:900px){.hw-nums{display:grid;grid-template-columns:repeat(2,1fr);gap:0 24px}.hw-nums.one{display:block}.hw-nums li{border-bottom:0;border-top:1px solid var(--line)}.hw-doors{grid-template-columns:repeat(3,1fr)}}
 </style>`);
 }
