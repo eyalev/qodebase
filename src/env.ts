@@ -57,7 +57,8 @@ export interface Env {
   /** qodebase's own Anthropic key (Build suggestions on Haiku); absent = Workers AI. */
   ANTHROPIC_API_KEY?: string;
   MAX_AWAKE_BOXES: string;     // change agents awake per project
-  MAX_TOTAL_AWAKE?: string;    // every box on the account, every role, owner included (safety net)
+  MAX_TOTAL_AWAKE?: string;
+  OWNER_MAX_CODERS?: string;  // the instance owner's crew size cap at Build (real builds R4/R5: 20, then 40-60)    // every box on the account, every role, owner included (safety net)
   CLAUDE_CODE_OAUTH_TOKEN: string;
   ADMIN_SECRET: string;
 }

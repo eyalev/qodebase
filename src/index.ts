@@ -651,7 +651,7 @@ const app = {
         // Build settings (Adjust): only with the flag on for this person; otherwise (and with no settings) today's Build.
         // Adjust settings (flag on for this person) or, by default, one Opus agent with the merge queue landing on its own.
         const plan = (buildSettingsOn(env.BUILD_SETTINGS, me.handle, env.OWNER_HANDLE)
-          ? resolveBuildPlan(b.settings, { maxCoders: isOwner(env, me.handle) ? 12 : Number(env.MAX_AGENTS_PER_PROJECT) || 6 }) : null) || DEFAULT_PLAN;
+          ? resolveBuildPlan(b.settings, { maxCoders: isOwner(env, me.handle) ? Number(env.OWNER_MAX_CODERS) || 12 : Number(env.MAX_AGENTS_PER_PROJECT) || 6 }) : null) || DEFAULT_PLAN;
         if (plan) {
           await p.setLanding(true);
           await env.Landing.get(env.Landing.idFromName(slug)).setFlags(slug, planFlags(plan));
