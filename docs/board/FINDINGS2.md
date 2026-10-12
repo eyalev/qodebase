@@ -179,19 +179,20 @@ none / board + upfront check / board + a check on every new task: pairs built tw
 while the test expected the twin's own name. Lesson, now in qodebase (W9c): a twin is handed out as 'add a
 one-line alias of the original under this name', never closed.
 
-## 8. Growing the team (W8, E7-results.md; 150 tasks, Haiku, 40-agent pool)
-Throughput-probing controller (start 8, add 2 while landings/min rise, step back otherwise, halve only on dropped
-work). Medians of 3 rounds where complete (round 3 controller arms pending at writing):
+## 8. Growing the team (W8, E7-results.md; 150 tasks, Haiku, 40-agent pool, 3 runs each, medians)
+Throughput-probing controller (start 8, add 2 while landings/min rise, step back otherwise, halve only on dropped work):
 
-| | wall | API-equiv $ | agent-minutes | hidden |
+| | wall | API-equiv $ | agent-minutes | hidden (3 runs) |
 |---|---|---|---|---|
-| 40 agents, no board | 1,964 s | 10.31 | 927 | 150/150 |
-| 40 agents, board | 1,388 s | 9.39 | 817 | 148-150 |
-| controller, no board (settles ~10) | 1,689-1,711 s (2 runs) | 5.09-5.51 | 253-289 | 150 |
-| controller + board (settles ~10) | 1,284-1,470 s (2 runs) | 4.73-4.98 | 222-229 | 150 |
+| 40 agents, no board | 1,964 s | 10.31 | 927 | 150, 150, 150 |
+| 40 agents, board | 1,388 s | 9.39 | 817 | 150, 148, 149 |
+| controller, no board (settled ~10) | 1,711 s (p = 0.1 vs fixed 40) | 5.41 | 270 | 150, 150, 150 |
+| controller + board (settled 10-14) | 1,284 s (p = 0.4 vs board + 40) | 4.73 | 229 | 150, 150, 150 |
 
-Without the board, 40 agents jam: the controller at ~10 was faster and about half the cost. With the board, 40
-agents are faster than without it; the controller + board was the fastest and cheapest setup in both rounds so far.
+The controller used about a quarter of the agent-minutes and about half the cost of 40 agents, and was not slower
+(faster without the board; overlapping with it). Controller + board was the best arm overall. The fast sim predicted the
+caps (~10 / ~12) but was optimistic on wall (1,310 / 1,180 s predicted). The fixed 8/20 comparison teams were cut by the
+weekly-meter stop, so 'the controller finds the best fixed size' is untested here.
 
 ## 9. Scaling to thousands: lanes (L1 fast sim, L2 real git, L3 Cloudflare pending)
 - **One queue has a ceiling** (~830-900 landed/h in both sims, at 500, 2,000 and 10,000 agents); past ~300 agents
