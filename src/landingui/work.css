@@ -291,7 +291,7 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .hev .meta>[data-ago]{white-space:nowrap;flex:none}
 
 /* One screen (qb3, 2026-10-12, Eyal: the whole run fits one phone screen, no page scroll) */
-.lw .fit{display:flex;flex-direction:column;gap:10px;min-height:360px;overflow:hidden}
+.lw .fit{display:flex;flex-direction:column;gap:10px}
 .lw .sstrip{flex:none;display:grid;gap:6px}
 .lw .skick{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);margin:0}
 .lw .skick .stm{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--fg);font-weight:500}
@@ -300,8 +300,7 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .sbar2 i{display:block;height:100%;background:var(--acc);transition:width 220ms ease}
 .lw .sacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .lw .snote{font-size:13px;color:var(--dim);margin:0}
-.lw .fpipe{flex:0 1 auto;min-height:96px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
-.lw .fit.open .fpipe{max-height:32%}
+.lw .fpipe{display:flex;flex-direction:column;gap:6px}
 .lw .fit.open .pkey{display:none}
 .lw .fit.open .slast2{-webkit-line-clamp:2}
 .lw .pipe{flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;min-height:0}
@@ -329,7 +328,7 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .ftab{min-height:44px;padding:0 14px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);font:500 14px Geist,sans-serif;cursor:pointer;transition:background-color 120ms}
 .lw .ftab[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 .lw .fhow{margin-left:auto;font-size:13px;color:var(--acc);min-height:44px;display:inline-flex;align-items:center}
-.lw .fpanel{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain;box-shadow:inset 0 1px 0 var(--line);padding-top:8px}
+.lw .fpanel{max-height:min(52vh,440px);overflow-y:auto;overscroll-behavior:auto;box-shadow:inset 0 1px 0 var(--line);padding-top:8px}
 .lw .fpanel .sec{margin:0}
 .lw .fmore{margin:8px 0 0;font-size:14px}
 .lw .fmore a{color:var(--acc)}

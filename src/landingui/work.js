@@ -410,7 +410,7 @@
     }
     return m;
   }
-  const conflictPaths = (c, e) => (c.landing?.conflicts?.length ? c.landing.conflicts : (e.detail || '').split(':')[0].split(/,\s*/).filter((p) => /[./]/.test(p)));
+  const conflictPaths = (c, e) => (c.landing?.conflicts?.length ? c.landing.conflicts : (e.detail || '').split(':')[0].replace(/\s+with\s+.*$/, '').split(/,\s*/).filter((p) => /[./]/.test(p)));
   const agNum = (a) => String(agentNum(a));
   const RANK = { 'with-lead': 9, bounced: 8, replaying: 7, testing: 6, queued: 5, ready: 4, reviewing: 3, pushed: 2, working: 1, landed: 0 };
   // One chip per agent: its number, coloured by what its change is doing; tap opens the change.
@@ -659,9 +659,21 @@
       <div class="fpipe">${pipeline()}</div>
       ${latestLine(isStarting)}
       <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}<a class="fhow" href="/how">How it works</a></div>
-      <div class="fpanel">${OWN ? needsYou() : ''}${fitPanel(cur)}</div></div>`;
+      <div class="fpanel">${OWN ? needsYou() : ''}${fitPanel(cur)}</div></div>
+      ${belowFold()}`;
+  }
+  // Eyal (2026-10-12, on the preview): not a one-page app. The page scrolls normally; under the tabs come the extras
+  // as ordinary sections. Only the tab panel has a height cap, and it hands the swipe to the page at its end.
+  function belowFold() {
+    const intro = D.mode === 'demo' ? `Each agent here is ${term('scripted', 'scripted')} (it follows a script instead of an AI model) and works on its own ${term('fork', 'copy')} of the code.` : `Each agent is an AI working on its own ${term('fork', 'copy')} of the code.`;
+    return `<section class="sec"><div class="sec-h"><h3>Where they work</h3><a href="#/changes">All changes</a></div>
+        <p class="cap">Each circle is an agent, in the part of the code it is changing. Tap one to see its change.</p>${theMap()}${mapKey()}</section>
+      ${D.changes.length ? `<section class="sec"><div class="sec-h"><h3>Step by step</h3><a href="#/feed">Every step</a></div>${feed(20)}</section>
+      <section class="sec"><div class="sec-h"><h3>Change records</h3></div><p class="cap">What each change was asked to do, its diff, review, tests and how it landed.</p><ul class="rows">${sortC(D.changes).map((c) => row(c)).join('')}</ul></section>` : ''}
+      <section class="sec"><h3>How this works</h3><p class="intro">${intro} Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}. When two changes collide, the later one is redone on the newest code instead of being sent back.</p><p class="fmore"><a href="/how">How qodebase works</a></p></section>`;
   }
   function fitSize() {
+    return; // superseded: the page scrolls normally (Eyal); kept so older calls stay harmless
     const f = root.querySelector('.fit'), v = root.closest('.view');
     if (!f || !v) return;
     f.style.height = '';
