@@ -19,6 +19,7 @@ import {
   type Change, type ProjectArgs, type UI, ORDER, OPEN_ICON_C as OPEN_ICON, SEND, VISIT, BUSY,
   accentOf, appUrl, changeRow, changesOf, fixtureData, forkAction, FORK_JS, fromIssues, isMerge, keyNote, legend,
   noApp, pageJs, planningHtml, planningOf, primary, shell2,
+  md,
 } from './v2';
 
 export type ViewId = 'readme' | 'changes' | 'app' | 'code' | 'history' | 'more' | 'agents' | 'errors' | 'work';
@@ -127,7 +128,7 @@ export function liveChanges(c: Ctx) {
       ? `<div class="you sys"><b>Cloudflare Issues reported an error</b>${esc(g.text.replace(/^Production error from Cloudflare Issues:\s*/, '').slice(0, 220))}</div>`
       : `<div class="you">${esc(g.text)}</div>`;
     const last = i === groups.length - 1;
-    const tail = last && !(q && isMerge(q.text)) ? `${planningHtml(plan, q)}${plan.said ? `<div class="said">${esc(plan.said)}</div>` : ''}` : '';
+    const tail = last && !(q && isMerge(q.text)) ? `${planningHtml(plan, q)}${plan.said ? `<div class="said">${md(plan.said)}</div>` : ''}` : '';
     return `${you}${g.changes.map((ch) => changeRow(info, ch, now, accent)).join('')}${tail}`;
   });
   if (q && isMerge(q.text)) out.push(planningHtml(plan, q));
@@ -135,7 +136,7 @@ export function liveChanges(c: Ctx) {
   // A copy you just made: say it is yours and what to do with it.
   const fresh = info.forkedFrom && !info.agents.length && !q;
   const empty = !out.join('').trim() ? fresh ? `<div class="hello"><b>This is your copy.</b><p>Forked from <a href="/p/${esc(info.forkedFrom!.replace('.', '/'))}">${esc(info.forkedFrom!.replace('.', ' / '))}</a>. Say what to change below, in plain words: qodebase splits it into tasks, an agent does each one, and a reviewer checks it before you merge. The original is not touched.</p></div>` : `<div class="hello"><b>Nothing in progress.</b><p>Ask for a change in plain words. qodebase splits it into tasks, an agent does each one on its own fork, and a reviewer checks it before you merge.</p></div>` : '';
-  return `<template id="needs" data-n="${needsOf(open).length}"></template>${estBar}${merged}${empty}${out.join('')}${legend(open.length)}`;
+  return `<template id="needs" data-n="${needsOf(open).length}"></template>${estBar}${merged}${empty}${out.join('')}`;
 }
 
 /** App: the running app, with a picker for Live or any change you can try. */
@@ -145,15 +146,15 @@ function appView(c: Ctx) {
   const sel = tryable.find((ch) => shortId(ch.a.id) === c.tryAgent);
   const src = sel?.tryUrl || app;
   const picker = tryable.length ? `<div class="pick" role="tablist"><button type="button" role="tab" data-pick="${esc(app)}" class="${sel ? '' : 'on'}">Live</button>${tryable.map((ch) =>
-    `<button type="button" role="tab" data-pick="${esc(ch.tryUrl!)}" data-agent="${esc(shortId(ch.a.id))}" data-state="${ch.state}" data-id="${esc(ch.a.id)}" data-word="${esc(ch.word)}" class="${sel === ch ? 'on' : ''}"><span class="dot s-${ch.state}"></span>${esc(ch.title)}</button>`).join('')}</div>
-<div class="pstrip" id="pstrip"${sel ? '' : ' hidden'}><span id="pword">${sel ? esc(sel.word) : ''}</span><button type="button" class="btn" id="pmerge"${sel?.state === 'ready' ? '' : ' hidden'}>Merge</button></div>` : '';
+    `<button type="button" role="tab" data-pick="${esc(ch.tryUrl!)}" data-agent="${esc(shortId(ch.a.id))}" data-state="${ch.state}"${ch.auto ? ' data-auto="1"' : ''} data-id="${esc(ch.a.id)}" data-word="${esc(ch.word)}" class="${sel === ch ? 'on' : ''}"><span class="dot s-${ch.state}"></span>${esc(ch.title)}</button>`).join('')}</div>
+<div class="pstrip" id="pstrip"${sel ? '' : ' hidden'}><span id="pword">${sel ? esc(sel.word) : ''}</span><button type="button" class="btn" id="pmerge"${sel?.state === 'ready' && !sel.auto ? '' : ' hidden'}>Merge</button></div>` : '';
   return {
     full: true,
     action: app ? `<a class="hact" id="ext" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open the app in a new tab">${OPEN_ICON}</a>` : '',
     body: `${picker}${app ? `<iframe id="app" src="${esc(src)}" title="${esc(c.info.name)}"></iframe>` : noApp(c)}${c.own ? '' : `<div class="forkbar">${VISIT}${forkAction(c.info, c.me, c.forks.filter((e) => e.owner === c.me))}</div>`}`,
     js: `(function(){const f=document.getElementById('app'),x=document.getElementById('ext'),ps=document.getElementById('pstrip'),pm=document.getElementById('pmerge');let cur=null;
 document.addEventListener('click',async(e)=>{const b=e.target.closest('[data-pick]');if(b){f.src=b.dataset.pick;if(x)x.href=b.dataset.pick;for(const o of document.querySelectorAll('[data-pick]'))o.classList.toggle('on',o===b);
- cur=b.dataset.id||null;if(ps){ps.hidden=!cur;document.getElementById('pword').textContent=b.dataset.word||'';pm.hidden=b.dataset.state!=='ready';}
+ cur=b.dataset.id||null;if(ps){ps.hidden=!cur;document.getElementById('pword').textContent=b.dataset.word||'';pm.hidden=b.dataset.state!=='ready'||b.dataset.auto==='1';}
  history.replaceState(null,'',location.pathname+(b.dataset.agent?'?try='+b.dataset.agent:''));return;}
  if(e.target===pm){pm.disabled=true;pm.textContent='Merging';try{await post('merge',{agent:cur});location.href=location.pathname;}catch(err){pm.textContent=err.message;}}});
 if(${JSON.stringify(sel?.a.id || '')})cur=${JSON.stringify(sel?.a.id || '')};})();`,
@@ -175,7 +176,7 @@ function historyView(c: Ctx) {
   const day = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: new Date(t).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
   let last = '';
   const rows = items.map((it) => { const d = day(it.at); const h = d !== last ? `<h3>${d}</h3>` : ''; last = d; return `${h}<div class="hi">${it.html}${freshTag(it.at, now, STEPS)}</div>`; }).join('');
-  return { body: `<div class="pad">${rows}${legend(items.length)}</div>` };
+  return { body: `<div class="pad">${rows}</div>` };
 }
 
 /** Agents: the machinery, for when you want it. */

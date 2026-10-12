@@ -29,7 +29,10 @@ const NAMES: Record<UI, string> = { a: 'Views, home tabs (two bars)', b: 'Views,
 // ---- the change model ------------------------------------------------------
 
 export type State = 'working' | 'checking' | 'ready' | 'fix' | 'waiting' | 'paused' | 'merged';
-export type Change = { a: Agent; title: string; state: State; word: string; busy: boolean; since?: number; tryUrl?: string; notes?: string };
+export type Change = { a: Agent; title: string; state: State; word: string; busy: boolean; since?: number; tryUrl?: string; notes?: string; auto?: boolean };
+
+/** Agent and router messages are markdown-ish: **bold**, `code`, line breaks (was shown raw: '**vru7x:**'). Escaped first. */
+export const md = (t: string) => esc(t).replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>').replace(/`([^`\n]+?)`/g, '<code>$1</code>').replace(/\n/g, '<br>');
 
 export const BUSY = /busy|thinking|working|running|tool/;
 /** Merge taps go through the router agent as "Merge <id>": not something the person typed. */
@@ -48,13 +51,16 @@ export function changeOf(info: ProjectInfo, a: Agent, s: BoxStatus | undefined, 
   const tryUrl = worker ? (a.preview?.status === 'live' && a.preview.url ? `${a.preview.url}/` : undefined) : runUrl(runBase, a.fork, info.entry || '');
   const base = { a, title: titleOf(a.task), tryUrl, busy: false } as Change;
   const r = a.review;
-  if (a.state === 'merged' || a.state === 'stopped') return { ...base, state: 'merged', word: a.state === 'merged' ? 'Merged' : 'Stopped' };
+  // A project whose merge queue lands approved changes itself (Landing autoMerge, carried as info.autoLand):
+  // no Merge step for anyone, so a ready change reads 'Landing…' and a merged one 'Landed' (Eyal, 2026-10-12).
+  const auto = !!(info as { autoLand?: boolean }).autoLand;
+  if (a.state === 'merged' || a.state === 'stopped') return { ...base, state: 'merged', word: a.state === 'merged' ? (auto ? 'Landed' : 'Merged') : 'Stopped' };
   if (a.state === 'blocked') return { ...base, state: 'waiting', word: 'Needs your answer', notes: a.note };
   if (a.state === 'pushed') {
     if (r?.state === 'sent') return { ...base, state: 'working', word: 'Fixing', busy: true, since: r.at };
     if (r?.state === 'queued' || r?.state === 'reviewing') return { ...base, state: 'checking', word: 'Checking', busy: true, since: r.at };
     if (r?.state === 'changes') return { ...base, state: 'fix', word: 'Needs a fix', notes: r.notes };
-    return { ...base, state: 'ready', word: 'Ready to merge', notes: r?.notes };
+    return { ...base, state: 'ready', word: auto ? 'Landing…' : 'Ready to merge', notes: r?.notes, auto };
   }
   const st = s || { awake: false, cc: 'asleep' };
   if (st.booting || !st.taskSent || (st.awake && BUSY.test(st.cc))) return { ...base, state: 'working', word: 'Working', busy: true, since: a.createdAt };
@@ -108,7 +114,7 @@ const dot = (c: Change) => `<span class="dot s-${c.state}"></span>`;
 /** The one thing to do with a change. Accent only on the page's most urgent one. */
 export function primary(c: Change, accent = false) {
   const k = accent ? 'btn' : 'chipbtn';
-  if (c.state === 'ready') return `<button class="${k}" data-merge="${esc(c.a.id)}">Merge</button>`;
+  if (c.state === 'ready') return c.auto ? '' : `<button class="${k}" data-merge="${esc(c.a.id)}">Merge</button>`;
   if (c.state === 'fix') return `<button class="${k}" data-fix="${esc(c.a.id)}">Ask to fix</button>`;
   if (c.state === 'waiting') return `<button class="${k}" data-sheet="${esc(c.a.id)}" data-name="${esc(c.title)}" data-mode="chat">Reply</button>`;
   return '';
@@ -137,7 +143,7 @@ function detail(info: ProjectInfo, c: Change) {
     : c.state === 'checking' ? `<p>The reviewer agent is trying it in a preview.</p>` : '';
   const pv = a.preview?.status === 'building' ? `<p>Building its preview${since(a.preview.at)}</p>` : a.preview?.status === 'failed' ? `<p>Its preview did not build: ${esc(a.preview.error || '')}. <a href="/p/${info.owner}/${info.name}/build-log?agent=${shortId(a.id)}">Build log</a></p>` : '';
   return `<div class="more">
-${a.note ? `<p><b>What it did.</b> ${esc(a.note)}</p>` : ''}${check}${pv}
+${a.note ? `<p><b>What it did.</b> ${md(a.note)}</p>` : ''}${check}${pv}
 <p class="dim"><b>${fromIssues(a.request) ? 'Reported by Cloudflare Issues.' : a.request ? 'You asked.' : 'Task.'}</b> ${esc(fromIssues(a.request) ? a.task : a.request || a.task)}</p>
 <div class="acts">${secondary(info, c)}</div></div>`;
 }
