@@ -207,8 +207,13 @@ weekly-meter stop: fixed 8, no board, 1,862 s, $4.63, 150/150 (about as fast as 
   change, ~380 agents awake. 10,000 agents, 2 h (upper bound): 7,433/h vs 896 (8x), $2.09 vs $13.25, 9 vs 61 min.
   8 lanes was worse than one queue (coordinated lane overloaded). Cross-area share caps everything: at 20% cross,
   lanes give 1.5-2.7x at any lane count (fast sim).
-- **Cloudflare (L3):** 500 agents: 1 lane and 8 lanes both ~7,530 landed in 10 min (demand-bound; lanes only add
-  main-ref compare-and-swap misses, 24% as predicted); main whole in every cell. 2,000-agent cells pending.
+- **Cloudflare (L3, scripted agents, 10 min, 5% cross):** 500 agents: 1 lane and 8 lanes both ~7,530 landed
+  (demand-bound; per-lane compare-and-swap pushes miss 24%, as predicted). 2,000 agents: one lane landed 14,336 of
+  28,969 (median wait 500 s, the one-door ceiling ~57k/h); 8 lanes + one main-door object 30,066 of 30,152 (median
+  wait 8 s), 16 and 32 lanes the same (29,941 / 30,096: demand-bound from 8 lanes up); counts match the commits on main,
+  main whole (fsck + tests) in every cell. 16 lanes at 20% cross: the first run broke main twice (a lane reset lost its
+  saved state; fixed); the rerun landed ~29,800 with main whole, though 63 changes landed twice (same content; the door
+  that refuses repeats is still open). Source: sim/cloud/README.md.
 
 ## 10. Bun's Zig->Rust port (BUN2-BUN5; sim/bun, sim.md (j)-(k))
 - **Replayed on Bun's real patches** (one agent in history order ends on history's exact files): the port's
