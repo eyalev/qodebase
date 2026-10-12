@@ -519,9 +519,12 @@ export const REAL_BUILDS = [
   // Router split at +41 s, both pushed at +311 s, landed at +320 s. The page showed Fastest's 70-180 s: it ran
   // on code from before a810395, which ignored the setting. The model for what ran (2 pieces): 90-240 s.
   { slug: 'eyal/est-bar-test', at: '2026-10-12', shape: 'team', pieces: 2, wallS: 320 },
+  // R2, eyal/real-tip-splitter, 2026-10-12: curated small idea (3 pieces), default Build = one Opus agent. Shown
+  // 50-120 s, $0.21-0.28; took 149 s and $0.81 (Ledger at lab rates). Cost: not refit yet (which tokens: asked qb6).
+  { slug: 'eyal/real-tip-splitter', at: '2026-10-12', shape: 'alone', pieces: 3, wallS: 149, usd: 0.813 },
 ];
-// alone mid: no real one-agent build yet; the lab's 58 s plus room for a brand-new project's first box.
-export const BUILD_FLOOR = { alone: { low: 50, mid: 90 }, team: { low: 170, mid: 320 } };
+// alone mid: the one real one-agent build (R2, 149 s); low stays the lab's quickest (58 s).
+export const BUILD_FLOOR = { alone: { low: 50, mid: 150 }, team: { low: 170, mid: 320 } };
 
 // -> { wallS: [lo, hi], apiUsd: [lo, hi], basedOn, sameSetup, agentTasks, quality, qualityMeasured, notes, simVersion, job }
 // basedOn = real lab runs the range rests on; sameSetup = how many of them used exactly this setup.

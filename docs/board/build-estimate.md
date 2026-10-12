@@ -117,6 +117,13 @@ Only tiny jobs change (a team on 2 pieces: 3 to 8 min; one agent: 50 s to 2 min)
 `REAL_BUILDS` in predict.js lists each real build used. At 3+ finished builds, refit the floor from them
 (Workers Logs: module `build`, events `started` and `build_settled`).
 
+R2 (eyal/real-tip-splitter, 2026-10-12): a curated small idea with 3 pieces on the default Build (one Opus agent).
+The page showed 50-120 s and $0.21-0.28. It took 149 s and cost $0.81 (Ledger, at lab rates). The one-agent
+floor's mid is now 150 s, taken from this build (90 s was a placeholder), so one agent on a small job shows
+1.5-4 min. Cost came in about 3x the estimate and is not refit yet: the lab's one-agent cafe-family run cost $0.39,
+and the token split will show whether a fixed per-session cost or more work made the difference (asked qb6). The
+cost refit waits for R2-R5.
+
 ## jobType(job, suggestion): the adaptive orchestrator's label (2026-10-12, qb7's contract)
 
 `jobType(job, suggestion?)` in `public/lab/predict.js` returns
