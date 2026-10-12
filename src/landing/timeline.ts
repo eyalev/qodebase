@@ -110,7 +110,7 @@ export function buildTimeline(inp: TlInput): Timeline {
       for (const [name, s, e, id] of t.phases) {
         const [phase, label] = MERGER[name] || ['apply', name];
         const fm = t.fetchMs && (name === 'fetch-all' || name === 'fetch-main' || name === 'fetch-forks')
-          ? `main ${(t.fetchMs.main / 1000).toFixed(1)} s, notes ${(t.fetchMs.notes / 1000).toFixed(1)} s, forks ${t.fetchMs.forks.map((x) => (x / 1000).toFixed(1)).join(' / ')} s` : null;
+          ? `main ${(t.fetchMs.main / 1000).toFixed(1)} s, notes ${(t.fetchMs.notes / 1000).toFixed(1)} s, forks ${t.fetchMs.forks.map((x) => (x / 1000).toFixed(1)).join(' / ')} s${t.fetchMs.prefetched ? ` (${t.fetchMs.prefetched} prefetched while queued)` : ''}` : null;
         own.push(span({ lane: ml, phase, start: s, end: e, train: t.id, ...(id ? { change: id } : {}), label: id ? `${label ? label + ': ' : ''}${short(id)}` : (label || name), ...(name === 'wake-cold' ? { detail: 'cold start' } : fm ? { detail: fm } : {}) }));
       }
     }

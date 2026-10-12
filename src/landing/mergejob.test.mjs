@@ -147,6 +147,16 @@ test('a warm merger box: three trains in a row on one clone, main moving under i
   const check = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, check);
   for (const f of ['w1.txt', 'w2.txt', 'm.txt']) assert.ok(readFileSync(join(check, f), 'utf8'));
   assert.match(readFileSync(join(check, 'src/math.js'), 'utf8'), /return b \+ a;/);
+  // Prefetch (merger.ts): the fork's commit fetched into a ref of its own while it waited; the train skips the network.
+  const c4 = s.fork('w4', (fw) => write(fw, { 'w4.txt': 'four\n' }));
+  execFileSync('git', ['-c', 'gc.auto=0', 'fetch', '-q', '--no-tags', '--no-write-fetch-head', c4.remote, `+HEAD:refs/qb/p/${c4.id}`], { cwd: dir });
+  assert.throws(() => execFileSync('git', ['cat-file', '-e', 'HEAD:w4.txt'], { cwd: dir, stdio: 'ignore' }), 'prefetched code is only in a ref, not in the working tree');
+  const r4 = run(job(c4));
+  assert.equal(r4.changes[0].landed, true);
+  assert.equal(r4.fetchMs.prefetched, 1);
+  assert.equal(r4.fetchMs.forks[0], 0);
+  g(check, 'pull', '-q');
+  assert.equal(readFileSync(join(check, 'w4.txt'), 'utf8'), 'four\n');
   execFileSync('git', ['fsck', '--strict'], { cwd: s.main });
-  assert.equal(g(s.main, 'rev-parse', 'main'), r3.mainAfter);
+  assert.equal(g(s.main, 'rev-parse', 'main'), r4.mainAfter);
 });

@@ -54,7 +54,7 @@ export type Train = { id: string; state: 'testing' | 'landed' | 'bounced'; chang
   outcomes?: Record<string, 'landed' | 'bounced' | 'conflict' | 'retry'>;
   /** Timeline (T1): the merger's phases [name, start, end, change?] and whether its box had to start. */
   phases?: [string, number, number, string?][]; cold?: boolean;
-  fetchMs?: { main: number; notes: number; forks: number[]; warm: boolean; shallow: boolean; parallel: boolean } };
+  fetchMs?: { main: number; notes: number; forks: number[]; prefetched?: number; warm: boolean; shallow: boolean; parallel: boolean } };
 type Demo = { running: boolean; agents: number; speed: number; startedAt: number; endsAt: number; stoppedAt?: number;
   /** story = the café's 14 tasks; busy = an endless stream of small colliding changes. */
   mode?: 'story' | 'busy';
@@ -441,6 +441,12 @@ export class Landing extends DurableObject<Env> {
   }
 
   // ---- the queue ---------------------------------------------------------------
+  async #prefetch(slug: string, c: Change) {
+    using fork = await this.env.ARTIFACTS.get(c.fork);
+    const token = (await fork.createToken('read', 600)).plaintext;
+    await this.env.MergeBox.get(this.env.MergeBox.idFromName(`${slug}--merge`)).prefetch(slug, [{ id: c.id, remote: c.remote, token, commit: c.commit! }]);
+  }
+
   /** The merge tap: approved → waits for the next train. */
   async approve(id: string) {
     const m = await this.#m();
@@ -452,6 +458,8 @@ export class Landing extends DurableObject<Env> {
     c.state = 'queued'; c.queuedAt = Date.now();
     this.#ev(c, 'queued', m.waiting.length > 1 ? `${m.waiting.length - 1} ahead` : 'next train');
     await this.#put(c);
+    // While it waits, the merger box (if awake) fetches its commit, so the train does not have to (merger.ts prefetch).
+    if (c.fork && c.remote && c.commit) this.ctx.waitUntil(this.#prefetch(m.slug, c).catch((e) => log('landing', 'prefetch_error', { id, err: String(e).slice(0, 200) })));
     await this.#bpost(c.id, 'queued', '', c.files, '');
     await this.#saveMeta();
     await this.#arm(m.failStreak ? Math.min(300_000, 5000 * 2 ** (m.failStreak - 1)) : 300);

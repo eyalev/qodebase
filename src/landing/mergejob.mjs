@@ -254,7 +254,11 @@ async function main() {
     try { writeFileSync(branchFile, `${job.mainRemote}\n${branch}\n`); } catch {}
   }
   const shallow = warm && git(['rev-parse', '--is-shallow-repository'], { ok: true }).out === 'true';
-  const forkFetch = () => Promise.all(job.changes.map((c) => gitAsync(['fetch', '-q', '--update-shallow', '--no-tags', '--no-write-fetch-head', c.remote, `+HEAD:refs/qb/c/${c.id}`], c.token)));
+  // A change whose approved commit is already here (prefetched while it waited in the queue) needs no fetch.
+  const have = (c) => warm && c.commit && git(['cat-file', '-e', `${c.commit}^{commit}`], { ok: true }).code === 0;
+  const forkFetch = () => Promise.all(job.changes.map((c) => have(c)
+    ? (git(['update-ref', `refs/qb/c/${c.id}`, c.commit]), { code: 0, out: '', err: '', ms: 0, prefetched: true })
+    : gitAsync(['fetch', '-q', '--update-shallow', '--no-tags', '--no-write-fetch-head', c.remote, `+HEAD:refs/qb/c/${c.id}`], c.token)));
   const tF = Date.now();
   const early = warm && !shallow ? forkFetch() : null;
   // --update-shallow: an imported repo is shallow (depth 1), and without it git refuses the ref ('shallow roots are
@@ -285,7 +289,7 @@ async function main() {
   const fetches = await (early || forkFetch());
   phase(early ? 'fetch-all' : 'fetch-forks', early ? tF : tForks);
   // Each fetch's own time (why a warm fetch still took ~3 s in the box, 2026-10-12).
-  const fetchMs = { main: f.ms, notes: fn.ms, forks: fetches.map((x) => x.ms), warm, shallow, parallel: !!early };
+  const fetchMs = { main: f.ms, notes: fn.ms, forks: fetches.map((x) => x.ms), prefetched: fetches.filter((x) => x.prefetched).length, warm, shallow, parallel: !!early };
   say('fetched', { forks: job.changes.length, ...fetchMs, ms: Date.now() - t0 });
   for (const [k, c] of job.changes.entries()) {
     const f = fetches[k];

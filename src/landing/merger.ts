@@ -36,7 +36,7 @@ export type MergeResult = {
   phases?: [string, number, number, string?][];
   cold?: boolean;
   /** Each fetch's own ms (main, notes, every fork) and how they ran. */
-  fetchMs?: { main: number; notes: number; forks: number[]; warm: boolean; shallow: boolean; parallel: boolean };
+  fetchMs?: { main: number; notes: number; forks: number[]; prefetched?: number; warm: boolean; shallow: boolean; parallel: boolean };
 };
 
 // git, node --test, an occasional npm install. Billed while awake only. Custom sizes need
@@ -162,6 +162,28 @@ export class MergeBox extends DurableObject<Env> {
       log('merger', 'error', { train: job.trainId, err: String((e as Error)?.stack || e).slice(0, 600) });
       return { trainId: job.trainId, ok: false, error: String((e as Error)?.message || e), log: String((e as Error)?.stack || e).slice(0, 2000), changes: [], ms: Date.now() - t0, cold, phases: ph };
     }
+  }
+
+  /** Fork prefetch (T1 finding, 2026-10-12: fetching each agent's fork at train time was 1.6-4 s, ~60% of a train):
+   *  while a change waits in the queue, fetch its approved commit into the warm clone, into a ref of its own
+   *  (refs/qb/p/<id>), never into a working tree. Only when the box is awake and already has the project's clone
+   *  (waking a box for this would cost more than it saves). Tokens: one read token per fork, passed as env, never logged.
+   *  At train time mergejob.mjs finds the commit already there and skips the network for that change. */
+  async prefetch(slug: string, items: { id: string; remote: string; token: string; commit: string }[]) {
+    if (!this.c.running || !items.length) return { skipped: 'asleep' };
+    const dir = `/m/${slug}`, env: Record<string, string> = { D: dir };
+    const lines: string[] = [];
+    items.slice(0, 8).forEach((it, i) => {
+      env[`R${i}`] = it.remote; env[`A${i}`] = btoa(`x:${it.token.split('?')[0]}`); env[`C${i}`] = it.commit; env[`I${i}`] = it.id.replace(/[^\w.-]/g, '_');
+      lines.push(`( git -C "$D" cat-file -e "$C${i}^{commit}" 2>/dev/null || git -C "$D" -c gc.auto=0 -c http.extraHeader="Authorization: Basic $A${i}" fetch -q --no-tags --no-write-fetch-head "$R${i}" "+HEAD:refs/qb/p/$I${i}" ) &`);
+    });
+    const t0 = Date.now();
+    try {
+      const r = await this.#sh(`[ -d "$D/.git" ] || { echo cold; exit 0; }\n${lines.join('\n')}\nwait\necho done`, env);
+      const out = { ok: r.exitCode === 0, cold: r.stdout.includes('cold'), ms: Date.now() - t0, n: items.length };
+      log('merger', 'prefetch', { slug, ...out, ids: items.map((x) => x.id) });
+      return out;
+    } catch (e) { log('merger', 'prefetch_failed', { slug, err: String(e).slice(0, 200) }); return { ok: false }; }
   }
 
   async restart(): Promise<void> { await this.c.destroy().catch(() => {}); this.ctx.abort('restart on the deployed code'); }
