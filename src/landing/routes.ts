@@ -11,6 +11,7 @@
 //   POST /api/p/<o>/<n>/landing/{pause,resume,stop}  owner controls (R1): view().run says which is on
 
 import type { Env } from '../env';
+import { billingOf } from '../auth';
 import type { ProjectInfo } from '../project';
 import { log } from '../box';
 import { SEED } from './demoproject';
@@ -40,7 +41,7 @@ async function resetDemo(env: Env, info: ProjectInfo, L: ReturnType<typeof landi
 
 export async function landingRoute(request: Request, env: Env, info: ProjectInfo, verb: string, me: { handle: string | null; admin?: boolean }): Promise<Response> {
   const L = landingStub(env, info.slug);
-  if (verb === '' && request.method === 'GET') return json(await L.view(info.slug));
+  if (verb === '' && request.method === 'GET') return json({ ...(await L.view(info.slug)), billing: await billingOf(env, info.owner) });
   // Watch a run: anyone, no sign-in, on projects with flags.publicWatch (eyal/corner-cafe). Caps in Landing.watchClaim.
   if (verb === 'watch' && request.method === 'POST') {
     if (info.private) return json({ error: 'no such project' }, 404);

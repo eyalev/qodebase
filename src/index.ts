@@ -30,7 +30,7 @@ import { viewShown, buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, li
 import { changesOf, runUrl } from './v2';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
-import { DEFAULT_API_MODEL, isClaudeToken, onSubscription, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle } from './auth';
+import { DEFAULT_API_MODEL, isClaudeToken, onSubscription, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle , billingOf } from './auth';
 import { importPage } from './ui';
 import { allFiles, blob, diffTrees, forkBase, head, resolvePath, tree } from './code';
 import { changesPage, dirPage, filePage, type ChangeText, type FileWhy } from './codeui';
@@ -159,15 +159,6 @@ async function loginRoute(request: Request, env: Env, url: URL): Promise<Respons
   }
   log('auth', 'login', { handle: user.handle, fresh });
   return new Response(null, { status: 302, headers: { location: next, 'set-cookie': await sessionCookie(env, email), 'cache-control': 'no-store' } });
-}
-
-/** Who pays a project's Claude: 'sub' = a Claude plan (the instance owner's, or the person's own setup-token: not billed
- *  by qodebase), 'api' = the person's own API key, null = none connected (qb7's estimate bar). */
-async function billingOf(env: Env, owner: string): Promise<'sub' | 'api' | null> {
-  if (onSubscription(env, owner)) return 'sub';
-  const u = await userByHandle(env, owner).catch(() => null);
-  if (!u?.apiKeyEnc || u.keyFailed) return null;
-  return u.apiKeyKind === 'plan' || (!u.apiKeyKind && u.apiKeyTail && (await decryptKey(env, u.apiKeyEnc).then(isClaudeToken).catch(() => false))) ? 'sub' : 'api';
 }
 
 /** Stop every awake box of one person's projects (their key changed, was deleted, or stopped working). Returns how many. */

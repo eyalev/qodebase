@@ -147,3 +147,13 @@ export const isOwner = (env: Env, handle: string) => handle === env.OWNER_HANDLE
 /** Runs on this instance's Claude subscription (CLAUDE_CODE_OAUTH_TOKEN). A self-hosted
  *  copy has none until its owner adds one: its owner brings an API key like anyone. */
 export const onSubscription = (env: Env, handle: string) => isOwner(env, handle) && !!env.CLAUDE_CODE_OAUTH_TOKEN;
+
+/** Who pays a project's Claude: 'sub' = a Claude plan (the instance owner's, or the person's own setup-token: not billed
+ *  by qodebase), 'api' = the person's own API key, null = none connected (qb7's estimate bar). */
+export async function billingOf(env: Env, owner: string): Promise<'sub' | 'api' | null> {
+  if (onSubscription(env, owner)) return 'sub';
+  const u = await userByHandle(env, owner).catch(() => null);
+  if (!u?.apiKeyEnc || u.keyFailed) return null;
+  return u.apiKeyKind === 'plan' || (!u.apiKeyKind && u.apiKeyTail && (await decryptKey(env, u.apiKeyEnc).then(isClaudeToken).catch(() => false))) ? 'sub' : 'api';
+}
+
