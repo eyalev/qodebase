@@ -42,7 +42,9 @@ export const CODE_CSS = `<style>
 .ls a:last-child{border-bottom:0}
 .ls .k{width:16px;flex:none;color:var(--dim);font-family:'Geist',sans-serif;font-size:13px;text-align:center}
 .ls .dir{font-weight:600}
-.fwhy{display:grid;gap:2px;margin:8px 0;padding:10px 12px;min-height:44px;border-radius:14px;background:var(--card);box-shadow:inset 3px 0 0 var(--acc),inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none}
+.fwhy{display:grid;gap:2px;margin:4px 0 12px;padding:10px 12px;min-height:44px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none}
+.fwhy .fwhyx{white-space:normal;margin-top:2px}
+body:has(.gtop2) .back{display:none}
 .fwhy b{font-weight:600;font-size:15px;color:var(--acc)}
 .fwhy span{font-size:13px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (hover:hover){.fwhy:hover{background:var(--chip)}}
@@ -133,9 +135,9 @@ $h.addEventListener('click',async(e)=>{if(!e.target.closest('#deep'))return;cons
   j.results.map((r)=>'<div class="sr"><a class="f" href="'+codeUrl(r.path)+'">'+esc(r.path)+'<span>'+r.count+'</span></a>'+r.lines.map((l)=>'<a class="l" href="'+codeUrl(r.path,l.n)+'"><span class="ln">'+l.n+'</span><span class="lt">'+mark(l.text.trim(),ql)+'</span></a>').join('')+'</div>').join('');});
 })();</script>`;
 
-const head = (info: ProjectInfo, v: string, at: string, title: string, rev?: Head | null) =>
+const head = (info: ProjectInfo, v: string, at: string, title: string, rev?: Head | null, after = '') =>
   `${CODE_CSS}<a class="back" href="/p/${info.owner}/${info.name}">${esc(info.owner)} / ${esc(info.name)}</a>
-<h1>${esc(title)}</h1>
+<h1>${esc(title)}</h1>${after}
 ${versionTabs(info, v, at)}${rev ? `<div class="fmeta"><span>at ${esc(rev.commit.slice(0, 7))}</span><span>${esc(rev.message)}</span></div>` : ''}`;
 
 export function dirPage(o: { info: ProjectInfo; v: string; path: string; entries: TreeEntry[]; readme: string | null; rev: Head | null }) {
@@ -167,8 +169,8 @@ export function filePage(o: { info: ProjectInfo; v: string; path: string; file: 
     body = `<div class="md">${markdown(file.text)}</div><h2>Source</h2>${codeBlock(file.text, 'markdown')}`;
   } else body = codeBlock(file.text, LANG[ext]);
   const lines = file.text ? file.text.split('\n').length : 0;
-  return shell(`${name} · code · qodebase`, `${head(info, v, path, name, o.rev)}${crumbs(info, path, v)}
-${o.why && o.why.changes ? `<a class="fwhy" href="${esc(o.why.href)}"><b>Changed by ${o.why.changes} change${o.why.changes === 1 ? '' : 's'}${o.why.collisions ? `, ${o.why.collisions} collision${o.why.collisions === 1 ? '' : 's'}` : ''}</b><span>${esc(o.why.titles.slice(0, 3).join(', '))}${o.why.titles.length > 3 ? ` and ${o.why.titles.length - 3} more` : ''}</span></a>` : ''}
+  const why = o.why && o.why.changes ? `<a class="fwhy" href="${esc(o.why.href)}"><b>${o.why.changes} change${o.why.changes === 1 ? '' : 's'} shaped this file${o.why.collisions ? `, ${o.why.collisions} of them after a collision` : ''}</b><span>${esc(o.why.titles.slice(0, 3).join(', '))}${o.why.titles.length > 3 ? ` and ${o.why.titles.length - 3} more` : ''}</span>${o.why.collisions ? '<span class="fwhyx">A collision: two agents changed the same lines. qodebase redid the later change on the newest code, or sent it back when a test failed.</span>' : ''}</a>` : '';
+  return shell(`${name} · code · qodebase`, `${head(info, v, path, name, o.rev, why)}${crumbs(info, path, v)}
 <div class="fmeta"><span>${size}</span>${lines ? `<span>${lines} lines</span>` : ''}${actions}</div>${body}`);
 }
 

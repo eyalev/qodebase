@@ -744,7 +744,7 @@
     return `<div class="drill">${crumbs([['Agents at work', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [p.split('/').pop()]])}
       <p class="mono dim">${esc(p)}</p>
       <section class="sec" style="margin-top:12px"><h3>Changes to this file</h3>${on.length ? `<ul class="rows">${on.map((c) => row(c, `${AG(c.agent)}${(c.claims || []).includes(p) && !c.files.includes(p) ? ', claimed only' : ''}`)).join('')}</ul>` : '<p class="dim">None yet.</p>'}</section>
-      ${coll.length ? `<section class="sec"><h3>${term('collision', 'Collisions')} here</h3><ul class="rows">${coll.map(({ c, e }) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-bounced"></i><span class="t">${short(c)}</span><time>${ago(e.t)}</time><span class="sub">${esc(e.detail || '')}</span></a></li>`).join('')}</ul></section>` : ''}</div>`;
+      ${coll.length ? `<section class="sec"><h3>${term('collision', 'Collisions')} here</h3><ul class="rows">${coll.map(({ c, e }) => { const oc = otherOf(c, e, byId()); const ev = new Set(c.events.map((x) => x.what)); const how = c.state === 'with-lead' ? 'waiting for its lead' : ev.has('replayed') ? (c.state === 'landed' ? 'redone on the newest code, then landed' : 'redone on the newest code') : c.state === 'bounced' ? 'sent back' : c.state === 'landed' ? 'landed' : WORD[skey(c)].toLowerCase(); return `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${ev.has('replayed') ? 'replaying' : 'bounced'}"></i><span class="t">${short(c)}</span><time>${ago(e.t)}</time><span class="sub">${oc ? `With ${AG(oc.agent)}'s ${short(oc)}; ` : ''}${how}</span></a></li>`; }).join('')}</ul></section>` : ''}</div>`;
   }
   function progress(c) {
     // Five steps a person understands: working, review, in line, tested, landed.
