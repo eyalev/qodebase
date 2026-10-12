@@ -508,6 +508,19 @@ function measured(v) {
   });
 }
 
+// Fixed start-up time every build pays whatever its size: agent boxes starting, the planner's split, the queue's
+// check and landing. The lab's per-task fit scales it away on tiny jobs (one agent on 2 easy pieces: 20-40 s).
+// low = no build of this shape finished sooner; mid = what a tiny build takes. From the lab's quickest finished
+// runs (one agent 58 s, a team 172 s) and the real builds below (Workers Logs build_settled). Refit at 3+ builds.
+export const REAL_BUILDS = [
+  // eyal/est-bar-test, 2026-10-12: click-counter page + README, router + 2 Opus agents, no review, auto-land.
+  // Router split at +41 s, both pushed at +311 s, landed at +320 s. The page showed Fastest's 70-180 s: it ran
+  // on code from before a810395, which ignored the setting. The model for what ran (2 pieces): 90-240 s.
+  { slug: 'eyal/est-bar-test', at: '2026-10-12', shape: 'team', pieces: 2, wallS: 320 },
+];
+// alone mid: no real one-agent build yet; the lab's 58 s plus room for a brand-new project's first box.
+export const BUILD_FLOOR = { alone: { low: 50, mid: 90 }, team: { low: 170, mid: 320 } };
+
 // -> { wallS: [lo, hi], apiUsd: [lo, hi], basedOn, sameSetup, agentTasks, quality, qualityMeasured, notes, simVersion, job }
 // basedOn = real lab runs the range rests on; sameSetup = how many of them used exactly this setup.
 // Monotonic in reviewers (qb7, 2026-10-12): each change is reviewed once, so reviewers add review time and cost
@@ -548,8 +561,11 @@ export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced
   const direction = baseline === 'opus-alone' ? 'Fewest misses in the lab.' : isRef ? 'The lab\'s middle setting.'
     // Never better than Fastest: one Opus agent is the lab's measured best, and a sim edge over it is not evidence.
     : dq > 2 && !solo ? `Fewer misses than ${refName}.` : dq < -2 ? `More misses than ${refName}.` : `About like ${refName}.`;
+  const floor = BUILD_FLOOR[baseline === 'opus-alone' ? 'alone' : 'team'];
+  const wallMid = Math.max(p.wallS, floor.mid);
+  if (p.wallS < floor.mid) notes.push(`Mostly start-up time (agents starting, landing) at this size; measured on ${REAL_BUILDS.length} real build${REAL_BUILDS.length === 1 ? '' : 's'} so far.`);
   return {
-    wallS: [roundS(p.wallS * w.p10), roundS(p.wallS * w.p90)],
+    wallS: [roundS(Math.max(wallMid * w.p10, floor.low)), roundS(wallMid * w.p90)],
     apiUsd: [roundUsd(p.apiUsdStd * c.p10), roundUsd(p.apiUsdStd * c.p90)],
     basedOn: EST_CAL.runs, sameSetup: sameSetup(variantKey(variantIn, baseline)),
     // The planner bundles pieces into fewer agent tasks (Opus ~0.37 of the pieces, Haiku ~0.8: stage 1); the

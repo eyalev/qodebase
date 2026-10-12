@@ -97,3 +97,21 @@ on either side of 11/12 or 29/30 can still flip.
 - **fastest** for the two small buckets, or when one agent costs at most 1.5× Balanced (midpoints);
 - **cheapest** when the job is easy and has low overlap;
 - **balanced** otherwise, with the board on when overlap is high.
+
+## Start-up floor (2026-10-12, first real build)
+
+First real data point: eyal/est-bar-test showed 70 s to 3 min and settled at 5:20. Two causes:
+- **Wrong setup.** The build ran on code from before a810395, which ignored the page's setting: the page
+  estimated Fastest (one agent) and the server ran a router that split the job between 2 Opus agents. For what
+  ran, on a 2-piece job, the model says 90 s to 4 min. From a810395 on, a Build without Adjust is one Opus
+  agent, so the shown estimate and the setup agree.
+- **Fixed start-up time.** Of the 320 s, the router's split took 41 s and the agents pushed at 311 s; the queue's
+  check and landing took 5-9 s. The lab's per-task fit scales start-up away on tiny jobs (one agent on 2 easy
+  pieces: 20-40 s), which no real build can do.
+
+So `predictBuild` takes the middle of the time range as at least `BUILD_FLOOR[shape].mid` and the low end as at least
+`.low` (alone 50/90 s, team 170/320 s: the lab's quickest finished runs, 58 s alone and 172 s for a team, and the
+real build), and adds the note "Mostly start-up time … measured on N real builds so far" when the floor applies.
+Only tiny jobs change (a team on 2 pieces: 3 to 8 min; one agent: 50 s to 2 min); 8 pieces and up are as before.
+`REAL_BUILDS` in predict.js lists each real build used. At 3+ finished builds, refit the floor from them
+(Workers Logs: module `build`, events `started` and `build_settled`).
