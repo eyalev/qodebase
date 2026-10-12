@@ -8,6 +8,7 @@ const REPO = 'https://github.com/eyalev/qodebase';
 
 export function howPage(selfHost = false) {
   const step = (b: string, t: string) => `<li><b>${b}</b><span>${t}</span></li>`;
+  const tool = (job: string, won: string, why: string, src: string, href = '') => `<li><span class="tj">${job}</span><b>${won}</b><span class="tw">${why}</span><small>${href ? `<a href="${href}">${src}</a>` : src}</small></li>`;
   const num = (n: string, t: string, src: string) => `<li><b class="n">${n}</b><span>${t}</span><small>${src}</small></li>`;
   const demo = selfHost ? '' : `<section class="hw-sec">
 <a class="hw-demo" href="/p/eyal/corner-cafe"><span class="hw-k">A demo you can start, no sign-in. About 2 minutes.</span>
@@ -35,6 +36,18 @@ ${num('48%', "of the last 346 pull requests of Hono (a popular open-source web f
 ${num('3.5×', 'as many changes landed per hour with land by intent as when each change waits for review and merges one at a time, on real code (403 files) with 500 scripted agents.', 'Simulation: scripted agents, real git and tests')}
 ${num('7,033', 'git pushes from 500 agents at once, each with its own copy of the code, 280 ms median.', 'Run on Cloudflare: Durable Objects + Artifacts')}
 </ul></section>
+<section class="hw-sec"><h2>Different jobs need different ways to run agents</h2>
+<p class="desc">No one way won everywhere. What won, per job, and how we know:</p>
+<ul class="hw-tool">
+${tool('Small-to-mid apps (bakery and club sites, 15-minute jobs with several pieces)', 'One strong agent', 'One Opus agent finished 1.9× and 1.6× faster than an Opus planner with a Haiku crew; the crew cost about half at standard API prices.', 'Measured, real AI agents, 2–3 runs each', '/lab')}
+${tool('A shared task list with hidden duplicates (60 tasks, 20 agents)', 'The board and a duplicate check up front', 'The only setup with no task built twice (0 of 10 pairs, against 3, 7 and 8 for the others), and the lowest median time and cost.', 'Measured, 20 Claude Haiku agents, 3 runs each')}
+${tool('Tasks that arrive during the run', 'A duplicate check on every new task', '88 of 90 arrivals classified right; pairs built twice fell from 10 to 4 to 1.', 'Measured, 10 Claude Haiku agents, 3 runs each')}
+${tool('Two teams on one repo', "The board's check across both lists", '40% less time, 22% cheaper; tasks built twice fell from 3–4 to 0–1.', 'Measured on qodebase, on Cloudflare, 3 runs each')}
+${tool("A chain-shaped port (Bun's Zig to Rust: 89% of commits edit lines an earlier commit wrote)", 'Own line ranges, land at once, check behind each commit, fix forward', "Kept Bun's 26.2 hours and cut the time the build was broken by 59–73%; a check that blocks each commit cost 23–92% more time; past 64 agents, no gain.", "Replayed: Bun's real patches; breaks in the middle phases modelled")}
+${tool('A big codebase, thousands of agents', 'Lanes by dependency, a controller per lane', 'At 2,000 agents after 6 hours: 1,271 landed an hour against 896 for one queue, a median wait of 10 min against 130, and main never broken.', 'Simulated: real git and real tests, scripted agents, one run per setup (the Cloudflare run is pending)')}
+${tool('When to switch', 'When one queue saturates', 'One queue lands about 850–900 changes an hour at 500, 2,000 and 10,000 agents alike; past that, more agents only lengthen the wait.', 'Simulated')}
+</ul>
+<p class="hw-next"><b>Next, not built yet:</b> choose the way per job. qodebase would profile a job first (how many pieces, how much they overlap, which files are hot, how long the chains are, how long a check takes) and pick from this toolbox. When the stakes are high it would run a cheap pilot first, a simulation or a replay of the repo's own history, then adapt live (switch tactics when a queue saturates), compare its estimate with what happened so the next project starts from a better guess, and follow your choice of speed, cost or safety. Today qodebase runs one landing queue per project, with the board and the duplicate check as options.</p></section>
 <section class="hw-sec"><h2>See for yourself</h2>
 <nav class="hw-doors">
 <a href="/lab"><b>The lab</b><span>One strong agent or many? Real jobs, scored by tests the agents never saw.</span></a>
@@ -71,6 +84,16 @@ body:has(.hw-demo) .gbuild{background:var(--chip);color:var(--fg)}
 .hw-nums .n{font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
 .hw-nums span{color:var(--fg)}
 .hw-nums small{font-size:13px;color:var(--dim)}
+.hw-tool{list-style:none;padding:0;margin:0}
+.hw-tool li{display:grid;gap:2px;padding:12px 0;border-bottom:1px solid var(--line)}
+.hw-tool li:last-child{border-bottom:0}
+.hw-tool .tj{font-size:13px;color:var(--dim)}
+.hw-tool b{font-size:16px;font-weight:600}
+.hw-tool .tw{font-size:15px;line-height:1.45}
+.hw-tool small{font-size:13px;color:var(--dim)}
+.hw-tool small a{color:var(--acc)}
+.hw-next{margin:12px 0 0;padding:12px 14px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);font-size:15px;line-height:1.5;color:var(--fg)}
+.hw-next b{font-weight:600}
 .hw-doors{display:grid;gap:8px}
 .hw-doors a{display:grid;gap:2px;padding:12px 14px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;min-height:44px}
 .hw-doors b{font-size:16px;font-weight:600}
