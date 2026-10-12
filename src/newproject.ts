@@ -49,8 +49,12 @@ export const BUILD_CSS = `
 .bld .err{color:var(--warn);font-size:14px;min-height:1.4em;margin:8px 0 0}
 .vis{border:0;padding:0;margin:12px 0 0}.vis legend{font-size:14px;font-weight:500;margin-bottom:6px}
 .vis label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-top:8px;cursor:pointer}
-.vis label:has(input:checked){border-color:var(--acc)}.vis input{margin-top:3px;accent-color:var(--acc)}
-.vis span{display:flex;flex-direction:column;font-size:14px;color:var(--dim)}.vis b{color:var(--fg);font-size:15px;font-weight:500}
+.vis label:has(input:checked){border-color:var(--acc)}
+/* The site's input rules (full width, a border, a focus ring) hit radios too: the circle floated mid-row and Private
+   showed a stray rectangle (Eyal, 2026-10-12). A radio is a 20 px circle at the left edge, ringed only on keyboard focus. */
+.vis input[type=radio]{flex:none;width:20px;height:20px;min-height:0;margin:1px 0 0;padding:0;border:0;border-radius:50%;background:none;box-shadow:none;outline:none;accent-color:var(--acc)}
+.vis input[type=radio]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.vis span{flex:1;min-width:0;display:flex;flex-direction:column;font-size:14px;color:var(--dim)}.vis b{color:var(--fg);font-size:15px;font-weight:500}
 .bld .back4{background:none;border:0;color:var(--acc);font:500 15px 'Geist',sans-serif;padding:10px 0;cursor:pointer}
 `;
 
@@ -86,13 +90,22 @@ ${needsKey ? `<p class="lede">Agents run on your own Anthropic API key. <a href=
 (function(){
  const KEY='forq.buildDraft',DOM=${JSON.stringify(runDomain)},ME=${JSON.stringify(me)};
  const $=(id)=>document.getElementById(id),idea=$('idea'),pname=$('pname'),pidea=$('pidea');
- const STOP=new Set('a an the for my our your with that which to of and in on at by from app web page website site tool simple small little i we me want need make build create please some lets let us like who what where when'.split(' '));
- const suggest=(t)=>(t.toLowerCase().replace(/[^a-z0-9 ]+/g,' ').split(/\\s+/).filter((w)=>w&&!STOP.has(w)).slice(0,3).join('-')||'my-app').slice(0,39);
+ const STOP=new Set('a an the for my our your with that which to of and in on at by from app web page website site tool simple small little i we me want need make build create please some lets let us like who what where when will would can could should help helps helping allow allows enable enables is are be it its so just also really very thing things way easy easily lot'.split(' '));
+ // Name from the idea: filler dropped, no word twice, the first three content words ('I want to build an app that
+ // will help help my family plan trips' -> family-plan-trips). The small model's name replaces it when it answers.
+ const suggest=(t)=>(t.toLowerCase().replace(/[^a-z0-9 ]+/g,' ').split(/\\s+/).filter((w,i,a)=>w&&!STOP.has(w)&&a.indexOf(w)===i).slice(0,3).join('-')||'my-app').slice(0,39);
  const clean=(n)=>n.toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/-{2,}/g,'-').replace(/^-+|-+$/g,'').slice(0,39);
  const url=()=>{$('purl').textContent=(clean(pname.value)||'my-app')+'--'+(ME||'you')+'.'+DOM;};
  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({idea:pidea.value||idea.value,name:pname.value}))}catch{}};
+ // The small model behind /api/build/suggest also names the project (qb6: job.name, kebab, 2-3 words). Only while
+ // Build settings are on for this viewer (the endpoint is gated the same way); a name the person typed always wins.
+ async function nameFromModel(t){if(document.body.dataset.buildSettings!=='1')return;
+  try{const r=await fetch('/api/build/suggest',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prompt:t})});const d=await r.json();
+   const n=clean(String((d.job&&d.job.name)||(d.suggestion&&d.suggestion.job&&d.suggestion.job.name)||''));
+   console.log(JSON.stringify({module:'build',event:'model_name',status:r.status,name:n||null}));
+   if(n&&n.length>=3&&!pname.dataset.touched&&pidea.value===t){pname.value=n;url();save();}}catch(e){console.log(JSON.stringify({module:'build',event:'model_name_failed',error:String(e)}));}}
  function brief(){const t=idea.value.trim();if(!t){idea.focus();return;}
-  pidea.value=t;if(!pname.dataset.touched)pname.value=suggest(t);url();$('s1').hidden=true;$('s2').hidden=false;scrollTo(0,0);save();
+  pidea.value=t;if(!pname.dataset.touched)pname.value=suggest(t);url();nameFromModel(t);$('s1').hidden=true;$('s2').hidden=false;scrollTo(0,0);save();
   history.replaceState(null,'','/build?step=brief');}
  $('next').onclick=brief;
  idea.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();brief();}});
