@@ -80,8 +80,9 @@ The Haiku call returns exactly this JSON (no prose). Use temperature 0 and about
 
 Then:
 1. `const job = { tasks, overlap, difficulty, label: summary }`.
-2. `suggestBuild(job)` returns `{ preset, why, board? }`. Show it as "<Preset>: <why>". Apply `board` on top
-   of the preset when present.
+2. `suggestBuild(job)` returns `{ preset, why }`. Show it as "<Preset>: <why>". The board comes with the preset
+   (R0, 2026-10-12): `board: true` in Balanced and Cheapest, none in Fastest; its effect with a planner handing out
+   tasks is not measured (the lab measured it with self-picking agents), and the estimate's notes say so.
 3. `predictBuild(job, BUILD_PRESETS[preset].variant)` gives the estimate.
 
 Bad or missing JSON, or a timeout (keep it short, 4 s): fall back to `SMALL_APP` and no suggestion.
@@ -96,7 +97,7 @@ on either side of 11/12 or 29/30 can still flip.
 `suggestBuild`'s rules (on the bucket):
 - **fastest** for the two small buckets, or when one agent costs at most 1.5× Balanced (midpoints);
 - **cheapest** when the job is easy and has low overlap;
-- **balanced** otherwise, with the board on when overlap is high.
+- **balanced** otherwise (the board is on in both team presets since R0; its effect with a planner is not measured, and the estimate's notes say so).
 
 ## Start-up floor (2026-10-12, first real build)
 
@@ -127,7 +128,7 @@ Only tiny jobs change (a team on 2 pieces: 3 to 8 min; one agent: 50 s to 2 min)
 | type | when | label | strategy (builder) | better (measured, not built) |
 |---|---|---|---|---|
 | small-app | 1-11 pieces | a new small app | one strong agent | |
-| shared-list | 12+ pieces, board on or high overlap | an app whose pieces overlap | team with the board on | |
+| shared-list | 12+ pieces, high overlap | an app whose pieces overlap | team with the board on | |
 | app | 12-29 pieces | a mid-size app | the preset's team | |
 | big-app | 30+ pieces | a big app | the preset's team (up to 12 coders) | dependency-aware lanes + per-lane controller (L1-L2) |
 | port | `job.kind === 'port'` only | a port of existing code | the preset (one agent at small sizes) | owned line ranges, land at once, check behind (BUN3) |

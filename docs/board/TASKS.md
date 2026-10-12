@@ -82,7 +82,7 @@ GitHub-shaped, agent-first (Eyal, 2026-10-12: "yes, build items 2-5" of docs/con
 - [ ] EV1 Artifacts event subscriptions -> a Cloudflare Queue -> the Worker's queue() handler -> Landing/board/timeline: any push (agent or a person's plain git push) is recorded; pushes to a fork of a project with landing on can join the queue; cloudcost line for the Queue (qb6, Eyal 2026-10-12)
 
 Real builds, staircase (Eyal, 2026-10-12 ~22:00 UTC: "go for it"); meter stop for these: 35% (manager's pick, Eyal can change); every run has a Landing budget (halts all boxes) and an owner Stop button:
-- [ ] R0 board ON by default for team presets (Balanced, Cheapest), off for Fastest; estimate note 'board effect not measured for planned teams' (qb7 + qb4)
+- [x] R0 board ON by default for team presets (Balanced, Cheapest), off for Fastest; estimate note 'board effect not measured for planned teams' (qb7 + qb4). qb4 part done 2026-10-12: board:true in both team variants, suggestBuild no longer returns board, the note in predictBuild; qb7 checks the sheet
 - [ ] R1 Stop/Pause for the owner on Agents at work: Pause = no new tasks/trains; Stop = halt (stop every box); visible while a run goes (qb6 + qb7)
 - [ ] R2 small: 'Need an idea? Small' default Build (one Opus agent), budget $3 — checks the default path end to end (estimate bar, auto-land, timeline, Asks)
 - [ ] R3 large: a Large idea with Balanced (Opus planner + 12 Haiku + 3 reviewers, board on), budget $8

@@ -21,7 +21,7 @@ test('no settings or unknown input: today\'s default (null)', () => {
 test('presets: fastest = one Opus agent; balanced and cheapest = crews as in the lab', () => {
   assert.deepEqual(resolveBuildPlan({ preset: 'fastest' }, O), { kind: 'single', model: 'opus', preset: 'fastest' });
   const b = resolveBuildPlan({ preset: 'balanced' }, O);
-  assert.deepEqual([b.kind, b.planner, b.coders, b.coderModel, b.reviewers, b.board], ['crew', 'opus', 12, 'haiku', 3, false]);
+  assert.deepEqual([b.kind, b.planner, b.coders, b.coderModel, b.reviewers, b.board], ['crew', 'opus', 12, 'haiku', 3, true], 'R0: the board is on in team presets');
   const c = resolveBuildPlan({ preset: 'cheapest' }, O);
   assert.deepEqual([c.coders, c.reviewers], [6, 0]);
   assert.equal(resolveBuildPlan({ preset: 'balanced' }, { maxCoders: 6 }).coders, 6, 'others are capped at the instance limit');
@@ -36,7 +36,7 @@ test('custom knobs are validated and clamped', () => {
 
 test('flags as the lab runner sets them; the router and single-agent texts', () => {
   const f = planFlags(resolveBuildPlan({ preset: 'balanced' }, O));
-  assert.deepEqual([f.autoMerge, f.reviewers, f.policy, f.plannerModel, f.coderModel, f.caps.agents, f.board], [true, 3, 'intent', 'opus', 'haiku', 12, false]);
+  assert.deepEqual([f.autoMerge, f.reviewers, f.policy, f.plannerModel, f.coderModel, f.caps.agents, f.board], [true, 3, 'intent', 'opus', 'haiku', 12, true]);
   const s = planFlags(resolveBuildPlan({ preset: 'fastest' }, O));
   assert.deepEqual([s.reviewers, s.coderModel, s.caps.agents], [0, 'opus', 1]);
   assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /at most 6 tasks/);
@@ -72,7 +72,7 @@ test('estimate vs elapsed: the shown estimate is checked and stamped; spend is p
   const { cleanEstimate, apiUsdOf } = await import('./buildsettings.ts');
   const plan = resolveBuildPlan({ preset: 'cheapest' }, O);
   const e = cleanEstimate({ wallS: [300, 720], apiUsd: [0.6, 0.9], basis: 'idea', basedOn: 25, simVersion: 'lab-0.12', extra: 'x' }, plan, 1000);
-  assert.deepEqual(e, { startedAt: 1000, wallS: [300, 720], apiUsd: [0.6, 0.9], preset: 'cheapest', v: { coders: 6, coderModel: 'haiku', reviewers: 0, board: false }, basis: 'idea', basedOn: 25, simVersion: 'lab-0.12' });
+  assert.deepEqual(e, { startedAt: 1000, wallS: [300, 720], apiUsd: [0.6, 0.9], preset: 'cheapest', v: { coders: 6, coderModel: 'haiku', reviewers: 0, board: true }, basis: 'idea', basedOn: 25, simVersion: 'lab-0.12' });
   for (const bad of [null, {}, { wallS: [5, 1], apiUsd: [0, 1] }, { wallS: [1, 2], apiUsd: [-1, 1] }, { wallS: [1, 2, 3], apiUsd: [0, 1] }]) assert.equal(cleanEstimate(bad, plan), null);
   assert.equal(cleanEstimate({ wallS: [1, 2], apiUsd: [0, 1] }, null).preset, null, 'a default build (no plan) still keeps its estimate');
   const rows = [{ kind: 'claude', project: 'eyal/app:claude-haiku-5-5', tokens: { in: 1e6, out: 1e6 } }, { kind: 'claude', project: 'eyal/app', tokens: { out: 1e5 } },

@@ -459,14 +459,16 @@ export function predict(variant, scenario, { seeds = 5, cal, baseline } = {}) {
 // number here: only a direction against Balanced, plus what the lab saw for the knob.
 import EST_CAL from './estimate-cal.js';
 
-// The three presets, each one a setup the lab has run for real (public/lab/runs.jsonl).
+// The three presets, each one a setup the lab has run for real (public/lab/runs.jsonl). R0 (2026-10-12): the two
+// team presets run with the board on. The lab measured the board only with agents picking their own tasks; with
+// a planner handing out tasks its effect is not measured yet, so the estimate says so (notes) instead of claiming it.
 export const BUILD_PRESETS = {
   fastest: { label: 'Fastest', variant: { baseline: 'opus-alone' },
     why: 'One Opus agent does it all. In the lab it finished first where time could be compared (2 of 4 jobs), with the same quality or within one hidden test; on the bigger apps it cost 2-2.5x a team.' },
-  balanced: { label: 'Balanced', variant: { planner: 'opus', coders: 12, coderModel: 'haiku', reviewers: 3, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4 },
-    why: 'An Opus planner, 12 Haiku coders and 3 Haiku reviewers. On the lab\'s bigger apps: about half the cost of Fastest, slower, nearly the same quality. On small jobs the saving shrinks or reverses.' },
-  cheapest: { label: 'Cheapest', variant: { planner: 'opus', coders: 6, coderModel: 'haiku', reviewers: 0, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4 },
-    why: 'An Opus planner and 6 Haiku coders, no reviewer. Cheapest of the three on most jobs (on very small ones a single agent can cost less), and more misses get through.' },
+  balanced: { label: 'Balanced', variant: { planner: 'opus', coders: 12, coderModel: 'haiku', reviewers: 3, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4, board: true },
+    why: 'An Opus planner, 12 Haiku coders and 3 Haiku reviewers, with the board on. On the lab\'s bigger apps: about half the cost of Fastest, slower, nearly the same quality. On small jobs the saving shrinks or reverses.' },
+  cheapest: { label: 'Cheapest', variant: { planner: 'opus', coders: 6, coderModel: 'haiku', reviewers: 0, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4, board: true },
+    why: 'An Opus planner and 6 Haiku coders with the board on, no reviewer. Cheapest of the three on most jobs (on very small ones a single agent can cost less), and more misses get through.' },
 };
 
 // job: { tasks: 1-80 (pieces of work), overlap: 'low'|'some'|'high' or 0-1 (how much the pieces touch the same
@@ -553,7 +555,8 @@ export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced
     else notes.push('Each change is reviewed once: more reviewers only shorten the wait for one.');
     if (v.coders === 1) notes.push('One coder in a team still pays for a planner and reviews: Fastest skips both.');
     if (v.planner === 'haiku') notes.push('A Haiku planner missed requirements on vague prompts in the lab.');
-    if (v.board) notes.push('Board on: fewer pieces built twice when tasks overlap.');
+    // The lab measured the board with self-picking agents only (round 2); the sim's planned-team effect is a guess.
+    if (v.board) notes.push('Board on: its effect is not measured for planned teams yet (the lab measured it with agents picking their own tasks).');
     else if (sc.pShared >= 0.7) notes.push('Many tasks touch the same files: the board helps here.');
   }
   const qualityMeasured = measured(v);
@@ -588,7 +591,7 @@ export const TASK_BUCKETS = [
   { max: Infinity, tasks: 40, label: '30 or more pieces', small: false, size: 'A big job' },
 ];
 export const bucketOf = (n) => TASK_BUCKETS.find((b) => Math.round(n) <= b.max);
-// -> { preset, why, board?, bucket, job }
+// -> { preset, why, bucket, job }. The board comes with the preset (R0: on for both team presets), so no board here.
 export function suggestBuild(jobIn = SMALL_APP) {
   const bucket = bucketOf(jobProfile(jobIn).tasks);
   const job = { ...jobIn, tasks: bucket.tasks, bucket: bucket.label };
@@ -606,7 +609,7 @@ export function suggestBuild(jobIn = SMALL_APP) {
   const share = 1 / x;
   const part = share <= 0.4 ? 'at well under half' : share <= 0.6 ? 'at about half' : share <= 0.8 ? 'at about two thirds' : 'a little below';
   const of = `${part} the cost of one agent`;
-  return out({ preset: 'balanced', board: sc.pShared >= 0.7, why: sc.pShared >= 0.7 ? `${bucket.size} whose pieces overlap: a team with the board on, ${of}.` : `${bucket.size}: a reviewed team, ${of}.` });
+  return out({ preset: 'balanced', why: sc.pShared >= 0.7 ? `${bucket.size} whose pieces overlap: a team with the board on, ${of}.` : `${bucket.size}: a reviewed team, ${of}.` });
 }
 
 // "Need an idea?" chips (docs/board/TASKS.md I1): each size's typical time and cost, i.e. a job in the middle of
@@ -638,7 +641,8 @@ export function ideaSizes() {
 const STRATEGY = { fastest: 'one strong agent', balanced: 'an Opus planner with a reviewed Haiku team', cheapest: 'an Opus planner and a Haiku crew, no reviewer' };
 export function jobType(job = SMALL_APP, suggestion = null) {
   const s = suggestion || suggestBuild(job);
-  const preset = s.preset, board = s.board;
+  // The board comes with the preset (R0); an older suggestion may still carry its own.
+  const preset = s.preset, board = s.board ?? BUILD_PRESETS[preset]?.variant.board;
   const strategy = STRATEGY[preset] + (board ? ' with the board on' : '');
   const base = { preset, ...(board !== undefined ? { board } : {}), strategy };
   const b = bucketOf(jobProfile(job).tasks);
@@ -654,8 +658,8 @@ export function jobType(job = SMALL_APP, suggestion = null) {
   if (b.small) return { ...base, type: 'small-app', from: 'size', label: 'a new small app',
     why: preset === 'fastest' ? 'fastest in the lab, at about a team\'s quality' : s.why,
     evidence: 'Lab: one agent finished first where time could be compared (2 of 4 jobs), same quality or within one hidden test.' };
-  if (board || overlapHigh) return { ...base, type: 'shared-list', from: 'size', label: 'an app whose pieces overlap',
-    why: board ? 'the board shows who works on what, so pieces are not built twice' : s.why,
+  if (overlapHigh) return { ...base, type: 'shared-list', from: 'size', label: 'an app whose pieces overlap',
+    why: board ? 'the board shows who works on what, so pieces are not built twice (not yet measured with a planner)' : s.why,
     evidence: 'Board runs and sims (sim.md (d)-(h)): a duplicate check before work stops pieces being built twice.' };
   if (b.tasks < 30) return { ...base, type: 'app', from: 'size', label: 'a mid-size app',
     why: preset === 'balanced' ? 'about half the cost of one agent on the lab\'s bigger apps' : preset === 'cheapest' ? 'many simple, separate pieces' : 'one agent is still quickest here',
