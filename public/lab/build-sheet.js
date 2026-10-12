@@ -65,7 +65,9 @@
         <button type="button" role="switch" class="bs-switch" data-k="board" aria-checked="false" aria-labelledby="bs-bl" aria-describedby="bs-hb"><i></i></button></div>
       <p class="bs-hint" id="bs-hb"></p>
     </div>
-    <div class="bs-out" aria-live="polite">
+    <p class="bs-out bs-wait">Write your idea above to see time and cost.</p>
+    <div class="bs-out bs-est" aria-live="polite">
+      <p class="bs-for" data-out="for"></p>
       <div class="bs-bar"><span class="bs-bl">Time</span><b data-out="time"></b><div class="bs-track" data-bar="time"><i></i></div></div>
       <div class="bs-bar"><span class="bs-bl">Cost at API prices</span><b data-out="cost"></b><div class="bs-track" data-bar="cost"><i></i></div></div>
       <div class="bs-bar"><span class="bs-bl">Quality</span><b data-out="quality"></b><div class="bs-meter" data-bar="quality"><i></i><i></i><i></i><i></i></div></div>
@@ -88,7 +90,12 @@
     } catch (e) { log('estimate_failed', { error: String(e), v: st.v }); return 'error'; }
   }
   const bucketWords = () => (st.sug?.bucket && jobNow() ? `${st.sug.bucket.replace(/ pieces?$/, '')} pieces of work` : null);
+  // Eyal: with an empty box, numbers confuse. No prices on the chips, the dock asks for the idea; with text, the
+  // estimate is for a typical small app until 'Suggest from my idea' reads it (never an automatic model call).
+  const empty = () => idea().length < 4;
   function paintOut() {
+    root.classList.toggle('bs-empty', empty());
+    if (empty()) { st.est = null; out('src').textContent = ''; return; }
     const e = estimate();
     st.est = e;
     root.classList.toggle('bs-noest', !e || e === 'error');
@@ -101,6 +108,7 @@
     $('#bs-hc').textContent = v.coders === 1 ? 'One agent builds everything. With more, an Opus planner splits the work and each agent builds a piece on its own copy.'
       : cap && v.coders > cap ? `A limit, not a crew size: the planner splits this into about ${cap} task${cap === 1 ? '' : 's'}, so about ${cap} agent${cap === 1 ? '' : 's'} will work.`
       : `Up to ${v.coders} agents at once, each on its own copy${cap ? `; the planner makes about ${cap} tasks` : ''}.`;
+    out('for').textContent = e.mine ? (st.sug?.state === 'unsure' ? 'Rough guess for your idea' : 'For your idea') : 'For a typical small app (Suggest from my idea reads yours)';
     out('time').textContent = range(e.wallS, mins);
     out('cost').textContent = range(e.usd, usd);
     const seg = (el, r, lo, hi) => { const a = pos(r[0], lo, hi), b = pos(r[1], lo, hi); el.style.left = `${a}%`; el.style.width = `${Math.max(3, b - a)}%`; };
@@ -158,14 +166,15 @@
   }
   // Each preset chip carries its cost for the current job (one estimate per preset, again only when the job changes).
   let priced = null;
+  const PLAIN = { fastest: 'One strong agent does it all', balanced: 'A planned team with reviewers', cheapest: 'A planned team of small agents' };
   function paintPrices() {
     if (!SIM?.predictBuild) return;
-    const j = jobNow(), key = JSON.stringify(j);
+    const j = jobNow(), key = JSON.stringify(j) + empty();
     if (priced === key) return;
     priced = key;
     for (const [k, p] of Object.entries(PRESETS)) {
-      let t = '';
-      try { const r = SIM.predictBuild(j || SIM.SMALL_APP, toVariant(p.v)); t = range(r.apiUsd, usd); } catch {}
+      let t = PLAIN[k] || '';
+      if (!empty()) try { const r = SIM.predictBuild(j || SIM.SMALL_APP, toVariant(p.v)); t = range(r.apiUsd, usd); } catch {}
       const sm = root.querySelector(`[data-preset="${k}"] small`); if (sm) sm.textContent = t;
     }
   }
@@ -223,7 +232,7 @@
     if (i < 0) return; e.preventDefault(); cs[(i + (e.key === 'ArrowRight' ? 1 : cs.length - 1)) % cs.length].focus();
   });
   // A changed idea makes 'For my idea' stale: the chip asks again and the bars go back to a typical app.
-  form.querySelector('textarea')?.addEventListener('input', () => { if (st.sug) paintSoon(); });
+  form.querySelector('textarea')?.addEventListener('input', () => { if (st.open || st.sug) paintSoon(); });
 
   async function loadSim() {
     try {

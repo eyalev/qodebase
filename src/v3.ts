@@ -727,7 +727,8 @@ ${watch}
 <h1>Own your codebase.</h1>
 <p class="lede">Describe it. Agents build it. The code is yours to keep.</p>
 <form class="landask" action="/build" method="get">
-<textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
+<div class="askbox"><textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
+<button type="button" class="askmic" id="askmic" hidden aria-label="Speak your idea" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
 <button class="btn" type="submit">Build it</button>
 <p class="bsrow"><span id="bschosen" aria-live="polite"></span><button type="button" class="bsopen" id="bsopen" hidden>Adjust</button></p>
 <div id="bsheet" class="bsheet" hidden></div>
@@ -742,11 +743,24 @@ ${tryRow(entries)}
 <script>(function(){document.querySelectorAll('.land .browse').forEach((a)=>a.addEventListener('click',()=>a.classList.add('going')));
 addEventListener('pageshow',()=>document.querySelectorAll('.land .browse.going').forEach((a)=>a.classList.remove('going')));
 const f=document.querySelector('.landask'),t=f.querySelector('textarea');
+(function(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition,m=document.getElementById('askmic');if(!SR||!m)return;m.hidden=false;let rec=null,base='';
+m.addEventListener('click',()=>{if(rec){rec.stop();return;}rec=new SR();rec.interimResults=true;rec.continuous=true;rec.lang=document.documentElement.lang||navigator.language||'en-US';base=t.value.trim();
+rec.onresult=(e)=>{let s='';for(let i=0;i<e.results.length;i++)s+=e.results[i][0].transcript;t.value=(base?base+' ':'')+s.trim();t.dispatchEvent(new Event('input',{bubbles:true}));};
+rec.onend=()=>{rec=null;m.classList.remove('on');m.setAttribute('aria-pressed','false');m.setAttribute('aria-label','Speak your idea');};rec.onerror=()=>{};
+try{rec.start();m.classList.add('on');m.setAttribute('aria-pressed','true');m.setAttribute('aria-label','Stop listening');}catch(e){rec=null;}});})();
 if(document.body.dataset.buildSettings==='1'){const s=document.createElement('script');s.src='/lab/build-sheet.js';document.head.appendChild(s);}
 t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();if(t.value.trim())f.requestSubmit();}});})();</script>`;
 }
 
 export const LAND_CSS = `
+/* The mic sits inside the prompt box (Eyal, 2026-10-12): speaking fills the box. Talk's floating button is not
+   shown on the home page, so it never covers the Build settings dock. */
+.askbox{position:relative}
+.askbox textarea{padding-right:56px}
+.askmic{position:absolute;right:8px;bottom:8px;width:44px;height:44px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.askmic svg{width:22px;height:22px}.askmic.on{background:var(--warn);color:#fff}
+.askmic:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+body:has(.landask) #talk-fab{display:none!important}
 /* Build settings (B2/B4, behind BUILD_SETTINGS): 'Adjust' expands a section in place under Build it (Eyal: no
    modal). Preset chips, sliders with touch-sized thumbs, a board switch, outcome bars that move while you drag. */
 .bsrow{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0}
@@ -793,6 +807,9 @@ export const LAND_CSS = `
 .bs-meter i{height:6px;border-radius:3px;background:var(--line);transition:background-color .12s}.bs-meter i.on{background:var(--fg)}
 .bs-noest .bs-track,.bs-noest .bs-meter{display:none}
 .bs-src{margin:0;font-size:13px;color:var(--dim)}
+.bs-for{margin:0;font-size:12px;color:var(--dim)}
+.bs-wait{margin:0;font-size:15px;color:var(--dim);text-align:center;padding:14px 12px}
+.bsheet:not(.bs-empty) .bs-wait,.bs-empty .bs-est,.bs-empty .bs-src{display:none}
 .bs-foot{margin:0}
 .bs-link{border:0;background:none;padding:0;color:var(--dim);font:inherit;font-size:14px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:44px}
 .bs-chip:focus-visible,.bs-switch:focus-visible,.bs-link:focus-visible,.bsopen:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
