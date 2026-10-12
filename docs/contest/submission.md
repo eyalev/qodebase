@@ -31,7 +31,7 @@ Main ended with 13 commits, 12 git notes and green tests. Real spend was $0.16 o
 
 The crew cost 57% and 48% less at standard API prices. At the >100k-token-prompt price the crew costs more than Opus. Times leave out runs stalled by the platform; with the stalled bakery run, Opus was 2.3× faster. A crew is limited by how fast changes land, not by how many agents work. Haiku planners under-planned.
 
-**Agent board.** Agents state their task, edits are posted by a hook, and one duplicate check runs before work starts. With 20 Haiku agents it cut wall time 24% and cost 16% on synthetic task lists with duplicates we planted; with two teams on one repo inside qodebase, wall time fell 40% and duplicates built twice fell from 3-4 to 0-1 ([docs/board](https://github.com/eyalev/qodebase/tree/main/docs/board)).
+**Agent board.** Agents state their task, edits are posted by a hook, and one duplicate check runs before work starts. With 20 Haiku agents it cut wall time 24% and cost 16% on synthetic task lists with duplicates we planted; with two teams on one repo inside qodebase, wall time fell 40% and duplicates built twice fell from 3-4 to 0-1. Against a static split rule or the duplicate annotation alone, it was the only setup with no duplicate built twice; on time and cost it overlaps the split rule ([docs/board](https://github.com/eyalev/qodebase/tree/main/docs/board)).
 
 **OpenClaw.** In 30 days of OpenClaw's public data, their no-queue flow was the cheapest at their pace. A queue running each train's own scoped tests would cost ~1.6× their landing CI ([findings](https://github.com/eyalev/qodebase/blob/main/docs/openclaw/FINDINGS.md)).
 
