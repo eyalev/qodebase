@@ -5,9 +5,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const HERE = path.dirname(new URL(import.meta.url).pathname);
+// --since <run id prefix>: only runs from then on (round 3's ablation reruns arms with round 2's prompt versions).
+const SINCE = (() => { const i = process.argv.indexOf('--since'); return i >= 0 ? process.argv[i + 1] : null; })();
 const SCEN = (() => { const i = process.argv.indexOf('--scenario'); return i >= 0 ? process.argv[i + 1] : 's1'; })();
 const runs = fs.readFileSync(path.join(HERE, 'runs.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l))
-  .filter((r) => r.rep > 0 && !r.meter_stopped && (r.scenario || 's1') === SCEN && (SCEN === 's3' || r.agents === ({ s1: 5, s2: 10, s4: 8, s5: 8 }[SCEN] ?? r.agents)));
+  .filter((r) => r.rep > 0 && !r.meter_stopped && (!SINCE || r.run >= SINCE) && (r.scenario || 's1') === SCEN && (SCEN === 's3' || r.agents === ({ s1: 5, s2: 10, s4: 8, s5: 8 }[SCEN] ?? r.agents)));
 // Round 2: a 'condition' is cond + version (v2 = fixed board + no-wait + 60 turns) + AIMD + team size when not 20.
 for (const r of runs) if (SCEN === 's3' || SCEN === 's4' || SCEN === 's5') r.cond = `${r.cond}${r.prompt_version?.includes('tiebreak') ? ' v3' : r.prompt_version === 'board-ab-v2-nowait' ? ' v2' : ' v1'}${r.aimd ? ' aimd' : ''}${SCEN === 's3' && r.agents !== 20 ? ` n${r.agents}` : ''}`;
 const M = [
