@@ -64,8 +64,8 @@
         <button type="button" role="switch" class="bs-switch" data-k="board" aria-checked="false" aria-labelledby="bs-bl" aria-describedby="bs-hb"><i></i></button></div>
       <p class="bs-hint" id="bs-hb"></p>
     </div>
-    <p class="bs-out bs-wait">Write your idea above to see time and cost.</p>
-    <div class="bs-out bs-est" aria-live="polite">
+    <p class="bs-out bs-wait" data-talk-dock>Write your idea above to see time and cost.</p>
+    <div class="bs-out bs-est" data-talk-dock aria-live="polite">
       <p class="bs-for" data-out="for"></p>
       <div class="bs-bar"><span class="bs-bl">Time</span><b data-out="time"></b><div class="bs-track" data-bar="time"><i></i></div></div>
       <div class="bs-bar"><span class="bs-bl">Cost at API prices</span><b data-out="cost"></b><div class="bs-track" data-bar="cost"><i></i></div></div>
