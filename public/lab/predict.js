@@ -608,3 +608,22 @@ export function suggestBuild(jobIn = SMALL_APP) {
   const of = `${part} the cost of one agent`;
   return out({ preset: 'balanced', board: sc.pShared >= 0.7, why: sc.pShared >= 0.7 ? `${bucket.size} whose pieces overlap: a team with the board on, ${of}.` : `${bucket.size}: a reviewed team, ${of}.` });
 }
+
+// "Need an idea?" chips (docs/board/TASKS.md I1): each size's typical time and cost, i.e. a job in the middle of
+// its bucket (some overlap, normal difficulty) on the settings suggestBuild picks for it. A picked idea then shows
+// its own estimate (POST /api/build/idea returns it). The ideas themselves are one list, server side: qb6's
+// CURATED_IDEAS in src/buildsettings.ts. A function, memoised, so importing this module costs nothing.
+// -> { small: { label, tasks, bucket: '1-4 pieces', preset, board?, settings, wallS: [lo, hi], apiUsd: [lo, hi] }, medium, large, huge }
+const IDEA_SIZE_IDS = [['small', 'Small'], ['medium', 'Medium'], ['large', 'Large'], ['huge', 'Huge']];
+let ideaSizesMemo = null;
+export function ideaSizes() {
+  if (ideaSizesMemo) return ideaSizesMemo;
+  ideaSizesMemo = Object.fromEntries(IDEA_SIZE_IDS.map(([id, label], i) => {
+    const b = TASK_BUCKETS[i];
+    const s = suggestBuild({ tasks: b.tasks, overlap: 'some', difficulty: 'normal' });
+    const settings = { ...BUILD_PRESETS[s.preset].variant, ...(s.board !== undefined ? { board: s.board } : {}) };
+    const e = predictBuild(s.job, settings);
+    return [id, { label, tasks: b.tasks, bucket: b.label, preset: s.preset, ...(s.board !== undefined ? { board: s.board } : {}), settings, wallS: e.wallS, apiUsd: e.apiUsd }];
+  }));
+  return ideaSizesMemo;
+}

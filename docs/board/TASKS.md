@@ -51,6 +51,6 @@ Screenshots + pick an element in the app (Eyal, 2026-10-12 ~16:00 UTC):
 - [ ] S4 mark up a screenshot: circle/arrow/highlight on the attached image before sending (qb7), after S1-S3
 
 Idea generator by project size (Eyal, 2026-10-12 ~17:40 UTC):
-- [ ] I1 sizes = the predictor's buckets: Small (1-4 pieces), Medium (5-11), Large (12-29), Huge (30+), each with its typical time/cost from predictBuild; curated list of ~8 ideas per size, phone-relevant, varied domains (qb4)
+- [x] I1 sizes = the predictor's buckets: Small (1-4 pieces), Medium (5-11), Large (12-29), Huge (30+), each with its typical time/cost from predictBuild; curated list of ~8 ideas per size, phone-relevant, varied domains (qb4). Done: predict.js `ideaSizes()` (label, bucket, preset, settings, wallS, apiUsd per size, memoised); the one curated list is qb6's CURATED_IDEAS (src/buildsettings.ts, 60aaa34)
 - [ ] I2 POST /api/build/idea {size, seed?} -> {title, prompt, size, job facts} in one small-model call (Workers AI like suggest), validated against the size; caps like suggest; curated fallback on any failure (qb6)
 - [ ] I3 UI under the box: 'Need an idea?' + size chips (Small/Medium/Large/Huge, each with ~time/~cost) + 'Another'; picking fills the box and applies the suggested settings (same path as Suggest, no second call), settings row updates (qb7)
