@@ -168,6 +168,7 @@
   };
 
   window.QB_TIMELINE_CSS = `.tl{display:grid;gap:10px}
+.tl-compact .tl-brush{order:1}.tl-compact .tl-scroll{order:2}.tl-compact .tl-ctl{order:3}.tl-compact .tl-sum{order:4}.tl-compact .tl-legend{order:5}.tl-compact .tl-sheet{order:6}
 .tl-sum p{margin:0 0 4px;font-size:15px}.tl-sum .dim{font-size:13px}
 .tl-legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--dim)}.tl-lg{display:inline-flex;align-items:center;gap:5px}.tl-lg i{width:14px;height:10px;border-radius:3px;display:inline-block}
 .tl-ctl{display:flex;align-items:center;gap:6px}.tl-ctl .chipb{min-width:44px;min-height:40px}.tl-zl{font-size:12px}

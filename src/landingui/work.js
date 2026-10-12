@@ -656,7 +656,7 @@
     // qb6's GET …/landing/timeline when it answers (refreshed every 10 s while shown); else built from the view.
     TL = TLsrv && Date.now() - TLsrv.at < 60e3 ? TLsrv.t : window.qbTimelineData(D);
     if (!TLsrv || Date.now() - TLsrv.at > 10e3) loadTimeline();
-    return `${window.qbTimelineView(TL)}${full ? '' : '<p class="fmore"><a href="#/timeline">Open the timeline full width</a></p>'}`;
+    return full ? window.qbTimelineView(TL) : `<div class="tl-compact">${window.qbTimelineView(TL)}</div><p class="fmore"><a href="#/timeline">Open the timeline full width</a></p>`;
   }
   let TLsrv = null, TLbusy = false;
   async function loadTimeline() {
