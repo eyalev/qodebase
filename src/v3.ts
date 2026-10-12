@@ -140,6 +140,8 @@ export function liveChanges(c: Ctx) {
   return `<template id="needs" data-n="${needsOf(open).length}"></template>${estBar}${merged}${empty}${out.join('')}`;
 }
 
+const PICK_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2.5l9.5 4-4 1.5-1.5 4z"/><path d="M8.5 8.5l4 4"/></svg>`;
+
 /** App: the running app, with a picker for Live or any change you can try. */
 function appView(c: Ctx) {
   const app = appUrl(c);
@@ -151,9 +153,23 @@ function appView(c: Ctx) {
 <div class="pstrip" id="pstrip"${sel ? '' : ' hidden'}><span id="pword">${sel ? esc(sel.word) : ''}</span><button type="button" class="btn" id="pmerge"${sel?.state === 'ready' && !sel.auto ? '' : ' hidden'}>Merge</button></div>` : '';
   return {
     full: true,
-    action: app ? `<a class="hact" id="ext" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open the app in a new tab">${OPEN_ICON}</a>` : '',
-    body: `${picker}${app ? `<iframe id="app" src="${esc(src)}" title="${esc(c.info.name)}"></iframe>` : noApp(c)}${c.own ? '' : `<div class="forkbar">${VISIT}${forkAction(c.info, c.me, c.forks.filter((e) => e.owner === c.me))}</div>`}`,
+    action: app ? `${c.own ? `<button type="button" class="hact qbpick" id="qbpick" aria-pressed="false" aria-label="Pick an element in the app to add to your message">${PICK_ICON}<span>Pick</span></button>` : ''}<a class="hact" id="ext" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open the app in a new tab">${OPEN_ICON}</a>` : '',
+    body: `${picker}${app && c.own ? `<div class="pickhint" id="pickhint" hidden role="status"><span>Tap anything in the app to add it to your message.</span><button type="button" class="chipbtn" id="pickdone">Done</button></div>` : ''}${app ? `<iframe id="app" src="${esc(src)}" title="${esc(c.info.name)}"></iframe>` : noApp(c)}${c.own ? '' : `<div class="forkbar">${VISIT}${forkAction(c.info, c.me, c.forks.filter((e) => e.owner === c.me))}</div>`}`,
     js: `(function(){const f=document.getElementById('app'),x=document.getElementById('ext'),ps=document.getElementById('pstrip'),pm=document.getElementById('pmerge');let cur=null;
+// Pick (S2): the app host injects its picker only with ?__qbpick=1 (qb6); we switch it on and off by postMessage
+// to the app's origin and take picks only from that origin. Each pick becomes a chip in the composer (attach.js).
+const pb=document.getElementById('qbpick'),ph=document.getElementById('pickhint');let picking=false;
+const appOrigin=()=>{try{return new URL(f.src).origin;}catch(e){return null;}};
+const withPick=(u)=>{try{const x=new URL(u);x.searchParams.set('__qbpick','1');return x.toString();}catch(e){return u;}};
+const say=(on)=>{const o=appOrigin();if(o&&f.contentWindow)f.contentWindow.postMessage({type:'qb-pick',on:on},o);};
+function setPick(on){picking=on;if(pb){pb.setAttribute('aria-pressed',String(on));pb.classList.toggle('on',on);}if(ph)ph.hidden=!on;
+ if(on){if(!/[?&]__qbpick=1/.test(f.src)){f.addEventListener('load',()=>say(picking),{once:true});f.src=withPick(f.src);}else say(true);}else say(false);
+ console.log(JSON.stringify({module:'pick',event:on?'on':'off'}));}
+if(pb)pb.addEventListener('click',()=>setPick(!picking));
+document.getElementById('pickdone')?.addEventListener('click',()=>setPick(false));
+addEventListener('message',(e)=>{const d=e.data;if(!d||d.type!=='qb-picked'||e.origin!==appOrigin())return;
+ console.log(JSON.stringify({module:'pick',event:'picked',selector:d.selector,tag:d.tag}));
+ if(window.qbAddPick)window.qbAddPick(d);});
 document.addEventListener('click',async(e)=>{const b=e.target.closest('[data-pick]');if(b){f.src=b.dataset.pick;if(x)x.href=b.dataset.pick;for(const o of document.querySelectorAll('[data-pick]'))o.classList.toggle('on',o===b);
  cur=b.dataset.id||null;if(ps){ps.hidden=!cur;document.getElementById('pword').textContent=b.dataset.word||'';pm.hidden=b.dataset.state!=='ready'||b.dataset.auto==='1';}
  history.replaceState(null,'',location.pathname+(b.dataset.agent?'?try='+b.dataset.agent:''));return;}
@@ -298,6 +314,10 @@ body.v3{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .h3 .nm b{font-weight:600}
 .hact{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--fg)}
 .hact .ico{width:18px;height:18px}
+.hact.qbpick{width:auto;gap:6px;padding:0 10px;border:0;border-radius:10px;background:none;font:inherit;font-size:14px;cursor:pointer}
+.hact.qbpick.on{background:var(--fg);color:var(--bg)}
+.pickhint{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line);font-size:14px}
+.pickhint span{flex:1}.pickhint .chipbtn{min-height:40px}
 .ico{width:14px;height:14px;flex:none}
 .view{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
 .view.full{display:flex;flex-direction:column;overflow:hidden}
