@@ -115,3 +115,27 @@ real build), and adds the note "Mostly start-up time … measured on N real buil
 Only tiny jobs change (a team on 2 pieces: 3 to 8 min; one agent: 50 s to 2 min); 8 pieces and up are as before.
 `REAL_BUILDS` in predict.js lists each real build used. At 3+ finished builds, refit the floor from them
 (Workers Logs: module `build`, events `started` and `build_settled`).
+
+## jobType(facts): the adaptive orchestrator's label (2026-10-12)
+
+`jobType(facts)` in `public/lab/predict.js` turns the suggest/idea job facts into
+`{type, strategy, runs, inBuilder, why, evidence, from}`:
+- `type`: small app, mid-size app, big app, port or sweep;
+- `strategy`: what we measured works for that type;
+- `runs`: the preset the builder actually uses today (suggestBuild's);
+- `inBuilder`: whether the builder runs that strategy today.
+
+| type | when | strategy (evidence) | the builder today |
+|---|---|---|---|
+| small app | 1-11 pieces | one strong agent (lab) | Fastest: yes |
+| mid-size app | 12-29 pieces | a reviewed team; board + duplicate check when pieces overlap (board runs, sim.md (d)-(h)) | Balanced (board on with overlap): yes |
+| big app | 30+ pieces | dependency-aware lanes + per-lane controller once one queue saturates (L1-L2) | no: Balanced, up to 12 coders |
+| port | kind 'port' or port words | owned line ranges, land at once, check behind, fix forward (BUN3) | no: Fastest (extra agents mostly wait on chains) |
+| sweep | kind 'sweep' or sweep words | many agents owning files, replay on the newest main (sim/real) | yes, unless the size says Fastest |
+
+`from` says how the type was decided:
+- **facts:** `kind` was given;
+- **words:** a word rule on the summary found port or sweep words;
+- **size:** the piece count alone.
+
+qb6 can add `"kind": "build"|"port"|"sweep"` to the suggest/idea JSON so the word rule is only a fallback.
