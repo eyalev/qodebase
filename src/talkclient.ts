@@ -78,8 +78,16 @@ var chatHist = sget('chat', []);       // [{role, content}] for the chat lane
 // ---- DOM -------------------------------------------------------------------
 var css = [
   '#talk-root{--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);font:16px/1.45 var(--t-ff);color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
-  '#talk-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483000;width:52px;height:52px;border-radius:12px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer;transition:background-color .12s}',
-  '#talk-fab svg{width:24px;height:24px}',
+  '#talk-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483000;width:44px;height:44px;border-radius:12px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer;transition:background-color .12s}',
+  '#talk-fab svg{width:22px;height:22px}',
+  // Pages with a composer (form.ask, [data-talk-composer]) get the mic inside it, WhatsApp-style, and no floating button.
+  'body.talk-composer #talk-fab,body.talk-composer #talk-ver{display:none!important}',
+  '.talk-cmic{width:44px;height:44px;flex:none;border-radius:12px;border:0;background:var(--acc,#17695a);color:var(--acc-fg,#fff);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}',
+  '.talk-cmic svg{width:22px;height:22px}',
+  '.talk-cmic.on{background:#b42d1f}',
+  'form.talk-hassend-off .send{display:none!important}',
+  'form.talk-hassend-on .talk-cmic{display:none!important}',
+  '@media (max-width:600px){#talk-ver{display:none!important}}',
   '#talk-ver{position:fixed;z-index:2147483000;font:11px/1 var(--t-ff);color:var(--t-dim);font-variant-numeric:tabular-nums;pointer-events:none;text-align:center;width:72px}',
   '#talk-root.open #talk-ver{display:none}',
   '#talk-head .ver{font-size:11px;color:var(--t-dim);font-variant-numeric:tabular-nums}',
@@ -155,7 +163,49 @@ var ICON = {
 var root, sheet, logEl, live, offer, inp, micBtn, sendBtn, fab, stEl, spk, convBtn, peek;
 // The input grows with what you say or type (up to a third of the screen), then scrolls to the newest words.
 function fitInp() { if (!inp) return; inp.style.height = 'auto'; inp.style.height = Math.max(44, inp.scrollHeight + 2) + 'px'; inp.scrollTop = inp.scrollHeight; if (sendBtn) sendBtn.classList.toggle('ready', !!inp.value.trim() || listening); }
-function setInp(v) { inp.value = v; fitInp(); }
+function setInp(v) {
+  if (cInto) { cInto.value = v; try { cInto.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {} cInto.scrollTop = cInto.scrollHeight; return; }
+  inp.value = v; fitInp();
+}
+function inpVal() { return cInto ? cInto.value : inp.value; }
+
+// ---- The mic inside a page's composer (WhatsApp-style) -----------------------------------------
+// Eyal, 2026-10-12: the floating button sat on the conversation right above "Ask for a change" + Send.
+// On pages with a composer the mic lives in its row: empty box → mic, text → the page's own Send.
+// Tap: dictate into that box (live words, then Whisper reads the whole clip); tap again to stop.
+// Long-press: open Talk. The page's Send does what it always did.
+var cInto = null, cMic = null;
+function wireComposers() {
+  var forms = document.querySelectorAll('form.ask, [data-talk-composer]');
+  var any = false;
+  [].forEach.call(forms, function (f) {
+    var ta = f.querySelector('textarea, input[type=text]');
+    if (!ta || !f.getClientRects().length) return;
+    any = true;
+    if (f.__talk) return;
+    f.__talk = 1;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'talk-cmic'; b.setAttribute('aria-label', 'Speak (hold for Talk)'); b.innerHTML = ICON.mic;
+    var send = f.querySelector('.send, button[type=submit], button:not([type])');
+    if (send && send.parentNode) send.parentNode.insertBefore(b, send); else f.appendChild(b);
+    var sync = function () { var has = !!ta.value.trim() || (listening && cInto === ta); f.classList.toggle('talk-hassend-on', has); f.classList.toggle('talk-hassend-off', !has); };
+    ta.addEventListener('input', sync); sync(); f.__talkSync = sync;
+    var lp = null, long = false;
+    b.addEventListener('pointerdown', function () { long = false; lp = setTimeout(function () { long = true; trace('cmic', { how: 'long' }); open(true); }, 550); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { b.addEventListener(ev, function () { clearTimeout(lp); }); });
+    b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); if (long) return; unlockAudio();
+      if (listening && cInto === ta) { trace('cmic', { how: 'stop' }); stopListen(false, false); return; }
+      if (listening || busy) return;
+      if (S.engine !== 'live') { open(true); startListen(); return; }   // the other engines live in the sheet
+      cInto = ta; cMic = b; trace('cmic', { how: 'start', path: location.pathname });
+      startListen();
+    });
+  });
+  document.body.classList.toggle('talk-composer', any);
+  if (any && root) root.classList.add('talk-hasc');
+}
 function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
 
 function build() {
@@ -212,6 +262,7 @@ function build() {
     var vh = el('span', { class: 'ver' }); vh.textContent = VERSION; head.querySelector('b').after(vh);
   }
   placeFab(); window.addEventListener('resize', placeFab); setTimeout(placeFab, 600);
+  wireComposers(); setInterval(wireComposers, 1500);
   root.appendChild(fab); root.appendChild(sheet);
   document.body.appendChild(root);
   stEl = document.getElementById('talk-st');
@@ -704,6 +755,8 @@ var rec = null, mr = null, chunks = [], stream = null, t0 = 0, tick = null, inte
 function setListening(on) {
   listening = on;
   micBtn.classList.toggle('on', on); micBtn.innerHTML = on ? ICON.stop : ICON.mic;
+  if (cMic) { cMic.classList.toggle('on', on); cMic.innerHTML = on ? ICON.stop : ICON.mic; cMic.setAttribute('aria-label', on ? 'Stop' : 'Speak (hold for Talk)'); }
+  if (cInto) { cInto.placeholder = on ? 'Listening\u2026' : (cInto.getAttribute('aria-label') || ''); var cf = cInto.closest('form'); if (cf && cf.__talkSync) cf.__talkSync(); }
   if (inp) { inp.classList.toggle('live', on); inp.placeholder = on ? 'Listening\u2026' : 'Say or type: open my calculator'; fitInp(); }
   micBtn.setAttribute('aria-label', on ? 'Stop' : 'Speak');
   clearInterval(tick);
@@ -1045,7 +1098,7 @@ function clipStop(cb) {
 var dcBase = '';
 function startLive() {
   setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); live.textContent = '';
-  dcBase = inp.value.trim() ? inp.value.trim() + ' ' : '';   // speak more after typing: the words are added
+  dcBase = inpVal().trim() ? inpVal().trim() + ' ' : '';   // speak more after typing: the words are added
   clipStart(function () { if (listening) status('Listening, speak'); });
   dcWarm(function () {
     if (!listening) return;
@@ -1070,6 +1123,7 @@ function liveFinish(text, sendIt) {
     trace('dc_whisper', Object.assign({ how: how, live: t, final: final, send: !!sendIt }, extra || {}));
     keepClip(clipBlob, { live: t, final: final || '', how: how });
     var all = (base + (final || '')).trim();
+    if (cInto) { setInp(all); var cf = cInto.closest('form'); cInto = null; cMic = null; if (cf && cf.__talkSync) cf.__talkSync(); return; }   // the page's composer: its own Send sends
     if (!sendIt) { setInp(all); if (!final) status('I did not hear anything'); return; }   // tap, speak, tap Send: the words wait in the box
     setInp('');
     if (all) { lastSpoken = true; submit(all); } else add('note', 'I did not hear anything.');
@@ -1089,7 +1143,7 @@ function liveFinish(text, sendIt) {
   });
 }
 function liveStop(cancel, sendIt) {
-  if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} clipStop(null); setListening(false); live.textContent = ''; return; }
+  if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} clipStop(null); setListening(false); live.textContent = ''; cInto = null; cMic = null; return; }
   // Stopped by hand (tap, or releasing the button): send what was heard, including the piece being said.
   trace('dc_stop', { how: 'hand', pieces: dcBuf.length, interim: dcText, ms: Date.now() - dcT0 });
   status('Finishing\u2026');
