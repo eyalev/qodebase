@@ -40,7 +40,7 @@ async function callModel(env: Env, prompt: string): Promise<{ text: string; mode
     const tokens = { in: j.usage?.input_tokens || 0, out: j.usage?.output_tokens || 0 };
     return { text: (j.content || []).map((c: any) => c.text || '').join(''), model: HAIKU, usd: claudeUsd(HAIKU, { ...tokens, cw: 0, cr: 0 }), tokens };
   }
-  const run = (env.AI as any).run(WAI, { messages: [{ role: 'system', content: SUGGEST_SYSTEM }, { role: 'user', content: prompt }], max_tokens: 250, temperature: 0,
+  const run = (env.AI as any).run(WAI, { messages: [{ role: 'system', content: SUGGEST_SYSTEM }, { role: 'user', content: prompt }], max_tokens: 250, temperature: 0, seed: 7,
     chat_template_kwargs: { enable_thinking: false } }, env.TALK_GATEWAY ? { gateway: { id: env.TALK_GATEWAY } } : {});
   const res: any = await Promise.race([run, new Promise((_, no) => signal.addEventListener('abort', () => no(new Error('timeout'))))]);
   const text = res?.choices?.[0]?.message?.content ?? res?.response ?? '';
@@ -51,6 +51,12 @@ export async function suggestRoute(request: Request, env: Env, ctx: ExecutionCon
   const b = await request.json().catch(() => ({})) as { prompt?: string };
   const prompt = String(b.prompt || '').trim().slice(0, 3000);
   if (prompt.length < 4) return Response.json({ error: 'Say what to build' }, { status: 400 });
+  // The same prompt gets the same answer for a day: temperature 0 alone still read one bakery prompt as 12 or 20
+  // tasks (manager, 2026-10-12), which flipped the preset. Memo per colo by prompt hash; a fallback is not kept.
+  const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(prompt.toLowerCase().replace(/\s+/g, ' '))))].map((x) => x.toString(16).padStart(2, '0')).join('');
+  const key = new Request(`https://suggest.qodebase.internal/${hash}`);
+  const hit = await caches.default.match(key).catch(() => undefined);
+  if (hit) { const j = await hit.json() as { job: Job; model: string }; log('build', 'suggest', { handle, cached: true, tasks: j.job.tasks }); return Response.json({ ...suggestion(j.job), model: j.model, ms: 0, cached: true }, { headers: { 'cache-control': 'no-store' } }); }
   const reg = registry(env);
   const mine = await reg.dayCount(`suggest:${handle}`, SUGGEST_CAPS.perPerson);
   const all = mine.ok ? await reg.dayCount('suggest:*', SUGGEST_CAPS.total) : mine;
@@ -64,6 +70,7 @@ export async function suggestRoute(request: Request, env: Env, ctx: ExecutionCon
     ctx.waitUntil(recordCost(env, handle, 'ai', 'build suggestion', { usd: r.usd, covered: true, ...(r.tokens ? { tokens: { ...r.tokens, cw: 0, cr: 0 } } : {}), billing: 'api' }));
   } catch (e) { err = String((e as Error)?.message || e).slice(0, 200); }
   const ms = Date.now() - t0;
+  if (job) ctx.waitUntil(caches.default.put(key, new Response(JSON.stringify({ job, model }), { headers: { 'content-type': 'application/json', 'cache-control': 's-maxage=86400' } })));
   log('build', 'suggest', { handle, model, ms, ok: !!job, err: err || undefined, tasks: job?.tasks, confidence: job?.confidence });
   return Response.json({ ...suggestion(job), model: model || null, ms, ...(err ? { fallback: true } : {}) }, { headers: { 'cache-control': 'no-store' } });
 }
