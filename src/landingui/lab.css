@@ -131,13 +131,6 @@
 #lab details.oldplan{margin-top:14px}
 #lab details.oldplan summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;display:flex;align-items:center;list-style:none}
 #lab details.oldplan summary::-webkit-details-marker{display:none}
-#lab .tw{overflow-x:auto;margin:0 -2px}
-#lab table.found{width:100%;border-collapse:collapse;font-size:14px}
-#lab table.found th,#lab table.found td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
-#lab table.found thead th{font-size:13px;font-weight:500;color:var(--dim)}
-#lab table.found tbody th{font-weight:500}
-#lab table.found tr.bnote-row td{padding-top:0;border-bottom:1px solid var(--line)}
-#lab table.found tr:has(+ tr.bnote-row) th,#lab table.found tr:has(+ tr.bnote-row) td{border-bottom:0}
 #lab .sep{color:var(--acc);font-weight:600}
 #lab .abs{display:grid;gap:8px;margin-top:8px}
 #lab .abc{display:grid;gap:8px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:12px 14px}
@@ -146,3 +139,21 @@
 #lab .abc dt{color:var(--dim)}
 #lab .abc dd{margin:0;text-align:right;white-space:nowrap}
 #lab .abc dd b{font-weight:600}
+#lab .sum{background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:14px;padding:14px 16px;margin:4px 0 16px;display:grid;gap:6px}
+#lab .sum p:first-child{font-size:16px;font-weight:500;line-height:1.4}
+#lab .sum a{color:var(--acc)}
+#lab .cmps{display:grid;gap:12px}
+#lab .cmp{box-shadow:inset 0 0 0 1px var(--line);border-radius:14px;overflow:hidden}
+#lab .cmp h3{font-size:16px;font-weight:600;letter-spacing:-.01em;padding:12px 16px 4px;margin:0}
+#lab .cmp table{width:100%;border-collapse:collapse;font-size:15px;table-layout:fixed}
+#lab .cmp th,#lab .cmp td{text-align:left;padding:10px 8px;vertical-align:top}
+#lab .cmp thead th{font-size:13px;font-weight:500;color:var(--dim);padding-top:4px;padding-bottom:6px}
+#lab .cmp tbody th{font-weight:400;color:var(--dim);font-size:14px}
+#lab .cmp tbody tr>*{box-shadow:inset 0 1px 0 var(--line)}
+#lab .cmp th:first-child{padding-left:16px;width:36%}
+#lab .cmp td.win{font-weight:600;color:var(--acc)}
+#lab .cmp td.win::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:2px}
+#lab .cmp td.na{color:var(--dim);font-size:14px}
+#lab .cmp .verdict{margin:0;padding:10px 16px 12px;font-size:14px;color:var(--dim);background:var(--card);box-shadow:inset 0 1px 0 var(--line)}
+#lab .cmp .verdict b{color:var(--fg);font-weight:600}
+#lab .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}

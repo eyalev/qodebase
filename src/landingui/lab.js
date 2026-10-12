@@ -475,26 +475,54 @@
       <p class="small dim">Each line reads board off → <b>board on</b>.</p><div class="abs">${rows}</div>
       <p class="small dim">✓ = every board-on run did better than every board-off run. Plain git means a conflict sends the agent back to rebase; the board does not change that.</p></section>`;
   }
+  // Board time change per shared-work setup (the summary card quotes these, never a typed number).
+  function boardTimes() {
+    const rs = RUNS.filter((r) => r.stage === 4 && !r.excluded && r.variant && 'board' in r.variant && r.variant.policy !== 'github');
+    const cells = new Map();
+    for (const r of rs) { const k = r.scenario; if (!cells.has(k)) cells.set(k, { off: [], on: [] }); const t = runS(r); if (t != null) cells.get(k)[r.variant.board ? 'on' : 'off'].push(t); }
+    return [...cells.values()].filter((c) => c.off.length && c.on.length && med(c.on) < med(c.off)).map((c) => Math.round((1 - med(c.on) / med(c.off)) * 100));
+  }
+  // What we found (design pass, manager 2026-10-12): one balanced summary card, then one compare card per job.
+  // The tie rules above (qTie, tTie) decide every cell; a not-comparable cell spans both columns.
   function foundView() {
-    const rows = []; let anyNc = false;
+    const cards = []; let anyNc = false; const oneFaster = [], cheaper = [];
+    const SHORT = { 'a person had to step in during the run (a platform bug, since fixed)': 'a person stepped in', 'a platform stall': 'platform stall', 'only an upper bound is known': 'upper bound only', 'only a lower bound is known': 'lower bound only' };
     for (const sc of SCEN) {
       const keep = st.scenario; st.scenario = sc.id; const gs = groups(); st.scenario = keep;
       const oa = gs.find((g) => g.baseline === 'opus-alone' && g.quality != null), sw = bestOf(gs);
       if (!oa || !sw) continue;
       const ha = oa.hidden != null && oa.hiddenOf ? Math.round(oa.hidden * oa.hiddenOf) : null, hs = sw.hidden != null && sw.hiddenOf ? Math.round(sw.hidden * sw.hiddenOf) : null;
-      const SHORT = { 'a person had to step in during the run (a platform bug, since fixed)': 'a person stepped in', 'a platform stall': 'platform stall', 'only an upper bound is known': 'upper bound only', 'only a lower bound is known': 'lower bound only' };
-      const nc = (why) => `<span class="dim">Not comparable${why ? ` (${esc(SHORT[why] || why)})` : ''}</span>`;
+      const both = (html, cls = '') => `<td colspan="2"${cls ? ` class="${cls}"` : ''}>${html}</td>`;
+      const side = (oneWins, html) => (oneWins ? `<td class="win">${html}</td><td></td>` : `<td></td><td class="win">${html}</td>`);
+      const nc = (why) => both(`Not comparable${why ? `: ${esc(SHORT[why] || why)}` : ''}`, 'na');
+      const wins = { one: [], sev: [] };
       if ((oa.wallS == null || sw.wallS == null) || (oa.usd == null || sw.usd == null)) anyNc = true;
-      const fast = oa.wallS == null || sw.wallS == null ? nc((oa.wallS == null ? oa : sw).timeNot) : tTie(oa, sw) ? 'Within 15%' : oa.wallS < sw.wallS ? `One agent, ${(sw.wallS / oa.wallS).toFixed(1)}×` : `Several, ${(oa.wallS / sw.wallS).toFixed(1)}×`;
-      const cost = oa.usd == null || sw.usd == null ? nc((oa.usd == null ? oa : sw).costNot) : sw.usd < oa.usd ? `Several, ${Math.round((1 - sw.usd / oa.usd) * 100)}% less` : `One agent, ${Math.round((1 - oa.usd / sw.usd) * 100)}% less`;
-      const tc = oa.floor?.typecheck && sw.floor && !sw.floor.typecheck ? '; several agents failed the strict type check' : sw.floor?.typecheck && oa.floor && !oa.floor.typecheck ? '; one agent failed the strict type check' : '';
-      const qual = (qTie(oa, sw) ? `Tie${ha != null && ha === hs ? ` (${ha}/${oa.hiddenOf})` : ''}` : ha != null && hs != null && ha !== hs ? `${ha > hs ? 'One agent' : 'Several'}, +${Math.abs(ha - hs)} hidden test${Math.abs(ha - hs) === 1 ? '' : 's'}` : `${oa.quality > sw.quality ? 'One agent' : 'Several'}`) + tc;
-      rows.push(`<tr><th scope="row">${esc(sc.title)}${jobOpen(sc.id) ? ' <span class="dim">(running)</span>' : ''}</th><td>${fast}</td><td>${cost}</td><td>${qual}</td></tr>`);
+      let time;
+      if (oa.wallS == null || sw.wallS == null) time = nc((oa.wallS == null ? oa : sw).timeNot);
+      else if (tTie(oa, sw)) time = both('Within 15%');
+      else { const one = oa.wallS < sw.wallS, x = one ? sw.wallS / oa.wallS : oa.wallS / sw.wallS; time = side(one, `${x.toFixed(1)}× faster`); (one ? wins.one : wins.sev).push('faster'); if (one) oneFaster.push(sc.title); }
+      let cost;
+      if (oa.usd == null || sw.usd == null) cost = nc((oa.usd == null ? oa : sw).costNot);
+      else { const sev = sw.usd < oa.usd, pc = Math.round((sev ? 1 - sw.usd / oa.usd : 1 - oa.usd / sw.usd) * 100); cost = side(!sev, `${pc}% less`); (sev ? wins.sev : wins.one).push(`${pc}% cheaper`); if (sev) cheaper.push(pc); }
+      let qual;
+      if (qTie(oa, sw)) qual = both(`Tie${ha != null && ha === hs ? `, ${ha} of ${oa.hiddenOf}` : ''}`);
+      else if (ha != null && hs != null && ha !== hs) { const one = ha > hs, d = Math.abs(ha - hs); qual = side(one, `+${d} passed`); (one ? wins.one : wins.sev).push(`+${d} hidden test${d === 1 ? '' : 's'}`); }
+      else { const one = oa.quality > sw.quality; qual = side(one, 'better'); (one ? wins.one : wins.sev).push('better quality'); }
+      const tc = oa.floor?.typecheck && sw.floor && !sw.floor.typecheck ? 'Several agents failed the strict type check.' : sw.floor?.typecheck && oa.floor && !oa.floor.typecheck ? 'One agent failed the strict type check.' : '';
+      const verdict = [wins.one.length ? `<b>One agent:</b> ${wins.one.join(', ')}.` : '', wins.sev.length ? `<b>Several:</b> ${wins.sev.join(', ')}.` : '', !wins.one.length && !wins.sev.length ? '<b>Too close to call</b> on what can be compared.' : '', tc].filter(Boolean).join(' ');
+      cards.push(`<div class="cmp"><h3>${esc(sc.title)}${jobOpen(sc.id) ? ' <span class="dim">(running)</span>' : ''}</h3>
+        <table><thead><tr><th scope="col"><span class="vh">Measure</span></th><th scope="col">One agent</th><th scope="col">Several</th></tr></thead><tbody>
+        <tr><th scope="row">Time</th>${time}</tr><tr><th scope="row">Cost</th>${cost}</tr><tr><th scope="row">Hidden tests</th>${qual}</tr></tbody></table>
+        <p class="verdict">${verdict}</p></div>`);
     }
-    if (!rows.length) return '';
+    if (!cards.length) return '';
+    const bt = boardTimes(), range = (xs) => (Math.min(...xs) === Math.max(...xs) ? `${xs[0]}%` : `${Math.min(...xs)}–${Math.max(...xs)}%`);
+    const sum = [oneFaster.length ? `One strong agent finished first on ${oneFaster.length} of ${cards.length} jobs${cheaper.length ? `, while several agents cost ${range(cheaper)} less` : ''}.` : '',
+      bt.length ? `When many agents share the work (two teams, one task list), the agent board made them ${range(bt)} faster in the median.` : ''].filter(Boolean).join(' ');
     return `<section class="sec" id="found"><h2>What we found</h2>
-      <p class="cap">One Opus agent alone against the best setup with several agents, on each job (medians of the real runs; a run hit by a platform bug counts for quality but not for time or cost).</p>
-      <div class="tw"><table class="found"><thead><tr><th scope="col">Job</th><th scope="col">Faster</th><th scope="col">Cheaper at API prices</th><th scope="col">Hidden tests</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>${anyNc ? '<p class="small dim">Not comparable: those runs hit platform bugs that were fixed later (a person had to step in, or a stall), or their cost is only known as a bound. Their quality still counts.</p>' : ''}</section>`;
+      ${sum ? `<div class="sum"><p>${sum}</p><p class="dim small">Medians of real runs. Details below and under <a href="#board-ab">The agent board</a>.</p></div>` : ''}
+      <p class="cap">One Opus agent alone against the best setup with several agents, on each job; cost at API prices. A run hit by a platform bug counts for quality but not for time or cost.</p>
+      <div class="cmps">${cards.join('')}</div>${anyNc ? '<p class="small dim">Not comparable: those runs hit platform bugs that were fixed later (a person had to step in, or a stall), or their cost is only known as a bound. Their quality still counts.</p>' : ''}</section>`;
   }
   function funnelView() {
     const list = STAGES.slice();
