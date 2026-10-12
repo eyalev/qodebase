@@ -973,6 +973,7 @@ const app = {
           return json(await sendTo(env, id, composeMessage(text, projectOf(id), attachments, context).text, apiBase));
         }
         if (verb === 'exec' && me.admin) return json(await box.adminExec(await request.text()));
+        if (verb === 'busy' && me.admin) return json({ busy: await box.busy() });
         if (verb === 'reset' && me.admin) { await box.destroy(); return json(await wake(env, id, apiBase)); }
       }
 

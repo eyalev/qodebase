@@ -39,7 +39,7 @@ test('flags as the lab runner sets them; the router and single-agent texts', () 
   assert.deepEqual([f.autoMerge, f.reviewers, f.policy, f.plannerModel, f.coderModel, f.caps.agents, f.board], [true, 3, 'intent', 'opus', 'haiku', 12, true]);
   const s = planFlags(resolveBuildPlan({ preset: 'fastest' }, O));
   assert.deepEqual([s.reviewers, s.coderModel, s.caps.agents], [0, 'opus', 1]);
-  assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /at most 6 tasks/);
+  assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /you have 6 agents; use them. Split this into at least 6 tasks/);
   assert.match(singleTask('a todo app', true), /EMPTY project[\s\S]*only agent[\s\S]*a todo app[\s\S]*forq push/);
 });
 

@@ -133,7 +133,7 @@ export { landedEntry, type LandedEntry } from './landed';
 import { landedEntry, type LandedEntry } from './landed';
 
 const TRAIN_MAX = 8;
-const STALL_MS = 12 * 60_000, STALL_TICK_MS = 3 * 60_000;
+const STALL_MS = 4 * 60_000, STALL_TICK_MS = 60_000;   // was 12 / 3 min: at 40 agents a stall costs too much (R5)
 const GUARD_MARGIN = 1.2, GUARD_MARGIN_UNNAMED = 1.5;
 const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER_CHANGE = 3;
 const TRAIN_STUCK_MS = 12 * 60_000;
@@ -667,8 +667,8 @@ export class Landing extends DurableObject<Env> {
 
   // ---- stalled agents (R3, 2026-10-12) -------------------------------------------------
   // An agent can go quiet with its work done but not pushed: its box idle-stops and the change sits in 'working' for good
-  // (R3's last change, 25 min, until it was nudged by hand; it pushed in a minute). Every few minutes, a real agent's
-  // change with no event for STALL_MS whose box is asleep gets a nudge through the outbox, at most twice.
+  // (R3's last change, 25 min, until it was nudged by hand; it pushed in a minute). Every minute, a real agent's
+  // change with no event for STALL_MS (4 min) whose box is asleep gets a nudge through the outbox, at most twice.
   async #stallTick() {
     const m = await this.#m();
     if (m.flags.halted || m.flags.paused) return;
@@ -679,11 +679,13 @@ export class Landing extends DurableObject<Env> {
       open++;
       const last = c.events.at(-1)?.t || c.createdAt, nudges = (c as { nudges?: number }).nudges || 0;
       if (Date.now() - last < STALL_MS || nudges >= 2) continue;
-      const st = await fetch(`${this.env.API_BASE}/api/agents/${c.id}/state`, { headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } })
-        .then((r) => r.json() as Promise<{ running?: boolean }>).catch(() => ({ running: true }));
-      if (st.running) continue;   // awake = still at it (a long task); only a sleeping box is stalled
+      // Claude working right now = still at it (a long task). Asleep, or awake and idle, is stalled (a box only sleeps
+      // after 5 idle minutes, so 'asleep only' could not fire before ~5 min; lastActive moves only on requests).
+      const st = await fetch(`${this.env.API_BASE}/api/agents/${c.id}/busy`, { headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } })
+        .then((r) => r.json() as Promise<{ busy?: boolean }>).catch(() => ({ busy: true }));
+      if (st.busy) continue;
       (c as { nudges?: number }).nudges = nudges + 1;
-      this.#ev(c, 'working', `nudged: nothing pushed for ${Math.round((Date.now() - last) / 60_000)} min and its box was asleep`);
+      this.#ev(c, 'working', `nudged: nothing pushed for ${Math.round((Date.now() - last) / 60_000)} min and its agent was idle`);
       await this.#put(c);
       this.#tell(c.id, `qodebase: your task "${c.title}" has not been pushed yet. Check what you have, finish it, commit, push with \`forq push\`, then run \`forq status pushed "<what you did>"\`. If it is already done, just push and report.`);
       await this.#saveMeta();
@@ -1035,6 +1037,17 @@ Failures: ${(rc.checks?.failures || []).slice(0, 4).join(' | ') || rc.why}
 Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     }
     if (deploy && (await P.kindOf()) === 'worker') await P.requestBuild('deploy').catch((e) => log('landing', 'deploy_request_failed', { err: String(e) }));
+    // Changes stacked on what just landed: their agents learn their base is on main, whatever their state (R4,
+    // 2026-10-12: two stacked agents ended their turn 'waiting for foundation', it landed, nobody told them, and they
+    // sat until the watchdog's nudge 4-16 min later).
+    if (deploy) for (const id of m.order) {
+      const c = await this.#get(id);
+      if (!c || c.kind !== 'agent' || !c.stackedOn || c.state === 'landed' || c.state === 'testing') continue;
+      const base = r.changes.find((x) => x.landed && x.id === c.stackedOn);
+      if (!base) continue;
+      const parent = await this.#get(c.stackedOn);
+      this.#tell(c.id, `qodebase: the change you build on ("${parent?.title || c.stackedOn}") just landed on main (${(r.mainAfter || '').slice(0, 7)}). Run \`forq sync-main\` to rebase on it and finish your task now; then push and run: forq status pushed "<what you did>".`);
+    }
     // Agents that said they are blocked (often: waiting for another agent's work) learn that main
     // moved. Four agents waited 20 min for helpers that had already landed (lab run 14, 2026-10-08).
     if (deploy) {

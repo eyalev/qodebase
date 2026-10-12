@@ -70,7 +70,7 @@ export function planFlags(plan: BuildPlan) {
 /** The extra rules the router gets for a crew (the lab runner's router text, minus the lab-only parts). */
 export function crewRules(plan: Extract<BuildPlan, { kind: 'crew' }>) {
   return [
-    `How to work: split this into at most ${plan.coders} tasks and start one agent per task (never more than ${plan.coders} at once).`,
+    `How to work: you have ${plan.coders} agents; use them. Split this into at least ${plan.coders} tasks along file and area lines (one page, view, module or feature area per task) and start one agent per task, never more than ${plan.coders} at once (start the rest as agents finish). Tasks may touch shared files (layout, routes, data, styles): the merge queue replays collisions, so do not merge work into fewer, bigger tasks to avoid them. Avoid stacking tasks on each other unless one truly cannot start without the other; an agent can build on a placeholder and push.`,
     'Begin every task text with a short title line (under 60 characters) saying what it does; details after it.',
     'Merging is automatic: approved changes go to the merge queue, which replays collisions on the latest code. Do not merge anything yourself.',
   ].join('\n');

@@ -658,6 +658,14 @@ walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}
     return this.#sh(cmd);
   }
 
+  /** Is Claude Code working right now (mobile-agent or Claude Code's own status says so)? False when asleep. Landing's
+   *  stall watchdog asks before nudging: lastActive only moves on requests, not while Claude works. */
+  async busy(): Promise<boolean> {
+    if (!this.c.running) return false;
+    const [ma, cc] = await Promise.all([this.#agentBusy().catch(() => false), this.ccStatus().catch(() => 'unknown')]);
+    return ma || /busy|thinking|working|running|tool|compact/i.test(cc);
+  }
+
   async state() {
     const keys = ['agentId', 'lastActive', 'lastSnapshot', 'snapshot', 'failedSnapshots', 'taskSent'];
     const m = await this.ctx.storage.get(keys);
@@ -702,6 +710,6 @@ function taskPrompt(spec: BootSpec) {
     `You are a forq agent (${spec.agentId}) on the project ${spec.project}. You work in ${REPO_DIR}, a clone of your own fork; no other agent touches it.`,
     `Your task: ${spec.task}`,
     ...(spec.board ? [BOARD_AGENT] : []),
-    `Check your change works before you push (run it locally where you can). When the task is done: commit with a clear message, push with \`forq push\` (it pushes to your own fork, which no one else uses; your clone is on the default branch), and run \`forq status pushed "<one-line summary>"\` right away: that is what builds your preview and starts the review, so never wait for a deploy yourself. Then reply with a 2-3 line summary. If you are blocked or the task is unclear, run \`forq status blocked "<why>"\` and say so instead of guessing.`,
+    `Check your change works before you push (run it locally where you can). When the task is done: commit with a clear message, push with \`forq push\` (it pushes to your own fork, which no one else uses; your clone is on the default branch), and run \`forq status pushed "<one-line summary>"\` right away: that is what builds your preview and starts the review, so never wait for a deploy yourself. Then reply with a 2-3 line summary. If you are blocked or the task is unclear, run \`forq status blocked "<why>"\` and say so instead of guessing. Never end your turn to wait for another agent's work: if something you need is not on main yet, build against what is there (a placeholder or your own minimal version is fine), then push and report; if you truly cannot go on without it, run \`forq status blocked "waiting for <what>"\` and you will be told when it lands.`,
   ].join('\n\n');
 }
