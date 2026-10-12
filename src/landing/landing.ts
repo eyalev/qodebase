@@ -223,6 +223,9 @@ export class Landing extends DurableObject<Env> {
     this.#ev(c, 'pushed', (note || `${files.length} file${files.length === 1 ? '' : 's'}`) + onMain);
     await this.#overlaps(c, c.files);
     await this.#put(c);
+    // Prefetch from the push, not only from the queue: a change is often approved and trained at once, and then the
+    // queue-time prefetch lost the race (2026-10-12: 2 of 9 trains). Into a ref only; the review still decides.
+    if (c.fork && c.remote) { const m0 = await this.#m(); this.ctx.waitUntil(this.#prefetch(m0.slug, c).catch((e) => log('landing', 'prefetch_error', { id, err: String(e).slice(0, 200) }))); }
     await this.#bpost(c.id, 'pushed', '', c.files, (note || '').slice(0, 80));
     return c;
   }
