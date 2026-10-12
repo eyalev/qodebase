@@ -600,9 +600,10 @@ walk("/workspace/.claude/projects");console.log("USAGE="+JSON.stringify({m,last}
       const covered = !!st.get('costCovered'), billing = (st.get('costBilling') as 'sub' | 'api') || 'api', project = (st.get('costProject') as string) || '';
       await recordCost(this.env, owner, 'boxes', project, { usd: boxUsd(seconds, cpuSeconds, INSTANCE.memoryMib / 1024, INSTANCE.diskMb / 1000), covered, seconds, cpuSeconds });
       for (const [model, t] of Object.entries(usage.m)) {
-        // Variants lab projects keep tokens per model in the ledger (`<project>:<model>`), so their
-        // budget guard prices each model at its own rate (src/landing/landing.ts #budgetTick).
-        const proj = /\/lab-/.test(project) ? `${project}:${model}` : project;
+        // Tokens per model in the ledger (`<project>:<model>`) for every project, so the budget guard prices each model at
+        // its own rate (src/landing/landing.ts #budgetTick). Only lab projects did until 2026-10-12, when a real build's
+        // 9 Haiku coders were priced as its Opus planner: \$22.72 instead of ~\$1, and the run halted (R3).
+        const proj = model && model !== 'unknown' ? `${project}:${model}` : project;
         await recordCost(this.env, owner, 'claude', proj, { usd: billing === 'sub' ? null : claudeUsd(model, t), covered: false, tokens: t, billing });
       }
       await this.ctx.storage.put({ costFrom: now, cpuLast: cpuNow, ...(usage.last ? { costCursor: usage.last } : {}) });
