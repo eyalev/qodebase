@@ -5,7 +5,7 @@
 // it is opened (cached a day per colo).
 
 import type { Entry } from './registry';
-import { esc, path, STEPS } from './ui';
+import { esc, path, STEPS, ownerLabel } from './ui';
 import { freshTag } from './fresh';
 import { markdown } from './md';
 import CATALOG from './catalog.json';
@@ -93,7 +93,7 @@ export function catalogBody(entries: Entry[], opts: { cat?: string; sort?: strin
 <span class="m"><span class="st">${STAR}${k(x.stars)}</span><span class="upd">${freshTag(x.pushed, now, [365 * 24, 90 * 24, 30 * 24, 7 * 24])}</span>${runsHere(x) ? RUNS : ''}<span class="tg">${esc(CAT_LABEL[x.cat] || x.cat)}</span><span>${esc(x.license)}</span>${there ? '<span class="onforq">On qodebase</span>' : ''}</span></span></a>`;
   }).join('');
   const forqRows = native.sort((a, b) => b.updatedAt - a.updatedAt).map((e) => `<a class="pr" href="${path(e.slug)}">${avatar(e.importedFrom ? e.importedFrom.fullName.split('/')[0] : e.owner)}<span class="bd">
-<span class="n"><span class="o">${esc(e.owner)} /</span> ${esc(e.name)}</span><span class="d">${esc(e.description || '')}</span>
+<span class="n"><span class="o">${esc(ownerLabel(e.owner))} /</span> ${esc(e.name)}</span><span class="d">${esc(e.description || '')}</span>
 <span class="m">${e.importedFrom ? `<span class="st">${STAR}${k(e.importedFrom.stars)}</span>` : ''}${freshTag(e.updatedAt, now, STEPS)}</span></span></a>`).join('') || '<p class="empty">Nothing imported yet.</p>';
   return `${cats}${sorts}<div class="plist${sort === 'updated' ? ' by-upd' : ''}" data-list="gh"${cat === 'forq' ? ' hidden' : ''}>${rows}</div><div class="plist" data-list="forq"${cat === 'forq' ? '' : ' hidden'}>${forqRows}</div>`;
 }

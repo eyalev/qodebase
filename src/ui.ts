@@ -119,6 +119,9 @@ h2{font-size:15px;font-weight:600;margin:32px 0 8px}
 @media (hover:hover){.row:hover{background:var(--chip)}.chipbtn:hover{background:var(--line)}}
 ${FRESH_CSS}${SHEET_CSS}`;
 
+/** The showcase handle 'forq' is qodebase's own account: shown as "qodebase" (display only; review #3, 2026-10-12). */
+export const ownerLabel = (o: string) => (o === 'forq' ? 'qodebase' : o);
+
 export const shell = (title: string, body: string, steps: number[] = STEPS) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${esc(title)}</title><meta name="robots" content="noindex">
@@ -129,7 +132,7 @@ export const shell = (title: string, body: string, steps: number[] = STEPS) => `
 const stars = (n: number) => `${n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : n} stars`;
 
 function row(e: Entry, forks: number, now: number, mineFork?: Entry) {
-  return `<div class="row"><a class="t stretch" href="${path(e.slug)}"><span class="owner">${esc(e.owner)} /</span> <b>${esc(e.name)}</b></a>
+  return `<div class="row"><a class="t stretch" href="${path(e.slug)}"><span class="owner">${esc(ownerLabel(e.owner))} /</span> <b>${esc(e.name)}</b></a>
   ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
   <div class="meta one">${freshTag(e.updatedAt, now, STEPS)}${mineFork ? `<span class="yours">you have a fork</span>` : ''}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.forkedFrom ? `<span>forked from ${esc(label(e.forkedFrom))}</span>` : e.importedFrom ? `<span>${stars(e.importedFrom.stars)} on GitHub</span>` : ''}</div></div>`;
 }
@@ -173,7 +176,7 @@ export function projectPage(o: { info: ProjectInfo; entry: Entry; forks: Entry[]
   const src = info.importedFrom;
   const myForks = forks.filter((e) => e.owner === me);
   return shell(`${info.owner}/${info.name} · qodebase`, `<a class="back" href="/">Explore</a>
-<h1><span class="owner">${esc(info.owner)} /</span> ${esc(info.name)}</h1>
+<h1><span class="owner">${esc(ownerLabel(info.owner))} /</span> ${esc(info.name)}</h1>
 ${info.description ? `<p class="desc">${esc(info.description)}</p>` : ''}
 <div class="meta">${freshTag(entry.updatedAt, now, STEPS)}${forks.length ? `<span>${forks.length} fork${forks.length > 1 ? 's' : ''}</span>` : ''}${info.forkedFrom ? `<span>forked from <a href="${path(info.forkedFrom)}">${esc(label(info.forkedFrom))}</a></span>` : ''}${src && !info.forkedFrom ? `<span>imported from <a href="${esc(src.url)}" rel="noopener">GitHub ${esc(src.fullName)}</a></span>` : ''}${src ? `<span>${stars(src.stars)}</span>${src.license ? `<span>${esc(src.license)}</span>` : ''}` : ''}</div>
 ${own ? '' : myForks.length

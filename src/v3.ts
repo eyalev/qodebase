@@ -6,7 +6,7 @@
 import type { Entry } from './registry';
 import type { ProjectInfo } from './project';
 import type { BoxStatus, Overview } from './ui';
-import { esc, path, label, STEPS } from './ui';
+import { esc, path, label, STEPS, ownerLabel } from './ui';
 import { freshTag } from './fresh';
 import { markdown } from './md';
 import { SHEET_HTML, shortId } from './sheet';
@@ -408,7 +408,7 @@ export function projectV3(o: ProjectArgs & { view: ViewId | null; status: Record
     ? `<a class="home back" href="/" aria-label="All projects${g.inbox ? `, ${g.inbox} need you` : ''}">${CHEV}qodebase${g.inbox ? `<span class="hbadge">${g.inbox}</span>` : ''}</a>`
     : `<a class="home" href="/" aria-label="All projects">qodebase</a>`;
   return shell2(g.nav as UI, `${v.label} · ${info.owner}/${info.name} · qodebase`, `${g.nav === 'd' ? globalTop(own ? 'projects' : 'explore', g.inbox, me) : ''}
-<header class="h3${g.nav === 'd' ? ' sub' : ''}">${g.nav === 'd' ? '' : home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(info.owner)} /</span> <b>${esc(info.name)}</b>${info.private ? ` <span class="priv" title="Private: only you">${LOCK}</span>` : ''}</a>${r.action || ''}</header>
+<header class="h3${g.nav === 'd' ? ' sub' : ''}">${g.nav === 'd' ? '' : home}<a class="nm" href="${c.base}" style="color:inherit"><span class="o">${esc(ownerLabel(info.owner))} /</span> <b>${esc(info.name)}</b>${info.private ? ` <span class="priv" title="Private: only you">${LOCK}</span>` : ''}</a>${r.action || ''}</header>
 ${g.nav === 'b' ? tabBar(c, id, needs, true) : ''}
 <main class="view${r.full ? ' full' : ''}" id="view">${r.body}</main>${r.compose || (own ? askBox(c) : '')}
 ${g.nav === 'b' ? globalBar('projects', g.inbox, me) : tabBar(c, id, needs)}
@@ -580,7 +580,7 @@ function projRow(e: Entry, now: number, st?: { ready: number; fix: number; worki
   const s = !st ? '' : st.fix ? `<span class="st fix"><span class="dot s-fix"></span>${st.fix} need${st.fix > 1 ? '' : 's'} you</span>`
     : st.ready ? `<span class="st ready"><span class="dot s-ready"></span>${st.ready} ready to merge</span>`
     : st.working ? `<span class="st working"><span class="dot s-working"></span>${st.working} in progress</span>` : '';
-  return `<div class="prow"><a class="t stretch" href="${path(e.slug)}"><span class="o">${esc(e.owner)} /</span> <b>${esc(e.name)}</b></a>
+  return `<div class="prow"><a class="t stretch" href="${path(e.slug)}"><span class="o">${esc(ownerLabel(e.owner))} /</span> <b>${esc(e.name)}</b></a>
 ${e.description ? `<div class="d">${esc(e.description)}</div>` : ''}
 <div class="m">${e.private ? `<span class="priv">${LOCK}Private</span>` : ''}${s}${freshTag(e.updatedAt, now, STEPS)}${forks ? `<span>${forks} fork${forks > 1 ? 's' : ''}</span>` : ''}${e.importedFrom ? `<span>${e.importedFrom.stars >= 1000 ? (e.importedFrom.stars / 1000).toFixed(1) + 'k' : e.importedFrom.stars} stars</span>` : ''}</div></div>`;
 }
@@ -717,7 +717,13 @@ export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, 
  *  line, the build box above the fold, then three doors (your own qodebase, your own AI
  *  assistant, explore) and the try-changing row. */
 function landBody(entries: Entry[], selfHost = false) {
+  // Review #3 (2026-10-12): lead with the coordination demo, then the lab and the sim; the builder stays below.
+  const watch = selfHost ? '' : `<a class="watchtop" href="/p/eyal/corner-cafe"><span class="wt1"><i class="live" aria-hidden="true"></i>Live demo, no sign-in</span>
+<b>Watch 6 agents change one app at once</b>
+<span class="wt2">Real git: collisions replayed instead of thrown away, a merge queue that tests before anything lands, every change explained. About 2 minutes.</span></a>
+<nav class="watchmore" aria-label="The evidence"><a href="/lab">The lab: which way of running agents wins</a><a href="/sim/">The simulation: up to 100,000 agents</a></nav>`;
   return `<section class="land">
+${watch}
 <h1>Own your codebase.</h1>
 <p class="lede">Describe it. Agents build it. The code is yours to keep.</p>
 <form class="landask" action="/build" method="get">
@@ -738,6 +744,14 @@ t.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('
 }
 
 export const LAND_CSS = `
+.watchtop{display:grid;gap:4px;margin:0 0 10px;padding:14px 16px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--fg);text-decoration:none;transition:background-color .12s}
+.watchtop b{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25}
+.watchtop .wt1{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--acc)}
+.watchtop .live{width:8px;height:8px;border-radius:50%;background:var(--acc);flex:none}
+.watchtop .wt2{font-size:14px;color:var(--dim)}
+.watchmore{display:flex;flex-wrap:wrap;gap:0 16px;margin:0 0 28px}
+.watchmore a{min-height:44px;display:inline-flex;align-items:center;font-size:14px;color:var(--acc)}
+@media (hover:hover){.watchtop:hover{background:var(--chip)}}
 .land{max-width:560px;margin:0 auto;padding:5vh 0 24px}
 .land h1{font-size:34px;line-height:1.15;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;text-wrap:balance}
 .land .lede{margin:0 0 24px;font-size:17px}
