@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design pass mockups</title>
+<!-- qb3 design pass, 2026-10-12: throwaway mockups at 390 px, DESIGN.md tokens only. Not deployed. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--card:#fafafa;--chip:#f3f4f6;--line:#ececef;--fg:#111214;--dim:#6e737b;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;--warn:#b42d1f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c0d0e;--card:#141517;--chip:#1c1d20;--line:#222428;--fg:#ececee;--dim:#9a9fa6;--acc:#4fbf9f;--acc-fg:#0f1112;--busy:#e0a948;--warn:#f08a7e}}
+:root[data-theme="dark"]{--bg:#0c0d0e;--card:#141517;--chip:#1c1d20;--line:#222428;--fg:#ececee;--dim:#9a9fa6;--acc:#4fbf9f;--acc-fg:#0f1112;--busy:#e0a948;--warn:#f08a7e}
+*{box-sizing:border-box;margin:0}
+body{background:#8a8d92;font:400 16px/1.45 Geist,sans-serif;color:var(--fg);-webkit-tap-highlight-color:transparent;padding:16px;display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.phone{width:390px;min-height:844px;background:var(--bg);overflow:hidden;position:relative}
+.top{height:48px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);font-size:15px}
+.top b{font-weight:600;letter-spacing:-.02em;font-size:17px}.top .sp{flex:1}.top .dim{color:var(--dim)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:10px;border:0;font:500 15px Geist,sans-serif;background:var(--acc);color:var(--acc-fg)}
+.chipbtn{background:var(--chip);color:var(--fg)}
+.crumb{padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);font-size:15px;color:var(--dim)}.crumb b{color:var(--fg);font-weight:600}
+.pad{padding:16px}
+h2{font-size:22px;line-height:1.2;letter-spacing:-.02em;font-weight:600}
+h3{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.dim{color:var(--dim)}.meta{font-size:13px;color:var(--dim)}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:'JetBrains Mono',monospace;font-size:13px}
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:56px;border-top:1px solid var(--line);background:var(--bg);display:flex;font-size:12px;color:var(--dim)}
+.tabbar span{flex:1;display:flex;align-items:center;justify-content:center}.tabbar .on{color:var(--fg);font-weight:600}
+.label{font-size:12px;color:var(--dim);margin:0 0 4px;font-weight:500}
+
+/* 1: live run scoreboard */
+.run{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--card)}
+.run-h{display:flex;align-items:center;gap:8px;font-size:15px}
+.live{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 20%,transparent)}
+.run-h .sp{flex:1}
+.bar{height:6px;border-radius:4px;background:var(--line);margin:12px 0 16px;overflow:hidden}.bar i{display:block;height:100%;width:40%;background:var(--acc)}
+.stages{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:16px}
+.st{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 6px;text-align:left}
+.st b{display:block;font-size:22px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.st span{font-size:12px;color:var(--dim);line-height:1.2;display:block;margin-top:2px}
+.st.k{border-color:var(--acc)} .st.k b{color:var(--acc)} .st.z b{color:var(--dim)} .st b .dot{vertical-align:5px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:1px;margin-right:4px}
+.d-busy{background:var(--busy)}.d-rev{border:1.5px solid var(--dim)}.d-line{background:var(--fg)}.d-acc{background:var(--acc)}.d-rep{background:repeating-linear-gradient(45deg,var(--busy) 0 2px,transparent 2px 4px);border:1px solid var(--busy)}
+.latest{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:15px}
+.latest .meta{display:block;margin-top:2px}
+.how{display:inline-block;margin-top:12px;font-size:13px;color:var(--acc);text-decoration:none}
+.train{margin-top:24px}
+.cars{display:flex;gap:4px;margin-top:8px;align-items:stretch}
+.car{flex:1;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px;line-height:1.25;min-width:0}
+.car b{display:block;font-size:13px;font-weight:600}.car span{display:block;color:var(--dim)}
+.car.main{flex:0 0 64px;background:transparent;color:var(--acc);border:1.5px solid var(--acc);display:flex;align-items:center;justify-content:center;text-align:center;font-weight:600}
+
+/* 2: feed */
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:24px 0 8px}
+.sec-h a{font-size:15px;color:var(--acc);text-decoration:none}
+.now{display:flex;flex-direction:column}
+.nr{display:flex;align-items:center;gap:12px;min-height:44px;border-bottom:1px solid var(--line);font-size:15px}
+.nr:last-child{border-bottom:0}
+.nr .who{font-weight:600;flex:0 0 64px}.nr .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nr .s{font-size:13px;color:var(--dim)}
+.ev{border:1px solid var(--line);border-radius:14px;padding:12px 12px 12px 16px;margin-bottom:8px;position:relative;background:var(--bg)}
+.ev::before{content:'';position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--acc)}
+.ev.w::before{background:var(--warn)}
+.ev p{font-size:15px}.ev p b{font-weight:600}
+.ev .meta{margin-top:4px;display:flex;gap:12px}
+.steps{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.steps span{font-size:12px;padding:2px 6px;border-radius:4px;background:var(--chip);color:var(--fg)}
+.steps .x{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
+.steps .ok{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+.fold{display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:0 12px;border-radius:10px;background:var(--chip);font-size:15px}
+.fold .meta{font-size:13px}
+
+/* 3: lab compare */
+.lead{font-size:15px;color:var(--dim);margin-top:4px}
+.cmp{border:1px solid var(--line);border-radius:14px;margin-top:12px;overflow:hidden}
+.cmp h4{font-size:16px;font-weight:600;padding:12px 16px 8px;letter-spacing:-.01em}
+.cmp table{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+.cmp th{font-size:12px;font-weight:500;color:var(--dim);text-align:left;padding:0 8px 6px}
+.cmp th:first-child,.cmp td:first-child{padding-left:16px;width:34%}
+.cmp td{padding:10px 8px;border-top:1px solid var(--line);vertical-align:top}
+.cmp td.win{font-weight:600;color:var(--acc)}
+.cmp td.win::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--acc);margin-right:6px;vertical-align:2px}
+.cmp td.na{color:var(--dim);font-size:13px}
+.cmp .verdict{padding:10px 16px 12px;font-size:13px;color:var(--dim);border-top:1px solid var(--line);background:var(--card)}
+.cmp .verdict b{color:var(--fg);font-weight:600}
+.cap{font-size:12px;color:var(--dim);text-align:center;padding:8px;background:#8a8d92;color:#fff}
+</style>
+</head>
+<body>
+
+<!-- ============ MOCK 1: live run scoreboard (work view, top) ============ -->
+<div class="phone" id="m1">
+  <div class="top"><b>qodebase</b><span class="dim">Explore</span><span class="sp"></span><span class="dim">Sign in</span></div>
+  <div class="crumb">eyal / <b>corner-cafe</b></div>
+  <div class="pad">
+    <div class="run">
+      <div class="run-h"><i class="live"></i><b>Live run</b><span class="sp"></span><span class="num dim">0:47 of about 2:00</span></div>
+      <div class="bar"><i></i></div>
+      <h2>6 agents are changing corner-cafe at once</h2>
+      <div class="stages">
+        <div class="st"><b><i class="dot d-busy"></i>2</b><span>working</span></div>
+        <div class="st"><b><i class="dot d-rev"></i>1</b><span>review</span></div>
+        <div class="st"><b><i class="dot d-line"></i>2</b><span>in line</span></div>
+        <div class="st k"><b><i class="dot d-acc"></i>1</b><span>landed</span></div>
+        <div class="st z"><b><i class="dot d-rep"></i>0</b><span>replayed</span></div>
+      </div>
+      <div class="latest">Agent 1 and Agent 3 both changed <span class="mono">site.js</span>. Agent 3's change is being redone on the newest code.<span class="meta">4 s ago</span></div>
+      <a class="how" href="#">How this works</a>
+    </div>
+
+    <div class="train">
+      <div class="sec-h" style="margin-top:0"><h3>The line</h3><a href="#">Everything</a></div>
+      <div class="meta">Tested together, then they join the main code.</div>
+      <div class="cars">
+        <div class="car main">main</div>
+        <div class="car"><b>Agent 2</b><span>Add a Contact page</span></div>
+        <div class="car"><b>Agent 4</b><span>Add teas to the menu</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="tabbar"><span class="on">Agents at work</span><span>App</span><span>Code</span><span>History</span></div>
+</div>
+
+<!-- ============ MOCK 2: feed = now + headlines + folded routine ============ -->
+<div class="phone" id="m2">
+  <div class="top"><b>qodebase</b><span class="dim">Explore</span><span class="sp"></span><span class="dim">Sign in</span></div>
+  <div class="crumb">eyal / <b>corner-cafe</b></div>
+  <div class="pad" style="padding-top:0">
+    <div class="sec-h"><h3>Right now</h3></div>
+    <div class="now">
+      <div class="nr"><i class="dot d-busy"></i><span class="who">Agent 5</span><span class="t">Show round prices without cents</span><span class="s">working</span></div>
+      <div class="nr"><i class="dot d-rev"></i><span class="who">Agent 4</span><span class="t">Add teas to the menu</span><span class="s">in review</span></div>
+      <div class="nr"><i class="dot d-line"></i><span class="who">Agent 2</span><span class="t">Add a Contact page</span><span class="s">being tested</span></div>
+    </div>
+
+    <div class="sec-h"><h3>What just happened</h3><a href="#">All</a></div>
+    <div class="ev w">
+      <p><b>Collision, replayed.</b> Agent 1 and Agent 3 both changed <span class="mono">site.js</span>. Instead of sending Agent 3 back, its change was redone on the newest code.</p>
+      <div class="steps"><span class="x">collided</span><span>replayed</span><span>tested</span><span class="ok">landed</span></div>
+      <div class="meta"><span>Mark the vegan items</span><span>22 s ago</span></div>
+    </div>
+    <div class="ev">
+      <p><b>4 changes landed together.</b> Agents 1, 2, 4 and 6; tests passed in 0.4 s.</p>
+      <div class="meta"><span>Opening hours, Contact, Teas, Dark theme</span><span>22 s ago</span></div>
+    </div>
+    <div class="ev w">
+      <p><b>Sent back.</b> Agent 5's change failed a test, so main stayed healthy. Agent 5 is fixing it.</p>
+      <div class="meta"><span>Show round prices without cents</span><span>31 s ago</span></div>
+    </div>
+    <div class="fold"><span>11 routine steps</span><span class="meta">approved, joined the line</span></div>
+  </div>
+  <div class="tabbar"><span class="on">Agents at work</span><span>App</span><span>Code</span><span>History</span></div>
+</div>
+
+<!-- ============ MOCK 3: lab findings as compare cards ============ -->
+<div class="phone" id="m3">
+  <div class="top"><b>qodebase</b><span class="dim">Explore</span><span class="sp"></span><span class="dim">Sign in</span></div>
+  <div class="pad">
+    <h3 style="font-size:20px">What we found</h3>
+    <p class="lead">One Opus agent against the best setup of several agents, on each job. Medians of real runs.</p>
+
+    <div class="cmp">
+      <h4>Build a bakery website from scratch</h4>
+      <table>
+        <tr><th></th><th>One agent</th><th>Several</th></tr>
+        <tr><td>Time</td><td class="win">1.9× faster</td><td></td></tr>
+        <tr><td>Cost at API prices</td><td></td><td class="win">57% less</td></tr>
+        <tr><td>Hidden tests</td><td class="win">+1 passed</td><td></td></tr>
+      </table>
+      <div class="verdict"><b>One agent</b> was quicker and a little better; several cost about half.</div>
+    </div>
+
+    <div class="cmp">
+      <h4>Build a padel club app</h4>
+      <table>
+        <tr><th></th><th>One agent</th><th>Several</th></tr>
+        <tr><td>Time</td><td class="win">1.6× faster</td><td></td></tr>
+        <tr><td>Cost at API prices</td><td></td><td class="win">48% less</td></tr>
+        <tr><td>Hidden tests</td><td colspan="2">Tie, 42 of 42</td></tr>
+      </table>
+      <div class="verdict"><b>Same quality</b>; one agent sooner, several cheaper.</div>
+    </div>
+
+    <div class="cmp">
+      <h4>Make the café family-friendly</h4>
+      <table>
+        <tr><th></th><th>One agent</th><th>Several</th></tr>
+        <tr><td>Hidden tests</td><td colspan="2">Tie, 6 of 7</td></tr>
+        <tr><td>Time, cost</td><td class="na" colspan="2">Not comparable: a person stepped in</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
