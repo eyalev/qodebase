@@ -236,7 +236,7 @@ const ASKS_CSS = `.asks .ah{font-size:22px;font-weight:600;letter-spacing:-.02em
 @media (hover:hover){.arow:hover{background:color-mix(in srgb,var(--chip) 60%,transparent)}}`;
 const ASKS_JS = `(function(){
 var API='%API%',BASE='%BASE%',list=document.getElementById('alist'),fil=document.querySelector('.afil'),data=null,show='all',open={},titles=null;
-var FROM={person:'A person',talk:'Talk',issues:'Cloudflare Issues',board:'The task list'};
+var FROM={person:'A person',talk:'Talk',issues:'Cloudflare Issues',board:'The task list',script:'The demo script'};
 var WORD={planning:'Planning',working:'Working','in-line':'In line',landed:'Landed',bounced:'Sent back',mixed:'In progress',pushed:'In review',reviewing:'In review',queued:'In line',testing:'Being tested',replaying:'Replaying','with-lead':'With its lead'};
 // Change titles come from the landing view, fetched once, the first time a row is opened.
 function loadTitles(){if(titles)return;titles={};fetch(API+'/landing',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(j){(j&&j.changes||[]).forEach(function(c){titles[c.id]=String(c.title||c.intent||'').split('. ')[0]});render()}).catch(function(){})}
@@ -267,12 +267,32 @@ function load(){fetch(API+'/asks',{cache:'no-store'}).then(function(r){if(r.stat
 load();setInterval(function(){if(!document.hidden)load()},15000);
 })();`;
 
+type Landed = { id: string; title?: string; intent?: string; agent?: string; verdict?: 'approved' | 'auto' | 'changes' | null; reviewer?: string; replayed?: boolean; how?: 'clean' | 'handler' | 'model' | null; stackedOn?: string; landedAt?: number };
+/** G2: the one-line 'why' under a landed commit: its intent, how it was reviewed, how it landed (qb6's info.landed). */
+function whyLine(l: Landed) {
+  const intent = (l.intent || l.title || '').replace(/\s+/g, ' ').trim();
+  const short = intent.length > 110 ? `${intent.slice(0, 107).replace(/\s+\S*$/, '')}…` : intent;
+  const rv = l.verdict === 'auto' ? 'auto-approved (scripted)' : l.verdict === 'approved' ? `reviewed${l.reviewer ? ` by ${l.reviewer}` : ''}` : l.verdict === 'changes' ? 'landed after a requested fix' : '';
+  const how = l.replayed || l.how === 'handler' || l.how === 'model' ? `replayed on the newest code${l.how === 'model' ? ' by a model' : ''}` : '';
+  return [short && `Why: ${short}`, rv, how].filter(Boolean).join('; ');
+}
 function historyView(c: Ctx) {
   const now = Date.now();
   type Item = { at: number; html: string };
   const items: Item[] = [];
-  for (const ch of c.done) items.push({ at: ch.a.noteAt || ch.a.createdAt, html: `<span class="k">Merged</span><span class="t">${esc(ch.title)}</span><a class="sub" href="/p/${c.info.owner}/${c.info.name}/changes/${shortId(ch.a.id)}">See the code</a>` });
-  for (const cm of c.overview.commits) if (!/^Merge /.test(cm.message)) items.push({ at: cm.at, html: `<span class="k">Commit</span><span class="t">${esc(cm.message)}</span><code class="sub">${esc(cm.hash.slice(0, 7))}</code>` });
+  const landed = ((c.info as { landed?: Record<string, Landed> }).landed) || {};
+  const byId = new Map(Object.values(landed).map((l) => [l.id, l] as const));
+  const lookup = (hash: string) => landed[hash] || Object.entries(landed).find(([k]) => k.startsWith(hash) || hash.startsWith(k))?.[1];
+  const record = (id: string) => `/p/${c.info.owner}/${c.info.name}/work#/change/${encodeURIComponent(id)}`;
+  for (const ch of c.done) if (byId.has(ch.a.id)) { const l = byId.get(ch.a.id)!; items.push({ at: l.landedAt || ch.a.noteAt || ch.a.createdAt, html: `<a class="hrow" href="${record(ch.a.id)}"><span class="k">Landed</span><span class="t">${esc(ch.title)}</span><span class="why">${esc(whyLine(l))}</span></a>` }); } else items.push({ at: ch.a.noteAt || ch.a.createdAt, html: `<span class="k">Merged</span><span class="t">${esc(ch.title)}</span><a class="sub" href="/p/${c.info.owner}/${c.info.name}/changes/${shortId(ch.a.id)}">See the code</a>` });
+  for (const cm of c.overview.commits) {
+    if (/^Merge /.test(cm.message)) continue;
+    const l = lookup(cm.hash);
+    if (l && c.done.some((ch) => ch.a.id === l.id)) continue;   // already listed as its change, above
+    items.push({ at: cm.at, html: l
+      ? `<a class="hrow" href="${record(l.id)}"><span class="k">Commit</span><span class="t">${esc(cm.message)}</span><span class="why">${esc(whyLine(l))}</span><code class="sub">${esc(cm.hash.slice(0, 7))}</code></a>`
+      : `<span class="k">Commit</span><span class="t">${esc(cm.message)}</span><code class="sub">${esc(cm.hash.slice(0, 7))}</code>` });
+  }
   const dep = c.overview.app ?? c.info.app;
   if (dep?.status === 'live') items.push({ at: dep.at, html: `<span class="k">Deployed</span><span class="t"><a href="${esc(dep.url || '')}" target="_blank" rel="noopener">${esc((dep.url || '').replace('https://', ''))}</a></span>` });
   for (const f of c.forks) items.push({ at: f.createdAt, html: `<span class="k">Forked</span><span class="t"><a href="${path(f.slug)}">${esc(label(f.slug))}</a></span>` });
@@ -459,6 +479,14 @@ h3{font-size:13px;font-weight:600;color:var(--dim);margin:24px 0 8px}
 /* History */
 .hi{display:flex;align-items:baseline;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
 .hi .k{flex:none;width:6.5em;color:var(--dim);font-size:13px}
+/* G2: a landed commit is one tappable row (opens its change record) with a grey 'why' line under the title. */
+.hi:has(>.hrow){display:block;padding:0}
+.hrow{display:grid;grid-template-columns:6.5em 1fr;column-gap:10px;row-gap:2px;padding:10px 0;color:inherit;text-decoration:none;align-items:baseline}
+.hrow .k{grid-row:1 / span 3}.hrow .t{color:var(--fg)}
+.hrow .why{grid-column:2;font-size:13px;color:var(--dim)}
+.hrow code.sub{grid-column:2;justify-self:start}
+@media (hover:hover){.hrow:hover .t{text-decoration:underline;text-underline-offset:3px}}
+.hrow:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .hi .t{flex:1;min-width:0;overflow-wrap:anywhere}
 .hi .sub{display:none}
 .hi code{font:12px 'JetBrains Mono',monospace;color:var(--dim)}
@@ -596,7 +624,7 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 .gtop{margin:0 0 8px}
 @media (min-width:900px){.tabbar{right:auto;top:48px;bottom:0;width:80px}body{padding-bottom:0;padding-left:80px}.gtop{margin-left:-80px}}
 .badge{position:absolute}.gtop .badge{position:static}</style>`;
-    return html.replace('</head>', `${css}</head>`).replace(/<body([^>]*)>/, `<body$1>${globalTop('projects', g.inbox, me)}`).replace('</body>', `${tabBar(pc, 'code', n)}</body>`);
+    return html.replace('</head>', `${css}</head>`).replace(/<body([^>]*)>/, `<body$1>${globalTop(own ? 'projects' : 'explore', g.inbox, me, { owner: info.owner, ownerLabel: ownerLabel(info.owner), name: info.name, href: `/p/${info.owner}/${info.name}`, private: !!info.private })}`).replace('</body>', `${tabBar(pc, 'code', n)}</body>`);
   }
   const bar = tabBar(pc, 'code', n);
   const css = `<style>${V3_CSS.slice(V3_CSS.indexOf('/* Tab bar'))}
