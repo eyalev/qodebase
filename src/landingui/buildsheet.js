@@ -285,16 +285,11 @@
   // and applies that size's suggested settings; 'Another' rerolls. The idea's own estimate is the sheet's
   // estimate, so a slider moved later updates it everywhere.
   const SIZES = [['small', 'Small', 3], ['medium', 'Medium', 7], ['large', 'Large', 18], ['huge', 'Huge', 40]];
-  const FALLBACK_IDEAS = {
-    small: [{ title: 'Tip splitter', prompt: 'A tip calculator: enter the bill and the number of people, pick a tip percentage, see what each person pays.' }, { title: 'Habit check', prompt: 'A page with one habit and a button to mark today done, showing the current streak.' }],
-    medium: [{ title: 'Family shopping list', prompt: 'A shared shopping list for a family: add items, tick them off, group them by aisle, and clear what was bought.' }, { title: 'Recipe box', prompt: 'A recipe box: save recipes with ingredients and steps, search them, and scale the servings.' }],
-    large: [{ title: 'Trip planner', prompt: 'A trip planner for a family: trips with dates and places, a day-by-day plan, a packing list per person, and a shared budget.' }, { title: 'Club manager', prompt: 'A small sports club app: members, a weekly schedule, sign-ups for sessions with limits, and a page per member.' }],
-    huge: [{ title: 'Small shop', prompt: 'An online shop for a bakery: a menu with photos, a cart, checkout, an admin page for orders and stock, and order emails.' }, { title: 'Classroom', prompt: 'A classroom app: classes, assignments with due dates, submissions, grading with comments, and a parent view.' }],
-  };
-  const ideaPool = (k) => (SIM?.CURATED_IDEAS?.[k]?.length ? SIM.CURATED_IDEAS[k] : FALLBACK_IDEAS[k]);
+  // One curated list, on the server (qb6's CURATED_IDEAS): first paint asks for one with fast:true (no model).
   let ideas = null, ideaSize = null, ideaSeq = 0, lastIdea = {};
   function ideaEstimate(k) {
-    const tasks = SIM?.IDEA_SIZES?.[k]?.tasks || SIZES.find((x) => x[0] === k)[2];
+    try { const z = SIM.ideaSizes?.()[k]; if (z) return `${range(z.wallS, mins)}, ${range(z.apiUsd, usd)}`; } catch {}   // qb4: the same numbers, memoised
+    const tasks = SIZES.find((x) => x[0] === k)[2];
     try { const sg = SIM.suggestBuild({ tasks, overlap: 'some', difficulty: 'normal' }); const pv = PRESETS[sg.preset]?.v; const r = SIM.predictBuild(sg.job, toVariant({ ...pv, ...(typeof sg.board === 'boolean' && pv.coders > 1 ? { board: sg.board } : {}) })); return `${range(r.wallS, mins)}, ${range(r.apiUsd, usd)}`; } catch { return ''; }
   }
   function mountIdeas() {
@@ -312,10 +307,10 @@
   function showIdea(k, it, from) {
     const ta = form.querySelector('textarea');
     ta.value = it.prompt; ta.dispatchEvent(new Event('input', { bubbles: true }));
-    const tasks = it.job?.tasks || SIM?.IDEA_SIZES?.[k]?.tasks || SIZES.find((x) => x[0] === k)[2];
+    const tasks = it.job?.tasks || SIZES.find((x) => x[0] === k)[2];
     const sg = it.suggestion || SIM.suggestBuild({ tasks, overlap: it.job?.overlap || 'some', difficulty: it.job?.difficulty || 'normal' });
     applySuggestion(it.prompt, sg, it.job || sg.job, it.model || null, false);
-    lastIdea[k] = it.title;
+    if (it.title) (lastIdea[k] = lastIdea[k] || []).includes(it.title) || lastIdea[k].push(it.title);
     const card = ideas.querySelector('.id-card'); card.hidden = false;
     card.querySelector('.id-title').textContent = it.title || 'An idea';
     card.querySelector('.id-src').textContent = from === 'model' ? 'written by a small model' : 'from our list';
@@ -323,20 +318,28 @@
     paint();
     log('idea', { size: k, from, title: it.title });
   }
+  const ask = (k, body) => fetch('/api/build/idea', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ size: k, ...body }) }).then(async (r) => ({ r, d: await r.json().catch(() => ({})) }));
   async function pickIdea(k) {
     ideaSize = k; const my = ++ideaSeq;
-    const pool = ideaPool(k).filter((x) => x.title !== lastIdea[k]);
-    const cur = pool[Math.floor(Math.random() * pool.length)] || ideaPool(k)[0];
-    showIdea(k, cur, 'list');   // instant; the model's idea replaces it if it answers and the box is untouched
-    const shown = cur.prompt;
+    const card = ideas.querySelector('.id-card'), title = card.querySelector('.id-title');
+    ideas.querySelectorAll('[data-size]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.size === k)));
+    card.hidden = false; title.textContent = 'Finding an idea\u2026'; card.querySelector('.id-src').textContent = ''; card.querySelector('.id-est').textContent = '';
+    const avoid = (lastIdea[k] || []).slice(-12);   // titles already shown for this size: 'Another' never repeats
+    let shown = null;
+    try {   // a curated idea at once (no model), then the small model's
+      const { r, d } = await ask(k, { fast: true, avoid });
+      if (my !== ideaSeq) return;
+      if (r.ok && d.prompt) { showIdea(k, d, 'list'); shown = d.prompt; }
+      else if (r.status === 429) { title.textContent = 'Ideas are used up for today.'; return; }
+    } catch (e) { log('idea_fast_failed', { error: String(e) }); }
     try {
-      const r = await fetch('/api/build/idea', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ size: k, seed: Math.floor(Math.random() * 1e6) }) });
-      const d = await r.json().catch(() => ({}));
+      const { r, d } = await ask(k, { avoid: (lastIdea[k] || []).slice(-12) });
       log('idea_model', { status: r.status, size: k, title: d.title || null, fallback: !!d.fallback });
-      if (my !== ideaSeq || !r.ok || d.fallback || !d.prompt) return;
-      if (form.querySelector('textarea').value !== shown) return;   // the person edited it: keep theirs
-      showIdea(k, d, 'model');
-    } catch (e) { log('idea_failed', { error: String(e) }); }
+      if (my !== ideaSeq || !r.ok || !d.prompt) { if (!shown && my === ideaSeq) title.textContent = 'Could not get an idea right now.'; return; }
+      if (d.fallback && shown) return;   // the model did not answer in time: keep the curated one
+      if (shown && form.querySelector('textarea').value !== shown) return;   // the person edited it: keep theirs
+      showIdea(k, d, d.fallback ? 'list' : 'model');
+    } catch (e) { log('idea_failed', { error: String(e) }); if (!shown && my === ideaSeq) title.textContent = 'Could not reach qodebase.'; }
   }
   async function loadSim() {
     try {
