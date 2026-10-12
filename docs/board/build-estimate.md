@@ -29,6 +29,7 @@ predictBuild(SMALL_APP, BUILD_PRESETS.balanced.variant)
   - Cost: 0.86–1.17×.
   - Lab-only GitHub-policy runs are left out: their time was off by about 3×.
   - Rounding: 10 s steps under 2 min, then whole minutes; cents under $1, then $0.1.
+- **`agentTasks`**: how many agent tasks the planner makes from the pieces (Opus bundles ~0.37 of them, Haiku ~0.8, measured in stage 1). The router starts one agent per task, so a coders setting above `agentTasks` changes nothing: the coders knob is a cap. Example: a small app (8 pieces) with an Opus planner is ~3 agent tasks.
 - **`sameSetup`**: how many of those runs used exactly this setup. Say "based on N real runs" with
   `basedOn`. When `sameSetup` is 0, say the setup itself was not run in the lab.
 - **`quality`**: a direction only, never a number:

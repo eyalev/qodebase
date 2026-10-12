@@ -513,6 +513,9 @@ export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced
     wallS: [roundS(p.wallS * w.p10), roundS(p.wallS * w.p90)],
     apiUsd: [roundUsd(p.apiUsdStd * c.p10), roundUsd(p.apiUsdStd * c.p90)],
     basedOn: EST_CAL.runs, sameSetup: sameSetup(variantKey(variantIn, baseline)),
+    // The planner bundles pieces into fewer agent tasks (Opus ~0.37 of the pieces, Haiku ~0.8: stage 1); the
+    // router spawns one agent per task, so agents beyond `agentTasks` never start: the coders knob is a cap.
+    agentTasks: baseline ? 1 : Math.max(1, Math.round(p.counts.tasksPlanned)),
     quality, notes, simVersion: SIM_VERSION, job: { tasks: sc.tasks, overlap: sc.pShared, difficulty: sc.difficulty, label: sc.label },
   };
 }
