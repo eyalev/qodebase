@@ -35,7 +35,7 @@
   async function loadSim() {
     try {
       SIM = await import('/lab/predict.js');
-      PRESETS = Object.fromEntries(Object.entries(SIM.BUILD_PRESETS || {}).map(([k, p]) => [k, { label: p.label, why: p.why, v: toV(p.variant) }]));
+      PRESETS = Object.fromEntries(Object.entries(SIM.BUILD_PRESETS || {}).map(([k, p]) => [k, { label: k === 'fastest' ? `${p.label} (default)` : p.label, name: p.label, why: p.why, v: toV(p.variant) }]));
     } catch (e) { SIM = null; log('predict_missing', { error: String(e) }); }
   }
   // One estimate for the current settings. Ranges only; quality as a direction.
@@ -48,15 +48,23 @@
   }
   const presetOf = (v) => Object.keys(PRESETS).find((k) => KNOBS.every(([n]) => PRESETS[k].v[n] === v[n])) || 'custom';
   const M = { haiku: 'Haiku', sonnet: 'Sonnet', opus: 'Opus' };
-  const summary = (key, v) => `${key === 'custom' ? 'Custom' : PRESETS[key].label}: ${v.coders === 1 ? `one ${M[v.coderModel]} agent` : `Opus planner, ${v.coders} ${M[v.coderModel]} agents`}${v.reviewers ? `, ${v.reviewers} reviewer${v.reviewers === 1 ? '' : 's'}` : ''}${v.board ? ', board on' : ''}`;
+  const alone = (v) => v.coders === 1 && v.coderModel === 'opus' && !v.reviewers;
+  const team = (v) => (alone(v) ? 'one Opus agent' : `${v.coders} ${M[v.coderModel]} agent${v.coders === 1 ? '' : 's'} and an Opus planner${v.reviewers ? `, ${v.reviewers} reviewer${v.reviewers === 1 ? '' : 's'}` : ''}${v.board ? ', shared board' : ''}`);
+  const summary = (key, v, e) => `${key === 'custom' ? 'Custom' : PRESETS[key].name}: ${team(v)}${e && e !== 'error' ? `, about ${range(e.usd, usd)}` : ''}`;
 
+  // The estimate's details (scroll with the sheet) and its one line (in the sticky footer, next to the button).
   function estHtml() {
-    if (st.estState === 'loading') return '<p class="dim">Estimating…</p>';
+    if (st.estState === 'loading') return '';
     const e = st.est;
-    if (!e || e === 'error') return `<p class="dim">${e === 'error' ? 'No estimate right now.' : 'No estimate yet.'} You can still build with these settings.</p>`;
-    return `<p class="bs-e1">For ${esc(e.job)}${e.tasks ? ` (about ${e.tasks} pieces of work)` : ''}: <b>${range(e.wallS, mins)}</b>, <b>${range(e.usd, usd)}</b> at API prices.</p>
-      <p class="bs-q">${esc(e.quality)}${e.notes.length ? ` ${esc(e.notes.join(' '))}` : ''}</p>
-      <p class="bs-src">Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}. On your own Claude plan the price is part of your plan.</p>`;
+    if (!e || e === 'error') return '';
+    return `<div class="bs-est"><p class="bs-q">${esc(e.quality)}${e.notes.length ? ` ${esc(e.notes.join(' '))}` : ''}</p>
+      <p class="bs-src">For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet. Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}. With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.</p></div>`;
+  }
+  function estLine() {
+    if (st.estState === 'loading') return 'Estimating…';
+    const e = st.est;
+    if (!e || e === 'error') return `${e === 'error' ? 'No estimate right now.' : 'No estimate yet.'} You can still build with these settings.`;
+    return `About <b>${range(e.wallS, mins)}</b> and <b>${range(e.usd, usd)}</b> at API prices`;
   }
   function render() {
     const key = presetOf(st.v);
@@ -66,32 +74,39 @@
         ${Object.keys(PRESETS).length ? '' : st.estState === 'loading' ? '<p class="bs-src">Loading the presets…</p>' : '<p class="bs-src">The presets did not load. Fine-tune below, or build with the default.</p>'}
         <div class="bs-presets" role="radiogroup" aria-label="Presets">${Object.entries(PRESETS).map(([k, p]) => `<button type="button" role="radio" class="bs-p" data-preset="${k}" aria-checked="${key === k}"><b>${esc(p.label)}</b><span>${esc(p.why)}</span></button>`).join('')}</div>
         <details class="bs-fine"${(key === 'custom' && Object.keys(PRESETS).length) || st.fineOpen ? ' open' : ''}><summary>Fine-tune${key === 'custom' ? ' (custom)' : ''}</summary>
-          <div class="bs-knobs">${KNOBS.map(([n, label, vals, word]) => `<div class="bs-k"><span class="bs-kl">${esc(label)}${GLOSS[n] ? ` <button type="button" class="bs-g" data-gloss="${n}" aria-label="What is ${esc(label.toLowerCase())}?">?</button>` : ''}</span><span class="bs-opts" role="group" aria-label="${esc(label)}">${vals.map((x) => `<button type="button" class="bs-o" data-k="${n}" data-val='${esc(JSON.stringify(x))}' aria-pressed="${st.v[n] === x}">${esc(word(x))}</button>`).join('')}</span></div>`).join('')}</div>
+          <div class="bs-knobs">${KNOBS.map(([n, label, vals, word]) => `<div class="bs-k"><span class="bs-kl">${esc(label)}${GLOSS[n] ? ` <button type="button" class="bs-g" data-gloss="${n}" aria-label="What is ${esc(label.toLowerCase())}?">?</button>` : ''}</span><span class="bs-opts" role="group" aria-label="${esc(label)}">${vals.map((x) => `<button type="button" class="bs-o" data-k="${n}" data-val='${esc(JSON.stringify(x))}' aria-pressed="${st.v[n] === x}"${n === 'board' && st.v.coders === 1 ? ' disabled' : ''}>${esc(word(x))}</button>`).join('')}</span></div>`).join('')}</div>
           ${st.glossOpen ? `<p class="small dim bs-gl">${esc(GLOSS[st.glossOpen])}</p>` : ''}
         </details>
-        <div class="bs-est" aria-live="polite">${estHtml()}</div>
-        <div class="bs-foot"><button type="button" class="btn" data-apply>Use these settings</button><button type="button" class="chipbtn" data-reset>Back to the default</button></div>
+        ${estHtml()}
+        ${key === 'fastest' ? '' : '<button type="button" class="bs-reset" data-reset>Back to the default</button>'}
+        <div class="bs-foot"><p class="bs-line" aria-live="polite">${estLine()}</p><button type="button" class="btn" data-apply>Use these settings</button></div>
       </div>`;
   }
-  function recompute() { st.est = estimate(); st.estState = 'done'; render(); }
+  // Re-rendering replaces the buttons: keep focus on the same control.
+  function recompute() {
+    const f = document.activeElement, inside = f && root.contains(f);
+    const sel = inside ? (f.dataset.preset ? `[data-preset="${f.dataset.preset}"]` : f.dataset.k ? `[data-k="${f.dataset.k}"][data-val='${f.dataset.val}']` : null) : null;
+    st.est = estimate(); st.estState = 'done'; render();
+    if (inside || !root.contains(document.activeElement)) (sel && root.querySelector(sel) || root.querySelector('.bs-p[aria-checked="true"]') || root.querySelector('.bs-x'))?.focus();
+  }
   function open() {
     st.v = st.applied ? { ...st.applied.v } : { ...DEFAULT_V };
     root.hidden = false; document.body.classList.add('bs-on');
     if (!SIM) { st.estState = 'loading'; render(); loadSim().then(recompute); } else recompute();
-    requestAnimationFrame(() => root.classList.add('open'));
+    requestAnimationFrame(() => { root.classList.add('open'); (root.querySelector('.bs-p[aria-checked="true"]') || root.querySelector('.bs-x'))?.focus(); });
     log('open', {});
   }
-  function close() { root.classList.remove('open'); document.body.classList.remove('bs-on'); setTimeout(() => { root.hidden = true; }, 220); }
+  function close() { root.classList.remove('open'); document.body.classList.remove('bs-on'); setTimeout(() => { root.hidden = true; }, 220); document.getElementById('bsopen')?.focus(); }
   // The choice rides on the form: preset + v (qb6's B3 reads them on /build).
   function apply(def) {
     form.querySelectorAll('input[data-bs]').forEach((i) => i.remove());
     const chip = document.getElementById('bschosen');
-    if (def) { st.applied = null; if (chip) chip.textContent = ''; log('reset', {}); return close(); }
     const key = presetOf(st.v);
+    if (def || key === 'fastest') { st.applied = null; if (chip) chip.textContent = ''; log('apply_default', {}); return close(); }
     st.applied = { key, v: { ...st.v } };
     const add = (name, value) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = name; i.value = value; i.dataset.bs = '1'; form.appendChild(i); };
     add('preset', key); add('v', JSON.stringify(st.v));
-    if (chip) chip.textContent = summary(key, st.v);
+    if (chip) chip.textContent = summary(key, st.v, st.est);
     log('apply', { key, v: st.v });
     close();
   }
@@ -100,15 +115,23 @@
     const p = e.target.closest('[data-preset]');
     if (p) { st.v = { ...PRESETS[p.dataset.preset].v }; return recompute(); }
     const k = e.target.closest('[data-k]');
-    if (k) { st.v[k.dataset.k] = JSON.parse(k.dataset.val); st.fineOpen = true; return recompute(); }
+    if (k) { st.v[k.dataset.k] = JSON.parse(k.dataset.val); if (st.v.coders === 1) st.v.board = false; st.fineOpen = true; return recompute(); }
     const g = e.target.closest('[data-gloss]');
     if (g) { st.glossOpen = st.glossOpen === g.dataset.gloss ? null : g.dataset.gloss; st.fineOpen = true; return render(); }
     if (e.target.closest('[data-apply]')) return apply(false);
-    if (e.target.closest('[data-reset]')) return apply(true);
+    if (e.target.closest('[data-reset]')) { st.v = { ...DEFAULT_V }; recompute(); root.querySelector('.bs-p[aria-checked="true"]')?.focus(); return; }
   });
   // Fine-tune remembers only a real tap (a toggle event also fires when a render opens it).
   root.addEventListener('click', (e) => { const sm = e.target.closest('.bs-fine > summary'); if (sm) st.fineOpen = !sm.parentElement.open; }, true);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !root.hidden) close(); });
+  document.addEventListener('keydown', (e) => {
+    if (root.hidden) return;
+    if (e.key === 'Escape') return close();
+    if (e.key !== 'Tab') return;
+    const f = [...root.querySelectorAll('button:not([disabled]), summary')].filter((x) => x.offsetParent);
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  });
   // Shown only when the server turned Build settings on for this viewer (qb6: <body data-build-settings="1">).
   const btn = document.getElementById('bsopen');
   if (btn && document.body.dataset.buildSettings === '1') { btn.hidden = false; btn.addEventListener('click', open); }
