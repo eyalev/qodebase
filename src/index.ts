@@ -1182,7 +1182,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     }
     if (verb === 'next') {
       if (me.role !== 'agent') return json({ error: 'forq next is for agents' }, 403);
-      return json(await L.next(me.agentId));
+      return json(await L.claimNextTask(me.agentId));
     }
     // Task lists and alias pairs come only from the router (the planner): an agent posting pairs could make
     // others skip real work (adversarial review, 2026-10-11).

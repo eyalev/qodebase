@@ -340,7 +340,7 @@ export class Landing extends DurableObject<Env> {
 
   /** \`forq next\` (flag claimNext): one atomic step in this single-threaded object, so two agents asking at the
    *  same moment never get the same task (the tie-break and TTL races of advisory claims cannot happen). */
-  async next(changeId: string) {
+  async claimNextTask(changeId: string) {   // not `next`: Workers RPC answers "does not implement the method" for that name
     const m = await this.#m();
     if (!m.flags.claimNext) return { off: true as const };
     const items = (m.dedupeLists || []).flatMap((l) => l.items).filter((i, k, a) => !i.id.startsWith('#') && a.findIndex((x) => x.id === i.id) === k);
