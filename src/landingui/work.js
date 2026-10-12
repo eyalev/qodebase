@@ -645,8 +645,29 @@
     if (tab === 'agents') { const r = rightNow(true); return r || (D.changes.length ? `<ul class="now">${sortC(D.changes).map((c) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${skey(c)}"></i><b>${AG(c.agent)}</b><span class="t">${short(c)}</span><span class="w">${WORD[skey(c)]}</span></a></li>`).join('')}</ul>` : '<p class="dim">No agent has worked here yet.</p>'); }
     if (tab === 'line') return theLine(false);
     if (tab === 'events') return `${headFeed(8, true)}<p class="fmore"><a href="#/feed">Every step</a></p>`;
+    if (tab === 'timeline') return timelineHtml(false);
     return '';
   }
+  // The run as a trace (timeline.js, bundled in front of this file): a tab here and a full page at #/timeline.
+  let TL = null;
+  function timelineHtml(full) {
+    if (!window.qbTimelineView) return '';
+    if (!document.getElementById('tl-css')) { const st = document.createElement('style'); st.id = 'tl-css'; st.textContent = window.QB_TIMELINE_CSS; document.head.appendChild(st); }
+    // qb6's GET …/landing/timeline when it answers (refreshed every 10 s while shown); else built from the view.
+    TL = TLsrv && Date.now() - TLsrv.at < 60e3 ? TLsrv.t : window.qbTimelineData(D);
+    if (!TLsrv || Date.now() - TLsrv.at > 10e3) loadTimeline();
+    return `${window.qbTimelineView(TL)}${full ? '' : '<p class="fmore"><a href="#/timeline">Open the timeline full width</a></p>'}`;
+  }
+  let TLsrv = null, TLbusy = false;
+  async function loadTimeline() {
+    if (TLbusy || !API || MOCK) return; TLbusy = true;
+    try {
+      const r = await fetch(`${API}/landing/timeline`); const t = r.ok ? await r.json() : null;
+      log('timeline', { status: r.status, spans: t?.spans?.length ?? null });
+      if (t?.spans?.length) { TLsrv = { t, at: Date.now() }; render(); }
+    } catch (e) { log('timeline_failed', { error: String(e) }); } finally { TLbusy = false; }
+  }
+  function viewTimeline() { return `<div class="drill">${crumbs([['Agents at work', '#/'], ['Timeline']])}<h2 style="font-size:20px;margin-bottom:8px">How the run went</h2>${timelineHtml(true)}</div>`; }
   function overview() {
     const act = D.changes.filter(active);
     const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;
@@ -658,7 +679,7 @@
     return `<div class="fit open">${statusStrip(live, isStarting)}
       <div class="fpipe">${pipeline()}</div>
       ${latestLine(isStarting)}
-      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}<a class="fhow" href="/how">How it works</a></div>
+      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${tab('timeline', 'Timeline')}</div>
       <div class="fpanel">${OWN ? needsYou() : ''}${fitPanel(cur)}</div></div>
       ${belowFold()}`;
   }
@@ -842,7 +863,7 @@
     const h = decodeURIComponent(location.hash || '#/'); let m;
     termSeen = new Set();
     const html = (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
-      : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
+      : h === '#/timeline' ? viewTimeline() : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
     termSeen = null;
     // Rebuild only when something other than a time changed, and never under a finger:
     // a rebuild mid-tap swallowed about one tap in six (critique, 2026-10-07).
@@ -863,6 +884,7 @@
       const ps = root.querySelector('.fpanel')?.scrollTop || 0;
       root.innerHTML = html;
       const pn = root.querySelector('.fpanel'); if (pn && ps) pn.scrollTop = ps;
+      if (TL && root.querySelector('.tl') && window.qbTimelineMount) window.qbTimelineMount(root, TL);
       fitSize();
       if (same && before.size) flip(before);
     }

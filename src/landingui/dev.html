@@ -19,6 +19,8 @@ body{margin:0;background:var(--bg);color:var(--fg);font:400 15px/1.45 Geist,sans
 <body>
 <div id="lw" data-src="/public/landing-mock.json" data-name="hono" data-mock></div>
 <script>{const q=new URLSearchParams(location.search),el=document.getElementById('lw');if(q.get('src')){el.dataset.src=q.get('src');if(q.get('live')!==null)delete el.dataset.mock;}}</script>
+<script src="./estbar.js"></script>
+<script src="./timeline.js"></script>
 <script src="./work.js"></script>
 </body>
 </html>
