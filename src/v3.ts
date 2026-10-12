@@ -226,8 +226,8 @@ const ASKS_CSS = `.asks .ah{font-size:22px;font-weight:600;letter-spacing:-.02em
 .arow .w{font-size:13px;color:var(--dim);white-space:nowrap}
 .arow .chev{width:16px;height:16px;color:var(--dim);transition:transform 120ms;align-self:center}
 .arow[aria-expanded="true"] .chev{transform:rotate(180deg)}
-.arow[aria-expanded="true"] .t{-webkit-line-clamp:unset}
-.achg .ag{color:var(--fg);font-weight:600;min-width:64px}
+.arow[aria-expanded="true"] .t{-webkit-line-clamp:8}
+.achg .acag{color:var(--fg);font-weight:600;min-width:64px;flex:none}
 .arow .m{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--dim)}
 .adot{width:9px;height:9px;border-radius:50%;background:var(--dim);transform:translateY(-1px)}
 .adot.working{background:var(--busy)}.adot.in-line{background:var(--fg)}.adot.landed{background:var(--acc)}.adot.bounced{background:var(--warn)}.adot.planning{background:transparent;box-shadow:inset 0 0 0 1.5px var(--dim)}
@@ -243,7 +243,12 @@ var API='%API%',BASE='%BASE%',list=document.getElementById('alist'),fil=document
 var FROM={person:'A person',talk:'Talk',issues:'Cloudflare Issues',board:'The task list',script:'The demo script'};
 var WORD={planning:'Planning',working:'Working','in-line':'In line',landed:'Landed',bounced:'Sent back',mixed:'In progress',pushed:'In review',reviewing:'In review',queued:'In line',testing:'Being tested',replaying:'Replaying','with-lead':'With its lead'};
 // Change titles come from the landing view, fetched once, the first time a row is opened.
-function loadTitles(){if(titles)return;titles={};fetch(API+'/landing',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(j){(j&&j.changes||[]).forEach(function(c){titles[c.id]=String(c.title||c.intent||'').split('. ')[0];agents[c.id]=c.agent});render()}).catch(function(){})}
+function loadTitles(){if(titles)return;titles={};fetch(API+'/landing',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(j){(j&&j.changes||[]).forEach(function(c){titles[c.id]=String(c.title||c.intent||'').split('. ')[0];agents[c.id]=c.agent});
+ var all=(j&&j.changes||[]).slice().sort(function(a,b){return(a.createdAt||0)-(b.createdAt||0)}),num={},used={},n=1;
+ // Same numbering as Agents at work (agentNums in work.js): 'agent-3' keeps 3, others get the next free number by first change.
+ all.forEach(function(c){var k=/^(?:scripted )?agent[- ](\\d+)$/i.exec(c.agent||'');if(k&&!(c.agent in num)){num[c.agent]=+k[1];used[+k[1]]=1}});
+ all.forEach(function(c){if(!(c.agent in num)){while(used[n])n++;num[c.agent]=n;used[n]=1}});
+ Object.keys(agents).forEach(function(id){agents[id]=num[agents[id]]||''});render()}).catch(function(){})}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function ago(t){if(!t)return'';var s=Math.max(0,Math.round((Date.now()-t)/1000));return s<60?'just now':s<3600?Math.floor(s/60)+' min ago':s<86400?Math.floor(s/3600)+' h ago':Math.floor(s/86400)+' d ago'}
 function open_(a){return a.state!=='landed'}
@@ -263,7 +268,7 @@ function render(){
   var dupOf=a.duplicateOf&&byId[a.duplicateOf]?'<p class="adup">Same as <b>'+esc(byId[a.duplicateOf].text)+'</b></p>':'';
   var repl=reps.length&&!(a.aliases||[]).length?'<p class="adup">Asked again '+reps.length+'×'+(reps[0].text&&reps[0].text!==a.text?' as <b>'+esc(reps[0].text)+'</b>':'')+'</p>':'';
   var al=(a.aliases||[]).length?'<p class="adup">Also called <b>'+(a.aliases||[]).map(esc).join('</b>, <b>')+'</b></p>':'';
-  var cs=a.changeStates||{};var chl=open[a.id]&&ch.length?'<ul class="achg">'+ch.map(function(c){var id=typeof c==='string'?c:c.id,t=(titles&&titles[id])||'',w=WORD[cs[id]]||cs[id]||'';var an=agents[id]?String(agents[id]).replace(/\\D+/g,''):'';return'<li><a href="'+BASE+'/work#/change/'+encodeURIComponent(id)+'">'+(an?'<span class="ag">Agent '+esc(an)+'</span>':'')+esc(t||('#'+String(id).split('--').pop()))+'<span class="w">'+esc(w)+'</span></a></li>'}).join('')+'</ul>':'';
+  var cs=a.changeStates||{};var chl=open[a.id]&&ch.length?'<ul class="achg">'+ch.map(function(c){var id=typeof c==='string'?c:c.id,t=(titles&&titles[id])||'',w=WORD[cs[id]]||cs[id]||'';var an=agents[id]||'';return'<li><a href="'+BASE+'/work#/change/'+encodeURIComponent(id)+'">'+(an?'<span class="acag">Agent '+esc(an)+'</span>':'')+esc(t||('#'+String(id).split('--').pop()))+'<span class="w">'+esc(w)+'</span></a></li>'}).join('')+'</ul>':'';
   return'<li><button type="button" class="arow" data-a="'+esc(a.id)+'" aria-expanded="'+!!open[a.id]+'"><i class="adot '+esc(a.state||'')+'"></i><span class="t">'+esc(a.text)+'</span><span class="w">'+esc(a.delivery==='failed'?'Not delivered':a.delivery==='waking'?'Waking the router':(WORD[a.state]||''))+'</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg><span class="m">'+meta+'</span></button>'+dupOf+repl+al+chl+'</li>'}).join('');
 }
 fil.addEventListener('click',function(e){var b=e.target.closest('[data-f]');if(b){show=b.dataset.f;render()}});
