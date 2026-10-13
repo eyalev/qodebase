@@ -736,7 +736,7 @@ const app = {
         const b = await request.json().catch(() => ({})) as Record<string, unknown>;
         const c = cleanStart(b);
         if ('error' in c) return json(c, 400);
-        if (path === '/api/runs/estimate' && request.method === 'POST') return json(fleetEstimate({ files: Number(b.files) || 0, models: c.models, agents: c.agents, budgetUsd: c.budgetUsd, job: c.job }) || { error: 'Pick a copy with files.' });
+        if (path === '/api/runs/estimate' && request.method === 'POST') return json(fleetEstimate({ files: Number(b.files) || 0, models: c.models, agents: c.agents, budgetUsd: c.budgetUsd, job: c.job, overflow: c.overflow }) || { error: 'Pick a copy with files.' });
         if (path === '/api/runs/start' && request.method === 'POST') {
           const r = await fleetCall(env, '/start', c) as { runId?: string; error?: string };
           log('fleet', 'job_start', { by: me.handle || 'admin', repo: c.repo, root: c.root, agents: c.agents, budgetUsd: c.budgetUsd, job: c.job || 'comments', runId: r.runId || null, error: r.error || null });
