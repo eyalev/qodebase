@@ -407,7 +407,7 @@
   // ---- pages -------------------------------------------------------------------------------------------------------
   const PINS = [
     (r) => !r.group && r.repo === 'fleet-n2-vscode-src-1' && (r.agents || 0) >= 500,   // the 1,000-agent VS Code index take, once recorded
-    (r) => !r.group && r.repo === 'fleet-kata-d60f',                                      // the fast code dial at 60%
+    (r) => !r.group && r.repo === 'fleet-kata-d60g',                                      // the fast code dial at 60% (K60g, qb6: module lanes + gateway replays; K60f was a discarded try)
     (r) => r.group && /^S5b\b/.test(r.label),
     (r) => r.group && /^S4d\b/.test(r.label),
   ];
