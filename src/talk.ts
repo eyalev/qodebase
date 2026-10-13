@@ -663,7 +663,9 @@ async function tts(request: Request, env: Env, ctx: ExecutionContext, who: Who &
   if (!budget.ok) return json({ error: 'budget', why: 'Spoken replies have reached today\'s limit.' }, 429);
   let res: Response;
   try {
-    res = await (env.AI as any).run(v.id, { text, speaker, encoding: 'mp3' }, { ...aiOpts(env), returnRawResponse: true });
+    // Straight to Workers AI, not through the gateway: the gateway buffered the whole clip (first byte 2-2.8 s for one
+    // sentence), Workers AI streams it (first byte ~0.35 s, measured 2026-10-13). Guarded by the tts_chars cap above.
+    res = await (env.AI as any).run(v.id, { text, speaker, encoding: 'mp3' }, { returnRawResponse: true });
   } catch (e) {
     log('tts_error', { level: 'error', err: String(e), stack: (e as Error)?.stack, model, chars: text.length });
     return json({ error: 'tts', why: 'No voice right now.' }, 502);
