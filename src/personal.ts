@@ -4,8 +4,8 @@
 // changing a cost or a claim.
 
 const CSS = `
-:root{--bg:#fff;--card:#fafafa;--chip:#f3f4f6;--line:#ececef;--fg:#111214;--dim:#6e737b;--acc:#17695a;--acc-fg:#fff;--busy:#b7791f;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#0c0d0e;--card:#141517;--chip:#1c1d20;--line:#222428;--fg:#ececee;--dim:#9a9fa6;--acc:#4fbf9f;--acc-fg:#0c0d0e;--busy:#e0a948;color-scheme:dark}}
+:root{--bg:#f7f7fa;--card:#ffffff;--chip:#efeff4;--line:#e4e4ec;--fg:#14121f;--dim:#646177;--acc:#6a2ff0;--acc-fg:#ffffff;--acc-soft:#f0ebfe;--busy:#b7791f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0d0c12;--card:#16151e;--chip:#211f2b;--line:#2a2836;--fg:#eeedf3;--dim:#a3a0b3;--acc:#a585ff;--acc-fg:#120c24;--acc-soft:#231b3d;--busy:#e0a948;color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 'Geist',sans-serif}

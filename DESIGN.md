@@ -8,17 +8,23 @@ none of its chrome.
 
 | token | light | dark | use |
 |---|---|---|---|
-| `--bg` | `#ffffff` | `#0c0d0e` | page |
-| `--card` | `#fafafa` | `#141517` | rows, cards, inputs |
-| `--chip` | `#f3f4f6` | `#1c1d20` | tags, secondary buttons |
-| `--line` | `#ececef` | `#222428` | hairlines |
-| `--frame` | `#d9dbe0` | `#34373d` | the edge of a framed app preview (a hairline that must read against `--chip`) |
-| `--fg` | `#111214` | `#ececee` | text |
-| `--dim` | `#6e737b` | `#9a9fa6` | secondary text |
-| `--acc` | `#17695a` | `#4fbf9f` | one accent: primary buttons, links, live dots |
-| `--acc-fg` | `#ffffff` | `#0f1112` | text on accent |
+| `--bg` | `#f7f7fa` | `#0d0c12` | page: a cool gray one step below the cards |
+| `--card` | `#ffffff` | `#16151e` | rows, cards, inputs (white on the gray page, with a `--line` hairline) |
+| `--chip` | `#efeff4` | `#211f2b` | tags, secondary buttons |
+| `--line` | `#e4e4ec` | `#2a2836` | hairlines |
+| `--frame` | `#d4d4de` | `#3b3849` | the edge of a framed app preview (a hairline that must read against `--chip`) |
+| `--fg` | `#14121f` | `#eeedf3` | text |
+| `--dim` | `#646177` | `#a3a0b3` | secondary text |
+| `--acc` | `#6a2ff0` | `#a585ff` | one accent, used in many small places: primary buttons, links, the selected tab, live dots, focus |
+| `--acc-fg` | `#ffffff` | `#120c24` | text on accent |
+| `--acc-soft` | `#f0ebfe` | `#231b3d` | tinted wells: an icon square, a selected row, a quiet highlight (never a button) |
 | `--busy` | `#b7791f` | `#e0a948` | an agent that is working |
-| `--warn` | `#b42d1f` | `#f08a7e` | something needs a decision or went wrong: sent back, collided, with its lead, needs a fix (design v2; added 2026-10-07 because `--busy` already means "working") |
+| `--warn` | `#c2321f` | `#f08a7e` | something needs a decision or went wrong: sent back, collided, with its lead, needs a fix (design v2; added 2026-10-07 because `--busy` already means "working") |
+
+**Violet since 2026-10-14** (Eyal picked direction A of three, tried live on the app with `?theme=`; reference
+aced.io's signed-in pages). Was teal `#17695a` / `#4fbf9f` on white. **Surface treatment** (src/look.ts): the page is
+`--bg`, a step below white cards; cards, inputs and tiles carry a 1 px `--line` hairline (inset box-shadow, no drop
+shadows); colour enters through the accent in small places and `--acc-soft` wells, never through big fills.
 
 - **Type (2026-10-07, after Executor's look and feel):** Geist (UI, 400/500/600, headings −0.02em) + JetBrains Mono (file names,
   commit hashes, code only; never labels). Body 16 px, rows 15 px, meta 13 px,
