@@ -694,12 +694,14 @@ const app = {
       if (path === '/api/runs' && request.method === 'GET') return json(await runsData(env, me));
       if ((m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(series|timeline)$/)) && request.method === 'GET') return json(await fleetCall(env, `/series?repo=${m[1]}&run=${m[2]}`));
       // /runs v2 drill-down (qb7), public reads, bounded by the fleet (<= 200 rows, offset paging).
-      if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(agents|agent\/(\d{1,5})|slice|change|commits|commit\/([0-9a-f]{40}))$/))) {
+      if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(agents|agent\/(\d{1,5})|slice|change|commits|commit\/([0-9a-f]{40})|indexcheck)$/))) {
         const q = url.searchParams, pg = `&offset=${Math.max(0, Number(q.get('offset')) || 0)}&limit=${Math.min(200, Number(q.get('limit')) || 200)}`;
         const base = `repo=${m[1]}&run=${m[2]}`;
         if (m[3] === 'agents') return json(await fleetCall(env, `/agents?${base}${pg}`));
         if (m[4]) return json(await fleetCall(env, `/agents?${base}&agent=${m[4]}${pg}`));
         if (m[3] === 'slice') return json(await fleetCall(env, `/slice?${base}&t=${Number(q.get('t')) || 0}&to=${Number(q.get('to')) || 0}${pg}`));
+        // The hotspot job's checker: docs/API.md on main has every landed declaration exactly once, sorted.
+        if (m[3] === 'indexcheck') return json(await fleetCall(env, `/indexcheck?${base}`));
         if (m[3] === 'commits') return json(await fleetCall(env, `/commits?${base}&t=${Number(q.get('t')) || 0}&to=${Number(q.get('to')) || 0}${pg}`));
         if (m[5]) return json(await fleetCall(env, `/commit?${base}&sha=${m[5]}`));
         const sha = /^[0-9a-f]{40}$/.test(String(q.get('sha') || '')) ? `&sha=${q.get('sha')}` : '';
