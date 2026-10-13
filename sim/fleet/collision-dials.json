@@ -90,10 +90,32 @@
     "lostNote": "9 = the same accounting artefact as L30 (these agents ran before the record fix deployed); not lost work",
     "landWaitP50S": 114,
     "landWaitP90S": 173
+   },
+   {
+    "dial": 60,
+    "claims": true,
+    "tasks": 43880,
+    "tasksPerSec": 1276,
+    "pairs": {
+     "far": 2298,
+     "near": 2438,
+     "same": 8424
+    },
+    "resolutions": {
+     "farAutoMerged": 2298,
+     "nearAutoMerged": 2429,
+     "sameCaughtEarly": 8424
+    },
+    "doubled": 0,
+    "codeChanged": 0,
+    "lost": 11,
+    "lostNote": "11 = the same accounting artefact; 1 task left 'ready' (not landed), being looked at",
+    "landWaitP50S": 102,
+    "landWaitP90S": 169
    }
   ],
   "caveat": "In cached mode the second comment of a same-declaration pair is derived from the first (its first sentence, or that plus a stock phrase), so 'duplicate, kept the first' says which landed first, not which answer was better. Which version wins under real collisions is measured by the code dial, where the hidden tests decide.",
-  "finding": "Across dial 0-60% throughput stayed ~1,100-1,200 tasks/s and land wait p50 ~96-114 s: comment collisions cost nothing measurable at this scale (merges and replays are per-file text operations in the Lander). 0 doubled comments and 0 code changes at every level."
+  "finding": "Across dial 0-60% (1,000 agents) throughput stayed ~1,100-1,280 tasks/s and land wait p50 ~96-114 s; 0 doubled comments, 0 code changes, nothing lost at any level. Same-declaration collisions resolve at landing ('duplicate, kept the first', or a replay when the declaration is still undocumented) or, with claims on, before any work: at 60% + claims all 8,424 second-of-pair tasks were caught early and 0 duplicates reached the Lander, at ~9% higher throughput (1,276 vs 1,167 tasks/s)."
  },
  "code": {
   "label": "kata collision dial (sim/kata, lab-hidden tests); pending",
