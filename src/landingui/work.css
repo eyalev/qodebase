@@ -330,6 +330,7 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .slast2 .meta{font-size:13px;color:var(--dim)}
 .lw .ftabs{flex:none;display:flex;gap:4px;align-items:center}
 .lw .ftab{min-height:44px;padding:0 14px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);font:500 14px Geist,sans-serif;cursor:pointer;transition:background-color 120ms}
+@media (max-width:420px){.lw .ftab{padding:0 8px}.lw .ftabs{overflow-x:auto;scrollbar-width:none}}
 .lw .ftab[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 .lw .fhow{margin-left:auto;font-size:13px;color:var(--acc);min-height:44px;display:inline-flex;align-items:center}
 .lw .fpanel{max-height:min(52vh,440px);overflow-y:auto;overscroll-behavior:auto;box-shadow:inset 0 1px 0 var(--line);padding-top:8px}

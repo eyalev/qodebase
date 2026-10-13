@@ -138,6 +138,7 @@
       ${ctl}
       ${r.group ? copyRows(r) : ''}
       ${r.group && !full ? `<a class="chipbtn rc-go" href="#/step/${encodeURIComponent(r.label)}">Open: drill into moments and commits</a>` : ''}
+      ${window.qbIntentsMount ? (r.group ? `<a class="chipbtn rc-go" href="#/intents/step/${encodeURIComponent(r.label)}">Intents</a>` : `<a class="chipbtn rc-go" href="#/intents/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">Intents</a>`) : ''}
       ${full || r.group ? '' : `<a class="chipbtn rc-go" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">Timeline</a>`}
     </article>`;
   }
@@ -399,6 +400,21 @@
     if (lad) return `<p class="crumb"><a href="#/">All runs</a></p>${card(g, true)}${drillPanel(g)}`;
     return `<p class="crumb"><a href="#/">All runs</a></p>${card(g, true)}<section class="rsec"><h2>Timeline, all ${g.copies.length} copies together</h2>${have < g.copies.length ? `<p class="dim">${have} of ${g.copies.length} copies loaded…</p>` : ''}${timeline(g, t, DR && DR.k === key(g) ? DR : null)}${drillPanel(g)}</section>`;
   }
+  // The intent tree (qb5, intents.js bundled in front of this file): a run's folders and files, status rolled up; a step's
+  // copies first. intents.js draws inside the mount and keeps its own state (DR and TLS are not touched here).
+  const itSrc = (r) => `/api/runs/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}/intents`;
+  function intentsRunView(repo, id, why) {
+    const r = (D.fleet || []).find((x) => x.repo === repo && x.runId === id);
+    if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
+    const base = `#/intents/run/${encodeURIComponent(repo)}/${encodeURIComponent(id)}`;
+    return `<p class="crumb"><a href="#/">All runs</a></p><section class="rsec"><h2>${why ? 'Why this exists' : `Intents: ${esc(r.label || repo)}`}</h2><p><a class="chipbtn rc-go" href="#/run/${encodeURIComponent(repo)}/${encodeURIComponent(id)}">Timeline</a></p>${why ? '' : '<p class="dim">The job, then its folders; each file is one agent\'s intent. Stuck files come first. Tap a line to open it.</p>'}<div class="it-mount" data-src="${esc(itSrc(r))}" data-runs="/api/runs/${esc(encodeURIComponent(repo))}/${esc(encodeURIComponent(id))}" data-why-href="${esc(base)}/why/{id}" data-tree-href="${esc(base)}"${why ? ` data-why="${esc(why)}"` : ''}></div></section>`;
+  }
+  function intentsStepView(label) {
+    const g = stepOf(label);
+    if (!g) return `<p><a href="#/">All runs</a></p><p>That ladder step is not in the list any more.</p>`;
+    const copies = g.copies.map((c) => ({ src: itSrc(c), label: c.copy ? `Copy ${c.copy}${c.root ? `, ${c.root}` : ''}` : c.label || c.repo, sub: `${n0(c.landed || 0)} files got comments, ${n0(c.skipped || 0)} already had them` }));
+    return `<p class="crumb"><a href="#/">All runs</a></p><section class="rsec"><h2>Intents: ${esc(label)}</h2><p><a class="chipbtn rc-go" href="#/step/${encodeURIComponent(label)}">Timeline</a></p><div class="it-mount" data-step="${esc(label)}" data-label="${esc(label)}" data-copies="${esc(JSON.stringify(copies))}"></div></section>`;
+  }
   function current() {
     let m = /^#\/run\/([^/]+)\/([^/]+)$/.exec(location.hash);
     if (m) return (D?.fleet || []).find((x) => x.repo === decodeURIComponent(m[1]) && x.runId === decodeURIComponent(m[2])) || null;
@@ -410,7 +426,8 @@
   function render() {
     if (!D) return;
     const m = /^#\/run\/([^/]+)\/([^/]+)$/.exec(location.hash), ms = /^#\/step\/(.+)$/.exec(location.hash);
-    const html = m ? runView(decodeURIComponent(m[1]), decodeURIComponent(m[2])) : ms ? stepView(decodeURIComponent(ms[1])) : listView();
+    const mi = /^#\/intents\/run\/([^/]+)\/([^/]+?)(?:\/why\/(.+))?$/.exec(location.hash), mis = /^#\/intents\/step\/(.+)$/.exec(location.hash);
+    const html = mi && window.qbIntentsMount ? intentsRunView(decodeURIComponent(mi[1]), decodeURIComponent(mi[2]), mi[3] ? decodeURIComponent(mi[3]) : null) : mis && window.qbIntentsMount ? intentsStepView(decodeURIComponent(mis[1])) : m ? runView(decodeURIComponent(m[1]), decodeURIComponent(m[2])) : ms ? stepView(decodeURIComponent(ms[1])) : listView();
     const k = html.replace(/(data-since="\d+">)[^<]*/g, '$1');
     if (k === lastHtml || busy) return tickClocks();
     const ctlF = document.activeElement?.closest?.('.rc-ctl') ? document.activeElement.dataset.ctl : null;
@@ -420,6 +437,7 @@
     const f2 = root.querySelector('.tl-frame'); if (f2) f2.scrollLeft = fr ? (atEnd && 'live' in f2.dataset ? f2.scrollWidth : sx) : ('live' in f2.dataset ? f2.scrollWidth : 0);
     if (ctlF) root.querySelector(`[data-ctl="${ctlF}"]`)?.focus({ preventScroll: true });
     talkActions();
+    if (window.qbIntentsMount) window.qbIntentsMount(root);
   }
   function tickClocks() { root.querySelectorAll('[data-since]').forEach((b) => { b.textContent = clock((Date.now() - +b.dataset.since) / 1000); }); }
 

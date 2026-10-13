@@ -686,6 +686,7 @@
     if (tab === 'line') return theLine(false);
     if (tab === 'events') return `${headFeed(8, true)}<p class="fmore"><a href="#/feed">Every step</a>${asksUrl() ? ` <a href="${asksUrl()}">All asks</a>` : ''}</p>`;
     if (tab === 'timeline') return timelineHtml(false);
+    if (tab === 'intents' && itOk()) return `${itMount()}<p class="fmore"><a href="#/intents">Open the intent tree full width</a></p>`;
     return '';
   }
   // The run as a trace (timeline.js, bundled in front of this file): a tab here and a full page at #/timeline.
@@ -710,6 +711,13 @@
       if (t?.spans?.length) { TLsrv = { t, at: Date.now() }; render(); }
     } catch (e) { log('timeline_failed', { error: String(e) }); } finally { TLbusy = false; }
   }
+  // The intent tree (qb5, intents.js bundled in front of this file): request -> areas -> each agent's intent -> its change.
+  // intents.js draws inside the mount and keeps its own state, so this page's re-renders never close what is open.
+  const itOk = () => !!(window.qbIntentsMount && API && !MOCK);
+  const itMount = (why) => `<div class="it-mount" data-src="${esc(API)}/intents" data-change-href="#/change/{id}"${why ? ` data-why="${esc(why)}"` : ''}></div>`;
+  function viewIntents(why) {
+    return `<div class="drill">${crumbs(why ? [['Agents at work', '#/'], ['Intents', '#/intents'], ['Why this exists']] : [['Agents at work', '#/'], ['Intents']])}<h2 style="font-size:20px;margin-bottom:8px">${why ? 'Why this exists' : 'What was asked, and where each part stands'}</h2>${why ? '' : '<p class="cap">Each request splits into areas, each area into what one agent set out to do. Things that need you or are stuck come first. Tap a line to open it.</p>'}${itMount(why)}</div>`;
+  }
   function viewTimeline() { return `<div class="drill">${crumbs([['Agents at work', '#/'], ['Timeline']])}<h2 style="font-size:20px;margin-bottom:8px">How the run went</h2>${timelineHtml(true)}</div>`; }
   function overview() {
     const act = D.changes.filter(active);
@@ -722,7 +730,7 @@
     return `<div class="fit open">${statusStrip(live, isStarting)}
       <div class="fpipe">${pipeline()}</div>
       ${latestLine(isStarting)}
-      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${tlOk() ? tab('timeline', 'Timeline') : ''}</div>
+      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${tlOk() ? tab('timeline', 'Timeline') : ''}${itOk() ? tab('intents', 'Intents') : ''}</div>
       <div class="fpanel">${OWN ? needsYou() : ''}${fitPanel(cur)}</div></div>
       ${belowFold()}`;
   }
@@ -860,7 +868,7 @@
       <div class="tags">${st(c)}<span>${AG(c.agent)}</span>${c.createdAt ? `<span>started ${ago(c.createdAt)}</span>` : ''}</div>
       ${progress(c)}
       <section class="sec" style="margin-top:16px">${howBox(c)}</section>
-      <section class="sec"><h3>What it was asked to do</h3>${intentHtml(c)}</section>
+      <section class="sec"><h3>What it was asked to do</h3>${intentHtml(c)}${itOk() ? `<p class="fmore"><a href="#/intents/why/${encodeURIComponent(`c:${c.id}`)}">Why this exists: its place in the intent tree</a></p>` : ''}</section>
       ${stackOn || above.length ? `<section class="sec"><h3>${term('stack', 'Stacked')}</h3><ul class="rows">${stackOn ? row(stackOn, 'This change builds on it, and lands after it') : ''}${above.map((x) => row(x, 'Builds on this change')).join('')}</ul></section>` : ''}
       <section class="sec"><h3>What happened</h3><ol class="story">${story}</ol></section>
       <section class="sec"><h3>Details</h3><dl class="kv" style="margin-top:6px">
@@ -917,7 +925,7 @@
     if (!D) return;
     const h = decodeURIComponent(location.hash || '#/'); let m;
     termSeen = new Set();
-    const html = (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
+    const html = (m = /^#\/intents(?:\/why\/(.+))?$/.exec(h)) && itOk() ? viewIntents(m[1] || null) : (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
       : h === '#/timeline' && tlOk() ? viewTimeline() : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
     termSeen = null;
     // Rebuild only when something other than a time changed, and never under a finger:
@@ -945,6 +953,7 @@
       if (TL && root.querySelector('.tl') && window.qbTimelineMount) window.qbTimelineMount(root, TL);
       fitSize();
       if (same && before.size) flip(before);
+      if (window.qbIntentsMount) window.qbIntentsMount(root);
     }
     lastNow = D.now;
     firstPaint = false;

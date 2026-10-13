@@ -612,6 +612,22 @@ docs/contest/landing.md; owner tab qb6). UI: src/landingui/ (qb7), view "Agents 
   never into a working tree), and the train skips forks it already has. Watch run: median train 5.5 s -> 2.9 s, fetch per
   train 3.8 s -> 1.6 s, merger busy 54 s -> 33 s; warm trains fetch in ~0.6 s.
 
+## Intent tree (src/intents.ts + src/landingui/intents.js, qb5, since 2026-10-14)
+
+Read-only answer to "what does the developer see when a thousand agents work on one codebase": browse intents, not agents.
+- Real builds: request (Project.requests) -> areas (the known area path holding most of a change's claims) -> each agent's
+  intent (Landing change; agents numbered like the work page) -> its record, commits, diff. Fleet runs: the job -> folders
+  nested by path (one-child chains collapsed) -> each file (last record wins; the diff from /runs' change endpoint).
+- Status rolls up (needs you > blocked > working > waiting > done) with counts, $, time; children sorted by it and paged
+  (50, max 200). `?why=<id>` = path to the request, `?find=<words>` = nodes by words (Talk's `intent` page action).
+- API: `GET /api/p/<o>/<n>/intents` (same readers as /landing, behind the private gate) and
+  `GET /api/runs/<repo>/<run>/intents` (fleet /records NDJSON, ~3 MB per 4k files, memoised per isolate: 15 s live, 1 h ended).
+- UI: tab "Intents" + `#/intents`, `#/intents/why/<id>` on the work page; `#/intents/run/<repo>/<run>[/why/<id>]` and
+  `#/intents/step/<label>` on /runs. The host calls `window.qbIntentsMount(root)` after every innerHTML; state lives in
+  intents.js, so host re-renders keep what is open. build.mjs prepends intents.js to WORK_JS and RUNS_JS.
+- Tests: `node --experimental-strip-types --test src/intents.test.mjs`; screenshots on real fixtures:
+  `node --experimental-strip-types claude5/intents/harness.mjs --src .` then `node claude5/intents/shots.mjs`.
+
 ## Agent board (src/landing/board.ts, docs/board/PLAN2.md, since 2026-10-10)
 
 Who works on what, live, inside each project's Landing DO (SQLite table `board`, 24 h). Landing flag

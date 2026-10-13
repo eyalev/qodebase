@@ -52,6 +52,7 @@ import MA_REV from '../box/mobile-agent.rev';
 
 export { AgentBox, Project, Registry, BuildBox, Installs, TalkLog, Ledger, TalkVoice };
 import { landingRoute } from './landing/routes';
+import { projectTree, fleetTree, parseRecords, answer as intentsAnswer, memoTree } from './intents';
 import * as landingHooks from './landing/hooks';
 import { landingOn } from './landing/hooks';
 import { boardName } from './landing/landing';
@@ -600,6 +601,14 @@ const app = {
         const info = await projectStub(env, slugOf(m[1], m[2])).info();
         return info ? landingRoute(request, env, info, m[3] || '', me) : json({ error: 'no such project' }, 404);
       }
+      // The intent tree (qb5, src/intents.ts): request -> areas -> intents -> change, status rolled up. Same readers as /landing.
+      if ((m = path.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/intents$/)) && request.method === 'GET') {
+        const info = await projectStub(env, slugOf(m[1], m[2])).info();
+        if (!info) return json({ error: 'no such project' }, 404);
+        // One Landing view per project per 5 s per isolate, however many viewers and open nodes.
+        const T = await memoTree(`p:${info.slug}`, 5_000, async () => projectTree(info as any, await env.Landing.get(env.Landing.idFromName(info.slug)).view(info.slug) as any));
+        return json(intentsAnswer(T, url.searchParams));
+      }
 
       // ---- pages
       // Production renders design D (views, home tabs, Build) since 2026-10-03; the
@@ -691,6 +700,21 @@ const app = {
         if (m[5]) return json(await fleetCall(env, `/commit?${base}&sha=${m[5]}`));
         const sha = /^[0-9a-f]{40}$/.test(String(q.get('sha') || '')) ? `&sha=${q.get('sha')}` : '';
         return json(await fleetCall(env, `/file?${base}&path=${encodeURIComponent(String(q.get('file') || '').slice(0, 300))}${sha}`));
+      }
+      // A fleet run's intent tree (qb5, src/intents.ts): folders nested by path, each file's status rolled up; 10k files paged.
+      if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/intents$/))) {
+        const [repo, run] = [m[1], m[2]];
+        const st = await fleetCall(env, `/status?repo=${repo}`) as { runId?: string; state?: string; files?: number; counts?: Record<string, number> };
+        const live = st.runId === run && !['done', 'stopped', 'ended'].includes(String(st.state));
+        const T = await memoTree(`${repo}/${run}`, live ? 15_000 : 3_600_000, async () => {
+          const r = await fetch(`https://qbfleet.forqdev.workers.dev/records?repo=${repo}&run=${run}`, { headers: { 'x-fleet-key': env.FLEET_KEY || '', 'user-agent': 'forq-internal/1' } });
+          if (!r.ok) throw new Error(`fleet records ${r.status}`);
+          const recs = parseRecords(await r.text());
+          // The title comes from the runs list (server side), never from the request.
+          const row = ((await runsData(env, me).catch(() => null)) as { fleet?: { repo: string; runId: string; label?: string; intent?: string }[] } | null)?.fleet?.find((x) => x.repo === repo && x.runId === run);
+          return fleetTree(recs, { label: row?.label || repo, intent: row?.intent, stopped: st.runId === run && st.state === 'stopped', pending: st.runId === run && st.files ? Math.max(0, st.files - recs.length) : 0 });
+        });
+        return json(intentsAnswer(T, url.searchParams));
       }
       if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/ladder\/([A-Za-z0-9-]{1,20})\/series$/))) return json(await fleetCall(env, `/ladder-series?ladder=${m[1]}`));
       if ((m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/(pause|resume|stop)$/)) && request.method === 'POST') {
