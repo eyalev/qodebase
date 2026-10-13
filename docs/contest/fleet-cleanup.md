@@ -23,7 +23,9 @@ Agreed with the manager 2026-10-13: keep what public pages link to, plus one cop
 
 - forq, 2026-10-13 ~19:10 UTC: eyal.kata-d30 (code dial level 30: project, repo and its 1,635 forks; records, main clone and qb4's checker output saved in ~/.local/share/qbfleet/kata/K30/).
 
+- forq, 2026-10-13 ~21:10 UTC: eyal.kata-d60 (code dial level 60, the slow baseline: project, repo, 1,809 forks; outputs saved in ~/.local/share/qbfleet/kata/K60/) and eyal.kata-d60f (the discarded first try of the fast variant: its Landing predated the gateway secret, so replays ran on the plan; project, repo, 337 forks).
+
 ## Pending
 
-- eyal.kata-d60 (1,513 repos at 19:05, still growing; the slow baseline of the fast-variant comparison): deleted after its level finishes and the records, main clone and qb4's checker output are saved in ~/.local/share/qbfleet/kata/K60/. eyal.kata-d60f (the fast variant) the same, after its checker run.
+- Kept for now: eyal.kata-d60g (the fast variant's run, 1,954 repos, outputs in ~/.local/share/qbfleet/kata/K60g/) beside eyal.kata-d0b, in case the deck or results link it; delete when no public page does.
 - fleet-n2-vscode-src-1: after the recording, if the take's run is not linked from a public page.
