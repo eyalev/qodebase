@@ -1,0 +1,27 @@
+# Fleet cleanup (Artifacts storage bills from 2026-10-14)
+
+Agreed with the manager 2026-10-13: keep what public pages link to, plus one copy of each step, through 2026-10-31; delete the rest once the numbers and checker outputs are saved. Run records, series, slices, commits + notes and checker inputs live in the fleet's Run/Lander objects, not in the repos, so every /runs page keeps working; the per-file diff view of a deleted copy says so (copyDeleted).
+
+## Kept until 2026-10-31
+
+- qbfleet (13): fleet-main, fleet-angular, fleet-babel, fleet-nest, fleet-nextjs, fleet-vscode-ext (F3/F3b; the answer cache's source), fleet-vscode-src-11 (S5b, the run linked from the README and Intents), -src-15 (index-job test), -src-1 (S4a, S5 gemma), -src-5 (S4b), -src-6 (S4c), fleet-vscode-ext-1 (comment dial L0-L60c), fleet-nest-1 (S4d/S4e).
+- qbfleet2 (2): fleet-n2-vscode-src-1 (the video's run, reserved), fleet-n2-babel-1 (S4e second namespace).
+- forq: eyal.kata-d0b and its forks (one code-dial level, whole).
+
+## Deleted 2026-10-13 17:56 UTC
+
+- qbfleet: 127 copies; qbfleet2: 88 copies (all answered 202; namespaces then held 13 and 2 repos).
+- forq: eyal.kata-d0 (the code dial's smoke project: project, repo and its 27 forks; records + checker output saved in ~/.local/share/qbfleet/kata/smoke/).
+
+<details><summary>Every deleted copy</summary>
+
+**qbfleet:** fleet-angular-1 fleet-angular-2 fleet-angular-3 fleet-angular-4 fleet-angular-5 fleet-angular-6 fleet-angular-7 fleet-angular-8 fleet-angular-9 fleet-angular-10 fleet-angular-11 fleet-angular-12 fleet-angular-13 fleet-angular-14 fleet-angular-15 fleet-angular-16 fleet-angular-17 fleet-angular-18 fleet-angular-19 fleet-angular-20 fleet-angular-21 fleet-angular-22 fleet-babel-1 fleet-babel-2 fleet-babel-3 fleet-babel-4 fleet-babel-5 fleet-babel-6 fleet-babel-7 fleet-babel-8 fleet-babel-9 fleet-babel-10 fleet-babel-11 fleet-babel-12 fleet-babel-13 fleet-babel-14 fleet-babel-15 fleet-babel-16 fleet-babel-17 fleet-babel-18 fleet-babel-19 fleet-babel-20 fleet-babel-21 fleet-babel-22 fleet-nest-2 fleet-nest-3 fleet-nest-4 fleet-nest-5 fleet-nest-6 fleet-nest-7 fleet-nest-8 fleet-nest-9 fleet-nest-10 fleet-nest-11 fleet-nest-12 fleet-nest-13 fleet-nest-14 fleet-nest-15 fleet-nest-16 fleet-nest-17 fleet-nest-18 fleet-nest-19 fleet-nest-20 fleet-nest-21 fleet-nest-22 fleet-nextjs-1 fleet-nextjs-2 fleet-nextjs-3 fleet-nextjs-4 fleet-nextjs-5 fleet-nextjs-6 fleet-nextjs-7 fleet-nextjs-8 fleet-nextjs-9 fleet-nextjs-10 fleet-nextjs-11 fleet-nextjs-12 fleet-nextjs-13 fleet-nextjs-14 fleet-nextjs-15 fleet-nextjs-16 fleet-nextjs-17 fleet-nextjs-18 fleet-nextjs-19 fleet-nextjs-20 fleet-nextjs-21 fleet-nextjs-22 fleet-vscode-ext-2 fleet-vscode-ext-3 fleet-vscode-ext-4 fleet-vscode-ext-5 fleet-vscode-ext-6 fleet-vscode-ext-7 fleet-vscode-ext-8 fleet-vscode-ext-9 fleet-vscode-ext-10 fleet-vscode-ext-11 fleet-vscode-ext-12 fleet-vscode-ext-13 fleet-vscode-ext-14 fleet-vscode-ext-15 fleet-vscode-ext-16 fleet-vscode-ext-17 fleet-vscode-ext-18 fleet-vscode-ext-19 fleet-vscode-ext-20 fleet-vscode-ext-21 fleet-vscode-ext-22 fleet-vscode-src-2 fleet-vscode-src-3 fleet-vscode-src-4 fleet-vscode-src-7 fleet-vscode-src-8 fleet-vscode-src-9 fleet-vscode-src-10 fleet-vscode-src-12 fleet-vscode-src-13 fleet-vscode-src-14 fleet-vscode-src-16 fleet-vscode-src-17 fleet-vscode-src-18 fleet-vscode-src-19 fleet-vscode-src-20 fleet-vscode-src-21 fleet-vscode-src-22 fleet-vscode-src-23 fleet-vscode-src-24 
+
+**qbfleet2:** fleet-n2-angular fleet-n2-babel fleet-n2-babel-2 fleet-n2-babel-3 fleet-n2-babel-4 fleet-n2-babel-5 fleet-n2-babel-6 fleet-n2-babel-7 fleet-n2-babel-8 fleet-n2-babel-9 fleet-n2-babel-10 fleet-n2-babel-11 fleet-n2-babel-12 fleet-n2-babel-13 fleet-n2-babel-14 fleet-n2-babel-15 fleet-n2-babel-16 fleet-n2-babel-17 fleet-n2-babel-18 fleet-n2-babel-19 fleet-n2-babel-20 fleet-n2-babel-21 fleet-n2-babel-22 fleet-n2-nest fleet-n2-nest-1 fleet-n2-nest-2 fleet-n2-nest-3 fleet-n2-nest-4 fleet-n2-nest-5 fleet-n2-nest-6 fleet-n2-nest-7 fleet-n2-nest-8 fleet-n2-nest-9 fleet-n2-nest-10 fleet-n2-nest-11 fleet-n2-nest-12 fleet-n2-nest-13 fleet-n2-nest-14 fleet-n2-nest-15 fleet-n2-nest-16 fleet-n2-nest-17 fleet-n2-nest-18 fleet-n2-nest-19 fleet-n2-nest-20 fleet-n2-nest-21 fleet-n2-nest-22 fleet-n2-nextjs fleet-n2-vscode-ext fleet-n2-vscode-ext-1 fleet-n2-vscode-ext-2 fleet-n2-vscode-ext-3 fleet-n2-vscode-ext-4 fleet-n2-vscode-ext-5 fleet-n2-vscode-ext-6 fleet-n2-vscode-ext-7 fleet-n2-vscode-ext-8 fleet-n2-vscode-ext-9 fleet-n2-vscode-ext-10 fleet-n2-vscode-ext-11 fleet-n2-vscode-ext-12 fleet-n2-vscode-ext-13 fleet-n2-vscode-ext-14 fleet-n2-vscode-ext-15 fleet-n2-vscode-ext-16 fleet-n2-vscode-ext-17 fleet-n2-vscode-ext-18 fleet-n2-vscode-ext-19 fleet-n2-vscode-ext-20 fleet-n2-vscode-src fleet-n2-vscode-src-2 fleet-n2-vscode-src-3 fleet-n2-vscode-src-4 fleet-n2-vscode-src-5 fleet-n2-vscode-src-6 fleet-n2-vscode-src-7 fleet-n2-vscode-src-8 fleet-n2-vscode-src-9 fleet-n2-vscode-src-10 fleet-n2-vscode-src-11 fleet-n2-vscode-src-12 fleet-n2-vscode-src-13 fleet-n2-vscode-src-14 fleet-n2-vscode-src-15 fleet-n2-vscode-src-16 fleet-n2-vscode-src-17 fleet-n2-vscode-src-18 fleet-n2-vscode-src-19 fleet-n2-vscode-src-20 
+
+</details>
+
+## Pending
+
+- eyal.kata-d30 (1,090 repos) and eyal.kata-d60 (851 repos, still growing): deleted after their levels finish and the records, main clones and qb4's checker output are saved in ~/.local/share/qbfleet/kata/K30, K60/.
+- fleet-n2-vscode-src-1: after the recording, if the take's run is not linked from a public page.
