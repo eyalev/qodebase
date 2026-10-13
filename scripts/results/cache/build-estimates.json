@@ -1,6 +1,96 @@
 {
  "builds": [
   {
+   "slug": "eyal.my-home",
+   "estimate": {
+    "startedAt": 1791935181969,
+    "wallS": [
+     480,
+     1260
+    ],
+    "apiUsd": [
+     0.78,
+     2.1
+    ],
+    "preset": "cheapest",
+    "v": {
+     "coders": 6,
+     "coderModel": "haiku",
+     "reviewers": 0,
+     "board": true
+    },
+    "basis": "typical",
+    "basedOn": 25,
+    "simVersion": "lab-0.11"
+   },
+   "progress": {
+    "spentUsd": 0,
+    "settledAt": null,
+    "actualWallS": null,
+    "actualUsd": null
+   }
+  },
+  {
+   "slug": "eyal.home-tracker",
+   "estimate": {
+    "startedAt": 1791932944271,
+    "wallS": [
+     480,
+     1260
+    ],
+    "apiUsd": [
+     0.78,
+     2.1
+    ],
+    "preset": "cheapest",
+    "v": {
+     "coders": 6,
+     "coderModel": "haiku",
+     "reviewers": 0,
+     "board": true
+    },
+    "basis": "typical",
+    "basedOn": 25,
+    "simVersion": "lab-0.11"
+   },
+   "progress": {
+    "spentUsd": 2.321,
+    "settledAt": 1791934431575,
+    "actualWallS": 1487,
+    "actualUsd": 2.321
+   }
+  },
+  {
+   "slug": "eyal.home-inventory-demo",
+   "estimate": {
+    "startedAt": 1791929773497,
+    "wallS": [
+     480,
+     1260
+    ],
+    "apiUsd": [
+     0.78,
+     2.1
+    ],
+    "preset": "cheapest",
+    "v": {
+     "coders": 6,
+     "coderModel": "haiku",
+     "reviewers": 0,
+     "board": true
+    },
+    "basis": "typical",
+    "basedOn": 25,
+    "simVersion": "lab-0.11"
+   },
+   "progress": {
+    "spentUsd": 1.497,
+    "settledAt": 1791931417211,
+    "actualWallS": 1644,
+    "actualUsd": 1.497
+   }
+  },
+  {
    "slug": "eyal.real-home-inventory-r8b",
    "estimate": {
     "startedAt": 1791878491400,
