@@ -28,6 +28,8 @@ const GATEWAY = 'qodebase-fleet';
 // $ per million tokens [input, output] per model: the FLEET_PRICES var (JSON). An unpriced model is refused, never priced at 0.
 const DAY_CAP_USD = 50;
 // What each copy is a duplicate of (a one-commit snapshot of the upstream at the base sha; never pushed upstream).
+// Kept fresh for the video take (2026-10-14 ~09:00 UTC, scene 3): /start refuses it unless the run is labelled as the take.
+const RESERVED = ['fleet-n2-vscode-src-1'];
 const KIND_BASE = { 'vscode-src': 'd4793e33307ee0862715165b2e021451ee9f207e', 'vscode-ext': '785307db28d9ec8bdca32d5fe74ea60696a46f7e', nextjs: 'e8d747659267c2937cc4b5dcbff4b0bd1e029315',
   angular: '80b1f335d707d5993415d48cb08689980f04082b', babel: 'c964b8d7a77d21328bc44b41b57b65bd2f9e0008', nest: '8cdb43358b0ed91cd5b60502e571f3524ad2113d' };
 const SOURCES = {
@@ -125,7 +127,7 @@ export default {
           const last = (await run(env, r).runs().catch(() => [])).sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))[0] || null;
           let fresh = null;
           try { using rp = await ns(env, r).get(r); fresh = (await rp.log({ limit: 1 }))[0]?.hash === KIND_BASE[kind]; } catch {}
-          return { repo: r, source: { ...(SOURCES[kind] || SOURCES.main), namespace: r.startsWith(N2) ? 'qbfleet2' : 'qbfleet' }, files: last?.files ?? null, fresh, lastRun: last ? { runId: last.runId, state: last.state, label: last.label } : null };
+          return { repo: r, ...(RESERVED.includes(r) ? { reserved: true } : {}), source: { ...(SOURCES[kind] || SOURCES.main), namespace: r.startsWith(N2) ? 'qbfleet2' : 'qbfleet' }, files: last?.files ?? null, fresh, lastRun: last ? { runId: last.runId, state: last.state, label: last.label } : null };
         }));
         return json({ jobs: ['comments', 'comments+index'], copies: rows.sort((a, b) => a.repo.localeCompare(b.repo, 'en', { numeric: true })) });
       }
