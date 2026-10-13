@@ -194,6 +194,24 @@ function llmOf(r, t, prompt) {
     promptChars: prompt.length, exit: r.status, error: r.status === 0 && !j.is_error ? undefined : String(j.result || r.stderr || r.error || '').slice(0, 300) };
 }
 const replayMsg = (c, unhandled) => `${c.title || c.id}\n\n${(c.intent || '').slice(0, 4000)}\n\nReplayed by ${job.llm.model} on the latest main (the text merge conflicted in ${unhandled.join(', ')}).\n\nqodebase-change: ${c.id}\n`;
+// After a model replay: is every line the reviewed change ADDED still there? (Review 2 #2, 2026-10-13: a replay must never
+// quietly drop reviewed work.) Non-trivial added lines only (3+ chars after trim), looked up in the replayed version of the
+// same file; a file the replay deleted counts as missing. Lines the reviewed diff REMOVED are not checked: on a stale base
+// they are often other agents' work, which a replay rightly keeps.
+const REPLAY_MIN_COVERAGE = 0.9;
+function coverage(base, agentCommit, landedCommit, cwd = DIR) {
+  const files = git(['diff', '--name-only', '--diff-filter=AM', base, agentCommit], { cwd }).out.split('\n').filter(Boolean);
+  let want = 0, have = 0; const missing = [];
+  for (const f of files) {
+    const added = git(['diff', '-U0', base, agentCommit, '--', f], { cwd }).out.split('\n').filter((l) => l.startsWith('+') && !l.startsWith('+++')).map((l) => l.slice(1).trim()).filter((l) => l.length >= 3);
+    if (!added.length) continue;
+    const now = git(['show', `${landedCommit}:${f}`], { cwd, ok: true });
+    const lines = new Set(now.code === 0 ? now.out.split('\n').map((l) => l.trim()) : []);
+    for (const l of added) { want++; if (lines.has(l)) have++; else if (missing.length < 3) missing.push(`${f}: ${l.slice(0, 80)}`); }
+  }
+  return { want, have, ratio: want ? have / want : 1, missing };
+}
+
 const sameLines = (a, b) => { const lines = (d) => d.split('\n').filter((l) => /^[+-](?![+-])/.test(l)).map((l) => l.trim()).sort().join('\n'); return lines(a) === lines(b); };
 
 function replay(c, base, before, conflicts, unhandled) {
@@ -209,6 +227,13 @@ function replay(c, base, before, conflicts, unhandled) {
   git(['commit', '-q', '-F', '-'], { input: replayMsg(c, unhandled) });
   const commit = git(['rev-parse', 'HEAD']).out;
   llm.sameLines = sameLines(git(['diff', before, commit]).out, git(['diff', base, c.commit]).out);
+  const cov = coverage(base, c.commit, commit);
+  llm.coverage = Math.round(cov.ratio * 1000) / 1000;
+  if (cov.ratio < REPLAY_MIN_COVERAGE) {
+    git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']);
+    say('replay_incomplete', { id: c.id, ...cov });
+    return { ok: false, llm, why: `the replay left out ${cov.want - cov.have} of ${cov.want} lines the reviewed change added (${cov.missing.join('; ')})` };
+  }
   return { ok: true, commit, llm };
 }
 
@@ -276,15 +301,19 @@ async function replayDeferred(deferred, results, applied, cfg) {
     const before = git(['rev-parse', 'HEAD']).out;
     if (o?.ok) {
       const cp = git(['cherry-pick', '--allow-empty', '--keep-redundant-commits', o.commit], { ok: true });
-      if (cp.code === 0) {
+      const covOk = cp.code === 0 && (() => { const cov = coverage(r.base, c.commit, git(['rev-parse', 'HEAD']).out); o.llm.coverage = Math.round(cov.ratio * 1000) / 1000; if (cov.ratio < REPLAY_MIN_COVERAGE) { say('replay_incomplete', { id: c.id, parallel: true, ...cov }); return false; } return true; })();
+      if (cp.code === 0 && !covOk) { git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']); o.ok = false; o.why = 'the side-by-side replay left out reviewed lines'; }
+      else if (cp.code === 0) {
         const commit = git(['rev-parse', 'HEAD']).out;
         o.llm.sameLines = sameLines(git(['diff', before, commit]).out, git(['diff', r.base, c.commit]).out);
         results.set(c.id, { id: c.id, ok: true, how: 'replayed-llm', files: r.files, conflicts: r.conflicts, handled: r.handled, commit, before, llm: { ...o.llm, parallel: true, parallelOutcome: 'landed' }, reviewedDiff: diffOf(r.base, c.commit) });
         say('applied', { id: c.id, ok: true, how: 'replayed-llm', parallel: true });
         applied.push(c); continue;
       }
-      git(['cherry-pick', '--abort'], { ok: true }); git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']);
-      say('replay_collided', { id: c.id, err: (cp.err || cp.out).slice(0, 200) });
+      if (cp.code !== 0) {
+        git(['cherry-pick', '--abort'], { ok: true }); git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']);
+        say('replay_collided', { id: c.id, err: (cp.err || cp.out).slice(0, 200) });
+      }
     } else if (o) say('replay_parallel_failed', { id: c.id, why: String(o.why || '').slice(0, 300) });
     // Serial: a stacked change, a replay that collided with an earlier one, or one that failed in parallel (one more try).
     const tS = Date.now();

@@ -171,7 +171,23 @@ const prompt = process.argv[process.argv.indexOf('-p') + 1];
 const id = (prompt.match(/Intent: change (\\w+)/) || [])[1];
 // Like Claude Code: every write under a .git path is refused ('sensitive file').
 if (process.cwd().split('/').includes('.git')) { console.log(JSON.stringify({ is_error: true, result: 'refused: sensitive file' })); process.exit(0); }
+// Like a real replay, make the reviewed change: each '+' line of the diff in the prompt replaces the line with the same
+// start (up to its '=' or 14 chars) in that diff's file, or is appended. FAKE_MODE=drop leaves them out (a bad replay).
+const applyDiff = () => {
+  const diff = (prompt.split('\`\`\`diff')[1] || '').split('\`\`\`')[0];
+  let file = null;
+  for (const l of diff.split('\\n')) {
+    const m = l.match(/^\\+\\+\\+ b\\/(.+)$/); if (m) { file = m[1]; continue; }
+    if (!file || !l.startsWith('+') || l.startsWith('+++')) continue;
+    const line = l.slice(1), key = (line.includes('=') ? line.slice(0, line.indexOf('=')) : line.slice(0, 14)).trim();
+    const t = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\\n') : [];
+    const k = t.findIndex((x) => x.trim().startsWith(key) && key.length > 2);
+    if (k >= 0) t[k] = line; else t.push(line);
+    fs.writeFileSync(file, t.join('\\n'));
+  }
+};
 setTimeout(() => {
+  if (process.env.FAKE_MODE !== 'drop') applyDiff();
   if (process.env.FAKE_MODE === 'append') fs.appendFileSync('src/math.js', '\\nexport function f_' + id + '() {\\n  return "' + id + '";\\n}\\n');
   else { fs.mkdirSync('src', { recursive: true }); fs.writeFileSync('src/' + id + '.js', 'export const ' + id + ' = 1;\\n'); }
   console.log(JSON.stringify({ num_turns: 1, total_cost_usd: 0.001, usage: { input_tokens: 10, output_tokens: 5 }, result: 'done' }));
@@ -247,4 +263,14 @@ test('the same train run twice at once lands once and reports one result', async
   assert.deepEqual(g(w, 'log', '--format=%s').split('\n'), ['change b', 'change a', 'start'], 'each change landed once');
   const o3 = await go();
   assert.match(o3, /"event":"result_reused"/); assert.deepEqual(res(o3), r1);
+});
+
+test('a model replay that leaves out reviewed lines is not landed (review 2 #2)', () => {
+  const s = setup({ 'src/p1.js': 'export const p1 = 0;\n', 'src/p2.js': 'export const p2 = 0;\n', 'src/p3.js': 'export const p3 = 0;\n', 'src/p4.js': 'export const p4 = 0;\n' });
+  const env = fakeClaude(s.root, 'drop');
+  const { r, log } = runEnv({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', llm: { model: 'claude-haiku-5-5' }, changes: disjoint(s) }, env);
+  const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
+  assert.equal(by.a.landed, true);
+  for (const id of ['b', 'c', 'd', 'e']) { assert.equal(by[id].landed, false, id); assert.match(by[id].why, /left out 1 of 1 lines the reviewed change added/, id); }
+  assert.match(log, /"event":"replay_incomplete"/);
 });
