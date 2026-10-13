@@ -94,7 +94,7 @@ F0 bench (20 files per model, measured, sim/fleet/F0.md):
 
 ## Collision dials
 
-**Comment dial.** measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off; collisions = pairs of tasks started at the same moment.
+**Comment dial.** measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off; collisions = pairs of tasks started at the same moment. In cached mode the second comment of a same-declaration pair is derived from the first (its first sentence, or that plus a stock phrase), so 'duplicate, kept the first' says which landed first, not which answer was better. Which version wins under real collisions is measured by the code dial, where the hidden tests decide.
 
 | dial | tasks | tasks/s | pairs far / near / same | how pairs resolved | doubled comments | code changed | lost (checker) | land wait p50 / p90 |
 |---|---|---|---|---|---|---|---|---|

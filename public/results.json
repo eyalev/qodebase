@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T15:45:12.844Z",
+ "generated": "2026-10-13T15:45:59.202Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -294,7 +294,8 @@
      "landWaitP50S": 96,
      "landWaitP90S": 165
     }
-   ]
+   ],
+   "caveat": "In cached mode the second comment of a same-declaration pair is derived from the first (its first sentence, or that plus a stock phrase), so 'duplicate, kept the first' says which landed first, not which answer was better. Which version wins under real collisions is measured by the code dial, where the hidden tests decide."
   },
   "code": {
    "label": "kata collision dial (sim/kata, lab-hidden tests); pending",

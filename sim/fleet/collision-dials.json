@@ -3,9 +3,53 @@
  "comment": {
   "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off; collisions = pairs of tasks started at the same moment",
   "levels": [
-   { "dial": 0, "tasks": 30720, "tasksPerSec": 1180, "pairs": { "far": 0, "near": 0, "same": 0 }, "resolutions": { "clean": 30720 }, "doubled": 0, "codeChanged": 0, "lost": 20, "lostNote": "20 = one file per copy with '} export class X' on one line: comment placed above the '}' (a doc.js targeting bug from F3 on, fixed in 6807d72), not a collision", "landWaitP50S": null, "landWaitP90S": null, "landNote": "landing times not comparable: the Lander stalled on Artifacts internal errors until trees were memoised mid-level" },
-   { "dial": 10, "tasks": 32340, "tasksPerSec": 1195, "pairs": { "far": 238, "near": 318, "same": 1064 }, "resolutions": { "farAutoMerged": 238, "nearAutoMerged": 318, "sameDuplicateKeptFirst": 1060, "sameReplayed": 4 }, "doubled": 0, "codeChanged": 0, "lost": 20, "lostNote": "the same 20 targeting-bug files as dial 0, none from collisions", "landWaitP50S": 96, "landWaitP90S": 165 }
-  ]
+   {
+    "dial": 0,
+    "tasks": 30720,
+    "tasksPerSec": 1180,
+    "pairs": {
+     "far": 0,
+     "near": 0,
+     "same": 0
+    },
+    "resolutions": {
+     "clean": 30720
+    },
+    "doubled": 0,
+    "codeChanged": 0,
+    "lost": 20,
+    "lostNote": "20 = one file per copy with '} export class X' on one line: comment placed above the '}' (a doc.js targeting bug from F3 on, fixed in 6807d72), not a collision",
+    "landWaitP50S": null,
+    "landWaitP90S": null,
+    "landNote": "landing times not comparable: the Lander stalled on Artifacts internal errors until trees were memoised mid-level"
+   },
+   {
+    "dial": 10,
+    "tasks": 32340,
+    "tasksPerSec": 1195,
+    "pairs": {
+     "far": 238,
+     "near": 318,
+     "same": 1064
+    },
+    "resolutions": {
+     "farAutoMerged": 238,
+     "nearAutoMerged": 318,
+     "sameDuplicateKeptFirst": 1060,
+     "sameReplayed": 4
+    },
+    "doubled": 0,
+    "codeChanged": 0,
+    "lost": 20,
+    "lostNote": "the same 20 targeting-bug files as dial 0, none from collisions",
+    "landWaitP50S": 96,
+    "landWaitP90S": 165
+   }
+  ],
+  "caveat": "In cached mode the second comment of a same-declaration pair is derived from the first (its first sentence, or that plus a stock phrase), so 'duplicate, kept the first' says which landed first, not which answer was better. Which version wins under real collisions is measured by the code dial, where the hidden tests decide."
  },
- "code": { "label": "kata collision dial (sim/kata, lab-hidden tests); pending", "levels": [] }
+ "code": {
+  "label": "kata collision dial (sim/kata, lab-hidden tests); pending",
+  "levels": []
+ }
 }

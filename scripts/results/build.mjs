@@ -242,7 +242,7 @@ if (F.f0) md.push('F0 bench (20 files per model, measured, sim/fleet/F0.md):', '
   Object.entries(F.f0).map(([m, v]) => v.withComments === 0 ? [m, 'not usable: 14 of 20 calls hit the free-tier quota', '-', '-', '-', '-', '-'] : [m, `${v.codeUnchanged}/${v.withComments}`, fmt(v.comments), v.judge?.accurate != null ? fmt(v.judge.accurate * 100) + '%' : '-', fmt(v.judge?.helpful, 2), `${fmt(v.latencyS?.p50, 1)} s`, usd(v.per1kFiles?.usd)])), '');
 
 if (DIALS) {
-  md.push('## Collision dials', '', `**Comment dial.** ${DIALS.comment.label}.`, '',
+  md.push('## Collision dials', '', `**Comment dial.** ${DIALS.comment.label}.${DIALS.comment.caveat ? ' ' + DIALS.comment.caveat : ''}`, '',
     table(['dial', 'tasks', 'tasks/s', 'pairs far / near / same', 'how pairs resolved', 'doubled comments', 'code changed', 'lost (checker)', 'land wait p50 / p90'],
       DIALS.comment.levels.map((l) => [`${l.dial}%`, fmt(l.tasks), fmt(l.tasksPerSec), `${fmt(l.pairs.far)} / ${fmt(l.pairs.near)} / ${fmt(l.pairs.same)}`, Object.entries(l.resolutions).map(([k, v]) => `${k} ${fmt(v)}`).join(', '), fmt(l.doubled), fmt(l.codeChanged), `${fmt(l.lost)}${l.lostNote ? ` (${l.lostNote})` : ''}`, l.landWaitP50S != null ? `${fmt(l.landWaitP50S)} / ${fmt(l.landWaitP90S)} s` : `- (${l.landNote || ''})`])), '');
   md.push(`**Code dial.** ${DIALS.code.levels.length ? '' : 'Pending (prediction in docs/board/sim.md (m)).'}`, '');
