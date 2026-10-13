@@ -191,6 +191,7 @@ upstream).
   wait p90 18 s, $1.37.
 - **Pace:** each model was paced at its own request limit. The busiest, gemma, peaked at 294 requests a minute against
   Workers AI's 300 per model; only 3 of ~6,650 calls were refused (429).
+- **Our side alone, without the models** (qb6's S4a runs): the same pipeline with the comments the fleet had already written looked up by each file's content hash instead of calling a model, so the providers' limits drop out; every other step is real (read from Artifacts, insert, verify, lanes commit and push). 200 agents on 4 copies of VS Code `src/vs`: 16,256 files in 71 s (227 files a second), all landed within 137 s (2,989 per copy; the rest had nothing to document or missed the cache), 0 verify failures. The first limit there was our own per-copy coordinator (~0.3 s per file per agent), being fixed.
 - **Cost:** $2.81 in all, $0.42 per 1,000 files landed. Per 1,000 files handled: glm-4.7-flash $0.10, gemma-4-26b
   $0.19, Gemini 3.1 Flash-Lite $0.22, Gemini 3.5 Flash-Lite $0.87.
 - **Quality:** a hand check of 50 VS Code files found 109 of 115 comments right (95%). A model judge (gpt-oss-120b)

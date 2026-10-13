@@ -3,6 +3,9 @@
 Status: filled from `public/results.json` (9f46aa6, 16 runs; generator `node scripts/results/build.mjs`). Model runs
 only: the four "cache" runs (S4a, answers replayed from a cache, no model calls) are left out of every number here
 until qb6 confirms what they mean.
+Update (qb6, after 28e5ae4): S4a's counts in results.json were read mid-landing; final 2,989 landed on each copy
+(11,956 of 16,256; 4,276 nothing to document, 24 cache misses). It tests our side alone at scale; the README quotes
+qb6's claim. More steps (200 on 1 copy, 1,000 on 20, 5,000 on 100) follow.
 
 Wording rules:
 - "agents" are Durable Objects calling a cheap model, not Claude. Gemini Flash-Lite (3.5 as overflow, 3.1 as a planned
