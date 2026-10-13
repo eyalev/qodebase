@@ -314,7 +314,21 @@ export class Run extends DurableObject {
   async nextMany(runId, n) {
     const files = [];
     let first = null;
+    // Batching: the pace counts calls, so one slot per pack: after a paced file, up to pack.files - 1 more ride with it
+    // (S5 v2 charged every file and ran gemma at ~30 calls/min of 255).
+    const st0 = await this.st(), per = st0?.cfg.pack ? Math.max(1, Math.min(10, Number(st0.cfg.pack.files) || 8)) : 1;
     for (let k = 0; k < Math.min(20, n); k++) {
+      if (per > 1 && first && files.length % per !== 0) {
+        const s = await this.st();
+        if (!s || s.runId !== runId || s.state !== 'running') break;
+        const row = this.sql.exec(`SELECT i, path, hash FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0];
+        if (!row) break;
+        this.sql.exec(`UPDATE q SET taken = 1 WHERE run = ? AND i = ?`, runId, row.i);
+        s.counts.queued--; s.counts.model++; await this.save(s);
+        const lead = files[files.length - (files.length % per)];
+        files.push({ path: row.path, hash: row.hash, model: lead.model, provider: lead.provider, slot: null });
+        continue;
+      }
       const r = await this.next(runId, 1);
       if (!r.file) { if (!files.length) return r; break; }
       first ||= r; files.push({ ...r.file, model: r.model, provider: r.provider, slot: r.slot });
@@ -332,8 +346,7 @@ export class Run extends DurableObject {
     if (!s || s.runId !== runId) return;
     // A file with nothing to document never reached the model: its pace slot goes back (F3b: the pacer was the first thing
     // to saturate, counting those files; the models peaked at 207/191/172 calls/min of 290/290/350).
-    // A file that rode in another file's call (batching) also gives its slot back: the pace counts calls.
-    if ((r.status === 'skipped' || r.packExtra) && r.slot && s.perSlice?.[r.slot] > 0) s.perSlice[r.slot]--;
+    if (r.status === 'skipped' && r.slot && s.perSlice?.[r.slot] > 0) s.perSlice[r.slot]--;
     const usd = r.usd || 0;
     s.usd += usd; s.calls++;
     const minute = Math.floor(Date.now() / 60000);
