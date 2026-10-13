@@ -38,6 +38,8 @@ export default {
       case '/stop': return json(await run(env).stop(body.why || 'stopped by hand'));
       case '/records': return new Response(await run(env).records(url.searchParams.get('run')), { headers: { 'content-type': 'application/x-ndjson' } });
       case '/budget': return json(await budget(env).status());
+      // One file through a given provider/model, no landing (provider checks; the call is priced and counted in the day cap).
+      case '/try': { const r = await env.AGENT.get(env.AGENT.idFromName('try')).work(body.file, body.model, body.provider || 'workers-ai'); if (r.usd) await budget(env).spend(r.usd); delete r.text; return json(r); }
       case '/retire-v1': { await env.LANDER.get(env.LANDER.idFromName('fleet')).begin('retired', ''); return json({ ok: true }); }
       // An object that never goes idle (the Lander's 5 s alarm) keeps running old code after a deploy: restart it.
       case '/restart': { await lander(env).restart().catch(() => {}); await run(env).restart().catch(() => {}); return json({ ok: true }); }
@@ -119,7 +121,14 @@ export class Run extends DurableObject {
     const b = await budget(this.env).check();
     if (!b.ok) return { error: b.why };
     const cfg = { ...DEFAULTS, ...opts, pause: { ...DEFAULTS.pause, ...(opts.pause || {}) } };
-    if (!cfg.model || !PRICES_OF(this.env)[cfg.model]) return { error: `model required, with a price: one of ${Object.keys(PRICES_OF(this.env)).join(', ') || '(none set: FLEET_PRICES)'}` };
+    // Models side by side, each paced at its own limit (Workers AI: 300 req/min per model): cfg.models [{model, maxPerMin}],
+    // or one cfg.model at cfg.maxPerMin. cfg.overflow {model, maxPerMin}: Gemini through the same gateway, used only when
+    // every Workers AI model is at its limit.
+    cfg.models = (Array.isArray(cfg.models) && cfg.models.length ? cfg.models : [{ model: cfg.model, maxPerMin: cfg.maxPerMin }]).map((m) => ({ model: m.model, maxPerMin: Number(m.maxPerMin) || 250 }));
+    cfg.model = cfg.models.map((m) => m.model).join(' + ');
+    const prices = PRICES_OF(this.env);
+    for (const m of [...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])]) if (!m.model || !prices[m.model]) return { error: `model ${m.model} has no price: one of ${Object.keys(prices).join(', ')}` };
+    if (cfg.overflow && !this.env.GEMINI_KEY) return { error: 'overflow needs the GEMINI_KEY secret' };
     cfg.agents = Math.max(1, Math.min(2000, Number(cfg.agents) || 10));
     cfg.budgetUsd = Math.min(Number(cfg.budgetUsd) || 1, b.left);
     // One walk of main's src/vs (~800 folders): the files with their blob hashes, lanes interleaved, and main's tip.
@@ -158,13 +167,16 @@ export class Run extends DurableObject {
     if (!s || s.runId !== runId) return { stop: true };
     if (s.state === 'paused') return { wait: 15_000 };
     if (s.state !== 'running') return { stop: true };
-    // The pace in 10-second slices (a per-minute bucket let a minute's calls go in seconds, and two at its edges: 429s at
-    // 100 agents), and the money.
+    // The pace in 10-second slices per model (a per-minute bucket let a minute's calls go in seconds, and two at its edges:
+    // 429s at 100 agents). The first model with room takes the file; Gemini only when every Workers AI model is full.
     const minute = Math.floor(Date.now() / 60000), slice = Math.floor(Date.now() / 10000);
     s.perSlice ||= {};
-    if ((s.perSlice[slice] || 0) >= Math.max(1, Math.floor(s.cfg.maxPerMin / 6))) return { wait: 2_000 + Math.random() * 3000 };
-    s.perSlice[slice] = (s.perSlice[slice] || 0) + 1;
-    for (const k of Object.keys(s.perSlice)) if (Number(k) < slice - 12) delete s.perSlice[k];
+    const room = (m) => (s.perSlice[`${m.model}|${slice}`] || 0) < Math.max(1, Math.floor(m.maxPerMin / 6));
+    let pickM = s.cfg.models.find(room), provider = 'workers-ai';
+    if (!pickM && s.cfg.overflow && room(s.cfg.overflow)) { pickM = s.cfg.overflow; provider = 'google-ai-studio'; }
+    if (!pickM) return { wait: 2_000 + Math.random() * 3000 };
+    s.perSlice[`${pickM.model}|${slice}`] = (s.perSlice[`${pickM.model}|${slice}`] || 0) + 1;
+    for (const k of Object.keys(s.perSlice)) if (Number(k.split('|')[1]) < slice - 12) delete s.perSlice[k];
     if (s.usd >= s.cfg.budgetUsd) { await this.autoPause(s, `run budget reached: $${s.usd.toFixed(3)} of $${s.cfg.budgetUsd}`); return { wait: 15_000 }; }
     const row = this.sql.exec(`SELECT i, path, hash FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0];
     if (!row) return { stop: true };
@@ -172,7 +184,7 @@ export class Run extends DurableObject {
     s.counts.queued--; s.counts.model++;
     (s.perMin[minute] ||= { calls: 0, usd: 0 }).calls++;
     await this.save(s);
-    return { file: { path: row.path, hash: row.hash }, model: s.cfg.model };
+    return { file: { path: row.path, hash: row.hash }, model: pickM.model, provider };
   }
 
   /** An agent's result for one file. */
@@ -192,7 +204,7 @@ export class Run extends DurableObject {
       if (q && (q.tries || 0) < 2) { this.sql.exec(`UPDATE q SET taken = 0, tries = ? WHERE run = ? AND i = ?`, (q.tries || 0) + 1, runId, q.i); r = { ...r, status: `${r.status}_retry` }; }
     }
     this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      runId, r.file, r.status, (r.reason || '').slice(0, 300), s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0);
+      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0);
     // Old per-minute buckets go (an hour kept).
     for (const k of Object.keys(s.perMin)) if (Number(k) < minute - 60) delete s.perMin[k];
     await this.save(s);
@@ -312,11 +324,12 @@ export class Agent extends DurableObject {
     const n = await R.next(runId);
     if (n.stop) { await R.agentFinished(runId); return; }
     if (n.wait) { await this.ctx.storage.setAlarm(Date.now() + n.wait); return; }
-    const r = await this.work(n.file, n.model).catch((e) => ({ file: n.file.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
+    const r = await this.work(n.file, n.model, n.provider).catch((e) => ({ file: n.file.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
+    r.model = n.model;
     await R.done(runId, i, r);
     await this.ctx.storage.setAlarm(Date.now() + 50);
   }
-  async work(file, model) {
+  async work(file, model, provider = 'workers-ai') {
     const t0 = Date.now();
     using repo = await this.env.ARTIFACTS.get(MAIN);
     const blob = await repo.readBlob(file.hash);
@@ -325,7 +338,17 @@ export class Agent extends DurableObject {
     const tg = targets(file.path, text);
     if (!tg.length) return { file: file.path, status: 'skipped', reason: 'nothing to document', ms: Date.now() - t0 };
     let res;
-    try {
+    if (provider === 'google-ai-studio') {
+      // Gemini through the same AI Gateway (provider google-ai-studio), JSON answer, the provider's own token counts.
+      const g = await fetch(`https://gateway.ai.cloudflare.com/v1/887d7234a6b8d65ad355a4f6684cab67/${GATEWAY}/google-ai-studio/v1beta/models/${model}:generateContent`, {
+        method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': this.env.GEMINI_KEY },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt(file.path, text, tg) }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 1200, responseMimeType: 'application/json' } }),
+      }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }));
+      if (!g.ok) { const m = (await g.text()).slice(0, 200); return { file: file.path, status: g.status === 429 ? 'rate_limited' : 'model_error', reason: `gemini ${g.status}: ${m}`, ms: Date.now() - t0 }; }
+      const j = await g.json();
+      const u = j.usageMetadata || {};
+      res = { response: j.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '', usage: { prompt_tokens: u.promptTokenCount || 0, completion_tokens: (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0) } };
+    } else try {
       // Thinking off (GLM and Qwen spend the whole budget reasoning otherwise: the plumbing run's 3 answers had no JSON).
       res = await this.env.AI.run(model, { messages: [{ role: 'user', content: prompt(file.path, text, tg) }], max_tokens: 1200, temperature: 0.2, chat_template_kwargs: { enable_thinking: false } }, { gateway: { id: GATEWAY } });
     } catch (e) {
