@@ -25,6 +25,13 @@
   const clock = (s) => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60), h = Math.floor(m / 60); return h ? `${h}:${String(m % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` : `${m}:${String(s % 60).padStart(2, '0')}`; };
   const ago = (t) => { const s = Math.max(0, (Date.now() - t) / 1000); return s < 60 ? 'just now' : s < 3600 ? `${Math.floor(s / 60)} min ago` : s < 86400 ? `${Math.floor(s / 3600)} h ago` : `${Math.floor(s / 86400)} days ago`; };
   const short = (m) => (m === 'cache' ? 'cache (answers reused, no model)' : String(m || '').replace(/^@cf\/[^/]+\//, '').replace(/-instruct$|-it$|-fp8$/g, ''));
+  // What each fleet repo is (Eyal: 'Copy' means nothing): our own Artifacts duplicates of these open-source projects,
+  // made for the test and never pushed upstream. qb6's row.source wins when present.
+  const SRC = { 'fleet-vscode-src': ['VS Code src/vs', 'microsoft/vscode'], 'fleet-vscode-ext': ['VS Code extensions', 'microsoft/vscode'], 'fleet-nest': ['NestJS packages', 'nestjs/nest'],
+    'fleet-angular': ['Angular packages', 'angular/angular'], 'fleet-nextjs': ['Next.js packages', 'vercel/next.js'], 'fleet-babel': ['Babel packages', 'babel/babel'], 'fleet-main': ['VS Code src/vs', 'microsoft/vscode'] };
+  const repoBase = (repo) => String(repo || '').replace(/-\d+$/, '');
+  const srcOf = (r) => { const x = r.source; if (x && x.name) return { name: x.name, upstream: x.upstream || '' }; const m = SRC[repoBase(r.repo)]; return m ? { name: m[0], upstream: m[1] } : { name: repoBase(r.repo).replace(/^fleet-/, ''), upstream: '' }; };
+  const repoCopy = (r) => +((/-(\d+)$/.exec(r.repo || '') || [])[1] || 0);
   const pct = (a, b) => (b ? Math.max(0, Math.min(100, (100 * a) / b)) : 0);
 
   let D = null, TL = {}, failures = 0, timer = 0, lastOk = 0, stopAsk = {}, busy = false;
@@ -115,7 +122,8 @@
     return `<article class="rc st-${esc(r.state)}" data-k="${esc(key(r))}">
       <div class="rc-h">${stateTag(r)}<span class="rc-t">${live(r) ? `running <b data-since="${r.startedAt}">${clock(elapsedS(r))}</b>` : r.endedAt ? `${clock(elapsedS(r))}, ended ${ago(r.endedAt)}` : ''}</span></div>
       ${full || r.group ? `<h2 class="rc-name">${esc(title)}</h2>` : `<a class="rc-name" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">${esc(title)}</a>`}
-      <p class="rc-sub">${r.group ? `${r.copies.length} copies run side by side` : `${esc(r.repo)}${r.root ? `, ${esc(r.root)}` : ''}`}, ${n0(r.agentsStarted ?? r.agents)} of ${n0(r.agents)} agents started</p>
+      <p class="rc-sub">${r.group ? `${r.copies.length} copies of ${new Set(r.copies.map((c) => repoBase(c.repo))).size} projects, run side by side` : whatIs(r)}, ${n0(r.agentsStarted ?? r.agents)} of ${n0(r.agents)} agents started</p>
+      ${r.group && r.copies[0]?.ladder ? `<div class="rc-tl"><p class="rc-mh">All ${r.copies.length} copies together</p>${timeline(r, TL['ladder:' + r.copies[0].ladder], full ? (DR && DR.k === key(r) ? DR : null) : 'mini')}</div>` : ''}
       ${why ? `<p class="rc-why">${r.state === 'paused' && autoWhy(r) ? 'Paused automatically: ' : ''}${esc(why)}</p>` : ''}
       <div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${c.files} files got comments on main">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
         <p>Agents ${live(r) ? 'have added' : 'added'} doc comments to <b>${n0(c.landed)}</b> files and committed them to ${r.group ? 'each copy\u2019s' : 'the'} main branch; ${n0(c.skipped)} files already had them.</p>
@@ -129,9 +137,13 @@
       ${modRows ? `<div class="rc-m"><p class="rc-mh">Calls per minute, per model${live(r) ? '' : ' (peak)'}</p>${modRows}</div>` : ''}
       ${ctl}
       ${r.group ? copyRows(r) : ''}
-      ${r.group && !full ? `<a class="chipbtn rc-go" href="#/step/${encodeURIComponent(r.label)}">Timeline, all copies</a>` : ''}
+      ${r.group && !full ? `<a class="chipbtn rc-go" href="#/step/${encodeURIComponent(r.label)}">Open: drill into moments and commits</a>` : ''}
       ${full || r.group ? '' : `<a class="chipbtn rc-go" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">Timeline</a>`}
     </article>`;
+  }
+  function whatIs(r) {
+    const s = srcOf(r), n = repoCopy(r), of = r.copiesOfRepo || (D?.fleet || []).filter((x) => x.ladder && x.ladder === r.ladder && repoBase(x.repo) === repoBase(r.repo)).length;
+    return `${esc(s.name)}${n && r.ladder ? `, copy ${n}${of > 1 ? ` of ${of}` : ''}` : ''}${s.upstream ? ` (a duplicate of ${esc(s.upstream)} made for this test)` : ''}`;
   }
   function controls(r) {
     const k = key(r), asking = stopAsk[k] && Date.now() - stopAsk[k] < 10e3, all = r.group ? ` all ${r.copies.length}` : '';
@@ -255,13 +267,13 @@
     const mlabels = (t.marks || []).map((m) => { const w = MW(m.kind).length * 6.5, mx = Math.max(1, Math.min(W - w - 4, x(m.at) + 3)); return `<text class="tl-mt m-${esc(MK(m.kind))}" x="${mx.toFixed(1)}" y="12">${esc(MW(m.kind))}</text>`; }).join('');
     const legend = (t.marks || []).length ? `<ul class="tl-ml">${(t.marks || []).map((m) => `<li><i class="m-${esc(MK(m.kind))}"></i>${esc(MW(m.kind).replace(/^./, (c) => c.toUpperCase()))} ${clock((m.at - t0) / 1000)} in${m.why ? `: ${esc(m.why)}` : ''}</li>`).join('')}</ul>` : '';
     const sel = drill && drill.i != null && S[drill.i] ? `<rect class="tl-sel" x="${x(S[drill.i].minute).toFixed(1)}" y="0" width="${per}" height="100%"/>` : '';
-    TLS = { S, stepMs, per, t0, unit };
-    return `<div class="tl-frame"${live(run) ? ' data-live' : ''} tabindex="0" role="group" aria-label="Timeline of the run; scrolls sideways; tap a column for that moment"><div class="tl-in" style="width:${W}px" data-per="${per}">
+    const mini = drill === 'mini'; if (mini) drill = null; else TLS = { S, stepMs, per, t0, unit };
+    return `<div class="tl-frame${mini ? ' mini' : ''}"${live(run) ? ' data-live' : ''} tabindex="0" role="group" aria-label="Timeline of the run; scrolls sideways; tap a column for that moment"><div class="tl-in" style="width:${W}px;--fw:${W0 - 6}px" data-per="${per}">
       ${mlabels ? `<svg class="tl-ax" width="${W}" height="16" aria-hidden="true">${mlabels}</svg>` : ''}
       <svg class="tl-ov" width="${W}" height="100%" aria-hidden="true">${grid}${sel}${marks}</svg>
       ${rows.map(strip).join('')}
       <svg class="tl-ax" width="${W}" height="16" aria-hidden="true">${axis}</svg></div></div>${legend}
-      <p class="tl-hint">Tap a column to see what happened in that slice.</p>`;
+      ${mini ? '' : '<p class="tl-hint">Tap a column to see what happened in that slice.</p>'}`;
   }
 
   // ---- drill-down: a slice -> its changes -> an agent's files, or one change's comments and timings --------------
@@ -278,7 +290,7 @@
     if (!DR || DR.k !== key(run) || !TLS) return '';
     const s = TLS.S[DR.i]; if (!s) return '';
     const from = clock((s.minute - TLS.t0) / 1000), to = clock((s.minute - TLS.t0 + TLS.stepMs) / 1000);
-    const crumbs = `<p class="dp-cr"><button type="button" class="dp-x" data-dr="close" aria-label="Close">Close</button><button type="button" class="dp-b${DR.view === 'slice' ? ' on' : ''}" data-dr="slice">${from} to ${to}</button>${DR.agent ? `<button type="button" class="dp-b${DR.view === 'agent' ? ' on' : ''}" data-dr="agent" data-agent="${esc(DR.agent)}">${esc(agentName(DR.agent))}</button>` : ''}${DR.file && DR.view === 'change' ? `<span class="dp-b on">${esc(fileName(DR.file))}</span>` : ''}</p>`;
+    const crumbs = `<p class="dp-cr"><button type="button" class="dp-x" data-dr="close" aria-label="Close">Close</button><button type="button" class="dp-b${DR.view === 'slice' ? ' on' : ''}" data-dr="slice">${from} to ${to}</button>${DR.agent ? `<button type="button" class="dp-b${DR.view === 'agent' ? ' on' : ''}" data-dr="agent" data-agent="${esc(DR.agent)}">${esc(agentName(DR.agent))}</button>` : ''}${DR.sha && (DR.view === 'commit' || DR.view === 'change') ? `<button type="button" class="dp-b${DR.view === 'commit' ? ' on' : ''}" data-dr="commit" data-sha="${esc(DR.sha)}">Commit ${esc(DR.sha.slice(0, 7))}</button>` : ''}${DR.file && DR.view === 'change' ? `<span class="dp-b on">${esc(fileName(DR.file))}</span>` : ''}</p>`;
     let body = '';
     if (DR.view === 'slice') {
       const raw = s.raw || {};
@@ -290,7 +302,13 @@
         : !d ? '<p class="dp-n">Loading the changes in this slice…</p>' : d.error ? `<p class="dp-n">The list of changes is not available yet (${esc(d.error)}).</p>`
         : !(d.changes || []).length ? `<p class="dp-n">${d.landedInSlice ? `${n0(d.landedInSlice)} changes reached main in this slice; agents finished them earlier.` : 'No single change finished in this slice.'}</p>`
         : `<ul class="dp-l">${d.changes.slice(0, 60).map((c) => `<li><button type="button" class="dp-f" data-dr="change" data-file="${esc(c.file)}" data-agent="${esc(c.agent || '')}"><span class="mono">${esc(fileName(c.file))}</span><small>${esc(ST[c.status] || c.status || '')}${c.landed ? `, on main ${rel(c.landed)}` : c.answered ? `, finished ${rel(c.answered)}` : ''}</small></button>${c.agent ? `<button type="button" class="dp-a" data-dr="agent" data-agent="${esc(c.agent)}">${esc(agentName(c.agent))}</button>` : ''}</li>`).join('')}</ul>${(d.total || d.changes.length) > 60 ? `<p class="dp-n">and ${n0((d.total || d.changes.length) - 60)} more in this slice</p>` : ''}`;
-      body = `<ul class="dp-facts">${facts}</ul>${lanes.length ? `<p class="dp-n">Busiest lanes: ${lanes.map(([l, v]) => `${esc(l)} ${n0(v)}`).join(', ')}</p>` : ''}${list}`;
+      const cm = DR.data.commits;
+      const commits = cm && !cm.error && (cm.commits || []).length ? `<p class="dp-h">Commits to main in this slice</p><ul class="dp-l">${cm.commits.slice(0, 40).map((c) => `<li><button type="button" class="dp-f" data-dr="commit" data-sha="${esc(c.sha)}"><span>${esc(c.message || c.sha.slice(0, 7))}</span><small>${rel(c.at)}, ${n0(c.files)} file${c.files === 1 ? '' : 's'}, <span class="mono">${esc(c.sha.slice(0, 7))}</span></small></button></li>`).join('')}</ul>` : '';
+      body = `<ul class="dp-facts">${facts}</ul>${lanes.length ? `<p class="dp-n">Busiest lanes: ${lanes.map(([l, v]) => `${esc(l)} ${n0(v)}`).join(', ')}</p>` : ''}${commits}${commits ? '<p class="dp-h">Changes in this slice</p>' : ''}${list}`;
+    } else if (DR.view === 'commit') {
+      const d = DR.data['c:' + DR.sha];
+      body = !d ? '<p class="dp-n">Loading the commit…</p>' : d.error ? `<p class="dp-n">Not available yet (${esc(d.error)}).</p>`
+        : `<p class="dp-cm">${esc(d.message || '')}</p><p class="dp-n">On main ${rel(d.at)}, ${n0((d.files || []).length)} files, <span class="mono">${esc(d.sha.slice(0, 7))}</span></p><ul class="dp-l">${(d.files || []).slice(0, 100).map((f) => { const fp = typeof f === 'string' ? f : f.file; return `<li><button type="button" class="dp-f" data-dr="change" data-file="${esc(fp)}" data-sha="${esc(d.sha)}"><span class="mono">${esc(fileName(fp))}</span><small>${esc(ST[f.status] || f.status || 'comments added')}</small></button></li>`; }).join('')}</ul>`;
     } else if (DR.view === 'agent') {
       const d = DR.data['a:' + DR.agent];
       body = !d ? '<p class="dp-n">Loading this agent’s files…</p>' : d.error ? `<p class="dp-n">Not available yet (${esc(d.error)}).</p>`
@@ -298,7 +316,7 @@
     } else {
       const d = DR.data['f:' + DR.file];
       body = !d ? '<p class="dp-n">Loading the change…</p>' : d.error ? `<p class="dp-n">Not available yet (${esc(d.error)}).</p>`
-        : `<p class="dp-p mono">${esc(d.file)}</p><dl class="dp-t"><div><dt>Agent</dt><dd>${esc(agentName(d.agent))}</dd></div><div><dt>Picked</dt><dd>${rel(d.picked)}</dd></div><div><dt>Comments from</dt><dd>${esc(d.source === 'cache' ? 'the cache (reused)' : short(d.model || d.source || ''))}${d.answered ? `, ${rel(d.answered)}` : ''}</dd></div><div><dt>Code unchanged</dt><dd>${d.verified ? `checked ${rel(d.verified)}` : '–'}</dd></div><div><dt>On main</dt><dd>${d.landed ? rel(d.landed) : esc(ST[d.status] || d.status || '–')}</dd></div></dl>
+        : `<p class="dp-p mono">${esc(d.file)}</p>${(d.note?.intent || d.intent) ? `<p class="dp-why"><b>Why:</b> ${esc(d.note?.intent || d.intent)}</p>` : ''}<dl class="dp-t"><div><dt>Agent</dt><dd>${esc(agentName(d.agent))}</dd></div><div><dt>Picked</dt><dd>${rel(d.picked)}</dd></div><div><dt>Comments from</dt><dd>${esc(d.source === 'cache' ? 'the cache (reused)' : short(d.model || d.source || ''))}${d.answered ? `, ${rel(d.answered)}` : ''}</dd></div><div><dt>Code unchanged</dt><dd>${d.note?.verify ? `${d.note.verify.ok ? 'yes' : 'no'}${d.note.verify.how ? `: ${esc(d.note.verify.how)}` : ''}` : d.verified ? `yes, checked ${rel(d.verified)}` : '–'}</dd></div>${d.commit ? `<div><dt>Commit</dt><dd class="mono">${esc(String(d.commit).slice(0, 7))}</dd></div>` : ''}<div><dt>On main</dt><dd>${d.landed ? rel(d.landed) : esc(ST[d.status] || d.status || '–')}</dd></div></dl>
           ${d.diff ? `<pre class="dp-d">${String(d.diff).split('\n').slice(0, 400).map((l) => `<span class="${/^\+(?!\+\+)/.test(l) ? 'ad' : /^-(?!--)/.test(l) ? 'rm' : /^@@/.test(l) ? 'hk' : ''}">${esc(l)}</span>`).join('\n')}</pre>` : '<p class="dp-n">No diff for this change.</p>'}`;
     }
     return `<section class="dp" aria-label="What happened">${crumbs}${body}</section>`;
@@ -336,16 +354,23 @@
     }
     return out;
   }
+  // A step's copies grouped by the project they duplicate: one summary row per project (tap to open its copies, the
+  // first five, then 'Show all'); above them, fastest / median / slowest copy by files per second.
   function copyRows(g) {
-    // many copies (S4d: 100): the first five, the rest behind 'Show all'
-    const row = (c, i) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>${esc(`Copy ${c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || i + 1}`)}</span><span class="rcp-v">${n0(k.landed)} files got comments, ${n0(k.skipped)} already had them, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; };
-    // one line above the list (Eyal): fastest, median and slowest copy by files per second (finished files / its time)
     const rate = (c) => { const k = counts(c), sec = elapsedS(c); return sec > 0 ? (k.landed + k.skipped + k.rejected) / sec : null; };
-    const rs = g.copies.map((c, i) => ({ c, i, v: rate(c) })).filter((x) => x.v != null).sort((a, b) => b.v - a.v);
-    const nm = (x) => `copy ${x.c.copy || x.i + 1}`, f1 = (v) => (v >= 10 ? Math.round(v) : v.toFixed(1));
-    const sum = rs.length > 2 ? `<p class="rcp-s">Files per second: fastest ${f1(rs[0].v)} (${nm(rs[0])}), median ${f1(rs[rs.length >> 1].v)}, slowest ${f1(rs[rs.length - 1].v)} (${nm(rs[rs.length - 1])}).</p>` : '';
-    if (g.copies.length > 6) return `${sum}<ul class="rcp">${g.copies.slice(0, 5).map(row).join('')}</ul><details class="rcp-more"${openCopies.has(g.label) ? ' open' : ''} data-g="${esc(g.label)}"><summary>Show all ${g.copies.length} copies</summary><ul class="rcp">${g.copies.slice(5).map((c, i) => row(c, i + 5)).join('')}</ul></details>`;
-    return `${sum}<ul class="rcp">${g.copies.map((c, i) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>${esc(`Copy ${c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || i + 1}`)}</span><span class="rcp-v">${n0(k.landed)} files got comments, ${n0(k.skipped)} already had them, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; }).join('')}</ul>`;
+    const f1 = (v) => (v >= 10 ? Math.round(v) : v.toFixed(1));
+    const rs = g.copies.map((c) => ({ c, v: rate(c) })).filter((x) => x.v != null).sort((a, b) => b.v - a.v);
+    const nm = (x) => `${srcOf(x.c).name} copy ${repoCopy(x.c) || '?'}`;
+    const sum = rs.length > 2 ? `<p class="rcp-s">Files per second per copy: fastest ${f1(rs[0].v)} (${esc(nm(rs[0]))}), median ${f1(rs[rs.length >> 1].v)}, slowest ${f1(rs[rs.length - 1].v)} (${esc(nm(rs[rs.length - 1]))}).</p>` : '';
+    const by = new Map(); for (const c of g.copies) { const b = repoBase(c.repo); (by.get(b) || by.set(b, []).get(b)).push(c); }
+    const row = (c, n) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>Copy ${repoCopy(c) || '?'}</span><span class="rcp-v">${n0(k.landed)} files got comments, ${n0(k.skipped)} already had them, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; };
+    const groups = [...by.entries()].sort((a, b) => b[1].length - a[1].length).map(([base, cs]) => {
+      cs.sort((a, b) => repoCopy(a) - repoCopy(b));
+      const s = srcOf(cs[0]), k = cs.reduce((a, c) => { const x = counts(c); a.l += x.landed; a.s += x.skipped; return a; }, { l: 0, s: 0 });
+      const id = `${g.label}|${base}`, more = cs.length > 5 ? `<details class="rcp-more"${openCopies.has(id + '|all') ? ' open' : ''} data-g="${esc(id + '|all')}"><summary>Show all ${cs.length} copies</summary><ul class="rcp">${cs.slice(5).map(row).join('')}</ul></details>` : '';
+      return `<details class="rcp-repo"${openCopies.has(id) ? ' open' : ''} data-g="${esc(id)}"><summary><span class="rr-n"><b>${esc(s.name)}</b><small>${cs.length} cop${cs.length === 1 ? 'y' : 'ies'}${s.upstream ? ` of ${esc(s.upstream)}` : ''}, ${n0(k.l)} files got comments, ${n0(k.s)} already had them</small></span></summary><ul class="rcp">${cs.slice(0, 5).map(row).join('')}</ul>${more}</details>`;
+    }).join('');
+    return `${sum}<div class="rcp-g">${groups}</div>`;
   }
 
   // ---- pages -------------------------------------------------------------------------------------------------------
@@ -371,6 +396,7 @@
     const lad = g.copies[0]?.ladder && TL['ladder:' + g.copies[0].ladder];
     const ts = lad ? [] : g.copies.map((c) => TL[key(c)]), have = lad ? g.copies.length : ts.filter(Boolean).length;
     const t = lad || (have ? summed(ts) : null);
+    if (lad) return `<p class="crumb"><a href="#/">All runs</a></p>${card(g, true)}${drillPanel(g)}`;
     return `<p class="crumb"><a href="#/">All runs</a></p>${card(g, true)}<section class="rsec"><h2>Timeline, all ${g.copies.length} copies together</h2>${have < g.copies.length ? `<p class="dim">${have} of ${g.copies.length} copies loaded…</p>` : ''}${timeline(g, t, DR && DR.k === key(g) ? DR : null)}${drillPanel(g)}</section>`;
   }
   function current() {
@@ -398,10 +424,12 @@
 
   async function tick() {
     clearTimeout(timer);
+    if (!D && !root.innerHTML) root.innerHTML = '<header class="rh"><h1>Scale runs</h1><p class="rh-s"><i class="live off"></i><span>Loading the runs…</span></p></header>';
     try {
       await load(); failures = 0; lastOk = Date.now();
       const cur = current();
       if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); }
+      else await Promise.all(grouped((D.fleet || []).slice()).filter((g) => g.group).slice(0, 6).map((g) => loadLadder(g).catch(() => false)));
       render();
     } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (!D) root.innerHTML = `<header class="rh"><h1>Scale runs</h1></header><p class="dim">Could not load the runs (${esc(String(e.message || e))}). Trying again.</p>`; }
     const anyLive = (D?.fleet || []).some(live);
@@ -411,33 +439,39 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
   setInterval(tickClocks, 1000);
 
-  root.addEventListener('toggle', (e) => { const d = e.target; if (d.matches?.('.rcp-more')) { if (d.open) openCopies.add(d.dataset.g); else openCopies.delete(d.dataset.g); } }, true);
+  root.addEventListener('toggle', (e) => { const d = e.target; if (d.matches?.('.rcp-more, .rcp-repo')) { if (d.open) openCopies.add(d.dataset.g); else openCopies.delete(d.dataset.g); } }, true);
   // Taps on the timeline and in the drill-down panel.
   root.addEventListener('click', async (e) => {
     const run = current();
     const tin = e.target.closest('.tl-in');
+    if (tin && tin.closest('.tl-frame.mini')) { const k = tin.closest('.rc')?.querySelector('a.rc-go[href^="#/step/"]'); if (k) location.hash = k.getAttribute('href'); return; }
     if (tin && run && TLS) {
       const i = Math.floor((e.clientX - tin.getBoundingClientRect().left) / TLS.per);
       if (i < 0 || i >= TLS.S.length) return;
       const s = TLS.S[i]; DR = { k: key(run), i, t: s.minute, to: s.minute + TLS.stepMs, view: 'slice', data: {} };
       log('drill', { kind: 'slice', i }); lastHtml = ''; render(); root.querySelector('.dp')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      const d = await drillFetch(run, `slice?t=${s.minute}&to=${s.minute + TLS.stepMs}`).catch((x) => ({ error: String(x) }));
-      if (DR && DR.t === s.minute) { DR.data.slice = d; lastHtml = ''; render(); }
+      const [d, cm] = await Promise.all([drillFetch(run, `slice?t=${s.minute}&to=${s.minute + TLS.stepMs}`).catch((x) => ({ error: String(x) })), drillFetch(run, `commits?t=${s.minute}&to=${s.minute + TLS.stepMs}`).catch(() => null)]);
+      if (DR && DR.t === s.minute) { DR.data.slice = d; DR.data.commits = cm; lastHtml = ''; render(); }
       return;
     }
     const dr = e.target.closest('[data-dr]');
     if (dr && run && DR) {
       const a = dr.dataset.dr;
       if (a === 'close') { DR = null; lastHtml = ''; render(); return; }
-      if (a === 'slice') { DR.view = 'slice'; DR.agent = null; lastHtml = ''; render(); return; }
+      if (a === 'slice') { DR.view = 'slice'; DR.agent = null; DR.sha = null; lastHtml = ''; render(); return; }
       if (a === 'agent') {
         DR.view = 'agent'; DR.agent = dr.dataset.agent; lastHtml = ''; render(); log('drill', { kind: 'agent' });
         const k = 'a:' + DR.agent; if (!DR.data[k]) { const d = await drillFetch(run, `agent/${encodeURIComponent(DR.agent)}`).catch((x) => ({ error: String(x) })); if (DR) { DR.data[k] = d; lastHtml = ''; render(); } }
         return;
       }
+      if (a === 'commit') {
+        DR.view = 'commit'; DR.sha = dr.dataset.sha; lastHtml = ''; render(); log('drill', { kind: 'commit' });
+        const k = 'c:' + DR.sha; if (!DR.data[k]) { const d = await drillFetch(run, `commit/${encodeURIComponent(DR.sha)}`).catch((x) => ({ error: String(x) })); if (DR) { DR.data[k] = d; lastHtml = ''; render(); } }
+        return;
+      }
       if (a === 'change') {
-        DR.view = 'change'; DR.file = dr.dataset.file; if (dr.dataset.agent) DR.agent = dr.dataset.agent; lastHtml = ''; render(); log('drill', { kind: 'change' });
-        const k = 'f:' + DR.file; if (!DR.data[k]) { const d = await drillFetch(run, `change?file=${encodeURIComponent(DR.file)}`).catch((x) => ({ error: String(x) })); if (DR) { DR.data[k] = d; lastHtml = ''; render(); } }
+        DR.view = 'change'; DR.file = dr.dataset.file; if (dr.dataset.agent) DR.agent = dr.dataset.agent; if (dr.dataset.sha) DR.sha = dr.dataset.sha; lastHtml = ''; render(); log('drill', { kind: 'change' });
+        const k = 'f:' + DR.file; if (!DR.data[k]) { const d = await drillFetch(run, `change?file=${encodeURIComponent(DR.file)}${DR.sha ? `&sha=${encodeURIComponent(DR.sha)}` : ''}`).catch((x) => ({ error: String(x) })); if (DR) { DR.data[k] = d; lastHtml = ''; render(); } }
         return;
       }
     }
@@ -459,5 +493,12 @@
     lastHtml = ''; tick();
   });
 
+  // A tab left open keeps polling JSON with the code it loaded; when a new version is deployed, reload (not while the
+  // person is in a drill-down or has a stop confirm open).
+  let ver = null;
+  setInterval(async () => {
+    try { const v = (await (await fetch('/version.json', { cache: 'no-store' })).json()).version; if (ver && v && v !== ver && !DR && !Object.keys(stopAsk).length) { log('reload_new_version', { from: ver, to: v }); location.reload(); } ver = ver || v; } catch (e) {}
+  }, 120e3);
+  fetch('/version.json', { cache: 'no-store' }).then((r) => r.json()).then((j) => { ver = j.version; }).catch(() => {});
   tick();
 })();
