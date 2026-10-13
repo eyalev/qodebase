@@ -756,6 +756,15 @@ function changeRequest(c) {
   // The whole request: the server decides on the first 300 characters only, so a long order (qb8's 900-character
   // café list) would otherwise reach the router cut short.
   var text = lastText && c.text && lastText.indexOf(String(c.text).slice(0, 60)) === 0 ? lastText : c.text;
+  // Someone else's project, and the sentence suggests ("suggest to this project: …", "ask the owner to …"):
+  // a request to its owner (qb7's Requests, POST …/requests), confirmed first like a change.
+  var sug = SUGGEST_RX.exec(String(text || ''));
+  if (!c.mine && sug) {
+    var what = String(text).slice(sug[0].length).replace(/^[\s:,-]+/, '').trim() || text;
+    var q = what.length > 160 ? what.slice(0, 150).replace(/\s+\S*$/, '') + '\u2026' : what;
+    offerOn('Suggest to ' + owner + '/' + name + '\u2019s owner: \u201c' + q + '\u201d?', function () { busy = true; suggest(owner, name, what); }, 'Suggest');
+    return done();
+  }
   if (!c.mine) {
     add('ai', owner + '/' + name + ' is not yours. Fork it to get your own copy, then I can send the change to its agents.');
     offerOn('Fork ' + owner + '/' + name + '?', function () {
@@ -817,6 +826,16 @@ function codeQuestion(c) {
 function projPost(owner, name, verb, body) {
   return fetch('/api/p/' + owner + '/' + name + '/' + verb, { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
     .then(function (r) { return r.json().catch(function () { return { error: 'HTTP ' + r.status }; }); });
+}
+var SUGGEST_RX = /^\s*(please\s+)?(suggest|request|propose|ask the owner( to)?|tell the owner( to)?)(\s+(to|for|on)\s+(this|the|that)\s+(project|app))?/i;
+function suggest(owner, name, text) {
+  status('Sending\u2026');
+  projPost(owner, name, 'requests', { text: String(text).slice(0, 1000) }).then(function (r) {
+    logEv('suggest', { project: owner + '/' + name, ok: !r.error, err: r.error || null });
+    if (r.error) { add('note', /HTTP 404/.test(r.error) ? 'This project does not take requests yet.' : 'Could not send it: ' + r.error); return done(); }
+    add('app', 'Sent to ' + owner + '/' + name + '\u2019s owner as a request.', [{ text: 'Requests', href: '/p/' + owner + '/' + name + '/requests' }]);
+    done();
+  }).catch(function () { add('note', 'Could not reach qodebase.'); done(); });
 }
 function sendChange(owner, name, text) {
   status('Sending\u2026');
@@ -1639,13 +1658,15 @@ function onVoiceMsg(d) {
   var c = d.cmd;
   if (c.refused) { if (c.op === 'go' && c.href) offerOn('Take me to ' + (c.label || 'that page') + '?', function () { vcNavigate(c); }); return; }
   if (c.offer) { vcPending = c; offerOn('', function () { vcPending = null; vcNavigate(c); }); return; }
-  if (c.op === 'change') { vcPending = c; offerOn('', function () { vcPending = null; voiceChange(c); }, c.mine ? 'Send' : 'Fork'); return; }
+  if (c.op === 'change') { vcPending = c; offerOn('', function () { vcPending = null; voiceChange(c); }, c.mine ? 'Send' : SUGGEST_RX.test(String(c.text || '')) ? 'Suggest' : 'Fork'); return; }
   if (c.op === 'code') return codeQuestion(c);
   if (c.op === 'go' || c.op === 'back') return vcNavigate(c);
   act(c);
 }
 function voiceChange(c) {
   var parts = String(c.slug || '').split('.'), owner = parts[0], name = parts.slice(1).join('.');
+  var sug = SUGGEST_RX.exec(String(c.text || ''));
+  if (!c.mine && sug) { busy = true; return suggest(owner, name, String(c.text).slice(sug[0].length).replace(/^[\s:,-]+/, '').trim() || c.text); }
   if (c.mine) { busy = true; return sendChange(owner, name, c.text); }
   busy = true; status('Forking\u2026');
   projPost(owner, name, 'fork', {}).then(function (f) {

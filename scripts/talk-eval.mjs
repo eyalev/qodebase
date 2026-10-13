@@ -103,6 +103,8 @@ const CASES = [
   ['run_detail', 'what happened at 1:20', { mode: ['act', 'both', 'ask'], op: ['press', 'none'], label: 'moment' }],
   ['run_step', 'show me minute 1', { mode: ['act', 'both'], op: 'press', label: 'moment' }],
   ['deck', 'show me slide 12', { mode: 'act', op: 'press', label: 'slide by its number' }],
+  ['p_forq_calculator', 'suggest to this project: add a history of past calculations', { mode: ['act', 'both'], op: 'change', label: 'forq/calculator' }],
+  ['p_forq_calculator', 'ask the owner to add a dark theme', { mode: ['act', 'both'], op: 'change', label: 'forq/calculator' }],
   ['run_detail', 'back to all runs', { mode: 'act', op: ['go', 'back'], href: '#/' }],
   ['home_build', 'use the cheapest preset', { mode: 'act', op: 'press', label: 'Cheapest' }],
   ['home_build', 'set the agents to 6', { mode: 'act', op: 'type', label: 'Agents', text: '6' }],

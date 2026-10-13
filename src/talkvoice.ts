@@ -294,6 +294,7 @@ export class TalkVoice extends VoiceAgent {
       this.#pending = c;
       this.#send(connection, { type: 'talk-cmd', cmd: c });
       const name = String(c.label || '').split('/').pop();
+      if (!c.mine && /^\s*(please\s+)?(suggest|request|propose|ask the owner|tell the owner)\b/i.test(String(c.text || ''))) return `Suggest that to the owner of ${name}?`;
       return c.mine ? `Send that to the ${name} agents?` : `${name} isn't yours. Want me to fork it first?`;
     }
     if (c.op === 'code') { this.#send(connection, { type: 'talk-cmd', cmd: c }); return c.mine ? 'Reading the code.' : 'I can only read your own projects\' code, so this is from the page.'; }

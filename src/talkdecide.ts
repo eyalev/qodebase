@@ -223,7 +223,7 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
   // when the sentence asks for something different either. A build verb is never a status question: on the
   // Agents-at-work view the model ranked "status" first for the same order (live, 2026-10-08).
   const onProject = currentSlug(s.path);
-  const order = /^\s*(please\s+|can you\s+|could you\s+|i want you to\s+|let'?s\s+)?(build|add|make|create|implement|fix|change|remove|delete|rename|give|put|update|improve|redesign|replace|write|refactor|start|turn)\b/i.test(utterance);
+  const order = /^\s*(please\s+|can you\s+|could you\s+|i want you to\s+|let'?s\s+)?(build|add|make|create|implement|fix|change|remove|delete|rename|give|put|update|improve|redesign|replace|write|refactor|start|turn|suggest|request|propose|ask the owner|tell the owner)\b/i.test(utterance);
   if (onProject && action.choice !== 'change' && ((order && wc >= 0.4 && !['explain', 'code', 'list'].includes(action.choice)) || (action.choice === 'project' && wc >= 0.5))) action = { choice: 'change', p: Math.max(wc, action.p ?? 0) };
   // "Plan how to…", "how would we…", "why does…" ask for an answer about the code, not an edit (vocabulary in code).
   if (action.choice === 'change' && /^\s*(plan|how (would|should|could|do) (we|i|you)|why\b|what would it take|should (we|i))/i.test(utterance)) action = { choice: 'code', p: action.p };
