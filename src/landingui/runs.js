@@ -185,19 +185,20 @@
     for (const s of series) { const L = {}; for (const [l, v] of Object.entries(s.lanes)) { const k = keep.has(l) ? l : 'other'; L[k] = (L[k] || 0) + v; } s.lanes = L; }
     return { start, end: end || null, slice, series, limits, marks };
   }
-  const nice = (v) => { if (v <= 10) return Math.max(1, Math.ceil(v)); const p = 10 ** Math.floor(Math.log10(v)), m = v / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; };
+  const nice = (v) => { if (v <= 10) return Math.max(1, Math.ceil(v)); const p = 10 ** Math.floor(Math.log10(v)), m = v / p; return (m <= 1 ? 1 : m <= 1.5 ? 1.5 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 3 ? 3 : m <= 4 ? 4 : m <= 5 ? 5 : m <= 6 ? 6 : m <= 8 ? 8 : 10) * p; };
   const kfmt = (v) => (v >= 10000 ? `${Math.round(v / 1000)}k` : v >= 1000 ? `${(v / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(v));
   function timeline(run, t, drill) {
     if (!t) return '<p class="tl-empty">Loading the timeline…</p>';
     const { S, step: stepMs, unit, limScale } = bucketed(t);
     if (!S.length) return '<p class="tl-empty">Nothing on the timeline yet: the first slice is still running.</p>';
-    const W0 = Math.max(root.clientWidth - 24, 300), per = Math.max(12, Math.floor(W0 / S.length)), W = Math.max(W0, per * S.length);
+    // the frame's inner width (root padding 2 x 16, frame left padding 8): a run that fits never overflows the card
+    const W0 = Math.max((root.querySelector('.tl-frame')?.clientWidth || root.clientWidth - 32) - 10, 280), per = Math.max(12, Math.floor(W0 / S.length)), W = Math.max(W0, per * S.length);
     const t0 = S[0].minute, x = (m) => ((m - t0) / stepMs) * per;
     const rows = [], H = 36, HB = 64;
     const peakOf = (f) => Math.max(0, ...S.map(f).filter((v) => v != null));
     if (S.some((s) => s.active != null)) { const pk = peakOf((s) => s.active); rows.push({ label: `Agents at work, peak ${n0(pk)}`, kind: 'area', vals: S.map((s) => s.active || 0), max: nice(Math.max(pk, 1)), cls: 'c-active', h: HB }); }
     { const pr = peakOf((s) => s.ready), pl = peakOf((s) => s.landed), hasReady = S.some((s) => s.ready != null);
-      rows.push({ label: hasReady ? `Changes ${unit}: finished by agents (area), reached main (bars, in batches)` : `Changes reaching main ${unit} (in batches), peak ${n0(pl)}`, kind: 'pair', vals: S.map((s) => s.landed || 0), area: hasReady ? S.map((s) => s.ready || 0) : null, max: nice(Math.max(pr, pl, 1)), cls: 'c-land', h: HB }); }
+      rows.push({ label: hasReady ? `Changes ${unit}: <i class="k-ready"></i>finished by agents, <i class="k-main"></i>reached main (in batches)` : `Changes reaching main ${unit} (in batches), peak ${n0(pl)}`, html: true, kind: 'pair', vals: S.map((s) => s.landed || 0), area: hasReady ? S.map((s) => s.ready || 0) : null, max: nice(Math.max(pr, pl, 1)), cls: 'c-land', h: HB }); }
     const models = Object.keys(Object.assign({}, ...S.map((s) => s.calls || {})));
     for (const m of models) {
       const peak = peakOf((s) => (s.calls || {})[m] || 0), lim0 = (t.limits || {})[m], lim = lim0 ? lim0 * limScale : null;
@@ -209,7 +210,7 @@
     const laneMax = Math.max(1, ...S.flatMap((s) => Object.values(s.lanes || {})));
     if (lanes.length) rows.push({ label: `Changes per lane (${lanes.length}${lanes.includes('other') ? ', smaller lanes together' : ''}), darker = more, up to ${n0(laneMax)} in a slice`, kind: 'heat', lanes, max: laneMax });
     if (S.some((s) => s.door)) { const pk = peakOf((s) => s.door?.commits || 0); rows.push({ label: `The door: commits ${unit} (pushes as ticks)`, kind: 'door', vals: S.map((s) => s.door?.commits || 0), ticks: S.map((s) => s.door?.pushes || 0), max: nice(Math.max(pk, 1)), cls: 'c-door', h: H }); }
-    if (S.some((s) => s.queue != null)) { const pk = peakOf((s) => s.queue || 0); rows.push({ label: `Waiting (to start, at the model, ready to land), peak ${n0(pk)}`, kind: 'area', vals: S.map((s) => s.queue || 0), max: nice(Math.max(pk, 1)), cls: 'c-queue', h: H }); }
+    if (S.some((s) => s.queue != null)) { const pk = peakOf((s) => s.queue || 0); rows.push({ label: `Waiting (not started, at the model, or not yet on main), peak ${n0(pk)}`, kind: 'area', vals: S.map((s) => s.queue || 0), max: nice(Math.max(pk, 1)), cls: 'c-queue', h: H }); }
     const cx = (i) => x(S[i].minute) + per / 2;
     const strip = (r) => {
       const h = r.kind === 'heat' ? r.lanes.length * 10 : r.h, base = h, parts = [`<rect class="tl-bg" x="0" y="0" width="${W}" height="${h}" rx="4"/>`];
@@ -218,18 +219,19 @@
       const area = (vals, cls) => `<path class="tl-a ${cls}" d="M${cx(0).toFixed(1)},${base} L${vals.map((v, i) => `${cx(i).toFixed(1)},${yv(v)}`).join(' L')} L${cx(S.length - 1).toFixed(1)},${base} Z"/><path class="tl-ln ${cls}" d="M${vals.map((v, i) => `${cx(i).toFixed(1)},${yv(v)}`).join(' L')}"/>`;
       if (r.kind === 'area') { parts.push(area(r.vals, r.cls)); if (r.lim) parts.push(`<line class="tl-lim" x1="0" x2="${W}" y1="${yv(r.lim)}" y2="${yv(r.lim)}"/>`); }
       else if (r.kind === 'pair' || r.kind === 'door') {
-        if (r.area) parts.push(area(r.area, 'c-ready'));
         r.vals.forEach((v, i) => { if (!v) return; const bh = Math.max(1.5, (v / r.max) * (h - 2)); parts.push(`<rect class="tl-b ${r.cls}" x="${(x(S[i].minute) + per * 0.2).toFixed(1)}" y="${(base - bh).toFixed(1)}" width="${Math.max(2, per * 0.6).toFixed(1)}" height="${bh.toFixed(1)}" rx="1.5"/>`); });
         if (r.ticks) r.ticks.forEach((v, i) => { if (!v) return; parts.push(`<rect class="tl-tick" x="${(cx(i) - 1).toFixed(1)}" y="1" width="2" height="${Math.min(h - 2, 4 + v * 2)}"/>`); });
+        // finished by agents: a line on top of the batch bars, so the agents' own pace stays visible (critique)
+        if (r.area) parts.push(`<path class="tl-ln c-ready" d="M${r.area.map((v, i) => `${cx(i).toFixed(1)},${yv(v)}`).join(' L')}"/>`);
       } else if (r.kind === 'heat') {
         r.lanes.forEach((ln, j) => S.forEach((s) => { const v = (s.lanes || {})[ln] || 0; if (!v) return; parts.push(`<rect class="tl-h" x="${(x(s.minute) + 0.5).toFixed(1)}" y="${j * 10 + 1}" width="${Math.max(2, per - 1)}" height="8" rx="1" style="opacity:${(0.18 + 0.82 * (v / r.max)).toFixed(2)}"><title>${esc(ln)}: ${v}</title></rect>`); }));
       }
-      const yscale = r.kind === 'heat' ? '' : `<div class="tl-y" style="height:${h}px" aria-hidden="true"><span>${kfmt(r.max)}</span><span>${kfmt(r.max / 2)}</span><span>0</span></div>`;
-      return `<div class="tl-row"><p class="tl-lab"><span>${esc(r.label)}</span></p><div class="tl-plot" style="height:${h}px">${yscale}<svg class="tl-s" width="${W}" height="${h}" viewBox="0 0 ${W} ${h}" aria-hidden="true">${parts.join('')}</svg></div></div>`;
+      const yscale = r.kind === 'heat' ? '' : `<div class="tl-y" style="height:${h}px" aria-hidden="true"><span>${kfmt(r.max)}</span>${h >= 50 ? `<span>${kfmt(r.max / 2)}</span>` : ''}<span>0</span></div>`;
+      return `<div class="tl-row"><p class="tl-lab"><span>${r.html ? r.label : esc(r.label)}</span></p><div class="tl-plot" style="height:${h}px">${yscale}<svg class="tl-s" width="${W}" height="${h}" viewBox="0 0 ${W} ${h}" aria-hidden="true">${parts.join('')}</svg></div></div>`;
     };
     // ticks on round times: every 10 s, 30 s, 1, 2, 5, 10 or 30 min, at least ~56 px apart
     const niceT = [10e3, 30e3, 60e3, 120e3, 300e3, 600e3, 1800e3, 3600e3].find((ms) => (ms / stepMs) * per >= 56) || 3600e3;
-    const every = Math.max(1, Math.round(niceT / stepMs)), lab = (i) => { const sec = Math.round((i * stepMs) / 1000); return i === 0 ? 'start' : sec < 120 ? `${sec} s` : `${Math.round(sec / 60)} min`; };
+    const every = Math.max(1, Math.round(niceT / stepMs)), lab = (i) => { const sec = Math.round((i * stepMs) / 1000); return i === 0 ? '0:00' : sec < 120 ? `${sec} s` : `${Math.round(sec / 60)} min`; };
     const grid = S.map((s, i) => (i % every === 0 ? `<line class="tl-g" x1="${x(s.minute).toFixed(1)}" x2="${x(s.minute).toFixed(1)}" y1="0" y2="100%"/>` : '')).join('');
     const axis = S.map((s, i) => (i % every === 0 && x(s.minute) < W - 40 ? `<text class="tl-x" x="${Math.max(2, x(s.minute) + 2).toFixed(1)}" y="12">${lab(i)}</text>` : '')).join('');
     const MK = (k) => (k === 'auto_pause' ? 'pause' : k), MW = (k) => (k === 'auto_pause' ? 'auto-paused' : k === 'pause' ? 'paused' : k === 'resume' ? 'resumed' : k === 'stop' ? 'stopped' : k);
