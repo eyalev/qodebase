@@ -192,7 +192,7 @@ export function quickCmd(utterance: string, s: Screen, projects: Proj[]): Cmd | 
     const own = projects.filter((p) => p.mine && !isScaffold(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
     return { ...base, mode: 'none', op: 'none', greet: true, example: own ? own.name.replace(/-/g, ' ') : undefined, why: 'greeting (no model)' } as Cmd;
   }
-  const sz = /^\s*(please\s+)?(give me|show me|suggest|get me|i want|i need)\s+(an?|another|one)\s+(small|tiny|quick|medium|large|big|huge)?\s*(app\s+)?idea\s*[.!?]*\s*$/i.exec(u);
+  const sz = /^\s*(please\s+)?(give me|show me|suggest|get me|i want|i need)\s+(an?|another|one)\s+(small|tiny|quick|medium|large|big|huge)?\s*(app\s+)?idea(\s+for\s+(a|an|my)\s+(new\s+)?(app|project|thing))?\s*[.!?]*\s*$/i.exec(u);
   if (sz) {
     const size = /small|tiny|quick/i.test(sz[4] || '') ? 'Small' : /huge/i.test(sz[4] || '') ? 'Huge' : /large|big/i.test(sz[4] || '') ? 'Large' : 'Medium';
     const btn = s.items.find((i) => i.kind === 'button' && new RegExp('^' + size + '\\b').test(i.text));

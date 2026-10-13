@@ -98,11 +98,12 @@ var css = [
   // conversation, which folds back into the bar. Its height is kept free at the end of the page.
   // Docked edge to edge like a tab bar (Eyal, 2026-10-13: not a floating card): a hairline on top, the phone's
   // bottom inset inside it; above the page's own bottom bars when it has some. A card bottom-right on wide screens.
-  '#talk-bar{position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px 8px calc(6px + var(--talk-inset,env(safe-area-inset-bottom))) 8px;min-height:56px;box-sizing:border-box;background:var(--t-chip);background:color-mix(in srgb,var(--t-acc) 9%,var(--t-bg));border-top:1px solid var(--t-frame);box-shadow:0 -2px 12px rgba(0,0,0,.08);color:var(--t-fg)}',
+  '#talk-bar{position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px 8px calc(6px + var(--talk-inset,env(safe-area-inset-bottom))) 8px;min-height:56px;box-sizing:border-box;background:var(--t-chip);background:var(--acc-soft,color-mix(in srgb,var(--t-acc) 9%,var(--t-bg)));border-top:1px solid var(--t-frame);box-shadow:0 -2px 12px rgba(0,0,0,.08);color:var(--t-fg)}',
   // The minimized bar stands apart from the page (Eyal, 2026-10-13: it blended in): an accent-tinted surface from the
   // tokens, a hairline and a soft shadow on top, the mic a filled accent circle.
+  '.talk-somic{background:var(--t-acc)!important;color:var(--t-accfg)!important;border-radius:50%!important;width:48px;height:48px}',   // signed-out bar: the same filled mic (qb5's critique)
   '#talk-root:not(.arming) #talk-bmic:not(.on){background:var(--t-acc);color:var(--t-accfg);border-radius:50%}',
-  '@media (min-width:720px){#talk-bar{left:auto;right:16px;bottom:16px;width:420px;padding:6px;border:0;border-radius:14px;background:var(--t-card);background:color-mix(in srgb,var(--t-acc) 9%,var(--t-bg));box-shadow:inset 0 0 0 1px var(--t-frame),0 4px 16px rgba(0,0,0,.10)}}',
+  '@media (min-width:720px){#talk-bar{left:auto;right:16px;bottom:16px;width:420px;padding:6px;border:0;border-radius:14px;background:var(--t-card);background:var(--acc-soft,color-mix(in srgb,var(--t-acc) 9%,var(--t-bg)));box-shadow:inset 0 0 0 1px var(--t-frame),0 4px 16px rgba(0,0,0,.10)}}',
   '#talk-root.open #talk-bar{display:none}',
   '.talk-bb{width:44px;height:44px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--t-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}',
   '.talk-bb svg{width:22px;height:22px}',
@@ -2354,7 +2355,7 @@ function signedOutBar() {
   var st = el('style'); st.textContent = css; document.head.appendChild(st);
   root = el('div', { id: 'talk-root' }); root.style.setProperty('--t-ff', getComputedStyle(document.body).fontFamily || 'sans-serif');
   bar = el('a', { id: 'talk-bar', href: '/login?to=' + encodeURIComponent(location.pathname), 'aria-label': 'Sign in to talk to qodebase', style: 'text-decoration:none;align-items:center' });
-  bar.innerHTML = '<span class="talk-bb pri">' + ICON.mic + '</span><span id="talk-bmid" style="cursor:pointer"><span id="talk-btext">Sign in, then say \u201cbuild a habit tracker\u201d</span></span>';
+  bar.innerHTML = '<span class="talk-bb pri talk-somic">' + ICON.mic + '</span><span id="talk-bmid" style="cursor:pointer"><span id="talk-btext">Sign in, then say \u201cbuild a habit tracker\u201d</span></span>';
   root.appendChild(bar); document.body.appendChild(root);
   spacer = el('div', { id: 'talk-spacer', 'aria-hidden': 'true' }); document.body.insertBefore(spacer, root);
   bMic = bar.firstChild; bText = document.getElementById('talk-btext');
