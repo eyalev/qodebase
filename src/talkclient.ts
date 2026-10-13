@@ -940,6 +940,7 @@ function route(c, text) {
       if (!wp) return cut();
       status('Checking the words\u2026'); wp.taken = true;
       return Promise.race([wp.p, new Promise(function (ok) { setTimeout(function () { ok(''); }, 4000); })]).then(function (w) {
+        w = wordsOnly(w);
         if (w && normWords(w) !== normWords(text)) { trace('whisper_redo', { how: 'not understood', live: text, text: w }); busy = false; status(''); lastSpoken = true; return submit(w); }
         cut();
       });
@@ -993,6 +994,14 @@ function latEmit(why) {
 }
 function latSilent() { setTimeout(function () { if (lat && !speakPending && !speakingQ && !ackPlaying) latEmit('no sound'); }, 3000); }
 // Words compared the way a person hears them: no case or punctuation, plural s and doubled words ignored.
+// Only words someone said ever reach the page's logic or a 'Did you say': no code, markup, methods or empties
+// (2026-10-13: "function text() { [native code] }" was quoted to Eyal). Mirrors src/talkstt.ts wordsOnly.
+function wordsOnly(s) {
+  var t = typeof s === 'string' ? s.replace(/\s+/g, ' ').trim() : '';
+  if (!t || !/\p{L}/u.test(t)) return '';
+  if (/\bfunction\s*\w*\s*\(|\[native code\]|=>|^\s*[{[<]|\bundefined\b|\[object \w+\]/.test(t)) return '';
+  return t;
+}
 function wordsOf(x) { return String(x || '').toLowerCase().replace(/[^\p{L}\p{N}' ]+/gu, ' ').split(/\s+/).filter(Boolean).map(function (w) { return w.replace(/'s$/, '').replace(/(..)s$/, '$1'); }).filter(function (w, i, a) { return i === 0 || w !== a[i - 1]; }); }
 function wordDist(a, b) { var d = []; for (var i = 0; i <= a.length; i++) { d[i] = [i]; for (var j = 1; j <= b.length; j++) d[i][j] = i === 0 ? j : Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); } return d[a.length][b.length]; }
 // Quick replies act on the live words; Whisper reads the clip meanwhile and, when it heard something materially
@@ -1003,12 +1012,9 @@ function whisperCheck(live, j, w0) {
   var A = wordsOf(live), B = wordsOf(w), d = wordDist(A, B), r = d / Math.max(1, A.length, B.length);
   var material = d >= 1;   // after the normalising above, any word left different counts ("parking" vs "packing" list, Eyal 2026-10-13)
   trace('dc_whisper_check', { live: live, whisper: w, dist: d, ratio: Math.round(r * 100) / 100, material: material, whisper_ms: Date.now() - w0 });
-  if (!material) return;
-  (function wait(n) {
-    if ((busy || speakingQ) && n < 60) return setTimeout(function () { wait(n + 1); }, 250);
-    var q = 'I may have misheard. Did you say \u201c' + w + '\u201d?';
-    add('note', q); offerOn(q, function () { trace('whisper_redo', { text: w }); lastSpoken = true; submit(w); }, 'Yes');
-  })(0);
+  // Talk has already answered by now: never a 'Did you say…?' over or after the answer (Eyal, 2026-10-13: it quoted
+  // a bad string and talked over the answer). The difference stays in the trace for the bench; a turn the live
+  // words did not make sense of uses Whisper's words before answering (the 'none' path in route()).
 }
 // "What's going on" kept ready while Talk is in use (every 30 s while the page shows, and after each turn), so the
 // answer comes from memory; the call has its own cap (status_warm) and is not tied to an utterance.
@@ -1534,6 +1540,7 @@ function spoken(text) {
 }
 function phoneSay(text) {
   if (!window.speechSynthesis) return;
+  try { if (player) { player.onended = null; player.onerror = null; player.pause(); } } catch (e) {}
   try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(text); u.onstart = function () { latMark('audio'); }; u.lang = /[\u0590-\u05ff]/.test(text) ? 'he-IL' : 'en-US'; speechSynthesis.speak(u); } catch (e) {}
 }
 function say(text) {
@@ -1585,6 +1592,7 @@ function streamSrc(text) {
 function playParts(parts, whole) {
   var seq = ++saySeq, i = 0, urls = {}, t0 = Date.now();
   speakingQ = true;
+  try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}   // one voice at a time
   var pre = function (k) { if (k >= parts.length || urls[k]) return; urls[k] = fetch(ttsUrl(parts[k]), { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.blob(); }).then(function (b) { return URL.createObjectURL(b); }).catch(function () { return null; }); };
   var next = function () {
     if (seq !== saySeq) return;
@@ -1599,20 +1607,26 @@ function playParts(parts, whole) {
       try { player.playbackRate = S.speed; player.preservesPitch = true; player.defaultPlaybackRate = S.speed; } catch (e) {}
       player.onplaying = function () { speakPending = false; try { player.playbackRate = S.speed; } catch (e) {} if (k === 0) { latMark('audio'); logEv('speak_start', { chars: whole.length, parts: parts.length, ms_first: Date.now() - t0, speed: S.speed }); } };
       player.onended = next;
-      // A streamed clip that fails (an intermittent 500 on 'Hi.', 2026-10-13) is fetched whole once before the phone voice.
-      player.onerror = function () {
-        if (!player.__retried) {
-          player.__retried = true;
-          fetch(ttsUrl(parts[k]), { credentials: 'same-origin' }).then(function (r) { logEv('speak_retry', { status: r.status, part: k }); if (!r.ok) throw new Error(String(r.status)); return r.blob(); })
-            .then(function (b) { if (seq !== saySeq) return; player.src = URL.createObjectURL(b); var p2 = player.play(); if (p2 && p2.catch) p2.catch(function () {}); })
-            .catch(function (e) { logEv('speak_error', { chars: parts[k].length, part: k, err: String(e) }); if (k === 0) { speakingQ = false; phoneSay(whole); } else next(); });
+      // A clip that fails (an intermittent 500 on a fresh text, 2026-10-13) is fetched whole ONCE, then the phone voice.
+      // The element's error and play()'s rejection both report the same failure: handled once (two voices otherwise).
+      var failed = 0;
+      var fail = function (why) {
+        if (seq !== saySeq || failed === 2) return;
+        if (failed === 1 && why !== 'retry') return;
+        failed++;
+        if (failed === 1) {
+          logEv('speak_retry', { part: k, why: why });
+          fetch(ttsUrl(parts[k]), { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
+            .then(function (b) { if (seq !== saySeq) return; player.src = URL.createObjectURL(b); var p2 = player.play(); if (p2 && p2.catch) p2.catch(function (e) { fail('retry'); }); })
+            .catch(function (e) { fail('retry'); });
           return;
         }
-        logEv('speak_error', { chars: parts[k].length, part: k }); if (k === 0) { speakingQ = false; phoneSay(whole); } else next();
+        logEv('speak_error', { chars: parts[k].length, part: k, why: why });
+        if (k === 0) { speakingQ = false; phoneSay(whole); } else next();
       };
-      player.__retried = false;
+      player.onerror = function () { fail(failed ? 'retry' : 'element'); };
       var p = player.play();
-      if (p && p.catch) p.catch(function (e) { logEv('speak_blocked', { err: String(e) }); if (k === 0) { speakingQ = false; phoneSay(whole); } });
+      if (p && p.catch) p.catch(function (e) { if (/NotAllowed/.test(String(e))) { logEv('speak_blocked', { err: String(e) }); if (k === 0 && !failed) { failed = 2; speakingQ = false; phoneSay(whole); } return; } fail(failed ? 'retry' : 'play'); });
     });
   };
   // An acknowledgement still playing finishes first.
@@ -1993,7 +2007,7 @@ function hearText(blob, live) {
   return fetch('/api/talk/transcribe?names=1&lang=' + encodeURIComponent(S.lang), { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type }, body: blob })
     .then(function (r) { return r.json(); })
     .then(function (j) {
-      var w = (j && j.text) || '', out = { text: w || live, how: w ? 'whisper' : 'live', whisper_ms: Date.now() - w0, err: j && j.error, whisper: w };
+      var w = wordsOnly(j && j.text), out = { text: w || live, how: w ? 'whisper' : 'live', whisper_ms: Date.now() - w0, err: j && j.error, whisper: w };
       if (!w || S.merge !== 'on' || !live) return out;
       var m0 = Date.now();
       return Promise.race([

@@ -28,6 +28,7 @@ import { MERGE_MODEL, mergeMessages, cleanMerge } from './talkmerge';
 import { convOp, convRoute, contextKnowledge } from './talkthreads';
 import { chatSystem, TOOLS, CONTEXT_TOOLS, parseChat, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, PAID_FALLBACK, toGemini, fromGemini, toAnthropic, fromAnthropic, type AnswerModel } from './talkchat';
 import { TALK_VOICE_JS } from './talkvoicejs.gen';
+import { sttText, wordsOnly } from './talkstt';
 import { routeAgentRequest } from 'agents';
 
 const DECIDE_MODEL = '@cf/cloudflare/clef-flash';
@@ -369,7 +370,9 @@ async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
   }
   try {
     const res: any = await (env.AI as any).run(STT_MODEL, { audio: btoa(b64), ...(lang === 'en' || lang === 'he' ? { language: lang } : {}), vad_filter: true, ...(prompt ? { initial_prompt: prompt } : {}) }, aiOpts(env));
-    let text = String(res?.text || '').trim();
+    const got = await sttText(res);   // the binding sometimes hands back a raw Response (src/talkstt.ts)
+    if (got.shape !== 'object') log('stt_shape', { level: 'warn', handle: who.handle, shape: got.shape, chars: got.text.length });
+    let text = got.text;
     if (prompt && text && (prompt.includes(text) || /^qodebase\. my projects:/i.test(text))) { log('stt_prompt_echo', { level: 'warn', handle: who.handle, text: text.slice(0, 200) }); text = ''; }
     log('stt', { level: 'info', handle: who.handle, bytes: buf.byteLength, lang, ms: Date.now() - t0, chars: text.length, detected: res?.transcription_info?.language });
     return json({ text, ms: Date.now() - t0 });
@@ -384,7 +387,7 @@ async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
 async function merge(request: Request, env: Env, who: Who & {}) {
   const t0 = Date.now();
   const b = await request.json().catch(() => ({})) as any;
-  const live = String(b?.live || '').slice(0, 2000), whisper = String(b?.whisper || '').slice(0, 2000), lang = String(b?.lang || 'en');
+  const live = wordsOnly(String(b?.live || '').slice(0, 2000)), whisper = wordsOnly(String(b?.whisper || '').slice(0, 2000)), lang = String(b?.lang || 'en');
   if (!whisper && !live) return json({ text: '' });
   const budget = await talkLog(env).take('stt', who.handle);
   if (!budget.ok) return json({ text: whisper, why: 'budget' });
