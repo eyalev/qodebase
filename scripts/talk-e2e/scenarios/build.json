@@ -34,7 +34,7 @@
   },
   {
     "id": "build-typed-idea",
-    "title": "Build sentence fills the box, build it asks first, no stops it",
+    "title": "Build sentence fills the box; 'build it' answers the Build it offer and opens the brief (no write)",
     "start": "/",
     "turns": [
       {
@@ -50,14 +50,8 @@
       {
         "say": "build it",
         "expect": {
-          "confirm": true
-        }
-      },
-      {
-        "say": "no",
-        "expect": {
-          "no_writes": true,
-          "answer_has": "left it"
+          "nav": "/build\\?step=brief",
+          "no_writes": true
         }
       }
     ]
