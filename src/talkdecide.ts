@@ -175,6 +175,23 @@ export type Cmd = {
 };
 
 /** Answers -> one command the page carries out (or hands to the chat lane). */
+// Sentences that need no model at all (manager, 2026-10-13, latency: the decide call was 1.5-2.8 s of a spoken turn):
+// fixed phrases only, the same answers resolve() gives them. The page mirrors STATUS_RX to skip the round trip too.
+export const STATUS_RX = /^\s*((ok(ay)?|so|hey|hi|and)[,\s]+)?(what'?s|what is|whats)\s+(going on|happening)(\s+(with|in|across)\s+(all\s+)?(my|the)\s+(projects?|builds?|work|apps?))?(\s+(today|right now|now|at the moment))?\s*[?.!]*\s*$|^\s*(status|status update|any updates?|give me (a|the) status( update)?)\s*[?.!]*\s*$/i;
+export function quickCmd(utterance: string, s: Screen, projects: Proj[]): Cmd | null {
+  const u = utterance.trim();
+  if (!u || u.split(/\s+/).length > 12) return null;
+  const base: Cmd = { mode: 'act', modeP: 1, op: 'none', p: 0.95, risky: 0, destroys: 0, complete: 1 };
+  if (STATUS_RX.test(u)) return { ...base, mode: 'ask', op: 'status', why: 'status words (no model)' };
+  const home = s.items.find((i) => i.kind === 'link' && i.href === '/');
+  if (home && /^\s*((please\s+)?(go|take me|bring me|get me)\s+(back\s+)?home|(open\s+|go to\s+)?(the\s+)?home ?page|home)\s*[.!]*\s*$/i.test(u)) return { ...base, op: 'go', href: '/', label: home.text, target: home.id, why: 'home words (no model)' };
+  if (/^\s*((please\s+)?(take me to|go to|open|show( me)?|bring me to|back to)\s+(all\s+)?(my|your) projects|(my|your) projects)\s*[.!]*\s*$/i.test(u)) return { ...base, op: 'go', href: '/mine', label: 'your projects', why: 'my projects = /mine (no model)' };
+  if (/^\s*(what|which)('s| is| was)?\s+(is\s+)?my\s+(latest|newest|last|most recent)\s+(project|app|build)\s*[?.!]*\s*$/i.test(u)) {
+    const p = projects.filter((x) => x.mine && !HARNESS_RX.test(x.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+    if (p) return { ...base, mode: 'ask', op: 'latest', href: projectHref(p, 'page'), label: projLabel(p, 'page'), target: p.slug, text: p.description || '', updatedAt: p.updatedAt, why: 'latest project (no model)' } as Cmd;
+  }
+  return null;
+}
 export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen, projects: Proj[], utterance: string): Cmd {
   const cmd = resolveAction(answers, cands, s, projects, utterance);
   // A question a page action answers ("what is the packing list waiting on" → qb5's intent finder, "what happened at

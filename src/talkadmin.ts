@@ -101,6 +101,14 @@ export async function talkAdmin(request: Request, env: Env, url: URL, who: Who):
     if (env.CLIPS) { const l = await env.CLIPS.list({ prefix: day + '/', limit: 1000 } as any); clip = (l.objects.find((o: any) => o.key.includes(`-${u}.`)) as any)?.key || null; }
     return json({ u, day, utterance: group(all.filter((r) => r.d?.u === u || r.sid === sid), day).find((x) => x.u === u), rows, around, clip });
   }
+  // Latency per stage of spoken turns (the page's 'latency' rows, ms from the stop; manager 2026-10-13): p50 / p90.
+  if (sub === 'latency') {
+    const n = Math.min(14, Math.max(1, Number(url.searchParams.get('days')) || 2));
+    const handle = (url.searchParams.get('handle') || '').slice(0, 40);
+    const rows: any[] = [];
+    for (const d of days(n)) for (const r of await rowsFor(env, d, handle)) if (r.ev === 'latency' && r.d) rows.push(r.d);
+    return json({ days: n, ...latencyTable(rows) });
+  }
   if (sub === 'clip') {
     const key = url.searchParams.get('key') || '';
     const o = env.CLIPS && key ? await env.CLIPS.get(key) : null;
@@ -109,6 +117,16 @@ export async function talkAdmin(request: Request, env: Env, url: URL, who: Who):
   }
   if (sub === '') return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
   return json({ error: 'not found' }, 404);
+}
+
+export const LAT_STAGES = ['end', 'final', 'decide', 'data', 'ack', 'audio', 'total'] as const;
+const pct = (xs: number[], q: number) => { if (!xs.length) return null; const a = [...xs].sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.floor(q * a.length))]; };
+/** p50 / p90 per stage over latency rows; 'end' = last word heard -> stop, 'total' = last word -> first sound. */
+export function latencyTable(rows: any[]) {
+  const by = (list: any[]) => Object.fromEntries(LAT_STAGES.map((k) => { const xs = list.map((r) => r[k]).filter((v) => typeof v === 'number' && v >= 0 && v < 120_000); return [k, { n: xs.length, p50: pct(xs, 0.5), p90: pct(xs, 0.9) }]; }));
+  const lanes: Record<string, any[]> = {};
+  for (const r of rows) (lanes[r.lane || 'other'] ||= []).push(r);
+  return { n: rows.length, all: by(rows), lanes: Object.fromEntries(Object.entries(lanes).map(([k, v]) => [k, { n: v.length, ...by(v) }])) };
 }
 
 // One page, phone first, the site's tokens (DESIGN.md). Plain DOM, no libraries.
@@ -142,6 +160,7 @@ audio{width:100%;margin:8px 0}
 <h1>Talk traces</h1>
 <div class="bar"><input type="search" id="q" placeholder="Words, page" aria-label="Search the traces"><label><input type="checkbox" id="miss"> Misses only</label>
 <select id="days" aria-label="How far back"><option value="1">Today</option><option value="2" selected>2 days</option><option value="7">7 days</option><option value="14">14 days</option></select></div>
+<details id="lat"><summary>Latency of spoken turns (ms from the stop)</summary><div id="latt" class="n">Loading…</div></details>
 <p class="n" id="n">Loading…</p><ul id="list"></ul></main>
 <section id="d" aria-label="One utterance"><div class="in"><button type="button" id="back">Back to the list</button><div id="dd"></div></div></section>
 <script>
@@ -166,5 +185,12 @@ function open1(u,day){$('dd').innerHTML='<p class="n">Loading…</p>';$('d').cla
  })}
 $('back').onclick=function(){$('d').classList.remove('on');history.replaceState(null,'',location.pathname)};
 ['days','miss'].forEach(function(i){$(i).onchange=load});var qt;$('q').oninput=function(){clearTimeout(qt);qt=setTimeout(load,300)};
+function lat(){fetch('/api/talk/admin/latency?days='+$('days').value,{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(j){
+ if(!j.all){$('latt').textContent='Not allowed.';return}
+ var st=['end','final','decide','data','ack','audio','total'],nm={end:'last word to stop',final:'words ready',decide:'decided',data:'answer ready',ack:'first ack',audio:'first sound',total:'last word to first sound'};
+ var tb=function(o){return '<table><tr><td></td><td>p50</td><td>p90</td><td>n</td></tr>'+st.map(function(k){var v=o[k]||{};return v.n?'<tr><td>'+nm[k]+'</td><td>'+v.p50+'</td><td>'+v.p90+'</td><td>'+v.n+'</td></tr>':''}).join('')+'</table>'};
+ $('latt').innerHTML=j.n+' turns'+tb(j.all)+Object.keys(j.lanes).map(function(l){return '<p><b>'+esc(l)+'</b> ('+j.lanes[l].n+')</p>'+tb(j.lanes[l])}).join('');
+})}
+$('days').addEventListener('change',lat);lat();
 load();var h=/^#([\\w-]+)\\/(\\d{4}-\\d{2}-\\d{2})$/.exec(location.hash);if(h)open1(h[1],h[2]);
 </script></body></html>`;

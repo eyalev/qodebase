@@ -20,7 +20,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
 import { listFor } from './registry';
 import { isOwner } from './auth';
-import { buildQuestions, candidateProjects, currentSlug, isScaffold, resolve, stateText, type Item, type Proj, type Screen } from './talkdecide';
+import { buildQuestions, candidateProjects, currentSlug, isScaffold, quickCmd, resolve, stateText, type Item, type Proj, type Screen } from './talkdecide';
 import { TALK_JS } from './talkclient';
 import { talkAdmin } from './talkadmin';
 import { recordCost } from './costs';
@@ -36,7 +36,7 @@ const STT_MODEL = '@cf/openai/whisper-large-v3-turbo';
 // Daily caps (UTC day). A person's own, and everyone's together.
 // usd_milli: answering-model spend in thousandths of a dollar, $1 per person a day; usd_others: everyone but the owner
 // together, $5 a day (Eyal, 2026-10-13: a burst of visitors must not drain the credits).
-const CAPS = { usd_milli: { me: 1000, all: 50000 }, usd_others: { me: 5000, all: 5000 }, decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 }, tts_chars: { me: 20000, all: 150000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
+const CAPS = { usd_milli: { me: 1000, all: 50000 }, usd_others: { me: 5000, all: 5000 }, decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 }, status_warm: { me: 3000, all: 20000 }, tts_chars: { me: 20000, all: 150000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
 type Kind = keyof typeof CAPS;
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talk', event, ...data }));
@@ -163,6 +163,12 @@ export async function decideCore(env: Env, who: Who & {}, body: any) {
   const allProjects = await projectsFor(env, who);
   const projects = candidateProjects(utterance, allProjects, 24, currentSlug(s.path));
   (s as any).projects = allProjects.filter((p) => p.mine);   // for "list my projects" (not shown to the model)
+  // Fixed phrases answer at once, no model (latency work, 2026-10-13).
+  const quick = body.interim ? null : quickCmd(utterance, s as any, allProjects);
+  if (quick) {
+    log('decide', { level: 'info', handle: who.handle, path: s.path, quick: true, total_ms: Date.now() - t0, mode: quick.mode, op: quick.op, why: quick.why });
+    return { ok: true as const, cmd: quick, ms: { model: 0, total: Date.now() - t0 }, left: budget.left, trace: { utterance, path: s.path, quick: true, cmd: quick, ms: Date.now() - t0 } };
+  }
   const { questions, cands } = buildQuestions(utterance, s, projects);
   const state = stateText(utterance, s, projects);
   const tm = Date.now();
@@ -485,7 +491,8 @@ async function sttLive(request: Request, env: Env, ctx: ExecutionContext, who: W
         if (d?.type !== 'Results') return;
         const text = d.channel?.alternatives?.[0]?.transcript || '';
         if (text) words++;
-        try { server.send(JSON.stringify({ type: d.is_final ? 'final' : 'interim', text, start: d.start, duration: d.duration })); } catch { /* page gone */ }
+        // speech_final = nova-3's endpointing heard the speaker stop (300 ms): the page ends a conversation turn on it.
+        try { server.send(JSON.stringify({ type: d.is_final ? 'final' : 'interim', text, start: d.start, duration: d.duration, end: !!d.speech_final })); } catch { /* page gone */ }
       });
       up.addEventListener('close', (e: CloseEvent) => { clearInterval(keep); try { server.send(JSON.stringify({ type: 'closed', code: e.code })); } catch { /* gone */ } finish(`nova-3 closed ${e.code}`); });
       // Never longer than 3 minutes (Talk's dictation cap); the page normally closes first.
@@ -513,7 +520,8 @@ async function talkEtag() {
 // one Registry list + one Project info() per own project (newest 20), no boxes.
 export async function statusCore(env: Env, who: Who & {}, body: any) {
   const t0 = Date.now();
-  const budget = await talkLog(env).take('status', who.handle);
+  // A background refresh (the page keeps a fresh answer ready while Talk is in use, latency work 2026-10-13) has its own cap.
+  const budget = await talkLog(env).take(body?.warm ? 'status_warm' : 'status', who.handle);
   if (!budget.ok) return { ok: false as const, http: 429, error: 'budget', why: 'Talk has reached today\'s limit. It resets at midnight UTC.' };
   const today = /\btoday\b/i.test(String(body?.utterance || ''));
   const since = Date.now() - (today ? 24 : 7 * 24) * 3600_000;
@@ -626,8 +634,11 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
   const brief = [n(asked.length + blocked.length + waiting.length, 'thing waiting for you', 'things waiting for you'), n(stalled.length, 'thing stuck', 'things stuck'), n(builds.length, 'build in progress', 'builds in progress'),
     n(runs.length, 'experiment running', 'experiments running'), n(working.length, 'agent at work', 'agents at work'), n(ready.length, 'change ready to merge', 'changes ready to merge')].filter(Boolean);
   const lead = 'Here\u2019s where things stand:';
+  // What is said aloud: one short line from the counts, no summary model (it was 1.7 s of the turn).
+  const say1 = (xs: string[]) => xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
+  const spoken = brief.length ? `Here\u2019s where things stand: ${say1(brief.map((x) => x.replace(/^1 /, 'one ')))}.${stalled.length === 1 ? ` ${stalled[0].proj || 'One build'} has made no progress, want to stop it?` : ''}` : parts[0] || '';
   if (sections.length) parts.unshift('Here\u2019s where things stand.');
-  return { ok: true as const, text: parts.join(' '), lead: sections.length ? lead : '', brief: brief.length ? `Status: ${brief.join(', ')}` : 'Status: nothing in progress', sections, links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left, trace: { text: parts.join(' ').slice(0, 1500), links: links.length, ms: Date.now() - t0 } };
+  return { ok: true as const, text: parts.join(' '), lead: sections.length ? lead : '', spoken, brief: brief.length ? `Status: ${brief.join(', ')}` : 'Status: nothing in progress', sections, links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left, trace: { text: parts.join(' ').slice(0, 1500), links: links.length, ms: Date.now() - t0 } };
 }
 
 // ---- Spoken replies: Aura on Workers AI, streamed (first sound ~0.5 s). Same voices

@@ -75,6 +75,7 @@ var S = {
   merge: get('merge', 'off'),
   answer: get('answer', ''),            // answering model ('' = Talk's default, Gemini 3.1 Flash-Lite); per device           // also merge live words + Whisper with a model (off: it lost to Whisper alone on Eyal's dictations, 2026-10-13)
   keep: get('keepmic', 'open'),
+  fast: get('fast', 'on'),               // quick replies (latency work, 2026-10-13): act on the live words, end turns on nova-3's endpointing, guess early, short ack, socket kept warm
   clips: get('clips', 'on'),            // owner only: keep my recordings for debugging (14 days); on for the owner since 2026-10-13 (traceability)         // open = keep the mic ready while Talk is open (first words never lost) | use = only while speaking
 };
 // Aura-2 is the default voice since 2026-10-07 (Eyal): devices that had Aura-1 only because it was the default move once.
@@ -96,7 +97,10 @@ var css = [
   // conversation, which folds back into the bar. Its height is kept free at the end of the page.
   // Docked edge to edge like a tab bar (Eyal, 2026-10-13: not a floating card): a hairline on top, the phone's
   // bottom inset inside it; above the page's own bottom bars when it has some. A card bottom-right on wide screens.
-  '#talk-bar{position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px 8px calc(6px + var(--talk-inset,env(safe-area-inset-bottom))) 8px;min-height:56px;box-sizing:border-box;background:var(--t-bg);border-top:1px solid var(--t-line);color:var(--t-fg)}',
+  '#talk-bar{position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px 8px calc(6px + var(--talk-inset,env(safe-area-inset-bottom))) 8px;min-height:56px;box-sizing:border-box;background:var(--t-chip);background:color-mix(in srgb,var(--t-acc) 9%,var(--t-bg));border-top:1px solid var(--t-line);box-shadow:0 -2px 12px rgba(0,0,0,.08);color:var(--t-fg)}',
+  // The minimized bar stands apart from the page (Eyal, 2026-10-13: it blended in): an accent-tinted surface from the
+  // tokens, a hairline and a soft shadow on top, the mic a filled accent circle.
+  '#talk-root:not(.arming) #talk-bmic:not(.on){background:var(--t-acc);color:var(--t-accfg);border-radius:50%}',
   '@media (min-width:720px){#talk-bar{left:auto;right:16px;bottom:16px;width:420px;padding:6px;border:0;border-radius:14px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line),0 4px 16px rgba(0,0,0,.10)}}',
   '#talk-root.open #talk-bar{display:none}',
   '.talk-bb{width:44px;height:44px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--t-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}',
@@ -248,6 +252,7 @@ var ICON = {
   mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
   stop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>',
   gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   sound: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
   mute: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
@@ -389,7 +394,8 @@ function build() {
   head.innerHTML = '<b>Talk</b><span class="st" id="talk-st"></span>';
   spk = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Spoken replies' }, ICON.mute);
   var gear = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Talk settings' }, ICON.gear);
-  var close = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Close' }, ICON.x);
+  // Minimize, never an X: nothing in the header may look like deleting the conversation (Eyal, 2026-10-13).
+  var close = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Minimize' }, ICON.down);
   // Conversation mode, visible in the open conversation (Eyal, 2026-10-13): on = hands-free turns; off = dictate, then Send.
   convBtn = el('button', { class: 'talk-convt', type: 'button', 'aria-pressed': S.convmode === 'on' ? 'true' : 'false', title: 'Conversation mode: it sends after a pause, speaks the answer and listens again' }, 'Conversation');
   convBtn.addEventListener('click', function () { unlockAudio(); toggleConv('head'); });
@@ -398,6 +404,7 @@ function build() {
   setp.innerHTML =
     '<label>Dictation<select id="talk-s-engine"><option value="live">Deepgram live (Cloudflare): words as you speak</option><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
     '<label>How the mic works<select id="talk-s-mic"><option value="send">Tap the mic, speak, tap Send (like tmux-web)</option><option value="pause">Tap the mic; it sends when I stop talking</option><option value="hold">Hold the mic while I talk; letting go sends</option></select></label>' +
+    '<label>Quick replies<select id="talk-s-fast"><option value="on">On: answer from the live words, Whisper double-checks</option><option value="off">Off: wait for Whisper before answering</option></select></label>' +
     '<label>Conversation mode<select id="talk-s-convmode"><option value="off">Off: tap the mic, speak, tap Send</option><option value="on">On: it sends after a pause, speaks the answer, and listens again</option></select></label>' +
     '<label>Send after a pause of<select id="talk-s-pause"><option value="1500">1.5 s</option><option value="2500">2.5 s</option><option value="4000">4 s</option></select></label>' +
     '<label>Check the words with Whisper<select id="talk-s-whisper"><option value="on">On: the whole recording is read again (steadier, about 1.5 s)</option><option value="off">Off: send the live words right away</option></select></label>' +
@@ -519,6 +526,7 @@ function build() {
   // Models: what the running Talk uses for each step (from /api/talk/me), never typed in here.
   var mdl = document.getElementById('talk-s-models'), ROWS = [['live', 'Live words'], ['final', 'Final words'], ['cleanup', 'Clean-up'], ['decide', 'Picking the action'], ['chat', 'Answering'], ['status', 'What\u2019s going on'], ['code', 'Questions about code'], ['summary', 'Spoken summary'], ['voice', 'Voice']];
   mdl.innerHTML = ROWS.filter(function (r) { return MODELS[r[0]]; }).map(function (r) { var m = MODELS[r[0]]; return '<dt>' + r[1] + '</dt><dd>' + esc(m.model ? shortModel(m.model) : 'no model') + ' \u00b7 ' + esc(m.provider) + (m.note ? '<br><span style="color:var(--t-dim)">' + esc(m.note) + '</span>' : '') + '</dd>'; }).join('') + (MODELS.gateway ? '<dt>Gateway</dt><dd>' + esc(MODELS.gateway) + '</dd>' : '');
+  var sfa = document.getElementById('talk-s-fast'); sfa.value = S.fast; sfa.onchange = function () { S.fast = sfa.value; set('fast', S.fast); trace('setting', { fast: S.fast }); };
   var scm = document.getElementById('talk-s-convmode'); scm.value = S.convmode; scm.onchange = function () { if ((scm.value === 'on') !== convOn()) toggleConv('settings'); };
   var smg = document.getElementById('talk-s-merge'); smg.value = S.merge; smg.onchange = function () { S.merge = smg.value; set('merge', S.merge); trace('setting', { merge: S.merge }); };
   var smic = document.getElementById('talk-s-mic'), swh = document.getElementById('talk-s-whisper'), skp = document.getElementById('talk-s-keep');
@@ -646,7 +654,7 @@ function dragHandle(g) {
   g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
 }
 function status(t) { stEl.textContent = t || ''; barSync(); }
-function add(who, text, links, extra) { if (run && who !== 'you') run.texts.push(String(text)); var m = { who: who, text: String(text), links: links || undefined }; if (extra) { if (extra.sections) m.sections = extra.sections; if (extra.via) m.via = extra.via; if (extra.lead) m.lead = extra.lead; if (extra.brief) m.brief = extra.brief; } if (convAdd(m)) return; hist.push(m); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
+function add(who, text, links, extra) { if (run && who !== 'you') run.texts.push(String(text)); if (who !== 'you' && lat) latMark('data'); var m = { who: who, text: String(text), links: links || undefined }; if (extra) { if (extra.sections) m.sections = extra.sections; if (extra.via) m.via = extra.via; if (extra.lead) m.lead = extra.lead; if (extra.brief) m.brief = extra.brief; } if (convAdd(m)) return; hist.push(m); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
 // "How this was answered" (manager, 2026-10-13): what heard it, what picked the action, what answered, how long.
 var viaNow = null;   // the utterance in flight: { heard, decide: {model, ms}, answer: {lane, model, ms} }
 function viaShort(v) { if (!v || !v.answer) return ''; var a = v.answer; return (a.label || (a.model ? shortModel(a.model) : a.lane + ', no model')) + (a.fellBack ? ' (fallback)' : '') + (a.ms != null ? ', ' + (a.ms / 1000).toFixed(1) + ' s' : ''); }
@@ -814,6 +822,22 @@ function api(path, body) {
 
 // ---- The one entry point: a sentence --------------------------------------
 var preview = null;   // { text, cmd } from interim speech
+var spec = null, specCalls = 0, specT = null;   // { text, p } a decide made on the live words while they were still talking
+var STATUS_RX = /^\s*((ok(ay)?|so|hey|hi|and)[,\s]+)?(what'?s|what is|whats)\s+(going on|happening)(\s+(with|in|across)\s+(all\s+)?(my|the)\s+(projects?|builds?|work|apps?))?(\s+(today|right now|now|at the moment))?\s*[?.!]*\s*$|^\s*(status|status update|any updates?|give me (a|the) status( update)?)\s*[?.!]*\s*$/i;
+function normWords(x) { return wordsOf(x).join(' '); }
+function guess(text, now) {
+  clearTimeout(specT);
+  if (S.fast !== 'on' || !convOn() || !dcOn || specCalls >= 3) return;
+  var t = String(text || '').trim();
+  if (t.split(/\s+/).length < 2 || STATUS_RX.test(t) || (spec && normWords(spec.text) === normWords(t))) return;
+  specT = setTimeout(function () {
+    if (!dcOn && !now) return;
+    specCalls++;
+    var p = api('decide', { utterance: t, screen: screen() });
+    spec = { text: t, p: p, at: Date.now() };
+    trace('decide_guess', { text: t, n: specCalls });
+  }, now ? 0 : 350);
+}
 var lastText = '';
 function submit(text) {
   if (!curU || uSaid) curU = newU();
@@ -831,11 +855,21 @@ function submit(text) {
   add('you', text);
   status('Thinking…');
   var t0 = Date.now();
-  var reuse = preview && preview.text === text ? Promise.resolve({ cmd: preview.cmd, ms: { total: 0 } }) : api('decide', { utterance: text, screen: screen() });
-  preview = null;
+  talkUsedAt = Date.now();
+  // No round trip for fixed phrases (STATUS_RX mirrors the server's), and a guess made while they were still talking
+  // is used when its words are the final words (quick replies, 2026-10-13).
+  var quickSt = S.fast === 'on' && STATUS_RX.test(String(text || ''));
+  var specHit = spec && normWords(spec.text) === normWords(text);
+  var reuse = quickSt ? Promise.resolve({ cmd: { mode: 'ask', op: 'status', p: 1, why: 'status words (page)' }, ms: { total: 0 } })
+    : preview && preview.text === text ? Promise.resolve({ cmd: preview.cmd, ms: { total: 0 } })
+    : specHit ? spec.p : api('decide', { utterance: text, screen: screen() });
+  if (lat) lat.quick = quickSt ? 'status' : specHit ? 'spec' : '';
+  if (specHit || quickSt) trace('decide_reuse', { how: quickSt ? 'status words' : 'guessed while talking', text: text });
+  preview = null; spec = null;
   reuse.then(function (r) {
     if (r.error) { if (run) run.ok = false; add('note', r.why || 'Something went wrong.'); return done(); }
     var c = r.cmd;
+    if (lat) { latMark('decide'); lat.lane = c.mode + '/' + c.op; }
     viaNow = { heard: lastSpoken ? (S.engine === 'live' ? 'live words + ' + (S.merge === 'on' ? 'Whisper, cleaned up' : 'Whisper') : S.engine) : 'typed', decide: { model: MODELS.decide && MODELS.decide.model, ms: r.ms && r.ms.total } };
     if (run) { run.mode = c.mode; run.action = c.op; }
     logEv('decide', { text: text, mode: c.mode, mode_p: c.modeP, op: c.op, p: c.p, risky: c.risky, ms: Date.now() - t0 });
@@ -932,7 +966,58 @@ function route(c, text) {
     }
     ask(text, '');
 }
-function done() { busy = false; status(''); finish(); convAfter(); convDone(); }
+function done() { busy = false; status(''); finish(); convAfter(); latSilent(); convDone(); }
+// ---- Latency of a spoken turn (manager, 2026-10-13): ms from the stop to words ready, decided, answer ready, first ack,
+// first sound; 'end' = last word heard -> stop. One 'latency' trace row per turn (/admin/talk shows p50/p90).
+var lat = null, lastWordAt = 0;
+function latStart(how) { lat = { t0: Date.now(), how: how, end: lastWordAt ? Date.now() - lastWordAt : null, marks: {}, lane: '' }; }
+function latMark(k, extra) { if (!lat || lat.marks[k] != null) return; lat.marks[k] = Date.now() - lat.t0; if (extra) for (var x in extra) lat[x] = extra[x]; if (k === 'audio') latEmit(''); }
+function latEmit(why) {
+  if (!lat) return; var m = lat.marks, L = lat; lat = null;
+  trace('latency', { how: L.how, lane: L.lane, heard: L.heard || '', end: L.end, final: m.final, decide: m.decide, data: m.data, ack: m.ack, audio: m.audio,
+    total: m.audio != null && L.end != null ? m.audio + L.end : null, why: why, fast: S.fast, quick: L.quick || undefined });
+}
+function latSilent() { setTimeout(function () { if (lat && !speakPending && !speakingQ && !ackPlaying) latEmit('no sound'); }, 3000); }
+// Words compared the way a person hears them: no case or punctuation, plural s and doubled words ignored.
+function wordsOf(x) { return String(x || '').toLowerCase().replace(/[^\p{L}\p{N}' ]+/gu, ' ').split(/\s+/).filter(Boolean).map(function (w) { return w.replace(/'s$/, '').replace(/(..)s$/, '$1'); }).filter(function (w, i, a) { return i === 0 || w !== a[i - 1]; }); }
+function wordDist(a, b) { var d = []; for (var i = 0; i <= a.length; i++) { d[i] = [i]; for (var j = 1; j <= b.length; j++) d[i][j] = i === 0 ? j : Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); } return d[a.length][b.length]; }
+// Quick replies act on the live words; Whisper reads the clip meanwhile and, when it heard something materially
+// different, the answer is offered again for its words (traced either way).
+function whisperCheck(live, j, w0) {
+  var w = (j && j.whisper) || '';
+  if (!w) { trace('whisper_missing', { why: (j && j.err) || 'no text', after: 'live-first' }); return; }
+  var A = wordsOf(live), B = wordsOf(w), d = wordDist(A, B), r = d / Math.max(1, A.length, B.length);
+  var material = d >= 1;   // after the normalising above, any word left different counts ("parking" vs "packing" list, Eyal 2026-10-13)
+  trace('dc_whisper_check', { live: live, whisper: w, dist: d, ratio: Math.round(r * 100) / 100, material: material, whisper_ms: Date.now() - w0 });
+  if (!material) return;
+  (function wait(n) {
+    if ((busy || speakingQ) && n < 60) return setTimeout(function () { wait(n + 1); }, 250);
+    var q = 'I may have misheard. Did you say \u201c' + w + '\u201d?';
+    add('note', q); offerOn(q, function () { trace('whisper_redo', { text: w }); lastSpoken = true; submit(w); }, 'Yes');
+  })(0);
+}
+// "What's going on" kept ready while Talk is in use (every 30 s while the page shows, and after each turn), so the
+// answer comes from memory; the call has its own cap (status_warm) and is not tied to an utterance.
+var stCache = null, signedInNow = false, talkUsedAt = 0;
+function warmStatus(why) {
+  if (!signedInNow || document.visibilityState === 'hidden') return;
+  if (!(convOn() || Date.now() - talkUsedAt < 10 * 60000 || (root && root.classList.contains('open')))) return;
+  if (stCache && stCache.loading) return;
+  var t0 = Date.now(); stCache = Object.assign(stCache || {}, { loading: true });
+  fetch('/api/talk/status', { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ utterance: '', warm: 1 }) })
+    .then(function (r) { return r.json(); }).then(function (r) { stCache = r && r.ok !== false && !r.error ? { at: Date.now(), r: r, ms: Date.now() - t0 } : (stCache && stCache.r ? Object.assign(stCache, { loading: false }) : null); })
+    .catch(function () { if (stCache) stCache.loading = false; });
+}
+setInterval(function () { warmStatus('tick'); }, 30000);
+// A short "One moment." when the answer will take a while (chat, code, ideas), so the first sound comes at once.
+var ACK = 'One moment.', ackPlaying = false;
+function ack() {
+  if (S.fast !== 'on' || S.voice === 'off' || S.voice === 'phone' || !lastSpoken || !lat || lat.marks.audio != null || speakingQ || ackPlaying) return;
+  unlockAudio(); ackPlaying = true; latMark('ack');
+  player.onplaying = null; player.onended = function () { ackPlaying = false; }; player.onerror = function () { ackPlaying = false; };
+  player.src = ttsUrl(ACK);
+  var pp = player.play(); if (pp && pp.catch) pp.catch(function () { ackPlaying = false; });
+}
 // ---- Conversation mode: hands-free turns over the dictation path (no voice kit). A 1.5 s pause after words sends them;
 // when the answer has been spoken, it listens again. Two turns with nothing heard, or the toggle, end it.
 var convEmpty = 0, speakPending = false;
@@ -951,7 +1036,7 @@ function convAfter() {
   var t0 = Date.now();
   (function wait() {
     if (!convOn()) return;
-    var talking = speakPending || (player && !player.paused && !player.ended && player.currentTime > 0) || (window.speechSynthesis && speechSynthesis.speaking);
+    var talking = speakPending || speakingQ || ackPlaying || (player && !player.paused && !player.ended && player.currentTime > 0) || (window.speechSynthesis && speechSynthesis.speaking);
     if ((talking || busy) && Date.now() - t0 < 30000) return setTimeout(wait, 300);
     if (offerState) { trace('conv_wait', { why: 'a question on screen' }); return; }   // a yes/no waits for its tap or for the mic
     if (!listening) { trace('conv_listen_again', { ms: Date.now() - t0 }); startListen(); }
@@ -965,7 +1050,9 @@ function armQuiet() {
   quietT = setTimeout(function () {
     if (!dcOn) return;
     if (!(dcBuf.length || dcText)) return;
+    if (S.fast === 'on' && dcBuf.length && !dcText) return endTurn('quiet');
     trace('dc_stop', { how: 'quiet', conv: convOn(), pieces: dcBuf.length, ms: Date.now() - dcT0 });
+    latStart('quiet');
     liveStop(false, true);
   }, 1500);
 }
@@ -1025,11 +1112,15 @@ function greeting(example) {
 
 // ---- "What's going on": real data across their projects (/api/talk/status, no model).
 function whatsGoingOn(text) {
+  if (lat) lat.lane = 'status';
+  var fresh = stCache && stCache.r && Date.now() - stCache.at < 45000 && !/\btoday\b/i.test(text || '');
   status('Looking at your projects\u2026');
-  api('status', { utterance: text }).then(function (r) {
+  (fresh ? Promise.resolve(Object.assign({}, stCache.r, { ready: Date.now() - stCache.at })) : api('status', { utterance: text })).then(function (r) {
+    if (fresh) { trace('status_ready', { age_ms: r.ready }); setTimeout(function () { warmStatus('used'); }, 1500); }
     if (r.error) { if (run) run.ok = false; add('note', r.why || 'Could not look.'); return done(); }
     if (viaNow) viaNow.answer = { lane: 'status', model: null, ms: r.ms };
-    add('ai', r.text, r.links, { sections: r.sections, via: viaNow, lead: r.lead, brief: r.brief }); say(r.text);
+    add('ai', r.text, r.links, { sections: r.sections, via: viaNow, lead: r.lead, brief: r.brief });
+    if (r.spoken) { var sp = new String(r.spoken); sp.__short = true; say(sp); } else say(r.text);
     logEv('status', { ms: r.ms, links: (r.links || []).length });
     done();
   }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'status', err: String(e) }); done(); });
@@ -1366,6 +1457,7 @@ function chatPress(b) {
 }
 function ask(text, did) {
   busy = true;
+  if (lat) { lat.lane = lat.lane || 'chat'; ack(); }
   status('Answering…');
   api('chat', { utterance: text, did: did, screen: screen(), pageText: pageText(), history: chatHist, model: S.answer || undefined, context: convCtxSlugs() }).then(function (r) {
     if (r.error) { if (run) run.ok = false; add('note', r.why || 'No answer.'); return done(); }
@@ -1412,6 +1504,7 @@ function unlockAudio() {
   } catch (e) {}
 }
 function stopSpeaking() {
+  saySeq++; speakingQ = false; ackPlaying = false;
   try { if (player) { player.pause(); player.removeAttribute('src'); player.load(); } } catch (e) {}
   try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}
 }
@@ -1423,7 +1516,7 @@ function spoken(text) {
 }
 function phoneSay(text) {
   if (!window.speechSynthesis) return;
-  try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(text); u.lang = /[\u0590-\u05ff]/.test(text) ? 'he-IL' : 'en-US'; speechSynthesis.speak(u); } catch (e) {}
+  try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(text); u.onstart = function () { latMark('audio'); }; u.lang = /[\u0590-\u05ff]/.test(text) ? 'he-IL' : 'en-US'; speechSynthesis.speak(u); } catch (e) {}
 }
 function say(text) {
   if (S.voice === 'off' || (S.when === 'voice' && !lastSpoken)) return;
@@ -1434,19 +1527,47 @@ function say(text) {
   if (S.say === 'short' && t.length > 200 && !text.__short) {
     var v = viaNow, done1 = false, t0 = Date.now();
     var go = function (x, how) { if (done1) return; done1 = true; if (v) v.spoken = how; trace('summary', { how: how, ms: Date.now() - t0, chars: x.length }); var o = new String(x); o.__short = true; say(o); };
-    setTimeout(function () { go((t.match(/[^.!?]+[.!?]+/g) || [t]).slice(0, 2).join(' '), 'first sentences (summary too slow)'); }, 4000);
+    setTimeout(function () { go((t.match(/[^.!?]+[.!?]+/g) || [t]).slice(0, 2).join(' '), 'first sentences (summary too slow)'); }, S.fast === 'on' ? 700 : 4000);
     api('summary', { text: t, question: lastText }).then(function (r) { if (r && r.spoken) go(r.spoken, 'summary by ' + shortModel(r.model) + ', ' + ((r.ms || 0) / 1000).toFixed(1) + ' s'); }).catch(function () {});
     return;
   }
   if (S.voice === 'phone') return phoneSay(t);
   unlockAudio();
-  var t0 = Date.now();
-  player.src = '/api/talk/tts?model=' + encodeURIComponent(S.voice) + '&speaker=' + encodeURIComponent(S.speaker || '') + '&text=' + encodeURIComponent(t);
-  try { player.playbackRate = S.speed; player.preservesPitch = true; player.defaultPlaybackRate = S.speed; } catch (e) {}
-  player.onplaying = function () { speakPending = false; try { player.playbackRate = S.speed; } catch (e) {} logEv('speak_start', { chars: t.length, ms_first: Date.now() - t0, speed: S.speed }); };
-  player.onerror = function () { logEv('speak_error', { chars: t.length }); phoneSay(t); };
-  var p = player.play();
-  if (p && p.catch) p.catch(function (e) { logEv('speak_blocked', { err: String(e) }); phoneSay(t); });
+  playParts(S.fast === 'on' ? sentencesOf(t) : [t], t);
+}
+function ttsUrl(t) { return '/api/talk/tts?model=' + encodeURIComponent(S.voice) + '&speaker=' + encodeURIComponent(S.speaker || '') + '&text=' + encodeURIComponent(t); }
+// Sentence by sentence (latency work, 2026-10-13): a short first sentence comes back from Aura fastest; the next one is
+// fetched while the first plays. A short first piece is kept short; tiny later ones join their neighbour.
+function sentencesOf(t) {
+  var parts = String(t).match(/[^.!?]+[.!?]+[\u201d\u2019"')]*|[^.!?]+$/g) || [t], out = [];
+  parts.forEach(function (x) { x = x.trim(); if (!x) return; if (out.length > 1 && out[out.length - 1].length < 40) out[out.length - 1] += ' ' + x; else out.push(x); });
+  return out.length ? out : [t];
+}
+var saySeq = 0, speakingQ = false;
+function playParts(parts, whole) {
+  var seq = ++saySeq, i = 0, urls = {}, t0 = Date.now();
+  speakingQ = true;
+  var pre = function (k) { if (k >= parts.length || urls[k]) return; urls[k] = fetch(ttsUrl(parts[k]), { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.blob(); }).then(function (b) { return URL.createObjectURL(b); }).catch(function () { return null; }); };
+  var next = function () {
+    if (seq !== saySeq) return;
+    if (i >= parts.length) { speakingQ = false; return; }
+    var k = i++;
+    var src = k === 0 ? Promise.resolve(ttsUrl(parts[0])) : (pre(k), urls[k]);
+    pre(k + 1);
+    src.then(function (u) {
+      if (seq !== saySeq) return;
+      if (!u) return next();
+      player.src = u;
+      try { player.playbackRate = S.speed; player.preservesPitch = true; player.defaultPlaybackRate = S.speed; } catch (e) {}
+      player.onplaying = function () { speakPending = false; try { player.playbackRate = S.speed; } catch (e) {} if (k === 0) { latMark('audio'); logEv('speak_start', { chars: whole.length, parts: parts.length, ms_first: Date.now() - t0, speed: S.speed }); } };
+      player.onended = next;
+      player.onerror = function () { logEv('speak_error', { chars: parts[k].length, part: k }); if (k === 0) { speakingQ = false; phoneSay(whole); } else next(); };
+      var p = player.play();
+      if (p && p.catch) p.catch(function (e) { logEv('speak_blocked', { err: String(e) }); if (k === 0) { speakingQ = false; phoneSay(whole); } });
+    });
+  };
+  // An acknowledgement still playing finishes first.
+  (function waitAck() { if (seq !== saySeq) return; if (ackPlaying) return setTimeout(waitAck, 60); next(); })();
 }
 
 // ---- Listening ---------------------------------------------------------------
@@ -1718,7 +1839,7 @@ function publishTools() {
 var dc = null, dcReady = false, dcOn = false, dcText = '', dcT0 = 0, dcBuf = [], dcQuiet = null;
 // What was said so far: the finished pieces plus the one being said now.
 function dcSaid(interim) { return dcBuf.concat(interim ? [interim] : []).join(' ').replace(/\s+/g, ' ').trim(); }
-function dcArm() { clearTimeout(dcQuiet); if (S.mic === 'pause' && S.pause !== 'tap' && dcOn) dcQuiet = setTimeout(function () { if (dcOn) { trace('dc_stop', { how: 'quiet', pieces: dcBuf.length, ms: Date.now() - dcT0 }); liveFinish('', true); } }, Number(S.pause) || 2500); }
+function dcArm() { clearTimeout(dcQuiet); if (S.mic === 'pause' && S.pause !== 'tap' && dcOn) dcQuiet = setTimeout(function () { if (dcOn) { trace('dc_stop', { how: 'quiet', pieces: dcBuf.length, ms: Date.now() - dcT0 }); latStart('pause'); liveFinish('', true); } }, Number(S.pause) || 2500); }
 var dcLoading = null;   // callbacks waiting while the kit loads (a press-down and the tap both ask: one client only)
 function dcWarm(cb) {
   if (dc && dcReady) return cb && cb();
@@ -1882,15 +2003,19 @@ function liveChunk(blob) {
 }
 function liveOpen() {
   if (S.lang === 'he') { startNativePreview(); return; }   // Workers AI's nova-3 has no Hebrew: the phone's recogniser shows the words
-  var t0 = Date.now(), gotWords = false;
-  try { liveWs = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/api/talk/stt-live?lang=' + encodeURIComponent(S.lang)); }
-  catch (e) { trace('stt_ws_error', { err: String(e) }); startNativePreview(); return; }
+  var t0 = Date.now(), gotWords = false, reused = false;
+  if (nextWs && nextWs.readyState <= 1 && nextWs.__lang === S.lang) { liveWs = nextWs; nextWs = null; reused = true; }
+  else {
+    try { liveWs = new WebSocket(sttUrl()); }
+    catch (e) { trace('stt_ws_error', { err: String(e) }); startNativePreview(); return; }
+  }
   var ws = liveWs;
   ws.onopen = function () {
     var queued = liveQ.length;
     while (liveQ.length && ws.readyState === 1) { ws.send(liveQ.shift()); liveSent++; }
-    trace('stt_ws_open', { ms: Date.now() - t0, flushed: queued });
+    trace('stt_ws_open', { ms: Date.now() - t0, flushed: queued, warm: reused });
   };
+  if (reused && ws.readyState === 1) ws.onopen();
   ws.onmessage = function (ev) {
     var d = null; try { d = JSON.parse(ev.data); } catch (e) { return; }
     if (!dcOn && d.type !== 'final') return;
@@ -1898,7 +2023,9 @@ function liveOpen() {
       var txt = String(d.text || '').trim();
       if (!gotWords && txt) { gotWords = true; convEmpty = 0; trace('stt_first_words', { ms: Date.now() - dcT0, text: txt }); }
       if (d.type === 'final') { if (txt) dcBuf.push(txt); dcText = ''; } else dcText = txt;
-      if (txt) armQuiet();
+      if (txt) { lastWordAt = Date.now(); clearTimeout(endT); armQuiet(); guess(dcSaid(dcText)); }
+      // nova-3's endpointing heard them stop (speech_final): in conversation mode the turn ends now, not 1.5 s later.
+      if (d.end && dcBuf.length && !dcText && convOn() && S.fast === 'on') { guess(dcSaid(''), true); endT = setTimeout(function () { if (dcOn && !dcText) endTurn('endpoint'); }, 450); }   // + nova-3's 300 ms = ~0.75 s of quiet
       if (!nativePreview) setInp(dcBase + dcSaid(dcText));
     } else if (d.type === 'error') { trace('stt_ws_server_error', { err: d.error }); if (!gotWords && dcOn && !nativePreview) startNativePreview(); }
   };
@@ -1909,7 +2036,25 @@ function liveOpen() {
     if (dcOn && !gotWords && !nativePreview) startNativePreview();   // the live words failed: the phone's recogniser instead
   };
 }
+var nextWs = null, endT = null;
+function sttUrl() { return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/api/talk/stt-live?lang=' + encodeURIComponent(S.lang); }
+// Conversation mode: the next turn's socket opens while the answer is being given (nova-3 kept alive server-side),
+// so listening again does not wait for a new connection. Closed if unused for 55 s.
+function prewarmWs() {
+  if (S.fast !== 'on' || !convOn() || S.lang === 'he' || (nextWs && nextWs.readyState <= 1)) return;
+  try { var w = new WebSocket(sttUrl()); w.__lang = S.lang; nextWs = w; trace('stt_ws_prewarm', {}); setTimeout(function () { if (nextWs === w) { nextWs = null; try { w.close(); } catch (e) {} } }, 55000); } catch (e) {}
+}
+// End a conversation turn that already has its final words: no flush wait (the hand stop waits 0.85 s for the last chunk).
+function endTurn(how) {
+  if (!dcOn) return;
+  clearTimeout(quietT); clearTimeout(endT);
+  trace('dc_stop', { how: how, conv: true, pieces: dcBuf.length, ms: Date.now() - dcT0, since_word: Date.now() - lastWordAt });
+  latStart(how);
+  liveFinish('', true); liveClose();
+}
 function startLive() {
+  specCalls = 0; spec = null; clearTimeout(endT); lastWordAt = 0; talkUsedAt = Date.now();
+  if (convOn() && (!stCache || Date.now() - (stCache.at || 0) > 25000)) warmStatus('listen');
   setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); clearTimeout(quietT); live.textContent = '';
   if (convOn()) setTimeout(function () { if (dcOn && !dcBuf.length && !dcText) { convEmpty++; trace('conv_quiet', { empty: convEmpty }); stopListen(true); if (convEmpty >= 2) { toggleConv('quiet'); add('note', 'Conversation mode is off: nothing heard twice.'); } else convAfter(); } }, 10000);
   else convEmpty = 0;
@@ -1935,6 +2080,8 @@ function liveFinish(text, sendIt) {
     var fixed = unrepeat(final, t);
     if (fixed !== final) { extra = Object.assign({ unrepeated: final }, extra || {}); final = fixed; }
     trace('dc_whisper', Object.assign({ how: how, live: t, final: final, send: !!sendIt }, extra || {}));
+    if (sendIt && lat) latMark('final', { heard: how });
+    if (sendIt) prewarmWs();
     keepClip(clipBlob, { live: t, final: final || '', how: how });
     var all = (base + (final || '')).trim();
     if (cInto) {
@@ -1957,8 +2104,17 @@ function liveFinish(text, sendIt) {
     clipBlob = blob;
     // Whisper always reads the whole recording; a turn where it could not is an error in the trace (it was silent before).
     if (!blob || blob.size < 2000) { trace('whisper_missing', { why: blob ? 'too short' : 'no recording', bytes: blob ? blob.size : 0 }); return send(t, 'live', { bytes: blob ? blob.size : 0 }); }
-    status('Checking the words\u2026');
     var w0 = Date.now();
+    // Quick replies: answer from the live words now; Whisper double-checks in the background (whisperCheck).
+    // Only where nobody reviews the words first (conversation mode, the 'sends when I stop' mic): tap-then-Send keeps
+    // waiting for Whisper as before.
+    if (sendIt && t && !cInto && S.fast === 'on' && S.lang !== 'he' && (convOn() || S.mic === 'pause')) {
+      lastClip = { blob: blob, live: t, base: base, at: Date.now() };
+      send(t, 'live-first', { bytes: blob.size });
+      hearText(blob, t).then(function (j) { whisperCheck(t, j, w0); }).catch(function (e) { trace('whisper_missing', { why: String(e), after: 'live-first' }); });
+      return;
+    }
+    status('Checking the words\u2026');
     // Reviewing before Send (the words are on screen already): wait up to 15 s for Whisper, then keep the live words.
     // Sending now: 8 s. (Whisper on Workers AI usually 1.5-4.5 s, spikes past 6 s: 2026-10-13.)
     var late = false;
@@ -1974,6 +2130,7 @@ function liveStop(cancel, sendIt) {
   if (cancel) { dcOn = false; stopNativePreview(); liveClose(); clipStop(null); setListening(false); live.textContent = ''; cInto = null; cMic = null; return; }
   // Stopped by hand: the recorder's last chunk goes to the socket, which then finishes its words (up to 0.8 s).
   trace('dc_stop', { how: 'hand', pieces: dcBuf.length, interim: dcText, ms: Date.now() - dcT0, sent: liveSent, queued: liveQ.length });
+  if (sendIt && !lat) latStart('hand');
   status('Finishing\u2026');
   try { if (clip && clip.state === 'recording') clip.requestData(); } catch (e) {}
   setTimeout(function () {
@@ -2124,7 +2281,8 @@ function signedOutBar() {
 // ---- Boot ----------------------------------------------------------------
 fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
   if (!j.signedIn) return signedOutBar();
-  me = j.handle;
+  me = j.handle; signedInNow = true;
+  if (convOn()) setTimeout(function () { warmStatus('load'); }, 1500);
   if (j.version && j.version.sha) VERSION = j.version.sha + (j.version.built ? ' ' + new Date(j.version.built).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '') + (j.version.talk && j.version.talk !== j.version.sha ? ' talk ' + j.version.talk : '');
   if (j.trace) traceStart(); else tq = [];
   CLIPS = !!j.clips; MODELS = j.models || {}; ANSWER = j.answer || null;

@@ -811,6 +811,21 @@ answers, or both.
   settings, work, asks, deck.
 - **What's going on** also names builds running/finished (Landing binding on the talk Worker), questions agents
   asked you (X5 ask-person), live fleet runs (needs `FLEET_KEY` as a secret on qodebase-talk).
+- **Quick replies (latency, 2026-10-13, setting `fast`, on by default; off = the old path):** stop -> first sound was
+  ~18 s on Eyal's 'What's going on?' (pause 1.5, Whisper 5.9, decide 1.5, status 2.9, summary 1.7, TTS 4.2). Now: a
+  conversation turn ends on nova-3's endpointing (`end` = speech_final, forwarded by stt-live) + 0.2 s, 1.5 s quiet is
+  the maximum; the turn acts on the live words at once and Whisper double-checks in the background (`whisperCheck`:
+  word diff after normalising case, plurals, doubled words; any difference is traced `dc_whisper_check` and offered
+  as "Did you say …?"); fixed phrases need no model (`quickCmd`/STATUS_RX, mirrored in the page); a decide is guessed
+  on the live words while they talk (`guess`, at most 3 per turn, used only when its words are the final words);
+  "what's going on" is kept warm (POST /api/talk/status {warm:1}, cap `status_warm`, every 30 s while Talk is in use
+  and the page shows) and speaks its own short line (`spoken`), no summary model; replies are spoken sentence by
+  sentence (first TTS at once, next prefetched as a blob); "One moment." when a slow lane starts (chat, code);
+  the next turn's live socket opens while the answer plays. Every spoken turn writes a `latency` trace row (end,
+  final, decide, data, ack, audio, total in ms from the stop); /admin/talk -> "Latency of spoken turns" = p50/p90.
+  Bench: `~/.local/share/forq-deploy/qb2-tests/lat/bench.mjs <label>` (fixtures.json: Eyal's kept clips + Aura
+  voices at 0.9/1.0/1.15 speed, fed as the mic in conversation mode on / at 390 px, real Chrome for MP3, every write
+  intercepted; results.jsonl).
 - **Conversations** (qb5, 2026-10-14, hidden: per device, `?conv=1` turns it on, `?conv=0` off; settings row only when
   on): several Talk threads, each with its log + chat memory, project chips (context), an automatic title and a status
   dot. Page side src/talkconv.ts (concatenated into TALK_JS; every hook in talkclient.ts is a no-op when off, and the
