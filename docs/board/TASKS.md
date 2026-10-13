@@ -112,3 +112,10 @@ Task: documentation comments for exported functions/classes in a big real codeba
 - [ ] F3 ramp: 1,000 -> 5,000 (-> all files if it holds), lanes by folder; at each step stop, read bottlenecks, fix, resume (qb6; manager decides each step)
 - [ ] F4 quality: judge sample + hand check of 50 files; verify-fail and rejected counts (qb9): sampler ready, scripts/fleet/quality-sample.mjs (re-verifies unchanged code per file, flags invented @params; seeded folder-proportional sample; --judge via gateway qodebase-fleet with a $ cap)
 - [ ] F5 write-up: FINDINGS + /how + submission (manager, qb8)
+
+Parallel tracks (Eyal, 2026-10-13: "do 1, 2, 3, 5 and 4"):
+- [ ] P1 results generator: one script turns the fleet records, lab runs.jsonl, sim/board-ab runs and /api/admin/build-estimates into the FINDINGS tables + a numbers JSON that /how and the README read; re-run after every run (qb4)
+- [ ] P2 fleet section drafted now with marked gaps: submission + README + /how card text (qb8, /how with qb3)
+- [ ] P3 scale-step prep off qb6: import + count the extra repos (rest of VS Code extensions/, microsoft/TypeScript src, angular/angular packages, babel/babel packages) into Artifacts qbfleet, licences checked, target counts, per-repo $/time estimate (qb5)
+- [ ] P4 repos side by side on different models (per-model limits): e.g. gemma on VS Code, glm-4.7 on TypeScript, Gemini on Angular; per-model quality from qb9's check (qb6 runs, after P3)
+- [ ] P5 second judge-style adversarial review of README + submission + the live judge path (manager's subagent)
