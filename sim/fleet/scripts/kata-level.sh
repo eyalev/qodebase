@@ -9,7 +9,8 @@ DIAL=$1; PROJ=$2; LABEL=$3; AGENTS=${4:-200}; BUDGET=${5:-8}
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 K=$(cat ~/.config/qbfleet/key); U=https://qbfleet.forqdev.workers.dev; D=~/.local/share/qbfleet/kata/$LABEL; mkdir -p "$D"
 REPO="fleet-$PROJ"
-jq -c '[.list | sort_by(.order)[]]' "$ROOT/sim/kata/seed-1/kata-tasks-dial$DIAL.json" > "$D/tasks.json"
+# LIMIT (env): only the first N tasks in order (a small check run).
+jq -c --argjson n "${LIMIT:-100000}" '[.list | sort_by(.order)[]] | .[0:$n]' "$ROOT/sim/kata/seed-1/kata-tasks-dial$DIAL.json" > "$D/tasks.json"
 jq -n --slurpfile ts "$D/tasks.json" --arg repo "$REPO" --arg slug "eyal.$PROJ" --arg label "code dial $DIAL% ($LABEL)" --argjson agents "$AGENTS" --argjson budget "$BUDGET" \
   '{repo: $repo, label: $label, ladder: ("K" + ($label|split(" ")[2]|rtrimstr("%"))), kata: {slug: $slug, tasks: $ts[0], maxRedos: 2}, agents: $agents, batch: 1,
     models: [{model: "gemini-3.1-flash-lite", maxPerMin: 300}], overflow: {model: "@cf/zai-org/glm-4.7-flash", maxPerMin: 200},
