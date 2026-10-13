@@ -135,11 +135,32 @@ export class TalkVoice extends VoiceAgent {
   createTranscriber(connection: Connection) {
     if (!this.#dictate.has(connection.id)) return undefined as any;
     const lang = this.#dictLang.get(connection.id) || 'en';
-    const keyterms = ['qodebase', 'Talk', 'fork', 'merge', 'router', ...this.#keyterms].slice(0, 80);
-    this.#trace('srv_stt', { model: 'nova-3', lang, keyterms: keyterms.length });
+    // Deepgram advises 20-50 keyterms (500-token hard limit; tmux-web's notes): the newest 35 project names.
+    const keyterms = ['qodebase', 'Talk', 'fork', 'merge', 'router', ...this.#keyterms].slice(0, 40);
+    // nova-3 has Hebrew (with keyterms); "auto" is multi, which romanises Hebrew, fine for a preview Whisper replaces.
+    const language = lang === 'he' ? 'he' : lang === 'auto' ? 'multi' : 'en';
+    this.#trace('srv_stt', { model: 'nova-3', lang, language, keyterms: keyterms.length });
+    // Live words failed to start from 2026-10-13 ~08:00 ("stt_startup_failed", nothing in the logs) while the same
+    // request over REST worked: log what the binding answers, so the next failure says why.
+    const ai = {
+      run: async (model: string, input: any, opts: any) => {
+        const t0 = Date.now();
+        try {
+          const r: any = await (this.env.AI as any).run(model, input, opts);
+          const ok = !!r?.webSocket;
+          log('stt_ws', { level: ok ? 'info' : 'error', handle: this.name, model, ok, ms: Date.now() - t0, keyterms: input?.keyterm?.length || 0, language: input?.language, status: r?.status, keys: r && typeof r === 'object' ? Object.keys(r).slice(0, 8) : typeof r });
+          if (!ok) { let body = ''; try { body = typeof r?.text === 'function' ? (await r.clone().text()).slice(0, 500) : JSON.stringify(r).slice(0, 500); } catch {} this.#trace('srv_stt_error', { ms: Date.now() - t0, status: r?.status, body }); }
+          return r;
+        } catch (e) {
+          log('stt_ws_error', { level: 'error', handle: this.name, model, ms: Date.now() - t0, err: String(e), stack: (e as Error)?.stack, keyterms: input?.keyterm?.length || 0 });
+          this.#trace('srv_stt_error', { ms: Date.now() - t0, err: String(e).slice(0, 300) });
+          throw e;
+        }
+      },
+    };
     // Straight to the AI binding, not through the gateway: through it the first words came ~7 s late
     // (2026-10-07, Eyal's phone). Flux's websocket skips the gateway too; the cost goes to the Ledger per call.
-    return new WorkersAINova3STT(this.env.AI as any, { keyterms, language: lang === 'en' ? 'en' : 'multi', endpointingMs: 300, utteranceEndMs: 1000 }) as any;
+    return new WorkersAINova3STT(ai as any, { keyterms, language, endpointingMs: 300, utteranceEndMs: 1000 }) as any;
   }
   async #loadKeyterms() {
     try {

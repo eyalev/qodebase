@@ -103,6 +103,14 @@ var css = [
   '#talk-root.slim #talk-bmic{display:none}',
   '#talk-root.slim #talk-bar{min-height:48px;padding:2px 2px 2px 6px}',
   '#talk-spacer{height:0;pointer-events:none}',
+  // A clear (×) inside text boxes, only while they hold text (Eyal, 2026-10-13): Talk's own input and the page's
+  // idea / change boxes.
+  '.talk-clr{position:absolute;width:32px;height:32px;border:0;border-radius:8px;background:var(--chip,#f3f4f6);color:var(--dim,#6e737b);display:none;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:2}',
+  '.talk-clr svg{width:16px;height:16px}',
+  '.talk-clr.on{display:flex}',
+  '#talk-inwrap{position:relative;flex:1;min-width:0;display:flex}',
+  '#talk-inwrap #talk-in{padding-right:40px}',
+  '#talk-inwrap .talk-clr{right:6px;top:6px}',
   // A page can ask for less: data-talk-bar="mic" on <body> (a deck: only the mic, the words show while in use),
   // "off" (no bar; ?clean on any URL does the same, for recordings).
   '#talk-root.miconly #talk-bar{right:auto;width:auto;min-height:0}',
@@ -237,6 +245,12 @@ function wireComposers() {
       startListen();
     });
   });
+  // The × in the home idea box (top right, clear of its own mic at the bottom).
+  [].forEach.call(document.querySelectorAll('.askbox textarea'), function (t) {
+    if (t.__talkClr) return;
+    clearer(t, t.parentNode, function () { if (listening && cInto === t) stopListen(true); });
+    var x = t.parentNode.querySelector('.talk-clr'); if (x) { x.style.right = '8px'; x.style.top = '8px'; }
+  });
   document.body.classList.toggle('talk-composer', any);
   if (root && root.classList.contains('slim') !== any) { root.classList.toggle('slim', any); trace('bar_slim', { on: any }); setTimeout(placeBar, 50); }
 }
@@ -255,6 +269,23 @@ function suggestFromComposer(text, form) {
       preview = { text: text, cmd: c }; lastSpoken = true; submit(text);
     }, 'Do it');
   }).catch(function () {});
+}
+// The × in a text box: shown while it holds text; clears it (and stops listening into it), focus stays in the box.
+function clearer(ta, box, before) {
+  if (!ta || ta.__talkClr) return;
+  ta.__talkClr = 1;
+  var b = el('button', { type: 'button', class: 'talk-clr', 'aria-label': 'Clear the text' }, ICON.x);
+  if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
+  box.appendChild(b);
+  var sync = function () { b.classList.toggle('on', !!ta.value); };
+  ta.addEventListener('input', sync); setInterval(sync, 700); sync();
+  b.addEventListener('pointerdown', function (e) { e.preventDefault(); });   // keep the keyboard up
+  b.addEventListener('click', function () {
+    if (before) before();
+    var proto = ta.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, 'value').set.call(ta, '');
+    ta.dispatchEvent(new Event('input', { bubbles: true })); sync(); trace('clear', { box: ta.id || ta.name || ta.getAttribute('aria-label') || '' });
+  });
 }
 function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
 
@@ -306,7 +337,9 @@ function build() {
   inp = el('textarea', { id: 'talk-in', rows: '1', enterkeyhint: 'send', autocomplete: 'off', placeholder: 'Say or type: open my calculator', 'aria-label': 'Talk to qodebase' });
   micBtn = el('button', { id: 'talk-mic', type: 'button', 'aria-label': 'Speak' }, ICON.mic);
   sendBtn = el('button', { id: 'talk-send', type: 'submit', 'aria-label': 'Send' }, ICON.send);
-  form.appendChild(inp); form.appendChild(micBtn); form.appendChild(sendBtn);
+  var inWrap = el('div', { id: 'talk-inwrap' }); inWrap.appendChild(inp);
+  form.appendChild(inWrap); form.appendChild(micBtn); form.appendChild(sendBtn);
+  clearer(inp, inWrap, function () { if (listening) stopListen(true); });
   inp.addEventListener('input', function () { fitInp(); });
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
   var grab = el('button', { id: 'talk-grab', type: 'button', 'aria-label': 'Drag to resize Talk, tap to fold it into the bar' }, '<i></i>');
@@ -547,8 +580,10 @@ function barMode() {
   // Mic only, unless something is happening; the last answer stays readable for 6 s.
   var active = listening || busy || !!offerState || (vc && vcStatus !== 'idle');
   clearTimeout(miniT);
-  if (active) root.classList.remove('miconly');
-  else miniT = setTimeout(function () { root.classList.add('miconly'); placeBar(); }, root.classList.contains('miconly') ? 0 : 6000);
+  if (active) { root.classList.remove('miconly'); root.__wasActive = 1; return; }
+  // Until something happens on this page: only the mic, at once. After an answer: readable for 6 s first.
+  if (!root.__wasActive) { root.classList.add('miconly'); return; }
+  miniT = setTimeout(function () { root.classList.add('miconly'); placeBar(); }, 6000);
 }
 
 // ---- Pointing ----------------------------------------------------------------
@@ -595,7 +630,7 @@ function submit(text) {
   // A short yes / no answers the question on screen (Stop this run? Send it to the agents?): no model.
   var said = String(text || '').trim(), short = said.split(/\s+/).length <= 5;
   if (offerState && short && YES_RX.test(said)) { var y = offerState.yes; trace('offer_voice', { answer: 'yes', text: said }); add('you', said); offerOff(); y(); return; }
-  if (offerState && said.split(/\s+/).length <= 3 && NO_RX.test(said)) { trace('offer_voice', { answer: 'no', text: said }); add('you', said); offerOff(); add('app', 'Okay, I left it.'); return; }
+  if (offerState && said.split(/\s+/).length <= 3 && NO_RX.test(said)) { trace('offer_voice', { answer: 'no', text: said }); add('you', said); offerOff(); add('app', 'Okay, I left it.'); return finish(); }
   busy = true; unmark(); offerOff();
   add('you', text);
   status('Thinking…');
@@ -909,7 +944,7 @@ function offerSubmit(t) {
   else {
     // A box outside a form ("What should change?" + "Send back to Agent 3"): the send-like button next to it.
     for (var box = t.parentElement, i = 0; box && i < 4 && !b; box = box.parentElement, i++)
-      b = [].filter.call(box.querySelectorAll('button'), function (x) { return x.getClientRects().length && /^(send|ask|save|post|reply|answer)/i.test(String(x.innerText || x.getAttribute('aria-label') || '').trim()); })[0] || null;
+      b = [].filter.call(box.querySelectorAll('button'), function (x) { return x.getClientRects().length && /^(send|ask|save|post|reply|answer|build)/i.test(String(x.innerText || x.getAttribute('aria-label') || '').trim()); })[0] || null;
     if (b) { var lab = String(b.innerText || 'Send').trim(); offerOn('Send it?', function () { if (CONFIRM_RX.test(lab)) { add('app', 'Pressed \u201c' + lab + '\u201d.'); } b.click(); }, lab.split(/\s+/)[0]); }
     return;
   }
@@ -919,7 +954,7 @@ function offerSubmit(t) {
 
 var offerState = null;
 function offerOn(text, yes, yesLabel) {
-  if (run) run.texts.push(text);
+  if (run && text && run.texts[run.texts.length - 1] !== text) run.texts.push(text);
   offerState = { text: text || '', yes: yes, label: yesLabel || 'Go' };
   bOffer.innerHTML = '';
   var by = el('button', { type: 'button', class: 'talk-chip pri' }); by.textContent = yesLabel || 'Go';
@@ -1371,6 +1406,15 @@ function clipStop(cb) {
   try { r.stop(); } catch (e) { if (cb) cb(null); }
 }
 var dcBase = '';
+function unrepeat(text, live) {
+  var s = String(text || ''); if (!s) return s;
+  var count = function (str, ph) { var n = 0, i = 0; str = str.toLowerCase(); ph = ph.toLowerCase(); while ((i = str.indexOf(ph, i)) >= 0) { n++; i += ph.length; } return n; };
+  return s.replace(/\b((?:[\p{L}\p{N}']+[\s,.!?]*){1,4}?)(?:\1){2,}/giu, function (m, ph) {
+    var core = ph.replace(/[\s,.!?]+$/, '');
+    var times = m.length / ph.length;
+    return count(live || '', core) >= times ? m : ph;
+  });
+}
 function startLive() {
   setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); live.textContent = '';
   dcBase = inpVal().trim() ? inpVal().trim() + ' ' : '';   // speak more after typing: the words are added
@@ -1395,6 +1439,10 @@ function liveFinish(text, sendIt) {
   var base = dcBase;
   function send(final, how, extra) {
     if (sent) return; sent = true; status('');
+    // Whisper on a quiet or noisy clip repeats itself ("Hello, hello, hello, hello, hello."): a phrase said 3+ times
+    // in a row that the live words did not hear that often is kept once.
+    var fixed = unrepeat(final, t);
+    if (fixed !== final) { extra = Object.assign({ unrepeated: final }, extra || {}); final = fixed; }
     trace('dc_whisper', Object.assign({ how: how, live: t, final: final, send: !!sendIt }, extra || {}));
     keepClip(clipBlob, { live: t, final: final || '', how: how });
     var all = (base + (final || '')).trim();
@@ -1552,9 +1600,23 @@ function voiceChange(c) {
   }).catch(function () { add('note', 'Could not reach qodebase.'); done(); });
 }
 
+// Signed out, on the home page: the bar is a door to sign in (talking costs, so it is for signed-in people).
+function signedOutBar() {
+  if (location.pathname !== '/' || document.body.getAttribute('data-talk-bar') === 'off' || /[?&](clean|rec=1)\b/.test(location.search)) return;
+  var st = el('style'); st.textContent = css; document.head.appendChild(st);
+  root = el('div', { id: 'talk-root' }); root.style.setProperty('--t-ff', getComputedStyle(document.body).fontFamily || 'sans-serif');
+  bar = el('a', { id: 'talk-bar', href: '/login?to=' + encodeURIComponent(location.pathname), 'aria-label': 'Sign in to talk to qodebase', style: 'text-decoration:none;align-items:center' });
+  bar.innerHTML = '<span class="talk-bb pri">' + ICON.mic + '</span><span id="talk-bmid" style="cursor:pointer"><span id="talk-btext">Sign in to talk to qodebase: say what to build, and it builds it</span></span>';
+  root.appendChild(bar); document.body.appendChild(root);
+  spacer = el('div', { id: 'talk-spacer', 'aria-hidden': 'true' }); document.body.insertBefore(spacer, root);
+  bMic = bar.firstChild; bText = document.getElementById('talk-btext');
+  placeBar(); setTimeout(placeBar, 800); window.addEventListener('resize', placeBar);
+  bar.addEventListener('click', function () { trace('bar', { how: 'signin' }); });
+}
+
 // ---- Boot ----------------------------------------------------------------
 fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
-  if (!j.signedIn) return;
+  if (!j.signedIn) return signedOutBar();
   me = j.handle;
   if (j.version && j.version.sha) VERSION = j.version.sha + (j.version.built ? ' ' + new Date(j.version.built).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '') + (j.version.talk && j.version.talk !== j.version.sha ? ' talk ' + j.version.talk : '');
   if (j.trace) traceStart(); else tq = [];

@@ -92,8 +92,12 @@ export const SCAN_JS = String.raw`function talkScan(root) {
     if (count[x.it.text] < 2) return;
     var card = x.el.closest('[data-talk-ctx], article, li, section, .card, .rc'), name = '';
     if (card) { var h = card.getAttribute('data-talk-ctx') || ((card.querySelector('h1, h2, h3, h4, .rc-name, b, strong') || {}).textContent) || lines(card); name = clean(h).slice(0, 50); }
-    if (name && name.toLowerCase() !== x.it.text.toLowerCase()) x.it.text = x.it.text + ' (' + name + ')';
+    if (name && name.toLowerCase() !== x.it.text.toLowerCase()) { x.bare = x.it.text; x.it.text = x.it.text + ' (' + name + ')'; }
   });
+  // A card name that does not tell them apart either (two "Build it" under one heading) is only noise: drop it.
+  var after = {};
+  btns.forEach(function (x) { after[x.it.text] = (after[x.it.text] || 0) + 1; });
+  btns.forEach(function (x) { if (x.bare && after[x.it.text] > 1) x.it.text = x.bare; });
   root.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]), textarea, select, [contenteditable=true]').forEach(function (f) {
     if (skip(f) || f.disabled || !shown(f)) return;
     var name = f.getAttribute('placeholder') || named(f) || labelOf(f) || f.name || 'text field';
