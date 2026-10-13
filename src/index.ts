@@ -679,7 +679,7 @@ const app = {
       if (path === '/settings') {
         const u = await userByEmail(env, me.email || '');
         if (!u) return new Response(null, { status: 302, headers: { location: '/login?next=/settings' } });
-        const mine = (await listFor(env, me.handle, me.admin)).filter((e) => e.owner === u.handle).length;
+        const mine = (await listFor(env, me.handle, me.admin, true)).filter((e) => e.owner === u.handle).length;
         const page = settingsPage(u, onSubscription(env, u.handle), mine, url.searchParams.has('welcome'), await registry(env).cliTokens(u.email));
         return html(tabsNav ? withGlobal(page, 'account', (await globalOf()).inbox, u.handle, ui as Nav) : page);
       }
@@ -791,7 +791,7 @@ const app = {
         }
         if (path === '/api/me/handle' && request.method === 'POST') {
           const { handle } = await request.json() as { handle?: string };
-          if ((await listFor(env, me.handle, me.admin)).some((e) => e.owner === u.handle)) return json({ error: 'You already own projects under this name, so it cannot change.' }, 400);
+          if ((await listFor(env, me.handle, me.admin, true)).some((e) => e.owner === u.handle)) return json({ error: 'You already own projects under this name, so it cannot change.' }, 400);
           const r = await claimHandle(env, u.email, String(handle || ''));
           if (!r.ok) return json({ error: r.error }, 400);
           await registry(env).putUser({ ...u, handle: r.user!.handle });

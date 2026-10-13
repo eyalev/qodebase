@@ -133,7 +133,9 @@ export const registry = (env: Env) => env.Registry.get(env.Registry.idFromName('
 
 /** Can this person see this project? Private ones: the owner (and admin) only. */
 export const canSee = (e: { owner: string; private?: boolean } | null | undefined, handle: string, admin = false) => !!e && (!e.private || admin || (!!handle && e.owner === handle));
-/** The registry as one person may see it. */
-export async function listFor(env: Env, handle: string, admin = false): Promise<Entry[]> {
-  return (await registry(env).list()).filter((e) => canSee(e, handle, admin) && (!e.unlisted || e.owner === handle));
+/** The registry as one person may see it. Unlisted projects (lab runs, the collision dial's kata projects) are test
+ *  projects: kept out of every list, the owner's own too (/mine, home, Talk's suggestions), unless `tests` (name and
+ *  ownership checks); a direct link still opens them. */
+export async function listFor(env: Env, handle: string, admin = false, tests = false): Promise<Entry[]> {
+  return (await registry(env).list()).filter((e) => canSee(e, handle, admin) && (!e.unlisted || (tests && e.owner === handle)));
 }
