@@ -53,7 +53,7 @@ export async function onPushed(env: Env, ctx: ExecutionContext, info: ProjectInf
   if (base?.tree) files = (await diffTrees(env, ctx, info.repo, base.tree, a.fork, tip.tree).catch(() => [])).map((c) => c.path);
   if (!rec) await onSpawn(env, info, a, {});   // spawned before the system was on
   await L_.pushed(agentId, tip.commit, files, note || undefined, base?.commit);
-  if (pooled === 'none') await L_.reviewed(agentId, 'auto', 'no reviewer in this variant', true);   // straight to the queue
+  if (pooled === 'none') await L_.reviewed(agentId, 'auto', 'no reviewer in this setup', true);   // straight to the queue
   else if (pooled) await L_.queueReview(agentId);   // a free reviewer of the pool takes it (Landing alarm)
   else await L_.reviewing(agentId);
 }
