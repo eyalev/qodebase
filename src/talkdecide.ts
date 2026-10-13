@@ -242,8 +242,10 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // "Maybe…?" (live, 2026-10-13: p 0.39). Vocabulary from the page itself.
   if ((cmd.op === 'press' || cmd.op === 'go') && (cmd.p ?? 0) < 0.45 && cmd.label) {   // links too ('show me its history' → History, p 0.40: qb7's e2e)
     const stem = (x: string) => x.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/).filter(Boolean).map((w) => w.replace(/(es|s)$/, '')).join(' ');
-    const bare = stem(cmd.label.replace(/\s*\(.*\)$/, ''));
-    if (bare.length >= 4 && ` ${stem(utterance)} `.includes(` ${bare} `)) cmd.p = 0.6;
+    const bare = stem(cmd.label.replace(/\s*\(.*\)$/, '')), part = stem((/\(([^)]*)\)$/.exec(cmd.label) || [, ''])[1]);
+    const said = ` ${stem(utterance)} `;
+    // the name, or the part named in brackets ('forq/calculator (history)' for 'show me its history': qb7's e2e, p 0.444)
+    if ((bare.length >= 4 && said.includes(` ${bare} `)) || (part.length >= 4 && !/\d/.test(part) && said.includes(` ${part} `))) cmd.p = Math.max(cmd.p ?? 0, 0.6);
   }
   // Greetings and small talk get a friendly reply with examples, never "say it again" (Eyal's phone, 2026-10-07:
   // "hi there" and "hello" got "Sounds cut off"). Fixed words in code; the model's yes/no for the rest.
@@ -304,6 +306,14 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // actions (x…: a timeline moment, an intent), which answer questions themselves.
   if ((cmd.op === 'type' || cmd.op === 'press') && !/^x/.test(String(cmd.target || '')) && /^\s*(please\s+)?(give me|suggest|tell me|what('s| is| are| was)|explain|describe|recommend|can you (tell|suggest|give|recommend)|any (ideas|suggestions))\b/i.test(utterance) && !/\b(type|write|enter|fill|press|tap|click|put)\b/i.test(utterance))
     return { ...cmd, mode: 'ask', op: 'none', why: `${cmd.why || ''}; a request for content goes to the answering model` };
+  // On a run's page: 'show me minute 1' / 'at 1:20' is the timeline's moment action, 'back to all runs' the run list
+  // (qb7's e2e: the model scrolled to Timeline at p 0.65, and offered 'go back' at p 0.44).
+  if (/^\/runs/.test(s.path)) {
+    const moment = s.items.find((i) => /^x/.test(i.id) && /moment/i.test(i.text));
+    if (moment && /\b(minute|min|second|sec)s?\s+\d+|\bat\s+\d{1,2}:\d{2}\b|\b\d{1,2}:\d{2}\b/i.test(utterance)) return { ...cmd, mode: 'act', op: 'press', target: moment.id, label: moment.text, p: 0.9, why: 'a moment on the timeline (word rule)' };
+    const all = s.items.find((i) => i.kind === 'link' && (/^all runs\b/i.test(i.text) || i.href === '#/' || i.href === '/runs'));
+    if (all && /\b(back to|show( me)?|open|go to)\s+(all\s+)?(the\s+)?runs\b|^\s*all runs\s*[.!]*\s*$/i.test(utterance)) return { ...cmd, mode: 'act', op: 'go', href: all.href, label: all.text, target: all.id, p: 0.9, why: 'the run list (word rule)' };
+  }
   // On /runs, "open the last run" / "the first VS Code run": the run list is newest first (vocabulary in code).
   if (/^\/runs/.test(s.path) && /\b(open|show( me)?|go to)\b.*\b(last|latest|newest|most recent|first|top)\b.*\brun\b/i.test(utterance)) {
     const runs = s.items.filter((i) => i.kind === 'link' && /^#\/(run|step)\//.test(i.href || ''));
@@ -460,6 +470,7 @@ function projectHref(p: Proj, part: string): string {
 // even when the sentence did not sound risky. Vocabulary in code.
 export const CONFIRM_WORDS = /^(stop|pause|resume|merge|build it|build|send back|start|watch a run|run for real|replay|replace|connect my plan|save the key|shot|fork|import)\b/i;
 export const DESTROY_WORDS = /^(remove|delete|revoke|sign out|log out|uninstall|disconnect|make (it )?(private|public)|clear)\b/i;
+export const PRESET_RX = /^(Fastest|Balanced|Cheapest|Suggest from my idea|Small|Medium|Large|Huge)\b/;
 export function gate(c: Cmd): 'refuse' | 'confirm' | null {
   // Anything else (a change request, a question): as before, refused only when the sentence itself is risky
   // ("delete the particles project" must not become a request to the agents).
@@ -469,6 +480,7 @@ export function gate(c: Cmd): 'refuse' | 'confirm' | null {
   // A page's own action (window.__talkActions) is the page's promise to be safe: its UI asks for the real step
   // (qb7's fleet-job fills the form; the person taps Start). Opening a page is only a navigation.
   if (c.op === 'press' && /^x/.test(String(c.target || ''))) return null;
+  if (c.op === 'press' && PRESET_RX.test(label)) return null;   // choosing a preset only changes the settings (qb7's e2e)
   if (c.op === 'go' && (c.then || c.href === '/runs' || /^\/p\//.test(String(c.href || '')))) return null;
   // Typing only fills a box (its Send or Build it is the step that needs a yes): "build a habit tracker" types at once.
   if (c.op === 'type') return null;

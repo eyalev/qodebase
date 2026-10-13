@@ -1140,6 +1140,7 @@ function gateOf(c) {
   var label = String(c.label || '').trim();
   if ((c.destroys || 0) >= 0.5 || DESTROY_RX.test(label)) return 'refuse';
   if (c.op === 'press' && /^x/.test(String(c.target || ''))) return null;   // a page's own action: its UI asks for the real step
+  if (c.op === 'press' && /^(Fastest|Balanced|Cheapest|Suggest from my idea|Small|Medium|Large|Huge)\b/.test(label)) return null;   // a preset only changes the settings
   if (c.op === 'go' && (c.then || c.href === '/runs' || /^\/p\//.test(String(c.href || '')))) return null;   // opening a page
   if (c.op === 'type') return null;   // filling a box is safe; its Send / Build it asks
   if ((c.risky || 0) >= 0.5 || (c.op === 'press' && CONFIRM_RX.test(label))) return 'confirm';

@@ -139,6 +139,8 @@ const CASES = [
   ['home_build', 'explain the cheapest preset', { mode: ['ask', 'both'], op: ['none', 'explain'] }],
   ['home_build', 'what does balanced mean?', { mode: ['ask', 'both'], op: ['none', 'explain'] }],
   ['home', 'list my projects', { mode: ['act', 'ask'], op: 'list' }],
+  ['run_detail', 'show me minute 1', { mode: 'act', op: 'press' }],
+  ['run_detail', 'what happened at 1:20', { mode: 'act', op: 'press' }],
   ['run_detail', 'back to all runs', { mode: 'act', op: ['go', 'back'], href: '#/' }],
   ['home_build', 'use the cheapest preset', { mode: 'act', op: 'press', label: 'Cheapest' }],
   ['home_build', 'set the agents to 6', { mode: 'act', op: 'type', label: 'Agents', text: '6' }],
