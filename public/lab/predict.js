@@ -647,10 +647,12 @@ export function suggestBuild(jobIn = SMALL_APP) {
   const mid = (r) => (r.apiUsd[0] + r.apiUsd[1]) / 2;
   const x = mid(f) / mid(b);
   const out = (o) => ({ ...o, bucket: bucket.label, job });
-  // Large: one agent (manager + Eyal, 2026-10-13: 'default like Claude Code on the laptop'). The same Large prompt both
+  // The rule (Eyal via the manager, 2026-10-13): the best experience at every size: time to a working app first, then
+  // quality, then cost. Small to Large: one agent is soonest at equal features. The same Large prompt both
   // ways: 11/11 features each (docs/board/R3-R6-quality.md), one agent 457 s vs the team's 1,940 s (9 Haiku coders of 12
   // allowed), the team 38% cheaper in tokens, 29% with box time ($2.77 vs $3.88).
-  // The saving is said from this job's estimate. Huge stays on the numbers: no real one-agent build that big.
+  // The saving is said from this job's estimate. Huge stays a team until real data says otherwise: no real
+  // one-agent build that big, and the 40-agent real build worked (R5).
   if (!bucket.small && bucket.max < 30) {
     const less = Math.max(10, Math.round((1 - 1 / x) * 10) * 10);
     return out({ preset: 'fastest', why: x > 1.05
@@ -666,7 +668,9 @@ export function suggestBuild(jobIn = SMALL_APP) {
   const share = 1 / x;
   const part = share <= 0.4 ? 'at well under half' : share <= 0.6 ? 'at about half' : share <= 0.8 ? 'at about two thirds' : 'a little below';
   const of = `${part} the cost of one agent`;
-  return out({ preset: 'balanced', why: sc.pShared >= 0.7 ? `${bucket.size} whose pieces overlap: a team with the board on, ${of}.` : `${bucket.size}: a reviewed team, ${of}.` });
+  // Huge: no real one-agent build this big, so the team is the size we have seen work; cost is the second reason.
+  const tried = 'as in our real builds at this size';
+  return out({ preset: 'balanced', why: sc.pShared >= 0.7 ? `${bucket.size} whose pieces overlap: a team with the board on, ${tried}, ${of}.` : `${bucket.size}: a reviewed team, ${tried}, ${of}.` });
 }
 
 // "Need an idea?" chips (docs/board/TASKS.md I1): each size's typical time and cost, i.e. a job in the middle of

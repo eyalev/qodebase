@@ -182,9 +182,10 @@ guess.
 Port and sweep come only from `job.kind`, never guessed from words. qb6 can add `"kind": "build"|"port"|"sweep"` to
 the suggest/idea JSON.
 
-**Large on one agent (2026-10-13, manager + Eyal: "default like Claude Code on the laptop").** qb9 checked R3 and R6
+**Large on one agent (2026-10-13).** The rule (Eyal via the manager) is the best experience at every size: time to a working app first, then quality, then cost. qb9 checked R3 and R6
 feature by feature (docs/board/R3-R6-quality.md): both built 11 of 11 features. `suggestBuild` now picks Fastest for
 Small, Medium and Large. For Large the words are "One strong agent: about 4x faster in our real builds, same features;
 a team costs about N% less (Balanced)". N comes from the job's own estimate: 40% for a mid-Large job; the R3/R6 pair
 gave 38%. Huge stays Balanced, because no one-agent build that big has run. The Cheapest branch (easy, separate
 pieces) now applies only to Huge. Large chip: 6-17 min, $3.0-6.7.
+Huge's words now give "as in our real builds at this size" first and the cost second.
