@@ -526,7 +526,7 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
       .then((r: Response) => r.json()).catch((e: unknown) => { log('fleet_error', { level: 'error', err: String(e) }); return null; }))
     : Promise.resolve(null);
   const infos = await Promise.all(own.map((e: any) => env.Project.get(env.Project.idFromName(e.slug)).info().catch(() => null)));
-  type It = { t: string; href?: string; proj?: string };
+  type It = { t: string; href?: string; proj?: string; at?: number };
   const working: It[] = [], ready: It[] = [], blocked: It[] = [], waiting: It[] = [], stalled: It[] = [];
   // Every item says how old it is; work with no news for STALL_MS reads as stuck, not as in progress (Eyal, 2026-10-13:
   // a build at '0 of 1 changes, 1 in progress' for 10 h, whose agent had never got its task).
@@ -575,7 +575,7 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
       builds.push({ t: `${info.name}, started ${ago(started)} ago (${landed} of ${ch.length || '?'} changes on main${open ? `, ${open} in progress` : ''}${bi?.progress?.spentUsd != null ? `, ${usd(bi.progress.spentUsd)} so far` : ''})`, href: `${base}/work` });
       links.push({ text: `${info.name}: in progress`, href: `${base}/work` });
     } else if (settled && settled >= since) {
-      finished.push({ t: `${info.name}, done ${ago(settled)} ago (${landed} change${landed === 1 ? '' : 's'}${bi?.progress?.actualUsd != null ? `, ${usd(bi.progress.actualUsd)}` : ''})`, href: base });
+      finished.push({ at: settled, t: `${info.name}, done ${ago(settled)} ago (${landed} change${landed === 1 ? '' : 's'}${bi?.progress?.actualUsd != null ? `, ${usd(bi.progress.actualUsd)}` : ''})`, href: base });
     }
     for (const n of (ad?.notes || []) as { kind: string; answered?: boolean; text: string }[]) {
       if (n.kind !== 'asked-person' || n.answered) continue;
@@ -592,6 +592,7 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
     for (const r of live.slice(0, 3)) { const at = Number(r.startedAt || r.createdAt || r.at || 0); runs.push({ t: `${r.label || r.repo} (${r.state}${r.agents ? `, ${r.agents} agents` : ''}${at > 1e12 ? `, started ${ago(at)} ago` : ''})`, href: '/runs' }); }
     if (live.length) links.push({ text: `Runs: ${live.length} live`, href: '/runs' });
   }
+  finished.sort((a, b) => (b.at || 0) - (a.at || 0));   // newest first
   const list = (ys: It[]) => { const xs = ys.map((y) => y.t); return xs.length <= 2 ? xs.join(' and ') : `${xs.slice(0, 2).join(', ')} and ${xs.length - 2} more`; };
   // For reading (Eyal, 2026-10-13: "no wall of text"): short sections, each line a link; the sentence form stays for
   // the voice and for clients that do not render sections.
@@ -605,7 +606,7 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
   ].filter((x) => x.items.length).map((x) => ({ title: x.title, items: x.items.slice(0, 6).map((y) => ({ text: y.t, href: y.href })), more: Math.max(0, x.items.length - 6) }));
   const parts: string[] = [];
   if (asked.length) parts.push(`${asked.length === 1 ? 'One question is' : `${asked.length} questions are`} waiting for you: ${list(asked)}.`);
-  if (stalled.length) parts.push(`${stalled.length === 1 ? 'One thing is' : `${stalled.length} things are`} stuck: ${list(stalled)}`.replace(/\.?$/, '.'));
+  if (stalled.length) parts.push(`${stalled.length === 1 ? 'One thing is' : `${stalled.length} things are`} stuck: ${list(stalled)}`.replace(/[.?]?$/, (m) => m || '.'));
   if (builds.length) parts.push(`In progress: ${list(builds)}.`);
   if (runs.length) parts.push(`Experiments running: ${list(runs)}.`);
   if (finished.length) parts.push(`Done ${today ? 'today' : 'this week'}: ${list(finished)}.`);
@@ -619,7 +620,7 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
   // Never let the answer read as if the question started something: a framing line first, and for the folded bar a
   // count line ("Status: 1 build in progress, 1 experiment running"), never a heading fragment.
   const n = (k: number, one: string, many: string) => k ? `${k} ${k === 1 ? one : many}` : '';
-  const brief = [n(asked.length + blocked.length + waiting.length, 'thing waiting for you', 'things waiting for you'), n(stalled.length, 'stuck', 'stuck'), n(builds.length, 'build in progress', 'builds in progress'),
+  const brief = [n(asked.length + blocked.length + waiting.length, 'thing waiting for you', 'things waiting for you'), n(stalled.length, 'thing stuck', 'things stuck'), n(builds.length, 'build in progress', 'builds in progress'),
     n(runs.length, 'experiment running', 'experiments running'), n(working.length, 'agent at work', 'agents at work'), n(ready.length, 'change ready to merge', 'changes ready to merge')].filter(Boolean);
   const lead = 'Here\u2019s where things stand:';
   if (sections.length) parts.unshift('Here\u2019s where things stand.');
