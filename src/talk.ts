@@ -20,7 +20,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
 import { listFor } from './registry';
 import { isOwner } from './auth';
-import { buildQuestions, candidateProjects, currentSlug, resolve, stateText, type Item, type Proj, type Screen } from './talkdecide';
+import { buildQuestions, candidateProjects, currentSlug, isScaffold, resolve, stateText, type Item, type Proj, type Screen } from './talkdecide';
 import { TALK_JS } from './talkclient';
 import { talkAdmin } from './talkadmin';
 import { MERGE_MODEL, mergeMessages, cleanMerge } from './talkmerge';
@@ -263,7 +263,7 @@ async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
   // their way (tmux-web does the same with its vocabulary). On a silent clip Whisper can echo the prompt: dropped.
   let prompt = '';
   if (url.searchParams.get('names') === '1') {
-    const names = (await projectsFor(env, who).catch(() => [] as Proj[])).filter((p) => p.mine).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' '));
+    const names = (await projectsFor(env, who).catch(() => [] as Proj[])).filter((p) => p.mine && !isScaffold(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' '));
     if (names.length) prompt = 'qodebase. My projects: ' + [...new Set(names)].slice(0, 40).join(', ') + '.';
   }
   try {
@@ -287,7 +287,7 @@ async function merge(request: Request, env: Env, who: Who & {}) {
   if (!whisper && !live) return json({ text: '' });
   const budget = await talkLog(env).take('stt', who.handle);
   if (!budget.ok) return json({ text: whisper, why: 'budget' });
-  const names = (await projectsFor(env, who).catch(() => [] as any[])).filter((p: any) => p.mine).map((p: any) => String(p.name).replace(/[-_]+/g, ' ')).slice(0, 40);
+  const names = (await projectsFor(env, who).catch(() => [] as any[])).filter((p: any) => p.mine && !isScaffold(p.name)).map((p: any) => String(p.name).replace(/[-_]+/g, ' ')).slice(0, 40);
   try {
     const res: any = await (env.AI as any).run(MERGE_MODEL, { messages: mergeMessages(live, whisper, names, lang), max_tokens: 400, temperature: 0, chat_template_kwargs: { enable_thinking: false } }, aiOpts(env));
     const raw = res?.choices?.[0]?.message?.content ?? res?.response ?? '';

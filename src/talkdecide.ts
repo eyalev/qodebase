@@ -206,7 +206,7 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // "hi there" and "hello" got "Sounds cut off"). Fixed words in code; the model's yes/no for the rest.
   const hello = /^\s*(hi|hello|hey|hiya|yo|howdy|good (morning|afternoon|evening|night)|thanks|thank you|cheers|how are you|what'?s up|bye|goodbye)\b/i.test(utterance) || (answers.greeting?.noul ?? 0) >= 0.6;
   if (hello && cmd.op === 'none') {
-    const own = projects.filter((p) => p.mine).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];   // the one they touched last
+    const own = projects.filter((p) => p.mine && !isScaffold(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];   // the one they touched last, not a harness's
     return { ...cmd, mode: 'none', greet: true, example: own ? own.name.replace(/-/g, ' ') : undefined };
   }
   // "Go home" / "home page" is a fixed phrase: vocabulary in code, not the model (talkui's rule).
@@ -396,3 +396,8 @@ export function gate(c: Cmd): 'refuse' | 'confirm' | null {
   if ((c.risky ?? 0) >= 0.5 || (c.op === 'press' && CONFIRM_WORDS.test(label))) return 'confirm';
   return null;
 }
+
+// Projects a harness made (Eyal, 2026-10-13: the bar's example said "open my kata d0b"): never offered as examples,
+// "which project?" chips, keyterms or name hints. Lab/fleet/dial copies, experiment copies, numbered copies, tests.
+export const SCAFFOLD_RX = /^(kata|fleet|lab|real|selftest|self-test|test|tmp|smoke|bench|dial|sim)[-_]|[-_][0-9a-f]{5}([-_]|$)|[-_]r\d+[a-z]?$|[-_]\d+$|(^|[-_])(test|lab|crew|busy|team|demo|copy|fixture|real)([-_]|$)/i;
+export const isScaffold = (name: string) => SCAFFOLD_RX.test(String(name || ''));

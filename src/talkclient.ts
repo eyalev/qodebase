@@ -910,6 +910,8 @@ function changeRequest(c) {
 // ---- Questions about a project's code: qb1's ask box (a read-only Claude Code box on
 // the owner's Claude). Owner only; others get the quick chat lane over the page.
 var DEPTH_MODEL = { fact: 'haiku', explain: 'sonnet', plan: 'opus' };
+// Same as talkdecide.ts SCAFFOLD_RX: projects a harness made never become examples or "which project?" chips.
+var SCAFFOLD_RX = /^(kata|fleet|lab|real|selftest|self-test|test|tmp|smoke|bench|dial|sim)[-_]|[-_][0-9a-f]{5}([-_]|$)|[-_]r\d+[a-z]?$|[-_]\d+$|(^|[-_])(test|lab|crew|busy|team|demo|copy|fixture|real)([-_]|$)/i;
 function codeQuestion(c) {
   var parts = String(c.slug || '').split('.'), owner = parts[0], name = parts.slice(1).join('.');
   if (!c.mine) { add('note', 'I can only read the code of your own projects, so this answer is from the page.'); return ask(c.text, ''); }
@@ -1071,7 +1073,7 @@ function checkHref(href, fromPage) {
 }
 function whichOne(c) {
   return projects().then(function (l) {
-    var mine = l.filter(function (p) { return p.owner === me; }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); }).slice(0, 5);
+    var mine = l.filter(function (p) { return p.owner === me && !SCAFFOLD_RX.test(p.name); }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); }).slice(0, 5);
     var links = mine.map(function (p) { return { text: p.name, href: '/p/' + p.owner + '/' + p.name }; }).concat([{ text: 'All your projects', href: '/mine' }]);
     var q = 'Which project? Your newest:';
     add('ai', q, links); say('Which project?'); open(true);   // the chips live in the conversation
@@ -1933,7 +1935,7 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
     var navE = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {};
     var keepU = curU; curU = nv.u; trace('arrived', { href: nv.href, at: location.pathname + location.search + location.hash, status: navE.responseStatus, ms: Date.now() - nv.at }); curU = keepU;
   }
-  projects().then(function (l) { var mine = l.filter(function (p) { return p.owner === me && !/^lab-|^real-/.test(p.name); }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); }); if (mine[0]) { latestOwn = mine[0].name.replace(/-/g, ' '); render(); } }).catch(function () {});
+  projects().then(function (l) { var mine = l.filter(function (p) { return p.owner === me && !SCAFFOLD_RX.test(p.name); }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); }); if (mine[0]) { latestOwn = mine[0].name.replace(/-/g, ' '); render(); } }).catch(function () {});
   publishTools();
   // Coming back from a navigation Talk made: show the sheet, finish any pending question.
   if (sget('call', false)) {

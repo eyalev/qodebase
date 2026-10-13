@@ -18,7 +18,7 @@ import { isOwner } from './auth';
 import { recordCost } from './costs';
 import { chatCore, decideCore, projectsFor, statusCore, talkLog } from './talk';
 import { stretchPcm16 } from './stretch';
-import { gate } from './talkdecide';
+import { gate, isScaffold } from './talkdecide';
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talkvoice', event, ...data }));
 const FLUX_USD_PER_MIN = 0.0077;
@@ -167,7 +167,7 @@ export class TalkVoice extends VoiceAgent {
     try {
       const ps = await projectsFor(this.env, this.#who);
       // Names a person says: not the lab's generated ones (lab-backlog-3f447-r3), which filled the list on 2026-10-13.
-      this.#keyterms = [...new Set(ps.filter((p) => p.mine && !/^lab-|-[0-9a-f]{5}(-|$)/.test(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' ')))].slice(0, 35);
+      this.#keyterms = [...new Set(ps.filter((p) => p.mine && !isScaffold(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' ')))].slice(0, 35);
     } catch (e) { log('keyterms_error', { err: String(e) }); }
   }
   async onCallStart(connection: Connection) {
