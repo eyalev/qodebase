@@ -1546,6 +1546,26 @@ function sentencesOf(t) {
   return out.length ? out : [t];
 }
 var saySeq = 0, speakingQ = false;
+// The first sentence streams into a MediaSource from our own fetch: sound starts on the first chunk, and the audio
+// element never requests the URL itself (its media request got an intermittent 500 on 'Hi.' that a fetch did not,
+// 2026-10-13). No MediaSource for MP3 -> the plain URL.
+function streamSrc(text) {
+  var MS = window.MediaSource;
+  if (S.fast !== 'on' || !MS || !MS.isTypeSupported || !MS.isTypeSupported('audio/mpeg')) return null;
+  var ms = new MS(), url = URL.createObjectURL(ms);
+  ms.addEventListener('sourceopen', function () {
+    var sb, q = [], ended = false;
+    try { sb = ms.addSourceBuffer('audio/mpeg'); } catch (e) { logEv('speak_mse', { err: String(e) }); return; }
+    var pump = function () { if (sb.updating) return; if (q.length) { try { sb.appendBuffer(q.shift()); } catch (e) { logEv('speak_mse', { err: String(e) }); } } else if (ended && ms.readyState === 'open') { try { ms.endOfStream(); } catch (e) {} } };
+    sb.addEventListener('updateend', pump);
+    fetch(ttsUrl(text), { credentials: 'same-origin' }).then(function (r) {
+      if (!r.ok || !r.body) throw new Error('tts ' + r.status);
+      var rd = r.body.getReader();
+      (function read() { rd.read().then(function (x) { if (x.done) { ended = true; pump(); return; } q.push(x.value); pump(); read(); }).catch(function (e) { ended = true; pump(); }); })();
+    }).catch(function (e) { logEv('speak_mse', { err: String(e) }); try { ms.endOfStream('network'); } catch (_) {} });
+  }, { once: true });
+  return url;
+}
 function playParts(parts, whole) {
   var seq = ++saySeq, i = 0, urls = {}, t0 = Date.now();
   speakingQ = true;
@@ -1554,7 +1574,7 @@ function playParts(parts, whole) {
     if (seq !== saySeq) return;
     if (i >= parts.length) { speakingQ = false; return; }
     var k = i++;
-    var src = k === 0 ? Promise.resolve(ttsUrl(parts[0])) : (pre(k), urls[k]);
+    var src = k === 0 ? Promise.resolve(streamSrc(parts[0]) || ttsUrl(parts[0])) : (pre(k), urls[k]);
     pre(k + 1);
     src.then(function (u) {
       if (seq !== saySeq) return;
@@ -1565,7 +1585,7 @@ function playParts(parts, whole) {
       player.onended = next;
       // A streamed clip that fails (an intermittent 500 on 'Hi.', 2026-10-13) is fetched whole once before the phone voice.
       player.onerror = function () {
-        if (!/^blob:/.test(player.src || '') && !player.__retried) {
+        if (!player.__retried) {
           player.__retried = true;
           fetch(ttsUrl(parts[k]), { credentials: 'same-origin' }).then(function (r) { logEv('speak_retry', { status: r.status, part: k }); if (!r.ok) throw new Error(String(r.status)); return r.blob(); })
             .then(function (b) { if (seq !== saySeq) return; player.src = URL.createObjectURL(b); var p2 = player.play(); if (p2 && p2.catch) p2.catch(function () {}); })
