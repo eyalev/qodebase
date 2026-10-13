@@ -152,6 +152,15 @@ fitting only one side would tilt the choice: with the fit on both, one agent com
 3-4x faster at every size, but that rests on no real one-agent build bigger than 3 pieces. A real one-agent build of
 a Large idea would settle it.
 
+**R6 (2026-10-13) settled it.** R3's Large prompt was run on Fastest (one Opus agent): 457 s and $3.87, against R3's
+team at 1,940 s and $2.40. The team was cheaper (0.62x) and 4x slower, as in the lab. The one agent built 7 files and
+~1,340 lines, the team 22 files and ~4,140 lines; quality was not measured. The one-agent fit is now the line through
+R2 and R6: real cost = 2.14 x sim + $0.30, time = 2.4 x sim (R2 sits on the 150 s floor). R6 falls in its range
+(4-12 min, $2.2-4.9), and so do the other four. `suggestBuild` now compares on the real-fitted estimates and makes the
+same picks as on lab-only ones: Fastest for Small and Medium, Balanced for Large and Huge. Its words no longer say
+"in the lab". Sonnet and Opus crews have no real build: their per-agent extra ($0.57 Opus, half that for Sonnet) is a
+guess.
+
 
 ## jobType(job, suggestion): the adaptive orchestrator's label (2026-10-12, qb7's contract)
 

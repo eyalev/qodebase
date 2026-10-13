@@ -528,11 +528,15 @@ export const REAL_BUILDS = [
   { slug: 'eyal/real-cafe-site', at: '2026-10-12', shape: 'team', bucket: 'huge', coders: 20, agents: 10, reviewers: 3, wallS: 1762, usd: 3.45, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
   // 40 agents: long-context Haiku calls $8.16 of $17.3; agents waited 16,234 agent-s for a reviewer vs 15,731 working.
   { slug: 'eyal/real-course-builder', at: '2026-10-13', shape: 'team', bucket: 'huge', coders: 40, agents: 40, reviewers: 6, wallS: 2257, usd: 17.3, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
+  // R6: R3's Large prompt on Fastest (one Opus agent): 457 s, $3.87 (out 95k, cache reads 4.6M, 1-h writes 132k);
+  // 1 change, 7 files, ~1,340 lines vs R3's 22 files, ~4,140 lines. Shown 120-300 s, $1.70-3.10 (sim ~195 s, $1.67).
+  { slug: 'eyal/real-home-inventory-solo', at: '2026-10-13', shape: 'alone', bucket: 'large', wallS: 457, usd: 3.87, shown: { wallS: [120, 300], usd: [1.7, 3.1] } },
 ];
 // The refit on those builds (2026-10-13), applied on top of the lab-calibrated sim. Few points, so each term is
 // named, the range is widened, and the estimate says how many real builds it rests on.
-// - sessionUsd: one Opus agent's fixed cost per build that the lab's per-piece fit misses (Claude Code's start-up
-//   context written to a 1-h cache, the push and landing turns). R2: $0.81 real vs $0.24 sim -> $0.57. One build.
+// - one Opus agent: real = aloneUsdX x sim + sessionUsd, the line through R2 ($0.81 real, $0.24 sim) and R6 ($3.87,
+//   $1.67): x2.14 + $0.30. The fixed part is the start-up context (1-h cache) and the push/landing turns; the x2.1
+//   is more work per piece than in the lab (R6 wrote 95k output tokens). Time: R6 2.4x the sim (R2 sits on the floor).
 // - perAgentUsd: each Haiku team agent's own session on top of the sim (start-up context, board, waiting turns):
 //   R3 ($2.40 - $1.2 sim) / 9 agents = $0.13, R4 ($3.45 - $2.0) / 10 = $0.145.
 // - long: at 40 agents contexts grew past 100k tokens (5x price): per-agent cost x2.7 (R5: ($17.3 - $2.0) / 40 =
@@ -541,7 +545,7 @@ export const REAL_BUILDS = [
 //   reviewer as working). Same linear ramp.
 // - agents: how many the router opens. It is now told how many it has, so up to min(coders, pieces) (R5 used all
 //   40); R3/R4 used fewer (9 of 12, 10 of 20). Low end = the planner's bundling, high end = min(coders, pieces).
-export const REAL_FIT = { sessionUsd: 0.57, perAgentUsd: 0.14, longAt40: 2.7, wallAt10: 1.8, wallAt40: 2.3, from: 10, to: 40 };
+export const REAL_FIT = { aloneUsdX: 2.14, sessionUsd: 0.30, aloneWallX: 2.4, perAgentUsd: 0.14, longAt40: 2.7, wallAt10: 1.8, wallAt40: 2.3, from: 10, to: 40 };
 const ramp = (n) => Math.max(0, Math.min(1, (n - REAL_FIT.from) / (REAL_FIT.to - REAL_FIT.from)));
 // alone mid: the one real one-agent build (R2, 149 s); low stays the lab's quickest (58 s).
 export const BUILD_FLOOR = { alone: { low: 50, mid: 150 }, team: { low: 170, mid: 320 } };
@@ -595,12 +599,11 @@ export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced
   // REAL_FIT (above): time x the real/sim ratio for this many agents; cost + per-session costs.
   const agentsLo = shape === 'alone' ? 1 : Math.max(1, Math.min(v.coders, Math.round(p.counts.tasksPlanned)));
   const agentsHi = shape === 'alone' ? 1 : Math.max(agentsLo, Math.min(v.coders, sc.tasks));
-  const wallX = shape === 'alone' || !real ? 1 : REAL_FIT.wallAt10 + (REAL_FIT.wallAt40 - REAL_FIT.wallAt10) * ramp(agentsHi);
-  const extraUsd = (n) => !real ? 0 : shape === 'alone' ? REAL_FIT.sessionUsd
+  const wallX = !real ? 1 : shape === 'alone' ? REAL_FIT.aloneWallX : REAL_FIT.wallAt10 + (REAL_FIT.wallAt40 - REAL_FIT.wallAt10) * ramp(agentsHi);
+  const extraUsd = (n) => !real ? 0 : shape === 'alone' ? REAL_FIT.sessionUsd + (REAL_FIT.aloneUsdX - 1) * p.apiUsdStd
     : v.coderModel === 'haiku' ? n * REAL_FIT.perAgentUsd * (1 + (REAL_FIT.longAt40 - 1) * ramp(n))
-    // Sonnet/Opus crews: no real build yet; the Haiku session scaled by the output price (Sonnet 20x, Opus 40x is
-    // too much to guess from Haiku: use the Opus one-agent session per agent instead).
-    : n * REAL_FIT.sessionUsd * (v.coderModel === 'sonnet' ? 0.5 : 1);
+    // Sonnet/Opus crews: no real build yet. A guess: R2's extra over the sim ($0.57) per Opus agent, half per Sonnet one.
+    : n * 0.57 * (v.coderModel === 'sonnet' ? 0.5 : 1);
   const simWall = p.wallS * wallX;
   const wallMid = Math.max(simWall, floor.mid);
   if (simWall < floor.mid) notes.push('Mostly start-up time (agents starting, landing) at this size.');
@@ -638,21 +641,21 @@ export function suggestBuild(jobIn = SMALL_APP) {
   const bucket = bucketOf(jobProfile(jobIn).tasks);
   const job = { ...jobIn, tasks: bucket.tasks, bucket: bucket.label };
   const sc = jobProfile(job);
-  // Compared on the lab-only estimates (REAL_FIT off): the lab ran one agent and teams on the same jobs; the real
-  // builds so far are one small one-agent build and three teams, so fitting one side only would tilt the choice.
-  const f = predictBuild(job, BUILD_PRESETS.fastest.variant, { real: false }), b = predictBuild(job, BUILD_PRESETS.balanced.variant, { real: false });
+  // Compared on the real-fitted estimates (2026-10-13): both sides now have real builds, including the same Large
+  // prompt both ways (R3 team $2.40 / 1,940 s, R6 one agent $3.87 / 457 s). The picks equal the lab-only ones.
+  const f = predictBuild(job, BUILD_PRESETS.fastest.variant), b = predictBuild(job, BUILD_PRESETS.balanced.variant);
   const mid = (r) => (r.apiUsd[0] + r.apiUsd[1]) / 2;
   const x = mid(f) / mid(b);
   const out = (o) => ({ ...o, bucket: bucket.label, job });
   if (bucket.small || x <= 1.5) {
     // The words follow this job's numbers: 'small' only for the two small buckets.
     const cost = x <= 1.05 ? 'costs about the same as a team or less' : x <= 1.25 ? 'costs a little more than a team' : `costs about ${x.toFixed(1)}x a team`;
-    return out({ preset: 'fastest', why: `${bucket.small ? 'A small job: o' : 'O'}ne agent is likely quickest here, at about a team's quality, and in the lab ${cost}.` });
+    return out({ preset: 'fastest', why: `${bucket.small ? 'A small job: o' : 'O'}ne agent is likely quickest here, at about a team's quality, and ${cost}.` });
   }
   if (sc.difficulty <= 0.7 && sc.pShared < 0.7) return out({ preset: 'cheapest', why: 'Many simple, separate pieces: a Haiku crew does them for the least.' });
   const share = 1 / x;
   const part = share <= 0.4 ? 'at well under half' : share <= 0.6 ? 'at about half' : share <= 0.8 ? 'at about two thirds' : 'a little below';
-  const of = `${part} the cost of one agent in the lab`;
+  const of = `${part} the cost of one agent`;
   return out({ preset: 'balanced', why: sc.pShared >= 0.7 ? `${bucket.size} whose pieces overlap: a team with the board on, ${of}.` : `${bucket.size}: a reviewed team, ${of}.` });
 }
 
