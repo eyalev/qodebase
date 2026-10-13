@@ -1,0 +1,14 @@
+{
+ "status": "pending",
+ "note": "F4 has not run yet: waiting for F3 (all of src/vs) to land. Written by scripts/fleet/quality-sample.mjs --publish; fields below keep this shape when filled.",
+ "base": null,
+ "head": null,
+ "checked_at": null,
+ "files_changed": null,
+ "code_changed": null,
+ "fleet_records": { "landed": null, "verify_fail": null, "rejected": null, "other": {} },
+ "auto": { "comments": null, "invented_params": null, "missing_params": null, "returns_on_void": null, "trivial": null },
+ "judge": [ { "model": null, "n": null, "accurate": null, "helpful": null, "invented": null, "unparsed": null, "usd": null } ],
+ "hand": { "files": null, "comments": null, "ok": null, "accurate": null, "helpful": null, "invented": null },
+ "worst": []
+}
