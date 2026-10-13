@@ -574,7 +574,7 @@
     const c = await njCopies();
     const idx = c.jobs.includes('comments+index');
     f.innerHTML = `<h2 class="nj-h">New fleet job</h2>${c.error ? `<p class="rc-cn bad">${esc(c.error)}</p>` : ''}
-      <label class="nj-l" for="nj-copy">Copy to work on</label><select id="nj-copy">${c.copies.map((x) => `<option value="${esc(x.repo)}" data-root="${esc(x.source?.root || '')}" data-files="${x.files || 0}" data-name="${esc(x.source?.name || x.repo)}">${esc(x.source?.name || x.repo)} (${esc(x.repo)}), ${n0(x.files)} files${x.fresh ? '' : ', already documented'}</option>`).join('')}</select>
+      <label class="nj-l" for="nj-copy">Copy to work on</label><select id="nj-copy">${c.copies.map((x) => `<option value="${esc(x.repo)}" data-root="${esc(x.source?.root || '')}" data-files="${x.files || 0}" data-name="${esc(x.source?.name || x.repo)}">${esc(x.source?.name || x.repo)} (${esc(x.repo)})${x.files != null ? `, ${n0(x.files)} files` : ''}${x.fresh ? '' : ', already documented'}</option>`).join('')}</select>
       <label class="nj-l" for="nj-root">Folder</label><input id="nj-root" autocapitalize="none" spellcheck="false">
       <fieldset class="nj-g"><legend>Job</legend><label><input type="radio" name="nj-job" value="comments" checked> Doc comments on every exported function</label><label><input type="radio" name="nj-job" value="comments+index"${idx ? '' : ' disabled'}> Doc comments and a line for each in docs/API.md${idx ? '' : ' <small>(coming)</small>'}</label></fieldset>
       <div class="nj-row"><label class="nj-l" for="nj-agents">Agents<input id="nj-agents" type="number" inputmode="numeric" min="1" max="2000" step="1" value="200"></label><label class="nj-l" for="nj-budget">Budget, $<input id="nj-budget" type="number" inputmode="decimal" min="0.1" max="30" step="any" value="3"></label></div>
@@ -610,12 +610,14 @@
       label: `${o?.dataset.name || ''}${rootV && rootV !== o?.dataset.root ? ` ${rootV.split('/').pop()}` : ''}: ${f.querySelector('[name=nj-job]:checked')?.value === 'comments+index' ? 'doc comments + API index' : 'doc comments'}` };
   }
   async function njEstimate() {
-    const my = ++njEst, box = NJ?.querySelector('#nj-est'); if (!box) return;
-    const b2 = njBody(); if (!b2.repo) { box.textContent = 'Pick a copy.'; return; }
-    await new Promise((z) => setTimeout(z, 250)); if (my !== njEst) return;
+    const my = ++njEst, box = NJ?.querySelector('#nj-est'); if (!box) return log('nj_estimate', { step: 'no_box' });
+    let b2; try { b2 = njBody(); } catch (e) { log('nj_estimate', { step: 'body_failed', error: String(e) }); return; }
+    log('nj_estimate', { step: 'start', my, repo: b2.repo, root: b2.root, files: b2.files });
+    if (!b2.repo) { box.textContent = 'Pick a copy.'; return; }
+    await new Promise((z) => setTimeout(z, 250)); if (my !== njEst) return log('nj_estimate', { step: 'superseded', my, now: njEst });
     if (!b2.files && b2.root) {   // a subfolder: count its files (qbfleet /count through the proxy), once per folder
       const k = `${b2.repo}:${b2.root}`;
-      if (!(k in njCount)) { njCount[k] = 0; const r0 = await fetch(`${API}/count?repo=${encodeURIComponent(b2.repo)}&root=${encodeURIComponent(b2.root)}`, { credentials: 'same-origin' }).catch(() => null); const j0 = r0 && r0.ok ? await r0.json().catch(() => ({})) : {}; if (j0.files) { njCount[k] = j0.files; return njEstimate(); } }
+      if (!(k in njCount)) { njCount[k] = 0; box.textContent = `Counting the files in ${b2.root}…`; const r0 = await fetch(`${API}/count?repo=${encodeURIComponent(b2.repo)}&root=${encodeURIComponent(b2.root)}`, { credentials: 'same-origin' }).catch(() => null); const j0 = r0 && r0.ok ? await r0.json().catch(() => ({})) : {}; if (j0.files) { njCount[k] = j0.files; return njEstimate(); } }
     }
     if (!b2.files) { box.innerHTML = `<b>${n0(b2.agents)} agents</b> on ${esc(b2.root || 'the copy')}. The number of files in a subfolder is counted when it starts; the budget stops it at <b>${usd(Math.min(30, b2.budgetUsd))}</b>.`; return; }
     const r = await fetch(`${API}/estimate`, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(b2) }).catch(() => null);
@@ -626,11 +628,13 @@
   // filled in, with its estimate: the person checks it and taps Start (Talk never starts a job by itself).
   function njFromSentence(t) {
     const x = String(t || '').toLowerCase(), pre = {};
-    const kinds = [[/vs ?code|visual studio code/, 'VS Code'], [/nest/, 'NestJS'], [/angular/, 'Angular'], [/next(\.js|js)?\b/, 'Next.js'], [/babel/, 'Babel']];
+    const kinds = [[/vs ?code|visual studio code/, /extension/.test(x) ? 'VS Code extensions' : 'VS Code'], [/nest/, 'NestJS'], [/angular/, 'Angular'], [/next(\.js|js)?\b/, 'Next.js'], [/babel/, 'Babel']];
     const want = (kinds.find(([re]) => re.test(x)) || [])[1];
-    const cs = (COPIES?.copies || []).filter((c) => !want || (c.source?.name || '').toLowerCase().startsWith(want.toLowerCase()));
+    const area = want === 'VS Code' && VS_AREAS.find((a) => new RegExp(`\\b${a}\\b`).test(x));
+    // the exact project name (VS Code is not VS Code extensions); an area like 'editor' needs a src/vs copy; fresh first
+    const cs = (COPIES?.copies || []).filter((c) => !want || (c.source?.name || '').toLowerCase() === want.toLowerCase()).filter((c) => !area || String(c.source?.root || '').startsWith('src/vs'));
     const c = cs.find((y) => y.fresh) || cs[0];
-    if (c) { pre.repo = c.repo; const area = want === 'VS Code' && VS_AREAS.find((a) => new RegExp(`\\b${a}\\b`).test(x)); if (area && (c.source?.root || '').startsWith('src/vs')) pre.root = `src/vs/${area}`; }
+    if (c) { pre.repo = c.repo; if (area) pre.root = `src/vs/${area}`; }
     if (/api index|index|api\.md/.test(x)) pre.job = 'comments+index';
     const ag = /([\d,]+)\s*agents/.exec(x); if (ag) pre.agents = Math.min(2000, +ag[1].replace(/,/g, ''));
     const bd = /\$\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*dollars?/.exec(x); if (bd) pre.budgetUsd = Math.min(30, +(bd[1] || bd[2]));
