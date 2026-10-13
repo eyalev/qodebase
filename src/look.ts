@@ -1,7 +1,9 @@
 // The site's look (2026-10-07, Eyal: "more gentle, sleek, modern", after Executor's look
 // and feel). Font (Geist) and colour tokens live in each page's own CSS; this layer adds
-// what spans every page: a size step down, tighter headings, softer corners. Green stays
-// the one accent (Build button, links, live dots): Eyal did not want a black button.
+// what spans every page: a size step down, tighter headings, softer corners. One accent
+// (Build button, links, live dots): violet since 2026-10-14 (Eyal picked direction A of three,
+// tried live; after aced.io), green before. The surface treatment: the page sits a step below
+// white cards; inputs and tiles get a hairline; plain links and focus take the accent.
 // Added after each page's own styles on every HTML page of the UI host (index.ts).
 
 const CSS = `
@@ -19,6 +21,12 @@ textarea,input[type=text],input[type=password],input:not([type]),.field,.landask
 .prow,.tcard img,.gmenupop{border-radius:14px}
 .gtop .g{font-size:14.5px;font-weight:500}
 .gtop .mark{font-weight:600;letter-spacing:-.02em}
+html,body{background:var(--bg)!important}
+textarea,input[type=text],input:not([type]){background-color:var(--card)!important}
+.id-size,.bstoggle{background:var(--card)!important;box-shadow:inset 0 0 0 1px var(--line)}
+#talk-root #talk-bar{background:var(--card)}
+a:not([class]){color:var(--acc)}
+:focus-visible{outline-color:var(--acc)!important}
 `;
 
 /** Adds the layer at the end of <head>. */

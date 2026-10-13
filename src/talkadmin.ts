@@ -133,8 +133,8 @@ export function latencyTable(rows: any[]) {
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
 <title>Talk traces · qodebase</title>
 <style>
-:root{--bg:#fff;--card:#fafafa;--chip:#f3f4f6;--line:#ececef;--fg:#111214;--dim:#6e737b;--acc:#17695a;--acc-fg:#fff;--warn:#b42d1f}
-@media (prefers-color-scheme:dark){:root{--bg:#0c0d0e;--card:#141517;--chip:#1c1d20;--line:#222428;--fg:#ececee;--dim:#9a9fa6;--acc:#4fbf9f;--acc-fg:#0f1112;--warn:#f08a7e}}
+:root{--bg:#f7f7fa;--card:#ffffff;--chip:#efeff4;--line:#e4e4ec;--fg:#14121f;--dim:#646177;--acc:#6a2ff0;--acc-fg:#ffffff;--acc-soft:#f0ebfe;--warn:#c2321f}
+@media (prefers-color-scheme:dark){:root{--bg:#0d0c12;--card:#16151e;--chip:#211f2b;--line:#2a2836;--fg:#eeedf3;--dim:#a3a0b3;--acc:#a585ff;--acc-fg:#120c24;--acc-soft:#231b3d;--warn:#f08a7e}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 Geist,ui-sans-serif,sans-serif;-webkit-tap-highlight-color:transparent}
 main{max-width:760px;margin:0 auto;padding:16px}h1{font-size:22px;letter-spacing:-.02em;margin:4px 0 12px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
