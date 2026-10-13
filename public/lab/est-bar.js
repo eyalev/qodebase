@@ -86,7 +86,10 @@
           const S = await sim();
           try {   // qb4 (98a4ac5): the range in seconds, and the phase ('over' = past the estimate: its own words)
             const est = j.estimate && j.estimate.wallS ? { wallS: j.estimate.wallS, startedAt: j.estimate.startedAt || b.startedAt } : null;
-            if (S?.remainingS) b.remainingS = S.remainingS({ estimate: est, parts: b.parts, landed: b.landed, firstLandedAt: b.firstLandedAt, now: Date.now() }) || null;
+            // lastLandedAt (qb4 be003f3): between landings the time left counts down. qb6's field if present, else the newest
+            // 'landed' event among the view's changes.
+            const lastLandedAt = b.lastLandedAt || (j.changes || []).reduce((m, c) => Math.max(m, ...(c.events || []).filter((e) => e.what === 'landed').map((e) => e.t || 0)), 0) || null;
+            if (S?.remainingS) b.remainingS = S.remainingS({ estimate: est, parts: b.parts, landed: b.landed, firstLandedAt: b.firstLandedAt, lastLandedAt, now: Date.now() }) || null;
             if (S?.remainingTime && est) { const t = S.remainingTime({ parts: b.parts, landed: b.landed, elapsedS: (Date.now() - (est.startedAt || Date.now())) / 1000, estimate: { wallS: est.wallS }, firstLandS: b.firstLandedAt && est.startedAt ? (b.firstLandedAt - est.startedAt) / 1000 : null }); if (t && t.phase === 'over') b.leftText = t.text; }
           } catch (e) { console.log(JSON.stringify({ module: 'estbar', event: 'remaining_failed', error: String(e) })); }
         }
