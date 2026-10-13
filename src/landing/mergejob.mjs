@@ -168,16 +168,32 @@ function applyChange(c, cfg, { defer = false } = {}) {
 // change's intent and the diff the agent made on older code, in a checkout of TODAY's main,
 // and let it make the same change here. Its edits are committed like any other change and
 // still go through the checks. Usage is reported (tokens, cost estimate, prompt size).
-function replayPrompt(c, base, unhandled) {
-  const diff = git(['diff', '-U3', base, c.commit]).out.slice(0, 12000);
+// Review 2 #2 (2026-10-13): the model redoes ONLY the files whose text merge conflicted. Every other file of the change is
+// applied straight from the reviewed diff first (partialApply). A replay used to redo the whole change from a diff cut at
+// 12,000 characters, and one (the flagship's splitter view) landed without a 119-line file the model never saw.
+function partialApply(c, base, conflicts, cwd = DIR) {
+  const ex = conflicts.map((p) => `:(exclude)${p}`);
+  const patch = git(['diff', '--binary', '--full-index', base, c.commit, '--', '.', ...ex], { cwd }).out;
+  if (!patch.trim()) return { ok: true, files: [] };
+  const pf = `${cwd}.partial.patch`;
+  writeFileSync(pf, patch + '\n');
+  const r = git(['apply', '--3way', '--index', '--whitespace=nowarn', pf], { cwd, ok: true });
+  rmSync(pf, { force: true });
+  const files = git(['diff', '--name-only', base, c.commit, '--', '.', ...ex], { cwd }).out.split('\n').filter(Boolean);
+  return { ok: r.code === 0, files, err: r.err.slice(0, 300) };
+}
+function replayPrompt(c, base, conflicts, applied = [], cwd = DIR) {
+  // The conflicting files' full reviewed diff: nothing cut (a sanity cap of 400k chars only, said if it ever hits).
+  let diff = git(['diff', '-U3', base, c.commit, '--', ...conflicts], { cwd }).out;
+  const cut = diff.length > 400_000; if (cut) diff = diff.slice(0, 400_000);
   return [
-    'You are the merge queue of a git platform. A reviewed change could not be merged as text because the files changed since the change was written.',
-    'Make the SAME change to the code in this directory (it is the latest version). Keep everything that is already here; add the change\'s intent on top.',
-    'Edit files only. Do not run git. Do not change files the change did not touch unless the intent needs it.',
+    'You are the merge queue of a git platform. A reviewed change could not be merged as text because some files changed since the change was written.',
+    `Redo the change ONLY in these files, on the code in this directory (the latest version): ${conflicts.join(', ')}. Keep everything that is already in them; add the change's intent on top.`,
+    applied.length ? `The rest of the change is already in place (applied as reviewed): ${applied.join(', ')}. Do not touch those files.` : '',
+    'Edit files only. Do not run git.',
     '', `Intent: ${c.title}`, (c.intent || '').slice(0, 2000), '',
-    `Files that conflicted: ${unhandled.join(', ')}`, '',
-    'The change as it was written on the older code (unified diff):', '```diff', diff, '```',
-  ].join('\n');
+    `The change to ${conflicts.length === 1 ? 'that file' : 'those files'} as it was written on the older code (unified diff${cut ? ', cut at 400k characters' : ''}):`, '```diff', diff, '```',
+  ].filter((l) => l !== '').join('\n');
 }
 const CLAUDE_ARGS = (prompt) => ['-p', prompt, '--model', job.llm.model, '--output-format', 'json', '--permission-mode', 'acceptEdits',
   '--allowedTools', 'Read,Edit,Write,Glob,Grep', '--max-turns', '12'];
@@ -198,10 +214,15 @@ const replayMsg = (c, unhandled) => `${c.title || c.id}\n\n${(c.intent || '').sl
 // quietly drop reviewed work.) Non-trivial added lines only (3+ chars after trim), looked up in the replayed version of the
 // same file; a file the replay deleted counts as missing. Lines the reviewed diff REMOVED are not checked: on a stale base
 // they are often other agents' work, which a replay rightly keeps.
-const REPLAY_MIN_COVERAGE = 0.9;
-function coverage(base, agentCommit, landedCommit, cwd = DIR) {
-  const files = git(['diff', '--name-only', '--diff-filter=AM', base, agentCommit], { cwd }).out.split('\n').filter(Boolean);
-  let want = 0, have = 0; const missing = [];
+// Measured on the flagship's and R8b's 35 old replays: good rewrites keep 56-100% of the reviewed lines in the files they
+// redo; the one that dropped work kept 23%. So: every file the change ADDED must exist (hard), and the lines of the redone
+// (conflicting) files must be at least half there.
+const REPLAY_MIN_COVERAGE = 0.5;
+function coverage(base, agentCommit, landedCommit, cwd = DIR, only = null) {
+  const added = git(['diff', '--name-only', '--diff-filter=A', base, agentCommit], { cwd }).out.split('\n').filter(Boolean);
+  const lostFiles = added.filter((f) => git(['cat-file', '-e', `${landedCommit}:${f}`], { cwd, ok: true }).code !== 0);
+  const files = git(['diff', '--name-only', '--diff-filter=AM', base, agentCommit], { cwd }).out.split('\n').filter(Boolean).filter((f) => !only || only.includes(f));
+  let want = 0, have = 0; const missing = lostFiles.map((f) => `${f}: the whole file is missing`);
   for (const f of files) {
     const added = git(['diff', '-U0', base, agentCommit, '--', f], { cwd }).out.split('\n').filter((l) => l.startsWith('+') && !l.startsWith('+++')).map((l) => l.slice(1).trim()).filter((l) => l.length >= 3);
     if (!added.length) continue;
@@ -209,14 +230,17 @@ function coverage(base, agentCommit, landedCommit, cwd = DIR) {
     const lines = new Set(now.code === 0 ? now.out.split('\n').map((l) => l.trim()) : []);
     for (const l of added) { want++; if (lines.has(l)) have++; else if (missing.length < 3) missing.push(`${f}: ${l.slice(0, 80)}`); }
   }
-  return { want, have, ratio: want ? have / want : 1, missing };
+  return { want, have, ratio: lostFiles.length ? 0 : want ? have / want : 1, lostFiles, missing };
 }
 
 const sameLines = (a, b) => { const lines = (d) => d.split('\n').filter((l) => /^[+-](?![+-])/.test(l)).map((l) => l.trim()).sort().join('\n'); return lines(a) === lines(b); };
 
 function replay(c, base, before, conflicts, unhandled) {
   const t = Date.now();
-  const prompt = replayPrompt(c, base, unhandled);
+  const pa = partialApply(c, base, conflicts);
+  if (!pa.ok) { git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']); say('partial_apply_failed', { id: c.id, err: pa.err }); }
+  const redo = pa.ok ? conflicts : git(['diff', '--name-only', base, c.commit]).out.split('\n').filter(Boolean);
+  const prompt = replayPrompt(c, base, redo, pa.ok ? pa.files : []);
   const r = spawnSync('claude', CLAUDE_ARGS(prompt), { cwd: DIR, encoding: 'utf8', timeout: 240_000, maxBuffer: 16 << 20, env: claudeEnv() });
   const llm = llmOf(r, t, prompt);
   say('replay', { id: c.id, ...llm });
@@ -227,12 +251,12 @@ function replay(c, base, before, conflicts, unhandled) {
   git(['commit', '-q', '-F', '-'], { input: replayMsg(c, unhandled) });
   const commit = git(['rev-parse', 'HEAD']).out;
   llm.sameLines = sameLines(git(['diff', before, commit]).out, git(['diff', base, c.commit]).out);
-  const cov = coverage(base, c.commit, commit);
-  llm.coverage = Math.round(cov.ratio * 1000) / 1000;
+  const cov = coverage(base, c.commit, commit, DIR, redo);
+  llm.coverage = Math.round(cov.ratio * 1000) / 1000; llm.redone = redo; llm.appliedAsReviewed = pa.ok ? pa.files : [];
   if (cov.ratio < REPLAY_MIN_COVERAGE) {
     git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']);
     say('replay_incomplete', { id: c.id, ...cov });
-    return { ok: false, llm, why: `the replay left out ${cov.want - cov.have} of ${cov.want} lines the reviewed change added (${cov.missing.join('; ')})` };
+    return { ok: false, llm, why: cov.lostFiles.length ? `the replay lost ${cov.lostFiles.join(', ')}, which the reviewed change added` : `the replay left out ${cov.want - cov.have} of ${cov.want} lines the reviewed change added (${cov.missing.join('; ')})` };
   }
   return { ok: true, commit, llm };
 }
@@ -241,10 +265,13 @@ function replay(c, base, before, conflicts, unhandled) {
 // pass 1 set aside run side by side, each in its own worktree on the train's text-merged code, and land in train order by
 // cherry-pick; one that collides with an earlier replay is replayed again, alone, on the code it now has to fit.
 const REPLAY_PAR = Math.max(1, Math.min(6, Number(process.env.QB_REPLAY_PAR) || 4));
-function replayAsync(c, base, unhandled, cwd) {
+function replayAsync(c, base, unhandled, cwd, conflicts = unhandled) {
   return new Promise((resolve) => {
     const t = Date.now();
-    const prompt = replayPrompt(c, base, unhandled);
+    const pa = partialApply(c, base, conflicts, cwd);
+    if (!pa.ok) { git(['reset', '-q', '--hard', 'HEAD'], { cwd }); git(['clean', '-qfd'], { cwd }); }
+    const redo = pa.ok ? conflicts : git(['diff', '--name-only', base, c.commit], { cwd }).out.split('\n').filter(Boolean);
+    const prompt = replayPrompt(c, base, redo, pa.ok ? pa.files : [], cwd);
     const p = spawn('claude', CLAUDE_ARGS(prompt), { cwd, env: claudeEnv() });
     let stdout = '', stderr = '';
     const kill = setTimeout(() => p.kill('SIGTERM'), 240_000);
@@ -252,6 +279,7 @@ function replayAsync(c, base, unhandled, cwd) {
     const done = (status, error) => {
       clearTimeout(kill);
       const llm = llmOf({ stdout, stderr, status, error }, t, prompt);
+      llm.redone = redo; llm.appliedAsReviewed = pa.ok ? pa.files : [];
       say('replay', { id: c.id, parallel: true, ...llm });
       if (status !== 0 || llm.error) return resolve({ ok: false, llm, why: llm.error || `exit ${status}` });
       git(['add', '-A'], { cwd });
@@ -289,7 +317,7 @@ async function replayDeferred(deferred, results, applied, cfg) {
     git(['worktree', 'remove', '--force', wt], { ok: true }); rmSync(wt, { recursive: true, force: true }); git(['worktree', 'prune'], { ok: true });
     mkdirSync(`${DIR}.wt`, { recursive: true });
     git(['worktree', 'add', '-q', '--detach', wt, at]);
-    try { return await replayAsync(d.c, d.r.base, d.r.unhandled, wt); }
+    try { return await replayAsync(d.c, d.r.base, d.r.unhandled, wt, d.r.conflicts); }
     finally { git(['worktree', 'remove', '--force', wt], { ok: true }); }
   });
   phase('replay-llm-parallel', tP);
@@ -301,7 +329,7 @@ async function replayDeferred(deferred, results, applied, cfg) {
     const before = git(['rev-parse', 'HEAD']).out;
     if (o?.ok) {
       const cp = git(['cherry-pick', '--allow-empty', '--keep-redundant-commits', o.commit], { ok: true });
-      const covOk = cp.code === 0 && (() => { const cov = coverage(r.base, c.commit, git(['rev-parse', 'HEAD']).out); o.llm.coverage = Math.round(cov.ratio * 1000) / 1000; if (cov.ratio < REPLAY_MIN_COVERAGE) { say('replay_incomplete', { id: c.id, parallel: true, ...cov }); return false; } return true; })();
+      const covOk = cp.code === 0 && (() => { const cov = coverage(r.base, c.commit, git(['rev-parse', 'HEAD']).out, DIR, r.conflicts); o.llm.coverage = Math.round(cov.ratio * 1000) / 1000; if (cov.ratio < REPLAY_MIN_COVERAGE) { say('replay_incomplete', { id: c.id, parallel: true, ...cov }); return false; } return true; })();
       if (cp.code === 0 && !covOk) { git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']); o.ok = false; o.why = 'the side-by-side replay left out reviewed lines'; }
       else if (cp.code === 0) {
         const commit = git(['rev-parse', 'HEAD']).out;

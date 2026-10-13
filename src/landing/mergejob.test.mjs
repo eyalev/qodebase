@@ -274,3 +274,25 @@ test('a model replay that leaves out reviewed lines is not landed (review 2 #2)'
   for (const id of ['b', 'c', 'd', 'e']) { assert.equal(by[id].landed, false, id); assert.match(by[id].why, /left out 1 of 1 lines the reviewed change added/, id); }
   assert.match(log, /"event":"replay_incomplete"/);
 });
+
+// Review 2 #2: the flagship's splitter view. A change adds a big new file and edits one shared line; only the shared line
+// conflicts. The new file is applied straight from the reviewed diff, the model redoes only the conflicting file (its prompt
+// carries only that file's diff), and the big file lands whole.
+test('a replay redoes only the conflicting file; the change\'s new file lands as reviewed (ag1dx)', () => {
+  const s = setup({ 'index.html': '<title>app</title>\nconst nav = "home";\n' });
+  const big = Array.from({ length: 400 }, (_, i) => `export const line${i} = ${i}; // ${'x'.repeat(60)}`).join('\n') + '\n';
+  const changes = [
+    s.fork('a', (fw) => edit(fw, 'index.html', (t) => t.replace('const nav = "home";', 'const nav = "home,trips";'))),
+    s.fork('b', (fw) => { edit(fw, 'index.html', (t) => t.replace('const nav = "home";', 'const nav = "home,split";')); write(fw, { 'src/split.js': big }); }),
+  ];
+  const env = fakeClaude(s.root, 'file');
+  const { r, log } = runEnv({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', llm: { model: 'claude-haiku-5-5' }, changes }, env);
+  const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
+  assert.equal(by.a.how, 'merged');
+  assert.equal(by.b.landed, true, by.b.why); assert.equal(by.b.how, 'replayed-llm');
+  assert.deepEqual(by.b.llm.redone, ['index.html']); assert.deepEqual(by.b.llm.appliedAsReviewed, ['src/split.js']);
+  const w = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, w);
+  assert.equal(readFileSync(join(w, 'src/split.js'), 'utf8'), big, 'the new file landed whole');
+  assert.match(readFileSync(join(w, 'index.html'), 'utf8'), /const nav = "home,split";/);
+  assert.doesNotMatch(log, /replay_incomplete/);
+});
