@@ -34,7 +34,7 @@ export default {
       case '/plan': return json(await plan(env, body));
       case '/start': return json(await run(env).start(body));
       case '/pause': return json(await run(env).pause(body.why || 'paused by hand'));
-      case '/resume': return json(await run(env).resume());
+      case '/resume': return json(await run(env).resume(body.cfg || {}));   // cfg: e.g. a new planUsdPerMin or maxPerMin after a fix
       case '/stop': return json(await run(env).stop(body.why || 'stopped by hand'));
       case '/records': return new Response(await run(env).records(url.searchParams.get('run')), { headers: { 'content-type': 'application/x-ndjson' } });
       case '/budget': return json(await budget(env).status());
@@ -106,9 +106,12 @@ export class Run extends DurableObject {
     this.sql = ctx.storage.sql;
     this.sql.exec(`CREATE TABLE IF NOT EXISTS rec (run TEXT, file TEXT, status TEXT, reason TEXT, model TEXT, agent INT, at INT, ms INT, usd REAL, tin INT, tout INT, comments INT, landed_at INT)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS q (run TEXT, i INT, path TEXT, hash TEXT, taken INT DEFAULT 0, PRIMARY KEY (run, i))`);
+    try { this.sql.exec(`ALTER TABLE q ADD COLUMN tries INT DEFAULT 0`); } catch {}
   }
-  async st() { return (await this.ctx.storage.get('s')) || null; }
-  async save(s) { await this.ctx.storage.put('s', s); }
+  // One state object in memory, shared by every handler: handlers that await other objects interleave, and each saving the
+  // copy it had read lost the others' counts (F2 at 100 agents showed -37 files at the model).
+  async st() { if (this.s === undefined) this.s = (await this.ctx.storage.get('s')) || null; return this.s; }
+  async save(s) { this.s = s; await this.ctx.storage.put('s', s); }
 
   async start(opts) {
     const cur = await this.st();
@@ -122,7 +125,8 @@ export class Run extends DurableObject {
     // One walk of main's src/vs (~800 folders): the files with their blob hashes, lanes interleaved, and main's tip.
     const { base, files } = await listFiles(this.env);
     const p = { base };
-    const pick = files.slice(0, Math.max(1, Math.min(files.length, Number(cfg.maxFiles) || 10)));
+    const off = Math.max(0, Number(cfg.offset) || 0);   // the next slice of the (stable) file list
+    const pick = files.slice(off, off + Math.max(1, Math.min(files.length, Number(cfg.maxFiles) || 10)));
     const runId = `f${Date.now().toString(36)}`;
     pick.forEach((f, i) => this.sql.exec(`INSERT INTO q (run, i, path, hash) VALUES (?, ?, ?, ?)`, runId, i, f.path, f.hash));
     const s = { runId, state: 'running', cfg, base: p.base, startedAt: Date.now(), files: pick.length, next: 0, usd: 0, calls: 0,
@@ -130,9 +134,22 @@ export class Run extends DurableObject {
       recent: [], perMin: {}, pauses: [], agentsDone: 0 };
     await this.save(s);
     await lander(this.env).begin(runId, p.base);
-    for (let i = 0; i < cfg.agents; i++) await this.env.AGENT.get(this.env.AGENT.idFromName(`${runId}-${i}`)).begin(runId, i);
+    // Agents start from this object's alarm in batches: started one by one inside the request, F2's 100-agent start
+    // outlived the request and only ~8 agents began.
+    s.agentsStarted = 0; await this.save(s);
+    await this.ctx.storage.setAlarm(Date.now() + 100);
     log('run_started', { runId, agents: cfg.agents, files: pick.length, model: cfg.model, budgetUsd: cfg.budgetUsd });
     return { runId, agents: cfg.agents, files: pick.length, base: p.base };
+  }
+
+  async alarm() {
+    const s = await this.st();
+    if (!s || s.state === 'stopped' || (s.agentsStarted || 0) >= s.cfg.agents) return;
+    const from = s.agentsStarted || 0, to = Math.min(s.cfg.agents, from + 50);
+    await Promise.all(Array.from({ length: to - from }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k)));
+    s.agentsStarted = to; await this.save(s);
+    log('agents_started', { runId: s.runId, started: to, of: s.cfg.agents });
+    if (to < s.cfg.agents) await this.ctx.storage.setAlarm(Date.now() + 200);
   }
 
   /** An agent asks for its next file. */
@@ -141,9 +158,13 @@ export class Run extends DurableObject {
     if (!s || s.runId !== runId) return { stop: true };
     if (s.state === 'paused') return { wait: 15_000 };
     if (s.state !== 'running') return { stop: true };
-    // The per-minute pace (calls) and the money.
-    const minute = Math.floor(Date.now() / 60000);
-    if ((s.perMin[minute]?.calls || 0) >= s.cfg.maxPerMin) return { wait: 5_000 };
+    // The pace in 10-second slices (a per-minute bucket let a minute's calls go in seconds, and two at its edges: 429s at
+    // 100 agents), and the money.
+    const minute = Math.floor(Date.now() / 60000), slice = Math.floor(Date.now() / 10000);
+    s.perSlice ||= {};
+    if ((s.perSlice[slice] || 0) >= Math.max(1, Math.floor(s.cfg.maxPerMin / 6))) return { wait: 2_000 + Math.random() * 3000 };
+    s.perSlice[slice] = (s.perSlice[slice] || 0) + 1;
+    for (const k of Object.keys(s.perSlice)) if (Number(k) < slice - 12) delete s.perSlice[k];
     if (s.usd >= s.cfg.budgetUsd) { await this.autoPause(s, `run budget reached: $${s.usd.toFixed(3)} of $${s.cfg.budgetUsd}`); return { wait: 15_000 }; }
     const row = this.sql.exec(`SELECT i, path, hash FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0];
     if (!row) return { stop: true };
@@ -155,7 +176,7 @@ export class Run extends DurableObject {
   }
 
   /** An agent's result for one file. */
-  async done(runId, agent, r) {
+  async done(runId, agent, r) {   // r may be rewritten (a retry)
     const s = await this.st();
     if (!s || s.runId !== runId) return;
     const usd = r.usd || 0;
@@ -165,6 +186,11 @@ export class Run extends DurableObject {
     s.counts.model--;
     s.counts[r.status] = (s.counts[r.status] || 0) + 1;
     s.recent.push({ status: r.status, at: Date.now() }); if (s.recent.length > 200) s.recent.splice(0, s.recent.length - 200);
+    // A rate limit or a model error is not the file's verdict: back in the queue, two more tries.
+    if (r.status === 'rate_limited' || r.status === 'model_error') {
+      const q = this.sql.exec(`SELECT i, tries FROM q WHERE run = ? AND path = ?`, runId, r.file).toArray()[0];
+      if (q && (q.tries || 0) < 2) { this.sql.exec(`UPDATE q SET taken = 0, tries = ? WHERE run = ? AND i = ?`, (q.tries || 0) + 1, runId, q.i); r = { ...r, status: `${r.status}_retry` }; }
+    }
     this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       runId, r.file, r.status, (r.reason || '').slice(0, 300), s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0);
     // Old per-minute buckets go (an hour kept).
@@ -172,6 +198,8 @@ export class Run extends DurableObject {
     await this.save(s);
     if (usd) await budget(this.env).spend(usd);
     if (r.status === 'ready') await lander(this.env).add(runId, laneOf(r.file), r.file, r.text, Date.now());
+    // Done when no file is waiting or at the model (not only when every agent reported in: a lost agent kept a run open).
+    if (s.state === 'running' && s.counts.queued <= 0 && s.counts.model <= 0) { s.state = 'done'; s.endedAt = Date.now(); await this.save(s); await lander(this.env).flush(runId); return; }
     await this.checkAutoPause(s);
   }
 
@@ -209,10 +237,12 @@ export class Run extends DurableObject {
     await pushover(this.env, `qodebase fleet paused: ${why}`, `Run ${s.runId}: ${s.counts.landed} landed, $${s.usd.toFixed(3)}. Resume after a fix: POST /resume.`);
   }
   async pause(why) { const s = await this.st(); if (!s || s.state !== 'running') return { error: 'nothing running' }; s.state = 'paused'; s.pauses.push({ at: Date.now(), why }); await this.save(s); return { state: s.state }; }
-  async resume() {
+  async resume(cfg = {}) {
     const s = await this.st(); if (!s || s.state !== 'paused') return { error: 'not paused' };
     const b = await budget(this.env).check(); if (!b.ok) return { error: b.why };
-    s.state = 'running'; s.recent = []; await this.save(s); return { state: s.state };
+    for (const k of ['maxPerMin', 'planUsdPerMin', 'budgetUsd']) if (Number(cfg[k]) > 0) s.cfg[k] = k === 'budgetUsd' ? Math.min(Number(cfg[k]), s.usd + b.left) : Number(cfg[k]);
+    if (cfg.pause && typeof cfg.pause === 'object') s.cfg.pause = { ...s.cfg.pause, ...cfg.pause };
+    s.state = 'running'; s.recent = []; s.pauses.push({ at: Date.now(), why: 'resumed', cfg }); await this.save(s); return { state: s.state, cfg: s.cfg };
   }
   async stop(why) { const s = await this.st(); if (!s) return { error: 'no run' }; s.state = 'stopped'; s.stoppedWhy = why; s.endedAt = Date.now(); await this.save(s); await lander(this.env).flush(s.runId); return { state: s.state }; }
   async restart() { await this.ctx.storage.sync(); this.ctx.abort('restart on the deployed code'); }
@@ -226,7 +256,14 @@ export class Run extends DurableObject {
     const minute = Math.floor(Date.now() / 60000);
     const lastMin = s.perMin[minute - 1] || { calls: 0, usd: 0 };
     const reasons = this.sql.exec(`SELECT status, reason, COUNT(*) AS n FROM rec WHERE run = ? AND status NOT IN ('ready','landed','skipped') GROUP BY status, reason ORDER BY n DESC LIMIT 8`, s.runId).toArray();
-    return { runId: s.runId, state: s.state, model: s.cfg.model, agents: s.cfg.agents, files: s.files, base: s.base, startedAt: s.startedAt, endedAt: s.endedAt || null,
+    // Counts from the records and the queue table (the source of truth), not from running tallies.
+    const byStatus = Object.fromEntries(this.sql.exec(`SELECT status, COUNT(*) AS n FROM rec WHERE run = ? GROUP BY status`, s.runId).toArray().map((x) => [x.status, x.n]));
+    const qq = this.sql.exec(`SELECT SUM(taken = 0) AS waiting, SUM(taken = 1) AS taken FROM q WHERE run = ?`, s.runId).toArray()[0] || {};
+    const finals = Object.entries(byStatus).filter(([k]) => !k.endsWith('_retry')).reduce((n, [, v]) => n + v, 0);
+    s.counts = { queued: qq.waiting || 0, model: Math.max(0, (qq.taken || 0) - finals), ready: byStatus.ready || 0, landed: byStatus.landed || 0, skipped: byStatus.skipped || 0,
+      verify_fail: byStatus.verify_fail || 0, rejected: byStatus.rejected || 0, model_error: byStatus.model_error || 0, rate_limited: byStatus.rate_limited || 0,
+      retried: (byStatus.rate_limited_retry || 0) + (byStatus.model_error_retry || 0) };
+    return { runId: s.runId, state: s.state, model: s.cfg.model, agents: s.cfg.agents, agentsStarted: s.agentsStarted ?? null, inFlight: s.counts.model, files: s.files, base: s.base, startedAt: s.startedAt, endedAt: s.endedAt || null,
       counts: s.counts, usd: Math.round(s.usd * 10000) / 10000, budgetUsd: s.cfg.budgetUsd, calls: s.calls, lastMinute: lastMin,
       landWaitS: { p50: pct(waits, 0.5), p90: pct(waits, 0.9) }, errors: reasons, pauses: s.pauses.slice(-5), budget: await budget(this.env).check(), lander: await lander(this.env).summary() };
   }
