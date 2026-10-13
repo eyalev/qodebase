@@ -96,7 +96,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 - replay by rules; replay by AI behind a per-project switch
 - claims and stacking (`forq spawn --files … --on …`)
 - Talk (type or speak a request), Watch a run, replays of past runs
-- the Intents tab: browse intents, not agents. The request at the top, then areas, then what each agent set out to do and the change it made; each line rolls up status (needs you, blocked, working, waiting, didn't land, done), counts, cost and time, needs-you first, and from any change "Why this exists" walks up to the request. A fleet run opens the same way, folder by folder ([a 40-agent build](https://qodebase.app/p/eyal/real-course-builder/work#/intents), [a 4,064-file fleet run](https://qodebase.app/runs#/intents/run/fleet-vscode-src-11/fmv6rzp4n))
+- the Intents tab: browse intents, not agents. The request at the top, then areas, then what each agent set out to do and the change it made; each line rolls up status (needs you, blocked, working, waiting, didn't land, done), counts, cost and time, needs-you first, and from any change "Why this exists" walks up to the request. A fleet run opens the same way, folder by folder ([a 40-agent build](https://qodebase.app/p/eyal/real-course-builder/work#/intents), [a 4,063-file fleet run](https://qodebase.app/runs#/intents/run/fleet-vscode-src-11/fmv6rzp4n))
 - Requests, issues for the agent age: anyone signed in sends a public project's owner one short request (a screenshot and a link to their fork optional); the owner sends it to the agents, replies or closes it
 - installing your own copy into your Cloudflare account
 
