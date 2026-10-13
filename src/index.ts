@@ -712,7 +712,7 @@ const app = {
           const recs = parseRecords(await r.text());
           // The title comes from the runs list (server side), never from the request.
           const row = ((await runsData(env, me).catch(() => null)) as { fleet?: { repo: string; runId: string; label?: string; intent?: string }[] } | null)?.fleet?.find((x) => x.repo === repo && x.runId === run);
-          return fleetTree(recs, { label: row?.label || repo, intent: row?.intent, stopped: st.runId === run && st.state === 'stopped', pending: st.runId === run && st.files ? Math.max(0, st.files - recs.length) : 0 });
+          return fleetTree(recs, { label: row?.label || repo, intent: row?.intent, stopped: st.runId === run && st.state === 'stopped', pending: live && st.files ? Math.max(0, st.files - recs.length) : 0 });   // an ended run has nothing still to start
         });
         return json(intentsAnswer(T, url.searchParams));
       }
