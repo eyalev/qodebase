@@ -23,6 +23,10 @@ test('cleanStart: repo checked, numbers clamped, job only when asked, real model
   const c = cleanStart({ repo: 'fleet-vscode-src-3', root: '/src/vs/editor/', agents: 99999, budgetUsd: 500, job: 'comments+index', preset: 'workers', label: 'VS Code editor <script>' });
   assert.equal(c.root, 'src/vs/editor'); assert.equal(c.agents, AGENTS_MAX); assert.equal(c.budgetUsd, BUDGET_MAX); assert.equal(c.job, 'comments+index');
   assert.equal(c.batch, 20); assert.equal(c.label, 'VS Code editor script');
+  const many = cleanStart({ repo: 'fleet-n2-vscode-src-1', root: 'src/vs', files: 4064, agents: 1000, preset: 'workers' });
+  assert.equal(many.batch, 4); assert.equal(many.pack.files, 4);
+  assert.equal(cleanStart({ repo: 'fleet-n2-vscode-src-1', files: 300, agents: 1000 }).batch, 1);
+  assert.equal(cleanStart({ repo: 'fleet-n2-vscode-src-1', files: 659, agents: 200 }).batch, 20);
   const k = cleanStart({ repo: 'fleet-nest-2', preset: 'cache' });
   assert.equal(k.job, undefined); assert.equal(k.batch, undefined); assert.deepEqual(k.models, PRESETS.cache);
 });

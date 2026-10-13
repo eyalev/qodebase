@@ -52,6 +52,10 @@ export function cleanStart(b: Record<string, unknown>) {
   const label = String(b.label || '').replace(/[^\w ,.:'()/+-]/g, '').slice(0, 80);
   // real models run batched and packed, paced by $ per minute (qb6's S5 settings); the cache needs none of it
   const real = preset.some((m) => m.model !== 'cache');
+  // qb6 (2026-10-13): with many agents, batch = files per agent (1..20), or with batch 20 only ~files/20 agents ever get
+  // work (4,064 files / 1,000 agents -> 4); pack.files the same.
+  const files = Math.max(0, Math.round(Number(b.files) || 0));
+  const per = agents >= 500 && files ? Math.max(1, Math.min(20, Math.floor(files / agents))) : 0;
   return { repo, root, ...(job === 'comments+index' ? { job } : {}), agents, budgetUsd, models: preset, maxFiles: 100000, label,
-    ...(real ? { batch: 20, pack: { files: 10, tokens: 24000 }, planUsdPerMin: 3 } : {}) };
+    ...(real ? { batch: per || 20, pack: { files: per || 10, tokens: 24000 }, planUsdPerMin: 3 } : {}) };
 }
