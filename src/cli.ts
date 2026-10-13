@@ -7,10 +7,12 @@ export const FORQ_CLI = String.raw`#!/usr/bin/env python3
 
   forq status <working|pushed|blocked> "note"   report your state (agents)
   forq list                                     this project's agents
-  forq spawn "task" [--files a,b] [--on <agent-id>]
+  forq spawn "task" [--files a,b] [--on <agent-id>] [--skeleton]
                                                 start an agent on its own fork (router); --files claims
                                                 the files it expects to change, --on stacks it on
-                                                another agent's unlanded work
+                                                another agent's unlanded work; --skeleton marks the
+                                                build's runnable skeleton (other spawns wait until it lands)
+  forq parts N                                  say how many tasks you planned, the skeleton included (router)
   forq send <agent-id> "text"                   message an agent (router)
   forq merge <agent-id>                         merge an agent's fork into main (router); on projects
                                                 with the merge queue it queues the change instead
@@ -182,13 +184,14 @@ def main(argv):
             if a.get('claims'): print(f"    claims: {', '.join(a['claims'][:12])}")
             if a.get('landing'): print(f"    queue: {a['landing']}")
     elif v == 'spawn':
-        files, on, words = [], None, []
+        files, on, words, skeleton = [], None, [], False
         it = iter(rest)
         for w in it:
             if w == '--files': files += [f for f in next(it, '').split(',') if f]
             elif w == '--on': on = next(it, None)
+            elif w == '--skeleton': skeleton = True
             else: words.append(w)
-        if not words: sys.exit('usage: forq spawn "task" [--files a,b] [--on <agent-id>]')
+        if not words: sys.exit('usage: forq spawn "task" [--files a,b] [--on <agent-id>] [--skeleton]')
         task = ' '.join(words)
         # W9c: on a board project, one quick pass checks the new task against work under way or just landed. A twin is
         # not dropped: it goes out as "a thin alias of <the original> under this task's name" (its name is still wanted).
@@ -203,7 +206,11 @@ def main(argv):
         body = {'task': task}
         if files: body['files'] = files
         if on: body['on'] = on
-        a = api('POST', '/api/agent/spawn', body); print(f"started {a['id']}" + (f" (stacked on {on})" if on else ''))
+        if skeleton: body['skeleton'] = True
+        a = api('POST', '/api/agent/spawn', body); print(f"started {a['id']}" + (f" (stacked on {on})" if on else '') + (' (the skeleton: other agents wait until it lands)' if skeleton else ''))
+    elif v == 'parts':
+        if not rest or not rest[0].isdigit(): sys.exit('usage: forq parts <N>   (how many tasks you planned, the skeleton included)')
+        print(api('POST', '/api/agent/parts', {'parts': int(rest[0])}))
     elif v == 'send':
         if len(rest) < 2: sys.exit('usage: forq send <agent-id> "text"')
         print(api('POST', '/api/agent/send', {'agent': rest[0], 'text': ' '.join(rest[1:])}))

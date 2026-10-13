@@ -44,6 +44,8 @@ export type Change = {
   events: Ev[]; review: { verdict: 'approved' | 'changes' | 'auto'; notes: string } | null;
   landing: Landing_ | null; lead: string | null;
   createdAt: number; landedAt: number | null; queuedAt?: number; tries: number;
+  /** X1: the build's runnable skeleton (app shell, routes, empty views), spawned alone; the features start once it lands. */
+  skeleton?: boolean;
   /** tier 3 / redo: the next landing of this change is a lead's (or LLM's) replay. */
   redo?: 'lead' | 'llm';
   task?: string;       // demo: the script's task key (demoproject.ts)
@@ -118,6 +120,8 @@ type Meta = {
   build?: BuildEstimate & { actual?: { settledAt: number; actualWallS: number; actualUsd: number | null } };                      // task ids whose claiming change landed (claims, forq next)
   /** G2 History: each landed change by its commit on main (and the train's tip), newest 300; built once from the records. */
   landedIdx?: Record<string, LandedEntry>;
+  /** X1/X2: how many parts the router planned (`forq parts N`), and when the first change landed. */
+  parts?: number; firstLandedAt?: number;
   /** Artifacts 'pushed' subscriptions this project holds (repo -> subscription id): its main + open agents' forks. */
   evsubs?: Record<string, string>;
   /** Pushes to main by a person over git (events.ts), newest 50: the board, Asks and the timeline show them. */
@@ -178,7 +182,7 @@ export class Landing extends DurableObject<Env> {
 
   // ---- the record --------------------------------------------------------------
   /** A new change: at spawn (real agents) or when a scripted agent picks a task. */
-  async record(slug: string, c: Pick<Change, 'id' | 'title' | 'intent' | 'agent' | 'kind' | 'fork' | 'remote' | 'base'> & Partial<Pick<Change, 'claims' | 'needs' | 'provides' | 'stackedOn' | 'task'>>, runId?: number) {
+  async record(slug: string, c: Pick<Change, 'id' | 'title' | 'intent' | 'agent' | 'kind' | 'fork' | 'remote' | 'base'> & Partial<Pick<Change, 'claims' | 'needs' | 'provides' | 'stackedOn' | 'task' | 'skeleton'>>, runId?: number) {
     const m = await this.#m(slug);
     if (c.kind === 'demo' && (!m.demo?.running || m.demo.startedAt !== runId)) throw new Error('stale demo run: this scripted agent belongs to an earlier run');
     const ch: Change = { ...c, title: (c.title || c.intent.split('\n')[0]).slice(0, 60), intent: c.intent.slice(0, 4000), commit: null, state: 'working',
@@ -512,6 +516,28 @@ export class Landing extends DurableObject<Env> {
   #progressMemo: { at: number; v: unknown } | null = null;
   /** {estimate, progress} for the project page and Agents at work; null when built without an estimate.
    *  Settled = every agent merged and nothing new for 3 min (as the lab runner settles); recorded once. */
+  /** X1/X2: the router says how many parts it planned (the skeleton included). */
+  async setParts(n: number) {
+    const m = await this.#m();
+    m.parts = Math.max(1, Math.min(200, Math.round(n)));
+    await this.#saveMeta();
+    return { parts: m.parts };
+  }
+
+  /** X1: a skeleton that has not landed yet holds other spawns (unless it bounced, or 20 minutes passed). */
+  async skeletonHold(): Promise<{ id: string; title: string } | null> {
+    const s = (await this.#all()).find((c) => c.skeleton && c.state !== 'landed' && c.state !== 'bounced' && Date.now() - c.createdAt < 20 * 60_000);
+    return s ? { id: s.id, title: s.title } : null;
+  }
+
+  /** X2 (qb7's shape): parts planned and landed, first landing, start and settle times; remainingS is the page's (qb4's model). */
+  #progressOf(m: Meta, all: Change[], settledAt: number | null) {
+    const agents = all.filter((c) => c.kind === 'agent');
+    const landed = agents.filter((c) => c.state === 'landed').length;
+    return { parts: m.parts ? Math.max(m.parts, agents.length) : null, landed, firstLandedAt: m.firstLandedAt || null,
+      startedAt: m.build?.startedAt || null, settledAt, remainingS: null };
+  }
+
   async buildInfo(): Promise<{ estimate: BuildEstimate; progress: { spentUsd: number | null; settledAt: number | null; actualWallS: number | null; actualUsd: number | null } } | null> {
     const m = await this.#m();
     const b = m.build;
@@ -961,6 +987,9 @@ export class Landing extends DurableObject<Env> {
           if (how === 'replayed-handler') this.#ev(c, 'replayed', (rc.handled || []).map((h) => `${h.path} (${h.handler})`).join(', ') || 'on the latest code');
           if (how === 'replayed-llm' || how === 'lead') this.#ev(c, 'replayed', how === 'lead' ? `by ${c.lead || 'the lead'} on the latest code` : `by ${rc.llm?.model || 'a model'} on the latest code`);
           c.state = 'landed'; c.landedAt = Date.now(); delete c.redo; this.#claimDone(m, c.id);
+          m.firstLandedAt ||= c.landedAt;
+          // X1: the skeleton is on main: the router starts the features now, each forking from it.
+          if (c.skeleton) this.#tell(`${m.slug}--router`, `qodebase: the skeleton landed on main ("${c.title}"). Start the feature agents now: each one forks from main and builds on the skeleton. Keep at most your agent limit running at once.`);
           (m.landings ||= []).push([c.landedAt, Math.round((c.landedAt - c.createdAt) / 1000), how && how !== 'merged' ? 1 : 0]);
           if (m.landings.length > 2000) m.landings.splice(0, m.landings.length - 2000);
           c.landing = { how, conflicts: rc.conflicts, diff: rc.diff || [], commit: rc.commit, mainCommit: r.mainAfter || null,
@@ -1198,6 +1227,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       run: this.runState(),
       // Estimate vs elapsed (Build): absent when built without an estimate.
       ...(m.build ? await this.buildInfo() : {}),
+      build: this.#progressOf(m, await this.#all(), m.build?.actual?.settledAt || null),
       // The board (qb7's "who works on what"): working now + finished in the last 30 min + dedupe aliases.
       ...(m.flags.board ? { board: await this.boardWho({ recent: 30 * 60_000 }).then(({ rows, aliases }) => ({ rows, aliases })) } : {}),
       ...(m.flags.budgetUsd ? { budget: { usd: m.flags.budgetUsd, spent: m.spent?.usd ?? 0, halted: !!m.flags.halted, reviewers: m.flags.reviewers || 1 } } : {}),

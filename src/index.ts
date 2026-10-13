@@ -1337,7 +1337,7 @@ async function landingCaps(env: Env, slug: string): Promise<{ agents?: number; a
   return (await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null))?.caps || null;
 }
 
-async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string, o: { files?: string[]; on?: string } = {}) {
+async function spawn(env: Env, ctx: ExecutionContext, slug: string, task: string, apiBase: string, o: { files?: string[]; on?: string; skeleton?: boolean } = {}) {
   task = task.trim();
   if (!task || task.length > 4000) throw new Error('task required (max 4000 chars)');
   const caps = await landingCaps(env, slug);
@@ -1510,7 +1510,17 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     const b = body as Record<string, unknown>;
     // R1: the owner paused or stopped this project: no new agents until they resume.
     if (await env.Landing.get(env.Landing.idFromName(slug)).isPaused().catch(() => false)) return json({ error: 'paused by the owner: no new agents until the project is resumed' }, 409);
-    return json(await spawn(env, ctx, slug, String(b.task || ''), apiBase, { files: Array.isArray(b.files) ? b.files.map(String) : undefined, on: b.on ? String(b.on) : undefined }));
+    // X1: features wait for the skeleton to land, so each forks from a runnable app (the router is told when it lands).
+    if (b.skeleton !== true) {
+      const hold = await env.Landing.get(env.Landing.idFromName(slug)).skeletonHold().catch(() => null);
+      if (hold) return json({ error: `wait: the skeleton (${hold.id}, "${hold.title}") has not landed yet. End your turn; qodebase tells you when it lands, then start the features.` }, 409);
+    }
+    return json(await spawn(env, ctx, slug, String(b.task || ''), apiBase, { files: Array.isArray(b.files) ? b.files.map(String) : undefined, on: b.on ? String(b.on) : undefined, skeleton: b.skeleton === true }));
+  }
+  if (verb === 'parts') {
+    const n = Number((body as Record<string, unknown>).parts);
+    if (!(n >= 1)) return json({ error: 'parts: a number of tasks, 1 or more' }, 400);
+    return json(await env.Landing.get(env.Landing.idFromName(slug)).setParts(n));
   }
   if (verb === 'send') {
     if (projectOf(body.agent || '') !== slug) return json({ error: 'not an agent of this project' }, 400);

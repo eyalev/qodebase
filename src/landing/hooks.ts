@@ -11,11 +11,12 @@ export const landingOn = (info: ProjectInfo | null | undefined) => !!info?.landi
 const L = (env: Env, slug: string) => env.Landing.get(env.Landing.idFromName(slug));
 
 /** spawn: the change's record, with the router's expected files as claims. */
-export async function onSpawn(env: Env, info: ProjectInfo, agent: Agent, o: { files?: string[]; on?: string | null }) {
+export async function onSpawn(env: Env, info: ProjectInfo, agent: Agent, o: { files?: string[]; on?: string | null; skeleton?: boolean }) {
   await L(env, info.slug).record(info.slug, {
     id: agent.id, title: agent.task.split('\n')[0].slice(0, 60), intent: agent.request ? `${agent.task}\n\nAsked: ${agent.request}` : agent.task,
     agent: `agent ${agent.id.split('--')[1]}`, kind: 'agent', fork: agent.fork, remote: agent.remote, base: agent.base?.commit || null,
     claims: (o.files || []).map((f) => f.trim().replace(/^\.?\//, '')).filter(Boolean).slice(0, 50), stackedOn: o.on || null,
+    ...(o.skeleton ? { skeleton: true } : {}),
   });
 }
 
