@@ -346,7 +346,7 @@ body.rec .prog,body.rec .notes{display:none}
 
 <section class="s secs" data-t="Built for people, built on Cloudflare" data-sec="D" data-head>
  <div class="claim"><span class="secn">Section D</span><h2>Built for people, built on Cloudflare</h2><p>One person steers from a phone, and every step is visible.</p></div>
- <div class="vis"><ul class="pts"><li>Phone first, plain words</li><li>The timeline, Asks and the Runs page</li><li>An estimate before you build</li><li>Cloudflare underneath</li></ul><ol class="map mini" data-map></ol></div>
+ <div class="vis"><ul class="pts"><li>Phone first, plain words</li><li>Intents, the timeline, Asks and the Runs page</li><li>An estimate before you build</li><li>Cloudflare underneath</li></ul><ol class="map mini" data-map></ol></div>
  <aside class="say">Section D: the people side. One person steers it all from a phone, and every step is visible.</aside>
 </section>
 
@@ -360,6 +360,12 @@ body.rec .prog,body.rec .notes{display:none}
  <div class="claim"><h2>The timeline shows where time went</h2><p>Each agent's time: working, in review, waiting, merging. In the 40-agent build it showed agents waiting for review as long as they worked, so reviewers now scale with the team.</p></div>
  <div class="vis"><div class="phone"><img class="shot" data-shot="timeline" alt="The timeline of a run: how each agent's time was spent"></div></div>
  <aside class="say">Every run has a timeline. In the forty-agent build, it showed agents waiting for a reviewer about as long as they worked. So we changed the product: reviewers now scale with the team.</aside>
+</section>
+
+<section class="s" data-t="Intents" data-sec="D">
+ <div class="claim"><h2>With 1,000 agents, you browse intents, not agents</h2><p>Each request splits into areas, each area into what one agent set out to do, then its change. Status rolls up on every line, stuck things first, and any change leads back to the request it came from.</p><span class="src">The 40-agent build: one request, 41 of 41 done</span></div>
+ <div class="vis"><div class="phone"><img class="shot" data-shot="intents" alt="Intents: a request, its areas, and one agent's change, each line with its status"></div></div>
+ <aside class="say">With a thousand agents, nobody can follow agents one by one. So qodebase shows intents: each request, split into areas, then what each agent set out to do, then its change. Every line rolls up its status, stuck things come first, and from any change you can ask why it exists, all the way up to the request.</aside>
 </section>
 
 <section class="s" data-t="Asks" data-sec="D">
@@ -439,7 +445,7 @@ if(q.get('rec'))document.body.classList.add('rec');
 var S=[].slice.call(document.querySelectorAll('.s')),i=0,notes=document.getElementById('notes'),nb=document.getElementById('nbtn');
 function dark(){var t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
 [].forEach.call(document.querySelectorAll('[data-shot]'),function(e){e.src=e.dataset.shot+'-'+(dark()?'dark':'light')+'.webp'});
-var SECS=[['A','The idea: land by intent','Why order breaks the flow, and how qodebase lands by intent'],['B','It works with real agents','Real Claude teams of up to 40 building apps, and one agent against a team'],['C','Many agents, at scale','Hundreds checked by tests, 4,750 on Cloudflare, a cheap fleet, lanes'],['D','Built for people, built on Cloudflare','Phone first, the timeline, Asks, estimates, the Runs page']];
+var SECS=[['A','The idea: land by intent','Why order breaks the flow, and how qodebase lands by intent'],['B','It works with real agents','Real Claude teams of up to 40 building apps, and one agent against a team'],['C','Many agents, at scale','Hundreds checked by tests, 4,750 on Cloudflare, a cheap fleet, lanes'],['D','Built for people, built on Cloudflare','Phone first, intents, the timeline, Asks, estimates, the Runs page']];
 [].forEach.call(document.querySelectorAll('[data-map]'),function(m){var cur=m.closest('.s').dataset.sec;m.innerHTML=SECS.map(function(x){return'<li'+(x[0]===cur?' class="on"':'')+'><b>'+x[0]+'</b><span><b>'+x[1]+'</b><span>'+x[2]+'</span></span></li>'}).join('')});
 // Where am I: 'Section B, slide 2 of 4' on every slide (plain words, no meta string)
 S.forEach(function(s){var sec=s.dataset.sec,w='';
