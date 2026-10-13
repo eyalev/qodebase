@@ -182,11 +182,19 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
     const it = s.items.find((i) => i.id === tbx.choice);
     if (it) return { ...cmd, mode: 'act', op: 'press', target: it.id, label: it.text, p: tbx.p, why: `${cmd.why || ''}; the page's own action answers it` };
   }
+  // "Opening" the project this page already shows is never the answer when a button here is a sure pick
+  // ("show the intent tree" on its work page went to the project itself at p 0.28, live 2026-10-13).
+  const curS = currentSlug(s.path), tbp = top(answers.button);
+  if (cmd.op === 'go' && curS && cmd.target === curS && cmd.href === `/p/${curS.replace('.', '/')}` && (cmd.p ?? 0) < 0.5 && tbp.choice !== 'none' && (tbp.p ?? 0) >= 0.6) {
+    const it = s.items.find((i) => i.id === tbp.choice);
+    if (it) return { ...cmd, mode: 'act', op: 'press', target: it.id, label: it.text, p: tbp.p, why: `${cmd.why || ''}; a button here, not the page itself` };
+  }
   // A sentence that names the button it presses ("show the timeline tab" → Timeline) is sure enough to act, not to ask
   // "Maybe…?" (live, 2026-10-13: p 0.39). Vocabulary from the page itself.
   if (cmd.op === 'press' && (cmd.p ?? 0) < 0.45 && cmd.label) {
-    const bare = cmd.label.replace(/\s*\(.*\)$/, '').toLowerCase().trim();
-    if (bare.length >= 4 && ` ${utterance.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ')} `.includes(` ${bare} `)) cmd.p = 0.6;
+    const stem = (x: string) => x.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/).filter(Boolean).map((w) => w.replace(/(es|s)$/, '')).join(' ');
+    const bare = stem(cmd.label.replace(/\s*\(.*\)$/, ''));
+    if (bare.length >= 4 && ` ${stem(utterance)} `.includes(` ${bare} `)) cmd.p = 0.6;
   }
   // Greetings and small talk get a friendly reply with examples, never "say it again" (Eyal's phone, 2026-10-07:
   // "hi there" and "hello" got "Sounds cut off"). Fixed words in code; the model's yes/no for the rest.
@@ -273,6 +281,9 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
       // 0.83, project cafe-crew 0.49 with the action itself at 0.24).
       const tl = top(answers.link), tp = top(answers.project), ll = s.items.find((i) => i.id === tl.choice);
       if (ll?.href && (tl.p ?? 0) >= 0.7 && (tp.p ?? 0) < 0.6 && (action.p ?? 0) < 0.5) return { ...base, op: 'go', href: ll.href, label: ll.text, target: ll.id, why: 'a sure link over a weak project' };
+      // …and to a sure button or tab here ("show the intent tree": Intents 0.83, project 0.30, action 0.21).
+      const tb2 = top(answers.button), bb = s.items.find((i) => i.id === tb2.choice);
+      if (bb && (tb2.p ?? 0) >= 0.7 && (tp.p ?? 0) < 0.6 && (action.p ?? 0) < 0.5) return { ...base, op: 'press', target: bb.id, label: bb.text, p: tb2.p, why: 'a sure button over a weak project' };
       const p = projects.find((x) => x.id === pick(answers.project));
       if (!p) return { ...base, why: 'no project matched' };
       return { ...base, op: 'go', href: projectHref(p, partOf(answers)), label: projLabel(p, partOf(answers)), target: p.slug };
