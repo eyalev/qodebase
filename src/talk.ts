@@ -403,7 +403,7 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
       builds.push({ t: `${info.name} (${landed} of ${ch.length || '?'} changes on main${open ? `, ${open} in progress` : ''}${bi?.progress?.spentUsd != null ? `, ${usd(bi.progress.spentUsd)} so far` : ''})`, href: `${base}/work` });
       links.push({ text: `${info.name}: building`, href: `${base}/work` });
     } else if (settled && settled >= since) {
-      finished.push({ t: `${info.name} (${landed} changes${bi?.progress?.actualUsd != null ? `, ${usd(bi.progress.actualUsd)}` : ''})`, href: base });
+      finished.push({ t: `${info.name} (${landed} change${landed === 1 ? '' : 's'}${bi?.progress?.actualUsd != null ? `, ${usd(bi.progress.actualUsd)}` : ''})`, href: base });
     }
     for (const n of (ad?.notes || []) as { kind: string; answered?: boolean; text: string }[]) {
       if (n.kind !== 'asked-person' || n.answered) continue;
