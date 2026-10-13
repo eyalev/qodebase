@@ -536,7 +536,8 @@ export class Landing extends DurableObject<Env> {
   #progressOf(m: Meta, all: Change[], settledAt: number | null) {
     const agents = all.filter((c) => c.kind === 'agent');
     const landed = agents.filter((c) => c.state === 'landed').length;
-    return { parts: m.parts ? Math.max(m.parts, agents.length) : null, landed, firstLandedAt: m.firstLandedAt || null,
+    const lastLandedAt = agents.reduce((t, c) => Math.max(t, c.landedAt || 0), 0) || null;
+    return { parts: m.parts ? Math.max(m.parts, agents.length) : null, landed, firstLandedAt: m.firstLandedAt || null, lastLandedAt,
       startedAt: m.build?.startedAt || null, settledAt, remainingS: null };
   }
 
