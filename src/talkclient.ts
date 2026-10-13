@@ -67,7 +67,8 @@ var S = {
   speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
   when: get('when', 'voice'),           // voice (only when I spoke) | always
   speed: Number(get('speed', '1.25')) || 1.25,   // reply speed, pitch kept (Ask's Jarvis default)
-  pause: get('pause', '2500'),          // mic 'pause': send after this many ms of quiet
+  pause: get('pause', '1500'),          // mic 'pause': send after this many ms of quiet (1.5 s, tmux-web's default)
+  convmode: get('convmode', 'off'),     // Conversation mode (Eyal, 2026-10-13): after a 1.5 s pause it sends, speaks the answer, listens again; per device
   mic: get('mic', 'send'),              // how the mic works: send (tap, speak, tap Send, like tmux-web; default) | pause (sends when I stop) | hold | conv (conversation)
   whisper: get('whisper', 'on'),        // re-read the whole clip with Whisper before sending (Deepgram live only)
   merge: get('merge', 'off'),
@@ -140,6 +141,8 @@ var css = [
   // in at rest is the composer mic (hold it: Talk listens). Three layers at the bottom were too many (critique).
   '#talk-root.slim.rest #talk-bar,#talk-root.tall.rest #talk-bar{display:none}',
   '#talk-spacer{height:0;pointer-events:none}',
+  '.talk-convt{min-height:36px;padding:0 10px;border:0;border-radius:10px;background:var(--t-chip);color:var(--t-fg);font:500 13px var(--t-ff);cursor:pointer;white-space:nowrap}',
+  '.talk-convt[aria-pressed=true]{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-log .talk-sh{margin:8px 0 2px;font-weight:600;font-size:14px}',
   '#talk-log .talk-sl{margin:0;padding-left:18px;white-space:normal}',
   '#talk-log .talk-sl li{margin:2px 0}',
@@ -383,13 +386,15 @@ function build() {
   spk = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Spoken replies' }, ICON.mute);
   var gear = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Talk settings' }, ICON.gear);
   var close = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Close' }, ICON.x);
-  convBtn = el('button', { class: 'talk-ib', type: 'button', 'aria-label': 'Start a conversation' }, ICON.conv);
-  convBtn.addEventListener('click', function () { unlockAudio(); if (vc) endConversation('you'); else startConversation(); });
+  // Conversation mode, visible in the open conversation (Eyal, 2026-10-13): on = hands-free turns; off = dictate, then Send.
+  convBtn = el('button', { class: 'talk-convt', type: 'button', 'aria-pressed': S.convmode === 'on' ? 'true' : 'false', title: 'Conversation mode: it sends after a pause, speaks the answer and listens again' }, 'Conversation');
+  convBtn.addEventListener('click', function () { unlockAudio(); toggleConv('head'); });
   head.appendChild(convBtn); head.appendChild(spk); head.appendChild(gear); head.appendChild(close);
   var setp = el('div', { id: 'talk-set' });
   setp.innerHTML =
     '<label>Dictation<select id="talk-s-engine"><option value="live">Deepgram live (Cloudflare): words as you speak</option><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
-    '<label>How the mic works<select id="talk-s-mic"><option value="send">Tap the mic, speak, tap Send (like tmux-web)</option><option value="pause">Tap the mic; it sends when I stop talking</option><option value="hold">Hold the mic while I talk; letting go sends</option><option value="conv">Conversation: it keeps listening and talks back</option></select></label>' +
+    '<label>How the mic works<select id="talk-s-mic"><option value="send">Tap the mic, speak, tap Send (like tmux-web)</option><option value="pause">Tap the mic; it sends when I stop talking</option><option value="hold">Hold the mic while I talk; letting go sends</option></select></label>' +
+    '<label>Conversation mode<select id="talk-s-convmode"><option value="off">Off: tap the mic, speak, tap Send</option><option value="on">On: it sends after a pause, speaks the answer, and listens again</option></select></label>' +
     '<label>Send after a pause of<select id="talk-s-pause"><option value="1500">1.5 s</option><option value="2500">2.5 s</option><option value="4000">4 s</option></select></label>' +
     '<label>Check the words with Whisper<select id="talk-s-whisper"><option value="on">On: the whole recording is read again (steadier, about 1.5 s)</option><option value="off">Off: send the live words right away</option></select></label>' +
     '<label>Clean up the words with a model<select id="talk-s-merge"><option value="off">Off: Whisper\u2019s words</option><option value="on">On: live words + Whisper merged, your project names kept (about 1 s more)</option></select></label>' +
@@ -510,6 +515,7 @@ function build() {
   // Models: what the running Talk uses for each step (from /api/talk/me), never typed in here.
   var mdl = document.getElementById('talk-s-models'), ROWS = [['live', 'Live words'], ['final', 'Final words'], ['cleanup', 'Clean-up'], ['decide', 'Picking the action'], ['chat', 'Answering'], ['status', 'What\u2019s going on'], ['code', 'Questions about code'], ['summary', 'Spoken summary'], ['voice', 'Voice']];
   mdl.innerHTML = ROWS.filter(function (r) { return MODELS[r[0]]; }).map(function (r) { var m = MODELS[r[0]]; return '<dt>' + r[1] + '</dt><dd>' + esc(m.model ? shortModel(m.model) : 'no model') + ' \u00b7 ' + esc(m.provider) + (m.note ? '<br><span style="color:var(--t-dim)">' + esc(m.note) + '</span>' : '') + '</dd>'; }).join('') + (MODELS.gateway ? '<dt>Gateway</dt><dd>' + esc(MODELS.gateway) + '</dd>' : '');
+  var scm = document.getElementById('talk-s-convmode'); scm.value = S.convmode; scm.onchange = function () { if ((scm.value === 'on') !== convOn()) toggleConv('settings'); };
   var smg = document.getElementById('talk-s-merge'); smg.value = S.merge; smg.onchange = function () { S.merge = smg.value; set('merge', S.merge); trace('setting', { merge: S.merge }); };
   var smic = document.getElementById('talk-s-mic'), swh = document.getElementById('talk-s-whisper'), skp = document.getElementById('talk-s-keep');
   var showMic = function () { spz.parentNode.style.display = S.mic === 'pause' ? '' : 'none'; swh.parentNode.style.display = S.engine === 'live' && S.mic !== 'conv' ? '' : 'none'; micBtn.setAttribute('aria-label', S.mic === 'hold' ? 'Hold to speak' : S.mic === 'conv' ? 'Start a conversation' : 'Speak'); };
@@ -807,7 +813,7 @@ function submit(text) {
   if (!curU || uSaid) curU = newU();
   uSaid = true;
   lastText = String(text || '');
-  trace('said', { text: text, spoken: lastSpoken, engine: lastSpoken ? S.engine : 'typed' });
+  trace('said', { text: text, spoken: lastSpoken, engine: lastSpoken ? S.engine : 'typed', conv: convOn() || undefined });
   if (busy) return;
   // A short yes / no answers the question on screen (Stop this run? Send it to the agents?): no model.
   var said = String(text || '').trim(), short = said.split(/\s+/).length <= 5;
@@ -918,7 +924,43 @@ function route(c, text) {
     }
     ask(text, '');
 }
-function done() { busy = false; status(''); finish(); }
+function done() { busy = false; status(''); finish(); convAfter(); }
+// ---- Conversation mode: hands-free turns over the dictation path (no voice kit). A 1.5 s pause after words sends them;
+// when the answer has been spoken, it listens again. Two turns with nothing heard, or the toggle, end it.
+var convEmpty = 0, speakPending = false;
+function convOn() { return S.convmode === 'on'; }
+function toggleConv(where) {
+  S.convmode = convOn() ? 'off' : 'on'; set('convmode', S.convmode); convEmpty = 0;
+  if (convBtn) convBtn.setAttribute('aria-pressed', convOn() ? 'true' : 'false');
+  var scm = document.getElementById('talk-s-convmode'); if (scm) scm.value = S.convmode;
+  trace('conv_mode', { on: convOn(), where: where });
+  if (convOn()) { if (S.voice === 'off') { S.voice = get('voice-on', 'aura-2'); set('voice', S.voice); voiceBtn(); } if (!listening && !busy) startListen(); }
+  else if (listening) stopListen(false, false);
+  barSync();
+}
+function convAfter() {
+  if (!convOn() || !lastSpoken) return;
+  var t0 = Date.now();
+  (function wait() {
+    if (!convOn()) return;
+    var talking = speakPending || (player && !player.paused && !player.ended && player.currentTime > 0) || (window.speechSynthesis && speechSynthesis.speaking);
+    if ((talking || busy) && Date.now() - t0 < 30000) return setTimeout(wait, 300);
+    if (offerState) { trace('conv_wait', { why: 'a question on screen' }); return; }   // a yes/no waits for its tap or for the mic
+    if (!listening) { trace('conv_listen_again', { ms: Date.now() - t0 }); startListen(); }
+  })();
+}
+var quietT = null;
+// Conversation mode: after words, 1.5 s of quiet ends the turn (tmux-web's default pause).
+function armQuiet() {
+  clearTimeout(quietT);
+  if (!convOn() || !dcOn) return;   // the 'pause' mic mode keeps its own timer (dcArm)
+  quietT = setTimeout(function () {
+    if (!dcOn) return;
+    if (!(dcBuf.length || dcText)) return;
+    trace('dc_stop', { how: 'quiet', conv: convOn(), pieces: dcBuf.length, ms: Date.now() - dcT0 });
+    liveStop(false, true);
+  }, 1500);
+}
 function agoWords(ms) { var m = Math.round(ms / 60000); return m < 60 ? m + ' min' : m < 48 * 60 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' days'; }
 // "Give me an idea": the page's own generator ('Need an idea?' sizes) fills the box with an idea and its settings;
 // Talk says it in a sentence and offers Build it ("another" asks again). Never types a placeholder like "a new app".
@@ -1379,6 +1421,7 @@ function say(text) {
   var t = spoken(text);
   if (!t) return;
   // A long answer is summarised for the ear (the text stays on screen); 4 s at most, else its first two sentences.
+  speakPending = true; setTimeout(function () { speakPending = false; }, 8000);
   if (S.say === 'short' && t.length > 200 && !text.__short) {
     var v = viaNow, done1 = false, t0 = Date.now();
     var go = function (x, how) { if (done1) return; done1 = true; if (v) v.spoken = how; trace('summary', { how: how, ms: Date.now() - t0, chars: x.length }); var o = new String(x); o.__short = true; say(o); };
@@ -1391,7 +1434,7 @@ function say(text) {
   var t0 = Date.now();
   player.src = '/api/talk/tts?model=' + encodeURIComponent(S.voice) + '&speaker=' + encodeURIComponent(S.speaker || '') + '&text=' + encodeURIComponent(t);
   try { player.playbackRate = S.speed; player.preservesPitch = true; player.defaultPlaybackRate = S.speed; } catch (e) {}
-  player.onplaying = function () { try { player.playbackRate = S.speed; } catch (e) {} logEv('speak_start', { chars: t.length, ms_first: Date.now() - t0, speed: S.speed }); };
+  player.onplaying = function () { speakPending = false; try { player.playbackRate = S.speed; } catch (e) {} logEv('speak_start', { chars: t.length, ms_first: Date.now() - t0, speed: S.speed }); };
   player.onerror = function () { logEv('speak_error', { chars: t.length }); phoneSay(t); };
   var p = player.play();
   if (p && p.catch) p.catch(function (e) { logEv('speak_blocked', { err: String(e) }); phoneSay(t); });
@@ -1801,7 +1844,7 @@ function startNativePreview() {
     r.onresult = function (e) {
       var interim = '';
       for (var i = e.resultIndex; i < e.results.length; i++) { if (e.results[i].isFinal) done += e.results[i][0].transcript + ' '; else interim += e.results[i][0].transcript; }
-      if (dcOn) { dcText = (done + interim).trim(); setInp(dcBase + dcText); }
+      if (dcOn) { dcText = (done + interim).trim(); setInp(dcBase + dcText); if (dcText) armQuiet(); }
     };
     r.onerror = function (e) { trace('native_preview', { ok: false, why: e.error }); };
     r.onend = function () { if (nativePreview === r) nativePreview = null; };
@@ -1844,8 +1887,9 @@ function liveOpen() {
     if (!dcOn && d.type !== 'final') return;
     if (d.type === 'interim' || d.type === 'final') {
       var txt = String(d.text || '').trim();
-      if (!gotWords && txt) { gotWords = true; trace('stt_first_words', { ms: Date.now() - dcT0, text: txt }); }
+      if (!gotWords && txt) { gotWords = true; convEmpty = 0; trace('stt_first_words', { ms: Date.now() - dcT0, text: txt }); }
       if (d.type === 'final') { if (txt) dcBuf.push(txt); dcText = ''; } else dcText = txt;
+      if (txt) armQuiet();
       if (!nativePreview) setInp(dcBase + dcSaid(dcText));
     } else if (d.type === 'error') { trace('stt_ws_server_error', { err: d.error }); if (!gotWords && dcOn && !nativePreview) startNativePreview(); }
   };
@@ -1857,7 +1901,9 @@ function liveOpen() {
   };
 }
 function startLive() {
-  setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); live.textContent = '';
+  setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); clearTimeout(quietT); live.textContent = '';
+  if (convOn()) setTimeout(function () { if (dcOn && !dcBuf.length && !dcText) { convEmpty++; trace('conv_quiet', { empty: convEmpty }); stopListen(true); if (convEmpty >= 2) { toggleConv('quiet'); add('note', 'Conversation mode is off: nothing heard twice.'); } else convAfter(); } }, 10000);
+  else convEmpty = 0;
   dcOn = true; dcT0 = Date.now(); liveQ = []; liveSent = 0;
   dcBase = inpVal().trim() ? inpVal().trim() + ' ' : '';   // speak more after typing: the words are added
   root.classList.add('arming'); status('Starting the mic\u2026');
