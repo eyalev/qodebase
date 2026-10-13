@@ -16,14 +16,4 @@ echo "started $(date -u +%T)"
 done_all() { for n in $(seq 1 "$N"); do curl -4 -s -A qbfleet-cli/1 "$U/status?repo=fleet-vscode-ext-$n" | jq -e '.state != "running" and .lander.waiting == 0' >/dev/null || return 1; done; }
 until done_all; do sleep 10; done
 echo "landed $(date -u +%T)"
-for n in $(seq 1 "$N"); do
-  rid=$(jq -r .runId "$D/start-$n.json")
-  curl -4 -s -A qbfleet-cli/1 "$U/status?repo=fleet-vscode-ext-$n" > "$D/status-$n.json"
-  curl -4 -s -A qbfleet-cli/1 -H "x-fleet-key: $K" "$U/records?repo=fleet-vscode-ext-$n&run=$rid" > "$D/rec-$n.jsonl"
-  off=0; : > "$D/check-$n.jsonl"
-  while :; do c=$(curl -4 -s -m 280 -A qbfleet-cli/1 -H "x-fleet-key: $K" "$U/dialcheck?repo=fleet-vscode-ext-$n&run=$rid&offset=$off&limit=60"); echo "$c" >> "$D/check-$n.jsonl"; t=$(echo "$c" | jq -r '.total // 0'); off=$((off+60)); [ $off -ge "$t" ] && break; done
-done
-cat "$D"/rec-*.jsonl | jq -s -c 'def p(q): sort | .[(length*q)|floor]; {tasks: length, wallS: (((map(.at)|max) - (map(.at)|min))/1000|floor), tasksPerS: (length / (((map(.at)|max) - (map(.at)|min))/1000) | floor), lastLandS: (((map(.landed_at // 0)|max) - (map(.at)|min))/1000|floor), byKind: (group_by(.kind) | map({(.[0].kind // "?"): (group_by(.resolution // .status) | map({(.[0].resolution // .[0].status): length}) | add)}) | add), landWaitP50: ([.[]|select(.landed_at)|.landed_at - .at]|p(0.5)), landWaitP90: ([.[]|select(.landed_at)|.landed_at - .at]|p(0.9))}' > "$D/summary.json"
-cat "$D"/check-*.jsonl | jq -s -c '{files: (map(.n)|add), tasksLanded: (map(.tasks)|add), codeChanged: (map(.codeChanged|length)|add), doubled: (map(.doubled|length)|add), lost: (map(.lost|length)|add), lostEx: ([.[].lost[]][0:5]), byResolution: (reduce (.[].byResolution | to_entries[]) as $e ({}; .[$e.key] += $e.value))}' > "$D/check.json"
-jq -s -c '{dial: (map(.dial) | {pairShare: (map(.pairShare)|add/length*1000|round/1000), pairs: (reduce (.[].pairs | to_entries[]) as $e ({}; .[$e.key] += $e.value))})}' "$D"/start-*.json > "$D/dial.json"
-cat "$D/dial.json" "$D/summary.json" "$D/check.json"
+exec "$(dirname "$0")/dial-collect.sh" "$LABEL" "$N"

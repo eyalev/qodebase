@@ -10,7 +10,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { landOne } from './merge.js';
 import { Objects, push } from '../../cloud/src/gitpush.js';
-import { targets, insert, verify, prompt, parseAnswer, cleanComment, promptPack, parseAnswerPack, packFiles } from './doc.js';
+import { targets, insert, verify, prompt, parseAnswer, cleanComment, promptPack, parseAnswerPack, packFiles, docBlocks } from './doc.js';
 
 const log = (event, f = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'fleet', event, ...f }));
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { 'content-type': 'application/json' } });
@@ -1127,15 +1127,12 @@ async function dialCheck(env, repoName, runId, offset, limit) {
     const [bb, fb] = [await repo.readBlob(f.hash), await repo.readBlob(await blobAt(repo, objs, tip.treeHash, f.path))];
     const base = new TextDecoder().decode(await bb.arrayBuffer()), fin = new TextDecoder().decode(await fb.arrayBuffer());
     if (!verify(f.path, base, fin).ok) out.codeChanged.push(f.path);
-    // Doc blocks per declaration line: count '/**' blocks directly above each declaration of the base file.
-    const lines = fin.split('\n'), above = new Map();
-    for (const t of targets(f.path, base)) {
-      const at = lines.findIndex((l) => l.trim() && t.signature.startsWith(l.trim().slice(0, 30)));
-      if (at < 0) continue;
-      let n = 0, k = at - 1, text = '';
-      while (k >= 0 && lines[k].trim().endsWith('*/')) { const end = k; while (k >= 0 && !lines[k].trim().startsWith('/**')) k--; n++; text = lines.slice(k, end + 1).join(' ') + ' ' + text; k--; }
-      above.set(t.name, { n, text });
-      if (n > 1) out.doubled.push(`${f.path}#${t.name}`);
+    // The /** blocks above each declaration, from the parser; only declarations that had none at base count.
+    const before = docBlocks(f.path, base), after = docBlocks(f.path, fin), above = new Map();
+    for (const [name, blocks] of after) {
+      if ((before.get(name) || []).length) continue;
+      above.set(name, { n: blocks.length, text: blocks.join(' ') });
+      if (blocks.length > 1) out.doubled.push(`${f.path}#${name}`);
     }
     for (const t of f.tasks) {
       const res = t.resolution || t.status || 'not done';
@@ -1147,7 +1144,7 @@ async function dialCheck(env, repoName, runId, offset, limit) {
         const a = above.get(fn);
         if (!a) continue;   // not a target in this copy
         const want = (cleanComment(c[fn]) || [''])[0].slice(0, 40);
-        const ok = t.resolution === 'duplicate' ? a.n >= 1 : want && a.text.replace(/\s+\*\s+/g, ' ').includes(want.split(' ').slice(0, 5).join(' '));
+        const ok = t.resolution === 'duplicate' ? a.n >= 1 : !!want && a.text.includes(want.split(' ').slice(0, 5).join(' '));
         if (!ok) out.lost.push({ task: t.task, fn, file: f.path, resolution: t.resolution });
       }
       out.ok++;

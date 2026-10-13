@@ -23,6 +23,9 @@ export function targets(path, text) {
     if (ranges.some((r) => text.slice(r.pos, r.pos + 3) === '/**')) continue;   // already documented
     const start = st.getStart(sf, false);   // after leading trivia: decorators/export included
     const line = sf.getLineAndCharacterOfPosition(start).line;
+    // Only a declaration that starts its line: '} export class X' would get the comment above the '}', where it documents
+    // nothing (code unchanged, so verify passes; the dial checker found it, 2026-10-13). Code lines are never split.
+    if (text.slice(sf.getPositionOfLineAndCharacter(line, 0), start).trim()) continue;
     out.push({ name, kind, line, signature: text.slice(start, Math.min(text.length, start + 240)).split('{')[0].trim().slice(0, 200) });
   }
   // Names must be unique to be addressed by name (overloads: the first one only).
@@ -139,4 +142,19 @@ export function packFiles(files, maxFiles = 8, maxTokens = 12_000) {
   }
   if (cur.length) packs.push(cur);
   return packs;
+}
+
+/** Every exported declaration's /** blocks directly above it (the dial checker: present, doubled). name -> [text]. */
+export function docBlocks(path, text) {
+  const sf = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const out = new Map();
+  for (const st of sf.statements) {
+    let name = null;
+    if ((ts.isFunctionDeclaration(st) || ts.isClassDeclaration(st)) && st.name) name = st.name.text;
+    else if (ts.isVariableStatement(st) && st.declarationList.declarations.length === 1 && ts.isIdentifier(st.declarationList.declarations[0].name)) name = st.declarationList.declarations[0].name.text;
+    if (!name || out.has(name)) continue;
+    const blocks = (ts.getLeadingCommentRanges(text, st.pos) || []).filter((r) => text.slice(r.pos, r.pos + 3) === '/**').map((r) => text.slice(r.pos, r.end).replace(/^\/\*\*|\*\/$/g, '').replace(/^\s*\*\s?/gm, '').replace(/\s+/g, ' ').trim());
+    out.set(name, blocks);
+  }
+  return out;
 }

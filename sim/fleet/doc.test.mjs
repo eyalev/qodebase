@@ -53,3 +53,8 @@ test('packs: budget and count, a big file alone; pack answers parse per id', asy
   assert.deepEqual(a, { F1: { a: 'Does a thing well.' } });
   assert.match(promptPack(files), /=== F2: F2\.ts/);
 });
+
+test('a declaration that does not start its line is not a target', () => {
+  const t = 'function f() {\n} export class A {}\nexport function b() {}\n';
+  assert.deepEqual(targets('x.ts', t).map((x) => x.name), ['b']);
+});
