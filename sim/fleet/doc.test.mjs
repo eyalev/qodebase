@@ -41,3 +41,15 @@ test('model answers: JSON inside text, unknown names dropped; prompt names the t
   assert.deepEqual(parseAnswer('no json', t), {});
   assert.match(prompt('a.ts', 'export function foo() {}', t), /- foo \(function\)/);
 });
+
+test('packs: budget and count, a big file alone; pack answers parse per id', async () => {
+  const { packFiles, parseAnswerPack, promptPack } = await import('./src/doc.js');
+  const f = (id, n) => ({ id, path: `${id}.ts`, text: 'x'.repeat(n), tg: [{ name: 'a', kind: 'function', signature: 'function a()' }] });
+  const p = packFiles([f('F1', 3500), f('F2', 3500), f('F3', 60000), f('F4', 100)], 8, 6000);
+  assert.deepEqual(p.map((x) => x.map((y) => y.id)), [['F1', 'F2'], ['F3'], ['F4']]);
+  assert.equal(packFiles([1, 2, 3, 4, 5].map((i) => f(`F${i}`, 10)), 2, 12000).length, 3);
+  const files = [f('F1', 10), f('F2', 10)];
+  const a = parseAnswerPack('ok {"F1": {"a": "Does a thing well."}, "F2": "bad", "F9": {"a": "x"}}', files);
+  assert.deepEqual(a, { F1: { a: 'Does a thing well.' } });
+  assert.match(promptPack(files), /=== F2: F2\.ts/);
+});

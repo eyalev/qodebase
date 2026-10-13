@@ -9,7 +9,7 @@
 // No fork per agent (manager, 2026-10-13): a comment-only change to one file needs none; the lanes do the git.
 import { DurableObject } from 'cloudflare:workers';
 import { Objects, push } from '../../cloud/src/gitpush.js';
-import { targets, insert, verify, prompt, parseAnswer, cleanComment } from './doc.js';
+import { targets, insert, verify, prompt, parseAnswer, cleanComment, promptPack, parseAnswerPack, packFiles } from './doc.js';
 
 const log = (event, f = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'fleet', event, ...f }));
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { 'content-type': 'application/json' } });
@@ -197,7 +197,7 @@ export class Run extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS q (run TEXT, i INT, path TEXT, hash TEXT, taken INT DEFAULT 0, PRIMARY KEY (run, i))`);
     try { this.sql.exec(`ALTER TABLE q ADD COLUMN tries INT DEFAULT 0`); } catch {}
     // cmt: the comments this file got ({name: text}, for the per-file diff); commit: the lane commit it landed in.
-    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
+    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
     // S4/qb7: the queue sampled every 10 s while a run is on (the series' depth per stage).
     this.sql.exec(`CREATE TABLE IF NOT EXISTS samp (run TEXT, t INT, waiting INT, at_model INT, ready INT, landed INT, lander_waiting INT, PRIMARY KEY (run, t))`);
     // S4a: the per-result land-wait check scanned the whole table; landed() looked files up by name.
@@ -275,7 +275,7 @@ export class Run extends DurableObject {
     const s = await this.st();
     if (!s || s.state === 'stopped' || s.state === 'held' || (s.agentsStarted || 0) >= s.cfg.agents) return;
     const from = s.agentsStarted || 0, to = Math.min(s.cfg.agents, from + 50);
-    await Promise.all(Array.from({ length: to - from }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN, Math.max(1, Math.min(10, Number(s.cfg.batch) || 1)))));
+    await Promise.all(Array.from({ length: to - from }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN, Math.max(1, Math.min(20, Number(s.cfg.batch) || 1)), s.cfg.pack ? { files: Math.max(2, Math.min(10, Number(s.cfg.pack.files) || 8)), tokens: Math.max(2000, Math.min(30000, Number(s.cfg.pack.tokens) || 12000)) } : null)));
     s.agentsStarted = to; await this.save(s);
     const meta = await this.ctx.storage.get(`meta:${s.runId}`); if (meta) { meta.agentsStarted = to; await this.ctx.storage.put(`meta:${s.runId}`, meta); }
     log('agents_started', { runId: s.runId, started: to, of: s.cfg.agents });
@@ -314,7 +314,7 @@ export class Run extends DurableObject {
   async nextMany(runId, n) {
     const files = [];
     let first = null;
-    for (let k = 0; k < Math.min(10, n); k++) {
+    for (let k = 0; k < Math.min(20, n); k++) {
       const r = await this.next(runId, 1);
       if (!r.file) { if (!files.length) return r; break; }
       first ||= r; files.push({ ...r.file, model: r.model, provider: r.provider, slot: r.slot });
@@ -332,7 +332,8 @@ export class Run extends DurableObject {
     if (!s || s.runId !== runId) return;
     // A file with nothing to document never reached the model: its pace slot goes back (F3b: the pacer was the first thing
     // to saturate, counting those files; the models peaked at 207/191/172 calls/min of 290/290/350).
-    if (r.status === 'skipped' && r.slot && s.perSlice?.[r.slot] > 0) s.perSlice[r.slot]--;
+    // A file that rode in another file's call (batching) also gives its slot back: the pace counts calls.
+    if ((r.status === 'skipped' || r.packExtra) && r.slot && s.perSlice?.[r.slot] > 0) s.perSlice[r.slot]--;
     const usd = r.usd || 0;
     s.usd += usd; s.calls++;
     const minute = Math.floor(Date.now() / 60000);
@@ -346,8 +347,8 @@ export class Run extends DurableObject {
       if (q && (q.tries || 0) < 2) { this.sql.exec(`UPDATE q SET taken = 0, tries = ? WHERE run = ? AND i = ?`, (q.tries || 0) + 1, runId, q.i); r = { ...r, status: `${r.status}_retry` }; }
     }
     const cmt = r.cmt ? JSON.stringify(r.cmt).slice(0, 8000) : null;
-    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt);
+    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null);
     const t10 = Math.floor(Date.now() / 10000) * 10000;
     if (s.lastSample !== t10) {
       s.lastSample = t10;
@@ -652,7 +653,7 @@ async function pushover(env, title, message) {
 
 // ---- Agent: one file at a time --------------------------------------------------------------
 export class Agent extends DurableObject {
-  async begin(runId, i, repo = MAIN, batch = 1) { await this.ctx.storage.put({ runId, i, repo, batch }); await this.ctx.storage.setAlarm(Date.now() + Math.random() * 3000); }
+  async begin(runId, i, repo = MAIN, batch = 1, pack = null) { await this.ctx.storage.put({ runId, i, repo, batch, pack }); await this.ctx.storage.setAlarm(Date.now() + Math.random() * 3000); }
   async alarm() {
     const runId = await this.ctx.storage.get('runId'), i = await this.ctx.storage.get('i'), repoName = (await this.ctx.storage.get('repo')) || MAIN;
     const R = run(this.env, repoName);
@@ -665,7 +666,9 @@ export class Agent extends DurableObject {
     if (n.files) {
       // S4: a batch: each file worked in turn, the ready ones straight to the Lander (one call), then one done() for all.
       const rs = [];
-      for (const f of n.files) {
+      const pack = await this.ctx.storage.get('pack');
+      if (pack && n.files[0]?.provider !== 'cache') rs.push(...(await this.workPack(n.files, repoName, pack).catch((e) => n.files.map((f) => ({ file: f.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}`, model: f.model, slot: f.slot, finishedAt: Date.now() })))));
+      else for (const f of n.files) {
         const r = await this.work(f, f.model, f.provider, repoName).catch((e) => ({ file: f.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
         r.model = f.model; r.slot = f.slot; r.finishedAt = Date.now(); rs.push(r);
       }
@@ -691,6 +694,79 @@ export class Agent extends DurableObject {
     try { await R.done(runId, i, r); await this.ctx.storage.put('infraErrs', 0); }
     catch (e) { await this.ctx.storage.put('infraErrs', r.infraErrs + 1); log('agent_infra_error', { runId, i, where: 'done', err: String(e?.message || e).slice(0, 200) }); }
     await this.ctx.storage.setAlarm(Date.now() + 50);
+  }
+  /** One file's text from Artifacts, with the same retries as work(). */
+  async readText(repoName, hash) {
+    let lastErr = '';
+    for (const wait of [0, 250, 1000, 3000]) {
+      if (wait) await new Promise((r) => setTimeout(r, wait + Math.random() * wait));
+      try { using repo = await ns(this.env, repoName).get(repoName); const b = await repo.readBlob(hash); if (b) return { text: new TextDecoder().decode(await b.arrayBuffer()) }; lastErr = 'blob not found'; }
+      catch (e) { lastErr = `artifacts: ${String(e?.message || e).slice(0, 200)}`; }
+    }
+    return { error: lastErr };
+  }
+  /** One model call: Workers AI through the gateway, or Gemini; {raw, usd, tin, tout} or {status, reason}. */
+  async callModel(model, provider, text, maxTokens = 1200) {
+    let res;
+    if (provider === 'google-ai-studio') {
+      const g = await fetch(`https://gateway.ai.cloudflare.com/v1/887d7234a6b8d65ad355a4f6684cab67/${GATEWAY}/google-ai-studio/v1beta/models/${model}:generateContent`, {
+        method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': this.env.GEMINI_KEY },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text }] }], generationConfig: { temperature: 0.2, maxOutputTokens: maxTokens, responseMimeType: 'application/json' } }),
+      }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }));
+      if (!g.ok) { const m = (await g.text()).slice(0, 200); return { status: g.status === 429 ? 'rate_limited' : 'model_error', reason: `gemini ${g.status}: ${m}` }; }
+      const j = await g.json(); const u = j.usageMetadata || {};
+      res = { response: j.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '', usage: { prompt_tokens: u.promptTokenCount || 0, completion_tokens: (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0) } };
+    } else try {
+      // glm-5.3 keeps thinking with enable_thinking off; reasoning_effort low stops it (qb4's F0).
+      res = await this.env.AI.run(model, { messages: [{ role: 'user', content: text }], max_tokens: maxTokens, temperature: 0.2, chat_template_kwargs: { enable_thinking: false }, ...(/glm-5/.test(model) ? { reasoning_effort: 'low' } : {}) }, { gateway: { id: GATEWAY } });
+    } catch (e) { const m = String(e?.message || e); return { status: /429|rate.?limit|Too Many|3021/i.test(m) ? 'rate_limited' : 'model_error', reason: m.slice(0, 200) }; }
+    const u = res?.usage || {}, tin = u.prompt_tokens || 0, tout = u.completion_tokens || 0, pr = PRICES_OF(this.env)[model];
+    return { raw: res?.choices?.[0]?.message?.content ?? res?.response ?? res?.result?.response ?? '', usd: pr ? (tin * pr[0] + tout * pr[1]) / 1e6 : 0, tin, tout };
+  }
+  /** Batching: the batch's files with something to document go in packs (per model, up to pack.files / ~pack.tokens), one
+   *  call per pack; each file inserted and verified on its own; a pack with no usable JSON is retried in halves once. */
+  async workPack(files, repoName, pack) {
+    const out = [], cand = [];
+    const t0 = Date.now();
+    for (const f of files) {
+      const t1 = Date.now(); const rd = await this.readText(repoName, f.hash); const tRead = Date.now() - t1;
+      const base = { file: f.path, model: f.model, slot: f.slot };
+      if (rd.error) { out.push({ ...base, status: 'read_error', reason: rd.error, ms: Date.now() - t1, finishedAt: Date.now() }); continue; }
+      const tg = targets(f.path, rd.text);
+      if (!tg.length) { out.push({ ...base, status: 'skipped', reason: 'nothing to document', ms: Date.now() - t1, tRead, finishedAt: Date.now() }); continue; }
+      cand.push({ ...f, id: `F${cand.length + 1}`, text: rd.text, tg, tRead });
+    }
+    const byModel = new Map(); for (const c of cand) { if (!byModel.has(c.model)) byModel.set(c.model, []); byModel.get(c.model).push(c); }
+    const runPack = async (p, halves) => {
+      const t1 = Date.now();
+      const r = await this.callModel(p[0].model, p[0].provider, p.length === 1 ? prompt(p[0].path, p[0].text, p[0].tg) : promptPack(p), Math.min(4000, 400 + 300 * p.length));
+      const tModel = Date.now() - t1;
+      const size = p.reduce((n, x) => n + x.text.length, 0);
+      if (r.status) { p.forEach((x, k) => out.push({ file: x.path, model: x.model, slot: x.slot, status: r.status, reason: r.reason, ms: Date.now() - t1, packN: p.length, packExtra: k > 0, finishedAt: Date.now() })); return; }
+      const ans = p.length === 1 ? { [p[0].id]: parseAnswer(r.raw, p[0].tg) } : parseAnswerPack(r.raw, p);
+      if (p.length > 1 && halves && !Object.values(ans).some((a) => Object.keys(a || {}).length)) {
+        log('pack_split', { n: p.length, raw: String(r.raw).replace(/\s+/g, ' ').slice(0, 160) });
+        const h = Math.ceil(p.length / 2);
+        // The failed call's cost goes on the first half's first file.
+        p[0].carry = { usd: r.usd, tin: r.tin, tout: r.tout };
+        await runPack(p.slice(0, h), false); await runPack(p.slice(h), false); return;
+      }
+      p.forEach((x, k) => {
+        const share = x.text.length / size, c = x.carry || { usd: 0, tin: 0, tout: 0 };
+        const cost = { usd: r.usd * share + c.usd, tin: Math.round(r.tin * share) + c.tin, tout: Math.round(r.tout * share) + c.tout };
+        const base = { file: x.path, model: x.model, slot: x.slot, packN: p.length, packExtra: k > 0, tRead: x.tRead, tModel, ...cost };
+        const a = ans[x.id] || {};
+        if (!Object.keys(a).length) { out.push({ ...base, status: 'rejected', reason: p.length > 1 ? `no usable answer for this file in a pack of ${p.length}` : `no usable JSON in the answer: ${String(r.raw).replace(/\s+/g, ' ').slice(0, 160)}`, ms: Date.now() - t0, finishedAt: Date.now() }); return; }
+        const tV = Date.now();
+        const { text: next, inserted } = insert(x.text, x.tg, a);
+        if (!inserted) { out.push({ ...base, status: 'rejected', reason: 'no comment survived cleaning', ms: Date.now() - t0, finishedAt: Date.now() }); return; }
+        const v = verify(x.path, x.text, next);
+        if (!v.ok) { out.push({ ...base, status: 'verify_fail', reason: v.why, ms: Date.now() - t0, tVerify: Date.now() - tV, finishedAt: Date.now() }); return; }
+        out.push({ ...base, status: 'ready', text: next, comments: inserted, cmt: pickC(x.tg, a), vTokens: v.tokens, ms: Date.now() - t0, tVerify: Date.now() - tV, finishedAt: Date.now() });
+      });
+    };
+    for (const list of byModel.values()) for (const p of packFiles(list, pack.files, pack.tokens)) await runPack(p, true);
+    return out;
   }
   async work(file, model, provider = 'workers-ai', repoName = MAIN) {
     const t0 = Date.now();

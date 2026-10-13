@@ -105,3 +105,38 @@ export function parseAnswer(raw, tgts) {
   const names = new Set(tgts.map((t) => t.name));
   return Object.fromEntries(Object.entries(j || {}).filter(([k, v]) => names.has(k) && typeof v === 'string'));
 }
+
+/** Batching (Eyal, 2026-10-13): several files in one call. files: [{id, path, text, tg}]; the answer maps each id to
+ *  {name: comment}. Each file is still inserted and verified on its own, so a bad answer only fails its own file. */
+export function promptPack(files) {
+  return [
+    `You write documentation comments for ${files.length} TypeScript files from one codebase.`,
+    `For each listed exported declaration, write one short doc comment (1-3 sentences, plain English, no markdown, no @param tags, no code): what it is or does and when to use it. Base it on that file's code; do not guess beyond it.`,
+    `Answer with ONE JSON object only: each file id maps to an object of name -> comment, e.g. {"${files[0].id}": {"${files[0].tg[0]?.name || 'name'}": "Returns ..."}${files[1] ? `, "${files[1].id}": {...}` : ''}}. Cover every id. No other text.`,
+    ...files.flatMap((f) => ['', `=== ${f.id}: ${f.path}`, 'Declarations:', f.tg.map((t) => `- ${t.name} (${t.kind}): ${t.signature}`).join('\n'), '```ts', f.text.length > 24_000 ? f.text.slice(0, 24_000) + '\n// … (file continues)' : f.text, '```']),
+  ].join('\n');
+}
+
+/** A pack's answer -> {id: {name: comment}} for the ids and target names it covered. */
+export function parseAnswerPack(raw, files) {
+  const s = typeof raw === 'string' ? raw : JSON.stringify(raw ?? '');
+  const m = s.match(/\{[\s\S]*\}/);
+  if (!m) return {};
+  let j; try { j = JSON.parse(m[0]); } catch { return {}; }
+  const out = {};
+  for (const f of files) { const a = j?.[f.id]; if (a && typeof a === 'object') out[f.id] = parseAnswer(JSON.stringify(a), f.tg); }
+  return out;
+}
+
+/** Greedy packs in order: at most maxFiles each and ~maxTokens of input (chars / 3.5 + per-file overhead). */
+export function packFiles(files, maxFiles = 8, maxTokens = 12_000) {
+  const est = (f) => Math.ceil(Math.min(f.text.length, 24_000) / 3.5) + 60 + f.tg.length * 30;
+  const packs = []; let cur = [], tok = 600;
+  for (const f of files) {
+    const t = est(f);
+    if (cur.length && (cur.length >= maxFiles || tok + t > maxTokens)) { packs.push(cur); cur = []; tok = 600; }
+    cur.push(f); tok += t;
+  }
+  if (cur.length) packs.push(cur);
+  return packs;
+}
