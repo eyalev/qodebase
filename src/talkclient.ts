@@ -189,6 +189,8 @@ var css = [
   '#talk-ver{position:fixed;z-index:2147483000;font:11px/1 var(--t-ff);color:var(--t-dim);font-variant-numeric:tabular-nums;pointer-events:none;text-align:center;width:72px}',
   '#talk-root.open #talk-ver{display:none}',
   '#talk-head .ver{font-size:11px;color:var(--t-dim);font-variant-numeric:tabular-nums}',
+  '#talk-head:has(.st:not(:empty)) .ver{display:none}',   // the status ("Listening 3s") takes the version label\'s place on a phone
+  '#talk-head .st{white-space:nowrap}',
   '#talk-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483001;background:var(--t-bg);border-top:1px solid var(--t-line);border-radius:12px 12px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.14);transform:translateY(105%);transition:transform .22s ease,height .22s ease;height:var(--talk-h,62dvh);max-height:92dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}',
   '#talk-sheet.drag{transition:none}',
   '#talk-grab{display:flex;align-items:center;justify-content:center;height:20px;margin:0;padding:0;border:0;background:transparent;width:100%;cursor:grab;touch-action:none}',
