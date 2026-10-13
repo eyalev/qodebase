@@ -1503,3 +1503,31 @@ Readings to compare against:
 - **Requirement lost scales with replays x pLost.** pLost is the thing the run measures: 3% gives ~15 / ~29 at dial
   30 / 60, 1% gives ~5 / ~10, 10% gives ~50 / ~95. The checker counts it exactly ('requirement lost'), separated into
   clustered vs spread.
+
+### (m) for qb6's actual harness: the real Landing queue
+qb6's runs go through qodebase's own Landing. Each agent pushes one commit from its fork. A stale change is handled by
+the merge queue (a model replay on the newest main, or a bounce back to the agent), not by the agent redoing it at
+once, as the Monte Carlo above assumed. The setup: one project per dial level, 200 agents, trains of 8, a few seconds a
+train. With 200 agents at ~10-30 s a task, supply (~400-1,200 tasks/min) is far above the queue's ~120-160/min, so the
+queue sets the time.
+
+- **Replays.** In a cluster of k tasks on one function, the first lands clean and each later one is stale against
+  it. In the queue they replay one after another, since they touch the same file and side-by-side replays need
+  non-overlapping files. So ~k-1 replays per cluster: **~299 at dial 30, ~593 at dial 60** (1,385 tasks; 119 and 241
+  clustered functions), ~0 at dial 0.
+- **Time.** Queue-only ≈ 1,385 / 8 trains x ~4 s ≈ **11-12 min at dial 0**. Each replay is a model call: R5 measured
+  ~40 s each; Workers AI may be faster. Up to 4 run side by side across different files.
+
+| dial | replays | wall at 20 s / replay | wall at 40 s / replay |
+|---|---|---|---|
+| 0% | ~0 | ~12 min | ~12 min |
+| 30% | ~299 | ~36 min (3x) | ~61 min (5x) |
+| 60% | ~593 | ~61 min (5x) | ~110 min (9x) |
+
+  The merge queue's serial replays become the wall as the dial rises: time grows with the replay count / 4, not with
+  agents.
+- **Bounces instead of replays** (a replay that fails goes back to the agent): each adds an agent task-time plus
+  another queue pass. Expect the clustered tasks' last members to land last.
+- **Requirement lost** ≈ replays x pLost. At pLost 1-10%: **dial 30 ~3-30, dial 60 ~6-60**, all among
+  `resolution: replayed`. The checker splits lost requirements by resolution (clean / replayed / lead). A loss on a
+  'clean' landing would be a new kind of bug.
