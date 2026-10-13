@@ -72,7 +72,9 @@ test('estimate vs elapsed: the shown estimate is checked and stamped; spend is p
   const { cleanEstimate, apiUsdOf } = await import('./buildsettings.ts');
   const plan = resolveBuildPlan({ preset: 'cheapest' }, O);
   const e = cleanEstimate({ wallS: [300, 720], apiUsd: [0.6, 0.9], basis: 'idea', basedOn: 25, simVersion: 'lab-0.12', extra: 'x' }, plan, 1000);
-  assert.deepEqual(e, { startedAt: 1000, wallS: [300, 720], apiUsd: [0.6, 0.9], preset: 'cheapest', v: { coders: 6, coderModel: 'haiku', reviewers: 0, board: true }, basis: 'idea', basedOn: 25, simVersion: 'lab-0.12' });
+  assert.deepEqual(e, { startedAt: 1000, wallS: [300, 720], apiUsd: [0.6, 0.9], preset: 'cheapest', v: { coders: 6, coderModel: 'haiku', reviewers: 0, board: true }, basis: 'idea', basedOn: 25, simVersion: 'lab-0.12', realBuilds: 0 });
+  assert.equal(cleanEstimate({ wallS: [300, 720], apiUsd: [0.6, 0.9], realBuilds: 4 }, plan, 1000).realBuilds, 4);
+  assert.equal(cleanEstimate({ wallS: [300, 720], apiUsd: [0.6, 0.9], realBuilds: 'x' }, plan, 1000).realBuilds, 0);
   for (const bad of [null, {}, { wallS: [5, 1], apiUsd: [0, 1] }, { wallS: [1, 2], apiUsd: [-1, 1] }, { wallS: [1, 2, 3], apiUsd: [0, 1] }]) assert.equal(cleanEstimate(bad, plan), null);
   assert.equal(cleanEstimate({ wallS: [1, 2], apiUsd: [0, 1] }, null).preset, null, 'a default build (no plan) still keeps its estimate');
   const rows = [{ kind: 'claude', project: 'eyal/app:claude-haiku-5-5', tokens: { in: 1e6, out: 1e6 } }, { kind: 'claude', project: 'eyal/app', tokens: { out: 1e5 } },

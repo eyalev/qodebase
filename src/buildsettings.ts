@@ -126,7 +126,7 @@ export function parseJob(text: string): Job | null {
 
 // ---- the estimate shown at Build, and what the build really took (estimate vs elapsed bar) ----
 export type BuildEstimate = { startedAt: number; wallS: [number, number]; apiUsd: [number, number]; preset: string | null;
-  v: { coders?: number; coderModel?: string; reviewers?: number; board?: boolean } | null; basis: 'typical' | 'idea'; basedOn: number | null; simVersion: string | null };
+  v: { coders?: number; coderModel?: string; reviewers?: number; board?: boolean } | null; basis: 'typical' | 'idea'; basedOn: number | null; simVersion: string | null; realBuilds?: number };
 
 /** The estimate the page showed, as sent with the build: numbers checked, nothing else kept. Null when absent or bad. */
 export function cleanEstimate(e: unknown, plan: BuildPlan | null, now = Date.now()): BuildEstimate | null {
@@ -142,7 +142,9 @@ export function cleanEstimate(e: unknown, plan: BuildPlan | null, now = Date.now
   return { startedAt: now, wallS, apiUsd, preset: plan?.preset || null,
     v: plan ? (plan.kind === 'single' ? { coders: 1, coderModel: plan.model, reviewers: 0, board: false } : { coders: plan.coders, coderModel: plan.coderModel, reviewers: plan.reviewers, board: plan.board }) : null,
     basis: o.basis === 'idea' ? 'idea' : 'typical', basedOn: Number.isFinite(Number(o.basedOn)) ? Math.round(Number(o.basedOn)) : null,
-    simVersion: typeof o.simVersion === 'string' ? o.simVersion.slice(0, 40) : null };
+    simVersion: typeof o.simVersion === 'string' ? o.simVersion.slice(0, 40) : null,
+    // How many real builds the estimate was fitted to (qb4's refit, 0a2362c): the bar says 'from 25 lab runs and N real builds'.
+    realBuilds: Number.isFinite(Number(o.realBuilds)) && Number(o.realBuilds) >= 0 ? Math.min(10_000, Math.floor(Number(o.realBuilds))) : 0 };
 }
 
 /** API-price cost of a project's Claude token rows (the Ledger), at the lab's standard rates, so it compares with
