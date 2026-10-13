@@ -675,7 +675,10 @@ export class Landing extends DurableObject<Env> {
     let open = 0;
     for (const id of m.order) {
       const c = await this.#get(id);
-      if (!c || c.kind !== 'agent' || (c.state !== 'working' && c.state !== 'replaying')) continue;
+      // Also a change sent back by its reviewer: it sits in 'pushed' with 'changes-suggested' last (R5's last change waited
+      // 47 min for a fix nobody made).
+      const sentBack = c?.state === 'pushed' && c.events.at(-1)?.what === 'changes-suggested';
+      if (!c || c.kind !== 'agent' || (c.state !== 'working' && c.state !== 'replaying' && !sentBack)) continue;
       open++;
       const last = c.events.at(-1)?.t || c.createdAt, nudges = (c as { nudges?: number }).nudges || 0;
       if (Date.now() - last < STALL_MS || nudges >= 2) continue;
@@ -689,7 +692,8 @@ export class Landing extends DurableObject<Env> {
       (c as { nudges?: number }).nudges = nudges + 1;
       this.#ev(c, 'working', `nudged: nothing pushed for ${Math.round((Date.now() - last) / 60_000)} min and its agent was idle`);
       await this.#put(c);
-      this.#tell(c.id, `qodebase: your task "${c.title}" has not been pushed yet. Check what you have, finish it, commit, push with \`forq push\`, then run \`forq status pushed "<what you did>"\`. If it is already done, just push and report.`);
+      if (sentBack) this.#tell(c.id, `qodebase: your reviewer asked for changes on "${c.title}" and nothing has been pushed since:\n\n${c.events.at(-1)?.detail || ''}\n\nMake them (run \`forq sync-main\` first), commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`);
+      else this.#tell(c.id, `qodebase: your task "${c.title}" has not been pushed yet. Check what you have, finish it, commit, push with \`forq push\`, then run \`forq status pushed "<what you did>"\`. If it is already done, just push and report.`);
       await this.#saveMeta();
       log('landing', 'stall_nudge', { slug: m.slug, id: c.id, idleMin: Math.round((Date.now() - last) / 60_000), nudge: nudges + 1 });
     }
