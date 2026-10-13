@@ -119,7 +119,7 @@
     const why = r.state === 'paused' ? (autoWhy(r) || lastPause(r)?.why || '') : r.state === 'stopped' ? (r.stopWhy || '') : '';
     const ctl = OWN && live(r) ? controls(r) : '';
     const title = r.label || `${r.repo}${r.root ? ` ${r.root}` : ''}`;
-    return `<article class="rc st-${esc(r.state)}" data-k="${esc(key(r))}">
+    return `<article class="rc st-${esc(r.state)}" data-k="${esc(key(r))}" data-talk-ctx="${esc(title)}">
       <div class="rc-h">${stateTag(r)}<span class="rc-t">${live(r) ? `running <b data-since="${r.startedAt}">${clock(elapsedS(r))}</b>` : r.endedAt ? `${clock(elapsedS(r))}, ended ${ago(r.endedAt)}` : ''}</span></div>
       ${full || r.group ? `<h2 class="rc-name">${esc(title)}</h2>` : `<a class="rc-name" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">${esc(title)}</a>`}
       <p class="rc-sub">${r.group ? `${r.copies.length} copies of ${new Set(r.copies.map((c) => repoBase(c.repo))).size} projects, run side by side` : whatIs(r)}, ${n0(r.agentsStarted ?? r.agents)} of ${n0(r.agents)} agents started</p>
@@ -419,6 +419,7 @@
     // a live run opens at, and keeps showing, its newest minute; a finished one opens at its start
     const f2 = root.querySelector('.tl-frame'); if (f2) f2.scrollLeft = fr ? (atEnd && 'live' in f2.dataset ? f2.scrollWidth : sx) : ('live' in f2.dataset ? f2.scrollWidth : 0);
     if (ctlF) root.querySelector(`[data-ctl="${ctlF}"]`)?.focus({ preventScroll: true });
+    talkActions();
   }
   function tickClocks() { root.querySelectorAll('[data-since]').forEach((b) => { b.textContent = clock((Date.now() - +b.dataset.since) / 1000); }); }
 
@@ -439,21 +440,45 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
   setInterval(tickClocks, 1000);
 
+  // Open the moment (column) i of the timeline on screen: by tap, or by voice through Talk's __talkActions (qb2).
+  async function openMoment(run, i) {
+    if (!TLS || i < 0 || i >= TLS.S.length) return null;
+    const s = TLS.S[i]; DR = { k: key(run), i, t: s.minute, to: s.minute + TLS.stepMs, view: 'slice', data: {} };
+    log('drill', { kind: 'slice', i }); lastHtml = ''; render(); root.querySelector('.dp')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const [d, cm] = await Promise.all([drillFetch(run, `slice?t=${s.minute}&to=${s.minute + TLS.stepMs}`).catch((x) => ({ error: String(x) })), drillFetch(run, `commits?t=${s.minute}&to=${s.minute + TLS.stepMs}`).catch(() => null)]);
+    if (DR && DR.t === s.minute) { DR.data.slice = d; DR.data.commits = cm; lastHtml = ''; render(); }
+    return s;
+  }
+  // '3:20', '3 min 20', 'minute 5', '5 minutes', '30 seconds', '90 s' -> seconds from the run's start (null if none)
+  function spokenTime(t) {
+    const x = String(t || '').toLowerCase();
+    let m = /(\d+)\s*:\s*(\d{1,2})/.exec(x); if (m) return +m[1] * 60 + +m[2];
+    m = /(\d+)\s*(?:min(?:ute)?s?)\s*(?:and\s*)?(\d+)\s*(?:s|sec|secs|seconds?)\b/.exec(x); if (m) return +m[1] * 60 + +m[2];
+    m = /minute\s+(\d+)|(\d+(?:\.\d+)?)\s*(?:min(?:ute)?s?)\b/.exec(x); if (m) return Math.round(+(m[1] || m[2]) * 60);
+    m = /(\d+)\s*(?:s|sec|secs|seconds?)\b/.exec(x); if (m) return +m[1];
+    if (/\b(start|beginning)\b/.test(x)) return 0;
+    if (/\b(end|last)\b/.test(x) && TLS) return Math.round(((TLS.S.length - 1) * TLS.stepMs) / 1000);
+    return null;
+  }
+  function talkActions() {
+    const run = current();
+    if (!run || !TLS || !root.querySelector('.tl-in:not(.tl-frame.mini .tl-in)')) { delete window.__talkActions; return; }
+    window.__talkActions = [{ id: 'moment', text: 'Open the moment of this run\u2019s timeline at a time (say it like 3:20 or minute 5)', run: async (sentence) => {
+      const sec = spokenTime(sentence); if (sec == null || !TLS) return false;
+      const i = Math.max(0, Math.min(TLS.S.length - 1, Math.floor((sec * 1000) / TLS.stepMs)));
+      const s = await openMoment(current(), i); if (!s) return false;
+      const raw = s.raw || {}, from = clock((s.minute - TLS.t0) / 1000), to = clock((s.minute - TLS.t0 + TLS.stepMs) / 1000);
+      log('talk_moment', { sentence: String(sentence).slice(0, 80), i });
+      return `Opened ${from} to ${to}: ${s.active != null ? `${n0(s.active)} agents at work, ` : ''}${n0(raw.landed || 0)} changes reached main.`;
+    } }];
+  }
   root.addEventListener('toggle', (e) => { const d = e.target; if (d.matches?.('.rcp-more, .rcp-repo')) { if (d.open) openCopies.add(d.dataset.g); else openCopies.delete(d.dataset.g); } }, true);
   // Taps on the timeline and in the drill-down panel.
   root.addEventListener('click', async (e) => {
     const run = current();
     const tin = e.target.closest('.tl-in');
     if (tin && tin.closest('.tl-frame.mini')) { const k = tin.closest('.rc')?.querySelector('a.rc-go[href^="#/step/"]'); if (k) location.hash = k.getAttribute('href'); return; }
-    if (tin && run && TLS) {
-      const i = Math.floor((e.clientX - tin.getBoundingClientRect().left) / TLS.per);
-      if (i < 0 || i >= TLS.S.length) return;
-      const s = TLS.S[i]; DR = { k: key(run), i, t: s.minute, to: s.minute + TLS.stepMs, view: 'slice', data: {} };
-      log('drill', { kind: 'slice', i }); lastHtml = ''; render(); root.querySelector('.dp')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      const [d, cm] = await Promise.all([drillFetch(run, `slice?t=${s.minute}&to=${s.minute + TLS.stepMs}`).catch((x) => ({ error: String(x) })), drillFetch(run, `commits?t=${s.minute}&to=${s.minute + TLS.stepMs}`).catch(() => null)]);
-      if (DR && DR.t === s.minute) { DR.data.slice = d; DR.data.commits = cm; lastHtml = ''; render(); }
-      return;
-    }
+    if (tin && run && TLS) { openMoment(run, Math.floor((e.clientX - tin.getBoundingClientRect().left) / TLS.per)); return; }
     const dr = e.target.closest('[data-dr]');
     if (dr && run && DR) {
       const a = dr.dataset.dr;
