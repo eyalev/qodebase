@@ -30,7 +30,8 @@ export const TOOLS = [
   { type: 'function', function: { name: 'show', description: 'Point at parts of the page while you explain them: heading, link, button or field ids, in the order you talk about them.', parameters: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } }, required: ['ids'] } } },
 ];
 
-export const TOOL_NAMES = ['go', 'press', 'type_into', 'show'];
+TOOLS.push({ type: 'function', function: { name: 'idea', description: 'Get an idea for something new to build from qodebase\'s idea generator (it fills the build box with the idea and settings that suit it). Use it whenever they ask for an idea or a suggestion of what to build.', parameters: { type: 'object', properties: { size: { type: 'string', enum: ['Small', 'Medium', 'Large', 'Huge'] } }, required: [] } } } as any);
+export const TOOL_NAMES = ['go', 'press', 'type_into', 'show', 'idea'];
 /** One model answer (OpenAI-shaped, Workers AI, or Gemini's) → { raw tool calls, calls, reply }. */
 export function parseChat(res: any) {
   const msg = res?.choices?.[0]?.message || res;

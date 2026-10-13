@@ -811,6 +811,7 @@ function submit(text) {
   if (busy) return;
   // A short yes / no answers the question on screen (Stop this run? Send it to the agents?): no model.
   var said = String(text || '').trim(), short = said.split(/\s+/).length <= 5;
+  if (lastIdea && Date.now() - lastIdea.at < 10 * 60000 && /^\s*(another( one)?|one more|a different one|next( one)?|try again)\b/i.test(said)) { add('you', said); busy = true; offerOff(); return ideaFlow(lastIdea.size); }
   if (offerState && short && YES_RX.test(said)) { var y = offerState.yes; trace('offer_voice', { answer: 'yes', text: said }); add('you', said); offerOff(); y(); return; }
   if (offerState && said.split(/\s+/).length <= 3 && NO_RX.test(said)) { trace('offer_voice', { answer: 'no', text: said }); add('you', said); offerOff(); add('app', 'Okay, I left it.'); return finish(); }
   busy = true; unmark(); offerOff();
@@ -887,10 +888,23 @@ function route(c, text) {
       var n = Number(c.target) || 0;
       var line = n ? 'You have ' + n + ' project' + (n === 1 ? '' : 's') + '. The latest: ' + c.text + '.' : 'You have no projects yet. Say what you want to build.';
       add('ai', line); say(line);
-      if (n && location.pathname !== '/mine') { sset('last', 'your projects'); setTimeout(function () { act({ op: 'go', href: '/mine', label: 'your projects' }); }, 400); return; }
+      // Only when asked to show or open them; otherwise offer it (Eyal, 2026-10-13: "don't navigate unasked").
+      if (n && location.pathname !== '/mine') {
+        if (/\b(show|open|take me|go to|bring up)\b/i.test(lastText)) { sset('last', 'your projects'); setTimeout(function () { act({ op: 'go', href: '/mine', label: 'your projects' }); }, 400); return; }
+        offerOn('Open your projects?', function () { act({ op: 'go', href: '/mine', label: 'your projects' }); }, 'Open');
+      }
       return done();
     }
     if (c.op === 'which') return whichOne(c);
+    if (c.op === 'idea') return ideaFlow(c.text || 'Medium', c.target);
+    if (c.op === 'latest') {
+      var ago = c.updatedAt ? agoWords(Date.now() - c.updatedAt) : '';
+      var line2 = 'Your latest is ' + String(c.label || '').split('/').pop().replace(/-/g, ' ') + (c.text ? ': ' + String(c.text).replace(/\s+/g, ' ').slice(0, 140).replace(/[.\s]+$/, '') : '') + (ago ? ', changed ' + ago + ' ago' : '') + '.';
+      if (viaNow) viaNow.answer = { lane: 'your projects', model: null, ms: 0 };
+      add('ai', line2 + ' Open it?', null, { via: viaNow }); say(line2 + ' Want to open it?');
+      offerOn('', function () { act({ op: 'go', href: c.href, label: c.label }); }, 'Open');
+      return done();
+    }
     if (c.op === 'change') return changeRequest(c);
     if (c.op === 'code') return codeQuestion(c);
     var acts = (c.mode === 'act' || c.mode === 'both') && c.op !== 'none' && c.op !== 'explain';
@@ -905,6 +919,32 @@ function route(c, text) {
     ask(text, '');
 }
 function done() { busy = false; status(''); finish(); }
+function agoWords(ms) { var m = Math.round(ms / 60000); return m < 60 ? m + ' min' : m < 48 * 60 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' days'; }
+// "Give me an idea": the page's own generator ('Need an idea?' sizes) fills the box with an idea and its settings;
+// Talk says it in a sentence and offers Build it ("another" asks again). Never types a placeholder like "a new app".
+var lastIdea = null;   // { size, at }
+function ideaFlow(size, targetId) {
+  var btn = (targetId && byId(targetId)) || [].filter.call(document.querySelectorAll('button'), function (b) { return new RegExp('^' + size + '\\b').test(String(b.innerText || '').trim()); })[0];
+  var box = document.querySelector('.askbox textarea, textarea[aria-label="What do you want to build?"]');
+  if (!btn || !box) { add('note', 'Ideas are on the home page.'); sset('then', { text: 'give me a ' + size.toLowerCase() + ' idea', at: Date.now() }); act({ op: 'go', href: '/', label: 'home' }); return; }
+  var before = box.value; lastIdea = { size: size, at: Date.now() };
+  status('Thinking of an idea\u2026'); trace('idea', { size: size });
+  btn.click();
+  var t0 = Date.now();
+  (function wait() {
+    if (box.value && box.value !== before) {
+      var idea = box.value.replace(/\s+/g, ' ').trim(), first = (idea.match(/^[^.!?]+[.!?]?/) || [idea])[0];
+      if (viaNow) viaNow.answer = { lane: 'the idea generator', model: null, ms: Date.now() - t0 };
+      add('ai', 'Here\u2019s a ' + size.toLowerCase() + ' idea: ' + first + ' It\u2019s in the box with settings that suit it. Want another, or build it?', null, { via: viaNow });
+      say('Here\u2019s an idea: ' + first + ' Want another, or build it?');
+      var b2 = [].filter.call(document.querySelectorAll('button'), function (b) { return /^build it$/i.test(String(b.innerText || '').trim()) && b.getClientRects().length; })[0];
+      if (b2) offerOn('', function () { add('app', 'Pressed \u201cBuild it\u201d.'); trace('act', { op: 'press', label: 'Build it', confirmed: true }); b2.click(); }, 'Build it');
+      return done();
+    }
+    if (Date.now() - t0 > 15000) { add('note', 'No idea came back. Try again?'); return done(); }
+    setTimeout(wait, 300);
+  })();
+}
 // The gate (same words as talkdecide.ts gate(), which the conversation agent uses).
 var CONFIRM_RX = /^(stop|pause|resume|merge|build it|build|send back|start|watch a run|run for real|replay|replace|connect my plan|save the key|shot|fork|import)\b/i;
 var DESTROY_RX = /^(remove|delete|revoke|sign out|log out|uninstall|disconnect|make (it )?(private|public)|clear)\b/i;
@@ -1291,6 +1331,7 @@ function ask(text, did) {
       if (a.name === 'show') showSeq((a.args && a.args.ids) || []);
       else if (a.name === 'press') { var b = byId(a.args.id); if (b) chatPress(b); }
       else if (a.name === 'type_into') { var f = byId(a.args.id); if (f) { typeInto(f, String(a.args.text || '')); offerSubmit(f); } }
+      else if (a.name === 'idea') { var sz = String(a.args.size || 'Medium'); sz = sz.charAt(0).toUpperCase() + sz.slice(1).toLowerCase(); nav = null; setTimeout(function () { busy = true; ideaFlow(/^(Small|Medium|Large|Huge)$/.test(sz) ? sz : 'Medium'); }, 300); }
       else if (a.name === 'go' && !did) {
         var to = String(a.args.to || ''); var l = byId(to);
         var href = l ? l.getAttribute('href') : (to.charAt(0) === '/' ? to : null);

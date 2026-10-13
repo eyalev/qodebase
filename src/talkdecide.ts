@@ -170,6 +170,7 @@ export type Cmd = {
   greet?: boolean; example?: string;   // a greeting / small talk, and one of their projects to suggest
   depth?: string;                  // code: fact | explain | plan (haiku | sonnet | opus in the ask box)
   then?: string;                   // go: say this again on the page it opens (an action that lives there)
+  updatedAt?: number;              // latest: when the project last changed
   preset?: string;                 // type into the idea box: the Build preset to pick too (Fastest | Balanced | Cheapest)
 };
 
@@ -237,6 +238,26 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // pick, and the chat lane made up /p/forq, a page that does not exist). Vocabulary in code.
   if (cmd.mode !== 'ask' && /\b(take me to|go to|open|show( me)?|bring me to|back to)\s+(all\s+)?(my|your) projects\b|^\s*(my|your) projects\s*[.!?]?$/i.test(utterance.trim()))
     return { ...cmd, mode: 'act', op: 'go', href: '/mine', label: 'your projects', p: 0.9, why: 'my projects = /mine' };
+  // "Give me an idea for a new app" (Eyal, 2026-10-13: it typed "a new app" into the build box and offered Build it):
+  // the page's own idea generator ("Need an idea?" sizes), Medium unless a size is said; elsewhere, go home and ask there.
+  const wantsIdea = (/\bideas?\b/i.test(utterance) && /\b(give|suggest|get|need|want|have|any|come up|think of|tell|show|surprise)\b/i.test(utterance))
+    || /\b(suggest|recommend|give me|think of)\b.*\b(something|an app|a project|a thing|what)\b.*\bto (build|make)\b/i.test(utterance);
+  if (wantsIdea && !/\b(my|this|the) idea (is|was)\b|\bsettings\b|\bfrom my idea\b/i.test(utterance)) {
+    const size = (/\b(small|tiny|quick|little)\b/i.exec(utterance) ? 'Small' : /\b(huge|giant|massive|ambitious)\b/i.test(utterance) ? 'Huge' : /\b(large|big|bigger)\b/i.test(utterance) ? 'Large' : 'Medium');
+    const btn = s.items.find((i) => i.kind === 'button' && new RegExp('^' + size + '\\b').test(i.text));
+    if (btn) return { ...cmd, mode: 'act', op: 'idea', target: btn.id, label: btn.text, text: size, p: 0.9, why: 'the idea generator' };
+    return { ...cmd, mode: 'act', op: 'go', href: '/', label: 'home', p: 0.9, then: utterance, why: 'ideas live on home' };
+  }
+  // "What is my latest project?": answer it (name, what it is, when), offer to open it; never navigate unasked.
+  if (/\b(what|which)('s| is| was| are)?\s+(is\s+)?my\s+(latest|newest|last|most recent)\s+(project|app|build)\b|\bwhich project did i (work on|change|touch) last\b/i.test(utterance)) {
+    const p = projects.filter((x) => x.mine && !isScaffold(x.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+    if (p) return { ...cmd, mode: 'ask', op: 'latest', href: projectHref(p, 'page'), label: projLabel(p, 'page'), target: p.slug, text: p.description || '', updatedAt: p.updatedAt, p: 0.9, why: 'latest project' } as Cmd;
+  }
+  // A request for content ("give me…", "suggest…", "tell me…", "what is…", "explain…") picked as typing into or pressing
+  // something on the page goes to the answering model (with tools) instead (Eyal, 2026-10-13). Not the page's own
+  // actions (x…: a timeline moment, an intent), which answer questions themselves.
+  if ((cmd.op === 'type' || cmd.op === 'press') && !/^x/.test(String(cmd.target || '')) && /^\s*(please\s+)?(give me|suggest|tell me|what('s| is| are| was)|explain|describe|recommend|can you (tell|suggest|give|recommend)|any (ideas|suggestions))\b/i.test(utterance) && !/\b(type|write|enter|fill|press|tap|click|put)\b/i.test(utterance))
+    return { ...cmd, mode: 'ask', op: 'none', why: `${cmd.why || ''}; a request for content goes to the answering model` };
   // On /runs, "open the last run" / "the first VS Code run": the run list is newest first (vocabulary in code).
   if (/^\/runs/.test(s.path) && /\b(open|show( me)?|go to)\b.*\b(last|latest|newest|most recent|first|top)\b.*\brun\b/i.test(utterance)) {
     const runs = s.items.filter((i) => i.kind === 'link' && /^#\/(run|step)\//.test(i.href || ''));
