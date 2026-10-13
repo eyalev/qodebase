@@ -67,6 +67,8 @@ export default {
         return json({ repo, from: body.from, remote: r.remote || remoteOf(repo), ms: Date.now() - t0 });
       }
       case '/go': return json(await run(env, repo).go());
+      // Warm a held run's copy before a burst: read n of its queued blobs (S4e: cold forks failed reads under a burst).
+      case '/warm': return json(await run(env, repo).warm(Math.min(500, Number(body.n) || 100)));
       // A used copy back to its starting commit (main -> body.to, a commit already in the repo; no objects sent).
       case '/reset': {
         if (!/^[0-9a-f]{40}$/.test(String(body.to || ''))) return json({ error: 'to: a commit sha' }, 400);
@@ -165,6 +167,8 @@ async function plan(env, b) {
 
 // ---- Budget: the account-day cap across all fleet runs --------------------------------
 export class Budget extends DurableObject {
+  /** True at most once per `everyMs` for a key (push rate limit). */
+  async pushGate(key, everyMs) { const k = `gate:${key}`, last = (await this.ctx.storage.get(k)) || 0; if (Date.now() - last < everyMs) return false; await this.ctx.storage.put(k, Date.now()); return true; }
   day() { return new Date().toISOString().slice(0, 10); }
   async check() {
     const env = this.env;
@@ -183,7 +187,7 @@ export class Budget extends DurableObject {
 
 // ---- Run: the controller ------------------------------------------------------------------
 const DEFAULTS = { agents: 10, maxFiles: 10, model: null, budgetUsd: 1, maxPerMin: 100, planUsdPerMin: 0.5,
-  pause: { rateLimitShare: 0.05, modelErrorShare: 0.05, verifyFailShare: 0.10, landWaitP90S: 300, window: 40 } };
+  pause: { rateLimitShare: 0.05, modelErrorShare: 0.05, readErrorShare: 0.30, verifyFailShare: 0.10, landWaitP90S: 300, window: 40 } };
 
 export class Run extends DurableObject {
   constructor(ctx, env) {
@@ -250,6 +254,15 @@ export class Run extends DurableObject {
     return { runId, agents: cfg.agents, files: pick.length, base: p.base };
   }
 
+  async warm(n) {
+    const s = await this.st();
+    if (!s || s.state !== 'held') return { error: 'warm a held run' };
+    const rows = this.sql.exec(`SELECT hash FROM q WHERE run = ? ORDER BY i LIMIT ?`, s.runId, n).toArray();
+    const t0 = Date.now(); let ok = 0, err = 0;
+    using r = await ns(this.env, s.cfg.repo).get(s.cfg.repo);
+    for (let i = 0; i < rows.length; i += 20) await Promise.all(rows.slice(i, i + 20).map(async (x) => { try { const b = await r.readBlob(x.hash); if (b) { await b.arrayBuffer(); ok++; } else err++; } catch { err++; } }));
+    return { read: ok, errors: err, ms: Date.now() - t0 };
+  }
   async go() {
     const s = await this.st();
     if (!s || s.state !== 'held') return { error: `nothing held (state ${s?.state || 'none'})` };
@@ -328,7 +341,7 @@ export class Run extends DurableObject {
     s.counts[r.status] = (s.counts[r.status] || 0) + 1;
     s.recent.push({ status: r.status, at: Date.now() }); if (s.recent.length > 200) s.recent.splice(0, s.recent.length - 200);
     // A rate limit or a model error is not the file's verdict: back in the queue, two more tries.
-    if (r.status === 'rate_limited' || r.status === 'model_error') {
+    if (r.status === 'rate_limited' || r.status === 'model_error' || r.status === 'read_error') {
       const q = this.sql.exec(`SELECT i, tries FROM q WHERE run = ? AND path = ?`, runId, r.file).toArray()[0];
       if (q && (q.tries || 0) < 2) { this.sql.exec(`UPDATE q SET taken = 0, tries = ? WHERE run = ? AND i = ?`, (q.tries || 0) + 1, runId, q.i); r = { ...r, status: `${r.status}_retry` }; }
     }
@@ -371,6 +384,8 @@ export class Run extends DurableObject {
     const share = (k) => w.filter((x) => x.status === k).length / w.length;
     if (share('rate_limited') > p.rateLimitShare) return this.autoPause(s, `rate limits (429) ${Math.round(share('rate_limited') * 100)}% of the last ${w.length}`);
     if (share('model_error') > p.modelErrorShare) return this.autoPause(s, `model errors ${Math.round(share('model_error') * 100)}% of the last ${w.length}`);
+    // Artifacts read failures (S4e: 'An internal error occurred' under load) are retried; only a high share pauses.
+    if (share('read_error') > (p.readErrorShare ?? 0.3)) return this.autoPause(s, `Artifacts read errors ${Math.round(share('read_error') * 100)}% of the last ${w.length}`);
     if (share('verify_fail') > p.verifyFailShare) return this.autoPause(s, `verify failures ${Math.round(share('verify_fail') * 100)}% of the last ${w.length}`);
   }
   /** AUTO-PAUSE: any signal over its line pauses the run and pushes the reason. */
@@ -381,6 +396,8 @@ export class Run extends DurableObject {
       const share = (k) => w.filter((x) => x.status === k).length / w.length;
       if (share('rate_limited') > p.rateLimitShare) return this.autoPause(s, `rate limits (429) ${Math.round(share('rate_limited') * 100)}% of the last ${w.length}`);
       if (share('model_error') > p.modelErrorShare) return this.autoPause(s, `model errors ${Math.round(share('model_error') * 100)}% of the last ${w.length}`);
+    // Artifacts read failures (S4e: 'An internal error occurred' under load) are retried; only a high share pauses.
+    if (share('read_error') > (p.readErrorShare ?? 0.3)) return this.autoPause(s, `Artifacts read errors ${Math.round(share('read_error') * 100)}% of the last ${w.length}`);
       if (share('verify_fail') > p.verifyFailShare) return this.autoPause(s, `verify failures ${Math.round(share('verify_fail') * 100)}% of the last ${w.length}`);
     }
     const minute = Math.floor(Date.now() / 60000) - 1;
@@ -395,8 +412,12 @@ export class Run extends DurableObject {
     if (s.state !== 'running') return;
     s.state = 'paused'; s.pauses.push({ at: Date.now(), why, auto: true });
     await this.save(s);
-    log('auto_paused', { runId: s.runId, why });
-    await pushover(this.env, `qodebase fleet paused: ${why}`, `Run ${s.runId}: ${s.counts.landed} landed, $${s.usd.toFixed(3)}. Resume after a fix: POST /resume.`);
+    log('auto_paused', { runId: s.runId, why, ladder: s.cfg.ladder || null });
+    // Scale-ladder runs never push (S4e sent Eyal one push per copy, dozens at once): qb6 reports those through cc-com.
+    // Other runs: at most one push per 10 minutes for the whole fleet.
+    if (s.cfg.ladder) return;
+    if (!(await budget(this.env).pushGate('autopause', 600_000))) return;
+    await pushover(this.env, `qodebase fleet paused: ${why}`, `Run ${s.runId} (${s.cfg.repo || MAIN}): ${s.counts.landed} landed, $${s.usd.toFixed(3)}. Resume after a fix: POST /resume.`);
   }
   async pause(why) { const s = await this.st(); if (!s || s.state !== 'running') return { error: 'nothing running' }; s.state = 'paused'; s.pauses.push({ at: Date.now(), why }); await this.save(s); return { state: s.state }; }
   async resume(cfg = {}) {
@@ -673,10 +694,21 @@ export class Agent extends DurableObject {
   }
   async work(file, model, provider = 'workers-ai', repoName = MAIN) {
     const t0 = Date.now();
-    using repo = await ns(this.env, repoName).get(repoName);
-    const blob = await repo.readBlob(file.hash);
-    if (!blob) return { file: file.path, status: 'model_error', reason: 'blob not found', ms: Date.now() - t0 };
-    const text = new TextDecoder().decode(await blob.arrayBuffer());
+    let text, readTries = 0, lastErr = '';
+    // An internal error on a read is retried here with backoff (S4e: a fresh namespace's forks failed 1,454 reads in one burst).
+    for (const wait of [0, 250, 1000, 3000]) {
+      if (wait) await new Promise((r) => setTimeout(r, wait + Math.random() * wait));
+      readTries++;
+      try {
+        using repo = await ns(this.env, repoName).get(repoName);
+        const blob = await repo.readBlob(file.hash);
+        if (!blob) { lastErr = 'blob not found'; continue; }
+        text = new TextDecoder().decode(await blob.arrayBuffer());
+        break;
+      } catch (e) { lastErr = `artifacts: ${String(e?.message || e).slice(0, 200)}`; }
+    }
+    if (text === undefined) return { file: file.path, status: 'read_error', reason: `${lastErr} (after ${readTries} tries)`, ms: Date.now() - t0 };
+    if (readTries > 1) log('read_retried', { file: file.path, tries: readTries, err: lastErr.slice(0, 120) });
     const tRead = Date.now() - t0;
     const tg = targets(file.path, text);
     if (!tg.length) return { file: file.path, status: 'skipped', reason: 'nothing to document', ms: Date.now() - t0, tRead };
@@ -735,6 +767,7 @@ export class Lander extends DurableObject {
     // The commits this run put on main, each with its git note (one JSON line per file).
     q(`CREATE TABLE IF NOT EXISTS cmt (sha TEXT PRIMARY KEY, at INT, lane TEXT, message TEXT, files INT, note TEXT)`); q(`CREATE INDEX IF NOT EXISTS cmt_at ON cmt (at)`);
     q(`CREATE TABLE IF NOT EXISTS push (at INT, ms INT, files INT, lanes INT, commit_sha TEXT, bytes INT)`);
+    q(`CREATE TABLE IF NOT EXISTS nent (name TEXT PRIMARY KEY, sha TEXT)`);   // the notes tree's entries (commit -> note blob)
   }
   async begin(runId, base, repo = MAIN) { await this.ctx.storage.deleteAll(); this.tables(); await this.ctx.storage.put({ runId, base, repo, landed: 0, commits: 0, pushes: 0, stale: 0, errors: [] }); }
   async add(runId, lane, path, text, at) { return this.addMany(runId, [{ lane, path, text, at }]); }
@@ -760,6 +793,7 @@ export class Lander extends DurableObject {
     const repoName = (await this.ctx.storage.get('repo')) || MAIN;
     using repo = await ns(this.env, repoName).get(repoName);
     const token = (await repo.createToken('write', 600)).plaintext;
+    let lastWhy = '';
     for (let attempt = 0; attempt < 3; attempt++) {
       const tip = (await repo.log({ limit: 1 }))[0];
       const objs = new Objects();
@@ -778,31 +812,51 @@ export class Lander extends DurableObject {
         for (const x of items) commitOf[x.path] = parent;
       }
       // Notes: the old notes tree (flat: one blob per commit) plus this push's notes, as one new notes commit.
+      // The Lander is the notes ref's only writer, so it keeps the tip and the entries itself: right after a push log() still
+      // returns the old tip, and Artifacts applies both refs atomically, so a stale notes ref aborted main too (S4e: 105 of 106
+      // pushes refused on one copy). Read from git only on a run's first push. After two notes failures main goes alone.
       const NOTES = 'refs/notes/qodebase';
-      const nt = (await repo.log({ ref: NOTES, limit: 1 }).catch(() => []))[0];
-      const old = nt ? await repo.readTree(nt.treeHash).catch(() => []) : [];
-      const entries = new Map(old.filter((e) => e.type === 'blob').map((e) => [e.name, { name: e.name, mode: '100644', sha: e.hash }]));
-      for (const c of made) entries.set(c.sha, { name: c.sha, mode: '100644', sha: objs.blob(c.note) });
-      const notesCommit = objs.commit(objs.treeOf([...entries.values()]), nt ? [nt.hash] : [], `Notes added by qodebase fleet (run ${runId})`, Date.now(), 'qodebase fleet <fleet@qodebase.app>');
+      const withNotes = ((await this.ctx.storage.get('notesFails')) || 0) < 2;
+      let notesCommit = null, nt = null;
+      if (withNotes) {
+        nt = await this.ctx.storage.get('notesTip');
+        if (nt === undefined) {
+          const t = (await repo.log({ ref: NOTES, limit: 1 }).catch(() => []))[0];
+          nt = t ? t.hash : null;
+          for (const e of t ? await repo.readTree(t.treeHash).catch(() => []) : []) if (e.type === 'blob') this.ctx.storage.sql.exec(`INSERT OR REPLACE INTO nent (name, sha) VALUES (?, ?)`, e.name, e.hash);
+        }
+        const entries = new Map(this.ctx.storage.sql.exec(`SELECT name, sha FROM nent`).toArray().map((e) => [e.name, { name: e.name, mode: '100644', sha: e.sha }]));
+        for (const c of made) entries.set(c.sha, { name: c.sha, mode: '100644', sha: (c.noteSha = objs.blob(c.note)) });
+        notesCommit = objs.commit(objs.treeOf([...entries.values()]), nt ? [nt] : [], `Notes added by qodebase fleet (run ${runId})`, Date.now(), 'qodebase fleet <fleet@qodebase.app>');
+      }
       const tPush = Date.now();
       const p = await push({ remote: remoteOf(repoName), token, branch: 'main', oldSha: tip.hash, newSha: parent, objs: [...objs.map.values()],
-        extra: [{ ref: NOTES, oldSha: nt?.hash || '0'.repeat(40), newSha: notesCommit }] });
+        extra: withNotes ? [{ ref: NOTES, oldSha: nt || '0'.repeat(40), newSha: notesCommit }] : [] });
+      if (withNotes && !p.ok && /refs\/notes\/qodebase stale/.test(p.detail || '')) {
+        // Our tip is wrong (another writer, or a lost reply): re-read from git next time; two in a row -> main alone.
+        await this.ctx.storage.delete('notesTip'); this.ctx.storage.sql.exec(`DELETE FROM nent`);
+        await this.ctx.storage.put('notesFails', ((await this.ctx.storage.get('notesFails')) || 0) + 1);
+      }
       await this.ctx.storage.put('pushes', ((await this.ctx.storage.get('pushes')) || 0) + 1);
       if (p.ok) {
         // Only the landed rows go: files added while this batch was pushing stay (F2 at 10 agents lost 9 that way once).
         for (const f of landedFiles) this.ctx.storage.sql.exec(`DELETE FROM pend WHERE path = ?`, f);
         await this.ctx.storage.put({ landed: ((await this.ctx.storage.get('landed')) || 0) + landedFiles.length, commits: ((await this.ctx.storage.get('commits')) || 0) + keys.length });
         for (const c of made) this.ctx.storage.sql.exec(`INSERT OR REPLACE INTO cmt (sha, at, lane, message, files, note) VALUES (?,?,?,?,?,?)`, c.sha, c.at, c.lane, c.message, c.files, c.note);
-        if (!p.refs?.[NOTES]) log('notes_not_pushed', { runId, repo: repoName });
+        if (withNotes && p.refs?.[NOTES]) {
+          await this.ctx.storage.put({ notesTip: notesCommit, notesFails: 0 });
+          for (const c of made) this.ctx.storage.sql.exec(`INSERT OR REPLACE INTO nent (name, sha) VALUES (?, ?)`, c.sha, c.noteSha);
+        } else log('notes_not_pushed', { runId, repo: repoName, withNotes });
         this.ctx.storage.sql.exec(`INSERT INTO push (at, ms, files, lanes, commit_sha, bytes) VALUES (?,?,?,?,?,?)`, Date.now(), Date.now() - tPush, landedFiles.length, keys.length, parent, p.bytes || 0);
         await run(this.env, repoName).landed(runId, landedFiles, Date.now(), commitOf);
         log('landed', { runId, lanes: keys.length, files: landedFiles.length, commit: parent.slice(0, 10) });
         return;
       }
       await this.ctx.storage.put('stale', ((await this.ctx.storage.get('stale')) || 0) + 1);
-      log('push_retry', { runId, attempt, status: p.status, why: String(p.detail || '').slice(0, 200) });
+      lastWhy = `HTTP ${p.status}: ${String(p.detail || '').replace(/\s+/g, ' ').slice(0, 300)}`;
+      log('push_retry', { runId, attempt, status: p.status, why: lastWhy });
     }
-    throw new Error('push failed 3 times');
+    throw new Error(`push failed 3 times; last: ${lastWhy}`);
   }
   /** The door: every push of this run (the Lander is per repo and begins fresh per run). */
   async pushes(runId) {
