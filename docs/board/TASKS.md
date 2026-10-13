@@ -103,3 +103,12 @@ Bottleneck fixes + compaction (Eyal, 2026-10-13 ~07:40 UTC):
 - [ ] B-3 faster first landing: a warm pool of 1-3 agent boxes per active owner (bounded, idle-stop) + the skeleton agent starts while the planner plans the rest; measure time-to-first-landing before/after (qb6)
 - [ ] C-1 measure from R5's per-call rows: how many Haiku calls crossed 100k prompt tokens, when in a session, and why (review rounds, sync-main, tool output, board text) (qb6, no cost)
 - [ ] C-2 compaction: Haiku agents auto-compact before ~85-90k; fresh session per review fix; short board summary instead of the full board; capped tool output; one real team build vs R3 (~$3-5), cost + long-context share + quality (qb6 run, qb9 feature check)
+
+Fleet on Workers AI (Eyal, 2026-10-13: "Go, comments first"; budget $50/day today + tomorrow only, breaker raised with auto-expiry 6cb75a4 in remote-manage):
+Task: documentation comments for exported functions/classes in a big real codebase (VS Code src/vs, MIT, ~thousands of TS files; our own Artifacts copy, never pushed upstream). Each agent = a Durable Object (sim/cloud harness) that reads one file from its fork, calls a cheap Workers AI model through gateway qodebase-fleet, writes doc comments, VERIFIES the code is unchanged (strip comments -> same syntax tree), pushes; lanes by folder land it. Quality: a cheap judge on a sample + a hand-checked sample.
+- [ ] F0 research: Workers AI models fit for code comments, prices (neurons), rate limits per model/account; benchmark 20 files on 2-3 models (quality, cost, latency); cost estimate per 1k files (qb4)
+- [ ] F1 fleet harness: model step + verify + push, per-run budget (ledger), gateway qodebase-fleet with rate limit, pipeline controls Pause / Resume / Stop (API + a small page), and AUTO-PAUSE on bottleneck signals (429/rate-limit share, model error share, verify-fail share, queue wait, $/min over plan) with a push to the manager (qb6)
+- [ ] F2 smoke: 10 agents, then 100; check every stage + the controls (qb6)
+- [ ] F3 ramp: 1,000 -> 5,000 (-> all files if it holds), lanes by folder; at each step stop, read bottlenecks, fix, resume (qb6; manager decides each step)
+- [ ] F4 quality: judge sample + hand check of 50 files; verify-fail and rejected counts (qb9)
+- [ ] F5 write-up: FINDINGS + /how + submission (manager, qb8)
