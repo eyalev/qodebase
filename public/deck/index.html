@@ -189,7 +189,7 @@ body.rec .prog,body.rec .notes{display:none}
 @media (min-width:900px) and (min-aspect-ratio:4/3){.where{left:6%;top:3%;font-size:.6em}.s{padding-top:6%}.secn{font-size:.7em}.pts li{font-size:.95em}.map li{grid-template-columns:1.6em 1fr;gap:.5em}.map li>b{width:1.6em;height:1.6em;font-size:.65em}.map li>span{font-size:.62em}.map li>span>b{font-size:1.2em}.map.mini li>span{font-size:.75em}.ov{grid-template-columns:1fr 1.1fr;gap:6%}.ov h3{font-size:.62em}.ov p{font-size:.85em}.proved li>b{font-size:1.3em}.proved li>span{font-size:.75em}.ovc{gap:.9em}.s.ovs{overflow:hidden}.ovs .map li>span>span{display:grid}.dots.d12{max-width:17em}.phone .shot{height:100%;width:100%;object-fit:cover;object-position:top}}
 </style>
 </head>
-<body>
+<body data-talk-bar="mic">
 <div class="prog" id="prog"></div>
 <div id="deck"><div class="stage" id="stage">
 
@@ -213,7 +213,7 @@ body.rec .prog,body.rec .notes{display:none}
   <div class="ovc"><h3>What we proved</h3>
    <ul class="proved">
     <li><b>28 of 40</b><span>changes collided in a 40-agent build; all were redone, none sent back</span></li>
-    <li><b>2–4×</b><span>faster with one strong agent for a fresh app; many agents win for wide work</span></li>
+    <li><b>3 of 3</b><span>real builds of a fresh app finished sooner with one strong agent (2×, 4× and 6×); the team was cheaper in 2 of 3</span></li>
     <li><b data-k="scale.agents">4,750</b><span>agents on Cloudflare, up to ~2,100 files a second (no model calls); separately, cheap models documented <span data-k="fleet.files">13,746</span> real files for $<span data-k="fleet.usd">6.33</span></span></li>
     <li><b>Every step</b><span>recorded in git and visible: each change, the timeline, the asks</span></li>
    </ul></div>
@@ -280,9 +280,9 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s" data-t="One agent or a team" data-sec="B">
- <div class="claim"><h2>For a fresh app, one strong agent was faster</h2><p>On the same prompts, one Opus agent finished 2 to 4 times sooner than a team, with at least as many features working.</p><span class="src">Real builds on the same prompts, one run each</span></div>
+ <div class="claim"><h2>For a fresh app, one strong agent was faster</h2><p>On the same prompts, one Opus agent finished sooner than a team in all three real builds, 2 to 6 times, with at least as many features working. The team was cheaper in two of the three.</p><span class="src">Real builds on the same prompts, one run each</span></div>
  <div class="vis"><div class="bars" id="solo"></div></div>
- <aside class="say">And an honest finding: for a fresh app, one strong agent beat a team. On the same prompts, a single Opus agent finished two to four times sooner, with at least as many features working.</aside>
+ <aside class="say">And an honest finding: for a fresh app, one strong agent beat a team. On the same prompts, a single Opus agent finished sooner in all three real builds, two to six times, with at least as many features working. The team was cheaper in two of the three.</aside>
 </section>
 
 <section class="s secs" data-t="Many agents, at scale" data-sec="C" data-head>
@@ -331,6 +331,12 @@ body.rec .prog,body.rec .notes{display:none}
  <div class="claim"><h2>A fleet of cheap models, on real code</h2><p>Agents on Workers AI and Gemini Flash-Lite, no Claude, documented real codebases including VS Code, Next.js and Angular. A hand check found 109 of 115 comments right.</p><span class="src">Measured on Cloudflare; Durable Object agents, real git on Artifacts</span></div>
  <div class="vis"><div><div class="count" data-k="fleet.files">13,746</div><p class="fl">files landed for <b>$<span data-k="fleet.usd">6.33</span></b>, about $<span data-k="fleet.per1k">0.46</span> per thousand</p></div></div>
  <aside class="say">And agents do not have to be expensive. A fleet on cheap models, Workers AI and Gemini Flash-Lite, documented real codebases, VS Code, Next.js and Angular. Over twenty thousand files have landed so far, for well under a dollar per thousand, and a hand check found a hundred and nine of a hundred and fifteen comments right.</aside>
+</section>
+
+<section class="s" data-t="The collision dial" data-sec="C">
+ <div class="claim"><h2>The collision dial</h2><p>How far can landing by intent go as more changes collide? Two dials: comments, and code checked by tests the agents never saw.</p><span class="src">Running now (qb6, qb4); numbers by Oct 14, 12:00 UTC</span></div>
+ <div class="vis"><div class="card" style="display:grid;gap:8px"><b>Results pending</b><span class="fc">This slide fills in when the runs finish.</span></div></div>
+ <aside class="say">Placeholder: the collision dial, comment dial and code dial with hidden tests. Narration follows the numbers.</aside>
 </section>
 
 <section class="s secs" data-t="Built for people, built on Cloudflare" data-sec="D" data-head>
@@ -382,7 +388,7 @@ body.rec .prog,body.rec .notes{display:none}
  <div class="ov"><div class="ovc"><h3>What we proved</h3>
   <ul class="proved">
    <li><b>Land by intent works</b><span>12 of 12 landed with real agents; in a 40-agent build 28 of 40 changes collided and all were redone, and 11 of 13 features work (Section B)</span></li>
-   <li><b>One or many</b><span>one strong agent is 2–4× faster for a fresh app; the board stops duplicate work, 8 pairs to 0 (Sections B, C)</span></li>
+   <li><b>One or many</b><span>one strong agent finished a fresh app sooner in 3 of 3 builds, the team was cheaper in 2 of 3; the board stops duplicate work, 8 pairs to 0 (Sections B, C)</span></li>
    <li><b>It scales</b><span>4,750 agents on Cloudflare, up to ~2,100 files a second with no model calls; cheap models documented <span data-k="fleet.files">13,746</span> real files for $<span data-k="fleet.usd">6.33</span> (Section C)</span></li>
    <li><b>Every step is visible</b><span>the record in git, the timeline, Asks, estimates, the Runs page (Sections A, D)</span></li>
   </ul></div>
@@ -499,5 +505,15 @@ window.deckSlides=function(){return S.map(function(s,k){return{n:k+1,title:s.dat
 go((parseInt(location.hash.slice(1),10)||1)-1);
 })();
 </script>
+<script>
+// Talk (qb2): voice on the deck. Next/Previous are found by their labels; this goes to a slide by number or title.
+window.__talkActions=[{id:'slide',text:'Go to a slide by its number or title ('+(window.deckSlides?deckSlides().length:'')+' slides)',run:function(said){
+ var t=String(said||'').toLowerCase(),W={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,first:1,last:(window.deckSlides?deckSlides().length:1)};
+ var m=/\b(\d{1,2})\b/.exec(t),n=m?+m[1]:0;if(!n)Object.keys(W).some(function(k){if(new RegExp('\\b'+k+'\\b').test(t)){n=W[k];return true}});
+ var got=n?deckGo(n):0;
+ if(!got){var q=t.replace(/^.*?\b(slide|section)s?\b\s*(about|on|called|with|for)?\s*/,'').replace(/^(go|show|open|take me|jump)( me)?( to)?( the)?\s*/,'').replace(/[.?!]+$/,'').trim();got=q?deckGo(q):0;}
+ return got?'Slide '+got+'.':false}}];
+</script>
+<script src="/talk.js" defer></script>
 </body>
 </html>
