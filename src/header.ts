@@ -64,7 +64,7 @@ export const HEADER_CSS = `
 .gtop2 .hav::after{content:'';position:absolute;inset:-6px}
 .gtop2 .hbell{flex:none;position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;color:var(--dim);text-decoration:none}
 .gtop2 .hbell.on{color:var(--fg)}
-.gtop2 .hbell .hbadge{top:4px;right:2px}
+.gtop2 .hbell .hbadge{top:5px;right:auto;left:22px;width:max-content;white-space:nowrap;min-width:16px;height:16px;padding:0 4px;font-size:10px;line-height:16px}
 .gtop2 .hbadge{position:absolute;top:-5px;right:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:4px;background:var(--warn);color:var(--acc-fg);font-size:11px;font-weight:600;line-height:18px;text-align:center;box-shadow:0 0 0 2px var(--bg)}
 .gtop2 .hsignin{flex:none;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;font-size:15px;color:var(--fg);text-decoration:none}
 .gmenupop.hsheet{max-height:calc(100dvh - var(--top-h) - 16px);overflow-y:auto;overscroll-behavior:contain}
