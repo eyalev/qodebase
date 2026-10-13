@@ -59,9 +59,9 @@ Status (qb6, Oct 13 evening):
   (src/vs/editor = 659 files at its base); nobody runs on it before the take.
 
 Status (qb7, Oct 13 evening; everything below ships with qb6's first deploy after the code-dial freeze):
-- **3b ready:** each run's timeline gets a 'Collisions per 10 s' row (red bars, total) and the count in a moment's
+- **3b live (forq 6355cc6):** each run's timeline gets a 'Collisions per 10 s' row (red bars, total) and the count in a moment's
   facts; replays appear as a line once qb6's series carries them.
-- **3e ready on the page:** 'API index (docs/API.md): 1,173 of 1,173 lines, sorted, none missing, none twice.' from
+- **3e live (forq 6355cc6), shows on the comments+index job only:** 'API index (docs/API.md): 1,173 of 1,173 lines, sorted, none missing, none twice.' from
   the indexcheck route (that route is qb6's, deploying after the freeze).
 - **2b live:** Build settings and the estimate bar on the project.
 - **2f live:** X1 in the App tab: a waiting note, then 'More is coming: N of M parts landed…', 'Show the new parts'.
