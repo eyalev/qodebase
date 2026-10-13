@@ -120,6 +120,8 @@ var css = [
   '#talk-root.boffer #talk-bexp,#talk-root.live #talk-bexp{display:none}',
   '#talk-bsend{display:none}',
   '#talk-root.live #talk-bsend,#talk-root.draft #talk-bsend{display:flex}',
+  // Not listening yet (the mic is still opening): the stop button stays quiet, so nobody starts talking too early.
+  '#talk-root.arming .talk-bb.on,#talk-root.arming #talk-mic.on{background:var(--t-chip);color:var(--t-fg)}',
   '#talk-root.draft #talk-bexp{display:none}',
   '#talk-root.draft #talk-btext{-webkit-line-clamp:3}',
   '#talk-boffer .talk-chip{min-height:44px;padding:0 12px}',
@@ -410,6 +412,7 @@ function build() {
   // The bar's mic works like the sheet's ("How the mic works"): tap, speak, tap Send; hold; pause; conversation.
   // Speaking from the bar keeps the page in view: the words grow in the bar, the answer comes back to it.
   var bHoldT = null, bHeld = false;
+  bMic.addEventListener('pointerdown', function () { if (!listening && S.engine === 'live') { dcWarm(); warmMic(true); } });
   bMic.addEventListener('pointerdown', function () { if (S.mic !== 'hold' || vc || listening) return; unlockAudio(); bHeld = false; bHoldT = setTimeout(function () { bHeld = true; startListen(); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} }, 150); });
   var bHoldEnd = function () { clearTimeout(bHoldT); if (S.mic === 'hold' && bHeld && listening) { trace('bar', { how: 'release' }); stopListen(false, true); } };
   bMic.addEventListener('pointerup', bHoldEnd); bMic.addEventListener('pointercancel', bHoldEnd); bMic.addEventListener('pointerleave', bHoldEnd);
@@ -490,7 +493,7 @@ function build() {
   render();
 }
 
-function open(on) { if (on && S.engine === 'live' && me) { dcWarm(); warmMic(); } if (!on) releaseMic(); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); barSync(); if (on && hist.length) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+function open(on) { if (on && S.engine === 'live' && me) { dcWarm(); warmMic(); } if (!on && S.keep !== 'open') releaseMic('closed'); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); barSync(); if (on && hist.length) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
 // Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is, and keep
 // the bar's height free at the end of the page (and of the page's own scrolling panel, on project pages).
 var scrollers = null, lastLift = -1;
@@ -634,7 +637,7 @@ function barSync() {
   for (var i = hist.length - 1; i >= 0; i--) if (hist[i].who !== 'you') { last = hist[i]; break; }
   if (offerState) t = offerState.text || (last ? last.text : 'Go ahead?');
   else if (draft) t = inp.value.trim();
-  else if (mine) { t = inp.value.trim(); if (!t) { t = stEl.textContent || 'Listening\u2026'; dim = true; } }
+  else if (mine) { t = inp.value.trim(); if (!t) { t = root.classList.contains('arming') ? 'Starting the mic\u2026' : 'Listening\u2026'; dim = true; } }
   else if (busy && stEl.textContent) { t = stEl.textContent; dim = true; }
   else if (last && hist.length !== histAtLoad) t = last.text;
   else ex = exampleLine();
@@ -1267,6 +1270,7 @@ function say(text) {
 var rec = null, mr = null, chunks = [], stream = null, t0 = 0, tick = null, interimTimer = null, interimCalls = 0;
 function setListening(on) {
   listening = on;
+  if (!on) root.classList.remove('arming');
   micBtn.classList.toggle('on', on); micBtn.innerHTML = on ? ICON.stop : ICON.mic;
   if (cMic) { cMic.classList.toggle('on', on); cMic.innerHTML = on ? ICON.stop : ICON.mic; cMic.setAttribute('aria-label', on ? 'Stop' : 'Speak (hold for Talk)'); }
   if (cInto) { cInto.placeholder = on ? 'Listening\u2026' : (cInto.getAttribute('aria-label') || ''); var cf = cInto.closest('form'); if (cf && cf.__talkSync) cf.__talkSync(); }
@@ -1532,13 +1536,16 @@ var dc = null, dcReady = false, dcOn = false, dcText = '', dcT0 = 0, dcBuf = [],
 // What was said so far: the finished pieces plus the one being said now.
 function dcSaid(interim) { return dcBuf.concat(interim ? [interim] : []).join(' ').replace(/\s+/g, ' ').trim(); }
 function dcArm() { clearTimeout(dcQuiet); if (S.mic === 'pause' && S.pause !== 'tap' && dcOn) dcQuiet = setTimeout(function () { if (dcOn) { trace('dc_stop', { how: 'quiet', pieces: dcBuf.length, ms: Date.now() - dcT0 }); liveFinish('', true); } }, Number(S.pause) || 2500); }
+var dcLoading = null;   // callbacks waiting while the kit loads (a press-down and the tap both ask: one client only)
 function dcWarm(cb) {
   if (dc && dcReady) return cb && cb();
   if (dc) { if (cb) dc.__wait = (dc.__wait || []).concat(cb); return; }
+  if (dcLoading) { if (cb) dcLoading.push(cb); return; }
+  dcLoading = cb ? [cb] : [];
   loadKit(function () {
     var t0 = Date.now();
     dc = new window.TalkVoiceKit.VoiceClient({ agent: 'TalkVoice', name: me, silenceDurationMs: 900 });
-    dc.__wait = cb ? [cb] : [];
+    dc.__wait = dcLoading || []; dcLoading = null;
     dc.addEventListener('connectionchange', function (on) {
       dcReady = !!on; logEv('dc_connection', { on: on, ms: Date.now() - t0 });
       if (!on) trace('dc_disconnect', { listening: dcOn });
@@ -1573,15 +1580,23 @@ var clip = null, clipChunks = [], clipStream = null, clipT0 = 0, warmP = null;
 function micOpts() { return { audio: { echoCancellation: true, noiseSuppression: true } }; }
 // "Microphone: ready while Talk is open": the stream is opened when Talk opens (only if the mic was
 // already allowed, so no permission prompt pops up) and kept until Talk closes, so a tap records at once.
-function warmMic() {
+// Warm like tmux-web (Eyal, 2026-10-13: "the start of what I say is cut off"; the cold mic took 0.7-0.8 s after the tap
+// and both the live words and the Whisper clip lost it): once the mic has been used, its stream stays open for 5 min
+// of quiet, is released at once when the page is hidden (a held mic keeps Android in call audio), and a press on the
+// bar's mic starts opening it before the tap ends.
+var warmTimer = null;
+function warmMic(force) {
   if (S.keep !== 'open' || S.engine !== 'live' || clipStream || warmP || !navigator.mediaDevices) return;
   var go = function () {
     var t = Date.now();
-    warmP = navigator.mediaDevices.getUserMedia(micOpts()).then(function (st) { warmP = null; if (!root.classList.contains('open')) { st.getTracks().forEach(function (x) { x.stop(); }); return; } clipStream = st; trace('mic_warm', { ms: Date.now() - t }); }).catch(function (e) { warmP = null; trace('mic_warm_error', { err: String(e) }); });
+    warmP = navigator.mediaDevices.getUserMedia(micOpts()).then(function (st) { warmP = null; if (document.visibilityState === 'hidden') { st.getTracks().forEach(function (x) { x.stop(); }); return; } clipStream = st; trace('mic_warm', { ms: Date.now() - t, force: !!force }); warmIdle(); }).catch(function (e) { warmP = null; trace('mic_warm_error', { err: String(e) }); });
   };
+  if (force) return go();
   try { navigator.permissions.query({ name: 'microphone' }).then(function (r) { if (r.state === 'granted') go(); }, function () {}); } catch (e) {}
 }
-function releaseMic() { if (clipStream && !clip) { clipStream.getTracks().forEach(function (x) { x.stop(); }); clipStream = null; trace('mic_release', {}); } }
+function warmIdle() { clearTimeout(warmTimer); warmTimer = setTimeout(function () { if (!listening) releaseMic('idle'); }, 5 * 60 * 1000); }
+function releaseMic(why) { if (clipStream && !clip) { clipStream.getTracks().forEach(function (x) { x.stop(); }); clipStream = null; trace('mic_release', { why: why || '' }); } }
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && !listening) releaseMic('hidden'); });
 function clipStart(ready) {
   clipChunks = []; clipT0 = Date.now();
   if (!navigator.mediaDevices || !window.MediaRecorder) return ready && ready();
@@ -1612,7 +1627,7 @@ function clipStop(cb) {
   var r = clip, st = clipStream; clip = null;
   if (!r) { if (cb) cb(null); return; }
   r.onstop = function () {
-    if (S.keep !== 'open' || !root.classList.contains('open')) { if (st) st.getTracks().forEach(function (x) { x.stop(); }); clipStream = null; }
+    if (S.keep !== 'open') { if (st) st.getTracks().forEach(function (x) { x.stop(); }); clipStream = null; } else warmIdle();
     if (cb) cb(new Blob(clipChunks, { type: r.mimeType || 'audio/webm' }));
   };
   try { r.stop(); } catch (e) { if (cb) cb(null); }
@@ -1647,16 +1662,28 @@ function unrepeat(text, live) {
 }
 function startLive() {
   setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); live.textContent = '';
+  dcOn = true; dcT0 = Date.now();   // on from the tap: a stop before the socket is ready still ends it (and keeps the recording)
   dcBase = inpVal().trim() ? inpVal().trim() + ' ' : '';   // speak more after typing: the words are added
-  clipStart(function () { if (listening) status('Listening, speak'); });
+  root.classList.add('arming'); status('Starting the mic\u2026');
+  clipStart(function () { root.classList.remove('arming'); if (listening) { status('Listening, speak'); try { navigator.vibrate && navigator.vibrate(15); } catch (e) {} barSync(); } });
   dcWarm(function () {
-    if (!listening) return;
-    dcOn = true; dcT0 = Date.now(); dc.__heardSound = 0;
+    if (!listening || !dcOn) return;
+    dc.__heardSound = 0;
     // Hebrew: Workers AI's nova-3 has none, so the phone's own recogniser shows the words (Whisper still makes the final).
     if (S.lang === 'he') startNativePreview();
     try { dc.sendJSON({ type: 'mode', dictate: true, lang: S.lang }); } catch (e) {}
-    dc.startCall().then(function () { logEv('dc_start', {}); })
-      .catch(function (e) { dcOn = false; setListening(false); clipStop(null); add('note', 'Could not start the microphone: ' + (e && e.message || e)); });
+    // "Cannot start call: not connected" right after the socket said it was (Eyal's first tap, 2026-10-13): try again
+    // a few times before giving up; the recording from the tap carries on either way.
+    var tries = 0;
+    var call = function () {
+      dc.startCall().then(function () { logEv('dc_start', { tries: tries }); })
+        .catch(function (e) {
+          if (++tries <= 3 && dcOn && /not connected/i.test(String(e && e.message || e))) { trace('dc_retry', { tries: tries }); return setTimeout(call, 300 * tries); }
+          logEv('dc_start_error', { err: String(e && e.message || e), tries: tries });
+          if (!nativePreview) startNativePreview();   // live words from the phone instead; Whisper still makes the final text
+        });
+    };
+    call();
   });
 }
 function liveFinish(text, sendIt) {
