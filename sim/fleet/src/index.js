@@ -29,7 +29,8 @@ const GATEWAY = 'qodebase-fleet';
 const DAY_CAP_USD = 50;
 // What each copy is a duplicate of (a one-commit snapshot of the upstream at the base sha; never pushed upstream).
 // Kept fresh for the video take (2026-10-14 ~09:00 UTC, scene 3): /start refuses it unless the run is labelled as the take.
-const RESERVED = ['fleet-n2-vscode-src-1'];
+// TEMPORARY (2026-10-14 night): the scene-3 rehearsal uses the spare fork; back to fleet-n2-vscode-src-1 for the real take.
+const RESERVED = ['fleet-n2-vscode-src-2'];
 // Files a /start queues for each kind's root at its base (tests, fixtures, .d.ts excluded), measured 2026-10-13.
 const ROOT_FILES = { 'vscode-src': { 'src/vs': 4064, 'src/vs/editor': 659 }, 'vscode-ext': { extensions: 2328 }, nextjs: { packages: 1546 }, angular: { packages: 2090 }, babel: { packages: 597 }, nest: { packages: 652 } };
 const KIND_BASE = { 'vscode-src': 'd4793e33307ee0862715165b2e021451ee9f207e', 'vscode-ext': '785307db28d9ec8bdca32d5fe74ea60696a46f7e', nextjs: 'e8d747659267c2937cc4b5dcbff4b0bd1e029315',
