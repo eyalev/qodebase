@@ -18,7 +18,9 @@ export type MergeChange = { id: string; title: string; intent: string; agent: st
   base: string | null; commit: string | null; review: unknown };
 export type MergeJob = { trainId: string; enqueuedAt?: number; slug: string; mainRemote: string; mainToken: string; branch: string | null; check?: string | null; changes: MergeChange[]; tries?: number;
   /** Tier 2: replay conflicting changes with this model (on the owner's Claude subscription). */
-  llm?: { model: string; via?: 'gateway' };
+  llm?: { model: string; via?: 'gateway'; direct?: boolean };
+  /** Lanes: rebase onto a main another lane moved, instead of reporting stale. */
+  rebaseOnStale?: boolean;
   /** Lab policies github/ffa: no tier-1 handlers (plain git); ffa also skips the checks. */
   handlers?: boolean; noChecks?: boolean };
 export type LlmUse = { model: string; ms: number; turns: number | null; usd: number | null; in: number | null; out: number | null; cacheRead: number | null; cacheWrite: number | null; cacheWrite1h?: number | null; sameLines?: boolean; error?: string };
@@ -146,12 +148,12 @@ export class MergeBox extends DurableObject<Env> {
       const tU = Date.now();
       await this.#sh(`mkdir -p /opt/qb && printf '%s' "$JS" > /opt/qb/mergejob.mjs`, { JS: MERGEJOB });
       ph.push(['upload', tU, Date.now()]);
-      const spec = { trainId: job.trainId, dir: `/m/${job.slug}`, mainRemote: job.mainRemote, mainToken: job.mainToken, branch: job.branch, check: job.check ?? null, changes: job.changes, llm: job.llm || null, handlers: job.handlers !== false, noChecks: !!job.noChecks };
+      const spec = { trainId: job.trainId, dir: `/m/${job.slug}`, mainRemote: job.mainRemote, mainToken: job.mainToken, branch: job.branch, check: job.check ?? null, changes: job.changes, llm: job.llm || null, handlers: job.handlers !== false, noChecks: !!job.noChecks, rebaseOnStale: !!job.rebaseOnStale };
       // The Claude token only reaches the box for a tier-2 replay, as its own variable (never in JOB, never logged).
       // Replays through forq's AI Gateway when the Landing chose it (flag replayVia: 'gateway' + the REPLAY_GATEWAY_TOKEN secret):
       // billed to Cloudflare unified-billing credits, never the plan. Otherwise the owner's plan, as before.
       const gw = job.llm?.via === 'gateway' && this.env.REPLAY_GATEWAY_TOKEN;
-      const r = await this.#sh('node /opt/qb/mergejob.mjs 2>&1', { JOB: JSON.stringify(spec), HOME: '/root', ...(job.llm ? (gw ? { QB_GW_URL: `https://gateway.ai.cloudflare.com/v1/${this.env.ACCOUNT_ID}/${this.env.REPLAY_GATEWAY || 'qodebase-replay'}/anthropic`, QB_GW_TOKEN: String(this.env.REPLAY_GATEWAY_TOKEN) } : { QB_CLAUDE_TOKEN: this.env.CLAUDE_CODE_OAUTH_TOKEN }) : {}) });
+      const r = await this.#sh('node /opt/qb/mergejob.mjs 2>&1', { JOB: JSON.stringify(spec), HOME: '/root', ...(job.llm ? (gw ? { QB_GW_URL: `https://gateway.ai.cloudflare.com/v1/${this.env.ACCOUNT_ID}/${this.env.REPLAY_GATEWAY || 'qodebase-replay'}/anthropic`, QB_GW_TOKEN: String(this.env.REPLAY_GATEWAY_TOKEN), ...(job.llm?.direct ? { QB_REPLAY_DIRECT: '1' } : {}) } : { QB_CLAUDE_TOKEN: this.env.CLAUDE_CODE_OAUTH_TOKEN }) : {}) });
       const line = r.stdout.split('\n').find((l) => l.startsWith('QB_RESULT '));
       const progress = r.stdout.split('\n').filter((l) => l && !l.startsWith('QB_RESULT ')).slice(-60).join('\n');
       // Tokens never reach the log: the job prints none, but be sure.

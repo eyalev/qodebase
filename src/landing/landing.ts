@@ -52,6 +52,8 @@ export type Change = {
   choreTaken?: string; // demo: the fix/redo for this state was handed out ('bounced@<tries>' / 'with-lead@<tries>')
 };
 export type Train = { id: string; state: 'testing' | 'landed' | 'bounced'; changes: string[]; startedAt: number; endedAt: number | null;
+  /** Lanes (flag lanes): the lane this train ran in (its own MergeBox). */
+  lane?: string;
   checks: { ok: boolean; ms: number; failures: string[] } | null; mainBefore: string | null; mainAfter: string | null; note?: string;
   /** What happened to each change in this train (set when the merger reports). */
   outcomes?: Record<string, 'landed' | 'bounced' | 'conflict' | 'retry'>;
@@ -65,6 +67,8 @@ type Demo = { running: boolean; agents: number; speed: number; startedAt: number
   publicRun?: boolean };
 type Meta = {
   slug: string; waiting: string[]; running: string | null; runningSince?: number;
+  /** Lanes (flag lanes = path depth): one train per lane at once, each on its own MergeBox. */
+  lanes?: Record<string, { train: string; since: number }>;
   flags: { llmReplay: boolean; agentModel?: string; replayModel?: string; publicWatch?: boolean;
     /** This project's own caps (a crew run): open agents, awake change agents. */
     caps?: { agents?: number; awake?: number };
@@ -83,6 +87,10 @@ type Meta = {
      *  to the agent to rebase (ffa also skips the checks); phases/stacking/leads = planner strategies (runner). */
     policy?: 'intent' | 'ffa' | 'phases' | 'stacking' | 'leads' | 'github';
     trainMax?: number; claims?: boolean; dedupe?: boolean;
+    /** Lanes: path depth that splits the queue (2 = kata/m1, kata/m2, ...); a change spanning lanes waits for all. */
+    lanes?: number;
+    /** Model replays as one direct call through the replay gateway instead of claude -p (needs replayVia 'gateway'). */
+    replayDirect?: boolean;
     /** The agent board (board.ts): platform + box-hook posts, `forq who`, the hook's context. Off unless set (lab A/B). */
     board?: boolean;
     /** Dedupe passes read every list handed out on this project (two teams), not only the caller's. */
@@ -718,12 +726,15 @@ export class Landing extends DurableObject<Env> {
     if (m.watchPrep) await this.#prepareWatch().catch((e) => log('landing', 'watch_prep_failed', { err: String((e as Error)?.stack || e) }));
     log('landing', 'alarm', { slug: m.slug, running: m.running, waiting: m.waiting.length, failStreak: m.failStreak || 0 });
     try {
-      if (m.running) {
-        // A train lost to a restart (the box reports back; if it never does, run it again).
-        if (Date.now() - (m.runningSince || 0) > TRAIN_STUCK_MS) await this.#trainLost('no result from the merger box in 12 min');
-        else { await this.#arm(30_000); return; }
+      if (m.flags.lanes) await this.#laneTick();
+      else {
+        if (m.running) {
+          // A train lost to a restart (the box reports back; if it never does, run it again).
+          if (Date.now() - (m.runningSince || 0) > TRAIN_STUCK_MS) await this.#trainLost('no result from the merger box in 12 min');
+          else { await this.#arm(30_000); return; }
+        }
+        await this.#startTrain();
       }
-      await this.#startTrain();
     } finally {
       await this.#deliver();
       await this.#reviewTick().catch((e) => log('landing', 'review_tick_failed', { err: String(e) }));
@@ -939,10 +950,11 @@ export class Landing extends DurableObject<Env> {
   }
 
   /** Which waiting changes can go now: stacked ones only after their base. */
-  async #pick(): Promise<Change[]> {
+  async #pick(allow?: Set<string>): Promise<Change[]> {
     const m = await this.#m();
     const out: Change[] = [];
     for (const id of m.waiting) {
+      if (allow && !allow.has(id)) continue;
       if (out.length >= (m.flags.trainMax || (m.flags.policy === 'ffa' ? 1 : TRAIN_MAX))) break;
       const c = await this.#get(id);
       if (!c || c.state !== 'queued') continue;
@@ -955,7 +967,29 @@ export class Landing extends DurableObject<Env> {
     return out;
   }
 
-  async #startTrain() {
+  /** A change's lane: the first `depth` path segments its files share; files in more than one lane -> '*' (alone). */
+  #laneOf(c: Change, depth: number) {
+    const keys = new Set((c.files.length ? c.files : c.claims).map((f) => f.split('/').slice(0, depth).join('/')));
+    return keys.size === 1 ? [...keys][0] : '*';
+  }
+  /** Lanes: every lane with waiting changes and no train starts one (a '*' change runs only when no lane does). */
+  async #laneTick() {
+    const m = await this.#m();
+    m.lanes ||= {};
+    for (const [lane, r] of Object.entries(m.lanes)) if (Date.now() - r.since > TRAIN_STUCK_MS) await this.#trainLost('no result from the merger box in 12 min', lane);
+    if (m.flags.paused || m.flags.halted) return;
+    const by = new Map<string, string[]>();
+    for (const id of m.waiting) { const c = await this.#get(id); if (!c || c.state !== 'queued') continue; const l = this.#laneOf(c, m.flags.lanes!); by.set(l, [...(by.get(l) || []), id]); }
+    const busy = () => Object.keys(m.lanes!);
+    for (const [lane, ids] of by) {
+      if (m.lanes![lane] || busy().includes('*')) continue;
+      if (lane === '*' && busy().length) continue;
+      await this.#startTrain(lane, new Set(ids));
+    }
+    if (busy().length) await this.#arm(30_000);
+  }
+
+  async #startTrain(lane?: string, only?: Set<string>) {
     const m = await this.#m();
     if (m.flags.paused || m.flags.halted) return;   // R1: queued changes wait while the owner has paused or stopped
     m.waiting = (await Promise.all(m.waiting.map((id) => this.#get(id)))).filter((c) => c && c.state === 'queued').map((c) => c!.id);
@@ -963,16 +997,18 @@ export class Landing extends DurableObject<Env> {
     // 00:58 while the run was being stopped, sat for hours; cause not traced). Put it back, oldest first, and log it.
     const lost = (await this.#all()).filter((c) => c.state === 'queued' && !m.waiting.includes(c.id)).sort((a, b) => a.createdAt - b.createdAt);
     if (lost.length) { m.waiting.push(...lost.map((c) => c.id)); log('landing', 'waiting_repaired', { slug: m.slug, ids: lost.map((c) => c.id) }); }
-    const picked = await this.#pick();
+    const picked = await this.#pick(only);
     if (!picked.length) { await this.#saveMeta(); return; }
     const project = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
     if (!project) throw new Error('no such project');
     using main = await this.env.ARTIFACTS.get(project.repo);
     const mainToken = (await main.createToken('write', 1800)).plaintext;
-    const train: Train = { id: `t${Date.now().toString(36)}`, state: 'testing', changes: picked.map((c) => c.id), startedAt: Date.now(), endedAt: null, checks: null, mainBefore: null, mainAfter: null };
+    const train: Train = { id: `t${Date.now().toString(36)}${lane ? Math.random().toString(36).slice(2, 4) : ''}`, ...(lane ? { lane } : {}), state: 'testing', changes: picked.map((c) => c.id), startedAt: Date.now(), endedAt: null, checks: null, mainBefore: null, mainAfter: null };
     const job: MergeJob = { trainId: train.id, slug: m.slug, mainRemote: project.remote, mainToken, branch: project.importedFrom?.branch || null, changes: [],
       // Tier 2 runs on the owner's Claude subscription: only for the instance owner's projects (and the showcase).
-      ...(m.flags.llmReplay && !m.demo?.publicRun && !this.#rebasePolicy(m) && (project.owner === this.env.OWNER_HANDLE || project.owner === 'forq') ? { llm: { model: m.flags.replayModel || DEFAULT_REPLAY_MODEL, ...((m.flags as any).replayVia === 'gateway' && this.env.REPLAY_GATEWAY_TOKEN ? { via: 'gateway' } : {}) } } : {}),
+      ...(m.flags.llmReplay && !m.demo?.publicRun && !this.#rebasePolicy(m) && (project.owner === this.env.OWNER_HANDLE || project.owner === 'forq') ? { llm: { model: m.flags.replayModel || DEFAULT_REPLAY_MODEL, ...((m.flags as any).replayVia === 'gateway' && this.env.REPLAY_GATEWAY_TOKEN ? { via: 'gateway' as const, ...(m.flags.replayDirect ? { direct: true } : {}) } : {}) } } : {}),
+      // Lanes: another lane may move main while this train runs: rebase onto it instead of running the train again.
+      ...(lane ? { rebaseOnStale: true } : {}),
       // github / ffa: plain git only (no handlers), ffa also without checks.
       ...(this.#rebasePolicy(m) ? { handlers: false, noChecks: m.flags.policy === 'ffa' } : {}) };
     for (const c of picked) {
@@ -986,19 +1022,23 @@ export class Landing extends DurableObject<Env> {
       await this.#put(c);
     }
     m.waiting = m.waiting.filter((id) => !train.changes.includes(id));
-    m.running = train.id; m.runningSince = Date.now();
+    if (lane) (m.lanes ||= {})[lane] = { train: train.id, since: Date.now() };
+    else { m.running = train.id; m.runningSince = Date.now(); }
     m.trains.push(train.id);
     await this.ctx.storage.put(`t:${train.id}`, train);
     await this.#saveMeta();
-    await this.env.MergeBox.get(this.env.MergeBox.idFromName(`${m.slug}--merge`)).enqueue(job);
+    // One MergeBox per lane (its own clone and container), the project's usual one otherwise.
+    const box = lane ? `${m.slug}--merge-${lane.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 40) || 'all'}` : `${m.slug}--merge`;
+    await this.env.MergeBox.get(this.env.MergeBox.idFromName(box)).enqueue(job);
     log('landing', 'train_started', { slug: m.slug, train: train.id, changes: train.changes });
     await this.#arm(30_000);
   }
 
-  async #trainLost(why: string) {
+  async #trainLost(why: string, lane?: string) {
     const m = await this.#m();
-    const t = await this.ctx.storage.get<Train>(`t:${m.running}`);
-    log('landing', 'train_lost', { slug: m.slug, train: m.running, why });
+    const tid = lane ? m.lanes?.[lane]?.train : m.running;
+    const t = await this.ctx.storage.get<Train>(`t:${tid}`);
+    log('landing', 'train_lost', { slug: m.slug, train: tid, lane, why });
     if (t) {
       t.state = 'bounced'; t.endedAt = Date.now(); t.note = why; await this.ctx.storage.put(`t:${t.id}`, t);
       for (const id of t.changes.slice().reverse()) {
@@ -1006,7 +1046,7 @@ export class Landing extends DurableObject<Env> {
         if (c && c.state === 'testing') { c.state = 'queued'; this.#ev(c, 'queued', 'train interrupted, trying again'); await this.#put(c); m.waiting.unshift(id); }
       }
     }
-    m.running = null;
+    if (lane) delete m.lanes?.[lane]; else m.running = null;
     await this.#saveMeta();
   }
 
@@ -1014,13 +1054,14 @@ export class Landing extends DurableObject<Env> {
   async trainDone(r: MergeResult) {
     const m = await this.#m();
     const t = await this.ctx.storage.get<Train>(`t:${r.trainId}`);
-    if (!t || m.running !== r.trainId) { log('landing', 'train_result_ignored', { slug: m.slug, train: r.trainId, running: m.running }); return; }
+    const inLane = !!(t?.lane && m.lanes?.[t.lane]?.train === r.trainId);
+    if (!t || (!inLane && m.running !== r.trainId)) { log('landing', 'train_result_ignored', { slug: m.slug, train: r.trainId, running: m.running, lane: t?.lane }); return; }
     t.endedAt = Date.now(); t.mainBefore = r.mainBefore || null; t.mainAfter = r.mainAfter || null;
     if (r.phases?.length) t.phases = r.phases.slice(0, 80);
     if (r.cold !== undefined) t.cold = r.cold;
     if (r.fetchMs) t.fetchMs = r.fetchMs;
     t.checks = r.checks ? { ok: !!r.checks.ok, ms: r.checks.ms || 0, failures: r.checks.failures || [] } : null;
-    m.running = null;
+    if (inLane) delete m.lanes![t.lane!]; else m.running = null;
     m.failStreak = !r.ok ? (m.failStreak || 0) + 1 : 0;
     if (!r.ok || r.stale) {
       // The box failed or main moved under it: everyone goes back to the front of the line.
@@ -1083,7 +1124,11 @@ export class Landing extends DurableObject<Env> {
         log('landing', 'replay_llm', { slug: m.slug, id: rc.id, landed: rc.landed, ...rc.llm });
         // Named like the boxes' rows (<owner>/<name>:<model>): under the bare slug the guard priced these Haiku replays as the
         // project's priciest model + 50% (R5: ~\$11 of a \$30.5 guard reading, the run halted at ~\$16.5 real).
-        await recordCost(this.env, m.slug.split('.')[0], 'claude', `${m.slug.replace('.', '/')}:${rc.llm.model || DEFAULT_REPLAY_MODEL}`, { usd: null, covered: false, billing: (m.flags as any).replayVia === 'gateway' && this.env.REPLAY_GATEWAY_TOKEN ? 'gateway' : 'sub',
+        await recordCost(this.env, m.slug.split('.')[0], 'claude', `${m.slug.replace('.', '/')}:${rc.llm.model || DEFAULT_REPLAY_MODEL}`, { ...(((m.flags as any).replayVia === 'gateway' && this.env.REPLAY_GATEWAY_TOKEN)
+            // Through the gateway, paid from forq's unified-billing credits: priced (Haiku 5.5 \$0.10 in / \$0.50 out per M), so the
+            // project's budget guard is the cap.
+            ? { usd: ((rc.llm.in || 0) * 0.10 + (rc.llm.out || 0) * 0.50) / 1e6, covered: false, billing: 'gateway' as const }
+            : { usd: null, covered: false, billing: 'sub' as const }),
           tokens: { in: rc.llm.in || 0, out: rc.llm.out || 0, cw: Math.max(0, (rc.llm.cacheWrite || 0) - (rc.llm.cacheWrite1h || 0)), cw1h: rc.llm.cacheWrite1h || 0, cr: rc.llm.cacheRead || 0 } });
       }
       await this.#afterRealTrain(r);
