@@ -236,7 +236,7 @@ async function runScenario(s, cookies, browserArgs) {
             await page.waitForTimeout(250);
           }
           const said = await page.evaluate((n) => [...document.querySelectorAll('#talk-log > *')].slice(n).filter((c) => !/\byou\b/.test(c.className)).map((c) => c.innerText.replace(/\s+/g, ' ').trim()).join(' '), n0).catch(() => '');
-          res = { ok: true, text: said || (st && st.last) || '' };
+          res = { ok: true, text: said || (st && st.last && (st.last.text || '')) || '' };   // last = the message object {who, text, links, …}
         }
       }
       if (via === 'audio') {
