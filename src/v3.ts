@@ -233,7 +233,7 @@ function whyLine(l: Landed, shown?: string) {
   const m = /^(.+?[.!?])\s+(.*)$/.exec(raw);
   const intent = m && ttl && m[1].replace(/[.!?]+$/, '').trim().toLowerCase() === ttl.toLowerCase() ? m[2] : raw;
   const short = intent.length > 110 ? `${intent.slice(0, 107).replace(/\s+\S*$/, '')}…` : intent;
-  const rv = l.verdict === 'auto' ? 'auto-approved (scripted)' : l.verdict === 'approved' ? `reviewed${l.reviewer && !/^(r:)?review(er)?\d*$/i.test(l.reviewer) ? ` by ${l.reviewer}` : ''}` : l.verdict === 'changes' ? 'landed after a requested fix' : '';
+  const rv = l.verdict === 'auto' ? 'no reviewer in this setup: landed after its checks passed' : l.verdict === 'approved' ? `reviewed${l.reviewer && !/^(r:)?review(er)?\d*$/i.test(l.reviewer) ? ` by ${l.reviewer}` : ''}` : l.verdict === 'changes' ? 'landed after a requested fix' : '';
   const how = l.replayed || l.how === 'handler' || l.how === 'model' ? `replayed on the newest code${l.how === 'model' ? ' by a model' : ''}` : '';
   return [short && `Why: ${short}`, rv, how].filter(Boolean).join('; ');
 }

@@ -189,7 +189,7 @@
       case 'working': return null;
       case 'pushed': return [`${who} finished and sent it for review`, T];
       case 'reviewing': return null;
-      case 'approved': return [c.review?.verdict === 'auto' || /scripted/i.test(e.detail || '') ? `${its} was auto-approved (scripted)` : `${its} passed review`, T];
+      case 'approved': return [D.mode === 'demo' && (c.review?.verdict === 'auto' || /scripted/i.test(e.detail || '')) ? `${its} was auto-approved (scripted)` : c.review?.verdict === 'auto' ? `${its} needs no review (no reviewer in this setup): it lands once its checks pass` : `${its} passed review`, T];
       case 'changes-suggested': return [`The reviewer asked ${who} for a fix`, d || (c.review && c.review.notes)];
       case 'queued': return [`${its} joined the line`, T];
       case 'testing': return null; // trains say this once for all their changes
@@ -538,7 +538,8 @@
   function boardRow(r, sharedWith) {
     const w = boardWho(r.agent);
     let [verb, k] = BKIND[r.kind] || [r.kind, 'working'];
-    if (r.kind === 'approved' && (w.c?.review?.verdict === 'auto' || D.mode === 'demo')) verb = 'was auto-approved (scripted)';
+    if (r.kind === 'approved' && D.mode === 'demo') verb = 'was auto-approved (scripted)';
+    else if (r.kind === 'approved' && w.c?.review?.verdict === 'auto') verb = 'needs no review (no reviewer in this setup)';
     const href = w.c ? `#/change/${esc(w.c.id)}` : null;
     const right = r.done || r.kind === 'gave-up' ? ago(r.ts) : w.c?.createdAt ? `started ${ago(w.c.createdAt)}` : ago(r.ts);
     // One dim line: the agent's own status note, "no news" only while it should be working, a shared file.
@@ -823,7 +824,7 @@
         }
         if (L?.how === 'lead') return `<div class="how"><b>Landed with its ${term('lead', 'lead')}'s help</b><p>It ${term('collision', 'collided')}${withWho}${conf.length ? ` on ${files(conf)}` : ''}. No rule could replay this edit, so its lead redid it on the newest code; it passed the tests and joined main.</p></div>`;
         if (sentBack) return `<div class="how"><b>Landed on the second try</b><p>The first time, a test failed, so it was sent back and main stayed healthy. ${AG(c.agent)} fixed it, and it passed${L?.mainCommit ? `, joining main as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
-        return `<div class="how"><b>Landed</b><p>It ${c.review?.verdict === 'auto' ? 'was auto-approved (scripted), passed the tests' : 'passed review and the tests'}, and joined main${L?.mainCommit ? ` as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
+        return `<div class="how"><b>Landed</b><p>It ${c.review?.verdict === 'auto' ? (D.mode === 'demo' ? 'was auto-approved (scripted), passed the tests' : 'had no reviewer in this setup, passed its checks') : 'passed review and the tests'}, and joined main${L?.mainCommit ? ` as ${sha(L.mainCommit)}` : ''}${c.landedAt ? `, ${ago(c.landedAt)}` : ''}.</p></div>`;
       case 'replaying': return `<div class="how busy"><b>Replaying now</b><p>It ${term('collision', 'collided')}${withWho} on ${files(conf.length ? conf : (ce?.detail || '').split(':')[0].split(', '))}. qodebase is re-applying its intent on the newest code instead of throwing the work away.</p></div>`;
       case 'with-lead': return `<div class="how warn"><b>Waiting for its ${term('lead', 'lead')}</b><p>It collided${withWho} on ${files(conf)}. No rule could replay this edit${D.flags && D.flags.llmReplay === false ? ' and AI replay is off for this project' : ''}, so ${esc(leadName(c.lead) || 'the lead')} decides how to combine both.</p></div>`;
       case 'bounced': { const tr = D.queue.trains.find((t) => t.changes.includes(c.id) && t.state === 'bounced'); return `<div class="how warn"><b>Sent back</b><p>A test failed when it was tested with the newest main, so it did not land and main stayed healthy. ${AG(c.agent)} gets the failure and fixes it.</p>${tr ? `<p class="mono" style="margin-top:6px">${esc(tr.checks.failures.join('\n'))}</p>` : ''}</div>`; }
@@ -865,7 +866,7 @@
     const two = L?.reviewedDiff?.length && L?.diff?.length;
     const tabs = two ? `<div class="dtabs" role="tablist"><button type="button" role="tab" class="chipb" data-diff="landed" aria-pressed="${diffTab !== 'reviewed'}">What landed</button><button type="button" role="tab" class="chipb" data-diff="reviewed" aria-pressed="${diffTab === 'reviewed'}">What was reviewed</button></div>` : '';
     const diff = L?.diff?.length ? tabs + diffHtml(two && diffTab === 'reviewed' ? L.reviewedDiff : L.diff) : '';
-    const rv = c.review ? `<dt>${term('review', 'Review')}</dt><dd>${c.review.verdict === 'changes' ? 'Fixes asked' : c.review.verdict === 'auto' ? 'Approved (scripted)' : 'Approved'}${c.review.notes ? `<span class="dim small" style="display:block">${esc(c.review.notes)}</span>` : ''}</dd>` : '';
+    const rv = c.review ? `<dt>${term('review', 'Review')}</dt><dd>${c.review.verdict === 'changes' ? 'Fixes asked' : c.review.verdict === 'auto' ? (D.mode === 'demo' ? 'Approved (scripted)' : 'No reviewer in this setup: landed after its checks passed') : 'Approved'}${c.review.notes ? `<span class="dim small" style="display:block">${esc(c.review.notes)}</span>` : ''}</dd>` : '';
     return `<div class="drill">${crumbs([['Agents at work', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [ref(c.id)]])}
       <h2 style="font-size:20px;margin-bottom:6px">${short(c)}</h2>
       <div class="tags">${st(c)}<span>${AG(c.agent)}</span>${c.createdAt ? `<span>started ${ago(c.createdAt)}</span>` : ''}</div>
