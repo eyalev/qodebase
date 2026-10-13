@@ -40,6 +40,7 @@ export default {
       case '/pause': return json(await run(env, repo).pause(body.why || 'paused by hand'));
       case '/resume': return json(await run(env, repo).resume(body.cfg || {}));   // cfg: e.g. a new planUsdPerMin or maxPerMin after a fix
       case '/stop': return json(await run(env, repo).stop(body.why || 'stopped by hand'));
+      case '/meta': return json(await run(env, repo).setMeta(String(body.run || ''), body.meta || {}));
       case '/records': return new Response(await run(env, repo).records(url.searchParams.get('run')), { headers: { 'content-type': 'application/x-ndjson' } });
       case '/budget': return json(await budget(env).status());
       // One file through a given provider/model, no landing (provider checks; the call is priced and counted in the day cap).
@@ -136,7 +137,7 @@ export class Run extends DurableObject {
     cfg.model = cfg.models.map((m) => m.model).join(' + ');
     const prices = PRICES_OF(this.env);
     for (const m of [...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])]) if (!m.model || !prices[m.model]) return { error: `model ${m.model} has no price: one of ${Object.keys(prices).join(', ')}` };
-    if (cfg.overflow && !this.env.GEMINI_KEY) return { error: 'overflow needs the GEMINI_KEY secret' };
+    if ([...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])].some((m) => m.model.startsWith('gemini')) && !this.env.GEMINI_KEY) return { error: 'a Gemini model needs the GEMINI_KEY secret' };
     cfg.agents = Math.max(1, Math.min(2000, Number(cfg.agents) || 10));
     cfg.budgetUsd = Math.min(Number(cfg.budgetUsd) || 1, b.left);
     // One walk of main's src/vs (~800 folders): the files with their blob hashes, lanes interleaved, and main's tip.
@@ -152,6 +153,7 @@ export class Run extends DurableObject {
       counts: { queued: pick.length, model: 0, verify: 0, ready: 0, landed: 0, skipped: 0, verify_fail: 0, model_error: 0, rate_limited: 0, rejected: 0 },
       recent: [], perMin: {}, pauses: [], agentsDone: 0 };
     await this.save(s);
+    await this.ctx.storage.put(`meta:${runId}`, { label: String(cfg.label || '').slice(0, 80) || null, agents: cfg.agents, agentsStarted: 0, repo: cfg.repo, root: cfg.root, planned: cfg.models.map((m) => m.model), overflow: cfg.overflow?.model || null, maxPerMin: Object.fromEntries([...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])].map((m) => [m.model, m.maxPerMin])) });
     await lander(this.env, cfg.repo).begin(runId, p.base, cfg.repo);
     await budget(this.env).addRepo(cfg.repo);
     // Agents start from this object's alarm in batches: started one by one inside the request, F2's 100-agent start
@@ -168,6 +170,7 @@ export class Run extends DurableObject {
     const from = s.agentsStarted || 0, to = Math.min(s.cfg.agents, from + 50);
     await Promise.all(Array.from({ length: to - from }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN)));
     s.agentsStarted = to; await this.save(s);
+    const meta = await this.ctx.storage.get(`meta:${s.runId}`); if (meta) { meta.agentsStarted = to; await this.ctx.storage.put(`meta:${s.runId}`, meta); }
     log('agents_started', { runId: s.runId, started: to, of: s.cfg.agents });
     if (to < s.cfg.agents) await this.ctx.storage.setAlarm(Date.now() + 200);
   }
@@ -183,9 +186,10 @@ export class Run extends DurableObject {
     const minute = Math.floor(Date.now() / 60000), slice = Math.floor(Date.now() / 10000);
     s.perSlice ||= {};
     const room = (m) => (s.perSlice[`${m.model}|${slice}`] || 0) < Math.max(1, Math.floor(m.maxPerMin / 6));
-    let pickM = s.cfg.models.find(room), provider = 'workers-ai';
-    if (!pickM && s.cfg.overflow && room(s.cfg.overflow)) { pickM = s.cfg.overflow; provider = 'google-ai-studio'; }
+    let pickM = s.cfg.models.find(room);
+    if (!pickM && s.cfg.overflow && room(s.cfg.overflow)) pickM = s.cfg.overflow;
     if (!pickM) return { wait: 2_000 + Math.random() * 3000 };
+    const provider = pickM.model.startsWith('gemini') ? 'google-ai-studio' : 'workers-ai';   // a planned Gemini model too (F3b)
     s.perSlice[`${pickM.model}|${slice}`] = (s.perSlice[`${pickM.model}|${slice}`] || 0) + 1;
     for (const k of Object.keys(s.perSlice)) if (Number(k.split('|')[1]) < slice - 12) delete s.perSlice[k];
     if (s.usd >= s.cfg.budgetUsd) { await this.autoPause(s, `run budget reached: $${s.usd.toFixed(3)} of $${s.cfg.budgetUsd}`); return { wait: 15_000 }; }
@@ -293,21 +297,33 @@ export class Run extends DurableObject {
   async runs() {
     const ids = this.sql.exec(`SELECT DISTINCT run FROM rec`).toArray().map((x) => x.run);
     const s = await this.st();
+    const metas = await this.ctx.storage.get(ids.map((i) => `meta:${i}`)).then((m) => new Map([...m].map(([k, v]) => [k.slice(5), v])));
     return ids.map((id) => {
       const by = Object.fromEntries(this.sql.exec(`SELECT status, COUNT(*) AS n FROM rec WHERE run = ? GROUP BY status`, id).toArray().map((x) => [x.status, x.n]));
       const agg = this.sql.exec(`SELECT MIN(at) AS t0, MAX(at) AS t1, SUM(usd) AS usd, SUM(tin) AS tin, SUM(tout) AS tout, COUNT(DISTINCT file) AS files FROM rec WHERE run = ?`, id).toArray()[0];
       const waits = this.sql.exec(`SELECT landed_at - at AS w FROM rec WHERE run = ? AND landed_at IS NOT NULL`, id).toArray().map((x) => x.w).sort((a, b) => a - b);
       const models = {};
       for (const x of this.sql.exec(`SELECT model, status, COUNT(*) AS n, SUM(usd) AS usd FROM rec WHERE run = ? GROUP BY model, status`, id).toArray()) { const m = (models[x.model] ||= { usd: 0 }); m[x.status] = x.n; m.usd = Math.round((m.usd + (x.usd || 0)) * 10000) / 10000; }
+      const meta = metas.get(id) || {};
+      // Per model: calls (anything that reached a model: not 'skipped'), 429s, and its busiest minute.
+      for (const x of this.sql.exec(`SELECT model, COUNT(*) AS calls, SUM(status LIKE 'rate_limited%') AS r429 FROM rec WHERE run = ? AND status != 'skipped' GROUP BY model`, id).toArray()) {
+        const m = (models[x.model] ||= { usd: 0 }); m.calls = x.calls; m.rateLimited429 = x.r429 || 0;
+        m.peakPerMin = this.sql.exec(`SELECT COUNT(*) AS n FROM rec WHERE run = ? AND model = ? AND status != 'skipped' GROUP BY at / 60000 ORDER BY n DESC LIMIT 1`, id, x.model).toArray()[0]?.n || 0;
+        m.role = meta.overflow === x.model ? 'overflow' : meta.planned?.includes(x.model) ? 'planned' : (x.model.startsWith('gemini') ? 'overflow' : 'planned');
+      }
+      const perMinute = this.sql.exec(`SELECT at / 60000 AS minute, model, COUNT(*) AS calls FROM rec WHERE run = ? AND status != 'skipped' GROUP BY minute, model ORDER BY minute`, id).toArray().map((x) => ({ minute: x.minute * 60000, model: x.model, calls: x.calls }));
       const cur = s && s.runId === id ? s : null;
       const pct = (q) => (waits.length ? Math.round(waits[Math.floor(waits.length * q)] / 1000) : null);
       const t0 = cur?.startedAt || agg.t0, t1 = cur?.endedAt || agg.t1;
-      return { runId: id, repo: cur?.cfg.repo || MAIN, root: cur?.cfg.root || 'src/vs', state: cur?.state || 'ended', agents: cur?.cfg.agents ?? null, files: agg.files,
+      return { runId: id, label: meta.label || null, repo: meta.repo || cur?.cfg.repo || MAIN, root: meta.root || cur?.cfg.root || 'src/vs', state: cur?.state || 'ended', agents: meta.agents ?? cur?.cfg.agents ?? null, agentsStarted: meta.agentsStarted ?? cur?.agentsStarted ?? null, files: agg.files,
         landed: by.landed || 0, ready: by.ready || 0, skipped: by.skipped || 0, verify_fail: by.verify_fail || 0, rejected: by.rejected || 0, rate_limited: by.rate_limited || 0, model_error: by.model_error || 0,
         retried: (by.rate_limited_retry || 0) + (by.model_error_retry || 0), usd: Math.round((agg.usd || 0) * 10000) / 10000, tokensIn: agg.tin, tokensOut: agg.tout,
-        startedAt: t0, endedAt: t1, wallS: Math.round((t1 - t0) / 1000), landWaitS: { p50: pct(0.5), p90: pct(0.9) }, models };
+        startedAt: t0, endedAt: t1, wallS: Math.round((t1 - t0) / 1000), landWaitS: { p50: pct(0.5), p90: pct(0.9) }, models, perMinute };
     });
   }
+
+  /** Admin: fill in a past run's label and facts (runs from before run meta was kept). */
+  async setMeta(runId, m) { const k = `meta:${runId}`; const cur = (await this.ctx.storage.get(k)) || {}; await this.ctx.storage.put(k, { ...cur, ...m }); return { ...cur, ...m }; }
 
   async records(runId) {
     const s = await this.st(); const id = runId || s?.runId;
@@ -328,7 +344,7 @@ async function listFiles(env, repoName = MAIN, root = 'src/vs') {
     for (const e of await r.readTree(hash)) {
       const p = `${prefix}/${e.name}`;
       if (e.type === 'tree') { if (!SKIP_DIRS.has(e.name)) await walk(e.hash, p); }
-      else if (e.type === 'blob' && /\.m?ts$/.test(p) && !/\.d\.m?ts$|\.(test|spec)\.m?ts$/.test(p)) out.push({ path: p, hash: e.hash });
+      else if (e.type === 'blob' && /\.m?ts$/.test(p) && !/\.d\.m?ts$|[._](test|spec)\.m?ts$/.test(p)) out.push({ path: p, hash: e.hash });
     }
   };
   await walk(h, root);
