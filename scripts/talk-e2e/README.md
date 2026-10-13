@@ -6,6 +6,7 @@ real Chrome at 390 px, signed in as Eyal, says a sequence of turns to Talk and c
 ```
 npm run talk:e2e                    # every scenario (~50, ~15 min)
 npm run talk:e2e -- nav-mine        # one scenario by id (or a group name / substring: runs, deck, idea-)
+npm run talk:e2e -- --via live      # every turn through the dictation pipeline instead of typed submit
 node scripts/talk-e2e/run.mjs --list
 ```
 
@@ -35,8 +36,9 @@ under `/api/p/eyal/x/` through, for a sandbox project only.
 
 **How a turn is said:**
 - `webmcp` (the default): `__webmcp.call('talk')`, the same `submit()` that typed text goes through.
-- `live`: qb2's test hook into the live-words pipeline (`__talkTest.live`). It falls back to `webmcp` until the hook
-  ships.
+- `live`: qb2's test hook (`__talkTest.live(words)`, on with `qb-talk-test=1`): the words enter the dictation pipeline
+  as if nova-3 ended the turn (quick commands, decide, the Whisper double-check, spoken replies, a `latency` trace row).
+  The turn ends when `__talkTest.state()` is neither busy nor speaking. `--via live` runs every typed turn this way.
 - `tap`: taps a selector.
 - `audio`: a WAV file plays as the microphone in conversation mode. `~name` points to qb2's synthetic Aura clips
   (`TALK_E2E_AUDIO_DIR`); they are never kept in this public repo.
