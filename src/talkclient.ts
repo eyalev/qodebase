@@ -75,6 +75,7 @@ var S = {
   merge: get('merge', 'off'),
   answer: get('answer', ''),            // answering model ('' = Talk's default, Gemini 3.1 Flash-Lite); per device           // also merge live words + Whisper with a model (off: it lost to Whisper alone on Eyal's dictations, 2026-10-13)
   keep: get('keepmic', 'open'),
+  prewarm: get('prewarm', 'off'),
   fast: get('fast', 'on'),               // quick replies (latency work, 2026-10-13): act on the live words, end turns on nova-3's endpointing, guess early, short ack, socket kept warm
   clips: get('clips', 'on'),            // owner only: keep my recordings for debugging (14 days); on for the owner since 2026-10-13 (traceability)         // open = keep the mic ready while Talk is open (first words never lost) | use = only while speaking
 };
@@ -2112,7 +2113,9 @@ function sttUrl() { return (location.protocol === 'https:' ? 'wss://' : 'ws://')
 // Conversation mode: the next turn's socket opens while the answer is being given (nova-3 kept alive server-side),
 // so listening again does not wait for a new connection. Closed if unused for 55 s.
 function prewarmWs() {
-  if (S.fast !== 'on' || !convOn() || S.lang === 'he' || (nextWs && nextWs.readyState <= 1)) return;
+  // Off by default (2026-10-13): a prewarmed socket left idle ~5 s heard nothing (nova-3 upstream went deaf), and the
+  // gain is small (audio recorded before a socket opens is queued and flushed). localStorage qb-talk-prewarm=on to try.
+  if (S.prewarm !== 'on' || S.fast !== 'on' || !convOn() || S.lang === 'he' || (nextWs && nextWs.readyState <= 1)) return;
   try { var w = new WebSocket(sttUrl()), w0 = Date.now(); w.__lang = S.lang; nextWs = w; trace('stt_ws_prewarm', {});
     w.addEventListener('open', function () { trace('stt_prewarm_open', { ms: Date.now() - w0 }); });
     w.addEventListener('message', function (ev) { if (nextWs === w) { var d = null; try { d = JSON.parse(ev.data); } catch (e) {} if (d && d.type !== 'interim' && d.type !== 'final') trace('stt_prewarm_msg', { type: d.type, err: d.error, code: d.code }); } });
