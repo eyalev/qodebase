@@ -64,9 +64,13 @@
     return { files, landed, skipped, rejected, inflight };
   }
   function elapsedS(r) { return r.startedAt ? ((r.endedAt || Date.now()) - r.startedAt) / 1000 : 0; }
+  // Live: the last minute's landings. Finished: an average over the minutes it ran; under 2 min the plain count and time,
+  // never a per-minute rate the run did not last long enough to have (critique).
   function landedPerMin(r) {
-    if (r.lastMinute && typeof r.lastMinute.landed === 'number' && live(r)) return r.lastMinute.landed;
-    const s = elapsedS(r); return s > 30 ? Math.round((counts(r).landed / s) * 60) : null;
+    if (r.lastMinute && typeof r.lastMinute.landed === 'number' && live(r)) return n0(r.lastMinute.landed);
+    const s = elapsedS(r), l = counts(r).landed;
+    if (!s || !l) return '–';
+    return s < 120 && !live(r) ? `${n0(l)} <small>in ${Math.round(s)} s</small>` : n0(Math.round((l / s) * 60));
   }
   function modelsOf(r) {
     const m = r.models || {};
@@ -78,7 +82,7 @@
     const mods = modelsOf(r);
     const modRows = mods.map((m) => {
       const v = m.now ?? m.peak, lim = m.limit;
-      return `<div class="rm"><span class="rm-n">${esc(short(m.name))}${m.role === 'overflow' ? ' <small>overflow</small>' : ''}</span><span class="rm-v">${v == null ? '–' : n0(v)}${lim ? ` of ${n0(lim)}` : ''} per min${m.now == null && m.peak != null ? ' at peak' : ''}${m.r429 ? `, ${n0(m.r429)} refused (429)` : ''}</span>
+      return `<div class="rm"><span class="rm-n">${esc(short(m.name))}${m.role === 'overflow' ? ' <small>overflow</small>' : ''}</span><span class="rm-v">${m.now == null && m.peak != null ? 'peak ' : ''}${v == null ? '–' : n0(v)}${lim ? ` of ${n0(lim)}` : ''}/min${m.r429 ? `, ${n0(m.r429)} refused` : ''}</span>
         ${lim ? `<div class="bar" aria-hidden="true"><i style="width:${pct(v || 0, lim).toFixed(1)}%"${v / lim > 0.9 ? ' class="hot"' : ''}></i></div>` : ''}</div>`;
     }).join('');
     const why = r.state === 'paused' ? (autoWhy(r) || lastPause(r)?.why || '') : r.state === 'stopped' ? (r.stopWhy || '') : '';
@@ -93,8 +97,8 @@
         <p><b>${n0(c.landed)}</b> landed, ${n0(c.skipped)} nothing to document, ${n0(c.rejected)} rejected${c.inflight && live(r) ? `, ${n0(c.inflight)} to go` : ''}, of ${n0(c.files)} files</p></div>
       <dl class="rc-k">
         <div><dt>Spent</dt><dd>${usd(spent)}${budget ? ` <small>of ${usd(budget)}</small>` : ''}</dd>${budget ? `<div class="bar" aria-hidden="true"><i style="width:${pct(spent, budget).toFixed(1)}%"${spent / budget > 0.85 ? ' class="hot"' : ''}></i></div>` : ''}</div>
-        <div><dt>${live(r) ? 'Landed per min' : 'Landed per min, average'}</dt><dd>${lpm == null ? '–' : n0(lpm)}</dd></div>
-        <div><dt>Wait to land</dt><dd>${r.landWaitS ? `${n0(r.landWaitS.p50)} s <small>median, ${n0(r.landWaitS.p90)} s slowest tenth</small>` : '–'}</dd></div>
+        <div><dt>${live(r) ? 'Landed per min' : elapsedS(r) < 120 ? 'Landed' : 'Landed per min, average'}</dt><dd>${lpm}</dd></div>
+        <div><dt>Wait to land</dt><dd>${r.landWaitS && r.landWaitS.p50 != null ? `${n0(r.landWaitS.p50)} s <small>median, ${n0(r.landWaitS.p90)} s slowest tenth</small>` : '–'}</dd></div>
         <div><dt>Model calls</dt><dd>${n0(r.calls ?? mods.reduce((a, m) => a + m.calls, 0))}</dd></div>
       </dl>
       ${modRows ? `<div class="rc-m"><p class="rc-mh">Calls per minute, per model${live(r) ? '' : ' (peak)'}</p>${modRows}</div>` : ''}
@@ -136,6 +140,9 @@
     // Buckets of a minute or more show rates per minute (to line up with per-minute limits); shorter buckets (runs under
     // ~20 min) show plain counts per bucket, so one burst is not blown up into a per-minute rate it never had.
     const asRate = step >= 60000, f = asRate ? perMin : 1;
+    // every bucket from the first to the last, empty ones included (the series skips quiet slices): x is time
+    const last = Math.max(...out.keys());
+    for (let b = t0; b <= last; b += step) if (!out.has(b)) out.set(b, { minute: b, calls: {}, landed: 0, lanes: {}, r429: 0, usd: 0, queue: null, door: null, n: 0 });
     const S = [...out.values()].sort((a, b) => a.minute - b.minute).map((o) => ({ ...o, calls: Object.fromEntries(Object.entries(o.calls).map(([m, v]) => [m, Math.round(v * f)])), landed: Math.round(o.landed * f) }));
     return { S, step, unit: asRate ? 'per min' : `per ${Math.round(step / 1000)} s`, limScale: asRate ? 1 : step / 60000 };
   }
@@ -180,16 +187,16 @@
     const nice = [10e3, 30e3, 60e3, 120e3, 300e3, 600e3, 1800e3, 3600e3].find((ms) => (ms / stepMs) * per >= 56) || 3600e3;
     const every = Math.max(1, Math.round(nice / stepMs)), lab = (i) => { const sec = Math.round((i * stepMs) / 1000); return i === 0 ? 'start' : sec < 120 ? `${sec} s` : `${Math.round(sec / 60)} min`; };
     const grid = S.map((s, i) => (i % every === 0 ? `<line class="tl-g" x1="${x(s.minute).toFixed(1)}" x2="${x(s.minute).toFixed(1)}" y1="0" y2="100%"/>` : '')).join('');
-    const near = (px) => (t.marks || []).some((m) => Math.abs(x(m.at) - px) < 70);
-    const axis = S.map((s, i) => (i % every === 0 && !near(x(s.minute)) ? `<text class="tl-x" x="${(x(s.minute) + 2).toFixed(1)}" y="12">${lab(i)}</text>` : '')).join('');
+    const axis = S.map((s, i) => (i % every === 0 && x(s.minute) < W - 40 ? `<text class="tl-x" x="${Math.max(2, x(s.minute) + 2).toFixed(1)}" y="12">${lab(i)}</text>` : '')).join('');
     const MK = (k) => (k === 'auto_pause' ? 'pause' : k), MW = (k) => (k === 'auto_pause' ? 'auto-paused' : k === 'pause' ? 'paused' : k === 'resume' ? 'resumed' : k === 'stop' ? 'stopped' : k);
     const marks = (t.marks || []).map((m) => { const mx = Math.max(1, Math.min(W - 1, x(m.at))); return `<line class="tl-m m-${esc(MK(m.kind))}" x1="${mx.toFixed(1)}" x2="${mx.toFixed(1)}" y1="0" y2="100%"/>`; }).join('');
-    const mlabels = (t.marks || []).map((m) => { const mx = Math.max(1, Math.min(W - 60, x(m.at))); return `<text class="tl-mt m-${esc(MK(m.kind))}" x="${(mx + 3).toFixed(1)}" y="12">${esc(MW(m.kind))}</text>`; }).join('');
+    const mlabels = (t.marks || []).map((m) => { const w = MW(m.kind).length * 6.5, mx = Math.max(1, Math.min(W - w - 4, x(m.at) + 3)); return `<text class="tl-mt m-${esc(MK(m.kind))}" x="${mx.toFixed(1)}" y="12">${esc(MW(m.kind))}</text>`; }).join('');
     const legend = (t.marks || []).length ? `<ul class="tl-ml">${(t.marks || []).map((m) => `<li><i class="m-${esc(MK(m.kind))}"></i>${esc(MW(m.kind).replace(/^./, (c) => c.toUpperCase()))} ${clock((m.at - t0) / 1000)} in${m.why ? `: ${esc(m.why)}` : ''}</li>`).join('')}</ul>` : '';
-    return `<div class="tl-frame" tabindex="0" role="group" aria-label="Timeline of the run; scrolls sideways"><div class="tl-in" style="width:${W}px">
+    return `<div class="tl-frame"${live(run) ? ' data-live' : ''} tabindex="0" role="group" aria-label="Timeline of the run; scrolls sideways"><div class="tl-in" style="width:${W}px">
+      ${mlabels ? `<svg class="tl-ax" width="${W}" height="16" aria-hidden="true">${mlabels}</svg>` : ''}
       <svg class="tl-ov" width="${W}" height="100%" aria-hidden="true">${grid}${marks}</svg>
       ${rows.map(strip).join('')}
-      <svg class="tl-ax" width="${W}" height="16" aria-hidden="true">${axis}${mlabels}</svg></div></div>${legend}`;
+      <svg class="tl-ax" width="${W}" height="16" aria-hidden="true">${axis}</svg></div></div>${legend}`;
   }
 
   // ---- copies: one ladder step runs as N copies (label '… - copy N'); the step is one card with the copies under it ---
@@ -203,6 +210,8 @@
       if (!g) { g = { group: true, label: b, copies: [], repo: r.repo, runId: `group:${b}` }; seen.set(b, g); out.push(g); }
       g.copies.push(r);
     }
+    const cn = (c) => +((/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || 0);
+    for (const g of seen.values()) g.copies.sort((a, b) => cn(a) - cn(b));
     for (const g of out.filter((x) => x.group)) {
       const cs = g.copies, sum = (f) => cs.reduce((a, c) => a + (f(c) || 0), 0);
       const st = cs.some((c) => c.state === 'running') ? 'running' : cs.some((c) => c.state === 'paused') ? 'paused' : cs.every((c) => c.state === 'stopped') ? 'stopped' : 'done';
@@ -250,7 +259,8 @@
     const ctlF = document.activeElement?.closest?.('.rc-ctl') ? document.activeElement.dataset.ctl : null;
     const fr = root.querySelector('.tl-frame'), sx = fr ? fr.scrollLeft : null, atEnd = fr ? fr.scrollLeft + fr.clientWidth >= fr.scrollWidth - 4 : true;
     lastHtml = k; root.innerHTML = html;
-    const f2 = root.querySelector('.tl-frame'); if (f2) f2.scrollLeft = atEnd ? f2.scrollWidth : sx;   // a live run keeps showing its newest minute
+    // a live run opens at, and keeps showing, its newest minute; a finished one opens at its start
+    const f2 = root.querySelector('.tl-frame'); if (f2) f2.scrollLeft = fr ? (atEnd && 'live' in f2.dataset ? f2.scrollWidth : sx) : ('live' in f2.dataset ? f2.scrollWidth : 0);
     if (ctlF) root.querySelector(`[data-ctl="${ctlF}"]`)?.focus({ preventScroll: true });
   }
   function tickClocks() { root.querySelectorAll('[data-since]').forEach((b) => { b.textContent = clock((Date.now() - +b.dataset.since) / 1000); }); }
