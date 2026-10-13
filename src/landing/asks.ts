@@ -56,7 +56,10 @@ export function buildAsks(inp: AsksInput): { asks: Ask[]; counts: Record<AskStat
   const seen = new Set<string>();
   const alias = new Map<string, string>();   // second name -> first
   for (const p of inp.aliases) if (!alias.has(p.b)) alias.set(p.b, p.a);
-  for (const l of inp.lists) for (const it of l.items) {
+  // A list nobody claimed from (no claims, nothing marked done) is the router's dedupe list, not work agents picked:
+  // its tasks would all read 'planning' forever (the R5 flagship's 40), so leave them out.
+  const claimed = Object.keys(inp.claims).length > 0 || inp.done.length > 0;
+  if (claimed) for (const l of inp.lists) for (const it of l.items) {
     if (seen.has(it.id)) continue;
     seen.add(it.id);
     // A claim holder is an agent name; its change is the record whose id ends with it (`<slug>--<name>`).

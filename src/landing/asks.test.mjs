@@ -39,3 +39,8 @@ test('asks: scripted demo changes (no request, no list) are asks of their own', 
     changes: [{ id: 'e.c--d1', title: 'Menu prices', state: 'landed', createdAt: 5, kind: 'demo' }, { id: 'e.c--d2', title: 'Hours', state: 'queued', createdAt: 6, kind: 'demo' }] });
   assert.deepEqual(out.asks.map((a) => [a.id, a.from, a.state, a.text]), [['c:e.c--d2', 'script', 'in-line', 'Hours'], ['c:e.c--d1', 'script', 'landed', 'Menu prices']]);
 });
+
+test('asks: a task list nobody claimed from (only for dedupe) is left out', () => {
+  const out = buildAsks({ requests: [{ text: 'build', at: 1, from: 'person', state: 'sent' }], changes: [], lists: [{ by: 'router', at: 2, items: [{ id: 'T1', text: 'a' }, { id: 'T2', text: 'b' }] }], done: [], claims: {}, aliases: [] });
+  assert.deepEqual(out.asks.map((a) => a.from), ['person']);
+});
