@@ -250,7 +250,7 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   }
   // "What is my latest project?": answer it (name, what it is, when), offer to open it; never navigate unasked.
   if (/\b(what|which)('s| is| was| are)?\s+(is\s+)?my\s+(latest|newest|last|most recent)\s+(project|app|build)\b|\bwhich project did i (work on|change|touch) last\b/i.test(utterance)) {
-    const p = projects.filter((x) => x.mine && !isScaffold(x.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+    const p = projects.filter((x) => x.mine && !HARNESS_RX.test(x.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
     if (p) return { ...cmd, mode: 'ask', op: 'latest', href: projectHref(p, 'page'), label: projLabel(p, 'page'), target: p.slug, text: p.description || '', updatedAt: p.updatedAt, p: 0.9, why: 'latest project' } as Cmd;
   }
   // A request for content ("give me…", "suggest…", "tell me…", "what is…", "explain…") picked as typing into or pressing
@@ -267,7 +267,7 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   }
   // "Open my newest project": the one they touched last, never one a harness made (vocabulary in code).
   if (/\b(open|show( me)?|take me to|go to)\s+my\s+(newest|latest|last|most recent|newest real)\s+project\b/i.test(utterance)) {
-    const p = projects.filter((x) => x.mine && !isScaffold(x.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+    const p = projects.filter((x) => x.mine && !HARNESS_RX.test(x.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
     if (p) return { ...cmd, mode: 'act', op: 'go', href: projectHref(p, 'page'), label: projLabel(p, 'page'), target: p.slug, p: 0.9, why: 'newest project' };
   }
   // "Take me to my project" / "open the project" with no name, off a project page: ask which one, never guess.
@@ -434,3 +434,5 @@ export function gate(c: Cmd): 'refuse' | 'confirm' | null {
 // "which project?" chips, keyterms or name hints. Lab/fleet/dial copies, experiment copies, numbered copies, tests.
 export const SCAFFOLD_RX = /^(kata|fleet|lab|real|selftest|self-test|test|tmp|smoke|bench|dial|sim)[-_]|[-_][0-9a-f]{5}([-_]|$)|[-_]r\d+[a-z]?$|[-_]\d+$|(^|[-_])(test|lab|crew|busy|team|demo|copy|fixture|real)([-_]|$)/i;
 export const isScaffold = (name: string) => SCAFFOLD_RX.test(String(name || ''));
+// Narrower, for answers about their own work ('my latest project', status): only what a test harness made; real builds count.
+export const HARNESS_RX = /^(lab|kata|fleet|selftest)-/i;
