@@ -779,6 +779,21 @@ export class Landing extends DurableObject<Env> {
       const sentBack = c?.state === 'pushed' && c.events.at(-1)?.what === 'changes-suggested';
       if (!c || c.kind !== 'agent' || (c.state !== 'working' && c.state !== 'replaying' && !sentBack)) continue;
       open++;
+      // A change whose agent's box never started (spawn wakes it from waitUntil, which can be cut; the scene-2 rehearsal's
+      // skeleton sat 8.5 min, box never booted, task never sent, 2026-10-13): after 2 min, wake its box once. A nudge would
+      // not help: it is a message to an agent that is not there.
+      if (c.state === 'working' && !(c as { bootKicked?: number }).bootKicked && Date.now() - c.createdAt > 120_000) {
+        const hdr = { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' };
+        const bs = await fetch(`${this.env.API_BASE}/api/agents/${c.id}/state`, { headers: hdr }).then((r) => r.json() as Promise<{ running?: boolean; taskSent?: boolean }>).catch(() => null);
+        if (bs && bs.taskSent === false && !bs.running) {
+          (c as { bootKicked?: number }).bootKicked = Date.now();
+          this.#ev(c, 'working', 'its box had not started: woken');
+          await this.#put(c);
+          const w = await fetch(`${this.env.API_BASE}/api/agents/${c.id}/wake`, { method: 'POST', headers: hdr }).then((r) => r.json()).catch((e) => ({ error: String(e).slice(0, 200) }));
+          log('landing', 'boot_kick', { slug: m.slug, id: c.id, ageS: Math.round((Date.now() - c.createdAt) / 1000), wake: w });
+          continue;
+        }
+      }
       const last = c.events.at(-1)?.t || c.createdAt, nudges = (c as { nudges?: number }).nudges || 0;
       // X1: the skeleton holds every other agent, so an idle skeleton is nudged after 90 s (the proof build's sat idle 4 min).
       if (Date.now() - last < (c.skeleton ? 90_000 : STALL_MS) || nudges >= 2) continue;
