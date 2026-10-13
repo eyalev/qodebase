@@ -4362,7 +4362,7 @@
    "copy": 1,
    "repo": "fleet-vscode-src-5",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 200,
    "agentsStarted": 200,
    "files": 4064,
@@ -4377,9 +4377,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896025530,
-   "endedAt": 1791896050915,
-   "wallS": 25,
+   "startedAt": 1791896028129,
+   "endedAt": 1791896050837,
+   "wallS": 23,
    "landWaitS": {
     "p50": 25,
     "p90": 35
@@ -4410,6 +4410,67 @@
    ],
    "copyOfKind": 1,
    "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6rj9j5",
+   "label": "batching bench: glm-4.7 single (70 files)",
+   "ladder": "B1",
+   "copy": 1,
+   "repo": "fleet-vscode-src-5",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 10,
+   "agentsStarted": 10,
+   "files": 70,
+   "landed": 51,
+   "ready": 0,
+   "skipped": 19,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.0106,
+   "tokensIn": 140350,
+   "tokensOut": 5166,
+   "startedAt": 1791900908033,
+   "endedAt": 1791900978218,
+   "wallS": 70,
+   "landWaitS": {
+    "p50": 6,
+    "p90": 7
+   },
+   "models": {
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.0106,
+     "landed": 51,
+     "skipped": 19,
+     "calls": 51,
+     "rateLimited429": 0,
+     "peakPerMin": 38,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791900900000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 38
+    },
+    {
+     "minute": 1791900960000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 13
+    }
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 4,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -4771,7 +4832,7 @@
    "copy": 20,
    "repo": "fleet-vscode-src-6",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 4064,
@@ -4786,9 +4847,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896163521,
+   "startedAt": 1791896166633,
    "endedAt": 1791896186657,
-   "wallS": 23,
+   "wallS": 20,
    "landWaitS": {
     "p50": 51,
     "p90": 58
@@ -4814,6 +4875,62 @@
    ],
    "copyOfKind": 5,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6rkgbw",
+   "label": "batching bench: glm-4.7 pack (70 files)",
+   "ladder": "B1",
+   "copy": 2,
+   "repo": "fleet-vscode-src-6",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 10,
+   "agentsStarted": 10,
+   "files": 70,
+   "landed": 51,
+   "ready": 0,
+   "skipped": 19,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.0104,
+   "tokensIn": 137823,
+   "tokensOut": 5154,
+   "startedAt": 1791900963500,
+   "endedAt": 1791901011929,
+   "wallS": 48,
+   "landWaitS": {
+    "p50": 8,
+    "p90": 11
+   },
+   "models": {
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.0104,
+     "landed": 51,
+     "skipped": 19,
+     "calls": 51,
+     "rateLimited429": 0,
+     "peakPerMin": 51,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791900960000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 51
+    }
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 4,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -5185,7 +5302,7 @@
    "copy": 17,
    "repo": "fleet-vscode-src-7",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 4064,
@@ -5200,9 +5317,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896149754,
+   "startedAt": 1791896153299,
    "endedAt": 1791896179720,
-   "wallS": 30,
+   "wallS": 26,
    "landWaitS": {
     "p50": 46,
     "p90": 61
@@ -5233,6 +5350,67 @@
    ],
    "copyOfKind": 4,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6rld7f",
+   "label": "batching bench: gemini-3.1 single (70 files)",
+   "ladder": "B1",
+   "copy": 3,
+   "repo": "fleet-vscode-src-7",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 10,
+   "agentsStarted": 10,
+   "files": 70,
+   "landed": 51,
+   "ready": 0,
+   "skipped": 19,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.0492,
+   "tokensIn": 163380,
+   "tokensOut": 5541,
+   "startedAt": 1791901006107,
+   "endedAt": 1791901024753,
+   "wallS": 19,
+   "landWaitS": {
+    "p50": 8,
+    "p90": 11
+   },
+   "models": {
+    "gemini-3.1-flash-lite": {
+     "usd": 0.0492,
+     "landed": 51,
+     "skipped": 19,
+     "calls": 51,
+     "rateLimited429": 0,
+     "peakPerMin": 38,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791900960000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 13
+    },
+    {
+     "minute": 1791901020000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 38
+    }
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 4,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -5480,7 +5658,7 @@
    "copy": 5,
    "repo": "fleet-vscode-src-8",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 4064,
@@ -5495,9 +5673,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896120016,
+   "startedAt": 1791896123407,
    "endedAt": 1791896147014,
-   "wallS": 27,
+   "wallS": 24,
    "landWaitS": {
     "p50": 33,
     "p90": 45
@@ -5523,6 +5701,63 @@
    ],
    "copyOfKind": 1,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6rlmud",
+   "label": "batching bench: gemini-3.1 pack (70 files)",
+   "ladder": "B1",
+   "copy": 4,
+   "repo": "fleet-vscode-src-8",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 10,
+   "agentsStarted": 10,
+   "files": 70,
+   "landed": 49,
+   "ready": 0,
+   "skipped": 19,
+   "verify_fail": 0,
+   "rejected": 2,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.063,
+   "tokensIn": 204297,
+   "tokensOut": 7974,
+   "startedAt": 1791901018597,
+   "endedAt": 1791901042819,
+   "wallS": 24,
+   "landWaitS": {
+    "p50": 9,
+    "p90": 13
+   },
+   "models": {
+    "gemini-3.1-flash-lite": {
+     "usd": 0.0631,
+     "landed": 49,
+     "rejected": 2,
+     "skipped": 19,
+     "calls": 51,
+     "rateLimited429": 0,
+     "peakPerMin": 51,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791901020000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 51
+    }
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 4,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -5651,7 +5886,7 @@
    "copy": 14,
    "repo": "fleet-vscode-src-9",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 4064,
@@ -5666,9 +5901,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896138934,
+   "startedAt": 1791896142951,
    "endedAt": 1791896163517,
-   "wallS": 25,
+   "wallS": 21,
    "landWaitS": {
     "p50": 27,
     "p90": 33
@@ -5699,6 +5934,163 @@
    ],
    "copyOfKind": 2,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6rwo3r",
+   "label": "S5b batched (gemma + glm-4.7, Gemini overflow) - copy 1",
+   "ladder": "S5b",
+   "copy": 1,
+   "repo": "fleet-vscode-src-9",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 150,
+   "agentsStarted": 150,
+   "files": 4064,
+   "landed": 2968,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 27,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 2.3126,
+   "tokensIn": 8978982,
+   "tokensOut": 283991,
+   "startedAt": 1791901675747,
+   "endedAt": 1791901984776,
+   "wallS": 309,
+   "landWaitS": {
+    "p50": 8,
+    "p90": 15
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.0722,
+     "landed": 237,
+     "rejected": 1,
+     "skipped": 98,
+     "calls": 238,
+     "rateLimited429": 0,
+     "peakPerMin": 59,
+     "role": "planned"
+    },
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.0764,
+     "landed": 398,
+     "rejected": 3,
+     "skipped": 127,
+     "calls": 401,
+     "rateLimited429": 0,
+     "peakPerMin": 95,
+     "role": "planned"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 2.164,
+     "landed": 2333,
+     "rejected": 23,
+     "skipped": 844,
+     "calls": 2356,
+     "rateLimited429": 0,
+     "peakPerMin": 691,
+     "role": "overflow"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791901680000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 46
+    },
+    {
+     "minute": 1791901680000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 78
+    },
+    {
+     "minute": 1791901680000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 691
+    },
+    {
+     "minute": 1791901740000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 59
+    },
+    {
+     "minute": 1791901740000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 75
+    },
+    {
+     "minute": 1791901740000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 557
+    },
+    {
+     "minute": 1791901800000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 52
+    },
+    {
+     "minute": 1791901800000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 95
+    },
+    {
+     "minute": 1791901800000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 632
+    },
+    {
+     "minute": 1791901860000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 52
+    },
+    {
+     "minute": 1791901860000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 94
+    },
+    {
+     "minute": 1791901860000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 466
+    },
+    {
+     "minute": 1791901920000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 29
+    },
+    {
+     "minute": 1791901920000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 46
+    },
+    {
+     "minute": 1791901920000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 7
+    },
+    {
+     "minute": 1791901980000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 13
+    },
+    {
+     "minute": 1791901980000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 3
+    }
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 3,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -5889,7 +6281,7 @@
    "copy": 15,
    "repo": "fleet-vscode-src-10",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 4064,
@@ -5904,9 +6296,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896143612,
+   "startedAt": 1791896147099,
    "endedAt": 1791896170959,
-   "wallS": 27,
+   "wallS": 24,
    "landWaitS": {
     "p50": 45,
     "p90": 54
@@ -5937,6 +6329,152 @@
    ],
    "copyOfKind": 3,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6rxhnq",
+   "label": "S5b batched (gemma + glm-4.7, Gemini overflow) - copy 2",
+   "ladder": "S5b",
+   "copy": 2,
+   "repo": "fleet-vscode-src-10",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 150,
+   "agentsStarted": 150,
+   "files": 4064,
+   "landed": 2969,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 26,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 2.2873,
+   "tokensIn": 8987874,
+   "tokensOut": 284874,
+   "startedAt": 1791901675730,
+   "endedAt": 1791901979658,
+   "wallS": 304,
+   "landWaitS": {
+    "p50": 13,
+    "p90": 25
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.0865,
+     "landed": 247,
+     "rejected": 3,
+     "skipped": 100,
+     "calls": 250,
+     "rateLimited429": 0,
+     "peakPerMin": 76,
+     "role": "planned"
+    },
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.0779,
+     "landed": 406,
+     "skipped": 144,
+     "calls": 406,
+     "rateLimited429": 0,
+     "peakPerMin": 112,
+     "role": "planned"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 2.1229,
+     "landed": 2316,
+     "rejected": 23,
+     "skipped": 825,
+     "calls": 2339,
+     "rateLimited429": 0,
+     "peakPerMin": 592,
+     "role": "overflow"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791901680000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 41
+    },
+    {
+     "minute": 1791901680000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 56
+    },
+    {
+     "minute": 1791901680000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 592
+    },
+    {
+     "minute": 1791901740000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 76
+    },
+    {
+     "minute": 1791901740000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 112
+    },
+    {
+     "minute": 1791901740000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 572
+    },
+    {
+     "minute": 1791901800000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 31
+    },
+    {
+     "minute": 1791901800000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 86
+    },
+    {
+     "minute": 1791901800000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 561
+    },
+    {
+     "minute": 1791901860000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 50
+    },
+    {
+     "minute": 1791901860000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 92
+    },
+    {
+     "minute": 1791901860000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 586
+    },
+    {
+     "minute": 1791901920000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 52
+    },
+    {
+     "minute": 1791901920000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 60
+    },
+    {
+     "minute": 1791901920000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 28
+    }
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 3,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -13842,6 +14380,152 @@
     "upstream": "babel/babel",
     "root": "packages",
     "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6rzp4n",
+   "label": "S5b batched (gemma + glm-4.7, Gemini overflow) - copy 3",
+   "ladder": "S5b",
+   "copy": 3,
+   "repo": "fleet-vscode-src-11",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 150,
+   "agentsStarted": 150,
+   "files": 4063,
+   "landed": 2973,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 21,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 2.2398,
+   "tokensIn": 8878387,
+   "tokensOut": 277434,
+   "startedAt": 1791901675702,
+   "endedAt": 1791901962591,
+   "wallS": 287,
+   "landWaitS": {
+    "p50": 10,
+    "p90": 18
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.0831,
+     "landed": 273,
+     "rejected": 3,
+     "skipped": 88,
+     "calls": 276,
+     "rateLimited429": 0,
+     "peakPerMin": 81,
+     "role": "planned"
+    },
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.0813,
+     "landed": 422,
+     "skipped": 150,
+     "calls": 422,
+     "rateLimited429": 0,
+     "peakPerMin": 114,
+     "role": "planned"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 2.0753,
+     "landed": 2278,
+     "rejected": 18,
+     "skipped": 831,
+     "calls": 2296,
+     "rateLimited429": 0,
+     "peakPerMin": 581,
+     "role": "overflow"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791901680000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 50
+    },
+    {
+     "minute": 1791901680000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 53
+    },
+    {
+     "minute": 1791901680000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 508
+    },
+    {
+     "minute": 1791901740000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 62
+    },
+    {
+     "minute": 1791901740000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 114
+    },
+    {
+     "minute": 1791901740000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 557
+    },
+    {
+     "minute": 1791901800000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 42
+    },
+    {
+     "minute": 1791901800000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 81
+    },
+    {
+     "minute": 1791901800000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 581
+    },
+    {
+     "minute": 1791901860000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 41
+    },
+    {
+     "minute": 1791901860000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 100
+    },
+    {
+     "minute": 1791901860000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 554
+    },
+    {
+     "minute": 1791901920000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 81
+    },
+    {
+     "minute": 1791901920000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 74
+    },
+    {
+     "minute": 1791901920000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 96
+    }
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 3,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
    }
   }
  ]

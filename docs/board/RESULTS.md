@@ -76,33 +76,39 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | fmv6pzkcu (S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 17) [cached answers] | fleet-babel-5 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 22 s | 979 / 986 s |
 | fmv6oxc57 (S4d 4,750 agents / 95 copies (cache) - copy 5) [cached answers] | fleet-angular-7 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 21 s | 6 / 10 s |
 | fmv6oxhrz (S4d 4,750 agents / 95 copies (cache) - copy 33) [cached answers] | fleet-nextjs-6 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 17 s | 11 / 21 s |
-| fmv6omm62 (S4b 200 agents / 1 copy (cache) - copy 1) [cached answers] | fleet-vscode-src-5 src/vs | cache | 200 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 25 s | 25 / 35 s |
+| fmv6omm62 (S4b 200 agents / 1 copy (cache) - copy 1) [cached answers] | fleet-vscode-src-5 src/vs | cache | 200 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 23 s | 25 / 35 s |
+| fmv6rj9j5 (batching bench: glm-4.7 single (70 files)) | fleet-vscode-src-5 src/vs | glm-4.7-flash | 10 | 70 | 51 | 19 | 0 | 0 | 0 | $0.01 | 70 s | 6 / 7 s |
 | fmv6oxe7q (S4d 4,750 agents / 95 copies (cache) - copy 16) [cached answers] | fleet-angular-8 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 16 s | 9 / 12 s |
 | fmv6oxdj1 (S4d 4,750 agents / 95 copies (cache) - copy 12) [cached answers] | fleet-babel-6 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 5 s | 9 / 10 s |
 | fmv6pzgah (S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 21) [cached answers] | fleet-babel-6 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 15 s | 14 / 972 s |
 | fmv6oxmzy (S4d 4,750 agents / 95 copies (cache) - copy 40) [cached answers] | fleet-nextjs-7 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 29 s | 12 / 22 s |
 | fmv6op7me (S4c 1,000 agents / 20 copies (cache) - copy 16) [cached answers] | fleet-vscode-ext-5 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 14 s | 25 / 57 s |
 | fmv6oxn4i (S4d 4,750 agents / 95 copies (cache) - copy 42) [cached answers] | fleet-angular-9 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 18 s | 18 / 21 s |
-| fmv6opkn5 (S4c 1,000 agents / 20 copies (cache) - copy 20) [cached answers] | fleet-vscode-src-6 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 23 s | 51 / 58 s |
+| fmv6opkn5 (S4c 1,000 agents / 20 copies (cache) - copy 20) [cached answers] | fleet-vscode-src-6 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 20 s | 51 / 58 s |
+| fmv6rkgbw (batching bench: glm-4.7 pack (70 files)) | fleet-vscode-src-6 src/vs | glm-4.7-flash | 10 | 70 | 51 | 19 | 0 | 0 | 0 | $0.01 | 48 s | 8 / 11 s |
 | fmv6oxn0q (S4d 4,750 agents / 95 copies (cache) - copy 41) [cached answers] | fleet-nextjs-8 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 16 s | 15 / 25 s |
 | fmv6oxgpt (S4d 4,750 agents / 95 copies (cache) - copy 30) [cached answers] | fleet-babel-7 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 7 s | 9 / 13 s |
 | fmv6q032e (S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 25) [cached answers] | fleet-babel-7 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 20 s | 987 / 993 s |
 | fmv6oy148 (S4d 4,750 agents / 95 copies (cache) - copy 77) [cached answers] | fleet-vscode-ext-6 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 52 s | 19 / 42 s |
 | fmv6oxp1e (S4d 4,750 agents / 95 copies (cache) - copy 45) [cached answers] | fleet-angular-10 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 48 s | 11 / 19 s |
 | fmv6oxi9m (S4d 4,750 agents / 95 copies (cache) - copy 34) [cached answers] | fleet-nextjs-9 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 19 s | 13 / 19 s |
-| fmv6opa0q (S4c 1,000 agents / 20 copies (cache) - copy 17) [cached answers] | fleet-vscode-src-7 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 30 s | 46 / 61 s |
+| fmv6opa0q (S4c 1,000 agents / 20 copies (cache) - copy 17) [cached answers] | fleet-vscode-src-7 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 26 s | 46 / 61 s |
+| fmv6rld7f (batching bench: gemini-3.1 single (70 files)) | fleet-vscode-src-7 src/vs | gemini-3.1-flash-lite | 10 | 70 | 51 | 19 | 0 | 0 | 0 | $0.05 | 19 s | 8 / 11 s |
 | fmv6oxeut (S4d 4,750 agents / 95 copies (cache) - copy 20) [cached answers] | fleet-babel-8 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 8 s | 8 / 13 s |
 | fmv6q01ki (S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 29) [cached answers] | fleet-babel-8 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 22 s | 1,028 / 1,033 s |
 | fmv6oxmws (S4d 4,750 agents / 95 copies (cache) - copy 39) [cached answers] | fleet-nextjs-10 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 18 s | 12 / 19 s |
 | fmv6oxsgg (S4d 4,750 agents / 95 copies (cache) - copy 56) [cached answers] | fleet-vscode-ext-7 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 25 s | 22 / 46 s |
-| fmv6oon2o (S4c 1,000 agents / 20 copies (cache) - copy 5) [cached answers] | fleet-vscode-src-8 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 27 s | 33 / 45 s |
+| fmv6oon2o (S4c 1,000 agents / 20 copies (cache) - copy 5) [cached answers] | fleet-vscode-src-8 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 24 s | 33 / 45 s |
+| fmv6rlmud (batching bench: gemini-3.1 pack (70 files)) | fleet-vscode-src-8 src/vs | gemini-3.1-flash-lite | 10 | 70 | 49 | 19 | 0 | 2 | 0 | $0.06 | 24 s | 9 / 13 s |
 | fmv6oxfu2 (S4d 4,750 agents / 95 copies (cache) - copy 24) [cached answers] | fleet-babel-9 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 6 s | 5 / 7 s |
 | fmv6q01tm (S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 33) [cached answers] | fleet-babel-9 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 14 s | 11 / 1,024 s |
-| fmv6op1o6 (S4c 1,000 agents / 20 copies (cache) - copy 14) [cached answers] | fleet-vscode-src-9 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 25 s | 27 / 33 s |
+| fmv6op1o6 (S4c 1,000 agents / 20 copies (cache) - copy 14) [cached answers] | fleet-vscode-src-9 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 21 s | 27 / 33 s |
+| fmv6rwo3r (S5b batched (gemma + glm-4.7, Gemini overflow) - copy 1) | fleet-vscode-src-9 src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.1-flash-lite | 150 | 4,064 | 2,968 | 1,069 | 0 | 27 | 0 | $2.31 | 309 s | 8 / 15 s |
 | fmv6oxtyv (S4d 4,750 agents / 95 copies (cache) - copy 61) [cached answers] | fleet-vscode-ext-8 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 24 s | 18 / 38 s |
 | fmv6oxgf1 (S4d 4,750 agents / 95 copies (cache) - copy 27) [cached answers] | fleet-babel-10 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 13 s | 7 / 12 s |
 | fmv6q02qp (S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 37) [cached answers] | fleet-babel-10 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 21 s | 1,032 / 1,039 s |
-| fmv6op5a4 (S4c 1,000 agents / 20 copies (cache) - copy 15) [cached answers] | fleet-vscode-src-10 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 27 s | 45 / 54 s |
+| fmv6op5a4 (S4c 1,000 agents / 20 copies (cache) - copy 15) [cached answers] | fleet-vscode-src-10 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 24 s | 45 / 54 s |
+| fmv6rxhnq (S5b batched (gemma + glm-4.7, Gemini overflow) - copy 2) | fleet-vscode-src-10 src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.1-flash-lite | 150 | 4,064 | 2,969 | 1,069 | 0 | 26 | 0 | $2.29 | 304 s | 13 / 25 s |
 | fmv6oxeev (S4d 4,750 agents / 95 copies (cache) - copy 18) [cached answers] | fleet-vscode-ext-9 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 29 s | 14 / 29 s |
 | fmv6oxl6s (S4d 4,750 agents / 95 copies (cache) - copy 38) [cached answers] | fleet-vscode-ext-10 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 20 s | 20 / 43 s |
 | fmv6oz4u9 (S4d 4,750 agents / 95 copies (cache) - copy 94) [cached answers] | fleet-vscode-ext-16 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 14 s | 26 / 59 s |
@@ -236,18 +242,19 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | fmv6q1lyi (S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 87) [cached answers] | fleet-n2-babel-22 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 1,181 s | 6 / 1,034 s |
 | fmv6q1hm4 (S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 83) [cached answers] | fleet-n2-babel-21 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 1,179 s | 9 / 972 s |
 | fmv6q1l82 (S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 79) [cached answers] | fleet-n2-babel-20 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 1,181 s | 10 / 990 s |
+| fmv6rzp4n (S5b batched (gemma + glm-4.7, Gemini overflow) - copy 3) | fleet-vscode-src-11 src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.1-flash-lite | 150 | 4,063 | 2,973 | 1,069 | 0 | 21 | 0 | $2.24 | 287 s | 10 / 18 s |
 
 | model | files handled | landed | verify refused | rate-limited (share of calls) | peak calls/min | $ | $ per 1k files |
 |---|---|---|---|---|---|---|---|
-| @cf/zai-org/glm-4.7-flash | 6,603 | 4,567 | 0 | 31 (0.7%) | 404 | $0.80 | $0.12 |
-| @cf/google/gemma-4-26b-a4b-it | 5,830 | 4,048 | 0 | 23 (0.6%) | 294 | $1.13 | $0.19 |
+| @cf/zai-org/glm-4.7-flash | 8,393 | 5,895 | 0 | 31 (0.5%) | 404 | $1.06 | $0.13 |
+| @cf/google/gemma-4-26b-a4b-it | 6,880 | 4,805 | 0 | 23 (0.5%) | 294 | $1.38 | $0.20 |
 | gemini-3.5-flash-lite | 1,152 | 860 | 0 | 0 (0.0%) | 235 | $1.00 | $0.87 |
-| gemini-3.1-flash-lite | 7,403 | 4,173 | 0 | 51 (1.2%) | 1,500 | $3.31 | $0.45 |
+| gemini-3.1-flash-lite | 17,034 | 11,200 | 0 | 51 (0.5%) | 1,500 | $9.79 | $0.57 |
 | @cf/zai-org/glm-5.3-flash | 223 | 98 | 0 | 63 (35.8%) | 50 | $0.08 | $0.34 |
 
 Cached-answer runs (measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real): 211 runs, 254,522 files, 130,580 landed, 0 refused by verify. Not counted in the model totals below.
 
-Model-written totals: 13,746 files landed of 21,260 attempted over 17 runs (7,422 needed no comment); 0 refused by the code-unchanged check; $6.33 ($0.30 per 1k files).
+Model-written totals: 22,858 files landed of 33,731 attempted over 24 runs (10,705 needed no comment); 0 refused by the code-unchanged check; $13.30 ($0.39 per 1k files).
 
 Quality (qb9's F4 check, sim/fleet/quality.json; measured on main 0f3ba876 vs base d4793e33): 3,029 files changed, **code changed on re-verify: 0**; automatic checks over 6,542 comments: invented params 0, missing params 0, @returns on void 0, trivial 0.
 
