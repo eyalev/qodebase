@@ -541,7 +541,7 @@ function build() {
   skp.onchange = function () { S.keep = skp.value; set('keepmic', S.keep); trace('setting', { keep: S.keep }); if (S.keep === 'open') warmMic(); else releaseMic(); };
   var sspd = document.getElementById('talk-s-speed'); sspd.value = String(S.speed);
   sspd.onchange = function () { S.speed = Number(sspd.value) || 1.25; set('speed', String(S.speed)); trace('setting', { speed: S.speed }); vcVoice(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how fast I talk.'); } };
-  var toggleVoice = function (where) { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-2') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); trace('voice_toggle', { on: S.voice !== 'off', where: where }); if (S.voice === 'off') stopSpeaking(); };
+  var toggleVoice = toggleVoiceFn = function (where) { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-2') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); trace('voice_toggle', { on: S.voice !== 'off', where: where }); if (S.voice === 'off') stopSpeaking(); };
   spk.addEventListener('click', function () { toggleVoice('sheet'); });
   bSpk.addEventListener('click', function () { toggleVoice('bar'); });
   voiceBtn();
@@ -825,6 +825,7 @@ function api(path, body) {
 }
 
 // ---- The one entry point: a sentence --------------------------------------
+var toggleVoiceFn = null;   // the speaker toggle (built with the sheet), for 'turn off spoken replies'
 var preview = null;   // { text, cmd } from interim speech
 var whisperP = null;  // { live, p: Promise<whisper words>, taken } for the turn that acted on the live words
 var spec = null, specCalls = 0, specT = null;   // { text, p } a decide made on the live words while they were still talking
@@ -853,6 +854,19 @@ function submit(text) {
   if (convSaid(text)) return;   // Conversations (hidden setting): "new conversation", the turn, project chips
   // A short yes / no answers the question on screen (Stop this run? Send it to the agents?): no model.
   var said = String(text || '').trim(), short = said.split(/\s+/).length <= 5;
+  // Talk's own settings by voice (qb7's e2e: no route to them): spoken replies, conversation mode.
+  var setv = /^\s*(please\s+)?(turn|switch)\s+(off|on)\s+(the\s+)?(spoken replies|voice replies|replies out loud|speaking|talking back|voice)\s*[.!]*\s*$|^\s*(mute|unmute)( talk| replies| yourself)?\s*[.!]*\s*$|^\s*(stop|start) (talking|speaking)( out loud)?\s*[.!]*\s*$/i.exec(said);
+  if (setv) {
+    var on = /\bon\b|unmute|start/i.test(said) && !/\boff\b|^\s*mute|stop/i.test(said);
+    add('you', said); if ((S.voice !== 'off') !== on && toggleVoiceFn) toggleVoiceFn('voice'); trace('setting', { voice: S.voice, by: 'voice' });
+    add('app', on ? 'Spoken replies are on.' : 'Spoken replies are off.'); if (on) say('Spoken replies are on.'); return finish();
+  }
+  var setc = /^\s*(please\s+)?((turn|switch)\s+(on|off)\s+conversation( mode)?|(start|stop|end)\s+(the\s+)?conversation( mode)?|conversation mode\s+(on|off))\s*[.!]*\s*$/i.exec(said);
+  if (setc) {
+    var con = /\bon\b|start/i.test(said) && !/\boff\b|stop|end/i.test(said);
+    add('you', said); add('app', con ? 'Conversation mode is on: I\u2019ll listen again after each answer.' : 'Conversation mode is off.');
+    if (convOn() !== con) toggleConv('voice'); return finish();
+  }
   if (lastIdea && Date.now() - lastIdea.at < 10 * 60000 && /^\s*(another( one)?|one more|a different one|next( one)?|try again)\b/i.test(said)) { add('you', said); busy = true; offerOff(); return ideaFlow(lastIdea.size); }
   if (offerState && short && YES_RX.test(said)) { var y = offerState.yes; trace('offer_voice', { answer: 'yes', text: said }); add('you', said); offerOff(); y(); return; }
   if (offerState && said.split(/\s+/).length <= 3 && NO_RX.test(said)) { trace('offer_voice', { answer: 'no', text: said }); add('you', said); offerOff(); add('app', 'Okay, I left it.'); return finish(); }
@@ -954,7 +968,7 @@ function route(c, text) {
       add('ai', line); say(line);
       // Only when asked to show or open them; otherwise offer it (Eyal, 2026-10-13: "don't navigate unasked").
       if (n && location.pathname !== '/mine') {
-        if (/\b(show|open|take me|go to|bring up)\b/i.test(lastText)) { sset('last', 'your projects'); setTimeout(function () { act({ op: 'go', href: '/mine', label: 'your projects' }); }, 400); return; }
+        if (/\b(show|open|take me|go to|bring up)\b|תראה|הראה|תפתח|פתח|קח אותי|תעביר אותי/i.test(lastText)) { sset('last', 'your projects'); setTimeout(function () { act({ op: 'go', href: '/mine', label: 'your projects' }); }, 400); return; }
         offerOn('Open your projects?', function () { act({ op: 'go', href: '/mine', label: 'your projects' }); }, 'Open');
       }
       return done();
@@ -1108,10 +1122,11 @@ function ideaFlow(size, targetId) {
 // The gate (same words as talkdecide.ts gate(), which the conversation agent uses).
 var CONFIRM_RX = /^(stop|pause|resume|merge|build it|build|send back|start|watch a run|run for real|replay|replace|connect my plan|save the key|shot|fork|import)\b/i;
 var DESTROY_RX = /^(remove|delete|revoke|sign out|log out|uninstall|disconnect|make (it )?(private|public)|clear)\b/i;
-var YES_RX = /^\s*(yes|yeah|yep|yup|sure|ok(ay)?|do it|go( ahead)?|please( do)?|confirm|send( it)?|fork( it)?|stop it|go for it)\b/i;
-var NO_RX = /^\s*(no|nope|nah|cancel|don'?t|never ?mind|not now|leave it)\b/i;
+// The whole sentence is the answer ('go back' is a new turn, not a yes: qb7's e2e, 2026-10-13).
+var YES_RX = /^\s*(yes|yeah|yep|yup|sure|ok(ay)?|do it|go( ahead)?|please( do)?|confirm|send( it)?|fork( it)?|stop it|go for it|open( it)?|build( it)?|yes,? (please|do it|go ahead|open it|send it))\s*(please|then|now)?[.!]*\s*$/i;
+var NO_RX = /^\s*(no|nope|nah|cancel|don'?t|never ?mind|not now|leave it|no,? thanks?|no thank you)\s*(then|now)?[.!]*\s*$/i;
 function gateOf(c) {
-  if (['press', 'go', 'type'].indexOf(c.op) < 0) return (c.risky || 0) >= 0.5 && ['status', 'list', 'code'].indexOf(c.op) < 0 ? 'refuse' : null;
+  if (['press', 'go', 'type'].indexOf(c.op) < 0) return (c.risky || 0) >= 0.5 && ['status', 'list', 'code', 'none', 'latest', 'idea', 'which'].indexOf(c.op) < 0 ? 'refuse' : null;
   var label = String(c.label || '').trim();
   if ((c.destroys || 0) >= 0.5 || DESTROY_RX.test(label)) return 'refuse';
   if (c.op === 'press' && /^x/.test(String(c.target || ''))) return null;   // a page's own action: its UI asks for the real step
@@ -1607,13 +1622,16 @@ function playParts(parts, whole) {
       if (!u) return next();
       player.src = u;
       try { player.playbackRate = S.speed; player.preservesPitch = true; player.defaultPlaybackRate = S.speed; } catch (e) {}
-      player.onplaying = function () { speakPending = false; try { player.playbackRate = S.speed; } catch (e) {} if (k === 0) { latMark('audio'); logEv('speak_start', { chars: whole.length, parts: parts.length, ms_first: Date.now() - t0, speed: S.speed }); } };
+      player.onplaying = function () { started = true; speakPending = false; try { player.playbackRate = S.speed; } catch (e) {} if (k === 0) { latMark('audio'); logEv('speak_start', { chars: whole.length, parts: parts.length, ms_first: Date.now() - t0, speed: S.speed }); } };
       player.onended = next;
       // A clip that fails (an intermittent 500 on a fresh text, 2026-10-13) is fetched whole ONCE, then the phone voice.
       // The element's error and play()'s rejection both report the same failure: handled once (two voices otherwise).
-      var failed = 0;
+      var failed = 0, started = false;
       var fail = function (why) {
         if (seq !== saySeq || failed === 2) return;
+        // Cut off after it had started (a stream that broke mid-way): go on, never say it again from the start
+        // (qb7's e2e heard 'Your latest is…' twice, 2026-10-13).
+        if (started) { failed = 2; logEv('speak_cut', { part: k, why: why, at: Math.round(player.currentTime * 10) / 10 }); return next(); }
         if (failed === 1 && why !== 'retry') return;
         failed++;
         if (failed === 1) {
