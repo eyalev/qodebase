@@ -1,7 +1,7 @@
 // Build settings (B3): presets and custom knobs -> a plan -> landing flags. node --experimental-strip-types --test src/buildsettings.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, parseJob, SUGGEST_SYSTEM, cleanName } from './buildsettings.ts';
+import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, skeletonTask, parseJob, SUGGEST_SYSTEM, cleanName } from './buildsettings.ts';
 
 const O = { maxCoders: 12 };
 
@@ -41,6 +41,8 @@ test('flags as the lab runner sets them; the router and single-agent texts', () 
   assert.deepEqual([s.reviewers, s.coderModel, s.caps.agents], [0, 'opus', 1]);
   assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /you have 6 agents; use them. Split the rest into at least 6 tasks/);
   assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /forq spawn --skeleton/);
+  assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /signature of every function one module calls in another/);
+  assert.match(skeletonTask('a travel planner'), /contracts file/);
   assert.match(singleTask('a todo app', true), /EMPTY project[\s\S]*only agent[\s\S]*a todo app[\s\S]*forq push/);
 });
 
