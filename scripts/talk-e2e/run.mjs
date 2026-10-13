@@ -197,7 +197,8 @@ async function runScenario(s, cookies, browserArgs) {
     }
     if (READ_POST.test(u.pathname)) return route.continue();
     if (ALLOW && u.pathname.startsWith(`/api/p/${ALLOW}/`)) { ev.push({ t: Date.now(), k: 'write', path: u.pathname, real: true }); return route.continue(); }
-    ev.push({ t: Date.now(), k: 'write', path: u.pathname, method: m });
+    // Talk's own conversation store (Conversations, ?conv=1) is page state, not an action: answered, not counted
+    if (!/^\/api\/talk\/conv/.test(u.pathname)) ev.push({ t: Date.now(), k: 'write', path: u.pathname, method: m });
     const mk = MOCKS.find(([r]) => r.test(u.pathname));
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mk ? mk[1] : { ok: true }) });
   });

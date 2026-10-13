@@ -51,7 +51,10 @@
       {
         "say": "start a fleet job to document the VS Code editor with 100 agents",
         "expect": {
-          "lane": "act/go",
+          "lane": [
+            "act/go",
+            "act/press"
+          ],
           "nav": "/runs",
           "no_writes": true
         }

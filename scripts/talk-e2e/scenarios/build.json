@@ -1,9 +1,84 @@
 [
-  { "id": "build-preset", "title": "Use the cheapest preset", "start": "/", "turns": [{ "say": "use the cheapest preset", "expect": { "lane": "act/press", "fields": { "css:[data-preset=cheapest]": "true" }, "no_writes": true } }] },
-  { "id": "build-agents", "title": "Set the agents to 6", "start": "/", "turns": [{ "say": "set the agents to 6", "expect": { "lane": ["act/type", "act/press"], "fields": { "Agents": "^6$" }, "no_writes": true } }] },
-  { "id": "build-typed-idea", "title": "Build sentence fills the box, build it asks first, no stops it", "start": "/", "turns": [
-    { "say": "Build me a home inventory app with a team, and let people pay for a pro plan with Stripe.", "expect": { "lane": "act/type", "fields": { "What do you want to build": "home inventory" }, "no_writes": true } },
-    { "say": "build it", "expect": { "confirm": true } },
-    { "say": "no", "expect": { "no_writes": true, "answer_has": "left it" } }] },
-  { "id": "build-explain", "title": "What does balanced mean? (answer, no action)", "start": "/", "turns": [{ "say": "what does balanced mean?", "expect": { "lane": ["ask", "both"], "stay": true, "no_writes": true, "answer_has": "team|review|agent" } }] }
+  {
+    "id": "build-preset",
+    "title": "Use the cheapest preset",
+    "start": "/",
+    "turns": [
+      {
+        "say": "use the cheapest preset",
+        "expect": {
+          "lane": "act/press",
+          "fields": {
+            "css:[data-preset=cheapest]": "true"
+          },
+          "no_writes": true
+        }
+      }
+    ]
+  },
+  {
+    "id": "build-agents",
+    "title": "Set the agents to 6",
+    "start": "/",
+    "turns": [
+      {
+        "say": "set the agents to 6",
+        "expect": {
+          "fields": {
+            "css:input[type=range]": "^6$"
+          },
+          "no_writes": true
+        }
+      }
+    ]
+  },
+  {
+    "id": "build-typed-idea",
+    "title": "Build sentence fills the box, build it asks first, no stops it",
+    "start": "/",
+    "turns": [
+      {
+        "say": "Build me a home inventory app with a team, and let people pay for a pro plan with Stripe.",
+        "expect": {
+          "lane": "act/type",
+          "fields": {
+            "What do you want to build": "home inventory"
+          },
+          "no_writes": true
+        }
+      },
+      {
+        "say": "build it",
+        "expect": {
+          "confirm": true
+        }
+      },
+      {
+        "say": "no",
+        "expect": {
+          "no_writes": true,
+          "answer_has": "left it"
+        }
+      }
+    ]
+  },
+  {
+    "id": "build-explain",
+    "title": "What does balanced mean? (answer, no action)",
+    "start": "/",
+    "turns": [
+      {
+        "say": "what does balanced mean?",
+        "expect": {
+          "lane": [
+            "ask",
+            "both"
+          ],
+          "stay": true,
+          "no_writes": true,
+          "answer_has": "team|review|agent"
+        }
+      }
+    ]
+  }
 ]
