@@ -145,7 +145,7 @@ const KEEP_CHANGES = 150, KEEP_TRAINS = 40, EVENTS_PER_CHANGE = 40, OVERLAPS_PER
 const TRAIN_STUCK_MS = 12 * 60_000;
 /** Tier 2's default model: short prompts, a fraction of a cent each (2026-10-08: Haiku 5.5). */
 export const DEFAULT_REPLAY_MODEL = 'claude-haiku-5-5';
-/** Watch a run (public, no sign-in): one at a time, 40 a day (judges in many timezones, manager 2026-10-08), 10 a day
+/** Watch a run (public, no sign-in): one at a time, 40 a day, 150 a day 2026-10-14..31 (watchPerDay), 10 a day
  *  and one per 2 min per IP (judges behind one office IP shared 3 a day, review #8, 2026-10-12). */
 export const WATCH = { perDay: 40, perIpDay: 10, ipCooldownS: 120, agents: 6, speed: 2, maxMs: 5 * 60_000 };
 /** Review 2 #8: 150 runs a day through the contest's judging window (2026-10-14..31), 40 otherwise. */
