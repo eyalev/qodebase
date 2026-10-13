@@ -284,7 +284,10 @@ async function chatBench(request: Request, env: Env, who: Who) {
   const pickM = (id: string): AnswerModel | undefined => answerModel(id) || (/^@cf\/[\w.-]+\/[\w.-]+$/.test(id) ? { id, label: id, model: id, via: 'workers', usdIn: 0, usdOut: 0 } : undefined);
   const cases = (b?.cases || []).slice(0, 40), ids = (b?.models || []).filter((id: string) => pickM(id));
   const out: any[] = [];
-  await Promise.all(cases.flatMap((c: any, i: number) => ids.map(async (id: string) => {
+  // Three at a time: the gateway allows 120 calls a minute and Talk's real traffic shares it.
+  const jobs = cases.flatMap((c: any, i: number) => ids.map((id: string) => ({ c, i, id })));
+  const worker = async () => { for (let j = jobs.shift(); j; j = jobs.shift()) await one(j.c, j.i, j.id); };
+  const one = async (c: any, i: number, id: string) => {
     const m = pickM(id)!, t0 = Date.now();
     const s = cleanScreen(c.screen);
     const messages = [{ role: 'system', content: chatSystem(who.handle, s, String(c.pageText || ''), '') }, { role: 'user', content: String(c.utterance || '') }];
@@ -293,7 +296,8 @@ async function chatBench(request: Request, env: Env, who: Who) {
       const p = parseChat(res);
       out.push({ i, model: id, ms: Date.now() - t0, tools: p.calls.map((x: any) => ({ name: x.name, args: x.args })), reply: p.reply.slice(0, 300), usage: res?.usage || null });
     } catch (e) { out.push({ i, model: id, ms: Date.now() - t0, error: String((e as Error)?.message || e).slice(0, 200) }); }
-  })));
+  };
+  await Promise.all([worker(), worker(), worker()]);
   return json({ results: out });
 }
 
