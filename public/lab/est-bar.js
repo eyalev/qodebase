@@ -36,20 +36,24 @@
     const p = prog || {}, done = !!p.settledAt;
     const el = done ? (p.actualWallS ?? (p.settledAt - est.startedAt) / 1000) : (now - est.startedAt) / 1000;
     const [lo, hi] = est.wallS;
-    const state = done ? (el > hi ? 'Took longer than expected' : el < lo ? 'Faster than expected' : 'Within the estimate')
+    // Review 2 (#3): a finished build shows its real record first; the range is the estimate shown at the time, and
+    // estimates made before the refit on real builds (no realBuilds field) say so.
+    const old = done && !est.realBuilds;
+    const exp = done ? 'estimated' : 'expected';
+    const state = done ? (el > hi ? 'Took longer than estimated' : el < lo ? 'Faster than estimated' : 'Within the estimate')
       : el > hi ? 'Taking longer than expected' : el >= lo ? 'Within the expected range' : 'On track';
     const late = el > hi;
     const cost = done ? p.actualUsd : p.spentUsd;
     // On the person's Claude plan (qb6: billing 'sub'), the dollars are what the same work costs at API prices.
     const plan = (billing || p.billing || est.billing) === 'sub';   // qb6: info.billing, next to estimate/progress
-    const costRow = Array.isArray(est.apiUsd) ? `<div class="eb-row"><span class="eb-k">${plan ? (done ? 'API-equivalent' : 'API-equivalent so far') : done ? 'Cost' : 'Cost so far'}</span>${cost == null ? '<span class="eb-k">not known yet</span>' : `<b>${usd(cost)}</b>`}<span class="eb-x">expected ${span(est.apiUsd, usd)}</span></div>
+    const costRow = Array.isArray(est.apiUsd) ? `<div class="eb-row"><span class="eb-k">${plan ? (done ? 'API-equivalent' : 'API-equivalent so far') : done ? 'Cost' : 'Cost so far'}</span>${cost == null ? '<span class="eb-k">not known yet</span>' : `<b>${usd(cost)}</b>`}<span class="eb-x">${exp} ${span(est.apiUsd, usd)}</span></div>
       ${cost == null ? '' : bar(cost, est.apiUsd[0], est.apiUsd[1], cost > est.apiUsd[1] ? 'eb-late' : '')}` : '';
     return `<section class="estbar${late ? ' eb-over' : ''}" aria-label="Estimated and actual time and cost">${partsRow(build, done)}
-      <div class="eb-row"><span class="eb-k">${done ? 'Took' : 'Elapsed'}</span><b${done ? '' : ` data-eb-since="${est.startedAt}"`}>${clock(el)}</b><span class="eb-x">expected ${span(est.wallS, mins)}</span></div>
+      <div class="eb-row"><span class="eb-k">${done ? 'Took' : 'Elapsed'}</span><b${done ? '' : ` data-eb-since="${est.startedAt}"`}>${clock(el)}</b><span class="eb-x">${exp} ${span(est.wallS, mins)}</span></div>
       ${bar(el, lo, hi, late ? 'eb-late' : '')}
       <p class="eb-state">${esc(state)}</p>
       ${costRow}
-      <p class="eb-src">Estimate for ${est.basis === 'idea' ? 'your idea, as the small model read it' : 'a typical small app'}${est.basedOn ? (est.realBuilds ? `, from ${est.basedOn} lab runs and ${est.realBuilds} real build${est.realBuilds === 1 ? '' : 's'}` : `, from ${est.basedOn} real lab runs`) : ''}${plan ? '. Runs on your Claude plan (not billed by qodebase); the dollars are API prices for the same work.' : '; cost at API prices.'}</p>
+      <p class="eb-src">${old ? 'Estimate shown at the time, before qodebase refit its estimates on real builds. ' : ''}${done ? 'It was the estimate' : 'Estimate'} for ${est.basis === 'idea' ? 'this idea, as the small model read it' : 'a typical small app'}${est.basedOn ? (est.realBuilds ? `, from ${est.basedOn} lab runs and ${est.realBuilds} real build${est.realBuilds === 1 ? '' : 's'}` : `, from ${est.basedOn} real lab runs`) : ''}${plan ? '. Runs on your Claude plan (not billed by qodebase); the dollars are API prices for the same work.' : '; cost at API prices.'}</p>
     </section>`;
   };
   // Tick every elapsed clock on the page once a second (no rebuild).

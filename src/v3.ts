@@ -226,7 +226,7 @@ type Landed = { id: string; title?: string; intent?: string; agent?: string; ver
 /** G2: the one-line 'why' under a landed commit: its intent, how it was reviewed, how it landed (qb6's info.landed). */
 function whyLine(l: Landed, shown?: string) {
   // The intent often starts with the title itself: say only what the title does not.
-  const ttl = (shown || l.title || '').replace(/[.\s]+$/, ''), raw = (l.intent || '').replace(/\s+/g, ' ').trim().replace(/^In \/workspace\/repo[^,]*,\s*/i, '');
+  const ttl = (shown || l.title || '').replace(/[.\s]+$/, ''), raw = (l.intent || '').split(/\n\s*(?:Your files|Files|Done when|Tests?|Contract)\s*:/i)[0].replace(/^([^\n]*)\n/, (m, first) => (first.trim().replace(/[.\s]+$/, '').toLowerCase() === ttl.toLowerCase() ? '' : m)).replace(/\s+/g, ' ').trim().replace(/^In \/workspace\/repo[^,]*,\s*/i, '');
   // Only a whole first sentence equal to the title goes (titles are often the intent cut mid-word: keep it then).
   const m = /^(.+?[.!?])\s+(.*)$/.exec(raw);
   const intent = m && ttl && m[1].replace(/[.!?]+$/, '').trim().toLowerCase() === ttl.toLowerCase() ? m[2] : raw;
@@ -235,6 +235,9 @@ function whyLine(l: Landed, shown?: string) {
   const how = l.replayed || l.how === 'handler' || l.how === 'model' ? `replayed on the newest code${l.how === 'model' ? ' by a model' : ''}` : '';
   return [short && `Why: ${short}`, rv, how].filter(Boolean).join('; ');
 }
+/** The part of the why line after the intent (how it was reviewed and landed): History's script keeps it when it
+ *  swaps the intent for the person's request (review 2, #12). */
+const whyRest = (l: Landed) => whyLine({ ...l, intent: '' }).replace(/^Why: [^;]*;?\s*/, '');
 function historyView(c: Ctx) {
   const now = Date.now();
   type Item = { at: number; html: string };
@@ -243,13 +246,13 @@ function historyView(c: Ctx) {
   const byId = new Map(Object.values(landed).map((l) => [l.id, l] as const));
   const lookup = (hash: string) => landed[hash] || Object.entries(landed).find(([k]) => k.startsWith(hash) || hash.startsWith(k))?.[1];
   const record = (id: string) => `/p/${c.info.owner}/${c.info.name}/work#/change/${encodeURIComponent(id)}`;
-  for (const ch of c.done) if (byId.has(ch.a.id)) { const l = byId.get(ch.a.id)!; items.push({ at: l.landedAt || ch.a.noteAt || ch.a.createdAt, html: `<a class="hrow" href="${record(ch.a.id)}"><span class="k">Landed</span><span class="t">${esc(ch.title)}</span><span class="why">${esc(whyLine(l, ch.title))}</span></a>` }); } else items.push({ at: ch.a.noteAt || ch.a.createdAt, html: `<span class="k">Merged</span><span class="t">${esc(ch.title)}</span><a class="sub" href="/p/${c.info.owner}/${c.info.name}/changes/${shortId(ch.a.id)}">See the code</a>` });
+  for (const ch of c.done) if (byId.has(ch.a.id)) { const l = byId.get(ch.a.id)!; items.push({ at: l.landedAt || ch.a.noteAt || ch.a.createdAt, html: `<a class="hrow" href="${record(ch.a.id)}"><span class="k">Landed</span><span class="t">${esc(ch.title)}</span><span class="why" data-cid="${esc(l.id)}" data-rest="${esc(whyRest(l))}">${esc(whyLine(l, ch.title))}</span></a>` }); } else items.push({ at: ch.a.noteAt || ch.a.createdAt, html: `<span class="k">Merged</span><span class="t">${esc(ch.title)}</span><a class="sub" href="/p/${c.info.owner}/${c.info.name}/changes/${shortId(ch.a.id)}">See the code</a>` });
   for (const cm of c.overview.commits) {
     if (/^Merge /.test(cm.message)) continue;
     const l = lookup(cm.hash);
     if (l && c.done.some((ch) => ch.a.id === l.id)) continue;   // already listed as its change, above
     items.push({ at: cm.at, html: l
-      ? `<a class="hrow" href="${record(l.id)}"><span class="k">Commit</span><span class="t">${esc(cm.message)}</span><span class="why">${esc(whyLine(l, cm.message))}</span><code class="sub">${esc(cm.hash.slice(0, 7))}</code></a>`
+      ? `<a class="hrow" href="${record(l.id)}"><span class="k">Commit</span><span class="t">${esc(cm.message)}</span><span class="why" data-cid="${esc(l.id)}" data-rest="${esc(whyRest(l))}">${esc(whyLine(l, cm.message))}</span><code class="sub">${esc(cm.hash.slice(0, 7))}</code></a>`
       : `<span class="k">Commit</span><span class="t">${esc(cm.message)}</span><code class="sub">${esc(cm.hash.slice(0, 7))}</code>` });
   }
   const dep = c.overview.app ?? c.info.app;
@@ -260,7 +263,16 @@ function historyView(c: Ctx) {
   const day = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: new Date(t).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
   let last = '';
   const rows = items.map((it) => { const d = day(it.at); const h = d !== last ? `<h3>${d}</h3>` : ''; last = d; return `${h}<div class="hi">${it.html}${freshTag(it.at, now, STEPS)}</div>`; }).join('');
-  return { body: `<div class="pad">${rows}</div>` };
+  // Review 2 (#12): 'Why:' is the request the change came from, not the agent's task brief. The person's asks
+  // (GET …/asks: each ask lists its change ids) replace the server's line; a run of rows from the same request names
+  // it once, on the newest row. Without asks (older projects) the server's line stays.
+  const js = c.info.landing ? `(function(){const rows=[...document.querySelectorAll('.hi .why[data-cid]')];if(!rows.length)return;
+fetch(API+'/asks',{cache:'no-store'}).then((r)=>r.ok?r.json():null).then((d)=>{if(!d||!Array.isArray(d.asks))return;const of={};for(const a of d.asks)for(const id of a.changes||[])of[id]=a;
+ let prev=null;for(const w of rows){const a=of[w.dataset.cid];if(!a){prev=null;continue;}const rest=w.dataset.rest||'';
+  const t=String(a.text||'').replace(/\\s+/g,' ').trim(),q=t.length>90?t.slice(0,87).replace(/\\s+\\S*$/,'')+'…':t;
+  w.textContent=a===prev?(rest?rest.charAt(0).toUpperCase()+rest.slice(1):''):'Why: '+(a.from==='person'?'your request':'a request')+' “'+q+'”'+(rest?'; '+rest:'');prev=a;}
+ console.log(JSON.stringify({module:'history',event:'why_from_asks',rows:rows.length,asks:d.asks.length}));}).catch((e)=>console.log(JSON.stringify({module:'history',event:'asks_failed',error:String(e)})));})();` : '';
+  return { body: `<div class="pad">${rows}</div>`, js };
 }
 
 /** Agents: the machinery, for when you want it. */

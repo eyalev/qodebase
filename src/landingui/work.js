@@ -193,14 +193,18 @@
       case 'changes-suggested': return [`The reviewer asked ${who} for a fix`, d || (c.review && c.review.notes)];
       case 'queued': return [`${its} joined the line`, T];
       case 'testing': return null; // trains say this once for all their changes
-      case 'conflict': return [`${its} collided with ${oc ? (oc.agent === c.agent ? 'its own earlier change' : `${AG(oc.agent)}'s`) : 'newer code'}`, d];
+      case 'conflict': return oc && oc.agent === c.agent ? [`Two of ${who}'s changes edited the same lines`, d] : [`${its} collided with ${oc ? `${AG(oc.agent)}'s` : 'newer code'}`, d];
       case 'replaying': return [`Replaying ${its} on the newest code instead of sending it back`, d];
-      case 'replayed': return [`${its} replayed cleanly and went back in line`, T];
+      // Review 2 (#6): the demo's lead redo and stacked change get their own words.
+      case 'replayed': return c.landing?.how === 'lead' ? [`The area lead redid ${its} on the newest code`, T] : [`${its} replayed cleanly and went back in line`, T];
       case 'with-lead': return [`${its} needs ${leadName(c.lead) || 'its lead'} to decide`, d];
       case 'bounced': return [`${its} was sent back: a test failed`, T];
       case 'sent back': case 'sent-back': case 'sendback': return [`${its} was sent back by ${e.by === 'owner' || !e.by ? 'you' : esc(e.by)}`, d];
       case 'landed': {
         const rp = c.landing && /^replayed/.test(c.landing.how || '');
+        if (c.landing?.how === 'lead') return [`${its} landed, redone by the area lead`, `${T.replace(/[.!?]+$/, '')}: it collided${(c.landing.conflicts || []).length ? ` on ${c.landing.conflicts.join(', ')}` : ''}, no rule could merge it, so the area lead redid it on the newest code and it passed the tests.`];
+        const base = c.stackedOn && idx.get(c.stackedOn);
+        if (base) return [`${its} landed right after the change it was built on`, `Built on ${AG(base.agent)}'s change (${title1(base).replace(/[.!?]+$/, '')}), it landed right after it.`];
         return rp ? [`${its} landed after a replay`, `${T.replace(/[.!?]+$/, '')}: it collided on ${(c.landing.conflicts || []).join(', ')}, was re-applied on the newest code, and passed the tests.`] : [`${its} landed on main`, T];
       }
       default: return [`${its}: ${e.what}`, d];
@@ -225,6 +229,13 @@
     const idx = byId(), out = [];
     for (const c of D.changes) {
       const hs = c.events.filter((e) => HEAD.has(e.what) || (e.what === 'landed' && c.events.some((x) => HEAD.has(x.what))));
+      // A stacked change (built on another before it landed) is its own beat once it lands (review 2, #6).
+      const sb = c.stackedOn && idx.get(c.stackedOn);
+      if (!hs.length && sb && c.state === 'landed') {
+        out.push({ t: c.landedAt || c.events[c.events.length - 1].t, c, kind: 'stack', ok: true, key: `h:${c.id}:stack`, tags: [['', 'stacked'], ['', 'landed']],
+          text: `<b>Built on another change.</b> ${AG(c.agent)} started on top of ${AG(sb.agent)}'s change before it landed, and landed right after it.` });
+        continue;
+      }
       if (!hs.length) continue;
       const ev = new Set(c.events.map((e) => e.what)), last = hs[hs.length - 1];
       const ce = [...c.events].reverse().find((e) => e.what === 'conflict'), oc = ce && otherOf(c, ce, idx);
@@ -233,12 +244,13 @@
       if (ev.has('conflict')) {
         kind = 'collision';
         const where = paths.length ? files(paths) : 'the same file';
-        const pair = oc && oc.agent === c.agent ? `${AG(c.agent)}'s change met its own earlier change on ${where}.` : `${AG(c.agent)}${oc ? ` and ${AG(oc.agent)}` : ''} both changed ${where}.`;
+        const pair = oc && oc.agent === c.agent ? `Two of ${AG(c.agent)}'s changes edited ${where}.` : `${AG(c.agent)}${oc ? ` and ${AG(oc.agent)}` : ''} both changed ${where}.`;
         text = c.state === 'with-lead' ? `<b>Collision, waiting for its lead.</b> ${pair} No rule could redo it, so ${esc(leadName(c.lead) || 'its lead')} decides.`
+          : c.landing?.how === 'lead' ? `<b>Collision, redone by the area lead.</b> ${pair} No rule could merge it, so the area lead redid it on the newest code${c.state === 'landed' ? ' and it landed' : ''}.`
           : ev.has('replayed') || ev.has('replaying') ? `<b>Collision, replayed.</b> ${pair} Instead of sending ${AG(c.agent)} back, its change was redone on the newest code.`
           : `<b>Collision.</b> ${pair}`;
       } else { kind = 'back'; text = `<b>Sent back.</b> ${AG(c.agent)}'s change failed a test, so main stayed healthy.${c.state === 'landed' ? ' It was fixed and landed.' : ` ${AG(c.agent)} is fixing it.`}`; }
-      const tags = kind === 'collision' ? [['x', 'collided'], ev.has('replaying') || ev.has('replayed') ? ['', ev.has('replayed') ? 'replayed' : 'replaying'] : null, c.state === 'with-lead' ? ['', 'with its lead'] : null, ev.has('testing') && (ev.has('replayed') || c.state === 'landed') ? ['', 'tested'] : null, c.state === 'landed' ? ['ok', 'landed'] : null].filter(Boolean) : [];
+      const tags = kind === 'collision' ? [['x', 'collided'], ev.has('replaying') || ev.has('replayed') ? ['', c.landing?.how === 'lead' ? 'redone by the lead' : ev.has('replayed') ? 'replayed' : 'replaying'] : null, c.state === 'with-lead' ? ['', 'with its lead'] : null, ev.has('testing') && (ev.has('replayed') || c.state === 'landed') ? ['', 'tested'] : null, c.state === 'landed' ? ['ok', 'landed'] : null].filter(Boolean) : [];
       const ok = kind === 'collision' && (ev.has('replayed') || c.state === 'landed') && c.state !== 'with-lead';  // a replayed collision is the success: accent edge, the 'collided' tag stays warn
       out.push({ t: (c.state === 'landed' && c.landedAt) || last.t, c, kind, ok, text, tags, key: `h:${c.id}:${last.what}` });
     }
@@ -856,7 +868,7 @@
         ${(c.claims || []).some((p) => !c.files.includes(p)) ? `<dt>${term('claim', 'Claimed')}</dt><dd>${files(c.claims.filter((p) => !c.files.includes(p)))}</dd>` : ''}
         ${rv}
         <dt>${term('fork', 'Its copy')}</dt><dd class="mono">${esc(c.fork)}</dd>
-        ${L?.commit ? `<dt>Commit</dt><dd class="mono">${esc(L.commit.slice(0, 7))}${L.mainCommit ? ` landed as ${esc(L.mainCommit.slice(0, 7))}` : ''}</dd>` : ''}
+        ${L?.commit ? `<dt>Commit</dt><dd><span class="mono">${esc(L.commit.slice(0, 7))}</span>${L.mainCommit && L.mainCommit !== L.commit ? `, on main as <span class="mono">${esc(L.mainCommit.slice(0, 7))}</span>${/^replayed/.test(L.how || '') || L.how === 'lead' ? ' after the replay' : ''}` : L.mainCommit ? ', on main unchanged' : ''}</dd>` : ''}
       </dl></section>
       ${sendBackBox(c)}
       ${diff ? `<section class="sec"><h3>The change</h3><p class="cap">Green lines were added, red lines removed.${two ? ' The reviewed version was written on older code; the replay re-did the same intent on the newest code.' : ''}</p>${diff}</section>` : ''}</div>`;
