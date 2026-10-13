@@ -485,6 +485,7 @@ PY
 
   async letGo(why: string): Promise<void> {
     if (!this.c.running) return;
+    await this.#stoppedBeforeTask(why);
     await this.#collectCosts();
     await this.ctx.storage.delete('costFrom');
     const snap = await this.snapshot(why);
@@ -542,6 +543,18 @@ PY
     }
     log('box', 'idle_stop', { agentId, idleMin: Math.round(idle / 60000) });
     await this.letGo('idle');
+  }
+
+  /** An agent whose box stops before its task was ever sent is not 'working' (real-home-inventory-r8's skeleton agent
+   *  showed 'working' for 11 h after its box was stopped by hand before it got its task, 2026-10-13): mark it blocked. */
+  async #stoppedBeforeTask(why: string) {
+    if (await this.ctx.storage.get<boolean>('taskSent')) return;
+    const id = await this.ctx.storage.get<string>('agentId');
+    const i = id ? id.lastIndexOf('--') : -1;
+    if (!id || i < 0 || /^(router\d*|review\d*|ask|build|merge)/.test(id.slice(i + 2))) return;
+    await this.env.Project.get(this.env.Project.idFromName(id.slice(0, i))).setState(id, 'blocked', `its box stopped (${why}) before its task was sent`)
+      .catch((e: unknown) => log('box', 'stopped_before_task_mark_failed', { agentId: id, err: String(e).slice(0, 200) }));
+    log('box', 'stopped_before_task', { agentId: id, why });
   }
 
   /** Proxy to mobile-agent (default) or the in-box tmux-web (x-forq-port: 7681).

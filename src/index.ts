@@ -1166,6 +1166,13 @@ const app = {
           return json(await sendTo(env, id, composeMessage(text, projectOf(id), attachments, context).text, apiBase));
         }
         if (verb === 'exec' && me.admin) return json(await box.adminExec(await request.text()));
+        // Admin: set an agent's state by hand (an abandoned build's agent that never got its task, 2026-10-13).
+        if (verb === 'mark' && me.admin && request.method === 'POST') {
+          const b = await request.json().catch(() => ({})) as { state?: string; note?: string };
+          if (!['working', 'pushed', 'merged', 'stopped', 'blocked'].includes(String(b.state))) return json({ error: 'state: working|pushed|merged|stopped|blocked' }, 400);
+          await projectStub(env, projectOf(id)).setState(id, b.state as 'stopped', String(b.note || 'marked by an admin').slice(0, 200));
+          return json({ ok: true, id, state: b.state });
+        }
         if (verb === 'busy' && me.admin) return json({ busy: await box.busy() });
         if (verb === 'reset' && me.admin) { await box.destroy(); return json(await wake(env, id, apiBase)); }
       }
