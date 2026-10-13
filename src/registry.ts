@@ -109,6 +109,13 @@ export class Registry extends DurableObject<Env> {
   }
 
   /** A per-day counter (Build suggestion caps): counts one use unless the day's limit is reached. */
+  /** The requests a person sent (src/requests.ts), newest first, last 50: their 'Your requests' list. */
+  async myRequests(handle: string): Promise<{ slug: string; id: string; at: number }[]> {
+    return (await this.ctx.storage.get<{ slug: string; id: string; at: number }[]>(`mr:${handle}`)) || [];
+  }
+  async addMyRequest(handle: string, ref: { slug: string; id: string; at: number }) {
+    await this.ctx.storage.put(`mr:${handle}`, [ref, ...(await this.myRequests(handle))].slice(0, 50));
+  }
   async dayCount(key: string, limit: number): Promise<{ ok: boolean; n: number }> {
     const k = `dc:${new Date().toISOString().slice(0, 10)}:${key}`;
     const n = (await this.ctx.storage.get<number>(k)) || 0;

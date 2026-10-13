@@ -17,6 +17,7 @@ import { CATALOG_CSS, ITEMS, catalogPage } from './catalog';
 import { BUILD_CSS, buildBody } from './newproject';
 import { workBody, workJs } from './landingui/view';
 import { asksView } from './asksui';
+import { requestsView, requestButton } from './requestsui';
 import {
   type Change, type ProjectArgs, type UI, ORDER, OPEN_ICON_C as OPEN_ICON, SEND, VISIT, BUSY,
   accentOf, appUrl, changeRow, changesOf, fixtureData, forkAction, FORK_JS, fromIssues, isMerge, keyNote, legend,
@@ -24,8 +25,8 @@ import {
   md,
 } from './v2';
 
-export type ViewId = 'readme' | 'changes' | 'app' | 'code' | 'history' | 'more' | 'agents' | 'errors' | 'work' | 'asks';
-export const VIEW_IDS: ViewId[] = ['readme', 'changes', 'app', 'code', 'history', 'more', 'agents', 'errors', 'work', 'asks'];
+export type ViewId = 'readme' | 'changes' | 'app' | 'code' | 'history' | 'more' | 'agents' | 'errors' | 'work' | 'asks' | 'requests';
+export const VIEW_IDS: ViewId[] = ['readme', 'changes', 'app', 'code', 'history', 'more', 'agents', 'errors', 'work', 'asks', 'requests'];
 
 /** The project's documents (README first) and the one being read. */
 export type Docs = { list: { path: string; label: string }[]; current: string | null; text: string | null };
@@ -66,6 +67,7 @@ const ICONS = {
   app: I('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/>'),
   code: I('<path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>'),
   history: I('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+  requests: I('<path d="M4 13.5V18a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 18v-4.5"/><path d="M4 13.5 6.5 5.5h11l2.5 8h-4.5l-1.5 2.5h-4L8.5 13.5z"/>'),
   asks: I('<path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="m3.5 6.5 1.2 1.2 2.3-2.4M3.5 12l1.2 1.2 2.3-2.4"/><circle cx="5" cy="17.5" r="1.3"/>'),
   more: I('<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'),
   agents: I('<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 4v4M9 13h.01M15 13h.01"/>'),
@@ -184,7 +186,7 @@ function appView(c: Ctx) {
 <a class="afurl" id="afurl" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open your app in a new tab" title="${esc(hostOf(src))}"><span>${esc(addrOf(src))}</span></a>
 <span class="afpick" id="pickhint" hidden role="status">Tap something in your app</span>
 ${c.own ? `<button type="button" class="afb" id="qbpick" aria-pressed="false" aria-label="Pick an element in your app to add to your message">${PICK_ICON}<span>Pick</span></button><button type="button" class="afb" id="qbshot" aria-label="Take a screenshot of your app and add it to your message">${SHOT_ICON}<span>Shot</span></button><button type="button" class="afb afdone" id="pickdone" hidden>Done</button>` : ''}<a class="afb" id="ext" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open your app in a new tab">${OPEN_ICON}</a></div>
-<iframe id="app" src="${esc(src)}" title="${esc(c.info.name)}, your app"></iframe></div></div>` : noApp(c)}${c.own ? '' : `<div class="forkbar">${VISIT}${forkAction(c.info, c.me, c.forks.filter((e) => e.owner === c.me))}</div>`}`,
+<iframe id="app" src="${esc(src)}" title="${esc(c.info.name)}, your app"></iframe></div></div>` : noApp(c)}${c.own ? '' : `<div class="forkbar">${VISIT}${forkAction(c.info, c.me, c.forks.filter((e) => e.owner === c.me))}${requestButton({ info: c.info, base: c.base, me: c.me, accepts: !(c.info as { requestsOff?: boolean }).requestsOff })}</div>`}`,
     js: `${c.own && c.info.landing ? BUILD_STRIP_JS : ''}(function(){const f=document.getElementById('app'),x=document.getElementById('ext'),ps=document.getElementById('pstrip'),pm=document.getElementById('pmerge');let cur=null;
 // Pick (S2): the app host injects its picker only with ?__qbpick=1 (qb6); we switch it on and off by postMessage
 // to the app's origin and take picks only from that origin. Each pick becomes a chip in the composer (attach.js).
@@ -317,7 +319,7 @@ function readmeView(c: Ctx) {
     info.importedFrom ? `From <a href="${esc(info.importedFrom.url)}" rel="noopener">${esc(info.importedFrom.fullName)}</a> on GitHub` : '',
     forks.length ? `${forks.length} fork${forks.length > 1 ? 's' : ''}` : ''].filter(Boolean);
   return { body: `<div class="pad">${info.description ? `<p class="big">${esc(info.description)}</p>` : ''}${origin.length ? `<p class="lede">${origin.join('. ')}.</p>` : ''}
-${c.own ? '' : `<div class="forkbar in">${VISIT}${forkAction(info, c.me, forks.filter((e) => e.owner === c.me))}</div>`}
+${c.own ? '' : `<div class="forkbar in">${VISIT}${forkAction(info, c.me, forks.filter((e) => e.owner === c.me))}${requestButton({ info, base: c.base, me: c.me, accepts: !(info as { requestsOff?: boolean }).requestsOff })}</div>`}
 ${chips}${doc}${cur ? `<p class="srcl"><a href="/p/${info.owner}/${info.name}/code/${esc(cur)}">${esc(cur)} in Code</a></p>` : ''}${FOOT}</div>` };
 }
 
@@ -362,12 +364,18 @@ const VIEWS: View[] = [
     render: (c) => ({ body: workBody({ owner: c.info.owner, name: c.info.name, own: c.own }), js: workJs() }) },
   // Asks (G4, qb3): every request the agents got and every task on the board, with state, agent and duplicates.
   { id: 'asks', label: 'Asks', icon: ICONS.asks, desc: 'Every request the agents got and every task on the list: state, agents, duplicates', when: (c) => !!c.info.landing, render: asksView },
+  // Requests (qb7, src/requestsui.ts): what people asked the owner to change; a visitor's own requests and the form.
+  { id: 'requests', label: 'Requests', icon: ICONS.requests, desc: 'What people asked you to change: send one to your agents, reply, or close it', when: (c) => !c.info.private,
+    render: (c) => requestsView({ info: c.info, base: c.base, own: c.own, me: c.me, forks: c.forks }) },
   { id: 'errors', label: 'Errors', icon: ICONS.errors, desc: 'Production errors from Cloudflare Issues and the fixes they started', when: (c) => c.worker, render: errorsView },
 ];
 
 /** Tabs for this person: the owner's five, or a visitor's four (History instead of Changes and More). */
 function tabsFor(c: Ctx) {
-  const tabs = c.own ? VIEWS.filter((v) => v.tab && v.when(c)) : VIEWS.filter((v) => ['readme', 'app', 'code', ...(c.info.landing ? ['asks'] : []), 'history'].includes(v.id));
+  const open = (c.info as { requestsOpen?: number }).requestsOpen || 0;
+  const own = VIEWS.filter((v) => v.tab && v.when(c)), rqv = open > 0 ? VIEWS.find((v) => v.id === 'requests' && v.when(c)) : null;
+  if (rqv) own.splice(Math.max(0, own.findIndex((v) => v.id === 'more')), 0, rqv);   // before More, while requests wait
+  const tabs = c.own ? own : VIEWS.filter((v) => ['readme', 'app', 'code', ...(c.info.landing ? ['asks'] : []), 'history'].includes(v.id));
   // A landing-system project (qb6/qb7) leads with Agents at work in Readme's place; Readme stays under More.
   return c.info.landing ? tabs.map((v) => (v.id === 'readme' ? VIEWS.find((x) => x.id === 'work')! : v)) : tabs;
 }
@@ -379,7 +387,8 @@ export function tabBar(c: Pick<Ctx, 'own' | 'base' | 'worker' | 'info'> & Partia
     const href = v.href ? v.href(c as Ctx) : `${c.base}/${v.id}`;
     // More opens a sheet over the current view; a second tap closes it (Eyal, 2026-10-02).
     if (v.id === 'more') return `<a href="${href}" class="tab${on ? ' on' : ''}" data-more aria-expanded="false" aria-controls="moresheet">${v.icon}<span>${v.label}</span></a>`;
-    const badge = v.id === 'changes' && needs ? `<span class="badge" id="badge">${needs}</span>` : v.id === 'changes' ? '<span class="badge" id="badge" hidden></span>' : '';
+    const rq = v.id === 'requests' ? (c.info as { requestsOpen?: number }).requestsOpen || 0 : 0;
+    const badge = v.id === 'changes' && needs ? `<span class="badge" id="badge">${needs}</span>` : v.id === 'changes' ? '<span class="badge" id="badge" hidden></span>' : rq ? `<span class="badge">${rq}</span>` : '';
     return `<a href="${href}" class="tab${on ? ' on' : ''}"${on ? ' aria-current="page"' : ''}${v.short ? ` aria-label="${v.label}"` : ''}>${v.icon}${badge}<span>${v.short || v.label}</span></a>`;
   }).join('')}</nav>`;
 }
@@ -715,6 +724,13 @@ div.hrow .btn,div.hrow .chipbtn{min-height:40px;padding:0 14px;font-size:14px}
 .ibx h3 a{color:var(--fg)}
 .ibx .chg{margin-bottom:8px}
 .ntcs{display:grid;gap:8px;margin:0 0 16px}
+.myrq{margin:18px 0 0}.myrq h3{margin:0 0 8px}
+.myrq-l{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.myrq-a{display:grid;gap:4px;padding:12px 14px;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;min-height:44px}
+.myrq-t{display:flex;align-items:baseline;gap:8px;font-size:13px}.myrq-t b{font-weight:600}
+.myrq-s{margin-left:auto;color:var(--dim)}.myrq-s.done{color:var(--acc)}.myrq-s.sent{color:var(--busy)}
+.myrq-x{font-size:14px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.myrq-r{font-size:13px;color:var(--dim);white-space:pre-wrap;word-break:break-word}.myrq-r b{color:var(--fg);font-weight:600}
 .ntc{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;min-height:44px}
 .ntc-i{flex:none;width:10px;height:10px;margin-top:6px;border-radius:50%;background:var(--acc)}
 .ntc.k-decision .ntc-i{background:var(--warn)}
@@ -725,6 +741,16 @@ div.hrow .btn,div.hrow .chipbtn{min-height:40px;padding:0 14px;font-size:14px}
 
 export type InboxItem = { entry: Entry; info: ProjectInfo; open: Change[] };
 
+// 'Your requests' (src/requests.ts): what you asked other projects' owners, with status and their reply. Filled from
+// GET /api/me/requests in the page; text set with textContent.
+const MYREQ = `<section class="myrq" id="myrq" hidden><h3>Your requests</h3><ul class="myrq-l"></ul></section>
+<script>(function(){const S=document.getElementById('myrq');if(!S)return;fetch('/api/me/requests',{credentials:'same-origin'}).then((r)=>r.ok?r.json():null).then((d)=>{if(!d||!(d.requests||[]).length)return;
+const L=S.querySelector('ul'),el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
+const W=(r)=>r.state==='closed'?(r.closedAs==='done'?'Done':'Not doing it'):r.state==='sent'?'With the agents':'Waiting for the owner';
+for(const r of d.requests.slice(0,10)){const li=el('li');const a=el('a','myrq-a');a.href='/p/'+r.project+'/requests';
+ const top=el('span','myrq-t');top.append(el('b',null,r.project.replace('/',' / ')),el('span','myrq-s '+r.state+(r.closedAs?' '+r.closedAs:''),W(r)));
+ a.append(top,el('span','myrq-x',r.text));if(r.reply){const p=el('span','myrq-r');p.append(el('b',null,'Reply: '),document.createTextNode(r.reply));a.append(p);}li.append(a);L.append(li);}
+S.hidden=false;}).catch(()=>{});})();</script>`;
 const LOCK = `<svg class="lockic" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 function projRow(e: Entry, now: number, st?: { ready: number; fix: number; working: number }, forks = 0) {
   const s = !st ? '' : st.fix ? `<span class="st fix"><span class="dot s-fix"></span>${st.fix} need${st.fix > 1 ? '' : 's'} you</span>`
@@ -771,13 +797,13 @@ export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, ite
     let first = true;
     // X3 (qb6: ProjectInfo.notices, newest first, max 5, cleared when the owner opens the project): a build that
     // finished, a decision an agent needs. One row each, newest first across projects; the row is the link.
-    type Notice = { kind: 'build-done' | 'decision'; title: string; at: number; href?: string };
+    type Notice = { kind: 'build-done' | 'decision' | 'request'; title: string; at: number; href?: string };
     const notices = items.flatMap((it) => ((it.info as { notices?: Notice[] }).notices || []).map((n) => ({ n, it }))).sort((a, b) => b.n.at - a.n.at).slice(0, 12);
     const agoTxt = (t: number) => { const m = Math.max(0, Math.round((now - t) / 60000)); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.floor(m / 60)} h ago` : `${Math.floor(m / 1440)} days ago`; };
-    const noticeHtml = notices.length ? `<div class="ntcs">${notices.map(({ n, it }) => `<a class="ntc k-${n.kind === 'decision' ? 'decision' : 'done'}" href="${esc(n.href || `${path(it.entry.slug)}/changes`)}"><span class="ntc-i" aria-hidden="true"></span><span class="ntc-b"><b>${esc(n.title)}</b><span>${n.kind === 'decision' ? 'Needs your decision' : 'Build finished'} in ${esc(label(it.entry.slug))}, ${agoTxt(n.at)}</span></span></a>`).join('')}</div>` : '';
+    const noticeHtml = notices.length ? `<div class="ntcs">${notices.map(({ n, it }) => `<a class="ntc k-${n.kind === 'decision' || n.kind === 'request' ? 'decision' : 'done'}" href="${esc(n.href || `${path(it.entry.slug)}/changes`)}"><span class="ntc-i" aria-hidden="true"></span><span class="ntc-b"><b>${esc(n.title)}</b><span>${n.kind === 'decision' ? 'Needs your decision' : n.kind === 'request' ? 'New request' : 'Build finished'} in ${esc(label(it.entry.slug))}, ${agoTxt(n.at)}</span></span></a>`).join('')}</div>` : '';
     body = `<div class="ibx">${noticeHtml}${need.length ? need.map((it) => `<h3><a href="${path(it.entry.slug)}/changes">${esc(label(it.entry.slug))}</a></h3>${it.need.map((c) => { const html = changeRow(it.info, c, now, first ? c.a.id : undefined).replace('<div class="chg ', `<div data-api="/api/p/${it.info.owner}/${it.info.name}" class="chg `); first = false; return html; }).join('')}`).join('')
       : notices.length ? '' : `<div class="hello"><b>Nothing needs you.</b><p>When a change is ready to merge, needs a fix, or an agent has a question, it shows up here, from every project.</p></div>`}
-${moving.length ? `<h3>In progress</h3>${moving.map(({ it, c }) => `<a class="mi" href="${path(it.entry.slug)}/changes"><span class="dot s-${c.state}"></span><span><b>${esc(c.title)}</b><span>${esc(label(it.entry.slug))}, ${c.word.toLowerCase()}</span></span></a>`).join('')}` : ''}</div>`;
+${moving.length ? `<h3>In progress</h3>${moving.map(({ it, c }) => `<a class="mi" href="${path(it.entry.slug)}/changes"><span class="dot s-${c.state}"></span><span><b>${esc(c.title)}</b><span>${esc(label(it.entry.slug))}, ${c.word.toLowerCase()}</span></span></a>`).join('')}` : ''}</div>${MYREQ}`;
   } else {
     title = 'Explore';
     body = `<div class="hrow"><span class="lede" style="flex:1;margin:0">Projects that run. Open one, fork it, ask for changes.</span>${me ? '<a class="chipbtn" href="/import">Import</a>' : ''}</div>

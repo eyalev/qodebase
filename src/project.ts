@@ -58,8 +58,15 @@ export type ProjectInfo = {
   /** X3: what the owner should see in their Inbox (a build finished, an agent asks them), newest first, max 5;
    *  cleared when the owner opens the project. */
   notices?: Notice[];
+  /** Requests from people (src/requests.ts): how many wait for the owner (the tab's badge), and whether the owner
+   *  turned them off. The requests themselves are kept apart in this object's storage ('rq:<id>'). */
+  requestsOpen?: number;
+  requestsOff?: boolean;
 };
-export type Notice = { kind: 'build-done' | 'decision'; title: string; at: number; href: string };
+export type Notice = { kind: 'build-done' | 'decision' | 'request'; title: string; at: number; href: string };
+/** A request from a signed-in person to the owner (src/requests.ts). Text fields are stored as typed and escaped where shown. */
+export type PersonRequest = { id: string; by: string; text: string; shot?: string; fork?: string; at: number;
+  state: 'open' | 'sent' | 'closed'; closedAs?: 'done' | 'not-doing'; reply?: string; replyAt?: number; sentAt?: number };
 
 export class Project extends DurableObject<Env> {
   async info(): Promise<ProjectInfo | null> {
@@ -136,6 +143,41 @@ export class Project extends DurableObject<Env> {
     info.notices = [n, ...(info.notices || []).filter((x) => !(x.kind === n.kind && x.title === n.title))].slice(0, 5);
     await this.#register(info);
   }
+  // ---- requests from people (src/requests.ts) ----
+  async personRequests(): Promise<PersonRequest[]> {
+    return [...(await this.ctx.storage.list<PersonRequest>({ prefix: 'rq:' })).values()].sort((a, b) => b.at - a.at);
+  }
+  async personRequest(id: string): Promise<PersonRequest | null> { return (await this.ctx.storage.get<PersonRequest>(`rq:${id}`)) || null; }
+  async #countOpen(info: ProjectInfo) {
+    const n = (await this.personRequests()).filter((r) => r.state === 'open').length;
+    if (n) info.requestsOpen = n; else delete info.requestsOpen;
+  }
+  /** A new request: stored, counted for the tab's badge, and a notice for the owner's bell and Inbox. */
+  async addPersonRequest(r: PersonRequest, notice: Notice) {
+    const info = await this.#need();
+    await this.ctx.storage.put(`rq:${r.id}`, r);
+    await this.#countOpen(info);
+    info.notices = [notice, ...(info.notices || [])].slice(0, 5);
+    await this.#register(info);
+    log('project', 'request_added', { slug: info.slug, id: r.id, by: r.by, chars: r.text.length });
+  }
+  async updatePersonRequest(id: string, patch: Partial<PersonRequest>): Promise<PersonRequest | null> {
+    const r = await this.personRequest(id);
+    if (!r) return null;
+    const next = { ...r, ...patch, id: r.id, by: r.by, text: r.text, at: r.at };
+    await this.ctx.storage.put(`rq:${id}`, next);
+    const info = await this.#need();
+    await this.#countOpen(info);
+    await this.#register(info);
+    log('project', 'request_updated', { slug: info.slug, id, state: next.state });
+    return next;
+  }
+  async setRequestsOff(off: boolean) {
+    const info = await this.#need();
+    if (off) info.requestsOff = true; else delete info.requestsOff;
+    await this.#register(info);
+  }
+
   /** The owner opened the project: its notices are read. */
   async clearNotices() {
     const info = await this.#need();

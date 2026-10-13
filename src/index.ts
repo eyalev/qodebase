@@ -26,6 +26,7 @@ import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, sk
 import { suggestRoute, ideaRoute } from './buildsuggest';
 import { withPicker } from './picker';
 import { screenshotRoute } from './screenshot';
+import { requestsRoute, myRequestsRoute } from './requests';
 import { ATTACH_TYPES, ATTACH_MAX, newAttachId, isAttachId, attachKey, composeMessage, parseMarker, attachedLines } from './attach';
 import { viewShown, buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
@@ -524,6 +525,14 @@ const app = {
         const e = await registry(env).get(slugOf(m[1], m[2]));
         if (e && !canSee(e, me.handle, me.admin)) return path.startsWith('/api/') ? json({ error: 'no such project' }, 404) : new Response('No such project', { status: 404 });
       }
+      // Requests from people to a public project's owner (src/requests.ts, qb7): the private gate above already answers
+      // 404 for someone else's private project.
+      if ((m = path.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/requests(?:\/(.*))?$/))) {
+        const slug = slugOf(m[1], m[2]), P = projectStub(env, slug), info0 = await P.info();
+        if (!info0) return json({ error: 'no such project' }, 404);
+        return requestsRoute(request, { env, me, slug, p: P, info: info0, toRouter: (payload, shown) => askRouter(env, ctx, P, slug, payload, apiBase, shown, 'person') }, m[3] || '');
+      }
+      if (path === '/api/me/requests' && request.method === 'GET') return myRequestsRoute(env, me, (s) => projectStub(env, s));
       // Attached images (src/attach.ts): upload and read back, the project's owner only.
       if ((m = path.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/attach(?:\/([a-z0-9.]+))?$/))) {
         const slug = slugOf(m[1], m[2]);
@@ -840,7 +849,7 @@ const app = {
         return html(buildLogPage(info, a ? `Preview of agent ${ag}` : 'Live app (main)', a ? a.preview : info.app));
       }
       // ---- design v3 (views): /p/<o>/<n>[/<view>] on the views host
-      if (views && (m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(readme|changes|app|history|more|agents|errors|about|work|asks))?\/?$/))) {
+      if (views && (m = path.match(/^\/p\/([a-z0-9-]+)\/([a-z0-9-]+)(?:\/(readme|changes|app|history|more|agents|errors|about|work|asks|requests))?\/?$/))) {
         const slug = slugOf(m[1], m[2]);
         const p = projectStub(env, slug);
         const info = await p.info();
@@ -905,7 +914,9 @@ const app = {
         if (verb === '' && request.method === 'GET') {
           // Estimate vs elapsed (Build): the estimate shown and the progress, when the project was built with one.
           const bi = { ...(await env.Landing.get(env.Landing.idFromName(slug)).pageExtras().catch(() => null)), billing: await billingOf(env, slug.split('.')[0]) };
-          return json(bi ? { ...info, ...bi } : info);
+          // Visitors never see the owner's notices (a request's words and handle) or the requests counters (critique).
+          const pub = info.owner === me.handle || me.admin ? info : (({ notices: _n, requestsOpen: _o, requestsOff: _f, ...rest }) => rest)(info);
+          return json(bi ? { ...pub, ...bi } : pub);
         }
         if (verb === 'fork' && request.method === 'POST') {
           if (info.owner === me.handle) return json({ error: 'this is already yours' }, 400);
