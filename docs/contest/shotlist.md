@@ -18,10 +18,10 @@ the owner tab before 08:30 UTC Oct 14. Anything not ready is cut or replaced as 
 | # | length | on screen | Eyal says (voice-over or into Talk) | what must happen | speed |
 |---|---|---|---|---|---|
 | 1 | 0:20 | Deck slide 2 (Overview), then slide 1's merge animation | "Agents write code faster than pull requests and review can land it. With many agents, order and collisions break the flow. qodebase lands each change by what it was asked to do." | Deck in `?rec=1&theme=light`, advanced by keyboard | real time |
-| 2a | 0:20 | Home on the phone, mic | Into Talk: "Build me a home inventory app with a team." | Talk fills the build box, opens Build | real time |
+| 2a | 0:20 | Home on the phone, mic | Into Talk: "Build me a home inventory app with a team, and let people pay for a pro plan with Stripe." | Talk fills the build box, opens Build | real time |
 | 2b | 0:20 | Build settings: team preset, the estimate (time + cost range) | "It picks a team and tells me roughly how long and what it costs." | Team preset chosen; estimate visible; Build tapped | real time |
 | 2c | 0:30 | Agents at work: pipeline columns filling, the latest line | "Each agent takes one part. Collisions are redone on the newest code, not sent back." | Agents start, first changes reach review/line | 8–12× (clock + label) |
-| 2d | 0:15 | An Ask (X5 question card) and the answer by voice | Into Talk: the answer (e.g. "use the free tier, no payment") | A real `ask-person` appears in Asks; answered; the agent continues | real time |
+| 2d | 0:15 | An Ask (X5 question card) and the answer by voice | Into Talk: "Use Stripe test mode; here is the test key." (test key only) | A real `ask-person` appears in Asks; answered; the agent continues | real time |
 | 2e | 0:25 | **Money moment**: into Talk "Add a dark mode" mid-build; it lands on top | "Mid-build I ask for one more thing. It lands on top of the rest, and nothing breaks." | The dark-mode change goes through review and the line while others are still working; tests pass; it lands | 8× then real time for the landing |
 | 2f | 0:20 | App tab: the live app in dark mode; then one change record (what it was asked, review, replay, tests) | "The app is live, and every change keeps its record." | App preview loads; one collided-and-redone change opened | real time |
 | 2g | 0:10 | Timeline of the run | "The timeline shows where the time went." | Timeline tab with the critical path | real time |
@@ -40,6 +40,23 @@ Depends on, to confirm by 08:30 UTC Oct 14 (owner in brackets):
 - 3a the 1,000-agent job from Talk with a confirm card [qb2, qb6]; 3b collisions/min and replays on /runs [qb6];
   3c Intents on a run [qb5, deploy with 5f0bb2d]; 3e the checker's "every entry once, nothing lost" [qb6, qb4];
   the run's cost cap set before Start [qb6].
+
+Status (qb6, Oct 13 evening):
+- **2d ready**, but only if the build needs a real decision. Scene 2a's phrase therefore becomes "Build me a home
+  inventory app with a team, and let people pay for a pro plan with Stripe": an agent then asks for the Stripe key
+  (bell, Inbox and the change). The answer by voice is "use Stripe test mode, here is the test key" (a test key
+  only, never a live one on film).
+- **2e ready:** requests during a build queue and land through the same merge queue (seen in R5–R8b).
+- **3a fleet side ready** (job 'comments+index', qb7's form, /api/runs/start); Talk's confirm card is qb2's, open.
+- **3b data ready** (collisions per 10 s, wait p90, door on the run's series; an index test re-inserted 494 index
+  collisions by intent); how /runs shows it is qb7's, open.
+- **3e ready as an API:** GET /api/runs/<repo>/<run>/indexcheck → {lines, expected, sorted, missing, twice}
+  (index test: 1,173 of 1,173, sorted, 0 missing, 0 twice). On screen it needs a line on the run page [qb7], or
+  scene 3e shows the numbers as a caption read from that response.
+- **Cost cap ready:** budgetUsd on the form plus the fleet's $50/day cap; a 1,000-agent run on src/vs/editor costs
+  ~$0.15–0.25.
+- **Pre-flight:** gateway limit 3,000/min stays up for the take; copy fleet-n2-vscode-src-1 is reserved
+  (src/vs/editor = 659 files at its base); nobody runs on it before the take.
 
 ## Pre-flight (08:00–08:45 UTC)
 
