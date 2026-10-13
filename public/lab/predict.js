@@ -736,19 +736,24 @@ export function jobType(job = SMALL_APP, suggestion = null) {
 }
 
 // ---- X2: time left on a running build (docs/board/TASKS.md X2; qb7 shows 'N of M parts landed, about K min left').
-// remainingTime({ parts, landed, elapsedS, estimate: { wallS: [lo, hi] }, firstLandS? })
+// remainingTime({ parts, landed, elapsedS, estimate: { wallS: [lo, hi] }, firstLandS?, lastLandS? })
 //   parts: the plan's part count (changes it will land; one agent = 1); landed: how many have landed;
 //   elapsedS: seconds since Build; estimate: the shown estimate (predictBuild's wallS); firstLandS: when the first
-//   part landed (seconds since Build), from the board or timeline.
+//   part landed and lastLandS when the latest one did (seconds since Build), from the board or timeline.
 // -> { leftS: [lo, hi], midS, text, phase: 'starting'|'landing'|'done'|'over', parts, landed }
 // Before the first landing the estimate is all we have: its range minus the time gone. After it, each landing is
-// evidence: seconds per part = (time since the first landing + k prior parts) / (parts landed since + k), so the
-// prior fades as parts land, and the range narrows with them. Real builds (R3-R5) landed in trains and their last
-// part straggled (R3 +395 s, R4 +614 s after the one before): the high end keeps a straggler allowance (3 parts' time
-// plus a fifth of the time since the first landing). Tuned on R3-R5's landing times (sim/remaining-backtest.mjs):
-// the actual time left fell in the range 75-80% of the time after the first landing; 3 builds, so a rough fit.
-export const REMAINING = { k: 4, spreadLo: 1, spreadHi: 2, straggleParts: 3, straggleSince: 0.2, minS: 30, minPartS: 20 };
-export function remainingTime({ parts, landed = 0, elapsedS, estimate, firstLandS = null } = {}) {
+// evidence: seconds per part = (first to latest landing + k prior parts) / (parts landed since + k), so the prior
+// fades as parts land and the range narrows with them. Between landings the time left counts down (the part in
+// flight is credited up to one part's time); it grows only when the gap since the latest landing runs past the pace
+// (then the pace is taken as if a part landed now). v2 (2026-10-13, qb7 saw v1 grow while parts landed on
+// real-budget-tracker-10): v1 counted every second between landings as slower pace (with 11 parts left, +3 s left per
+// second). Prior pace = 2x what the estimate's middle leaves after the first landing (real builds land their parts
+// slower than that). Real builds landed in trains and their last part straggled (R3 +395 s, R4 +614 s after the one
+// before): the top end adds 3 parts' time. Tuned on R3-R5's landing times (sim/remaining-backtest.mjs): truth inside
+// the range 85-91% of the time after the first landing, shown minutes going up on 0-6% of 15 s steps (v1: 74-80%,
+// 10-27%). 3 builds, in-sample: a rough fit.
+export const REMAINING = { k: 4, priorX: 2, spreadLo: 1.5, spreadHi: 2, straggleParts: 3, minS: 30, minPartS: 20 };
+export function remainingTime({ parts, landed = 0, elapsedS, estimate, firstLandS = null, lastLandS = null } = {}) {
   const M = Math.max(1, Math.round(parts || 1)), n = Math.max(0, Math.min(M, Math.round(landed || 0)));
   const t = Math.max(0, elapsedS || 0);
   const [eLo, eHi] = estimate?.wallS || [0, 0];
@@ -767,14 +772,17 @@ export function remainingTime({ parts, landed = 0, elapsedS, estimate, firstLand
     const lo = Math.max(R.minS, eLo - t), hi = Math.max(lo, eHi - t);
     return out('starting', lo, hi, Math.max(lo, Math.min(hi, (eMid ?? hi) - t)));
   }
-  const t1 = Math.min(firstLandS, t);
-  // Prior seconds per part after the first: what the estimate's middle leaves after the first landing.
-  const r0 = Math.max(R.minPartS, ((eMid ?? t1 * 2) - t1) / Math.max(1, M - 1));
-  const k = R.k, seen = n - 1;
-  const r = Math.max(R.minPartS, (t - t1 + k * r0) / (seen + k));
-  const left = M - n, mid = r * left;
+  const t1 = Math.min(firstLandS, t), seen = n - 1;
+  // No latest-landing time: assume the landings so far were evenly spread.
+  const tL = Math.max(t1, Math.min(t, lastLandS ?? (t1 + (t - t1) * seen / (seen + 1))));
+  // Prior seconds per part after the first.
+  const r0 = Math.max(R.minPartS, R.priorX * ((eMid ?? t1 * 2) - t1) / Math.max(1, M - 1));
+  const k = R.k;
+  const rDone = (tL - t1 + k * r0) / (seen + k), rOpen = (t - t1 + k * r0) / (seen + 1 + k);
+  const r = Math.max(R.minPartS, rDone, rOpen);
+  const left = M - n, mid = Math.max(r * (left - 1) + R.minPartS, r * left - Math.min(t - tL, r));
   const q = Math.sqrt(seen + k);
-  const lo = Math.max(R.minS, mid / (1 + R.spreadLo / q)), hi = mid * (1 + R.spreadHi / q) + r * R.straggleParts + R.straggleSince * (t - t1);
+  const lo = Math.max(R.minS, mid / (1 + R.spreadLo / q)), hi = mid * (1 + R.spreadHi / q) + r * R.straggleParts;
   // 'about K' = the range's geometric middle: on R3-R5 it was nearer the truth than the rate alone (which ignores
   // stragglers): median error 1.2-1.7x vs 1.2-2.4x.
   return out('landing', lo, hi, Math.sqrt(lo * hi));
@@ -791,9 +799,9 @@ function leftText(phase, lo, hi, mid) {
 
 // qb7's call shape (est-bar.js, in the browser): times in ms since the epoch -> [lo, hi] seconds, or null when it
 // cannot say (no estimate and nothing landed yet, or the build is done).
-export function remainingS({ estimate, parts, landed = 0, firstLandedAt = null, now = Date.now() } = {}) {
+export function remainingS({ estimate, parts, landed = 0, firstLandedAt = null, lastLandedAt = null, now = Date.now() } = {}) {
   if (!estimate?.startedAt || !Array.isArray(estimate.wallS)) return null;
-  const r = remainingTime({ parts, landed, elapsedS: (now - estimate.startedAt) / 1000, estimate,
-    firstLandS: firstLandedAt ? (firstLandedAt - estimate.startedAt) / 1000 : null });
+  const s = (at) => (at ? (at - estimate.startedAt) / 1000 : null);
+  const r = remainingTime({ parts, landed, elapsedS: (now - estimate.startedAt) / 1000, estimate, firstLandS: s(firstLandedAt), lastLandS: s(lastLandedAt) });
   return r.phase === 'done' || (r.phase === 'starting' && r.leftS[1] === 0) ? null : r.leftS;
 }

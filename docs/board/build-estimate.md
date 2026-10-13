@@ -223,3 +223,12 @@ qb9's R3 vs R6, would decide it: if R7 has R4's features, one agent is the soone
 size. Huge's words: "One strong agent: about 2x faster in our real builds (one each) and as complete; a team costs
 about half (Balanced)." What the team costs is computed from the job's real-fitted estimate. The Balanced and
 Cheapest branches are gone from `suggestBuild`; both presets stay in Adjust. Huge chip: 11-31 min, $5.7-12.3.
+
+**Time left v2 (2026-10-13).** qb7 saw v1's time left grow while parts landed on real-budget-tracker-10. The cause:
+v1 counted every second between landings as a slower pace, which with 11 parts left added ~3 s left per second. Now
+the pace comes from first to latest landing (`lastLandS`, or `lastLandedAt` in `remainingS`). Between landings the
+time left counts down, crediting the part in flight up to one part's time. It grows only once the gap runs past the
+pace. The prior pace is 2x what the estimate's middle leaves after the first landing; the top end adds 3 parts'
+time. Backtest after the first landing: truth inside the range 84-92% of the time (v1: 74-80%), and the shown
+minutes go up on 1-5% of 15 s steps (v1: 10-27%). At the first landing the range can jump wider than the
+estimate-minus-time-gone, because the first landing came late in every real build (7-12 min).

@@ -33,6 +33,14 @@ test('slow landings push the time left up', () => {
   assert.ok(remainingTime({ ...base, elapsedS: 1500 }).midS > remainingTime({ ...base, elapsedS: 600 }).midS);
 });
 
+test('between landings the time left counts down while the pace holds (v1 grew: qb7 on real-budget-tracker-10)', () => {
+  const at = (t) => remainingTime({ parts: 13, landed: 2, elapsedS: t, estimate: { wallS: [840, 2220] }, firstLandS: 576, lastLandS: 740 });
+  const a = at(745), b = at(800), c = at(860);
+  assert.ok(a.midS > b.midS && b.midS > c.midS, `${a.midS} > ${b.midS} > ${c.midS}`);
+  // Far past the pace with no landing: it may grow, honestly.
+  assert.ok(at(3000).midS > c.midS);
+});
+
 test('done, and bad input', () => {
   assert.equal(remainingTime({ parts: 3, landed: 3, elapsedS: 900, estimate: est }).text, 'done');
   assert.equal(remainingTime({ parts: 3, landed: 9, elapsedS: 900, estimate: est }).phase, 'done', 'landed past parts');
@@ -55,7 +63,7 @@ test('backtest on real builds: after the first landing the truth falls in the ra
     const end = b.lands[b.parts - 1]; let hit = 0, n = 0;
     for (let t = b.lands[0]; t < end; t += 15) {
       const landed = b.lands.filter((x) => x <= t).length;
-      const r = remainingTime({ parts: b.parts, landed, elapsedS: t, estimate: { wallS: b.estimate }, firstLandS: b.lands[0] });
+      const r = remainingTime({ parts: b.parts, landed, elapsedS: t, estimate: { wallS: b.estimate }, firstLandS: b.lands[0], lastLandS: b.lands[landed - 1] });
       n++; if (end - t >= r.leftS[0] && end - t <= r.leftS[1]) hit++;
     }
     assert.ok(hit / n >= 0.7, `${b.slug}: ${hit}/${n}`);
