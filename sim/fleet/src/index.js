@@ -40,6 +40,17 @@ export default {
       case '/pause': return json(await run(env, repo).pause(body.why || 'paused by hand'));
       case '/resume': return json(await run(env, repo).resume(body.cfg || {}));   // cfg: e.g. a new planUsdPerMin or maxPerMin after a fix
       case '/stop': return json(await run(env, repo).stop(body.why || 'stopped by hand'));
+      // F4 (qb9): the quality judge through the same gateway, one model only, priced and counted in the account-day cap.
+      case '/judge': {
+        if (body.model !== '@cf/openai/gpt-oss-120b') return json({ error: 'model must be @cf/openai/gpt-oss-120b' }, 400);
+        const b = await budget(env).check(); if (!b.ok) return json({ error: b.why }, 429);
+        let res; try { res = await env.AI.run(body.model, { messages: Array.isArray(body.messages) ? body.messages.slice(0, 4) : [], max_tokens: Math.min(300, Number(body.max_tokens) || 200) }, { gateway: { id: GATEWAY } }); }
+        catch (e) { const m = String(e?.message || e); return json({ error: m.slice(0, 300) }, /429|rate.?limit/i.test(m) ? 429 : 502); }
+        const u = res?.usage || {}, pr = PRICES_OF(env)[body.model];
+        const usd = pr ? ((u.prompt_tokens || 0) * pr[0] + (u.completion_tokens || 0) * pr[1]) / 1e6 : 0;
+        if (usd) await budget(env).spend(usd);
+        return json({ result: res, usd });
+      }
       case '/meta': return json(await run(env, repo).setMeta(String(body.run || ''), body.meta || {}));
       case '/records': return new Response(await run(env, repo).records(url.searchParams.get('run')), { headers: { 'content-type': 'application/x-ndjson' } });
       case '/budget': return json(await budget(env).status());
