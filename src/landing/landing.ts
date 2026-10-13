@@ -555,6 +555,8 @@ export class Landing extends DurableObject<Env> {
     // From the records (m.firstLandedAt only exists since 2026-10-13: an older build read its newest landing as its first).
     const firstLandedAt = agents.reduce((t, c) => (c.landedAt && (!t || c.landedAt < t) ? c.landedAt : t), 0) || m.firstLandedAt || null;
     return { parts: m.parts ? Math.max(m.parts, agents.length) : null, landed, firstLandedAt, lastLandedAt,
+      // #9 (qb7): the cost when the last planned part landed, so the page can stop the clock and the cost there.
+      usdAtLastLanding: (m.build as { usdAtLastLanding?: number } | undefined)?.usdAtLastLanding ?? null,
       startedAt: m.build?.startedAt || null, settledAt, remainingS: null };
   }
 
@@ -572,6 +574,11 @@ export class Landing extends DurableObject<Env> {
     const agents = info?.agents || [];
     const last = Math.max(0, ...agents.map((a) => a.noteAt || 0));
     let progress = { spentUsd, settledAt: null as number | null, actualWallS: null as number | null, actualUsd: null as number | null };
+    // #9: once every planned part has landed, keep the cost of that moment (the clock is the last landing's time).
+    if (m.parts && (b as { usdAtLastLanding?: number }).usdAtLastLanding === undefined) {
+      const landedNow = (await this.#all()).filter((c) => c.kind === 'agent' && c.state === 'landed').length;
+      if (landedNow >= m.parts && spentUsd != null) { (b as { usdAtLastLanding?: number }).usdAtLastLanding = spentUsd; await this.#saveMeta(); }
+    }
     if (agents.length && agents.every((a) => a.state === 'merged') && last > b.startedAt && Date.now() - last > 3 * 60_000) {
       b.actual = { settledAt: last, actualWallS: Math.round((last - b.startedAt) / 1000), actualUsd: spentUsd };
       await this.#saveMeta();
