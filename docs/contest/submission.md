@@ -8,6 +8,10 @@
 
 ## Project vision
 
+**What we proved, at two scales** (all on Cloudflare):
+- **Thousands of agents:** 4,750 agents with cached answers landed 63,441 changes in under 3 minutes, with no errors; with real cheap models, a fleet landed 31,466 file changes in six real codebases, up to ~114 a second, none touching code.
+- **Real Claude teams up to 40:** 28 of a 40-agent build's changes collided and were all redone by a model on the newest code; at this size, one strong agent finished sooner in 3 of 3 builds.
+
 **What we found.** For a fresh app, one strong agent is the measured default: on the same prompts, in 3 of 3 real builds, one strong agent finished sooner than a team (2×, 4× and 6×; the 6× pair, R8b, had a ~10 min queue bug), with at least as many features working; the team was cheaper in 2 of 3 (one build each: [R6 vs R3](https://github.com/eyalev/qodebase/blob/main/docs/board/R3-R6-quality.md), [R7 vs R4](https://github.com/eyalev/qodebase/blob/main/docs/board/R4-R7-quality.md), [R8b](https://github.com/eyalev/qodebase/blob/main/docs/board/R8b-quality.md)). Many agents pay off for wide work (shared task lists, two teams, arriving tasks: the board), forced-parallel work (big ports like Bun's) and fleet scale (lanes, cheap-model fleets). qodebase is the layer that makes many agents safe: each change an intent with a record, landed by intent on the newest code, with a live board and a timeline.
 
 Merge queues already exist (GitHub's merge queue, Graphite, Mergify, Bors), and so do multi-agent coding setups like Gas Town. They all treat a change as a diff: when it no longer applies, it goes back to its author. qodebase treats a change as an **intent with a record**. When it collides with what landed since, the queue **replays the reviewed intent on the newest main** instead of bouncing it, tests it, and lands it. Every agent works on **its own fork in Cloudflare Artifacts**, each change's record (intent, diff, review, tests) stays with the code **as git notes**, and a live **board** shows who works on what.
