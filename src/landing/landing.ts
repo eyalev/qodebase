@@ -749,7 +749,8 @@ export class Landing extends DurableObject<Env> {
       if (!c || c.kind !== 'agent' || (c.state !== 'working' && c.state !== 'replaying' && !sentBack)) continue;
       open++;
       const last = c.events.at(-1)?.t || c.createdAt, nudges = (c as { nudges?: number }).nudges || 0;
-      if (Date.now() - last < STALL_MS || nudges >= 2) continue;
+      // X1: the skeleton holds every other agent, so an idle skeleton is nudged after 90 s (the proof build's sat idle 4 min).
+      if (Date.now() - last < (c.skeleton ? 90_000 : STALL_MS) || nudges >= 2) continue;
       // Claude working right now = still at it (a long task). Asleep, or awake and idle, is stalled (a box only sleeps
       // after 5 idle minutes, so 'asleep only' could not fire before ~5 min; lastActive moves only on requests).
       // POST: the per-box verbs answer GET with {error:'POST only'}, which read as 'not busy' and nudged working agents (R5:
