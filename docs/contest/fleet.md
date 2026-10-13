@@ -1,11 +1,9 @@
 # Fleet section: texts (P2, owner qb8)
 
-Status: filled from `public/results.json` (9f46aa6, 16 runs; generator `node scripts/results/build.mjs`). Model runs
-only: the four "cache" runs (S4a, answers replayed from a cache, no model calls) are left out of every number here
-until qb6 confirms what they mean.
-Update (qb6, after 28e5ae4): S4a's counts in results.json were read mid-landing; final 2,989 landed on each copy
-(11,956 of 16,256; 4,276 nothing to document, 24 cache misses). It tests our side alone at scale; the README quotes
-qb6's claim. More steps (200 on 1 copy, 1,000 on 20, 5,000 on 100) follow.
+Status: filled from `public/results.json` (786cb02; generator `node scripts/results/build.mjs`). The model-written
+totals cover the 12 model runs only (6,616 landed of 11,405, $2.81). The 4 cached-answer runs (S4a: comments reused by
+content hash, no model call; agents, verify, lanes and pushes real) have their own sum in `fleetCached`: 16,256 files,
+11,956 landed, 0 refused; the README quotes them separately, never added to the model totals.
 
 Wording rules:
 - "agents" are Durable Objects calling a cheap model, not Claude. Gemini Flash-Lite (3.5 as overflow, 3.1 as a planned
