@@ -93,7 +93,7 @@ export function toAnthropic(messages: any[], tools: any[] | null, maxTokens: num
     }
     out.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || ' ') });
   }
-  const body: any = { messages: out, max_tokens: maxTokens, temperature: 0.3 };
+  const body: any = { messages: out, max_tokens: maxTokens };   // no temperature: Claude 5.5 refuses it here (7003)
   if (system) body.system = system;
   if (tools?.length) body.tools = tools.map((t: any) => ({ name: t.function.name, description: t.function.description, input_schema: t.function.parameters }));
   return body;
