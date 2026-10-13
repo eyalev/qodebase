@@ -69,6 +69,7 @@ var S = {
   pause: get('pause', '2500'),          // mic 'pause': send after this many ms of quiet
   mic: get('mic', 'send'),              // how the mic works: send (tap, speak, tap Send, like tmux-web; default) | pause (sends when I stop) | hold | conv (conversation)
   whisper: get('whisper', 'on'),        // re-read the whole clip with Whisper before sending (Deepgram live only)
+  merge: get('merge', 'off'),           // also merge live words + Whisper with a model (off: it lost to Whisper alone on Eyal's dictations, 2026-10-13)
   keep: get('keepmic', 'open'),
   clips: get('clips', 'on'),            // owner only: keep my recordings for debugging (14 days); on for the owner since 2026-10-13 (traceability)         // open = keep the mic ready while Talk is open (first words never lost) | use = only while speaking
 };
@@ -132,6 +133,8 @@ var css = [
   // in at rest is the composer mic (hold it: Talk listens). Three layers at the bottom were too many (critique).
   '#talk-root.slim.rest #talk-bar,#talk-root.tall.rest #talk-bar{display:none}',
   '#talk-spacer{height:0;pointer-events:none}',
+  '#talk-again{display:none;align-self:flex-start;margin:0 16px 8px;min-height:36px;font-size:14px}',
+  '#talk-root.canagain #talk-again{display:inline-flex;align-items:center}',
   // Things to say (Eyal, 2026-10-13: a first-time visitor should know what they can say): a rotating line in the
   // bar at rest (tap = say it), and grouped chips in the empty conversation.
   '#talk-root.ex #talk-btext{color:var(--t-dim)}',
@@ -232,7 +235,7 @@ var ICON = {
 var root, sheet, logEl, live, offer, inp, micBtn, sendBtn, stEl, spk, convBtn;
 var bar, bMic, bText, bOffer, bSend, bExp, bSpk, spacer;
 // The input grows with what you say or type (up to a third of the screen), then scrolls to the newest words.
-function fitInp() { if (!inp) return; inp.style.height = 'auto'; inp.style.height = Math.max(44, inp.scrollHeight + 2) + 'px'; inp.scrollTop = inp.scrollHeight; if (sendBtn) sendBtn.classList.toggle('ready', !!inp.value.trim() || listening); }
+function fitInp() { if (!inp) return; if (root) root.classList.toggle('canagain', !!(lastClip && inp.value.trim() && !listening && Date.now() - lastClip.at < 10 * 60000)); inp.style.height = 'auto'; inp.style.height = Math.max(44, inp.scrollHeight + 2) + 'px'; inp.scrollTop = inp.scrollHeight; if (sendBtn) sendBtn.classList.toggle('ready', !!inp.value.trim() || listening); }
 function setInp(v) {
   if (cInto) { cInto.value = v; try { cInto.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {} cInto.scrollTop = cInto.scrollHeight; return; }
   inp.value = v; fitInp(); barSync();
@@ -369,6 +372,7 @@ function build() {
     '<label>How the mic works<select id="talk-s-mic"><option value="send">Tap the mic, speak, tap Send (like tmux-web)</option><option value="pause">Tap the mic; it sends when I stop talking</option><option value="hold">Hold the mic while I talk; letting go sends</option><option value="conv">Conversation: it keeps listening and talks back</option></select></label>' +
     '<label>Send after a pause of<select id="talk-s-pause"><option value="1500">1.5 s</option><option value="2500">2.5 s</option><option value="4000">4 s</option></select></label>' +
     '<label>Check the words with Whisper<select id="talk-s-whisper"><option value="on">On: the whole recording is read again (steadier, about 1.5 s)</option><option value="off">Off: send the live words right away</option></select></label>' +
+    '<label>Clean up the words with a model<select id="talk-s-merge"><option value="off">Off: Whisper\u2019s words</option><option value="on">On: live words + Whisper merged, your project names kept (about 1 s more)</option></select></label>' +
     '<label>Microphone<select id="talk-s-keep"><option value="open">Ready while Talk is open (your first words are never lost)</option><option value="use">Only while I speak</option></select></label>' +
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
     '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
@@ -386,13 +390,15 @@ function build() {
   inp = el('textarea', { id: 'talk-in', rows: '1', enterkeyhint: 'send', autocomplete: 'off', placeholder: 'Say or type', 'aria-label': 'Talk to qodebase' });
   micBtn = el('button', { id: 'talk-mic', type: 'button', 'aria-label': 'Speak' }, ICON.mic);
   sendBtn = el('button', { id: 'talk-send', type: 'submit', 'aria-label': 'Send' }, ICON.send);
+  var again = el('button', { id: 'talk-again', type: 'button', class: 'talk-chip' }, 'Hear it again');
+  again.addEventListener('click', function () { unlockAudio(); hearAgain(); });
   var inWrap = el('div', { id: 'talk-inwrap' }); inWrap.appendChild(inp);
   form.appendChild(inWrap); form.appendChild(sendBtn); form.appendChild(micBtn);   // the mic at the right edge, Send next to it
   clearer(inp, inWrap, function () { if (listening) stopListen(true); });
   inp.addEventListener('input', function () { fitInp(); });
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
   var grab = el('button', { id: 'talk-grab', type: 'button', 'aria-label': 'Drag to resize Talk, tap to fold it into the bar' }, '<i></i>');
-  sheet.appendChild(grab); sheet.appendChild(head); sheet.appendChild(setp); sheet.appendChild(logEl); sheet.appendChild(live); sheet.appendChild(offer); sheet.appendChild(form);
+  sheet.appendChild(grab); sheet.appendChild(head); sheet.appendChild(setp); sheet.appendChild(logEl); sheet.appendChild(live); sheet.appendChild(offer); sheet.appendChild(again); sheet.appendChild(form);
   var h0 = Number(get('h', 0)); if (h0 > 0) sheet.style.setProperty('--talk-h', h0 + 'px');
   // Tap the header (not its buttons) to fold the conversation back into the bar.
   head.addEventListener('click', function (e) { if (e.target.closest('button')) return; open(false); });
@@ -470,6 +476,7 @@ function build() {
   if (scon) { scon.value = CONSENT ? 'on' : 'off'; scon.onchange = function () { api('consent', { on: scon.value === 'on' }).then(function (r) { CONSENT = !!r.on; if (CONSENT && !tOn) traceStart(); else if (!CONSENT) { tOn = false; tq = []; } }); }; }
   var sclp = document.getElementById('talk-s-clips');
   if (sclp) { sclp.value = S.clips; sclp.onchange = function () { S.clips = sclp.value; set('clips', S.clips); trace('setting', { clips: S.clips }); }; }
+  var smg = document.getElementById('talk-s-merge'); smg.value = S.merge; smg.onchange = function () { S.merge = smg.value; set('merge', S.merge); trace('setting', { merge: S.merge }); };
   var smic = document.getElementById('talk-s-mic'), swh = document.getElementById('talk-s-whisper'), skp = document.getElementById('talk-s-keep');
   var showMic = function () { spz.parentNode.style.display = S.mic === 'pause' ? '' : 'none'; swh.parentNode.style.display = S.engine === 'live' && S.mic !== 'conv' ? '' : 'none'; micBtn.setAttribute('aria-label', S.mic === 'hold' ? 'Hold to speak' : S.mic === 'conv' ? 'Start a conversation' : 'Speak'); };
   smic.value = S.mic; swh.value = S.whisper; skp.value = S.keep; showMic();
@@ -1633,6 +1640,33 @@ function clipStop(cb) {
   try { r.stop(); } catch (e) { if (cb) cb(null); }
 }
 var dcBase = '';
+var lastClip = null;   // the last dictation's recording, for "Hear it again"
+// Whisper on the whole recording, then (setting "Clean up the words") the merge with the live words, 3.5 s at most.
+function hearText(blob, live) {
+  var w0 = Date.now();
+  return fetch('/api/talk/transcribe?names=1&lang=' + encodeURIComponent(S.lang), { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type }, body: blob })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      var w = (j && j.text) || '', out = { text: w || live, how: w ? 'whisper' : 'live', whisper_ms: Date.now() - w0, err: j && j.error, whisper: w };
+      if (!w || S.merge !== 'on' || !live) return out;
+      var m0 = Date.now();
+      return Promise.race([
+        api('merge', { live: live, whisper: w, lang: S.lang }).then(function (m) { return m && m.merged && m.text ? Object.assign(out, { text: m.text, how: 'whisper+merge', merge_ms: Date.now() - m0 }) : Object.assign(out, { merge_ms: Date.now() - m0 }); }),
+        new Promise(function (ok) { setTimeout(function () { ok(Object.assign(out, { merge_ms: 'timeout' })); }, 3500); }),
+      ]).catch(function () { return out; });
+    });
+}
+// "Hear it again": the same recording through Whisper once more (Whisper spikes and misses; tmux-web has a Retry too).
+function hearAgain() {
+  if (!lastClip || busy) return;
+  trace('hear_again', { bytes: lastClip.blob.size });
+  status('Hearing it again\u2026');
+  hearText(lastClip.blob, lastClip.live).then(function (j) {
+    status(''); var all = (lastClip.base + (j.text || '')).trim();
+    trace('dc_whisper', { how: 'again-' + j.how, live: lastClip.live, final: j.text, whisper_ms: j.whisper_ms });
+    if (all) { setInp(all); open(true); try { inp.focus(); } catch (e) {} }
+  }).catch(function () { status('Could not hear it again'); });
+}
 var nativePreview = null;
 function startNativePreview() {
   var R = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1731,9 +1765,8 @@ function liveFinish(text, sendIt) {
     var late = false;
     var into = !!cInto;   // a page's composer (its Send may be waiting on this): 8 s too
     setTimeout(function () { if (!sendIt && !into) { late = true; status(''); return; } send(t, 'live-timeout', { bytes: blob.size }); }, sendIt || into ? 8000 : 15000);
-    fetch('/api/talk/transcribe?names=1&lang=' + encodeURIComponent(S.lang), { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type }, body: blob })
-      .then(function (r) { return r.json(); })
-      .then(function (j) { send((j && j.text) || t, j && j.text ? 'whisper' : 'live', { bytes: blob.size, whisper_ms: Date.now() - w0, err: j && j.error, late: late || undefined }); })
+    lastClip = { blob: blob, live: t, base: base, at: Date.now() };
+    hearText(blob, t).then(function (j) { send(j.text || t, j.how, { bytes: blob.size, whisper_ms: j.whisper_ms, merge_ms: j.merge_ms, whisper: j.whisper, err: j.err, late: late || undefined }); })
       .catch(function (e) { send(t, 'live-error', { err: String(e) }); });
   });
 }

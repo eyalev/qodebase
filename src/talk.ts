@@ -23,6 +23,7 @@ import { isOwner } from './auth';
 import { buildQuestions, candidateProjects, currentSlug, resolve, stateText, type Item, type Proj, type Screen } from './talkdecide';
 import { TALK_JS } from './talkclient';
 import { talkAdmin } from './talkadmin';
+import { MERGE_MODEL, mergeMessages, cleanMerge } from './talkmerge';
 import { TALK_VOICE_JS } from './talkvoicejs.gen';
 import { routeAgentRequest } from 'agents';
 
@@ -277,6 +278,28 @@ async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
   }
 }
 
+// Live words + Whisper → one text (Talk setting "Clean up the words", off by default: on Eyal's 14 dictations the merge
+// agreed less with tmux-web's final than Whisper alone, 8.0% vs 6.5% WER, and took 1-16 s; bench: scripts/talk-stt-bench.mjs).
+async function merge(request: Request, env: Env, who: Who & {}) {
+  const t0 = Date.now();
+  const b = await request.json().catch(() => ({})) as any;
+  const live = String(b?.live || '').slice(0, 2000), whisper = String(b?.whisper || '').slice(0, 2000), lang = String(b?.lang || 'en');
+  if (!whisper && !live) return json({ text: '' });
+  const budget = await talkLog(env).take('stt', who.handle);
+  if (!budget.ok) return json({ text: whisper, why: 'budget' });
+  const names = (await projectsFor(env, who).catch(() => [] as any[])).filter((p: any) => p.mine).map((p: any) => String(p.name).replace(/[-_]+/g, ' ')).slice(0, 40);
+  try {
+    const res: any = await (env.AI as any).run(MERGE_MODEL, { messages: mergeMessages(live, whisper, names, lang), max_tokens: 400, temperature: 0, chat_template_kwargs: { enable_thinking: false } }, aiOpts(env));
+    const raw = res?.choices?.[0]?.message?.content ?? res?.response ?? '';
+    const t = cleanMerge(raw, live, whisper);
+    log('merge', { level: 'info', handle: who.handle, ms: Date.now() - t0, used: t != null, live_chars: live.length, whisper_chars: whisper.length });
+    return json({ text: t ?? whisper, merged: t != null, ms: Date.now() - t0 });
+  } catch (e) {
+    log('merge_error', { level: 'error', err: String(e), ms: Date.now() - t0 });
+    return json({ text: whisper, merged: false, error: 'model' });
+  }
+}
+
 let etagMemo: string | null = null;
 async function talkEtag() {
   if (!etagMemo) {
@@ -509,6 +532,7 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
   if (url.pathname === '/api/talk/chat') return chat(request, env, who, _ctx);
   if (url.pathname === '/api/talk/transcribe') return transcribe(request, env, who, url);
   if (url.pathname === '/api/talk/status') return status(request, env, who, _ctx);
+  if (url.pathname === '/api/talk/merge') return merge(request, env, who);
   if (url.pathname === '/api/talk/log') {
     // One row per page-tool call (window.__webmcp / WebMCP, src/talkclient.ts). No model, no budget.
     const b = await request.json().catch(() => null) as any;

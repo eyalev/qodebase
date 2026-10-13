@@ -9,6 +9,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { MERGE_MODEL, mergeMessages, cleanMerge } from '../src/talkmerge.ts';
 
 const ACC = '887d7234a6b8d65ad355a4f6684cab67';
 const TOKEN = fs.readFileSync(path.join(os.homedir(), '.config/forq-cf/api-token'), 'utf8').trim();
@@ -16,6 +17,8 @@ const DIR = path.join(os.homedir(), '.config/tmux-web/voice-recordings');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const nEn = arg('--en', 8), nHe = arg('--he', 4);
 const OUT = path.join(os.homedir(), '.local/share/forq/talk-stt-bench.jsonl');
+// --names <json file>: the speaker's names/terms for the merge prompt (Talk sends the person's project names).
+const NAMES = process.argv.includes('--names') ? JSON.parse(fs.readFileSync(process.argv[process.argv.indexOf('--names') + 1], 'utf8')) : [];
 
 const clips = [];
 for (const d of fs.readdirSync(DIR).filter((x) => /^2026-/.test(x)).sort().reverse()) {
@@ -61,16 +64,29 @@ async function nova(buf, lang) {
   return { text, ms: Date.now() - t0, err: j.errors?.[0]?.message || (r.ok ? undefined : `HTTP ${r.status}`) };
 }
 
+async function merge(live, whisper, lang) {
+  const t0 = Date.now();
+  const r = await fetch(`https://gateway.ai.cloudflare.com/v1/${ACC}/qodebase-talk/workers-ai/${MERGE_MODEL}`, {
+    method: 'POST', headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ messages: mergeMessages(live, whisper, NAMES, lang), max_tokens: 400, temperature: 0, chat_template_kwargs: { enable_thinking: false } }),
+  });
+  const j = await r.json().catch(() => ({}));
+  const res = j.result || j;
+  const raw = res?.choices?.[0]?.message?.content ?? res?.response ?? '';
+  const t = cleanMerge(raw, live, whisper);
+  return { text: t ?? whisper, used: t != null, ms: Date.now() - t0 };
+}
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-const sum = { en: { w: [], n: [] }, he: { w: [], n: [] } };
+const sum = { en: { w: [], n: [], m: [] }, he: { w: [], n: [], m: [] } };
 for (const c of [...en, ...he]) {
   const buf = fs.readFileSync(c.audio);
   const lang = c.he ? 'he' : 'en';
   const [w, n] = await Promise.all([whisper(buf, lang), nova(buf, lang)]);
-  const row = { ts: new Date().toISOString(), id: c.id, lang, words: c.words, wer_whisper: +wer(c.ref, w.text).toFixed(3), wer_nova: +wer(c.ref, n.text).toFixed(3), ms_whisper: w.ms, ms_nova: n.ms, err: w.err || n.err, ref: c.ref.slice(0, 160), whisper: w.text.slice(0, 160), nova: n.text.slice(0, 160) };
+  const m = await merge(n.text, w.text, lang);
+  const row = { ts: new Date().toISOString(), id: c.id, lang, words: c.words, wer_whisper: +wer(c.ref, w.text).toFixed(3), wer_nova: +wer(c.ref, n.text).toFixed(3), wer_merge: +wer(c.ref, m.text).toFixed(3), ms_merge: m.ms, merge_used: m.used, merged: m.text.slice(0, 160), ms_whisper: w.ms, ms_nova: n.ms, err: w.err || n.err, ref: c.ref.slice(0, 160), whisper: w.text.slice(0, 160), nova: n.text.slice(0, 160) };
   fs.appendFileSync(OUT, JSON.stringify(row) + '\n');
-  sum[lang].w.push(row.wer_whisper); sum[lang].n.push(row.wer_nova);
-  console.log(`${lang} ${String(c.words).padStart(3)}w  whisper ${row.wer_whisper.toFixed(2)} (${w.ms} ms)  nova-3 ${row.wer_nova.toFixed(2)} (${n.ms} ms)${row.err ? '  ERR ' + row.err : ''}\n   ref:     ${row.ref}\n   whisper: ${row.whisper}\n   nova-3:  ${row.nova}`);
+  sum[lang].w.push(row.wer_whisper); sum[lang].n.push(row.wer_nova); sum[lang].m.push(row.wer_merge);
+  console.log(`${lang} ${String(c.words).padStart(3)}w  whisper ${row.wer_whisper.toFixed(2)} (${w.ms} ms)  nova-3 ${row.wer_nova.toFixed(2)} (${n.ms} ms)  merge ${row.wer_merge.toFixed(2)} (${m.ms} ms${m.used ? '' : ', fell back'})${row.err ? '  ERR ' + row.err : ''}\n   ref:     ${row.ref}\n   whisper: ${row.whisper}\n   nova-3:  ${row.nova}\n   merged:  ${row.merged}`);
 }
 const mean = (a) => a.length ? (a.reduce((x, y) => x + y, 0) / a.length).toFixed(3) : '-';
-console.log(`\nmean WER vs tmux-web's final  en (${sum.en.w.length}): whisper ${mean(sum.en.w)}  nova-3 ${mean(sum.en.n)}   he (${sum.he.w.length}): whisper ${mean(sum.he.w)}  nova-3 ${mean(sum.he.n)}`);
+console.log(`\nmean WER vs tmux-web's final  en (${sum.en.w.length}): whisper ${mean(sum.en.w)}  nova-3 ${mean(sum.en.n)}  merge ${mean(sum.en.m)}   he (${sum.he.w.length}): whisper ${mean(sum.he.w)}  nova-3 ${mean(sum.he.n)}  merge ${mean(sum.he.m)}`);
