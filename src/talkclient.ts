@@ -990,7 +990,9 @@ function route(c, text) {
       var ago = c.updatedAt ? agoWords(Date.now() - c.updatedAt) : '';
       var line2 = 'Your latest is ' + String(c.label || '').split('/').pop().replace(/-/g, ' ') + (c.text ? ': ' + String(c.text).replace(/\s+/g, ' ').slice(0, 140).replace(/[.\s]+$/, '') : '') + (ago ? ', changed ' + ago + ' ago' : '') + '.';
       if (viaNow) viaNow.answer = { lane: 'your projects', model: null, ms: 0 };
-      add('ai', line2 + ' Open it?', null, { via: viaNow }); say(line2 + ' Want to open it?');
+      // Said short (name + when): the ~200-character line with its description took 3-7 s to start speaking.
+      var said2 = 'Your latest is ' + String(c.label || '').split('/').pop().replace(/-/g, ' ') + (ago ? ', changed ' + ago + ' ago' : '') + '. Want to open it?';
+      add('ai', line2 + ' Open it?', null, { via: viaNow }); var s2 = new String(said2); s2.__short = true; say(s2);
       offerOn('', function () { act({ op: 'go', href: c.href, label: c.label }); }, 'Open');
       return done();
     }
@@ -1116,6 +1118,7 @@ function ideaFlow(size, targetId) {
   if (!btn || !box) { add('note', 'Ideas are on the home page.'); sset('then', { text: 'give me a ' + size.toLowerCase() + ' idea', at: Date.now() }); act({ op: 'go', href: '/', label: 'home' }); return; }
   var before = box.value; lastIdea = { size: size, at: Date.now() };
   status('Thinking of an idea\u2026'); trace('idea', { size: size });
+  if (lat) { lat.lane = lat.lane || 'idea'; ack(); }   // the generator takes 2-10 s: 'One moment.' at once
   btn.click();
   var t0 = Date.now();
   (function wait() {
