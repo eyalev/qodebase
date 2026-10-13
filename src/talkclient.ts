@@ -22,9 +22,14 @@ function logEv(event, data) { try { console.log(JSON.stringify(Object.assign({ t
 // ---- Experience trace (the owner only, /api/talk/trace): every step, batched, sent on leaving a page.
 var tq = [], tOn = false, tTimer = null, VERSION = '';
 var tsid = (function () { try { var v = ss.getItem(KEY + 'sid'); if (!v) { v = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); ss.setItem(KEY + 'sid', v); } return v; } catch (e) { return 'nosid'; } })();
+// One id per utterance (Eyal, 2026-10-13, full traceability): from the tap (or the typed sentence) to what Talk did,
+// every row carries it, the API calls send it (the server adds its rows), and the recording is named by it.
+var curU = '', uSaid = false;
+function newU() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
 function trace(ev, data) {
   if (!tOn && tq.length > 300) return;
   var r = { ts: Date.now(), ev: ev, path: location.pathname };
+  if (curU) r.u = curU;
   for (var k in data || {}) { var v = data[k]; r[k] = typeof v === 'string' ? v.slice(0, 400) : v; }
   tq.push(r);
   if (tOn && !tTimer) tTimer = setTimeout(traceFlush, 4000);
@@ -65,11 +70,12 @@ var S = {
   mic: get('mic', 'send'),              // how the mic works: send (tap, speak, tap Send, like tmux-web; default) | pause (sends when I stop) | hold | conv (conversation)
   whisper: get('whisper', 'on'),        // re-read the whole clip with Whisper before sending (Deepgram live only)
   keep: get('keepmic', 'open'),
-  clips: get('clips', 'off'),           // owner only: keep my recordings for debugging (7 days); off by default         // open = keep the mic ready while Talk is open (first words never lost) | use = only while speaking
+  clips: get('clips', 'on'),            // owner only: keep my recordings for debugging (14 days); on for the owner since 2026-10-13 (traceability)         // open = keep the mic ready while Talk is open (first words never lost) | use = only while speaking
 };
 // Aura-2 is the default voice since 2026-10-07 (Eyal): devices that had Aura-1 only because it was the default move once.
 try { if (!ls.getItem(KEY + 'v2')) { if (ls.getItem(KEY + 'voice-on') === 'aura-1') ls.setItem(KEY + 'voice-on', 'aura-2'); if (S.voice === 'aura-1') { S.voice = 'aura-2'; S.speaker = ''; ls.setItem(KEY + 'voice', 'aura-2'); ls.removeItem(KEY + 'speaker'); } ls.setItem(KEY + 'v2', '1'); } } catch (e) {}
 var CLIPS = false;   // the owner may keep recordings (set from /api/talk/me)
+var CONSENT = null;  // others: null for the owner (always traced); true/false = their "Help improve Talk" answer
 var LANGS = { en: 'en-US', he: 'he-IL', auto: 'en-US' };
 var me = null, busy = false, listening = false, lastSpoken = false;
 var hist = sget('log', []);             // [{who:'you'|'app'|'ai'|'note', text}]
@@ -360,7 +366,8 @@ function build() {
     '<label>Voice<select id="talk-s-speaker"></select></label>' +
     '<label>Speed<select id="talk-s-speed"><option value="1">1\u00d7</option><option value="1.1">1.1\u00d7</option><option value="1.15">1.15\u00d7</option><option value="1.25">1.25\u00d7</option><option value="1.4">1.4\u00d7</option><option value="1.6">1.6\u00d7</option></select></label>' +
     '<label>Speak<select id="talk-s-when"><option value="voice">When I talked</option><option value="always">Always</option></select></label>' +
-    (CLIPS ? '<label>Keep my recordings (only you can hear them, deleted after 7 days)<select id="talk-s-clips"><option value="off">Off</option><option value="on">On, for debugging</option></select></label>' : '') +
+    (CLIPS ? '<label>Keep my recordings (only you can hear them, deleted after 14 days)<select id="talk-s-clips"><option value="on">On, for debugging</option><option value="off">Off</option></select></label>' : '') +
+    (CONSENT !== null ? '<label>Help improve Talk<select id="talk-s-consent"><option value="off">Off: nothing is kept</option><option value="on">On: keep what I say and what Talk did, 14 days (no audio)</option></select></label>' : '') +
     '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>' +
     '<button type="button" class="talk-chip pri" id="talk-s-done">Done</button>';
   logEl = el('div', { id: 'talk-log', 'aria-live': 'polite' });
@@ -448,6 +455,8 @@ function build() {
   sw.onchange = function () { S.when = sw.value; set('when', S.when); };
   var spz = document.getElementById('talk-s-pause'); spz.value = S.pause === 'tap' ? '2500' : S.pause;
   spz.onchange = function () { S.pause = spz.value; set('pause', S.pause); trace('setting', { pause: S.pause }); };
+  var scon = document.getElementById('talk-s-consent');
+  if (scon) { scon.value = CONSENT ? 'on' : 'off'; scon.onchange = function () { api('consent', { on: scon.value === 'on' }).then(function (r) { CONSENT = !!r.on; if (CONSENT && !tOn) traceStart(); else if (!CONSENT) { tOn = false; tq = []; } }); }; }
   var sclp = document.getElementById('talk-s-clips');
   if (sclp) { sclp.value = S.clips; sclp.onchange = function () { S.clips = sclp.value; set('clips', S.clips); trace('setting', { clips: S.clips }); }; }
   var smic = document.getElementById('talk-s-mic'), swh = document.getElementById('talk-s-whisper'), skp = document.getElementById('talk-s-keep');
@@ -689,6 +698,7 @@ function pageText() {
 
 // ---- Server ----------------------------------------------------------------
 function api(path, body) {
+  if (curU && tOn) { body.uid = curU; body.sid = tsid; }
   return fetch('/api/talk/' + path, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) })
     .then(function (r) { return r.json().then(function (j) { j._status = r.status; return j; }); });
 }
@@ -697,6 +707,8 @@ function api(path, body) {
 var preview = null;   // { text, cmd } from interim speech
 var lastText = '';
 function submit(text) {
+  if (!curU || uSaid) curU = newU();
+  uSaid = true;
   lastText = String(text || '');
   trace('said', { text: text, spoken: lastSpoken, engine: lastSpoken ? S.engine : 'typed' });
   if (busy) return;
@@ -932,19 +944,21 @@ function act(c, withPreview) {
         if (!ok) return whichOne(c);
         add('app', 'Opening ' + (c.label || c.href) + '…');
         sset('last', c.label || c.href);
+        sset('nav', { u: curU, href: c.href, at: Date.now() });
+        trace('act', { op: 'go', href: c.href, label: c.label });
         busy = false;
-        leave(function () { location.assign(c.href); });
+        leave(function () { traceFlush(true); location.assign(c.href); });
       });
     }
-    if (c.op === 'back') { add('app', 'Going back…'); busy = false; leave(function () { history.back(); }); return; }
+    if (c.op === 'back') { add('app', 'Going back…'); trace('act', { op: 'back' }); busy = false; leave(function () { history.back(); }); return; }
     if (c.op === 'press' && c.target && /^x/.test(c.target)) { return pageAction(c); }
     if (c.op === 'press' && target) {
       var before = visibleButtons();
-      add('app', 'Pressed \u201c' + plainLabel(c.label) + '\u201d.'); target.click();
+      add('app', 'Pressed \u201c' + plainLabel(c.label) + '\u201d.'); target.click(); trace('act', { op: 'press', label: c.label, confirmed: !!c.confirmed });
       // A button that asks again ("Stop" → "Stop this run", "Remove" → tap again): after a yes, press the second one too.
       if (c.confirmed) return followConfirm(c, before);
     }
-    else if (c.op === 'type' && target) { typeInto(target, c.text); add('app', target.tagName === 'SELECT' || target.type === 'range' ? 'Set \u201c' + plainLabel(c.label) + '\u201d to ' + (target.tagName === 'SELECT' ? (target.selectedOptions[0] || {}).textContent : target.value) + '.' : 'Typed \u201c' + c.text + '\u201d.'); if (target.tagName !== 'SELECT' && target.type !== 'range') offerSubmit(target); }
+    else if (c.op === 'type' && target) { trace('act', { op: 'type', label: c.label, text: c.text }); typeInto(target, c.text); add('app', target.tagName === 'SELECT' || target.type === 'range' ? 'Set \u201c' + plainLabel(c.label) + '\u201d to ' + (target.tagName === 'SELECT' ? (target.selectedOptions[0] || {}).textContent : target.value) + '.' : 'Typed \u201c' + c.text + '\u201d.'); if (target.tagName !== 'SELECT' && target.type !== 'range') offerSubmit(target); }
     else if (c.op === 'scroll') {
       if (c.section === 'top') window.scrollTo({ top: 0, behavior: 'smooth' });
       else if (c.section === 'bottom') window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -984,7 +998,7 @@ function whichOne(c) {
     var mine = l.filter(function (p) { return p.owner === me; }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); }).slice(0, 5);
     var links = mine.map(function (p) { return { text: p.name, href: '/p/' + p.owner + '/' + p.name }; }).concat([{ text: 'All your projects', href: '/mine' }]);
     var q = 'Which project? Your newest:';
-    add('ai', q, links); say('Which project?');
+    add('ai', q, links); say('Which project?'); open(true);   // the chips live in the conversation
     done();
   }).catch(function () { add('note', 'That page is not there.'); done(); });
 }
@@ -1198,6 +1212,7 @@ function setListening(on) {
   barSync();
 }
 function startListen() {
+  if (!listening && !busy) { curU = newU(); uSaid = false; }
   trace('listen_start', { engine: S.engine, lang: S.lang, listening: listening, busy: busy });
   if (listening || busy) return;
   stopSpeaking();   // talking over the reply stops it
@@ -1208,6 +1223,7 @@ function startListen() {
 }
 function stopListen(cancel, send) {
   if (!listening) return;
+  if (cancel) trace('listen_cancel', {});
   if (dcOn) return liveStop(cancel, send);
   if (rec) { if (cancel) rec.abort(); else rec.stop(); }
   if (mr) { if (cancel) { chunks = []; mr.onstop = null; } try { mr.stop(); } catch (e) {} }
@@ -1521,7 +1537,7 @@ function clipStart(ready) {
 // heard live and what was sent, and its key lands in the trace (scripts/talk-trace.mjs --clip <key> plays it back).
 function keepClip(blob, m) {
   if (!CLIPS || S.clips !== 'on' || !blob || blob.size < 800) return;
-  var q = '?sid=' + encodeURIComponent(tsid || '') + '&path=' + encodeURIComponent(location.pathname) + '&live=' + encodeURIComponent((m.live || '').slice(0, 400)) + '&final=' + encodeURIComponent((m.final || '').slice(0, 400)) + '&how=' + encodeURIComponent(m.how || '');
+  var q = '?sid=' + encodeURIComponent(tsid || '') + '&u=' + encodeURIComponent(curU || '') + '&path=' + encodeURIComponent(location.pathname) + '&live=' + encodeURIComponent((m.live || '').slice(0, 400)) + '&final=' + encodeURIComponent((m.final || '').slice(0, 400)) + '&how=' + encodeURIComponent(m.how || '');
   fetch('/api/talk/clip' + q, { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type || 'audio/webm' }, body: blob })
     .then(function (r) { return r.json(); }).then(function (j) { trace('clip_saved', { key: j.key, bytes: blob.size, err: j.error }); })
     .catch(function (e) { trace('clip_error', { err: String(e) }); });
@@ -1687,7 +1703,7 @@ function vcFlush(msgs, final) {
   for (var i = vcSeen; i < msgs.length; i++) {
     var m = msgs[i];
     if (m.role !== 'user' && i === msgs.length - 1 && !final) break;
-    if (m.role === 'user') { live.textContent = ''; add('you', m.text); }
+    if (m.role === 'user') { live.textContent = ''; curU = newU(); uSaid = true; trace('said', { text: m.text, spoken: true, engine: 'conversation' }); add('you', m.text); }
     else if (m.text) { add('ai', m.text, vcLinks || undefined); vcLinks = null; }
     vcSeen = i + 1;
   }
@@ -1774,7 +1790,15 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   if (j.version && j.version.sha) VERSION = j.version.sha + (j.version.built ? ' ' + new Date(j.version.built).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '') + (j.version.talk && j.version.talk !== j.version.sha ? ' talk ' + j.version.talk : '');
   if (j.trace) traceStart(); else tq = [];
   CLIPS = !!j.clips;
+  CONSENT = j.consent === undefined ? null : j.consent;
   build();
+  // Arrived on a page Talk opened: say how it went (status, time), tied to the utterance that asked for it.
+  var nv = sget('nav', null);
+  if (nv && nv.u) {
+    sset('nav', null);
+    var navE = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {};
+    var keepU = curU; curU = nv.u; trace('arrived', { href: nv.href, at: location.pathname + location.search + location.hash, status: navE.responseStatus, ms: Date.now() - nv.at }); curU = keepU;
+  }
   projects().then(function (l) { var mine = l.filter(function (p) { return p.owner === me && !/^lab-|^real-/.test(p.name); }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); }); if (mine[0]) { latestOwn = mine[0].name.replace(/-/g, ' '); render(); } }).catch(function () {});
   publishTools();
   // Coming back from a navigation Talk made: show the sheet, finish any pending question.

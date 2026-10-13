@@ -458,6 +458,8 @@ const app = {
       if (url.pathname === '/personal-agents' && env.CF_OAUTH_CLIENT_ID) return html(personalAgentsPage());
       if (url.pathname === '/own' && !env.SELF_HOST) return html(ownPage(true));
       if (url.pathname.startsWith('/connect/cf/') || url.pathname.startsWith('/personal-agents/') || url.pathname === '/api/installs') { const r = await installRoute(request, env, ctx, url); if (r) return r; }
+      // Talk's traces for the admin (Eyal, 2026-10-13): the page lives in the Talk Worker (src/talkadmin.ts).
+      if (url.pathname === '/admin/talk' || url.pathname === '/admin/talk/') url.pathname = '/api/talk/admin';
       if (url.pathname === '/talk.js' || url.pathname === '/talk-voice.js' || url.pathname.startsWith('/api/talk/') || url.pathname.startsWith('/agents/talk-voice/')) {
         const w = await who(request, env);
         const me = w?.kind === 'user' && !w.anon ? { handle: w.handle, admin: w.admin } : null;

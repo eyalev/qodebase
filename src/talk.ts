@@ -22,6 +22,7 @@ import { listFor } from './registry';
 import { isOwner } from './auth';
 import { buildQuestions, candidateProjects, currentSlug, resolve, stateText, type Item, type Proj, type Screen } from './talkdecide';
 import { TALK_JS } from './talkclient';
+import { talkAdmin } from './talkadmin';
 import { TALK_VOICE_JS } from './talkvoicejs.gen';
 import { routeAgentRequest } from 'agents';
 
@@ -53,6 +54,8 @@ export class TalkLog extends DurableObject<Env> {
   }
   async addTrace(handle: string, sid: string, rows: { ts: number; ev: string; data: string }[]) {
     const sql = this.#trace();
+    // A day's trace (and its counters) is deleted 15 days later (Eyal, 2026-10-13: keep 14 days).
+    if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + 15 * 86400_000);
     const n = (sql.exec('SELECT COUNT(*) AS n FROM trace WHERE handle = ?', handle).one() as any).n as number;
     if (n > 20000) return { ok: false, n };
     for (const r of rows) sql.exec('INSERT INTO trace (ts, handle, sid, ev, data) VALUES (?, ?, ?, ?, ?)', r.ts, handle, sid, r.ev, r.data);
@@ -61,6 +64,19 @@ export class TalkLog extends DurableObject<Env> {
   async readTrace(handle: string, since: number, limit: number) {
     return this.#trace().exec('SELECT ts, sid, ev, data FROM trace WHERE handle = ? AND ts > ? ORDER BY ts LIMIT ?', handle, since, limit).toArray();
   }
+  /** The admin's view: every traced person's rows (only the owner and people who said yes are ever traced). */
+  async readAll(since: number, limit: number, handle = '') {
+    const sql = this.#trace();
+    return (handle ? sql.exec('SELECT ts, handle, sid, ev, data FROM trace WHERE handle = ? AND ts > ? ORDER BY ts LIMIT ?', handle, since, limit)
+      : sql.exec('SELECT ts, handle, sid, ev, data FROM trace WHERE ts > ? ORDER BY ts LIMIT ?', since, limit)).toArray();
+  }
+  async alarm() { await this.ctx.storage.deleteAll(); }
+  // Consent to be traced (people other than the owner; off unless they turn it on in Talk settings). Lives in the
+  // 'consent' instance, which never traces, so the 15-day alarm never deletes it.
+  async consent(handle: string, on?: boolean) {
+    if (on !== undefined) { if (on) await this.ctx.storage.put(`consent:${handle}`, Date.now()); else await this.ctx.storage.delete(`consent:${handle}`); }
+    return !!(await this.ctx.storage.get(`consent:${handle}`));
+  }
   async counts(who: string) {
     const out: Record<string, number> = {};
     for (const k of Object.keys(CAPS) as Kind[]) out[k] = (await this.ctx.storage.get<number>(`${k}:${who}`)) || 0;
@@ -68,6 +84,32 @@ export class TalkLog extends DurableObject<Env> {
   }
 }
 export const talkLog = (env: Env) => env.TalkLog.get(env.TalkLog.idFromName(day()));
+const consentMemo = new Map<string, { at: number; on: boolean }>();
+/** Traced: the owner always (Eyal, 2026-10-13: full traceability for his account); anyone else only after saying yes. */
+export async function canTrace(env: Env, who: Who): Promise<boolean> {
+  if (!who) return false;
+  if (isOwner(env, who.handle)) return true;
+  const m = consentMemo.get(who.handle);
+  if (m && Date.now() - m.at < 60_000) return m.on;
+  const on = await env.TalkLog.get(env.TalkLog.idFromName('consent')).consent(who.handle).catch(() => false);
+  consentMemo.set(who.handle, { at: Date.now(), on });
+  return on;
+}
+/** One server-side trace row for an utterance (u): what the model saw and chose, what the chat lane said. */
+export async function strace(env: Env, who: Who & {}, sid: string, u: string, ev: string, data: Record<string, unknown>) {
+  try { await talkLog(env).addTrace(who.handle, String(sid || '').slice(0, 40), [{ ts: Date.now(), ev, data: JSON.stringify({ u: String(u).slice(0, 24), ...data }).slice(0, 6000) }]); }
+  catch (e) { log('strace_error', { level: 'error', err: String(e) }); }
+}
+/** The model's answers in short: each yes/no as a number, each choice as its top two with their probabilities. */
+function topAnswers(answers: Record<string, any>) {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(answers || {})) {
+    if (typeof v?.noul === 'number') { out[k] = Math.round(v.noul * 100) / 100; continue; }
+    const ps = Object.entries((v?.probabilities || {}) as Record<string, number>).sort((a, b) => b[1] - a[1]).slice(0, 2);
+    out[k] = ps.length ? ps.map(([c, p]) => `${c} ${Math.round(p * 100) / 100}`).join(', ') : v?.choice;
+  }
+  return out;
+}
 
 const aiOpts = (env: Env) => (env.TALK_GATEWAY ? { gateway: { id: env.TALK_GATEWAY } } : {});
 
@@ -126,7 +168,8 @@ export async function decideCore(env: Env, who: Who & {}, body: any) {
   const cmd = resolve(res.answers, cands, s, projects, utterance);
   log('decide', { level: 'info', handle: who.handle, path: s.path, interim: !!body.interim, model_ms: Date.now() - tm, total_ms: Date.now() - t0, fired, won,
     n_items: s.items.length, n_projects: projects.length, n_questions: Object.keys(questions).length, mode: cmd.mode, mode_p: cmd.modeP, op: cmd.op, p: cmd.p, risky: cmd.risky, why: cmd.why, usage: res.usage });
-  return { ok: true as const, cmd, ms: { model: Date.now() - tm, total: Date.now() - t0 }, left: budget.left, ...(body.debug ? { answers: res.answers, state } : {}) };
+  return { ok: true as const, cmd, ms: { model: Date.now() - tm, total: Date.now() - t0 }, left: budget.left, ...(body.debug ? { answers: res.answers, state } : {}),
+    trace: { utterance, path: s.path, items: s.items.length, projects: projects.length, fired, won, top: topAnswers(res.answers), cmd, ms: Date.now() - t0 } };
 }
 
 // ---- Chat lane: answers questions about the page, and can act with the same verbs.
@@ -200,7 +243,8 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
   }
   const { calls, reply } = out;
   log('chat', { level: 'info', handle: who.handle, path: s.path, rounds, model_ms: Date.now() - tm, total_ms: Date.now() - t0, tools: calls.map((c: any) => c.name), reply_len: reply.length, usage: res?.usage, usage2: res?.usage2 });
-  return { ok: true as const, reply, actions: calls.map((c: any) => ({ name: c.name, args: c.args })), ms: { model: Date.now() - tm }, left: budget.left };
+  return { ok: true as const, reply, actions: calls.map((c: any) => ({ name: c.name, args: c.args })), ms: { model: Date.now() - tm }, left: budget.left,
+    trace: { utterance, model: CHAT_MODEL, did: body?.did || '', tools: calls.map((c: any) => ({ name: c.name, args: c.args })), reply: String(reply || '').slice(0, 1500), ms: Date.now() - t0 } };
 }
 
 async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
@@ -318,7 +362,7 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
   if (!working.length && !ready.length && !blocked.length && !waiting.length && !asked.length && !builds.length && !runs.length) parts.unshift(own.length ? 'Nothing is in progress: no agents working, no builds running and nothing waiting for you.' : 'You have no projects yet. Say what you want to build.');
   if (own.length) parts.push(`${today ? 'Today' : 'This week'} ${changed === 0 ? 'none of your projects changed' : changed === 1 ? 'one of your projects changed' : `${changed} of your projects changed`}${merged ? `, with ${merged} merged change${merged > 1 ? 's' : ''}` : ''}.`);
   log('status', { level: 'info', handle: who.handle, projects: own.length, working: working.length, ready: ready.length, blocked: blocked.length, waiting: waiting.length, builds: builds.length, finished: finished.length, asked: asked.length, runs: runs.length, fleet: !!env.FLEET_KEY, changed, merged, ms: Date.now() - t0 });
-  return { ok: true as const, text: parts.join(' '), links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left };
+  return { ok: true as const, text: parts.join(' '), links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left, trace: { text: parts.join(' ').slice(0, 1500), links: links.length, ms: Date.now() - t0 } };
 }
 
 // ---- Spoken replies: Aura on Workers AI, streamed (first sound ~0.5 s). Same voices
@@ -357,9 +401,20 @@ async function tts(request: Request, env: Env, ctx: ExecutionContext, who: Who &
 
 // HTTP wrappers over the cores (the voice agent, src/talkvoice.ts, calls the cores directly).
 const wrap = (r: { ok: boolean; http?: number }) => json(r, r.ok ? 200 : (r as any).http || 500);
-const decide = async (request: Request, env: Env, who: Who & {}) => wrap(await decideCore(env, who, await request.json().catch(() => null)));
-const chat = async (request: Request, env: Env, who: Who & {}) => wrap(await chatCore(env, who, await request.json().catch(() => null)));
-const status = async (request: Request, env: Env, who: Who & {}) => wrap(await statusCore(env, who, await request.json().catch(() => ({}))));
+// Each lane's call, and (for people who are traced) one server row tied to the utterance id the page sends.
+const traced = async (kind: string, request: Request, env: Env, who: Who & {}, core: (env: Env, who: Who & {}, body: any) => Promise<any>, ctx?: ExecutionContext) => {
+  const body: any = await request.json().catch(() => ({}));
+  const r: any = await core(env, who, body);
+  const t = r.trace; delete r.trace;
+  if (body?.uid && await canTrace(env, who)) {
+    const p = strace(env, who, body.sid, body.uid, `srv_${kind}`, { ...(t || {}), ok: r.ok, error: r.error, why: r.ok ? undefined : r.why });
+    if (ctx) ctx.waitUntil(p); else await p;
+  }
+  return wrap(r);
+};
+const decide = (request: Request, env: Env, who: Who & {}, ctx?: ExecutionContext) => traced('decide', request, env, who, decideCore, ctx);
+const chat = (request: Request, env: Env, who: Who & {}, ctx?: ExecutionContext) => traced('chat', request, env, who, chatCore, ctx);
+const status = (request: Request, env: Env, who: Who & {}, ctx?: ExecutionContext) => traced('status', request, env, who, statusCore, ctx);
 
 export async function talkRoute(request: Request, env: Env, _ctx: ExecutionContext, url: URL, who: Who): Promise<Response | null> {
   if (url.pathname.startsWith('/agents/talk-voice/')) {
@@ -387,12 +442,25 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     let site: any = null; try { site = JSON.parse(request.headers.get('x-talk-site') || 'null'); } catch { /* none */ }
     const own = { sha: (env as any).CF_VERSION_METADATA?.tag || null, built: (env as any).CF_VERSION_METADATA?.timestamp || null };
     const v = owner ? (site?.sha ? { sha: site.sha, built: site.built, talk: own.sha } : own) : undefined;
-    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: owner, clips: owner && !!env.CLIPS, version: v });
+    const traced = await canTrace(env, who);
+    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: traced, consent: owner ? null : traced, clips: owner && !!env.CLIPS, version: v });
   }
+  if (url.pathname === '/api/talk/consent' && request.method === 'POST') {
+    // "Help improve Talk" (Talk settings, off by default): keep what I say and what Talk did for 14 days.
+    if (!who) return json({ error: 'signin' }, 401);
+    const b = await request.json().catch(() => ({})) as any;
+    const on = await env.TalkLog.get(env.TalkLog.idFromName('consent')).consent(who.handle, !!b?.on);
+    consentMemo.delete(who.handle);
+    log('consent', { level: 'info', handle: who.handle, on });
+    return json({ ok: true, on });
+  }
+  if (url.pathname.startsWith('/api/talk/admin')) return talkAdmin(request, env, url, who);
   if (url.pathname === '/api/talk/trace') {
     // The owner's own experience, step by step (Eyal, 2026-10-07: "log and instrument every part of the app
-    // experience … so you really have a sense of what I'm going through"). Nobody else's is collected.
-    if (!who || !isOwner(env, who.handle)) return json({ error: 'forbidden' }, 403);
+    // experience … so you really have a sense of what I'm going through"); since 2026-10-13 also anyone who said
+    // yes in Talk settings ("Help improve Talk"). Reading it back stays the owner's (and the admin view's).
+    if (!who || !(await canTrace(env, who))) return json({ error: 'forbidden' }, 403);
+    if (request.method === 'GET' && !isOwner(env, who.handle)) return json({ error: 'forbidden' }, 403);
     const day = /^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('day') || '') ? url.searchParams.get('day')! : new Date().toISOString().slice(0, 10);
     const stub = env.TalkLog.get(env.TalkLog.idFromName(day));
     if (request.method === 'GET') return json({ day, rows: await stub.readTrace(who.handle, Number(url.searchParams.get('since')) || 0, Math.min(5000, Number(url.searchParams.get('limit')) || 2000)) });
@@ -400,13 +468,14 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     const sid = String(b?.sid || '').slice(0, 40);
     const rows = (Array.isArray(b?.events) ? b.events : []).slice(0, 200).map((e: any) => {
       const { ts, ev, ...rest } = e || {};
-      return { ts: Number(ts) || Date.now(), ev: String(ev || '').slice(0, 40), data: JSON.stringify(rest).slice(0, 2000) };
+      return { ts: Number(ts) || Date.now(), ev: String(ev || '').slice(0, 40), data: JSON.stringify(rest).slice(0, 4000) };
     }).filter((r: any) => r.ev);
     return json(rows.length ? await env.TalkLog.get(env.TalkLog.idFromName(new Date().toISOString().slice(0, 10))).addTrace(who.handle, sid, rows) : { ok: true, n: 0 });
   }
   if (url.pathname === '/api/talk/clip') {
     // The owner's own recordings, kept for debugging only when they turn it on in Talk settings (Eyal, 2026-10-07:
-    // "only for me, only as me as the owner. This shouldn't be the default"). Bucket deletes after 7 days.
+    // "only for me, only as me as the owner. This shouldn't be the default"); on by default for the owner since 2026-10-13
+    // (full traceability, kept 14 days: the bucket's lifecycle rule). Nobody else's audio is ever kept.
     if (!who || !isOwner(env, who.handle) || !env.CLIPS) return json({ error: 'forbidden' }, 403);
     if (request.method === 'POST') {
       const buf = await request.arrayBuffer();
@@ -414,15 +483,16 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
       const type = (request.headers.get('content-type') || 'audio/webm').split(';')[0];
       const ext = /mp4/.test(type) ? 'm4a' : /ogg/.test(type) ? 'ogg' : 'webm';
       const q = (k: string, n = 500) => String(url.searchParams.get(k) || '').slice(0, n);
-      const key = `${new Date().toISOString().slice(0, 10)}/${Date.now()}-${q('sid', 40).replace(/[^\w-]/g, '') || 'x'}.${ext}`;
-      await env.CLIPS.put(key, buf, { httpMetadata: { contentType: type }, customMetadata: { handle: who.handle, path: q('path', 200), live: q('live'), final: q('final'), how: q('how', 20) } });
+      const u = q('u', 24).replace(/[^\w-]/g, '');
+      const key = `${new Date().toISOString().slice(0, 10)}/${Date.now()}-${q('sid', 40).replace(/[^\w-]/g, '') || 'x'}${u ? '-' + u : ''}.${ext}`;
+      await env.CLIPS.put(key, buf, { httpMetadata: { contentType: type }, customMetadata: { handle: who.handle, path: q('path', 200), live: q('live'), final: q('final'), how: q('how', 20), u } });
       log('clip_saved', { level: 'info', handle: who.handle, key, bytes: buf.byteLength });
       return json({ key });
     }
     const key = url.searchParams.get('key');
     if (key) {
       const o = await env.CLIPS.get(key);
-      if (!o) return json({ error: 'gone', why: 'Not found (recordings are deleted after 7 days).' }, 404);
+      if (!o) return json({ error: 'gone', why: 'Not found (recordings are deleted after 14 days).' }, 404);
       return new Response(o.body, { headers: { 'content-type': o.httpMetadata?.contentType || 'audio/webm', 'cache-control': 'private, no-store', 'x-talk-meta': JSON.stringify(o.customMetadata || {}) } });
     }
     const day = /^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('day') || '') ? url.searchParams.get('day')! : new Date().toISOString().slice(0, 10);
@@ -432,10 +502,10 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
   if (!who) return json({ error: 'signin', why: 'Sign in to talk to qodebase.' }, 401);
   if (url.pathname === '/api/talk/tts' && request.method === 'GET') return tts(request, env, _ctx, who, url);
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
-  if (url.pathname === '/api/talk/decide') return decide(request, env, who);
-  if (url.pathname === '/api/talk/chat') return chat(request, env, who);
+  if (url.pathname === '/api/talk/decide') return decide(request, env, who, _ctx);
+  if (url.pathname === '/api/talk/chat') return chat(request, env, who, _ctx);
   if (url.pathname === '/api/talk/transcribe') return transcribe(request, env, who, url);
-  if (url.pathname === '/api/talk/status') return status(request, env, who);
+  if (url.pathname === '/api/talk/status') return status(request, env, who, _ctx);
   if (url.pathname === '/api/talk/log') {
     // One row per page-tool call (window.__webmcp / WebMCP, src/talkclient.ts). No model, no budget.
     const b = await request.json().catch(() => null) as any;
