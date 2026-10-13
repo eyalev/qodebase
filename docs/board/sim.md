@@ -1248,3 +1248,41 @@ assumed curve, so treat it as a rough guide.
   account- or storage-wide.
 - Copies should start together (S4c's starts over ~2 min diluted the overlap). Peak windows should be read with the
   number of copies running at that moment.
+
+**S4d: 4,750 agents on 95 copies (50 each), cached mode, batch 5.** 128,866 files in 110 s.
+- 63,441 changes landed, all within 171 s of the first file; 65,227 files had nothing to document.
+- 190 cache misses, 0 verify failures, 0 infra errors, 0 429s, 0 overloaded, 0 Lander errors.
+- The copies did not all overlap: 95 starts took 98 s and a copy finishes in ~20 s, so at most 42 ran at once.
+
+| 10-s window: copies running | files/s | read p50 | fit L = 71 / (1 - rate/2,600) |
+|---|---|---|---|
+| 37 | 1,862 | 164 ms | ~250 ms |
+| 42 | 1,636 | 190 ms | ~190 ms |
+| 40 | 2,139 | 273 ms | ~400 ms |
+| 35 | 2,137 | 353 ms | ~390 ms |
+| 27 | 1,705 | 329 ms | ~205 ms |
+| 13 | 642 | 789 ms | ~95 ms |
+
+Read p50 / p90 / p99: 255 / 843 / 1,659 ms (S4c: 135 / 356 / 615).
+
+| | prediction (from S4c) | measured |
+|---|---|---|
+| total rate | flattens near ~2,000-2,500 files/s | **flattens at ~2,100 files/s** whether 35 or 42 copies run |
+| how it shows | read latency rising to ~0.5-1 s, no errors | read p50 to ~350 ms at the plateau, p90 843 ms, p99 1.7 s; **nothing refused** |
+| per copy at the plateau | (S4b alone: 178/s) | ~53/s |
+
+What it says:
+- **The wall is on Artifacts' side and shows up as latency.** The shared read path saturates near ~2,100 reads/s in
+  one namespace. Our parts did not fail at 4,750 agents: Run DOs, Landers, verify and the door.
+- **The fit was right on the plateau and early on latency in the middle.** At 1,862/s it said ~250 ms where 164 ms
+  was measured.
+- **The fit misses the tail.** The last window (13 copies, 642/s) still read at p50 789 ms, where an unloaded server
+  would be near ~95 ms. Either a backlog drains slowly, or the last copies are heavier ones (bigger files or trees). So
+  latency does not fall back as soon as load drops: a pure capacity-only model is not the whole story.
+- **One bug, found and fixed by qb6:** 8 files landed in git but stayed 'ready' in the records. Agents handed a file
+  to the Lander before writing its record, and a fast landing won. The order is now swapped.
+
+S4e will tell a per-namespace capacity from an account- or storage-wide one: the same run split over 2 namespaces, with
+the trees pre-listed so all copies start within seconds.
+- If the plateau goes to ~4,000+ files/s, it is per namespace, and sharding namespaces is the fix.
+- If it stays ~2,100, it is account- or storage-wide.
