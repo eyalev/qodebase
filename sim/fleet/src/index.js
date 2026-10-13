@@ -211,13 +211,16 @@ export class Run extends DurableObject {
     s.counts.queued--; s.counts.model++;
     (s.perMin[minute] ||= { calls: 0, usd: 0 }).calls++;
     await this.save(s);
-    return { file: { path: row.path, hash: row.hash }, model: pickM.model, provider };
+    return { file: { path: row.path, hash: row.hash }, model: pickM.model, provider, slot: `${pickM.model}|${slice}` };
   }
 
   /** An agent's result for one file. */
   async done(runId, agent, r) {   // r may be rewritten (a retry)
     const s = await this.st();
     if (!s || s.runId !== runId) return;
+    // A file with nothing to document never reached the model: its pace slot goes back (F3b: the pacer was the first thing
+    // to saturate, counting those files; the models peaked at 207/191/172 calls/min of 290/290/350).
+    if (r.status === 'skipped' && r.slot && s.perSlice?.[r.slot] > 0) s.perSlice[r.slot]--;
     const usd = r.usd || 0;
     s.usd += usd; s.calls++;
     const minute = Math.floor(Date.now() / 60000);
@@ -385,7 +388,7 @@ export class Agent extends DurableObject {
     if (n.stop) { await R.agentFinished(runId); return; }
     if (n.wait) { await this.ctx.storage.setAlarm(Date.now() + n.wait); return; }
     const r = await this.work(n.file, n.model, n.provider, repoName).catch((e) => ({ file: n.file.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
-    r.model = n.model;
+    r.model = n.model; r.slot = n.slot;
     await R.done(runId, i, r);
     await this.ctx.storage.setAlarm(Date.now() + 50);
   }
