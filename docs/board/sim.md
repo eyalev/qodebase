@@ -1073,3 +1073,113 @@ The open assumptions are unchanged:
 **Label, updated:** *simulated from Bun's real structure; the module order was checked against the names Bun's
 real patches use across files (strict order misses 3%; two-phase interfaces-first meets them by construction at
 no time cost); not replayed.*
+
+## (l) Fleet at scale: where does our side break? (qb4, 2026-10-13, before S2-S5 run)
+
+**Question.** Model rate limits are taken out of the way by cached-answer mode (S3): reuse the comments already made for
+the same file content, with everything else real. That leaves agents, the Run queue, verify, the Lander's lanes, the
+door and Artifacts pushes. At 200 / 1,000 / 5,000 agents over N repo copies, which one saturates first, and at what
+rate? Then real-model mode: what is the summed ceiling of the models?
+
+**Path of one file today** (sim/fleet/src/index.js):
+
+1. **Agent DO alarm.** `Run.next()` is one RPC to the copy's Run DO, which does a storage get and put of its state plus
+   SQL.
+2. **Read.** `ARTIFACTS.get(repo)` then `readBlob`.
+3. **Check.** `targets()` is one TypeScript parse, then `insert()`, then `verify()`, which is two parses plus a
+   token walk.
+4. **Record.** `Run.done()` is another state get/put plus a SQL insert. For a ready file it awaits `Lander.add()`,
+   which gets and puts the whole `lanes` object plus the file text.
+5. **Next file** after a 50 ms alarm gap.
+
+Every 5 s the copy's Lander DO builds one commit per lane: JS SHA-1, deflate through `CompressionStream`, `readTree`
+along each changed folder. It pushes all of them to the copy's main in one push.
+
+**Cloudflare's documented limits that apply** (cloudflare-docs, 2026-10-13):
+
+| limit | value | where it bites |
+|---|---|---|
+| one Durable Object | ~500-1,000 req/s simple, ~200-500 req/s with storage writes ('rules of Durable Objects'); past it 'overloaded' errors | Run DO (2 writing requests per file), Lander DO (1 per ready file) |
+| Artifacts git requests | 2,000 per 10 s **per artifact** (200/s) | readBlob per file, readTree + push per Lander round, on each copy |
+| Artifacts control plane | 2,000 per 10 s **per namespace** (200/s) | anything counted as control plane, shared by **all** copies: create, tokens, and possibly `ARTIFACTS.get()`, which the Agent calls once per file |
+| isolate memory | 128 MB | the Lander holds each round's file texts plus objects |
+| CPU per invocation | 30 s default, up to 5 min | the Lander round; the Agent's verify |
+| subrequests | 10,000 per invocation (paid) | Run.start of 5,000 agents is one invocation; a Lander round's readTrees |
+| DO stub creation | 'account generating too much load on Durable Objects' (rate not documented) | starting thousands of Agent DOs at once |
+| Artifacts operations | $0.15 per 1k past 10k/month, billed from **2026-10-14** ('create, push, pull, clone'; whether readBlob counts is not documented) | if a read counts: ~$0.15 per 1k files |
+
+**Per-agent pace in cached mode** (estimate): about 300 ms per file, so ~3 files/s per agent. That is two cross-object
+RPCs at 20-100 ms each, an Artifacts read of 30-100 ms, ~10-30 ms of CPU for the TypeScript work, and the 50 ms gap.
+Demand: 200 agents ~600 files/s; 1,000 ~3,000/s; 5,000 ~15,000/s.
+
+**Prediction for cached mode, in the order things saturate:**
+
+1. **The namespace control plane, if `ARTIFACTS.get()` counts (likely first, at ~70 agents).** It caps all copies
+   together at ~200 files/s. 200 agents would want 600/s: expect 429s from `get()` and flat throughput near 200/s
+   however many copies. Fix (ours): get the repo handle once per agent and keep it, not once per file. If `get()`
+   does not count, this line drops out.
+2. **The per-copy Run DO and the per-artifact git rate, at ~50-80 agents per copy.** Each copy's Run DO takes 2
+   writing requests per file, so ~100-250 files/s. Its reads hit the per-artifact 200 git requests/s. Expect 'Durable
+   Object is overloaded' or Artifacts 429s, with per-file ms rising while files/s per copy stay flat.
+   - 1,000 agents on 10 copies is 100 per copy: ~150-200 files/s per copy, ~1,500-2,000 files/s in all.
+   - Fix: more copies (agents per copy at most ~50). In the Run DO, batch `next()` (hand out 5-10 files per call) and
+     keep the counters in SQL instead of rewriting one state object on every request.
+3. **The Lander DO per copy** comes later. `add()` rewrites the whole `lanes` object (O(waiting files)) once per
+   ready file, so it slows as the backlog grows. At ~200 files/s per copy, a 5 s round is ~1,000 files (~16 MB of
+   text): fine for memory and ~1-2 s of CPU. It would break near ~8,000 files per round (memory). Fix: store lanes in
+   SQL rows, not one object.
+4. **Agent verify CPU** is only a ceiling if the Agent DOs share a few isolates: they are placed near their creator,
+   the Run DO, and run on single-threaded isolates. At ~20 ms per file that would be ~50 files/s per isolate. Sign:
+   per-file ms grows with the agent count while the Artifacts and DO counters stay calm.
+5. **Starting 5,000 agents** from one `Run.start` call: ~5,000 subrequests, under 10,000. Stub creation may answer
+   'too much load': stagger the starts (already random over 3 s; make it 30-60 s at 5,000).
+6. **The door** (one push per copy every ~5 s, up to 200 files per lane) is not the limit at any of these rates.
+   With 10 or more copies there are 10 or more doors.
+
+**What the ladder needs** (tell qb6):
+- **Copies.** Agents per copy at most ~50 to measure our own ceilings rather than the per-copy one, so 200 agents
+  need 4+ copies, 1,000 need 20+, and 5,000 need 100+. To show the per-copy ceiling on purpose, run one cell with
+  100+ agents on one copy.
+- **Corpus.** At ~3 files/s per agent, one copy (4,120 files) lasts ~14 s at 100 agents per copy. Each step needs
+  ≥3 minutes of steady state, so let the queue cycle over the copies' base blobs. A second pass lands identical text,
+  i.e. no-op commits. The commits are not the point; the rate through every stage is. Alternatively, use enough
+  copies: rate × 180 s / 4,120.
+- **What to read at each step:**
+  - files/s per copy and in total;
+  - per-file ms, split into next / read / verify / done;
+  - Artifacts 429s, split into control plane vs git;
+  - 'overloaded' errors per DO class;
+  - the Lander's waiting files and round time;
+  - CPU per invocation.
+
+**Cells:**
+
+| cell | agents | copies | expected files/s | expected first limit |
+|---|---|---|---|---|
+| S4a | 200 | 4 | ~200 if `get()` is control plane, else ~600 | namespace control plane, or none |
+| S4b | 200 | 1 | ~150-200 | per-copy Run DO / per-artifact git rate (the deliberate ceiling) |
+| S4c | 1,000 | 20 | ~200 or ~3,000 | the control plane again; else Agent CPU placement, DO creation at start |
+| S4d | 5,000 | 100 | ≤ the S4c rate x copies, if nothing shared breaks | start-up load (DO creation); the namespace control plane at any rate above 200/s |
+
+If the namespace control plane caps the whole fleet at ~200 files/s, that is 12,000 files per minute. Fixing
+`get()` per file is ours. Anything else per namespace needs more namespaces (one per ~1,000 agents).
+
+**Cost.** DO requests run about five per file, ~$0.75 per million files. Artifacts operations are free today: billing
+starts 2026-10-14. If each read counts from tomorrow, it is ~$0.15 per 1k files, so the $50/day cap would allow
+~330k files, about 20 s at 15,000 files/s. Run the cached ladder today.
+
+**Real-model mode (S5): the summed model ceilings.**
+- **Limits:** Workers AI has 300 requests/min per model per account. Gemini paid tier 2 has 360/min per model per
+  project, and each Gemini model counts separately.
+- **Sum:** gemma-4 + glm-4.7 + glm-5.3 + Gemini 3.1 flash-lite = 300 + 300 + 300 + 360 = 1,260 calls/min. Adding
+  gemini-3.5-flash-lite gives 1,620.
+- **Files per call:** files with nothing to document make no call (26-67% of files in the runs so far), so files/min
+  ≈ calls/min / (1 - skip share). At ~30% skipped that is ~1,800 files/min, ~30 files/s.
+- **Agents needed:** rate × latency. Gemma ~30 (6 s), glm-4.7 ~65, glm-5.3 ~70 (13-14 s), Gemini ~12 (2 s): ~180
+  agents in total. Past ~200 agents, real mode gains nothing.
+- **Measured so far:** the pacer kept the models at 191-207 calls/min against 290-350 configured, and a pacing slice
+  can idle at a 10 s edge. Expect ~75-85% of the sum: ~1,000 calls/min, ~1,400 files/min.
+- **Untested:** Workers AI's 3040 out-of-capacity answers at a sustained 300/min.
+
+Real mode tops out near 30 files/s whatever the agent count; cached mode should reach hundreds to thousands per
+second. The S4 ladder therefore finds our ceilings well above anything the models allow today.
