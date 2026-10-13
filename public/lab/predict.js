@@ -559,6 +559,13 @@ export const BUILD_FLOOR = { alone: { low: 50, mid: 150 }, team: { low: 170, mid
 // opts.real = false: the lab-only estimate, without REAL_FIT (suggestBuild compares presets on it, see there).
 export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced.variant, opts = {}) {
   const real = opts.real !== false;
+  // X4 (qb6, 2026-10-13): the builder gives a reviewed crew max(asked, ceil(coders / 5)) reviewers, up to 8
+  // (resolveBuildPlan), so estimate what will run. REAL_FIT's review-wait ramp is left as R5 measured it until a
+  // real build with X4 (more reviewers, replays side by side) says how much it gained.
+  if (!variantIn?.baseline && variantIn?.reviewers > 0 && variantIn?.coders > 0) {
+    const r = Math.min(8, Math.max(variantIn.reviewers, Math.ceil(variantIn.coders / 5)));
+    if (r !== variantIn.reviewers) variantIn = { ...variantIn, reviewers: r };
+  }
   const sc = jobProfile(job);
   const baseline = variantIn?.baseline ?? null;
   const v = variantOf(variantIn, baseline);
