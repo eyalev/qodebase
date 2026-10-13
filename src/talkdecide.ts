@@ -225,6 +225,11 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   }
   // The 1,000-agent job (qb3's shot 3a) said without the words 'fleet job'.
   const docJob = /\b(document|comment) (every|all|each)\b.*\b(function|class|file|export)/i.test(utterance) || /\bapi index\b/i.test(utterance);
+  // On /runs, a fleet job sentence is that page's own fleet-job action (the model picked it at only 0.67 for
+  // "…with 1,000 agents"). Vocabulary in code.
+  const fleetWords = docJob || /\b(fleet job|start a fleet|run a fleet|doc comments)\b/i.test(utterance);
+  const fj = s.items.find((i) => i.id === 'xfleet-job');
+  if (/^\/runs/.test(s.path) && fj && fleetWords && cmd.mode !== 'ask') return { ...cmd, mode: 'act', op: 'press', target: fj.id, label: fj.text, p: 0.9, why: 'fleet words on /runs' };
   // A fleet job (qb7's /runs action, owner only) asked for from another page: open /runs, then say it again there.
   if (!/^\/runs/.test(s.path) && (docJob || /\b(fleet job|start a fleet|run a fleet|document (the )?(api|code|comments)|doc comments)\b/i.test(utterance)) && cmd.mode !== 'ask')
     return { ...cmd, mode: 'act', op: 'go', href: '/runs', label: 'Runs', p: 0.9, then: utterance, why: 'fleet jobs start on /runs' };
