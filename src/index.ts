@@ -651,6 +651,16 @@ const app = {
       // qb7's /runs page: the fleet runs (qbfleet Worker, its key stays here) + the real builds. Public read; control owner-only.
       if (path === '/api/runs' && request.method === 'GET') return json(await runsData(env, me));
       if ((m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(series|timeline)$/)) && request.method === 'GET') return json(await fleetCall(env, `/series?repo=${m[1]}&run=${m[2]}`));
+      // /runs v2 drill-down (qb7), public reads, bounded by the fleet (<= 200 rows, offset paging).
+      if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(agents|agent\/(\d{1,5})|slice|change)$/))) {
+        const q = url.searchParams, pg = `&offset=${Math.max(0, Number(q.get('offset')) || 0)}&limit=${Math.min(200, Number(q.get('limit')) || 200)}`;
+        const base = `repo=${m[1]}&run=${m[2]}`;
+        if (m[3] === 'agents') return json(await fleetCall(env, `/agents?${base}${pg}`));
+        if (m[4]) return json(await fleetCall(env, `/agents?${base}&agent=${m[4]}${pg}`));
+        if (m[3] === 'slice') return json(await fleetCall(env, `/slice?${base}&t=${Number(q.get('t')) || 0}${pg}`));
+        return json(await fleetCall(env, `/file?${base}&path=${encodeURIComponent(String(q.get('file') || '').slice(0, 300))}`));
+      }
+      if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/ladder\/([A-Za-z0-9-]{1,20})\/series$/))) return json(await fleetCall(env, `/ladder-series?ladder=${m[1]}`));
       if ((m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/(pause|resume|stop)$/)) && request.method === 'POST') {
         if (!(me.admin || (me.handle && isOwner(env, me.handle)))) return json({ error: 'owner only' }, 403);
         const b = await request.json().catch(() => ({})) as { why?: string };
