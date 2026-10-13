@@ -203,7 +203,10 @@ const headline = {
   controller: { usdFixed40Board: w8('40 agents, board')?.usd, usdControllerBoard: w8('controller + board')?.usd, agentMinFixed40Board: w8('40 agents, board')?.agentMin, agentMinControllerBoard: w8('controller + board')?.agentMin, label: AB.label },
   lanes: { oneQueuePerH: l2('a2000-l1-split-h6-s1')?.perHLastHour, lanes32PerH: l2('a2000-l32-split-rdeps-ctl-h6-s1')?.perHLastHour, label: L.L2.label },
 };
-const results = { v: 1, generated: new Date().toISOString(), sources: { fleet: F.source, buildEstimates: RB.source }, notes, headline, fleet: F, realBuilds: RB, boardAblation: AB.ablation, w8: AB.w8, lanes: L, lab: LAB };
+const DIALS = (() => { try { return JSON.parse(rd('sim/fleet/collision-dials.json')); } catch { return null; } })();
+headline.collisionDials = DIALS ? { comment: DIALS.comment.levels.map(({ dial, tasks, tasksPerSec, doubled, codeChanged, lost }) => ({ dial, tasks, tasksPerSec, doubled, codeChanged, lost })),
+  code: DIALS.code.levels, label: DIALS.comment.label } : null;
+const results = { v: 1, generated: new Date().toISOString(), sources: { fleet: F.source, buildEstimates: RB.source }, notes, headline, collisionDials: DIALS, fleet: F, realBuilds: RB, boardAblation: AB.ablation, w8: AB.w8, lanes: L, lab: LAB };
 fs.writeFileSync(path.join(ROOT, 'public/results.json'), JSON.stringify(results, null, 1) + '\n');
 
 const md = [];
@@ -238,6 +241,12 @@ if (F.quality) {
 if (F.f0) md.push('F0 bench (20 files per model, measured, sim/fleet/F0.md):', '', table(['model', 'code unchanged', 'comments', 'judge accurate', 'helpful', 'p50 latency', '$ per 1k files'],
   Object.entries(F.f0).map(([m, v]) => v.withComments === 0 ? [m, 'not usable: 14 of 20 calls hit the free-tier quota', '-', '-', '-', '-', '-'] : [m, `${v.codeUnchanged}/${v.withComments}`, fmt(v.comments), v.judge?.accurate != null ? fmt(v.judge.accurate * 100) + '%' : '-', fmt(v.judge?.helpful, 2), `${fmt(v.latencyS?.p50, 1)} s`, usd(v.per1kFiles?.usd)])), '');
 
+if (DIALS) {
+  md.push('## Collision dials', '', `**Comment dial.** ${DIALS.comment.label}.`, '',
+    table(['dial', 'tasks', 'tasks/s', 'pairs far / near / same', 'how pairs resolved', 'doubled comments', 'code changed', 'lost (checker)', 'land wait p50 / p90'],
+      DIALS.comment.levels.map((l) => [`${l.dial}%`, fmt(l.tasks), fmt(l.tasksPerSec), `${fmt(l.pairs.far)} / ${fmt(l.pairs.near)} / ${fmt(l.pairs.same)}`, Object.entries(l.resolutions).map(([k, v]) => `${k} ${fmt(v)}`).join(', '), fmt(l.doubled), fmt(l.codeChanged), `${fmt(l.lost)}${l.lostNote ? ` (${l.lostNote})` : ''}`, l.landWaitP50S != null ? `${fmt(l.landWaitP50S)} / ${fmt(l.landWaitP90S)} s` : `- (${l.landNote || ''})`])), '');
+  md.push(`**Code dial.** ${DIALS.code.levels.length ? '' : 'Pending (prediction in docs/board/sim.md (m)).'}`, '');
+}
 md.push('## Real builds inside qodebase (R2-R8b)', '', `Label: ${RB.label}. Source: /api/admin/build-estimates (${RB.source}).`, '',
   table(['build', 'what', 'setup', 'wall', 'cost (tokens)', 'estimate shown', 'inside?'],
     RB.rows.map((r) => [r.id, r.what, r.setup, `${fmt(r.wallS)} s`, usd(r.usd), `${fmt(r.shownWallS[0])}-${fmt(r.shownWallS[1])} s, ${usd(r.shownUsd[0])}-${usd(r.shownUsd[1])}`, `time ${r.inside.wall ? 'yes' : 'no'}, cost ${r.inside.usd ? 'yes' : 'no'}`])), '',
