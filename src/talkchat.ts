@@ -51,8 +51,8 @@ export const ANSWER_MODELS: AnswerModel[] = [
   // 22/24 (median 2.8 s); gpt-oss-120b 18/24, glm-5.3-flash 21/24 (9.4 s), qwen3.8-27b 20/24 (9.0 s).
   { id: 'big', label: 'DeepSeek V4 Flash (Workers AI)', model: '@cf/deepseek-ai/deepseek-v4-flash-0731', via: 'workers', usdIn: 0.44, usdOut: 1.32 },
   { id: 'glm', label: 'GLM-4.7-flash (Workers AI, cheapest)', model: '@cf/zai-org/glm-4.7-flash', via: 'workers', usdIn: 0.0605, usdOut: 0.4, thinkingOff: true },
-  { id: 'haiku', label: 'Claude Haiku 5.5', model: 'anthropic/claude-haiku-5.5', via: 'unified', paid: true, ownerOnly: true, usdIn: 1, usdOut: 5 },
-  { id: 'sonnet', label: 'Claude Sonnet 5.5', model: 'anthropic/claude-sonnet-5.5', via: 'unified', paid: true, ownerOnly: true, usdIn: 2, usdOut: 10 },
+  { id: 'haiku', label: 'Claude Haiku 5.5', model: 'anthropic/claude-haiku-5.5', via: 'unified', paid: true, ownerOnly: true, usdIn: 0.105, usdOut: 0.525 },   // $0.10/$0.50 + unified billing's 5% (CLAUDE.md prices, 2026-10-08)
+  { id: 'sonnet', label: 'Claude Sonnet 5.5', model: 'anthropic/claude-sonnet-5.5', via: 'unified', paid: true, ownerOnly: true, usdIn: 2.1, usdOut: 10.5 },   // $2/$10 + 5%
 ];
 export const DEFAULT_ANSWER = 'gemini';
 export const FALLBACK_ANSWER = 'glm';
