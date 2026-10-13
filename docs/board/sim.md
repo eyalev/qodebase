@@ -1307,3 +1307,51 @@ S4e predictions under that model:
 Fixes on our side if (1) holds: Landers push smaller batches more often, staggered across copies (no synchronized
 bursts); or reads and writes in different namespaces. The door moves fewer bytes per second either way; the gain is in
 not lining the pushes up.
+
+**S4e: 4,400 agents, 88 copies split over 2 namespaces** (44 in qbfleet, 44 in qbfleet2; babel and nest, the same
+bases). All 88 started within 0.9 s. 56,410 files; 21,736 landed (all, after a fix to the git notes); 33,044 nothing
+to document; 176 cache misses; 0 verify failures.
+
+| 10-s window | total files/s (qbfleet / qbfleet2) | read p50 (qbfleet / qbfleet2) |
+|---|---|---|
+| 13:33:40 | 1,527 (900 / 627) | 591 / 515 ms |
+| 13:33:50 | 3,033 (1,504 / 1,528) | 868 / 948 ms |
+
+After that the copies ran out of files.
+
+| | the S4d readout | measured |
+|---|---|---|
+| ~4,000+ files/s | per-namespace capacity | no |
+| ~2,100 flat | account- or storage-wide | no |
+| **between** | | **~3,000 files/s: ~1,500 per namespace** at ~44 copies each, where one namespace gave 2,100 at ~40 copies in S4d. Read latency ~3x S4d's |
+
+What it says:
+- **Part per namespace, part shared.** A second namespace added ~45%, not 100%. The shared part got worse because 88
+  copies started at once (S4d never had more than 42).
+- **A cold namespace failed instead of slowing.** qbfleet2 threw 1,454 'An internal error occurred' on blob reads in
+  that window; qbfleet threw 0. Forks fresh in a new namespace under a cold burst failed outright, the first refusals
+  in the whole ladder. Fix on our side: warm a new namespace's copies (one slow pass) before a burst, and retry a read
+  that failed internally with backoff.
+- **The push question (do writes slow reads) is still open.** The Landers' pushes were refused for ~15 min by a git
+  notes bug (atomic multi-ref with a stale notes tip, fixed), so reads and pushes never overlapped in S4e.
+- **Thin evidence.** One ~10 s window at ~3,000 files/s. A longer reading needs more files per copy: the VS Code
+  copies are 2-4x bigger than babel and nest.
+
+**Where the S4 ladder leaves our side** (cached answers, so no model limits):
+
+| run | agents | result |
+|---|---|---|
+| S4a | 200 | 227 files/s; the per-copy Run DO was the wall, fixed |
+| S4b | 200 on one copy | 178 files/s |
+| S4c | 1,000 | 1,230 files/s, no errors |
+| S4d | 4,750 | a ~2,100 files/s plateau in one namespace that shows up as read latency |
+| S4e | 4,400 over 2 namespaces | ~3,000 files/s; a cold namespace's reads failed |
+
+Our components (Run DOs after the fix, Landers, verify, the door) never were the limit after S4a. The limit is Artifacts'
+shared read path. Every model limit is far lower: at most ~30 files/s for all models together (S5 below), against
+~2,000-3,000 files/s of headroom on our side.
+
+**S5 prediction** (real models at their limits; see the real-model paragraph above):
+- ~1,000 model calls/min (75-85% of 1,260), ~1,400-1,800 files/min (~25-30 files/s), with ~180-250 agents busy.
+- Agents beyond that wait.
+- The fleet's own side runs at ~1% of the capacity S4 measured.
