@@ -112,6 +112,7 @@ const CASES = [
   ['work_cb', 'show the intent tree', { mode: 'act', op: 'press', label: 'Intents' }],
   ['work_cb_tree', 'what is the packing list waiting on', { mode: ['act', 'both', 'ask'], op: 'press', label: 'Find an intent' }],
   ['work_cb_tree', 'why does photo upload exist', { mode: ['act', 'both', 'ask'], op: 'press', label: 'Find an intent' }],
+  ['home', 'start a fleet job to document the VS Code editor with 100 agents', { mode: 'act', op: 'go', href: '/runs' }],
   ['run_detail', 'back to all runs', { mode: 'act', op: ['go', 'back'], href: '#/' }],
   ['home_build', 'use the cheapest preset', { mode: 'act', op: 'press', label: 'Cheapest' }],
   ['home_build', 'set the agents to 6', { mode: 'act', op: 'type', label: 'Agents', text: '6' }],
@@ -135,7 +136,7 @@ const asList = (x) => (x == null ? null : Array.isArray(x) ? x : [x]);
 async function run(page, utterance) {
   const s = screen(page);
   s.me = 'eyal';
-  s.items = s.items.filter((i) => /^([lbfh]\d{1,4}|x[\w-]{1,7})$/.test(i.id));   // what the server keeps (cleanScreen in talk.ts)
+  s.items = s.items.filter((i) => /^([lbfh]\d{1,4}|x[\w-]{1,23})$/.test(i.id));   // what the server keeps (cleanScreen in talk.ts)
   const projects = candidateProjects(utterance, allProjects, 24, currentSlug(s.path));
   s.projects = allProjects.filter((p) => p.mine);
   const { questions, cands } = buildQuestions(utterance, s, projects);

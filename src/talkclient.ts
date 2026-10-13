@@ -945,6 +945,7 @@ function act(c, withPreview) {
         add('app', 'Opening ' + (c.label || c.href) + '…');
         sset('last', c.label || c.href);
         sset('nav', { u: curU, href: c.href, at: Date.now() });
+        if (c.then) sset('then', { text: c.then, at: Date.now() });
         trace('act', { op: 'go', href: c.href, label: c.label });
         busy = false;
         leave(function () { traceFlush(true); location.assign(c.href); });
@@ -1815,5 +1816,15 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   if (last && last.who === 'app' && /^Opening /.test(last.text)) { hist[hist.length - 1] = { who: 'app', text: last.text.replace(/^Opening (.*)…$/, 'Opened $1.') }; sset('log', hist); render(); }
   var p = sget('pending', null);
   if (p) { sset('pending', null); setTimeout(function () { ask(p.text, p.did); }, 300); }
+  // Said on another page for an action that lives here (a fleet job on /runs): say it again once the page has drawn its actions.
+  var th = sget('then', null);
+  if (th && Date.now() - th.at < 60000) {
+    sset('then', null);
+    var waited = 0;
+    (function again() {
+      if ((window.__talkActions || []).length || waited >= 15000) { trace('then', { text: th.text, waited: waited }); lastSpoken = false; submit(th.text); return; }
+      waited += 500; setTimeout(again, 500);
+    })();
+  }
 }).catch(function () {});
 })();`;

@@ -169,6 +169,7 @@ export type Cmd = {
   slug?: string; mine?: boolean;   // change / code: the project, and whether it is theirs
   greet?: boolean; example?: string;   // a greeting / small talk, and one of their projects to suggest
   depth?: string;                  // code: fact | explain | plan (haiku | sonnet | opus in the ask box)
+  then?: string;                   // go: say this again on the page it opens (an action that lives there)
 };
 
 /** Answers -> one command the page carries out (or hands to the chat lane). */
@@ -178,7 +179,8 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // 1:20" → a run's moment): the page's own action, even when the model heard a question. Only actions the page
   // registered (x… ids), only when the model is sure it is this page's thing.
   const tbx = top(answers.button);
-  if (/^x/.test(tbx.choice) && (tbx.p ?? 0) >= 0.6 && (answers.on_page?.noul ?? 0) >= 0.5 && cmd.op !== 'press' && !['change', 'code', 'list'].includes(cmd.op)) {
+  // (A very sure pick needs no "this page" yes: live, the intent finder was 0.93 with on_page 0.22.)
+  if (/^x/.test(tbx.choice) && ((tbx.p ?? 0) >= 0.85 || ((tbx.p ?? 0) >= 0.6 && (answers.on_page?.noul ?? 0) >= 0.5)) && cmd.op !== 'press' && !['change', 'code', 'list'].includes(cmd.op)) {
     const it = s.items.find((i) => i.id === tbx.choice);
     if (it) return { ...cmd, mode: 'act', op: 'press', target: it.id, label: it.text, p: tbx.p, why: `${cmd.why || ''}; the page's own action answers it` };
   }
@@ -206,6 +208,9 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // "Go home" / "home page" is a fixed phrase: vocabulary in code, not the model (talkui's rule).
   const home = s.items.find((i) => i.kind === 'link' && i.href === '/');
   if (home && cmd.mode !== 'ask' && /\b(go|take me|back to the|bring me) home\b|\bhome ?page\b|^home$/i.test(utterance.trim())) return { ...cmd, mode: cmd.mode === 'none' ? 'act' : cmd.mode, op: 'go', href: '/', label: home.text, target: home.id };
+  // A fleet job (qb7's /runs action, owner only) asked for from another page: open /runs, then say it again there.
+  if (!/^\/runs/.test(s.path) && /\b(fleet job|start a fleet|run a fleet|document (the )?(api|code|comments)|doc comments)\b/i.test(utterance) && cmd.mode !== 'ask')
+    return { ...cmd, mode: 'act', op: 'go', href: '/runs', label: 'Runs', p: 0.9, then: utterance, why: 'fleet jobs start on /runs' };
   // "Take me to my projects", "show my projects", "open yours": the Yours page (Eyal's phone, 2026-10-13: no confident
   // pick, and the chat lane made up /p/forq, a page that does not exist). Vocabulary in code.
   if (cmd.mode !== 'ask' && /\b(take me to|go to|open|show( me)?|bring me to|back to)\s+(all\s+)?(my|your) projects\b|^\s*(my|your) projects\s*[.!?]?$/i.test(utterance.trim()))

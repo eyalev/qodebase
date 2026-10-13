@@ -134,9 +134,9 @@ export type Who = { handle: string; admin: boolean } | null;
 /** Keep what the page sends to a known shape and size (it is the model's input). */
 function cleanScreen(b: any): Screen {
   const items: Item[] = (Array.isArray(b?.items) ? b.items : []).slice(0, 140).map((i: any) => ({
-    id: String(i.id || '').slice(0, 8), kind: (['link', 'button', 'field', 'heading'].includes(i.kind) ? i.kind : 'link') as Item['kind'],
+    id: String(i.id || '').slice(0, 24), kind: (['link', 'button', 'field', 'heading'].includes(i.kind) ? i.kind : 'link') as Item['kind'],
     text: String(i.text || '').slice(0, 140), href: i.href ? String(i.href).slice(0, 300) : undefined,
-  })).filter((i: Item) => /^([lbfh]\d{1,4}|x[\w-]{1,7})$/.test(i.id) && i.text);   // x…: the page's own actions (window.__talkActions)
+  })).filter((i: Item) => /^([lbfh]\d{1,4}|x[\w-]{1,23})$/.test(i.id) && i.text);   // x…: the page's own actions (window.__talkActions)
   return { path: String(b?.path || '/').slice(0, 200), title: String(b?.title || '').slice(0, 120), items, projects: [], last: b?.last ? String(b.last).slice(0, 120) : null };
 }
 
