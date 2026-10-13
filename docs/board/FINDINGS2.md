@@ -260,3 +260,12 @@ hand); the team wrote ~3x the code (22 files vs 7) with more polish bugs (overfl
 bulk move, quantity, currency. One build each: one strong agent was ~3-4x faster at similar quality; the team ~30% cheaper.
 Decision (on the data: the user gets the same app ~4x sooner): Suggest picks one agent for Large too; Balanced stays one tap
 away as the cheaper option. Huge is untested with one agent.
+
+**R7 vs R4, same Huge 'Café website' prompt (R4-R7-quality.md, 12 features tried at 390 px):** one Opus agent 863 s / $7.58,
+12 of 12 features working; the 10-agent team 1,762 s / $3.45, 10 working + 2 partial. The team's two partials share one
+cause, a cross-agent integration bug: one agent stored the café's name/address as {en, pt}, others read them as strings, so
+About shows '[object Object]' and 'Export site.json' always throws (the owner can edit but never publish). The solo app had
+smaller bugs (pickup time not checked against opening hours). One build each: one strong agent ~2x faster and more complete;
+a team ~half the cost. Decision (time to a working, complete app first): Suggest picks one agent at every size; the team
+presets stay one tap away as the cheaper option. A lesson for teams: shared data shapes need a contract (the skeleton task
+should define them).
