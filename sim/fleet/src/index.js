@@ -8,6 +8,7 @@
 //   Budget (one)       the account-day cap across all fleet runs ($50 per UTC day; no run after FLEET_LAST_DAY)
 // No fork per agent (manager, 2026-10-13): a comment-only change to one file needs none; the lanes do the git.
 import { DurableObject } from 'cloudflare:workers';
+import { landOne } from './merge.js';
 import { Objects, push } from '../../cloud/src/gitpush.js';
 import { targets, insert, verify, prompt, parseAnswer, cleanComment, promptPack, parseAnswerPack, packFiles } from './doc.js';
 
@@ -111,6 +112,7 @@ export default {
         return json(r ? { runId: url.searchParams.get('run'), t, to, ...r } : { error: 'commits are kept for the newest run of each copy, from 2026-10-13 14:00 UTC on' });
       }
       case '/commit': return json(await commitView(env, repo, url.searchParams.get('run'), String(url.searchParams.get('sha') || '')));
+      case '/dialcheck': return json(await dialCheck(env, repo, url.searchParams.get('run'), Math.max(0, Number(url.searchParams.get('offset')) || 0), Math.min(200, Number(url.searchParams.get('limit')) || 100)));
       case '/ladder-series': return json(await ladderSeries(env, String(url.searchParams.get('ladder') || '')));
       case '/meta': return json(await run(env, repo).setMeta(String(body.run || ''), body.meta || {}));
       case '/records': return new Response(await run(env, repo).records(url.searchParams.get('run')), { headers: { 'content-type': 'application/x-ndjson' } });
@@ -196,8 +198,11 @@ export class Run extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS rec (run TEXT, file TEXT, status TEXT, reason TEXT, model TEXT, agent INT, at INT, ms INT, usd REAL, tin INT, tout INT, comments INT, landed_at INT)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS q (run TEXT, i INT, path TEXT, hash TEXT, taken INT DEFAULT 0, PRIMARY KEY (run, i))`);
     try { this.sql.exec(`ALTER TABLE q ADD COLUMN tries INT DEFAULT 0`); } catch {}
+    // Collision dial: a task is one or more declarations of a file (fns, JSON), its kind (solo / far / near / same), its pair.
+    for (const c of ['task TEXT', 'fns TEXT', 'kind TEXT', 'grp TEXT', 'variant INT']) try { this.sql.exec(`ALTER TABLE q ADD COLUMN ${c}`); } catch {}
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS claim (run TEXT, file TEXT, fn TEXT, task TEXT, PRIMARY KEY (run, file, fn))`);
     // cmt: the comments this file got ({name: text}, for the per-file diff); commit: the lane commit it landed in.
-    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
+    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT', 'task TEXT', 'kind TEXT', 'grp TEXT', 'resolution TEXT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
     // S4/qb7: the queue sampled every 10 s while a run is on (the series' depth per stage).
     this.sql.exec(`CREATE TABLE IF NOT EXISTS samp (run TEXT, t INT, waiting INT, at_model INT, ready INT, landed INT, lander_waiting INT, PRIMARY KEY (run, t))`);
     // S4a: the per-result land-wait check scanned the whole table; landed() looked files up by name.
@@ -235,15 +240,19 @@ export class Run extends DurableObject {
     const { base, files } = await listFiles(this.env, cfg.repo, cfg.root);
     const p = { base };
     const off = Math.max(0, Number(cfg.offset) || 0);   // the next slice of the (stable) file list
-    const pick = files.slice(off, off + Math.max(1, Math.min(files.length, Number(cfg.maxFiles) || 10)));
+    let pick = files.slice(off, off + Math.max(1, Math.min(files.length, Number(cfg.maxFiles) || 10)));
     const runId = `f${Date.now().toString(36)}`;
-    pick.forEach((f, i) => this.sql.exec(`INSERT INTO q (run, i, path, hash) VALUES (?, ?, ?, ?)`, runId, i, f.path, f.hash));
+    if (cfg.dial) {
+      const tasks = await dialTasks(this.env, pick, Number(cfg.dial.level) || 0, cfg.dial.seed || runId);
+      tasks.forEach((t, i) => this.sql.exec(`INSERT INTO q (run, i, path, hash, task, fns, kind, grp, variant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, runId, i, t.path, t.hash, t.task, JSON.stringify(t.fns), t.kind, t.grp, t.variant || 0));
+      pick = tasks; cfg.dialActual = tasks.dial;
+    } else pick.forEach((f, i) => this.sql.exec(`INSERT INTO q (run, i, path, hash) VALUES (?, ?, ?, ?)`, runId, i, f.path, f.hash));
     // hold: list and queue now, start the agents on /go (S4e: copies started together; S4d's starts spread over 98 s).
     const s = { runId, state: cfg.hold ? 'held' : 'running', cfg, base: p.base, startedAt: Date.now(), files: pick.length, next: 0, usd: 0, calls: 0,
       counts: { queued: pick.length, model: 0, verify: 0, ready: 0, landed: 0, skipped: 0, verify_fail: 0, model_error: 0, rate_limited: 0, rejected: 0 },
       recent: [], perMin: {}, pauses: [], agentsDone: 0 };
     await this.save(s);
-    await this.ctx.storage.put(`meta:${runId}`, { base: p.base, ladder: cfg.ladder ? String(cfg.ladder).slice(0, 80) : null, copy: Number.isFinite(Number(cfg.copy)) && cfg.copy !== undefined ? Number(cfg.copy) : null, label: String(cfg.label || '').slice(0, 80) || null, agents: cfg.agents, agentsStarted: 0, repo: cfg.repo, root: cfg.root, planned: cfg.models.map((m) => m.model), overflow: cfg.overflow?.model || null, maxPerMin: Object.fromEntries([...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])].map((m) => [m.model, m.maxPerMin])) });
+    await this.ctx.storage.put(`meta:${runId}`, { base: p.base, dial: cfg.dialActual || null, ladder: cfg.ladder ? String(cfg.ladder).slice(0, 80) : null, copy: Number.isFinite(Number(cfg.copy)) && cfg.copy !== undefined ? Number(cfg.copy) : null, label: String(cfg.label || '').slice(0, 80) || null, agents: cfg.agents, agentsStarted: 0, repo: cfg.repo, root: cfg.root, planned: cfg.models.map((m) => m.model), overflow: cfg.overflow?.model || null, maxPerMin: Object.fromEntries([...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])].map((m) => [m.model, m.maxPerMin])) });
     await lander(this.env, cfg.repo).begin(runId, p.base, cfg.repo);
     await budget(this.env).addRepo(cfg.repo);
     // Agents start from this object's alarm in batches: started one by one inside the request, F2's 100-agent start
@@ -251,7 +260,7 @@ export class Run extends DurableObject {
     s.agentsStarted = 0; await this.save(s);
     if (!cfg.hold) await this.ctx.storage.setAlarm(Date.now() + 100);
     log('run_started', { runId, agents: cfg.agents, files: pick.length, model: cfg.model, budgetUsd: cfg.budgetUsd });
-    return { runId, agents: cfg.agents, files: pick.length, base: p.base };
+    return { runId, agents: cfg.agents, files: pick.length, base: p.base, ...(cfg.dialActual ? { dial: cfg.dialActual } : {}) };
   }
 
   async warm(n) {
@@ -283,8 +292,8 @@ export class Run extends DurableObject {
   }
 
   /** An agent asks for its next file. */
-  async next(runId, n = 1) {
-    if (n > 1) return this.nextMany(runId, n);
+  async next(runId, n = 1, inner = false) {
+    if (!inner && (n > 1 || this.s?.cfg?.dial)) return this.nextMany(runId, n);
     const s = await this.st();
     if (!s || s.runId !== runId) return { stop: true };
     if (s.state === 'paused') return { wait: 15_000 };
@@ -301,13 +310,14 @@ export class Run extends DurableObject {
     s.perSlice[`${pickM.model}|${slice}`] = (s.perSlice[`${pickM.model}|${slice}`] || 0) + 1;
     for (const k of Object.keys(s.perSlice)) if (Number(k.split('|')[1]) < slice - 12) delete s.perSlice[k];
     if (s.usd >= s.cfg.budgetUsd) { await this.autoPause(s, `run budget reached: $${s.usd.toFixed(3)} of $${s.cfg.budgetUsd}`); return { wait: 15_000 }; }
-    const row = this.sql.exec(`SELECT i, path, hash FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0];
+    const row = this.sql.exec(`SELECT i, path, hash, task, fns, kind, grp, variant FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0];
     if (!row) return { stop: true };
     this.sql.exec(`UPDATE q SET taken = 1 WHERE run = ? AND i = ?`, runId, row.i);
     s.counts.queued--; s.counts.model++;
     (s.perMin[minute] ||= { calls: 0, usd: 0 }).calls++;
     await this.save(s);
-    return { file: { path: row.path, hash: row.hash }, model: pickM.model, provider, slot: `${pickM.model}|${slice}` };
+    const task = row.task ? { task: row.task, fns: JSON.parse(row.fns || '[]'), kind: row.kind, grp: row.grp, variant: row.variant || 0, claims: !!s.cfg.dial?.claims } : {};
+    return { file: { path: row.path, hash: row.hash, ...task }, model: pickM.model, provider, slot: `${pickM.model}|${slice}` };
   }
 
   /** S4: up to n files per call (one round trip, not n): each still paced per model, the first without room stops the batch. */
@@ -329,7 +339,7 @@ export class Run extends DurableObject {
         files.push({ path: row.path, hash: row.hash, model: lead.model, provider: lead.provider, slot: null });
         continue;
       }
-      const r = await this.next(runId, 1);
+      const r = await this.next(runId, 1, true);
       if (!r.file) { if (!files.length) return r; break; }
       first ||= r; files.push({ ...r.file, model: r.model, provider: r.provider, slot: r.slot });
     }
@@ -360,8 +370,9 @@ export class Run extends DurableObject {
       if (q && (q.tries || 0) < 2) { this.sql.exec(`UPDATE q SET taken = 0, tries = ? WHERE run = ? AND i = ?`, (q.tries || 0) + 1, runId, q.i); r = { ...r, status: `${r.status}_retry` }; }
     }
     const cmt = r.cmt ? JSON.stringify(r.cmt).slice(0, 8000) : null;
-    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null);
+    if (r.task && r.status !== 'ready') this.sql.exec(`DELETE FROM claim WHERE run = ? AND task = ?`, runId, r.task);
+    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n, task, kind, grp, resolution) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null, r.task || null, r.kind || null, r.grp || null, r.status === 'caught_early' ? 'caught_early' : r.status === 'skipped' && r.task ? 'done_before' : null);
     const t10 = Math.floor(Date.now() / 10000) * 10000;
     if (s.lastSample !== t10) {
       s.lastSample = t10;
@@ -383,6 +394,30 @@ export class Run extends DurableObject {
     else await this.checkShares(s);
   }
 
+  /** Dial checker input: files (paged) with their base blob and every task's final record. */
+  async dialFiles(runId, offset = 0, limit = 100) {
+    const files = this.sql.exec(`SELECT path, MIN(hash) AS hash FROM q WHERE run = ? AND task IS NOT NULL GROUP BY path ORDER BY path LIMIT ? OFFSET ?`, runId, limit, offset).toArray();
+    const total = this.sql.exec(`SELECT COUNT(DISTINCT path) AS n FROM q WHERE run = ? AND task IS NOT NULL`, runId).toArray()[0]?.n || 0;
+    return { total, files: files.map((f) => ({ ...f, tasks: this.sql.exec(`SELECT q.task, q.fns, q.kind, q.grp, r.status, r.resolution, r.cmt FROM q LEFT JOIN rec r ON r.run = q.run AND r.task = q.task AND r.status NOT LIKE '%_retry' WHERE q.run = ? AND q.path = ?`, runId, f.path).toArray() })) };
+  }
+  /** Dial: claim a task's declarations before work; another live task on one of them -> caught early. */
+  async claim(runId, task, file, fns) {
+    const held = fns.map((fn) => this.sql.exec(`SELECT task FROM claim WHERE run = ? AND file = ? AND fn = ?`, runId, file, fn).toArray()[0]?.task).find((t) => t && t !== task);
+    if (held) return { caught: held };
+    for (const fn of fns) this.sql.exec(`INSERT OR REPLACE INTO claim (run, file, fn, task) VALUES (?, ?, ?, ?)`, runId, file, fn, task);
+    return { ok: true };
+  }
+  /** Dial: tasks the Lander landed, each with how (clean / merged / identical / replayed / duplicate / replay_failed). */
+  async landedTasks(runId, list, at, commits = {}) {
+    const s = await this.st();
+    if (!s || s.runId !== runId) return;
+    for (const x of list) {
+      this.sql.exec(`UPDATE rec SET landed_at = ?, status = ?, resolution = ?, commit_sha = ? WHERE run = ? AND task = ? AND status = 'ready'`, at, x.how === 'replay_failed' ? 'bounced' : 'landed', x.how, commits[x.path] || null, runId, x.task);
+      this.sql.exec(`DELETE FROM claim WHERE run = ? AND task = ?`, runId, x.task);
+    }
+    s.counts.ready = Math.max(0, (s.counts.ready || 0) - list.length); s.counts.landed += list.filter((x) => x.how !== 'replay_failed').length;
+    await this.save(s);
+  }
   async landed(runId, files, at, commits = {}) {
     const s = await this.st();
     if (!s || s.runId !== runId) return;
@@ -680,7 +715,11 @@ export class Agent extends DurableObject {
       // S4: a batch: each file worked in turn, the ready ones straight to the Lander (one call), then one done() for all.
       const rs = [];
       const pack = await this.ctx.storage.get('pack');
-      if (pack && n.files[0]?.provider !== 'cache') rs.push(...(await this.workPack(n.files, repoName, pack).catch((e) => n.files.map((f) => ({ file: f.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}`, model: f.model, slot: f.slot, finishedAt: Date.now() })))));
+      if (n.files[0]?.task) for (const f of n.files) {
+        const r = await this.workTask(runId, R, f, repoName).catch((e) => ({ file: f.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
+        Object.assign(r, { model: f.model, slot: f.slot, finishedAt: Date.now(), task: f.task, kind: f.kind, grp: f.grp }); rs.push(r);
+      }
+      else if (pack && n.files[0]?.provider !== 'cache') rs.push(...(await this.workPack(n.files, repoName, pack).catch((e) => n.files.map((f) => ({ file: f.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}`, model: f.model, slot: f.slot, finishedAt: Date.now() })))));
       else for (const f of n.files) {
         const r = await this.work(f, f.model, f.provider, repoName).catch((e) => ({ file: f.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
         r.model = f.model; r.slot = f.slot; r.finishedAt = Date.now(); rs.push(r);
@@ -689,14 +728,14 @@ export class Agent extends DurableObject {
       try {
         // Records first, then the Lander: a fast land before the record exists was lost (S4d: 8 files on nest-6 stayed 'ready').
         // meta = the change record that goes into the lane commit's git note.
-        const items = ready.map((r) => ({ lane: laneOf(r.file, n.root), path: r.file, text: r.text, at: Date.now(),
+        const items = ready.map((r) => ({ lane: laneOf(r.file, n.root), path: r.file, text: r.text, at: Date.now(), task: r.task, base: r.base, names: r.names, cmtMap: r.cmt,
           meta: { intent: `add doc comments to ${r.file}`, agent: i, source: r.model === 'cache' ? 'cache' : 'model', model: r.model, comments: r.comments || 0,
             verify: { ok: true, how: `same code tokens before and after (${r.vTokens || '?'} syntax-tree tokens, comments and whitespace skipped), no new parse errors` },
             picked: r.finishedAt - (r.ms || 0), finished: r.finishedAt } }));
         for (const r of rs) delete r.text;
         rs[0].infraErrs = (await this.ctx.storage.get('infraErrs')) || 0;
         await R.doneMany(runId, i, rs); await this.ctx.storage.put('infraErrs', 0);
-        if (items.length) await lander(this.env, repoName).addMany(runId, items);
+        if (items.length) await (items[0].task ? lander(this.env, repoName).addTasks(runId, items) : lander(this.env, repoName).addMany(runId, items));
       } catch (e) { await this.ctx.storage.put('infraErrs', ((await this.ctx.storage.get('infraErrs')) || 0) + 1); log('agent_infra_error', { runId, i, where: 'doneMany', err: String(e?.message || e).slice(0, 200) }); }
       await this.ctx.storage.setAlarm(Date.now() + 20);
       return;
@@ -707,6 +746,23 @@ export class Agent extends DurableObject {
     try { await R.done(runId, i, r); await this.ctx.storage.put('infraErrs', 0); }
     catch (e) { await this.ctx.storage.put('infraErrs', r.infraErrs + 1); log('agent_infra_error', { runId, i, where: 'done', err: String(e?.message || e).slice(0, 200) }); }
     await this.ctx.storage.setAlarm(Date.now() + 50);
+  }
+  /** Dial task (cache mode): only this task's declarations; claims first when the run uses them. */
+  async workTask(runId, R, f, repoName) {
+    const t0 = Date.now();
+    if (f.claims) { const c = await R.claim(runId, f.task, f.path, f.fns); if (c.caught) return { file: f.path, status: 'caught_early', reason: `task ${c.caught} holds it`, ms: Date.now() - t0 }; }
+    const rd = await this.readText(repoName, f.hash);
+    if (rd.error) return { file: f.path, status: 'read_error', reason: rd.error, ms: Date.now() - t0 };
+    const tRead = Date.now() - t0;
+    const hit = await this.env.FLEET_CACHE.get(f.hash, 'json');
+    const c = {};
+    for (const name of f.fns) if (typeof hit?.c?.[name] === 'string') c[name] = f.variant ? variantOf(hit.c[name]) : hit.c[name];
+    const tg = targets(f.path, rd.text).filter((t) => f.fns.includes(t.name) && c[t.name]);
+    if (!tg.length) return { file: f.path, status: hit ? 'skipped' : 'cache_miss', reason: hit ? 'nothing to document for this task' : 'no cached answer', ms: Date.now() - t0, tRead };
+    const { text: next, inserted } = insert(rd.text, tg, c);
+    const v = verify(f.path, rd.text, next);
+    if (!inserted || !v.ok) return { file: f.path, status: v.ok ? 'rejected' : 'verify_fail', reason: v.why || 'nothing inserted', ms: Date.now() - t0, tRead };
+    return { file: f.path, status: 'ready', text: next, comments: inserted, cmt: c, names: tg.map((t) => t.name), base: f.hash, vTokens: v.tokens, ms: Date.now() - t0, usd: 0, tRead, tModel: 0 };
   }
   /** One file's text from Artifacts, with the same retries as work(). */
   async readText(repoName, hash) {
@@ -857,9 +913,17 @@ export class Lander extends DurableObject {
     q(`CREATE TABLE IF NOT EXISTS cmt (sha TEXT PRIMARY KEY, at INT, lane TEXT, message TEXT, files INT, note TEXT)`); q(`CREATE INDEX IF NOT EXISTS cmt_at ON cmt (at)`);
     q(`CREATE TABLE IF NOT EXISTS push (at INT, ms INT, files INT, lanes INT, commit_sha TEXT, bytes INT)`);
     q(`CREATE TABLE IF NOT EXISTS nent (name TEXT PRIMARY KEY, sha TEXT)`);   // the notes tree's entries (commit -> note blob)
+    // Dial: one row per task (several per file), merged per file at landing.
+    q(`CREATE TABLE IF NOT EXISTS ptask (task TEXT PRIMARY KEY, path TEXT, lane TEXT, at INT, base TEXT, text TEXT, names TEXT, cmt TEXT, meta TEXT)`);
   }
   async begin(runId, base, repo = MAIN) { await this.ctx.storage.deleteAll(); this.tables(); await this.ctx.storage.put({ runId, base, repo, landed: 0, commits: 0, pushes: 0, stale: 0, errors: [] }); }
   async add(runId, lane, path, text, at) { return this.addMany(runId, [{ lane, path, text, at }]); }
+  async addTasks(runId, items) {
+    if ((await this.ctx.storage.get('runId')) !== runId) return;
+    this.tables();
+    for (const x of items) this.ctx.storage.sql.exec(`INSERT OR REPLACE INTO ptask (task, path, lane, at, base, text, names, cmt, meta) VALUES (?,?,?,?,?,?,?,?,?)`, x.task, x.path, x.lane, x.at, x.base, x.text, JSON.stringify(x.names || []), JSON.stringify(x.cmtMap || {}), x.meta ? JSON.stringify(x.meta) : null);
+    if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + 5000);
+  }
   async addMany(runId, items) {
     if ((await this.ctx.storage.get('runId')) !== runId) return;
     this.tables();
@@ -871,11 +935,69 @@ export class Lander extends DurableObject {
   async alarm() {
     const runId = await this.ctx.storage.get('runId');
     this.tables();
+    if (this.ctx.storage.sql.exec(`SELECT COUNT(*) AS n FROM ptask`).toArray()[0].n) {
+      try { await this.landTasks(runId); }
+      catch (e) { const errors = (await this.ctx.storage.get('errors')) || []; errors.push({ at: Date.now(), err: String(e?.stack || e).slice(0, 600) }); await this.ctx.storage.put('errors', errors.slice(-20)); log('land_error', { runId, err: String(e?.stack || e).slice(0, 500) }); }
+      await this.ctx.storage.setAlarm(Date.now() + 5000);
+      return;
+    }
     const keys = this.ctx.storage.sql.exec(`SELECT DISTINCT lane FROM pend`).toArray().map((x) => x.lane);
     if (!keys.length) return;
     try { await this.land(runId, keys); }
     catch (e) { const errors = (await this.ctx.storage.get('errors')) || []; errors.push({ at: Date.now(), err: String(e?.stack || e).slice(0, 600) }); await this.ctx.storage.put('errors', errors.slice(-20)); log('land_error', { runId, err: String(e?.stack || e).slice(0, 500) }); }
     await this.ctx.storage.setAlarm(Date.now() + 5000);
+  }
+  /** Dial: per file, every pending task lands on the file's current text the way git would (merge, else replay by intent,
+   *  or 'duplicate' when its declaration already has a comment); one commit per lane, one push (main only: notes off here). */
+  async landTasks(runId) {
+    const repoName = (await this.ctx.storage.get('repo')) || MAIN;
+    using repo = await ns(this.env, repoName).get(repoName);
+    const token = (await repo.createToken('write', 600)).plaintext;
+    const rows = this.ctx.storage.sql.exec(`SELECT task, path, lane, at, base, text, names, cmt FROM ptask ORDER BY at LIMIT 2000`).toArray();
+    let lastWhy = '';
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const tip = (await repo.log({ limit: 1 }))[0];
+      const objs = new Objects();
+      let parent = tip.hash, tree = tip.treeHash;
+      const results = [], commitOf = {};
+      const blobs = new Map();
+      const readB = async (h) => { if (!blobs.has(h)) { const b = await repo.readBlob(h); blobs.set(h, b ? new TextDecoder().decode(await b.arrayBuffer()) : null); } return blobs.get(h); };
+      const lanes = new Map(); for (const r of rows) { if (!lanes.has(r.lane)) lanes.set(r.lane, []); lanes.get(r.lane).push(r); }
+      for (const [lane, list] of lanes) {
+        const byPath = new Map(); for (const r of list) { if (!byPath.has(r.path)) byPath.set(r.path, []); byPath.get(r.path).push(r); }
+        const files = [];
+        for (const [path, ch] of byPath) {
+          const curHash = await blobAt(repo, objs, tree, path);
+          let cur = await readB(curHash);
+          const orig = cur;
+          for (const r of ch) {
+            const base = r.base === curHash && cur === orig ? cur : await readB(r.base);
+            const out = landOne(path, cur, base, r.text, JSON.parse(r.names), JSON.parse(r.cmt));
+            results.push({ task: r.task, path, how: out.how });
+            cur = out.text;
+          }
+          if (cur !== orig) files.push({ path, sha: objs.blob(cur) });
+        }
+        if (!files.length) continue;
+        tree = await overlay(repo, objs, tree, files);
+        parent = objs.commit(tree, [parent], `docs(${lane}): comments for ${files.length} file${files.length === 1 ? '' : 's'}\n\nqodebase fleet run ${runId} (collision dial); code unchanged (verified per file).`, Date.now(), 'qodebase fleet <fleet@qodebase.app>');
+        for (const f of files) commitOf[f.path] = parent;
+      }
+      const tPush = Date.now();
+      const p = parent === tip.hash ? { ok: true, bytes: 0 } : await push({ remote: remoteOf(repoName), token, branch: 'main', oldSha: tip.hash, newSha: parent, objs: [...objs.map.values()] });
+      await this.ctx.storage.put('pushes', ((await this.ctx.storage.get('pushes')) || 0) + 1);
+      if (p.ok) {
+        for (const r of rows) this.ctx.storage.sql.exec(`DELETE FROM ptask WHERE task = ?`, r.task);
+        await this.ctx.storage.put({ landed: ((await this.ctx.storage.get('landed')) || 0) + results.length, commits: ((await this.ctx.storage.get('commits')) || 0) + Object.keys(commitOf).length });
+        this.ctx.storage.sql.exec(`INSERT INTO push (at, ms, files, lanes, commit_sha, bytes) VALUES (?,?,?,?,?,?)`, Date.now(), Date.now() - tPush, results.length, lanes.size, parent, p.bytes || 0);
+        await run(this.env, repoName).landedTasks(runId, results, Date.now(), commitOf);
+        log('landed_tasks', { runId, tasks: results.length, by: Object.fromEntries([...new Set(results.map((x) => x.how))].map((h) => [h, results.filter((x) => x.how === h).length])) });
+        return;
+      }
+      await this.ctx.storage.put('stale', ((await this.ctx.storage.get('stale')) || 0) + 1);
+      lastWhy = `HTTP ${p.status}: ${String(p.detail || '').replace(/\s+/g, ' ').slice(0, 300)}`;
+    }
+    throw new Error(`push failed 3 times; last: ${lastWhy}`);
   }
   /** One commit per lane on top of main's tip, all pushed together; a stale tip is re-read and the batch rebuilt. */
   async land(runId, keys) {
@@ -970,8 +1092,102 @@ export class Lander extends DurableObject {
     const g = await this.ctx.storage.get(['landed', 'commits', 'pushes', 'stale', 'errors']);
     this.tables();
     const w = this.ctx.storage.sql.exec(`SELECT COUNT(*) AS n, COUNT(DISTINCT lane) AS l FROM pend`).toArray()[0] || {};
-    return { waiting: w.n || 0, lanes: w.l || 0, landed: g.get('landed') || 0, commits: g.get('commits') || 0, pushes: g.get('pushes') || 0, stale: g.get('stale') || 0, errors: (g.get('errors') || []).slice(-3) };
+    const wt = this.ctx.storage.sql.exec(`SELECT COUNT(*) AS n, COUNT(DISTINCT lane) AS l FROM ptask`).toArray()[0] || {};
+    return { waiting: (w.n || 0) + (wt.n || 0), lanes: (w.l || 0) + (wt.l || 0), landed: g.get('landed') || 0, commits: g.get('commits') || 0, pushes: g.get('pushes') || 0, stale: g.get('stale') || 0, errors: (g.get('errors') || []).slice(-3) };
   }
+}
+
+/** The blob hash at a path in a tree (in-memory trees from this batch first). */
+async function blobAt(repo, objs, rootHash, path) {
+  let h = rootHash;
+  const parts = path.split('/');
+  for (let k = 0; k < parts.length; k++) {
+    const o = objs.map.get(h);
+    const entries = o && o.type === 'tree' ? parseTree(o.body).map((e) => ({ name: e.name, hash: e.sha, type: e.type })) : await repo.readTree(h);
+    const e = (entries || []).find((x) => x.name === parts[k]);
+    if (!e) throw new Error(`no ${path} on main`);
+    h = e.hash;
+  }
+  return h;
+}
+
+/** Dial checker (one page of files): main's final text vs the base. Per file: code unchanged; per declaration at most one
+ *  doc comment; per landed task its comment present (clean/merged/identical/replayed) or a comment there (duplicate). */
+async function dialCheck(env, repoName, runId, offset, limit) {
+  const { total, files } = await run(env, repoName).dialFiles(runId, offset, limit);
+  using repo = await ns(env, repoName).get(repoName);
+  const tip = (await repo.log({ limit: 1 }))[0];
+  const objs = new Objects();
+  const out = { total, offset, n: files.length, codeChanged: [], doubled: [], lost: [], ok: 0, tasks: 0, byResolution: {} };
+  for (const f of files) {
+    const [bb, fb] = [await repo.readBlob(f.hash), await repo.readBlob(await blobAt(repo, objs, tip.treeHash, f.path))];
+    const base = new TextDecoder().decode(await bb.arrayBuffer()), fin = new TextDecoder().decode(await fb.arrayBuffer());
+    if (!verify(f.path, base, fin).ok) out.codeChanged.push(f.path);
+    // Doc blocks per declaration line: count '/**' blocks directly above each declaration of the base file.
+    const lines = fin.split('\n'), above = new Map();
+    for (const t of targets(f.path, base)) {
+      const at = lines.findIndex((l) => l.trim() && t.signature.startsWith(l.trim().slice(0, 30)));
+      if (at < 0) continue;
+      let n = 0, k = at - 1, text = '';
+      while (k >= 0 && lines[k].trim().endsWith('*/')) { const end = k; while (k >= 0 && !lines[k].trim().startsWith('/**')) k--; n++; text = lines.slice(k, end + 1).join(' ') + ' ' + text; k--; }
+      above.set(t.name, { n, text });
+      if (n > 1) out.doubled.push(`${f.path}#${t.name}`);
+    }
+    for (const t of f.tasks) {
+      const res = t.resolution || t.status || 'not done';
+      out.byResolution[res] = (out.byResolution[res] || 0) + 1;
+      if (t.status !== 'landed') continue;
+      out.tasks++;
+      const c = JSON.parse(t.cmt || '{}');
+      for (const fn of JSON.parse(t.fns)) {
+        const a = above.get(fn);
+        if (!a) continue;   // not a target in this copy
+        const want = (cleanComment(c[fn]) || [''])[0].slice(0, 40);
+        const ok = t.resolution === 'duplicate' ? a.n >= 1 : want && a.text.replace(/\s+\*\s+/g, ' ').includes(want.split(' ').slice(0, 5).join(' '));
+        if (!ok) out.lost.push({ task: t.task, fn, file: f.path, resolution: t.resolution });
+      }
+      out.ok++;
+    }
+  }
+  return out;
+}
+
+/** The second agent's comment on the same declaration (cache mode): a different text, so the two really collide. */
+const variantOf = (c) => { const first = String(c).split(/(?<=\.)\s/)[0].trim(); return first !== String(c).trim() ? first : `${first.replace(/\.$/, '')}; see the code for details.`; };
+
+/** Collision dial tasks over the files' cached declarations. Level 0: one task per file (all its declarations). Level L:
+ *  some files become a PAIR of tasks picked at the same moment (adjacent in the queue), so that pair tasks are L of all;
+ *  pairs cycle far (first + last declaration), near (two neighbours), same (one declaration twice, different text). */
+async function dialTasks(env, files, level, seed) {
+  const withNames = new Array(files.length);
+  for (let i = 0; i < files.length; i += 50) await Promise.all(files.slice(i, i + 50).map(async (f, k) => { const h = await env.FLEET_CACHE.get(f.hash, 'json'); const names = Object.keys(h?.c || {}); if (names.length) withNames[i + k] = { ...f, names }; }));
+  const fl = withNames.filter(Boolean);
+  let rnd = [...String(seed)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const rand = () => ((rnd = (rnd * 1103515245 + 12345) >>> 0) / 2 ** 32);
+  const k = Math.round((level * fl.length) / (2 - level));
+  const kinds = ['far', 'near', 'same'];
+  const pairIdx = new Set(), want = { far: 0, near: 0, same: 0 };
+  const order = fl.map((_, i) => i).sort(() => rand() - 0.5);
+  // Each paired file takes the kind it fits (far needs 3+ declarations, near 2+) that has the fewest pairs so far.
+  for (const i of order) {
+    if (pairIdx.size >= k) break;
+    const n = fl[i].names.length;
+    const fits = kinds.filter((kd) => !(kd === 'far' && n < 3) && !(kd === 'near' && n < 2));
+    const kind = fits.sort((a, b) => want[a] - want[b])[0];
+    pairIdx.add(i); fl[i].pairKind = kind; want[kind]++;
+  }
+  const units = fl.map((f, i) => {
+    if (!pairIdx.has(i)) return [{ path: f.path, hash: f.hash, fns: f.names, kind: 'solo', grp: null }];
+    const g = `p${i}`, n = f.names;
+    if (f.pairKind === 'far') return [{ path: f.path, hash: f.hash, fns: [n[0]], kind: 'far', grp: g }, { path: f.path, hash: f.hash, fns: [n[n.length - 1]], kind: 'far', grp: g }];
+    if (f.pairKind === 'near') { const j = Math.floor(rand() * (n.length - 1)); return [{ path: f.path, hash: f.hash, fns: [n[j]], kind: 'near', grp: g }, { path: f.path, hash: f.hash, fns: [n[j + 1]], kind: 'near', grp: g }]; }
+    const j = Math.floor(rand() * n.length);
+    return [{ path: f.path, hash: f.hash, fns: [n[j]], kind: 'same', grp: g }, { path: f.path, hash: f.hash, fns: [n[j]], kind: 'same', grp: g, variant: 1 }];
+  });
+  units.sort(() => rand() - 0.5);
+  const tasks = units.flat().map((t, i) => ({ ...t, task: `t${i}` }));
+  tasks.dial = { level, pairs: want, pairShare: Math.round((tasks.filter((t) => t.grp).length / tasks.length) * 1000) / 1000, files: fl.length };
+  return tasks;
 }
 
 function parseTree(body) {
