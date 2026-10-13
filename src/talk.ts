@@ -280,6 +280,11 @@ async function callAnswer(env: Env, m: AnswerModel, messages: any[], tools: any[
 async function chatBench(request: Request, env: Env, who: Who) {
   if (!who || !(who.admin || isOwner(env, who.handle))) return json({ error: 'forbidden' }, 403);
   const b = await request.json().catch(() => ({})) as any;
+  // A raw binding call, to see exactly what a provider says (b.probe = { model, input, opts }).
+  if (b?.probe) {
+    try { const r = await (env.AI as any).run(b.probe.model, b.probe.input, b.probe.opts); return json({ ok: true, r }); }
+    catch (e: any) { return json({ ok: false, err: String(e?.message || e), name: e?.name, cause: String(e?.cause || ''), keys: Object.keys(e || {}) }); }
+  }
   // Also any Workers AI model by its @cf/ id, to choose the "bigger Workers AI model" from candidates.
   const pickM = (id: string): AnswerModel | undefined => answerModel(id) || (/^@cf\/[\w.-]+\/[\w.-]+$/.test(id) ? { id, label: id, model: id, via: 'workers', usdIn: 0, usdOut: 0 } : undefined);
   const cases = (b?.cases || []).slice(0, 40), ids = (b?.models || []).filter((id: string) => pickM(id));
