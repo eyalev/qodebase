@@ -1426,3 +1426,31 @@ a call, batches of 20 per agent.
   agents or gemma tripping 3040, ~100-150 files/s, with Gemini taking most of the files as overflow.
 - **Run length:** 3 copies x ~4,060 files is ~12k files, about 1-2 minutes at that rate. The peak windows are the
   reading.
+
+**S5 v2: batched, 3 copies x 150 agents** (gemma + glm-4.7 with Gemini 3.1 as overflow, 14:28-14:33). 8,984 files in
+298 s: ~30 files/s, peak ~37. 8,910 landed, 74 rejected (64 of them Gemini), 0 verify failures, 0 429s, 0 3040s,
+$6.84.
+
+| | prediction | measured |
+|---|---|---|
+| files per call | ~6-8 (Workers AI), ~5 (Gemini) | gemma 5.1, glm-4.7 4.8, Gemini 2.7 |
+| call p50 | glm > 30 s | gemma 14.8 s, glm 26 s, Gemini 5 s |
+| throughput | ~100-150 files/s, Gemini doing most | **~30 files/s**; Gemini did 78% |
+| Workers AI call rate | at each model's measured limit | **far below**: gemma ~30 calls/min of 255, glm ~55 of 405 |
+| first limit | the models (gemma's 3040 first) | **our pacer again**: none of the model limits was reached |
+
+**Why.** The pacer charges a pace slot per file when the file is picked. A pack's slots come back only after its
+15-26 s call, in a later 10 s slice, so the pace counted files, not calls. Gemma ran at ~150 files/min across the 3
+runs, i.e. its 85/min share x 3, counted in files. qb6's fix: one slot per pack (the other files in a pack ride free).
+
+**Prediction for S5 v2b** (the same setup, the pacer fixed):
+- **Workers AI at its call limits:** gemma 255 x 5.1 ≈ 1,300 files/min and glm 405 x 4.8 ≈ 1,940 files/min, together
+  ~54 files/s.
+- **Calls in flight:** 255 x 14.8 s + 405 x 26 s ≈ 240 calls. With 450 agents and one call each, that leaves ~210
+  agents for Gemini.
+- **Gemini:** at ~5 s a call those agents could make ~2,500 calls/min, capped at its 1,500, so ~67 files/s at 2.7 a
+  call.
+- **Total:** at most ~120 files/s; **~80-120 expected, 3-4x S5 v2.**
+- **The first model wall should now be gemma's 3040 capacity:** 255 calls/min of ~5 files each use more capacity than
+  S5 v1's single files did.
+- ~12k files at ~100 files/s is ~2 min: read the peak windows.
