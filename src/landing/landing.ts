@@ -988,7 +988,9 @@ export class Landing extends DurableObject<Env> {
       if (r.mainAfter) m.tree = undefined;   // re-read the file map on the next view
       for (const rc of r.changes) if (rc.llm) {
         log('landing', 'replay_llm', { slug: m.slug, id: rc.id, landed: rc.landed, ...rc.llm });
-        await recordCost(this.env, m.slug.split('.')[0], 'claude', m.slug, { usd: null, covered: false, billing: 'sub',
+        // Named like the boxes' rows (<owner>/<name>:<model>): under the bare slug the guard priced these Haiku replays as the
+        // project's priciest model + 50% (R5: ~\$11 of a \$30.5 guard reading, the run halted at ~\$16.5 real).
+        await recordCost(this.env, m.slug.split('.')[0], 'claude', `${m.slug.replace('.', '/')}:${rc.llm.model || DEFAULT_REPLAY_MODEL}`, { usd: null, covered: false, billing: 'sub',
           tokens: { in: rc.llm.in || 0, out: rc.llm.out || 0, cw: Math.max(0, (rc.llm.cacheWrite || 0) - (rc.llm.cacheWrite1h || 0)), cw1h: rc.llm.cacheWrite1h || 0, cr: rc.llm.cacheRead || 0 } });
       }
       await this.#afterRealTrain(r);
