@@ -593,7 +593,7 @@
     const c = await njCopies();
     const idx = c.jobs.includes('comments+index');
     f.innerHTML = `<h2 class="nj-h">New fleet job</h2>${c.error ? `<p class="rc-cn bad">${esc(c.error)}</p>` : ''}
-      <label class="nj-l" for="nj-copy">Copy to work on</label><select id="nj-copy">${c.copies.map((x) => `<option value="${esc(x.repo)}" data-root="${esc(x.source?.root || '')}" data-files="${x.files || 0}" data-name="${esc(x.source?.name || x.repo)}">${esc(x.source?.name || x.repo)} (${esc(x.repo)})${x.files != null ? `, ${n0(x.files)} files` : ''}${x.fresh ? '' : ', already documented'}</option>`).join('')}</select>
+      <label class="nj-l" for="nj-copy">Copy to work on</label><select id="nj-copy">${c.copies.map((x) => `<option value="${esc(x.repo)}" data-root="${esc(x.source?.root || '')}" data-files="${x.files || 0}" data-name="${esc(x.source?.name || x.repo)}">${esc(x.source?.name || x.repo)} (${esc(x.repo)})${x.reserved ? ', reserved' : ''}${x.fresh ? '' : ', already documented'}</option>`).join('')}</select>
       <label class="nj-l" for="nj-root">Folder</label><input id="nj-root" autocapitalize="none" spellcheck="false">
       <fieldset class="nj-g"><legend>Job</legend><label><input type="radio" name="nj-job" value="comments" checked> Doc comments on every exported function</label><label><input type="radio" name="nj-job" value="comments+index"${idx ? '' : ' disabled'}> Doc comments and a line for each in docs/API.md${idx ? '' : ' <small>(coming)</small>'}</label></fieldset>
       <div class="nj-row"><label class="nj-l" for="nj-agents">Agents<input id="nj-agents" type="number" inputmode="numeric" min="1" max="2000" step="1" value="200"></label><label class="nj-l" for="nj-budget">Budget, $<input id="nj-budget" type="number" inputmode="decimal" min="0.1" max="30" step="any" value="3"></label></div>
@@ -624,7 +624,11 @@
     const f = NJ.querySelector('form'), o = f.querySelector('#nj-copy').selectedOptions[0];
     const rootV = f.querySelector('#nj-root').value.trim();
     const cp = (COPIES?.copies || []).find((x) => x.repo === o?.value);
-    return { repo: o?.value || '', root: rootV, files: o && rootV === o.dataset.root ? +o.dataset.files : (cp?.folders || {})[rootV] || njCount[`${o?.value}:${rootV}`] || 0, job: f.querySelector('[name=nj-job]:checked')?.value || 'comments',
+    // a copy without a count (qbfleet2's copies: files null) at its own root: every copy of the same project and root has
+    // the same files, so take a sibling's count (a /count walk of src/vs takes ~50 s)
+    // (/copies' files can be what a copy's last run covered, so the largest sibling count is the whole folder)
+    const sib = cp && cp.files == null && rootV === cp.source?.root ? { files: Math.max(0, ...(COPIES?.copies || []).filter((x) => x.files && x.source?.name === cp.source?.name && x.source?.root === cp.source?.root).map((x) => x.files)) } : null;
+    return { repo: o?.value || '', root: rootV, files: (o && rootV === o.dataset.root ? +o.dataset.files : 0) || sib?.files || (cp?.folders || {})[rootV] || njCount[`${o?.value}:${rootV}`] || 0, job: f.querySelector('[name=nj-job]:checked')?.value || 'comments',
       agents: +f.querySelector('#nj-agents').value || 200, budgetUsd: +f.querySelector('#nj-budget').value || 3, preset: f.querySelector('[name=nj-model]:checked')?.value || 'workers',
       label: `${o?.dataset.name || ''}${rootV && rootV !== o?.dataset.root ? ` ${rootV.split('/').pop()}` : ''}: ${f.querySelector('[name=nj-job]:checked')?.value === 'comments+index' ? 'doc comments + API index' : 'doc comments'}` };
   }
@@ -649,7 +653,9 @@
     const x = String(t || '').toLowerCase(), pre = {};
     const kinds = [[/vs ?code|visual studio code/, /extension/.test(x) ? 'VS Code extensions' : 'VS Code'], [/nest/, 'NestJS'], [/angular/, 'Angular'], [/next(\.js|js)?\b/, 'Next.js'], [/babel/, 'Babel']];
     const want = (kinds.find(([re]) => re.test(x)) || [])[1];
-    const area = want === 'VS Code' && VS_AREAS.find((a) => new RegExp(`\\b${a}\\b`).test(x));
+    // area words only outside the project's name ('VS Code' itself must not read as the src/vs/code area)
+    const rest = x.replace(/vs ?code|visual studio code/g, ' ');
+    const area = want === 'VS Code' && VS_AREAS.find((a) => new RegExp(`\\b${a}\\b`).test(rest));
     // the exact project name (VS Code is not VS Code extensions); an area like 'editor' needs a src/vs copy; fresh first
     const cs = (COPIES?.copies || []).filter((c) => !want || (c.source?.name || '').toLowerCase() === want.toLowerCase()).filter((c) => !area || String(c.source?.root || '').startsWith('src/vs'));
     // a copy qbfleet marks reserved (the recording's take) first, then any fresh one. RESERVED_TAKE: the 3a take on
