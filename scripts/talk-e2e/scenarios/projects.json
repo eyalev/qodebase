@@ -1,0 +1,8 @@
+[
+  { "id": "latest-open", "title": "Latest project, then open it with a yes", "start": "/", "turns": [
+    { "say": "What is my latest project?", "expect": { "lane": "latest", "answer_has": "latest", "offer": "open", "spoken": "once", "stay": true } },
+    { "say": "yes", "expect": { "nav": "/p/eyal/", "no_writes": true } }] },
+  { "id": "latest-newest", "title": "What's my newest app?", "start": "/", "turns": [{ "say": "what's my newest app?", "expect": { "lane": "latest", "stay": true } }] },
+  { "id": "list-projects", "title": "How many projects, answered without leaving", "start": "/", "turns": [{ "say": "what projects do I have?", "expect": { "lane": "list", "answer_has": "You have \\d+ project", "stay": true, "spoken": "once" } }] },
+  { "id": "list-show", "title": "Show me my projects (list + open)", "start": "/", "turns": [{ "say": "show me my projects", "expect": { "lane": ["act/go", "list"], "nav": "/mine$" } }] }
+]

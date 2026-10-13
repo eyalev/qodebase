@@ -1,0 +1,12 @@
+[
+  { "id": "watch-run", "title": "Watch a run asks first; yes starts it (intercepted)", "start": "/p/eyal/corner-cafe", "turns": [
+    { "say": "watch a run", "expect": { "confirm": true, "stay": true } },
+    { "say": "yes", "expect": { "writes": "landing/watch" } }] },
+  { "id": "work-timeline", "title": "Show the timeline tab", "start": "/p/eyal/real-course-builder/work", "turns": [{ "say": "show the timeline tab", "expect": { "lane": "act/press", "fields": { "Timeline": "true" }, "no_writes": true } }] },
+  { "id": "intent-tree", "title": "Intent tree, then find an intent", "start": "/p/eyal/real-course-builder/work", "turns": [
+    { "say": "show the intent tree", "expect": { "lane": "act/press", "nav": { "url": "#/intents", "hash": true } } },
+    { "say": "why does photo upload exist", "expect": { "lane": ["act/press", "both/press"], "no_writes": true } }] },
+  { "id": "change-request", "title": "A change on my project asks before sending", "start": "/p/eyal/todo", "turns": [
+    { "say": "add due dates to the tasks", "expect": { "lane": "change", "confirm": true } },
+    { "say": "yes", "expect": { "writes": "/api/p/eyal/todo/router" } }] }
+]

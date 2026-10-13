@@ -1,0 +1,11 @@
+[
+  { "id": "runs-open-moment", "title": "Open the last run, then a moment by voice", "start": "/runs", "turns": [
+    { "say": "open the last run", "expect": { "lane": ["act/go", "act/press"], "nav": { "url": "#/run/", "hash": true } } },
+    { "say": "show me minute 1", "expect": { "lane": ["act/press", "both/press"], "fields": { "css:.dp": "\\w" }, "no_writes": true } },
+    { "say": "back to all runs", "expect": { "nav": { "url": "/runs(#/?)?$", "hash": true } } }] },
+  { "id": "runs-fleet-from-home", "title": "Fleet job sentence from home opens /runs with the form filled", "start": "/", "turns": [
+    { "say": "start a fleet job to document the VS Code editor with 100 agents", "expect": { "lane": "act/go", "nav": "/runs", "no_writes": true } },
+    { "say": "Document every exported function in VS Code's editor and add each one to the API index, with 100 agents", "settle_ms": 6000, "expect": { "fields": { "css:#nj-agents": "^100$", "css:#nj-root": "editor" }, "no_writes": true } }] },
+  { "id": "runs-take", "title": "The 1,000-agent take fills the reserved copy, never starts", "start": "/runs", "turns": [
+    { "say": "Document every exported function in VS Code and add each one to the API index, with 1,000 agents", "settle_ms": 8000, "expect": { "fields": { "css:#nj-copy": "fleet-n2-vscode-src-1", "css:#nj-root": "^src/vs$", "css:#nj-agents": "^1000$", "css:#nj-budget": "^5$", "css:#nj-est": "1,000 agents" }, "no_writes": true } }] }
+]

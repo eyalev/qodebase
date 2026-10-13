@@ -1,0 +1,15 @@
+[
+  { "id": "nav-mine", "title": "Take me to my projects", "start": "/", "turns": [{ "say": "Take me to my projects.", "expect": { "lane": "act/go", "nav": "/mine$", "no_writes": true } }] },
+  { "id": "nav-explore", "title": "Go to Explore", "start": "/", "turns": [{ "say": "go to explore", "expect": { "lane": "act/go", "nav": "/explore$" } }] },
+  { "id": "nav-inbox", "title": "Open my inbox", "start": "/", "turns": [{ "say": "open my inbox", "expect": { "lane": "act/go", "nav": "/inbox$" } }] },
+  { "id": "nav-settings", "title": "Take me to settings", "start": "/", "turns": [{ "say": "take me to settings", "expect": { "lane": "act/go", "nav": "/settings$" } }] },
+  { "id": "nav-import", "title": "Import from GitHub", "start": "/", "turns": [{ "say": "I want to import something from GitHub", "expect": { "lane": "act/go", "nav": "/import$" } }] },
+  { "id": "nav-project", "title": "Open a project by name", "start": "/", "turns": [{ "say": "open the timer app", "expect": { "lane": "act/go", "nav": "/p/[a-z]+/timer" } }] },
+  { "id": "nav-play", "title": "Play 2048 (the live app)", "start": "/", "turns": [{ "say": "play 2048", "expect": { "lane": "act/go", "nav": "2048/app" } }] },
+  { "id": "nav-code", "title": "Show the code, then go home", "start": "/p/forq/calculator", "turns": [
+    { "say": "show me the code", "expect": { "lane": "act/go", "nav": "/p/forq/calculator/code" } },
+    { "say": "go home", "expect": { "lane": "act/go", "nav": "qodebase\\.app/$" } }] },
+  { "id": "nav-back", "title": "Go back after opening history", "start": "/p/forq/calculator", "turns": [
+    { "say": "show me its history", "expect": { "lane": "act/go", "nav": "/p/forq/calculator/history" } },
+    { "say": "go back", "expect": { "lane": ["act/back", "act/go"], "nav": "/p/forq/calculator$" } }] }
+]

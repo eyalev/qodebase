@@ -1,0 +1,8 @@
+[
+  { "id": "idea-small", "title": "Small idea into the build box", "start": "/", "turns": [{ "say": "suggest something small to build", "expect": { "lane": "idea", "fields": { "What do you want to build": "\\w{4,}" }, "answer_has": "small idea", "spoken": "once", "no_writes": true } }] },
+  { "id": "idea-medium", "title": "Medium idea, then another", "start": "/", "turns": [
+    { "say": "Give me an idea for a new app.", "expect": { "lane": "idea", "fields": { "What do you want to build": "\\w{4,}" }, "answer_has": "idea" } },
+    { "say": "another one", "expect": { "answer_has": "idea", "fields": { "What do you want to build": "\\w{4,}" }, "no_writes": true } }] },
+  { "id": "idea-large", "title": "Surprise me with a big idea", "start": "/", "turns": [{ "say": "surprise me with a big idea", "expect": { "lane": "idea", "answer_has": "large idea", "fields": { "What do you want to build": "\\w{4,}" } } }] },
+  { "id": "idea-from-mine", "title": "Idea asked on /mine goes home first", "start": "/mine", "turns": [{ "say": "give me an idea", "expect": { "nav": "qodebase\\.app/$" } }] }
+]

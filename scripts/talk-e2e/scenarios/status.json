@@ -1,0 +1,6 @@
+[
+  { "id": "status-home", "title": "What's going on (quick reply)", "start": "/", "turns": [{ "say": "what's going on", "expect": { "lane": "ask/status", "answer_has": "where things stand|nothing is in progress|working|ready", "spoken": "once", "stay": true, "no_writes": true, "max_ms": 8000 } }] },
+  { "id": "status-agents", "title": "What are my agents doing?", "start": "/mine", "turns": [{ "say": "what are my agents doing?", "expect": { "lane": "status", "spoken": "once", "stay": true, "no_writes": true } }] },
+  { "id": "status-merge", "title": "Is anything ready to merge?", "start": "/mine", "turns": [{ "say": "is anything ready to merge?", "expect": { "lane": "status", "stay": true, "no_writes": true } }] },
+  { "id": "status-waiting", "title": "Which builds are waiting for me?", "start": "/mine", "turns": [{ "say": "which builds are waiting for me?", "expect": { "lane": "status", "stay": true, "no_writes": true } }] }
+]

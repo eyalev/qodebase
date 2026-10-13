@@ -1,0 +1,6 @@
+[
+  { "id": "request-suggest", "title": "Suggest to someone else's project: asks, then sends (intercepted)", "start": "/p/forq/calculator", "turns": [
+    { "say": "suggest to this project: add a history of past calculations", "expect": { "lane": "change", "confirm": true } },
+    { "say": "yes", "expect": { "writes": "/api/p/forq/calculator/(requests|fork)" } }] },
+  { "id": "request-owner", "title": "Ask the owner to add a dark theme", "start": "/p/forq/calculator", "turns": [{ "say": "ask the owner to add a dark theme", "expect": { "lane": "change", "confirm": true } }] }
+]

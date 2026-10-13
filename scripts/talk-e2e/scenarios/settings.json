@@ -1,0 +1,7 @@
+[
+  { "id": "settings-notify", "title": "Turn off a notification switch (write intercepted)", "start": "/settings", "turns": [{ "say": "turn off the notification when a build finishes", "expect": { "lane": "act/press", "stay": true } }] },
+  { "id": "settings-speaker", "title": "Turn spoken replies off", "start": "/", "turns": [{ "say": "turn off spoken replies", "expect": { "fields": { "css:#talk-bspk": "false" }, "stay": true, "no_writes": true } }] },
+  { "id": "settings-conv-mode", "title": "Conversation mode on, then off", "start": "/", "turns": [
+    { "say": "turn on conversation mode", "expect": { "fields": { "css:#talk-head .talk-convt": "true" }, "stay": true } },
+    { "say": "turn off conversation mode", "expect": { "fields": { "css:#talk-head .talk-convt": "false" }, "stay": true } }] }
+]

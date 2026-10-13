@@ -1,0 +1,9 @@
+[
+  { "id": "greet-hi", "title": "Hi there (greeting, no action)", "start": "/", "turns": [{ "say": "hi there", "expect": { "stay": true, "no_writes": true, "no_offer": true, "spoken": "once" } }] },
+  { "id": "greet-morning", "title": "Good morning, how are you?", "start": "/p/forq/calculator", "turns": [{ "say": "good morning, how are you?", "expect": { "stay": true, "no_writes": true, "spoken": "once" } }] },
+  { "id": "gibberish", "title": "Gibberish does nothing", "start": "/", "turns": [{ "say": "blorp asdf quantum noodle", "expect": { "stay": true, "no_writes": true } }] },
+  { "id": "cut-off", "title": "A cut-off sentence asks again", "start": "/", "turns": [{ "say": "um so I was", "expect": { "lane": "none", "stay": true, "no_writes": true, "answer_has": "again|catch" } }] },
+  { "id": "hebrew-nav", "title": "Hebrew: show my projects", "start": "/", "turns": [{ "say": "תראה לי את הפרויקטים שלי", "expect": { "nav": "/mine$" } }] },
+  { "id": "hebrew-status", "title": "Hebrew: what's going on", "start": "/", "turns": [{ "say": "מה קורה עם הפרויקטים שלי?", "expect": { "lane": "status", "stay": true } }] },
+  { "id": "code-question", "title": "Code question goes to the ask box (mocked)", "start": "/", "turns": [{ "say": "how are tasks stored in my todo app?", "expect": { "lane": "code", "writes": "/api/p/eyal/todo/ask", "answer_has": "Mocked answer" } }] }
+]

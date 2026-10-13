@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "deploy": "wrangler deploy",
-    "types": "wrangler types"
+    "types": "wrangler types",
+    "talk:e2e": "node scripts/talk-e2e/run.mjs"
   },
   "dependencies": {
     "@cloudflare/puppeteer": "1.4.0",

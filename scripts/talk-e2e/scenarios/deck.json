@@ -1,0 +1,8 @@
+[
+  { "id": "deck-next-back", "title": "Deck: next, next, back, slide 12", "start": "/deck/#1", "turns": [
+    { "say": "next slide", "expect": { "nav": { "url": "#2$", "hash": true }, "no_writes": true } },
+    { "say": "next", "expect": { "nav": { "url": "#3$", "hash": true } } },
+    { "say": "previous slide", "expect": { "nav": { "url": "#2$", "hash": true } } },
+    { "say": "show me slide 12", "expect": { "nav": { "url": "#12$", "hash": true } } }] },
+  { "id": "deck-notes", "title": "Deck: show the speaker notes", "start": "/deck/#1", "turns": [{ "say": "show the speaker notes", "expect": { "lane": "act/press", "stay": true } }] }
+]
