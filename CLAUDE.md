@@ -753,7 +753,14 @@ answers, or both.
   **Microphone** ready while Talk is open (`keepmic`: the stream opens with the
   sheet when the mic is already allowed, so the recording starts at 0 ms) or only
   while speaking. Live words grow in the input (textarea, up to 35dvh, then scrolls).
-- **Keep my recordings** (owner only, off by default, 2026-10-07): Talk setting →
+- **Dictation from the bar (2026-10-13, Eyal):** tap the mic → 'Starting the mic…' until the recording is really on,
+  then red 'listening' + a buzz; live words grow in the bar; tap again → the words stay (Whisper-checked; up to 15 s,
+  replaced only if not edited) → Send. Never sent by silence unless 'sends when I stop talking' is chosen. The mic stays
+  warm after use like tmux-web (5 min idle; released when the page is hidden): cold, it opened 0.8 s after the tap and
+  the first words were lost. Keyterms ≤ 40 (65 made Workers AI refuse the nova-3 socket). Workers AI nova-3 has no
+  Hebrew: Hebrew live words come from the phone's recogniser. Bench: `node scripts/talk-stt-bench.mjs` (Eyal's tmux-web
+  dictations; EN whisper 7% / nova-3 10% WER vs tmux-web's final). Examples in the bar are hints, never sent.
+- **Keep my recordings** (owner only; on by default for the owner since 2026-10-13, 14 days): Talk setting →
   each dictation clip goes to R2 `qodebase-talk-clips` (talk Worker binding
   `CLIPS`, lifecycle rule deletes after 7 days) with the live and final words;
   `/api/talk/clip` (POST save, `?key=` play, `?day=` list) answers 403 to anyone
