@@ -672,6 +672,8 @@ export class Landing extends DurableObject<Env> {
       await this.#saveMeta(); await this.#arm(500);
       log('landing', 'resumed', { slug: m.slug, by, ...was });
     }
+    // A queue with work waiting always has an alarm (the flagship's queued change sat for hours with none set).
+    else if (m.waiting.length) await this.#arm(500);
     return this.runState();
   }
   async stopAll(by: string) {
@@ -1188,6 +1190,8 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     if ('budgetUsd' in flags) { delete m.spentBase; delete m.spent; await this.ctx.storage.setAlarm(Date.now() + 1000); }   // re-baselined by the next budget tick
     m.flags = { ...m.flags, ...flags };
     await this.#saveMeta();
+    // Clearing a stop or a pause re-arms a queue that has work waiting (it used to stay unarmed).
+    if ((flags.halted === false || flags.paused === false) && m.waiting.length) await this.#arm(500);
     return m.flags;
   }
 
@@ -1407,7 +1411,8 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     return { ok: true, before, after: { alarm: await this.ctx.storage.getAlarm(), running: m.running, waiting: m.waiting }, ms: Date.now() - t };
   }
 
-  async restart(): Promise<void> { await this.ctx.storage.setAlarm(Date.now() + 2000); this.ctx.abort('restart on the deployed code'); }
+  // sync() first: an abort right after setAlarm dropped the write, and the restarted object had no alarm at all.
+  async restart(): Promise<void> { await this.ctx.storage.setAlarm(Date.now() + 2000); await this.ctx.storage.sync(); this.ctx.abort('restart on the deployed code'); }
 
   async demoForks() { return (await this.#m()).demoForks || []; }
 
