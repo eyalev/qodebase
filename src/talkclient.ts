@@ -119,7 +119,9 @@ var css = [
   '#talk-root.boffer #talk-boffer{display:flex}',
   '#talk-root.boffer #talk-bexp,#talk-root.live #talk-bexp{display:none}',
   '#talk-bsend{display:none}',
-  '#talk-root.live #talk-bsend{display:flex}',
+  '#talk-root.live #talk-bsend,#talk-root.draft #talk-bsend{display:flex}',
+  '#talk-root.draft #talk-bexp{display:none}',
+  '#talk-root.draft #talk-btext{-webkit-line-clamp:3}',
   '#talk-boffer .talk-chip{min-height:44px;padding:0 12px}',
   // Pages with a composer (form.ask) keep the mic in its row: the bar there is the door to Talk, without a mic.
   '#talk-root.slim #talk-bmic{display:none}',
@@ -135,7 +137,8 @@ var css = [
   '.talk-ex{display:flex;flex-direction:column;gap:12px}',
   '.talk-ex h3{margin:0 0 6px;font:600 13px var(--t-ff);color:var(--t-dim)}',
   '.talk-ex div{display:flex;flex-wrap:wrap;gap:8px}',
-  '.talk-ex button{min-height:40px;padding:0 12px;border:0;border-radius:10px;background:var(--t-chip);color:var(--t-fg);font:15px var(--t-ff);cursor:pointer;text-align:left}',
+  '.talk-ex .talk-exs{font-size:15px;color:var(--t-fg)}',
+  '.talk-ex div{column-gap:16px;row-gap:4px}',
   // A clear (×) inside text boxes, only while they hold text (Eyal, 2026-10-13): Talk's own input and the page's
   // idea / change boxes.
   '.talk-clr::after{content:"";position:absolute;inset:-6px}',
@@ -341,10 +344,14 @@ function build() {
   bSpk = el('button', { id: 'talk-bspk', class: 'talk-bb', type: 'button' });
   // Right-thumb reach (Eyal, 2026-10-13): open and spoken replies on the left, the words, then Send and the mic at the right edge.
   bar.appendChild(bExp); bar.appendChild(bSpk); bar.appendChild(bMid); bar.appendChild(bOffer); bar.appendChild(bSend); bar.appendChild(bMic);
-  bMid.addEventListener('click', function () { unlockAudio(); if (root.classList.contains('ex') && !listening && !busy) return runExample(exampleLine()); trace('bar', { how: 'open' }); open(true); });
-  exT = setInterval(function () { if (root.classList.contains('ex') && !root.classList.contains('open') && document.visibilityState === 'visible') { exI++; barSync(); } }, 4000);
+  // Examples are hints, never sent (Eyal, 2026-10-13: a tap near the bar sent 'how does it work?' twice). A tap opens Talk.
+  bMid.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'open' }); open(true); });
   bExp.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'expand' }); open(true); });
-  bSend.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'send' }); if (listening) stopListen(false, true); });
+  bSend.addEventListener('click', function () {
+    unlockAudio(); trace('bar', { how: 'send' });
+    if (listening) return stopListen(false, true);
+    var v = inp.value.trim(); if (!v) return; setInp(''); lastSpoken = true; submit(v);
+  });
   sheet = el('section', { id: 'talk-sheet', 'aria-label': 'Talk' });
   var head = el('div', { id: 'talk-head' });
   head.innerHTML = '<b>Talk</b><span class="st" id="talk-st"></span>';
@@ -412,7 +419,8 @@ function build() {
     if (S.mic === 'hold') { if (bHeld) { bHeld = false; return; } if (!listening) { bNote('Hold the mic while you talk'); } return; }
     if (S.mic === 'conv') { if (vc) endConversation('you'); else { startConversation(); } return; }
     if (vc) { vc.toggleMute(); return; }
-    if (listening) { trace('bar', { how: 'stop-tap', mode: S.mic }); stopListen(false, true); return; }
+    // Tap again: stop; the words stay for a look (and an edit: tap them), then Send (Eyal: like tmux-web, never sent by itself).
+    if (listening) { trace('bar', { how: 'stop-tap', mode: S.mic }); stopListen(false, S.mic === 'pause'); return; }
     trace('bar', { how: 'mic', mode: S.mic }); if (S.engine === 'live') { dcWarm(); } startListen();
   });
   close.addEventListener('click', function () { open(false); });
@@ -482,7 +490,7 @@ function build() {
   render();
 }
 
-function open(on) { if (on && S.engine === 'live' && me) { dcWarm(); warmMic(); } if (!on) releaseMic(); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); if (on && hist.length) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+function open(on) { if (on && S.engine === 'live' && me) { dcWarm(); warmMic(); } if (!on) releaseMic(); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); barSync(); if (on && hist.length) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
 // Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is, and keep
 // the bar's height free at the end of the page (and of the page's own scrolling panel, on project pages).
 var scrollers = null, lastLift = -1;
@@ -590,7 +598,7 @@ function render() {
     var box = el('div', { class: 'talk-ex' });
     examples().slice(0, 3).forEach(function (g) {
       var sec = el('section'), h = el('h3'); h.textContent = g.h; sec.appendChild(h);
-      var row = el('div'); g.xs.forEach(function (x) { var b = el('button', { type: 'button' }); b.textContent = x; b.onclick = function () { runExample(x); }; row.appendChild(b); });
+      var row = el('div'); g.xs.forEach(function (x) { var b = el('span', { class: 'talk-exs' }); b.textContent = '\u201c' + x + '\u201d'; row.appendChild(b); });
       sec.appendChild(row); box.appendChild(sec);
     });
     logEl.appendChild(box);
@@ -619,20 +627,23 @@ function barSync() {
   if (!bar) return;
   var mine = listening && !cInto;   // words for Talk (a page's composer shows its own)
   root.classList.toggle('live', mine && !offerState);
+  var draft = !listening && !offerState && !busy && !!inp.value.trim() && !root.classList.contains('open');
+  root.classList.toggle('draft', draft);
   root.classList.toggle('boffer', !!offerState);
   var t = '', dim = false, last = null, ex = '';
   for (var i = hist.length - 1; i >= 0; i--) if (hist[i].who !== 'you') { last = hist[i]; break; }
   if (offerState) t = offerState.text || (last ? last.text : 'Go ahead?');
+  else if (draft) t = inp.value.trim();
   else if (mine) { t = inp.value.trim(); if (!t) { t = stEl.textContent || 'Listening\u2026'; dim = true; } }
   else if (busy && stEl.textContent) { t = stEl.textContent; dim = true; }
   else if (last && hist.length !== histAtLoad) t = last.text;
   else ex = exampleLine();
   root.classList.toggle('ex', !!ex);
-  if (ex) { bText.innerHTML = ''; bText.appendChild(document.createTextNode('Try: ')); var qq = el('q'); qq.textContent = ex; bText.appendChild(qq); bar.querySelector('#talk-bmid').setAttribute('aria-label', 'Say: ' + ex); }
+  if (ex) { bText.innerHTML = ''; bText.appendChild(document.createTextNode('Try saying ')); var qq = el('q'); qq.textContent = ex; bText.appendChild(qq); bar.querySelector('#talk-bmid').setAttribute('aria-label', 'Open Talk'); }
   else { bText.textContent = String(t).replace(/\s+/g, ' ').trim(); bar.querySelector('#talk-bmid').setAttribute('aria-label', 'Open the conversation'); }
   bText.classList.toggle('dim', dim);
   // Above a composer: hidden at rest; shown for live words, a question, work in progress, or a fresh answer (8 s).
-  var happening = mine || !!offerState || busy || (vc && vcStatus !== 'idle');
+  var happening = mine || draft || !!offerState || busy || (vc && vcStatus !== 'idle');
   if (happening) { root.classList.remove('rest'); clearTimeout(restT); restT = null; }
   else if (hist.length !== histAtLoad && !restT && (root.classList.contains('slim') || root.classList.contains('tall')) && !root.classList.contains('rest')) restT = setTimeout(function () { restT = null; histAtLoad = hist.length; root.classList.add('rest'); }, 8000);
   else if (hist.length === histAtLoad && !restT) root.classList.add('rest');
@@ -656,7 +667,7 @@ function examples() {
   if (/^\/deck/.test(location.pathname)) groups.unshift({ h: 'Slides', xs: ['next slide', 'go to slide 5', 'show the speaker notes'] });
   return groups;
 }
-var latestOwn = '', exI = 0, exT = null;
+var latestOwn = '', exI = Math.floor(Math.random() * 1000), exT = null;   // one example per page load, picked at random
 function exampleLine() { var g = examples(), all = []; g.forEach(function (x) { x.xs.forEach(function (y) { all.push(y); }); }); var pageFirst = g[0].xs.concat(all.slice(g[0].xs.length)); return pageFirst[exI % pageFirst.length]; }
 function runExample(t) { trace('example', { text: t, where: root.classList.contains('open') ? 'sheet' : 'bar' }); unlockAudio(); lastSpoken = false; submit(t); }
 var miniT = null, restT = null, histAtLoad = -1;
