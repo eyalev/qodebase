@@ -24,7 +24,6 @@ textarea,input[type=text],input[type=password],input:not([type]),.field,.landask
 html,body{background:var(--bg)!important}
 textarea,input[type=text],input:not([type]){background-color:var(--card)!important}
 .id-size,.bstoggle{background:var(--card)!important;box-shadow:inset 0 0 0 1px var(--line)}
-#talk-root #talk-bar{background:var(--card)}
 a:not([class]){color:var(--acc)}
 :focus-visible{outline-color:var(--acc)!important}
 `;
