@@ -821,7 +821,14 @@ answers, or both.
   "what's going on" is kept warm (POST /api/talk/status {warm:1}, cap `status_warm`, every 30 s while Talk is in use
   and the page shows) and speaks its own short line (`spoken`), no summary model; replies are spoken sentence by
   sentence (first TTS at once, next prefetched as a blob); "One moment." when a slow lane starts (chat, code);
-  the next turn's live socket opens while the answer plays. Every spoken turn writes a `latency` trace row (end,
+  the next turn's live socket opens while the answer plays. Aura goes straight to Workers AI, NOT through the gateway
+  (the gateway buffered the whole clip: first byte 2-3 s; direct 0.3 s), and the first sentence streams into a
+  MediaSource from our own fetch (the audio element's own request got an intermittent 500 on 'Hi.'). A turn ends
+  early only when the words sound finished (`soundsDone`: '…update for' is a breath); a turn the live words did not
+  make sense of waits ≤ 4 s for Whisper's words. Live-word sockets count against the day (`stt`, 1000/person) on
+  their first audio, so unused prewarmed ones cost nothing. Result (2026-10-13, 31 recordings): speech end -> first
+  sound p50 16.8 -> 3.8 s, p90 20.2 -> 5.2 s; in-page last word -> first sound p50 2.0 s.
+  Every spoken turn writes a `latency` trace row (end,
   final, decide, data, ack, audio, total in ms from the stop); /admin/talk -> "Latency of spoken turns" = p50/p90.
   Bench: `~/.local/share/forq-deploy/qb2-tests/lat/bench.mjs <label>` (fixtures.json: Eyal's kept clips + Aura
   voices at 0.9/1.0/1.15 speed, fed as the mic in conversation mode on / at 390 px, real Chrome for MP3, every write
