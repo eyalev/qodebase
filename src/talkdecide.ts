@@ -194,6 +194,9 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // pick, and the chat lane made up /p/forq, a page that does not exist). Vocabulary in code.
   if (cmd.mode !== 'ask' && /\b(take me to|go to|open|show( me)?|bring me to|back to)\s+(all\s+)?(my|your) projects\b|^\s*(my|your) projects\s*[.!?]?$/i.test(utterance.trim()))
     return { ...cmd, mode: 'act', op: 'go', href: '/mine', label: 'your projects', p: 0.9, why: 'my projects = /mine' };
+  // "Take me to my project" / "open the project" with no name, off a project page: ask which one, never guess.
+  if (!currentSlug(s.path) && /^\s*(please\s+)?(take me to|go to|open|show( me)?|bring me to)\s+(my|the|a|one of my)\s+projects?\s*[.!?]?\s*$/i.test(utterance) && !/projects\s*[.!?]?\s*$/i.test(utterance))
+    return { ...cmd, mode: 'act', op: 'which', p: 0.9, why: 'no project named' };
   // A bare name of a place ("the code.", "changes", "agents"): saying it means open it. Eyal's phone, 2026-10-07:
   // "show me the code" arrived clipped as "the code." and the model picked the Code link but chose mode none.
   const words = utterance.trim().replace(/[.!?,]+$/g, '').split(/\s+/).filter(Boolean);

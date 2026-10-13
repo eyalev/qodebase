@@ -27,6 +27,8 @@ const CASES = [
   // Navigation by menu words.
   ['home', 'show me my projects', { mode: 'act', op: ['go', 'list'], href: '/mine' }],
   ['home', 'Take me to my projects.', { mode: 'act', op: 'go', href: '/mine' }],
+  ['home', 'take me to my project', { mode: 'act', op: 'which' }],
+  ['home', 'open the project', { mode: 'act', op: 'which' }],
   ['home', 'go to explore', { mode: 'act', op: 'go', href: '/explore' }],
   ['home', 'open my inbox', { mode: 'act', op: 'go', href: '/inbox' }],
   ['home', 'take me to settings', { mode: 'act', op: 'go', href: '/settings' }],

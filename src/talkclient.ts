@@ -741,6 +741,7 @@ function submit(text) {
       if (n && location.pathname !== '/mine') { sset('last', 'your projects'); setTimeout(function () { act({ op: 'go', href: '/mine', label: 'your projects' }); }, 400); return; }
       return done();
     }
+    if (c.op === 'which') return whichOne(c);
     if (c.op === 'change') return changeRequest(c);
     if (c.op === 'code') return codeQuestion(c);
     var acts = (c.mode === 'act' || c.mode === 'both') && c.op !== 'none' && c.op !== 'explain';
@@ -1735,6 +1736,7 @@ function onVoiceMsg(d) {
   if (c.offer) { vcPending = c; offerOn('', function () { vcPending = null; vcNavigate(c); }); return; }
   if (c.op === 'change') { vcPending = c; offerOn('', function () { vcPending = null; voiceChange(c); }, c.mine ? 'Send' : SUGGEST_RX.test(String(c.text || '')) ? 'Suggest' : 'Fork'); return; }
   if (c.op === 'code') return codeQuestion(c);
+  if (c.op === 'which') return whichOne(c);
   if (c.op === 'go' || c.op === 'back') return vcNavigate(c);
   act(c);
 }

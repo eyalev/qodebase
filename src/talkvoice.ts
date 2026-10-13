@@ -278,6 +278,7 @@ export class TalkVoice extends VoiceAgent {
       }
       log('turn_rescued', { handle: this.name, said, op: c.op, as: c.mode });
     }
+    if (c.op === 'which') { this.#send(connection, { type: 'talk-cmd', cmd: c }); return 'Which project? Your newest are on the screen.'; }
     if (c.op === 'list') {
       const n = Number(c.target) || 0;
       if (n && this.#screen?.path !== '/mine') this.#send(connection, { type: 'talk-cmd', cmd: { ...c, op: 'go', href: '/mine', label: 'your projects' } });
