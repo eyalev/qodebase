@@ -21,9 +21,16 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | fmv6mu93d (F3b vscode extensions/ (gemma)) | fleet-vscode-ext extensions | gemma-4-26b-a4b-it | 200 | 2,328 | 1,536 | 790 | 0 | 2 | 0 | $0.37 | 484 s | 5 / 8 s |
 | fmv6mu3wd (F3b babel packages/ (gemini-3.1)) | fleet-babel packages | gemini-3.1-flash-lite | 100 | 597 | 319 | 274 | 0 | 4 | 0 | $0.19 | 326 s | 8 / 15 s |
 | fmv6ofmt4 (S4a 200 agents / 4 copies (cache) - copy 1) [cached answers] | fleet-vscode-src-1 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 52 s | 43 / 55 s |
+| fmv6ookhf (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-2) [cached answers] | fleet-angular-2 packages | cache | 50 | 635 | 0 | 411 | 0 | 0 | 0 | $0.00 | 7 s | - / - s |
+| fmv6oojsh (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-2) [cached answers] | fleet-nextjs-2 packages | cache | 50 | 870 | 0 | 386 | 0 | 0 | 0 | $0.00 | 8 s | - / - s |
 | fmv6ofopo (S4a 200 agents / 4 copies (cache) - copy 2) [cached answers] | fleet-vscode-src-2 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 45 s | 61 / 76 s |
+| fmv6oond3 (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-3) [cached answers] | fleet-angular-3 packages | cache | 50 (0 started) | 50 | 0 | 39 | 0 | 0 | 0 | $0.00 | 4 s | - / - s |
+| fmv6ookgc (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-3) [cached answers] | fleet-nextjs-3 packages | cache | 50 | 410 | 0 | 217 | 0 | 0 | 0 | $0.00 | 7 s | - / - s |
 | fmv6of4um (S4a 200 agents / 4 copies (cache) - copy 3) [cached answers] | fleet-vscode-src-3 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 46 s | 41 / 54 s |
+| fmv6ookxz (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-5) [cached answers] | fleet-angular-5 packages | cache | 50 | 450 | 0 | 305 | 0 | 0 | 0 | $0.00 | 7 s | - / - s |
 | fmv6oflq1 (S4a 200 agents / 4 copies (cache) - copy 4) [cached answers] | fleet-vscode-src-4 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 41 s | 83 / 97 s |
+| fmv6omm62 (S4b 200 agents / 1 copy (cache, batch 5)) [cached answers] | fleet-vscode-src-5 src/vs | cache | 200 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 25 s | 25 / 35 s |
+| fmv6oon2o (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-8) [cached answers] | fleet-vscode-src-8 src/vs | cache | 50 (0 started) | 35 | 0 | 9 | 0 | 0 | 0 | $0.00 | 4 s | - / - s |
 
 | model | files handled | landed | verify refused | rate-limited (share of calls) | peak calls/min | $ | $ per 1k files |
 |---|---|---|---|---|---|---|---|
@@ -32,7 +39,7 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | gemini-3.5-flash-lite | 1,152 | 860 | 0 | 0 (0.0%) | 235 | $1.00 | $0.87 |
 | gemini-3.1-flash-lite | 3,339 | 1,183 | 0 | 0 (0.0%) | 75 | $0.75 | $0.22 |
 
-Cached-answer runs (measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real): 4 runs, 16,256 files, 11,956 landed, 0 refused by verify. Not counted in the model totals below.
+Cached-answer runs (measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real): 11 runs, 22,770 files, 14,945 landed, 0 refused by verify. Not counted in the model totals below.
 
 Model-written totals: 6,616 files landed of 11,405 attempted over 12 runs (4,757 needed no comment); 0 refused by the code-unchanged check; $2.81 ($0.25 per 1k files).
 

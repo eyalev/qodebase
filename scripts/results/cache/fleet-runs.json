@@ -938,6 +938,100 @@
    ]
   },
   {
+   "runId": "fmv6ookhf",
+   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-2",
+   "repo": "fleet-angular-2",
+   "root": "packages",
+   "state": "running",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 635,
+   "landed": 0,
+   "ready": 223,
+   "skipped": 411,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896116659,
+   "endedAt": 1791896124074,
+   "wallS": 7,
+   "landWaitS": {
+    "p50": null,
+    "p90": null
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 1,
+     "ready": 223,
+     "skipped": 411,
+     "calls": 224,
+     "rateLimited429": 0,
+     "peakPerMin": 224,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791896100000,
+     "model": "cache",
+     "calls": 224
+    }
+   ]
+  },
+  {
+   "runId": "fmv6oojsh",
+   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-2",
+   "repo": "fleet-nextjs-2",
+   "root": "packages",
+   "state": "running",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 870,
+   "landed": 0,
+   "ready": 483,
+   "skipped": 386,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896115761,
+   "endedAt": 1791896123969,
+   "wallS": 8,
+   "landWaitS": {
+    "p50": null,
+    "p90": null
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 1,
+     "ready": 483,
+     "skipped": 386,
+     "calls": 484,
+     "rateLimited429": 0,
+     "peakPerMin": 484,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791896100000,
+     "model": "cache",
+     "calls": 484
+    }
+   ]
+  },
+  {
    "runId": "fmv6ofopo",
    "label": "S4a 200 agents / 4 copies (cache) - copy 2",
    "repo": "fleet-vscode-src-2",
@@ -986,6 +1080,99 @@
      "minute": 1791895740000,
      "model": "cache",
      "calls": 421
+    }
+   ]
+  },
+  {
+   "runId": "fmv6oond3",
+   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-3",
+   "repo": "fleet-angular-3",
+   "root": "packages",
+   "state": "running",
+   "agents": 50,
+   "agentsStarted": 0,
+   "files": 50,
+   "landed": 0,
+   "ready": 11,
+   "skipped": 39,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896120391,
+   "endedAt": 1791896124154,
+   "wallS": 4,
+   "landWaitS": {
+    "p50": null,
+    "p90": null
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "ready": 11,
+     "skipped": 39,
+     "calls": 11,
+     "rateLimited429": 0,
+     "peakPerMin": 11,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791896100000,
+     "model": "cache",
+     "calls": 11
+    }
+   ]
+  },
+  {
+   "runId": "fmv6ookgc",
+   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-3",
+   "repo": "fleet-nextjs-3",
+   "root": "packages",
+   "state": "running",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 410,
+   "landed": 0,
+   "ready": 192,
+   "skipped": 217,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896116620,
+   "endedAt": 1791896123860,
+   "wallS": 7,
+   "landWaitS": {
+    "p50": null,
+    "p90": null
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 1,
+     "ready": 192,
+     "skipped": 217,
+     "calls": 193,
+     "rateLimited429": 0,
+     "peakPerMin": 193,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791896100000,
+     "model": "cache",
+     "calls": 193
     }
    ]
   },
@@ -1042,6 +1229,52 @@
    ]
   },
   {
+   "runId": "fmv6ookxz",
+   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-5",
+   "repo": "fleet-angular-5",
+   "root": "packages",
+   "state": "running",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 450,
+   "landed": 0,
+   "ready": 145,
+   "skipped": 305,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896117255,
+   "endedAt": 1791896124088,
+   "wallS": 7,
+   "landWaitS": {
+    "p50": null,
+    "p90": null
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "ready": 145,
+     "skipped": 305,
+     "calls": 145,
+     "rateLimited429": 0,
+     "peakPerMin": 145,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791896100000,
+     "model": "cache",
+     "calls": 145
+    }
+   ]
+  },
+  {
    "runId": "fmv6oflq1",
    "label": "S4a 200 agents / 4 copies (cache) - copy 4",
    "repo": "fleet-vscode-src-4",
@@ -1085,6 +1318,104 @@
      "minute": 1791895680000,
      "model": "cache",
      "calls": 2995
+    }
+   ]
+  },
+  {
+   "runId": "fmv6omm62",
+   "label": "S4b 200 agents / 1 copy (cache, batch 5)",
+   "repo": "fleet-vscode-src-5",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 200,
+   "agentsStarted": 200,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896025530,
+   "endedAt": 1791896050915,
+   "wallS": 25,
+   "landWaitS": {
+    "p50": 25,
+    "p90": 35
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 1750,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791895980000,
+     "model": "cache",
+     "calls": 1245
+    },
+    {
+     "minute": 1791896040000,
+     "model": "cache",
+     "calls": 1750
+    }
+   ]
+  },
+  {
+   "runId": "fmv6oon2o",
+   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-8",
+   "repo": "fleet-vscode-src-8",
+   "root": "src/vs",
+   "state": "running",
+   "agents": 50,
+   "agentsStarted": 0,
+   "files": 35,
+   "landed": 0,
+   "ready": 26,
+   "skipped": 9,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896120016,
+   "endedAt": 1791896124254,
+   "wallS": 4,
+   "landWaitS": {
+    "p50": null,
+    "p90": null
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "ready": 26,
+     "skipped": 9,
+     "calls": 26,
+     "rateLimited429": 0,
+     "peakPerMin": 26,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791896100000,
+     "model": "cache",
+     "calls": 26
     }
    ]
   }

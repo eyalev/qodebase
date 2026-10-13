@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T12:53:44.204Z",
+ "generated": "2026-10-13T12:55:27.835Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -46,10 +46,10 @@
    "label": "measured (qb9: re-verify of every changed file, automatic checks, gpt-oss-120b judge, 50-file hand check)"
   },
   "fleetCached": {
-   "runs": 4,
-   "files": 16256,
-   "landed": 11956,
-   "skipped": 4276,
+   "runs": 11,
+   "files": 22770,
+   "landed": 14945,
+   "skipped": 6712,
    "verifyRefused": 0,
    "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real"
   },
@@ -669,6 +669,84 @@
     "cached": true
    },
    {
+    "runId": "fmv6ookhf",
+    "models": [
+     "cache"
+    ],
+    "state": "running",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 635,
+    "landed": 0,
+    "skipped": 411,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 7,
+    "landWaitP50S": null,
+    "landWaitP90S": null,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 1,
+      "ready": 223,
+      "skipped": 411,
+      "calls": 224,
+      "rateLimited429": 0,
+      "peakPerMin": 224,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-angular-2 packages",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-2",
+    "cached": true
+   },
+   {
+    "runId": "fmv6oojsh",
+    "models": [
+     "cache"
+    ],
+    "state": "running",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 870,
+    "landed": 0,
+    "skipped": 386,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 8,
+    "landWaitP50S": null,
+    "landWaitP90S": null,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 1,
+      "ready": 483,
+      "skipped": 386,
+      "calls": 484,
+      "rateLimited429": 0,
+      "peakPerMin": 484,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-nextjs-2 packages",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-2",
+    "cached": true
+   },
+   {
     "runId": "fmv6ofopo",
     "models": [
      "cache"
@@ -705,6 +783,83 @@
     },
     "repo": "fleet-vscode-src-2 src/vs",
     "label": "S4a 200 agents / 4 copies (cache) - copy 2",
+    "cached": true
+   },
+   {
+    "runId": "fmv6oond3",
+    "models": [
+     "cache"
+    ],
+    "state": "running",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 0,
+    "files": 50,
+    "landed": 0,
+    "skipped": 39,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 4,
+    "landWaitP50S": null,
+    "landWaitP90S": null,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "ready": 11,
+      "skipped": 39,
+      "calls": 11,
+      "rateLimited429": 0,
+      "peakPerMin": 11,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-angular-3 packages",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-3",
+    "cached": true
+   },
+   {
+    "runId": "fmv6ookgc",
+    "models": [
+     "cache"
+    ],
+    "state": "running",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 410,
+    "landed": 0,
+    "skipped": 217,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 7,
+    "landWaitP50S": null,
+    "landWaitP90S": null,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 1,
+      "ready": 192,
+      "skipped": 217,
+      "calls": 193,
+      "rateLimited429": 0,
+      "peakPerMin": 193,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-nextjs-3 packages",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-3",
     "cached": true
    },
    {
@@ -747,6 +902,44 @@
     "cached": true
    },
    {
+    "runId": "fmv6ookxz",
+    "models": [
+     "cache"
+    ],
+    "state": "running",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 450,
+    "landed": 0,
+    "skipped": 305,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 7,
+    "landWaitP50S": null,
+    "landWaitP90S": null,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "ready": 145,
+      "skipped": 305,
+      "calls": 145,
+      "rateLimited429": 0,
+      "peakPerMin": 145,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-angular-5 packages",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-5",
+    "cached": true
+   },
+   {
     "runId": "fmv6oflq1",
     "models": [
      "cache"
@@ -783,6 +976,83 @@
     },
     "repo": "fleet-vscode-src-4 src/vs",
     "label": "S4a 200 agents / 4 copies (cache) - copy 4",
+    "cached": true
+   },
+   {
+    "runId": "fmv6omm62",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 200,
+    "agentsStarted": 200,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 25,
+    "landWaitP50S": 25,
+    "landWaitP90S": 35,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 1750,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-5 src/vs",
+    "label": "S4b 200 agents / 1 copy (cache, batch 5)",
+    "cached": true
+   },
+   {
+    "runId": "fmv6oon2o",
+    "models": [
+     "cache"
+    ],
+    "state": "running",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 0,
+    "files": 35,
+    "landed": 0,
+    "skipped": 9,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 4,
+    "landWaitP50S": null,
+    "landWaitP90S": null,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "ready": 26,
+      "skipped": 9,
+      "calls": 26,
+      "rateLimited429": 0,
+      "peakPerMin": 26,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-8 src/vs",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-8",
     "cached": true
    }
   ],
@@ -881,10 +1151,10 @@
    }
   },
   "cached": {
-   "runs": 4,
-   "files": 16256,
-   "landed": 11956,
-   "skipped": 4276,
+   "runs": 11,
+   "files": 22770,
+   "landed": 14945,
+   "skipped": 6712,
    "verifyRefused": 0,
    "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real"
   },
