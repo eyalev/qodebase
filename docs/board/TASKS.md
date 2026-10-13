@@ -110,5 +110,5 @@ Task: documentation comments for exported functions/classes in a big real codeba
 - [ ] F1 fleet harness: model step + verify + push, per-run budget (ledger), gateway qodebase-fleet with rate limit, pipeline controls Pause / Resume / Stop (API + a small page), and AUTO-PAUSE on bottleneck signals (429/rate-limit share, model error share, verify-fail share, queue wait, $/min over plan) with a push to the manager (qb6)
 - [ ] F2 smoke: 10 agents, then 100; check every stage + the controls (qb6)
 - [ ] F3 ramp: 1,000 -> 5,000 (-> all files if it holds), lanes by folder; at each step stop, read bottlenecks, fix, resume (qb6; manager decides each step)
-- [ ] F4 quality: judge sample + hand check of 50 files; verify-fail and rejected counts (qb9)
+- [ ] F4 quality: judge sample + hand check of 50 files; verify-fail and rejected counts (qb9): sampler ready, scripts/fleet/quality-sample.mjs (re-verifies unchanged code per file, flags invented @params; seeded folder-proportional sample; --judge via gateway qodebase-fleet with a $ cap)
 - [ ] F5 write-up: FINDINGS + /how + submission (manager, qb8)
