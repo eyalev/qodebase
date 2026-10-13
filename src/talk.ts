@@ -526,8 +526,12 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
       .then((r: Response) => r.json()).catch((e: unknown) => { log('fleet_error', { level: 'error', err: String(e) }); return null; }))
     : Promise.resolve(null);
   const infos = await Promise.all(own.map((e: any) => env.Project.get(env.Project.idFromName(e.slug)).info().catch(() => null)));
-  type It = { t: string; href?: string };
-  const working: It[] = [], ready: It[] = [], blocked: It[] = [], waiting: It[] = [];
+  type It = { t: string; href?: string; proj?: string };
+  const working: It[] = [], ready: It[] = [], blocked: It[] = [], waiting: It[] = [], stalled: It[] = [];
+  // Every item says how old it is; work with no news for STALL_MS reads as stuck, not as in progress (Eyal, 2026-10-13:
+  // a build at '0 of 1 changes, 1 in progress' for 10 h, whose agent had never got its task).
+  const STALL_MS = 2 * 3600_000;
+  const ago = (t: number) => { const m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? `${m} min` : m < 48 * 60 ? `${Math.round(m / 60)} h` : `${Math.round(m / 1440)} days`; };
   const links: { text: string; href: string }[] = [];
   const short = (t: string) => { const x = String(t || '').replace(/\s+/g, ' ').trim(); return x.length > 48 ? x.slice(0, 46).replace(/\s\S*$/, '') + '…' : x; };
   let changed = 0, merged = 0;
@@ -538,7 +542,9 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
     let note = '';
     for (const a of info.agents || []) {
       const what = `“${short(a.request || a.task)}” in ${info.name}`;
-      if (a.state === 'working') { working.push({ t: what, href: `${base}/changes` }); note ||= 'working'; }
+      const seen = a.noteAt || a.createdAt || 0;
+      if (a.state === 'working' && seen && Date.now() - seen > STALL_MS) { stalled.push({ t: `${what}: no progress for ${ago(seen)}`, href: `${base}/changes`, proj: info.name }); note ||= 'stuck'; }
+      else if (a.state === 'working') { working.push({ t: `${what}${seen ? `, started ${ago(seen)} ago` : ''}`, href: `${base}/changes` }); note ||= 'working'; }
       else if (a.state === 'pushed') { ready.push({ t: what + (a.review?.state === 'approved' ? ' (approved)' : a.review?.state === 'changes' ? ' (reviewer asked for changes)' : ''), href: `${base}/changes` }); note = 'ready to merge'; }
       else if (a.state === 'blocked') { blocked.push({ t: what, href: `${base}/changes` }); note ||= 'blocked'; }
       else if (a.state === 'merged' && (a.noteAt || a.createdAt) >= since) merged++;
@@ -559,11 +565,17 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
     const landed = ch.filter((c) => c.state === 'landed').length, open = ch.filter((c) => !['landed', 'bounced'].includes(c.state)).length;
     const started = bi?.estimate?.startedAt || 0, settled = bi?.progress?.settledAt || 0;
     const usd = (x: number | null | undefined) => x == null ? '' : x < 1 ? `${Math.round(x * 100)} cents` : `$${x.toFixed(2)}`;
-    if (started && !settled && Date.now() - started < 24 * 3600_000) {
-      builds.push({ t: `${info.name} (${landed} of ${ch.length || '?'} changes on main${open ? `, ${open} in progress` : ''}${bi?.progress?.spentUsd != null ? `, ${usd(bi.progress.spentUsd)} so far` : ''})`, href: `${base}/work` });
-      links.push({ text: `${info.name}: building`, href: `${base}/work` });
+    const moved = Math.max(started, ...((info.agents || []) as any[]).map((a) => a.noteAt || a.createdAt || 0));
+    if (started && !settled && Date.now() - moved > STALL_MS) {
+      // Stuck: one line in 'Waiting for you' for the build, instead of its agents one by one.
+      for (let k = stalled.length - 1; k >= 0; k--) if (stalled[k].proj === info.name) stalled.splice(k, 1);
+      stalled.push({ t: `${info.name}: no progress for ${ago(moved)} (${landed} of ${ch.length || '?'} changes on main). Stop it?`, href: `${base}/work`, proj: info.name });
+      links.push({ text: `${info.name}: stuck`, href: `${base}/work` });
+    } else if (started && !settled && Date.now() - started < 24 * 3600_000) {
+      builds.push({ t: `${info.name}, started ${ago(started)} ago (${landed} of ${ch.length || '?'} changes on main${open ? `, ${open} in progress` : ''}${bi?.progress?.spentUsd != null ? `, ${usd(bi.progress.spentUsd)} so far` : ''})`, href: `${base}/work` });
+      links.push({ text: `${info.name}: in progress`, href: `${base}/work` });
     } else if (settled && settled >= since) {
-      finished.push({ t: `${info.name} (${landed} change${landed === 1 ? '' : 's'}${bi?.progress?.actualUsd != null ? `, ${usd(bi.progress.actualUsd)}` : ''})`, href: base });
+      finished.push({ t: `${info.name}, done ${ago(settled)} ago (${landed} change${landed === 1 ? '' : 's'}${bi?.progress?.actualUsd != null ? `, ${usd(bi.progress.actualUsd)}` : ''})`, href: base });
     }
     for (const n of (ad?.notes || []) as { kind: string; answered?: boolean; text: string }[]) {
       if (n.kind !== 'asked-person' || n.answered) continue;
@@ -577,33 +589,41 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
     const fl: any = await fleetP;
     if (!fl?.runs) log('fleet_empty', { level: 'warn', keys: fl ? Object.keys(fl).slice(0, 5) : null });
     const live = ((fl?.runs || []) as any[]).filter((r) => !['done', 'stopped', 'ended'].includes(r.state));
-    for (const r of live.slice(0, 3)) runs.push({ t: `${r.label || r.repo} (${r.state}${r.agents ? `, ${r.agents} agents` : ''})`, href: '/runs' });
+    for (const r of live.slice(0, 3)) { const at = Number(r.startedAt || r.createdAt || r.at || 0); runs.push({ t: `${r.label || r.repo} (${r.state}${r.agents ? `, ${r.agents} agents` : ''}${at > 1e12 ? `, started ${ago(at)} ago` : ''})`, href: '/runs' }); }
     if (live.length) links.push({ text: `Runs: ${live.length} live`, href: '/runs' });
   }
   const list = (ys: It[]) => { const xs = ys.map((y) => y.t); return xs.length <= 2 ? xs.join(' and ') : `${xs.slice(0, 2).join(', ')} and ${xs.length - 2} more`; };
   // For reading (Eyal, 2026-10-13: "no wall of text"): short sections, each line a link; the sentence form stays for
   // the voice and for clients that do not render sections.
   const sections = [
-    { title: 'Waiting for you', items: [...asked, ...blocked, ...waiting] },
-    { title: 'Building now', items: builds },
-    { title: 'Scale runs going', items: runs },
-    { title: 'Agents working', items: working },
+    { title: 'Waiting for you', items: [...asked, ...stalled, ...blocked, ...waiting] },
+    { title: 'In progress', items: builds },
+    { title: 'Experiments running', items: runs },
+    { title: 'Agents at work', items: working },
     { title: 'Ready to merge', items: ready },
-    { title: `Finished ${today ? 'today' : 'this week'}`, items: finished },
+    { title: `Done ${today ? 'today' : 'this week'}`, items: finished },
   ].filter((x) => x.items.length).map((x) => ({ title: x.title, items: x.items.slice(0, 6).map((y) => ({ text: y.t, href: y.href })), more: Math.max(0, x.items.length - 6) }));
   const parts: string[] = [];
   if (asked.length) parts.push(`${asked.length === 1 ? 'One question is' : `${asked.length} questions are`} waiting for you: ${list(asked)}.`);
-  if (builds.length) parts.push(`Building now: ${list(builds)}.`);
-  if (runs.length) parts.push(`Scale runs going: ${list(runs)}.`);
-  if (finished.length) parts.push(`Finished ${today ? 'today' : 'this week'}: ${list(finished)}.`);
-  if (working.length) parts.push(`${working.length === 1 ? 'One agent is' : `${working.length} agents are`} working: ${list(working)}.`);
+  if (stalled.length) parts.push(`${stalled.length === 1 ? 'One thing is' : `${stalled.length} things are`} stuck: ${list(stalled)}`.replace(/\.?$/, '.'));
+  if (builds.length) parts.push(`In progress: ${list(builds)}.`);
+  if (runs.length) parts.push(`Experiments running: ${list(runs)}.`);
+  if (finished.length) parts.push(`Done ${today ? 'today' : 'this week'}: ${list(finished)}.`);
+  if (working.length) parts.push(`${working.length === 1 ? 'One agent is' : `${working.length} agents are`} at work: ${list(working)}.`);
   if (ready.length) parts.push(`${ready.length === 1 ? 'One change is' : `${ready.length} changes are`} ready to merge: ${list(ready)}.`);
   if (blocked.length) parts.push(`Blocked and waiting for you: ${list(blocked)}.`);
   if (waiting.length) parts.push(`Also: ${list(waiting)}.`);
-  if (!working.length && !ready.length && !blocked.length && !waiting.length && !asked.length && !builds.length && !runs.length) parts.unshift(own.length ? 'Nothing is in progress: no agents working, no builds running and nothing waiting for you.' : 'You have no projects yet. Say what you want to build.');
+  if (!working.length && !ready.length && !blocked.length && !waiting.length && !asked.length && !builds.length && !runs.length && !stalled.length) parts.unshift(own.length ? 'Nothing is in progress: no agents working, no builds running and nothing waiting for you.' : 'You have no projects yet. Say what you want to build.');
   if (own.length) parts.push(`${today ? 'Today' : 'This week'} ${changed === 0 ? 'none of your projects changed' : changed === 1 ? 'one of your projects changed' : `${changed} of your projects changed`}${merged ? `, with ${merged} merged change${merged > 1 ? 's' : ''}` : ''}.`);
-  log('status', { level: 'info', handle: who.handle, projects: own.length, working: working.length, ready: ready.length, blocked: blocked.length, waiting: waiting.length, builds: builds.length, finished: finished.length, asked: asked.length, runs: runs.length, fleet: !!env.FLEET_KEY, changed, merged, ms: Date.now() - t0 });
-  return { ok: true as const, text: parts.join(' '), sections, links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left, trace: { text: parts.join(' ').slice(0, 1500), links: links.length, ms: Date.now() - t0 } };
+  log('status', { level: 'info', handle: who.handle, projects: own.length, working: working.length, ready: ready.length, blocked: blocked.length, waiting: waiting.length, builds: builds.length, stalled: stalled.length, finished: finished.length, asked: asked.length, runs: runs.length, fleet: !!env.FLEET_KEY, changed, merged, ms: Date.now() - t0 });
+  // Never let the answer read as if the question started something: a framing line first, and for the folded bar a
+  // count line ("Status: 1 build in progress, 1 experiment running"), never a heading fragment.
+  const n = (k: number, one: string, many: string) => k ? `${k} ${k === 1 ? one : many}` : '';
+  const brief = [n(asked.length + blocked.length + waiting.length, 'thing waiting for you', 'things waiting for you'), n(stalled.length, 'stuck', 'stuck'), n(builds.length, 'build in progress', 'builds in progress'),
+    n(runs.length, 'experiment running', 'experiments running'), n(working.length, 'agent at work', 'agents at work'), n(ready.length, 'change ready to merge', 'changes ready to merge')].filter(Boolean);
+  const lead = 'Here\u2019s where things stand:';
+  if (sections.length) parts.unshift('Here\u2019s where things stand.');
+  return { ok: true as const, text: parts.join(' '), lead: sections.length ? lead : '', brief: brief.length ? `Status: ${brief.join(', ')}` : 'Status: nothing in progress', sections, links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left, trace: { text: parts.join(' ').slice(0, 1500), links: links.length, ms: Date.now() - t0 } };
 }
 
 // ---- Spoken replies: Aura on Workers AI, streamed (first sound ~0.5 s). Same voices

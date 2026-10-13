@@ -145,6 +145,7 @@ var css = [
   '.talk-convt{min-height:36px;padding:0 10px;border:0;border-radius:10px;background:var(--t-chip);color:var(--t-fg);font:500 13px var(--t-ff);cursor:pointer;white-space:nowrap}',
   '.talk-convt[aria-pressed=true]{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-log .talk-sh{margin:8px 0 2px;font-weight:600;font-size:14px}',
+  '#talk-log .talk-lead{margin:0 0 2px}',
   '#talk-log .talk-sl{margin:0;padding-left:18px;white-space:normal}',
   '#talk-log .talk-sl li{margin:2px 0}',
   '#talk-log .talk-sl a{color:inherit;text-decoration-color:var(--t-line);text-underline-offset:3px}',
@@ -645,7 +646,7 @@ function dragHandle(g) {
   g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
 }
 function status(t) { stEl.textContent = t || ''; barSync(); }
-function add(who, text, links, extra) { if (run && who !== 'you') run.texts.push(String(text)); var m = { who: who, text: String(text), links: links || undefined }; if (extra) { if (extra.sections) m.sections = extra.sections; if (extra.via) m.via = extra.via; } if (convAdd(m)) return; hist.push(m); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
+function add(who, text, links, extra) { if (run && who !== 'you') run.texts.push(String(text)); var m = { who: who, text: String(text), links: links || undefined }; if (extra) { if (extra.sections) m.sections = extra.sections; if (extra.via) m.via = extra.via; if (extra.lead) m.lead = extra.lead; if (extra.brief) m.brief = extra.brief; } if (convAdd(m)) return; hist.push(m); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
 // "How this was answered" (manager, 2026-10-13): what heard it, what picked the action, what answered, how long.
 var viaNow = null;   // the utterance in flight: { heard, decide: {model, ms}, answer: {lane, model, ms} }
 function viaShort(v) { if (!v || !v.answer) return ''; var a = v.answer; return (a.label || (a.model ? shortModel(a.model) : a.lane + ', no model')) + (a.fellBack ? ' (fallback)' : '') + (a.ms != null ? ', ' + (a.ms / 1000).toFixed(1) + ' s' : ''); }
@@ -681,6 +682,7 @@ function render() {
     // A status answer in sections (Building now, Waiting for you…), each line a link: for reading, not a wall of text.
     if (m.sections && m.sections.length) {
       d.textContent = '';
+      if (m.lead) { var ld = el('p', { class: 'talk-lead' }); ld.textContent = m.lead; d.appendChild(ld); }
       m.sections.forEach(function (sec) {
         var h = el('p', { class: 'talk-sh' }); h.textContent = sec.title; d.appendChild(h);
         var ul = el('ul', { class: 'talk-sl' });
@@ -718,7 +720,7 @@ function barSync() {
   else if (draft) t = inp.value.trim();
   else if (mine) { t = inp.value.trim(); if (!t) { t = root.classList.contains('arming') ? 'Starting the mic\u2026' : 'Listening\u2026'; dim = true; } }
   else if (busy && stEl.textContent) { t = stEl.textContent; dim = true; }
-  else if (last && hist.length !== histAtLoad) t = last.text;
+  else if (last && hist.length !== histAtLoad) t = last.brief || last.text;   // a status answer folds to its count line
   else ex = exampleLine();
   root.classList.toggle('ex', !!ex);
   if (ex) { bText.innerHTML = ''; bText.appendChild(document.createTextNode('Try saying ')); var qq = el('q'); qq.textContent = ex; bText.appendChild(qq); bar.querySelector('#talk-bmid').setAttribute('aria-label', 'Open Talk'); }
@@ -1027,7 +1029,7 @@ function whatsGoingOn(text) {
   api('status', { utterance: text }).then(function (r) {
     if (r.error) { if (run) run.ok = false; add('note', r.why || 'Could not look.'); return done(); }
     if (viaNow) viaNow.answer = { lane: 'status', model: null, ms: r.ms };
-    add('ai', r.text, r.links, { sections: r.sections, via: viaNow }); say(r.text);
+    add('ai', r.text, r.links, { sections: r.sections, via: viaNow, lead: r.lead, brief: r.brief }); say(r.text);
     logEv('status', { ms: r.ms, links: (r.links || []).length });
     done();
   }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'status', err: String(e) }); done(); });
