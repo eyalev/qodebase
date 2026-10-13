@@ -12,9 +12,11 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
+// Violet since 2026-10-14 (DESIGN.md; was teal #17695a / #4fbf9f). Light keeps a white ground (charts sit on white
+// in the README); neutrals take the violet-leaning grays; --busy is the darker light amber (text passes 4.5:1).
 export const THEMES = {
-  dark: { bg: '#0c0d0e', card: '#141517', line: '#222428', fg: '#ececee', dim: '#9a9fa6', acc: '#4fbf9f', busy: '#e0a948', bad: '#e8655a', bar: '#5a5f67' },
-  light: { bg: '#ffffff', card: '#f3f4f6', line: '#e2e4e8', fg: '#111214', dim: '#6e737b', acc: '#17695a', busy: '#b7791f', bad: '#b4322a', bar: '#a9aeb6' },
+  dark: { bg: '#0d0c12', card: '#16151e', line: '#2a2836', fg: '#eeedf3', dim: '#a3a0b3', acc: '#a585ff', busy: '#e0a948', bad: '#e8655a', bar: '#5e5b6d' },
+  light: { bg: '#ffffff', card: '#efeff4', line: '#e4e4ec', fg: '#14121f', dim: '#646177', acc: '#6a2ff0', busy: '#94600f', bad: '#b4322a', bar: '#aaa7b8' },
 };
 // L = video slide, P = phone portrait. top/side padding, where the chart may
 // end, and the source line's baseline.
