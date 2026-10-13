@@ -6,7 +6,7 @@
 //
 //   node video/rig2.mjs --out ~/.local/share/qodebase-video/take-2 [--port 7931] [--start /] [--headed]
 //   curl -s localhost:7931/say?clip=/path/2a.wav    play a clip into the mic (the next getUserMedia, or the open one)
-//   curl -s localhost:7931/tap?sel=<css>            trusted tap        /type?sel=<css>&text=..   /press?key=Enter
+//   curl -s localhost:7931/tap?sel=<css>            trusted tap   /tapxy?x=&y= (CSS px)   /ftap?frame=iframe&sel=<css> (in a frame)        /type?sel=<css>&text=..   /press?key=Enter
 //   curl -s localhost:7931/goto?path=/p/eyal/x      /eval  (POST body = JS, result as JSON)        /shot?name=x
 //   curl -s localhost:7931/mark?label=2b            a cue in events.jsonl for the cut           /stop
 // Output: <out>/audio.webm (the user's clips + Talk's replies, from the first audio use: event audio-start),
@@ -129,6 +129,8 @@ http.createServer(async (req, res) => {
         return send({ ...r, dur, end: Date.now() - T0 });
       }
       case '/tap': await page.locator(a.sel).first().tap({ timeout: +(a.timeout || 8000) }); return send(log('tap', { sel: a.sel }));
+      case '/tapxy': await page.touchscreen.tap(+a.x, +a.y); return send(log('tap', { x: +a.x, y: +a.y }));
+      case '/ftap': await page.frameLocator(a.frame || 'iframe').locator(a.sel).first().tap({ timeout: +(a.timeout || 8000) }); return send(log('tap', { frame: a.frame || 'iframe', sel: a.sel }));
       case '/type': await page.locator(a.sel).first().fill(a.text); return send(log('type', { sel: a.sel, text: a.text }));
       case '/press': await page.keyboard.press(a.key); return send(log('press', { key: a.key }));
       case '/goto': await page.goto(BASE + a.path, { waitUntil: 'load' }); return send(log('goto', { path: a.path }));
