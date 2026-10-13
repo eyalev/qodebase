@@ -344,7 +344,10 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
   // Fleet runs (the /runs page; the owner's): the ones running now. Needs FLEET_KEY on this Worker.
   const runs: string[] = [];
   if (env.FLEET_KEY && isOwner(env, who.handle)) {
-    const fl: any = await fetch('https://qbfleet.forqdev.workers.dev/runs', { headers: { 'x-fleet-key': env.FLEET_KEY, 'user-agent': 'forq-internal/1' } }).then((r) => r.json()).catch(() => null);
+    const fh = { 'x-fleet-key': env.FLEET_KEY, 'user-agent': 'forq-internal/1' };
+    const fl: any = await ((env as any).FLEET ? (env as any).FLEET.fetch('https://qbfleet.internal/runs', { headers: fh }) : fetch('https://qbfleet.forqdev.workers.dev/runs', { headers: fh }))
+      .then((r: Response) => r.json()).catch((e: unknown) => { log('fleet_error', { level: 'error', err: String(e) }); return null; });
+    if (!fl?.runs) log('fleet_empty', { level: 'warn', keys: fl ? Object.keys(fl).slice(0, 5) : null });
     const live = ((fl?.runs || []) as any[]).filter((r) => !['done', 'stopped', 'ended'].includes(r.state));
     for (const r of live.slice(0, 3)) runs.push(`${r.label || r.repo} (${r.state}${r.agents ? `, ${r.agents} agents` : ''})`);
     if (live.length) links.push({ text: `Runs: ${live.length} live`, href: '/runs' });

@@ -1822,9 +1822,13 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   var th = sget('then', null);
   if (th && Date.now() - th.at < 60000) {
     sset('then', null);
-    var waited = 0;
+    // Wait for the page to settle: its own actions present and the number of things on it steady for a second
+    // (live 2026-10-13: said again while /runs had drawn 5 items, before its fleet-job action was there).
+    var waited = 0, lastN = -1, steady = 0;
     (function again() {
-      if ((window.__talkActions || []).length || waited >= 15000) { trace('then', { text: th.text, waited: waited }); lastSpoken = false; submit(th.text); return; }
+      var n = talkScan(document).length, acts = (window.__talkActions || []).length;
+      steady = n === lastN ? steady + 1 : 0; lastN = n;
+      if ((acts && steady >= 2) || waited >= 20000) { trace('then', { text: th.text, waited: waited, items: n, actions: acts }); lastSpoken = false; submit(th.text); return; }
       waited += 500; setTimeout(again, 500);
     })();
   }
