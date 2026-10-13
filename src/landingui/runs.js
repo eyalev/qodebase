@@ -412,7 +412,9 @@
   function intentsStepView(label) {
     const g = stepOf(label);
     if (!g) return `<p><a href="#/">All runs</a></p><p>That ladder step is not in the list any more.</p>`;
-    const copies = g.copies.map((c) => ({ src: itSrc(c), label: c.copy ? `Copy ${c.copy}${c.root ? `, ${c.root}` : ''}` : c.label || c.repo, sub: `${n0(c.landed || 0)} files got comments, ${n0(c.skipped || 0)} already had them` }));
+    // Named like the step card (whatIs): "NestJS packages, copy 3 of 22"; counts from counts(), which reads live rows too.
+    const copies = g.copies.map((c) => { const k = counts(c), n = c.copyOfKind || repoCopy(c), of = c.copiesOfKind || c.copiesOfRepo || 0;
+      return { src: itSrc(c), label: `${srcOf(c).name}${n ? `, copy ${n}${of > 1 ? ` of ${of}` : ''}` : ''}`, sub: `${n0(k.landed)} files got comments, ${n0(k.skipped)} already had them` }; });
     return `<p class="crumb"><a href="#/">All runs</a></p><section class="rsec"><h2>Intents: ${esc(label)}</h2><p><a class="chipbtn rc-go" href="#/step/${encodeURIComponent(label)}">Timeline</a></p><div class="it-mount" data-step="${esc(label)}" data-label="${esc(label)}" data-copies="${esc(JSON.stringify(copies))}"></div></section>`;
   }
   function current() {
