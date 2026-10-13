@@ -34,7 +34,7 @@
       ${bar(el, lo, hi, late ? 'eb-late' : '')}
       <p class="eb-state">${esc(state)}</p>
       ${costRow}
-      <p class="eb-src">Estimate for ${est.basis === 'idea' ? 'your idea, as the small model read it' : 'a typical small app'}${est.basedOn ? `, from ${est.basedOn} real lab runs` : ''}${plan ? '. Runs on your Claude plan (not billed by qodebase); the dollars are API prices for the same work.' : '; cost at API prices.'}</p>
+      <p class="eb-src">Estimate for ${est.basis === 'idea' ? 'your idea, as the small model read it' : 'a typical small app'}${est.basedOn ? (est.realBuilds ? `, from ${est.basedOn} lab runs and ${est.realBuilds} real build${est.realBuilds === 1 ? '' : 's'}` : `, from ${est.basedOn} real lab runs`) : ''}${plan ? '. Runs on your Claude plan (not billed by qodebase); the dollars are API prices for the same work.' : '; cost at API prices.'}</p>
     </section>`;
   };
   // Tick every elapsed clock on the page once a second (no rebuild).

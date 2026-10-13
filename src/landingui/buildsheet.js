@@ -86,7 +86,7 @@
     try {
       const j = jobNow();
       const r = SIM.predictBuild(j || SIM.SMALL_APP, toVariant(st.v));
-      return r && { wallS: r.wallS, usd: r.apiUsd, basedOn: r.basedOn, same: r.sameSetup, quality: r.quality, notes: r.notes || [], mine: !!j, tasks: r.job?.tasks, agentTasks: r.agentTasks, measured: r.qualityMeasured !== false, guess: r.qualityGuess };
+      return r && { wallS: r.wallS, usd: r.apiUsd, basedOn: r.basedOn, real: r.realBuilds || 0, same: r.sameSetup, quality: r.quality, notes: (r.notes || []).filter((n) => !(r.realBuilds && /^Fitted to /.test(n))), mine: !!j, tasks: r.job?.tasks, agentTasks: r.agentTasks, measured: r.qualityMeasured !== false, guess: r.qualityGuess };
     } catch (e) { log('estimate_failed', { error: String(e), v: st.v }); return 'error'; }
   }
   const bucketWords = () => (st.sug?.bucket && jobNow() ? `${st.sug.bucket.replace(/ pieces?$/, '')} pieces of work` : null);
@@ -118,7 +118,7 @@
     out('quality').textContent = e.quality.replace(/\.$/, '');
     $('[data-bar="quality"]').classList.toggle('bs-unmeasured', !e.measured);
     root.querySelectorAll('[data-bar="quality"] i').forEach((el, i) => el.classList.toggle('on', i < q));
-    out('src').textContent = `${e.mine ? `For your idea as the small model read it (${bucketWords() || `about ${e.tasks} pieces of work`}).` : `For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet.`} Based on ${e.basedOn} real lab runs${e.same ? '' : '; this exact setup wasn\'t run'}.${!e.measured && e.guess ? ` Quality guess: ${e.guess.replace(/\.$/, '').toLowerCase()}.` : ''} ${e.notes.join(' ')} With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.`;
+    out('src').textContent = `${e.mine ? `For your idea as the small model read it (${bucketWords() || `about ${e.tasks} pieces of work`}).` : `For a typical small app (about ${e.tasks || 8} pieces of work), not your idea yet.`} Based on ${e.real ? `${e.basedOn} lab runs and ${e.real} real build${e.real === 1 ? '' : 's'} like this` : `${e.basedOn} real lab runs`}${e.same ? '' : '; this exact setup wasn\'t run'}.${!e.measured && e.guess ? ` Quality guess: ${e.guess.replace(/\.$/, '').toLowerCase()}.` : ''} ${e.notes.join(' ')} With an API key you pay about this; with your Claude plan it uses your plan's limits instead, and more agents use them up faster.`;
   }
   function paintWhy() {
     const g = st.sug, w = $('.bs-why'), k = which(st.v);
@@ -157,7 +157,7 @@
     const e = st.est;
     if (e && e !== 'error' && !empty()) {
       const i = document.createElement('input'); i.type = 'hidden'; i.name = 'est'; i.dataset.bs = '1';
-      i.value = JSON.stringify({ wallS: e.wallS, apiUsd: e.usd, basis: e.mine ? 'idea' : 'typical', basedOn: e.basedOn, simVersion: SIM?.SIM_VERSION || null });
+      i.value = JSON.stringify({ wallS: e.wallS, apiUsd: e.usd, basis: e.mine ? 'idea' : 'typical', basedOn: e.basedOn, realBuilds: e.real || 0, simVersion: SIM?.SIM_VERSION || null });
       form.appendChild(i);
     }
     $('[data-reset]').hidden = isDefault;
