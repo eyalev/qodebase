@@ -1,6 +1,6 @@
 # R3 vs R6: does each "Home inventory" build actually do what the prompt asked?
 
-Same prompt, two builds: **R3** = a 12-agent team (eyal/real-home-inventory), **R6** = one Opus agent
+Same prompt, two builds: **R3** = a team of 9 Haiku coders (Balanced, allowed up to 12; its router started 9) with an Opus planner and 3 reviewers (eyal/real-home-inventory), **R6** = one Opus agent
 (eyal/real-home-inventory-solo). Both private; opened with the owner's run pass. Checked 2026-10-13 by qb9 in headless
 Chromium as a phone (390 x 844, touch, trusted taps), each app in a fresh profile, by doing each thing: add rooms
 and a box, add an item with a photo, price, purchase date, warranty date and two tags, then search, move it, read
@@ -11,14 +11,14 @@ changed; the test data lives only in the test browser's storage. No model runs.
 
 | | works | partial | missing |
 |---|---|---|---|
-| R3 (12 agents) | 11 | 0 | 0 |
+| R3 (9-agent team) | 11 | 0 | 0 |
 | R6 (one Opus) | 11 | 0 | 0 |
 
 Both builds do every feature. The differences are in finish and small bugs, listed below the table.
 
 ## Feature by feature
 
-| feature | R3 (12 agents) | R6 (one Opus) |
+| feature | R3 (9-agent team) | R6 (one Opus) |
 |---|---|---|
 | rooms | works: add, rename, delete on the Rooms page | works: "+ Add room" dialog; rename, delete per room |
 | boxes | works: "Add box" inside a room; box shows its item count and value | works: "+ Box" dialog with a room picker; shown under its room |
@@ -34,7 +34,7 @@ Both builds do every feature. The differences are in finish and small bugs, list
 
 ## Bugs and rough edges
 
-R3 (12 agents):
+R3 (9-agent team):
 - "0 boxs" on every room card (plural).
 - The bottom bar holds 7 tabs and is 508 px wide at 390: it scrolls sideways, "Print" is cut and "Data" (where
   export is) is off screen until you scroll the bar.
@@ -50,6 +50,6 @@ R6 (one Opus):
 
 ## Reading
 
-On this prompt the 12-agent team and the single Opus agent shipped the same feature coverage, 11 of 11 each. R6 is a
+On this prompt the 9-agent team and the single Opus agent shipped the same feature coverage, 11 of 11 each. R6 is a
 little more polished (bulk move, lending from the item, every tab nearly fits, no console error); R3 has more
 small defects (plural, 7-tab bar, 404, print preview width). Neither has a blocking bug.
