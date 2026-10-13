@@ -2,6 +2,22 @@
 
 Mostly real product footage; the deck (qodebase.app/deck) is only short framing. Recording Oct 14 ~09:00 UTC.
 
+**Change, Oct 13 late (Eyal via the manager): Eyal is not in the video.** Every voice is generated:
+- **The user's spoken requests** are TTS clips (one voice, Deepgram Aura-2 `arcas`, each checked by transcribing it
+  back) played as the microphone into a real Chrome at 390×844 with Eyal's session, so Talk really hears them and the
+  live words appear on screen. The rig is `video/rig2.mjs` (qb3): `getUserMedia` returns a WebAudio destination with a
+  low pink-noise bed (qb2: a real mic is never digitally silent), `/say` plays a clip only while Talk listens
+  (`#talk-root.live`, not `.arming`), frames are 2× CDP screenshots at ~12 fps, and one audio track records the
+  clips plus Talk's spoken replies (its Audio element routed through WebAudio). Driven step by step over a local
+  port, so a take waits on whatever the build does.
+- **Narration between scenes** is a second generated voice over the deck slides (Aura-2, a different speaker from the
+  user and from Talk's own `draco`).
+- **Capture** is the rig's frames + audio (mp4, never GIF); fast-forwards get the visible clock and `N×` label.
+  Nothing private in shot: the account menu stays closed, no emails or keys; the Stripe answer is "use Stripe in
+  test mode for now, and leave the key as a placeholder" (no key on film at all).
+- **Everything violet** (Eyal picked direction A on Oct 13): the app, the deck, the charts; nothing teal in the cut.
+- Scene 2's rehearsal (a cheap team build, cap ~$2) becomes the real take if it is clean. Length target 5–10 min.
+
 **Length: 5:00–5:30.** The contest asks for a 5–10 min video (PLAN.md, video.md). The manager's brief said ~3–5 min,
 so this list aims just over the 5-minute minimum: a cut under 5:00 would break the rule. Scene lengths below add up
 to ~5:15; if a take runs short, scene 4 grows (more of the deck), never below 5:00 in total.
@@ -15,7 +31,7 @@ the owner tab before 08:30 UTC Oct 14. Anything not ready is cut or replaced as 
 
 ## Scenes
 
-| # | length | on screen | Eyal says (voice-over or into Talk) | what must happen | speed |
+| # | length | on screen | said (user clip into Talk, or narration voice) | what must happen | speed |
 |---|---|---|---|---|---|
 | 1 | 0:20 | Deck slide 2 (Overview), then slide 1's merge animation | "Agents write code faster than pull requests and review can land it. With many agents, order and collisions break the flow. qodebase lands each change by what it was asked to do." | Deck in `?rec=1&theme=light`, advanced by keyboard | real time |
 | 2a | 0:20 | Home on the phone, mic | Into Talk: "Build me a home inventory app with a team, and let people pay for a pro plan with Stripe." | Talk fills the build box, opens Build | real time |
@@ -135,6 +151,6 @@ estimate.
 
 ## After recording
 
-- Compose (video/compose.py), captions = what Eyal says, `.srt` alongside; loudnorm −16 LUFS.
+- Compose (video/compose.py), captions = the user's words and the narration, `.srt` alongside; loudnorm −16 LUFS.
 - Check the cut at 50% size: every number legible, every fast-forward labelled, total ≥ 5:00.
 - Export 1080p30 H.264 + AAC; upload copy per video.md.
