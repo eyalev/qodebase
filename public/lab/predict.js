@@ -650,7 +650,7 @@ export function suggestBuild(jobIn = SMALL_APP) {
   if (bucket.small || x <= 1.5) {
     // The words follow this job's numbers: 'small' only for the two small buckets.
     const cost = x <= 1.05 ? 'costs about the same as a team or less' : x <= 1.25 ? 'costs a little more than a team' : `costs about ${x.toFixed(1)}x a team`;
-    return out({ preset: 'fastest', why: `${bucket.small ? 'A small job: o' : 'O'}ne agent is likely quickest here, at about a team's quality, and ${cost}.` });
+    return out({ preset: 'fastest', why: `${bucket.small ? 'A small job: o' : 'O'}ne agent is likely quickest here and ${cost}; in the lab its quality was about a team's.` });
   }
   if (sc.difficulty <= 0.7 && sc.pShared < 0.7) return out({ preset: 'cheapest', why: 'Many simple, separate pieces: a Haiku crew does them for the least.' });
   const share = 1 / x;
@@ -703,7 +703,7 @@ export function jobType(job = SMALL_APP, suggestion = null) {
     why: preset === 'fastest' ? 'at this size one agent is still quickest' : 'many small, separate edits split well, and the queue replays each on the newest main',
     evidence: 'Real-code run (sim/real): 972 of 976 conflicts replayed cleanly on the new main.' };
   if (b.small) return { ...base, type: 'small-app', from: 'size', label: 'a new small app',
-    why: preset === 'fastest' ? 'fastest in the lab, at about a team\'s quality' : s.why,
+    why: preset === 'fastest' ? 'quickest, and in the lab about as good as a team' : s.why,
     evidence: 'Lab: one agent finished first where time could be compared (2 of 4 jobs), same quality or within one hidden test.' };
   if (overlapHigh) return { ...base, type: 'shared-list', from: 'size', label: 'an app whose pieces overlap',
     why: board ? 'the board shows who works on what, so pieces are not built twice (not yet measured with a planner)' : s.why,
