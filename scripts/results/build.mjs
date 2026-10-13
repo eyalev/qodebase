@@ -64,7 +64,9 @@ async function fleet() {
   const pm = {};
   for (const r of rows) for (const [m, c] of Object.entries(r.perModel || {})) {
     const t = (pm[m] ||= { files: 0, landed: 0, skipped: 0, verifyFail: 0, rejected: 0, rateLimited: 0, calls: 0, usd: 0, peakPerMin: 0 });
-    for (const k of ['landed', 'skipped', 'verifyFail', 'rejected', 'rateLimited', 'calls', 'usd']) t[k] += c[k] ?? c[{ verifyFail: 'verify_fail', rateLimited: 'rate_limited' }[k]] ?? 0;
+    for (const k of ['landed', 'skipped', 'verifyFail', 'rejected', 'rateLimited', 'calls', 'usd']) t[k] += c[k] ?? c[{ verifyFail: 'verify_fail', rateLimited: 'rateLimited429' }[k]] ?? 0;
+    // role: 'planned' (the run's own model) or 'overflow' (took work when the planned models were full)
+    if (c.role) { t.roles ||= {}; t.roles[c.role] = (t.roles[c.role] || 0) + (c.landed || 0) + (c.skipped || 0); }
     // Files a model handled = every final outcome (an answer with nothing to add is 'skipped').
     t.files += c.files ?? ((c.landed || 0) + (c.skipped || 0) + (c.rejected || 0) + (c.verify_fail || c.verifyFail || 0) + (c.model_error || 0));
     t.peakPerMin = Math.max(t.peakPerMin, c.peakPerMin || 0);

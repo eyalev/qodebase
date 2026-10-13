@@ -446,36 +446,36 @@
    "label": "F3b nest packages/ (gemini-3.1)",
    "repo": "fleet-nest",
    "root": "packages",
-   "state": "running",
+   "state": "done",
    "agents": 100,
    "agentsStarted": 100,
-   "files": 36,
-   "landed": 9,
+   "files": 652,
+   "landed": 175,
    "ready": 0,
-   "skipped": 27,
+   "skipped": 477,
    "verify_fail": 0,
    "rejected": 0,
    "rate_limited": 0,
    "model_error": 0,
    "retried": 0,
-   "usd": 0.003,
-   "tokensIn": 8358,
-   "tokensOut": 578,
+   "usd": 0.0637,
+   "tokensIn": 186283,
+   "tokensOut": 11388,
    "startedAt": 1791893002887,
-   "endedAt": 1791893011894,
-   "wallS": 9,
+   "endedAt": 1791893360140,
+   "wallS": 357,
    "landWaitS": {
-    "p50": 6,
+    "p50": 3,
     "p90": 6
    },
    "models": {
     "gemini-3.1-flash-lite": {
-     "usd": 0.003,
-     "landed": 9,
-     "skipped": 27,
-     "calls": 9,
+     "usd": 0.0637,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
      "rateLimited429": 0,
-     "peakPerMin": 9,
+     "peakPerMin": 39,
      "role": "planned"
     }
    },
@@ -483,7 +483,32 @@
     {
      "minute": 1791892980000,
      "model": "gemini-3.1-flash-lite",
-     "calls": 9
+     "calls": 15
+    },
+    {
+     "minute": 1791893040000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 29
+    },
+    {
+     "minute": 1791893100000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 29
+    },
+    {
+     "minute": 1791893160000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 28
+    },
+    {
+     "minute": 1791893220000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 35
+    },
+    {
+     "minute": 1791893280000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 39
     }
    ]
   },
@@ -492,36 +517,37 @@
    "label": "F3b angular packages/ (gemini-3.1)",
    "repo": "fleet-angular",
    "root": "packages",
-   "state": "running",
+   "state": "done",
    "agents": 100,
-   "agentsStarted": 50,
-   "files": 21,
-   "landed": 0,
-   "ready": 3,
-   "skipped": 18,
+   "agentsStarted": 100,
+   "files": 2090,
+   "landed": 689,
+   "ready": 0,
+   "skipped": 1398,
    "verify_fail": 0,
-   "rejected": 0,
+   "rejected": 3,
    "rate_limited": 0,
    "model_error": 0,
    "retried": 0,
-   "usd": 0.0015,
-   "tokensIn": 4219,
-   "tokensOut": 322,
+   "usd": 0.4994,
+   "tokensIn": 1586833,
+   "tokensOut": 68460,
    "startedAt": 1791893009421,
-   "endedAt": 1791893014987,
-   "wallS": 6,
+   "endedAt": 1791894002330,
+   "wallS": 993,
    "landWaitS": {
-    "p50": null,
-    "p90": null
+    "p50": 4,
+    "p90": 6
    },
    "models": {
     "gemini-3.1-flash-lite": {
-     "usd": 0.0015,
-     "ready": 3,
-     "skipped": 18,
-     "calls": 3,
+     "usd": 0.4994,
+     "landed": 689,
+     "rejected": 3,
+     "skipped": 1398,
+     "calls": 692,
      "rateLimited429": 0,
-     "peakPerMin": 3,
+     "peakPerMin": 58,
      "role": "planned"
     }
    },
@@ -529,7 +555,333 @@
     {
      "minute": 1791892980000,
      "model": "gemini-3.1-flash-lite",
-     "calls": 3
+     "calls": 14
+    },
+    {
+     "minute": 1791893040000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 32
+    },
+    {
+     "minute": 1791893100000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 47
+    },
+    {
+     "minute": 1791893160000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 58
+    },
+    {
+     "minute": 1791893220000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 47
+    },
+    {
+     "minute": 1791893280000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 50
+    },
+    {
+     "minute": 1791893340000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 53
+    },
+    {
+     "minute": 1791893400000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 44
+    },
+    {
+     "minute": 1791893460000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 51
+    },
+    {
+     "minute": 1791893520000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 37
+    },
+    {
+     "minute": 1791893580000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 37
+    },
+    {
+     "minute": 1791893640000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 43
+    },
+    {
+     "minute": 1791893700000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 35
+    },
+    {
+     "minute": 1791893760000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 25
+    },
+    {
+     "minute": 1791893820000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 32
+    },
+    {
+     "minute": 1791893880000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 31
+    },
+    {
+     "minute": 1791893940000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 54
+    },
+    {
+     "minute": 1791894000000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 2
+    }
+   ]
+  },
+  {
+   "runId": "fmv6mu687",
+   "label": "F3b next.js packages/ (glm-4.7)",
+   "repo": "fleet-nextjs",
+   "root": "packages",
+   "state": "done",
+   "agents": 150,
+   "agentsStarted": 150,
+   "files": 1546,
+   "landed": 868,
+   "ready": 0,
+   "skipped": 677,
+   "verify_fail": 0,
+   "rejected": 1,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.1067,
+   "tokensIn": 1285716,
+   "tokensOut": 72254,
+   "startedAt": 1791893018887,
+   "endedAt": 1791893359143,
+   "wallS": 340,
+   "landWaitS": {
+    "p50": 4,
+    "p90": 7
+   },
+   "models": {
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.1067,
+     "landed": 868,
+     "rejected": 1,
+     "skipped": 677,
+     "calls": 869,
+     "rateLimited429": 0,
+     "peakPerMin": 191,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791892980000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 28
+    },
+    {
+     "minute": 1791893040000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 150
+    },
+    {
+     "minute": 1791893100000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 173
+    },
+    {
+     "minute": 1791893160000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 191
+    },
+    {
+     "minute": 1791893220000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 188
+    },
+    {
+     "minute": 1791893280000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 134
+    },
+    {
+     "minute": 1791893340000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 5
+    }
+   ]
+  },
+  {
+   "runId": "fmv6mu93d",
+   "label": "F3b vscode extensions/ (gemma)",
+   "repo": "fleet-vscode-ext",
+   "root": "extensions",
+   "state": "done",
+   "agents": 200,
+   "agentsStarted": 200,
+   "files": 2328,
+   "landed": 1536,
+   "ready": 0,
+   "skipped": 790,
+   "verify_fail": 0,
+   "rejected": 2,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.3703,
+   "tokensIn": 3285675,
+   "tokensOut": 139052,
+   "startedAt": 1791893022601,
+   "endedAt": 1791893506497,
+   "wallS": 484,
+   "landWaitS": {
+    "p50": 5,
+    "p90": 8
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.3703,
+     "landed": 1536,
+     "rejected": 2,
+     "skipped": 790,
+     "calls": 1538,
+     "rateLimited429": 0,
+     "peakPerMin": 207,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791892980000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 41
+    },
+    {
+     "minute": 1791893040000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 172
+    },
+    {
+     "minute": 1791893100000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 207
+    },
+    {
+     "minute": 1791893160000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 162
+    },
+    {
+     "minute": 1791893220000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 180
+    },
+    {
+     "minute": 1791893280000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 207
+    },
+    {
+     "minute": 1791893340000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 206
+    },
+    {
+     "minute": 1791893400000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 206
+    },
+    {
+     "minute": 1791893460000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 157
+    }
+   ]
+  },
+  {
+   "runId": "fmv6mu3wd",
+   "label": "F3b babel packages/ (gemini-3.1)",
+   "repo": "fleet-babel",
+   "root": "packages",
+   "state": "done",
+   "agents": 100,
+   "agentsStarted": 100,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 4,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.1867,
+   "tokensIn": 542304,
+   "tokensOut": 34082,
+   "startedAt": 1791893015869,
+   "endedAt": 1791893341730,
+   "wallS": 326,
+   "landWaitS": {
+    "p50": 8,
+    "p90": 15
+   },
+   "models": {
+    "gemini-3.1-flash-lite": {
+     "usd": 0.1867,
+     "landed": 319,
+     "rejected": 4,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 75,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791892980000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 20
+    },
+    {
+     "minute": 1791893040000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 20
+    },
+    {
+     "minute": 1791893100000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 69
+    },
+    {
+     "minute": 1791893160000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 63
+    },
+    {
+     "minute": 1791893220000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 74
+    },
+    {
+     "minute": 1791893280000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 75
+    },
+    {
+     "minute": 1791893340000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 2
     }
    ]
   }

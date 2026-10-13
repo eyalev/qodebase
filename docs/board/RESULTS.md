@@ -15,17 +15,20 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | fmv6lmffn (F2 @ 100 agents (start bug: 8 started)) | microsoft/vscode src/vs | gemma-4-26b-a4b-it | 100 (8 started) | 500 | 301 | 199 | 0 | 0 | 0 | $0.09 | 191 s | 6 / 9 s |
 | fmv6m4smw (F2 @ 100 agents) | microsoft/vscode src/vs | gemma-4-26b-a4b-it | 100 | 500 | 364 | 133 | 0 | 0 | 3 | $0.11 | 102 s | 23 / 27 s |
 | fmv6md3we (F3 @ 200 agents, src/vs) | microsoft/vscode src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.5-flash-lite | 200 | 3,120 | 2,330 | 786 | 0 | 4 | 0 | $1.37 | 261 s | 10 / 18 s |
-| fmv6mttvr (F3b nest packages/ (gemini-3.1)) | fleet-nest packages | gemini-3.1-flash-lite | 100 | 36 | 9 | 27 | 0 | 0 | 0 | $0.00 | 9 s | 6 / 6 s |
-| fmv6mtyx9 (F3b angular packages/ (gemini-3.1)) | fleet-angular packages | gemini-3.1-flash-lite | 100 (50 started) | 21 | 0 | 18 | 0 | 0 | 0 | $0.00 | 6 s | - / - s |
+| fmv6mttvr (F3b nest packages/ (gemini-3.1)) | fleet-nest packages | gemini-3.1-flash-lite | 100 | 652 | 175 | 477 | 0 | 0 | 0 | $0.06 | 357 s | 3 / 6 s |
+| fmv6mtyx9 (F3b angular packages/ (gemini-3.1)) | fleet-angular packages | gemini-3.1-flash-lite | 100 | 2,090 | 689 | 1,398 | 0 | 3 | 0 | $0.50 | 993 s | 4 / 6 s |
+| fmv6mu687 (F3b next.js packages/ (glm-4.7)) | fleet-nextjs packages | glm-4.7-flash | 150 | 1,546 | 868 | 677 | 0 | 1 | 0 | $0.11 | 340 s | 4 / 7 s |
+| fmv6mu93d (F3b vscode extensions/ (gemma)) | fleet-vscode-ext extensions | gemma-4-26b-a4b-it | 200 | 2,328 | 1,536 | 790 | 0 | 2 | 0 | $0.37 | 484 s | 5 / 8 s |
+| fmv6mu3wd (F3b babel packages/ (gemini-3.1)) | fleet-babel packages | gemini-3.1-flash-lite | 100 | 597 | 319 | 274 | 0 | 4 | 0 | $0.19 | 326 s | 8 / 15 s |
 
 | model | files handled | landed | verify refused | rate-limited (share of calls) | peak calls/min | $ | $ per 1k files |
 |---|---|---|---|---|---|---|---|
-| @cf/zai-org/glm-4.7-flash | 993 | 710 | 0 | 0 (0.0%) | 183 | $0.14 | $0.14 |
-| @cf/google/gemma-4-26b-a4b-it | 2,032 | 1,459 | 0 | 3 (0.2%) | 294 | $0.45 | $0.22 |
+| @cf/zai-org/glm-4.7-flash | 2,539 | 1,578 | 0 | 0 (0.0%) | 191 | $0.25 | $0.10 |
+| @cf/google/gemma-4-26b-a4b-it | 4,360 | 2,995 | 0 | 3 (0.1%) | 294 | $0.82 | $0.19 |
 | gemini-3.5-flash-lite | 1,152 | 860 | 0 | 0 (0.0%) | 235 | $1.00 | $0.87 |
-| gemini-3.1-flash-lite | 54 | 9 | 0 | 0 (0.0%) | 9 | $0.00 | $0.08 |
+| gemini-3.1-flash-lite | 3,339 | 1,183 | 0 | 0 (0.0%) | 75 | $0.75 | $0.22 |
 
-Totals: 3,038 files landed of 4,249 attempted over 9 runs (1,186 needed no comment); 0 refused by the code-unchanged check; $1.59 ($0.37 per 1k files).
+Totals: 6,616 files landed of 11,405 attempted over 12 runs (4,757 needed no comment); 0 refused by the code-unchanged check; $2.81 ($0.25 per 1k files).
 
 Quality (qb9, sim/fleet/quality.json, status pending): not measured yet.
 

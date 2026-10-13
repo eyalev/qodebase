@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T12:03:43.671Z",
+ "generated": "2026-10-13T12:38:57.758Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -24,12 +24,12 @@
      "gemini-3.5-flash-lite"
     ]
    },
-   "filesLanded": 3038,
-   "filesAttempted": 4249,
+   "filesLanded": 6616,
+   "filesAttempted": 11405,
    "verifyRefused": 0,
-   "usd": 1.59,
-   "usdPer1kLanded": 0.52,
-   "runs": 9,
+   "usd": 2.81,
+   "usdPer1kLanded": 0.42,
+   "runs": 12,
    "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
   },
   "realBuilds": {
@@ -387,32 +387,32 @@
     "models": [
      "gemini-3.1-flash-lite"
     ],
-    "state": "running",
-    "tokensIn": 8358,
-    "tokensOut": 578,
+    "state": "done",
+    "tokensIn": 186283,
+    "tokensOut": 11388,
     "agents": 100,
     "agentsStarted": 100,
-    "files": 36,
-    "landed": 9,
-    "skipped": 27,
+    "files": 652,
+    "landed": 175,
+    "skipped": 477,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
-    "usd": 0.003,
-    "wallS": 9,
-    "landWaitP50S": 6,
+    "usd": 0.0637,
+    "wallS": 357,
+    "landWaitP50S": 3,
     "landWaitP90S": 6,
     "peakPerMin": null,
     "perModel": {
      "gemini-3.1-flash-lite": {
-      "usd": 0.003,
-      "landed": 9,
-      "skipped": 27,
-      "calls": 9,
+      "usd": 0.0637,
+      "landed": 175,
+      "skipped": 477,
+      "calls": 175,
       "rateLimited429": 0,
-      "peakPerMin": 9,
+      "peakPerMin": 39,
       "role": "planned"
      }
     },
@@ -424,65 +424,186 @@
     "models": [
      "gemini-3.1-flash-lite"
     ],
-    "state": "running",
-    "tokensIn": 4219,
-    "tokensOut": 322,
+    "state": "done",
+    "tokensIn": 1586833,
+    "tokensOut": 68460,
     "agents": 100,
-    "agentsStarted": 50,
-    "files": 21,
-    "landed": 0,
-    "skipped": 18,
+    "agentsStarted": 100,
+    "files": 2090,
+    "landed": 689,
+    "skipped": 1398,
     "verifyFail": 0,
-    "rejected": 0,
+    "rejected": 3,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
-    "usd": 0.0015,
-    "wallS": 6,
-    "landWaitP50S": null,
-    "landWaitP90S": null,
+    "usd": 0.4994,
+    "wallS": 993,
+    "landWaitP50S": 4,
+    "landWaitP90S": 6,
     "peakPerMin": null,
     "perModel": {
      "gemini-3.1-flash-lite": {
-      "usd": 0.0015,
-      "ready": 3,
-      "skipped": 18,
-      "calls": 3,
+      "usd": 0.4994,
+      "landed": 689,
+      "rejected": 3,
+      "skipped": 1398,
+      "calls": 692,
       "rateLimited429": 0,
-      "peakPerMin": 3,
+      "peakPerMin": 58,
       "role": "planned"
      }
     },
     "repo": "fleet-angular packages",
     "label": "F3b angular packages/ (gemini-3.1)"
+   },
+   {
+    "runId": "fmv6mu687",
+    "models": [
+     "@cf/zai-org/glm-4.7-flash"
+    ],
+    "state": "done",
+    "tokensIn": 1285716,
+    "tokensOut": 72254,
+    "agents": 150,
+    "agentsStarted": 150,
+    "files": 1546,
+    "landed": 868,
+    "skipped": 677,
+    "verifyFail": 0,
+    "rejected": 1,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.1067,
+    "wallS": 340,
+    "landWaitP50S": 4,
+    "landWaitP90S": 7,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.1067,
+      "landed": 868,
+      "rejected": 1,
+      "skipped": 677,
+      "calls": 869,
+      "rateLimited429": 0,
+      "peakPerMin": 191,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-nextjs packages",
+    "label": "F3b next.js packages/ (glm-4.7)"
+   },
+   {
+    "runId": "fmv6mu93d",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it"
+    ],
+    "state": "done",
+    "tokensIn": 3285675,
+    "tokensOut": 139052,
+    "agents": 200,
+    "agentsStarted": 200,
+    "files": 2328,
+    "landed": 1536,
+    "skipped": 790,
+    "verifyFail": 0,
+    "rejected": 2,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.3703,
+    "wallS": 484,
+    "landWaitP50S": 5,
+    "landWaitP90S": 8,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.3703,
+      "landed": 1536,
+      "rejected": 2,
+      "skipped": 790,
+      "calls": 1538,
+      "rateLimited429": 0,
+      "peakPerMin": 207,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-ext extensions",
+    "label": "F3b vscode extensions/ (gemma)"
+   },
+   {
+    "runId": "fmv6mu3wd",
+    "models": [
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "done",
+    "tokensIn": 542304,
+    "tokensOut": 34082,
+    "agents": 100,
+    "agentsStarted": 100,
+    "files": 597,
+    "landed": 319,
+    "skipped": 274,
+    "verifyFail": 0,
+    "rejected": 4,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.1867,
+    "wallS": 326,
+    "landWaitP50S": 8,
+    "landWaitP90S": 15,
+    "peakPerMin": null,
+    "perModel": {
+     "gemini-3.1-flash-lite": {
+      "usd": 0.1867,
+      "landed": 319,
+      "rejected": 4,
+      "skipped": 274,
+      "calls": 323,
+      "rateLimited429": 0,
+      "peakPerMin": 75,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-babel packages",
+    "label": "F3b babel packages/ (gemini-3.1)"
    }
   ],
   "perModel": {
    "@cf/zai-org/glm-4.7-flash": {
-    "files": 993,
-    "landed": 710,
-    "skipped": 278,
+    "files": 2539,
+    "landed": 1578,
+    "skipped": 955,
     "verifyFail": 0,
-    "rejected": 5,
+    "rejected": 6,
     "rateLimited": 0,
-    "calls": 718,
-    "usd": 0.1407,
-    "peakPerMin": 183,
-    "usdPer1kFiles": 0.14,
+    "calls": 1587,
+    "usd": 0.2474,
+    "peakPerMin": 191,
+    "roles": {
+     "planned": 2533
+    },
+    "usdPer1kFiles": 0.1,
     "share429": 0
    },
    "@cf/google/gemma-4-26b-a4b-it": {
-    "files": 2032,
-    "landed": 1459,
-    "skipped": 573,
+    "files": 4360,
+    "landed": 2995,
+    "skipped": 1363,
     "verifyFail": 0,
-    "rejected": 0,
+    "rejected": 2,
     "rateLimited": 3,
-    "calls": 1471,
-    "usd": 0.4463,
+    "calls": 3009,
+    "usd": 0.8166,
     "peakPerMin": 294,
-    "usdPer1kFiles": 0.22,
-    "share429": 0.002
+    "roles": {
+     "planned": 4358
+    },
+    "usdPer1kFiles": 0.19,
+    "share429": 0.001
    },
    "gemini-3.5-flash-lite": {
     "files": 1152,
@@ -494,34 +615,40 @@
     "calls": 862,
     "usd": 0.9995,
     "peakPerMin": 235,
+    "roles": {
+     "overflow": 1150
+    },
     "usdPer1kFiles": 0.87,
     "share429": 0
    },
    "gemini-3.1-flash-lite": {
-    "files": 54,
-    "landed": 9,
-    "skipped": 45,
+    "files": 3339,
+    "landed": 1183,
+    "skipped": 2149,
     "verifyFail": 0,
-    "rejected": 0,
+    "rejected": 7,
     "rateLimited": 0,
-    "calls": 12,
-    "usd": 0.0045,
-    "peakPerMin": 9,
-    "usdPer1kFiles": 0.08,
+    "calls": 1190,
+    "usd": 0.7498,
+    "peakPerMin": 75,
+    "roles": {
+     "planned": 3332
+    },
+    "usdPer1kFiles": 0.22,
     "share429": 0
    }
   },
   "totals": {
-   "runs": 9,
-   "filesAttempted": 4249,
-   "landed": 3038,
-   "skipped": 1186,
+   "runs": 12,
+   "filesAttempted": 11405,
+   "landed": 6616,
+   "skipped": 4757,
    "verifyRefused": 0,
-   "rejected": 7,
+   "rejected": 17,
    "rateLimited": 3,
-   "usd": 1.59,
-   "usdPer1kLanded": 0.52,
-   "usdPer1kFiles": 0.37,
+   "usd": 2.81,
+   "usdPer1kLanded": 0.42,
+   "usdPer1kFiles": 0.25,
    "largestRun": {
     "runId": "fmv6md3we",
     "agents": 200,
