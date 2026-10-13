@@ -308,7 +308,7 @@
     } else if (DR.view === 'commit') {
       const d = DR.data['c:' + DR.sha];
       body = !d ? '<p class="dp-n">Loading the commit…</p>' : d.error ? `<p class="dp-n">Not available yet (${esc(d.error)}).</p>`
-        : `<p class="dp-cm">${esc(d.message || '')}</p><p class="dp-n">On main ${rel(d.at)}, ${n0((d.files || []).length)} files, <span class="mono">${esc(d.sha.slice(0, 7))}</span></p><ul class="dp-l">${(d.files || []).slice(0, 100).map((f) => { const fp = typeof f === 'string' ? f : f.file; return `<li><button type="button" class="dp-f" data-dr="change" data-file="${esc(fp)}" data-sha="${esc(d.sha)}"><span class="mono">${esc(fileName(fp))}</span><small>${esc(ST[f.status] || f.status || 'comments added')}</small></button></li>`; }).join('')}</ul>`;
+        : `<p class="dp-cm">${esc(d.message || '')}</p><p class="dp-n">On main ${rel(d.at)}, ${n0((d.files || []).length)} file${(d.files || []).length === 1 ? '' : 's'}, <span class="mono">${esc(d.sha.slice(0, 7))}</span></p><ul class="dp-l">${(d.files || []).slice(0, 100).map((f) => { const fp = typeof f === 'string' ? f : f.file; return `<li><button type="button" class="dp-f" data-dr="change" data-file="${esc(fp)}" data-sha="${esc(d.sha)}"><span class="mono">${esc(fileName(fp))}</span><small>${esc(ST[f.status] || f.status || 'comments added')}</small></button></li>`; }).join('')}</ul>`;
     } else if (DR.view === 'agent') {
       const d = DR.data['a:' + DR.agent];
       body = !d ? '<p class="dp-n">Loading this agent’s files…</p>' : d.error ? `<p class="dp-n">Not available yet (${esc(d.error)}).</p>`
