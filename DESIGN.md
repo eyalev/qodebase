@@ -18,7 +18,7 @@ none of its chrome.
 | `--acc` | `#6a2ff0` | `#a585ff` | one accent, used in many small places: primary buttons, links, the selected tab, live dots, focus |
 | `--acc-fg` | `#ffffff` | `#120c24` | text on accent |
 | `--acc-soft` | `#f0ebfe` | `#231b3d` | tinted wells: an icon square, a selected row, a quiet highlight (never a button) |
-| `--busy` | `#b7791f` | `#e0a948` | an agent that is working |
+| `--busy` | `#94600f` | `#e0a948` | an agent that is working (light darkened from #b7791f with violet: amber text must pass 4.5:1 on the page, 2026-10-14) |
 | `--warn` | `#c2321f` | `#f08a7e` | something needs a decision or went wrong: sent back, collided, with its lead, needs a fix (design v2; added 2026-10-07 because `--busy` already means "working") |
 
 **Violet since 2026-10-14** (Eyal picked direction A of three, tried live on the app with `?theme=`; reference

@@ -16,7 +16,7 @@ export const path = (slug: string) => `/p/${slug.replace('.', '/')}`;
 export const label = (slug: string) => slug.replace('.', ' / ');
 
 const CSS = `
-:root{--bg:#f7f7fa;--card:#ffffff;--chip:#efeff4;--line:#e4e4ec;--frame:#d4d4de;--fg:#14121f;--dim:#646177;--acc:#6a2ff0;--acc-fg:#ffffff;--acc-soft:#f0ebfe;--busy:#b7791f;--warn:#c2321f;color-scheme:light}
+:root{--bg:#f7f7fa;--card:#ffffff;--chip:#efeff4;--line:#e4e4ec;--frame:#d4d4de;--fg:#14121f;--dim:#646177;--acc:#6a2ff0;--acc-fg:#ffffff;--acc-soft:#f0ebfe;--busy:#94600f;--warn:#c2321f;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0d0c12;--card:#16151e;--chip:#211f2b;--line:#2a2836;--frame:#3b3849;--fg:#eeedf3;--dim:#a3a0b3;--acc:#a585ff;--acc-fg:#120c24;--acc-soft:#231b3d;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 input:focus,textarea:focus{outline:none;border-color:var(--acc)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}

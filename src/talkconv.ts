@@ -28,7 +28,7 @@ var CV_CSS = [
   '#talk-cvt svg{width:16px;height:16px;flex:none;color:var(--t-dim)}',
   '#talk-head>b{display:none}',
   '.talk-dot{width:8px;height:8px;border-radius:4px;flex:none;background:transparent}',
-  '.talk-dot.working{background:var(--busy,#b7791f)}',
+  '.talk-dot.working{background:var(--busy,#94600f)}',
   '.talk-dot.replied{background:var(--t-acc)}',
   '.talk-dot.needs{background:var(--t-warn)}',
   // Context chips: under the header; a faded one is a suggestion (tap to keep).

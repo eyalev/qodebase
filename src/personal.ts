@@ -4,7 +4,7 @@
 // changing a cost or a claim.
 
 const CSS = `
-:root{--bg:#f7f7fa;--card:#ffffff;--chip:#efeff4;--line:#e4e4ec;--fg:#14121f;--dim:#646177;--acc:#6a2ff0;--acc-fg:#ffffff;--acc-soft:#f0ebfe;--busy:#b7791f;color-scheme:light}
+:root{--bg:#f7f7fa;--card:#ffffff;--chip:#efeff4;--line:#e4e4ec;--fg:#14121f;--dim:#646177;--acc:#6a2ff0;--acc-fg:#ffffff;--acc-soft:#f0ebfe;--busy:#94600f;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0d0c12;--card:#16151e;--chip:#211f2b;--line:#2a2836;--fg:#eeedf3;--dim:#a3a0b3;--acc:#a585ff;--acc-fg:#120c24;--acc-soft:#231b3d;--busy:#e0a948;color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -77,11 +77,11 @@ const INSTALL_CSS = `
 .addr{font:14px 'JetBrains Mono',monospace;color:var(--dim);word-break:break-all}
 button.btn{border:0;cursor:pointer;font:600 15px 'Geist',sans-serif;width:100%;justify-content:center}
 .btn.wide{width:100%;justify-content:center}
-.err{background:color-mix(in srgb,#b42d1f 12%,transparent);color:var(--fg);border-radius:8px;padding:12px 14px;margin:12px 0}
+.err{background:color-mix(in srgb,var(--warn,#c2321f) 12%,transparent);color:var(--fg);border-radius:8px;padding:12px 14px;margin:12px 0}
 .steps{list-style:none;padding:0;margin:20px 0;display:flex;flex-direction:column;gap:2px}
 .steps li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
 .dot{flex:0 0 12px;height:12px;border-radius:50%;margin-top:5px;background:var(--chip);box-shadow:inset 0 0 0 1px var(--line)}
-.dot.doing{background:var(--busy);animation:pulse 1s ease-in-out infinite alternate}.dot.done{background:var(--acc)}.dot.failed{background:#b42d1f}
+.dot.doing{background:var(--busy);animation:pulse 1s ease-in-out infinite alternate}.dot.done{background:var(--acc)}.dot.failed{background:var(--warn,#c2321f)}
 @keyframes pulse{to{opacity:.35}}
 @media (prefers-reduced-motion:reduce){.dot.doing{animation:none}}
 .steps .t{font-size:15px}.steps .n{font-size:13px;color:var(--dim)}
