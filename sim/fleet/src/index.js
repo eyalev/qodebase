@@ -15,7 +15,10 @@ const log = (event, f = {}) => console.log(JSON.stringify({ ts: new Date().toISO
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { 'content-type': 'application/json' } });
 const MAIN = 'fleet-main';
 // The repo handle has no remote URL (only create/import return it): the namespace's fixed git endpoint.
-const REMOTE = 'https://887d7234a6b8d65ad355a4f6684cab67.artifacts.cloudflare.net/git/qbfleet/fleet-main.git';
+const remoteOf = (repo) => `https://887d7234a6b8d65ad355a4f6684cab67.artifacts.cloudflare.net/git/qbfleet/${repo}.git`;
+// Several repos at once (P4): one Run and one Lander per repo; fleet-main keeps its first object names.
+const REPO_RE = /^fleet-[a-z0-9-]{1,40}$/;
+const repoOf = (u, b = {}) => { const r = b.repo || u.searchParams.get('repo') || MAIN; if (!REPO_RE.test(r)) throw new Error('repo: fleet-<name>'); return r; };
 const GATEWAY = 'qodebase-fleet';
 // $ per million tokens [input, output] per model: the FLEET_PRICES var (JSON). An unpriced model is refused, never priced at 0.
 const DAY_CAP_USD = 50;
@@ -24,37 +27,40 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/' || url.pathname === '/page') return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
-    if (url.pathname === '/status' && request.method === 'GET') return json(await run(env).status());
+    if (url.pathname === '/status' && request.method === 'GET') return json(await run(env, repoOf(url)).status());
     if (request.headers.get('x-fleet-key') !== env.FLEET_KEY) return json({ error: 'key required' }, 401);
     const body = request.method === 'POST' ? await request.json().catch(() => ({})) : {};
+    const repo = repoOf(url, body);
     switch (url.pathname) {
       case '/import': return json(await importRepo(env, body));
       // VS Code is too big for Artifacts' import ('upstream unavailable'): an empty repo, then the laptop pushes src/vs.
-      case '/create': { const c = await env.ARTIFACTS.create(MAIN, { description: 'VS Code src/vs (MIT) for the fleet experiment; never pushed upstream', setDefaultBranch: 'main' }); using r = await env.ARTIFACTS.get(MAIN); const t = await r.createToken('write', 3600); return json({ remote: c.remote || REMOTE, token: t.plaintext }); }
+      case '/create': { const c = await env.ARTIFACTS.create(repo, { description: String(body.description || 'fleet experiment base (an open-source slice); never pushed upstream').slice(0, 300), setDefaultBranch: 'main' }); using r = await env.ARTIFACTS.get(repo); const t = await r.createToken('write', 3600); await budget(env).addRepo(repo); return json({ repo, remote: c.remote || remoteOf(repo), token: t.plaintext }); }
       case '/plan': return json(await plan(env, body));
-      case '/start': return json(await run(env).start(body));
-      case '/pause': return json(await run(env).pause(body.why || 'paused by hand'));
-      case '/resume': return json(await run(env).resume(body.cfg || {}));   // cfg: e.g. a new planUsdPerMin or maxPerMin after a fix
-      case '/stop': return json(await run(env).stop(body.why || 'stopped by hand'));
-      case '/records': return new Response(await run(env).records(url.searchParams.get('run')), { headers: { 'content-type': 'application/x-ndjson' } });
+      case '/start': return json(await run(env, repo).start(body));
+      case '/pause': return json(await run(env, repo).pause(body.why || 'paused by hand'));
+      case '/resume': return json(await run(env, repo).resume(body.cfg || {}));   // cfg: e.g. a new planUsdPerMin or maxPerMin after a fix
+      case '/stop': return json(await run(env, repo).stop(body.why || 'stopped by hand'));
+      case '/records': return new Response(await run(env, repo).records(url.searchParams.get('run')), { headers: { 'content-type': 'application/x-ndjson' } });
       case '/budget': return json(await budget(env).status());
       // One file through a given provider/model, no landing (provider checks; the call is priced and counted in the day cap).
       case '/try': { const r = await env.AGENT.get(env.AGENT.idFromName('try')).work(body.file, body.model, body.provider || 'workers-ai'); if (r.usd) await budget(env).spend(r.usd); delete r.text; return json(r); }
       case '/retire-v1': { await env.LANDER.get(env.LANDER.idFromName('fleet')).begin('retired', ''); return json({ ok: true }); }
       // An object that never goes idle (the Lander's 5 s alarm) keeps running old code after a deploy: restart it.
-      case '/restart': { await lander(env).restart().catch(() => {}); await run(env).restart().catch(() => {}); return json({ ok: true }); }
-      case '/clone-token': { using r = await env.ARTIFACTS.get(MAIN); const t = await r.createToken('read', 3600); return json({ remote: REMOTE, token: t.plaintext }); }
+      case '/restart': { await lander(env, repo).restart().catch(() => {}); await run(env, repo).restart().catch(() => {}); return json({ ok: true }); }
+      // One summary row per run, every repo (qb4's results generator).
+      case '/runs': { const repos = [MAIN, ...((await budget(env).repos().catch(() => [])) || []).filter((x) => x !== MAIN)]; const rows = (await Promise.all(repos.map((x) => run(env, x).runs().catch(() => [])))).flat(); return json({ runs: rows }); }
+      case '/clone-token': { using r = await env.ARTIFACTS.get(repo); const t = await r.createToken('read', 3600); return json({ repo, remote: remoteOf(repo), token: t.plaintext }); }
       default: return json({ error: 'not found' }, 404);
     }
   },
 };
 
-const run = (env) => env.RUN.get(env.RUN.idFromName('fleet'));
+const run = (env, repo = MAIN) => env.RUN.get(env.RUN.idFromName(repo === MAIN ? 'fleet' : `run-${repo}`));
 const budget = (env) => env.BUDGET.get(env.BUDGET.idFromName('account-day'));
 // v2: the first Lander instance kept running pre-fix code on its 5 s alarm (it never went idle); /retire-v1 empties it.
-const lander = (env) => env.LANDER.get(env.LANDER.idFromName('fleet-v2'));
+const lander = (env, repo = MAIN) => env.LANDER.get(env.LANDER.idFromName(repo === MAIN ? 'fleet-v2' : `lander-${repo}`));
 // A lane is a folder (never a file name): src/vs/<top>, or three levels deep in the big trees (workbench, editor, platform).
-const laneOf = (path) => { const d = path.split('/').slice(2, -1); return (d[0] === 'workbench' || d[0] === 'editor' || d[0] === 'platform' ? d.slice(0, 3) : d.slice(0, 1)).join('/') || 'vs'; };
+const laneOf = (path, root = 'src/vs') => { const d = path.split('/').slice(root.split('/').length, -1); return (root === 'src/vs' && (d[0] === 'workbench' || d[0] === 'editor' || d[0] === 'platform') ? d.slice(0, 3) : root === 'src/vs' ? d.slice(0, 1) : d.slice(0, 2)).join('/') || 'root'; };
 
 /** One-time: VS Code (shallow) into Artifacts qbfleet/fleet-main. */
 async function importRepo(env, b) {
@@ -95,6 +101,8 @@ export class Budget extends DurableObject {
     return { ok: true, day, spent, left: DAY_CAP_USD - spent };
   }
   async spend(usd) { const k = `d:${this.day()}`; const v = ((await this.ctx.storage.get(k)) || 0) + usd; await this.ctx.storage.put(k, v); return v; }
+  async addRepo(r) { const l = (await this.ctx.storage.get('repos')) || []; if (!l.includes(r)) { l.push(r); await this.ctx.storage.put('repos', l); } }
+  async repos() { return (await this.ctx.storage.get('repos')) || []; }
   async status() { return { cap: DAY_CAP_USD, lastDay: this.env.FLEET_LAST_DAY || '2026-10-14', days: Object.fromEntries(await this.ctx.storage.list({ prefix: 'd:' })) }; }
 }
 
@@ -132,7 +140,9 @@ export class Run extends DurableObject {
     cfg.agents = Math.max(1, Math.min(2000, Number(cfg.agents) || 10));
     cfg.budgetUsd = Math.min(Number(cfg.budgetUsd) || 1, b.left);
     // One walk of main's src/vs (~800 folders): the files with their blob hashes, lanes interleaved, and main's tip.
-    const { base, files } = await listFiles(this.env);
+    cfg.repo = REPO_RE.test(cfg.repo || '') ? cfg.repo : MAIN;
+    cfg.root = String(cfg.root || 'src/vs').replace(/^\/+|\/+$/g, '');
+    const { base, files } = await listFiles(this.env, cfg.repo, cfg.root);
     const p = { base };
     const off = Math.max(0, Number(cfg.offset) || 0);   // the next slice of the (stable) file list
     const pick = files.slice(off, off + Math.max(1, Math.min(files.length, Number(cfg.maxFiles) || 10)));
@@ -142,7 +152,8 @@ export class Run extends DurableObject {
       counts: { queued: pick.length, model: 0, verify: 0, ready: 0, landed: 0, skipped: 0, verify_fail: 0, model_error: 0, rate_limited: 0, rejected: 0 },
       recent: [], perMin: {}, pauses: [], agentsDone: 0 };
     await this.save(s);
-    await lander(this.env).begin(runId, p.base);
+    await lander(this.env, cfg.repo).begin(runId, p.base, cfg.repo);
+    await budget(this.env).addRepo(cfg.repo);
     // Agents start from this object's alarm in batches: started one by one inside the request, F2's 100-agent start
     // outlived the request and only ~8 agents began.
     s.agentsStarted = 0; await this.save(s);
@@ -155,7 +166,7 @@ export class Run extends DurableObject {
     const s = await this.st();
     if (!s || s.state === 'stopped' || (s.agentsStarted || 0) >= s.cfg.agents) return;
     const from = s.agentsStarted || 0, to = Math.min(s.cfg.agents, from + 50);
-    await Promise.all(Array.from({ length: to - from }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k)));
+    await Promise.all(Array.from({ length: to - from }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN)));
     s.agentsStarted = to; await this.save(s);
     log('agents_started', { runId: s.runId, started: to, of: s.cfg.agents });
     if (to < s.cfg.agents) await this.ctx.storage.setAlarm(Date.now() + 200);
@@ -209,9 +220,9 @@ export class Run extends DurableObject {
     for (const k of Object.keys(s.perMin)) if (Number(k) < minute - 60) delete s.perMin[k];
     await this.save(s);
     if (usd) await budget(this.env).spend(usd);
-    if (r.status === 'ready') await lander(this.env).add(runId, laneOf(r.file), r.file, r.text, Date.now());
+    if (r.status === 'ready') await lander(this.env, s.cfg.repo || MAIN).add(runId, laneOf(r.file, s.cfg.root || 'src/vs'), r.file, r.text, Date.now());
     // Done when no file is waiting or at the model (not only when every agent reported in: a lost agent kept a run open).
-    if (s.state === 'running' && s.counts.queued <= 0 && s.counts.model <= 0) { s.state = 'done'; s.endedAt = Date.now(); await this.save(s); await lander(this.env).flush(runId); return; }
+    if (s.state === 'running' && s.counts.queued <= 0 && s.counts.model <= 0) { s.state = 'done'; s.endedAt = Date.now(); await this.save(s); await lander(this.env, s.cfg.repo || MAIN).flush(runId); return; }
     await this.checkAutoPause(s);
   }
 
@@ -256,9 +267,9 @@ export class Run extends DurableObject {
     if (cfg.pause && typeof cfg.pause === 'object') s.cfg.pause = { ...s.cfg.pause, ...cfg.pause };
     s.state = 'running'; s.recent = []; s.pauses.push({ at: Date.now(), why: 'resumed', cfg }); await this.save(s); return { state: s.state, cfg: s.cfg };
   }
-  async stop(why) { const s = await this.st(); if (!s) return { error: 'no run' }; s.state = 'stopped'; s.stoppedWhy = why; s.endedAt = Date.now(); await this.save(s); await lander(this.env).flush(s.runId); return { state: s.state }; }
+  async stop(why) { const s = await this.st(); if (!s) return { error: 'no run' }; s.state = 'stopped'; s.stoppedWhy = why; s.endedAt = Date.now(); await this.save(s); await lander(this.env, s.cfg.repo || MAIN).flush(s.runId); return { state: s.state }; }
   async restart() { await this.ctx.storage.sync(); this.ctx.abort('restart on the deployed code'); }
-  async agentFinished(runId) { const s = await this.st(); if (!s || s.runId !== runId) return; s.agentsDone++; if (s.agentsDone >= s.cfg.agents && s.state === 'running') { s.state = 'done'; s.endedAt = Date.now(); await lander(this.env).flush(runId); } await this.save(s); }
+  async agentFinished(runId) { const s = await this.st(); if (!s || s.runId !== runId) return; s.agentsDone++; if (s.agentsDone >= s.cfg.agents && s.state === 'running') { s.state = 'done'; s.endedAt = Date.now(); await lander(this.env, s.cfg.repo || MAIN).flush(runId); } await this.save(s); }
 
   async status() {
     const s = await this.st();
@@ -277,8 +288,27 @@ export class Run extends DurableObject {
       retried: (byStatus.rate_limited_retry || 0) + (byStatus.model_error_retry || 0) };
     return { runId: s.runId, state: s.state, model: s.cfg.model, agents: s.cfg.agents, agentsStarted: s.agentsStarted ?? null, inFlight: s.counts.model, files: s.files, base: s.base, startedAt: s.startedAt, endedAt: s.endedAt || null,
       counts: s.counts, usd: Math.round(s.usd * 10000) / 10000, budgetUsd: s.cfg.budgetUsd, calls: s.calls, lastMinute: lastMin,
-      landWaitS: { p50: pct(waits, 0.5), p90: pct(waits, 0.9) }, errors: reasons, pauses: s.pauses.slice(-5), budget: await budget(this.env).check(), lander: await lander(this.env).summary() };
+      landWaitS: { p50: pct(waits, 0.5), p90: pct(waits, 0.9) }, errors: reasons, pauses: s.pauses.slice(-5), budget: await budget(this.env).check(), repo: s.cfg.repo || MAIN, root: s.cfg.root || 'src/vs', lander: await lander(this.env, s.cfg.repo || MAIN).summary() };
   }
+  async runs() {
+    const ids = this.sql.exec(`SELECT DISTINCT run FROM rec`).toArray().map((x) => x.run);
+    const s = await this.st();
+    return ids.map((id) => {
+      const by = Object.fromEntries(this.sql.exec(`SELECT status, COUNT(*) AS n FROM rec WHERE run = ? GROUP BY status`, id).toArray().map((x) => [x.status, x.n]));
+      const agg = this.sql.exec(`SELECT MIN(at) AS t0, MAX(at) AS t1, SUM(usd) AS usd, SUM(tin) AS tin, SUM(tout) AS tout, COUNT(DISTINCT file) AS files FROM rec WHERE run = ?`, id).toArray()[0];
+      const waits = this.sql.exec(`SELECT landed_at - at AS w FROM rec WHERE run = ? AND landed_at IS NOT NULL`, id).toArray().map((x) => x.w).sort((a, b) => a - b);
+      const models = {};
+      for (const x of this.sql.exec(`SELECT model, status, COUNT(*) AS n, SUM(usd) AS usd FROM rec WHERE run = ? GROUP BY model, status`, id).toArray()) { const m = (models[x.model] ||= { usd: 0 }); m[x.status] = x.n; m.usd = Math.round((m.usd + (x.usd || 0)) * 10000) / 10000; }
+      const cur = s && s.runId === id ? s : null;
+      const pct = (q) => (waits.length ? Math.round(waits[Math.floor(waits.length * q)] / 1000) : null);
+      const t0 = cur?.startedAt || agg.t0, t1 = cur?.endedAt || agg.t1;
+      return { runId: id, repo: cur?.cfg.repo || MAIN, root: cur?.cfg.root || 'src/vs', state: cur?.state || 'ended', agents: cur?.cfg.agents ?? null, files: agg.files,
+        landed: by.landed || 0, ready: by.ready || 0, skipped: by.skipped || 0, verify_fail: by.verify_fail || 0, rejected: by.rejected || 0, rate_limited: by.rate_limited || 0, model_error: by.model_error || 0,
+        retried: (by.rate_limited_retry || 0) + (by.model_error_retry || 0), usd: Math.round((agg.usd || 0) * 10000) / 10000, tokensIn: agg.tin, tokensOut: agg.tout,
+        startedAt: t0, endedAt: t1, wallS: Math.round((t1 - t0) / 1000), landWaitS: { p50: pct(0.5), p90: pct(0.9) }, models };
+    });
+  }
+
   async records(runId) {
     const s = await this.st(); const id = runId || s?.runId;
     return this.sql.exec(`SELECT * FROM rec WHERE run = ? ORDER BY at`, id).toArray().map((r) => JSON.stringify(r)).join('\n') + '\n';
@@ -286,22 +316,24 @@ export class Run extends DurableObject {
 }
 const PRICES_OF = (env) => { try { return JSON.parse(env.FLEET_PRICES || '{}'); } catch { return {}; } };
 
-async function listFiles(env) {
-  using r = await env.ARTIFACTS.get(MAIN);
+// Not the code people use: tests, fixtures, build output, vendored deps.
+const SKIP_DIRS = new Set(['test', 'tests', '__tests__', 'fixtures', '__fixtures__', 'testing', 'node_modules', 'compiled', 'dist', 'out', 'e2e', 'integrationtest', 'test-fixtures']);
+async function listFiles(env, repoName = MAIN, root = 'src/vs') {
+  using r = await env.ARTIFACTS.get(repoName);
   const tip = (await r.log({ limit: 1 }))[0];
   const out = [];
   let h = tip.treeHash;
-  for (const part of ['src', 'vs']) h = (await r.readTree(h)).find((x) => x.name === part && x.type === 'tree').hash;
+  for (const part of root.split('/')) { const e = (await r.readTree(h)).find((x) => x.name === part && x.type === 'tree'); if (!e) throw new Error(`no ${root}/ in ${repoName}`); h = e.hash; }
   const walk = async (hash, prefix) => {
     for (const e of await r.readTree(hash)) {
       const p = `${prefix}/${e.name}`;
-      if (e.type === 'tree') { if (e.name !== 'test') await walk(e.hash, p); }
-      else if (e.type === 'blob' && p.endsWith('.ts') && !p.endsWith('.d.ts') && !p.endsWith('.test.ts')) out.push({ path: p, hash: e.hash });
+      if (e.type === 'tree') { if (!SKIP_DIRS.has(e.name)) await walk(e.hash, p); }
+      else if (e.type === 'blob' && /\.m?ts$/.test(p) && !/\.d\.m?ts$|\.(test|spec)\.m?ts$/.test(p)) out.push({ path: p, hash: e.hash });
     }
   };
-  await walk(h, 'src/vs');
+  await walk(h, root);
   // Lanes interleaved: a small run touches many folders, like a big one.
-  const by = new Map(); for (const f of out) { const k = laneOf(f.path); if (!by.has(k)) by.set(k, []); by.get(k).push(f); }
+  const by = new Map(); for (const f of out) { const k = laneOf(f.path, root); if (!by.has(k)) by.set(k, []); by.get(k).push(f); }
   const lanes = [...by.values()]; const mixed = [];
   for (let i = 0; mixed.length < out.length; i++) for (const l of lanes) if (l[i]) mixed.push(l[i]);
   return { base: tip.hash, files: mixed };
@@ -317,21 +349,21 @@ async function pushover(env, title, message) {
 
 // ---- Agent: one file at a time --------------------------------------------------------------
 export class Agent extends DurableObject {
-  async begin(runId, i) { await this.ctx.storage.put({ runId, i }); await this.ctx.storage.setAlarm(Date.now() + Math.random() * 3000); }
+  async begin(runId, i, repo = MAIN) { await this.ctx.storage.put({ runId, i, repo }); await this.ctx.storage.setAlarm(Date.now() + Math.random() * 3000); }
   async alarm() {
-    const runId = await this.ctx.storage.get('runId'), i = await this.ctx.storage.get('i');
-    const R = run(this.env);
+    const runId = await this.ctx.storage.get('runId'), i = await this.ctx.storage.get('i'), repoName = (await this.ctx.storage.get('repo')) || MAIN;
+    const R = run(this.env, repoName);
     const n = await R.next(runId);
     if (n.stop) { await R.agentFinished(runId); return; }
     if (n.wait) { await this.ctx.storage.setAlarm(Date.now() + n.wait); return; }
-    const r = await this.work(n.file, n.model, n.provider).catch((e) => ({ file: n.file.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
+    const r = await this.work(n.file, n.model, n.provider, repoName).catch((e) => ({ file: n.file.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
     r.model = n.model;
     await R.done(runId, i, r);
     await this.ctx.storage.setAlarm(Date.now() + 50);
   }
-  async work(file, model, provider = 'workers-ai') {
+  async work(file, model, provider = 'workers-ai', repoName = MAIN) {
     const t0 = Date.now();
-    using repo = await this.env.ARTIFACTS.get(MAIN);
+    using repo = await this.env.ARTIFACTS.get(repoName);
     const blob = await repo.readBlob(file.hash);
     if (!blob) return { file: file.path, status: 'model_error', reason: 'blob not found', ms: Date.now() - t0 };
     const text = new TextDecoder().decode(await blob.arrayBuffer());
@@ -373,7 +405,7 @@ export class Agent extends DurableObject {
 
 // ---- Lander: lanes by folder, one commit per lane, pushed in order ---------------------------
 export class Lander extends DurableObject {
-  async begin(runId, base) { await this.ctx.storage.deleteAll(); await this.ctx.storage.put({ runId, base, lanes: {}, landed: 0, commits: 0, pushes: 0, stale: 0, errors: [] }); }
+  async begin(runId, base, repo = MAIN) { await this.ctx.storage.deleteAll(); await this.ctx.storage.put({ runId, base, repo, lanes: {}, landed: 0, commits: 0, pushes: 0, stale: 0, errors: [] }); }
   async add(runId, lane, path, text, at) {
     if ((await this.ctx.storage.get('runId')) !== runId) return;
     const lanes = (await this.ctx.storage.get('lanes')) || {};
@@ -394,7 +426,8 @@ export class Lander extends DurableObject {
   }
   /** One commit per lane on top of main's tip, all pushed together; a stale tip is re-read and the batch rebuilt. */
   async land(runId, lanes, keys) {   // eslint-disable-line no-param-reassign
-    using repo = await this.env.ARTIFACTS.get(MAIN);
+    const repoName = (await this.ctx.storage.get('repo')) || MAIN;
+    using repo = await this.env.ARTIFACTS.get(repoName);
     const token = (await repo.createToken('write', 600)).plaintext;
     for (let attempt = 0; attempt < 3; attempt++) {
       const tip = (await repo.log({ limit: 1 }))[0];
@@ -408,7 +441,7 @@ export class Lander extends DurableObject {
         parent = objs.commit(tree, [parent], `docs(${k}): comments for ${items.length} file${items.length === 1 ? '' : 's'}\n\nqodebase fleet run ${runId}; code unchanged (verified per file).`, Date.now(), 'qodebase fleet <fleet@qodebase.app>');
         landedFiles.push(...items.map((x) => x.path));
       }
-      const p = await push({ remote: REMOTE, token, branch: 'main', oldSha: tip.hash, newSha: parent, objs: [...objs.map.values()] });
+      const p = await push({ remote: remoteOf(repoName), token, branch: 'main', oldSha: tip.hash, newSha: parent, objs: [...objs.map.values()] });
       await this.ctx.storage.put('pushes', ((await this.ctx.storage.get('pushes')) || 0) + 1);
       if (p.ok) {
         // Re-read the lanes: files added while this batch was pushing must stay (F2 at 10 agents lost 9 that way).
@@ -417,7 +450,7 @@ export class Lander extends DurableObject {
         lanes = now;
         await this.ctx.storage.put({ lanes, landed: ((await this.ctx.storage.get('landed')) || 0) + landedFiles.length, commits: ((await this.ctx.storage.get('commits')) || 0) + keys.length });
         await this.ctx.storage.delete(landedFiles.map((f) => `f:${f}`));
-        await run(this.env).landed(runId, landedFiles, Date.now());
+        await run(this.env, repoName).landed(runId, landedFiles, Date.now());
         log('landed', { runId, lanes: keys.length, files: landedFiles.length, commit: parent.slice(0, 10) });
         return;
       }
