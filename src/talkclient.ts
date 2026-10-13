@@ -128,6 +128,9 @@ var css = [
   // Not listening yet (the mic is still opening): the stop button stays quiet, so nobody starts talking too early.
   '#talk-root.arming .talk-bb.on,#talk-root.arming #talk-mic.on{background:var(--t-chip);color:var(--t-fg)}',
   '#talk-root.draft #talk-bexp{display:none}',
+  '#talk-bclr{display:none;color:var(--t-dim)}',
+  '#talk-root.draft #talk-bclr{display:flex}',
+  '#talk-root.draft #talk-bspk{display:none}',
   '#talk-root.draft #talk-btext{-webkit-line-clamp:3}',
   '#talk-boffer .talk-chip{min-height:44px;padding:0 12px}',
   // Pages with a composer (form.ask) keep the mic in its row: the bar there is the door to Talk, without a mic.
@@ -362,7 +365,10 @@ function build() {
   // Spoken replies, one tap (remembered on this device): the same switch as the sheet's speaker.
   bSpk = el('button', { id: 'talk-bspk', class: 'talk-bb', type: 'button' });
   // Right-thumb reach (Eyal, 2026-10-13): open and spoken replies on the left, the words, then Send and the mic at the right edge.
-  bar.appendChild(bExp); bar.appendChild(bSpk); bar.appendChild(bMid); bar.appendChild(bOffer); bar.appendChild(bSend); bar.appendChild(bMic);
+  // A clear (×) whenever the bar holds words (manager, 2026-10-13).
+  var bClr = el('button', { id: 'talk-bclr', class: 'talk-bb', type: 'button', 'aria-label': 'Clear the words' }, ICON.x);
+  bClr.addEventListener('click', function () { trace('bar', { how: 'clear' }); setInp(''); lastClip = null; barSync(); });
+  bar.appendChild(bExp); bar.appendChild(bSpk); bar.appendChild(bMid); bar.appendChild(bClr); bar.appendChild(bOffer); bar.appendChild(bSend); bar.appendChild(bMic);
   // Examples are hints, never sent (Eyal, 2026-10-13: a tap near the bar sent 'how does it work?' twice). A tap opens Talk.
   bMid.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'open' }); open(true); });
   bExp.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'expand' }); open(true); });
@@ -435,7 +441,7 @@ function build() {
   // The bar's mic works like the sheet's ("How the mic works"): tap, speak, tap Send; hold; pause; conversation.
   // Speaking from the bar keeps the page in view: the words grow in the bar, the answer comes back to it.
   var bHoldT = null, bHeld = false;
-  bMic.addEventListener('pointerdown', function () { if (!listening && S.engine === 'live') { dcWarm(); warmMic(true); } });
+  bMic.addEventListener('pointerdown', function () { if (!listening && S.engine === 'live') warmMic(true); });
   bMic.addEventListener('pointerdown', function () { if (S.mic !== 'hold' || vc || listening) return; unlockAudio(); bHeld = false; bHoldT = setTimeout(function () { bHeld = true; startListen(); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} }, 150); });
   var bHoldEnd = function () { clearTimeout(bHoldT); if (S.mic === 'hold' && bHeld && listening) { trace('bar', { how: 'release' }); stopListen(false, true); } };
   bMic.addEventListener('pointerup', bHoldEnd); bMic.addEventListener('pointercancel', bHoldEnd); bMic.addEventListener('pointerleave', bHoldEnd);
@@ -447,7 +453,7 @@ function build() {
     if (vc) { vc.toggleMute(); return; }
     // Tap again: stop; the words stay for a look (and an edit: tap them), then Send (Eyal: like tmux-web, never sent by itself).
     if (listening) { trace('bar', { how: 'stop-tap', mode: S.mic }); stopListen(false, S.mic === 'pause'); return; }
-    trace('bar', { how: 'mic', mode: S.mic }); if (S.engine === 'live') { dcWarm(); } startListen();
+    trace('bar', { how: 'mic', mode: S.mic }); startListen();
   });
   close.addEventListener('click', function () { open(false); });
   gear.addEventListener('click', function () { var on = root.classList.toggle('settings'); if (on) setp.scrollTop = 0; trace('settings', { open: on }); });
@@ -517,7 +523,7 @@ function build() {
   spk.addEventListener('click', function () { toggleVoice('sheet'); });
   bSpk.addEventListener('click', function () { toggleVoice('bar'); });
   voiceBtn();
-  se.onchange = function () { S.engine = se.value; set('engine2', S.engine); trace('setting', { engine: S.engine }); if (S.engine === 'live') dcWarm(); showMic(); };
+  se.onchange = function () { S.engine = se.value; set('engine2', S.engine); trace('setting', { engine: S.engine }); showMic(); };
   sl.onchange = function () { S.lang = sl.value; set('lang', S.lang); };
   document.getElementById('talk-s-done').onclick = function () { root.classList.remove('settings'); trace('settings', { open: false }); };
   document.getElementById('talk-s-clear').onclick = function () { hist = []; chatHist = []; sset('log', hist); sset('chat', chatHist); render(); root.classList.remove('settings'); };
@@ -528,7 +534,7 @@ function build() {
   render();
 }
 
-function open(on) { if (on && S.engine === 'live' && me) { dcWarm(); warmMic(); } if (!on && S.keep !== 'open') releaseMic('closed'); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); barSync(); if (on && hist.length) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+function open(on) { if (on && S.engine === 'live' && me) warmMic(); if (!on && S.keep !== 'open') releaseMic('closed'); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); barSync(); if (on && hist.length) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
 // Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is, and keep
 // the bar's height free at the end of the page (and of the page's own scrolling panel, on project pages).
 var scrollers = null, lastLift = -1;
@@ -1689,7 +1695,7 @@ function clipStart(ready) {
     clipStream = st;
     var type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].filter(function (x) { return MediaRecorder.isTypeSupported(x); })[0] || '';
     clip = new MediaRecorder(st, type ? { mimeType: type } : {});
-    clip.ondataavailable = function (e) { if (e.data && e.data.size) clipChunks.push(e.data); };
+    clip.ondataavailable = function (e) { if (e.data && e.data.size) { clipChunks.push(e.data); liveChunk(e.data); } };
     clip.start(250);
     trace('rec_start', { ms: Date.now() - clipT0, warm: !!warmUsed });
     if (ready) ready();
@@ -1771,36 +1777,55 @@ function unrepeat(text, live) {
     return count(live || '', core) >= times ? m : ph;
   });
 }
+// Dictation like tmux-web (manager, 2026-10-13, after Eyal's 'What should I build next?' lost its first word and never
+// got a Whisper pass): ONE recorder from the tap feeds both the Whisper clip and our own socket to Workers AI nova-3
+// (/api/talk/stt-live in the Talk Worker); every chunk recorded before the socket opens waits in a queue and goes first,
+// in order; no server-side turns, nothing is sent by itself; at the stop, Whisper reads the whole recording.
+var liveWs = null, liveQ = [], liveSent = 0, liveClosedAt = 0;
+function liveChunk(blob) {
+  if (!dcOn || !blob || !blob.size) return;
+  if (liveWs && liveWs.readyState === 1) { liveWs.send(blob); liveSent++; }
+  else liveQ.push(blob);
+}
+function liveOpen() {
+  if (S.lang === 'he') { startNativePreview(); return; }   // Workers AI's nova-3 has no Hebrew: the phone's recogniser shows the words
+  var t0 = Date.now(), gotWords = false;
+  try { liveWs = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/api/talk/stt-live?lang=' + encodeURIComponent(S.lang)); }
+  catch (e) { trace('stt_ws_error', { err: String(e) }); startNativePreview(); return; }
+  var ws = liveWs;
+  ws.onopen = function () {
+    var queued = liveQ.length;
+    while (liveQ.length && ws.readyState === 1) { ws.send(liveQ.shift()); liveSent++; }
+    trace('stt_ws_open', { ms: Date.now() - t0, flushed: queued });
+  };
+  ws.onmessage = function (ev) {
+    var d = null; try { d = JSON.parse(ev.data); } catch (e) { return; }
+    if (!dcOn && d.type !== 'final') return;
+    if (d.type === 'interim' || d.type === 'final') {
+      var txt = String(d.text || '').trim();
+      if (!gotWords && txt) { gotWords = true; trace('stt_first_words', { ms: Date.now() - dcT0, text: txt }); }
+      if (d.type === 'final') { if (txt) dcBuf.push(txt); dcText = ''; } else dcText = txt;
+      if (!nativePreview) setInp(dcBase + dcSaid(dcText));
+    } else if (d.type === 'error') { trace('stt_ws_server_error', { err: d.error }); if (!gotWords && dcOn && !nativePreview) startNativePreview(); }
+  };
+  ws.onerror = function () { trace('stt_ws_error', { open: ws.readyState === 1, sent: liveSent }); };
+  ws.onclose = function (e) {
+    liveClosedAt = Date.now();
+    trace('stt_ws_close', { code: e.code, reason: String(e.reason || '').slice(0, 80), sent: liveSent, words: gotWords, ms: Date.now() - t0 });
+    if (dcOn && !gotWords && !nativePreview) startNativePreview();   // the live words failed: the phone's recogniser instead
+  };
+}
 function startLive() {
   setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); live.textContent = '';
-  dcOn = true; dcT0 = Date.now();   // on from the tap: a stop before the socket is ready still ends it (and keeps the recording)
+  dcOn = true; dcT0 = Date.now(); liveQ = []; liveSent = 0;
   dcBase = inpVal().trim() ? inpVal().trim() + ' ' : '';   // speak more after typing: the words are added
   root.classList.add('arming'); status('Starting the mic\u2026');
+  liveOpen();
   clipStart(function () { root.classList.remove('arming'); if (listening) { status('Listening, speak'); try { navigator.vibrate && navigator.vibrate(15); } catch (e) {} barSync(); } });
-  dcWarm(function () {
-    if (!listening || !dcOn) return;
-    dc.__heardSound = 0;
-    // Hebrew: Workers AI's nova-3 has none, so the phone's own recogniser shows the words (Whisper still makes the final).
-    if (S.lang === 'he') startNativePreview();
-    try { dc.sendJSON({ type: 'mode', dictate: true, lang: S.lang }); } catch (e) {}
-    // "Cannot start call: not connected" right after the socket said it was (Eyal's first tap, 2026-10-13): try again
-    // a few times before giving up; the recording from the tap carries on either way.
-    var tries = 0;
-    var call = function () {
-      dc.startCall().then(function () { logEv('dc_start', { tries: tries }); })
-        .catch(function (e) {
-          if (++tries <= 3 && dcOn && /not connected/i.test(String(e && e.message || e))) { trace('dc_retry', { tries: tries }); return setTimeout(call, 300 * tries); }
-          logEv('dc_start_error', { err: String(e && e.message || e), tries: tries });
-          if (!nativePreview) startNativePreview();   // live words from the phone instead; Whisper still makes the final text
-        });
-    };
-    call();
-  });
 }
 function liveFinish(text, sendIt) {
   if (!dcOn) return;
   dcOn = false; clearTimeout(dcQuiet); stopNativePreview();
-  try { dc.endCall(); } catch (e) {}
   setListening(false); live.textContent = '';
   var t = (dcSaid(text || dcText) || '').trim();
   logEv('dc_final', { chars: t.length, pieces: dcBuf.length, ms: Date.now() - dcT0 });
@@ -1834,7 +1859,8 @@ function liveFinish(text, sendIt) {
   var clipBlob = null;
   clipStop(function (blob) {
     clipBlob = blob;
-    if (S.whisper === 'off' || !blob || blob.size < 2000) return send(t, S.whisper === 'off' ? 'live-only' : 'live', { bytes: blob ? blob.size : 0 });
+    // Whisper always reads the whole recording; a turn where it could not is an error in the trace (it was silent before).
+    if (!blob || blob.size < 2000) { trace('whisper_missing', { why: blob ? 'too short' : 'no recording', bytes: blob ? blob.size : 0 }); return send(t, 'live', { bytes: blob ? blob.size : 0 }); }
     status('Checking the words\u2026');
     var w0 = Date.now();
     // Reviewing before Send (the words are on screen already): wait up to 15 s for Whisper, then keep the live words.
@@ -1843,17 +1869,21 @@ function liveFinish(text, sendIt) {
     var into = !!cInto;   // a page's composer (its Send may be waiting on this): 8 s too
     setTimeout(function () { if (!sendIt && !into) { late = true; status(''); return; } send(t, 'live-timeout', { bytes: blob.size }); }, sendIt || into ? 8000 : 15000);
     lastClip = { blob: blob, live: t, base: base, at: Date.now() };
-    hearText(blob, t).then(function (j) { send(j.text || t, j.how, { bytes: blob.size, whisper_ms: j.whisper_ms, merge_ms: j.merge_ms, whisper: j.whisper, err: j.err, late: late || undefined }); })
-      .catch(function (e) { send(t, 'live-error', { err: String(e) }); });
+    hearText(blob, t).then(function (j) { if (!j.whisper) trace('whisper_missing', { why: j.err || 'no text', bytes: blob.size }); send(j.text || t, j.how, { bytes: blob.size, whisper_ms: j.whisper_ms, merge_ms: j.merge_ms, whisper: j.whisper, err: j.err, late: late || undefined }); })
+      .catch(function (e) { trace('whisper_missing', { why: String(e), bytes: blob.size }); send(t, 'live-error', { err: String(e) }); });
   });
 }
+function liveClose() { var ws = liveWs; liveWs = null; if (ws && ws.readyState === 1) { try { ws.send('close'); } catch (e) {} setTimeout(function () { try { ws.close(); } catch (e) {} }, 1500); } else if (ws) { try { ws.close(); } catch (e) {} } }
 function liveStop(cancel, sendIt) {
-  if (cancel) { dcOn = false; stopNativePreview(); try { dc.endCall(); } catch (e) {} clipStop(null); setListening(false); live.textContent = ''; cInto = null; cMic = null; return; }
-  // Stopped by hand (tap, or releasing the button): send what was heard, including the piece being said.
-  trace('dc_stop', { how: 'hand', pieces: dcBuf.length, interim: dcText, ms: Date.now() - dcT0 });
+  if (cancel) { dcOn = false; stopNativePreview(); liveClose(); clipStop(null); setListening(false); live.textContent = ''; cInto = null; cMic = null; return; }
+  // Stopped by hand: the recorder's last chunk goes to the socket, which then finishes its words (up to 0.8 s).
+  trace('dc_stop', { how: 'hand', pieces: dcBuf.length, interim: dcText, ms: Date.now() - dcT0, sent: liveSent, queued: liveQ.length });
   status('Finishing\u2026');
-  var t = dcText;
-  setTimeout(function () { if (dcOn) liveFinish(t, sendIt); }, 600);
+  try { if (clip && clip.state === 'recording') clip.requestData(); } catch (e) {}
+  setTimeout(function () {
+    if (liveWs && liveWs.readyState === 1) try { liveWs.send('close'); } catch (e) {}
+    setTimeout(function () { if (dcOn) { var t = dcText; liveFinish(t, sendIt); liveClose(); } }, 700);
+  }, 150);
 }
 
 // ---- Conversation (phase 2): mic streamed to the TalkVoice agent (src/talkvoice.ts)

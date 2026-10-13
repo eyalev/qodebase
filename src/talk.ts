@@ -23,6 +23,7 @@ import { isOwner } from './auth';
 import { buildQuestions, candidateProjects, currentSlug, isScaffold, resolve, stateText, type Item, type Proj, type Screen } from './talkdecide';
 import { TALK_JS } from './talkclient';
 import { talkAdmin } from './talkadmin';
+import { recordCost } from './costs';
 import { MERGE_MODEL, mergeMessages, cleanMerge } from './talkmerge';
 import { chatSystem, TOOLS, parseChat, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, PAID_FALLBACK, toGemini, fromGemini, toAnthropic, fromAnthropic, type AnswerModel } from './talkchat';
 import { TALK_VOICE_JS } from './talkvoicejs.gen';
@@ -427,6 +428,63 @@ export function talkModels(env: Env) {
   };
 }
 
+// ---- Live words for dictation (manager, 2026-10-13: tmux-web's way instead of the agents voice kit): the page's own
+// recorder (WebM/Opus chunks, the ones it keeps for Whisper) comes in over a WebSocket and goes straight to Workers AI
+// nova-3 (no gateway: through it the first words came ~7 s late); its words go back as {type: interim|final, text}.
+// No turns, no replies: the page decides when the person is done. Text 'close' = the recording ended.
+const NOVA3_USD_PER_MIN = 0.0092;
+async function sttLive(request: Request, env: Env, ctx: ExecutionContext, who: Who & {}, url: URL) {
+  if ((request.headers.get('upgrade') || '').toLowerCase() !== 'websocket') return json({ error: 'websocket' }, 426);
+  const budget = await talkLog(env).take('stt', who.handle);
+  const pair = new WebSocketPair(); const [client, server] = Object.values(pair); server.accept();
+  if (!budget.ok) { server.send(JSON.stringify({ type: 'error', error: 'budget' })); server.close(1008, 'budget'); return new Response(null, { status: 101, webSocket: client }); }
+  const t0 = Date.now(), lang = url.searchParams.get('lang') || 'en';
+  const names = (await projectsFor(env, who).catch(() => [] as Proj[])).filter((p) => p.mine && !isScaffold(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' '));
+  const keyterm = [...new Set(['qodebase', 'Talk', 'fork', 'merge', 'router', ...names])].slice(0, 40);   // ≤ 40: 65 made the socket refuse (2026-10-13)
+  let up: WebSocket | null = null, bytes = 0, chunks = 0, words = 0, closed = false;
+  const pending: (ArrayBuffer | string)[] = [];
+  const finish = (why: string) => {
+    if (closed) return; closed = true;
+    const sec = (Date.now() - t0) / 1000;
+    log('stt_live', { level: 'info', handle: who.handle, why, sec: Math.round(sec), bytes, chunks, words, keyterms: keyterm.length });
+    ctx.waitUntil(recordCost(env, who.handle, 'voice', '', { usd: (sec / 60) * NOVA3_USD_PER_MIN, covered: false, seconds: Math.round(sec), billing: 'api' }));
+    try { up?.close(1000, why); } catch { /* gone */ }
+    try { server.close(1000, why); } catch { /* gone */ }
+  };
+  server.addEventListener('message', (e: MessageEvent) => {
+    if (typeof e.data === 'string') { if (e.data === 'close') { const m = JSON.stringify({ type: 'CloseStream' }); if (up) up.send(m); else pending.push(m); } return; }
+    bytes += (e.data as ArrayBuffer).byteLength; chunks++;
+    if (up) up.send(e.data as ArrayBuffer); else pending.push(e.data as ArrayBuffer);
+  });
+  server.addEventListener('close', () => { if (up) { try { up.send(JSON.stringify({ type: 'CloseStream' })); } catch { /* gone */ } } setTimeout(() => finish('client closed'), 1500); });
+  ctx.waitUntil((async () => {
+    try {
+      const res: any = await (env.AI as any).run('@cf/deepgram/nova-3', { language: lang === 'en' ? 'en' : 'multi', interim_results: 'true', smart_format: 'true', punctuate: 'true', endpointing: '300', keyterm }, { websocket: true });
+      up = res?.webSocket;
+      if (!up) { log('stt_live_error', { level: 'error', err: 'no socket', status: res?.status }); server.send(JSON.stringify({ type: 'error', error: 'no socket' })); return finish('no socket'); }
+      up.accept();
+      for (const m of pending.splice(0)) up.send(m as any);   // what the page sent while nova-3 was connecting, in order
+      const keep = setInterval(() => { try { up?.send(JSON.stringify({ type: 'KeepAlive' })); } catch { /* gone */ } }, 5000);
+      up.addEventListener('message', (e: MessageEvent) => {
+        let d: any = null; try { d = JSON.parse(String(e.data)); } catch { return; }
+        if (d?.type !== 'Results') return;
+        const text = d.channel?.alternatives?.[0]?.transcript || '';
+        if (text) words++;
+        try { server.send(JSON.stringify({ type: d.is_final ? 'final' : 'interim', text, start: d.start, duration: d.duration })); } catch { /* page gone */ }
+      });
+      up.addEventListener('close', (e: CloseEvent) => { clearInterval(keep); try { server.send(JSON.stringify({ type: 'closed', code: e.code })); } catch { /* gone */ } finish(`nova-3 closed ${e.code}`); });
+      // Never longer than 3 minutes (Talk's dictation cap); the page normally closes first.
+      setTimeout(() => finish('3 min'), 180_000);
+      await new Promise<void>((ok) => { const t = setInterval(() => { if (closed) { clearInterval(t); ok(); } }, 1000); });
+    } catch (e) {
+      log('stt_live_error', { level: 'error', err: String(e), stack: (e as Error)?.stack });
+      try { server.send(JSON.stringify({ type: 'error', error: String(e).slice(0, 200) })); } catch { /* gone */ }
+      finish('error');
+    }
+  })());
+  return new Response(null, { status: 101, webSocket: client });
+}
+
 let etagMemo: string | null = null;
 async function talkEtag() {
   if (!etagMemo) {
@@ -669,6 +727,7 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     return json({ day, clips: list.objects.map((o: any) => ({ key: o.key, bytes: o.size, at: o.uploaded, ...(o.customMetadata || {}) })) });
   }
   if (!who) return json({ error: 'signin', why: 'Sign in to talk to qodebase.' }, 401);
+  if (url.pathname === '/api/talk/stt-live') return sttLive(request, env, _ctx, who, url);
   if (url.pathname === '/api/talk/tts' && request.method === 'GET') return tts(request, env, _ctx, who, url);
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
   if (url.pathname === '/api/talk/decide') return decide(request, env, who, _ctx);
