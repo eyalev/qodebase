@@ -148,6 +148,10 @@ export const DEFAULT_REPLAY_MODEL = 'claude-haiku-5-5';
 /** Watch a run (public, no sign-in): one at a time, 40 a day (judges in many timezones, manager 2026-10-08), 10 a day
  *  and one per 2 min per IP (judges behind one office IP shared 3 a day, review #8, 2026-10-12). */
 export const WATCH = { perDay: 40, perIpDay: 10, ipCooldownS: 120, agents: 6, speed: 2, maxMs: 5 * 60_000 };
+/** Review 2 #8: 150 runs a day through the contest's judging window (2026-10-14..31), 40 otherwise. */
+export const watchPerDay = (now = Date.now()) => { const d = new Date(now).toISOString().slice(0, 10); return d >= '2026-10-14' && d <= '2026-10-31' ? 150 : WATCH.perDay; };
+/** Our own runs (the laptop's admin scripts and tests, the project's owner) are logged but never count against visitors. */
+const internalWatch = (ip: string) => ip === 'admin' || ip.startsWith('owner:');
 export const DEMO_MAX_AGENTS = 24, DEMO_MAX_MS = 20 * 60_000, DEMO_MAX_STORY_AGENTS = 12, BUSY_MAX_TASKS = 400, BUSY_MAX_WAITING = 40;
 const OPEN = (c: Change) => c.state !== 'landed';
 /** A change id's name on the board: what follows the project slug (`eyal.cafe--a3` -> `a3`). */
@@ -1276,7 +1280,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       demo: m.demo || m.flags.publicWatch ? { ...(m.demo || { running: false, agents: 0, speed: 1, startedAt: 0, endsAt: 0 }),
         active: this.#active(m), public: !!m.flags.publicWatch,
         // How many tasks the run has in all ('N of 14 landed'): the story's script; busy mode has no fixed list.
-        tasks: (m.demo?.mode || 'story') === 'busy' ? null : TASKS.length, runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 86400_000).length) } : null,
+        tasks: (m.demo?.mode || 'story') === 'busy' ? null : TASKS.length, runsLeftToday: Math.max(0, watchPerDay(now) - (m.watchLog || []).filter((w) => now - w.at < 86400_000 && !internalWatch(w.ip)).length) } : null,
       flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch, board: !!m.flags.board, keep: !!m.flags.keep },
       run: this.runState(),
       // Estimate vs elapsed (Build): absent when built without an estimate.
@@ -1285,7 +1289,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       // The board (qb7's "who works on what"): working now + finished in the last 30 min + dedupe aliases.
       ...(m.flags.board ? { board: await this.boardWho({ recent: 30 * 60_000 }).then(({ rows, aliases }) => ({ rows, aliases })) } : {}),
       ...(m.flags.budgetUsd ? { budget: { usd: m.flags.budgetUsd, spent: m.spent?.usd ?? 0, halted: !!m.flags.halted, reviewers: m.flags.reviewers || 1 } } : {}),
-      watch: { enabled: !!m.flags.publicWatch, runsToday: (m.watchLog || []).filter((w) => now - w.at < 86400_000).length, maxPerDay: WATCH.perDay, running: this.#active(m) },
+      watch: { enabled: !!m.flags.publicWatch, runsToday: (m.watchLog || []).filter((w) => now - w.at < 86400_000 && !internalWatch(w.ip)).length, maxPerDay: watchPerDay(now), running: this.#active(m) },
       queue: { trains: trains.map((t) => ({ id: t.id, state: t.state, changes: t.changes, startedAt: t.startedAt, endedAt: t.endedAt, checks: t.checks || { ok: false, ms: 0, failures: [] }, mainBefore: t.mainBefore, mainAfter: t.mainAfter, ...(t.note ? { note: t.note } : {}),
         // What was in the train, by name ("Landed: Add teas to the menu (scripted agent 4)").
         items: t.changes.map((id) => ({ id, title: byId.get(id)?.title || id, agent: byId.get(id)?.agent || '', outcome: t.outcomes?.[id] || (t.state === 'testing' ? 'testing' : null) })) })), waiting: m.waiting },
@@ -1343,9 +1347,10 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     const now = Date.now();
     if (m.watchStarting && now - m.watchStarting < 60_000) return { state: 'running', startedAt: m.watchStarting, endsAt: m.watchStarting + WATCH.maxMs, startedNow: false };
     const day = (m.watchLog || []).filter((w) => now - w.at < 86400_000);
-    if (day.length >= WATCH.perDay) return { state: 'limit', reason: 'daily', retryAfterS: Math.ceil((day[0].at + 86400_000 - now) / 1000) };
+    const counted = day.filter((w) => !internalWatch(w.ip));
+    if (!internalWatch(ip) && counted.length >= watchPerDay(now)) return { state: 'limit', reason: 'daily', retryAfterS: Math.ceil((counted[0].at + 86400_000 - now) / 1000) };
     const mine = day.filter((w) => w.ip === ip);
-    if (mine.length >= WATCH.perIpDay) return { state: 'limit', reason: 'ip', retryAfterS: Math.ceil((mine[0].at + 86400_000 - now) / 1000) };
+    if (!internalWatch(ip) && mine.length >= WATCH.perIpDay) return { state: 'limit', reason: 'ip', retryAfterS: Math.ceil((mine[0].at + 86400_000 - now) / 1000) };
     const last = mine[mine.length - 1];
     if (last && now - last.at < WATCH.ipCooldownS * 1000) return { state: 'limit', reason: 'cooldown', retryAfterS: Math.ceil((last.at + WATCH.ipCooldownS * 1000 - now) / 1000) };
     if (m.running) return { state: 'limit', reason: 'cooldown', retryAfterS: 30 };   // the last run's final train is still landing

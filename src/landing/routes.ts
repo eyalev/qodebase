@@ -48,7 +48,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
     // Only cf-connecting-ip: Cloudflare sets it, and fromFront() (index.ts) moves a verified front
     // request's x-qb-ip there. x-qb-ip itself could be sent by anyone straight to projectsbase.dev.
     // The admin (laptop scripts, tests) gets its own bucket so tests don't spend the laptop IP's runs.
-    const ip = me.admin ? 'admin' : request.headers.get('cf-connecting-ip') || 'unknown';
+    const ip = me.admin ? 'admin' : me.handle && me.handle === info.owner ? `owner:${me.handle}` : request.headers.get('cf-connecting-ip') || 'unknown';
     const c = await L.watchClaim(ip) as any;
     // Both spellings: state running|started|limit, why/reason, nextAt/retryAfterS.
     if (c.state === 'limit') return json({ ...c, why: c.reason, nextAt: Date.now() + c.retryAfterS * 1000 });
