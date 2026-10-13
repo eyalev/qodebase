@@ -297,7 +297,7 @@ body.rec .prog,body.rec .notes{display:none}
 
 
 <section class="s" data-t="Hundreds of agents, checked by tests" data-sec="C">
- <div class="claim"><h2>200 agents aimed at the same code: losses did not rise</h2><p>1,385 small coding tasks on one codebase through the real merge queue. A model redid up to 468 collided changes, wrong about as often as fresh work (~5%); at most 2 checks were lost in landing. The queue slowed; lanes per module fixed most of it.</p><span class="src">Cloudflare, 200 cheap-model agents, hidden tests, one run each; 0 lost in landing at 60%. With lanes, change records can still go missing (open)</span></div>
+ <div class="claim"><h2>200 agents aimed at the same code: losses did not rise</h2><p>1,385 small coding tasks on one codebase through the real merge queue. A model redid up to 468 collided changes, wrong about as often as fresh work (~5%); at most 2 checks were lost in landing. The queue slowed; lanes per module fixed most of it.</p><span class="src">Cloudflare, 200 cheap-model agents, hidden tests, one run each; 0 lost in landing at 60%. Change records missing in those lane runs: fixed, 199 of 199 in a check run</span></div>
  <div class="vis"><div class="bars">
   <div class="pair"><h3>Checks lost on main, of 1,385</h3>
    <div class="bar"><div class="l"><span>No overlap</span><b>96</b></div><div class="t"><i class="dim" style="--w:100%;--d:0"></i></div></div>
