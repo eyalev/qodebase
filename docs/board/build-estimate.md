@@ -240,3 +240,10 @@ landing, and the shown minutes went up on 3% of steps. "About K" ran high early 
 17 real). Re-tuning on all four team builds improved the median "about K" error only from 1.35x to 1.26x, so the
 constants stay. qb7's log of the deployed v1 on the same build: the range held the truth at most readings, but
 grew between landings (12-42 min at 1 landed, 2.5 min later 14-49): the reason for v2.
+
+**R8b (2026-10-13; R3's prompt again, Balanced).** It took 2,765 s and $4.41, against a shown 720-1980 s and
+$1.3-4.1: over both, with two known causes. About 10 min was a merge-queue bug (a train run twice, now fixed). The
+Haiku 1-hour cache writes reached 7.7M because contexts compacted near 66k tokens. Even without the bug (~2,165 s) it
+was 9% past the top, so team time at about 10 agents is now 2.0x the sim (was 1.8x). Every team build now falls in
+its time range: R3, R4, R5, the proof build, and R8b without the bug. R8b's cost sits at the top edge of its new range
+($1.6-4.4). If compaction keeps showing up, it belongs in the per-agent cost; one build does not say that yet.

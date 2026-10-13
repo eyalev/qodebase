@@ -536,6 +536,10 @@ export const REAL_BUILDS = [
   // R8 proof build (X1/X4), Balanced: 12 Haiku coders, 3 reviewers, 13 parts: 1,639 s, $3.52. Shown 840-2220 s,
   // $1.8-4.6: inside both, out of sample (the fit above did not see it), so REAL_FIT is unchanged.
   { slug: 'eyal/real-budget-tracker-10', at: '2026-10-13', shape: 'team', bucket: 'large', coders: 12, agents: 12, reviewers: 3, wallS: 1639, usd: 3.52, shown: { wallS: [840, 2220], usd: [1.8, 4.6] } },
+  // R8b, R3's prompt again on Balanced: 2,765 s (~10 min of it a merge-queue bug, a train run twice, fixed), $4.41
+  // (Haiku 1-h cache writes 7.7M, inflated by compaction near 66k tokens), 13 changes, first landing 274 s. Shown
+  // 720-1980 s, $1.3-4.1: over both. Without the bug ~2,165 s, still 9% over the top: team time at 10 agents x1.8 -> x2.0.
+  { slug: 'eyal/real-home-inventory-r8b', at: '2026-10-13', shape: 'team', bucket: 'large', coders: 12, agents: 12, reviewers: 3, wallS: 2765, usd: 4.41, clean: false, shown: { wallS: [720, 1980], usd: [1.3, 4.1] } },
   { slug: 'eyal/real-cafe-site-solo', at: '2026-10-13', shape: 'alone', bucket: 'huge', wallS: 863, usd: 7.55, shown: { wallS: [660, 1800], usd: [5.4, 11.9] } },
 ];
 // The refit on those builds (2026-10-13), applied on top of the lab-calibrated sim. Few points, so each term is
@@ -548,11 +552,11 @@ export const REAL_BUILDS = [
 //   R3 ($2.40 - $1.2 sim) / 9 agents = $0.13, R4 ($3.45 - $2.0) / 10 = $0.145.
 // - long: at 40 agents contexts grew past 100k tokens (5x price): per-agent cost x2.7 (R5: ($17.3 - $2.0) / 40 =
 //   $0.38). Grows linearly from 10 agents (none seen) to 40 (R5). Why contexts grow is open (FINDINGS2 11).
-// - wall: real team walls were 1.8x the sim at 9-10 agents (R3, R4) and 2.3x at 40 (R5: as much time waiting for a
+// - wall: real team walls were 1.8x the sim at 9-10 agents (R3, R4; R8b ~2.0x without its queue bug: x2.0) and 2.3x at 40 (R5: as much time waiting for a
 //   reviewer as working). Same linear ramp.
 // - agents: how many the router opens. It is now told how many it has, so up to min(coders, pieces) (R5 used all
 //   40); R3/R4 used fewer (9 of 12, 10 of 20). Low end = the planner's bundling, high end = min(coders, pieces).
-export const REAL_FIT = { aloneUsdX: 1.83, sessionUsd: 0.54, aloneWallX: 2.1, perAgentUsd: 0.14, longAt40: 2.7, wallAt10: 1.8, wallAt40: 2.3, from: 10, to: 40 };
+export const REAL_FIT = { aloneUsdX: 1.83, sessionUsd: 0.54, aloneWallX: 2.1, perAgentUsd: 0.14, longAt40: 2.7, wallAt10: 2.0, wallAt40: 2.3, from: 10, to: 40 };
 const ramp = (n) => Math.max(0, Math.min(1, (n - REAL_FIT.from) / (REAL_FIT.to - REAL_FIT.from)));
 // alone mid: the one real one-agent build (R2, 149 s); low stays the lab's quickest (58 s).
 export const BUILD_FLOOR = { alone: { low: 50, mid: 150 }, team: { low: 170, mid: 320 } };
