@@ -319,13 +319,24 @@ async function fleetCall(env: Env, path: string, body?: unknown) {
 // The real builds the /runs page lists (only public ones are shown to people who are not the owner).
 const REAL_BUILDS: [string, string][] = [['eyal.real-tip-splitter', 'R2'], ['eyal.real-home-inventory', 'R3'], ['eyal.real-cafe-site', 'R4'], ['eyal.real-course-builder', 'R5 flagship'],
   ['eyal.real-home-inventory-solo', 'R6'], ['eyal.real-cafe-site-solo', 'R7'], ['eyal.real-budget-tracker-10', 'proof build'], ['eyal.real-home-inventory-r8b', 'R8b']];
+// The merged list, memoised per isolate for 8 s (owner and public apart): it fans out to every copy's Run (~180 after S4),
+// 4.6 s cold (qb7, 2026-10-13).
+const runsMemo = new Map<boolean, { at: number; p: Promise<unknown> }>();
 async function runsData(env: Env, me: { handle?: string | null; admin?: boolean }) {
   const owner = !!(me.admin || (me.handle && isOwner(env, me.handle)));
+  const m = runsMemo.get(owner);
+  if (m && Date.now() - m.at < 8000) return m.p;
+  const p = runsDataFresh(env, owner).catch((e) => { runsMemo.delete(owner); throw e; });
+  runsMemo.set(owner, { at: Date.now(), p });
+  return p;
+}
+async function runsDataFresh(env: Env, owner: boolean) {
   const fl = await fleetCall(env, '/runs') as { runs?: { repo: string; runId: string; state: string }[] };
   const rows = fl.runs || [];
-  // The live status of each repo's newest run, merged in.
-  const latest = new Map<string, { runId: string }>(); for (const r of rows) latest.set(r.repo, r);
-  const live = new Map(await Promise.all([...latest.keys()].map(async (repo) => [repo, await fleetCall(env, `/status?repo=${repo}`)] as const)));
+  // The live status of each repo's newest run, merged in: only for runs not finished (an ended run's row already says it all).
+  const latest = new Map<string, { runId: string; state: string }>(); for (const r of rows) latest.set(r.repo, r);
+  const open = [...latest.entries()].filter(([, r]) => !['done', 'stopped', 'ended'].includes(r.state)).map(([repo]) => repo);
+  const live = new Map(await Promise.all(open.map(async (repo) => [repo, await fleetCall(env, `/status?repo=${repo}`)] as const)));
   const fleet = rows.map((r) => { const st = live.get(r.repo) as { runId?: string } | undefined; return st && st.runId === r.runId ? { ...r, live: st } : r; });
   const real = (await Promise.all(REAL_BUILDS.map(async ([slug, label]) => {
     const info = await projectStub(env, slug).info().catch(() => null);
@@ -652,13 +663,16 @@ const app = {
       if (path === '/api/runs' && request.method === 'GET') return json(await runsData(env, me));
       if ((m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(series|timeline)$/)) && request.method === 'GET') return json(await fleetCall(env, `/series?repo=${m[1]}&run=${m[2]}`));
       // /runs v2 drill-down (qb7), public reads, bounded by the fleet (<= 200 rows, offset paging).
-      if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(agents|agent\/(\d{1,5})|slice|change)$/))) {
+      if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(agents|agent\/(\d{1,5})|slice|change|commits|commit\/([0-9a-f]{40}))$/))) {
         const q = url.searchParams, pg = `&offset=${Math.max(0, Number(q.get('offset')) || 0)}&limit=${Math.min(200, Number(q.get('limit')) || 200)}`;
         const base = `repo=${m[1]}&run=${m[2]}`;
         if (m[3] === 'agents') return json(await fleetCall(env, `/agents?${base}${pg}`));
         if (m[4]) return json(await fleetCall(env, `/agents?${base}&agent=${m[4]}${pg}`));
         if (m[3] === 'slice') return json(await fleetCall(env, `/slice?${base}&t=${Number(q.get('t')) || 0}&to=${Number(q.get('to')) || 0}${pg}`));
-        return json(await fleetCall(env, `/file?${base}&path=${encodeURIComponent(String(q.get('file') || '').slice(0, 300))}`));
+        if (m[3] === 'commits') return json(await fleetCall(env, `/commits?${base}&t=${Number(q.get('t')) || 0}&to=${Number(q.get('to')) || 0}${pg}`));
+        if (m[5]) return json(await fleetCall(env, `/commit?${base}&sha=${m[5]}`));
+        const sha = /^[0-9a-f]{40}$/.test(String(q.get('sha') || '')) ? `&sha=${q.get('sha')}` : '';
+        return json(await fleetCall(env, `/file?${base}&path=${encodeURIComponent(String(q.get('file') || '').slice(0, 300))}${sha}`));
       }
       if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/ladder\/([A-Za-z0-9-]{1,20})\/series$/))) return json(await fleetCall(env, `/ladder-series?ladder=${m[1]}`));
       if ((m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/(pause|resume|stop)$/)) && request.method === 'POST') {

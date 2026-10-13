@@ -15,13 +15,23 @@ const log = (event, f = {}) => console.log(JSON.stringify({ ts: new Date().toISO
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { 'content-type': 'application/json' } });
 const MAIN = 'fleet-main';
 // The repo handle has no remote URL (only create/import return it): the namespace's fixed git endpoint.
-const remoteOf = (repo) => `https://887d7234a6b8d65ad355a4f6684cab67.artifacts.cloudflare.net/git/qbfleet/${repo}.git`;
+// S4e: a second namespace (qbfleet2) for repos named fleet-n2-*: does the shared slowdown follow the namespace?
+const N2 = 'fleet-n2-';
+const ns = (env, repo) => (String(repo).startsWith(N2) ? env.ARTIFACTS2 : env.ARTIFACTS);
+const remoteOf = (repo) => `https://887d7234a6b8d65ad355a4f6684cab67.artifacts.cloudflare.net/git/${String(repo).startsWith(N2) ? 'qbfleet2' : 'qbfleet'}/${repo}.git`;
 // Several repos at once (P4): one Run and one Lander per repo; fleet-main keeps its first object names.
 const REPO_RE = /^fleet-[a-z0-9-]{1,40}$/;
 const repoOf = (u, b = {}) => { const r = b.repo || u.searchParams.get('repo') || MAIN; if (!REPO_RE.test(r)) throw new Error('repo: fleet-<name>'); return r; };
 const GATEWAY = 'qodebase-fleet';
 // $ per million tokens [input, output] per model: the FLEET_PRICES var (JSON). An unpriced model is refused, never priced at 0.
 const DAY_CAP_USD = 50;
+// What each copy is a duplicate of (a one-commit snapshot of the upstream at the base sha; never pushed upstream).
+const SOURCES = {
+  main: { name: 'VS Code', upstream: 'microsoft/vscode', root: 'src/vs' }, 'vscode-src': { name: 'VS Code', upstream: 'microsoft/vscode', root: 'src/vs' },
+  'vscode-ext': { name: 'VS Code extensions', upstream: 'microsoft/vscode', root: 'extensions' }, nextjs: { name: 'Next.js', upstream: 'vercel/next.js', root: 'packages' },
+  angular: { name: 'Angular', upstream: 'angular/angular', root: 'packages' }, babel: { name: 'Babel', upstream: 'babel/babel', root: 'packages' },
+  nest: { name: 'NestJS', upstream: 'nestjs/nest', root: 'packages' },
+};
 
 export default {
   async fetch(request, env) {
@@ -39,12 +49,36 @@ export default {
       case '/fork': {
         if (!REPO_RE.test(String(body.from || ''))) return json({ error: 'from: fleet-<name>' }, 400);
         const t0 = Date.now();
-        using src = await env.ARTIFACTS.get(body.from);
+        using src = await ns(env, body.from).get(body.from);
         const f = await src.fork(repo, { description: `fleet copy of ${body.from} (S4 scale runs); never pushed upstream`, defaultBranchOnly: true });
         await budget(env).addRepo(repo);
         return json({ repo, from: body.from, remote: f.remote || remoteOf(repo), ms: Date.now() - t0 });
       }
-      case '/create': { const c = await env.ARTIFACTS.create(repo, { description: String(body.description || 'fleet experiment base (an open-source slice); never pushed upstream').slice(0, 300), setDefaultBranch: 'main' }); using r = await env.ARTIFACTS.get(repo); const t = await r.createToken('write', 3600); await budget(env).addRepo(repo); return json({ repo, remote: c.remote || remoteOf(repo), token: t.plaintext }); }
+      // S4e: a seed in the other namespace, imported server-side from a qbfleet copy over git (a 1-hour read token in the URL).
+      case '/import-copy': {
+        if (!REPO_RE.test(String(body.from || '')) || ns(env, repo) === ns(env, body.from)) return json({ error: 'from: a repo in the other namespace' }, 400);
+        const t0 = Date.now();
+        using src = await ns(env, body.from).get(body.from);
+        const tok = (await src.createToken('read', 3600)).plaintext.split('?')[0];
+        let r;
+        try { r = await ns(env, repo).import({ source: { url: remoteOf(body.from).replace('https://', `https://x:${tok}@`), branch: 'main', depth: 1 }, target: { name: repo, opts: { description: `fleet copy of ${body.from} (S4e); never pushed upstream` } } }); }
+        catch (e) { return json({ error: String(e?.message || e).replaceAll(tok, '***').slice(0, 400) }, 502); }
+        await budget(env).addRepo(repo);
+        return json({ repo, from: body.from, remote: r.remote || remoteOf(repo), ms: Date.now() - t0 });
+      }
+      case '/go': return json(await run(env, repo).go());
+      // A used copy back to its starting commit (main -> body.to, a commit already in the repo; no objects sent).
+      case '/reset': {
+        if (!/^[0-9a-f]{40}$/.test(String(body.to || ''))) return json({ error: 'to: a commit sha' }, 400);
+        using r = await ns(env, repo).get(repo);
+        if (!(await r.readCommit(body.to))) return json({ error: 'no such commit in this repo' }, 400);
+        const tip = (await r.log({ limit: 1 }))[0];
+        if (tip.hash === body.to) return json({ repo, main: tip.hash, already: true });
+        const token = (await r.createToken('write', 600)).plaintext;
+        const p = await push({ remote: remoteOf(repo), token, branch: 'main', oldSha: tip.hash, newSha: body.to, objs: [] });
+        return json({ repo, from: tip.hash, main: p.ok ? body.to : tip.hash, ok: p.ok, detail: p.detail || '' });
+      }
+      case '/create': { const c = await ns(env, repo).create(repo, { description: String(body.description || 'fleet experiment base (an open-source slice); never pushed upstream').slice(0, 300), setDefaultBranch: 'main' }); using r = await ns(env, repo).get(repo); const t = await r.createToken('write', 3600); await budget(env).addRepo(repo); return json({ repo, remote: c.remote || remoteOf(repo), token: t.plaintext }); }
       case '/plan': return json(await plan(env, body));
       case '/start': return json(await run(env, repo).start(body));
       case '/pause': return json(await run(env, repo).pause(body.why || 'paused by hand'));
@@ -68,7 +102,13 @@ export default {
         const a = url.searchParams.get('agent');
         return json(a != null ? await run(env, repo).agentFiles(rid, Number(a), off, lim) : await run(env, repo).agents(rid, off, lim)); }
       case '/slice': return json(await run(env, repo).slice(url.searchParams.get('run'), url.searchParams.get('t'), Math.max(0, Number(url.searchParams.get('offset')) || 0), Math.min(200, Number(url.searchParams.get('limit')) || 200), Number(url.searchParams.get('to')) || null));
-      case '/file': return json(await fileView(env, repo, url.searchParams.get('run'), String(url.searchParams.get('path') || '')));
+      case '/file': return json(await fileView(env, repo, url.searchParams.get('run'), String(url.searchParams.get('path') || ''), url.searchParams.get('sha')));
+      case '/commits': {
+        const t = Number(url.searchParams.get('t')) || 0, to = Number(url.searchParams.get('to')) || 0;
+        const r = await lander(env, repo).commits(url.searchParams.get('run'), t, to || (t ? t + 10000 : 9e15), Math.max(0, Number(url.searchParams.get('offset')) || 0), Math.min(200, Number(url.searchParams.get('limit')) || 200));
+        return json(r ? { runId: url.searchParams.get('run'), t, to, ...r } : { error: 'commits are kept for the newest run of each copy, from 2026-10-13 14:00 UTC on' });
+      }
+      case '/commit': return json(await commitView(env, repo, url.searchParams.get('run'), String(url.searchParams.get('sha') || '')));
       case '/ladder-series': return json(await ladderSeries(env, String(url.searchParams.get('ladder') || '')));
       case '/meta': return json(await run(env, repo).setMeta(String(body.run || ''), body.meta || {}));
       case '/records': return new Response(await run(env, repo).records(url.searchParams.get('run')), { headers: { 'content-type': 'application/x-ndjson' } });
@@ -79,8 +119,12 @@ export default {
       // An object that never goes idle (the Lander's 5 s alarm) keeps running old code after a deploy: restart it.
       case '/restart': { await lander(env, repo).restart().catch(() => {}); await run(env, repo).restart().catch(() => {}); return json({ ok: true }); }
       // One summary row per run, every repo (qb4's results generator).
-      case '/runs': { const repos = [MAIN, ...((await budget(env).repos().catch(() => [])) || []).filter((x) => x !== MAIN)]; const missing = []; const rows = (await Promise.all(repos.map((x) => run(env, x).runs().catch((e) => { missing.push({ repo: x, err: String(e?.message || e).slice(0, 120) }); return []; })))).flat(); return json({ runs: rows, ...(missing.length ? { missing } : {}) }); }
-      case '/clone-token': { using r = await env.ARTIFACTS.get(repo); const t = await r.createToken('read', 3600); return json({ repo, remote: remoteOf(repo), token: t.plaintext }); }
+      case '/runs': { const repos = [MAIN, ...((await budget(env).repos().catch(() => [])) || []).filter((x) => x !== MAIN)]; const missing = []; const rows = (await Promise.all(repos.map((x) => run(env, x).runs().catch((e) => { missing.push({ repo: x, err: String(e?.message || e).slice(0, 120) }); return []; })))).flat(); const kindOf = (r) => r.repo.replace(/^fleet-(n2-)?/, '').replace(/-\d+$/, '');
+        const groups = new Map(); for (const r of rows) if (r.ladder) { const k = `${r.ladder}|${kindOf(r)}`; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
+        for (const g of groups.values()) g.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0)).forEach((r, i) => { r.copyOfKind = i + 1; r.copiesOfKind = g.length; });
+        for (const r of rows) r.source = { ...(SOURCES[kindOf(r)] || SOURCES.main), namespace: r.repo.startsWith(N2) ? 'qbfleet2' : 'qbfleet' };
+        return json({ runs: rows, ...(missing.length ? { missing } : {}) }); }
+      case '/clone-token': { using r = await ns(env, repo).get(repo); const t = await r.createToken('read', 3600); return json({ repo, remote: remoteOf(repo), token: t.plaintext }); }
       default: return json({ error: 'not found' }, 404);
     }
   },
@@ -165,7 +209,7 @@ export class Run extends DurableObject {
 
   async start(opts) {
     const cur = await this.st();
-    if (cur && (cur.state === 'running' || cur.state === 'paused')) return { error: `run ${cur.runId} is ${cur.state}: stop it first` };
+    if (cur && (cur.state === 'running' || cur.state === 'paused' || cur.state === 'held')) return { error: `run ${cur.runId} is ${cur.state}: stop it first` };
     const b = await budget(this.env).check();
     if (!b.ok) return { error: b.why };
     const cfg = { ...DEFAULTS, ...opts, pause: { ...DEFAULTS.pause, ...(opts.pause || {}) } };
@@ -190,7 +234,8 @@ export class Run extends DurableObject {
     const pick = files.slice(off, off + Math.max(1, Math.min(files.length, Number(cfg.maxFiles) || 10)));
     const runId = `f${Date.now().toString(36)}`;
     pick.forEach((f, i) => this.sql.exec(`INSERT INTO q (run, i, path, hash) VALUES (?, ?, ?, ?)`, runId, i, f.path, f.hash));
-    const s = { runId, state: 'running', cfg, base: p.base, startedAt: Date.now(), files: pick.length, next: 0, usd: 0, calls: 0,
+    // hold: list and queue now, start the agents on /go (S4e: copies started together; S4d's starts spread over 98 s).
+    const s = { runId, state: cfg.hold ? 'held' : 'running', cfg, base: p.base, startedAt: Date.now(), files: pick.length, next: 0, usd: 0, calls: 0,
       counts: { queued: pick.length, model: 0, verify: 0, ready: 0, landed: 0, skipped: 0, verify_fail: 0, model_error: 0, rate_limited: 0, rejected: 0 },
       recent: [], perMin: {}, pauses: [], agentsDone: 0 };
     await this.save(s);
@@ -200,14 +245,22 @@ export class Run extends DurableObject {
     // Agents start from this object's alarm in batches: started one by one inside the request, F2's 100-agent start
     // outlived the request and only ~8 agents began.
     s.agentsStarted = 0; await this.save(s);
-    await this.ctx.storage.setAlarm(Date.now() + 100);
+    if (!cfg.hold) await this.ctx.storage.setAlarm(Date.now() + 100);
     log('run_started', { runId, agents: cfg.agents, files: pick.length, model: cfg.model, budgetUsd: cfg.budgetUsd });
     return { runId, agents: cfg.agents, files: pick.length, base: p.base };
   }
 
+  async go() {
+    const s = await this.st();
+    if (!s || s.state !== 'held') return { error: `nothing held (state ${s?.state || 'none'})` };
+    s.state = 'running'; s.startedAt = Date.now(); await this.save(s);
+    await this.ctx.storage.setAlarm(Date.now() + 10);
+    return { runId: s.runId, startedAt: s.startedAt };
+  }
+
   async alarm() {
     const s = await this.st();
-    if (!s || s.state === 'stopped' || (s.agentsStarted || 0) >= s.cfg.agents) return;
+    if (!s || s.state === 'stopped' || s.state === 'held' || (s.agentsStarted || 0) >= s.cfg.agents) return;
     const from = s.agentsStarted || 0, to = Math.min(s.cfg.agents, from + 50);
     await Promise.all(Array.from({ length: to - from }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN, Math.max(1, Math.min(10, Number(s.cfg.batch) || 1)))));
     s.agentsStarted = to; await this.save(s);
@@ -413,21 +466,22 @@ export class Run extends DurableObject {
     const meta = (await this.ctx.storage.get(`meta:${id}`)) || {};
     const root = meta.root || 'src/vs';
     const by = new Map(); const slot = (t) => { const k = Math.floor(t / 10000) * 10000; if (!by.has(k)) by.set(k, { t: k, calls: {}, r429: 0, landed: 0, lanes: {}, usd: 0, waits: [], agents: new Set(), ready: 0, files: 0, door: { pushes: 0, files: 0, ms: 0 } }); return by.get(k); };
-    for (const r of this.sql.exec(`SELECT at, ms, model, status, usd, agent FROM rec WHERE run = ?`, id).toArray()) {
+    for (const r of this.sql.exec(`SELECT at, ms, model, status, usd, agent, t_read FROM rec WHERE run = ?`, id).toArray()) {
       // active = agents that worked in the slice (a file's work spans at-ms..at); ready = files finished with a change.
       for (let t = Math.floor((r.at - (r.ms || 0)) / 10000) * 10000; t <= r.at; t += 10000) slot(t).agents.add(r.agent);
-      const x = slot(r.at); x.files++;
+      const x = slot(r.at); x.files++; if (r.t_read != null) (x.reads ||= []).push(r.t_read);
       if (r.status === 'ready' || r.status === 'landed') x.ready++;
       if (r.status === 'skipped') continue;
       x.calls[r.model] = (x.calls[r.model] || 0) + 1; if (String(r.status).startsWith('rate_limited')) x.r429++; x.usd += r.usd || 0;
     }
-    for (const p of await lander(this.env, meta.repo || s?.cfg.repo || MAIN).pushes(id).catch(() => [])) { const d = slot(p.at).door; d.pushes++; d.files += p.files; d.ms = Math.max(d.ms, p.ms); }
+    for (const p of await lander(this.env, meta.repo || s?.cfg.repo || MAIN).pushes(id).catch(() => [])) { const d = slot(p.at).door; d.pushes++; d.files += p.files; d.bytes = (d.bytes || 0) + (p.bytes || 0); d.ms = Math.max(d.ms, p.ms); }
     for (const r of this.sql.exec(`SELECT file, at, landed_at FROM rec WHERE run = ? AND landed_at IS NOT NULL`, id).toArray()) { const x = slot(r.landed_at); x.landed++; const ln = laneOf(r.file, root); x.lanes[ln] = (x.lanes[ln] || 0) + 1; x.waits.push(r.landed_at - r.at); }
     const samp = new Map(this.sql.exec(`SELECT * FROM samp WHERE run = ?`, id).toArray().map((r) => [r.t, { waiting: r.waiting, atModel: r.at_model, readyToLand: r.ready }]));
     const series = [...by.values()].sort((a, b) => a.t - b.t).map((x) => {
       const top = Object.entries(x.lanes).sort((a, b) => b[1] - a[1]); const lanes = Object.fromEntries(top.slice(0, 10)); const other = top.slice(10).reduce((n, [, v]) => n + v, 0); if (other) lanes.other = other;
       const w = x.waits.sort((a, b) => a - b);
-      return { t: x.t, active: x.agents.size, files: x.files, ready: x.ready, door: x.door, calls: x.calls, r429: x.r429, landed: x.landed, lanes, usd: Math.round(x.usd * 1e5) / 1e5, landWaitP90: w.length ? Math.round(w[Math.floor(w.length * 0.9)] / 1000) : null, queue: samp.get(x.t) || null };
+      const rd = (x.reads || []).sort((a, b) => a - b);
+      return { t: x.t, active: x.agents.size, files: x.files, ready: x.ready, door: x.door, readP50: rd.length ? rd[Math.floor(rd.length / 2)] : null, calls: x.calls, r429: x.r429, landed: x.landed, lanes, usd: Math.round(x.usd * 1e5) / 1e5, landWaitP90: w.length ? Math.round(w[Math.floor(w.length * 0.9)] / 1000) : null, queue: samp.get(x.t) || null };
     });
     const cur = s && s.runId === id ? s : null;
     const marks = (cur?.pauses || meta.pauses || []).map((p) => ({ at: p.at, kind: p.why === 'resumed' ? 'resume' : p.auto ? 'auto_pause' : 'pause', why: p.why }));
@@ -474,15 +528,18 @@ export class Run extends DurableObject {
 const pickC = (tg, c) => Object.fromEntries(tg.filter((t) => typeof c?.[t.name] === 'string').map((t) => [t.name, c[t.name]]));
 /** One file: its records, and the diff of the comments it got (rebuilt from the base blob + the stored comments; for cache
  *  runs before comments were stored, from the cache by the blob's hash). */
-async function fileView(env, repo, runId, path) {
+async function fileView(env, repo, runId, path, sha = null) {
   const f = await run(env, repo).fileRec(runId, path);
   if (!f.rows.length) return { error: 'no such file in this run' };
   const last = f.rows.at(-1);
-  const out = { ...fileRow(last), tries: f.rows.length, commit: last.commit_sha || null, base: f.base, blob: f.hash, diff: null };
+  const out = { ...fileRow(last), tries: f.rows.length, commit: last.commit_sha || null, base: f.base, blob: f.hash, note: null, diff: null };
+  // The change record from the commit's git note (runs from 2026-10-13 ~14:00 UTC on).
+  const cn = (sha || last.commit_sha) ? await lander(env, repo).commitNote(runId, sha || last.commit_sha).catch(() => null) : null;
+  if (cn) { const n = cn.note.split('\n').filter(Boolean).map((l) => JSON.parse(l)).find((x) => x.file === path); if (n) out.note = { ...n, landedAt: last.landed_at || null }; }
   let c = last.cmt ? JSON.parse(last.cmt) : null;
   if (!c && last.model === 'cache' && f.hash) c = (await env.FLEET_CACHE.get(f.hash, 'json'))?.c || null;
   if (c && f.hash && (last.status === 'ready' || last.status === 'landed')) {
-    using r = await env.ARTIFACTS.get(repo);
+    using r = await ns(env, repo).get(repo);
     const blob = await r.readBlob(f.hash);
     if (blob) {
       const text = new TextDecoder().decode(await blob.arrayBuffer());
@@ -504,6 +561,15 @@ async function fileView(env, repo, runId, path) {
   return out;
 }
 
+/** One commit: message, files (with status), and its git note. */
+async function commitView(env, repo, runId, sha) {
+  if (!/^[0-9a-f]{40}$/.test(sha)) return { error: 'sha: 40 hex' };
+  const c = await lander(env, repo).commitNote(runId, sha);
+  if (!c) return { error: 'not a commit of this run (commits are kept for the newest run of each copy)' };
+  const notes = c.note.split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  return { sha, at: c.at, lane: c.lane, message: c.message, files: notes.map((n) => ({ file: n.file, status: 'landed', agent: n.agent, source: n.source })), notes };
+}
+
 /** A ladder step's copies summed per slice (qb7): same shape as /series, plus copies (runs active in the slice). */
 async function ladderSeries(env, ladder) {
   if (!ladder) return { error: 'ladder required' };
@@ -515,7 +581,7 @@ async function ladderSeries(env, ladder) {
     const y = by.get(x.t) || { t: x.t, copies: 0, active: 0, files: 0, ready: 0, landed: 0, r429: 0, usd: 0, calls: {}, door: { pushes: 0, files: 0, ms: 0 }, landWaitP90: null };
     y.copies++; y.active += x.active || 0; y.files += x.files || 0; y.ready += x.ready || 0; y.landed += x.landed || 0; y.r429 += x.r429 || 0; y.usd += x.usd || 0;
     for (const [m, n] of Object.entries(x.calls || {})) y.calls[m] = (y.calls[m] || 0) + n;
-    if (x.door) { y.door.pushes += x.door.pushes; y.door.files += x.door.files; y.door.ms = Math.max(y.door.ms, x.door.ms); }
+    if (x.door) { y.door.pushes += x.door.pushes; y.door.files += x.door.files; y.door.bytes = (y.door.bytes || 0) + (x.door.bytes || 0); y.door.ms = Math.max(y.door.ms, x.door.ms); }
     if (x.landWaitP90 != null) y.landWaitP90 = Math.max(y.landWaitP90 ?? 0, x.landWaitP90);   // the worst copy's p90
     by.set(x.t, y);
   }
@@ -535,7 +601,7 @@ const PRICES_OF = (env) => { try { return JSON.parse(env.FLEET_PRICES || '{}'); 
 // Not the code people use: tests, fixtures, build output, vendored deps.
 const SKIP_DIRS = new Set(['test', 'tests', '__tests__', 'fixtures', '__fixtures__', 'testing', 'node_modules', 'compiled', 'dist', 'out', 'e2e', 'integrationtest', 'test-fixtures']);
 async function listFiles(env, repoName = MAIN, root = 'src/vs') {
-  using r = await env.ARTIFACTS.get(repoName);
+  using r = await ns(env, repoName).get(repoName);
   const tip = (await r.log({ limit: 1 }))[0];
   const out = [];
   let h = tip.treeHash;
@@ -580,12 +646,16 @@ export class Agent extends DurableObject {
       const rs = [];
       for (const f of n.files) {
         const r = await this.work(f, f.model, f.provider, repoName).catch((e) => ({ file: f.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
-        r.model = f.model; r.slot = f.slot; rs.push(r);
+        r.model = f.model; r.slot = f.slot; r.finishedAt = Date.now(); rs.push(r);
       }
       const ready = rs.filter((r) => r.status === 'ready');
       try {
         // Records first, then the Lander: a fast land before the record exists was lost (S4d: 8 files on nest-6 stayed 'ready').
-        const items = ready.map((r) => ({ lane: laneOf(r.file, n.root), path: r.file, text: r.text, at: Date.now() }));
+        // meta = the change record that goes into the lane commit's git note.
+        const items = ready.map((r) => ({ lane: laneOf(r.file, n.root), path: r.file, text: r.text, at: Date.now(),
+          meta: { intent: `add doc comments to ${r.file}`, agent: i, source: r.model === 'cache' ? 'cache' : 'model', model: r.model, comments: r.comments || 0,
+            verify: { ok: true, how: `same code tokens before and after (${r.vTokens || '?'} syntax-tree tokens, comments and whitespace skipped), no new parse errors` },
+            picked: r.finishedAt - (r.ms || 0), finished: r.finishedAt } }));
         for (const r of rs) delete r.text;
         rs[0].infraErrs = (await this.ctx.storage.get('infraErrs')) || 0;
         await R.doneMany(runId, i, rs); await this.ctx.storage.put('infraErrs', 0);
@@ -603,7 +673,7 @@ export class Agent extends DurableObject {
   }
   async work(file, model, provider = 'workers-ai', repoName = MAIN) {
     const t0 = Date.now();
-    using repo = await this.env.ARTIFACTS.get(repoName);
+    using repo = await ns(this.env, repoName).get(repoName);
     const blob = await repo.readBlob(file.hash);
     if (!blob) return { file: file.path, status: 'model_error', reason: 'blob not found', ms: Date.now() - t0 };
     const text = new TextDecoder().decode(await blob.arrayBuffer());
@@ -619,7 +689,7 @@ export class Agent extends DurableObject {
       const v = verify(file.path, text, next);
       const tVerify = Date.now() - tV;
       if (!v.ok) return { file: file.path, status: 'verify_fail', reason: v.why, ms: Date.now() - t0, tRead, tVerify };
-      return { file: file.path, status: 'ready', text: next, comments: inserted, cmt: pickC(tg, hit.c), ms: Date.now() - t0, usd: 0, tRead, tModel: 0, tVerify };
+      return { file: file.path, status: 'ready', text: next, comments: inserted, cmt: pickC(tg, hit.c), vTokens: v.tokens, ms: Date.now() - t0, usd: 0, tRead, tModel: 0, tVerify };
     }
     let res;
     if (provider === 'google-ai-studio') {
@@ -651,20 +721,27 @@ export class Agent extends DurableObject {
     if (!inserted) return { file: file.path, status: 'rejected', reason: 'no comment survived cleaning', ms: Date.now() - t0, usd, tin, tout };
     const v = verify(file.path, text, next);
     if (!v.ok) return { file: file.path, status: 'verify_fail', reason: v.why, ms: Date.now() - t0, usd, tin, tout };
-    return { file: file.path, status: 'ready', text: next, comments: inserted, cmt: pickC(tg, answer), ms: Date.now() - t0, usd, tin, tout, tRead };
+    return { file: file.path, status: 'ready', text: next, comments: inserted, cmt: pickC(tg, answer), vTokens: v.tokens, ms: Date.now() - t0, usd, tin, tout, tRead };
   }
 }
 
 // ---- Lander: lanes by folder, one commit per lane, pushed in order ---------------------------
 export class Lander extends DurableObject {
   // S4a: pending files were one 'lanes' object rewritten per file (and a key per text); now SQL rows, one insert per file.
-  tables() { this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS pend (path TEXT PRIMARY KEY, lane TEXT, at INT, text TEXT)`); this.ctx.storage.sql.exec(`CREATE INDEX IF NOT EXISTS pend_lane ON pend (lane, at)`); }
+  tables() {
+    const q = (x) => this.ctx.storage.sql.exec(x);
+    q(`CREATE TABLE IF NOT EXISTS pend (path TEXT PRIMARY KEY, lane TEXT, at INT, text TEXT)`); q(`CREATE INDEX IF NOT EXISTS pend_lane ON pend (lane, at)`);
+    try { q(`ALTER TABLE pend ADD COLUMN meta TEXT`); } catch {}
+    // The commits this run put on main, each with its git note (one JSON line per file).
+    q(`CREATE TABLE IF NOT EXISTS cmt (sha TEXT PRIMARY KEY, at INT, lane TEXT, message TEXT, files INT, note TEXT)`); q(`CREATE INDEX IF NOT EXISTS cmt_at ON cmt (at)`);
+    q(`CREATE TABLE IF NOT EXISTS push (at INT, ms INT, files INT, lanes INT, commit_sha TEXT, bytes INT)`);
+  }
   async begin(runId, base, repo = MAIN) { await this.ctx.storage.deleteAll(); this.tables(); await this.ctx.storage.put({ runId, base, repo, landed: 0, commits: 0, pushes: 0, stale: 0, errors: [] }); }
   async add(runId, lane, path, text, at) { return this.addMany(runId, [{ lane, path, text, at }]); }
   async addMany(runId, items) {
     if ((await this.ctx.storage.get('runId')) !== runId) return;
     this.tables();
-    for (const x of items) this.ctx.storage.sql.exec(`INSERT OR REPLACE INTO pend (path, lane, at, text) VALUES (?, ?, ?, ?)`, x.path, x.lane, x.at, x.text);
+    for (const x of items) this.ctx.storage.sql.exec(`INSERT OR REPLACE INTO pend (path, lane, at, text, meta) VALUES (?, ?, ?, ?, ?)`, x.path, x.lane, x.at, x.text, x.meta ? JSON.stringify(x.meta) : null);
     if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + 5000);
   }
   async restart() { await this.ctx.storage.setAlarm(Date.now() + 2000); await this.ctx.storage.sync(); this.ctx.abort('restart on the deployed code'); }
@@ -681,29 +758,43 @@ export class Lander extends DurableObject {
   /** One commit per lane on top of main's tip, all pushed together; a stale tip is re-read and the batch rebuilt. */
   async land(runId, keys) {
     const repoName = (await this.ctx.storage.get('repo')) || MAIN;
-    using repo = await this.env.ARTIFACTS.get(repoName);
+    using repo = await ns(this.env, repoName).get(repoName);
     const token = (await repo.createToken('write', 600)).plaintext;
     for (let attempt = 0; attempt < 3; attempt++) {
       const tip = (await repo.log({ limit: 1 }))[0];
       const objs = new Objects();
       let parent = tip.hash, tree = tip.treeHash;
-      const landedFiles = [], commitOf = {};
+      const landedFiles = [], commitOf = {}, made = [];
       for (const k of keys) {
-        const items = this.ctx.storage.sql.exec(`SELECT path, text FROM pend WHERE lane = ? ORDER BY at LIMIT 200`, k).toArray();
+        const items = this.ctx.storage.sql.exec(`SELECT path, text, meta FROM pend WHERE lane = ? ORDER BY at LIMIT 200`, k).toArray();
         tree = await overlay(repo, objs, tree, items.map((x) => ({ path: x.path, sha: objs.blob(x.text) })));
-        parent = objs.commit(tree, [parent], `docs(${k}): comments for ${items.length} file${items.length === 1 ? '' : 's'}\n\nqodebase fleet run ${runId}; code unchanged (verified per file).`, Date.now(), 'qodebase fleet <fleet@qodebase.app>');
+        const message = `docs(${k}): comments for ${items.length} file${items.length === 1 ? '' : 's'}\n\nqodebase fleet run ${runId}; code unchanged (verified per file).`;
+        const at = Date.now();
+        parent = objs.commit(tree, [parent], message, at, 'qodebase fleet <fleet@qodebase.app>');
+        // The commit's git note: the change record of every file in it (qodebase's refs/notes/qodebase, like the merge queue).
+        const note = items.map((x) => JSON.stringify({ file: x.path, run: runId, ...(x.meta ? JSON.parse(x.meta) : {}), committed: at })).join('\n') + '\n';
+        made.push({ sha: parent, at, lane: k, message, files: items.length, note });
         landedFiles.push(...items.map((x) => x.path));
         for (const x of items) commitOf[x.path] = parent;
       }
+      // Notes: the old notes tree (flat: one blob per commit) plus this push's notes, as one new notes commit.
+      const NOTES = 'refs/notes/qodebase';
+      const nt = (await repo.log({ ref: NOTES, limit: 1 }).catch(() => []))[0];
+      const old = nt ? await repo.readTree(nt.treeHash).catch(() => []) : [];
+      const entries = new Map(old.filter((e) => e.type === 'blob').map((e) => [e.name, { name: e.name, mode: '100644', sha: e.hash }]));
+      for (const c of made) entries.set(c.sha, { name: c.sha, mode: '100644', sha: objs.blob(c.note) });
+      const notesCommit = objs.commit(objs.treeOf([...entries.values()]), nt ? [nt.hash] : [], `Notes added by qodebase fleet (run ${runId})`, Date.now(), 'qodebase fleet <fleet@qodebase.app>');
       const tPush = Date.now();
-      const p = await push({ remote: remoteOf(repoName), token, branch: 'main', oldSha: tip.hash, newSha: parent, objs: [...objs.map.values()] });
+      const p = await push({ remote: remoteOf(repoName), token, branch: 'main', oldSha: tip.hash, newSha: parent, objs: [...objs.map.values()],
+        extra: [{ ref: NOTES, oldSha: nt?.hash || '0'.repeat(40), newSha: notesCommit }] });
       await this.ctx.storage.put('pushes', ((await this.ctx.storage.get('pushes')) || 0) + 1);
       if (p.ok) {
         // Only the landed rows go: files added while this batch was pushing stay (F2 at 10 agents lost 9 that way once).
         for (const f of landedFiles) this.ctx.storage.sql.exec(`DELETE FROM pend WHERE path = ?`, f);
         await this.ctx.storage.put({ landed: ((await this.ctx.storage.get('landed')) || 0) + landedFiles.length, commits: ((await this.ctx.storage.get('commits')) || 0) + keys.length });
-        this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS push (at INT, ms INT, files INT, lanes INT, commit_sha TEXT)`);
-        this.ctx.storage.sql.exec(`INSERT INTO push VALUES (?,?,?,?,?)`, Date.now(), Date.now() - tPush, landedFiles.length, keys.length, parent);
+        for (const c of made) this.ctx.storage.sql.exec(`INSERT OR REPLACE INTO cmt (sha, at, lane, message, files, note) VALUES (?,?,?,?,?,?)`, c.sha, c.at, c.lane, c.message, c.files, c.note);
+        if (!p.refs?.[NOTES]) log('notes_not_pushed', { runId, repo: repoName });
+        this.ctx.storage.sql.exec(`INSERT INTO push (at, ms, files, lanes, commit_sha, bytes) VALUES (?,?,?,?,?,?)`, Date.now(), Date.now() - tPush, landedFiles.length, keys.length, parent, p.bytes || 0);
         await run(this.env, repoName).landed(runId, landedFiles, Date.now(), commitOf);
         log('landed', { runId, lanes: keys.length, files: landedFiles.length, commit: parent.slice(0, 10) });
         return;
@@ -716,8 +807,21 @@ export class Lander extends DurableObject {
   /** The door: every push of this run (the Lander is per repo and begins fresh per run). */
   async pushes(runId) {
     if ((await this.ctx.storage.get('runId')) !== runId) return [];
-    this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS push (at INT, ms INT, files INT, lanes INT, commit_sha TEXT)`);
+    this.tables();
     return this.ctx.storage.sql.exec(`SELECT * FROM push ORDER BY at`).toArray();
+  }
+  /** Commits this run put on main (newest run only: the Lander begins fresh per run). */
+  async commits(runId, t0, t1, offset = 0, limit = 200) {
+    if ((await this.ctx.storage.get('runId')) !== runId) return null;
+    this.tables();
+    const rows = this.ctx.storage.sql.exec(`SELECT sha, at, lane, message, files FROM cmt WHERE at >= ? AND at < ? ORDER BY at LIMIT ? OFFSET ?`, t0, t1, limit, offset).toArray();
+    const total = this.ctx.storage.sql.exec(`SELECT COUNT(*) AS n FROM cmt WHERE at >= ? AND at < ?`, t0, t1).toArray()[0]?.n || 0;
+    return { total, commits: rows.map((r) => ({ ...r, message: r.message.split('\n')[0] })) };
+  }
+  async commitNote(runId, sha) {
+    if ((await this.ctx.storage.get('runId')) !== runId) return null;
+    this.tables();
+    return this.ctx.storage.sql.exec(`SELECT sha, at, lane, message, files, note FROM cmt WHERE sha = ?`, sha).toArray()[0] || null;
   }
   async summary() {
     const g = await this.ctx.storage.get(['landed', 'commits', 'pushes', 'stale', 'errors']);

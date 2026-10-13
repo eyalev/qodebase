@@ -90,8 +90,10 @@ export async function pack(objects) {
 function pktLine(s) { const b = enc.encode(s); return concat([enc.encode((b.length + 4).toString(16).padStart(4, '0')), b]); }
 
 // Push `newSha` to refs/heads/<branch> (expected current value `oldSha`), sending `objs`.
-export async function push({ remote, token, branch = 'main', oldSha, newSha, objs }) {
-  const body = concat([pktLine(`${oldSha} ${newSha} refs/heads/${branch}\0report-status agent=qodebase-sim\n`), enc.encode('0000'), await pack(objs)]);
+// extra: more refs in the same push [{ref, oldSha, newSha}] (the fleet's git notes); their results come back in `refs`.
+export async function push({ remote, token, branch = 'main', oldSha, newSha, objs, extra = [] }) {
+  const lines = [pktLine(`${oldSha} ${newSha} refs/heads/${branch}\0report-status agent=qodebase-sim\n`), ...extra.map((x) => pktLine(`${x.oldSha} ${x.newSha} ${x.ref}\n`))];
+  const body = concat([...lines, enc.encode('0000'), await pack(objs)]);
   const res = await fetch(`${remote.replace(/\/$/, '')}/git-receive-pack`, {
     method: 'POST',
     headers: {
@@ -104,5 +106,6 @@ export async function push({ remote, token, branch = 'main', oldSha, newSha, obj
   });
   const text = await res.text();
   const ok = res.ok && /unpack ok/.test(text) && new RegExp(`ok refs/heads/${branch}`).test(text);
-  return { ok, status: res.status, bytes: body.length, detail: ok ? '' : text.slice(0, 300) };
+  const refs = Object.fromEntries(extra.map((x) => [x.ref, new RegExp(`ok ${x.ref.replace(/[/.]/g, '\\$&')}`).test(text)]));
+  return { ok, status: res.status, bytes: body.length, refs, detail: ok ? '' : text.slice(0, 300) };
 }
