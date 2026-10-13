@@ -1880,7 +1880,8 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
     (function again() {
       var n = talkScan(document).length, acts = (window.__talkActions || []).length;
       steady = n === lastN ? steady + 1 : 0; lastN = n;
-      if ((acts && steady >= 2) || waited >= 20000) { trace('then', { text: th.text, waited: waited, items: n, actions: acts }); lastSpoken = false; submit(th.text); return; }
+      // A page that keeps redrawing (/runs) never holds still: its actions plus 6 s is enough.
+      if ((acts && (steady >= 2 || waited >= 6000)) || waited >= 20000) { trace('then', { text: th.text, waited: waited, items: n, actions: acts }); lastSpoken = false; submit(th.text); return; }
       waited += 500; setTimeout(again, 500);
     })();
   }
