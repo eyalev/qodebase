@@ -597,7 +597,7 @@
   function estTop() {
     if (!D.estimate || !window.qbEstBar) return '';
     if (!document.getElementById('estbar-css')) { const st = document.createElement('style'); st.id = 'estbar-css'; st.textContent = window.QB_ESTBAR_CSS; document.head.appendChild(st); }
-    return window.qbEstBar(D.estimate, D.progress, Date.now(), D.billing || null);
+    return window.qbEstBar(D.estimate, D.progress, Date.now(), D.billing || null, D.build || null);
   }
   // ---- One screen (Eyal, 2026-10-12: "everything should fit inside one phone screen ... WITHOUT SCROLLING") --------
   // A status strip, the pipeline as the picture (one chip per change, moving Working -> Review -> In line -> Landed),

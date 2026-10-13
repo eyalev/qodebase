@@ -395,7 +395,7 @@ ${d?.url ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.ur
 <pre style="background:var(--card);border-radius:12px;padding:12px;overflow:auto;font:12px/1.5 'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word">${esc(d?.log || 'No log.')}</pre>`);
 }
 
-export function settingsPage(u: { handle: string; email: string; apiKeyTail?: string; apiKeyCheckedAt?: number; apiKeyKind?: 'plan' | 'api'; keyFailed?: { at: number; why: string }; model?: string }, owner: boolean, projects: number, welcome: boolean, cli: { id: string; label: string; createdAt: number; usedAt: number }[] = []) {
+export function settingsPage(u: { handle: string; email: string; apiKeyTail?: string; apiKeyCheckedAt?: number; apiKeyKind?: 'plan' | 'api'; keyFailed?: { at: number; why: string }; notify?: { done?: boolean; decisions?: boolean }; model?: string }, owner: boolean, projects: number, welcome: boolean, cli: { id: string; label: string; createdAt: number; usedAt: number }[] = []) {
   const keyBlock = owner
     ? `<p class="desc">Your agents run on this instance's Claude subscription. No API key needed.</p>`
     // The Claude-plan onboarding (src/connectplan.ts): connected state, Replace, Remove, or the three steps.
@@ -408,17 +408,33 @@ ${welcome ? `<p class="desc">You are signed in. ${[projects ? '' : 'Pick the nam
 ${projects ? `<p class="note">You own ${projects} project${projects > 1 ? 's' : ''} under this name, so it stays.</p>` : '<div class="bar"><button class="btn">Save name</button></div>'}</form>
 <h2>Claude for your agents</h2>${keyBlock}
 <p class="err" id="msg" role="status"></p>
+<h2>Notifications</h2>
+<div class="ntf" id="ntf">
+${[['done', 'When a build finishes', 'Your app is ready to try.'], ['decisions', 'When an agent needs a decision', 'Only for real decisions, like a secret or money.']].map(([k, t, d]) => `<div class="ntf-r"><span class="ntf-l" id="ntf-${k}"><b>${t}</b><span>${d}</span></span><button type="button" role="switch" class="ntf-sw" data-ntf="${k}" aria-checked="${u.notify?.[k as 'done' | 'decisions'] !== false}" aria-labelledby="ntf-${k}"><i></i></button></div>`).join('')}
+<p class="ntf-where" id="ntf-where">They show in your Inbox.</p></div>
 <h2>Command line</h2>
 <p class="desc">${cli.length ? `Signed-in CLIs (last used):` : `No CLI signed in.`} <a href="/cli">Install qb</a> to use qodebase from a terminal or an agent.</p>
 ${cli.map((t) => `<div class="actions cli-t"><span><b>${esc(t.label)}</b> ${freshTag(t.usedAt, Date.now(), STEPS)}</span><button type="button" class="chipbtn" data-revoke="${esc(t.id)}">Revoke</button></div>`).join('')}
 <h2>Account</h2><p class="desc">Signed in as ${esc(u.email)}.</p><div class="actions"><a class="chipbtn" href="/logout">Sign out</a></div>
-<style>.field{width:100%;font:16px 'Geist',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}.cli-t{align-items:center;justify-content:space-between;margin:8px 0}.cli-t span{display:flex;gap:8px;align-items:center;min-width:0}.err{min-height:1.4em;color:var(--dim);font-size:15px;margin:8px 0 0}.err.bad{color:var(--fg);font-weight:600}</style>
+<style>.field{width:100%;font:16px 'Geist',sans-serif;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}.cli-t{align-items:center;justify-content:space-between;margin:8px 0}.cli-t span{display:flex;gap:8px;align-items:center;min-width:0}.ntf{display:grid;gap:4px}.ntf-r{display:flex;align-items:center;gap:12px;min-height:56px;border-bottom:1px solid var(--line)}.ntf-l{flex:1;display:grid;gap:2px}.ntf-l b{font-weight:500;font-size:16px}.ntf-l span{font-size:14px;color:var(--dim)}
+.ntf-sw{flex:none;position:relative;width:52px;height:32px;border-radius:16px;border:0;background:var(--line);box-shadow:inset 0 0 0 1px var(--dim);cursor:pointer;padding:0;transition:background-color .15s}.ntf-sw i{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--bg);box-shadow:0 1px 2px rgb(0 0 0/.25);transition:transform .15s}
+.ntf-sw[aria-checked=true]{background:var(--acc);box-shadow:none}.ntf-sw[aria-checked=false] i{background:var(--dim)}.ntf-sw[aria-checked=true] i{transform:translateX(20px)}.ntf-sw:focus-visible{outline:2px solid var(--acc);outline-offset:2px}.ntf-sw::after{content:'';position:absolute;inset:-6px}
+.ntf-where{margin:8px 0 0;font-size:14px;color:var(--dim)}
+.err{min-height:1.4em;color:var(--dim);font-size:15px;margin:8px 0 0}.err.bad{color:var(--fg);font-weight:600}</style>
 <script>
 const msg=document.getElementById('msg');
 // The message shows under the form that was used, not at the foot of the page
 // (a refused key was easy to miss there, seen in the sign-up video).
 async function call(url,method,body,form){if(form)form.after(msg);msg.classList.remove('bad');const r=await fetch(url,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok){msg.textContent=j.error||'Failed';msg.classList.add('bad');return null;}return j;}
 const hf=document.getElementById('hf');if(hf)hf.onsubmit=async(e)=>{e.preventDefault();msg.textContent='Saving';if(await call('/api/me/handle','POST',{handle:hf.handle.value},hf))location.reload();};
+// Notifications (X3, qb6: GET/POST /api/me/notify -> {done, decisions, push}). A switch flips at once and goes back if
+// the save fails. push says whether this person can get a phone push at all (today only the instance owner can).
+const nw=document.getElementById('ntf-where');
+const where=(p)=>{if(nw)nw.textContent=p==='pushover'?'They go to your phone and your Inbox.':'They show in your Inbox. Phone notifications are not available for your account yet.';};
+fetch('/api/me/notify').then((r)=>r.ok?r.json():null).then((j)=>{if(!j)return;where(j.push);for(const k of ['done','decisions'])if(typeof j[k]==='boolean')document.querySelector('[data-ntf="'+k+'"]')?.setAttribute('aria-checked',String(j[k]));}).catch(()=>{});
+document.querySelectorAll('[data-ntf]').forEach((b)=>b.onclick=async()=>{const k=b.dataset.ntf,on=b.getAttribute('aria-checked')!=='true';b.setAttribute('aria-checked',String(on));
+ const j=await call('/api/me/notify','POST',{[k]:on},document.getElementById('ntf'));console.log(JSON.stringify({module:'settings',event:'notify',key:k,on,ok:!!j}));
+ if(!j)b.setAttribute('aria-checked',String(!on));else{msg.textContent='';if(j.push)where(j.push);}});
 document.querySelectorAll('[data-revoke]').forEach((b)=>b.onclick=async()=>{if(await call('/api/cli/revoke','POST',{id:b.dataset.revoke},b.parentElement))location.reload();});
 </script>`);
 }

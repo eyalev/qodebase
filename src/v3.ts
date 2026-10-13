@@ -125,7 +125,7 @@ export function liveChanges(c: Ctx) {
   const accent = accentOf([...open].sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state)));
   // Estimated vs elapsed (qb6 stores the estimate shown at Build; /lab/est-bar.js draws it and ticks the clock).
   const est = (info as { estimate?: { startedAt?: number } }).estimate;
-  const estBar = est?.startedAt ? `<div class="estmount" data-estbar="${esc(JSON.stringify({ e: est, p: (info as { progress?: unknown }).progress || null, b: (info as { billing?: string | null }).billing || null }))}"></div><script src="/lab/est-bar.js" defer></script>` : '';
+  const estBar = est?.startedAt ? `<div class="estmount" data-estbar="${esc(JSON.stringify({ e: est, p: (info as { progress?: unknown }).progress || null, b: (info as { billing?: string | null }).billing || null, x: (info as { build?: unknown }).build || null, api: info.landing && c.own ? `/api/p/${info.owner}/${info.name}` : null }))}"></div><script src="/lab/est-bar.js" defer></script>` : '';
   const out = groups.map((g, i) => {
     const you = !g.text ? '' : fromIssues(g.text)
       ? `<div class="you sys"><b>Cloudflare Issues reported an error</b>${esc(g.text.replace(/^Production error from Cloudflare Issues:\s*/, '').slice(0, 220))}</div>`
@@ -149,6 +149,23 @@ const addrOf = (u: string) => { const h = hostOf(u); const m = /^ag-([a-z0-9]+)-
 const SHOT_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.5h2.5L6 3.5h4l1.5 2H14v7.5H2z"/><circle cx="8" cy="9" r="2.3"/></svg>`;
 const PICK_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2.5l9.5 4-4 1.5-1.5 4z"/><path d="M8.5 8.5l4 4"/></svg>`;
 
+/** X1 (Eyal, 2026-10-13: 'something working early'): while a build runs, the App tab says how far it is. Before the
+ *  first part lands the frame waits behind a note (main is still the empty starter); from the first landing the live
+ *  app shows with 'More is coming: N of M parts landed', and a tap reloads it when more parts land. Data: the build
+ *  from GET …/landing through est-bar.js's shared poller (qbBuildWatch); nothing shows on projects without a build. */
+const BUILD_STRIP = `<div class="bstrip" id="bstrip" hidden role="status" aria-live="polite"><p class="bs-t"></p><div class="bs-trk" aria-hidden="true"><i></i></div><button type="button" class="chipbtn" id="bsnew" hidden>Show the new parts</button></div>`;
+const BUILD_STRIP_JS = `(function(){const st=document.getElementById('bstrip');if(!st)return;const t=st.querySelector('.bs-t'),nb=document.getElementById('bsnew');let seen=null;
+const go=()=>{if(!window.qbBuildWatch)return setTimeout(go,200);window.qbBuildWatch(API,(b)=>{const f=document.getElementById('app'),fr=document.getElementById('appframe');if(!b||!b.startedAt||!f){st.hidden=true;return;}
+ const M=b.parts,N=b.landed||0,of=M?N+' of '+M:String(N),left=b.leftText||(window.qbLeftText?window.qbLeftText(b.remainingS):'');
+ if(seen===null)seen=N;
+ if(!N&&!b.settledAt){st.hidden=false;st.classList.add('wait');fr.classList.add('afwait');t.textContent='Your app shows here when its first part lands, usually a few minutes in.'+(M?' 0 of '+M+' parts landed so far.':'');nb.hidden=true;return;}
+ if(fr.classList.contains('afwait')){fr.classList.remove('afwait');st.classList.remove('wait');f.src=f.src;seen=N;}
+ st.hidden=false;
+ t.textContent=b.settledAt?(M?'All '+M+' parts landed.':'Your app is built.'):'More is coming: '+of+' parts landed'+(left?', '+left:'')+'.';
+ nb.hidden=!(N>seen);nb.textContent=N-seen===1?'Show the new part':'Show the '+(N-seen)+' new parts';
+ nb.onclick=()=>{seen=N;nb.hidden=true;f.src=f.src;console.log(JSON.stringify({module:'buildstrip',event:'reload',landed:N}));};});};
+const s=document.createElement('script');s.src='/lab/est-bar.js';s.onload=go;document.head.appendChild(s);})();`;
+
 /** App: the running app, with a picker for Live or any change you can try. */
 function appView(c: Ctx) {
   const app = appUrl(c);
@@ -163,12 +180,12 @@ function appView(c: Ctx) {
     // Eyal, 2026-10-12: the running app must read as a VIEW of his app inside qodebase, so it sits in a framed
     // card with its own strip (address, Pick, Shot, open); qodebase's controls stay outside the frame.
     action: '',
-    body: `${picker}${app ? `<div class="appwrap"><div class="appframe" id="appframe"><div class="afbar">
+    body: `${picker}${app && c.own && c.info.landing ? BUILD_STRIP : ''}${app ? `<div class="appwrap"><div class="appframe" id="appframe"><div class="afbar">
 <a class="afurl" id="afurl" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open your app in a new tab" title="${esc(hostOf(src))}"><span>${esc(addrOf(src))}</span></a>
 <span class="afpick" id="pickhint" hidden role="status">Tap something in your app</span>
 ${c.own ? `<button type="button" class="afb" id="qbpick" aria-pressed="false" aria-label="Pick an element in your app to add to your message">${PICK_ICON}<span>Pick</span></button><button type="button" class="afb" id="qbshot" aria-label="Take a screenshot of your app and add it to your message">${SHOT_ICON}<span>Shot</span></button><button type="button" class="afb afdone" id="pickdone" hidden>Done</button>` : ''}<a class="afb" id="ext" href="${esc(src)}" target="_blank" rel="noopener" aria-label="Open your app in a new tab">${OPEN_ICON}</a></div>
 <iframe id="app" src="${esc(src)}" title="${esc(c.info.name)}, your app"></iframe></div></div>` : noApp(c)}${c.own ? '' : `<div class="forkbar">${VISIT}${forkAction(c.info, c.me, c.forks.filter((e) => e.owner === c.me))}</div>`}`,
-    js: `(function(){const f=document.getElementById('app'),x=document.getElementById('ext'),ps=document.getElementById('pstrip'),pm=document.getElementById('pmerge');let cur=null;
+    js: `${c.own && c.info.landing ? BUILD_STRIP_JS : ''}(function(){const f=document.getElementById('app'),x=document.getElementById('ext'),ps=document.getElementById('pstrip'),pm=document.getElementById('pmerge');let cur=null;
 // Pick (S2): the app host injects its picker only with ?__qbpick=1 (qb6); we switch it on and off by postMessage
 // to the app's origin and take picks only from that origin. Each pick becomes a chip in the composer (attach.js).
 const pb=document.getElementById('qbpick'),ph=document.getElementById('pickhint');let picking=false;
@@ -372,6 +389,18 @@ body.v3{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .appwrap{flex:1;min-height:0;display:flex;padding:8px;background:var(--chip)}
 .appframe{flex:1;min-height:0;width:100%;max-width:1200px;margin:0 auto;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 1px var(--frame)}
 .appframe.picking{box-shadow:0 0 0 2px var(--acc)}
+.bstrip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-sizing:border-box;width:auto;margin:8px max(8px,calc((100% - 1200px) / 2)) 0;padding:10px 12px;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+.bstrip .bs-t{flex:1;min-width:12em;margin:0;font-size:14px;line-height:1.4}
+.bstrip .chipbtn{min-height:44px}
+.bstrip .bs-trk{display:none}
+.appframe.afwait,.appwrap:has(.afwait){display:none}
+.bstrip.wait{margin-bottom:8px}
+.bstrip.wait{flex:1;flex-direction:column;justify-content:center;text-align:center;gap:14px;min-height:240px;padding:24px}
+.bstrip.wait .bs-t{flex:none;max-width:28em;font-size:16px;line-height:1.5}
+.bstrip.wait .bs-trk{display:block;width:min(240px,70%);height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bstrip.wait .bs-trk i{display:block;width:6%;height:100%;background:var(--acc);border-radius:3px;animation:bswait 1.6s ease-in-out infinite alternate}
+@keyframes bswait{to{transform:translateX(1450%)}}
+@media (prefers-reduced-motion:reduce){.bstrip.wait .bs-trk i{animation:none}}
 .afbar{flex:none;display:flex;align-items:center;gap:4px;min-height:52px;padding:4px 4px 4px 12px;border-bottom:1px solid var(--frame);background:var(--chip)}
 .afurl{flex:1;min-width:0;min-height:44px;display:flex;align-items:center;overflow:hidden;font-size:13px;color:var(--dim)}
 .afurl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline;text-decoration-color:var(--dim);text-underline-offset:3px}
@@ -673,6 +702,12 @@ div.hrow{display:flex;align-items:center;gap:8px;margin:0 0 12px}
 div.hrow .btn,div.hrow .chipbtn{min-height:40px;padding:0 14px;font-size:14px}
 .ibx h3 a{color:var(--fg)}
 .ibx .chg{margin-bottom:8px}
+.ntcs{display:grid;gap:8px;margin:0 0 16px}
+.ntc{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;min-height:44px}
+.ntc-i{flex:none;width:10px;height:10px;margin-top:6px;border-radius:50%;background:var(--acc)}
+.ntc.k-decision .ntc-i{background:var(--warn)}
+.ntc-b{display:grid;gap:2px;min-width:0}.ntc-b b{font-weight:600;font-size:15px}.ntc-b span{font-size:13px;color:var(--dim)}
+@media (hover:hover){.ntc:hover{background:var(--chip)}}
 @media (hover:hover){.prow:hover{background:var(--chip)}}
 `;
 
@@ -722,8 +757,14 @@ export function homeV3(nav: Nav, tab: HomeTab, entries: Entry[], me: string, ite
     const need = items.map((it) => ({ ...it, need: needsOf(it.open).sort((x, y) => ORDER.indexOf(x.state) - ORDER.indexOf(y.state)) })).filter((it) => it.need.length);
     const moving = items.flatMap((it) => it.open.filter((c) => c.state === 'working' || c.state === 'checking').map((c) => ({ it, c })));
     let first = true;
-    body = `<div class="ibx">${need.length ? need.map((it) => `<h3><a href="${path(it.entry.slug)}/changes">${esc(label(it.entry.slug))}</a></h3>${it.need.map((c) => { const html = changeRow(it.info, c, now, first ? c.a.id : undefined).replace('<div class="chg ', `<div data-api="/api/p/${it.info.owner}/${it.info.name}" class="chg `); first = false; return html; }).join('')}`).join('')
-      : `<div class="hello"><b>Nothing needs you.</b><p>When a change is ready to merge, needs a fix, or an agent has a question, it shows up here, from every project.</p></div>`}
+    // X3 (qb6: ProjectInfo.notices, newest first, max 5, cleared when the owner opens the project): a build that
+    // finished, a decision an agent needs. One row each, newest first across projects; the row is the link.
+    type Notice = { kind: 'build-done' | 'decision'; title: string; at: number; href?: string };
+    const notices = items.flatMap((it) => ((it.info as { notices?: Notice[] }).notices || []).map((n) => ({ n, it }))).sort((a, b) => b.n.at - a.n.at).slice(0, 12);
+    const agoTxt = (t: number) => { const m = Math.max(0, Math.round((now - t) / 60000)); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.floor(m / 60)} h ago` : `${Math.floor(m / 1440)} days ago`; };
+    const noticeHtml = notices.length ? `<div class="ntcs">${notices.map(({ n, it }) => `<a class="ntc k-${n.kind === 'decision' ? 'decision' : 'done'}" href="${esc(n.href || `${path(it.entry.slug)}/changes`)}"><span class="ntc-i" aria-hidden="true"></span><span class="ntc-b"><b>${esc(n.title)}</b><span>${n.kind === 'decision' ? 'Needs your decision' : 'Build finished'} in ${esc(label(it.entry.slug))}, ${agoTxt(n.at)}</span></span></a>`).join('')}</div>` : '';
+    body = `<div class="ibx">${noticeHtml}${need.length ? need.map((it) => `<h3><a href="${path(it.entry.slug)}/changes">${esc(label(it.entry.slug))}</a></h3>${it.need.map((c) => { const html = changeRow(it.info, c, now, first ? c.a.id : undefined).replace('<div class="chg ', `<div data-api="/api/p/${it.info.owner}/${it.info.name}" class="chg `); first = false; return html; }).join('')}`).join('')
+      : notices.length ? '' : `<div class="hello"><b>Nothing needs you.</b><p>When a change is ready to merge, needs a fix, or an agent has a question, it shows up here, from every project.</p></div>`}
 ${moving.length ? `<h3>In progress</h3>${moving.map(({ it, c }) => `<a class="mi" href="${path(it.entry.slug)}/changes"><span class="dot s-${c.state}"></span><span><b>${esc(c.title)}</b><span>${esc(label(it.entry.slug))}, ${c.word.toLowerCase()}</span></span></a>`).join('')}` : ''}</div>`;
   } else {
     title = 'Explore';
