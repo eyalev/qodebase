@@ -386,7 +386,7 @@
       "lost": 13
      }
     },
-    "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. In this run, change records (git notes) could be missing on main: lanes force-pushed refs/notes/qodebase, and no-op changes had no commit of their own. The code and these counts are unaffected. Fixed in forq 3cde9b4 and checked on eyal/kata-notes (lanes, 200 tasks): 199 of 199 landed changes have their own commit and their note."
+    "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. In this run, change records (git notes) could be missing on main: lanes force-pushed refs/notes/qodebase, and no-op changes had no commit of their own. The code and these counts are unaffected. Fixed in 116d1b7 (notes merged, never force-pushed; lane rebase keeps empty commits) and b3f2b03 (a no-op change lands as its own empty commit), deployed with forq 3cde9b4, and checked on eyal/kata-notes (lanes, 200 tasks): 199 of 199 landed changes have their own commit and their note."
    }
   ]
  }
