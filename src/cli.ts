@@ -183,6 +183,27 @@ def main(argv):
     if v == 'status':
         if not rest or rest[0] not in ('working', 'pushed', 'blocked'): sys.exit('usage: forq status <working|pushed|blocked> "note"')
         api('POST', '/api/agent/status', {'state': rest[0], 'note': ' '.join(rest[1:])}); print('ok')
+    elif v == 'autopush':
+        # B-1 (2026-10-13): the Stop hook at the end of every turn of a change agent. Agents finished and went quiet
+        # with their work committed but not pushed (R3's last change sat 25 min; the proof build's skeleton 4 min).
+        # Only the agent's own fork, only commits not on it yet; nothing to push = nothing done. Never fails the turn.
+        try:
+            me = secret('agent-token').rsplit('.', 1)[0]
+            tail = me.split('--')[-1] if '--' in me else ''
+            if not tail or tail.startswith('router') or tail.startswith('review') or tail == 'ask': return
+            if git('rev-parse', '--abbrev-ref', '@{u}', check=False).returncode: return
+            ahead = git('rev-list', '--count', '@{u}..HEAD', check=False).stdout.strip()
+            if not ahead.isdigit() or int(ahead) == 0: return
+            subject = git('log', '-1', '--format=%s', check=False).stdout.strip()[:120]
+            r = git('push', '-q', '--force', 'origin', 'HEAD', check=False)
+            if r.returncode:
+                try_api('POST', '/api/agent/board', {'kind': 'note', 'status': f'auto-push failed: {(r.stderr or r.stdout)[-120:]}'}, timeout=5)
+                return
+            git('fetch', '-q', 'origin', check=False)
+            api('POST', '/api/agent/status', {'state': 'pushed', 'note': f'{subject} (pushed automatically at the end of a turn: {ahead} commit{"s" if ahead != "1" else ""})'})
+            print(f'forq: pushed {ahead} unpushed commit(s) and reported them')
+        except SystemExit: pass
+        except Exception as e: print(f'forq autopush: {e}', file=sys.stderr)
     elif v == 'list':
         for a in api('GET', '/api/agent/list')['agents']:
             print(f"{a['id']}  [{a['state']}]  {a['task'][:70]}")

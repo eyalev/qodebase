@@ -265,20 +265,23 @@ PY
       # The agent board (src/landing/board.ts): Claude Code hooks post edits and commits and read the
       # board into the context. Only while the project's board flag is on; removed again when it is off.
       mkdir -p /workspace/.claude
-      python3 - "$BOARD" <<'PY'
+      python3 - "$BOARD" "$ROLE" <<'PY'
 import json, sys
 p = '/workspace/.claude/settings.json'
 try: d = json.load(open(p))
 except Exception: d = {}
 h = {'type': 'command', 'command': 'forq hook', 'timeout': 6}
-hooks = {'UserPromptSubmit': [{'hooks': [h]}], 'PreToolUse': [{'matcher': 'Edit|Write|MultiEdit', 'hooks': [h]}], 'PostToolUse': [{'matcher': '*', 'hooks': [h]}]}
-if sys.argv[1] == '1': d['hooks'] = hooks
-elif 'forq hook' in json.dumps(d.get('hooks', {})): d.pop('hooks', None)
+hooks = {}
+if sys.argv[1] == '1': hooks = {'UserPromptSubmit': [{'hooks': [h]}], 'PreToolUse': [{'matcher': 'Edit|Write|MultiEdit', 'hooks': [h]}], 'PostToolUse': [{'matcher': '*', 'hooks': [h]}]}
+# B-1: a change agent's unpushed commits are pushed and reported at the end of each turn (forq autopush, a no-op otherwise).
+if sys.argv[2] == 'agent': hooks['Stop'] = [{'hooks': [{'type': 'command', 'command': 'forq autopush', 'timeout': 45}]}]
+if hooks: d['hooks'] = hooks
+else: d.pop('hooks', None)
 json.dump(d, open(p, 'w'))
 PY
       # An empty repo (a self-hosted copy's Build starts empty) has no commit to show yet.
       git -C ${REPO_DIR} log --oneline -1 2>/dev/null || echo '(empty repository)'`, { GIT_TOKEN: spec.gitToken, REMOTE: spec.remote, AGENT_ID: spec.agentId, UI_HOST: spec.uiHost,
-        AGENT_TOKEN: spec.agentToken, API_BASE: spec.apiBase, FORQ_CLI, BOARD: spec.board && (spec.role === 'agent' || spec.role === 'router') ? '1' : '0' });
+        AGENT_TOKEN: spec.agentToken, API_BASE: spec.apiBase, FORQ_CLI, BOARD: spec.board && (spec.role === 'agent' || spec.role === 'router') ? '1' : '0', ROLE: spec.role || '' });
     log('box', 'repo_ready', { agentId: spec.agentId, exit: repo.exitCode, head: repo.stdout.trim().slice(-80), err: repo.stderr.slice(-300) });
     if (repo.exitCode !== 0) return { ok: false, ms: Date.now() - t0, from, error: `clone failed: ${repo.stderr.slice(-200)}` };
 

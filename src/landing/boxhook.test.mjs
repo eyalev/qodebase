@@ -205,3 +205,30 @@ test('forq spawn: a twin of running/landed work goes out as an alias task (W9c);
     assert.equal(t.calls.filter((c) => c.url === '/api/agent/spawn').at(-1).body.task, 'a new page');
   } finally { t.close(); }
 });
+
+// B-1: the Stop hook pushes a change agent's unpushed commits to its own fork and reports them, once.
+test('autopush: unpushed commits are pushed and reported once; nothing unpushed = no call; never for the router', async () => {
+  const t = await setup(() => ({ ok: true }));
+  try {
+    const g = (...a) => execFileSync('git', [...ID, ...a], { cwd: t.repo, encoding: 'utf8' }).trim();
+    const fork = join(t.root, 'fork.git'); execFileSync('git', [...ID, 'init', '-q', '--bare', fork]);
+    writeFileSync(join(t.repo, 'a.txt'), '1\n'); g('add', '-A'); g('commit', '-qm', 'start');
+    g('remote', 'add', 'origin', fork); g('push', '-q', '-u', 'origin', 'HEAD:main'); g('branch', '-q', '--set-upstream-to=origin/main');
+    assert.equal((await t.forq(['autopush'])).code, 0);
+    assert.equal(t.calls.length, 0, 'nothing unpushed: no call');
+    writeFileSync(join(t.repo, 'a.txt'), '2\n'); g('commit', '-qam', 'Add the totals view');
+    const r = await t.forq(['autopush']);
+    assert.equal(r.code, 0, r.err);
+    assert.equal(execFileSync('git', ['--git-dir', fork, 'log', '-1', '--format=%s', 'main'], { encoding: 'utf8' }).trim(), 'Add the totals view');
+    const st = t.calls.find((c) => c.url === '/api/agent/status');
+    assert.equal(st.body.state, 'pushed');
+    assert.match(st.body.note, /^Add the totals view \(pushed automatically at the end of a turn: 1 commit\)$/);
+    const n = t.calls.length;
+    assert.equal((await t.forq(['autopush'])).code, 0);
+    assert.equal(t.calls.length, n, 'run again: already pushed, no second report');
+    writeFileSync(join(t.run, 'agent-token'), 'eyal.lab--router.sig');
+    writeFileSync(join(t.repo, 'a.txt'), '3\n'); g('commit', '-qam', 'router work');
+    assert.equal((await t.forq(['autopush'])).code, 0);
+    assert.equal(t.calls.length, n, 'the router is never auto-pushed');
+  } finally { t.close(); }
+});
