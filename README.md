@@ -13,7 +13,7 @@
 
 **How it works, with the demo, the measurements and the simulations:** https://qodebase.app/how
 
-**Watch it work, no sign-in:** open **https://qodebase.app/p/eyal/corner-cafe** and tap **Watch a run**. Six scripted agents (no AI) change a small café website at once for about a minute: real commits on their own forks, real collisions, real tests, through the real merge queue. It is staged: reviews are approved automatically and the tasks are ordered so the story happens. The run with real AI agents is below.
+**Watch it work, no sign-in:** open **[qodebase.app/p/eyal/corner-cafe](https://qodebase.app/p/eyal/corner-cafe)** and tap **Watch a run**. Six scripted agents (no AI) change a small café website at once for about a minute: real commits on their own forks, real collisions, real tests, through the real merge queue. It is staged: reviews are approved automatically and the tasks are ordered so the story happens. The run with real AI agents is below.
 
 <img src="docs/img/readme-phones.jpg" width="720" alt="On the phone: 20 agents changing one project and the line of changes being tested; a change record where an AI re-did a collided change on the newest code in 19 seconds; Talk confirming one request for twelve features before it goes to the agents">
 
@@ -82,7 +82,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 ## Use it
 
-- **On the phone:** https://qodebase.app. Explore, open a project, read code, fork. Signing in uses an emailed code; running agents needs your own Anthropic API key or Claude subscription token.
+- **On the phone:** https://qodebase.app. Explore, open a project, read code, fork. Signing in uses an emailed code; running agents needs your own Claude API key or Claude subscription token.
 - **Command line / agents:** `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login` (approve on your phone) and `qb help`. Agents read https://qodebase.app/llms.txt.
 - **Ask for a change:** on someone else's public project, tap **Request a change**: one text box, an optional screenshot, an optional link to your fork. The owner sees it in the project's Requests tab (shown while requests wait; otherwise under More) and can send it to the project's agents (on the owner's budget), reply, or close it; you follow it under Your requests in the Inbox. Limits: 3 per project and 10 in all per person a day; private projects take none, and owners can turn them off.
 - **Your own copy:** https://qodebase.app/own installs qodebase, merge queue and board included, into your own Cloudflare account in about 85 seconds (needs Workers Paid and Cloudflare Artifacts, in beta). Manual setup: [`SELF_HOST.md`](SELF_HOST.md); agent image: [`box/`](box/).

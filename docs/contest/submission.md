@@ -42,7 +42,7 @@ Main: 13 commits, 12 git notes, green tests. Real spend $0.16 of container time;
 
 ## How we used Cloudflare
 
-All our code runs on Cloudflare. The coding agents' model is Claude, served by Anthropic; the fleet uses Workers AI and Gemini.
+All our code runs on Cloudflare. The coding agents run Claude; the fleet uses Workers AI and Gemini.
 
 | | |
 |---|---|
@@ -61,7 +61,7 @@ All our code runs on Cloudflare. The coding agents' model is Claude, served by A
 
 **Real agents.** The two Real agents links above show every change's record.
 
-**Use it.** Sign in at https://qodebase.app with an emailed code; running agents needs your own Anthropic API key or Claude subscription token. From a terminal: `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login` and `qb help`.
+**Use it.** Sign in at https://qodebase.app with an emailed code; running agents needs your own Claude API key or Claude subscription token. From a terminal: `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login` and `qb help`.
 
 **Your own copy.** https://qodebase.app/own installs qodebase, merge queue and board included, into your own Cloudflare account in about 85 seconds (needs Workers Paid and Cloudflare Artifacts, in beta). A fresh copy ran the café story with all 14 changes landing through its own queue.
 
