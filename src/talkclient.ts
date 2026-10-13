@@ -1711,7 +1711,11 @@ function liveFinish(text, sendIt) {
       else if (cf && final && !base) suggestFromComposer(final, cf);
       return;
     }   // the page's composer: its own Send sends
-    if (!sendIt) { setInp(all); if (!final) status('I did not hear anything'); return; }   // tap, speak, tap Send: the words wait in the box
+    if (!sendIt) {   // tap, speak, tap Send: the words wait in the box
+      // Whisper came late and they already changed the live words (or sent them): leave theirs.
+      if (/^whisper/.test(how) && inp.value.trim() !== (base + t).trim()) { trace('dc_whisper_late', { kept: 'theirs' }); return; }
+      setInp(all); if (!final) status('I did not hear anything'); return;
+    }
     setInp('');
     if (all) { lastSpoken = true; submit(all); } else add('note', 'I did not hear anything.');
   }
@@ -1722,10 +1726,14 @@ function liveFinish(text, sendIt) {
     if (S.whisper === 'off' || !blob || blob.size < 2000) return send(t, S.whisper === 'off' ? 'live-only' : 'live', { bytes: blob ? blob.size : 0 });
     status('Checking the words\u2026');
     var w0 = Date.now();
-    setTimeout(function () { send(t, 'live-timeout', { bytes: blob.size }); }, 6000);
+    // Reviewing before Send (the words are on screen already): wait up to 15 s for Whisper, then keep the live words.
+    // Sending now: 8 s. (Whisper on Workers AI usually 1.5-4.5 s, spikes past 6 s: 2026-10-13.)
+    var late = false;
+    var into = !!cInto;   // a page's composer (its Send may be waiting on this): 8 s too
+    setTimeout(function () { if (!sendIt && !into) { late = true; status(''); return; } send(t, 'live-timeout', { bytes: blob.size }); }, sendIt || into ? 8000 : 15000);
     fetch('/api/talk/transcribe?names=1&lang=' + encodeURIComponent(S.lang), { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type }, body: blob })
       .then(function (r) { return r.json(); })
-      .then(function (j) { send((j && j.text) || t, j && j.text ? 'whisper' : 'live', { bytes: blob.size, whisper_ms: Date.now() - w0, err: j && j.error }); })
+      .then(function (j) { send((j && j.text) || t, j && j.text ? 'whisper' : 'live', { bytes: blob.size, whisper_ms: Date.now() - w0, err: j && j.error, late: late || undefined }); })
       .catch(function (e) { send(t, 'live-error', { err: String(e) }); });
   });
 }
