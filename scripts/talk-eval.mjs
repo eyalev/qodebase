@@ -101,6 +101,8 @@ const CASES = [
   ['runs', 'open the timeline of the first VS Code run', { mode: 'act', op: ['go', 'press'], href: '#/run/', label: 'VS Code' }],
   ['run_detail', 'show me minute 3', { mode: ['act', 'both'], op: 'press', label: 'moment', gate: null }],
   ['run_detail', 'what happened at 1:20', { mode: ['act', 'both', 'ask'], op: ['press', 'none'], label: 'moment' }],
+  ['run_step', 'show me minute 1', { mode: ['act', 'both'], op: 'press', label: 'moment' }],
+  ['deck', 'show me slide 12', { mode: 'act', op: 'press', label: 'slide by its number' }],
   ['run_detail', 'back to all runs', { mode: 'act', op: ['go', 'back'], href: '#/' }],
   ['home_build', 'use the cheapest preset', { mode: 'act', op: 'press', label: 'Cheapest' }],
   ['home_build', 'set the agents to 6', { mode: 'act', op: 'type', label: 'Agents', text: '6' }],
@@ -124,6 +126,7 @@ const asList = (x) => (x == null ? null : Array.isArray(x) ? x : [x]);
 async function run(page, utterance) {
   const s = screen(page);
   s.me = 'eyal';
+  s.items = s.items.filter((i) => /^([lbfh]\d{1,4}|x[\w-]{1,7})$/.test(i.id));   // what the server keeps (cleanScreen in talk.ts)
   const projects = candidateProjects(utterance, allProjects, 24, currentSlug(s.path));
   s.projects = allProjects.filter((p) => p.mine);
   const { questions, cands } = buildQuestions(utterance, s, projects);

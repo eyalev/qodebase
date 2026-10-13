@@ -1367,14 +1367,20 @@ function dcWarm(cb) {
       if (!on) trace('dc_disconnect', { listening: dcOn });
       if (on) { try { dc.sendJSON({ type: 'mode', dictate: true, lang: S.lang }); } catch (e) {} var w = dc.__wait || []; dc.__wait = []; w.forEach(function (f) { f(); }); }
     });
-    dc.addEventListener('interimtranscript', function (t) { if (dcOn) trace('dc_interim', { text: t || '', ms: Date.now() - dcT0 }); if (dcOn && t) { dcText = t; setInp(dcBase + dcSaid(t)); clearTimeout(dcQuiet); } });
+    dc.addEventListener('interimtranscript', function (t) { if (dcOn) trace('dc_interim', { text: t || '', ms: Date.now() - dcT0 }); if (dcOn && t && !nativePreview) { dcText = t; setInp(dcBase + dcSaid(t)); clearTimeout(dcQuiet); } });
     dc.addEventListener('statuschange', function (st) { trace('dc_status', { status: st, on: dcOn, ms: dcT0 ? Date.now() - dcT0 : undefined }); });
-    dc.addEventListener('voiceerror', function (e) { trace('dc_voiceerror', { e: e && (e.code || e.message || String(e)) }); });
+    dc.addEventListener('voiceerror', function (e) {
+      var code = e && (e.code || e.message || String(e));
+      trace('dc_voiceerror', { e: code });
+      // Live words could not start (Workers AI refused the stream): the phone's own dictation shows the words instead;
+      // the recording from the tap still goes to Whisper for the final text.
+      if (dcOn && /startup|failed to start/i.test(String(code)) && !nativePreview) startNativePreview();
+    });
     dc.addEventListener('audiolevelchange', function (lv) { if (dcOn && lv > 0.05 && !dc.__heardSound) { dc.__heardSound = 1; trace('dc_sound', { level: Math.round(lv * 100) / 100, ms: Date.now() - dcT0 }); } });
     dc.addEventListener('custommessage', function (d) {
       if (!d || d.type !== 'talk-dictated') return;
       // Flux ended a turn: keep it and keep listening (a pause to think is not the end), send after the quiet.
-      if (!dcOn) return;
+      if (!dcOn || nativePreview) return;
       dcBuf.push(String(d.text || '').trim()); dcText = ''; setInp(dcBase + dcSaid(''));
       logEv('dc_piece', { text: String(d.text || ''), pieces: dcBuf.length, ms: Date.now() - dcT0 });
       dcArm();
@@ -1435,6 +1441,24 @@ function clipStop(cb) {
   try { r.stop(); } catch (e) { if (cb) cb(null); }
 }
 var dcBase = '';
+var nativePreview = null;
+function startNativePreview() {
+  var R = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!R) { trace('native_preview', { ok: false, why: 'none' }); return; }
+  try {
+    var r = new R(); r.lang = LANGS[S.lang] || 'en-US'; r.interimResults = true; r.continuous = true;
+    var done = '';
+    r.onresult = function (e) {
+      var interim = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) { if (e.results[i].isFinal) done += e.results[i][0].transcript + ' '; else interim += e.results[i][0].transcript; }
+      if (dcOn) { dcText = (done + interim).trim(); setInp(dcBase + dcText); }
+    };
+    r.onerror = function (e) { trace('native_preview', { ok: false, why: e.error }); };
+    r.onend = function () { if (nativePreview === r) nativePreview = null; };
+    r.start(); nativePreview = r; trace('native_preview', { ok: true });
+  } catch (e) { trace('native_preview', { ok: false, why: String(e) }); }
+}
+function stopNativePreview() { if (nativePreview) { try { nativePreview.stop(); } catch (e) {} nativePreview = null; } }
 function unrepeat(text, live) {
   var s = String(text || ''); if (!s) return s;
   var count = function (str, ph) { var n = 0, i = 0; str = str.toLowerCase(); ph = ph.toLowerCase(); while ((i = str.indexOf(ph, i)) >= 0) { n++; i += ph.length; } return n; };
@@ -1451,6 +1475,8 @@ function startLive() {
   dcWarm(function () {
     if (!listening) return;
     dcOn = true; dcT0 = Date.now(); dc.__heardSound = 0;
+    // Hebrew: Workers AI's nova-3 has none, so the phone's own recogniser shows the words (Whisper still makes the final).
+    if (S.lang === 'he') startNativePreview();
     try { dc.sendJSON({ type: 'mode', dictate: true, lang: S.lang }); } catch (e) {}
     dc.startCall().then(function () { logEv('dc_start', {}); })
       .catch(function (e) { dcOn = false; setListening(false); clipStop(null); add('note', 'Could not start the microphone: ' + (e && e.message || e)); });
@@ -1458,7 +1484,7 @@ function startLive() {
 }
 function liveFinish(text, sendIt) {
   if (!dcOn) return;
-  dcOn = false; clearTimeout(dcQuiet);
+  dcOn = false; clearTimeout(dcQuiet); stopNativePreview();
   try { dc.endCall(); } catch (e) {}
   setListening(false); live.textContent = '';
   var t = (dcSaid(text || dcText) || '').trim();
@@ -1500,7 +1526,7 @@ function liveFinish(text, sendIt) {
   });
 }
 function liveStop(cancel, sendIt) {
-  if (cancel) { dcOn = false; try { dc.endCall(); } catch (e) {} clipStop(null); setListening(false); live.textContent = ''; cInto = null; cMic = null; return; }
+  if (cancel) { dcOn = false; stopNativePreview(); try { dc.endCall(); } catch (e) {} clipStop(null); setListening(false); live.textContent = ''; cInto = null; cMic = null; return; }
   // Stopped by hand (tap, or releasing the button): send what was heard, including the piece being said.
   trace('dc_stop', { how: 'hand', pieces: dcBuf.length, interim: dcText, ms: Date.now() - dcT0 });
   status('Finishing\u2026');

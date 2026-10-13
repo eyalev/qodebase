@@ -137,8 +137,9 @@ export class TalkVoice extends VoiceAgent {
     const lang = this.#dictLang.get(connection.id) || 'en';
     // Deepgram advises 20-50 keyterms (500-token hard limit; tmux-web's notes): the newest 35 project names.
     const keyterms = ['qodebase', 'Talk', 'fork', 'merge', 'router', ...this.#keyterms].slice(0, 40);
-    // nova-3 has Hebrew (with keyterms); "auto" is multi, which romanises Hebrew, fine for a preview Whisper replaces.
-    const language = lang === 'he' ? 'he' : lang === 'auto' ? 'multi' : 'en';
+    // Workers AI's nova-3 has no Hebrew ("No such model/language/tier combination", bench 2026-10-13): Hebrew and
+    // auto use multi (it romanises Hebrew); the page shows the phone's own Hebrew words instead, Whisper the final.
+    const language = lang === 'en' ? 'en' : 'multi';
     this.#trace('srv_stt', { model: 'nova-3', lang, language, keyterms: keyterms.length });
     // Live words failed to start from 2026-10-13 ~08:00 ("stt_startup_failed", nothing in the logs) while the same
     // request over REST worked: log what the binding answers, so the next failure says why.

@@ -174,6 +174,12 @@ export type Cmd = {
 /** Answers -> one command the page carries out (or hands to the chat lane). */
 export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen, projects: Proj[], utterance: string): Cmd {
   const cmd = resolveAction(answers, cands, s, projects, utterance);
+  // A sentence that names the button it presses ("show the timeline tab" → Timeline) is sure enough to act, not to ask
+  // "Maybe…?" (live, 2026-10-13: p 0.39). Vocabulary from the page itself.
+  if (cmd.op === 'press' && (cmd.p ?? 0) < 0.45 && cmd.label) {
+    const bare = cmd.label.replace(/\s*\(.*\)$/, '').toLowerCase().trim();
+    if (bare.length >= 4 && ` ${utterance.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ')} `.includes(` ${bare} `)) cmd.p = 0.6;
+  }
   // Greetings and small talk get a friendly reply with examples, never "say it again" (Eyal's phone, 2026-10-07:
   // "hi there" and "hello" got "Sounds cut off"). Fixed words in code; the model's yes/no for the rest.
   const hello = /^\s*(hi|hello|hey|hiya|yo|howdy|good (morning|afternoon|evening|night)|thanks|thank you|cheers|how are you|what'?s up|bye|goodbye)\b/i.test(utterance) || (answers.greeting?.noul ?? 0) >= 0.6;
