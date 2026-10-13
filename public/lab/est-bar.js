@@ -64,7 +64,7 @@
 .estbar .eb-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.estbar .eb-k{font-size:13px;color:var(--dim)}
 .estbar .eb-row b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}.estbar .eb-x{margin-left:auto;font-size:13px;color:var(--dim)}
 .estbar .eb-track{position:relative;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
-.estbar .eb-band{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--acc) 30%,transparent)}
+.estbar .eb-band{position:absolute;top:0;bottom:0;z-index:1;border-radius:4px;box-shadow:inset 0 0 0 2px var(--acc)}
 .estbar .eb-fill{position:absolute;left:0;top:2px;bottom:2px;border-radius:2px;background:var(--fg)}
 .estbar .eb-late .eb-fill{background:var(--busy)}
 .estbar .eb-parts b{font-size:17px}.estbar .eb-ptrack .eb-fill{top:0;bottom:0;border-radius:4px;background:var(--acc)}.estbar .eb-ptrack{margin-bottom:6px}

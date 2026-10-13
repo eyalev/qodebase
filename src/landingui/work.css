@@ -320,7 +320,7 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .pcol.line .pc.test{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--fg)}
 .lw .pcol.done .pc{background:var(--acc);color:var(--acc-fg);box-shadow:none}
 .lw .pc.rp{position:relative}
-.lw .pc.rp::after{content:'';position:absolute;right:-2px;top:-2px;width:10px;height:10px;border-radius:50%;background:repeating-linear-gradient(135deg,var(--busy) 0 2px,var(--bg) 2px 4px);box-shadow:0 0 0 1.5px var(--bg)}
+.lw .pc.rp::after{content:'';position:absolute;right:-3px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--busy);box-shadow:0 0 0 2px var(--card)}
 .lw .pc.bad{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--warn)}
 .lw .pkey{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;font-size:12px;color:var(--dim)}
 .lw .pkey span{display:inline-flex;align-items:center;gap:6px}
@@ -339,7 +339,7 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .fmore a{color:var(--acc)}
 .lw .pchips.many{gap:3px}
 .lw .pchips.many .pc{width:19px;height:19px;font-size:11px}
-.lw .pchips.many .pc.rp::after{width:8px;height:8px}
+.lw .pchips.many .pc.rp::after{width:6px;height:6px;right:-2px;top:-2px;box-shadow:0 0 0 1.5px var(--card)}
 
 /* G5 'Ask for changes' on a change record */
 .lw .sb textarea{width:100%;box-sizing:border-box;min-height:64px;margin:8px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font:inherit;font-size:16px;resize:vertical}
