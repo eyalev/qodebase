@@ -155,7 +155,7 @@ const PICK_ICON = `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="curr
  *  from GET …/landing through est-bar.js's shared poller (qbBuildWatch); nothing shows on projects without a build. */
 const BUILD_STRIP = `<div class="bstrip" id="bstrip" hidden role="status" aria-live="polite"><p class="bs-t"></p><div class="bs-trk" aria-hidden="true"><i></i></div><button type="button" class="chipbtn" id="bsnew" hidden>Show the new parts</button></div>`;
 const BUILD_STRIP_JS = `(function(){const st=document.getElementById('bstrip');if(!st)return;const t=st.querySelector('.bs-t'),nb=document.getElementById('bsnew');let seen=null;
-const go=()=>{if(!window.qbBuildWatch)return setTimeout(go,200);window.qbBuildWatch(API,(b)=>{const f=document.getElementById('app'),fr=document.getElementById('appframe');if(!b||!b.startedAt||!f){st.hidden=true;return;}
+const go=()=>{if(!window.qbBuildWatch)return setTimeout(go,200);window.qbBuildWatch(API,(b)=>{const f=document.getElementById('app'),fr=document.getElementById('appframe');if(!b||!b.startedAt||!f||(b.settledAt&&Date.now()-b.settledAt>15*60e3)){st.hidden=true;if(fr)fr.classList.remove('afwait');st.classList.remove('wait');return;}   /* a build that finished a while ago: nothing to say */
  const M=b.parts,N=b.landed||0,of=M?N+' of '+M:String(N),left=b.leftText||(window.qbLeftText?window.qbLeftText(b.remainingS):'');
  if(seen===null)seen=N;
  if(!N&&!b.settledAt){st.hidden=false;st.classList.add('wait');fr.classList.add('afwait');t.textContent='Your app shows here when its first part lands, usually a few minutes in.'+(M?' 0 of '+M+' parts landed so far.':'');nb.hidden=true;return;}
