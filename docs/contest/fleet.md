@@ -1,10 +1,11 @@
 # Fleet section: texts (P2, owner qb8)
 
-Status: updated 2026-10-13 from `public/results.json` (fleet, fleetCached; 27 model runs) and `docs/board/sim.md` (l)
+Status: updated 2026-10-13 from `public/results.json` (fleet.totals.byJob.docs: 27 runs, 31,466 landed, $19.09; fleetCached) and `docs/board/sim.md` (l)
 (S4a-S4e cached ladder, S5 real-model runs). The README block and the submission bullet are the published texts; this
 file keeps the rules and the /how card.
 
 Wording rules:
+- Quote `fleet.totals.byJob.docs` for the fleet number; `fleet.totals` also counts the index job and the code-dial (kata) runs.
 - "agents" are Durable Objects calling a cheap model, not Claude. Gemini 3.1 Flash-Lite landed 16,852 of the 31,466,
   so never say "Workers AI models" alone for the whole fleet.
 - 31,466 is file CHANGES landed over 27 runs, not distinct files: VS Code src/vs was re-documented on fresh copies
