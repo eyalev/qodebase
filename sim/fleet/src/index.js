@@ -993,7 +993,8 @@ export class KataAgent extends DurableObject {
     const code = parseCode(m.raw);
     const chk = checkCode(job.path, code, job.fns[0]);
     if (!chk.ok) return { error: chk.why, usd: m.usd };
-    const name = job.stage === 'redo' ? `${job.changeId}r${job.redos}` : job.changeId;
+    // A fresh fork name per attempt: an attempt that forked and then failed left its fork behind ('repo already exists').
+    const name = `${job.changeId}${job.stage === 'redo' ? `r${job.redos}` : ''}${job.fails ? `a${job.fails}` : ''}`;
     const f = await retry(() => main.fork(name, { description: `fleet code dial: ${job.task}`.slice(0, 200), defaultBranchOnly: true }));
     using fr = await retry(() => this.env.ARTIFACTS_FORQ.get(f.name || name), [0, 500, 1500, 4000]);
     const objs = new Objects();
