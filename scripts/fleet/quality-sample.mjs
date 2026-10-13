@@ -135,7 +135,9 @@ if (opt('records')) for (const f of opt('records').split(',')) for (const l of f
 const items = []; for (const r of judge) for (const d of r.docs) items.push({ file: r.file, folder: r.folder, model: modelOf.get(r.file) || null, key: d.key, line: d.line, comment: d.doc, code: codeFor(r.file, d.key), auto_issues: d.issues.map((i) => i.kind), hand: hand.includes(r) });
 jsonl('judge-items.jsonl', items);
 const handItems = items.filter((i) => i.hand);
-jsonl('hand.jsonl', handItems.map((i) => ({ file: i.file, model: i.model, key: i.key, correct: null, useful: null, hallucinates: null, note: '' })));
+// Keep verdicts already recorded by hand: a rerun (e.g. to resume the judge) must never blank them.
+const prevHand = new Map((fs.existsSync(path.join(OUT, 'hand.jsonl')) ? fs.readFileSync(path.join(OUT, 'hand.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []).map((h) => [`${h.file}|${h.key}`, h]));
+jsonl('hand.jsonl', handItems.map((i) => { const h = prevHand.get(`${i.file}|${i.key}`); return { file: i.file, model: i.model, key: i.key, correct: h?.correct ?? null, useful: h?.useful ?? null, hallucinates: h?.hallucinates ?? null, note: h?.note || '' }; }));
 fs.writeFileSync(path.join(OUT, 'hand.md'), [`# Hand check: ${hand.length} files, ${handItems.length} comments (seed ${SEED}, ${baseSha.slice(0, 8)}..${headSha.slice(0, 8)})`, '',
   'For each comment: correct (says what the code does) / useful (more than the name says) / hallucinates (parameters, behaviour or callers that are not there). Record verdicts in hand.jsonl.', '',
   ...handItems.flatMap((i) => [`## ${i.file}:${i.line} \`${i.key}\` (${i.model || 'model ?'})${i.auto_issues.length ? `  (auto: ${i.auto_issues.join(', ')})` : ''}`, '', '```ts', i.comment, i.code, '```', ''])].join('\n'));
@@ -185,7 +187,7 @@ if (flag('judge')) {
     calls++; const t0 = Date.now(); let res, body;
     try {
       res = await fetch(url, { method: 'POST', headers: { ...authH, 'content-type': 'application/json', 'cf-aig-metadata': JSON.stringify({ run: 'f4-quality', head: headSha.slice(0, 8) }) },
-        body: JSON.stringify({ ...(JURL ? { model: MODEL } : {}), messages: [{ role: 'system', content: sys }, { role: 'user', content: `Comment:\n${it.comment}\n\nCode it documents:\n${it.code}` }], max_tokens: 200 }) });
+        body: JSON.stringify({ ...(JURL ? { model: MODEL } : {}), messages: [{ role: 'system', content: sys }, { role: 'user', content: `Comment:\n${it.comment}\n\nCode it documents:\n${it.code}` }], max_tokens: +opt('max-tokens', 200), ...(opt('reasoning') ? { reasoning_effort: opt('reasoning') } : {}) }) });
       body = await res.json();
     } catch (e) { log('judge_error', { file: it.file, key: it.key, error: String(e), stack: e.stack?.split('\n').slice(0, 3).join(' | ') }); continue; }
     // /judge wraps Workers AI's body as {result: <body>, usd}; the gateway returns the body itself
@@ -209,7 +211,7 @@ if (opt('publish')) {
   const recs = records?.by_field?.status || records?.by_field?.outcome || {};
   const pick = (re) => Object.entries(recs).filter(([k]) => re.test(k)).reduce((s, [, v]) => s + v, 0);
   const models = [...new Set(ledger.map((l) => l.model))];
-  const worst = handRows.filter((h) => h.correct === false || h.hallucinates === true).slice(0, 5).map((h) => ({ file: h.file, key: h.key, comment: items.find((i) => i.file === h.file && i.key === h.key)?.comment, why: h.note }));
+  const worst = handRows.filter((h) => h.correct === false || h.hallucinates === true).sort((a, b) => (b.hallucinates === true) - (a.hallucinates === true)).slice(0, 5).map((h) => ({ file: h.file, key: h.key, comment: items.find((i) => i.file === h.file && i.key === h.key)?.comment, why: h.note }));
   const q = { status: handRows.length && judged.length ? 'done' : 'partial', base: baseSha, head: headSha, checked_at: new Date().toISOString(), files_changed: files.length, code_changed: summary.code_changed_n,
     fleet_records: { landed: pick(/^landed|^merged|^pushed/), verify_fail: pick(/verify/), rejected: pick(/reject/), other: Object.fromEntries(Object.entries(recs).filter(([k]) => !/^landed|^merged|^pushed|verify|reject/.test(k))) },
     auto: { comments: allDocs.length, invented_params: summary.issues.unknown_param, missing_params: summary.issues.missing_param, returns_on_void: summary.issues.returns_on_void, trivial: summary.issues.trivial + summary.issues.restates_name },
@@ -219,6 +221,10 @@ if (opt('publish')) {
     judge_usd: +ledger.reduce((s, l) => s + (l.usd || 0), 0).toFixed(4),
     hand_by_model: Object.fromEntries([...new Set(handRows.map((h) => h.model || null))].map((m) => { const hs = handRows.filter((h) => (h.model || null) === m); return [m, { comments: hs.length, ok: hs.filter((h) => h.correct && !h.hallucinates).length, invented: hs.filter((h) => h.hallucinates).length }]; })),
     hand: { files: new Set(handRows.map((h) => h.file)).size, comments: handRows.length, ok: handRows.filter((h) => h.correct && !h.hallucinates).length, accurate: handRows.filter((h) => h.correct).length, helpful: handRows.filter((h) => h.useful).length, invented: handRows.filter((h) => h.hallucinates).length },
+    // the judge against the hand check, on the comments both graded (ok = correct and invents nothing)
+    judge_vs_hand: (() => { const ok = (c, h) => c === true && h !== true; const pairs = handRows.map((h) => [h, judged.find((j) => j.file === h.file && j.key === h.key && j.verdict)]).filter(([, j]) => j);
+      const mine = (h) => ok(h.correct, h.hallucinates), its = (j) => ok(j.verdict.correct, j.verdict.hallucinates);
+      return { paired: pairs.length, agree: pairs.filter(([h, j]) => mine(h) === its(j)).length, hand_bad: pairs.filter(([h]) => !mine(h)).length, judge_caught: pairs.filter(([h, j]) => !mine(h) && !its(j)).length, judge_flagged_hand_ok: pairs.filter(([h, j]) => mine(h) && !its(j)).length }; })(),
     worst };
   fs.writeFileSync(opt('publish'), JSON.stringify(q, null, 1) + '\n'); log('published', { to: opt('publish'), status: q.status });
   console.error(`published ${opt('publish')} (${q.status})`);
