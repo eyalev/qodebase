@@ -19,12 +19,12 @@ const MATH = `export function add(a, b) {\n  return a + b;\n}\n\nexport function
 const TEST = `import { test } from 'node:test';\nimport assert from 'node:assert';\nimport { add, twice } from '../src/math.js';\ntest('add', () => assert.equal(add(2, 3), 5));\ntest('twice', () => assert.equal(twice(4), 8));\n`;
 const PKG = JSON.stringify({ name: 'demo', type: 'module', scripts: { test: 'node --test' } }, null, 2) + '\n';
 
-function setup() {
+function setup(extra = {}) {
   const root = mkdtempSync(join(tmpdir(), 'qbmerge-'));
   const main = join(root, 'main.git');
   g(root, 'init', '-q', '--bare', main);
   const w = join(root, 'w'); g(root, 'clone', '-q', main, w);
-  write(w, { 'src/routes.js': ROUTES, 'src/math.js': MATH, 'test/math.test.js': TEST, 'package.json': PKG });
+  write(w, { 'src/routes.js': ROUTES, 'src/math.js': MATH, 'test/math.test.js': TEST, 'package.json': PKG, ...extra });
   g(w, 'add', '-A'); g(w, 'commit', '-qm', 'start'); g(w, 'push', '-q', 'origin', 'HEAD:main');
   const base = g(w, 'rev-parse', 'HEAD');
   let n = 0;
@@ -188,12 +188,19 @@ const runEnv = (job, env) => {
 };
 // Five changes rewrite the same line of math.js differently: the first merges as text, the other four need the model.
 const conflicting = (s) => ['a', 'b', 'c', 'd', 'e'].map((id, k) => s.fork(id, (fw) => edit(fw, 'src/math.js', (t) => t.replace('return a + b;', `return a + b + ${k} - ${k};`).replace('export function twice', '// keep\nexport function twice'))));
+// Disjoint: change a rewrites one line in each of four files; b..e each rewrite that line in ONE of them, differently. All
+// four conflict with a, none with each other: their replays can run side by side.
+const disjoint = (s) => {
+  const files = ['src/p1.js', 'src/p2.js', 'src/p3.js', 'src/p4.js'];
+  return [s.fork('a', (fw) => { for (const f of files) edit(fw, f, (t) => t.replace('= 0;', '= 100;')); }),
+    ...['b', 'c', 'd', 'e'].map((id, k) => s.fork(id, (fw) => edit(fw, files[k], (t) => t.replace('= 0;', `= ${k + 1};`))))];
+};
 
 test('parallel model replays: four replays at once, all land in train order, main whole', () => {
-  const s = setup();
+  const s = setup({ 'src/p1.js': 'export const p1 = 0;\n', 'src/p2.js': 'export const p2 = 0;\n', 'src/p3.js': 'export const p3 = 0;\n', 'src/p4.js': 'export const p4 = 0;\n' });
   const env = fakeClaude(s.root, 'file');
   const t = Date.now();
-  const { r, log } = runEnv({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', llm: { model: 'claude-haiku-5-5' }, changes: conflicting(s) }, env);
+  const { r, log } = runEnv({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', llm: { model: 'claude-haiku-5-5' }, changes: disjoint(s) }, env);
   const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
   assert.equal(r.pushed, true);
   assert.equal(by.a.how, 'merged');
@@ -207,14 +214,16 @@ test('parallel model replays: four replays at once, all land in train order, mai
   assert.equal(spawnSync('node', ['--test'], { cwd: w, encoding: 'utf8', env: { ...process.env, NODE_TEST_CONTEXT: '' } }).status, 0, 'checks pass on main');
 });
 
-test('parallel replays that collide with each other fall back to one at a time, and nothing is lost', () => {
+test('replays of the same file run one at a time (no wasted side-by-side run), and nothing is lost', () => {
   const s = setup();
   const env = fakeClaude(s.root, 'append');
   const { r, log } = runEnv({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', llm: { model: 'claude-haiku-5-5' }, changes: conflicting(s) }, env);
   const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
   assert.equal(r.pushed, true);
   for (const id of ['b', 'c', 'd', 'e']) assert.equal(by[id].landed, true, id);
-  assert.match(log, /"event":"replay_collided"/);
+  assert.match(log, /"event":"replays_parallel","n":1,/, 'only the first goes side by side; the rest share its file');
+  assert.doesNotMatch(log, /"event":"replay_collided"/);
+  assert.deepEqual(['c', 'd', 'e'].map((id) => by[id].llm.parallelOutcome), ['serial', 'serial', 'serial']);
   const w = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, w);
   const math = readFileSync(join(w, 'src/math.js'), 'utf8');
   for (const id of ['b', 'c', 'd', 'e']) assert.match(math, new RegExp(`f_${id}\\(`), id);

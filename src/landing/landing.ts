@@ -1046,7 +1046,7 @@ export class Landing extends DurableObject<Env> {
           if (m.landings.length > 2000) m.landings.splice(0, m.landings.length - 2000);
           c.landing = { how, conflicts: rc.conflicts, diff: rc.diff || [], commit: rc.commit, mainCommit: r.mainAfter || null,
             ...(rc.reviewedDiff ? { reviewedDiff: rc.reviewedDiff } : {}),
-            ...(rc.llm ? { replay: { model: rc.llm.model, ms: rc.llm.ms, usd: rc.llm.usd, tokensIn: (rc.llm.in || 0) + (rc.llm.cacheRead || 0) + (rc.llm.cacheWrite || 0), tokensOut: rc.llm.out || 0, sameLinesAsReviewed: rc.llm.sameLines ?? null } } : {}) };
+            ...(rc.llm ? { replay: { model: rc.llm.model, ms: rc.llm.ms, usd: rc.llm.usd, tokensIn: (rc.llm.in || 0) + (rc.llm.cacheRead || 0) + (rc.llm.cacheWrite || 0), tokensOut: rc.llm.out || 0, sameLinesAsReviewed: rc.llm.sameLines ?? null, ...((rc.llm as { parallelOutcome?: string }).parallelOutcome ? { parallel: (rc.llm as { parallelOutcome?: string }).parallelOutcome } : {}) } } : {}) };
           this.#ev(c, 'landed', `${(rc.commit || '').slice(0, 7)} on main`);
           this.#index(m, c);
           landed++;

@@ -247,8 +247,15 @@ async function pool(items, n, fn) {
 async function replayDeferred(deferred, results, applied, cfg) {
   if (!deferred.length) return;
   const at = git(['rev-parse', 'HEAD']).out;
-  // A change stacked on another set-aside change needs its parent's replay first: it waits for the serial pass.
-  const par = deferred.filter((d) => !deferred.some((o) => o.c.id !== d.c.id && o.c.commit === d.r.base));
+  // A change stacked on another set-aside change needs its parent's replay first: it waits for the serial pass. So does one
+  // whose files overlap a change already chosen to run side by side: replays of the same shared files collide when they
+  // are put together, and the serial redo then costs more than plain serial (real build r8b, 2026-10-13: 2 of 2).
+  const par = [], used = new Set();
+  for (const d of deferred) {
+    if (deferred.some((o) => o.c.id !== d.c.id && o.c.commit === d.r.base)) continue;
+    if ((d.r.files || []).some((f) => used.has(f))) continue;
+    par.push(d); for (const f of d.r.files || []) used.add(f);
+  }
   const tP = Date.now();
   const outs = await pool(par, REPLAY_PAR, async (d) => {
     // Outside .git: Claude Code refuses every write under a .git path ('sensitive file'), so a worktree in .git made each
@@ -272,7 +279,7 @@ async function replayDeferred(deferred, results, applied, cfg) {
       if (cp.code === 0) {
         const commit = git(['rev-parse', 'HEAD']).out;
         o.llm.sameLines = sameLines(git(['diff', before, commit]).out, git(['diff', r.base, c.commit]).out);
-        results.set(c.id, { id: c.id, ok: true, how: 'replayed-llm', files: r.files, conflicts: r.conflicts, handled: r.handled, commit, before, llm: { ...o.llm, parallel: true }, reviewedDiff: diffOf(r.base, c.commit) });
+        results.set(c.id, { id: c.id, ok: true, how: 'replayed-llm', files: r.files, conflicts: r.conflicts, handled: r.handled, commit, before, llm: { ...o.llm, parallel: true, parallelOutcome: 'landed' }, reviewedDiff: diffOf(r.base, c.commit) });
         say('applied', { id: c.id, ok: true, how: 'replayed-llm', parallel: true });
         applied.push(c); continue;
       }
@@ -282,7 +289,7 @@ async function replayDeferred(deferred, results, applied, cfg) {
     // Serial: a stacked change, a replay that collided with an earlier one, or one that failed in parallel (one more try).
     const tS = Date.now();
     const s = applyChange(c, cfg);
-    if (o && !o.ok && s.llm) s.llm.parallelFirst = o.why;
+    if (s.llm) s.llm.parallelOutcome = !o ? 'serial' : o.ok ? 'collided' : `failed: ${String(o.why || '').slice(0, 120)}`;
     phase(s.llm ? 'replay-llm' : 'apply', tS, c.id);
     results.set(c.id, s);
     say('applied', { id: c.id, ok: s.ok, how: s.how, serial: true, why: s.why });
