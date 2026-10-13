@@ -95,9 +95,9 @@ estimate.
 - **qb7, checked live (forq 119b989): 3a ready for 1,000 agents.** The sentence fills VS Code
   (fleet-n2-vscode-src-1), src/vs, doc comments + API index, 1,000 agents, batch 4 on Start, and the estimate
   '4,064 files, 1,000 agents: about 2 to 4 min and $0.80 to $1.49. It stops at $3.00 whatever happens.'
-  **Mismatch to settle before the take:** qb6 expects ~$1.5–3 and a $5 cap, the form estimates $0.80–1.49 with a $3
-  cap. If qb6 is right, $3 could stop the run on camera: raise the budget on the form to $5 before Start (or qb7
-  makes that the default for this job).
+  **Settled (qb7):** the form defaults to $5 for 500+ agents and the estimate is refit for small batches: '4,064 files,
+  1,000 agents: about 2 to 4 min and $1.28 to $2.38. It stops at $5.00 whatever happens.' (deploys before the take;
+  no budget step needed).
 
 ## Pre-flight (08:00–08:45 UTC)
 
