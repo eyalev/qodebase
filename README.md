@@ -177,6 +177,26 @@ No one way of running agents won everywhere. What won, by the shape of the job:
 - **Real git, scripted agents, one run per cell:** at 2,000 agents over 6 h, 32 lanes landed 1,271 an hour against 896 for one queue (1.4×), median wait 10 min against 130. At 10,000 agents over 2 h, 7,433 against 896 (8×); a 2 h figure overstated the 6 h one by 1.5× at 2,000 agents, so read it as an upper bound. 8 lanes did worse than one queue.
 - **On Cloudflare** (Durable Objects + Artifacts, scripted agents, 2,000 agents for 10 minutes, one run per cell, landed counts checked against main's commits; [`sim/cloud/README.md`](sim/cloud/README.md) "L3"): one lane landed 14,336 of the 28,969 changes made, median wait 500 s. 8 lanes landed 30,066 of 30,152, median wait 8 s; 16 and 32 lanes landed the same (29,941 and 30,096): from 8 lanes up, the work, not the queue, was the limit, as at 500 agents with one lane or eight (~7,530). One door onto main that combines the lanes' trains beat every lane pushing main itself (no compare-and-swap misses, against 24% at 500 agents). Main stayed whole and passed its tests in every cell. At 20% cross-area changes the first run broke main twice (a lane that reset lost its save; fixed); the rerun landed ~29,800 with main whole, though 63 changes landed twice (same files, main unaffected; the door should refuse a repeat, still open).
 
+**A fleet of cheap models** ([`public/results.json`](public/results.json) `fleet`, [`sim/fleet/`](sim/fleet/)):
+Durable Object agents calling cheap models through AI Gateway, no Claude: glm-4.7-flash and gemma-4-26b on Workers AI,
+and Gemini Flash-Lite. The job: documentation comments for real codebases, in our own Artifacts copies (never pushed
+upstream).
+- **Six repos, 6,616 files landed:** VS Code `src/vs` (3,029) and `extensions/` (1,536), and the `packages/` of
+  Next.js (868), Angular (689), Babel (319) and Nest (175). The other files had nothing to add (4,757) or were rejected
+  (17).
+- **Every change verified:** before a file lands, its code must be unchanged (the TypeScript syntax, compared with
+  comments ignored, is identical, with no new parse errors). None was refused, and re-checking all 3,029 changed VS
+  Code files on main found 0 code changes.
+- **Landing:** lanes by folder. Largest run: 200 agents, 3,120 files in 261 s (~716 a minute), 2,330 landed, land
+  wait p90 18 s, $1.37.
+- **Pace:** each model was paced at its own request limit. The busiest, gemma, peaked at 294 requests a minute against
+  Workers AI's 300 per model; only 3 of ~6,650 calls were refused (429).
+- **Cost:** $2.81 in all, $0.42 per 1,000 files landed. Per 1,000 files handled: glm-4.7-flash $0.10, gemma-4-26b
+  $0.19, Gemini 3.1 Flash-Lite $0.22, Gemini 3.5 Flash-Lite $0.87.
+- **Quality:** a hand check of 50 VS Code files found 109 of 115 comments right (95%). A model judge (gpt-oss-120b)
+  rated ~96% accurate, but it caught only 1 of the 6 comments the hand check found wrong, so the hand check is the
+  number to trust.
+
 **Bun's Zig→Rust port** (~64 Claude agents, 6,755 commits; [`sim/bun/README.md`](sim/bun/README.md), [`FINDINGS2.md`](docs/board/FINDINGS2.md) §10):
 - **Replayed on Bun's real patches:** its commits are chains (89% edit lines an earlier commit wrote), so 640 agents finish no sooner than 64 (26.3 vs 26.2 h). A check that blocks each commit costs 23–92% more time; the same check right after landing, fixing forward, keeps 26.2 h and cuts the time a crate stays broken by 59–73% (breaks in the middle phases are modelled).
 - **Re-cut by module, interfaces first** (simulated from Bun's real structure, with the module order checked against the names Bun's real patches use across files; not replayed): 3.4–5.2 h at 64 agents, 5–8× faster than the replay. The chains were mostly how the work was cut.
