@@ -54,6 +54,7 @@ Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6's series;
 |---|---|---|---|---|---|
 | S5 v1 | - | 36 | 2,170 | our own gateway's 1,200/min first (raised); then gemma capacity (3040) ~210-260/min, glm-5.3 own limit ~35/min | $3.48 |
 | S5 v2 | 450 | 37 | - | our pacer counted files, not calls (fixing) | $6.84 |
+| S5 v2b | 450 | 114 | 1,230 | gemma's capacity (3040) at ~200 calls/min of 5-file packs; glm-4.7 and Gemini clean | $5.79 |
 
 | model | files handled | landed | verify refused | rate-limited (share of calls) | peak calls/min | $ | $ per 1k files |
 |---|---|---|---|---|---|---|---|

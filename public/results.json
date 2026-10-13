@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T14:49:23.100Z",
+ "generated": "2026-10-13T14:49:58.159Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -112,6 +112,14 @@
      "callsPerMin": null,
      "limit": "our pacer counted files, not calls (fixing)",
      "usd": 6.84
+    },
+    {
+     "run": "S5 v2b",
+     "agents": 450,
+     "filesPerSec": 114,
+     "callsPerMin": 1230,
+     "limit": "gemma's capacity (3040) at ~200 calls/min of 5-file packs; glm-4.7 and Gemini clean",
+     "usd": 5.79
     }
    ],
    "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call); agents, Artifacts reads, verify, lanes, the door and pushes real",

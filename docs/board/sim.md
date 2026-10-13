@@ -1455,6 +1455,21 @@ runs, i.e. its 85/min share x 3, counted in files. qb6's fix: one slot per pack 
   S5 v1's single files did.
 - ~12k files at ~100 files/s is ~2 min: read the peak windows.
 
+**S5 v2b: the pacer fixed (one slot per pack); 3 fresh copies x 150 agents, 14:41-14:44.** 9,033 files in 151 s;
+8,939 landed, 46 rejected, 0 verify failures, $5.79. Peak minute ~6,840 files = **~114 files/s (predicted 80-120)**.
+
+| model | calls in the peak minute | files per call | files | call p50 | errors |
+|---|---|---|---|---|---|
+| gemma-4 | 201 | 5.8 | 1,141 | 25 s | **48 '3040 capacity exceeded'** from ~200 calls/min of 5-file calls: the first model wall, as predicted |
+| glm-4.7 | 305 | 5.4 | 1,672 | 36 s | 0 |
+| Gemini 3.1 (overflow) | 724 | 5.5 | 4,027 | 9.3 s | 0 429s |
+
+- **Calls in flight** (rate x latency): gemma ~84, glm ~183, Gemini ~112: ~380 of 450 agents busy at the peak (predicted
+  ~240 for Workers AI plus ~210 for Gemini).
+- **$ per 1k files:** gemma $0.31, glm $0.18, Gemini $0.86.
+- **With real models the fleet does ~114 files/s, ~5% of what our side carried with cached answers (S4d: 2,100).**
+  The first wall is a model's capacity (gemma), then call limits and latency.
+
 ## (m) Code collision dial: prediction before qb6's runs (qb4, 2026-10-13)
 
 **Setup** (generator: lab-hidden/kata, private; public seed and tasks: sim/kata/seed-1):
