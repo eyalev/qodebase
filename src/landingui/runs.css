@@ -110,3 +110,7 @@
 #runs .dp-d .ad{color:var(--acc)}#runs .dp-d .rm{color:var(--warn)}#runs .dp-d .hk{color:var(--dim)}
 #runs .rcp-more summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:14px;font-weight:500;color:var(--acc)}
 #runs .rcp-more[open] summary{margin-bottom:6px}
+#runs .rc-sm{margin:4px 0 0;font-size:13px;color:var(--dim)}
+#runs .rc-files p:first-of-type{color:var(--fg);font-size:14px;line-height:1.45}
+#runs .rcp-s{margin:0;font-size:13px;color:var(--dim)}
+#runs .rc-k dd small{margin-right:4px}

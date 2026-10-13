@@ -54,6 +54,19 @@
   }
   // A step with many copies (S4d: 100) is fetched at most 10 at a time, and a copy at most every 15 s past 20 copies.
   const TLat = {};
+  const openCopies = new Set();   // which steps' 'Show all copies' are open: kept across the 5 s refresh
+  // A ladder step's own summed series (qb6: /api/runs/ladder/<ladder>/series); copies summed in the page otherwise.
+  async function loadLadder(g) {
+    const lad = g.copies[0]?.ladder; if (!lad || MOCK) return false;
+    const k = 'ladder:' + lad;
+    if (TL[k] && !live(g) && TL[k].series) return true;
+    if (TL[k] && Date.now() - (TLat[k] || 0) < 5e3) return true;
+    const r = await fetch(`${API}/ladder/${encodeURIComponent(lad)}/series`, { cache: 'no-store', credentials: 'same-origin' }).catch(() => null);
+    if (!r || !r.ok) return false;
+    const j = await r.json(); TLat[k] = Date.now();
+    TL[k] = { start: j.series?.[0]?.t, slice: j.slice || 10000, series: j.series || [], limits: j.limits || {}, marks: j.marks || [] };
+    return true;
+  }
   async function loadMany(runs) {
     const gap = runs.length > 20 ? 15e3 : 4e3, q = runs.filter((r) => !TL[key(r)] || (live(r) && Date.now() - (TLat[key(r)] || 0) > gap));
     for (let i = 0; i < q.length; i += 10) await Promise.all(q.slice(i, i + 10).map((r) => loadTimeline(r).catch((e) => log('timeline_failed', { repo: r.repo, error: String(e) }))));
@@ -104,13 +117,14 @@
       ${full || r.group ? `<h2 class="rc-name">${esc(title)}</h2>` : `<a class="rc-name" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">${esc(title)}</a>`}
       <p class="rc-sub">${r.group ? `${r.copies.length} copies run side by side` : `${esc(r.repo)}${r.root ? `, ${esc(r.root)}` : ''}`}, ${n0(r.agentsStarted ?? r.agents)} of ${n0(r.agents)} agents started</p>
       ${why ? `<p class="rc-why">${r.state === 'paused' && autoWhy(r) ? 'Paused automatically: ' : ''}${esc(why)}</p>` : ''}
-      <div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${c.files} files have new comments on main">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
-        <p><b>${n0(c.landed)}</b> files with new comments on main, ${n0(c.skipped)} already had them, ${n0(c.rejected)} rejected${c.inflight && live(r) ? `, ${n0(c.inflight)} to go` : ''}, of ${n0(c.files)} files. One change = comments added to one file.</p></div>
+      <div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${c.files} files got comments on main">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
+        <p>Agents ${live(r) ? 'have added' : 'added'} doc comments to <b>${n0(c.landed)}</b> files and committed them to ${r.group ? 'each copy\u2019s' : 'the'} main branch; ${n0(c.skipped)} files already had them.</p>
+        <p class="rc-sm">${n0(c.rejected)} rejected${c.inflight && live(r) ? `, ${n0(c.inflight)} still to do` : ''}, of ${n0(c.files)} files. One change = comments added to one file.</p></div>
       <dl class="rc-k">
         <div><dt>Spent</dt><dd>${usd(spent)}${budget ? ` <small>of ${usd(budget)}</small>` : ''}</dd>${budget ? `<div class="bar" aria-hidden="true"><i style="width:${pct(spent, budget).toFixed(1)}%"${spent / budget > 0.85 ? ' class="hot"' : ''}></i></div>` : ''}</div>
         <div><dt>${live(r) ? 'Changes on main per min' : elapsedS(r) < 120 ? 'Changes on main' : 'Changes on main per min, average'}</dt><dd>${lpm}</dd></div>
-        <div><dt>From ready to main</dt><dd>${r.landWaitS && r.landWaitS.p50 != null ? `${n0(r.landWaitS.p50)} s <small>median, ${n0(r.landWaitS.p90)} s slowest tenth</small>` : '–'}</dd></div>
-        <div><dt>Model calls</dt><dd>${n0(r.calls ?? mods.reduce((a, m) => a + m.calls, 0))}</dd></div>
+        <div><dt>Wait to reach main</dt><dd>${r.landWaitS && r.landWaitS.p50 != null ? `${n0(r.landWaitS.p50)} s <small>median, ${n0(r.landWaitS.p90)} s slowest tenth</small>` : '–'}</dd></div>
+        <div><dt>Answers</dt><dd>${(() => { const fromCache = mods.filter((m) => m.name === 'cache').reduce((a, m) => a + m.calls, 0), fromModel = mods.filter((m) => m.name !== 'cache').reduce((a, m) => a + m.calls, 0); return `${n0(fromCache)} <small>from cache</small> ${n0(fromModel)} <small>from a model</small>`; })()}</dd></div>
       </dl>
       ${modRows ? `<div class="rc-m"><p class="rc-mh">Calls per minute, per model${live(r) ? '' : ' (peak)'}</p>${modRows}</div>` : ''}
       ${ctl}
@@ -122,7 +136,7 @@
   function controls(r) {
     const k = key(r), asking = stopAsk[k] && Date.now() - stopAsk[k] < 10e3, all = r.group ? ` all ${r.copies.length}` : '';
     const reposAttr = r.group ? ` data-repos="${esc(r.copies.filter(live).map((c) => c.repo).join(','))}"` : '';
-    if (asking) return `<div class="rc-ctl" role="group" aria-label="Run controls"><button class="btn danger" type="button" data-ctl="stop" data-k="${esc(k)}"${reposAttr}>${r.group ? `Stop${all} copies` : 'Stop this run'}</button><button class="chipbtn" type="button" data-ctl="cancel" data-k="${esc(k)}">Keep going</button><p class="rc-cn">Stop ends the run; what has landed stays. It cannot be resumed.</p></div>`;
+    if (asking) return `<div class="rc-ctl" role="group" aria-label="Run controls"><button class="btn danger" type="button" data-ctl="stop" data-k="${esc(k)}"${reposAttr}>${r.group ? `Stop${all} copies` : 'Stop this run'}</button><button class="chipbtn" type="button" data-ctl="cancel" data-k="${esc(k)}">Keep going</button><p class="rc-cn">Stop ends the run; what is already on main stays. It cannot be resumed.</p></div>`;
     return `<div class="rc-ctl" role="group" aria-label="Run controls"><button class="chipbtn" type="button" data-ctl="${r.state === 'paused' ? 'resume' : 'pause'}" data-k="${esc(k)}"${reposAttr}>${r.state === 'paused' ? 'Resume' : 'Pause'}${all}</button><button class="chipbtn danger" type="button" data-ctl="ask" data-k="${esc(k)}">Stop${all}</button></div>`;
   }
 
@@ -152,7 +166,8 @@
       if (s.active != null) o.active = Math.max(o.active || 0, s.active);   // agents at work: the busiest slice in the bucket
       const q = typeof s.queue === 'number' ? s.queue : s.queue ? (s.queue.waiting || 0) + (s.queue.atModel || 0) + (s.queue.readyToLand || 0) : null;
       if (q != null) o.queue = Math.max(o.queue || 0, q);
-      if (s.door) o.door = { commits: (o.door?.commits || 0) + (s.door.commits || 0), pushes: (o.door?.pushes || 0) + (s.door.pushes || 0) };
+      // the door (qb6): the Lander's pushes to main, with the files they carried
+      if (s.door) o.door = { files: (o.door?.files || 0) + (s.door.files ?? s.door.commits ?? 0), pushes: (o.door?.pushes || 0) + (s.door.pushes || 0) };
       out.set(b, o);
     }
     const last = Math.max(...out.keys());
@@ -173,6 +188,7 @@
         o.landed += s.landed || 0; o.r429 += s.r429 || 0; o.usd += s.usd || 0;
         if (s.ready != null) o.ready = (o.ready || 0) + s.ready;
         if (s.active != null) o.active = (o.active || 0) + s.active;
+        if (s.door) o.door = { files: (o.door?.files || 0) + (s.door.files || 0), pushes: (o.door?.pushes || 0) + (s.door.pushes || 0) };
         const q = typeof s.queue === 'number' ? s.queue : s.queue ? (s.queue.waiting || 0) + (s.queue.atModel || 0) + (s.queue.readyToLand || 0) : null;
         if (q != null) o.queue = (o.queue || 0) + q;
         by.set(s.t, o);
@@ -198,7 +214,7 @@
     const peakOf = (f) => Math.max(0, ...S.map(f).filter((v) => v != null));
     if (S.some((s) => s.active != null)) { const pk = peakOf((s) => s.active); rows.push({ label: `Agents at work, peak ${n0(pk)}`, kind: 'area', vals: S.map((s) => s.active || 0), max: nice(Math.max(pk, 1)), cls: 'c-active', h: HB }); }
     { const pr = peakOf((s) => s.ready), pl = peakOf((s) => s.landed), hasReady = S.some((s) => s.ready != null);
-      rows.push({ label: hasReady ? `Changes ${unit}: <i class="k-ready"></i>finished by agents, <i class="k-main"></i>reached main (in batches)` : `Changes reaching main ${unit} (in batches), peak ${n0(pl)}`, html: true, kind: 'pair', vals: S.map((s) => s.landed || 0), area: hasReady ? S.map((s) => s.ready || 0) : null, max: nice(Math.max(pr, pl, 1)), cls: 'c-land', h: HB }); }
+      rows.push({ label: hasReady ? `Changes ${unit}: <i class="k-ready"></i>finished by agents (comments written), <i class="k-main"></i>reached main (in batches)` : `Changes reaching main ${unit} (in batches), peak ${n0(pl)}`, html: true, kind: 'pair', vals: S.map((s) => s.landed || 0), area: hasReady ? S.map((s) => s.ready || 0) : null, max: nice(Math.max(pr, pl, 1)), cls: 'c-land', h: HB }); }
     const models = Object.keys(Object.assign({}, ...S.map((s) => s.calls || {})));
     for (const m of models) {
       const peak = peakOf((s) => (s.calls || {})[m] || 0), lim0 = (t.limits || {})[m], lim = lim0 ? lim0 * limScale : null;
@@ -209,7 +225,7 @@
     if (S.some((s) => (s.lanes || {}).other)) lanes.push('other');
     const laneMax = Math.max(1, ...S.flatMap((s) => Object.values(s.lanes || {})));
     if (lanes.length) rows.push({ label: `Changes per lane (${lanes.length}${lanes.includes('other') ? ', smaller lanes together' : ''}), darker = more, up to ${n0(laneMax)} in a slice`, kind: 'heat', lanes, max: laneMax });
-    if (S.some((s) => s.door)) { const pk = peakOf((s) => s.door?.commits || 0); rows.push({ label: `The door: commits ${unit} (pushes as ticks)`, kind: 'door', vals: S.map((s) => s.door?.commits || 0), ticks: S.map((s) => s.door?.pushes || 0), max: nice(Math.max(pk, 1)), cls: 'c-door', h: H }); }
+    if (S.some((s) => s.door && (s.door.files || s.door.pushes))) { const pk = peakOf((s) => s.door?.files || 0), pp = S.reduce((a, s) => a + (s.door?.pushes || 0), 0); rows.push({ label: `The door to main: files ${unit} (bars), pushes as ticks, ${n0(pp)} pushes in all`, kind: 'door', vals: S.map((s) => s.door?.files || 0), ticks: S.map((s) => s.door?.pushes || 0), max: nice(Math.max(pk, 1)), cls: 'c-door', h: H }); }
     if (S.some((s) => s.queue != null)) { const pk = peakOf((s) => s.queue || 0); rows.push({ label: `Waiting (not started, at the model, or not yet on main), peak ${n0(pk)}`, kind: 'area', vals: S.map((s) => s.queue || 0), max: nice(Math.max(pk, 1)), cls: 'c-queue', h: H }); }
     const cx = (i) => x(S[i].minute) + per / 2;
     const strip = (r) => {
@@ -272,8 +288,8 @@
       const d = DR.data.slice;
       const list = run.group ? '<p class="dp-n">Open one copy’s timeline to see its single changes.</p>'
         : !d ? '<p class="dp-n">Loading the changes in this slice…</p>' : d.error ? `<p class="dp-n">The list of changes is not available yet (${esc(d.error)}).</p>`
-        : !(d.changes || []).length ? '<p class="dp-n">No single change finished in this slice.</p>'
-        : `<ul class="dp-l">${d.changes.slice(0, 60).map((c) => `<li><button type="button" class="dp-f" data-dr="change" data-file="${esc(c.file)}" data-agent="${esc(c.agent || '')}"><span class="mono">${esc(fileName(c.file))}</span><small>${esc(ST[c.status] || c.status || '')}${c.landed ? `, on main ${rel(c.landed)}` : c.answered ? `, finished ${rel(c.answered)}` : ''}</small></button>${c.agent ? `<button type="button" class="dp-a" data-dr="agent" data-agent="${esc(c.agent)}">${esc(agentName(c.agent))}</button>` : ''}</li>`).join('')}</ul>${d.changes.length > 60 ? `<p class="dp-n">and ${n0(d.changes.length - 60)} more</p>` : ''}`;
+        : !(d.changes || []).length ? `<p class="dp-n">${d.landedInSlice ? `${n0(d.landedInSlice)} changes reached main in this slice; agents finished them earlier.` : 'No single change finished in this slice.'}</p>`
+        : `<ul class="dp-l">${d.changes.slice(0, 60).map((c) => `<li><button type="button" class="dp-f" data-dr="change" data-file="${esc(c.file)}" data-agent="${esc(c.agent || '')}"><span class="mono">${esc(fileName(c.file))}</span><small>${esc(ST[c.status] || c.status || '')}${c.landed ? `, on main ${rel(c.landed)}` : c.answered ? `, finished ${rel(c.answered)}` : ''}</small></button>${c.agent ? `<button type="button" class="dp-a" data-dr="agent" data-agent="${esc(c.agent)}">${esc(agentName(c.agent))}</button>` : ''}</li>`).join('')}</ul>${(d.total || d.changes.length) > 60 ? `<p class="dp-n">and ${n0((d.total || d.changes.length) - 60)} more in this slice</p>` : ''}`;
       body = `<ul class="dp-facts">${facts}</ul>${lanes.length ? `<p class="dp-n">Busiest lanes: ${lanes.map(([l, v]) => `${esc(l)} ${n0(v)}`).join(', ')}</p>` : ''}${list}`;
     } else if (DR.view === 'agent') {
       const d = DR.data['a:' + DR.agent];
@@ -287,11 +303,12 @@
     }
     return `<section class="dp" aria-label="What happened">${crumbs}${body}</section>`;
   }
-  const agentName = (a) => String(a || '').replace(/^.*#/, 'Agent ').replace(/^agent[-_ ]?/i, 'Agent ');
+  const agentName = (a) => { const x = String(a ?? ''); return /^\d+$/.test(x) ? `Agent ${x}` : x.replace(/^.*#/, 'Agent ').replace(/^agent[-_ ]?/i, 'Agent '); };
   const fileName = (f) => { const p = String(f || '').split('/'); return p.length > 3 ? `…/${p.slice(-3).join('/')}` : f; };
 
   // ---- copies: one ladder step runs as N copies (label '… - copy N'); the step is one card with the copies under it ---
-  const baseOf = (r) => { if (r.ladder) return r.ladder; const m = /^(.*?)\s+[-–]\s+(?:copy\s+\d+|fleet-[\w-]+)$/i.exec(r.label || ''); return m ? m[1] : null; };
+  // the step's name from the label ('S4d 4,750 agents / 95 copies (cache) - copy 7'), else qb6's ladder field
+  const baseOf = (r) => { const m = /^(.*?)\s+[-–]\s+(?:copy\s+\d+|fleet-[\w-]+)$/i.exec(r.label || ''); return m ? m[1] : r.ladder || null; };
   const copyNo = (c) => +(c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || (/-(\d+)$/.exec(c.repo || '') || [])[1] || 0);
   function grouped(list) {
     const out = [], seen = new Map();
@@ -321,9 +338,14 @@
   }
   function copyRows(g) {
     // many copies (S4d: 100): the first five, the rest behind 'Show all'
-    const row = (c, i) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>${esc(`Copy ${c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || i + 1}`)}</span><span class="rcp-v">${n0(k.landed)} of ${n0(k.files)} files changed, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; };
-    if (g.copies.length > 6) return `<ul class="rcp">${g.copies.slice(0, 5).map(row).join('')}</ul><details class="rcp-more"><summary>Show all ${g.copies.length} copies</summary><ul class="rcp">${g.copies.slice(5).map((c, i) => row(c, i + 5)).join('')}</ul></details>`;
-    return `<ul class="rcp">${g.copies.map((c, i) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>${esc(`Copy ${c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || i + 1}`)}</span><span class="rcp-v">${n0(k.landed)} of ${n0(k.files)} files changed, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; }).join('')}</ul>`;
+    const row = (c, i) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>${esc(`Copy ${c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || i + 1}`)}</span><span class="rcp-v">${n0(k.landed)} files got comments, ${n0(k.skipped)} already had them, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; };
+    // one line above the list (Eyal): fastest, median and slowest copy by files per second (finished files / its time)
+    const rate = (c) => { const k = counts(c), sec = elapsedS(c); return sec > 0 ? (k.landed + k.skipped + k.rejected) / sec : null; };
+    const rs = g.copies.map((c, i) => ({ c, i, v: rate(c) })).filter((x) => x.v != null).sort((a, b) => b.v - a.v);
+    const nm = (x) => `copy ${x.c.copy || x.i + 1}`, f1 = (v) => (v >= 10 ? Math.round(v) : v.toFixed(1));
+    const sum = rs.length > 2 ? `<p class="rcp-s">Files per second: fastest ${f1(rs[0].v)} (${nm(rs[0])}), median ${f1(rs[rs.length >> 1].v)}, slowest ${f1(rs[rs.length - 1].v)} (${nm(rs[rs.length - 1])}).</p>` : '';
+    if (g.copies.length > 6) return `${sum}<ul class="rcp">${g.copies.slice(0, 5).map(row).join('')}</ul><details class="rcp-more"${openCopies.has(g.label) ? ' open' : ''} data-g="${esc(g.label)}"><summary>Show all ${g.copies.length} copies</summary><ul class="rcp">${g.copies.slice(5).map((c, i) => row(c, i + 5)).join('')}</ul></details>`;
+    return `${sum}<ul class="rcp">${g.copies.map((c, i) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>${esc(`Copy ${c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || i + 1}`)}</span><span class="rcp-v">${n0(k.landed)} files got comments, ${n0(k.skipped)} already had them, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; }).join('')}</ul>`;
   }
 
   // ---- pages -------------------------------------------------------------------------------------------------------
@@ -346,8 +368,9 @@
   function stepView(base) {
     const g = stepOf(base);
     if (!g) return `<p><a href="#/">All runs</a></p><p>That ladder step is not in the list any more.</p>`;
-    const ts = g.copies.map((c) => TL[key(c)]), have = ts.filter(Boolean).length;
-    const t = have ? summed(ts) : null;
+    const lad = g.copies[0]?.ladder && TL['ladder:' + g.copies[0].ladder];
+    const ts = lad ? [] : g.copies.map((c) => TL[key(c)]), have = lad ? g.copies.length : ts.filter(Boolean).length;
+    const t = lad || (have ? summed(ts) : null);
     return `<p class="crumb"><a href="#/">All runs</a></p>${card(g, true)}<section class="rsec"><h2>Timeline, all ${g.copies.length} copies together</h2>${have < g.copies.length ? `<p class="dim">${have} of ${g.copies.length} copies loaded…</p>` : ''}${timeline(g, t, DR && DR.k === key(g) ? DR : null)}${drillPanel(g)}</section>`;
   }
   function current() {
@@ -378,7 +401,7 @@
     try {
       await load(); failures = 0; lastOk = Date.now();
       const cur = current();
-      if (cur) await loadMany(cur.group ? cur.copies : [cur]);
+      if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); }
       render();
     } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (!D) root.innerHTML = `<header class="rh"><h1>Scale runs</h1></header><p class="dim">Could not load the runs (${esc(String(e.message || e))}). Trying again.</p>`; }
     const anyLive = (D?.fleet || []).some(live);
@@ -388,6 +411,7 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
   setInterval(tickClocks, 1000);
 
+  root.addEventListener('toggle', (e) => { const d = e.target; if (d.matches?.('.rcp-more')) { if (d.open) openCopies.add(d.dataset.g); else openCopies.delete(d.dataset.g); } }, true);
   // Taps on the timeline and in the drill-down panel.
   root.addEventListener('click', async (e) => {
     const run = current();
