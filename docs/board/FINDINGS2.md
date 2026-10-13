@@ -253,3 +253,10 @@ What it shows:
   agents it has); 'Need an idea?' fell back silently when its daily cap was used.
 - **Open:** parallel model replays in a train; more reviewers by default at 20+ agents; why agents' contexts grow past
   100k; refit the cost estimate on these four builds.
+
+**R6 vs R3, same 'Home inventory' prompt (R3-R6-quality.md):** one Opus agent 457 s / $3.87 vs a 12-agent team 1,940 s
+(~1,100-1,300 s without the halt and the stall) / $2.77. Both apps do all 11 requested features at 390 px (each tried by
+hand); the team wrote ~3x the code (22 files vs 7) with more polish bugs (overflowing tab bar, '0 boxs'); the solo app added
+bulk move, quantity, currency. One build each: one strong agent was ~3-4x faster at similar quality; the team ~30% cheaper.
+Decision (Eyal's default 'like Claude Code on the laptop'): Suggest picks one agent for Large too; Balanced stays one tap
+away as the cheaper option. Huge is untested with one agent.
