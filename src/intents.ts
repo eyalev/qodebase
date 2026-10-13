@@ -22,6 +22,7 @@ export type Node = {
   label: string; sub?: string; status: Status; counts: Counts; leaves: number;
   usd: number | null; startedAt: number | null; endedAt: number | null;
   waitingOn?: string; who?: string; pending?: number; kids: number; parent: string | null;
+  later?: { n: number; at: number };   // a build's group: changes that landed after the build settled (its time stops at the build)
   detail?: unknown;   // leaves only: what the client shows when the node opens
 };
 export type Page = { node: Node; children: Node[]; offset: number; limit: number; total: number; path?: Node[] };
@@ -192,7 +193,25 @@ export function projectTree(info: Info, v: View): Tree {
     const as = T.kids.get(r) || [];
     if (as.length === 1 && T.nodes.get(as[0])!.kind === 'area') { const kids = T.kids.get(as[0]) || []; for (const k of kids) T.nodes.get(k)!.parent = r; T.kids.set(r, kids); T.nodes.delete(as[0]); T.kids.delete(as[0]); T.nodes.get(r)!.kids = kids.length; }
   }
+  buildWindow(T, v);
   return T;
+}
+
+// A build that settled, then had a change land hours later (real-course-builder: build 37:37, the 41st change 8 h on):
+// the groups' time is the build's own (what the project page says), and the later changes are named apart (qb8, 2026-10-13).
+function buildWindow(T: Tree, v: View) {
+  const b = (v as any).build as { startedAt?: number | null; settledAt?: number | null } | undefined;
+  if (!b?.settledAt) return;
+  const end = b.settledAt + 1000;
+  const leaves = (id: string): Node[] => (T.kids.get(id) || []).flatMap((k) => { const n = T.nodes.get(k)!; return n.kind === 'intent' ? [n] : leaves(k); });
+  for (const n of T.nodes.values()) {
+    if (n.kind === 'intent' || n.endedAt == null || n.endedAt <= end) continue;
+    const ls = leaves(n.id), inside = ls.filter((x) => x.endedAt != null && x.endedAt <= end), after = ls.filter((x) => x.endedAt != null && x.endedAt > end);
+    if (!inside.length || !after.length) continue;
+    n.endedAt = Math.max(...inside.map((x) => x.endedAt!));
+    if (n.kind === 'project' && b.startedAt) { n.startedAt = b.startedAt; n.endedAt = b.settledAt; }
+    n.later = { n: after.length, at: Math.max(...after.map((x) => x.endedAt!)) };
+  }
 }
 
 // ---------------------------------------------------------------- fleet runs ----

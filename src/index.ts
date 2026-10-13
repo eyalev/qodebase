@@ -710,18 +710,36 @@ const app = {
       // A fleet run's intent tree (qb5, src/intents.ts): folders nested by path, each file's status rolled up; 10k files paged.
       if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/intents$/))) {
         const [repo, run] = [m[1], m[2]];
+        const t0 = Date.now(), ms: Record<string, number> = {};
+        // An ended run never changes: its answers are kept at the edge for a day (qb8: the first open took 13.5 s cold).
+        const qs = [...url.searchParams.entries()].sort().map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+        const ck = new Request(`https://intents.cache/${repo}/${run}?${qs}`);
+        const hit = await caches.default.match(ck);
+        if (hit) { console.log(JSON.stringify({ ts: new Date().toISOString(), level: 'info', module: 'intents', event: 'run_edge_hit', repo, run, ms: Date.now() - t0 })); return hit; }
         const st = await fleetCall(env, `/status?repo=${repo}`) as { runId?: string; state?: string; files?: number; counts?: Record<string, number> };
+        ms.status = Date.now() - t0;
         const live = st.runId === run && !['done', 'stopped', 'ended'].includes(String(st.state));
         const T = await memoTree(`${repo}/${run}`, live ? 15_000 : 3_600_000, async () => {
           const ri = { headers: { 'x-fleet-key': env.FLEET_KEY || '', 'user-agent': 'forq-internal/1' } };
+          const t1 = Date.now();
+          // The title comes from the runs list (server side), never from the request; fetched alongside the records.
+          const rowP = runsData(env, me).catch(() => null);
           const r = env.FLEET ? await env.FLEET.fetch(`https://qbfleet.internal/records?repo=${repo}&run=${run}`, ri) : await fetch(`https://qbfleet.forqdev.workers.dev/records?repo=${repo}&run=${run}`, ri);
           if (!r.ok) throw new Error(`fleet records ${r.status}`);
           const recs = parseRecords(await r.text());
-          // The title comes from the runs list (server side), never from the request.
-          const row = ((await runsData(env, me).catch(() => null)) as { fleet?: { repo: string; runId: string; label?: string; intent?: string }[] } | null)?.fleet?.find((x) => x.repo === repo && x.runId === run);
-          return fleetTree(recs, { label: row?.label || repo, intent: row?.intent, stopped: st.runId === run && st.state === 'stopped', pending: live && st.files ? Math.max(0, st.files - recs.length) : 0 });   // an ended run has nothing still to start
+          ms.records = Date.now() - t1;
+          const row = ((await rowP) as { fleet?: { repo: string; runId: string; label?: string; intent?: string }[] } | null)?.fleet?.find((x) => x.repo === repo && x.runId === run);
+          ms.runs = Date.now() - t1;
+          const t2 = Date.now();
+          const T = fleetTree(recs, { label: row?.label || repo, intent: row?.intent, stopped: st.runId === run && st.state === 'stopped', pending: live && st.files ? Math.max(0, st.files - recs.length) : 0 });   // an ended run has nothing still to start
+          ms.build = Date.now() - t2; ms.files = recs.length;
+          return T;
         });
-        return json(intentsAnswer(T, url.searchParams));
+        const out = json(intentsAnswer(T, url.searchParams));
+        console.log(JSON.stringify({ ts: new Date().toISOString(), level: 'info', module: 'intents', event: 'run_answer', repo, run, live, ...ms, total: Date.now() - t0 }));
+        // Kept only when the run has ended and it is public data (no owner-only fields in it).
+        if (!live && st.runId) { const c = out.clone(); const h = new Headers(c.headers); h.set('cache-control', 'public, max-age=86400'); ctx.waitUntil(caches.default.put(ck, new Response(c.body, { status: 200, headers: h }))); }
+        return out;
       }
       if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/ladder\/([A-Za-z0-9-]{1,20})\/series$/))) return json(await fleetCall(env, `/ladder-series?ladder=${m[1]}`));
       // Start a fleet job from the app (qb7, src/fleetjob.ts): owner/admin only; the fleet key stays here (fleetCall).

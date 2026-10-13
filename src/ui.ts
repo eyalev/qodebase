@@ -144,7 +144,7 @@ export function explorePage(entries: Entry[], me: string) {
   const mine = entries.filter((e) => e.owner === me);
   const others = entries.filter((e) => e.owner !== me);
   return shell('forq', `<header class="top"><span class="mark">qodebase</span><span class="tr">${me ? `<a class="chipbtn" href="/import">Import from GitHub</a><a class="who" href="/settings">${esc(me)}</a>` : `<a class="chipbtn" href="/login">Sign in</a>`}</span></header>
-<p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.${me ? '' : ' Reading is open to everyone; sign in with your email to fork and run agents with your own Anthropic API key.'}</p>
+<p class="intro">Projects that run. Open one, fork it, then tell its router agent what to change.${me ? '' : ' Reading is open to everyone; sign in with your email to fork and run agents on your own Claude plan or Claude API key.'}</p>
 ${mine.length ? `<h2>Yours</h2><p class="fresh-legend">Shaded dates: full today, empty after two weeks. Tap one for more.</p><div class="rows">${mine.map((e) => row(e, forks(e.slug), now)).join('')}</div>` : ''}
 <h2>Explore</h2>${mine.length ? '' : '<p class="fresh-legend">Shaded dates: full today, empty after two weeks. Tap one for more.</p>'}<div class="rows">${others.map((e) => row(e, forks(e.slug), now, mine.find((m) => m.forkedFrom === e.slug))).join('') || '<p class="empty">Nothing here yet.</p>'}</div>
 <p class="empty" style="margin-top:32px"><a href="/about">About</a>&nbsp;&nbsp; <a href="/privacy">Privacy</a>&nbsp;&nbsp; <a href="/feedback?from=/">Feedback</a></p>`);
@@ -460,7 +460,7 @@ ${li('Open source', '<a href="https://github.com/eyalev/qodebase" target="_blank
 </ul>
 <h2>What it costs</h2>
 <ul class="abl">
-${li('Agents run Claude Code', 'The real Claude Code, on your own Claude plan (Pro or Max) or an Anthropic API key, connected in Settings. Plan use counts toward your plan\'s limits; qodebase does not bill it.')}
+${li('Agents run Claude Code', 'The real Claude Code, on your own Claude plan (Pro or Max) or a Claude API key, connected in Settings. Plan use counts toward your plan\'s limits; qodebase does not bill it.')}
 ${li('About $1–2 a change', 'One finished, reviewed change on Sonnet with an API key, measured in October 2026.')}
 ${selfHost ? '' : li('Your own copy', "Needs Cloudflare's Workers Paid plan: $5 a month for the whole account.")}
 </ul>

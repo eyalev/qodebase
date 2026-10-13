@@ -145,7 +145,12 @@
     const fl = many && c.failed && k !== 'failed' ? `<span class="fl">${n0(c.failed)} didn't land</span>` : '';
     return `<span class="w k-${k}">${esc(head)}</span>${tail}${fl ? `</span><span>${fl}` : ''}`;
   }
-  function timeOf(n) { if (!n.startedAt) return ''; const end = n.endedAt || Date.now(); return n.endedAt ? `took ${dur(end - n.startedAt)}` : `<span data-it-since="${n.startedAt}">${dur(end - n.startedAt)}</span> so far`; }
+  function timeOf(n) {
+    if (!n.startedAt) return ''; const end = n.endedAt || Date.now();
+    // A build that settled, then had a change land later: the build's own time, the later ones named apart (src/intents.ts buildWindow).
+    if (n.endedAt && n.later) return `build took ${dur(end - n.startedAt)}, then ${n.later.n === 1 ? 'one more change' : `${n0(n.later.n)} more changes`} ${dur(n.later.at - n.endedAt)} later`;
+    return n.endedAt ? `took ${dur(end - n.startedAt)}` : `<span data-it-since="${n.startedAt}">${dur(end - n.startedAt)}</span> so far`;
+  }
   function rowHtml(src, n, depth) {
     const s = st(src), open = s.open.has(n.id), leaf = !n.kids, done = n.counts?.done || 0;
     const sub = [n.who ? esc(n.who) : '', phrase(n), n.pending ? `${n0(n.pending)} not started yet` : '', timeOf(n), n.usd ? usd(n.usd) : ''].filter(Boolean).map((x) => `<span>${x}</span>`).join('');

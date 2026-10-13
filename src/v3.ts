@@ -901,7 +901,8 @@ export function buildV3(nav: Nav, me: string, inbox: number, needsKey: boolean, 
 function landBody(entries: Entry[], selfHost = false) {
   // Eyal (2026-10-12): the home page is the product: the build box first, nothing contest-y above it. The demo, the
   // lab and the simulation live on /how; one quiet link under the build box points there.
-  const how = selfHost ? '' : '<p class="howlink"><a href="/how">How it works: watch 6 agents change one app</a></p>';
+  // qb8's judge pass (2026-10-13): the tour (the deck) and the runs at scale are one tap from home too.
+  const how = selfHost ? '' : '<p class="howlink"><a href="/how">How it works: watch 6 agents change one app</a><a href="/deck/">The 6-minute tour</a></p>';
   return `<section class="land">
 <h1>Own your codebase.</h1>
 <p class="lede">Describe it. Agents build it. The code is yours to keep.</p>
@@ -917,6 +918,7 @@ ${how}
 ${selfHost ? '' : `<a class="browse own" href="/own"><span>Get your own qodebase<small>Your own copy, in your own Cloudflare account.</small></span></a>
 <a class="browse own" href="/personal-agents"><span>Your own AI assistant<small>An AI assistant that runs in your own Cloudflare account.</small></span></a>`}
 <a class="browse own" href="/explore"><span>Explore public projects<small>Apps and code others have shared.</small></span></a>
+${selfHost ? '' : '<a class="browse own" href="/runs"><span>See it at scale: live runs<small>Hundreds of agents changing real codebases, file by file, with the cost.</small></span></a>'}
 </nav>
 ${tryRow(entries)}
 </section>${SPECULATE}
@@ -1040,7 +1042,7 @@ body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 .watchtop b{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--acc)}
 .watchtop .wt1{font-size:13px;color:var(--dim)}
 .watchtop .wt2{font-size:14px;color:var(--dim)}
-.land .howlink{margin:4px 0 20px;font-size:15px}
+.land .howlink{margin:4px 0 20px;font-size:15px;display:flex;flex-wrap:wrap;column-gap:20px}
 .land .howlink a{display:inline-flex;align-items:center;min-height:44px;color:var(--acc);text-decoration:underline;text-underline-offset:3px}
 /* Design pass (2026-10-12): the card looked like text; a visible button says it starts something. Chip, not accent: Build it is the page's one green button. */
 .watchtop .wtgo{justify-self:start;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;margin-top:8px;border-radius:10px;background:var(--chip);color:var(--fg);font-size:15px;font-weight:500;box-shadow:inset 0 0 0 1px var(--line)}

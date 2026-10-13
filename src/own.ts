@@ -16,7 +16,7 @@ export function ownPage(installReady: boolean): string {
 <p class="desc">The same qodebase, in your own Cloudflare account. Your projects, your apps and your agents live there.</p>
 <ul class="ownpts">
 <li>Your code in your account, on Cloudflare's git storage</li>
-<li>Agents run on your own Claude account or Anthropic API key</li>
+<li>Agents run on your own Claude account or Claude API key</li>
 <li>Locked to you by Cloudflare sign-in</li>
 <li>Needs Cloudflare's Workers Paid plan: <a href="${PLAN}" target="_blank" rel="noopener">$5 a month for the whole account${EXT}</a></li>
 <li>Needs Cloudflare Artifacts (git storage), in beta: your account must have access to it</li>

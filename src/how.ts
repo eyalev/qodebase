@@ -18,6 +18,10 @@ export function howPage(selfHost = false) {
 <span class="hw-go">Watch a run</span></a></section>`;
   return shell('How qodebase works', `<h1>How qodebase works</h1>
 <p class="desc">Many agents can change one codebase at the same time. Here is what happens when their changes meet, and what we measured.</p>
+${selfHost ? '' : `<nav class="hw-doors hw-top" aria-label="Start here">
+<a href="/deck/"><b>The 6-minute tour</b><span>The whole story in slides, with the numbers.</span></a>
+<a href="/runs"><b>See it at scale: live runs</b><span>Hundreds of agents changing real codebases, file by file, with the cost.</span></a>
+</nav>`}
 <section class="hw-sec hw-when"><h2>One agent or many?</h2>
 <p>For a fresh app, one strong agent is the measured default: in 3 of 3 real builds, one strong agent finished sooner than a team (2×, 4× and 6×; the 6× pair, R8b, had a ~10 min queue bug), with at least as many features working; the team was cheaper in 2 of 3 (one build each: <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R3-R6-quality.md">R6 against R3</a>, <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R4-R7-quality.md">R7 against R4</a>, <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R8b-quality.md">R8b</a>). Many agents pay off for wide work (shared task lists, two teams, tasks arriving mid-run: the board), for work that must run in parallel (big ports like Bun's), and at fleet scale (lanes, fleets of cheap models). qodebase is the layer that makes many agents safe: each change an intent with a record, landed by intent on the newest code, with a live board and a timeline.</p></section>
 ${demo}
@@ -59,6 +63,7 @@ ${tool('When to switch', 'When one queue saturates', 'One queue lands about 830�
 <p class="hw-next"><b>Next, not built yet:</b> choose the way per job. qodebase would profile a job first (how many pieces, how much they overlap, which files are hot, how long the chains are, how long a check takes) and pick from this toolbox. When the stakes are high it would run a cheap pilot first, a simulation or a replay of the repo's own history, then adapt live (switch tactics when a queue saturates), compare its estimate with what happened so the next project starts from a better guess, and follow your choice of speed, cost or safety. Today qodebase runs one landing queue per project, with the board and the duplicate check as options.</p></section>
 <section class="hw-sec"><h2>See for yourself</h2>
 <nav class="hw-doors">
+${selfHost ? '' : '<a href="/runs"><b>Live runs</b><span>Fleets of agents on real codebases: every file, its diff and its cost.</span></a>'}
 <a href="/lab"><b>The lab</b><span>One strong agent or many? Real jobs, scored by tests the agents never saw.</span></a>
 <a href="/sim/"><b>The simulation</b><span>Up to 100,000 agents on a virtual clock.</span></a>
 <a href="${REPO}" target="_blank" rel="noopener"><b>The code</b><span>Open source on GitHub (Apache-2.0), with every number and how it was measured.</span></a>
@@ -105,6 +110,8 @@ body:has(.hw-demo) .gbuild{background:var(--chip);color:var(--fg)}
 .hw-next{margin:12px 0 0;padding:12px 14px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);font-size:15px;line-height:1.5;color:var(--fg)}
 .hw-next b{font-weight:600}
 .hw-doors{display:grid;gap:8px}
+.hw-top{margin:16px 0 8px}
+@media (min-width:720px){.hw-top{grid-template-columns:1fr 1fr}}
 .hw-doors a{display:grid;gap:2px;padding:12px 14px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;min-height:44px}
 .hw-doors b{font-size:16px;font-weight:600}
 .hw-doors span{font-size:14px;color:var(--dim);line-height:1.4}

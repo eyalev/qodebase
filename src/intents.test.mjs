@@ -120,3 +120,17 @@ test('10k leaves: built fast, paged 50 at a time, blocked files first', () => {
   assert.equal(p2.offset, 50);
   assert.notEqual(p2.children[0]?.id, leaf.children[0].id);
 });
+
+test('a build that settled, then a change hours later: groups keep the build\'s time, the later change is named apart', () => {
+  const v = { ...view([ch('a', 'landed', ['js/features/a.js'], { createdAt: 2000, landedAt: 5000 }), ch('b', 'landed', ['js/features/b.js'], { createdAt: 3000, landedAt: 6000 }),
+    ch('c', 'landed', ['js/features/c.js'], { createdAt: 4000, landedAt: 8 * 3600_000 })]), build: { startedAt: 1500, settledAt: 6500 } };
+  const T = projectTree({ ...info, requests: [{ text: 'Build a travel app with photos', at: 1000 }] }, v);
+  const root = answer(T, q(''));
+  assert.equal(root.node.startedAt, 1500);
+  assert.equal(root.node.endedAt, 6500, 'the project = the build, as the project page says');
+  assert.deepEqual(root.node.later, { n: 1, at: 8 * 3600_000 });
+  assert.equal(root.children[0].endedAt, 6000);
+  assert.equal(root.children[0].later.n, 1);
+  // No build record: unchanged.
+  assert.equal(answer(projectTree(info, view([ch('a', 'landed', ['x.js'], { landedAt: 5000 })])), q('')).node.later, undefined);
+});
