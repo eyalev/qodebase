@@ -44,3 +44,24 @@ test('asks: a task list nobody claimed from (only for dedupe) is left out', () =
   const out = buildAsks({ requests: [{ text: 'build', at: 1, from: 'person', state: 'sent' }], changes: [], lists: [{ by: 'router', at: 2, items: [{ id: 'T1', text: 'a' }, { id: 'T2', text: 'b' }] }], done: [], claims: {}, aliases: [] });
   assert.deepEqual(out.asks.map((a) => a.from), ['person']);
 });
+
+test('asks: X5 notes go to their ask; questions only for the owner', () => {
+  const inp = {
+    requests: [{ text: 'build a café site', at: 100, from: 'person', state: 'sent' }],
+    changes: [{ id: 'o.n--a1', title: 'Menu', state: 'working', createdAt: 200, agent: 'agent a1', kind: 'agent' }],
+    lists: [], done: [], claims: {}, aliases: [],
+    notes: [
+      { at: 150, by: 'router', kind: 'decided', text: 'Plain static files, no build step', why: 'phone-first, fastest' },
+      { at: 300, by: 'o.n--a1', kind: 'decided', text: 'Used a local list instead of a database' },
+      { at: 400, by: 'o.n--a1', kind: 'asked-person', text: 'Which payment provider?', why: 'money', answered: false },
+    ],
+    base: '/p/o/n',
+  };
+  const owner = buildAsks({ ...inp, owner: true }).asks[0];
+  assert.deepEqual(owner.decided.map((d) => d.by), ['router', 'o.n--a1']);
+  assert.equal(owner.decided[0].why, 'phone-first, fastest');
+  assert.deepEqual(owner.asked, [{ at: 400, by: 'o.n--a1', question: 'Which payment provider?', why: 'money', state: 'open', href: '/p/o/n/work#/change/o.n--a1' }]);
+  const visitor = buildAsks({ ...inp, owner: false }).asks[0];
+  assert.equal(visitor.decided.length, 2);
+  assert.equal(visitor.asked, undefined);
+});

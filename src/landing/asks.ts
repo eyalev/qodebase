@@ -14,13 +14,20 @@
 export type AskFrom = 'person' | 'talk' | 'issues' | 'board' | 'script' | 'git';
 export type AskState = 'planning' | 'working' | 'in-line' | 'landed' | 'bounced' | 'mixed';
 export type Ask = { id: string; text: string; from: AskFrom; at: number; state: AskState; changes: string[];
-  changeStates: Record<string, string>; duplicateOf?: string; aliases?: string[]; delivery?: string };
+  changeStates: Record<string, string>; duplicateOf?: string; aliases?: string[]; delivery?: string;
+  /** X5: what agents and the router decided on the person's behalf, and (owner only) what they asked the person. */
+  decided?: Decided[]; asked?: AskedPerson[] };
+export type Decided = { at: number; by: string; what: string; why?: string };
+export type AskedPerson = { at: number; by: string; question: string; why: 'secret' | 'money' | 'failing' | 'other'; state: 'open' | 'answered'; href?: string };
+export type Note = { at: number; by: string; kind: 'decided' | 'asked-person'; text: string; why?: string; answered?: boolean };
 export type AsksInput = {
   requests: { text: string; at: number; from?: string; state?: string }[];
   changes: { id: string; title: string; state: string; createdAt: number; agent?: string; kind?: string }[];
   lists: { by: string; at: number; items: { id: string; text: string }[] }[];
   done: string[]; claims: Record<string, { ids: string[]; at: number }>; aliases: { a: string; b: string }[];
   gitPushes?: { at: number; by: string; after: string; n: number; message: string }[];
+  /** X5 notes (`forq decided`, `forq ask-person`); by = a change id or 'router'. */
+  notes?: Note[]; owner?: boolean; base?: string;
 };
 
 const OPEN_WORK = new Set(['working', 'replaying', 'with-lead']);
@@ -79,6 +86,22 @@ export function buildAsks(inp: AsksInput): { asks: Ask[]; counts: Record<AskStat
   const covered = new Set(asks.flatMap((a) => a.changes));
   for (const c of inp.changes) if (c.kind === 'demo' && !covered.has(c.id))
     asks.push({ id: `c:${c.id}`, text: c.title, from: 'script', at: c.createdAt, state: stateOf([c.state]), changes: [c.id], changeStates: { [c.id]: c.state } });
+  // X5: each note goes to the ask that holds its change; the router's to the request it was working on (the newest
+  // request before the note). Questions to the person are the owner's only (one can name a secret).
+  const reqAsks = asks.filter((a) => a.from === 'person' || a.from === 'talk' || a.from === 'issues').sort((a, b) => a.at - b.at);
+  for (const n of (inp.notes || []).slice().sort((a, b) => a.at - b.at)) {
+    if (n.kind === 'asked-person' && !inp.owner) continue;
+    const home = n.by === 'router'
+      ? reqAsks.filter((a) => a.at <= n.at).at(-1) || reqAsks[0]
+      : reqAsks.find((a) => a.changes.includes(n.by)) || asks.find((a) => a.changes.includes(n.by));
+    if (!home) continue;
+    if (n.kind === 'decided') (home.decided ||= []).push({ at: n.at, by: n.by, what: n.text.slice(0, 140), ...(n.why ? { why: n.why.slice(0, 200) } : {}) });
+    else {
+      const why = (['secret', 'money', 'failing'] as const).find((w) => w === n.why) || 'other';
+      (home.asked ||= []).push({ at: n.at, by: n.by, question: n.text.slice(0, 600), why, state: n.answered ? 'answered' : 'open',
+        ...(inp.base ? { href: n.by === 'router' ? inp.base : `${inp.base}/work#/change/${encodeURIComponent(n.by)}` } : {}) });
+    }
+  }
   asks.sort((a, b) => b.at - a.at);
   const counts = { planning: 0, working: 0, 'in-line': 0, landed: 0, bounced: 0, mixed: 0 } as Record<AskState, number>;
   for (const a of asks) counts[a.state]++;

@@ -55,7 +55,11 @@ export type ProjectInfo = {
   private?: boolean;   // owner-only everywhere (registry.ts canSee); its live app needs a signed pass (run.ts)
   landing?: boolean;   // shows 'Agents at work' as its main view (the landing system's demo, src/landing/)
   unlisted?: boolean;  // reachable by link, not listed for others (registry Entry.unlisted): lab runs
+  /** X3: what the owner should see in their Inbox (a build finished, an agent asks them), newest first, max 5;
+   *  cleared when the owner opens the project. */
+  notices?: Notice[];
 };
+export type Notice = { kind: 'build-done' | 'decision'; title: string; at: number; href: string };
 
 export class Project extends DurableObject<Env> {
   async info(): Promise<ProjectInfo | null> {
@@ -124,6 +128,20 @@ export class Project extends DurableObject<Env> {
     await this.#register(info);
     log('project', 'visibility', { slug: info.slug, private: v });
     return info;
+  }
+
+  /** X3: an Inbox notice for the owner (a build finished, an agent asks them). */
+  async addNotice(n: Notice) {
+    const info = await this.#need();
+    info.notices = [n, ...(info.notices || []).filter((x) => !(x.kind === n.kind && x.title === n.title))].slice(0, 5);
+    await this.#register(info);
+  }
+  /** The owner opened the project: its notices are read. */
+  async clearNotices() {
+    const info = await this.#need();
+    if (!info.notices?.length) return;
+    delete info.notices;
+    await this.#register(info);
   }
 
   /** The project's one-line description (shown on its page and in lists): the owner can correct it. */

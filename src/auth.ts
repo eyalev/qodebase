@@ -28,6 +28,8 @@ export type User = {
    *  paste a new one. Subscription only: nothing falls back to another key or anyone else's plan. */
   keyFailed?: { at: number; why: string };
   model?: string;          // Claude Code model for their boxes (API-key users)
+  /** X3: phone pushes when a build finishes / an agent asks them (default on; the Inbox item comes either way). */
+  notify?: { done?: boolean; decisions?: boolean };
 };
 
 const COOKIE = 'forq_session';

@@ -43,6 +43,7 @@ import { TalkLog, talkRoute } from './talk';
 import { TalkVoice } from './talkvoice';
 import { Ledger, costSummary, costsPage, recordCost } from './costs';
 import { bearerEmail, cliPublicRoute, cliUserRoute } from './cliauth';
+import { pushAlert } from './alert';
 // mobile-agent, newer than the image's copy: boxes unpack it at boot (box.ts).
 import MA_TGZ from '../box/mobile-agent.tgz';
 import MA_REV from '../box/mobile-agent.rev';
@@ -301,6 +302,20 @@ async function docsOf(env: Env, ctx: ExecutionContext, info: ProjectInfo, want: 
 /** Which design to render: a preview host's choice (x-forq-ui), else D on the real site. */
 const uiFor = (request: Request, env: Env): UI | null => uiOf(request) ?? (isUiHost(env, new URL(request.url).hostname) ? 'd' : null);
 
+/** X3: tell a project's owner (Inbox notice always; a phone push unless they turned it off). Phone pushes go through the
+ *  instance's Pushover, which reaches only the instance owner: others get the Inbox item. */
+async function notifyOwner(env: Env, slug: string, kind: 'build-done' | 'decision', title: string, href: string) {
+  const p = projectStub(env, slug);
+  const info = await p.info();
+  if (!info) return;
+  await p.addNotice({ kind, title: title.slice(0, 200), at: Date.now(), href });
+  const u = await userByHandle(env, info.owner).catch(() => null);
+  const on = (u?.notify?.[kind === 'decision' ? 'decisions' : 'done']) !== false;
+  const push = on && info.owner === env.OWNER_HANDLE;
+  if (push) await pushAlert(env, `qodebase: ${info.name}`, title, `https://${env.UI_HOST}${href}`, 0);
+  log('notify', 'sent', { slug, kind, push, on });
+}
+
 /** Your projects with changes in progress (no box calls: states from the Project DO). */
 async function inboxOf(env: Env, me: string, entries: Entry[], runBase: string): Promise<InboxItem[]> {
   if (!me) return [];
@@ -308,9 +323,9 @@ async function inboxOf(env: Env, me: string, entries: Entry[], runBase: string):
     const info = await projectStub(env, entry.slug).info().catch(() => null);
     return info ? { entry, info, open: changesOf(info, {}, runBase).open } : null;
   }));
-  return out.filter((x): x is InboxItem => !!x && x.open.length > 0);
+  return out.filter((x): x is InboxItem => !!x && (x.open.length > 0 || !!x.info.notices?.length));
 }
-const inboxCount = (items: InboxItem[]) => items.reduce((n, it) => n + needsOf(it.open).length, 0);
+const inboxCount = (items: InboxItem[]) => items.reduce((n, it) => n + needsOf(it.open).length + (it.info.notices?.length || 0), 0);
 
 /** Box states for a project's open agents, its router and its reviewer. */
 async function statusesOf(env: Env, info: ProjectInfo) {
@@ -592,6 +607,18 @@ const app = {
         const kind = onSubscription(env, u.handle) ? 'plan' : u.apiKeyEnc ? (u.apiKeyKind || 'api') : null;
         return json({ kind, tail: u.apiKeyEnc ? u.apiKeyTail || null : null, ...(u.keyFailed ? { failed: u.keyFailed } : {}) });
       }
+      // X3: build-done / decision pushes (qb7's Settings). push says whether this person can get a phone push at all.
+      if (path === '/api/me/notify' && (request.method === 'GET' || request.method === 'POST')) {
+        const u = await userByEmail(env, me.email || '');
+        if (!u) return json({ error: 'Sign in first' }, 401);
+        let n = { done: u.notify?.done !== false, decisions: u.notify?.decisions !== false };
+        if (request.method === 'POST') {
+          const b = await request.json().catch(() => ({})) as { done?: unknown; decisions?: unknown };
+          n = { done: typeof b.done === 'boolean' ? b.done : n.done, decisions: typeof b.decisions === 'boolean' ? b.decisions : n.decisions };
+          await registry(env).putUser({ ...u, notify: n });
+        }
+        return json({ ...n, push: u.handle === env.OWNER_HANDLE ? 'pushover' : 'none' });
+      }
       if (path.startsWith('/api/me/') && request.method !== 'GET') {
         const u = await userByEmail(env, me.email || '');
         if (!u) return json({ error: 'Sign in first' }, 401);
@@ -737,6 +764,7 @@ const app = {
         if (!info) return new Response('No such project', { status: 404 });
         const all = await listFor(env, me.handle, me.admin);
         const own = info.owner === me.handle;
+        if (own && info.notices?.length) ctx.waitUntil(p.clearNotices().catch(() => {}));   // X3: the owner has seen them
         const st = own ? await statusesOf(env, info) : { status: {}, router: { awake: false, cc: 'asleep' }, reviewer: { awake: false, cc: 'asleep' } };
         // Estimate vs elapsed (Build): the Changes tab reads info.estimate / info.progress.
         const bi0 = { ...(await env.Landing.get(env.Landing.idFromName(slug)).pageExtras().catch(() => null)), billing: await billingOf(env, slug.split('.')[0]) };
@@ -836,7 +864,8 @@ const app = {
           const last = info.lastRequest;
           const reqs = info.requests?.length ? info.requests : last ? [{ text: last.text, at: last.at, from: last.from }] : [];
           return json(buildAsks({ requests: reqs.map((r) => ({ ...r, state: last && r.at === last.at ? last.state : 'sent' })),
-            changes: ld?.changes || [], lists: ld?.lists || [], done: ld?.done || [], claims: ld?.claims || {}, aliases: ld?.aliases || [], gitPushes: ld?.gitPushes || [] }));
+            changes: ld?.changes || [], lists: ld?.lists || [], done: ld?.done || [], claims: ld?.claims || {}, aliases: ld?.aliases || [], gitPushes: ld?.gitPushes || [],
+            notes: ld?.notes || [], owner: info.owner === me.handle || !!me.admin, base: `/p/${slug.replace('.', '/')}` }));
         }
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());
@@ -854,6 +883,11 @@ const app = {
         if (verb === 'ask-result') {
           const r = await boxStub(env, `${slug}--ask`).askResult(url.searchParams.get('id') || '');
           return r ? json(r) : json({ error: 'no such question' }, 404);
+        }
+        if (verb === 'notify' && request.method === 'POST' && me.admin) {   // X3: Landing says a build finished
+          const b = await request.json().catch(() => ({})) as { kind?: string; title?: string; href?: string };
+          await notifyOwner(env, slug, b.kind === 'decision' ? 'decision' : 'build-done', String(b.title || 'Build finished'), String(b.href || `/p/${slug.replace('.', '/')}`));
+          return json({ ok: true });
         }
         if (verb === 'description' && request.method === 'POST') {
           const b = await request.json().catch(() => ({})) as { description?: string };
@@ -1454,6 +1488,18 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       return json({ pairs, aliases: await L.boardAliases(pairs, name) });
     }
     return json({ error: 'stage: prompt|answer' }, 400);
+  }
+  // X5: decisions taken on the person's behalf, and the rare question that needs them (secrets, money, a change that
+  // keeps failing). Agents note on their change; the router on the project.
+  if ((verb === 'decided' || verb === 'ask-person') && request.method === 'POST' && (me.role === 'agent' || me.role === 'router')) {
+    const b = body as Record<string, unknown>;
+    const by = me.role === 'router' ? 'router' : me.agentId;
+    const why = verb === 'ask-person' ? (['secret', 'money', 'failing'].includes(String(b.why)) ? String(b.why) : 'other') : (b.why ? String(b.why) : undefined);
+    const r = await env.Landing.get(env.Landing.idFromName(slug)).personNote(by, verb === 'decided' ? 'decided' : 'asked-person', String(b.text || ''), why)
+      .catch((e) => { log('landing', 'note_failed', { slug, by, err: String(e) }); return { ok: true }; });   // a project without the landing system: nothing to record
+    if (!r.ok) return json({ error: 'text required' }, 400);
+    if (verb === 'ask-person') ctx.waitUntil(notifyOwner(env, slug, 'decision', `${by === 'router' ? 'The router' : `Agent ${by.split('--')[1]}`} asks: ${String(b.text).slice(0, 140)}`, by === 'router' ? `/p/${slug.replace('.', '/')}` : `/p/${slug.replace('.', '/')}/work#/change/${encodeURIComponent(by)}`).catch((e) => log('notify', 'failed', { slug, err: String(e) })));
+    return json({ ok: true });
   }
   if (verb === 'status' && me.role === 'agent') {
     if (!['working', 'pushed', 'blocked'].includes(body.state)) return json({ error: 'state: working|pushed|blocked' }, 400);

@@ -13,6 +13,10 @@ export const FORQ_CLI = String.raw`#!/usr/bin/env python3
                                                 another agent's unlanded work; --skeleton marks the
                                                 build's runnable skeleton (other spawns wait until it lands)
   forq parts N                                  say how many tasks you planned, the skeleton included (router)
+  forq decided "what you chose" [--why "..."]   log a choice you made on the person's behalf (they see it in Asks)
+  forq ask-person --why secret|money|failing|other "question"
+                                                ask the person; ONLY for a secret/key, spending money, or a
+                                                change that keeps failing; then carry on with what you can
   forq send <agent-id> "text"                   message an agent (router)
   forq merge <agent-id>                         merge an agent's fork into main (router); on projects
                                                 with the merge queue it queues the change instead
@@ -208,6 +212,17 @@ def main(argv):
         if on: body['on'] = on
         if skeleton: body['skeleton'] = True
         a = api('POST', '/api/agent/spawn', body); print(f"started {a['id']}" + (f" (stacked on {on})" if on else '') + (' (the skeleton: other agents wait until it lands)' if skeleton else ''))
+    elif v in ('decided', 'ask-person'):
+        why, words = None, []
+        it = iter(rest)
+        for w in it:
+            if w == '--why': why = next(it, None)
+            else: words.append(w)
+        if not words: sys.exit(f'usage: forq {v} "text" [--why ...]')
+        body = {'text': ' '.join(words)}
+        if why: body['why'] = why
+        api('POST', f'/api/agent/{v}', body)
+        print('logged: the person sees it in Asks' if v == 'decided' else 'asked: the person gets it in their Inbox; carry on with what you can meanwhile')
     elif v == 'parts':
         if not rest or not rest[0].isdigit(): sys.exit('usage: forq parts <N>   (how many tasks you planned, the skeleton included)')
         print(api('POST', '/api/agent/parts', {'parts': int(rest[0])}))

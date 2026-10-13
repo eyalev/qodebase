@@ -29,8 +29,8 @@ import { subscribePush, unsubscribe, eligibleSlug, type PushEv } from '../events
 import { makeBoardEvent, boardView, boardText, taskIds, knownTaskIds, claimHolders, pickNext, type TwinCandidate, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
-  | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap' | 'sent-back';
-export type Ev = { t: number; what: What; detail?: string };
+  | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap' | 'sent-back' | 'decided' | 'asked-person';
+export type Ev = { t: number; what: What; detail?: string; why?: string };
 export type ChangeState = 'working' | 'pushed' | 'reviewing' | 'queued' | 'testing' | 'landed' | 'bounced' | 'replaying' | 'with-lead';
 export type Landing_ = { how: 'merged' | 'replayed-handler' | 'replayed-llm' | 'lead' | null; conflicts: string[]; diff: { path: string; lines: string[] }[]; commit: string | null; mainCommit: string | null;
   /** Tier 2: the model that redid it, its usage, and whether it changed the same lines as the reviewed change. */
@@ -122,6 +122,8 @@ type Meta = {
   landedIdx?: Record<string, LandedEntry>;
   /** X1/X2: how many parts the router planned (`forq parts N`), and when the first change landed. */
   parts?: number; firstLandedAt?: number;
+  /** X5: the router's own decisions and questions to the person (agents' go on their change), newest 300. */
+  routerNotes?: { at: number; kind: 'decided' | 'asked-person'; text: string; why?: string }[];
   /** Artifacts 'pushed' subscriptions this project holds (repo -> subscription id): its main + open agents' forks. */
   evsubs?: Record<string, string>;
   /** Pushes to main by a person over git (events.ts), newest 50: the board, Asks and the timeline show them. */
@@ -557,6 +559,12 @@ export class Landing extends DurableObject<Env> {
       await this.#saveMeta();
       // One line per finished build, to recalibrate the predictor on real builds later (Workers Logs, event build_settled).
       log('build', 'build_settled', { slug: m.slug, estimate, actual: b.actual, agents: agents.length });
+      // X3: tell the owner (Inbox + phone push), once.
+      const [o, n] = m.slug.split('.');
+      const mins = Math.max(1, Math.round(b.actual.actualWallS / 60));
+      await fetch(`${this.env.API_BASE}/api/p/${o}/${n}/notify`, { method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1', 'content-type': 'application/json' },
+        body: JSON.stringify({ kind: 'build-done', title: `Your build is ready: ${agents.length} part${agents.length === 1 ? '' : 's'} landed in ${mins} min.`, href: `/p/${o}/${n}` }) })
+        .then((r) => log('build', 'notify', { slug: m.slug, status: r.status })).catch((e) => log('build', 'notify_failed', { slug: m.slug, err: String(e) }));
       progress = { spentUsd, settledAt: last, actualWallS: b.actual.actualWallS, actualUsd: spentUsd };
     }
     this.#progressMemo = { at: Date.now(), v: progress };
@@ -605,7 +613,28 @@ export class Landing extends DurableObject<Env> {
     if (!m) return null;
     if (!this.#meta) this.#meta = m;
     const changes = (await Promise.all(m.order.map((id) => this.#get(id)))).filter(Boolean).map((c) => ({ id: c!.id, title: c!.title, state: c!.state, createdAt: c!.createdAt, agent: c!.agent, kind: c!.kind }));
-    return { changes, lists: m.dedupeLists || [], done: m.tasksDone || [], claims: m.boardClaims || {}, aliases: (m.aliases || []).map((a) => ({ a: a.a, b: a.b })), gitPushes: (m.gitPushes || []).filter((g) => g.n > 0) };
+    // X5 notes: an agent's live on its change (answered once it logs anything after asking); the router's in routerNotes.
+    const recs = (await Promise.all(m.order.map((id) => this.#get(id)))).filter(Boolean) as Change[];
+    const notes = [] as { at: number; by: string; kind: 'decided' | 'asked-person'; text: string; why?: string; answered?: boolean }[];
+    for (const c of recs) c.events.forEach((e, k) => {
+      if (e.what !== 'decided' && e.what !== 'asked-person') return;
+      notes.push({ at: e.t, by: c.id, kind: e.what, text: e.detail || '', ...(e.why ? { why: e.why } : {}), ...(e.what === 'asked-person' ? { answered: c.events.slice(k + 1).some((x) => ['decided', 'pushed', 'landed', 'bounced'].includes(x.what)) } : {}) });
+    });
+    const rn = m.routerNotes || [];
+    rn.forEach((n, k) => notes.push({ at: n.at, by: 'router', kind: n.kind, text: n.text, ...(n.why ? { why: n.why } : {}), ...(n.kind === 'asked-person' ? { answered: k < rn.length - 1 } : {}) }));
+    return { changes, lists: m.dedupeLists || [], done: m.tasksDone || [], claims: m.boardClaims || {}, aliases: (m.aliases || []).map((a) => ({ a: a.a, b: a.b })), gitPushes: (m.gitPushes || []).filter((g) => g.n > 0), notes };
+  }
+
+  /** X5: `forq decided` / `forq ask-person` from an agent (on its change) or the router. */
+  async personNote(by: string, kind: 'decided' | 'asked-person', text: string, why?: string) {
+    const m = await this.#m();
+    text = text.replace(/\s+/g, ' ').trim().slice(0, kind === 'decided' ? 300 : 600);
+    if (!text) return { ok: false };
+    const c = by === 'router' ? null : await this.#get(by);
+    if (c) { c.events.push({ t: Date.now(), what: kind, detail: text, ...(why ? { why: why.slice(0, 200) } : {}) }); await this.#put(c); }
+    else { (m.routerNotes ||= []).push({ at: Date.now(), kind, text, ...(why ? { why: why.slice(0, 200) } : {}) }); if (m.routerNotes.length > 300) m.routerNotes.splice(0, m.routerNotes.length - 300); await this.#saveMeta(); }
+    log('landing', 'note', { slug: m.slug, by, kind, why: why || null, chars: text.length });
+    return { ok: true, title: c?.title || null };
   }
 
   // ---- R1: owner controls (pause / resume / stop all) ------------------------------
@@ -688,7 +717,20 @@ export class Landing extends DurableObject<Env> {
       await this.#budgetTick().catch((e) => log('landing', 'budget_tick_failed', { err: String(e) }));
       await this.#demoTick();
       await this.#stallTick().catch((e) => log('landing', 'stall_tick_failed', { err: String(e) }));
+      await this.#settleTick().catch((e) => log('landing', 'settle_tick_failed', { err: String(e) }));
     }
+  }
+
+  /** X3: a build is noticed as finished without anyone looking at it (buildInfo settles it 3 min after the last
+   *  change landed): while every change is closed and the build not settled, look again every minute. */
+  async #settleTick() {
+    const m = await this.#m();
+    if (!m.build || m.build.actual || !m.firstLandedAt || m.flags.halted) return;
+    const open = (await this.#all()).some((c) => c.kind === 'agent' && c.state !== 'landed' && c.state !== 'bounced');
+    if (open) return;
+    this.#progressMemo = null;
+    const r = await this.buildInfo();
+    if (!r?.progress.settledAt) await this.#arm(60_000);
   }
 
   // ---- stalled agents (R3, 2026-10-12) -------------------------------------------------
