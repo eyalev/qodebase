@@ -95,3 +95,4 @@ Build experience at every size (Eyal, 2026-10-13: "do all 5"); goal = soonest wo
 - [ ] X3 notify when done (and when a decision is needed): push to the owner's phone (web push or the existing alert path) + an Inbox item; opt-out in Settings (qb6 server, qb7 UI)
 - [ ] X4 review keeps up in big builds: reviewers scale with agents (e.g. 1 per 5 coders, up to 8), reviews run in parallel, and the merger replays collisions in parallel within a train (qb6)
 - [ ] X5 fewer interruptions: agents ask the person only for real decisions (secrets, money, a change that keeps failing); everything else decided and logged (router + agent prompts, qb6); Asks shows decisions taken on the person's behalf (qb3)
+- [ ] R7 Huge with one agent: R4's exact 'Café website' prompt, Fastest (one Opus agent), $15 real cap; compare with R4 (10 agents, ~1,770 s, ~$3.5) + hands-on feature check of both apps (qb6 run, qb9 check)
