@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T12:55:27.835Z",
+ "generated": "2026-10-13T12:59:34.987Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -46,10 +46,10 @@
    "label": "measured (qb9: re-verify of every changed file, automatic checks, gpt-oss-120b judge, 50-file hand check)"
   },
   "fleetCached": {
-   "runs": 11,
-   "files": 22770,
-   "landed": 14945,
-   "skipped": 6712,
+   "runs": 25,
+   "files": 70460,
+   "landed": 45355,
+   "skipped": 25015,
    "verifyRefused": 0,
    "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real"
   },
@@ -630,6 +630,45 @@
     "cached": false
    },
    {
+    "runId": "fmv6ooow4",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 1546,
+    "landed": 868,
+    "skipped": 677,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 13,
+    "landWaitP50S": 8,
+    "landWaitP90S": 15,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 1,
+      "landed": 868,
+      "skipped": 677,
+      "calls": 869,
+      "rateLimited429": 0,
+      "peakPerMin": 869,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-nextjs-1 packages",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-1",
+    "cached": true
+   },
+   {
     "runId": "fmv6ofmt4",
     "models": [
      "cache"
@@ -669,37 +708,115 @@
     "cached": true
    },
    {
-    "runId": "fmv6ookhf",
+    "runId": "fmv6oootq",
     "models": [
      "cache"
     ],
-    "state": "running",
+    "state": "done",
     "tokensIn": 0,
     "tokensOut": 0,
     "agents": 50,
     "agentsStarted": 50,
-    "files": 635,
-    "landed": 0,
-    "skipped": 411,
+    "files": 2090,
+    "landed": 689,
+    "skipped": 1398,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
     "usd": 0,
-    "wallS": 7,
-    "landWaitP50S": null,
-    "landWaitP90S": null,
+    "wallS": 14,
+    "landWaitP50S": 15,
+    "landWaitP90S": 19,
     "peakPerMin": null,
     "perModel": {
      "cache": {
       "usd": 0,
-      "cache_miss": 1,
-      "ready": 223,
-      "skipped": 411,
-      "calls": 224,
+      "cache_miss": 3,
+      "landed": 689,
+      "skipped": 1398,
+      "calls": 692,
       "rateLimited429": 0,
-      "peakPerMin": 224,
+      "peakPerMin": 692,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-angular-1 packages",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-1",
+    "cached": true
+   },
+   {
+    "runId": "fmv6oopl9",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 2328,
+    "landed": 1536,
+    "skipped": 790,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 20,
+    "landWaitP50S": 21,
+    "landWaitP90S": 52,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 2,
+      "landed": 1536,
+      "skipped": 790,
+      "calls": 1538,
+      "rateLimited429": 0,
+      "peakPerMin": 1538,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-ext-1 extensions",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-1",
+    "cached": true
+   },
+   {
+    "runId": "fmv6ookhf",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 2090,
+    "landed": 689,
+    "skipped": 1398,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 15,
+    "landWaitP50S": 13,
+    "landWaitP90S": 16,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 3,
+      "landed": 689,
+      "skipped": 1398,
+      "calls": 692,
+      "rateLimited429": 0,
+      "peakPerMin": 692,
       "role": "planned"
      }
     },
@@ -712,33 +829,33 @@
     "models": [
      "cache"
     ],
-    "state": "running",
+    "state": "done",
     "tokensIn": 0,
     "tokensOut": 0,
     "agents": 50,
     "agentsStarted": 50,
-    "files": 870,
-    "landed": 0,
-    "skipped": 386,
+    "files": 1546,
+    "landed": 868,
+    "skipped": 677,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
     "usd": 0,
-    "wallS": 8,
-    "landWaitP50S": null,
-    "landWaitP90S": null,
+    "wallS": 12,
+    "landWaitP50S": 11,
+    "landWaitP90S": 20,
     "peakPerMin": null,
     "perModel": {
      "cache": {
       "usd": 0,
       "cache_miss": 1,
-      "ready": 483,
-      "skipped": 386,
-      "calls": 484,
+      "landed": 868,
+      "skipped": 677,
+      "calls": 869,
       "rateLimited429": 0,
-      "peakPerMin": 484,
+      "peakPerMin": 869,
       "role": "planned"
      }
     },
@@ -786,36 +903,76 @@
     "cached": true
    },
    {
-    "runId": "fmv6oond3",
+    "runId": "fmv6oox4a",
     "models": [
      "cache"
     ],
-    "state": "running",
+    "state": "done",
     "tokensIn": 0,
     "tokensOut": 0,
     "agents": 50,
-    "agentsStarted": 0,
-    "files": 50,
-    "landed": 0,
-    "skipped": 39,
+    "agentsStarted": 50,
+    "files": 2328,
+    "landed": 1536,
+    "skipped": 790,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
     "usd": 0,
-    "wallS": 4,
-    "landWaitP50S": null,
-    "landWaitP90S": null,
+    "wallS": 21,
+    "landWaitP50S": 19,
+    "landWaitP90S": 36,
     "peakPerMin": null,
     "perModel": {
      "cache": {
       "usd": 0,
-      "ready": 11,
-      "skipped": 39,
-      "calls": 11,
+      "cache_miss": 2,
+      "landed": 1536,
+      "skipped": 790,
+      "calls": 1538,
       "rateLimited429": 0,
-      "peakPerMin": 11,
+      "peakPerMin": 1538,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-ext-2 extensions",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-2",
+    "cached": true
+   },
+   {
+    "runId": "fmv6oond3",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 2090,
+    "landed": 689,
+    "skipped": 1398,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 16,
+    "landWaitP50S": 7,
+    "landWaitP90S": 9,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 3,
+      "landed": 689,
+      "skipped": 1398,
+      "calls": 692,
+      "rateLimited429": 0,
+      "peakPerMin": 692,
       "role": "planned"
      }
     },
@@ -828,38 +985,77 @@
     "models": [
      "cache"
     ],
-    "state": "running",
+    "state": "done",
     "tokensIn": 0,
     "tokensOut": 0,
     "agents": 50,
     "agentsStarted": 50,
-    "files": 410,
-    "landed": 0,
-    "skipped": 217,
+    "files": 1546,
+    "landed": 868,
+    "skipped": 677,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
     "usd": 0,
-    "wallS": 7,
-    "landWaitP50S": null,
-    "landWaitP90S": null,
+    "wallS": 15,
+    "landWaitP50S": 15,
+    "landWaitP90S": 26,
     "peakPerMin": null,
     "perModel": {
      "cache": {
       "usd": 0,
       "cache_miss": 1,
-      "ready": 192,
-      "skipped": 217,
-      "calls": 193,
+      "landed": 868,
+      "skipped": 677,
+      "calls": 869,
       "rateLimited429": 0,
-      "peakPerMin": 193,
+      "peakPerMin": 869,
       "role": "planned"
      }
     },
     "repo": "fleet-nextjs-3 packages",
     "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-3",
+    "cached": true
+   },
+   {
+    "runId": "fmv6oov7h",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 2090,
+    "landed": 689,
+    "skipped": 1398,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 16,
+    "landWaitP50S": 15,
+    "landWaitP90S": 20,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 3,
+      "landed": 689,
+      "skipped": 1398,
+      "calls": 692,
+      "rateLimited429": 0,
+      "peakPerMin": 692,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-angular-4 packages",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-4",
     "cached": true
    },
    {
@@ -902,41 +1098,159 @@
     "cached": true
    },
    {
-    "runId": "fmv6ookxz",
+    "runId": "fmv6oopwn",
     "models": [
      "cache"
     ],
-    "state": "running",
+    "state": "done",
     "tokensIn": 0,
     "tokensOut": 0,
     "agents": 50,
     "agentsStarted": 50,
-    "files": 450,
-    "landed": 0,
-    "skipped": 305,
+    "files": 1546,
+    "landed": 868,
+    "skipped": 677,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
     "usd": 0,
-    "wallS": 7,
-    "landWaitP50S": null,
-    "landWaitP90S": null,
+    "wallS": 15,
+    "landWaitP50S": 14,
+    "landWaitP90S": 26,
     "peakPerMin": null,
     "perModel": {
      "cache": {
       "usd": 0,
-      "ready": 145,
-      "skipped": 305,
-      "calls": 145,
+      "cache_miss": 1,
+      "landed": 868,
+      "skipped": 677,
+      "calls": 869,
       "rateLimited429": 0,
-      "peakPerMin": 145,
+      "peakPerMin": 869,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-nextjs-4 packages",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-4",
+    "cached": true
+   },
+   {
+    "runId": "fmv6opa7x",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 2328,
+    "landed": 1536,
+    "skipped": 790,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 22,
+    "landWaitP50S": 24,
+    "landWaitP90S": 58,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 2,
+      "landed": 1536,
+      "skipped": 790,
+      "calls": 1538,
+      "rateLimited429": 0,
+      "peakPerMin": 1184,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-ext-3 extensions",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-3",
+    "cached": true
+   },
+   {
+    "runId": "fmv6ookxz",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 2090,
+    "landed": 689,
+    "skipped": 1398,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 17,
+    "landWaitP50S": 14,
+    "landWaitP90S": 16,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 3,
+      "landed": 689,
+      "skipped": 1398,
+      "calls": 692,
+      "rateLimited429": 0,
+      "peakPerMin": 692,
       "role": "planned"
      }
     },
     "repo": "fleet-angular-5 packages",
     "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-5",
+    "cached": true
+   },
+   {
+    "runId": "fmv6oopmh",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 1546,
+    "landed": 868,
+    "skipped": 677,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 12,
+    "landWaitP50S": 12,
+    "landWaitP90S": 22,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 1,
+      "landed": 868,
+      "skipped": 677,
+      "calls": 869,
+      "rateLimited429": 0,
+      "peakPerMin": 869,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-nextjs-5 packages",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-5",
     "cached": true
    },
    {
@@ -979,6 +1293,45 @@
     "cached": true
    },
    {
+    "runId": "fmv6opaqc",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 2328,
+    "landed": 1536,
+    "skipped": 790,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 22,
+    "landWaitP50S": 27,
+    "landWaitP90S": 51,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 2,
+      "landed": 1536,
+      "skipped": 790,
+      "calls": 1538,
+      "rateLimited429": 0,
+      "peakPerMin": 1187,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-ext-4 extensions",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-4",
+    "cached": true
+   },
+   {
     "runId": "fmv6omm62",
     "models": [
      "cache"
@@ -1018,41 +1371,237 @@
     "cached": true
    },
    {
-    "runId": "fmv6oon2o",
+    "runId": "fmv6op7me",
     "models": [
      "cache"
     ],
-    "state": "running",
+    "state": "done",
     "tokensIn": 0,
     "tokensOut": 0,
     "agents": 50,
-    "agentsStarted": 0,
-    "files": 35,
-    "landed": 0,
-    "skipped": 9,
+    "agentsStarted": 50,
+    "files": 2328,
+    "landed": 1536,
+    "skipped": 790,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
     "usd": 0,
-    "wallS": 4,
-    "landWaitP50S": null,
-    "landWaitP90S": null,
+    "wallS": 14,
+    "landWaitP50S": 25,
+    "landWaitP90S": 57,
     "peakPerMin": null,
     "perModel": {
      "cache": {
       "usd": 0,
-      "ready": 26,
-      "skipped": 9,
-      "calls": 26,
+      "cache_miss": 2,
+      "landed": 1536,
+      "skipped": 790,
+      "calls": 1538,
       "rateLimited429": 0,
-      "peakPerMin": 26,
+      "peakPerMin": 1373,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-ext-5 extensions",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-5",
+    "cached": true
+   },
+   {
+    "runId": "fmv6opkn5",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 23,
+    "landWaitP50S": 51,
+    "landWaitP90S": 58,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-6 src/vs",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-6",
+    "cached": true
+   },
+   {
+    "runId": "fmv6opa0q",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 30,
+    "landWaitP50S": 46,
+    "landWaitP90S": 61,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2459,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-7 src/vs",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-7",
+    "cached": true
+   },
+   {
+    "runId": "fmv6oon2o",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 27,
+    "landWaitP50S": 33,
+    "landWaitP90S": 45,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
       "role": "planned"
      }
     },
     "repo": "fleet-vscode-src-8 src/vs",
     "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-8",
+    "cached": true
+   },
+   {
+    "runId": "fmv6op1o6",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 25,
+    "landWaitP50S": 27,
+    "landWaitP90S": 33,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2496,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-9 src/vs",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-9",
+    "cached": true
+   },
+   {
+    "runId": "fmv6op5a4",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 27,
+    "landWaitP50S": 45,
+    "landWaitP90S": 54,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 1557,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-10 src/vs",
+    "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-10",
     "cached": true
    }
   ],
@@ -1151,10 +1700,10 @@
    }
   },
   "cached": {
-   "runs": 11,
-   "files": 22770,
-   "landed": 14945,
-   "skipped": 6712,
+   "runs": 25,
+   "files": 70460,
+   "landed": 45355,
+   "skipped": 25015,
    "verifyRefused": 0,
    "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real"
   },
