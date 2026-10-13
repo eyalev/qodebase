@@ -236,7 +236,7 @@ landing queue with checks; timelines at /p/eyal/<project>/work#/timeline.
 | R2 tip splitter (small) | 1 Opus agent | 1 | 0 | 0 | 149 s | $0.81 | 50-120 s, $0.21-0.28 |
 | R3 home inventory (large) | Opus planner + 12 Haiku + 3 reviewers, board | 9 | 0 | 0 | 1,940 s* | ~$2.40 + $0.37 boxes | 420-1,080 s, $1.00-1.40 |
 | R4 café website (huge) | planner + up to 20 Haiku (used 10) + 3 reviewers, board | 10 | 0 | 0 | ~1,770 s | $3.28 + $0.21 | 540-1,440 s, $1.70-2.30 |
-| R5 travel planner (huge) | planner + up to 40 Haiku + 3-6 reviewers, board | 40 (one closed as already on main) | 28 | 0 | 2,257 s* | ~$17.1 + $0.88 | 540-1,440 s, $1.70-2.30 |
+| R5 travel planner (huge) | planner + up to 40 Haiku + 3-6 reviewers, board | 40, each its own commit (+ a 41st after the run that wired two views) | 28 | 0 | 2,257 s* | ~$17.1 + $0.88 | 540-1,440 s, $1.70-2.30 |
 
 \* includes a false budget halt (2-6 min; pricing bugs, fixed) and, in R3, ~25 min of one finished-but-unpushed change.
 
