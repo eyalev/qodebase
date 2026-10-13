@@ -657,7 +657,7 @@ const app = {
         const base = `repo=${m[1]}&run=${m[2]}`;
         if (m[3] === 'agents') return json(await fleetCall(env, `/agents?${base}${pg}`));
         if (m[4]) return json(await fleetCall(env, `/agents?${base}&agent=${m[4]}${pg}`));
-        if (m[3] === 'slice') return json(await fleetCall(env, `/slice?${base}&t=${Number(q.get('t')) || 0}${pg}`));
+        if (m[3] === 'slice') return json(await fleetCall(env, `/slice?${base}&t=${Number(q.get('t')) || 0}&to=${Number(q.get('to')) || 0}${pg}`));
         return json(await fleetCall(env, `/file?${base}&path=${encodeURIComponent(String(q.get('file') || '').slice(0, 300))}`));
       }
       if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/ladder\/([A-Za-z0-9-]{1,20})\/series$/))) return json(await fleetCall(env, `/ladder-series?ladder=${m[1]}`));

@@ -67,7 +67,7 @@ export default {
       case '/agents': { const rid = url.searchParams.get('run'), off = Math.max(0, Number(url.searchParams.get('offset')) || 0), lim = Math.min(200, Number(url.searchParams.get('limit')) || 200);
         const a = url.searchParams.get('agent');
         return json(a != null ? await run(env, repo).agentFiles(rid, Number(a), off, lim) : await run(env, repo).agents(rid, off, lim)); }
-      case '/slice': return json(await run(env, repo).slice(url.searchParams.get('run'), url.searchParams.get('t'), Math.max(0, Number(url.searchParams.get('offset')) || 0), Math.min(200, Number(url.searchParams.get('limit')) || 200)));
+      case '/slice': return json(await run(env, repo).slice(url.searchParams.get('run'), url.searchParams.get('t'), Math.max(0, Number(url.searchParams.get('offset')) || 0), Math.min(200, Number(url.searchParams.get('limit')) || 200), Number(url.searchParams.get('to')) || null));
       case '/file': return json(await fileView(env, repo, url.searchParams.get('run'), String(url.searchParams.get('path') || '')));
       case '/ladder-series': return json(await ladderSeries(env, String(url.searchParams.get('ladder') || '')));
       case '/meta': return json(await run(env, repo).setMeta(String(body.run || ''), body.meta || {}));
@@ -447,12 +447,14 @@ export class Run extends DurableObject {
     return { runId, agent, offset, files: rows.map(fileRow) };
   }
   /** What happened in one 10 s slice: files finished in it (cap 200), plus files that landed in it. */
-  async slice(runId, t, offset = 0, limit = 200) {
+  async slice(runId, t, offset = 0, limit = 200, to = null) {
     const t0 = Math.floor(Number(t) / 10000) * 10000;
-    const done = this.sql.exec(`SELECT file, agent, status, model, at, ms, t_read, t_model, t_verify, landed_at, comments, reason FROM rec WHERE run = ? AND at >= ? AND at < ? ORDER BY at LIMIT ? OFFSET ?`, runId, t0, t0 + 10000, limit, offset).toArray();
-    const n = this.sql.exec(`SELECT COUNT(*) AS n FROM rec WHERE run = ? AND at >= ? AND at < ?`, runId, t0, t0 + 10000).toArray()[0]?.n || 0;
-    const landed = this.sql.exec(`SELECT COUNT(*) AS n FROM rec WHERE run = ? AND landed_at >= ? AND landed_at < ?`, runId, t0, t0 + 10000).toArray()[0]?.n || 0;
-    return { runId, t: t0, total: n, landedInSlice: landed, offset, changes: done.map(fileRow) };
+    // to: a range of slices (qb7), at most 10 minutes; one slice by default.
+    const t1 = to ? Math.min(Math.max(t0 + 10000, Math.ceil(Number(to) / 10000) * 10000), t0 + 600000) : t0 + 10000;
+    const done = this.sql.exec(`SELECT file, agent, status, model, at, ms, t_read, t_model, t_verify, landed_at, comments, reason FROM rec WHERE run = ? AND at >= ? AND at < ? ORDER BY at LIMIT ? OFFSET ?`, runId, t0, t1, limit, offset).toArray();
+    const n = this.sql.exec(`SELECT COUNT(*) AS n FROM rec WHERE run = ? AND at >= ? AND at < ?`, runId, t0, t1).toArray()[0]?.n || 0;
+    const landed = this.sql.exec(`SELECT COUNT(*) AS n FROM rec WHERE run = ? AND landed_at >= ? AND landed_at < ?`, runId, t0, t1).toArray()[0]?.n || 0;
+    return { runId, t: t0, to: t1, total: n, landedInSlice: landed, offset, changes: done.map(fileRow) };
   }
   /** One file's record(s) and what the diff needs (base blob hash, comments). */
   async fileRec(runId, path) {
