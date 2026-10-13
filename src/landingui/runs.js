@@ -666,6 +666,7 @@
     const ag = /([\d,]+)\s*agents/.exec(x); if (ag) pre.agents = Math.min(2000, +ag[1].replace(/,/g, ''));
     const bd = /\$\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*dollars?/.exec(x); if (bd) pre.budgetUsd = Math.min(30, +(bd[1] || bd[2]));
     if (/\bcache\b|for free/.test(x)) pre.preset = 'cache';
+    if (!pre.budgetUsd && (pre.agents || 0) >= 500) pre.budgetUsd = 5;   // a big run gets room: small batches cost more per file
     return pre;
   }
 

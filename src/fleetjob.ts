@@ -32,11 +32,14 @@ export function estimate(o: { files: number; models: Model[]; agents: number; bu
   // agents cap the pace too: each agent does about one file every 20 s at best
   const perMin = Math.min(rate / callsPerFile, Math.max(1, o.agents) * 3);
   const mid = files / perMin + 1;
-  const usd = files * usdPerFile;
+  // the S5 $/file came from batches of 20; smaller batches (many agents: files per agent, qb6) repeat the fixed prompt
+  // for fewer files, ~15% more per file for every halving-ish step (batch 4 -> x1.6). Matches qb6's $1.5-3 for 4,064 / 1,000.
+  const batch = o.agents >= 500 ? Math.max(1, Math.min(20, Math.floor(files / Math.max(1, o.agents)))) : 20;
+  const usd = files * usdPerFile * (1 + 0.15 * (20 / batch - 1));
   const capUsd = Math.min(Math.max(0.1, o.budgetUsd || 0), BUDGET_MAX);
   return { files, agents: o.agents, minutes: [Math.max(1, Math.round(mid * 0.7)), Math.max(2, Math.round(mid * 1.4))] as [number, number],
     usd: [+(usd * 0.7).toFixed(2), +(usd * 1.3).toFixed(2)] as [number, number], capUsd,
-    note: usd * 1.3 > capUsd ? `The budget stops it at $${capUsd.toFixed(2)}, before every file is done.` : '' };
+    note: usd * 1.3 > capUsd ? `The budget may stop it at $${capUsd.toFixed(2)} before every file is done: raise it to be safe.` : '' };
 }
 
 /** A start request checked and clamped: {repo, root, job, agents, budgetUsd, models, label} or {error}. */
