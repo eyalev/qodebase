@@ -700,7 +700,7 @@
   }
   // Who sees the timeline: the owner, or anyone on a project whose runs are public (Watch a run, like corner-cafe:
   // its timeline endpoint answers anonymously too). Eyal shipped it 2026-10-12.
-  const tlOk = () => OWN || !!D?.watch?.enabled;
+  const tlOk = () => OWN || !!D?.watch?.enabled || !!D?.flags?.keep;   // kept projects (review 2 #5): their timeline is public too
   let TLsrv = null, TLbusy = false;
   async function loadTimeline() {
     if (TLbusy || !API || MOCK) return; TLbusy = true;
