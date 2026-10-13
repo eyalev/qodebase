@@ -28,14 +28,14 @@ One request, typed on the phone ([eyal/cafe-team](https://qodebase.app/p/eyal/ca
 - **the app works for 11 of its 13 features** (each tried by hand at 390 px, [`R5-quality.md`](docs/board/R5-quality.md)): the cost splitter is missing: the model replay of its change (ag1dx) landed the CSS and the index.html line but dropped the reviewed view, `js/features/split.js`, so the math (`settle.js`) was never given a screen, and the tests missed it. Auditing all 35 replays afterwards (this build's 28 and R8b's 7), we found that one; replays now apply clean files directly, redo only conflicting files, and refuse to land if any reviewed file is missing ([`FINDINGS2.md`](docs/board/FINDINGS2.md) §11); and one cross-agent interface mismatch broke itinerary editing (one agent called the editor with an object, another defined it with positional arguments). As on the café site (R4), the team failed at the seams between agents
 - **28 collided** with work that landed first; each was re-done by a model on the newest code, tested and landed; **none was sent back**
 - at that size **review was the bottleneck**: agents spent 16,234 agent-seconds waiting for a reviewer against 15,731 working, even with 6 reviewers; next, the train ran model replays one after another
-- 2,257 s wall (including a false budget halt, since fixed); ~$17.1 at normal API rates (the agents ran on a Claude subscription) + $0.88 of container time. Smaller builds and the bugs these runs found: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md) §11
+- 2,257 s wall (including a false budget halt, since fixed); $17.48 of model use at normal API rates (the agents ran on a Claude subscription), plus $0.88 of container time. Smaller builds and the bugs these runs found: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md) §11
 
-**One agent or a team, on the same prompt** (real builds through Build, one build each, every feature tried by hand at 390 px):
+**One agent or a team, on the same prompt** (real builds through Build, one build each, every feature tried by hand at 390 px; cost = model use at normal API rates from [`public/results.json`](public/results.json), container time not included):
 
 | prompt | one Opus agent | team (Opus planner + Haiku coders + reviewers, board) | quality |
 |---|---|---|---|
-| Home inventory (Large) | R6: 457 s, $3.87 | R3: 1,940 s (~1,100-1,300 s without a false halt and a stall), $2.77; R8b, after fixes: 2,765 s, $4.71 | all 11 features in all three ([R6 vs R3](docs/board/R3-R6-quality.md), [R8b](docs/board/R8b-quality.md)) |
-| Café website (Huge) | R7: 863 s, $7.58, 12 of 12 working | R4: 1,762 s, $3.45, 10 working + 2 partial (one agent stored the name as {en, pt}, others read a string) | [R7 vs R4](docs/board/R4-R7-quality.md) |
+| Home inventory (Large) | R6: 457 s, $3.87 | R3: 1,940 s (~1,100-1,300 s without a false halt and a stall), $2.40; R8b, after fixes: 2,765 s (incl. a ~10 min queue bug), $4.41 | all 11 features in all three ([R6 vs R3](docs/board/R3-R6-quality.md), [R8b](docs/board/R8b-quality.md)) |
+| Café website (Huge) | R7: 863 s, $7.55, 12 of 12 working | R4: 1,762 s, $3.32, 10 working + 2 partial (one agent stored the name as {en, pt}, others read a string) | [R7 vs R4](docs/board/R4-R7-quality.md) |
 
 So Build now suggests one strong agent at every size; the team presets stay one tap away. A team was cheaper in R3 and R4 but not in R8b (its first run exposed a merge-queue bug, since fixed). Huge with one agent is R7 only.
 
