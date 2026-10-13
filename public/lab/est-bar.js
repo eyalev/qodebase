@@ -34,7 +34,7 @@
   // qb6 (#5, from the 23:00 deploy): a change whose agent's box never started gets the event 'its box had not started:
   // woken', and an agent whose box stopped before its task is 'blocked' with that note. -> 'Agent N' (or 'an agent').
   window.qbStuckAgent = function (view, name) {
-    const never = (x) => /box had not started|never started/i.test(JSON.stringify(x || ''));
+    const never = (x) => /box had not started|never started|before its task was sent/i.test(JSON.stringify(x || ''));
     const c = ((view && view.changes) || []).find((c) => c.state !== 'landed' && (c.events || []).some(never));
     const a = c ? null : ((view && view.agents) || []).find((a) => a.state === 'blocked' && never(a));
     const id = c ? c.agent : a ? a.id || a.agent : null;
