@@ -479,7 +479,21 @@ PY
     await this.#collectCosts();
     await this.ctx.storage.delete('costFrom');
     const snap = await this.snapshot(why);
-    if (!snap) { await this.ctx.storage.setAlarm(Date.now() + ALARM_EVERY_MS); return; }
+    if (!snap) {
+      // A snapshot that keeps failing must not keep the box running: two flagship boxes ran 6-7 h idle, retrying every
+      // minute, on 'snapshot resource limits were exceeded' (2026-10-13). After 3 tries: an agent's unpushed work goes
+      // to a branch of its own fork (qb-idle-save; forks only, never main), then the box stops without a snapshot.
+      const fails = ((await this.ctx.storage.get<number>('snapFails')) || 0) + 1;
+      await this.ctx.storage.put('snapFails', fails);
+      if (fails < 3) { await this.ctx.storage.setAlarm(Date.now() + ALARM_EVERY_MS); return; }
+      const saved = await this.#sh(`cd /workspace/repo 2>/dev/null || exit 0; case "$(git remote get-url origin 2>/dev/null)" in *--*) ;; *) echo not-a-fork; exit 0;; esac; git add -A; git diff --cached --quiet || git -c user.name='forq agent' -c user.email=agent+save@qodebase.app -c commit.gpgsign=false commit -qm 'qodebase: work saved at idle stop (snapshot failed)'; [ -z "$(git log --oneline @{u}..HEAD 2>/dev/null | head -1)" ] && [ "$(git rev-parse HEAD)" = "$(git rev-parse @{u} 2>/dev/null)" ] && { echo nothing-unpushed; exit 0; }; timeout 30 git push -q origin HEAD:refs/heads/qb-idle-save 2>&1 | tail -1; echo pushed`)
+        .then((r) => (r.stdout + r.stderr).trim().slice(-200)).catch((e) => `save failed: ${String(e).slice(0, 150)}`);
+      log('box', 'let_go_unsaved', { why, fails, agentId: await this.ctx.storage.get<string>('agentId'), saved });
+      await this.ctx.storage.delete('snapFails');
+      await this.c.destroy();
+      return;
+    }
+    await this.ctx.storage.delete('snapFails');
     await this.c.destroy();
     log('box', 'let_go', { why, agentId: await this.ctx.storage.get<string>('agentId') });
   }
