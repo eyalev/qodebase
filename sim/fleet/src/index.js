@@ -229,7 +229,7 @@ export class Run extends DurableObject {
     for (const c of ['task TEXT', 'fns TEXT', 'kind TEXT', 'grp TEXT', 'variant INT', 'text TEXT']) try { this.sql.exec(`ALTER TABLE q ADD COLUMN ${c}`); } catch {}
     this.sql.exec(`CREATE TABLE IF NOT EXISTS claim (run TEXT, file TEXT, fn TEXT, task TEXT, PRIMARY KEY (run, file, fn))`);
     // cmt: the comments this file got ({name: text}, for the per-file diff); commit: the lane commit it landed in.
-    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT', 'task TEXT', 'kind TEXT', 'grp TEXT', 'resolution TEXT', 'change_id TEXT', 'redos INT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
+    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT', 'task TEXT', 'kind TEXT', 'grp TEXT', 'resolution TEXT', 'change_id TEXT', 'redos INT', 'base_sha TEXT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
     // S4/qb7: the queue sampled every 10 s while a run is on (the series' depth per stage).
     this.sql.exec(`CREATE TABLE IF NOT EXISTS samp (run TEXT, t INT, waiting INT, at_model INT, ready INT, landed INT, lander_waiting INT, PRIMARY KEY (run, t))`);
     // S4a: the per-result land-wait check scanned the whole table; landed() looked files up by name.
@@ -404,8 +404,8 @@ export class Run extends DurableObject {
     }
     const cmt = r.cmt ? JSON.stringify(r.cmt).slice(0, 8000) : null;
     if (r.task && r.status !== 'ready') this.sql.exec(`DELETE FROM claim WHERE run = ? AND task = ?`, runId, r.task);
-    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n, task, kind, grp, resolution, change_id, redos, landed_at, commit_sha) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null, r.task || null, r.kind || null, r.grp || null, r.resolution || (r.status === 'caught_early' ? 'caught_early' : r.status === 'skipped' && r.task ? 'done_before' : null), r.changeId || null, r.redos ?? null, r.landedAt || null, r.commit || null);
+    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n, task, kind, grp, resolution, change_id, redos, landed_at, commit_sha, base_sha) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null, r.task || null, r.kind || null, r.grp || null, r.resolution || (r.status === 'caught_early' ? 'caught_early' : r.status === 'skipped' && r.task ? 'done_before' : null), r.changeId || null, r.redos ?? null, r.landedAt || null, r.commit || null, r.baseSha || null);
     const t10 = Math.floor(Date.now() / 10000) * 10000;
     if (s.lastSample !== t10) {
       s.lastSample = t10;
@@ -981,7 +981,7 @@ export class KataAgent extends DurableObject {
     await this.ctx.storage.setAlarm(Date.now() + (job?.stage === 'wait' ? 4000 : 300));
   }
   async finish(R, runId, i, job, r) {
-    await R.done(runId, i, { file: job.path, task: job.task, kind: job.kind, grp: job.grp, model: job.model, slot: job.slot, ms: Date.now() - job.t0, usd: job.usd, changeId: job.changeId, redos: job.redos, ...r });
+    await R.done(runId, i, { file: job.path, task: job.task, kind: job.kind, grp: job.grp, model: job.model, slot: job.slot, ms: Date.now() - job.t0, usd: job.usd, changeId: job.changeId, redos: job.redos, baseSha: job.base || null, ...r });
     await this.ctx.storage.put('job', null);
     await this.ctx.storage.setAlarm(Date.now() + 100);
   }
@@ -1007,6 +1007,7 @@ export class KataAgent extends DurableObject {
     if (!chk.ok) return { error: chk.why, usd: m.usd };
     const objs = new Objects();
     const head = fh;
+    job.base = head.hash;   // the main this attempt read (qb4's checker: who saw what)
     const tree = await overlay(fr, objs, head.treeHash, [{ path: job.path, sha: objs.blob(code) }]);
     const commit = objs.commit(tree, [head.hash], `${job.task}\n\n${job.text}`.slice(0, 2000), Date.now(), `qodebase fleet agent ${i} <agent+fleet${i}@qodebase.app>`);
     const token = (await fr.createToken('write', 600)).plaintext;
