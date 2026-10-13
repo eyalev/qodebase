@@ -78,3 +78,30 @@ export function fromGemini(j: any) {
   const u = j?.usageMetadata || {};
   return { choices: [{ message: { role: 'assistant', content: text, tool_calls } }], usage: { prompt_tokens: u.promptTokenCount || 0, completion_tokens: (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0) } };
 }
+
+// Claude through the AI binding speaks Anthropic's own Messages API (system apart, tools with input_schema, tool_use /
+// tool_result blocks, usage.input_tokens): OpenAI-shaped in, OpenAI-shaped out (2026-10-13: OpenAI-shaped input gave 7003).
+export function toAnthropic(messages: any[], tools: any[] | null, maxTokens: number) {
+  const system = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n');
+  const out: any[] = [];
+  for (const m of messages) {
+    if (m.role === 'system') continue;
+    if (m.role === 'tool') { out.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: m.tool_call_id, content: String(m.content || 'done') }] }); continue; }
+    if (m.role === 'assistant' && m.tool_calls?.length) {
+      out.push({ role: 'assistant', content: [...(m.content ? [{ type: 'text', text: m.content }] : []), ...m.tool_calls.map((c: any) => ({ type: 'tool_use', id: c.id, name: c.function?.name, input: typeof c.function?.arguments === 'string' ? JSON.parse(c.function.arguments || '{}') : c.function?.arguments || {} }))] });
+      continue;
+    }
+    out.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || ' ') });
+  }
+  const body: any = { messages: out, max_tokens: maxTokens, temperature: 0.3 };
+  if (system) body.system = system;
+  if (tools?.length) body.tools = tools.map((t: any) => ({ name: t.function.name, description: t.function.description, input_schema: t.function.parameters }));
+  return body;
+}
+export function fromAnthropic(r: any) {
+  if (r?.choices) return r;   // already OpenAI-shaped
+  const blocks = r?.content || [];
+  const text = blocks.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('').trim();
+  const tool_calls = blocks.filter((b: any) => b.type === 'tool_use').map((b: any) => ({ id: b.id, type: 'function', function: { name: b.name, arguments: JSON.stringify(b.input || {}) } }));
+  return { choices: [{ message: { role: 'assistant', content: text, tool_calls } }], usage: { prompt_tokens: r?.usage?.input_tokens || 0, completion_tokens: r?.usage?.output_tokens || 0 } };
+}

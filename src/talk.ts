@@ -24,7 +24,7 @@ import { buildQuestions, candidateProjects, currentSlug, isScaffold, resolve, st
 import { TALK_JS } from './talkclient';
 import { talkAdmin } from './talkadmin';
 import { MERGE_MODEL, mergeMessages, cleanMerge } from './talkmerge';
-import { chatSystem, TOOLS, parseChat, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, toGemini, fromGemini, type AnswerModel } from './talkchat';
+import { chatSystem, TOOLS, parseChat, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, toGemini, fromGemini, toAnthropic, fromAnthropic, type AnswerModel } from './talkchat';
 import { TALK_VOICE_JS } from './talkvoicejs.gen';
 import { routeAgentRequest } from 'agents';
 
@@ -272,8 +272,9 @@ async function callAnswer(env: Env, m: AnswerModel, messages: any[], tools: any[
     if (!r.ok) throw new Error(`gemini ${r.status}: ${(await r.text()).slice(0, 200)}`);
     return fromGemini(await r.json());
   }
+  if (m.via === 'unified') return fromAnthropic(await (env.AI as any).run(m.model, toAnthropic(messages, tools, 700), UNIFIED));
   const input: any = { messages, ...(tools ? { tools } : {}), max_tokens: 700, temperature: 0.3, ...(m.thinkingOff ? { chat_template_kwargs: { enable_thinking: false } } : {}) };
-  return (env.AI as any).run(m.model, input, m.via === 'unified' ? UNIFIED : aiOpts(env));
+  return (env.AI as any).run(m.model, input, aiOpts(env));
 }
 // The chat bench (admin only; scripts/talk-chat-bench.mjs sends the cases): each case through each answering model with
 // the chat lane's own prompt and tools, first round only; returns the tool calls, the words and the time.
