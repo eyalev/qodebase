@@ -753,6 +753,15 @@ answers, or both.
   **Microphone** ready while Talk is open (`keepmic`: the stream opens with the
   sheet when the mic is already allowed, so the recording starts at 0 ms) or only
   while speaking. Live words grow in the input (textarea, up to 35dvh, then scrolls).
+- **Dictation path (since 2026-10-13 evening, tmux-web's way):** ONE MediaRecorder from the tap (WebM/Opus, 250 ms)
+  feeds both the Whisper clip and our own WebSocket `/api/talk/stt-live` (Talk Worker → Workers AI nova-3 over the
+  binding with `{websocket:true}`, no gateway, keyterms ≤ 40, binary frames normalised to bytes); chunks recorded before
+  the socket opens are queued and flushed in order; no server turns. At the stop Whisper always reads the whole clip
+  (a turn without it is traced `whisper_missing`). The agents voice kit (TalkVoice) is now only for conversation mode.
+  Answering model (settings, per device): Claude Haiku 5.5 default for everyone (unified billing through the account's
+  authenticated `default` gateway; $1/person/day, $5/day for all non-owner use, then Gemini, then GLM), Sonnet 5.5,
+  Gemini 3.1 Flash-Lite (`GEMINI_API_KEY` secret, through qodebase-talk), DeepSeek V4 Flash, GLM-4.7-flash. Prompt,
+  tools, model list: src/talkchat.ts; bench: `node scripts/talk-chat-bench.mjs --models haiku,gemini,…`.
 - **Dictation from the bar (2026-10-13, Eyal):** tap the mic → 'Starting the mic…' until the recording is really on,
   then red 'listening' + a buzz; live words grow in the bar; tap again → the words stay (Whisper-checked; up to 15 s,
   replaced only if not edited) → Send. Never sent by silence unless 'sends when I stop talking' is chosen. The mic stays
