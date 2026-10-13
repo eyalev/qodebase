@@ -212,7 +212,7 @@ body.rec .prog,body.rec .notes{display:none}
   </div>
   <div class="ovc"><h3>What we proved</h3>
    <ul class="proved">
-    <li><b>Thousands</b><span>of agents on Cloudflare: <span data-k="scale.agents">4,750</span> with cached answers; cheap models documented <span data-k="fleet.files">31,466</span> real files, up to <span data-k="fleet.peak">114</span> a second over the busiest minute</span></li>
+    <li><b>Thousands</b><span>of agents on Cloudflare: <span data-k="scale.agents">4,750</span> with cached answers; cheap models landed <span data-k="fleet.files">31,466</span> file changes across six codebases (VS Code re-documented on fresh copies for scale), up to <span data-k="fleet.peak">114</span> a second over the busiest minute</span></li>
     <li><b>Hundreds</b><span>of agents with real code collisions, checked by tests they never saw (numbers on Oct 14)</span></li>
     <li><b>Up to 40</b><span>real Claude agents building apps: 28 of 40 changes collided, all redone; at this size one strong agent finished sooner in 3 of 3 builds</span></li>
     <li><b>Every step</b><span>recorded in git and visible: each change, the timeline, the asks</span></li>
@@ -313,9 +313,9 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s" data-t="A fleet of cheap models" data-sec="C">
- <div class="claim"><h2>A fleet of cheap models, on real code</h2><p>Agents on Workers AI and Gemini Flash-Lite, no Claude, documented real codebases including VS Code, Next.js and Angular. A hand check found 109 of 115 comments right.</p><span class="src">Measured on Cloudflare; Durable Object agents, real git on Artifacts</span></div>
- <div class="vis"><div><div class="count" data-k="fleet.files">31,466</div><p class="fl">files landed for <b>$<span data-k="fleet.usd">19.09</span></b>, about $<span data-k="fleet.per1k">0.61</span> per thousand, up to <span data-k="fleet.peak">114</span> a second over the busiest minute</p></div></div>
- <aside class="say">And agents do not have to be expensive. A fleet on cheap models, Workers AI and Gemini Flash-Lite, documented real codebases, VS Code, Next.js and Angular. About thirty thousand files have landed so far, up to a hundred a second, for well under a dollar per thousand, and a hand check found a hundred and nine of a hundred and fifteen comments right.</aside>
+ <div class="claim"><h2>A fleet of cheap models, on real code</h2><p>Agents on Workers AI and Gemini Flash-Lite, no Claude, documented real codebases including VS Code, Next.js and Angular. A hand check found 109 of 115 comments right.</p><span class="src">Measured on Cloudflare; Durable Object agents, real git on Artifacts; VS Code src/vs documented again on fresh copies for the scale runs</span></div>
+ <div class="vis"><div><div class="count" data-k="fleet.files">31,466</div><p class="fl">file changes landed across six codebases for <b>$<span data-k="fleet.usd">19.09</span></b>, about $<span data-k="fleet.per1k">0.61</span> per thousand, up to <span data-k="fleet.peak">114</span> a second over the busiest minute</p></div></div>
+ <aside class="say">And agents do not have to be expensive. A fleet on cheap models, Workers AI and Gemini Flash-Lite, documented real codebases, VS Code, Next.js and Angular. About thirty thousand file changes have landed so far, across six codebases, up to a hundred a second, for well under a dollar per thousand, and a hand check found a hundred and nine of a hundred and fifteen comments right.</aside>
 </section>
 
 <section class="s" data-t="Lanes" data-sec="C">
@@ -392,7 +392,7 @@ body.rec .prog,body.rec .notes{display:none}
 <section class="s ovs" data-t="What we proved" data-sec="wrap">
  <div class="ov"><div class="ovc"><h3>What we proved</h3>
   <ul class="proved">
-   <li><b>Thousands</b><span><span data-k="scale.agents">4,750</span> agents on Cloudflare with cached answers; cheap models documented <span data-k="fleet.files">31,466</span> real files for $<span data-k="fleet.usd">19.09</span> (Section C)</span></li>
+   <li><b>Thousands</b><span><span data-k="scale.agents">4,750</span> agents on Cloudflare with cached answers; cheap models landed <span data-k="fleet.files">31,466</span> file changes across six codebases for $<span data-k="fleet.usd">19.09</span> (Section C)</span></li>
    <li><b>Hundreds</b><span>agents with real code collisions, checked by hidden tests: the code dial (Section C)</span></li>
    <li><b>Up to 40</b><span>real Claude agents: 12 of 12 landed; 28 of 40 collided and all were redone, 11 of 13 features work; one strong agent sooner in 3 of 3, the team cheaper in 2 of 3 (Section B)</span></li>
    <li><b>Every step is visible</b><span>the record in git, the timeline, Asks, estimates, the Runs page (Sections A, D)</span></li>
