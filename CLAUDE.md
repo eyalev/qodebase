@@ -762,6 +762,23 @@ answers, or both.
   caps (per person decide 600 / chat 150 / stt 300; total 5000/1500/3000);
   signed-in only. NOT under remote-manage's AI breaker (personal account only);
   cloudcost gap `qodebase-talk`. Self-host copies have the binding but no gateway.
+- **Voice bar** (2026-10-13, manager's brief "everything by voice"): replaces the floating button on every
+  signed-in page. A mini-player above the page's own bottom bars (placeBar probes under it): mic | what you are
+  saying (3 lines) or the last answer | open the conversation; the sheet folds back into it; offers (Send? Stop
+  this run?) show in it with chips. `slim` (no mic) above a project's composer (its mic stays, WhatsApp-style;
+  composer dictation that sounds like a site command is offered in the bar); `data-talk-bar="mic"` on <body> =
+  mic only (the deck), `"off"`, `?clean`, `?rec=1` = none. Signed out on `/`: a sign-in bar. Its height is kept
+  free (a spacer on scrolling pages, padding on an app-like page's scroller).
+- **Voice coverage:** the scan reads `#/` routes, summary, role=tab/switch/button, aria-labelledby, sliders and
+  selects (label + value + choices), hidden panels a visible button controls, card names on duplicate labels
+  (`data-talk-ctx`). Pages add actions an element cannot express with
+  `window.__talkActions = [{id, text, run(sentence)}]` (runs.js moments, the deck's slides). Re-renders: elements
+  are re-found by their words. **Gate** (`gate()` in talkdecide.ts, mirrored in the client): delete / sign out /
+  revoke never by voice; stop / pause / resume / merge / build / start / watch after a yes (said or tapped; the
+  page's own second "Stop this run" is pressed after a yes). Eval fixtures for runs, run_detail, home_build,
+  settings, work, asks, deck.
+- **What's going on** also names builds running/finished (Landing binding on the talk Worker), questions agents
+  asked you (X5 ask-person), live fleet runs (needs `FLEET_KEY` as a secret on qodebase-talk).
 - **Page tools for Jarvis hands** (contract:
   `<jarvis webmcp contract>`): signed-in pages
   publish `window.__webmcp` {version 1, app qodebase, tools, call} and register
