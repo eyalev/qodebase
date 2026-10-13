@@ -572,6 +572,7 @@
   // from a sentence ('document every exported function in VS Code's editor and add each one to the API index').
   let NJ = null, COPIES = null, njEst = 0; const njCount = {};
   const VS_AREAS = ['editor', 'workbench', 'base', 'platform', 'code', 'server'];
+  const RESERVED_TAKE = 'fleet-n2-vscode-src-1';
   function njMount() {
     if (!OWN || NJ || MOCK) return;
     NJ = document.createElement('section'); NJ.id = 'nj'; NJ.className = 'nj';   // placed into #nj-slot by render()
@@ -651,7 +652,9 @@
     const area = want === 'VS Code' && VS_AREAS.find((a) => new RegExp(`\\b${a}\\b`).test(x));
     // the exact project name (VS Code is not VS Code extensions); an area like 'editor' needs a src/vs copy; fresh first
     const cs = (COPIES?.copies || []).filter((c) => !want || (c.source?.name || '').toLowerCase() === want.toLowerCase()).filter((c) => !area || String(c.source?.root || '').startsWith('src/vs'));
-    const c = cs.find((y) => y.fresh) || cs[0];
+    // a copy qbfleet marks reserved (the recording's take) first, then any fresh one. RESERVED_TAKE: the 3a take on
+    // 2026-10-14 (qb2/qb3) until /copies carries reserved; drop it after the recording.
+    const c = cs.find((y) => y.reserved && y.fresh) || cs.find((y) => y.repo === RESERVED_TAKE && y.fresh) || cs.find((y) => y.fresh) || cs[0];
     if (c) { pre.repo = c.repo; if (area) pre.root = `src/vs/${area}`; }
     if (/api index|index|api\.md/.test(x)) pre.job = 'comments+index';
     const ag = /([\d,]+)\s*agents/.exec(x); if (ag) pre.agents = Math.min(2000, +ag[1].replace(/,/g, ''));
