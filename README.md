@@ -2,8 +2,9 @@
 
 **A git platform where many AI agents change one codebase at once, and their work lands by itself.** Built entirely on Cloudflare, made to be used from a phone.
 
-**What we proved, at two scales** (all on Cloudflare):
+**What we proved, at three scales** (all on Cloudflare):
 - **Thousands of agents:** 4,750 agents with cached answers landed 63,441 changes in under 3 minutes, with no errors; with real cheap models, a fleet landed 31,466 file changes in six real codebases, up to ~114 a second, none touching code.
+- **Hundreds of agents, on code with hidden tests:** 200 cheap-model agents took 1,385 small coding tasks on one codebase, every change through the real merge queue (one run per level). With 30% of the tasks aimed at the same functions, 229 collided changes were redone by a model, wrong about as often as fresh work (~5%), and losses did not rise (74 lost checks against 96 with no overlap; at most 2 lost in landing, the rest the models' own mistakes). The overlap cost time: 145 min against 40.
 - **Real Claude teams up to 40:** 28 of a 40-agent build's changes collided and were all redone by a model on the newest code; at this size, one strong agent finished sooner in 3 of 3 builds.
 
 **What we found.** For building a fresh app, one strong agent is the measured default: on the same prompts, in 3 of 3 real builds, one strong agent finished sooner than a team (2×, 4× and 6×; the 6× pair, R8b, had a ~10 min queue bug), with at least as many features working; the team was cheaper in 2 of 3 (one build each: [R6 vs R3](docs/board/R3-R6-quality.md), [R7 vs R4](docs/board/R4-R7-quality.md), [R8b](docs/board/R8b-quality.md)). Many agents pay off for wide work (shared task lists, two teams on one repo, tasks arriving mid-run: the board), for work that has to run in parallel (big ports like Bun's), and at fleet scale (lanes, a fleet of cheap models). qodebase is the layer that makes many agents safe: every change an intent with a record, landed by intent on the newest code, with a live board and a timeline of who did what.
