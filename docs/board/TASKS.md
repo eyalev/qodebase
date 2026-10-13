@@ -119,3 +119,11 @@ Parallel tracks (Eyal, 2026-10-13: "do 1, 2, 3, 5 and 4"):
 - [ ] P3 scale-step prep off qb6: import + count the extra repos (rest of VS Code extensions/, microsoft/TypeScript src, angular/angular packages, babel/babel packages) into Artifacts qbfleet, licences checked, target counts, per-repo $/time estimate (qb5)
 - [ ] P4 repos side by side on different models (per-model limits): e.g. gemma on VS Code, glm-4.7 on TypeScript, Gemini on Angular; per-model quality from qb9's check (qb6 runs, after P3)
 - [ ] P5 second judge-style adversarial review of README + submission + the live judge path (manager's subagent)
+
+Fleet at scale: where does OUR side break? (Eyal, 2026-10-13 ~12:45 UTC)
+- [ ] S1 prediction first: cached-answer mode (no model limit) at 200 / 1k / 5k agents over N repo copies: which saturates first (Agent DO throughput, Artifacts push/fetch rates, the door's compare-and-swap, lane DOs, verify CPU, Workers subrequests); then real-model mode with all models at their limits (qb4, sim.md (l))
+- [ ] S2 copies: 10 copies of each fleet repo from its ORIGINAL base (uncommented) in Artifacts qbfleet (fleet-vscode-1..10 etc.), scaling to 50 if needed (qb5)
+- [ ] S3 cached-answer mode: reuse the comments already produced for identical files (by content hash) instead of calling a model; everything else real (agents, verify, lanes, door, pushes) (qb6)
+- [ ] S4 ladder 200 -> 1,000 -> 5,000 agents over the copies; at each step read the first thing that queues/fails, fix if ours, go up; auto-pause on; cost of Cloudflare ops tracked (qb6)
+- [ ] S5 real models, all at once (gemma, glm-4.7, glm-5.3, Gemini 3.1 flash-lite) at their limits on fresh copies, within the $50/day cap (qb6)
+- [ ] S6 write-up (results generator + qb8)
