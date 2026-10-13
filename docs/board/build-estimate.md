@@ -247,3 +247,9 @@ Haiku 1-hour cache writes reached 7.7M because contexts compacted near 66k token
 was 9% past the top, so team time at about 10 agents is now 2.0x the sim (was 1.8x). Every team build now falls in
 its time range: R3, R4, R5, the proof build, and R8b without the bug. R8b's cost sits at the top edge of its new range
 ($1.6-4.4). If compaction keeps showing up, it belongs in the per-agent cost; one build does not say that yet.
+
+**What the picker says about a team's cost (second review, 2026-10-13).** It no longer says "a team costs about N%
+less". R8b, R3's prompt run again on Balanced, cost $4.41, more than one agent's $3.87. So the team was cheaper in only
+2 of 3 same-prompt comparisons. `teamVsOneAgent()` counts the comparisons from REAL_BUILDS (the `prompt` key). The
+Large and Huge words now end "a team may cost less or more (Balanced): it was cheaper in K of N same-prompt
+comparisons". If every comparison favours the team, they say "a team cost less in all N".

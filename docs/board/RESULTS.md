@@ -8,21 +8,24 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 
 | run | repo | models | agents | files | landed | nothing to add | verify refused | rejected | rate-limited | $ | wall | land wait p50 / p90 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| fmv6kuwtl (plumbing) | microsoft/vscode src/vs | glm-4.7-flash | - | 3 | 0 | 0 | 0 | 3 | 0 | $0.00 | 33 s | - / - s |
-| fmv6kzol3 (plumbing) | microsoft/vscode src/vs | glm-4.7-flash | - | 3 | 0 | 0 | 0 | 0 | 0 | $0.00 | 8 s | - / - s |
-| fmv6l8doa (plumbing) | microsoft/vscode src/vs | glm-4.7-flash | - | 6 | 6 | 0 | 0 | 0 | 0 | $0.00 | 8 s | 221 / 223 s |
-| fmv6lhnk2 (F2 @ 10 agents) | microsoft/vscode src/vs | gemma-4-26b-a4b-it | - | 60 | 28 | 23 | 0 | 0 | 0 | $0.01 | 47 s | 5 / 7 s |
-| fmv6lmffn (F2 @ 100 (start bug: only 8 agents started)) | microsoft/vscode src/vs | gemma-4-26b-a4b-it | - | 500 | 301 | 199 | 0 | 0 | 0 | $0.09 | 191 s | 6 / 9 s |
-| fmv6m4smw (F2 @ 100 agents) | microsoft/vscode src/vs | gemma-4-26b-a4b-it | - | 500 | 364 | 133 | 0 | 0 | 3 | $0.11 | 102 s | 23 / 27 s |
-| fmv6md3we (F3 @ 200 agents) | microsoft/vscode src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.5-flash-lite | 200 | 3,120 | 2,330 | 786 | 0 | 4 | 0 | $1.37 | 261 s | 10 / 18 s |
+| fmv6kuwtl (plumbing (3 files, thinking on)) | microsoft/vscode src/vs | glm-4.7-flash | 2 | 3 | 0 | 0 | 0 | 3 | 0 | $0.00 | 33 s | - / - s |
+| fmv6kzol3 (plumbing (3 files)) | microsoft/vscode src/vs | glm-4.7-flash | 2 | 3 | 0 | 0 | 0 | 0 | 0 | $0.00 | 8 s | - / - s |
+| fmv6l8doa (plumbing (6 files, first landing)) | microsoft/vscode src/vs | glm-4.7-flash | 3 | 6 | 6 | 0 | 0 | 0 | 0 | $0.00 | 8 s | 221 / 223 s |
+| fmv6lhnk2 (F2 @ 10 agents) | microsoft/vscode src/vs | gemma-4-26b-a4b-it | 10 | 60 | 28 | 23 | 0 | 0 | 0 | $0.01 | 47 s | 5 / 7 s |
+| fmv6lmffn (F2 @ 100 agents (start bug: 8 started)) | microsoft/vscode src/vs | gemma-4-26b-a4b-it | 100 (8 started) | 500 | 301 | 199 | 0 | 0 | 0 | $0.09 | 191 s | 6 / 9 s |
+| fmv6m4smw (F2 @ 100 agents) | microsoft/vscode src/vs | gemma-4-26b-a4b-it | 100 | 500 | 364 | 133 | 0 | 0 | 3 | $0.11 | 102 s | 23 / 27 s |
+| fmv6md3we (F3 @ 200 agents, src/vs) | microsoft/vscode src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.5-flash-lite | 200 | 3,120 | 2,330 | 786 | 0 | 4 | 0 | $1.37 | 261 s | 10 / 18 s |
+| fmv6mttvr (F3b nest packages/ (gemini-3.1)) | fleet-nest packages | gemini-3.1-flash-lite | 100 | 36 | 9 | 27 | 0 | 0 | 0 | $0.00 | 9 s | 6 / 6 s |
+| fmv6mtyx9 (F3b angular packages/ (gemini-3.1)) | fleet-angular packages | gemini-3.1-flash-lite | 100 (50 started) | 21 | 0 | 18 | 0 | 0 | 0 | $0.00 | 6 s | - / - s |
 
 | model | files handled | landed | verify refused | rate-limited (share of calls) | peak calls/min | $ | $ per 1k files |
 |---|---|---|---|---|---|---|---|
-| @cf/zai-org/glm-4.7-flash | 993 | 710 | 0 | 0 (-) | - | $0.14 | $0.14 |
-| @cf/google/gemma-4-26b-a4b-it | 2,032 | 1,459 | 0 | 3 (-) | - | $0.45 | $0.22 |
-| gemini-3.5-flash-lite | 1,152 | 860 | 0 | 0 (-) | - | $1.00 | $0.87 |
+| @cf/zai-org/glm-4.7-flash | 993 | 710 | 0 | 0 (0.0%) | 183 | $0.14 | $0.14 |
+| @cf/google/gemma-4-26b-a4b-it | 2,032 | 1,459 | 0 | 3 (0.2%) | 294 | $0.45 | $0.22 |
+| gemini-3.5-flash-lite | 1,152 | 860 | 0 | 0 (0.0%) | 235 | $1.00 | $0.87 |
+| gemini-3.1-flash-lite | 54 | 9 | 0 | 0 (0.0%) | 9 | $0.00 | $0.08 |
 
-Totals: 3,029 files landed of 4,192 attempted over 7 runs (1,141 needed no comment); 0 refused by the code-unchanged check; $1.59 ($0.38 per 1k files).
+Totals: 3,038 files landed of 4,249 attempted over 9 runs (1,186 needed no comment); 0 refused by the code-unchanged check; $1.59 ($0.37 per 1k files).
 
 Quality (qb9, sim/fleet/quality.json, status pending): not measured yet.
 
@@ -53,6 +56,8 @@ Label: measured (real Claude agents on Eyal's plan, real builds on Cloudflare; o
 | R8b | R3's prompt again, Balanced (~10 min queue bug) | planner + 12 haiku, 3 reviewers, board | 2,765 s | $4.41 | 720-1,980 s, $1.30-$4.10 | time no, cost no |
 
 Estimates as shown at the time; later refits (public/lab/predict.js REAL_FIT) were fitted on these builds.
+
+Same prompt, team vs one Opus agent (tokens): real-home-inventory $2.4 / 1,940 s vs one agent $3.87 / 457 s; real-home-inventory-r8b $4.41 / 2,765 s vs one agent $3.87 / 457 s; real-cafe-site $3.45 / 1,762 s vs one agent $7.55 / 863 s. The team was cheaper in 2 of 3; one agent was faster in 3 of 3.
 
 ## Board ablation (E7)
 

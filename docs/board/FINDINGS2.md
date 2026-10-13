@@ -259,7 +259,7 @@ What it shows:
 hand); the team wrote ~3x the code (22 files vs 7) with more polish bugs (overflowing tab bar, '0 boxs'); the solo app added
 bulk move, quantity, currency. One build each: one strong agent was ~3-4x faster at similar quality; the team ~30% cheaper.
 Decision (on the data: the user gets the same app ~4x sooner): Suggest picks one agent for Large too; Balanced stays one tap
-away as the cheaper option. Huge is untested with one agent.
+away. Huge is untested with one agent.
 
 **R7 vs R4, same Huge 'Café website' prompt (R4-R7-quality.md, 12 features tried at 390 px):** one Opus agent 863 s / $7.58,
 12 of 12 features working; the 10-agent team 1,762 s / $3.45, 10 working + 2 partial. The team's two partials share one
@@ -267,7 +267,7 @@ cause, a cross-agent integration bug: one agent stored the café's name/address 
 About shows '[object Object]' and 'Export site.json' always throws (the owner can edit but never publish). The solo app had
 smaller bugs (pickup time not checked against opening hours). One build each: one strong agent ~2x faster and more complete;
 a team ~half the cost. Decision (time to a working, complete app first): Suggest picks one agent at every size; the team
-presets stay one tap away as the cheaper option. A lesson for teams: shared data shapes need a contract (the skeleton task
+presets stay one tap away. A lesson for teams: shared data shapes need a contract (the skeleton task
 should define them).
 
 **Build-experience round (X1-X5, B-1..B-3, C-1/C-2, 2026-10-13): proof build eyal/real-budget-tracker-10 and R8b.**
@@ -297,4 +297,9 @@ should define them).
   (all 7 nav links visible at 390, lend from the item page, print table fits, a room with contents can't be deleted, tag
   rename) and has new small ones (no currency sign, raw ISO dates, the header search keeps the old query, '1 items',
   print per room only). No blocking bugs. One build each. The default stays one strong agent (no long-context price
-  tier); team presets are the cheaper option.
+  tier).
+- **Is a team cheaper? Not reliably.** Same prompt, team vs one Opus agent, tokens: R3 $2.40 vs R6 $3.87 (team cheaper),
+  R8b $4.41 vs R6 $3.87 (team dearer; $4.71 with boxes), R4 $3.45 vs R7 $7.55 (team cheaper): cheaper in 2 of 3, one
+  build each. So the picker no longer promises a saving: it says "a team may cost less or more (Balanced): it was cheaper
+  in 2 of 3 same-prompt comparisons" (public/lab/predict.js teamVsOneAgent(), counted from REAL_BUILDS). One agent was
+  faster in all three (457 s vs 1,940 / 2,765 s; 863 s vs 1,762 s).

@@ -13,6 +13,7 @@
 // tables; 'generated' is in results.json only).
 import fs from 'node:fs';
 import path from 'node:path';
+import { teamVsOneAgent } from '../../public/lab/predict.js';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
 const CACHE = path.join(ROOT, 'scripts/results/cache');
@@ -158,6 +159,7 @@ const l2 = (name) => L.L2.rows.find((r) => r.name === name);
 const headline = {
   fleet: { largestRun: F.totals.largestRun, filesLanded: F.totals.landed, filesAttempted: F.totals.filesAttempted, verifyRefused: F.totals.verifyRefused, usd: F.totals.usd, usdPer1kLanded: F.totals.usdPer1kLanded, runs: F.totals.runs, label: F.label },
   realBuilds: { n: RB.rows.length, insideEstimateTime: RB.rows.filter((r) => r.inside.wall).length, insideEstimateCost: RB.rows.filter((r) => r.inside.usd).length,
+    teamVsOneAgent: (() => { const c = teamVsOneAgent(); return { n: c.n, teamCheaper: c.teamCheaper, comparisons: c.comparisons.map(({ prompt, team, teamUsd, oneUsd, teamS, oneS, teamCheaper }) => ({ prompt, team, teamUsd, oneUsd, teamS, oneS, teamCheaper })) }; })(),
     sameLargePrompt: (() => { const t = RB.rows.find((r) => r.id === 'R3'), s = RB.rows.find((r) => r.id === 'R6'); return t && s ? { teamS: t.wallS, oneAgentS: s.wallS, teamUsd: t.usd, oneAgentUsd: s.usd } : null; })(),
     label: RB.label },
   board: { dupPairsNoBoard: ab('A')?.dupPairs, dupPairsBoard: ab('E')?.dupPairs, wallNoBoardS: ab('A')?.wallS, wallBoardS: ab('E')?.wallS, n: ab('E')?.n, label: AB.label },
@@ -190,7 +192,8 @@ if (F.f0) md.push('F0 bench (20 files per model, measured, sim/fleet/F0.md):', '
 md.push('## Real builds inside qodebase (R2-R8b)', '', `Label: ${RB.label}. Source: /api/admin/build-estimates (${RB.source}).`, '',
   table(['build', 'what', 'setup', 'wall', 'cost (tokens)', 'estimate shown', 'inside?'],
     RB.rows.map((r) => [r.id, r.what, r.setup, `${fmt(r.wallS)} s`, usd(r.usd), `${fmt(r.shownWallS[0])}-${fmt(r.shownWallS[1])} s, ${usd(r.shownUsd[0])}-${usd(r.shownUsd[1])}`, `time ${r.inside.wall ? 'yes' : 'no'}, cost ${r.inside.usd ? 'yes' : 'no'}`])), '',
-  'Estimates as shown at the time; later refits (public/lab/predict.js REAL_FIT) were fitted on these builds.', '');
+  'Estimates as shown at the time; later refits (public/lab/predict.js REAL_FIT) were fitted on these builds.', '',
+  (() => { const c = teamVsOneAgent(); return `Same prompt, team vs one Opus agent (tokens): ${c.comparisons.map((x) => `${x.team.split('/').pop()} $${x.teamUsd} / ${fmt(x.teamS)} s vs one agent $${x.oneUsd} / ${fmt(x.oneS)} s`).join('; ')}. The team was cheaper in ${c.teamCheaper} of ${c.n}; one agent was faster in ${c.comparisons.filter((x) => x.oneS < x.teamS).length} of ${c.n}.`; })(), '');
 
 md.push('## Board ablation (E7)', '', `Label: ${AB.label}. ${AB.ablation.scenario}.`, '',
   table(['arm', 'n', 'wall', 'agent-minutes', 'API-equiv $', 'twin pairs built twice (of 10)'], AB.ablation.arms.map((a) => [a.name, a.n, `${fmt(a.wallS)} s`, fmt(a.agentMin), usd(a.usd), fmt(a.dupPairs)])), '');

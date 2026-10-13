@@ -524,13 +524,13 @@ export const REAL_BUILDS = [
   { slug: 'eyal/real-tip-splitter', at: '2026-10-12', shape: 'alone', pieces: 3, wallS: 149, usd: 0.813 },
   // R3-R5 (FINDINGS2 section 11; Ledger per model at lab rates, Haiku prompts over 100k tokens at 5x; boxes left out,
   // the estimate is API cost). Walls include a false budget halt (2-6 min, fixed) and, in R3, a stalled push.
-  { slug: 'eyal/real-home-inventory', at: '2026-10-12', shape: 'team', bucket: 'large', coders: 12, agents: 9, reviewers: 3, wallS: 1940, usd: 2.40, shown: { wallS: [420, 1080], usd: [1.0, 1.4] } },
-  { slug: 'eyal/real-cafe-site', at: '2026-10-12', shape: 'team', bucket: 'huge', coders: 20, agents: 10, reviewers: 3, wallS: 1762, usd: 3.45, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
+  { slug: 'eyal/real-home-inventory', prompt: 'home-inventory', at: '2026-10-12', shape: 'team', bucket: 'large', coders: 12, agents: 9, reviewers: 3, wallS: 1940, usd: 2.40, shown: { wallS: [420, 1080], usd: [1.0, 1.4] } },
+  { slug: 'eyal/real-cafe-site', prompt: 'cafe-site', at: '2026-10-12', shape: 'team', bucket: 'huge', coders: 20, agents: 10, reviewers: 3, wallS: 1762, usd: 3.45, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
   // 40 agents: long-context Haiku calls $8.16 of $17.3; agents waited 16,234 agent-s for a reviewer vs 15,731 working.
   { slug: 'eyal/real-course-builder', at: '2026-10-13', shape: 'team', bucket: 'huge', coders: 40, agents: 40, reviewers: 6, wallS: 2257, usd: 17.3, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
   // R6: R3's Large prompt on Fastest (one Opus agent): 457 s, $3.87 (out 95k, cache reads 4.6M, 1-h writes 132k);
   // 1 change, 7 files, ~1,340 lines vs R3's 22 files, ~4,140 lines. Shown 120-300 s, $1.70-3.10 (sim ~195 s, $1.67).
-  { slug: 'eyal/real-home-inventory-solo', at: '2026-10-13', shape: 'alone', bucket: 'large', wallS: 457, usd: 3.87, shown: { wallS: [120, 300], usd: [1.7, 3.1] } },
+  { slug: 'eyal/real-home-inventory-solo', prompt: 'home-inventory', at: '2026-10-13', shape: 'alone', bucket: 'large', wallS: 457, usd: 3.87, shown: { wallS: [120, 300], usd: [1.7, 3.1] } },
   // R7: R4's Huge prompt on Fastest: 863 s, $7.55 (out 201k, cache reads 7.8M, 1-h writes 244k), 44 files ~2,320 lines
   // vs R4's 71 / ~5,940 (features not compared yet). Shown 660-1800 s, $5.4-11.9 (sim ~470 s, $3.9): inside.
   // R8 proof build (X1/X4), Balanced: 12 Haiku coders, 3 reviewers, 13 parts: 1,639 s, $3.52. Shown 840-2220 s,
@@ -539,8 +539,8 @@ export const REAL_BUILDS = [
   // R8b, R3's prompt again on Balanced: 2,765 s (~10 min of it a merge-queue bug, a train run twice, fixed), $4.41
   // (Haiku 1-h cache writes 7.7M, inflated by compaction near 66k tokens), 13 changes, first landing 274 s. Shown
   // 720-1980 s, $1.3-4.1: over both. Without the bug ~2,165 s, still 9% over the top: team time at 10 agents x1.8 -> x2.0.
-  { slug: 'eyal/real-home-inventory-r8b', at: '2026-10-13', shape: 'team', bucket: 'large', coders: 12, agents: 12, reviewers: 3, wallS: 2765, usd: 4.41, clean: false, shown: { wallS: [720, 1980], usd: [1.3, 4.1] } },
-  { slug: 'eyal/real-cafe-site-solo', at: '2026-10-13', shape: 'alone', bucket: 'huge', wallS: 863, usd: 7.55, shown: { wallS: [660, 1800], usd: [5.4, 11.9] } },
+  { slug: 'eyal/real-home-inventory-r8b', prompt: 'home-inventory', at: '2026-10-13', shape: 'team', bucket: 'large', coders: 12, agents: 12, reviewers: 3, wallS: 2765, usd: 4.41, clean: false, shown: { wallS: [720, 1980], usd: [1.3, 4.1] } },
+  { slug: 'eyal/real-cafe-site-solo', prompt: 'cafe-site', at: '2026-10-13', shape: 'alone', bucket: 'huge', wallS: 863, usd: 7.55, shown: { wallS: [660, 1800], usd: [5.4, 11.9] } },
 ];
 // The refit on those builds (2026-10-13), applied on top of the lab-calibrated sim. Few points, so each term is
 // named, the range is widened, and the estimate says how many real builds it rests on.
@@ -559,6 +559,14 @@ export const REAL_BUILDS = [
 export const REAL_FIT = { aloneUsdX: 1.83, sessionUsd: 0.54, aloneWallX: 2.1, perAgentUsd: 0.14, longAt40: 2.7, wallAt10: 2.0, wallAt40: 2.3, from: 10, to: 40 };
 const ramp = (n) => Math.max(0, Math.min(1, (n - REAL_FIT.from) / (REAL_FIT.to - REAL_FIT.from)));
 // alone mid: the one real one-agent build (R2, 149 s); low stays the lab's quickest (58 s).
+// Same prompt, team vs one agent, from REAL_BUILDS (the `prompt` key): what the picker may say about a team's cost.
+// R3 $2.40 and R8b $4.41 vs R6 $3.87 (Large), R4 $3.45 vs R7 $7.55 (Huge): the team was cheaper in 2 of 3 (2026-10-13).
+export function teamVsOneAgent() {
+  const out = [];
+  for (const solo of REAL_BUILDS.filter((r) => r.shape === 'alone' && r.prompt)) for (const team of REAL_BUILDS.filter((r) => r.shape === 'team' && r.prompt === solo.prompt))
+    out.push({ prompt: solo.prompt, bucket: solo.bucket, team: team.slug, teamUsd: team.usd, oneUsd: solo.usd, teamS: team.wallS, oneS: solo.wallS, teamCheaper: team.usd < solo.usd });
+  return { n: out.length, teamCheaper: out.filter((c) => c.teamCheaper).length, comparisons: out };
+}
 export const BUILD_FLOOR = { alone: { low: 50, mid: 150 }, team: { low: 170, mid: 320 } };
 
 // -> { wallS: [lo, hi], apiUsd: [lo, hi], basedOn, sameSetup, agentTasks, quality, qualityMeasured, notes, simVersion, job }
@@ -661,8 +669,9 @@ export function suggestBuild(jobIn = SMALL_APP) {
   // The rule (Eyal via the manager, 2026-10-13): the best experience at every size: time to a working app first, then
   // quality, then cost. One agent at every size now: the same prompt both ways at Large (R3 team vs R6: 11/11 features
   // each, 1,940 s vs 457 s; docs/board/R3-R6-quality.md) and at Huge (R4 team vs R7: team 10/12 working + 2 partial,
-  // one agent 12/12; 1,762 s vs 863 s). The team stays one tap away (Balanced) and the words say what it saves,
-  // computed on the real-fitted estimates of this job.
+  // one agent 12/12; 1,762 s vs 863 s). The team stays one tap away (Balanced). What it costs is said from the real
+  // same-prompt comparisons (teamVsOneAgent), not the fit: the team was cheaper in only 2 of 3 (R8b cost more than one
+  // agent: second review, 2026-10-13), so the words say so instead of promising a saving.
   const f = predictBuild(job, BUILD_PRESETS.fastest.variant), b = predictBuild(job, BUILD_PRESETS.balanced.variant);
   const mid = (r) => (r.apiUsd[0] + r.apiUsd[1]) / 2;
   const x = mid(f) / mid(b);
@@ -671,15 +680,12 @@ export function suggestBuild(jobIn = SMALL_APP) {
     const cost = x <= 1.05 ? 'costs about the same as a team or less' : x <= 1.25 ? 'costs a little more than a team' : `costs about ${x.toFixed(1)}x a team`;
     return out({ why: `A small job: one agent is likely quickest here and ${cost}; in the lab its quality was about a team's.` });
   }
-  if (bucket.max < 30) {
-    const less = Math.max(10, Math.round((1 - 1 / x) * 10) * 10);
-    return out({ why: x > 1.05
-      ? `One strong agent: about 4x faster in our real builds (one each), same features; a team costs about ${less}% less (Balanced).`
-      : 'One strong agent: about 4x faster in our real builds (one each), same features, at about a team\'s cost.' });
-  }
-  const share = 1 / x;
-  const team = share <= 0.4 ? 'well under half' : share <= 0.6 ? 'about half' : share <= 0.8 ? 'about two thirds' : 'a little less';
-  return out({ why: `One strong agent: about 2x faster in our real builds (one each) and as complete; a team costs ${team} (Balanced).` });
+  const cmp = teamVsOneAgent();
+  const teamCost = cmp.teamCheaper === cmp.n
+    ? `a team cost less in all ${cmp.n} of our same-prompt comparisons (Balanced)`
+    : `a team may cost less or more (Balanced): it was cheaper in ${cmp.teamCheaper} of ${cmp.n} same-prompt comparisons`;
+  if (bucket.max < 30) return out({ why: `One strong agent: about 4x faster in our real builds, same features; ${teamCost}.` });
+  return out({ why: `One strong agent: about 2x faster in our real builds and as complete; ${teamCost}.` });
 }
 
 // "Need an idea?" chips (docs/board/TASKS.md I1): each size's typical time and cost, i.e. a job in the middle of
@@ -733,7 +739,7 @@ export function jobType(job = SMALL_APP, suggestion = null) {
     evidence: 'Board runs and sims (sim.md (d)-(h)): a duplicate check before work stops pieces being built twice.' };
   if (b.tasks < 30) return { ...base, type: 'app', from: 'size', label: 'a mid-size app',
     why: preset === 'balanced' ? 'about half the cost of one agent on the lab\'s bigger apps' : preset === 'cheapest' ? 'many simple, separate pieces' : 'about 4x faster than a team in our real builds, same features',
-    evidence: preset === 'fastest' ? 'In our real builds (one each), R3 vs R6, same prompt: 11/11 features each; one agent 457 s, a 9-agent team 1,940 s and 38% cheaper in tokens (29% with box time).'
+    evidence: preset === 'fastest' ? 'Same prompt in our real builds: one agent 457 s, $3.87 (R6); a 9-agent team 1,940 s, $2.40 (R3, 11/11 features each); the same team again 2,765 s, $4.41 (R8b, more than one agent).'
       : 'Lab stage 1: on the bigger apps a team cost about half of one agent.' };
   return { ...base, type: 'big-app', from: 'size', label: 'a big app',
     why: preset === 'fastest' ? 'about 2x faster than a team in our real builds (one each) and as complete' : preset === 'cheapest' ? 'many simple, separate pieces: a Haiku crew does them for the least'
