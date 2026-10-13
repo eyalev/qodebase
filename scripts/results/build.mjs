@@ -60,9 +60,17 @@ async function fleet() {
     peakPerMin: r.peakPerMin ?? null, perModel: r.perModel || (r.models && !Array.isArray(r.models) ? r.models : null),
     repo: r.repo === 'fleet-main' || !r.repo ? `microsoft/vscode ${r.root || 'src/vs'}` : `${r.repo} ${r.root || ''}`.trim(), label: r.label || RUN_NOTES[r.runId] || null,
   }));
+  // Cached-answer runs (S3/S4: comments reused by content hash, no model call) test our side only: kept out of the
+  // model totals and summed on their own.
+  for (const r of rows) r.cached = r.models.length > 0 && r.models.every((m) => m === 'cache');
+  const cachedRows = rows.filter((r) => r.cached);
+  const csum = (k) => cachedRows.reduce((a, r) => a + (r[k] || 0), 0);
+  const cachedTotals = { runs: cachedRows.length, files: csum('files'), landed: csum('landed'), skipped: csum('skipped'), verifyRefused: csum('verifyFail'),
+    label: 'measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real' };
+  const modelRows = rows.filter((r) => !r.cached);
   // Per model across runs (the per-run perModel counts when the API gives them).
   const pm = {};
-  for (const r of rows) for (const [m, c] of Object.entries(r.perModel || {})) {
+  for (const r of modelRows) for (const [m, c] of Object.entries(r.perModel || {})) {
     const t = (pm[m] ||= { files: 0, landed: 0, skipped: 0, verifyFail: 0, rejected: 0, rateLimited: 0, calls: 0, usd: 0, peakPerMin: 0 });
     for (const k of ['landed', 'skipped', 'verifyFail', 'rejected', 'rateLimited', 'calls', 'usd']) t[k] += c[k] ?? c[{ verifyFail: 'verify_fail', rateLimited: 'rateLimited429' }[k]] ?? 0;
     // role: 'planned' (the run's own model) or 'overflow' (took work when the planned models were full)
@@ -73,14 +81,14 @@ async function fleet() {
   }
   // $ per 1k files handled (a skipped file still costs its read); 429 share only when the API gives calls.
   for (const t of Object.values(pm)) { t.usdPer1kFiles = t.files ? r1((t.usd / t.files) * 1000, 2) : null; t.share429 = t.calls ? r1(t.rateLimited / t.calls, 3) : null; t.usd = r1(t.usd, 4); if (!t.calls) { t.calls = null; t.peakPerMin = t.peakPerMin || null; } }
-  const sum = (k) => rows.reduce((a, r) => a + (r[k] || 0), 0);
-  const totals = { runs: rows.length, filesAttempted: sum('files'), landed: sum('landed'), skipped: sum('skipped'), verifyRefused: sum('verifyFail'), rejected: sum('rejected'), rateLimited: sum('rateLimited'), usd: r1(sum('usd'), 2) };
+  const sum = (k) => modelRows.reduce((a, r) => a + (r[k] || 0), 0);
+  const totals = { runs: modelRows.length, filesAttempted: sum('files'), landed: sum('landed'), skipped: sum('skipped'), verifyRefused: sum('verifyFail'), rejected: sum('rejected'), rateLimited: sum('rateLimited'), usd: r1(sum('usd'), 2) };
   totals.usdPer1kLanded = totals.landed ? r1((totals.usd / totals.landed) * 1000, 2) : null;
   totals.usdPer1kFiles = totals.filesAttempted ? r1((totals.usd / totals.filesAttempted) * 1000, 2) : null;
   // The biggest run so far, for the headline.
-  const big = [...rows].sort((a, b) => (b.files || 0) - (a.files || 0))[0] || null;
+  const big = [...modelRows].sort((a, b) => (b.files || 0) - (a.files || 0))[0] || null;
   totals.largestRun = big && { runId: big.runId, agents: big.agents, files: big.files, landed: big.landed, skipped: big.skipped, wallS: big.wallS, filesPerMin: big.wallS ? r1(((big.landed || 0) + (big.skipped || 0)) / (big.wallS / 60), 0) : null, landWaitP90S: big.landWaitP90S, usd: big.usd, models: big.models };
-  return { label: 'measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)', source: runs.from, runs: rows, perModel: pm, totals, quality, f0: f0?.models || null };
+  return { label: 'measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)', source: runs.from, runs: rows, perModel: pm, totals, cached: cachedTotals, quality, f0: f0?.models || null };
 }
 
 // ---- Real builds (R2-R8b): /api/admin/build-estimates (forq admin) ----
@@ -161,6 +169,7 @@ const l2 = (name) => L.L2.rows.find((r) => r.name === name);
 const headline = {
   fleetQuality: F.quality?.status === 'done' ? { filesChanged: F.quality.files_changed, codeChanged: F.quality.code_changed, handComments: F.quality.hand?.comments, handOk: F.quality.hand?.ok, handFiles: F.quality.hand?.files,
     judge: (F.quality.judge || []).map((j) => ({ model: j.model, n: j.n, accurate: j.accurate, helpful: j.helpful, invented: j.invented })), judgeVsHand: F.quality.judge_vs_hand, label: 'measured (qb9: re-verify of every changed file, automatic checks, gpt-oss-120b judge, 50-file hand check)' } : null,
+  fleetCached: F.cached,
   fleet: { largestRun: F.totals.largestRun, filesLanded: F.totals.landed, filesAttempted: F.totals.filesAttempted, verifyRefused: F.totals.verifyRefused, usd: F.totals.usd, usdPer1kLanded: F.totals.usdPer1kLanded, runs: F.totals.runs, label: F.label },
   realBuilds: { n: RB.rows.length, insideEstimateTime: RB.rows.filter((r) => r.inside.wall).length, insideEstimateCost: RB.rows.filter((r) => r.inside.usd).length,
     teamVsOneAgent: (() => { const c = teamVsOneAgent(); return { n: c.n, teamCheaper: c.teamCheaper, comparisons: c.comparisons.map(({ prompt, team, teamUsd, oneUsd, teamS, oneS, teamCheaper }) => ({ prompt, team, teamUsd, oneUsd, teamS, oneS, teamCheaper })) }; })(),
@@ -179,10 +188,11 @@ if (notes.length) md.push('Sources not fresh: ' + notes.join('; ') + '.', '');
 md.push('## Fleet: documentation comments on VS Code (F2-F3)', '', `Label: ${F.label}. Source: qbfleet /runs (${F.source}).`, '');
 if (F.runs.length) {
   md.push(table(['run', 'repo', 'models', 'agents', 'files', 'landed', 'nothing to add', 'verify refused', 'rejected', 'rate-limited', '$', 'wall', 'land wait p50 / p90'],
-    F.runs.map((r) => [`${r.runId}${r.label ? ` (${r.label})` : ''}`, r.repo, r.models.map((m) => m.split('/').pop()).join(', ') || '-', `${fmt(r.agents)}${r.agentsStarted != null && r.agentsStarted !== r.agents ? ` (${fmt(r.agentsStarted)} started)` : ''}`, fmt(r.files), fmt(r.landed), fmt(r.skipped), fmt(r.verifyFail), fmt(r.rejected), fmt(r.rateLimited), usd(r.usd, 2), r.wallS != null ? `${fmt(r.wallS)} s` : '-', `${fmt(r.landWaitP50S)} / ${fmt(r.landWaitP90S)} s`])), '');
+    F.runs.map((r) => [`${r.runId}${r.label ? ` (${r.label})` : ''}${r.cached ? ' [cached answers]' : ''}`, r.repo, r.models.map((m) => m.split('/').pop()).join(', ') || '-', `${fmt(r.agents)}${r.agentsStarted != null && r.agentsStarted !== r.agents ? ` (${fmt(r.agentsStarted)} started)` : ''}`, fmt(r.files), fmt(r.landed), fmt(r.skipped), fmt(r.verifyFail), fmt(r.rejected), fmt(r.rateLimited), usd(r.usd, 2), r.wallS != null ? `${fmt(r.wallS)} s` : '-', `${fmt(r.landWaitP50S)} / ${fmt(r.landWaitP90S)} s`])), '');
   if (Object.keys(F.perModel).length) md.push(table(['model', 'files handled', 'landed', 'verify refused', 'rate-limited (share of calls)', 'peak calls/min', '$', '$ per 1k files'],
     Object.entries(F.perModel).map(([m, t]) => [m, fmt(t.files), fmt(t.landed), fmt(t.verifyFail), `${fmt(t.rateLimited)} (${t.share429 != null ? fmt(t.share429 * 100, 1) + '%' : '-'})`, fmt(t.peakPerMin), usd(t.usd, 2), usd(t.usdPer1kFiles, 2)])), '');
-  md.push(`Totals: ${fmt(F.totals.landed)} files landed of ${fmt(F.totals.filesAttempted)} attempted over ${F.totals.runs} runs (${fmt(F.totals.skipped)} needed no comment); ${fmt(F.totals.verifyRefused)} refused by the code-unchanged check; ${usd(F.totals.usd)} (${usd(F.totals.usdPer1kFiles)} per 1k files).`, '');
+  if (F.cached.runs) md.push(`Cached-answer runs (${F.cached.label}): ${F.cached.runs} runs, ${fmt(F.cached.files)} files, ${fmt(F.cached.landed)} landed, ${fmt(F.cached.verifyRefused)} refused by verify. Not counted in the model totals below.`, '');
+  md.push(`Model-written totals: ${fmt(F.totals.landed)} files landed of ${fmt(F.totals.filesAttempted)} attempted over ${F.totals.runs} runs (${fmt(F.totals.skipped)} needed no comment); ${fmt(F.totals.verifyRefused)} refused by the code-unchanged check; ${usd(F.totals.usd)} (${usd(F.totals.usdPer1kFiles)} per 1k files).`, '');
 } else md.push('No fleet runs readable yet.', '');
 if (F.quality) {
   const q = F.quality, pct = (a, n) => (n ? `${a}/${n} (${fmt((a / n) * 100)}%)` : '-');

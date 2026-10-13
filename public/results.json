@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T12:49:32.562Z",
+ "generated": "2026-10-13T12:53:44.204Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -45,27 +45,37 @@
    },
    "label": "measured (qb9: re-verify of every changed file, automatic checks, gpt-oss-120b judge, 50-file hand check)"
   },
+  "fleetCached": {
+   "runs": 4,
+   "files": 16256,
+   "landed": 11956,
+   "skipped": 4276,
+   "verifyRefused": 0,
+   "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real"
+  },
   "fleet": {
    "largestRun": {
-    "runId": "fmv6ofmt4",
-    "agents": 50,
-    "files": 4064,
-    "landed": 1810,
-    "skipped": 1069,
-    "wallS": 52,
-    "filesPerMin": 3322,
-    "landWaitP90S": 57,
-    "usd": 0,
+    "runId": "fmv6md3we",
+    "agents": 200,
+    "files": 3120,
+    "landed": 2330,
+    "skipped": 786,
+    "wallS": 261,
+    "filesPerMin": 716,
+    "landWaitP90S": 18,
+    "usd": 1.3742,
     "models": [
-     "cache"
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.5-flash-lite"
     ]
    },
-   "filesLanded": 12003,
-   "filesAttempted": 27661,
+   "filesLanded": 6616,
+   "filesAttempted": 11405,
    "verifyRefused": 0,
    "usd": 2.81,
-   "usdPer1kLanded": 0.23,
-   "runs": 16,
+   "usdPer1kLanded": 0.42,
+   "runs": 12,
    "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
   },
   "realBuilds": {
@@ -172,7 +182,8 @@
      }
     },
     "repo": "microsoft/vscode src/vs",
-    "label": "plumbing (3 files, thinking on)"
+    "label": "plumbing (3 files, thinking on)",
+    "cached": false
    },
    {
     "runId": "fmv6kzol3",
@@ -208,7 +219,8 @@
      }
     },
     "repo": "microsoft/vscode src/vs",
-    "label": "plumbing (3 files)"
+    "label": "plumbing (3 files)",
+    "cached": false
    },
    {
     "runId": "fmv6l8doa",
@@ -244,7 +256,8 @@
      }
     },
     "repo": "microsoft/vscode src/vs",
-    "label": "plumbing (6 files, first landing)"
+    "label": "plumbing (6 files, first landing)",
+    "cached": false
    },
    {
     "runId": "fmv6lhnk2",
@@ -282,7 +295,8 @@
      }
     },
     "repo": "microsoft/vscode src/vs",
-    "label": "F2 @ 10 agents"
+    "label": "F2 @ 10 agents",
+    "cached": false
    },
    {
     "runId": "fmv6lmffn",
@@ -319,7 +333,8 @@
      }
     },
     "repo": "microsoft/vscode src/vs",
-    "label": "F2 @ 100 agents (start bug: 8 started)"
+    "label": "F2 @ 100 agents (start bug: 8 started)",
+    "cached": false
    },
    {
     "runId": "fmv6m4smw",
@@ -357,7 +372,8 @@
      }
     },
     "repo": "microsoft/vscode src/vs",
-    "label": "F2 @ 100 agents"
+    "label": "F2 @ 100 agents",
+    "cached": false
    },
    {
     "runId": "fmv6md3we",
@@ -416,7 +432,8 @@
      }
     },
     "repo": "microsoft/vscode src/vs",
-    "label": "F3 @ 200 agents, src/vs"
+    "label": "F3 @ 200 agents, src/vs",
+    "cached": false
    },
    {
     "runId": "fmv6mttvr",
@@ -453,7 +470,8 @@
      }
     },
     "repo": "fleet-nest packages",
-    "label": "F3b nest packages/ (gemini-3.1)"
+    "label": "F3b nest packages/ (gemini-3.1)",
+    "cached": false
    },
    {
     "runId": "fmv6mtyx9",
@@ -491,7 +509,8 @@
      }
     },
     "repo": "fleet-angular packages",
-    "label": "F3b angular packages/ (gemini-3.1)"
+    "label": "F3b angular packages/ (gemini-3.1)",
+    "cached": false
    },
    {
     "runId": "fmv6mu687",
@@ -529,7 +548,8 @@
      }
     },
     "repo": "fleet-nextjs packages",
-    "label": "F3b next.js packages/ (glm-4.7)"
+    "label": "F3b next.js packages/ (glm-4.7)",
+    "cached": false
    },
    {
     "runId": "fmv6mu93d",
@@ -567,7 +587,8 @@
      }
     },
     "repo": "fleet-vscode-ext extensions",
-    "label": "F3b vscode extensions/ (gemma)"
+    "label": "F3b vscode extensions/ (gemma)",
+    "cached": false
    },
    {
     "runId": "fmv6mu3wd",
@@ -605,7 +626,8 @@
      }
     },
     "repo": "fleet-babel packages",
-    "label": "F3b babel packages/ (gemini-3.1)"
+    "label": "F3b babel packages/ (gemini-3.1)",
+    "cached": false
    },
    {
     "runId": "fmv6ofmt4",
@@ -618,7 +640,7 @@
     "agents": 50,
     "agentsStarted": 50,
     "files": 4064,
-    "landed": 1810,
+    "landed": 2989,
     "skipped": 1069,
     "verifyFail": 0,
     "rejected": 0,
@@ -627,15 +649,14 @@
     "calls": null,
     "usd": 0,
     "wallS": 52,
-    "landWaitP50S": 47,
-    "landWaitP90S": 57,
+    "landWaitP50S": 43,
+    "landWaitP90S": 55,
     "peakPerMin": null,
     "perModel": {
      "cache": {
       "usd": 0,
       "cache_miss": 6,
-      "landed": 1810,
-      "ready": 1179,
+      "landed": 2989,
       "skipped": 1069,
       "calls": 2995,
       "rateLimited429": 0,
@@ -644,7 +665,8 @@
      }
     },
     "repo": "fleet-vscode-src-1 src/vs",
-    "label": "S4a 200 agents / 4 copies (cache) - copy 1"
+    "label": "S4a 200 agents / 4 copies (cache) - copy 1",
+    "cached": true
    },
    {
     "runId": "fmv6ofopo",
@@ -657,7 +679,7 @@
     "agents": 50,
     "agentsStarted": 50,
     "files": 4064,
-    "landed": 285,
+    "landed": 2989,
     "skipped": 1069,
     "verifyFail": 0,
     "rejected": 0,
@@ -666,15 +688,14 @@
     "calls": null,
     "usd": 0,
     "wallS": 45,
-    "landWaitP50S": 36,
-    "landWaitP90S": 38,
+    "landWaitP50S": 61,
+    "landWaitP90S": 76,
     "peakPerMin": null,
     "perModel": {
      "cache": {
       "usd": 0,
       "cache_miss": 6,
-      "landed": 285,
-      "ready": 2704,
+      "landed": 2989,
       "skipped": 1069,
       "calls": 2995,
       "rateLimited429": 0,
@@ -683,7 +704,8 @@
      }
     },
     "repo": "fleet-vscode-src-2 src/vs",
-    "label": "S4a 200 agents / 4 copies (cache) - copy 2"
+    "label": "S4a 200 agents / 4 copies (cache) - copy 2",
+    "cached": true
    },
    {
     "runId": "fmv6of4um",
@@ -721,7 +743,8 @@
      }
     },
     "repo": "fleet-vscode-src-3 src/vs",
-    "label": "S4a 200 agents / 4 copies (cache) - copy 3"
+    "label": "S4a 200 agents / 4 copies (cache) - copy 3",
+    "cached": true
    },
    {
     "runId": "fmv6oflq1",
@@ -734,7 +757,7 @@
     "agents": 50,
     "agentsStarted": 50,
     "files": 4064,
-    "landed": 303,
+    "landed": 2989,
     "skipped": 1069,
     "verifyFail": 0,
     "rejected": 0,
@@ -743,15 +766,14 @@
     "calls": null,
     "usd": 0,
     "wallS": 41,
-    "landWaitP50S": 48,
-    "landWaitP90S": 50,
+    "landWaitP50S": 83,
+    "landWaitP90S": 97,
     "peakPerMin": null,
     "perModel": {
      "cache": {
       "usd": 0,
       "cache_miss": 6,
-      "landed": 303,
-      "ready": 2686,
+      "landed": 2989,
       "skipped": 1069,
       "calls": 2995,
       "rateLimited429": 0,
@@ -760,7 +782,8 @@
      }
     },
     "repo": "fleet-vscode-src-4 src/vs",
-    "label": "S4a 200 agents / 4 copies (cache) - copy 4"
+    "label": "S4a 200 agents / 4 copies (cache) - copy 4",
+    "cached": true
    }
   ],
   "perModel": {
@@ -827,49 +850,43 @@
     },
     "usdPer1kFiles": 0.22,
     "share429": 0
-   },
-   "cache": {
-    "files": 9663,
-    "landed": 5387,
-    "skipped": 4276,
-    "verifyFail": 0,
-    "rejected": 0,
-    "rateLimited": 0,
-    "calls": 11980,
-    "usd": 0,
-    "peakPerMin": 2995,
-    "roles": {
-     "planned": 9663
-    },
-    "usdPer1kFiles": 0,
-    "share429": 0
    }
   },
   "totals": {
-   "runs": 16,
-   "filesAttempted": 27661,
-   "landed": 12003,
-   "skipped": 9033,
+   "runs": 12,
+   "filesAttempted": 11405,
+   "landed": 6616,
+   "skipped": 4757,
    "verifyRefused": 0,
    "rejected": 17,
    "rateLimited": 3,
    "usd": 2.81,
-   "usdPer1kLanded": 0.23,
-   "usdPer1kFiles": 0.1,
+   "usdPer1kLanded": 0.42,
+   "usdPer1kFiles": 0.25,
    "largestRun": {
-    "runId": "fmv6ofmt4",
-    "agents": 50,
-    "files": 4064,
-    "landed": 1810,
-    "skipped": 1069,
-    "wallS": 52,
-    "filesPerMin": 3322,
-    "landWaitP90S": 57,
-    "usd": 0,
+    "runId": "fmv6md3we",
+    "agents": 200,
+    "files": 3120,
+    "landed": 2330,
+    "skipped": 786,
+    "wallS": 261,
+    "filesPerMin": 716,
+    "landWaitP90S": 18,
+    "usd": 1.3742,
     "models": [
-     "cache"
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.5-flash-lite"
     ]
    }
+  },
+  "cached": {
+   "runs": 4,
+   "files": 16256,
+   "landed": 11956,
+   "skipped": 4276,
+   "verifyRefused": 0,
+   "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real"
   },
   "quality": {
    "status": "done",

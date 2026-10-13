@@ -894,8 +894,8 @@
    "agents": 50,
    "agentsStarted": 50,
    "files": 4064,
-   "landed": 1810,
-   "ready": 1179,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -909,15 +909,14 @@
    "endedAt": 1791895751589,
    "wallS": 52,
    "landWaitS": {
-    "p50": 47,
-    "p90": 57
+    "p50": 43,
+    "p90": 55
    },
    "models": {
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 1810,
-     "ready": 1179,
+     "landed": 2989,
      "skipped": 1069,
      "calls": 2995,
      "rateLimited429": 0,
@@ -947,8 +946,8 @@
    "agents": 50,
    "agentsStarted": 50,
    "files": 4064,
-   "landed": 285,
-   "ready": 2704,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -962,15 +961,14 @@
    "endedAt": 1791895747368,
    "wallS": 45,
    "landWaitS": {
-    "p50": 36,
-    "p90": 38
+    "p50": 61,
+    "p90": 76
    },
    "models": {
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 285,
-     "ready": 2704,
+     "landed": 2989,
      "skipped": 1069,
      "calls": 2995,
      "rateLimited429": 0,
@@ -1052,8 +1050,8 @@
    "agents": 50,
    "agentsStarted": 50,
    "files": 4064,
-   "landed": 303,
-   "ready": 2686,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -1067,15 +1065,14 @@
    "endedAt": 1791895739464,
    "wallS": 41,
    "landWaitS": {
-    "p50": 48,
-    "p90": 50
+    "p50": 83,
+    "p90": 97
    },
    "models": {
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 303,
-     "ready": 2686,
+     "landed": 2989,
      "skipped": 1069,
      "calls": 2995,
      "rateLimited429": 0,
