@@ -190,3 +190,22 @@ if (flag('judge')) {
   log('judge_done', { spent });
   console.error(`judge: $${spent.toFixed(4)} spent; verdicts in ${path.join(OUT, 'judge.jsonl')}`);
 }
+
+// ---- 5. --publish <path>: the tally for results.json (qb4's scripts/results/build.mjs reads sim/fleet/quality.json) ----
+if (opt('publish')) {
+  const read = (f) => (fs.existsSync(path.join(OUT, f)) ? fs.readFileSync(path.join(OUT, f), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
+  const judged = read('judge.jsonl'), ledger = read('judge-ledger.jsonl'), handRows = read('hand.jsonl').filter((h) => h.correct != null);
+  const recs = records?.by_field?.status || records?.by_field?.outcome || {};
+  const pick = (re) => Object.entries(recs).filter(([k]) => re.test(k)).reduce((s, [, v]) => s + v, 0);
+  const models = [...new Set(ledger.map((l) => l.model))];
+  const worst = handRows.filter((h) => h.correct === false || h.hallucinates === true).slice(0, 5).map((h) => ({ file: h.file, key: h.key, comment: items.find((i) => i.file === h.file && i.key === h.key)?.comment, why: h.note }));
+  const q = { status: handRows.length && judged.length ? 'done' : 'partial', base: baseSha, head: headSha, checked_at: new Date().toISOString(), files_changed: files.length, code_changed: summary.code_changed_n,
+    fleet_records: { landed: pick(/^landed|^merged|^pushed/), verify_fail: pick(/verify/), rejected: pick(/reject/), other: Object.fromEntries(Object.entries(recs).filter(([k]) => !/^landed|^merged|^pushed|verify|reject/.test(k))) },
+    auto: { comments: allDocs.length, invented_params: summary.issues.unknown_param, missing_params: summary.issues.missing_param, returns_on_void: summary.issues.returns_on_void, trivial: summary.issues.trivial + summary.issues.restates_name },
+    judge: (models.length ? models : [opt('model') || null]).map((m) => ({ model: m, n: judged.length, accurate: judged.filter((j) => j.verdict?.correct === true).length, helpful: judged.filter((j) => j.verdict?.useful === true).length,
+      invented: judged.filter((j) => j.verdict?.hallucinates === true).length, unparsed: judged.filter((j) => !j.verdict).length, usd: +ledger.filter((l) => l.model === m).reduce((s, l) => s + (l.usd || 0), 0).toFixed(4) })),
+    hand: { files: new Set(handRows.map((h) => h.file)).size, comments: handRows.length, ok: handRows.filter((h) => h.correct && !h.hallucinates).length, accurate: handRows.filter((h) => h.correct).length, helpful: handRows.filter((h) => h.useful).length, invented: handRows.filter((h) => h.hallucinates).length },
+    worst };
+  fs.writeFileSync(opt('publish'), JSON.stringify(q, null, 1) + '\n'); log('published', { to: opt('publish'), status: q.status });
+  console.error(`published ${opt('publish')} (${q.status})`);
+}
