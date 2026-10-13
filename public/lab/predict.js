@@ -525,9 +525,9 @@ export const REAL_BUILDS = [
   // R3-R5 (FINDINGS2 section 11; Ledger per model at lab rates, Haiku prompts over 100k tokens at 5x; boxes left out,
   // the estimate is API cost). Walls include a false budget halt (2-6 min, fixed) and, in R3, a stalled push.
   { slug: 'eyal/real-home-inventory', prompt: 'home-inventory', at: '2026-10-12', shape: 'team', bucket: 'large', coders: 12, agents: 9, reviewers: 3, wallS: 1940, usd: 2.40, shown: { wallS: [420, 1080], usd: [1.0, 1.4] } },
-  { slug: 'eyal/real-cafe-site', prompt: 'cafe-site', at: '2026-10-12', shape: 'team', bucket: 'huge', coders: 20, agents: 10, reviewers: 3, wallS: 1762, usd: 3.45, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
+  { slug: 'eyal/real-cafe-site', prompt: 'cafe-site', at: '2026-10-12', shape: 'team', bucket: 'huge', coders: 20, agents: 10, reviewers: 3, wallS: 1762, usd: 3.32, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
   // 40 agents: long-context Haiku calls $8.16 of $17.3; agents waited 16,234 agent-s for a reviewer vs 15,731 working.
-  { slug: 'eyal/real-course-builder', at: '2026-10-13', shape: 'team', bucket: 'huge', coders: 40, agents: 40, reviewers: 6, wallS: 2257, usd: 17.3, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
+  { slug: 'eyal/real-course-builder', at: '2026-10-13', shape: 'team', bucket: 'huge', coders: 40, agents: 40, reviewers: 6, wallS: 2257, usd: 17.48, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
   // R6: R3's Large prompt on Fastest (one Opus agent): 457 s, $3.87 (out 95k, cache reads 4.6M, 1-h writes 132k);
   // 1 change, 7 files, ~1,340 lines vs R3's 22 files, ~4,140 lines. Shown 120-300 s, $1.70-3.10 (sim ~195 s, $1.67).
   { slug: 'eyal/real-home-inventory-solo', prompt: 'home-inventory', at: '2026-10-13', shape: 'alone', bucket: 'large', wallS: 457, usd: 3.87, shown: { wallS: [120, 300], usd: [1.7, 3.1] } },
@@ -560,7 +560,9 @@ export const REAL_FIT = { aloneUsdX: 1.83, sessionUsd: 0.54, aloneWallX: 2.1, pe
 const ramp = (n) => Math.max(0, Math.min(1, (n - REAL_FIT.from) / (REAL_FIT.to - REAL_FIT.from)));
 // alone mid: the one real one-agent build (R2, 149 s); low stays the lab's quickest (58 s).
 // Same prompt, team vs one agent, from REAL_BUILDS (the `prompt` key): what the picker may say about a team's cost.
-// R3 $2.40 and R8b $4.41 vs R6 $3.87 (Large), R4 $3.45 vs R7 $7.55 (Huge): the team was cheaper in 2 of 3 (2026-10-13).
+// R3 $2.40 and R8b $4.41 vs R6 $3.87 (Large), R4 $3.32 vs R7 $7.55 (Huge): the team was cheaper in 2 of 3 (2026-10-13).
+// usd = the build's settled cost from /api/admin/build-estimates (model use at API rates, containers not included);
+// R4 and R5 were first entered from a by-hand Ledger sum ($3.45, $17.3), aligned to the settled figures 2026-10-13.
 export function teamVsOneAgent() {
   const out = [];
   for (const solo of REAL_BUILDS.filter((r) => r.shape === 'alone' && r.prompt)) for (const team of REAL_BUILDS.filter((r) => r.shape === 'team' && r.prompt === solo.prompt))

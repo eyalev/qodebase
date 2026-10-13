@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T14:36:18.547Z",
+ "generated": "2026-10-13T14:49:23.100Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -140,12 +140,12 @@
      "@cf/zai-org/glm-4.7-flash"
     ]
    },
-   "filesLanded": 22858,
-   "filesAttempted": 33731,
+   "filesLanded": 31466,
+   "filesAttempted": 45923,
    "verifyRefused": 0,
-   "usd": 13.3,
-   "usdPer1kLanded": 0.58,
-   "runs": 24,
+   "usd": 19.09,
+   "usdPer1kLanded": 0.61,
+   "runs": 27,
    "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
   },
   "realBuilds": {
@@ -155,6 +155,7 @@
    "teamVsOneAgent": {
     "n": 3,
     "teamCheaper": 2,
+    "usdBasis": "model use at normal API rates per model (Haiku calls over 100k-token prompts at 5x): every Claude session in the project's boxes (router/planner, coders, reviewers) and merge-queue model replays recorded under the project; container time not included. R5: ~$0.21 of merge-queue replays were recorded under a mistyped project key and are not in its figure.",
     "comparisons": [
      {
       "prompt": "home-inventory",
@@ -177,7 +178,7 @@
      {
       "prompt": "cafe-site",
       "team": "eyal/real-cafe-site",
-      "teamUsd": 3.45,
+      "teamUsd": 3.32,
       "oneUsd": 7.55,
       "teamS": 1762,
       "oneS": 863,
@@ -1040,6 +1041,32 @@
     "wallS": 309,
     "landWaitP90S": 25,
     "firstAt": 1791901675702
+   },
+   {
+    "label": "S5c batched, paced per call (gemma + glm-4.7, Gemini overflow)",
+    "runs": 3,
+    "cached": false,
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "repos": [
+     "fleet-vscode-src-12 src/vs",
+     "fleet-vscode-src-13 src/vs",
+     "fleet-vscode-src-14 src/vs"
+    ],
+    "agents": 450,
+    "files": 12192,
+    "landed": 8608,
+    "skipped": 3207,
+    "verifyFail": 0,
+    "rejected": 46,
+    "rateLimited": 0,
+    "usd": 5.7866,
+    "wallS": 163,
+    "landWaitP90S": 71,
+    "firstAt": 1791902486503
    }
   ],
   "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)",
@@ -10655,6 +10682,201 @@
     "cached": true
    },
    {
+    "runId": "fmv6sbaud",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "done",
+    "tokensIn": 8420553,
+    "tokensOut": 264827,
+    "agents": 150,
+    "agentsStarted": 150,
+    "files": 4064,
+    "landed": 2955,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 13,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 1.9211,
+    "startedAt": 1791902486503,
+    "endedAt": 1791902614893,
+    "wallS": 128,
+    "landWaitP50S": 35,
+    "landWaitP90S": 52,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.1277,
+      "landed": 395,
+      "model_error_retry": 18,
+      "ready": 13,
+      "skipped": 148,
+      "calls": 426,
+      "rateLimited429": 0,
+      "peakPerMin": 370,
+      "role": "planned"
+     },
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.1183,
+      "landed": 601,
+      "ready": 14,
+      "rejected": 2,
+      "skipped": 263,
+      "calls": 617,
+      "rateLimited429": 0,
+      "peakPerMin": 561,
+      "role": "planned"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 1.675,
+      "landed": 1959,
+      "rejected": 11,
+      "skipped": 658,
+      "calls": 1970,
+      "rateLimited429": 0,
+      "peakPerMin": 1397,
+      "role": "overflow"
+     }
+    },
+    "repo": "fleet-vscode-src-12 src/vs",
+    "label": "S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) - copy 1",
+    "cached": false
+   },
+   {
+    "runId": "fmv6sdht6",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "done",
+    "tokensIn": 8472369,
+    "tokensOut": 266508,
+    "agents": 150,
+    "agentsStarted": 150,
+    "files": 4064,
+    "landed": 2899,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 21,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 1.9426,
+    "startedAt": 1791902486581,
+    "endedAt": 1791902649405,
+    "wallS": 163,
+    "landWaitP50S": 19,
+    "landWaitP90S": 31,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.138,
+      "landed": 408,
+      "model_error_retry": 24,
+      "ready": 47,
+      "skipped": 159,
+      "calls": 479,
+      "rateLimited429": 0,
+      "peakPerMin": 406,
+      "role": "planned"
+     },
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.1097,
+      "landed": 587,
+      "ready": 28,
+      "skipped": 265,
+      "calls": 615,
+      "rateLimited429": 0,
+      "peakPerMin": 524,
+      "role": "planned"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 1.6948,
+      "landed": 1904,
+      "rejected": 21,
+      "skipped": 645,
+      "calls": 1925,
+      "rateLimited429": 0,
+      "peakPerMin": 1244,
+      "role": "overflow"
+     }
+    },
+    "repo": "fleet-vscode-src-13 src/vs",
+    "label": "S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) - copy 2",
+    "cached": false
+   },
+   {
+    "runId": "fmv6sh281",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "done",
+    "tokensIn": 8428473,
+    "tokensOut": 265250,
+    "agents": 150,
+    "agentsStarted": 150,
+    "files": 4064,
+    "landed": 2754,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 12,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 1.9229,
+    "startedAt": 1791902486505,
+    "endedAt": 1791902636616,
+    "wallS": 150,
+    "landWaitP50S": 45,
+    "landWaitP90S": 71,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.1366,
+      "landed": 361,
+      "model_error_retry": 6,
+      "ready": 41,
+      "rejected": 3,
+      "skipped": 155,
+      "calls": 411,
+      "rateLimited429": 0,
+      "peakPerMin": 365,
+      "role": "planned"
+     },
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.1138,
+      "landed": 604,
+      "ready": 27,
+      "skipped": 249,
+      "calls": 631,
+      "rateLimited429": 0,
+      "peakPerMin": 587,
+      "role": "planned"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 1.6724,
+      "landed": 1789,
+      "ready": 161,
+      "rejected": 9,
+      "skipped": 665,
+      "calls": 1959,
+      "rateLimited429": 0,
+      "peakPerMin": 1386,
+      "role": "overflow"
+     }
+    },
+    "repo": "fleet-vscode-src-14 src/vs",
+    "label": "S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) - copy 3",
+    "cached": false
+   },
+   {
     "runId": "fmv6rzp4n",
     "models": [
      "@cf/google/gemma-4-26b-a4b-it",
@@ -10719,36 +10941,36 @@
   ],
   "perModel": {
    "@cf/zai-org/glm-4.7-flash": {
-    "files": 8393,
-    "landed": 5895,
-    "skipped": 2483,
+    "files": 10964,
+    "landed": 7687,
+    "skipped": 3260,
     "verifyFail": 0,
-    "rejected": 15,
+    "rejected": 17,
     "rateLimited": 31,
-    "calls": 5944,
-    "usd": 1.0593,
-    "peakPerMin": 404,
+    "calls": 7807,
+    "usd": 1.4011,
+    "peakPerMin": 587,
     "roles": {
-     "planned": 8378
+     "planned": 10947
     },
     "usdPer1kFiles": 0.13,
-    "share429": 0.005
+    "share429": 0.004
    },
    "@cf/google/gemma-4-26b-a4b-it": {
-    "files": 6880,
-    "landed": 4805,
-    "skipped": 2066,
+    "files": 8509,
+    "landed": 5969,
+    "skipped": 2528,
     "verifyFail": 0,
-    "rejected": 9,
+    "rejected": 12,
     "rateLimited": 23,
-    "calls": 4876,
-    "usd": 1.3762,
-    "peakPerMin": 294,
+    "calls": 6192,
+    "usd": 1.7785,
+    "peakPerMin": 406,
     "roles": {
-     "planned": 6871
+     "planned": 8497
     },
-    "usdPer1kFiles": 0.2,
-    "share429": 0.005
+    "usdPer1kFiles": 0.21,
+    "share429": 0.004
    },
    "gemini-3.5-flash-lite": {
     "files": 1152,
@@ -10767,21 +10989,21 @@
     "share429": 0
    },
    "gemini-3.1-flash-lite": {
-    "files": 17034,
-    "landed": 11200,
-    "skipped": 5756,
+    "files": 24695,
+    "landed": 16852,
+    "skipped": 7724,
     "verifyFail": 0,
-    "rejected": 78,
+    "rejected": 119,
     "rateLimited": 51,
-    "calls": 11330,
-    "usd": 9.7893,
+    "calls": 17184,
+    "usd": 14.8315,
     "peakPerMin": 1500,
     "roles": {
      "planned": 7529,
-     "overflow": 9427
+     "overflow": 17047
     },
-    "usdPer1kFiles": 0.57,
-    "share429": 0.005
+    "usdPer1kFiles": 0.6,
+    "share429": 0.003
    },
    "@cf/zai-org/glm-5.3-flash": {
     "files": 223,
@@ -10801,16 +11023,16 @@
    }
   },
   "totals": {
-   "runs": 24,
-   "filesAttempted": 33731,
-   "landed": 22858,
-   "skipped": 10705,
+   "runs": 27,
+   "filesAttempted": 45923,
+   "landed": 31466,
+   "skipped": 13912,
    "verifyRefused": 0,
-   "rejected": 119,
+   "rejected": 165,
    "rateLimited": 3,
-   "usd": 13.3,
-   "usdPer1kLanded": 0.58,
-   "usdPer1kFiles": 0.39,
+   "usd": 19.09,
+   "usdPer1kLanded": 0.61,
+   "usdPer1kFiles": 0.42,
    "largestRun": {
     "runId": "fmv6qw9jf",
     "agents": 120,
@@ -11348,7 +11570,8 @@
      "usd": false
     }
    }
-  ]
+  ],
+  "usdBasis": "model use at normal API rates per model (Haiku calls over 100k-token prompts at 5x): every Claude session in the project's boxes (router/planner, coders, reviewers) and merge-queue model replays recorded under the project; container time not included. R5: ~$0.21 of merge-queue replays were recorded under a mistyped project key and are not in its figure."
  },
  "boardAblation": {
   "scenario": "s3: 20 agents, 60 tasks, 10 twin pairs",

@@ -102,6 +102,7 @@ async function fleet() {
 }
 
 // ---- Real builds (R2-R8b): /api/admin/build-estimates (forq admin) ----
+const REAL_SOLO = { 'home-inventory': 'eyal/real-home-inventory-solo', 'cafe-site': 'eyal/real-cafe-site-solo' };
 const BUILD_NAMES = { 'eyal.real-tip-splitter': ['R2', 'small, one Opus agent'], 'eyal.real-home-inventory': ['R3', 'Large, Balanced team'], 'eyal.real-cafe-site': ['R4', 'Huge, up to 20 Haiku'],
   'eyal.real-course-builder': ['R5', 'Huge, up to 40 Haiku'], 'eyal.real-home-inventory-solo': ['R6', "R3's prompt, one Opus agent"], 'eyal.real-cafe-site-solo': ['R7', "R4's prompt, one Opus agent"],
   'eyal.real-budget-tracker-10': ['R8', 'proof build (X1/X4), Balanced'], 'eyal.real-home-inventory-r8b': ['R8b', "R3's prompt again, Balanced (~10 min queue bug)"] };
@@ -114,7 +115,8 @@ async function realBuilds() {
       wallS: p.actualWallS, usd: p.actualUsd, shownWallS: e.wallS, shownUsd: e.apiUsd,
       inside: { wall: p.actualWallS >= e.wallS[0] && p.actualWallS <= e.wallS[1], usd: p.actualUsd >= e.apiUsd[0] && p.actualUsd <= e.apiUsd[1] } };
   }).sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
-  return { label: 'measured (real Claude agents on Eyal\'s plan, real builds on Cloudflare; one run each)', source: be.from, rows };
+  return { label: 'measured (real Claude agents on Eyal\'s plan, real builds on Cloudflare; one run each)', source: be.from, rows,
+    usdBasis: 'model use at normal API rates per model (Haiku calls over 100k-token prompts at 5x): every Claude session in the project\'s boxes (router/planner, coders, reviewers) and merge-queue model replays recorded under the project; container time not included. R5: ~$0.21 of merge-queue replays were recorded under a mistyped project key and are not in its figure.' };
 }
 
 // ---- Board ablation (E7) and growing the team (W8): sim/board-ab/runs.jsonl ----
@@ -189,7 +191,11 @@ const headline = {
   fleetCached: F.cached,
   fleet: { largestRun: F.totals.largestRun, filesLanded: F.totals.landed, filesAttempted: F.totals.filesAttempted, verifyRefused: F.totals.verifyRefused, usd: F.totals.usd, usdPer1kLanded: F.totals.usdPer1kLanded, runs: F.totals.runs, label: F.label },
   realBuilds: { n: RB.rows.length, insideEstimateTime: RB.rows.filter((r) => r.inside.wall).length, insideEstimateCost: RB.rows.filter((r) => r.inside.usd).length,
-    teamVsOneAgent: (() => { const c = teamVsOneAgent(); return { n: c.n, teamCheaper: c.teamCheaper, comparisons: c.comparisons.map(({ prompt, team, teamUsd, oneUsd, teamS, oneS, teamCheaper }) => ({ prompt, team, teamUsd, oneUsd, teamS, oneS, teamCheaper })) }; })(),
+    // Costs and walls from the rows (the settled build-estimates figures), so the headline and the table agree.
+    teamVsOneAgent: (() => { const c = teamVsOneAgent(); const row = (slug) => RB.rows.find((r) => r.slug === slug);
+      return { n: c.n, teamCheaper: c.teamCheaper, usdBasis: RB.usdBasis, comparisons: c.comparisons.map(({ prompt, team, teamUsd, oneUsd, teamS, oneS, teamCheaper }) => {
+        const solo = REAL_SOLO[prompt], t = row(team), o = solo && row(solo);
+        return { prompt, team, teamUsd: t ? r1(t.usd, 2) : teamUsd, oneUsd: o ? r1(o.usd, 2) : oneUsd, teamS: t?.wallS ?? teamS, oneS: o?.wallS ?? oneS, teamCheaper }; }) }; })(),
     sameLargePrompt: (() => { const t = RB.rows.find((r) => r.id === 'R3'), s = RB.rows.find((r) => r.id === 'R6'); return t && s ? { teamS: t.wallS, oneAgentS: s.wallS, teamUsd: t.usd, oneAgentUsd: s.usd } : null; })(),
     label: RB.label },
   board: { dupPairsNoBoard: ab('A')?.dupPairs, dupPairsBoard: ab('E')?.dupPairs, wallNoBoardS: ab('A')?.wallS, wallBoardS: ab('E')?.wallS, n: ab('E')?.n, label: AB.label },
@@ -235,7 +241,7 @@ md.push('## Real builds inside qodebase (R2-R8b)', '', `Label: ${RB.label}. Sour
   table(['build', 'what', 'setup', 'wall', 'cost (tokens)', 'estimate shown', 'inside?'],
     RB.rows.map((r) => [r.id, r.what, r.setup, `${fmt(r.wallS)} s`, usd(r.usd), `${fmt(r.shownWallS[0])}-${fmt(r.shownWallS[1])} s, ${usd(r.shownUsd[0])}-${usd(r.shownUsd[1])}`, `time ${r.inside.wall ? 'yes' : 'no'}, cost ${r.inside.usd ? 'yes' : 'no'}`])), '',
   'Estimates as shown at the time; later refits (public/lab/predict.js REAL_FIT) were fitted on these builds.', '',
-  (() => { const c = teamVsOneAgent(); return `Same prompt, team vs one Opus agent (tokens): ${c.comparisons.map((x) => `${x.team.split('/').pop()} $${x.teamUsd} / ${fmt(x.teamS)} s vs one agent $${x.oneUsd} / ${fmt(x.oneS)} s`).join('; ')}. The team was cheaper in ${c.teamCheaper} of ${c.n}; one agent was faster in ${c.comparisons.filter((x) => x.oneS < x.teamS).length} of ${c.n}.`; })(), '');
+  (() => { const c = headline.realBuilds.teamVsOneAgent; return `Same prompt, team vs one Opus agent (model use at API rates, no containers): ${c.comparisons.map((x) => `${x.team.split('/').pop()} $${x.teamUsd} / ${fmt(x.teamS)} s vs one agent $${x.oneUsd} / ${fmt(x.oneS)} s`).join('; ')}. The team was cheaper in ${c.teamCheaper} of ${c.n}; one agent was faster in ${c.comparisons.filter((x) => x.oneS < x.teamS).length} of ${c.n}.`; })(), '');
 
 md.push('## Board ablation (E7)', '', `Label: ${AB.label}. ${AB.ablation.scenario}.`, '',
   table(['arm', 'n', 'wall', 'agent-minutes', 'API-equiv $', 'twin pairs built twice (of 10)'], AB.ablation.arms.map((a) => [a.name, a.n, `${fmt(a.wallS)} s`, fmt(a.agentMin), usd(a.usd), fmt(a.dupPairs)])), '');
