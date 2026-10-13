@@ -96,3 +96,10 @@ Build experience at every size (Eyal, 2026-10-13: "do all 5"); goal = soonest wo
 - [ ] X4 review keeps up in big builds: reviewers scale with agents (e.g. 1 per 5 coders, up to 8), reviews run in parallel, and the merger replays collisions in parallel within a train (qb6)
 - [ ] X5 fewer interruptions: agents ask the person only for real decisions (secrets, money, a change that keeps failing); everything else decided and logged (router + agent prompts, qb6); Asks shows decisions taken on the person's behalf (qb3)
 - [ ] R7 Huge with one agent: R4's exact 'Café website' prompt, Fastest (one Opus agent), $15 real cap; compare with R4 (10 agents, ~1,770 s, ~$3.5) + hands-on feature check of both apps (qb6 run, qb9 check)
+
+Bottleneck fixes + compaction (Eyal, 2026-10-13 ~07:40 UTC):
+- [ ] B-1 auto-push: a box hook pushes when an agent's turn ends with unpushed commits on its change branch (idempotent, never force on others' refs), logged as an event (qb6)
+- [ ] B-2 acceptance criteria: the planner writes 2-5 checkable criteria per task; agents run a self-check against them (and the reviewer's checklist) before pushing; reviewers give one combined round (qb6)
+- [ ] B-3 faster first landing: a warm pool of 1-3 agent boxes per active owner (bounded, idle-stop) + the skeleton agent starts while the planner plans the rest; measure time-to-first-landing before/after (qb6)
+- [ ] C-1 measure from R5's per-call rows: how many Haiku calls crossed 100k prompt tokens, when in a session, and why (review rounds, sync-main, tool output, board text) (qb6, no cost)
+- [ ] C-2 compaction: Haiku agents auto-compact before ~85-90k; fresh session per review fix; short board summary instead of the full board; capped tool output; one real team build vs R3 (~$3-5), cost + long-context share + quality (qb6 run, qb9 feature check)
