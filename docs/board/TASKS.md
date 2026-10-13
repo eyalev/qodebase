@@ -91,7 +91,7 @@ Real builds, staircase (Eyal, 2026-10-12 ~22:00 UTC: "go for it"); meter stop fo
 
 Build experience at every size (Eyal, 2026-10-13: "do all 5"); goal = soonest working app, good quality, sensible cost, clear progress. Target live Oct 14 06:00 UTC:
 - [ ] X1 something working early: the planner's first task is a runnable skeleton (app shell, routes, empty views) that lands first; feature tasks build on it; the App tab shows the live app from the first landing (qb6 router prompt + plan order, qb7 App view)
-- [ ] X2 clear progress + finish estimate on the project page: 'N of M parts landed, about K min left' from the plan + the estimate bar, updated live (qb7, qb4 for the remaining-time model)
+- [ ] X2 clear progress + finish estimate on the project page: 'N of M parts landed, about K min left' from the plan + the estimate bar, updated live (qb7, qb4 for the remaining-time model) . qb4 model done 2026-10-13: remainingS/remainingTime in predict.js, docs/board/build-estimate.md 'Time left'
 - [ ] X3 notify when done (and when a decision is needed): push to the owner's phone (web push or the existing alert path) + an Inbox item; opt-out in Settings (qb6 server, qb7 UI)
 - [ ] X4 review keeps up in big builds: reviewers scale with agents (e.g. 1 per 5 coders, up to 8), reviews run in parallel, and the merger replays collisions in parallel within a train (qb6)
 - [ ] X5 fewer interruptions: agents ask the person only for real decisions (secrets, money, a change that keeps failing); everything else decided and logged (router + agent prompts, qb6); Asks shows decisions taken on the person's behalf (qb3)

@@ -1,0 +1,115 @@
+{
+ "note": "Landing times (s since Build) of real builds, from /api/p/eyal/real-*/landing/timeline, 2026-10-13. parts = changes the plan landed; estimate = the refit wallS (0a2362c+).",
+ "builds": [
+  {
+   "slug": "eyal/real-tip-splitter",
+   "parts": 1,
+   "estimate": [
+    90,
+    240
+   ],
+   "lands": [
+    149
+   ]
+  },
+  {
+   "slug": "eyal/real-home-inventory-solo",
+   "parts": 1,
+   "estimate": [
+    360,
+    1020
+   ],
+   "lands": [
+    457
+   ]
+  },
+  {
+   "slug": "eyal/real-home-inventory",
+   "parts": 9,
+   "estimate": [
+    720,
+    1980
+   ],
+   "lands": [
+    748,
+    748,
+    748,
+    1005,
+    1298,
+    1482,
+    1543,
+    1545,
+    1940
+   ]
+  },
+  {
+   "slug": "eyal/real-cafe-site",
+   "parts": 10,
+   "estimate": [
+    1200,
+    3300
+   ],
+   "lands": [
+    615,
+    619,
+    619,
+    619,
+    804,
+    831,
+    951,
+    969,
+    1148,
+    1762
+   ]
+  },
+  {
+   "slug": "eyal/real-course-builder",
+   "parts": 39,
+   "estimate": [
+    1380,
+    3780
+   ],
+   "lands": [
+    404,
+    404,
+    435,
+    463,
+    496,
+    550,
+    595,
+    605,
+    712,
+    795,
+    795,
+    795,
+    795,
+    845,
+    903,
+    965,
+    996,
+    1059,
+    1164,
+    1249,
+    1249,
+    1504,
+    1504,
+    1504,
+    1504,
+    1596,
+    1596,
+    1596,
+    1596,
+    1930,
+    1930,
+    1930,
+    1930,
+    2146,
+    2146,
+    2146,
+    2146,
+    2258,
+    2258
+   ]
+  }
+ ]
+}

@@ -189,3 +189,24 @@ a team costs about N% less (Balanced)". N comes from the job's own estimate: 40%
 gave 38%. Huge stays Balanced, because no one-agent build that big has run. The Cheapest branch (easy, separate
 pieces) now applies only to Huge. Large chip: 6-17 min, $3.0-6.7.
 Huge's words now give "as in our real builds at this size" first and the cost second.
+
+## Time left on a running build (X2, 2026-10-13)
+
+`remainingTime({ parts, landed, elapsedS, estimate: { wallS }, firstLandS })` in predict.js returns
+`{ leftS: [lo, hi], midS, text, phase }`, where phase is starting, landing, over or done. The text reads like
+"about 19 min left (13-28)". qb7's browser call is
+`remainingS({ estimate: { wallS, startedAt }, parts, landed, firstLandedAt, now })`, which returns `[lo, hi]` seconds,
+or null when the build is done or nothing is known yet. All times are ms since the epoch.
+
+- **Before the first landing:** the shown estimate minus the time gone. Past its top end, the phase is "over" and the
+  text says "taking longer than estimated", with up to half the time taken so far again as the range.
+- **After the first landing:** seconds per part = (time since the first landing + 4 prior parts) / (parts landed since
+  + 4). The prior is the estimate's middle spread over the parts. Time left = seconds per part x parts left; the range
+  is /(1 + 1/sqrt(.)) and x(1 + 2/sqrt(.)), so it narrows as parts land. The top end adds a straggler allowance of 3
+  parts' time plus a fifth of the time since the first landing, because the last part of R3 and R4 came 6.5 and 10
+  min after the one before it. "About K" is the range's geometric middle.
+- **Backtest** (`node sim/remaining-backtest.mjs`, landing times only in `sim/remaining-lands.json`): after the first
+  landing the real time left fell in the range 74-80% of the time on R3, R4 and R5. Before it, the refit estimate
+  covered 80-100%. This is in-sample: the estimate refit and these constants were tuned on the same builds. On a
+  40-part build the range goes from 21-52 min at 5 landed, to 13-28 at 20, to 3-13 at 35.
+- Tests: `node --test sim/remaining.test.mjs`.
