@@ -124,6 +124,35 @@ floor's mid is now 150 s, taken from this build (90 s was a placeholder), so one
 and the token split will show whether a fixed per-session cost or more work made the difference (asked qb6). The
 cost refit waits for R2-R5.
 
+## Refit on four real builds (R2-R5, 2026-10-13)
+
+What the four builds cost and how long they took, by model, at lab rates: FINDINGS2 section 11, from the per-model
+Ledger rows. Haiku prompts over 100k tokens are priced at 5x, and box costs are left out because the estimate is
+API cost. `REAL_FIT` in predict.js sits on top of the lab-calibrated sim, and each term is named:
+
+| term | value | from |
+|---|---|---|
+| one Opus agent's fixed cost per build | +$0.57 | R2: $0.81 real vs $0.24 sim. 3x the output and the cache reads of the lab's one-agent cafe run (the push and landing turns), plus Claude Code's start-up context written to a 1-hour cache |
+| each Haiku team agent's own session | +$0.14 per agent | R3 ($2.40 - $1.2) / 9 agents = $0.13; R4 ($3.45 - $2.0) / 10 = $0.145 |
+| long contexts at many agents | per-agent x1 at 10 agents, rising to x2.7 at 40 | R5: ($17.3 - $2.0) / 40 = $0.38; long-context Haiku calls were $8.16 of it |
+| team time | sim x1.8 at 10 agents, rising to x2.3 at 40 | R3, R4 1.8x; R5 2.3x (as much time waiting for a reviewer as working) |
+| agents opened | low end: the planner's bundling; high end: min(coders, pieces) | the router is now told how many agents it has; R5 used 40 of 40, R3 9 of 12, R4 10 of 20 |
+
+The ranges are widened: the low end takes 40% of the fitted extra and the high end is x1.25. Each estimate adds the
+note "Fitted to N real builds like this (M in all) on top of 25 lab runs" and carries `realBuilds`. With 20 or more
+Haiku agents it also says that contexts grow past 100k tokens and that agents wait for reviewers.
+
+Every real build falls inside its refit range: R2 1.5-4 min, $0.52-1.2 (149 s, $0.81); R3 12-33 min, $1.6-4.4
+(1,940 s, $2.40); R4 20-55 min, $3.2-9.2 (1,762 s, $3.45); R5 23-63 min, $3.2-22.6 (2,257 s, $17.3). The R5 range
+is wide because how many agents the router opens is still the largest unknown.
+
+`suggestBuild` still compares the presets on the lab-only estimate (`predictBuild(job, v, { real: false })`). The
+lab ran one agent and teams on the same jobs. The real builds are one small one-agent build and three teams, so
+fitting only one side would tilt the choice: with the fit on both, one agent comes out about as cheap as a team and
+3-4x faster at every size, but that rests on no real one-agent build bigger than 3 pieces. A real one-agent build of
+a Large idea would settle it.
+
+
 ## jobType(job, suggestion): the adaptive orchestrator's label (2026-10-12, qb7's contract)
 
 `jobType(job, suggestion?)` in `public/lab/predict.js` returns
