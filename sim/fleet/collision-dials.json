@@ -67,9 +67,33 @@
     "lostNote": "15 = an accounting artefact: the fixed agent correctly skips the one-line '} export class' declaration, but the record still listed it as intended (records keep only inserted comments from L60 on)",
     "landWaitP50S": 98,
     "landWaitP90S": 169
+   },
+   {
+    "dial": 60,
+    "tasks": 43880,
+    "tasksPerSec": 1167,
+    "pairs": {
+     "far": 2278,
+     "near": 2450,
+     "same": 8432
+    },
+    "resolutions": {
+     "farAutoMerged": 2278,
+     "nearAutoMerged": 2439,
+     "nearDoneBefore": 11,
+     "sameDuplicateKeptFirst": 8379,
+     "sameReplayed": 53
+    },
+    "doubled": 0,
+    "codeChanged": 0,
+    "lost": 9,
+    "lostNote": "9 = the same accounting artefact as L30 (these agents ran before the record fix deployed); not lost work",
+    "landWaitP50S": 114,
+    "landWaitP90S": 173
    }
   ],
-  "caveat": "In cached mode the second comment of a same-declaration pair is derived from the first (its first sentence, or that plus a stock phrase), so 'duplicate, kept the first' says which landed first, not which answer was better. Which version wins under real collisions is measured by the code dial, where the hidden tests decide."
+  "caveat": "In cached mode the second comment of a same-declaration pair is derived from the first (its first sentence, or that plus a stock phrase), so 'duplicate, kept the first' says which landed first, not which answer was better. Which version wins under real collisions is measured by the code dial, where the hidden tests decide.",
+  "finding": "Across dial 0-60% throughput stayed ~1,100-1,200 tasks/s and land wait p50 ~96-114 s: comment collisions cost nothing measurable at this scale (merges and replays are per-file text operations in the Lander). 0 doubled comments and 0 code changes at every level."
  },
  "code": {
   "label": "kata collision dial (sim/kata, lab-hidden tests); pending",

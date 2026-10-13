@@ -204,7 +204,7 @@ const headline = {
   lanes: { oneQueuePerH: l2('a2000-l1-split-h6-s1')?.perHLastHour, lanes32PerH: l2('a2000-l32-split-rdeps-ctl-h6-s1')?.perHLastHour, label: L.L2.label },
 };
 const DIALS = (() => { try { return JSON.parse(rd('sim/fleet/collision-dials.json')); } catch { return null; } })();
-headline.collisionDials = DIALS ? { comment: DIALS.comment.levels.map(({ dial, tasks, tasksPerSec, doubled, codeChanged, lost }) => ({ dial, tasks, tasksPerSec, doubled, codeChanged, lost })),
+headline.collisionDials = DIALS ? { commentFinding: DIALS.comment.finding || null, comment: DIALS.comment.levels.map(({ dial, tasks, tasksPerSec, doubled, codeChanged, lost }) => ({ dial, tasks, tasksPerSec, doubled, codeChanged, lost })),
   code: DIALS.code.levels, label: DIALS.comment.label } : null;
 const results = { v: 1, generated: new Date().toISOString(), sources: { fleet: F.source, buildEstimates: RB.source }, notes, headline, collisionDials: DIALS, fleet: F, realBuilds: RB, boardAblation: AB.ablation, w8: AB.w8, lanes: L, lab: LAB };
 fs.writeFileSync(path.join(ROOT, 'public/results.json'), JSON.stringify(results, null, 1) + '\n');
@@ -245,6 +245,7 @@ if (DIALS) {
   md.push('## Collision dials', '', `**Comment dial.** ${DIALS.comment.label}.${DIALS.comment.caveat ? ' ' + DIALS.comment.caveat : ''}`, '',
     table(['dial', 'tasks', 'tasks/s', 'pairs far / near / same', 'how pairs resolved', 'doubled comments', 'code changed', 'lost (checker)', 'land wait p50 / p90'],
       DIALS.comment.levels.map((l) => [`${l.dial}%`, fmt(l.tasks), fmt(l.tasksPerSec), `${fmt(l.pairs.far)} / ${fmt(l.pairs.near)} / ${fmt(l.pairs.same)}`, Object.entries(l.resolutions).map(([k, v]) => `${k} ${fmt(v)}`).join(', '), fmt(l.doubled), fmt(l.codeChanged), `${fmt(l.lost)}${l.lostNote ? ` (${l.lostNote})` : ''}`, l.landWaitP50S != null ? `${fmt(l.landWaitP50S)} / ${fmt(l.landWaitP90S)} s` : `- (${l.landNote || ''})`])), '');
+  if (DIALS.comment.finding) md.push(DIALS.comment.finding, '');
   md.push(`**Code dial.** ${DIALS.code.levels.length ? '' : 'Pending (prediction in docs/board/sim.md (m)).'}`, '');
 }
 md.push('## Real builds inside qodebase (R2-R8b)', '', `Label: ${RB.label}. Source: /api/admin/build-estimates (${RB.source}).`, '',
