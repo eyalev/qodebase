@@ -146,7 +146,7 @@ command -v node >/dev/null 2>&1 || { echo "qb needs Node 18 or newer: https://no
 mkdir -p "$HOME/.local/bin"
 curl -fsSL ${origin}/cli/qb.mjs -o "$HOME/.local/bin/qb"
 chmod +x "$HOME/.local/bin/qb"
-echo "Installed qb in $HOME/.local/bin. Next: qb install agents-starter (your own AI assistant, Cloudflare free plan), qb installs (all of them), or qb help"
+echo "Installed qb in $HOME/.local/bin. Next: qb new \"a tip calculator with a dark mode\" (agents build it; open its Agents at work view to watch each change get reviewed and land), then qb help"
 case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) echo "Add $HOME/.local/bin to your PATH.";; esac
 `;
 
@@ -166,7 +166,7 @@ or with --json. Projects are named owner/name. Another instance: --host <url> or
 - \`qb whoami\` — who the token acts as
 - \`qb ls [--mine] [--owner <handle>]\` — projects
 - \`qb info <owner/name>\` — a project: description, live URL, agents and their states
-- \`qb new "<what to build>" [--name <name>]\` — a new project; agents build it
+- \`qb new "<what to build>" [--name <name>]\` — a new project; agents build it. Its live app opens on <name>--<owner>.ttyview.dev: qodebase's app host, served by the same Cloudflare Worker, one origin per project so no app can read another's storage
 - \`qb import <github url or owner/repo>\` — copy a public GitHub repo in
 - \`qb visibility <owner/name> public|private\` — private = only the owner sees the project, its code and its live app (\`--private\` on new and import too)
 - \`qb fork <owner/name>\` — your own copy
