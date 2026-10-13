@@ -103,6 +103,13 @@
     const inflight = Math.max(0, files - landed - skipped - rejected);
     return { files, landed, skipped, rejected, inflight };
   }
+  // Code-dial runs (qb6's kata: agents make small code changes to src/vs through the merge queue) count changes, not
+  // files with comments (qb8's pass: the K60 card read 'added doc comments to 2,852 files'). Redone = sent back by the
+  // queue (bounced) and made again.
+  const isCode = (r) => (r.group ? isCode(r.copies[0] || {}) : /^fleet-kata/.test(r.repo || '') || /^K\d/.test(r.ladder || '') || /code dial/i.test(r.label || ''));
+  const bouncedOf = (r) => (r.group ? r.copies.reduce((a, c) => a + bouncedOf(c), 0) : Object.values(r.models || {}).reduce((a, m) => a + (m.bounced || 0), 0));
+  // queue waits under a second come back as 0 or below (clock offsets between the boxes): never print a negative wait
+  const secs = (v) => (v == null ? '–' : v < 1 ? 'under 1' : n0(v));
   function elapsedS(r) { return r.startedAt ? ((r.endedAt || Date.now()) - r.startedAt) / 1000 : 0; }
   // Live: the last minute's landings. Finished: an average over the minutes it ran; under 2 min the plain count and time,
   // never a per-minute rate the run did not last long enough to have (critique).
@@ -134,13 +141,13 @@
       <p class="rc-sub">${r.group ? `${r.copies.length} copies of ${new Set(r.copies.map((c) => repoBase(c.repo))).size} projects, run side by side` : whatIs(r)}, ${n0(r.agentsStarted ?? r.agents)} of ${n0(r.agents)} agents started</p>
       ${r.group && r.copies[0]?.ladder ? `<div class="rc-tl"><p class="rc-mh">All ${r.copies.length} copies together</p>${timeline(r, TL['ladder:' + r.copies[0].ladder], full ? (DR && DR.k === key(r) ? DR : null) : 'mini')}</div>` : ''}
       ${why ? `<p class="rc-why">${r.state === 'paused' && autoWhy(r) ? 'Paused automatically: ' : ''}${esc(why)}</p>` : ''}
-      <div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${c.files} files got comments on main">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
+      ${isCode(r) ? codeFiles(r, c) : `<div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${c.files} files got comments on main">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
         <p>Agents ${live(r) ? 'have added' : 'added'} doc comments to <b>${n0(c.landed)}</b> files and committed them to ${r.group ? 'each copy\u2019s' : 'the'} main branch; ${n0(c.skipped)} files already had them.</p>
-        <p class="rc-sm">${n0(c.rejected)} rejected${c.inflight && live(r) ? `, ${n0(c.inflight)} still to do` : ''}, of ${n0(c.files)} files. One change = comments added to one file.</p></div>
+        <p class="rc-sm">${n0(c.rejected)} rejected${c.inflight && live(r) ? `, ${n0(c.inflight)} still to do` : ''}, of ${n0(c.files)} files. One change = comments added to one file.</p></div>`}
       <dl class="rc-k">
         <div><dt>Spent</dt><dd>${usd(spent)}${budget ? ` <small>of ${usd(budget)}</small>` : ''}</dd>${budget ? `<div class="bar" aria-hidden="true"><i style="width:${pct(spent, budget).toFixed(1)}%"${spent / budget > 0.85 ? ' class="hot"' : ''}></i></div>` : ''}</div>
         <div><dt>${live(r) ? 'Changes on main per min' : elapsedS(r) < 120 ? 'Changes on main' : 'Changes on main per min, average'}</dt><dd>${lpm}</dd></div>
-        <div><dt>Wait to reach main</dt><dd>${r.landWaitS && r.landWaitS.p50 != null ? `${n0(r.landWaitS.p50)} s <small>median, ${n0(r.landWaitS.p90)} s slowest tenth</small>` : '–'}</dd></div>
+        <div><dt>Wait to reach main</dt><dd>${r.landWaitS && r.landWaitS.p50 != null ? `${secs(r.landWaitS.p50)} s <small>median, ${secs(r.landWaitS.p90)} s slowest tenth</small>` : '–'}</dd></div>
         <div><dt>Answers</dt><dd>${(() => { const fromCache = mods.filter((m) => m.name === 'cache').reduce((a, m) => a + m.calls, 0), fromModel = mods.filter((m) => m.name !== 'cache').reduce((a, m) => a + m.calls, 0); return `${n0(fromCache)} <small>from cache</small> ${n0(fromModel)} <small>from a model</small>`; })()}</dd></div>
       </dl>
       ${modRows ? `<div class="rc-m"><p class="rc-mh">Calls per minute, per model${live(r) ? '' : ' (peak)'}</p>${modRows}</div>` : ''}
@@ -151,9 +158,16 @@
       ${full || r.group ? '' : `<a class="chipbtn rc-go" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">Timeline</a>`}
     </article>`;
   }
+  function codeFiles(r, c) {
+    const redone = bouncedOf(r), made = c.landed + redone + c.rejected;
+    const seg = (n, cls) => (n ? `<i class="${cls}" style="width:${pct(n, made).toFixed(2)}%"></i>` : '');
+    return `<div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${made} code changes reached main">${seg(c.landed, 's-l')}${seg(redone, 's-s')}${seg(c.rejected, 's-r')}</div>
+        <p>${n0(r.agentsStarted ?? r.agents)} agents ${live(r) ? 'have made' : 'made'} <b>${n0(made)}</b> small code changes and sent each through the merge queue: <b>${n0(c.landed)}</b> reached main, ${n0(redone)} ${redone === 1 ? 'was' : 'were'} sent back and redone${c.rejected ? `, ${n0(c.rejected)} rejected` : ''}.</p>
+        <p class="rc-sm">${n0(c.files)} tasks${live(r) ? '' : ` in ${clock(elapsedS(r))}`}. One change = one small edit to the code, checked before it lands.</p></div>`;
+  }
   function whatIs(r) {
     const s = srcOf(r), n = r.copyOfKind || repoCopy(r), of = r.copiesOfKind || r.copiesOfRepo || (D?.fleet || []).filter((x) => x.ladder && x.ladder === r.ladder && repoBase(x.repo) === repoBase(r.repo)).length;
-    return `${esc(s.name)}${n && r.ladder ? `, copy ${n}${of > 1 ? ` of ${of}` : ''}` : ''}${s.upstream ? ` (a duplicate of ${esc(s.upstream)} made for this test)` : ''}`;
+    return `${esc(s.name)}${n && r.ladder && of > 1 ? `, copy ${n} of ${of}` : ''}${s.upstream ? ` (a duplicate of ${esc(s.upstream)} made for this test)` : ''}`;
   }
   function controls(r) {
     const k = key(r), asking = stopAsk[k] && Date.now() - stopAsk[k] < 10e3, all = r.group ? ` all ${r.copies.length}` : '';
@@ -343,7 +357,7 @@
 
   // ---- copies: one ladder step runs as N copies (label '… - copy N'); the step is one card with the copies under it ---
   // the step's name from the label ('S4d 4,750 agents / 95 copies (cache) - copy 7'), else qb6's ladder field
-  const baseOf = (r) => { const m = /^(.*?)\s+[-–]\s+(?:copy\s+\d+|fleet-[\w-]+)$/i.exec(r.label || ''); return m ? m[1] : r.ladder || null; };
+  const baseOf = (r) => { const m = /^(.*?)\s+[-–]\s+(?:copy\s+\d+|fleet-[\w-]+)$/i.exec(r.label || ''); return m ? m[1] : r.ladder && r.copy != null ? r.ladder : null; };   // reruns of a step (K60, K60f) are not copies
   const copyNo = (c) => +(c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || (/-(\d+)$/.exec(c.repo || '') || [])[1] || 0);
   function grouped(list) {
     const out = [], seen = new Map();
@@ -391,14 +405,23 @@
   }
 
   // ---- pages -------------------------------------------------------------------------------------------------------
+  const PINS = [
+    (r) => !r.group && r.repo === 'fleet-n2-vscode-src-1' && (r.agents || 0) >= 500,   // the 1,000-agent VS Code index take, once recorded
+    (r) => !r.group && r.repo === 'fleet-kata-d60f',                                      // the fast code dial at 60%
+    (r) => r.group && /^S5b\b/.test(r.label),
+    (r) => r.group && /^S4d\b/.test(r.label),
+  ];
   function listView() {
     const fleet = grouped((D.fleet || []).slice().sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))).sort((a, b) => (live(b) - live(a)) || (b.startedAt || 0) - (a.startedAt || 0));
     const cur = fleet.filter(live), past = fleet.filter((r) => !live(r));
+    // Judge-facing runs first, in this order (manager, 2026-10-14); the rest, newest first, as experiments.
+    const pins = PINS.map((p) => past.find(p)).filter(Boolean), rest = past.filter((r) => !pins.includes(r));
     const real = D.real || [];
     const realRow = (b) => `<li><a href="${esc(b.link || `/p/${b.slug.replace('.', '/')}/work#/timeline`)}"><span class="rr-n"><b>${esc(b.label || b.slug)}</b><small>${esc(b.slug.replace('.', ' / '))}</small></span><span class="rr-v">${b.settledAt ? `${clock((b.settledAt - b.startedAt) / 1000)}, ${usd(b.usd)}` : b.startedAt ? `running, ${usd(b.usd)} so far` : '–'}${b.parts ? `<small>${n0(b.landed)} of ${n0(b.parts)} parts on main</small>` : b.landed ? `<small>${n0(b.landed)} changes on main</small>` : ''}</span><span class="rr-go">Timeline</span></a></li>`;
     return `<header class="rh"><h1>Scale runs</h1><p class="rh-s"><i class="live${cur.length ? '' : ' off'}"></i><span id="rupd">${cur.length ? `${cur.length} running now` : 'Nothing running now'}</span>${OWN ? '' : '<span class="rh-ro">read-only</span>'}</p></header>${OWN && !MOCK ? '<div id="nj-slot"></div>' : ''}
       ${cur.length ? `<section class="rsec"><h2>Now</h2>${cur.map((r) => card(r, false)).join('')}</section>` : ''}
-      <section class="rsec"><h2>${cur.length ? 'Earlier' : 'Fleet runs'}</h2>${past.length ? past.slice(0, 20).map((r) => card(r, false)).join('') : '<p class="dim">No fleet runs yet.</p>'}</section>
+      ${pins.length ? `<section class="rsec"><h2>Highlights</h2>${pins.map((r) => card(r, false)).join('')}</section>` : ''}
+      <section class="rsec"><h2>${pins.length ? 'Experiments' : cur.length ? 'Earlier' : 'Fleet runs'}</h2>${rest.length ? rest.slice(0, 20).map((r) => card(r, false)).join('') : '<p class="dim">No fleet runs yet.</p>'}</section>
       ${real.length ? `<section class="rsec"><h2>Real builds</h2><p class="dim">Real Claude Code agents building an app; each opens its project's timeline.</p><ul class="rr">${real.map(realRow).join('')}</ul></section>` : ''}`;
   }
   function runView(repo, id) {
