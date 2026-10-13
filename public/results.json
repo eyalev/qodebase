@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T16:36:40.940Z",
+ "generated": "2026-10-13T17:16:53.746Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -150,10 +150,10 @@
      "@cf/zai-org/glm-4.7-flash"
     ]
    },
-   "filesLanded": 32408,
-   "filesAttempted": 47050,
+   "filesLanded": 33839,
+   "filesAttempted": 47503,
    "verifyRefused": 0,
-   "usd": 19.48,
+   "usd": 20.45,
    "usdPer1kLanded": 0.6,
    "runs": 33,
    "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
@@ -273,7 +273,44 @@
      "lost": 11
     }
    ],
-   "code": [],
+   "code": [
+    {
+     "dial": 0,
+     "project": "eyal/kata-d0b",
+     "wallMin": 40,
+     "usd": 0.96,
+     "tasks": 1385,
+     "landed": 1228,
+     "landedByResolution": {
+      "merged": 1118,
+      "redo+merged": 84,
+      "replayed-llm": 14,
+      "redo+replayed-llm": 12
+     },
+     "bouncedTwice": 81,
+     "rejectedHarness": 54,
+     "noFinalRecord": 22,
+     "requirementsPassing": 1241,
+     "requirements": 1385,
+     "functionsAllPassing": 316,
+     "casesPassed": 5988,
+     "cases": 6340,
+     "requirementLost": 63,
+     "baseLost": 33,
+     "attribution": {
+      "cr": {
+       "wrongAtLanding": 53,
+       "laterAgentDroppedIt": 9,
+       "concurrentLostInLanding": 1
+      },
+      "base": {
+       "wrongAtLanding": 23,
+       "laterAgentDroppedIt": 10
+      }
+     },
+     "note": "At dial 0 the losses are model mistakes: 76 of 96 were already wrong in the commit where they landed, 19 were dropped by a later agent that read main with the requirement in; 1 lost in landing (a redo that started before the requirement landed; the redo's start time is approximate). 54 rejected = a harness bug (stale fork read; fixed 16:38), 22 cut by deploys."
+    }
+   ],
    "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off unless marked \"+ claims\" (an agent claims its declarations before reading the file); collisions = pairs of tasks started at the same moment"
   }
  },
@@ -397,8 +434,45 @@
    "finding": "Across dial 0-60% (1,000 agents) throughput stayed ~1,100-1,280 tasks/s and land wait p50 ~96-114 s; 0 doubled comments, 0 code changes, nothing lost at any level. Same-declaration collisions resolve at landing ('duplicate, kept the first', or a replay when the declaration is still undocumented) or, with claims on, before any work: at 60% + claims all 8,424 second-of-pair tasks were caught early and 0 duplicates reached the Lander, at ~9% higher throughput (1,276 vs 1,167 tasks/s)."
   },
   "code": {
-   "label": "kata collision dial (sim/kata, lab-hidden tests); pending",
-   "levels": []
+   "label": "measured on Cloudflare: kata (sim/kata/seed-1, hidden tests in lab-hidden), 1,385 tasks per level, 200 fleet agents (Gemini 3.1 flash-lite, glm-4.7 overflow), every change through qodebase's real merge queue (trains of 8, bounces, model replays); checked on main by lab-hidden/kata/check.mjs --attribute (each lost requirement replayed on the commit where it landed)",
+   "levels": [
+    {
+     "dial": 0,
+     "project": "eyal/kata-d0b",
+     "wallMin": 40,
+     "usd": 0.96,
+     "tasks": 1385,
+     "landed": 1228,
+     "landedByResolution": {
+      "merged": 1118,
+      "redo+merged": 84,
+      "replayed-llm": 14,
+      "redo+replayed-llm": 12
+     },
+     "bouncedTwice": 81,
+     "rejectedHarness": 54,
+     "noFinalRecord": 22,
+     "requirementsPassing": 1241,
+     "requirements": 1385,
+     "functionsAllPassing": 316,
+     "casesPassed": 5988,
+     "cases": 6340,
+     "requirementLost": 63,
+     "baseLost": 33,
+     "attribution": {
+      "cr": {
+       "wrongAtLanding": 53,
+       "laterAgentDroppedIt": 9,
+       "concurrentLostInLanding": 1
+      },
+      "base": {
+       "wrongAtLanding": 23,
+       "laterAgentDroppedIt": 10
+      }
+     },
+     "note": "At dial 0 the losses are model mistakes: 76 of 96 were already wrong in the commit where they landed, 19 were dropped by a later agent that read main with the requirement in; 1 lost in landing (a redo that started before the requirement landed; the redo's start time is approximate). 54 rejected = a harness bug (stale fork read; fixed 16:38), 22 cut by deploys."
+    }
+   ]
   }
  },
  "fleet": {
@@ -1538,14 +1612,14 @@
      "fleet-kata-d0b src/vs"
     ],
     "agents": 200,
-    "files": 361,
-    "landed": 340,
+    "files": 400,
+    "landed": 1228,
     "skipped": 0,
     "verifyFail": 0,
-    "rejected": 45,
+    "rejected": 54,
     "rateLimited": 0,
-    "usd": 0.2061,
-    "wallS": 349,
+    "usd": 0.9644,
+    "wallS": 2487,
     "landWaitP90S": -1,
     "firstAt": 1791909049435
    },
@@ -1561,14 +1635,14 @@
      "fleet-kata-d30 src/vs"
     ],
     "agents": 200,
-    "files": 45,
-    "landed": 49,
+    "files": 318,
+    "landed": 396,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
-    "usd": 0.0166,
-    "wallS": 340,
+    "usd": 0.1496,
+    "wallS": 2743,
     "landWaitP90S": null,
     "firstAt": 1791909049479
    },
@@ -1577,21 +1651,22 @@
     "runs": 1,
     "cached": false,
     "models": [
+     "@cf/zai-org/glm-4.7-flash",
      "gemini-3.1-flash-lite"
     ],
     "repos": [
      "fleet-kata-d60 src/vs"
     ],
     "agents": 200,
-    "files": 22,
-    "landed": 27,
+    "files": 163,
+    "landed": 223,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
-    "usd": 0.0098,
-    "wallS": 321,
-    "landWaitP90S": null,
+    "usd": 0.0911,
+    "wallS": 2699,
+    "landWaitP90S": -1,
     "firstAt": 1791909049547
    }
   ],
@@ -15585,41 +15660,43 @@
      "@cf/zai-org/glm-4.7-flash",
      "gemini-3.1-flash-lite"
     ],
-    "state": "running",
+    "state": "done",
     "tokensIn": 0,
     "tokensOut": 0,
     "agents": 200,
     "agentsStarted": 200,
-    "files": 361,
-    "landed": 340,
+    "files": 400,
+    "landed": 1228,
     "skipped": 0,
     "verifyFail": 0,
-    "rejected": 45,
+    "rejected": 54,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
-    "usd": 0.2061,
+    "usd": 0.9644,
     "startedAt": 1791909049435,
-    "endedAt": 1791909398743,
-    "wallS": 349,
+    "endedAt": 1791911536365,
+    "wallS": 2487,
     "landWaitP50S": -2,
     "landWaitP90S": -1,
     "peakPerMin": null,
     "perModel": {
      "@cf/zai-org/glm-4.7-flash": {
-      "usd": 0.0072,
+      "usd": 0.0077,
+      "bounced": 6,
       "landed": 59,
       "rejected": 1,
-      "calls": 60,
+      "calls": 66,
       "rateLimited429": 0,
       "peakPerMin": 44,
       "role": "overflow"
      },
      "gemini-3.1-flash-lite": {
-      "usd": 0.1989,
-      "landed": 281,
-      "rejected": 44,
-      "calls": 325,
+      "usd": 0.9567,
+      "bounced": 75,
+      "landed": 1169,
+      "rejected": 53,
+      "calls": 1297,
       "rateLimited429": 0,
       "peakPerMin": 82,
       "role": "planned"
@@ -15640,36 +15717,37 @@
     "tokensOut": 0,
     "agents": 200,
     "agentsStarted": 200,
-    "files": 45,
-    "landed": 49,
+    "files": 318,
+    "landed": 396,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
-    "usd": 0.0166,
+    "usd": 0.1496,
     "startedAt": 1791909049479,
-    "endedAt": 1791909389170,
-    "wallS": 340,
+    "endedAt": 1791911792683,
+    "wallS": 2743,
     "landWaitP50S": -2,
     "landWaitP90S": 0,
     "peakPerMin": null,
     "perModel": {
      "@cf/zai-org/glm-4.7-flash": {
-      "usd": 0.0002,
-      "landed": 2,
-      "calls": 2,
+      "usd": 0.0068,
+      "landed": 48,
+      "calls": 48,
       "rateLimited429": 0,
-      "peakPerMin": 2,
+      "peakPerMin": 7,
       "role": "overflow"
      },
      "gemini-3.1-flash-lite": {
-      "usd": 0.0164,
-      "landed": 47,
-      "calls": 47,
+      "usd": 0.1427,
+      "bounced": 3,
+      "landed": 348,
+      "calls": 351,
       "rateLimited429": 0,
-      "peakPerMin": 14,
+      "peakPerMin": 15,
       "role": "planned"
      }
     },
@@ -15680,6 +15758,7 @@
    {
     "runId": "fmv6wdrkb",
     "models": [
+     "@cf/zai-org/glm-4.7-flash",
      "gemini-3.1-flash-lite"
     ],
     "state": "running",
@@ -15687,28 +15766,38 @@
     "tokensOut": 0,
     "agents": 200,
     "agentsStarted": 200,
-    "files": 22,
-    "landed": 27,
+    "files": 163,
+    "landed": 223,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
-    "usd": 0.0098,
+    "usd": 0.0911,
     "startedAt": 1791909049547,
-    "endedAt": 1791909370282,
-    "wallS": 321,
+    "endedAt": 1791911748940,
+    "wallS": 2699,
     "landWaitP50S": -2,
-    "landWaitP90S": 0,
+    "landWaitP90S": -1,
     "peakPerMin": null,
     "perModel": {
-     "gemini-3.1-flash-lite": {
-      "usd": 0.0098,
-      "landed": 27,
-      "calls": 27,
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.006,
+      "bounced": 2,
+      "landed": 44,
+      "calls": 46,
       "rateLimited429": 0,
-      "peakPerMin": 7,
+      "peakPerMin": 6,
+      "role": "overflow"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 0.0851,
+      "bounced": 8,
+      "landed": 179,
+      "calls": 187,
+      "rateLimited429": 0,
+      "peakPerMin": 14,
       "role": "planned"
      }
     },
@@ -15719,18 +15808,18 @@
   ],
   "perModel": {
    "@cf/zai-org/glm-4.7-flash": {
-    "files": 11355,
-    "landed": 7998,
+    "files": 11445,
+    "landed": 8088,
     "skipped": 3339,
     "verifyFail": 0,
     "rejected": 18,
     "rateLimited": 31,
-    "calls": 8119,
-    "usd": 1.4538,
+    "calls": 8217,
+    "usd": 1.4669,
     "peakPerMin": 587,
     "roles": {
      "planned": 11276,
-     "overflow": 61
+     "overflow": 151
     },
     "usdPer1kFiles": 0.13,
     "share429": 0.004
@@ -15768,20 +15857,20 @@
     "share429": 0
    },
    "gemini-3.1-flash-lite": {
-    "files": 25135,
-    "landed": 17227,
+    "files": 26485,
+    "landed": 18568,
     "skipped": 7724,
     "verifyFail": 0,
-    "rejected": 184,
+    "rejected": 193,
     "rateLimited": 51,
-    "calls": 17630,
-    "usd": 15.0893,
+    "calls": 19066,
+    "usd": 16.0487,
     "peakPerMin": 1500,
     "roles": {
-     "planned": 7904,
+     "planned": 9245,
      "overflow": 17047
     },
-    "usdPer1kFiles": 0.6,
+    "usdPer1kFiles": 0.61,
     "share429": 0.003
    },
    "@cf/zai-org/glm-5.3-flash": {
@@ -15803,15 +15892,15 @@
   },
   "totals": {
    "runs": 33,
-   "filesAttempted": 47050,
-   "landed": 32408,
+   "filesAttempted": 47503,
+   "landed": 33839,
    "skipped": 14065,
    "verifyRefused": 0,
-   "rejected": 231,
+   "rejected": 240,
    "rateLimited": 3,
-   "usd": 19.48,
+   "usd": 20.45,
    "usdPer1kLanded": 0.6,
-   "usdPer1kFiles": 0.41,
+   "usdPer1kFiles": 0.43,
    "largestRun": {
     "runId": "fmv6qw9jf",
     "agents": 120,

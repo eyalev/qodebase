@@ -118,7 +118,44 @@
   "finding": "Across dial 0-60% (1,000 agents) throughput stayed ~1,100-1,280 tasks/s and land wait p50 ~96-114 s; 0 doubled comments, 0 code changes, nothing lost at any level. Same-declaration collisions resolve at landing ('duplicate, kept the first', or a replay when the declaration is still undocumented) or, with claims on, before any work: at 60% + claims all 8,424 second-of-pair tasks were caught early and 0 duplicates reached the Lander, at ~9% higher throughput (1,276 vs 1,167 tasks/s)."
  },
  "code": {
-  "label": "kata collision dial (sim/kata, lab-hidden tests); pending",
-  "levels": []
+  "label": "measured on Cloudflare: kata (sim/kata/seed-1, hidden tests in lab-hidden), 1,385 tasks per level, 200 fleet agents (Gemini 3.1 flash-lite, glm-4.7 overflow), every change through qodebase's real merge queue (trains of 8, bounces, model replays); checked on main by lab-hidden/kata/check.mjs --attribute (each lost requirement replayed on the commit where it landed)",
+  "levels": [
+   {
+    "dial": 0,
+    "project": "eyal/kata-d0b",
+    "wallMin": 40,
+    "usd": 0.96,
+    "tasks": 1385,
+    "landed": 1228,
+    "landedByResolution": {
+     "merged": 1118,
+     "redo+merged": 84,
+     "replayed-llm": 14,
+     "redo+replayed-llm": 12
+    },
+    "bouncedTwice": 81,
+    "rejectedHarness": 54,
+    "noFinalRecord": 22,
+    "requirementsPassing": 1241,
+    "requirements": 1385,
+    "functionsAllPassing": 316,
+    "casesPassed": 5988,
+    "cases": 6340,
+    "requirementLost": 63,
+    "baseLost": 33,
+    "attribution": {
+     "cr": {
+      "wrongAtLanding": 53,
+      "laterAgentDroppedIt": 9,
+      "concurrentLostInLanding": 1
+     },
+     "base": {
+      "wrongAtLanding": 23,
+      "laterAgentDroppedIt": 10
+     }
+    },
+    "note": "At dial 0 the losses are model mistakes: 76 of 96 were already wrong in the commit where they landed, 19 were dropped by a later agent that read main with the requirement in; 1 lost in landing (a redo that started before the requirement landed; the redo's start time is approximate). 54 rejected = a harness bug (stale fork read; fixed 16:38), 22 cut by deploys."
+   }
+  ]
  }
 }
