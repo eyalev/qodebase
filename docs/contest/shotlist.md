@@ -53,8 +53,8 @@ Status (qb6, Oct 13 evening):
 - **3e ready as an API:** GET /api/runs/<repo>/<run>/indexcheck → {lines, expected, sorted, missing, twice}
   (index test: 1,173 of 1,173, sorted, 0 missing, 0 twice). On screen it needs a line on the run page [qb7], or
   scene 3e shows the numbers as a caption read from that response.
-- **Cost cap ready:** budgetUsd on the form plus the fleet's $50/day cap; a 1,000-agent run on src/vs/editor costs
-  ~$0.15–0.25.
+- **Cost cap ready:** budgetUsd on the form plus the fleet's $50/day cap; a run on src/vs/editor costs ~$0.15–0.25;
+  src/vs is ~6× the files, so expect roughly $1–2 (read the form's estimate; set the cap above it).
 - **Pre-flight:** gateway limit 3,000/min stays up for the take; copy fleet-n2-vscode-src-1 is reserved
   (src/vs/editor = 659 files at its base); nobody runs on it before the take.
 
@@ -78,7 +78,7 @@ Status (qb2, Talk 01813f6, tested live at 390):
 - **3a:** Talk opens /runs and qb7's form fills with the job and its estimate; Eyal taps Start (Talk never starts a
   run, so there is no separate Talk confirm card: the filled form with its estimate is the confirm step). **Open:**
   qb7's parser picks 'VS Code extensions' instead of src/vs/editor on the reserved copy fleet-n2-vscode-src-1;
-  check the form shows src/vs/editor before tapping Start.
+  superseded: the take now uses src/vs (see below); check the form shows src/vs before tapping Start.
 
 Status (qb7, forq fd40111, checked live): **3a ready.** The sentence fills New fleet job with VS Code
 (fleet-n2-vscode-src-1, reserved, fresh), src/vs/editor, doc comments + API index, and an estimate (for 200 agents:
@@ -93,7 +93,7 @@ estimate.
 - **Accounts:** Eyal signed in on qodebase.app in the recording browser (the debug Chrome profile, not his daily one);
   Claude plan connected for the team build; the fleet gateway's limits raised for the 1,000-agent run [qb6].
 - **Projects:** a fresh project for the team build (no history), name decided in advance (e.g. `home-inventory-demo`);
-  a fresh fleet target copy of VS Code `src/vs/editor` for scene 3 [qb6]. Never film other people's projects.
+  a fresh fleet target copy of VS Code `src/vs` (~4,064 files) for scene 3 [qb6, qb7]. Never film other people's projects.
 - **Nothing private in shot:** no emails, tokens, the Talk version label (`#talk-ver`), browser bookmarks or tabs;
   the address bar hidden (phone emulation shows no chrome).
 - **Phone settings (if any part is filmed on the real phone):** Do Not Disturb on, battery > 50%, brightness max,
