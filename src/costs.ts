@@ -35,7 +35,7 @@ export const LONG_PROMPT = 100_000;
 
 export type Kind = 'boxes' | 'claude' | 'voice' | 'ai' | 'browser';
 export type Tokens = { in: number; out: number; cw: number; cw1h?: number; cr: number };
-export type CostRow = { usd: number | null; covered: boolean; tokens?: Tokens; seconds?: number; cpuSeconds?: number; billing?: 'api' | 'sub' };
+export type CostRow = { usd: number | null; covered: boolean; tokens?: Tokens; seconds?: number; cpuSeconds?: number; billing?: 'api' | 'sub' | 'gateway' };
 
 const day = (t = Date.now()) => new Date(t).toISOString().slice(0, 10);
 const modelKey = (m: string) => Object.keys(CLAUDE).find((k) => m.toLowerCase().includes(k)) || null;

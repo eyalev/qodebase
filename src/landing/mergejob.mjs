@@ -199,7 +199,13 @@ const CLAUDE_ARGS = (prompt) => ['-p', prompt, '--model', job.llm.model, '--outp
   '--allowedTools', 'Read,Edit,Write,Glob,Grep', '--max-turns', '12'];
 // Only the credential we were given; no auth variable is blanked or removed (Anthropic's 2026-10 rule; the replay
 // used to set ANTHROPIC_API_KEY='' when none was given).
-const claudeEnv = () => ({ ...process.env, IS_SANDBOX: '1', ...(process.env.QB_CLAUDE_TOKEN ? { CLAUDE_CODE_OAUTH_TOKEN: process.env.QB_CLAUDE_TOKEN } : {}), ...(process.env.QB_ANTHROPIC_KEY ? { ANTHROPIC_API_KEY: process.env.QB_ANTHROPIC_KEY } : {}), JOB: '' });
+// QB_GW_URL + QB_GW_TOKEN: Claude through forq's AI Gateway (Cloudflare unified billing, no plan, no Anthropic key):
+// Claude Code needs ANTHROPIC_API_KEY set (the gateway ignores it), the gateway token travels in cf-aig-authorization.
+const claudeEnv = () => ({ ...process.env, IS_SANDBOX: '1',
+  ...(process.env.QB_GW_URL && process.env.QB_GW_TOKEN
+    ? { ANTHROPIC_BASE_URL: process.env.QB_GW_URL, ANTHROPIC_API_KEY: process.env.QB_GW_TOKEN, ANTHROPIC_CUSTOM_HEADERS: `cf-aig-authorization: Bearer ${process.env.QB_GW_TOKEN}` }
+    : { ...(process.env.QB_CLAUDE_TOKEN ? { CLAUDE_CODE_OAUTH_TOKEN: process.env.QB_CLAUDE_TOKEN } : {}), ...(process.env.QB_ANTHROPIC_KEY ? { ANTHROPIC_API_KEY: process.env.QB_ANTHROPIC_KEY } : {}) }),
+  QB_GW_TOKEN: '', QB_CLAUDE_TOKEN: '', JOB: '' });
 function llmOf(r, t, prompt) {
   let j = {}; try { j = JSON.parse(r.stdout || '{}'); } catch {}
   const u = j.usage || {};

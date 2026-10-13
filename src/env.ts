@@ -63,6 +63,9 @@ export interface Env {
   ADMIN_SECRET: string;
   /** The fleet Worker's key (sim/fleet, qbfleet): /api/runs proxies its data and controls; never sent to a browser. */
   FLEET_KEY?: string;
+  /** Merge-queue model replays through AI Gateway (unified billing): the gateway's token and id (default qodebase-replay). */
+  REPLAY_GATEWAY_TOKEN?: string;
+  REPLAY_GATEWAY?: string;
   /** qbfleet over a service binding (a same-account workers.dev fetch started answering 404, 2026-10-13). */
   FLEET?: Fetcher;
 }

@@ -972,7 +972,7 @@ export class Landing extends DurableObject<Env> {
     const train: Train = { id: `t${Date.now().toString(36)}`, state: 'testing', changes: picked.map((c) => c.id), startedAt: Date.now(), endedAt: null, checks: null, mainBefore: null, mainAfter: null };
     const job: MergeJob = { trainId: train.id, slug: m.slug, mainRemote: project.remote, mainToken, branch: project.importedFrom?.branch || null, changes: [],
       // Tier 2 runs on the owner's Claude subscription: only for the instance owner's projects (and the showcase).
-      ...(m.flags.llmReplay && !m.demo?.publicRun && !this.#rebasePolicy(m) && (project.owner === this.env.OWNER_HANDLE || project.owner === 'forq') ? { llm: { model: m.flags.replayModel || DEFAULT_REPLAY_MODEL } } : {}),
+      ...(m.flags.llmReplay && !m.demo?.publicRun && !this.#rebasePolicy(m) && (project.owner === this.env.OWNER_HANDLE || project.owner === 'forq') ? { llm: { model: m.flags.replayModel || DEFAULT_REPLAY_MODEL, ...((m.flags as any).replayVia === 'gateway' && this.env.REPLAY_GATEWAY_TOKEN ? { via: 'gateway' } : {}) } } : {}),
       // github / ffa: plain git only (no handlers), ffa also without checks.
       ...(this.#rebasePolicy(m) ? { handlers: false, noChecks: m.flags.policy === 'ffa' } : {}) };
     for (const c of picked) {
@@ -1083,7 +1083,7 @@ export class Landing extends DurableObject<Env> {
         log('landing', 'replay_llm', { slug: m.slug, id: rc.id, landed: rc.landed, ...rc.llm });
         // Named like the boxes' rows (<owner>/<name>:<model>): under the bare slug the guard priced these Haiku replays as the
         // project's priciest model + 50% (R5: ~\$11 of a \$30.5 guard reading, the run halted at ~\$16.5 real).
-        await recordCost(this.env, m.slug.split('.')[0], 'claude', `${m.slug.replace('.', '/')}:${rc.llm.model || DEFAULT_REPLAY_MODEL}`, { usd: null, covered: false, billing: 'sub',
+        await recordCost(this.env, m.slug.split('.')[0], 'claude', `${m.slug.replace('.', '/')}:${rc.llm.model || DEFAULT_REPLAY_MODEL}`, { usd: null, covered: false, billing: (m.flags as any).replayVia === 'gateway' && this.env.REPLAY_GATEWAY_TOKEN ? 'gateway' : 'sub',
           tokens: { in: rc.llm.in || 0, out: rc.llm.out || 0, cw: Math.max(0, (rc.llm.cacheWrite || 0) - (rc.llm.cacheWrite1h || 0)), cw1h: rc.llm.cacheWrite1h || 0, cr: rc.llm.cacheRead || 0 } });
       }
       await this.#afterRealTrain(r);
