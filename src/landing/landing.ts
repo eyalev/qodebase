@@ -877,6 +877,10 @@ export class Landing extends DurableObject<Env> {
     const m = await this.#m();
     if (m.flags.paused || m.flags.halted) return;   // R1: queued changes wait while the owner has paused or stopped
     m.waiting = (await Promise.all(m.waiting.map((id) => this.#get(id)))).filter((c) => c && c.state === 'queued').map((c) => c!.id);
+    // A change marked queued but missing from the waiting list never gets a train (the R5 flagship's 41st, queued at
+    // 00:58 while the run was being stopped, sat for hours; cause not traced). Put it back, oldest first, and log it.
+    const lost = (await this.#all()).filter((c) => c.state === 'queued' && !m.waiting.includes(c.id)).sort((a, b) => a.createdAt - b.createdAt);
+    if (lost.length) { m.waiting.push(...lost.map((c) => c.id)); log('landing', 'waiting_repaired', { slug: m.slug, ids: lost.map((c) => c.id) }); }
     const picked = await this.#pick();
     if (!picked.length) { await this.#saveMeta(); return; }
     const project = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
