@@ -36,7 +36,7 @@ const STT_MODEL = '@cf/openai/whisper-large-v3-turbo';
 // Daily caps (UTC day). A person's own, and everyone's together.
 // usd_milli: answering-model spend in thousandths of a dollar, $1 per person a day; usd_others: everyone but the owner
 // together, $5 a day (Eyal, 2026-10-13: a burst of visitors must not drain the credits).
-const CAPS = { usd_milli: { me: 1000, all: 50000 }, usd_others: { me: 5000, all: 5000 }, decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 }, status_warm: { me: 3000, all: 20000 }, tts_chars: { me: 20000, all: 150000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
+const CAPS = { usd_milli: { me: 1000, all: 50000 }, usd_others: { me: 5000, all: 5000 }, decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 1000, all: 3000 }, status: { me: 200, all: 2000 }, status_warm: { me: 3000, all: 20000 }, tts_chars: { me: 20000, all: 150000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
 type Kind = keyof typeof CAPS;
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talk', event, ...data }));
@@ -448,9 +448,14 @@ export function talkModels(env: Env) {
 const NOVA3_USD_PER_MIN = 0.0092;
 async function sttLive(request: Request, env: Env, ctx: ExecutionContext, who: Who & {}, url: URL) {
   if ((request.headers.get('upgrade') || '').toLowerCase() !== 'websocket') return json({ error: 'websocket' }, 426);
-  const budget = await talkLog(env).take('stt', who.handle);
   const pair = new WebSocketPair(); const [client, server] = Object.values(pair); server.accept();
-  if (!budget.ok) { server.send(JSON.stringify({ type: 'error', error: 'budget' })); server.close(1008, 'budget'); return new Response(null, { status: 101, webSocket: client }); }
+  // Counted when the first audio arrives, not on connect: conversation mode opens the next turn's socket early, and
+  // an unused one must not use up the day (300 went in one evening of benches, 2026-10-13).
+  let charged: Promise<boolean> | null = null;
+  const charge = () => (charged ||= talkLog(env).take('stt', who.handle).then((b) => {
+    if (!b.ok) { try { server.send(JSON.stringify({ type: 'error', error: 'budget' })); server.close(1008, 'budget'); } catch { /* gone */ } }
+    return b.ok;
+  }).catch(() => true));
   const t0 = Date.now(), lang = url.searchParams.get('lang') || 'en';
   const names = (await projectsFor(env, who).catch(() => [] as Proj[])).filter((p) => p.mine && !isScaffold(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' '));
   const keyterm = [...new Set(['qodebase', 'Talk', 'fork', 'merge', 'router', ...names])].slice(0, 40);   // ≤ 40: 65 made the socket refuse (2026-10-13)
@@ -471,6 +476,7 @@ async function sttLive(request: Request, env: Env, ctx: ExecutionContext, who: W
   server.addEventListener('message', (e: MessageEvent) => {
     if (typeof e.data === 'string') { chain = chain.then(() => { if (e.data === 'close') { const m = JSON.stringify({ type: 'CloseStream' }); if (up) up.send(m); else pending.push(m); } }); return; }
     chain = chain.then(async () => {
+      if (!(await charge())) return;
       const b = await toBytes(e.data);
       if (!b) { log('stt_live_frame', { level: 'warn', kind: Object.prototype.toString.call(e.data) }); return; }
       bytes += b.byteLength; chunks++;
