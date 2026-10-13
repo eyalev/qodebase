@@ -34,6 +34,16 @@ export default {
     switch (url.pathname) {
       case '/import': return json(await importRepo(env, body));
       // VS Code is too big for Artifacts' import ('upstream unavailable'): an empty repo, then the laptop pushes src/vs.
+      // S4: more copies server-side: an Artifacts fork of a never-touched seed copy (seconds; pushing from the laptop took ~1 min
+      // a copy). {repo, from}. A fresh repo can be invisible to an immediate read: callers retry reads.
+      case '/fork': {
+        if (!REPO_RE.test(String(body.from || ''))) return json({ error: 'from: fleet-<name>' }, 400);
+        const t0 = Date.now();
+        using src = await env.ARTIFACTS.get(body.from);
+        const f = await src.fork(repo, { description: `fleet copy of ${body.from} (S4 scale runs); never pushed upstream`, defaultBranchOnly: true });
+        await budget(env).addRepo(repo);
+        return json({ repo, from: body.from, remote: f.remote || remoteOf(repo), ms: Date.now() - t0 });
+      }
       case '/create': { const c = await env.ARTIFACTS.create(repo, { description: String(body.description || 'fleet experiment base (an open-source slice); never pushed upstream').slice(0, 300), setDefaultBranch: 'main' }); using r = await env.ARTIFACTS.get(repo); const t = await r.createToken('write', 3600); await budget(env).addRepo(repo); return json({ repo, remote: c.remote || remoteOf(repo), token: t.plaintext }); }
       case '/plan': return json(await plan(env, body));
       case '/start': return json(await run(env, repo).start(body));
@@ -134,6 +144,11 @@ export class Run extends DurableObject {
     for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
     // S4/qb7: the queue sampled every 10 s while a run is on (the series' depth per stage).
     this.sql.exec(`CREATE TABLE IF NOT EXISTS samp (run TEXT, t INT, waiting INT, at_model INT, ready INT, landed INT, lander_waiting INT, PRIMARY KEY (run, t))`);
+    // S4a: the per-result land-wait check scanned the whole table; landed() looked files up by name.
+    this.sql.exec(`CREATE INDEX IF NOT EXISTS rec_run_at ON rec (run, at)`);
+    this.sql.exec(`CREATE INDEX IF NOT EXISTS rec_run_file ON rec (run, file)`);
+    this.sql.exec(`CREATE INDEX IF NOT EXISTS rec_run_landed ON rec (run, landed_at)`);
+    this.sql.exec(`CREATE INDEX IF NOT EXISTS q_run_taken ON q (run, taken, i)`);
   }
   // One state object in memory, shared by every handler: handlers that await other objects interleave, and each saving the
   // copy it had read lost the others' counts (F2 at 100 agents showed -37 files at the model).
@@ -186,7 +201,7 @@ export class Run extends DurableObject {
     const s = await this.st();
     if (!s || s.state === 'stopped' || (s.agentsStarted || 0) >= s.cfg.agents) return;
     const from = s.agentsStarted || 0, to = Math.min(s.cfg.agents, from + 50);
-    await Promise.all(Array.from({ length: to - from }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN)));
+    await Promise.all(Array.from({ length: to - from }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN, Math.max(1, Math.min(10, Number(s.cfg.batch) || 1)))));
     s.agentsStarted = to; await this.save(s);
     const meta = await this.ctx.storage.get(`meta:${s.runId}`); if (meta) { meta.agentsStarted = to; await this.ctx.storage.put(`meta:${s.runId}`, meta); }
     log('agents_started', { runId: s.runId, started: to, of: s.cfg.agents });
@@ -194,7 +209,8 @@ export class Run extends DurableObject {
   }
 
   /** An agent asks for its next file. */
-  async next(runId) {
+  async next(runId, n = 1) {
+    if (n > 1) return this.nextMany(runId, n);
     const s = await this.st();
     if (!s || s.runId !== runId) return { stop: true };
     if (s.state === 'paused') return { wait: 15_000 };
@@ -219,6 +235,22 @@ export class Run extends DurableObject {
     await this.save(s);
     return { file: { path: row.path, hash: row.hash }, model: pickM.model, provider, slot: `${pickM.model}|${slice}` };
   }
+
+  /** S4: up to n files per call (one round trip, not n): each still paced per model, the first without room stops the batch. */
+  async nextMany(runId, n) {
+    const files = [];
+    let first = null;
+    for (let k = 0; k < Math.min(10, n); k++) {
+      const r = await this.next(runId, 1);
+      if (!r.file) { if (!files.length) return r; break; }
+      first ||= r; files.push({ ...r.file, model: r.model, provider: r.provider, slot: r.slot });
+    }
+    const s = await this.st();
+    return { files, root: s?.cfg.root || 'src/vs', repo: s?.cfg.repo || MAIN };
+  }
+
+  /** S4: an agent's results for a batch of files (the ready ones went to the Lander already). */
+  async doneMany(runId, agent, rs) { for (const r of rs) await this.done(runId, agent, r); }
 
   /** An agent's result for one file. */
   async done(runId, agent, r) {   // r may be rewritten (a retry)
@@ -252,10 +284,14 @@ export class Run extends DurableObject {
     for (const k of Object.keys(s.perMin)) if (Number(k) < minute - 60) delete s.perMin[k];
     await this.save(s);
     if (usd) await budget(this.env).spend(usd);
-    if (r.status === 'ready') await lander(this.env, s.cfg.repo || MAIN).add(runId, laneOf(r.file, s.cfg.root || 'src/vs'), r.file, r.text, Date.now());
+    if (r.status === 'ready' && r.text) await lander(this.env, s.cfg.repo || MAIN).add(runId, laneOf(r.file, s.cfg.root || 'src/vs'), r.file, r.text, Date.now());
     // Done when no file is waiting or at the model (not only when every agent reported in: a lost agent kept a run open).
     if (s.state === 'running' && s.counts.queued <= 0 && s.counts.model <= 0) { s.state = 'done'; s.endedAt = Date.now(); await this.save(s); await lander(this.env, s.cfg.repo || MAIN).flush(runId); return; }
-    await this.checkAutoPause(s);
+    // The shares come from memory each time; the land-wait query and the budget check every 50 results (S4a: per result they
+    // were a full table scan and a round trip to a shared object).
+    s.sinceCheck = (s.sinceCheck || 0) + 1;
+    if (s.sinceCheck >= 50 || s.counts?.queued <= 0) { s.sinceCheck = 0; await this.checkAutoPause(s); }
+    else await this.checkShares(s);
   }
 
   async landed(runId, files, at) {
@@ -266,6 +302,15 @@ export class Run extends DurableObject {
     await this.save(s);
   }
 
+  async checkShares(s) {
+    if (s.state !== 'running') return;
+    const p = s.cfg.pause, w = s.recent.slice(-p.window);
+    if (w.length < Math.min(p.window, 10)) return;
+    const share = (k) => w.filter((x) => x.status === k).length / w.length;
+    if (share('rate_limited') > p.rateLimitShare) return this.autoPause(s, `rate limits (429) ${Math.round(share('rate_limited') * 100)}% of the last ${w.length}`);
+    if (share('model_error') > p.modelErrorShare) return this.autoPause(s, `model errors ${Math.round(share('model_error') * 100)}% of the last ${w.length}`);
+    if (share('verify_fail') > p.verifyFailShare) return this.autoPause(s, `verify failures ${Math.round(share('verify_fail') * 100)}% of the last ${w.length}`);
+  }
   /** AUTO-PAUSE: any signal over its line pauses the run and pushes the reason. */
   async checkAutoPause(s) {
     if (s.state !== 'running') return;
@@ -413,15 +458,33 @@ async function pushover(env, title, message) {
 
 // ---- Agent: one file at a time --------------------------------------------------------------
 export class Agent extends DurableObject {
-  async begin(runId, i, repo = MAIN) { await this.ctx.storage.put({ runId, i, repo }); await this.ctx.storage.setAlarm(Date.now() + Math.random() * 3000); }
+  async begin(runId, i, repo = MAIN, batch = 1) { await this.ctx.storage.put({ runId, i, repo, batch }); await this.ctx.storage.setAlarm(Date.now() + Math.random() * 3000); }
   async alarm() {
     const runId = await this.ctx.storage.get('runId'), i = await this.ctx.storage.get('i'), repoName = (await this.ctx.storage.get('repo')) || MAIN;
     const R = run(this.env, repoName);
     let n;
+    const batch = (await this.ctx.storage.get('batch')) || 1;
     // Infra errors on our own objects (an overloaded Run, a reset) are counted here and reported with the next result.
-    try { n = await R.next(runId); } catch (e) { await this.ctx.storage.put('infraErrs', ((await this.ctx.storage.get('infraErrs')) || 0) + 1); log('agent_infra_error', { runId, i, where: 'next', err: String(e?.message || e).slice(0, 200) }); await this.ctx.storage.setAlarm(Date.now() + 1000 + Math.random() * 2000); return; }
+    try { n = await R.next(runId, batch); } catch (e) { await this.ctx.storage.put('infraErrs', ((await this.ctx.storage.get('infraErrs')) || 0) + 1); log('agent_infra_error', { runId, i, where: 'next', err: String(e?.message || e).slice(0, 200) }); await this.ctx.storage.setAlarm(Date.now() + 1000 + Math.random() * 2000); return; }
     if (n.stop) { await R.agentFinished(runId); return; }
     if (n.wait) { await this.ctx.storage.setAlarm(Date.now() + n.wait); return; }
+    if (n.files) {
+      // S4: a batch: each file worked in turn, the ready ones straight to the Lander (one call), then one done() for all.
+      const rs = [];
+      for (const f of n.files) {
+        const r = await this.work(f, f.model, f.provider, repoName).catch((e) => ({ file: f.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
+        r.model = f.model; r.slot = f.slot; rs.push(r);
+      }
+      const ready = rs.filter((r) => r.status === 'ready');
+      try {
+        if (ready.length) await lander(this.env, repoName).addMany(runId, ready.map((r) => ({ lane: laneOf(r.file, n.root), path: r.file, text: r.text, at: Date.now() })));
+        for (const r of rs) delete r.text;
+        rs[0].infraErrs = (await this.ctx.storage.get('infraErrs')) || 0;
+        await R.doneMany(runId, i, rs); await this.ctx.storage.put('infraErrs', 0);
+      } catch (e) { await this.ctx.storage.put('infraErrs', ((await this.ctx.storage.get('infraErrs')) || 0) + 1); log('agent_infra_error', { runId, i, where: 'doneMany', err: String(e?.message || e).slice(0, 200) }); }
+      await this.ctx.storage.setAlarm(Date.now() + 20);
+      return;
+    }
     const r = await this.work(n.file, n.model, n.provider, repoName).catch((e) => ({ file: n.file.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
     r.model = n.model; r.slot = n.slot;
     r.infraErrs = (await this.ctx.storage.get('infraErrs')) || 0;
@@ -485,27 +548,29 @@ export class Agent extends DurableObject {
 
 // ---- Lander: lanes by folder, one commit per lane, pushed in order ---------------------------
 export class Lander extends DurableObject {
-  async begin(runId, base, repo = MAIN) { await this.ctx.storage.deleteAll(); await this.ctx.storage.put({ runId, base, repo, lanes: {}, landed: 0, commits: 0, pushes: 0, stale: 0, errors: [] }); }
-  async add(runId, lane, path, text, at) {
+  // S4a: pending files were one 'lanes' object rewritten per file (and a key per text); now SQL rows, one insert per file.
+  tables() { this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS pend (path TEXT PRIMARY KEY, lane TEXT, at INT, text TEXT)`); this.ctx.storage.sql.exec(`CREATE INDEX IF NOT EXISTS pend_lane ON pend (lane, at)`); }
+  async begin(runId, base, repo = MAIN) { await this.ctx.storage.deleteAll(); this.tables(); await this.ctx.storage.put({ runId, base, repo, landed: 0, commits: 0, pushes: 0, stale: 0, errors: [] }); }
+  async add(runId, lane, path, text, at) { return this.addMany(runId, [{ lane, path, text, at }]); }
+  async addMany(runId, items) {
     if ((await this.ctx.storage.get('runId')) !== runId) return;
-    const lanes = (await this.ctx.storage.get('lanes')) || {};
-    (lanes[lane] ||= []).push({ path, at });
-    await this.ctx.storage.put({ lanes, [`f:${path}`]: text });
+    this.tables();
+    for (const x of items) this.ctx.storage.sql.exec(`INSERT OR REPLACE INTO pend (path, lane, at, text) VALUES (?, ?, ?, ?)`, x.path, x.lane, x.at, x.text);
     if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + 5000);
   }
   async restart() { await this.ctx.storage.setAlarm(Date.now() + 2000); await this.ctx.storage.sync(); this.ctx.abort('restart on the deployed code'); }
   async flush(runId) { if ((await this.ctx.storage.get('runId')) === runId) await this.ctx.storage.setAlarm(Date.now() + 100); }
   async alarm() {
     const runId = await this.ctx.storage.get('runId');
-    const lanes = (await this.ctx.storage.get('lanes')) || {};
-    const keys = Object.keys(lanes).filter((k) => lanes[k].length);
+    this.tables();
+    const keys = this.ctx.storage.sql.exec(`SELECT DISTINCT lane FROM pend`).toArray().map((x) => x.lane);
     if (!keys.length) return;
-    try { await this.land(runId, lanes, keys); }
+    try { await this.land(runId, keys); }
     catch (e) { const errors = (await this.ctx.storage.get('errors')) || []; errors.push({ at: Date.now(), err: String(e?.stack || e).slice(0, 600) }); await this.ctx.storage.put('errors', errors.slice(-20)); log('land_error', { runId, err: String(e?.stack || e).slice(0, 500) }); }
     await this.ctx.storage.setAlarm(Date.now() + 5000);
   }
   /** One commit per lane on top of main's tip, all pushed together; a stale tip is re-read and the batch rebuilt. */
-  async land(runId, lanes, keys) {   // eslint-disable-line no-param-reassign
+  async land(runId, keys) {
     const repoName = (await this.ctx.storage.get('repo')) || MAIN;
     using repo = await this.env.ARTIFACTS.get(repoName);
     const token = (await repo.createToken('write', 600)).plaintext;
@@ -515,21 +580,17 @@ export class Lander extends DurableObject {
       let parent = tip.hash, tree = tip.treeHash;
       const landedFiles = [];
       for (const k of keys) {
-        const items = lanes[k].slice(0, 200);
-        const texts = await this.ctx.storage.get(items.map((x) => `f:${x.path}`));
-        tree = await overlay(repo, objs, tree, items.map((x) => ({ path: x.path, sha: objs.blob(texts.get(`f:${x.path}`)) })));
+        const items = this.ctx.storage.sql.exec(`SELECT path, text FROM pend WHERE lane = ? ORDER BY at LIMIT 200`, k).toArray();
+        tree = await overlay(repo, objs, tree, items.map((x) => ({ path: x.path, sha: objs.blob(x.text) })));
         parent = objs.commit(tree, [parent], `docs(${k}): comments for ${items.length} file${items.length === 1 ? '' : 's'}\n\nqodebase fleet run ${runId}; code unchanged (verified per file).`, Date.now(), 'qodebase fleet <fleet@qodebase.app>');
         landedFiles.push(...items.map((x) => x.path));
       }
       const p = await push({ remote: remoteOf(repoName), token, branch: 'main', oldSha: tip.hash, newSha: parent, objs: [...objs.map.values()] });
       await this.ctx.storage.put('pushes', ((await this.ctx.storage.get('pushes')) || 0) + 1);
       if (p.ok) {
-        // Re-read the lanes: files added while this batch was pushing must stay (F2 at 10 agents lost 9 that way).
-        const done = new Set(landedFiles), now = (await this.ctx.storage.get('lanes')) || {};
-        for (const k of Object.keys(now)) now[k] = now[k].filter((x) => !done.has(x.path));
-        lanes = now;
-        await this.ctx.storage.put({ lanes, landed: ((await this.ctx.storage.get('landed')) || 0) + landedFiles.length, commits: ((await this.ctx.storage.get('commits')) || 0) + keys.length });
-        await this.ctx.storage.delete(landedFiles.map((f) => `f:${f}`));
+        // Only the landed rows go: files added while this batch was pushing stay (F2 at 10 agents lost 9 that way once).
+        for (const f of landedFiles) this.ctx.storage.sql.exec(`DELETE FROM pend WHERE path = ?`, f);
+        await this.ctx.storage.put({ landed: ((await this.ctx.storage.get('landed')) || 0) + landedFiles.length, commits: ((await this.ctx.storage.get('commits')) || 0) + keys.length });
         await run(this.env, repoName).landed(runId, landedFiles, Date.now());
         log('landed', { runId, lanes: keys.length, files: landedFiles.length, commit: parent.slice(0, 10) });
         return;
@@ -540,9 +601,10 @@ export class Lander extends DurableObject {
     throw new Error('push failed 3 times');
   }
   async summary() {
-    const g = await this.ctx.storage.get(['lanes', 'landed', 'commits', 'pushes', 'stale', 'errors']);
-    const lanes = g.get('lanes') || {};
-    return { waiting: Object.values(lanes).reduce((n, l) => n + l.length, 0), lanes: Object.keys(lanes).length, landed: g.get('landed') || 0, commits: g.get('commits') || 0, pushes: g.get('pushes') || 0, stale: g.get('stale') || 0, errors: (g.get('errors') || []).slice(-3) };
+    const g = await this.ctx.storage.get(['landed', 'commits', 'pushes', 'stale', 'errors']);
+    this.tables();
+    const w = this.ctx.storage.sql.exec(`SELECT COUNT(*) AS n, COUNT(DISTINCT lane) AS l FROM pend`).toArray()[0] || {};
+    return { waiting: w.n || 0, lanes: w.l || 0, landed: g.get('landed') || 0, commits: g.get('commits') || 0, pushes: g.get('pushes') || 0, stale: g.get('stale') || 0, errors: (g.get('errors') || []).slice(-3) };
   }
 }
 
