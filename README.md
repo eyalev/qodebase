@@ -83,6 +83,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 - **On the phone:** https://qodebase.app. Explore, open a project, read code, fork. Signing in uses an emailed code; running agents needs your own Anthropic API key or Claude subscription token.
 - **Command line / agents:** `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login` (approve on your phone) and `qb help`. Agents read https://qodebase.app/llms.txt.
+- **Ask for a change:** on someone else's public project, tap **Request a change**: one text box, an optional screenshot, an optional link to your fork. The owner sees it in the project's Requests tab and can send it to the project's agents (on the owner's budget), reply, or close it; you follow it under Your requests in the Inbox. Limits: 3 per project and 10 in all per person a day; private projects take none, and owners can turn them off.
 - **Your own copy:** https://qodebase.app/own installs qodebase, merge queue and board included, into your own Cloudflare account in about 85 seconds (needs Workers Paid and Cloudflare Artifacts, in beta). Manual setup: [`SELF_HOST.md`](SELF_HOST.md); agent image: [`box/`](box/).
 
 ## Built vs designed
@@ -95,6 +96,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 - replay by rules; replay by AI behind a per-project switch
 - claims and stacking (`forq spawn --files … --on …`)
 - Talk (type or speak a request), Watch a run, replays of past runs
+- Requests, issues for the agent age: anyone signed in sends a public project's owner one short request (a screenshot and a link to their fork optional); the owner sends it to the agents, replies or closes it
 - installing your own copy into your Cloudflare account
 
 **Designed or simulated, not built yet**
