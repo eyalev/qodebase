@@ -21,7 +21,9 @@ Agreed with the manager 2026-10-13: keep what public pages link to, plus one cop
 
 </details>
 
+- forq, 2026-10-13 ~19:10 UTC: eyal.kata-d30 (code dial level 30: project, repo and its 1,635 forks; records, main clone and qb4's checker output saved in ~/.local/share/qbfleet/kata/K30/).
+
 ## Pending
 
-- eyal.kata-d30 (1,090 repos) and eyal.kata-d60 (851 repos, still growing): deleted after their levels finish and the records, main clones and qb4's checker output are saved in ~/.local/share/qbfleet/kata/K30, K60/.
+- eyal.kata-d60 (1,513 repos at 19:05, still growing; the slow baseline of the fast-variant comparison): deleted after its level finishes and the records, main clone and qb4's checker output are saved in ~/.local/share/qbfleet/kata/K60/. eyal.kata-d60f (the fast variant) the same, after its checker run.
 - fleet-n2-vscode-src-1: after the recording, if the take's run is not linked from a public page.
