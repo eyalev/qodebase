@@ -855,6 +855,11 @@ const app = {
           const r = await boxStub(env, `${slug}--ask`).askResult(url.searchParams.get('id') || '');
           return r ? json(r) : json({ error: 'no such question' }, 404);
         }
+        if (verb === 'description' && request.method === 'POST') {
+          const b = await request.json().catch(() => ({})) as { description?: string };
+          if (!String(b.description || '').trim()) return json({ error: 'description required' }, 400);
+          return json({ ok: true, description: await p.setDescription(String(b.description)) });
+        }
         if (verb === 'visibility' && request.method === 'POST') {
           const b = await request.json().catch(() => ({})) as { private?: boolean };
           const ni = await p.setPrivate(!!b.private);

@@ -1154,7 +1154,8 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
    *  Window: `since`, else the current demo run, else the current build, else everything kept. */
   async timeline(opts: { slug: string; owner: boolean; since?: number | null; request?: { at: number; sentAt?: number; text?: string } | null }): Promise<Timeline | null> {
     const m = await this.#m(opts.slug);
-    if (!opts.owner && !m.flags.publicWatch) return null;
+    // Public: Watch-a-run projects and kept records (flags.keep: published evidence, like eyal/cafe-team and the R5 flagship).
+    if (!opts.owner && !m.flags.publicWatch && !m.flags.keep) return null;
     const changes = (await Promise.all(m.order.map((id) => this.#get(id)))).filter(Boolean) as Change[];
     const trains = (await Promise.all(m.trains.map((id) => this.ctx.storage.get<Train>(`t:${id}`)))).filter(Boolean) as Train[];
     const kind = m.demo ? 'demo' : /\.lab-/.test(m.slug) ? 'lab' : m.build ? 'build' : 'project';
@@ -1189,7 +1190,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
         active: this.#active(m), public: !!m.flags.publicWatch,
         // How many tasks the run has in all ('N of 14 landed'): the story's script; busy mode has no fixed list.
         tasks: (m.demo?.mode || 'story') === 'busy' ? null : TASKS.length, runsLeftToday: Math.max(0, WATCH.perDay - (m.watchLog || []).filter((w) => now - w.at < 86400_000).length) } : null,
-      flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch, board: !!m.flags.board },
+      flags: { llmReplay: m.flags.llmReplay, publicWatch: !!m.flags.publicWatch, board: !!m.flags.board, keep: !!m.flags.keep },
       run: this.runState(),
       // Estimate vs elapsed (Build): absent when built without an estimate.
       ...(m.build ? await this.buildInfo() : {}),

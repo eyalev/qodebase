@@ -6,7 +6,7 @@
 //   POST /api/p/<o>/<n>/landing/flags       {llmReplay?, agentModel?, replayModel?} (owner; models: alias or claude-… id, null clears)
 //   GET  /api/p/<o>/<n>/landing/state       merger box + alarm state (admin)
 //   GET  /api/p/<o>/<n>/landing/board       the agent board: ?recent=<min, default 30>&files=a,b&area=X&tail=N (anyone who can see the project)
-//   GET  /api/p/<o>/<n>/landing/timeline    the run as a trace: lanes, spans, marks, critical path (timeline.ts; owner or publicWatch)
+//   GET  /api/p/<o>/<n>/landing/timeline    the run as a trace: lanes, spans, marks, critical path (timeline.ts; owner, publicWatch or keep)
 //   POST /api/p/<o>/<n>/landing/sendback    {id, note}: the owner sends a change back to its agent with their note (G5)
 //   POST /api/p/<o>/<n>/landing/{pause,resume,stop}  owner controls (R1): view().run says which is on
 

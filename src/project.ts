@@ -126,6 +126,14 @@ export class Project extends DurableObject<Env> {
     return info;
   }
 
+  /** The project's one-line description (shown on its page and in lists): the owner can correct it. */
+  async setDescription(text: string) {
+    const info = await this.#need();
+    info.description = text.replace(/\s+/g, ' ').trim().slice(0, 300);
+    await this.#register(info);
+    return info.description;
+  }
+
   /** Reachable by link but never listed for others (variants lab runs). */
   async setUnlisted(v: boolean) {
     const info = await this.#need();
