@@ -222,16 +222,21 @@ async function replayHelper() {
   const inp = JSON.parse(readFileSync(0, 'utf8'));   // fd 0: /dev/stdin fails (ENXIO) when stdin is a spawn pipe
   const cur = inp.files.map((f) => { let s = ''; try { s = readFileSync(f, 'utf8'); } catch {} return `<<<FILE ${f}>>>\n${s}\n<<<END>>>`; }).join('\n\n');
   const user = `${inp.prompt}\n\nThe files as they are now on the latest main:\n\n${cur}\n\nReply with the COMPLETE new content of each of these files and nothing else, each one as:\n<<<FILE path>>>\n(the whole file)\n<<<END>>>`;
-  // No x-api-key: the gateway pays Anthropic from forq's unified-billing credits; a placeholder key would be forwarded.
+  // The account's unified endpoint (OpenAI shape, model 'anthropic/claude-haiku-5.5'), through gateway QB_GW_ID: the gateway's
+  // native Anthropic route did not apply unified billing to Anthropic's own model ids (2026-10-13), this one does.
+  const model = /\//.test(inp.model) ? inp.model : `anthropic/${inp.model.replace(/-(\d+)-(\d+)$/, '-$1.$2')}`;
   let r, j = {};
   try {
-    r = await fetch(`${process.env.QB_GW_URL}/v1/messages`, { method: 'POST',
-      headers: { 'content-type': 'application/json', 'anthropic-version': '2023-06-01', 'cf-aig-authorization': `Bearer ${process.env.QB_GW_TOKEN}` },
-      body: JSON.stringify({ model: inp.model, max_tokens: 16000, temperature: 0, messages: [{ role: 'user', content: user }] }) });
+    r = await fetch(process.env.QB_GW_URL, { method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${process.env.QB_GW_TOKEN}`, ...(process.env.QB_GW_ID ? { 'cf-aig-gateway-id': process.env.QB_GW_ID } : {}) },
+      body: JSON.stringify({ model, max_tokens: 16000, temperature: 0, messages: [{ role: 'user', content: user }] }) });
     j = await r.json().catch(() => ({}));
   } catch (e) { out({ is_error: true, result: `fetch: ${String(e?.message || e).slice(0, 200)}` }); process.exit(1); }
-  if (!r.ok) { out({ is_error: true, result: `HTTP ${r.status}: ${JSON.stringify(j).slice(0, 240)}` }); process.exit(1); }
-  const text = (j.content || []).map((b) => b.text || '').join('');
+  const res = j.result && j.result.choices ? j.result : j;
+  if (!r.ok || !res.choices) { out({ is_error: true, result: `HTTP ${r.status}: ${JSON.stringify(j).slice(0, 240)}` }); process.exit(1); }
+  const text = String(res.choices[0]?.message?.content || '');
+  const u = res.usage || {};
+  j.usage = { input_tokens: u.prompt_tokens ?? null, output_tokens: u.completion_tokens ?? null };
   let n = 0;
   for (const m of text.matchAll(/<<<FILE (.+?)>>>\n([\s\S]*?)\n?<<<END>>>/g)) {
     if (!inp.files.includes(m[1])) continue;

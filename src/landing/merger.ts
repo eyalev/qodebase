@@ -153,7 +153,7 @@ export class MergeBox extends DurableObject<Env> {
       // Replays through forq's AI Gateway when the Landing chose it (flag replayVia: 'gateway' + the REPLAY_GATEWAY_TOKEN secret):
       // billed to Cloudflare unified-billing credits, never the plan. Otherwise the owner's plan, as before.
       const gw = job.llm?.via === 'gateway' && this.env.REPLAY_GATEWAY_TOKEN;
-      const r = await this.#sh('node /opt/qb/mergejob.mjs 2>&1', { JOB: JSON.stringify(spec), HOME: '/root', ...(job.llm ? (gw ? { QB_GW_URL: `https://gateway.ai.cloudflare.com/v1/${this.env.ACCOUNT_ID}/${this.env.REPLAY_GATEWAY || 'qodebase-replay'}/anthropic`, QB_GW_TOKEN: String(this.env.REPLAY_GATEWAY_TOKEN), ...(job.llm?.direct ? { QB_REPLAY_DIRECT: '1' } : {}) } : { QB_CLAUDE_TOKEN: this.env.CLAUDE_CODE_OAUTH_TOKEN }) : {}) });
+      const r = await this.#sh('node /opt/qb/mergejob.mjs 2>&1', { JOB: JSON.stringify(spec), HOME: '/root', ...(job.llm ? (gw ? { QB_GW_URL: `https://api.cloudflare.com/client/v4/accounts/${this.env.ACCOUNT_ID}/ai/v1/chat/completions`, QB_GW_ID: this.env.REPLAY_GATEWAY || 'qodebase-replay', QB_GW_TOKEN: String(this.env.REPLAY_GATEWAY_TOKEN), QB_REPLAY_DIRECT: '1' } : { QB_CLAUDE_TOKEN: this.env.CLAUDE_CODE_OAUTH_TOKEN }) : {}) });
       const line = r.stdout.split('\n').find((l) => l.startsWith('QB_RESULT '));
       const progress = r.stdout.split('\n').filter((l) => l && !l.startsWith('QB_RESULT ')).slice(-60).join('\n');
       // Tokens never reach the log: the job prints none, but be sure.

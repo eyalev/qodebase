@@ -324,16 +324,16 @@ test('lanes: main moved by another lane mid-train -> rebase onto it and push', (
 test('direct replays: one gateway call per replay, whole files back, nothing lost', async () => {
   const http = await import('node:http');
   const { spawn } = await import('node:child_process');
-  let calls = 0, auth = '';
+  let calls = 0, auth = '', model = '';
   const srv = http.createServer((req, res) => {
     let b = ''; req.on('data', (d) => (b += d)); req.on('end', () => {
-      calls++; auth = req.headers['cf-aig-authorization'] || '';
+      calls++; auth = req.headers.authorization || ''; model = JSON.parse(b).model;
       const msg = JSON.parse(b).messages[0].content;
       const id = (msg.match(/Intent: change (\w+)/) || [])[1];
       const files = [...msg.matchAll(/<<<FILE (.+?)>>>\n([\s\S]*?)\n<<<END>>>/g)].map((m) => [m[1], m[2]]);
       const text = files.map(([p, t]) => `<<<FILE ${p}>>>\n${t.replace(/\n*$/, '')}\nexport function f_${id}() {\n  return "${id}";\n}\n<<<END>>>`).join('\n');
       res.setHeader('content-type', 'application/json');
-      res.end(JSON.stringify({ content: [{ type: 'text', text }], usage: { input_tokens: 100, output_tokens: 40 } }));
+      res.end(JSON.stringify({ choices: [{ message: { role: 'assistant', content: text } }], usage: { prompt_tokens: 100, completion_tokens: 40 } }));
     });
   });
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
@@ -345,6 +345,7 @@ test('direct replays: one gateway call per replay, whole files back, nothing los
   const r = JSON.parse(out.split('\n').find((l) => l.startsWith('QB_RESULT ')).slice(10));
   assert.equal(r.pushed, true);
   assert.equal(auth, 'Bearer gw-test');
+  assert.equal(model, 'anthropic/claude-haiku-5.5');
   assert.ok(calls >= 4, `one call per replay (${calls})`);
   const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
   for (const id of ['b', 'c', 'd', 'e']) { assert.equal(by[id].landed, true, id); assert.equal(by[id].how, 'replayed-llm', id); assert.equal(by[id].llm.in, 100, id); }
