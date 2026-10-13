@@ -71,7 +71,7 @@ async function shareTags(env: BaselineEnv, host: string, path: string, rawTitle:
       ...(project ? { eyebrow: `${project[1]}/${project[2]}` } : {}),
       title: project && title.startsWith(`${project[1]}/`) ? (desc || title) : title,
       ...(desc && !(project && title.startsWith(`${project[1]}/`)) ? { subtitle: desc.slice(0, 400) } : {}),
-      footer: env.UI_HOST,
+      footer: host,   // the host the page was asked on (qodebase.app through the front), not UI_HOST (projectsbase.dev)
     };
     const img = await signedCard(env.OG_KEY, spec);
     tags.push(`<meta property="og:image" content="${img}">`, `<meta property="og:image:width" content="1200">`, `<meta property="og:image:height" content="630">`, `<meta name="twitter:card" content="summary_large_image">`);
