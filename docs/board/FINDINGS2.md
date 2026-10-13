@@ -269,3 +269,29 @@ smaller bugs (pickup time not checked against opening hours). One build each: on
 a team ~half the cost. Decision (time to a working, complete app first): Suggest picks one agent at every size; the team
 presets stay one tap away as the cheaper option. A lesson for teams: shared data shapes need a contract (the skeleton task
 should define them).
+
+**Build-experience round (X1-X5, B-1..B-3, C-1/C-2, 2026-10-13): proof build eyal/real-budget-tracker-10 and R8b.**
+- **C-1, why R5's Haiku calls went over 100k (read from the boxes' own transcripts; scripts/real/longcalls.mjs):** 764 of
+  5,015 calls (15%), all in 14 coder sessions (router 0/113, reviewers 0/1,635: each review starts clean). A coder crossed
+  100k at its call ~75 (median, ~4 min in) and stayed over. At that call: the starting prompt was already ~43k (Claude
+  Code's system prompt, tools, skill list, the task), the agent's own thinking ~30-35k (a task is one long turn, so all of
+  it stays), its own file writes ~8k, tool results ~2-6k, some phone screenshots. Review rounds, sync-main and board text
+  were not causes (~5k chars per session in all).
+- **Proof build (a Large idea, Balanced, 12 coders):** 1,639 s, $3.52 tokens + $0.21 boxes, 13/13 landed, inside the
+  estimate (14-37 min, $1.8-4.6). The skeleton (X1) landed first at 558 s; it had sat done-but-idle for 4 min (fixed:
+  90 s nudge, B-1 auto-push at turn end). Found: side-by-side replays ran each replay twice (worktrees under .git, where
+  Claude Code refuses to write); fixed.
+- **R8b vs R3, same 'Home inventory' prompt, Balanced:** 2,765 s vs 1,940 s; $4.41 + $0.30 boxes vs ~$2.40 + $0.37; 13/13
+  landed (7 by model replay), 28 'decided' rows, 0 questions to the person. First landing **274 s** (skeleton started by
+  Build while the router plans, reviewer and merger warmed; B-3) vs 558 s on the proof build and ~7 min before. The extra
+  time is mostly a merge-queue bug it exposed: the merger box ran one train twice at once, so 4 changes were redone by
+  their agents (~10 min); fixed with a lock per clone and one run per train. Side-by-side replays of changes touching the
+  same shared files collided with each other; now only replays with no overlapping files run side by side.
+- **Compaction (C-2), measured, not a win yet:** with Claude Code's auto-compact window at 100k x 88% no Haiku call went
+  over 100k (0% long-context; the proof build's long calls were 29% of its token cost), but compaction fired at ~66k, not
+  88k (the percentage applies after a reserve the docs do not state): ~50 compactions across 13 coders, each a full cache
+  rewrite, so cache writes were ~2.8x R3's and output ~2.4x. Saved nothing net. Now 125k x 88% (aiming at ~88k), to be
+  measured on the next team build. Trimming the coders' starting prompt (no WebSearch/NotebookEdit/Agent/Skill tools,
+  no bundled skills or auto memory) took call 1 from ~42.9k to ~39.4k tokens (-8%).
+- **One build each; quality of R8b vs R3 is with qb9.** The default stays one strong agent (no long-context price tier);
+  team presets are the cheaper option.
