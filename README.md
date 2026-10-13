@@ -20,6 +20,12 @@ One request, typed on the phone ([eyal/cafe-team](https://qodebase.app/p/eyal/ca
 - main: 13 commits, 12 git notes with the full record of each change, tests green
 - real spend: **$0.16** of container time (the agents ran on a Claude subscription; API-equivalent ~$0.53)
 
+**Bigger:** through the product's own Build path, up to 40 real Claude Haiku agents (an Opus planner, 3-6 reviewers, the board) built a travel planner inside qodebase (a private project for now):
+- **40 changes landed** (one closed as already on main), every one through the landing queue with checks
+- **28 collided** with work that landed first; each was re-done by a model on the newest code, tested and landed; **none was sent back**
+- at that size **review was the bottleneck**: agents spent 16,234 agent-seconds waiting for a reviewer against 15,731 working, even with 6 reviewers; next, the train ran model replays one after another
+- 2,257 s wall (including a false budget halt, since fixed); ~$17.1 at normal API rates (the agents ran on a Claude subscription) + $0.88 of container time. Smaller builds and the bugs these runs found: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md) §11
+
 ## How it works
 
 <img src="docs/img/readme-flow.png" width="480" alt="One request, a router agent, agents on their own forks, reviewer agents, the line (merge queue) testing trains on the newest main; a collided change is replayed, a failing one goes back; landed changes carry a git note">

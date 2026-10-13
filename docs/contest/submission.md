@@ -20,6 +20,8 @@ Merge queues already exist (GitHub's merge queue, Graphite, Mergify, Bors), and 
 
 Main ended with 13 commits, 12 git notes and green tests. Real spend was $0.16 of container time; the agents ran on a Claude subscription, about $0.53 at API prices.¹
 
+**Bigger, through the product's own Build path:** up to 40 real Claude Haiku agents (an Opus planner, 3-6 reviewers, the board) built a travel planner inside qodebase. 40 changes landed (one closed as already on main); **28 collided with earlier work and were re-done by a model on the newest code, none sent back.** At that size review became the bottleneck: agents spent as long waiting for a reviewer as working (16,234 vs 15,731 agent-seconds, with 6 reviewers).
+
 **Why we built it this way: we measured first.**
 - **Hono, real PRs, no model calls:** Hono's last 346 PRs replayed as if 100 were written at once: 48% needed another PR to land first; git reported no conflicts. The problem is order.
 - **Simulation, scripted edits:** on a generated 403-file project with real git and tests, landing by intent got **3.5×** as many changes in per hour as review-then-merge.
