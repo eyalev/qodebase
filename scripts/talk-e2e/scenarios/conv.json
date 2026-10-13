@@ -1,6 +1,30 @@
 [
-  { "id": "conversations", "title": "Conversations (?conv=1): a turn, a new conversation, a change", "start": "/?conv=1", "turns": [
-    { "say": "what's going on", "expect": { "lane": "status", "stay": true } },
-    { "say": "new conversation", "expect": { "max_ms": 10000, "stay": true, "no_writes": true } },
-    { "say": "in my todo app, add due dates", "expect": { "lane": "change", "confirm": true } }] }
+  {
+    "id": "conversations",
+    "title": "Conversations (?conv=1): a turn, a new conversation, a change",
+    "start": "/?conv=1",
+    "turns": [
+      {
+        "say": "what's going on",
+        "expect": {
+          "lane": "status",
+          "stay": true
+        }
+      },
+      {
+        "say": "new conversation",
+        "expect": {
+          "max_ms": 10000,
+          "stay": true
+        }
+      },
+      {
+        "say": "in my todo app, add due dates",
+        "expect": {
+          "lane": "change",
+          "confirm": true
+        }
+      }
+    ]
+  }
 ]

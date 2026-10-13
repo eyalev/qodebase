@@ -209,6 +209,8 @@ async function runScenario(s, cookies, browserArgs) {
   const ready = async () => { await page.waitForLoadState('load', { timeout: 20000 }).catch(() => {}); return page.waitForFunction(() => window.__webmcp && document.getElementById('talk-bar'), null, { timeout: 15000 }).then(() => true).catch(() => false); };
   await page.goto(BASE + s.start, { waitUntil: 'load', timeout: 30000 }).catch(() => {});
   await ready();
+  // a page that loads its data after the HTML (/runs: ~4 s) names a selector to wait for; without it Talk scans a half-built page
+  if (s.wait_for) await page.waitForSelector(s.wait_for, { timeout: 20000 }).catch(() => {});
   await page.waitForTimeout(s.wait_start ?? 1500);
 
   for (let i = 0; i < s.turns.length; i++) {
