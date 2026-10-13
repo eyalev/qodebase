@@ -58,6 +58,16 @@ Status (qb6, Oct 13 evening):
 - **Pre-flight:** gateway limit 3,000/min stays up for the take; copy fleet-n2-vscode-src-1 is reserved
   (src/vs/editor = 659 files at its base); nobody runs on it before the take.
 
+Status (qb7, Oct 13 evening; everything below ships with qb6's first deploy after the code-dial freeze):
+- **3b ready:** each run's timeline gets a 'Collisions per 10 s' row (red bars, total) and the count in a moment's
+  facts; replays appear as a line once qb6's series carries them.
+- **3e ready on the page:** 'API index (docs/API.md): 1,173 of 1,173 lines, sorted, none missing, none twice.' from
+  the indexcheck route (that route is qb6's, deploying after the freeze).
+- **2b live:** Build settings and the estimate bar on the project.
+- **2f live:** X1 in the App tab: a waiting note, then 'More is coming: N of M parts landed…', 'Show the new parts'.
+- **3a:** Talk's fleet job fills the New fleet job form with the sentence and picks VS Code src/vs/editor (fix in the
+  same deploy). Whether a Talk confirm card shows first is qb2's, open.
+
 ## Pre-flight (08:00–08:45 UTC)
 
 - **Accounts:** Eyal signed in on qodebase.app in the recording browser (the debug Chrome profile, not his daily one);
