@@ -201,6 +201,12 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
     if (isClaudeToken(key)) { ccEnv = `CLAUDE_CODE_OAUTH_TOKEN=${key}`; keyTail = key.slice(-20); billing = 'sub'; }
     else { ccEnv = `ANTHROPIC_API_KEY=${key} ANTHROPIC_MODEL=${u.model || DEFAULT_API_MODEL}`; keyTail = key.slice(-20); billing = 'api'; }
   }
+  // C-2 (2026-10-13): Haiku 5.5 runs with a 1M window in Claude Code and compacts only at ~967K, but its price goes x5 for a
+  // prompt over 100k tokens. Compact at ~88k (window 100k, the documented minimum, x 88%; code.claude.com/docs/en/env-vars),
+  // and cap what one command or file read puts into the context (defaults 30k chars / 25k tokens).
+  if (/ANTHROPIC_MODEL=\S*haiku/i.test(ccEnv)) ccEnv += ' CLAUDE_CODE_AUTO_COMPACT_WINDOW=100000 CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=88';
+  ccEnv += ' BASH_MAX_OUTPUT_LENGTH=15000 CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS=12000';
+  if (roleOf(agentId) === 'agent') ccEnv += ' CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS=1';
   // The agent board (landing flag `board`): the box gets the hook and the prompts mention `forq who`.
   const lfl = landingOn(await projectStub(env, slug).info().catch(() => null)) ? await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null) : null;
   const boardOn = !!lfl?.board;

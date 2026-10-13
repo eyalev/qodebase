@@ -277,6 +277,12 @@ if sys.argv[1] == '1': hooks = {'UserPromptSubmit': [{'hooks': [h]}], 'PreToolUs
 if sys.argv[2] == 'agent': hooks['Stop'] = [{'hooks': [{'type': 'command', 'command': 'forq autopush', 'timeout': 45}]}]
 if hooks: d['hooks'] = hooks
 else: d.pop('hooks', None)
+# C-2: a coder's first call carried ~43k prompt tokens (R5). Tools and listings a coder never uses are taken out of its
+# context (a bare tool name in permissions.deny removes the definition; code.claude.com/docs/en/permissions).
+if sys.argv[2] == 'agent':
+    d.setdefault('permissions', {})['deny'] = sorted(set(d.get('permissions', {}).get('deny', [])) | {'WebSearch', 'NotebookEdit', 'Agent', 'Skill'})
+    d['disableBundledSkills'] = True
+    d['autoMemoryEnabled'] = False
 json.dump(d, open(p, 'w'))
 PY
       # An empty repo (a self-hosted copy's Build starts empty) has no commit to show yet.
