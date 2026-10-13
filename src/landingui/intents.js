@@ -73,7 +73,7 @@
 .it-d .acts a,.it-d .acts button{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:10px;background:var(--chip);color:var(--fg);text-decoration:none;font:inherit;font-size:14px;border:0;cursor:pointer}
 .it-d pre{margin:8px 0 0;padding:8px 0;background:var(--card);border-radius:12px;overflow-x:auto;font:12px/1.55 'JetBrains Mono',ui-monospace,monospace}
 .it-d pre span{display:block;padding:0 10px;white-space:pre}
-.it-d pre .add{background:color-mix(in srgb,var(--acc) 14%,transparent)}
+.it-d pre .add{background:var(--acc-soft,color-mix(in srgb,var(--acc) 14%,transparent))}
 .it-d pre .del{background:color-mix(in srgb,var(--warn) 14%,transparent)}
 .it-d pre .gap{color:var(--dim)}
 .it-why{margin:0 0 16px}
