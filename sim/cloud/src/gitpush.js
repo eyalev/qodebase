@@ -64,8 +64,8 @@ export class Objects {
     es.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
     return this.put('tree', concat(es.flatMap((e) => [enc.encode(`${e.mode} ${e.name}\0`), hexBytes(e.sha)])));
   }
-  commit(tree, parents, message, whenMs) {
-    const who = `qodebase sim <sim@qodebase.app> ${Math.floor(whenMs / 1000)} +0000`;
+  commit(tree, parents, message, whenMs, author = 'qodebase sim <sim@qodebase.app>') {
+    const who = `${author} ${Math.floor(whenMs / 1000)} +0000`;
     return this.put('commit', enc.encode([`tree ${tree}`, ...parents.map((p) => `parent ${p}`), `author ${who}`, `committer ${who}`, '', message, ''].join('\n')));
   }
 }
