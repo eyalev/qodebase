@@ -151,7 +151,8 @@ function convChat(text, reply) {
 // for projects in the sentence. True = the sentence is used up.
 function convSaid(text) {
   if (!CONV_ON || !cv.cur) return false;
-  if (NEW_RX.test(String(text || ''))) { cvTrace('new_by_voice', { text: text }); convNew('voice'); return true; }
+  // A turn of its own: it ends here (the page tool's talk() promise resolves; qb7's e2e found it hanging 45 s).
+  if (NEW_RX.test(String(text || ''))) { cvTrace('new_by_voice', { text: text }); if (run) run.texts.push('Started a new conversation.'); convNew('voice'); finish(); return true; }
   // A short yes / no answers the question on screen: not a new turn (its own path ends it).
   var said = String(text || '').trim();
   if (offerState && said.split(/\s+/).length <= 5 && (YES_RX.test(said) || NO_RX.test(said))) return false;

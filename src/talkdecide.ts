@@ -183,6 +183,8 @@ export function quickCmd(utterance: string, s: Screen, projects: Proj[]): Cmd | 
   if (!u || u.split(/\s+/).length > 12) return null;
   const base: Cmd = { mode: 'act', modeP: 1, op: 'none', p: 0.95, risky: 0, destroys: 0, complete: 1 };
   if (STATUS_RX.test(u)) return { ...base, mode: 'ask', op: 'status', why: 'status words (no model)' };
+  if (/^\s*(please\s+)?((take me|go|bring me|get me) to|open|show( me)?)\s+(my\s+|the\s+)?(settings|account( settings)?|preferences|profile)( page)?\s*[.!]*\s*$/i.test(u)) return { ...base, op: 'go', href: '/settings', label: 'Settings', why: 'settings words (no model)' };
+  if (/\bimport\b.{0,40}\b(from\s+)?github\b|^\s*(take me to|go to|open)\s+(the\s+)?import( page)?\s*[.!]*\s*$/i.test(u) && !/\b(how|what|why)\b/i.test(u)) return { ...base, op: 'go', href: '/import', label: 'Import from GitHub', why: 'import words (no model)' };
   // The turns Eyal says most (traces, 2026-10-13): counts, greetings, ideas, how-it-works questions. Same answers resolve() gives.
   if (/^\s*how many (of my )?(projects|apps)( do i have| have i got)?( now| so far)?\s*[?.!]*\s*$/i.test(u)) {
     const mine = projects.filter((p) => p.mine).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/-/g, ' '));
@@ -210,12 +212,17 @@ export function quickCmd(utterance: string, s: Screen, projects: Proj[]): Cmd | 
   }
   return null;
 }
+const INTENT_RX = /\bwhy (does|do|is|are|did) .+? (exist|exists|there|here|happen)\b|\bwhat('s| is| are) .+? waiting (on|for)\b|\b(blocked|stuck) on\b|\bwhy (does|do|is|are) .+? (needed|asked for)\b/i;
 export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen, projects: Proj[], utterance: string): Cmd {
   const cmd = resolveAction(answers, cands, s, projects, utterance);
   // A question a page action answers ("what is the packing list waiting on" → qb5's intent finder, "what happened at
   // 1:20" → a run's moment): the page's own action, even when the model heard a question. Only actions the page
   // registered (x… ids), only when the model is sure it is this page's thing.
   const tbx = top(answers.button);
+  // The intent tree's own question words, when its finder is on the page (registered only while the tree is open): never
+  // the code reader. Live 2026-10-14 (qb7's e2e): "why does photo upload exist" went to the code lane at p 0.24.
+  const finder = s.items.find((i) => /^x/.test(i.id) && /^Find an intent\b/.test(i.text));
+  if (finder && INTENT_RX.test(utterance)) return { ...cmd, mode: 'act', op: 'press', target: finder.id, label: finder.text, p: 0.9, why: 'intent words on the intent tree (no model)' };
   // Already pressing that very action, but sure of it only by the action's own pick ("…with 1,000 agents" on /runs:
   // press xfleet-job at p 0.29 → only a "Maybe…?"): the action's confidence is the command's.
   if (cmd.op === 'press' && /^x/.test(String(cmd.target || '')) && cmd.target === tbx.choice && (tbx.p ?? 0) >= 0.85 && (cmd.p ?? 0) < (tbx.p ?? 0)) cmd.p = tbx.p;
@@ -233,7 +240,7 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   }
   // A sentence that names the button it presses ("show the timeline tab" → Timeline) is sure enough to act, not to ask
   // "Maybe…?" (live, 2026-10-13: p 0.39). Vocabulary from the page itself.
-  if (cmd.op === 'press' && (cmd.p ?? 0) < 0.45 && cmd.label) {
+  if ((cmd.op === 'press' || cmd.op === 'go') && (cmd.p ?? 0) < 0.45 && cmd.label) {   // links too ('show me its history' → History, p 0.40: qb7's e2e)
     const stem = (x: string) => x.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/).filter(Boolean).map((w) => w.replace(/(es|s)$/, '')).join(' ');
     const bare = stem(cmd.label.replace(/\s*\(.*\)$/, ''));
     if (bare.length >= 4 && ` ${stem(utterance)} `.includes(` ${bare} `)) cmd.p = 0.6;
@@ -452,7 +459,7 @@ export const DESTROY_WORDS = /^(remove|delete|revoke|sign out|log out|uninstall|
 export function gate(c: Cmd): 'refuse' | 'confirm' | null {
   // Anything else (a change request, a question): as before, refused only when the sentence itself is risky
   // ("delete the particles project" must not become a request to the agents).
-  if (!['press', 'go', 'type'].includes(c.op)) return (c.risky ?? 0) >= 0.5 && c.op !== 'status' && c.op !== 'list' && c.op !== 'code' ? 'refuse' : null;
+  if (!['press', 'go', 'type'].includes(c.op)) return (c.risky ?? 0) >= 0.5 && !['status', 'list', 'code', 'none', 'latest', 'idea', 'which'].includes(c.op) ? 'refuse' : null;   // nothing to do is never 'that would remove something' (qb7's e2e: 'open the last run' before the cards loaded)
   const label = String(c.label || '').trim();
   if ((c.destroys ?? 0) >= 0.5 || DESTROY_WORDS.test(label)) return 'refuse';
   // A page's own action (window.__talkActions) is the page's promise to be safe: its UI asks for the real step
