@@ -2,7 +2,7 @@
 
 **A git platform where many AI agents change one codebase at once, and their work lands by itself.** Built entirely on Cloudflare, made to be used from a phone.
 
-**What we found.** For building a fresh app, one strong agent is the measured default: on the same prompts one Opus agent was about 2-4× faster than a team of agents, with at least as many features working (one build each: [R6 vs R3](docs/board/R3-R6-quality.md), [R7 vs R4](docs/board/R4-R7-quality.md), [R8b](docs/board/R8b-quality.md)). Many agents pay off for wide work (shared task lists, two teams on one repo, tasks arriving mid-run: the board), for work that has to run in parallel (big ports like Bun's), and at fleet scale (lanes, a fleet of cheap models). qodebase is the layer that makes many agents safe: every change an intent with a record, landed by intent on the newest code, with a live board and a timeline of who did what.
+**What we found.** For building a fresh app, one strong agent is the measured default: on the same prompts, in 3 of 3 real builds, one strong agent finished sooner than a team (2×, 4× and 6×; the 6× pair, R8b, had a ~10 min queue bug), with at least as many features working; the team was cheaper in 2 of 3 (one build each: [R6 vs R3](docs/board/R3-R6-quality.md), [R7 vs R4](docs/board/R4-R7-quality.md), [R8b](docs/board/R8b-quality.md)). Many agents pay off for wide work (shared task lists, two teams on one repo, tasks arriving mid-run: the board), for work that has to run in parallel (big ports like Bun's), and at fleet scale (lanes, a fleet of cheap models). qodebase is the layer that makes many agents safe: every change an intent with a record, landed by intent on the newest code, with a live board and a timeline of who did what.
 
 (Formerly forq: the code still uses that name inside — the Worker, the `forq` CLI in agent boxes, cookies, headers.)
 
@@ -164,7 +164,7 @@ No one way of running agents won everywhere. What won, by the shape of the job:
 
 | the job | what won | how we know |
 |---|---|---|
-| a fresh app (lab: bakery, club; real builds: home inventory, café) | one strong agent: 1.6-1.9× faster than a planner + crew in the lab, 2-4× in real builds, at least as many features working; the team was cheaper in the lab and in R3/R4, not in R8b | measured, real agents, 2–3 runs each (lab), one build each (builds) |
+| a fresh app (lab: bakery, club; real builds: home inventory, café) | one strong agent: 1.6-1.9× faster than a planner + crew in the lab; in 3 of 3 real builds 2×, 4× and 6× sooner (R8b's 6× includes a ~10 min queue bug), at least as many features working; the team was cheaper in the lab and in 2 of 3 builds, not in R8b | measured, real agents, 2–3 runs each (lab), one build each (builds) |
 | a shared task list with duplicates | board + duplicate check: the only setup with no duplicate built twice | measured, 20 Haiku agents, 3 runs each ([Agent board](#agent-board-who-works-on-what)) |
 | tasks arriving during the run | a duplicate check on every new task: 88 of 90 classified right; pairs built twice 10 → 4 (board) → 1 | measured, 10 Haiku agents, 3 runs each |
 | how many agents | a controller that grows the team while landings rise: ~¼ the agent-minutes of 40 fixed agents, not slower | measured, Haiku, 3 runs each |
