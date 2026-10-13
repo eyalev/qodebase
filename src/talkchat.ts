@@ -47,7 +47,9 @@ export function parseChat(res: any) {
 export type AnswerModel = { id: string; label: string; model: string; via: 'workers' | 'gemini' | 'unified'; paid?: boolean; ownerOnly?: boolean; usdIn: number; usdOut: number; thinkingOff?: boolean };
 export const ANSWER_MODELS: AnswerModel[] = [
   { id: 'gemini', label: 'Gemini 3.1 Flash-Lite', model: 'gemini-3.1-flash-lite', via: 'gemini', usdIn: 0.25, usdOut: 1.5 },
-  { id: 'big', label: 'GPT-OSS 120B (Workers AI)', model: '@cf/openai/gpt-oss-120b', via: 'workers', usdIn: 0.35, usdOut: 0.75 },
+  // The best tool-caller of the bigger Workers AI models on the chat bench (2026-10-13, 12 cases x 2): DeepSeek V4 Flash
+  // 22/24 (median 2.8 s); gpt-oss-120b 18/24, glm-5.3-flash 21/24 (9.4 s), qwen3.8-27b 20/24 (9.0 s).
+  { id: 'big', label: 'DeepSeek V4 Flash (Workers AI)', model: '@cf/deepseek-ai/deepseek-v4-flash-0731', via: 'workers', usdIn: 0.44, usdOut: 1.32 },
   { id: 'glm', label: 'GLM-4.7-flash (Workers AI, cheapest)', model: '@cf/zai-org/glm-4.7-flash', via: 'workers', usdIn: 0.0605, usdOut: 0.4, thinkingOff: true },
   { id: 'haiku', label: 'Claude Haiku 5.5', model: 'anthropic/claude-haiku-5.5', via: 'unified', paid: true, ownerOnly: true, usdIn: 1, usdOut: 5 },
   { id: 'sonnet', label: 'Claude Sonnet 5.5', model: 'anthropic/claude-sonnet-5.5', via: 'unified', paid: true, ownerOnly: true, usdIn: 2, usdOut: 10 },
