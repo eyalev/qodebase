@@ -142,7 +142,7 @@
     </article>`;
   }
   function whatIs(r) {
-    const s = srcOf(r), n = repoCopy(r), of = r.copiesOfRepo || (D?.fleet || []).filter((x) => x.ladder && x.ladder === r.ladder && repoBase(x.repo) === repoBase(r.repo)).length;
+    const s = srcOf(r), n = r.copyOfKind || repoCopy(r), of = r.copiesOfKind || r.copiesOfRepo || (D?.fleet || []).filter((x) => x.ladder && x.ladder === r.ladder && repoBase(x.repo) === repoBase(r.repo)).length;
     return `${esc(s.name)}${n && r.ladder ? `, copy ${n}${of > 1 ? ` of ${of}` : ''}` : ''}${s.upstream ? ` (a duplicate of ${esc(s.upstream)} made for this test)` : ''}`;
   }
   function controls(r) {
@@ -303,7 +303,7 @@
         : !(d.changes || []).length ? `<p class="dp-n">${d.landedInSlice ? `${n0(d.landedInSlice)} changes reached main in this slice; agents finished them earlier.` : 'No single change finished in this slice.'}</p>`
         : `<ul class="dp-l">${d.changes.slice(0, 60).map((c) => `<li><button type="button" class="dp-f" data-dr="change" data-file="${esc(c.file)}" data-agent="${esc(c.agent || '')}"><span class="mono">${esc(fileName(c.file))}</span><small>${esc(ST[c.status] || c.status || '')}${c.landed ? `, on main ${rel(c.landed)}` : c.answered ? `, finished ${rel(c.answered)}` : ''}</small></button>${c.agent ? `<button type="button" class="dp-a" data-dr="agent" data-agent="${esc(c.agent)}">${esc(agentName(c.agent))}</button>` : ''}</li>`).join('')}</ul>${(d.total || d.changes.length) > 60 ? `<p class="dp-n">and ${n0((d.total || d.changes.length) - 60)} more in this slice</p>` : ''}`;
       const cm = DR.data.commits;
-      const commits = cm && !cm.error && (cm.commits || []).length ? `<p class="dp-h">Commits to main in this slice</p><ul class="dp-l">${cm.commits.slice(0, 40).map((c) => `<li><button type="button" class="dp-f" data-dr="commit" data-sha="${esc(c.sha)}"><span>${esc(c.message || c.sha.slice(0, 7))}</span><small>${rel(c.at)}, ${n0(c.files)} file${c.files === 1 ? '' : 's'}, <span class="mono">${esc(c.sha.slice(0, 7))}</span></small></button></li>`).join('')}</ul>` : '';
+      const commits = cm && !cm.error && (cm.commits || []).length ? `<p class="dp-h">Commits to main in this slice</p><ul class="dp-l">${cm.commits.slice(0, 40).map((c) => `<li><button type="button" class="dp-f" data-dr="commit" data-sha="${esc(c.sha)}"><span>${esc(c.message || c.sha.slice(0, 7))}</span><small>${rel(c.at)}, ${n0(c.files)} file${c.files === 1 ? '' : 's'}${c.lane ? `, lane ${esc(c.lane)}` : ''}, <span class="mono">${esc(c.sha.slice(0, 7))}</span></small></button></li>`).join('')}</ul>` : '';
       body = `<ul class="dp-facts">${facts}</ul>${lanes.length ? `<p class="dp-n">Busiest lanes: ${lanes.map(([l, v]) => `${esc(l)} ${n0(v)}`).join(', ')}</p>` : ''}${commits}${commits ? '<p class="dp-h">Changes in this slice</p>' : ''}${list}`;
     } else if (DR.view === 'commit') {
       const d = DR.data['c:' + DR.sha];
@@ -316,7 +316,7 @@
     } else {
       const d = DR.data['f:' + DR.file];
       body = !d ? '<p class="dp-n">Loading the change…</p>' : d.error ? `<p class="dp-n">Not available yet (${esc(d.error)}).</p>`
-        : `<p class="dp-p mono">${esc(d.file)}</p>${(d.note?.intent || d.intent) ? `<p class="dp-why"><b>Why:</b> ${esc(d.note?.intent || d.intent)}</p>` : ''}<dl class="dp-t"><div><dt>Agent</dt><dd>${esc(agentName(d.agent))}</dd></div><div><dt>Picked</dt><dd>${rel(d.picked)}</dd></div><div><dt>Comments from</dt><dd>${esc(d.source === 'cache' ? 'the cache (reused)' : short(d.model || d.source || ''))}${d.answered ? `, ${rel(d.answered)}` : ''}</dd></div><div><dt>Code unchanged</dt><dd>${d.note?.verify ? `${d.note.verify.ok ? 'yes' : 'no'}${d.note.verify.how ? `: ${esc(d.note.verify.how)}` : ''}` : d.verified ? `yes, checked ${rel(d.verified)}` : '–'}</dd></div>${d.commit ? `<div><dt>Commit</dt><dd class="mono">${esc(String(d.commit).slice(0, 7))}</dd></div>` : ''}<div><dt>On main</dt><dd>${d.landed ? rel(d.landed) : esc(ST[d.status] || d.status || '–')}</dd></div></dl>
+        : `<p class="dp-p mono">${esc(d.file)}</p>${(d.note?.intent || d.intent) ? `<p class="dp-why"><b>Why:</b> ${esc(d.note?.intent || d.intent)}</p>` : ''}<dl class="dp-t"><div><dt>Agent</dt><dd>${esc(agentName(d.agent))}</dd></div><div><dt>Picked</dt><dd>${rel(d.note?.picked || d.picked)}</dd></div><div><dt>Comments from</dt><dd>${esc(d.source === 'cache' ? 'the cache (reused)' : short(d.model || d.source || ''))}${d.answered ? `, ${rel(d.answered)}` : ''}</dd></div><div><dt>Code unchanged</dt><dd>${d.note?.verify ? `${d.note.verify.ok ? 'yes' : 'no'}${d.note.verify.how ? `: ${esc(d.note.verify.how)}` : ''}` : d.verified ? `yes, checked ${rel(d.verified)}` : '–'}</dd></div>${d.commit ? `<div><dt>Commit</dt><dd class="mono">${esc(String(d.commit).slice(0, 7))}</dd></div>` : ''}<div><dt>On main</dt><dd>${(d.note?.landedAt || d.landed) ? rel(d.note?.landedAt || d.landed) : esc(ST[d.status] || d.status || '–')}</dd></div></dl>
           ${d.diff ? `<pre class="dp-d">${String(d.diff).split('\n').slice(0, 400).map((l) => `<span class="${/^\+(?!\+\+)/.test(l) ? 'ad' : /^-(?!--)/.test(l) ? 'rm' : /^@@/.test(l) ? 'hk' : ''}">${esc(l)}</span>`).join('\n')}</pre>` : '<p class="dp-n">No diff for this change.</p>'}`;
     }
     return `<section class="dp" aria-label="What happened">${crumbs}${body}</section>`;
@@ -360,12 +360,12 @@
     const rate = (c) => { const k = counts(c), sec = elapsedS(c); return sec > 0 ? (k.landed + k.skipped + k.rejected) / sec : null; };
     const f1 = (v) => (v >= 10 ? Math.round(v) : v.toFixed(1));
     const rs = g.copies.map((c) => ({ c, v: rate(c) })).filter((x) => x.v != null).sort((a, b) => b.v - a.v);
-    const nm = (x) => `${srcOf(x.c).name} copy ${repoCopy(x.c) || '?'}`;
+    const nm = (x) => `${srcOf(x.c).name} copy ${x.c.copyOfKind || repoCopy(x.c) || '?'}`;
     const sum = rs.length > 2 ? `<p class="rcp-s">Files per second per copy: fastest ${f1(rs[0].v)} (${esc(nm(rs[0]))}), median ${f1(rs[rs.length >> 1].v)}, slowest ${f1(rs[rs.length - 1].v)} (${esc(nm(rs[rs.length - 1]))}).</p>` : '';
     const by = new Map(); for (const c of g.copies) { const b = repoBase(c.repo); (by.get(b) || by.set(b, []).get(b)).push(c); }
-    const row = (c, n) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>Copy ${repoCopy(c) || '?'}</span><span class="rcp-v">${n0(k.landed)} files got comments, ${n0(k.skipped)} already had them, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; };
+    const row = (c, n) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>Copy ${c.copyOfKind || repoCopy(c) || '?'}</span><span class="rcp-v">${n0(k.landed)} files got comments, ${n0(k.skipped)} already had them, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; };
     const groups = [...by.entries()].sort((a, b) => b[1].length - a[1].length).map(([base, cs]) => {
-      cs.sort((a, b) => repoCopy(a) - repoCopy(b));
+      cs.sort((a, b) => (a.copyOfKind || repoCopy(a)) - (b.copyOfKind || repoCopy(b)));
       const s = srcOf(cs[0]), k = cs.reduce((a, c) => { const x = counts(c); a.l += x.landed; a.s += x.skipped; return a; }, { l: 0, s: 0 });
       const id = `${g.label}|${base}`, more = cs.length > 5 ? `<details class="rcp-more"${openCopies.has(id + '|all') ? ' open' : ''} data-g="${esc(id + '|all')}"><summary>Show all ${cs.length} copies</summary><ul class="rcp">${cs.slice(5).map(row).join('')}</ul></details>` : '';
       return `<details class="rcp-repo"${openCopies.has(id) ? ' open' : ''} data-g="${esc(id)}"><summary><span class="rr-n"><b>${esc(s.name)}</b><small>${cs.length} cop${cs.length === 1 ? 'y' : 'ies'}${s.upstream ? ` of ${esc(s.upstream)}` : ''}, ${n0(k.l)} files got comments, ${n0(k.s)} already had them</small></span></summary><ul class="rcp">${cs.slice(0, 5).map(row).join('')}</ul>${more}</details>`;
