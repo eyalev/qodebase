@@ -229,3 +229,22 @@ test('replays of the same file run one at a time (no wasted side-by-side run), a
   for (const id of ['b', 'c', 'd', 'e']) assert.match(math, new RegExp(`f_${id}\\(`), id);
   assert.equal(spawnSync('node', ['--test'], { cwd: w, encoding: 'utf8', env: { ...process.env, NODE_TEST_CONTEXT: '' } }).status, 0, 'checks pass on main');
 });
+
+// Two copies of one train at once (real build r8b: the merger box ran a train twice): one does the work, the other waits
+// and reports the same result; main gets each change once; a third run of the finished train reuses the saved result.
+test('the same train run twice at once lands once and reports one result', async () => {
+  const { spawn } = await import('node:child_process');
+  const s = setup();
+  const changes = [s.fork('a', (fw) => write(fw, { 'src/a.js': 'export const a = 1;\n' })), s.fork('b', (fw) => write(fw, { 'src/b.js': 'export const b = 1;\n' }))];
+  const job = { trainId: 't-dup', dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'sleep 2 && node --test', changes };
+  const go = () => new Promise((res) => { const p = spawn('node', [JOBJS], { env: { ...process.env, JOB: JSON.stringify(job) } }); let out = ''; p.stdout.on('data', (d) => (out += d)); p.on('close', () => res(out)); });
+  const [o1, o2] = await Promise.all([go(), new Promise((r) => setTimeout(r, 300)).then(go)]);
+  const res = (o) => JSON.parse(o.split('\n').find((l) => l.startsWith('QB_RESULT ')).slice(10));
+  const r1 = res(o1), r2 = res(o2);
+  assert.equal(r1.pushed, true); assert.deepEqual(r2, r1, 'the waiting copy reports the first copy\'s result');
+  assert.match(o2, /"event":"duplicate_waits"/);
+  const w = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, w);
+  assert.deepEqual(g(w, 'log', '--format=%s').split('\n'), ['change b', 'change a', 'start'], 'each change landed once');
+  const o3 = await go();
+  assert.match(o3, /"event":"result_reused"/); assert.deepEqual(res(o3), r1);
+});

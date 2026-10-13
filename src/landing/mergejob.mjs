@@ -476,7 +476,41 @@ async function main() {
         unhandled: r.unhandled || [], handled: r.handled || [], bounced: !!r.bounced, empty: !!r.empty, llm: r.llm || null, reviewedDiff: landedOk ? r.reviewedDiff || null : null, checks: r.checks || null, why: r.why || (r.ok && !pushed ? (stale ? 'main moved: retry' : 'push failed') : ''), diff: landedOk ? r.diff : null };
     }),
   };
+  saveResult(out);
   console.log('QB_RESULT ' + JSON.stringify(out));
 }
 
-main().catch((e) => { say('error', { err: String(e?.stack || e) }); console.log('QB_RESULT ' + JSON.stringify({ ok: false, error: String(e?.message || e).slice(0, 600), ms: Date.now() - t0, phases: PH })); });
+// ---- one job at a time per clone, and one run per train (2026-10-13) ---------------
+// Real build r8b: the same train ran twice at once in the box (the first copy's result never reached Landing, a second
+// copy started 3 min later): two jobs in one working tree, the first pushed, the second found main moved, and the retry
+// read the already-landed work as 'the model made no change'. Now a job holds a lock on the clone; a second copy of the
+// same train waits for the first and prints ITS result; a train that already finished prints the saved result.
+const LOCK = `${DIR}.lock`, RES = `${DIR}.res`;
+const resFile = () => join(RES, `${String(job.trainId || 'none').replace(/[^\w.-]/g, '_')}.json`);
+function saveResult(out) { if (!job.trainId) return; try { mkdirSync(RES, { recursive: true }); writeFileSync(resFile(), JSON.stringify(out)); } catch {} }
+const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+async function withLock(run) {
+  if (job.trainId && existsSync(resFile())) { say('result_reused', { train: job.trainId }); console.log('QB_RESULT ' + readFileSync(resFile(), 'utf8')); return; }
+  const tW = Date.now();
+  for (;;) {
+    try { mkdirSync(LOCK); writeFileSync(join(LOCK, 'owner'), JSON.stringify({ pid: process.pid, train: job.trainId || null, at: Date.now() })); break; }
+    catch {
+      let o = {}; try { o = JSON.parse(readFileSync(join(LOCK, 'owner'), 'utf8')); } catch {}
+      if (!o.pid || !alive(o.pid)) { say('lock_stale', { owner: o }); rmSync(LOCK, { recursive: true, force: true }); continue; }
+      if (job.trainId && o.train === job.trainId) {
+        // The same train is already running here: wait for its result and report that one.
+        say('duplicate_waits', { train: job.trainId, pid: o.pid });
+        while (alive(o.pid) && Date.now() - tW < 20 * 60_000) await sleepMs(2000);
+        if (existsSync(resFile())) { console.log('QB_RESULT ' + readFileSync(resFile(), 'utf8')); return; }
+        continue;   // it died without a result: take the lock and run
+      }
+      if (Date.now() - tW > 20 * 60_000) throw new Error(`the clone is locked by train ${o.train} for 20 min`);
+      await sleepMs(2000);
+    }
+  }
+  if (Date.now() - tW > 1000) phase('wait-lock', tW);
+  try { await run(); } finally { rmSync(LOCK, { recursive: true, force: true }); }
+}
+
+withLock(main).catch((e) => { say('error', { err: String(e?.stack || e) }); console.log('QB_RESULT ' + JSON.stringify({ ok: false, error: String(e?.message || e).slice(0, 600), ms: Date.now() - t0, phases: PH })); });

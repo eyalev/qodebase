@@ -146,7 +146,7 @@ export class MergeBox extends DurableObject<Env> {
       const tU = Date.now();
       await this.#sh(`mkdir -p /opt/qb && printf '%s' "$JS" > /opt/qb/mergejob.mjs`, { JS: MERGEJOB });
       ph.push(['upload', tU, Date.now()]);
-      const spec = { dir: `/m/${job.slug}`, mainRemote: job.mainRemote, mainToken: job.mainToken, branch: job.branch, check: job.check ?? null, changes: job.changes, llm: job.llm || null, handlers: job.handlers !== false, noChecks: !!job.noChecks };
+      const spec = { trainId: job.trainId, dir: `/m/${job.slug}`, mainRemote: job.mainRemote, mainToken: job.mainToken, branch: job.branch, check: job.check ?? null, changes: job.changes, llm: job.llm || null, handlers: job.handlers !== false, noChecks: !!job.noChecks };
       // The Claude token only reaches the box for a tier-2 replay, as its own variable (never in JOB, never logged).
       const r = await this.#sh('node /opt/qb/mergejob.mjs 2>&1', { JOB: JSON.stringify(spec), HOME: '/root', ...(job.llm ? { QB_CLAUDE_TOKEN: this.env.CLAUDE_CODE_OAUTH_TOKEN } : {}) });
       const line = r.stdout.split('\n').find((l) => l.startsWith('QB_RESULT '));
