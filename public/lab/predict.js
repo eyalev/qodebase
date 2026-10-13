@@ -648,7 +648,8 @@ export function suggestBuild(jobIn = SMALL_APP) {
   const x = mid(f) / mid(b);
   const out = (o) => ({ ...o, bucket: bucket.label, job });
   // Large: one agent (manager + Eyal, 2026-10-13: 'default like Claude Code on the laptop'). The same Large prompt both
-  // ways: 11/11 features each (docs/board/R3-R6-quality.md), one agent 457 s vs the team's 1,940 s, the team 38% cheaper.
+  // ways: 11/11 features each (docs/board/R3-R6-quality.md), one agent 457 s vs the team's 1,940 s (9 Haiku coders of 12
+  // allowed), the team 38% cheaper in tokens, 29% with box time ($2.77 vs $3.88).
   // The saving is said from this job's estimate. Huge stays on the numbers: no real one-agent build that big.
   if (!bucket.small && bucket.max < 30) {
     const less = Math.max(10, Math.round((1 - 1 / x) * 10) * 10);
@@ -719,7 +720,7 @@ export function jobType(job = SMALL_APP, suggestion = null) {
     evidence: 'Board runs and sims (sim.md (d)-(h)): a duplicate check before work stops pieces being built twice.' };
   if (b.tasks < 30) return { ...base, type: 'app', from: 'size', label: 'a mid-size app',
     why: preset === 'balanced' ? 'about half the cost of one agent on the lab\'s bigger apps' : preset === 'cheapest' ? 'many simple, separate pieces' : 'about 4x faster than a team in our real builds, same features',
-    evidence: preset === 'fastest' ? 'In our real builds (one each), R3 vs R6, same prompt: 11/11 features each; one agent 457 s, a 12-agent team 1,940 s and 38% cheaper.'
+    evidence: preset === 'fastest' ? 'In our real builds (one each), R3 vs R6, same prompt: 11/11 features each; one agent 457 s, a 9-agent team 1,940 s and 38% cheaper in tokens (29% with box time).'
       : 'Lab stage 1: on the bigger apps a team cost about half of one agent.' };
   return { ...base, type: 'big-app', from: 'size', label: 'a big app',
     why: preset === 'fastest' ? 'one agent is still quickest here' : preset === 'cheapest' ? 'many simple, separate pieces: a Haiku crew does them for the least'
