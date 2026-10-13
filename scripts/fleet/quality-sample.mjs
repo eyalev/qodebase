@@ -129,18 +129,21 @@ function codeFor(f, key) {
   const sf = parse(f, show(headSha, f)); const e = docMap(sf).get(key); if (!e) return '';
   const text = e.node.getText(sf).split('\n'); return text.slice(0, 40).join('\n') + (text.length > 40 ? `\n… (${text.length - 40} more lines)` : '');
 }
-const items = []; for (const r of judge) for (const d of r.docs) items.push({ file: r.file, folder: r.folder, key: d.key, line: d.line, comment: d.doc, code: codeFor(r.file, d.key), auto_issues: d.issues.map((i) => i.kind), hand: hand.includes(r) });
+// The model that wrote each landed file (latest landed record wins), from --records (comma-separated JSONL files).
+const modelOf = new Map();
+if (opt('records')) for (const f of opt('records').split(',')) for (const l of fs.readFileSync(f, 'utf8').split('\n')) { if (!l) continue; let r; try { r = JSON.parse(l); } catch { continue; } if (r.status === 'landed' && r.file) modelOf.set(r.file, String(r.model || '').replace(/^@cf\/[^/]+\//, '')); }
+const items = []; for (const r of judge) for (const d of r.docs) items.push({ file: r.file, folder: r.folder, model: modelOf.get(r.file) || null, key: d.key, line: d.line, comment: d.doc, code: codeFor(r.file, d.key), auto_issues: d.issues.map((i) => i.kind), hand: hand.includes(r) });
 jsonl('judge-items.jsonl', items);
 const handItems = items.filter((i) => i.hand);
-jsonl('hand.jsonl', handItems.map((i) => ({ file: i.file, key: i.key, correct: null, useful: null, hallucinates: null, note: '' })));
+jsonl('hand.jsonl', handItems.map((i) => ({ file: i.file, model: i.model, key: i.key, correct: null, useful: null, hallucinates: null, note: '' })));
 fs.writeFileSync(path.join(OUT, 'hand.md'), [`# Hand check: ${hand.length} files, ${handItems.length} comments (seed ${SEED}, ${baseSha.slice(0, 8)}..${headSha.slice(0, 8)})`, '',
   'For each comment: correct (says what the code does) / useful (more than the name says) / hallucinates (parameters, behaviour or callers that are not there). Record verdicts in hand.jsonl.', '',
-  ...handItems.flatMap((i) => [`## ${i.file}:${i.line} \`${i.key}\`${i.auto_issues.length ? `  (auto: ${i.auto_issues.join(', ')})` : ''}`, '', '```ts', i.comment, i.code, '```', ''])].join('\n'));
+  ...handItems.flatMap((i) => [`## ${i.file}:${i.line} \`${i.key}\` (${i.model || 'model ?'})${i.auto_issues.length ? `  (auto: ${i.auto_issues.join(', ')})` : ''}`, '', '```ts', i.comment, i.code, '```', ''])].join('\n'));
 
 // ---- 3. the fleet's own records ---------------------------------------------------------------------------------------
 let records = null;
 if (opt('records')) {
-  const rows = fs.readFileSync(opt('records'), 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  const rows = opt('records').split(',').flatMap((f) => fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } })).filter(Boolean);
   records = { rows: rows.length, by_field: {} };
   for (const k of ['status', 'outcome', 'state', 'verdict', 'result', 'stage', 'event', 'reason', 'error']) {
     const c = {}; for (const r of rows) if (r[k] != null) { const v = String(typeof r[k] === 'object' ? JSON.stringify(r[k]) : r[k]).slice(0, 60); c[v] = (c[v] || 0) + 1; }
@@ -165,27 +168,35 @@ console.log(JSON.stringify({ out: OUT, ...summary, code_changed: summary.code_ch
 if (flag('judge')) {
   const MODEL = opt('model'); const PIN = +opt('price-in', NaN), POUT = +opt('price-out', NaN); const MAX = +opt('max-usd', 2);
   if (!MODEL || !(PIN >= 0) || !(POUT >= 0)) { console.error('--judge needs --model, --price-in and --price-out ($ per 1M tokens)'); process.exit(2); }
-  const ACCOUNT = opt('account', process.env.CF_ACCOUNT_ID); const TOKEN = process.env.FLEET_AI_TOKEN;   // a token for the forq account's Workers AI; never printed
-  if (!ACCOUNT || !TOKEN) { console.error('--judge needs --account (or CF_ACCOUNT_ID) and FLEET_AI_TOKEN in the environment'); process.exit(2); }
-  const url = `https://gateway.ai.cloudflare.com/v1/${ACCOUNT}/qodebase-fleet/workers-ai/${MODEL}`;
+  // Either the fleet Worker's key-gated POST /judge (--judge-url; it calls the gateway and counts in the fleet's daily cap)
+  // or the gateway directly (--account + FLEET_AI_TOKEN). Keys are read from files/env and never printed.
+  const JURL = opt('judge-url'); const ACCOUNT = opt('account', process.env.CF_ACCOUNT_ID); const TOKEN = process.env.FLEET_AI_TOKEN;
+  if (!JURL && (!ACCOUNT || !TOKEN)) { console.error('--judge needs --judge-url, or --account (or CF_ACCOUNT_ID) and FLEET_AI_TOKEN in the environment'); process.exit(2); }
+  const url = JURL || `https://gateway.ai.cloudflare.com/v1/${ACCOUNT}/qodebase-fleet/workers-ai/${MODEL}`;
+  const authH = JURL ? { 'x-fleet-key': fs.readFileSync(opt('key-file', path.join(os.homedir(), '.config/qbfleet/key')), 'utf8').trim() } : { authorization: `Bearer ${TOKEN}` };
   const done = new Set(fs.existsSync(path.join(OUT, 'judge.jsonl')) ? fs.readFileSync(path.join(OUT, 'judge.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => { const j = JSON.parse(l); return `${j.file}|${j.key}`; }) : []);
   let spent = fs.existsSync(path.join(OUT, 'judge-ledger.jsonl')) ? fs.readFileSync(path.join(OUT, 'judge-ledger.jsonl'), 'utf8').split('\n').filter(Boolean).reduce((s, l) => s + (JSON.parse(l).usd || 0), 0) : 0;
   const sys = 'You review documentation comments added to TypeScript code. Answer with one JSON object only: {"correct": true|false, "useful": true|false, "hallucinates": true|false, "why": "<one short sentence>"}. correct = the comment matches what the code does. useful = it says more than the name. hallucinates = it mentions parameters, return values, behaviour or callers that are not in the code.';
+  let calls = 0; const LIMIT = +opt('limit', Infinity);
   for (const it of items) {
+    if (calls >= LIMIT) break;
     if (done.has(`${it.file}|${it.key}`)) continue;
     if (spent >= MAX) { log('judge_budget_stop', { spent, max: MAX }); console.error(`judge stopped at the budget: $${spent.toFixed(4)} of $${MAX}`); break; }
-    const t0 = Date.now(); let res, body;
+    calls++; const t0 = Date.now(); let res, body;
     try {
-      res = await fetch(url, { method: 'POST', headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json', 'cf-aig-metadata': JSON.stringify({ run: 'f4-quality', head: headSha.slice(0, 8) }) },
-        body: JSON.stringify({ messages: [{ role: 'system', content: sys }, { role: 'user', content: `Comment:\n${it.comment}\n\nCode it documents:\n${it.code}` }], max_tokens: 200 }) });
+      res = await fetch(url, { method: 'POST', headers: { ...authH, 'content-type': 'application/json', 'cf-aig-metadata': JSON.stringify({ run: 'f4-quality', head: headSha.slice(0, 8) }) },
+        body: JSON.stringify({ ...(JURL ? { model: MODEL } : {}), messages: [{ role: 'system', content: sys }, { role: 'user', content: `Comment:\n${it.comment}\n\nCode it documents:\n${it.code}` }], max_tokens: 200 }) });
       body = await res.json();
     } catch (e) { log('judge_error', { file: it.file, key: it.key, error: String(e), stack: e.stack?.split('\n').slice(0, 3).join(' | ') }); continue; }
-    const u = body?.result?.usage || {}; const usd = ((u.prompt_tokens || 0) * PIN + (u.completion_tokens || 0) * POUT) / 1e6; spent += usd;
-    fs.appendFileSync(path.join(OUT, 'judge-ledger.jsonl'), JSON.stringify({ ts: new Date().toISOString(), model: MODEL, status: res.status, ms: Date.now() - t0, in: u.prompt_tokens ?? null, out: u.completion_tokens ?? null, usd: u.prompt_tokens == null ? null : +usd.toFixed(6) }) + '\n');
+    // /judge wraps Workers AI's body as {result: <body>, usd}; the gateway returns the body itself
+    const wb = JURL ? body?.result : body; const r0 = wb?.result ?? wb;
+    const u = r0?.usage || wb?.usage || {}; const usd = JURL && typeof body?.usd === 'number' ? body.usd : ((u.prompt_tokens || 0) * PIN + (u.completion_tokens || 0) * POUT) / 1e6; spent += usd;
+    fs.appendFileSync(path.join(OUT, 'judge-ledger.jsonl'), JSON.stringify({ ts: new Date().toISOString(), model: MODEL, status: res.status, ms: Date.now() - t0, in: u.prompt_tokens ?? null, out: u.completion_tokens ?? null, usd: (JURL && typeof body?.usd === 'number') || u.prompt_tokens != null ? +usd.toFixed(6) : null }) + '\n');
     if (!res.ok) { log('judge_http', { status: res.status, file: it.file, body: JSON.stringify(body).slice(0, 300) }); if (res.status === 429) break; continue; }
-    const text = typeof body.result?.response === 'string' ? body.result.response : JSON.stringify(body.result?.response ?? body.result);
+    const out = r0?.response ?? r0?.choices?.[0]?.message?.content ?? r0?.output?.flatMap?.((o) => o.content || []).map((c) => c.text).filter(Boolean).join('\n');
+    const text = typeof out === 'string' ? out : JSON.stringify(out ?? r0);
     let v = null; try { v = JSON.parse(text.match(/\{[\s\S]*\}/)[0]); } catch {}
-    fs.appendFileSync(path.join(OUT, 'judge.jsonl'), JSON.stringify({ file: it.file, key: it.key, hand: it.hand, auto_issues: it.auto_issues, verdict: v, raw: v ? undefined : text.slice(0, 300) }) + '\n');
+    fs.appendFileSync(path.join(OUT, 'judge.jsonl'), JSON.stringify({ file: it.file, model: it.model, key: it.key, hand: it.hand, auto_issues: it.auto_issues, verdict: v, raw: v ? undefined : text.slice(0, 300) }) + '\n');
   }
   log('judge_done', { spent });
   console.error(`judge: $${spent.toFixed(4)} spent; verdicts in ${path.join(OUT, 'judge.jsonl')}`);
@@ -202,8 +213,11 @@ if (opt('publish')) {
   const q = { status: handRows.length && judged.length ? 'done' : 'partial', base: baseSha, head: headSha, checked_at: new Date().toISOString(), files_changed: files.length, code_changed: summary.code_changed_n,
     fleet_records: { landed: pick(/^landed|^merged|^pushed/), verify_fail: pick(/verify/), rejected: pick(/reject/), other: Object.fromEntries(Object.entries(recs).filter(([k]) => !/^landed|^merged|^pushed|verify|reject/.test(k))) },
     auto: { comments: allDocs.length, invented_params: summary.issues.unknown_param, missing_params: summary.issues.missing_param, returns_on_void: summary.issues.returns_on_void, trivial: summary.issues.trivial + summary.issues.restates_name },
-    judge: (models.length ? models : [opt('model') || null]).map((m) => ({ model: m, n: judged.length, accurate: judged.filter((j) => j.verdict?.correct === true).length, helpful: judged.filter((j) => j.verdict?.useful === true).length,
-      invented: judged.filter((j) => j.verdict?.hallucinates === true).length, unparsed: judged.filter((j) => !j.verdict).length, usd: +ledger.filter((l) => l.model === m).reduce((s, l) => s + (l.usd || 0), 0).toFixed(4) })),
+    // one row per FLEET model (the model that wrote the comments); judge_model = the grader
+    judge: [...new Set(judged.map((j) => j.model || null))].map((m) => { const js = judged.filter((j) => (j.model || null) === m); return { model: m, judge_model: models[0] || opt('model') || null, n: js.length,
+      accurate: js.filter((j) => j.verdict?.correct === true).length, helpful: js.filter((j) => j.verdict?.useful === true).length, invented: js.filter((j) => j.verdict?.hallucinates === true).length, unparsed: js.filter((j) => !j.verdict).length }; }),
+    judge_usd: +ledger.reduce((s, l) => s + (l.usd || 0), 0).toFixed(4),
+    hand_by_model: Object.fromEntries([...new Set(handRows.map((h) => h.model || null))].map((m) => { const hs = handRows.filter((h) => (h.model || null) === m); return [m, { comments: hs.length, ok: hs.filter((h) => h.correct && !h.hallucinates).length, invented: hs.filter((h) => h.hallucinates).length }]; })),
     hand: { files: new Set(handRows.map((h) => h.file)).size, comments: handRows.length, ok: handRows.filter((h) => h.correct && !h.hallucinates).length, accurate: handRows.filter((h) => h.correct).length, helpful: handRows.filter((h) => h.useful).length, invented: handRows.filter((h) => h.hallucinates).length },
     worst };
   fs.writeFileSync(opt('publish'), JSON.stringify(q, null, 1) + '\n'); log('published', { to: opt('publish'), status: q.status });
