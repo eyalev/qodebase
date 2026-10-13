@@ -1035,6 +1035,7 @@ function toggleConv(where) {
 }
 function convAfter() {
   if (!convOn() || !lastSpoken) return;
+  prewarmWs();   // the next turn's socket, whatever ended this one
   var t0 = Date.now();
   (function wait() {
     if (!convOn()) return;
@@ -2059,7 +2060,10 @@ function liveOpen() {
       if (d.type === 'final') { if (txt) dcBuf.push(txt); dcText = ''; } else dcText = txt;
       if (txt) { lastWordAt = Date.now(); clearTimeout(endT); armQuiet(); guess(dcSaid(dcText)); }
       // nova-3's endpointing heard them stop (speech_final): in conversation mode the turn ends now, not 1.5 s later.
-      if (d.end && dcBuf.length && !dcText && convOn() && S.fast === 'on' && soundsDone(dcSaid(''))) { guess(dcSaid(''), true); endT = setTimeout(function () { if (dcOn && !dcText) endTurn('endpoint'); }, 450); }   // + nova-3's 300 ms = ~0.75 s of quiet
+      // nova-3's speech_final sometimes comes seconds after the final words (2.3 s, 2026-10-13): a final that ends a
+      // sentence ('…project?') and sounds finished ends the turn too, after 0.6 s with no new words.
+      var sentenceEnd = d.type === 'final' && /[.?!]["\u201d\u2019)]*$/.test(txt);
+      if ((d.end || sentenceEnd) && dcBuf.length && !dcText && convOn() && S.fast === 'on' && soundsDone(dcSaid(''))) { guess(dcSaid(''), true); endT = setTimeout(function () { if (dcOn && !dcText) endTurn(d.end ? 'endpoint' : 'sentence'); }, d.end ? 450 : 600); }   // + nova-3's 300 ms = ~0.75 s of quiet
       if (!nativePreview) setInp(dcBase + dcSaid(dcText));
     } else if (d.type === 'error') { trace('stt_ws_server_error', { err: d.error }); if (!gotWords && dcOn && !nativePreview) startNativePreview(); }
   };
@@ -2070,7 +2074,7 @@ function liveOpen() {
     if (dcOn && !gotWords && !nativePreview) startNativePreview();   // the live words failed: the phone's recogniser instead
   };
 }
-var nextWs = null, endT = null;
+var nextWs = null, endT = null, convQuietT = null;
 // A pause after "…update for" is a breath, not the end (Eyal's 'What is the latest update for … my projects?' was cut,
 // 2026-10-13): end early only when the words sound finished; otherwise the 1.5 s quiet rule decides.
 var DANGLING = /\b(for|the|a|an|to|and|or|of|my|with|in|on|at|is|are|was|what|how|about|from|into|that|this|so|but|if|then|because|like|um|uh|can|could|would|should|please|me|i|you|your|our|their|its)\s*$/i;
@@ -2098,7 +2102,10 @@ function startLive() {
   specCalls = 0; spec = null; clearTimeout(endT); lastWordAt = 0; talkUsedAt = Date.now();
   if (convOn() && (!stCache || Date.now() - (stCache.at || 0) > 25000)) warmStatus('listen');
   setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); clearTimeout(quietT); live.textContent = '';
-  if (convOn()) setTimeout(function () { if (dcOn && !dcBuf.length && !dcText) { convEmpty++; trace('conv_quiet', { empty: convEmpty }); stopListen(true); if (convEmpty >= 2) { toggleConv('quiet'); add('note', 'Conversation mode is off: nothing heard twice.'); } else convAfter(); } }, 10000);
+  // Nothing heard for 10 s ends this turn: the timer belongs to this turn only (a fast answer's next turn was cancelled
+  // 2 s in by the previous turn's timer, 2026-10-13).
+  clearTimeout(convQuietT);
+  if (convOn()) convQuietT = setTimeout(function () { if (dcOn && !dcBuf.length && !dcText) { convEmpty++; trace('conv_quiet', { empty: convEmpty }); stopListen(true); if (convEmpty >= 2) { toggleConv('quiet'); add('note', 'Conversation mode is off: nothing heard twice.'); } else convAfter(); } }, 10000);
   else convEmpty = 0;
   dcOn = true; dcT0 = Date.now(); liveQ = []; liveSent = 0;
   dcBase = inpVal().trim() ? inpVal().trim() + ' ' : '';   // speak more after typing: the words are added
@@ -2108,6 +2115,7 @@ function startLive() {
 }
 function liveFinish(text, sendIt) {
   if (!dcOn) return;
+  clearTimeout(convQuietT);
   dcOn = false; clearTimeout(dcQuiet); stopNativePreview();
   setListening(false); live.textContent = '';
   var t = (dcSaid(text || dcText) || '').trim();
