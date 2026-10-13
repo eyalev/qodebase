@@ -1,7 +1,7 @@
 # R4 vs R7: does each "Café website" build actually do what the prompt asked?
 
-Same prompt, two builds: **R4** = a 10-agent team (eyal/real-cafe-site), **R7** = one Opus agent
-(eyal/real-cafe-site-solo). Both private; opened with the owner's run pass. Checked by qb9 in headless Chromium as a
+Same prompt, two builds: **R4** = a 10-agent team (eyal/real-cafe-site; 8 HTML pages, ~5,940 lines), **R7** = one
+Opus agent (eyal/real-cafe-site-solo; one page with hash routes, ~2,320 lines). Both private; opened with the owner's run pass. Checked by qb9 in headless Chromium as a
 phone (390 x 844, touch, trusted taps), a fresh profile per app, by doing each thing. Nothing in either app was
 changed; test edits stayed in the test browser's storage (drafts, cart, stamps). No model runs. The owner PIN and
 staff code came from each project's own README, as an owner would have them.
@@ -18,7 +18,7 @@ That is 12 features.
 | | works | partial | missing |
 |---|---|---|---|
 | R4 (10 agents) | 10 | 2 | 0 |
-| R7 (one Opus) | (pending: R7 not settled yet) | | |
+| R7 (one Opus) | 12 | 0 | 0 |
 
 ## R4 (10 agents), feature by feature (checked 2026-10-13, ~07:00 UTC)
 
@@ -46,6 +46,36 @@ R4 bugs and rough edges:
 - README.md is served on the live site and lists the owner PIN and the staff code (the README itself calls the PIN a soft gate).
 - Portuguese names the stamp card two ways: "Cartão de selos" (nav) and "Cartão de carimbos" (page).
 
-## R7 (one Opus)
+## R7 (one Opus), feature by feature (checked 2026-10-13, ~07:15 UTC)
 
-(pending: waiting for qb6 to say R7 has settled)
+| feature | R7 |
+|---|---|
+| home: hours + map link | works: open now / until, week table, Open in Maps, WhatsApp / phone / email, next event |
+| menu: categories, photos, prices, allergens | works: 4 categories as filter chips, 19 items, every photo loads, prices, allergens named on every item ("No major allergens" too), a menu search |
+| vegan / gluten-free filters | works: both, combined, and they apply to the specials too |
+| cart to WhatsApp pickup order | works: add, +/-, line totals, total, name and pickup time required; opens wa.me with a greeting, one line per item, total, name, pickup time; the cart survives a reload |
+| specials of the day | works: today's special on home and menu; the owner sets weekdays or one date |
+| events page | works: 4 upcoming with date tiles, "Add to calendar" |
+| gallery | works: 6 photos, tap opens a viewer |
+| about page | works: story, hours, address, map link |
+| stamp card on the phone | works: staff code entered on the card (wrong code refused), filled to 10, reward shown, "Redeem reward" with the code resets the card, survives a reload |
+| edit mode behind a PIN, export to publish | works: PIN gate (wrong PIN refused); price, hours, a new special and a new event all edited; they show on this device's pages; Publish → "Download data file" gives cafe-data.js with every edit in it |
+| English and Portuguese | works on every view, the print menu included |
+| print-friendly menu | works: a print view in two columns, V / SG badges, allergens per item, in the chosen language |
+
+R7 bugs and rough edges:
+- The pickup time is not checked against opening hours: an order for 03:00 goes to WhatsApp (R4 limits the time).
+- Portuguese dates are capitalised English-style ("Sexta-Feira, 23 De Outubro").
+- No cooldown between stamps (staff can add several at once by design, with a 1–4 stamp choice).
+- `manifest.webmanifest` 404 on every load, as in R4.
+- README.md is served on the live site with the default PIN and stamp code, as in R4 (both READMEs say the PIN is a soft gate).
+
+## Reading
+
+On this prompt the single Opus agent shipped all 12 features; the 10-agent team shipped 10 fully and 2 partly. The
+team's two partial features share one cause: the data file stores the café's name and address in both languages,
+and two parts written by other agents (the About page and the admin's export check) still treat them as plain text.
+The result is the worse of the two failures in either app: R4's owner can edit but can never export, so nothing
+they change can be published. R7 has only small defects (pickup time unchecked, date capitals). R4 is the bigger
+site (8 pages, ~2.5x the code) and does a few things R7 does not (pickup time inside opening hours, a 10-minute
+stamp cooldown, "Ask about this event"), but the prompt's features are fully there only in R7.
