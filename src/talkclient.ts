@@ -126,7 +126,7 @@ var css = [
   '#talk-root.slim #talk-bar{min-height:48px;padding:2px 2px 2px 6px}',
   // Above a composer the bar shows only when it has something to say (an answer, a question, live words); the way
   // in at rest is the composer mic (hold it: Talk listens). Three layers at the bottom were too many (critique).
-  '#talk-root.slim.rest #talk-bar{display:none}',
+  '#talk-root.slim.rest #talk-bar,#talk-root.tall.rest #talk-bar{display:none}',
   '#talk-spacer{height:0;pointer-events:none}',
   // Things to say (Eyal, 2026-10-13: a first-time visitor should know what they can say): a rotating line in the
   // bar at rest (tap = say it), and grouped chips in the empty conversation.
@@ -514,10 +514,16 @@ function placeBar() {
   }
   root.style.pointerEvents = '';
   // A page can name its docks: [data-talk-dock] near the bottom always lifts the button above it.
+  // A tall dock (Build's estimate panel, a third of the screen and more) does not lift the bar into the middle of the
+  // page (live 2026-10-13): the bar rests hidden there and shows at the bottom only with something to say.
+  var tall = false;
   [].forEach.call(document.querySelectorAll('[data-talk-dock]'), function (d) {
     var r = d.getBoundingClientRect();
-    if (r.height > 0 && r.bottom > window.innerHeight - 48 && r.top < window.innerHeight) lift = Math.max(lift, window.innerHeight - r.top);
+    if (!(r.height > 0 && r.bottom > window.innerHeight - 48 && r.top < window.innerHeight)) return;
+    if (r.height > window.innerHeight * 0.3) { tall = true; return; }
+    lift = Math.max(lift, window.innerHeight - r.top);
   });
+  if (root.classList.contains('tall') !== tall) { root.classList.toggle('tall', tall); barSync(); }
   lift = Math.round(lift);
   if (window.innerWidth < 720 && !root.classList.contains('miconly')) { bar.style.bottom = lift ? lift + 'px' : '0px'; bar.style.setProperty('--talk-inset', lift ? '0px' : 'env(safe-area-inset-bottom)'); }
   else bar.style.bottom = 'calc(' + (lift ? lift + 8 : (window.innerWidth < 720 ? 8 : 16)) + 'px + env(safe-area-inset-bottom))';
@@ -628,7 +634,7 @@ function barSync() {
   // Above a composer: hidden at rest; shown for live words, a question, work in progress, or a fresh answer (8 s).
   var happening = mine || !!offerState || busy || (vc && vcStatus !== 'idle');
   if (happening) { root.classList.remove('rest'); clearTimeout(restT); restT = null; }
-  else if (hist.length !== histAtLoad && !restT && root.classList.contains('slim') && !root.classList.contains('rest')) restT = setTimeout(function () { restT = null; histAtLoad = hist.length; root.classList.add('rest'); }, 8000);
+  else if (hist.length !== histAtLoad && !restT && (root.classList.contains('slim') || root.classList.contains('tall')) && !root.classList.contains('rest')) restT = setTimeout(function () { restT = null; histAtLoad = hist.length; root.classList.add('rest'); }, 8000);
   else if (hist.length === histAtLoad && !restT) root.classList.add('rest');
   if (root.classList.contains('rest') !== !!root.__rest) { root.__rest = root.classList.contains('rest'); setTimeout(placeBar, 30); }
   var on = (listening && !cInto) || (vc && vcStatus !== 'idle');
@@ -744,6 +750,45 @@ function submit(text) {
       return done();
     }
     if (c.greet) { var hi = greeting(c.example); add('ai', hi); say(hi); return done(); }
+    // A project whose agents asked you something (X5 ask-person): a sentence that is not a build order is offered
+    // as the answer (qb3's shot 2d: "Use Stripe test mode; here is the test key.").
+    var pm = /^\/p\/([^/]+)\/([^/]+)/.exec(location.pathname);
+    if (pm && !c.answerChecked && !ORDER_RX.test(text) && (c.mode === 'none' || c.mode === 'ask' || ['change', 'none', 'explain', 'type'].indexOf(c.op) >= 0 || (c.p || 0) < 0.45)) {
+      c.answerChecked = true;
+      return openAsks(pm[1], pm[2]).then(function (open) {
+        if (!open.length) return route(c, text);
+        var a = open[0], who = a.by === 'router' ? 'the router' : 'Agent ' + String(a.by).split('--').pop();
+        var q = 'Answer ' + who + '\u2019s question (\u201c' + String(a.question).slice(0, 90) + '\u201d) with this?';
+        add('ai', q); say('Answer ' + who + '?');
+        offerOn(q, function () { busy = true; answerAsk(pm[1], pm[2], a, text); }, 'Answer');
+        trace('ask_offer', { by: a.by, open: open.length });
+        done();
+      }).catch(function () { route(c, text); });
+    }
+    route(c, text);
+  }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'decide', err: String(e) }); done(); });
+}
+var ORDER_RX = /^\s*(please\s+|can you\s+|could you\s+|let'?s\s+)?(build|add|make|create|implement|fix|change|remove|delete|rename|give|put|update|improve|redesign|replace|write|refactor|start|turn|open|show|go|take)\b/i;
+function openAsks(owner, name) {
+  return fetch('/api/p/' + owner + '/' + name + '/asks', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
+    var out = [];
+    (j.asks || []).forEach(function (x) { (x.asked || []).forEach(function (q) { if (q.state === 'open') out.push(q); }); });
+    return out.sort(function (a, b) { return b.at - a.at; });
+  });
+}
+// The answer goes into the asker's own session (qb6): an agent by its id, the router as a router request.
+function answerAsk(owner, name, a, text) {
+  status('Sending\u2026');
+  var p = a.by === 'router' ? projPost(owner, name, 'router', { text: text, from: 'talk' })
+    : fetch('/api/agents/' + encodeURIComponent(a.by) + '/send', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: text }) }).then(function (r) { return r.json().catch(function () { return { error: 'HTTP ' + r.status }; }); });
+  p.then(function (r) {
+    logEv('ask_answer', { by: a.by, ok: !(r && r.error), err: r && r.error || null });
+    if (r && r.error) { add('note', 'Could not send the answer: ' + r.error); return done(); }
+    add('app', 'Answered ' + (a.by === 'router' ? 'the router' : 'Agent ' + String(a.by).split('--').pop()) + '.', a.href ? [{ text: 'Open it', href: a.href }] : undefined);
+    done();
+  }).catch(function () { add('note', 'Could not reach qodebase.'); done(); });
+}
+function route(c, text) {
     if (c.mode === 'none') { add('note', (c.complete || 0) < 0.5 ? 'Sounds cut off. Say it again?' : 'I did not catch a request there.'); return done(); }
     if (c.op === 'status') return whatsGoingOn(text);
     if (c.op === 'list') {
@@ -766,7 +811,6 @@ function submit(text) {
       if (c.mode === 'act') return done();
     }
     ask(text, '');
-  }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'decide', err: String(e) }); done(); });
 }
 function done() { busy = false; status(''); finish(); }
 // The gate (same words as talkdecide.ts gate(), which the conversation agent uses).
