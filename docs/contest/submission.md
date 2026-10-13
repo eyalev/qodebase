@@ -4,7 +4,7 @@
 - **Live:** https://qodebase.app
 - **Code:** https://github.com/eyalev/qodebase (Apache-2.0)
 - **Watch a run, no sign-in:** https://qodebase.app/p/eyal/corner-cafe
-- **Real agents:** https://qodebase.app/p/eyal/cafe-team
+- **Real agents:** https://qodebase.app/p/eyal/cafe-team (12 agents) and https://qodebase.app/p/eyal/real-course-builder (up to 40)
 
 ## Project vision
 
@@ -20,7 +20,7 @@ Merge queues already exist (GitHub's merge queue, Graphite, Mergify, Bors), and 
 
 Main: 13 commits, 12 git notes, green tests. Real spend $0.16 of container time; the agents ran on a Claude subscription (about $0.53 at API prices).¹
 
-**Bigger, through the normal Build path:** up to 40 real Claude Haiku agents (an Opus planner, 3-6 reviewers, the board) built a travel planner inside qodebase. 40 changes landed (one closed as already on main); **28 collided with earlier work and were re-done by a model on the newest code, none sent back.** At that size review was the bottleneck: agents waited for a reviewer as long as they worked (16,234 vs 15,731 agent-seconds, with 6 reviewers).
+**Bigger, through the normal Build path:** up to 40 real Claude Haiku agents (an Opus planner, 3-6 reviewers, the board) built a travel planner inside qodebase ([eyal/real-course-builder](https://qodebase.app/p/eyal/real-course-builder): the project is called course-builder; what it built is a travel planner). 40 changes landed (one closed as already on main); **28 collided with earlier work and were re-done by a model on the newest code, none sent back.** At that size review was the bottleneck: agents waited for a reviewer as long as they worked (16,234 vs 15,731 agent-seconds, with 6 reviewers).
 
 **We measured first** (no model calls): replaying Hono's last 346 PRs as if 100 were written at once, 48% needed another PR to land first, with no git conflicts: the problem is order. In simulation (scripted edits, real git and tests, 403 files), landing by intent landed **3.5×** as many changes per hour as review-then-merge; in a simulated Hono migration, knowing the order took under half the time **at 10 agents**, where grabbing tasks wasted 90 agent-hours. On Cloudflare, 500 agents (a Durable Object and an Artifacts fork each) made 7,033 pushes at 280 ms median; our single merge queue was the limit (it reset three times; a bug of ours caused 88 stale-ref rejections, since fixed).
 

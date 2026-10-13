@@ -20,7 +20,7 @@ One request, typed on the phone ([eyal/cafe-team](https://qodebase.app/p/eyal/ca
 - main: 13 commits, 12 git notes with the full record of each change, tests green
 - real spend: **$0.16** of container time (the agents ran on a Claude subscription; API-equivalent ~$0.53)
 
-**Bigger:** through the product's own Build path, up to 40 real Claude Haiku agents (an Opus planner, 3-6 reviewers, the board) built a travel planner inside qodebase (a private project for now):
+**Bigger:** through the product's own Build path, up to 40 real Claude Haiku agents (an Opus planner, 3-6 reviewers, the board) built a travel planner inside qodebase ([eyal/real-course-builder](https://qodebase.app/p/eyal/real-course-builder); the project is called course-builder, but what it built is a travel planner):
 - **40 changes landed** (one closed as already on main), every one through the landing queue with checks
 - **28 collided** with work that landed first; each was re-done by a model on the newest code, tested and landed; **none was sent back**
 - at that size **review was the bottleneck**: agents spent 16,234 agent-seconds waiting for a reviewer against 15,731 working, even with 6 reviewers; next, the train ran model replays one after another
