@@ -54,7 +54,7 @@ Status (qb6, Oct 13 evening):
   (index test: 1,173 of 1,173, sorted, 0 missing, 0 twice). On screen it needs a line on the run page [qb7], or
   scene 3e shows the numbers as a caption read from that response.
 - **Cost cap ready:** budgetUsd on the form plus the fleet's $50/day cap; a run on src/vs/editor costs ~$0.15–0.25;
-  src/vs is ~6× the files, so expect roughly $1–2 (read the form's estimate; set the cap above it).
+  src/vs at 1,000 agents: ~$1.5–3 (qb6), cap $5.
 - **Pre-flight:** gateway limit 3,000/min stays up for the take; copy fleet-n2-vscode-src-1 is reserved
   (src/vs/editor = 659 files at its base); nobody runs on it before the take.
 
@@ -87,6 +87,11 @@ defaults to 200 agents**: the sentence must end "with 1,000 agents" (scene 3a ab
 on film is whatever the form gives for 1,000. **Decided (manager):** the take uses VS Code src/vs (~4,064 files) with 1,000 agents, since src/vs/editor has only
 659 files; qb7 is setting the form up for it. Before the take, check the form shows src/vs, 1,000 agents and its
 estimate.
+- **qb6 on the 1,000-agent take:** the form's real-model preset packs 20 files per agent, so 4,064 files would
+  reach only ~200 agents; for 1,000 agents the batch must be 4 (qb7 sets that for agents ≥ 500). Check the form
+  shows batch 4. Expect ~1–2 min at the models' limits (gemma ~200 + glm ~400 calls/min, Gemini 3.1 overflow),
+  every file's index lines colliding on docs/API.md and re-inserted on the newest main, **~$1.5–3; cap it at $5**.
+  The reserved copy fleet-n2-vscode-src-1 has src/vs fresh.
 
 ## Pre-flight (08:00–08:45 UTC)
 
