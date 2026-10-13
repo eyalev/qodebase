@@ -34,8 +34,9 @@ const BASE = opt('--base', 'https://qodebase.app');
 const HOST = new URL(BASE).host;
 const ALLOW = flag('--allow-writes') ? opt('--project', '') : '';
 if (flag('--allow-writes') && !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(ALLOW)) { console.error('--allow-writes needs --project owner/name (a sandbox project)'); process.exit(2); }
-const valued = new Set(['--out', '--project', '--base']);
+const valued = new Set(['--out', '--project', '--base', '--via']);
 const pick = argv.filter((a, i) => !a.startsWith('--') && !valued.has(argv[i - 1]));
+const VIA = opt('--via', 'webmcp');   // webmcp (typed submit) | live (qb2's __talkTest.live: the dictation pipeline)
 const OUT = opt('--out', path.join(os.homedir(), '.local/share/qodebase-talk-e2e', new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)));
 
 // ---- Scenarios ---------------------------------------------------------------------------------------------------
@@ -216,12 +217,26 @@ async function runScenario(s, cookies, browserArgs) {
   for (let i = 0; i < s.turns.length; i++) {
     const turn = typeof s.turns[i] === 'string' ? { say: s.turns[i] } : s.turns[i];
     const t0 = Date.now(), e0 = ev.length, urlBefore = page.url();
-    let res = null, via = turn.via || (audio ? 'audio' : 'webmcp');
+    let res = null, via = turn.via || (audio ? 'audio' : VIA);
     try {
       if (via === 'live') {
         const has = await page.evaluate(() => !!(window.__talkTest && window.__talkTest.live));
         if (!has) via = 'webmcp (no live hook yet)';
-        else res = await page.evaluate(([w, o]) => window.__talkTest.live(w, o), [turn.say, turn.live || {}]);
+        else {
+          // qb2's hook: the words enter the pipeline as if nova-3 ended the turn; the turn is over when Talk is no longer
+          // busy and nothing is being said (state()); the answer is read from the Talk log
+          const n0 = await page.evaluate(() => document.querySelectorAll('#talk-log > *').length).catch(() => 0);
+          await page.evaluate(([w, o]) => window.__talkTest.live(w, o), [turn.say, turn.live || {}]);
+          const end = Date.now() + 40000; let st = null;
+          await page.waitForTimeout(400);
+          while (Date.now() < end) {
+            st = await page.evaluate(() => window.__talkTest && window.__talkTest.state()).catch(() => null);   // null = navigated away
+            if (!st || (!st.busy && !st.speaking)) break;
+            await page.waitForTimeout(250);
+          }
+          const said = await page.evaluate((n) => [...document.querySelectorAll('#talk-log > *')].slice(n).filter((c) => !/\byou\b/.test(c.className)).map((c) => c.innerText.replace(/\s+/g, ' ').trim()).join(' '), n0).catch(() => '');
+          res = { ok: true, text: said || (st && st.last) || '' };
+        }
       }
       if (via === 'audio') {
         // the file plays as the microphone from the first getUserMedia: open Talk in conversation mode
@@ -321,6 +336,6 @@ for (const [id, rs] of by) {
   if (sk) skip++; else if (ok) pass++;
   lines.push(`| ${id} | ${rs[0].group || ''} | ${sk ? 'skip' : ok ? 'pass' : '**FAIL**'} | ${rs.filter((r) => r.pass).length}/${rs.length} | ${rs.map((r) => r.lane || '').join(', ')} | ${rs.map((r) => ms(r.ms && r.ms.total)).join(', ')} | ${rs.map((r) => ms(r.ms && r.ms.first_audio)).join(', ')} | ${sk ? sk.skip : rs.filter((r) => !r.pass).map((r) => `#${r.turn}: ${r.fails.join('; ')}`).join(' / ').replace(/\|/g, '/').slice(0, 300)} |`);
 }
-const head = `Talk e2e on ${BASE}, ${new Date().toISOString().slice(0, 16)}Z: ${pass}/${by.size - skip} scenarios pass${skip ? `, ${skip} skipped` : ''}, ${results.filter((r) => r.pass).length}/${results.filter((r) => !r.skip).length} turns.`;
+const head = `Talk e2e (${VIA}) on ${BASE}, ${new Date().toISOString().slice(0, 16)}Z: ${pass}/${by.size - skip} scenarios pass${skip ? `, ${skip} skipped` : ''}, ${results.filter((r) => r.pass).length}/${results.filter((r) => !r.skip).length} turns.`;
 fs.writeFileSync(path.join(OUT, 'table.md'), head + '\n\n' + lines.join('\n') + '\n');
 console.log('\n' + head + '\n' + lines.join('\n') + `\n\nresults: ${OUT}`);
