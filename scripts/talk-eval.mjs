@@ -26,6 +26,7 @@ const allProjects = JSON.parse(fs.readFileSync(path.join(FX, 'projects.json'), '
 const CASES = [
   // Navigation by menu words.
   ['home', 'show me my projects', { mode: 'act', op: ['go', 'list'], href: '/mine' }],
+  ['home', 'Take me to my projects.', { mode: 'act', op: 'go', href: '/mine' }],
   ['home', 'go to explore', { mode: 'act', op: 'go', href: '/explore' }],
   ['home', 'open my inbox', { mode: 'act', op: 'go', href: '/inbox' }],
   ['home', 'take me to settings', { mode: 'act', op: 'go', href: '/settings' }],

@@ -57,7 +57,7 @@ function traceStart() {
 var S = {
   engine: get('engine2', 'live'),   // live (Deepgram Nova-3 live words + Whisper on the whole clip, like tmux-web; default) | native | whisper
   lang: get('lang', 'en'),
-  voice: get('voice', 'off'),           // spoken replies: off | aura-1 | aura-2 | phone (off by default)
+  voice: get('voice', 'aura-2'),        // spoken replies: off | aura-1 | aura-2 | phone (on by default since 2026-10-13, Eyal via the manager; 'when' keeps it to replies to speech)
   speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
   when: get('when', 'voice'),           // voice (only when I spoke) | always
   speed: Number(get('speed', '1.25')) || 1.25,   // reply speed, pitch kept (Ask's Jarvis default)
@@ -81,17 +81,22 @@ var css = [
   // The voice bar (2026-10-13, manager's brief): a mini-player on every page, above the page's own bottom bars.
   // Mic + what you are saying (growing to 3 lines) or the last answer in one line; tap it to open the whole
   // conversation, which folds back into the bar. Its height is kept free at the end of the page.
-  '#talk-bar{position:fixed;left:16px;right:16px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px;min-height:56px;box-sizing:border-box;border-radius:14px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line),0 4px 16px rgba(0,0,0,.10);color:var(--t-fg)}',
-  '@media (min-width:720px){#talk-bar{left:auto;right:16px;width:420px}}',
+  // Docked edge to edge like a tab bar (Eyal, 2026-10-13: not a floating card): a hairline on top, the phone's
+  // bottom inset inside it; above the page's own bottom bars when it has some. A card bottom-right on wide screens.
+  '#talk-bar{position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px 8px calc(6px + var(--talk-inset,env(safe-area-inset-bottom))) 8px;min-height:56px;box-sizing:border-box;background:var(--t-bg);border-top:1px solid var(--t-line);color:var(--t-fg)}',
+  '@media (min-width:720px){#talk-bar{left:auto;right:16px;bottom:16px;width:420px;padding:6px;border:0;border-radius:14px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line),0 4px 16px rgba(0,0,0,.10)}}',
   '#talk-root.open #talk-bar{display:none}',
   '.talk-bb{width:44px;height:44px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--t-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}',
   '.talk-bb svg{width:22px;height:22px}',
   '.talk-bb.pri{background:var(--t-chip);color:var(--t-fg)}',
+  '#talk-bmic{width:48px;height:48px;border-radius:12px}',
+  '#talk-bmic svg{width:24px;height:24px}',
+  '#talk-bspk,#talk-bexp{width:40px}',
   // The page's own primary button stays the loudest thing at rest (critique 2026-10-13): the mic turns accent only while live.
   '#talk-root.live .talk-bb.pri,#talk-bsend.talk-bb.pri{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-bexp{color:var(--t-dim)}',
-  // The page's text must not show in the strip under the bar.
-  '@media (max-width:719px){#talk-bar::after{content:"";position:absolute;left:-16px;right:-16px;top:100%;height:calc(8px + env(safe-area-inset-bottom));background:var(--t-bg);pointer-events:none}}',
+  '#talk-bspk[aria-pressed=true]{color:var(--t-acc)}',
+  '#talk-root.miconly #talk-bspk,#talk-root.boffer #talk-bspk,#talk-root.live #talk-bspk{display:none}',
   '.talk-bb.on{background:var(--t-warn)}',
   '@media (hover:hover){.talk-bb:not(.pri):hover{background:var(--t-chip)}}',
   '#talk-bmid{flex:1;min-width:0;min-height:44px;display:flex;align-items:center;border:0;background:transparent;color:inherit;text-align:left;padding:0 6px;font:15px/20px var(--t-ff);cursor:pointer}',
@@ -117,6 +122,14 @@ var css = [
   // in at rest is the composer mic (hold it: Talk listens). Three layers at the bottom were too many (critique).
   '#talk-root.slim.rest #talk-bar{display:none}',
   '#talk-spacer{height:0;pointer-events:none}',
+  // Things to say (Eyal, 2026-10-13: a first-time visitor should know what they can say): a rotating line in the
+  // bar at rest (tap = say it), and grouped chips in the empty conversation.
+  '#talk-root.ex #talk-btext{color:var(--t-dim)}',
+  '#talk-root.ex #talk-btext q{color:var(--t-fg);quotes:"\\201C" "\\201D"}',
+  '.talk-ex{display:flex;flex-direction:column;gap:12px}',
+  '.talk-ex h3{margin:0 0 6px;font:600 13px var(--t-ff);color:var(--t-dim)}',
+  '.talk-ex div{display:flex;flex-wrap:wrap;gap:8px}',
+  '.talk-ex button{min-height:40px;padding:0 12px;border:0;border-radius:10px;background:var(--t-chip);color:var(--t-fg);font:15px var(--t-ff);cursor:pointer;text-align:left}',
   // A clear (×) inside text boxes, only while they hold text (Eyal, 2026-10-13): Talk's own input and the page's
   // idea / change boxes.
   '.talk-clr::after{content:"";position:absolute;inset:-6px}',
@@ -128,8 +141,7 @@ var css = [
   '#talk-inwrap .talk-clr{right:6px;top:6px}',
   // A page can ask for less: data-talk-bar="mic" on <body> (a deck: only the mic, the words show while in use),
   // "off" (no bar; ?clean on any URL does the same, for recordings).
-  '#talk-root.miconly #talk-bar{right:auto;width:auto;min-height:0;padding:0;background:transparent;box-shadow:none}',
-  '#talk-root.miconly #talk-bar::after{display:none}',
+  '#talk-root.miconly #talk-bar{left:auto;width:auto;min-height:0;padding:0 16px 0 0;background:transparent;box-shadow:none;border:0;bottom:8px}',
   '#talk-root.miconly #talk-bmic{width:52px;height:52px;border-radius:14px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line)}',
   '#talk-root.miconly #talk-bmid,#talk-root.miconly #talk-bexp{display:none}',
   '#talk-root.nobar #talk-bar{display:none}',
@@ -179,7 +191,7 @@ var css = [
   '#talk-send svg{width:22px;height:22px}',
   '#talk-send.ready{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-in:focus{border-color:var(--t-acc)}',
-  '#talk-mic{width:44px;height:44px;border-radius:8px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}',
+  '#talk-mic{width:48px;height:48px;border-radius:8px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}',
   '#talk-mic svg{width:22px;height:22px}',
   '#talk-mic.on{background:var(--t-warn)}',
   '.talk-ib.on{background:var(--t-acc);color:var(--t-accfg)}',
@@ -207,7 +219,7 @@ var ICON = {
 };
 
 var root, sheet, logEl, live, offer, inp, micBtn, sendBtn, stEl, spk, convBtn;
-var bar, bMic, bText, bOffer, bSend, bExp, spacer;
+var bar, bMic, bText, bOffer, bSend, bExp, bSpk, spacer;
 // The input grows with what you say or type (up to a third of the screen), then scrolls to the newest words.
 function fitInp() { if (!inp) return; inp.style.height = 'auto'; inp.style.height = Math.max(44, inp.scrollHeight + 2) + 'px'; inp.scrollTop = inp.scrollHeight; if (sendBtn) sendBtn.classList.toggle('ready', !!inp.value.trim() || listening); }
 function setInp(v) {
@@ -319,8 +331,12 @@ function build() {
   bOffer = el('div', { id: 'talk-boffer' });
   bSend = el('button', { id: 'talk-bsend', class: 'talk-bb pri', type: 'button', 'aria-label': 'Send' }, ICON.send);
   bExp = el('button', { id: 'talk-bexp', class: 'talk-bb', type: 'button', 'aria-label': 'Open the conversation' }, ICON.up);
-  bar.appendChild(bMic); bar.appendChild(bMid); bar.appendChild(bOffer); bar.appendChild(bSend); bar.appendChild(bExp);
-  bMid.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'open' }); open(true); });
+  // Spoken replies, one tap (remembered on this device): the same switch as the sheet's speaker.
+  bSpk = el('button', { id: 'talk-bspk', class: 'talk-bb', type: 'button' });
+  // Right-thumb reach (Eyal, 2026-10-13): open and spoken replies on the left, the words, then Send and the mic at the right edge.
+  bar.appendChild(bExp); bar.appendChild(bSpk); bar.appendChild(bMid); bar.appendChild(bOffer); bar.appendChild(bSend); bar.appendChild(bMic);
+  bMid.addEventListener('click', function () { unlockAudio(); if (root.classList.contains('ex') && !listening && !busy) return runExample(exampleLine()); trace('bar', { how: 'open' }); open(true); });
+  exT = setInterval(function () { if (root.classList.contains('ex') && !root.classList.contains('open') && document.visibilityState === 'visible') { exI++; barSync(); } }, 4000);
   bExp.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'expand' }); open(true); });
   bSend.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'send' }); if (listening) stopListen(false, true); });
   sheet = el('section', { id: 'talk-sheet', 'aria-label': 'Talk' });
@@ -351,11 +367,11 @@ function build() {
   live = el('div', { id: 'talk-live' });
   offer = el('div', { id: 'talk-offer' });
   var form = el('form', { id: 'talk-form' });
-  inp = el('textarea', { id: 'talk-in', rows: '1', enterkeyhint: 'send', autocomplete: 'off', placeholder: 'Say or type: open my calculator', 'aria-label': 'Talk to qodebase' });
+  inp = el('textarea', { id: 'talk-in', rows: '1', enterkeyhint: 'send', autocomplete: 'off', placeholder: 'Say or type', 'aria-label': 'Talk to qodebase' });
   micBtn = el('button', { id: 'talk-mic', type: 'button', 'aria-label': 'Speak' }, ICON.mic);
   sendBtn = el('button', { id: 'talk-send', type: 'submit', 'aria-label': 'Send' }, ICON.send);
   var inWrap = el('div', { id: 'talk-inwrap' }); inWrap.appendChild(inp);
-  form.appendChild(inWrap); form.appendChild(micBtn); form.appendChild(sendBtn);
+  form.appendChild(inWrap); form.appendChild(sendBtn); form.appendChild(micBtn);   // the mic at the right edge, Send next to it
   clearer(inp, inWrap, function () { if (listening) stopListen(true); });
   inp.addEventListener('input', function () { fitInp(); });
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
@@ -442,7 +458,9 @@ function build() {
   skp.onchange = function () { S.keep = skp.value; set('keepmic', S.keep); trace('setting', { keep: S.keep }); if (S.keep === 'open') warmMic(); else releaseMic(); };
   var sspd = document.getElementById('talk-s-speed'); sspd.value = String(S.speed);
   sspd.onchange = function () { S.speed = Number(sspd.value) || 1.25; set('speed', String(S.speed)); trace('setting', { speed: S.speed }); vcVoice(); if (S.voice !== 'off') { unlockAudio(); lastSpoken = true; say('This is how fast I talk.'); } };
-  spk.addEventListener('click', function () { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-2') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); if (S.voice === 'off') stopSpeaking(); });
+  var toggleVoice = function (where) { unlockAudio(); S.voice = S.voice === 'off' ? get('voice-on', 'aura-2') : 'off'; set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); trace('voice_toggle', { on: S.voice !== 'off', where: where }); if (S.voice === 'off') stopSpeaking(); };
+  spk.addEventListener('click', function () { toggleVoice('sheet'); });
+  bSpk.addEventListener('click', function () { toggleVoice('bar'); });
   voiceBtn();
   se.onchange = function () { S.engine = se.value; set('engine2', S.engine); trace('setting', { engine: S.engine }); if (S.engine === 'live') dcWarm(); showMic(); };
   sl.onchange = function () { S.lang = sl.value; set('lang', S.lang); };
@@ -455,7 +473,7 @@ function build() {
   render();
 }
 
-function open(on) { if (on && S.engine === 'live' && me) { dcWarm(); warmMic(); } if (!on) releaseMic(); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
+function open(on) { if (on && S.engine === 'live' && me) { dcWarm(); warmMic(); } if (!on) releaseMic(); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); if (on && hist.length) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
 // Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is, and keep
 // the bar's height free at the end of the page (and of the page's own scrolling panel, on project pages).
 var scrollers = null, lastLift = -1;
@@ -492,7 +510,8 @@ function placeBar() {
     if (r.height > 0 && r.bottom > window.innerHeight - 48 && r.top < window.innerHeight) lift = Math.max(lift, window.innerHeight - r.top);
   });
   lift = Math.round(lift);
-  bar.style.bottom = 'calc(' + (lift ? lift + 8 : 8) + 'px + env(safe-area-inset-bottom))';
+  if (window.innerWidth < 720 && !root.classList.contains('miconly')) { bar.style.bottom = lift ? lift + 'px' : '0px'; bar.style.setProperty('--talk-inset', lift ? '0px' : 'env(safe-area-inset-bottom)'); }
+  else bar.style.bottom = 'calc(' + (lift ? lift + 8 : (window.innerWidth < 720 ? 8 : 16)) + 'px + env(safe-area-inset-bottom))';
   var vb = document.getElementById('talk-ver');
   if (vb) { vb.style.right = '6px'; vb.style.bottom = 'calc(' + (lift + bar.offsetHeight + 12) + 'px + env(safe-area-inset-bottom))'; }
   reserve(lift);
@@ -501,7 +520,7 @@ function placeBar() {
 // Body-scrolling pages: a spacer after everything. Pages that scroll a panel of their own (a project page's view
 // between its header and its composer): that panel's bottom padding, measured once the page has drawn.
 function reserve(lift) {
-  var r = bar.getBoundingClientRect(), need = Math.round(r.height + 16);
+  var r = bar.getBoundingClientRect(), need = Math.round(r.height + (window.innerWidth < 720 ? 8 : 24));
   if (root.classList.contains('open')) return;
   if (!r.height) {   // the bar is hidden (resting above a composer): give the room back
     if (spacer.offsetHeight) spacer.style.height = '0px';
@@ -553,9 +572,16 @@ function add(who, text, links) { if (run && who !== 'you') run.texts.push(String
 function render() {
   logEl.innerHTML = '';
   if (!hist.length) {
-    var h = el('div', { class: 'hint' });
-    h.textContent = 'Try: “open my calculator”, “show me the code of the timer”, “what is this page?”, “build a habit tracker”.';
-    logEl.appendChild(h);
+    var box = el('div', { class: 'talk-ex' });
+    examples().slice(0, 3).forEach(function (g) {
+      var sec = el('section'), h = el('h3'); h.textContent = g.h; sec.appendChild(h);
+      var row = el('div'); g.xs.forEach(function (x) { var b = el('button', { type: 'button' }); b.textContent = x; b.onclick = function () { runExample(x); }; row.appendChild(b); });
+      sec.appendChild(row); box.appendChild(sec);
+    });
+    logEl.appendChild(box);
+    setTimeout(function () { logEl.scrollTop = 0; }, 60);
+    barSync();
+    return;
   }
   var lastMsg = hist.length ? hist[hist.length - 1] : null;
   barSync();
@@ -579,14 +605,16 @@ function barSync() {
   var mine = listening && !cInto;   // words for Talk (a page's composer shows its own)
   root.classList.toggle('live', mine && !offerState);
   root.classList.toggle('boffer', !!offerState);
-  var t = '', dim = false, last = null;
+  var t = '', dim = false, last = null, ex = '';
   for (var i = hist.length - 1; i >= 0; i--) if (hist[i].who !== 'you') { last = hist[i]; break; }
   if (offerState) t = offerState.text || (last ? last.text : 'Go ahead?');
   else if (mine) { t = inp.value.trim(); if (!t) { t = stEl.textContent || 'Listening\u2026'; dim = true; } }
   else if (busy && stEl.textContent) { t = stEl.textContent; dim = true; }
-  else if (last) t = last.text;
-  else { t = 'Ask qodebase, or say where to go'; dim = true; }
-  bText.textContent = String(t).replace(/\s+/g, ' ').trim();
+  else if (last && hist.length !== histAtLoad) t = last.text;
+  else ex = exampleLine();
+  root.classList.toggle('ex', !!ex);
+  if (ex) { bText.innerHTML = ''; bText.appendChild(document.createTextNode('Try: ')); var qq = el('q'); qq.textContent = ex; bText.appendChild(qq); bar.querySelector('#talk-bmid').setAttribute('aria-label', 'Say: ' + ex); }
+  else { bText.textContent = String(t).replace(/\s+/g, ' ').trim(); bar.querySelector('#talk-bmid').setAttribute('aria-label', 'Open the conversation'); }
   bText.classList.toggle('dim', dim);
   // Above a composer: hidden at rest; shown for live words, a question, work in progress, or a fresh answer (8 s).
   var happening = mine || !!offerState || busy || (vc && vcStatus !== 'idle');
@@ -600,6 +628,22 @@ function barSync() {
   barMode();
 }
 function bNote(t) { add('note', t); }
+// What a person can say, by page. Every one is a sentence the eval knows Talk handles.
+function examples() {
+  var own = latestOwn || 'todo';
+  var groups = [
+    { h: 'Build', xs: ['build a habit tracker', 'show me a medium idea', 'use the cheapest settings'] },
+    { h: 'Explore', xs: ['how does it work?', 'open explore', 'watch agents change one app'] },
+    { h: 'Your projects', xs: ['what is going on with my builds?', 'list my projects', 'open my ' + own] },
+  ];
+  if (/^\/p\//.test(location.pathname)) groups.unshift({ h: 'This project', xs: ['show the code', 'what does this project do?', 'show the timeline tab'] });
+  if (/^\/runs/.test(location.pathname)) groups.unshift({ h: 'Runs', xs: ['open the newest run', 'show me minute 2', 'what is going on with my builds?'] });
+  if (/^\/deck/.test(location.pathname)) groups.unshift({ h: 'Slides', xs: ['next slide', 'go to slide 5', 'show the speaker notes'] });
+  return groups;
+}
+var latestOwn = '', exI = 0, exT = null;
+function exampleLine() { var g = examples(), all = []; g.forEach(function (x) { x.xs.forEach(function (y) { all.push(y); }); }); var pageFirst = g[0].xs.concat(all.slice(g[0].xs.length)); return pageFirst[exI % pageFirst.length]; }
+function runExample(t) { trace('example', { text: t, where: root.classList.contains('open') ? 'sheet' : 'bar' }); unlockAudio(); lastSpoken = false; submit(t); }
 var miniT = null, restT = null, histAtLoad = -1;
 function barMode() {
   var m = document.body.getAttribute('data-talk-bar') || '';
@@ -721,6 +765,7 @@ function gateOf(c) {
   if (['press', 'go', 'type'].indexOf(c.op) < 0) return (c.risky || 0) >= 0.5 && ['status', 'list', 'code'].indexOf(c.op) < 0 ? 'refuse' : null;
   var label = String(c.label || '').trim();
   if ((c.destroys || 0) >= 0.5 || DESTROY_RX.test(label)) return 'refuse';
+  if (c.op === 'type') return null;   // filling a box is safe; its Send / Build it asks
   if ((c.risky || 0) >= 0.5 || (c.op === 'press' && CONFIRM_RX.test(label))) return 'confirm';
   return null;
 }
@@ -734,7 +779,7 @@ function confirmVerb(c) { var w = String(c.label || '').trim().split(/\s+/)[0] |
 // A greeting or small talk: a friendly line and three things to try, one with their own project.
 function greeting(example) {
   var p = example || 'todo';
-  return 'Hi! I can find things, open your projects, and answer questions about them. Try \u201cwhat\u2019s going on\u201d, \u201copen my ' + p + '\u201d, or \u201chow does my ' + p + ' work?\u201d';
+  return 'Hi. Say what to build, where to go, or ask \u201cwhat\u2019s going on?\u201d';
 }
 
 // ---- "What's going on": real data across their projects (/api/talk/status, no model).
@@ -880,11 +925,15 @@ function act(c, withPreview) {
       return done();
     }
     if (c.op === 'go') {
-      add('app', 'Opening ' + (c.label || c.href) + '…');
-      sset('last', c.label || c.href);
-      busy = false;
-      leave(function () { location.assign(c.href); });
-      return;
+      // Never open a page that is not there (a made-up /p/forq showed raw JSON): check it first, else ask which one.
+      return checkHref(c.href, c.target && byId(c.target)).then(function (ok) {
+        logEv('nav_check', { href: c.href, ok: ok });
+        if (!ok) return whichOne(c);
+        add('app', 'Opening ' + (c.label || c.href) + '…');
+        sset('last', c.label || c.href);
+        busy = false;
+        leave(function () { location.assign(c.href); });
+      });
     }
     if (c.op === 'back') { add('app', 'Going back…'); busy = false; leave(function () { history.back(); }); return; }
     if (c.op === 'press' && c.target && /^x/.test(c.target)) { return pageAction(c); }
@@ -914,6 +963,31 @@ function act(c, withPreview) {
   // Inside a closed panel (Build's settings, a closed <details>): open it first, then do it.
   if (target && !target.getClientRects().length) reveal(target, function () { target = find(c) || target; start(); }); else start();
 }
+// A link the page itself shows is a real place. A project link must name a project that exists; anything else is
+// asked for (GET, same origin, an HTML page that answers 2xx/3xx).
+var KNOWN = /^\/(|mine|explore|inbox|build|import|settings|cli|personal-agents|own|about|how|lab|runs|deck\/?|privacy|feedback)(\?.*)?$/;
+function checkHref(href, fromPage) {
+  var u; try { u = new URL(href, location.href); } catch (e) { return Promise.resolve(false); }
+  if (u.origin !== location.origin) return Promise.resolve(!!fromPage);
+  if (fromPage && fromPage.tagName === 'A') return Promise.resolve(true);
+  var m = /^\/p\/([^/]+)(?:\/([^/]+))?/.exec(u.pathname);
+  if (m) {
+    if (!m[2]) return Promise.resolve(false);   // /p/<owner> alone is not a page
+    return projects().then(function (l) { return l.some(function (p) { return p.owner === m[1] && p.name === m[2]; }); }).catch(function () { return true; });
+  }
+  if (KNOWN.test(u.pathname + u.search)) return Promise.resolve(true);
+  return fetch(u.href, { credentials: 'same-origin', redirect: 'follow' }).then(function (r) { return r.ok && /html/.test(r.headers.get('content-type') || ''); }).catch(function () { return false; });
+}
+function whichOne(c) {
+  return projects().then(function (l) {
+    var mine = l.filter(function (p) { return p.owner === me; }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); }).slice(0, 5);
+    var links = mine.map(function (p) { return { text: p.name, href: '/p/' + p.owner + '/' + p.name }; }).concat([{ text: 'All your projects', href: '/mine' }]);
+    var q = 'Which project? Your newest:';
+    add('ai', q, links); say('Which project?');
+    done();
+  }).catch(function () { add('note', 'That page is not there.'); done(); });
+}
+
 // The element a command names. Pages that redraw every few seconds (Runs, Agents at work) drop the data-talk ids:
 // read the page again and take the element with the same words.
 function find(c) {
@@ -997,7 +1071,8 @@ function offerSubmit(t) {
     return;
   }
   if (!b) return;
-  offerOn('Send it?', function () { if (f.requestSubmit) f.requestSubmit(b); else b.click(); }, (b.innerText || 'Send').trim());
+  var bl = (b.innerText || 'Send').trim();
+  offerOn(bl + '?', function () { if (f.requestSubmit) f.requestSubmit(b); else b.click(); }, bl);
 }
 
 var offerState = null;
@@ -1068,7 +1143,7 @@ var SPEAKERS = {
   'aura-2': ['draco', 'apollo', 'arcas', 'atlas', 'hermes', 'orion', 'zeus', 'asteria', 'athena', 'aurora', 'cora', 'helena', 'hera', 'iris', 'juno', 'luna', 'minerva', 'thalia'],
 };
 var player = null, actx = null;
-function voiceBtn() { if (!spk) return; var on = S.voice !== 'off'; spk.innerHTML = on ? ICON.sound : ICON.mute; spk.setAttribute('aria-label', on ? 'Spoken replies on (tap for text only)' : 'Text only (tap for spoken replies)'); spk.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+function voiceBtn() { var on = S.voice !== 'off'; [spk, bSpk].forEach(function (b) { if (!b) return; b.innerHTML = on ? ICON.sound : ICON.mute; b.setAttribute('aria-label', on ? 'Spoken replies on (tap for text only)' : 'Text only (tap for spoken replies)'); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); }
 // Phones only play sound that a tap started: every tap in Talk calls this, so a reply
 // that arrives seconds later may still play (the element and audio context are unlocked).
 function unlockAudio() {
@@ -1114,7 +1189,7 @@ function setListening(on) {
   micBtn.classList.toggle('on', on); micBtn.innerHTML = on ? ICON.stop : ICON.mic;
   if (cMic) { cMic.classList.toggle('on', on); cMic.innerHTML = on ? ICON.stop : ICON.mic; cMic.setAttribute('aria-label', on ? 'Stop' : 'Speak (hold for Talk)'); }
   if (cInto) { cInto.placeholder = on ? 'Listening\u2026' : (cInto.getAttribute('aria-label') || ''); var cf = cInto.closest('form'); if (cf && cf.__talkSync) cf.__talkSync(); }
-  if (inp) { inp.classList.toggle('live', on); inp.placeholder = on ? 'Listening\u2026' : 'Say or type: open my calculator'; fitInp(); }
+  if (inp) { inp.classList.toggle('live', on); inp.placeholder = on ? 'Listening\u2026' : 'Say or type'; fitInp(); }
   micBtn.setAttribute('aria-label', on ? 'Stop' : 'Speak');
   clearInterval(tick);
   if (on) { t0 = Date.now(); tick = setInterval(function () { status('Listening ' + Math.floor((Date.now() - t0) / 1000) + 's'); }, 250); status('Listening'); }
@@ -1682,7 +1757,7 @@ function signedOutBar() {
   var st = el('style'); st.textContent = css; document.head.appendChild(st);
   root = el('div', { id: 'talk-root' }); root.style.setProperty('--t-ff', getComputedStyle(document.body).fontFamily || 'sans-serif');
   bar = el('a', { id: 'talk-bar', href: '/login?to=' + encodeURIComponent(location.pathname), 'aria-label': 'Sign in to talk to qodebase', style: 'text-decoration:none;align-items:center' });
-  bar.innerHTML = '<span class="talk-bb pri">' + ICON.mic + '</span><span id="talk-bmid" style="cursor:pointer"><span id="talk-btext">Sign in to talk to qodebase: say what to build, and it builds it</span></span>';
+  bar.innerHTML = '<span class="talk-bb pri">' + ICON.mic + '</span><span id="talk-bmid" style="cursor:pointer"><span id="talk-btext">Sign in, then say \u201cbuild a habit tracker\u201d</span></span>';
   root.appendChild(bar); document.body.appendChild(root);
   spacer = el('div', { id: 'talk-spacer', 'aria-hidden': 'true' }); document.body.insertBefore(spacer, root);
   bMic = bar.firstChild; bText = document.getElementById('talk-btext');
@@ -1698,6 +1773,7 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   if (j.trace) traceStart(); else tq = [];
   CLIPS = !!j.clips;
   build();
+  projects().then(function (l) { var mine = l.filter(function (p) { return p.owner === me && !/^lab-|^real-/.test(p.name); }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); }); if (mine[0]) { latestOwn = mine[0].name.replace(/-/g, ' '); render(); } }).catch(function () {});
   publishTools();
   // Coming back from a navigation Talk made: show the sheet, finish any pending question.
   if (sget('call', false)) {

@@ -258,8 +258,7 @@ export class TalkVoice extends VoiceAgent {
       return `${what}? Say yes to go ahead.`;
     }
     if (c.greet) {
-      const p = c.example || 'todo';
-      return `Hi! I can find things, open your projects, and answer questions about them. Try asking what's going on, or say open my ${p}.`;
+      return `Hi. Say what to build, where to go, or ask what's going on.`;
     }
     // Speech comes garbled ("Our tasks stored in my to do app"): "not a request" with a concrete
     // reading behind it is not silence. Questions are answered (safe), a change goes to its confirm,

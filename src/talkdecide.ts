@@ -190,6 +190,10 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // "Go home" / "home page" is a fixed phrase: vocabulary in code, not the model (talkui's rule).
   const home = s.items.find((i) => i.kind === 'link' && i.href === '/');
   if (home && cmd.mode !== 'ask' && /\b(go|take me|back to the|bring me) home\b|\bhome ?page\b|^home$/i.test(utterance.trim())) return { ...cmd, mode: cmd.mode === 'none' ? 'act' : cmd.mode, op: 'go', href: '/', label: home.text, target: home.id };
+  // "Take me to my projects", "show my projects", "open yours": the Yours page (Eyal's phone, 2026-10-13: no confident
+  // pick, and the chat lane made up /p/forq, a page that does not exist). Vocabulary in code.
+  if (cmd.mode !== 'ask' && /\b(take me to|go to|open|show( me)?|bring me to|back to)\s+(all\s+)?(my|your) projects\b|^\s*(my|your) projects\s*[.!?]?$/i.test(utterance.trim()))
+    return { ...cmd, mode: 'act', op: 'go', href: '/mine', label: 'your projects', p: 0.9, why: 'my projects = /mine' };
   // A bare name of a place ("the code.", "changes", "agents"): saying it means open it. Eyal's phone, 2026-10-07:
   // "show me the code" arrived clipped as "the code." and the model picked the Code link but chose mode none.
   const words = utterance.trim().replace(/[.!?,]+$/g, '').split(/\s+/).filter(Boolean);
@@ -334,6 +338,8 @@ export function gate(c: Cmd): 'refuse' | 'confirm' | null {
   if (!['press', 'go', 'type'].includes(c.op)) return (c.risky ?? 0) >= 0.5 && c.op !== 'status' && c.op !== 'list' && c.op !== 'code' ? 'refuse' : null;
   const label = String(c.label || '').trim();
   if ((c.destroys ?? 0) >= 0.5 || DESTROY_WORDS.test(label)) return 'refuse';
+  // Typing only fills a box (its Send or Build it is the step that needs a yes): "build a habit tracker" types at once.
+  if (c.op === 'type') return null;
   if ((c.risky ?? 0) >= 0.5 || (c.op === 'press' && CONFIRM_WORDS.test(label))) return 'confirm';
   return null;
 }
