@@ -92,6 +92,12 @@ estimate.
   shows batch 4. Expect ~1–2 min at the models' limits (gemma ~200 + glm ~400 calls/min, Gemini 3.1 overflow),
   every file's index lines colliding on docs/API.md and re-inserted on the newest main, **~$1.5–3; cap it at $5**.
   The reserved copy fleet-n2-vscode-src-1 has src/vs fresh.
+- **qb7, checked live (forq 119b989): 3a ready for 1,000 agents.** The sentence fills VS Code
+  (fleet-n2-vscode-src-1), src/vs, doc comments + API index, 1,000 agents, batch 4 on Start, and the estimate
+  '4,064 files, 1,000 agents: about 2 to 4 min and $0.80 to $1.49. It stops at $3.00 whatever happens.'
+  **Mismatch to settle before the take:** qb6 expects ~$1.5–3 and a $5 cap, the form estimates $0.80–1.49 with a $3
+  cap. If qb6 is right, $3 could stop the run on camera: raise the budget on the form to $5 before Start (or qb7
+  makes that the default for this job).
 
 ## Pre-flight (08:00–08:45 UTC)
 
