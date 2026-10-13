@@ -180,6 +180,9 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // 1:20" → a run's moment): the page's own action, even when the model heard a question. Only actions the page
   // registered (x… ids), only when the model is sure it is this page's thing.
   const tbx = top(answers.button);
+  // Already pressing that very action, but sure of it only by the action's own pick ("…with 1,000 agents" on /runs:
+  // press xfleet-job at p 0.29 → only a "Maybe…?"): the action's confidence is the command's.
+  if (cmd.op === 'press' && /^x/.test(String(cmd.target || '')) && cmd.target === tbx.choice && (tbx.p ?? 0) >= 0.85 && (cmd.p ?? 0) < (tbx.p ?? 0)) cmd.p = tbx.p;
   // (A very sure pick needs no "this page" yes: live, the intent finder was 0.93 with on_page 0.22.)
   if (/^x/.test(tbx.choice) && ((tbx.p ?? 0) >= 0.85 || ((tbx.p ?? 0) >= 0.6 && (answers.on_page?.noul ?? 0) >= 0.5)) && cmd.op !== 'press' && !['change', 'code', 'list'].includes(cmd.op)) {
     const it = s.items.find((i) => i.id === tbx.choice);
