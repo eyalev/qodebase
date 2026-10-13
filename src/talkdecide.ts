@@ -183,6 +183,24 @@ export function quickCmd(utterance: string, s: Screen, projects: Proj[]): Cmd | 
   if (!u || u.split(/\s+/).length > 12) return null;
   const base: Cmd = { mode: 'act', modeP: 1, op: 'none', p: 0.95, risky: 0, destroys: 0, complete: 1 };
   if (STATUS_RX.test(u)) return { ...base, mode: 'ask', op: 'status', why: 'status words (no model)' };
+  // The turns Eyal says most (traces, 2026-10-13): counts, greetings, ideas, how-it-works questions. Same answers resolve() gives.
+  if (/^\s*how many (of my )?(projects|apps)( do i have| have i got)?( now| so far)?\s*[?.!]*\s*$/i.test(u)) {
+    const mine = projects.filter((p) => p.mine).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/-/g, ' '));
+    return { ...base, mode: 'ask', op: 'list', text: mine.slice(0, 6).join(', '), href: '/mine', label: 'your projects', target: String(mine.length), why: 'count words (no model)' };
+  }
+  if (/^\s*(hi|hello|hey|hiya|good (morning|afternoon|evening))( there)?(,?\s*(my )?(friend|qodebase|talk))?\s*[.!?]*\s*$/i.test(u)) {
+    const own = projects.filter((p) => p.mine && !isScaffold(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+    return { ...base, mode: 'none', op: 'none', greet: true, example: own ? own.name.replace(/-/g, ' ') : undefined, why: 'greeting (no model)' } as Cmd;
+  }
+  const sz = /^\s*(please\s+)?(give me|show me|suggest|get me|i want|i need)\s+(an?|another|one)\s+(small|tiny|quick|medium|large|big|huge)?\s*(app\s+)?idea\s*[.!?]*\s*$/i.exec(u);
+  if (sz) {
+    const size = /small|tiny|quick/i.test(sz[4] || '') ? 'Small' : /huge/i.test(sz[4] || '') ? 'Huge' : /large|big/i.test(sz[4] || '') ? 'Large' : 'Medium';
+    const btn = s.items.find((i) => i.kind === 'button' && new RegExp('^' + size + '\\b').test(i.text));
+    if (btn) return { ...base, op: 'idea', target: btn.id, label: btn.text, text: size, why: 'idea words (no model)' };
+    return { ...base, op: 'go', href: '/', label: 'home', then: u, why: 'ideas live on home (no model)' };
+  }
+  if (/^\s*(how does (a |the )?(build|qodebase|code ?base|this|it|talk) work|what (can|does) (qodebase|code ?base|this( site| app)?|talk) do( for me)?|what is qodebase|explain qodebase)\s*[?.!]*\s*$/i.test(u))
+    return { ...base, mode: 'ask', op: 'none', why: 'a question about qodebase (no model)' };
   const home = s.items.find((i) => i.kind === 'link' && i.href === '/');
   if (home && /^\s*((please\s+)?(go|take me|bring me|get me)\s+(back\s+)?home|(open\s+|go to\s+)?(the\s+)?home ?page|home)\s*[.!]*\s*$/i.test(u)) return { ...base, op: 'go', href: '/', label: home.text, target: home.id, why: 'home words (no model)' };
   if (/^\s*((please\s+)?(take me to|go to|open|show( me)?|bring me to|back to)\s+(all\s+)?(my|your) projects|(my|your) projects)\s*[.!]*\s*$/i.test(u)) return { ...base, op: 'go', href: '/mine', label: 'your projects', why: 'my projects = /mine (no model)' };

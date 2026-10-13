@@ -124,7 +124,7 @@ const aiOpts = (env: Env) => (env.TALK_GATEWAY ? { gateway: { id: env.TALK_GATEW
 
 // clef-flash latency is bimodal (talkui, 2026-10-02): most calls 0.3–0.9 s, about
 // one in four 12–90 s upstream. Fire it again at each mark; the first answer wins.
-const HEDGE_MS = [1200, 2500];
+const HEDGE_MS = [700, 1500];   // a second (and third) identical call if the first has not answered: p50 was 1.1 s (2026-10-13)
 async function hedged<T>(call: () => Promise<T>, marks: number[]): Promise<{ res: T; fired: number; won: number }> {
   let fired = 1;
   const timers: ReturnType<typeof setTimeout>[] = [];

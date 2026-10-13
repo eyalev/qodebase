@@ -92,7 +92,7 @@ var chatHist = sget('chat', []);       // [{role, content}] for the chat lane
 
 // ---- DOM -------------------------------------------------------------------
 var css = [
-  '#talk-root{--t-frame:var(--frame,#d9dbe0);--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);--t-warn:var(--warn,#b42d1f);font:16px/1.45 var(--t-ff);color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
+  '#talk-root{--t-frame:var(--frame,#d9dbe0);--t-acc:var(--acc,#6a2ff0);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);--t-warn:var(--warn,#b42d1f);font:16px/1.45 var(--t-ff);color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
   // The voice bar (2026-10-13, manager's brief): a mini-player on every page, above the page's own bottom bars.
   // Mic + what you are saying (growing to 3 lines) or the last answer in one line; tap it to open the whole
   // conversation, which folds back into the bar. Its height is kept free at the end of the page.
@@ -189,7 +189,7 @@ var css = [
   '#talk-root.nobar #talk-bar{display:none}',
   // Pages with a composer (form.ask, [data-talk-composer]) get the mic inside it, WhatsApp-style, and no floating button.
   'body.talk-composer #talk-ver{display:none!important}',
-  '.talk-cmic{width:44px;height:44px;flex:none;border-radius:12px;border:0;background:var(--acc,#17695a);color:var(--acc-fg,#fff);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}',
+  '.talk-cmic{width:44px;height:44px;flex:none;border-radius:12px;border:0;background:var(--acc,#6a2ff0);color:var(--acc-fg,#fff);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}',
   '.talk-cmic svg{width:22px;height:22px}',
   '.talk-cmic.on{background:var(--warn,#b42d1f)}',
   'form.talk-hassend-off .send{display:none!important}',
@@ -246,7 +246,7 @@ var css = [
   '#talk-set select{height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);font:16px var(--t-ff);padding:0 8px}',
   '.talk-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}',
   '.talk-link{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:8px;background:var(--t-chip);color:var(--t-fg);font-size:14px;text-decoration:none}',
-  '.talk-mark{outline:3px solid var(--acc,#17695a)!important;outline-offset:3px!important;border-radius:8px;transition:outline-color .12s}',
+  '.talk-mark{outline:3px solid var(--acc,#6a2ff0)!important;outline-offset:3px!important;border-radius:8px;transition:outline-color .12s}',
   '.talk-mark.dash{outline-style:dashed!important}',
 ].join('\n');
 
@@ -2093,7 +2093,7 @@ function liveOpen() {
       // nova-3's speech_final sometimes comes seconds after the final words (2.3 s, 2026-10-13): a final that ends a
       // sentence ('…project?') and sounds finished ends the turn too, after 0.6 s with no new words.
       var sentenceEnd = d.type === 'final' && /[.?!]["\u201d\u2019)]*$/.test(txt);
-      if ((d.end || sentenceEnd) && dcBuf.length && !dcText && convOn() && S.fast === 'on' && soundsDone(dcSaid(''))) { guess(dcSaid(''), true); endT = setTimeout(function () { if (dcOn && !dcText) endTurn(d.end ? 'endpoint' : 'sentence'); }, d.end ? 450 : 600); }   // + nova-3's 300 ms = ~0.75 s of quiet
+      if ((d.end || sentenceEnd) && dcBuf.length && !dcText && convOn() && S.fast === 'on' && soundsDone(dcSaid(''))) { guess(dcSaid(''), true); endT = setTimeout(function () { if (dcOn && !dcText) endTurn(d.end ? 'endpoint' : 'sentence'); }, sentenceEnd ? 450 : 1000); }   // no closing punctuation ('What's going'): wait longer   // + nova-3's 300 ms = ~0.75 s of quiet
       if (!nativePreview) setInp(dcBase + dcSaid(dcText));
     } else if (d.type === 'error') { trace('stt_ws_server_error', { err: d.error }); if (!gotWords && dcOn && !nativePreview) startNativePreview(); }
   };
@@ -2363,6 +2363,34 @@ function signedOutBar() {
 }
 
 ` + CONV_JS + String.raw`
+// ---- Test hook (qb7's Talk workflow harness, 2026-10-13): words fed into the SAME pipeline as live dictation, as if
+// nova-3 delivered them and an end: lastSpoken, a latency row, quickCmd/STATUS_RX, the guessed decide, the Whisper
+// double-check (whisper defaults to the same words) and spoken replies all run. Off unless this device opted in:
+// localStorage qb-talk-test=1 or ?talktest=1. Returns the utterance id; the trace rows carry test:true.
+var TEST_ON = (function () { try { return localStorage.getItem('qb-talk-test') === '1' || /[?&]talktest=1\b/.test(location.search); } catch (e) { return false; } })();
+if (TEST_ON) window.__talkTest = {
+  live: function (words, o) {
+    o = o || {};
+    words = String(words || '').trim();
+    if (!words) return Promise.reject(new Error('no words'));
+    if (busy) return Promise.reject(new Error('busy'));
+    curU = newU(); uSaid = false;
+    lastWordAt = Date.now() - 300;   // as if the last word came 0.3 s before nova-3's end
+    latStart('test');
+    var w = o.whisper == null ? words : String(o.whisper), t0 = Date.now();
+    trace('dc_whisper', { how: 'test-live', live: words, final: words, send: true, test: true, conv: !!o.conv });
+    latMark('final', { heard: 'test-live' });
+    var wpo = { live: words, taken: false };
+    wpo.p = new Promise(function (ok) { setTimeout(function () { ok(wordsOnly(w)); }, Number(o.whisperMs) || 1500); });
+    wpo.p.then(function (ww) { if (!wpo.taken) whisperCheck(words, { whisper: ww }, t0); });
+    whisperP = wpo;
+    lastSpoken = true;
+    submit(words);
+    return Promise.resolve({ u: curU });
+  },
+  state: function () { return { busy: busy, listening: listening, conv: convOn(), speaking: !!(speakPending || speakingQ || ackPlaying), offer: offerState ? offerState.text : null, last: hist.length ? hist[hist.length - 1] : null }; },
+};
+
 // ---- Boot ----------------------------------------------------------------
 fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
   if (!j.signedIn) return signedOutBar();
