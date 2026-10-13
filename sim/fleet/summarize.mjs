@@ -6,7 +6,8 @@ import { execSync } from 'node:child_process';
 import { sameCode, insertComments } from './verify.mjs';
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const ROOT = path.join(process.env.HOME, 'projects/github/microsoft/vscode');
-const rows = fs.readFileSync(path.join(HERE, 'f0-results.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((r) => !r.event);
+const IN = process.argv.slice(2).filter((a) => a.endsWith('.jsonl'));
+const rows = (IN.length ? IN : ['f0-results.jsonl']).flatMap((f) => fs.readFileSync(path.join(HERE, f), 'utf8').trim().split('\n').map((l) => JSON.parse(l))).filter((r) => !r.event);
 const CHUNK = 600;   // lines per call for big files (a call answered up to ~38 comments on ~550 lines)
 const sizes = execSync(`cd ${ROOT} && find src/vs -name '*.ts' -not -path '*/test/*' -not -name '*.d.ts' -exec wc -lc {} +`, { encoding: 'utf8' }).trim().split('\n')
   .map((l) => l.trim().split(/\s+/)).filter((p) => p[2] && p[2] !== 'total').map(([lines, bytes]) => ({ lines: +lines, bytes: +bytes }));
@@ -33,5 +34,5 @@ for (const model of [...new Set(rows.map((r) => r.model))]) {
     per1kFiles: per1k, allSrcVs: est(corpus.bytes, corpus.calls),
   };
 }
-fs.writeFileSync(path.join(HERE, 'f0-summary.json'), JSON.stringify(out, null, 1));
+fs.writeFileSync(path.join(HERE, IN.includes('f0-google.jsonl') ? 'f0-summary-all.json' : 'f0-summary.json'), JSON.stringify(out, null, 1));
 console.log(JSON.stringify(out, null, 1));

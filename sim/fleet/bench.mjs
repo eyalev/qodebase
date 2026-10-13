@@ -17,10 +17,19 @@ const MODELS = {
   '@cf/google/gemma-4-26b-a4b-it': { chat_template_kwargs: { enable_thinking: false } },
   '@cf/zai-org/glm-5.3-flash': { reasoning_effort: 'low' },
 };
+// Google AI Studio through the same gateway (provider google-ai-studio), key from ~/.config/qodebase-fleet/gemini.key
+// (never printed). $ per M tokens, ai.google.dev/gemini-api/docs/pricing (updated 2026-10-09); thoughts bill as output.
+// Gemma 4 on AI Studio: free tier only (paid 'not available'), so $0 here and low limits.
+const GOOGLE = {
+  'google/gemini-3.5-flash-lite': { in: 0.30, out: 2.50 },
+  'google/gemini-3.1-flash-lite': { in: 0.25, out: 1.50 },
+  'google/gemma-4-26b-a4b-it': { in: 0, out: 0 },
+};
+const GKEY = (() => { try { return fs.readFileSync(path.join(process.env.HOME, '.config/qodebase-fleet/gemini.key'), 'utf8').trim(); } catch { return null; } })();
 const models = (arg('models') || Object.keys(MODELS).join(',')).split(',');
 const JUDGE = arg('judge', '@cf/openai/gpt-oss-120b');
 const BUDGET = +arg('budget', 2);
-const OUT = path.join(path.dirname(new URL(import.meta.url).pathname), 'f0-results.jsonl');
+const OUT = path.join(path.dirname(new URL(import.meta.url).pathname), arg('out', 'f0-results.jsonl'));
 let spentUsd = 0;
 const log = (o) => fs.appendFileSync(OUT, JSON.stringify({ ts: new Date().toISOString(), ...o }) + '\n');
 
@@ -34,8 +43,27 @@ function pick(n) {
   return out;
 }
 
+async function callGoogle(model, messages, maxTokens) {
+  const m = model.slice('google/'.length), price = GOOGLE[model];
+  const sys = messages.find((x) => x.role === 'system')?.content;
+  const t0 = Date.now();
+  const r = await fetch(`https://gateway.ai.cloudflare.com/v1/${ACC}/${GW}/google-ai-studio/v1beta/models/${m}:generateContent`, {
+    method: 'POST', headers: { 'x-goog-api-key': GKEY, 'content-type': 'application/json', 'cf-aig-metadata': JSON.stringify({ run: 'f0' }) },
+    body: JSON.stringify({ ...(sys ? { systemInstruction: { parts: [{ text: sys }] } } : {}),
+      contents: messages.filter((x) => x.role !== 'system').map((x) => ({ role: 'user', parts: [{ text: x.content }] })),
+      generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2, responseMimeType: 'application/json', thinkingConfig: { thinkingLevel: 'minimal' } } }) });
+  const ms = Date.now() - t0;
+  const d = await r.json().catch(() => ({}));
+  const u = d.usageMetadata || {};
+  const out = (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0);
+  const usd = ((u.promptTokenCount || 0) * price.in + out * price.out) / 1e6; spentUsd += usd;
+  const text = (d.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('');
+  return { ok: r.ok, status: r.status, ms, text, in: u.promptTokenCount, out, neurons: null, usd, err: r.ok ? null : JSON.stringify(d).slice(0, 300) };
+}
+
 async function call(model, messages, extra = {}, maxTokens = 4000) {
   if (spentUsd >= BUDGET) throw new Error(`budget ${BUDGET} reached`);
+  if (model.startsWith('google/')) return callGoogle(model, messages, maxTokens);
   const t0 = Date.now();
   const r = await fetch(`https://gateway.ai.cloudflare.com/v1/${ACC}/${GW}/workers-ai/v1/chat/completions`, {
     method: 'POST', headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json', 'cf-aig-metadata': JSON.stringify({ run: 'f0' }) },
@@ -66,7 +94,7 @@ console.log('files', files.length, 'models', models.join(' '));
 for (const model of models) {
   const rows = await pool(files, 5, async (file) => {
     const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
-    const r = await call(model, [{ role: 'system', content: SYS }, { role: 'user', content: ask(file, text) }], MODELS[model]);
+    const r = await call(model, [{ role: 'system', content: SYS }, { role: 'user', content: ask(file, text) }], MODELS[model] || {});
     const j = r.ok ? parseJson(r.text) : null;
     const items = Array.isArray(j?.comments) ? j.comments.filter((c) => Number.isInteger(c.line) && typeof c.comment === 'string' && c.comment.trim().startsWith('/**') && c.comment.trim().endsWith('*/')) : [];
     const after = insertComments(text, items);
