@@ -12,6 +12,8 @@
   // typescript.js reads __filename/__dirname at load (Workers have neither)
   "define": { "__filename": "\"/typescript.js\"", "__dirname": "\"/\"" },
   "ai": { "binding": "AI" },
+  // S3: the answers the fleet already produced, keyed by the original file's blob hash (scripts/build-cache.mjs)
+  "kv_namespaces": [{ "binding": "FLEET_CACHE", "id": "fcaf78997dea45c6b8d145598f878dfe" }],
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "qbfleet" }],
   "vars": {
     "FLEET_LAST_DAY": "2026-10-14",

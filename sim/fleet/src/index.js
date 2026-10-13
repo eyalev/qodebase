@@ -52,6 +52,7 @@ export default {
         if (usd) await budget(env).spend(usd);
         return json({ result: res, usd });
       }
+      case '/series': return json(await run(env, repo).series(url.searchParams.get('run')));
       case '/meta': return json(await run(env, repo).setMeta(String(body.run || ''), body.meta || {}));
       case '/records': return new Response(await run(env, repo).records(url.searchParams.get('run')), { headers: { 'content-type': 'application/x-ndjson' } });
       case '/budget': return json(await budget(env).status());
@@ -130,6 +131,9 @@ export class Run extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS rec (run TEXT, file TEXT, status TEXT, reason TEXT, model TEXT, agent INT, at INT, ms INT, usd REAL, tin INT, tout INT, comments INT, landed_at INT)`);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS q (run TEXT, i INT, path TEXT, hash TEXT, taken INT DEFAULT 0, PRIMARY KEY (run, i))`);
     try { this.sql.exec(`ALTER TABLE q ADD COLUMN tries INT DEFAULT 0`); } catch {}
+    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
+    // S4/qb7: the queue sampled every 10 s while a run is on (the series' depth per stage).
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS samp (run TEXT, t INT, waiting INT, at_model INT, ready INT, landed INT, lander_waiting INT, PRIMARY KEY (run, t))`);
   }
   // One state object in memory, shared by every handler: handlers that await other objects interleave, and each saving the
   // copy it had read lost the others' counts (F2 at 100 agents showed -37 files at the model).
@@ -145,10 +149,12 @@ export class Run extends DurableObject {
     // Models side by side, each paced at its own limit (Workers AI: 300 req/min per model): cfg.models [{model, maxPerMin}],
     // or one cfg.model at cfg.maxPerMin. cfg.overflow {model, maxPerMin}: Gemini through the same gateway, used only when
     // every Workers AI model is at its limit.
+    // S3: model 'cache' answers from the comments the fleet already produced (KV FLEET_CACHE, keyed by the file's blob hash):
+    // no model call, everything else real. A miss is recorded as cache_miss (no fallback in the scale ladder).
     cfg.models = (Array.isArray(cfg.models) && cfg.models.length ? cfg.models : [{ model: cfg.model, maxPerMin: cfg.maxPerMin }]).map((m) => ({ model: m.model, maxPerMin: Number(m.maxPerMin) || 250 }));
     cfg.model = cfg.models.map((m) => m.model).join(' + ');
     const prices = PRICES_OF(this.env);
-    for (const m of [...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])]) if (!m.model || !prices[m.model]) return { error: `model ${m.model} has no price: one of ${Object.keys(prices).join(', ')}` };
+    for (const m of [...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])]) if (!m.model || (m.model !== 'cache' && !prices[m.model])) return { error: `model ${m.model} has no price: one of ${Object.keys(prices).join(', ')}` };
     if ([...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])].some((m) => m.model.startsWith('gemini')) && !this.env.GEMINI_KEY) return { error: 'a Gemini model needs the GEMINI_KEY secret' };
     cfg.agents = Math.max(1, Math.min(2000, Number(cfg.agents) || 10));
     cfg.budgetUsd = Math.min(Number(cfg.budgetUsd) || 1, b.left);
@@ -201,7 +207,7 @@ export class Run extends DurableObject {
     let pickM = s.cfg.models.find(room);
     if (!pickM && s.cfg.overflow && room(s.cfg.overflow)) pickM = s.cfg.overflow;
     if (!pickM) return { wait: 2_000 + Math.random() * 3000 };
-    const provider = pickM.model.startsWith('gemini') ? 'google-ai-studio' : 'workers-ai';   // a planned Gemini model too (F3b)
+    const provider = pickM.model === 'cache' ? 'cache' : pickM.model.startsWith('gemini') ? 'google-ai-studio' : 'workers-ai';   // a planned Gemini model too (F3b)
     s.perSlice[`${pickM.model}|${slice}`] = (s.perSlice[`${pickM.model}|${slice}`] || 0) + 1;
     for (const k of Object.keys(s.perSlice)) if (Number(k.split('|')[1]) < slice - 12) delete s.perSlice[k];
     if (s.usd >= s.cfg.budgetUsd) { await this.autoPause(s, `run budget reached: $${s.usd.toFixed(3)} of $${s.cfg.budgetUsd}`); return { wait: 15_000 }; }
@@ -233,8 +239,15 @@ export class Run extends DurableObject {
       const q = this.sql.exec(`SELECT i, tries FROM q WHERE run = ? AND path = ?`, runId, r.file).toArray()[0];
       if (q && (q.tries || 0) < 2) { this.sql.exec(`UPDATE q SET taken = 0, tries = ? WHERE run = ? AND i = ?`, (q.tries || 0) + 1, runId, q.i); r = { ...r, status: `${r.status}_retry` }; }
     }
-    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0);
+    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0);
+    const t10 = Math.floor(Date.now() / 10000) * 10000;
+    if (s.lastSample !== t10) {
+      s.lastSample = t10;
+      const qq = this.sql.exec(`SELECT SUM(taken = 0) AS w, SUM(taken = 1) AS tk FROM q WHERE run = ?`, runId).toArray()[0] || {};
+      const fin = this.sql.exec(`SELECT COUNT(*) AS n, SUM(status = 'ready') AS rd, SUM(status = 'landed') AS ld FROM rec WHERE run = ? AND status NOT LIKE '%_retry'`, runId).toArray()[0] || {};
+      this.sql.exec(`INSERT OR REPLACE INTO samp (run, t, waiting, at_model, ready, landed, lander_waiting) VALUES (?,?,?,?,?,?,?)`, runId, t10, qq.w || 0, Math.max(0, (qq.tk || 0) - (fin.n || 0)), fin.rd || 0, fin.ld || 0, null);
+    }
     // Old per-minute buckets go (an hour kept).
     for (const k of Object.keys(s.perMin)) if (Number(k) < minute - 60) delete s.perMin[k];
     await this.save(s);
@@ -340,6 +353,26 @@ export class Run extends DurableObject {
   /** Admin: fill in a past run's label and facts (runs from before run meta was kept). */
   async setMeta(runId, m) { const k = `meta:${runId}`; const cur = (await this.ctx.storage.get(k)) || {}; await this.ctx.storage.put(k, { ...cur, ...m }); return { ...cur, ...m }; }
 
+  /** qb7's Runs page: the run in 10-second slices (calls by model, 429s, landed by lane, $, land wait p90) + sampled queue depth + marks. */
+  async series(runId) {
+    const s = await this.st(); const id = runId || s?.runId;
+    const meta = (await this.ctx.storage.get(`meta:${id}`)) || {};
+    const root = meta.root || 'src/vs';
+    const by = new Map(); const slot = (t) => { const k = Math.floor(t / 10000) * 10000; if (!by.has(k)) by.set(k, { t: k, calls: {}, r429: 0, landed: 0, lanes: {}, usd: 0, waits: [] }); return by.get(k); };
+    for (const r of this.sql.exec(`SELECT at, model, status, usd FROM rec WHERE run = ? AND status != 'skipped'`, id).toArray()) { const x = slot(r.at); x.calls[r.model] = (x.calls[r.model] || 0) + 1; if (String(r.status).startsWith('rate_limited')) x.r429++; x.usd += r.usd || 0; }
+    for (const r of this.sql.exec(`SELECT file, at, landed_at FROM rec WHERE run = ? AND landed_at IS NOT NULL`, id).toArray()) { const x = slot(r.landed_at); x.landed++; const ln = laneOf(r.file, root); x.lanes[ln] = (x.lanes[ln] || 0) + 1; x.waits.push(r.landed_at - r.at); }
+    const samp = new Map(this.sql.exec(`SELECT * FROM samp WHERE run = ?`, id).toArray().map((r) => [r.t, { waiting: r.waiting, atModel: r.at_model, readyToLand: r.ready }]));
+    const series = [...by.values()].sort((a, b) => a.t - b.t).map((x) => {
+      const top = Object.entries(x.lanes).sort((a, b) => b[1] - a[1]); const lanes = Object.fromEntries(top.slice(0, 10)); const other = top.slice(10).reduce((n, [, v]) => n + v, 0); if (other) lanes.other = other;
+      const w = x.waits.sort((a, b) => a - b);
+      return { t: x.t, calls: x.calls, r429: x.r429, landed: x.landed, lanes, usd: Math.round(x.usd * 1e5) / 1e5, landWaitP90: w.length ? Math.round(w[Math.floor(w.length * 0.9)] / 1000) : null, queue: samp.get(x.t) || null };
+    });
+    const cur = s && s.runId === id ? s : null;
+    const marks = (cur?.pauses || meta.pauses || []).map((p) => ({ at: p.at, kind: p.why === 'resumed' ? 'resume' : p.auto ? 'auto_pause' : 'pause', why: p.why }));
+    if (cur?.state === 'stopped') marks.push({ at: cur.endedAt, kind: 'stop', why: cur.stoppedWhy || '' });
+    return { runId: id, start: series[0]?.t ?? cur?.startedAt ?? null, end: cur ? cur.endedAt || null : series.at(-1)?.t ?? null, slice: 10000, series, limits: meta.maxPerMin || {}, marks };
+  }
+
   async records(runId) {
     const s = await this.st(); const id = runId || s?.runId;
     return this.sql.exec(`SELECT * FROM rec WHERE run = ? ORDER BY at`, id).toArray().map((r) => JSON.stringify(r)).join('\n') + '\n';
@@ -384,12 +417,16 @@ export class Agent extends DurableObject {
   async alarm() {
     const runId = await this.ctx.storage.get('runId'), i = await this.ctx.storage.get('i'), repoName = (await this.ctx.storage.get('repo')) || MAIN;
     const R = run(this.env, repoName);
-    const n = await R.next(runId);
+    let n;
+    // Infra errors on our own objects (an overloaded Run, a reset) are counted here and reported with the next result.
+    try { n = await R.next(runId); } catch (e) { await this.ctx.storage.put('infraErrs', ((await this.ctx.storage.get('infraErrs')) || 0) + 1); log('agent_infra_error', { runId, i, where: 'next', err: String(e?.message || e).slice(0, 200) }); await this.ctx.storage.setAlarm(Date.now() + 1000 + Math.random() * 2000); return; }
     if (n.stop) { await R.agentFinished(runId); return; }
     if (n.wait) { await this.ctx.storage.setAlarm(Date.now() + n.wait); return; }
     const r = await this.work(n.file, n.model, n.provider, repoName).catch((e) => ({ file: n.file.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
     r.model = n.model; r.slot = n.slot;
-    await R.done(runId, i, r);
+    r.infraErrs = (await this.ctx.storage.get('infraErrs')) || 0;
+    try { await R.done(runId, i, r); await this.ctx.storage.put('infraErrs', 0); }
+    catch (e) { await this.ctx.storage.put('infraErrs', r.infraErrs + 1); log('agent_infra_error', { runId, i, where: 'done', err: String(e?.message || e).slice(0, 200) }); }
     await this.ctx.storage.setAlarm(Date.now() + 50);
   }
   async work(file, model, provider = 'workers-ai', repoName = MAIN) {
@@ -398,8 +435,20 @@ export class Agent extends DurableObject {
     const blob = await repo.readBlob(file.hash);
     if (!blob) return { file: file.path, status: 'model_error', reason: 'blob not found', ms: Date.now() - t0 };
     const text = new TextDecoder().decode(await blob.arrayBuffer());
+    const tRead = Date.now() - t0;
     const tg = targets(file.path, text);
-    if (!tg.length) return { file: file.path, status: 'skipped', reason: 'nothing to document', ms: Date.now() - t0 };
+    if (!tg.length) return { file: file.path, status: 'skipped', reason: 'nothing to document', ms: Date.now() - t0, tRead };
+    if (provider === 'cache') {
+      const hit = await this.env.FLEET_CACHE.get(file.hash, 'json');
+      if (!hit) return { file: file.path, status: 'cache_miss', reason: 'no cached answer for this content', ms: Date.now() - t0, tRead };
+      const tV = Date.now();
+      const { text: next, inserted } = insert(text, tg, hit.c || {});
+      if (!inserted) return { file: file.path, status: 'rejected', reason: 'cached answer names no target', ms: Date.now() - t0, tRead };
+      const v = verify(file.path, text, next);
+      const tVerify = Date.now() - tV;
+      if (!v.ok) return { file: file.path, status: 'verify_fail', reason: v.why, ms: Date.now() - t0, tRead, tVerify };
+      return { file: file.path, status: 'ready', text: next, comments: inserted, ms: Date.now() - t0, usd: 0, tRead, tModel: 0, tVerify };
+    }
     let res;
     if (provider === 'google-ai-studio') {
       // Gemini through the same AI Gateway (provider google-ai-studio), JSON answer, the provider's own token counts.
