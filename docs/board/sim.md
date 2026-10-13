@@ -1454,3 +1454,52 @@ runs, i.e. its 85/min share x 3, counted in files. qb6's fix: one slot per pack 
 - **The first model wall should now be gemma's 3040 capacity:** 255 calls/min of ~5 files each use more capacity than
   S5 v1's single files did.
 - ~12k files at ~100 files/s is ~2 min: read the peak windows.
+
+## (m) Code collision dial: prediction before qb6's runs (qb4, 2026-10-13)
+
+**Setup** (generator: lab-hidden/kata, private; public seed and tasks: sim/kata/seed-1):
+- **Functions:** 400 small specified functions: 18 families (strings, dates, parsers) with variants, 80 distinct
+  functions placed in 5 modules, one file each.
+- **Tasks:** 1,385: one 'impl' per function plus 2-3 change requests (CRs). Each CR adds one option flag, so all CRs on
+  a function compose.
+- **Hidden tests:** 6,340 cases, never in a box or this repo. Each CR's cases include at least 2 where its flag changes
+  the answer.
+- **Checker check:** a reference solution passes 6,340/6,340; the untouched stubs pass 0. With one CR's option dropped,
+  the checker flags exactly that 'requirement lost'.
+- **The dial** is the share of tasks put in clusters: all of a function's tasks back to back, so different agents take
+  them at the same moment (0% / 30% / 60% = 0 / 418 / 834 tasks). The rest are spread a whole layer apart (≥170 tasks
+  between a function's tasks at dial 30, ≥91 at dial 60).
+
+**Model** (sim/kata/predict.mjs, 10 runs per cell):
+- A agents take tasks in order. A task takes T, lognormal with median T and σ 0.5.
+- A finished task lands at the next Lander round (every 5 s) plus a 3 s push.
+- A task is stale if another task on the same function landed after it read main. It is then replayed (redone on the
+  new main, another T) and can go stale again; up to 3 tries.
+- Each replay drops a requirement with probability pLost = 3%: an assumption. The one real number is R5's flagship, 1
+  dropped in 28 model replays, ~4%.
+
+| agents, T | dial | stale (replayed) tasks | requirement lost (pLost 3%) | wall |
+|---|---|---|---|---|
+| 100, 10 s | 0% | 9 | 0 | 198 s |
+| 100, 10 s | 30% | 491 | ~15 | 283 s (+43%) |
+| 100, 10 s | 60% | 954 | ~29 | 323 s (+63%) |
+| 100, 30 s | 0% | 4 | 0 | 563 s |
+| 100, 30 s | 30% | 468 | ~14 | 798 s (+42%) |
+| 100, 30 s | 60% | 914 | ~25 | 958 s (+70%) |
+| 150, 10 s | 0% | 81 | ~2 | 163 s |
+| 150, 10 s | 60% | 973 | ~29 | 243 s |
+| 50, 30 s | 60% | 909 | ~24 | 1,673 s |
+
+Readings to compare against:
+- **Stale tasks exceed the clustered ones** (~1.15 per clustered task). Within a cluster of k tasks, the first lands,
+  the other k-1 replay together, the first of those lands, the rest replay again: k(k-1)/2 replays, finishing about k
+  task-times after the cluster starts. **If qb6's harness replays stale tasks one at a time** (a merge queue that redoes
+  them in order rather than all agents at once), stale counts fall to ~k-1 per cluster (~0.75 per clustered task) at
+  the same wall time.
+- **Dial 0 is not quite zero at 150 agents** (81 stale): the spread gap (≥91-185 tasks) is shorter than 150 agents x
+  a few rounds. At 100 agents it is ~0.
+- **Wall grows +40-45% at dial 30 and +60-70% at dial 60** for the same work: a cluster finishes ~k task-times after
+  it starts, whatever the agent count.
+- **Requirement lost scales with replays x pLost.** pLost is the thing the run measures: 3% gives ~15 / ~29 at dial
+  30 / 60, 1% gives ~5 / ~10, 10% gives ~50 / ~95. The checker counts it exactly ('requirement lost'), separated into
+  clustered vs spread.
