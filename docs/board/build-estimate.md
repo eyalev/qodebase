@@ -217,3 +217,9 @@ built 44 files and ~2,320 lines, the team 71 files and ~5,940 lines; features no
 shown range (11-30 min, $5.4-11.9). The one-agent fit is now least squares over R2, R6 and R7: cost = 1.83 x sim +
 $0.54, time = 2.1 x sim. Huge still suggests Balanced. Under the time-first rule a feature check of R4 vs R7, like
 qb9's R3 vs R6, would decide it: if R7 has R4's features, one agent is the sooner working app at Huge too.
+
+**Huge on one agent (2026-10-13).** In qb9's check of R4 vs R7, one agent had 12/12 features working. The team had
+10/12 working and 2 partial, both from one data-shape bug between agents. `suggestBuild` now picks Fastest at every
+size. Huge's words: "One strong agent: about 2x faster in our real builds (one each) and as complete; a team costs
+about half (Balanced)." What the team costs is computed from the job's real-fitted estimate. The Balanced and
+Cheapest branches are gone from `suggestBuild`; both presets stay in Adjust. Huge chip: 11-31 min, $5.7-12.3.

@@ -651,37 +651,28 @@ export const bucketOf = (n) => TASK_BUCKETS.find((b) => Math.round(n) <= b.max);
 export function suggestBuild(jobIn = SMALL_APP) {
   const bucket = bucketOf(jobProfile(jobIn).tasks);
   const job = { ...jobIn, tasks: bucket.tasks, bucket: bucket.label };
-  const sc = jobProfile(job);
-  // Compared on the real-fitted estimates (2026-10-13): both sides now have real builds, including the same Large
-  // prompt both ways (R3 team $2.40 / 1,940 s, R6 one agent $3.87 / 457 s).
+  // The rule (Eyal via the manager, 2026-10-13): the best experience at every size: time to a working app first, then
+  // quality, then cost. One agent at every size now: the same prompt both ways at Large (R3 team vs R6: 11/11 features
+  // each, 1,940 s vs 457 s; docs/board/R3-R6-quality.md) and at Huge (R4 team vs R7: team 10/12 working + 2 partial,
+  // one agent 12/12; 1,762 s vs 863 s). The team stays one tap away (Balanced) and the words say what it saves,
+  // computed on the real-fitted estimates of this job.
   const f = predictBuild(job, BUILD_PRESETS.fastest.variant), b = predictBuild(job, BUILD_PRESETS.balanced.variant);
   const mid = (r) => (r.apiUsd[0] + r.apiUsd[1]) / 2;
   const x = mid(f) / mid(b);
-  const out = (o) => ({ ...o, bucket: bucket.label, job });
-  // The rule (Eyal via the manager, 2026-10-13): the best experience at every size: time to a working app first, then
-  // quality, then cost. Small to Large: one agent is soonest at equal features. The same Large prompt both
-  // ways: 11/11 features each (docs/board/R3-R6-quality.md), one agent 457 s vs the team's 1,940 s (9 Haiku coders of 12
-  // allowed), the team 38% cheaper in tokens, 29% with box time ($2.77 vs $3.88).
-  // The saving is said from this job's estimate. Huge stays a team until real data says otherwise: no real
-  // one-agent build that big, and the 40-agent real build worked (R5).
-  if (!bucket.small && bucket.max < 30) {
-    const less = Math.max(10, Math.round((1 - 1 / x) * 10) * 10);
-    return out({ preset: 'fastest', why: x > 1.05
-      ? `One strong agent: about 4x faster in our real builds, same features; a team costs about ${less}% less (Balanced).`
-      : 'One strong agent: about 4x faster in our real builds, same features, at about a team\'s cost.' });
-  }
-  if (bucket.small || x <= 1.5) {
-    // The words follow this job's numbers: 'small' only for the two small buckets.
+  const out = (o) => ({ ...o, preset: 'fastest', bucket: bucket.label, job });
+  if (bucket.small) {
     const cost = x <= 1.05 ? 'costs about the same as a team or less' : x <= 1.25 ? 'costs a little more than a team' : `costs about ${x.toFixed(1)}x a team`;
-    return out({ preset: 'fastest', why: `${bucket.small ? 'A small job: o' : 'O'}ne agent is likely quickest here and ${cost}; in the lab its quality was about a team's.` });
+    return out({ why: `A small job: one agent is likely quickest here and ${cost}; in the lab its quality was about a team's.` });
   }
-  if (sc.difficulty <= 0.7 && sc.pShared < 0.7) return out({ preset: 'cheapest', why: 'Many simple, separate pieces: a Haiku crew does them for the least.' });
+  if (bucket.max < 30) {
+    const less = Math.max(10, Math.round((1 - 1 / x) * 10) * 10);
+    return out({ why: x > 1.05
+      ? `One strong agent: about 4x faster in our real builds (one each), same features; a team costs about ${less}% less (Balanced).`
+      : 'One strong agent: about 4x faster in our real builds (one each), same features, at about a team\'s cost.' });
+  }
   const share = 1 / x;
-  const part = share <= 0.4 ? 'at well under half' : share <= 0.6 ? 'at about half' : share <= 0.8 ? 'at about two thirds' : 'a little below';
-  const of = `${part} the cost of one agent`;
-  // Huge: no real one-agent build this big, so the team is the size we have seen work; cost is the second reason.
-  const tried = 'as in our real builds at this size';
-  return out({ preset: 'balanced', why: sc.pShared >= 0.7 ? `${bucket.size} whose pieces overlap: a team with the board on, ${tried}, ${of}.` : `${bucket.size}: a reviewed team, ${tried}, ${of}.` });
+  const team = share <= 0.4 ? 'well under half' : share <= 0.6 ? 'about half' : share <= 0.8 ? 'about two thirds' : 'a little less';
+  return out({ why: `One strong agent: about 2x faster in our real builds (one each) and as complete; a team costs ${team} (Balanced).` });
 }
 
 // "Need an idea?" chips (docs/board/TASKS.md I1): each size's typical time and cost, i.e. a job in the middle of
@@ -738,7 +729,7 @@ export function jobType(job = SMALL_APP, suggestion = null) {
     evidence: preset === 'fastest' ? 'In our real builds (one each), R3 vs R6, same prompt: 11/11 features each; one agent 457 s, a 9-agent team 1,940 s and 38% cheaper in tokens (29% with box time).'
       : 'Lab stage 1: on the bigger apps a team cost about half of one agent.' };
   return { ...base, type: 'big-app', from: 'size', label: 'a big app',
-    why: preset === 'fastest' ? 'one agent is still quickest here' : preset === 'cheapest' ? 'many simple, separate pieces: a Haiku crew does them for the least'
+    why: preset === 'fastest' ? 'about 2x faster than a team in our real builds (one each) and as complete' : preset === 'cheapest' ? 'many simple, separate pieces: a Haiku crew does them for the least'
       : 'in the lab a team cost about half of one agent on big apps; the builder runs up to 12 coders',
     better: 'landing lanes by area that test what depends on each change, with a controller per lane',
     evidence: 'L1-L2: one queue saturates near 300 agents; 32 dependency-aware lanes + controller landed 1.4x one queue with 0 breaks.' };
