@@ -124,6 +124,10 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
         ...(body.reviewStyle === 'read' || body.reviewStyle === 'adversarial' ? { reviewStyle: body.reviewStyle } : {}),
         ...(['intent', 'ffa', 'phases', 'stacking', 'leads', 'github'].includes(String(body.policy)) ? { policy: body.policy as 'intent' } : {}),
         ...(Number(body.trainMax) >= 1 ? { trainMax: Math.min(24, Math.round(Number(body.trainMax))) } : {}),
+        // Lanes (path depth, 1-4; 0 = one queue) and model replays through the replay gateway as direct calls (2026-10-13).
+        ...(Number.isFinite(Number(body.lanes)) && body.lanes !== undefined && body.lanes !== null ? { lanes: Math.max(0, Math.min(4, Math.round(Number(body.lanes)))) || undefined } : {}),
+        ...(body.replayVia === 'gateway' || body.replayVia === null ? { replayVia: body.replayVia || undefined } : {}),
+        ...(typeof body.replayDirect === 'boolean' ? { replayDirect: body.replayDirect } : {}),
         ...(typeof body.claims === 'boolean' ? { claims: body.claims } : {}),
         ...(typeof body.dedupe === 'boolean' ? { dedupe: body.dedupe } : {}),
         ...(typeof body.board === 'boolean' ? { board: body.board } : {}),
