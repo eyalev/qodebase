@@ -6,7 +6,11 @@
 //   GET  /api/runs                                -> { owner, fleet: [run], real: [build] }
 //   GET  /api/runs/<repo>/<runId>/series          -> { start, end, slice: 10000, series: [{ t, calls: {model: n}, r429, landed,
 //        lanes: {lane: n}, usd, queue: {waiting, atModel, readyToLand}, landWaitP90 }], limits: {model: perMin}, marks }
+//   GET  /api/runs/<repo>/<runId>/slice?t=&to=    -> { t, changes: [{file, agent, picked, answered, source, verified, landed, status}] }
+//   GET  /api/runs/<repo>/<runId>/agent/<agent>   -> { agent, files: [{file, picked, answered, verified, landed, status}] }
+//   GET  /api/runs/<repo>/<runId>/change?file=    -> { file, agent, status, picked, answered, source, model, verified, landed, diff }
 //   POST /api/runs/<repo>/{pause,resume,stop}     owner only
+// Words (Eyal, 2026-10-13): a change = comments added to one file; 'on main' = landed; 'already had them' = nothing to do.
 // ?mock=1 reads /lab/runs-mock.json (same shapes, timelines inside). Polls every 5 s while a run is live.
 (() => {
   const root = document.getElementById('runs');
@@ -45,7 +49,14 @@
     if (MOCK) return TL[key(run)] || null;
     const r = await fetch(`${API}/${encodeURIComponent(run.repo)}/${encodeURIComponent(run.runId)}/series`, { cache: 'no-store', credentials: 'same-origin' });
     if (!r.ok) throw new Error(`timeline ${r.status}`);
+    TLat[key(run)] = Date.now();
     return (TL[key(run)] = await r.json());
+  }
+  // A step with many copies (S4d: 100) is fetched at most 10 at a time, and a copy at most every 15 s past 20 copies.
+  const TLat = {};
+  async function loadMany(runs) {
+    const gap = runs.length > 20 ? 15e3 : 4e3, q = runs.filter((r) => !TL[key(r)] || (live(r) && Date.now() - (TLat[key(r)] || 0) > gap));
+    for (let i = 0; i < q.length; i += 10) await Promise.all(q.slice(i, i + 10).map((r) => loadTimeline(r).catch((e) => log('timeline_failed', { repo: r.repo, error: String(e) }))));
   }
 
   // ---- one run -----------------------------------------------------------------------------------------------------
@@ -93,17 +104,18 @@
       ${full || r.group ? `<h2 class="rc-name">${esc(title)}</h2>` : `<a class="rc-name" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">${esc(title)}</a>`}
       <p class="rc-sub">${r.group ? `${r.copies.length} copies run side by side` : `${esc(r.repo)}${r.root ? `, ${esc(r.root)}` : ''}`}, ${n0(r.agentsStarted ?? r.agents)} of ${n0(r.agents)} agents started</p>
       ${why ? `<p class="rc-why">${r.state === 'paused' && autoWhy(r) ? 'Paused automatically: ' : ''}${esc(why)}</p>` : ''}
-      <div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} landed of ${c.files} files">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
-        <p><b>${n0(c.landed)}</b> landed, ${n0(c.skipped)} nothing to document, ${n0(c.rejected)} rejected${c.inflight && live(r) ? `, ${n0(c.inflight)} to go` : ''}, of ${n0(c.files)} files</p></div>
+      <div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${c.files} files have new comments on main">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
+        <p><b>${n0(c.landed)}</b> files with new comments on main, ${n0(c.skipped)} already had them, ${n0(c.rejected)} rejected${c.inflight && live(r) ? `, ${n0(c.inflight)} to go` : ''}, of ${n0(c.files)} files. One change = comments added to one file.</p></div>
       <dl class="rc-k">
         <div><dt>Spent</dt><dd>${usd(spent)}${budget ? ` <small>of ${usd(budget)}</small>` : ''}</dd>${budget ? `<div class="bar" aria-hidden="true"><i style="width:${pct(spent, budget).toFixed(1)}%"${spent / budget > 0.85 ? ' class="hot"' : ''}></i></div>` : ''}</div>
-        <div><dt>${live(r) ? 'Landed per min' : elapsedS(r) < 120 ? 'Landed' : 'Landed per min, average'}</dt><dd>${lpm}</dd></div>
-        <div><dt>Wait to land</dt><dd>${r.landWaitS && r.landWaitS.p50 != null ? `${n0(r.landWaitS.p50)} s <small>median, ${n0(r.landWaitS.p90)} s slowest tenth</small>` : '–'}</dd></div>
+        <div><dt>${live(r) ? 'Changes on main per min' : elapsedS(r) < 120 ? 'Changes on main' : 'Changes on main per min, average'}</dt><dd>${lpm}</dd></div>
+        <div><dt>From ready to main</dt><dd>${r.landWaitS && r.landWaitS.p50 != null ? `${n0(r.landWaitS.p50)} s <small>median, ${n0(r.landWaitS.p90)} s slowest tenth</small>` : '–'}</dd></div>
         <div><dt>Model calls</dt><dd>${n0(r.calls ?? mods.reduce((a, m) => a + m.calls, 0))}</dd></div>
       </dl>
       ${modRows ? `<div class="rc-m"><p class="rc-mh">Calls per minute, per model${live(r) ? '' : ' (peak)'}</p>${modRows}</div>` : ''}
       ${ctl}
       ${r.group ? copyRows(r) : ''}
+      ${r.group && !full ? `<a class="chipbtn rc-go" href="#/step/${encodeURIComponent(r.label)}">Timeline, all copies</a>` : ''}
       ${full || r.group ? '' : `<a class="chipbtn rc-go" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">Timeline</a>`}
     </article>`;
   }
@@ -115,92 +127,170 @@
   }
 
   // ---- the timeline ----------------------------------------------------------------------------------------------
-  // One SVG, rows stacked; x = minutes from the run's start. A row's label sits above its strip (no sticky column on a
-  // phone). The SVG is at least 12 px per minute and scrolls sideways in its frame when that is wider than the screen.
-  // qb6's series come in 10 s slices; buckets of whole slices keep ~120 columns at most, and every rate is shown per
-  // minute so it lines up with the models' per-minute limits. Lanes stay counts per bucket (the heat rows).
+  // x = time from the run's start, one shared axis for every row. qb6's series come in 10 s slices; buckets of whole
+  // slices keep ~120 columns at most (empty ones filled: the series skips quiet slices). Buckets of a minute or more
+  // show rates per minute (to line up with per-minute limits); shorter ones show plain counts per bucket.
+  // Rows, top first (Eyal, 2026-10-13): active agents; changes (finished by agents = ready, and reached main: they land
+  // in batches, so the two are shown apart); each model's calls vs its limit; changes per lane; waiting; the door if
+  // present. Every chart has a y-scale (its top value and 0), pinned left with the row's label while it scrolls.
+  // Tap a column: what happened in that slice; from there an agent's files, or one change's comments and timings.
   function bucketed(t) {
     const src = (t.series || []).map((s) => ({ ...s, minute: s.minute ?? s.t }));
     const slice = t.slice || t.minute || 60000;
     if (!src.length) return { S: [], step: slice };
     const span = src[src.length - 1].minute - src[0].minute + slice;
     const k = Math.max(1, Math.ceil(span / slice / 120)), step = slice * k, perMin = 60000 / step, t0 = src[0].minute;
+    const blank = (b) => ({ minute: b, calls: {}, landed: 0, ready: null, active: null, lanes: {}, r429: 0, usd: 0, queue: null, door: null, n: 0 });
     const out = new Map();
     for (const s of src) {
       const b = t0 + Math.floor((s.minute - t0) / step) * step;
-      const o = out.get(b) || { minute: b, calls: {}, landed: 0, lanes: {}, r429: 0, usd: 0, queue: null, door: null, n: 0 };
+      const o = out.get(b) || blank(b);
       for (const [m, v] of Object.entries(s.calls || {})) o.calls[m] = (o.calls[m] || 0) + v;
       for (const [l, v] of Object.entries(s.lanes || {})) o.lanes[l] = (o.lanes[l] || 0) + v;
       o.landed += s.landed || 0; o.r429 += s.r429 || 0; o.usd += s.usd || 0; o.n++;
+      if (s.ready != null) o.ready = (o.ready || 0) + s.ready;
+      if (s.active != null) o.active = Math.max(o.active || 0, s.active);   // agents at work: the busiest slice in the bucket
       const q = typeof s.queue === 'number' ? s.queue : s.queue ? (s.queue.waiting || 0) + (s.queue.atModel || 0) + (s.queue.readyToLand || 0) : null;
-      if (q != null) o.queue = Math.max(o.queue || 0, q);   // sampled: the deepest moment in the bucket
+      if (q != null) o.queue = Math.max(o.queue || 0, q);
       if (s.door) o.door = { commits: (o.door?.commits || 0) + (s.door.commits || 0), pushes: (o.door?.pushes || 0) + (s.door.pushes || 0) };
       out.set(b, o);
     }
-    // Buckets of a minute or more show rates per minute (to line up with per-minute limits); shorter buckets (runs under
-    // ~20 min) show plain counts per bucket, so one burst is not blown up into a per-minute rate it never had.
-    const asRate = step >= 60000, f = asRate ? perMin : 1;
-    // every bucket from the first to the last, empty ones included (the series skips quiet slices): x is time
     const last = Math.max(...out.keys());
-    for (let b = t0; b <= last; b += step) if (!out.has(b)) out.set(b, { minute: b, calls: {}, landed: 0, lanes: {}, r429: 0, usd: 0, queue: null, door: null, n: 0 });
-    const S = [...out.values()].sort((a, b) => a.minute - b.minute).map((o) => ({ ...o, calls: Object.fromEntries(Object.entries(o.calls).map(([m, v]) => [m, Math.round(v * f)])), landed: Math.round(o.landed * f) }));
+    for (let b = t0; b <= last; b += step) if (!out.has(b)) out.set(b, blank(b));
+    const asRate = step >= 60000, f = asRate ? perMin : 1, sc = (v) => (v == null ? null : Math.round(v * f));
+    const S = [...out.values()].sort((a, b) => a.minute - b.minute).map((o) => ({ ...o, raw: { landed: o.landed, ready: o.ready, calls: { ...o.calls } }, calls: Object.fromEntries(Object.entries(o.calls).map(([m, v]) => [m, sc(v)])), landed: sc(o.landed), ready: sc(o.ready) }));
     return { S, step, unit: asRate ? 'per min' : `per ${Math.round(step / 1000)} s`, limScale: asRate ? 1 : step / 60000 };
   }
-  function timeline(run, t) {
+  // A ladder step's copies summed slice by slice (their slices share the 10 s grid).
+  function summed(ts) {
+    const by = new Map(); let slice = 10000, start = Infinity, end = 0; const limits = {}, marks = [];
+    for (const t of ts.filter(Boolean)) {
+      slice = t.slice || slice; start = Math.min(start, t.start || Infinity); end = Math.max(end, t.end || 0); Object.assign(limits, t.limits || {});
+      for (const s of t.series || []) {
+        const o = by.get(s.t) || { t: s.t, calls: {}, lanes: {}, landed: 0, ready: null, active: null, r429: 0, usd: 0, queue: null };
+        for (const [m, v] of Object.entries(s.calls || {})) o.calls[m] = (o.calls[m] || 0) + v;
+        for (const [l, v] of Object.entries(s.lanes || {})) o.lanes[l] = (o.lanes[l] || 0) + v;
+        o.landed += s.landed || 0; o.r429 += s.r429 || 0; o.usd += s.usd || 0;
+        if (s.ready != null) o.ready = (o.ready || 0) + s.ready;
+        if (s.active != null) o.active = (o.active || 0) + s.active;
+        const q = typeof s.queue === 'number' ? s.queue : s.queue ? (s.queue.waiting || 0) + (s.queue.atModel || 0) + (s.queue.readyToLand || 0) : null;
+        if (q != null) o.queue = (o.queue || 0) + q;
+        by.set(s.t, o);
+      }
+    }
+    // a summed lane heat would be 20 copies x 20 lanes: keep the ten busiest lane names, the rest as 'other'
+    const series = [...by.values()].sort((a, b) => a.t - b.t);
+    const tot = {}; for (const s of series) for (const [l, v] of Object.entries(s.lanes)) tot[l] = (tot[l] || 0) + v;
+    const keep = new Set(Object.entries(tot).filter(([l]) => l !== 'other').sort((a, b) => b[1] - a[1]).slice(0, 10).map(([l]) => l));
+    for (const s of series) { const L = {}; for (const [l, v] of Object.entries(s.lanes)) { const k = keep.has(l) ? l : 'other'; L[k] = (L[k] || 0) + v; } s.lanes = L; }
+    return { start, end: end || null, slice, series, limits, marks };
+  }
+  const nice = (v) => { if (v <= 10) return Math.max(1, Math.ceil(v)); const p = 10 ** Math.floor(Math.log10(v)), m = v / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; };
+  const kfmt = (v) => (v >= 10000 ? `${Math.round(v / 1000)}k` : v >= 1000 ? `${(v / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(v));
+  function timeline(run, t, drill) {
     if (!t) return '<p class="tl-empty">Loading the timeline…</p>';
     const { S, step: stepMs, unit, limScale } = bucketed(t);
-    t = { ...t, minute: stepMs };
-    if (!S.length) return '<p class="tl-empty">Nothing on the timeline yet: the first minute is still running.</p>';
+    if (!S.length) return '<p class="tl-empty">Nothing on the timeline yet: the first slice is still running.</p>';
     const W0 = Math.max(root.clientWidth - 24, 300), per = Math.max(12, Math.floor(W0 / S.length)), W = Math.max(W0, per * S.length);
-    const t0 = S[0].minute, x = (m) => ((m - t0) / (t.minute || 60000)) * per;
-    const rows = [], H = 34, GAP = 22;
+    const t0 = S[0].minute, x = (m) => ((m - t0) / stepMs) * per;
+    const rows = [], H = 36, HB = 64;
+    const peakOf = (f) => Math.max(0, ...S.map(f).filter((v) => v != null));
+    if (S.some((s) => s.active != null)) { const pk = peakOf((s) => s.active); rows.push({ label: `Agents at work, peak ${n0(pk)}`, kind: 'area', vals: S.map((s) => s.active || 0), max: nice(Math.max(pk, 1)), cls: 'c-active', h: HB }); }
+    { const pr = peakOf((s) => s.ready), pl = peakOf((s) => s.landed), hasReady = S.some((s) => s.ready != null);
+      rows.push({ label: hasReady ? `Changes ${unit}: finished by agents (area), reached main (bars, in batches)` : `Changes reaching main ${unit} (in batches), peak ${n0(pl)}`, kind: 'pair', vals: S.map((s) => s.landed || 0), area: hasReady ? S.map((s) => s.ready || 0) : null, max: nice(Math.max(pr, pl, 1)), cls: 'c-land', h: HB }); }
     const models = Object.keys(Object.assign({}, ...S.map((s) => s.calls || {})));
     for (const m of models) {
-      const peak = Math.max(...S.map((s) => (s.calls || {})[m] || 0)), lim0 = (t.limits || {})[m], lim = lim0 ? lim0 * limScale : null;
+      const peak = peakOf((s) => (s.calls || {})[m] || 0), lim0 = (t.limits || {})[m], lim = lim0 ? lim0 * limScale : null;
       const drawLim = lim && lim <= peak * 4;   // a limit far above the peak would flatten the chart: named, not drawn
-      rows.push({ label: `${short(m)}: calls ${unit}, peak ${n0(peak)}${lim0 ? `, limit ${n0(lim0)} per min` : ''}`, kind: 'area', vals: S.map((s) => (s.calls || {})[m] || 0), max: Math.max(drawLim ? lim : 0, peak, 1), lim: drawLim ? lim : null, cls: 'c-model' });
+      rows.push({ label: `${short(m)}: calls ${unit}, peak ${n0(peak)}${lim0 ? `, limit ${n0(lim0)} per min` : ''}`, kind: 'area', vals: S.map((s) => (s.calls || {})[m] || 0), max: nice(Math.max(drawLim ? lim : 0, peak, 1)), lim: drawLim ? lim : null, cls: 'c-model', h: H });
     }
-    { const peak = Math.max(...S.map((s) => s.landed || 0)); rows.push({ label: `Landed ${unit}, peak ${n0(peak)}`, kind: 'bars', vals: S.map((s) => s.landed || 0), max: Math.max(peak, 1), cls: 'c-land' }); }
     const lanes = Object.keys(Object.assign({}, ...S.map((s) => s.lanes || {}))).filter((l) => l !== 'other');
     if (S.some((s) => (s.lanes || {}).other)) lanes.push('other');
     const laneMax = Math.max(1, ...S.flatMap((s) => Object.values(s.lanes || {})));
-    if (lanes.length) rows.push({ label: `Landings per lane (${lanes.length}${lanes.includes('other') ? ', smaller lanes together' : ''}), darker = more`, kind: 'heat', lanes, max: laneMax });
-    if (S.some((s) => s.door)) { const peak = Math.max(...S.map((s) => (s.door?.commits || 0))); rows.push({ label: `The door: commits per min (pushes as ticks), peak ${n0(peak)}`, kind: 'door', vals: S.map((s) => s.door?.commits || 0), ticks: S.map((s) => s.door?.pushes || 0), max: Math.max(peak, 1), cls: 'c-door' }); }
-    if (S.some((s) => s.queue != null)) { const peak = Math.max(...S.map((s) => s.queue || 0)); rows.push({ label: `Waiting to land, peak ${n0(peak)}`, kind: 'area', vals: S.map((s) => s.queue || 0), max: Math.max(peak, 1), cls: 'c-queue' }); }
-    // Each row: a label pinned to the left of the scrolling frame (sticky), then its own SVG strip. One overlay SVG on
-    // top carries the time grid and the pause/resume marks across every row.
+    if (lanes.length) rows.push({ label: `Changes per lane (${lanes.length}${lanes.includes('other') ? ', smaller lanes together' : ''}), darker = more, up to ${n0(laneMax)} in a slice`, kind: 'heat', lanes, max: laneMax });
+    if (S.some((s) => s.door)) { const pk = peakOf((s) => s.door?.commits || 0); rows.push({ label: `The door: commits ${unit} (pushes as ticks)`, kind: 'door', vals: S.map((s) => s.door?.commits || 0), ticks: S.map((s) => s.door?.pushes || 0), max: nice(Math.max(pk, 1)), cls: 'c-door', h: H }); }
+    if (S.some((s) => s.queue != null)) { const pk = peakOf((s) => s.queue || 0); rows.push({ label: `Waiting (to start, at the model, ready to land), peak ${n0(pk)}`, kind: 'area', vals: S.map((s) => s.queue || 0), max: nice(Math.max(pk, 1)), cls: 'c-queue', h: H }); }
+    const cx = (i) => x(S[i].minute) + per / 2;
     const strip = (r) => {
-      const h = r.kind === 'heat' ? r.lanes.length * 10 : H, base = h, parts = [`<rect class="tl-bg" x="0" y="0" width="${W}" height="${h}" rx="4"/>`];
-      if (r.kind === 'area') {
-        const pts = r.vals.map((v, i) => `${(x(S[i].minute) + per / 2).toFixed(1)},${(base - (v / r.max) * (h - 2)).toFixed(1)}`);
-        parts.push(`<path class="tl-a ${r.cls}" d="M${(x(S[0].minute) + per / 2).toFixed(1)},${base} L${pts.join(' L')} L${(x(S[S.length - 1].minute) + per / 2).toFixed(1)},${base} Z"/>`);
-        if (r.lim) { const ly = (base - (r.lim / r.max) * (h - 2)).toFixed(1); parts.push(`<line class="tl-lim" x1="0" x2="${W}" y1="${ly}" y2="${ly}"/>`); }
-      } else if (r.kind === 'bars' || r.kind === 'door') {
-        r.vals.forEach((v, i) => { if (!v) return; const bh = Math.max(1.5, (v / r.max) * (h - 2)); parts.push(`<rect class="tl-b ${r.cls}" x="${(x(S[i].minute) + 1).toFixed(1)}" y="${(base - bh).toFixed(1)}" width="${Math.max(2, per - 2)}" height="${bh.toFixed(1)}" rx="1.5"/>`); });
-        if (r.ticks) r.ticks.forEach((v, i) => { if (!v) return; parts.push(`<rect class="tl-tick" x="${(x(S[i].minute) + per / 2 - 1).toFixed(1)}" y="1" width="2" height="${Math.min(h - 2, 4 + v * 2)}"/>`); });
+      const h = r.kind === 'heat' ? r.lanes.length * 10 : r.h, base = h, parts = [`<rect class="tl-bg" x="0" y="0" width="${W}" height="${h}" rx="4"/>`];
+      const yv = (v) => (base - (v / r.max) * (h - 2)).toFixed(1);
+      if (r.kind !== 'heat') parts.push(`<line class="tl-mid" x1="0" x2="${W}" y1="${(h / 2).toFixed(1)}" y2="${(h / 2).toFixed(1)}"/>`);
+      const area = (vals, cls) => `<path class="tl-a ${cls}" d="M${cx(0).toFixed(1)},${base} L${vals.map((v, i) => `${cx(i).toFixed(1)},${yv(v)}`).join(' L')} L${cx(S.length - 1).toFixed(1)},${base} Z"/><path class="tl-ln ${cls}" d="M${vals.map((v, i) => `${cx(i).toFixed(1)},${yv(v)}`).join(' L')}"/>`;
+      if (r.kind === 'area') { parts.push(area(r.vals, r.cls)); if (r.lim) parts.push(`<line class="tl-lim" x1="0" x2="${W}" y1="${yv(r.lim)}" y2="${yv(r.lim)}"/>`); }
+      else if (r.kind === 'pair' || r.kind === 'door') {
+        if (r.area) parts.push(area(r.area, 'c-ready'));
+        r.vals.forEach((v, i) => { if (!v) return; const bh = Math.max(1.5, (v / r.max) * (h - 2)); parts.push(`<rect class="tl-b ${r.cls}" x="${(x(S[i].minute) + per * 0.2).toFixed(1)}" y="${(base - bh).toFixed(1)}" width="${Math.max(2, per * 0.6).toFixed(1)}" height="${bh.toFixed(1)}" rx="1.5"/>`); });
+        if (r.ticks) r.ticks.forEach((v, i) => { if (!v) return; parts.push(`<rect class="tl-tick" x="${(cx(i) - 1).toFixed(1)}" y="1" width="2" height="${Math.min(h - 2, 4 + v * 2)}"/>`); });
       } else if (r.kind === 'heat') {
         r.lanes.forEach((ln, j) => S.forEach((s) => { const v = (s.lanes || {})[ln] || 0; if (!v) return; parts.push(`<rect class="tl-h" x="${(x(s.minute) + 0.5).toFixed(1)}" y="${j * 10 + 1}" width="${Math.max(2, per - 1)}" height="8" rx="1" style="opacity:${(0.18 + 0.82 * (v / r.max)).toFixed(2)}"><title>${esc(ln)}: ${v}</title></rect>`); }));
       }
-      return `<div class="tl-row"><p class="tl-lab"><span>${esc(r.label)}</span></p><svg class="tl-s" width="${W}" height="${h}" viewBox="0 0 ${W} ${h}" aria-hidden="true">${parts.join('')}</svg></div>`;
+      const yscale = r.kind === 'heat' ? '' : `<div class="tl-y" style="height:${h}px" aria-hidden="true"><span>${kfmt(r.max)}</span><span>${kfmt(r.max / 2)}</span><span>0</span></div>`;
+      return `<div class="tl-row"><p class="tl-lab"><span>${esc(r.label)}</span></p><div class="tl-plot" style="height:${h}px">${yscale}<svg class="tl-s" width="${W}" height="${h}" viewBox="0 0 ${W} ${h}" aria-hidden="true">${parts.join('')}</svg></div></div>`;
     };
     // ticks on round times: every 10 s, 30 s, 1, 2, 5, 10 or 30 min, at least ~56 px apart
-    const nice = [10e3, 30e3, 60e3, 120e3, 300e3, 600e3, 1800e3, 3600e3].find((ms) => (ms / stepMs) * per >= 56) || 3600e3;
-    const every = Math.max(1, Math.round(nice / stepMs)), lab = (i) => { const sec = Math.round((i * stepMs) / 1000); return i === 0 ? 'start' : sec < 120 ? `${sec} s` : `${Math.round(sec / 60)} min`; };
+    const niceT = [10e3, 30e3, 60e3, 120e3, 300e3, 600e3, 1800e3, 3600e3].find((ms) => (ms / stepMs) * per >= 56) || 3600e3;
+    const every = Math.max(1, Math.round(niceT / stepMs)), lab = (i) => { const sec = Math.round((i * stepMs) / 1000); return i === 0 ? 'start' : sec < 120 ? `${sec} s` : `${Math.round(sec / 60)} min`; };
     const grid = S.map((s, i) => (i % every === 0 ? `<line class="tl-g" x1="${x(s.minute).toFixed(1)}" x2="${x(s.minute).toFixed(1)}" y1="0" y2="100%"/>` : '')).join('');
     const axis = S.map((s, i) => (i % every === 0 && x(s.minute) < W - 40 ? `<text class="tl-x" x="${Math.max(2, x(s.minute) + 2).toFixed(1)}" y="12">${lab(i)}</text>` : '')).join('');
     const MK = (k) => (k === 'auto_pause' ? 'pause' : k), MW = (k) => (k === 'auto_pause' ? 'auto-paused' : k === 'pause' ? 'paused' : k === 'resume' ? 'resumed' : k === 'stop' ? 'stopped' : k);
     const marks = (t.marks || []).map((m) => { const mx = Math.max(1, Math.min(W - 1, x(m.at))); return `<line class="tl-m m-${esc(MK(m.kind))}" x1="${mx.toFixed(1)}" x2="${mx.toFixed(1)}" y1="0" y2="100%"/>`; }).join('');
     const mlabels = (t.marks || []).map((m) => { const w = MW(m.kind).length * 6.5, mx = Math.max(1, Math.min(W - w - 4, x(m.at) + 3)); return `<text class="tl-mt m-${esc(MK(m.kind))}" x="${mx.toFixed(1)}" y="12">${esc(MW(m.kind))}</text>`; }).join('');
     const legend = (t.marks || []).length ? `<ul class="tl-ml">${(t.marks || []).map((m) => `<li><i class="m-${esc(MK(m.kind))}"></i>${esc(MW(m.kind).replace(/^./, (c) => c.toUpperCase()))} ${clock((m.at - t0) / 1000)} in${m.why ? `: ${esc(m.why)}` : ''}</li>`).join('')}</ul>` : '';
-    return `<div class="tl-frame"${live(run) ? ' data-live' : ''} tabindex="0" role="group" aria-label="Timeline of the run; scrolls sideways"><div class="tl-in" style="width:${W}px">
+    const sel = drill && drill.i != null && S[drill.i] ? `<rect class="tl-sel" x="${x(S[drill.i].minute).toFixed(1)}" y="0" width="${per}" height="100%"/>` : '';
+    TLS = { S, stepMs, per, t0, unit };
+    return `<div class="tl-frame"${live(run) ? ' data-live' : ''} tabindex="0" role="group" aria-label="Timeline of the run; scrolls sideways; tap a column for that moment"><div class="tl-in" style="width:${W}px" data-per="${per}">
       ${mlabels ? `<svg class="tl-ax" width="${W}" height="16" aria-hidden="true">${mlabels}</svg>` : ''}
-      <svg class="tl-ov" width="${W}" height="100%" aria-hidden="true">${grid}${marks}</svg>
+      <svg class="tl-ov" width="${W}" height="100%" aria-hidden="true">${grid}${sel}${marks}</svg>
       ${rows.map(strip).join('')}
-      <svg class="tl-ax" width="${W}" height="16" aria-hidden="true">${axis}</svg></div></div>${legend}`;
+      <svg class="tl-ax" width="${W}" height="16" aria-hidden="true">${axis}</svg></div></div>${legend}
+      <p class="tl-hint">Tap a column to see what happened in that slice.</p>`;
   }
 
+  // ---- drill-down: a slice -> its changes -> an agent's files, or one change's comments and timings --------------
+  let TLS = null, DR = null;   // DR = { k, i, t, to, view: 'slice'|'agent'|'change', agent, file, data: {} }
+  const rel = (at) => (at && TLS ? clock((at - TLS.t0) / 1000) : '–');
+  const ST = { landed: 'on main', skipped: 'already had comments', rejected: 'rejected', verify_fail: 'changed the code: refused', ready: 'ready to land', model: 'at the model', queued: 'waiting' };
+  async function drillFetch(run, path) {
+    if (MOCK || run.group) return null;
+    const r = await fetch(`${API}/${encodeURIComponent(run.repo)}/${encodeURIComponent(run.runId)}/${path}`, { cache: 'no-store', credentials: 'same-origin' });
+    if (!r.ok) return { error: r.status };
+    return r.json();
+  }
+  function drillPanel(run) {
+    if (!DR || DR.k !== key(run) || !TLS) return '';
+    const s = TLS.S[DR.i]; if (!s) return '';
+    const from = clock((s.minute - TLS.t0) / 1000), to = clock((s.minute - TLS.t0 + TLS.stepMs) / 1000);
+    const crumbs = `<p class="dp-cr"><button type="button" class="dp-x" data-dr="close" aria-label="Close">Close</button><button type="button" class="dp-b${DR.view === 'slice' ? ' on' : ''}" data-dr="slice">${from} to ${to}</button>${DR.agent ? `<button type="button" class="dp-b${DR.view === 'agent' ? ' on' : ''}" data-dr="agent" data-agent="${esc(DR.agent)}">${esc(agentName(DR.agent))}</button>` : ''}${DR.file && DR.view === 'change' ? `<span class="dp-b on">${esc(fileName(DR.file))}</span>` : ''}</p>`;
+    let body = '';
+    if (DR.view === 'slice') {
+      const raw = s.raw || {};
+      const facts = [s.active != null ? `<li><b>${n0(s.active)}</b> agents at work</li>` : '', raw.ready != null ? `<li><b>${n0(raw.ready)}</b> changes finished by agents</li>` : '', `<li><b>${n0(raw.landed || 0)}</b> changes reached main</li>`,
+        ...Object.entries(raw.calls || {}).map(([m, v]) => `<li><b>${n0(v)}</b> calls to ${esc(short(m))}</li>`), s.queue != null ? `<li><b>${n0(s.queue)}</b> waiting at the deepest moment</li>` : '', s.r429 ? `<li><b>${n0(s.r429)}</b> refused by the model (429)</li>` : ''].join('');
+      const lanes = Object.entries(s.lanes || {}).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const d = DR.data.slice;
+      const list = run.group ? '<p class="dp-n">Open one copy’s timeline to see its single changes.</p>'
+        : !d ? '<p class="dp-n">Loading the changes in this slice…</p>' : d.error ? `<p class="dp-n">The list of changes is not available yet (${esc(d.error)}).</p>`
+        : !(d.changes || []).length ? '<p class="dp-n">No single change finished in this slice.</p>'
+        : `<ul class="dp-l">${d.changes.slice(0, 60).map((c) => `<li><button type="button" class="dp-f" data-dr="change" data-file="${esc(c.file)}" data-agent="${esc(c.agent || '')}"><span class="mono">${esc(fileName(c.file))}</span><small>${esc(ST[c.status] || c.status || '')}${c.landed ? `, on main ${rel(c.landed)}` : c.answered ? `, finished ${rel(c.answered)}` : ''}</small></button>${c.agent ? `<button type="button" class="dp-a" data-dr="agent" data-agent="${esc(c.agent)}">${esc(agentName(c.agent))}</button>` : ''}</li>`).join('')}</ul>${d.changes.length > 60 ? `<p class="dp-n">and ${n0(d.changes.length - 60)} more</p>` : ''}`;
+      body = `<ul class="dp-facts">${facts}</ul>${lanes.length ? `<p class="dp-n">Busiest lanes: ${lanes.map(([l, v]) => `${esc(l)} ${n0(v)}`).join(', ')}</p>` : ''}${list}`;
+    } else if (DR.view === 'agent') {
+      const d = DR.data['a:' + DR.agent];
+      body = !d ? '<p class="dp-n">Loading this agent’s files…</p>' : d.error ? `<p class="dp-n">Not available yet (${esc(d.error)}).</p>`
+        : `<p class="dp-n">${n0((d.files || []).length)} files, times from the run’s start.</p><ul class="dp-l">${(d.files || []).map((f) => `<li><button type="button" class="dp-f" data-dr="change" data-file="${esc(f.file)}" data-agent="${esc(DR.agent)}"><span class="mono">${esc(fileName(f.file))}</span><small>picked ${rel(f.picked)}${f.answered ? `, finished ${rel(f.answered)}` : ''}${f.landed ? `, on main ${rel(f.landed)}` : ''}, ${esc(ST[f.status] || f.status || '')}</small></button></li>`).join('')}</ul>`;
+    } else {
+      const d = DR.data['f:' + DR.file];
+      body = !d ? '<p class="dp-n">Loading the change…</p>' : d.error ? `<p class="dp-n">Not available yet (${esc(d.error)}).</p>`
+        : `<p class="dp-p mono">${esc(d.file)}</p><dl class="dp-t"><div><dt>Agent</dt><dd>${esc(agentName(d.agent))}</dd></div><div><dt>Picked</dt><dd>${rel(d.picked)}</dd></div><div><dt>Comments from</dt><dd>${esc(d.source === 'cache' ? 'the cache (reused)' : short(d.model || d.source || ''))}${d.answered ? `, ${rel(d.answered)}` : ''}</dd></div><div><dt>Code unchanged</dt><dd>${d.verified ? `checked ${rel(d.verified)}` : '–'}</dd></div><div><dt>On main</dt><dd>${d.landed ? rel(d.landed) : esc(ST[d.status] || d.status || '–')}</dd></div></dl>
+          ${d.diff ? `<pre class="dp-d">${String(d.diff).split('\n').slice(0, 400).map((l) => `<span class="${/^\+(?!\+\+)/.test(l) ? 'ad' : /^-(?!--)/.test(l) ? 'rm' : /^@@/.test(l) ? 'hk' : ''}">${esc(l)}</span>`).join('\n')}</pre>` : '<p class="dp-n">No diff for this change.</p>'}`;
+    }
+    return `<section class="dp" aria-label="What happened">${crumbs}${body}</section>`;
+  }
+  const agentName = (a) => String(a || '').replace(/^.*#/, 'Agent ').replace(/^agent[-_ ]?/i, 'Agent ');
+  const fileName = (f) => { const p = String(f || '').split('/'); return p.length > 3 ? `…/${p.slice(-3).join('/')}` : f; };
+
   // ---- copies: one ladder step runs as N copies (label '… - copy N'); the step is one card with the copies under it ---
-  const baseOf = (r) => { const m = /^(.*?)\s*[-–]\s*copy\s+\d+$/i.exec(r.label || ''); return m ? m[1] : null; };
+  const baseOf = (r) => { if (r.ladder) return r.ladder; const m = /^(.*?)\s+[-–]\s+(?:copy\s+\d+|fleet-[\w-]+)$/i.exec(r.label || ''); return m ? m[1] : null; };
+  const copyNo = (c) => +(c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || (/-(\d+)$/.exec(c.repo || '') || [])[1] || 0);
   function grouped(list) {
     const out = [], seen = new Map();
     for (const r of list) {
@@ -210,8 +300,7 @@
       if (!g) { g = { group: true, label: b, copies: [], repo: r.repo, runId: `group:${b}` }; seen.set(b, g); out.push(g); }
       g.copies.push(r);
     }
-    const cn = (c) => +((/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || 0);
-    for (const g of seen.values()) g.copies.sort((a, b) => cn(a) - cn(b));
+    for (const g of seen.values()) g.copies.sort((a, b) => copyNo(a) - copyNo(b));
     for (const g of out.filter((x) => x.group)) {
       const cs = g.copies, sum = (f) => cs.reduce((a, c) => a + (f(c) || 0), 0);
       const st = cs.some((c) => c.state === 'running') ? 'running' : cs.some((c) => c.state === 'paused') ? 'paused' : cs.every((c) => c.state === 'stopped') ? 'stopped' : 'done';
@@ -229,7 +318,10 @@
     return out;
   }
   function copyRows(g) {
-    return `<ul class="rcp">${g.copies.map((c, i) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>${esc((/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] ? `Copy ${/copy\s+(\d+)$/i.exec(c.label)[1]}` : c.repo)}</span><span class="rcp-v">${n0(k.landed)} of ${n0(k.files)} landed, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; }).join('')}</ul>`;
+    // many copies (S4d: 100): the first five, the rest behind 'Show all'
+    const row = (c, i) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>${esc(`Copy ${c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || i + 1}`)}</span><span class="rcp-v">${n0(k.landed)} of ${n0(k.files)} files changed, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; };
+    if (g.copies.length > 6) return `<ul class="rcp">${g.copies.slice(0, 5).map(row).join('')}</ul><details class="rcp-more"><summary>Show all ${g.copies.length} copies</summary><ul class="rcp">${g.copies.slice(5).map((c, i) => row(c, i + 5)).join('')}</ul></details>`;
+    return `<ul class="rcp">${g.copies.map((c, i) => { const k = counts(c); return `<li><a href="#/run/${encodeURIComponent(c.repo)}/${encodeURIComponent(c.runId)}"><span class="rs-st st-${esc(c.state)}"><i></i>${esc(`Copy ${c.copy || (/copy\s+(\d+)$/i.exec(c.label || '') || [])[1] || i + 1}`)}</span><span class="rcp-v">${n0(k.landed)} of ${n0(k.files)} files changed, ${esc((STATE[c.state] || c.state).toLowerCase())}</span><span class="rr-go">Timeline</span></a></li>`; }).join('')}</ul>`;
   }
 
   // ---- pages -------------------------------------------------------------------------------------------------------
@@ -237,7 +329,7 @@
     const fleet = grouped((D.fleet || []).slice().sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))).sort((a, b) => (live(b) - live(a)) || (b.startedAt || 0) - (a.startedAt || 0));
     const cur = fleet.filter(live), past = fleet.filter((r) => !live(r));
     const real = D.real || [];
-    const realRow = (b) => `<li><a href="${esc(b.link || `/p/${b.slug.replace('.', '/')}/work#/timeline`)}"><span class="rr-n"><b>${esc(b.label || b.slug)}</b><small>${esc(b.slug.replace('.', ' / '))}</small></span><span class="rr-v">${b.settledAt ? `${clock((b.settledAt - b.startedAt) / 1000)}, ${usd(b.usd)}` : b.startedAt ? `running, ${usd(b.usd)} so far` : '–'}${b.parts ? `<small>${n0(b.landed)} of ${n0(b.parts)} parts</small>` : b.landed ? `<small>${n0(b.landed)} landed</small>` : ''}</span><span class="rr-go">Timeline</span></a></li>`;
+    const realRow = (b) => `<li><a href="${esc(b.link || `/p/${b.slug.replace('.', '/')}/work#/timeline`)}"><span class="rr-n"><b>${esc(b.label || b.slug)}</b><small>${esc(b.slug.replace('.', ' / '))}</small></span><span class="rr-v">${b.settledAt ? `${clock((b.settledAt - b.startedAt) / 1000)}, ${usd(b.usd)}` : b.startedAt ? `running, ${usd(b.usd)} so far` : '–'}${b.parts ? `<small>${n0(b.landed)} of ${n0(b.parts)} parts on main</small>` : b.landed ? `<small>${n0(b.landed)} changes on main</small>` : ''}</span><span class="rr-go">Timeline</span></a></li>`;
     return `<header class="rh"><h1>Scale runs</h1><p class="rh-s"><i class="live${cur.length ? '' : ' off'}"></i><span id="rupd">${cur.length ? `${cur.length} running now` : 'Nothing running now'}</span>${OWN ? '' : '<span class="rh-ro">read-only</span>'}</p></header>
       ${cur.length ? `<section class="rsec"><h2>Now</h2>${cur.map((r) => card(r, false)).join('')}</section>` : ''}
       <section class="rsec"><h2>${cur.length ? 'Earlier' : 'Fleet runs'}</h2>${past.length ? past.slice(0, 20).map((r) => card(r, false)).join('') : '<p class="dim">No fleet runs yet.</p>'}</section>
@@ -246,14 +338,28 @@
   function runView(repo, id) {
     const r = (D.fleet || []).find((x) => x.repo === repo && x.runId === id);
     if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
-    return `<p class="crumb"><a href="#/">All runs</a></p>${card(r, true)}<section class="rsec"><h2>Timeline</h2>${timeline(r, TL[key(r)])}</section>`;
+    return `<p class="crumb"><a href="#/">All runs</a></p>${card(r, true)}<section class="rsec"><h2>Timeline</h2>${timeline(r, TL[key(r)], DR && DR.k === key(r) ? DR : null)}${drillPanel(r)}</section>`;
+  }
+  const stepOf = (base) => grouped((D.fleet || []).slice()).find((g) => g.group && g.label === base) || null;
+  function stepView(base) {
+    const g = stepOf(base);
+    if (!g) return `<p><a href="#/">All runs</a></p><p>That ladder step is not in the list any more.</p>`;
+    const ts = g.copies.map((c) => TL[key(c)]), have = ts.filter(Boolean).length;
+    const t = have ? summed(ts) : null;
+    return `<p class="crumb"><a href="#/">All runs</a></p>${card(g, true)}<section class="rsec"><h2>Timeline, all ${g.copies.length} copies together</h2>${have < g.copies.length ? `<p class="dim">${have} of ${g.copies.length} copies loaded…</p>` : ''}${timeline(g, t, DR && DR.k === key(g) ? DR : null)}${drillPanel(g)}</section>`;
+  }
+  function current() {
+    let m = /^#\/run\/([^/]+)\/([^/]+)$/.exec(location.hash);
+    if (m) return (D?.fleet || []).find((x) => x.repo === decodeURIComponent(m[1]) && x.runId === decodeURIComponent(m[2])) || null;
+    m = /^#\/step\/(.+)$/.exec(location.hash);
+    return m && D ? stepOf(decodeURIComponent(m[1])) : null;
   }
 
   let lastHtml = '';
   function render() {
     if (!D) return;
-    const m = /^#\/run\/([^/]+)\/([^/]+)$/.exec(location.hash);
-    const html = m ? runView(decodeURIComponent(m[1]), decodeURIComponent(m[2])) : listView();
+    const m = /^#\/run\/([^/]+)\/([^/]+)$/.exec(location.hash), ms = /^#\/step\/(.+)$/.exec(location.hash);
+    const html = m ? runView(decodeURIComponent(m[1]), decodeURIComponent(m[2])) : ms ? stepView(decodeURIComponent(ms[1])) : listView();
     const k = html.replace(/(data-since="\d+">)[^<]*/g, '$1');
     if (k === lastHtml || busy) return tickClocks();
     const ctlF = document.activeElement?.closest?.('.rc-ctl') ? document.activeElement.dataset.ctl : null;
@@ -269,18 +375,46 @@
     clearTimeout(timer);
     try {
       await load(); failures = 0; lastOk = Date.now();
-      const m = /^#\/run\/([^/]+)\/([^/]+)$/.exec(location.hash);
-      if (m) { const r = (D.fleet || []).find((x) => x.repo === decodeURIComponent(m[1]) && x.runId === decodeURIComponent(m[2])); if (r && (live(r) || !TL[key(r)])) await loadTimeline(r).catch((e) => log('timeline_failed', { error: String(e) })); }
+      const cur = current();
+      if (cur) await loadMany(cur.group ? cur.copies : [cur]);
       render();
     } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (!D) root.innerHTML = `<header class="rh"><h1>Scale runs</h1></header><p class="dim">Could not load the runs (${esc(String(e.message || e))}). Trying again.</p>`; }
     const anyLive = (D?.fleet || []).some(live);
     timer = setTimeout(tick, document.hidden ? 30e3 : anyLive ? 5e3 : 30e3 * Math.min(4, 2 ** failures));
   }
-  addEventListener('hashchange', () => { lastHtml = ''; render(); tick(); });
+  addEventListener('hashchange', () => { DR = null; lastHtml = ''; render(); tick(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
   setInterval(tickClocks, 1000);
 
+  // Taps on the timeline and in the drill-down panel.
   root.addEventListener('click', async (e) => {
+    const run = current();
+    const tin = e.target.closest('.tl-in');
+    if (tin && run && TLS) {
+      const i = Math.floor((e.clientX - tin.getBoundingClientRect().left) / TLS.per);
+      if (i < 0 || i >= TLS.S.length) return;
+      const s = TLS.S[i]; DR = { k: key(run), i, t: s.minute, to: s.minute + TLS.stepMs, view: 'slice', data: {} };
+      log('drill', { kind: 'slice', i }); lastHtml = ''; render(); root.querySelector('.dp')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      const d = await drillFetch(run, `slice?t=${s.minute}&to=${s.minute + TLS.stepMs}`).catch((x) => ({ error: String(x) }));
+      if (DR && DR.t === s.minute) { DR.data.slice = d; lastHtml = ''; render(); }
+      return;
+    }
+    const dr = e.target.closest('[data-dr]');
+    if (dr && run && DR) {
+      const a = dr.dataset.dr;
+      if (a === 'close') { DR = null; lastHtml = ''; render(); return; }
+      if (a === 'slice') { DR.view = 'slice'; DR.agent = null; lastHtml = ''; render(); return; }
+      if (a === 'agent') {
+        DR.view = 'agent'; DR.agent = dr.dataset.agent; lastHtml = ''; render(); log('drill', { kind: 'agent' });
+        const k = 'a:' + DR.agent; if (!DR.data[k]) { const d = await drillFetch(run, `agent/${encodeURIComponent(DR.agent)}`).catch((x) => ({ error: String(x) })); if (DR) { DR.data[k] = d; lastHtml = ''; render(); } }
+        return;
+      }
+      if (a === 'change') {
+        DR.view = 'change'; DR.file = dr.dataset.file; if (dr.dataset.agent) DR.agent = dr.dataset.agent; lastHtml = ''; render(); log('drill', { kind: 'change' });
+        const k = 'f:' + DR.file; if (!DR.data[k]) { const d = await drillFetch(run, `change?file=${encodeURIComponent(DR.file)}`).catch((x) => ({ error: String(x) })); if (DR) { DR.data[k] = d; lastHtml = ''; render(); } }
+        return;
+      }
+    }
     const b = e.target.closest('[data-ctl]'); if (!b) return;
     const k = b.dataset.k, act = b.dataset.ctl, repos = b.dataset.repos ? b.dataset.repos.split(',').filter(Boolean) : [k.split('/')[0]], repo = repos.join(',');
     if (act === 'ask') { stopAsk[k] = Date.now(); lastHtml = ''; render(); root.querySelector(`[data-ctl="stop"][data-k="${CSS.escape(k)}"]`)?.focus(); setTimeout(() => { lastHtml = ''; render(); }, 10.1e3); return; }
