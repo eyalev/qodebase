@@ -1,0 +1,21 @@
+{
+ "note": "Fleet at scale (TASKS 'Fleet at scale' S4/S5): peak 10-s windows as reported by qb6 from the qbfleet series (sim.md (l) has the full readings). filesPerSec = files through the whole pipeline (read, verify, record, landing) per second in the peak window. Update after each run; scripts/results/build.mjs reads this into results.json headline.scale.",
+ "cached": {
+  "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call); agents, Artifacts reads, verify, lanes, the door and pushes real",
+  "ladder": [
+   { "run": "S4a", "agents": 200, "copies": 4, "namespaces": 1, "filesPerSec": 227, "readP50Ms": null, "limit": "our per-copy Run DO round trips (fixed after this step)" },
+   { "run": "S4b", "agents": 200, "copies": 1, "namespaces": 1, "filesPerSec": 178, "readP50Ms": 76, "limit": "one copy: the Run DO still queues (after the fix)" },
+   { "run": "S4c", "agents": 1000, "copies": 20, "namespaces": 1, "filesPerSec": 1230, "readP50Ms": 135, "limit": "none refused; reads slow as copies overlap" },
+   { "run": "S4d", "agents": 4750, "copies": 95, "namespaces": 1, "filesPerSec": 2100, "readP50Ms": 353, "limit": "plateau: Artifacts' shared read path, shown as latency, nothing refused" },
+   { "run": "S4e", "agents": 4400, "copies": 88, "namespaces": 2, "filesPerSec": 3000, "readP50Ms": 908, "limit": "2 namespaces ~1.4x: part per namespace, part shared; a cold namespace's reads failed (1,454 internal errors); one 10-s window" }
+  ],
+  "files": { "S4a": 16256, "S4c": 50140, "S4d": 128866, "S4e": 56410 }
+ },
+ "realModels": {
+  "label": "measured on Cloudflare with real models (Workers AI + Gemini through AI Gateway qodebase-fleet)",
+  "runs": [
+   { "run": "S5 v1", "agents": null, "filesPerSec": 36, "callsPerMin": 2170, "limit": "our own gateway's 1,200/min first (raised); then gemma capacity (3040) ~210-260/min, glm-5.3 own limit ~35/min", "usd": 3.48 },
+   { "run": "S5 v2", "agents": 450, "filesPerSec": 37, "callsPerMin": null, "limit": "our pacer counted files, not calls (fixing)", "usd": 6.84 }
+  ]
+ }
+}
