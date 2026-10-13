@@ -719,7 +719,7 @@ export function jobType(job = SMALL_APP, suggestion = null) {
     evidence: 'Board runs and sims (sim.md (d)-(h)): a duplicate check before work stops pieces being built twice.' };
   if (b.tasks < 30) return { ...base, type: 'app', from: 'size', label: 'a mid-size app',
     why: preset === 'balanced' ? 'about half the cost of one agent on the lab\'s bigger apps' : preset === 'cheapest' ? 'many simple, separate pieces' : 'about 4x faster than a team in our real builds, same features',
-    evidence: preset === 'fastest' ? 'Real builds R3 vs R6, same prompt: 11/11 features each; one agent 457 s, a 12-agent team 1,940 s and 38% cheaper.'
+    evidence: preset === 'fastest' ? 'In our real builds (one each), R3 vs R6, same prompt: 11/11 features each; one agent 457 s, a 12-agent team 1,940 s and 38% cheaper.'
       : 'Lab stage 1: on the bigger apps a team cost about half of one agent.' };
   return { ...base, type: 'big-app', from: 'size', label: 'a big app',
     why: preset === 'fastest' ? 'one agent is still quickest here' : preset === 'cheapest' ? 'many simple, separate pieces: a Haiku crew does them for the least'
