@@ -9,9 +9,9 @@ DIAL=$1; PROJ=$2; LABEL=$3; AGENTS=${4:-200}; BUDGET=${5:-8}
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 K=$(cat ~/.config/qbfleet/key); U=https://qbfleet.forqdev.workers.dev; D=~/.local/share/qbfleet/kata/$LABEL; mkdir -p "$D"
 REPO="fleet-$PROJ"
-T=$(jq -c '[.list | sort_by(.order)[]]' "$ROOT/sim/kata/seed-1/kata-tasks-dial$DIAL.json")
-jq -n --argjson t "$T" --arg repo "$REPO" --arg slug "eyal.$PROJ" --arg label "code dial $DIAL% ($LABEL)" --argjson agents "$AGENTS" --argjson budget "$BUDGET" \
-  '{repo: $repo, label: $label, ladder: ("K" + ($label|split(" ")[2]|rtrimstr("%"))), kata: {slug: $slug, tasks: $t, maxRedos: 2}, agents: $agents, batch: 1,
+jq -c '[.list | sort_by(.order)[]]' "$ROOT/sim/kata/seed-1/kata-tasks-dial$DIAL.json" > "$D/tasks.json"
+jq -n --slurpfile ts "$D/tasks.json" --arg repo "$REPO" --arg slug "eyal.$PROJ" --arg label "code dial $DIAL% ($LABEL)" --argjson agents "$AGENTS" --argjson budget "$BUDGET" \
+  '{repo: $repo, label: $label, ladder: ("K" + ($label|split(" ")[2]|rtrimstr("%"))), kata: {slug: $slug, tasks: $ts[0], maxRedos: 2}, agents: $agents, batch: 1,
     models: [{model: "gemini-3.1-flash-lite", maxPerMin: 300}], overflow: {model: "@cf/zai-org/glm-4.7-flash", maxPerMin: 200},
     budgetUsd: $budget, planUsdPerMin: 3, maxFiles: 100000, pause: {rateLimitShare: 0.25, modelErrorShare: 0.3}}' > "$D/start-body.json"
 curl -4 -s -m 280 -A qbfleet-cli/1 -H "x-fleet-key: $K" -X POST -H 'content-type: application/json' "$U/start" --data @"$D/start-body.json" > "$D/start.json"

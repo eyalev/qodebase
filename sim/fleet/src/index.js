@@ -575,13 +575,15 @@ export class Run extends DurableObject {
       x.calls[r.model] = (x.calls[r.model] || 0) + 1; if (String(r.status).startsWith('rate_limited')) x.r429++; x.usd += r.usd || 0;
     }
     for (const p of await lander(this.env, meta.repo || s?.cfg.repo || MAIN).pushes(id).catch(() => [])) { const d = slot(p.at).door; d.pushes++; d.files += p.files; d.bytes = (d.bytes || 0) + (p.bytes || 0); d.ms = Math.max(d.ms, p.ms); }
-    for (const r of this.sql.exec(`SELECT file, at, landed_at, resolution FROM rec WHERE run = ? AND landed_at IS NOT NULL`, id).toArray()) { const x = slot(r.landed_at); x.landed++; if (r.resolution === 'index-replayed' || ['merged', 'replayed', 'duplicate', 'identical'].includes(r.resolution)) x.collisions = (x.collisions || 0) + 1; const ln = laneOf(r.file, root); x.lanes[ln] = (x.lanes[ln] || 0) + 1; x.waits.push(r.landed_at - r.at); }
+    for (const r of this.sql.exec(`SELECT file, at, landed_at, resolution FROM rec WHERE run = ? AND landed_at IS NOT NULL`, id).toArray()) { const x = slot(r.landed_at); x.landed++; if (r.resolution === 'index-replayed' || ['merged', 'replayed', 'duplicate', 'identical'].includes(r.resolution)) x.collisions = (x.collisions || 0) + 1;
+      // Replays: collisions resolved by redoing the intent on the newest main (index re-inserts, comment replays, kata redos and model replays).
+      if (/replayed|^redo/.test(r.resolution || '')) x.replays = (x.replays || 0) + 1; const ln = laneOf(r.file, root); x.lanes[ln] = (x.lanes[ln] || 0) + 1; x.waits.push(r.landed_at - r.at); }
     const samp = new Map(this.sql.exec(`SELECT * FROM samp WHERE run = ?`, id).toArray().map((r) => [r.t, { waiting: r.waiting, atModel: r.at_model, readyToLand: r.ready }]));
     const series = [...by.values()].sort((a, b) => a.t - b.t).map((x) => {
       const top = Object.entries(x.lanes).sort((a, b) => b[1] - a[1]); const lanes = Object.fromEntries(top.slice(0, 10)); const other = top.slice(10).reduce((n, [, v]) => n + v, 0); if (other) lanes.other = other;
       const w = x.waits.sort((a, b) => a - b);
       const rd = (x.reads || []).sort((a, b) => a - b);
-      return { t: x.t, active: x.agents.size, files: x.files, ready: x.ready, collisions: x.collisions || 0, door: x.door, readP50: rd.length ? rd[Math.floor(rd.length / 2)] : null, calls: x.calls, r429: x.r429, landed: x.landed, lanes, usd: Math.round(x.usd * 1e5) / 1e5, landWaitP90: w.length ? Math.round(w[Math.floor(w.length * 0.9)] / 1000) : null, queue: samp.get(x.t) || null };
+      return { t: x.t, active: x.agents.size, files: x.files, ready: x.ready, collisions: x.collisions || 0, replays: x.replays || 0, door: x.door, readP50: rd.length ? rd[Math.floor(rd.length / 2)] : null, calls: x.calls, r429: x.r429, landed: x.landed, lanes, usd: Math.round(x.usd * 1e5) / 1e5, landWaitP90: w.length ? Math.round(w[Math.floor(w.length * 0.9)] / 1000) : null, queue: samp.get(x.t) || null };
     });
     const cur = s && s.runId === id ? s : null;
     const marks = (cur?.pauses || meta.pauses || []).map((p) => ({ at: p.at, kind: p.why === 'resumed' ? 'resume' : p.auto ? 'auto_pause' : 'pause', why: p.why }));
@@ -984,20 +986,23 @@ export class KataAgent extends DurableObject {
     const project = await this.env.PROJECT.get(this.env.PROJECT.idFromName(job.slug)).info();
     if (!project?.repo) return { error: 'no such project' };
     using main = await retry(() => this.env.ARTIFACTS_FORQ.get(project.repo));
-    const head = (await retry(() => main.log({ limit: 1 })))[0];
-    const h = await blobAt(main, new Objects(), head.treeHash, job.path);
-    const b = await retry(() => main.readBlob(h));
+    // Fork first, then read the fork: main can move between reading its head and forking, and the push to the fork was
+    // then refused as stale (40 of the first 320 dial-0 tasks). The fork's head is this change's base.
+    // A fresh fork name per attempt: an attempt that forked and then failed left its fork behind ('repo already exists').
+    const name = `${job.changeId}${job.stage === 'redo' ? `r${job.redos}` : ''}${job.fails ? `a${job.fails}` : ''}`;
+    const f = await retry(() => main.fork(name, { description: `fleet code dial: ${job.task}`.slice(0, 200), defaultBranchOnly: true }));
+    using fr = await retry(() => this.env.ARTIFACTS_FORQ.get(f.name || name), [0, 500, 1500, 4000]);
+    const fh = await retry(async () => { const x = (await fr.log({ limit: 1 }))[0]; if (!x) throw new Error('empty fork'); return x; }, [0, 500, 1500, 4000]);
+    const h = await blobAt(fr, new Objects(), fh.treeHash, job.path);
+    const b = await retry(() => fr.readBlob(h));
     const text = new TextDecoder().decode(await b.arrayBuffer());
     const m = await Agent.prototype.callModel.call({ env: this.env }, job.model, job.provider, kataPrompt(job.text, job.path, text), 3000, false);
     if (m.status) return { error: `${m.status}: ${m.reason}` };
     const code = parseCode(m.raw);
     const chk = checkCode(job.path, code, job.fns[0]);
     if (!chk.ok) return { error: chk.why, usd: m.usd };
-    // A fresh fork name per attempt: an attempt that forked and then failed left its fork behind ('repo already exists').
-    const name = `${job.changeId}${job.stage === 'redo' ? `r${job.redos}` : ''}${job.fails ? `a${job.fails}` : ''}`;
-    const f = await retry(() => main.fork(name, { description: `fleet code dial: ${job.task}`.slice(0, 200), defaultBranchOnly: true }));
-    using fr = await retry(() => this.env.ARTIFACTS_FORQ.get(f.name || name), [0, 500, 1500, 4000]);
     const objs = new Objects();
+    const head = fh;
     const tree = await overlay(fr, objs, head.treeHash, [{ path: job.path, sha: objs.blob(code) }]);
     const commit = objs.commit(tree, [head.hash], `${job.task}\n\n${job.text}`.slice(0, 2000), Date.now(), `qodebase fleet agent ${i} <agent+fleet${i}@qodebase.app>`);
     const token = (await fr.createToken('write', 600)).plaintext;
