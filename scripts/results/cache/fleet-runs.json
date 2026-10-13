@@ -3,6 +3,8 @@
   {
    "runId": "fmv6kuwtl",
    "label": "plumbing (3 files, thinking on)",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-main",
    "root": "src/vs",
    "state": "ended",
@@ -48,11 +50,19 @@
      "model": "@cf/zai-org/glm-4.7-flash",
      "calls": 2
     }
-   ]
+   ],
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6kzol3",
    "label": "plumbing (3 files)",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-main",
    "root": "src/vs",
    "state": "ended",
@@ -93,11 +103,19 @@
      "model": "@cf/zai-org/glm-4.7-flash",
      "calls": 3
     }
-   ]
+   ],
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6l8doa",
    "label": "plumbing (6 files, first landing)",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-main",
    "root": "src/vs",
    "state": "ended",
@@ -138,11 +156,19 @@
      "model": "@cf/zai-org/glm-4.7-flash",
      "calls": 6
     }
-   ]
+   ],
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6lhnk2",
    "label": "F2 @ 10 agents",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-main",
    "root": "src/vs",
    "state": "ended",
@@ -185,11 +211,19 @@
      "model": "@cf/google/gemma-4-26b-a4b-it",
      "calls": 37
     }
-   ]
+   ],
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6lmffn",
    "label": "F2 @ 100 agents (start bug: 8 started)",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-main",
    "root": "src/vs",
    "state": "ended",
@@ -246,11 +280,19 @@
      "model": "@cf/google/gemma-4-26b-a4b-it",
      "calls": 83
     }
-   ]
+   ],
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6m4smw",
    "label": "F2 @ 100 agents",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-main",
    "root": "src/vs",
    "state": "ended",
@@ -303,11 +345,19 @@
      "model": "@cf/google/gemma-4-26b-a4b-it",
      "calls": 59
     }
-   ]
+   ],
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6md3we",
    "label": "F3 @ 200 agents, src/vs",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-main",
    "root": "src/vs",
    "state": "done",
@@ -439,11 +489,19 @@
      "model": "gemini-3.5-flash-lite",
      "calls": 54
     }
-   ]
+   ],
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6mttvr",
    "label": "F3b nest packages/ (gemini-3.1)",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-nest",
    "root": "packages",
    "state": "done",
@@ -510,11 +568,19 @@
      "model": "gemini-3.1-flash-lite",
      "calls": 39
     }
-   ]
+   ],
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6mtyx9",
    "label": "F3b angular packages/ (gemini-3.1)",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-angular",
    "root": "packages",
    "state": "done",
@@ -642,11 +708,19 @@
      "model": "gemini-3.1-flash-lite",
      "calls": 2
     }
-   ]
+   ],
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6mu687",
    "label": "F3b next.js packages/ (glm-4.7)",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-nextjs",
    "root": "packages",
    "state": "done",
@@ -719,11 +793,19 @@
      "model": "@cf/zai-org/glm-4.7-flash",
      "calls": 5
     }
-   ]
+   ],
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6mu93d",
    "label": "F3b vscode extensions/ (gemma)",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-vscode-ext",
    "root": "extensions",
    "state": "done",
@@ -806,11 +888,19 @@
      "model": "@cf/google/gemma-4-26b-a4b-it",
      "calls": 157
     }
-   ]
+   ],
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6mu3wd",
    "label": "F3b babel packages/ (gemini-3.1)",
+   "ladder": null,
+   "copy": null,
    "repo": "fleet-babel",
    "root": "packages",
    "state": "done",
@@ -883,11 +973,19 @@
      "model": "gemini-3.1-flash-lite",
      "calls": 2
     }
-   ]
+   ],
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6ooow4",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-1",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 8",
+   "ladder": "S4c",
+   "copy": 8,
    "repo": "fleet-nextjs-1",
    "root": "packages",
    "state": "done",
@@ -930,11 +1028,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6ofmt4",
-   "label": "S4a 200 agents / 4 copies (cache) - copy 1",
+   "label": "S4a 200 agents / 4 copies (cache) - copy 3",
+   "ladder": "S4a",
+   "copy": 3,
    "repo": "fleet-vscode-src-1",
    "root": "src/vs",
    "state": "done",
@@ -982,11 +1090,21 @@
      "model": "cache",
      "calls": 639
     }
-   ]
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 4,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oootq",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-1",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 7",
+   "ladder": "S4c",
+   "copy": 7,
    "repo": "fleet-angular-1",
    "root": "packages",
    "state": "done",
@@ -1029,11 +1147,21 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oopl9",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-1",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 9",
+   "ladder": "S4c",
+   "copy": 9,
    "repo": "fleet-vscode-ext-1",
    "root": "extensions",
    "state": "done",
@@ -1076,14 +1204,24 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxch6",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-1",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 9",
+   "ladder": "S4d",
+   "copy": 9,
    "repo": "fleet-nest-1",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 652,
@@ -1098,9 +1236,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896526186,
+   "startedAt": 1791896528337,
    "endedAt": 1791896534010,
-   "wallS": 8,
+   "wallS": 6,
    "landWaitS": {
     "p50": 7,
     "p90": 8
@@ -1122,14 +1260,80 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzedx",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 2",
+   "ladder": "S4e",
+   "copy": 2,
+   "repo": "fleet-nest-1",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421057,
+   "endedAt": 1791898437190,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 975,
+    "p90": 979
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 19,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxeqx",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-1",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 19",
+   "ladder": "S4d",
+   "copy": 19,
    "repo": "fleet-babel-1",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -1144,9 +1348,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896529129,
+   "startedAt": 1791896532514,
    "endedAt": 1791896539179,
-   "wallS": 10,
+   "wallS": 7,
    "landWaitS": {
     "p50": 12,
     "p90": 13
@@ -1169,14 +1373,81 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzht2",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 1",
+   "ladder": "S4e",
+   "copy": 1,
+   "repo": "fleet-babel-1",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420700,
+   "endedAt": 1791898434587,
+   "wallS": 14,
+   "landWaitS": {
+    "p50": 11,
+    "p90": 1000
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxcfc",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-2",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 7",
+   "ladder": "S4d",
+   "copy": 7,
    "repo": "fleet-nest-2",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 652,
@@ -1191,9 +1462,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896526120,
+   "startedAt": 1791896528715,
    "endedAt": 1791896539898,
-   "wallS": 14,
+   "wallS": 11,
    "landWaitS": {
     "p50": 4,
     "p90": 7
@@ -1215,12 +1486,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 6,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxcfw",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-3",
-   "repo": "fleet-nest-3",
+   "runId": "fmv6pzdpp",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 6",
+   "ladder": "S4e",
+   "copy": 6,
+   "repo": "fleet-nest-2",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -1237,9 +1518,70 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896526140,
+   "startedAt": 1791898421390,
+   "endedAt": 1791898442699,
+   "wallS": 21,
+   "landWaitS": {
+    "p50": 1015,
+    "p90": 1021
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 124,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 124
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 51
+    }
+   ],
+   "copyOfKind": 41,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxcfw",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 8",
+   "ladder": "S4d",
+   "copy": 8,
+   "repo": "fleet-nest-3",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896529856,
    "endedAt": 1791896541179,
-   "wallS": 15,
+   "wallS": 11,
    "landWaitS": {
     "p50": 5,
     "p90": 7
@@ -1261,12 +1603,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 8,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxbe8",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-4",
-   "repo": "fleet-nest-4",
+   "runId": "fmv6pzdsh",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 10",
+   "ladder": "S4e",
+   "copy": 10,
+   "repo": "fleet-nest-3",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -1283,9 +1635,70 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896524784,
+   "startedAt": 1791898421205,
+   "endedAt": 1791898442769,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 1020,
+    "p90": 1025
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 134,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 134
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 41
+    }
+   ],
+   "copyOfKind": 37,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxbe8",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 2",
+   "ladder": "S4d",
+   "copy": 2,
+   "repo": "fleet-nest-4",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896526490,
    "endedAt": 1791896531734,
-   "wallS": 7,
+   "wallS": 5,
    "landWaitS": {
     "p50": 4,
     "p90": 6
@@ -1307,12 +1720,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxccz",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-5",
-   "repo": "fleet-nest-5",
+   "runId": "fmv6pzcsf",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 14",
+   "ladder": "S4e",
+   "copy": 14,
+   "repo": "fleet-nest-4",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -1329,9 +1752,65 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896526035,
+   "startedAt": 1791898421016,
+   "endedAt": 1791898437196,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 1018,
+    "p90": 1023
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 8,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxccz",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 6",
+   "ladder": "S4d",
+   "copy": 6,
+   "repo": "fleet-nest-5",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896528938,
    "endedAt": 1791896534130,
-   "wallS": 8,
+   "wallS": 5,
    "landWaitS": {
     "p50": 6,
     "p90": 7
@@ -1353,14 +1832,80 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 7,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzelo",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 18",
+   "ladder": "S4e",
+   "copy": 18,
+   "repo": "fleet-nest-5",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421137,
+   "endedAt": 1791898437186,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 1020,
+    "p90": 1026
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 35,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxblx",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-6",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 3",
+   "ladder": "S4d",
+   "copy": 3,
    "repo": "fleet-nest-6",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 652,
@@ -1375,9 +1920,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896525061,
+   "startedAt": 1791896528043,
    "endedAt": 1791896536204,
-   "wallS": 11,
+   "wallS": 8,
    "landWaitS": {
     "p50": 3,
     "p90": 5
@@ -1400,12 +1945,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxcvu",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-7",
-   "repo": "fleet-nest-7",
+   "runId": "fmv6pzelm",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 22",
+   "ladder": "S4e",
+   "copy": 22,
+   "repo": "fleet-nest-6",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -1422,9 +1977,70 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896526714,
+   "startedAt": 1791898421114,
+   "endedAt": 1791898441208,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 1020,
+    "p90": 1024
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 159,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 159
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 16
+    }
+   ],
+   "copyOfKind": 32,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxcvu",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 10",
+   "ladder": "S4d",
+   "copy": 10,
+   "repo": "fleet-nest-7",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896530250,
    "endedAt": 1791896541945,
-   "wallS": 15,
+   "wallS": 12,
    "landWaitS": {
     "p50": 7,
     "p90": 9
@@ -1446,11 +2062,82 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 10,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzz4a",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 26",
+   "ladder": "S4e",
+   "copy": 26,
+   "repo": "fleet-nest-7",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421057,
+   "endedAt": 1791898442674,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 1023,
+    "p90": 1030
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 124,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 124
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 51
+    }
+   ],
+   "copyOfKind": 20,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6ookhf",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-2",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 3",
+   "ladder": "S4c",
+   "copy": 3,
    "repo": "fleet-angular-2",
    "root": "packages",
    "state": "done",
@@ -1493,11 +2180,21 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oojsh",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-2",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 1",
+   "ladder": "S4c",
+   "copy": 1,
    "repo": "fleet-nextjs-2",
    "root": "packages",
    "state": "done",
@@ -1540,14 +2237,24 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxb40",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-8",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 1",
+   "ladder": "S4d",
+   "copy": 1,
    "repo": "fleet-nest-8",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 652,
@@ -1562,9 +2269,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896524416,
+   "startedAt": 1791896526572,
    "endedAt": 1791896535898,
-   "wallS": 11,
+   "wallS": 9,
    "landWaitS": {
     "p50": 6,
     "p90": 8
@@ -1586,12 +2293,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxbwg",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-9",
-   "repo": "fleet-nest-9",
+   "runId": "fmv6pzxpc",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 30",
+   "ladder": "S4e",
+   "copy": 30,
+   "repo": "fleet-nest-8",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -1608,9 +2325,70 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896525440,
+   "startedAt": 1791898421106,
+   "endedAt": 1791898442745,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 1019,
+    "p90": 1024
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 125,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 125
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 50
+    }
+   ],
+   "copyOfKind": 30,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxbwg",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 4",
+   "ladder": "S4d",
+   "copy": 4,
+   "repo": "fleet-nest-9",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896527582,
    "endedAt": 1791896532937,
-   "wallS": 7,
+   "wallS": 5,
    "landWaitS": {
     "p50": 5,
     "p90": 7
@@ -1632,14 +2410,85 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzxph",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 34",
+   "ladder": "S4e",
+   "copy": 34,
+   "repo": "fleet-nest-9",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421310,
+   "endedAt": 1791898441168,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 964,
+    "p90": 970
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 158,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 158
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 17
+    }
+   ],
+   "copyOfKind": 38,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxg1i",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-2",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 26",
+   "ladder": "S4d",
+   "copy": 26,
    "repo": "fleet-babel-2",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -1654,9 +2503,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896530806,
+   "startedAt": 1791896534224,
    "endedAt": 1791896540377,
-   "wallS": 10,
+   "wallS": 6,
    "landWaitS": {
     "p50": 10,
     "p90": 11
@@ -1679,11 +2528,78 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzigo",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 5",
+   "ladder": "S4e",
+   "copy": 5,
+   "repo": "fleet-babel-2",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420855,
+   "endedAt": 1791898434581,
+   "wallS": 14,
+   "landWaitS": {
+    "p50": 11,
+    "p90": 1024
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 14,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6ofopo",
-   "label": "S4a 200 agents / 4 copies (cache) - copy 2",
+   "label": "S4a 200 agents / 4 copies (cache) - copy 4",
+   "ladder": "S4a",
+   "copy": 4,
    "repo": "fleet-vscode-src-2",
    "root": "src/vs",
    "state": "done",
@@ -1731,14 +2647,24 @@
      "model": "cache",
      "calls": 421
     }
-   ]
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 4,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxd2v",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-10",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 11",
+   "ladder": "S4d",
+   "copy": 11,
    "repo": "fleet-nest-10",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 652,
@@ -1753,9 +2679,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896526967,
+   "startedAt": 1791896530382,
    "endedAt": 1791896540903,
-   "wallS": 14,
+   "wallS": 11,
    "landWaitS": {
     "p50": 5,
     "p90": 8
@@ -1777,11 +2703,82 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 11,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzywm",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 38",
+   "ladder": "S4e",
+   "copy": 38,
+   "repo": "fleet-nest-10",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421059,
+   "endedAt": 1791898442708,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 961,
+    "p90": 966
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 130,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 130
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 45
+    }
+   ],
+   "copyOfKind": 24,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oox4a",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-2",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 13",
+   "ladder": "S4c",
+   "copy": 13,
    "repo": "fleet-vscode-ext-2",
    "root": "extensions",
    "state": "done",
@@ -1824,11 +2821,21 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oond3",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-3",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 6",
+   "ladder": "S4c",
+   "copy": 6,
    "repo": "fleet-angular-3",
    "root": "packages",
    "state": "done",
@@ -1871,11 +2878,21 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6ookgc",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-3",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 2",
+   "ladder": "S4c",
+   "copy": 2,
    "repo": "fleet-nextjs-3",
    "root": "packages",
    "state": "done",
@@ -1918,14 +2935,24 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxie4",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-3",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 35",
+   "ladder": "S4d",
+   "copy": 35,
    "repo": "fleet-babel-3",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -1940,9 +2967,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896533852,
+   "startedAt": 1791896538063,
    "endedAt": 1791896546357,
-   "wallS": 13,
+   "wallS": 8,
    "landWaitS": {
     "p50": 11,
     "p90": 18
@@ -1965,11 +2992,83 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 9,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzl2r",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 9",
+   "ladder": "S4e",
+   "copy": 9,
+   "repo": "fleet-babel-3",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420809,
+   "endedAt": 1791898442953,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 963,
+    "p90": 971
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 227,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 227
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 96
+    }
+   ],
+   "copyOfKind": 9,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oov7h",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-4",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 12",
+   "ladder": "S4c",
+   "copy": 12,
    "repo": "fleet-angular-4",
    "root": "packages",
    "state": "done",
@@ -2012,11 +3111,21 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6of4um",
-   "label": "S4a 200 agents / 4 copies (cache) - copy 3",
+   "label": "S4a 200 agents / 4 copies (cache) - copy 1",
+   "ladder": "S4a",
+   "copy": 1,
    "repo": "fleet-vscode-src-3",
    "root": "src/vs",
    "state": "done",
@@ -2064,11 +3173,21 @@
      "model": "cache",
      "calls": 2992
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 4,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oopwn",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-4",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 11",
+   "ladder": "S4c",
+   "copy": 11,
    "repo": "fleet-nextjs-4",
    "root": "packages",
    "state": "done",
@@ -2111,11 +3230,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6opa7x",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-3",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 18",
+   "ladder": "S4c",
+   "copy": 18,
    "repo": "fleet-vscode-ext-3",
    "root": "extensions",
    "state": "done",
@@ -2163,11 +3292,21 @@
      "model": "cache",
      "calls": 1184
     }
-   ]
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6ookxz",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-5",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 4",
+   "ladder": "S4c",
+   "copy": 4,
    "repo": "fleet-angular-5",
    "root": "packages",
    "state": "done",
@@ -2210,14 +3349,24 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxhl1",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-4",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 32",
+   "ladder": "S4d",
+   "copy": 32,
    "repo": "fleet-babel-4",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -2232,9 +3381,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896532805,
+   "startedAt": 1791896536774,
    "endedAt": 1791896541656,
-   "wallS": 9,
+   "wallS": 5,
    "landWaitS": {
     "p50": 12,
     "p90": 13
@@ -2257,11 +3406,78 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 8,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzjzi",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 13",
+   "ladder": "S4e",
+   "copy": 13,
+   "repo": "fleet-babel-4",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420856,
+   "endedAt": 1791898434611,
+   "wallS": 14,
+   "landWaitS": {
+    "p50": 14,
+    "p90": 976
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 15,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oopmh",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-5",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 10",
+   "ladder": "S4c",
+   "copy": 10,
    "repo": "fleet-nextjs-5",
    "root": "packages",
    "state": "done",
@@ -2304,11 +3520,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oflq1",
-   "label": "S4a 200 agents / 4 copies (cache) - copy 4",
+   "label": "S4a 200 agents / 4 copies (cache) - copy 2",
+   "ladder": "S4a",
+   "copy": 2,
    "repo": "fleet-vscode-src-4",
    "root": "src/vs",
    "state": "done",
@@ -2351,11 +3577,21 @@
      "model": "cache",
      "calls": 2995
     }
-   ]
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 4,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxpgh",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-6",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 48",
+   "ladder": "S4d",
+   "copy": 48,
    "repo": "fleet-angular-6",
    "root": "packages",
    "state": "done",
@@ -2403,11 +3639,21 @@
      "model": "cache",
      "calls": 139
     }
-   ]
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6opaqc",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-4",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 19",
+   "ladder": "S4c",
+   "copy": 19,
    "repo": "fleet-vscode-ext-4",
    "root": "extensions",
    "state": "done",
@@ -2455,14 +3701,24 @@
      "model": "cache",
      "calls": 1187
     }
-   ]
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxig2",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-5",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 36",
+   "ladder": "S4d",
+   "copy": 36,
    "repo": "fleet-babel-5",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -2477,9 +3733,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896533922,
+   "startedAt": 1791896539644,
    "endedAt": 1791896546504,
-   "wallS": 13,
+   "wallS": 7,
    "landWaitS": {
     "p50": 10,
     "p90": 12
@@ -2502,11 +3758,83 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 10,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzkcu",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 17",
+   "ladder": "S4e",
+   "copy": 17,
+   "repo": "fleet-babel-5",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420874,
+   "endedAt": 1791898442916,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 979,
+    "p90": 986
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 242,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 242
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 81
+    }
+   ],
+   "copyOfKind": 16,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxc57",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-7",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 5",
+   "ladder": "S4d",
+   "copy": 5,
    "repo": "fleet-angular-7",
    "root": "packages",
    "state": "done",
@@ -2549,11 +3877,21 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxhrz",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-6",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 33",
+   "ladder": "S4d",
+   "copy": 33,
    "repo": "fleet-nextjs-6",
    "root": "packages",
    "state": "done",
@@ -2596,11 +3934,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6omm62",
-   "label": "S4b 200 agents / 1 copy (cache, batch 5)",
+   "label": "S4b 200 agents / 1 copy (cache) - copy 1",
+   "ladder": "S4b",
+   "copy": 1,
    "repo": "fleet-vscode-src-5",
    "root": "src/vs",
    "state": "done",
@@ -2648,11 +3996,21 @@
      "model": "cache",
      "calls": 1750
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxe7q",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-8",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 16",
+   "ladder": "S4d",
+   "copy": 16,
    "repo": "fleet-angular-8",
    "root": "packages",
    "state": "done",
@@ -2695,14 +4053,24 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxdj1",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-6",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 12",
+   "ladder": "S4d",
+   "copy": 12,
    "repo": "fleet-babel-6",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -2717,9 +4085,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896527549,
+   "startedAt": 1791896530593,
    "endedAt": 1791896535946,
-   "wallS": 8,
+   "wallS": 5,
    "landWaitS": {
     "p50": 9,
     "p90": 10
@@ -2742,11 +4110,78 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzgah",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 21",
+   "ladder": "S4e",
+   "copy": 21,
+   "repo": "fleet-babel-6",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420897,
+   "endedAt": 1791898435859,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 14,
+    "p90": 972
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 20,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxmzy",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-7",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 40",
+   "ladder": "S4d",
+   "copy": 40,
    "repo": "fleet-nextjs-7",
    "root": "packages",
    "state": "done",
@@ -2789,11 +4224,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6op7me",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-5",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 16",
+   "ladder": "S4c",
+   "copy": 16,
    "repo": "fleet-vscode-ext-5",
    "root": "extensions",
    "state": "done",
@@ -2841,11 +4286,21 @@
      "model": "cache",
      "calls": 165
     }
-   ]
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxn4i",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-9",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 42",
+   "ladder": "S4d",
+   "copy": 42,
    "repo": "fleet-angular-9",
    "root": "packages",
    "state": "done",
@@ -2888,11 +4343,21 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6opkn5",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-6",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 20",
+   "ladder": "S4c",
+   "copy": 20,
    "repo": "fleet-vscode-src-6",
    "root": "src/vs",
    "state": "done",
@@ -2935,11 +4400,21 @@
      "model": "cache",
      "calls": 2995
     }
-   ]
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxn0q",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-8",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 41",
+   "ladder": "S4d",
+   "copy": 41,
    "repo": "fleet-nextjs-8",
    "root": "packages",
    "state": "done",
@@ -2982,14 +4457,24 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxgpt",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-7",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 30",
+   "ladder": "S4d",
+   "copy": 30,
    "repo": "fleet-babel-7",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -3004,9 +4489,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896531681,
+   "startedAt": 1791896535360,
    "endedAt": 1791896542814,
-   "wallS": 11,
+   "wallS": 7,
    "landWaitS": {
     "p50": 9,
     "p90": 13
@@ -3029,11 +4514,83 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 7,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6q032e",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 25",
+   "ladder": "S4e",
+   "copy": 25,
+   "repo": "fleet-babel-7",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421140,
+   "endedAt": 1791898441588,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 987,
+    "p90": 993
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 271,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 271
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 52
+    }
+   ],
+   "copyOfKind": 36,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oy148",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-6",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 77",
+   "ladder": "S4d",
+   "copy": 77,
    "repo": "fleet-vscode-ext-6",
    "root": "extensions",
    "state": "done",
@@ -3081,11 +4638,21 @@
      "model": "cache",
      "calls": 1148
     }
-   ]
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxp1e",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-10",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 45",
+   "ladder": "S4d",
+   "copy": 45,
    "repo": "fleet-angular-10",
    "root": "packages",
    "state": "done",
@@ -3133,11 +4700,21 @@
      "model": "cache",
      "calls": 127
     }
-   ]
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxi9m",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-9",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 34",
+   "ladder": "S4d",
+   "copy": 34,
    "repo": "fleet-nextjs-9",
    "root": "packages",
    "state": "done",
@@ -3180,11 +4757,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6opa0q",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-7",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 17",
+   "ladder": "S4c",
+   "copy": 17,
    "repo": "fleet-vscode-src-7",
    "root": "src/vs",
    "state": "done",
@@ -3232,14 +4819,24 @@
      "model": "cache",
      "calls": 2459
     }
-   ]
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxeut",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-8",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 20",
+   "ladder": "S4d",
+   "copy": 20,
    "repo": "fleet-babel-8",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -3254,9 +4851,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896529269,
+   "startedAt": 1791896534520,
    "endedAt": 1791896542839,
-   "wallS": 14,
+   "wallS": 8,
    "landWaitS": {
     "p50": 8,
     "p90": 13
@@ -3279,11 +4876,83 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 6,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6q01ki",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 29",
+   "ladder": "S4e",
+   "copy": 29,
+   "repo": "fleet-babel-8",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421513,
+   "endedAt": 1791898443015,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 1028,
+    "p90": 1033
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 194,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 129
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 194
+    }
+   ],
+   "copyOfKind": 43,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxmws",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-10",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 39",
+   "ladder": "S4d",
+   "copy": 39,
    "repo": "fleet-nextjs-10",
    "root": "packages",
    "state": "done",
@@ -3326,11 +4995,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxsgg",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-7",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 56",
+   "ladder": "S4d",
+   "copy": 56,
    "repo": "fleet-vscode-ext-7",
    "root": "extensions",
    "state": "done",
@@ -3373,11 +5052,21 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oon2o",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-8",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 5",
+   "ladder": "S4c",
+   "copy": 5,
    "repo": "fleet-vscode-src-8",
    "root": "src/vs",
    "state": "done",
@@ -3420,14 +5109,24 @@
      "model": "cache",
      "calls": 2995
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxfu2",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-9",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 24",
+   "ladder": "S4d",
+   "copy": 24,
    "repo": "fleet-babel-9",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -3442,9 +5141,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896530538,
+   "startedAt": 1791896533318,
    "endedAt": 1791896538881,
-   "wallS": 8,
+   "wallS": 6,
    "landWaitS": {
     "p50": 5,
     "p90": 7
@@ -3467,11 +5166,78 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6q01tm",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 33",
+   "ladder": "S4e",
+   "copy": 33,
+   "repo": "fleet-babel-9",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420878,
+   "endedAt": 1791898434603,
+   "wallS": 14,
+   "landWaitS": {
+    "p50": 11,
+    "p90": 1024
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 17,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6op1o6",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-9",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 14",
+   "ladder": "S4c",
+   "copy": 14,
    "repo": "fleet-vscode-src-9",
    "root": "src/vs",
    "state": "done",
@@ -3519,11 +5285,21 @@
      "model": "cache",
      "calls": 499
     }
-   ]
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxtyv",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-8",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 61",
+   "ladder": "S4d",
+   "copy": 61,
    "repo": "fleet-vscode-ext-8",
    "root": "extensions",
    "state": "done",
@@ -3566,14 +5342,24 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxgf1",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-10",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 27",
+   "ladder": "S4d",
+   "copy": 27,
    "repo": "fleet-babel-10",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -3588,9 +5374,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896531293,
+   "startedAt": 1791896534318,
    "endedAt": 1791896547493,
-   "wallS": 16,
+   "wallS": 13,
    "landWaitS": {
     "p50": 7,
     "p90": 12
@@ -3613,11 +5399,83 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6q02qp",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 37",
+   "ladder": "S4e",
+   "copy": 37,
+   "repo": "fleet-babel-10",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421156,
+   "endedAt": 1791898441667,
+   "wallS": 21,
+   "landWaitS": {
+    "p50": 1032,
+    "p90": 1039
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 254,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 254
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 69
+    }
+   ],
+   "copyOfKind": 37,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6op5a4",
-   "label": "S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-10",
+   "label": "S4c 1,000 agents / 20 copies (cache) - copy 15",
+   "ladder": "S4c",
+   "copy": 15,
    "repo": "fleet-vscode-src-10",
    "root": "src/vs",
    "state": "done",
@@ -3665,11 +5523,21 @@
      "model": "cache",
      "calls": 1438
     }
-   ]
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxeev",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-9",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 18",
+   "ladder": "S4d",
+   "copy": 18,
    "repo": "fleet-vscode-ext-9",
    "root": "extensions",
    "state": "done",
@@ -3712,11 +5580,21 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxl6s",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-10",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 38",
+   "ladder": "S4d",
+   "copy": 38,
    "repo": "fleet-vscode-ext-10",
    "root": "extensions",
    "state": "done",
@@ -3759,11 +5637,21 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oz4u9",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-16",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 94",
+   "ladder": "S4d",
+   "copy": 94,
    "repo": "fleet-vscode-ext-16",
    "root": "extensions",
    "state": "done",
@@ -3806,11 +5694,21 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 16,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oz2iy",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-12",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 93",
+   "ladder": "S4d",
+   "copy": 93,
    "repo": "fleet-vscode-ext-12",
    "root": "extensions",
    "state": "done",
@@ -3853,11 +5751,21 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 15,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oy9s0",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-11",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 85",
+   "ladder": "S4d",
+   "copy": 85,
    "repo": "fleet-vscode-ext-11",
    "root": "extensions",
    "state": "done",
@@ -3905,11 +5813,21 @@
      "model": "cache",
      "calls": 778
     }
-   ]
+   ],
+   "copyOfKind": 9,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oy68c",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-15",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 83",
+   "ladder": "S4d",
+   "copy": 83,
    "repo": "fleet-vscode-ext-15",
    "root": "extensions",
    "state": "done",
@@ -3957,11 +5875,21 @@
      "model": "cache",
      "calls": 831
     }
-   ]
+   ],
+   "copyOfKind": 7,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oykp8",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-19",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 91",
+   "ladder": "S4d",
+   "copy": 91,
    "repo": "fleet-vscode-ext-19",
    "root": "extensions",
    "state": "done",
@@ -4004,11 +5932,21 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 13,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oy5xs",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-21",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 81",
+   "ladder": "S4d",
+   "copy": 81,
    "repo": "fleet-vscode-ext-21",
    "root": "extensions",
    "state": "done",
@@ -4056,11 +5994,21 @@
      "model": "cache",
      "calls": 806
     }
-   ]
+   ],
+   "copyOfKind": 6,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oyfcq",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-22",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 90",
+   "ladder": "S4d",
+   "copy": 90,
    "repo": "fleet-vscode-ext-22",
    "root": "extensions",
    "state": "done",
@@ -4108,11 +6056,21 @@
      "model": "cache",
      "calls": 1530
     }
-   ]
+   ],
+   "copyOfKind": 12,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oym43",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-20",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 92",
+   "ladder": "S4d",
+   "copy": 92,
    "repo": "fleet-vscode-ext-20",
    "root": "extensions",
    "state": "done",
@@ -4155,11 +6113,21 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 14,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oyemf",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-18",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 89",
+   "ladder": "S4d",
+   "copy": 89,
    "repo": "fleet-vscode-ext-18",
    "root": "extensions",
    "state": "done",
@@ -4207,11 +6175,21 @@
      "model": "cache",
      "calls": 1475
     }
-   ]
+   ],
+   "copyOfKind": 11,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6ozbfa",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-17",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 95",
+   "ladder": "S4d",
+   "copy": 95,
    "repo": "fleet-vscode-ext-17",
    "root": "extensions",
    "state": "done",
@@ -4254,11 +6232,21 @@
      "model": "cache",
      "calls": 1538
     }
-   ]
+   ],
+   "copyOfKind": 17,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxyae",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-12",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 70",
+   "ladder": "S4d",
+   "copy": 70,
    "repo": "fleet-nextjs-12",
    "root": "packages",
    "state": "done",
@@ -4301,11 +6289,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 12,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oy2tg",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-16",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 78",
+   "ladder": "S4d",
+   "copy": 78,
    "repo": "fleet-nextjs-16",
    "root": "packages",
    "state": "done",
@@ -4348,11 +6346,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 14,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxrq3",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-11",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 52",
+   "ladder": "S4d",
+   "copy": 52,
    "repo": "fleet-nextjs-11",
    "root": "packages",
    "state": "done",
@@ -4395,11 +6403,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 7,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxx1q",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-13",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 65",
+   "ladder": "S4d",
+   "copy": 65,
    "repo": "fleet-nextjs-13",
    "root": "packages",
    "state": "done",
@@ -4447,11 +6465,21 @@
      "model": "cache",
      "calls": 343
     }
-   ]
+   ],
+   "copyOfKind": 11,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oy5rs",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-14",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 80",
+   "ladder": "S4d",
+   "copy": 80,
    "repo": "fleet-nextjs-14",
    "root": "packages",
    "state": "done",
@@ -4499,11 +6527,21 @@
      "model": "cache",
      "calls": 181
     }
-   ]
+   ],
+   "copyOfKind": 16,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxsf1",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-17",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 55",
+   "ladder": "S4d",
+   "copy": 55,
    "repo": "fleet-nextjs-17",
    "root": "packages",
    "state": "done",
@@ -4546,11 +6584,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 8,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxtko",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-18",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 59",
+   "ladder": "S4d",
+   "copy": 59,
    "repo": "fleet-nextjs-18",
    "root": "packages",
    "state": "done",
@@ -4593,11 +6641,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 10,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxspg",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-22",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 57",
+   "ladder": "S4d",
+   "copy": 57,
    "repo": "fleet-nextjs-22",
    "root": "packages",
    "state": "done",
@@ -4640,11 +6698,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 9,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxz2f",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-21",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 73",
+   "ladder": "S4d",
+   "copy": 73,
    "repo": "fleet-nextjs-21",
    "root": "packages",
    "state": "done",
@@ -4687,11 +6755,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 13,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oy64q",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-19",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 82",
+   "ladder": "S4d",
+   "copy": 82,
    "repo": "fleet-nextjs-19",
    "root": "packages",
    "state": "done",
@@ -4739,11 +6817,21 @@
      "model": "cache",
      "calls": 767
     }
-   ]
+   ],
+   "copyOfKind": 17,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oy2zt",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-20",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 79",
+   "ladder": "S4d",
+   "copy": 79,
    "repo": "fleet-nextjs-20",
    "root": "packages",
    "state": "done",
@@ -4791,11 +6879,21 @@
      "model": "cache",
      "calls": 632
     }
-   ]
+   ],
+   "copyOfKind": 15,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxs0t",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-16",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 54",
+   "ladder": "S4d",
+   "copy": 54,
    "repo": "fleet-angular-16",
    "root": "packages",
    "state": "done",
@@ -4838,11 +6936,21 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 6,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxtdw",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-12",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 58",
+   "ladder": "S4d",
+   "copy": 58,
    "repo": "fleet-angular-12",
    "root": "packages",
    "state": "done",
@@ -4885,11 +6993,21 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 7,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oy0ut",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-13",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 76",
+   "ladder": "S4d",
+   "copy": 76,
    "repo": "fleet-angular-13",
    "root": "packages",
    "state": "done",
@@ -4937,11 +7055,21 @@
      "model": "cache",
      "calls": 73
     }
-   ]
+   ],
+   "copyOfKind": 15,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxxv8",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-11",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 67",
+   "ladder": "S4d",
+   "copy": 67,
    "repo": "fleet-angular-11",
    "root": "packages",
    "state": "done",
@@ -4989,11 +7117,21 @@
      "model": "cache",
      "calls": 372
     }
-   ]
+   ],
+   "copyOfKind": 10,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxzpz",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-20",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 74",
+   "ladder": "S4d",
+   "copy": 74,
    "repo": "fleet-angular-20",
    "root": "packages",
    "state": "done",
@@ -5036,11 +7174,21 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 13,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oyc03",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-18",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 88",
+   "ladder": "S4d",
+   "copy": 88,
    "repo": "fleet-angular-18",
    "root": "packages",
    "state": "done",
@@ -5088,11 +7236,21 @@
      "model": "cache",
      "calls": 422
     }
-   ]
+   ],
+   "copyOfKind": 17,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxyfs",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-17",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 71",
+   "ladder": "S4d",
+   "copy": 71,
    "repo": "fleet-angular-17",
    "root": "packages",
    "state": "done",
@@ -5140,11 +7298,21 @@
      "model": "cache",
      "calls": 399
     }
-   ]
+   ],
+   "copyOfKind": 12,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxxy5",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-19",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 68",
+   "ladder": "S4d",
+   "copy": 68,
    "repo": "fleet-angular-19",
    "root": "packages",
    "state": "done",
@@ -5187,11 +7355,21 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 11,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxvqv",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-21",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 64",
+   "ladder": "S4d",
+   "copy": 64,
    "repo": "fleet-angular-21",
    "root": "packages",
    "state": "done",
@@ -5234,14 +7412,24 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 9,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxyks",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-22",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 72",
+   "ladder": "S4d",
+   "copy": 72,
    "repo": "fleet-angular-22",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2090,
@@ -5256,9 +7444,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896554828,
+   "startedAt": 1791896557291,
    "endedAt": 1791896578958,
-   "wallS": 24,
+   "wallS": 22,
    "landWaitS": {
     "p50": 16,
     "p90": 22
@@ -5281,14 +7469,186 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 14,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pp9gx",
+   "label": "notes test",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-angular-22",
+   "root": "packages",
+   "state": "ended",
+   "agents": 5,
+   "agentsStarted": 5,
+   "files": 80,
+   "landed": 16,
+   "ready": 0,
+   "skipped": 64,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791897831733,
+   "endedAt": 1791897834597,
+   "wallS": 3,
+   "landWaitS": {
+    "p50": 5,
+    "p90": 7
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 16,
+     "skipped": 64,
+     "calls": 16,
+     "rateLimited429": 0,
+     "peakPerMin": 16,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791897780000,
+     "model": "cache",
+     "calls": 16
+    }
+   ],
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pr6sg",
+   "label": "notes test",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-angular-22",
+   "root": "packages",
+   "state": "ended",
+   "agents": 5,
+   "agentsStarted": 5,
+   "files": 80,
+   "landed": 16,
+   "ready": 0,
+   "skipped": 64,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791897922572,
+   "endedAt": 1791897925572,
+   "wallS": 3,
+   "landWaitS": {
+    "p50": 4,
+    "p90": 6
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 16,
+     "skipped": 64,
+     "calls": 16,
+     "rateLimited429": 0,
+     "peakPerMin": 16,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791897900000,
+     "model": "cache",
+     "calls": 16
+    }
+   ],
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6putjb",
+   "label": "notes test",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-angular-22",
+   "root": "packages",
+   "state": "done",
+   "agents": 5,
+   "agentsStarted": 5,
+   "files": 80,
+   "landed": 16,
+   "ready": 0,
+   "skipped": 64,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898087943,
+   "endedAt": 1791898094371,
+   "wallS": 6,
+   "landWaitS": {
+    "p50": 5,
+    "p90": 7
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 16,
+     "skipped": 64,
+     "calls": 16,
+     "rateLimited429": 0,
+     "peakPerMin": 16,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898080000,
+     "model": "cache",
+     "calls": 16
+    }
+   ],
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxtlr",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-12",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 60",
+   "ladder": "S4d",
+   "copy": 60,
    "repo": "fleet-babel-12",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -5303,9 +7663,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896548383,
+   "startedAt": 1791896551336,
    "endedAt": 1791896557043,
-   "wallS": 9,
+   "wallS": 6,
    "landWaitS": {
     "p50": 11,
     "p90": 12
@@ -5328,12 +7688,22 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 18,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxniz",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-16",
-   "repo": "fleet-babel-16",
+   "runId": "fmv6q0tb6",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 45",
+   "ladder": "S4e",
+   "copy": 45,
+   "repo": "fleet-babel-12",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5350,9 +7720,71 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896540507,
-   "endedAt": 1791896560932,
+   "startedAt": 1791898420690,
+   "endedAt": 1791898441127,
    "wallS": 20,
+   "landWaitS": {
+    "p50": 979,
+    "p90": 985
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 271,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 271
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 52
+    }
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxniz",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 43",
+   "ladder": "S4d",
+   "copy": 43,
+   "repo": "fleet-babel-16",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896545406,
+   "endedAt": 1791896560932,
+   "wallS": 16,
    "landWaitS": {
     "p50": 13,
     "p90": 17
@@ -5375,12 +7807,22 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 12,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxrwj",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-11",
-   "repo": "fleet-babel-11",
+   "runId": "fmv6q0q1e",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 61",
+   "ladder": "S4e",
+   "copy": 61,
+   "repo": "fleet-babel-16",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5397,9 +7839,71 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896546179,
+   "startedAt": 1791898420716,
+   "endedAt": 1791898444060,
+   "wallS": 23,
+   "landWaitS": {
+    "p50": 1037,
+    "p90": 1047
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 228,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 95
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 228
+    }
+   ],
+   "copyOfKind": 7,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxrwj",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 53",
+   "ladder": "S4d",
+   "copy": 53,
+   "repo": "fleet-babel-11",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896549512,
    "endedAt": 1791896556317,
-   "wallS": 10,
+   "wallS": 7,
    "landWaitS": {
     "p50": 12,
     "p90": 15
@@ -5422,12 +7926,22 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 16,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxrhr",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-20",
-   "repo": "fleet-babel-20",
+   "runId": "fmv6q06g7",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 41",
+   "ladder": "S4e",
+   "copy": 41,
+   "repo": "fleet-babel-11",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5444,9 +7958,71 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896545647,
+   "startedAt": 1791898420701,
+   "endedAt": 1791898441186,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 998,
+    "p90": 1006
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 268,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 268
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 55
+    }
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxrhr",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 51",
+   "ladder": "S4d",
+   "copy": 51,
+   "repo": "fleet-babel-20",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896549705,
    "endedAt": 1791896554782,
-   "wallS": 9,
+   "wallS": 5,
    "landWaitS": {
     "p50": 12,
     "p90": 13
@@ -5469,12 +8045,22 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 17,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxpzg",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-18",
-   "repo": "fleet-babel-18",
+   "runId": "fmv6q1ejl",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 77",
+   "ladder": "S4e",
+   "copy": 77,
+   "repo": "fleet-babel-20",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5491,9 +8077,66 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896543692,
+   "startedAt": 1791898420705,
+   "endedAt": 1791898435866,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 13,
+    "p90": 971
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 6,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxpzg",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 49",
+   "ladder": "S4d",
+   "copy": 49,
+   "repo": "fleet-babel-18",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896546956,
    "endedAt": 1791896552940,
-   "wallS": 9,
+   "wallS": 6,
    "landWaitS": {
     "p50": 11,
     "p90": 12
@@ -5516,12 +8159,22 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 14,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxoar",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-19",
-   "repo": "fleet-babel-19",
+   "runId": "fmv6q1fhi",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 69",
+   "ladder": "S4e",
+   "copy": 69,
+   "repo": "fleet-babel-18",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5538,9 +8191,66 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896541507,
+   "startedAt": 1791898420839,
+   "endedAt": 1791898437204,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 10,
+    "p90": 992
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 12,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxoar",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 44",
+   "ladder": "S4d",
+   "copy": 44,
+   "repo": "fleet-babel-19",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896545345,
    "endedAt": 1791896550824,
-   "wallS": 9,
+   "wallS": 5,
    "landWaitS": {
     "p50": 8,
     "p90": 10
@@ -5563,12 +8273,22 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 11,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxxv3",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-21",
-   "repo": "fleet-babel-21",
+   "runId": "fmv6q1az6",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 73",
+   "ladder": "S4e",
+   "copy": 73,
+   "repo": "fleet-babel-19",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5585,9 +8305,71 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896553903,
+   "startedAt": 1791898421386,
+   "endedAt": 1791898441138,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 1028,
+    "p90": 1034
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 287,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 287
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 36
+    }
+   ],
+   "copyOfKind": 42,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxxv3",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 66",
+   "ladder": "S4d",
+   "copy": 66,
+   "repo": "fleet-babel-21",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896556838,
    "endedAt": 1791896562656,
-   "wallS": 9,
+   "wallS": 6,
    "landWaitS": {
     "p50": 12,
     "p90": 14
@@ -5610,12 +8392,22 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 20,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxp29",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-17",
-   "repo": "fleet-babel-17",
+   "runId": "fmv6q1g97",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 81",
+   "ladder": "S4e",
+   "copy": 81,
+   "repo": "fleet-babel-21",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5632,9 +8424,71 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896542497,
+   "startedAt": 1791898420847,
+   "endedAt": 1791898441141,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 1028,
+    "p90": 1035
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 301,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 301
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 22
+    }
+   ],
+   "copyOfKind": 13,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxp29",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 46",
+   "ladder": "S4d",
+   "copy": 46,
+   "repo": "fleet-babel-17",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896545519,
    "endedAt": 1791896552361,
-   "wallS": 10,
+   "wallS": 7,
    "landWaitS": {
     "p50": 12,
     "p90": 15
@@ -5657,12 +8511,22 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 13,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oy03f",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-22",
-   "repo": "fleet-babel-22",
+   "runId": "fmv6q0p58",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 65",
+   "ladder": "S4e",
+   "copy": 65,
+   "repo": "fleet-babel-17",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5679,9 +8543,71 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896556795,
+   "startedAt": 1791898420804,
+   "endedAt": 1791898443178,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 991,
+    "p90": 1002
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 190,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 133
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 190
+    }
+   ],
+   "copyOfKind": 8,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oy03f",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 75",
+   "ladder": "S4d",
+   "copy": 75,
+   "repo": "fleet-babel-22",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896560663,
    "endedAt": 1791896566732,
-   "wallS": 10,
+   "wallS": 6,
    "landWaitS": {
     "p50": 14,
     "p90": 16
@@ -5704,14 +8630,86 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 22,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6q1gxd",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 85",
+   "ladder": "S4e",
+   "copy": 85,
+   "repo": "fleet-babel-22",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420819,
+   "endedAt": 1791898441133,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 980,
+    "p90": 987
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 272,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 272
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 51
+    }
+   ],
+   "copyOfKind": 11,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxh4o",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-13",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 31",
+   "ladder": "S4d",
+   "copy": 31,
    "repo": "fleet-nest-13",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 652,
@@ -5726,9 +8724,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896532216,
+   "startedAt": 1791896534802,
    "endedAt": 1791896542418,
-   "wallS": 10,
+   "wallS": 8,
    "landWaitS": {
     "p50": 3,
     "p90": 4
@@ -5750,12 +8748,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 20,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxfgr",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-12",
-   "repo": "fleet-nest-12",
+   "runId": "fmv6q0mo4",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 50",
+   "ladder": "S4e",
+   "copy": 50,
+   "repo": "fleet-nest-13",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5772,9 +8780,70 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896530059,
+   "startedAt": 1791898421058,
+   "endedAt": 1791898441165,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 971,
+    "p90": 977
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 159,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 159
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 16
+    }
+   ],
+   "copyOfKind": 22,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxfgr",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 23",
+   "ladder": "S4d",
+   "copy": 23,
+   "repo": "fleet-nest-12",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896533126,
    "endedAt": 1791896543357,
-   "wallS": 13,
+   "wallS": 10,
    "landWaitS": {
     "p50": 3,
     "p90": 5
@@ -5796,12 +8865,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 18,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxeb0",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-11",
-   "repo": "fleet-nest-11",
+   "runId": "fmv6q0l93",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 46",
+   "ladder": "S4e",
+   "copy": 46,
+   "repo": "fleet-nest-12",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5818,9 +8897,70 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896528556,
+   "startedAt": 1791898421050,
+   "endedAt": 1791898441660,
+   "wallS": 21,
+   "landWaitS": {
+    "p50": 959,
+    "p90": 965
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 150,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 150
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 25
+    }
+   ],
+   "copyOfKind": 16,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxeb0",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 17",
+   "ladder": "S4d",
+   "copy": 17,
+   "repo": "fleet-nest-11",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896531448,
    "endedAt": 1791896540184,
-   "wallS": 12,
+   "wallS": 9,
    "landWaitS": {
     "p50": 6,
     "p90": 8
@@ -5842,12 +8982,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 13,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxdq5",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-15",
-   "repo": "fleet-nest-15",
+   "runId": "fmv6pzygc",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 42",
+   "ladder": "S4e",
+   "copy": 42,
+   "repo": "fleet-nest-11",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5864,9 +9014,70 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896527805,
+   "startedAt": 1791898421107,
+   "endedAt": 1791898441165,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 964,
+    "p90": 970
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 160,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 160
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 15
+    }
+   ],
+   "copyOfKind": 31,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxdq5",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 14",
+   "ladder": "S4d",
+   "copy": 14,
+   "repo": "fleet-nest-15",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896531523,
    "endedAt": 1791896536466,
-   "wallS": 9,
+   "wallS": 5,
    "landWaitS": {
     "p50": 5,
     "p90": 7
@@ -5888,12 +9099,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 14,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxgp2",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-14",
-   "repo": "fleet-nest-14",
+   "runId": "fmv6q0moq",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 58",
+   "ladder": "S4e",
+   "copy": 58,
+   "repo": "fleet-nest-15",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5910,9 +9131,65 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896531654,
+   "startedAt": 1791898421052,
+   "endedAt": 1791898435862,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 1022,
+    "p90": 1026
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 17,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxgp2",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 29",
+   "ladder": "S4d",
+   "copy": 29,
+   "repo": "fleet-nest-14",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896534298,
    "endedAt": 1791896541723,
-   "wallS": 10,
+   "wallS": 7,
    "landWaitS": {
     "p50": 8,
     "p90": 10
@@ -5934,12 +9211,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 19,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxf44",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-22",
-   "repo": "fleet-nest-22",
+   "runId": "fmv6q0m72",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 54",
+   "ladder": "S4e",
+   "copy": 54,
+   "repo": "fleet-nest-14",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -5956,9 +9243,65 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896529604,
+   "startedAt": 1791898421081,
+   "endedAt": 1791898435875,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 1016,
+    "p90": 1021
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 27,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxf44",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 21",
+   "ladder": "S4d",
+   "copy": 21,
+   "repo": "fleet-nest-22",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896532619,
    "endedAt": 1791896539393,
-   "wallS": 10,
+   "wallS": 7,
    "landWaitS": {
     "p50": 6,
     "p90": 8
@@ -5980,12 +9323,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 17,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxfgb",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-20",
-   "repo": "fleet-nest-20",
+   "runId": "fmv6q17wi",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 86",
+   "ladder": "S4e",
+   "copy": 86,
+   "repo": "fleet-nest-22",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -6002,9 +9355,70 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896530043,
+   "startedAt": 1791898421134,
+   "endedAt": 1791898441157,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 1022,
+    "p90": 1028
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 158,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 158
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 17
+    }
+   ],
+   "copyOfKind": 34,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxfgb",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 22",
+   "ladder": "S4d",
+   "copy": 22,
+   "repo": "fleet-nest-20",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896532342,
    "endedAt": 1791896539184,
-   "wallS": 9,
+   "wallS": 7,
    "landWaitS": {
     "p50": 5,
     "p90": 9
@@ -6026,11 +9440,133 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 16,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6q19jj",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 78",
+   "ladder": "S4e",
+   "copy": 78,
+   "repo": "fleet-nest-20",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421131,
+   "endedAt": 1791898435882,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 963,
+    "p90": 967
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 33,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxdod",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-19",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 13",
+   "ladder": "S4d",
+   "copy": 13,
+   "repo": "fleet-nest-19",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896529933,
+   "endedAt": 1791896536253,
+   "wallS": 6,
+   "landWaitS": {
+    "p50": 3,
+    "p90": 6
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791896520000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 9,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6q172z",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 74",
+   "ladder": "S4e",
+   "copy": 74,
    "repo": "fleet-nest-19",
    "root": "packages",
    "state": "done",
@@ -6048,8 +9584,64 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896527741,
-   "endedAt": 1791896536253,
+   "startedAt": 1791898421046,
+   "endedAt": 1791898435875,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 1020,
+    "p90": 1024
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 14,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxfw2",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 25",
+   "ladder": "S4d",
+   "copy": 25,
+   "repo": "fleet-nest-18",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896532320,
+   "endedAt": 1791896541798,
    "wallS": 9,
    "landWaitS": {
     "p50": 3,
@@ -6072,11 +9664,21 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 15,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxfw2",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-18",
+   "runId": "fmv6q15qa",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 70",
+   "ladder": "S4e",
+   "copy": 70,
    "repo": "fleet-nest-18",
    "root": "packages",
    "state": "done",
@@ -6094,12 +9696,12 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896530610,
-   "endedAt": 1791896541798,
-   "wallS": 11,
+   "startedAt": 1791898421049,
+   "endedAt": 1791898441199,
+   "wallS": 20,
    "landWaitS": {
-    "p50": 3,
-    "p90": 6
+    "p50": 1013,
+    "p90": 1019
    },
    "models": {
     "cache": {
@@ -6108,24 +9710,39 @@
      "skipped": 477,
      "calls": 175,
      "rateLimited429": 0,
-     "peakPerMin": 175,
+     "peakPerMin": 158,
      "role": "planned"
     }
    },
    "perMinute": [
     {
-     "minute": 1791896520000,
+     "minute": 1791898380000,
      "model": "cache",
-     "calls": 175
+     "calls": 158
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 17
     }
-   ]
+   ],
+   "copyOfKind": 15,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxk4k",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-17",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 37",
+   "ladder": "S4d",
+   "copy": 37,
    "repo": "fleet-nest-17",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 652,
@@ -6140,9 +9757,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896536100,
+   "startedAt": 1791896539702,
    "endedAt": 1791896549694,
-   "wallS": 14,
+   "wallS": 10,
    "landWaitS": {
     "p50": 8,
     "p90": 11
@@ -6164,12 +9781,22 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 22,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxgfd",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-21",
-   "repo": "fleet-nest-21",
+   "runId": "fmv6q0nws",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 66",
+   "ladder": "S4e",
+   "copy": 66,
+   "repo": "fleet-nest-17",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -6186,9 +9813,70 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896531305,
+   "startedAt": 1791898421081,
+   "endedAt": 1791898442697,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 967,
+    "p90": 972
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 126,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 126
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 49
+    }
+   ],
+   "copyOfKind": 28,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxgfd",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 28",
+   "ladder": "S4d",
+   "copy": 28,
+   "repo": "fleet-nest-21",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896534955,
    "endedAt": 1791896540196,
-   "wallS": 9,
+   "wallS": 5,
    "landWaitS": {
     "p50": 7,
     "p90": 8
@@ -6210,11 +9898,77 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 21,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6q18qp",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 82",
+   "ladder": "S4e",
+   "copy": 82,
+   "repo": "fleet-nest-21",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421062,
+   "endedAt": 1791898435848,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 1021,
+    "p90": 1025
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 25,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oyb4b",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-14",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 87",
+   "ladder": "S4d",
+   "copy": 87,
    "repo": "fleet-angular-14",
    "root": "packages",
    "state": "done",
@@ -6262,11 +10016,21 @@
      "model": "cache",
      "calls": 257
     }
-   ]
+   ],
+   "copyOfKind": 16,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxuu7",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-15",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 63",
+   "ladder": "S4d",
+   "copy": 63,
    "repo": "fleet-angular-15",
    "root": "packages",
    "state": "done",
@@ -6309,14 +10073,24 @@
      "model": "cache",
      "calls": 692
     }
-   ]
+   ],
+   "copyOfKind": 8,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Angular",
+    "upstream": "angular/angular",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxup1",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-13",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 62",
+   "ladder": "S4d",
+   "copy": 62,
    "repo": "fleet-babel-13",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 597,
@@ -6331,9 +10105,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896549797,
+   "startedAt": 1791896553126,
    "endedAt": 1791896561740,
-   "wallS": 12,
+   "wallS": 9,
    "landWaitS": {
     "p50": 10,
     "p90": 17
@@ -6356,12 +10130,22 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 19,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxxyw",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-14",
-   "repo": "fleet-babel-14",
+   "runId": "fmv6q0uq4",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 49",
+   "ladder": "S4e",
+   "copy": 49,
+   "repo": "fleet-babel-13",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -6378,9 +10162,66 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896554040,
+   "startedAt": 1791898420661,
+   "endedAt": 1791898435879,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 19,
+    "p90": 1039
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxxyw",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 69",
+   "ladder": "S4d",
+   "copy": 69,
+   "repo": "fleet-babel-14",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896556916,
    "endedAt": 1791896561504,
-   "wallS": 7,
+   "wallS": 5,
    "landWaitS": {
     "p50": 5,
     "p90": 6
@@ -6403,12 +10244,22 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 21,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
-   "runId": "fmv6oxper",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-15",
-   "repo": "fleet-babel-15",
+   "runId": "fmv6q0re6",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 53",
+   "ladder": "S4e",
+   "copy": 53,
+   "repo": "fleet-babel-14",
    "root": "packages",
    "state": "done",
    "agents": 50,
@@ -6425,9 +10276,66 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896542947,
+   "startedAt": 1791898420809,
+   "endedAt": 1791898435847,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 7,
+    "p90": 980
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 10,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6oxper",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 47",
+   "ladder": "S4d",
+   "copy": 47,
+   "repo": "fleet-babel-15",
+   "root": "packages",
+   "state": "ended",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791896547534,
    "endedAt": 1791896561010,
-   "wallS": 18,
+   "wallS": 13,
    "landWaitS": {
     "p50": 9,
     "p90": 11
@@ -6450,14 +10358,86 @@
      "model": "cache",
      "calls": 323
     }
-   ]
+   ],
+   "copyOfKind": 15,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6q0rei",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 57",
+   "ladder": "S4e",
+   "copy": 57,
+   "repo": "fleet-babel-15",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420677,
+   "endedAt": 1791898443229,
+   "wallS": 23,
+   "landWaitS": {
+    "p50": 1040,
+    "p90": 1049
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 184,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 139
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 184
+    }
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxdz4",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-16",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 15",
+   "ladder": "S4d",
+   "copy": 15,
    "repo": "fleet-nest-16",
    "root": "packages",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 652,
@@ -6472,9 +10452,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896528128,
+   "startedAt": 1791896530598,
    "endedAt": 1791896536573,
-   "wallS": 8,
+   "wallS": 6,
    "landWaitS": {
     "p50": 3,
     "p90": 6
@@ -6496,11 +10476,77 @@
      "model": "cache",
      "calls": 175
     }
-   ]
+   ],
+   "copyOfKind": 12,
+   "copiesOfKind": 22,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6q0lq5",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 62",
+   "ladder": "S4e",
+   "copy": 62,
+   "repo": "fleet-nest-16",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421063,
+   "endedAt": 1791898437183,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 1019,
+    "p90": 1024
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 26,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oxrcy",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-15",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 50",
+   "ladder": "S4d",
+   "copy": 50,
    "repo": "fleet-nextjs-15",
    "root": "packages",
    "state": "done",
@@ -6543,11 +10589,21 @@
      "model": "cache",
      "calls": 869
     }
-   ]
+   ],
+   "copyOfKind": 6,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "Next.js",
+    "upstream": "vercel/next.js",
+    "root": "packages",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oya7q",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-13",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 86",
+   "ladder": "S4d",
+   "copy": 86,
    "repo": "fleet-vscode-ext-13",
    "root": "extensions",
    "state": "done",
@@ -6595,11 +10651,21 @@
      "model": "cache",
      "calls": 1509
     }
-   ]
+   ],
+   "copyOfKind": 10,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
   },
   {
    "runId": "fmv6oy9lc",
-   "label": "S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-14",
+   "label": "S4d 4,750 agents / 95 copies (cache) - copy 84",
+   "ladder": "S4d",
+   "copy": 84,
    "repo": "fleet-vscode-ext-14",
    "root": "extensions",
    "state": "done",
@@ -6647,7 +10713,2725 @@
      "model": "cache",
      "calls": 529
     }
-   ]
+   ],
+   "copyOfKind": 8,
+   "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6pzne3",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 3",
+   "ladder": "S4e",
+   "copy": 3,
+   "repo": "fleet-n2-babel-1",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420927,
+   "endedAt": 1791898437208,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 13,
+    "p90": 978
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 26,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6pzc72",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 4",
+   "ladder": "S4e",
+   "copy": 4,
+   "repo": "fleet-n2-nest-1",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 25,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421035,
+   "endedAt": 1791899608388,
+   "wallS": 1187,
+   "landWaitS": {
+    "p50": 6,
+    "p90": 1022
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "model_error_retry": 25,
+     "skipped": 477,
+     "calls": 200,
+     "rateLimited429": 0,
+     "peakPerMin": 100,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 100
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 74
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 26
+    }
+   ],
+   "copyOfKind": 12,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6pzibx",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 12",
+   "ladder": "S4e",
+   "copy": 12,
+   "repo": "fleet-n2-nest-3",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421373,
+   "endedAt": 1791898438551,
+   "wallS": 17,
+   "landWaitS": {
+    "p50": 976,
+    "p90": 981
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 40,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6pzjtv",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 8",
+   "ladder": "S4e",
+   "copy": 8,
+   "repo": "fleet-n2-nest-2",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 9,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421142,
+   "endedAt": 1791899508952,
+   "wallS": 1088,
+   "landWaitS": {
+    "p50": 8,
+    "p90": 14
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "model_error_retry": 9,
+     "skipped": 477,
+     "calls": 184,
+     "rateLimited429": 0,
+     "peakPerMin": 113,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 113
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 71
+    }
+   ],
+   "copyOfKind": 36,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6pzgdb",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 16",
+   "ladder": "S4e",
+   "copy": 16,
+   "repo": "fleet-n2-nest-4",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 135,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421102,
+   "endedAt": 1791899508394,
+   "wallS": 1087,
+   "landWaitS": {
+    "p50": 9,
+    "p90": 11
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "model_error_retry": 135,
+     "skipped": 477,
+     "calls": 310,
+     "rateLimited429": 0,
+     "peakPerMin": 205,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 205
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 105
+    }
+   ],
+   "copyOfKind": 29,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6pzram",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 11",
+   "ladder": "S4e",
+   "copy": 11,
+   "repo": "fleet-n2-babel-3",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 14,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420929,
+   "endedAt": 1791899611243,
+   "wallS": 1190,
+   "landWaitS": {
+    "p50": 8,
+    "p90": 985
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 14,
+     "skipped": 274,
+     "calls": 337,
+     "rateLimited429": 0,
+     "peakPerMin": 169,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 144
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 169
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 24
+    }
+   ],
+   "copyOfKind": 28,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6pzrn3",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 7",
+   "ladder": "S4e",
+   "copy": 7,
+   "repo": "fleet-n2-babel-2",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 22,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421024,
+   "endedAt": 1791899611972,
+   "wallS": 1191,
+   "landWaitS": {
+    "p50": 8,
+    "p90": 988
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 22,
+     "skipped": 274,
+     "calls": 345,
+     "rateLimited429": 0,
+     "peakPerMin": 137,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 137
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 88
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 120
+    }
+   ],
+   "copyOfKind": 35,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6pzsb8",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 15",
+   "ladder": "S4e",
+   "copy": 15,
+   "repo": "fleet-n2-babel-4",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 143,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420921,
+   "endedAt": 1791899489933,
+   "wallS": 1069,
+   "landWaitS": {
+    "p50": 29,
+    "p90": 30
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 143,
+     "skipped": 274,
+     "calls": 466,
+     "rateLimited429": 0,
+     "peakPerMin": 267,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 267
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 199
+    }
+   ],
+   "copyOfKind": 25,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q010h",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 24",
+   "ladder": "S4e",
+   "copy": 24,
+   "repo": "fleet-n2-nest-6",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 17,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421315,
+   "endedAt": 1791899509462,
+   "wallS": 1088,
+   "landWaitS": {
+    "p50": 3,
+    "p90": 6
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "model_error_retry": 17,
+     "skipped": 477,
+     "calls": 192,
+     "rateLimited429": 0,
+     "peakPerMin": 106,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 86
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 106
+    }
+   ],
+   "copyOfKind": 39,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6pzg2y",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 20",
+   "ladder": "S4e",
+   "copy": 20,
+   "repo": "fleet-n2-nest-5",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 12,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421426,
+   "endedAt": 1791899509357,
+   "wallS": 1088,
+   "landWaitS": {
+    "p50": 4,
+    "p90": 7
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "model_error_retry": 12,
+     "skipped": 477,
+     "calls": 187,
+     "rateLimited429": 0,
+     "peakPerMin": 104,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 83
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 104
+    }
+   ],
+   "copyOfKind": 43,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q02ek",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 28",
+   "ladder": "S4e",
+   "copy": 28,
+   "repo": "fleet-n2-nest-7",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421057,
+   "endedAt": 1791898437188,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 9,
+    "p90": 977
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 21,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0ai7",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 27",
+   "ladder": "S4e",
+   "copy": 27,
+   "repo": "fleet-n2-babel-7",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 16,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420956,
+   "endedAt": 1791899609850,
+   "wallS": 1189,
+   "landWaitS": {
+    "p50": 9,
+    "p90": 989
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 16,
+     "skipped": 274,
+     "calls": 339,
+     "rateLimited429": 0,
+     "peakPerMin": 133,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 133
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 101
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 105
+    }
+   ],
+   "copyOfKind": 34,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6pzubd",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 19",
+   "ladder": "S4e",
+   "copy": 19,
+   "repo": "fleet-n2-babel-5",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 8,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420939,
+   "endedAt": 1791899494392,
+   "wallS": 1073,
+   "landWaitS": {
+    "p50": 17,
+    "p90": 19
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 8,
+     "skipped": 274,
+     "calls": 331,
+     "rateLimited429": 0,
+     "peakPerMin": 196,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 196
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 8
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 127
+    }
+   ],
+   "copyOfKind": 33,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0h5h",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 23",
+   "ladder": "S4e",
+   "copy": 23,
+   "repo": "fleet-n2-babel-6",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421306,
+   "endedAt": 1791898438548,
+   "wallS": 17,
+   "landWaitS": {
+    "p50": 978,
+    "p90": 983
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 40,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0110",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 32",
+   "ladder": "S4e",
+   "copy": 32,
+   "repo": "fleet-n2-nest-8",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421052,
+   "endedAt": 1791898437203,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 9,
+    "p90": 1021
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 18,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q02qk",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 40",
+   "ladder": "S4e",
+   "copy": 40,
+   "repo": "fleet-n2-nest-10",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 43,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420947,
+   "endedAt": 1791899494495,
+   "wallS": 1074,
+   "landWaitS": {
+    "p50": 6,
+    "p90": 10
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "model_error_retry": 43,
+     "skipped": 477,
+     "calls": 218,
+     "rateLimited429": 0,
+     "peakPerMin": 146,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 146
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 72
+    }
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q00eb",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 36",
+   "ladder": "S4e",
+   "copy": 36,
+   "repo": "fleet-n2-nest-9",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421058,
+   "endedAt": 1791898437172,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 9,
+    "p90": 971
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 23,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0iny",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 31",
+   "ladder": "S4e",
+   "copy": 31,
+   "repo": "fleet-n2-babel-8",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420929,
+   "endedAt": 1791898438487,
+   "wallS": 18,
+   "landWaitS": {
+    "p50": 960,
+    "p90": 966
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 29,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0cp1",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 39",
+   "ladder": "S4e",
+   "copy": 39,
+   "repo": "fleet-n2-babel-10",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421311,
+   "endedAt": 1791898438498,
+   "wallS": 17,
+   "landWaitS": {
+    "p50": 1024,
+    "p90": 1028
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 41,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0iri",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 35",
+   "ladder": "S4e",
+   "copy": 35,
+   "repo": "fleet-n2-babel-9",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 12,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421252,
+   "endedAt": 1791899493707,
+   "wallS": 1072,
+   "landWaitS": {
+    "p50": 21,
+    "p90": 24
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 12,
+     "skipped": 274,
+     "calls": 335,
+     "rateLimited429": 0,
+     "peakPerMin": 213,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 122
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 213
+    }
+   ],
+   "copyOfKind": 38,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0rgt",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 48",
+   "ladder": "S4e",
+   "copy": 48,
+   "repo": "fleet-n2-nest-12",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421434,
+   "endedAt": 1791898438517,
+   "wallS": 17,
+   "landWaitS": {
+    "p50": 1018,
+    "p90": 1024
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 44,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0puo",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 52",
+   "ladder": "S4e",
+   "copy": 52,
+   "repo": "fleet-n2-nest-13",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421028,
+   "endedAt": 1791898438544,
+   "wallS": 18,
+   "landWaitS": {
+    "p50": 958,
+    "p90": 965
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 10,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q02t2",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 44",
+   "ladder": "S4e",
+   "copy": 44,
+   "repo": "fleet-n2-nest-11",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420937,
+   "endedAt": 1791898438512,
+   "wallS": 18,
+   "landWaitS": {
+    "p50": 969,
+    "p90": 975
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q14hr",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 51",
+   "ladder": "S4e",
+   "copy": 51,
+   "repo": "fleet-n2-babel-13",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 128,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420901,
+   "endedAt": 1791899599970,
+   "wallS": 1179,
+   "landWaitS": {
+    "p50": 8,
+    "p90": 984
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 128,
+     "skipped": 274,
+     "calls": 451,
+     "rateLimited429": 0,
+     "peakPerMin": 259,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 259
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 86
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 106
+    }
+   ],
+   "copyOfKind": 22,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0je1",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 43",
+   "ladder": "S4e",
+   "copy": 43,
+   "repo": "fleet-n2-babel-11",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420891,
+   "endedAt": 1791898438514,
+   "wallS": 18,
+   "landWaitS": {
+    "p50": 957,
+    "p90": 962
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 323,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 323
+    }
+   ],
+   "copyOfKind": 19,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0zov",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 47",
+   "ladder": "S4e",
+   "copy": 47,
+   "repo": "fleet-n2-babel-12",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420916,
+   "endedAt": 1791898441190,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 988,
+    "p90": 995
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 311,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 311
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 12
+    }
+   ],
+   "copyOfKind": 24,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0pxr",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 64",
+   "ladder": "S4e",
+   "copy": 64,
+   "repo": "fleet-n2-nest-16",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421033,
+   "endedAt": 1791898438567,
+   "wallS": 18,
+   "landWaitS": {
+    "p50": 9,
+    "p90": 1020
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 11,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0pts",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 56",
+   "ladder": "S4e",
+   "copy": 56,
+   "repo": "fleet-n2-nest-14",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421006,
+   "endedAt": 1791898437229,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 8,
+    "p90": 955
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 7,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0rkx",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 60",
+   "ladder": "S4e",
+   "copy": 60,
+   "repo": "fleet-n2-nest-15",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420955,
+   "endedAt": 1791898438520,
+   "wallS": 18,
+   "landWaitS": {
+    "p50": 9,
+    "p90": 1022
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1297",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 55",
+   "ladder": "S4e",
+   "copy": 55,
+   "repo": "fleet-n2-babel-14",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 56,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420928,
+   "endedAt": 1791899480235,
+   "wallS": 1059,
+   "landWaitS": {
+    "p50": 13,
+    "p90": 14
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 56,
+     "skipped": 274,
+     "calls": 379,
+     "rateLimited429": 0,
+     "peakPerMin": 240,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 240
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 5
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 134
+    }
+   ],
+   "copyOfKind": 27,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q0y76",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 63",
+   "ladder": "S4e",
+   "copy": 63,
+   "repo": "fleet-n2-babel-16",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 149,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420908,
+   "endedAt": 1791899599417,
+   "wallS": 1179,
+   "landWaitS": {
+    "p50": 6,
+    "p90": 973
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 149,
+     "skipped": 274,
+     "calls": 472,
+     "rateLimited429": 0,
+     "peakPerMin": 276,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 276
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 8
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 188
+    }
+   ],
+   "copyOfKind": 23,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q12z0",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 59",
+   "ladder": "S4e",
+   "copy": 59,
+   "repo": "fleet-n2-babel-15",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 37,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420900,
+   "endedAt": 1791899610291,
+   "wallS": 1189,
+   "landWaitS": {
+    "p50": 10,
+    "p90": 1037
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 37,
+     "skipped": 274,
+     "calls": 360,
+     "rateLimited429": 0,
+     "peakPerMin": 166,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 155
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 39
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 166
+    }
+   ],
+   "copyOfKind": 21,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1b54",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 72",
+   "ladder": "S4e",
+   "copy": 72,
+   "repo": "fleet-n2-nest-18",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 17,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420929,
+   "endedAt": 1791899509055,
+   "wallS": 1088,
+   "landWaitS": {
+    "p50": 3,
+    "p90": 6
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "model_error_retry": 17,
+     "skipped": 477,
+     "calls": 192,
+     "rateLimited429": 0,
+     "peakPerMin": 106,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 86
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 106
+    }
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q197h",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 76",
+   "ladder": "S4e",
+   "copy": 76,
+   "repo": "fleet-n2-nest-19",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421002,
+   "endedAt": 1791898438571,
+   "wallS": 18,
+   "landWaitS": {
+    "p50": 1016,
+    "p90": 1023
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 6,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1bpv",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 68",
+   "ladder": "S4e",
+   "copy": 68,
+   "repo": "fleet-n2-nest-17",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 147,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420925,
+   "endedAt": 1791899507986,
+   "wallS": 1087,
+   "landWaitS": {
+    "p50": 5,
+    "p90": 10
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "model_error_retry": 147,
+     "skipped": 477,
+     "calls": 322,
+     "rateLimited429": 0,
+     "peakPerMin": 217,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 217
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 105
+    }
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1mts",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 75",
+   "ladder": "S4e",
+   "copy": 75,
+   "repo": "fleet-n2-babel-19",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 144,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421281,
+   "endedAt": 1791899495304,
+   "wallS": 1074,
+   "landWaitS": {
+    "p50": 9,
+    "p90": 13
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 144,
+     "skipped": 274,
+     "calls": 467,
+     "rateLimited429": 0,
+     "peakPerMin": 263,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 263
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 204
+    }
+   ],
+   "copyOfKind": 39,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1si1",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 71",
+   "ladder": "S4e",
+   "copy": 71,
+   "repo": "fleet-n2-babel-18",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420889,
+   "endedAt": 1791898441150,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 1021,
+    "p90": 1024
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "skipped": 274,
+     "calls": 323,
+     "rateLimited429": 0,
+     "peakPerMin": 284,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 284
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 39
+    }
+   ],
+   "copyOfKind": 18,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1g2l",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 67",
+   "ladder": "S4e",
+   "copy": 67,
+   "repo": "fleet-n2-babel-17",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 24,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420933,
+   "endedAt": 1791899480848,
+   "wallS": 1060,
+   "landWaitS": {
+    "p50": 16,
+    "p90": 19
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 24,
+     "skipped": 274,
+     "calls": 347,
+     "rateLimited429": 0,
+     "peakPerMin": 226,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 226
+    },
+    {
+     "minute": 1791898440000,
+     "model": "cache",
+     "calls": 4
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 117
+    }
+   ],
+   "copyOfKind": 31,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1b4r",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 88",
+   "ladder": "S4e",
+   "copy": 88,
+   "repo": "fleet-n2-nest-22",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421415,
+   "endedAt": 1791898438519,
+   "wallS": 17,
+   "landWaitS": {
+    "p50": 1018,
+    "p90": 1023
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 42,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1cbl",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 80",
+   "ladder": "S4e",
+   "copy": 80,
+   "repo": "fleet-n2-nest-20",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 22,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421040,
+   "endedAt": 1791899600745,
+   "wallS": 1180,
+   "landWaitS": {
+    "p50": 5,
+    "p90": 1032
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "model_error_retry": 22,
+     "skipped": 477,
+     "calls": 197,
+     "rateLimited429": 0,
+     "peakPerMin": 102,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 102
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 79
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 16
+    }
+   ],
+   "copyOfKind": 13,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1aqb",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 84",
+   "ladder": "S4e",
+   "copy": 84,
+   "repo": "fleet-n2-nest-21",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 652,
+   "landed": 175,
+   "ready": 0,
+   "skipped": 477,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421019,
+   "endedAt": 1791898438538,
+   "wallS": 18,
+   "landWaitS": {
+    "p50": 1018,
+    "p90": 1025
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 175,
+     "skipped": 477,
+     "calls": 175,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 175
+    }
+   ],
+   "copyOfKind": 9,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "NestJS",
+    "upstream": "nestjs/nest",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1lyi",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 87",
+   "ladder": "S4e",
+   "copy": 87,
+   "repo": "fleet-n2-babel-22",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 128,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420935,
+   "endedAt": 1791899601642,
+   "wallS": 1181,
+   "landWaitS": {
+    "p50": 6,
+    "p90": 1034
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 128,
+     "skipped": 274,
+     "calls": 451,
+     "rateLimited429": 0,
+     "peakPerMin": 255,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 255
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 70
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 126
+    }
+   ],
+   "copyOfKind": 32,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1hm4",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 83",
+   "ladder": "S4e",
+   "copy": 83,
+   "repo": "fleet-n2-babel-21",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 123,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898420929,
+   "endedAt": 1791899599437,
+   "wallS": 1179,
+   "landWaitS": {
+    "p50": 9,
+    "p90": 972
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 123,
+     "skipped": 274,
+     "calls": 446,
+     "rateLimited429": 0,
+     "peakPerMin": 256,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 256
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 164
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 26
+    }
+   ],
+   "copyOfKind": 30,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv6q1l82",
+   "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 79",
+   "ladder": "S4e",
+   "copy": 79,
+   "repo": "fleet-n2-babel-20",
+   "root": "packages",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 597,
+   "landed": 319,
+   "ready": 0,
+   "skipped": 274,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 23,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791898421536,
+   "endedAt": 1791899602066,
+   "wallS": 1181,
+   "landWaitS": {
+    "p50": 10,
+    "p90": 990
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 4,
+     "landed": 319,
+     "model_error_retry": 23,
+     "skipped": 274,
+     "calls": 346,
+     "rateLimited429": 0,
+     "peakPerMin": 125,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791898380000,
+     "model": "cache",
+     "calls": 112
+    },
+    {
+     "minute": 1791899460000,
+     "model": "cache",
+     "calls": 109
+    },
+    {
+     "minute": 1791899580000,
+     "model": "cache",
+     "calls": 125
+    }
+   ],
+   "copyOfKind": 44,
+   "copiesOfKind": 44,
+   "source": {
+    "name": "Babel",
+    "upstream": "babel/babel",
+    "root": "packages",
+    "namespace": "qbfleet2"
+   }
   }
  ]
 }
