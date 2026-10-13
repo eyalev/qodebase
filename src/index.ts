@@ -21,7 +21,7 @@ import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectP
 import { previewTabs } from './sheet';
 import { catalogReadme } from './catalog';
 import { STARTER, buildPayload } from './newproject';
-import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, cleanEstimate, DEFAULT_PLAN } from './buildsettings';
+import { buildSettingsOn, resolveBuildPlan, planFlags, crewRules, singleTask, skeletonTask, cleanEstimate, DEFAULT_PLAN } from './buildsettings';
 import { suggestRoute, ideaRoute } from './buildsuggest';
 import { withPicker } from './picker';
 import { screenshotRoute } from './screenshot';
@@ -728,6 +728,16 @@ const app = {
           await env.Landing.get(env.Landing.idFromName(slug)).setFlags(slug, planFlags(plan));
           // One agent with the whole job (Fastest); an empty project (self-host) goes through the router, told to start one.
           if (plan.kind === 'single' && starter) await spawn(env, ctx, slug, singleTask(prompt, false), apiBase);
+          else if (plan.kind === 'crew' && starter) {
+            // B-3 (2026-10-13): the skeleton starts now, while the router plans the rest (it waited ~35 s for the router's
+            // wake and plan), and the first reviewer and the merger box warm up so they are ready when it pushes.
+            await spawn(env, ctx, slug, skeletonTask(prompt), apiBase, { skeleton: true });
+            await askRouter(env, ctx, p, slug, buildPayload(prompt, false) + '\n\n' + crewRules(plan, true), apiBase, prompt);
+            ctx.waitUntil(Promise.all([
+              plan.reviewers > 0 ? wake(env, `${slug}--review`, apiBase).then((r) => log('build', 'warm_reviewer', { slug, ...r })) : null,
+              env.MergeBox.get(env.MergeBox.idFromName(`${slug}--merge`)).warm().then((r) => log('build', 'warm_merger', { slug, ...r })),
+            ]).catch((e) => log('build', 'warm_failed', { slug, err: String(e) })));
+          }
           else await askRouter(env, ctx, p, slug, buildPayload(prompt, !starter) + '\n\n' + (plan.kind === 'crew' ? crewRules(plan) : 'Start exactly ONE agent with the whole job; do not split it.'), apiBase, prompt);
         } else await askRouter(env, ctx, p, slug, buildPayload(prompt, !starter), apiBase, prompt);
         // The estimate the page showed (estimate vs elapsed bar), stamped with the start.

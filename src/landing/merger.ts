@@ -169,6 +169,16 @@ export class MergeBox extends DurableObject<Env> {
    *  (refs/qb/p/<id>), never into a working tree. Only when the box is awake and already has the project's clone
    *  (waking a box for this would cost more than it saves). Tokens: one read token per fork, passed as env, never logged.
    *  At train time mergejob.mjs finds the commit already there and skips the network for that change. */
+  /** B-3: start the container ahead of the first train (a Build warms it); the idle stop applies as after a job. */
+  async warm() {
+    const t = Date.now();
+    const cold = await this.#ensureContainer();
+    await this.ctx.storage.put('lastJob', Date.now());
+    if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + 60_000);
+    log('merger', 'warmed', { cold, ms: Date.now() - t });
+    return { cold, ms: Date.now() - t };
+  }
+
   async prefetch(slug: string, items: { id: string; remote: string; token: string; commit: string }[]) {
     if (!this.c.running || !items.length) return { skipped: 'asleep' };
     const dir = `/m/${slug}`, env: Record<string, string> = { D: dir };
