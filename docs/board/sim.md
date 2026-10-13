@@ -1199,3 +1199,23 @@ What it says:
 - qb6 is fixing #2 and #3 before S4b (200 agents on 1 copy): indexes, an auto-pause check every 50 files instead of
   every file, agents calling the Lander directly, batched `next()`, and lanes as SQL rows.
 - #1 stays the thing to watch at S4c (1,000 agents), where `get()` would run at ~1,000/s.
+
+**S4b: 200 agents on ONE copy, cached mode, after qb6's fixes** (batched next/done with 5 files per call, Lander lanes
+as SQL rows, indexes). 4,064 files in 22.7 s = **178 files/s on one copy**, ~3x S4a's ~57 per copy.
+
+| | prediction (S1 #2: ~100-250 files/s per copy) | measured |
+|---|---|---|
+| files/s per copy | 100-250 | 178: inside the range once the per-file state rewrites were gone |
+| what queues | the Run DO | still the Run DO: agents idle between batches p50 397 ms / p90 1.1 s, ~80 ms per file (S4a: 316 ms per file) |
+| per-copy git rate (200/s per artifact) | near the same point | not hit: 0 Artifacts 429s at ~178 reads/s, just under 200/s |
+| Lander (#3) | gone with SQL rows | land wait p50 25 s / p90 35 s; 3 pushes, 444 lane commits, 0 stale |
+| errors | 'overloaded' past the limit | 0 overloaded, 0 infra errors |
+
+Per-file work p50 131 ms, with the blob read p50 76 / p90 287 ms. Caveats: one copy lasts 23 s, so this is a burst, not
+a steady state; its 178 reads/s also sit just under the per-artifact 200/s, so S4b cannot tell the Run DO apart from
+the git rate as the next wall per copy.
+
+For S4c (1,000 agents, 20 copies of 50): at ~3.5 files/s per agent the expected demand is ~3,500 files/s (~175 per
+copy, as in S4b). The shared limits get their first real test there: 3,500 `ARTIFACTS.get()` calls/s against the
+documented 200/s namespace control plane (#1), and starting 1,000 agents at once (#5). If #1 counts, expect a hard
+flat line near 200-230 files/s in total and 429s on get(). If not, ~3,000+ files/s.
