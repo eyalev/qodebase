@@ -1155,6 +1155,11 @@ const app = {
         const ok = b.repo ? await env.ARTIFACTS.delete(b.repo).catch((e) => String(e)) : null;
         return json({ deleted: ok });
       }
+      // /p/<owner> alone (Eyal landed there from Talk): your own projects, or Explore for someone else's.
+      if ((m = path.match(/^\/p\/([a-z0-9-]+)\/?$/))) return Response.redirect(new URL(m[1] === me.handle ? '/mine' : '/explore', url).toString(), 302);
+      // A browser never gets raw JSON for a page that does not exist.
+      if (!path.startsWith('/api/') && (request.headers.get('accept') || '').includes('text/html'))
+        return new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Not found · qodebase</title><style>body{font:16px/1.5 system-ui,sans-serif;margin:0;padding:48px 16px;max-width:520px;margin:auto;color:#222}a{color:#0a58ca}@media(prefers-color-scheme:dark){body{background:#111;color:#ddd}a{color:#7ab0ff}}</style><h1 style="font-size:22px">Nothing here</h1><p>This page does not exist, or it is private.</p><p><a href="/">Home</a> · <a href="/explore">Explore projects</a></p>`, { status: 404, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
       return json({ error: 'not found' }, 404);
     } catch (e) {
       log('api', 'error', { path, err: String(e), stack: (e as Error)?.stack });
