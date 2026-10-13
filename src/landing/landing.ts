@@ -540,7 +540,9 @@ export class Landing extends DurableObject<Env> {
     const agents = all.filter((c) => c.kind === 'agent');
     const landed = agents.filter((c) => c.state === 'landed').length;
     const lastLandedAt = agents.reduce((t, c) => Math.max(t, c.landedAt || 0), 0) || null;
-    return { parts: m.parts ? Math.max(m.parts, agents.length) : null, landed, firstLandedAt: m.firstLandedAt || null, lastLandedAt,
+    // From the records (m.firstLandedAt only exists since 2026-10-13: an older build read its newest landing as its first).
+    const firstLandedAt = agents.reduce((t, c) => (c.landedAt && (!t || c.landedAt < t) ? c.landedAt : t), 0) || m.firstLandedAt || null;
+    return { parts: m.parts ? Math.max(m.parts, agents.length) : null, landed, firstLandedAt, lastLandedAt,
       startedAt: m.build?.startedAt || null, settledAt, remainingS: null };
   }
 
@@ -1403,6 +1405,18 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
   /** Restart this object on the deployed code (admin, src/landing/routes.ts 'restart'). */
   /** Restart on the deployed code. Arms the alarm first: an alarm cut by the abort is not retried,
    *  and a run's queue sat still for minutes after a restart (stage 2, 2026-10-08). */
+  /** Admin: record what a build really took when it never settled by itself (a run stopped before its last change landed,
+   *  like the R5 flagship); the estimate bar then shows the actual instead of an ever-growing 'elapsed'. */
+  async settleBuild(a: { settledAt: number; actualWallS: number; actualUsd: number | null }) {
+    const m = await this.#m();
+    if (!m.build) return { ok: false, error: 'no build estimate on this project' };
+    m.build.actual = { settledAt: a.settledAt, actualWallS: Math.round(a.actualWallS), actualUsd: a.actualUsd };
+    this.#progressMemo = null;
+    await this.#saveMeta();
+    log('build', 'settled_by_admin', { slug: m.slug, actual: m.build.actual });
+    return { ok: true, actual: m.build.actual };
+  }
+
   async kick() {
     const t = Date.now();
     const before = { alarm: await this.ctx.storage.getAlarm(), running: (await this.#m()).running, waiting: [...(await this.#m()).waiting] };

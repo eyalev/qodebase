@@ -85,6 +85,11 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
   }
   // Diagnostics (2026-10-13): run the alarm's work as a request, so it logs and returns what it did or threw. The flagship's
   // Landing alarms were cancelled ~20 ms in, before any of our code, and a queued change waited for hours.
+  if (verb === 'settle' && me.admin && request.method === 'POST') {
+    const b = await request.json().catch(() => ({})) as { settledAt?: number; actualWallS?: number; actualUsd?: number | null };
+    if (!(Number(b.settledAt) > 0) || !(Number(b.actualWallS) > 0)) return json({ error: 'settledAt (ms) and actualWallS required' }, 400);
+    return json(await L.settleBuild({ settledAt: Number(b.settledAt), actualWallS: Number(b.actualWallS), actualUsd: b.actualUsd == null ? null : Number(b.actualUsd) }));
+  }
   if (verb === 'kick' && me.admin) return json(await L.kick().catch((e: unknown) => ({ ok: false, error: String((e as Error)?.stack || e).slice(0, 1500) })));
   if (verb === 'restart' && me.admin) {
     // After a deploy: objects that never went idle keep the old code; this restarts them on the new one.
