@@ -672,7 +672,14 @@ async function tts(request: Request, env: Env, ctx: ExecutionContext, who: Who &
   }
   if (!res.ok || !res.body) { log('tts_error', { level: 'error', status: res.status, body: (await res.text().catch(() => '')).slice(0, 200) }); return json({ error: 'tts' }, 502); }
   const [a, b] = res.body.tee();
-  ctx.waitUntil(new Response(b).arrayBuffer().then((buf) => caches.default.put(key, new Response(buf, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=604800' } }))).catch(() => {}));
+  // When the first audio bytes reach this Worker (is the clip streamed or buffered upstream?), then the cache copy.
+  const tRun = Date.now() - t0;
+  ctx.waitUntil((async () => {
+    const rd = b.getReader(), parts: Uint8Array[] = []; let first = -1;
+    for (;;) { const x = await rd.read(); if (x.done) break; if (first < 0) first = Date.now() - t0; parts.push(x.value); }
+    log('tts_stream', { level: 'info', model, chars: text.length, run_ms: tRun, first_chunk_ms: first, done_ms: Date.now() - t0, chunks: parts.length });
+    await caches.default.put(key, new Response(new Blob(parts), { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=604800' } }));
+  })().catch(() => {}));
   log('tts', { level: 'info', handle: who.handle, model, speaker, chars: text.length, usd: Math.round(text.length / 1000 * (model === 'aura-2' ? 0.03 : 0.015) * 1e5) / 1e5, cached: false, ms_first: Date.now() - t0, left: budget.left });
   return new Response(a, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'private, max-age=86400', 'x-talk-tts': 'fresh' } });
 }
