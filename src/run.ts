@@ -87,6 +87,10 @@ export async function serveRun(request: Request, env: Env, ctx: ExecutionContext
   let path = decodeURIComponent(rest.slice(1));
   if (path === '' || path.endsWith('/')) path += 'index.html';
   if (path.split('/').some((s) => s === '..' || s.startsWith('.git'))) return deny(404, 'not found');
+  // Not part of the app (manager, 2026-10-13, after a build's README carried its admin PIN): dotfiles and dot-folders
+  // (.qodebase/, .env, .claude/ …; /.well-known/ stays), and the repo's own notes at the root (README, CLAUDE.md,
+  // AGENTS.md, CHANGELOG, any root *.md). Markdown the app loads from a folder (content/post.md) is still served.
+  if (path.split('/').some((s) => s.startsWith('.') && s !== '.well-known') || (!path.includes('/') && /(^readme|^claude|^agents|^changelog|\.md$)/i.test(path))) return deny(404, 'not found');
 
   const cache = caches.default;
   const headKey = new Request(`https://${env.RUN_HOST}/__head/${repoName}`);
