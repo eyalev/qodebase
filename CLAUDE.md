@@ -811,6 +811,16 @@ answers, or both.
   settings, work, asks, deck.
 - **What's going on** also names builds running/finished (Landing binding on the talk Worker), questions agents
   asked you (X5 ask-person), live fleet runs (needs `FLEET_KEY` as a secret on qodebase-talk).
+- **Conversations** (qb5, 2026-10-14, hidden: per device, `?conv=1` turns it on, `?conv=0` off; settings row only when
+  on): several Talk threads, each with its log + chat memory, project chips (context), an automatic title and a status
+  dot. Page side src/talkconv.ts (concatenated into TALK_JS; every hook in talkclient.ts is a no-op when off, and the
+  harness proves the off DOM is HEAD's with no extra request), server src/talkthreads.ts: `GET|POST /api/talk/conv`,
+  `/conv/delete`, `/conv/wipe`, `/conv/title` (glm-4.7-flash, budget 'chat'). Stored in the TalkLog instance
+  `conv:<handle>` (never traces or counts; 30 days after the last write, swept on writes, 200 max) only for the owner
+  and people with "Help improve Talk" on; everyone else's stay in localStorage. Chips: names said in a sentence
+  (own + clearly a name -> on; short/near/public -> faded), and change/code commands' project; chat lane gets
+  `context` (slugs, re-checked: own or public) -> chatSystem's context block + tool `send_change`, which only ever
+  reaches changeRequest()'s confirm. Tests `src/talkthreads.test.mjs`; harness + shots `claude5/conv/`.
 - **Page tools for Jarvis hands** (contract:
   `<jarvis webmcp contract>`): signed-in pages
   publish `window.__webmcp` {version 1, app qodebase, tools, call} and register

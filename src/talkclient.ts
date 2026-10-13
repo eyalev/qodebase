@@ -6,6 +6,7 @@
 // engine, language, speak replies. Written as plain ES5-ish JS in a raw string:
 // no backticks or dollar-brace inside.
 import { SCAN_JS } from './talkscan';
+import { CONV_JS } from './talkconv';
 
 export const TALK_JS = String.raw`(function () {
 'use strict';
@@ -540,6 +541,7 @@ function build() {
   });
   histAtLoad = hist.length;
   render();
+  convBuild();   // Conversations (src/talkconv.ts): nothing unless this device has the hidden setting
 }
 
 function open(on) { if (on && S.engine === 'live' && me) warmMic(); if (!on && S.keep !== 'open') releaseMic('closed'); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); barSync(); if (on && hist.length) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
@@ -643,7 +645,7 @@ function dragHandle(g) {
   g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
 }
 function status(t) { stEl.textContent = t || ''; barSync(); }
-function add(who, text, links, extra) { if (run && who !== 'you') run.texts.push(String(text)); var m = { who: who, text: String(text), links: links || undefined }; if (extra) { if (extra.sections) m.sections = extra.sections; if (extra.via) m.via = extra.via; } hist.push(m); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
+function add(who, text, links, extra) { if (run && who !== 'you') run.texts.push(String(text)); var m = { who: who, text: String(text), links: links || undefined }; if (extra) { if (extra.sections) m.sections = extra.sections; if (extra.via) m.via = extra.via; } if (convAdd(m)) return; hist.push(m); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
 // "How this was answered" (manager, 2026-10-13): what heard it, what picked the action, what answered, how long.
 var viaNow = null;   // the utterance in flight: { heard, decide: {model, ms}, answer: {lane, model, ms} }
 function viaShort(v) { if (!v || !v.answer) return ''; var a = v.answer; return (a.label || (a.model ? shortModel(a.model) : a.lane + ', no model')) + (a.fellBack ? ' (fallback)' : '') + (a.ms != null ? ', ' + (a.ms / 1000).toFixed(1) + ' s' : ''); }
@@ -817,6 +819,7 @@ function submit(text) {
   lastText = String(text || '');
   trace('said', { text: text, spoken: lastSpoken, engine: lastSpoken ? S.engine : 'typed', conv: convOn() || undefined });
   if (busy) return;
+  if (convSaid(text)) return;   // Conversations (hidden setting): "new conversation", the turn, project chips
   // A short yes / no answers the question on screen (Stop this run? Send it to the agents?): no model.
   var said = String(text || '').trim(), short = said.split(/\s+/).length <= 5;
   if (lastIdea && Date.now() - lastIdea.at < 10 * 60000 && /^\s*(another( one)?|one more|a different one|next( one)?|try again)\b/i.test(said)) { add('you', said); busy = true; offerOff(); return ideaFlow(lastIdea.size); }
@@ -913,6 +916,7 @@ function route(c, text) {
       offerOn('', function () { act({ op: 'go', href: c.href, label: c.label }); }, 'Open');
       return done();
     }
+    convFromCmd(c); if (c.op === 'change') convChange(c);   // Conversations: the project goes on it / the one on it is the target
     if (c.op === 'change') return changeRequest(c);
     if (c.op === 'code') return codeQuestion(c);
     var acts = (c.mode === 'act' || c.mode === 'both') && c.op !== 'none' && c.op !== 'explain';
@@ -926,7 +930,7 @@ function route(c, text) {
     }
     ask(text, '');
 }
-function done() { busy = false; status(''); finish(); convAfter(); }
+function done() { busy = false; status(''); finish(); convAfter(); convDone(); }
 // ---- Conversation mode: hands-free turns over the dictation path (no voice kit). A 1.5 s pause after words sends them;
 // when the answer has been spoken, it listens again. Two turns with nothing heard, or the toggle, end it.
 var convEmpty = 0, speakPending = false;
@@ -1326,6 +1330,7 @@ function offerSubmit(t) {
 
 var offerState = null;
 function offerOn(text, yes, yesLabel) {
+  if (convOfferAway(text, yes, yesLabel)) return;   // Conversations: a question for a conversation not on screen waits there
   if (run && text && run.texts[run.texts.length - 1] !== text) run.texts.push(text);
   offerState = { text: text || '', yes: yes, label: yesLabel || 'Go' };
   bOffer.innerHTML = '';
@@ -1345,7 +1350,7 @@ function offerOn(text, yes, yesLabel) {
   offer.classList.add('on');
   barSync();
 }
-function offerOff() { offerState = null; offer.classList.remove('on'); offer.innerHTML = ''; if (bOffer) bOffer.innerHTML = ''; barSync(); }
+function offerOff() { convOfferOff(); offerState = null; offer.classList.remove('on'); offer.innerHTML = ''; if (bOffer) bOffer.innerHTML = ''; barSync(); }
 
 // The chat lane may press buttons too: the same gate as the fast lane (it never stops, merges or deletes on its own).
 function chatPress(b) {
@@ -1360,19 +1365,18 @@ function chatPress(b) {
 function ask(text, did) {
   busy = true;
   status('Answering…');
-  api('chat', { utterance: text, did: did, screen: screen(), pageText: pageText(), history: chatHist, model: S.answer || undefined }).then(function (r) {
+  api('chat', { utterance: text, did: did, screen: screen(), pageText: pageText(), history: chatHist, model: S.answer || undefined, context: convCtxSlugs() }).then(function (r) {
     if (r.error) { if (run) run.ok = false; add('note', r.why || 'No answer.'); return done(); }
     var reply = r.reply || '';
-    chatHist.push({ role: 'user', content: text });
-    if (reply) chatHist.push({ role: 'assistant', content: reply });
-    chatHist = chatHist.slice(-12); sset('chat', chatHist);
+    convChat(text, reply);
     if (viaNow) viaNow.answer = { lane: 'chat', model: r.model, label: r.modelLabel, fellBack: r.fellBack, ms: r.ms && r.ms.model };
     if (reply) { add('ai', reply, null, { via: viaNow }); say(reply); }
     var acts = r.actions || [];
     logEv('chat', { text: text, reply_len: reply.length, actions: acts.map(function (a) { return a.name; }), ms: r.ms && r.ms.model });
-    var nav = null;
+    var nav = null, sendCh = null;
     acts.forEach(function (a) {
       if (a.name === 'show') showSeq((a.args && a.args.ids) || []);
+      else if (a.name === 'send_change') sendCh = a.args;   // Conversations: changeRequest()'s confirm, below
       else if (a.name === 'press') { var b = byId(a.args.id); if (b) chatPress(b); }
       else if (a.name === 'type_into') { var f = byId(a.args.id); if (f) { typeInto(f, String(a.args.text || '')); offerSubmit(f); } }
       else if (a.name === 'idea') { var sz = String(a.args.size || 'Medium'); sz = sz.charAt(0).toUpperCase() + sz.slice(1).toLowerCase(); nav = null; setTimeout(function () { busy = true; ideaFlow(/^(Small|Medium|Large|Huge)$/.test(sz) ? sz : 'Medium'); }, 300); }
@@ -1384,6 +1388,7 @@ function ask(text, did) {
       }
     });
     if (nav) { var c = { op: 'go', href: nav.href, label: nav.label }; setTimeout(function () { act(c); }, reply ? 900 : 0); return; }
+    if (sendCh) { var sp = convSendChange(sendCh); if (sp) { sp.then(function () { if (busy) done(); }); return; } }
     done();
   }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'chat', err: String(e) }); done(); });
 }
@@ -2113,6 +2118,7 @@ function signedOutBar() {
   bar.addEventListener('click', function () { trace('bar', { how: 'signin' }); });
 }
 
+` + CONV_JS + String.raw`
 // ---- Boot ----------------------------------------------------------------
 fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
   if (!j.signedIn) return signedOutBar();

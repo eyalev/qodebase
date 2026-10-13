@@ -6,7 +6,8 @@
 
 export type ChatScreen = { path: string; title: string; items: { id: string; kind: string; text: string; href?: string }[] };
 
-export function chatSystem(handle: string, s: ChatScreen, pageText: string, did: string) {
+// context: what the conversation's project chips say (src/talkthreads.ts contextKnowledge); '' = today's prompt, unchanged.
+export function chatSystem(handle: string, s: ChatScreen, pageText: string, did: string, context = '') {
   const items = s.items.map((i) => `${i.id} ${i.kind}: ${i.text}${i.href ? ' → ' + i.href : ''}`).join('\n');
   const system = [
     'You are the voice of qodebase, a git platform made for the phone: every project runs as a live app, every fork gets its own AI agents, and people can install AI assistants into their own Cloudflare account.',
@@ -17,6 +18,7 @@ export function chatSystem(handle: string, s: ChatScreen, pageText: string, did:
     '- Fork copies a project to your account. Ask (the router agent) splits a request into tasks; each task gets an agent (Claude Code in a Cloudflare container) on its own fork; a reviewer agent checks pushes; you merge from the phone.',
     '- Your own AI assistant (/personal-agents) installs an assistant into YOUR Cloudflare account with Sign in with Cloudflare: Cloudflare Agent fits the free plan; OpenClaw, Hermes, T3 Code, Mobile Agent and Pi need Workers Paid ($5 a month per account, not per assistant). Mobile Agent and T3 Code can use your own Claude subscription.',
     '- Get your own qodebase (/own) installs a whole copy of qodebase into your Cloudflare account. The qb command line (/cli) does everything from a terminal or an agent.',
+    context ? `This conversation is about these projects (the person put them on it; this is what is true about them now):\n${context}\nTo ask one of them for a change, call send_change with the project as owner/name and the request in the person's words; the app asks the person to confirm before anything is sent, so never say it was sent.` : '',
     did ? `The app has ALREADY done this for their sentence: ${did}. Do not do it again; answer the rest of what they asked, about the page they are on now.` : '',
     '', 'What is on the page (id, kind, text):', items || '(nothing)', '', 'The page text:', pageText || '(none)',
   ].filter((x) => x !== '').join('\n');
@@ -30,8 +32,12 @@ export const TOOLS = [
   { type: 'function', function: { name: 'show', description: 'Point at parts of the page while you explain them: heading, link, button or field ids, in the order you talk about them.', parameters: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } }, required: ['ids'] } } },
 ];
 
+// Only when the conversation has projects on it (Conversations, qb5): a change request to one of them, confirmed on the page.
+export const CONTEXT_TOOLS = [
+  { type: 'function', function: { name: 'send_change', description: 'Ask one of this conversation\'s projects for a change: its agents get the request after the person confirms on screen. project = owner/name from the conversation\'s projects; text = the request, in the person\'s words.', parameters: { type: 'object', properties: { project: { type: 'string' }, text: { type: 'string' } }, required: ['project', 'text'] } } },
+];
 TOOLS.push({ type: 'function', function: { name: 'idea', description: 'Get an idea for something new to build from qodebase\'s idea generator (it fills the build box with the idea and settings that suit it). Use it whenever they ask for an idea or a suggestion of what to build.', parameters: { type: 'object', properties: { size: { type: 'string', enum: ['Small', 'Medium', 'Large', 'Huge'] } }, required: [] } } } as any);
-export const TOOL_NAMES = ['go', 'press', 'type_into', 'show', 'idea'];
+export const TOOL_NAMES = ['go', 'press', 'type_into', 'show', 'send_change', 'idea'];
 /** One model answer (OpenAI-shaped, Workers AI, or Gemini's) → { raw tool calls, calls, reply }. */
 export function parseChat(res: any) {
   const msg = res?.choices?.[0]?.message || res;

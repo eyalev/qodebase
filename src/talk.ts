@@ -25,7 +25,8 @@ import { TALK_JS } from './talkclient';
 import { talkAdmin } from './talkadmin';
 import { recordCost } from './costs';
 import { MERGE_MODEL, mergeMessages, cleanMerge } from './talkmerge';
-import { chatSystem, TOOLS, parseChat, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, PAID_FALLBACK, toGemini, fromGemini, toAnthropic, fromAnthropic, type AnswerModel } from './talkchat';
+import { convOp, convRoute, contextKnowledge } from './talkthreads';
+import { chatSystem, TOOLS, CONTEXT_TOOLS, parseChat, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, PAID_FALLBACK, toGemini, fromGemini, toAnthropic, fromAnthropic, type AnswerModel } from './talkchat';
 import { TALK_VOICE_JS } from './talkvoicejs.gen';
 import { routeAgentRequest } from 'agents';
 
@@ -82,6 +83,8 @@ export class TalkLog extends DurableObject<Env> {
     if (on !== undefined) { if (on) await this.ctx.storage.put(`consent:${handle}`, Date.now()); else await this.ctx.storage.delete(`consent:${handle}`); }
     return !!(await this.ctx.storage.get(`consent:${handle}`));
   }
+  // Conversations (src/talkthreads.ts) live in the instance named conv:<handle>, which never traces or counts.
+  async conv(op: string, a: any) { return convOp(this.ctx.storage.sql, op, a); }
   async counts(who: string) {
     const out: Record<string, number> = {};
     for (const k of Object.keys(CAPS) as Kind[]) out[k] = (await this.ctx.storage.get<number>(`${k}:${who}`)) || 0;
@@ -188,7 +191,11 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
   const s = cleanScreen(body.screen);
   const pageText = String(body.pageText || '').slice(0, 5000);
   const did = body.did ? String(body.did).slice(0, 200) : '';
-  const system = chatSystem(who.handle, s, pageText, did);
+  // A conversation's project chips (Conversations, hidden setting): what each one is, and change requests to them.
+  const ctxIn = Array.isArray(body?.context) ? body.context.map(String).slice(0, 6) : [];
+  const know = ctxIn.length ? await contextKnowledge(env, who, ctxIn, listFor).catch((e) => { log('ctx_error', { level: 'error', err: String(e) }); return { text: '', slugs: [] as string[] }; }) : { text: '', slugs: [] as string[] };
+  const system = chatSystem(who.handle, s, pageText, did, know.text);
+  const tools = know.text ? [...TOOLS, ...CONTEXT_TOOLS] : TOOLS;
   const pick = await pickAnswer(env, who, String(body?.model || ''));
   const history = (Array.isArray(body.history) ? body.history : []).slice(-8).map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || '').slice(0, 800) }));
   const messages = [{ role: 'system', content: system }, ...history, { role: 'user', content: utterance }];
@@ -196,9 +203,9 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
   // After a "both" sentence the app has already acted (did): answer only, no tools, or it acts again.
   // The chosen answering model (Talk setting; Gemini by default); any failure goes to GLM-4.7-flash for the rest of the turn.
   let used: AnswerModel = pick.m, fellBack: string | null = pick.why, spentMilli = 0;
-  const run = async (msgs: unknown[], tools = !did): Promise<any> => {
+  const run = async (msgs: unknown[], useTools = !did): Promise<any> => {
     try {
-      const res = await callAnswer(env, used, msgs as any[], tools ? TOOLS : null);
+      const res = await callAnswer(env, used, msgs as any[], useTools ? tools : null);
       spentMilli += costMilli(used, res?.usage);
       return res;
     } catch (e) {
@@ -208,9 +215,9 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
       if (/insufficient balance|2021/i.test(String(e))) creditsMemo = { at: Date.now(), ok: false };
       // A paid model failed: Gemini next (if it can), else GLM.
       used = used.paid && (env as any).GEMINI_API_KEY ? answerModel(PAID_FALLBACK)! : answerModel(FALLBACK_ANSWER)!;
-      try { const r2 = await callAnswer(env, used, msgs as any[], tools ? TOOLS : null); spentMilli += costMilli(used, r2?.usage); return r2; }
+      try { const r2 = await callAnswer(env, used, msgs as any[], useTools ? tools : null); spentMilli += costMilli(used, r2?.usage); return r2; }
       catch (e2) { if (used.id === FALLBACK_ANSWER) throw e2; log('answer_fallback', { level: 'warn', from: used.id, err: String(e2).slice(0, 300) }); used = answerModel(FALLBACK_ANSWER)!; }
-      const res = await callAnswer(env, used, msgs as any[], tools ? TOOLS : null);
+      const res = await callAnswer(env, used, msgs as any[], useTools ? tools : null);
       spentMilli += costMilli(used, res?.usage);
       return res;
     }
@@ -246,7 +253,7 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
     if (!(who.admin || isOwner(env, who.handle))) await talkLog(env).take('usd_others', 'others', Math.ceil(spentMilli)).catch(() => null);
   }
   return { ok: true as const, reply, actions: calls.map((c: any) => ({ name: c.name, args: c.args })), ms: { model: Date.now() - tm }, left: budget.left, model: used.model, modelLabel: used.label, fellBack,
-    trace: { utterance, model: used.model, chosen: pick.m.id, fellBack, usd: spentMilli / 1000, did: body?.did || '', tools: calls.map((c: any) => ({ name: c.name, args: c.args })), reply: String(reply || '').slice(0, 1500), ms: Date.now() - t0 } };
+    trace: { utterance, model: used.model, chosen: pick.m.id, ...(ctxIn.length ? { context: know.slugs } : {}), fellBack, usd: spentMilli / 1000, did: body?.did || '', tools: calls.map((c: any) => ({ name: c.name, args: c.args })), reply: String(reply || '').slice(0, 1500), ms: Date.now() - t0 } };
 }
 
 // ---- Answering models (src/talkchat.ts): how each is called, what it costs, who may pick it.
@@ -735,6 +742,8 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     return json({ day, clips: list.objects.map((o: any) => ({ key: o.key, bytes: o.size, at: o.uploaded, ...(o.customMetadata || {}) })) });
   }
   if (!who) return json({ error: 'signin', why: 'Sign in to talk to qodebase.' }, 401);
+  // Conversations (src/talkthreads.ts): kept here for the owner and people who said yes to "Help improve Talk".
+  if (url.pathname === '/api/talk/conv' || url.pathname.startsWith('/api/talk/conv/')) return convRoute(request, env, url, who, await canTrace(env, who), (k, h) => talkLog(env).take(k, h));
   if (url.pathname === '/api/talk/stt-live') return sttLive(request, env, _ctx, who, url);
   if (url.pathname === '/api/talk/tts' && request.method === 'GET') return tts(request, env, _ctx, who, url);
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
