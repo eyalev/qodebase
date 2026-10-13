@@ -25,7 +25,7 @@ the owner tab before 08:30 UTC Oct 14. Anything not ready is cut or replaced as 
 | 2e | 0:25 | **Money moment**: into Talk "Add a dark mode" mid-build; it lands on top | "Mid-build I ask for one more thing. It lands on top of the rest, and nothing breaks." | The dark-mode change goes through review and the line while others are still working; tests pass; it lands | 8× then real time for the landing |
 | 2f | 0:20 | App tab: the live app in dark mode; then one change record (what it was asked, review, replay, tests) | "The app is live, and every change keeps its record." | App preview loads; one collided-and-redone change opened | real time |
 | 2g | 0:10 | Timeline of the run | "The timeline shows where the time went." | Timeline tab with the critical path | real time |
-| 3a | 0:15 | Into Talk: "Document every exported function in VS Code's editor and add each one to the API index, with 1,000 agents." → /runs opens with the New fleet job form filled (agents, files, estimate) → Eyal taps Start | "Now a thousand agents." | Confirm card shows the agent count and cost; Start | real time |
+| 3a | 0:15 | Into Talk: "Document every exported function in VS Code and add each one to the API index, with 1,000 agents." → /runs opens with the New fleet job form filled (agents, files, estimate) → Eyal taps Start | "Now a thousand agents." | Confirm card shows the agent count and cost; Start | real time |
 | 3b | 0:20 | /runs live: agents at work, files landed, collisions per minute, replays | "Every agent writes its comment and one line in a shared index, so they collide all the time." | Counters climb; collisions and replays non-zero | 4× (clock + label) |
 | 3c | 0:15 | Intents tab of the run: job → folders → files; stuck first | "With a thousand agents you browse intents, not agents." | Tree with roll-up counts | real time |
 | 3d | 0:15 | One collision → its replay → the diff | "This one collided on the index; it was redone on the newest code." | A real replayed change with its diff | real time |
@@ -84,8 +84,9 @@ Status (qb7, forq fd40111, checked live): **3a ready.** The sentence fills New f
 (fleet-n2-vscode-src-1, reserved, fresh), src/vs/editor, doc comments + API index, and an estimate (for 200 agents:
 '659 files, 200 agents: about 1 to 3 min and $0.13 to $0.24. It stops at $3.00 whatever happens.'). **The form
 defaults to 200 agents**: the sentence must end "with 1,000 agents" (scene 3a above says so), and the estimate shown
-on film is whatever the form gives for 1,000. Note 1,000 agents on 659 files means some agents get no file; check
-with qb6 before the take whether 1,000 is worth saying over 659, or whether the take uses a bigger folder.
+on film is whatever the form gives for 1,000. **Decided (manager):** the take uses VS Code src/vs (~4,064 files) with 1,000 agents, since src/vs/editor has only
+659 files; qb7 is setting the form up for it. Before the take, check the form shows src/vs, 1,000 agents and its
+estimate.
 
 ## Pre-flight (08:00–08:45 UTC)
 
