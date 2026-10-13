@@ -91,17 +91,17 @@ var chatHist = sget('chat', []);       // [{role, content}] for the chat lane
 
 // ---- DOM -------------------------------------------------------------------
 var css = [
-  '#talk-root{--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);--t-warn:var(--warn,#b42d1f);font:16px/1.45 var(--t-ff);color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
+  '#talk-root{--t-frame:var(--frame,#d9dbe0);--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);--t-warn:var(--warn,#b42d1f);font:16px/1.45 var(--t-ff);color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
   // The voice bar (2026-10-13, manager's brief): a mini-player on every page, above the page's own bottom bars.
   // Mic + what you are saying (growing to 3 lines) or the last answer in one line; tap it to open the whole
   // conversation, which folds back into the bar. Its height is kept free at the end of the page.
   // Docked edge to edge like a tab bar (Eyal, 2026-10-13: not a floating card): a hairline on top, the phone's
   // bottom inset inside it; above the page's own bottom bars when it has some. A card bottom-right on wide screens.
-  '#talk-bar{position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px 8px calc(6px + var(--talk-inset,env(safe-area-inset-bottom))) 8px;min-height:56px;box-sizing:border-box;background:var(--t-chip);background:color-mix(in srgb,var(--t-acc) 9%,var(--t-bg));border-top:1px solid var(--t-line);box-shadow:0 -2px 12px rgba(0,0,0,.08);color:var(--t-fg)}',
+  '#talk-bar{position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px 8px calc(6px + var(--talk-inset,env(safe-area-inset-bottom))) 8px;min-height:56px;box-sizing:border-box;background:var(--t-chip);background:color-mix(in srgb,var(--t-acc) 9%,var(--t-bg));border-top:1px solid var(--t-frame);box-shadow:0 -2px 12px rgba(0,0,0,.08);color:var(--t-fg)}',
   // The minimized bar stands apart from the page (Eyal, 2026-10-13: it blended in): an accent-tinted surface from the
   // tokens, a hairline and a soft shadow on top, the mic a filled accent circle.
   '#talk-root:not(.arming) #talk-bmic:not(.on){background:var(--t-acc);color:var(--t-accfg);border-radius:50%}',
-  '@media (min-width:720px){#talk-bar{left:auto;right:16px;bottom:16px;width:420px;padding:6px;border:0;border-radius:14px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line),0 4px 16px rgba(0,0,0,.10)}}',
+  '@media (min-width:720px){#talk-bar{left:auto;right:16px;bottom:16px;width:420px;padding:6px;border:0;border-radius:14px;background:var(--t-card);background:color-mix(in srgb,var(--t-acc) 9%,var(--t-bg));box-shadow:inset 0 0 0 1px var(--t-frame),0 4px 16px rgba(0,0,0,.10)}}',
   '#talk-root.open #talk-bar{display:none}',
   '.talk-bb{width:44px;height:44px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--t-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}',
   '.talk-bb svg{width:22px;height:22px}',
@@ -109,7 +109,8 @@ var css = [
   '#talk-bmic{width:48px;height:48px;border-radius:12px}',
   '#talk-bmic svg{width:24px;height:24px}',
   '#talk-bspk,#talk-bexp{width:40px}',
-  // The page's own primary button stays the loudest thing at rest (critique 2026-10-13): the mic turns accent only while live.
+  // The bar's own mic is a filled accent circle at rest since Eyal's ask (2026-10-13, the bar blended in); the
+  // composer's buttons below keep the old rule (accent only while live). DESIGN.md's radius rule names this circle.
   '#talk-root.live .talk-bb.pri,#talk-bsend.talk-bb.pri{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-bexp{color:var(--t-dim)}',
   '#talk-bspk[aria-pressed=true]{color:var(--t-acc)}',
@@ -162,8 +163,9 @@ var css = [
   '#talk-root.canagain #talk-again{display:inline-flex;align-items:center}',
   // Things to say (Eyal, 2026-10-13: a first-time visitor should know what they can say): a rotating line in the
   // bar at rest (tap = say it), and grouped chips in the empty conversation.
-  '#talk-root.ex #talk-btext{color:var(--t-dim)}',
-  '#talk-root.ex #talk-btext q{color:var(--t-fg);quotes:"\\201C" "\\201D"}',
+  // On the tinted bar --dim fell below 4.5:1 (critique 2026-10-13): the hint is --fg, the example set apart by weight.
+  '#talk-root.ex #talk-btext{color:var(--t-fg);font-weight:400}',
+  '#talk-root.ex #talk-btext q{color:var(--t-fg);font-weight:500;quotes:"\\201C" "\\201D"}',
   '.talk-ex{display:flex;flex-direction:column;gap:12px}',
   '.talk-ex h3{margin:0 0 6px;font:600 13px var(--t-ff);color:var(--t-dim)}',
   '.talk-ex div{display:flex;flex-wrap:wrap;gap:8px}',
@@ -1561,7 +1563,18 @@ function playParts(parts, whole) {
       try { player.playbackRate = S.speed; player.preservesPitch = true; player.defaultPlaybackRate = S.speed; } catch (e) {}
       player.onplaying = function () { speakPending = false; try { player.playbackRate = S.speed; } catch (e) {} if (k === 0) { latMark('audio'); logEv('speak_start', { chars: whole.length, parts: parts.length, ms_first: Date.now() - t0, speed: S.speed }); } };
       player.onended = next;
-      player.onerror = function () { logEv('speak_error', { chars: parts[k].length, part: k }); if (k === 0) { speakingQ = false; phoneSay(whole); } else next(); };
+      // A streamed clip that fails (an intermittent 500 on 'Hi.', 2026-10-13) is fetched whole once before the phone voice.
+      player.onerror = function () {
+        if (!/^blob:/.test(player.src || '') && !player.__retried) {
+          player.__retried = true;
+          fetch(ttsUrl(parts[k]), { credentials: 'same-origin' }).then(function (r) { logEv('speak_retry', { status: r.status, part: k }); if (!r.ok) throw new Error(String(r.status)); return r.blob(); })
+            .then(function (b) { if (seq !== saySeq) return; player.src = URL.createObjectURL(b); var p2 = player.play(); if (p2 && p2.catch) p2.catch(function () {}); })
+            .catch(function (e) { logEv('speak_error', { chars: parts[k].length, part: k, err: String(e) }); if (k === 0) { speakingQ = false; phoneSay(whole); } else next(); });
+          return;
+        }
+        logEv('speak_error', { chars: parts[k].length, part: k }); if (k === 0) { speakingQ = false; phoneSay(whole); } else next();
+      };
+      player.__retried = false;
       var p = player.play();
       if (p && p.catch) p.catch(function (e) { logEv('speak_blocked', { err: String(e) }); if (k === 0) { speakingQ = false; phoneSay(whole); } });
     });
@@ -2004,8 +2017,9 @@ function liveChunk(blob) {
 function liveOpen() {
   if (S.lang === 'he') { startNativePreview(); return; }   // Workers AI's nova-3 has no Hebrew: the phone's recogniser shows the words
   var t0 = Date.now(), gotWords = false, reused = false;
-  if (nextWs && nextWs.readyState <= 1 && nextWs.__lang === S.lang) { liveWs = nextWs; nextWs = null; reused = true; }
+  if (nextWs && nextWs.readyState <= 1 && nextWs.__lang === S.lang) { liveWs = nextWs; liveWs.__used = true; nextWs = null; reused = true; }
   else {
+    if (S.fast === 'on' && convOn()) trace('stt_prewarm_miss', { had: !!nextWs, state: nextWs ? nextWs.readyState : null });
     try { liveWs = new WebSocket(sttUrl()); }
     catch (e) { trace('stt_ws_error', { err: String(e) }); startNativePreview(); return; }
   }
@@ -2025,7 +2039,7 @@ function liveOpen() {
       if (d.type === 'final') { if (txt) dcBuf.push(txt); dcText = ''; } else dcText = txt;
       if (txt) { lastWordAt = Date.now(); clearTimeout(endT); armQuiet(); guess(dcSaid(dcText)); }
       // nova-3's endpointing heard them stop (speech_final): in conversation mode the turn ends now, not 1.5 s later.
-      if (d.end && dcBuf.length && !dcText && convOn() && S.fast === 'on') { guess(dcSaid(''), true); endT = setTimeout(function () { if (dcOn && !dcText) endTurn('endpoint'); }, 450); }   // + nova-3's 300 ms = ~0.75 s of quiet
+      if (d.end && dcBuf.length && !dcText && convOn() && S.fast === 'on' && soundsDone(dcSaid(''))) { guess(dcSaid(''), true); endT = setTimeout(function () { if (dcOn && !dcText) endTurn('endpoint'); }, 450); }   // + nova-3's 300 ms = ~0.75 s of quiet
       if (!nativePreview) setInp(dcBase + dcSaid(dcText));
     } else if (d.type === 'error') { trace('stt_ws_server_error', { err: d.error }); if (!gotWords && dcOn && !nativePreview) startNativePreview(); }
   };
@@ -2037,12 +2051,20 @@ function liveOpen() {
   };
 }
 var nextWs = null, endT = null;
+// A pause after "…update for" is a breath, not the end (Eyal's 'What is the latest update for … my projects?' was cut,
+// 2026-10-13): end early only when the words sound finished; otherwise the 1.5 s quiet rule decides.
+var DANGLING = /\b(for|the|a|an|to|and|or|of|my|with|in|on|at|is|are|was|what|how|about|from|into|that|this|so|but|if|then|because|like|um|uh|can|could|would|should|please|me|i|you|your|our|their|its)\s*$/i;
+function soundsDone(t) { t = String(t || '').trim(); return !!t && (/[.?!]["\u201d\u2019)]*$/.test(t) || !DANGLING.test(t.replace(/[,;:]+$/, ''))) && !/[,;:]$/.test(t); }
 function sttUrl() { return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/api/talk/stt-live?lang=' + encodeURIComponent(S.lang); }
 // Conversation mode: the next turn's socket opens while the answer is being given (nova-3 kept alive server-side),
 // so listening again does not wait for a new connection. Closed if unused for 55 s.
 function prewarmWs() {
   if (S.fast !== 'on' || !convOn() || S.lang === 'he' || (nextWs && nextWs.readyState <= 1)) return;
-  try { var w = new WebSocket(sttUrl()); w.__lang = S.lang; nextWs = w; trace('stt_ws_prewarm', {}); setTimeout(function () { if (nextWs === w) { nextWs = null; try { w.close(); } catch (e) {} } }, 55000); } catch (e) {}
+  try { var w = new WebSocket(sttUrl()), w0 = Date.now(); w.__lang = S.lang; nextWs = w; trace('stt_ws_prewarm', {});
+    w.addEventListener('open', function () { trace('stt_prewarm_open', { ms: Date.now() - w0 }); });
+    w.addEventListener('message', function (ev) { if (nextWs === w) { var d = null; try { d = JSON.parse(ev.data); } catch (e) {} if (d && d.type !== 'interim' && d.type !== 'final') trace('stt_prewarm_msg', { type: d.type, err: d.error, code: d.code }); } });
+    w.addEventListener('close', function (e) { if (nextWs === w || !w.__used) trace('stt_prewarm_close', { code: e.code, reason: String(e.reason || '').slice(0, 80), ms: Date.now() - w0, used: !!w.__used }); if (nextWs === w) nextWs = null; });
+    setTimeout(function () { if (nextWs === w) { nextWs = null; try { w.close(); } catch (e) {} } }, 55000); } catch (e) {}
 }
 // End a conversation turn that already has its final words: no flush wait (the hand stop waits 0.85 s for the last chunk).
 function endTurn(how) {

@@ -26,6 +26,7 @@ none of its chrome.
 - **Spacing:** 4, 8, 12, 16, 24, 32. Page gutter 16 px.
 - **Radius:** cards 14 px, the app preview 12 px, inputs 12 px, buttons 10 px; tags
   4 px. Site-wide layer: src/look.ts (sizes a step down, home h1 28 px). Never pill-shaped.
+  One exception: the Talk voice bar's mic is a filled accent circle (Eyal, 2026-10-13: the bar blended into the page).
 - **Motion:** colour/background transitions 120 ms; the agent sheet slides
   (transform + height, 220 ms ease) because it is a surface arriving, not
   decoration. No entrance animation on content.
