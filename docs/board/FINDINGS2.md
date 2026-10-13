@@ -226,3 +226,30 @@ weekly-meter stop: fixed 8, no board, 1,862 s, $4.63, 150/150 (about as fast as 
   no gain from more agents (~450 modules at most in parallel). Strict order (wait for finished modules) 89 h: the use
   graph is cyclic. The chain was mostly how the work was cut.
 - One merge queue with a 5-min full check is the wrong tool for a chain-shaped port (73-89 h in the fast sim).
+
+## 11. Real builds inside qodebase on Cloudflare (R2-R5, 2026-10-12/13; real Claude agents on Eyal's plan)
+Through the product's own Build path (the settings a user picks), private projects eyal/real-*; every change through the
+landing queue with checks; timelines at /p/eyal/<project>/work#/timeline.
+
+| build | setup | landed | via model replay of a collision | bounced | wall | real cost (normal rates) | estimate shown |
+|---|---|---|---|---|---|---|---|
+| R2 tip splitter (small) | 1 Opus agent | 1 | 0 | 0 | 149 s | $0.81 | 50-120 s, $0.21-0.28 |
+| R3 home inventory (large) | Opus planner + 12 Haiku + 3 reviewers, board | 9 | 0 | 0 | 1,940 s* | ~$2.40 + $0.37 boxes | 420-1,080 s, $1.00-1.40 |
+| R4 café website (huge) | planner + up to 20 Haiku (used 10) + 3 reviewers, board | 10 | 0 | 0 | ~1,770 s | $3.28 + $0.21 | 540-1,440 s, $1.70-2.30 |
+| R5 travel planner (huge) | planner + up to 40 Haiku + 3-6 reviewers, board | 40 (one closed as already on main) | 28 | 0 | 2,257 s* | ~$17.1 + $0.88 | 540-1,440 s, $1.70-2.30 |
+
+\* includes a false budget halt (2-6 min; pricing bugs, fixed) and, in R3, ~25 min of one finished-but-unpushed change.
+
+What it shows:
+- **Land by intent with real AI at scale:** in R5, 28 of 40 changes collided with work that landed first and every one
+  was re-done by a model on the newest code, tested and landed; none was sent back.
+- **At 40 agents the bottleneck is review:** agents spent 16,234 agent-s waiting for a reviewer vs 15,731 working, even
+  with 6 reviewers; second, the merge train runs model replays one after another (1,266 of 1,360 s of train time).
+- **Estimates are too low on real builds:** ~25% on time for one agent, ~3x cost for one Opus agent (session fixed cost),
+  ~8x cost at 40 agents, where long-context Haiku calls (prompts over 100k tokens) were nearly half the bill.
+- **Bugs found only by real runs, all fixed:** the budget guard priced Haiku and replay rows as Opus (3 false halts);
+  Resume didn't wake mid-task agents; agents ended turns 'waiting' for others and nothing woke them (prompt + stacked-base
+  notice + 4-min watchdog with a busy check); reviewers asked agents to rebase; the router under-split (now told how many
+  agents it has); 'Need an idea?' fell back silently when its daily cap was used.
+- **Open:** parallel model replays in a train; more reviewers by default at 20+ agents; why agents' contexts grow past
+  100k; refit the cost estimate on these four builds.
