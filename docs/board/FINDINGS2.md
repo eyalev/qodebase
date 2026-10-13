@@ -293,5 +293,8 @@ should define them).
   rewrite, so cache writes were ~2.8x R3's and output ~2.4x. Saved nothing net. Now 125k x 88% (aiming at ~88k), to be
   measured on the next team build. Trimming the coders' starting prompt (no WebSearch/NotebookEdit/Agent/Skill tools,
   no bundled skills or auto memory) took call 1 from ~42.9k to ~39.4k tokens (-8%).
-- **One build each; quality of R8b vs R3 is with qb9.** The default stays one strong agent (no long-context price tier);
-  team presets are the cheaper option.
+- **Quality, R8b vs R3 (R8b-quality.md, 11 features tried at 390 px):** 11/11 working, same as R3. R8b fixed R3's defects
+  (all 7 nav links visible at 390, lend from the item page, print table fits, a room with contents can't be deleted, tag
+  rename) and has new small ones (no currency sign, raw ISO dates, the header search keeps the old query, '1 items',
+  print per room only). No blocking bugs. One build each. The default stays one strong agent (no long-context price
+  tier); team presets are the cheaper option.
