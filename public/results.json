@@ -1,0 +1,1899 @@
+{
+ "v": 1,
+ "generated": "2026-10-13T11:58:14.783Z",
+ "sources": {
+  "fleet": "cache",
+  "buildEstimates": "cache"
+ },
+ "notes": [],
+ "headline": {
+  "fleet": {
+   "largestRun": {
+    "runId": "fmv6md3we",
+    "agents": 200,
+    "files": 3120,
+    "landed": 2330,
+    "skipped": 786,
+    "wallS": 261,
+    "filesPerMin": 716,
+    "landWaitP90S": 18,
+    "usd": 1.3742,
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.5-flash-lite"
+    ]
+   },
+   "filesLanded": 3029,
+   "filesAttempted": 4192,
+   "verifyRefused": 0,
+   "usd": 1.59,
+   "usdPer1kLanded": 0.52,
+   "runs": 7,
+   "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
+  },
+  "realBuilds": {
+   "n": 8,
+   "insideEstimateTime": 2,
+   "insideEstimateCost": 2,
+   "sameLargePrompt": {
+    "teamS": 1940,
+    "oneAgentS": 457,
+    "teamUsd": 2.396,
+    "oneAgentUsd": 3.867
+   },
+   "label": "measured (real Claude agents on Eyal's plan, real builds on Cloudflare; one run each)"
+  },
+  "board": {
+   "dupPairsNoBoard": 8,
+   "dupPairsBoard": 0,
+   "wallNoBoardS": 558,
+   "wallBoardS": 443,
+   "n": 3,
+   "label": "measured (real Haiku agents on Eyal's plan, real git, local; medians)"
+  },
+  "controller": {
+   "usdFixed40Board": 9.39,
+   "usdControllerBoard": 4.73,
+   "agentMinFixed40Board": 817,
+   "agentMinControllerBoard": 229,
+   "label": "measured (real Haiku agents on Eyal's plan, real git, local; medians)"
+  },
+  "lanes": {
+   "oneQueuePerH": 896,
+   "lanes32PerH": 1271,
+   "label": "real git, scripted agents (real tests, one run per cell unless seeds say otherwise)"
+  }
+ },
+ "fleet": {
+  "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)",
+  "source": "cache",
+  "runs": [
+   {
+    "runId": "fmv6kuwtl",
+    "models": [
+     "@cf/zai-org/glm-4.7-flash"
+    ],
+    "state": "ended",
+    "tokensIn": 7833,
+    "tokensOut": 3120,
+    "agents": null,
+    "agentsStarted": null,
+    "files": 3,
+    "landed": 0,
+    "skipped": 0,
+    "verifyFail": 0,
+    "rejected": 3,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.0017,
+    "wallS": 33,
+    "landWaitP50S": null,
+    "landWaitP90S": null,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.0017,
+      "rejected": 3
+     }
+    },
+    "repo": "microsoft/vscode src/vs",
+    "label": "plumbing"
+   },
+   {
+    "runId": "fmv6kzol3",
+    "models": [
+     "@cf/zai-org/glm-4.7-flash"
+    ],
+    "state": "ended",
+    "tokensIn": 7833,
+    "tokensOut": 169,
+    "agents": null,
+    "agentsStarted": null,
+    "files": 3,
+    "landed": 0,
+    "skipped": 0,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.0005,
+    "wallS": 8,
+    "landWaitP50S": null,
+    "landWaitP90S": null,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.0005,
+      "ready": 3
+     }
+    },
+    "repo": "microsoft/vscode src/vs",
+    "label": "plumbing"
+   },
+   {
+    "runId": "fmv6l8doa",
+    "models": [
+     "@cf/zai-org/glm-4.7-flash"
+    ],
+    "state": "ended",
+    "tokensIn": 17490,
+    "tokensOut": 514,
+    "agents": null,
+    "agentsStarted": null,
+    "files": 6,
+    "landed": 6,
+    "skipped": 0,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.0013,
+    "wallS": 8,
+    "landWaitP50S": 221,
+    "landWaitP90S": 223,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.0013,
+      "landed": 6
+     }
+    },
+    "repo": "microsoft/vscode src/vs",
+    "label": "plumbing"
+   },
+   {
+    "runId": "fmv6lhnk2",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it"
+    ],
+    "state": "ended",
+    "tokensIn": 117372,
+    "tokensOut": 4553,
+    "agents": null,
+    "agentsStarted": null,
+    "files": 60,
+    "landed": 28,
+    "skipped": 23,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.0131,
+    "wallS": 47,
+    "landWaitP50S": 5,
+    "landWaitP90S": 7,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.0131,
+      "landed": 28,
+      "ready": 9,
+      "skipped": 23
+     }
+    },
+    "repo": "microsoft/vscode src/vs",
+    "label": "F2 @ 10 agents"
+   },
+   {
+    "runId": "fmv6lmffn",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it"
+    ],
+    "state": "ended",
+    "tokensIn": 765515,
+    "tokensOut": 28678,
+    "agents": null,
+    "agentsStarted": null,
+    "files": 500,
+    "landed": 301,
+    "skipped": 199,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.0852,
+    "wallS": 191,
+    "landWaitP50S": 6,
+    "landWaitP90S": 9,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.0852,
+      "landed": 301,
+      "skipped": 199
+     }
+    },
+    "repo": "microsoft/vscode src/vs",
+    "label": "F2 @ 100 (start bug: only 8 agents started)"
+   },
+   {
+    "runId": "fmv6m4smw",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it"
+    ],
+    "state": "ended",
+    "tokensIn": 1009359,
+    "tokensOut": 32261,
+    "agents": null,
+    "agentsStarted": null,
+    "files": 500,
+    "landed": 364,
+    "skipped": 133,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 3,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.1106,
+    "wallS": 102,
+    "landWaitP50S": 23,
+    "landWaitP90S": 27,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.1106,
+      "landed": 364,
+      "rate_limited": 3,
+      "skipped": 133
+     }
+    },
+    "repo": "microsoft/vscode src/vs",
+    "label": "F2 @ 100 agents"
+   },
+   {
+    "runId": "fmv6md3we",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.5-flash-lite"
+    ],
+    "state": "done",
+    "tokensIn": 6680534,
+    "tokensOut": 212288,
+    "agents": 200,
+    "agentsStarted": null,
+    "files": 3120,
+    "landed": 2330,
+    "skipped": 786,
+    "verifyFail": 0,
+    "rejected": 4,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 1.3742,
+    "wallS": 261,
+    "landWaitP50S": 10,
+    "landWaitP90S": 18,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.2374,
+      "landed": 766,
+      "skipped": 218
+     },
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.1372,
+      "landed": 704,
+      "rejected": 2,
+      "skipped": 278
+     },
+     "gemini-3.5-flash-lite": {
+      "usd": 0.9995,
+      "landed": 860,
+      "rejected": 2,
+      "skipped": 290
+     }
+    },
+    "repo": "microsoft/vscode src/vs",
+    "label": "F3 @ 200 agents"
+   }
+  ],
+  "perModel": {
+   "@cf/zai-org/glm-4.7-flash": {
+    "files": 993,
+    "landed": 710,
+    "skipped": 278,
+    "verifyFail": 0,
+    "rejected": 5,
+    "rateLimited": 0,
+    "calls": null,
+    "usd": 0.1407,
+    "peakPerMin": null,
+    "usdPer1kFiles": 0.14,
+    "share429": null
+   },
+   "@cf/google/gemma-4-26b-a4b-it": {
+    "files": 2032,
+    "landed": 1459,
+    "skipped": 573,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 3,
+    "calls": null,
+    "usd": 0.4463,
+    "peakPerMin": null,
+    "usdPer1kFiles": 0.22,
+    "share429": null
+   },
+   "gemini-3.5-flash-lite": {
+    "files": 1152,
+    "landed": 860,
+    "skipped": 290,
+    "verifyFail": 0,
+    "rejected": 2,
+    "rateLimited": 0,
+    "calls": null,
+    "usd": 0.9995,
+    "peakPerMin": null,
+    "usdPer1kFiles": 0.87,
+    "share429": null
+   }
+  },
+  "totals": {
+   "runs": 7,
+   "filesAttempted": 4192,
+   "landed": 3029,
+   "skipped": 1141,
+   "verifyRefused": 0,
+   "rejected": 7,
+   "rateLimited": 3,
+   "usd": 1.59,
+   "usdPer1kLanded": 0.52,
+   "usdPer1kFiles": 0.38,
+   "largestRun": {
+    "runId": "fmv6md3we",
+    "agents": 200,
+    "files": 3120,
+    "landed": 2330,
+    "skipped": 786,
+    "wallS": 261,
+    "filesPerMin": 716,
+    "landWaitP90S": 18,
+    "usd": 1.3742,
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.5-flash-lite"
+    ]
+   }
+  },
+  "quality": {
+   "status": "pending",
+   "note": "F4 has not run yet: waiting for F3 (all of src/vs) to land. Written by scripts/fleet/quality-sample.mjs --publish; fields below keep this shape when filled.",
+   "base": null,
+   "head": null,
+   "checked_at": null,
+   "files_changed": null,
+   "code_changed": null,
+   "fleet_records": {
+    "landed": null,
+    "verify_fail": null,
+    "rejected": null,
+    "other": {}
+   },
+   "auto": {
+    "comments": null,
+    "invented_params": null,
+    "missing_params": null,
+    "returns_on_void": null,
+    "trivial": null
+   },
+   "judge": [
+    {
+     "model": null,
+     "n": null,
+     "accurate": null,
+     "helpful": null,
+     "invented": null,
+     "unparsed": null,
+     "usd": null
+    }
+   ],
+   "hand": {
+    "files": null,
+    "comments": null,
+    "ok": null,
+    "accurate": null,
+    "helpful": null,
+    "invented": null
+   },
+   "worst": []
+  },
+  "f0": {
+   "@cf/zai-org/glm-4.7-flash": {
+    "files": 20,
+    "answered": 20,
+    "json": 20,
+    "withComments": 20,
+    "codeUnchanged": 20,
+    "comments": 319,
+    "perFile": 15.9,
+    "judge": {
+     "n": 308,
+     "accurate": 0.98,
+     "placed": 0.99,
+     "helpful": 3.62
+    },
+    "tokens": {
+     "in": 69945,
+     "out": 14834
+    },
+    "usd": 0.0102,
+    "judgeUsd": 0.0306,
+    "latencyS": {
+     "p50": 13,
+     "p90": 48.5,
+     "max": 71.6
+    },
+    "per1kFiles": {
+     "calls": 1201,
+     "usd": 0.65,
+     "inM": 4.45,
+     "outM": 0.94
+    },
+    "allSrcVs": {
+     "calls": 4949,
+     "usd": 2.67,
+     "inM": 18.33,
+     "outM": 3.89
+    }
+   },
+   "@cf/google/gemma-4-26b-a4b-it": {
+    "files": 20,
+    "answered": 20,
+    "json": 20,
+    "withComments": 19,
+    "codeUnchanged": 19,
+    "comments": 231,
+    "perFile": 11.6,
+    "judge": {
+     "n": 225,
+     "accurate": 0.97,
+     "placed": 1,
+     "helpful": 3.45
+    },
+    "tokens": {
+     "in": 82498,
+     "out": 6475
+    },
+    "usd": 0.0102,
+    "judgeUsd": 0.0234,
+    "latencyS": {
+     "p50": 6.1,
+     "p90": 10.7,
+     "max": 14.1
+    },
+    "per1kFiles": {
+     "calls": 1201,
+     "usd": 0.65,
+     "inM": 5.25,
+     "outM": 0.41
+    },
+    "allSrcVs": {
+     "calls": 4949,
+     "usd": 2.67,
+     "inM": 21.62,
+     "outM": 1.7
+    }
+   },
+   "@cf/zai-org/glm-5.3-flash": {
+    "files": 20,
+    "answered": 20,
+    "json": 20,
+    "withComments": 19,
+    "codeUnchanged": 19,
+    "comments": 225,
+    "perFile": 11.3,
+    "judge": {
+     "n": 225,
+     "accurate": 0.97,
+     "placed": 1,
+     "helpful": 3.69
+    },
+    "tokens": {
+     "in": 70085,
+     "out": 7278
+    },
+    "usd": 0.0142,
+    "judgeUsd": 0.0221,
+    "latencyS": {
+     "p50": 13.7,
+     "p90": 31.7,
+     "max": 33
+    },
+    "per1kFiles": {
+     "calls": 1201,
+     "usd": 0.9,
+     "inM": 4.46,
+     "outM": 0.46
+    },
+    "allSrcVs": {
+     "calls": 4949,
+     "usd": 3.71,
+     "inM": 18.37,
+     "outM": 1.91
+    }
+   },
+   "google/gemini-3.5-flash-lite": {
+    "files": 20,
+    "answered": 20,
+    "json": 20,
+    "withComments": 19,
+    "codeUnchanged": 19,
+    "comments": 134,
+    "perFile": 6.7,
+    "judge": {
+     "n": 124,
+     "accurate": 0.98,
+     "placed": 1,
+     "helpful": 3.56
+    },
+    "tokens": {
+     "in": 82177,
+     "out": 4950
+    },
+    "usd": 0.037,
+    "judgeUsd": 0.0153,
+    "latencyS": {
+     "p50": 1.4,
+     "p90": 2.4,
+     "max": 2.4
+    },
+    "per1kFiles": {
+     "calls": 1201,
+     "usd": 2.36,
+     "inM": 5.23,
+     "outM": 0.31
+    },
+    "allSrcVs": {
+     "calls": 4949,
+     "usd": 9.7,
+     "inM": 21.53,
+     "outM": 1.3
+    }
+   },
+   "google/gemini-3.1-flash-lite": {
+    "files": 20,
+    "answered": 20,
+    "json": 20,
+    "withComments": 20,
+    "codeUnchanged": 20,
+    "comments": 209,
+    "perFile": 10.4,
+    "judge": {
+     "n": 210,
+     "accurate": 0.99,
+     "placed": 1,
+     "helpful": 3.69
+    },
+    "tokens": {
+     "in": 82177,
+     "out": 7599
+    },
+    "usd": 0.0319,
+    "judgeUsd": 0.0196,
+    "latencyS": {
+     "p50": 1.8,
+     "p90": 2.5,
+     "max": 2.7
+    },
+    "per1kFiles": {
+     "calls": 1201,
+     "usd": 2.03,
+     "inM": 5.23,
+     "outM": 0.48
+    },
+    "allSrcVs": {
+     "calls": 4949,
+     "usd": 8.37,
+     "inM": 21.53,
+     "outM": 1.99
+    }
+   },
+   "google/gemma-4-26b-a4b-it": {
+    "files": 20,
+    "answered": 6,
+    "json": 1,
+    "withComments": 0,
+    "codeUnchanged": 0,
+    "comments": 0,
+    "perFile": 0,
+    "judge": {
+     "n": 0,
+     "accurate": null,
+     "placed": null,
+     "helpful": null
+    },
+    "tokens": {
+     "in": 18152,
+     "out": 1612
+    },
+    "usd": 0,
+    "judgeUsd": 0,
+    "latencyS": {
+     "p50": 7.7,
+     "p90": 20.8,
+     "max": 20.8
+    },
+    "per1kFiles": {
+     "calls": 1201,
+     "usd": 0,
+     "inM": 4.95,
+     "outM": 0.44
+    },
+    "allSrcVs": {
+     "calls": 4949,
+     "usd": 0,
+     "inM": 20.41,
+     "outM": 1.81
+    }
+   }
+  }
+ },
+ "realBuilds": {
+  "label": "measured (real Claude agents on Eyal's plan, real builds on Cloudflare; one run each)",
+  "source": "cache",
+  "rows": [
+   {
+    "id": "R2",
+    "slug": "eyal/real-tip-splitter",
+    "what": "small, one Opus agent",
+    "setup": "one Opus agent",
+    "wallS": 149,
+    "usd": 0.813,
+    "shownWallS": [
+     50,
+     120
+    ],
+    "shownUsd": [
+     0.21,
+     0.28
+    ],
+    "inside": {
+     "wall": false,
+     "usd": false
+    }
+   },
+   {
+    "id": "R3",
+    "slug": "eyal/real-home-inventory",
+    "what": "Large, Balanced team",
+    "setup": "planner + 12 haiku, 3 reviewers, board",
+    "wallS": 1940,
+    "usd": 2.396,
+    "shownWallS": [
+     420,
+     1080
+    ],
+    "shownUsd": [
+     1,
+     1.4
+    ],
+    "inside": {
+     "wall": false,
+     "usd": false
+    }
+   },
+   {
+    "id": "R4",
+    "slug": "eyal/real-cafe-site",
+    "what": "Huge, up to 20 Haiku",
+    "setup": "planner + 20 haiku, 3 reviewers, board",
+    "wallS": 1762,
+    "usd": 3.323,
+    "shownWallS": [
+     540,
+     1440
+    ],
+    "shownUsd": [
+     1.7,
+     2.3
+    ],
+    "inside": {
+     "wall": false,
+     "usd": false
+    }
+   },
+   {
+    "id": "R5",
+    "slug": "eyal/real-course-builder",
+    "what": "Huge, up to 40 Haiku",
+    "setup": "planner + 40 haiku, 3 reviewers, board",
+    "wallS": 2257,
+    "usd": 17.48,
+    "shownWallS": [
+     540,
+     1440
+    ],
+    "shownUsd": [
+     1.7,
+     2.3
+    ],
+    "inside": {
+     "wall": false,
+     "usd": false
+    }
+   },
+   {
+    "id": "R6",
+    "slug": "eyal/real-home-inventory-solo",
+    "what": "R3's prompt, one Opus agent",
+    "setup": "one Opus agent",
+    "wallS": 457,
+    "usd": 3.867,
+    "shownWallS": [
+     120,
+     300
+    ],
+    "shownUsd": [
+     1.7,
+     3.1
+    ],
+    "inside": {
+     "wall": false,
+     "usd": false
+    }
+   },
+   {
+    "id": "R7",
+    "slug": "eyal/real-cafe-site-solo",
+    "what": "R4's prompt, one Opus agent",
+    "setup": "one Opus agent",
+    "wallS": 863,
+    "usd": 7.549,
+    "shownWallS": [
+     660,
+     1800
+    ],
+    "shownUsd": [
+     5.4,
+     11.9
+    ],
+    "inside": {
+     "wall": true,
+     "usd": true
+    }
+   },
+   {
+    "id": "R8",
+    "slug": "eyal/real-budget-tracker-10",
+    "what": "proof build (X1/X4), Balanced",
+    "setup": "planner + 12 haiku, 3 reviewers, board",
+    "wallS": 1639,
+    "usd": 3.52,
+    "shownWallS": [
+     840,
+     2220
+    ],
+    "shownUsd": [
+     1.8,
+     4.6
+    ],
+    "inside": {
+     "wall": true,
+     "usd": true
+    }
+   },
+   {
+    "id": "R8b",
+    "slug": "eyal/real-home-inventory-r8b",
+    "what": "R3's prompt again, Balanced (~10 min queue bug)",
+    "setup": "planner + 12 haiku, 3 reviewers, board",
+    "wallS": 2765,
+    "usd": 4.411,
+    "shownWallS": [
+     720,
+     1980
+    ],
+    "shownUsd": [
+     1.3,
+     4.1
+    ],
+    "inside": {
+     "wall": false,
+     "usd": false
+    }
+   }
+  ]
+ },
+ "boardAblation": {
+  "scenario": "s3: 20 agents, 60 tasks, 10 twin pairs",
+  "arms": [
+   {
+    "arm": "A",
+    "name": "A: no coordination",
+    "n": 3,
+    "wallS": 558,
+    "agentMin": 170,
+    "usd": 3.52,
+    "dupPairs": 8,
+    "hidden": [
+     60,
+     60,
+     60
+    ],
+    "runs": [
+     "202610121303-s3-A-n20-r1",
+     "202610121334-s3-A-n20-r2",
+     "202610121409-s3-A-n20-r3"
+    ]
+   },
+   {
+    "arm": "A+",
+    "name": "A+: upfront dedupe + stagger, no board",
+    "n": 3,
+    "wallS": 505,
+    "agentMin": 148,
+    "usd": 2.85,
+    "dupPairs": 3,
+    "hidden": [
+     60,
+     60,
+     60
+    ],
+    "runs": [
+     "202610121312-s3-P-n20-r1",
+     "202610121344-s3-P-n20-r2",
+     "202610121418-s3-P-n20-r3"
+    ]
+   },
+   {
+    "arm": "A-split",
+    "name": "split: agent k takes every 20th task",
+    "n": 3,
+    "wallS": 549,
+    "agentMin": 162,
+    "usd": 3.27,
+    "dupPairs": 7,
+    "hidden": [
+     60,
+     60,
+     60
+    ],
+    "runs": [
+     "202610121320-s3-S-n20-r1",
+     "202610121353-s3-S-n20-r2",
+     "202610121427-s3-S-n20-r3"
+    ]
+   },
+   {
+    "arm": "E",
+    "name": "E: board + upfront dedupe",
+    "n": 3,
+    "wallS": 443,
+    "agentMin": 128,
+    "usd": 2.61,
+    "dupPairs": 0,
+    "hidden": [
+     60,
+     60,
+     60
+    ],
+    "runs": [
+     "202610121326-s3-E-n20-r1",
+     "202610121402-s3-E-n20-r2",
+     "202610121436-s3-E-n20-r3"
+    ]
+   }
+  ]
+ },
+ "w8": {
+  "scenario": "s6: 150 tasks, 40-agent pool",
+  "arms": [
+   {
+    "name": "40 agents, no board",
+    "n": 3,
+    "wallS": 1964,
+    "agentMin": 927,
+    "usd": 10.31,
+    "dupPairs": 0,
+    "hidden": [
+     150,
+     150,
+     150
+    ],
+    "runs": [
+     "202610110911-s6-A-n40-r1",
+     "202610121736-s6-A-n40-r2",
+     "202610121930-s6-A-n40-r3"
+    ]
+   },
+   {
+    "name": "40 agents, board",
+    "n": 3,
+    "wallS": 1388,
+    "agentMin": 817,
+    "usd": 9.39,
+    "dupPairs": 0,
+    "hidden": [
+     150,
+     148,
+     149
+    ],
+    "runs": [
+     "202610121623-s6-E-n40-r1",
+     "202610121811-s6-E-n40-r2",
+     "202610122003-s6-E-n40-r3"
+    ]
+   },
+   {
+    "name": "controller, no board",
+    "n": 3,
+    "wallS": 1711,
+    "agentMin": 270,
+    "usd": 5.41,
+    "dupPairs": 0,
+    "hidden": [
+     150,
+     150,
+     150
+    ],
+    "runs": [
+     "202610121646-s6-A-n40-r1",
+     "202610121837-s6-A-n40-r2",
+     "202610122026-s6-A-n40-r3"
+    ]
+   },
+   {
+    "name": "controller + board",
+    "n": 3,
+    "wallS": 1284,
+    "agentMin": 229,
+    "usd": 4.73,
+    "dupPairs": 0,
+    "hidden": [
+     150,
+     150,
+     150
+    ],
+    "runs": [
+     "202610121714-s6-E-n40-r1",
+     "202610121905-s6-E-n40-r2",
+     "202610122056-s6-E-n40-r3"
+    ]
+   },
+   {
+    "name": "fixed 8, no board (control)",
+    "n": 1,
+    "wallS": 1862,
+    "agentMin": 228,
+    "usd": 4.63,
+    "dupPairs": 0,
+    "hidden": [
+     150
+    ],
+    "runs": [
+     "202610122117-s6-A-n8-r1"
+    ]
+   }
+  ]
+ },
+ "lanes": {
+  "L1": {
+   "label": "simulated (fast sim, 16 h runs, last 8 h measured)",
+   "rows": [
+    {
+     "lanes": 1,
+     "cross": 0,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 833,
+     "saturatesAt": 300
+    },
+    {
+     "lanes": 1,
+     "cross": 0,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 828,
+     "saturatesAt": 300
+    },
+    {
+     "lanes": 4,
+     "cross": 0,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 3270,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 4,
+     "cross": 0,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 3258,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 16,
+     "cross": 0,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 6076,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 16,
+     "cross": 0,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 6573,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 64,
+     "cross": 0,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 6249,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 64,
+     "cross": 0,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 6788,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 256,
+     "cross": 0,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 5851,
+     "saturatesAt": 3000
+    },
+    {
+     "lanes": 256,
+     "cross": 0,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 6551,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 1,
+     "cross": 0,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 841,
+     "saturatesAt": 300
+    },
+    {
+     "lanes": 1,
+     "cross": 0,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 841,
+     "saturatesAt": 300
+    },
+    {
+     "lanes": 4,
+     "cross": 0,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 3186,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 4,
+     "cross": 0,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 3332,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 16,
+     "cross": 0,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 12881,
+     "saturatesAt": 3000
+    },
+    {
+     "lanes": 16,
+     "cross": 0,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 12888,
+     "saturatesAt": 3000
+    },
+    {
+     "lanes": 64,
+     "cross": 0,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 40191,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 64,
+     "cross": 0,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 40157,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 256,
+     "cross": 0,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 40322,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 256,
+     "cross": 0,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 40272,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 4,
+     "cross": 0.05,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 1322,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 4,
+     "cross": 0.05,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 1367,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 16,
+     "cross": 0.05,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 3508,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 16,
+     "cross": 0.05,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 3588,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 64,
+     "cross": 0.05,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 3036,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 64,
+     "cross": 0.05,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 2755,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 256,
+     "cross": 0.05,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 3015,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 256,
+     "cross": 0.05,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 2849,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 4,
+     "cross": 0.05,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 1377,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 4,
+     "cross": 0.05,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 1332,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 16,
+     "cross": 0.05,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 4554,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 16,
+     "cross": 0.05,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 4453,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 64,
+     "cross": 0.05,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 9816,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 64,
+     "cross": 0.05,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 11440,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 256,
+     "cross": 0.05,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 9104,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 256,
+     "cross": 0.05,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 11221,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 4,
+     "cross": 0.2,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 748,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 4,
+     "cross": 0.2,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 736,
+     "saturatesAt": 300
+    },
+    {
+     "lanes": 16,
+     "cross": 0.2,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 2126,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 16,
+     "cross": 0.2,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 1705,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 64,
+     "cross": 0.2,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 1228,
+     "saturatesAt": 300
+    },
+    {
+     "lanes": 64,
+     "cross": 0.2,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 1355,
+     "saturatesAt": 3000
+    },
+    {
+     "lanes": 256,
+     "cross": 0.2,
+     "controller": false,
+     "zipf": 1,
+     "maxPerH": 1393,
+     "saturatesAt": 3000
+    },
+    {
+     "lanes": 256,
+     "cross": 0.2,
+     "controller": true,
+     "zipf": 1,
+     "maxPerH": 1459,
+     "saturatesAt": 3000
+    },
+    {
+     "lanes": 4,
+     "cross": 0.2,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 763,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 4,
+     "cross": 0.2,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 779,
+     "saturatesAt": 3000
+    },
+    {
+     "lanes": 16,
+     "cross": 0.2,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 2273,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 16,
+     "cross": 0.2,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 2330,
+     "saturatesAt": 10000
+    },
+    {
+     "lanes": 64,
+     "cross": 0.2,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 1815,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 64,
+     "cross": 0.2,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 1780,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 256,
+     "cross": 0.2,
+     "controller": false,
+     "zipf": 0.5,
+     "maxPerH": 2005,
+     "saturatesAt": 1000
+    },
+    {
+     "lanes": 256,
+     "cross": 0.2,
+     "controller": true,
+     "zipf": 0.5,
+     "maxPerH": 1965,
+     "saturatesAt": 1000
+    }
+   ]
+  },
+  "L2": {
+   "label": "real git, scripted agents (real tests, one run per cell unless seeds say otherwise)",
+   "rows": [
+    {
+     "name": "a2000-l1-split-h6-s1",
+     "agents": 2000,
+     "hours": 6,
+     "seed": 1,
+     "lanes": 1,
+     "controller": false,
+     "rdeps": false,
+     "splitHot": true,
+     "perHLastHour": 896,
+     "waitP50Min": 130,
+     "usdPerChange": 2.66,
+     "redShare": 0,
+     "awake": 1994
+    },
+    {
+     "name": "a2000-l8-split-rdeps-ctl-h6-s1",
+     "agents": 2000,
+     "hours": 6,
+     "seed": 1,
+     "lanes": 8,
+     "controller": true,
+     "rdeps": true,
+     "splitHot": true,
+     "perHLastHour": 540,
+     "waitP50Min": 12,
+     "usdPerChange": 2.32,
+     "redShare": 0,
+     "awake": 319
+    },
+    {
+     "name": "a2000-l8-split-rdeps-ctl-h6-s2",
+     "agents": 2000,
+     "hours": 6,
+     "seed": 2,
+     "lanes": 8,
+     "controller": true,
+     "rdeps": true,
+     "splitHot": true,
+     "perHLastHour": 501,
+     "waitP50Min": 12,
+     "usdPerChange": 2.25,
+     "redShare": 0,
+     "awake": 286
+    },
+    {
+     "name": "a2000-l8-split-rdeps-ctl-h6-s3",
+     "agents": 2000,
+     "hours": 6,
+     "seed": 3,
+     "lanes": 8,
+     "controller": true,
+     "rdeps": true,
+     "splitHot": true,
+     "perHLastHour": 734,
+     "waitP50Min": 13,
+     "usdPerChange": 2.27,
+     "redShare": 0,
+     "awake": 470
+    },
+    {
+     "name": "a2000-l32-split-h6-s1",
+     "agents": 2000,
+     "hours": 6,
+     "seed": 1,
+     "lanes": 32,
+     "controller": false,
+     "splitHot": true,
+     "perHLastHour": 1638,
+     "waitP50Min": 18,
+     "usdPerChange": 2.32,
+     "redShare": 0.573,
+     "awake": 1994
+    },
+    {
+     "name": "a2000-l32-split-rdeps-ctl-cb16-h6-s1",
+     "agents": 2000,
+     "hours": 6,
+     "seed": 1,
+     "lanes": 32,
+     "controller": true,
+     "rdeps": true,
+     "splitHot": true,
+     "perHLastHour": 1133,
+     "waitP50Min": 12,
+     "usdPerChange": 2.4,
+     "redShare": 0,
+     "awake": 1110
+    },
+    {
+     "name": "a2000-l32-split-rdeps-ctl-h6-s1",
+     "agents": 2000,
+     "hours": 6,
+     "seed": 1,
+     "lanes": 32,
+     "controller": true,
+     "rdeps": true,
+     "splitHot": true,
+     "perHLastHour": 1271,
+     "waitP50Min": 10,
+     "usdPerChange": 2.02,
+     "redShare": 0,
+     "awake": 378
+    },
+    {
+     "name": "a10000-l1-split-s1",
+     "agents": 10000,
+     "hours": 2,
+     "seed": 1,
+     "lanes": 1,
+     "controller": false,
+     "splitHot": true,
+     "perHLastHour": 896,
+     "waitP50Min": 61,
+     "usdPerChange": 13.25,
+     "redShare": 0,
+     "awake": 9916
+    },
+    {
+     "name": "a10000-l8-split-rdeps-ctl-s1",
+     "agents": 10000,
+     "hours": 2,
+     "seed": 1,
+     "lanes": 8,
+     "controller": true,
+     "rdeps": true,
+     "splitHot": true,
+     "perHLastHour": 2124,
+     "waitP50Min": 11,
+     "usdPerChange": 2.26,
+     "redShare": 0,
+     "awake": 341
+    },
+    {
+     "name": "a10000-l8-split-s1",
+     "agents": 10000,
+     "hours": 2,
+     "seed": 1,
+     "lanes": 8,
+     "controller": false,
+     "splitHot": true,
+     "perHLastHour": 1314,
+     "waitP50Min": 33,
+     "usdPerChange": 7.75,
+     "redShare": 0.359,
+     "awake": 9913
+    },
+    {
+     "name": "a10000-l32-split-rdeps-ctl-s1",
+     "agents": 10000,
+     "hours": 2,
+     "seed": 1,
+     "lanes": 32,
+     "controller": true,
+     "rdeps": true,
+     "splitHot": true,
+     "perHLastHour": 7433,
+     "waitP50Min": 9,
+     "usdPerChange": 2.09,
+     "redShare": 0,
+     "awake": 1030
+    },
+    {
+     "name": "a10000-l32-split-s1",
+     "agents": 10000,
+     "hours": 2,
+     "seed": 1,
+     "lanes": 32,
+     "controller": false,
+     "splitHot": true,
+     "perHLastHour": 1702,
+     "waitP50Min": 53,
+     "usdPerChange": 5.81,
+     "redShare": 0.862,
+     "awake": 9915
+    }
+   ]
+  },
+  "L3": {
+   "label": "Cloudflare, scripted agents (Durable Objects + Artifacts, 10 min)",
+   "rows": [
+    {
+     "cell": "2000-16lanes-combine-x20",
+     "agents": 2000,
+     "lanes": 16,
+     "door": "combine",
+     "cross": 0.2,
+     "minutes": 10,
+     "tasks": 30117,
+     "landed": 29848,
+     "mainWhole": true,
+     "dupIds": 63
+    },
+    {
+     "cell": "2000-16lanes-combine",
+     "agents": 2000,
+     "lanes": 16,
+     "door": "combine",
+     "cross": 0.05,
+     "minutes": 10,
+     "tasks": 30038,
+     "landed": 29941,
+     "mainWhole": true,
+     "dupIds": 0
+    },
+    {
+     "cell": "2000-1lane",
+     "agents": 2000,
+     "lanes": 1,
+     "door": "cas",
+     "cross": 0.05,
+     "minutes": 10,
+     "tasks": 28969,
+     "landed": 14336,
+     "mainWhole": true,
+     "dupIds": 0
+    },
+    {
+     "cell": "2000-32lanes-combine",
+     "agents": 2000,
+     "lanes": 32,
+     "door": "combine",
+     "cross": 0.05,
+     "minutes": 10,
+     "tasks": 30164,
+     "landed": 30096,
+     "mainWhole": true,
+     "dupIds": 0
+    },
+    {
+     "cell": "2000-8lanes-cas",
+     "agents": 2000,
+     "lanes": 8,
+     "door": "cas",
+     "cross": 0.05,
+     "minutes": 10,
+     "tasks": 30238,
+     "landed": 30134,
+     "mainWhole": true,
+     "dupIds": 0
+    },
+    {
+     "cell": "2000-8lanes-combine",
+     "agents": 2000,
+     "lanes": 8,
+     "door": "combine",
+     "cross": 0.05,
+     "minutes": 10,
+     "tasks": 30152,
+     "landed": 30066,
+     "mainWhole": true,
+     "dupIds": 0
+    },
+    {
+     "cell": "500-1lane",
+     "agents": 500,
+     "lanes": 1,
+     "door": "cas",
+     "cross": 0.05,
+     "minutes": 10,
+     "tasks": 7537,
+     "landed": 7532,
+     "mainWhole": true,
+     "dupIds": 0
+    },
+    {
+     "cell": "500-8lanes-cas",
+     "agents": 500,
+     "lanes": 8,
+     "door": "cas",
+     "cross": 0.05,
+     "minutes": 10,
+     "tasks": 7558,
+     "landed": 7543,
+     "mainWhole": true,
+     "dupIds": 0
+    },
+    {
+     "cell": "500-8lanes-combine",
+     "agents": 500,
+     "lanes": 8,
+     "door": "combine",
+     "cross": 0.05,
+     "minutes": 10,
+     "tasks": 7543,
+     "landed": 7530,
+     "mainWhole": true,
+     "dupIds": 0
+    }
+   ]
+  }
+ },
+ "lab": {
+  "label": "measured (real Claude agents on qodebase, lab stages; finished runs only; medians)",
+  "rows": [
+   {
+    "stage": 1,
+    "scenario": "bakery",
+    "setup": "opus planner + 12 haiku, 3 rev, intent",
+    "n": 1,
+    "wallS": 811,
+    "usd": 1.75,
+    "quality": 89.7,
+    "hidden": "25/26"
+   },
+   {
+    "stage": 1,
+    "scenario": "bakery",
+    "setup": "opus-alone",
+    "n": 1,
+    "wallS": 806,
+    "usd": 4.04,
+    "quality": 96,
+    "hidden": "26/26"
+   },
+   {
+    "stage": 1,
+    "scenario": "cafe-family",
+    "setup": "haiku planner + 12 haiku, 0 rev, intent",
+    "n": 1,
+    "wallS": 172,
+    "usd": 0.2,
+    "quality": 53.7,
+    "hidden": "3/7"
+   },
+   {
+    "stage": 1,
+    "scenario": "cafe-family",
+    "setup": "haiku planner + 6 haiku, 0 rev, phases",
+    "n": 1,
+    "wallS": 283,
+    "usd": 0.14,
+    "quality": 34.6,
+    "hidden": "1/7"
+   },
+   {
+    "stage": 1,
+    "scenario": "cafe-family",
+    "setup": "opus planner + 12 haiku, 3 rev, intent",
+    "n": 1,
+    "wallS": 1431,
+    "usd": 9.99,
+    "quality": 85.4,
+    "hidden": "6/7"
+   },
+   {
+    "stage": 1,
+    "scenario": "cafe-family",
+    "setup": "opus-alone",
+    "n": 1,
+    "wallS": 58,
+    "usd": 0.39,
+    "quality": 85.4,
+    "hidden": "6/7"
+   },
+   {
+    "stage": 1,
+    "scenario": "port-ts",
+    "setup": "opus planner + 6 haiku, 0 rev, intent",
+    "n": 1,
+    "wallS": 830,
+    "usd": 0.85,
+    "quality": 81,
+    "hidden": "157/158"
+   },
+   {
+    "stage": 1,
+    "scenario": "port-ts",
+    "setup": "opus-alone",
+    "n": 1,
+    "wallS": 228,
+    "usd": 2.02,
+    "quality": 92,
+    "hidden": "158/158"
+   },
+   {
+    "stage": 2,
+    "scenario": "bakery",
+    "setup": "opus planner + 12 haiku, 3 rev, intent",
+    "n": 2,
+    "wallS": 1626.5,
+    "usd": 1.71,
+    "quality": 91.7,
+    "hidden": "25/26"
+   },
+   {
+    "stage": 2,
+    "scenario": "bakery",
+    "setup": "opus-alone",
+    "n": 2,
+    "wallS": 487,
+    "usd": 4.35,
+    "quality": 94.9,
+    "hidden": "25.5/26"
+   },
+   {
+    "stage": 2,
+    "scenario": "club",
+    "setup": "opus planner + 12 haiku, 3 rev, intent",
+    "n": 3,
+    "wallS": 1263,
+    "usd": 2.96,
+    "quality": 92,
+    "hidden": "42/42"
+   },
+   {
+    "stage": 2,
+    "scenario": "club",
+    "setup": "opus-alone",
+    "n": 2,
+    "wallS": 728,
+    "usd": 5.71,
+    "quality": 91,
+    "hidden": "42/42"
+   },
+   {
+    "stage": 4,
+    "scenario": "backlog",
+    "setup": "haiku planner + 6 haiku, 0 rev, github",
+    "n": 3,
+    "wallS": 948,
+    "usd": 3.06,
+    "quality": 97.5,
+    "hidden": "29/30"
+   },
+   {
+    "stage": 4,
+    "scenario": "backlog",
+    "setup": "haiku planner + 6 haiku, 0 rev, github, board",
+    "n": 3,
+    "wallS": 1012,
+    "usd": 2.94,
+    "quality": 97.5,
+    "hidden": "29/30"
+   },
+   {
+    "stage": 4,
+    "scenario": "backlog",
+    "setup": "haiku planner + 6 haiku, 0 rev, intent",
+    "n": 2,
+    "wallS": 599.5,
+    "usd": 1.18,
+    "quality": 86.3,
+    "hidden": "24.5/30"
+   },
+   {
+    "stage": 4,
+    "scenario": "backlog",
+    "setup": "haiku planner + 6 haiku, 0 rev, intent, board",
+    "n": 3,
+    "wallS": 435,
+    "usd": 1.34,
+    "quality": 100,
+    "hidden": "30/30"
+   },
+   {
+    "stage": 4,
+    "scenario": "two-teams",
+    "setup": "haiku planner + 6 haiku, 0 rev, intent",
+    "n": 1,
+    "wallS": 775,
+    "usd": 1.79,
+    "quality": 100,
+    "hidden": "30/30"
+   },
+   {
+    "stage": 4,
+    "scenario": "two-teams",
+    "setup": "haiku planner + 6 haiku, 0 rev, intent, board",
+    "n": 2,
+    "wallS": 452.5,
+    "usd": 1.32,
+    "quality": 98.8,
+    "hidden": "29.5/30"
+   }
+  ]
+ }
+}

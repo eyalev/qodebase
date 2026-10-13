@@ -1,0 +1,246 @@
+{
+ "runs": [
+  {
+   "runId": "fmv6kuwtl",
+   "repo": "fleet-main",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": null,
+   "files": 3,
+   "landed": 0,
+   "ready": 0,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 3,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.0017,
+   "tokensIn": 7833,
+   "tokensOut": 3120,
+   "startedAt": 1791889739691,
+   "endedAt": 1791889772351,
+   "wallS": 33,
+   "landWaitS": {
+    "p50": null,
+    "p90": null
+   },
+   "models": {
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.0017,
+     "rejected": 3
+    }
+   }
+  },
+  {
+   "runId": "fmv6kzol3",
+   "repo": "fleet-main",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": null,
+   "files": 3,
+   "landed": 0,
+   "ready": 3,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.0005,
+   "tokensIn": 7833,
+   "tokensOut": 169,
+   "startedAt": 1791889925575,
+   "endedAt": 1791889933967,
+   "wallS": 8,
+   "landWaitS": {
+    "p50": null,
+    "p90": null
+   },
+   "models": {
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.0005,
+     "ready": 3
+    }
+   }
+  },
+  {
+   "runId": "fmv6l8doa",
+   "repo": "fleet-main",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": null,
+   "files": 6,
+   "landed": 6,
+   "ready": 0,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.0013,
+   "tokensIn": 17490,
+   "tokensOut": 514,
+   "startedAt": 1791890327316,
+   "endedAt": 1791890334872,
+   "wallS": 8,
+   "landWaitS": {
+    "p50": 221,
+    "p90": 223
+   },
+   "models": {
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.0013,
+     "landed": 6
+    }
+   }
+  },
+  {
+   "runId": "fmv6lhnk2",
+   "repo": "fleet-main",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": null,
+   "files": 60,
+   "landed": 28,
+   "ready": 9,
+   "skipped": 23,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.0131,
+   "tokensIn": 117372,
+   "tokensOut": 4553,
+   "startedAt": 1791890757671,
+   "endedAt": 1791890804570,
+   "wallS": 47,
+   "landWaitS": {
+    "p50": 5,
+    "p90": 7
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.0131,
+     "landed": 28,
+     "ready": 9,
+     "skipped": 23
+    }
+   }
+  },
+  {
+   "runId": "fmv6lmffn",
+   "repo": "fleet-main",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": null,
+   "files": 500,
+   "landed": 301,
+   "ready": 0,
+   "skipped": 199,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.0852,
+   "tokensIn": 765515,
+   "tokensOut": 28678,
+   "startedAt": 1791890980527,
+   "endedAt": 1791891171982,
+   "wallS": 191,
+   "landWaitS": {
+    "p50": 6,
+    "p90": 9
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.0852,
+     "landed": 301,
+     "skipped": 199
+    }
+   }
+  },
+  {
+   "runId": "fmv6m4smw",
+   "repo": "fleet-main",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": null,
+   "files": 500,
+   "landed": 364,
+   "ready": 0,
+   "skipped": 133,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 3,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.1106,
+   "tokensIn": 1009359,
+   "tokensOut": 32261,
+   "startedAt": 1791891837140,
+   "endedAt": 1791891939177,
+   "wallS": 102,
+   "landWaitS": {
+    "p50": 23,
+    "p90": 27
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.1106,
+     "landed": 364,
+     "rate_limited": 3,
+     "skipped": 133
+    }
+   }
+  },
+  {
+   "runId": "fmv6md3we",
+   "repo": "fleet-main",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 200,
+   "files": 3120,
+   "landed": 2330,
+   "ready": 0,
+   "skipped": 786,
+   "verify_fail": 0,
+   "rejected": 4,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 1.3742,
+   "tokensIn": 6680534,
+   "tokensOut": 212288,
+   "startedAt": 1791892222718,
+   "endedAt": 1791892483264,
+   "wallS": 261,
+   "landWaitS": {
+    "p50": 10,
+    "p90": 18
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.2374,
+     "landed": 766,
+     "skipped": 218
+    },
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.1372,
+     "landed": 704,
+     "rejected": 2,
+     "skipped": 278
+    },
+    "gemini-3.5-flash-lite": {
+     "usd": 0.9995,
+     "landed": 860,
+     "rejected": 2,
+     "skipped": 290
+    }
+   }
+  }
+ ]
+}
