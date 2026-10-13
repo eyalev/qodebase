@@ -33,8 +33,12 @@ export function whoPushed(c: { name?: string; email?: string } | undefined): Pus
 export function parsePush(body: unknown): PushEv | null {
   const b = body as { type?: string; source?: { namespace?: string; repoName?: string }; payload?: Record<string, any>; metadata?: { eventTimestamp?: string } };
   if (!b || b.type !== 'cf.artifacts.repo.pushed' || !b.source?.repoName || !b.payload?.after) return null;
+  // Only branch pushes with commits: the merge queue pushes its git notes (refs/notes/qodebase) after every train, and
+  // those read as '0 commits pushed by someone via git' (the R5 flagship's public Asks showed 21).
+  if (!String(b.payload.ref || '').startsWith('refs/heads/')) return null;
   const commits = Array.isArray(b.payload.commits) ? b.payload.commits : [];
   const newest = commits.find((c: any) => c?.id === b.payload!.after) || commits.at(-1);
+  if (!newest) return null;   // no commit to say who pushed
   return {
     repo: b.source.repoName, namespace: String(b.source.namespace || ''), ref: String(b.payload.ref || ''),
     before: String(b.payload.before || ''), after: String(b.payload.after), n: Number(b.payload.totalCommitsCount ?? commits.length) || commits.length,

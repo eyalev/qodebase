@@ -579,7 +579,7 @@ export class Landing extends DurableObject<Env> {
     if (!m) return null;
     if (!this.#meta) this.#meta = m;
     const changes = (await Promise.all(m.order.map((id) => this.#get(id)))).filter(Boolean).map((c) => ({ id: c!.id, title: c!.title, state: c!.state, createdAt: c!.createdAt, agent: c!.agent, kind: c!.kind }));
-    return { changes, lists: m.dedupeLists || [], done: m.tasksDone || [], claims: m.boardClaims || {}, aliases: (m.aliases || []).map((a) => ({ a: a.a, b: a.b })), gitPushes: m.gitPushes || [] };
+    return { changes, lists: m.dedupeLists || [], done: m.tasksDone || [], claims: m.boardClaims || {}, aliases: (m.aliases || []).map((a) => ({ a: a.a, b: a.b })), gitPushes: (m.gitPushes || []).filter((g) => g.n > 0) };
   }
 
   // ---- R1: owner controls (pause / resume / stop all) ------------------------------
@@ -1160,7 +1160,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
     const trains = (await Promise.all(m.trains.map((id) => this.ctx.storage.get<Train>(`t:${id}`)))).filter(Boolean) as Train[];
     const kind = m.demo ? 'demo' : /\.lab-/.test(m.slug) ? 'lab' : m.build ? 'build' : 'project';
     const since = opts.since ?? (m.demo ? m.demo.startedAt - 1000 : m.build ? m.build.startedAt - 60_000 : null);
-    return buildTimeline({ slug: m.slug, now: Date.now(), since, changes, trains, request: opts.request || null, kind, gitPushes: m.gitPushes || [], repoEvents: m.repoEvents || [] });
+    return buildTimeline({ slug: m.slug, now: Date.now(), since, changes, trains, request: opts.request || null, kind, gitPushes: (m.gitPushes || []).filter((g) => g.n > 0), repoEvents: m.repoEvents || [] });
   }
 
   async view(slug: string) {

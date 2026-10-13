@@ -48,3 +48,9 @@ test('events: the batch consumer routes pushes and repo events to Landing, acks 
   assert.deepEqual(calls, [['push', 'eyal.cafe-lab', null, 'person'], ['push', 'eyal.boom', null, 'person'], ['repo', 'eyal.cafe', 'forked']]);
   assert.equal(acked.length, 3); assert.equal(retried.length, 1, 'a failed push is retried');
 });
+
+test('events: a notes push or a push without commits is not a person\'s push', () => {
+  const notes = { type: 'cf.artifacts.repo.pushed', source: { namespace: 'forq', repoName: 'eyal.x' }, payload: { ref: 'refs/notes/qodebase', after: 'a'.repeat(40), commits: [], totalCommitsCount: 0 } };
+  assert.equal(parsePush(notes), null);
+  assert.equal(parsePush({ ...notes, payload: { ...notes.payload, ref: 'refs/heads/main' } }), null, 'no commits');
+});
