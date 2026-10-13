@@ -303,3 +303,38 @@ should define them).
   build each. So the picker no longer promises a saving: it says "a team may cost less or more (Balanced): it was cheaper
   in 2 of 3 same-prompt comparisons" (public/lab/predict.js teamVsOneAgent(), counted from REAL_BUILDS). One agent was
   faster in all three (457 s vs 1,940 / 2,765 s; 863 s vs 1,762 s).
+
+**A model replay that dropped reviewed work, found by auditing every replay (2026-10-13, review 2 #2).** Change ag1dx in the
+flagship (eyal/real-course-builder), 'Shared-cost splitter view'. Its reviewed diff added three files: css/split.css (+29),
+an index.html line, and js/features/split.js (+119, the view itself). The text merge conflicted only in index.html, but the
+model replay of that time redid the WHOLE change, and its landed commit 4dc2a6f changed only css/split.css (+28) and
+index.html (+1). js/features/split.js is not on main (checked at 07c2e8c; the splitter's math is in js/core/settle.js, from
+another change, which is what qb9's check found: 'math built but never given a screen'). The replay prompt carried the
+change's diff cut at 12,000 characters, with split.js last in path order; that is the likely cause (the prompt's size was not
+stored on the record, so it cannot be proven after the fact). The project's tests passed: nothing loaded the missing view.
+The Today-view change (rbd8q) is NOT this case: its reviewed diff never added the today.js tag (the agent's omission; the 41st
+change wired it).
+- **Audit:** all 35 model replays of the flagship (28) and R8b (7), the reviewed change's added lines looked up in the landed
+  files (plus the proof build's 5, all >= 97%). The first guard I shipped (90% of all reviewed lines) would have refused 6,
+  five of them good rewrites (the model writes the same feature in its own words; isdhz, the linked real-logic example, keeps
+  56%). The rules now live (forq a734b18, 94168f5) refuse exactly one, ag1dx:
+
+| build | change | conflicted | kept, all files | kept, conflicted files | file lost | 90% rule | rules now |
+|---|---|---|---|---|---|---|---|
+| real-course-builder | rbd8q Today view during a trip | index.html | 58% | 100% | - | refuse | land |
+| real-course-builder | ag1dx Shared-cost splitter view | index.html | 23% | 50% | js/features/split.js | refuse | refuse (file lost) |
+| real-home-inventory-r8b | h3m42 Printable list per room | README.md app.js styles.css | 76% | 76% | - | refuse | land |
+| real-home-inventory-r8b | isdhz Lent out: who has what | README.md app.js styles.css | 56% | 56% | - | refuse | land |
+| real-home-inventory-r8b | y26um Item photos: take or upload a photo per  | README.md app.js styles.css | 70% | 75% | - | refuse | land |
+| real-home-inventory-r8b | m39ug Boxes: boxes inside rooms, with their co | app.js styles.css | 67% | 67% | - | refuse | land |
+
+  The other 29 replays: kept 95-100% under both rules, land.
+- **The fix (live 2026-10-13 ~12:20 UTC, a734b18):** files that applied cleanly are applied straight from the reviewed diff;
+  the model redoes only the conflicting files and sees their full reviewed diff (no 12k cut); after a replay every file the
+  reviewed change added must exist (else it is not landed) and at least half the reviewed lines of the redone files must be
+  there; coverage, the redone files and the files applied as reviewed are on each change record. Test: the ag1dx shape (a big
+  new file plus one conflicting line) lands the new file whole. The flagship also got a smoke check (.qodebase/landing.json:
+  every script exists and is loaded), which fails on the commit before its 41st change.
+- **Second seam bug (qb9), same class as R4's:** itinerary.js calls itineraryEditor.open({tripId, day, item}) while the editor
+  defines open(trip, date, item). The skeleton now writes a contracts file (record shapes AND cross-module function
+  signatures) that features call exactly, and reviewers check calls against it (94168f5).
