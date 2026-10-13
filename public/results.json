@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T18:59:42.371Z",
+ "generated": "2026-10-13T19:01:24.781Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -150,12 +150,35 @@
      "@cf/zai-org/glm-4.7-flash"
     ]
    },
-   "filesLanded": 35372,
-   "filesAttempted": 47768,
+   "filesLanded": 35382,
+   "filesAttempted": 47770,
    "verifyRefused": 0,
    "usd": 21.53,
    "usdPer1kLanded": 0.61,
    "runs": 33,
+   "byJob": {
+    "docs": {
+     "runs": 27,
+     "filesAttempted": 45923,
+     "landed": 31466,
+     "skipped": 13912,
+     "usd": 19.09
+    },
+    "index": {
+     "runs": 1,
+     "filesAttempted": 659,
+     "landed": 506,
+     "skipped": 153,
+     "usd": 0.13
+    },
+    "code": {
+     "runs": 5,
+     "filesAttempted": 1188,
+     "landed": 3410,
+     "skipped": 0,
+     "usd": 2.32
+    }
+   },
    "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
   },
   "realBuilds": {
@@ -1770,14 +1793,14 @@
      "fleet-kata-d60 src/vs"
     ],
     "agents": 200,
-    "files": 346,
-    "landed": 888,
+    "files": 348,
+    "landed": 898,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
-    "usd": 0.5257,
-    "wallS": 8884,
+    "usd": 0.5318,
+    "wallS": 9015,
     "landWaitP90S": -1,
     "firstAt": 1791909049547
    }
@@ -1822,7 +1845,8 @@
     },
     "repo": "microsoft/vscode src/vs",
     "label": "plumbing (3 files, thinking on)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6kzol3",
@@ -1861,7 +1885,8 @@
     },
     "repo": "microsoft/vscode src/vs",
     "label": "plumbing (3 files)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6l8doa",
@@ -1900,7 +1925,8 @@
     },
     "repo": "microsoft/vscode src/vs",
     "label": "plumbing (6 files, first landing)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6lhnk2",
@@ -1941,7 +1967,8 @@
     },
     "repo": "microsoft/vscode src/vs",
     "label": "F2 @ 10 agents",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6lmffn",
@@ -1981,7 +2008,8 @@
     },
     "repo": "microsoft/vscode src/vs",
     "label": "F2 @ 100 agents (start bug: 8 started)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6m4smw",
@@ -2022,7 +2050,8 @@
     },
     "repo": "microsoft/vscode src/vs",
     "label": "F2 @ 100 agents",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6md3we",
@@ -2084,7 +2113,8 @@
     },
     "repo": "microsoft/vscode src/vs",
     "label": "F3 @ 200 agents, src/vs",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6mttvr",
@@ -2124,7 +2154,8 @@
     },
     "repo": "fleet-nest packages",
     "label": "F3b nest packages/ (gemini-3.1)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6mtyx9",
@@ -2165,7 +2196,8 @@
     },
     "repo": "fleet-angular packages",
     "label": "F3b angular packages/ (gemini-3.1)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6mu687",
@@ -2206,7 +2238,8 @@
     },
     "repo": "fleet-nextjs packages",
     "label": "F3b next.js packages/ (glm-4.7)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6mu93d",
@@ -2247,7 +2280,8 @@
     },
     "repo": "fleet-vscode-ext extensions",
     "label": "F3b vscode extensions/ (gemma)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6mu3wd",
@@ -2288,7 +2322,8 @@
     },
     "repo": "fleet-babel packages",
     "label": "F3b babel packages/ (gemini-3.1)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6ooow4",
@@ -2329,7 +2364,8 @@
     },
     "repo": "fleet-nextjs-1 packages",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 8",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6ofmt4",
@@ -2370,7 +2406,8 @@
     },
     "repo": "fleet-vscode-src-1 src/vs",
     "label": "S4a 200 agents / 4 copies (cache) - copy 3",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6qv8oz",
@@ -2412,7 +2449,8 @@
     },
     "repo": "fleet-vscode-src-1 src/vs",
     "label": "S5 gemma-4-26b at its limit (VS Code src/vs, 120 agents)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6oootq",
@@ -2453,7 +2491,8 @@
     },
     "repo": "fleet-angular-1 packages",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 7",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oopl9",
@@ -2494,7 +2533,8 @@
     },
     "repo": "fleet-vscode-ext-1 extensions",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 9",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sx9zg",
@@ -2533,7 +2573,8 @@
     },
     "repo": "fleet-vscode-ext-1 extensions",
     "label": "comment dial L0 - copy 1",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8475",
@@ -2572,7 +2613,8 @@
     },
     "repo": "fleet-vscode-ext-1 extensions",
     "label": "comment dial L10 - copy 1",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6us04c",
@@ -2611,7 +2653,8 @@
     },
     "repo": "fleet-vscode-ext-1 extensions",
     "label": "comment dial L30 - copy 1",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6ves9u",
@@ -2650,7 +2693,8 @@
     },
     "repo": "fleet-vscode-ext-1 extensions",
     "label": "comment dial L60 - copy 1",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w25dz",
@@ -2690,7 +2734,8 @@
     },
     "repo": "fleet-vscode-ext-1 extensions",
     "label": "comment dial L60c - copy 1",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxch6",
@@ -2730,7 +2775,8 @@
     },
     "repo": "fleet-nest-1 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 9",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzedx",
@@ -2770,7 +2816,8 @@
     },
     "repo": "fleet-nest-1 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 2",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxeqx",
@@ -2811,7 +2858,8 @@
     },
     "repo": "fleet-babel-1 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 19",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzht2",
@@ -2852,7 +2900,8 @@
     },
     "repo": "fleet-babel-1 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 1",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxcfc",
@@ -2892,7 +2941,8 @@
     },
     "repo": "fleet-nest-2 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 7",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzdpp",
@@ -2932,7 +2982,8 @@
     },
     "repo": "fleet-nest-2 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 6",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxcfw",
@@ -2972,7 +3023,8 @@
     },
     "repo": "fleet-nest-3 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 8",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzdsh",
@@ -3012,7 +3064,8 @@
     },
     "repo": "fleet-nest-3 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 10",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxbe8",
@@ -3052,7 +3105,8 @@
     },
     "repo": "fleet-nest-4 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 2",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzcsf",
@@ -3092,7 +3146,8 @@
     },
     "repo": "fleet-nest-4 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 14",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxccz",
@@ -3132,7 +3187,8 @@
     },
     "repo": "fleet-nest-5 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 6",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzelo",
@@ -3172,7 +3228,8 @@
     },
     "repo": "fleet-nest-5 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 18",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxblx",
@@ -3213,7 +3270,8 @@
     },
     "repo": "fleet-nest-6 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 3",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzelm",
@@ -3253,7 +3311,8 @@
     },
     "repo": "fleet-nest-6 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 22",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxcvu",
@@ -3293,7 +3352,8 @@
     },
     "repo": "fleet-nest-7 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 10",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzz4a",
@@ -3333,7 +3393,8 @@
     },
     "repo": "fleet-nest-7 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 26",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6ookhf",
@@ -3374,7 +3435,8 @@
     },
     "repo": "fleet-angular-2 packages",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 3",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oojsh",
@@ -3415,7 +3477,8 @@
     },
     "repo": "fleet-nextjs-2 packages",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 1",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxb40",
@@ -3455,7 +3518,8 @@
     },
     "repo": "fleet-nest-8 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 1",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzxpc",
@@ -3495,7 +3559,8 @@
     },
     "repo": "fleet-nest-8 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 30",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxbwg",
@@ -3535,7 +3600,8 @@
     },
     "repo": "fleet-nest-9 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 4",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzxph",
@@ -3575,7 +3641,8 @@
     },
     "repo": "fleet-nest-9 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 34",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxg1i",
@@ -3616,7 +3683,8 @@
     },
     "repo": "fleet-babel-2 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 26",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzigo",
@@ -3657,7 +3725,8 @@
     },
     "repo": "fleet-babel-2 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 5",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6ofopo",
@@ -3698,7 +3767,8 @@
     },
     "repo": "fleet-vscode-src-2 src/vs",
     "label": "S4a 200 agents / 4 copies (cache) - copy 4",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6qw9jf",
@@ -3740,7 +3810,8 @@
     },
     "repo": "fleet-vscode-src-2 src/vs",
     "label": "S5 glm-4.7-flash at its limit (VS Code src/vs, 120 agents)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxd2v",
@@ -3780,7 +3851,8 @@
     },
     "repo": "fleet-nest-10 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 11",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzywm",
@@ -3820,7 +3892,8 @@
     },
     "repo": "fleet-nest-10 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 38",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oox4a",
@@ -3861,7 +3934,8 @@
     },
     "repo": "fleet-vscode-ext-2 extensions",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 13",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxjw4",
@@ -3900,7 +3974,8 @@
     },
     "repo": "fleet-vscode-ext-2 extensions",
     "label": "comment dial L0 - copy 2",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8df0",
@@ -3939,7 +4014,8 @@
     },
     "repo": "fleet-vscode-ext-2 extensions",
     "label": "comment dial L10 - copy 2",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6us9el",
@@ -3978,7 +4054,8 @@
     },
     "repo": "fleet-vscode-ext-2 extensions",
     "label": "comment dial L30 - copy 2",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vf1vb",
@@ -4018,7 +4095,8 @@
     },
     "repo": "fleet-vscode-ext-2 extensions",
     "label": "comment dial L60 - copy 2",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2f6c",
@@ -4059,7 +4137,8 @@
     },
     "repo": "fleet-vscode-ext-2 extensions",
     "label": "comment dial L60c - copy 2",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oond3",
@@ -4100,7 +4179,8 @@
     },
     "repo": "fleet-angular-3 packages",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 6",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6ookgc",
@@ -4141,7 +4221,8 @@
     },
     "repo": "fleet-nextjs-3 packages",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 2",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxie4",
@@ -4182,7 +4263,8 @@
     },
     "repo": "fleet-babel-3 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 35",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzl2r",
@@ -4223,7 +4305,8 @@
     },
     "repo": "fleet-babel-3 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 9",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oov7h",
@@ -4264,7 +4347,8 @@
     },
     "repo": "fleet-angular-4 packages",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 12",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6of4um",
@@ -4305,7 +4389,8 @@
     },
     "repo": "fleet-vscode-src-3 src/vs",
     "label": "S4a 200 agents / 4 copies (cache) - copy 1",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6qwvp6",
@@ -4347,7 +4432,8 @@
     },
     "repo": "fleet-vscode-src-3 src/vs",
     "label": "S5 glm-5.3-flash at its limit (VS Code src/vs, 120 agents)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6r4vz5",
@@ -4389,7 +4475,8 @@
     },
     "repo": "fleet-vscode-src-3 src/vs",
     "label": "S5 glm-5.3-flash at 30/min (VS Code src/vs, 40 agents)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6oopwn",
@@ -4430,7 +4517,8 @@
     },
     "repo": "fleet-nextjs-4 packages",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 11",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6opa7x",
@@ -4471,7 +4559,8 @@
     },
     "repo": "fleet-vscode-ext-3 extensions",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 18",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxu7k",
@@ -4510,7 +4599,8 @@
     },
     "repo": "fleet-vscode-ext-3 extensions",
     "label": "comment dial L0 - copy 3",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8ouu",
@@ -4549,7 +4639,8 @@
     },
     "repo": "fleet-vscode-ext-3 extensions",
     "label": "comment dial L10 - copy 3",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6usjur",
@@ -4588,7 +4679,8 @@
     },
     "repo": "fleet-vscode-ext-3 extensions",
     "label": "comment dial L30 - copy 3",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vfe7s",
@@ -4627,7 +4719,8 @@
     },
     "repo": "fleet-vscode-ext-3 extensions",
     "label": "comment dial L60 - copy 3",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2pop",
@@ -4667,7 +4760,8 @@
     },
     "repo": "fleet-vscode-ext-3 extensions",
     "label": "comment dial L60c - copy 3",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6ookxz",
@@ -4708,7 +4802,8 @@
     },
     "repo": "fleet-angular-5 packages",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 4",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxhl1",
@@ -4749,7 +4844,8 @@
     },
     "repo": "fleet-babel-4 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 32",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzjzi",
@@ -4790,7 +4886,8 @@
     },
     "repo": "fleet-babel-4 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 13",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oopmh",
@@ -4831,7 +4928,8 @@
     },
     "repo": "fleet-nextjs-5 packages",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 10",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oflq1",
@@ -4872,7 +4970,8 @@
     },
     "repo": "fleet-vscode-src-4 src/vs",
     "label": "S4a 200 agents / 4 copies (cache) - copy 2",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6qxvn1",
@@ -4915,7 +5014,8 @@
     },
     "repo": "fleet-vscode-src-4 src/vs",
     "label": "S5 gemini-3.1-flash-lite at its limit (VS Code src/vs, 300 agents)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxpgh",
@@ -4956,7 +5056,8 @@
     },
     "repo": "fleet-angular-6 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 48",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6opaqc",
@@ -4997,7 +5098,8 @@
     },
     "repo": "fleet-vscode-ext-4 extensions",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 19",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxv2e",
@@ -5036,7 +5138,8 @@
     },
     "repo": "fleet-vscode-ext-4 extensions",
     "label": "comment dial L0 - copy 4",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8phh",
@@ -5075,7 +5178,8 @@
     },
     "repo": "fleet-vscode-ext-4 extensions",
     "label": "comment dial L10 - copy 4",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6usk1r",
@@ -5115,7 +5219,8 @@
     },
     "repo": "fleet-vscode-ext-4 extensions",
     "label": "comment dial L30 - copy 4",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vfcma",
@@ -5154,7 +5259,8 @@
     },
     "repo": "fleet-vscode-ext-4 extensions",
     "label": "comment dial L60 - copy 4",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2qca",
@@ -5194,7 +5300,8 @@
     },
     "repo": "fleet-vscode-ext-4 extensions",
     "label": "comment dial L60c - copy 4",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxig2",
@@ -5235,7 +5342,8 @@
     },
     "repo": "fleet-babel-5 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 36",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzkcu",
@@ -5276,7 +5384,8 @@
     },
     "repo": "fleet-babel-5 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 17",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxc57",
@@ -5317,7 +5426,8 @@
     },
     "repo": "fleet-angular-7 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 5",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxhrz",
@@ -5358,7 +5468,8 @@
     },
     "repo": "fleet-nextjs-6 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 33",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6omm62",
@@ -5399,7 +5510,8 @@
     },
     "repo": "fleet-vscode-src-5 src/vs",
     "label": "S4b 200 agents / 1 copy (cache) - copy 1",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6rj9j5",
@@ -5439,7 +5551,8 @@
     },
     "repo": "fleet-vscode-src-5 src/vs",
     "label": "batching bench: glm-4.7 single (70 files)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxe7q",
@@ -5480,7 +5593,8 @@
     },
     "repo": "fleet-angular-8 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 16",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxdj1",
@@ -5521,7 +5635,8 @@
     },
     "repo": "fleet-babel-6 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 12",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzgah",
@@ -5562,7 +5677,8 @@
     },
     "repo": "fleet-babel-6 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 21",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxmzy",
@@ -5603,7 +5719,8 @@
     },
     "repo": "fleet-nextjs-7 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 40",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6op7me",
@@ -5644,7 +5761,8 @@
     },
     "repo": "fleet-vscode-ext-5 extensions",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 16",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxsto",
@@ -5683,7 +5801,8 @@
     },
     "repo": "fleet-vscode-ext-5 extensions",
     "label": "comment dial L0 - copy 5",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8n65",
@@ -5722,7 +5841,8 @@
     },
     "repo": "fleet-vscode-ext-5 extensions",
     "label": "comment dial L10 - copy 5",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6ushwd",
@@ -5761,7 +5881,8 @@
     },
     "repo": "fleet-vscode-ext-5 extensions",
     "label": "comment dial L30 - copy 5",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vfb0i",
@@ -5800,7 +5921,8 @@
     },
     "repo": "fleet-vscode-ext-5 extensions",
     "label": "comment dial L60 - copy 5",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2oin",
@@ -5841,7 +5963,8 @@
     },
     "repo": "fleet-vscode-ext-5 extensions",
     "label": "comment dial L60c - copy 5",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxn4i",
@@ -5882,7 +6005,8 @@
     },
     "repo": "fleet-angular-9 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 42",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6opkn5",
@@ -5923,7 +6047,8 @@
     },
     "repo": "fleet-vscode-src-6 src/vs",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 20",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6rkgbw",
@@ -5963,7 +6088,8 @@
     },
     "repo": "fleet-vscode-src-6 src/vs",
     "label": "batching bench: glm-4.7 pack (70 files)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxn0q",
@@ -6004,7 +6130,8 @@
     },
     "repo": "fleet-nextjs-8 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 41",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxgpt",
@@ -6045,7 +6172,8 @@
     },
     "repo": "fleet-babel-7 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 30",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q032e",
@@ -6086,7 +6214,8 @@
     },
     "repo": "fleet-babel-7 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 25",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy148",
@@ -6127,7 +6256,8 @@
     },
     "repo": "fleet-vscode-ext-6 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 77",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxsrm",
@@ -6166,7 +6296,8 @@
     },
     "repo": "fleet-vscode-ext-6 extensions",
     "label": "comment dial L0 - copy 6",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8n1a",
@@ -6205,7 +6336,8 @@
     },
     "repo": "fleet-vscode-ext-6 extensions",
     "label": "comment dial L10 - copy 6",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6usiim",
@@ -6245,7 +6377,8 @@
     },
     "repo": "fleet-vscode-ext-6 extensions",
     "label": "comment dial L30 - copy 6",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vfaru",
@@ -6285,7 +6418,8 @@
     },
     "repo": "fleet-vscode-ext-6 extensions",
     "label": "comment dial L60 - copy 6",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2p0c",
@@ -6326,7 +6460,8 @@
     },
     "repo": "fleet-vscode-ext-6 extensions",
     "label": "comment dial L60c - copy 6",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxp1e",
@@ -6367,7 +6502,8 @@
     },
     "repo": "fleet-angular-10 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 45",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxi9m",
@@ -6408,7 +6544,8 @@
     },
     "repo": "fleet-nextjs-9 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 34",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6opa0q",
@@ -6449,7 +6586,8 @@
     },
     "repo": "fleet-vscode-src-7 src/vs",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 17",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6rld7f",
@@ -6489,7 +6627,8 @@
     },
     "repo": "fleet-vscode-src-7 src/vs",
     "label": "batching bench: gemini-3.1 single (70 files)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxeut",
@@ -6530,7 +6669,8 @@
     },
     "repo": "fleet-babel-8 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 20",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q01ki",
@@ -6571,7 +6711,8 @@
     },
     "repo": "fleet-babel-8 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 29",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxmws",
@@ -6612,7 +6753,8 @@
     },
     "repo": "fleet-nextjs-10 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 39",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxsgg",
@@ -6653,7 +6795,8 @@
     },
     "repo": "fleet-vscode-ext-7 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 56",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxkdx",
@@ -6692,7 +6835,8 @@
     },
     "repo": "fleet-vscode-ext-7 extensions",
     "label": "comment dial L0 - copy 7",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8eb4",
@@ -6731,7 +6875,8 @@
     },
     "repo": "fleet-vscode-ext-7 extensions",
     "label": "comment dial L10 - copy 7",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6usay9",
@@ -6770,7 +6915,8 @@
     },
     "repo": "fleet-vscode-ext-7 extensions",
     "label": "comment dial L30 - copy 7",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vf32s",
@@ -6809,7 +6955,8 @@
     },
     "repo": "fleet-vscode-ext-7 extensions",
     "label": "comment dial L60 - copy 7",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2fjf",
@@ -6849,7 +6996,8 @@
     },
     "repo": "fleet-vscode-ext-7 extensions",
     "label": "comment dial L60c - copy 7",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oon2o",
@@ -6890,7 +7038,8 @@
     },
     "repo": "fleet-vscode-src-8 src/vs",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 5",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6rlmud",
@@ -6931,7 +7080,8 @@
     },
     "repo": "fleet-vscode-src-8 src/vs",
     "label": "batching bench: gemini-3.1 pack (70 files)",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxfu2",
@@ -6972,7 +7122,8 @@
     },
     "repo": "fleet-babel-9 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 24",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q01tm",
@@ -7013,7 +7164,8 @@
     },
     "repo": "fleet-babel-9 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 33",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6op1o6",
@@ -7054,7 +7206,8 @@
     },
     "repo": "fleet-vscode-src-9 src/vs",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 14",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6rwo3r",
@@ -7117,7 +7270,8 @@
     },
     "repo": "fleet-vscode-src-9 src/vs",
     "label": "S5b batched (gemma + glm-4.7, Gemini overflow) - copy 1",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxtyv",
@@ -7158,7 +7312,8 @@
     },
     "repo": "fleet-vscode-ext-8 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 61",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxlel",
@@ -7197,7 +7352,8 @@
     },
     "repo": "fleet-vscode-ext-8 extensions",
     "label": "comment dial L0 - copy 8",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8fc6",
@@ -7236,7 +7392,8 @@
     },
     "repo": "fleet-vscode-ext-8 extensions",
     "label": "comment dial L10 - copy 8",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6usba2",
@@ -7276,7 +7433,8 @@
     },
     "repo": "fleet-vscode-ext-8 extensions",
     "label": "comment dial L30 - copy 8",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vf4iw",
@@ -7316,7 +7474,8 @@
     },
     "repo": "fleet-vscode-ext-8 extensions",
     "label": "comment dial L60 - copy 8",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2h7g",
@@ -7356,7 +7515,8 @@
     },
     "repo": "fleet-vscode-ext-8 extensions",
     "label": "comment dial L60c - copy 8",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxgf1",
@@ -7397,7 +7557,8 @@
     },
     "repo": "fleet-babel-10 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 27",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q02qp",
@@ -7438,7 +7599,8 @@
     },
     "repo": "fleet-babel-10 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 37",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6op5a4",
@@ -7479,7 +7641,8 @@
     },
     "repo": "fleet-vscode-src-10 src/vs",
     "label": "S4c 1,000 agents / 20 copies (cache) - copy 15",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6rxhnq",
@@ -7541,7 +7704,8 @@
     },
     "repo": "fleet-vscode-src-10 src/vs",
     "label": "S5b batched (gemma + glm-4.7, Gemini overflow) - copy 2",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxeev",
@@ -7582,7 +7746,8 @@
     },
     "repo": "fleet-vscode-ext-9 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 18",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sx5z6",
@@ -7621,7 +7786,8 @@
     },
     "repo": "fleet-vscode-ext-9 extensions",
     "label": "comment dial L0 - copy 9",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u80dz",
@@ -7660,7 +7826,8 @@
     },
     "repo": "fleet-vscode-ext-9 extensions",
     "label": "comment dial L10 - copy 9",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6urvd6",
@@ -7699,7 +7866,8 @@
     },
     "repo": "fleet-vscode-ext-9 extensions",
     "label": "comment dial L30 - copy 9",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vemyg",
@@ -7739,7 +7907,8 @@
     },
     "repo": "fleet-vscode-ext-9 extensions",
     "label": "comment dial L60 - copy 9",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w20y4",
@@ -7781,7 +7950,8 @@
     },
     "repo": "fleet-vscode-ext-9 extensions",
     "label": "comment dial L60c - copy 9",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxl6s",
@@ -7822,7 +7992,8 @@
     },
     "repo": "fleet-vscode-ext-10 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 38",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxanu",
@@ -7861,7 +8032,8 @@
     },
     "repo": "fleet-vscode-ext-10 extensions",
     "label": "comment dial L0 - copy 10",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u85gi",
@@ -7900,7 +8072,8 @@
     },
     "repo": "fleet-vscode-ext-10 extensions",
     "label": "comment dial L10 - copy 10",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6us4p4",
@@ -7939,7 +8112,8 @@
     },
     "repo": "fleet-vscode-ext-10 extensions",
     "label": "comment dial L30 - copy 10",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vewj2",
@@ -7979,7 +8153,8 @@
     },
     "repo": "fleet-vscode-ext-10 extensions",
     "label": "comment dial L60 - copy 10",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2577",
@@ -8019,7 +8194,8 @@
     },
     "repo": "fleet-vscode-ext-10 extensions",
     "label": "comment dial L60c - copy 10",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oz4u9",
@@ -8060,7 +8236,8 @@
     },
     "repo": "fleet-vscode-ext-16 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 94",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxsuw",
@@ -8099,7 +8276,8 @@
     },
     "repo": "fleet-vscode-ext-16 extensions",
     "label": "comment dial L0 - copy 16",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8mu7",
@@ -8138,7 +8316,8 @@
     },
     "repo": "fleet-vscode-ext-16 extensions",
     "label": "comment dial L10 - copy 16",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6usi4y",
@@ -8177,7 +8356,8 @@
     },
     "repo": "fleet-vscode-ext-16 extensions",
     "label": "comment dial L30 - copy 16",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vfbcb",
@@ -8217,7 +8397,8 @@
     },
     "repo": "fleet-vscode-ext-16 extensions",
     "label": "comment dial L60 - copy 16",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2olx",
@@ -8257,7 +8438,8 @@
     },
     "repo": "fleet-vscode-ext-16 extensions",
     "label": "comment dial L60c - copy 16",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oz2iy",
@@ -8298,7 +8480,8 @@
     },
     "repo": "fleet-vscode-ext-12 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 93",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxs0p",
@@ -8337,7 +8520,8 @@
     },
     "repo": "fleet-vscode-ext-12 extensions",
     "label": "comment dial L0 - copy 12",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8m3c",
@@ -8376,7 +8560,8 @@
     },
     "repo": "fleet-vscode-ext-12 extensions",
     "label": "comment dial L10 - copy 12",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6ushhy",
@@ -8415,7 +8600,8 @@
     },
     "repo": "fleet-vscode-ext-12 extensions",
     "label": "comment dial L30 - copy 12",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vf9k2",
@@ -8454,7 +8640,8 @@
     },
     "repo": "fleet-vscode-ext-12 extensions",
     "label": "comment dial L60 - copy 12",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2nzp",
@@ -8495,7 +8682,8 @@
     },
     "repo": "fleet-vscode-ext-12 extensions",
     "label": "comment dial L60c - copy 12",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy9s0",
@@ -8536,7 +8724,8 @@
     },
     "repo": "fleet-vscode-ext-11 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 85",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxd14",
@@ -8575,7 +8764,8 @@
     },
     "repo": "fleet-vscode-ext-11 extensions",
     "label": "comment dial L0 - copy 11",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u84k3",
@@ -8614,7 +8804,8 @@
     },
     "repo": "fleet-vscode-ext-11 extensions",
     "label": "comment dial L10 - copy 11",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6us3ai",
@@ -8653,7 +8844,8 @@
     },
     "repo": "fleet-vscode-ext-11 extensions",
     "label": "comment dial L30 - copy 11",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vew8j",
@@ -8693,7 +8885,8 @@
     },
     "repo": "fleet-vscode-ext-11 extensions",
     "label": "comment dial L60 - copy 11",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w273o",
@@ -8733,7 +8926,8 @@
     },
     "repo": "fleet-vscode-ext-11 extensions",
     "label": "comment dial L60c - copy 11",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy68c",
@@ -8774,7 +8968,8 @@
     },
     "repo": "fleet-vscode-ext-15 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 83",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxfry",
@@ -8813,7 +9008,8 @@
     },
     "repo": "fleet-vscode-ext-15 extensions",
     "label": "comment dial L0 - copy 15",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u89dx",
@@ -8852,7 +9048,8 @@
     },
     "repo": "fleet-vscode-ext-15 extensions",
     "label": "comment dial L10 - copy 15",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6us6ep",
@@ -8892,7 +9089,8 @@
     },
     "repo": "fleet-vscode-ext-15 extensions",
     "label": "comment dial L30 - copy 15",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vextr",
@@ -8932,7 +9130,8 @@
     },
     "repo": "fleet-vscode-ext-15 extensions",
     "label": "comment dial L60 - copy 15",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w28vw",
@@ -8972,7 +9171,8 @@
     },
     "repo": "fleet-vscode-ext-15 extensions",
     "label": "comment dial L60c - copy 15",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oykp8",
@@ -9013,7 +9213,8 @@
     },
     "repo": "fleet-vscode-ext-19 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 91",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxiir",
@@ -9052,7 +9253,8 @@
     },
     "repo": "fleet-vscode-ext-19 extensions",
     "label": "comment dial L0 - copy 19",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8blj",
@@ -9091,7 +9293,8 @@
     },
     "repo": "fleet-vscode-ext-19 extensions",
     "label": "comment dial L10 - copy 19",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6us7ws",
@@ -9130,7 +9333,8 @@
     },
     "repo": "fleet-vscode-ext-19 extensions",
     "label": "comment dial L30 - copy 19",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vf2m5",
@@ -9170,7 +9374,8 @@
     },
     "repo": "fleet-vscode-ext-19 extensions",
     "label": "comment dial L60 - copy 19",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2d7d",
@@ -9211,7 +9416,8 @@
     },
     "repo": "fleet-vscode-ext-19 extensions",
     "label": "comment dial L60c - copy 19",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy5xs",
@@ -9252,7 +9458,8 @@
     },
     "repo": "fleet-vscode-ext-21 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 81",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sulok",
@@ -9291,7 +9498,8 @@
     },
     "repo": "fleet-vscode-ext-21 extensions",
     "label": "dial smoke 60%",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oyfcq",
@@ -9332,7 +9540,8 @@
     },
     "repo": "fleet-vscode-ext-22 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 90",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oym43",
@@ -9373,7 +9582,8 @@
     },
     "repo": "fleet-vscode-ext-20 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 92",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxt8g",
@@ -9412,7 +9622,8 @@
     },
     "repo": "fleet-vscode-ext-20 extensions",
     "label": "comment dial L0 - copy 20",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8nej",
@@ -9451,7 +9662,8 @@
     },
     "repo": "fleet-vscode-ext-20 extensions",
     "label": "comment dial L10 - copy 20",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6usioi",
@@ -9490,7 +9702,8 @@
     },
     "repo": "fleet-vscode-ext-20 extensions",
     "label": "comment dial L30 - copy 20",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vfarn",
@@ -9530,7 +9743,8 @@
     },
     "repo": "fleet-vscode-ext-20 extensions",
     "label": "comment dial L60 - copy 20",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2okz",
@@ -9570,7 +9784,8 @@
     },
     "repo": "fleet-vscode-ext-20 extensions",
     "label": "comment dial L60c - copy 20",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oyemf",
@@ -9611,7 +9826,8 @@
     },
     "repo": "fleet-vscode-ext-18 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 89",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxhpu",
@@ -9650,7 +9866,8 @@
     },
     "repo": "fleet-vscode-ext-18 extensions",
     "label": "comment dial L0 - copy 18",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8bmv",
@@ -9689,7 +9906,8 @@
     },
     "repo": "fleet-vscode-ext-18 extensions",
     "label": "comment dial L10 - copy 18",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6us7ud",
@@ -9728,7 +9946,8 @@
     },
     "repo": "fleet-vscode-ext-18 extensions",
     "label": "comment dial L30 - copy 18",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vf0cm",
@@ -9768,7 +9987,8 @@
     },
     "repo": "fleet-vscode-ext-18 extensions",
     "label": "comment dial L60 - copy 18",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2deo",
@@ -9809,7 +10029,8 @@
     },
     "repo": "fleet-vscode-ext-18 extensions",
     "label": "comment dial L60c - copy 18",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6ozbfa",
@@ -9850,7 +10071,8 @@
     },
     "repo": "fleet-vscode-ext-17 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 95",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxuh6",
@@ -9889,7 +10111,8 @@
     },
     "repo": "fleet-vscode-ext-17 extensions",
     "label": "comment dial L0 - copy 17",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8pqg",
@@ -9928,7 +10151,8 @@
     },
     "repo": "fleet-vscode-ext-17 extensions",
     "label": "comment dial L10 - copy 17",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6usk21",
@@ -9968,7 +10192,8 @@
     },
     "repo": "fleet-vscode-ext-17 extensions",
     "label": "comment dial L30 - copy 17",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vfceb",
@@ -10007,7 +10232,8 @@
     },
     "repo": "fleet-vscode-ext-17 extensions",
     "label": "comment dial L60 - copy 17",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2q4p",
@@ -10047,7 +10273,8 @@
     },
     "repo": "fleet-vscode-ext-17 extensions",
     "label": "comment dial L60c - copy 17",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxyae",
@@ -10088,7 +10315,8 @@
     },
     "repo": "fleet-nextjs-12 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 70",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy2tg",
@@ -10129,7 +10357,8 @@
     },
     "repo": "fleet-nextjs-16 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 78",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxrq3",
@@ -10170,7 +10399,8 @@
     },
     "repo": "fleet-nextjs-11 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 52",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxx1q",
@@ -10211,7 +10441,8 @@
     },
     "repo": "fleet-nextjs-13 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 65",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy5rs",
@@ -10252,7 +10483,8 @@
     },
     "repo": "fleet-nextjs-14 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 80",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxsf1",
@@ -10293,7 +10525,8 @@
     },
     "repo": "fleet-nextjs-17 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 55",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxtko",
@@ -10334,7 +10567,8 @@
     },
     "repo": "fleet-nextjs-18 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 59",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxspg",
@@ -10375,7 +10609,8 @@
     },
     "repo": "fleet-nextjs-22 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 57",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxz2f",
@@ -10416,7 +10651,8 @@
     },
     "repo": "fleet-nextjs-21 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 73",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy64q",
@@ -10457,7 +10693,8 @@
     },
     "repo": "fleet-nextjs-19 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 82",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy2zt",
@@ -10498,7 +10735,8 @@
     },
     "repo": "fleet-nextjs-20 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 79",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxs0t",
@@ -10539,7 +10777,8 @@
     },
     "repo": "fleet-angular-16 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 54",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxtdw",
@@ -10580,7 +10819,8 @@
     },
     "repo": "fleet-angular-12 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 58",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy0ut",
@@ -10621,7 +10861,8 @@
     },
     "repo": "fleet-angular-13 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 76",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxxv8",
@@ -10662,7 +10903,8 @@
     },
     "repo": "fleet-angular-11 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 67",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxzpz",
@@ -10703,7 +10945,8 @@
     },
     "repo": "fleet-angular-20 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 74",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oyc03",
@@ -10744,7 +10987,8 @@
     },
     "repo": "fleet-angular-18 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 88",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxyfs",
@@ -10785,7 +11029,8 @@
     },
     "repo": "fleet-angular-17 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 71",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxxy5",
@@ -10826,7 +11071,8 @@
     },
     "repo": "fleet-angular-19 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 68",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxvqv",
@@ -10867,7 +11113,8 @@
     },
     "repo": "fleet-angular-21 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 64",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxyks",
@@ -10908,7 +11155,8 @@
     },
     "repo": "fleet-angular-22 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 72",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pp9gx",
@@ -10948,7 +11196,8 @@
     },
     "repo": "fleet-angular-22 packages",
     "label": "notes test",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pr6sg",
@@ -10988,7 +11237,8 @@
     },
     "repo": "fleet-angular-22 packages",
     "label": "notes test",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6putjb",
@@ -11028,7 +11278,8 @@
     },
     "repo": "fleet-angular-22 packages",
     "label": "notes test",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxtlr",
@@ -11069,7 +11320,8 @@
     },
     "repo": "fleet-babel-12 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 60",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0tb6",
@@ -11110,7 +11362,8 @@
     },
     "repo": "fleet-babel-12 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 45",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxniz",
@@ -11151,7 +11404,8 @@
     },
     "repo": "fleet-babel-16 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 43",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0q1e",
@@ -11192,7 +11446,8 @@
     },
     "repo": "fleet-babel-16 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 61",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxrwj",
@@ -11233,7 +11488,8 @@
     },
     "repo": "fleet-babel-11 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 53",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q06g7",
@@ -11274,7 +11530,8 @@
     },
     "repo": "fleet-babel-11 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 41",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxrhr",
@@ -11315,7 +11572,8 @@
     },
     "repo": "fleet-babel-20 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 51",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1ejl",
@@ -11356,7 +11614,8 @@
     },
     "repo": "fleet-babel-20 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 77",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxpzg",
@@ -11397,7 +11656,8 @@
     },
     "repo": "fleet-babel-18 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 49",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1fhi",
@@ -11438,7 +11698,8 @@
     },
     "repo": "fleet-babel-18 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 69",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxoar",
@@ -11479,7 +11740,8 @@
     },
     "repo": "fleet-babel-19 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 44",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1az6",
@@ -11520,7 +11782,8 @@
     },
     "repo": "fleet-babel-19 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 73",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxxv3",
@@ -11561,7 +11824,8 @@
     },
     "repo": "fleet-babel-21 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 66",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1g97",
@@ -11602,7 +11866,8 @@
     },
     "repo": "fleet-babel-21 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 81",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxp29",
@@ -11643,7 +11908,8 @@
     },
     "repo": "fleet-babel-17 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 46",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0p58",
@@ -11684,7 +11950,8 @@
     },
     "repo": "fleet-babel-17 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 65",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy03f",
@@ -11725,7 +11992,8 @@
     },
     "repo": "fleet-babel-22 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 75",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1gxd",
@@ -11766,7 +12034,8 @@
     },
     "repo": "fleet-babel-22 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 85",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxh4o",
@@ -11806,7 +12075,8 @@
     },
     "repo": "fleet-nest-13 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 31",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0mo4",
@@ -11846,7 +12116,8 @@
     },
     "repo": "fleet-nest-13 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 50",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxfgr",
@@ -11886,7 +12157,8 @@
     },
     "repo": "fleet-nest-12 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 23",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0l93",
@@ -11926,7 +12198,8 @@
     },
     "repo": "fleet-nest-12 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 46",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxeb0",
@@ -11966,7 +12239,8 @@
     },
     "repo": "fleet-nest-11 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 17",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzygc",
@@ -12006,7 +12280,8 @@
     },
     "repo": "fleet-nest-11 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 42",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxdq5",
@@ -12046,7 +12321,8 @@
     },
     "repo": "fleet-nest-15 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 14",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0moq",
@@ -12086,7 +12362,8 @@
     },
     "repo": "fleet-nest-15 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 58",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxgp2",
@@ -12126,7 +12403,8 @@
     },
     "repo": "fleet-nest-14 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 29",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0m72",
@@ -12166,7 +12444,8 @@
     },
     "repo": "fleet-nest-14 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 54",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxf44",
@@ -12206,7 +12485,8 @@
     },
     "repo": "fleet-nest-22 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 21",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q17wi",
@@ -12246,7 +12526,8 @@
     },
     "repo": "fleet-nest-22 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 86",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxfgb",
@@ -12286,7 +12567,8 @@
     },
     "repo": "fleet-nest-20 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 22",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q19jj",
@@ -12326,7 +12608,8 @@
     },
     "repo": "fleet-nest-20 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 78",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxdod",
@@ -12366,7 +12649,8 @@
     },
     "repo": "fleet-nest-19 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 13",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q172z",
@@ -12406,7 +12690,8 @@
     },
     "repo": "fleet-nest-19 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 74",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxfw2",
@@ -12446,7 +12731,8 @@
     },
     "repo": "fleet-nest-18 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 25",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q15qa",
@@ -12486,7 +12772,8 @@
     },
     "repo": "fleet-nest-18 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 70",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxk4k",
@@ -12526,7 +12813,8 @@
     },
     "repo": "fleet-nest-17 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 37",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0nws",
@@ -12566,7 +12854,8 @@
     },
     "repo": "fleet-nest-17 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 66",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxgfd",
@@ -12606,7 +12895,8 @@
     },
     "repo": "fleet-nest-21 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 28",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q18qp",
@@ -12646,7 +12936,8 @@
     },
     "repo": "fleet-nest-21 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 82",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oyb4b",
@@ -12687,7 +12978,8 @@
     },
     "repo": "fleet-angular-14 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 87",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxuu7",
@@ -12728,7 +13020,8 @@
     },
     "repo": "fleet-angular-15 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 63",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxup1",
@@ -12769,7 +13062,8 @@
     },
     "repo": "fleet-babel-13 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 62",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0uq4",
@@ -12810,7 +13104,8 @@
     },
     "repo": "fleet-babel-13 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 49",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxxyw",
@@ -12851,7 +13146,8 @@
     },
     "repo": "fleet-babel-14 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 69",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0re6",
@@ -12892,7 +13188,8 @@
     },
     "repo": "fleet-babel-14 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 53",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxper",
@@ -12933,7 +13230,8 @@
     },
     "repo": "fleet-babel-15 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 47",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0rei",
@@ -12974,7 +13272,8 @@
     },
     "repo": "fleet-babel-15 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 57",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxdz4",
@@ -13014,7 +13313,8 @@
     },
     "repo": "fleet-nest-16 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 15",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0lq5",
@@ -13054,7 +13354,8 @@
     },
     "repo": "fleet-nest-16 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 62",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oxrcy",
@@ -13095,7 +13396,8 @@
     },
     "repo": "fleet-nextjs-15 packages",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 50",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oya7q",
@@ -13136,7 +13438,8 @@
     },
     "repo": "fleet-vscode-ext-13 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 86",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sxhi2",
@@ -13175,7 +13478,8 @@
     },
     "repo": "fleet-vscode-ext-13 extensions",
     "label": "comment dial L0 - copy 13",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u8b8m",
@@ -13214,7 +13518,8 @@
     },
     "repo": "fleet-vscode-ext-13 extensions",
     "label": "comment dial L10 - copy 13",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6us7ct",
@@ -13253,7 +13558,8 @@
     },
     "repo": "fleet-vscode-ext-13 extensions",
     "label": "comment dial L30 - copy 13",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6vf06y",
@@ -13292,7 +13598,8 @@
     },
     "repo": "fleet-vscode-ext-13 extensions",
     "label": "comment dial L60 - copy 13",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2cmx",
@@ -13333,7 +13640,8 @@
     },
     "repo": "fleet-vscode-ext-13 extensions",
     "label": "comment dial L60c - copy 13",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6oy9lc",
@@ -13374,7 +13682,8 @@
     },
     "repo": "fleet-vscode-ext-14 extensions",
     "label": "S4d 4,750 agents / 95 copies (cache) - copy 84",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sx9hy",
@@ -13413,7 +13722,8 @@
     },
     "repo": "fleet-vscode-ext-14 extensions",
     "label": "comment dial L0 - copy 14",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6u82tt",
@@ -13452,7 +13762,8 @@
     },
     "repo": "fleet-vscode-ext-14 extensions",
     "label": "comment dial L10 - copy 14",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6urzjl",
@@ -13491,7 +13802,8 @@
     },
     "repo": "fleet-vscode-ext-14 extensions",
     "label": "comment dial L30 - copy 14",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6veruq",
@@ -13530,7 +13842,8 @@
     },
     "repo": "fleet-vscode-ext-14 extensions",
     "label": "comment dial L60 - copy 14",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2463",
@@ -13571,7 +13884,8 @@
     },
     "repo": "fleet-vscode-ext-14 extensions",
     "label": "comment dial L60c - copy 14",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzne3",
@@ -13612,7 +13926,8 @@
     },
     "repo": "fleet-n2-babel-1 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 3",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzc72",
@@ -13653,7 +13968,8 @@
     },
     "repo": "fleet-n2-nest-1 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 4",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzibx",
@@ -13693,7 +14009,8 @@
     },
     "repo": "fleet-n2-nest-3 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 12",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzjtv",
@@ -13734,7 +14051,8 @@
     },
     "repo": "fleet-n2-nest-2 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 8",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzgdb",
@@ -13775,7 +14093,8 @@
     },
     "repo": "fleet-n2-nest-4 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 16",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzram",
@@ -13817,7 +14136,8 @@
     },
     "repo": "fleet-n2-babel-3 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 11",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzrn3",
@@ -13859,7 +14179,8 @@
     },
     "repo": "fleet-n2-babel-2 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 7",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzsb8",
@@ -13901,7 +14222,8 @@
     },
     "repo": "fleet-n2-babel-4 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 15",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q010h",
@@ -13942,7 +14264,8 @@
     },
     "repo": "fleet-n2-nest-6 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 24",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzg2y",
@@ -13983,7 +14306,8 @@
     },
     "repo": "fleet-n2-nest-5 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 20",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q02ek",
@@ -14023,7 +14347,8 @@
     },
     "repo": "fleet-n2-nest-7 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 28",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0ai7",
@@ -14065,7 +14390,8 @@
     },
     "repo": "fleet-n2-babel-7 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 27",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6pzubd",
@@ -14107,7 +14433,8 @@
     },
     "repo": "fleet-n2-babel-5 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 19",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0h5h",
@@ -14148,7 +14475,8 @@
     },
     "repo": "fleet-n2-babel-6 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 23",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0110",
@@ -14188,7 +14516,8 @@
     },
     "repo": "fleet-n2-nest-8 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 32",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q02qk",
@@ -14229,7 +14558,8 @@
     },
     "repo": "fleet-n2-nest-10 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 40",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q00eb",
@@ -14269,7 +14599,8 @@
     },
     "repo": "fleet-n2-nest-9 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 36",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0iny",
@@ -14310,7 +14641,8 @@
     },
     "repo": "fleet-n2-babel-8 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 31",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0cp1",
@@ -14351,7 +14683,8 @@
     },
     "repo": "fleet-n2-babel-10 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 39",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0iri",
@@ -14393,7 +14726,8 @@
     },
     "repo": "fleet-n2-babel-9 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 35",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0rgt",
@@ -14433,7 +14767,8 @@
     },
     "repo": "fleet-n2-nest-12 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 48",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0puo",
@@ -14473,7 +14808,8 @@
     },
     "repo": "fleet-n2-nest-13 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 52",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q02t2",
@@ -14513,7 +14849,8 @@
     },
     "repo": "fleet-n2-nest-11 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 44",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q14hr",
@@ -14555,7 +14892,8 @@
     },
     "repo": "fleet-n2-babel-13 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 51",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0je1",
@@ -14596,7 +14934,8 @@
     },
     "repo": "fleet-n2-babel-11 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 43",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0zov",
@@ -14637,7 +14976,8 @@
     },
     "repo": "fleet-n2-babel-12 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 47",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0pxr",
@@ -14677,7 +15017,8 @@
     },
     "repo": "fleet-n2-nest-16 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 64",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0pts",
@@ -14717,7 +15058,8 @@
     },
     "repo": "fleet-n2-nest-14 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 56",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0rkx",
@@ -14757,7 +15099,8 @@
     },
     "repo": "fleet-n2-nest-15 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 60",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1297",
@@ -14799,7 +15142,8 @@
     },
     "repo": "fleet-n2-babel-14 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 55",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q0y76",
@@ -14841,7 +15185,8 @@
     },
     "repo": "fleet-n2-babel-16 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 63",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q12z0",
@@ -14883,7 +15228,8 @@
     },
     "repo": "fleet-n2-babel-15 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 59",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1b54",
@@ -14924,7 +15270,8 @@
     },
     "repo": "fleet-n2-nest-18 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 72",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q197h",
@@ -14964,7 +15311,8 @@
     },
     "repo": "fleet-n2-nest-19 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 76",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1bpv",
@@ -15005,7 +15353,8 @@
     },
     "repo": "fleet-n2-nest-17 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 68",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1mts",
@@ -15047,7 +15396,8 @@
     },
     "repo": "fleet-n2-babel-19 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 75",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1si1",
@@ -15088,7 +15438,8 @@
     },
     "repo": "fleet-n2-babel-18 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 71",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1g2l",
@@ -15130,7 +15481,8 @@
     },
     "repo": "fleet-n2-babel-17 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 67",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1b4r",
@@ -15170,7 +15522,8 @@
     },
     "repo": "fleet-n2-nest-22 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 88",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1cbl",
@@ -15211,7 +15564,8 @@
     },
     "repo": "fleet-n2-nest-20 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 80",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1aqb",
@@ -15251,7 +15605,8 @@
     },
     "repo": "fleet-n2-nest-21 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 84",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1lyi",
@@ -15293,7 +15648,8 @@
     },
     "repo": "fleet-n2-babel-22 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 87",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1hm4",
@@ -15335,7 +15691,8 @@
     },
     "repo": "fleet-n2-babel-21 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 83",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6q1l82",
@@ -15377,7 +15734,8 @@
     },
     "repo": "fleet-n2-babel-20 packages",
     "label": "S4e 4,400 agents / 88 copies in 2 namespaces (cache) - copy 79",
-    "cached": true
+    "cached": true,
+    "job": "docs"
    },
    {
     "runId": "fmv6sbaud",
@@ -15442,7 +15800,8 @@
     },
     "repo": "fleet-vscode-src-12 src/vs",
     "label": "S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) - copy 1",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6sdht6",
@@ -15506,7 +15865,8 @@
     },
     "repo": "fleet-vscode-src-13 src/vs",
     "label": "S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) - copy 2",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6sh281",
@@ -15572,7 +15932,8 @@
     },
     "repo": "fleet-vscode-src-14 src/vs",
     "label": "S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) - copy 3",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6rzp4n",
@@ -15634,7 +15995,8 @@
     },
     "repo": "fleet-vscode-src-11 src/vs",
     "label": "S5b batched (gemma + glm-4.7, Gemini overflow) - copy 3",
-    "cached": false
+    "cached": false,
+    "job": "docs"
    },
    {
     "runId": "fmv6w2me8",
@@ -15684,7 +16046,8 @@
     },
     "repo": "fleet-vscode-src-15 src/vs/editor",
     "label": "index job test (src/vs/editor, 100 agents)",
-    "cached": false
+    "cached": false,
+    "job": "index"
    },
    {
     "runId": "fmv6ver2k",
@@ -15723,7 +16086,8 @@
     },
     "repo": "fleet-kata-d0 src/vs",
     "label": "code dial smoke (20 tasks)",
-    "cached": false
+    "cached": false,
+    "job": "code"
    },
    {
     "runId": "fmv6w1dst",
@@ -15764,7 +16128,8 @@
     },
     "repo": "fleet-kata-d0 src/vs",
     "label": "code dial smoke (20 tasks)",
-    "cached": false
+    "cached": false,
+    "job": "code"
    },
    {
     "runId": "fmv6wdrh7",
@@ -15816,7 +16181,8 @@
     },
     "repo": "fleet-kata-d0b src/vs",
     "label": "code dial 0% (K0)",
-    "cached": false
+    "cached": false,
+    "job": "code"
    },
    {
     "runId": "fmv6wdrif",
@@ -15865,7 +16231,8 @@
     },
     "repo": "fleet-kata-d30 src/vs",
     "label": "code dial 30% (K30)",
-    "cached": false
+    "cached": false,
+    "job": "code"
    },
    {
     "runId": "fmv6wdrkb",
@@ -15878,18 +16245,18 @@
     "tokensOut": 0,
     "agents": 200,
     "agentsStarted": 200,
-    "files": 346,
-    "landed": 888,
+    "files": 348,
+    "landed": 898,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
-    "usd": 0.5257,
+    "usd": 0.5318,
     "startedAt": 1791909049547,
-    "endedAt": 1791917933076,
-    "wallS": 8884,
+    "endedAt": 1791918064193,
+    "wallS": 9015,
     "landWaitP50S": -2,
     "landWaitP90S": -1,
     "peakPerMin": null,
@@ -15904,10 +16271,10 @@
       "role": "overflow"
      },
      "gemini-3.1-flash-lite": {
-      "usd": 0.5127,
+      "usd": 0.5188,
       "bounced": 73,
-      "landed": 826,
-      "calls": 899,
+      "landed": 836,
+      "calls": 909,
       "rateLimited429": 0,
       "peakPerMin": 17,
       "role": "planned"
@@ -15915,7 +16282,8 @@
     },
     "repo": "fleet-kata-d60 src/vs",
     "label": "code dial 60% (K60)",
-    "cached": false
+    "cached": false,
+    "job": "code"
    }
   ],
   "perModel": {
@@ -15969,17 +16337,17 @@
     "share429": 0
    },
    "gemini-3.1-flash-lite": {
-    "files": 27999,
-    "landed": 20082,
+    "files": 28009,
+    "landed": 20092,
     "skipped": 7724,
     "verifyFail": 0,
     "rejected": 193,
     "rateLimited": 51,
-    "calls": 20755,
-    "usd": 17.1155,
+    "calls": 20765,
+    "usd": 17.1216,
     "peakPerMin": 1500,
     "roles": {
-     "planned": 10759,
+     "planned": 10769,
      "overflow": 17047
     },
     "usdPer1kFiles": 0.61,
@@ -16004,8 +16372,8 @@
   },
   "totals": {
    "runs": 33,
-   "filesAttempted": 47768,
-   "landed": 35372,
+   "filesAttempted": 47770,
+   "landed": 35382,
    "skipped": 14065,
    "verifyRefused": 0,
    "rejected": 240,
@@ -16013,6 +16381,29 @@
    "usd": 21.53,
    "usdPer1kLanded": 0.61,
    "usdPer1kFiles": 0.45,
+   "byJob": {
+    "docs": {
+     "runs": 27,
+     "filesAttempted": 45923,
+     "landed": 31466,
+     "skipped": 13912,
+     "usd": 19.09
+    },
+    "index": {
+     "runs": 1,
+     "filesAttempted": 659,
+     "landed": 506,
+     "skipped": 153,
+     "usd": 0.13
+    },
+    "code": {
+     "runs": 5,
+     "filesAttempted": 1188,
+     "landed": 3410,
+     "skipped": 0,
+     "usd": 2.32
+    }
+   },
    "largestRun": {
     "runId": "fmv6qw9jf",
     "agents": 120,

@@ -49,7 +49,7 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | comment dial L60c [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 35,446 | 9 | 0 | 0 | 0 | $0.00 | 36 s | 183 s |
 | code dial 0% (K0) | 1 | fleet-kata-d0b src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 400 | 1,228 | 0 | 0 | 54 | 0 | $0.96 | 2,487 s | -1 s |
 | code dial 30% (K30) | 1 | fleet-kata-d30 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 400 | 1,264 | 0 | 0 | 0 | 0 | $0.79 | 8,826 s | - |
-| code dial 60% (K60) | 1 | fleet-kata-d60 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 346 | 888 | 0 | 0 | 0 | 0 | $0.53 | 8,884 s | -1 s |
+| code dial 60% (K60) | 1 | fleet-kata-d60 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 348 | 898 | 0 | 0 | 0 | 0 | $0.53 | 9,015 s | -1 s |
 
 Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6's series; sim.md (l)):
 
@@ -72,12 +72,12 @@ Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6's series;
 | @cf/zai-org/glm-4.7-flash | 11,464 | 8,107 | 0 | 31 (0.4%) | 587 | $1.47 | $0.13 |
 | @cf/google/gemma-4-26b-a4b-it | 8,839 | 6,225 | 0 | 23 (0.4%) | 406 | $1.86 | $0.21 |
 | gemini-3.5-flash-lite | 1,152 | 860 | 0 | 0 (0.0%) | 235 | $1.00 | $0.87 |
-| gemini-3.1-flash-lite | 27,999 | 20,082 | 0 | 51 (0.2%) | 1,500 | $17.12 | $0.61 |
+| gemini-3.1-flash-lite | 28,009 | 20,092 | 0 | 51 (0.2%) | 1,500 | $17.12 | $0.61 |
 | @cf/zai-org/glm-5.3-flash | 223 | 98 | 0 | 63 (35.8%) | 50 | $0.08 | $0.34 |
 
 Cached-answer runs (measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real): 312 runs, 408,165 files, 309,139 landed, 0 refused by verify. Not counted in the model totals below.
 
-Model-written totals: 35,372 files landed of 47,768 attempted over 33 runs (14,065 needed no comment); 0 refused by the code-unchanged check; $21.53 ($0.45 per 1k files).
+Model-written totals: 35,382 files landed of 47,770 attempted over 33 runs (14,065 needed no comment); by job: docs 31,466 landed in 27 runs, index 506 landed in 1 run, code 3,410 landed in 5 runs; 0 refused by the code-unchanged check; $21.53 ($0.45 per 1k files).
 
 Quality (qb9's F4 check, sim/fleet/quality.json; measured on main 0f3ba876 vs base d4793e33): 3,029 files changed, **code changed on re-verify: 0**; automatic checks over 6,542 comments: invented params 0, missing params 0, @returns on void 0, trivial 0.
 

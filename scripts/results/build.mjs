@@ -63,6 +63,9 @@ async function fleet() {
   // Cached-answer runs (S3/S4: comments reused by content hash, no model call) test our side only: kept out of the
   // model totals and summed on their own.
   for (const r of rows) r.cached = r.models.length > 0 && r.models.every((m) => m === 'cache');
+  // What the run wrote: 'docs' (comments only, code unchanged by verify), 'code' (the kata code dial: functions on
+  // their own repos) or 'index' (the index job). Totals are kept per job so the docs-only number has its own source.
+  for (const r of rows) r.job = /^fleet-kata/.test(r.repo) ? 'code' : /^index job/.test(r.label || '') ? 'index' : 'docs';
   const cachedRows = rows.filter((r) => r.cached);
   const csum = (k) => cachedRows.reduce((a, r) => a + (r[k] || 0), 0);
   const cachedTotals = { runs: cachedRows.length, files: csum('files'), landed: csum('landed'), skipped: csum('skipped'), verifyRefused: csum('verifyFail'),
@@ -85,6 +88,9 @@ async function fleet() {
   const totals = { runs: modelRows.length, filesAttempted: sum('files'), landed: sum('landed'), skipped: sum('skipped'), verifyRefused: sum('verifyFail'), rejected: sum('rejected'), rateLimited: sum('rateLimited'), usd: r1(sum('usd'), 2) };
   totals.usdPer1kLanded = totals.landed ? r1((totals.usd / totals.landed) * 1000, 2) : null;
   totals.usdPer1kFiles = totals.filesAttempted ? r1((totals.usd / totals.filesAttempted) * 1000, 2) : null;
+  totals.byJob = {};
+  for (const r of modelRows) { const j = (totals.byJob[r.job] ||= { runs: 0, filesAttempted: 0, landed: 0, skipped: 0, usd: 0 }); j.runs++; j.filesAttempted += r.files || 0; j.landed += r.landed || 0; j.skipped += r.skipped || 0; j.usd += r.usd || 0; }
+  for (const j of Object.values(totals.byJob)) j.usd = r1(j.usd, 2);
   // The biggest run so far, for the headline.
   const big = [...modelRows].sort((a, b) => (b.files || 0) - (a.files || 0))[0] || null;
   totals.largestRun = big && { runId: big.runId, agents: big.agents, files: big.files, landed: big.landed, skipped: big.skipped, wallS: big.wallS, filesPerMin: big.wallS ? r1(((big.landed || 0) + (big.skipped || 0)) / (big.wallS / 60), 0) : null, landWaitP90S: big.landWaitP90S, usd: big.usd, models: big.models };
@@ -190,7 +196,7 @@ const headline = {
       label: d.cached.label, realModelsLabel: d.realModels.label }; } catch { return null; } })(),
   fleetCached: F.cached,
   fleet: { peakFilesPerSec: (() => { try { const d = JSON.parse(rd('sim/fleet/scale-ladder.json')); return Math.max(...d.realModels.runs.map((r) => r.filesPerSec || 0)) || null; } catch { return null; } })(),
-    peakNote: 'busiest stretch of the real-model runs (S5 v2b: its peak minute, 6,840 files)', largestRun: F.totals.largestRun, filesLanded: F.totals.landed, filesAttempted: F.totals.filesAttempted, verifyRefused: F.totals.verifyRefused, usd: F.totals.usd, usdPer1kLanded: F.totals.usdPer1kLanded, runs: F.totals.runs, label: F.label },
+    peakNote: 'busiest stretch of the real-model runs (S5 v2b: its peak minute, 6,840 files)', largestRun: F.totals.largestRun, filesLanded: F.totals.landed, filesAttempted: F.totals.filesAttempted, verifyRefused: F.totals.verifyRefused, usd: F.totals.usd, usdPer1kLanded: F.totals.usdPer1kLanded, runs: F.totals.runs, byJob: F.totals.byJob, label: F.label },
   realBuilds: { n: RB.rows.length, insideEstimateTime: RB.rows.filter((r) => r.inside.wall).length, insideEstimateCost: RB.rows.filter((r) => r.inside.usd).length,
     // Costs and walls from the rows (the settled build-estimates figures), so the headline and the table agree.
     teamVsOneAgent: (() => { const c = teamVsOneAgent(); const row = (slug) => RB.rows.find((r) => r.slug === slug);
@@ -224,7 +230,7 @@ if (F.runs.length) {
   if (Object.keys(F.perModel).length) md.push(table(['model', 'files handled', 'landed', 'verify refused', 'rate-limited (share of calls)', 'peak calls/min', '$', '$ per 1k files'],
     Object.entries(F.perModel).map(([m, t]) => [m, fmt(t.files), fmt(t.landed), fmt(t.verifyFail), `${fmt(t.rateLimited)} (${t.share429 != null ? fmt(t.share429 * 100, 1) + '%' : '-'})`, fmt(t.peakPerMin), usd(t.usd, 2), usd(t.usdPer1kFiles, 2)])), '');
   if (F.cached.runs) md.push(`Cached-answer runs (${F.cached.label}): ${F.cached.runs} runs, ${fmt(F.cached.files)} files, ${fmt(F.cached.landed)} landed, ${fmt(F.cached.verifyRefused)} refused by verify. Not counted in the model totals below.`, '');
-  md.push(`Model-written totals: ${fmt(F.totals.landed)} files landed of ${fmt(F.totals.filesAttempted)} attempted over ${F.totals.runs} runs (${fmt(F.totals.skipped)} needed no comment); ${fmt(F.totals.verifyRefused)} refused by the code-unchanged check; ${usd(F.totals.usd)} (${usd(F.totals.usdPer1kFiles)} per 1k files).`, '');
+  md.push(`Model-written totals: ${fmt(F.totals.landed)} files landed of ${fmt(F.totals.filesAttempted)} attempted over ${F.totals.runs} runs (${fmt(F.totals.skipped)} needed no comment)${F.totals.byJob ? `; by job: ${Object.entries(F.totals.byJob).map(([k, j]) => `${k} ${fmt(j.landed)} landed in ${j.runs} run${j.runs === 1 ? "" : "s"}`).join(', ')}` : ''}; ${fmt(F.totals.verifyRefused)} refused by the code-unchanged check; ${usd(F.totals.usd)} (${usd(F.totals.usdPer1kFiles)} per 1k files).`, '');
 } else md.push('No fleet runs readable yet.', '');
 if (F.quality) {
   const q = F.quality, pct = (a, n) => (n ? `${a}/${n} (${fmt((a / n) * 100)}%)` : '-');

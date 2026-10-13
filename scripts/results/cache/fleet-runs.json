@@ -21956,8 +21956,8 @@
    "state": "running",
    "agents": 200,
    "agentsStarted": 200,
-   "files": 346,
-   "landed": 888,
+   "files": 348,
+   "landed": 898,
    "ready": 0,
    "skipped": 0,
    "verify_fail": 0,
@@ -21965,12 +21965,12 @@
    "rate_limited": 0,
    "model_error": 0,
    "retried": 0,
-   "usd": 0.5257,
+   "usd": 0.5318,
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791909049547,
-   "endedAt": 1791917933076,
-   "wallS": 8884,
+   "endedAt": 1791918064193,
+   "wallS": 9015,
    "landWaitS": {
     "p50": -2,
     "p90": -1
@@ -21986,10 +21986,10 @@
      "role": "overflow"
     },
     "gemini-3.1-flash-lite": {
-     "usd": 0.5127,
+     "usd": 0.5188,
      "bounced": 73,
-     "landed": 826,
-     "calls": 899,
+     "landed": 836,
+     "calls": 909,
      "rateLimited429": 0,
      "peakPerMin": 17,
      "role": "planned"
@@ -22780,6 +22780,16 @@
      "minute": 1791917880000,
      "model": "gemini-3.1-flash-lite",
      "calls": 13
+    },
+    {
+     "minute": 1791917940000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791918060000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
     }
    ],
    "copyOfKind": 1,
