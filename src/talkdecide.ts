@@ -365,6 +365,10 @@ export function gate(c: Cmd): 'refuse' | 'confirm' | null {
   if (!['press', 'go', 'type'].includes(c.op)) return (c.risky ?? 0) >= 0.5 && c.op !== 'status' && c.op !== 'list' && c.op !== 'code' ? 'refuse' : null;
   const label = String(c.label || '').trim();
   if ((c.destroys ?? 0) >= 0.5 || DESTROY_WORDS.test(label)) return 'refuse';
+  // A page's own action (window.__talkActions) is the page's promise to be safe: its UI asks for the real step
+  // (qb7's fleet-job fills the form; the person taps Start). Opening a page is only a navigation.
+  if (c.op === 'press' && /^x/.test(String(c.target || ''))) return null;
+  if (c.op === 'go' && (c.then || c.href === '/runs' || /^\/p\//.test(String(c.href || '')))) return null;
   // Typing only fills a box (its Send or Build it is the step that needs a yes): "build a habit tracker" types at once.
   if (c.op === 'type') return null;
   if ((c.risky ?? 0) >= 0.5 || (c.op === 'press' && CONFIRM_WORDS.test(label))) return 'confirm';
