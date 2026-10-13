@@ -11,13 +11,15 @@ export function howPage(selfHost = false) {
   const tool = (job: string, won: string, why: string, src: string, href = '') => `<li><span class="tj">${job}</span><b>${won}</b><span class="tw">${why}</span><small>${href ? `<a href="${href}">${src}</a>` : src}</small></li>`;
   const num = (n: string, t: string, src: string) => `<li><b class="n">${n}</b><span>${t}</span><small>${src}</small></li>`;
   const demo = selfHost ? '' : `<section class="hw-sec">
-<a class="hw-demo" href="/p/eyal/corner-cafe"><span class="hw-k">A demo you can start, no sign-in. About 2 minutes.</span>
+<a class="hw-demo" href="/p/eyal/corner-cafe"><span class="hw-k">A demo you can start, no sign-in. About a minute.</span>
 <b class="hw-t">Watch 6 scripted agents change one app at once</b>
 <span class="hw-pic" aria-hidden="true"><span class="hw-row"><i class="a1">2</i><i class="a2">4</i><span>both changed <span class="hw-f">style.css</span></span></span><span class="hw-tags"><span class="hw-x">collided</span><span>replayed</span><span>tested</span><span class="hw-ok">landed</span></span></span>
 <span class="hw-d">Real commits and real tests on a real copy of a café website. The agents follow a script, so there is no AI cost.</span>
 <span class="hw-go">Watch a run</span></a></section>`;
   return shell('How qodebase works', `<h1>How qodebase works</h1>
 <p class="desc">Many agents can change one codebase at the same time. Here is what happens when their changes meet, and what we measured.</p>
+<section class="hw-sec hw-when"><h2>One agent or many?</h2>
+<p>For a fresh app, one strong agent is the measured default: on the same prompts one Opus agent was 2–4× faster than a team, with at least as many features working (one build each: <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R3-R6-quality.md">R6 against R3</a>, <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R4-R7-quality.md">R7 against R4</a>, <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R8b-quality.md">R8b</a>). Many agents pay off for wide work (shared task lists, two teams, tasks arriving mid-run: the board), for work that must run in parallel (big ports like Bun's), and at fleet scale (lanes, fleets of cheap models). qodebase is the layer that makes many agents safe: each change an intent with a record, landed by intent on the newest code, with a live board and a timeline.</p></section>
 ${demo}
 <section class="hw-sec"><h2>Land by intent</h2>
 <ul class="hw-steps">
@@ -40,7 +42,7 @@ ${num('7,033', 'git pushes from 500 agents at once, each with its own copy of th
 <section class="hw-sec"><h2>Different jobs need different ways to run agents</h2>
 <p class="desc">No one way won everywhere. What won, per job, and how we know:</p>
 <ul class="hw-tool">
-${tool('Small-to-mid apps (bakery and club sites, 15-minute jobs with several pieces)', 'One strong agent', 'One Opus agent finished 1.9× and 1.6× faster than an Opus planner with a Haiku crew; the crew cost about half at standard API prices.', 'Measured, real AI agents, 2–3 runs each', '/lab')}
+${tool('Small-to-mid apps (bakery and club sites, 15-minute jobs with several pieces)', 'One strong agent', 'One Opus agent finished 1.9× and 1.6× faster than an Opus planner with a Haiku crew; the crew cost about half at standard API prices. Cheaper here and in two real builds, not in a third (R8b: $4.71 for the team against $3.87 for one Opus agent).', 'Measured, real AI agents, 2–3 runs each', '/lab')}
 ${tool('A shared task list with hidden duplicates (60 tasks, 20 agents)', 'The board and a duplicate check up front', 'The only setup with no task built twice (0 of 10 pairs, against 3, 7 and 8 for the others), and the lowest median time and cost.', 'Measured, 20 Claude Haiku agents, 3 runs each')}
 ${tool('Tasks that arrive during the run', 'A duplicate check on every new task', '88 of 90 arrivals classified right; pairs built twice fell from 10 to 4 to 1.', 'Measured, 10 Claude Haiku agents, 3 runs each')}
 ${tool('How many agents (150 tasks)', 'A controller that grows the team while landings rise', 'It settled at 10–14 agents and used about a quarter of the agent-minutes and half the cost of a fixed team of 40, and was not slower. With the board it was best: 1,284 s, $4.73, all 150 hidden tests in every run.', 'Measured, Claude Haiku agents, 3 runs each; fixed teams of 8 and 20 were cut by the weekly usage limit, so whether it finds the best fixed size is untested')}
