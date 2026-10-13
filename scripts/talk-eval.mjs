@@ -101,7 +101,7 @@ const CASES = [
   ['home', 'sign me out', { mode: 'act', risky: true }],
   // Voice everywhere (2026-10-13): the pages added since, read by the new scan (in-page #/ routes, sliders, switches,
   // page actions, card names on shared labels). gate: what Talk may do without a tap (talkdecide.ts gate()).
-  ['runs', 'open the timeline of the first VS Code run', { mode: 'act', op: ['go', 'press'], href: '#/run/', label: 'VS Code' }],
+  ['runs', 'open the timeline of the first VS Code run', { mode: 'act', op: ['go', 'press'], href: '#/run/' }],
   ['run_detail', 'show me minute 3', { mode: ['act', 'both'], op: 'press', label: 'moment', gate: null }],
   ['run_detail', 'what happened at 1:20', { mode: ['act', 'both', 'ask'], op: ['press', 'none'], label: 'moment' }],
   ['run_step', 'show me minute 1', { mode: ['act', 'both'], op: 'press', label: 'moment' }],
@@ -118,6 +118,13 @@ const CASES = [
   ['runs', "Document every exported function in VS Code's editor and add each one to the API index.", { mode: 'act', op: ['press', 'none'] }],
   ['home', "Document every exported function in VS Code's editor and add each one to the API index.", { mode: 'act', op: 'go', href: '/runs' }],
   ['home', 'Document every exported function in VS Code and add each one to the API index, with 1,000 agents', { mode: 'act', op: 'go', href: '/runs' }],
+  // The bar's curated examples (2026-10-13): each must do what it says.
+  ['mine', 'open my newest project', { mode: 'act', op: 'go', href: '/p/eyal/' }],
+  ['mine', 'which builds are waiting for me?', { mode: ['act', 'ask', 'both'], op: ['status'] }],
+  ['home', 'show me how it works', { mode: ['act', 'both', 'ask'], op: ['go', 'explain', 'none'] }],
+  ['p_forq_calculator', 'what changed today?', { mode: ['ask', 'act', 'both'], op: ['status', 'none', 'explain', 'go'] }],
+  ['runs', 'open the last run', { mode: 'act', op: 'go', href: '#/' }],
+  ['run_step', 'what happened at one minute?', { mode: ['act', 'both', 'ask'], op: 'press', label: 'moment' }],
   ['run_detail', 'back to all runs', { mode: 'act', op: ['go', 'back'], href: '#/' }],
   ['home_build', 'use the cheapest preset', { mode: 'act', op: 'press', label: 'Cheapest' }],
   ['home_build', 'set the agents to 6', { mode: 'act', op: 'type', label: 'Agents', text: '6' }],

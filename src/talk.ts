@@ -24,6 +24,7 @@ import { buildQuestions, candidateProjects, currentSlug, isScaffold, resolve, st
 import { TALK_JS } from './talkclient';
 import { talkAdmin } from './talkadmin';
 import { MERGE_MODEL, mergeMessages, cleanMerge } from './talkmerge';
+import { chatSystem, TOOLS, parseChat, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, toGemini, fromGemini, type AnswerModel } from './talkchat';
 import { TALK_VOICE_JS } from './talkvoicejs.gen';
 import { routeAgentRequest } from 'agents';
 
@@ -31,7 +32,7 @@ const DECIDE_MODEL = '@cf/cloudflare/clef-flash';
 const CHAT_MODEL = '@cf/zai-org/glm-4.7-flash';
 const STT_MODEL = '@cf/openai/whisper-large-v3-turbo';
 // Daily caps (UTC day). A person's own, and everyone's together.
-const CAPS = { decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 }, tts_chars: { me: 20000, all: 150000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
+const CAPS = { usd_milli: { me: 1000, all: 5000 }, decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 }, tts_chars: { me: 20000, all: 150000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
 type Kind = keyof typeof CAPS;
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talk', event, ...data }));
@@ -173,14 +174,8 @@ export async function decideCore(env: Env, who: Who & {}, body: any) {
     trace: { utterance, path: s.path, items: s.items.length, projects: projects.length, fired, won, top: topAnswers(res.answers), cmd, ms: Date.now() - t0 } };
 }
 
-// ---- Chat lane: answers questions about the page, and can act with the same verbs.
-const TOOLS = [
-  { type: 'function', function: { name: 'go', description: 'Open a page: a link id from the page (like l12) or a path on this site (like /p/forq/timer/app).', parameters: { type: 'object', properties: { to: { type: 'string' } }, required: ['to'] } } },
-  { type: 'function', function: { name: 'press', description: 'Press a button on the page by its id (like b3). Never for deleting, merging, publishing or signing out.', parameters: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } } },
-  { type: 'function', function: { name: 'type_into', description: 'Type text into a field on the page by its id (like f1).', parameters: { type: 'object', properties: { id: { type: 'string' }, text: { type: 'string' } }, required: ['id', 'text'] } } },
-  { type: 'function', function: { name: 'show', description: 'Point at parts of the page while you explain them: heading, link, button or field ids, in the order you talk about them.', parameters: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } }, required: ['ids'] } } },
-];
-
+// ---- Chat lane: answers questions about the page, and can act with the same verbs (prompt, tools, parsing and the
+// answering models: src/talkchat.ts, shared with scripts/talk-chat-bench.mjs).
 export async function chatCore(env: Env, who: Who & {}, body: any) {
   const t0 = Date.now();
   const utterance = String(body?.utterance || '').trim().slice(0, 500);
@@ -190,35 +185,31 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
   const s = cleanScreen(body.screen);
   const pageText = String(body.pageText || '').slice(0, 5000);
   const did = body.did ? String(body.did).slice(0, 200) : '';
-  const items = s.items.map((i) => `${i.id} ${i.kind}: ${i.text}${i.href ? ' → ' + i.href : ''}`).join('\n');
-  const system = [
-    'You are the voice of qodebase, a git platform made for the phone: every project runs as a live app, every fork gets its own AI agents, and people can install AI assistants into their own Cloudflare account.',
-    `You talk with ${who.handle}, who is on ${s.path} ("${s.title}"). Answer in plain words, short: two or three sentences unless they ask for more. Spoken aloud too, so no markdown, no lists, no code, and never read out paths, URLs or ids (say "this page", "the Hermes card").`,
-    'You can act with the tools: open pages, press buttons, type into fields, and point at parts of the page while you explain. Act when asked; explain what is on the page when asked; never press anything that deletes, merges, publishes or signs out.',
-    'What is true about qodebase (say you do not know rather than guess anything else):',
-    '- Every project is a git repo stored in Cloudflare Artifacts. Static projects run live at <name>--<owner>.ttyview.dev; projects with a Worker config are deployed as Cloudflare Workers.',
-    '- Fork copies a project to your account. Ask (the router agent) splits a request into tasks; each task gets an agent (Claude Code in a Cloudflare container) on its own fork; a reviewer agent checks pushes; you merge from the phone.',
-    '- Your own AI assistant (/personal-agents) installs an assistant into YOUR Cloudflare account with Sign in with Cloudflare: Cloudflare Agent fits the free plan; OpenClaw, Hermes, T3 Code, Mobile Agent and Pi need Workers Paid ($5 a month per account, not per assistant). Mobile Agent and T3 Code can use your own Claude subscription.',
-    '- Get your own qodebase (/own) installs a whole copy of qodebase into your Cloudflare account. The qb command line (/cli) does everything from a terminal or an agent.',
-    did ? `The app has ALREADY done this for their sentence: ${did}. Do not do it again; answer the rest of what they asked, about the page they are on now.` : '',
-    '', 'What is on the page (id, kind, text):', items || '(nothing)', '', 'The page text:', pageText || '(none)',
-  ].filter((x) => x !== '').join('\n');
+  const system = chatSystem(who.handle, s, pageText, did);
+  const pick = await pickAnswer(env, who, String(body?.model || ''));
   const history = (Array.isArray(body.history) ? body.history : []).slice(-8).map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || '').slice(0, 800) }));
   const messages = [{ role: 'system', content: system }, ...history, { role: 'user', content: utterance }];
   const tm = Date.now();
   // After a "both" sentence the app has already acted (did): answer only, no tools, or it acts again.
-  const run = (msgs: unknown[], tools = !did) => (env.AI as any).run(CHAT_MODEL, { messages: msgs, ...(tools ? { tools: TOOLS } : {}), max_tokens: 700, temperature: 0.3, chat_template_kwargs: { enable_thinking: false } }, aiOpts(env));
-  const parse = (res: any) => {
-    const msg = res?.choices?.[0]?.message || res;
-    const raw = msg?.tool_calls || res?.tool_calls || [];
-    const calls = raw.map((c: any) => {
-      const f = c.function || c;
-      let args: any = f.arguments;
-      if (typeof args === 'string') { try { args = JSON.parse(args); } catch { args = {}; } }
-      return { id: c.id, name: String(f.name || ''), args: args || {} };
-    }).filter((c: any) => ['go', 'press', 'type_into', 'show'].includes(c.name)).slice(0, 4);
-    return { msg, raw, calls, reply: String(msg?.content ?? res?.response ?? '').replace(/<think>[\s\S]*?<\/think>/g, '').trim() };
+  // The chosen answering model (Talk setting; Gemini by default); any failure goes to GLM-4.7-flash for the rest of the turn.
+  let used: AnswerModel = pick.m, fellBack: string | null = pick.why, spentMilli = 0;
+  const run = async (msgs: unknown[], tools = !did): Promise<any> => {
+    try {
+      const res = await callAnswer(env, used, msgs as any[], tools ? TOOLS : null);
+      spentMilli += costMilli(used, res?.usage);
+      return res;
+    } catch (e) {
+      if (used.id === FALLBACK_ANSWER) throw e;
+      log('answer_fallback', { level: 'warn', from: used.id, err: String(e).slice(0, 300) });
+      fellBack = `${used.label}: ${String((e as Error)?.message || e).slice(0, 120)}`;
+      if (/insufficient balance|2021/i.test(String(e))) creditsMemo = { at: Date.now(), ok: false };
+      used = answerModel(FALLBACK_ANSWER)!;
+      const res = await callAnswer(env, used, msgs as any[], tools ? TOOLS : null);
+      spentMilli += costMilli(used, res?.usage);
+      return res;
+    }
   };
+  const parse = parseChat;
   let res: any, out: ReturnType<typeof parse>, rounds = 1;
   try {
     res = await run(messages);
@@ -244,8 +235,76 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
   }
   const { calls, reply } = out;
   log('chat', { level: 'info', handle: who.handle, path: s.path, rounds, model_ms: Date.now() - tm, total_ms: Date.now() - t0, tools: calls.map((c: any) => c.name), reply_len: reply.length, usage: res?.usage, usage2: res?.usage2 });
-  return { ok: true as const, reply, actions: calls.map((c: any) => ({ name: c.name, args: c.args })), ms: { model: Date.now() - tm }, left: budget.left,
-    trace: { utterance, model: CHAT_MODEL, did: body?.did || '', tools: calls.map((c: any) => ({ name: c.name, args: c.args })), reply: String(reply || '').slice(0, 1500), ms: Date.now() - t0 } };
+  if (spentMilli) await talkLog(env).take('usd_milli', who.handle, Math.ceil(spentMilli)).catch(() => null);
+  return { ok: true as const, reply, actions: calls.map((c: any) => ({ name: c.name, args: c.args })), ms: { model: Date.now() - tm }, left: budget.left, model: used.model, modelLabel: used.label, fellBack,
+    trace: { utterance, model: used.model, chosen: pick.m.id, fellBack, usd: spentMilli / 1000, did: body?.did || '', tools: calls.map((c: any) => ({ name: c.name, args: c.args })), reply: String(reply || '').slice(0, 1500), ms: Date.now() - t0 } };
+}
+
+// ---- Answering models (src/talkchat.ts): how each is called, what it costs, who may pick it.
+let creditsMemo: { at: number; ok: boolean } | null = null;
+// Claude through unified billing needs an AUTHENTICATED gateway; qodebase-talk is not (turning that on would make every
+// direct call to it, like Gemini's, carry a gateway token). So Claude goes through the account's default gateway,
+// which is authenticated; Talk's own daily dollar cap (usd_milli) still bounds it (2026-10-13).
+const UNIFIED = { gateway: { id: 'default' } };
+/** Does the forq account have AI Gateway credits (Claude through unified billing)? One tiny call, memoised 10 min. */
+async function hasCredits(env: Env): Promise<boolean> {
+  if (creditsMemo && Date.now() - creditsMemo.at < 600_000) return creditsMemo.ok;
+  try { await (env.AI as any).run('anthropic/claude-haiku-5.5', { messages: [{ role: 'user', content: 'hi' }], max_tokens: 1 }, UNIFIED); creditsMemo = { at: Date.now(), ok: true }; }
+  catch (e) { creditsMemo = { at: Date.now(), ok: false }; log('credits_probe', { level: 'info', err: String(e).slice(0, 200) }); }
+  return creditsMemo.ok;
+}
+async function pickAnswer(env: Env, who: Who & {}, id: string): Promise<{ m: AnswerModel; why: string | null }> {
+  const want = answerModel(id) || answerModel(DEFAULT_ANSWER)!;
+  if (want.ownerOnly && !(who.admin || isOwner(env, who.handle))) return { m: answerModel(DEFAULT_ANSWER)!, why: `${want.label} is for the owner` };
+  if (want.via === 'gemini' && !(env as any).GEMINI_API_KEY) return { m: answerModel(FALLBACK_ANSWER)!, why: 'no Gemini key on this copy' };
+  if (want.paid && !(await hasCredits(env))) return { m: answerModel(FALLBACK_ANSWER)!, why: `${want.label} needs Cloudflare credits` };
+  // The day's dollar cap (all answering models together): over it, the cheapest model only.
+  const used = await talkLog(env).counts(who.handle).catch(() => ({} as any));
+  if (want.id !== FALLBACK_ANSWER && (used.usd_milli || 0) >= CAPS.usd_milli.me) return { m: answerModel(FALLBACK_ANSWER)!, why: 'today\'s answering budget is used up' };
+  return { m: want, why: null };
+}
+const costMilli = (m: AnswerModel, u: any) => !u ? 0 : ((u.prompt_tokens || u.input_tokens || 0) * m.usdIn + (u.completion_tokens || u.output_tokens || 0) * m.usdOut) / 1000;   // $/M tokens → thousandths of a dollar
+async function callAnswer(env: Env, m: AnswerModel, messages: any[], tools: any[] | null): Promise<any> {
+  if (m.via === 'gemini') {
+    const gw = (env.AI as any).gateway(env.TALK_GATEWAY || 'qodebase-talk');
+    const base = await gw.getUrl('google-ai-studio');
+    const r = await fetch(`${base}/v1beta/models/${m.model}:generateContent`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': (env as any).GEMINI_API_KEY }, body: JSON.stringify(toGemini(messages, tools, 700)) });
+    if (!r.ok) throw new Error(`gemini ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    return fromGemini(await r.json());
+  }
+  const input: any = { messages, ...(tools ? { tools } : {}), max_tokens: 700, temperature: 0.3, ...(m.thinkingOff ? { chat_template_kwargs: { enable_thinking: false } } : {}) };
+  return (env.AI as any).run(m.model, input, m.via === 'unified' ? UNIFIED : aiOpts(env));
+}
+// The chat bench (admin only; scripts/talk-chat-bench.mjs sends the cases): each case through each answering model with
+// the chat lane's own prompt and tools, first round only; returns the tool calls, the words and the time.
+async function chatBench(request: Request, env: Env, who: Who) {
+  if (!who || !(who.admin || isOwner(env, who.handle))) return json({ error: 'forbidden' }, 403);
+  const b = await request.json().catch(() => ({})) as any;
+  // Also any Workers AI model by its @cf/ id, to choose the "bigger Workers AI model" from candidates.
+  const pickM = (id: string): AnswerModel | undefined => answerModel(id) || (/^@cf\/[\w.-]+\/[\w.-]+$/.test(id) ? { id, label: id, model: id, via: 'workers', usdIn: 0, usdOut: 0 } : undefined);
+  const cases = (b?.cases || []).slice(0, 40), ids = (b?.models || []).filter((id: string) => pickM(id));
+  const out: any[] = [];
+  await Promise.all(cases.flatMap((c: any, i: number) => ids.map(async (id: string) => {
+    const m = pickM(id)!, t0 = Date.now();
+    const s = cleanScreen(c.screen);
+    const messages = [{ role: 'system', content: chatSystem(who.handle, s, String(c.pageText || ''), '') }, { role: 'user', content: String(c.utterance || '') }];
+    try {
+      const res = await callAnswer(env, m, messages, TOOLS);
+      const p = parseChat(res);
+      out.push({ i, model: id, ms: Date.now() - t0, tools: p.calls.map((x: any) => ({ name: x.name, args: x.args })), reply: p.reply.slice(0, 300), usage: res?.usage || null });
+    } catch (e) { out.push({ i, model: id, ms: Date.now() - t0, error: String((e as Error)?.message || e).slice(0, 200) }); }
+  })));
+  return json({ results: out });
+}
+
+/** For Talk settings: every answering model, and whether this person can use it now. */
+export async function answerChoices(env: Env, who: Who & {}) {
+  const owner = who.admin || isOwner(env, who.handle);
+  const credits = owner ? await hasCredits(env) : false;
+  return ANSWER_MODELS.filter((m) => !m.ownerOnly || owner).map((m) => ({ id: m.id, label: m.label, model: m.model,
+    ok: m.via === 'gemini' ? !!(env as any).GEMINI_API_KEY : m.paid ? credits : true,
+    why: m.via === 'gemini' && !(env as any).GEMINI_API_KEY ? 'no Gemini key' : m.paid && !credits ? 'needs Cloudflare credits' : null,
+    price: `$${m.usdIn} / $${m.usdOut} per M tokens` }));
 }
 
 async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
@@ -331,7 +390,7 @@ export function talkModels(env: Env) {
     final: { model: STT_MODEL, provider: 'Workers AI', note: 'reads the whole recording' },
     cleanup: { model: MERGE_MODEL, provider: 'Workers AI', note: 'only when "Clean up the words" is on' },
     decide: { model: DECIDE_MODEL, provider: 'Workers AI', note: 'picks what to do' },
-    chat: { model: CHAT_MODEL, provider: 'Workers AI', note: 'answers questions about the page' },
+    chat: { model: 'the model chosen under "Answering model"', provider: 'AI Gateway', note: 'answers questions about the page; GLM-4.7-flash if it fails' },
     status: { model: null, provider: 'qodebase', note: '"what\'s going on": read from your projects, no model' },
     code: { model: 'Claude (opus, sonnet or haiku by depth)', provider: 'your Claude plan', note: 'questions about a project\'s code' },
     summary: { model: CHAT_MODEL, provider: 'Workers AI', note: 'what is said aloud' },
@@ -524,7 +583,7 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     const own = { sha: (env as any).CF_VERSION_METADATA?.tag || null, built: (env as any).CF_VERSION_METADATA?.timestamp || null };
     const v = owner ? (site?.sha ? { sha: site.sha, built: site.built, talk: own.sha } : own) : undefined;
     const traced = await canTrace(env, who);
-    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: traced, consent: owner ? null : traced, clips: owner && !!env.CLIPS, version: v, models: talkModels(env) });
+    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: traced, consent: owner ? null : traced, clips: owner && !!env.CLIPS, version: v, models: talkModels(env), answer: { default: DEFAULT_ANSWER, choices: await answerChoices(env, who) } });
   }
   if (url.pathname === '/api/talk/consent' && request.method === 'POST') {
     // "Help improve Talk" (Talk settings, off by default): keep what I say and what Talk did for 14 days.
@@ -535,6 +594,7 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     log('consent', { level: 'info', handle: who.handle, on });
     return json({ ok: true, on });
   }
+  if (url.pathname === '/api/talk/admin/chatbench' && request.method === 'POST') return chatBench(request, env, who);
   if (url.pathname.startsWith('/api/talk/admin')) return talkAdmin(request, env, url, who);
   if (url.pathname === '/api/talk/trace') {
     // The owner's own experience, step by step (Eyal, 2026-10-07: "log and instrument every part of the app

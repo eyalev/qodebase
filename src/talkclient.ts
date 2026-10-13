@@ -70,7 +70,8 @@ var S = {
   pause: get('pause', '2500'),          // mic 'pause': send after this many ms of quiet
   mic: get('mic', 'send'),              // how the mic works: send (tap, speak, tap Send, like tmux-web; default) | pause (sends when I stop) | hold | conv (conversation)
   whisper: get('whisper', 'on'),        // re-read the whole clip with Whisper before sending (Deepgram live only)
-  merge: get('merge', 'off'),           // also merge live words + Whisper with a model (off: it lost to Whisper alone on Eyal's dictations, 2026-10-13)
+  merge: get('merge', 'off'),
+  answer: get('answer', ''),            // answering model ('' = Talk's default, Gemini 3.1 Flash-Lite); per device           // also merge live words + Whisper with a model (off: it lost to Whisper alone on Eyal's dictations, 2026-10-13)
   keep: get('keepmic', 'open'),
   clips: get('clips', 'on'),            // owner only: keep my recordings for debugging (14 days); on for the owner since 2026-10-13 (traceability)         // open = keep the mic ready while Talk is open (first words never lost) | use = only while speaking
 };
@@ -78,6 +79,7 @@ var S = {
 try { if (!ls.getItem(KEY + 'v2')) { if (ls.getItem(KEY + 'voice-on') === 'aura-1') ls.setItem(KEY + 'voice-on', 'aura-2'); if (S.voice === 'aura-1') { S.voice = 'aura-2'; S.speaker = ''; ls.setItem(KEY + 'voice', 'aura-2'); ls.removeItem(KEY + 'speaker'); } ls.setItem(KEY + 'v2', '1'); } } catch (e) {}
 var CLIPS = false;   // the owner may keep recordings (set from /api/talk/me)
 var MODELS = {};      // which model does what, from the running Talk Worker (/api/talk/me)
+var ANSWER = null;    // { default, choices: [{ id, label, model, ok, why, price }] } from /api/talk/me
 var CONSENT = null;  // others: null for the owner (always traced); true/false = their "Help improve Talk" answer
 var LANGS = { en: 'en-US', he: 'he-IL', auto: 'en-US' };
 var me = null, busy = false, listening = false, lastSpoken = false;
@@ -387,6 +389,7 @@ function build() {
     '<label>Clean up the words with a model<select id="talk-s-merge"><option value="off">Off: Whisper\u2019s words</option><option value="on">On: live words + Whisper merged, your project names kept (about 1 s more)</option></select></label>' +
     '<label>Microphone<select id="talk-s-keep"><option value="open">Ready while Talk is open (your first words are never lost)</option><option value="use">Only while I speak</option></select></label>' +
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
+    '<label>Answering model<select id="talk-s-answer"></select></label>' +
     '<label>Spoken replies<select id="talk-s-say"><option value="short">Short summary</option><option value="full">Read the full answer</option><option value="off">Off</option></select></label>' +
     '<label>Voice<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
     '<label>Speaker<select id="talk-s-speaker"></select></label>' +
@@ -490,6 +493,11 @@ function build() {
   if (scon) { scon.value = CONSENT ? 'on' : 'off'; scon.onchange = function () { api('consent', { on: scon.value === 'on' }).then(function (r) { CONSENT = !!r.on; if (CONSENT && !tOn) traceStart(); else if (!CONSENT) { tOn = false; tq = []; } }); }; }
   var sclp = document.getElementById('talk-s-clips');
   if (sclp) { sclp.value = S.clips; sclp.onchange = function () { S.clips = sclp.value; set('clips', S.clips); trace('setting', { clips: S.clips }); }; }
+  // Answering model: the choices the running Talk offers this person (Claude: owner only, while the account has credits).
+  var sans = document.getElementById('talk-s-answer'), AC = (ANSWER && ANSWER.choices) || [];
+  sans.innerHTML = AC.map(function (c) { return '<option value="' + c.id + '"' + (c.ok ? '' : ' disabled') + '>' + esc(c.label) + (c.id === ANSWER.default ? ' (default)' : '') + (c.ok ? '' : ' \u2013 ' + esc(c.why || 'not available')) + '</option>'; }).join('');
+  sans.value = S.answer && AC.some(function (c) { return c.id === S.answer && c.ok; }) ? S.answer : (ANSWER && ANSWER.default) || '';
+  sans.onchange = function () { S.answer = sans.value; set('answer', S.answer); trace('setting', { answer: S.answer }); };
   var ssay = document.getElementById('talk-s-say');
   ssay.value = S.voice === 'off' ? 'off' : S.say;
   ssay.onchange = function () { if (ssay.value === 'off') { S.voice = 'off'; } else { S.say = ssay.value; set('say', S.say); if (S.voice === 'off') S.voice = get('voice-on', 'aura-2'); } set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); trace('setting', { say: ssay.value }); };
@@ -624,12 +632,12 @@ function status(t) { stEl.textContent = t || ''; barSync(); }
 function add(who, text, links, extra) { if (run && who !== 'you') run.texts.push(String(text)); var m = { who: who, text: String(text), links: links || undefined }; if (extra) { if (extra.sections) m.sections = extra.sections; if (extra.via) m.via = extra.via; } hist.push(m); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
 // "How this was answered" (manager, 2026-10-13): what heard it, what picked the action, what answered, how long.
 var viaNow = null;   // the utterance in flight: { heard, decide: {model, ms}, answer: {lane, model, ms} }
-function viaShort(v) { if (!v || !v.answer) return ''; var a = v.answer; return (a.model ? shortModel(a.model) : a.lane + ', no model') + (a.ms != null ? ', ' + (a.ms / 1000).toFixed(1) + ' s' : ''); }
+function viaShort(v) { if (!v || !v.answer) return ''; var a = v.answer; return (a.label || (a.model ? shortModel(a.model) : a.lane + ', no model')) + (a.fellBack ? ' (fallback)' : '') + (a.ms != null ? ', ' + (a.ms / 1000).toFixed(1) + ' s' : ''); }
 function viaLong(v) {
   var out = [];
   if (v.heard) out.push('Heard: ' + v.heard);
   if (v.decide) out.push('Picked by ' + shortModel(v.decide.model) + (v.decide.ms != null ? ' in ' + (v.decide.ms / 1000).toFixed(1) + ' s' : ''));
-  if (v.answer) out.push('Answered by ' + (v.answer.model ? shortModel(v.answer.model) : v.answer.lane + ' (read from your projects, no model)') + (v.answer.ms != null ? ' in ' + (v.answer.ms / 1000).toFixed(1) + ' s' : ''));
+  if (v.answer) out.push('Answered by ' + (v.answer.label || (v.answer.model ? shortModel(v.answer.model) : v.answer.lane + ' (read from your projects, no model)')) + (v.answer.ms != null ? ' in ' + (v.answer.ms / 1000).toFixed(1) + ' s' : '') + (v.answer.fellBack ? ' (fell back: ' + v.answer.fellBack + ')' : ''));
   if (v.spoken) out.push('Said aloud: ' + v.spoken);
   return out.join(' \u00b7 ');
 }
@@ -712,21 +720,29 @@ function barSync() {
   barMode();
 }
 function bNote(t) { add('note', t); }
-// What a person can say, by page. Every one is a sentence the eval knows Talk handles.
+// What a person can say, by page: a fixed, curated set, never a project name (Eyal, 2026-10-13: 'Try saying "open my will
+// help help"' reads weird). Names only in answers and chips. The bar shows one of the page's own, picked per page load.
+var PAGE_EX = [
+  [/^\/$/, ['build a habit tracker', 'what\u2019s going on with my builds?', 'show me how it works']],
+  [/^\/mine/, ['open my newest project', 'which builds are waiting for me?']],
+  [/^\/runs/, ['open the last run', 'what happened at one minute?']],
+  [/^\/deck/, ['next slide', 'go to slide 5']],
+  [/^\/p\//, ['add a dark mode', 'what changed today?']],
+  [/.*/, ['what\u2019s going on with my builds?', 'open my projects', 'build a habit tracker']],
+];
+function pageExamples() { for (var i = 0; i < PAGE_EX.length; i++) if (PAGE_EX[i][0].test(location.pathname)) return PAGE_EX[i][1]; return []; }
 function examples() {
-  var own = latestOwn || 'todo';
   var groups = [
     { h: 'Build', xs: ['build a habit tracker', 'show me a medium idea', 'use the cheapest settings'] },
-    { h: 'Explore', xs: ['how does it work?', 'open explore', 'watch agents change one app'] },
-    { h: 'Your projects', xs: ['what is going on with my builds?', 'list my projects', 'open my ' + own] },
+    { h: 'Find your way', xs: ['show me how it works', 'open explore', 'open my newest project'] },
+    { h: 'Your projects', xs: ['what\u2019s going on with my builds?', 'which builds are waiting for me?', 'list my projects'] },
   ];
-  if (/^\/p\//.test(location.pathname)) groups.unshift({ h: 'This project', xs: ['show the code', 'what does this project do?', 'show the timeline tab'] });
-  if (/^\/runs/.test(location.pathname)) groups.unshift({ h: 'Runs', xs: ['open the newest run', 'show me minute 2', 'what is going on with my builds?'] });
-  if (/^\/deck/.test(location.pathname)) groups.unshift({ h: 'Slides', xs: ['next slide', 'go to slide 5', 'show the speaker notes'] });
+  var here = pageExamples();
+  if (!/^\/$/.test(location.pathname)) groups.unshift({ h: 'On this page', xs: here });
   return groups;
 }
 var latestOwn = '', exI = Math.floor(Math.random() * 1000), exT = null;   // one example per page load, picked at random
-function exampleLine() { var g = examples(), all = []; g.forEach(function (x) { x.xs.forEach(function (y) { all.push(y); }); }); var pageFirst = g[0].xs.concat(all.slice(g[0].xs.length)); return pageFirst[exI % pageFirst.length]; }
+function exampleLine() { var xs = pageExamples(); return xs[exI % xs.length]; }
 function runExample(t) { trace('example', { text: t, where: root.classList.contains('open') ? 'sheet' : 'bar' }); unlockAudio(); lastSpoken = false; submit(t); }
 var miniT = null, restT = null, histAtLoad = -1;
 function barMode() {
@@ -1254,13 +1270,13 @@ function chatPress(b) {
 function ask(text, did) {
   busy = true;
   status('Answering…');
-  api('chat', { utterance: text, did: did, screen: screen(), pageText: pageText(), history: chatHist }).then(function (r) {
+  api('chat', { utterance: text, did: did, screen: screen(), pageText: pageText(), history: chatHist, model: S.answer || undefined }).then(function (r) {
     if (r.error) { if (run) run.ok = false; add('note', r.why || 'No answer.'); return done(); }
     var reply = r.reply || '';
     chatHist.push({ role: 'user', content: text });
     if (reply) chatHist.push({ role: 'assistant', content: reply });
     chatHist = chatHist.slice(-12); sset('chat', chatHist);
-    if (viaNow) viaNow.answer = { lane: 'chat', model: MODELS.chat && MODELS.chat.model, ms: r.ms && r.ms.model };
+    if (viaNow) viaNow.answer = { lane: 'chat', model: r.model, label: r.modelLabel, fellBack: r.fellBack, ms: r.ms && r.ms.model };
     if (reply) { add('ai', reply, null, { via: viaNow }); say(reply); }
     var acts = r.actions || [];
     logEv('chat', { text: text, reply_len: reply.length, actions: acts.map(function (a) { return a.name; }), ms: r.ms && r.ms.model });
@@ -1984,7 +2000,7 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   me = j.handle;
   if (j.version && j.version.sha) VERSION = j.version.sha + (j.version.built ? ' ' + new Date(j.version.built).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '') + (j.version.talk && j.version.talk !== j.version.sha ? ' talk ' + j.version.talk : '');
   if (j.trace) traceStart(); else tq = [];
-  CLIPS = !!j.clips; MODELS = j.models || {};
+  CLIPS = !!j.clips; MODELS = j.models || {}; ANSWER = j.answer || null;
   CONSENT = j.consent === undefined ? null : j.consent;
   build();
   // Arrived on a page Talk opened: say how it went (status, time), tied to the utterance that asked for it.
@@ -1994,7 +2010,6 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
     var navE = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {};
     var keepU = curU; curU = nv.u; trace('arrived', { href: nv.href, at: location.pathname + location.search + location.hash, status: navE.responseStatus, ms: Date.now() - nv.at }); curU = keepU;
   }
-  projects().then(function (l) { var mine = l.filter(function (p) { return p.owner === me && !SCAFFOLD_RX.test(p.name); }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); }); if (mine[0]) { latestOwn = mine[0].name.replace(/-/g, ' '); render(); } }).catch(function () {});
   publishTools();
   // Coming back from a navigation Talk made: show the sheet, finish any pending question.
   if (sget('call', false)) {

@@ -237,6 +237,18 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // pick, and the chat lane made up /p/forq, a page that does not exist). Vocabulary in code.
   if (cmd.mode !== 'ask' && /\b(take me to|go to|open|show( me)?|bring me to|back to)\s+(all\s+)?(my|your) projects\b|^\s*(my|your) projects\s*[.!?]?$/i.test(utterance.trim()))
     return { ...cmd, mode: 'act', op: 'go', href: '/mine', label: 'your projects', p: 0.9, why: 'my projects = /mine' };
+  // On /runs, "open the last run" / "the first VS Code run": the run list is newest first (vocabulary in code).
+  if (/^\/runs/.test(s.path) && /\b(open|show( me)?|go to)\b.*\b(last|latest|newest|most recent|first|top)\b.*\brun\b/i.test(utterance)) {
+    const runs = s.items.filter((i) => i.kind === 'link' && /^#\/(run|step)\//.test(i.href || ''));
+    const named = runs.filter((i) => utterance.toLowerCase().split(/\W+/).filter((w) => w.length > 3 && !/^(open|show|last|latest|newest|first|timeline|the)$/.test(w)).some((w) => i.text.toLowerCase().includes(w)));
+    const r = named[0] || runs[0];
+    if (r) return { ...cmd, mode: 'act', op: 'go', href: r.href, label: r.text, target: r.id, p: 0.9, why: 'newest run first' };
+  }
+  // "Open my newest project": the one they touched last, never one a harness made (vocabulary in code).
+  if (/\b(open|show( me)?|take me to|go to)\s+my\s+(newest|latest|last|most recent|newest real)\s+project\b/i.test(utterance)) {
+    const p = projects.filter((x) => x.mine && !isScaffold(x.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+    if (p) return { ...cmd, mode: 'act', op: 'go', href: projectHref(p, 'page'), label: projLabel(p, 'page'), target: p.slug, p: 0.9, why: 'newest project' };
+  }
   // "Take me to my project" / "open the project" with no name, off a project page: ask which one, never guess.
   if (!currentSlug(s.path) && /^\s*(please\s+)?(take me to|go to|open|show( me)?|bring me to)\s+(my|the|a|one of my)\s+projects?\s*[.!?]?\s*$/i.test(utterance) && !/projects\s*[.!?]?\s*$/i.test(utterance))
     return { ...cmd, mode: 'act', op: 'which', p: 0.9, why: 'no project named' };
