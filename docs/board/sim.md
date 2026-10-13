@@ -1580,3 +1580,9 @@ taking 66 tasks in each):
 - **Lost in landing across both dial-60 runs: 0.** Every attribution there is exact by base_sha.
 - **Clustering is still not the main driver of losses:** 96 / 74 / 60 lost at dial 0 / 30 / 60 on the baseline queue.
   What clustering costs is time: 40 / 145 / 207 min.
+- **With lane prefetch** (eyal/kata-d60h):
+  - **Time:** 44.5 min.
+  - **Results:** 1,330 landed and 1,277 requirements passing. 66 lost: 57 wrong when they landed (clean merges 3.3%,
+    replays 5.8%), 9 dropped by a later agent, 0 lost in landing.
+  - **Losses vs the fast run:** fewer than d60g's 79, which supports reading d60g's higher replay rate as chance.
+  - **Lost in landing: 0 in all three dial-60 runs.**

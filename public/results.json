@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T21:01:55.942Z",
+ "generated": "2026-10-13T23:02:22.467Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -150,12 +150,12 @@
      "@cf/zai-org/glm-4.7-flash"
     ]
    },
-   "filesLanded": 37336,
-   "filesAttempted": 48359,
+   "filesLanded": 38666,
+   "filesAttempted": 48759,
    "verifyRefused": 0,
-   "usd": 22.83,
+   "usd": 23.74,
    "usdPer1kLanded": 0.61,
-   "runs": 35,
+   "runs": 36,
    "byJob": {
     "docs": {
      "runs": 27,
@@ -172,11 +172,11 @@
      "usd": 0.13
     },
     "code": {
-     "runs": 7,
-     "filesAttempted": 1777,
-     "landed": 5364,
+     "runs": 8,
+     "filesAttempted": 2177,
+     "landed": 6694,
      "skipped": 0,
-     "usd": 3.62
+     "usd": 4.52
     }
    },
    "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
@@ -506,6 +506,64 @@
       }
      },
      "note": "Same seed, task order, 200 agents and model mix as the baseline (glm took 66 tasks in both, so the mix is equal). 3.9x faster (53 vs 207 min), queue wait p50 7x shorter, 66 more landed, 32 more requirements passing on main. 79 lost: 71 wrong when they landed (35 of 763 clean merges 4.6%, 32 of 481 replays 6.7% vs 4.9% baseline: higher, but 32 vs 23 is within chance at these counts), 8 dropped by a later agent (all by base_sha), 0 lost in landing. The new wall is fetching forks into five lane boxes at once (p50 12.7 s, was 3.3 s)."
+    },
+    {
+     "dial": 60,
+     "variant": "fast + lane prefetch",
+     "project": "eyal/kata-d60h",
+     "wallMin": 44.5,
+     "usd": 0.91,
+     "replayUsd": 0.13,
+     "tasks": 1385,
+     "clusteredTasks": 834,
+     "landed": 1330,
+     "landedByResolution": {
+      "merged": 751,
+      "replayed-llm": 170,
+      "redo+replayed-llm": 314,
+      "redo+merged": 95
+     },
+     "bouncedTwice": 54,
+     "redos": 595,
+     "modelReplays": 484,
+     "noFinalRecord": 1,
+     "queueWaitP50S": 141,
+     "replayP50S": 4.1,
+     "trainP50S": 45,
+     "fetchP50S": 13,
+     "fetchP90S": 27,
+     "requirementsPassing": 1277,
+     "requirements": 1385,
+     "functionsAllPassing": 328,
+     "casesPassed": 6084,
+     "cases": 6340,
+     "requirementLost": 42,
+     "requirementLostClustered": 30,
+     "requirementLostSpread": 12,
+     "baseLost": 24,
+     "attribution": {
+      "cr": {
+       "wrongAtLanding": 37,
+       "laterAgentDroppedIt": 5,
+       "concurrentLostInLanding": 0
+      },
+      "base": {
+       "wrongAtLanding": 20,
+       "laterAgentDroppedIt": 4,
+       "concurrentLostInLanding": 0
+      }
+     },
+     "byModel": {
+      "gemini-3.1-flash-lite": {
+       "tasks": 1318,
+       "lost": 53
+      },
+      "glm-4.7-flash": {
+       "tasks": 66,
+       "lost": 13
+      }
+     },
+     "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. Known gap: lanes force-push refs/notes/qodebase, so change records (notes) on main can be missing; the code and these counts are unaffected."
     }
    ],
    "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off unless marked \"+ claims\" (an agent claims its declarations before reading the file); collisions = pairs of tasks started at the same moment"
@@ -842,6 +900,64 @@
       }
      },
      "note": "Same seed, task order, 200 agents and model mix as the baseline (glm took 66 tasks in both, so the mix is equal). 3.9x faster (53 vs 207 min), queue wait p50 7x shorter, 66 more landed, 32 more requirements passing on main. 79 lost: 71 wrong when they landed (35 of 763 clean merges 4.6%, 32 of 481 replays 6.7% vs 4.9% baseline: higher, but 32 vs 23 is within chance at these counts), 8 dropped by a later agent (all by base_sha), 0 lost in landing. The new wall is fetching forks into five lane boxes at once (p50 12.7 s, was 3.3 s)."
+    },
+    {
+     "dial": 60,
+     "variant": "fast + lane prefetch",
+     "project": "eyal/kata-d60h",
+     "wallMin": 44.5,
+     "usd": 0.91,
+     "replayUsd": 0.13,
+     "tasks": 1385,
+     "clusteredTasks": 834,
+     "landed": 1330,
+     "landedByResolution": {
+      "merged": 751,
+      "replayed-llm": 170,
+      "redo+replayed-llm": 314,
+      "redo+merged": 95
+     },
+     "bouncedTwice": 54,
+     "redos": 595,
+     "modelReplays": 484,
+     "noFinalRecord": 1,
+     "queueWaitP50S": 141,
+     "replayP50S": 4.1,
+     "trainP50S": 45,
+     "fetchP50S": 13,
+     "fetchP90S": 27,
+     "requirementsPassing": 1277,
+     "requirements": 1385,
+     "functionsAllPassing": 328,
+     "casesPassed": 6084,
+     "cases": 6340,
+     "requirementLost": 42,
+     "requirementLostClustered": 30,
+     "requirementLostSpread": 12,
+     "baseLost": 24,
+     "attribution": {
+      "cr": {
+       "wrongAtLanding": 37,
+       "laterAgentDroppedIt": 5,
+       "concurrentLostInLanding": 0
+      },
+      "base": {
+       "wrongAtLanding": 20,
+       "laterAgentDroppedIt": 4,
+       "concurrentLostInLanding": 0
+      }
+     },
+     "byModel": {
+      "gemini-3.1-flash-lite": {
+       "tasks": 1318,
+       "lost": 53
+      },
+      "glm-4.7-flash": {
+       "tasks": 66,
+       "lost": 13
+      }
+     },
+     "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. Known gap: lanes force-push refs/notes/qodebase, so change records (notes) on main can be missing; the code and these counts are unaffected."
     }
    ]
   }
@@ -2085,6 +2201,29 @@
     "wallS": 3216,
     "landWaitP90S": -1,
     "firstAt": 1791921857350
+   },
+   {
+    "label": "code dial 60% (K60h)",
+    "runs": 1,
+    "cached": false,
+    "models": [
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "repos": [
+     "fleet-kata-d60h src/vs"
+    ],
+    "agents": 200,
+    "files": 400,
+    "landed": 1330,
+    "skipped": 0,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0.9058,
+    "wallS": 2691,
+    "landWaitP90S": -1,
+    "firstAt": 1791929636289
    }
   ],
   "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)",
@@ -16668,22 +16807,72 @@
     "label": "code dial 60% (K60g)",
     "cached": false,
     "job": "code"
+   },
+   {
+    "runId": "fmv78n0e9",
+    "models": [
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 200,
+    "agentsStarted": 200,
+    "files": 400,
+    "landed": 1330,
+    "skipped": 0,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.9058,
+    "startedAt": 1791929636289,
+    "endedAt": 1791932327753,
+    "wallS": 2691,
+    "landWaitP50S": -2,
+    "landWaitP90S": -1,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.012,
+      "landed": 66,
+      "calls": 66,
+      "rateLimited429": 0,
+      "peakPerMin": 23,
+      "role": "overflow"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 0.8938,
+      "bounced": 54,
+      "landed": 1264,
+      "calls": 1318,
+      "rateLimited429": 0,
+      "peakPerMin": 59,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-kata-d60h src/vs",
+    "label": "code dial 60% (K60h)",
+    "cached": false,
+    "job": "code"
    }
   ],
   "perModel": {
    "@cf/zai-org/glm-4.7-flash": {
-    "files": 11592,
-    "landed": 8235,
+    "files": 11658,
+    "landed": 8301,
     "skipped": 3339,
     "verifyFail": 0,
     "rejected": 18,
     "rateLimited": 31,
-    "calls": 8370,
-    "usd": 1.5022,
+    "calls": 8436,
+    "usd": 1.5142,
     "peakPerMin": 587,
     "roles": {
      "planned": 11276,
-     "overflow": 298
+     "overflow": 364
     },
     "usdPer1kFiles": 0.13,
     "share429": 0.004
@@ -16721,17 +16910,17 @@
     "share429": 0
    },
    "gemini-3.1-flash-lite": {
-    "files": 29835,
-    "landed": 21918,
+    "files": 31099,
+    "landed": 23182,
     "skipped": 7724,
     "verifyFail": 0,
     "rejected": 193,
     "rateLimited": 51,
-    "calls": 22670,
-    "usd": 18.3914,
+    "calls": 23988,
+    "usd": 19.2852,
     "peakPerMin": 1500,
     "roles": {
-     "planned": 12595,
+     "planned": 13859,
      "overflow": 17047
     },
     "usdPer1kFiles": 0.62,
@@ -16755,16 +16944,16 @@
    }
   },
   "totals": {
-   "runs": 35,
-   "filesAttempted": 48359,
-   "landed": 37336,
+   "runs": 36,
+   "filesAttempted": 48759,
+   "landed": 38666,
    "skipped": 14065,
    "verifyRefused": 0,
    "rejected": 240,
    "rateLimited": 3,
-   "usd": 22.83,
+   "usd": 23.74,
    "usdPer1kLanded": 0.61,
-   "usdPer1kFiles": 0.47,
+   "usdPer1kFiles": 0.49,
    "byJob": {
     "docs": {
      "runs": 27,
@@ -16781,11 +16970,11 @@
      "usd": 0.13
     },
     "code": {
-     "runs": 7,
-     "filesAttempted": 1777,
-     "landed": 5364,
+     "runs": 8,
+     "filesAttempted": 2177,
+     "landed": 6694,
      "skipped": 0,
-     "usd": 3.62
+     "usd": 4.52
     }
    },
    "largestRun": {

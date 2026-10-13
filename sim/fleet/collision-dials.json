@@ -329,6 +329,64 @@
      }
     },
     "note": "Same seed, task order, 200 agents and model mix as the baseline (glm took 66 tasks in both, so the mix is equal). 3.9x faster (53 vs 207 min), queue wait p50 7x shorter, 66 more landed, 32 more requirements passing on main. 79 lost: 71 wrong when they landed (35 of 763 clean merges 4.6%, 32 of 481 replays 6.7% vs 4.9% baseline: higher, but 32 vs 23 is within chance at these counts), 8 dropped by a later agent (all by base_sha), 0 lost in landing. The new wall is fetching forks into five lane boxes at once (p50 12.7 s, was 3.3 s)."
+   },
+   {
+    "dial": 60,
+    "variant": "fast + lane prefetch",
+    "project": "eyal/kata-d60h",
+    "wallMin": 44.5,
+    "usd": 0.91,
+    "replayUsd": 0.13,
+    "tasks": 1385,
+    "clusteredTasks": 834,
+    "landed": 1330,
+    "landedByResolution": {
+     "merged": 751,
+     "replayed-llm": 170,
+     "redo+replayed-llm": 314,
+     "redo+merged": 95
+    },
+    "bouncedTwice": 54,
+    "redos": 595,
+    "modelReplays": 484,
+    "noFinalRecord": 1,
+    "queueWaitP50S": 141,
+    "replayP50S": 4.1,
+    "trainP50S": 45,
+    "fetchP50S": 13,
+    "fetchP90S": 27,
+    "requirementsPassing": 1277,
+    "requirements": 1385,
+    "functionsAllPassing": 328,
+    "casesPassed": 6084,
+    "cases": 6340,
+    "requirementLost": 42,
+    "requirementLostClustered": 30,
+    "requirementLostSpread": 12,
+    "baseLost": 24,
+    "attribution": {
+     "cr": {
+      "wrongAtLanding": 37,
+      "laterAgentDroppedIt": 5,
+      "concurrentLostInLanding": 0
+     },
+     "base": {
+      "wrongAtLanding": 20,
+      "laterAgentDroppedIt": 4,
+      "concurrentLostInLanding": 0
+     }
+    },
+    "byModel": {
+     "gemini-3.1-flash-lite": {
+      "tasks": 1318,
+      "lost": 53
+     },
+     "glm-4.7-flash": {
+      "tasks": 66,
+      "lost": 13
+     }
+    },
+    "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. Known gap: lanes force-push refs/notes/qodebase, so change records (notes) on main can be missing; the code and these counts are unaffected."
    }
   ]
  }
