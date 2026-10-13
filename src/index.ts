@@ -316,7 +316,10 @@ const uiFor = (request: Request, env: Env): UI | null => uiOf(request) ?? (isUiH
 
 /** The fleet Worker (sim/fleet, qbfleet) with its key; the key never leaves this Worker. */
 async function fleetCall(env: Env, path: string, body?: unknown) {
-  const r = await fetch(`https://qbfleet.forqdev.workers.dev${path}`, { method: body ? 'POST' : 'GET', headers: { 'x-fleet-key': env.FLEET_KEY || '', 'user-agent': 'forq-internal/1', 'content-type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  // Over the service binding: a same-account workers.dev fetch never reached qbfleet once it bound forq's objects
+  // (every call 404, 2026-10-13).
+  const init = { method: body ? 'POST' : 'GET', headers: { 'x-fleet-key': env.FLEET_KEY || '', 'user-agent': 'forq-internal/1', 'content-type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) };
+  const r = env.FLEET ? await env.FLEET.fetch(`https://qbfleet.internal${path}`, init) : await fetch(`https://qbfleet.forqdev.workers.dev${path}`, init);
   return r.json().catch(() => ({ error: `fleet ${r.status}` }));
 }
 // The real builds the /runs page lists (only public ones are shown to people who are not the owner).
@@ -708,7 +711,8 @@ const app = {
         const st = await fleetCall(env, `/status?repo=${repo}`) as { runId?: string; state?: string; files?: number; counts?: Record<string, number> };
         const live = st.runId === run && !['done', 'stopped', 'ended'].includes(String(st.state));
         const T = await memoTree(`${repo}/${run}`, live ? 15_000 : 3_600_000, async () => {
-          const r = await fetch(`https://qbfleet.forqdev.workers.dev/records?repo=${repo}&run=${run}`, { headers: { 'x-fleet-key': env.FLEET_KEY || '', 'user-agent': 'forq-internal/1' } });
+          const ri = { headers: { 'x-fleet-key': env.FLEET_KEY || '', 'user-agent': 'forq-internal/1' } };
+          const r = env.FLEET ? await env.FLEET.fetch(`https://qbfleet.internal/records?repo=${repo}&run=${run}`, ri) : await fetch(`https://qbfleet.forqdev.workers.dev/records?repo=${repo}&run=${run}`, ri);
           if (!r.ok) throw new Error(`fleet records ${r.status}`);
           const recs = parseRecords(await r.text());
           // The title comes from the runs list (server side), never from the request.

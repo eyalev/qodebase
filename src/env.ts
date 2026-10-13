@@ -63,6 +63,8 @@ export interface Env {
   ADMIN_SECRET: string;
   /** The fleet Worker's key (sim/fleet, qbfleet): /api/runs proxies its data and controls; never sent to a browser. */
   FLEET_KEY?: string;
+  /** qbfleet over a service binding (a same-account workers.dev fetch started answering 404, 2026-10-13). */
+  FLEET?: Fetcher;
 }
 
 /** `owner/name` ↔ Artifacts repo name `owner.name`. */
