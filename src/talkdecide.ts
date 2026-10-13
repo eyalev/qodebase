@@ -212,7 +212,8 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // "Build me a home inventory app with a team, …" on a page with the idea box (home): the idea goes in the box, the
   // team words pick the preset, and Build it is offered (qb3's shot 2a). Vocabulary in code.
   const ideaBox = s.items.find((i) => i.kind === 'field' && /what do you want to build/i.test(i.text));
-  const bm = /^\s*(please\s+)?(build|make|create)\s+(me\s+|us\s+)?(.{6,})$/i.exec(utterance.trim());
+  // Something new ("build me a…", "make an…"), not a change to an existing thing ("make the timer chime louder").
+  const bm = /^\s*(please\s+)?(build|make|create)\s+(me\s+|us\s+)?((?:a|an|some|my own)\s+.{4,})$/i.exec(utterance.trim());
   if (ideaBox && bm && cmd.mode !== 'ask') {
     const preset = /\b(with|as|by) a (small |big |whole )?team\b|\bteam of agents\b|\bseveral agents\b|\bmany agents\b/i.test(utterance) ? 'Balanced'
       : /\b(one|a single|single) agent\b|\bon its own\b|\bfastest\b/i.test(utterance) ? 'Fastest' : /\bcheap(est|ly)?\b/i.test(utterance) ? 'Cheapest' : '';
