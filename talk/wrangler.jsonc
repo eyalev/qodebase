@@ -29,7 +29,8 @@
       { "name": "TalkVoice", "class_name": "TalkVoice" },
       { "name": "Registry", "class_name": "Registry", "script_name": "forq" },
       { "name": "Project", "class_name": "Project", "script_name": "forq" },
-      { "name": "Ledger", "class_name": "Ledger", "script_name": "forq" }
+      { "name": "Ledger", "class_name": "Ledger", "script_name": "forq" },
+      { "name": "Landing", "class_name": "Landing", "script_name": "forq" }
     ]
   },
   "migrations": [

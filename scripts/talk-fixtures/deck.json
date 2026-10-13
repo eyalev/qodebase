@@ -1,0 +1,26 @@
+{
+ "path": "/deck/#1",
+ "title": "qodebase deck",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "qodebase"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Notes"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "Next slide"
+  },
+  {
+   "id": "xslide",
+   "kind": "button",
+   "text": "Go to a slide by its number or title (28 slides)"
+  }
+ ]
+}

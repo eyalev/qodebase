@@ -27,15 +27,15 @@ const ACTIONS = {
   link: 'Go to a page or open something listed on the screen or in the menu: the home page, Explore, Yours, Inbox, Build, Account, Import, Command line, About, Feedback, Get your own qodebase, Your own AI assistant, a document or file shown on the page (README, LICENSE), or any other link shown',
   project: 'Open a project by its name, or one part of it (its app, code, readme, history, agents), just to look at it or use it. A sentence that also says what the project should do differently is a change, not this.',
   search: 'Search or look for something by words: find a project, find text in the code',
-  type: 'Type words into a field on the page (an idea to build, a search box, a message to an agent)',
-  press: 'Press a button that is on the screen',
+  type: 'Type words into a field on the page (an idea to build, a search box, a message to an agent), or set a slider or a choice to a value ("set the agents to 6", "use Sonnet")',
+  press: 'Press a button, tab, switch or toggle that is on the screen: a preset, a size, a tab, Next, Pause, Build it, open more, or turn a setting on or off',
   back: 'Go back to the previous page (only when they say back or previous; "go home" is the home page link)',
   scroll: 'Scroll to or show a section of this page (by its heading), or scroll to the top or bottom',
   explain: 'Explain, describe or show around the page the person is looking at',
-  change: 'Ask for a change in one of the projects: add, fix, change, improve or remove a feature in an app or its code ("in my todo app add due dates", "make the timer chime louder", "fix the dark mode")',
+  change: 'Ask for a change in one of the projects: add, fix, change, improve or remove a feature in an app or its code ("in my todo app add due dates", "make the timer chime louder", "fix the dark mode"). Not a setting, switch or slider on this qodebase page.',
   list: 'List or name their projects ("list my projects", "what projects do I have", "show me some of my projects")',
   code: 'Answer a question about a project\'s CODE that needs reading it: how something works or is stored, where something is, why it is built a certain way, or a plan for how to change it ("how are tasks stored in my todo app", "why does the timer use a worker", "plan how to add accounts")',
-  status: 'Say what is going on across their projects: what their agents are doing, what is ready to merge or review, what changed today or this week, what needs them',
+  status: 'Say what is going on across their projects: what their agents are doing, builds and scale runs going, questions the agents asked them, what is ready to merge or review, what changed today or this week, what needs them',
   none: 'No action in the app',
 };
 
@@ -136,8 +136,10 @@ export function buildQuestions(utterance: string, s: Screen, projects: Proj[]) {
     complete: noul('The sentence is a finished request or question, not cut off in the middle.'),
     greeting: noul('The sentence is a greeting, thanks, goodbye or small talk to the assistant ("hi", "hello there", "thanks", "how are you", "good morning"), not a request.'),
     wants_change: noul('The sentence asks for something in an app or project to be different: a feature added, fixed, changed, improved or removed (not just opening or looking at it).'),
-    risky: noul('Doing what the sentence asks would delete a project or an account, merge, publish, make something public or private, sign out, revoke, uninstall, disconnect, or spend money. Asking the agents to change, add or remove something inside an app is NOT risky (it only proposes a change).'),
+    risky: noul('Doing what the sentence asks would delete a project or an account, merge, publish, make something public or private, sign out, revoke, uninstall, disconnect, spend money, start a build or a run, or pause, resume or stop one. Asking the agents to change, add or remove something inside an app is NOT risky (it only proposes a change).'),
+    destroys: noul('Doing what the sentence asks would delete or remove something for good, sign out, revoke access, uninstall, disconnect an account, or make a project public or private. Starting, pausing, resuming or stopping a run, merging, building something, or asking the agents to change, add or remove something inside an app does NOT count.'),
   };
+  q.on_page = noul('The sentence asks to use something on this very page: one of its buttons, tabs, switches, sliders or fields, a slide, a moment on a timeline, or a run or list shown here. Not opening a project, and not a change to an app.');
   if (by('link').length) q.link = choice('Which link does it want to open? Pick the link whose words match what the sentence asks for.', { ...Object.fromEntries(by('link').map((l) => [l.id, l.text])), ...none });
   if (projects.length) {
     q.project = choice('Which project does the sentence name or mean? Match by name or what it is (a "timer" is the Focus timer project). With no project name ("the app", "its history", "this"), it is the project the page shows. "My copy", "my version" or "mine" means their own project of the same name. Prefer their own project when they say "my" or names tie.',
@@ -162,6 +164,7 @@ const pick = (a: Ans | undefined, min = 0) => { const t = top(a); return t.choic
 
 export type Cmd = {
   mode: string; modeP: number | null; op: string; p: number | null; risky: number | null; complete: number | null;
+  destroys?: number | null;        // the part of risky that Talk never does (delete, sign out, revoke…)
   href?: string; label?: string; target?: string; text?: string; section?: string; why?: string;
   slug?: string; mine?: boolean;   // change / code: the project, and whether it is theirs
   greet?: boolean; example?: string;   // a greeting / small talk, and one of their projects to suggest
@@ -186,9 +189,19 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   const words = utterance.trim().replace(/[.!?,]+$/g, '').split(/\s+/).filter(Boolean);
   if (cmd.mode === 'none' && cmd.op === 'go' && cmd.href && words.length <= 3 && (cmd.p ?? 0) >= 0.3 && !hello) return { ...cmd, mode: 'act', why: `${cmd.why || ''}; a bare place name opens it` };
   if (cmd.op !== 'none' || cmd.mode === 'ask' || cmd.mode === 'none') return cmd;
-  // The action kind could not be done (no field, no words): a confident link pick still can.
-  const l = s.items.find((i) => i.id === pick(answers.link, 0.5));
-  return l?.href ? { ...cmd, op: 'go', href: l.href, label: l.text, target: l.id, why: `${cmd.why}; used the link` } : cmd;
+  // The action kind could not be done (no field, no words, no project on this page): the most confident pick among
+  // the page's own links, buttons and fields still can ("give me a medium sized idea" came out as "type" with
+  // nothing to type; "turn off the build notification" as a change with no project, 2026-10-13).
+  const cands2: { p: number; cmd: Cmd }[] = [];
+  const tl = top(answers.link), l = s.items.find((i) => i.id === tl.choice);
+  if (l?.href) cands2.push({ p: tl.p ?? 0, cmd: { ...cmd, op: 'go', href: l.href, label: l.text, target: l.id, why: `${cmd.why}; used the link` } });
+  const tb = top(answers.button), b = s.items.find((i) => i.id === tb.choice);
+  if (b) cands2.push({ p: tb.p ?? 0, cmd: { ...cmd, op: 'press', label: b.text, target: b.id, why: `${cmd.why}; used the button` } });
+  const tf = top(answers.field), f = s.items.find((i) => i.id === tf.choice);
+  const typed = (() => { const c = pick(answers.text); return c && /^s\d+$/.test(c) ? cands[Number(c.slice(1))] : null; })();
+  if (f && typed) cands2.push({ p: tf.p ?? 0, cmd: { ...cmd, op: "type", label: f.text, target: f.id, text: typed, why: `${cmd.why}; used the field` } });
+  const best = cands2.filter((x) => x.p >= 0.35).sort((x, y) => y.p - x.p)[0];
+  return best ? best.cmd : cmd;
 }
 
 function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen, projects: Proj[], utterance: string): Cmd {
@@ -197,7 +210,7 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
   // The many-way action spreads thin on "in my X app, let it do Y" (it opens X); a direct yes/no on just that is sharper (talkui's rewords rule).
   const wc = answers.wants_change?.noul ?? 0;
   const changeP = answers.action?.probabilities?.change ?? 0;
-  if (action.choice !== 'change' && !['status', 'explain', 'type', 'code'].includes(action.choice) && (wc >= 0.75 || (wc >= 0.55 && changeP >= 0.15))) action = { choice: 'change', p: wc };
+  if (action.choice !== 'change' && !['status', 'explain', 'type', 'code', 'press'].includes(action.choice) && (wc >= 0.75 || (wc >= 0.55 && changeP >= 0.15))) action = { choice: 'change', p: wc };
   // On a project page, an order that starts with a build verb is a change to this project (vocabulary in code):
   // qb8's "Build these 12 café features at once, …" on /p/eyal/cafe-crew came out as "open a page" (p 0.42), and
   // its Go tap navigated instead of sending. "Opening" the project the page already shows is never the answer
@@ -208,7 +221,21 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
   if (onProject && action.choice !== 'change' && ((order && wc >= 0.4 && !['explain', 'code', 'list'].includes(action.choice)) || (action.choice === 'project' && wc >= 0.5))) action = { choice: 'change', p: Math.max(wc, action.p ?? 0) };
   // "Plan how to…", "how would we…", "why does…" ask for an answer about the code, not an edit (vocabulary in code).
   if (action.choice === 'change' && /^\s*(plan|how (would|should|could|do) (we|i|you)|why\b|what would it take|should (we|i))/i.test(utterance)) action = { choice: 'code', p: action.p };
-  const base: Cmd = { mode: mode.choice, modeP: mode.p, op: 'none', p: action.p, risky: answers.risky?.noul ?? null, complete: answers.complete?.noul ?? null };
+  // "Watch a run", "go to slide 5", "show me minute 3": the page's own control, even when a project's name sounds
+  // close (the many-way action picked a project called reveal-js for "go to slide 5", 2026-10-13). A direct
+  // yes/no on "this page" plus a confident pick among its buttons, fields and links decides.
+  const onPage = answers.on_page?.noul ?? 0;
+  if (onPage >= 0.5 && wc < 0.5 && ['project', 'link', 'change', 'scroll', 'none', 'search'].includes(action.choice)) {
+    const tb = top(answers.button), tf = top(answers.field), tl = top(answers.link);
+    const typedW = (() => { const c = pick(answers.text); return c && /^s\d+$/.test(c) ? cands[Number(c.slice(1))] : null; })();
+    const opts = [
+      { k: 'press', p: tb.choice !== 'none' ? tb.p ?? 0 : 0 },
+      { k: 'type', p: tf.choice !== 'none' && typedW ? tf.p ?? 0 : 0 },
+      { k: 'link', p: action.choice !== 'link' && tl.choice !== 'none' && !String(s.items.find((i) => i.id === tl.choice)?.href || '').startsWith('/p/') ? tl.p ?? 0 : 0 },
+    ].sort((a, b) => b.p - a.p);
+    if (opts[0].p >= 0.3) action = { choice: opts[0].k, p: opts[0].p };
+  }
+  const base: Cmd = { mode: mode.choice, modeP: mode.p, op: 'none', p: action.p, risky: answers.risky?.noul ?? null, destroys: answers.destroys?.noul ?? null, complete: answers.complete?.noul ?? null };
   const item = (id: string | null) => s.items.find((i) => i.id === id) || null;
   const text = (() => { const c = pick(answers.text); return c && /^s\d+$/.test(c) ? cands[Number(c.slice(1))] : null; })();
   switch (action.choice) {
@@ -221,6 +248,10 @@ function resolveAction(answers: Record<string, Ans>, cands: string[], s: Screen,
       return { ...base, why: 'no link matched' };
     }
     case 'project': {
+      // A weak project guess loses to a sure link on the page ("open all the asks" on Agents at work: link "All asks"
+      // 0.83, project cafe-crew 0.49 with the action itself at 0.24).
+      const tl = top(answers.link), tp = top(answers.project), ll = s.items.find((i) => i.id === tl.choice);
+      if (ll?.href && (tl.p ?? 0) >= 0.7 && (tp.p ?? 0) < 0.6 && (action.p ?? 0) < 0.5) return { ...base, op: 'go', href: ll.href, label: ll.text, target: ll.id, why: 'a sure link over a weak project' };
       const p = projects.find((x) => x.id === pick(answers.project));
       if (!p) return { ...base, why: 'no project matched' };
       return { ...base, op: 'go', href: projectHref(p, partOf(answers)), label: projLabel(p, partOf(answers)), target: p.slug };
@@ -283,4 +314,20 @@ const projLabel = (p: Proj, part: string) => `${p.owner}/${p.name}${part && part
 function projectHref(p: Proj, part: string): string {
   const root = `/p/${p.owner}/${p.name}`;
   return part === 'app' ? `${root}/app` : part === 'code' ? `${root}/code/` : part === 'readme' ? `${root}/readme` : part === 'history' ? `${root}/history` : root;   // agents: the cards on the project page (/agents is not a page)
+}
+
+// What a voice command may do without a tap (2026-10-13, voice everywhere): most things at once; things that spend
+// money, start or stop work, or merge, after a yes (spoken or tapped); things that delete, sign out or revoke, never
+// (Talk takes you to them instead). The model's yes/no plus the button's own words, so a "Stop" on a page is gated
+// even when the sentence did not sound risky. Vocabulary in code.
+export const CONFIRM_WORDS = /^(stop|pause|resume|merge|build it|build|send back|start|watch a run|run for real|replay|replace|connect my plan|save the key|shot|fork|import)\b/i;
+export const DESTROY_WORDS = /^(remove|delete|revoke|sign out|log out|uninstall|disconnect|make (it )?(private|public)|clear)\b/i;
+export function gate(c: Cmd): 'refuse' | 'confirm' | null {
+  // Anything else (a change request, a question): as before, refused only when the sentence itself is risky
+  // ("delete the particles project" must not become a request to the agents).
+  if (!['press', 'go', 'type'].includes(c.op)) return (c.risky ?? 0) >= 0.5 && c.op !== 'status' && c.op !== 'list' && c.op !== 'code' ? 'refuse' : null;
+  const label = String(c.label || '').trim();
+  if ((c.destroys ?? 0) >= 0.5 || DESTROY_WORDS.test(label)) return 'refuse';
+  if ((c.risky ?? 0) >= 0.5 || (c.op === 'press' && CONFIRM_WORDS.test(label))) return 'confirm';
+  return null;
 }

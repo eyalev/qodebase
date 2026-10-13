@@ -18,6 +18,7 @@ import { isOwner } from './auth';
 import { recordCost } from './costs';
 import { chatCore, decideCore, projectsFor, statusCore, talkLog } from './talk';
 import { stretchPcm16 } from './stretch';
+import { gate } from './talkdecide';
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talkvoice', event, ...data }));
 const FLUX_USD_PER_MIN = 0.0077;
@@ -223,7 +224,16 @@ export class TalkVoice extends VoiceAgent {
     await this.#cost(0.00032);   // one clef-flash decision (measured mean, gateway logs 2026-10-07)
     log('turn', { handle: this.name, said, path: this.#screen?.path, mode: c.mode, op: c.op, p: c.p, risky: c.risky, why: c.why, decide_ms: Date.now() - t0 });
 
-    if ((c.risky || 0) >= 0.5) { this.#send(connection, { type: 'talk-cmd', cmd: { ...c, refused: true } }); return 'That would change or remove something, so I\'ll leave the doing to you.'; }
+    // Delete, sign out, revoke: never by voice. Stop, pause, merge, build, spend: after a spoken yes (gate() in talkdecide.ts).
+    const g = gate(c);
+    log('gate', { handle: this.name, op: c.op, label: c.label, risky: c.risky, destroys: c.destroys, gate: g });
+    if (g === 'refuse') { this.#send(connection, { type: 'talk-cmd', cmd: { ...c, refused: true } }); return 'That would remove something for good, so I\'ll leave the doing to you.'; }
+    if (g === 'confirm') {
+      this.#pending = { ...c, confirmed: true };
+      this.#send(connection, { type: 'talk-cmd', cmd: { ...c, confirmed: true, offer: true } });
+      const what = c.op === 'press' ? `Press ${String(c.label || 'that').replace(/\s*\((.*)\)$/, ', $1')}` : c.op === 'go' ? `Open ${String(c.label || 'that').replace(/\s*\(.*\)$/, '')}` : 'Type that in';
+      return `${what}? Say yes to go ahead.`;
+    }
     if (c.greet) {
       const p = c.example || 'todo';
       return `Hi! I can find things, open your projects, and answer questions about them. Try asking what's going on, or say open my ${p}.`;

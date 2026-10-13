@@ -1,0 +1,159 @@
+{
+ "path": "/p/eyal/corner-cafe/asks",
+ "title": "Asks \u00b7 eyal/corner-cafe \u00b7 qodebase",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "Asks"
+  },
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase home",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "eyal / corner-cafe",
+   "href": "/p/eyal/corner-cafe"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox: 58 need you",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "Agents at work",
+   "href": "/p/eyal/corner-cafe/work"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "Changes",
+   "href": "/p/eyal/corner-cafe/changes"
+  },
+  {
+   "id": "l6",
+   "kind": "link",
+   "text": "App",
+   "href": "/p/eyal/corner-cafe/app"
+  },
+  {
+   "id": "l7",
+   "kind": "link",
+   "text": "Code",
+   "href": "/p/eyal/corner-cafe/code/"
+  },
+  {
+   "id": "l8",
+   "kind": "link",
+   "text": "More",
+   "href": "/p/eyal/corner-cafe/more"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Menu and account: eyal"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "All 14"
+  },
+  {
+   "id": "b3",
+   "kind": "button",
+   "text": "Open 0"
+  },
+  {
+   "id": "b4",
+   "kind": "button",
+   "text": "Landed 14"
+  },
+  {
+   "id": "b5",
+   "kind": "button",
+   "text": "Add a booking form (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b6",
+   "kind": "button",
+   "text": "Tag the vegan drinks in the menu data (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b7",
+   "kind": "button",
+   "text": "Add a footer (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b8",
+   "kind": "button",
+   "text": "Today's specials on the home page (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b9",
+   "kind": "button",
+   "text": "Add a Reservations page (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b10",
+   "kind": "button",
+   "text": "Mark vegan items on the menu (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b11",
+   "kind": "button",
+   "text": "New tagline with books (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b12",
+   "kind": "button",
+   "text": "Rename to Corner Caf\u00e9 & Books (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b13",
+   "kind": "button",
+   "text": "Add a dark theme (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b14",
+   "kind": "button",
+   "text": "Show round prices without cents (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b15",
+   "kind": "button",
+   "text": "Add three cakes to the menu (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b16",
+   "kind": "button",
+   "text": "Add teas to the menu (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b17",
+   "kind": "button",
+   "text": "Add a Contact page (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b18",
+   "kind": "button",
+   "text": "Add an Opening hours page (Landed, The demo script, 1 change, 2 h ago)"
+  },
+  {
+   "id": "b19",
+   "kind": "button",
+   "text": "Add photos or screenshots"
+  },
+  {
+   "id": "f1",
+   "kind": "field",
+   "text": "Ask for a change"
+  }
+ ]
+}

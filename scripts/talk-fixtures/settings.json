@@ -1,0 +1,111 @@
+{
+ "path": "/settings",
+ "title": "Settings \u00b7 qodebase",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "Settings"
+  },
+  {
+   "id": "h2",
+   "kind": "heading",
+   "text": "Your name"
+  },
+  {
+   "id": "h3",
+   "kind": "heading",
+   "text": "Claude for your agents"
+  },
+  {
+   "id": "h4",
+   "kind": "heading",
+   "text": "Notifications"
+  },
+  {
+   "id": "h5",
+   "kind": "heading",
+   "text": "Command line"
+  },
+  {
+   "id": "h6",
+   "kind": "heading",
+   "text": "Account"
+  },
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase home",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "Build something new",
+   "href": "/build"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox: 58 need you",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "Install qb",
+   "href": "/cli"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "Sign out",
+   "href": "/logout"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Menu and account: eyal"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "When a build finishes (Your app is ready to try.) (switch, now on)"
+  },
+  {
+   "id": "b3",
+   "kind": "button",
+   "text": "When an agent needs a decision (Only for real decisions, like a secret or money.) (switch,"
+  },
+  {
+   "id": "b4",
+   "kind": "button",
+   "text": "6d ago, how recent"
+  },
+  {
+   "id": "b5",
+   "kind": "button",
+   "text": "Revoke"
+  },
+  {
+   "id": "b6",
+   "kind": "button",
+   "text": "7d ago, how recent"
+  },
+  {
+   "id": "b7",
+   "kind": "button",
+   "text": "Revoke"
+  },
+  {
+   "id": "b8",
+   "kind": "button",
+   "text": "5d ago, how recent"
+  },
+  {
+   "id": "b9",
+   "kind": "button",
+   "text": "Revoke"
+  }
+ ]
+}

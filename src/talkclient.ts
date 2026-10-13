@@ -77,35 +77,56 @@ var chatHist = sget('chat', []);       // [{role, content}] for the chat lane
 
 // ---- DOM -------------------------------------------------------------------
 var css = [
-  '#talk-root{--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);font:16px/1.45 var(--t-ff);color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
-  '#talk-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483000;width:44px;height:44px;border-radius:12px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer;transition:background-color .12s}',
-  '#talk-fab svg{width:22px;height:22px}',
+  '#talk-root{--t-acc:var(--acc,#17695a);--t-accfg:var(--acc-fg,#fff);--t-bg:var(--bg,#fff);--t-card:var(--card,#f6f7f8);--t-chip:var(--chip,#eceef1);--t-line:var(--line,#e2e5e9);--t-fg:var(--fg,#15171a);--t-dim:var(--dim,#5f6670);--t-warn:var(--warn,#b42d1f);font:16px/1.45 var(--t-ff);color:var(--t-fg);-webkit-tap-highlight-color:transparent}',
+  // The voice bar (2026-10-13, manager's brief): a mini-player on every page, above the page's own bottom bars.
+  // Mic + what you are saying (growing to 3 lines) or the last answer in one line; tap it to open the whole
+  // conversation, which folds back into the bar. Its height is kept free at the end of the page.
+  '#talk-bar{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px;min-height:56px;box-sizing:border-box;border-radius:14px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line),0 4px 16px rgba(0,0,0,.10);color:var(--t-fg)}',
+  '@media (min-width:720px){#talk-bar{left:auto;right:16px;width:420px}}',
+  '#talk-root.open #talk-bar{display:none}',
+  '.talk-bb{width:44px;height:44px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--t-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}',
+  '.talk-bb svg{width:22px;height:22px}',
+  '.talk-bb.pri{background:var(--t-acc);color:var(--t-accfg)}',
+  '.talk-bb.on{background:var(--t-warn)}',
+  '@media (hover:hover){.talk-bb:not(.pri):hover{background:var(--t-chip)}}',
+  '#talk-bmid{flex:1;min-width:0;min-height:44px;display:flex;align-items:center;border:0;background:transparent;color:inherit;text-align:left;padding:0 6px;font:15px/20px var(--t-ff);cursor:pointer}',
+  '#talk-btext{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden;overflow-wrap:anywhere}',
+  '#talk-btext.dim{color:var(--t-dim)}',
+  '#talk-root.live #talk-btext,#talk-root.boffer #talk-btext{-webkit-line-clamp:3}',
+  '#talk-boffer{display:none;gap:6px;flex:none}',
+  '#talk-root.boffer #talk-boffer{display:flex}',
+  '#talk-root.boffer #talk-bexp,#talk-root.live #talk-bexp{display:none}',
+  '#talk-bsend{display:none}',
+  '#talk-root.live #talk-bsend{display:flex}',
+  '#talk-boffer .talk-chip{min-height:44px;padding:0 12px}',
+  // Pages with a composer (form.ask) keep the mic in its row: the bar there is the door to Talk, without a mic.
+  '#talk-root.slim #talk-bmic{display:none}',
+  '#talk-root.slim #talk-bar{min-height:48px;padding:2px 2px 2px 6px}',
+  '#talk-spacer{height:0;pointer-events:none}',
+  // A page can ask for less: data-talk-bar="mic" on <body> (a deck: only the mic, the words show while in use),
+  // "off" (no bar; ?clean on any URL does the same, for recordings).
+  '#talk-root.miconly #talk-bar{right:auto;width:auto;min-height:0}',
+  '#talk-root.miconly #talk-bmid,#talk-root.miconly #talk-bexp{display:none}',
+  '#talk-root.nobar #talk-bar{display:none}',
   // Pages with a composer (form.ask, [data-talk-composer]) get the mic inside it, WhatsApp-style, and no floating button.
-  'body.talk-composer #talk-fab,body.talk-composer #talk-ver{display:none!important}',
+  'body.talk-composer #talk-ver{display:none!important}',
   '.talk-cmic{width:44px;height:44px;flex:none;border-radius:12px;border:0;background:var(--acc,#17695a);color:var(--acc-fg,#fff);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}',
   '.talk-cmic svg{width:22px;height:22px}',
-  '.talk-cmic.on{background:#b42d1f}',
+  '.talk-cmic.on{background:var(--warn,#b42d1f)}',
   'form.talk-hassend-off .send{display:none!important}',
   'form.talk-hassend-on .talk-cmic{display:none!important}',
   '@media (max-width:600px){#talk-ver{display:none!important}}',
   '#talk-ver{position:fixed;z-index:2147483000;font:11px/1 var(--t-ff);color:var(--t-dim);font-variant-numeric:tabular-nums;pointer-events:none;text-align:center;width:72px}',
   '#talk-root.open #talk-ver{display:none}',
   '#talk-head .ver{font-size:11px;color:var(--t-dim);font-variant-numeric:tabular-nums}',
-  '#talk-fab.on{background:#b42d1f}',
-  '#talk-root.open #talk-fab{display:none}',
   '#talk-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483001;background:var(--t-bg);border-top:1px solid var(--t-line);border-radius:12px 12px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.14);transform:translateY(105%);transition:transform .22s ease,height .22s ease;height:var(--talk-h,62dvh);max-height:92dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}',
   '#talk-sheet.drag{transition:none}',
-  '#talk-root.bar #talk-sheet{height:auto}',
-  '#talk-root.bar #talk-log,#talk-root.bar #talk-set{display:none!important}',
   '#talk-grab{display:flex;align-items:center;justify-content:center;height:20px;margin:0;padding:0;border:0;background:transparent;width:100%;cursor:grab;touch-action:none}',
   '#talk-grab i{display:block;width:36px;height:4px;border-radius:2px;background:var(--t-line)}',
   '#talk-head{cursor:pointer}',
-  '#talk-peek{display:none;padding:0 16px 8px;font-size:15px;color:var(--t-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}',
-  '#talk-root.bar #talk-peek:not(:empty){display:block}',
   '#talk-root.open #talk-sheet{transform:none}',
   '@media (min-width:720px){#talk-sheet{left:auto;right:16px;bottom:16px;width:420px;border:1px solid var(--t-line);border-radius:12px}}',
   '#talk-head{display:flex;align-items:center;gap:8px;padding:0 8px 8px 16px;border-bottom:1px solid var(--t-line)}',
-  '#talk-root.bar #talk-head{border-bottom:0}',
   '#talk-head b{font-weight:600;font-size:15px;flex:1}',
   '#talk-head .st{font-size:13px;color:var(--t-dim);font-variant-numeric:tabular-nums}',
   '.talk-ib{width:44px;height:44px;border:0;border-radius:8px;background:transparent;color:var(--t-fg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}',
@@ -135,12 +156,11 @@ var css = [
   '#talk-in:focus{border-color:var(--t-acc)}',
   '#talk-mic{width:44px;height:44px;border-radius:8px;border:0;background:var(--t-acc);color:var(--t-accfg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}',
   '#talk-mic svg{width:22px;height:22px}',
-  '#talk-mic.on{background:#b42d1f}',
+  '#talk-mic.on{background:var(--t-warn)}',
   '.talk-ib.on{background:var(--t-acc);color:var(--t-accfg)}',
   '#talk-set{display:none;padding:12px 16px;border-bottom:1px solid var(--t-line);gap:12px;flex-direction:column;font-size:15px}',
   '#talk-root.settings #talk-set{display:flex;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}',
-  '#talk-root.settings #talk-log,#talk-root.settings #talk-live,#talk-root.settings #talk-offer,#talk-root.settings #talk-peek{display:none!important}',
-  '#talk-root.settings.bar #talk-sheet{height:var(--talk-h,62dvh)}',
+  '#talk-root.settings #talk-log,#talk-root.settings #talk-live,#talk-root.settings #talk-offer{display:none!important}',
   '#talk-set label{display:flex;flex-direction:column;gap:4px;color:var(--t-dim);font-size:13px}',
   '#talk-set select{height:44px;border-radius:8px;border:1px solid var(--t-line);background:var(--t-card);color:var(--t-fg);font:16px var(--t-ff);padding:0 8px}',
   '.talk-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}',
@@ -157,15 +177,17 @@ var ICON = {
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   sound: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
   mute: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>',
   send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
 };
 
-var root, sheet, logEl, live, offer, inp, micBtn, sendBtn, fab, stEl, spk, convBtn, peek;
+var root, sheet, logEl, live, offer, inp, micBtn, sendBtn, stEl, spk, convBtn;
+var bar, bMic, bText, bOffer, bSend, bExp, spacer;
 // The input grows with what you say or type (up to a third of the screen), then scrolls to the newest words.
 function fitInp() { if (!inp) return; inp.style.height = 'auto'; inp.style.height = Math.max(44, inp.scrollHeight + 2) + 'px'; inp.scrollTop = inp.scrollHeight; if (sendBtn) sendBtn.classList.toggle('ready', !!inp.value.trim() || listening); }
 function setInp(v) {
   if (cInto) { cInto.value = v; try { cInto.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {} cInto.scrollTop = cInto.scrollHeight; return; }
-  inp.value = v; fitInp();
+  inp.value = v; fitInp(); barSync();
 }
 function inpVal() { return cInto ? cInto.value : inp.value; }
 
@@ -203,7 +225,7 @@ function wireComposers() {
       trace('cmic', { how: 'send-while-listening' }); f.__sendAfter = 1; stopListen(false, false);
     }, true);
     var lp = null, long = false;
-    b.addEventListener('pointerdown', function () { long = false; lp = setTimeout(function () { long = true; trace('cmic', { how: 'long' }); open(true); }, 550); });
+    b.addEventListener('pointerdown', function () { long = false; lp = setTimeout(function () { long = true; trace('cmic', { how: 'long' }); open(true); if (!listening && !busy) startListen(); }, 550); });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { b.addEventListener(ev, function () { clearTimeout(lp); }); });
     b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     b.addEventListener('click', function (e) {
@@ -216,7 +238,23 @@ function wireComposers() {
     });
   });
   document.body.classList.toggle('talk-composer', any);
-  if (any && root) root.classList.add('talk-hasc');
+  if (root && root.classList.contains('slim') !== any) { root.classList.toggle('slim', any); trace('bar_slim', { on: any }); setTimeout(placeBar, 50); }
+}
+// Spoken into a project's "Ask for a change" box, but it sounds like something to do on the site ("open the code",
+// "what's going on", "pause the run"): offer it in the bar; the words stay in the box until they say yes.
+var SITE_OPS = ['go', 'back', 'press', 'scroll', 'status', 'list', 'code', 'type'];
+function suggestFromComposer(text, form) {
+  api('decide', { utterance: text, screen: screen() }).then(function (r) {
+    var c = r && r.cmd; if (!c) return;
+    var yes = SITE_OPS.indexOf(c.op) >= 0 && c.mode !== 'none' && (c.p == null || c.p >= 0.6) && !(c.op === 'type' && /ask for a change/i.test(c.label || ''));
+    trace('cmic_decide', { text: text, op: c.op, mode: c.mode, p: c.p, offer: yes });
+    if (!yes || listening || busy) return;
+    var ta = form.querySelector('textarea, input[type=text]');
+    offerOn('Not a change? I can ' + describe(c) + '.', function () {
+      if (ta && ta.value.trim() === text.trim()) { ta.value = ''; try { ta.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {} }
+      preview = { text: text, cmd: c }; lastSpoken = true; submit(text);
+    }, 'Do it');
+  }).catch(function () {});
 }
 function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
 
@@ -225,7 +263,18 @@ function build() {
   root = el('div', { id: 'talk-root' });
   // The page's own font (it changes with the site's look), for every Talk control too.
   root.style.setProperty('--t-ff', getComputedStyle(document.body).fontFamily || 'sans-serif');
-  fab = el('button', { id: 'talk-fab', type: 'button', 'aria-label': 'Talk to qodebase (tap to open, hold to speak)', title: 'Tap to open, hold to speak' }, ICON.mic);
+  // The voice bar: mic | what you are saying, or the last answer | open the conversation.
+  bar = el('div', { id: 'talk-bar', role: 'region', 'aria-label': 'Talk to qodebase' });
+  bMic = el('button', { id: 'talk-bmic', class: 'talk-bb pri', type: 'button', 'aria-label': 'Speak to qodebase' }, ICON.mic);
+  var bMid = el('button', { id: 'talk-bmid', type: 'button', 'aria-label': 'Open the conversation' });
+  bText = el('span', { id: 'talk-btext' }); bMid.appendChild(bText);
+  bOffer = el('div', { id: 'talk-boffer' });
+  bSend = el('button', { id: 'talk-bsend', class: 'talk-bb pri', type: 'button', 'aria-label': 'Send' }, ICON.send);
+  bExp = el('button', { id: 'talk-bexp', class: 'talk-bb', type: 'button', 'aria-label': 'Open the conversation' }, ICON.up);
+  bar.appendChild(bMic); bar.appendChild(bMid); bar.appendChild(bOffer); bar.appendChild(bSend); bar.appendChild(bExp);
+  bMid.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'open' }); open(true); });
+  bExp.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'expand' }); open(true); });
+  bSend.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'send' }); if (listening) stopListen(false, true); });
   sheet = el('section', { id: 'talk-sheet', 'aria-label': 'Talk' });
   var head = el('div', { id: 'talk-head' });
   head.innerHTML = '<b>Talk</b><span class="st" id="talk-st"></span>';
@@ -260,33 +309,40 @@ function build() {
   form.appendChild(inp); form.appendChild(micBtn); form.appendChild(sendBtn);
   inp.addEventListener('input', function () { fitInp(); });
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
-  var grab = el('button', { id: 'talk-grab', type: 'button', 'aria-label': 'Drag to resize Talk, tap to fold it to a bar' }, '<i></i>');
-  peek = el('div', { id: 'talk-peek' });
-  sheet.appendChild(grab); sheet.appendChild(head); sheet.appendChild(setp); sheet.appendChild(peek); sheet.appendChild(logEl); sheet.appendChild(live); sheet.appendChild(offer); sheet.appendChild(form);
+  var grab = el('button', { id: 'talk-grab', type: 'button', 'aria-label': 'Drag to resize Talk, tap to fold it into the bar' }, '<i></i>');
+  sheet.appendChild(grab); sheet.appendChild(head); sheet.appendChild(setp); sheet.appendChild(logEl); sheet.appendChild(live); sheet.appendChild(offer); sheet.appendChild(form);
   var h0 = Number(get('h', 0)); if (h0 > 0) sheet.style.setProperty('--talk-h', h0 + 'px');
-  if (get('sheet', 'open') === 'bar') root.classList.add('bar');
-  // Tap the header (not its buttons) or the last line to fold to a bar / unfold.
-  head.addEventListener('click', function (e) { if (e.target.closest('button')) return; setSheet(root.classList.contains('bar') ? 'open' : 'bar'); });
-  peek.addEventListener('click', function () { setSheet('open'); });
+  // Tap the header (not its buttons) to fold the conversation back into the bar.
+  head.addEventListener('click', function (e) { if (e.target.closest('button')) return; open(false); });
   dragHandle(grab);
   if (VERSION) {
     var vb = el('div', { id: 'talk-ver', 'aria-hidden': 'true' }); vb.textContent = VERSION; root.appendChild(vb);
     var vh = el('span', { class: 'ver' }); vh.textContent = VERSION; head.querySelector('b').after(vh);
   }
-  placeFab(); window.addEventListener('resize', placeFab); setTimeout(placeFab, 600);
-  wireComposers(); setInterval(wireComposers, 1500);
-  root.appendChild(fab); root.appendChild(sheet);
+  root.appendChild(bar); root.appendChild(sheet);
+  spacer = el('div', { id: 'talk-spacer', 'aria-hidden': 'true' });
+  document.body.appendChild(spacer);
   document.body.appendChild(root);
+  wireComposers(); setInterval(wireComposers, 1500);
+  placeBar(); window.addEventListener('resize', function () { scrollers = null; placeBar(); }); setTimeout(placeBar, 600); setTimeout(function () { scrollers = null; placeBar(); }, 2500); setInterval(placeBar, 3000);
   stEl = document.getElementById('talk-st');
 
-  // Tap: show Talk (no recording). Hold: push-to-talk (records while held, sends on release).
-  var pttTimer = null, ptt = false;
-  fab.addEventListener('pointerdown', function () { unlockAudio(); ptt = false; pttTimer = setTimeout(function () { ptt = true; open(true); startListen(); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} }, 350); });
-  var pttEnd = function () { clearTimeout(pttTimer); if (ptt && listening) stopListen(false, true); };
-  fab.addEventListener('pointerup', pttEnd); fab.addEventListener('pointercancel', pttEnd); fab.addEventListener('pointerleave', pttEnd);
-  fab.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-  fab.addEventListener('click', function () { if (ptt) { ptt = false; return; } unlockAudio(); open(true); });
-  close.addEventListener('click', function () { stopListen(true); open(false); });
+  // The bar's mic works like the sheet's ("How the mic works"): tap, speak, tap Send; hold; pause; conversation.
+  // Speaking from the bar keeps the page in view: the words grow in the bar, the answer comes back to it.
+  var bHoldT = null, bHeld = false;
+  bMic.addEventListener('pointerdown', function () { if (S.mic !== 'hold' || vc || listening) return; unlockAudio(); bHeld = false; bHoldT = setTimeout(function () { bHeld = true; startListen(); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} }, 150); });
+  var bHoldEnd = function () { clearTimeout(bHoldT); if (S.mic === 'hold' && bHeld && listening) { trace('bar', { how: 'release' }); stopListen(false, true); } };
+  bMic.addEventListener('pointerup', bHoldEnd); bMic.addEventListener('pointercancel', bHoldEnd); bMic.addEventListener('pointerleave', bHoldEnd);
+  bMic.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  bMic.addEventListener('click', function () {
+    unlockAudio();
+    if (S.mic === 'hold') { if (bHeld) { bHeld = false; return; } if (!listening) { bNote('Hold the mic while you talk'); } return; }
+    if (S.mic === 'conv') { if (vc) endConversation('you'); else { startConversation(); } return; }
+    if (vc) { vc.toggleMute(); return; }
+    if (listening) { trace('bar', { how: 'stop-tap', mode: S.mic }); stopListen(false, true); return; }
+    trace('bar', { how: 'mic', mode: S.mic }); if (S.engine === 'live') { dcWarm(); } startListen();
+  });
+  close.addEventListener('click', function () { open(false); });
   gear.addEventListener('click', function () { var on = root.classList.toggle('settings'); if (on) setp.scrollTop = 0; trace('settings', { open: on }); });
   // The mic follows "How the mic works": send (tap, speak, tap Send), pause (sends when you stop), hold, conv.
   var holdT = null, held = false;
@@ -349,44 +405,73 @@ function build() {
 }
 
 function open(on) { if (on && S.engine === 'live' && me) { dcWarm(); warmMic(); } if (!on) releaseMic(); trace('sheet', { open: !!on, bar: root.classList.contains('bar') }); root.classList.toggle('open', !!on); sset('open', !!on); if (on) setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 50); }
-// Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is.
-function placeFab() {
-  if (!fab) return;
+// Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is, and keep
+// the bar's height free at the end of the page (and of the page's own scrolling panel, on project pages).
+var scrollers = null, lastLift = -1;
+function placeBar() {
+  if (!bar) return;
   // Walk up from the bottom edge: each short bar touching the one below (fixed, sticky, or a page
   // that lays out as a full-height column, like a project page's tabs + "Ask for a change") lifts the button.
   // A dock inset from the edge (bottom: 8px) counts too: probes at 4/12/20 px and 20 px tolerance, also at the
   // button's own side (qb7, 2026-10-12: a home-page dock with bottom:8px was covered by the button).
   var y = window.innerHeight, lift = 0;
+  root.style.pointerEvents = 'none';   // probe the page under the bar, not the bar
   for (var n = 0; n < 4; n++) {
     var top = null;
     [0.15, 0.5, 0.85].forEach(function (fx) {
       [4, 12, 20].forEach(function (dy) {
         var e = document.elementFromPoint(Math.round(window.innerWidth * fx), y - dy);
-        var bar = null;
+        var dock = null;
         for (; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
-          if (root.contains(e)) { bar = null; break; }
+          if (root.contains(e) || e === spacer) { dock = null; break; }
           var r = e.getBoundingClientRect(), cs = getComputedStyle(e);
           var pinned = cs.position === 'fixed' || cs.position === 'sticky' || e.parentElement === document.body;
-          if (pinned && r.height < window.innerHeight * 0.3 && y - r.bottom > -3 && y - r.bottom < 20) { bar = e; break; }
+          if (pinned && r.height < window.innerHeight * 0.3 && y - r.bottom > -3 && y - r.bottom < 20) { dock = e; break; }
         }
-        if (bar) { var t = bar.getBoundingClientRect().top; top = top === null ? t : Math.min(top, t); }
+        if (dock) { var t = dock.getBoundingClientRect().top; top = top === null ? t : Math.min(top, t); }
       });
     });
     if (top === null) break;
     lift = window.innerHeight - top; y = top;
   }
+  root.style.pointerEvents = '';
   // A page can name its docks: [data-talk-dock] near the bottom always lifts the button above it.
   [].forEach.call(document.querySelectorAll('[data-talk-dock]'), function (d) {
     var r = d.getBoundingClientRect();
     if (r.height > 0 && r.bottom > window.innerHeight - 48 && r.top < window.innerHeight) lift = Math.max(lift, window.innerHeight - r.top);
   });
-  fab.style.bottom = 'calc(' + (lift ? Math.round(lift) + 12 : 16) + 'px + env(safe-area-inset-bottom))';
+  lift = Math.round(lift);
+  bar.style.bottom = 'calc(' + (lift ? lift + 8 : 8) + 'px + env(safe-area-inset-bottom))';
   var vb = document.getElementById('talk-ver');
-  if (vb) { vb.style.right = '6px'; vb.style.bottom = 'calc(' + (lift ? Math.round(lift) : 0) + 'px + 2px + env(safe-area-inset-bottom))'; }
+  if (vb) { vb.style.right = '6px'; vb.style.bottom = 'calc(' + (lift + bar.offsetHeight + 12) + 'px + env(safe-area-inset-bottom))'; }
+  reserve(lift);
 }
-// open (the conversation, at the height they chose) | bar (header + input only, the page shows). Per device.
-function setSheet(st) { trace('sheet', { state: st, h: Math.round(sheet.getBoundingClientRect().height) }); root.classList.toggle('bar', st === 'bar'); set('sheet', st); if (st === 'open') setTimeout(function () { logEl.scrollTop = logEl.scrollHeight; }, 60); }
-// The handle: drag to any height (remembered), low enough folds to the bar, to the bottom closes; a tap folds/unfolds.
+// The bar covers the last ~64 px above the page's own bottom bars: the page gets that much more room at its end.
+// Body-scrolling pages: a spacer after everything. Pages that scroll a panel of their own (a project page's view
+// between its header and its composer): that panel's bottom padding, measured once the page has drawn.
+function reserve(lift) {
+  var r = bar.getBoundingClientRect(), need = Math.round(r.height + 16);
+  if (!r.height || root.classList.contains('open')) return;
+  // Only a page that scrolls as a whole gets the spacer: an app-like page (a full-height column) must not start to scroll.
+  var docH = document.documentElement.scrollHeight - (spacer.offsetHeight || 0);
+  var sp = docH > window.innerHeight + 4 ? need : 0;
+  if (spacer.offsetHeight !== sp) spacer.style.height = sp + 'px';
+  if (!scrollers) {
+    scrollers = [].filter.call(document.querySelectorAll('main, [class*=view], [class*=scroll], section, div'), function (e) {
+      if (root.contains(e) || e === document.body) return false;
+      var cs = getComputedStyle(e);
+      return /(auto|scroll)/.test(cs.overflowY) && e.clientHeight > 200 && e.clientWidth > 280;
+    }).slice(0, 4);
+  }
+  scrollers.forEach(function (e) {
+    if (e.__talkPad == null) e.__talkPad = parseFloat(getComputedStyle(e).paddingBottom) || 0;
+    var er = e.getBoundingClientRect(), over = er.bottom - r.top;
+    var pad = over > 0 ? Math.round(over + 12) : 0;
+    if (e.__talkAdd !== pad) { e.__talkAdd = pad; e.style.paddingBottom = (e.__talkPad + pad) + 'px'; }
+  });
+  if (lift !== lastLift) { lastLift = lift; trace('bar_place', { lift: lift, h: Math.round(r.height), spacer: sp, scrollers: scrollers.length }); }
+}
+// The handle: drag to any height (remembered), low enough folds the conversation into the bar; a tap folds it.
 function dragHandle(g) {
   var y0 = 0, h0 = 0, moved = false, on = false;
   g.addEventListener('pointerdown', function (e) { on = true; moved = false; y0 = e.clientY; h0 = sheet.getBoundingClientRect().height; g.setPointerCapture(e.pointerId); });
@@ -394,21 +479,20 @@ function dragHandle(g) {
     if (!on) return;
     var dy = y0 - e.clientY;
     if (!moved && Math.abs(dy) < 6) return;
-    if (!moved) { moved = true; sheet.classList.add('drag'); root.classList.remove('bar'); }
+    if (!moved) { moved = true; sheet.classList.add('drag'); }
     var h = Math.max(96, Math.min(window.innerHeight * 0.92, h0 + dy));
     sheet.style.setProperty('--talk-h', h + 'px');
   });
-  var end = function (e) {
+  var end = function () {
     if (!on) return; on = false; sheet.classList.remove('drag');
-    if (!moved) return setSheet(root.classList.contains('bar') ? 'open' : 'bar');
+    if (!moved) return open(false);
     var h = sheet.getBoundingClientRect().height;
-    if (h < 110) { stopListen(true); open(false); sheet.style.setProperty('--talk-h', (Number(get('h', 0)) || window.innerHeight * 0.62) + 'px'); return; }
-    if (h < 200) { sheet.style.setProperty('--talk-h', (Number(get('h', 0)) || window.innerHeight * 0.62) + 'px'); return setSheet('bar'); }
-    set('h', Math.round(h)); setSheet('open');
+    if (h < 200) { sheet.style.setProperty('--talk-h', (Number(get('h', 0)) || window.innerHeight * 0.62) + 'px'); return open(false); }
+    set('h', Math.round(h)); trace('sheet', { h: Math.round(h) });
   };
   g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
 }
-function status(t) { stEl.textContent = t || ''; }
+function status(t) { stEl.textContent = t || ''; barSync(); }
 function add(who, text, links) { if (run && who !== 'you') run.texts.push(String(text)); hist.push({ who: who, text: String(text), links: links || undefined }); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
 function render() {
   logEl.innerHTML = '';
@@ -418,7 +502,7 @@ function render() {
     logEl.appendChild(h);
   }
   var lastMsg = hist.length ? hist[hist.length - 1] : null;
-  if (peek) peek.textContent = lastMsg && lastMsg.who !== 'you' ? String(lastMsg.text).replace(/\s+/g, ' ') : '';
+  barSync();
   hist.forEach(function (m) {
     var d = el('div', { class: m.who });
     // Answers from the code reader come as light markdown: show it as plain lines.
@@ -431,6 +515,40 @@ function render() {
     logEl.appendChild(d);
   });
   logEl.scrollTop = logEl.scrollHeight;
+}
+
+// The bar shows one thing: the question waiting for a yes, what you are saying, what Talk is doing, or the last answer.
+function barSync() {
+  if (!bar) return;
+  var mine = listening && !cInto;   // words for Talk (a page's composer shows its own)
+  root.classList.toggle('live', mine && !offerState);
+  root.classList.toggle('boffer', !!offerState);
+  var t = '', dim = false, last = null;
+  for (var i = hist.length - 1; i >= 0; i--) if (hist[i].who !== 'you') { last = hist[i]; break; }
+  if (offerState) t = offerState.text || (last ? last.text : 'Go ahead?');
+  else if (mine) { t = inp.value.trim(); if (!t) { t = stEl.textContent || 'Listening\u2026'; dim = true; } }
+  else if (busy && stEl.textContent) { t = stEl.textContent; dim = true; }
+  else if (last) t = last.text;
+  else { t = 'Say what you want to do'; dim = true; }
+  bText.textContent = String(t).replace(/\s+/g, ' ').trim();
+  bText.classList.toggle('dim', dim);
+  var on = (listening && !cInto) || (vc && vcStatus !== 'idle');
+  bMic.classList.toggle('on', !!on); bMic.innerHTML = on ? ICON.stop : ICON.mic;
+  bMic.setAttribute('aria-label', on ? 'Stop' : 'Speak to qodebase');
+  barMode();
+}
+function bNote(t) { add('note', t); }
+var miniT = null;
+function barMode() {
+  var m = document.body.getAttribute('data-talk-bar') || '';
+  if (/[?&](clean|rec=1)\b/.test(location.search) || document.body.classList.contains('rec')) m = 'off';
+  root.classList.toggle('nobar', m === 'off');
+  if (m !== 'mic') { root.classList.remove('miconly'); return; }
+  // Mic only, unless something is happening; the last answer stays readable for 6 s.
+  var active = listening || busy || !!offerState || (vc && vcStatus !== 'idle');
+  clearTimeout(miniT);
+  if (active) root.classList.remove('miconly');
+  else miniT = setTimeout(function () { root.classList.add('miconly'); placeBar(); }, root.classList.contains('miconly') ? 0 : 6000);
 }
 
 // ---- Pointing ----------------------------------------------------------------
@@ -474,6 +592,10 @@ function submit(text) {
   lastText = String(text || '');
   trace('said', { text: text, spoken: lastSpoken, engine: lastSpoken ? S.engine : 'typed' });
   if (busy) return;
+  // A short yes / no answers the question on screen (Stop this run? Send it to the agents?): no model.
+  var said = String(text || '').trim(), short = said.split(/\s+/).length <= 5;
+  if (offerState && short && YES_RX.test(said)) { var y = offerState.yes; trace('offer_voice', { answer: 'yes', text: said }); add('you', said); offerOff(); y(); return; }
+  if (offerState && said.split(/\s+/).length <= 3 && NO_RX.test(said)) { trace('offer_voice', { answer: 'no', text: said }); add('you', said); offerOff(); add('app', 'Okay, I left it.'); return; }
   busy = true; unmark(); offerOff();
   add('you', text);
   status('Thinking…');
@@ -485,9 +607,20 @@ function submit(text) {
     var c = r.cmd;
     if (run) { run.mode = c.mode; run.action = c.op; }
     logEv('decide', { text: text, mode: c.mode, mode_p: c.modeP, op: c.op, p: c.p, risky: c.risky, ms: Date.now() - t0 });
-    if ((c.risky || 0) >= 0.5) {
-      add('ai', 'That would change or remove something, so I will leave the doing to you.');
+    // Delete, sign out, revoke: never by voice. Stop, pause, merge, build, spend: after a yes (said or tapped).
+    var g = gateOf(c);
+    if (g) logEv('gate', { op: c.op, label: c.label, risky: c.risky, destroys: c.destroys, gate: g });
+    if (g === 'refuse') {
+      add('ai', 'That would remove something for good, so I will leave the doing to you.');
       if (c.op === 'go' && c.href) offerOn('Take me to ' + (c.label || 'that page') + '?', function () { act(c); });
+      else if (c.target && byId(c.target)) { unmark(); mark(byId(c.target)); }
+      return done();
+    }
+    if (g === 'confirm') {
+      var q = confirmLine(c);
+      add('ai', q); say(q);
+      var t = byId(c.target); if (t && t.getClientRects().length) { unmark(); mark(t, true); }
+      offerOn(q, function () { unmark(); c.confirmed = true; act(c); }, confirmVerb(c));
       return done();
     }
     if (c.greet) { var hi = greeting(c.example); add('ai', hi); say(hi); return done(); }
@@ -515,6 +648,25 @@ function submit(text) {
   }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'decide', err: String(e) }); done(); });
 }
 function done() { busy = false; status(''); finish(); }
+// The gate (same words as talkdecide.ts gate(), which the conversation agent uses).
+var CONFIRM_RX = /^(stop|pause|resume|merge|build it|build|send back|start|watch a run|run for real|replay|replace|connect my plan|save the key|shot|fork|import)\b/i;
+var DESTROY_RX = /^(remove|delete|revoke|sign out|log out|uninstall|disconnect|make (it )?(private|public)|clear)\b/i;
+var YES_RX = /^\s*(yes|yeah|yep|yup|sure|ok(ay)?|do it|go( ahead)?|please( do)?|confirm|send( it)?|fork( it)?|stop it|go for it)\b/i;
+var NO_RX = /^\s*(no|nope|nah|cancel|don'?t|never ?mind|not now|leave it)\b/i;
+function gateOf(c) {
+  if (['press', 'go', 'type'].indexOf(c.op) < 0) return (c.risky || 0) >= 0.5 && ['status', 'list', 'code'].indexOf(c.op) < 0 ? 'refuse' : null;
+  var label = String(c.label || '').trim();
+  if ((c.destroys || 0) >= 0.5 || DESTROY_RX.test(label)) return 'refuse';
+  if ((c.risky || 0) >= 0.5 || (c.op === 'press' && CONFIRM_RX.test(label))) return 'confirm';
+  return null;
+}
+function plainLabel(l) { return String(l || '').replace(/\s*\((switch|tab|choice|slider)[^)]*\)$/, '').replace(/\s*\((.*)\)$/, ', $1'); }
+function confirmLine(c) {
+  if (c.op === 'press') return 'Press \u201c' + plainLabel(c.label) + '\u201d? Say yes, or tap ' + confirmVerb(c) + '.';
+  if (c.op === 'go') return 'Open ' + (c.label || 'that page') + '? Say yes, or tap Go.';
+  return describe(c) + '? Say yes, or tap Go.';
+}
+function confirmVerb(c) { var w = String(c.label || '').trim().split(/\s+/)[0] || 'Go'; return c.op === 'press' && w.length <= 10 ? w.charAt(0).toUpperCase() + w.slice(1) : 'Go'; }
 // A greeting or small talk: a friendly line and three things to try, one with their own project.
 function greeting(example) {
   var p = example || 'todo';
@@ -619,13 +771,26 @@ function describe(c) {
   if (c.op === 'type') return 'type “' + c.text + '” into “' + c.label + '”';
   if (c.op === 'scroll') return 'scroll to ' + (c.label || c.section);
   if (c.op === 'search') return 'search for “' + c.text + '”';
+  if (c.op === 'status') return 'tell you what is going on';
+  if (c.op === 'list') return 'list your projects';
+  if (c.op === 'code') return 'read the code of ' + (c.label || 'the project') + ' to answer';
   return c.op;
 }
 
 function act(c, withPreview) {
-  var target = c.target && byId(c.target);
+  var target = c.target && /^x/.test(c.target) ? null : find(c);
   var go = function () {
     unmark();
+    if (c.op === 'go' && /^#/.test(String(c.href || ''))) c.href = location.pathname + location.search + c.href;
+    if (c.op === 'go') {
+      // A place on this same page (#/run/…, #/timeline): change the hash, the page draws it; no reload.
+      var u = null; try { u = new URL(c.href, location.href); } catch (e) {}
+      if (u && u.origin === location.origin && u.pathname === location.pathname && u.search === location.search && u.hash && u.hash !== location.hash) {
+        location.hash = u.hash; add('app', 'Opened ' + (c.label || u.hash) + '.'); sset('last', c.label || u.hash);
+        setTimeout(function () { scrollers = null; placeBar(); }, 400);
+        return after();
+      }
+    }
     if (c.op === 'go' && String(c.href).replace(/\/$/, '') === (location.pathname + location.search).replace(/\/$/, '')) {
       // Already here: a reload would drop the conversation and repeat the page for nothing.
       add('app', 'You are on ' + (c.label || 'that page') + '.');
@@ -634,14 +799,19 @@ function act(c, withPreview) {
     if (c.op === 'go') {
       add('app', 'Opening ' + (c.label || c.href) + '…');
       sset('last', c.label || c.href);
-      sset('open', true);
       busy = false;
       leave(function () { location.assign(c.href); });
       return;
     }
     if (c.op === 'back') { add('app', 'Going back…'); busy = false; leave(function () { history.back(); }); return; }
-    if (c.op === 'press' && target) { add('app', 'Pressed “' + c.label + '”.'); target.click(); }
-    else if (c.op === 'type' && target) { typeInto(target, c.text); add('app', 'Typed “' + c.text + '”.'); offerSubmit(target); }
+    if (c.op === 'press' && c.target && /^x/.test(c.target)) { return pageAction(c); }
+    if (c.op === 'press' && target) {
+      var before = visibleButtons();
+      add('app', 'Pressed \u201c' + plainLabel(c.label) + '\u201d.'); target.click();
+      // A button that asks again ("Stop" → "Stop this run", "Remove" → tap again): after a yes, press the second one too.
+      if (c.confirmed) return followConfirm(c, before);
+    }
+    else if (c.op === 'type' && target) { typeInto(target, c.text); add('app', target.tagName === 'SELECT' || target.type === 'range' ? 'Set \u201c' + plainLabel(c.label) + '\u201d to ' + (target.tagName === 'SELECT' ? (target.selectedOptions[0] || {}).textContent : target.value) + '.' : 'Typed \u201c' + c.text + '\u201d.'); if (target.tagName !== 'SELECT' && target.type !== 'range') offerSubmit(target); }
     else if (c.op === 'scroll') {
       if (c.section === 'top') window.scrollTo({ top: 0, behavior: 'smooth' });
       else if (c.section === 'bottom') window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -649,16 +819,82 @@ function act(c, withPreview) {
       add('app', 'Scrolled to ' + (c.label || c.section) + '.');
     }
     else if (c.op === 'search') { add('note', 'There is no search box on this page.'); return ask('Find ' + c.text, ''); }
-    else { add('note', 'Could not find that on the page any more.'); }
+    else { add('note', 'Could not find that on the page any more.'); logEv('act_missing', { op: c.op, target: c.target, label: c.label }); }
+    after();
+  };
+  var after = function () {
     var p = sget('pending', null);
     if (p) { sset('pending', null); return ask(p.text, p.did); }
     done();
   };
-  if (withPreview && target) { mark(target, true); status(describe(c)); setTimeout(go, 450); }
-  else go();
+  var start = function () { if (withPreview && target && target.getClientRects().length) { mark(target, true); status(describe(c)); setTimeout(go, 450); } else go(); };
+  // Inside a closed panel (Build's settings, a closed <details>): open it first, then do it.
+  if (target && !target.getClientRects().length) reveal(target, function () { target = find(c) || target; start(); }); else start();
+}
+// The element a command names. Pages that redraw every few seconds (Runs, Agents at work) drop the data-talk ids:
+// read the page again and take the element with the same words.
+function find(c) {
+  var e = c.target ? byId(c.target) : null;
+  if (e && document.contains(e)) return e;
+  if (!c.label) return null;
+  var want = String(c.label).toLowerCase(), bare = want.replace(/\s*\(.*\)$/, '');
+  var items = talkScan(document);
+  var hit = items.filter(function (i) { return i.text.toLowerCase() === want; })[0] || items.filter(function (i) { return i.text.toLowerCase().replace(/\s*\(.*\)$/, '') === bare; })[0];
+  trace('refind', { label: c.label, id: hit ? hit.id : null });
+  return hit ? byId(hit.id) : null;
+}
+function reveal(e, cb) {
+  var d = e.closest('details:not([open])'); if (d) d.open = true;
+  var h = e.closest('[hidden]');
+  if (h && h.id) { var t = document.querySelector('[aria-controls="' + h.id + '"]'); if (t && t.getClientRects().length) t.click(); }
+  trace('reveal', { details: !!d, panel: h ? h.id || h.className : null });
+  setTimeout(cb, 300);
+}
+function visibleButtons() { return [].filter.call(document.querySelectorAll('button, [role=button]'), function (b) { return b.getClientRects().length && !root.contains(b); }); }
+function followConfirm(c, before) {
+  var verb = String(c.label || '').trim().split(/\s+/)[0].toLowerCase();
+  setTimeout(function () {
+    var again = visibleButtons().filter(function (b) {
+      if (before.indexOf(b) >= 0) return false;
+      var t = String(b.getAttribute('aria-label') || b.innerText || '').trim().toLowerCase();
+      return verb && t.indexOf(verb) === 0;
+    })[0];
+    trace('follow_confirm', { label: c.label, found: again ? String(again.innerText || '').trim().slice(0, 60) : null });
+    if (again) { again.click(); add('app', 'Pressed \u201c' + String(again.innerText || again.getAttribute('aria-label') || '').trim() + '\u201d.'); }
+    done();
+  }, 400);
+}
+// Actions a page names itself (window.__talkActions: a moment on a timeline, the next slide): run with the sentence.
+function pageAction(c) {
+  var list = window.__talkActions || [], a = null;
+  list.forEach(function (x, i) { if ('x' + (x.id || i) === c.target) a = x; });
+  if (!a) { add('note', 'Could not find that on the page any more.'); return done(); }
+  var t0 = Date.now();
+  Promise.resolve().then(function () { return a.run(lastText || c.text || ''); }).then(function (r) {
+    logEv('page_action', { id: c.target, ms: Date.now() - t0, ok: r !== false });
+    add('app', typeof r === 'string' ? r : r === false ? 'That did not work here.' : 'Done: ' + a.text + '.');
+    done();
+  }).catch(function (e) { logEv('page_action', { id: c.target, err: String(e) }); add('note', 'That did not work: ' + String(e && e.message || e)); done(); });
 }
 
+var NUMS = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, twenty: 20, thirty: 30, fifty: 50, hundred: 100 };
 function typeInto(t, text) {
+  if (t.tagName === 'SELECT') {
+    // The option whose words match what was said ("Sonnet", "the cheapest one").
+    var w = String(text || '').toLowerCase(), best = null;
+    [].forEach.call(t.options, function (o) { var ot = String(o.textContent || '').toLowerCase(); if (!best && (ot === w || o.value.toLowerCase() === w)) best = o; });
+    if (!best) [].forEach.call(t.options, function (o) { var ot = String(o.textContent || '').toLowerCase(); if (!best && (ot.indexOf(w) >= 0 || w.indexOf(ot) >= 0 || w.indexOf(o.value.toLowerCase()) >= 0)) best = o; });
+    if (best) { t.value = best.value; t.dispatchEvent(new Event('input', { bubbles: true })); t.dispatchEvent(new Event('change', { bubbles: true })); }
+    return;
+  }
+  if (t.type === 'range') {
+    var m = /-?\d+(\.\d+)?/.exec(String(text)), v = m ? Number(m[0]) : NUMS[String(text).toLowerCase().replace(/[^a-z]/g, '')];
+    if (v == null || isNaN(v)) return;
+    v = Math.max(Number(t.min || 0), Math.min(Number(t.max || 100), v));
+    var rs = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; rs.call(t, String(v));
+    t.dispatchEvent(new Event('input', { bubbles: true })); t.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
   t.focus();
   if (t.isContentEditable) { t.textContent = text; t.dispatchEvent(new InputEvent('input', { bubbles: true })); return; }
   var proto = t.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
@@ -668,14 +904,29 @@ function typeInto(t, text) {
   t.dispatchEvent(new Event('change', { bubbles: true }));
 }
 function offerSubmit(t) {
-  var f = t.form; if (!f) return;
-  var b = f.querySelector('button[type=submit], button:not([type])');
+  var f = t.form, b = null;
+  if (f) b = f.querySelector('button[type=submit], button:not([type])');
+  else {
+    // A box outside a form ("What should change?" + "Send back to Agent 3"): the send-like button next to it.
+    for (var box = t.parentElement, i = 0; box && i < 4 && !b; box = box.parentElement, i++)
+      b = [].filter.call(box.querySelectorAll('button'), function (x) { return x.getClientRects().length && /^(send|ask|save|post|reply|answer)/i.test(String(x.innerText || x.getAttribute('aria-label') || '').trim()); })[0] || null;
+    if (b) { var lab = String(b.innerText || 'Send').trim(); offerOn('Send it?', function () { if (CONFIRM_RX.test(lab)) { add('app', 'Pressed \u201c' + lab + '\u201d.'); } b.click(); }, lab.split(/\s+/)[0]); }
+    return;
+  }
   if (!b) return;
   offerOn('Send it?', function () { if (f.requestSubmit) f.requestSubmit(b); else b.click(); }, (b.innerText || 'Send').trim());
 }
 
+var offerState = null;
 function offerOn(text, yes, yesLabel) {
   if (run) run.texts.push(text);
+  offerState = { text: text || '', yes: yes, label: yesLabel || 'Go' };
+  bOffer.innerHTML = '';
+  var by = el('button', { type: 'button', class: 'talk-chip pri' }); by.textContent = yesLabel || 'Go';
+  var bn = el('button', { type: 'button', class: 'talk-chip', 'aria-label': 'No' }); bn.textContent = 'No';
+  by.onclick = function () { unlockAudio(); trace('offer_tap', { answer: 'yes', where: 'bar' }); offerOff(); yes(); };
+  bn.onclick = function () { trace('offer_tap', { answer: 'no', where: 'bar' }); offerOff(); };
+  bOffer.appendChild(by); bOffer.appendChild(bn);
   offer.innerHTML = '';
   var s = el('span'); s.textContent = text || '';
   var y = el('button', { type: 'button', class: 'talk-chip pri' }); y.textContent = yesLabel || 'Go';
@@ -685,9 +936,20 @@ function offerOn(text, yes, yesLabel) {
   if (text) offer.appendChild(s);   // in a conversation the question is spoken (and in the log): buttons only
   offer.appendChild(y); offer.appendChild(n);
   offer.classList.add('on');
+  barSync();
 }
-function offerOff() { offer.classList.remove('on'); offer.innerHTML = ''; }
+function offerOff() { offerState = null; offer.classList.remove('on'); offer.innerHTML = ''; if (bOffer) bOffer.innerHTML = ''; barSync(); }
 
+// The chat lane may press buttons too: the same gate as the fast lane (it never stops, merges or deletes on its own).
+function chatPress(b) {
+  var label = String(b.getAttribute('aria-label') || b.innerText || '').trim().split('\n')[0];
+  var c = { op: 'press', label: label, target: b.getAttribute('data-talk') };
+  var g = gateOf(c);
+  logEv('chat_press', { label: label, gate: g });
+  if (g === 'refuse') { add('note', 'I left \u201c' + label + '\u201d for you to press.'); unmark(); mark(b); return; }
+  if (g === 'confirm') { offerOn(confirmLine(c), function () { c.confirmed = true; act(c); }, confirmVerb(c)); return; }
+  add('app', 'Pressed \u201c' + label + '\u201d.'); b.click();
+}
 function ask(text, did) {
   busy = true;
   status('Answering…');
@@ -703,7 +965,7 @@ function ask(text, did) {
     var nav = null;
     acts.forEach(function (a) {
       if (a.name === 'show') showSeq((a.args && a.args.ids) || []);
-      else if (a.name === 'press') { var b = byId(a.args.id); if (b) { add('app', 'Pressed “' + (b.innerText || b.getAttribute('aria-label') || '').trim() + '”.'); b.click(); } }
+      else if (a.name === 'press') { var b = byId(a.args.id); if (b) chatPress(b); }
       else if (a.name === 'type_into') { var f = byId(a.args.id); if (f) { typeInto(f, String(a.args.text || '')); offerSubmit(f); } }
       else if (a.name === 'go' && !did) {
         var to = String(a.args.to || ''); var l = byId(to);
@@ -774,6 +1036,7 @@ function setListening(on) {
   clearInterval(tick);
   if (on) { t0 = Date.now(); tick = setInterval(function () { status('Listening ' + Math.floor((Date.now() - t0) / 1000) + 's'); }, 250); status('Listening'); }
   else if (!busy) status('');
+  barSync();
 }
 function startListen() {
   trace('listen_start', { engine: S.engine, lang: S.lang, listening: listening, busy: busy });
@@ -1138,6 +1401,7 @@ function liveFinish(text, sendIt) {
     if (cInto) {
       setInp(all); var cf = cInto.closest('form'); cInto = null; cMic = null; if (cf && cf.__talkSync) cf.__talkSync();
       if (cf && cf.__sendAfter) { cf.__sendAfter = 0; if (all) { trace('cmic', { how: 'sent', chars: all.length }); if (cf.requestSubmit) cf.requestSubmit(); else cf.dispatchEvent(new Event('submit', { cancelable: true })); } }
+      else if (cf && final && !base) suggestFromComposer(final, cf);
       return;
     }   // the page's composer: its own Send sends
     if (!sendIt) { setInp(all); if (!final) status('I did not hear anything'); return; }   // tap, speak, tap Send: the words wait in the box
@@ -1202,7 +1466,7 @@ function startConversation() {
       vcStatus = st; vcActive();
       if (st === 'listening' || st === 'idle') vcFlush(vc.transcript || [], true);
       status(st === 'listening' ? 'Listening' : st === 'thinking' ? 'Thinking\u2026' : st === 'speaking' ? 'Speaking' : '');
-      fab.classList.toggle('on', st !== 'idle');
+      bMic.classList.toggle('on', st !== 'idle');
     });
     vc.addEventListener('interimtranscript', function (t) { live.textContent = t || ''; if (t) vcActive(); });
     vc.addEventListener('transcriptchange', function (msgs) { vcFlush(msgs, false); vcActive(); });
@@ -1235,7 +1499,7 @@ function endConversation(why) {
   if (vc) { try { vc.endCall(); } catch (e) {} try { vc.disconnect(); } catch (e) {} }
   vc = null; vcSeen = 0; vcStatus = 'idle'; sset('call', false);
   if (convBtn) { convBtn.classList.remove('on'); convBtn.setAttribute('aria-label', 'Start a conversation'); }
-  fab.classList.remove('on'); live.textContent = ''; status('');
+  bMic.classList.remove('on'); live.textContent = ''; status('');
   if (why === 'quiet') add('note', 'Ended the conversation after 30 seconds of quiet.');
   if (why === 'minutes') add('note', 'That is all the talking time for today.');
   logEv('vc_end', { why: why });
@@ -1261,7 +1525,7 @@ function onVoiceMsg(d) {
   if (d.type === 'talk-chat') {
     (d.actions || []).forEach(function (a) {
       if (a.name === 'show') showSeq((a.args && a.args.ids) || []);
-      else if (a.name === 'press') { var b = byId(a.args.id); if (b) b.click(); }
+      else if (a.name === 'press') { var b = byId(a.args.id); if (b) chatPress(b); }
       else if (a.name === 'type_into') { var f = byId(a.args.id); if (f) { typeInto(f, String(a.args.text || '')); offerSubmit(f); } }
       // A page the answer chose by itself is offered, not opened: in a conversation nobody is watching the screen.
       else if (a.name === 'go') { var to = String(a.args.to || ''); var l = byId(to); var href = l ? l.getAttribute('href') : (to.charAt(0) === '/' ? to : null); if (href) { var g = { op: 'go', href: href, label: l ? (l.innerText || href).split('\n')[0] : href }; offerOn('Open ' + g.label + '?', function () { vcNavigate(g); }); } }
@@ -1305,12 +1569,11 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
     if (probe && probe.state === 'running') { probe.close(); startConversation(); }
     else { if (probe) probe.close(); offerOn('Keep talking?', function () { unlockAudio(); startConversation(); }, 'Talk'); }
   }
-  if (sget('open', false)) {
-    open(true);
-    var last = hist[hist.length - 1];
-    if (last && last.who === 'app' && /^Opening /.test(last.text)) { hist[hist.length - 1] = { who: 'app', text: last.text.replace(/^Opening (.*)…$/, 'Opened $1.') }; sset('log', hist); render(); }
-    var p = sget('pending', null);
-    if (p) { sset('pending', null); setTimeout(function () { ask(p.text, p.did); }, 300); }
-  }
+  // Coming from a page Talk opened: the bar (or the conversation, if it was open) says so, and a pending question is answered here.
+  if (sget('open', false)) open(true);
+  var last = hist[hist.length - 1];
+  if (last && last.who === 'app' && /^Opening /.test(last.text)) { hist[hist.length - 1] = { who: 'app', text: last.text.replace(/^Opening (.*)…$/, 'Opened $1.') }; sset('log', hist); render(); }
+  var p = sget('pending', null);
+  if (p) { sset('pending', null); setTimeout(function () { ask(p.text, p.did); }, 300); }
 }).catch(function () {});
 })();`;

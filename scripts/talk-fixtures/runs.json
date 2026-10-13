@@ -1,0 +1,571 @@
+{
+ "path": "/runs",
+ "title": "Scale runs \u00b7 qodebase",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "Scale runs"
+  },
+  {
+   "id": "h2",
+   "kind": "heading",
+   "text": "Fleet runs"
+  },
+  {
+   "id": "h3",
+   "kind": "heading",
+   "text": "S5c batched, paced per call (gemma + glm-4.7, Gemini overflow)"
+  },
+  {
+   "id": "h4",
+   "kind": "heading",
+   "text": "S5b batched (gemma + glm-4.7, Gemini overflow)"
+  },
+  {
+   "id": "h5",
+   "kind": "heading",
+   "text": "B1"
+  },
+  {
+   "id": "h6",
+   "kind": "heading",
+   "text": "S5"
+  },
+  {
+   "id": "h7",
+   "kind": "heading",
+   "text": "S4e 4,400 agents / 88 copies in 2 namespaces (cache)"
+  },
+  {
+   "id": "h8",
+   "kind": "heading",
+   "text": "S4d 4,750 agents / 95 copies (cache)"
+  },
+  {
+   "id": "h9",
+   "kind": "heading",
+   "text": "S4c 1,000 agents / 20 copies (cache)"
+  },
+  {
+   "id": "h10",
+   "kind": "heading",
+   "text": "S4b 200 agents / 1 copy (cache)"
+  },
+  {
+   "id": "h11",
+   "kind": "heading",
+   "text": "S4a 200 agents / 4 copies (cache)"
+  },
+  {
+   "id": "h12",
+   "kind": "heading",
+   "text": "Real builds"
+  },
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase home",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "Build something new",
+   "href": "/build"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox, nothing new",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "Copy 12,955 files got comments, 1,069 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-12/fmv6sbaud"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "Copy 22,754 files got comments, 1,069 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-14/fmv6sh281"
+  },
+  {
+   "id": "l6",
+   "kind": "link",
+   "text": "Copy 32,899 files got comments, 1,069 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-13/fmv6sdht6"
+  },
+  {
+   "id": "l7",
+   "kind": "link",
+   "text": "Open: drill into moments and commits",
+   "href": "#/step/S5c%20batched%2C%20paced%20per%20call%20(gemma%20%2B%20glm-4.7%2C%20Gemini%20overflow)"
+  },
+  {
+   "id": "l8",
+   "kind": "link",
+   "text": "Copy 12,973 files got comments, 1,069 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-11/fmv6rzp4n"
+  },
+  {
+   "id": "l9",
+   "kind": "link",
+   "text": "Copy 22,969 files got comments, 1,069 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-10/fmv6rxhnq"
+  },
+  {
+   "id": "l10",
+   "kind": "link",
+   "text": "Copy 32,968 files got comments, 1,069 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-9/fmv6rwo3r"
+  },
+  {
+   "id": "l11",
+   "kind": "link",
+   "text": "Open: drill into moments and commits",
+   "href": "#/step/S5b%20batched%20(gemma%20%2B%20glm-4.7%2C%20Gemini%20overflow)"
+  },
+  {
+   "id": "l12",
+   "kind": "link",
+   "text": "Copy 151 files got comments, 19 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-5/fmv6rj9j5"
+  },
+  {
+   "id": "l13",
+   "kind": "link",
+   "text": "Copy 251 files got comments, 19 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-6/fmv6rkgbw"
+  },
+  {
+   "id": "l14",
+   "kind": "link",
+   "text": "Copy 351 files got comments, 19 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-7/fmv6rld7f"
+  },
+  {
+   "id": "l15",
+   "kind": "link",
+   "text": "Copy 449 files got comments, 19 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-8/fmv6rlmud"
+  },
+  {
+   "id": "l16",
+   "kind": "link",
+   "text": "Open: drill into moments and commits",
+   "href": "#/step/B1"
+  },
+  {
+   "id": "l17",
+   "kind": "link",
+   "text": "Copy 12,990 files got comments, 1,069 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-4/fmv6qxvn1"
+  },
+  {
+   "id": "l18",
+   "kind": "link",
+   "text": "Copy 22,989 files got comments, 1,069 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-2/fmv6qw9jf"
+  },
+  {
+   "id": "l19",
+   "kind": "link",
+   "text": "Copy 31,053 files got comments, 417 already had them, stoppedTimeline",
+   "href": "#/run/fleet-vscode-src-1/fmv6qv8oz"
+  },
+  {
+   "id": "l20",
+   "kind": "link",
+   "text": "Copy 438 files got comments, 29 already had them, doneTimeline",
+   "href": "#/run/fleet-vscode-src-3/fmv6qwvp6"
+  },
+  {
+   "id": "l21",
+   "kind": "link",
+   "text": "Copy 560 files got comments, 81 already had them, stoppedTimeline",
+   "href": "#/run/fleet-vscode-src-3/fmv6r4vz5"
+  },
+  {
+   "id": "l22",
+   "kind": "link",
+   "text": "Open: drill into moments and commits",
+   "href": "#/step/S5"
+  },
+  {
+   "id": "l23",
+   "kind": "link",
+   "text": "Copy 1319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-13/fmv6q0uq4"
+  },
+  {
+   "id": "l24",
+   "kind": "link",
+   "text": "Copy 2319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-15/fmv6q0rei"
+  },
+  {
+   "id": "l25",
+   "kind": "link",
+   "text": "Copy 3319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-12/fmv6q0tb6"
+  },
+  {
+   "id": "l26",
+   "kind": "link",
+   "text": "Copy 4319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-1/fmv6pzht2"
+  },
+  {
+   "id": "l27",
+   "kind": "link",
+   "text": "Copy 5319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-11/fmv6q06g7"
+  },
+  {
+   "id": "l28",
+   "kind": "link",
+   "text": "Copy 6319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-20/fmv6q1ejl"
+  },
+  {
+   "id": "l29",
+   "kind": "link",
+   "text": "Copy 7319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-16/fmv6q0q1e"
+  },
+  {
+   "id": "l30",
+   "kind": "link",
+   "text": "Copy 8319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-17/fmv6q0p58"
+  },
+  {
+   "id": "l31",
+   "kind": "link",
+   "text": "Copy 9319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-3/fmv6pzl2r"
+  },
+  {
+   "id": "l32",
+   "kind": "link",
+   "text": "Copy 10319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-14/fmv6q0re6"
+  },
+  {
+   "id": "l33",
+   "kind": "link",
+   "text": "Copy 11319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-22/fmv6q1gxd"
+  },
+  {
+   "id": "l34",
+   "kind": "link",
+   "text": "Copy 12319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-18/fmv6q1fhi"
+  },
+  {
+   "id": "l35",
+   "kind": "link",
+   "text": "Copy 13319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-21/fmv6q1g97"
+  },
+  {
+   "id": "l36",
+   "kind": "link",
+   "text": "Copy 14319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-2/fmv6pzigo"
+  },
+  {
+   "id": "l37",
+   "kind": "link",
+   "text": "Copy 15319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-4/fmv6pzjzi"
+  },
+  {
+   "id": "l38",
+   "kind": "link",
+   "text": "Copy 16319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-5/fmv6pzkcu"
+  },
+  {
+   "id": "l39",
+   "kind": "link",
+   "text": "Copy 17319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-9/fmv6q01tm"
+  },
+  {
+   "id": "l40",
+   "kind": "link",
+   "text": "Copy 20319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-6/fmv6pzgah"
+  },
+  {
+   "id": "l41",
+   "kind": "link",
+   "text": "Copy 36319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-7/fmv6q032e"
+  },
+  {
+   "id": "l42",
+   "kind": "link",
+   "text": "Copy 37319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-10/fmv6q02qp"
+  },
+  {
+   "id": "l43",
+   "kind": "link",
+   "text": "Copy 42319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-19/fmv6q1az6"
+  },
+  {
+   "id": "l44",
+   "kind": "link",
+   "text": "Copy 43319 files got comments, 274 already had them, doneTimeline",
+   "href": "#/run/fleet-babel-8/fmv6q01ki"
+  },
+  {
+   "id": "l45",
+   "kind": "link",
+   "text": "Copy 8175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-4/fmv6pzcsf"
+  },
+  {
+   "id": "l46",
+   "kind": "link",
+   "text": "Copy 14175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-19/fmv6q172z"
+  },
+  {
+   "id": "l47",
+   "kind": "link",
+   "text": "Copy 15175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-18/fmv6q15qa"
+  },
+  {
+   "id": "l48",
+   "kind": "link",
+   "text": "Copy 16175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-12/fmv6q0l93"
+  },
+  {
+   "id": "l49",
+   "kind": "link",
+   "text": "Copy 17175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-15/fmv6q0moq"
+  },
+  {
+   "id": "l50",
+   "kind": "link",
+   "text": "Copy 19175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-1/fmv6pzedx"
+  },
+  {
+   "id": "l51",
+   "kind": "link",
+   "text": "Copy 20175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-7/fmv6pzz4a"
+  },
+  {
+   "id": "l52",
+   "kind": "link",
+   "text": "Copy 22175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-13/fmv6q0mo4"
+  },
+  {
+   "id": "l53",
+   "kind": "link",
+   "text": "Copy 24175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-10/fmv6pzywm"
+  },
+  {
+   "id": "l54",
+   "kind": "link",
+   "text": "Copy 25175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-21/fmv6q18qp"
+  },
+  {
+   "id": "l55",
+   "kind": "link",
+   "text": "Copy 26175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-16/fmv6q0lq5"
+  },
+  {
+   "id": "l56",
+   "kind": "link",
+   "text": "Copy 27175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-14/fmv6q0m72"
+  },
+  {
+   "id": "l57",
+   "kind": "link",
+   "text": "Copy 28175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-17/fmv6q0nws"
+  },
+  {
+   "id": "l58",
+   "kind": "link",
+   "text": "Copy 30175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-8/fmv6pzxpc"
+  },
+  {
+   "id": "l59",
+   "kind": "link",
+   "text": "Copy 31175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-11/fmv6pzygc"
+  },
+  {
+   "id": "l60",
+   "kind": "link",
+   "text": "Copy 32175 files got comments, 477 already had them, doneTimeline",
+   "href": "#/run/fleet-nest-6/fmv6pzelm"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Menu and account: eyal"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "VS Code (3 copies of microsoft/vscode, 8,608 files got comments, 3,207 already had them) ("
+  },
+  {
+   "id": "b3",
+   "kind": "button",
+   "text": "VS Code (3 copies of microsoft/vscode, 8,910 files got comments, 3,207 already had them) ("
+  },
+  {
+   "id": "b4",
+   "kind": "button",
+   "text": "VS Code (4 copies of microsoft/vscode, 202 files got comments, 76 already had them) (opens"
+  },
+  {
+   "id": "b5",
+   "kind": "button",
+   "text": "VS Code (5 copies of microsoft/vscode, 7,130 files got comments, 2,665 already had them) ("
+  },
+  {
+   "id": "b6",
+   "kind": "button",
+   "text": "Babel (22 copies of babel/babel, 7,018 files got comments, 6,028 already had them) (opens  (S4e 4,400 agents / 88 copies in 2 namespaces (cach)"
+  },
+  {
+   "id": "b7",
+   "kind": "button",
+   "text": "Show all 22 copies (opens more) (S4e 4,400 agents / 88 copies in 2 namespaces (cach)"
+  },
+  {
+   "id": "b8",
+   "kind": "button",
+   "text": "NestJS (22 copies of nestjs/nest, 3,850 files got comments, 10,494 already had them) (open (S4e 4,400 agents / 88 copies in 2 namespaces (cach)"
+  },
+  {
+   "id": "b9",
+   "kind": "button",
+   "text": "Show all 22 copies (opens more) (S4e 4,400 agents / 88 copies in 2 namespaces (cach)"
+  },
+  {
+   "id": "b10",
+   "kind": "button",
+   "text": "Babel (22 copies of babel/babel, 7,018 files got comments, 6,028 already had them) (opens  (S4e 4,400 agents / 88 copies in 2 namespaces (cach)"
+  },
+  {
+   "id": "b11",
+   "kind": "button",
+   "text": "Show all 22 copies (opens more) (S4e 4,400 agents / 88 copies in 2 namespaces (cach)"
+  },
+  {
+   "id": "b12",
+   "kind": "button",
+   "text": "NestJS (22 copies of nestjs/nest, 3,850 files got comments, 10,494 already had them) (open (S4e 4,400 agents / 88 copies in 2 namespaces (cach)"
+  },
+  {
+   "id": "b13",
+   "kind": "button",
+   "text": "Show all 22 copies (opens more) (S4e 4,400 agents / 88 copies in 2 namespaces (cach)"
+  },
+  {
+   "id": "b14",
+   "kind": "button",
+   "text": "NestJS (22 copies of nestjs/nest, 3,842 files got comments, 10,494 already had them) (open"
+  },
+  {
+   "id": "b15",
+   "kind": "button",
+   "text": "Show all 22 copies (opens more) (S4d 4,750 agents / 95 copies (cache))"
+  },
+  {
+   "id": "b16",
+   "kind": "button",
+   "text": "Babel (22 copies of babel/babel, 7,018 files got comments, 6,028 already had them) (opens  (S4d 4,750 agents / 95 copies (cache))"
+  },
+  {
+   "id": "b17",
+   "kind": "button",
+   "text": "Show all 22 copies (opens more) (S4d 4,750 agents / 95 copies (cache))"
+  },
+  {
+   "id": "b18",
+   "kind": "button",
+   "text": "Angular (17 copies of angular/angular, 11,713 files got comments, 23,766 already had them)"
+  },
+  {
+   "id": "b19",
+   "kind": "button",
+   "text": "Show all 17 copies (opens more) (S4d 4,750 agents / 95 copies (cache))"
+  },
+  {
+   "id": "b20",
+   "kind": "button",
+   "text": "VS Code extensions (17 copies of microsoft/vscode, 26,112 files got comments, 13,430 alrea"
+  },
+  {
+   "id": "b21",
+   "kind": "button",
+   "text": "Show all 17 copies (opens more) (S4d 4,750 agents / 95 copies (cache))"
+  },
+  {
+   "id": "b22",
+   "kind": "button",
+   "text": "Next.js (17 copies of vercel/next.js, 14,756 files got comments, 11,509 already had them) "
+  },
+  {
+   "id": "b23",
+   "kind": "button",
+   "text": "Show all 17 copies (opens more) (S4d 4,750 agents / 95 copies (cache))"
+  },
+  {
+   "id": "b24",
+   "kind": "button",
+   "text": "Next.js (5 copies of vercel/next.js, 4,340 files got comments, 3,385 already had them) (op"
+  },
+  {
+   "id": "b25",
+   "kind": "button",
+   "text": "Angular (5 copies of angular/angular, 3,445 files got comments, 6,990 already had them) (o"
+  },
+  {
+   "id": "b26",
+   "kind": "button",
+   "text": "VS Code (5 copies of microsoft/vscode, 14,945 files got comments, 5,345 already had them) "
+  },
+  {
+   "id": "b27",
+   "kind": "button",
+   "text": "VS Code extensions (5 copies of microsoft/vscode, 7,680 files got comments, 3,950 already "
+  },
+  {
+   "id": "b28",
+   "kind": "button",
+   "text": "VS Code (1 copy of microsoft/vscode, 2,989 files got comments, 1,069 already had them) (op"
+  },
+  {
+   "id": "b29",
+   "kind": "button",
+   "text": "VS Code (4 copies of microsoft/vscode, 11,956 files got comments, 4,276 already had them) "
+  }
+ ]
+}

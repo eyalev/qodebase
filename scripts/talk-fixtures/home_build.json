@@ -1,0 +1,202 @@
+{
+ "path": "/",
+ "title": "qodebase",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "Own your codebase."
+  },
+  {
+   "id": "h2",
+   "kind": "heading",
+   "text": "Need an idea?"
+  },
+  {
+   "id": "h3",
+   "kind": "heading",
+   "text": "Or try changing one of these"
+  },
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase home",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "Build something new",
+   "href": "/build"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox: 55 need you",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "How it works: watch 6 agents change one app",
+   "href": "/how"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "Get your own qodebase (Your own copy, in your own Cloudflare account.)",
+   "href": "/own"
+  },
+  {
+   "id": "l6",
+   "kind": "link",
+   "text": "Your own AI assistant (An AI assistant that runs in your own Cloudflare account.)",
+   "href": "/personal-agents"
+  },
+  {
+   "id": "l7",
+   "kind": "link",
+   "text": "Explore public projects (Apps and code others have shared.)",
+   "href": "/explore"
+  },
+  {
+   "id": "l8",
+   "kind": "link",
+   "text": "Calculator (Try asking: Add a history of past results)",
+   "href": "/p/forq/calculator/app?ask=Add%20a%20history%20of%20past%20results"
+  },
+  {
+   "id": "l9",
+   "kind": "link",
+   "text": "2048 (Try asking: Show the best score of all time)",
+   "href": "/p/forq/2048/app?ask=Show%20the%20best%20score%20of%20all%20time"
+  },
+  {
+   "id": "l10",
+   "kind": "link",
+   "text": "Tetris (Try asking: Add touch controls so it plays on a phone)",
+   "href": "/p/forq/javascript-tetris/app?ask=Add%20touch%20controls%20so%20it%20plays%20on%20a%20phone"
+  },
+  {
+   "id": "l11",
+   "kind": "link",
+   "text": "Focus timer (Try asking: Add a 90 minute option)",
+   "href": "/p/forq/timer/app?ask=Add%20a%2090%20minute%20option"
+  },
+  {
+   "id": "l12",
+   "kind": "link",
+   "text": "Tip split (Try asking: Let each person pay a different share)",
+   "href": "/p/forq/tipsplit/app?ask=Let%20each%20person%20pay%20a%20different%20share"
+  },
+  {
+   "id": "l13",
+   "kind": "link",
+   "text": "To-do (Try asking: Add due dates)",
+   "href": "/p/forq/todo/app?ask=Add%20due%20dates"
+  },
+  {
+   "id": "l14",
+   "kind": "link",
+   "text": "About",
+   "href": "/about"
+  },
+  {
+   "id": "l15",
+   "kind": "link",
+   "text": "Privacy",
+   "href": "/privacy"
+  },
+  {
+   "id": "l16",
+   "kind": "link",
+   "text": "Feedback",
+   "href": "/feedback?from=%2F"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Menu and account: eyal"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "Speak your idea"
+  },
+  {
+   "id": "b3",
+   "kind": "button",
+   "text": "Fastest: one Opus agent"
+  },
+  {
+   "id": "b4",
+   "kind": "button",
+   "text": "Fastest (One strong agent does it all)"
+  },
+  {
+   "id": "b5",
+   "kind": "button",
+   "text": "Balanced (A planned team with reviewers)"
+  },
+  {
+   "id": "b6",
+   "kind": "button",
+   "text": "Cheapest (A planned team of small agents)"
+  },
+  {
+   "id": "b7",
+   "kind": "button",
+   "text": "Suggest from my idea"
+  },
+  {
+   "id": "b8",
+   "kind": "button",
+   "text": "Build it (Own your codebase.)"
+  },
+  {
+   "id": "b9",
+   "kind": "button",
+   "text": "Build it (Own your codebase.)"
+  },
+  {
+   "id": "b10",
+   "kind": "button",
+   "text": "Small (2 to 4 min, $0.62 to $1.50)"
+  },
+  {
+   "id": "b11",
+   "kind": "button",
+   "text": "Medium (2 to 6 min, $1.20 to $2.80)"
+  },
+  {
+   "id": "b12",
+   "kind": "button",
+   "text": "Large (5 to 15 min, $2.80 to $6.20)"
+  },
+  {
+   "id": "b13",
+   "kind": "button",
+   "text": "Huge (11 to 31 min, $5.70 to $12)"
+  },
+  {
+   "id": "f1",
+   "kind": "field",
+   "text": "What do you want to build?"
+  },
+  {
+   "id": "f2",
+   "kind": "field",
+   "text": "Agents 1 agent (slider, now 1, 1 to 12)"
+  },
+  {
+   "id": "f3",
+   "kind": "field",
+   "text": "Reviewers quality none (slider, now 0, 0 to 3)"
+  },
+  {
+   "id": "f4",
+   "kind": "field",
+   "text": "Agent model cost per agent Opus (slider, now 2, 0 to 2)"
+  }
+ ]
+}

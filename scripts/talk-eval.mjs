@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { buildQuestions, candidateProjects, currentSlug, resolve, stateText } from '../src/talkdecide.ts';
+import { buildQuestions, candidateProjects, currentSlug, gate, resolve, stateText } from '../src/talkdecide.ts';
 
 const ACC = '887d7234a6b8d65ad355a4f6684cab67';
 const TOKEN = fs.readFileSync(path.join(os.homedir(), '.config/forq-cf/api-token'), 'utf8').trim();
@@ -96,6 +96,27 @@ const CASES = [
   // Risky: must be flagged.
   ['mine', 'delete the particles project', { mode: ['act', 'both', 'ask'], risky: true }],
   ['home', 'sign me out', { mode: 'act', risky: true }],
+  // Voice everywhere (2026-10-13): the pages added since, read by the new scan (in-page #/ routes, sliders, switches,
+  // page actions, card names on shared labels). gate: what Talk may do without a tap (talkdecide.ts gate()).
+  ['runs', 'open the timeline of the first VS Code run', { mode: 'act', op: ['go', 'press'], href: '#/run/', label: 'VS Code' }],
+  ['run_detail', 'show me minute 3', { mode: ['act', 'both'], op: 'press', label: 'moment', gate: null }],
+  ['run_detail', 'what happened at 1:20', { mode: ['act', 'both', 'ask'], op: ['press', 'none'], label: 'moment' }],
+  ['run_detail', 'back to all runs', { mode: 'act', op: ['go', 'back'], href: '#/' }],
+  ['home_build', 'use the cheapest preset', { mode: 'act', op: 'press', label: 'Cheapest' }],
+  ['home_build', 'set the agents to 6', { mode: 'act', op: 'type', label: 'Agents', text: '6' }],
+  ['home_build', 'give me a medium sized idea', { mode: 'act', op: 'press', label: 'Medium' }],
+  ['home_build', 'suggest the settings from my idea', { mode: 'act', op: 'press', label: 'Suggest' }],
+  ['home_build', 'build it', { mode: 'act', op: 'press', label: 'Build it', gate: 'confirm' }],
+  ['settings', 'turn off the notification when a build finishes', { mode: 'act', op: 'press', label: 'When a build finishes' }],
+  ['settings', 'sign out', { mode: 'act', gate: 'refuse' }],
+  ['settings', 'revoke my command line token', { mode: 'act', gate: 'refuse' }],
+  ['work', 'show the timeline tab', { mode: 'act', op: 'press', label: 'Timeline' }],
+  ['work', 'watch a run', { mode: 'act', op: 'press', label: 'Watch a run', gate: 'confirm' }],
+  ['work', 'open all the asks', { mode: 'act', op: 'go', href: 'asks' }],
+  ['asks', 'show only the landed ones', { mode: 'act', op: 'press', label: 'Landed' }],
+  ['deck', 'next slide', { mode: 'act', op: 'press', label: 'Next slide', gate: null }],
+  ['deck', 'go to slide 5', { mode: 'act', op: 'press', label: 'slide by its number' }],
+  ['deck', 'show the speaker notes', { mode: 'act', op: 'press', label: 'Notes' }],
 ];
 
 const asList = (x) => (x == null ? null : Array.isArray(x) ? x : [x]);
@@ -116,6 +137,7 @@ async function run(page, utterance) {
   const body = await r.json().catch(() => ({}));
   const res = body.result || body;
   if (!res.answers) return { error: JSON.stringify(body).slice(0, 300), ms };
+  if (process.env.DEBUG) console.log(JSON.stringify(Object.fromEntries(Object.entries(res.answers).map(([k, v]) => [k, v.noul ?? v.choice + " " + (v.probabilities?.[v.choice] ?? "")]))));
   return { cmd: resolve(res.answers, cands, s, projects, utterance), ms, usage: res.usage, nq: Object.keys(questions).length, np: projects.length };
 }
 
@@ -130,6 +152,7 @@ function judge(cmd, want) {
   if (want.greet === false && cmd.greet) bad.push('treated as a greeting');
   if (want.risky === true && !((cmd.risky ?? 0) >= 0.5)) bad.push(`risky ${cmd.risky}`);
   if (want.risky === false && (cmd.risky ?? 0) >= 0.5) bad.push(`risky ${cmd.risky} (should act)`);
+  if ('gate' in want && gate(cmd) !== want.gate) bad.push(`gate ${gate(cmd)} (risky ${cmd.risky?.toFixed?.(2)}, destroys ${cmd.destroys?.toFixed?.(2)})`);
   return bad;
 }
 

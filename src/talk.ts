@@ -273,15 +273,51 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
     if ((e.updatedAt || 0) >= since) changed++;
     if (note) links.push({ text: `${info.name}: ${note}`, href: `${base}/changes` });
   });
+  // Builds (landing projects): running ones with how far they are, ones that finished today, and questions the
+  // agents asked the person that nobody answered yet (X5 ask-person). Only projects touched in the last day, 8 at most.
+  const builds: string[] = [], finished: string[] = [], asked: string[] = [];
+  const recent = own.map((e: any, i: number) => ({ e, info: infos[i] as any })).filter((x) => x.info?.landing && (x.e.updatedAt || 0) >= Date.now() - 24 * 3600_000).slice(0, 8);
+  if (env.Landing) await Promise.all(recent.map(async ({ info }) => {
+    const L = env.Landing.get(env.Landing.idFromName(`${info.owner}.${info.name}`));
+    const [ad, bi] = await Promise.all([L.asksData().catch(() => null) as Promise<any>, L.buildInfo().catch(() => null) as Promise<any>]);
+    const base = `/p/${info.owner}/${info.name}`;
+    const ch = (ad?.changes || []) as { state: string }[];
+    const landed = ch.filter((c) => c.state === 'landed').length, open = ch.filter((c) => !['landed', 'bounced'].includes(c.state)).length;
+    const started = bi?.estimate?.startedAt || 0, settled = bi?.progress?.settledAt || 0;
+    const usd = (x: number | null | undefined) => x == null ? '' : x < 1 ? `${Math.round(x * 100)} cents` : `$${x.toFixed(2)}`;
+    if (started && !settled && Date.now() - started < 24 * 3600_000) {
+      builds.push(`${info.name} (${landed} of ${ch.length || '?'} changes on main${open ? `, ${open} in progress` : ''}${bi?.progress?.spentUsd != null ? `, ${usd(bi.progress.spentUsd)} so far` : ''})`);
+      links.push({ text: `${info.name}: building`, href: `${base}/work` });
+    } else if (settled && settled >= since) {
+      finished.push(`${info.name} (${landed} changes${bi?.progress?.actualUsd != null ? `, ${usd(bi.progress.actualUsd)}` : ''})`);
+    }
+    for (const n of (ad?.notes || []) as { kind: string; answered?: boolean; text: string }[]) {
+      if (n.kind !== 'asked-person' || n.answered) continue;
+      asked.push(`${info.name} asks “${short(n.text)}”`);
+      if (!links.some((l) => l.href === `${base}/asks`)) links.unshift({ text: `${info.name}: answer`, href: `${base}/asks` });
+    }
+  }));
+  // Fleet runs (the /runs page; the owner's): the ones running now. Needs FLEET_KEY on this Worker.
+  const runs: string[] = [];
+  if (env.FLEET_KEY && isOwner(env, who.handle)) {
+    const fl: any = await fetch('https://qbfleet.forqdev.workers.dev/runs', { headers: { 'x-fleet-key': env.FLEET_KEY, 'user-agent': 'forq-internal/1' } }).then((r) => r.json()).catch(() => null);
+    const live = ((fl?.runs || []) as any[]).filter((r) => !['done', 'stopped', 'ended'].includes(r.state));
+    for (const r of live.slice(0, 3)) runs.push(`${r.label || r.repo} (${r.state}${r.agents ? `, ${r.agents} agents` : ''})`);
+    if (live.length) links.push({ text: `Runs: ${live.length} live`, href: '/runs' });
+  }
   const list = (xs: string[]) => xs.length <= 2 ? xs.join(' and ') : `${xs.slice(0, 2).join(', ')} and ${xs.length - 2} more`;
   const parts: string[] = [];
+  if (asked.length) parts.push(`${asked.length === 1 ? 'One question is' : `${asked.length} questions are`} waiting for you: ${list(asked)}.`);
+  if (builds.length) parts.push(`Building now: ${list(builds)}.`);
+  if (runs.length) parts.push(`Scale runs going: ${list(runs)}.`);
+  if (finished.length) parts.push(`Finished ${today ? 'today' : 'this week'}: ${list(finished)}.`);
   if (working.length) parts.push(`${working.length === 1 ? 'One agent is' : `${working.length} agents are`} working: ${list(working)}.`);
   if (ready.length) parts.push(`${ready.length === 1 ? 'One change is' : `${ready.length} changes are`} ready to merge: ${list(ready)}.`);
   if (blocked.length) parts.push(`Blocked and waiting for you: ${list(blocked)}.`);
   if (waiting.length) parts.push(`Also: ${list(waiting)}.`);
-  if (!parts.length) parts.push(own.length ? 'Nothing is in progress: no agents working and nothing waiting to merge.' : 'You have no projects yet. Say what you want to build.');
+  if (!working.length && !ready.length && !blocked.length && !waiting.length && !asked.length && !builds.length && !runs.length) parts.unshift(own.length ? 'Nothing is in progress: no agents working, no builds running and nothing waiting for you.' : 'You have no projects yet. Say what you want to build.');
   if (own.length) parts.push(`${today ? 'Today' : 'This week'} ${changed === 0 ? 'none of your projects changed' : changed === 1 ? 'one of your projects changed' : `${changed} of your projects changed`}${merged ? `, with ${merged} merged change${merged > 1 ? 's' : ''}` : ''}.`);
-  log('status', { level: 'info', handle: who.handle, projects: own.length, working: working.length, ready: ready.length, blocked: blocked.length, waiting: waiting.length, changed, merged, ms: Date.now() - t0 });
+  log('status', { level: 'info', handle: who.handle, projects: own.length, working: working.length, ready: ready.length, blocked: blocked.length, waiting: waiting.length, builds: builds.length, finished: finished.length, asked: asked.length, runs: runs.length, fleet: !!env.FLEET_KEY, changed, merged, ms: Date.now() - t0 });
   return { ok: true as const, text: parts.join(' '), links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left };
 }
 

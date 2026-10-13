@@ -1,0 +1,50 @@
+{
+ "path": "/runs#/run/fleet-vscode-src-12/fmv6sbaud",
+ "title": "Scale runs \u00b7 qodebase",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) - copy 1"
+  },
+  {
+   "id": "h2",
+   "kind": "heading",
+   "text": "Timeline"
+  },
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase home",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "Build something new",
+   "href": "/build"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox, nothing new",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "All runs",
+   "href": "#/"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Menu and account: eyal"
+  },
+  {
+   "id": "xmoment",
+   "kind": "button",
+   "text": "Open the moment of this run\u2019s timeline at a time (say it like 3:20 or minute 5)"
+  }
+ ]
+}
