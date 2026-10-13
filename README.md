@@ -19,6 +19,7 @@ One request, typed on the phone ([eyal/cafe-team](https://qodebase.app/p/eyal/ca
 - **12 real Claude Haiku 5.5 agents**, each on its own fork, plus 3 reviewer agents
 - **12 of 12 changes landed in 6 min 43 s**, each reviewed once, none bounced
 - **7 collisions**: 6 replayed by rules on shared files, 1 real conflict (two edits to the same line) re-done by an AI on the newest code in 19 s ([the change and its record](https://qodebase.app/p/eyal/cafe-team/work#/change/eyal.cafe-team--xkvo4))
+- a bigger example from another build ([eyal/real-home-inventory-r8b, change 'Lent out: who has what'](https://qodebase.app/p/eyal/real-home-inventory-r8b/work#/change/eyal.real-home-inventory-r8b--isdhz)): its merge collided with another agent's change in app.js, README and styles.css; instead of sending it back, Claude Haiku 5.5 redid the loan feature on the newest code in 2 min for $0.62 (the active-loan lookup, an overdue check, borrower de-duplication, overdue-first sorting and the lend form), then the tests ran again and passed
 - main: 13 commits, 12 git notes with the full record of each change, tests green
 - real spend: **$0.16** of container time (the agents ran on a Claude subscription; API-equivalent ~$0.53)
 

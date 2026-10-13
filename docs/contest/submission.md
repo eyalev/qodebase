@@ -18,6 +18,7 @@ Merge queues already exist (GitHub's merge queue, Graphite, Mergify, Bors), and 
 **The proof, with real agents.** One request typed on the phone started **12 Claude Haiku 5.5 agents** in cafe-team, each on its own fork, plus 3 reviewers. **12 of 12 changes landed in 6 min 43 s.** **7 collided** with work that had landed first:
 - **6 were replayed by rules** on shared files (routes, the menu data, CSS);
 - **1 was a real conflict** (two edits to the same line), re-done by an AI on the newest code **in 19 s**: [the change and its record](https://qodebase.app/p/eyal/cafe-team/work#/change/eyal.cafe-team--xkvo4).
+- a bigger one, in a real-logic file: in [eyal/real-home-inventory-r8b](https://qodebase.app/p/eyal/real-home-inventory-r8b/work#/change/eyal.real-home-inventory-r8b--isdhz), the 'Lent out' change collided with another agent's in app.js; instead of sending it back, a model redid the loan logic (lookup, overdue check, sorting, the lend form) on the newest code in 2 min for $0.62, and the tests passed.
 
 Main: 13 commits, 12 git notes, green tests. Real spend $0.16 of container time; the agents ran on a Claude subscription (about $0.53 at API prices).¹
 
