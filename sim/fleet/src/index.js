@@ -44,7 +44,8 @@ export default {
       case '/judge': {
         if (body.model !== '@cf/openai/gpt-oss-120b') return json({ error: 'model must be @cf/openai/gpt-oss-120b' }, 400);
         const b = await budget(env).check(); if (!b.ok) return json({ error: b.why }, 429);
-        let res; try { res = await env.AI.run(body.model, { messages: Array.isArray(body.messages) ? body.messages.slice(0, 4) : [], max_tokens: Math.min(300, Number(body.max_tokens) || 200) }, { gateway: { id: GATEWAY } }); }
+        // gpt-oss-120b reasons before it answers: 300 tokens went to reasoning alone (qb9), so up to 1500, effort passed through.
+        let res; try { res = await env.AI.run(body.model, { messages: Array.isArray(body.messages) ? body.messages.slice(0, 4) : [], max_tokens: Math.min(1500, Number(body.max_tokens) || 600), ...(['low', 'medium', 'high'].includes(body.reasoning_effort) ? { reasoning_effort: body.reasoning_effort, reasoning: { effort: body.reasoning_effort } } : {}) }, { gateway: { id: GATEWAY } }); }
         catch (e) { const m = String(e?.message || e); return json({ error: m.slice(0, 300) }, /429|rate.?limit/i.test(m) ? 429 : 502); }
         const u = res?.usage || {}, pr = PRICES_OF(env)[body.model];
         const usd = pr ? ((u.prompt_tokens || 0) * pr[0] + (u.completion_tokens || 0) * pr[1]) / 1e6 : 0;
