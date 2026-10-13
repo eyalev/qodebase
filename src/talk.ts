@@ -300,6 +300,46 @@ async function merge(request: Request, env: Env, who: Who & {}) {
   }
 }
 
+// What is said aloud (Talk setting "Spoken replies: Short summary", the default since 2026-10-13, after tmux-web's
+// spoken summary): 1-3 conversational sentences about the answer on screen, by the chat model with thinking off.
+async function summary(request: Request, env: Env, who: Who & {}) {
+  const t0 = Date.now();
+  const b = await request.json().catch(() => ({})) as any;
+  const text = String(b?.text || '').slice(0, 4000), question = String(b?.question || '').slice(0, 500);
+  if (!text) return json({ spoken: '' });
+  const budget = await talkLog(env).take('chat', who.handle);
+  if (!budget.ok) return json({ spoken: '', why: 'budget' });
+  const messages = [
+    { role: 'system', content: 'You turn an answer that is on the person\'s screen into what a helpful assistant says out loud: 1 to 3 short, natural sentences with the one or two things that matter most. No lists, no links, no markdown, no ids, round numbers. If there is more detail on screen, you may end with a short offer such as "Want the details?". Same language as the answer.' },
+    { role: 'user', content: `${question ? `They asked: ${question}\n` : ''}The answer on screen:\n${text}` },
+  ];
+  try {
+    const res: any = await (env.AI as any).run(CHAT_MODEL, { messages, max_tokens: 160, temperature: 0.3, chat_template_kwargs: { enable_thinking: false } }, aiOpts(env));
+    const spoken = String(res?.choices?.[0]?.message?.content ?? res?.response ?? '').replace(/<think>[\s\S]*?<\/think>/g, '').trim().slice(0, 600);
+    log('summary', { level: 'info', handle: who.handle, ms: Date.now() - t0, chars_in: text.length, chars_out: spoken.length });
+    return json({ spoken, model: CHAT_MODEL, ms: Date.now() - t0 });
+  } catch (e) {
+    log('summary_error', { level: 'error', err: String(e) });
+    return json({ spoken: '', error: 'model' });
+  }
+}
+
+/** Which model does what, from the code that runs (Talk settings → Models). */
+export function talkModels(env: Env) {
+  return {
+    live: { model: '@cf/deepgram/nova-3', provider: 'Workers AI', note: 'live words; Hebrew: the phone\'s own recogniser' },
+    final: { model: STT_MODEL, provider: 'Workers AI', note: 'reads the whole recording' },
+    cleanup: { model: MERGE_MODEL, provider: 'Workers AI', note: 'only when "Clean up the words" is on' },
+    decide: { model: DECIDE_MODEL, provider: 'Workers AI', note: 'picks what to do' },
+    chat: { model: CHAT_MODEL, provider: 'Workers AI', note: 'answers questions about the page' },
+    status: { model: null, provider: 'qodebase', note: '"what\'s going on": read from your projects, no model' },
+    code: { model: 'Claude (opus, sonnet or haiku by depth)', provider: 'your Claude plan', note: 'questions about a project\'s code' },
+    summary: { model: CHAT_MODEL, provider: 'Workers AI', note: 'what is said aloud' },
+    voice: { model: Object.values(VOICES).map((v) => v.id).join(' or '), provider: 'Workers AI', note: 'or the phone\'s own voice' },
+    gateway: env.TALK_GATEWAY || null,
+  };
+}
+
 let etagMemo: string | null = null;
 async function talkEtag() {
   if (!etagMemo) {
@@ -317,10 +357,17 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
   if (!budget.ok) return { ok: false as const, http: 429, error: 'budget', why: 'Talk has reached today\'s limit. It resets at midnight UTC.' };
   const today = /\btoday\b/i.test(String(body?.utterance || ''));
   const since = Date.now() - (today ? 24 : 7 * 24) * 3600_000;
-  const own = (await listFor(env, who.handle, false)).filter((e: any) => e.owner === who.handle)
+  // Test projects a harness made (lab-, kata-, fleet-, selftest) are not news (Eyal, 2026-10-13).
+  const own = (await listFor(env, who.handle, false)).filter((e: any) => e.owner === who.handle && !/^(lab|kata|fleet|selftest)-/.test(String(e.name || e.slug?.split('.')[1] || '')))
     .sort((a: any, b: any) => (b.updatedAt || 0) - (a.updatedAt || 0)).slice(0, 20);
+  // The fleet's runs, fetched alongside (it was the slow part: 9 s for one answer, live 2026-10-13).
+  const fleetP: Promise<any> = env.FLEET_KEY && isOwner(env, who.handle)
+    ? (((env as any).FLEET ? (env as any).FLEET.fetch('https://qbfleet.internal/runs', { headers: { 'x-fleet-key': env.FLEET_KEY, 'user-agent': 'forq-internal/1' } }) : fetch('https://qbfleet.forqdev.workers.dev/runs', { headers: { 'x-fleet-key': env.FLEET_KEY, 'user-agent': 'forq-internal/1' } }))
+      .then((r: Response) => r.json()).catch((e: unknown) => { log('fleet_error', { level: 'error', err: String(e) }); return null; }))
+    : Promise.resolve(null);
   const infos = await Promise.all(own.map((e: any) => env.Project.get(env.Project.idFromName(e.slug)).info().catch(() => null)));
-  const working: string[] = [], ready: string[] = [], blocked: string[] = [], waiting: string[] = [];
+  type It = { t: string; href?: string };
+  const working: It[] = [], ready: It[] = [], blocked: It[] = [], waiting: It[] = [];
   const links: { text: string; href: string }[] = [];
   const short = (t: string) => { const x = String(t || '').replace(/\s+/g, ' ').trim(); return x.length > 48 ? x.slice(0, 46).replace(/\s\S*$/, '') + '…' : x; };
   let changed = 0, merged = 0;
@@ -331,18 +378,18 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
     let note = '';
     for (const a of info.agents || []) {
       const what = `“${short(a.request || a.task)}” in ${info.name}`;
-      if (a.state === 'working') { working.push(what); note ||= 'working'; }
-      else if (a.state === 'pushed') { ready.push(what + (a.review?.state === 'approved' ? ' (approved)' : a.review?.state === 'changes' ? ' (reviewer asked for changes)' : '')); note = 'ready to merge'; }
-      else if (a.state === 'blocked') { blocked.push(what); note ||= 'blocked'; }
+      if (a.state === 'working') { working.push({ t: what, href: `${base}/changes` }); note ||= 'working'; }
+      else if (a.state === 'pushed') { ready.push({ t: what + (a.review?.state === 'approved' ? ' (approved)' : a.review?.state === 'changes' ? ' (reviewer asked for changes)' : ''), href: `${base}/changes` }); note = 'ready to merge'; }
+      else if (a.state === 'blocked') { blocked.push({ t: what, href: `${base}/changes` }); note ||= 'blocked'; }
       else if (a.state === 'merged' && (a.noteAt || a.createdAt) >= since) merged++;
     }
-    if (info.lastRequest && info.lastRequest.state !== 'sent' && info.lastRequest.at >= since) { waiting.push(`${info.name} (${info.lastRequest.state === 'failed' ? 'your request did not reach its agents' : 'delivering your request'})`); note ||= info.lastRequest.state === 'failed' ? 'request failed' : 'delivering'; }
+    if (info.lastRequest && info.lastRequest.state !== 'sent' && info.lastRequest.at >= since) { waiting.push({ t: `${info.name} (${info.lastRequest.state === 'failed' ? 'your request did not reach its agents' : 'delivering your request'})`, href: base }); note ||= info.lastRequest.state === 'failed' ? 'request failed' : 'delivering'; }
     if ((e.updatedAt || 0) >= since) changed++;
     if (note) links.push({ text: `${info.name}: ${note}`, href: `${base}/changes` });
   });
   // Builds (landing projects): running ones with how far they are, ones that finished today, and questions the
   // agents asked the person that nobody answered yet (X5 ask-person). Only projects touched in the last day, 8 at most.
-  const builds: string[] = [], finished: string[] = [], asked: string[] = [];
+  const builds: It[] = [], finished: It[] = [], asked: It[] = [];
   const recent = own.map((e: any, i: number) => ({ e, info: infos[i] as any })).filter((x) => x.info?.landing && (x.e.updatedAt || 0) >= Date.now() - 24 * 3600_000).slice(0, 8);
   if (env.Landing) await Promise.all(recent.map(async ({ info }) => {
     const L = env.Landing.get(env.Landing.idFromName(`${info.owner}.${info.name}`));
@@ -353,29 +400,37 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
     const started = bi?.estimate?.startedAt || 0, settled = bi?.progress?.settledAt || 0;
     const usd = (x: number | null | undefined) => x == null ? '' : x < 1 ? `${Math.round(x * 100)} cents` : `$${x.toFixed(2)}`;
     if (started && !settled && Date.now() - started < 24 * 3600_000) {
-      builds.push(`${info.name} (${landed} of ${ch.length || '?'} changes on main${open ? `, ${open} in progress` : ''}${bi?.progress?.spentUsd != null ? `, ${usd(bi.progress.spentUsd)} so far` : ''})`);
+      builds.push({ t: `${info.name} (${landed} of ${ch.length || '?'} changes on main${open ? `, ${open} in progress` : ''}${bi?.progress?.spentUsd != null ? `, ${usd(bi.progress.spentUsd)} so far` : ''})`, href: `${base}/work` });
       links.push({ text: `${info.name}: building`, href: `${base}/work` });
     } else if (settled && settled >= since) {
-      finished.push(`${info.name} (${landed} changes${bi?.progress?.actualUsd != null ? `, ${usd(bi.progress.actualUsd)}` : ''})`);
+      finished.push({ t: `${info.name} (${landed} changes${bi?.progress?.actualUsd != null ? `, ${usd(bi.progress.actualUsd)}` : ''})`, href: base });
     }
     for (const n of (ad?.notes || []) as { kind: string; answered?: boolean; text: string }[]) {
       if (n.kind !== 'asked-person' || n.answered) continue;
-      asked.push(`${info.name} asks “${short(n.text)}”`);
+      asked.push({ t: `${info.name} asks “${short(n.text)}”`, href: `${base}/asks` });
       if (!links.some((l) => l.href === `${base}/asks`)) links.unshift({ text: `${info.name}: answer`, href: `${base}/asks` });
     }
   }));
   // Fleet runs (the /runs page; the owner's): the ones running now. Needs FLEET_KEY on this Worker.
-  const runs: string[] = [];
+  const runs: It[] = [];
   if (env.FLEET_KEY && isOwner(env, who.handle)) {
-    const fh = { 'x-fleet-key': env.FLEET_KEY, 'user-agent': 'forq-internal/1' };
-    const fl: any = await ((env as any).FLEET ? (env as any).FLEET.fetch('https://qbfleet.internal/runs', { headers: fh }) : fetch('https://qbfleet.forqdev.workers.dev/runs', { headers: fh }))
-      .then((r: Response) => r.json()).catch((e: unknown) => { log('fleet_error', { level: 'error', err: String(e) }); return null; });
+    const fl: any = await fleetP;
     if (!fl?.runs) log('fleet_empty', { level: 'warn', keys: fl ? Object.keys(fl).slice(0, 5) : null });
     const live = ((fl?.runs || []) as any[]).filter((r) => !['done', 'stopped', 'ended'].includes(r.state));
-    for (const r of live.slice(0, 3)) runs.push(`${r.label || r.repo} (${r.state}${r.agents ? `, ${r.agents} agents` : ''})`);
+    for (const r of live.slice(0, 3)) runs.push({ t: `${r.label || r.repo} (${r.state}${r.agents ? `, ${r.agents} agents` : ''})`, href: '/runs' });
     if (live.length) links.push({ text: `Runs: ${live.length} live`, href: '/runs' });
   }
-  const list = (xs: string[]) => xs.length <= 2 ? xs.join(' and ') : `${xs.slice(0, 2).join(', ')} and ${xs.length - 2} more`;
+  const list = (ys: It[]) => { const xs = ys.map((y) => y.t); return xs.length <= 2 ? xs.join(' and ') : `${xs.slice(0, 2).join(', ')} and ${xs.length - 2} more`; };
+  // For reading (Eyal, 2026-10-13: "no wall of text"): short sections, each line a link; the sentence form stays for
+  // the voice and for clients that do not render sections.
+  const sections = [
+    { title: 'Waiting for you', items: [...asked, ...blocked, ...waiting] },
+    { title: 'Building now', items: builds },
+    { title: 'Scale runs going', items: runs },
+    { title: 'Agents working', items: working },
+    { title: 'Ready to merge', items: ready },
+    { title: `Finished ${today ? 'today' : 'this week'}`, items: finished },
+  ].filter((x) => x.items.length).map((x) => ({ title: x.title, items: x.items.slice(0, 6).map((y) => ({ text: y.t, href: y.href })), more: Math.max(0, x.items.length - 6) }));
   const parts: string[] = [];
   if (asked.length) parts.push(`${asked.length === 1 ? 'One question is' : `${asked.length} questions are`} waiting for you: ${list(asked)}.`);
   if (builds.length) parts.push(`Building now: ${list(builds)}.`);
@@ -388,7 +443,7 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
   if (!working.length && !ready.length && !blocked.length && !waiting.length && !asked.length && !builds.length && !runs.length) parts.unshift(own.length ? 'Nothing is in progress: no agents working, no builds running and nothing waiting for you.' : 'You have no projects yet. Say what you want to build.');
   if (own.length) parts.push(`${today ? 'Today' : 'This week'} ${changed === 0 ? 'none of your projects changed' : changed === 1 ? 'one of your projects changed' : `${changed} of your projects changed`}${merged ? `, with ${merged} merged change${merged > 1 ? 's' : ''}` : ''}.`);
   log('status', { level: 'info', handle: who.handle, projects: own.length, working: working.length, ready: ready.length, blocked: blocked.length, waiting: waiting.length, builds: builds.length, finished: finished.length, asked: asked.length, runs: runs.length, fleet: !!env.FLEET_KEY, changed, merged, ms: Date.now() - t0 });
-  return { ok: true as const, text: parts.join(' '), links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left, trace: { text: parts.join(' ').slice(0, 1500), links: links.length, ms: Date.now() - t0 } };
+  return { ok: true as const, text: parts.join(' '), sections, links: links.slice(0, 6), ms: Date.now() - t0, left: budget.left, trace: { text: parts.join(' ').slice(0, 1500), links: links.length, ms: Date.now() - t0 } };
 }
 
 // ---- Spoken replies: Aura on Workers AI, streamed (first sound ~0.5 s). Same voices
@@ -469,7 +524,7 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     const own = { sha: (env as any).CF_VERSION_METADATA?.tag || null, built: (env as any).CF_VERSION_METADATA?.timestamp || null };
     const v = owner ? (site?.sha ? { sha: site.sha, built: site.built, talk: own.sha } : own) : undefined;
     const traced = await canTrace(env, who);
-    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: traced, consent: owner ? null : traced, clips: owner && !!env.CLIPS, version: v });
+    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: traced, consent: owner ? null : traced, clips: owner && !!env.CLIPS, version: v, models: talkModels(env) });
   }
   if (url.pathname === '/api/talk/consent' && request.method === 'POST') {
     // "Help improve Talk" (Talk settings, off by default): keep what I say and what Talk did for 14 days.
@@ -533,6 +588,7 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
   if (url.pathname === '/api/talk/transcribe') return transcribe(request, env, who, url);
   if (url.pathname === '/api/talk/status') return status(request, env, who, _ctx);
   if (url.pathname === '/api/talk/merge') return merge(request, env, who);
+  if (url.pathname === '/api/talk/summary') return summary(request, env, who);
   if (url.pathname === '/api/talk/log') {
     // One row per page-tool call (window.__webmcp / WebMCP, src/talkclient.ts). No model, no budget.
     const b = await request.json().catch(() => null) as any;

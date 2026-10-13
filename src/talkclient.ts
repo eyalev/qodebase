@@ -62,6 +62,7 @@ function traceStart() {
 var S = {
   engine: get('engine2', 'live'),   // live (Deepgram Nova-3 live words + Whisper on the whole clip, like tmux-web; default) | native | whisper
   lang: get('lang', 'en'),
+  say: get('say', 'short'),             // what is said aloud: short (a 1-3 sentence summary, default) | full (the whole answer)
   voice: get('voice', 'aura-2'),        // spoken replies: off | aura-1 | aura-2 | phone (on by default since 2026-10-13, Eyal via the manager; 'when' keeps it to replies to speech)
   speaker: get('speaker', ''),          // Aura speaker ('' = the model's default)
   when: get('when', 'voice'),           // voice (only when I spoke) | always
@@ -76,6 +77,7 @@ var S = {
 // Aura-2 is the default voice since 2026-10-07 (Eyal): devices that had Aura-1 only because it was the default move once.
 try { if (!ls.getItem(KEY + 'v2')) { if (ls.getItem(KEY + 'voice-on') === 'aura-1') ls.setItem(KEY + 'voice-on', 'aura-2'); if (S.voice === 'aura-1') { S.voice = 'aura-2'; S.speaker = ''; ls.setItem(KEY + 'voice', 'aura-2'); ls.removeItem(KEY + 'speaker'); } ls.setItem(KEY + 'v2', '1'); } } catch (e) {}
 var CLIPS = false;   // the owner may keep recordings (set from /api/talk/me)
+var MODELS = {};      // which model does what, from the running Talk Worker (/api/talk/me)
 var CONSENT = null;  // others: null for the owner (always traced); true/false = their "Help improve Talk" answer
 var LANGS = { en: 'en-US', he: 'he-IL', auto: 'en-US' };
 var me = null, busy = false, listening = false, lastSpoken = false;
@@ -133,6 +135,15 @@ var css = [
   // in at rest is the composer mic (hold it: Talk listens). Three layers at the bottom were too many (critique).
   '#talk-root.slim.rest #talk-bar,#talk-root.tall.rest #talk-bar{display:none}',
   '#talk-spacer{height:0;pointer-events:none}',
+  '#talk-log .talk-sh{margin:8px 0 2px;font-weight:600;font-size:14px}',
+  '#talk-log .talk-sl{margin:0;padding-left:18px;white-space:normal}',
+  '#talk-log .talk-sl li{margin:2px 0}',
+  '#talk-log .talk-sl a{color:inherit;text-decoration-color:var(--t-line);text-underline-offset:3px}',
+  '#talk-log .talk-more{color:var(--t-dim);list-style:none;margin-left:-18px}',
+  '.talk-via{display:block;margin-top:6px;padding:4px 0;min-height:28px;border:0;background:transparent;color:var(--t-dim);font:12px var(--t-ff);text-align:left;cursor:pointer;font-variant-numeric:tabular-nums}',
+  '#talk-set dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:13px;color:var(--t-fg)}',
+  '#talk-set dt{color:var(--t-dim)}',
+  '#talk-set dd{margin:0;overflow-wrap:anywhere}',
   '#talk-again{display:none;align-self:flex-start;margin:0 16px 8px;min-height:36px;font-size:14px}',
   '#talk-root.canagain #talk-again{display:inline-flex;align-items:center}',
   // Things to say (Eyal, 2026-10-13: a first-time visitor should know what they can say): a rotating line in the
@@ -330,6 +341,7 @@ function clearer(ta, box, before) {
     ta.dispatchEvent(new Event('input', { bubbles: true })); sync(); trace('clear', { box: ta.id || ta.name || ta.getAttribute('aria-label') || '' });
   });
 }
+function esc(x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
 
 function build() {
@@ -375,12 +387,14 @@ function build() {
     '<label>Clean up the words with a model<select id="talk-s-merge"><option value="off">Off: Whisper\u2019s words</option><option value="on">On: live words + Whisper merged, your project names kept (about 1 s more)</option></select></label>' +
     '<label>Microphone<select id="talk-s-keep"><option value="open">Ready while Talk is open (your first words are never lost)</option><option value="use">Only while I speak</option></select></label>' +
     '<label>Language<select id="talk-s-lang"><option value="en">English</option><option value="he">עברית (Hebrew)</option><option value="auto">Auto (Whisper detects)</option></select></label>' +
-    '<label>Spoken replies<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
-    '<label>Voice<select id="talk-s-speaker"></select></label>' +
+    '<label>Spoken replies<select id="talk-s-say"><option value="short">Short summary</option><option value="full">Read the full answer</option><option value="off">Off</option></select></label>' +
+    '<label>Voice<select id="talk-s-voice"><option value="off">Off</option><option value="aura-2">Natural voice (Cloudflare Aura 2)</option><option value="aura-1">Lighter voice (Aura 1, half the price)</option><option value="phone">The phone\u2019s own voice</option></select></label>' +
+    '<label>Speaker<select id="talk-s-speaker"></select></label>' +
     '<label>Speed<select id="talk-s-speed"><option value="1">1\u00d7</option><option value="1.1">1.1\u00d7</option><option value="1.15">1.15\u00d7</option><option value="1.25">1.25\u00d7</option><option value="1.4">1.4\u00d7</option><option value="1.6">1.6\u00d7</option></select></label>' +
     '<label>Speak<select id="talk-s-when"><option value="voice">When I talked</option><option value="always">Always</option></select></label>' +
     (CLIPS ? '<label>Keep my recordings (only you can hear them, deleted after 14 days)<select id="talk-s-clips"><option value="on">On, for debugging</option><option value="off">Off</option></select></label>' : '') +
     (CONSENT !== null ? '<label>Help improve Talk<select id="talk-s-consent"><option value="off">Off: nothing is kept</option><option value="on">On: keep what I say and what Talk did, 14 days (no audio)</option></select></label>' : '') +
+    '<div><b style="font-size:13px;font-weight:600">Models</b><dl id="talk-s-models"></dl></div>' +
     '<button type="button" class="talk-chip" id="talk-s-clear">Clear the conversation</button>' +
     '<button type="button" class="talk-chip pri" id="talk-s-done">Done</button>';
   logEl = el('div', { id: 'talk-log', 'aria-live': 'polite' });
@@ -476,6 +490,12 @@ function build() {
   if (scon) { scon.value = CONSENT ? 'on' : 'off'; scon.onchange = function () { api('consent', { on: scon.value === 'on' }).then(function (r) { CONSENT = !!r.on; if (CONSENT && !tOn) traceStart(); else if (!CONSENT) { tOn = false; tq = []; } }); }; }
   var sclp = document.getElementById('talk-s-clips');
   if (sclp) { sclp.value = S.clips; sclp.onchange = function () { S.clips = sclp.value; set('clips', S.clips); trace('setting', { clips: S.clips }); }; }
+  var ssay = document.getElementById('talk-s-say');
+  ssay.value = S.voice === 'off' ? 'off' : S.say;
+  ssay.onchange = function () { if (ssay.value === 'off') { S.voice = 'off'; } else { S.say = ssay.value; set('say', S.say); if (S.voice === 'off') S.voice = get('voice-on', 'aura-2'); } set('voice', S.voice); sv.value = S.voice; fillSpeakers(); voiceBtn(); trace('setting', { say: ssay.value }); };
+  // Models: what the running Talk uses for each step (from /api/talk/me), never typed in here.
+  var mdl = document.getElementById('talk-s-models'), ROWS = [['live', 'Live words'], ['final', 'Final words'], ['cleanup', 'Clean-up'], ['decide', 'Picking the action'], ['chat', 'Answering'], ['status', 'What\u2019s going on'], ['code', 'Questions about code'], ['summary', 'Spoken summary'], ['voice', 'Voice']];
+  mdl.innerHTML = ROWS.filter(function (r) { return MODELS[r[0]]; }).map(function (r) { var m = MODELS[r[0]]; return '<dt>' + r[1] + '</dt><dd>' + esc(m.model ? shortModel(m.model) : 'no model') + ' \u00b7 ' + esc(m.provider) + (m.note ? '<br><span style="color:var(--t-dim)">' + esc(m.note) + '</span>' : '') + '</dd>'; }).join('') + (MODELS.gateway ? '<dt>Gateway</dt><dd>' + esc(MODELS.gateway) + '</dd>' : '');
   var smg = document.getElementById('talk-s-merge'); smg.value = S.merge; smg.onchange = function () { S.merge = smg.value; set('merge', S.merge); trace('setting', { merge: S.merge }); };
   var smic = document.getElementById('talk-s-mic'), swh = document.getElementById('talk-s-whisper'), skp = document.getElementById('talk-s-keep');
   var showMic = function () { spz.parentNode.style.display = S.mic === 'pause' ? '' : 'none'; swh.parentNode.style.display = S.engine === 'live' && S.mic !== 'conv' ? '' : 'none'; micBtn.setAttribute('aria-label', S.mic === 'hold' ? 'Hold to speak' : S.mic === 'conv' ? 'Start a conversation' : 'Speak'); };
@@ -601,7 +621,19 @@ function dragHandle(g) {
   g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
 }
 function status(t) { stEl.textContent = t || ''; barSync(); }
-function add(who, text, links) { if (run && who !== 'you') run.texts.push(String(text)); hist.push({ who: who, text: String(text), links: links || undefined }); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
+function add(who, text, links, extra) { if (run && who !== 'you') run.texts.push(String(text)); var m = { who: who, text: String(text), links: links || undefined }; if (extra) { if (extra.sections) m.sections = extra.sections; if (extra.via) m.via = extra.via; } hist.push(m); if (hist.length > 40) hist = hist.slice(-40); sset('log', hist); render(); }
+// "How this was answered" (manager, 2026-10-13): what heard it, what picked the action, what answered, how long.
+var viaNow = null;   // the utterance in flight: { heard, decide: {model, ms}, answer: {lane, model, ms} }
+function viaShort(v) { if (!v || !v.answer) return ''; var a = v.answer; return (a.model ? shortModel(a.model) : a.lane + ', no model') + (a.ms != null ? ', ' + (a.ms / 1000).toFixed(1) + ' s' : ''); }
+function viaLong(v) {
+  var out = [];
+  if (v.heard) out.push('Heard: ' + v.heard);
+  if (v.decide) out.push('Picked by ' + shortModel(v.decide.model) + (v.decide.ms != null ? ' in ' + (v.decide.ms / 1000).toFixed(1) + ' s' : ''));
+  if (v.answer) out.push('Answered by ' + (v.answer.model ? shortModel(v.answer.model) : v.answer.lane + ' (read from your projects, no model)') + (v.answer.ms != null ? ' in ' + (v.answer.ms / 1000).toFixed(1) + ' s' : ''));
+  if (v.spoken) out.push('Said aloud: ' + v.spoken);
+  return out.join(' \u00b7 ');
+}
+function shortModel(m) { return String(m || '').replace(/^@cf\/[^/]+\//, ''); }
 function render() {
   logEl.innerHTML = '';
   if (!hist.length) {
@@ -622,7 +654,23 @@ function render() {
     var d = el('div', { class: m.who });
     // Answers from the code reader come as light markdown: show it as plain lines.
     d.textContent = m.who === 'ai' ? String(m.text).replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\x60([^\x60]+)\x60/g, '$1').replace(/^\s*[-*] /gm, '\u2022 ') : m.text;
-    if (m.links && m.links.length) {
+    // A status answer in sections (Building now, Waiting for you…), each line a link: for reading, not a wall of text.
+    if (m.sections && m.sections.length) {
+      d.textContent = '';
+      m.sections.forEach(function (sec) {
+        var h = el('p', { class: 'talk-sh' }); h.textContent = sec.title; d.appendChild(h);
+        var ul = el('ul', { class: 'talk-sl' });
+        sec.items.forEach(function (it) { var li = el('li'); if (it.href && /^\/[^/]/.test(it.href)) { var a = el('a', { href: it.href }); a.textContent = it.text; li.appendChild(a); } else li.textContent = it.text; ul.appendChild(li); });
+        if (sec.more) { var li2 = el('li', { class: 'talk-more' }); li2.textContent = 'and ' + sec.more + ' more'; ul.appendChild(li2); }
+        d.appendChild(ul);
+      });
+    }
+    if (m.via && m.via.answer) {
+      var vb = el('button', { type: 'button', class: 'talk-via', 'aria-expanded': 'false' }); vb.textContent = viaShort(m.via);
+      vb.onclick = (function (v, b) { return function () { var on = b.getAttribute('aria-expanded') !== 'true'; b.setAttribute('aria-expanded', on ? 'true' : 'false'); b.textContent = on ? viaLong(v) : viaShort(v); }; })(m.via, vb);
+      d.appendChild(vb);
+    }
+    if (m.links && m.links.length && !(m.sections && m.sections.length)) {
       var row = el('div', { class: 'talk-links' });
       m.links.forEach(function (l) { if (!/^\/[^/]/.test(l.href)) return; var a = el('a', { href: l.href, class: 'talk-link' }); a.textContent = l.text; row.appendChild(a); });
       d.appendChild(row);
@@ -752,6 +800,7 @@ function submit(text) {
   reuse.then(function (r) {
     if (r.error) { if (run) run.ok = false; add('note', r.why || 'Something went wrong.'); return done(); }
     var c = r.cmd;
+    viaNow = { heard: lastSpoken ? (S.engine === 'live' ? 'live words + ' + (S.merge === 'on' ? 'Whisper, cleaned up' : 'Whisper') : S.engine) : 'typed', decide: { model: MODELS.decide && MODELS.decide.model, ms: r.ms && r.ms.total } };
     if (run) { run.mode = c.mode; run.action = c.op; }
     logEv('decide', { text: text, mode: c.mode, mode_p: c.modeP, op: c.op, p: c.p, risky: c.risky, ms: Date.now() - t0 });
     // Delete, sign out, revoke: never by voice. Stop, pause, merge, build, spend: after a yes (said or tapped).
@@ -867,7 +916,8 @@ function whatsGoingOn(text) {
   status('Looking at your projects\u2026');
   api('status', { utterance: text }).then(function (r) {
     if (r.error) { if (run) run.ok = false; add('note', r.why || 'Could not look.'); return done(); }
-    add('ai', r.text, r.links); say(r.text);
+    if (viaNow) viaNow.answer = { lane: 'status', model: null, ms: r.ms };
+    add('ai', r.text, r.links, { sections: r.sections, via: viaNow }); say(r.text);
     logEv('status', { ms: r.ms, links: (r.links || []).length });
     done();
   }).catch(function (e) { if (run) run.ok = false; add('note', 'Could not reach qodebase.'); logEv('error', { where: 'status', err: String(e) }); done(); });
@@ -1210,7 +1260,8 @@ function ask(text, did) {
     chatHist.push({ role: 'user', content: text });
     if (reply) chatHist.push({ role: 'assistant', content: reply });
     chatHist = chatHist.slice(-12); sset('chat', chatHist);
-    if (reply) { add('ai', reply); say(reply); }
+    if (viaNow) viaNow.answer = { lane: 'chat', model: MODELS.chat && MODELS.chat.model, ms: r.ms && r.ms.model };
+    if (reply) { add('ai', reply, null, { via: viaNow }); say(reply); }
     var acts = r.actions || [];
     logEv('chat', { text: text, reply_len: reply.length, actions: acts.map(function (a) { return a.name; }), ms: r.ms && r.ms.model });
     var nav = null;
@@ -1264,6 +1315,14 @@ function say(text) {
   if (S.voice === 'off' || (S.when === 'voice' && !lastSpoken)) return;
   var t = spoken(text);
   if (!t) return;
+  // A long answer is summarised for the ear (the text stays on screen); 4 s at most, else its first two sentences.
+  if (S.say === 'short' && t.length > 200 && !text.__short) {
+    var v = viaNow, done1 = false, t0 = Date.now();
+    var go = function (x, how) { if (done1) return; done1 = true; if (v) v.spoken = how; trace('summary', { how: how, ms: Date.now() - t0, chars: x.length }); var o = new String(x); o.__short = true; say(o); };
+    setTimeout(function () { go((t.match(/[^.!?]+[.!?]+/g) || [t]).slice(0, 2).join(' '), 'first sentences (summary too slow)'); }, 4000);
+    api('summary', { text: t, question: lastText }).then(function (r) { if (r && r.spoken) go(r.spoken, 'summary by ' + shortModel(r.model) + ', ' + ((r.ms || 0) / 1000).toFixed(1) + ' s'); }).catch(function () {});
+    return;
+  }
   if (S.voice === 'phone') return phoneSay(t);
   unlockAudio();
   var t0 = Date.now();
@@ -1925,7 +1984,7 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   me = j.handle;
   if (j.version && j.version.sha) VERSION = j.version.sha + (j.version.built ? ' ' + new Date(j.version.built).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '') + (j.version.talk && j.version.talk !== j.version.sha ? ' talk ' + j.version.talk : '');
   if (j.trace) traceStart(); else tq = [];
-  CLIPS = !!j.clips;
+  CLIPS = !!j.clips; MODELS = j.models || {};
   CONSENT = j.consent === undefined ? null : j.consent;
   build();
   // Arrived on a page Talk opened: say how it went (status, time), tied to the utterance that asked for it.
