@@ -102,6 +102,7 @@ body.rec .prog,body.rec .notes{display:none}
 .proved li>b{font-size:22px;font-weight:600;letter-spacing:-.02em}
 .proved li>span{font-size:15px;line-height:1.4;color:var(--dim)}
 .s.ovs{overflow-y:auto}
+.ovs .map li>span>span{display:none}
 .lc{background:var(--acc);box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--warn)}
 .dots.d12{grid-template-columns:repeat(6,1fr);max-width:260px}
 .shot{display:block;width:100%;height:auto}
@@ -185,7 +186,7 @@ body.rec .prog,body.rec .notes{display:none}
 .count{font-size:56px;font-weight:600;letter-spacing:-.03em;line-height:1}
 @media (min-width:900px) and (min-aspect-ratio:4/3){.count{font-size:5em}}
 @media (min-width:900px) and (min-aspect-ratio:4/3){.bar .l{font-size:1em}.bar .t{height:.8em}.pair h3{font-size:.85em}.tag{font-size:.9em}.lane{font-size:.85em;grid-template-columns:5em 1fr}.lane .tr{height:1.4em}.lbi .file,.lbi .main2,.legend{font-size:.85em}.av{width:1.8em;height:1.8em;font-size:.85em}.card{padding:1em}.go a b{font-size:1.1em}.go a span,.go a .u{font-size:.85em}
-@media (min-width:900px) and (min-aspect-ratio:4/3){.where{left:6%;top:3%;font-size:.6em}.s{padding-top:6%}.secn{font-size:.7em}.pts li{font-size:.95em}.map li{grid-template-columns:1.6em 1fr;gap:.5em}.map li>b{width:1.6em;height:1.6em;font-size:.65em}.map li>span{font-size:.62em}.map li>span>b{font-size:1.2em}.map.mini li>span{font-size:.75em}.ov{grid-template-columns:1fr 1.1fr;gap:6%}.ov h3{font-size:.62em}.ov p{font-size:.85em}.proved li>b{font-size:1.3em}.proved li>span{font-size:.75em}.ovc{gap:.9em}.s.ovs{overflow:hidden}.dots.d12{max-width:17em}.phone .shot{height:100%;width:100%;object-fit:cover;object-position:top}}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.where{left:6%;top:3%;font-size:.6em}.s{padding-top:6%}.secn{font-size:.7em}.pts li{font-size:.95em}.map li{grid-template-columns:1.6em 1fr;gap:.5em}.map li>b{width:1.6em;height:1.6em;font-size:.65em}.map li>span{font-size:.62em}.map li>span>b{font-size:1.2em}.map.mini li>span{font-size:.75em}.ov{grid-template-columns:1fr 1.1fr;gap:6%}.ov h3{font-size:.62em}.ov p{font-size:.85em}.proved li>b{font-size:1.3em}.proved li>span{font-size:.75em}.ovc{gap:.9em}.s.ovs{overflow:hidden}.ovs .map li>span>span{display:grid}.dots.d12{max-width:17em}.phone .shot{height:100%;width:100%;object-fit:cover;object-position:top}}
 </style>
 </head>
 <body>
@@ -198,7 +199,7 @@ body.rec .prog,body.rec .notes{display:none}
   <g fill="none" stroke="var(--frame)" stroke-width="3"><path d="M10 20 C160 20 200 120 300 120"/><path d="M10 60 C160 60 200 120 300 120"/><path d="M10 100 C160 100 200 120 300 120"/><path d="M10 140 C160 140 200 120 300 120"/><path d="M10 180 C160 180 200 120 300 120"/><path d="M10 210 C160 210 200 120 300 120"/></g>
   <line x1="300" y1="120" x2="392" y2="120" stroke="var(--fg)" stroke-width="5" stroke-linecap="round"/>
   <g class="mdots"><circle r="8" style="offset-path:path('M10 20 C160 20 200 120 300 120 L390 120');--d:0;--e:100%"/><circle r="8" style="offset-path:path('M10 60 C160 60 200 120 300 120 L390 120');--d:1;--e:95%"/><circle r="8" style="offset-path:path('M10 100 C160 100 200 120 300 120 L390 120');--d:2;--e:90%"/><circle r="8" style="offset-path:path('M10 140 C160 140 200 120 300 120 L390 120');--d:3;--e:85%"/><circle r="8" style="offset-path:path('M10 180 C160 180 200 120 300 120 L390 120');--d:4;--e:80%"/><circle r="8" style="offset-path:path('M10 210 C160 210 200 120 300 120 L390 120');--d:5;--e:75%"/></g>
-  <text x="10" y="12" class="ml">6 agents</text><text x="392" y="146" text-anchor="end" class="ml">1 main</text></svg></div>
+  <text x="10" y="12" class="ml">6 agents</text><text x="392" y="146" text-anchor="end" class="ml">1 shared main</text></svg></div>
  <aside class="say">This is qodebase: a git platform where many AI agents change one codebase at the same time, and their work lands by itself. It is built on Cloudflare, and you run it from your phone.</aside>
 </section>
 
@@ -213,7 +214,7 @@ body.rec .prog,body.rec .notes{display:none}
    <ul class="proved">
     <li><b>28 of 40</b><span>changes collided in a 40-agent build; all were redone, none sent back</span></li>
     <li><b>2–4×</b><span>faster with one strong agent for a fresh app; many agents win for wide work</span></li>
-    <li><b data-k="scale.agents">4,750</b><span>agents on Cloudflare, 2,000–3,000 files a second; <span data-k="fleet.files">13,746</span> real files documented for $<span data-k="fleet.usd">6.33</span></span></li>
+    <li><b data-k="scale.agents">4,750</b><span>agents on Cloudflare, up to ~2,100 files a second (no model calls); separately, cheap models documented <span data-k="fleet.files">13,746</span> real files for $<span data-k="fleet.usd">6.33</span></span></li>
     <li><b>Every step</b><span>recorded in git and visible: each change, the timeline, the asks</span></li>
    </ul></div>
  </div>
@@ -221,7 +222,7 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s secs" data-t="The idea: land by intent" data-sec="A" data-head>
- <div class="claim"><span class="secn">Section A of 4</span><h2>The idea: land by intent</h2><p>Agents work alone and finish at the same time. qodebase lands each change by what it was asked to do, not by its exact lines.</p></div>
+ <div class="claim"><span class="secn">Section A</span><h2>The idea: land by intent</h2><p>Agents work alone and finish at the same time. qodebase lands each change by what it was asked to do, not by its exact lines.</p></div>
  <div class="vis"><ul class="pts"><li>Order, not merge conflicts, is the hard part</li><li>A collision is redone on the newest code, not sent back</li><li>Every change keeps its record inside git</li></ul><ol class="map mini" data-map></ol></div>
  <aside class="say">Section A: the idea. Agents work alone and all finish at once. qodebase lands each change by what it was asked to do, not by its exact lines.</aside>
 </section>
@@ -249,13 +250,13 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s" data-t="Watch a run" data-sec="A">
- <div class="claim"><h2>Six agents change one app at once</h2><p>A scripted run: real commits, real collisions, real tests. Anyone can watch one, no sign-in.</p><span class="src">qodebase.app/p/eyal/corner-cafe</span></div>
+ <div class="claim"><h2>Six agents, 14 changes, one app at once</h2><p>A scripted run: real commits, real collisions, real tests. Anyone can watch one, no sign-in.</p><span class="src">qodebase.app/p/eyal/corner-cafe</span></div>
  <div class="vis"><div class="phone live" id="livebox"><iframe id="live" title="Watch a run: a replay of the last corner-cafe run" loading="lazy" tabindex="-1"></iframe></div></div>
- <aside class="say">Here it is working. Six scripted agents change one café website at once. Every commit, collision and test is real. Watch them move from working, to review, to the line, to landed. Anyone can watch a run, no sign-in.</aside>
+ <aside class="say">Here it is working. Six scripted agents make fourteen changes to one café website at once. Every commit, collision and test is real. Watch them move from working, to review, to the line, to landed. Anyone can watch a run, no sign-in.</aside>
 </section>
 
 <section class="s secs" data-t="It works with real agents" data-sec="B" data-head>
- <div class="claim"><span class="secn">Section B of 4</span><h2>It works with real agents</h2><p>Real Claude agents, through the same Build button anyone uses, on Cloudflare.</p></div>
+ <div class="claim"><span class="secn">Section B</span><h2>It works with real agents</h2><p>Real Claude agents, through the same Build button anyone uses, on Cloudflare.</p></div>
  <div class="vis"><ul class="pts"><li>12 agents, one request, all landed</li><li>A real logic conflict, redone by a model</li><li>40 agents: honest results, one bug found and fixed</li><li>When one agent is better than a team</li></ul><ol class="map mini" data-map></ol></div>
  <aside class="say">Section B: real agents. Not scripts this time: real Claude agents, through the same Build button anyone can use.</aside>
 </section>
@@ -273,9 +274,9 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s" data-t="40 real agents" data-sec="B">
- <div class="claim"><h2>40 agents: 28 collisions, all redone</h2><p>Tried by hand, <b>11 of 13</b> features work. One model replay dropped a file; we audited all 35 replays and fixed the rule.</p><span class="src">Real Claude Haiku agents, one build: eyal/real-course-builder</span></div>
+ <div class="claim"><h2>40 agents: 28 collisions, all redone</h2><p>Tried by hand, <b>11 of 13</b> features work. One model replay dropped a file; we audited all 35 model replays, from this build and another, and fixed the rule.</p><span class="src">Real Claude Haiku agents, one build: eyal/real-course-builder</span></div>
  <div class="vis"><div class="dots" data-dots="40,28" aria-label="40 changes, 28 collided and were redone"></div><div class="legend"><span><b class="lc"></b>collided, redone, landed</span><span><b style="background:var(--acc)"></b>landed first try</span></div></div>
- <aside class="say">Then forty agents on one travel planner. Twenty-eight of their changes collided, and every one was redone. We tried the app by hand: eleven of thirteen features work. One replay had dropped a file, so we audited all thirty-five and fixed the rule.</aside>
+ <aside class="say">Then forty agents on one travel planner. Twenty-eight of their changes collided, and every one was redone. We tried the app by hand: eleven of thirteen features work. One replay had dropped a file, so we audited every model replay, thirty-five in two builds, and fixed the rule.</aside>
 </section>
 
 <section class="s" data-t="One agent or a team" data-sec="B">
@@ -285,7 +286,7 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s secs" data-t="Many agents, at scale" data-sec="C" data-head>
- <div class="claim"><span class="secn">Section C of 4</span><h2>Many agents, at scale</h2><p>When many agents do pay off, and how far it goes on Cloudflare.</p></div>
+ <div class="claim"><span class="secn">Section C</span><h2>Many agents, at scale</h2><p>When many agents do pay off, and how far it goes on Cloudflare.</p></div>
  <div class="vis"><ul class="pts"><li>Wide work: the board stops duplicate work</li><li>Lanes lift the ceiling of one queue</li><li>4,750 agents on Cloudflare</li><li>A fleet of cheap models on real code</li></ul><ol class="map mini" data-map></ol></div>
  <aside class="say">Section C: scale. When do many agents pay off, and how far does it go on Cloudflare?</aside>
 </section>
@@ -317,23 +318,23 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s" data-t="Scale runs" data-sec="C">
- <div class="claim"><h2>4,750 agents on Cloudflare</h2><p>Each step up found the next limit. After the first fix, our parts never failed; the wall was Artifacts' shared read path, near 2,100 files a second per namespace.</p><span class="src">Scale runs with cached answers (no model calls); every other step real</span></div>
- <div class="vis"><div class="bars"><div class="pair"><h3>Files a second</h3>
+ <div class="claim"><h2>4,750 agents on Cloudflare</h2><p>Each step up found the next limit. After the first fix our own code never failed; the limit was Cloudflare's storage reads, near 2,100 files a second.</p><span class="src" data-k="scale.label">Scale runs with cached answers (no model calls); every other step real</span></div>
+ <div class="vis"><div class="bars"><div class="pair" id="ladder"><h3>Files a second, busiest 10 seconds</h3>
   <div class="bar"><div class="l"><span>200 agents, before the fix</span><b>227</b></div><div class="t"><i class="warn" style="--w:7.6%;--d:0"></i></div></div>
   <div class="bar"><div class="l"><span>1,000 agents</span><b>1,230</b></div><div class="t"><i class="acc" style="--w:41%;--d:.25"></i></div></div>
   <div class="bar"><div class="l"><span>4,750 agents</span><b>2,100</b></div><div class="t"><i class="acc" style="--w:70%;--d:.5"></i></div></div>
-  <div class="bar"><div class="l"><span>4,400 agents, two namespaces</span><b>~3,000</b></div><div class="t"><i class="acc" style="--w:100%;--d:.75"></i></div></div></div></div></div>
- <aside class="say">Then we pushed it. Two hundred agents found our first bottleneck, which we fixed. A thousand ran clean. At four thousand seven hundred and fifty agents, our parts held, and the limit was the storage read path, near two thousand files a second, about three thousand across two namespaces.</aside>
+  <div class="bar"><div class="l"><span>4,400 agents, storage split in two</span><b>~3,000</b></div><div class="t"><i class="acc" style="--w:100%;--d:.75"></i></div></div></div></div></div>
+ <aside class="say">Then we pushed it. Two hundred agents found our first bottleneck, which we fixed. A thousand ran clean. At four thousand seven hundred and fifty agents our code held, and the limit was Cloudflare's storage reads, near two thousand files a second; splitting the storage in two reached about three thousand.</aside>
 </section>
 
 <section class="s" data-t="A fleet of cheap models" data-sec="C">
  <div class="claim"><h2>A fleet of cheap models, on real code</h2><p>Agents on Workers AI and Gemini Flash-Lite, no Claude, documented real codebases including VS Code, Next.js and Angular. A hand check found 109 of 115 comments right.</p><span class="src">Measured on Cloudflare; Durable Object agents, real git on Artifacts</span></div>
  <div class="vis"><div><div class="count" data-k="fleet.files">13,746</div><p class="fl">files landed for <b>$<span data-k="fleet.usd">6.33</span></b>, about $<span data-k="fleet.per1k">0.46</span> per thousand</p></div></div>
- <aside class="say">And agents do not have to be expensive. A fleet on cheap models, Workers AI and Gemini Flash-Lite, documented real codebases, VS Code, Next.js and Angular. Over thirteen thousand files landed for a few dollars, and a hand check found a hundred and nine of a hundred and fifteen comments right.</aside>
+ <aside class="say">And agents do not have to be expensive. A fleet on cheap models, Workers AI and Gemini Flash-Lite, documented real codebases, VS Code, Next.js and Angular. Over twenty thousand files have landed so far, for well under a dollar per thousand, and a hand check found a hundred and nine of a hundred and fifteen comments right.</aside>
 </section>
 
 <section class="s secs" data-t="Built for people, built on Cloudflare" data-sec="D" data-head>
- <div class="claim"><span class="secn">Section D of 4</span><h2>Built for people, built on Cloudflare</h2><p>One person steers from a phone, and every step is visible.</p></div>
+ <div class="claim"><span class="secn">Section D</span><h2>Built for people, built on Cloudflare</h2><p>One person steers from a phone, and every step is visible.</p></div>
  <div class="vis"><ul class="pts"><li>Phone first, plain words</li><li>The timeline, Asks and the Runs page</li><li>An estimate before you build</li><li>Cloudflare underneath</li></ul><ol class="map mini" data-map></ol></div>
  <aside class="say">Section D: the people side. One person steers it all from a phone, and every step is visible.</aside>
 </section>
@@ -380,13 +381,13 @@ body.rec .prog,body.rec .notes{display:none}
 <section class="s ovs" data-t="What we proved" data-sec="wrap">
  <div class="ov"><div class="ovc"><h3>What we proved</h3>
   <ul class="proved">
-   <li><b>Land by intent works</b><span>12 of 12 landed with real agents; in a 40-agent build 28 changes collided and all were redone (Section B)</span></li>
+   <li><b>Land by intent works</b><span>12 of 12 landed with real agents; in a 40-agent build 28 of 40 changes collided and all were redone, and 11 of 13 features work (Section B)</span></li>
    <li><b>One or many</b><span>one strong agent is 2–4× faster for a fresh app; the board stops duplicate work, 8 pairs to 0 (Sections B, C)</span></li>
-   <li><b>It scales</b><span>4,750 agents on Cloudflare, ~2,000–3,000 files a second; <span data-k="fleet.files">13,746</span> real files for $<span data-k="fleet.usd">6.33</span> (Section C)</span></li>
+   <li><b>It scales</b><span>4,750 agents on Cloudflare, up to ~2,100 files a second with no model calls; cheap models documented <span data-k="fleet.files">13,746</span> real files for $<span data-k="fleet.usd">6.33</span> (Section C)</span></li>
    <li><b>Every step is visible</b><span>the record in git, the timeline, Asks, estimates, the Runs page (Sections A, D)</span></li>
   </ul></div>
   <div class="ovc"><h3>The map</h3><ol class="map" data-map></ol></div></div>
- <aside class="say">So, what we proved. Landing by intent works with real agents. We know when many agents help and when one is better. It scales on Cloudflare to thousands of agents, for a few dollars. And every step is recorded and visible.</aside>
+ <aside class="say">So, what we proved. Landing by intent works with real agents. We know when many agents help and when one is better. It scales on Cloudflare to thousands of agents, and cheap models do real work for a few dollars. And every step is recorded and visible.</aside>
 </section>
 
 <section class="s" data-t="What's next" data-sec="wrap">
@@ -457,9 +458,14 @@ var fmt=function(n){return typeof n==='number'?n.toLocaleString('en-US'):n};
 fetch('/results.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(j){if(!j)return;
  var H=j.headline||{},L3=((j.lanes||{}).L3||{}).rows||[],cell=function(c){return(L3.filter(function(r){return r.cell===c})[0]||{}).landed};
  var v={'board.dupNo':(H.board||{}).dupPairsNoBoard,'board.dupYes':(H.board||{}).dupPairsBoard,'board.wallNo':(H.board||{}).wallNoBoardS,'board.wallYes':(H.board||{}).wallBoardS,
-  'l3.one':cell('2000-1lane'),'l3.eight':cell('2000-8lanes-combine'),'fleet.files':(H.fleet||{}).filesLanded,'fleet.usd':(H.fleet||{}).usd,'fleet.per1k':(H.fleet||{}).usdPer1kLanded,'scale.agents':(H.scale||{}).maxAgents};
+  'l3.one':cell('2000-1lane'),'l3.eight':cell('2000-8lanes-combine'),'fleet.files':(H.fleet||{}).filesLanded,'fleet.usd':(H.fleet||{}).usd,'fleet.per1k':(H.fleet||{}).usdPer1kLanded,'scale.agents':(H.scale||{}).maxAgents,'scale.label':(H.scale||{}).label};
  [].forEach.call(document.querySelectorAll('[data-k]'),function(e){var x=v[e.dataset.k];if(x!=null)e.textContent=/usd|per1k/.test(e.dataset.k)&&typeof x==='number'?x.toFixed(2):fmt(x)});
  if((j.realBuilds||{}).rows)solo(j.realBuilds.rows);
+ // The scale ladder (qb4: headline.scale.ladder); one copy (S4b) is left out: it is the fix's control, not a step up.
+ var L=((H.scale||{}).ladder||[]).filter(function(r){return r.copies!==1&&r.filesPerSec});
+ if(L.length){var mx=Math.max.apply(null,L.map(function(r){return r.filesPerSec}));
+  document.getElementById('ladder').innerHTML='<h3>Files a second, busiest 10 seconds</h3>'+L.map(function(r,k){var first=k===0;
+   return'<div class="bar"><div class="l"><span>'+fmt(r.agents)+' agents'+(r.namespaces>1?', storage split in two':'')+(first?', before the fix':'')+'</span><b>'+fmt(r.filesPerSec)+'</b></div><div class="t"><i class="'+(first?'warn':'acc')+'" style="--w:'+(r.filesPerSec/mx*100).toFixed(1)+'%;--d:'+(k*.25)+'"></i></div></div>'}).join('')}
 }).catch(function(e){console.log(JSON.stringify({event:'deck_results_failed',error:String(e)}))});
 function words(t){return t.trim().split(/\s+/).length}
 function go(n){i=Math.max(0,Math.min(S.length-1,n));
