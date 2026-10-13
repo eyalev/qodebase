@@ -127,3 +127,19 @@
 #runs .dp-cm{margin:0;font-size:15px;font-weight:500}
 #runs .dp-why{margin:0;font-size:14px;line-height:1.45}
 #runs .rcp-repo .rr-n small{white-space:normal;overflow:visible}
+#nj{margin:0 0 4px}
+#nj .nj-open{width:100%}
+#nj .nj-f{display:grid;gap:10px;margin:12px 0 0;padding:14px;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--frame,var(--line))}
+#nj .nj-h{font-size:18px;font-weight:600;margin:0}
+#nj .nj-l{display:grid;gap:4px;font-size:13px;font-weight:500;color:var(--fg)}
+#nj select,#nj input[type=number],#nj #nj-root{width:100%;box-sizing:border-box;min-height:44px;font:16px Geist,sans-serif;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+#nj .nj-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#nj .nj-g{border:0;margin:0;padding:0;display:grid;gap:4px}
+#nj .nj-g legend{font-size:13px;font-weight:500;margin-bottom:4px}
+#nj .nj-g label{display:flex;gap:10px;align-items:flex-start;min-height:44px;font-size:14px;line-height:1.4;padding-top:10px}
+#nj .nj-g input{width:20px;height:20px;margin:0;flex:none;accent-color:var(--acc)}
+#nj .nj-g small{color:var(--dim)}
+#nj .nj-est{padding:12px;border-radius:10px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);font-size:14px;line-height:1.45}
+#nj .rc-cn{margin:0;font-size:13px}#nj .rc-cn.bad{color:var(--warn)}
+#nj .btn,#nj .chipbtn{min-height:44px}
+#nj .rc-ctl{display:flex;flex-wrap:wrap;gap:8px}

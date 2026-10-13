@@ -27,6 +27,7 @@ import { suggestRoute, ideaRoute } from './buildsuggest';
 import { withPicker } from './picker';
 import { screenshotRoute } from './screenshot';
 import { requestsRoute, myRequestsRoute } from './requests';
+import { cleanStart, estimate as fleetEstimate } from './fleetjob';
 import { ATTACH_TYPES, ATTACH_MAX, newAttachId, isAttachId, attachKey, composeMessage, parseMarker, attachedLines } from './attach';
 import { viewShown, buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
 import { changesOf, runUrl } from './v2';
@@ -717,6 +718,26 @@ const app = {
         return json(intentsAnswer(T, url.searchParams));
       }
       if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/ladder\/([A-Za-z0-9-]{1,20})\/series$/))) return json(await fleetCall(env, `/ladder-series?ladder=${m[1]}`));
+      // Start a fleet job from the app (qb7, src/fleetjob.ts): owner/admin only; the fleet key stays here (fleetCall).
+      if (path === '/api/runs/copies' || path === '/api/runs/count' || path === '/api/runs/estimate' || path === '/api/runs/start') {
+        if (!(me.admin || (me.handle && isOwner(env, me.handle)))) return json({ error: 'owner only' }, 403);
+        if (path === '/api/runs/copies' && request.method === 'GET') return json(await fleetCall(env, '/copies'));
+        if (path === '/api/runs/count' && request.method === 'GET') {
+          const repo = url.searchParams.get('repo') || '', root = url.searchParams.get('root') || '';
+          if (!/^fleet-[a-z0-9-]{1,40}$/.test(repo) || !/^[\w.\-/]{0,120}$/.test(root)) return json({ error: 'repo and folder' }, 400);
+          return json(await fleetCall(env, `/count?repo=${repo}&root=${encodeURIComponent(root)}`));
+        }
+        const b = await request.json().catch(() => ({})) as Record<string, unknown>;
+        const c = cleanStart(b);
+        if ('error' in c) return json(c, 400);
+        if (path === '/api/runs/estimate' && request.method === 'POST') return json(fleetEstimate({ files: Number(b.files) || 0, models: c.models, agents: c.agents, budgetUsd: c.budgetUsd, job: c.job }) || { error: 'Pick a copy with files.' });
+        if (path === '/api/runs/start' && request.method === 'POST') {
+          const r = await fleetCall(env, '/start', c) as { runId?: string; error?: string };
+          log('fleet', 'job_start', { by: me.handle || 'admin', repo: c.repo, root: c.root, agents: c.agents, budgetUsd: c.budgetUsd, job: c.job || 'comments', runId: r.runId || null, error: r.error || null });
+          return json(r.runId ? { ...r, repo: c.repo } : r, r.runId ? 200 : 409);
+        }
+        return json({ error: 'GET copies, POST estimate or start' }, 405);
+      }
       if ((m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/(pause|resume|stop)$/)) && request.method === 'POST') {
         if (!(me.admin || (me.handle && isOwner(env, me.handle)))) return json({ error: 'owner only' }, 403);
         const b = await request.json().catch(() => ({})) as { why?: string };

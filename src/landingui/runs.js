@@ -380,7 +380,7 @@
     const cur = fleet.filter(live), past = fleet.filter((r) => !live(r));
     const real = D.real || [];
     const realRow = (b) => `<li><a href="${esc(b.link || `/p/${b.slug.replace('.', '/')}/work#/timeline`)}"><span class="rr-n"><b>${esc(b.label || b.slug)}</b><small>${esc(b.slug.replace('.', ' / '))}</small></span><span class="rr-v">${b.settledAt ? `${clock((b.settledAt - b.startedAt) / 1000)}, ${usd(b.usd)}` : b.startedAt ? `running, ${usd(b.usd)} so far` : '–'}${b.parts ? `<small>${n0(b.landed)} of ${n0(b.parts)} parts on main</small>` : b.landed ? `<small>${n0(b.landed)} changes on main</small>` : ''}</span><span class="rr-go">Timeline</span></a></li>`;
-    return `<header class="rh"><h1>Scale runs</h1><p class="rh-s"><i class="live${cur.length ? '' : ' off'}"></i><span id="rupd">${cur.length ? `${cur.length} running now` : 'Nothing running now'}</span>${OWN ? '' : '<span class="rh-ro">read-only</span>'}</p></header>
+    return `<header class="rh"><h1>Scale runs</h1><p class="rh-s"><i class="live${cur.length ? '' : ' off'}"></i><span id="rupd">${cur.length ? `${cur.length} running now` : 'Nothing running now'}</span>${OWN ? '' : '<span class="rh-ro">read-only</span>'}</p></header>${OWN && !MOCK ? '<div id="nj-slot"></div>' : ''}
       ${cur.length ? `<section class="rsec"><h2>Now</h2>${cur.map((r) => card(r, false)).join('')}</section>` : ''}
       <section class="rsec"><h2>${cur.length ? 'Earlier' : 'Fleet runs'}</h2>${past.length ? past.slice(0, 20).map((r) => card(r, false)).join('') : '<p class="dim">No fleet runs yet.</p>'}</section>
       ${real.length ? `<section class="rsec"><h2>Real builds</h2><p class="dim">Real Claude Code agents building an app; each opens its project's timeline.</p><ul class="rr">${real.map(realRow).join('')}</ul></section>` : ''}`;
@@ -438,6 +438,8 @@
     // a live run opens at, and keeps showing, its newest minute; a finished one opens at its start
     const f2 = root.querySelector('.tl-frame'); if (f2) f2.scrollLeft = fr ? (atEnd && 'live' in f2.dataset ? f2.scrollWidth : sx) : ('live' in f2.dataset ? f2.scrollWidth : 0);
     if (ctlF) root.querySelector(`[data-ctl="${ctlF}"]`)?.focus({ preventScroll: true });
+    // the New fleet job form is one node kept across refreshes (moving it keeps what is typed and the focus)
+    const slot = root.querySelector('#nj-slot'); if (slot && NJ) { const fa = document.activeElement, keep = NJ.contains(fa) ? fa : null; slot.replaceWith(NJ); keep?.focus({ preventScroll: true }); }
     talkActions();
     if (window.qbIntentsMount) window.qbIntentsMount(root);
   }
@@ -447,7 +449,7 @@
     clearTimeout(timer);
     if (!D && !root.innerHTML) root.innerHTML = '<header class="rh"><h1>Scale runs</h1><p class="rh-s"><i class="live off"></i><span>Loading the runs…</span></p></header>';
     try {
-      await load(); failures = 0; lastOk = Date.now();
+      await load(); failures = 0; lastOk = Date.now(); if (!NJ && OWN && !MOCK) { njMount(); lastHtml = ''; }
       const cur = current();
       if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); }
       else await Promise.all(grouped((D.fleet || []).slice()).filter((g) => g.group).slice(0, 6).map((g) => loadLadder(g).catch(() => false)));
@@ -482,6 +484,15 @@
   }
   function talkActions() {
     const run = current();
+    const fleetAction = OWN && NJ ? [{ id: 'fleet-job', text: 'Start a fleet job: say what to document and where (e.g. every exported function in VS Code\u2019s editor, and add each to the API index)', run: async (sentence) => {
+      await njCopies(); const pre = njFromSentence(sentence);
+      if (!pre.repo) return false;
+      if (location.hash && location.hash !== '#/') location.hash = '#/';
+      await njToggle(true, pre); log('talk_fleet_job', { sentence: String(sentence).slice(0, 120), repo: pre.repo, root: pre.root || null, job: pre.job || 'comments' });
+      const o = NJ.querySelector('#nj-copy').selectedOptions[0];
+      return `Ready to start ${pre.job === 'comments+index' && COPIES.jobs.includes('comments+index') ? 'doc comments and the API index' : 'doc comments'} on ${o?.dataset.name || pre.repo}${pre.root ? ` (${pre.root})` : ''}. Check the estimate and tap Start.`;
+    } }] : [];
+    if (!run || !TLS || !root.querySelector('.tl-in:not(.tl-frame.mini .tl-in)')) { if (fleetAction.length) window.__talkActions = fleetAction; else delete window.__talkActions; return; }
     if (!run || !TLS || !root.querySelector('.tl-in:not(.tl-frame.mini .tl-in)')) { delete window.__talkActions; return; }
     window.__talkActions = [{ id: 'moment', text: 'Open the moment of this run\u2019s timeline at a time (say it like 3:20 or minute 5)', run: async (sentence) => {
       const sec = spokenTime(sentence); if (sec == null || !TLS) return false;
@@ -490,7 +501,7 @@
       const raw = s.raw || {}, from = clock((s.minute - TLS.t0) / 1000), to = clock((s.minute - TLS.t0 + TLS.stepMs) / 1000);
       log('talk_moment', { sentence: String(sentence).slice(0, 80), i });
       return `Opened ${from} to ${to}: ${s.active != null ? `${n0(s.active)} agents at work, ` : ''}${n0(raw.landed || 0)} changes reached main.`;
-    } }];
+    } }, ...fleetAction];
   }
   root.addEventListener('toggle', (e) => { const d = e.target; if (d.matches?.('.rcp-more, .rcp-repo')) { if (d.open) openCopies.add(d.dataset.g); else openCopies.delete(d.dataset.g); } }, true);
   // Taps on the timeline and in the drill-down panel.
@@ -537,6 +548,95 @@
     if (!r.ok && say) { const p = document.createElement('p'); p.className = 'rc-cn bad'; p.textContent = r.status === 403 || r.status === 401 ? 'Only the owner can do that.' : 'That did not work. Try again.'; say.append(p); return; }
     lastHtml = ''; tick();
   });
+
+  // ---- New fleet job (owner; qb7, src/fleetjob.ts): pick a copy, the job, agents and a budget, see the estimate, start.
+  // The form lives in its own section above the list, outside the 5 s re-render, so typing is never wiped. Talk fills it
+  // from a sentence ('document every exported function in VS Code's editor and add each one to the API index').
+  let NJ = null, COPIES = null, njEst = 0; const njCount = {};
+  const VS_AREAS = ['editor', 'workbench', 'base', 'platform', 'code', 'server'];
+  function njMount() {
+    if (!OWN || NJ || MOCK) return;
+    NJ = document.createElement('section'); NJ.id = 'nj'; NJ.className = 'nj';   // placed into #nj-slot by render()
+    NJ.innerHTML = '<button type="button" class="btn nj-open" aria-expanded="false" aria-controls="nj-f">New fleet job</button><form class="nj-f" id="nj-f" hidden></form>';
+    NJ.querySelector('.nj-open').onclick = () => njToggle();
+  }
+  async function njCopies() {
+    if (COPIES) return COPIES;
+    const r = await fetch(`${API}/copies`, { cache: 'no-store', credentials: 'same-origin' }).catch(() => null);
+    const j = r && r.ok ? await r.json().catch(() => ({})) : {};
+    COPIES = { copies: (j.copies || []).slice().sort((a, b) => (b.fresh - a.fresh) || String(a.repo).localeCompare(String(b.repo))), jobs: j.jobs || ['comments'], error: j.error || (!r || !r.ok ? 'Could not list the copies.' : '') };
+    return COPIES;
+  }
+  async function njToggle(open, pre) {
+    const f = NJ.querySelector('form'), b = NJ.querySelector('.nj-open');
+    const on = open ?? f.hidden; f.hidden = !on; b.setAttribute('aria-expanded', String(on)); b.textContent = on ? 'Close' : 'New fleet job'; b.className = on ? 'chipbtn nj-open' : 'btn nj-open';
+    if (!on) return;
+    const c = await njCopies();
+    const idx = c.jobs.includes('comments+index');
+    f.innerHTML = `<h2 class="nj-h">New fleet job</h2>${c.error ? `<p class="rc-cn bad">${esc(c.error)}</p>` : ''}
+      <label class="nj-l" for="nj-copy">Copy to work on</label><select id="nj-copy">${c.copies.map((x) => `<option value="${esc(x.repo)}" data-root="${esc(x.source?.root || '')}" data-files="${x.files || 0}" data-name="${esc(x.source?.name || x.repo)}">${esc(x.source?.name || x.repo)} (${esc(x.repo)}), ${n0(x.files)} files${x.fresh ? '' : ', already documented'}</option>`).join('')}</select>
+      <label class="nj-l" for="nj-root">Folder</label><input id="nj-root" autocapitalize="none" spellcheck="false">
+      <fieldset class="nj-g"><legend>Job</legend><label><input type="radio" name="nj-job" value="comments" checked> Doc comments on every exported function</label><label><input type="radio" name="nj-job" value="comments+index"${idx ? '' : ' disabled'}> Doc comments and a line for each in docs/API.md${idx ? '' : ' <small>(coming)</small>'}</label></fieldset>
+      <div class="nj-row"><label class="nj-l" for="nj-agents">Agents<input id="nj-agents" type="number" inputmode="numeric" min="1" max="2000" step="1" value="200"></label><label class="nj-l" for="nj-budget">Budget, $<input id="nj-budget" type="number" inputmode="decimal" min="0.1" max="30" step="any" value="3"></label></div>
+      <fieldset class="nj-g"><legend>Who writes the comments</legend><label><input type="radio" name="nj-model" value="workers" checked> Workers AI models (Gemma 4 and GLM 4.7)</label><label><input type="radio" name="nj-model" value="cache"> The cache (answers reused, no model, free)</label></fieldset>
+      <div class="nj-est" id="nj-est" role="status" aria-live="polite">Pick a copy.</div>
+      <div class="rc-ctl"><button type="submit" class="btn" id="nj-go">Start</button><button type="button" class="chipbtn" id="nj-x">Cancel</button></div>
+      <p class="rc-cn" id="nj-msg"></p>`;
+    const $ = (id) => f.querySelector('#' + id);
+    const sel = $('nj-copy'), rootI = $('nj-root');
+    const pickCopy = () => { const o = sel.selectedOptions[0]; if (o && !rootI.dataset.touched) rootI.value = o.dataset.root; };
+    if (pre) { if (pre.repo) sel.value = pre.repo; if (pre.root) { rootI.value = pre.root; rootI.dataset.touched = '1'; } if (pre.job && idx) f.querySelector(`[name=nj-job][value="${pre.job}"]`).checked = true; if (pre.agents) $('nj-agents').value = pre.agents; if (pre.budgetUsd) $('nj-budget').value = pre.budgetUsd; if (pre.preset) f.querySelector(`[name=nj-model][value="${pre.preset}"]`).checked = true; }
+    pickCopy();
+    sel.onchange = () => { rootI.dataset.touched = ''; pickCopy(); njEstimate(); };
+    rootI.oninput = () => { rootI.dataset.touched = '1'; njEstimate(); };
+    f.oninput = (e) => { if (e.target !== rootI) njEstimate(); };
+    $('nj-x').onclick = () => njToggle(false);
+    f.onsubmit = async (e) => { e.preventDefault(); const b2 = njBody(); const go = $('nj-go'), msg = $('nj-msg'); go.disabled = true; go.textContent = 'Starting…'; msg.textContent = ''; msg.className = 'rc-cn';
+      let r, j = {};
+      try { r = await fetch(`${API}/start`, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(b2) }); j = await r.json().catch(() => ({})); } catch (x) { r = { ok: false }; }
+      log('fleet_start', { ok: !!r.ok, repo: b2.repo, agents: b2.agents, runId: j.runId || null, error: j.error || null });
+      go.disabled = false; go.textContent = 'Start';
+      if (!r.ok || !j.runId) { msg.className = 'rc-cn bad'; msg.textContent = j.error || 'Could not start it. Try again.'; return; }
+      njToggle(false); COPIES = null; location.hash = `#/run/${encodeURIComponent(j.repo || b2.repo)}/${encodeURIComponent(j.runId)}`; tick(); };
+    njEstimate();
+    setTimeout(() => f.scrollIntoView({ block: 'start', behavior: 'smooth' }), 30);
+  }
+  function njBody() {
+    const f = NJ.querySelector('form'), o = f.querySelector('#nj-copy').selectedOptions[0];
+    const rootV = f.querySelector('#nj-root').value.trim();
+    const cp = (COPIES?.copies || []).find((x) => x.repo === o?.value);
+    return { repo: o?.value || '', root: rootV, files: o && rootV === o.dataset.root ? +o.dataset.files : (cp?.folders || {})[rootV] || njCount[`${o?.value}:${rootV}`] || 0, job: f.querySelector('[name=nj-job]:checked')?.value || 'comments',
+      agents: +f.querySelector('#nj-agents').value || 200, budgetUsd: +f.querySelector('#nj-budget').value || 3, preset: f.querySelector('[name=nj-model]:checked')?.value || 'workers',
+      label: `${o?.dataset.name || ''}${rootV && rootV !== o?.dataset.root ? ` ${rootV.split('/').pop()}` : ''}: ${f.querySelector('[name=nj-job]:checked')?.value === 'comments+index' ? 'doc comments + API index' : 'doc comments'}` };
+  }
+  async function njEstimate() {
+    const my = ++njEst, box = NJ?.querySelector('#nj-est'); if (!box) return;
+    const b2 = njBody(); if (!b2.repo) { box.textContent = 'Pick a copy.'; return; }
+    await new Promise((z) => setTimeout(z, 250)); if (my !== njEst) return;
+    if (!b2.files && b2.root) {   // a subfolder: count its files (qbfleet /count through the proxy), once per folder
+      const k = `${b2.repo}:${b2.root}`;
+      if (!(k in njCount)) { njCount[k] = 0; const r0 = await fetch(`${API}/count?repo=${encodeURIComponent(b2.repo)}&root=${encodeURIComponent(b2.root)}`, { credentials: 'same-origin' }).catch(() => null); const j0 = r0 && r0.ok ? await r0.json().catch(() => ({})) : {}; if (j0.files) { njCount[k] = j0.files; return njEstimate(); } }
+    }
+    if (!b2.files) { box.innerHTML = `<b>${n0(b2.agents)} agents</b> on ${esc(b2.root || 'the copy')}. The number of files in a subfolder is counted when it starts; the budget stops it at <b>${usd(Math.min(30, b2.budgetUsd))}</b>.`; return; }
+    const r = await fetch(`${API}/estimate`, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(b2) }).catch(() => null);
+    const e = r && r.ok ? await r.json().catch(() => null) : null; if (my !== njEst) return;
+    box.innerHTML = !e || e.error ? esc(e?.error || 'No estimate right now.') : `<b>${n0(e.files)} files</b>, ${n0(e.agents)} agents: about <b>${e.minutes[0]} to ${e.minutes[1]} min</b> and <b>${usd(e.usd[0])} to ${usd(e.usd[1])}</b>. It stops at ${usd(e.capUsd)} whatever happens.${e.note ? ` ${esc(e.note)}` : ''}`;
+  }
+  // Talk (qb2): 'document every exported function in VS Code's editor and add each one to the API index' -> the form,
+  // filled in, with its estimate: the person checks it and taps Start (Talk never starts a job by itself).
+  function njFromSentence(t) {
+    const x = String(t || '').toLowerCase(), pre = {};
+    const kinds = [[/vs ?code|visual studio code/, 'VS Code'], [/nest/, 'NestJS'], [/angular/, 'Angular'], [/next(\.js|js)?\b/, 'Next.js'], [/babel/, 'Babel']];
+    const want = (kinds.find(([re]) => re.test(x)) || [])[1];
+    const cs = (COPIES?.copies || []).filter((c) => !want || (c.source?.name || '').toLowerCase().startsWith(want.toLowerCase()));
+    const c = cs.find((y) => y.fresh) || cs[0];
+    if (c) { pre.repo = c.repo; const area = want === 'VS Code' && VS_AREAS.find((a) => new RegExp(`\\b${a}\\b`).test(x)); if (area && (c.source?.root || '').startsWith('src/vs')) pre.root = `src/vs/${area}`; }
+    if (/api index|index|api\.md/.test(x)) pre.job = 'comments+index';
+    const ag = /([\d,]+)\s*agents/.exec(x); if (ag) pre.agents = Math.min(2000, +ag[1].replace(/,/g, ''));
+    const bd = /\$\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*dollars?/.exec(x); if (bd) pre.budgetUsd = Math.min(30, +(bd[1] || bd[2]));
+    if (/\bcache\b|for free/.test(x)) pre.preset = 'cache';
+    return pre;
+  }
 
   // A tab left open keeps polling JSON with the code it loaded; when a new version is deployed, reload (not while the
   // person is in a drill-down or has a stop confirm open).
