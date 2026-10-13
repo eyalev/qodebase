@@ -16,6 +16,9 @@ import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
+// Direct replays (2026-10-13): this file also runs as the replay helper (one Messages API call through forq's AI
+// Gateway instead of a claude -p agent loop), so the box needs no second file. See replayHelper().
+if (process.env.QB_REPLAY_HELPER) { await replayHelper(); process.exit(0); }
 const job = JSON.parse(process.env.JOB || readFileSync(process.argv[2] || '/dev/stdin', 'utf8'));
 const DIR = job.dir;
 const t0 = Date.now();
@@ -206,6 +209,37 @@ const claudeEnv = () => ({ ...process.env, IS_SANDBOX: '1',
     ? { ANTHROPIC_BASE_URL: process.env.QB_GW_URL, ANTHROPIC_API_KEY: process.env.QB_GW_TOKEN, ANTHROPIC_CUSTOM_HEADERS: `cf-aig-authorization: Bearer ${process.env.QB_GW_TOKEN}` }
     : { ...(process.env.QB_CLAUDE_TOKEN ? { CLAUDE_CODE_OAUTH_TOKEN: process.env.QB_CLAUDE_TOKEN } : {}), ...(process.env.QB_ANTHROPIC_KEY ? { ANTHROPIC_API_KEY: process.env.QB_ANTHROPIC_KEY } : {}) }),
   QB_GW_TOKEN: '', QB_CLAUDE_TOKEN: '', JOB: '' });
+// Direct mode: QB_REPLAY_DIRECT + the gateway: the replay is ONE call (the files as they are + the reviewed diff in,
+// the whole new files out), ~3-5 s instead of claude -p's ~12 s agent loop (measured, code dial 60). Same coverage rule.
+const DIRECT = () => !!(process.env.QB_REPLAY_DIRECT && process.env.QB_GW_URL && process.env.QB_GW_TOKEN);
+function replayer(prompt, files) {
+  return DIRECT()
+    ? { cmd: process.execPath, args: [process.argv[1]], input: JSON.stringify({ prompt, files, model: job.llm.model }), env: { ...process.env, QB_REPLAY_HELPER: '1', JOB: '' } }
+    : { cmd: 'claude', args: CLAUDE_ARGS(prompt), input: undefined, env: claudeEnv() };
+}
+async function replayHelper() {
+  const out = (o) => console.log(JSON.stringify(o));
+  const inp = JSON.parse(readFileSync(0, 'utf8'));   // fd 0: /dev/stdin fails (ENXIO) when stdin is a spawn pipe
+  const cur = inp.files.map((f) => { let s = ''; try { s = readFileSync(f, 'utf8'); } catch {} return `<<<FILE ${f}>>>\n${s}\n<<<END>>>`; }).join('\n\n');
+  const user = `${inp.prompt}\n\nThe files as they are now on the latest main:\n\n${cur}\n\nReply with the COMPLETE new content of each of these files and nothing else, each one as:\n<<<FILE path>>>\n(the whole file)\n<<<END>>>`;
+  // No x-api-key: the gateway pays Anthropic from forq's unified-billing credits; a placeholder key would be forwarded.
+  let r, j = {};
+  try {
+    r = await fetch(`${process.env.QB_GW_URL}/v1/messages`, { method: 'POST',
+      headers: { 'content-type': 'application/json', 'anthropic-version': '2023-06-01', 'cf-aig-authorization': `Bearer ${process.env.QB_GW_TOKEN}` },
+      body: JSON.stringify({ model: inp.model, max_tokens: 16000, temperature: 0, messages: [{ role: 'user', content: user }] }) });
+    j = await r.json().catch(() => ({}));
+  } catch (e) { out({ is_error: true, result: `fetch: ${String(e?.message || e).slice(0, 200)}` }); process.exit(1); }
+  if (!r.ok) { out({ is_error: true, result: `HTTP ${r.status}: ${JSON.stringify(j).slice(0, 240)}` }); process.exit(1); }
+  const text = (j.content || []).map((b) => b.text || '').join('');
+  let n = 0;
+  for (const m of text.matchAll(/<<<FILE (.+?)>>>\n([\s\S]*?)\n?<<<END>>>/g)) {
+    if (!inp.files.includes(m[1])) continue;
+    writeFileSync(m[1], m[2].endsWith('\n') ? m[2] : m[2] + '\n'); n++;
+  }
+  out({ usage: j.usage || {}, num_turns: 1, total_cost_usd: null, is_error: n === 0, result: n ? `wrote ${n} file${n === 1 ? '' : 's'}` : `no files in the answer: ${text.slice(0, 160)}` });
+  process.exit(n ? 0 : 1);
+}
 function llmOf(r, t, prompt) {
   let j = {}; try { j = JSON.parse(r.stdout || '{}'); } catch {}
   const u = j.usage || {};
@@ -247,7 +281,8 @@ function replay(c, base, before, conflicts, unhandled) {
   if (!pa.ok) { git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']); say('partial_apply_failed', { id: c.id, err: pa.err }); }
   const redo = pa.ok ? conflicts : git(['diff', '--name-only', base, c.commit]).out.split('\n').filter(Boolean);
   const prompt = replayPrompt(c, base, redo, pa.ok ? pa.files : []);
-  const r = spawnSync('claude', CLAUDE_ARGS(prompt), { cwd: DIR, encoding: 'utf8', timeout: 240_000, maxBuffer: 16 << 20, env: claudeEnv() });
+  const rp = replayer(prompt, redo);
+  const r = spawnSync(rp.cmd, rp.args, { cwd: DIR, encoding: 'utf8', timeout: 240_000, maxBuffer: 16 << 20, env: rp.env, input: rp.input });
   const llm = llmOf(r, t, prompt);
   say('replay', { id: c.id, ...llm });
   if (r.status !== 0 || llm.error) { git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']); return { ok: false, llm, why: llm.error || `exit ${r.status}` }; }
@@ -278,7 +313,9 @@ function replayAsync(c, base, unhandled, cwd, conflicts = unhandled) {
     if (!pa.ok) { git(['reset', '-q', '--hard', 'HEAD'], { cwd }); git(['clean', '-qfd'], { cwd }); }
     const redo = pa.ok ? conflicts : git(['diff', '--name-only', base, c.commit], { cwd }).out.split('\n').filter(Boolean);
     const prompt = replayPrompt(c, base, redo, pa.ok ? pa.files : [], cwd);
-    const p = spawn('claude', CLAUDE_ARGS(prompt), { cwd, env: claudeEnv() });
+    const rp = replayer(prompt, redo);
+    const p = spawn(rp.cmd, rp.args, { cwd, env: rp.env });
+    if (rp.input !== undefined) { p.stdin.end(rp.input); } else p.stdin.end();
     let stdout = '', stderr = '';
     const kill = setTimeout(() => p.kill('SIGTERM'), 240_000);
     p.stdout.on('data', (d) => { stdout += d; }); p.stderr.on('data', (d) => { stderr += d; });
@@ -435,7 +472,7 @@ async function main() {
     say('main_fetch_no_ref', { branch, sym: sym.slice(0, 200), fetchOut: (f.out + '\n' + f.err).slice(0, 600), lsRemote: (ls.out || ls.err).slice(0, 600), git: v });
     throw new Error(`main fetch wrote no ref (branch ${branch}; ${v}); remote refs: ${(ls.out || ls.err).replace(/\s+/g, ' ').slice(0, 300)}; fetch said: ${(f.out + ' ' + f.err).replace(/\s+/g, ' ').slice(0, 300)}`);
   }
-  const mainBefore = git(['rev-parse', 'refs/qb/main']).out;
+  let mainBefore = git(['rev-parse', 'refs/qb/main']).out;
   if (!early) phase('fetch-main', tF);
   say('main', { branch, mainBefore });
   const cfg = (() => { try { return JSON.parse(show(`${mainBefore}:.qodebase/landing.json`) || '{}'); } catch { return {}; } })();
@@ -528,6 +565,32 @@ async function main() {
     if (p.code === 0) { pushed = true; mainAfter = tip; }
     else { pushErr = p.err.slice(0, 400); stale = /rejected|non-fast-forward|fetch first|stale/i.test(p.err); }
     phase('push', tP);
+    // Lanes (2026-10-13): another lane moved main while this train ran. Lanes touch different files, so the train's
+    // commits are rebased onto the new main, the checks run again, and the push is retried (instead of the whole train,
+    // replays included, running again).
+    for (let i = 0; !pushed && stale && job.rebaseOnStale && i < 4; i++) {
+      const tR = Date.now();
+      const f2 = await gitAsync(['fetch', '-q', '--no-tags', job.mainRemote, `+refs/heads/${branch}:refs/qb/main`], job.mainToken);
+      if (f2.code !== 0) { pushErr = f2.err.slice(0, 300); break; }
+      const newMain = git(['rev-parse', 'refs/qb/main']).out;
+      const before = git(['rev-list', '--reverse', `${mainBefore}..HEAD`]).out.split('\n').filter(Boolean);
+      const rb = git(['rebase', '-q', '--onto', newMain, mainBefore], { ok: true });
+      if (rb.code !== 0) { git(['rebase', '--abort'], { ok: true }); say('lane_rebase_conflict', { err: rb.err.slice(0, 300) }); break; }
+      const after = git(['rev-list', '--reverse', `${newMain}..HEAD`]).out.split('\n').filter(Boolean);
+      if (after.length === before.length) {
+        const map = new Map(before.map((o, k) => [o, after[k]]));
+        for (const r of landed) if (map.has(r.commit)) { git(['notes', '--ref=qodebase', 'copy', '-f', r.commit, map.get(r.commit)], { ok: true }); r.commit = map.get(r.commit); }
+      }
+      const ch = runChecks();
+      phase('rebase', tR);
+      say('lane_rebased', { attempt: i + 1, newMain, commits: after.length, checks: ch.ok });
+      if (!ch.ok) { pushErr = 'checks failed after rebasing onto the new main'; break; }
+      mainBefore = newMain;
+      const tip2 = git(['rev-parse', 'HEAD']).out;
+      const p2 = git(['push', '-q', job.mainRemote, `${tip2}:refs/heads/${branch}`], { tok: job.mainToken, ok: true });
+      if (p2.code === 0) { pushed = true; stale = false; mainAfter = tip2; }
+      else { pushErr = p2.err.slice(0, 400); stale = /rejected|non-fast-forward|fetch first|stale/i.test(p2.err); }
+    }
     if (pushed) { const tNP = Date.now(); notesPushed = git(['push', '-q', '-f', job.mainRemote, 'refs/notes/qodebase:refs/notes/qodebase'], { tok: job.mainToken, ok: true }).code === 0; phase('push-notes', tNP); }
   }
   const out = {

@@ -187,6 +187,13 @@ const applyDiff = () => {
   }
 };
 setTimeout(() => {
+  // MOVE_MAIN: another lane lands on main while this train runs (once).
+  if (process.env.MOVE_MAIN && !fs.existsSync(process.env.MOVE_MAIN + '.moved')) {
+    const { execFileSync: x } = require('child_process'); const w = process.env.MOVE_MAIN + '.w'; const I = ['-c', 'user.name=t', '-c', 'user.email=t@t'];
+    x('git', ['clone', '-q', process.env.MOVE_MAIN, w]); fs.writeFileSync(w + '/other-lane.txt', 'landed by another lane\\n');
+    x('git', [...I, 'add', '-A'], { cwd: w }); x('git', [...I, 'commit', '-qm', 'other lane'], { cwd: w }); x('git', ['push', '-q', 'origin', 'HEAD:main'], { cwd: w });
+    fs.writeFileSync(process.env.MOVE_MAIN + '.moved', '1');
+  }
   if (process.env.FAKE_MODE !== 'drop') applyDiff();
   if (process.env.FAKE_MODE === 'append') fs.appendFileSync('src/math.js', '\\nexport function f_' + id + '() {\\n  return "' + id + '";\\n}\\n');
   else { fs.mkdirSync('src', { recursive: true }); fs.writeFileSync('src/' + id + '.js', 'export const ' + id + ' = 1;\\n'); }
@@ -295,4 +302,53 @@ test('a replay redoes only the conflicting file; the change\'s new file lands as
   assert.equal(readFileSync(join(w, 'src/split.js'), 'utf8'), big, 'the new file landed whole');
   assert.match(readFileSync(join(w, 'index.html'), 'utf8'), /const nav = "home,split";/);
   assert.doesNotMatch(log, /replay_incomplete/);
+});
+
+// Lanes (2026-10-13): another lane pushed main during this train; the train rebases onto it (different files), runs
+// its checks again and pushes, instead of running the whole train (replays included) again.
+test('lanes: main moved by another lane mid-train -> rebase onto it and push', () => {
+  const s = setup({ 'src/p1.js': 'export const p1 = 0;\n', 'src/p2.js': 'export const p2 = 0;\n', 'src/p3.js': 'export const p3 = 0;\n', 'src/p4.js': 'export const p4 = 0;\n' });
+  const env = { ...fakeClaude(s.root, 'file'), MOVE_MAIN: s.main };
+  const { r, log } = runEnv({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', rebaseOnStale: true, llm: { model: 'claude-haiku-5-5' }, changes: disjoint(s) }, env);
+  assert.equal(r.pushed, true, r.pushErr);
+  assert.match(log, /"event":"lane_rebased"/);
+  const w = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, w);
+  assert.equal(readFileSync(join(w, 'other-lane.txt'), 'utf8'), 'landed by another lane\n', 'the other lane kept');
+  for (const id of ['b', 'c', 'd', 'e']) assert.equal(readFileSync(join(w, `src/${id}.js`), 'utf8'), `export const ${id} = 1;\n`, id);
+  const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
+  for (const id of ['a', 'b', 'c', 'd', 'e']) { assert.equal(by[id].landed, true, id); assert.ok(g(w, 'notes', '--ref=qodebase', 'list').length >= 0); }
+  assert.equal(spawnSync('node', ['--test'], { cwd: w, encoding: 'utf8', env: { ...process.env, NODE_TEST_CONTEXT: '' } }).status, 0, 'checks pass on main');
+});
+
+// Direct replays (2026-10-13): one Messages API call through a (fake) gateway instead of claude -p; whole files back.
+test('direct replays: one gateway call per replay, whole files back, nothing lost', async () => {
+  const http = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  let calls = 0, auth = '';
+  const srv = http.createServer((req, res) => {
+    let b = ''; req.on('data', (d) => (b += d)); req.on('end', () => {
+      calls++; auth = req.headers['cf-aig-authorization'] || '';
+      const msg = JSON.parse(b).messages[0].content;
+      const id = (msg.match(/Intent: change (\w+)/) || [])[1];
+      const files = [...msg.matchAll(/<<<FILE (.+?)>>>\n([\s\S]*?)\n<<<END>>>/g)].map((m) => [m[1], m[2]]);
+      const text = files.map(([p, t]) => `<<<FILE ${p}>>>\n${t.replace(/\n*$/, '')}\nexport function f_${id}() {\n  return "${id}";\n}\n<<<END>>>`).join('\n');
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ content: [{ type: 'text', text }], usage: { input_tokens: 100, output_tokens: 40 } }));
+    });
+  });
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const s = setup();
+  const job = { dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', llm: { model: 'claude-haiku-5-5' }, changes: conflicting(s) };
+  const out = await new Promise((res) => { const p = spawn('node', [JOBJS], { env: { ...process.env, JOB: JSON.stringify(job), QB_REPLAY_DIRECT: '1', QB_GW_URL: `http://127.0.0.1:${srv.address().port}`, QB_GW_TOKEN: 'gw-test' } }); let o = ''; p.stdout.on('data', (d) => (o += d)); p.on('close', () => res(o)); });
+  srv.close();
+  if (process.env.DBG) console.error(out);
+  const r = JSON.parse(out.split('\n').find((l) => l.startsWith('QB_RESULT ')).slice(10));
+  assert.equal(r.pushed, true);
+  assert.equal(auth, 'Bearer gw-test');
+  assert.ok(calls >= 4, `one call per replay (${calls})`);
+  const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
+  for (const id of ['b', 'c', 'd', 'e']) { assert.equal(by[id].landed, true, id); assert.equal(by[id].how, 'replayed-llm', id); assert.equal(by[id].llm.in, 100, id); }
+  const w = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, w);
+  const math = readFileSync(join(w, 'src/math.js'), 'utf8');
+  for (const id of ['b', 'c', 'd', 'e']) assert.match(math, new RegExp(`f_${id}\\(`), id);
 });
