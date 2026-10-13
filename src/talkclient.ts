@@ -126,7 +126,10 @@ var css = [
   // A question waiting for a yes: the words get the whole width (4 lines), the chips go under them, right.
   // A question is one compact row (~56 px): text clamped to two lines, chips on the right (qb3's rehearsal 2026-10-14:
   // the wrapped two-row card covered Build's presets).
-  '#talk-root.boffer #talk-bar{flex-wrap:nowrap;align-items:center}',
+  '#talk-root.boffer #talk-bar{flex-wrap:nowrap;align-items:center;pointer-events:none}',
+  // ... and its empty area lets taps through to the page (qb3's take: Build's preset tiles under the row took no taps);
+  // only its words and buttons catch them.
+  '#talk-root.boffer #talk-bar #talk-btext,#talk-root.boffer #talk-bar button{pointer-events:auto}',
   '#talk-root.boffer #talk-bmic{display:none}',
   '#talk-root.boffer #talk-bmid{flex:1 1 auto;min-width:0;padding:4px 6px}',
   '#talk-root.boffer #talk-btext{-webkit-line-clamp:2;font-size:15px;line-height:1.3}',
@@ -1456,6 +1459,10 @@ function typeInto(t, text) {
   t.dispatchEvent(new Event('change', { bubbles: true }));
 }
 function offerSubmit(t) {
+  // Something was filled on the page and its Send / Build it is offered: fold the sheet into the bar, so the page
+  // (Build's preset tiles) can be seen and tapped while the question waits (qb3's take, 2026-10-14: the open sheet
+  // covered the tiles and taps never landed).
+  if (root && root.classList.contains('open')) setTimeout(function () { if (offerState) open(false); }, 50);
   var f = t.form, b = null;
   if (f) b = f.querySelector('button[type=submit], button:not([type])');
   else {
@@ -2035,9 +2042,10 @@ var lastClip = null;   // the last dictation's recording, for "Hear it again"
 // Whisper on the whole recording, then (setting "Clean up the words") the merge with the live words, 3.5 s at most.
 function hearText(blob, live) {
   var w0 = Date.now();
-  return fetch('/api/talk/transcribe?names=1&lang=' + encodeURIComponent(S.lang), { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type }, body: blob })
+  return fetch('/api/talk/transcribe?names=1&lang=' + encodeURIComponent(S.lang) + (live ? '&live=' + encodeURIComponent(String(live).slice(0, 500)) : ''), { method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type }, body: blob })
     .then(function (r) { return r.json(); })
     .then(function (j) {
+      if (j && j.pick === 'live') trace('dc_pick', { pick: 'live', why: j.why, live: live, whisper: j.whisper });
       var w = wordsOnly(j && j.text), out = { text: w || live, how: w ? 'whisper' : 'live', whisper_ms: Date.now() - w0, err: j && j.error, whisper: w };
       if (!w || S.merge !== 'on' || !live) return out;
       var m0 = Date.now();

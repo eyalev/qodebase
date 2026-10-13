@@ -364,9 +364,11 @@ async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
   // The person's project names as Whisper's prompt, so "reveal js" or "pomodoro streak" come out spelled
   // their way (tmux-web does the same with its vocabulary). On a silent clip Whisper can echo the prompt: dropped.
   let prompt = '';
+  const vocab = new Set<string>(['qodebase']);
   if (url.searchParams.get('names') === '1') {
     const names = (await projectsFor(env, who).catch(() => [] as Proj[])).filter((p) => p.mine && !isScaffold(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' '));
     if (names.length) prompt = 'qodebase. My projects: ' + [...new Set(names)].slice(0, 40).join(', ') + '.';
+    for (const n of names) for (const w of n.toLowerCase().split(/[\s-]+/)) if (w.length >= 4 && !/^\d/.test(w)) vocab.add(w);
   }
   try {
     const res: any = await (env.AI as any).run(STT_MODEL, { audio: btoa(b64), ...(lang === 'en' || lang === 'he' ? { language: lang } : {}), vad_filter: true, ...(prompt ? { initial_prompt: prompt } : {}) }, aiOpts(env));
@@ -375,6 +377,16 @@ async function transcribe(request: Request, env: Env, who: Who & {}, url: URL) {
     let text = got.text;
     if (prompt && text && (prompt.includes(text) || /^qodebase\. my projects:/i.test(text))) { log('stt_prompt_echo', { level: 'warn', handle: who.handle, text: text.slice(0, 200) }); text = ''; }
     log('stt', { level: 'info', handle: who.handle, bytes: buf.byteLength, lang, ms: Date.now() - t0, chars: text.length, detected: res?.transcription_info?.language });
+    // Whisper vs the live words (sent as ?live=): when the live words hold more of the person's own vocabulary (their
+    // project names) than Whisper's, keep the live words ('home inventory' was replaced by 'home in Venturia' in
+    // qb3's take, 2026-10-14). Returned as pick + why; the page traces it.
+    const live = wordsOnly(String(url.searchParams.get('live') || '').slice(0, 600));
+    if (live && text && vocab.size) {
+      const words = (t: string) => t.toLowerCase().replace(/[^\p{L}\p{N}' ]+/gu, ' ').split(/\s+/).filter(Boolean);
+      const score = (t: string) => words(t).filter((w) => vocab.has(w)).length;
+      const sl = score(live), sw = score(text);
+      if (sl > sw) { log('stt_pick', { level: 'info', handle: who.handle, pick: 'live', live, whisper: text, live_vocab: sl, whisper_vocab: sw }); return json({ text: live, whisper: text, pick: 'live', why: `the live words have ${sl - sw} more of your project words`, ms: Date.now() - t0 }); }
+    }
     return json({ text, ms: Date.now() - t0 });
   } catch (e) {
     log('stt_error', { level: 'error', err: String(e), stack: (e as Error)?.stack, bytes: buf.byteLength, type: request.headers.get('content-type') });
