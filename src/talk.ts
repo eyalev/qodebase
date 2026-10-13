@@ -253,8 +253,11 @@ async function hasCredits(env: Env): Promise<boolean> {
   catch (e) { creditsMemo = { at: Date.now(), ok: false }; log('credits_probe', { level: 'info', err: String(e).slice(0, 200) }); }
   return creditsMemo.ok;
 }
+// The owner's default is Claude Haiku 5.5 (manager, 2026-10-13: 24/24 tools right, ~2 s, $0.10/$0.50 checked against
+// the gateway's logged cost); everyone else's is Gemini 3.1 Flash-Lite.
+const defaultFor = (env: Env, who: Who & {}) => (who.admin || isOwner(env, who.handle) ? 'haiku' : DEFAULT_ANSWER);
 async function pickAnswer(env: Env, who: Who & {}, id: string): Promise<{ m: AnswerModel; why: string | null }> {
-  const want = answerModel(id) || answerModel(DEFAULT_ANSWER)!;
+  const want = answerModel(id) || answerModel(defaultFor(env, who))!;
   if (want.ownerOnly && !(who.admin || isOwner(env, who.handle))) return { m: answerModel(DEFAULT_ANSWER)!, why: `${want.label} is for the owner` };
   if (want.via === 'gemini' && !(env as any).GEMINI_API_KEY) return { m: answerModel(FALLBACK_ANSWER)!, why: 'no Gemini key on this copy' };
   if (want.paid && !(await hasCredits(env))) return { m: answerModel(FALLBACK_ANSWER)!, why: `${want.label} needs Cloudflare credits` };
@@ -593,7 +596,7 @@ export async function talkRoute(request: Request, env: Env, _ctx: ExecutionConte
     const own = { sha: (env as any).CF_VERSION_METADATA?.tag || null, built: (env as any).CF_VERSION_METADATA?.timestamp || null };
     const v = owner ? (site?.sha ? { sha: site.sha, built: site.built, talk: own.sha } : own) : undefined;
     const traced = await canTrace(env, who);
-    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: traced, consent: owner ? null : traced, clips: owner && !!env.CLIPS, version: v, models: talkModels(env), answer: { default: DEFAULT_ANSWER, choices: await answerChoices(env, who) } });
+    return json({ signedIn: true, handle: who.handle, used: await talkLog(env).counts(who.handle), caps: CAPS, trace: traced, consent: owner ? null : traced, clips: owner && !!env.CLIPS, version: v, models: talkModels(env), answer: { default: defaultFor(env, who), choices: await answerChoices(env, who) } });
   }
   if (url.pathname === '/api/talk/consent' && request.method === 'POST') {
     // "Help improve Talk" (Talk settings, off by default): keep what I say and what Talk did for 14 days.
