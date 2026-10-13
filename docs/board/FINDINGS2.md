@@ -258,5 +258,5 @@ What it shows:
 (~1,100-1,300 s without the halt and the stall) / $2.77. Both apps do all 11 requested features at 390 px (each tried by
 hand); the team wrote ~3x the code (22 files vs 7) with more polish bugs (overflowing tab bar, '0 boxs'); the solo app added
 bulk move, quantity, currency. One build each: one strong agent was ~3-4x faster at similar quality; the team ~30% cheaper.
-Decision (Eyal's default 'like Claude Code on the laptop'): Suggest picks one agent for Large too; Balanced stays one tap
+Decision (on the data: the user gets the same app ~4x sooner): Suggest picks one agent for Large too; Balanced stays one tap
 away as the cheaper option. Huge is untested with one agent.
