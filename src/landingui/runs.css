@@ -143,3 +143,6 @@
 #nj .rc-cn{margin:0;font-size:13px}#nj .rc-cn.bad{color:var(--warn)}
 #nj .btn,#nj .chipbtn{min-height:44px}
 #nj .rc-ctl{display:flex;flex-wrap:wrap;gap:8px}
+#runs .tl-b.c-coll{fill:var(--warn);opacity:.8}
+#runs .rc-ix{margin:-4px 0 10px;padding:10px 12px;border-radius:10px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);font-size:14px}
+#runs .rc-ix.ok{box-shadow:inset 0 0 0 1px var(--line),inset 3px 0 0 var(--acc)}#runs .rc-ix.bad{box-shadow:inset 0 0 0 1px var(--line),inset 3px 0 0 var(--warn)}

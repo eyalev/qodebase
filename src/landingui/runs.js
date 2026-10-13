@@ -61,6 +61,15 @@
   }
   // A step with many copies (S4d: 100) is fetched at most 10 at a time, and a copy at most every 15 s past 20 copies.
   const TLat = {};
+  // The API index checker (qb6: GET …/indexcheck -> {lines, expected, sorted, missing, twice}): asked on a run's page,
+  // every 15 s while it runs; a 404 (no index job, or not deployed) shows nothing.
+  const IX = {}, IXat = {};
+  async function loadIndexCheck(r) {
+    const k = key(r); if (IX[k] && (!live(r) || Date.now() - (IXat[k] || 0) < 15e3)) return;
+    IXat[k] = Date.now();
+    const res = await fetch(`${API}/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}/indexcheck`, { cache: 'no-store', credentials: 'same-origin' }).catch(() => null);
+    IX[k] = res && res.ok ? await res.json().catch(() => ({ error: 'bad' })) : { error: res ? res.status : 'net' };
+  }
   const openCopies = new Set();   // which steps' 'Show all copies' are open: kept across the 5 s refresh
   // A ladder step's own summed series (qb6: /api/runs/ladder/<ladder>/series); copies summed in the page otherwise.
   async function loadLadder(g) {
@@ -167,7 +176,7 @@
     if (!src.length) return { S: [], step: slice };
     const span = src[src.length - 1].minute - src[0].minute + slice;
     const k = Math.max(1, Math.ceil(span / slice / 120)), step = slice * k, perMin = 60000 / step, t0 = src[0].minute;
-    const blank = (b) => ({ minute: b, calls: {}, landed: 0, ready: null, active: null, lanes: {}, r429: 0, usd: 0, queue: null, door: null, n: 0 });
+    const blank = (b) => ({ minute: b, calls: {}, landed: 0, ready: null, active: null, lanes: {}, r429: 0, usd: 0, queue: null, door: null, coll: null, repl: null, wait90: null, n: 0 });
     const out = new Map();
     for (const s of src) {
       const b = t0 + Math.floor((s.minute - t0) / step) * step;
@@ -176,6 +185,9 @@
       for (const [l, v] of Object.entries(s.lanes || {})) o.lanes[l] = (o.lanes[l] || 0) + v;
       o.landed += s.landed || 0; o.r429 += s.r429 || 0; o.usd += s.usd || 0; o.n++;
       if (s.ready != null) o.ready = (o.ready || 0) + s.ready;
+      if (s.collisions != null) o.coll = (o.coll || 0) + s.collisions;   // qb6: two changes met on the same lines
+      if (s.replays != null) o.repl = (o.repl || 0) + s.replays;          // ... and were redone on the newest main
+      if (s.landWaitP90 != null && s.landWaitP90 >= 0) o.wait90 = Math.max(o.wait90 || 0, s.landWaitP90);
       if (s.active != null) o.active = Math.max(o.active || 0, s.active);   // agents at work: the busiest slice in the bucket
       const q = typeof s.queue === 'number' ? s.queue : s.queue ? (s.queue.waiting || 0) + (s.queue.atModel || 0) + (s.queue.readyToLand || 0) : null;
       if (q != null) o.queue = Math.max(o.queue || 0, q);
@@ -186,7 +198,7 @@
     const last = Math.max(...out.keys());
     for (let b = t0; b <= last; b += step) if (!out.has(b)) out.set(b, blank(b));
     const asRate = step >= 60000, f = asRate ? perMin : 1, sc = (v) => (v == null ? null : Math.round(v * f));
-    const S = [...out.values()].sort((a, b) => a.minute - b.minute).map((o) => ({ ...o, raw: { landed: o.landed, ready: o.ready, calls: { ...o.calls } }, calls: Object.fromEntries(Object.entries(o.calls).map(([m, v]) => [m, sc(v)])), landed: sc(o.landed), ready: sc(o.ready) }));
+    const S = [...out.values()].sort((a, b) => a.minute - b.minute).map((o) => ({ ...o, raw: { landed: o.landed, ready: o.ready, coll: o.coll, repl: o.repl, calls: { ...o.calls } }, calls: Object.fromEntries(Object.entries(o.calls).map(([m, v]) => [m, sc(v)])), landed: sc(o.landed), ready: sc(o.ready), coll: sc(o.coll), repl: sc(o.repl) }));
     return { S, step, unit: asRate ? 'per min' : `per ${Math.round(step / 1000)} s`, limScale: asRate ? 1 : step / 60000 };
   }
   // A ladder step's copies summed slice by slice (their slices share the 10 s grid).
@@ -228,6 +240,10 @@
     if (S.some((s) => s.active != null)) { const pk = peakOf((s) => s.active); rows.push({ label: `Agents at work, peak ${n0(pk)}`, kind: 'area', vals: S.map((s) => s.active || 0), max: nice(Math.max(pk, 1)), cls: 'c-active', h: HB }); }
     { const pr = peakOf((s) => s.ready), pl = peakOf((s) => s.landed), hasReady = S.some((s) => s.ready != null);
       rows.push({ label: hasReady ? `Changes ${unit}: <i class="k-ready"></i>finished by agents (comments written), <i class="k-main"></i>reached main (in batches)` : `Changes reaching main ${unit} (in batches), peak ${n0(pl)}`, html: true, kind: 'pair', vals: S.map((s) => s.landed || 0), area: hasReady ? S.map((s) => s.ready || 0) : null, max: nice(Math.max(pr, pl, 1)), cls: 'c-land', h: HB }); }
+    // collisions (qb3's shot list, 1): two changes met on the same lines; replays, when the series has them, as a line
+    if (S.some((s) => s.coll)) { const tot = S.reduce((a, s) => a + (s.raw.coll || 0), 0), rt = S.reduce((a, s) => a + (s.raw.repl || 0), 0), hasR = S.some((s) => s.repl != null);
+      rows.push({ label: hasR ? `Collisions ${unit} (bars), <i class="k-ready"></i>redone on the newest code (line): ${n0(tot)} met, ${n0(rt)} redone` : `Collisions ${unit}: two changes met on the same lines, ${n0(tot)} in all`, html: true, kind: 'pair', vals: S.map((s) => s.coll || 0), area: hasR ? S.map((s) => s.repl || 0) : null, max: nice(Math.max(1, ...S.map((s) => Math.max(s.coll || 0, s.repl || 0)))), cls: 'c-coll', h: H + 8 }); }
+    if (S.some((s) => s.wait90)) { const pk = peakOf((s) => s.wait90 || 0); rows.push({ label: `Wait to reach main, slowest tenth (seconds), peak ${n0(pk)}`, kind: 'area', vals: S.map((s) => s.wait90 || 0), max: nice(Math.max(pk, 1)), cls: 'c-queue', h: H }); }
     const models = Object.keys(Object.assign({}, ...S.map((s) => s.calls || {})));
     for (const m of models) {
       const peak = peakOf((s) => (s.calls || {})[m] || 0), lim0 = (t.limits || {})[m], lim = lim0 ? lim0 * limScale : null;
@@ -295,7 +311,7 @@
     let body = '';
     if (DR.view === 'slice') {
       const raw = s.raw || {};
-      const facts = [s.active != null ? `<li><b>${n0(s.active)}</b> agents at work</li>` : '', raw.ready != null ? `<li><b>${n0(raw.ready)}</b> changes finished by agents</li>` : '', `<li><b>${n0(raw.landed || 0)}</b> changes reached main</li>`,
+      const facts = [s.active != null ? `<li><b>${n0(s.active)}</b> agents at work</li>` : '', raw.ready != null ? `<li><b>${n0(raw.ready)}</b> changes finished by agents</li>` : '', `<li><b>${n0(raw.landed || 0)}</b> changes reached main</li>`, raw.coll ? `<li><b>${n0(raw.coll)}</b> collisions${raw.repl != null ? `, ${n0(raw.repl)} redone on the newest code` : ''}</li>` : '',
         ...Object.entries(raw.calls || {}).map(([m, v]) => `<li><b>${n0(v)}</b> calls to ${esc(short(m))}</li>`), s.queue != null ? `<li><b>${n0(s.queue)}</b> waiting at the deepest moment</li>` : '', s.r429 ? `<li><b>${n0(s.r429)}</b> refused by the model (429)</li>` : ''].join('');
       const lanes = Object.entries(s.lanes || {}).sort((a, b) => b[1] - a[1]).slice(0, 5);
       const d = DR.data.slice;
@@ -388,7 +404,9 @@
   function runView(repo, id) {
     const r = (D.fleet || []).find((x) => x.repo === repo && x.runId === id);
     if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
-    return `<p class="crumb"><a href="#/">All runs</a></p>${card(r, true)}<section class="rsec"><h2>Timeline</h2>${timeline(r, TL[key(r)], DR && DR.k === key(r) ? DR : null)}${drillPanel(r)}</section>`;
+    const ix = IX[key(r)];
+    const ixLine = ix && !ix.error && ix.expected != null ? `<p class="rc-ix${ix.lines === ix.expected && ix.sorted && !ix.missing && !ix.twice ? ' ok' : ' bad'}"><b>API index (docs/API.md):</b> ${n0(ix.lines)} of ${n0(ix.expected)} lines, ${ix.sorted ? 'sorted' : 'not sorted'}, ${ix.missing ? `${n0(ix.missing)} missing` : 'none missing'}, ${ix.twice ? `${n0(ix.twice)} twice` : 'none twice'}.</p>` : '';
+    return `<p class="crumb"><a href="#/">All runs</a></p>${card(r, true)}${ixLine}<section class="rsec"><h2>Timeline</h2>${timeline(r, TL[key(r)], DR && DR.k === key(r) ? DR : null)}${drillPanel(r)}</section>`;
   }
   const stepOf = (base) => grouped((D.fleet || []).slice()).find((g) => g.group && g.label === base) || null;
   function stepView(base) {
@@ -451,7 +469,7 @@
     try {
       await load(); failures = 0; lastOk = Date.now(); if (!NJ && OWN && !MOCK) { njMount(); lastHtml = ''; }
       const cur = current();
-      if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); }
+      if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); if (!cur.group) await loadIndexCheck(cur).catch(() => {}); }
       else await Promise.all(grouped((D.fleet || []).slice()).filter((g) => g.group).slice(0, 6).map((g) => loadLadder(g).catch(() => false)));
       render();
     } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (!D) root.innerHTML = `<header class="rh"><h1>Scale runs</h1></header><p class="dim">Could not load the runs (${esc(String(e.message || e))}). Trying again.</p>`; }
