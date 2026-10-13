@@ -1429,6 +1429,9 @@ function offerOn(text, yes, yesLabel) {
   if (convOfferAway(text, yes, yesLabel)) return;   // Conversations: a question for a conversation not on screen waits there
   if (run && text && run.texts[run.texts.length - 1] !== text) run.texts.push(text);
   offerState = { text: text || '', yes: yes, label: yesLabel || 'Go' };
+  // A question asked after a spoken turn is said too, short (the quoted request stays on screen), unless something is
+  // already being said (a confirm line says itself): in conversation mode it was silent and waited for an unheard yes.
+  if (text && lastSpoken && S.voice !== 'off' && !speakPending && !speakingQ && !ackPlaying) { var sq = new String(String(text).replace(/:\s*\u201c[^\u201d]*\u201d/, '').replace(/\s+\?$/, '?')); sq.__short = true; say(sq); }
   bOffer.innerHTML = '';
   var by = el('button', { type: 'button', class: 'talk-chip pri' }); by.textContent = yesLabel || 'Go';
   var bn = el('button', { type: 'button', class: 'talk-chip', 'aria-label': 'No' }); bn.textContent = 'No';
