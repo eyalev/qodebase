@@ -824,6 +824,7 @@ function api(path, body) {
 
 // ---- The one entry point: a sentence --------------------------------------
 var preview = null;   // { text, cmd } from interim speech
+var whisperP = null;  // { live, p: Promise<whisper words>, taken } for the turn that acted on the live words
 var spec = null, specCalls = 0, specT = null;   // { text, p } a decide made on the live words while they were still talking
 var STATUS_RX = /^\s*((ok(ay)?|so|hey|hi|and)[,\s]+)?(what'?s|what is|whats)\s+(going on|happening)(\s+(with|in|across)\s+(all\s+)?(my|the)\s+(projects?|builds?|work|apps?))?(\s+(today|right now|now|at the moment))?\s*[?.!]*\s*$|^\s*(status|status update|any updates?|give me (a|the) status( update)?)\s*[?.!]*\s*$/i;
 function normWords(x) { return wordsOf(x).join(' '); }
@@ -931,7 +932,18 @@ function answerAsk(owner, name, a, text) {
   }).catch(function () { add('note', 'Could not reach qodebase.'); done(); });
 }
 function route(c, text) {
-    if (c.mode === 'none') { add('note', (c.complete || 0) < 0.5 ? 'Sounds cut off. Say it again?' : 'I did not catch a request there.'); return done(); }
+    if (c.mode === 'none') {
+      // Not understood from the live words ("Give me a small ID."): Whisper is still reading the clip; when it heard
+      // something else, its words are the turn (no question asked), else the line is said aloud.
+      var wp = whisperP && whisperP.live === text ? whisperP : null;
+      var cut = function () { var nl = (c.complete || 0) < 0.5 ? 'Sounds cut off. Say it again?' : 'I did not catch a request there.'; add('note', nl); if (lastSpoken) say(nl); return done(); };
+      if (!wp) return cut();
+      status('Checking the words\u2026'); wp.taken = true;
+      return Promise.race([wp.p, new Promise(function (ok) { setTimeout(function () { ok(''); }, 4000); })]).then(function (w) {
+        if (w && normWords(w) !== normWords(text)) { trace('whisper_redo', { how: 'not understood', live: text, text: w }); busy = false; status(''); lastSpoken = true; return submit(w); }
+        cut();
+      });
+    }
     if (c.op === 'status') return whatsGoingOn(text);
     if (c.op === 'list') {
       var n = Number(c.target) || 0;
@@ -2164,7 +2176,10 @@ function liveFinish(text, sendIt) {
     if (sendIt && t && !cInto && S.fast === 'on' && S.lang !== 'he' && (convOn() || S.mic === 'pause')) {
       lastClip = { blob: blob, live: t, base: base, at: Date.now() };
       send(t, 'live-first', { bytes: blob.size });
-      hearText(blob, t).then(function (j) { whisperCheck(t, j, w0); }).catch(function (e) { trace('whisper_missing', { why: String(e), after: 'live-first' }); });
+      var wpo = { live: t, taken: false };
+      wpo.p = hearText(blob, t).then(function (j) { if (!wpo.taken) whisperCheck(t, j, w0); else trace('dc_whisper_check', { live: t, whisper: (j && j.whisper) || '', used: 'not understood', whisper_ms: Date.now() - w0 }); return (j && j.whisper) || ''; })
+        .catch(function (e) { trace('whisper_missing', { why: String(e), after: 'live-first' }); return ''; });
+      whisperP = wpo;
       return;
     }
     status('Checking the words\u2026');

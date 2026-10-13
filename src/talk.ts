@@ -458,7 +458,7 @@ async function sttLive(request: Request, env: Env, ctx: ExecutionContext, who: W
   }).catch(() => true));
   const t0 = Date.now(), lang = url.searchParams.get('lang') || 'en';
   const names = (await projectsFor(env, who).catch(() => [] as Proj[])).filter((p) => p.mine && !isScaffold(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' '));
-  const keyterm = [...new Set(['qodebase', 'Talk', 'fork', 'merge', 'router', ...names])].slice(0, 40);   // ≤ 40: 65 made the socket refuse (2026-10-13)
+  const keyterm = [...new Set(['qodebase', 'Talk', 'fork', 'merge', 'router', 'idea', ...names])].slice(0, 40);   // 'idea': nova-3 heard 'a small ID' (2026-10-13)   // ≤ 40: 65 made the socket refuse (2026-10-13)
   let up: WebSocket | null = null, bytes = 0, chunks = 0, words = 0, closed = false;
   const pending: (ArrayBuffer | string)[] = [];
   const finish = (why: string) => {
