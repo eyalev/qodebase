@@ -161,7 +161,7 @@ const go=()=>{if(!window.qbBuildWatch)return setTimeout(go,200);window.qbBuildWa
  if(!N&&!b.settledAt){st.hidden=false;st.classList.add('wait');fr.classList.add('afwait');t.textContent='Your app shows here when its first part lands, usually a few minutes in.'+(M?' 0 of '+M+' parts landed so far.':'');nb.hidden=true;return;}
  if(fr.classList.contains('afwait')){fr.classList.remove('afwait');st.classList.remove('wait');f.src=f.src;seen=N;}
  st.hidden=false;
- t.textContent=b.settledAt?(M?'All '+M+' parts landed.':'Your app is built.'):'More is coming: '+of+' parts landed'+(left?', '+left:'')+'.';
+ t.textContent=b.settledAt?(M?'All '+M+' parts landed.':'Your app is built.'):M&&N>=M?'All '+M+' parts landed. Finishing up.':'More is coming: '+of+' parts landed'+(left?', '+left:'')+'.';
  nb.hidden=!(N>seen);nb.textContent=N-seen===1?'Show the new part':'Show the '+(N-seen)+' new parts';
  nb.onclick=()=>{seen=N;nb.hidden=true;f.src=f.src;console.log(JSON.stringify({module:'buildstrip',event:'reload',landed:N}));};});};
 const s=document.createElement('script');s.src='/lab/est-bar.js';s.onload=go;document.head.appendChild(s);})();`;
