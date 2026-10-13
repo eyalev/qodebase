@@ -44,6 +44,29 @@
     "lostNote": "the same 20 targeting-bug files as dial 0, none from collisions",
     "landWaitP50S": 96,
     "landWaitP90S": 165
+   },
+   {
+    "dial": 30,
+    "tasks": 36140,
+    "tasksPerSec": 1105,
+    "pairs": {
+     "far": 893,
+     "near": 1006,
+     "same": 3521
+    },
+    "resolutions": {
+     "farAutoMerged": 893,
+     "nearAutoMerged": 1001,
+     "nearDoneBefore": 5,
+     "sameDuplicateKeptFirst": 3504,
+     "sameReplayed": 17
+    },
+    "doubled": 0,
+    "codeChanged": 0,
+    "lost": 15,
+    "lostNote": "15 = an accounting artefact: the fixed agent correctly skips the one-line '} export class' declaration, but the record still listed it as intended (records keep only inserted comments from L60 on)",
+    "landWaitP50S": 98,
+    "landWaitP90S": 169
    }
   ],
   "caveat": "In cached mode the second comment of a same-declaration pair is derived from the first (its first sentence, or that plus a stock phrase), so 'duplicate, kept the first' says which landed first, not which answer was better. Which version wins under real collisions is measured by the code dial, where the hidden tests decide."
