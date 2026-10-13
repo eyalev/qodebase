@@ -14,7 +14,7 @@
   "ai": { "binding": "AI" },
   // S3: the answers the fleet already produced, keyed by the original file's blob hash (scripts/build-cache.mjs)
   "kv_namespaces": [{ "binding": "FLEET_CACHE", "id": "fcaf78997dea45c6b8d145598f878dfe" }],
-  "artifacts": [{ "binding": "ARTIFACTS", "namespace": "qbfleet" }, { "binding": "ARTIFACTS2", "namespace": "qbfleet2" }],
+  "artifacts": [{ "binding": "ARTIFACTS", "namespace": "qbfleet" }, { "binding": "ARTIFACTS2", "namespace": "qbfleet2" }, { "binding": "ARTIFACTS_FORQ", "namespace": "forq" }],
   "vars": {
     "FLEET_LAST_DAY": "2026-10-14",
     // [input, output] $ per million tokens; set from qb4's F0 before a run (an unpriced model is refused)
@@ -26,8 +26,12 @@
       { "name": "RUN", "class_name": "Run" },
       { "name": "AGENT", "class_name": "Agent" },
       { "name": "LANDER", "class_name": "Lander" },
-      { "name": "BUDGET", "class_name": "Budget" }
+      { "name": "BUDGET", "class_name": "Budget" },
+      { "name": "KATA", "class_name": "KataAgent" },
+      // forq's own objects (the code dial goes through the real merge queue)
+      { "name": "LANDING", "class_name": "Landing", "script_name": "forq" },
+      { "name": "PROJECT", "class_name": "Project", "script_name": "forq" }
     ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Run", "Agent", "Lander", "Budget"] }]
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Run", "Agent", "Lander", "Budget"] }, { "tag": "v2", "new_sqlite_classes": ["KataAgent"] }]
 }

@@ -9,6 +9,7 @@
 // No fork per agent (manager, 2026-10-13): a comment-only change to one file needs none; the lanes do the git.
 import { DurableObject } from 'cloudflare:workers';
 import { landOne } from './merge.js';
+import { kataPrompt, parseCode, checkCode } from './kata.js';
 import { Objects, push } from '../../cloud/src/gitpush.js';
 import { targets, insert, verify, prompt, parseAnswer, cleanComment, promptPack, parseAnswerPack, packFiles, docBlocks } from './doc.js';
 
@@ -199,10 +200,10 @@ export class Run extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS q (run TEXT, i INT, path TEXT, hash TEXT, taken INT DEFAULT 0, PRIMARY KEY (run, i))`);
     try { this.sql.exec(`ALTER TABLE q ADD COLUMN tries INT DEFAULT 0`); } catch {}
     // Collision dial: a task is one or more declarations of a file (fns, JSON), its kind (solo / far / near / same), its pair.
-    for (const c of ['task TEXT', 'fns TEXT', 'kind TEXT', 'grp TEXT', 'variant INT']) try { this.sql.exec(`ALTER TABLE q ADD COLUMN ${c}`); } catch {}
+    for (const c of ['task TEXT', 'fns TEXT', 'kind TEXT', 'grp TEXT', 'variant INT', 'text TEXT']) try { this.sql.exec(`ALTER TABLE q ADD COLUMN ${c}`); } catch {}
     this.sql.exec(`CREATE TABLE IF NOT EXISTS claim (run TEXT, file TEXT, fn TEXT, task TEXT, PRIMARY KEY (run, file, fn))`);
     // cmt: the comments this file got ({name: text}, for the per-file diff); commit: the lane commit it landed in.
-    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT', 'task TEXT', 'kind TEXT', 'grp TEXT', 'resolution TEXT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
+    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT', 'task TEXT', 'kind TEXT', 'grp TEXT', 'resolution TEXT', 'change_id TEXT', 'redos INT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
     // S4/qb7: the queue sampled every 10 s while a run is on (the series' depth per stage).
     this.sql.exec(`CREATE TABLE IF NOT EXISTS samp (run TEXT, t INT, waiting INT, at_model INT, ready INT, landed INT, lander_waiting INT, PRIMARY KEY (run, t))`);
     // S4a: the per-result land-wait check scanned the whole table; landed() looked files up by name.
@@ -237,12 +238,18 @@ export class Run extends DurableObject {
     // One walk of main's src/vs (~800 folders): the files with their blob hashes, lanes interleaved, and main's tip.
     cfg.repo = REPO_RE.test(cfg.repo || '') ? cfg.repo : MAIN;
     cfg.root = String(cfg.root || 'src/vs').replace(/^\/+|\/+$/g, '');
-    const { base, files } = await listFiles(this.env, cfg.repo, cfg.root);
+    // Code dial: qb4's kata tasks in their order, on a qodebase project (forq's Artifacts namespace); no file walk here.
+    const { base, files } = cfg.kata ? { base: null, files: [] } : await listFiles(this.env, cfg.repo, cfg.root);
     const p = { base };
     const off = Math.max(0, Number(cfg.offset) || 0);   // the next slice of the (stable) file list
     let pick = files.slice(off, off + Math.max(1, Math.min(files.length, Number(cfg.maxFiles) || 10)));
     const runId = `f${Date.now().toString(36)}`;
-    if (cfg.dial) {
+    if (cfg.kata) {
+      const list = (cfg.kata.tasks || []).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      list.forEach((t, i) => this.sql.exec(`INSERT INTO q (run, i, path, hash, task, fns, kind, grp, text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, runId, i, t.file, '', t.id, JSON.stringify([t.fn]), t.kind, t.group || null, t.text));
+      pick = list.map((t) => ({ path: t.file }));
+      cfg.kata = { slug: cfg.kata.slug, tasks: list.length, maxRedos: cfg.kata.maxRedos ?? 2 };
+    } else if (cfg.dial) {
       const tasks = await dialTasks(this.env, pick, Number(cfg.dial.level) || 0, cfg.dial.seed || runId);
       tasks.forEach((t, i) => this.sql.exec(`INSERT INTO q (run, i, path, hash, task, fns, kind, grp, variant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, runId, i, t.path, t.hash, t.task, JSON.stringify(t.fns), t.kind, t.grp, t.variant || 0));
       pick = tasks; cfg.dialActual = tasks.dial;
@@ -253,7 +260,7 @@ export class Run extends DurableObject {
       recent: [], perMin: {}, pauses: [], agentsDone: 0 };
     await this.save(s);
     await this.ctx.storage.put(`meta:${runId}`, { base: p.base, dial: cfg.dialActual || null, ladder: cfg.ladder ? String(cfg.ladder).slice(0, 80) : null, copy: Number.isFinite(Number(cfg.copy)) && cfg.copy !== undefined ? Number(cfg.copy) : null, label: String(cfg.label || '').slice(0, 80) || null, agents: cfg.agents, agentsStarted: 0, repo: cfg.repo, root: cfg.root, planned: cfg.models.map((m) => m.model), overflow: cfg.overflow?.model || null, maxPerMin: Object.fromEntries([...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])].map((m) => [m.model, m.maxPerMin])) });
-    await lander(this.env, cfg.repo).begin(runId, p.base, cfg.repo);
+    if (!cfg.kata) await lander(this.env, cfg.repo).begin(runId, p.base, cfg.repo);
     await budget(this.env).addRepo(cfg.repo);
     // Agents start from this object's alarm in batches: started one by one inside the request, F2's 100-agent start
     // outlived the request and only ~8 agents began.
@@ -284,7 +291,7 @@ export class Run extends DurableObject {
     const s = await this.st();
     if (!s || s.state === 'stopped' || s.state === 'held' || (s.agentsStarted || 0) >= s.cfg.agents) return;
     const from = s.agentsStarted || 0, to = Math.min(s.cfg.agents, from + 50);
-    await Promise.all(Array.from({ length: to - from }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN, Math.max(1, Math.min(20, Number(s.cfg.batch) || 1)), s.cfg.pack ? { files: Math.max(2, Math.min(10, Number(s.cfg.pack.files) || 8)), tokens: Math.max(2000, Math.min(30000, Number(s.cfg.pack.tokens) || 12000)) } : null)));
+    await Promise.all(Array.from({ length: to - from }, (_, k) => (s.cfg.kata ? this.env.KATA : this.env.AGENT).get((s.cfg.kata ? this.env.KATA : this.env.AGENT).idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN, Math.max(1, Math.min(20, Number(s.cfg.batch) || 1)), s.cfg.pack ? { files: Math.max(2, Math.min(10, Number(s.cfg.pack.files) || 8)), tokens: Math.max(2000, Math.min(30000, Number(s.cfg.pack.tokens) || 12000)) } : null)));
     s.agentsStarted = to; await this.save(s);
     const meta = await this.ctx.storage.get(`meta:${s.runId}`); if (meta) { meta.agentsStarted = to; await this.ctx.storage.put(`meta:${s.runId}`, meta); }
     log('agents_started', { runId: s.runId, started: to, of: s.cfg.agents });
@@ -310,13 +317,13 @@ export class Run extends DurableObject {
     s.perSlice[`${pickM.model}|${slice}`] = (s.perSlice[`${pickM.model}|${slice}`] || 0) + 1;
     for (const k of Object.keys(s.perSlice)) if (Number(k.split('|')[1]) < slice - 12) delete s.perSlice[k];
     if (s.usd >= s.cfg.budgetUsd) { await this.autoPause(s, `run budget reached: $${s.usd.toFixed(3)} of $${s.cfg.budgetUsd}`); return { wait: 15_000 }; }
-    const row = this.sql.exec(`SELECT i, path, hash, task, fns, kind, grp, variant FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0];
+    const row = this.sql.exec(`SELECT i, path, hash, task, fns, kind, grp, variant, text FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0];
     if (!row) return { stop: true };
     this.sql.exec(`UPDATE q SET taken = 1 WHERE run = ? AND i = ?`, runId, row.i);
     s.counts.queued--; s.counts.model++;
     (s.perMin[minute] ||= { calls: 0, usd: 0 }).calls++;
     await this.save(s);
-    const task = row.task ? { task: row.task, fns: JSON.parse(row.fns || '[]'), kind: row.kind, grp: row.grp, variant: row.variant || 0, claims: !!s.cfg.dial?.claims } : {};
+    const task = row.task ? { task: row.task, fns: JSON.parse(row.fns || '[]'), kind: row.kind, grp: row.grp, variant: row.variant || 0, claims: !!s.cfg.dial?.claims, ...(s.cfg.kata ? { text: row.text, slug: s.cfg.kata.slug, maxRedos: s.cfg.kata.maxRedos } : {}) } : {};
     return { file: { path: row.path, hash: row.hash, ...task }, model: pickM.model, provider, slot: `${pickM.model}|${slice}` };
   }
 
@@ -371,8 +378,8 @@ export class Run extends DurableObject {
     }
     const cmt = r.cmt ? JSON.stringify(r.cmt).slice(0, 8000) : null;
     if (r.task && r.status !== 'ready') this.sql.exec(`DELETE FROM claim WHERE run = ? AND task = ?`, runId, r.task);
-    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n, task, kind, grp, resolution) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null, r.task || null, r.kind || null, r.grp || null, r.status === 'caught_early' ? 'caught_early' : r.status === 'skipped' && r.task ? 'done_before' : null);
+    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n, task, kind, grp, resolution, change_id, redos, landed_at, commit_sha) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null, r.task || null, r.kind || null, r.grp || null, r.resolution || (r.status === 'caught_early' ? 'caught_early' : r.status === 'skipped' && r.task ? 'done_before' : null), r.changeId || null, r.redos ?? null, r.landedAt || null, r.commit || null);
     const t10 = Math.floor(Date.now() / 10000) * 10000;
     if (s.lastSample !== t10) {
       s.lastSample = t10;
@@ -762,7 +769,7 @@ export class Agent extends DurableObject {
     const { text: next, inserted } = insert(rd.text, tg, c);
     const v = verify(f.path, rd.text, next);
     if (!inserted || !v.ok) return { file: f.path, status: v.ok ? 'rejected' : 'verify_fail', reason: v.why || 'nothing inserted', ms: Date.now() - t0, tRead };
-    return { file: f.path, status: 'ready', text: next, comments: inserted, cmt: c, names: tg.map((t) => t.name), base: f.hash, vTokens: v.tokens, ms: Date.now() - t0, usd: 0, tRead, tModel: 0 };
+    return { file: f.path, status: 'ready', text: next, comments: inserted, cmt: Object.fromEntries(tg.map((t) => [t.name, c[t.name]])), names: tg.map((t) => t.name), base: f.hash, vTokens: v.tokens, ms: Date.now() - t0, usd: 0, tRead, tModel: 0 };
   }
   /** One file's text from Artifacts, with the same retries as work(). */
   async readText(repoName, hash) {
@@ -899,6 +906,84 @@ export class Agent extends DurableObject {
     const v = verify(file.path, text, next);
     if (!v.ok) return { file: file.path, status: 'verify_fail', reason: v.why, ms: Date.now() - t0, usd, tin, tout };
     return { file: file.path, status: 'ready', text: next, comments: inserted, cmt: pickC(tg, answer), vTokens: v.tokens, ms: Date.now() - t0, usd, tin, tout, tRead };
+  }
+}
+
+// ---- KataAgent: the code dial's agent (one task at a time through qodebase's real merge queue) ---
+export class KataAgent extends DurableObject {
+  async begin(runId, i, repo) { await this.ctx.storage.put({ runId, i, repo, job: null }); await this.ctx.storage.setAlarm(Date.now() + Math.random() * 5000); }
+  landing(slug) { return this.env.LANDING.get(this.env.LANDING.idFromName(slug)); }
+  async alarm() {
+    const g = await this.ctx.storage.get(['runId', 'i', 'repo', 'job']);
+    const runId = g.get('runId'), i = g.get('i'), R = run(this.env, g.get('repo'));
+    let job = g.get('job');
+    try {
+      if (!job) {
+        const n = await R.next(runId, 1);
+        if (n.stop) { await R.agentFinished(runId); return; }
+        if (n.wait) { await this.ctx.storage.setAlarm(Date.now() + n.wait); return; }
+        const f = n.file;
+        job = { ...f, model: n.model, provider: n.provider, slot: n.slot, stage: 'work', redos: 0, fails: 0, usd: 0, t0: Date.now(), changeId: `${f.slug}--k${runId.slice(-4)}${i}${Math.random().toString(36).slice(2, 5)}` };
+      }
+      if (job.stage === 'work' || job.stage === 'redo') {
+        const r = await this.attempt(job, i);
+        job.usd += r.usd || 0;
+        if (r.error) {
+          job.fails++;
+          log('kata_attempt_failed', { runId, i, task: job.task, why: r.error, fails: job.fails });
+          if (job.fails >= 3) return this.finish(R, runId, i, job, { status: job.stage === 'redo' ? 'bounced' : 'rejected', reason: r.error });
+        } else { job.stage = 'wait'; job.queuedAt = Date.now(); }
+      } else if (job.stage === 'wait') {
+        const c = await this.landing(job.slug).change(job.changeId);
+        if (c?.state === 'landed') return this.finish(R, runId, i, job, { status: 'landed', resolution: (job.redos ? `redo+${c.landing?.how || 'merged'}` : c.landing?.how || 'merged'), landedAt: c.landedAt || Date.now(), commit: c.landing?.mainCommit || null });
+        if (c && ['replaying', 'bounced', 'with-lead'].includes(c.state)) {
+          if (job.redos >= job.maxRedos) return this.finish(R, runId, i, job, { status: 'bounced', reason: `${c.state}: ${(c.events || []).slice(-1)[0]?.detail || ''}`.slice(0, 200) });
+          job.redos++; job.stage = 'redo'; job.fails = 0;
+        } else if (Date.now() - job.queuedAt > 30 * 60_000) return this.finish(R, runId, i, job, { status: 'bounced', reason: `still ${c?.state || 'unknown'} after 30 min` });
+      }
+    } catch (e) {
+      job && (job.fails = (job.fails || 0) + 1);
+      log('kata_error', { runId, i, task: job?.task, err: String(e?.stack || e).slice(0, 400) });
+      if (job && job.fails >= 5) return this.finish(R, runId, i, job, { status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` });
+    }
+    await this.ctx.storage.put('job', job);
+    await this.ctx.storage.setAlarm(Date.now() + (job?.stage === 'wait' ? 4000 : 300));
+  }
+  async finish(R, runId, i, job, r) {
+    await R.done(runId, i, { file: job.path, task: job.task, kind: job.kind, grp: job.grp, model: job.model, slot: job.slot, ms: Date.now() - job.t0, usd: job.usd, changeId: job.changeId, redos: job.redos, ...r });
+    await this.ctx.storage.put('job', null);
+    await this.ctx.storage.setAlarm(Date.now() + 100);
+  }
+  /** Main's file now -> the model -> the local check -> a fork with one commit -> the change recorded, pushed and queued. */
+  async attempt(job, i) {
+    const project = await this.env.PROJECT.get(this.env.PROJECT.idFromName(job.slug)).info();
+    if (!project?.repo) return { error: 'no such project' };
+    using main = await retry(() => this.env.ARTIFACTS_FORQ.get(project.repo));
+    const head = (await retry(() => main.log({ limit: 1 })))[0];
+    const h = await blobAt(main, new Objects(), head.treeHash, job.path);
+    const b = await retry(() => main.readBlob(h));
+    const text = new TextDecoder().decode(await b.arrayBuffer());
+    const m = await Agent.prototype.callModel.call({ env: this.env }, job.model, job.provider, kataPrompt(job.text, job.path, text), 3000);
+    if (m.status) return { error: `${m.status}: ${m.reason}` };
+    const code = parseCode(m.raw);
+    const chk = checkCode(job.path, code, job.fns[0]);
+    if (!chk.ok) return { error: chk.why, usd: m.usd };
+    const name = job.stage === 'redo' ? `${job.changeId}r${job.redos}` : job.changeId;
+    const f = await retry(() => main.fork(name, { description: `fleet code dial: ${job.task}`.slice(0, 200), defaultBranchOnly: true }));
+    using fr = await retry(() => this.env.ARTIFACTS_FORQ.get(f.name || name), [0, 500, 1500, 4000]);
+    const objs = new Objects();
+    const tree = await overlay(fr, objs, head.treeHash, [{ path: job.path, sha: objs.blob(code) }]);
+    const commit = objs.commit(tree, [head.hash], `${job.task}\n\n${job.text}`.slice(0, 2000), Date.now(), `qodebase fleet agent ${i} <agent+fleet${i}@qodebase.app>`);
+    const token = (await fr.createToken('write', 600)).plaintext;
+    const p = await push({ remote: f.remote, token, branch: 'main', oldSha: head.hash, newSha: commit, objs: [...objs.map.values()] });
+    if (!p.ok) return { error: `push to its fork: HTTP ${p.status} ${String(p.detail).slice(0, 120)}`, usd: m.usd };
+    const L = this.landing(job.slug);
+    if (job.stage === 'redo') await L.rebase(job.changeId, f.name || name, f.remote, head.hash);
+    else await L.record(job.slug, { id: job.changeId, title: job.task.slice(0, 60), intent: job.text, agent: `fleet agent ${i}`, kind: 'fleet', fork: f.name || name, remote: f.remote, base: head.hash, claims: [job.path] });
+    await L.pushed(job.changeId, commit, [job.path], job.stage === 'redo' ? 'redone on the latest main' : `${job.kind} ${job.task}`, head.hash);
+    await L.reviewing(job.changeId);
+    await L.reviewed(job.changeId, 'auto', '', true);
+    return { ok: true, usd: m.usd };
   }
 }
 
