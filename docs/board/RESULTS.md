@@ -24,27 +24,122 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | fmv6ofmt4 (S4a 200 agents / 4 copies (cache) - copy 1) [cached answers] | fleet-vscode-src-1 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 52 s | 43 / 55 s |
 | fmv6oootq (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-1) [cached answers] | fleet-angular-1 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 14 s | 15 / 19 s |
 | fmv6oopl9 (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-1) [cached answers] | fleet-vscode-ext-1 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 20 s | 21 / 52 s |
+| fmv6oxch6 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-1) [cached answers] | fleet-nest-1 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 8 s | 7 / 8 s |
+| fmv6oxeqx (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-1) [cached answers] | fleet-babel-1 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 10 s | 12 / 13 s |
+| fmv6oxcfc (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-2) [cached answers] | fleet-nest-2 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 14 s | 4 / 7 s |
+| fmv6oxcfw (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-3) [cached answers] | fleet-nest-3 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 15 s | 5 / 7 s |
+| fmv6oxbe8 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-4) [cached answers] | fleet-nest-4 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 7 s | 4 / 6 s |
+| fmv6oxccz (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-5) [cached answers] | fleet-nest-5 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 8 s | 6 / 7 s |
+| fmv6oxblx (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-6) [cached answers] | fleet-nest-6 packages | cache | 50 | 652 | 167 | 477 | 0 | 0 | 0 | $0.00 | 11 s | 3 / 5 s |
+| fmv6oxcvu (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-7) [cached answers] | fleet-nest-7 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 15 s | 7 / 9 s |
 | fmv6ookhf (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-2) [cached answers] | fleet-angular-2 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 15 s | 13 / 16 s |
 | fmv6oojsh (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-2) [cached answers] | fleet-nextjs-2 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 12 s | 11 / 20 s |
+| fmv6oxb40 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-8) [cached answers] | fleet-nest-8 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 11 s | 6 / 8 s |
+| fmv6oxbwg (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-9) [cached answers] | fleet-nest-9 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 7 s | 5 / 7 s |
+| fmv6oxg1i (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-2) [cached answers] | fleet-babel-2 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 10 s | 10 / 11 s |
 | fmv6ofopo (S4a 200 agents / 4 copies (cache) - copy 2) [cached answers] | fleet-vscode-src-2 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 45 s | 61 / 76 s |
+| fmv6oxd2v (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-10) [cached answers] | fleet-nest-10 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 14 s | 5 / 8 s |
 | fmv6oox4a (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-2) [cached answers] | fleet-vscode-ext-2 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 21 s | 19 / 36 s |
 | fmv6oond3 (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-3) [cached answers] | fleet-angular-3 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 16 s | 7 / 9 s |
 | fmv6ookgc (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-3) [cached answers] | fleet-nextjs-3 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 15 s | 15 / 26 s |
+| fmv6oxie4 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-3) [cached answers] | fleet-babel-3 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 13 s | 11 / 18 s |
 | fmv6oov7h (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-4) [cached answers] | fleet-angular-4 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 16 s | 15 / 20 s |
 | fmv6of4um (S4a 200 agents / 4 copies (cache) - copy 3) [cached answers] | fleet-vscode-src-3 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 46 s | 41 / 54 s |
 | fmv6oopwn (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-4) [cached answers] | fleet-nextjs-4 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 15 s | 14 / 26 s |
 | fmv6opa7x (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-3) [cached answers] | fleet-vscode-ext-3 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 22 s | 24 / 58 s |
 | fmv6ookxz (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-angular-5) [cached answers] | fleet-angular-5 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 17 s | 14 / 16 s |
+| fmv6oxhl1 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-4) [cached answers] | fleet-babel-4 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 9 s | 12 / 13 s |
 | fmv6oopmh (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-nextjs-5) [cached answers] | fleet-nextjs-5 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 12 s | 12 / 22 s |
 | fmv6oflq1 (S4a 200 agents / 4 copies (cache) - copy 4) [cached answers] | fleet-vscode-src-4 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 41 s | 83 / 97 s |
+| fmv6oxpgh (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-6) [cached answers] | fleet-angular-6 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 49 s | 11 / 20 s |
 | fmv6opaqc (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-4) [cached answers] | fleet-vscode-ext-4 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 22 s | 27 / 51 s |
+| fmv6oxig2 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-5) [cached answers] | fleet-babel-5 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 13 s | 10 / 12 s |
+| fmv6oxc57 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-7) [cached answers] | fleet-angular-7 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 21 s | 6 / 10 s |
+| fmv6oxhrz (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-6) [cached answers] | fleet-nextjs-6 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 17 s | 11 / 21 s |
 | fmv6omm62 (S4b 200 agents / 1 copy (cache, batch 5)) [cached answers] | fleet-vscode-src-5 src/vs | cache | 200 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 25 s | 25 / 35 s |
+| fmv6oxe7q (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-8) [cached answers] | fleet-angular-8 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 16 s | 9 / 12 s |
+| fmv6oxdj1 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-6) [cached answers] | fleet-babel-6 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 8 s | 9 / 10 s |
+| fmv6oxmzy (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-7) [cached answers] | fleet-nextjs-7 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 29 s | 12 / 22 s |
 | fmv6op7me (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-ext-5) [cached answers] | fleet-vscode-ext-5 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 14 s | 25 / 57 s |
+| fmv6oxn4i (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-9) [cached answers] | fleet-angular-9 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 18 s | 18 / 21 s |
 | fmv6opkn5 (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-6) [cached answers] | fleet-vscode-src-6 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 23 s | 51 / 58 s |
+| fmv6oxn0q (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-8) [cached answers] | fleet-nextjs-8 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 16 s | 15 / 25 s |
+| fmv6oxgpt (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-7) [cached answers] | fleet-babel-7 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 11 s | 9 / 13 s |
+| fmv6oy148 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-6) [cached answers] | fleet-vscode-ext-6 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 52 s | 19 / 42 s |
+| fmv6oxp1e (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-10) [cached answers] | fleet-angular-10 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 48 s | 11 / 19 s |
+| fmv6oxi9m (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-9) [cached answers] | fleet-nextjs-9 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 19 s | 13 / 19 s |
 | fmv6opa0q (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-7) [cached answers] | fleet-vscode-src-7 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 30 s | 46 / 61 s |
+| fmv6oxeut (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-8) [cached answers] | fleet-babel-8 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 14 s | 8 / 13 s |
+| fmv6oxmws (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-10) [cached answers] | fleet-nextjs-10 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 18 s | 12 / 19 s |
+| fmv6oxsgg (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-7) [cached answers] | fleet-vscode-ext-7 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 25 s | 22 / 46 s |
 | fmv6oon2o (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-8) [cached answers] | fleet-vscode-src-8 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 27 s | 33 / 45 s |
+| fmv6oxfu2 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-9) [cached answers] | fleet-babel-9 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 8 s | 5 / 7 s |
 | fmv6op1o6 (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-9) [cached answers] | fleet-vscode-src-9 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 25 s | 27 / 33 s |
+| fmv6oxtyv (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-8) [cached answers] | fleet-vscode-ext-8 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 24 s | 18 / 38 s |
+| fmv6oxgf1 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-10) [cached answers] | fleet-babel-10 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 16 s | 7 / 12 s |
 | fmv6op5a4 (S4c 1,000 agents / 20 copies (cache, batch 5) - fleet-vscode-src-10) [cached answers] | fleet-vscode-src-10 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 27 s | 45 / 54 s |
+| fmv6oxeev (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-9) [cached answers] | fleet-vscode-ext-9 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 29 s | 14 / 29 s |
+| fmv6oxl6s (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-10) [cached answers] | fleet-vscode-ext-10 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 20 s | 20 / 43 s |
+| fmv6oz4u9 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-16) [cached answers] | fleet-vscode-ext-16 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 14 s | 26 / 59 s |
+| fmv6oz2iy (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-12) [cached answers] | fleet-vscode-ext-12 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 14 s | 26 / 58 s |
+| fmv6oy9s0 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-11) [cached answers] | fleet-vscode-ext-11 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 17 s | 22 / 44 s |
+| fmv6oy68c (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-15) [cached answers] | fleet-vscode-ext-15 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 22 s | 15 / 34 s |
+| fmv6oykp8 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-19) [cached answers] | fleet-vscode-ext-19 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 30 s | 13 / 34 s |
+| fmv6oy5xs (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-21) [cached answers] | fleet-vscode-ext-21 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 23 s | 20 / 44 s |
+| fmv6oyfcq (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-22) [cached answers] | fleet-vscode-ext-22 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 15 s | 20 / 43 s |
+| fmv6oym43 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-20) [cached answers] | fleet-vscode-ext-20 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 16 s | 23 / 48 s |
+| fmv6oyemf (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-18) [cached answers] | fleet-vscode-ext-18 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 15 s | 16 / 37 s |
+| fmv6ozbfa (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-17) [cached answers] | fleet-vscode-ext-17 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 19 s | 23 / 54 s |
+| fmv6oxyae (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-12) [cached answers] | fleet-nextjs-12 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 15 s | 14 / 24 s |
+| fmv6oy2tg (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-16) [cached answers] | fleet-nextjs-16 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 13 s | 14 / 28 s |
+| fmv6oxrq3 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-11) [cached answers] | fleet-nextjs-11 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 15 s | 7 / 15 s |
+| fmv6oxx1q (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-13) [cached answers] | fleet-nextjs-13 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 43 s | 11 / 15 s |
+| fmv6oy5rs (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-14) [cached answers] | fleet-nextjs-14 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 19 s | 16 / 27 s |
+| fmv6oxsf1 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-17) [cached answers] | fleet-nextjs-17 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 14 s | 6 / 15 s |
+| fmv6oxtko (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-18) [cached answers] | fleet-nextjs-18 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 21 s | 11 / 20 s |
+| fmv6oxspg (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-22) [cached answers] | fleet-nextjs-22 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 17 s | 9 / 16 s |
+| fmv6oxz2f (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-21) [cached answers] | fleet-nextjs-21 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 16 s | 9 / 19 s |
+| fmv6oy64q (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-19) [cached answers] | fleet-nextjs-19 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 41 s | 9 / 11 s |
+| fmv6oy2zt (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-20) [cached answers] | fleet-nextjs-20 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 42 s | 10 / 14 s |
+| fmv6oxs0t (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-16) [cached answers] | fleet-angular-16 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 19 s | 10 / 13 s |
+| fmv6oxtdw (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-12) [cached answers] | fleet-angular-12 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 17 s | 12 / 17 s |
+| fmv6oy0ut (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-13) [cached answers] | fleet-angular-13 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 24 s | 13 / 19 s |
+| fmv6oxxv8 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-11) [cached answers] | fleet-angular-11 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 51 s | 6 / 12 s |
+| fmv6oxzpz (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-20) [cached answers] | fleet-angular-20 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 22 s | 12 / 17 s |
+| fmv6oyc03 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-18) [cached answers] | fleet-angular-18 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 13 s | 20 / 23 s |
+| fmv6oxyfs (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-17) [cached answers] | fleet-angular-17 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 51 s | 7 / 12 s |
+| fmv6oxxy5 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-19) [cached answers] | fleet-angular-19 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 23 s | 9 / 14 s |
+| fmv6oxvqv (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-21) [cached answers] | fleet-angular-21 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 15 s | 17 / 21 s |
+| fmv6oxyks (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-22) [cached answers] | fleet-angular-22 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 24 s | 16 / 22 s |
+| fmv6oxtlr (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-12) [cached answers] | fleet-babel-12 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 9 s | 11 / 12 s |
+| fmv6oxniz (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-16) [cached answers] | fleet-babel-16 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 20 s | 13 / 17 s |
+| fmv6oxrwj (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-11) [cached answers] | fleet-babel-11 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 10 s | 12 / 15 s |
+| fmv6oxrhr (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-20) [cached answers] | fleet-babel-20 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 9 s | 12 / 13 s |
+| fmv6oxpzg (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-18) [cached answers] | fleet-babel-18 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 9 s | 11 / 12 s |
+| fmv6oxoar (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-19) [cached answers] | fleet-babel-19 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 9 s | 8 / 10 s |
+| fmv6oxxv3 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-21) [cached answers] | fleet-babel-21 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 9 s | 12 / 14 s |
+| fmv6oxp29 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-17) [cached answers] | fleet-babel-17 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 10 s | 12 / 15 s |
+| fmv6oy03f (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-22) [cached answers] | fleet-babel-22 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 10 s | 14 / 16 s |
+| fmv6oxh4o (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-13) [cached answers] | fleet-nest-13 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 10 s | 3 / 4 s |
+| fmv6oxfgr (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-12) [cached answers] | fleet-nest-12 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 13 s | 3 / 5 s |
+| fmv6oxeb0 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-11) [cached answers] | fleet-nest-11 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 12 s | 6 / 8 s |
+| fmv6oxdq5 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-15) [cached answers] | fleet-nest-15 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 9 s | 5 / 7 s |
+| fmv6oxgp2 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-14) [cached answers] | fleet-nest-14 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 10 s | 8 / 10 s |
+| fmv6oxf44 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-22) [cached answers] | fleet-nest-22 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 10 s | 6 / 8 s |
+| fmv6oxfgb (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-20) [cached answers] | fleet-nest-20 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 9 s | 5 / 9 s |
+| fmv6oxdod (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-19) [cached answers] | fleet-nest-19 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 9 s | 3 / 6 s |
+| fmv6oxfw2 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-18) [cached answers] | fleet-nest-18 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 11 s | 3 / 6 s |
+| fmv6oxk4k (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-17) [cached answers] | fleet-nest-17 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 14 s | 8 / 11 s |
+| fmv6oxgfd (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-21) [cached answers] | fleet-nest-21 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 9 s | 7 / 8 s |
+| fmv6oyb4b (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-14) [cached answers] | fleet-angular-14 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 12 s | 20 / 23 s |
+| fmv6oxuu7 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-angular-15) [cached answers] | fleet-angular-15 packages | cache | 50 | 2,090 | 689 | 1,398 | 0 | 0 | 0 | $0.00 | 24 s | 10 / 17 s |
+| fmv6oxup1 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-13) [cached answers] | fleet-babel-13 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 12 s | 10 / 17 s |
+| fmv6oxxyw (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-14) [cached answers] | fleet-babel-14 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 7 s | 5 / 6 s |
+| fmv6oxper (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-babel-15) [cached answers] | fleet-babel-15 packages | cache | 50 | 597 | 319 | 274 | 0 | 0 | 0 | $0.00 | 18 s | 9 / 11 s |
+| fmv6oxdz4 (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nest-16) [cached answers] | fleet-nest-16 packages | cache | 50 | 652 | 175 | 477 | 0 | 0 | 0 | $0.00 | 8 s | 3 / 6 s |
+| fmv6oxrcy (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-nextjs-15) [cached answers] | fleet-nextjs-15 packages | cache | 50 | 1,546 | 868 | 677 | 0 | 0 | 0 | $0.00 | 15 s | 9 / 18 s |
+| fmv6oya7q (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-13) [cached answers] | fleet-vscode-ext-13 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 44 s | 8 / 16 s |
+| fmv6oy9lc (S4d 5,000 agents / 100 copies (cache, batch 5) - fleet-vscode-ext-14) [cached answers] | fleet-vscode-ext-14 extensions | cache | 50 | 2,328 | 1,536 | 790 | 0 | 0 | 0 | $0.00 | 15 s | 19 / 41 s |
 
 | model | files handled | landed | verify refused | rate-limited (share of calls) | peak calls/min | $ | $ per 1k files |
 |---|---|---|---|---|---|---|---|
@@ -53,7 +148,7 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | gemini-3.5-flash-lite | 1,152 | 860 | 0 | 0 (0.0%) | 235 | $1.00 | $0.87 |
 | gemini-3.1-flash-lite | 3,339 | 1,183 | 0 | 0 (0.0%) | 75 | $0.75 | $0.22 |
 
-Cached-answer runs (measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real): 25 runs, 70,460 files, 45,355 landed, 0 refused by verify. Not counted in the model totals below.
+Cached-answer runs (measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real): 120 runs, 199,326 files, 108,796 landed, 0 refused by verify. Not counted in the model totals below.
 
 Model-written totals: 6,616 files landed of 11,405 attempted over 12 runs (4,757 needed no comment); 0 refused by the code-unchanged check; $2.81 ($0.25 per 1k files).
 
