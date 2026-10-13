@@ -645,6 +645,10 @@ async function fileView(env, repo, runId, path, sha = null) {
   let c = last.cmt ? JSON.parse(last.cmt) : null;
   if (!c && last.model === 'cache' && f.hash) c = (await env.FLEET_CACHE.get(f.hash, 'json'))?.c || null;
   if (c && f.hash && (last.status === 'ready' || last.status === 'landed')) {
+    // After the experiment most copies are deleted (Artifacts storage bills from 2026-10-14); the record stays.
+    let gone = false;
+    try { using probe = await ns(env, repo).get(repo); void probe; } catch { gone = true; }
+    if (gone) return { ...out, note: out.note, diff: null, copyDeleted: true, why: 'This copy was deleted after the experiment; the record and its comments are kept.' };
     using r = await ns(env, repo).get(repo);
     const blob = await r.readBlob(f.hash);
     if (blob) {
