@@ -705,7 +705,7 @@ export class Landing extends DurableObject<Env> {
   // wait 12 reviews in a row, so Landing hands pushed changes to the first free of N
   // reviewer boxes (<slug>--review, --review2, …) through the Worker's review-dispatch verb,
   // and watches each one: a review with no verdict after 8 min is handed out again, once.
-  #reviewers(m: Meta) { const n = Math.min(6, m.flags.reviewers || 1); return Array.from({ length: n }, (_, i) => `${m.slug}--review${i ? i + 1 : ''}`); }
+  #reviewers(m: Meta) { const n = Math.min(8, m.flags.reviewers || 1); return Array.from({ length: n }, (_, i) => `${m.slug}--review${i ? i + 1 : ''}`); }
   poolOn() { return (this.#meta?.flags.reviewers || 1) > 1; }
   async queueReview(id: string) {
     const m = await this.#m();
@@ -819,7 +819,7 @@ export class Landing extends DurableObject<Env> {
   async #halt(m: Meta, why: string) {
     m.flags.halted = true; m.flags.haltedAt = Date.now(); m.flags.haltedWhy = why;
     const p = await this.env.Project.get(this.env.Project.idFromName(m.slug)).info();
-    const ids = [...(p?.agents || []).map((a) => a.id), `${m.slug}--router`, `${m.slug}--router2`, ...this.#reviewers({ ...m, flags: { ...m.flags, reviewers: 6 } })];
+    const ids = [...(p?.agents || []).map((a) => a.id), `${m.slug}--router`, `${m.slug}--router2`, ...this.#reviewers({ ...m, flags: { ...m.flags, reviewers: 8 } })];
     for (const id of ids) await fetch(`${this.env.API_BASE}/api/agents/${id}/stop`, { method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } }).catch(() => null);
     log('landing', 'halted', { slug: m.slug, why, stopped: ids.length });
     await pushAlert(this.env, `qodebase: ${m.slug} halted`, why, `https://${this.env.UI_HOST}/p/${m.slug.replace('.', '/')}/work`, 0).catch(() => {});

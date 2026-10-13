@@ -41,12 +41,16 @@ export function resolveBuildPlan(s: unknown, o: { maxCoders: number }): BuildPla
   // One agent, no router: the lab's opus-alone, a planner of 'none', or the sheet's 1 coder with no reviewers.
   if (knobs.baseline === 'opus-alone' || knobs.planner === 'none' || (Number(knobs.coders) === 1 && Number(knobs.reviewers || 0) === 0))
     return { kind: 'single', model: model(knobs.coderModel, 'opus'), preset: p };
+  const coders = int(knobs.coders, 1, o.maxCoders, Math.min(6, o.maxCoders));
+  // X4 (2026-10-13): review keeps up with the team. R5 (40 coders, 6 reviewers) waited for review about as long as it
+  // worked, so reviewers grow with the coders: at least one per 5, up to 8. 0 (no review) stays 0.
+  const asked = int(knobs.reviewers, 0, 8, 1);
   return {
     kind: 'crew', preset: p,
     planner: model(knobs.planner, 'opus'),
-    coders: int(knobs.coders, 1, o.maxCoders, Math.min(6, o.maxCoders)),
+    coders,
     coderModel: model(knobs.coderModel, 'haiku'),
-    reviewers: int(knobs.reviewers, 0, 3, 1),
+    reviewers: asked === 0 ? 0 : Math.min(8, Math.max(asked, Math.ceil(coders / 5))),
     reviewerModel: model(knobs.reviewerModel, model(knobs.coderModel, 'haiku')),   // the sheet: reviewers use the coders' model
     board: knobs.board === true,
     trainMax: int(knobs.trainMax, 1, 8, 4),

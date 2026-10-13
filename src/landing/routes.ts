@@ -103,9 +103,9 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
       if (typeof body.landing === 'boolean') await env.Project.get(env.Project.idFromName(info.slug)).setLanding(body.landing);   // lab projects: not seeded by the demo
       return json(await L.setFlags(info.slug, { ...(typeof body.llmReplay === 'boolean' ? { llmReplay: body.llmReplay } : {}),
         ...(typeof body.publicWatch === 'boolean' ? { publicWatch: body.publicWatch } : {}),
-        // A crew run: caps {agents, awake}, reviewers (pool size, 1-4), budgetUsd (hard stop), halted:false to resume.
+        // A crew run: caps {agents, awake}, reviewers (pool size, 0-8), budgetUsd (hard stop), halted:false to resume.
         ...(body.caps && typeof body.caps === 'object' ? { caps: { agents: Math.min(16, Number((body.caps as any).agents) || 0) || undefined, awake: Math.min(16, Number((body.caps as any).awake) || 0) || undefined } } : body.caps === null ? { caps: undefined } : {}),
-        ...(Number(body.reviewers) >= 0 && body.reviewers !== null && body.reviewers !== undefined && body.reviewers !== '' ? { reviewers: Math.min(6, Math.round(Number(body.reviewers))) } : {}),
+        ...(Number(body.reviewers) >= 0 && body.reviewers !== null && body.reviewers !== undefined && body.reviewers !== '' ? { reviewers: Math.min(8, Math.round(Number(body.reviewers))) } : {}),
         ...(Number(body.budgetUsd) > 0 ? { budgetUsd: Math.min(50, Number(body.budgetUsd)) } : body.budgetUsd === null ? { budgetUsd: undefined } : {}),
         ...(body.halted === false ? { halted: false } : {}),
         ...(typeof body.autoMerge === 'boolean' ? { autoMerge: body.autoMerge } : {}),

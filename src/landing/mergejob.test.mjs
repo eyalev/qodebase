@@ -160,3 +160,61 @@ test('a warm merger box: three trains in a row on one clone, main moving under i
   execFileSync('git', ['fsck', '--strict'], { cwd: s.main });
   assert.equal(g(s.main, 'rev-parse', 'main'), r4.mainAfter);
 });
+
+// X4: model replays in one train run side by side (a stand-in `claude` on PATH that takes 1 s and edits files the way
+// FAKE_MODE says), land in train order, and main stays whole: every change's work is there and the checks pass.
+function fakeClaude(root, mode) {
+  const bin = join(root, 'bin'); mkdirSync(bin, { recursive: true });
+  writeFileSync(join(bin, 'claude'), `#!/usr/bin/env node
+const fs = require('fs');
+const prompt = process.argv[process.argv.indexOf('-p') + 1];
+const id = (prompt.match(/Intent: change (\\w+)/) || [])[1];
+setTimeout(() => {
+  if (process.env.FAKE_MODE === 'append') fs.appendFileSync('src/math.js', '\\nexport function f_' + id + '() {\\n  return "' + id + '";\\n}\\n');
+  else { fs.mkdirSync('src', { recursive: true }); fs.writeFileSync('src/' + id + '.js', 'export const ' + id + ' = 1;\\n'); }
+  console.log(JSON.stringify({ num_turns: 1, total_cost_usd: 0.001, usage: { input_tokens: 10, output_tokens: 5 }, result: 'done' }));
+}, 1000);
+`, { mode: 0o755 });
+  return { PATH: `${bin}:${process.env.PATH}`, FAKE_MODE: mode };
+}
+const runEnv = (job, env) => {
+  const r = spawnSync('node', [JOBJS], { env: { ...process.env, ...env, JOB: JSON.stringify(job) }, encoding: 'utf8' });
+  if (process.env.DBG) console.error(r.stdout);
+  const line = r.stdout.split('\n').find((l) => l.startsWith('QB_RESULT '));
+  assert.ok(line, r.stdout + r.stderr);
+  return { r: JSON.parse(line.slice(10)), log: r.stdout };
+};
+// Five changes rewrite the same line of math.js differently: the first merges as text, the other four need the model.
+const conflicting = (s) => ['a', 'b', 'c', 'd', 'e'].map((id, k) => s.fork(id, (fw) => edit(fw, 'src/math.js', (t) => t.replace('return a + b;', `return a + b + ${k} - ${k};`).replace('export function twice', '// keep\nexport function twice'))));
+
+test('parallel model replays: four replays at once, all land in train order, main whole', () => {
+  const s = setup();
+  const env = fakeClaude(s.root, 'file');
+  const t = Date.now();
+  const { r, log } = runEnv({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', llm: { model: 'claude-haiku-5-5' }, changes: conflicting(s) }, env);
+  const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
+  assert.equal(r.pushed, true);
+  assert.equal(by.a.how, 'merged');
+  for (const id of ['b', 'c', 'd', 'e']) { assert.equal(by[id].landed, true, id); assert.equal(by[id].how, 'replayed-llm', id); assert.equal(by[id].llm.parallel, true, id); }
+  assert.match(log, /"event":"replays_parallel","n":4,"ok":4/);
+  assert.ok(Date.now() - t < 3500, `four 1-second replays ran side by side (${Date.now() - t} ms)`);
+  const w = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, w);
+  for (const id of ['b', 'c', 'd', 'e']) assert.equal(readFileSync(join(w, `src/${id}.js`), 'utf8'), `export const ${id} = 1;\n`);
+  // Landed in train order: main's log, oldest first, is start, a, b, c, d, e.
+  assert.deepEqual(g(w, 'log', '--reverse', '--format=%s').split('\n'), ['start', 'change a', 'change b', 'change c', 'change d', 'change e']);
+  assert.equal(spawnSync('node', ['--test'], { cwd: w, encoding: 'utf8', env: { ...process.env, NODE_TEST_CONTEXT: '' } }).status, 0, 'checks pass on main');
+});
+
+test('parallel replays that collide with each other fall back to one at a time, and nothing is lost', () => {
+  const s = setup();
+  const env = fakeClaude(s.root, 'append');
+  const { r, log } = runEnv({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', llm: { model: 'claude-haiku-5-5' }, changes: conflicting(s) }, env);
+  const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
+  assert.equal(r.pushed, true);
+  for (const id of ['b', 'c', 'd', 'e']) assert.equal(by[id].landed, true, id);
+  assert.match(log, /"event":"replay_collided"/);
+  const w = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, w);
+  const math = readFileSync(join(w, 'src/math.js'), 'utf8');
+  for (const id of ['b', 'c', 'd', 'e']) assert.match(math, new RegExp(`f_${id}\\(`), id);
+  assert.equal(spawnSync('node', ['--test'], { cwd: w, encoding: 'utf8', env: { ...process.env, NODE_TEST_CONTEXT: '' } }).status, 0, 'checks pass on main');
+});

@@ -41,7 +41,7 @@ const STARTS: Partial<Record<Ev['what'], TlPhase | 'end'>> = {
 // Merger phases as the merge job and the box name them -> the timeline's phases.
 const MERGER: Record<string, [TlPhase, string?]> = {
   'box-queue': ['wait_box', 'waiting for the merger box'], wake: ['wake', 'box already awake'], 'wake-cold': ['wake', 'box started (cold)'], upload: ['wake', 'job sent to the box'],
-  'ls-remote': ['fetch', 'branch lookup'], 'fetch-all': ['fetch', 'main, notes and forks together'], 'fetch-main': ['fetch', 'main'], 'fetch-forks': ['fetch', 'agents\' forks'], apply: ['apply'], replay: ['replay', 'shared-file handler'], 'replay-llm': ['replay', 'model replay'],
+  'ls-remote': ['fetch', 'branch lookup'], 'fetch-all': ['fetch', 'main, notes and forks together'], 'fetch-main': ['fetch', 'main'], 'fetch-forks': ['fetch', 'agents\' forks'], apply: ['apply'], replay: ['replay', 'shared-file handler'], 'replay-llm': ['replay', 'model replay'], 'replay-llm-parallel': ['replay', 'model replays side by side'],
   checks: ['checks', 'whole train'], 'checks-solo': ['checks', 'one change alone'], notes: ['notes'], push: ['push'], 'push-notes': ['notes', 'pushed'],
 };
 export const agentLane = (c: Change) => c.agent || c.id;

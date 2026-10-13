@@ -27,8 +27,8 @@ const say = (event, data = {}) => console.log(JSON.stringify({ ts: new Date().to
 const auth = (tok) => (tok ? ['-c', `http.extraHeader=Authorization: Basic ${Buffer.from(`x:${tok.split('?')[0]}`).toString('base64')}`] : []);
 const ID = ['-c', 'user.name=qodebase lander', '-c', 'user.email=lander@qodebase.app', '-c', 'commit.gpgsign=false'];
 
-function git(args, { tok, input, ok = false } = {}) {
-  const r = spawnSync('git', [...ID, ...auth(tok), ...args], { cwd: DIR, input, encoding: 'utf8', maxBuffer: 64 << 20 });
+function git(args, { tok, input, ok = false, cwd = DIR } = {}) {
+  const r = spawnSync('git', [...ID, ...auth(tok), ...args], { cwd, input, encoding: 'utf8', maxBuffer: 64 << 20 });
   if (r.status !== 0 && !ok) throw new Error(`git ${args[0]} failed (${r.status}): ${(r.stderr || r.stdout || '').trim().slice(0, 600)}`);
   return { code: r.status, out: (r.stdout || '').trimEnd(), err: (r.stderr || '').trimEnd() };
 }
@@ -108,7 +108,7 @@ function handlerFor(path, cfg) {
 }
 
 // ---- one change on top of HEAD ----------------------------------------------------
-function applyChange(c, cfg) {
+function applyChange(c, cfg, { defer = false } = {}) {
   const before = git(['rev-parse', 'HEAD']).out;
   const base = c.base && git(['cat-file', '-e', `${c.base}^{commit}`], { ok: true }).code === 0 ? c.base : git(['merge-base', before, c.commit]).out;
   const patch = git(['diff', '--binary', '--full-index', base, c.commit]).out + '\n';
@@ -140,6 +140,8 @@ function applyChange(c, cfg) {
     }
     if (unhandled.length) {
       git(['reset', '-q', '--hard', before]);
+      // X4: in pass 1 the model replays are set aside and run side by side after the text merges (replayDeferred).
+      if (job.llm && defer) return { id: c.id, ok: false, deferred: true, base, files, conflicts, handled, unhandled };
       // Tier 2: a model redoes the change's intent on today's code (per-project flag).
       if (job.llm) {
         const rp = replay(c, base, before, conflicts, unhandled);
@@ -166,10 +168,9 @@ function applyChange(c, cfg) {
 // change's intent and the diff the agent made on older code, in a checkout of TODAY's main,
 // and let it make the same change here. Its edits are committed like any other change and
 // still go through the checks. Usage is reported (tokens, cost estimate, prompt size).
-function replay(c, base, before, conflicts, unhandled) {
-  const t = Date.now();
+function replayPrompt(c, base, unhandled) {
   const diff = git(['diff', '-U3', base, c.commit]).out.slice(0, 12000);
-  const prompt = [
+  return [
     'You are the merge queue of a git platform. A reviewed change could not be merged as text because the files changed since the change was written.',
     'Make the SAME change to the code in this directory (it is the latest version). Keep everything that is already here; add the change\'s intent on top.',
     'Edit files only. Do not run git. Do not change files the change did not touch unless the intent needs it.',
@@ -177,30 +178,113 @@ function replay(c, base, before, conflicts, unhandled) {
     `Files that conflicted: ${unhandled.join(', ')}`, '',
     'The change as it was written on the older code (unified diff):', '```diff', diff, '```',
   ].join('\n');
-  const r = spawnSync('claude', ['-p', prompt, '--model', job.llm.model, '--output-format', 'json', '--permission-mode', 'acceptEdits',
-    '--allowedTools', 'Read,Edit,Write,Glob,Grep', '--max-turns', '12'], {
-    cwd: DIR, encoding: 'utf8', timeout: 240_000, maxBuffer: 16 << 20,
-    // Only the credential we were given; no auth variable is blanked or removed (Anthropic's 2026-10 rule; the replay
-    // used to set ANTHROPIC_API_KEY='' when none was given).
-    env: { ...process.env, IS_SANDBOX: '1', ...(process.env.QB_CLAUDE_TOKEN ? { CLAUDE_CODE_OAUTH_TOKEN: process.env.QB_CLAUDE_TOKEN } : {}), ...(process.env.QB_ANTHROPIC_KEY ? { ANTHROPIC_API_KEY: process.env.QB_ANTHROPIC_KEY } : {}), JOB: '' } });
+}
+const CLAUDE_ARGS = (prompt) => ['-p', prompt, '--model', job.llm.model, '--output-format', 'json', '--permission-mode', 'acceptEdits',
+  '--allowedTools', 'Read,Edit,Write,Glob,Grep', '--max-turns', '12'];
+// Only the credential we were given; no auth variable is blanked or removed (Anthropic's 2026-10 rule; the replay
+// used to set ANTHROPIC_API_KEY='' when none was given).
+const claudeEnv = () => ({ ...process.env, IS_SANDBOX: '1', ...(process.env.QB_CLAUDE_TOKEN ? { CLAUDE_CODE_OAUTH_TOKEN: process.env.QB_CLAUDE_TOKEN } : {}), ...(process.env.QB_ANTHROPIC_KEY ? { ANTHROPIC_API_KEY: process.env.QB_ANTHROPIC_KEY } : {}), JOB: '' });
+function llmOf(r, t, prompt) {
   let j = {}; try { j = JSON.parse(r.stdout || '{}'); } catch {}
   const u = j.usage || {};
-  const llm = { model: job.llm.model, ms: Date.now() - t, turns: j.num_turns ?? null, usd: j.total_cost_usd ?? null,
+  return { model: job.llm.model, ms: Date.now() - t, turns: j.num_turns ?? null, usd: j.total_cost_usd ?? null,
     in: u.input_tokens ?? null, out: u.output_tokens ?? null, cacheRead: u.cache_read_input_tokens ?? null, cacheWrite: u.cache_creation_input_tokens ?? null,
     // Claude Code writes 1-hour cache (2x input, not 1.25x): the part of cacheWrite that is 1-hour (qb9, 2026-10-10).
     cacheWrite1h: u.cache_creation?.ephemeral_1h_input_tokens ?? null,
     promptChars: prompt.length, exit: r.status, error: r.status === 0 && !j.is_error ? undefined : String(j.result || r.stderr || r.error || '').slice(0, 300) };
+}
+const replayMsg = (c, unhandled) => `${c.title || c.id}\n\n${(c.intent || '').slice(0, 4000)}\n\nReplayed by ${job.llm.model} on the latest main (the text merge conflicted in ${unhandled.join(', ')}).\n\nqodebase-change: ${c.id}\n`;
+const sameLines = (a, b) => { const lines = (d) => d.split('\n').filter((l) => /^[+-](?![+-])/.test(l)).map((l) => l.trim()).sort().join('\n'); return lines(a) === lines(b); };
+
+function replay(c, base, before, conflicts, unhandled) {
+  const t = Date.now();
+  const prompt = replayPrompt(c, base, unhandled);
+  const r = spawnSync('claude', CLAUDE_ARGS(prompt), { cwd: DIR, encoding: 'utf8', timeout: 240_000, maxBuffer: 16 << 20, env: claudeEnv() });
+  const llm = llmOf(r, t, prompt);
   say('replay', { id: c.id, ...llm });
-  if (r.status !== 0 || j.is_error) { git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']); return { ok: false, llm, why: llm.error || `exit ${r.status}` }; }
+  if (r.status !== 0 || llm.error) { git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']); return { ok: false, llm, why: llm.error || `exit ${r.status}` }; }
   git(['add', '-A']);
   if (!git(['diff', '--cached', '--name-only']).out.trim()) { git(['reset', '-q', '--hard', before]); return { ok: false, llm, why: 'the model made no change' }; }
   // Diff-of-diffs: did the replay add/remove the same lines the reviewed change did?
-  const lines = (d) => d.split('\n').filter((l) => /^[+-](?![+-])/.test(l)).map((l) => l.trim()).sort().join('\n');
-  const msg = `${c.title || c.id}\n\n${(c.intent || '').slice(0, 4000)}\n\nReplayed by ${job.llm.model} on the latest main (the text merge conflicted in ${unhandled.join(', ')}).\n\nqodebase-change: ${c.id}\n`;
-  git(['commit', '-q', '-F', '-'], { input: msg });
+  git(['commit', '-q', '-F', '-'], { input: replayMsg(c, unhandled) });
   const commit = git(['rev-parse', 'HEAD']).out;
-  llm.sameLines = lines(git(['diff', before, commit]).out) === lines(git(['diff', base, c.commit]).out);
+  llm.sameLines = sameLines(git(['diff', before, commit]).out, git(['diff', base, c.commit]).out);
   return { ok: true, commit, llm };
+}
+
+// X4 (2026-10-13): the R5 flagship's trains spent most of their time on model replays run one after another. The ones
+// pass 1 set aside run side by side, each in its own worktree on the train's text-merged code, and land in train order by
+// cherry-pick; one that collides with an earlier replay is replayed again, alone, on the code it now has to fit.
+const REPLAY_PAR = Math.max(1, Math.min(6, Number(process.env.QB_REPLAY_PAR) || 4));
+function replayAsync(c, base, unhandled, cwd) {
+  return new Promise((resolve) => {
+    const t = Date.now();
+    const prompt = replayPrompt(c, base, unhandled);
+    const p = spawn('claude', CLAUDE_ARGS(prompt), { cwd, env: claudeEnv() });
+    let stdout = '', stderr = '';
+    const kill = setTimeout(() => p.kill('SIGTERM'), 240_000);
+    p.stdout.on('data', (d) => { stdout += d; }); p.stderr.on('data', (d) => { stderr += d; });
+    const done = (status, error) => {
+      clearTimeout(kill);
+      const llm = llmOf({ stdout, stderr, status, error }, t, prompt);
+      say('replay', { id: c.id, parallel: true, ...llm });
+      if (status !== 0 || llm.error) return resolve({ ok: false, llm, why: llm.error || `exit ${status}` });
+      git(['add', '-A'], { cwd });
+      if (!git(['diff', '--cached', '--name-only'], { cwd }).out.trim()) return resolve({ ok: false, llm, why: 'the model made no change' });
+      git(['commit', '-q', '-F', '-'], { cwd, input: replayMsg(c, unhandled) });
+      resolve({ ok: true, commit: git(['rev-parse', 'HEAD'], { cwd }).out, llm, t });
+    };
+    p.on('close', (code) => done(code));
+    p.on('error', (e) => done(-1, e));
+  });
+}
+async function pool(items, n, fn) {
+  const out = new Array(items.length); let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const k = i++; out[k] = await fn(items[k], k); } }));
+  return out;
+}
+/** Pass 1's set-aside changes (in train order) onto HEAD: parallel replays, then cherry-picks in order. */
+async function replayDeferred(deferred, results, applied, cfg) {
+  if (!deferred.length) return;
+  const at = git(['rev-parse', 'HEAD']).out;
+  // A change stacked on another set-aside change needs its parent's replay first: it waits for the serial pass.
+  const par = deferred.filter((d) => !deferred.some((o) => o.c.id !== d.c.id && o.c.commit === d.r.base));
+  const tP = Date.now();
+  const outs = await pool(par, REPLAY_PAR, async (d) => {
+    const wt = join(DIR, '.git', `qb-wt-${d.c.id.replace(/[^\w.-]/g, '_')}`);
+    git(['worktree', 'remove', '--force', wt], { ok: true }); rmSync(wt, { recursive: true, force: true });
+    git(['worktree', 'add', '-q', '--detach', wt, at]);
+    try { return await replayAsync(d.c, d.r.base, d.r.unhandled, wt); }
+    finally { git(['worktree', 'remove', '--force', wt], { ok: true }); }
+  });
+  phase('replay-llm-parallel', tP);
+  say('replays_parallel', { n: par.length, ok: outs.filter((o) => o.ok).length, ms: Date.now() - tP, par: REPLAY_PAR });
+  const byId = new Map(par.map((d, k) => [d.c.id, outs[k]]));
+  for (const d of deferred) {
+    const { c, r } = d;
+    const o = byId.get(c.id);
+    const before = git(['rev-parse', 'HEAD']).out;
+    if (o?.ok) {
+      const cp = git(['cherry-pick', '--allow-empty', '--keep-redundant-commits', o.commit], { ok: true });
+      if (cp.code === 0) {
+        const commit = git(['rev-parse', 'HEAD']).out;
+        o.llm.sameLines = sameLines(git(['diff', before, commit]).out, git(['diff', r.base, c.commit]).out);
+        results.set(c.id, { id: c.id, ok: true, how: 'replayed-llm', files: r.files, conflicts: r.conflicts, handled: r.handled, commit, before, llm: { ...o.llm, parallel: true }, reviewedDiff: diffOf(r.base, c.commit) });
+        say('applied', { id: c.id, ok: true, how: 'replayed-llm', parallel: true });
+        applied.push(c); continue;
+      }
+      git(['cherry-pick', '--abort'], { ok: true }); git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']);
+      say('replay_collided', { id: c.id, err: (cp.err || cp.out).slice(0, 200) });
+    }
+    // Serial: a stacked change, a replay that collided with an earlier one, or one that failed in parallel (one more try).
+    const tS = Date.now();
+    const s = applyChange(c, cfg);
+    if (o && !o.ok && s.llm) s.llm.parallelFirst = o.why;
+    phase(s.llm ? 'replay-llm' : 'apply', tS, c.id);
+    results.set(c.id, s);
+    say('applied', { id: c.id, ok: s.ok, how: s.how, serial: true, why: s.why });
+    if (s.ok) applied.push(c);
+  }
 }
 
 // ---- checks -----------------------------------------------------------------------
@@ -306,14 +390,19 @@ async function main() {
   // Pass 1: the whole train, tested once.
   reset(mainBefore);
   let applied = [];
+  const deferred = [];
   for (const c of fetched) {
     const tA = Date.now();
-    const r = applyChange(c, cfg);
+    const r = applyChange(c, cfg, { defer: true });
+    if (r.deferred) { deferred.push({ c, r }); phase('apply', tA, c.id); say('deferred', { id: c.id, unhandled: r.unhandled }); continue; }
     phase(r.llm ? 'replay-llm' : r.how === 'replayed-handler' ? 'replay' : 'apply', tA, c.id);
     results.set(c.id, r);
     say('applied', { id: c.id, ok: r.ok, how: r.how, conflicts: r.conflicts, why: r.why });
     if (r.ok) applied.push(c);
   }
+  await replayDeferred(deferred, results, applied, cfg);
+  // Train order for what landed (the set-aside ones landed after the text merges; the notes and the result follow it).
+  applied = fetched.filter((c) => applied.includes(c));
   const tC = Date.now();
   let checks = applied.length ? runChecks() : { ok: true, ms: 0, failures: [] };
   if (applied.length && !checks.skipped) phase('checks', tC);
