@@ -23,7 +23,7 @@ One request, typed on the phone ([eyal/cafe-team](https://qodebase.app/p/eyal/ca
 - real spend: **$0.16** of container time (the agents ran on a Claude subscription; API-equivalent ~$0.53)
 
 **Bigger:** through the product's own Build path, up to 40 real Claude Haiku agents (an Opus planner, 3-6 reviewers, the board) built a travel planner inside qodebase ([eyal/real-course-builder](https://qodebase.app/p/eyal/real-course-builder); the project is called course-builder, but what it built is a travel planner):
-- **40 changes landed** (one closed as already on main), every one through the landing queue with checks
+- **41 changes landed**, every one through the landing queue with checks: the build's 40, and a 41st that wired two views the build left unwired (an agent wrote a view but never added its script tag, and review missed it; a check that a model replay keeps every line the reviewed change added, and a smoke check, are being added)
 - **28 collided** with work that landed first; each was re-done by a model on the newest code, tested and landed; **none was sent back**
 - at that size **review was the bottleneck**: agents spent 16,234 agent-seconds waiting for a reviewer against 15,731 working, even with 6 reviewers; next, the train ran model replays one after another
 - 2,257 s wall (including a false budget halt, since fixed); ~$17.1 at normal API rates (the agents ran on a Claude subscription) + $0.88 of container time. Smaller builds and the bugs these runs found: [`docs/board/FINDINGS2.md`](docs/board/FINDINGS2.md) §11
