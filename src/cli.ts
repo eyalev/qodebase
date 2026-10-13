@@ -13,7 +13,9 @@ export const FORQ_CLI = String.raw`#!/usr/bin/env python3
                                                 another agent's unlanded work; --skeleton marks the
                                                 build's runnable skeleton (other spawns wait until it lands)
   forq parts N                                  say how many tasks you planned, the skeleton included (router)
-  forq decided "what you chose" [--why "..."]   log a choice you made on the person's behalf (they see it in Asks)
+  forq decided "what it means for the person" [--why "tech detail"]
+                                                log a choice you made on the person's behalf, in plain
+                                                words (they see it in Asks); the technical part goes in --why
   forq ask-person --why secret|money|failing|other "question"
                                                 ask the person; ONLY for a secret/key, spending money, or a
                                                 change that keeps failing; then carry on with what you can
