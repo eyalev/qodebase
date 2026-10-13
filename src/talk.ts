@@ -37,7 +37,7 @@ const STT_MODEL = '@cf/openai/whisper-large-v3-turbo';
 // Daily caps (UTC day). A person's own, and everyone's together.
 // usd_milli: answering-model spend in thousandths of a dollar, $1 per person a day; usd_others: everyone but the owner
 // together, $5 a day (Eyal, 2026-10-13: a burst of visitors must not drain the credits).
-const CAPS = { usd_milli: { me: 1000, all: 50000 }, usd_others: { me: 5000, all: 5000 }, decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 1000, all: 3000 }, status: { me: 200, all: 2000 }, status_warm: { me: 3000, all: 20000 }, tts_chars: { me: 20000, all: 150000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
+const CAPS = { usd_milli: { me: 1000, all: 50000 }, usd_others: { me: 5000, all: 5000 }, decide: { me: 3000, all: 20000 }, chat: { me: 400, all: 3000 }, stt: { me: 1000, all: 3000 }, status: { me: 200, all: 2000 }, status_warm: { me: 3000, all: 20000 }, tts_chars: { me: 60000, all: 300000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
 type Kind = keyof typeof CAPS;
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talk', event, ...data }));

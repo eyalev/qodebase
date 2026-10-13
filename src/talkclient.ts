@@ -1075,7 +1075,9 @@ function convAfter() {
     if (!convOn()) return;
     var talking = speakPending || speakingQ || ackPlaying || (player && !player.paused && !player.ended && player.currentTime > 0) || (window.speechSynthesis && speechSynthesis.speaking);
     if ((talking || busy) && Date.now() - t0 < 30000) return setTimeout(wait, 300);
-    if (offerState) { trace('conv_wait', { why: 'a question on screen' }); return; }   // a yes/no waits for its tap or for the mic
+    // A question on screen is answered by voice too: listen (a spoken yes/no answers it, anything else is a new turn).
+    // It used to stop here, so 'Want to open it?' was asked out loud and never heard (2026-10-13 user test).
+    if (offerState) trace('conv_listen_offer', { offer: String(offerState.text || '').slice(0, 60) });
     if (!listening) { trace('conv_listen_again', { ms: Date.now() - t0 }); startListen(); }
   })();
 }
