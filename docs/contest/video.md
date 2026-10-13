@@ -1,5 +1,7 @@
 # Video + submission (owner: qb8)
 
+**Superseded (2026-10-13, manager):** this describes the old, locked video. The contest video is now the NEW one qb3 is making (generated voices, real Talk footage, violet deck slides between scenes). Keep this file for the record; do not re-render the old video.
+
 Read docs/contest/PLAN.md (story, timeline), docs/video-guide.md and video/ (the existing
 recording rig: rig.mjs, compose.py, combine.py; an earlier 6:34 cut is video/out/forq-contest.mp4),
 sim/README.md, sim/cloud/README.md, and the challenge page https://www.cloudflare.com/git-competition/

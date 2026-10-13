@@ -1,5 +1,7 @@
 # Contest video: storyboard and script (owner: qb8)
 
+**Superseded (2026-10-13, manager):** this describes the old, locked video. The contest video is now the NEW one qb3 is making (generated voices, real Talk footage, violet deck slides between scenes). Keep this file for the record; do not re-render the old video.
+
 Target **5:30-7:00** (limit 5-10 min). Viewer: a smart non-programmer (a judge watching
 twenty of these). One idea per scene, every number on screen with its source. Captions
 carry the story, and an Aura-2 voice-over (Cloudflare Workers AI) reads exactly the
