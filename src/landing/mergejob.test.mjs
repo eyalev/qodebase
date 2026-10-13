@@ -353,3 +353,24 @@ test('direct replays: one gateway call per replay, whole files back, nothing los
   const math = readFileSync(join(w, 'src/math.js'), 'utf8');
   for (const id of ['b', 'c', 'd', 'e']) assert.match(math, new RegExp(`f_${id}\\(`), id);
 });
+
+// Lanes + notes (2026-10-13): two lane trains at once, different files. One push races the other and rebases; the notes
+// of BOTH trains must end up on the remote (a force-pushed notes ref used to drop the other lane's).
+test('lanes: two trains at once keep every landed commit\'s note', async () => {
+  const { spawn } = await import('node:child_process');
+  const s = setup({ 'src/p1.js': 'export const p1 = 0;\n', 'src/p2.js': 'export const p2 = 0;\n', 'src/p3.js': 'export const p3 = 0;\n', 'src/p4.js': 'export const p4 = 0;\n' });
+  const ch = (id, f) => s.fork(id, (fw) => edit(fw, f, (t) => t.replace('= 0;', '= 7;')));
+  const laneA = [ch('a1', 'src/p1.js'), ch('a2', 'src/p2.js')], laneB = [ch('b1', 'src/p3.js'), ch('b2', 'src/p4.js'), ch('b3', 'src/p4.js')];   // b3 = b2's change again: lands as an empty commit
+  const go = (dir, changes) => new Promise((res) => {
+    const p = spawn('node', [JOBJS], { env: { ...process.env, JOB: JSON.stringify({ dir: join(s.root, dir), mainRemote: s.main, mainToken: null, check: 'sleep 1 && node --test', rebaseOnStale: true, changes }) } });
+    let o = ''; p.stdout.on('data', (d) => (o += d)); p.on('close', () => res(JSON.parse(o.split('\n').find((l) => l.startsWith('QB_RESULT ')).slice(10))));
+  });
+  const [ra, rb] = await Promise.all([go('lane-a', laneA), go('lane-b', laneB)]);
+  assert.equal(ra.pushed, true, ra.pushErr); assert.equal(rb.pushed, true, rb.pushErr);
+  const w = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, w);
+  g(w, 'fetch', '-q', 'origin', '+refs/notes/qodebase:refs/notes/qodebase');
+  const noted = new Set(g(w, 'notes', '--ref=qodebase', 'list').split('\n').filter(Boolean).map((l) => l.split(' ')[1]));
+  const landed = g(w, 'log', '--format=%H %s', 'HEAD').split('\n').filter((l) => / change [ab]\d$/.test(l)).map((l) => l.split(' ')[0]);
+  assert.equal(landed.length, 5, 'five changes on main, the no-op b3 included');
+  for (const c of landed) assert.ok(noted.has(c), `note for ${c.slice(0, 7)}`);
+});

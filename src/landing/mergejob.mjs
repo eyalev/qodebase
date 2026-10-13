@@ -466,7 +466,9 @@ async function main() {
   // not allowed to be updated', exit 0, no ref): every train of an imported project bounced (self-host check, 2026-10-12).
   const [f, fn] = await Promise.all([
     gitAsync(['fetch', '--update-shallow', '--no-tags', job.mainRemote, `+refs/heads/${branch}:refs/qb/main`], job.mainToken),
-    gitAsync(['fetch', '-q', '--no-tags', job.mainRemote, '+refs/notes/qodebase:refs/notes/qodebase'], job.mainToken),
+    // The notes are fetched and merged right before they are pushed (below), not here: under lanes the notes ref grows every
+    // train and five boxes fetched it at once (fetch p50 13 s, 2026-10-13).
+    Promise.resolve({ code: 0, out: '', err: '', ms: 0 }),
   ]);
   if (f.code !== 0) throw new Error(`git fetch failed (${f.code}): ${(f.err || f.out).slice(0, 600)}`);
   // A fetch that exited 0 without writing the ref (seen on a self-hosted copy, 2026-10-12): say what the remote
@@ -579,7 +581,9 @@ async function main() {
       if (f2.code !== 0) { pushErr = f2.err.slice(0, 300); break; }
       const newMain = git(['rev-parse', 'refs/qb/main']).out;
       const before = git(['rev-list', '--reverse', `${mainBefore}..HEAD`]).out.split('\n').filter(Boolean);
-      const rb = git(['rebase', '-q', '--onto', newMain, mainBefore], { ok: true });
+      // --empty=keep: a change that was already on main lands as an empty commit of its own; a plain rebase dropped those
+      // (123 of K60h's landed changes had no commit) and then the old->new map no longer lined up, so that train lost its notes.
+      const rb = git(['rebase', '-q', '--empty=keep', '--onto', newMain, mainBefore], { ok: true });
       if (rb.code !== 0) { git(['rebase', '--abort'], { ok: true }); say('lane_rebase_conflict', { err: rb.err.slice(0, 300) }); break; }
       const after = git(['rev-list', '--reverse', `${newMain}..HEAD`]).out.split('\n').filter(Boolean);
       if (after.length === before.length) {
@@ -596,7 +600,21 @@ async function main() {
       if (p2.code === 0) { pushed = true; stale = false; mainAfter = tip2; }
       else { pushErr = p2.err.slice(0, 400); stale = /rejected|non-fast-forward|fetch first|stale/i.test(p2.err); }
     }
-    if (pushed) { const tNP = Date.now(); notesPushed = git(['push', '-q', '-f', job.mainRemote, 'refs/notes/qodebase:refs/notes/qodebase'], { tok: job.mainToken, ok: true }).code === 0; phase('push-notes', tNP); }
+    if (pushed) {
+      // Never force the notes: with lanes, another train may have pushed notes since; a force-push dropped them (2026-10-13).
+      // Union the remote's notes into ours (different commits, so nothing conflicts), push, and on a race do it again.
+      const tNP = Date.now();
+      for (let i = 0; i < 5 && !notesPushed; i++) {
+        const nf = git(['fetch', '-q', '--no-tags', job.mainRemote, '+refs/notes/qodebase:refs/qb/notes-remote'], { tok: job.mainToken, ok: true });
+        if (nf.code === 0 && git(['rev-parse', '-q', '--verify', 'refs/qb/notes-remote'], { ok: true }).code === 0) {
+          const mg = git(['notes', '--ref=qodebase', 'merge', '-q', '-s', 'cat_sort_uniq', 'refs/qb/notes-remote'], { ok: true });
+          if (mg.code !== 0) say('notes_merge_failed', { attempt: i + 1, err: (mg.err || mg.out).slice(0, 300) });
+        }
+        notesPushed = git(['push', '-q', job.mainRemote, 'refs/notes/qodebase:refs/notes/qodebase'], { tok: job.mainToken, ok: true }).code === 0;
+        if (!notesPushed) say('notes_push_retry', { attempt: i + 1 });
+      }
+      phase('push-notes', tNP);
+    }
   }
   const out = {
     ok: true, branch, mainBefore, mainAfter, pushed, stale, pushErr, notesPushed, solo, checks, ms: Date.now() - t0, phases: PH, fetchMs,
