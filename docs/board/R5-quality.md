@@ -42,7 +42,14 @@ That is 13 features.
   `TP.itineraryEditor.open({ tripId, day, item })` with one options object, while `js/features/itinerary-editor.js`
   defines `open(trip, date, item)`. The editor gets no trip and no date. Two agents' files disagree on one call, the
   same kind of seam as R4's export bug (docs/board/R4-R7-quality.md).
-- **The shared-cost splitter was built as a library but never given a screen.**
+- **The shared-cost splitter was built as a library but never given a screen.** Root cause found by qb6 afterwards
+  (docs/board/FINDINGS2.md §11, a2c6372): the screen *was* built and reviewed (change ag1dx: css/split.css,
+  js/features/split.js +119, one index.html line), but its merge conflicted in index.html and the model replay that
+  redid the change landed only the CSS and the HTML line; split.js never reached main. Likely the replay prompt's
+  diff was cut at 12,000 characters with split.js last. Fixed in the landing system since ~12:20 UTC 2026-10-13
+  (clean files applied straight from the reviewed diff, a replay is refused when a file the reviewed change added is
+  missing), and the build skeleton now carries a contracts file of cross-module signatures that reviewers check calls
+  against, aimed at the itinerary-editor seam above.
 - The overview's Countdown card links to `#/trip/<id>/countdown`, which answers "Page not found"; the working page is
   `#/countdown`.
 - The section bar inside a trip has 13 links and is 581 px wide at 390: it scrolls sideways, so Budget summary, Print,
