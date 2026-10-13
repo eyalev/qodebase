@@ -165,7 +165,8 @@ export class TalkVoice extends VoiceAgent {
   async #loadKeyterms() {
     try {
       const ps = await projectsFor(this.env, this.#who);
-      this.#keyterms = [...new Set(ps.filter((p) => p.mine).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' ')))].slice(0, 60);
+      // Names a person says: not the lab's generated ones (lab-backlog-3f447-r3), which filled the list on 2026-10-13.
+      this.#keyterms = [...new Set(ps.filter((p) => p.mine && !/^lab-|-[0-9a-f]{5}(-|$)/.test(p.name)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((p) => p.name.replace(/[-_]+/g, ' ')))].slice(0, 35);
     } catch (e) { log('keyterms_error', { err: String(e) }); }
   }
   async onCallStart(connection: Connection) {
