@@ -270,7 +270,7 @@ function historyView(c: Ctx) {
 fetch(API+'/asks',{cache:'no-store'}).then((r)=>r.ok?r.json():null).then((d)=>{if(!d||!Array.isArray(d.asks))return;const of={};for(const a of d.asks)for(const id of a.changes||[])of[id]=a;
  let prev=null;for(const w of rows){const a=of[w.dataset.cid];if(!a){prev=null;continue;}const rest=w.dataset.rest||'';
   const t=String(a.text||'').replace(/\\s+/g,' ').trim(),q=t.length>90?t.slice(0,87).replace(/\\s+\\S*$/,'')+'…':t;
-  w.textContent=a===prev?(rest?rest.charAt(0).toUpperCase()+rest.slice(1):''):'Why: '+(a.from==='person'?'your request':'a request')+' “'+q+'”'+(rest?'; '+rest:'');prev=a;}
+  w.textContent=a===prev?(rest?rest.charAt(0).toUpperCase()+rest.slice(1):''):'Why: '+(a.from==='person'&&${c.own ? 'true' : 'false'}?'your request':'the request')+' “'+q+'”'+(rest?'; '+rest:'');prev=a;}
  console.log(JSON.stringify({module:'history',event:'why_from_asks',rows:rows.length,asks:d.asks.length}));}).catch((e)=>console.log(JSON.stringify({module:'history',event:'asks_failed',error:String(e)})));})();` : '';
   return { body: `<div class="pad">${rows}</div>`, js };
 }
