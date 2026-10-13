@@ -159,6 +159,8 @@ const AB = boardAb(), L = lanes(), LAB = lab();
 const ab = (n) => AB.ablation.arms.find((a) => a.arm === n), w8 = (n) => AB.w8.arms.find((a) => a.name === n);
 const l2 = (name) => L.L2.rows.find((r) => r.name === name);
 const headline = {
+  fleetQuality: F.quality?.status === 'done' ? { filesChanged: F.quality.files_changed, codeChanged: F.quality.code_changed, handComments: F.quality.hand?.comments, handOk: F.quality.hand?.ok, handFiles: F.quality.hand?.files,
+    judge: (F.quality.judge || []).map((j) => ({ model: j.model, n: j.n, accurate: j.accurate, helpful: j.helpful, invented: j.invented })), judgeVsHand: F.quality.judge_vs_hand, label: 'measured (qb9: re-verify of every changed file, automatic checks, gpt-oss-120b judge, 50-file hand check)' } : null,
   fleet: { largestRun: F.totals.largestRun, filesLanded: F.totals.landed, filesAttempted: F.totals.filesAttempted, verifyRefused: F.totals.verifyRefused, usd: F.totals.usd, usdPer1kLanded: F.totals.usdPer1kLanded, runs: F.totals.runs, label: F.label },
   realBuilds: { n: RB.rows.length, insideEstimateTime: RB.rows.filter((r) => r.inside.wall).length, insideEstimateCost: RB.rows.filter((r) => r.inside.usd).length,
     teamVsOneAgent: (() => { const c = teamVsOneAgent(); return { n: c.n, teamCheaper: c.teamCheaper, comparisons: c.comparisons.map(({ prompt, team, teamUsd, oneUsd, teamS, oneS, teamCheaper }) => ({ prompt, team, teamUsd, oneUsd, teamS, oneS, teamCheaper })) }; })(),
@@ -183,10 +185,16 @@ if (F.runs.length) {
   md.push(`Totals: ${fmt(F.totals.landed)} files landed of ${fmt(F.totals.filesAttempted)} attempted over ${F.totals.runs} runs (${fmt(F.totals.skipped)} needed no comment); ${fmt(F.totals.verifyRefused)} refused by the code-unchanged check; ${usd(F.totals.usd)} (${usd(F.totals.usdPer1kFiles)} per 1k files).`, '');
 } else md.push('No fleet runs readable yet.', '');
 if (F.quality) {
-  const q = F.quality;
-  md.push(`Quality (qb9, sim/fleet/quality.json, status ${q.status}): ` + (q.status === 'done'
-    ? `${fmt(q.files_changed)} files changed, code changed on re-verify: ${fmt(q.code_changed)}; judge ${(q.judge || []).map((j) => `${j.model} n ${j.n}, accurate ${j.accurate}, helpful ${j.helpful}`).join('; ')}; hand check ${q.hand?.files} files / ${q.hand?.comments} comments, ok ${q.hand?.ok}.`
-    : 'not measured yet.'), '');
+  const q = F.quality, pct = (a, n) => (n ? `${a}/${n} (${fmt((a / n) * 100)}%)` : '-');
+  if (q.status !== 'done') md.push('Quality (qb9, sim/fleet/quality.json): not measured yet.', '');
+  else {
+    md.push(`Quality (qb9's F4 check, sim/fleet/quality.json; measured on main ${String(q.head).slice(0, 8)} vs base ${String(q.base).slice(0, 8)}): ${fmt(q.files_changed)} files changed, **code changed on re-verify: ${fmt(q.code_changed)}**; automatic checks over ${fmt(q.auto?.comments)} comments: invented params ${fmt(q.auto?.invented_params)}, missing params ${fmt(q.auto?.missing_params)}, @returns on void ${fmt(q.auto?.returns_on_void)}, trivial ${fmt(q.auto?.trivial)}.`, '');
+    md.push(table(['fleet model', 'judge (gpt-oss-120b) accurate', 'judge helpful', 'judge: invented', 'hand-checked ok', 'hand: invented'],
+      (q.judge || []).map((j) => { const h = Object.entries(q.hand_by_model || {}).find(([m]) => m.endsWith(j.model) || j.model.endsWith(m))?.[1];
+        return [j.model, pct(j.accurate, j.n), pct(j.helpful, j.n), fmt(j.invented), h ? pct(h.ok, h.comments) : '-', h ? fmt(h.invented) : '-']; })), '');
+    const h = q.hand || {}, jv = q.judge_vs_hand || {};
+    md.push(`Hand check: ${fmt(h.files)} files, ${fmt(h.comments)} comments, ${pct(h.ok, h.comments)} ok (accurate, nothing invented). Judge vs hand on the same ${fmt(jv.paired)} comments: agreed on ${fmt(jv.agree)}; of ${fmt(jv.hand_bad)} the hand check found bad, the judge caught ${fmt(jv.judge_caught)}, and it flagged ${fmt(jv.judge_flagged_hand_ok)} the hand check found fine.`, '');
+  }
 }
 if (F.f0) md.push('F0 bench (20 files per model, measured, sim/fleet/F0.md):', '', table(['model', 'code unchanged', 'comments', 'judge accurate', 'helpful', 'p50 latency', '$ per 1k files'],
   Object.entries(F.f0).map(([m, v]) => v.withComments === 0 ? [m, 'not usable: 14 of 20 calls hit the free-tier quota', '-', '-', '-', '-', '-'] : [m, `${v.codeUnchanged}/${v.withComments}`, fmt(v.comments), v.judge?.accurate != null ? fmt(v.judge.accurate * 100) + '%' : '-', fmt(v.judge?.helpful, 2), `${fmt(v.latencyS?.p50, 1)} s`, usd(v.per1kFiles?.usd)])), '');

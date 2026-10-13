@@ -884,6 +884,212 @@
      "calls": 2
     }
    ]
+  },
+  {
+   "runId": "fmv6ofmt4",
+   "label": "S4a 200 agents / 4 copies (cache) - copy 1",
+   "repo": "fleet-vscode-src-1",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 4064,
+   "landed": 1810,
+   "ready": 1179,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791895699768,
+   "endedAt": 1791895751589,
+   "wallS": 52,
+   "landWaitS": {
+    "p50": 47,
+    "p90": 57
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 1810,
+     "ready": 1179,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2356,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791895680000,
+     "model": "cache",
+     "calls": 2356
+    },
+    {
+     "minute": 1791895740000,
+     "model": "cache",
+     "calls": 639
+    }
+   ]
+  },
+  {
+   "runId": "fmv6ofopo",
+   "label": "S4a 200 agents / 4 copies (cache) - copy 2",
+   "repo": "fleet-vscode-src-2",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 4064,
+   "landed": 285,
+   "ready": 2704,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791895702236,
+   "endedAt": 1791895747368,
+   "wallS": 45,
+   "landWaitS": {
+    "p50": 36,
+    "p90": 38
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 285,
+     "ready": 2704,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2574,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791895680000,
+     "model": "cache",
+     "calls": 2574
+    },
+    {
+     "minute": 1791895740000,
+     "model": "cache",
+     "calls": 421
+    }
+   ]
+  },
+  {
+   "runId": "fmv6of4um",
+   "label": "S4a 200 agents / 4 copies (cache) - copy 3",
+   "repo": "fleet-vscode-src-3",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791895676494,
+   "endedAt": 1791895722988,
+   "wallS": 46,
+   "landWaitS": {
+    "p50": 41,
+    "p90": 54
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2992,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791895620000,
+     "model": "cache",
+     "calls": 3
+    },
+    {
+     "minute": 1791895680000,
+     "model": "cache",
+     "calls": 2992
+    }
+   ]
+  },
+  {
+   "runId": "fmv6oflq1",
+   "label": "S4a 200 agents / 4 copies (cache) - copy 4",
+   "repo": "fleet-vscode-src-4",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 4064,
+   "landed": 303,
+   "ready": 2686,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791895698361,
+   "endedAt": 1791895739464,
+   "wallS": 41,
+   "landWaitS": {
+    "p50": 48,
+    "p90": 50
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 303,
+     "ready": 2686,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791895680000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ]
   }
  ]
 }

@@ -1,35 +1,71 @@
 {
  "v": 1,
- "generated": "2026-10-13T12:38:57.758Z",
+ "generated": "2026-10-13T12:49:32.562Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
  },
  "notes": [],
  "headline": {
+  "fleetQuality": {
+   "filesChanged": 3029,
+   "codeChanged": 0,
+   "handComments": 115,
+   "handOk": 109,
+   "handFiles": 50,
+   "judge": [
+    {
+     "model": "gemma-4-26b-a4b-it",
+     "n": 152,
+     "accurate": 147,
+     "helpful": 150,
+     "invented": 5
+    },
+    {
+     "model": "glm-4.7-flash",
+     "n": 59,
+     "accurate": 57,
+     "helpful": 58,
+     "invented": 2
+    },
+    {
+     "model": "gemini-3.5-flash-lite",
+     "n": 117,
+     "accurate": 111,
+     "helpful": 115,
+     "invented": 8
+    }
+   ],
+   "judgeVsHand": {
+    "paired": 115,
+    "agree": 104,
+    "hand_bad": 6,
+    "judge_caught": 1,
+    "judge_flagged_hand_ok": 6
+   },
+   "label": "measured (qb9: re-verify of every changed file, automatic checks, gpt-oss-120b judge, 50-file hand check)"
+  },
   "fleet": {
    "largestRun": {
-    "runId": "fmv6md3we",
-    "agents": 200,
-    "files": 3120,
-    "landed": 2330,
-    "skipped": 786,
-    "wallS": 261,
-    "filesPerMin": 716,
-    "landWaitP90S": 18,
-    "usd": 1.3742,
+    "runId": "fmv6ofmt4",
+    "agents": 50,
+    "files": 4064,
+    "landed": 1810,
+    "skipped": 1069,
+    "wallS": 52,
+    "filesPerMin": 3322,
+    "landWaitP90S": 57,
+    "usd": 0,
     "models": [
-     "@cf/google/gemma-4-26b-a4b-it",
-     "@cf/zai-org/glm-4.7-flash",
-     "gemini-3.5-flash-lite"
+     "cache"
     ]
    },
-   "filesLanded": 6616,
-   "filesAttempted": 11405,
+   "filesLanded": 12003,
+   "filesAttempted": 27661,
    "verifyRefused": 0,
    "usd": 2.81,
-   "usdPer1kLanded": 0.42,
-   "runs": 12,
+   "usdPer1kLanded": 0.23,
+   "runs": 16,
    "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
   },
   "realBuilds": {
@@ -570,6 +606,161 @@
     },
     "repo": "fleet-babel packages",
     "label": "F3b babel packages/ (gemini-3.1)"
+   },
+   {
+    "runId": "fmv6ofmt4",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 4064,
+    "landed": 1810,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 52,
+    "landWaitP50S": 47,
+    "landWaitP90S": 57,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 1810,
+      "ready": 1179,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2356,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-1 src/vs",
+    "label": "S4a 200 agents / 4 copies (cache) - copy 1"
+   },
+   {
+    "runId": "fmv6ofopo",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 4064,
+    "landed": 285,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 45,
+    "landWaitP50S": 36,
+    "landWaitP90S": 38,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 285,
+      "ready": 2704,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2574,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-2 src/vs",
+    "label": "S4a 200 agents / 4 copies (cache) - copy 2"
+   },
+   {
+    "runId": "fmv6of4um",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 46,
+    "landWaitP50S": 41,
+    "landWaitP90S": 54,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2992,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-3 src/vs",
+    "label": "S4a 200 agents / 4 copies (cache) - copy 3"
+   },
+   {
+    "runId": "fmv6oflq1",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 50,
+    "agentsStarted": 50,
+    "files": 4064,
+    "landed": 303,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "wallS": 41,
+    "landWaitP50S": 48,
+    "landWaitP90S": 50,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 303,
+      "ready": 2686,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-4 src/vs",
+    "label": "S4a 200 agents / 4 copies (cache) - copy 4"
    }
   ],
   "perModel": {
@@ -636,77 +827,168 @@
     },
     "usdPer1kFiles": 0.22,
     "share429": 0
+   },
+   "cache": {
+    "files": 9663,
+    "landed": 5387,
+    "skipped": 4276,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "calls": 11980,
+    "usd": 0,
+    "peakPerMin": 2995,
+    "roles": {
+     "planned": 9663
+    },
+    "usdPer1kFiles": 0,
+    "share429": 0
    }
   },
   "totals": {
-   "runs": 12,
-   "filesAttempted": 11405,
-   "landed": 6616,
-   "skipped": 4757,
+   "runs": 16,
+   "filesAttempted": 27661,
+   "landed": 12003,
+   "skipped": 9033,
    "verifyRefused": 0,
    "rejected": 17,
    "rateLimited": 3,
    "usd": 2.81,
-   "usdPer1kLanded": 0.42,
-   "usdPer1kFiles": 0.25,
+   "usdPer1kLanded": 0.23,
+   "usdPer1kFiles": 0.1,
    "largestRun": {
-    "runId": "fmv6md3we",
-    "agents": 200,
-    "files": 3120,
-    "landed": 2330,
-    "skipped": 786,
-    "wallS": 261,
-    "filesPerMin": 716,
-    "landWaitP90S": 18,
-    "usd": 1.3742,
+    "runId": "fmv6ofmt4",
+    "agents": 50,
+    "files": 4064,
+    "landed": 1810,
+    "skipped": 1069,
+    "wallS": 52,
+    "filesPerMin": 3322,
+    "landWaitP90S": 57,
+    "usd": 0,
     "models": [
-     "@cf/google/gemma-4-26b-a4b-it",
-     "@cf/zai-org/glm-4.7-flash",
-     "gemini-3.5-flash-lite"
+     "cache"
     ]
    }
   },
   "quality": {
-   "status": "pending",
-   "note": "F4 has not run yet: waiting for F3 (all of src/vs) to land. Written by scripts/fleet/quality-sample.mjs --publish; fields below keep this shape when filled.",
-   "base": null,
-   "head": null,
-   "checked_at": null,
-   "files_changed": null,
-   "code_changed": null,
+   "status": "done",
+   "base": "d4793e33307ee0862715165b2e021451ee9f207e",
+   "head": "0f3ba876624e838588d2d158ac8cb5de416efe2e",
+   "checked_at": "2026-10-13T12:48:12.932Z",
+   "files_changed": 3029,
+   "code_changed": 0,
    "fleet_records": {
-    "landed": null,
-    "verify_fail": null,
-    "rejected": null,
-    "other": {}
+    "landed": 3023,
+    "verify_fail": 0,
+    "rejected": 4,
+    "other": {
+     "skipped": 1141,
+     "ready": 9,
+     "rate_limited": 3
+    }
    },
    "auto": {
-    "comments": null,
-    "invented_params": null,
-    "missing_params": null,
-    "returns_on_void": null,
-    "trivial": null
+    "comments": 6542,
+    "invented_params": 0,
+    "missing_params": 0,
+    "returns_on_void": 0,
+    "trivial": 0
    },
    "judge": [
     {
-     "model": null,
-     "n": null,
-     "accurate": null,
-     "helpful": null,
-     "invented": null,
-     "unparsed": null,
-     "usd": null
+     "model": "gemma-4-26b-a4b-it",
+     "judge_model": "@cf/openai/gpt-oss-120b",
+     "n": 152,
+     "accurate": 147,
+     "helpful": 150,
+     "invented": 5,
+     "unparsed": 0
+    },
+    {
+     "model": "glm-4.7-flash",
+     "judge_model": "@cf/openai/gpt-oss-120b",
+     "n": 59,
+     "accurate": 57,
+     "helpful": 58,
+     "invented": 2,
+     "unparsed": 0
+    },
+    {
+     "model": "gemini-3.5-flash-lite",
+     "judge_model": "@cf/openai/gpt-oss-120b",
+     "n": 117,
+     "accurate": 111,
+     "helpful": 115,
+     "invented": 8,
+     "unparsed": 0
     }
    ],
-   "hand": {
-    "files": null,
-    "comments": null,
-    "ok": null,
-    "accurate": null,
-    "helpful": null,
-    "invented": null
+   "judge_usd": 0.103,
+   "hand_by_model": {
+    "gemma-4-26b-a4b-it": {
+     "comments": 67,
+     "ok": 62,
+     "invented": 2
+    },
+    "glm-4.7-flash": {
+     "comments": 11,
+     "ok": 11,
+     "invented": 0
+    },
+    "gemini-3.5-flash-lite": {
+     "comments": 37,
+     "ok": 36,
+     "invented": 0
+    }
    },
-   "worst": []
+   "hand": {
+    "files": 50,
+    "comments": 115,
+    "ok": 109,
+    "accurate": 109,
+    "helpful": 105,
+    "invented": 2
+   },
+   "judge_vs_hand": {
+    "paired": 115,
+    "agree": 104,
+    "hand_bad": 6,
+    "judge_caught": 1,
+    "judge_flagged_hand_ok": 6
+   },
+   "worst": [
+    {
+     "file": "src/vs/editor/contrib/wordOperations/browser/wordOperations.ts",
+     "key": "CursorWordRight",
+     "comment": "/**\n * Moves the cursor to the end of the word to the right of the current position using fast navigation.\n * Use it for standard rightward word movement.\n */",
+     "why": "claims 'fast navigation'; the code uses WordNavigationType.WordEnd (text copied from CursorWordLeft)"
+    },
+    {
+     "file": "src/vs/editor/contrib/wordOperations/browser/wordOperations.ts",
+     "key": "CursorWordRightSelect",
+     "comment": "/**\n * Moves the cursor to the end of the word to the right and expands the selection using fast\n * navigation. Use it to select the word to the right.\n */",
+     "why": "claims 'fast navigation'; the code uses WordNavigationType.WordEnd (copied from CursorWordLeftSelect)"
+    },
+    {
+     "file": "src/vs/base/common/observableInternal/observables/observableValue.ts",
+     "key": "observableValue#2",
+     "comment": "/**\n * Creates an observable value that informs observers when the value changes. Use this when you need a\n * settable observable with an initial value and an optional name or owner.\n */",
+     "why": "says the name/owner is optional; this overload takes a required owner (the optional-name form is the other overload)"
+    },
+    {
+     "file": "src/vs/editor/contrib/wordOperations/browser/wordOperations.ts",
+     "key": "WordLeftCommand",
+     "comment": "/**\n * A command that moves the cursor to the left within a word. Use it to implement leftward word\n * navigation.\n */",
+     "why": "says it moves 'within a word'; it is the base class for moving left by word boundaries"
+    },
+    {
+     "file": "src/vs/editor/contrib/wordOperations/browser/wordOperations.ts",
+     "key": "WordRightCommand",
+     "comment": "/**\n * A command that moves the cursor to the right within a word. Use it to implement rightward word\n * navigation.\n */",
+     "why": "says it moves 'within a word'; it is the base class for moving right by word boundaries"
+    }
+   ]
   },
   "f0": {
    "@cf/zai-org/glm-4.7-flash": {

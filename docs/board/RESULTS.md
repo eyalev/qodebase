@@ -20,6 +20,10 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | fmv6mu687 (F3b next.js packages/ (glm-4.7)) | fleet-nextjs packages | glm-4.7-flash | 150 | 1,546 | 868 | 677 | 0 | 1 | 0 | $0.11 | 340 s | 4 / 7 s |
 | fmv6mu93d (F3b vscode extensions/ (gemma)) | fleet-vscode-ext extensions | gemma-4-26b-a4b-it | 200 | 2,328 | 1,536 | 790 | 0 | 2 | 0 | $0.37 | 484 s | 5 / 8 s |
 | fmv6mu3wd (F3b babel packages/ (gemini-3.1)) | fleet-babel packages | gemini-3.1-flash-lite | 100 | 597 | 319 | 274 | 0 | 4 | 0 | $0.19 | 326 s | 8 / 15 s |
+| fmv6ofmt4 (S4a 200 agents / 4 copies (cache) - copy 1) | fleet-vscode-src-1 src/vs | cache | 50 | 4,064 | 1,810 | 1,069 | 0 | 0 | 0 | $0.00 | 52 s | 47 / 57 s |
+| fmv6ofopo (S4a 200 agents / 4 copies (cache) - copy 2) | fleet-vscode-src-2 src/vs | cache | 50 | 4,064 | 285 | 1,069 | 0 | 0 | 0 | $0.00 | 45 s | 36 / 38 s |
+| fmv6of4um (S4a 200 agents / 4 copies (cache) - copy 3) | fleet-vscode-src-3 src/vs | cache | 50 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 46 s | 41 / 54 s |
+| fmv6oflq1 (S4a 200 agents / 4 copies (cache) - copy 4) | fleet-vscode-src-4 src/vs | cache | 50 | 4,064 | 303 | 1,069 | 0 | 0 | 0 | $0.00 | 41 s | 48 / 50 s |
 
 | model | files handled | landed | verify refused | rate-limited (share of calls) | peak calls/min | $ | $ per 1k files |
 |---|---|---|---|---|---|---|---|
@@ -27,10 +31,19 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | @cf/google/gemma-4-26b-a4b-it | 4,360 | 2,995 | 0 | 3 (0.1%) | 294 | $0.82 | $0.19 |
 | gemini-3.5-flash-lite | 1,152 | 860 | 0 | 0 (0.0%) | 235 | $1.00 | $0.87 |
 | gemini-3.1-flash-lite | 3,339 | 1,183 | 0 | 0 (0.0%) | 75 | $0.75 | $0.22 |
+| cache | 9,663 | 5,387 | 0 | 0 (0.0%) | 2,995 | $0.00 | $0.00 |
 
-Totals: 6,616 files landed of 11,405 attempted over 12 runs (4,757 needed no comment); 0 refused by the code-unchanged check; $2.81 ($0.25 per 1k files).
+Totals: 12,003 files landed of 27,661 attempted over 16 runs (9,033 needed no comment); 0 refused by the code-unchanged check; $2.81 ($0.10 per 1k files).
 
-Quality (qb9, sim/fleet/quality.json, status pending): not measured yet.
+Quality (qb9's F4 check, sim/fleet/quality.json; measured on main 0f3ba876 vs base d4793e33): 3,029 files changed, **code changed on re-verify: 0**; automatic checks over 6,542 comments: invented params 0, missing params 0, @returns on void 0, trivial 0.
+
+| fleet model | judge (gpt-oss-120b) accurate | judge helpful | judge: invented | hand-checked ok | hand: invented |
+|---|---|---|---|---|---|
+| gemma-4-26b-a4b-it | 147/152 (97%) | 150/152 (99%) | 5 | 62/67 (93%) | 2 |
+| glm-4.7-flash | 57/59 (97%) | 58/59 (98%) | 2 | 11/11 (100%) | 0 |
+| gemini-3.5-flash-lite | 111/117 (95%) | 115/117 (98%) | 8 | 36/37 (97%) | 0 |
+
+Hand check: 50 files, 115 comments, 109/115 (95%) ok (accurate, nothing invented). Judge vs hand on the same 115 comments: agreed on 104; of 6 the hand check found bad, the judge caught 1, and it flagged 6 the hand check found fine.
 
 F0 bench (20 files per model, measured, sim/fleet/F0.md):
 
