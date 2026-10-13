@@ -1392,3 +1392,37 @@ What it says:
 - **Bench to read** (50 files, one per call vs batched): files per call, calls/min per model at the limits, latency,
   $ per 1k files, rejected share, comments per file (batching may make the model skip more), and the 3040 rate for
   gemma (bigger calls may hit capacity sooner).
+
+**Batching bench (qb6, 656f490).** The same 51 VS Code src/vs files, all needing comments: one per call vs packs of up
+to 8 files or 12k tokens. Packs are keyed by file then name, names outside a file's targets are refused, each file is
+verified on its own, and a failed pack is retried in halves.
+
+| | prediction | glm-4.7-flash | gemini-3.1-flash-lite |
+|---|---|---|---|
+| files per call | ~4 at an ~8k budget | 2.3 (51 -> 22 calls) | 1.9 (51 -> 27) |
+| $ per 1k files | -10-15% (the instructions are shared) | $0.207 -> $0.204 (~0) | $0.96 -> $1.29 (+34%: one pack retried in halves) |
+| comments per file | maybe fewer | 2.84 -> 2.65 | 2.84 -> 2.88 |
+| call latency | ~x files per call | p50 3.5 -> 16 s (4.6x for 2.3x the files) | |
+| lost files | one bad JSON costs a pack | 0 | 2 (no answer in a 2-file pack) |
+| blind A/B, gpt-oss-120b (one-per-call better / packed better / tie) | | 13 / 17 / 20; 'wrong comment' 13 vs 9 | 9 / 14 / 26; wrong 9 vs 2 |
+
+What it says:
+- **Files per call came in below ~4,** limited by size: src/vs files are ~2,700 tokens, and an agent's batch of 10 held
+  only ~7 files to document.
+- **Token cost did not fall,** not even the predicted 10-15%. The per-file input (the file itself) is almost all of a
+  call, and a retry costs more than the shared instructions save.
+- **No quality loss within the judge's noise,** and no mis-keyed comment.
+- **Per-call latency grew faster than files per call** (4.6x for 2.3x), so a pack costs more agent-seconds per file.
+  The gain is only under call limits.
+
+**Prediction for S5 v2.** 3 copies, each running gemma and glm-4.7 with Gemini 3.1 as overflow, paced so the three
+together sit at each model's measured limit: gemma 255/min, glm 405, Gemini 1,500. Budget 24k tokens, up to 10 files
+a call, batches of 20 per agent.
+- **Files per call:** ~6-8 for Workers AI, ~5 for Gemini.
+- **Latency:** glm grows past 30 s a call. Keeping 405 calls/min needs ~200+ calls in flight, so ~200+ agents busy on
+  glm alone.
+- **Gemma:** bigger calls use more capacity per call, so expect its 3040 'capacity exceeded' to start below 255/min.
+- **Throughput:** at full call rates, ~(405 x 6 + 255 x 6 + 1,500 x 5) / 60 = **~190 files/s**. With glm short of
+  agents or gemma tripping 3040, ~100-150 files/s, with Gemini taking most of the files as overflow.
+- **Run length:** 3 copies x ~4,060 files is ~12k files, about 1-2 minutes at that rate. The peak windows are the
+  reading.
