@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T23:02:22.467Z",
+ "generated": "2026-10-13T23:48:04.979Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -150,12 +150,12 @@
      "@cf/zai-org/glm-4.7-flash"
     ]
    },
-   "filesLanded": 38666,
-   "filesAttempted": 48759,
+   "filesLanded": 38865,
+   "filesAttempted": 48871,
    "verifyRefused": 0,
-   "usd": 23.74,
+   "usd": 23.85,
    "usdPer1kLanded": 0.61,
-   "runs": 36,
+   "runs": 37,
    "byJob": {
     "docs": {
      "runs": 27,
@@ -172,11 +172,11 @@
      "usd": 0.13
     },
     "code": {
-     "runs": 8,
-     "filesAttempted": 2177,
-     "landed": 6694,
+     "runs": 9,
+     "filesAttempted": 2289,
+     "landed": 6893,
      "skipped": 0,
-     "usd": 4.52
+     "usd": 4.63
     }
    },
    "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
@@ -563,7 +563,7 @@
        "lost": 13
       }
      },
-     "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. Known gap: lanes force-push refs/notes/qodebase, so change records (notes) on main can be missing; the code and these counts are unaffected."
+     "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. In this run, change records (git notes) could be missing on main: lanes force-pushed refs/notes/qodebase, and no-op changes had no commit of their own. The code and these counts are unaffected. Fixed in forq 3cde9b4 and checked on eyal/kata-notes (lanes, 200 tasks): 199 of 199 landed changes have their own commit and their note."
     }
    ],
    "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off unless marked \"+ claims\" (an agent claims its declarations before reading the file); collisions = pairs of tasks started at the same moment"
@@ -957,7 +957,7 @@
        "lost": 13
       }
      },
-     "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. Known gap: lanes force-push refs/notes/qodebase, so change records (notes) on main can be missing; the code and these counts are unaffected."
+     "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. In this run, change records (git notes) could be missing on main: lanes force-pushed refs/notes/qodebase, and no-op changes had no commit of their own. The code and these counts are unaffected. Fixed in forq 3cde9b4 and checked on eyal/kata-notes (lanes, 200 tasks): 199 of 199 landed changes have their own commit and their note."
     }
    ]
   }
@@ -2224,6 +2224,28 @@
     "wallS": 2691,
     "landWaitP90S": -1,
     "firstAt": 1791929636289
+   },
+   {
+    "label": "code dial 60% (K-notes)",
+    "runs": 1,
+    "cached": false,
+    "models": [
+     "gemini-3.1-flash-lite"
+    ],
+    "repos": [
+     "fleet-kata-notes src/vs"
+    ],
+    "agents": 40,
+    "files": 112,
+    "landed": 199,
+    "skipped": 0,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0.1096,
+    "wallS": 267,
+    "landWaitP90S": -1,
+    "firstAt": 1791934940249
    }
   ],
   "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)",
@@ -16857,6 +16879,47 @@
     "label": "code dial 60% (K60h)",
     "cached": false,
     "job": "code"
+   },
+   {
+    "runId": "fmv7bsoyh",
+    "models": [
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 40,
+    "agentsStarted": 40,
+    "files": 112,
+    "landed": 199,
+    "skipped": 0,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0.1096,
+    "startedAt": 1791934940249,
+    "endedAt": 1791935207564,
+    "wallS": 267,
+    "landWaitP50S": -2,
+    "landWaitP90S": -1,
+    "peakPerMin": null,
+    "perModel": {
+     "gemini-3.1-flash-lite": {
+      "usd": 0.1096,
+      "bounced": 1,
+      "landed": 199,
+      "calls": 200,
+      "rateLimited429": 0,
+      "peakPerMin": 60,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-kata-notes src/vs",
+    "label": "code dial 60% (K-notes)",
+    "cached": false,
+    "job": "code"
    }
   ],
   "perModel": {
@@ -16910,17 +16973,17 @@
     "share429": 0
    },
    "gemini-3.1-flash-lite": {
-    "files": 31099,
-    "landed": 23182,
+    "files": 31298,
+    "landed": 23381,
     "skipped": 7724,
     "verifyFail": 0,
     "rejected": 193,
     "rateLimited": 51,
-    "calls": 23988,
-    "usd": 19.2852,
+    "calls": 24188,
+    "usd": 19.3948,
     "peakPerMin": 1500,
     "roles": {
-     "planned": 13859,
+     "planned": 14058,
      "overflow": 17047
     },
     "usdPer1kFiles": 0.62,
@@ -16944,14 +17007,14 @@
    }
   },
   "totals": {
-   "runs": 36,
-   "filesAttempted": 48759,
-   "landed": 38666,
+   "runs": 37,
+   "filesAttempted": 48871,
+   "landed": 38865,
    "skipped": 14065,
    "verifyRefused": 0,
    "rejected": 240,
    "rateLimited": 3,
-   "usd": 23.74,
+   "usd": 23.85,
    "usdPer1kLanded": 0.61,
    "usdPer1kFiles": 0.49,
    "byJob": {
@@ -16970,11 +17033,11 @@
      "usd": 0.13
     },
     "code": {
-     "runs": 8,
-     "filesAttempted": 2177,
-     "landed": 6694,
+     "runs": 9,
+     "filesAttempted": 2289,
+     "landed": 6893,
      "skipped": 0,
-     "usd": 4.52
+     "usd": 4.63
     }
    },
    "largestRun": {

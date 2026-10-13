@@ -23924,6 +23924,82 @@
     "root": "src/vs",
     "namespace": "qbfleet"
    }
+  },
+  {
+   "runId": "fmv7bsoyh",
+   "label": "code dial 60% (K-notes)",
+   "ladder": "K60",
+   "copy": null,
+   "repo": "fleet-kata-notes",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 40,
+   "agentsStarted": 40,
+   "files": 112,
+   "landed": 199,
+   "ready": 0,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.1096,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791934940249,
+   "endedAt": 1791935207564,
+   "wallS": 267,
+   "landWaitS": {
+    "p50": -2,
+    "p90": -1
+   },
+   "models": {
+    "gemini-3.1-flash-lite": {
+     "usd": 0.1096,
+     "bounced": 1,
+     "landed": 199,
+     "calls": 200,
+     "rateLimited429": 0,
+     "peakPerMin": 60,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791934920000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 21
+    },
+    {
+     "minute": 1791934980000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 46
+    },
+    {
+     "minute": 1791935040000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 60
+    },
+    {
+     "minute": 1791935100000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 48
+    },
+    {
+     "minute": 1791935160000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 25
+    }
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
   }
  ]
 }
