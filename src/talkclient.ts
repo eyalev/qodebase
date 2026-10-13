@@ -591,14 +591,17 @@ function placeBar() {
   // A page can name its docks: [data-talk-dock] near the bottom always lifts the button above it.
   // A tall dock (Build's estimate panel, a third of the screen and more) does not lift the bar into the middle of the
   // page (live 2026-10-13): the bar rests hidden there and shows at the bottom only with something to say.
-  var tall = false;
+  var tall = false, tallTop = window.innerHeight;
   [].forEach.call(document.querySelectorAll('[data-talk-dock]'), function (d) {
     var r = d.getBoundingClientRect();
     if (!(r.height > 0 && r.bottom > window.innerHeight - 48 && r.top < window.innerHeight)) return;
-    if (r.height > window.innerHeight * 0.3) { tall = true; return; }
+    if (r.height > window.innerHeight * 0.3) { tall = true; tallTop = Math.min(tallTop, r.top); return; }
     lift = Math.max(lift, window.innerHeight - r.top);
   });
   if (root.classList.contains('tall') !== tall) { root.classList.toggle('tall', tall); barSync(); }
+  // A question over a tall panel (Build's settings: 'Build it?' covered the presets, qb3's rehearsal 2026-10-14):
+  // the bar sits on the panel's top edge, so everything in the panel stays visible.
+  if (tall && root.classList.contains('boffer')) lift = Math.max(lift, window.innerHeight - tallTop);
   lift = Math.round(lift);
   if (window.innerWidth < 720 && !root.classList.contains('miconly')) { bar.style.bottom = lift ? lift + 'px' : '0px'; bar.style.setProperty('--talk-inset', lift ? '0px' : 'env(safe-area-inset-bottom)'); }
   else bar.style.bottom = 'calc(' + (lift ? lift + 8 : (window.innerWidth < 720 ? 8 : 16)) + 'px + env(safe-area-inset-bottom))';
@@ -744,6 +747,7 @@ function barSync() {
   else if (hist.length !== histAtLoad && !restT && (root.classList.contains('slim') || root.classList.contains('tall')) && !root.classList.contains('rest')) restT = setTimeout(function () { restT = null; histAtLoad = hist.length; root.classList.add('rest'); }, 8000);
   else if (hist.length === histAtLoad && !restT) root.classList.add('rest');
   if (root.classList.contains('rest') !== !!root.__rest) { root.__rest = root.classList.contains('rest'); setTimeout(placeBar, 30); }
+  if (root.classList.contains('boffer') !== !!root.__boffer) { root.__boffer = root.classList.contains('boffer'); setTimeout(placeBar, 30); }
   var on = (listening && !cInto) || (vc && vcStatus !== 'idle');
   bMic.classList.toggle('on', !!on); bMic.innerHTML = on ? ICON.stop : ICON.mic;
   bMic.setAttribute('aria-label', on ? 'Stop' : 'Speak to qodebase');

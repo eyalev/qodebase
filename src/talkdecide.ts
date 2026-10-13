@@ -261,9 +261,13 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // Something new ("build me a…", "make an…"), not a change to an existing thing ("make the timer chime louder").
   const bm = /^\s*(please\s+)?(build|make|create)\s+(me\s+|us\s+)?((?:a|an|some|my own)\s+.{4,})$/i.exec(utterance.trim());
   if (ideaBox && bm && cmd.mode !== 'ask') {
-    const preset = /\b(with|as|by) a (small |big |whole )?team\b|\bteam of agents\b|\bseveral agents\b|\bmany agents\b/i.test(utterance) ? 'Balanced'
-      : /\b(one|a single|single) agent\b|\bon its own\b|\bfastest\b/i.test(utterance) ? 'Fastest' : /\bcheap(est|ly)?\b/i.test(utterance) ? 'Cheapest' : '';
-    const idea = bm[4].replace(/,?\s*\b(with|as|by) a (small |big |whole )?team( of agents)?\b|,?\s*\b(with|using) (one|a single|single) agent\b|,?\s*\b(cheaply|the cheapest way)\b/gi, '').replace(/\s+,/g, ',').replace(/^[\s,]+|[\s,.]+$/g, '');
+    // The preset words choose the settings and come out of the idea (qb3's rehearsal: 'with the cheapest team' stayed
+    // in the idea and named the project home-inventory-cheapest). Cheapest/Fastest words win over 'team'.
+    const preset = /\bcheap(est|ly|er)?\b/i.test(utterance) ? 'Cheapest'
+      : /\b(one|a single|single) agent\b|\bon its own\b|\bfast(est)?\b|\bquick(est|ly)?\b/i.test(utterance) ? 'Fastest'
+      : /\bteam\b|\bseveral agents\b|\bmany agents\b|\bbalanced\b/i.test(utterance) ? 'Balanced' : '';
+    const SETTINGS_RX = /,?\s*\b(with|using|on|as|by|in)\s+(a|an|the|one|my)?\s*(cheapest|cheap|cheaper|fastest|fast|quickest|quick|balanced|small|big|whole|single|best)?\s*(team|agents?|preset|settings?|way|mode)( of agents)?\b|,?\s*\b(cheaply|quickly|the cheapest way|the fast way|on its own)\b/gi;
+    const idea = bm[4].replace(SETTINGS_RX, '').replace(/\s+(and|,)\s*(and\s+)?(?=[,.]|$)/gi, '').replace(/\s{2,}/g, ' ').replace(/\s+,/g, ',').replace(/^[\s,]+|[\s,.]+$/g, '');
     return { ...cmd, mode: 'act', op: 'type', target: ideaBox.id, label: ideaBox.text, text: idea.charAt(0).toUpperCase() + idea.slice(1), preset: preset || undefined, p: 0.9, why: 'build words on the idea box' };
   }
   // The 1,000-agent job (qb3's shot 3a) said without the words 'fleet job'.
