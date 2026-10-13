@@ -451,10 +451,18 @@ async function sttLive(request: Request, env: Env, ctx: ExecutionContext, who: W
     try { up?.close(1000, why); } catch { /* gone */ }
     try { server.close(1000, why); } catch { /* gone */ }
   };
+  // Binary frames arrive as an ArrayBuffer, a view or a Blob depending on the path: bytes in order either way
+  // (2026-10-13: the first version forwarded something nova-3 could not read, and heard nothing).
+  let chain: Promise<void> = Promise.resolve();
+  const toBytes = async (d: any): Promise<ArrayBuffer | null> => d instanceof ArrayBuffer ? d : ArrayBuffer.isView(d) ? (d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength) as ArrayBuffer) : d && typeof d.arrayBuffer === 'function' ? await d.arrayBuffer() : null;
   server.addEventListener('message', (e: MessageEvent) => {
-    if (typeof e.data === 'string') { if (e.data === 'close') { const m = JSON.stringify({ type: 'CloseStream' }); if (up) up.send(m); else pending.push(m); } return; }
-    bytes += (e.data as ArrayBuffer).byteLength; chunks++;
-    if (up) up.send(e.data as ArrayBuffer); else pending.push(e.data as ArrayBuffer);
+    if (typeof e.data === 'string') { chain = chain.then(() => { if (e.data === 'close') { const m = JSON.stringify({ type: 'CloseStream' }); if (up) up.send(m); else pending.push(m); } }); return; }
+    chain = chain.then(async () => {
+      const b = await toBytes(e.data);
+      if (!b) { log('stt_live_frame', { level: 'warn', kind: Object.prototype.toString.call(e.data) }); return; }
+      bytes += b.byteLength; chunks++;
+      if (up) up.send(b); else pending.push(b);
+    });
   });
   server.addEventListener('close', () => { if (up) { try { up.send(JSON.stringify({ type: 'CloseStream' })); } catch { /* gone */ } } setTimeout(() => finish('client closed'), 1500); });
   ctx.waitUntil((async () => {
