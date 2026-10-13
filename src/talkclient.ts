@@ -81,18 +81,29 @@ var css = [
   // The voice bar (2026-10-13, manager's brief): a mini-player on every page, above the page's own bottom bars.
   // Mic + what you are saying (growing to 3 lines) or the last answer in one line; tap it to open the whole
   // conversation, which folds back into the bar. Its height is kept free at the end of the page.
-  '#talk-bar{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px;min-height:56px;box-sizing:border-box;border-radius:14px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line),0 4px 16px rgba(0,0,0,.10);color:var(--t-fg)}',
+  '#talk-bar{position:fixed;left:16px;right:16px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2147483000;display:flex;align-items:flex-end;gap:4px;padding:6px;min-height:56px;box-sizing:border-box;border-radius:14px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line),0 4px 16px rgba(0,0,0,.10);color:var(--t-fg)}',
   '@media (min-width:720px){#talk-bar{left:auto;right:16px;width:420px}}',
   '#talk-root.open #talk-bar{display:none}',
   '.talk-bb{width:44px;height:44px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--t-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}',
   '.talk-bb svg{width:22px;height:22px}',
-  '.talk-bb.pri{background:var(--t-acc);color:var(--t-accfg)}',
+  '.talk-bb.pri{background:var(--t-chip);color:var(--t-fg)}',
+  // The page's own primary button stays the loudest thing at rest (critique 2026-10-13): the mic turns accent only while live.
+  '#talk-root.live .talk-bb.pri,#talk-bsend.talk-bb.pri{background:var(--t-acc);color:var(--t-accfg)}',
+  '#talk-bexp{color:var(--t-dim)}',
+  // The page's text must not show in the strip under the bar.
+  '@media (max-width:719px){#talk-bar::after{content:"";position:absolute;left:-16px;right:-16px;top:100%;height:calc(8px + env(safe-area-inset-bottom));background:var(--t-bg);pointer-events:none}}',
   '.talk-bb.on{background:var(--t-warn)}',
   '@media (hover:hover){.talk-bb:not(.pri):hover{background:var(--t-chip)}}',
   '#talk-bmid{flex:1;min-width:0;min-height:44px;display:flex;align-items:center;border:0;background:transparent;color:inherit;text-align:left;padding:0 6px;font:15px/20px var(--t-ff);cursor:pointer}',
   '#talk-btext{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden;overflow-wrap:anywhere}',
   '#talk-btext.dim{color:var(--t-dim)}',
-  '#talk-root.live #talk-btext,#talk-root.boffer #talk-btext{-webkit-line-clamp:3}',
+  '#talk-root.live #talk-btext{-webkit-line-clamp:3}',
+  // A question waiting for a yes: the words get the whole width (4 lines), the chips go under them, right.
+  '#talk-root.boffer #talk-bar{flex-wrap:wrap}',
+  '#talk-root.boffer #talk-bmic{display:none}',
+  '#talk-root.boffer #talk-bmid{flex:1 1 100%;padding:4px 6px}',
+  '#talk-root.boffer #talk-btext{-webkit-line-clamp:4}',
+  '#talk-root.boffer #talk-boffer{margin-left:auto}',
   '#talk-boffer{display:none;gap:6px;flex:none}',
   '#talk-root.boffer #talk-boffer{display:flex}',
   '#talk-root.boffer #talk-bexp,#talk-root.live #talk-bexp{display:none}',
@@ -102,10 +113,14 @@ var css = [
   // Pages with a composer (form.ask) keep the mic in its row: the bar there is the door to Talk, without a mic.
   '#talk-root.slim #talk-bmic{display:none}',
   '#talk-root.slim #talk-bar{min-height:48px;padding:2px 2px 2px 6px}',
+  // Above a composer the bar shows only when it has something to say (an answer, a question, live words); the way
+  // in at rest is the composer mic (hold it: Talk listens). Three layers at the bottom were too many (critique).
+  '#talk-root.slim.rest #talk-bar{display:none}',
   '#talk-spacer{height:0;pointer-events:none}',
   // A clear (×) inside text boxes, only while they hold text (Eyal, 2026-10-13): Talk's own input and the page's
   // idea / change boxes.
-  '.talk-clr{position:absolute;width:32px;height:32px;border:0;border-radius:8px;background:var(--chip,#f3f4f6);color:var(--dim,#6e737b);display:none;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:2}',
+  '.talk-clr::after{content:"";position:absolute;inset:-6px}',
+  '.talk-clr{position:absolute;width:32px;height:32px;border:0;border-radius:10px;background:var(--chip);color:var(--dim);display:none;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:2}',
   '.talk-clr svg{width:16px;height:16px}',
   '.talk-clr.on{display:flex}',
   '#talk-inwrap{position:relative;flex:1;min-width:0;display:flex}',
@@ -113,7 +128,9 @@ var css = [
   '#talk-inwrap .talk-clr{right:6px;top:6px}',
   // A page can ask for less: data-talk-bar="mic" on <body> (a deck: only the mic, the words show while in use),
   // "off" (no bar; ?clean on any URL does the same, for recordings).
-  '#talk-root.miconly #talk-bar{right:auto;width:auto;min-height:0}',
+  '#talk-root.miconly #talk-bar{right:auto;width:auto;min-height:0;padding:0;background:transparent;box-shadow:none}',
+  '#talk-root.miconly #talk-bar::after{display:none}',
+  '#talk-root.miconly #talk-bmic{width:52px;height:52px;border-radius:14px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line)}',
   '#talk-root.miconly #talk-bmid,#talk-root.miconly #talk-bexp{display:none}',
   '#talk-root.nobar #talk-bar{display:none}',
   // Pages with a composer (form.ask, [data-talk-composer]) get the mic inside it, WhatsApp-style, and no floating button.
@@ -434,6 +451,7 @@ function build() {
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && root.classList.contains('open')) { stopListen(true); open(false); }
   });
+  histAtLoad = hist.length;
   render();
 }
 
@@ -484,7 +502,12 @@ function placeBar() {
 // between its header and its composer): that panel's bottom padding, measured once the page has drawn.
 function reserve(lift) {
   var r = bar.getBoundingClientRect(), need = Math.round(r.height + 16);
-  if (!r.height || root.classList.contains('open')) return;
+  if (root.classList.contains('open')) return;
+  if (!r.height) {   // the bar is hidden (resting above a composer): give the room back
+    if (spacer.offsetHeight) spacer.style.height = '0px';
+    (scrollers || []).forEach(function (e) { if (e.__talkAdd) { e.__talkAdd = 0; e.style.paddingBottom = (e.__talkPad || 0) + 'px'; } });
+    return;
+  }
   // Only a page that scrolls as a whole gets the spacer: an app-like page (a full-height column) must not start to scroll.
   var docH = document.documentElement.scrollHeight - (spacer.offsetHeight || 0);
   var sp = docH > window.innerHeight + 4 ? need : 0;
@@ -562,16 +585,22 @@ function barSync() {
   else if (mine) { t = inp.value.trim(); if (!t) { t = stEl.textContent || 'Listening\u2026'; dim = true; } }
   else if (busy && stEl.textContent) { t = stEl.textContent; dim = true; }
   else if (last) t = last.text;
-  else { t = 'Say what you want to do'; dim = true; }
+  else { t = 'Ask qodebase, or say where to go'; dim = true; }
   bText.textContent = String(t).replace(/\s+/g, ' ').trim();
   bText.classList.toggle('dim', dim);
+  // Above a composer: hidden at rest; shown for live words, a question, work in progress, or a fresh answer (8 s).
+  var happening = mine || !!offerState || busy || (vc && vcStatus !== 'idle');
+  if (happening) { root.classList.remove('rest'); clearTimeout(restT); restT = null; }
+  else if (hist.length !== histAtLoad && !restT && root.classList.contains('slim') && !root.classList.contains('rest')) restT = setTimeout(function () { restT = null; histAtLoad = hist.length; root.classList.add('rest'); }, 8000);
+  else if (hist.length === histAtLoad && !restT) root.classList.add('rest');
+  if (root.classList.contains('rest') !== !!root.__rest) { root.__rest = root.classList.contains('rest'); setTimeout(placeBar, 30); }
   var on = (listening && !cInto) || (vc && vcStatus !== 'idle');
   bMic.classList.toggle('on', !!on); bMic.innerHTML = on ? ICON.stop : ICON.mic;
   bMic.setAttribute('aria-label', on ? 'Stop' : 'Speak to qodebase');
   barMode();
 }
 function bNote(t) { add('note', t); }
-var miniT = null;
+var miniT = null, restT = null, histAtLoad = -1;
 function barMode() {
   var m = document.body.getAttribute('data-talk-bar') || '';
   if (/[?&](clean|rec=1)\b/.test(location.search) || document.body.classList.contains('rec')) m = 'off';
