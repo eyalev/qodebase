@@ -119,10 +119,9 @@ export class Run extends DurableObject {
     if (!cfg.model || !PRICES_OF(this.env)[cfg.model]) return { error: `model required, with a price: one of ${Object.keys(PRICES_OF(this.env)).join(', ') || '(none set: FLEET_PRICES)'}` };
     cfg.agents = Math.max(1, Math.min(2000, Number(cfg.agents) || 10));
     cfg.budgetUsd = Math.min(Number(cfg.budgetUsd) || 1, b.left);
-    const p = await plan(this.env, {});
-    if (p.error) return p;
-    // The file list again with hashes (plan() returns counts only): files in a stable order, lanes interleaved.
-    const files = await listFiles(this.env);
+    // One walk of main's src/vs (~800 folders): the files with their blob hashes, lanes interleaved, and main's tip.
+    const { base, files } = await listFiles(this.env);
+    const p = { base };
     const pick = files.slice(0, Math.max(1, Math.min(files.length, Number(cfg.maxFiles) || 10)));
     const runId = `f${Date.now().toString(36)}`;
     pick.forEach((f, i) => this.sql.exec(`INSERT INTO q (run, i, path, hash) VALUES (?, ?, ?, ?)`, runId, i, f.path, f.hash));
@@ -256,7 +255,7 @@ async function listFiles(env) {
   const by = new Map(); for (const f of out) { const k = laneOf(f.path); if (!by.has(k)) by.set(k, []); by.get(k).push(f); }
   const lanes = [...by.values()]; const mixed = [];
   for (let i = 0; mixed.length < out.length; i++) for (const l of lanes) if (l[i]) mixed.push(l[i]);
-  return mixed;
+  return { base: tip.hash, files: mixed };
 }
 
 async function pushover(env, title, message) {
@@ -334,7 +333,7 @@ export class Lander extends DurableObject {
     await this.ctx.storage.setAlarm(Date.now() + 5000);
   }
   /** One commit per lane on top of main's tip, all pushed together; a stale tip is re-read and the batch rebuilt. */
-  async land(runId, lanes, keys) {
+  async land(runId, lanes, keys) {   // eslint-disable-line no-param-reassign
     using repo = await this.env.ARTIFACTS.get(MAIN);
     const token = (await repo.createToken('write', 600)).plaintext;
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -352,7 +351,10 @@ export class Lander extends DurableObject {
       const p = await push({ remote: REMOTE, token, branch: 'main', oldSha: tip.hash, newSha: parent, objs: [...objs.map.values()] });
       await this.ctx.storage.put('pushes', ((await this.ctx.storage.get('pushes')) || 0) + 1);
       if (p.ok) {
-        for (const k of keys) lanes[k] = lanes[k].slice(200);
+        // Re-read the lanes: files added while this batch was pushing must stay (F2 at 10 agents lost 9 that way).
+        const done = new Set(landedFiles), now = (await this.ctx.storage.get('lanes')) || {};
+        for (const k of Object.keys(now)) now[k] = now[k].filter((x) => !done.has(x.path));
+        lanes = now;
         await this.ctx.storage.put({ lanes, landed: ((await this.ctx.storage.get('landed')) || 0) + landedFiles.length, commits: ((await this.ctx.storage.get('commits')) || 0) + keys.length });
         await this.ctx.storage.delete(landedFiles.map((f) => `f:${f}`));
         await run(this.env).landed(runId, landedFiles, Date.now());
