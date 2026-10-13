@@ -1219,3 +1219,32 @@ For S4c (1,000 agents, 20 copies of 50): at ~3.5 files/s per agent the expected 
 copy, as in S4b). The shared limits get their first real test there: 3,500 `ARTIFACTS.get()` calls/s against the
 documented 200/s namespace control plane (#1), and starting 1,000 agents at once (#5). If #1 counts, expect a hard
 flat line near 200-230 files/s in total and 429s on get(). If not, ~3,000+ files/s.
+
+**S4c: 1,000 agents on 20 copies (50 each), cached mode, batch 5.** The copies were VS Code src x5, VS Code
+extensions x5, next.js x5 and angular x5. 50,140 files in 68 s; all 30,410 changes landed within 128 s of the first
+file.
+- Outcomes: 19,670 nothing to document, 60 cache misses, 0 verify failures, 0 infra errors, 0 overloaded, 0
+  Artifacts 429s.
+- Peak 10 s window: 1,230 files/s with 12 copies running at once (the copies started over ~2 min).
+- Per copy: 122-215 files/s over its own run, median ~160, but ~100/s per copy in the peak window.
+- Blob read p50 135 / p90 356 / p99 615 ms (S4b: 76 / 287 ms). Land wait p50 28 s / p90 52 s.
+
+| | prediction | measured |
+|---|---|---|
+| #1 namespace control plane (200/s documented) | a hard flat line near 200-230 files/s if `get()` counts | **wrong**: get() + readBlob ran at ~1,230/s in one namespace with no 429s. As a hard limit, the documented 200/s does not apply to these calls |
+| per-copy limit (#2 / per-artifact git rate) | ~175/s per copy, as S4b | ~160/s median per copy on its own run, as predicted |
+| new: a shared slowdown | not predicted | **as copies overlap, every copy slows**: per-copy rate down ~40% and read latency up ~1.8x at 1,230/s. The Run DOs are per copy, so the shared part is on Artifacts' side (namespace or storage). It slows rather than refuses |
+
+**Prediction for S4d (5,000 agents, 100 copies), from that slowdown.** Treat Artifacts reads as one shared server
+whose latency grows as L = L0 / (1 - rate / capacity). The two points, 76 ms at ~178 reads/s (S4b) and 135 ms at
+~1,230/s (S4c), give **L0 ≈ 71 ms and a capacity near ~2,600 reads/s** for the namespace. That is two points and an
+assumed curve, so treat it as a rough guide.
+- At 5,000 agents demand would be ~6,000+ files/s.
+- So S4d should flatten near **~2,000-2,500 files/s in total, with read p50 climbing to ~0.5-1 s and no errors**:
+  a wall that shows up as latency, not as 429s.
+- If S4d instead keeps scaling past ~3,000/s, the slowdown was start-up overlap rather than a capacity.
+- A cheap way to tell a namespace capacity from an account or storage one: S4e, the same 5,000 agents with the copies
+  split across 2 namespaces. If the ceiling doubles, it is per namespace (fix: shard namespaces). If not, it is
+  account- or storage-wide.
+- Copies should start together (S4c's starts over ~2 min diluted the overlap). Peak windows should be read with the
+  number of copies running at that moment.
