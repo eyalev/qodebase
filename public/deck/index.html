@@ -493,6 +493,9 @@ deck.addEventListener('pointerup',function(e){if(x0==null)return;var dx=e.client
  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){go(i+(dx<0?1:-1));return}
  if(Math.abs(dx)<10&&Math.abs(dy)<10&&Date.now()-t0<500){var r=deck.getBoundingClientRect();go(i+(e.clientX-r.left<r.width/3?-1:1))}});
 window.addEventListener('hashchange',function(){var n=parseInt(location.hash.slice(1),10);if(n&&n-1!==i)go(n-1)});
+// For Talk (qb2): go to a slide by number (1-based) or by words in its title.
+window.deckGo=function(x){var n=parseInt(x,10);if(!n){var q=String(x||'').toLowerCase();S.some(function(s,k){var t=(s.dataset.t+' '+(s.querySelector('h2')||{}).textContent).toLowerCase();if(q&&t.indexOf(q)>=0){n=k+1;return true}})}if(n)go(n-1);return n||0};
+window.deckSlides=function(){return S.map(function(s,k){return{n:k+1,title:s.dataset.t}})};
 go((parseInt(location.hash.slice(1),10)||1)-1);
 })();
 </script>
