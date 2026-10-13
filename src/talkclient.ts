@@ -124,10 +124,12 @@ var css = [
   '#talk-btext.dim{color:var(--t-dim)}',
   '#talk-root.live #talk-btext{-webkit-line-clamp:3}',
   // A question waiting for a yes: the words get the whole width (4 lines), the chips go under them, right.
-  '#talk-root.boffer #talk-bar{flex-wrap:wrap}',
+  // A question is one compact row (~56 px): text clamped to two lines, chips on the right (qb3's rehearsal 2026-10-14:
+  // the wrapped two-row card covered Build's presets).
+  '#talk-root.boffer #talk-bar{flex-wrap:nowrap;align-items:center}',
   '#talk-root.boffer #talk-bmic{display:none}',
-  '#talk-root.boffer #talk-bmid{flex:1 1 100%;padding:4px 6px}',
-  '#talk-root.boffer #talk-btext{-webkit-line-clamp:4}',
+  '#talk-root.boffer #talk-bmid{flex:1 1 auto;min-width:0;padding:4px 6px}',
+  '#talk-root.boffer #talk-btext{-webkit-line-clamp:2;font-size:15px;line-height:1.3}',
   '#talk-root.boffer #talk-boffer{margin-left:auto}',
   '#talk-boffer{display:none;gap:6px;flex:none}',
   '#talk-root.boffer #talk-boffer{display:flex}',
@@ -601,7 +603,9 @@ function placeBar() {
   if (root.classList.contains('tall') !== tall) { root.classList.toggle('tall', tall); barSync(); }
   // A question over a tall panel (Build's settings: 'Build it?' covered the presets, qb3's rehearsal 2026-10-14):
   // the bar sits on the panel's top edge, so everything in the panel stays visible.
-  if (tall && root.classList.contains('boffer')) lift = Math.max(lift, window.innerHeight - tallTop);
+  // A question sits at the very bottom, over the page's own action panel (which holds the same Build it), not lifted
+  // onto the settings above it (qb3's rehearsal 2026-10-14: 'Build it?' covered the presets). One compact row.
+  if (root.classList.contains('boffer') && window.innerWidth < 720) lift = 0;
   lift = Math.round(lift);
   if (window.innerWidth < 720 && !root.classList.contains('miconly')) { bar.style.bottom = lift ? lift + 'px' : '0px'; bar.style.setProperty('--talk-inset', lift ? '0px' : 'env(safe-area-inset-bottom)'); }
   else bar.style.bottom = 'calc(' + (lift ? lift + 8 : (window.innerWidth < 720 ? 8 : 16)) + 'px + env(safe-area-inset-bottom))';
