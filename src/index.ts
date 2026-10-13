@@ -5,6 +5,7 @@
 //   forq-run.kapps.dev  public run host: any repo/fork as a live static app (run.ts)
 //   *.workers.dev       admin (x-forq-secret) and the boxes' forq CLI (x-forq-agent)
 
+import { withThemePreview } from './themepreview';
 import { withBaseline, kstatsForward, feedback, health } from './baseline';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AGENT_RE, NAME_RE, appWorkerName, frontHosts, isUiHost, uiHosts, projectOf, slugOf, type Env } from './env';
@@ -1245,6 +1246,7 @@ export default {
     const u = new URL(request.url);
     if (!isUiHost(env, u.hostname)) return res;
     res = await withBaseline(request, env, res);
+    res = withThemePreview(request, res);   // ?theme=a|b|c: a colour direction on this device only (src/themepreview.ts)
     // Build settings (flag BUILD_SETTINGS): pages say whether this viewer may adjust a Build (the Adjust link).
     if (env.BUILD_SETTINGS && env.BUILD_SETTINGS !== 'off' && (res.headers.get('content-type') || '').startsWith('text/html')) {
       const w = await who(request, env).catch(() => null);
