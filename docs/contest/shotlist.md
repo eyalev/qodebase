@@ -18,6 +18,19 @@ Mostly real product footage; the deck (qodebase.app/deck) is only short framing.
 - **Everything violet** (Eyal picked direction A on Oct 13): the app, the deck, the charts; nothing teal in the cut.
 - Scene 2's rehearsal (a cheap team build, cap ~$2) becomes the real take if it is clean. Length target 5–10 min.
 
+**Scene 2, state Oct 14 ~00:45 UTC (qb3):**
+- Rehearsal (eyal/home-inventory-demo) and a first real take (eyal/home-tracker: 9 of 9 landed, the mid-build dark
+  mode collided with Agent 6 on app.js and was redone by Haiku in 10 s for $0.06, 24:47, $2.32) both worked end to
+  end. The take's footage is unusable (the rig's 2x capture laid the page out 780 px wide; fixed and verified).
+- **2d (the Ask) is cut** (manager): no build asked for the Stripe key, even with qb6's secret-ask rule. Asks get one
+  narration line over a real Ask screenshot from an earlier build (the deck's asks shot, eyal/cafe-team).
+- **Plan:** one fully live take (~$2) after qb7's 'no reviewer' label (51741d7) and qb2's preset-tap fix are deployed.
+  **Fallback:** take-3 = qodebase's own client replay of the home-tracker run ("Replay of a run from 00:09, 8× speed"
+  on screen) + the live app in dark + the dark-mode change record, with 2a/2b re-recorded by voice up to the estimate.
+- User lines that Talk hears right (checked live): "Build me a small app that keeps track of everything in my home,
+  and let people pay for a pro plan with Stripe." / "Please add a dark mode to the app." ("home inventory" came out
+  "home in Venturia" in the final transcript; a 2-word "Add a dark mode" came out "dark moon").
+
 **Length: 5:00–5:30.** The contest asks for a 5–10 min video (PLAN.md, video.md). The manager's brief said ~3–5 min,
 so this list aims just over the 5-minute minimum: a cut under 5:00 would break the rule. Scene lengths below add up
 to ~5:15; if a take runs short, scene 4 grows (more of the deck), never below 5:00 in total.
@@ -37,7 +50,7 @@ the owner tab before 08:30 UTC Oct 14. Anything not ready is cut or replaced as 
 | 2a | 0:20 | Home on the phone, mic | Into Talk: "Build me a home inventory app with a team, and let people pay for a pro plan with Stripe." | Talk fills the build box, opens Build | real time |
 | 2b | 0:20 | Build settings: team preset, the estimate (time + cost range) | "It picks a team and tells me roughly how long and what it costs." | Team preset chosen; estimate visible; Build tapped | real time |
 | 2c | 0:30 | Agents at work: pipeline columns filling, the latest line | "Each agent takes one part. Collisions are redone on the newest code, not sent back." | Agents start, first changes reach review/line | 8–12× (clock + label) |
-| 2d | 0:15 | An Ask (X5 question card) and the answer by voice | Into Talk: "Use Stripe test mode; here is the test key." (test key only) | A real `ask-person` appears in Asks; answered; the agent continues | real time |
+| ~~2d~~ | cut | ~~An Ask (X5 question card) and the answer by voice~~ (cut Oct 14: no build asked; Asks narrated over a screenshot) | Into Talk: "Use Stripe test mode; here is the test key." (test key only) | A real `ask-person` appears in Asks; answered; the agent continues | real time |
 | 2e | 0:25 | **Money moment**: into Talk "Add a dark mode" mid-build; it lands on top | "Mid-build I ask for one more thing. It lands on top of the rest, and nothing breaks." | The dark-mode change goes through review and the line while others are still working; tests pass; it lands | 8× then real time for the landing |
 | 2f | 0:20 | App tab: the live app in dark mode; then one change record (what it was asked, review, replay, tests) | "The app is live, and every change keeps its record." | App preview loads; one collided-and-redone change opened | real time |
 | 2g | 0:10 | Timeline of the run | "The timeline shows where the time went." | Timeline tab with the critical path | real time |

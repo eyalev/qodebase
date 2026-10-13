@@ -54,8 +54,8 @@ const MIC = () => {
       ctx = new AudioContext({ sampleRate: 48000 }); dest = ctx.createMediaStreamDestination(); out = ctx.createMediaStreamDestination();
       // qb2: a real mic is never digitally silent; near-empty Opus frames make the recogniser miss the next words.
       const nb = ctx.createBuffer(1, 48000 * 2, 48000), ch = nb.getChannelData(0);
-      let b0 = 0, b1 = 0, b2 = 0; for (let i = 0; i < ch.length; i++) { const w = Math.random() * 2 - 1; b0 = 0.997 * b0 + w * 0.029; b1 = 0.985 * b1 + w * 0.032; b2 = 0.95 * b2 + w * 0.048; ch[i] = (b0 + b1 + b2 + w * 0.02) * 0.5; }
-      const ns = ctx.createBufferSource(), g = ctx.createGain(); ns.buffer = nb; ns.loop = true; g.gain.value = 0.004; ns.connect(g).connect(dest); ns.start();
+      let b0 = 0, b1 = 0, b2 = 0; for (let i = 0; i < ch.length; i++) { const w = Math.random() * 2 - 1; b0 = 0.99765 * b0 + w * 0.099; b1 = 0.963 * b1 + w * 0.2965; b2 = 0.57 * b2 + w * 1.0526; ch[i] = b0 + b1 + b2 + w * 0.1848; }   // qb2's pink noise; x0.004 = about -48 dBFS
+      const ns = ctx.createBufferSource(), g = ctx.createGain(); ns.buffer = nb; ns.loop = true; g.gain.value = window.__rigNoise ?? 0.004; ns.connect(g).connect(dest); ns.start();
       // Everything the viewer should hear (the user's clips and Talk's replies) is recorded into one track.
       const rec = new MediaRecorder(out.stream, { mimeType: 'audio/webm;codecs=opus' });
       rec.ondataavailable = async (e) => { if (e.data.size) { const b = new Uint8Array(await e.data.arrayBuffer()); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); window.__rigAudio(btoa(s)); } };
@@ -74,7 +74,7 @@ const MIC = () => {
   const md = navigator.mediaDevices;
   md.getUserMedia = async (c) => {
     if (!c || !c.audio) throw new DOMException('rig: audio only', 'NotSupportedError');
-    const d = ensure(); window.__rigMicOpens = (window.__rigMicOpens || 0) + 1;
+    const d = ensure(); await ctx.resume(); window.__rigMicOpens = (window.__rigMicOpens || 0) + 1;
     return new MediaStream(d.stream.getAudioTracks().map((t) => t.clone()));
   };
   md.enumerateDevices = async () => [{ kind: 'audioinput', deviceId: 'rig', groupId: 'rig', label: 'rig mic', toJSON() { return this; } }];
@@ -95,6 +95,7 @@ const audioF = fs.createWriteStream(path.join(OUT, 'audio.webm'));
 await ctx.exposeBinding('__rigAudio', (_s, b64) => { audioF.write(Buffer.from(b64, 'base64')); });
 await ctx.exposeBinding('__rigAudioStart', () => { log('audio-start'); });
 await ctx.exposeBinding('__rigPlay', (_s, src) => { log('page-audio', { src }); });
+await ctx.addInitScript(`window.__rigNoise = ${+opt('--noise', '0.004')};`);
 await ctx.addInitScript(MIC);
 const page = await ctx.newPage();
 page.on('console', (m) => { const t = m.text(); if (t.includes('"module":"talk"')) { try { log('talk', { row: JSON.parse(t) }); } catch {} } });
@@ -107,7 +108,9 @@ const FPS = +opt('--fps', '12');
 (async () => {   // 2x frames (the screencast only gives 1x), as fast as Chrome answers up to FPS
   while (running) {
     const t = Date.now();
-    try { const r = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: 85 }); fs.writeFile(path.join(OUT, 'frames', String(t - T0).padStart(9, '0') + '.jpg'), Buffer.from(r.data, 'base64'), () => {}); frames++; } catch {}
+    // Playwright's screenshot, not CDP captureScreenshot with clip.scale: that one left the page laid out 780 CSS px wide
+    // (innerWidth 780, every frame the left half of a desktop layout) in the first take of 2026-10-14.
+    try { const buf = await page.screenshot({ type: 'jpeg', quality: 85 }); fs.writeFile(path.join(OUT, 'frames', String(t - T0).padStart(9, '0') + '.jpg'), buf, () => {}); frames++; } catch {}
     const w = 1000 / FPS - (Date.now() - t); if (w > 0) await new Promise((ok) => setTimeout(ok, w));
   }
 })();
@@ -131,6 +134,7 @@ http.createServer(async (req, res) => {
       case '/tap': await page.locator(a.sel).first().tap({ timeout: +(a.timeout || 8000) }); return send(log('tap', { sel: a.sel }));
       case '/tapxy': await page.touchscreen.tap(+a.x, +a.y); return send(log('tap', { x: +a.x, y: +a.y }));
       case '/ftap': await page.frameLocator(a.frame || 'iframe').locator(a.sel).first().tap({ timeout: +(a.timeout || 8000) }); return send(log('tap', { frame: a.frame || 'iframe', sel: a.sel }));
+      case '/fselect': await page.frameLocator(a.frame || 'iframe').locator(a.sel).first().selectOption(a.value); return send(log('select', { frame: a.frame || 'iframe', sel: a.sel, value: a.value }));
       case '/type': await page.locator(a.sel).first().fill(a.text); return send(log('type', { sel: a.sel, text: a.text }));
       case '/press': await page.keyboard.press(a.key); return send(log('press', { key: a.key }));
       case '/goto': await page.goto(BASE + a.path, { waitUntil: 'load' }); return send(log('goto', { path: a.path }));
