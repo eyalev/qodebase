@@ -1355,3 +1355,40 @@ shared read path. Every model limit is far lower: at most ~30 files/s for all mo
 - ~1,000 model calls/min (75-85% of 1,260), ~1,400-1,800 files/min (~25-30 files/s), with ~180-250 agents busy.
 - Agents beyond that wait.
 - The fleet's own side runs at ~1% of the capacity S4 measured.
+
+**S5 v1: real models at their limits, one model per copy of VS Code src/vs** (4,064 files each, no batching, started
+together at 13:58).
+
+| | prediction | measured |
+|---|---|---|
+| first limit | the models (~1,000 calls/min at 75-85% of 4 x ~300) | **our own AI Gateway**: qodebase-fleet's 1,200/min sliding limit, shared by every model, answered '2003 rate limited' after ~860 calls in ~25 s. All 4 runs auto-paused at 28% 429s. Raised to 3,000/min for S5 (to go back to 1,200 after) |
+| glm-4.7-flash | 300/min (docs) | held its 400/min pace for 5 min with 0 errors: **its real limit is above 400**, beyond the documented 300 |
+| gemma-4-26b | 300/min | **'3040 capacity temporarily exceeded' from ~210-260/min** (30 of them, 33% of a window; paused twice). Workers AI ran out of gemma capacity, a ceiling below the rate limit. I had flagged 3040 as untested |
+| glm-5.3-flash | 300/min | **its own '3021 per-minute limit' at ~35/min**, and slow: p50 14.6 s, 553 output tokens a call. It was thinking, see below |
+| gemini-3.1-flash-lite | 360/min (tier 2, as seen by the manager) | **1,500 calls in one minute**, 0 429s: the project's tier is far above 360 |
+| combined peak | ~1,000/min, ~25-30 files/s | **~2,170 calls/min, ~36 files/s** (14:03-04) |
+
+What it says:
+- **The first wall was ours again**, this time a configuration value (the gateway limit).
+- **Documented per-model limits were wrong both ways.** glm-4.7 and Gemini allowed more; gemma hit capacity errors
+  below its documented limit; glm-5.3 has a separate low limit.
+- **Why glm-5.3 thought at length:** with `chat_template_kwargs: {enable_thinking: false}` glm-5.3-flash still thinks.
+  F0 measured that it needs `reasoning_effort: "low"` (6 output tokens vs 42 on a trivial call). The 553 output
+  tokens a call and the 14.6 s p50 come from that setting. Fixed per model, its rate and latency should look like F0's
+  (p50 ~14 s with the low setting, ~7k output tokens per 20 files).
+- **Cost and quality per file landed:** glm-4.7 $0.00019, gemma $0.0003, Gemini 3.1 $0.00086, with ~2,500-2,900
+  input and 85-90 output tokens a call. 0 verify failures; 21 rejected answers in 7,257 calls.
+
+**Prediction for batching** (several small files per call up to a token budget, verify per file; Eyal's next step):
+- **What it saves:** input dominates (~2,700 in vs ~90 out a call), and the fixed instructions are ~330 tokens of
+  that. So batching saves ~10-15% of tokens. Its real gain is calls: rate limits count calls, not tokens.
+- **Files per call:** with a budget of ~8k input tokens and a median file ~6 KB (~1.7k tokens), ~4 files a call, more
+  for small ones. Files/min under the same call limits rises ~3-4x: from ~36 to ~100-140 files/s at S5's call peak.
+- **Latency:** gemma and glm-4.7 grow roughly with output tokens, so ~4x per call; Gemini stays fast.
+- **Risks:**
+  - a comment keyed to the wrong file. Per-file verify cannot catch it, since the code is unchanged. Keep the answer
+    keyed by file, then by name, and refuse any key that is not in that file's targets;
+  - one bad JSON loses k files at once: retry the batch split in halves.
+- **Bench to read** (50 files, one per call vs batched): files per call, calls/min per model at the limits, latency,
+  $ per 1k files, rejected share, comments per file (batching may make the model skip more), and the 3040 rate for
+  gemma (bigger calls may hit capacity sooner).
