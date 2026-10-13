@@ -1247,7 +1247,7 @@
    "copy": 9,
    "repo": "fleet-vscode-ext-1",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -1262,9 +1262,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896123277,
+   "startedAt": 1791896127244,
    "endedAt": 1791896143622,
-   "wallS": 20,
+   "wallS": 16,
    "landWaitS": {
     "p50": 21,
     "p90": 52
@@ -1290,6 +1290,67 @@
    ],
    "copyOfKind": 1,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sx9zg",
+   "label": "comment dial L0 - copy 1",
+   "ladder": "D-L0",
+   "copy": 1,
+   "repo": "fleet-vscode-ext-1",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 348,
+   "ready": 1188,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278313,
+   "endedAt": 1791903303265,
+   "wallS": 25,
+   "landWaitS": {
+    "p50": 79,
+    "p90": 81
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 348,
+     "ready": 1188,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1272,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1272
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 264
+    }
+   ],
+   "copyOfKind": 14,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -2967,7 +3028,7 @@
    "copy": 13,
    "repo": "fleet-vscode-ext-2",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -2982,9 +3043,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896133034,
+   "startedAt": 1791896135087,
    "endedAt": 1791896153653,
-   "wallS": 21,
+   "wallS": 19,
    "landWaitS": {
     "p50": 19,
     "p90": 36
@@ -3010,6 +3071,62 @@
    ],
    "copyOfKind": 2,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxjw4",
+   "label": "comment dial L0 - copy 2",
+   "ladder": "D-L0",
+   "copy": 2,
+   "repo": "fleet-vscode-ext-2",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 394,
+   "ready": 1142,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278255,
+   "endedAt": 1791903296808,
+   "wallS": 19,
+   "landWaitS": {
+    "p50": 40,
+    "p90": 42
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 394,
+     "ready": 1142,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1536,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1536
+    }
+   ],
+   "copyOfKind": 5,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -3579,7 +3696,7 @@
    "copy": 18,
    "repo": "fleet-vscode-ext-3",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -3594,9 +3711,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896150013,
+   "startedAt": 1791896153708,
    "endedAt": 1791896171621,
-   "wallS": 22,
+   "wallS": 18,
    "landWaitS": {
     "p50": 24,
     "p90": 58
@@ -3625,8 +3742,69 @@
      "calls": 1184
     }
    ],
-   "copyOfKind": 4,
+   "copyOfKind": 5,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxu7k",
+   "label": "comment dial L0 - copy 3",
+   "ladder": "D-L0",
+   "copy": 3,
+   "repo": "fleet-vscode-ext-3",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 396,
+   "ready": 1140,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278046,
+   "endedAt": 1791903301715,
+   "wallS": 24,
+   "landWaitS": {
+    "p50": 114,
+    "p90": 116
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 396,
+     "ready": 1140,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1405,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1405
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 131
+    }
+   ],
+   "copyOfKind": 3,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -4067,7 +4245,7 @@
    "copy": 19,
    "repo": "fleet-vscode-ext-4",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -4082,9 +4260,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896150676,
+   "startedAt": 1791896153203,
    "endedAt": 1791896172217,
-   "wallS": 22,
+   "wallS": 19,
    "landWaitS": {
     "p50": 27,
     "p90": 51
@@ -4113,8 +4291,69 @@
      "calls": 1187
     }
    ],
-   "copyOfKind": 5,
+   "copyOfKind": 4,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxv2e",
+   "label": "comment dial L0 - copy 4",
+   "ladder": "D-L0",
+   "copy": 4,
+   "repo": "fleet-vscode-ext-4",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 318,
+   "ready": 1218,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903277649,
+   "endedAt": 1791903301218,
+   "wallS": 24,
+   "landWaitS": {
+    "p50": 65,
+    "p90": 67
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 318,
+     "ready": 1218,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1387,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1387
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 149
+    }
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -4713,7 +4952,7 @@
    "copy": 16,
    "repo": "fleet-vscode-ext-5",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -4728,9 +4967,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896146646,
+   "startedAt": 1791896150330,
    "endedAt": 1791896161128,
-   "wallS": 14,
+   "wallS": 11,
    "landWaitS": {
     "p50": 25,
     "p90": 57
@@ -4761,6 +5000,62 @@
    ],
    "copyOfKind": 3,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxsto",
+   "label": "comment dial L0 - copy 5",
+   "ladder": "D-L0",
+   "copy": 5,
+   "repo": "fleet-vscode-ext-5",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 491,
+   "ready": 1045,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278507,
+   "endedAt": 1791903293702,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 159,
+    "p90": 160
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 491,
+     "ready": 1045,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1536,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1536
+    }
+   ],
+   "copyOfKind": 16,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -5121,7 +5416,7 @@
    "copy": 77,
    "repo": "fleet-vscode-ext-6",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -5136,9 +5431,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896558120,
+   "startedAt": 1791896563149,
    "endedAt": 1791896609733,
-   "wallS": 52,
+   "wallS": 47,
    "landWaitS": {
     "p50": 19,
     "p90": 42
@@ -5169,6 +5464,67 @@
    ],
    "copyOfKind": 5,
    "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxsrm",
+   "label": "comment dial L0 - copy 6",
+   "ladder": "D-L0",
+   "copy": 6,
+   "repo": "fleet-vscode-ext-6",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 272,
+   "ready": 1264,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278284,
+   "endedAt": 1791903304238,
+   "wallS": 26,
+   "landWaitS": {
+    "p50": 117,
+    "p90": 119
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 272,
+     "ready": 1264,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1218,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1218
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 318
+    }
+   ],
+   "copyOfKind": 10,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -5601,7 +5957,7 @@
    "copy": 56,
    "repo": "fleet-vscode-ext-7",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -5616,9 +5972,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896546896,
+   "startedAt": 1791896549622,
    "endedAt": 1791896571793,
-   "wallS": 25,
+   "wallS": 22,
    "landWaitS": {
     "p50": 22,
     "p90": 46
@@ -5644,6 +6000,67 @@
    ],
    "copyOfKind": 3,
    "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxkdx",
+   "label": "comment dial L0 - copy 7",
+   "ladder": "D-L0",
+   "copy": 7,
+   "repo": "fleet-vscode-ext-7",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 399,
+   "ready": 1137,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278299,
+   "endedAt": 1791903302045,
+   "wallS": 24,
+   "landWaitS": {
+    "p50": 108,
+    "p90": 111
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 399,
+     "ready": 1137,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1389,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1389
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 147
+    }
+   ],
+   "copyOfKind": 13,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -6105,7 +6522,7 @@
    "copy": 61,
    "repo": "fleet-vscode-ext-8",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -6120,9 +6537,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896548855,
+   "startedAt": 1791896552511,
    "endedAt": 1791896572910,
-   "wallS": 24,
+   "wallS": 20,
    "landWaitS": {
     "p50": 18,
     "p90": 38
@@ -6148,6 +6565,67 @@
    ],
    "copyOfKind": 4,
    "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxlel",
+   "label": "comment dial L0 - copy 8",
+   "ladder": "D-L0",
+   "copy": 8,
+   "repo": "fleet-vscode-ext-8",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 430,
+   "ready": 1106,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278635,
+   "endedAt": 1791903301583,
+   "wallS": 23,
+   "landWaitS": {
+    "p50": 100,
+    "p90": 103
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 430,
+     "ready": 1106,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1373,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1373
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 163
+    }
+   ],
+   "copyOfKind": 18,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -6489,7 +6967,7 @@
    "copy": 18,
    "repo": "fleet-vscode-ext-9",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -6504,9 +6982,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896528695,
+   "startedAt": 1791896532371,
    "endedAt": 1791896557230,
-   "wallS": 29,
+   "wallS": 25,
    "landWaitS": {
     "p50": 14,
     "p90": 29
@@ -6540,13 +7018,69 @@
    }
   },
   {
+   "runId": "fmv6sx5z6",
+   "label": "comment dial L0 - copy 9",
+   "ladder": "D-L0",
+   "copy": 9,
+   "repo": "fleet-vscode-ext-9",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 378,
+   "ready": 1158,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278244,
+   "endedAt": 1791903298066,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 67,
+    "p90": 69
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 378,
+     "ready": 1158,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1536,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1536
+    }
+   ],
+   "copyOfKind": 4,
+   "copiesOfKind": 20,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
    "runId": "fmv6oxl6s",
    "label": "S4d 4,750 agents / 95 copies (cache) - copy 38",
    "ladder": "S4d",
    "copy": 38,
    "repo": "fleet-vscode-ext-10",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -6561,9 +7095,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896537476,
+   "startedAt": 1791896540887,
    "endedAt": 1791896557337,
-   "wallS": 20,
+   "wallS": 16,
    "landWaitS": {
     "p50": 20,
     "p90": 43
@@ -6597,13 +7131,74 @@
    }
   },
   {
+   "runId": "fmv6sxanu",
+   "label": "comment dial L0 - copy 10",
+   "ladder": "D-L0",
+   "copy": 10,
+   "repo": "fleet-vscode-ext-10",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 349,
+   "ready": 1187,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278297,
+   "endedAt": 1791903301586,
+   "wallS": 23,
+   "landWaitS": {
+    "p50": 75,
+    "p90": 77
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 349,
+     "ready": 1187,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1420,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1420
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 116
+    }
+   ],
+   "copyOfKind": 12,
+   "copiesOfKind": 20,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
    "runId": "fmv6oz4u9",
    "label": "S4d 4,750 agents / 95 copies (cache) - copy 94",
    "ladder": "S4d",
    "copy": 94,
    "repo": "fleet-vscode-ext-16",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -6618,9 +7213,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896609601,
+   "startedAt": 1791896613105,
    "endedAt": 1791896623760,
-   "wallS": 14,
+   "wallS": 11,
    "landWaitS": {
     "p50": 26,
     "p90": 59
@@ -6654,13 +7249,74 @@
    }
   },
   {
+   "runId": "fmv6sxsuw",
+   "label": "comment dial L0 - copy 16",
+   "ladder": "D-L0",
+   "copy": 16,
+   "repo": "fleet-vscode-ext-16",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 295,
+   "ready": 1241,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278660,
+   "endedAt": 1791903301008,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 96,
+    "p90": 99
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 295,
+     "ready": 1241,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1445,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1445
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 91
+    }
+   ],
+   "copyOfKind": 19,
+   "copiesOfKind": 20,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
    "runId": "fmv6oz2iy",
    "label": "S4d 4,750 agents / 95 copies (cache) - copy 93",
    "ladder": "S4d",
    "copy": 93,
    "repo": "fleet-vscode-ext-12",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -6675,9 +7331,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896606602,
+   "startedAt": 1791896609776,
    "endedAt": 1791896620235,
-   "wallS": 14,
+   "wallS": 10,
    "landWaitS": {
     "p50": 26,
     "p90": 58
@@ -6711,13 +7367,69 @@
    }
   },
   {
+   "runId": "fmv6sxs0p",
+   "label": "comment dial L0 - copy 12",
+   "ladder": "D-L0",
+   "copy": 12,
+   "repo": "fleet-vscode-ext-12",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 369,
+   "ready": 1167,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278539,
+   "endedAt": 1791903299469,
+   "wallS": 21,
+   "landWaitS": {
+    "p50": 121,
+    "p90": 123
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 369,
+     "ready": 1167,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1536,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1536
+    }
+   ],
+   "copyOfKind": 17,
+   "copiesOfKind": 20,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
    "runId": "fmv6oy9s0",
    "label": "S4d 4,750 agents / 95 copies (cache) - copy 85",
    "ladder": "S4d",
    "copy": 85,
    "repo": "fleet-vscode-ext-11",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -6732,9 +7444,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896569344,
+   "startedAt": 1791896572675,
    "endedAt": 1791896585903,
-   "wallS": 17,
+   "wallS": 13,
    "landWaitS": {
     "p50": 22,
     "p90": 44
@@ -6773,13 +7485,74 @@
    }
   },
   {
+   "runId": "fmv6sxd14",
+   "label": "comment dial L0 - copy 11",
+   "ladder": "D-L0",
+   "copy": 11,
+   "repo": "fleet-vscode-ext-11",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 342,
+   "ready": 1194,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278256,
+   "endedAt": 1791903301841,
+   "wallS": 24,
+   "landWaitS": {
+    "p50": 80,
+    "p90": 82
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 342,
+     "ready": 1194,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1350,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1350
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 186
+    }
+   ],
+   "copyOfKind": 6,
+   "copiesOfKind": 20,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
    "runId": "fmv6oy68c",
    "label": "S4d 4,750 agents / 95 copies (cache) - copy 83",
    "ladder": "S4d",
    "copy": 83,
    "repo": "fleet-vscode-ext-15",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -6794,9 +7567,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896564748,
+   "startedAt": 1791896567122,
    "endedAt": 1791896586398,
-   "wallS": 22,
+   "wallS": 19,
    "landWaitS": {
     "p50": 15,
     "p90": 34
@@ -6835,13 +7608,74 @@
    }
   },
   {
+   "runId": "fmv6sxfry",
+   "label": "comment dial L0 - copy 15",
+   "ladder": "D-L0",
+   "copy": 15,
+   "repo": "fleet-vscode-ext-15",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 282,
+   "ready": 1254,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278274,
+   "endedAt": 1791903304633,
+   "wallS": 26,
+   "landWaitS": {
+    "p50": 47,
+    "p90": 49
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 282,
+     "ready": 1254,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1193,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1193
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 343
+    }
+   ],
+   "copyOfKind": 9,
+   "copiesOfKind": 20,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
    "runId": "fmv6oykp8",
    "label": "S4d 4,750 agents / 95 copies (cache) - copy 91",
    "ladder": "S4d",
    "copy": 91,
    "repo": "fleet-vscode-ext-19",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -6856,9 +7690,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896583500,
+   "startedAt": 1791896590453,
    "endedAt": 1791896613887,
-   "wallS": 30,
+   "wallS": 23,
    "landWaitS": {
     "p50": 13,
     "p90": 34
@@ -6882,8 +7716,69 @@
      "calls": 1538
     }
    ],
-   "copyOfKind": 13,
+   "copyOfKind": 14,
    "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxiir",
+   "label": "comment dial L0 - copy 19",
+   "ladder": "D-L0",
+   "copy": 19,
+   "repo": "fleet-vscode-ext-19",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 316,
+   "ready": 1220,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278489,
+   "endedAt": 1791903302242,
+   "wallS": 24,
+   "landWaitS": {
+    "p50": 61,
+    "p90": 63
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 316,
+     "ready": 1220,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1319,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1319
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 217
+    }
+   ],
+   "copyOfKind": 15,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -6898,7 +7793,7 @@
    "copy": 81,
    "repo": "fleet-vscode-ext-21",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -6913,9 +7808,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896564368,
+   "startedAt": 1791896567008,
    "endedAt": 1791896587124,
-   "wallS": 23,
+   "wallS": 20,
    "landWaitS": {
     "p50": 20,
     "p90": 44
@@ -6946,6 +7841,64 @@
    ],
    "copyOfKind": 6,
    "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sulok",
+   "label": "dial smoke 60%",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-vscode-ext-21",
+   "root": "extensions",
+   "state": "done",
+   "agents": 20,
+   "agentsStarted": 20,
+   "files": 43,
+   "landed": 49,
+   "ready": 0,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903117006,
+   "endedAt": 1791903122400,
+   "wallS": 5,
+   "landWaitS": {
+    "p50": 12,
+    "p90": 13
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 49,
+     "calls": 49,
+     "rateLimited429": 0,
+     "peakPerMin": 45,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903060000,
+     "model": "cache",
+     "calls": 4
+    },
+    {
+     "minute": 1791903120000,
+     "model": "cache",
+     "calls": 45
+    }
+   ],
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -7006,7 +7959,7 @@
      "calls": 1530
     }
    ],
-   "copyOfKind": 12,
+   "copyOfKind": 10,
    "copiesOfKind": 17,
    "source": {
     "name": "VS Code extensions",
@@ -7022,7 +7975,7 @@
    "copy": 92,
    "repo": "fleet-vscode-ext-20",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -7037,9 +7990,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896585331,
+   "startedAt": 1791896587999,
    "endedAt": 1791896601016,
-   "wallS": 16,
+   "wallS": 13,
    "landWaitS": {
     "p50": 23,
     "p90": 48
@@ -7063,8 +8016,69 @@
      "calls": 1538
     }
    ],
-   "copyOfKind": 14,
+   "copyOfKind": 13,
    "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxt8g",
+   "label": "comment dial L0 - copy 20",
+   "ladder": "D-L0",
+   "copy": 20,
+   "repo": "fleet-vscode-ext-20",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 261,
+   "ready": 1275,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278294,
+   "endedAt": 1791903304481,
+   "wallS": 26,
+   "landWaitS": {
+    "p50": 64,
+    "p90": 65
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 261,
+     "ready": 1275,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1134,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1134
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 402
+    }
+   ],
+   "copyOfKind": 11,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -7079,7 +8093,7 @@
    "copy": 89,
    "repo": "fleet-vscode-ext-18",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -7094,9 +8108,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896575623,
+   "startedAt": 1791896578226,
    "endedAt": 1791896590893,
-   "wallS": 15,
+   "wallS": 13,
    "landWaitS": {
     "p50": 16,
     "p90": 37
@@ -7125,8 +8139,69 @@
      "calls": 1475
     }
    ],
-   "copyOfKind": 11,
+   "copyOfKind": 12,
    "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxhpu",
+   "label": "comment dial L0 - copy 18",
+   "ladder": "D-L0",
+   "copy": 18,
+   "repo": "fleet-vscode-ext-18",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 332,
+   "ready": 1204,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278270,
+   "endedAt": 1791903301673,
+   "wallS": 23,
+   "landWaitS": {
+    "p50": 37,
+    "p90": 39
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 332,
+     "ready": 1204,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1388,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1388
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 148
+    }
+   ],
+   "copyOfKind": 8,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -7141,7 +8216,7 @@
    "copy": 95,
    "repo": "fleet-vscode-ext-17",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -7156,9 +8231,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896618134,
+   "startedAt": 1791896620950,
    "endedAt": 1791896636760,
-   "wallS": 19,
+   "wallS": 16,
    "landWaitS": {
     "p50": 23,
     "p90": 54
@@ -7184,6 +8259,67 @@
    ],
    "copyOfKind": 17,
    "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxuh6",
+   "label": "comment dial L0 - copy 17",
+   "ladder": "D-L0",
+   "copy": 17,
+   "repo": "fleet-vscode-ext-17",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 267,
+   "ready": 1269,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903277757,
+   "endedAt": 1791903305240,
+   "wallS": 27,
+   "landWaitS": {
+    "p50": 83,
+    "p90": 84
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 267,
+     "ready": 1269,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1191,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1191
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 345
+    }
+   ],
+   "copyOfKind": 2,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -11555,7 +12691,7 @@
    "copy": 86,
    "repo": "fleet-vscode-ext-13",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -11570,9 +12706,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896569910,
+   "startedAt": 1791896577996,
    "endedAt": 1791896613490,
-   "wallS": 44,
+   "wallS": 35,
    "landWaitS": {
     "p50": 8,
     "p90": 16
@@ -11601,8 +12737,69 @@
      "calls": 1509
     }
    ],
-   "copyOfKind": 10,
+   "copyOfKind": 11,
    "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sxhi2",
+   "label": "comment dial L0 - copy 13",
+   "ladder": "D-L0",
+   "copy": 13,
+   "repo": "fleet-vscode-ext-13",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 265,
+   "ready": 1271,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278664,
+   "endedAt": 1791903305614,
+   "wallS": 27,
+   "landWaitS": {
+    "p50": 31,
+    "p90": 33
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 265,
+     "ready": 1271,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1130,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1130
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 406
+    }
+   ],
+   "copyOfKind": 20,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -11617,7 +12814,7 @@
    "copy": 84,
    "repo": "fleet-vscode-ext-14",
    "root": "extensions",
-   "state": "done",
+   "state": "ended",
    "agents": 50,
    "agentsStarted": 50,
    "files": 2328,
@@ -11632,9 +12829,9 @@
    "usd": 0,
    "tokensIn": 0,
    "tokensOut": 0,
-   "startedAt": 1791896569104,
+   "startedAt": 1791896570929,
    "endedAt": 1791896584251,
-   "wallS": 15,
+   "wallS": 13,
    "landWaitS": {
     "p50": 19,
     "p90": 41
@@ -11665,6 +12862,67 @@
    ],
    "copyOfKind": 8,
    "copiesOfKind": 17,
+   "source": {
+    "name": "VS Code extensions",
+    "upstream": "microsoft/vscode",
+    "root": "extensions",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv6sx9hy",
+   "label": "comment dial L0 - copy 14",
+   "ladder": "D-L0",
+   "copy": 14,
+   "repo": "fleet-vscode-ext-14",
+   "root": "extensions",
+   "state": "done",
+   "agents": 50,
+   "agentsStarted": 50,
+   "files": 1536,
+   "landed": 326,
+   "ready": 1210,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791903278258,
+   "endedAt": 1791903300707,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 65,
+    "p90": 66
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "landed": 326,
+     "ready": 1210,
+     "calls": 1536,
+     "rateLimited429": 0,
+     "peakPerMin": 1483,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791903240000,
+     "model": "cache",
+     "calls": 1483
+    },
+    {
+     "minute": 1791903300000,
+     "model": "cache",
+     "calls": 53
+    }
+   ],
+   "copyOfKind": 7,
+   "copiesOfKind": 20,
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",

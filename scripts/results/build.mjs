@@ -189,7 +189,8 @@ const headline = {
       realModels: d.realModels.runs.map(({ run, agents, filesPerSec, callsPerMin, limit, usd }) => ({ run, agents, filesPerSec, callsPerMin, limit, usd })),
       label: d.cached.label, realModelsLabel: d.realModels.label }; } catch { return null; } })(),
   fleetCached: F.cached,
-  fleet: { largestRun: F.totals.largestRun, filesLanded: F.totals.landed, filesAttempted: F.totals.filesAttempted, verifyRefused: F.totals.verifyRefused, usd: F.totals.usd, usdPer1kLanded: F.totals.usdPer1kLanded, runs: F.totals.runs, label: F.label },
+  fleet: { peakFilesPerSec: (() => { try { const d = JSON.parse(rd('sim/fleet/scale-ladder.json')); return Math.max(...d.realModels.runs.map((r) => r.filesPerSec || 0)) || null; } catch { return null; } })(),
+    peakNote: 'busiest stretch of the real-model runs (S5 v2b: its peak minute, 6,840 files)', largestRun: F.totals.largestRun, filesLanded: F.totals.landed, filesAttempted: F.totals.filesAttempted, verifyRefused: F.totals.verifyRefused, usd: F.totals.usd, usdPer1kLanded: F.totals.usdPer1kLanded, runs: F.totals.runs, label: F.label },
   realBuilds: { n: RB.rows.length, insideEstimateTime: RB.rows.filter((r) => r.inside.wall).length, insideEstimateCost: RB.rows.filter((r) => r.inside.usd).length,
     // Costs and walls from the rows (the settled build-estimates figures), so the headline and the table agree.
     teamVsOneAgent: (() => { const c = teamVsOneAgent(); const row = (slug) => RB.rows.find((r) => r.slug === slug);
