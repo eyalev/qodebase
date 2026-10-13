@@ -113,6 +113,10 @@ const CASES = [
   ['work_cb_tree', 'what is the packing list waiting on', { mode: ['act', 'both', 'ask'], op: 'press', label: 'Find an intent' }],
   ['work_cb_tree', 'why does photo upload exist', { mode: ['act', 'both', 'ask'], op: 'press', label: 'Find an intent' }],
   ['home', 'start a fleet job to document the VS Code editor with 100 agents', { mode: 'act', op: 'go', href: '/runs' }],
+  // qb3's recording (2026-10-14): 2a and 3a.
+  ['home_build', 'Build me a home inventory app with a team, and let people pay for a pro plan with Stripe.', { mode: 'act', op: 'type', label: 'What do you want to build', text: 'home inventory' }],
+  ['runs', "Document every exported function in VS Code's editor and add each one to the API index.", { mode: 'act', op: ['press', 'none'] }],
+  ['home', "Document every exported function in VS Code's editor and add each one to the API index.", { mode: 'act', op: 'go', href: '/runs' }],
   ['run_detail', 'back to all runs', { mode: 'act', op: ['go', 'back'], href: '#/' }],
   ['home_build', 'use the cheapest preset', { mode: 'act', op: 'press', label: 'Cheapest' }],
   ['home_build', 'set the agents to 6', { mode: 'act', op: 'type', label: 'Agents', text: '6' }],

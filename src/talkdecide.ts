@@ -170,6 +170,7 @@ export type Cmd = {
   greet?: boolean; example?: string;   // a greeting / small talk, and one of their projects to suggest
   depth?: string;                  // code: fact | explain | plan (haiku | sonnet | opus in the ask box)
   then?: string;                   // go: say this again on the page it opens (an action that lives there)
+  preset?: string;                 // type into the idea box: the Build preset to pick too (Fastest | Balanced | Cheapest)
 };
 
 /** Answers -> one command the page carries out (or hands to the chat lane). */
@@ -208,8 +209,20 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // "Go home" / "home page" is a fixed phrase: vocabulary in code, not the model (talkui's rule).
   const home = s.items.find((i) => i.kind === 'link' && i.href === '/');
   if (home && cmd.mode !== 'ask' && /\b(go|take me|back to the|bring me) home\b|\bhome ?page\b|^home$/i.test(utterance.trim())) return { ...cmd, mode: cmd.mode === 'none' ? 'act' : cmd.mode, op: 'go', href: '/', label: home.text, target: home.id };
+  // "Build me a home inventory app with a team, …" on a page with the idea box (home): the idea goes in the box, the
+  // team words pick the preset, and Build it is offered (qb3's shot 2a). Vocabulary in code.
+  const ideaBox = s.items.find((i) => i.kind === 'field' && /what do you want to build/i.test(i.text));
+  const bm = /^\s*(please\s+)?(build|make|create)\s+(me\s+|us\s+)?(.{6,})$/i.exec(utterance.trim());
+  if (ideaBox && bm && cmd.mode !== 'ask') {
+    const preset = /\b(with|as|by) a (small |big |whole )?team\b|\bteam of agents\b|\bseveral agents\b|\bmany agents\b/i.test(utterance) ? 'Balanced'
+      : /\b(one|a single|single) agent\b|\bon its own\b|\bfastest\b/i.test(utterance) ? 'Fastest' : /\bcheap(est|ly)?\b/i.test(utterance) ? 'Cheapest' : '';
+    const idea = bm[4].replace(/,?\s*\b(with|as|by) a (small |big |whole )?team( of agents)?\b|,?\s*\b(with|using) (one|a single|single) agent\b|,?\s*\b(cheaply|the cheapest way)\b/gi, '').replace(/\s+,/g, ',').replace(/^[\s,]+|[\s,.]+$/g, '');
+    return { ...cmd, mode: 'act', op: 'type', target: ideaBox.id, label: ideaBox.text, text: idea.charAt(0).toUpperCase() + idea.slice(1), preset: preset || undefined, p: 0.9, why: 'build words on the idea box' };
+  }
+  // The 1,000-agent job (qb3's shot 3a) said without the words 'fleet job'.
+  const docJob = /\b(document|comment) (every|all|each)\b.*\b(function|class|file|export)/i.test(utterance) || /\bapi index\b/i.test(utterance);
   // A fleet job (qb7's /runs action, owner only) asked for from another page: open /runs, then say it again there.
-  if (!/^\/runs/.test(s.path) && /\b(fleet job|start a fleet|run a fleet|document (the )?(api|code|comments)|doc comments)\b/i.test(utterance) && cmd.mode !== 'ask')
+  if (!/^\/runs/.test(s.path) && (docJob || /\b(fleet job|start a fleet|run a fleet|document (the )?(api|code|comments)|doc comments)\b/i.test(utterance)) && cmd.mode !== 'ask')
     return { ...cmd, mode: 'act', op: 'go', href: '/runs', label: 'Runs', p: 0.9, then: utterance, why: 'fleet jobs start on /runs' };
   // "Take me to my projects", "show my projects", "open yours": the Yours page (Eyal's phone, 2026-10-13: no confident
   // pick, and the chat lane made up /p/forq, a page that does not exist). Vocabulary in code.

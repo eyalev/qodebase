@@ -961,6 +961,14 @@ function act(c, withPreview) {
       // A button that asks again ("Stop" → "Stop this run", "Remove" → tap again): after a yes, press the second one too.
       if (c.confirmed) return followConfirm(c, before);
     }
+    else if (c.op === 'type' && target && c.preset) {
+      // The idea goes in, the preset is picked (its panel opens), then Build it is offered.
+      trace('act', { op: 'type', label: c.label, text: c.text, preset: c.preset }); typeInto(target, c.text); add('app', 'Typed \u201c' + c.text + '\u201d.');
+      var pb = [].filter.call(document.querySelectorAll('button'), function (b) { return String(b.innerText || b.textContent || '').trim().toLowerCase().indexOf(c.preset.toLowerCase()) === 0; })[0];
+      var pick = function () { if (pb) { pb.click(); add('app', 'Picked \u201c' + c.preset + '\u201d.'); trace('act', { op: 'press', label: c.preset }); } offerSubmit(target); after(); };
+      if (pb && !pb.getClientRects().length) return reveal(pb, pick);
+      return pick();
+    }
     else if (c.op === 'type' && target) { trace('act', { op: 'type', label: c.label, text: c.text }); typeInto(target, c.text); add('app', target.tagName === 'SELECT' || target.type === 'range' ? 'Set \u201c' + plainLabel(c.label) + '\u201d to ' + (target.tagName === 'SELECT' ? (target.selectedOptions[0] || {}).textContent : target.value) + '.' : 'Typed \u201c' + c.text + '\u201d.'); if (target.tagName !== 'SELECT' && target.type !== 'range') offerSubmit(target); }
     else if (c.op === 'scroll') {
       if (c.section === 'top') window.scrollTo({ top: 0, behavior: 'smooth' });
