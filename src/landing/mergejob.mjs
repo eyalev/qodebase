@@ -116,7 +116,13 @@ function applyChange(c, cfg, { defer = false } = {}) {
   const base = c.base && git(['cat-file', '-e', `${c.base}^{commit}`], { ok: true }).code === 0 ? c.base : git(['merge-base', before, c.commit]).out;
   const patch = git(['diff', '--binary', '--full-index', base, c.commit]).out + '\n';
   const files = git(['diff', '--name-only', base, c.commit]).out.split('\n').filter(Boolean);
-  if (!files.length) return { id: c.id, ok: false, empty: true, files, conflicts: [], why: 'no changes since its base' };
+  if (!files.length) {
+    // Nothing new on top of main: the work is already there (often a redo of something another change landed). It lands as
+    // an empty commit of its own, so its record is on main like every other change's (its git note): before this, 59-96
+    // landed changes per code-dial run had no commit and no note, their record only in the Landing object (2026-10-14).
+    git(['commit', '-q', '--allow-empty', '-F', '-'], { input: `${c.title || c.id}\n\n${(c.intent || '').slice(0, 4000)}\n\nNothing new on top of main: the change was already there.\n\nqodebase-change: ${c.id}\n` });
+    return { id: c.id, ok: true, how: 'merged', empty: true, files, conflicts: [], handled: [], commit: git(['rev-parse', 'HEAD']).out, before };
+  }
   const patchFile = join(DIR, '.git', 'qb.patch');   // per repo: two jobs never share it
   writeFileSync(patchFile, patch);
   const ap = git(['apply', '--3way', '--index', '--whitespace=nowarn', patchFile], { ok: true });
@@ -532,7 +538,7 @@ async function main() {
     const keep = [];
     // Every change gets another try, not only those that applied: one that collided
     // with a change now bounced may apply cleanly without it.
-    for (const c of fetched.filter((x) => !results.get(x.id)?.empty)) {
+    for (const c of fetched) {   // an empty change too: it lands as an empty commit of its own
       const tS = Date.now();
       const r = applyChange(c, cfg);
       phase('apply', tS, c.id);

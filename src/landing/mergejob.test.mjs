@@ -374,3 +374,18 @@ test('lanes: two trains at once keep every landed commit\'s note', async () => {
   assert.equal(landed.length, 5, 'five changes on main, the no-op b3 included');
   for (const c of landed) assert.ok(noted.has(c), `note for ${c.slice(0, 7)}`);
 });
+
+// A change with nothing new on top of its base (its work is already on main) lands as an empty commit of its own, with its
+// note, instead of no commit at all (59-96 such changes per code-dial run had no record on main, 2026-10-14).
+test('a change with nothing new lands as its own empty commit, with a note', () => {
+  const s = setup();
+  const real = s.fork('a', (fw) => write(fw, { 'src/a.js': 'export const a = 1;\n' }));
+  const none = { id: 'z', title: 'change z', intent: 'do z', remote: s.main, token: null, base: s.base, commit: s.base };   // nothing on top of base
+  const r = run({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', changes: [real, none] });
+  assert.equal(r.pushed, true);
+  const z = r.changes.find((c) => c.id === 'z');
+  assert.equal(z.landed, true); assert.ok(z.commit, 'z has its own commit');
+  const w = join(s.root, 'check'); g(s.root, 'clone', '-q', s.main, w); g(w, 'fetch', '-q', 'origin', '+refs/notes/qodebase:refs/notes/qodebase');
+  assert.equal(g(w, 'log', '-1', '--format=%s', z.commit), 'change z');
+  assert.match(g(w, 'notes', '--ref=qodebase', 'show', z.commit), /"change": "z"/);
+});
