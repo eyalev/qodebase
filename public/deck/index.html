@@ -297,12 +297,13 @@ body.rec .prog,body.rec .notes{display:none}
 
 
 <section class="s" data-t="Hundreds of agents, checked by tests" data-sec="C">
- <div class="claim"><h2>200 agents aimed at the same code: losses did not rise</h2><p>1,385 small coding tasks on one codebase through the real merge queue, checked by tests the agents never saw. A model redid up to 468 collided changes, wrong about as often as fresh work (~5%); at most 2 checks were lost in landing. The queue slowed; lanes per module fixed that.</p><span class="src">Measured on Cloudflare: 200 agents (Gemini 3.1 Flash-Lite, GLM-4.7 overflow), hidden tests, one run per setting; the lanes run's replays by Claude Haiku</span></div>
+ <div class="claim"><h2>200 agents aimed at the same code: losses did not rise</h2><p>1,385 small coding tasks on one codebase through the real merge queue. A model redid up to 468 collided changes, wrong about as often as fresh work (~5%); at most 2 checks were lost in landing. The queue slowed; lanes per module cut it to 53 min.</p><span class="src">Cloudflare, 200 cheap-model agents, hidden tests, one run each. Lanes run (Haiku replays): 79 lost, but 66 more landed, 32 more passing on main</span></div>
  <div class="vis"><div class="bars">
   <div class="pair"><h3>Checks lost on main, of 1,385</h3>
    <div class="bar"><div class="l"><span>No overlap</span><b>96</b></div><div class="t"><i class="dim" style="--w:100%;--d:0"></i></div></div>
-   <div class="bar"><div class="l"><span>30% aimed at the same functions</span><b>74</b></div><div class="t"><i class="acc" style="--w:77%;--d:0.15"></i></div></div>
-   <div class="bar"><div class="l"><span>60% aimed at the same functions</span><b>60</b></div><div class="t"><i class="acc" style="--w:62.5%;--d:0.3"></i></div></div>
+   <div class="bar"><div class="l"><span>30% overlap</span><b>74</b></div><div class="t"><i class="acc" style="--w:77%;--d:0.15"></i></div></div>
+   <div class="bar"><div class="l"><span>60% overlap</span><b>60</b></div><div class="t"><i class="acc" style="--w:62.5%;--d:0.3"></i></div></div>
+   <div class="bar"><div class="l"><span>60%, lanes per module</span><b>79</b></div><div class="t"><i class="warn" style="--w:82.3%;--d:0.4"></i></div></div>
   </div>
   <div class="pair"><h3>Minutes to finish</h3>
    <div class="bar"><div class="l"><span>No overlap</span><b>40</b></div><div class="t"><i class="dim" style="--w:19.3%;--d:0.5"></i></div></div>
@@ -311,7 +312,7 @@ body.rec .prog,body.rec .notes{display:none}
    <div class="bar"><div class="l"><span>60%, lanes per module</span><b>53</b></div><div class="t"><i class="acc" style="--w:25.6%;--d:0.95"></i></div></div>
  </div>
  </div></div>
- <aside class="say">Now hundreds. Two hundred cheap-model agents took almost fourteen hundred small coding tasks on one codebase, and every change went through the real merge queue. Then we aimed more and more of the tasks at the same functions, up to sixty percent. A model redid up to four hundred and sixty-eight collided changes, and they were wrong about as often as fresh work. Losses did not rise: ninety-six, seventy-four, then sixty lost checks, almost all the models' own mistakes, not the landing. What the overlap cost was time: the queue went from forty minutes to over three hours. Splitting it into lanes per module brought the worst case back to fifty-three minutes.</aside>
+ <aside class="say">Now hundreds. Two hundred cheap-model agents took almost fourteen hundred small coding tasks on one codebase, and every change went through the real merge queue. Then we aimed more and more of the tasks at the same functions, up to sixty percent. A model redid up to four hundred and sixty-eight collided changes, and they were wrong about as often as fresh work. Losses did not rise: ninety-six, seventy-four, then sixty lost checks, almost all the models' own mistakes, not the landing. What the overlap cost was time: the queue went from forty minutes to over three hours. Splitting it into lanes per module cut the worst case to fifty-three minutes; that run lost more checks, seventy-nine, but landed more, with thirty-two more requirements passing on main.</aside>
 </section>
 
 <section class="s" data-t="Scale runs" data-sec="C">
