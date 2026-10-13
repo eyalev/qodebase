@@ -73,7 +73,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 | **Durable Objects** | each project, its merge queue (Landing), every agent box, the scripted demo agents |
 | **Artifacts** | git: a repo per project, a fork per agent, change records as git notes |
 | **Containers** | agent boxes running Claude Code; the merger box that tests and lands trains |
-| **Workers AI** | Talk (speech in and out, the fast picker), the video's narration |
+| **Workers AI** | the fleet's models (with AI Gateway), Talk (speech in and out, the fast picker), the video's narration |
 
 ## Use it
 
