@@ -24,7 +24,7 @@ import { buildQuestions, candidateProjects, currentSlug, isScaffold, resolve, st
 import { TALK_JS } from './talkclient';
 import { talkAdmin } from './talkadmin';
 import { MERGE_MODEL, mergeMessages, cleanMerge } from './talkmerge';
-import { chatSystem, TOOLS, parseChat, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, toGemini, fromGemini, toAnthropic, fromAnthropic, type AnswerModel } from './talkchat';
+import { chatSystem, TOOLS, parseChat, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, PAID_FALLBACK, toGemini, fromGemini, toAnthropic, fromAnthropic, type AnswerModel } from './talkchat';
 import { TALK_VOICE_JS } from './talkvoicejs.gen';
 import { routeAgentRequest } from 'agents';
 
@@ -32,7 +32,9 @@ const DECIDE_MODEL = '@cf/cloudflare/clef-flash';
 const CHAT_MODEL = '@cf/zai-org/glm-4.7-flash';
 const STT_MODEL = '@cf/openai/whisper-large-v3-turbo';
 // Daily caps (UTC day). A person's own, and everyone's together.
-const CAPS = { usd_milli: { me: 1000, all: 5000 }, decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 }, tts_chars: { me: 20000, all: 150000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
+// usd_milli: answering-model spend in thousandths of a dollar, $1 per person a day; usd_others: everyone but the owner
+// together, $5 a day (Eyal, 2026-10-13: a burst of visitors must not drain the credits).
+const CAPS = { usd_milli: { me: 1000, all: 50000 }, usd_others: { me: 5000, all: 5000 }, decide: { me: 600, all: 5000 }, chat: { me: 150, all: 1500 }, stt: { me: 300, all: 3000 }, status: { me: 200, all: 2000 }, tts_chars: { me: 20000, all: 150000 }, voice_sec: { me: 3600, all: 36000 } };   // voice_sec: open conversation time (Flux bills it, silence too): 60 min/day each = $0.46   // tts in characters: 20k = $0.30 of Aura-1 a day each
 type Kind = keyof typeof CAPS;
 
 const log = (event: string, data: Record<string, unknown> = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'talk', event, ...data }));
@@ -201,9 +203,12 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
     } catch (e) {
       if (used.id === FALLBACK_ANSWER) throw e;
       log('answer_fallback', { level: 'warn', from: used.id, err: String(e).slice(0, 300) });
-      fellBack = `${used.label}: ${String((e as Error)?.message || e).slice(0, 120)}`;
+      fellBack = `${used.label}: ${/insufficient balance|2021/i.test(String(e)) ? 'out of Cloudflare credits' : String((e as Error)?.message || e).slice(0, 120)}`;
       if (/insufficient balance|2021/i.test(String(e))) creditsMemo = { at: Date.now(), ok: false };
-      used = answerModel(FALLBACK_ANSWER)!;
+      // A paid model failed: Gemini next (if it can), else GLM.
+      used = used.paid && (env as any).GEMINI_API_KEY ? answerModel(PAID_FALLBACK)! : answerModel(FALLBACK_ANSWER)!;
+      try { const r2 = await callAnswer(env, used, msgs as any[], tools ? TOOLS : null); spentMilli += costMilli(used, r2?.usage); return r2; }
+      catch (e2) { if (used.id === FALLBACK_ANSWER) throw e2; log('answer_fallback', { level: 'warn', from: used.id, err: String(e2).slice(0, 300) }); used = answerModel(FALLBACK_ANSWER)!; }
       const res = await callAnswer(env, used, msgs as any[], tools ? TOOLS : null);
       spentMilli += costMilli(used, res?.usage);
       return res;
@@ -235,7 +240,10 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
   }
   const { calls, reply } = out;
   log('chat', { level: 'info', handle: who.handle, path: s.path, rounds, model_ms: Date.now() - tm, total_ms: Date.now() - t0, tools: calls.map((c: any) => c.name), reply_len: reply.length, usage: res?.usage, usage2: res?.usage2 });
-  if (spentMilli) await talkLog(env).take('usd_milli', who.handle, Math.ceil(spentMilli)).catch(() => null);
+  if (spentMilli) {
+    await talkLog(env).take('usd_milli', who.handle, Math.ceil(spentMilli)).catch(() => null);
+    if (!(who.admin || isOwner(env, who.handle))) await talkLog(env).take('usd_others', 'others', Math.ceil(spentMilli)).catch(() => null);
+  }
   return { ok: true as const, reply, actions: calls.map((c: any) => ({ name: c.name, args: c.args })), ms: { model: Date.now() - tm }, left: budget.left, model: used.model, modelLabel: used.label, fellBack,
     trace: { utterance, model: used.model, chosen: pick.m.id, fellBack, usd: spentMilli / 1000, did: body?.did || '', tools: calls.map((c: any) => ({ name: c.name, args: c.args })), reply: String(reply || '').slice(0, 1500), ms: Date.now() - t0 } };
 }
@@ -253,17 +261,24 @@ async function hasCredits(env: Env): Promise<boolean> {
   catch (e) { creditsMemo = { at: Date.now(), ok: false }; log('credits_probe', { level: 'info', err: String(e).slice(0, 200) }); }
   return creditsMemo.ok;
 }
-// The owner's default is Claude Haiku 5.5 (manager, 2026-10-13: 24/24 tools right, ~2 s, $0.10/$0.50 checked against
-// the gateway's logged cost); everyone else's is Gemini 3.1 Flash-Lite.
-const defaultFor = (env: Env, who: Who & {}) => (who.admin || isOwner(env, who.handle) ? 'haiku' : DEFAULT_ANSWER);
+// Everyone's default is Claude Haiku 5.5 (24/24 tools right, ~2 s, $0.10/$0.50 checked against the gateway's logged cost).
+const defaultFor = (_env: Env, _who: Who & {}) => DEFAULT_ANSWER;
 async function pickAnswer(env: Env, who: Who & {}, id: string): Promise<{ m: AnswerModel; why: string | null }> {
   const want = answerModel(id) || answerModel(defaultFor(env, who))!;
   if (want.ownerOnly && !(who.admin || isOwner(env, who.handle))) return { m: answerModel(DEFAULT_ANSWER)!, why: `${want.label} is for the owner` };
   if (want.via === 'gemini' && !(env as any).GEMINI_API_KEY) return { m: answerModel(FALLBACK_ANSWER)!, why: 'no Gemini key on this copy' };
-  if (want.paid && !(await hasCredits(env))) return { m: answerModel(FALLBACK_ANSWER)!, why: `${want.label} needs Cloudflare credits` };
-  // The day's dollar cap (all answering models together): over it, the cheapest model only.
-  const used = await talkLog(env).counts(who.handle).catch(() => ({} as any));
-  if (want.id !== FALLBACK_ANSWER && (used.usd_milli || 0) >= CAPS.usd_milli.me) return { m: answerModel(FALLBACK_ANSWER)!, why: 'today\'s answering budget is used up' };
+  // Paid models: credits on the account, the person's $1 a day, and (for everyone but the owner) $5 a day together.
+  // Out of any of them: Gemini, and the 'how this was answered' line says why.
+  const gem = answerModel(PAID_FALLBACK)!;
+  if (want.paid) {
+    if (!(await hasCredits(env))) return { m: gem, why: `${want.label} needs Cloudflare credits` };
+    const used = await talkLog(env).counts(who.handle).catch(() => ({} as any));
+    if ((used.usd_milli || 0) >= CAPS.usd_milli.me) return { m: gem, why: 'your answering budget for today is used up' };
+    if (!(who.admin || isOwner(env, who.handle))) {
+      const all = await talkLog(env).take('usd_others', 'others', 0).catch(() => ({ ok: true }));
+      if (!all.ok) return { m: gem, why: 'today\'s shared answering budget is used up' };
+    }
+  }
   return { m: want, why: null };
 }
 const costMilli = (m: AnswerModel, u: any) => !u ? 0 : ((u.prompt_tokens || u.input_tokens || 0) * m.usdIn + (u.completion_tokens || u.output_tokens || 0) * m.usdOut) / 1000;   // $/M tokens → thousandths of a dollar
