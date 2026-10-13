@@ -15,7 +15,7 @@
 
 **Watch it work, no sign-in:** open **[qodebase.app/p/eyal/corner-cafe](https://qodebase.app/p/eyal/corner-cafe)** and tap **Watch a run**. Six scripted agents (no AI) change a small café website at once for about a minute: real commits on their own forks, real collisions, real tests, through the real merge queue. It is staged: reviews are approved automatically and the tasks are ordered so the story happens. The run with real AI agents is below.
 
-<img src="docs/img/readme-phones.jpg" width="720" alt="On the phone: 20 agents changing one project and the line of changes being tested; a change record where an AI re-did a collided change on the newest code in 19 seconds; Talk confirming one request for twelve features before it goes to the agents">
+<img src="docs/img/readme-phones.jpg" width="720" alt="On the phone: a 40-agent build with 41 of 41 changes landed; a change record where an AI re-did a collided change on the newest code in 19 seconds; the Intents view of a 4,063-file fleet run, folder by folder">
 
 ## With real AI agents
 
