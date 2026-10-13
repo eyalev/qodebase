@@ -131,7 +131,8 @@ export default {
           try { using rp = await ns(env, r).get(r); fresh = (await rp.log({ limit: 1 }))[0]?.hash === KIND_BASE[kind]; } catch {}
           return { repo: r, ...(RESERVED.includes(r) ? { reserved: true } : {}), source: { ...(SOURCES[kind] || SOURCES.main), namespace: r.startsWith(N2) ? 'qbfleet2' : 'qbfleet' }, files: ROOT_FILES[kind]?.[(SOURCES[kind] || SOURCES.main).root] ?? last?.files ?? null, folders: ROOT_FILES[kind] || null, fresh, lastRun: last ? { runId: last.runId, state: last.state, label: last.label } : null };
         }));
-        return json({ jobs: ['comments', 'comments+index'], copies: rows.sort((a, b) => a.repo.localeCompare(b.repo, 'en', { numeric: true })) });
+        // A copy whose repo cannot be opened was deleted after the experiment: never offered to the job form.
+        return json({ jobs: ['comments', 'comments+index'], copies: rows.filter((x) => x.fresh !== null).sort((a, b) => a.repo.localeCompare(b.repo, 'en', { numeric: true })) });
       }
       // The number of files a /start would queue for a folder (same walk, no queue): the job form's estimate.
       case '/count': {
