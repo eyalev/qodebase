@@ -169,6 +169,8 @@ function fakeClaude(root, mode) {
 const fs = require('fs');
 const prompt = process.argv[process.argv.indexOf('-p') + 1];
 const id = (prompt.match(/Intent: change (\\w+)/) || [])[1];
+// Like Claude Code: every write under a .git path is refused ('sensitive file').
+if (process.cwd().split('/').includes('.git')) { console.log(JSON.stringify({ is_error: true, result: 'refused: sensitive file' })); process.exit(0); }
 setTimeout(() => {
   if (process.env.FAKE_MODE === 'append') fs.appendFileSync('src/math.js', '\\nexport function f_' + id + '() {\\n  return "' + id + '";\\n}\\n');
   else { fs.mkdirSync('src', { recursive: true }); fs.writeFileSync('src/' + id + '.js', 'export const ' + id + ' = 1;\\n'); }

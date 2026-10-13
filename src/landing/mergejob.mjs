@@ -251,8 +251,11 @@ async function replayDeferred(deferred, results, applied, cfg) {
   const par = deferred.filter((d) => !deferred.some((o) => o.c.id !== d.c.id && o.c.commit === d.r.base));
   const tP = Date.now();
   const outs = await pool(par, REPLAY_PAR, async (d) => {
-    const wt = join(DIR, '.git', `qb-wt-${d.c.id.replace(/[^\w.-]/g, '_')}`);
-    git(['worktree', 'remove', '--force', wt], { ok: true }); rmSync(wt, { recursive: true, force: true });
+    // Outside .git: Claude Code refuses every write under a .git path ('sensitive file'), so a worktree in .git made each
+    // parallel replay fail and run again alone (the proof build's 5 replays all ran twice, 2026-10-13).
+    const wt = `${DIR}.wt/${d.c.id.replace(/[^\w.-]/g, '_')}`;
+    git(['worktree', 'remove', '--force', wt], { ok: true }); rmSync(wt, { recursive: true, force: true }); git(['worktree', 'prune'], { ok: true });
+    mkdirSync(`${DIR}.wt`, { recursive: true });
     git(['worktree', 'add', '-q', '--detach', wt, at]);
     try { return await replayAsync(d.c, d.r.base, d.r.unhandled, wt); }
     finally { git(['worktree', 'remove', '--force', wt], { ok: true }); }
@@ -275,7 +278,7 @@ async function replayDeferred(deferred, results, applied, cfg) {
       }
       git(['cherry-pick', '--abort'], { ok: true }); git(['reset', '-q', '--hard', before]); git(['clean', '-qfd']);
       say('replay_collided', { id: c.id, err: (cp.err || cp.out).slice(0, 200) });
-    }
+    } else if (o) say('replay_parallel_failed', { id: c.id, why: String(o.why || '').slice(0, 300) });
     // Serial: a stacked change, a replay that collided with an earlier one, or one that failed in parallel (one more try).
     const tS = Date.now();
     const s = applyChange(c, cfg);
