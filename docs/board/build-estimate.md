@@ -232,3 +232,11 @@ pace. The prior pace is 2x what the estimate's middle leaves after the first lan
 time. Backtest after the first landing: truth inside the range 84-92% of the time (v1: 74-80%), and the shown
 minutes go up on 1-5% of 15 s steps (v1: 10-27%). At the first landing the range can jump wider than the
 estimate-minus-time-gone, because the first landing came late in every real build (7-12 min).
+
+**First out-of-sample check (real-budget-tracker-10, 2026-10-13; Balanced, 12 Haiku coders, 13 parts).** The estimate
+was 14-37 min and $1.8-4.6, and the build took 1,639 s and $3.52: inside both, so the real-build fit is unchanged.
+Time left v2, replayed on its landings: the real time left was inside the range 86% of the time after the first
+landing, and the shown minutes went up on 3% of steps. "About K" ran high early (about 30 min shown at 1 landed,
+17 real). Re-tuning on all four team builds improved the median "about K" error only from 1.35x to 1.26x, so the
+constants stay. qb7's log of the deployed v1 on the same build: the range held the truth at most readings, but
+grew between landings (12-42 min at 1 landed, 2.5 min later 14-49): the reason for v2.

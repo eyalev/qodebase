@@ -533,6 +533,9 @@ export const REAL_BUILDS = [
   { slug: 'eyal/real-home-inventory-solo', at: '2026-10-13', shape: 'alone', bucket: 'large', wallS: 457, usd: 3.87, shown: { wallS: [120, 300], usd: [1.7, 3.1] } },
   // R7: R4's Huge prompt on Fastest: 863 s, $7.55 (out 201k, cache reads 7.8M, 1-h writes 244k), 44 files ~2,320 lines
   // vs R4's 71 / ~5,940 (features not compared yet). Shown 660-1800 s, $5.4-11.9 (sim ~470 s, $3.9): inside.
+  // R8 proof build (X1/X4), Balanced: 12 Haiku coders, 3 reviewers, 13 parts: 1,639 s, $3.52. Shown 840-2220 s,
+  // $1.8-4.6: inside both, out of sample (the fit above did not see it), so REAL_FIT is unchanged.
+  { slug: 'eyal/real-budget-tracker-10', at: '2026-10-13', shape: 'team', bucket: 'large', coders: 12, agents: 12, reviewers: 3, wallS: 1639, usd: 3.52, shown: { wallS: [840, 2220], usd: [1.8, 4.6] } },
   { slug: 'eyal/real-cafe-site-solo', at: '2026-10-13', shape: 'alone', bucket: 'huge', wallS: 863, usd: 7.55, shown: { wallS: [660, 1800], usd: [5.4, 11.9] } },
 ];
 // The refit on those builds (2026-10-13), applied on top of the lab-calibrated sim. Few points, so each term is
@@ -751,7 +754,9 @@ export function jobType(job = SMALL_APP, suggestion = null) {
 // slower than that). Real builds landed in trains and their last part straggled (R3 +395 s, R4 +614 s after the one
 // before): the top end adds 3 parts' time. Tuned on R3-R5's landing times (sim/remaining-backtest.mjs): truth inside
 // the range 85-91% of the time after the first landing, shown minutes going up on 0-6% of 15 s steps (v1: 74-80%,
-// 10-27%). 3 builds, in-sample: a rough fit.
+// 10-27%). 3 builds, in-sample: a rough fit. Out of sample on real-budget-tracker-10 (13 parts): inside 86% of the
+// time after the first landing, minutes going up on 3% of steps; "about K" ran high early (30 min said, 17 real).
+// Re-tuning on all four gained little (median 'about K' error 1.35x -> 1.26x), so these stay.
 export const REMAINING = { k: 4, priorX: 2, spreadLo: 1.5, spreadHi: 2, straggleParts: 3, minS: 30, minPartS: 20 };
 export function remainingTime({ parts, landed = 0, elapsedS, estimate, firstLandS = null, lastLandS = null } = {}) {
   const M = Math.max(1, Math.round(parts || 1)), n = Math.max(0, Math.min(M, Math.round(landed || 0)));
