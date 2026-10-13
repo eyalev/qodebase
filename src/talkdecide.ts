@@ -174,6 +174,14 @@ export type Cmd = {
 /** Answers -> one command the page carries out (or hands to the chat lane). */
 export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen, projects: Proj[], utterance: string): Cmd {
   const cmd = resolveAction(answers, cands, s, projects, utterance);
+  // A question a page action answers ("what is the packing list waiting on" → qb5's intent finder, "what happened at
+  // 1:20" → a run's moment): the page's own action, even when the model heard a question. Only actions the page
+  // registered (x… ids), only when the model is sure it is this page's thing.
+  const tbx = top(answers.button);
+  if (/^x/.test(tbx.choice) && (tbx.p ?? 0) >= 0.6 && (answers.on_page?.noul ?? 0) >= 0.5 && cmd.op !== 'press' && !['change', 'code', 'list'].includes(cmd.op)) {
+    const it = s.items.find((i) => i.id === tbx.choice);
+    if (it) return { ...cmd, mode: 'act', op: 'press', target: it.id, label: it.text, p: tbx.p, why: `${cmd.why || ''}; the page's own action answers it` };
+  }
   // A sentence that names the button it presses ("show the timeline tab" → Timeline) is sure enough to act, not to ask
   // "Maybe…?" (live, 2026-10-13: p 0.39). Vocabulary from the page itself.
   if (cmd.op === 'press' && (cmd.p ?? 0) < 0.45 && cmd.label) {

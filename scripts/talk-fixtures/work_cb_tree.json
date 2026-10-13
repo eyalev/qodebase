@@ -1,0 +1,90 @@
+{
+ "path": "/p/eyal/real-course-builder/work#/intents",
+ "title": "Agents at work · eyal/real-course-builder · qodebase",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "What was asked, and where each part stands"
+  },
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase home",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "eyal / real-course-builder",
+   "href": "/p/eyal/real-course-builder"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox: 58 need you",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "Agents at work",
+   "href": "#/"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "Agents at work",
+   "href": "/p/eyal/real-course-builder/work"
+  },
+  {
+   "id": "l6",
+   "kind": "link",
+   "text": "Changes",
+   "href": "/p/eyal/real-course-builder/changes"
+  },
+  {
+   "id": "l7",
+   "kind": "link",
+   "text": "App",
+   "href": "/p/eyal/real-course-builder/app"
+  },
+  {
+   "id": "l8",
+   "kind": "link",
+   "text": "Code",
+   "href": "/p/eyal/real-course-builder/code/"
+  },
+  {
+   "id": "l9",
+   "kind": "link",
+   "text": "More",
+   "href": "/p/eyal/real-course-builder/more"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Menu and account: eyal"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "A travel planner and journal. Trips with dates and places; a day-by-day itinerary with dra"
+  },
+  {
+   "id": "b3",
+   "kind": "button",
+   "text": "Add photos or screenshots"
+  },
+  {
+   "id": "f1",
+   "kind": "field",
+   "text": "Ask for a change"
+  },
+  {
+   "id": "xintent",
+   "kind": "button",
+   "text": "Find an intent by its words and say its status (what it is waiting on, why it exists)"
+  }
+ ]
+}
