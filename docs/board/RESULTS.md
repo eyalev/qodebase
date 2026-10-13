@@ -48,8 +48,8 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | index job test (src/vs/editor, 100 agents) | 1 | fleet-vscode-src-15 src/vs/editor | gemma-4-26b-a4b-it, glm-4.7-flash | 100 | 659 | 506 | 153 | 0 | 0 | 0 | $0.13 | 155 s | 14 s |
 | comment dial L60c [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 35,446 | 9 | 0 | 0 | 0 | $0.00 | 36 s | 183 s |
 | code dial 0% (K0) | 1 | fleet-kata-d0b src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 400 | 1,228 | 0 | 0 | 54 | 0 | $0.96 | 2,487 s | -1 s |
-| code dial 30% (K30) | 1 | fleet-kata-d30 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 318 | 396 | 0 | 0 | 0 | 0 | $0.15 | 2,743 s | - |
-| code dial 60% (K60) | 1 | fleet-kata-d60 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 163 | 223 | 0 | 0 | 0 | 0 | $0.09 | 2,699 s | -1 s |
+| code dial 30% (K30) | 1 | fleet-kata-d30 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 400 | 1,264 | 0 | 0 | 0 | 0 | $0.79 | 8,826 s | - |
+| code dial 60% (K60) | 1 | fleet-kata-d60 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 346 | 888 | 0 | 0 | 0 | 0 | $0.53 | 8,884 s | -1 s |
 
 Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6's series; sim.md (l)):
 
@@ -69,15 +69,15 @@ Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6's series;
 
 | model | files handled | landed | verify refused | rate-limited (share of calls) | peak calls/min | $ | $ per 1k files |
 |---|---|---|---|---|---|---|---|
-| @cf/zai-org/glm-4.7-flash | 11,445 | 8,088 | 0 | 31 (0.4%) | 587 | $1.47 | $0.13 |
+| @cf/zai-org/glm-4.7-flash | 11,464 | 8,107 | 0 | 31 (0.4%) | 587 | $1.47 | $0.13 |
 | @cf/google/gemma-4-26b-a4b-it | 8,839 | 6,225 | 0 | 23 (0.4%) | 406 | $1.86 | $0.21 |
 | gemini-3.5-flash-lite | 1,152 | 860 | 0 | 0 (0.0%) | 235 | $1.00 | $0.87 |
-| gemini-3.1-flash-lite | 26,485 | 18,568 | 0 | 51 (0.3%) | 1,500 | $16.05 | $0.61 |
+| gemini-3.1-flash-lite | 27,999 | 20,082 | 0 | 51 (0.2%) | 1,500 | $17.12 | $0.61 |
 | @cf/zai-org/glm-5.3-flash | 223 | 98 | 0 | 63 (35.8%) | 50 | $0.08 | $0.34 |
 
 Cached-answer runs (measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real): 312 runs, 408,165 files, 309,139 landed, 0 refused by verify. Not counted in the model totals below.
 
-Model-written totals: 33,839 files landed of 47,503 attempted over 33 runs (14,065 needed no comment); 0 refused by the code-unchanged check; $20.45 ($0.43 per 1k files).
+Model-written totals: 35,372 files landed of 47,768 attempted over 33 runs (14,065 needed no comment); 0 refused by the code-unchanged check; $21.53 ($0.45 per 1k files).
 
 Quality (qb9's F4 check, sim/fleet/quality.json; measured on main 0f3ba876 vs base d4793e33): 3,029 files changed, **code changed on re-verify: 0**; automatic checks over 6,542 comments: invented params 0, missing params 0, @returns on void 0, trivial 0.
 
@@ -116,11 +116,13 @@ Across dial 0-60% (1,000 agents) throughput stayed ~1,100-1,280 tasks/s and land
 
 **Code dial.** measured on Cloudflare: kata (sim/kata/seed-1, hidden tests in lab-hidden), 1,385 tasks per level, 200 fleet agents (Gemini 3.1 flash-lite, glm-4.7 overflow), every change through qodebase's real merge queue (trains of 8, bounces, model replays); checked on main by lab-hidden/kata/check.mjs --attribute (each lost requirement replayed on the commit where it landed). Prediction: docs/board/sim.md (m).
 
-| dial | wall | landed (clean / redo / replayed) | requirements passing on main | requirement lost: wrong at landing / later agent dropped it / lost in landing | base lost: wrong at landing / dropped later | models $ |
+| dial | wall | landed (clean / redo / replayed) | requirements passing on main | requirement lost: wrong at landing / later agent dropped it / lost in landing | base lost: wrong at landing / dropped later / lost in landing | models $ |
 |---|---|---|---|---|---|---|
-| 0% | 40 min | 1,228 (1,118 / 96 / 26) | 1,241 / 1,385 | 63: 53 / 9 / 1 | 33: 23 / 10 | $0.96 |
+| 0% | 40 min | 1,228 (1,118 / 96 / 26) | 1,241 / 1,385 | 63: 53 / 9 / 1 | 33: 23 / 10 / 0 | $0.96 |
+| 30% | 145 min | 1,264 (998 / 168 / 229) | 1,247 / 1,385 | 48: 45 / 2 / 1 | 26: 21 / 4 / 1 | $0.79 |
 
 Dial 0%: At dial 0 the losses are model mistakes: 76 of 96 were already wrong in the commit where they landed, 19 were dropped by a later agent that read main with the requirement in; 1 lost in landing (a redo that started before the requirement landed; the redo's start time is approximate). 54 rejected = a harness bug (stale fork read; fixed 16:38), 22 cut by deploys.
+Dial 30%: Clustering 30% of the tasks did not raise losses (74 vs 96 at dial 0): 66 of 74 were already wrong in the commit where they landed, 53 of them clean merges (the model wrote it wrong), 11 among 229 model replays (~5%, the same rate as fresh work, 53 of 998 clean). 6 dropped by a later agent that read main with the requirement in (4 of them exact by base_sha). 2 lost in landing, both judged by the time rule (their breakers predate base_sha): an upper bound. What clustering cost is time: 145 min vs 40 at dial 0, 238 redos and 229 replays (predicted ~299 replays, 36-61 min: the replays were right, the wall 2.4-4x longer than predicted). glm-4.7 (overflow, 49 tasks) lost 11; Gemini flash-lite 55 of 1,328.
 
 ## Real builds inside qodebase (R2-R8b)
 

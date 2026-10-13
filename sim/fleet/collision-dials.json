@@ -155,6 +155,62 @@
      }
     },
     "note": "At dial 0 the losses are model mistakes: 76 of 96 were already wrong in the commit where they landed, 19 were dropped by a later agent that read main with the requirement in; 1 lost in landing (a redo that started before the requirement landed; the redo's start time is approximate). 54 rejected = a harness bug (stale fork read; fixed 16:38), 22 cut by deploys."
+   },
+   {
+    "dial": 30,
+    "project": "eyal/kata-d30",
+    "wallMin": 145,
+    "usd": 0.79,
+    "tasks": 1385,
+    "clusteredTasks": 418,
+    "landed": 1264,
+    "landedByResolution": {
+     "merged": 998,
+     "replayed-llm": 98,
+     "redo+replayed-llm": 131,
+     "redo+merged": 37
+    },
+    "bouncedTwice": 113,
+    "redos": 238,
+    "modelReplays": 229,
+    "noFinalRecord": 8,
+    "requirementsPassing": 1247,
+    "requirements": 1385,
+    "functionsAllPassing": 313,
+    "casesPassed": 5979,
+    "cases": 6340,
+    "requirementLost": 48,
+    "requirementLostClustered": 12,
+    "requirementLostSpread": 36,
+    "baseLost": 26,
+    "attribution": {
+     "cr": {
+      "wrongAtLanding": 45,
+      "laterAgentDroppedIt": 2,
+      "concurrentLostInLanding": 1
+     },
+     "base": {
+      "wrongAtLanding": 21,
+      "laterAgentDroppedIt": 4,
+      "concurrentLostInLanding": 1
+     }
+    },
+    "byModel": {
+     "gemini-3.1-flash-lite": {
+      "tasks": 1328,
+      "lost": 55
+     },
+     "glm-4.7-flash": {
+      "tasks": 49,
+      "lost": 11
+     }
+    },
+    "prediction": {
+     "replays": 299,
+     "wallMin": "36-61",
+     "requirementLost": "3-30, all among replayed"
+    },
+    "note": "Clustering 30% of the tasks did not raise losses (74 vs 96 at dial 0): 66 of 74 were already wrong in the commit where they landed, 53 of them clean merges (the model wrote it wrong), 11 among 229 model replays (~5%, the same rate as fresh work, 53 of 998 clean). 6 dropped by a later agent that read main with the requirement in (4 of them exact by base_sha). 2 lost in landing, both judged by the time rule (their breakers predate base_sha): an upper bound. What clustering cost is time: 145 min vs 40 at dial 0, 238 redos and 229 replays (predicted ~299 replays, 36-61 min: the replays were right, the wall 2.4-4x longer than predicted). glm-4.7 (overflow, 49 tasks) lost 11; Gemini flash-lite 55 of 1,328."
    }
   ]
  }

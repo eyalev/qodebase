@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T17:16:53.746Z",
+ "generated": "2026-10-13T18:59:42.371Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -150,11 +150,11 @@
      "@cf/zai-org/glm-4.7-flash"
     ]
    },
-   "filesLanded": 33839,
-   "filesAttempted": 47503,
+   "filesLanded": 35372,
+   "filesAttempted": 47768,
    "verifyRefused": 0,
-   "usd": 20.45,
-   "usdPer1kLanded": 0.6,
+   "usd": 21.53,
+   "usdPer1kLanded": 0.61,
    "runs": 33,
    "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
   },
@@ -309,6 +309,62 @@
       }
      },
      "note": "At dial 0 the losses are model mistakes: 76 of 96 were already wrong in the commit where they landed, 19 were dropped by a later agent that read main with the requirement in; 1 lost in landing (a redo that started before the requirement landed; the redo's start time is approximate). 54 rejected = a harness bug (stale fork read; fixed 16:38), 22 cut by deploys."
+    },
+    {
+     "dial": 30,
+     "project": "eyal/kata-d30",
+     "wallMin": 145,
+     "usd": 0.79,
+     "tasks": 1385,
+     "clusteredTasks": 418,
+     "landed": 1264,
+     "landedByResolution": {
+      "merged": 998,
+      "replayed-llm": 98,
+      "redo+replayed-llm": 131,
+      "redo+merged": 37
+     },
+     "bouncedTwice": 113,
+     "redos": 238,
+     "modelReplays": 229,
+     "noFinalRecord": 8,
+     "requirementsPassing": 1247,
+     "requirements": 1385,
+     "functionsAllPassing": 313,
+     "casesPassed": 5979,
+     "cases": 6340,
+     "requirementLost": 48,
+     "requirementLostClustered": 12,
+     "requirementLostSpread": 36,
+     "baseLost": 26,
+     "attribution": {
+      "cr": {
+       "wrongAtLanding": 45,
+       "laterAgentDroppedIt": 2,
+       "concurrentLostInLanding": 1
+      },
+      "base": {
+       "wrongAtLanding": 21,
+       "laterAgentDroppedIt": 4,
+       "concurrentLostInLanding": 1
+      }
+     },
+     "byModel": {
+      "gemini-3.1-flash-lite": {
+       "tasks": 1328,
+       "lost": 55
+      },
+      "glm-4.7-flash": {
+       "tasks": 49,
+       "lost": 11
+      }
+     },
+     "prediction": {
+      "replays": 299,
+      "wallMin": "36-61",
+      "requirementLost": "3-30, all among replayed"
+     },
+     "note": "Clustering 30% of the tasks did not raise losses (74 vs 96 at dial 0): 66 of 74 were already wrong in the commit where they landed, 53 of them clean merges (the model wrote it wrong), 11 among 229 model replays (~5%, the same rate as fresh work, 53 of 998 clean). 6 dropped by a later agent that read main with the requirement in (4 of them exact by base_sha). 2 lost in landing, both judged by the time rule (their breakers predate base_sha): an upper bound. What clustering cost is time: 145 min vs 40 at dial 0, 238 redos and 229 replays (predicted ~299 replays, 36-61 min: the replays were right, the wall 2.4-4x longer than predicted). glm-4.7 (overflow, 49 tasks) lost 11; Gemini flash-lite 55 of 1,328."
     }
    ],
    "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off unless marked \"+ claims\" (an agent claims its declarations before reading the file); collisions = pairs of tasks started at the same moment"
@@ -471,6 +527,62 @@
       }
      },
      "note": "At dial 0 the losses are model mistakes: 76 of 96 were already wrong in the commit where they landed, 19 were dropped by a later agent that read main with the requirement in; 1 lost in landing (a redo that started before the requirement landed; the redo's start time is approximate). 54 rejected = a harness bug (stale fork read; fixed 16:38), 22 cut by deploys."
+    },
+    {
+     "dial": 30,
+     "project": "eyal/kata-d30",
+     "wallMin": 145,
+     "usd": 0.79,
+     "tasks": 1385,
+     "clusteredTasks": 418,
+     "landed": 1264,
+     "landedByResolution": {
+      "merged": 998,
+      "replayed-llm": 98,
+      "redo+replayed-llm": 131,
+      "redo+merged": 37
+     },
+     "bouncedTwice": 113,
+     "redos": 238,
+     "modelReplays": 229,
+     "noFinalRecord": 8,
+     "requirementsPassing": 1247,
+     "requirements": 1385,
+     "functionsAllPassing": 313,
+     "casesPassed": 5979,
+     "cases": 6340,
+     "requirementLost": 48,
+     "requirementLostClustered": 12,
+     "requirementLostSpread": 36,
+     "baseLost": 26,
+     "attribution": {
+      "cr": {
+       "wrongAtLanding": 45,
+       "laterAgentDroppedIt": 2,
+       "concurrentLostInLanding": 1
+      },
+      "base": {
+       "wrongAtLanding": 21,
+       "laterAgentDroppedIt": 4,
+       "concurrentLostInLanding": 1
+      }
+     },
+     "byModel": {
+      "gemini-3.1-flash-lite": {
+       "tasks": 1328,
+       "lost": 55
+      },
+      "glm-4.7-flash": {
+       "tasks": 49,
+       "lost": 11
+      }
+     },
+     "prediction": {
+      "replays": 299,
+      "wallMin": "36-61",
+      "requirementLost": "3-30, all among replayed"
+     },
+     "note": "Clustering 30% of the tasks did not raise losses (74 vs 96 at dial 0): 66 of 74 were already wrong in the commit where they landed, 53 of them clean merges (the model wrote it wrong), 11 among 229 model replays (~5%, the same rate as fresh work, 53 of 998 clean). 6 dropped by a later agent that read main with the requirement in (4 of them exact by base_sha). 2 lost in landing, both judged by the time rule (their breakers predate base_sha): an upper bound. What clustering cost is time: 145 min vs 40 at dial 0, 238 redos and 229 replays (predicted ~299 replays, 36-61 min: the replays were right, the wall 2.4-4x longer than predicted). glm-4.7 (overflow, 49 tasks) lost 11; Gemini flash-lite 55 of 1,328."
     }
    ]
   }
@@ -1635,14 +1747,14 @@
      "fleet-kata-d30 src/vs"
     ],
     "agents": 200,
-    "files": 318,
-    "landed": 396,
+    "files": 400,
+    "landed": 1264,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
-    "usd": 0.1496,
-    "wallS": 2743,
+    "usd": 0.789,
+    "wallS": 8826,
     "landWaitP90S": null,
     "firstAt": 1791909049479
    },
@@ -1658,14 +1770,14 @@
      "fleet-kata-d60 src/vs"
     ],
     "agents": 200,
-    "files": 163,
-    "landed": 223,
+    "files": 346,
+    "landed": 888,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
-    "usd": 0.0911,
-    "wallS": 2699,
+    "usd": 0.5257,
+    "wallS": 8884,
     "landWaitP90S": -1,
     "firstAt": 1791909049547
    }
@@ -15712,42 +15824,42 @@
      "@cf/zai-org/glm-4.7-flash",
      "gemini-3.1-flash-lite"
     ],
-    "state": "running",
+    "state": "done",
     "tokensIn": 0,
     "tokensOut": 0,
     "agents": 200,
     "agentsStarted": 200,
-    "files": 318,
-    "landed": 396,
+    "files": 400,
+    "landed": 1264,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
-    "usd": 0.1496,
+    "usd": 0.789,
     "startedAt": 1791909049479,
-    "endedAt": 1791911792683,
-    "wallS": 2743,
+    "endedAt": 1791917875774,
+    "wallS": 8826,
     "landWaitP50S": -2,
     "landWaitP90S": 0,
     "peakPerMin": null,
     "perModel": {
      "@cf/zai-org/glm-4.7-flash": {
-      "usd": 0.0068,
-      "landed": 48,
-      "calls": 48,
+      "usd": 0.0071,
+      "landed": 49,
+      "calls": 49,
       "rateLimited429": 0,
       "peakPerMin": 7,
       "role": "overflow"
      },
      "gemini-3.1-flash-lite": {
-      "usd": 0.1427,
-      "bounced": 3,
-      "landed": 348,
-      "calls": 351,
+      "usd": 0.7819,
+      "bounced": 113,
+      "landed": 1215,
+      "calls": 1328,
       "rateLimited429": 0,
-      "peakPerMin": 15,
+      "peakPerMin": 27,
       "role": "planned"
      }
     },
@@ -15766,38 +15878,38 @@
     "tokensOut": 0,
     "agents": 200,
     "agentsStarted": 200,
-    "files": 163,
-    "landed": 223,
+    "files": 346,
+    "landed": 888,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
-    "usd": 0.0911,
+    "usd": 0.5257,
     "startedAt": 1791909049547,
-    "endedAt": 1791911748940,
-    "wallS": 2699,
+    "endedAt": 1791917933076,
+    "wallS": 8884,
     "landWaitP50S": -2,
     "landWaitP90S": -1,
     "peakPerMin": null,
     "perModel": {
      "@cf/zai-org/glm-4.7-flash": {
-      "usd": 0.006,
-      "bounced": 2,
-      "landed": 44,
-      "calls": 46,
+      "usd": 0.0131,
+      "bounced": 4,
+      "landed": 62,
+      "calls": 66,
       "rateLimited429": 0,
       "peakPerMin": 6,
       "role": "overflow"
      },
      "gemini-3.1-flash-lite": {
-      "usd": 0.0851,
-      "bounced": 8,
-      "landed": 179,
-      "calls": 187,
+      "usd": 0.5127,
+      "bounced": 73,
+      "landed": 826,
+      "calls": 899,
       "rateLimited429": 0,
-      "peakPerMin": 14,
+      "peakPerMin": 17,
       "role": "planned"
      }
     },
@@ -15808,18 +15920,18 @@
   ],
   "perModel": {
    "@cf/zai-org/glm-4.7-flash": {
-    "files": 11445,
-    "landed": 8088,
+    "files": 11464,
+    "landed": 8107,
     "skipped": 3339,
     "verifyFail": 0,
     "rejected": 18,
     "rateLimited": 31,
-    "calls": 8217,
-    "usd": 1.4669,
+    "calls": 8238,
+    "usd": 1.4743,
     "peakPerMin": 587,
     "roles": {
      "planned": 11276,
-     "overflow": 151
+     "overflow": 170
     },
     "usdPer1kFiles": 0.13,
     "share429": 0.004
@@ -15857,21 +15969,21 @@
     "share429": 0
    },
    "gemini-3.1-flash-lite": {
-    "files": 26485,
-    "landed": 18568,
+    "files": 27999,
+    "landed": 20082,
     "skipped": 7724,
     "verifyFail": 0,
     "rejected": 193,
     "rateLimited": 51,
-    "calls": 19066,
-    "usd": 16.0487,
+    "calls": 20755,
+    "usd": 17.1155,
     "peakPerMin": 1500,
     "roles": {
-     "planned": 9245,
+     "planned": 10759,
      "overflow": 17047
     },
     "usdPer1kFiles": 0.61,
-    "share429": 0.003
+    "share429": 0.002
    },
    "@cf/zai-org/glm-5.3-flash": {
     "files": 223,
@@ -15892,15 +16004,15 @@
   },
   "totals": {
    "runs": 33,
-   "filesAttempted": 47503,
-   "landed": 33839,
+   "filesAttempted": 47768,
+   "landed": 35372,
    "skipped": 14065,
    "verifyRefused": 0,
    "rejected": 240,
    "rateLimited": 3,
-   "usd": 20.45,
-   "usdPer1kLanded": 0.6,
-   "usdPer1kFiles": 0.43,
+   "usd": 21.53,
+   "usdPer1kLanded": 0.61,
+   "usdPer1kFiles": 0.45,
    "largestRun": {
     "runId": "fmv6qw9jf",
     "agents": 120,

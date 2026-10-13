@@ -1546,3 +1546,17 @@ queue sets the time.
 - **Requirement lost** ≈ replays x pLost. At pLost 1-10%: **dial 30 ~3-30, dial 60 ~6-60**, all among
   `resolution: replayed`. The checker splits lost requirements by resolution (clean / replayed / lead). A loss on a
   'clean' landing would be a new kind of bug.
+
+**Measured, dial 30** (qb6, eyal/kata-d30, 2026-10-13; checker with --attribute):
+- **Replays: right order of size.** 229 model replays against the predicted ~299, plus 238 redos (bounces back to the
+  agent), which the prediction did not count separately.
+- **Wall: 145 min, against the predicted 36-61 min** (2.4-4x longer); dial 0 took 40 min. Redos added agent
+  task-times and further queue passes, which the table priced at zero.
+- **Losses did not rise with clustering:** 74 at dial 30 vs 96 at dial 0.
+  - 66 were already wrong in the commit where they landed. 53 of these were clean merges, where the model wrote it
+    wrong. 11 came from the 229 replays: ~5%, the same rate as fresh work (53 of 998 clean merges).
+  - 6 were dropped by a later agent that read main with the requirement in (4 exact by base_sha).
+  - 2 were lost in landing. Both were judged by the time rule, since their breakers predate base_sha, so 2 is an
+    upper bound.
+- **The prediction's "losses only among replayed" was wrong:** most losses are the models' own mistakes, whatever the
+  resolution. The queue lost at most 2 of 1,264 landed changes.
