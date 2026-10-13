@@ -566,7 +566,10 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
     const started = bi?.estimate?.startedAt || 0, settled = bi?.progress?.settledAt || 0;
     const usd = (x: number | null | undefined) => x == null ? '' : x < 1 ? `${Math.round(x * 100)} cents` : `$${x.toFixed(2)}`;
     const moved = Math.max(started, ...((info.agents || []) as any[]).map((a) => a.noteAt || a.createdAt || 0));
-    if (started && !settled && Date.now() - moved > STALL_MS) {
+    // Stopped by hand (every agent 'stopped', qb6's admin verb): not news, neither stuck nor in progress.
+    const live = ((info.agents || []) as any[]).filter((a) => a.state !== 'stopped');
+    if (started && !settled && (info.agents || []).length && !live.length) { /* stopped build */ }
+    else if (started && !settled && Date.now() - moved > STALL_MS) {
       // Stuck: one line in 'Waiting for you' for the build, instead of its agents one by one.
       for (let k = stalled.length - 1; k >= 0; k--) if (stalled[k].proj === info.name) stalled.splice(k, 1);
       stalled.push({ t: `${info.name}: no progress for ${ago(moved)} (${landed} of ${ch.length || '?'} changes on main). Stop it?`, href: `${base}/work`, proj: info.name });
