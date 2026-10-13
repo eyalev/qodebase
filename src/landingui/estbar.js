@@ -30,25 +30,41 @@
     return `<div class="eb-row eb-parts"><b>${all ? `All ${M} parts landed` : `${N} of ${M} parts landed`}</b>${done || all ? '' : `<span class="eb-x">${esc(b.leftText || left(b.remainingS))}</span>`}</div>
       <div class="eb-track eb-ptrack" role="img" aria-label="${N} of ${M} parts landed"><i class="eb-fill" style="width:${pct(Math.min(N, M), M)}"></i></div>`;
   }
+  // qb6 (#5, from the 23:00 deploy): a change whose agent's box never started gets the event 'its box had not started:
+  // woken', and an agent whose box stopped before its task is 'blocked' with that note. -> 'Agent N' (or 'an agent').
+  window.qbStuckAgent = function (view, name) {
+    const never = (x) => /box had not started|never started/i.test(JSON.stringify(x || ''));
+    const c = ((view && view.changes) || []).find((c) => c.state !== 'landed' && (c.events || []).some(never));
+    const a = c ? null : ((view && view.agents) || []).find((a) => a.state === 'blocked' && never(a));
+    const id = c ? c.agent : a ? a.id || a.agent : null;
+    if (!c && !a) return null;
+    try { console.log(JSON.stringify({ module: 'estbar', event: 'stuck_agent', agent: id })); } catch (e) {}
+    return name ? name(id) : 'an agent';
+  };
   window.qbEstBar = function (est, prog, now = Date.now(), billing = null, build = null) {
     if (!est || !Array.isArray(est.wallS) || !est.startedAt) return '';
     const p = prog || {}, done = !!p.settledAt;
-    const el = done ? (p.actualWallS ?? (p.settledAt - est.startedAt) / 1000) : (now - est.startedAt) / 1000;
+    // qb3's rehearsal (#9): after 'All 8 parts landed' the clock and the cost kept rising while the boxes wound down. Once
+    // every planned part is on main, both stop at the last landing (qb6: build.settledAt / lastLandedAt, usdAtLastLanding).
+    const B = build || {}, allIn = !done && B.parts && (B.landed || 0) >= B.parts, stopAt = allIn ? B.settledAt || B.lastLandedAt || null : null;
+    const fin = done || !!stopAt;
+    const el = done ? (p.actualWallS ?? (p.settledAt - est.startedAt) / 1000) : stopAt ? (stopAt - est.startedAt) / 1000 : (now - est.startedAt) / 1000;
     const [lo, hi] = est.wallS;
     // Review 2 (#3): a finished build shows its real record first; the range is the estimate shown at the time, and
     // estimates made before the refit on real builds (no realBuilds field) say so.
     const old = done && !est.realBuilds;
-    const exp = done ? 'estimated' : 'expected';
-    const state = done ? (el > hi ? 'Took longer than estimated' : el < lo ? 'Faster than estimated' : 'Within the estimate')
-      : el > hi ? 'Taking longer than expected' : el >= lo ? 'Within the expected range' : 'On track';
-    const late = el > hi;
-    const cost = done ? p.actualUsd : p.spentUsd;
+    const exp = fin ? 'estimated' : 'expected';
+    // qb6 (#5): an agent whose box never started holds the build; say so instead of 'On track'
+    const state = fin ? (el > hi ? 'Took longer than estimated' : el < lo ? 'Faster than estimated' : 'Within the estimate')
+      : B.stuck ? `Stuck: ${B.stuck} never started` : el > hi ? 'Taking longer than expected' : el >= lo ? 'Within the expected range' : 'On track';
+    const late = el > hi || (!fin && !!B.stuck);
+    const cost = done ? p.actualUsd : stopAt && B.usdAtLastLanding != null ? B.usdAtLastLanding : p.spentUsd;
     // On the person's Claude plan (qb6: billing 'sub'), the dollars are what the same work costs at API prices.
     const plan = (billing || p.billing || est.billing) === 'sub';   // qb6: info.billing, next to estimate/progress
-    const costRow = Array.isArray(est.apiUsd) ? `<div class="eb-row"><span class="eb-k">${plan ? (done ? 'API-equivalent' : 'API-equivalent so far') : done ? 'Cost' : 'Cost so far'}</span>${cost == null ? '<span class="eb-k">not known yet</span>' : `<b>${usd(cost)}</b>`}<span class="eb-x">${exp} ${span(est.apiUsd, usd)}</span></div>
+    const costRow = Array.isArray(est.apiUsd) ? `<div class="eb-row"><span class="eb-k">${plan ? (fin ? 'API-equivalent' : 'API-equivalent so far') : fin ? 'Cost' : 'Cost so far'}</span>${cost == null ? '<span class="eb-k">not known yet</span>' : `<b>${usd(cost)}</b>`}<span class="eb-x">${exp} ${span(est.apiUsd, usd)}</span></div>
       ${cost == null ? '' : bar(cost, est.apiUsd[0], est.apiUsd[1], cost > est.apiUsd[1] ? 'eb-late' : '')}` : '';
     return `<section class="estbar${late ? ' eb-over' : ''}" aria-label="Estimated and actual time and cost">${partsRow(build, done)}
-      <div class="eb-row"><span class="eb-k">${done ? 'Took' : 'Elapsed'}</span><b${done ? '' : ` data-eb-since="${est.startedAt}"`}>${clock(el)}</b><span class="eb-x">${exp} ${span(est.wallS, mins)}</span></div>
+      <div class="eb-row"><span class="eb-k">${fin ? 'Took' : 'Elapsed'}</span><b${fin ? '' : ` data-eb-since="${est.startedAt}"`}>${clock(el)}</b><span class="eb-x">${exp} ${span(est.wallS, mins)}</span></div>
       ${bar(el, lo, hi, late ? 'eb-late' : '')}
       <p class="eb-state">${esc(state)}</p>
       ${costRow}
@@ -96,6 +112,7 @@
             if (S?.remainingTime && est) { const t = S.remainingTime({ parts: b.parts, landed: b.landed, elapsedS: (Date.now() - (est.startedAt || Date.now())) / 1000, estimate: { wallS: est.wallS }, firstLandS: b.firstLandedAt && est.startedAt ? (b.firstLandedAt - est.startedAt) / 1000 : null }); if (t && t.phase === 'over') b.leftText = t.text; }
           } catch (e) { console.log(JSON.stringify({ module: 'estbar', event: 'remaining_failed', error: String(e) })); }
         }
+        if (b && !b.stuck) b.stuck = window.qbStuckAgent ? window.qbStuckAgent(j) : null;
         w.last = b; w.cbs.forEach((f) => { try { f(b, j); } catch (e) {} });
         if (b && b.settledAt) { w.timer = -1; return; }
       } catch (e) { console.log(JSON.stringify({ module: 'estbar', event: 'build_poll_failed', error: String(e) })); }

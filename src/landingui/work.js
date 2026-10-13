@@ -609,7 +609,7 @@
   function estTop() {
     if (!D.estimate || !window.qbEstBar) return '';
     if (!document.getElementById('estbar-css')) { const st = document.createElement('style'); st.id = 'estbar-css'; st.textContent = window.QB_ESTBAR_CSS; document.head.appendChild(st); }
-    return window.qbEstBar(D.estimate, D.progress, Date.now(), D.billing || null, D.build || null);
+    return window.qbEstBar(D.estimate, D.progress, Date.now(), D.billing || null, D.build ? { ...D.build, stuck: window.qbStuckAgent ? window.qbStuckAgent(D, (id) => AG(id)) : null } : null);
   }
   // ---- One screen (Eyal, 2026-10-12: "everything should fit inside one phone screen ... WITHOUT SCROLLING") --------
   // A status strip, the pipeline as the picture (one chip per change, moving Working -> Review -> In line -> Landed),
@@ -650,6 +650,9 @@
     const total = Math.max(dm.tasks || 0, D.changes.length), idle = !live && !replay && !isStarting;
     const kick = MOCK ? 'Sample data, played in a loop' : replay ? `Replay of a run from ${hhmm(P.realStart)}, ${P.speed}× speed` : D.mode === 'demo' ? 'Scripted demo: real git, real tests, no AI' : 'Real AI agents';
     const tm = replay ? '' : live && dm.startedAt ? `running <span data-el="${dm.startedAt}">${elTxt(dm.startedAt)}</span>` : '';
+    // One counter (qb3's rehearsal: '0 of 8 parts landed' sat above '0 of 1 landed'): when the build's estimate bar shows
+    // its planned parts, this strip leaves the count to it.
+    const partsShown = !!(D.estimate && D.build && D.build.parts && !replay);
     const head = isStarting ? 'Starting the run' : idle ? (landed ? `${n0(landed)} of ${n0(total)} landed in the last run` : 'Nothing has run yet') : `${n0(landed)} of ${n0(total || landed)} landed`;
     const speedChips = (on) => [1, 2, 4].map((x) => `<button class="chipb sp" type="button" data-speed="${x}" aria-pressed="${on === x}">${x}×</button>`).join('');
     const left = W.maxPerDay ? Math.max(0, W.maxPerDay - (W.runsToday || 0)) : null;
@@ -658,7 +661,7 @@
       : live && OWN && !MOCK && D.mode === 'demo' ? `<div class="sacts">${ownerCtl(true)}</div>` : ''
     const ctl = runCtl(live);
     return `<div class="sstrip"><p class="skick"><i class="live${(live || isStarting) && !RUN().paused && !RUN().stopped ? '' : ' off'}"></i><span>${kick}${RUN().stopped ? ', stopped' : RUN().paused ? ', paused' : ''}</span>${tm ? `<span class="stm">${tm}</span>` : ''}</p>
-      <p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>${acts}${ctl}</div>`;
+      ${partsShown ? '' : `<p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>`}${acts}${ctl}</div>`;
   }
   function pipeline() {
     const rp = (c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying');

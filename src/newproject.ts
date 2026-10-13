@@ -57,6 +57,7 @@ export const BUILD_CSS = `
 .vis input[type=radio]{flex:none;width:20px;height:20px;min-height:0;margin:1px 0 0;padding:0;border:0;border-radius:50%;background:none;box-shadow:none;outline:none;accent-color:var(--acc)}
 .vis input[type=radio]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .vis span{flex:1;min-width:0;display:flex;flex-direction:column;font-size:14px;color:var(--dim)}.vis b{color:var(--fg);font-size:15px;font-weight:500}
+.bld .team .tl{font-size:13px;font-weight:500;color:var(--dim);margin:0 0 6px}.bld .team{margin:0 0 16px}.bld .team ul{margin:0;padding:0 0 0 18px;display:grid;gap:4px;font-size:15px}
 .bld .back4{background:none;border:0;color:var(--acc);font:500 15px 'Geist',sans-serif;padding:10px 0;cursor:pointer}
 `;
 
@@ -82,9 +83,10 @@ export function buildBody(me: string, needsKey: boolean, runDomain: string) {
 <label><input type="radio" name="vis" value="public" checked><span><b>Public</b>Anyone can see it, try it and fork it</span></label>
 <label><input type="radio" name="vis" value="private"><span><b>Private</b>Only you: the project, its code and its app</span></label></fieldset></div>
 ${needsKey ? connectPlan('build') : ''}
+<div class="fld team" id="team" hidden><p class="tl">The team</p><ul id="teaml"></ul></div>
 <ol class="steps3"><li><b>1</b>A new project is created${me ? ` under ${esc(me)}` : ''}, with its own code and history.</li>
-<li><b>2</b>Its router agent plans the work and starts an agent for each part.</li>
-<li><b>3</b>A reviewer agent checks every change in a preview before it goes live.</li>
+<li id="st2"><b>2</b>Its router agent plans the work and starts an agent for each part.</li>
+<li id="st3"><b>3</b>A reviewer agent checks every change in a preview before it goes live.</li>
 <li><b>4</b>You watch it happen, try the result, and ask for more changes any time.</li></ol>
 <button class="btn" id="go" style="width:100%"${needsKey ? ' disabled' : ''}>${needsKey ? 'Connect your plan above first' : me ? 'Start building' : 'Sign in to start building'}</button>
 <p class="err" id="err" role="status"></p></section></div>
@@ -109,7 +111,22 @@ ${needsKey ? connectPlan('build') : ''}
    const n=clean(String((d.job&&d.job.name)||(d.suggestion&&d.suggestion.job&&d.suggestion.job.name)||''));
    console.log(JSON.stringify({module:'build',event:'model_name',status:r.status,name:n||null}));
    if(n&&n.length>=3&&!pname.dataset.touched&&pidea.value===t){pname.value=n;url();save();}}catch(e){console.log(JSON.stringify({module:'build',event:'model_name_failed',error:String(e)}));}}
- function brief(){const t=idea.value.trim();if(!t){idea.focus();return;}
+ // The steps and the team follow the Build settings chosen on the home page (qb3's rehearsal: the brief promised a
+ // reviewer for Cheapest, which has none). Without settings: the default text.
+ const MOD={haiku:'Haiku',sonnet:'Sonnet',opus:'Opus'};
+ function team(){let v=null;try{v=SETS&&SETS.v?JSON.parse(SETS.v):null;}catch{}
+  if(!v||!v.coders)return;
+  const m=MOD[v.coderModel]||v.coderModel||'',n=+v.coders||1,r=+v.reviewers||0,alone=n===1&&v.coderModel==='opus'&&!r;
+  const li=(t)=>{const e=document.createElement('li');e.textContent=t;return e;};
+  const L=$('teaml');L.textContent='';
+  const step=(id,k,t)=>{const e=$(id);e.textContent='';const b=document.createElement('b');b.textContent=k;e.append(b,t);};
+  if(alone){L.append(li('One Opus agent does it all'),li('No reviewer'));
+   step('st2','2','One Opus agent plans and writes the whole thing.');}
+  else{L.append(li((MOD[v.planner]||'Opus')+' planner'),li(n+' '+m+' agent'+(n===1?'':'s')+', one part each'),li(r?r+' '+m+' reviewer'+(r===1?'':'s'):'No reviewer'));if(v.board)L.append(li('A shared board, so no two agents take the same part'));
+   step('st2','2','The planner splits the work into parts and starts '+n+' '+m+' agent'+(n===1?'':'s')+', one per part.');}
+  step('st3','3',r?(r===1?'A reviewer agent checks':r+' reviewer agents check')+' every change before it lands.':'No reviewer: each change lands on main once its checks pass.');
+  $('team').hidden=false;}
+ function brief(){const t=idea.value.trim();if(!t){idea.focus();return;}team();
   pidea.value=t;if(!pname.dataset.touched)pname.value=suggest(t);url();nameFromModel(t);$('s1').hidden=true;$('s2').hidden=false;scrollTo(0,0);save();
   history.replaceState(null,'','/build?step=brief');}
  $('next').onclick=brief;

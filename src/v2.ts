@@ -29,7 +29,7 @@ const NAMES: Record<UI, string> = { a: 'Views, home tabs (two bars)', b: 'Views,
 // ---- the change model ------------------------------------------------------
 
 export type State = 'working' | 'checking' | 'ready' | 'fix' | 'waiting' | 'paused' | 'merged';
-export type Change = { a: Agent; title: string; state: State; word: string; busy: boolean; since?: number; tryUrl?: string; notes?: string; auto?: boolean };
+export type Change = { a: Agent; title: string; desc?: string; state: State; word: string; busy: boolean; since?: number; tryUrl?: string; notes?: string; auto?: boolean };
 
 /** Agent and router messages are markdown-ish: **bold**, `code`, line breaks (was shown raw: '**vru7x:**'). Escaped first. */
 export const md = (t: string) => esc(t).replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>').replace(/`([^`\n]+?)`/g, '<code>$1</code>').replace(/\n/g, '<br>');
@@ -39,17 +39,26 @@ export const BUSY = /busy|thinking|working|running|tool/;
 export const isMerge = (t?: string) => !!t && /^Merge [a-z0-9]+$/.test(t);
 export const fromIssues = (t?: string) => !!t && t.startsWith('Production error from Cloudflare Issues');
 
-/** A change's title: its task's first sentence (the page clamps it to two lines). */
+/** A change's title: its task's first line when the router wrote a title line ('Items list: search, sort' then
+ *  'Build js/views/items.js…'), else its first sentence (the page clamps it to two lines). */
 export function titleOf(task: string) {
+  const first = String(task || '').trim().split(/\n+/)[0].trim();
+  if (first.length >= 8 && first.length < String(task || '').trim().length) return first.replace(/[.]$/, '');
   const t = task.replace(/\s+/g, ' ').trim();
   const m = t.match(/^(.{12,}?[.!?])(\s|$)/);
   return (m ? m[1] : t).replace(/[.]$/, '');
 }
 
+/** What follows a title line, for the dimmed line under it (qb3's rehearsal: title and description ran together). */
+export function descOf(task: string) {
+  const lines = String(task || '').trim().split(/\n+/), first = (lines[0] || '').trim();
+  return first.length >= 8 && lines.length > 1 ? lines.slice(1).join(' ').replace(/\s+/g, ' ').trim().slice(0, 200) : '';
+}
+
 export function changeOf(info: ProjectInfo, a: Agent, s: BoxStatus | undefined, runBase: string): Change {
   const worker = info.kind === 'worker';
   const tryUrl = worker ? (a.preview?.status === 'live' && a.preview.url ? `${a.preview.url}/` : undefined) : runUrl(runBase, a.fork, info.entry || '');
-  const base = { a, title: titleOf(a.task), tryUrl, busy: false } as Change;
+  const base = { a, title: titleOf(a.task), desc: descOf(a.task), tryUrl, busy: false } as Change;
   const r = a.review;
   // A project whose merge queue lands approved changes itself (Landing autoMerge, carried as info.autoLand):
   // no Merge step for anyone, so a ready change reads 'Landing…' and a merged one 'Landed' (Eyal, 2026-10-12).
@@ -154,7 +163,7 @@ const ROW_STEPS = STEPS;
 export function changeRow(info: ProjectInfo, c: Change, now: number, accentId?: string) {
   const act = primary(c, c.a.id === accentId);
   return `<div class="chg s-${c.state}${c.busy ? ' busy' : ''}" data-id="${esc(c.a.id)}" id="c-${esc(shortId(c.a.id))}"><div class="chg-row">
-<div class="chg-h" data-open role="button" tabindex="0" aria-expanded="false"><span class="chg-t">${esc(c.title)}</span>
+<div class="chg-h" data-open role="button" tabindex="0" aria-expanded="false"><span class="chg-t">${esc(c.title)}</span>${c.desc ? `<span class="chg-d">${esc(c.desc)}</span>` : ''}
 <span class="chg-s">${dot(c)}<span class="w">${c.word}${since(c.since)}</span>${freshTag(c.a.noteAt || c.a.createdAt, now, ROW_STEPS)}</span></div>
 ${act ? `<div class="chg-p">${act}</div>` : ''}</div>${detail(info, c)}</div>`;
 }
@@ -198,6 +207,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset
 /* change rows */
 .chg{background:var(--card);border-radius:12px;overflow:hidden}
 .chg-h{display:block;width:100%;text-align:left;background:none;border:0;padding:12px 14px 10px;color:inherit;font:inherit;cursor:pointer}
+.chg-d{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;color:var(--dim);line-height:1.35;margin-top:2px}
 .chg-t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:15px;font-weight:500;line-height:1.35}
 .chg-s{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--dim)}
 .chg-s .w{flex:1;min-width:0;font-variant-numeric:tabular-nums}

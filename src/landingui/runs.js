@@ -44,7 +44,10 @@
       const m = await fetch('/lab/runs-mock.json', { cache: 'no-store' }).then((r) => r.json());
       D = m; TL = m.timelines || {}; if (m.owner) OWN = true; return;
     }
-    const r = await fetch(API, { cache: 'no-store', credentials: 'same-origin' });
+    // 20 s at most (qb3: the first load sometimes sat on 'Loading the runs…' past 25 s); the poll tries again
+    const ac = new AbortController(), to = setTimeout(() => ac.abort(), 20e3), t0 = Date.now();
+    const r = await fetch(API, { cache: 'no-store', credentials: 'same-origin', signal: ac.signal }).finally(() => clearTimeout(to));
+    if (Date.now() - t0 > 5e3) log('runs_slow', { ms: Date.now() - t0 });
     if (!r.ok) throw new Error(`runs ${r.status}`);
     D = await r.json();
     if (typeof D.owner === 'boolean') OWN = D.owner;
@@ -78,7 +81,7 @@
     if (TL[k] && !live(g) && TL[k].series) return true;
     if (TL[k] && Date.now() - (TLat[k] || 0) < 5e3) return true;
     const r = await fetch(`${API}/ladder/${encodeURIComponent(lad)}/series`, { cache: 'no-store', credentials: 'same-origin' }).catch(() => null);
-    if (!r || !r.ok) return false;
+    if (!r || !r.ok) { if (!TL[k]) TL[k] = { failed: true, series: [] }; log('ladder_failed', { ladder: lad, status: r ? r.status : null }); return false; }
     const j = await r.json(); TLat[k] = Date.now();
     TL[k] = { start: j.series?.[0]?.t, slice: j.slice || 10000, series: j.series || [], limits: j.limits || {}, marks: j.marks || [] };
     return true;
@@ -99,7 +102,10 @@
   const autoWhy = (r) => r.autoPauseWhy || (lastPause(r)?.auto ? lastPause(r).why : '');
   function counts(r) {
     const c = r.counts || r;
-    const files = r.files || 0, landed = c.landed || 0, skipped = c.skipped || 0, rejected = (c.rejected || 0) + (c.verify_fail || 0) + (c.model_error || 0);
+    const landed = c.landed || 0, skipped = c.skipped || 0, rejected = (c.rejected || 0) + (c.verify_fail || 0) + (c.model_error || 0);
+    // an ended run leaves files that never finished (still at the model when it stopped) out of the total (qb6, qb8's
+    // pass: S5b copy 3 read 4,064 files where results.json and Intents say 4,063); a group sums its copies' totals
+    const files = r.group ? r.files || 0 : live(r) ? r.files || 0 : Math.min(r.files || 0, landed + skipped + rejected) || r.files || 0;
     const inflight = Math.max(0, files - landed - skipped - rejected);
     return { files, landed, skipped, rejected, inflight };
   }
@@ -244,6 +250,7 @@
   const kfmt = (v) => (v >= 10000 ? `${Math.round(v / 1000)}k` : v >= 1000 ? `${(v / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(v));
   function timeline(run, t, drill) {
     if (!t) return '<p class="tl-empty">Loading the timeline…</p>';
+    if (t.failed) return '<p class="tl-empty">No timeline for this step.</p>';
     const { S, step: stepMs, unit, limScale } = bucketed(t);
     if (!S.length) return '<p class="tl-empty">Nothing on the timeline yet: the first slice is still running.</p>';
     // the frame's inner width (root padding 2 x 16, frame left padding 8): a run that fits never overflows the card
@@ -376,7 +383,7 @@
       const models = {};
       for (const c of cs) for (const [m, x] of Object.entries(c.models || {})) { const o = (models[m] ||= { calls: 0, usd: 0, rateLimited429: 0, peakPerMin: 0, lastMinute: 0, limitPerMin: x.limitPerMin }); o.calls += x.calls || 0; o.usd += x.usd || 0; o.rateLimited429 += x.rateLimited429 || 0; o.peakPerMin += x.peakPerMin || 0; o.lastMinute += x.lastMinute || 0; }
       const p50s = cs.map((c) => c.landWaitS?.p50).filter((v) => v != null), p90s = cs.map((c) => c.landWaitS?.p90).filter((v) => v != null);
-      Object.assign(g, { state: st, files: sum((c) => c.files), counts: { landed: sum((c) => C(c).landed), skipped: sum((c) => C(c).skipped), rejected: sum((c) => C(c).rejected) },
+      Object.assign(g, { state: st, files: sum((c) => C(c).files), counts: { landed: sum((c) => C(c).landed), skipped: sum((c) => C(c).skipped), rejected: sum((c) => C(c).rejected) },
         usd: sum((c) => c.usd), budgetUsd: sum((c) => c.budgetUsd) || null, agents: sum((c) => c.agents), agentsStarted: sum((c) => c.agentsStarted ?? c.agents), calls: sum((c) => c.calls),
         startedAt: Math.min(...cs.map((c) => c.startedAt || Infinity)), endedAt: cs.every((c) => c.endedAt) ? Math.max(...cs.map((c) => c.endedAt)) : null,
         lastMinute: { landed: sum((c) => c.lastMinute?.landed), calls: sum((c) => c.lastMinute?.calls) },
@@ -411,11 +418,16 @@
     (r) => r.group && /^S5b\b/.test(r.label),
     (r) => r.group && /^S4d\b/.test(r.label),
   ];
-  function listView() {
+  function listOrder() {
     const fleet = grouped((D.fleet || []).slice().sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))).sort((a, b) => (live(b) - live(a)) || (b.startedAt || 0) - (a.startedAt || 0));
     const cur = fleet.filter(live), past = fleet.filter((r) => !live(r));
-    // Judge-facing runs first, in this order (manager, 2026-10-14); the rest, newest first, as experiments.
     const pins = PINS.map((p) => past.find(p)).filter(Boolean), rest = past.filter((r) => !pins.includes(r));
+    return { cur, pins, rest };
+  }
+  const shownGroups = () => { const o = listOrder(); return [...o.cur, ...o.pins, ...o.rest.slice(0, 20)].filter((g) => g.group); };
+  function listView() {
+    // Judge-facing runs first, in this order (manager, 2026-10-14); the rest, newest first, as experiments.
+    const { cur, pins, rest } = listOrder();
     const real = D.real || [];
     const realRow = (b) => `<li><a href="${esc(b.link || `/p/${b.slug.replace('.', '/')}/work#/timeline`)}"><span class="rr-n"><b>${esc(b.label || b.slug)}</b><small>${esc(b.slug.replace('.', ' / '))}</small></span><span class="rr-v">${b.settledAt ? `${clock((b.settledAt - b.startedAt) / 1000)}, ${usd(b.usd)}` : b.startedAt ? `running, ${usd(b.usd)} so far` : '–'}${b.parts ? `<small>${n0(b.landed)} of ${n0(b.parts)} parts on main</small>` : b.landed ? `<small>${n0(b.landed)} changes on main</small>` : ''}</span><span class="rr-go">Timeline</span></a></li>`;
     return `<header class="rh"><h1>Scale runs</h1><p class="rh-s"><i class="live${cur.length ? '' : ' off'}"></i><span id="rupd">${cur.length ? `${cur.length} running now` : 'Nothing running now'}</span>${OWN ? '' : '<span class="rh-ro">read-only</span>'}</p></header>${OWN && !MOCK ? '<div id="nj-slot"></div>' : ''}
@@ -490,10 +502,12 @@
     clearTimeout(timer);
     if (!D && !root.innerHTML) root.innerHTML = '<header class="rh"><h1>Scale runs</h1><p class="rh-s"><i class="live off"></i><span>Loading the runs…</span></p></header>';
     try {
+      const first = !D;
       await load(); failures = 0; lastOk = Date.now(); if (!NJ && OWN && !MOCK) { njMount(); lastHtml = ''; } loaded1();
+      if (first) render();   // the list at once; timelines fill in as they arrive
       const cur = current();
       if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); if (!cur.group) await loadIndexCheck(cur).catch(() => {}); }
-      else await Promise.all(grouped((D.fleet || []).slice()).filter((g) => g.group).slice(0, 6).map((g) => loadLadder(g).catch(() => false)));
+      else await Promise.all(shownGroups().slice(0, 16).map((g) => loadLadder(g).catch(() => false)));   // the steps on screen, in screen order (qb3: cards kept 'Loading the timeline…')
       render();
     } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (!D) root.innerHTML = `<header class="rh"><h1>Scale runs</h1></header><p class="dim">Could not load the runs (${esc(String(e.message || e))}). Trying again.</p>`; }
     const anyLive = (D?.fleet || []).some(live);
