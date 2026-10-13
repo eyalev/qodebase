@@ -95,9 +95,9 @@ estimate.
 - **qb7, checked live (forq 119b989): 3a ready for 1,000 agents.** The sentence fills VS Code
   (fleet-n2-vscode-src-1), src/vs, doc comments + API index, 1,000 agents, batch 4 on Start, and the estimate
   '4,064 files, 1,000 agents: about 2 to 4 min and $0.80 to $1.49. It stops at $3.00 whatever happens.'
-  **Settled (qb7):** the form defaults to $5 for 500+ agents and the estimate is refit for small batches: '4,064 files,
-  1,000 agents: about 2 to 4 min and $1.28 to $2.38. It stops at $5.00 whatever happens.' (deploys before the take;
-  no budget step needed).
+  **Settled (qb7):** the form defaults to $5 for 500+ agents and the estimate is refit for small batches: final, live in forq 106db1f: '4,064 files,
+  1,000 agents: about 2 to 3 min and $1.57 to $2.91. It stops at $5.00 whatever happens.' (Gemini 3.1 as overflow,
+  batch 4; no budget step needed).
 
 ## Pre-flight (08:00–08:45 UTC)
 
