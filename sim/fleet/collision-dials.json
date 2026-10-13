@@ -1,7 +1,7 @@
 {
  "note": "Collision dials (TASKS 'collision dial'), as reported by qb6 per level; scripts/results/build.mjs reads this into results.json (collisionDials) and RESULTS.md. Update after each level.",
  "comment": {
-  "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off; collisions = pairs of tasks started at the same moment",
+  "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off unless marked \"+ claims\" (an agent claims its declarations before reading the file); collisions = pairs of tasks started at the same moment",
   "levels": [
    {
     "dial": 0,

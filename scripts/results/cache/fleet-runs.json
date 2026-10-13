@@ -20820,21 +20820,21 @@
    "state": "running",
    "agents": 200,
    "agentsStarted": 200,
-   "files": 347,
-   "landed": 313,
+   "files": 361,
+   "landed": 340,
    "ready": 0,
    "skipped": 0,
    "verify_fail": 0,
-   "rejected": 41,
+   "rejected": 45,
    "rate_limited": 0,
    "model_error": 0,
    "retried": 0,
-   "usd": 0.1811,
+   "usd": 0.2061,
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791909049435,
-   "endedAt": 1791909377340,
-   "wallS": 328,
+   "endedAt": 1791909398743,
+   "wallS": 349,
    "landWaitS": {
     "p50": -2,
     "p90": -1
@@ -20850,10 +20850,10 @@
      "role": "overflow"
     },
     "gemini-3.1-flash-lite": {
-     "usd": 0.1738,
-     "landed": 254,
-     "rejected": 40,
-     "calls": 294,
+     "usd": 0.1989,
+     "landed": 281,
+     "rejected": 44,
+     "calls": 325,
      "rateLimited429": 0,
      "peakPerMin": 82,
      "role": "planned"
@@ -20898,7 +20898,7 @@
     {
      "minute": 1791909360000,
      "model": "gemini-3.1-flash-lite",
-     "calls": 25
+     "calls": 56
     }
    ],
    "copyOfKind": 1,
@@ -20920,8 +20920,8 @@
    "state": "running",
    "agents": 200,
    "agentsStarted": 200,
-   "files": 31,
-   "landed": 33,
+   "files": 45,
+   "landed": 49,
    "ready": 0,
    "skipped": 0,
    "verify_fail": 0,
@@ -20929,23 +20929,31 @@
    "rate_limited": 0,
    "model_error": 0,
    "retried": 0,
-   "usd": 0.0113,
+   "usd": 0.0166,
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791909049479,
-   "endedAt": 1791909357864,
-   "wallS": 308,
+   "endedAt": 1791909389170,
+   "wallS": 340,
    "landWaitS": {
     "p50": -2,
     "p90": 0
    },
    "models": {
-    "gemini-3.1-flash-lite": {
-     "usd": 0.0113,
-     "landed": 33,
-     "calls": 33,
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.0002,
+     "landed": 2,
+     "calls": 2,
      "rateLimited429": 0,
-     "peakPerMin": 13,
+     "peakPerMin": 2,
+     "role": "overflow"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 0.0164,
+     "landed": 47,
+     "calls": 47,
+     "rateLimited429": 0,
+     "peakPerMin": 14,
      "role": "planned"
     }
    },
@@ -20964,6 +20972,16 @@
      "minute": 1791909300000,
      "model": "gemini-3.1-flash-lite",
      "calls": 10
+    },
+    {
+     "minute": 1791909360000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 2
+    },
+    {
+     "minute": 1791909360000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 14
     }
    ],
    "copyOfKind": 1,

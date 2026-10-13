@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T16:36:30.198Z",
+ "generated": "2026-10-13T16:36:40.940Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -150,10 +150,10 @@
      "@cf/zai-org/glm-4.7-flash"
     ]
    },
-   "filesLanded": 32365,
-   "filesAttempted": 47022,
+   "filesLanded": 32408,
+   "filesAttempted": 47050,
    "verifyRefused": 0,
-   "usd": 19.45,
+   "usd": 19.48,
    "usdPer1kLanded": 0.6,
    "runs": 33,
    "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)"
@@ -274,13 +274,13 @@
     }
    ],
    "code": [],
-   "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off; collisions = pairs of tasks started at the same moment"
+   "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off unless marked \"+ claims\" (an agent claims its declarations before reading the file); collisions = pairs of tasks started at the same moment"
   }
  },
  "collisionDials": {
   "note": "Collision dials (TASKS 'collision dial'), as reported by qb6 per level; scripts/results/build.mjs reads this into results.json (collisionDials) and RESULTS.md. Update after each level.",
   "comment": {
-   "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off; collisions = pairs of tasks started at the same moment",
+   "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off unless marked \"+ claims\" (an agent claims its declarations before reading the file); collisions = pairs of tasks started at the same moment",
    "levels": [
     {
      "dial": 0,
@@ -1538,14 +1538,14 @@
      "fleet-kata-d0b src/vs"
     ],
     "agents": 200,
-    "files": 347,
-    "landed": 313,
+    "files": 361,
+    "landed": 340,
     "skipped": 0,
     "verifyFail": 0,
-    "rejected": 41,
+    "rejected": 45,
     "rateLimited": 0,
-    "usd": 0.1811,
-    "wallS": 328,
+    "usd": 0.2061,
+    "wallS": 349,
     "landWaitP90S": -1,
     "firstAt": 1791909049435
    },
@@ -1554,20 +1554,21 @@
     "runs": 1,
     "cached": false,
     "models": [
+     "@cf/zai-org/glm-4.7-flash",
      "gemini-3.1-flash-lite"
     ],
     "repos": [
      "fleet-kata-d30 src/vs"
     ],
     "agents": 200,
-    "files": 31,
-    "landed": 33,
+    "files": 45,
+    "landed": 49,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
-    "usd": 0.0113,
-    "wallS": 308,
+    "usd": 0.0166,
+    "wallS": 340,
     "landWaitP90S": null,
     "firstAt": 1791909049479
    },
@@ -15589,18 +15590,18 @@
     "tokensOut": 0,
     "agents": 200,
     "agentsStarted": 200,
-    "files": 347,
-    "landed": 313,
+    "files": 361,
+    "landed": 340,
     "skipped": 0,
     "verifyFail": 0,
-    "rejected": 41,
+    "rejected": 45,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
-    "usd": 0.1811,
+    "usd": 0.2061,
     "startedAt": 1791909049435,
-    "endedAt": 1791909377340,
-    "wallS": 328,
+    "endedAt": 1791909398743,
+    "wallS": 349,
     "landWaitP50S": -2,
     "landWaitP90S": -1,
     "peakPerMin": null,
@@ -15615,10 +15616,10 @@
       "role": "overflow"
      },
      "gemini-3.1-flash-lite": {
-      "usd": 0.1738,
-      "landed": 254,
-      "rejected": 40,
-      "calls": 294,
+      "usd": 0.1989,
+      "landed": 281,
+      "rejected": 44,
+      "calls": 325,
       "rateLimited429": 0,
       "peakPerMin": 82,
       "role": "planned"
@@ -15631,6 +15632,7 @@
    {
     "runId": "fmv6wdrif",
     "models": [
+     "@cf/zai-org/glm-4.7-flash",
      "gemini-3.1-flash-lite"
     ],
     "state": "running",
@@ -15638,28 +15640,36 @@
     "tokensOut": 0,
     "agents": 200,
     "agentsStarted": 200,
-    "files": 31,
-    "landed": 33,
+    "files": 45,
+    "landed": 49,
     "skipped": 0,
     "verifyFail": 0,
     "rejected": 0,
     "rateLimited": 0,
     "modelError": 0,
     "calls": null,
-    "usd": 0.0113,
+    "usd": 0.0166,
     "startedAt": 1791909049479,
-    "endedAt": 1791909357864,
-    "wallS": 308,
+    "endedAt": 1791909389170,
+    "wallS": 340,
     "landWaitP50S": -2,
     "landWaitP90S": 0,
     "peakPerMin": null,
     "perModel": {
-     "gemini-3.1-flash-lite": {
-      "usd": 0.0113,
-      "landed": 33,
-      "calls": 33,
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.0002,
+      "landed": 2,
+      "calls": 2,
       "rateLimited429": 0,
-      "peakPerMin": 13,
+      "peakPerMin": 2,
+      "role": "overflow"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 0.0164,
+      "landed": 47,
+      "calls": 47,
+      "rateLimited429": 0,
+      "peakPerMin": 14,
       "role": "planned"
      }
     },
@@ -15709,18 +15719,18 @@
   ],
   "perModel": {
    "@cf/zai-org/glm-4.7-flash": {
-    "files": 11353,
-    "landed": 7996,
+    "files": 11355,
+    "landed": 7998,
     "skipped": 3339,
     "verifyFail": 0,
     "rejected": 18,
     "rateLimited": 31,
-    "calls": 8117,
-    "usd": 1.4536,
+    "calls": 8119,
+    "usd": 1.4538,
     "peakPerMin": 587,
     "roles": {
      "planned": 11276,
-     "overflow": 59
+     "overflow": 61
     },
     "usdPer1kFiles": 0.13,
     "share429": 0.004
@@ -15758,17 +15768,17 @@
     "share429": 0
    },
    "gemini-3.1-flash-lite": {
-    "files": 25090,
-    "landed": 17186,
+    "files": 25135,
+    "landed": 17227,
     "skipped": 7724,
     "verifyFail": 0,
-    "rejected": 180,
+    "rejected": 184,
     "rateLimited": 51,
-    "calls": 17585,
-    "usd": 15.0591,
+    "calls": 17630,
+    "usd": 15.0893,
     "peakPerMin": 1500,
     "roles": {
-     "planned": 7863,
+     "planned": 7904,
      "overflow": 17047
     },
     "usdPer1kFiles": 0.6,
@@ -15793,13 +15803,13 @@
   },
   "totals": {
    "runs": 33,
-   "filesAttempted": 47022,
-   "landed": 32365,
+   "filesAttempted": 47050,
+   "landed": 32408,
    "skipped": 14065,
    "verifyRefused": 0,
-   "rejected": 227,
+   "rejected": 231,
    "rateLimited": 3,
-   "usd": 19.45,
+   "usd": 19.48,
    "usdPer1kLanded": 0.6,
    "usdPer1kFiles": 0.41,
    "largestRun": {

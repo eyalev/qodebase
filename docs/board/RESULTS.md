@@ -47,8 +47,8 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | comment dial L60 [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 43,869 | 11 | 0 | 0 | 0 | $0.00 | 38 s | 189 s |
 | index job test (src/vs/editor, 100 agents) | 1 | fleet-vscode-src-15 src/vs/editor | gemma-4-26b-a4b-it, glm-4.7-flash | 100 | 659 | 506 | 153 | 0 | 0 | 0 | $0.13 | 155 s | 14 s |
 | comment dial L60c [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 35,446 | 9 | 0 | 0 | 0 | $0.00 | 36 s | 183 s |
-| code dial 0% (K0) | 1 | fleet-kata-d0b src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 347 | 313 | 0 | 0 | 41 | 0 | $0.18 | 328 s | -1 s |
-| code dial 30% (K30) | 1 | fleet-kata-d30 src/vs | gemini-3.1-flash-lite | 200 | 31 | 33 | 0 | 0 | 0 | 0 | $0.01 | 308 s | - |
+| code dial 0% (K0) | 1 | fleet-kata-d0b src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 361 | 340 | 0 | 0 | 45 | 0 | $0.21 | 349 s | -1 s |
+| code dial 30% (K30) | 1 | fleet-kata-d30 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 45 | 49 | 0 | 0 | 0 | 0 | $0.02 | 340 s | - |
 | code dial 60% (K60) | 1 | fleet-kata-d60 src/vs | gemini-3.1-flash-lite | 200 | 22 | 27 | 0 | 0 | 0 | 0 | $0.01 | 321 s | - |
 
 Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6's series; sim.md (l)):
@@ -69,15 +69,15 @@ Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6's series;
 
 | model | files handled | landed | verify refused | rate-limited (share of calls) | peak calls/min | $ | $ per 1k files |
 |---|---|---|---|---|---|---|---|
-| @cf/zai-org/glm-4.7-flash | 11,353 | 7,996 | 0 | 31 (0.4%) | 587 | $1.45 | $0.13 |
+| @cf/zai-org/glm-4.7-flash | 11,355 | 7,998 | 0 | 31 (0.4%) | 587 | $1.45 | $0.13 |
 | @cf/google/gemma-4-26b-a4b-it | 8,839 | 6,225 | 0 | 23 (0.4%) | 406 | $1.86 | $0.21 |
 | gemini-3.5-flash-lite | 1,152 | 860 | 0 | 0 (0.0%) | 235 | $1.00 | $0.87 |
-| gemini-3.1-flash-lite | 25,090 | 17,186 | 0 | 51 (0.3%) | 1,500 | $15.06 | $0.60 |
+| gemini-3.1-flash-lite | 25,135 | 17,227 | 0 | 51 (0.3%) | 1,500 | $15.09 | $0.60 |
 | @cf/zai-org/glm-5.3-flash | 223 | 98 | 0 | 63 (35.8%) | 50 | $0.08 | $0.34 |
 
 Cached-answer runs (measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real): 312 runs, 408,165 files, 309,139 landed, 0 refused by verify. Not counted in the model totals below.
 
-Model-written totals: 32,365 files landed of 47,022 attempted over 33 runs (14,065 needed no comment); 0 refused by the code-unchanged check; $19.45 ($0.41 per 1k files).
+Model-written totals: 32,408 files landed of 47,050 attempted over 33 runs (14,065 needed no comment); 0 refused by the code-unchanged check; $19.48 ($0.41 per 1k files).
 
 Quality (qb9's F4 check, sim/fleet/quality.json; measured on main 0f3ba876 vs base d4793e33): 3,029 files changed, **code changed on re-verify: 0**; automatic checks over 6,542 comments: invented params 0, missing params 0, @returns on void 0, trivial 0.
 
@@ -102,7 +102,7 @@ F0 bench (20 files per model, measured, sim/fleet/F0.md):
 
 ## Collision dials
 
-**Comment dial.** measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off; collisions = pairs of tasks started at the same moment. In cached mode the second comment of a same-declaration pair is derived from the first (its first sentence, or that plus a stock phrase), so 'duplicate, kept the first' says which landed first, not which answer was better. Which version wins under real collisions is measured by the code dial, where the hidden tests decide.
+**Comment dial.** measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off unless marked "+ claims" (an agent claims its declarations before reading the file); collisions = pairs of tasks started at the same moment. In cached mode the second comment of a same-declaration pair is derived from the first (its first sentence, or that plus a stock phrase), so 'duplicate, kept the first' says which landed first, not which answer was better. Which version wins under real collisions is measured by the code dial, where the hidden tests decide.
 
 | dial | tasks | tasks/s | pairs far / near / same | how pairs resolved | doubled comments | code changed | lost (checker) | land wait p50 / p90 |
 |---|---|---|---|---|---|---|---|---|
