@@ -127,7 +127,14 @@ export default {
           try { using rp = await ns(env, r).get(r); fresh = (await rp.log({ limit: 1 }))[0]?.hash === KIND_BASE[kind]; } catch {}
           return { repo: r, source: { ...(SOURCES[kind] || SOURCES.main), namespace: r.startsWith(N2) ? 'qbfleet2' : 'qbfleet' }, files: last?.files ?? null, fresh, lastRun: last ? { runId: last.runId, state: last.state, label: last.label } : null };
         }));
-        return json({ copies: rows.sort((a, b) => a.repo.localeCompare(b.repo, 'en', { numeric: true })) });
+        return json({ jobs: ['comments', 'comments+index'], copies: rows.sort((a, b) => a.repo.localeCompare(b.repo, 'en', { numeric: true })) });
+      }
+      // The number of files a /start would queue for a folder (same walk, no queue): the job form's estimate.
+      case '/count': {
+        const root = String(url.searchParams.get('root') || 'src/vs').replace(/^\/+|\/+$/g, '');
+        if (!/^[A-Za-z0-9._/-]{1,120}$/.test(root) || root.includes('..')) return json({ error: 'root: a folder path' }, 400);
+        const { files } = await listFiles(env, repo, root).catch((e) => ({ files: null, err: String(e?.message || e) }));
+        return json(files ? { repo, root, files: files.length } : { error: `no ${root}/ in ${repo}` }, files ? 200 : 404);
       }
       case '/ladder-series': return json(await ladderSeries(env, String(url.searchParams.get('ladder') || '')));
       case '/meta': return json(await run(env, repo).setMeta(String(body.run || ''), body.meta || {}));
