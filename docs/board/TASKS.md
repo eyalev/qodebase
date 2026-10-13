@@ -106,7 +106,7 @@ Bottleneck fixes + compaction (Eyal, 2026-10-13 ~07:40 UTC):
 
 Fleet on Workers AI (Eyal, 2026-10-13: "Go, comments first"; budget $50/day today + tomorrow only, breaker raised with auto-expiry 6cb75a4 in remote-manage):
 Task: documentation comments for exported functions/classes in a big real codebase (VS Code src/vs, MIT, ~thousands of TS files; our own Artifacts copy, never pushed upstream). Each agent = a Durable Object (sim/cloud harness) that reads one file from its fork, calls a cheap Workers AI model through gateway qodebase-fleet, writes doc comments, VERIFIES the code is unchanged (strip comments -> same syntax tree), pushes; lanes by folder land it. Quality: a cheap judge on a sample + a hand-checked sample.
-- [ ] F0 research: Workers AI models fit for code comments, prices (neurons), rate limits per model/account; benchmark 20 files on 2-3 models (quality, cost, latency); cost estimate per 1k files (qb4)
+- [x] F0 research: Workers AI models fit for code comments, prices (neurons), rate limits per model/account; benchmark 20 files on 2-3 models (quality, cost, latency); cost estimate per 1k files (qb4). Done 2026-10-13: sim/fleet/F0.md ($0.11 spent)
 - [ ] F1 fleet harness: model step + verify + push, per-run budget (ledger), gateway qodebase-fleet with rate limit, pipeline controls Pause / Resume / Stop (API + a small page), and AUTO-PAUSE on bottleneck signals (429/rate-limit share, model error share, verify-fail share, queue wait, $/min over plan) with a push to the manager (qb6)
 - [ ] F2 smoke: 10 agents, then 100; check every stage + the controls (qb6)
 - [ ] F3 ramp: 1,000 -> 5,000 (-> all files if it holds), lanes by folder; at each step stop, read bottlenecks, fix, resume (qb6; manager decides each step)

@@ -1,0 +1,123 @@
+{
+ "corpus": {
+  "files": 4120,
+  "bytes": 48531704,
+  "calls": 4949
+ },
+ "models": {
+  "@cf/zai-org/glm-4.7-flash": {
+   "files": 20,
+   "answered": 20,
+   "json": 20,
+   "withComments": 20,
+   "codeUnchanged": 20,
+   "comments": 319,
+   "perFile": 15.9,
+   "judge": {
+    "n": 308,
+    "accurate": 0.98,
+    "placed": 0.99,
+    "helpful": 3.62
+   },
+   "tokens": {
+    "in": 69945,
+    "out": 14834
+   },
+   "usd": 0.0102,
+   "judgeUsd": 0.0306,
+   "latencyS": {
+    "p50": 13,
+    "p90": 48.5,
+    "max": 71.6
+   },
+   "per1kFiles": {
+    "calls": 1201,
+    "usd": 0.65,
+    "inM": 4.45,
+    "outM": 0.94
+   },
+   "allSrcVs": {
+    "calls": 4949,
+    "usd": 2.67,
+    "inM": 18.33,
+    "outM": 3.89
+   }
+  },
+  "@cf/google/gemma-4-26b-a4b-it": {
+   "files": 20,
+   "answered": 20,
+   "json": 20,
+   "withComments": 19,
+   "codeUnchanged": 19,
+   "comments": 231,
+   "perFile": 11.6,
+   "judge": {
+    "n": 225,
+    "accurate": 0.97,
+    "placed": 1,
+    "helpful": 3.45
+   },
+   "tokens": {
+    "in": 82498,
+    "out": 6475
+   },
+   "usd": 0.0102,
+   "judgeUsd": 0.0234,
+   "latencyS": {
+    "p50": 6.1,
+    "p90": 10.7,
+    "max": 14.1
+   },
+   "per1kFiles": {
+    "calls": 1201,
+    "usd": 0.65,
+    "inM": 5.25,
+    "outM": 0.41
+   },
+   "allSrcVs": {
+    "calls": 4949,
+    "usd": 2.67,
+    "inM": 21.62,
+    "outM": 1.7
+   }
+  },
+  "@cf/zai-org/glm-5.3-flash": {
+   "files": 20,
+   "answered": 20,
+   "json": 20,
+   "withComments": 19,
+   "codeUnchanged": 19,
+   "comments": 225,
+   "perFile": 11.3,
+   "judge": {
+    "n": 225,
+    "accurate": 0.97,
+    "placed": 1,
+    "helpful": 3.69
+   },
+   "tokens": {
+    "in": 70085,
+    "out": 7278
+   },
+   "usd": 0.0142,
+   "judgeUsd": 0.0221,
+   "latencyS": {
+    "p50": 13.7,
+    "p90": 31.7,
+    "max": 33
+   },
+   "per1kFiles": {
+    "calls": 1201,
+    "usd": 0.9,
+    "inM": 4.46,
+    "outM": 0.46
+   },
+   "allSrcVs": {
+    "calls": 4949,
+    "usd": 3.71,
+    "inM": 18.37,
+    "outM": 1.91
+   }
+  }
+ }
+}
