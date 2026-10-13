@@ -1560,3 +1560,23 @@ queue sets the time.
     upper bound.
 - **The prediction's "losses only among replayed" was wrong:** most losses are the models' own mistakes, whatever the
   resolution. The queue lost at most 2 of 1,264 landed changes.
+
+**Measured, dial 60** (qb6, 2026-10-13; same seed, task order, 200 agents and model mix in both runs, with glm
+taking 66 tasks in each):
+
+| | baseline (eyal/kata-d60) | fast: module lanes + direct Haiku replays (eyal/kata-d60g) |
+|---|---|---|
+| wall | 207 min | 53 min (3.9x faster) |
+| landed | 1,275 | 1,341 |
+| requirements passing on main | 1,242 | 1,274 |
+| lost (wrong at landing / dropped by a later agent / lost in landing) | 60 (54 / 6 / 0) | 79 (71 / 8 / 0) |
+
+- **Replays:** 468 / 481 model replays, against the ~593 predicted.
+- **Wall:** the baseline's 207 min was again ~2-3x my 61-110 min, because of redos. The fast variant's 53 min is
+  under the prediction's 20 s/replay line, since replays took 3.9 s at p50.
+- **Wrong at landing, clean merges:** 3.9% → 4.6%.
+- **Wrong at landing, replays:** 4.9% → 6.7%. The fast variant is higher, but 23 vs 32 is within chance at these
+  counts.
+- **Lost in landing across both dial-60 runs: 0.** Every attribution there is exact by base_sha.
+- **Clustering is still not the main driver of losses:** 96 / 74 / 60 lost at dial 0 / 30 / 60 on the baseline queue.
+  What clustering costs is time: 40 / 145 / 207 min.

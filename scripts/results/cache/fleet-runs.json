@@ -21953,11 +21953,11 @@
    "copy": null,
    "repo": "fleet-kata-d60",
    "root": "src/vs",
-   "state": "running",
+   "state": "done",
    "agents": 200,
    "agentsStarted": 200,
-   "files": 348,
-   "landed": 898,
+   "files": 400,
+   "landed": 1276,
    "ready": 0,
    "skipped": 0,
    "verify_fail": 0,
@@ -21965,12 +21965,12 @@
    "rate_limited": 0,
    "model_error": 0,
    "retried": 0,
-   "usd": 0.5318,
+   "usd": 0.8198,
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791909049547,
-   "endedAt": 1791918064193,
-   "wallS": 9015,
+   "endedAt": 1791921544266,
+   "wallS": 12495,
    "landWaitS": {
     "p50": -2,
     "p90": -1
@@ -21986,12 +21986,12 @@
      "role": "overflow"
     },
     "gemini-3.1-flash-lite": {
-     "usd": 0.5188,
-     "bounced": 73,
-     "landed": 836,
-     "calls": 909,
+     "usd": 0.8068,
+     "bounced": 104,
+     "landed": 1214,
+     "calls": 1318,
      "rateLimited429": 0,
-     "peakPerMin": 17,
+     "peakPerMin": 20,
      "role": "planned"
     }
    },
@@ -22790,6 +22790,806 @@
      "minute": 1791918060000,
      "model": "gemini-3.1-flash-lite",
      "calls": 5
+    },
+    {
+     "minute": 1791918120000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791918180000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    },
+    {
+     "minute": 1791918240000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 13
+    },
+    {
+     "minute": 1791918300000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    },
+    {
+     "minute": 1791918360000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    },
+    {
+     "minute": 1791918420000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 8
+    },
+    {
+     "minute": 1791918480000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 10
+    },
+    {
+     "minute": 1791918600000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791918660000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    },
+    {
+     "minute": 1791918720000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791918780000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791918840000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    },
+    {
+     "minute": 1791918900000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791918960000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791919020000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 4
+    },
+    {
+     "minute": 1791919080000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 7
+    },
+    {
+     "minute": 1791919140000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 13
+    },
+    {
+     "minute": 1791919200000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791919260000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791919320000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    },
+    {
+     "minute": 1791919380000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791919440000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    },
+    {
+     "minute": 1791919500000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 7
+    },
+    {
+     "minute": 1791919560000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 8
+    },
+    {
+     "minute": 1791919620000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    },
+    {
+     "minute": 1791919680000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 8
+    },
+    {
+     "minute": 1791919740000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 7
+    },
+    {
+     "minute": 1791919800000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 14
+    },
+    {
+     "minute": 1791919920000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791919980000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791920040000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 12
+    },
+    {
+     "minute": 1791920100000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    },
+    {
+     "minute": 1791920160000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791920220000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791920280000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 11
+    },
+    {
+     "minute": 1791920340000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791920400000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 7
+    },
+    {
+     "minute": 1791920460000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 7
+    },
+    {
+     "minute": 1791920700000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 5
+    },
+    {
+     "minute": 1791920760000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 1
+    },
+    {
+     "minute": 1791920820000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 7
+    },
+    {
+     "minute": 1791920880000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 13
+    },
+    {
+     "minute": 1791920940000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 10
+    },
+    {
+     "minute": 1791921000000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 20
+    },
+    {
+     "minute": 1791921060000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 18
+    },
+    {
+     "minute": 1791921120000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 12
+    },
+    {
+     "minute": 1791921180000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 11
+    },
+    {
+     "minute": 1791921240000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 16
+    },
+    {
+     "minute": 1791921300000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 9
+    },
+    {
+     "minute": 1791921360000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 14
+    },
+    {
+     "minute": 1791921480000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 10
+    },
+    {
+     "minute": 1791921540000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 3
+    }
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv73wh33",
+   "label": "code dial 60% (K60f)",
+   "ladder": "K60",
+   "copy": null,
+   "repo": "fleet-kata-d60f",
+   "root": "src/vs",
+   "state": "stopped",
+   "agents": 200,
+   "agentsStarted": 200,
+   "files": 137,
+   "landed": 235,
+   "ready": 0,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.1148,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791921679743,
+   "endedAt": 1791921841158,
+   "wallS": 161,
+   "landWaitS": {
+    "p50": -2,
+    "p90": 0
+   },
+   "models": {
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.015,
+     "bounced": 2,
+     "landed": 64,
+     "calls": 66,
+     "rateLimited429": 0,
+     "peakPerMin": 17,
+     "role": "overflow"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 0.0999,
+     "bounced": 6,
+     "landed": 171,
+     "calls": 177,
+     "rateLimited429": 0,
+     "peakPerMin": 38,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791921660000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 1
+    },
+    {
+     "minute": 1791921720000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 2
+    },
+    {
+     "minute": 1791921720000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 20
+    },
+    {
+     "minute": 1791921780000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 5
+    },
+    {
+     "minute": 1791921780000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 15
+    },
+    {
+     "minute": 1791921840000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 7
+    },
+    {
+     "minute": 1791921840000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 19
+    },
+    {
+     "minute": 1791921900000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 9
+    },
+    {
+     "minute": 1791921900000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 7
+    },
+    {
+     "minute": 1791921960000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 11
+    },
+    {
+     "minute": 1791921960000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 14
+    },
+    {
+     "minute": 1791922020000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 3
+    },
+    {
+     "minute": 1791922020000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 18
+    },
+    {
+     "minute": 1791922080000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 17
+    },
+    {
+     "minute": 1791922080000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 38
+    },
+    {
+     "minute": 1791922140000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 9
+    },
+    {
+     "minute": 1791922140000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 26
+    },
+    {
+     "minute": 1791922200000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 3
+    },
+    {
+     "minute": 1791922200000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 13
+    },
+    {
+     "minute": 1791923460000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    }
+   ],
+   "copyOfKind": 1,
+   "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv740a4m",
+   "label": "code dial 60% (K60g)",
+   "ladder": "K60",
+   "copy": null,
+   "repo": "fleet-kata-d60g",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 200,
+   "agentsStarted": 200,
+   "files": 400,
+   "landed": 1341,
+   "ready": 0,
+   "skipped": 0,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0.8948,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791921857350,
+   "endedAt": 1791925073662,
+   "wallS": 3216,
+   "landWaitS": {
+    "p50": -3,
+    "p90": -1
+   },
+   "models": {
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.0129,
+     "bounced": 2,
+     "landed": 64,
+     "calls": 66,
+     "rateLimited429": 0,
+     "peakPerMin": 15,
+     "role": "overflow"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 0.8819,
+     "bounced": 42,
+     "landed": 1277,
+     "calls": 1319,
+     "rateLimited429": 0,
+     "peakPerMin": 58,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791921840000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 6
+    },
+    {
+     "minute": 1791921900000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 13
+    },
+    {
+     "minute": 1791921900000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 42
+    },
+    {
+     "minute": 1791921960000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 15
+    },
+    {
+     "minute": 1791921960000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 37
+    },
+    {
+     "minute": 1791922020000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 13
+    },
+    {
+     "minute": 1791922020000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 44
+    },
+    {
+     "minute": 1791922080000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 11
+    },
+    {
+     "minute": 1791922080000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 58
+    },
+    {
+     "minute": 1791922140000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 5
+    },
+    {
+     "minute": 1791922140000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 52
+    },
+    {
+     "minute": 1791922200000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 1
+    },
+    {
+     "minute": 1791922200000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 31
+    },
+    {
+     "minute": 1791922260000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 3
+    },
+    {
+     "minute": 1791922260000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 49
+    },
+    {
+     "minute": 1791922320000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 2
+    },
+    {
+     "minute": 1791922320000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 41
+    },
+    {
+     "minute": 1791922380000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 44
+    },
+    {
+     "minute": 1791922440000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 1
+    },
+    {
+     "minute": 1791922440000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 33
+    },
+    {
+     "minute": 1791922500000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 2
+    },
+    {
+     "minute": 1791922500000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 38
+    },
+    {
+     "minute": 1791922560000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 32
+    },
+    {
+     "minute": 1791922620000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 47
+    },
+    {
+     "minute": 1791922680000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 19
+    },
+    {
+     "minute": 1791922740000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 21
+    },
+    {
+     "minute": 1791922800000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 20
+    },
+    {
+     "minute": 1791922860000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 25
+    },
+    {
+     "minute": 1791922920000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 32
+    },
+    {
+     "minute": 1791922980000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 33
+    },
+    {
+     "minute": 1791923040000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 21
+    },
+    {
+     "minute": 1791923100000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 26
+    },
+    {
+     "minute": 1791923160000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 24
+    },
+    {
+     "minute": 1791923220000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 12
+    },
+    {
+     "minute": 1791923280000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 33
+    },
+    {
+     "minute": 1791923340000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 29
+    },
+    {
+     "minute": 1791923400000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 26
+    },
+    {
+     "minute": 1791923460000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 11
+    },
+    {
+     "minute": 1791923520000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 17
+    },
+    {
+     "minute": 1791923580000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 22
+    },
+    {
+     "minute": 1791923640000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 18
+    },
+    {
+     "minute": 1791923700000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 24
+    },
+    {
+     "minute": 1791923760000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 19
+    },
+    {
+     "minute": 1791923820000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 25
+    },
+    {
+     "minute": 1791923880000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 14
+    },
+    {
+     "minute": 1791923940000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 12
+    },
+    {
+     "minute": 1791924000000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 14
+    },
+    {
+     "minute": 1791924060000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 16
+    },
+    {
+     "minute": 1791924120000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 14
+    },
+    {
+     "minute": 1791924180000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 7
+    },
+    {
+     "minute": 1791924240000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 9
+    },
+    {
+     "minute": 1791924300000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 14
+    },
+    {
+     "minute": 1791924360000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 12
+    },
+    {
+     "minute": 1791924420000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 36
+    },
+    {
+     "minute": 1791924480000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 22
+    },
+    {
+     "minute": 1791924540000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 20
+    },
+    {
+     "minute": 1791924600000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 30
+    },
+    {
+     "minute": 1791924660000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 19
+    },
+    {
+     "minute": 1791924720000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 22
+    },
+    {
+     "minute": 1791924780000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 10
+    },
+    {
+     "minute": 1791924840000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 11
+    },
+    {
+     "minute": 1791924900000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 9
+    },
+    {
+     "minute": 1791924960000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 14
+    },
+    {
+     "minute": 1791925020000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 3
     }
    ],
    "copyOfKind": 1,

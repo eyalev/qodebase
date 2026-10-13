@@ -211,6 +211,124 @@
      "requirementLost": "3-30, all among replayed"
     },
     "note": "Clustering 30% of the tasks did not raise losses (74 vs 96 at dial 0): 66 of 74 were already wrong in the commit where they landed, 53 of them clean merges (the model wrote it wrong), 11 among 229 model replays (~5%, the same rate as fresh work, 53 of 998 clean). 6 dropped by a later agent that read main with the requirement in (4 of them exact by base_sha). 2 lost in landing, both judged by the time rule (their breakers predate base_sha): an upper bound. What clustering cost is time: 145 min vs 40 at dial 0, 238 redos and 229 replays (predicted ~299 replays, 36-61 min: the replays were right, the wall 2.4-4x longer than predicted). glm-4.7 (overflow, 49 tasks) lost 11; Gemini flash-lite 55 of 1,328."
+   },
+   {
+    "dial": 60,
+    "variant": "baseline",
+    "project": "eyal/kata-d60",
+    "wallMin": 207,
+    "usd": 0.82,
+    "tasks": 1385,
+    "clusteredTasks": 834,
+    "landed": 1275,
+    "landedByResolution": {
+     "merged": 743,
+     "replayed-llm": 195,
+     "redo+replayed-llm": 273,
+     "redo+merged": 64
+    },
+    "bouncedTwice": 108,
+    "redos": 424,
+    "modelReplays": 468,
+    "noFinalRecord": 2,
+    "queueWaitP50S": 1014,
+    "queueWaitP90S": 1614,
+    "requirementsPassing": 1242,
+    "requirements": 1385,
+    "functionsAllPassing": 305,
+    "casesPassed": 5955,
+    "cases": 6340,
+    "requirementLost": 40,
+    "requirementLostClustered": 26,
+    "requirementLostSpread": 14,
+    "baseLost": 20,
+    "attribution": {
+     "cr": {
+      "wrongAtLanding": 37,
+      "laterAgentDroppedIt": 3,
+      "concurrentLostInLanding": 0
+     },
+     "base": {
+      "wrongAtLanding": 17,
+      "laterAgentDroppedIt": 3,
+      "concurrentLostInLanding": 0
+     }
+    },
+    "byModel": {
+     "gemini-3.1-flash-lite": {
+      "tasks": 1317,
+      "lost": 48
+     },
+     "glm-4.7-flash": {
+      "tasks": 66,
+      "lost": 12
+     }
+    },
+    "prediction": {
+     "replays": 593,
+     "wallMin": "61-110",
+     "requirementLost": "6-60, all among replayed"
+    },
+    "note": "60 lost: 54 wrong when they landed (29 of 743 clean merges, 23 of 468 model replays: 3.9% vs 4.9%), 6 dropped by a later agent (all exact by base_sha), 0 lost in landing. The queue was the wall: 207 min, agents waited p50 1,014 s to land."
+   },
+   {
+    "dial": 60,
+    "variant": "fast: module lanes + direct Haiku replays",
+    "project": "eyal/kata-d60g",
+    "wallMin": 53,
+    "usd": 0.89,
+    "replayUsd": 0.13,
+    "tasks": 1385,
+    "clusteredTasks": 834,
+    "landed": 1341,
+    "landedByResolution": {
+     "merged": 763,
+     "replayed-llm": 175,
+     "redo+replayed-llm": 306,
+     "redo+merged": 97
+    },
+    "bouncedTwice": 44,
+    "redos": 566,
+    "modelReplays": 481,
+    "noFinalRecord": 0,
+    "queueWaitP50S": 142,
+    "queueWaitP90S": 466,
+    "replayP50S": 3.9,
+    "replayP90S": 5.7,
+    "fetchP50S": 12.7,
+    "fetchP90S": 28.5,
+    "requirementsPassing": 1274,
+    "requirements": 1385,
+    "functionsAllPassing": 328,
+    "casesPassed": 6082,
+    "cases": 6340,
+    "requirementLost": 51,
+    "requirementLostClustered": 34,
+    "requirementLostSpread": 17,
+    "baseLost": 28,
+    "attribution": {
+     "cr": {
+      "wrongAtLanding": 47,
+      "laterAgentDroppedIt": 4,
+      "concurrentLostInLanding": 0
+     },
+     "base": {
+      "wrongAtLanding": 24,
+      "laterAgentDroppedIt": 4,
+      "concurrentLostInLanding": 0
+     }
+    },
+    "byModel": {
+     "gemini-3.1-flash-lite": {
+      "tasks": 1319,
+      "lost": 64
+     },
+     "glm-4.7-flash": {
+      "tasks": 66,
+      "lost": 15
+     }
+    },
+    "note": "Same seed, task order, 200 agents and model mix as the baseline (glm took 66 tasks in both, so the mix is equal). 3.9x faster (53 vs 207 min), queue wait p50 7x shorter, 66 more landed, 32 more requirements passing on main. 79 lost: 71 wrong when they landed (35 of 763 clean merges 4.6%, 32 of 481 replays 6.7% vs 4.9% baseline: higher, but 32 vs 23 is within chance at these counts), 8 dropped by a later agent (all by base_sha), 0 lost in landing. The new wall is fetching forks into five lane boxes at once (p50 12.7 s, was 3.3 s)."
    }
   ]
  }
