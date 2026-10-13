@@ -642,11 +642,20 @@ export function suggestBuild(jobIn = SMALL_APP) {
   const job = { ...jobIn, tasks: bucket.tasks, bucket: bucket.label };
   const sc = jobProfile(job);
   // Compared on the real-fitted estimates (2026-10-13): both sides now have real builds, including the same Large
-  // prompt both ways (R3 team $2.40 / 1,940 s, R6 one agent $3.87 / 457 s). The picks equal the lab-only ones.
+  // prompt both ways (R3 team $2.40 / 1,940 s, R6 one agent $3.87 / 457 s).
   const f = predictBuild(job, BUILD_PRESETS.fastest.variant), b = predictBuild(job, BUILD_PRESETS.balanced.variant);
   const mid = (r) => (r.apiUsd[0] + r.apiUsd[1]) / 2;
   const x = mid(f) / mid(b);
   const out = (o) => ({ ...o, bucket: bucket.label, job });
+  // Large: one agent (manager + Eyal, 2026-10-13: 'default like Claude Code on the laptop'). The same Large prompt both
+  // ways: 11/11 features each (docs/board/R3-R6-quality.md), one agent 457 s vs the team's 1,940 s, the team 38% cheaper.
+  // The saving is said from this job's estimate. Huge stays on the numbers: no real one-agent build that big.
+  if (!bucket.small && bucket.max < 30) {
+    const less = Math.max(10, Math.round((1 - 1 / x) * 10) * 10);
+    return out({ preset: 'fastest', why: x > 1.05
+      ? `One strong agent: about 4x faster in our real builds, same features; a team costs about ${less}% less (Balanced).`
+      : 'One strong agent: about 4x faster in our real builds, same features, at about a team\'s cost.' });
+  }
   if (bucket.small || x <= 1.5) {
     // The words follow this job's numbers: 'small' only for the two small buckets.
     const cost = x <= 1.05 ? 'costs about the same as a team or less' : x <= 1.25 ? 'costs a little more than a team' : `costs about ${x.toFixed(1)}x a team`;
@@ -709,8 +718,9 @@ export function jobType(job = SMALL_APP, suggestion = null) {
     why: board ? 'the board shows who works on what, so pieces are not built twice (not yet measured with a planner)' : s.why,
     evidence: 'Board runs and sims (sim.md (d)-(h)): a duplicate check before work stops pieces being built twice.' };
   if (b.tasks < 30) return { ...base, type: 'app', from: 'size', label: 'a mid-size app',
-    why: preset === 'balanced' ? 'about half the cost of one agent on the lab\'s bigger apps' : preset === 'cheapest' ? 'many simple, separate pieces' : 'one agent is still quickest here',
-    evidence: 'Lab stage 1: on the bigger apps a team cost about half of one agent.' };
+    why: preset === 'balanced' ? 'about half the cost of one agent on the lab\'s bigger apps' : preset === 'cheapest' ? 'many simple, separate pieces' : 'about 4x faster than a team in our real builds, same features',
+    evidence: preset === 'fastest' ? 'Real builds R3 vs R6, same prompt: 11/11 features each; one agent 457 s, a 12-agent team 1,940 s and 38% cheaper.'
+      : 'Lab stage 1: on the bigger apps a team cost about half of one agent.' };
   return { ...base, type: 'big-app', from: 'size', label: 'a big app',
     why: preset === 'fastest' ? 'one agent is still quickest here' : preset === 'cheapest' ? 'many simple, separate pieces: a Haiku crew does them for the least'
       : 'in the lab a team cost about half of one agent on big apps; the builder runs up to 12 coders',
