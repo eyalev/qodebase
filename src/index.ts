@@ -422,6 +422,13 @@ const app = {
     // Cloudflare Issues → Notifications webhook. Its own auth (cf-webhook-auth), before the user/agent auth.
     if (url.pathname === '/api/hooks/issues' && request.method === 'POST') return issuesHook(request, env, ctx);
     // Public-site basics (baseline): about, privacy, robots, version, health.
+    // Talk's traces as JSON with the admin key (workers.dev + x-forq-secret), for agents reviewing Talk (2026-10-13).
+    if (url.pathname.startsWith('/api/talk/admin') && env.TALK && !isUiHost(env, url.hostname)) {
+      const w = await who(request, env);
+      if (!(w?.kind === 'user' && w.admin)) return json({ error: 'forbidden' }, 403);
+      const h = new Headers(); h.set('x-talk-who', JSON.stringify({ handle: w.handle, admin: true }));
+      return env.TALK.fetch(new Request(url.toString(), { method: 'GET', headers: h }));
+    }
     if (isUiHost(env, url.hostname)) {
       const cf = (request as any).cf || {};
       if (url.pathname === '/robots.txt') return new Response('User-agent: *\nDisallow: /p/\nDisallow: /import\nDisallow: /api/\nDisallow: /a/\nDisallow: /login\n', { headers: { 'content-type': 'text/plain' } });
