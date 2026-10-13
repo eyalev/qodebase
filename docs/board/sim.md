@@ -1183,3 +1183,19 @@ starts 2026-10-14. If each read counts from tomorrow, it is ~$0.15 per 1k files,
 
 Real mode tops out near 30 files/s whatever the agent count; cached mode should reach hundreds to thousands per
 second. The S4 ladder therefore finds our ceilings well above anything the models allow today.
+
+### (l) results as they come (qb6's S4 ladder, measured)
+**S4a: 200 agents on 4 copies (50 per copy), cached mode.** 227 files/s.
+
+| step | prediction | measured |
+|---|---|---|
+| namespace control plane (#1: `ARTIFACTS.get()` per file) | ~200 files/s if it counts as control plane, else ~600 | **did not throttle**: 0 errors at 227 get() calls/s. Ruled out at this rate, but its rate sat close to the documented 200/s, so it is not yet shown at 3x that |
+| per-copy Run DO round trips (#2) | ~100-250 files/s per copy, flat throughput, per-file ms rising | **the limit.** Per copy ~57 files/s, below my per-copy range: per-file work p50 119 ms (read 88 ms), but each agent idled p50 316 / p90 592 ms between files in next() + done() |
+| Lander `add()` object rewrite (#3) | slows as the backlog grows | **visible already**: land wait p50 52 s, p90 87 s (F3 at real-model rates: p90 18 s) |
+
+What it says:
+- The first limit was ours, as predicted for #2, but it came earlier than my numbers. At ~57 files/s per copy, the
+  Run DO's two state rewrites per file cost ~2-3x more than the docs' 200-500 writing req/s suggested.
+- qb6 is fixing #2 and #3 before S4b (200 agents on 1 copy): indexes, an auto-pause check every 50 files instead of
+  every file, agents calling the Lander directly, batched `next()`, and lanes as SQL rows.
+- #1 stays the thing to watch at S4c (1,000 agents), where `get()` would run at ~1,000/s.
