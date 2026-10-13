@@ -1399,6 +1399,14 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
   /** Restart this object on the deployed code (admin, src/landing/routes.ts 'restart'). */
   /** Restart on the deployed code. Arms the alarm first: an alarm cut by the abort is not retried,
    *  and a run's queue sat still for minutes after a restart (stage 2, 2026-10-08). */
+  async kick() {
+    const t = Date.now();
+    const before = { alarm: await this.ctx.storage.getAlarm(), running: (await this.#m()).running, waiting: [...(await this.#m()).waiting] };
+    try { await this.alarm(); } catch (e) { return { ok: false, before, error: String((e as Error)?.stack || e).slice(0, 1500), ms: Date.now() - t }; }
+    const m = await this.#m();
+    return { ok: true, before, after: { alarm: await this.ctx.storage.getAlarm(), running: m.running, waiting: m.waiting }, ms: Date.now() - t };
+  }
+
   async restart(): Promise<void> { await this.ctx.storage.setAlarm(Date.now() + 2000); this.ctx.abort('restart on the deployed code'); }
 
   async demoForks() { return (await this.#m()).demoForks || []; }

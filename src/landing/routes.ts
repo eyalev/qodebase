@@ -83,6 +83,9 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
     const r = await L.sendBack(String(b.id || ''), String(b.note || ''), me.handle || 'owner');
     return json(r, r.ok ? 200 : (r as { status?: number }).status || 400);
   }
+  // Diagnostics (2026-10-13): run the alarm's work as a request, so it logs and returns what it did or threw. The flagship's
+  // Landing alarms were cancelled ~20 ms in, before any of our code, and a queued change waited for hours.
+  if (verb === 'kick' && me.admin) return json(await L.kick().catch((e: unknown) => ({ ok: false, error: String((e as Error)?.stack || e).slice(0, 1500) })));
   if (verb === 'restart' && me.admin) {
     // After a deploy: objects that never went idle keep the old code; this restarts them on the new one.
     let merger: string | null = null;
