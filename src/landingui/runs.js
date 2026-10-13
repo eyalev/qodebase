@@ -467,7 +467,7 @@
     clearTimeout(timer);
     if (!D && !root.innerHTML) root.innerHTML = '<header class="rh"><h1>Scale runs</h1><p class="rh-s"><i class="live off"></i><span>Loading the runs…</span></p></header>';
     try {
-      await load(); failures = 0; lastOk = Date.now(); if (!NJ && OWN && !MOCK) { njMount(); lastHtml = ''; }
+      await load(); failures = 0; lastOk = Date.now(); if (!NJ && OWN && !MOCK) { njMount(); lastHtml = ''; } loaded1();
       const cur = current();
       if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); if (!cur.group) await loadIndexCheck(cur).catch(() => {}); }
       else await Promise.all(grouped((D.fleet || []).slice()).filter((g) => g.group).slice(0, 6).map((g) => loadLadder(g).catch(() => false)));
@@ -500,16 +500,24 @@
     if (/\b(end|last)\b/.test(x) && TLS) return Math.round(((TLS.S.length - 1) * TLS.stepMs) / 1000);
     return null;
   }
-  function talkActions() {
-    const run = current();
-    const fleetAction = OWN && NJ ? [{ id: 'fleet-job', text: 'Start a fleet job: say what to document and where (e.g. every exported function in VS Code\u2019s editor, and add each to the API index)', run: async (sentence) => {
+  // Talk's fleet-job action. Registered at once (before /api/runs answers, ~4 s on a phone: a sentence said sooner went
+  // to the chat lane, which claimed it had opened the build page; found by scripts/talk-e2e runs-take); it waits for the
+  // first load and does nothing for a visitor.
+  const FLEET_TEXT = 'Start a fleet job: say what to document and where (e.g. every exported function in VS Code\u2019s editor, and add each to the API index)';
+  let loaded1 = null; const firstLoad = new Promise((ok) => { loaded1 = ok; });
+  async function fleetRun(sentence) {
+    await firstLoad; if (!OWN || MOCK) return false;
+    if (!NJ) { njMount(); lastHtml = ''; render(); }
       await njCopies(); const pre = njFromSentence(sentence);
       if (!pre.repo) return false;
       if (location.hash && location.hash !== '#/') location.hash = '#/';
       await njToggle(true, pre); log('talk_fleet_job', { sentence: String(sentence).slice(0, 120), repo: pre.repo, root: pre.root || null, job: pre.job || 'comments' });
       const o = NJ.querySelector('#nj-copy').selectedOptions[0];
       return `Ready to start ${pre.job === 'comments+index' && COPIES.jobs.includes('comments+index') ? 'doc comments and the API index' : 'doc comments'} on ${o?.dataset.name || pre.repo}${pre.root ? ` (${pre.root})` : ''}. Check the estimate and tap Start.`;
-    } }] : [];
+  }
+  function talkActions() {
+    const run = current();
+    const fleetAction = OWN && NJ ? [{ id: 'fleet-job', text: FLEET_TEXT, run: fleetRun }] : [];
     if (!run || !TLS || !root.querySelector('.tl-in:not(.tl-frame.mini .tl-in)')) { if (fleetAction.length) window.__talkActions = fleetAction; else delete window.__talkActions; return; }
     if (!run || !TLS || !root.querySelector('.tl-in:not(.tl-frame.mini .tl-in)')) { delete window.__talkActions; return; }
     window.__talkActions = [{ id: 'moment', text: 'Open the moment of this run\u2019s timeline at a time (say it like 3:20 or minute 5)', run: async (sentence) => {
@@ -677,5 +685,6 @@
     try { const v = (await (await fetch('/version.json', { cache: 'no-store' })).json()).version; if (ver && v && v !== ver && !DR && !Object.keys(stopAsk).length) { log('reload_new_version', { from: ver, to: v }); location.reload(); } ver = ver || v; } catch (e) {}
   }, 120e3);
   fetch('/version.json', { cache: 'no-store' }).then((r) => r.json()).then((j) => { ver = j.version; }).catch(() => {});
+  if (!MOCK && !window.__talkActions) window.__talkActions = [{ id: 'fleet-job', text: FLEET_TEXT, run: fleetRun }];   // until the first load
   tick();
 })();
