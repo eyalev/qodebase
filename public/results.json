@@ -1,9 +1,9 @@
 {
  "v": 1,
- "generated": "2026-10-13T11:58:14.783Z",
+ "generated": "2026-10-13T11:59:05.380Z",
  "sources": {
-  "fleet": "cache",
-  "buildEstimates": "cache"
+  "fleet": "live",
+  "buildEstimates": "live"
  },
  "notes": [],
  "headline": {
@@ -67,7 +67,7 @@
  },
  "fleet": {
   "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)",
-  "source": "cache",
+  "source": "live",
   "runs": [
    {
     "runId": "fmv6kuwtl",
@@ -658,7 +658,7 @@
  },
  "realBuilds": {
   "label": "measured (real Claude agents on Eyal's plan, real builds on Cloudflare; one run each)",
-  "source": "cache",
+  "source": "live",
   "rows": [
    {
     "id": "R2",
