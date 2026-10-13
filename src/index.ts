@@ -16,6 +16,7 @@ import { Registry, canSee, listFor, registry, type Entry } from './registry';
 import { BuildBox } from './build';
 import { mintRunPass, serveRun } from './run';
 import { labPage } from './landingui/labview';
+import { runsPage } from './landingui/runsview';
 import { howPage } from './how';
 import { aboutPage, agentsHtml, buildLogPage, explorePage, privacyPage, projectPage, settingsPage, type BoxStatus } from './ui';
 import { previewTabs } from './sheet';
@@ -434,6 +435,12 @@ const app = {
         const em = await sessionEmail(env, request);
         const u = em ? await userByEmail(env, em) : null;
         return html(withGlobal(labPage({ own: u?.handle === 'eyal' }), 'home', 0, u?.handle || '', 'd'));
+      }
+      // Runs (qb7): every fleet run and real build, live; the owner gets pause/resume/stop (/api/runs decides).
+      if (url.pathname === '/runs' || url.pathname === '/runs/') {
+        const em = await sessionEmail(env, request);
+        const u = em ? await userByEmail(env, em) : null;
+        return html(withGlobal(runsPage({ own: !!u && isOwner(env, u.handle) }), 'home', 0, u?.handle || '', 'd'));
       }
       if (url.pathname === '/privacy') return html(privacyPage());
       if (url.pathname === '/personal-agents' && env.CF_OAUTH_CLIENT_ID) return html(personalAgentsPage());
