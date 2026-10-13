@@ -1286,3 +1286,24 @@ S4e will tell a per-namespace capacity from an account- or storage-wide one: the
 the trees pre-listed so all copies start within seconds.
 - If the plateau goes to ~4,000+ files/s, it is per namespace, and sharding namespaces is the fix.
 - If it stays ~2,100, it is account- or storage-wide.
+
+**S4d tail, explained in part (qb6).** It is not the heavier repos. In the 13:03:10 window (6,422 files), read p50
+was angular 946 ms, next.js 958 and vscode-ext 216 (p90 1,072). At the peak every kind read at ~200-250 ms. Inside the
+window read p50 went 191 ms (first 2 s) -> 986 -> 742 -> 812 -> 697 while the rate fell: one step change for all kinds
+at once.
+
+qb6's reading: by then ~60 copies' Landers were pushing big batches. That points to writes slowing reads, not read load.
+It fits the residual the read-only fit left, and it changes the model.
+- **Model:** Artifacts' shared capacity serves reads and writes together, roughly
+  L_read = L0 / (1 - (reads/s + w x pushed-bytes/s) / capacity), where w is the weight of a written byte.
+- **Not provable for S4d:** pushes were not logged.
+- **S4e logs it:** each series slice now carries door {pushes, files, ms}.
+
+S4e predictions under that model:
+1. Read latency follows push load from one slice to the next, at the same read rate.
+2. The read-only plateau (~2,100 reads/s) is lower whenever many Landers push at once.
+3. Two namespaces double the plateau only if their storage is separate as well.
+
+Fixes on our side if (1) holds: Landers push smaller batches more often, staggered across copies (no synchronized
+bursts); or reads and writes in different namespaces. The door moves fewer bytes per second either way; the gain is in
+not lining the pushes up.
