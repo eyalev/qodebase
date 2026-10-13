@@ -61,6 +61,8 @@ export interface Env {
   OWNER_MAX_CODERS?: string;  // the instance owner's crew size cap at Build (real builds R4/R5: 20, then 40-60)    // every box on the account, every role, owner included (safety net)
   CLAUDE_CODE_OAUTH_TOKEN: string;
   ADMIN_SECRET: string;
+  /** The fleet Worker's key (sim/fleet, qbfleet): /api/runs proxies its data and controls; never sent to a browser. */
+  FLEET_KEY?: string;
 }
 
 /** `owner/name` ↔ Artifacts repo name `owner.name`. */

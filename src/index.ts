@@ -310,6 +310,32 @@ async function docsOf(env: Env, ctx: ExecutionContext, info: ProjectInfo, want: 
 /** Which design to render: a preview host's choice (x-forq-ui), else D on the real site. */
 const uiFor = (request: Request, env: Env): UI | null => uiOf(request) ?? (isUiHost(env, new URL(request.url).hostname) ? 'd' : null);
 
+/** The fleet Worker (sim/fleet, qbfleet) with its key; the key never leaves this Worker. */
+async function fleetCall(env: Env, path: string, body?: unknown) {
+  const r = await fetch(`https://qbfleet.forqdev.workers.dev${path}`, { method: body ? 'POST' : 'GET', headers: { 'x-fleet-key': env.FLEET_KEY || '', 'user-agent': 'forq-internal/1', 'content-type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  return r.json().catch(() => ({ error: `fleet ${r.status}` }));
+}
+// The real builds the /runs page lists (only public ones are shown to people who are not the owner).
+const REAL_BUILDS: [string, string][] = [['eyal.real-tip-splitter', 'R2'], ['eyal.real-home-inventory', 'R3'], ['eyal.real-cafe-site', 'R4'], ['eyal.real-course-builder', 'R5 flagship'],
+  ['eyal.real-home-inventory-solo', 'R6'], ['eyal.real-cafe-site-solo', 'R7'], ['eyal.real-budget-tracker-10', 'proof build'], ['eyal.real-home-inventory-r8b', 'R8b']];
+async function runsData(env: Env, me: { handle?: string | null; admin?: boolean }) {
+  const owner = !!(me.admin || (me.handle && isOwner(env, me.handle)));
+  const fl = await fleetCall(env, '/runs') as { runs?: { repo: string; runId: string; state: string }[] };
+  const rows = fl.runs || [];
+  // The live status of each repo's newest run, merged in.
+  const latest = new Map<string, { runId: string }>(); for (const r of rows) latest.set(r.repo, r);
+  const live = new Map(await Promise.all([...latest.keys()].map(async (repo) => [repo, await fleetCall(env, `/status?repo=${repo}`)] as const)));
+  const fleet = rows.map((r) => { const st = live.get(r.repo) as { runId?: string } | undefined; return st && st.runId === r.runId ? { ...r, live: st } : r; });
+  const real = (await Promise.all(REAL_BUILDS.map(async ([slug, label]) => {
+    const info = await projectStub(env, slug).info().catch(() => null);
+    if (!info || (info.private && !owner)) return null;
+    const v = await env.Landing.get(env.Landing.idFromName(slug)).view(slug).catch(() => null) as any;
+    return { slug, label, private: !!info.private, state: v?.run?.stopped ? 'stopped' : v?.progress?.settledAt ? 'settled' : 'running', startedAt: v?.estimate?.startedAt ?? null, settledAt: v?.progress?.settledAt ?? null,
+      usd: v?.progress?.actualUsd ?? v?.progress?.spentUsd ?? null, parts: v?.build?.parts ?? null, landed: v?.build?.landed ?? null, link: `/p/${slug.replace('.', '/')}/work#/timeline` };
+  }))).filter(Boolean);
+  return { owner, fleet, real };
+}
+
 /** X3: tell a project's owner (Inbox notice always; a phone push unless they turned it off). Phone pushes go through the
  *  instance's Pushover, which reaches only the instance owner: others get the Inbox item. */
 async function notifyOwner(env: Env, slug: string, kind: 'build-done' | 'decision', title: string, href: string) {
@@ -614,6 +640,14 @@ const app = {
         if (!u) return json({ error: 'Sign in first' }, 401);
         const kind = onSubscription(env, u.handle) ? 'plan' : u.apiKeyEnc ? (u.apiKeyKind || 'api') : null;
         return json({ kind, tail: u.apiKeyEnc ? u.apiKeyTail || null : null, ...(u.keyFailed ? { failed: u.keyFailed } : {}) });
+      }
+      // qb7's /runs page: the fleet runs (qbfleet Worker, its key stays here) + the real builds. Public read; control owner-only.
+      if (path === '/api/runs' && request.method === 'GET') return json(await runsData(env, me));
+      if ((m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(series|timeline)$/)) && request.method === 'GET') return json(await fleetCall(env, `/series?repo=${m[1]}&run=${m[2]}`));
+      if ((m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/(pause|resume|stop)$/)) && request.method === 'POST') {
+        if (!(me.admin || (me.handle && isOwner(env, me.handle)))) return json({ error: 'owner only' }, 403);
+        const b = await request.json().catch(() => ({})) as { why?: string };
+        return json(await fleetCall(env, `/${m[2]}`, { repo: m[1], why: String(b.why || `${m[2]} from /runs by ${me.handle || 'admin'}`).slice(0, 200) }));
       }
       // X3: build-done / decision pushes (qb7's Settings). push says whether this person can get a phone push at all.
       if (path === '/api/me/notify' && (request.method === 'GET' || request.method === 'POST')) {
