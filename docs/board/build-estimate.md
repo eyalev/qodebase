@@ -210,3 +210,10 @@ or null when the build is done or nothing is known yet. All times are ms since t
   covered 80-100%. This is in-sample: the estimate refit and these constants were tuned on the same builds. On a
   40-part build the range goes from 21-52 min at 5 landed, to 13-28 at 20, to 3-13 at 35.
 - Tests: `node --test sim/remaining.test.mjs`.
+
+**R7 (2026-10-13): Huge on one agent.** R4's Café website prompt was run on Fastest: 863 s and $7.55 (Opus only),
+against R4's team at 1,762 s and $3.45 (+$0.21 boxes). One agent was about 2x faster and cost about 2.2x as much. It
+built 44 files and ~2,320 lines, the team 71 files and ~5,940 lines; features not compared yet. R7 fell inside its
+shown range (11-30 min, $5.4-11.9). The one-agent fit is now least squares over R2, R6 and R7: cost = 1.83 x sim +
+$0.54, time = 2.1 x sim. Huge still suggests Balanced. Under the time-first rule a feature check of R4 vs R7, like
+qb9's R3 vs R6, would decide it: if R7 has R4's features, one agent is the sooner working app at Huge too.

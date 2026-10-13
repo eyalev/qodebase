@@ -531,12 +531,16 @@ export const REAL_BUILDS = [
   // R6: R3's Large prompt on Fastest (one Opus agent): 457 s, $3.87 (out 95k, cache reads 4.6M, 1-h writes 132k);
   // 1 change, 7 files, ~1,340 lines vs R3's 22 files, ~4,140 lines. Shown 120-300 s, $1.70-3.10 (sim ~195 s, $1.67).
   { slug: 'eyal/real-home-inventory-solo', at: '2026-10-13', shape: 'alone', bucket: 'large', wallS: 457, usd: 3.87, shown: { wallS: [120, 300], usd: [1.7, 3.1] } },
+  // R7: R4's Huge prompt on Fastest: 863 s, $7.55 (out 201k, cache reads 7.8M, 1-h writes 244k), 44 files ~2,320 lines
+  // vs R4's 71 / ~5,940 (features not compared yet). Shown 660-1800 s, $5.4-11.9 (sim ~470 s, $3.9): inside.
+  { slug: 'eyal/real-cafe-site-solo', at: '2026-10-13', shape: 'alone', bucket: 'huge', wallS: 863, usd: 7.55, shown: { wallS: [660, 1800], usd: [5.4, 11.9] } },
 ];
 // The refit on those builds (2026-10-13), applied on top of the lab-calibrated sim. Few points, so each term is
 // named, the range is widened, and the estimate says how many real builds it rests on.
-// - one Opus agent: real = aloneUsdX x sim + sessionUsd, the line through R2 ($0.81 real, $0.24 sim) and R6 ($3.87,
-//   $1.67): x2.14 + $0.30. The fixed part is the start-up context (1-h cache) and the push/landing turns; the x2.1
-//   is more work per piece than in the lab (R6 wrote 95k output tokens). Time: R6 2.4x the sim (R2 sits on the floor).
+// - one Opus agent: real = aloneUsdX x sim + sessionUsd, least squares over R2 ($0.81 real, $0.24 sim), R6 ($3.87,
+//   $1.67) and R7 ($7.55, $3.9): x1.83 + $0.54 (was x2.14 + $0.30 on R2 and R6). The fixed part is the start-up
+//   context (1-h cache) and the push/landing turns; the x1.8 is more work per piece than in the lab. Time: R6 2.4x
+//   the sim, R7 1.84x: x2.1 (geometric mean; R2 sits on the floor).
 // - perAgentUsd: each Haiku team agent's own session on top of the sim (start-up context, board, waiting turns):
 //   R3 ($2.40 - $1.2 sim) / 9 agents = $0.13, R4 ($3.45 - $2.0) / 10 = $0.145.
 // - long: at 40 agents contexts grew past 100k tokens (5x price): per-agent cost x2.7 (R5: ($17.3 - $2.0) / 40 =
@@ -545,7 +549,7 @@ export const REAL_BUILDS = [
 //   reviewer as working). Same linear ramp.
 // - agents: how many the router opens. It is now told how many it has, so up to min(coders, pieces) (R5 used all
 //   40); R3/R4 used fewer (9 of 12, 10 of 20). Low end = the planner's bundling, high end = min(coders, pieces).
-export const REAL_FIT = { aloneUsdX: 2.14, sessionUsd: 0.30, aloneWallX: 2.4, perAgentUsd: 0.14, longAt40: 2.7, wallAt10: 1.8, wallAt40: 2.3, from: 10, to: 40 };
+export const REAL_FIT = { aloneUsdX: 1.83, sessionUsd: 0.54, aloneWallX: 2.1, perAgentUsd: 0.14, longAt40: 2.7, wallAt10: 1.8, wallAt40: 2.3, from: 10, to: 40 };
 const ramp = (n) => Math.max(0, Math.min(1, (n - REAL_FIT.from) / (REAL_FIT.to - REAL_FIT.from)));
 // alone mid: the one real one-agent build (R2, 149 s); low stays the lab's quickest (58 s).
 export const BUILD_FLOOR = { alone: { low: 50, mid: 150 }, team: { low: 170, mid: 320 } };

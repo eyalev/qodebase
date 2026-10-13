@@ -24,6 +24,17 @@
    ]
   },
   {
+   "slug": "eyal/real-cafe-site-solo",
+   "parts": 1,
+   "estimate": [
+    660,
+    1800
+   ],
+   "lands": [
+    863
+   ]
+  },
+  {
    "slug": "eyal/real-home-inventory",
    "parts": 9,
    "estimate": [
