@@ -961,13 +961,14 @@ export class Lander extends DurableObject {
       let parent = tip.hash, tree = tip.treeHash;
       const results = [], commitOf = {};
       const blobs = new Map();
-      const readB = async (h) => { if (!blobs.has(h)) { const b = await repo.readBlob(h); blobs.set(h, b ? new TextDecoder().decode(await b.arrayBuffer()) : null); } return blobs.get(h); };
+      const treeMemo = new Map();
+      const readB = async (h) => { if (!blobs.has(h)) { const b = await retry(() => repo.readBlob(h)); blobs.set(h, b ? new TextDecoder().decode(await b.arrayBuffer()) : null); } return blobs.get(h); };
       const lanes = new Map(); for (const r of rows) { if (!lanes.has(r.lane)) lanes.set(r.lane, []); lanes.get(r.lane).push(r); }
       for (const [lane, list] of lanes) {
         const byPath = new Map(); for (const r of list) { if (!byPath.has(r.path)) byPath.set(r.path, []); byPath.get(r.path).push(r); }
         const files = [];
         for (const [path, ch] of byPath) {
-          const curHash = await blobAt(repo, objs, tree, path);
+          const curHash = await blobAt(repo, objs, tree, path, treeMemo);
           let cur = await readB(curHash);
           const orig = cur;
           for (const r of ch) {
@@ -1098,12 +1099,15 @@ export class Lander extends DurableObject {
 }
 
 /** The blob hash at a path in a tree (in-memory trees from this batch first). */
-async function blobAt(repo, objs, rootHash, path) {
+async function blobAt(repo, objs, rootHash, path, memo = new Map()) {
   let h = rootHash;
   const parts = path.split('/');
   for (let k = 0; k < parts.length; k++) {
     const o = objs.map.get(h);
-    const entries = o && o.type === 'tree' ? parseTree(o.body).map((e) => ({ name: e.name, hash: e.sha, type: e.type })) : await repo.readTree(h);
+    // Trees by hash, memoised for the whole land (a land of 1,000+ files walked from the root each time and Artifacts
+    // answered 'internal error'), and retried with backoff.
+    if (!(o && o.type === 'tree') && !memo.has(h)) memo.set(h, await retry(() => repo.readTree(h)));
+    const entries = o && o.type === 'tree' ? parseTree(o.body).map((e) => ({ name: e.name, hash: e.sha, type: e.type })) : memo.get(h);
     const e = (entries || []).find((x) => x.name === parts[k]);
     if (!e) throw new Error(`no ${path} on main`);
     h = e.hash;
@@ -1150,6 +1154,13 @@ async function dialCheck(env, repoName, runId, offset, limit) {
     }
   }
   return out;
+}
+
+/** An Artifacts read with backoff (internal errors under load). */
+async function retry(fn, waits = [0, 300, 1000, 3000]) {
+  let last;
+  for (const w of waits) { if (w) await new Promise((r) => setTimeout(r, w + Math.random() * w)); try { return await fn(); } catch (e) { last = e; } }
+  throw last;
 }
 
 /** The second agent's comment on the same declaration (cache mode): a different text, so the two really collide. */
