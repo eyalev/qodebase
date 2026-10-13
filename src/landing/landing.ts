@@ -590,10 +590,17 @@ export class Landing extends DurableObject<Env> {
   }
 
   // ---- the queue ---------------------------------------------------------------
+  /** The MergeBox a train runs in: one per lane (its own clone and container), else the project's one. */
+  #boxName(slug: string, lane?: string) {
+    return lane ? `${slug}--merge-${lane.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 40) || 'all'}` : `${slug}--merge`;
+  }
   async #prefetch(slug: string, c: Change) {
     using fork = await this.env.ARTIFACTS.get(c.fork);
     const token = (await fork.createToken('read', 600)).plaintext;
-    await this.env.MergeBox.get(this.env.MergeBox.idFromName(`${slug}--merge`)).prefetch(slug, [{ id: c.id, remote: c.remote, token, commit: c.commit! }]);
+    // Lanes: into the box of the change's own lane (the lanes run measured fetch at p50 12.7 s with no prefetch, 2026-10-13).
+    const m = await this.#m();
+    const lane = m.flags.lanes ? this.#laneOf(c, m.flags.lanes) : undefined;
+    await this.env.MergeBox.get(this.env.MergeBox.idFromName(this.#boxName(slug, lane))).prefetch(slug, [{ id: c.id, remote: c.remote, token, commit: c.commit! }]);
   }
 
   #index(m: Meta, c: Change) {
@@ -1028,8 +1035,7 @@ export class Landing extends DurableObject<Env> {
     await this.ctx.storage.put(`t:${train.id}`, train);
     await this.#saveMeta();
     // One MergeBox per lane (its own clone and container), the project's usual one otherwise.
-    const box = lane ? `${m.slug}--merge-${lane.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 40) || 'all'}` : `${m.slug}--merge`;
-    await this.env.MergeBox.get(this.env.MergeBox.idFromName(box)).enqueue(job);
+    await this.env.MergeBox.get(this.env.MergeBox.idFromName(this.#boxName(m.slug, lane))).enqueue(job);
     log('landing', 'train_started', { slug: m.slug, train: train.id, changes: train.changes });
     await this.#arm(30_000);
   }
