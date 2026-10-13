@@ -25,7 +25,7 @@ the owner tab before 08:30 UTC Oct 14. Anything not ready is cut or replaced as 
 | 2e | 0:25 | **Money moment**: into Talk "Add a dark mode" mid-build; it lands on top | "Mid-build I ask for one more thing. It lands on top of the rest, and nothing breaks." | The dark-mode change goes through review and the line while others are still working; tests pass; it lands | 8× then real time for the landing |
 | 2f | 0:20 | App tab: the live app in dark mode; then one change record (what it was asked, review, replay, tests) | "The app is live, and every change keeps its record." | App preview loads; one collided-and-redone change opened | real time |
 | 2g | 0:10 | Timeline of the run | "The timeline shows where the time went." | Timeline tab with the critical path | real time |
-| 3a | 0:15 | Into Talk: "Document every exported function in VS Code's editor and add each one to the API index." → the confirm card (agents, files, estimate) → Start | "Now a thousand agents." | Confirm card shows the agent count and cost; Start | real time |
+| 3a | 0:15 | Into Talk: "Document every exported function in VS Code's editor and add each one to the API index." → /runs opens with the New fleet job form filled (agents, files, estimate) → Eyal taps Start | "Now a thousand agents." | Confirm card shows the agent count and cost; Start | real time |
 | 3b | 0:20 | /runs live: agents at work, files landed, collisions per minute, replays | "Every agent writes its comment and one line in a shared index, so they collide all the time." | Counters climb; collisions and replays non-zero | 4× (clock + label) |
 | 3c | 0:15 | Intents tab of the run: job → folders → files; stuck first | "With a thousand agents you browse intents, not agents." | Tree with roll-up counts | real time |
 | 3d | 0:15 | One collision → its replay → the diff | "This one collided on the index; it was redone on the newest code." | A real replayed change with its diff | real time |
@@ -67,6 +67,18 @@ Status (qb7, Oct 13 evening; everything below ships with qb6's first deploy afte
 - **2f live:** X1 in the App tab: a waiting note, then 'More is coming: N of M parts landed…', 'Show the new parts'.
 - **3a:** Talk's fleet job fills the New fleet job form with the sentence and picks VS Code src/vs/editor (fix in the
   same deploy). Whether a Talk confirm card shows first is qb2's, open.
+
+Status (qb2, Talk 01813f6, tested live at 390):
+- **2a ready:** on home, the sentence fills the idea box, picks Balanced (its panel opens), and the bar asks
+  'Build it?'; say yes or tap Build it.
+- **2d ready** once a real ask-person is open: say the answer on the project page → 'Answer Agent …'s question (…)
+  with this?' → yes. Talk keeps its traces 14 days, another reason to say a test key only.
+- **2e ready:** 'Add a dark mode' on the project page → 'Send to …'s agents: "Add a dark mode"?' → yes → router
+  request; Changes opens.
+- **3a:** Talk opens /runs and qb7's form fills with the job and its estimate; Eyal taps Start (Talk never starts a
+  run, so there is no separate Talk confirm card: the filled form with its estimate is the confirm step). **Open:**
+  qb7's parser picks 'VS Code extensions' instead of src/vs/editor on the reserved copy fleet-n2-vscode-src-1;
+  check the form shows src/vs/editor before tapping Start.
 
 ## Pre-flight (08:00–08:45 UTC)
 
