@@ -1,12 +1,12 @@
 # GitHub parity: what qodebase has, what a judge will look for, what to add
 
-Checked 2026-10-12 against the code at `aa6e228` and the live site (`curl -4`, signed out).
+Checked 2026-10-12 against the code at `9a2a4ab` and the live site (`curl -4`, signed out).
 Judging: originality + prototype 50%, multi-agent coordination/review/conflicts 25%, UX 25%.
 
 ## 0. Broken things a judge will hit (fix first)
 
 1. **Header project link is broken on every project page.** `src/header.ts:24` emits
-   `href=""${esc(c.href)}"` (stray quote, landed 2 h ago in `67e8f09`/`9b4542f`). Live HTML on
+   `href=""${esc(c.href)}"` (stray quote, landed 2 h ago in `eca72cd`/`e00dce0`). Live HTML on
    `/p/eyal/cafe-team/history`: `<a class="hctx" href=""/p/eyal/cafe-team" …>`, so tapping
    "eyal / cafe-team" in the header reloads the current page. One character, S.
 2. **Unknown or owner-only tabs render a Readme that says "This project has no README yet."**
@@ -36,7 +36,7 @@ Legend, judge column: **E** = a judge will look for it, **N** = nice, **–** = 
 | PR review comments | reviewer agent verdict + notes shown on the record; owner can Approve (`/landing/approve`); `fix` verb re-sends *reviewer* notes (`index.ts` `verb === 'fix'`) | a person's comment = instruction to the agent | **a person can't send a change back with their own note from the record** | E |
 | Merge conflicts | land by intent: rule replay, AI replay, owner/lead; collisions shown per file/area | replay the intent on newest main | none; it's the headline | E |
 | Merge queue / protected branch | the line: tested trains, failing change bounces alone; main only moves through the queue on landing projects | same, intent-aware | per-area queues are "designed, not built" (README) | E |
-| Issues | **Requests** (live 2026-10-13, forq b65edbb; `src/requests.ts`, `src/requestsui.ts`): anyone signed in sends a public project's owner one request (≤1,000 chars, optional screenshot and fork link); the owner's Requests tab (count badge, Inbox notice) sends it to the router as the owner's own request, replies, or closes it (done / not doing it); requesters see status and reply under Your requests. Limits 3 per project / 10 a day per person; private projects never take requests; owner can turn them off. Also: router requests, board task lists + dedupe, Errors tab = Cloudflare Issues → auto fix | issue = an *ask* the owner forwards to agents; triage = router split + duplicate check | no categories, threads, votes or labels (by design) | E |
+| Issues | **Requests** (live 2026-10-13, forq 3b73c74; `src/requests.ts`, `src/requestsui.ts`): anyone signed in sends a public project's owner one request (≤1,000 chars, optional screenshot and fork link); the owner's Requests tab (count badge, Inbox notice) sends it to the router as the owner's own request, replies, or closes it (done / not doing it); requesters see status and reply under Your requests. Limits 3 per project / 10 a day per person; private projects never take requests; owner can turn them off. Also: router requests, board task lists + dedupe, Errors tab = Cloudflare Issues → auto fix | issue = an *ask* the owner forwards to agents; triage = router split + duplicate check | no categories, threads, votes or labels (by design) | E |
 | Projects / boards | Agent board (`src/landing/board.ts`), Board areas + feed + timeline | live board of who works where | none | N |
 | Discussions | none | Talk / router chat | – | – |
 | Notifications | "Needs you" section + inbox badge in header (`v3.ts` Global.inbox, `header.ts`) | asked only when something needs a person | no push/email when a change needs you | N |

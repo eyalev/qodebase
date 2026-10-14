@@ -31,7 +31,7 @@ Judging, and where each part is answered:
   By Oct 11, behind a flag, on 1-2 real changes only: tier-2 LLM replay. So the video
   never says an agent replays changes in the scripted run, and never scripts a number:
   run numbers are read from the run itself (rec-work.mjs `live`).
-- Hono is final (qb4, 395cbb5): 16/40/48% of PRs needed an earlier one, 0 git conflicts
+- Hono is final (qb4, b2dcda4): 16/40/48% of PRs needed an earlier one, 0 git conflicts
   and 0 clean-but-broken at every wave.
 
 ## Scenes (draft 3, after the manager's review of draft 2)
