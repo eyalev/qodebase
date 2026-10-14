@@ -212,7 +212,7 @@ body.rec .prog,body.rec .notes{display:none}
   </div>
   <div class="ovc"><h3>What we proved</h3>
    <ul class="proved">
-    <li><b>Thousands</b><span>of agents on Cloudflare: 10,000 with cached answers (at most ~2,800 busy at once), every file different, all on main in 86 s, 0 errors; cheap models landed <span data-k="fleet.files">31,466</span> file changes across six codebases (VS Code re-documented on fresh copies for scale), up to <span data-k="fleet.peak">114</span> a second over the busiest minute</span></li>
+    <li><b>Thousands</b><span>of agents on Cloudflare: 10,000 with cached answers (at most ~2,800 busy at once), every file different, all on main in 86 s, 0 errors; cheap models landed <span>31,466</span> file changes across six codebases (VS Code re-documented on fresh copies for scale), up to <span data-k="fleet.peak">114</span> a second over the busiest minute</span></li>
     <li><b>Hundreds</b><span>200 agents on one codebase, checked by tests they never saw: with up to 60% of tasks aimed at the same code, losses stayed in the same range (96, 74, 60 lost checks; 0 lost in landing); the queue slowed, and lanes per module took the worst case from 207 to 53 min, 44.5 with prefetch</span></li>
     <li><b>Up to 40</b><span>real Claude agents building apps: 28 of 40 changes collided, all redone; at this size one strong agent finished sooner in 3 of 3 builds</span></li>
     <li><b>Every step</b><span>recorded in git and visible: each change, the timeline, the asks</span></li>
@@ -326,7 +326,7 @@ body.rec .prog,body.rec .notes{display:none}
 
 <section class="s" data-t="A fleet of cheap models" data-sec="C">
  <div class="claim"><h2>A fleet of cheap models, on real code</h2><p>Agents on Workers AI and Gemini Flash-Lite, no Claude, documented real codebases including VS Code, Next.js and Angular. A hand check found 109 of 115 comments right.</p><span class="src">Measured on Cloudflare; Durable Object agents, real git on Artifacts; VS Code src/vs documented again on fresh copies for the scale runs</span></div>
- <div class="vis"><div><div class="count" data-k="fleet.files">31,466</div><p class="fl">file changes landed across six codebases for <b>$<span data-k="fleet.usd">19.09</span></b>, about $<span data-k="fleet.per1k">0.61</span> per thousand, up to <span data-k="fleet.peak">114</span> a second over the busiest minute</p></div></div>
+ <div class="vis"><div><div class="count">31,466</div><p class="fl">file changes landed across six codebases for <b>$<span>19.09</span></b>, about $<span>0.61</span> per thousand, up to <span data-k="fleet.peak">114</span> a second over the busiest minute</p></div></div>
  <aside class="say">And agents do not have to be expensive. A fleet on cheap models, Workers AI and Gemini Flash-Lite, documented real codebases, VS Code, Next.js and Angular. About thirty thousand file changes have landed so far, across six codebases, up to a hundred a second, for well under a dollar per thousand, and a hand check found a hundred and nine of a hundred and fifteen comments right.</aside>
 </section>
 
@@ -410,7 +410,7 @@ body.rec .prog,body.rec .notes{display:none}
 <section class="s ovs" data-t="What we proved" data-sec="wrap">
  <div class="ov"><div class="ovc"><h3>What we proved</h3>
   <ul class="proved">
-   <li><b>Thousands</b><span>10,000 agents on Cloudflare with cached answers (at most ~2,800 busy at once), every file different, all on main in 86 s; cheap models landed <span data-k="fleet.files">31,466</span> file changes across six codebases for $<span data-k="fleet.usd">19.09</span> (Section C)</span></li>
+   <li><b>Thousands</b><span>10,000 agents on Cloudflare with cached answers (at most ~2,800 busy at once), every file different, all on main in 86 s; cheap models landed <span>31,466</span> file changes across six codebases for $<span>19.09</span> (Section C)</span></li>
    <li><b>Hundreds</b><span>200 agents, 1,385 coding tasks, hidden tests: up to 468 collided changes redone by a model, losses stayed in the same range (96, 74, 60), at most 2 lost in landing; lanes per module, 207 to 53 min, 44.5 with prefetch (Section C)</span></li>
    <li><b>Up to 40</b><span>real Claude agents: 12 of 12 landed; 28 of 40 collided and all were redone, 11 of 13 features work; one strong agent sooner in 3 of 3, the team cheaper in 2 of 3 (Section B)</span></li>
    <li><b>Every step is visible</b><span>the record in git, the timeline, Asks, estimates, the Runs page (Sections A, D)</span></li>
