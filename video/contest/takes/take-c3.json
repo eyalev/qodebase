@@ -31,12 +31,13 @@
  },
  {
   "a": 395300,
-  "b": 408500
+  "b": 408500,
+  "frame_until": 398600
  },
  {
   "a": 408500,
   "b": 409800,
-  "say": "The run's own page: the index check, five thousand seven hundred eighty-seven lines, none missing, and every one of the two thousand seven hundred ninety-one collisions redone.",
-  "hold": 9
+  "say": "The run's own page: the index check, five thousand seven hundred eighty-seven lines, none missing; every one of the two thousand seven hundred ninety-one collisions redone; and the files the checks rejected were left unchanged.",
+  "hold": 13
  }
 ]

@@ -49,15 +49,29 @@ class Cut2(base.Cut):
 
     def __init__(self, out):
         super().__init__(out)
-        self.notes = deck_notes()
+        self.notes = deck_notes(); self.pace = []
 
     def deck(self, n, say=None, after=0.4):
         title, notes = self.notes[n]
         text = say if say is not None else notes
         im = Image.open(os.path.join(DECK, f'{n:02d}.png')).convert('RGB').resize((W, H))
-        secs = max(hold(text) if text else 2.5, (self.speak(text) if text else 0) + after)
+        secs = max(hold(text) if text else 2.5, (self.speak(text) if text else 0) + self.TAIL)
         if text: self.cues.append((self.now(), self.now() + secs, text))
-        self.emit(im, round(secs * FPS))
+        self.emit(im, round(secs * FPS)); self.block_end()
+
+    LEAD, TAIL = 0.4, 1.0
+    def speak(self, text):
+        path, secs = base.voice(text)
+        if path:
+            st = self.now() + self.LEAD
+            self.audio.append((st, path)); self.vo_end = st + secs
+            self.pace.append([st + secs, None, text[:50]])
+        return secs + self.LEAD
+
+    def block_end(self):
+        """Close the pacing record of narration started in this block (Eyal: hold >= 0.8 s after it ends)."""
+        for p in self.pace:
+            if p[1] is None: p[1] = self.now()
 
     def chapter(self, title):
         # no 0.5 s blank page between chapters (review of voice-7: white flashes at 0:40, 4:04, 5:26, 8:02)
@@ -83,9 +97,9 @@ class Cut2(base.Cut):
                 d.text((x, y + 20), big, font=F_VBIG, fill=ACC)
                 for j, l in enumerate(wrap(d, label, F_VLAB, max(cw - 60, 300))[:3]): d.text((x, y + 200 + j * 46), l, font=F_VLAB, fill=FG)
                 x += cw
-        secs = max(hold(headline + ' ' + sub) , (self.speak(say) + after) if say else 0)
+        secs = max(hold(headline + ' ' + sub), (self.speak(say) + max(after, self.TAIL)) if say else 0)
         if say: self.cues.append((self.now(), self.now() + secs, say))
-        self.emit(im, round(secs * FPS))
+        self.emit(im, round(secs * FPS)); self.block_end()
 
     @staticmethod
     def logo(im, x, y, size):
@@ -95,19 +109,30 @@ class Cut2(base.Cut):
         d.ellipse((x + (121 - 48) * k, y + (110 - 48) * k, x + (121 + 48) * k, y + (110 + 48) * k), outline=(255, 255, 255), width=round(30 * k))
         d.rectangle((x + 154 * k, y + 58 * k, x + 184 * k, y + 196 * k), fill=(255, 255, 255))
 
+    def end_card(self, say):
+        """Try it: one URL per row, logo, held ~4 s after the narration."""
+        im = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(im)
+        self.logo(im, 160, 170, 150)
+        d.text((160, 380), 'Try it: qodebase.app', font=font(110, 700), fill=FG)
+        rows = [('Watch a run, no sign-in', 'qodebase.app/how'), ('Code on qodebase', 'qodebase.app/p/eyal/qodebase'), ('Code on GitHub', 'github.com/eyalev/qodebase')]
+        for i, (k, v) in enumerate(rows):
+            y = 560 + i * 90; d.text((160, y), k + ':', font=F_VSUB, fill=DIM); d.text((760, y), v, font=F_VSUB, fill=ACC)
+        fit_check(d, [('Try it: qodebase.app', font(110, 700))] + [(v, F_VSUB) for _, v in rows], W - 320, 'end card')
+        secs = self.speak(say) + 4.0; self.cues.append((self.now(), self.now() + secs, say)); self.emit(im, round(secs * FPS)); self.block_end()
+
     def title_card(self, say, after=0.6):
         im = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(im)
         self.logo(im, 160, 380, 200)
         d.text((410, 395), 'qodebase', font=font(150, 700), fill=FG)
         d.text((414, 575), 'Many AI agents change one codebase; their work lands by itself.', font=F_VSUB, fill=DIM)
-        secs = max(4.0, self.speak(say) + after); self.cues.append((self.now(), self.now() + secs, say)); self.emit(im, round(secs * FPS))
+        secs = max(4.0, self.speak(say) + self.TAIL); self.cues.append((self.now(), self.now() + secs, say)); self.emit(im, round(secs * FPS)); self.block_end()
 
     def scale_chart(self, say, after=0.6):
         """Eyal: the old ladder read as 'scaling failed'. Two groups: realistic (every file read from storage) and
         best case (files repeat, read cache, no model calls), files per second over the busiest 10 s."""
         im = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(im)
         d.text((160, 110), 'Files per second, busiest 10 seconds', font=F_VH, fill=FG)
-        groups = [('Realistic: every file read from storage', ACC, [('1,000 agents', 1230), ('4,750 agents', 2100), ('10,000 agents', 1900)],
+        groups = [('Realistic: every file read from storage (cached answers, no model calls)', ACC, [('1,000 agents', 1230), ('4,750 agents', 2100), ('10,000 agents', 1900)],
                    'Capped by the account\'s storage reads, about 2,000 a second; the 10,000 run still finished in 86 s.'),
                   ('Best case: files repeat (read cache, no model calls)', (148, 96, 15), [('50,000 agents', 12900), ('100,000 agents, 0 lost', 22400)], '')]
         mx, y, x0, x1 = 22400, 270, 560, W - 260
@@ -120,8 +145,8 @@ class Cut2(base.Cut):
             for l in (wrap(d, note, F_VLAB, W - 400) if note else []): d.text((160, y + 4), l, font=F_VLAB, fill=DIM); y += 50
             if note: y += 10
             y += 40
-        secs = max(6.0, self.speak(say) + after)
-        self.cues.append((self.now(), self.now() + secs, say)); self.emit(im, round(secs * FPS))
+        secs = max(6.0, self.speak(say) + self.TAIL)
+        self.cues.append((self.now(), self.now() + secs, say)); self.emit(im, round(secs * FPS)); self.block_end()
 
     def _canvas(self, shot, y0, caption, quote, badge, zoom=1.0):
         canvas = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(canvas)
@@ -205,13 +230,13 @@ class Cut2(base.Cut):
         for s in segs:
             a = at(s['a'], prev); b = at(s['b'], a); prev = b; x = float(s.get('x', 1))
             if x > 1 and s.get('say'):
-                need = base.voice(s['say'])[1] + 0.5
+                need = base.voice(s['say'])[1] + self.LEAD + self.TAIL
                 if (b - a) / 1000 / x < need: x = max(1.0, (b - a) / 1000 / need)
             jump = (a - last_b) if (last_b is not None and x == 1 and a - last_b > 15000) else 0
             last_b = b
             if s.get('say'): self.speak(s['say'])
             cap = s.get('cap', s.get('say', ''))
-            if cap or s.get('quote'): self.cues.append((self.now(), self.now() + (b - a) / 1000 / x, s.get('quote') or cap))
+            if cap or s.get('quote'): self.cues.append((self.now(), self.now() + max((b - a) / 1000 / x + s.get('hold', 0), base.voice(s['say'])[1] if s.get('say') else 0), s.get('quote') or cap))
             # The user's words: the clip itself, mixed in at the moment the rig played it into the mic (clean, and
             # independent of the page recording). The page recording below adds Talk's own spoken replies.
             if x == 1:
@@ -241,15 +266,18 @@ class Cut2(base.Cut):
             while t <= b:
                 while ci < len(chat_ev) and chat_ev[ci][0] <= t:
                     self.chat.append((chat_ev[ci][1], chat_ev[ci][2])); self.cues.append((self.now(), self.now() + max(2.0, len(chat_ev[ci][2]) / (11.5 if chat_ev[ci][1] == 'talk' else 15)), ('Talk: ' if chat_ev[ci][1] == 'talk' else '') + chat_ev[ci][2])); ci += 1
-                while fi + 1 < len(frames) and frames[fi + 1][0] <= t: fi += 1
-                while fi > 0 and frames[fi][0] > t: fi -= 1
+                tf = min(t, s['frame_until']) if s.get('frame_until') else t
+                while fi + 1 < len(frames) and frames[fi + 1][0] <= tf: fi += 1
+                while fi > 0 and frames[fi][0] > tf: fi -= 1
                 f = frames[fi][1]
                 if f not in cache: cache.clear(); cache[f] = cover_talk_version(Image.open(os.path.join(src, 'frames', f)).convert('RGB'))
                 badge = (f'{round(x)}×', f'real time {int((t - a) / 60000)}:{int((t - a) / 1000 % 60):02d}') if x > 1 else (('later', f'+{round(jump / 60000)} min' if jump >= 60000 else f'+{round(jump / 1000)} s') if jump and t - a < 2000 else None)
                 self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), badge, s.get('zoom', 1.0)))
                 t += 1000 * x / FPS
             hold_s = s.get('hold', 0)
+            if s.get('say') and x == 1: hold_s = max(hold_s, base.voice(s['say'])[1] + self.LEAD + self.TAIL - (b - a) / 1000)
             if hold_s: self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), None, s.get('zoom', 1.0)), round(hold_s * FPS))
+            self.block_end()
 
 V = os.path.expanduser('~/.local/share/qodebase-video')
 def talk_voice(text):
@@ -287,32 +315,32 @@ def cover_talk_version(im):
 TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-d2,take-d2b').split(',')]
 
 def script(c):
-    PROVED = [('10,000', 'agents on Cloudflare, cached answers'), ('200', 'agents on real code: 0 lost in landing at 60% overlap'), ('40', 'real Claude agents on one app')]
+    PROVED = [('10,000', 'agents on Cloudflare, cached answers'), ('200', 'agents on one codebase: 0 lost in landing at 60% overlap'), ('40', 'Claude agents on one app')]
     c.chapter('')
     c.title_card(say="This is qodebase: a git platform where many AI agents change one codebase at the same time, and their work lands by itself.")
-    c.vslide('Agents write code faster than review can land it', say="Agents now write code faster than people can review it and land it. And when many agents work at once, their changes depend on each other and collide.")
+    c.vslide('Agents write code faster than people can review it', say="Agents now write code faster than people can review it and merge it. And when many agents work at once, their changes depend on each other and collide.")
     c.vslide('qodebase lands each change by its intent', sub='Phone-first, and on desktop too, on Cloudflare', say="qodebase lands each change by what it was asked to do, on the newest code. You run it from a phone or a desktop, and it is built on Cloudflare.")
-    c.vslide('What we proved', nums=PROVED, say="We proved it at three scales: ten thousand agents on Cloudflare, two hundred agents on real code with nothing lost in landing, and up to forty agents running Claude, building one app.")
+    c.vslide('What we proved', nums=PROVED, say="We proved it at three scales: ten thousand agents on Cloudflare with cached answers instead of model calls, two hundred agents on one codebase with at most two changes lost in landing, and up to forty agents running Claude, building one app.")
     c.chapter('The idea: land by intent')
     c.deck(4, say="A hint from real history. Hono is an open-source web framework. Replaying a hundred of its real pull requests as if they were written at the same moment, almost half needed another one to land first. People write pull requests one after another; agents in parallel can't see each other's unlanded work. So dependent work must wait, be stacked, or be redone after it lands.")
     c.deck(5)
     c.deck(6, say="Every change keeps its record inside git, as a note on its commit: what it was asked to do, which agent did it, the review, or that there was none, how it landed, and the tests.")
     c.chapter('A team build, all by voice')
     for t in TAKES2: c.take(t, json.load(open(os.path.join(t, 'segs.json'))))
-    c.chapter('It works with real agents')
-    c.deck(11, say="Then a real app: forty agents running Claude built one travel planner. Twenty-eight of their changes collided, and a model redid every one on the newest code. We tried the app by hand: eleven of thirteen features work. Why not forty Opus agents instead? One forty-agent run already cost about seventeen dollars.")
+    c.chapter('A bigger build: forty agents')
+    c.deck(11, say="Then a bigger build: forty agents running Claude built one travel planner. Twenty-eight of their changes collided, and a model redid every one on the newest code. We tried the app by hand: eleven of thirteen features work. Why not forty Opus agents instead? One forty-agent run already cost about seventeen dollars.")
     c.deck(12, say="And an honest finding: for a fresh app, one strong agent beat a team. A single Opus agent finished sooner in all three comparisons, two to six times, with at least as many features working; the team was cheaper in two of three.")
     c.chapter('Many agents, at scale')
-    c.vslide('200 agents on real code', nums=(('1,385', 'coding tasks, checked by hidden tests'), ('0', 'lost in landing at 60% overlap'), ('44.5 min', 'with lanes and prefetch, from 207')), say="Two hundred cheap-model agents took almost fourteen hundred coding tasks on one codebase, checked by tests they never saw. As more tasks aimed at the same functions, losses stayed in the same range and nothing was lost in landing. The overlap cost time; lanes, one landing queue per module, cut the worst case from two hundred and seven minutes to forty-four and a half.")
-    c.scale_chart(say="Then thousands of agents on one platform. With every file different, storage reads cap it near two thousand files a second; ten thousand agents still put all their changes on main in eighty-six seconds. When files repeat, the cache lets a hundred thousand agents reach twenty-two thousand a second, with nothing lost.")
+    c.vslide('200 agents on one codebase', nums=(('1,385', 'coding tasks, checked by hidden tests'), ('0', 'lost in landing at 60% overlap'), ('44.5 min', 'with lanes and prefetch, from 207')), say="Two hundred cheap-model agents took almost fourteen hundred coding tasks on one codebase, checked by tests they never saw. As more tasks aimed at the same functions, losses stayed in the same range: at most two changes lost in landing, none at sixty percent overlap. The overlap cost time; lanes, one landing queue per module, cut the worst case from two hundred and seven minutes to forty-four and a half.")
+    c.scale_chart(say="Then thousands of agents on one platform. With every file different, storage reads cap it near two thousand files a second; ten thousand agents still put all their changes on main in eighty-six seconds. When files repeat, the cache lets a hundred thousand agents reach twenty-two thousand a second, with nothing lost. All of these used cached answers instead of model calls.")
     c.chapter('A thousand agents, all by voice')
     T3 = os.path.join(V, os.environ.get('TAKE3', 'take-c3'))
     c.take(T3, json.load(open(os.path.join(T3, 'segs.json'))))
     c.chapter('Built on Cloudflare')
-    c.vslide('All of it runs on Cloudflare', sub='Workers, Durable Objects, Artifacts, Containers and Workers AI (Gemini as overflow)', say="Underneath, it is all Cloudflare: Workers serve the app, Durable Objects hold every project and agent, Artifacts hold every repository and fork, Containers run the agents, and Workers AI runs the low-cost models, with Gemini as overflow, and the voice.")
+    c.vslide('All of it runs on Cloudflare', sub='Workers, Durable Objects, Artifacts, Containers, Workers AI and AI Gateway', say="Underneath, it is all Cloudflare: Workers serve the app, Durable Objects hold every project and agent, Artifacts hold every repository and fork, Containers run the agents, and the low-cost models and the voice run through Workers AI and Cloudflare's AI Gateway.")
     c.chapter('')
-    c.vslide('What we proved', nums=PROVED, say="Ten thousand agents on one platform, two hundred on real code with nothing lost in landing, and up to forty agents running Claude building one app, every step recorded and visible.")
-    c.vslide('Try it: qodebase.app', sub='Watch a run, no sign-in. Code: qodebase.app/p/eyal/qodebase (also on GitHub: github.com/eyalev/qodebase)', say="Try it yourself at qodebase dot app: watch a run with no sign-in, and read how it works.", after=4.0, logo=True)
+    c.vslide('What we proved', nums=PROVED, say="Ten thousand agents on one platform with cached answers, two hundred on one codebase with at most two changes lost in landing, and up to forty agents running Claude building one app, every step recorded and visible.")
+    c.end_card(say="Try it yourself at qodebase dot app: watch a run with no sign-in, and read the code.")
 
 _SPEECH = {}
 def speech_spans(path, start):
@@ -358,6 +386,9 @@ def _close_fixed(self):
         print(json.dumps({'event': 'fit_check', 'overflows': FIT_FAIL}))
         if os.environ.get('ALLOW_OVERFLOW') != '1': _close(self); sys.exit(f'fit check FAILED: {len(FIT_FAIL)} lines overflow')
     print(json.dumps({'event': 'fit_check', 'overflows': 0}))
+    late = [(round(p[1] - p[0], 2), p[2]) for p in self.pace if p[1] is not None and p[1] - p[0] < 0.8]
+    print(json.dumps({'event': 'pace_check', 'late': late}))
+    if late and os.environ.get('ALLOW_PACE') != '1': _close(self); sys.exit(f'pace check FAILED: {len(late)} narrations end < 0.8 s before their slide ends')
     bad = overlap_check(self.audio)
     print(json.dumps({'event': 'overlap_check', 'overlaps': len(bad), 'list': bad[:20]}))
     if bad and os.environ.get('ALLOW_OVERLAP') != '1':

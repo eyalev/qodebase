@@ -207,7 +207,7 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
 <section class="s ovs" data-t="Overview" data-sec="intro">
  <div class="ov">
   <div class="ovc">
-   <div><h3>Why we are here</h3><p>Agents write code faster than pull requests and human review can land it. With many agents, order and collisions break the flow.</p></div>
+   <div><h3>Why we are here</h3><p>Agents write code faster than people can review it. When many agents work at once, their changes depend on each other and collide.</p></div>
    <div><h3>What is new</h3><p>Others send a collided change back (merge queues) or fix conflicts on request (Copilot), or let a model re-implement a branch as a last tier (Overstory). qodebase records the reviewed intent with every change, redoes it on the newest main as the normal path, and shows a live board and an Intents view, phone-first, and on desktop too, on Cloudflare.</p></div>
    <div><h3>The map</h3><ol class="map" data-map></ol></div>
   </div>
@@ -219,7 +219,7 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
     <li><b>Every step</b><span>recorded in git and visible: each change, the timeline, the asks</span></li>
    </ul></div>
  </div>
- <aside class="say">Here is the plan. Agents now write code faster than pull requests and human review can land it, and with many agents, order and collisions break the flow. We built qodebase to fix that. We proved it at three scales: thousands of agents on Cloudflare, hundreds with real code collisions checked by tests, and real Claude teams of up to forty building apps. We will show the idea, real agents, scale, and how a person follows it all.</aside>
+ <aside class="say">Here is the plan. Agents now write code faster than people can review it and merge it, and when many agents work at once, their changes depend on each other and collide. We built qodebase to fix that. We proved it at three scales: thousands of agents on Cloudflare, hundreds with real code collisions checked by tests, and real Claude teams of up to forty building apps. We will show the idea, real agents, scale, and how a person follows it all.</aside>
 </section>
 
 <section class="s secs" data-t="The idea: land by intent" data-sec="A" data-head>
@@ -275,7 +275,7 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
 </section>
 
 <section class="s" data-t="40 real agents" data-sec="B">
- <div class="claim"><h2>Real agents, real app</h2><p>40 agents built a travel planner: 28 of 40 changes collided, all were redone. Tried by hand, <b>11 of 13</b> features work. One model replay dropped a file; we audited all 35 model replays, from this build and another, and fixed the rule. Why not 400 Opus agents? A 40-agent run cost about $17, and at this size one strong agent finished sooner in 3 of 3 builds.</p><span class="src">Real Claude Haiku agents, one build: eyal/real-course-builder</span></div>
+ <div class="claim"><h2>Forty agents, one app</h2><p>40 agents built a travel planner: 28 of 40 changes collided, all were redone. Tried by hand, <b>11 of 13</b> features work. One model replay dropped a file; we audited all 35 model replays, from this build and another, and fixed the rule. Why not 400 Opus agents? A 40-agent run cost about $17, and at this size one strong agent finished sooner in 3 of 3 builds.</p><span class="src">Real Claude Haiku agents, one build: eyal/real-course-builder</span></div>
  <div class="vis"><div class="dots" data-dots="40,28" aria-label="40 changes, 28 collided and were redone"></div><div class="legend"><span><b class="lc"></b>collided, redone, landed</span><span><b style="background:var(--acc)"></b>landed first try</span></div></div>
  <aside class="say">Then a real app: forty agents on one travel planner. Twenty-eight of their changes collided, and every one was redone. We tried the app by hand: eleven of thirteen features work. One replay had dropped a file, so we audited every model replay, thirty-five in two builds, and fixed the rule. Why not four hundred Opus agents? One forty-agent run cost about seventeen dollars, and at this size one strong agent was faster anyway.</aside>
 </section>
