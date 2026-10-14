@@ -148,3 +148,21 @@ Same 100 copies (reset to their base), same settings as (g), with the lost-file 
 | errors | 'Durable Object is overloaded' (Run objects, Landers) + cancelled agent invocations | none that lost work |
 
 Copies deleted after (100 + 3 seeds).
+
+## The video's 1,000-agent run fmv8dekehi2g (fleet-n2-vscode-src-1, job comments + API index), from its records
+
+4,064 files: **2,794 landed, 1,069 nothing to document, 201 rejected**; $2.50; index check 5,787 of 5,787 lines, sorted,
+none missing, none twice.
+- **Reads:** all 4,064 files read from the KV read cache (the copy's files are byte-identical to earlier copies of the
+  same VS Code slice). **Answers:** real model calls, not cached answers: the landed files were written by Gemini 3.1
+  Flash-Lite (1,799), glm-4.7-flash (615) and gemma-4-26b (380).
+- **Collisions, 2,791 redone:** the landed records' resolution field: 2,791 `index-replayed`, 3 `index-clean`. The only
+  file every change touches is the shared index `docs/API.md` (one line per documented function); each source file is
+  changed by one agent only, so the comments themselves never collide. A change whose API.md line arrived after API.md had
+  changed on main since its agent picked the file is redone by a fixed rule, no model: the line is inserted into API.md as
+  it is on the newest main, at its sorted place, and a name + path already there is not added twice (`mergeIndex` in
+  sim/fleet/src/index.js). The 3 clean ones found API.md unchanged.
+- **Rejected, 201:** files whose model answer could not be used, so nothing was written for them and the source stays as
+  it was. They are not collisions and are not retried. 196: "no usable answer for this file in a pack" (Gemini answers
+  several files per call; its answer had no entry for this file); 5: "no usable JSON in the answer" (2 Gemini, 2 gemma,
+  1 glm). By model: Gemini 198, gemma 2, glm 1.
