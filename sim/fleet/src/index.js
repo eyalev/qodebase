@@ -650,8 +650,11 @@ export class Run extends DurableObject {
       retried: (byStatus.rate_limited_retry || 0) + (byStatus.model_error_retry || 0) };
     // Every answer is in but some still wait to land: the run is not over for the person watching (scene-3 rehearsal: the
     // card said Done with half the files still landing). Shown as running, phase 'landing', until the last one lands.
-    const landingLeft = s.state === 'done' && s.counts.ready > 0;
-    return { runId: s.runId, state: landingLeft ? 'running' : s.state, phase: landingLeft ? 'landing' : null, landingLeft: landingLeft ? s.counts.ready : 0, model: s.cfg.model, agents: s.cfg.agents, agentsStarted: s.agentsStarted ?? null, inFlight: s.counts.model, reads: s.reads || null, files: s.files, base: s.base, startedAt: s.startedAt, endedAt: landingLeft ? null : (s.endedAt || null),
+    // Only right after the end: a run that ended long ago with files never landed (before the 2026-10-14 fixes) is done,
+    // with those files reported as notLanded, not 'running' forever.
+    const landingLeft = s.state === 'done' && s.counts.ready > 0 && Date.now() - (s.endedAt || 0) < 10 * 60_000;
+    const notLanded = s.state === 'done' && s.counts.ready > 0 && !landingLeft ? s.counts.ready : 0;
+    return { runId: s.runId, state: landingLeft ? 'running' : s.state, phase: landingLeft ? 'landing' : null, landingLeft: landingLeft ? s.counts.ready : 0, notLanded, model: s.cfg.model, agents: s.cfg.agents, agentsStarted: s.agentsStarted ?? null, inFlight: s.counts.model, reads: s.reads || null, files: s.files, base: s.base, startedAt: s.startedAt, endedAt: landingLeft ? null : (s.endedAt || null),
       counts: s.counts, usd: Math.round(s.usd * 10000) / 10000, budgetUsd: s.cfg.budgetUsd, calls: s.calls, lastMinute: lastMin,
       landWaitS: { p50: pct(waits, 0.5), p90: pct(waits, 0.9) }, errors: reasons, pauses: s.pauses.slice(-5), budget: await budget(this.env).check(), repo: s.cfg.repo || MAIN, root: s.cfg.root || 'src/vs', lander: await lander(this.env, s.cfg.repo || MAIN).summary() };
   }
@@ -680,9 +683,10 @@ export class Run extends DurableObject {
       const perMinute = this.sql.exec(`SELECT at / 60000 AS minute, model, COUNT(*) AS calls FROM rec WHERE run = ? AND status != 'skipped' GROUP BY minute, model ORDER BY minute`, id).toArray().map((x) => ({ minute: x.minute * 60000, model: x.model, calls: x.calls }));
       const cur = s && s.runId === id ? s : null;
       const pct = (q) => (waits.length ? Math.round(waits[Math.floor(waits.length * q)] / 1000) : null);
-      const landingLeft = cur?.runId === id && cur.state === 'done' && cur.counts?.ready > 0;   // as in status(): still landing
+      const landingLeft = cur?.runId === id && cur.state === 'done' && cur.counts?.ready > 0 && Date.now() - (cur.endedAt || 0) < 10 * 60_000;   // as in status(): still landing
+      const notLanded = cur?.runId === id && cur.state === 'done' && cur.counts?.ready > 0 && !landingLeft ? cur.counts.ready : 0;
       const t0 = cur?.startedAt || agg.t0, t1 = landingLeft ? Date.now() : (cur?.endedAt || agg.t1);
-      return { runId: id, label: meta.label || null, ladder: meta.ladder || null, copy: meta.copy ?? null, repo: meta.repo || cur?.cfg.repo || MAIN, root: meta.root || cur?.cfg.root || 'src/vs', state: landingLeft ? 'running' : (cur?.state || 'ended'), ...(landingLeft ? { phase: 'landing', landingLeft: cur.counts.ready } : {}), agents: meta.agents ?? cur?.cfg.agents ?? null, agentsStarted: meta.agentsStarted ?? cur?.agentsStarted ?? null, files: agg.files,
+      return { runId: id, label: meta.label || null, ladder: meta.ladder || null, copy: meta.copy ?? null, repo: meta.repo || cur?.cfg.repo || MAIN, root: meta.root || cur?.cfg.root || 'src/vs', state: landingLeft ? 'running' : (cur?.state || 'ended'), ...(landingLeft ? { phase: 'landing', landingLeft: cur.counts.ready } : {}), ...(notLanded ? { notLanded } : {}), agents: meta.agents ?? cur?.cfg.agents ?? null, agentsStarted: meta.agentsStarted ?? cur?.agentsStarted ?? null, files: agg.files,
         landed: by.landed || 0, ready: by.ready || 0, skipped: by.skipped || 0, verify_fail: by.verify_fail || 0, rejected: by.rejected || 0, rate_limited: by.rate_limited || 0, model_error: by.model_error || 0,
         retried: (by.rate_limited_retry || 0) + (by.model_error_retry || 0), usd: Math.round((agg.usd || 0) * 10000) / 10000, tokensIn: agg.tin, tokensOut: agg.tout,
         startedAt: t0, endedAt: t1, wallS: Math.round((t1 - t0) / 1000), landWaitS: { p50: pct(0.5), p90: pct(0.9) }, models, perMinute,
