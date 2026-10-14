@@ -896,8 +896,11 @@ function submit(text) {
     if (convOn() !== con) toggleConv('voice'); return finish();
   }
   if (lastIdea && Date.now() - lastIdea.at < 10 * 60000 && /^\s*(another( one)?|one more|a different one|next( one)?|try again)\b/i.test(said)) { add('you', said); busy = true; offerOff(); return ideaFlow(lastIdea.size); }
-  if (offerState && short && YES_RX.test(said)) { var y = offerState.yes; trace('offer_voice', { answer: 'yes', text: said }); add('you', said); offerOff(); y(); return; }
-  if (offerState && said.split(/\s+/).length <= 3 && NO_RX.test(said)) { trace('offer_voice', { answer: 'no', text: said }); add('you', said); offerOff(); add('app', 'Okay, I left it.'); return finish(); }
+  // Punctuation is not words: the recogniser writes 'Yes. Start.' or 'Yes, build it.' (qb3's take, 2026-10-14: 'Yes. Start.'
+  // went to the model instead of answering the pending 'Start?').
+  var bare = said.replace(/[.,!?;:\u2026]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (offerState && short && YES_RX.test(bare)) { var y = offerState.yes; trace('offer_voice', { answer: 'yes', text: said }); add('you', said); offerOff(); y(); return; }
+  if (offerState && bare.split(/\s+/).length <= 3 && NO_RX.test(bare)) { trace('offer_voice', { answer: 'no', text: said }); add('you', said); offerOff(); add('app', 'Okay, I left it.'); return finish(); }
   busy = true; unmark(); offerOff();
   add('you', text);
   status('Thinking…');
@@ -1157,7 +1160,7 @@ var CONFIRM_RX = /^(stop|pause|resume|merge|build it|build|send back|start|watch
 var DESTROY_RX = /^(remove|delete|revoke|sign out|log out|uninstall|disconnect|make (it )?(private|public)|clear)\b/i;
 // The whole sentence is the answer ('go back' is a new turn, not a yes: qb7's e2e, 2026-10-13).
 var YES_RX = /^\s*(yes|yeah|yep|yup|sure|ok(ay)?|do it|go( ahead)?|please( do)?|confirm|send( it)?|fork( it)?|stop it|go for it|open( it)?|build( it)?|start( it| building| the run| the job)?|yes,? (please|do it|go ahead|open it|send it|start( it| building)?|build it)|go ahead and (start|build)( it)?)\s*(please|then|now)?[.!]*\s*$/i;
-var NO_RX = /^\s*(no|nope|nah|cancel|don'?t|never ?mind|not now|leave it|no,? thanks?|no thank you)\s*(then|now)?[.!]*\s*$/i;
+var NO_RX = /^\s*(no|nope|nah|cancel|don'?t|never ?mind|not now|leave it|no,? thanks?|no thank you|no,? (not now|not yet|cancel|stop|don'?t|leave it|wait|never ?mind))\s*(then|now)?[.!]*\s*$/i;
 function gateOf(c) {
   if (['press', 'go', 'type'].indexOf(c.op) < 0) return (c.risky || 0) >= 0.5 && ['status', 'list', 'code', 'none', 'latest', 'idea', 'which'].indexOf(c.op) < 0 ? 'refuse' : null;
   var label = String(c.label || '').trim();
