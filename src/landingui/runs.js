@@ -39,6 +39,10 @@
   const key = (r) => `${r.repo}/${r.runId}`;
 
   // ---- data ------------------------------------------------------------------------------------------------------
+  // The last list, kept in this browser (owner flag dropped): drawn at once on the next visit while /api/runs answers
+  // (review 3: /runs took ~3.4 s to show anything). Six hours at most; the poll replaces it.
+  const CACHE_K = 'qb.runs.v1';
+  function cached() { try { const c = JSON.parse(localStorage.getItem(CACHE_K) || 'null'); return c && Date.now() - c.at < 6 * 3600e3 ? c.d : null; } catch (e) { return null; } }
   async function load() {
     if (MOCK) {
       const m = await fetch('/lab/runs-mock.json', { cache: 'no-store' }).then((r) => r.json());
@@ -51,6 +55,7 @@
     if (!r.ok) throw new Error(`runs ${r.status}`);
     D = await r.json();
     if (typeof D.owner === 'boolean') OWN = D.owner;
+    try { localStorage.setItem(CACHE_K, JSON.stringify({ at: Date.now(), d: { ...D, owner: false } })); } catch (e) {}
     // qb6: the newest run per repo carries live: <qbfleet /status> (state, counts, usd, pauses, landWaitS, lastMinute…);
     // the /runs row keeps the label and the per-model summary.
     D.fleet = (D.fleet || []).map((x) => (x.live && (!x.live.runId || x.live.runId === x.runId) ? { ...x, ...x.live, label: x.label || x.live.label, models: x.models || x.live.models, repo: x.repo || x.live.repo } : x));
@@ -140,20 +145,20 @@
     }).join('');
     const why = r.state === 'paused' ? (autoWhy(r) || lastPause(r)?.why || '') : r.state === 'stopped' ? (r.stopWhy || '') : '';
     const ctl = OWN && live(r) ? controls(r) : '';
-    const title = r.label || `${r.repo}${r.root ? ` ${r.root}` : ''}`;
+    const title = plainName(r.label) || `${r.repo}${r.root ? ` ${r.root}` : ''}`;
     return `<article class="rc st-${esc(r.state)}" data-k="${esc(key(r))}" data-talk-ctx="${esc(title)}">
       <div class="rc-h">${stateTag(r)}<span class="rc-t">${live(r) ? `running <b data-since="${r.startedAt}">${clock(elapsedS(r))}</b>` : r.endedAt ? `${clock(elapsedS(r))}, ended ${ago(r.endedAt)}` : ''}</span></div>
       ${full || r.group ? `<h2 class="rc-name">${esc(title)}</h2>` : `<a class="rc-name" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">${esc(title)}</a>`}
       <p class="rc-sub">${r.group ? `${r.copies.length} copies of ${new Set(r.copies.map((c) => repoBase(c.repo))).size} projects, run side by side` : whatIs(r)}, ${n0(r.agentsStarted ?? r.agents)} of ${n0(r.agents)} agents started</p>
       ${r.group && r.copies[0]?.ladder ? `<div class="rc-tl"><p class="rc-mh">All ${r.copies.length} copies together</p>${timeline(r, TL['ladder:' + r.copies[0].ladder], full ? (DR && DR.k === key(r) ? DR : null) : 'mini')}</div>` : ''}
       ${why ? `<p class="rc-why">${r.state === 'paused' && autoWhy(r) ? 'Paused automatically: ' : ''}${esc(why)}</p>` : ''}
-      ${isCode(r) ? codeFiles(r, c) : `<div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${c.files} files got comments on main">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
+      ${isCode(r) ? codeFiles(r, c) : isDecl(r) ? declFiles(r, c) : `<div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${c.files} files got comments on main">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
         <p>Agents ${live(r) ? 'have added' : 'added'} doc comments to <b>${n0(c.landed)}</b> files and committed them to ${r.group ? 'each copy\u2019s' : 'the'} main branch; ${n0(c.skipped)} files already had them.</p>
         <p class="rc-sm">${n0(c.rejected)} rejected${c.inflight && live(r) ? `, ${n0(c.inflight)} still to do` : ''}, of ${n0(c.files)} files. One change = comments added to one file.</p></div>`}
       <dl class="rc-k">
         <div><dt>Spent</dt><dd>${usd(spent)}${budget ? ` <small>of ${usd(budget)}</small>` : ''}</dd>${budget ? `<div class="bar" aria-hidden="true"><i style="width:${pct(spent, budget).toFixed(1)}%"${spent / budget > 0.85 ? ' class="hot"' : ''}></i></div>` : ''}</div>
         <div><dt>${live(r) ? 'Changes on main per min' : elapsedS(r) < 120 ? 'Changes on main' : 'Changes on main per min, average'}</dt><dd>${lpm}</dd></div>
-        <div><dt>Wait to reach main</dt><dd>${r.landWaitS && r.landWaitS.p50 != null ? `${secs(r.landWaitS.p50)} s <small>median, ${secs(r.landWaitS.p90)} s slowest tenth</small>` : '–'}</dd></div>
+        ${`<div><dt>${isCode(r) ? 'Task picked to change on main' : 'Wait to reach main'}</dt><dd>${r.landWaitS && r.landWaitS.p50 != null ? `${secs(r.landWaitS.p50)} s <small>median, ${secs(r.landWaitS.p90)} s slowest tenth</small>` : '–'}</dd></div>`}
         <div><dt>Answers</dt><dd>${(() => { const fromCache = mods.filter((m) => m.name === 'cache').reduce((a, m) => a + m.calls, 0), fromModel = mods.filter((m) => m.name !== 'cache').reduce((a, m) => a + m.calls, 0); return `${n0(fromCache)} <small>from cache</small> ${n0(fromModel)} <small>from a model</small>`; })()}</dd></div>
       </dl>
       ${modRows ? `<div class="rc-m"><p class="rc-mh">Calls per minute, per model${live(r) ? '' : ' (peak)'}</p>${modRows}</div>` : ''}
@@ -164,15 +169,38 @@
       ${full || r.group ? '' : `<a class="chipbtn rc-go" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">Timeline</a>`}
     </article>`;
   }
+  // Comment-dial runs count doc comments per declaration (35,446 of them in 30,720 files' worth of copies), not files (H2)
+  const isDecl = (r) => (r.group ? isDecl(r.copies[0] || {}) : /comment dial/i.test(r.label || '') || /^D-L/.test(r.ladder || ''));
+  function declFiles(r, c) {
+    return `<div class="rc-files"><p>Agents ${live(r) ? 'have added' : 'added'} <b>${n0(c.landed)}</b> doc comments, one per declaration, to the ${n0(c.files)} files of ${r.group ? 'the copies' : 'the copy'} and committed them to main.</p>
+        <p class="rc-sm">${n0(c.rejected)} rejected. One change = a comment on one declaration.</p></div>`;
+  }
   function codeFiles(r, c) {
     const redone = bouncedOf(r), made = c.landed + redone + c.rejected;
     const seg = (n, cls) => (n ? `<i class="${cls}" style="width:${pct(n, made).toFixed(2)}%"></i>` : '');
     return `<div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${made} code changes reached main">${seg(c.landed, 's-l')}${seg(redone, 's-s')}${seg(c.rejected, 's-r')}</div>
-        <p>${n0(r.agentsStarted ?? r.agents)} agents ${live(r) ? 'have made' : 'made'} <b>${n0(made)}</b> small code changes and sent each through the merge queue: <b>${n0(c.landed)}</b> reached main, ${n0(redone)} ${redone === 1 ? 'was' : 'were'} sent back and redone${c.rejected ? `, ${n0(c.rejected)} rejected` : ''}.</p>
-        <p class="rc-sm">${n0(c.files)} tasks${live(r) ? '' : ` in ${clock(elapsedS(r))}`}. One change = one small edit to the code, checked before it lands.</p></div>`;
+        <p><b>${n0(c.landed)}</b> of ${n0(made)} code tasks ${live(r) ? 'have landed' : 'landed'} on main; ${n0(redone)} ${redone === 1 ? 'was' : 'were'} sent back by the merge queue and did not land${c.rejected ? `, ${n0(c.rejected)} rejected` : ''}.</p>
+        <p class="rc-sm">${n0(r.agentsStarted ?? r.agents)} agents${live(r) ? '' : `, ${clock(elapsedS(r))}`}. A task is one small change to the code, tested before it lands.</p></div>`;
+  }
+  // Run labels are the team's shorthand ('code dial 60% (K60h)', 'S5b batched…', 'smoke'): the card says it plainly; the
+  // label stays the step's key in links.
+  const KV = { '': ', one merge queue', f: ', first try (stopped)', g: ', a lane per module', h: ', a lane per module + prefetch' };
+  const STEP = { S5: 'Each model at its limit (VS Code)', B1: 'Batching bench: one file per call vs packs', S4a: '200 agents on 4 copies (cache)', S4b: '400 agents on 8 copies (cache)' };
+  function plainName(l) {
+    if (!l) return '';
+    if (STEP[l]) return STEP[l];
+    let m = /^code dial (\d+)% \(K(?:\d+([a-z]?)|-([\w-]+))\)$/i.exec(l);
+    if (m) return `Code changes, ${m[1] === '0' ? 'no tasks overlapping' : `${m[1]}% of tasks overlapping`}${m[3] ? `, ${m[3].replace(/-/g, ' ')} test` : KV[m[2] || ''] ?? ''}`;
+    m = /^comment dial L(\d+)(c?)\b(.*)$/i.exec(l);
+    if (m) return `Doc comments, ${m[1] === '0' ? 'no overlap' : `${m[1]}% overlapping`}${m[2] ? ', compact' : ''}${m[3]}`;
+    if (/smoke|plumbing|notes test/i.test(l)) return `Test run${(/\(([^)]*)\)/.exec(l) || [])[1] ? ` (${/\(([^)]*)\)/.exec(l)[1]})` : ''}`;
+    const x = l.replace(/^(?:S\d+[a-z]?|F\d+[a-z]?|B\d+)\s+/, '').replace(/\s@\s/, ' with ');
+    return x.charAt(0).toUpperCase() + x.slice(1);
   }
   function whatIs(r) {
     const s = srcOf(r), n = r.copyOfKind || repoCopy(r), of = r.copiesOfKind || r.copiesOfRepo || (D?.fleet || []).filter((x) => x.ladder && x.ladder === r.ladder && repoBase(x.repo) === repoBase(r.repo)).length;
+    // a code kata's source says what it is ('qb4 kata seed 1: 400 small JavaScript functions…'): that, not 'a duplicate of'
+    if (isCode(r)) { const pj = r.source && r.source.project; return `A 400-function JavaScript kata library${pj ? ` (${esc(pj)})` : ''}, one qodebase project per level`; }   // qb6: not VS Code
     return `${esc(s.name)}${n && r.ladder && of > 1 ? `, copy ${n} of ${of}` : ''}${s.upstream ? ` (a duplicate of ${esc(s.upstream)} made for this test)` : ''}`;
   }
   function controls(r) {
@@ -440,7 +468,7 @@
     const r = (D.fleet || []).find((x) => x.repo === repo && x.runId === id);
     if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
     const ix = IX[key(r)];
-    const ixLine = ix && !ix.error && ix.expected != null ? `<p class="rc-ix${ix.lines === ix.expected && ix.sorted && !ix.missing && !ix.twice ? ' ok' : ' bad'}"><b>API index (docs/API.md):</b> ${n0(ix.lines)} of ${n0(ix.expected)} lines, ${ix.sorted ? 'sorted' : 'not sorted'}, ${ix.missing ? `${n0(ix.missing)} missing` : 'none missing'}, ${ix.twice ? `${n0(ix.twice)} twice` : 'none twice'}.</p>` : '';
+    const ixLine = ix && !ix.error && ix.expected != null && ix.lines > 0 ? `<p class="rc-ix${ix.lines === ix.expected && ix.sorted && !ix.missing && !ix.twice ? ' ok' : ' bad'}"><b>API index (docs/API.md, one line per exported function, written by this job):</b> ${n0(ix.lines)} of ${n0(ix.expected)} lines, ${ix.sorted ? 'sorted' : 'not sorted'}, ${ix.missing ? `${n0(ix.missing)} missing` : 'none missing'}, ${ix.twice ? `${n0(ix.twice)} twice` : 'none twice'}.</p>` : '';
     return `<p class="crumb"><a href="#/">All runs</a></p>${card(r, true)}${ixLine}<section class="rsec"><h2>Timeline</h2>${timeline(r, TL[key(r)], DR && DR.k === key(r) ? DR : null)}${drillPanel(r)}</section>`;
   }
   const stepOf = (base) => grouped((D.fleet || []).slice()).find((g) => g.group && g.label === base) || null;
@@ -460,7 +488,7 @@
     const r = (D.fleet || []).find((x) => x.repo === repo && x.runId === id);
     if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
     const base = `#/intents/run/${encodeURIComponent(repo)}/${encodeURIComponent(id)}`;
-    return `<p class="crumb"><a href="#/">All runs</a></p><section class="rsec"><h2>${why ? 'Why this exists' : `Intents: ${esc(r.label || repo)}`}</h2><p><a class="chipbtn rc-go" href="#/run/${encodeURIComponent(repo)}/${encodeURIComponent(id)}">Timeline</a></p>${why ? '' : '<p class="dim">The job, then its folders; each file is one agent\'s intent. Stuck files come first. Tap a line to open it.</p>'}<div class="it-mount" data-src="${esc(itSrc(r))}" data-runs="/api/runs/${esc(encodeURIComponent(repo))}/${esc(encodeURIComponent(id))}" data-why-href="${esc(base)}/why/{id}" data-tree-href="${esc(base)}"${why ? ` data-why="${esc(why)}"` : ''}></div></section>`;
+    return `<p class="crumb"><a href="#/">All runs</a></p><section class="rsec"><h2>${why ? 'Why this exists' : `Intents: ${esc(plainName(r.label) || repo)}`}</h2><p><a class="chipbtn rc-go" href="#/run/${encodeURIComponent(repo)}/${encodeURIComponent(id)}">Timeline</a></p>${why ? '' : '<p class="dim">The job, then its folders; each file is one agent\'s intent. Stuck files come first. Tap a line to open it.</p>'}<div class="it-mount" data-src="${esc(itSrc(r))}" data-runs="/api/runs/${esc(encodeURIComponent(repo))}/${esc(encodeURIComponent(id))}" data-why-href="${esc(base)}/why/{id}" data-tree-href="${esc(base)}"${why ? ` data-why="${esc(why)}"` : ''}></div></section>`;
   }
   function intentsStepView(label) {
     const g = stepOf(label);
@@ -723,5 +751,6 @@
   }, 120e3);
   fetch('/version.json', { cache: 'no-store' }).then((r) => r.json()).then((j) => { ver = j.version; }).catch(() => {});
   if (!MOCK && !window.__talkActions) window.__talkActions = [{ id: 'fleet-job', text: FLEET_TEXT, run: fleetRun }];   // until the first load
+  if (!MOCK && !D) { const c = cached(); if (c) { D = c; log('cached_paint', { rows: (c.fleet || []).length }); render(); D = null; lastHtml = ''; window.__talkActions = [{ id: 'fleet-job', text: FLEET_TEXT, run: fleetRun }]; } }
   tick();
 })();
