@@ -122,3 +122,9 @@ took within a minute and gives them to a fresh agent to redo (cache answers are 
 **The walls at this scale (cache case):** Durable Objects of our own design. Each copy's Run object and Lander work for
 1,000 agents; at 50-100 copies at once they answer 'overloaded' at peaks, and agent invocations get cancelled. Reads
 (KV) and landing (Artifacts pushes, ~10,000 files/s at the peak) kept up.
+
+**Update 10:35 UTC: the fix, built and applied to (g).** The Run object now sweeps every 30 s once its agents have
+started: a file recorded 'ready' for over a minute that its landing queue does not hold is put back in the queue and a
+fresh agent redoes it. Deployed at 10:34 and applied to (g)'s 11 unfinished copies: all 43 files were redone and landed,
+so every one of (g)'s 100 runs finished (298,900 landed). The 43 in the (g) row above are what the run lost without the
+sweep; with it, applied ~15 min after the run, 0 were left. A rerun with the sweep live during the run follows.
