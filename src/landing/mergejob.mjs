@@ -30,10 +30,12 @@ const say = (event, data = {}) => console.log(JSON.stringify({ ts: new Date().to
 const auth = (tok) => (tok ? ['-c', `http.extraHeader=Authorization: Basic ${Buffer.from(`x:${tok.split('?')[0]}`).toString('base64')}`] : []);
 const ID = ['-c', 'user.name=qodebase lander', '-c', 'user.email=lander@qodebase.app', '-c', 'commit.gpgsign=false'];
 
-function git(args, { tok, input, ok = false, cwd = DIR } = {}) {
+function git(args, { tok, input, ok = false, cwd = DIR, raw = false } = {}) {
   const r = spawnSync('git', [...ID, ...auth(tok), ...args], { cwd, input, encoding: 'utf8', maxBuffer: 64 << 20 });
   if (r.status !== 0 && !ok) throw new Error(`git ${args[0]} failed (${r.status}): ${(r.stderr || r.stdout || '').trim().slice(0, 600)}`);
-  return { code: r.status, out: (r.stdout || '').trimEnd(), err: (r.stderr || '').trimEnd() };
+  // raw: the exact output (a patch): trimming dropped a final blank context line (' '), and git apply then said 'corrupt
+  // patch', which the queue took for a conflict and sent back to the agent forever (scene-2 take, stuff-tracker, 2026-10-14).
+  return { code: r.status, out: raw ? (r.stdout || '') : (r.stdout || '').trimEnd(), err: (r.stderr || '').trimEnd() };
 }
 // The same, without blocking: for fetching many forks at once (each git takes its own ref).
 function gitAsync(args, tok) {
@@ -114,7 +116,7 @@ function handlerFor(path, cfg) {
 function applyChange(c, cfg, { defer = false } = {}) {
   const before = git(['rev-parse', 'HEAD']).out;
   const base = c.base && git(['cat-file', '-e', `${c.base}^{commit}`], { ok: true }).code === 0 ? c.base : git(['merge-base', before, c.commit]).out;
-  const patch = git(['diff', '--binary', '--full-index', base, c.commit]).out + '\n';
+  const patch = git(['diff', '--binary', '--full-index', base, c.commit], { raw: true }).out;
   const files = git(['diff', '--name-only', base, c.commit]).out.split('\n').filter(Boolean);
   if (!files.length) {
     // Nothing new on top of main: the work is already there (often a redo of something another change landed). It lands as
@@ -182,10 +184,10 @@ function applyChange(c, cfg, { defer = false } = {}) {
 // 12,000 characters, and one (the flagship's splitter view) landed without a 119-line file the model never saw.
 function partialApply(c, base, conflicts, cwd = DIR) {
   const ex = conflicts.map((p) => `:(exclude)${p}`);
-  const patch = git(['diff', '--binary', '--full-index', base, c.commit, '--', '.', ...ex], { cwd }).out;
+  const patch = git(['diff', '--binary', '--full-index', base, c.commit, '--', '.', ...ex], { cwd, raw: true }).out;
   if (!patch.trim()) return { ok: true, files: [] };
   const pf = `${cwd}.partial.patch`;
-  writeFileSync(pf, patch + '\n');
+  writeFileSync(pf, patch);
   const r = git(['apply', '--3way', '--index', '--whitespace=nowarn', pf], { cwd, ok: true });
   rmSync(pf, { force: true });
   const files = git(['diff', '--name-only', base, c.commit, '--', '.', ...ex], { cwd }).out.split('\n').filter(Boolean);

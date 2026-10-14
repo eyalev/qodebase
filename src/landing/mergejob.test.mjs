@@ -389,3 +389,14 @@ test('a change with nothing new lands as its own empty commit, with a note', () 
   assert.equal(g(w, 'log', '-1', '--format=%s', z.commit), 'change z');
   assert.match(g(w, 'notes', '--ref=qodebase', 'show', z.commit), /"change": "z"/);
 });
+
+// A diff whose last line is a blank context line (' '): trimming the patch dropped it and git apply said 'corrupt patch',
+// which the queue took for a conflict and sent back to the agent forever (scene-2 take, 2026-10-14).
+test('a change whose diff ends with a blank context line lands', () => {
+  const s = setup({ 'src/v.js': 'a\nb\nc\nd\nx\n\ny\nz\n' });
+  // the change's diff ends with three context lines, the last of them blank: ' '
+  const ch = s.fork('t', (fw) => write(fw, { 'src/v.js': 'a\nb\nc\nNEW\nd\nx\n\ny\nz\n' }));
+  const r = run({ dir: join(s.root, 'merger'), mainRemote: s.main, mainToken: null, check: 'node --test', changes: [ch] });
+  const t = r.changes.find((c) => c.id === 't');
+  assert.equal(t.landed, true, JSON.stringify(t));
+});
