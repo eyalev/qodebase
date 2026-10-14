@@ -577,11 +577,22 @@ function open(on) { if (on && S.engine === 'live' && me) warmMic(); if (!on && S
 // Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is, and keep
 // the bar's height free at the end of the page (and of the page's own scrolling panel, on project pages).
 var scrollers = null, lastLift = -1;
+// The page's centred content width: --talk-content on <body> if the page sets it (qb5: home is 1080 wide from 1100 px),
+// else the widest centred column (main, .pad, .land, .lw) that is not full width; 720 at least.
+function contentW() {
+  var w = parseFloat(getComputedStyle(document.body).getPropertyValue('--talk-content')) || 720;
+  [].forEach.call(document.querySelectorAll('main, .pad, .land, .lw'), function (e) {
+    if (root && root.contains(e)) return;
+    var r = e.getBoundingClientRect();
+    if (r.width && r.width < window.innerWidth - 40) w = Math.max(w, Math.round(r.width));
+  });
+  return w;
+}
 function phoneLike() { return window.innerWidth < 720 || (root && root.classList.contains('flat')); }
 function placeBar() {
   if (!bar) return;
   // Desktop: the card only fits in the margin beside a centred 720 px column, min(420, margin - 32), floor 320.
-  var free = Math.floor((window.innerWidth - 720) / 2 - 32), flat = window.innerWidth >= 720 && free < 320;
+  var free = Math.floor((window.innerWidth - contentW()) / 2 - 32), flat = window.innerWidth >= 720 && free < 320;
   if (root.classList.contains('flat') !== flat) root.classList.toggle('flat', flat);
   if (!flat && window.innerWidth >= 720) root.style.setProperty('--t-dw', Math.min(420, free) + 'px');
   // Walk up from the bottom edge: each short bar touching the one below (fixed, sticky, or a page
