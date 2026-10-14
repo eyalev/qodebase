@@ -44,7 +44,7 @@ const SOURCES = {
 };
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === '/' || url.pathname === '/page') return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
     if (url.pathname === '/status' && request.method === 'GET') return json(await run(env, repoOf(url)).status());
@@ -156,17 +156,18 @@ export default {
       case '/indexcheck': return json(await indexCheck(env, repo, url.searchParams.get('run')));
       // qb7's 'start a fleet job': the copies there are, what each duplicates, and whether it is still at its base.
       case '/copies': {
-        const repos = ((await budget(env).repos().catch(() => [])) || []).filter((x) => x !== MAIN && !x.startsWith('fleet-kata'));
-        const rows = await Promise.all(repos.map(async (r) => {
-          const kind = r.replace(/^fleet-(n2-)?/, '').replace(/-\d+$/, '');
-          const last = (await run(env, r).runs().catch(() => [])).sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))[0] || null;
-          let fresh = null;
-          try { using rp = await ns(env, r).get(r); fresh = (await rp.log({ limit: 1 }))[0]?.hash === KIND_BASE[kind]; } catch {}
-          return { repo: r, ...(RESERVED.includes(r) ? { reserved: true } : {}), source: { ...(SOURCES[kind] || SOURCES.main), namespace: nsName(r) }, files: ROOT_FILES[kind]?.[(SOURCES[kind] || SOURCES.main).root] ?? last?.files ?? null, folders: ROOT_FILES[kind] || null, fresh, lastRun: last ? { runId: last.runId, state: last.state, label: last.label } : null };
-        }));
-        // A copy whose repo cannot be opened was deleted after the experiment: never offered to the job form.
-        return json({ jobs: ['comments', 'comments+index'], copies: rows.filter((x) => x.fresh !== null).sort((a, b) => a.repo.localeCompare(b.repo, 'en', { numeric: true })) });
+        // Served from KV for 30 s and refreshed in the background (2026-10-14: ~11 s per call once hundreds of deleted copies
+        // were probed one by one; Talk's spoken fleet sentence waited on it).
+        const cached = url.searchParams.get('fresh') ? null : await env.FLEET_CACHE.get('copies:v2', 'json').catch(() => null);
+        if (cached?.body) {
+          if (Date.now() - cached.at > 30_000 && ctx) ctx.waitUntil(copiesList(env).then((b) => env.FLEET_CACHE.put('copies:v2', JSON.stringify({ at: Date.now(), body: b }), { expirationTtl: 86400 })).catch(() => {}));
+          return json({ ...cached.body, cachedAt: cached.at });
+        }
+        const b = await copiesList(env);
+        await env.FLEET_CACHE.put('copies:v2', JSON.stringify({ at: Date.now(), body: b }), { expirationTtl: 86400 }).catch(() => {});
+        return json(b);
       }
+      case '/copies-uncached': return json(await copiesList(env));
       // The number of files a /start would queue for a folder (same walk, no queue): the job form's estimate.
       case '/count': {
         const root = String(url.searchParams.get('root') || 'src/vs').replace(/^\/+|\/+$/g, '');
@@ -248,6 +249,9 @@ export class Budget extends DurableObject {
   async spend(usd) { const k = `d:${this.day()}`; const v = ((await this.ctx.storage.get(k)) || 0) + usd; await this.ctx.storage.put(k, v); return v; }
   async addRepo(r) { const l = (await this.ctx.storage.get('repos')) || []; if (!l.includes(r)) { l.push(r); await this.ctx.storage.put('repos', l); } }
   async repos() { return (await this.ctx.storage.get('repos')) || []; }
+  /** Copies deleted after an experiment: /copies skips them without opening each one (/runs still lists their runs). */
+  async markGone(list) { const g = new Set((await this.ctx.storage.get('gone')) || []); for (const r of list) g.add(r); await this.ctx.storage.put('gone', [...g]); }
+  async gone() { return (await this.ctx.storage.get('gone')) || []; }
   async status() { return { cap: DAY_CAP_USD, lastDay: this.env.FLEET_LAST_DAY || '2026-10-14', days: Object.fromEntries(await this.ctx.storage.list({ prefix: 'd:' })) }; }
 }
 
@@ -649,6 +653,8 @@ export class Run extends DurableObject {
       counts: s.counts, usd: Math.round(s.usd * 10000) / 10000, budgetUsd: s.cfg.budgetUsd, calls: s.calls, lastMinute: lastMin,
       landWaitS: { p50: pct(waits, 0.5), p90: pct(waits, 0.9) }, errors: reasons, pauses: s.pauses.slice(-5), budget: await budget(this.env).check(), repo: s.cfg.repo || MAIN, root: s.cfg.root || 'src/vs', lander: await lander(this.env, s.cfg.repo || MAIN).summary() };
   }
+  /** The newest run, cheaply (the job form's copy list): no statistics. */
+  async lastRun() { const s = await this.st(); if (!s) return null; const meta = await this.ctx.storage.get(`meta:${s.runId}`); return { runId: s.runId, state: s.state, label: meta?.label || null, startedAt: s.startedAt }; }
   async runs() {
     const ids = this.sql.exec(`SELECT DISTINCT run FROM rec`).toArray().map((x) => x.run);
     const s = await this.st();
@@ -1543,6 +1549,24 @@ async function readBlobCached(env, repoName, hash) {
   caches.default.put(blobKey(hash), new Response(t, { headers: { 'cache-control': `public, max-age=${BLOB_TTL}` } })).catch(() => {});
   if (t.length < 2_000_000) env.FLEET_CACHE.put(`blob:${hash}`, t, { expirationTtl: BLOB_TTL }).catch(() => {});
   return { text: t, tier: 'artifacts' };
+}
+
+/** The copies the job form offers: every registered copy except deleted ones ('gone', skipped without opening), each with
+ *  its source, whether it is still at its base (fresh) and its last run (the Run object's cheap lastRun). */
+async function copiesList(env) {
+  const gone = new Set(await budget(env).gone().catch(() => []));
+  const repos = ((await budget(env).repos().catch(() => [])) || []).filter((x) => x !== MAIN && !x.startsWith('fleet-kata') && !gone.has(x));
+  const newlyGone = [];
+  const rows = await Promise.all(repos.map(async (r) => {
+    const kind = r.replace(/^fleet-(n2-)?/, '').replace(/-\d+$/, '');
+    const last = await run(env, r).lastRun().catch(() => null);
+    let fresh = null;
+    try { using rp = await ns(env, r).get(r); fresh = (await rp.log({ limit: 1 }))[0]?.hash === KIND_BASE[kind]; } catch { newlyGone.push(r); }
+    return { repo: r, ...(RESERVED.includes(r) ? { reserved: true } : {}), source: { ...(SOURCES[kind] || SOURCES.main), namespace: nsName(r) }, files: ROOT_FILES[kind]?.[(SOURCES[kind] || SOURCES.main).root] ?? last?.files ?? null, folders: ROOT_FILES[kind] || null, fresh, lastRun: last ? { runId: last.runId, state: last.state, label: last.label } : null };
+  }));
+  if (newlyGone.length) await budget(env).markGone(newlyGone).catch(() => {});
+  // A copy whose repo cannot be opened was deleted after the experiment: never offered to the job form.
+  return { jobs: ['comments', 'comments+index'], copies: rows.filter((x) => x.fresh !== null).sort((a, b) => a.repo.localeCompare(b.repo, 'en', { numeric: true })) };
 }
 
 async function retry(fn, waits = [0, 300, 1000, 3000]) {
