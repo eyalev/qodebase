@@ -161,7 +161,7 @@ var css = [
   // ... drawn inside the composer's row (placeBar sets its box): flat, the row's own height, its own mic/stop back.
   // qb5's tokens: --card with an inset 1px --line hairline (no drop shadow), radius 12 like the inputs.
   '#talk-root.inrow #talk-bar{padding:0 0 0 4px;gap:4px;align-items:center;border:0;border-radius:12px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line);min-height:0}',
-  '#talk-root.slim.inrow:not(.boffer) #talk-bmic{display:flex}',
+  '#talk-root.slim.inrow:not(.boffer) #talk-bmic,#talk-root.slim.onsheet:not(.boffer) #talk-bmic{display:flex}',
   '#talk-root.inrow #talk-bmic{width:44px;height:44px}',
   '#talk-spacer{height:0;pointer-events:none}',
   '.talk-convt{min-height:36px;padding:0 10px;border:0;border-radius:10px;background:var(--t-chip);color:var(--t-fg);font:500 13px var(--t-ff);cursor:pointer;white-space:nowrap}',
@@ -653,10 +653,14 @@ function placeBar() {
   // the bar sits on the panel's top edge, so everything in the panel stays visible.
   // A question sits at the very bottom, over the page's own action panel (which holds the same Build it), not lifted
   // onto the settings above it (qb3's rehearsal 2026-10-14: 'Build it?' covered the presets). One compact row.
-  if (root.classList.contains('boffer') && phoneLike()) lift = 0;
+  if (root.classList.contains('boffer') && phoneLike() && !root.classList.contains('onsheet')) lift = 0;   // on a sheet: same place (no terminal resize)
   // A project page's 'Ask for a change' row: Talk draws INSIDE it (over the text box and its mic, the attach button
   // stays), one row instead of two (manager, 2026-10-14). At rest the row is the page's own.
-  var row = root.classList.contains('slim') && !root.classList.contains('open') ? composerRow() : null;
+  // A project's agent sheet open (Chat / Terminal): Talk sits under it and the sheet gives up that room, so the
+  // terminal's input and keys are never covered (Eyal, 2026-10-14); the bar stays shown there (no resize each turn).
+  var shEl = document.getElementById('sheet'), shOpen = !!(shEl && shEl.classList.contains('open'));
+  if (root.classList.contains('onsheet') !== shOpen) { root.classList.toggle('onsheet', shOpen); trace('bar_onsheet', { on: shOpen }); barSync(); }
+  var row = root.classList.contains('slim') && !root.classList.contains('open') && !shOpen ? composerRow() : null;
   if (root.classList.contains('inrow') !== !!row) { root.classList.toggle('inrow', !!row); trace('bar_inrow', { on: !!row }); }
   if (row) {
     bar.style.left = row.l + 'px'; bar.style.right = Math.max(0, window.innerWidth - row.r) + 'px'; bar.style.width = 'auto';
@@ -668,6 +672,10 @@ function placeBar() {
   lift = Math.round(lift);
   if (phoneLike() && !root.classList.contains('miconly')) { bar.style.bottom = lift ? lift + 'px' : '0px'; bar.style.setProperty('--talk-inset', lift ? '0px' : 'env(safe-area-inset-bottom)'); }
   else bar.style.bottom = 'calc(' + (lift ? lift + 8 : (phoneLike() ? 8 : 16)) + 'px + env(safe-area-inset-bottom))';
+  if (shEl) {
+    var br = bar.getBoundingClientRect(), padNeed = shOpen && br.height ? Math.max(0, Math.round(window.innerHeight - br.top)) : 0;
+    if ((parseInt(shEl.style.paddingBottom, 10) || 0) !== padNeed) shEl.style.paddingBottom = padNeed ? padNeed + 'px' : '';
+  }
   var vb = document.getElementById('talk-ver');
   if (vb) { vb.style.right = '6px'; vb.style.bottom = 'calc(' + (lift + bar.offsetHeight + 12) + 'px + env(safe-area-inset-bottom))'; }
   reserve(lift);
@@ -816,7 +824,7 @@ function barSync() {
   else { bText.textContent = String(t).replace(/\s+/g, ' ').trim(); bar.querySelector('#talk-bmid').setAttribute('aria-label', 'Open the conversation'); }
   bText.classList.toggle('dim', dim);
   // Above a composer: hidden at rest; shown for live words, a question, work in progress, or a fresh answer (8 s).
-  var happening = mine || draft || !!offerState || busy || (vc && vcStatus !== 'idle');
+  var happening = mine || draft || !!offerState || busy || (vc && vcStatus !== 'idle') || root.classList.contains('onsheet');
   if (happening) { root.classList.remove('rest'); clearTimeout(restT); restT = null; }
   else if (hist.length !== histAtLoad && !restT && (root.classList.contains('slim') || root.classList.contains('tall')) && !root.classList.contains('rest')) restT = setTimeout(function () { restT = null; histAtLoad = hist.length; root.classList.add('rest'); }, 8000);
   else if (hist.length === histAtLoad && !restT) root.classList.add('rest');
@@ -1644,7 +1652,7 @@ function agWords(t) { return String(t || '').toLowerCase().replace(/[^\p{L}\p{N}
 function agTitle(a) { return String(a.task || a.note || '').split('\n')[0].trim(); }
 function agentNow() { var a = sget('agent', null); return a && Date.now() - a.at < 60 * 60000 ? a : null; }
 function openAgentSheet(a, mode) {
-  if (window.forqOpenSheet && document.getElementById('sheet') && projHere() && a.slug === projHere().owner + '.' + projHere().name) { try { window.forqOpenSheet(a.id, a.title, mode); return true; } catch (e) { trace('agent_sheet_err', { err: String(e) }); } }
+  if (window.forqOpenSheet && document.getElementById('sheet') && projHere() && a.slug === projHere().owner + '.' + projHere().name) { try { window.forqOpenSheet(a.id, a.title, mode); setTimeout(placeBar, 60); setTimeout(placeBar, 500); return true; } catch (e) { trace('agent_sheet_err', { err: String(e) }); } }
   return false;
 }
 function agentTalk(said) {
@@ -1718,7 +1726,9 @@ function askAgent(a, q) {
   }).then(function (res) {
     trace('agent_ask', { id: a.id, ok: res.ok, err: res.j && res.j.error, base: base });
     if (!res.ok) { add('note', 'Not sent: ' + ((res.j && res.j.error) || 'the agent did not take it') + '.'); return done(); }
-    openAgentSheet(a, 'chat');
+    // Stay where they are: the Terminal shows the answer in Claude Code's own session (Eyal); a closed sheet opens on Chat.
+    var shNow = document.getElementById('sheet'), termOn = shNow && shNow.classList.contains('open') && document.getElementById('sh-term') && !document.getElementById('sh-term').hidden;
+    if (!termOn) openAgentSheet(a, 'chat');
     var who0 = a.num ? 'Agent ' + a.num : 'The agent';
     add('app', 'Sent to ' + (a.num ? 'Agent ' + a.num : 'the agent') + '.'); status(who0 + ' is answering\u2026'); if (lastSpoken) say(who0 + ' is answering.');
     var seenUser = false;
