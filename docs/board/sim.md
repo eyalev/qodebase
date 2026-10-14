@@ -1486,6 +1486,16 @@ model calls. 10 copies of src/vs, 1,000 agents each.
   - **Wall:** Artifacts reads for the whole account, ~1,900-2,000/s. More namespaces only made reads wait longer
     (p50 0.5-0.9 s), and none failed.
   - **This corrects my S4e reading:** "2 namespaces ~1.4x" was one 10-s burst, not a per-namespace ceiling.
+- **Runs (d) and (e), best case: every read from the cache.**
+  - **(d), 10,000 agents:** clean; ~2,085 files/s at the busiest; start to all landed in 82 s.
+  - **(e), 50,000 agents over 50 copies:** ~12,400 files/s at the busiest, and landing peaked at ~7,000 files/s. 139,385
+    changes landed in ~70 s and nothing landed wrong.
+  - **But (e) lost 5.4% (10,943 files):** the per-copy Run Durable Objects answered "overloaded" at ~250 files/s each
+    (a SQL row per file for 1,000 agents), and the fleet dropped the work instead of retrying.
+  - **This is the S1 prediction's single-object wall** (a Durable Object handles ~500-1,000 requests/s; each file is
+    several requests to its Run object). It hit our bookkeeping, not Artifacts, KV or landing.
+  - **Without the cache, reads stop the fleet at ~2,000/s long before this.** So the bookkeeping limit matters only
+    when the files repeat.
 
 ## (m) Code collision dial: prediction before qb6's runs (qb4, 2026-10-13)
 
