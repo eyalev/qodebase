@@ -111,6 +111,9 @@ export function planningOf(info: ProjectInfo, r: BoxStatus): { line: string; fai
   // The router took the request but every agent is busy (qb6: 'queued until an agent is free'): say so, or the page
   // looks idle (the manager, 2026-10-14). The state from the server when it records it; meanwhile the router's own words.
   const qq = q as typeof q & { queuedAt?: number; ahead?: number };
+  // qb6's field when it lands (info.waiting [{text, at}], also read by Talk's status): the held request, by its words
+  const held = ((info as { waiting?: { text: string; at: number }[] }).waiting || []).find((w) => w.text === q.text);
+  if (held && !isMerge(q.text)) return { line: `Waiting for a free agent ${since(held.at)}` };
   if (!isMerge(q.text) && ((q.state as string) === 'queued' || ((q.state === 'sent' || !q.state) && QUEUED_RX.test(r.said || '') && !info.agents.some((a) => a.createdAt >= q.at))))
     return { line: `Waiting for a free agent${qq.ahead ? `, ${qq.ahead} request${qq.ahead > 1 ? 's' : ''} ahead` : ''} ${since(qq.queuedAt || q.sentAt || q.at)}` };
   if (q.state === 'sent' && (BUSY.test(r.cc) || Date.now() - (q.sentAt || 0) < 8000)) {
