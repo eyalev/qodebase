@@ -128,3 +128,23 @@ started: a file recorded 'ready' for over a minute that its landing queue does n
 fresh agent redoes it. Deployed at 10:34 and applied to (g)'s 11 unfinished copies: all 43 files were redone and landed,
 so every one of (g)'s 100 runs finished (298,900 landed). The 43 in the (g) row above are what the run lost without the
 sweep; with it, applied ~15 min after the run, 0 were left. A rerun with the sweep live during the run follows.
+
+## Run (h): 100,000 again, with the sweep live (2026-10-14 10:42 UTC), best case: files repeat (cache)
+
+Same 100 copies (reset to their base), same settings as (g), with the lost-file sweep running inside the run.
+
+| | (g) 100,000, no sweep | (h) 100,000, sweep live |
+|---|---|---|
+| files | 406,400 | 406,400 |
+| landed / nothing to document / no cached answer | 298,857 / 106,900 / 600 | **298,900 / 106,900 / 600** |
+| **not landed** | 43 (0.01%; all 43 redone by the sweep afterwards) | **0** |
+| runs that finished | 89 of 100 (100 after the sweep) | **100 of 100** (none needed the sweep: 0 re-issued, 0 re-queued) |
+| busiest 10 s | 211,032 (~21,100/s) | 223,880 (~22,400/s) |
+| agents busy at once | 13,839 | 12,275 |
+| reads (100% cache) p50 / p90 | 40 / 214 ms | 32 / 149 ms |
+| Run-object hand-out p50 / p90 / worst p99 | 80 / 252 / 1,505 ms | 72 / 225 / 1,079 ms |
+| landing peak | ~10,300 files/s (534 pushes) | ~10,750 files/s (621 pushes) |
+| start to everything landed | ~66 s (11 copies left) | ~89 s |
+| errors | 'Durable Object is overloaded' (Run objects, Landers) + cancelled agent invocations | none that lost work |
+
+Copies deleted after (100 + 3 seeds).
