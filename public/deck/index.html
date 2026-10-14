@@ -213,7 +213,7 @@ body.rec .prog,body.rec .notes{display:none}
   <div class="ovc"><h3>What we proved</h3>
    <ul class="proved">
     <li><b>Thousands</b><span>of agents on Cloudflare: <span data-k="scale.agents">4,750</span> with cached answers; cheap models landed <span data-k="fleet.files">31,466</span> file changes across six codebases (VS Code re-documented on fresh copies for scale), up to <span data-k="fleet.peak">114</span> a second over the busiest minute</span></li>
-    <li><b>Hundreds</b><span>200 agents on one codebase, checked by tests they never saw: with up to 60% of tasks aimed at the same code, losses did not rise (96, 74, 60 lost checks); the queue slowed, and lanes per module took the worst case from 207 to 53 min, 44.5 with prefetch</span></li>
+    <li><b>Hundreds</b><span>200 agents on one codebase, checked by tests they never saw: with up to 60% of tasks aimed at the same code, losses stayed in the same range (96, 74, 60 lost checks; 0 lost in landing); the queue slowed, and lanes per module took the worst case from 207 to 53 min, 44.5 with prefetch</span></li>
     <li><b>Up to 40</b><span>real Claude agents building apps: 28 of 40 changes collided, all redone; at this size one strong agent finished sooner in 3 of 3 builds</span></li>
     <li><b>Every step</b><span>recorded in git and visible: each change, the timeline, the asks</span></li>
    </ul></div>
@@ -244,9 +244,9 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s" data-t="Review and record" data-sec="A">
- <div class="claim"><h2>Every change is reviewed, and keeps its record</h2><p>A reviewer agent reads each change. The request, the verdict, how it landed and the tests stay inside git itself.</p></div>
- <div class="vis"><div class="term" aria-label="git log output with a qodebase note"><span style="--d:0">$ git log --notes=qodebase -1</span><span style="--d:1">commit 3f9a2c1  Add a booking form</span><span class="k" style="--d:2">Notes (qodebase):</span><span style="--d:3">  intent    Add a booking form to the contact page</span><span style="--d:4">  agent     Agent 6</span><span style="--d:5">  review    approved: "the form checks the date"</span><span style="--d:6">  landed    redone on the newest code</span><span style="--d:7">  tests     passed</span></div></div>
- <aside class="say">A reviewer agent reads every change before it lands. The request, the verdict, how it landed and the tests are kept inside git, so the record travels with the code. This is not GitHub with agents on top: the unit is a request with its record.</aside>
+ <div class="claim"><h2>Every change keeps its record, inside git</h2><p>What it was asked to do, which agent did it, the review (or that there was none), how it landed and the tests: a git note on its commit, read with plain git. This one is real, from a build in this video; long fields are cut with “…”.</p><span class="src">eyal/home-tracker, commit 373036d, refs/notes/qodebase (fields trimmed: title, fork, base, agentCommit, handled)</span></div>
+ <div class="vis"><div class="term" aria-label="git log output with a real qodebase note"><span style="--d:0">$ git log --notes=qodebase -1 373036d</span><span style="--d:0.6">commit 373036d  Dark mode: follow the device and allow a manual switch</span><span class="k" style="--d:1.2">Notes (qodebase):</span><span style="--d:1.8">{</span><span style="--d:2.4">  "change": "eyal.home-tracker--fcnj9",</span><span style="--d:3">  "intent": "Dark mode: follow the device and allow a manual switch\nIn styles.css move every color into CSS variables …\nAsked: Please add a dark mode to the app.",</span><span style="--d:3.6">  "agent": "agent fcnj9",</span><span style="--d:4.2">  "how": "replayed-llm",</span><span style="--d:4.8">  "review": { "verdict": "auto", "notes": "no reviewer in this variant" },</span><span style="--d:5.4">  "replay": { "model": "claude-haiku-5-5", "sameLinesAsReviewed": true },</span><span style="--d:6">  "checks": { "ok": true },</span><span style="--d:6.6">  "landedBy": "qodebase merge queue",</span><span style="--d:7.2">  "at": "2026-10-13T23:21:14.599Z"</span><span style="--d:7.8">}</span></div></div>
+ <aside class="say">Every change keeps its record inside git. What it was asked to do, which agent did it, the review, how it landed and the tests, written as a git note on its commit. This one is real: the dark mode from a build you will see in a minute. It collided, a model redid it on the newest code, and the tests passed. This is not GitHub with agents on top: the unit is a request with its record.</aside>
 </section>
 
 <section class="s" data-t="Watch a run" data-sec="A">
@@ -297,7 +297,7 @@ body.rec .prog,body.rec .notes{display:none}
 
 
 <section class="s" data-t="Hundreds of agents, checked by tests" data-sec="C">
- <div class="claim"><h2>200 agents aimed at the same code: losses did not rise</h2><p>1,385 small coding tasks on one codebase through the real merge queue. A model redid up to 468 collided changes, wrong about as often as fresh work (~5%); at most 2 checks were lost in landing. The queue slowed; lanes per module fixed most of it.</p><span class="src">Cloudflare, 200 cheap-model agents, hidden tests, one run each; 0 lost in landing at 60%. Change records missing in those lane runs: fixed, 199 of 199 in a check run</span></div>
+ <div class="claim"><h2>200 agents on the same code: losses in the same range, 0 lost in landing</h2><p>1,385 small coding tasks through the real merge queue. A model redid up to 468 collided changes, wrong about as often as fresh work (~5%). The queue slowed; lanes per module fixed most of it.</p><span class="src">Cloudflare, 200 cheap-model agents, hidden tests, one run each; 0 lost in landing at 60%. Change records missing in those lane runs: fixed, 199 of 199 in a check run</span></div>
  <div class="vis"><div class="bars">
   <div class="pair"><h3>Checks lost on main, of 1,385</h3>
    <div class="bar"><div class="l"><span>No overlap</span><b>96</b></div><div class="t"><i class="dim" style="--w:100%;--d:0"></i></div></div>
@@ -312,7 +312,7 @@ body.rec .prog,body.rec .notes{display:none}
    <div class="bar"><div class="l"><span>60%, lanes + prefetch</span><b>44.5</b></div><div class="t"><i class="acc" style="--w:21.5%;--d:0.95"></i></div></div>
  </div>
  </div></div>
- <aside class="say">Now hundreds. Two hundred cheap-model agents took almost fourteen hundred small coding tasks on one codebase, and every change went through the real merge queue. Then we aimed more and more of the tasks at the same functions, up to sixty percent. A model redid up to four hundred and sixty-eight collided changes, and they were wrong about as often as fresh work. Losses did not rise: ninety-six, seventy-four, then sixty lost checks, almost all the models' own mistakes, not the landing. What the overlap cost was time: the queue went from forty minutes to over three hours. Splitting it into lanes per module cut the worst case to fifty-three minutes, and fetching ahead in each lane to forty-four and a half, with more requirements passing on main and nothing lost in landing.</aside>
+ <aside class="say">Now hundreds. Two hundred cheap-model agents took almost fourteen hundred small coding tasks on one codebase, and every change went through the real merge queue. Then we aimed more and more of the tasks at the same functions, up to sixty percent. A model redid up to four hundred and sixty-eight collided changes, and they were wrong about as often as fresh work. Losses stayed in the same range: ninety-six, seventy-four, then sixty lost checks, almost all the models' own mistakes, not the landing. What the overlap cost was time: the queue went from forty minutes to over three hours. Splitting it into lanes per module cut the worst case to fifty-three minutes, and fetching ahead in each lane to forty-four and a half, with more requirements passing on main and nothing lost in landing.</aside>
 </section>
 
 <section class="s" data-t="Scale runs" data-sec="C">
@@ -412,12 +412,12 @@ body.rec .prog,body.rec .notes{display:none}
  <div class="ov"><div class="ovc"><h3>What we proved</h3>
   <ul class="proved">
    <li><b>Thousands</b><span><span data-k="scale.agents">4,750</span> agents on Cloudflare with cached answers; cheap models landed <span data-k="fleet.files">31,466</span> file changes across six codebases for $<span data-k="fleet.usd">19.09</span> (Section C)</span></li>
-   <li><b>Hundreds</b><span>200 agents, 1,385 coding tasks, hidden tests: up to 468 collided changes redone by a model, losses did not rise (96, 74, 60), at most 2 lost in landing; lanes per module, 207 to 53 min, 44.5 with prefetch (Section C)</span></li>
+   <li><b>Hundreds</b><span>200 agents, 1,385 coding tasks, hidden tests: up to 468 collided changes redone by a model, losses stayed in the same range (96, 74, 60), at most 2 lost in landing; lanes per module, 207 to 53 min, 44.5 with prefetch (Section C)</span></li>
    <li><b>Up to 40</b><span>real Claude agents: 12 of 12 landed; 28 of 40 collided and all were redone, 11 of 13 features work; one strong agent sooner in 3 of 3, the team cheaper in 2 of 3 (Section B)</span></li>
    <li><b>Every step is visible</b><span>the record in git, the timeline, Asks, estimates, the Runs page (Sections A, D)</span></li>
   </ul></div>
   <div class="ovc"><h3>The map</h3><ol class="map" data-map></ol></div></div>
- <aside class="say">So, what we proved, at three scales. Thousands of agents on Cloudflare, with cheap models doing real work for a few dollars. Two hundred agents with real code collisions, checked by hidden tests, and losses did not rise. And real Claude teams of up to forty building apps, where we also learned when one strong agent is better. Every step is recorded and visible.</aside>
+ <aside class="say">So, what we proved, at three scales. Thousands of agents on Cloudflare, with cheap models doing real work for a few dollars. Two hundred agents with real code collisions, checked by hidden tests, with losses in the same range and nothing lost in landing. And real Claude teams of up to forty building apps, where we also learned when one strong agent is better. Every step is recorded and visible.</aside>
 </section>
 
 <section class="s" data-t="What's next" data-sec="wrap">
@@ -486,9 +486,9 @@ solo([{id:'R3',wallS:1940},{id:'R4',wallS:1762},{id:'R6',wallS:457},{id:'R7',wal
 // Numbers from /results.json (falls back to the numbers in the page).
 var fmt=function(n){return typeof n==='number'?n.toLocaleString('en-US'):n};
 fetch('/results.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(j){if(!j)return;
- var H=j.headline||{},L3=((j.lanes||{}).L3||{}).rows||[],cell=function(c){return(L3.filter(function(r){return r.cell===c})[0]||{}).landed};
+ var H=j.headline||{},D=((H.fleet||{}).byJob||{}).docs||{},L3=((j.lanes||{}).L3||{}).rows||[],cell=function(c){return(L3.filter(function(r){return r.cell===c})[0]||{}).landed};
  var v={'board.dupNo':(H.board||{}).dupPairsNoBoard,'board.dupYes':(H.board||{}).dupPairsBoard,'board.wallNo':(H.board||{}).wallNoBoardS,'board.wallYes':(H.board||{}).wallBoardS,
-  'l3.one':cell('2000-1lane'),'l3.eight':cell('2000-8lanes-combine'),'fleet.files':(H.fleet||{}).filesLanded,'fleet.usd':(H.fleet||{}).usd,'fleet.per1k':(H.fleet||{}).usdPer1kLanded,'scale.agents':(H.scale||{}).maxAgents,'fleet.peak':(H.fleet||{}).peakFilesPerSec,'scale.label':(H.scale||{}).label};
+  'l3.one':cell('2000-1lane'),'l3.eight':cell('2000-8lanes-combine'),'fleet.files':D.landed,'fleet.usd':D.usd,'fleet.per1k':D.landed&&D.usd!=null?D.usd/D.landed*1000:null,'scale.agents':(H.scale||{}).maxAgents,'fleet.peak':(H.fleet||{}).peakFilesPerSec,'scale.label':(H.scale||{}).label};
  [].forEach.call(document.querySelectorAll('[data-k]'),function(e){var x=v[e.dataset.k];if(x!=null)e.textContent=/usd|per1k/.test(e.dataset.k)&&typeof x==='number'?x.toFixed(2):fmt(x)});
  if((j.realBuilds||{}).rows)solo(j.realBuilds.rows);
  // The scale ladder (qb4: headline.scale.ladder); one copy (S4b) is left out: it is the fix's control, not a step up.
