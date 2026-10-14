@@ -24,10 +24,6 @@ ${selfHost ? '' : `<nav class="hw-doors hw-top" aria-label="Start here">
 <a href="/deck/"><b>The 6-minute tour</b><span>The whole story in slides, with the numbers.</span></a>
 <a href="/runs"><b>See it at scale: live runs</b><span>Hundreds of agents changing real codebases, file by file, with the cost.</span></a>
 </nav>`}
-<section class="hw-sec"><h2>The idea</h2>
-<p>qodebase is a git platform, used from the phone, where many AI agents change one codebase at once and their work lands by itself. Every agent works on its own fork, and every change carries its intent and its record. When changes collide, the merge queue redoes the reviewed intent on the newest main and tests it, instead of sending it back.</p>
-<h2>What is new</h2>
-<p>Merge queues (GitHub’s, Graphite, Mergify, Bors) send a change that no longer applies back to its author. Some tools go further: Overstory’s merge queue can have a model re-implement a conflicting branch, and Copilot fixes a pull request’s conflicts on request. qodebase combines what we found nowhere together: the reviewed intent is recorded with each change as a git note; redoing that intent on the newest main and testing it is the normal landing path, not a last resort; a live board shows who works on what; and with a thousand agents you browse intents, not agents: the <a href="/p/eyal/real-course-builder/work#/intents">Intents tab</a> goes from the request to areas to each agent’s change, needs-you first.</p></section>
 <section class="hw-sec hw-when"><h2>One agent or many?</h2>
 <p>For a fresh app, one strong agent is the measured default: in 3 of 3 real builds, one strong agent finished sooner than a team (2×, 4× and 6×; the 6× pair, R8b, had a ~10 min queue bug), with at least as many features working; the team was cheaper in 2 of 3 (one build each: <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R3-R6-quality.md">R6 against R3</a>, <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R4-R7-quality.md">R7 against R4</a>, <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R8b-quality.md">R8b</a>). Many agents pay off for wide work (shared task lists, two teams, tasks arriving mid-run: the board), for work that must run in parallel (big ports like Bun's), and at fleet scale (lanes, fleets of cheap models). qodebase is the layer that makes many agents safe: each change an intent with a record, landed by intent on the newest code, with a live board and a timeline.</p></section>
 ${demo}
@@ -79,7 +75,6 @@ ${selfHost ? '' : '<a href="/runs"><b>Live runs</b><span>Fleets of agents on rea
 <style>
 .hw-sec{margin:28px 0 0}
 .hw-sec h2{margin:0 0 8px;font-size:20px;font-weight:600;letter-spacing:-.01em}
-.hw-sec p+h2{margin-top:20px}
 /* One green button per screen: Watch a run; the header's Build steps down here. */
 body:has(.hw-demo) .gbuild{background:var(--chip);color:var(--fg)}
 .hw-demo{display:grid;gap:4px;padding:14px 16px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);text-decoration:none;-webkit-tap-highlight-color:transparent;transition:background-color .12s}
