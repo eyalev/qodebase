@@ -407,12 +407,8 @@ const TAB_SPECULATE = `<script type="speculationrules">${JSON.stringify({
   prerender: [{ where: { selector_matches: '.tabbar a[href^="/p/"]' }, eagerness: 'moderate' }],
 })}</script>`;
 export const V3_CSS = `
-/* Switching a project's tabs is a page load: fade between them and keep the header and the tab bar still (Eyal,
-   2026-10-14: it felt slow). Cross-document view transitions, same origin; nothing when motion is reduced. */
-@view-transition{navigation:auto}
-.gtop{view-transition-name:qb-top}.tabbar{view-transition-name:qb-tabs}
-::view-transition-old(root),::view-transition-new(root){animation-duration:.14s}
-@media (prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+/* No cross-document view transition: with the prerendered tabs it left an invisible layer over the page that ate every
+   tap (2026-10-14, measured right after deploy); speed comes from the edge cache and speculation rules instead. */
 body.v3{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .h3{flex:none;display:flex;align-items:center;gap:4px;height:48px;padding:0 4px 0 4px;border-bottom:1px solid var(--line);background:var(--bg)}
 .h3 .home{font-weight:600;color:var(--fg);min-height:44px;display:inline-flex;align-items:center;padding:0 10px}
