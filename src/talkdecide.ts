@@ -326,6 +326,22 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
     const tab = s.items.find((i) => i.kind === 'link' && (i.text.toLowerCase() === want || (want === 'asks' && /^all asks$/i.test(i.text))) && /^\/p\//.test(i.href || ''));
     if (tab) return { ...cmd, mode: 'act', op: 'go', href: tab.href, label: tab.text, target: tab.id, p: 0.9, why: 'the page\'s own tab by name (word rule)' };
   }
+  // The work page's views from anywhere in a project (qb3's take: 'show the timeline' on a change record answered with a
+  // status list, 'open the dark mode change' on the App page offered to send it as a request).
+  const proj = /^\/p\/([^/]+)\/([^/#?]+)/.exec(s.path || '');
+  if (proj) {
+    const work = `/p/${proj[1]}/${proj[2]}/work`;
+    const view = /^\s*(please\s+)?(show( me)?|open|go to|take me to|switch to)\s+(the\s+)?(timeline|agents|collisions|intent tree|intents|changes list)( tab| view)?\s*[.!]*\s*$/i.exec(utterance);
+    if (view) {
+      const want = view[5].toLowerCase(), word = want === 'agents' ? 'Agents' : want === 'timeline' ? 'Timeline' : want === 'collisions' ? 'collided' : /intent/.test(want) ? 'Intents' : '';
+      const btn = word && s.items.find((i) => i.kind === 'button' && new RegExp('^' + word + '\\b', 'i').test(i.text));
+      if (btn) return { ...cmd, mode: 'act', op: 'press', target: btn.id, label: btn.text, p: 0.9, why: 'a view of the work page (word rule)' };
+      const hash = want === 'timeline' ? '#/timeline' : /intent/.test(want) ? '#/intents' : '#/';
+      return { ...cmd, mode: 'act', op: 'go', href: work + hash, label: `${proj[2]}: ${view[5]}`, p: 0.9, then: want === 'collisions' ? utterance : undefined, why: 'a view of the work page (word rule)' };
+    }
+    if (/\b(open|show( me)?)\b.*\bchange\b/i.test(utterance) && !s.items.some((i) => i.kind === 'link' && /#\/change\//.test(i.href || '')) && !/^\/p\/[^/]+\/[^/]+\/work/.test(s.path))
+      return { ...cmd, mode: 'act', op: 'go', href: work, label: `${proj[2]}: Agents at work`, then: utterance, p: 0.9, why: 'changes are listed on the work page (word rule)' };
+  }
   // 'open the dark mode change' on the work page: the change links (#/change/…) by their words; 'that change (record)'
   // with no words of its own = the newest one listed. Never another project with a similar name.
   if (/\b(open|show( me)?|go to)\b.*\bchanges?\b/i.test(utterance) && !/\ball (the )?changes\b/i.test(utterance)) {
@@ -343,7 +359,10 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // 'call it home things 2' / 'name it …' on the brief: the Project name box (qb3's scene 2).
   const nm = /^\s*(please\s+)?(call it|name it|rename it( to)?|name the project|call the project|the name is)\s+(.{2,60}?)\s*[.!]*\s*$/i.exec(utterance);
   const nameBox = s.items.find((i) => i.kind === 'field' && /project name|^name\b/i.test(i.text));
-  if (nm && nameBox) return { ...cmd, mode: 'act', op: 'type', target: nameBox.id, label: nameBox.text, text: nm[4].trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''), p: 0.9, why: 'the project name (word rule)' };
+  // A spoken number at the end of a name comes out as a homophone ('home things too' for 'home things 2', qb3's take).
+  const nameText = (t: string) => t.trim().toLowerCase().replace(/\b(to|too|two)\s*$/, '2').replace(/\b(for|four)\s*$/, '4').replace(/\b(one|won)\s*$/, '1').replace(/\bthree\s*$/, '3')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  if (nm && nameBox) return { ...cmd, mode: 'act', op: 'type', target: nameBox.id, label: nameBox.text, text: nameText(nm[4]), p: 0.9, why: 'the project name (word rule)' };
   // On a project's page a change request goes to THIS project unless another project is named by its words
   // ('switch to dark mode' on corner-cafe went to cafe-crew).
   const here = currentSlug(s.path);

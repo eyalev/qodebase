@@ -2328,7 +2328,9 @@ function startLive() {
   // Nothing heard for 10 s ends this turn: the timer belongs to this turn only (a fast answer's next turn was cancelled
   // 2 s in by the previous turn's timer, 2026-10-13).
   clearTimeout(convQuietT);
-  if (convOn()) convQuietT = setTimeout(function () { if (dcOn && !dcBuf.length && !dcText) { convEmpty++; trace('conv_quiet', { empty: convEmpty }); stopListen(true); if (convEmpty >= 2) { toggleConv('quiet'); add('note', 'Conversation mode is off: nothing heard twice.'); } else convAfter(); } }, 10000);
+  // 15 s windows, off after four empty ones in a row (~1 min): while filming, people watch the page for a while between
+  // turns (qb3's take: it turned itself off on nearly every page after ~20 s).
+  if (convOn()) convQuietT = setTimeout(function () { if (dcOn && !dcBuf.length && !dcText) { convEmpty++; trace('conv_quiet', { empty: convEmpty }); stopListen(true); if (convEmpty >= 4) { toggleConv('quiet'); add('note', 'Conversation mode is off: nothing heard for a minute.'); } else convAfter(); } }, 15000);
   else convEmpty = 0;
   dcOn = true; dcT0 = Date.now(); liveQ = []; liveSent = 0;
   dcBase = inpVal().trim() ? inpVal().trim() + ' ' : '';   // speak more after typing: the words are added
