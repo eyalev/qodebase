@@ -36,7 +36,8 @@ const ALLOW = flag('--allow-writes') ? opt('--project', '') : '';
 if (flag('--allow-writes') && !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(ALLOW)) { console.error('--allow-writes needs --project owner/name (a sandbox project)'); process.exit(2); }
 const valued = new Set(['--out', '--project', '--base', '--via']);
 const pick = argv.filter((a, i) => !a.startsWith('--') && !valued.has(argv[i - 1]));
-const VIA = opt('--via', 'webmcp');   // webmcp (typed submit) | live (qb2's __talkTest.live: the dictation pipeline)
+const VIA = opt('--via', 'webmcp');
+const PASS_TRACE = flag('--pass-trace');   // webmcp (typed submit) | live (qb2's __talkTest.live: the dictation pipeline)
 const OUT = opt('--out', path.join(os.homedir(), '.local/share/qodebase-talk-e2e', new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)));
 
 // ---- Scenarios ---------------------------------------------------------------------------------------------------
@@ -188,7 +189,7 @@ async function runScenario(s, cookies, browserArgs) {
     if (u.host !== HOST) return route.continue();
     const m = req.method();
     if (QUIET.test(u.pathname)) {
-      if (u.pathname === '/api/talk/trace') { try { const j = JSON.parse(req.postData() || '{}'); for (const r of j.rows || j.events || (Array.isArray(j) ? j : [])) ev.push({ t: Date.now(), k: 'trace', row: r }); } catch {} }
+      if (u.pathname === '/api/talk/trace') { try { const j = JSON.parse(req.postData() || '{}'); for (const r of j.rows || j.events || (Array.isArray(j) ? j : [])) ev.push({ t: Date.now(), k: 'trace', row: r }); } catch {} if (PASS_TRACE) return route.continue(); }   // --pass-trace: Talk's trace also reaches the server (qb2 reads it)
       return route.fulfill({ status: m === 'GET' ? 200 : 200, contentType: 'application/json', body: '{"ok":true}' });
     }
     if (m === 'GET' || m === 'HEAD') {
@@ -303,7 +304,11 @@ async function runScenario(s, cookies, browserArgs) {
       ms: { total: tAns - t0, decide: decide ? decide.ms : null, status: stage('status'), chat: stage('chat'), page_action: stage('page_action'), first_audio: firstAudio, latency: latRow },
     };
     const { lane, fails } = check(turn, got);
-    const row = { id: s.id, group: s.group, title: s.title, turn: i + 1, say: turn.say || turn.tap || '(audio)', via, pass: !fails.length, fails, lane, ...got, err: res && res.err };
+    // every Talk trace row and console row of the turn (say_dupe and its caller chain, speak_*, decide…): kept for whoever
+    // debugs a failure; trace rows flush every 4 s, so a few may land in the next turn
+    const trace = E.filter((e) => e.k === 'trace').map((e) => e.row).slice(0, 300);
+    const consoleRows = E.filter((e) => e.k === 'console').map((e) => e.row).slice(0, 200);
+    const row = { id: s.id, group: s.group, title: s.title, turn: i + 1, say: turn.say || turn.tap || '(audio)', via, pass: !fails.length, fails, lane, ...got, err: res && res.err, trace, console: consoleRows };
     if (fails.length) { row.shot = path.join(OUT, `fail-${s.id}-${i + 1}.png`); await page.screenshot({ path: row.shot }).catch(() => {}); }
     rows.push(row);
     console.log(`${row.pass ? 'PASS' : 'FAIL'} ${s.id}#${i + 1} ${JSON.stringify(row.say).slice(0, 60)} -> ${lane} ${fails.length ? '| ' + fails.join('; ') : ''}`);

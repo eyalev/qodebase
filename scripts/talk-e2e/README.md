@@ -10,7 +10,7 @@ npm run talk:e2e -- --via live      # every turn through the dictation pipeline 
 node scripts/talk-e2e/run.mjs --list
 ```
 
-Flags: `--headed` (watch it), `--out <dir>`, `--base <url>`, `--allow-writes --project owner/name` (sandbox only).
+Flags: `--headed` (watch it), `--out <dir>`, `--base <url>`, `--allow-writes --project owner/name` (sandbox only), `--pass-trace` (Talk's trace also reaches the server). Every turn's Talk trace and console rows are in results.jsonl (`trace`, `console`).
 
 **Session:** the `forq_session` cookie is copied from the debug Chrome on :9222, so sign in there once. Each scenario
 runs in its own headless Chrome with a fresh profile, so it never opens tabs in a window someone is using, and
