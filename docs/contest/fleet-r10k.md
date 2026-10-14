@@ -43,6 +43,7 @@ made under new names, so no file matched a cached blob: 40,630 of 40,640 reads w
 
 | | (b) | (c) |
 |---|---|---|
+| files (of 40,640) | 29,883 landed, 10,685 nothing to document | **29,890 landed, 10,690 nothing to document, 60 no cached answer** |
 | errors | 0 | 0 |
 | busiest 10 s | 19,058 files (~1,900/s) | 18,946 files (~1,900/s) |
 | agents busy at once (max per 10 s) | 2,321 | 2,796 |
@@ -50,6 +51,8 @@ made under new names, so no file matched a cached blob: 40,630 of 40,640 reads w
 | landing after the answers | ~3 min | ~1 min (peak 980 files/s landed) |
 | start to everything landed | ~5 min | 86 s |
 | read p50 / p90 by namespace (median copy) | 615 ms / 1.16 s (qbfleet + qbfleet2) | qbfleet 536 ms / 1.29 s, qbfleet3 877 ms / 1.82 s, qbfleet4 811 ms / 1.46 s |
+
+The 60 in (c) are 6 files per copy that the answer cache never had an answer for (cache mode answers only from the cache): not errors, nothing was read wrong or lost. Every one of the 29,890 changes was on main 86 s after the start.
 
 **What (c) shows.** Faster start and bigger landing passes cut the whole run from ~5 min to 86 s, and landing stopped
 being the wall. Reads did not get faster with more namespaces: ~1,900 files/s with every file read from Artifacts, in
