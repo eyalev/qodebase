@@ -818,10 +818,19 @@ export class Landing extends DurableObject<Env> {
         const bs = await fetch(`${this.env.API_BASE}/api/agents/${c.id}/state`, { headers: hdr }).then((r) => r.json() as Promise<{ running?: boolean; taskSent?: boolean }>).catch(() => null);
         if (bs && bs.taskSent === false && !bs.running) {
           (c as { bootKicked?: number }).bootKicked = Date.now();
-          this.#ev(c, 'working', 'its box had not started: woken');
           await this.#put(c);
-          const w = await fetch(`${this.env.API_BASE}/api/agents/${c.id}/wake`, { method: 'POST', headers: hdr }).then((r) => r.json()).catch((e) => ({ error: String(e).slice(0, 200) }));
+          const w = await fetch(`${this.env.API_BASE}/api/agents/${c.id}/wake`, { method: 'POST', headers: hdr }).then((r) => r.json() as Promise<{ ok?: boolean; error?: string }>).catch((e) => ({ ok: false, error: String(e).slice(0, 200) }));
           log('landing', 'boot_kick', { slug: m.slug, id: c.id, ageS: Math.round((Date.now() - c.createdAt) / 1000), wake: w });
+          // The project's awake-box limit refused it ('6 agents already awake'): try again on the next tick (every minute)
+          // until a box is free. Before, one refusal was final and the agent never started (scene-2 takes 3 and 4,
+          // 2026-10-14: 'Stuck: Agent 10 never started' until it was woken by hand).
+          // Said only when the wake went through: the work page reads 'box had not started' as stuck.
+          if (w?.ok || !/already awake/.test(String(w?.error || ''))) { this.#ev(c, 'working', 'its box had not started: woken'); await this.#put(c); }
+          else {
+            delete (c as { bootKicked?: number }).bootKicked;
+            if (c.events.at(-1)?.detail !== 'waiting for a free box') this.#ev(c, 'working', 'waiting for a free box');
+            await this.#put(c);
+          }
           continue;
         }
       }
