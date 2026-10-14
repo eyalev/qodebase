@@ -66,10 +66,13 @@ export const SCAN_JS = String.raw`function talkScan(root) {
     // Menu links carry a second line ("Account" / "eyal: your name…"): first line names it.
     var text = named(a) || lines(a);
     var key = href + '|' + clean(text).toLowerCase();
+    // The same place linked again (a change record from its feed events and from its title): one item, named by the
+    // shortest text, which is the thing's own title ('Dark mode: theme toggle…', not 'Collision, replayed. Agent 10…').
+    if (seen[href] && seen[href] !== 1) { var t2 = clean(text); if (t2.length >= 6 && t2.length < seen[href].text.length) seen[href].text = t2.slice(0, 120); return; }
     if (seen[href] || seen[key]) return;
-    seen[href] = seen[key] = 1; links++;
+    seen[key] = 1; links++;
     if (href === '/' && !/home/i.test(text)) text = clean(text) + ' (home page)';
-    add(a, 'link', text, { href: href });
+    seen[href] = add(a, 'link', text, { href: href }) || 1;
   });
   var buttons = 0, btns = [];
   root.querySelectorAll('button, summary, [role=button], [role=tab], [role=switch], input[type=checkbox]').forEach(function (b) {
