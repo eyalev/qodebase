@@ -108,6 +108,7 @@ class Cut2(base.Cut):
                 if kind == 'mark' and e['ev'] == 'mark' and e.get('label') == label: return e['t']
                 if kind == 'say' and e['ev'] == 'say' and os.path.basename(e.get('clip', '')).startswith(label): return e['t']
             raise KeyError(v)
+        tl = os.path.join(src, 'talk.json'); talk_lines = json.load(open(tl)) if os.path.exists(tl) else []
         prev, fi, cache = frames[0][0], 0, {}
         last_b = None
         for s in segs:
@@ -123,8 +124,13 @@ class Cut2(base.Cut):
                 for e in ev:
                     if e['ev'] == 'say' and a <= e['t'] < b and os.path.exists(e.get('clip', '')):
                         self.audio.append((self.now() + (e['t'] - a) / 1000, e['clip']))
+            if x == 1:
+                for t_ms, text in talk_lines:
+                    if a <= t_ms < b:
+                        f = talk_voice(text)
+                        if f: self.audio.append((self.now() + (t_ms - a) / 1000, f))
             part = next(((t0, f) for t0, f in reversed(parts) if t0 <= a), None)
-            if x == 1 and s.get('audio', True) and part and (s.get('page_audio') or not s.get('quote')):
+            if x == 1 and s.get('audio', True) and part and not talk_lines and (s.get('page_audio') or not s.get('quote')):
                 wav = os.path.join(src, f'aud-{a}-{b}.wav')
                 if not os.path.exists(wav):
                     # a page recording can end early (the page navigated away mid-chunk): a slice past its end is skipped
@@ -137,7 +143,7 @@ class Cut2(base.Cut):
                 while fi + 1 < len(frames) and frames[fi + 1][0] <= t: fi += 1
                 while fi > 0 and frames[fi][0] > t: fi -= 1
                 f = frames[fi][1]
-                if f not in cache: cache.clear(); cache[f] = Image.open(os.path.join(src, 'frames', f)).convert('RGB')
+                if f not in cache: cache.clear(); cache[f] = cover_talk_version(Image.open(os.path.join(src, 'frames', f)).convert('RGB'))
                 badge = (f'{x:g}×', f'real time {int((t - a) / 60000)}:{int((t - a) / 1000 % 60):02d}') if x > 1 else (('later', f'+{round(jump / 60000)} min' if jump >= 60000 else f'+{round(jump / 1000)} s') if jump and t - a < 2000 else None)
                 self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), badge))
                 t += 1000 * x / FPS
@@ -145,6 +151,29 @@ class Cut2(base.Cut):
             if hold_s: self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), None), round(hold_s * FPS))
 
 V = os.path.expanduser('~/.local/share/qodebase-video')
+def talk_voice(text):
+    """Talk's spoken reply, rebuilt: Aura-2 'draco' (Talk's voice) at Talk's 1.25x speed, cached by text."""
+    sp = base.VO_SPEAKER
+    try:
+        base.VO_SPEAKER = 'draco'; path, _ = base.voice(text)
+    finally:
+        base.VO_SPEAKER = sp
+    if not path: return None
+    out = path[:-4] + '-x125.wav'
+    if not os.path.exists(out): subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', path, '-af', 'atempo=1.25', '-ar', '48000', '-ac', '1', out], check=True)
+    return out
+
+def cover_talk_version(im):
+    """Paint over Talk's build stamp ('7f8de12 10:29 talk 93b9730') beside the purple Conversation pill in the sheet header."""
+    px = im.load(); w, h = im.size
+    rows = [y for y in range(0, h, 2) if sum(1 for x in range(int(w * .42), int(w * .62), 6) if abs(px[x, y][0] - 106) < 30 and abs(px[x, y][1] - 47) < 30 and abs(px[x, y][2] - 240) < 30) > 12]
+    if not rows: return im
+    y0, y1 = rows[0], rows[-1]
+    if y1 - y0 > 120: y1 = y0 + 90
+    bg = px[int(w * .40), max(0, y0 - 6)]
+    ImageDraw.Draw(im).rectangle((int(w * .13), y0 - 4, int(w * .40), y1 + 4), fill=bg)
+    return im
+
 TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-v2d').split(',')]
 
 def script(c):
