@@ -1164,6 +1164,7 @@ function gateOf(c) {
   if ((c.destroys || 0) >= 0.5 || DESTROY_RX.test(label)) return 'refuse';
   if (c.op === 'press' && /^x/.test(String(c.target || ''))) return null;   // a page's own action: its UI asks for the real step
   if (c.op === 'press' && /^(Fastest|Balanced|Cheapest|Suggest from my idea|Small|Medium|Large|Huge)\b/.test(label)) return null;   // a preset only changes the settings
+  if (c.op === 'press' && /^build it$/i.test(label) && location.pathname === '/') return null;   // home's Build it opens the brief, which asks before anything starts
   if (c.op === 'go' && (c.then || c.href === '/runs' || /^\/p\//.test(String(c.href || '')))) return null;   // opening a page
   if (c.op === 'type') return null;   // filling a box is safe; its Send / Build it asks
   if ((c.risky || 0) >= 0.5 || (c.op === 'press' && CONFIRM_RX.test(label))) return 'confirm';
@@ -1350,6 +1351,8 @@ function act(c, withPreview) {
     if (c.op === 'press' && target) {
       var before = visibleButtons();
       add('app', 'Pressed \u201c' + plainLabel(c.label) + '\u201d.'); target.click(); trace('act', { op: 'press', label: c.label, confirmed: !!c.confirmed });
+      // A preset picked by voice with the idea box filled: 'Build it?' again (picking one used to drop the question).
+      if (location.pathname === '/' && /^(Fastest|Balanced|Cheapest|Suggest from my idea)\b/.test(String(c.label || ''))) { var ib = document.querySelector('.askbox textarea'); if (ib && ib.value.trim()) setTimeout(function () { offerSubmit(ib); }, 250); }
       // A button that asks again ("Stop" → "Stop this run", "Remove" → tap again): after a yes, press the second one too.
       if (c.confirmed) return followConfirm(c, before);
     }
@@ -1465,15 +1468,27 @@ function pageAction(c) {
     // The fleet form filled by voice: ask out loud with the size and the hard cap; a spoken yes presses its Start
     // (manager, 2026-10-14: everything by voice, a safety question first; silence or 'no' never starts).
     var go = c.target === 'xfleet-job' && r !== false && document.getElementById('nj-go');
-    if (go && go.getClientRects().length) {
+    if (go && go.getClientRects().length && !c.__estWait) {
+      // the estimate line updates after its own request: wait for it (up to 3 s), never read the placeholder
+      var w0 = Date.now();
+      return (function waitEst() {
+        var e0 = String((document.getElementById('nj-est') || {}).innerText || '');
+        if ((!e0 || /pick a copy|estimating|…/i.test(e0)) && Date.now() - w0 < 3000) return setTimeout(waitEst, 250);
+        c.__estWait = true; fleetAsk(go, /pick a copy|estimating/i.test(e0) ? '' : e0);
+      })();
+    }
+    function fleetAsk(go, est) {
       var cap = (document.querySelector('#nj input[name=budget], #nj-budget, input[aria-label^="Budget"]') || {}).value;
       var copy = ((document.getElementById('nj-copy') || {}).selectedOptions || [])[0];
-      var est = (document.querySelector('#nj .nj-est, #nj-est') || {}).innerText || '';
-      var q = String(go.innerText || 'Start').trim().replace(/^Start/, 'This will start') + (copy ? ' on ' + String(copy.textContent).replace(/\s*\(.*$/, '') : '') + (est ? ', ' + est.replace(/\s+/g, ' ').trim().replace(/\.$/, '') : '') + (cap ? '. It stops at the $' + cap + ' budget' : '') + '. Start?';
+      // 'This will start 1,000 agents on VS Code (4,064 files): about 2 to 3 minutes and $1.36 to $2.53. It stops at $5.00 whatever happens. Start?'
+      var files = (est.match(/([\d,]+)\s+files/) || [])[1], rest = est.replace(/^[^:]*:\s*/, '').replace(/\bmin\b/, 'minutes').replace(/\s+/g, ' ').trim();
+      var capLine = /stops at/i.test(rest) ? '' : (cap ? ' It stops at the $' + cap + ' budget.' : '');
+      var q = String(go.innerText || 'Start').trim().replace(/^Start/, 'This will start') + (copy ? ' on ' + String(copy.textContent).replace(/\s*\(.*$/, '') : '') + (files ? ' (' + files + ' files)' : '') + (rest ? ': ' + rest.replace(/\.?$/, '.') : '.') + capLine + ' Start?';
       add('ai', q); trace('fleet_confirm', { q: q });
       offerOn(q, function () { add('app', 'Pressed \u201c' + String(go.innerText).trim() + '\u201d.'); trace('act', { op: 'press', label: go.innerText, confirmed: true }); go.click(); }, 'Start');
       return done();
     }
+    if (c.__estWait) return;
     add('app', typeof r === 'string' ? r : r === false ? 'That did not work here.' : 'Done: ' + a.text + '.');
     done();
   }).catch(function (e) { logEv('page_action', { id: c.target, err: String(e) }); add('note', 'That did not work: ' + String(e && e.message || e)); done(); });
@@ -1506,6 +1521,7 @@ function typeInto(t, text) {
   t.dispatchEvent(new Event('change', { bubbles: true }));
 }
 function offerSubmit(t) {
+  if (briefAsk && location.pathname === '/build') { var a2 = briefAsk; setTimeout(a2, 300); return; }
   // Something was filled on the page and its Send / Build it is offered: fold the sheet into the bar, so the page
   // (Build's preset tiles) can be seen and tapped while the question waits (qb3's take, 2026-10-14: the open sheet
   // covered the tiles and taps never landed).
@@ -1866,13 +1882,16 @@ function finish() {
 function leave(go) { if (convOn() && lastSpoken) sset('convresume', Date.now()); if (run) { finish(); setTimeout(go, 80); } else go(); }
 // Home's 'Build it' (pressed by Talk or by hand) opens the brief: keep its estimate, so the brief can ask out loud
 // 'This will start …, about … and …. Start?' before 'Start building' (manager, 2026-10-14). Talk's own press is untrusted.
-document.addEventListener('click', function (e) {
-  var t = e.target && e.target.closest && e.target.closest('button');
-  if (!t || t.closest('#talk-root') || location.pathname !== '/' || !/^build it$/i.test(String(t.innerText || '').trim())) return;
+function keepEstimate(t, voice) {
+  if (!t || (t.closest && t.closest('#talk-root')) || location.pathname !== '/' || !/^build it$/i.test(String(t.innerText || '').trim())) return;
   var box = document.getElementById('bsopen'), ln = box ? String(box.innerText || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean) : [];
   var team = (ln[0] || '').replace(/^[^:]*:\s*/, ''), tc = ln[1] || '', time = (tc.match(/[\d.]+\s*(to|-)\s*[\d.]+\s*min/) || [''])[0], cost = (tc.match(/\$[\d.,]+\s*(to|-)\s*\$[\d.,]+/) || [''])[0];
-  sset('est', { team: team, time: time, cost: cost, voice: !e.isTrusted || lastSpoken, at: Date.now() });
-}, true);
+  sset('est', { team: team, time: time, cost: cost, voice: voice, at: Date.now() });
+}
+document.addEventListener('click', function (e) { keepEstimate(e.target && e.target.closest && e.target.closest('button'), !e.isTrusted || lastSpoken); }, true);
+// Talk's yes to 'Build it?' submits the form (requestSubmit), which fires no click.
+document.addEventListener('submit', function (e) { keepEstimate(e.submitter, !e.isTrusted || lastSpoken); }, true);
+var briefAsk = null;   // the brief's start question, asked again after the name is changed by voice
 function briefQuestion() {
   var est = sget('est', null);
   if (location.pathname !== '/build' || !est || !est.voice || Date.now() - est.at > 5 * 60000) return;
@@ -1883,7 +1902,8 @@ function briefQuestion() {
     if (!go || !go.getClientRects().length) { if (++tries < 30) setTimeout(ask1, 300); return; }
     var q = 'This will start ' + (est.team || 'the agents') + (est.time ? ', about ' + est.time.replace(/min$/, 'minutes') : '') + (est.cost ? ' and ' + est.cost : '') + '. Start?';
     lastSpoken = true; add('ai', q); trace('build_confirm', { q: q });
-    offerOn(q, function () { add('app', 'Pressed \u201cStart building\u201d.'); trace('act', { op: 'press', label: 'Start building', confirmed: true }); go.click(); }, 'Start');
+    briefAsk = function () { offerOn(q, function () { briefAsk = null; add('app', 'Pressed \u201cStart building\u201d.'); trace('act', { op: 'press', label: 'Start building', confirmed: true }); go.click(); }, 'Start'); };
+    briefAsk();
   })();
 }
 
