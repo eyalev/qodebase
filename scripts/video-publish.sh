@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Publish a cut of the qodebase video to qodebase.app/video (src/video.ts). One command:
 #   scripts/video-publish.sh <file.mp4> [file.srt]        (the .srt defaults to the mp4's name with .srt)
-#   TITLE="…" DESCRIPTION="…" POSTER_AT=12 scripts/video-publish.sh cut.mp4
+#   TITLE="…" DESCRIPTION="…" POSTER_AT=12 CHAPTERS=chapters.txt scripts/video-publish.sh cut.mp4
+#   (chapters later, without re-uploading: scripts/video-chapters.sh chapters.txt)
 # Uploads to R2 qodebase-video (forq account) under a versioned name (<UTC time>-<sha8>): the mp4, a poster frame (jpg,
 # also the link-preview image) and the captions as WebVTT; then rewrites latest.json, which the page reads (30 s memo
 # per isolate, so the new cut shows within a minute). Old cuts stay until deleted by hand. Logs one JSON line per run to
@@ -37,6 +38,9 @@ json.dump({ "v": "$v", "mp4": "$v.mp4", "jpg": "$v.jpg", "vtt": $vtt, "bytes": o
   "title": os.environ.get("TITLE", "qodebase: many AI agents, one codebase"),
   "description": os.environ.get("DESCRIPTION", "A short film about qodebase: a git platform where many AI agents change one codebase at once and their work lands by itself.") }, open(sys.argv[1], "w"))
 PY
+# Chapters: CHAPTERS=<file> (lines "M:SS Title"), else <mp4 name>.chapters.txt when it exists.
+chap=${CHAPTERS:-${mp4%.mp4}.chapters.txt}
+if [ -s "$chap" ]; then python3 scripts/video-chapters.py "$work/latest.json" "$chap"; else echo "no chapters ($chap missing)"; fi
 put latest.json "$work/latest.json" application/json
 mkdir -p ~/.local/share/qodebase-video
 printf '{"ts":"%s","event":"published","v":"%s","file":"%s","bytes":%s,"duration":%s,"captions":%s}\n' "$(date -u +%FT%TZ)" "$v" "$mp4" "$(stat -c %s "$mp4")" "$dur" "$([ "$vtt" = null ] && echo false || echo true)" >> ~/.local/share/qodebase-video/publish.jsonl
