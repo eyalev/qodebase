@@ -187,7 +187,7 @@
     const redone = bouncedOf(r), made = c.landed + redone + c.rejected;
     const seg = (n, cls) => (n ? `<i class="${cls}" style="width:${pct(n, made).toFixed(2)}%"></i>` : '');
     return `<div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${made} code changes reached main">${seg(c.landed, 's-l')}${seg(redone, 's-s')}${seg(c.rejected, 's-r')}</div>
-        <p><b>${n0(c.landed)}</b> of ${n0(made)} code tasks ${live(r) ? 'have landed' : 'landed'} on main; ${n0(redone)} ${redone === 1 ? 'was' : 'were'} sent back by the merge queue and did not land${c.rejected ? `, ${n0(c.rejected)} rejected` : ''}.</p>
+        <p><b>${n0(c.landed)}</b> of ${n0(made)} code tasks ${live(r) ? 'have landed' : 'landed'} on main. ${n0(redone)} failed their own tests and went back to their agents${live(r) ? '' : '; none was broken by the merge'}${c.rejected ? `, ${n0(c.rejected)} rejected` : ''}.</p>
         <p class="rc-sm">${n0(r.agentsStarted ?? r.agents)} agents${live(r) ? '' : `, ${clock(elapsedS(r))}`}. A task is one small change to the code, tested before it lands.</p></div>`;
   }
   // Run labels are the team's shorthand ('code dial 60% (K60h)', 'S5b batched…', 'smoke'): the card says it plainly; the
@@ -303,7 +303,7 @@
     const peakOf = (f) => Math.max(0, ...S.map(f).filter((v) => v != null));
     if (S.some((s) => s.active != null)) { const pk = peakOf((s) => s.active); rows.push({ label: `Agents at work, peak ${n0(pk)}`, kind: 'area', vals: S.map((s) => s.active || 0), max: nice(Math.max(pk, 1)), cls: 'c-active', h: HB }); }
     { const pr = peakOf((s) => s.ready), pl = peakOf((s) => s.landed), hasReady = S.some((s) => s.ready != null);
-      rows.push({ label: hasReady ? `Changes ${unit}: <i class="k-ready"></i>finished by agents (comments written), <i class="k-main"></i>reached main (in batches)` : `Changes reaching main ${unit} (in batches), peak ${n0(pl)}`, html: true, kind: 'pair', vals: S.map((s) => s.landed || 0), area: hasReady ? S.map((s) => s.ready || 0) : null, max: nice(Math.max(pr, pl, 1)), cls: 'c-land', h: HB }); }
+      rows.push({ label: hasReady ? `Changes ${unit}: <i class="k-ready"></i>finished by agents (${isCode(run || {}) ? 'code changes made' : 'comments written'}), <i class="k-main"></i>reached main (in batches)` : `Changes reaching main ${unit} (in batches), peak ${n0(pl)}`, html: true, kind: 'pair', vals: S.map((s) => s.landed || 0), area: hasReady ? S.map((s) => s.ready || 0) : null, max: nice(Math.max(pr, pl, 1)), cls: 'c-land', h: HB }); }
     // collisions (qb3's shot list, 1): two changes met on the same lines; replays, when the series has them, as a line
     if (S.some((s) => s.coll)) { const tot = S.reduce((a, s) => a + (s.raw.coll || 0), 0), rt = S.reduce((a, s) => a + (s.raw.repl || 0), 0), hasR = S.some((s) => s.repl != null);
       rows.push({ label: hasR ? `Collisions ${unit} (bars), <i class="k-ready"></i>redone on the newest code (line): ${n0(tot)} met, ${n0(rt)} redone` : `Collisions ${unit}: two changes met on the same lines, ${n0(tot)} in all`, html: true, kind: 'pair', vals: S.map((s) => s.coll || 0), area: hasR ? S.map((s) => s.repl || 0) : null, max: nice(Math.max(1, ...S.map((s) => Math.max(s.coll || 0, s.repl || 0)))), cls: 'c-coll', h: H + 8 }); }
@@ -561,7 +561,7 @@
       if (OWN && !MOCK && !COPIES) njCopies().catch(() => {});
       if (first) render();   // the list at once; timelines fill in as they arrive
       const cur = current();
-      if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); if (!cur.group) await loadIndexCheck(cur).catch(() => {}); }
+      if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); if (!cur.group && !isCode(cur) && /API index|index job/i.test(cur.label || '')) await loadIndexCheck(cur).catch(() => {}); /* only runs with an index job (submission review H1: a 500 on a kata run) */ }
       else await Promise.all(shownGroups().slice(0, 16).map((g) => loadLadder(g).catch(() => false)));   // the steps on screen, in screen order (qb3: cards kept 'Loading the timeline…')
       render();
     } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (!D) root.innerHTML = `<header class="rh"><h1>Scale runs</h1></header><p class="dim">${e && e.name === 'AbortError' ? 'The list of runs is taking too long to load.' : 'Could not load the runs.'} Trying again in a few seconds\u2026</p>`; }

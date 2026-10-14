@@ -640,7 +640,7 @@
   function estTop() {
     if (!D.estimate || !window.qbEstBar) return '';
     if (!document.getElementById('estbar-css')) { const st = document.createElement('style'); st.id = 'estbar-css'; st.textContent = window.QB_ESTBAR_CSS; document.head.appendChild(st); }
-    return window.qbEstBar(D.estimate, D.progress, Date.now(), D.billing || null, D.build ? { ...D.build, stuck: window.qbStuckAgent ? window.qbStuckAgent(D, (id) => AG(id)) : null, boxWait: window.qbBoxWait ? window.qbBoxWait(D, (id) => AG(id)) : null } : null);
+    return window.qbEstBar(D.estimate, D.progress, Date.now(), D.billing || null, D.build ? { ...D.build, stuck: window.qbStuckAgent ? window.qbStuckAgent(D, (id) => AG(id)) : null, boxWait: window.qbBoxWait ? window.qbBoxWait(D, (id) => AG(id)) : null, bySettle: D.progress?.settledAt ? D.changes.filter((c) => c.landedAt && c.landedAt <= D.progress.settledAt + 1000).length : null } : null);
   }
   // ---- One screen (Eyal, 2026-10-12: "everything should fit inside one phone screen ... WITHOUT SCROLLING") --------
   // A status strip, the pipeline as the picture (one chip per change, moving Working -> Review -> In line -> Landed),
