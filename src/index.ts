@@ -30,7 +30,7 @@ import { requestsRoute, myRequestsRoute } from './requests';
 import { cleanStart, estimate as fleetEstimate } from './fleetjob';
 import { ATTACH_TYPES, ATTACH_MAX, newAttachId, isAttachId, attachKey, composeMessage, parseMarker, attachedLines } from './attach';
 import { viewShown, buildV3, catalogV3, docLabel, docRank, fixtureV3, homeV3, liveV3, needsOf, projectV3, withGlobal, withTabs, VIEW_IDS, type Docs, type Global, type InboxItem, type Nav, type ViewId } from './v3';
-import { changesOf, runUrl } from './v2';
+import { changesOf, runUrl, titleOf } from './v2';
 import { fixtureV2, homeV2, liveV2, projectV2, uiOf, type HomeStatus, type UI } from './v2';
 import { MAX_IMPORT_KB, getRepo, nameFor, parseRepoRef, searchRepos } from './github';
 import { DEFAULT_API_MODEL, isClaudeToken, onSubscription, checkApiKey, handoffEmail, handoffToken, claimHandle, clearCookie, decryptKey, encryptKey, isOwner, sessionCookie, sessionEmail, suggestHandle, userByEmail, userByHandle , billingOf } from './auth';
@@ -1033,7 +1033,10 @@ const app = {
         const id = m[1];
         const info = await projectStub(env, projectOf(id)).info();
         if (!info || (info.owner !== me.handle && !me.admin)) return json({ error: 'not your project' }, 403);
-        return agentProxy(request, env, ctx, id, m[2] || '/', url, apiBase);
+        const r = await agentProxy(request, env, ctx, id, m[2] || '/', url, apiBase);
+        // the agent's terminal page gets a way back to the app (Eyal, 2026-10-15): a slim bar on top of mobile-agent's page
+        if (r.status === 200 && /^\/agent\/(index\.html)?$/.test(m[2] || '') && (r.headers.get('content-type') || '').includes('text/html')) return withAgentBar(r, info, id);
+        return r;
       }
 
       // ---- project API: /api/p/<owner>/<name>/<verb>
@@ -1889,6 +1892,22 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
   return json({ error: 'unknown verb' }, 404);
 }
 
+// A slim bar over a box's own page (mobile-agent): 'Board' back to the project, the agent's task, its number. The page's
+// body is a full-height flex column, so a first child takes its height from the terminal instead of covering it.
+function withAgentBar(r: Response, info: ProjectInfo, id: string): Response {
+  const esc = (x: string) => x.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const role = /--router\d*$/.test(id) ? 'Router' : /--review\d*$/.test(id) ? 'Reviewer' : '';
+  const agents = (info.agents || []).filter((a) => !/--(router|review)\d*$/.test(a.id)).sort((a, b) => a.createdAt - b.createdAt);
+  const n = agents.findIndex((a) => a.id === id) + 1, a = agents[n - 1];
+  const who = role || (n ? `Agent ${n}` : 'Agent'), title = a ? titleOf(a.task) : role ? `${info.owner}/${info.name}` : '';
+  const back = `/p/${info.owner}/${info.name}${info.landing ? '/work' : ''}`;
+  const bar = `<div id="qb-agentbar" role="navigation" aria-label="Back to the project"><a href="${esc(back)}" aria-label="Back to the ${info.landing ? 'Board' : 'project'}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>${info.landing ? 'Board' : 'Project'}</a><span class="t">${esc(title)}</span><span class="n">${esc(who)}</span></div>
+<style>#qb-agentbar{flex:none;display:flex;align-items:center;gap:10px;height:44px;padding:0 12px 0 4px;background:#ffffff;color:#14121f;box-shadow:inset 0 -1px 0 #e4e4ec;font:500 14px/1.2 Geist,system-ui,sans-serif;z-index:5}
+#qb-agentbar a{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding:0 8px;color:#6a2ff0;text-decoration:none;flex:none}
+#qb-agentbar .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#qb-agentbar .n{flex:none;font-size:12px;color:#646177;background:#efeff4;border-radius:4px;padding:2px 6px}
+@media (prefers-color-scheme:dark){#qb-agentbar{background:#16151e;color:#eeedf3;box-shadow:inset 0 -1px 0 #2a2836}#qb-agentbar a{color:#a585ff}#qb-agentbar .n{background:#211f2b;color:#a3a0b3}}</style>`;
+  return new HTMLRewriter().on('body', { element(e) { e.prepend(bar, { html: true }); } }).transform(r);
+}
 async function agentProxy(request: Request, env: Env, ctx: ExecutionContext, agentId: string, rest: string, url: URL, apiBase: string) {
   if (rest === '/' || rest === '/agent') return Response.redirect(`${url.origin}/a/${agentId}/agent/${url.search}`, 302);
   if (!rest.startsWith('/agent/')) return json({ error: 'not found' }, 404);
