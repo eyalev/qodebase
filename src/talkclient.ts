@@ -103,7 +103,9 @@ var css = [
   // tokens, a hairline and a soft shadow on top, the mic a filled accent circle.
   '.talk-somic{background:var(--t-acc)!important;color:var(--t-accfg)!important;border-radius:50%!important;width:48px;height:48px}',   // signed-out bar: the same filled mic (qb5's critique)
   '#talk-root:not(.arming) #talk-bmic:not(.on){background:var(--t-acc);color:var(--t-accfg);border-radius:50%}',
-  '@media (min-width:720px){#talk-bar{left:auto;right:16px;bottom:16px;width:420px;padding:6px;border:0;border-radius:14px;background:var(--t-card);background:var(--acc-soft,color-mix(in srgb,var(--t-acc) 9%,var(--t-bg)));box-shadow:inset 0 0 0 1px var(--t-frame),0 4px 16px rgba(0,0,0,.10)}}',
+  // The card at the right only where it fits beside a centred 720 px column (qb5's desktop critique): width
+  // min(420, free margin), else (.flat) the phone's full-width bar. placeBar sets --t-dw and .flat.
+  '@media (min-width:720px){#talk-root:not(.flat) #talk-bar{left:auto;right:16px;bottom:16px;width:var(--t-dw,420px);padding:6px;border:0;border-radius:14px;background:var(--t-card);background:var(--acc-soft,color-mix(in srgb,var(--t-acc) 9%,var(--t-bg)));box-shadow:inset 0 0 0 1px var(--t-frame),0 4px 16px rgba(0,0,0,.10)}}',
   '#talk-root.open #talk-bar{display:none}',
   '.talk-bb{width:44px;height:44px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--t-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}',
   '.talk-bb svg{width:22px;height:22px}',
@@ -153,6 +155,11 @@ var css = [
   // Above a composer the bar shows only when it has something to say (an answer, a question, live words); the way
   // in at rest is the composer mic (hold it: Talk listens). Three layers at the bottom were too many (critique).
   '#talk-root.slim.rest #talk-bar,#talk-root.tall.rest #talk-bar{display:none}',
+  // ... drawn inside the composer's row (placeBar sets its box): flat, the row's own height, its own mic/stop back.
+  // qb5's tokens: --card with an inset 1px --line hairline (no drop shadow), radius 12 like the inputs.
+  '#talk-root.inrow #talk-bar{padding:0 0 0 4px;gap:4px;align-items:center;border:0;border-radius:12px;background:var(--t-card);box-shadow:inset 0 0 0 1px var(--t-line);min-height:0}',
+  '#talk-root.slim.inrow:not(.boffer) #talk-bmic{display:flex}',
+  '#talk-root.inrow #talk-bmic{width:44px;height:44px}',
   '#talk-spacer{height:0;pointer-events:none}',
   '.talk-convt{min-height:36px;padding:0 10px;border:0;border-radius:10px;background:var(--t-chip);color:var(--t-fg);font:500 13px var(--t-ff);cursor:pointer;white-space:nowrap}',
   '.talk-convt[aria-pressed=true]{background:var(--t-acc);color:var(--t-accfg)}',
@@ -212,7 +219,7 @@ var css = [
   '#talk-grab i{display:block;width:36px;height:4px;border-radius:2px;background:var(--t-line)}',
   '#talk-head{cursor:pointer}',
   '#talk-root.open #talk-sheet{transform:none}',
-  '@media (min-width:720px){#talk-sheet{left:auto;right:16px;bottom:16px;width:420px;border:1px solid var(--t-line);border-radius:12px}}',
+  '@media (min-width:720px){#talk-root:not(.flat) #talk-sheet{left:auto;right:16px;bottom:16px;width:var(--t-dw,420px);border:1px solid var(--t-line);border-radius:12px}}',
   '#talk-head{display:flex;align-items:center;gap:8px;padding:0 8px 8px 16px;border-bottom:1px solid var(--t-line)}',
   '#talk-head b{font-weight:600;font-size:15px;flex:1}',
   '#talk-head .st{font-size:13px;color:var(--t-dim);font-variant-numeric:tabular-nums}',
@@ -570,8 +577,13 @@ function open(on) { if (on && S.engine === 'live' && me) warmMic(); if (!on && S
 // Sit above the page's own bottom bar (a project's tabs and its "Ask for a change" box), whatever it is, and keep
 // the bar's height free at the end of the page (and of the page's own scrolling panel, on project pages).
 var scrollers = null, lastLift = -1;
+function phoneLike() { return window.innerWidth < 720 || (root && root.classList.contains('flat')); }
 function placeBar() {
   if (!bar) return;
+  // Desktop: the card only fits in the margin beside a centred 720 px column, min(420, margin - 32), floor 320.
+  var free = Math.floor((window.innerWidth - 720) / 2 - 32), flat = window.innerWidth >= 720 && free < 320;
+  if (root.classList.contains('flat') !== flat) root.classList.toggle('flat', flat);
+  if (!flat && window.innerWidth >= 720) root.style.setProperty('--t-dw', Math.min(420, free) + 'px');
   // Walk up from the bottom edge: each short bar touching the one below (fixed, sticky, or a page
   // that lays out as a full-height column, like a project page's tabs + "Ask for a change") lifts the button.
   // A dock inset from the edge (bottom: 8px) counts too: probes at 4/12/20 px and 20 px tolerance, also at the
@@ -580,9 +592,13 @@ function placeBar() {
   root.style.pointerEvents = 'none';   // probe the page under the bar, not the bar
   for (var n = 0; n < 4; n++) {
     var top = null;
+    // Wide screens: the bar is a card at the right, so probe only under it (qb5: a dock under the left column lifted
+    // it to mid-screen on home with Build's settings open).
+    var bx0 = 0, bx1 = window.innerWidth;
+    if (!phoneLike()) { bx1 = window.innerWidth - 16; bx0 = Math.max(0, bx1 - (bar.offsetWidth || 420)); }
     [0.15, 0.5, 0.85].forEach(function (fx) {
       [4, 12, 20].forEach(function (dy) {
-        var e = document.elementFromPoint(Math.round(window.innerWidth * fx), y - dy);
+        var e = document.elementFromPoint(Math.round(bx0 + (bx1 - bx0) * fx), y - dy);
         var dock = null;
         for (; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
           if (root.contains(e) || e === spacer) { dock = null; break; }
@@ -604,6 +620,7 @@ function placeBar() {
   [].forEach.call(document.querySelectorAll('[data-talk-dock]'), function (d) {
     var r = d.getBoundingClientRect();
     if (!(r.height > 0 && r.bottom > window.innerHeight - 48 && r.top < window.innerHeight)) return;
+    if (!phoneLike() && (r.right < bx0 || r.left > bx1)) return;   // not under the bar
     if (r.height > window.innerHeight * 0.3) { tall = true; tallTop = Math.min(tallTop, r.top); return; }
     lift = Math.max(lift, window.innerHeight - r.top);
   });
@@ -612,10 +629,21 @@ function placeBar() {
   // the bar sits on the panel's top edge, so everything in the panel stays visible.
   // A question sits at the very bottom, over the page's own action panel (which holds the same Build it), not lifted
   // onto the settings above it (qb3's rehearsal 2026-10-14: 'Build it?' covered the presets). One compact row.
-  if (root.classList.contains('boffer') && window.innerWidth < 720) lift = 0;
+  if (root.classList.contains('boffer') && phoneLike()) lift = 0;
+  // A project page's 'Ask for a change' row: Talk draws INSIDE it (over the text box and its mic, the attach button
+  // stays), one row instead of two (manager, 2026-10-14). At rest the row is the page's own.
+  var row = root.classList.contains('slim') && !root.classList.contains('open') ? composerRow() : null;
+  if (root.classList.contains('inrow') !== !!row) { root.classList.toggle('inrow', !!row); trace('bar_inrow', { on: !!row }); }
+  if (row) {
+    bar.style.left = row.l + 'px'; bar.style.right = Math.max(0, window.innerWidth - row.r) + 'px'; bar.style.width = 'auto';
+    bar.style.bottom = Math.max(0, window.innerHeight - row.b) + 'px'; bar.style.minHeight = row.h + 'px';
+    bar.style.setProperty('--talk-inset', '0px');
+    return reserve(0, true);
+  }
+  bar.style.left = bar.style.right = bar.style.width = bar.style.minHeight = '';
   lift = Math.round(lift);
-  if (window.innerWidth < 720 && !root.classList.contains('miconly')) { bar.style.bottom = lift ? lift + 'px' : '0px'; bar.style.setProperty('--talk-inset', lift ? '0px' : 'env(safe-area-inset-bottom)'); }
-  else bar.style.bottom = 'calc(' + (lift ? lift + 8 : (window.innerWidth < 720 ? 8 : 16)) + 'px + env(safe-area-inset-bottom))';
+  if (phoneLike() && !root.classList.contains('miconly')) { bar.style.bottom = lift ? lift + 'px' : '0px'; bar.style.setProperty('--talk-inset', lift ? '0px' : 'env(safe-area-inset-bottom)'); }
+  else bar.style.bottom = 'calc(' + (lift ? lift + 8 : (phoneLike() ? 8 : 16)) + 'px + env(safe-area-inset-bottom))';
   var vb = document.getElementById('talk-ver');
   if (vb) { vb.style.right = '6px'; vb.style.bottom = 'calc(' + (lift + bar.offsetHeight + 12) + 'px + env(safe-area-inset-bottom))'; }
   reserve(lift);
@@ -623,10 +651,21 @@ function placeBar() {
 // The bar covers the last ~64 px above the page's own bottom bars: the page gets that much more room at its end.
 // Body-scrolling pages: a spacer after everything. Pages that scroll a panel of their own (a project page's view
 // between its header and its composer): that panel's bottom padding, measured once the page has drawn.
-function reserve(lift) {
-  var r = bar.getBoundingClientRect(), need = Math.round(r.height + (window.innerWidth < 720 ? 8 : 24));
+function composerRow() {
+  var fs = document.querySelectorAll('form.ask, [data-talk-composer]');
+  for (var i = 0; i < fs.length; i++) {
+    var f = fs[i], ta = f.querySelector('textarea, input[type=text]'); if (!ta) continue;
+    var r = f.getBoundingClientRect(), t = ta.getBoundingClientRect();
+    // anywhere it is fully on screen: at the bottom on phones, at the top of a project page on desktop
+    if (!r.height || !t.width || r.height > 200 || r.top < 0 || r.bottom > window.innerHeight + 2) continue;
+    return { l: Math.round(t.left - 2), r: Math.round(r.right), b: Math.round(r.bottom), h: Math.round(r.height) };
+  }
+  return null;
+}
+function reserve(lift, none) {
+  var r = bar.getBoundingClientRect(), need = Math.round(r.height + (phoneLike() ? 8 : 24));
   if (root.classList.contains('open')) return;
-  if (!r.height) {   // the bar is hidden (resting above a composer): give the room back
+  if (!r.height || none) {   // the bar is hidden (resting above a composer): give the room back
     if (spacer.offsetHeight) spacer.style.height = '0px';
     (scrollers || []).forEach(function (e) { if (e.__talkAdd) { e.__talkAdd = 0; e.style.paddingBottom = (e.__talkPad || 0) + 'px'; } });
     return;
@@ -1028,7 +1067,10 @@ function route(c, text) {
       if (c.mode === 'both') sset('pending', { text: text, did: describe(c) });
       return act(c, true);
     }
-    if (acts && c.p >= 0.2) {
+    // Already inside that project (its work page, its code…): 'open eyal/home-ledger?' is no answer (manager, 2026-10-14).
+    var inside = c.op === 'go' && /^\/p\/[^/]+\/[^/?#]+\/?$/.test(String(c.href || '')) && (location.pathname + '/').indexOf(String(c.href).replace(/\/$/, '') + '/') === 0;
+    if (inside) trace('maybe_skip', { href: c.href, why: 'inside' });
+    if (acts && c.p >= 0.2 && !inside) {
       offerOn('Maybe: ' + describe(c) + '?', function () { if (c.mode === 'both') sset('pending', { text: text, did: describe(c) }); act(c); });
       if (c.mode === 'act') return done();
     }
@@ -1989,7 +2031,7 @@ var PARTS = { page: '', app: '/app', code: '/code/', readme: '/readme', history:
 
 function navTo(href, label) {
   add('app', 'Opening ' + label + '…');
-  sset('last', label); sset('open', true); open(true);
+  sset('last', label);   // the bar says it; the conversation stays folded (one row, manager 2026-10-14)
   setTimeout(function () { location.assign(href); }, 80);
 }
 
@@ -2042,7 +2084,7 @@ var TOOLS = [
       if (busy || run) return Promise.resolve({ ok: false, text: 'Talk is busy with the last sentence.' });
       return new Promise(function (resolve) {
         run = { texts: [], ok: true, resolve: resolve };
-        open(true); lastSpoken = false; submit(text);
+        lastSpoken = false; submit(text);
       });
     } },
   { name: 'open_project',
@@ -2662,8 +2704,7 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   publishTools();
   // Coming back from a navigation Talk made: show the sheet, finish any pending question.
   if (sget('call', false)) {
-    // Continue the conversation on this page. Sound needs a tap unless the browser still allows it.
-    open(true);
+    // Continue the conversation on this page (in the bar). Sound needs a tap unless the browser still allows it.
     var probe = null; try { var C = window.AudioContext || window.webkitAudioContext; probe = C ? new C() : null; } catch (e) {}
     if (probe && probe.state === 'running') { probe.close(); startConversation(); }
     else { if (probe) probe.close(); offerOn('Keep talking?', function () { unlockAudio(); startConversation(); }, 'Talk'); }
