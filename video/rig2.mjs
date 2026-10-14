@@ -75,7 +75,7 @@ const MIC = () => {
   md.getUserMedia = async (c) => {
     if (!c || !c.audio) throw new DOMException('rig: audio only', 'NotSupportedError');
     const d = ensure(); await ctx.resume(); window.__rigMicOpens = (window.__rigMicOpens || 0) + 1;
-    return new MediaStream(d.stream.getAudioTracks().map((t) => t.clone()));
+    const ms = new MediaStream(d.stream.getAudioTracks().map((t) => t.clone())); (window.__rigStreams = window.__rigStreams || []).push(ms); return ms;
   };
   md.enumerateDevices = async () => [{ kind: 'audioinput', deviceId: 'rig', groupId: 'rig', label: 'rig mic', toJSON() { return this; } }];
   window.__rigSay = async (b64) => {
@@ -127,7 +127,10 @@ http.createServer(async (req, res) => {
   try {
     switch (u.pathname) {
       case '/say': {
-        if (a.gate) await page.waitForFunction(() => { const r = document.getElementById('talk-root'); return r && r.classList.contains('live') && !r.classList.contains('arming'); }, null, { timeout: +(a.gate) || 15000 }).catch(() => log('gate-timeout'));
+        // qb2: play only once the recorder is on ('live' and not 'arming'), then 400 ms more; with wait=1, first wait for
+        // the previous turn to end (live goes off) so a clip never lands in a listening window that is closing.
+        if (a.wait) await page.waitForFunction(() => !document.getElementById('talk-root')?.classList.contains('live'), null, { timeout: 60000 }).catch(() => log('wait-off-timeout'));
+        if (a.gate) { await page.waitForFunction(() => { const r = document.getElementById('talk-root'); return r && r.classList.contains('live') && !r.classList.contains('arming'); }, null, { timeout: +(a.gate) || 15000 }).catch(() => log('gate-timeout')); await new Promise((ok) => setTimeout(ok, 400)); }
         const b64 = fs.readFileSync(a.clip).toString('base64');
         const r = log('say', { clip: a.clip });
         const dur = await page.evaluate((x) => window.__rigSay(x), b64);
