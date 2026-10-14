@@ -155,7 +155,10 @@ export default {
       case '/runs': { const repos = [MAIN, ...((await budget(env).repos().catch(() => [])) || []).filter((x) => x !== MAIN)]; const missing = []; const rows = (await Promise.all(repos.map((x) => run(env, x).runs().catch((e) => { missing.push({ repo: x, err: String(e?.message || e).slice(0, 120) }); return []; })))).flat(); const kindOf = (r) => r.repo.replace(/^fleet-(n2-)?/, '').replace(/-\d+$/, '');
         const groups = new Map(); for (const r of rows) if (r.ladder) { const k = `${r.ladder}|${kindOf(r)}`; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
         for (const g of groups.values()) g.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0)).forEach((r, i) => { r.copyOfKind = i + 1; r.copiesOfKind = g.length; });
-        for (const r of rows) r.source = { ...(SOURCES[kindOf(r)] || SOURCES.main), namespace: r.repo.startsWith(N2) ? 'qbfleet2' : 'qbfleet' };
+        for (const r of rows) r.source = r.repo.startsWith('fleet-kata-')
+          // The code dial ran on qb4's kata seed in qodebase projects (eyal/kata-*), through the real merge queue: not a fleet copy.
+          ? { name: 'Kata (code dial)', upstream: 'qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests', root: 'kata', project: `eyal/${r.repo.slice('fleet-'.length)}`, namespace: 'forq' }
+          : { ...(SOURCES[kindOf(r)] || SOURCES.main), namespace: r.repo.startsWith(N2) ? 'qbfleet2' : 'qbfleet' };
         return json({ runs: rows, ...(missing.length ? { missing } : {}) }); }
       case '/clone-token': { using r = await ns(env, repo).get(repo); const t = await r.createToken('read', 3600); return json({ repo, remote: remoteOf(repo), token: t.plaintext }); }
       default: return json({ error: 'not found' }, 404);
@@ -542,7 +545,10 @@ export class Run extends DurableObject {
     return ids.map((id) => {
       const by = Object.fromEntries(this.sql.exec(`SELECT status, COUNT(*) AS n FROM rec WHERE run = ? GROUP BY status`, id).toArray().map((x) => [x.status, x.n]));
       const agg = this.sql.exec(`SELECT MIN(at) AS t0, MAX(at) AS t1, SUM(usd) AS usd, SUM(tin) AS tin, SUM(tout) AS tout, COUNT(DISTINCT file) AS files FROM rec WHERE run = ?`, id).toArray()[0];
-      const waits = this.sql.exec(`SELECT landed_at - at AS w FROM rec WHERE run = ? AND landed_at IS NOT NULL`, id).toArray().map((x) => x.w).sort((a, b) => a - b);
+      // Code dial (kata) records end when the change has landed, so landed_at - at is ~0 or negative: there the wait is the
+      // whole time from the task being picked to its change on main (ms), the merge queue's wait included.
+      const kata = this.sql.exec(`SELECT 1 FROM rec WHERE run = ? AND kind IN ('impl', 'change') LIMIT 1`, id).toArray().length > 0;
+      const waits = this.sql.exec(kata ? `SELECT ms AS w FROM rec WHERE run = ? AND status = 'landed' AND task IS NOT NULL` : `SELECT landed_at - at AS w FROM rec WHERE run = ? AND landed_at IS NOT NULL`, id).toArray().map((x) => x.w).sort((a, b) => a - b);
       const models = {};
       for (const x of this.sql.exec(`SELECT model, status, COUNT(*) AS n, SUM(usd) AS usd FROM rec WHERE run = ? GROUP BY model, status`, id).toArray()) { const m = (models[x.model] ||= { usd: 0 }); m[x.status] = x.n; m.usd = Math.round((m.usd + (x.usd || 0)) * 10000) / 10000; }
       const meta = metas.get(id) || {};
