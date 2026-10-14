@@ -295,13 +295,15 @@
       ${h ? `<p class="slast">${h.text.replace(/<b>[^<]*<\/b>\s*/, '')} <span class="meta">${ago(h.t)}</span></p>` : ''}
     </div>`;
   }
+  // A row's tap opens the change; this small button opens the agent's own session (Terminal) in the sheet (Eyal, 2026-10-15)
+  const sessBtn = (c) => (OWN && c.kind !== 'demo' && window.forqOpenSheet ? `<button type="button" class="sessb" data-sheet="${esc(c.id)}" data-name="${esc(`${AG(c.agent)}: ${short(c)}`)}" data-mode="term" aria-label="Open ${AG(c.agent)}\u2019s session" title="${AG(c.agent)}\u2019s session"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-5-6-5"/><path d="M12 19h8"/></svg></button>` : '');
   function rightNow(all) {
     const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;
     const act = idleDemo ? [] : D.changes.filter(active).sort((a, b) => ORDERED.indexOf(skey(a)) - ORDERED.indexOf(skey(b)));
     if (!act.length) return '';
     const by = new Map(); for (const c of act) if (!by.has(c.agent)) by.set(c.agent, c);
     const list = [...by.values()], more = all ? 0 : list.length - 5;
-    return `<section class="sec"><div class="sec-h"><h3>Right now</h3>${more > 0 ? `<a href="#/changes">All ${list.length}</a>` : ''}</div><ul class="now">${list.slice(0, all ? 99 : 5).map((c) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${skey(c)}"></i><b>${AG(c.agent)}</b><span class="t">${short(c)}</span><span class="w">${WORD[skey(c)]}</span></a></li>`).join('')}</ul></section>`;
+    return `<section class="sec"><div class="sec-h"><h3>Right now</h3>${more > 0 ? `<a href="#/changes">All ${list.length}</a>` : ''}</div><ul class="now">${list.slice(0, all ? 99 : 5).map((c) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${skey(c)}"></i><b>${AG(c.agent)}</b><span class="t">${short(c)}</span><span class="w">${WORD[skey(c)]}</span></a>${sessBtn(c)}</li>`).join('')}</ul></section>`;
   }
   function headFeed(limit, noFold) {
     const hs = headlines().slice(0, limit), shown = new Set(hs.filter((h) => h.c).map((h) => h.c.id));
@@ -745,7 +747,7 @@
   // qb3's Asks view (G4): /p/<o>/<n>/asks, next to this page's /work.
   const asksUrl = () => { const m = /^(\/p\/[^/]+\/[^/]+)\//.exec(location.pathname); return m ? `${m[1]}/asks` : ''; };
   function fitPanel(tab) {
-    if (tab === 'agents') { const r = rightNow(true); return r || (D.changes.length ? `<ul class="now">${sortC(D.changes).map((c) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${skey(c)}"></i><b>${AG(c.agent)}</b><span class="t">${short(c)}</span><span class="w">${WORD[skey(c)]}</span></a></li>`).join('')}</ul>` : '<p class="dim">No agent has worked here yet.</p>'); }
+    if (tab === 'agents') { const r = rightNow(true); return r || (D.changes.length ? `<ul class="now">${sortC(D.changes).map((c) => `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${skey(c)}"></i><b>${AG(c.agent)}</b><span class="t">${short(c)}</span><span class="w">${WORD[skey(c)]}</span></a>${sessBtn(c)}</li>`).join('')}</ul>` : '<p class="dim">No agent has worked here yet.</p>'); }
     if (tab === 'line') return theLine(false);
     if (tab === 'events') return `${headFeed(8, true)}<p class="fmore"><a href="#/feed">Every step</a>${asksUrl() ? ` <a href="${asksUrl()}">All asks</a>` : ''}</p>`;
     if (tab === 'timeline') return timelineHtml(false);
