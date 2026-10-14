@@ -20,8 +20,8 @@ const MAIN = 'fleet-main';
 // S4e: a second namespace (qbfleet2) for repos named fleet-n2-*: does the shared slowdown follow the namespace?
 const N2 = 'fleet-n2-';
 // Namespaces by repo prefix (2026-10-14: four, to spread Artifacts reads): fleet-n2- / fleet-n3- / fleet-n4-, else qbfleet.
-const nsName = (repo) => { const r = String(repo); return r.startsWith('fleet-n4-') ? 'qbfleet4' : r.startsWith('fleet-n3-') ? 'qbfleet3' : r.startsWith(N2) ? 'qbfleet2' : 'qbfleet'; };
-const ns = (env, repo) => ({ qbfleet4: env.ARTIFACTS4, qbfleet3: env.ARTIFACTS3, qbfleet2: env.ARTIFACTS2, qbfleet: env.ARTIFACTS })[nsName(repo)];
+const nsName = (repo) => { const r = String(repo); return r.startsWith('fleet-n5-') ? 'qbfleet5' : r.startsWith('fleet-n4-') ? 'qbfleet4' : r.startsWith('fleet-n3-') ? 'qbfleet3' : r.startsWith(N2) ? 'qbfleet2' : 'qbfleet'; };
+const ns = (env, repo) => ({ qbfleet5: env.ARTIFACTS5, qbfleet4: env.ARTIFACTS4, qbfleet3: env.ARTIFACTS3, qbfleet2: env.ARTIFACTS2, qbfleet: env.ARTIFACTS })[nsName(repo)];
 const remoteOf = (repo) => `https://887d7234a6b8d65ad355a4f6684cab67.artifacts.cloudflare.net/git/${nsName(repo)}/${repo}.git`;
 // Several repos at once (P4): one Run and one Lander per repo; fleet-main keeps its first object names.
 const REPO_RE = /^fleet-[a-z0-9-]{1,40}$/;
