@@ -7,8 +7,8 @@
  {
   "a": 21000,
   "b": 57000,
-  "x": 2,
-  "say": "Talk opens the Runs page and fills in the job: the copy of VS Code, the folder, doc comments plus a line in the API index, a thousand agents, a five-dollar cap, and the estimate."
+  "x": 4,
+  "say": "Talk opens the Runs page and fills in the job: VS Code, a thousand agents, a five-dollar cap, and the estimate."
  },
  {
   "a": 57000,
@@ -18,8 +18,8 @@
  {
   "a": 61000,
   "b": 221000,
-  "x": 4,
-  "say": "A thousand agents start, each on its own files, on Workers AI with Gemini as overflow. When the answers are in, the last files land on main."
+  "x": 8,
+  "say": "A thousand agents start, each on its own files. Then the last files land on main."
  },
  {
   "a": 221000,
@@ -29,7 +29,7 @@
  {
   "a": 237311,
   "b": 251000,
-  "say": "Every agent also wrote one line in one shared index file, so they collided all the time, thousands of times, and every collision was redone on the newest code."
+  "say": "Each agent also wrote one line in a shared index, so they collided thousands of times, and every collision was redone on the newest code."
  },
  {
   "a": 287795,

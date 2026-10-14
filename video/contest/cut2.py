@@ -49,7 +49,7 @@ class Cut2(base.Cut):
         super().__init__(out)
         self.notes = deck_notes()
 
-    def deck(self, n, say=None, after=0.8):
+    def deck(self, n, say=None, after=0.4):
         title, notes = self.notes[n]
         text = say if say is not None else notes
         im = Image.open(os.path.join(DECK, f'{n:02d}.png')).convert('RGB').resize((W, H))
@@ -114,8 +114,14 @@ class Cut2(base.Cut):
             if s.get('say'): self.speak(s['say'])
             cap = s.get('cap', s.get('say', ''))
             if cap or s.get('quote'): self.cues.append((self.now(), self.now() + (b - a) / 1000 / x, s.get('quote') or cap))
+            # The user's words: the clip itself, mixed in at the moment the rig played it into the mic (clean, and
+            # independent of the page recording). The page recording below adds Talk's own spoken replies.
+            if x == 1:
+                for e in ev:
+                    if e['ev'] == 'say' and a <= e['t'] < b and os.path.exists(e.get('clip', '')):
+                        self.audio.append((self.now() + (e['t'] - a) / 1000, e['clip']))
             part = next(((t0, f) for t0, f in reversed(parts) if t0 <= a), None)
-            if x == 1 and s.get('audio', True) and part:
+            if x == 1 and s.get('audio', True) and part and not s.get('quote'):
                 wav = os.path.join(src, f'aud-{a}-{b}.wav')
                 if not os.path.exists(wav):
                     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-ss', f'{(a - part[0]) / 1000:.3f}', '-t', f'{(b - a) / 1000:.3f}',
@@ -145,9 +151,10 @@ def script(c):
     for t in TAKES2: c.take(t, json.load(open(os.path.join(t, 'segs.json'))))
     c.deck(23)
     c.chapter('It works with real agents')
-    for n in (9, 11, 12): c.deck(n)
+    for n in (11, 12): c.deck(n)
     c.chapter('Many agents, at scale')
-    for n in (14, 15, 16): c.deck(n)
+    c.deck(14, say="Now hundreds. Two hundred cheap-model agents took almost fourteen hundred coding tasks on one codebase, checked by tests they never saw. As more tasks aimed at the same functions, a model redid up to four hundred and sixty-eight collided changes, and losses stayed in the same range, with nothing lost in landing. The overlap cost time, and lanes per module won most of it back.")
+    for n in (15, 16): c.deck(n)
     c.chapter('A thousand agents, by voice')
     T3 = os.path.join(V, os.environ.get('TAKE3', 'take-s3e'))
     c.take(T3, json.load(open(os.path.join(T3, 'segs.json'))))
