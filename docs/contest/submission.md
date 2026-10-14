@@ -1,5 +1,6 @@
 # qodebase
 
+- **Video (6:35):** https://qodebase.app/video
 - **How it works (demo, lab, measurements):** https://qodebase.app/how
 - **Live:** https://qodebase.app
 - **Code:** https://github.com/eyalev/qodebase (Apache-2.0); qodebase's own code also lives on qodebase: https://qodebase.app/p/eyal/qodebase (a mirror of the repo, updated on every push)
