@@ -115,8 +115,13 @@ export function planningOf(info: ProjectInfo, r: BoxStatus): { line: string; fai
   // words a held task its own way, so it is not matched to the request text: anything held while the newest request has
   // no agent yet is that request waiting.
   const held = (info as { waiting?: { text: string; at: number }[] }).waiting || [];
-  if (held.length && !isMerge(q.text) && !info.agents.some((a) => a.createdAt >= q.at))
-    return { line: `Waiting for a free agent${held.length > 1 ? `: ${held.length} tasks held` : ''} ${since(Math.min(...held.map((w) => w.at || Date.now())))}` };
+  if (held.length && !isMerge(q.text)) {
+    const t0 = since(Math.min(...held.map((w) => w.at || Date.now())));
+    // nothing started yet: the request itself waits; some started: the rest wait (the router starts them as agents free up)
+    return { line: info.agents.some((a) => a.createdAt >= q.at)
+      ? `${held.length} more task${held.length > 1 ? 's' : ''} waiting for a free agent ${t0}`
+      : `Waiting for a free agent${held.length > 1 ? `: ${held.length} tasks held` : ''} ${t0}` };
+  }
   if (!isMerge(q.text) && ((q.state as string) === 'queued' || ((q.state === 'sent' || !q.state) && QUEUED_RX.test(r.said || '') && !info.agents.some((a) => a.createdAt >= q.at))))
     return { line: `Waiting for a free agent${qq.ahead ? `, ${qq.ahead} request${qq.ahead > 1 ? 's' : ''} ahead` : ''} ${since(qq.queuedAt || q.sentAt || q.at)}` };
   if (q.state === 'sent' && (BUSY.test(r.cc) || Date.now() - (q.sentAt || 0) < 8000)) {
