@@ -1415,6 +1415,7 @@ function act(c, withPreview) {
       if (location.pathname === '/' && /^(Fastest|Balanced|Cheapest|Suggest from my idea)\b/.test(String(c.label || ''))) { var ib = document.querySelector('.askbox textarea'); if (ib && ib.value.trim()) setTimeout(function () { offerSubmit(ib); }, 250); }
       // A button that asks again ("Stop" → "Stop this run", "Remove" → tap again): after a yes, press the second one too.
       if (c.confirmed) return followConfirm(c, before);
+      return after();   // done: the chain below is for typing/scrolling (a press fell through to 'Could not find…', qb5)
     }
     if (c.op === 'type' && c.name) { sset('pname', { name: c.name, at: Date.now() }); trace('act', { op: 'name later', name: c.name }); }   // filled on the brief
     if (c.op === 'type' && target && c.preset) {
