@@ -53,7 +53,7 @@ So Build now suggests one strong agent at every size; the team presets stay one 
 - **The line (merge queue).** Approved changes wait in one line and land in tested trains. A failing change bounces alone; main never breaks.
 - **Land by intent.** When a change collides with what landed since, the queue re-applies the reviewed intent on the newest code instead of sending the work back: rules for shared files (routes, package.json, lists, lockfiles), an AI for real conflicts (per-project switch), then the owner.
 - **Claims.** Agents declare the files they will touch, so everyone sees who works where.
-- **Stacking.** A change can build on one that has not landed yet; it lands right after it.
+- **Stacking.** A change can build on one that has not landed yet: it waits for that base to land, then lands after it. Only declared stacks wait; the queue does not detect other dependencies, so a change that needs one that has not landed fails its checks and goes back to its agent.
 
 Not GitHub with agents on top: the unit is an intent with its record, and landing is automatic.
 
@@ -63,7 +63,7 @@ No model calls in any of these; every number has its script.
 
 | | finding |
 |---|---|
-| Hono's last 346 PRs, replayed as 100 at once | 48% needed another PR to land first; **0 git conflicts**. The problem is order. |
+| Hono's last 346 PRs, replayed as 100 at once | 48% needed another PR to land first; **0 git conflicts**. The problem is order. (Holding a change until what it needs has landed is this simulation's strategy; the live queue orders only declared stacks.) |
 | A migration of Hono's code, many agents (simulation) | grabbing tasks in any order wasted **90 agent-hours**; knowing the order finished in less than half the time at 10 agents; stacking + land by intent wasted nothing |
 | Real code (403 files), 500 scripted agents, real git + tests (simulation, scripted edits) | land by intent landed **3.5×** as many changes per hour as review-then-merge |
 | 500 agents on Cloudflare (Durable Objects + Artifacts) | 7,033 pushes from 500 forks at once, 280 ms median; one merge queue was the limit (it reset three times, and a bug of ours caused 88 stale-ref rejections, since fixed) |
