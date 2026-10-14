@@ -1385,6 +1385,49 @@ Fix it on your fork, push, then run: qb-agent status pushed "fixed: <what>"`);
 
   /** Run timeline (T1, timeline.ts). null = not shown to this viewer (owner, or anyone on a publicWatch project).
    *  Window: `since`, else the current demo run, else the current build, else everything kept. */
+  /** 'How this build ran' (qb7's panel, 2026-10-14): read-only, from what the Landing already keeps. The router's plan
+   *  (parts, skeleton, stacks, what it held, waits for a free box), each train's merger summary (phases, fetch, checks,
+   *  replays with model/time/cost, push), the reviewer pool and the budget guard. */
+  async howRan() {
+    const m = await this.#m();
+    const all = await this.#all();
+    const agents = all.filter((c) => c.kind === 'agent');
+    const t0 = (c: Change) => c.createdAt;
+    const evAt = (c: Change, w: string, re?: RegExp) => c.events.filter((e) => e.what === w && (!re || re.test(e.detail || ''))).map((e) => e.t);
+    const plan = {
+      parts: m.parts ?? null,
+      skeleton: agents.filter((c) => c.skeleton).map((c) => ({ id: c.id, title: c.title, state: c.state, createdAt: c.createdAt, landedAt: c.landedAt || null })),
+      changes: agents.sort((a, b) => t0(a) - t0(b)).map((c) => ({ id: c.id, title: c.title, state: c.state, skeleton: !!c.skeleton, stackedOn: c.stackedOn || null,
+        claims: c.claims?.length || 0, createdAt: c.createdAt, landedAt: c.landedAt || null,
+        waitedForBox: evAt(c, 'working', /waiting for a free box/).length ? { firstAt: evAt(c, 'working', /waiting for a free box/)[0], wokenAt: evAt(c, 'working', /woken|had not started/)[0] || null } : null,
+        how: c.landing?.how || null, replay: c.landing?.replay || null })),
+      held: (m.held || []).map((h) => ({ text: h.text, at: h.at })),
+    };
+    const trains = [];
+    for (const id of m.trains || []) {
+      const t = await this.ctx.storage.get<Train>(`t:${id}`);
+      if (!t) continue;
+      const phaseMs: Record<string, number> = {};
+      for (const [name, a, b] of t.phases || []) phaseMs[name] = (phaseMs[name] || 0) + Math.max(0, b - a);
+      const replays = [];
+      for (const cid of t.changes) { const c = all.find((x) => x.id === cid); if (c?.landing?.replay) replays.push({ change: cid, ...c.landing.replay }); }
+      trains.push({ id: t.id, lane: t.lane || null, state: t.state, changes: t.changes.length, startedAt: t.startedAt, endedAt: t.endedAt, ms: t.endedAt ? t.endedAt - t.startedAt : null,
+        cold: !!t.cold, outcomes: t.outcomes || null, phaseMs, fetch: t.fetchMs || null,
+        checks: t.checks ? { ok: t.checks.ok, ms: t.checks.ms, failures: t.checks.failures.slice(0, 5) } : null,
+        replays, pushed: !!t.mainAfter && t.mainAfter !== t.mainBefore, mainAfter: t.mainAfter });
+    }
+    const rv = agents.flatMap((c) => c.events.filter((e) => e.what === 'reviewing' || e.what === 'approved' || e.what === 'changes-suggested').map((e) => ({ change: c.id, what: e.what, t: e.t })));
+    const reviews = {
+      reviewers: m.flags.reviewers ?? null, style: m.flags.reviewStyle || 'read', model: m.flags.reviewerModel || null,
+      queue: m.reviews?.queue?.length || 0, busy: Object.entries(m.reviews?.busy || {}).map(([box, b]) => ({ box, change: b.change, since: b.at, sends: b.sends })),
+      approved: rv.filter((x) => x.what === 'approved').length, changesAsked: rv.filter((x) => x.what === 'changes-suggested').length,
+      autoApproved: agents.filter((c) => c.review?.verdict === 'auto').length, events: rv.sort((a, b) => a.t - b.t).slice(-200),
+    };
+    const budget = { capUsd: m.flags.budgetUsd ?? null, spent: m.spent || null, halted: !!m.flags.halted, haltedAt: m.flags.haltedAt || null, haltedWhy: m.flags.haltedWhy || null,
+      paused: !!m.flags.paused };
+    return { slug: m.slug, at: Date.now(), plan, trains, reviews, budget };
+  }
+
   async timeline(opts: { slug: string; owner: boolean; since?: number | null; request?: { at: number; sentAt?: number; text?: string } | null }): Promise<Timeline | null> {
     const m = await this.#m(opts.slug);
     // Public: Watch-a-run projects and kept records (flags.keep: published evidence, like eyal/cafe-team and the R5 flagship).

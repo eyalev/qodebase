@@ -63,6 +63,8 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
     const who = await L.boardWho({ recent, files: u.searchParams.get('files') || '', area: u.searchParams.get('area') });
     return json(u.searchParams.has('tail') ? { ...who, tail: await L.boardTail(Number(u.searchParams.get('tail')) || 50) } : who);
   }
+  // How this build ran (qb7's panel): plan, trains, reviewers, budget guard. Read-only; same readers as the board.
+  if (verb === 'howran' && request.method === 'GET') return json(await L.howRan());
   // Run timeline (T1): the owner, or anyone on a publicWatch project (Landing decides).
   if (verb === 'timeline' && request.method === 'GET') {
     const sinceQ = Number(new URL(request.url).searchParams.get('since')) || null;
