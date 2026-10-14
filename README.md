@@ -9,7 +9,7 @@
 
 **What we found.** For building a fresh app, one strong agent is the measured default: on the same two prompts, one Opus agent (2 runs) finished sooner than each of 3 team builds (4× and 6× on one prompt, the 6× team, R8b, with a ~10 min queue bug; 2× on the other), with at least as many features working; the team was cheaper in 2 of the 3 pairs (one build each: [R6 vs R3](docs/board/R3-R6-quality.md), [R7 vs R4](docs/board/R4-R7-quality.md), [R8b](docs/board/R8b-quality.md)). Many agents pay off for wide work (shared task lists, two teams on one repo, tasks arriving mid-run: the board), for work that has to run in parallel (big ports like Bun's), and at fleet scale (lanes, a fleet of cheap models). qodebase is the layer that makes many agents safe: every change an intent with a record, landed by intent on the newest code, with a live board and a timeline of who did what.
 
-(Formerly forq: the code still uses that name inside — the Worker, the `forq` CLI in agent boxes, cookies, headers.)
+(Formerly forq: the code still uses that name inside — the Worker, cookies, headers. Each agent talks to the platform from inside its container with `qb-agent <cmd>`; `forq` is its old name and still works.)
 
 **How it works, with the demo, the measurements and the simulations:** https://qodebase.app/how
 
@@ -95,7 +95,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 - change records, kept as git notes
 - the merge queue with tested trains; a failing change bounces alone
 - replay by rules; replay by AI behind a per-project switch
-- claims and stacking (`forq spawn --files … --on …`)
+- claims and stacking (`qb-agent spawn --files … --on …`)
 - Talk (type or speak a request), Watch a run, replays of past runs
 - the Intents tab: browse intents, not agents. The request at the top, then areas, then what each agent set out to do and the change it made; each line rolls up status (needs you, blocked, working, waiting, didn't land, done), counts, cost and time, needs-you first, and from any change "Why this exists" walks up to the request. A fleet run opens the same way, folder by folder ([a 40-agent build](https://qodebase.app/p/eyal/real-course-builder/work#/intents), [a 4,063-file fleet run](https://qodebase.app/runs#/intents/run/fleet-vscode-src-11/fmv6rzp4n))
 - Requests, issues for the agent age: anyone signed in sends a public project's owner one short request (a screenshot and a link to their fork optional); the owner sends it to the agents, replies or closes it
@@ -109,7 +109,7 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 ## Agent board: who works on what
 
-Each project keeps a live board in its Landing Durable Object. Agents state their task, a hook posts their edits and commits, and finished work stays visible once it is on main. Before work starts, one duplicate check marks twin tasks on the list. Agents ask the board from their box (`forq who`, `forq intent`, `forq dedupe`); people watch it in Agents at work. What we tested is that bundle: **board + upfront duplicate check**.
+Each project keeps a live board in its Landing Durable Object. Agents state their task, a hook posts their edits and commits, and finished work stays visible once it is on main. Before work starts, one duplicate check marks twin tasks on the list. Agents ask the board from their box (`qb-agent who`, `qb-agent intent`, `qb-agent dedupe`); people watch it in Agents at work. What we tested is that bundle: **board + upfront duplicate check**.
 
 Real Claude agents on synthetic task lists of short tasks, with duplicates we planted, sharing one git repo on a laptop and pushing straight to main with plain git (no landing queue). Without vs with, 3 runs each (medians):
 

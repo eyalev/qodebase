@@ -15,7 +15,7 @@ src/landing/demoproject.ts (seed + scripted task list, Hono-shaped: routes list,
 package.json deps, modules, node --test tests), src/landing/routes.ts (API).
 Edits: wrangler.jsonc (MergeBox container, 3 DO bindings, migration v8), index.ts (one line
 routing `landing*` verbs + hooks at spawn/push/verdict/merge, coordinated with qb2),
-cli.ts (`forq spawn --files`, `--on`, `forq list` claims).
+cli.ts (`qb-agent spawn --files`, `--on`, `qb-agent list` claims).
 Why a separate Landing DO, not Project: project.ts stays as qb1-3 left it; the hot 2 s poll
 and the queue alarm never contend with the Project DO's review/delivery alarm.
 Order: (1) Landing DO + contract endpoint, (2) MergeBox + mergejob (plain merges, checks,
@@ -40,8 +40,8 @@ Local tests: `node --experimental-strip-types --test src/landing/*.test.mjs`.
       package.json deps, append to a list file such as routes/exports) -> reapply on latest main.
 - [x] Tier 2: LLM replay in the merger box (claude -p, default claude-haiku-5-5, flag llmReplay, OFF by default, owner's subscription only, never in public runs). Verified live 2026-10-08 on eyal/cafe-lab: site.js conflict redone in 9.7 s, ~90k tokens across turns. landing.reviewedDiff next to landing.diff = diff-of-diffs (UI: qb7).
 - [x] Tier 3: demo = scripted lead redo (verified); real = with-lead + the router is told through Landing's outbox (built, not yet seen live).
-- [x] CLAIMS: `forq spawn --files` verified live with real agents (eyal/cafe-real); overlap warnings capped at 3 per change; `forq list` shows claims.
-- [x] STACKING: demo verified; `forq spawn --on <agent>` built for real agents (not yet seen live).
+- [x] CLAIMS: `qb-agent spawn --files` verified live with real agents (eyal/cafe-real); overlap warnings capped at 3 per change; `qb-agent list` shows claims.
+- [x] STACKING: demo verified; `qb-agent spawn --on <agent>` built for real agents (not yet seen live).
 - [x] DEMO MODE: story (14 tasks), busy (generated, up to 24 agents, backpressure at 40 waiting, ~46 landings/min measured), WATCH A RUN (public, no sign-in, eyal/corner-cafe: 1 at a time, 10/day, 3/day + 5 min per IP).
 - [~] Docs: CLAUDE.md section [x], cloudcost gap qodebase-landing [x], README section [ ].
 - [x] REAL AGENTS through the queue (info.landing projects): verified 2026-10-08 on eyal/cafe-real,

@@ -59,7 +59,7 @@ Legend, judge column: **E** = a judge will look for it, **N** = nice, **–** = 
 | License / CoC | LICENSE shown as a doc tab; catalogue shows license | — | none | – |
 | Insights / graphs | Agents at work timeline ("How the run went"), landing stats, `/lab`, `/sim`, `/costs` | run timeline, cost per change | none; richer than GitHub's | N |
 | Security / Dependabot | Errors tab: production errors → router reproduces and fixes | agents that fix what production reports | no dependency alerts | – |
-| Code owners | claims (`forq spawn --files`), areas in Agents at work | dynamic claims instead of static owners | none | N |
+| Code owners | claims (`qb-agent spawn --files`), areas in Agents at work | dynamic claims instead of static owners | none | N |
 | Mobile app | phone-first web, Talk (voice), Build from a prompt, Prism app wrapper elsewhere | phone is the main client | none | E |
 | Import | Import from GitHub (`/import`, `qb import`), Explore mirrors 219 repos (`/gh/o/r`) | — | none | N |
 | Self-host | `/own` installs a copy into your Cloudflare account | — | none; unique | N |
