@@ -19,8 +19,10 @@ const MAIN = 'fleet-main';
 // The repo handle has no remote URL (only create/import return it): the namespace's fixed git endpoint.
 // S4e: a second namespace (qbfleet2) for repos named fleet-n2-*: does the shared slowdown follow the namespace?
 const N2 = 'fleet-n2-';
-const ns = (env, repo) => (String(repo).startsWith(N2) ? env.ARTIFACTS2 : env.ARTIFACTS);
-const remoteOf = (repo) => `https://887d7234a6b8d65ad355a4f6684cab67.artifacts.cloudflare.net/git/${String(repo).startsWith(N2) ? 'qbfleet2' : 'qbfleet'}/${repo}.git`;
+// Namespaces by repo prefix (2026-10-14: four, to spread Artifacts reads): fleet-n2- / fleet-n3- / fleet-n4-, else qbfleet.
+const nsName = (repo) => { const r = String(repo); return r.startsWith('fleet-n4-') ? 'qbfleet4' : r.startsWith('fleet-n3-') ? 'qbfleet3' : r.startsWith(N2) ? 'qbfleet2' : 'qbfleet'; };
+const ns = (env, repo) => ({ qbfleet4: env.ARTIFACTS4, qbfleet3: env.ARTIFACTS3, qbfleet2: env.ARTIFACTS2, qbfleet: env.ARTIFACTS })[nsName(repo)];
+const remoteOf = (repo) => `https://887d7234a6b8d65ad355a4f6684cab67.artifacts.cloudflare.net/git/${nsName(repo)}/${repo}.git`;
 // Several repos at once (P4): one Run and one Lander per repo; fleet-main keeps its first object names.
 const REPO_RE = /^fleet-[a-z0-9-]{1,40}$/;
 const repoOf = (u, b = {}) => { const r = b.repo || u.searchParams.get('repo') || MAIN; if (!REPO_RE.test(r)) throw new Error('repo: fleet-<name>'); return r; };
@@ -68,7 +70,9 @@ export default {
         if (!slice.length) return json({ done: true, total: files.length });
         using r = await ns(env, repo).get(repo);
         const tip = (await r.log({ limit: 1 }))[0];
-        const objs = new Objects(), marker = `${COPY_MARK}${repo}\n`;
+        // salt: a run's own tag, so a copy re-made under the same name is not byte-identical to an earlier run's (whose blobs
+        // are already in the read cache).
+        const objs = new Objects(), marker = `${COPY_MARK}${repo}${body.salt ? ` ${String(body.salt).replace(/[^a-z0-9-]/gi, '').slice(0, 20)}` : ''}\n`;
         const out = [];
         for (const f of slice) {
           const rb = await readBlobCached(env, repo, f.hash);
@@ -158,7 +162,7 @@ export default {
           const last = (await run(env, r).runs().catch(() => [])).sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))[0] || null;
           let fresh = null;
           try { using rp = await ns(env, r).get(r); fresh = (await rp.log({ limit: 1 }))[0]?.hash === KIND_BASE[kind]; } catch {}
-          return { repo: r, ...(RESERVED.includes(r) ? { reserved: true } : {}), source: { ...(SOURCES[kind] || SOURCES.main), namespace: r.startsWith(N2) ? 'qbfleet2' : 'qbfleet' }, files: ROOT_FILES[kind]?.[(SOURCES[kind] || SOURCES.main).root] ?? last?.files ?? null, folders: ROOT_FILES[kind] || null, fresh, lastRun: last ? { runId: last.runId, state: last.state, label: last.label } : null };
+          return { repo: r, ...(RESERVED.includes(r) ? { reserved: true } : {}), source: { ...(SOURCES[kind] || SOURCES.main), namespace: nsName(r) }, files: ROOT_FILES[kind]?.[(SOURCES[kind] || SOURCES.main).root] ?? last?.files ?? null, folders: ROOT_FILES[kind] || null, fresh, lastRun: last ? { runId: last.runId, state: last.state, label: last.label } : null };
         }));
         // A copy whose repo cannot be opened was deleted after the experiment: never offered to the job form.
         return json({ jobs: ['comments', 'comments+index'], copies: rows.filter((x) => x.fresh !== null).sort((a, b) => a.repo.localeCompare(b.repo, 'en', { numeric: true })) });
@@ -186,7 +190,7 @@ export default {
         for (const r of rows) r.source = r.repo.startsWith('fleet-kata-')
           // The code dial ran on qb4's kata seed in qodebase projects (eyal/kata-*), through the real merge queue: not a fleet copy.
           ? { name: 'Kata (code dial)', upstream: 'qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests', root: 'kata', project: `eyal/${r.repo.slice('fleet-'.length)}`, namespace: 'forq' }
-          : { ...(SOURCES[kindOf(r)] || SOURCES.main), namespace: r.repo.startsWith(N2) ? 'qbfleet2' : 'qbfleet' };
+          : { ...(SOURCES[kindOf(r)] || SOURCES.main), namespace: nsName(r.repo) };
         return json({ runs: rows, ...(missing.length ? { missing } : {}) }); }
       case '/clone-token': { using r = await ns(env, repo).get(repo); const t = await r.createToken('read', 3600); return json({ repo, remote: remoteOf(repo), token: t.plaintext }); }
       default: return json({ error: 'not found' }, 404);
@@ -354,12 +358,12 @@ export class Run extends DurableObject {
   async alarm() {
     const s = await this.st();
     if (!s || s.state === 'stopped' || s.state === 'held' || (s.agentsStarted || 0) >= s.cfg.agents) return;
-    const from = s.agentsStarted || 0, to = Math.min(s.cfg.agents, from + 50);
-    await Promise.all(Array.from({ length: to - from }, (_, k) => (s.cfg.kata ? this.env.KATA : this.env.AGENT).get((s.cfg.kata ? this.env.KATA : this.env.AGENT).idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN, Math.max(1, Math.min(20, Number(s.cfg.batch) || 1)), s.cfg.pack ? { files: Math.max(2, Math.min(10, Number(s.cfg.pack.files) || 8)), tokens: Math.max(2000, Math.min(30000, Number(s.cfg.pack.tokens) || 12000)) } : null)));
+    const from = s.agentsStarted || 0, to = Math.min(s.cfg.agents, from + (s.cfg.ramp || 50));
+    await Promise.all(Array.from({ length: to - from }, (_, k) => (s.cfg.kata ? this.env.KATA : this.env.AGENT).get((s.cfg.kata ? this.env.KATA : this.env.AGENT).idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN, Math.max(1, Math.min(20, Number(s.cfg.batch) || 1)), s.cfg.pack ? { files: Math.max(2, Math.min(10, Number(s.cfg.pack.files) || 8)), tokens: Math.max(2000, Math.min(30000, Number(s.cfg.pack.tokens) || 12000)) } : null, Number(s.cfg.jitterMs ?? 3000))));
     s.agentsStarted = to; await this.save(s);
     const meta = await this.ctx.storage.get(`meta:${s.runId}`); if (meta) { meta.agentsStarted = to; await this.ctx.storage.put(`meta:${s.runId}`, meta); }
     log('agents_started', { runId: s.runId, started: to, of: s.cfg.agents });
-    if (to < s.cfg.agents) await this.ctx.storage.setAlarm(Date.now() + 200);
+    if (to < s.cfg.agents) await this.ctx.storage.setAlarm(Date.now() + (s.cfg.ramp > 50 ? 100 : 200));
   }
 
   /** An agent asks for its next file. */
@@ -790,7 +794,7 @@ async function pushover(env, title, message) {
 
 // ---- Agent: one file at a time --------------------------------------------------------------
 export class Agent extends DurableObject {
-  async begin(runId, i, repo = MAIN, batch = 1, pack = null) { await this.ctx.storage.put({ runId, i, repo, batch, pack }); await this.ctx.storage.setAlarm(Date.now() + Math.random() * 3000); }
+  async begin(runId, i, repo = MAIN, batch = 1, pack = null, jitterMs = 3000) { await this.ctx.storage.put({ runId, i, repo, batch, pack }); await this.ctx.storage.setAlarm(Date.now() + Math.random() * jitterMs); }
   async alarm() {
     const runId = await this.ctx.storage.get('runId'), i = await this.ctx.storage.get('i'), repoName = (await this.ctx.storage.get('repo')) || MAIN;
     const R = run(this.env, repoName);
@@ -1084,7 +1088,7 @@ export class KataAgent extends DurableObject {
 }
 
 // ---- Lander: lanes by folder, one commit per lane, pushed in order ---------------------------
-const LAND_MAX_FILES = 400;   // files per landing pass (memory: see Lander.alarm)
+const LAND_MAX_FILES = 400, LAND_MAX_FILES_PLAIN = 1500;   // index jobs / plain comment jobs (memory: see Lander.alarm)   // files per landing pass (memory: see Lander.alarm)
 
 export class Lander extends DurableObject {
   // S4a: pending files were one 'lanes' object rewritten per file (and a key per text); now SQL rows, one insert per file.
@@ -1105,13 +1109,13 @@ export class Lander extends DurableObject {
     if ((await this.ctx.storage.get('runId')) !== runId) return;
     this.tables();
     for (const x of items) this.ctx.storage.sql.exec(`INSERT OR REPLACE INTO ptask (task, path, lane, at, base, text, names, cmt, meta) VALUES (?,?,?,?,?,?,?,?,?)`, x.task, x.path, x.lane, x.at, x.base, x.text, JSON.stringify(x.names || []), JSON.stringify(x.cmtMap || {}), x.meta ? JSON.stringify(x.meta) : null);
-    if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + 5000);
+    if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + 1000);
   }
   async addMany(runId, items) {
     if ((await this.ctx.storage.get('runId')) !== runId) return;
     this.tables();
     for (const x of items) this.ctx.storage.sql.exec(`INSERT OR REPLACE INTO pend (path, lane, at, text, meta) VALUES (?, ?, ?, ?, ?)`, x.path, x.lane, x.at, x.text, x.meta ? JSON.stringify(x.meta) : null);
-    if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + 5000);
+    if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + 1000);
   }
   async restart() { await this.ctx.storage.setAlarm(Date.now() + 2000); await this.ctx.storage.sync(); this.ctx.abort('restart on the deployed code'); }
   async flush(runId) { if ((await this.ctx.storage.get('runId')) === runId) await this.ctx.storage.setAlarm(Date.now() + 100); }
@@ -1133,11 +1137,12 @@ export class Lander extends DurableObject {
     // comments+index: each lane's commit carries a whole new docs/API.md (thousands of lines), all held until the push, so
     // lanes, not files, fill the memory there (the scene-3 take stalled at 424 files in 226 lanes): at most 10 lanes a pass.
     const maxLanes = (await this.ctx.storage.get('job')) === 'comments+index' ? 10 : Infinity;
-    for (const l of lanes) { if (keys.length && (files + Math.min(l.n, 200) > LAND_MAX_FILES || keys.length >= maxLanes)) break; keys.push(l.lane); files += Math.min(l.n, 200); }
+    const maxFiles = maxLanes === Infinity ? LAND_MAX_FILES_PLAIN : LAND_MAX_FILES;
+    for (const l of lanes) { if (keys.length && (files + Math.min(l.n, 200) > maxFiles || keys.length >= maxLanes)) break; keys.push(l.lane); files += Math.min(l.n, 200); }
     const more = keys.length < lanes.length || lanes.some((l) => l.n > 200);
     try { await this.land(runId, keys); }
     catch (e) { const errors = (await this.ctx.storage.get('errors')) || []; errors.push({ at: Date.now(), err: String(e?.stack || e).slice(0, 600) }); await this.ctx.storage.put('errors', errors.slice(-20)); log('land_error', { runId, err: String(e?.stack || e).slice(0, 500) }); }
-    await this.ctx.storage.setAlarm(Date.now() + (more ? 200 : 5000));
+    await this.ctx.storage.setAlarm(Date.now() + (more ? 200 : 1000));
   }
   /** Dial: per file, every pending task lands on the file's current text the way git would (merge, else replay by intent,
    *  or 'duplicate' when its declaration already has a comment); one commit per lane, one push (main only: notes off here). */

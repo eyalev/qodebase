@@ -33,3 +33,26 @@ every agent is busy.
 
 Not run: 20,000 agents. On the unique setup it needs 10 more copies and ~40k more Artifacts reads (~$6 at $0.15 per
 1,000 operations), which would pass the $13 stop. Copies made for these runs were deleted after (deleted.log).
+
+## Run (c): every file different, 3 namespaces, fast start, bigger landing passes (2026-10-14 09:15 UTC)
+
+Same 10,000 agents and 40,640 files as (b), with: copies spread over 3 Artifacts namespaces (qbfleet 4, qbfleet3 3,
+qbfleet4 3; qbfleet2 kept free for the scene-3 take), agents started 250 per 100 ms per copy with a 0-0.5 s first-file
+delay (was 50 per 200 ms, 0-3 s), landing passes up to 1,500 files every second (was 400 every 5 s). Copies were
+made under new names, so no file matched a cached blob: 40,630 of 40,640 reads went to Artifacts.
+
+| | (b) | (c) |
+|---|---|---|
+| errors | 0 | 0 |
+| busiest 10 s | 19,058 files (~1,900/s) | 18,946 files (~1,900/s) |
+| agents busy at once (max per 10 s) | 2,321 | 2,796 |
+| answers done in | ~50 s | ~33 s |
+| landing after the answers | ~3 min | ~1 min (peak 980 files/s landed) |
+| start to everything landed | ~5 min | 86 s |
+| read p50 / p90 by namespace (median copy) | 615 ms / 1.16 s (qbfleet + qbfleet2) | qbfleet 536 ms / 1.29 s, qbfleet3 877 ms / 1.82 s, qbfleet4 811 ms / 1.46 s |
+
+**What (c) shows.** Faster start and bigger landing passes cut the whole run from ~5 min to 86 s, and landing stopped
+being the wall. Reads did not get faster with more namespaces: ~1,900 files/s with every file read from Artifacts, in
+2 namespaces or 3, and each read slower when more run at once. **The next wall is Artifacts read throughput for the
+account (~1,900-2,000 reads/s), not per namespace**; past it reads wait longer (p90 1.3-1.8 s) but none failed. Behind
+it: one Run object per copy hands out the work to 1,000 agents, which is why at most ~2,800 agents were reading at once.
