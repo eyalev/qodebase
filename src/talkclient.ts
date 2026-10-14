@@ -1671,7 +1671,8 @@ function agentTalk(said) {
     var words = agWords(mOpen[mOpen.length - 1]);
     fetch('/api/p/' + pj.owner + '/' + pj.name, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
       var info = j.info || j, list = (info.agents || []).filter(function (a) { return !/--(router|review|merge|build|ask)\d*$/.test(a.id); });
-      var score = function (a) { var tw = agWords(agTitle(a)); return words.filter(function (w) { return tw.indexOf(w) >= 0 || (AG_SYN[w] && tw.indexOf(AG_SYN[w]) >= 0) || tw.some(function (x) { return x.length > 4 && (x.indexOf(w) === 0 || w.indexOf(x) === 0); }); }).length; };
+      // Earlier words weigh more: 'dark room' (nova-3 for 'dark mode', qb3's take) is the Dark mode agent, not Rooms.
+      var score = function (a) { var tw = agWords(agTitle(a)), n = 0; words.forEach(function (w, i) { if (tw.indexOf(w) >= 0 || (AG_SYN[w] && tw.indexOf(AG_SYN[w]) >= 0) || tw.some(function (x) { return x.length > 4 && (x.indexOf(w) === 0 || w.indexOf(x) === 0); })) n += 1 + (words.length - i) * 0.1; }); return n; };
       var best = list.map(function (a) { return { a: a, n: score(a) }; }).sort(function (x, y) { return y.n - x.n; })[0];
       trace('agent_pick', { words: words, best: best && best.a.id, n: best && best.n, of: list.length });
       if (!best || !best.n) return fail('I could not find an agent here that worked on ' + mOpen[mOpen.length - 1].replace(/[.!?]+$/, '') + '.');

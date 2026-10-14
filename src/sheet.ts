@@ -60,6 +60,9 @@ export const SHEET_CSS = `
 .log{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
 .m-u{align-self:flex-end;max-width:85%;background:var(--acc);color:var(--acc-fg);border-radius:12px 12px 4px 12px;padding:8px 12px;white-space:pre-wrap;word-break:break-word}
 .m-a{max-width:95%;white-space:pre-wrap;word-break:break-word;font-size:15px}
+.m-a code,.m-a pre{font-family:ui-monospace,'Geist Mono',monospace;font-size:13px;background:var(--chip,rgba(127,127,127,.12));border-radius:4px}
+.m-a code{padding:1px 4px}
+.m-a pre{display:block;margin:6px 0;padding:8px;overflow-x:auto;white-space:pre}
 .m-s{font-size:13px;color:var(--dim);background:var(--card);border-radius:8px;padding:6px 10px;align-self:flex-start;cursor:pointer}
 .m-s .names{display:none;margin-top:4px}
 .m-s.open .names{display:block}
@@ -85,6 +88,8 @@ export const SHEET_JS = String.raw`
  const log=document.getElementById('sh-log'),term=document.getElementById('sh-term'),chat=document.getElementById('sh-chat'),form=document.getElementById('sh-send');
  let cur=null,mode='chat',timer=null,lastKey='',busy=false,touched=Date.now();
  const esc=(t)=>String(t||'').replace(/[<>&"]/g,(c)=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+ // The agent's light markdown, drawn (qb3: bold file names showed as raw stars and backticks): escaped first, then bold, inline code, headings, bullets.
+ const md=(t)=>esc(t).replace(/\x60\x60\x60[a-z]*\n?([\s\S]*?)\x60\x60\x60/g,'<pre>$1</pre>').replace(/\x60([^\x60]+)\x60/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/^#{1,6} +(.+)$/gm,'<b>$1</b>').replace(/^[-*] +/gm,'• ');
  function setMode(m){mode=m;
   for(const b of sheet.querySelectorAll('.seg button'))b.classList.toggle('on',b.dataset.m===m);
   chat.hidden=m!=='chat';term.hidden=m!=='term';
@@ -125,7 +130,7 @@ export const SHEET_JS = String.raw`
   for(const m of msgs){
    if(m.type==='tool_use'){steps.push(m.toolName||m.name||m.text||'tool');continue;}
    if(m.type==='user'){const t=(m.text||'').trim();if(!t)continue;flush();out.push('<div class="m-u">'+esc(t)+'</div>');continue;}
-   if(m.type==='assistant_text'||m.type==='recap'){const t=(m.text||'').trim();if(!t)continue;flush();out.push('<div class="m-a">'+esc(t)+'</div>');continue;}
+   if(m.type==='assistant_text'||m.type==='recap'){const t=(m.text||'').trim();if(!t)continue;flush();out.push('<div class="m-a">'+md(t)+'</div>');continue;}
    if(m.type==='question_prompt'||m.type==='plan_prompt'){flush();out.push('<div class="m-q">'+esc(m.text||'')+'<br><i>Answer in the Terminal tab.</i></div>');}
   }
   flush();
