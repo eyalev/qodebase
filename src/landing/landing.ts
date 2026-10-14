@@ -1115,6 +1115,7 @@ export class Landing extends DurableObject<Env> {
           m.firstLandedAt ||= c.landedAt;
           // X1: the skeleton is on main: the router starts the features now, each forking from it.
           if (c.skeleton) this.#tell(`${m.slug}--router`, `qodebase: the skeleton landed on main ("${c.title}"). Start the feature agents now: each one forks from main and builds on the skeleton. Keep at most your agent limit running at once.`);
+          else if (c.kind === 'agent') ((r as { landedTitles?: string[] }).landedTitles ||= []).push(c.title);
           (m.landings ||= []).push([c.landedAt, Math.round((c.landedAt - c.createdAt) / 1000), how && how !== 'merged' ? 1 : 0]);
           if (m.landings.length > 2000) m.landings.splice(0, m.landings.length - 2000);
           c.landing = { how, conflicts: rc.conflicts, diff: rc.diff || [], commit: rc.commit, mainCommit: r.mainAfter || null,
@@ -1158,6 +1159,13 @@ export class Landing extends DurableObject<Env> {
             ? { usd: ((rc.llm.in || 0) * 0.10 + (rc.llm.out || 0) * 0.50) / 1e6, covered: false, billing: 'gateway' as const }
             : { usd: null, covered: false, billing: 'sub' as const }),
           tokens: { in: rc.llm.in || 0, out: rc.llm.out || 0, cw: Math.max(0, (rc.llm.cacheWrite || 0) - (rc.llm.cacheWrite1h || 0)), cw1h: rc.llm.cacheWrite1h || 0, cr: rc.llm.cacheRead || 0 } });
+      }
+      // A freed agent slot: tell the router, so tasks it queued 'until an agent is free' start (the scene-2 take: the
+      // router queued dark mode + 2 planned parts while 6 agents were busy and was never woken again, 2026-10-14).
+      const landedTitles = (r as { landedTitles?: string[] }).landedTitles || [];
+      if (landedTitles.length) {
+        const open = (await this.#all()).filter((x) => x.kind === 'agent' && ['working', 'pushed', 'reviewing', 'queued', 'testing', 'replaying', 'with-lead'].includes(x.state)).length;
+        this.#tell(`${m.slug}--router`, `qodebase: landed on main: ${landedTitles.map((x) => `"${x}"`).join(', ')}. ${open} change${open === 1 ? '' : 's'} still in progress${m.flags.caps?.agents ? ` (your agent limit: ${m.flags.caps.agents})` : ''}. If you have tasks waiting for a free agent, start them now with forq spawn; if everything is already running or done, end your turn without a reply.`);
       }
       await this.#afterRealTrain(r);
     }
