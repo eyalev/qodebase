@@ -931,7 +931,7 @@ function landBody(entries: Entry[], selfHost = false) {
   const how = selfHost ? '' : '<p class="howlink"><a href="/how">How it works: watch 6 agents change one app</a><a href="/deck/">The 6-minute tour</a></p>';
   return `<section class="land">
 <h1>Own your codebase.</h1>
-<p class="lede">Describe it. Agents build it. The code is yours to keep.</p>
+<p class="lede">Describe it. Agents build it. The code is yours to keep.${selfHost ? '' : '<span class="core">Many agents, one codebase: <a href="/p/eyal/corner-cafe">watch a run live</a></span>'}</p>
 <form class="landask" action="/build" method="get">
 <div class="askbox"><textarea name="idea" rows="3" placeholder="What do you want to build?" aria-label="What do you want to build?" enterkeyhint="go" required></textarea>
 <button type="button" class="askmic" id="askmic" hidden aria-label="Speak your idea" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
@@ -1068,6 +1068,8 @@ body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 .watchtop b{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--acc)}
 .watchtop .wt1{font-size:13px;color:var(--dim)}
 .watchtop .wt2{font-size:14px;color:var(--dim)}
+.land .lede .core{display:block;margin-top:6px;font-size:15px;color:var(--dim)}
+.land .lede .core a{color:var(--acc);text-underline-offset:3px}
 .land .howlink{margin:4px 0 20px;font-size:15px;display:flex;flex-wrap:wrap;column-gap:20px}
 .land .howlink a{display:inline-flex;align-items:center;min-height:44px;color:var(--acc);text-decoration:underline;text-underline-offset:3px}
 /* Design pass (2026-10-12): the card looked like text; a visible button says it starts something. Chip, not accent: Build it is the page's one green button. */
