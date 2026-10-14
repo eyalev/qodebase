@@ -743,7 +743,7 @@
   const itOk = () => !!(window.qbIntentsMount && API && !MOCK);
   const itMount = (why) => `<div class="it-mount" data-src="${esc(API)}/intents" data-change-href="#/change/{id}"${why ? ` data-why="${esc(why)}"` : ''}></div>`;
   function viewIntents(why) {
-    return `<div class="drill">${crumbs(why ? [['Agents at work', '#/'], ['Intents', '#/intents'], ['Why this exists']] : [['Agents at work', '#/'], ['Intents']])}<h2 style="font-size:20px;margin-bottom:8px">${why ? 'Why this exists' : 'What was asked, and where each part stands'}</h2>${why ? '' : '<p class="cap">Each request splits into areas, each area into what one agent set out to do. Things that need you or are stuck come first. Tap a line to open it.</p>'}${itMount(why)}</div>`;
+    return `<div class="drill">${crumbs(why ? [['Agents at work', '#/'], ['Intents', '#/intents'], ['Why this exists']] : [['Agents at work', '#/'], ['Intents']])}<h2 style="font-size:20px;margin-bottom:8px">${why ? 'Why this exists' : 'What was asked, and where each part stands'}</h2>${why ? '' : '<p class="cap">Each request splits into areas, each area into what one agent set out to do. Things that need you or are stuck come first. ' + (matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click' : 'Tap') + ' a line to open it.</p>'}${itMount(why)}</div>`;
   }
   function viewTimeline() { return `<div class="drill">${crumbs([['Agents at work', '#/'], ['Timeline']])}<h2 style="font-size:20px;margin-bottom:8px">How the run went</h2>${timelineHtml(true)}</div>`; }
   function overview() {
