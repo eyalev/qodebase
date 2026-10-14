@@ -1681,7 +1681,8 @@ function say(text) {
   // The same sentence twice within 6 s is never said again (qb7's e2e, 1 run in 3: the status line started twice);
   // the second caller is traced so the cause shows up.
   // (only while the first one is still being said: asking 'Build it?' again on a later turn is fine)
-  if (t === lastSay.t && Date.now() - lastSay.at < 6000 && (speakPending || speakingQ || (player && !player.paused && !player.ended && player.currentTime > 0))) { trace('say_dupe', { text: t.slice(0, 80), ms: Date.now() - lastSay.at, from: String(new Error().stack || '').split('\n').slice(2, 6).map(function (x) { return x.trim().replace(/^at\s+/, '').replace(/\s*\(.*$/, ''); }).join(' < ') }); return; }
+  // (a summary's hand-off is the same sentence on purpose when the reply was two sentences long: never a dupe)
+  if (!text.__short && t === lastSay.t && Date.now() - lastSay.at < 6000 && (speakPending || speakingQ || (player && !player.paused && !player.ended && player.currentTime > 0))) { trace('say_dupe', { text: t.slice(0, 80), ms: Date.now() - lastSay.at, from: String(new Error().stack || '').split('\n').slice(2, 6).map(function (x) { return x.trim().replace(/^at\s+/, '').replace(/\s*\(.*$/, ''); }).join(' < ') }); return; }
   lastSay = { t: t, at: Date.now() };
   // A long answer is summarised for the ear (the text stays on screen); 4 s at most, else its first two sentences.
   speakPending = true; setTimeout(function () { speakPending = false; }, 8000);
@@ -1935,7 +1936,9 @@ function leave(go) {
     stopAfterPart = true; var w0 = Date.now();
     trace('nav_wait_speech', {});
     (function wait() {
-      if ((speakingQ || speakPending) && Date.now() - w0 < 8000) return setTimeout(wait, 100);
+      var playing = speakingQ || (player && !player.paused && !player.ended && player.currentTime > 0);
+      // wait for a line being said (8 s at most); a line that has not started within 2.5 s is not waited for
+      if ((playing || speakPending) && Date.now() - w0 < (playing ? 8000 : 2500)) return setTimeout(wait, 100);
       stopAfterPart = false;
       // what was not said yet is said on the next page, after it loads (no line is cut by a navigation: manager)
       var rest = sayRest(); if (rest) { sset('sayafter', { text: rest, at: Date.now() }); trace('say_after_nav', { chars: rest.length }); }
