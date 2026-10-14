@@ -1643,10 +1643,15 @@ function phoneSay(text) {
   try { if (player) { player.onended = null; player.onerror = null; player.pause(); } } catch (e) {}
   try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(text); u.onstart = function () { latMark('audio'); }; u.lang = /[\u0590-\u05ff]/.test(text) ? 'he-IL' : 'en-US'; speechSynthesis.speak(u); } catch (e) {}
 }
+var lastSay = { t: '', at: 0 };
 function say(text) {
   if (S.voice === 'off' || (S.when === 'voice' && !lastSpoken)) return;
   var t = spoken(text);
   if (!t) return;
+  // The same sentence twice within 6 s is never said again (qb7's e2e, 1 run in 3: the status line started twice);
+  // the second caller is traced so the cause shows up.
+  if (t === lastSay.t && Date.now() - lastSay.at < 6000) { trace('say_dupe', { text: t.slice(0, 80), ms: Date.now() - lastSay.at, from: String(new Error().stack || '').split('\n').slice(2, 6).map(function (x) { return x.trim().replace(/^at\s+/, '').replace(/\s*\(.*$/, ''); }).join(' < ') }); return; }
+  lastSay = { t: t, at: Date.now() };
   // A long answer is summarised for the ear (the text stays on screen); 4 s at most, else its first two sentences.
   speakPending = true; setTimeout(function () { speakPending = false; }, 8000);
   if (S.say === 'short' && t.length > 200 && !text.__short) {
