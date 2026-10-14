@@ -28,7 +28,7 @@ Legend, judge column: **E** = a judge will look for it, **N** = nice, **–** = 
 |---|---|---|---|---|
 | Repo browsing | Code tab, folders + README render: `src/codeui.ts dirPage`, live `/p/eyal/corner-cafe/code/` | same | none | E |
 | File view + syntax highlight | hljs tokens, line numbers, `#L` anchors, Raw, size/lines: `filePage`, live `/code/src/routes.js` | — | no "who changed this" from the file | E |
-| Blame | none in the code browser. Per-file "Changes to this file" + "Collisions here" exists in Agents at work (`work.js viewFile`, `#/file/<path>`) | blame by intent: each line/file → the change record that wrote it | not linked from the code view | E |
+| Blame | none in the code browser. Per-file "Changes to this file" + "Collisions here" exists in Board (`work.js viewFile`, `#/file/<path>`) | blame by intent: each line/file → the change record that wrote it | not linked from the code view | E |
 | History / log | History tab: commits, merges, deploys, forks by day (`v3.ts historyView`) | log of landed intents | commits are not tappable; no git notes shown | E |
 | Commit view / diff | per-agent fork diff `/p/o/n/changes/<agent>` (`index.ts changesRoute`, `diffTrees`); change record diff with "What landed / What was reviewed" tabs (`work.js viewChange`) | diff of a change record, before/after replay | no `/commit/<sha>` for plain commits (imported repos have none) | E |
 | Branches / tags | no branches; each agent fork is a "version" tab in Code (`codeui.ts versionTabs`, `?v=<agent>`) | fork per agent = branch | no tags | N |
@@ -37,7 +37,7 @@ Legend, judge column: **E** = a judge will look for it, **N** = nice, **–** = 
 | Merge conflicts | land by intent: rule replay, AI replay, owner/lead; collisions shown per file/area | replay the intent on newest main | none; it's the headline | E |
 | Merge queue / protected branch | the line: tested trains, failing change bounces alone; main only moves through the queue on landing projects | same, intent-aware | per-area queues are "designed, not built" (README) | E |
 | Issues | **Requests** (live 2026-10-13, forq b65edbb; `src/requests.ts`, `src/requestsui.ts`): anyone signed in sends a public project's owner one request (≤1,000 chars, optional screenshot and fork link); the owner's Requests tab (count badge, Inbox notice) sends it to the router as the owner's own request, replies, or closes it (done / not doing it); requesters see status and reply under Your requests. Limits 3 per project / 10 a day per person; private projects never take requests; owner can turn them off. Also: router requests, board task lists + dedupe, Errors tab = Cloudflare Issues → auto fix | issue = an *ask* the owner forwards to agents; triage = router split + duplicate check | no categories, threads, votes or labels (by design) | E |
-| Projects / boards | Agent board (`src/landing/board.ts`), Agents at work areas + feed + timeline | live board of who works where | none | N |
+| Projects / boards | Agent board (`src/landing/board.ts`), Board areas + feed + timeline | live board of who works where | none | N |
 | Discussions | none | Talk / router chat | – | – |
 | Notifications | "Needs you" section + inbox badge in header (`v3.ts` Global.inbox, `header.ts`) | asked only when something needs a person | no push/email when a change needs you | N |
 | Stars / watch / follow | none for qodebase projects; Explore shows GitHub stars of catalogue repos | — | no stars | N |
@@ -57,9 +57,9 @@ Legend, judge column: **E** = a judge will look for it, **N** = nice, **–** = 
 | Clone / push over HTTPS | `qb clone` with short-lived Artifacts token (write on own projects), `git-token` API | — | no plain `git clone <url>` without qb | N |
 | SSH keys | none | tokens | – | – |
 | License / CoC | LICENSE shown as a doc tab; catalogue shows license | — | none | – |
-| Insights / graphs | Agents at work timeline ("How the run went"), landing stats, `/lab`, `/sim`, `/costs` | run timeline, cost per change | none; richer than GitHub's | N |
+| Insights / graphs | Board timeline ("How the run went"), landing stats, `/lab`, `/sim`, `/costs` | run timeline, cost per change | none; richer than GitHub's | N |
 | Security / Dependabot | Errors tab: production errors → router reproduces and fixes | agents that fix what production reports | no dependency alerts | – |
-| Code owners | claims (`qb-agent spawn --files`), areas in Agents at work | dynamic claims instead of static owners | none | N |
+| Code owners | claims (`qb-agent spawn --files`), areas in Board | dynamic claims instead of static owners | none | N |
 | Mobile app | phone-first web, Talk (voice), Build from a prompt, Prism app wrapper elsewhere | phone is the main client | none | E |
 | Import | Import from GitHub (`/import`, `qb import`), Explore mirrors 219 repos (`/gh/o/r`) | — | none | N |
 | Self-host | `/own` installs a copy into your Cloudflare account | — | none; unique | N |
@@ -88,7 +88,7 @@ Legend, judge column: **E** = a judge will look for it, **N** = nice, **–** = 
    Effort S (file level) / M (line level): `src/codeui.ts`, `src/index.ts` code route.
    Risk: low. Phone: one tappable line under the filename, not a gutter.
 
-4. **Asks = issues: a list per project.** One screen (section at the top of Agents at work, or
+4. **Asks = issues: a list per project.** One screen (section at the top of Board, or
    an "Asks" view in `v3.ts VIEWS`) listing every request the router got and every task on the
    board: text, who asked (person, Talk, Cloudflare Issues), split into N changes, state
    (planning / working / in line / landed / bounced), duplicates marked by the dedupe pass.
