@@ -66,7 +66,9 @@
     "landed": 29890,
     "readsFromArtifacts": 0,
     "limit": "none on reads (100% from the cache); landing took ~2.5 min more: one landing queue per copy",
-    "busyAtOnceMax": 2300
+    "busyAtOnceMax": 2300,
+    "nothingToDocument": 10690,
+    "busiest10sFiles": 23504
    },
    {
     "run": "R10K-b",
@@ -86,7 +88,9 @@
     "landed": 29883,
     "readsFromArtifacts": 36555,
     "limit": "Artifacts reads slow past ~2,000/s (p90 1.2 s, worst copy 2.9 s), none failed; landing took ~3 min more: one landing queue per copy",
-    "busyAtOnceMax": 2300
+    "busyAtOnceMax": 2300,
+    "nothingToDocument": 10685,
+    "busiest10sFiles": 19058
    }
   ],
   "files": {

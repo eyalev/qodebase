@@ -192,7 +192,7 @@ const headline = {
     const one = L.filter((r) => r.namespaces === 1 && !r.readCache);   // the read-cache runs (R10K) are reported apart
     return { maxAgents: Math.max(...L.map((r) => r.agents)), filesPerSecPlateau: Math.max(...one.map((r) => r.filesPerSec)), twoNamespacesFilesPerSec: L.find((r) => r.namespaces === 2)?.filesPerSec ?? null,
       ladder: L.map(({ run, agents, copies, namespaces, filesPerSec, readP50Ms, limit }) => ({ run, agents, copies, namespaces, filesPerSec, readP50Ms, limit })),
-      readCache: L.filter((r) => r.readCache).map(({ run, agents, copies, readCache, filesPerSec, readP50Ms, readP90Ms, answersDoneS, landed, readsFromArtifacts, errors, landedPerSecPeak, limit, source }) => ({ run, agents, copies, readCache, filesPerSec, readP50Ms, readP90Ms, answersDoneS, landed, readsFromArtifacts, errors, landedPerSecPeak, limit, source })),
+      readCache: L.filter((r) => r.readCache).map(({ run, agents, copies, readCache, filesPerSec, busiest10sFiles, readP50Ms, readP90Ms, answersDoneS, files, landed, nothingToDocument, readsFromArtifacts, errors, landedPerSecPeak, busyAtOnceMax, limit, source }) => ({ run, agents, copies, readCache, filesPerSec, busiest10sFiles, files, nothingToDocument, busyAtOnceMax, readP50Ms, readP90Ms, answersDoneS, landed, readsFromArtifacts, errors, landedPerSecPeak, limit, source })),
       realModels: d.realModels.runs.map(({ run, agents, filesPerSec, callsPerMin, limit, usd }) => ({ run, agents, filesPerSec, callsPerMin, limit, usd })),
       tenK: d.cached.tenK || null, maxBusyAtOnce: Math.max(...L.map((r) => r.busyAtOnceMax || 0)) || null,
       label: d.cached.label, realModelsLabel: d.realModels.label }; } catch { return null; } })(),

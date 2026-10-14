@@ -1,11 +1,14 @@
 {
  "v": 1,
- "generated": "2026-10-14T08:26:31.854Z",
+ "generated": "2026-10-14T08:26:56.959Z",
  "sources": {
-  "fleet": "live",
-  "buildEstimates": "live"
+  "fleet": "cache",
+  "buildEstimates": "cache"
  },
- "notes": [],
+ "notes": [
+  "fleet-runs.json: live fetch failed (fetch failed), used the cache",
+  "build-estimates.json: live fetch failed (fetch failed), used the cache"
+ ],
  "headline": {
   "fleetQuality": {
    "filesChanged": 3029,
@@ -121,6 +124,10 @@
      "copies": 10,
      "readCache": "identical copies (best case)",
      "filesPerSec": 2350,
+     "busiest10sFiles": 23504,
+     "files": 40640,
+     "nothingToDocument": 10690,
+     "busyAtOnceMax": 2300,
      "readP50Ms": 44,
      "readP90Ms": 73,
      "answersDoneS": 20,
@@ -137,6 +144,10 @@
      "copies": 10,
      "readCache": "every file different per copy (realistic)",
      "filesPerSec": 1900,
+     "busiest10sFiles": 19058,
+     "files": 40640,
+     "nothingToDocument": 10685,
+     "busyAtOnceMax": 2300,
      "readP50Ms": 615,
      "readP90Ms": 1163,
      "answersDoneS": 50,
@@ -2839,7 +2850,7 @@
    }
   ],
   "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)",
-  "source": "live",
+  "source": "cache",
   "runs": [
    {
     "runId": "fmv6kuwtl",
@@ -19289,7 +19300,7 @@
  },
  "realBuilds": {
   "label": "measured (real Claude agents on Eyal's plan, real builds on Cloudflare; one run each)",
-  "source": "live",
+  "source": "cache",
   "rows": [
    {
     "id": "R2",
