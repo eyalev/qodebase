@@ -1,6 +1,66 @@
 {
  "builds": [
   {
+   "slug": "eyal.tracker",
+   "estimate": {
+    "startedAt": 1792006471107,
+    "wallS": [
+     480,
+     1260
+    ],
+    "apiUsd": [
+     0.78,
+     2.1
+    ],
+    "preset": "cheapest",
+    "v": {
+     "coders": 6,
+     "coderModel": "haiku",
+     "reviewers": 0,
+     "board": true
+    },
+    "basis": "typical",
+    "basedOn": 25,
+    "simVersion": "lab-0.11"
+   },
+   "progress": {
+    "spentUsd": 1.906,
+    "settledAt": null,
+    "actualWallS": null,
+    "actualUsd": null
+   }
+  },
+  {
+   "slug": "eyal.stuff-tracker",
+   "estimate": {
+    "startedAt": 1791998570806,
+    "wallS": [
+     480,
+     1260
+    ],
+    "apiUsd": [
+     0.78,
+     2.1
+    ],
+    "preset": "cheapest",
+    "v": {
+     "coders": 6,
+     "coderModel": "haiku",
+     "reviewers": 0,
+     "board": true
+    },
+    "basis": "typical",
+    "basedOn": 25,
+    "simVersion": "lab-0.11"
+   },
+   "progress": {
+    "spentUsd": 2.243,
+    "settledAt": 1792002326019,
+    "actualWallS": 3755,
+    "actualUsd": 2.243
+   }
+  },
+  {
    "slug": "eyal.home-ledger",
    "estimate": {
     "startedAt": 1791981177336,

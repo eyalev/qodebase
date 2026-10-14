@@ -22457,7 +22457,7 @@
    "copy": null,
    "repo": "fleet-n2-vscode-src-1",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
@@ -22472,9 +22472,9 @@
    "usd": 2.3822,
    "tokensIn": 10021205,
    "tokensOut": 336701,
-   "startedAt": 1791986250619,
-   "endedAt": 1791986429491,
-   "wallS": 179,
+   "startedAt": 1791986257823,
+   "endedAt": 1791986337876,
+   "wallS": 80,
    "landWaitS": {
     "p50": 88,
     "p90": 172
@@ -22521,6 +22521,89 @@
     "p50": 29,
     "p90": 105,
     "p99": 2263,
+    "n": 4064
+   },
+   "readTiers": {
+    "kv": 4064
+   },
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv8dekehi2g",
+   "label": "VS Code: doc comments + API index",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-n2-vscode-src-1",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2794,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 201,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 2.5036,
+   "tokensIn": 10156586,
+   "tokensOut": 341294,
+   "startedAt": 1791998106569,
+   "endedAt": 1791998167997,
+   "wallS": 61,
+   "landWaitS": {
+    "p50": 88,
+    "p90": 148
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.1193,
+     "landed": 380,
+     "rejected": 2,
+     "skipped": 146,
+     "calls": 382,
+     "rateLimited429": 0,
+     "peakPerMin": 379,
+     "role": "planned"
+    },
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.1109,
+     "landed": 615,
+     "rejected": 1,
+     "skipped": 248,
+     "calls": 616,
+     "rateLimited429": 0,
+     "peakPerMin": 610,
+     "role": "planned"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 2.2734,
+     "landed": 1799,
+     "rejected": 198,
+     "skipped": 675,
+     "calls": 1997,
+     "rateLimited429": 0,
+     "peakPerMin": 1997,
+     "role": "overflow"
+    }
+   },
+   "readMs": {
+    "p50": 53,
+    "p90": 95,
+    "p99": 268,
+    "n": 4064
+   },
+   "nextMs": {
+    "p50": 35,
+    "p90": 102,
+    "p99": 840,
     "n": 4064
    },
    "readTiers": {

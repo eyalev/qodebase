@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-14T14:34:52.454Z",
+ "generated": "2026-10-14T19:58:55.441Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -245,7 +245,7 @@
      "errors": 0,
      "landedPerSecPeak": 980,
      "limit": "Artifacts reads for the whole account, ~1,900-2,000/s: 3 namespaces did not raise it (reads waited longer, none failed). Landing no longer the wall (~1 min after the answers). Behind it: one Run object per copy hands out work (at most ~2,800 reading at once)",
-     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, fdde165)"
+     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, c5a6864)"
     },
     {
      "run": "R10K-d",
@@ -269,7 +269,7 @@
      "errors": 0,
      "landedPerSecPeak": 830,
      "limit": "none: clean",
-     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 5d97b0b)"
+     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 0e3992f)"
     },
     {
      "run": "R50K-e",
@@ -293,13 +293,13 @@
      "errors": 10943,
      "landedPerSecPeak": 7000,
      "limit": "our bookkeeping: the per-copy Run Durable Objects answered 'overloaded' (~250 files/s each, a row per file); 10,943 files (5.4%) dropped without retry (3,321 results never recorded, 7,622 never handed to landing), 40 of 50 runs stopped by hand. No Artifacts, KV or landing errors; nothing landed wrong",
-     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 5d97b0b)"
+     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 0e3992f)"
     },
     {
      "run": "R50K-f",
      "agents": 50000,
      "copies": 50,
-     "readCache": "best case: files repeat (cache), after the fixes (4a4769f, 5aa4910)",
+     "readCache": "best case: files repeat (cache), after the fixes (9a56830, 30ea4c6)",
      "filesPerSec": 12900,
      "busiest10sFiles": 128876,
      "files": 203200,
@@ -317,13 +317,13 @@
      "readsFromArtifacts": 0,
      "landedPerSecPeak": 6800,
      "limit": "3 files answered but not landed (0.0015%); was 10,943 before the fixes",
-     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9643506)"
+     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, a7420e0)"
     },
     {
      "run": "R100K-g",
      "agents": 100000,
      "copies": 100,
-     "readCache": "best case: files repeat (cache), after the fixes (4a4769f, 5aa4910)",
+     "readCache": "best case: files repeat (cache), after the fixes (9a56830, 30ea4c6)",
      "filesPerSec": 21100,
      "busiest10sFiles": 211032,
      "files": 406400,
@@ -341,7 +341,7 @@
      "readsFromArtifacts": 0,
      "landedPerSecPeak": 10300,
      "limit": "43 files (0.01%) answered but never landed, on 11 of 100 copies: the agents' report met 'Durable Object is overloaded' (the write went through) and their invocations were cancelled before the hand-off retry. Run objects and Landers overloaded at peaks. Nothing landed wrong. Fix not built: the Run object re-dispatches answered files no landing queue took within a minute",
-     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9643506)"
+     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, a7420e0)"
     },
     {
      "run": "R100K-h",
@@ -366,7 +366,7 @@
      "errors": 0,
      "landedPerSecPeak": 10750,
      "limit": "none lost: 100 of 100 runs finished, the sweep had nothing to redo",
-     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9ebf0dd)"
+     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, cfa31e8)"
     }
    ],
    "realModels": [
@@ -433,12 +433,12 @@
      "@cf/zai-org/glm-4.7-flash"
     ]
    },
-   "filesLanded": 58775,
-   "filesAttempted": 77311,
+   "filesLanded": 61569,
+   "filesAttempted": 81375,
    "verifyRefused": 0,
-   "usd": 39.86,
-   "usdPer1kLanded": 0.68,
-   "runs": 44,
+   "usd": 42.37,
+   "usdPer1kLanded": 0.69,
+   "runs": 45,
    "byJob": {
     "docs": {
      "runs": 27,
@@ -455,11 +455,11 @@
      "usd": 0.13
     },
     "docs+index": {
-     "runs": 7,
-     "filesAttempted": 28440,
-     "landed": 19910,
-     "skipped": 7481,
-     "usd": 16.02
+     "runs": 8,
+     "filesAttempted": 32504,
+     "landed": 22704,
+     "skipped": 8550,
+     "usd": 18.52
     },
     "code": {
      "runs": 9,
@@ -853,7 +853,7 @@
        "lost": 13
       }
      },
-     "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. In this run, change records (git notes) could be missing on main: lanes force-pushed refs/notes/qodebase, and no-op changes had no commit of their own. The code and these counts are unaffected. Fixed in 116d1b7 (notes merged, never force-pushed; lane rebase keeps empty commits) and b3f2b03 (a no-op change lands as its own empty commit), deployed with forq 3cde9b4, and checked on eyal/kata-notes (lanes, 200 tasks): 199 of 199 landed changes have their own commit and their note."
+     "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. In this run, change records (git notes) could be missing on main: lanes force-pushed refs/notes/qodebase, and no-op changes had no commit of their own. The code and these counts are unaffected. Fixed in 3a13542 (notes merged, never force-pushed; lane rebase keeps empty commits) and 7c9bbcf (a no-op change lands as its own empty commit), deployed with forq 2abdd40, and checked on eyal/kata-notes (lanes, 200 tasks): 199 of 199 landed changes have their own commit and their note."
     }
    ],
    "label": "measured on Cloudflare: 1,000 agents (20 copies of VS Code extensions/ x 50), cached answers (no model call), one declaration-level comment task at a time, claims off unless marked \"+ claims\" (an agent claims its declarations before reading the file); collisions = pairs of tasks started at the same moment"
@@ -879,7 +879,7 @@
      "doubled": 0,
      "codeChanged": 0,
      "lost": 20,
-     "lostNote": "20 = one file per copy with '} export class X' on one line: comment placed above the '}' (a doc.js targeting bug from F3 on, fixed in 6807d72), not a collision",
+     "lostNote": "20 = one file per copy with '} export class X' on one line: comment placed above the '}' (a doc.js targeting bug from F3 on, fixed in 830fc0d), not a collision",
      "landWaitP50S": null,
      "landWaitP90S": null,
      "landNote": "landing times not comparable: the Lander stalled on Artifacts internal errors until trees were memoised mid-level"
@@ -1247,7 +1247,7 @@
        "lost": 13
       }
      },
-     "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. In this run, change records (git notes) could be missing on main: lanes force-pushed refs/notes/qodebase, and no-op changes had no commit of their own. The code and these counts are unaffected. Fixed in 116d1b7 (notes merged, never force-pushed; lane rebase keeps empty commits) and b3f2b03 (a no-op change lands as its own empty commit), deployed with forq 3cde9b4, and checked on eyal/kata-notes (lanes, 200 tasks): 199 of 199 landed changes have their own commit and their note."
+     "note": "Same seed, tasks, 200 agents and model mix (glm 66 tasks again). 44.5 min (4.6x faster than the baseline's 207). 66 lost: 57 wrong when they landed (25 of 751 clean merges 3.3%, 28 of 484 replays 5.8%), 9 dropped by a later agent (all by base_sha), 0 lost in landing: the third dial-60 run with 0. Fetch is still p50 13 s: main and the notes ref, not the forks. In this run, change records (git notes) could be missing on main: lanes force-pushed refs/notes/qodebase, and no-op changes had no commit of their own. The code and these counts are unaffected. Fixed in 3a13542 (notes merged, never force-pushed; lane rebase keeps empty commits) and 7c9bbcf (a no-op change lands as its own empty commit), deployed with forq 2abdd40, and checked on eyal/kata-notes (lanes, 200 tasks): 199 of 199 landed changes have their own commit and their note."
     }
    ]
   }
@@ -2627,7 +2627,7 @@
    },
    {
     "label": "VS Code: doc comments + API index",
-    "runs": 7,
+    "runs": 8,
     "cached": false,
     "models": [
      "@cf/google/gemma-4-26b-a4b-it",
@@ -2638,17 +2638,17 @@
      "fleet-n2-vscode-src-1 src/vs",
      "fleet-n2-vscode-src-2 src/vs"
     ],
-    "agents": 6200,
-    "files": 28440,
-    "landed": 19910,
-    "skipped": 7481,
+    "agents": 7200,
+    "files": 32504,
+    "landed": 22704,
+    "skipped": 8550,
     "verifyFail": 0,
-    "rejected": 1049,
+    "rejected": 1250,
     "rateLimited": 0,
     "notLanded": null,
-    "notLandedMissingOn": 6,
-    "usd": 16.0184,
-    "wallS": 46596,
+    "notLandedMissingOn": 7,
+    "usd": 18.522,
+    "wallS": 58334,
     "landWaitP90S": 561,
     "firstAt": 1791939833517
    },
@@ -18616,7 +18616,7 @@
      "@cf/zai-org/glm-4.7-flash",
      "gemini-3.1-flash-lite"
     ],
-    "state": "done",
+    "state": "ended",
     "tokensIn": 10021205,
     "tokensOut": 336701,
     "agents": 1000,
@@ -18631,9 +18631,9 @@
     "modelError": 0,
     "calls": null,
     "usd": 2.3822,
-    "startedAt": 1791986250619,
-    "endedAt": 1791986429491,
-    "wallS": 179,
+    "startedAt": 1791986257823,
+    "endedAt": 1791986337876,
+    "wallS": 80,
     "landWaitP50S": 88,
     "landWaitP90S": 172,
     "peakPerMin": null,
@@ -18666,6 +18666,71 @@
       "calls": 1828,
       "rateLimited429": 0,
       "peakPerMin": 942,
+      "role": "overflow"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-1 src/vs",
+    "label": "VS Code: doc comments + API index",
+    "cached": false,
+    "job": "docs+index"
+   },
+   {
+    "runId": "fmv8dekehi2g",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "done",
+    "tokensIn": 10156586,
+    "tokensOut": 341294,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2794,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 201,
+    "notLanded": null,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 2.5036,
+    "startedAt": 1791998106569,
+    "endedAt": 1791998167997,
+    "wallS": 61,
+    "landWaitP50S": 88,
+    "landWaitP90S": 148,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.1193,
+      "landed": 380,
+      "rejected": 2,
+      "skipped": 146,
+      "calls": 382,
+      "rateLimited429": 0,
+      "peakPerMin": 379,
+      "role": "planned"
+     },
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.1109,
+      "landed": 615,
+      "rejected": 1,
+      "skipped": 248,
+      "calls": 616,
+      "rateLimited429": 0,
+      "peakPerMin": 610,
+      "role": "planned"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 2.2734,
+      "landed": 1799,
+      "rejected": 198,
+      "skipped": 675,
+      "calls": 1997,
+      "rateLimited429": 0,
+      "peakPerMin": 1997,
       "role": "overflow"
      }
     },
@@ -33530,34 +33595,34 @@
   ],
   "perModel": {
    "@cf/zai-org/glm-4.7-flash": {
-    "files": 18390,
-    "landed": 13131,
-    "skipped": 5235,
+    "files": 19254,
+    "landed": 13746,
+    "skipped": 5483,
     "verifyFail": 0,
-    "rejected": 24,
+    "rejected": 25,
     "rateLimited": 31,
-    "calls": 13272,
-    "usd": 2.3854,
+    "calls": 13888,
+    "usd": 2.4963,
     "peakPerMin": 771,
     "roles": {
-     "planned": 18002,
+     "planned": 18865,
      "overflow": 364
     },
     "usdPer1kFiles": 0.13,
     "share429": 0.002
    },
    "@cf/google/gemma-4-26b-a4b-it": {
-    "files": 13309,
-    "landed": 9382,
-    "skipped": 3902,
+    "files": 13837,
+    "landed": 9762,
+    "skipped": 4048,
     "verifyFail": 0,
-    "rejected": 25,
+    "rejected": 27,
     "rateLimited": 23,
-    "calls": 9632,
-    "usd": 2.8411,
+    "calls": 10014,
+    "usd": 2.9604,
     "peakPerMin": 610,
     "roles": {
-     "planned": 13284
+     "planned": 13810
     },
     "usdPer1kFiles": 0.21,
     "share429": 0.002
@@ -33579,20 +33644,20 @@
     "share429": 0
    },
    "gemini-3.1-flash-lite": {
-    "files": 48536,
-    "landed": 35304,
-    "skipped": 12009,
+    "files": 51208,
+    "landed": 37103,
+    "skipped": 12684,
     "verifyFail": 0,
-    "rejected": 1223,
+    "rejected": 1421,
     "rateLimited": 51,
-    "calls": 37141,
-    "usd": 33.5618,
+    "calls": 39138,
+    "usd": 35.8352,
     "peakPerMin": 2059,
     "roles": {
      "planned": 14058,
-     "overflow": 33255
+     "overflow": 35729
     },
-    "usdPer1kFiles": 0.69,
+    "usdPer1kFiles": 0.7,
     "share429": 0.001
    },
    "@cf/zai-org/glm-5.3-flash": {
@@ -33613,15 +33678,15 @@
    }
   },
   "totals": {
-   "runs": 44,
-   "filesAttempted": 77311,
-   "landed": 58775,
-   "skipped": 21546,
+   "runs": 45,
+   "filesAttempted": 81375,
+   "landed": 61569,
+   "skipped": 22615,
    "verifyRefused": 0,
-   "rejected": 1289,
+   "rejected": 1490,
    "rateLimited": 3,
-   "usd": 39.86,
-   "usdPer1kLanded": 0.68,
+   "usd": 42.37,
+   "usdPer1kLanded": 0.69,
    "usdPer1kFiles": 0.52,
    "byJob": {
     "docs": {
@@ -33639,11 +33704,11 @@
      "usd": 0.13
     },
     "docs+index": {
-     "runs": 7,
-     "filesAttempted": 28440,
-     "landed": 19910,
-     "skipped": 7481,
-     "usd": 16.02
+     "runs": 8,
+     "filesAttempted": 32504,
+     "landed": 22704,
+     "skipped": 8550,
+     "usd": 18.52
     },
     "code": {
      "runs": 9,

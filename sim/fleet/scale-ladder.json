@@ -126,7 +126,7 @@
      ]
     },
     "limit": "Artifacts reads for the whole account, ~1,900-2,000/s: 3 namespaces did not raise it (reads waited longer, none failed). Landing no longer the wall (~1 min after the answers). Behind it: one Run object per copy hands out work (at most ~2,800 reading at once)",
-    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, fdde165)",
+    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, c5a6864)",
     "landed": 29890,
     "nothingToDocument": 10690,
     "noCachedAnswer": 60
@@ -154,7 +154,7 @@
     "noCachedAnswer": 60,
     "readsFromArtifacts": 0,
     "limit": "none: clean",
-    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 5d97b0b)"
+    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 0e3992f)"
    },
    {
     "run": "R50K-e",
@@ -186,7 +186,7 @@
      "split each copy's Run object",
      "batch the SQL writes"
     ],
-    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 5d97b0b)"
+    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 0e3992f)"
    },
    {
     "run": "R50K-f",
@@ -197,7 +197,7 @@
     "clean": false,
     "lost": 3,
     "lostShare": 1.5e-05,
-    "readCache": "best case: files repeat (cache), after the fixes (4a4769f, 5aa4910)",
+    "readCache": "best case: files repeat (cache), after the fixes (9a56830, 30ea4c6)",
     "filesPerSec": 12900,
     "busiest10sFiles": 128876,
     "busyAtOnceMax": 6949,
@@ -212,7 +212,7 @@
     "noCachedAnswer": 300,
     "readsFromArtifacts": 0,
     "limit": "3 files answered but not landed (0.0015%); was 10,943 before the fixes",
-    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9643506)"
+    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, a7420e0)"
    },
    {
     "run": "R100K-g",
@@ -223,7 +223,7 @@
     "clean": false,
     "lost": 43,
     "lostShare": 0.0001,
-    "readCache": "best case: files repeat (cache), after the fixes (4a4769f, 5aa4910)",
+    "readCache": "best case: files repeat (cache), after the fixes (9a56830, 30ea4c6)",
     "filesPerSec": 21100,
     "busiest10sFiles": 211032,
     "busyAtOnceMax": 13839,
@@ -238,12 +238,12 @@
     "noCachedAnswer": 600,
     "readsFromArtifacts": 0,
     "limit": "43 files (0.01%) answered but never landed, on 11 of 100 copies: the agents' report met 'Durable Object is overloaded' (the write went through) and their invocations were cancelled before the hand-off retry. Run objects and Landers overloaded at peaks. Nothing landed wrong. Fix not built: the Run object re-dispatches answered files no landing queue took within a minute",
-    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9643506)",
+    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, a7420e0)",
     "afterSweep": {
      "landed": 298900,
      "lost": 0,
      "runsFinished": 100,
-     "note": "The re-issue sweep (fleet b3ae9c4b; commits c93f333, 96d052c) was applied afterwards to the 11 unfinished copies: all 43 were redone and landed within ~75 s. The in-run figure stays 43 not landed; the rerun with the sweep live is R100K-h (0 lost)."
+     "note": "The re-issue sweep (fleet b3ae9c4b; commits 5783c76, 6cb115f) was applied afterwards to the 11 unfinished copies: all 43 were redone and landed within ~75 s. The in-run figure stays 43 not landed; the rerun with the sweep live is R100K-h (0 lost)."
     }
    },
    {
@@ -272,7 +272,7 @@
     "readsFromArtifacts": 0,
     "reissued": 0,
     "limit": "none lost: 100 of 100 runs finished, the sweep had nothing to redo",
-    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9ebf0dd)"
+    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, cfa31e8)"
    }
   ],
   "files": {
