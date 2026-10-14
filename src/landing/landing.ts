@@ -836,7 +836,9 @@ export class Landing extends DurableObject<Env> {
       }
       const last = c.events.at(-1)?.t || c.createdAt, nudges = (c as { nudges?: number }).nudges || 0;
       // X1: the skeleton holds every other agent, so an idle skeleton is nudged after 90 s (the proof build's sat idle 4 min).
-      if (Date.now() - last < (c.skeleton ? 90_000 : STALL_MS) || nudges >= 2) continue;
+      // Two nudges 4 min apart, then two more 15 min apart: an agent that answered the first nudge without pushing (Haiku said
+      // 'No response requested.', wake-check2) used to sit for good.
+      if (Date.now() - last < (c.skeleton ? 90_000 : nudges >= 2 ? 15 * 60_000 : STALL_MS) || nudges >= 4) continue;
       // Claude working right now = still at it (a long task). Asleep, or awake and idle, is stalled (a box only sleeps
       // after 5 idle minutes, so 'asleep only' could not fire before ~5 min; lastActive moves only on requests).
       // POST: the per-box verbs answer GET with {error:'POST only'}, which read as 'not busy' and nudged working agents (R5:
@@ -1004,9 +1006,13 @@ export class Landing extends DurableObject<Env> {
     // (2 tries dropped a rebase request and stalled a lab run, 2026-10-08).
     if (i >= 0) {
       const [x] = now.outbox!.splice(i, 1);
-      if (!ok && x.tries < 7) now.outbox!.push({ ...x, tries: x.tries + 1 });
+      // Refused by the awake-box limit ('2 agents already awake'): not a failed try. The box starts once another one
+      // sleeps, so the message waits (up to 2 h) instead of being dropped after 8 tries in ~5 min (wake-check2,
+      // 2026-10-14: a nudge was dropped that way and its agent never pushed).
+      const atLimit = /already awake|boxes are awake/.test(err);
+      if (!ok && (atLimit ? Date.now() - x.at < 2 * 3600_000 : x.tries < 7)) now.outbox!.push({ ...x, tries: atLimit ? x.tries : x.tries + 1 });
     }
-    log('landing', 'tell', { slug: m.slug, to: msg.to, ok, err, tries: msg.tries, dropped: !ok && msg.tries >= 7 });
+    log('landing', 'tell', { slug: m.slug, to: msg.to, ok, err, tries: msg.tries, dropped: !ok && msg.tries >= 7 && !/already awake|boxes are awake/.test(err) });
     await this.#saveMeta();
     if (now.outbox?.length) await this.#arm(ok ? 1000 : now.outbox.length > 1 ? 5_000 : 75_000);
   }
