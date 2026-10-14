@@ -31,6 +31,7 @@ BG, FG, DIM, ACC, LINE = base.BG, base.FG, base.DIM, base.ACC, base.LINE
 ROOT = base.ROOT
 DECK = os.path.join(HERE, 'build', 'deck')
 F_CAP, F_CHAP, F_BADGE, F_BIG, F_QUOTE = font(42, 500), font(30, 600), font(30, 600), font(64, 700), font(42, 500)
+F_MSG, F_WHO = font(32, 500), font(22, 600)
 
 def deck_notes():
     s = open(os.path.join(ROOT, 'public', 'deck', 'index.html')).read()
@@ -41,7 +42,7 @@ def deck_notes():
     return out
 
 class Cut2(base.Cut):
-    PX, PY, PW, PH = 150, 40, 600, H - 80      # the phone: full width of the 390 px screen, ~650 of its 844 CSS px
+    PX, PY, PW, PH = 150, 40, 462, H - 80      # the phone: the whole 390x844 screen (the voice bar at the bottom stays in frame)
     SRC_W = 780
     WIN = round(PH * SRC_W / PW)
 
@@ -65,15 +66,30 @@ class Cut2(base.Cut):
         d.rounded_rectangle((px - 3, py - 3, px + pw + 2, py + ph + 2), radius=33, outline=(212, 212, 222), width=2)
         mask = Image.new('L', (pw, ph), 0); ImageDraw.Draw(mask).rounded_rectangle((0, 0, pw - 1, ph - 1), radius=30, fill=255)
         canvas.paste(win, (px, py), mask)
-        tx = px + pw + 110; tw = W - tx - 120; y = 200
-        if self.chap: d.text((tx, y), self.chap, font=F_CHAP, fill=ACC); y += 70
-        if quote:
-            lines = wrap(d, f'“{quote}”', F_QUOTE, tw)[:5]
-            d.rounded_rectangle((tx - 24, y - 18, tx + tw + 24, y + len(lines) * 58 + 14), radius=14, fill=(240, 235, 254))
-            for i, line in enumerate(lines): d.text((tx, y + i * 58), line, font=F_QUOTE, fill=FG)
-            y += len(lines) * 58 + 60
-        for i, line in enumerate(wrap(d, caption or '', F_CAP, tw)[:6]):
-            d.text((tx, y + i * 60), line, font=F_CAP, fill=FG)
+        tx = px + pw + 110; tw = W - tx - 120; y = 120
+        if self.chap: d.text((tx, y), self.chap, font=F_CHAP, fill=ACC); y += 56
+        for i, line in enumerate(wrap(d, caption or '', F_CAP, tw)[:3]):
+            d.text((tx, y + i * 56), line, font=F_CAP, fill=FG)
+        if caption: y += min(3, len(wrap(d, caption, F_CAP, tw))) * 56 + 30
+        chat = list(getattr(self, 'chat', [])) or ([('you', quote)] if quote else [])
+        top, bottom = y, (H - 260 if badge else H - 80)
+        blocks, yb = [], bottom
+        for who, text in reversed(chat):
+            bw = tw * (.78 if who == 'you' else .86)
+            lines = wrap(d, text, F_MSG, bw - 48)
+            if len(lines) > 7: lines = lines[:6] + [lines[6].rstrip(' ,.') + ' …']
+            hgt = len(lines) * 42 + 30 + (28 if who == 'talk' else 0)
+            if yb - hgt < top: break
+            yb -= hgt; blocks.append((who, lines, yb, hgt)); yb -= 16
+        for who, lines, yy, hgt in blocks:
+            w_ = max(d.textlength(l, font=F_MSG) for l in lines) + 48
+            if who == 'you':
+                x0 = tx + tw - w_; d.rounded_rectangle((x0, yy, tx + tw, yy + hgt), radius=18, fill=(240, 235, 254))
+                for i, l in enumerate(lines): d.text((x0 + 24, yy + 15 + i * 42), l, font=F_MSG, fill=FG)
+            else:
+                d.text((tx, yy), 'Talk', font=F_WHO, fill=ACC)
+                d.rounded_rectangle((tx, yy + 28, tx + w_, yy + hgt), radius=18, fill=(255, 255, 255), outline=LINE, width=2)
+                for i, l in enumerate(lines): d.text((tx + 24, yy + 43 + i * 42), l, font=F_MSG, fill=FG)
         if badge:
             big, small = badge
             d.rounded_rectangle((tx, H - 230, tx + 330, H - 110), radius=14, fill=(20, 18, 31))
@@ -109,6 +125,9 @@ class Cut2(base.Cut):
                 if kind == 'say' and e['ev'] == 'say' and os.path.basename(e.get('clip', '')).startswith(label): return e['t']
             raise KeyError(v)
         tl = os.path.join(src, 'talk.json'); talk_lines = json.load(open(tl)) if os.path.exists(tl) else []
+        cj = os.path.join(src, 'chat.json'); chat_ev = sorted(json.load(open(cj))) if os.path.exists(cj) else []
+        self.chat = []; ci = 0
+        tab = next(((e['t'], os.path.join(src, e['file'])) for e in ev if e['ev'] == 'tab-audio-start'), None)
         prev, fi, cache = frames[0][0], 0, {}
         last_b = None
         for s in segs:
@@ -124,13 +143,18 @@ class Cut2(base.Cut):
                 for e in ev:
                     if e['ev'] == 'say' and a <= e['t'] < b and os.path.exists(e.get('clip', '')):
                         self.audio.append((self.now() + (e['t'] - a) / 1000, e['clip']))
-            if x == 1:
+            if x == 1 and tab:   # the tab's real output (Talk's replies as played)
+                wav = os.path.join(src, f'tab-{a}-{b}.wav')
+                if not os.path.exists(wav):
+                    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-ss', f'{(a - tab[0]) / 1000:.3f}', '-t', f'{(b - a) / 1000:.3f}', '-i', tab[1], '-ar', '48000', '-ac', '1', wav], check=True)
+                self.audio.append((self.now(), wav))
+            if x == 1 and not tab:
                 for t_ms, text in talk_lines:
                     if a <= t_ms < b:
                         f = talk_voice(text)
                         if f: self.audio.append((self.now() + (t_ms - a) / 1000, f))
             part = next(((t0, f) for t0, f in reversed(parts) if t0 <= a), None)
-            if x == 1 and s.get('audio', True) and part and not talk_lines and (s.get('page_audio') or not s.get('quote')):
+            if x == 1 and s.get('audio', True) and part and not talk_lines and not tab and (s.get('page_audio') or not s.get('quote')):
                 wav = os.path.join(src, f'aud-{a}-{b}.wav')
                 if not os.path.exists(wav):
                     # a page recording can end early (the page navigated away mid-chunk): a slice past its end is skipped
@@ -140,6 +164,7 @@ class Cut2(base.Cut):
                 else: print(json.dumps({'event': 'page_audio_missing', 'take': os.path.basename(src), 'a': a, 'b': b}), file=sys.stderr)
             t = float(a)
             while t <= b:
+                while ci < len(chat_ev) and chat_ev[ci][0] <= t: self.chat.append((chat_ev[ci][1], chat_ev[ci][2])); ci += 1
                 while fi + 1 < len(frames) and frames[fi + 1][0] <= t: fi += 1
                 while fi > 0 and frames[fi][0] > t: fi -= 1
                 f = frames[fi][1]
@@ -164,14 +189,23 @@ def talk_voice(text):
     return out
 
 def cover_talk_version(im):
-    """Paint over Talk's build stamp ('7f8de12 10:29 talk 93b9730') beside the purple Conversation pill in the sheet header."""
+    """Paint over Talk's build stamp ('7f8de12 10:29 talk 93b9730') in the sheet header, only when the header is there:
+    a purple Conversation pill (short, white on both sides) with the dark word 'Talk' at the far left of the same row."""
     px = im.load(); w, h = im.size
-    rows = [y for y in range(0, h, 2) if sum(1 for x in range(int(w * .42), int(w * .62), 6) if abs(px[x, y][0] - 106) < 30 and abs(px[x, y][1] - 47) < 30 and abs(px[x, y][2] - 240) < 30) > 12]
+    purple = lambda c: abs(c[0] - 106) < 30 and abs(c[1] - 47) < 30 and abs(c[2] - 240) < 30
+    light = lambda c: sum(c) > 690
+    rows = [y for y in range(0, h, 2) if sum(1 for x in range(int(w * .44), int(w * .64), 6) if purple(px[x, y])) > 12]
     if not rows: return im
-    y0, y1 = rows[0], rows[-1]
-    if y1 - y0 > 120: y1 = y0 + 90
-    bg = px[int(w * .40), max(0, y0 - 6)]
-    ImageDraw.Draw(im).rectangle((int(w * .13), y0 - 4, int(w * .40), y1 + 4), fill=bg)
+    y0 = rows[0]; y1 = y0
+    for y in rows:
+        if y - y1 > 20: break   # the white lettering inside the pill leaves short gaps
+        y1 = y
+    ym = (y0 + y1) // 2
+    if not (40 <= y1 - y0 <= 110): return im                                  # a pill, not a big button
+    if not (light(px[int(w * .38), ym]) and light(px[int(w * .70), ym])): return im   # white either side of it
+    if sum(1 for x in range(int(w * .03), int(w * .13), 2) if sum(px[x, ym]) < 200) < 3: return im   # the word 'Talk'
+    bg = px[int(w * .38), ym]
+    ImageDraw.Draw(im).rectangle((int(w * .135), y0 - 4, int(w * .40), y1 + 4), fill=bg)
     return im
 
 TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-v2d').split(',')]

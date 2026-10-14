@@ -87,8 +87,19 @@ const MIC = () => {
   };
 };
 
+// --pulse: the tab's REAL audio output (Talk's spoken replies as played), via a private PulseAudio null sink that Chrome
+// plays into and parec records for the whole take, across page loads (the per-page recorder lost audio on navigation).
+import { spawn, execFileSync } from 'node:child_process';
+let pulse = null;
+if (argv.includes('--pulse')) {
+  const sink = `qbrig${PORT}`;
+  const mod = execFileSync('pactl', ['load-module', 'module-null-sink', `sink_name=${sink}`, `sink_properties=device.description=${sink}`]).toString().trim();
+  const rec = spawn('parec', ['-d', `${sink}.monitor`, '--file-format=wav', '--rate=48000', '--channels=1', path.join(OUT, 'tab-audio.wav')], { stdio: 'ignore' });
+  pulse = { sink, mod, rec };
+  log('tab-audio-start', { file: 'tab-audio.wav', sink });
+}
 const cookies = await session();
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', headless: !argv.includes('--headed'), args: ['--autoplay-policy=no-user-gesture-required'] });
+const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', headless: !argv.includes('--headed'), args: ['--autoplay-policy=no-user-gesture-required'], ignoreDefaultArgs: pulse ? ['--mute-audio'] : [], env: pulse ? { ...process.env, PULSE_SINK: pulse.sink } : process.env });
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, permissions: ['microphone'], colorScheme: opt('--theme', 'light') });
 await ctx.addCookies(cookies);
 // One file per page load: each load starts a new MediaRecorder with its own header (appending them to one file left
@@ -130,7 +141,7 @@ http.createServer(async (req, res) => {
         // qb2: play only once the recorder is on ('live' and not 'arming'), then 400 ms more; with wait=1, first wait for
         // the previous turn to end (live goes off) so a clip never lands in a listening window that is closing.
         if (a.wait) await page.waitForFunction(() => !document.getElementById('talk-root')?.classList.contains('live'), null, { timeout: 60000 }).catch(() => log('wait-off-timeout'));
-        if (a.gate) { await page.waitForFunction(() => { const r = document.getElementById('talk-root'); return r && r.classList.contains('live') && !r.classList.contains('arming'); }, null, { timeout: +(a.gate) || 15000 }).catch(() => log('gate-timeout')); await new Promise((ok) => setTimeout(ok, 400)); }
+        if (a.gate) { await page.waitForFunction(() => { const r = document.getElementById('talk-root'); return r && r.classList.contains('live') && !r.classList.contains('arming'); }, null, { timeout: +(a.gate) || 15000 }).catch(() => log('gate-timeout')); await new Promise((ok) => setTimeout(ok, +(a.delay || 1000))); }
         const b64 = fs.readFileSync(a.clip).toString('base64');
         const r = log('say', { clip: a.clip });
         const dur = await page.evaluate((x) => window.__rigSay(x), b64);
@@ -148,7 +159,7 @@ http.createServer(async (req, res) => {
       case '/shot': { const f = path.join(OUT, 'shots', (a.name || String(Date.now() - T0)) + '.png'); await page.screenshot({ path: f }); return send({ f }); }
       case '/mark': return send(log('mark', { label: a.label }));
       case '/status': return send({ t: Date.now() - T0, frames, url: page.url(), micOpens: await page.evaluate(() => window.__rigMicOpens || 0) });
-      case '/stop': send(log('stop', { frames })); running = false; await page.evaluate(() => new Promise((ok) => setTimeout(ok, 1500))).catch(() => {}); await b.close(); if (audioF) audioF.end(); evf.end(); setTimeout(() => process.exit(0), 500); return;
+      case '/stop': send(log('stop', { frames })); running = false; await page.evaluate(() => new Promise((ok) => setTimeout(ok, 1500))).catch(() => {}); await b.close(); if (audioF) audioF.end(); if (pulse) { pulse.rec.kill('SIGINT'); try { execFileSync('pactl', ['unload-module', pulse.mod]); } catch {} } evf.end(); setTimeout(() => process.exit(0), 500); return;
       default: send({ err: 'unknown ' + u.pathname }, 404);
     }
   } catch (e) { send({ err: String(e.message || e).slice(0, 400) }, 500); }

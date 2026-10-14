@@ -1,0 +1,8 @@
+[[15540, "you", "Hi there."],
+ [19677, "talk", "Hi. Say what to build, where to go, or ask “what’s going on?”"],
+ [73106, "you", "What's going on with my projects?"],
+ [76982, "talk", "Running now: a fleet run on 150 agents. Done this week: home-ledger (10 changes, $2.47), keeps-track-everything (9 changes, $1.88), house-helper (10 changes, $2.09), home-things, my-home, home-tracker, and 2 more."],
+ [83026, "you", "Give me a medium idea."],
+ [88258, "talk", "Here’s a medium idea: An expense splitter for a group trip, kept on my phone. It’s in the box with settings that suit it. Want another, or build it?"],
+ [95449, "you", "Show me how it works."],
+ [105522, "talk", "Opening the How it works page now. It shows six agents changing one app, so you can watch how a request turns into finished code. You can also take the 6-minute tour if you want a guided version."]]
