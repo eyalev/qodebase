@@ -1,6 +1,6 @@
 [
  {
-  "a": 17000,
+  "a": 18300,
   "b": 46900,
   "quote": "Document every exported function in Visual Studio Code and add each one to the API index, with a thousand agents.",
   "page_audio": true
@@ -15,13 +15,20 @@
   "a": 62000,
   "b": 345000,
   "x": 12,
-  "say": "A thousand agents start, each on its own files. Each also writes one line in a shared index, so they collide thousands of times, and every collision is redone on the newest code. Then the last files land on main."
+  "say": "A thousand agents start, each on its own files. Each also writes one line in a shared index, so they collide thousands of times, and every collision is redone on the newest code. A hundred and sixty-six files were rejected by the checks and left unchanged; the rest land on main."
  },
  {
   "a": 402000,
   "b": 426000,
   "quote": "Show the index check.",
   "page_audio": true
+ },
+ {
+  "a": 463500,
+  "b": 478000,
+  "say": "The run's own page: the index check, five thousand eight hundred seventy-three lines, none missing; and the collisions chart: every collision met was redone.",
+  "hold": 1,
+  "y": 330
  },
  {
   "a": 480900,

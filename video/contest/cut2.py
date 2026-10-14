@@ -109,8 +109,11 @@ class Cut2(base.Cut):
                 if kind == 'say' and e['ev'] == 'say' and os.path.basename(e.get('clip', '')).startswith(label): return e['t']
             raise KeyError(v)
         prev, fi, cache = frames[0][0], 0, {}
+        last_b = None
         for s in segs:
             a = at(s['a'], prev); b = at(s['b'], a); prev = b; x = float(s.get('x', 1))
+            jump = (a - last_b) if (last_b is not None and x == 1 and a - last_b > 15000) else 0
+            last_b = b
             if s.get('say'): self.speak(s['say'])
             cap = s.get('cap', s.get('say', ''))
             if cap or s.get('quote'): self.cues.append((self.now(), self.now() + (b - a) / 1000 / x, s.get('quote') or cap))
@@ -135,14 +138,14 @@ class Cut2(base.Cut):
                 while fi > 0 and frames[fi][0] > t: fi -= 1
                 f = frames[fi][1]
                 if f not in cache: cache.clear(); cache[f] = Image.open(os.path.join(src, 'frames', f)).convert('RGB')
-                badge = (f'{x:g}×', f'real time {int((t - a) / 60000)}:{int((t - a) / 1000 % 60):02d}') if x > 1 else None
+                badge = (f'{x:g}×', f'real time {int((t - a) / 60000)}:{int((t - a) / 1000 % 60):02d}') if x > 1 else (('later', f'+{round(jump / 60000)} min' if jump >= 60000 else f'+{round(jump / 1000)} s') if jump and t - a < 2000 else None)
                 self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), badge))
                 t += 1000 * x / FPS
             hold_s = s.get('hold', 0)
             if hold_s: self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), None), round(hold_s * FPS))
 
 V = os.path.expanduser('~/.local/share/qodebase-video')
-TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-v2b,take-v2c').split(',')]
+TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-v2d').split(',')]
 
 def script(c):
     c.chapter('')
@@ -166,6 +169,15 @@ def script(c):
     c.deck(26)
     c.chapter('')
     c.deck(27); c.deck(29)
+
+def _no_overlap(cues):
+    cues.sort(key=lambda c: c[0])
+    return [(a, min(b, cues[i + 1][0] - 0.01) if i + 1 < len(cues) else b, t) for i, (a, b, t) in enumerate(cues)]
+
+_close = Cut2.close
+def _close_fixed(self):
+    self.cues = _no_overlap(self.cues); return _close(self)
+Cut2.close = _close_fixed
 
 if __name__ == '__main__':
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(base.VIDEO, 'out', 'qodebase-contest-v2.mp4')

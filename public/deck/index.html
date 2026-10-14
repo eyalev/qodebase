@@ -60,7 +60,7 @@ body.rec .bar-c{display:none}
 .bar-c .n{flex:1;text-align:center;font-size:14px;color:var(--dim)}
 .bar-c svg{width:18px;height:18px;vertical-align:-3px}
 .prog{position:fixed;left:0;top:0;height:3px;background:var(--acc);width:0;transition:width 220ms ease;z-index:6}
-body.rec .prog,body.rec .notes{display:none}
+body.rec .prog,body.rec .notes,body.rec .where{display:none}
 .notes{position:fixed;left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom));max-height:46dvh;overflow:auto;padding:16px 16px 20px;background:var(--card);border-top:1px solid var(--line);font-size:17px;line-height:1.5;transform:translateY(110%);transition:transform 220ms ease;z-index:4}
 .notes.open{transform:none}
 .notes h4{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--dim)}
@@ -244,9 +244,9 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s" data-t="Review and record" data-sec="A">
- <div class="claim"><h2>Every change keeps its record, inside git</h2><p>What it was asked to do, which agent did it, the review (or that there was none), how it landed and the tests: a git note on its commit, read with plain git. This one is real, from a build in this video; long fields are cut with “…”.</p><span class="src">eyal/home-tracker, commit 373036d, refs/notes/qodebase (fields trimmed: title, fork, base, agentCommit, handled)</span></div>
+ <div class="claim"><h2>Every change keeps its record, inside git</h2><p>What it was asked to do, which agent did it, the review (or that there was none), how it landed and the tests: a git note on its commit, read with plain git. This one is real, from an earlier build; long fields are cut with “…”.</p><span class="src">eyal/home-tracker, commit 373036d, refs/notes/qodebase (fields trimmed: title, fork, base, agentCommit, handled)</span></div>
  <div class="vis"><div class="term" aria-label="git log output with a real qodebase note"><span style="--d:0">$ git log --notes=qodebase -1 373036d</span><span style="--d:0.6">commit 373036d  Dark mode: follow the device and allow a manual switch</span><span class="k" style="--d:1.2">Notes (qodebase):</span><span style="--d:1.8">{</span><span style="--d:2.4">  "change": "eyal.home-tracker--fcnj9",</span><span style="--d:3">  "intent": "Dark mode: follow the device and allow a manual switch\nIn styles.css move every color into CSS variables …\nAsked: Please add a dark mode to the app.",</span><span style="--d:3.6">  "agent": "agent fcnj9",</span><span style="--d:4.2">  "how": "replayed-llm",</span><span style="--d:4.8">  "review": { "verdict": "auto", "notes": "no reviewer in this variant" },</span><span style="--d:5.4">  "replay": { "model": "claude-haiku-5-5", "sameLinesAsReviewed": true },</span><span style="--d:6">  "checks": { "ok": true },</span><span style="--d:6.6">  "landedBy": "qodebase merge queue",</span><span style="--d:7.2">  "at": "2026-10-13T23:21:14.599Z"</span><span style="--d:7.8">}</span></div></div>
- <aside class="say">Every change keeps its record inside git. What it was asked to do, which agent did it, the review, how it landed and the tests, written as a git note on its commit. This one is real: the dark mode from a build you will see in a minute. It collided, a model redid it on the newest code, and the tests passed. This is not GitHub with agents on top: the unit is a request with its record.</aside>
+ <aside class="say">Every change keeps its record inside git. What it was asked to do, which agent did it, the review, how it landed and the tests, written as a git note on its commit. This one is real, from an earlier build: a dark mode that collided, was redone by a model on the newest code, and passed its tests. This is not GitHub with agents on top: the unit is a request with its record.</aside>
 </section>
 
 <section class="s" data-t="Watch a run" data-sec="A">
