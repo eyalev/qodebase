@@ -273,7 +273,7 @@ class Cut:
                 args += ['-i', path]
                 ms = int(start * 1000)
                 filt.append(f'[{i + 1}:a]adelay={ms}|{ms},aresample=48000[a{i}]')
-            mix = ''.join(f'[a{i}]' for i in range(len(self.audio))) + f'amix=inputs={len(self.audio)}:normalize=0:dropout_transition=0,loudnorm=I=-16:TP=-1.5[vo]'
+            mix = ''.join(f'[a{i}]' for i in range(len(self.audio))) + f'amix=inputs={len(self.audio)}:normalize=0:dropout_transition=0,loudnorm=I=-16:TP=-1.5,apad[vo]'
             subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', self.silent, *args, '-filter_complex', ';'.join(filt + [mix]),
                             '-map', '0:v', '-map', '[vo]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-shortest', '-movflags', '+faststart', self.out], check=True)
             os.remove(self.silent)

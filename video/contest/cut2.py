@@ -63,11 +63,12 @@ class Cut2(base.Cut):
         # no 0.5 s blank page between chapters (review of voice-7: white flashes at 0:40, 4:04, 5:26, 8:02)
         self.chapters.append((self.now(), title)); self.chap = title
 
-    def vslide(self, headline, sub='', nums=(), say='', after=0.6):
+    def vslide(self, headline, sub='', nums=(), say='', after=0.6, logo=False):
         """A video slide: one big headline (<= 8 words), at most one short line, or up to three big numbers; the
         narration carries the detail (Eyal, 2026-10-14: the deck's paragraphs are unreadable in a video)."""
         im = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(im)
         hl = wrap(d, headline, F_VH, W - 320)
+        if logo: self.logo(im, 160, 120, 150)
         y = (H - (len(hl) * 104 + (len(wrap(d, sub, F_VSUB, W - 320)) * 60 + 30 if sub else 0) + (300 if nums else 0))) // 2
         for i, l in enumerate(hl): d.text((160, y + i * 104), l, font=F_VH, fill=FG)
         y += len(hl) * 104 + 30
@@ -85,6 +86,21 @@ class Cut2(base.Cut):
         secs = max(hold(headline + ' ' + sub) , (self.speak(say) + after) if say else 0)
         if say: self.cues.append((self.now(), self.now() + secs, say))
         self.emit(im, round(secs * FPS))
+
+    @staticmethod
+    def logo(im, x, y, size):
+        """qodebase's q mark (public icon: violet rounded square, white ring and stem), drawn at size px."""
+        k = size / 256; d = ImageDraw.Draw(im)
+        d.rounded_rectangle((x, y, x + size, y + size), radius=round(48 * k), fill=(106, 47, 240))
+        d.ellipse((x + (121 - 48) * k, y + (110 - 48) * k, x + (121 + 48) * k, y + (110 + 48) * k), outline=(255, 255, 255), width=round(30 * k))
+        d.rectangle((x + 154 * k, y + 58 * k, x + 184 * k, y + 196 * k), fill=(255, 255, 255))
+
+    def title_card(self, say, after=0.6):
+        im = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(im)
+        self.logo(im, 160, 380, 200)
+        d.text((410, 395), 'qodebase', font=font(150, 700), fill=FG)
+        d.text((414, 575), 'Many AI agents change one codebase; their work lands by itself.', font=F_VSUB, fill=DIM)
+        secs = max(4.0, self.speak(say) + after); self.cues.append((self.now(), self.now() + secs, say)); self.emit(im, round(secs * FPS))
 
     def scale_chart(self, say, after=0.6):
         """Eyal: the old ladder read as 'scaling failed'. Two groups: realistic (every file read from storage) and
@@ -224,12 +240,12 @@ class Cut2(base.Cut):
             t = float(a)
             while t <= b:
                 while ci < len(chat_ev) and chat_ev[ci][0] <= t:
-                    self.chat.append((chat_ev[ci][1], chat_ev[ci][2])); self.cues.append((self.now(), self.now() + max(2.0, len(chat_ev[ci][2]) / 15), ('Talk: ' if chat_ev[ci][1] == 'talk' else '') + chat_ev[ci][2])); ci += 1
+                    self.chat.append((chat_ev[ci][1], chat_ev[ci][2])); self.cues.append((self.now(), self.now() + max(2.0, len(chat_ev[ci][2]) / (11.5 if chat_ev[ci][1] == 'talk' else 15)), ('Talk: ' if chat_ev[ci][1] == 'talk' else '') + chat_ev[ci][2])); ci += 1
                 while fi + 1 < len(frames) and frames[fi + 1][0] <= t: fi += 1
                 while fi > 0 and frames[fi][0] > t: fi -= 1
                 f = frames[fi][1]
                 if f not in cache: cache.clear(); cache[f] = cover_talk_version(Image.open(os.path.join(src, 'frames', f)).convert('RGB'))
-                badge = (f'{x:g}×', f'real time {int((t - a) / 60000)}:{int((t - a) / 1000 % 60):02d}') if x > 1 else (('later', f'+{round(jump / 60000)} min' if jump >= 60000 else f'+{round(jump / 1000)} s') if jump and t - a < 2000 else None)
+                badge = (f'{round(x)}×', f'real time {int((t - a) / 60000)}:{int((t - a) / 1000 % 60):02d}') if x > 1 else (('later', f'+{round(jump / 60000)} min' if jump >= 60000 else f'+{round(jump / 1000)} s') if jump and t - a < 2000 else None)
                 self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), badge, s.get('zoom', 1.0)))
                 t += 1000 * x / FPS
             hold_s = s.get('hold', 0)
@@ -268,12 +284,12 @@ def cover_talk_version(im):
     ImageDraw.Draw(im).rectangle((int(w * .135), y0 - 4, int(w * .40), y1 + 4), fill=bg)
     return im
 
-TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-d2').split(',')]
+TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-d2,take-d2b').split(',')]
 
 def script(c):
     PROVED = [('10,000', 'agents on Cloudflare, cached answers'), ('200', 'agents on real code: 0 lost in landing at 60% overlap'), ('40', 'real Claude agents on one app')]
     c.chapter('')
-    c.deck(1, say="This is qodebase: a git platform where many AI agents change one codebase at the same time, and their work lands by itself.")
+    c.title_card(say="This is qodebase: a git platform where many AI agents change one codebase at the same time, and their work lands by itself.")
     c.vslide('Agents write code faster than review can land it', say="Agents now write code faster than people can review it and land it. And when many agents work at once, their changes depend on each other and collide.")
     c.vslide('qodebase lands each change by its intent', sub='Phone-first, and on desktop too, on Cloudflare', say="qodebase lands each change by what it was asked to do, on the newest code. You run it from a phone or a desktop, and it is built on Cloudflare.")
     c.vslide('What we proved', nums=PROVED, say="We proved it at three scales: ten thousand agents on Cloudflare, two hundred agents on real code with nothing lost in landing, and up to forty agents running Claude, building one app.")
@@ -296,7 +312,7 @@ def script(c):
     c.vslide('All of it runs on Cloudflare', sub='Workers, Durable Objects, Artifacts, Containers and Workers AI (Gemini as overflow)', say="Underneath, it is all Cloudflare: Workers serve the app, Durable Objects hold every project and agent, Artifacts hold every repository and fork, Containers run the agents, and Workers AI runs the low-cost models, with Gemini as overflow, and the voice.")
     c.chapter('')
     c.vslide('What we proved', nums=PROVED, say="Ten thousand agents on one platform, two hundred on real code with nothing lost in landing, and up to forty agents running Claude building one app, every step recorded and visible.")
-    c.vslide('Try it: qodebase.app', sub='Watch a run, no sign-in. Code: qodebase.app/p/eyal/qodebase (also on GitHub: github.com/eyalev/qodebase)', say="Try it yourself at qodebase dot app: watch a run with no sign-in, and read how it works.", after=4.0)
+    c.vslide('Try it: qodebase.app', sub='Watch a run, no sign-in. Code: qodebase.app/p/eyal/qodebase (also on GitHub: github.com/eyalev/qodebase)', say="Try it yourself at qodebase dot app: watch a run with no sign-in, and read how it works.", after=4.0, logo=True)
 
 _SPEECH = {}
 def speech_spans(path, start):
