@@ -1906,7 +1906,8 @@ async function aigAnthropic(request: Request, env: Env, url: URL): Promise<Respo
   // credits. Its model ids are 'anthropic/claude-haiku-5.5': Claude Code's are mapped on the way in.
   const acct = '887d7234a6b8d65ad355a4f6684cab67', gw = env.REPLAY_GATEWAY || 'qodebase-replay';
   const rest = url.pathname.slice('/api/aig/anthropic/'.length).replace(/^v1\//, '');
-  const target = `https://api.cloudflare.com/client/v4/accounts/${acct}/ai/v1/${rest}${url.search}`;
+  // No query string: Claude Code adds ?beta=true and the API refuses any ('Unrecognized key(s): query').
+  const target = `https://api.cloudflare.com/client/v4/accounts/${acct}/ai/v1/${rest}`;
   const h = new Headers();
   for (const [k, v] of request.headers) if (/^(content-type|anthropic-version|anthropic-beta|accept)$/i.test(k)) h.set(k, v);
   h.set('authorization', `Bearer ${env.REPLAY_GATEWAY_TOKEN}`);
