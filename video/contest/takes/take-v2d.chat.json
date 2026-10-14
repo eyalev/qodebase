@@ -1,0 +1,77 @@
+[
+ [
+  15549,
+  "you",
+  "Build me a small app called Home Ledger that keeps track of everything in my home, with a paid pro version."
+ ],
+ [
+  25431,
+  "talk",
+  "Build it?"
+ ],
+ [
+  34386,
+  "you",
+  "Use the cheapest team."
+ ],
+ [
+  38654,
+  "talk",
+  "Build it?"
+ ],
+ [
+  43228,
+  "you",
+  "Yes, build it."
+ ],
+ [
+  50055,
+  "talk",
+  "This will start 6 Haiku agents and an Opus planner, shared board, about 8 to 21 minutes and $0.78 to $2.10. Start?"
+ ],
+ [
+  63261,
+  "you",
+  "Call it Home Ledger."
+ ],
+ [
+  68504,
+  "talk",
+  "Start building home-ledger?"
+ ],
+ [
+  79078,
+  "you",
+  "Yes, start."
+ ],
+ [
+  106155,
+  "you",
+  "Show me the agents."
+ ],
+ [
+  534874,
+  "you",
+  "Add a dark mode to the app."
+ ],
+ [
+  540363,
+  "talk",
+  "Send to eyal/home-ledger's agents?"
+ ],
+ [
+  645080,
+  "you",
+  "Yes."
+ ],
+ [
+  1430802,
+  "you",
+  "Show me the app."
+ ],
+ [
+  1464985,
+  "you",
+  "Show the timeline."
+ ]
+]
