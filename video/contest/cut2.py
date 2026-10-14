@@ -32,6 +32,7 @@ ROOT = base.ROOT
 DECK = os.path.join(HERE, 'build', 'deck')
 F_CAP, F_CHAP, F_BADGE, F_BIG, F_QUOTE = font(42, 500), font(30, 600), font(30, 600), font(64, 700), font(42, 500)
 F_MSG, F_WHO = font(32, 500), font(22, 600)
+F_VH, F_VSUB, F_VBIG, F_VLAB = font(92, 700), font(46, 500), font(150, 700), font(36, 500)
 
 def deck_notes():
     s = open(os.path.join(ROOT, 'public', 'deck', 'index.html')).read()
@@ -56,6 +57,27 @@ class Cut2(base.Cut):
         im = Image.open(os.path.join(DECK, f'{n:02d}.png')).convert('RGB').resize((W, H))
         secs = max(hold(text) if text else 2.5, (self.speak(text) if text else 0) + after)
         if text: self.cues.append((self.now(), self.now() + secs, text))
+        self.emit(im, round(secs * FPS))
+
+    def vslide(self, headline, sub='', nums=(), say='', after=0.6):
+        """A video slide: one big headline (<= 8 words), at most one short line, or up to three big numbers; the
+        narration carries the detail (Eyal, 2026-10-14: the deck's paragraphs are unreadable in a video)."""
+        im = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(im)
+        hl = wrap(d, headline, F_VH, W - 320)
+        y = (H - (len(hl) * 104 + (90 if sub else 0) + (300 if nums else 0))) // 2
+        for i, l in enumerate(hl): d.text((160, y + i * 104), l, font=F_VH, fill=FG)
+        y += len(hl) * 104 + 30
+        if sub: d.text((160, y), sub, font=F_VSUB, fill=DIM); y += 90
+        if nums:
+            colw = (W - 320) // len(nums); x = 160
+            for i, (big, label) in enumerate(nums):
+                bw = d.textlength(big, font=F_VBIG)
+                cw = max(colw, bw + 90)                     # a wide number gets the room it needs
+                d.text((x, y + 20), big, font=F_VBIG, fill=ACC)
+                for j, l in enumerate(wrap(d, label, F_VLAB, max(cw - 60, 300))[:3]): d.text((x, y + 200 + j * 46), l, font=F_VLAB, fill=FG)
+                x += cw
+        secs = max(hold(headline + ' ' + sub) , (self.speak(say) + after) if say else 0)
+        if say: self.cues.append((self.now(), self.now() + secs, say))
         self.emit(im, round(secs * FPS))
 
     def _canvas(self, shot, y0, caption, quote, badge):
@@ -211,27 +233,29 @@ def cover_talk_version(im):
 TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-v2d').split(',')]
 
 def script(c):
+    PROVED = [('10,000', 'agents on Cloudflare, cached answers'), ('0', 'lost in landing: 200 agents on real code'), ('40', 'real Claude agents on one app')]
     c.chapter('')
-    c.deck(1); c.deck(2)
+    c.deck(1, say="This is qodebase: a git platform where many AI agents change one codebase at the same time, and their work lands by itself.")
+    c.vslide('Agents write code faster than review can land it', say="Agents now write code faster than pull requests and human review can land it. With many agents, order and collisions break the flow.")
+    c.vslide('qodebase lands each change by its intent', sub='Phone-first, and on desktop too, on Cloudflare', say="qodebase lands each change by what it was asked to do, on the newest code. You run it from a phone or a desktop, and it is built on Cloudflare.")
+    c.vslide('What we proved', nums=PROVED, say="We proved it at three scales: ten thousand agents on Cloudflare, two hundred agents on real code with nothing lost in landing, and real Claude teams of up to forty agents building an app.")
     c.chapter('The idea: land by intent')
     for n in (4, 5, 6): c.deck(n)
     c.chapter('A team build, all by voice')
     for t in TAKES2: c.take(t, json.load(open(os.path.join(t, 'segs.json'))))
-    c.deck(23)
     c.chapter('It works with real agents')
     for n in (11, 12): c.deck(n)
     c.chapter('Many agents, at scale')
-    c.deck(14, say="Now hundreds. Two hundred cheap-model agents took almost fourteen hundred coding tasks on one codebase, checked by tests they never saw. As more tasks aimed at the same functions, a model redid up to four hundred and sixty-eight collided changes, and losses stayed in the same range, with nothing lost in landing. The overlap cost time, and lanes per module won most of it back.")
+    c.vslide('200 agents on real code', nums=(('1,385', 'coding tasks, checked by hidden tests'), ('0', 'lost in landing'), ('53 min', 'with lanes, from 207')), say="Two hundred cheap-model agents took almost fourteen hundred coding tasks on one codebase, checked by tests they never saw. As more tasks aimed at the same functions, losses stayed in the same range and nothing was lost in landing. The overlap cost time, and lanes per module won most of it back.")
     c.deck(15)
     c.chapter('A thousand agents, all by voice')
-    T3 = os.path.join(V, os.environ.get('TAKE3', 'take-v3'))
+    T3 = os.path.join(V, os.environ.get('TAKE3', 'take-v3r'))
     c.take(T3, json.load(open(os.path.join(T3, 'segs.json'))))
-    if os.environ.get('TAKE3', 'take-v3') == 'take-s3e':   # the taps version had the index check as a pickup
-        T3b = os.path.join(V, 'take-s3f'); c.take(T3b, json.load(open(os.path.join(T3b, 'segs.json'))))
     c.chapter('Built on Cloudflare')
-    c.deck(26)
+    c.vslide('All of it runs on Cloudflare', sub='Workers, Durable Objects, Artifacts, Containers and Workers AI', say="Underneath, it is all Cloudflare: Workers serve the app, Durable Objects hold every project and agent, Artifacts hold every repository and fork, Containers run the agents, and Workers AI runs the cheap models and the voice.")
     c.chapter('')
-    c.deck(27); c.deck(29)
+    c.vslide('What we proved', nums=PROVED, say="Thousands of agents on one platform, hundreds on real code with nothing lost in landing, and real Claude teams building apps, every step recorded and visible.")
+    c.vslide('Try it: qodebase.app', sub='Watch a run, no sign-in. The details: How it works, the README, the Runs page.', say="Try it yourself at qodebase dot app: watch a run with no sign-in, and read how it works.")
 
 def _no_overlap(cues):
     cues.sort(key=lambda c: c[0])

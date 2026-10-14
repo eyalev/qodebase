@@ -1,0 +1,8 @@
+[[17633, "you", "Document every exported function in Visual Studio Code and add each one to the API index, with a thousand agents."],
+ [26015, "talk", "One moment, getting the estimate."],
+ [28261, "talk", "This will start 1,000 agents on VS Code (4,064 files): about 2 to 3 minutes and $1.57 to $2.91. It stops at $5.00 whatever happens. Start?"],
+ [43396, "you", "Yes, start."],
+ [401716, "you", "Show the index check."],
+ [406004, "talk", "API index, one line per exported function, written by this job: 5,890 of 5,890 lines, sorted, none missing, none twice."],
+ [426297, "you", "Show the intent tree."],
+ [440062, "talk", "Opening the intents view for this run now."]]

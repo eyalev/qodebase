@@ -1,0 +1,30 @@
+[
+ {
+  "a": 16400,
+  "b": 42000
+ },
+ {
+  "a": 42300,
+  "b": 49000
+ },
+ {
+  "a": 56000,
+  "b": 338000,
+  "x": 12,
+  "say": "A thousand agents start, each on its own files. Each also writes one line in a shared index, so they collide thousands of times, and every collision is redone on the newest code. A hundred and seventy-one files were rejected by the checks and left unchanged; the rest land on main."
+ },
+ {
+  "a": 400600,
+  "b": 418000
+ },
+ {
+  "a": 425200,
+  "b": 447000
+ },
+ {
+  "a": 459831,
+  "b": 472000,
+  "say": "The run's own page: the index check, five thousand eight hundred ninety lines, none missing; and every one of the two thousand seven hundred sixty-six collisions was redone.",
+  "hold": 1
+ }
+]
