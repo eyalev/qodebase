@@ -17,3 +17,10 @@
   git all ran in Eyal's own Cloudflare account.
 - Not covered: real Claude agents on the copy (it has no Claude key); a first try on an imported repo whose branch is
   master failed the reset ('stale ref': the seed pushes main) and was stopped after 12 s (project eyalev/test-repo1).
+
+## 2026-10-14 12:58-13:00 UTC: release rebuilt from the current forq
+- Built from forq c696edf (adds the day's landing fixes: the wake check at every spawn, 'woken: its box is starting',
+  the 'ended' state, and the other tabs' UI work since 57a3f2e), committed as 7f0d372, pushed to GitHub and the
+  Artifacts mirror forq/forq.
+- Install test `qb install qodebase --name qb-selftest`: account, storage, deploy, lock and ready all done in 79 s;
+  the copy answers 302 (Access). This is the release a person gets from /own now.
