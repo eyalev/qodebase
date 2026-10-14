@@ -60,7 +60,8 @@ body.rec .bar-c{display:none}
 .bar-c .n{flex:1;text-align:center;font-size:14px;color:var(--dim)}
 .bar-c svg{width:18px;height:18px;vertical-align:-3px}
 .prog{position:fixed;left:0;top:0;height:3px;background:var(--acc);width:0;transition:width 220ms ease;z-index:6}
-body.rec .prog,body.rec .notes{display:none}
+body.rec .prog,body.rec .notes,body.rec .where{display:none}
+body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}body.rec .claim .vline{display:block;margin-top:.7em;font-size:1em;line-height:1.35;color:var(--dim)}body.rec .claim h2{font-size:2.1em;line-height:1.08}
 .notes{position:fixed;left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom));max-height:46dvh;overflow:auto;padding:16px 16px 20px;background:var(--card);border-top:1px solid var(--line);font-size:17px;line-height:1.5;transform:translateY(110%);transition:transform 220ms ease;z-index:4}
 .notes.open{transform:none}
 .notes h4{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--dim)}
@@ -200,14 +201,14 @@ body.rec .prog,body.rec .notes{display:none}
   <line x1="300" y1="120" x2="392" y2="120" stroke="var(--fg)" stroke-width="5" stroke-linecap="round"/>
   <g class="mdots"><circle r="8" style="offset-path:path('M10 20 C160 20 200 120 300 120 L390 120');--d:0;--e:100%"/><circle r="8" style="offset-path:path('M10 60 C160 60 200 120 300 120 L390 120');--d:1;--e:95%"/><circle r="8" style="offset-path:path('M10 100 C160 100 200 120 300 120 L390 120');--d:2;--e:90%"/><circle r="8" style="offset-path:path('M10 140 C160 140 200 120 300 120 L390 120');--d:3;--e:85%"/><circle r="8" style="offset-path:path('M10 180 C160 180 200 120 300 120 L390 120');--d:4;--e:80%"/><circle r="8" style="offset-path:path('M10 210 C160 210 200 120 300 120 L390 120');--d:5;--e:75%"/></g>
   <text x="10" y="12" class="ml">6 agents</text><text x="392" y="146" text-anchor="end" class="ml">1 shared main</text></svg></div>
- <aside class="say">This is qodebase: a git platform where many AI agents change one codebase at the same time, and their work lands by itself. It is built on Cloudflare, and you run it from your phone.</aside>
+ <aside class="say">This is qodebase: a git platform where many AI agents change one codebase at the same time, and their work lands by itself. It is built on Cloudflare, and you run it from your phone or your desktop.</aside>
 </section>
 
 <section class="s ovs" data-t="Overview" data-sec="intro">
  <div class="ov">
   <div class="ovc">
    <div><h3>Why we are here</h3><p>Agents write code faster than pull requests and human review can land it. With many agents, order and collisions break the flow.</p></div>
-   <div><h3>What is new</h3><p>Others send a collided change back (merge queues) or fix conflicts on request (Copilot), or let a model re-implement a branch as a last tier (Overstory). qodebase records the reviewed intent with every change, redoes it on the newest main as the normal path, and shows a live board and an Intents view, phone-first on Cloudflare.</p></div>
+   <div><h3>What is new</h3><p>Others send a collided change back (merge queues) or fix conflicts on request (Copilot), or let a model re-implement a branch as a last tier (Overstory). qodebase records the reviewed intent with every change, redoes it on the newest main as the normal path, and shows a live board and an Intents view, phone-first, and on desktop too, on Cloudflare.</p></div>
    <div><h3>The map</h3><ol class="map" data-map></ol></div>
   </div>
   <div class="ovc"><h3>What we proved</h3>
@@ -227,13 +228,13 @@ body.rec .prog,body.rec .notes{display:none}
  <aside class="say">Section A: the idea. Agents work alone and all finish at once. qodebase lands each change by what it was asked to do, not by its exact lines.</aside>
 </section>
 
-<section class="s" data-t="The problem is order" data-sec="A">
- <div class="claim"><h2>The real problem is order</h2><p>Hono's last 346 pull requests, replayed in waves of 100: <b>48%</b> needed another one to land first. Git saw no conflicts at all.</p><span class="src">Replay of real pull requests, no model calls</span></div>
+<section class="s" data-t="The problem is order" data-sec="A" data-vh="48% couldn’t land until another did">
+ <div class="claim"><h2>The real problem is order</h2><span class="vline">Hono, an open-source web framework: if 100 of its last 346 real PRs were written at once, as 100 agents would. Git conflicts: 0.</span><p>Hono's last 346 pull requests, replayed in waves of 100: <b>48%</b> needed another one to land first. Git saw no conflicts at all.</p><span class="src">Replay of real pull requests, no model calls</span></div>
  <div class="vis"><div class="sq" id="hono" aria-label="48 of 100 squares filled"></div><div class="legend"><span><b style="background:var(--busy)"></b>needed another change first</span><span><b style="background:var(--chip);box-shadow:inset 0 0 0 1px var(--frame)"></b>could land alone</span></div></div>
  <aside class="say">We measured first. We replayed Hono's last 346 pull requests in waves of a hundred. Almost half needed another one to land first, and git reported no conflicts at all. The hard part is order.</aside>
 </section>
 
-<section class="s" data-t="Land by intent" data-sec="A">
+<section class="s" data-t="Land by intent" data-vh="A collision is redone, not sent back" data-sec="A">
  <div class="claim"><h2>A collision is redone, not sent back</h2><p>When a change collides, qodebase applies its request again on the newest code, tests it, and lands it.</p></div>
  <div class="vis"><div class="card lbi">
   <div class="row"><span class="av a">2</span><span class="file">Agent 2 changed <span class="mono">style.css</span> <span class="tag ok">landed</span></span></div>
@@ -243,10 +244,10 @@ body.rec .prog,body.rec .notes{display:none}
  <aside class="say">When Agent 4's change collides with Agent 2's, qodebase does not send it back. It applies the same request again on the newest code, by rules for shared files or by a model for a real conflict, tests it, and lands it.</aside>
 </section>
 
-<section class="s" data-t="Review and record" data-sec="A">
- <div class="claim"><h2>Every change keeps its record, inside git</h2><p>What it was asked to do, which agent did it, the review (or that there was none), how it landed and the tests: a git note on its commit, read with plain git. This one is real, from a build in this video; long fields are cut with “…”.</p><span class="src">eyal/home-tracker, commit 373036d, refs/notes/qodebase (fields trimmed: title, fork, base, agentCommit, handled)</span></div>
+<section class="s" data-t="Review and record" data-vh="Every change keeps its record, in git" data-sec="A">
+ <div class="claim"><h2>Every change keeps its record, inside git</h2><p>What it was asked to do, which agent did it, the review (or that there was none), how it landed and the tests: a git note on its commit, read with plain git. This one is real, from an earlier build; long fields are cut with “…”.</p><span class="src">eyal/home-tracker, commit 373036d, refs/notes/qodebase (fields trimmed: title, fork, base, agentCommit, handled)</span></div>
  <div class="vis"><div class="term" aria-label="git log output with a real qodebase note"><span style="--d:0">$ git log --notes=qodebase -1 373036d</span><span style="--d:0.6">commit 373036d  Dark mode: follow the device and allow a manual switch</span><span class="k" style="--d:1.2">Notes (qodebase):</span><span style="--d:1.8">{</span><span style="--d:2.4">  "change": "eyal.home-tracker--fcnj9",</span><span style="--d:3">  "intent": "Dark mode: follow the device and allow a manual switch\nIn styles.css move every color into CSS variables …\nAsked: Please add a dark mode to the app.",</span><span style="--d:3.6">  "agent": "agent fcnj9",</span><span style="--d:4.2">  "how": "replayed-llm",</span><span style="--d:4.8">  "review": { "verdict": "auto", "notes": "no reviewer in this variant" },</span><span style="--d:5.4">  "replay": { "model": "claude-haiku-5-5", "sameLinesAsReviewed": true },</span><span style="--d:6">  "checks": { "ok": true },</span><span style="--d:6.6">  "landedBy": "qodebase merge queue",</span><span style="--d:7.2">  "at": "2026-10-13T23:21:14.599Z"</span><span style="--d:7.8">}</span></div></div>
- <aside class="say">Every change keeps its record inside git. What it was asked to do, which agent did it, the review, how it landed and the tests, written as a git note on its commit. This one is real: the dark mode from a build you will see in a minute. It collided, a model redid it on the newest code, and the tests passed. This is not GitHub with agents on top: the unit is a request with its record.</aside>
+ <aside class="say">Every change keeps its record inside git. What it was asked to do, which agent did it, the review, how it landed and the tests, written as a git note on its commit. This one is real, from an earlier build: a dark mode that collided, was redone by a model on the newest code, and passed its tests. This is not GitHub with agents on top: the unit is a request with its record.</aside>
 </section>
 
 <section class="s" data-t="Watch a run" data-sec="A">
@@ -279,7 +280,7 @@ body.rec .prog,body.rec .notes{display:none}
  <aside class="say">Then a real app: forty agents on one travel planner. Twenty-eight of their changes collided, and every one was redone. We tried the app by hand: eleven of thirteen features work. One replay had dropped a file, so we audited every model replay, thirty-five in two builds, and fixed the rule. Why not four hundred Opus agents? One forty-agent run cost about seventeen dollars, and at this size one strong agent was faster anyway.</aside>
 </section>
 
-<section class="s" data-t="One agent or a team" data-sec="B">
+<section class="s" data-t="One agent or a team" data-vh="For a fresh app, one agent was faster" data-sec="B">
  <div class="claim"><h2>For a fresh app, one strong agent was faster</h2><p>On the same prompts, one Opus agent finished sooner than a team in all three real builds, 2 to 6 times, with at least as many features working. The team was cheaper in two of the three.</p><span class="src">Real builds on the same prompts, one run each</span></div>
  <div class="vis"><div class="bars" id="solo"></div></div>
  <aside class="say">And an honest finding: for a fresh app, one strong agent beat a team. On the same prompts, a single Opus agent finished sooner in all three real builds, two to six times, with at least as many features working. The team was cheaper in two of the three.</aside>
@@ -296,7 +297,7 @@ body.rec .prog,body.rec .notes{display:none}
 
 
 
-<section class="s" data-t="Hundreds of agents, checked by tests" data-sec="C">
+<section class="s" data-t="Hundreds of agents, checked by tests" data-vh="200 agents on one codebase, 0 lost in landing" data-sec="C">
  <div class="claim"><h2>200 agents on the same code: losses in the same range, 0 lost in landing</h2><p>1,385 small coding tasks through the real merge queue. A model redid up to 468 collided changes, wrong about as often as fresh work (~5%). The queue slowed; lanes per module fixed most of it.</p><span class="src">Cloudflare, 200 cheap-model agents, hidden tests, one run each; 0 lost in landing at 60%. Change records missing in those lane runs: fixed, 199 of 199 in a check run</span></div>
  <div class="vis"><div class="bars">
   <div class="pair"><h3>Checks lost on main, of 1,385</h3>
@@ -315,7 +316,7 @@ body.rec .prog,body.rec .notes{display:none}
  <aside class="say">Now hundreds. Two hundred cheap-model agents took almost fourteen hundred small coding tasks on one codebase, and every change went through the real merge queue. Then we aimed more and more of the tasks at the same functions, up to sixty percent. A model redid up to four hundred and sixty-eight collided changes, and they were wrong about as often as fresh work. Losses stayed in the same range: ninety-six, seventy-four, then sixty lost checks, almost all the models' own mistakes, not the landing. What the overlap cost was time: the queue went from forty minutes to over three hours. Splitting it into lanes per module cut the worst case to fifty-three minutes, and fetching ahead in each lane to forty-four and a half, with more requirements passing on main and nothing lost in landing.</aside>
 </section>
 
-<section class="s" data-t="Scale runs" data-sec="C">
+<section class="s" data-t="Scale runs" data-vh="Thousands of agents, one platform" data-sec="C">
  <div class="claim"><h2>Thousands of agents on one platform</h2><p>Past about 2,000 reads a second for the whole account, Artifacts slowed down instead of failing. What we built: a read cache and faster landing: 10,000 agents, every file different, everything on main in 86 seconds (cached answers, no model calls; at most ~2,800 busy at once).</p><span class="src">Best case, files repeating (cached answers + read cache, no model calls): 100,000 agents, ~22,000 files a second, 0 lost. 10,000-agent run (c): 40,640 files, 29,890 changes on main, 0 errors (docs/contest/fleet-r10k.md)</span></div>
  <div class="vis"><div class="bars"><div class="pair" id="ladder"><h3>Files a second, busiest 10 seconds</h3>
   <div class="bar"><div class="l"><span>200 agents, before our first fix</span><b>227</b></div><div class="t"><i class="warn" style="--w:7.6%;--d:0"></i></div></div>
@@ -357,9 +358,9 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s secs" data-t="Built for people, built on Cloudflare" data-sec="D" data-head>
- <div class="claim"><span class="secn">Section D</span><h2>Built for people, built on Cloudflare</h2><p>One person steers from a phone, and every step is visible.</p></div>
- <div class="vis"><ul class="pts"><li>Phone first, plain words</li><li>Intents, the timeline, Asks and the Runs page</li><li>An estimate before you build</li><li>Cloudflare underneath</li></ul><ol class="map mini" data-map></ol></div>
- <aside class="say">Section D: the people side. One person steers it all from a phone, and every step is visible.</aside>
+ <div class="claim"><span class="secn">Section D</span><h2>Built for people, built on Cloudflare</h2><p>One person steers from a phone or a desktop, and every step is visible.</p></div>
+ <div class="vis"><ul class="pts"><li>Phone first, desktop too, plain words</li><li>Intents, the timeline, Asks and the Runs page</li><li>An estimate before you build</li><li>Cloudflare underneath</li></ul><ol class="map mini" data-map></ol></div>
+ <aside class="say">Section D: the people side. One person steers it all from a phone or a desktop, and every step is visible.</aside>
 </section>
 
 <section class="s" data-t="From your phone" data-sec="D">
@@ -380,7 +381,7 @@ body.rec .prog,body.rec .notes{display:none}
  <aside class="say">With a thousand agents, nobody can follow agents one by one. So qodebase shows intents: each request, split into areas, then what each agent set out to do, then its change. Every line rolls up its status, stuck things come first, and from any change you can ask why it exists, all the way up to the request.</aside>
 </section>
 
-<section class="s" data-t="Asks" data-sec="D">
+<section class="s" data-t="Asks" data-vh="Every request, and what became of it" data-sec="D">
  <div class="claim"><h2>Asks: every request, and what became of it</h2><p>Each request, the changes it became and their state. Agents log what they decided for you, and ask you only for real decisions.</p></div>
  <div class="vis"><div class="phone"><img class="shot" data-shot="asks" alt="Asks: one request, 12 changes, all landed"></div></div>
  <aside class="say">Asks lists every request and what became of it: the changes it turned into and where each one is. Agents also log the decisions they made for you, and ask you only for the real ones.</aside>
@@ -524,6 +525,7 @@ deck.addEventListener('pointerup',function(e){if(x0==null)return;var dx=e.client
 window.addEventListener('hashchange',function(){var n=parseInt(location.hash.slice(1),10);if(n&&n-1!==i)go(n-1)});
 // For Talk (qb2): go to a slide by number (1-based) or by words in its title.
 window.deckGo=function(x){var n=parseInt(x,10);if(!n){var q=String(x||'').toLowerCase();S.some(function(s,k){var t=(s.dataset.t+' '+(s.querySelector('h2')||{}).textContent).toLowerCase();if(q&&t.indexOf(q)>=0){n=k+1;return true}})}if(n)go(n-1);return n||0};
+if(document.body.classList.contains('rec'))[].forEach.call(document.querySelectorAll('[data-vh]'),function(x){var h=x.querySelector('h2');if(h)h.textContent=x.dataset.vh});
 window.deckSlides=function(){return S.map(function(s,k){return{n:k+1,title:s.dataset.t}})};
 go((parseInt(location.hash.slice(1),10)||1)-1);
 })();
