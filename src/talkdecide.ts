@@ -286,7 +286,10 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
     // 'called-home-ledger').
     const named = /,?\s*\b(called|named)\s+["\u201c]?([\p{L}\p{N}][\p{L}\p{N} '-]{1,38}?)["\u201d]?(?=\s*(,|\.|$|\bwith\b|\band\b|\bthat\b|\bwhich\b|\bfor\b))/iu.exec(bm[4]);
     const projName = named ? named[2].trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : '';
-    const idea = (named ? bm[4].replace(named[0], '') : bm[4]).replace(SETTINGS_RX, '').replace(/\s+(and|,)\s*(and\s+)?(?=[,.]|$)/gi, '').replace(/\s{2,}/g, ' ').replace(/\s+,/g, ',').replace(/^[\s,]+|[\s,.]+$/g, '');
+    // '… called Stuff Tracker. That keeps track of …' (the dictation's full stop after the name): the idea reads on
+    // as one sentence, 'An app that keeps track of …', not 'An app. That keeps …' (qb3's take).
+    const unnamed = named ? bm[4].slice(0, named.index) + bm[4].slice(named.index + named[0].length).replace(/^\s*[.,;:!]\s+(that|which|where|who|to|for|with|so|and)\b/i, (_m, w: string) => ' ' + w.toLowerCase()) : bm[4];
+    const idea = unnamed.replace(SETTINGS_RX, '').replace(/\s+(and|,)\s*(and\s+)?(?=[,.]|$)/gi, '').replace(/\s{2,}/g, ' ').replace(/\s+,/g, ',').replace(/^[\s,]+|[\s,.]+$/g, '');
     return { ...cmd, mode: 'act', op: 'type', target: ideaBox.id, label: ideaBox.text, text: idea.charAt(0).toUpperCase() + idea.slice(1), preset: preset || undefined, name: projName || undefined, p: 0.9, why: 'build words on the idea box' } as Cmd;
   }
   // The 1,000-agent job (qb3's shot 3a) said without the words 'fleet job'.
