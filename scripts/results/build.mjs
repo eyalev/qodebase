@@ -65,7 +65,9 @@ async function fleet() {
   for (const r of rows) r.cached = r.models.length > 0 && r.models.every((m) => m === 'cache');
   // What the run wrote: 'docs' (comments only, code unchanged by verify), 'code' (the kata code dial: functions on
   // their own repos) or 'index' (the index job). Totals are kept per job so the docs-only number has its own source.
-  for (const r of rows) r.job = /^fleet-kata/.test(r.repo) ? 'code' : /^index job/.test(r.label || '') ? 'index' : 'docs';
+  // 'docs+index' = doc comments plus docs/API.md (one line per documented export); the source files are verified
+  // code-unchanged like 'docs', the index is a new markdown file. So far these are qb3's scene-3 film takes and rehearsals, not the measured set: kept apart so the docs-only total stays comparable.
+  for (const r of rows) r.job = /^fleet-kata/.test(r.repo) ? 'code' : /^index job/.test(r.label || '') ? 'index' : /API index/.test(r.label || '') ? 'docs+index' : 'docs';
   const cachedRows = rows.filter((r) => r.cached);
   const csum = (k) => cachedRows.reduce((a, r) => a + (r[k] || 0), 0);
   const cachedTotals = { runs: cachedRows.length, files: csum('files'), landed: csum('landed'), skipped: csum('skipped'), verifyRefused: csum('verifyFail'),

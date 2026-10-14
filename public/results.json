@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-14T09:19:44.336Z",
+ "generated": "2026-10-14T09:28:39.442Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -259,11 +259,11 @@
    "runs": 42,
    "byJob": {
     "docs": {
-     "runs": 32,
-     "filesAttempted": 66243,
-     "landed": 45729,
-     "skipped": 19257,
-     "usd": 30.35
+     "runs": 27,
+     "filesAttempted": 45923,
+     "landed": 31466,
+     "skipped": 13912,
+     "usd": 19.09
     },
     "index": {
      "runs": 1,
@@ -271,6 +271,13 @@
      "landed": 506,
      "skipped": 153,
      "usd": 0.13
+    },
+    "docs+index": {
+     "runs": 5,
+     "filesAttempted": 20320,
+     "landed": 14263,
+     "skipped": 5345,
+     "usd": 11.27
     },
     "code": {
      "runs": 9,
@@ -1912,7 +1919,7 @@
     "rejected": 46,
     "rateLimited": 0,
     "usd": 5.7866,
-    "wallS": 67094,
+    "wallS": 67631,
     "landWaitP90S": 71,
     "firstAt": 1791902486503
    },
@@ -2184,7 +2191,7 @@
     "rejected": 0,
     "rateLimited": 0,
     "usd": 0,
-    "wallS": 61035,
+    "wallS": 61572,
     "landWaitP90S": 183,
     "firstAt": 1791908544889
    },
@@ -9687,8 +9694,8 @@
     "calls": null,
     "usd": 0,
     "startedAt": 1791908546429,
-    "endedAt": 1791969580076,
-    "wallS": 61034,
+    "endedAt": 1791970116607,
+    "wallS": 61570,
     "landWaitP50S": 78,
     "landWaitP90S": 88,
     "peakPerMin": null,
@@ -17516,8 +17523,8 @@
     "calls": null,
     "usd": 1.9211,
     "startedAt": 1791902486503,
-    "endedAt": 1791969580338,
-    "wallS": 67094,
+    "endedAt": 1791970116872,
+    "wallS": 67630,
     "landWaitP50S": 35,
     "landWaitP90S": 52,
     "peakPerMin": null,
@@ -17582,8 +17589,8 @@
     "calls": null,
     "usd": 1.9426,
     "startedAt": 1791902486581,
-    "endedAt": 1791969580327,
-    "wallS": 67094,
+    "endedAt": 1791970117294,
+    "wallS": 67631,
     "landWaitP50S": 19,
     "landWaitP90S": 31,
     "peakPerMin": null,
@@ -17647,8 +17654,8 @@
     "calls": null,
     "usd": 1.9229,
     "startedAt": 1791902486505,
-    "endedAt": 1791969580333,
-    "wallS": 67094,
+    "endedAt": 1791970116909,
+    "wallS": 67630,
     "landWaitP50S": 45,
     "landWaitP90S": 71,
     "peakPerMin": null,
@@ -17867,7 +17874,7 @@
     "repo": "fleet-n2-vscode-src-1 src/vs",
     "label": "VS Code: doc comments + API index",
     "cached": false,
-    "job": "docs"
+    "job": "docs+index"
    },
    {
     "runId": "fmv7g24wi",
@@ -17932,7 +17939,7 @@
     "repo": "fleet-n2-vscode-src-1 src/vs",
     "label": "VS Code: doc comments + API index",
     "cached": false,
-    "job": "docs"
+    "job": "docs+index"
    },
    {
     "runId": "fmv7ggbyf",
@@ -17996,7 +18003,7 @@
     "repo": "fleet-n2-vscode-src-1 src/vs",
     "label": "VS Code: doc comments + API index",
     "cached": false,
-    "job": "docs"
+    "job": "docs+index"
    },
    {
     "runId": "fmv7stj8s",
@@ -18102,7 +18109,7 @@
     "repo": "fleet-n2-vscode-src-2 src/vs",
     "label": "VS Code: doc comments + API index",
     "cached": false,
-    "job": "docs"
+    "job": "docs+index"
    },
    {
     "runId": "fmv7f1obq",
@@ -18164,7 +18171,7 @@
     "repo": "fleet-n2-vscode-src-2 src/vs",
     "label": "VS Code: doc comments + API index",
     "cached": false,
-    "job": "docs"
+    "job": "docs+index"
    },
    {
     "runId": "fmv7slli9",
@@ -19575,11 +19582,11 @@
    "usdPer1kFiles": 0.51,
    "byJob": {
     "docs": {
-     "runs": 32,
-     "filesAttempted": 66243,
-     "landed": 45729,
-     "skipped": 19257,
-     "usd": 30.35
+     "runs": 27,
+     "filesAttempted": 45923,
+     "landed": 31466,
+     "skipped": 13912,
+     "usd": 19.09
     },
     "index": {
      "runs": 1,
@@ -19587,6 +19594,13 @@
      "landed": 506,
      "skipped": 153,
      "usd": 0.13
+    },
+    "docs+index": {
+     "runs": 5,
+     "filesAttempted": 20320,
+     "landed": 14263,
+     "skipped": 5345,
+     "usd": 11.27
     },
     "code": {
      "runs": 9,
