@@ -963,6 +963,7 @@ function submit(text) {
     add('you', said); add('app', con ? 'Conversation mode is on: I\u2019ll listen again after each answer.' : 'Conversation mode is off.');
     if (convOn() !== con) toggleConv('voice'); return finish();
   }
+  if (agentTalk(said)) return;   // 'open the agent that made dark mode', 'show its terminal', 'ask it: …'
   if (lastIdea && Date.now() - lastIdea.at < 10 * 60000 && /^\s*(another( one)?|one more|a different one|next( one)?|try again)\b/i.test(said)) { add('you', said); busy = true; offerOff(); return ideaFlow(lastIdea.size); }
   // Punctuation is not words: the recogniser writes 'Yes. Start.' or 'Yes, build it.' (qb3's take, 2026-10-14: 'Yes. Start.'
   // went to the model instead of answering the pending 'Start?').
@@ -1631,6 +1632,128 @@ function offerSubmit(t) {
 }
 
 var offerState = null;
+// ---- One of the project's agents, by voice (manager, 2026-10-14: a finished build, all by voice) ----------------------
+// 'Open the agent that made dark mode' -> the agent whose title has those words, in the project page's agent sheet
+// (Chat); 'show its session / terminal' -> the sheet's Terminal (mobile-agent; a sleeping box shows it waking);
+// 'ask it: what did you change, and why?' -> 'Send this to the agent?' -> yes -> sent with the owner's send API, then its
+// answer (from the box's conversation) is read out, short. The agent spoken about is remembered for 'its' / 'it'.
+function projHere() { var m = /^\/p\/([^/]+)\/([^/#?]+)/.exec(location.pathname); return m ? { owner: m[1], name: m[2] } : null; }
+var AG_STOP = /^(open|show|me|the|agent|agents|that|who|which|made|built|did|do|wrote|added|worked|implemented|created|on|it|its|a|an|of|for|to|please|go|page|chat|change|one|took|care|handled)$/;
+var AG_SYN = { mode: 'theme', theme: 'mode', colour: 'color', color: 'colour', night: 'dark' };
+function agWords(t) { return String(t || '').toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/).filter(function (w) { return w && !AG_STOP.test(w); }); }
+function agTitle(a) { return String(a.task || a.note || '').split('\n')[0].trim(); }
+function agentNow() { var a = sget('agent', null); return a && Date.now() - a.at < 60 * 60000 ? a : null; }
+function openAgentSheet(a, mode) {
+  if (window.forqOpenSheet && document.getElementById('sheet') && projHere() && a.slug === projHere().owner + '.' + projHere().name) { try { window.forqOpenSheet(a.id, a.title, mode); return true; } catch (e) { trace('agent_sheet_err', { err: String(e) }); } }
+  return false;
+}
+function agentTalk(said) {
+  var pj = projHere();
+  var mOpen = /^\s*(please\s+)?(open|show( me)?|go to|take me to|bring up)\s+(the\s+)?agent\s+(that|who|which)\s+(made|built|did|wrote|added|worked on|implemented|created|took care of|handled)\s+(the\s+)?(.+?)\s*[.!?]*\s*$/i.exec(said)
+    || /^\s*(please\s+)?(open|show( me)?|go to|bring up)\s+(the\s+)?(.+?)\s+agent\s*[.!?]*\s*$/i.exec(said);
+  var mTerm = /^\s*(please\s+)?(show|open|go to|bring up)\s+(me\s+)?(its|the agent'?s|that agent'?s|his|her|their)\s+(session|terminal|console|screen)\s*[.!?]*\s*$/i.exec(said);
+  var mChat = /^\s*(please\s+)?(show|open|go to)\s+(me\s+)?(its|the agent'?s|that agent'?s)\s+(chat|conversation|messages)\s*[.!?]*\s*$/i.exec(said);
+  var mAsk = /^\s*(please\s+)?ask\s+(it|the agent|that agent|him|her|them)\s*[:,]?\s*(.{3,})$/i.exec(said);
+  if (!pj || !(mOpen || mTerm || mChat || mAsk)) return false;
+  if (mOpen && /^(router|review|reviewer)$/i.test(String(mOpen[mOpen.length - 1] || mOpen[5] || '').trim())) return false;
+  add('you', said); busy = true; status('One moment\u2026');
+  var slug = pj.owner + '.' + pj.name;
+  var fail = function (t) { add('note', t); if (lastSpoken) say(t); done(); };
+  var goTo = function (a, mode, line) {
+    sset('agent', { id: a.id, title: a.title, slug: a.slug, num: a.num || null, at: Date.now() });
+    trace('agent_open', { id: a.id, mode: mode, here: !!window.forqOpenSheet });
+    add('app', line); if (lastSpoken) say(line);
+    if (openAgentSheet(a, mode)) return done();
+    sset('agentOpen', { id: a.id, title: a.title, slug: a.slug, mode: mode, at: Date.now() });
+    busy = false; leave(function () { traceFlush(true); location.assign('/p/' + pj.owner + '/' + pj.name); });
+  };
+  if (mOpen) {
+    var words = agWords(mOpen[mOpen.length - 1]);
+    fetch('/api/p/' + pj.owner + '/' + pj.name, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
+      var info = j.info || j, list = (info.agents || []).filter(function (a) { return !/--(router|review|merge|build|ask)\d*$/.test(a.id); });
+      var score = function (a) { var tw = agWords(agTitle(a)); return words.filter(function (w) { return tw.indexOf(w) >= 0 || (AG_SYN[w] && tw.indexOf(AG_SYN[w]) >= 0) || tw.some(function (x) { return x.length > 4 && (x.indexOf(w) === 0 || w.indexOf(x) === 0); }); }).length; };
+      var best = list.map(function (a) { return { a: a, n: score(a) }; }).sort(function (x, y) { return y.n - x.n; })[0];
+      trace('agent_pick', { words: words, best: best && best.a.id, n: best && best.n, of: list.length });
+      if (!best || !best.n) return fail('I could not find an agent here that worked on ' + mOpen[mOpen.length - 1].replace(/[.!?]+$/, '') + '.');
+      var a = { id: best.a.id, title: agTitle(best.a).slice(0, 80), slug: slug };
+      var what = a.title.split(':')[0].trim(); if (!/^[A-Z0-9]{2}/.test(what)) what = what.charAt(0).toLowerCase() + what.slice(1);
+      agentNumber(pj.owner, pj.name, a.id).then(function (num) {
+        a.num = num;
+        goTo(a, 'chat', num ? 'This is Agent ' + num + ', the agent that made ' + what + '.' : 'This is the agent that made ' + what + '.');
+      });
+    }).catch(function () { fail('Could not reach qodebase.'); });
+    return true;
+  }
+  var cur = agentNow();
+  if (!cur || cur.slug !== slug) { fail('Which agent? Say \u201copen the agent that made\u201d and what it built.'); return true; }
+  if (mTerm) { goTo(cur, 'term', 'Opening its terminal. If the agent was asleep, it is waking up.'); return true; }
+  if (mChat) { goTo(cur, 'chat', 'Here is its chat.'); return true; }
+  // Ask it: one confirm, then send and wait for the answer.
+  var q = mAsk[3].trim().replace(/^[\u201c"]|[\u201d"]$/g, '');
+  q = q.charAt(0).toUpperCase() + q.slice(1);
+  busy = false; status('');
+  offerOn('Send this to the agent: \u201c' + q + '\u201d?', function () { askAgent(cur, q); }, 'Send');
+  done();
+  return true;
+}
+// The Board's number for an agent (work.js agentNums: changes by creation time; 'agent 7' ids keep their own number).
+function agentNumber(o, n, id) {
+  return fetch('/api/p/' + o + '/' + n + '/landing', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
+    var all = ((v && v.changes) || []).slice().sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); }), m = {}, used = {}, k = 1;
+    all.forEach(function (c) { var x = /^(?:scripted )?agent[- ](\d+)$/i.exec(c.agent || ''); if (x && !(c.agent in m) && !used[+x[1]]) { m[c.agent] = +x[1]; used[+x[1]] = 1; } });
+    all.forEach(function (c) { if (!(c.agent in m)) { while (used[k]) k++; m[c.agent] = k; used[k] = 1; } });
+    var sh = String(id).split('--').pop();   // changes name their agent 'agent <short id>'
+    return m[id] || m['agent ' + sh] || m[sh] || null;
+  }).catch(function () { return null; });
+}
+var agentWait = null;
+function askAgent(a, q) {
+  busy = true; status('Sending\u2026'); clearTimeout(agentWait);
+  var conv = function () { return fetch('/api/agents/' + a.id + '/conversation', { credentials: 'same-origin' }).then(function (r) { return r.json(); }); };
+  var t0 = Date.now(), base = 0;
+  conv().catch(function () { return {}; }).then(function (c) {
+    base = (c && c.messages || []).length;
+    return fetch('/api/agents/' + a.id + '/send', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: q }) }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok && j.ok !== false, j: j }; }); });
+  }).then(function (res) {
+    trace('agent_ask', { id: a.id, ok: res.ok, err: res.j && res.j.error, base: base });
+    if (!res.ok) { add('note', 'Not sent: ' + ((res.j && res.j.error) || 'the agent did not take it') + '.'); return done(); }
+    openAgentSheet(a, 'chat');
+    var who0 = a.num ? 'Agent ' + a.num : 'The agent';
+    add('app', 'Sent to ' + (a.num ? 'Agent ' + a.num : 'the agent') + '.'); status(who0 + ' is answering\u2026'); if (lastSpoken) say(who0 + ' is answering.');
+    var seenUser = false;
+    (function poll() {
+      if (Date.now() - t0 > 4 * 60000) { var lt = 'The agent is still working. Its answer will show in its chat.'; add('note', lt); if (lastSpoken) say(lt); trace('agent_answer', { id: a.id, timeout: true }); return done(); }
+      agentWait = setTimeout(function () {
+        conv().then(function (c) {
+          var ms = (c && c.messages) || [], status_ = String((c && c.status) || '');
+          var after = ms.slice(Math.max(0, base - 2)), out = [], at = -1;
+          for (var i = 0; i < after.length; i++) if (after[i].type === 'user' && String(after[i].text || '').indexOf(q.slice(0, 24)) >= 0) at = i;
+          if (at >= 0) { seenUser = true; for (var k = at + 1; k < after.length; k++) if (after[k].type === 'assistant_text' && String(after[k].text || '').trim()) out.push(String(after[k].text).trim()); }
+          var working = /busy|thinking|working|running|tool/.test(status_);
+          if (seenUser && out.length && !working) {
+            var ans = out.join('\n\n'), who = a.num ? 'Agent ' + a.num : 'The agent';
+            trace('agent_answer', { id: a.id, chars: ans.length, ms: Date.now() - t0 });
+            add('ai', who + ' says: ' + ans);
+            if (!lastSpoken) return done();
+            // In Talk's own voice, attributed (manager: three voices in the video): verbatim when short, else a short summary.
+            var plain = spoken(ans), parts = sentencesOf(plain);
+            if (plain.length <= 220 && parts.length <= 2) { var v1 = new String(who + ' says: ' + plain); v1.__short = true; say(v1); return done(); }
+            var sumDone = false, sumSay = function (x, how) {
+              if (sumDone) return; sumDone = true; trace('agent_answer_said', { how: how, chars: x.length });
+              x = String(x).replace(/(\s*[^.!?]*\?)+\s*$/, '').trim() || parts.slice(0, 2).join(' ');   // no questions of its own ('Want the details?')
+              var v2 = new String(who + ' says, in short: ' + x.replace(/\s+$/, '') + ' The full answer is on screen.'); v2.__short = true; say(v2); done();
+            };
+            setTimeout(function () { sumSay(parts.slice(0, 2).join(' '), 'first sentences'); }, 4000);
+            api('summary', { text: ans, question: q }).then(function (r) { if (r && r.spoken) sumSay(r.spoken, 'summary'); }).catch(function () {});
+            return;
+          }
+          poll();
+        }).catch(function () { poll(); });
+      }, 3000);
+    })();
+  }).catch(function (e) { add('note', 'Could not reach the agent.'); trace('agent_ask', { id: a.id, ok: false, err: String(e) }); done(); });
+}
+
 function offerOn(text, yes, yesLabel) {
   if (convOfferAway(text, yes, yesLabel)) return;   // Conversations: a question for a conversation not on screen waits there
   if (run && text && run.texts[run.texts.length - 1] !== text) run.texts.push(text);
@@ -2756,6 +2879,8 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   var p = sget('pending', null);
   if (p) { sset('pending', null); setTimeout(function () { ask(p.text, p.did); }, 300); }
   briefQuestion();
+  var ao = sget('agentOpen', null);
+  if (ao && Date.now() - ao.at < 30000) { sset('agentOpen', null); setTimeout(function () { if (!openAgentSheet(ao, ao.mode)) trace('agent_sheet_missing', { id: ao.id }); }, 700); }
   // The rest of a reply that a navigation interrupted, said here once the page is up.
   var sa = sget('sayafter', null);
   if (sa && Date.now() - sa.at < 30000) { sset('sayafter', null); lastSpoken = true; setTimeout(function () { var o = new String(sa.text); o.__short = true; say(o); }, 900); }
