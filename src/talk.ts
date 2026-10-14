@@ -578,6 +578,13 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
       else if (a.state === 'blocked') { blocked.push({ t: what, href: `${base}/changes` }); note ||= 'blocked'; }
       else if (a.state === 'merged' && (a.noteAt || a.createdAt) >= since) merged++;
     }
+    // A request the router is holding because every agent is busy (qb7, manager's ask 2026-10-14): qb6's view.waiting
+    // [{text, at}] when present; until then, delivered 3+ min ago, no agent started since, and agents still working.
+    const lr = info.lastRequest, agentsNow = (info.agents || []) as any[];
+    const held = Array.isArray(info.waiting) && info.waiting.length ? info.waiting[0]
+      : lr && lr.state === 'sent' && Date.now() - (lr.sentAt || lr.at) > 3 * 60_000 && Date.now() - lr.at < 6 * 3600_000
+        && !agentsNow.some((a) => (a.createdAt || 0) > lr.at) && agentsNow.some((a) => a.state === 'working') ? lr : null;
+    if (held) { waiting.push({ t: `${info.name}: “${short(held.text)}” is waiting for a free agent (sent ${ago(held.sentAt || held.at)} ago)`, href: base, proj: info.name }); note ||= 'waiting for an agent'; }
     if (info.lastRequest && info.lastRequest.state !== 'sent' && info.lastRequest.at >= since) { waiting.push({ t: `${info.name} (${info.lastRequest.state === 'failed' ? 'your request did not reach its agents' : 'delivering your request'})`, href: base }); note ||= info.lastRequest.state === 'failed' ? 'request failed' : 'delivering'; }
     if ((e.updatedAt || 0) >= since) changed++;
     if (note) links.push({ text: `${info.name}: ${note}`, href: `${base}/changes` });
