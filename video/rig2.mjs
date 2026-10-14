@@ -82,7 +82,7 @@ const MIC = () => {
     const d = ensure();
     const bytes = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0));
     const buf = await ctx.decodeAudioData(bytes.buffer);
-    const src = ctx.createBufferSource(); src.buffer = buf; src.connect(d); src.connect(out); src.start();
+    const src = ctx.createBufferSource(); src.buffer = buf; src.connect(d); src.start();   // the cut mixes the clip from its file; out carries Talk's replies
     return new Promise((ok) => { src.onended = () => ok(buf.duration); });
   };
 };

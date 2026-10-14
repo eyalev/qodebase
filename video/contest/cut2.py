@@ -121,7 +121,7 @@ class Cut2(base.Cut):
                     if e['ev'] == 'say' and a <= e['t'] < b and os.path.exists(e.get('clip', '')):
                         self.audio.append((self.now() + (e['t'] - a) / 1000, e['clip']))
             part = next(((t0, f) for t0, f in reversed(parts) if t0 <= a), None)
-            if x == 1 and s.get('audio', True) and part and not s.get('quote'):
+            if x == 1 and s.get('audio', True) and part and (s.get('page_audio') or not s.get('quote')):
                 wav = os.path.join(src, f'aud-{a}-{b}.wav')
                 if not os.path.exists(wav):
                     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-ss', f'{(a - part[0]) / 1000:.3f}', '-t', f'{(b - a) / 1000:.3f}',
