@@ -914,6 +914,7 @@ export class Agent extends DurableObject {
         await this.ctx.storage.delete([...keys, 'pendLandN', 'pendKind']);
       }
       await this.ctx.storage.put('infraErrs', 0); await this.ctx.storage.delete('pendFails');
+      await this.ctx.storage.deleteAlarm();   // the safety retry is not needed; the caller books what comes next
       return true;
     } catch (e) {
       const f = ((await this.ctx.storage.get('pendFails')) || 0) + 1;
