@@ -316,13 +316,12 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s" data-t="Scale runs" data-sec="C">
- <div class="claim"><h2>Thousands of agents on one platform</h2><p>4,750 agents on Cloudflare. Past about 2,000 reads a second, Artifacts slowed down instead of failing: nothing broke, the waits grew. Splitting storage in two peaked near 3,000 files a second (one 10-s window), though the new half failed reads at first.</p><span class="src" data-k="scale.label">Scale runs with cached answers (no model calls); every other step real</span></div>
+ <div class="claim"><h2>Thousands of agents on one platform</h2><p>4,750 on Cloudflare. Past about 2,000 reads a second, Artifacts slowed down instead of failing; nothing broke.</p><span class="src" data-k="scale.label">Scale runs with cached answers (no model calls); every other step real</span></div>
  <div class="vis"><div class="bars"><div class="pair" id="ladder"><h3>Files a second, busiest 10 seconds</h3>
   <div class="bar"><div class="l"><span>200 agents, before our first fix</span><b>227</b></div><div class="t"><i class="warn" style="--w:7.6%;--d:0"></i></div></div>
   <div class="bar"><div class="l"><span>1,000 agents</span><b>1,230</b></div><div class="t"><i class="acc" style="--w:41%;--d:.25"></i></div></div>
-  <div class="bar"><div class="l"><span>4,750 agents</span><b>2,100</b></div><div class="t"><i class="acc" style="--w:70%;--d:.5"></i></div></div>
-  <div class="bar"><div class="l"><span>4,400 agents, storage split in two</span><b>~3,000</b></div><div class="t"><i class="acc" style="--w:100%;--d:.75"></i></div></div></div></div></div>
- <aside class="say">Then we pushed it: thousands of agents on one platform. Four thousand seven hundred and fifty agents ran on Cloudflare. Past about two thousand reads a second, Artifacts slowed down instead of failing: nothing broke, the waits just grew. Splitting the storage in two reached about three thousand files a second at its peak, though the new half failed reads at first, so we are building a read cache next.</aside>
+  <div class="bar"><div class="l"><span>4,750 agents</span><b>2,100</b></div><div class="t"><i class="acc" style="--w:100%;--d:.5"></i></div></div></div></div></div>
+ <aside class="say">Then we pushed it: thousands of agents on one platform, four thousand seven hundred and fifty on Cloudflare. Past about two thousand reads a second, Artifacts slowed down instead of failing; nothing broke, the waits just grew.</aside>
 </section>
 
 <section class="s" data-t="A fleet of cheap models" data-sec="C">
@@ -492,7 +491,7 @@ fetch('/results.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():
  [].forEach.call(document.querySelectorAll('[data-k]'),function(e){var x=v[e.dataset.k];if(x!=null)e.textContent=/usd|per1k/.test(e.dataset.k)&&typeof x==='number'?x.toFixed(2):fmt(x)});
  if((j.realBuilds||{}).rows)solo(j.realBuilds.rows);
  // The scale ladder (qb4: headline.scale.ladder); one copy (S4b) is left out: it is the fix's control, not a step up.
- var L=((H.scale||{}).ladder||[]).filter(function(r){return r.copies!==1&&r.filesPerSec});
+ var L=((H.scale||{}).ladder||[]).filter(function(r){return r.copies!==1&&r.filesPerSec&&!(r.namespaces>1)});
  if(L.length){var mx=Math.max.apply(null,L.map(function(r){return r.filesPerSec}));
   document.getElementById('ladder').innerHTML='<h3>Files a second, busiest 10 seconds</h3>'+L.map(function(r,k){var first=k===0;
    return'<div class="bar"><div class="l"><span>'+fmt(r.agents)+' agents'+(r.namespaces>1?', storage split in two':'')+(first?', before the fix':'')+'</span><b>'+fmt(r.filesPerSec)+'</b></div><div class="t"><i class="'+(first?'warn':'acc')+'" style="--w:'+(r.filesPerSec/mx*100).toFixed(1)+'%;--d:'+(k*.25)+'"></i></div></div>'}).join('')}
