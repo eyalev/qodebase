@@ -74,6 +74,8 @@ ${v?.mp4 ? `<meta property="og:video" content="${origin}${f(v.mp4)}"><meta prope
 .vid .vrow{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
 .vid .share{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:0;border-radius:10px;background:var(--acc);color:var(--acc-fg);font-family:inherit;font-weight:500;font-size:15px;cursor:pointer}
 .vid .share svg{width:18px;height:18px}
+.vid .cc{min-width:44px;min-height:44px;padding:0 12px;border:0;border-radius:10px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--dim);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.vid .cc[aria-pressed=true]{background:var(--acc-soft,var(--chip));color:var(--acc);box-shadow:inset 0 0 0 1.5px var(--acc)}
 .vid .meta{color:var(--dim);font-size:13px;font-variant-numeric:tabular-nums}
 .vid .vnote{color:var(--dim);font-size:14px;margin:0}
 .vid .vnote:empty{display:none}
@@ -84,14 +86,24 @@ ${v?.mp4 ? `<meta property="og:video" content="${origin}${f(v.mp4)}"><meta prope
 <p class="lede">${esc(desc)}</p>
 <video controls playsinline preload="metadata"${v.jpg ? ` poster="${f(v.jpg)}"` : ''} aria-label="${esc(title)}">
 <source src="${f(v.mp4)}" type="video/mp4">
-${v.vtt ? `<track kind="captions" src="${f(v.vtt)}" srclang="en" label="English" default>` : ''}
+${v.vtt ? `<track kind="captions" src="${f(v.vtt)}" srclang="en" label="English">` : ''}
 </video>
 <div class="vrow"><button type="button" class="share" id="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>Share</button>
-<span class="meta">${v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, '0')}` : ''}${v.at ? `${v.duration ? ', ' : ''}cut of ${new Date(v.at).toISOString().slice(0, 10)}` : ''}</span>
+${v.vtt ? '<button type="button" class="cc" id="cc" aria-pressed="false" aria-label="Captions">CC</button>' : ''}<span class="meta">${v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, '0')}` : ''}${v.at ? `${v.duration ? ', ' : ''}cut of ${new Date(v.at).toISOString().slice(0, 10)}` : ''}</span>
 <a class="site" href="/">Try qodebase</a></div>
 <p class="vnote" id="note" role="status" aria-live="polite"></p>
 </section>
-<script>(function(){var b=document.getElementById('share'),n=document.getElementById('note'),u=location.origin+'/video';
+<script>(function(){
+// Captions: off unless this device turned them on (Eyal, 2026-10-14); the CC button and the player's own menu agree.
+var cc=document.getElementById('cc'),vd=document.querySelector('.vid video'),K='qb-video-cc';
+function tr(){return vd&&vd.textTracks&&vd.textTracks[0];}
+function setCC(on,keep){var t=tr();if(t)t.mode=on?'showing':'hidden';if(cc)cc.setAttribute('aria-pressed',on?'true':'false');if(keep){try{localStorage.setItem(K,on?'1':'0');}catch(e){}}}
+var want=false;try{want=localStorage.getItem(K)==='1';}catch(e){}
+setCC(want,false);if(vd)vd.addEventListener('loadedmetadata',function(){setCC(want,false);});
+if(cc)cc.addEventListener('click',function(){var t=tr();want=!(t&&t.mode==='showing');setCC(want,true);});
+if(vd&&vd.textTracks)vd.textTracks.addEventListener('change',function(){var t=tr();if(t&&cc)cc.setAttribute('aria-pressed',t.mode==='showing'?'true':'false');});
+})();
+(function(){var b=document.getElementById('share'),n=document.getElementById('note'),u=location.origin+'/video';
 b.addEventListener('click',function(){var d={title:${JSON.stringify(title)},text:${JSON.stringify(desc)},url:u};
 if(navigator.share){navigator.share(d).catch(function(){});return;}
 var done=function(){n.textContent='Link copied: '+u;};
