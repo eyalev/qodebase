@@ -1423,12 +1423,27 @@ function followConfirm(c, before) {
   }, 400);
 }
 // Actions a page names itself (window.__talkActions: a moment on a timeline, the next slide): run with the sentence.
+// Spoken numbers as digits for a page's own action ('with a thousand agents' -> 'with 1000 agents': the fleet form
+// reads digits only and fell back to 200/$3 in qb3's take, 2026-10-14). 'a/one hundred', 'five hundred', 'two
+// thousand', 'twenty five', 'one point five'.
+function numberWords(t) {
+  var U = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
+  var W = '(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)';
+  var re = new RegExp('\\b(' + W + '(?:[ -]' + W + ')?)(?:\\s+(hundred|thousand))?(?:\\s+(?:and\\s+)?(' + W + '(?:[ -]' + W + ')?)\\s+(hundred))?\\b(?=\\s+(agents?|dollars?|bucks|files?|minutes?|reviewers?|copies|people)\\b)', 'gi');
+  var val = function (p) { return String(p).toLowerCase().split(/[ -]/).reduce(function (n, w) { return n + (U[w] || 0); }, 0); };
+  return String(t || '').replace(re, function (m, a, mult, b) {
+    var n = val(a); if (mult) n *= mult.toLowerCase() === 'hundred' ? 100 : 1000; if (b) n += val(b) * 100;
+    return n ? String(n) : m;
+  }).replace(/\b(\d+)\s+thousand\b/gi, function (m, d) { return String(+d * 1000); }).replace(/\b(\d+)\s+hundred\b/gi, function (m, d) { return String(+d * 100); });
+}
 function pageAction(c) {
   var list = window.__talkActions || [], a = null;
   list.forEach(function (x, i) { if ('x' + (x.id || i) === c.target) a = x; });
   if (!a) { add('note', 'Could not find that on the page any more.'); return done(); }
   var t0 = Date.now();
-  Promise.resolve().then(function () { return a.run(lastText || c.text || ''); }).then(function (r) {
+  var said = numberWords(lastText || c.text || '');
+  if (said !== (lastText || c.text || '')) trace('number_words', { from: lastText, to: said });
+  Promise.resolve().then(function () { return a.run(said); }).then(function (r) {
     logEv('page_action', { id: c.target, ms: Date.now() - t0, ok: r !== false });
     add('app', typeof r === 'string' ? r : r === false ? 'That did not work here.' : 'Done: ' + a.text + '.');
     done();
