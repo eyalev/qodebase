@@ -669,7 +669,12 @@
     COPIES = { copies: (j.copies || []).slice().sort((a, b) => (b.fresh - a.fresh) || String(a.repo).localeCompare(String(b.repo))), jobs: j.jobs || ['comments'], error: j.error || (!r || !r.ok ? 'Could not list the copies.' : '') };
     return COPIES;
   }
+  // What the form holds (qb3's real take started with the defaults, 200 agents / $3, after Talk had filled 1,000 / $5): kept
+  // here and put back whenever the form is drawn again (a second open, a tap on the button, two opens racing over the
+  // copies fetch). Talk's values are kept before the await; a start clears them.
+  let NJV = null;
   async function njToggle(open, pre) {
+    if (pre) NJV = { ...pre, rootTouched: !!pre.root };
     const f = NJ.querySelector('form'), b = NJ.querySelector('.nj-open');
     const on = open ?? f.hidden; f.hidden = !on; b.setAttribute('aria-expanded', String(on)); b.textContent = on ? 'Close' : 'New fleet job'; b.className = on ? 'chipbtn nj-open' : 'btn nj-open';
     if (!on) return;
@@ -687,23 +692,27 @@
     const $ = (id) => f.querySelector('#' + id);
     const sel = $('nj-copy'), rootI = $('nj-root');
     const pickCopy = () => { const o = sel.selectedOptions[0]; if (o && !rootI.dataset.touched) rootI.value = o.dataset.root; };
-    if (pre) { if (pre.repo) sel.value = pre.repo; if (pre.root) { rootI.value = pre.root; rootI.dataset.touched = '1'; } if (pre.job && idx) f.querySelector(`[name=nj-job][value="${pre.job}"]`).checked = true; if (pre.agents) $('nj-agents').value = pre.agents; if (pre.budgetUsd) $('nj-budget').value = pre.budgetUsd; if (pre.preset) f.querySelector(`[name=nj-model][value="${pre.preset}"]`).checked = true; }
+    const drawnFrom = pre ? 'talk' : NJV ? 'kept' : 'defaults'; pre = pre || NJV;
+    if (pre) { if (pre.repo) sel.value = pre.repo; if (pre.root) { rootI.value = pre.root; if (pre.rootTouched !== false) rootI.dataset.touched = '1'; } if (pre.job && idx) f.querySelector(`[name=nj-job][value="${pre.job}"]`).checked = true; if (pre.agents) $('nj-agents').value = pre.agents; if (pre.budgetUsd) $('nj-budget').value = pre.budgetUsd; if (pre.preset) f.querySelector(`[name=nj-model][value="${pre.preset}"]`).checked = true; }
     pickCopy();
-    sel.onchange = () => { rootI.dataset.touched = ''; pickCopy(); njEstimate(); };
-    rootI.oninput = () => { rootI.dataset.touched = '1'; njEstimate(); };
-    f.oninput = (e) => { if (e.target !== rootI) njEstimate(); };
+    const keep = () => { const v = njBody(); NJV = { repo: v.repo, root: rootI.value.trim(), rootTouched: !!rootI.dataset.touched, job: v.job, agents: v.agents, budgetUsd: v.budgetUsd, preset: v.preset };
+      const go = $('nj-go'); if (go && !go.disabled) go.textContent = `Start ${n0(v.agents || 0)} agent${v.agents === 1 ? '' : 's'}`; };
+    sel.onchange = () => { rootI.dataset.touched = ''; pickCopy(); keep(); njEstimate(); };
+    rootI.oninput = () => { rootI.dataset.touched = '1'; keep(); njEstimate(); };
+    f.oninput = (e) => { keep(); if (e.target !== rootI) njEstimate(); };
     $('nj-x').onclick = () => njToggle(false);
     f.onsubmit = async (e) => { e.preventDefault(); const b2 = njBody(); const go = $('nj-go'), msg = $('nj-msg'); go.disabled = true; go.textContent = `Starting ${n0(b2.agents || 0)} agents…`; msg.textContent = (b2.agents || 0) >= 200 ? 'Starting every agent takes up to a minute for a big job.' : ''; msg.className = 'rc-cn';
       let r, j = {};
       try { r = await fetch(`${API}/start`, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(b2) }); j = await r.json().catch(() => ({})); } catch (x) { r = { ok: false }; }
       log('fleet_start', { ok: !!r.ok, repo: b2.repo, agents: b2.agents, runId: j.runId || null, error: j.error || null });
-      go.disabled = false; go.textContent = 'Start';
+      go.disabled = false; keep();
       if (!r.ok || !j.runId) { msg.className = 'rc-cn bad'; msg.textContent = j.error || 'Could not start it. Try again.'; return; }
       // qb3's rehearsal: the new run is not in /api/runs for a while; show it as starting and poll until it is
       PENDING = { repo: j.repo || b2.repo, runId: j.runId, at: Date.now(), agents: b2.agents, root: b2.root || '', label: b2.label || '' };
       log('fleet_pending', { repo: PENDING.repo, runId: PENDING.runId });
-      njToggle(false); COPIES = null; location.hash = `#/run/${encodeURIComponent(PENDING.repo)}/${encodeURIComponent(j.runId)}`; tick(); };
-    njEstimate();
+      NJV = null; njToggle(false); COPIES = null; location.hash = `#/run/${encodeURIComponent(PENDING.repo)}/${encodeURIComponent(j.runId)}`; tick(); };
+    keep(); njEstimate();
+    log('nj_drawn', { from: drawnFrom, agents: NJV && NJV.agents, budget: NJV && NJV.budgetUsd });
     setTimeout(() => f.scrollIntoView({ block: 'start', behavior: 'smooth' }), 30);
   }
   function njBody() {
