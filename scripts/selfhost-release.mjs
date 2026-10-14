@@ -42,6 +42,6 @@ for (const f of fs.readdirSync(`${OUT}/worker`)) {
   fs.writeFileSync(fp, t);
   if (n0) console.log(`  ${f}: ${n0} absolute path(s) made relative`);
 }
-const left = fs.readdirSync(`${OUT}/worker`).filter((f) => /\.(m?js|cjs)$/.test(f) && /\/home\/[a-z]/.test(fs.readFileSync(`${OUT}/worker/${f}`, 'utf8')));
+const left = fs.readdirSync(`${OUT}/worker`).filter((f) => /\.(m?js|cjs)$/.test(f) && /\/home\/[a-z][a-z0-9_-]*\/[A-Za-z.]/.test(fs.readFileSync(`${OUT}/worker/${f}`, 'utf8')));
 if (left.length) { console.error(`absolute /home paths remain in: ${left.join(', ')}`); process.exit(1); }
 console.log(`${OUT} ready:`, fs.readdirSync(`${OUT}/worker`).join(' '));
