@@ -1340,7 +1340,9 @@ async function pageCache(request: Request, env: Env, ctx: ExecutionContext, serv
   const ok = request.method === 'GET' && isUiHost(env, u.hostname) && PC_PATH.test(u.pathname) && ![...u.searchParams.keys()].some((k) => k !== 'doc')
     && !/(^|;\s*)(forq_session|CF_Authorization)=/.test(ck) && !request.headers.get('authorization');
   if (!ok) return serve();
-  const key = new Request(`https://pagecache.internal${u.pathname}${u.search}`);
+  // Keyed by the deployed version: a deploy never serves the previous code's pages (qb6, 2026-10-14: it kept a fixed bug live).
+  const ver = (env as { CF_VERSION_METADATA?: { id?: string } }).CF_VERSION_METADATA?.id || 'v';
+  const key = new Request(`https://pagecache.internal/${ver}${u.pathname}${u.search}`);
   const fresh = async () => {
     const res = await serve();
     if (res.status !== 200 || !(res.headers.get('content-type') || '').startsWith('text/html') || res.headers.has('set-cookie')) return res;
