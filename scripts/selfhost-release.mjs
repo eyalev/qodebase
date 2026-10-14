@@ -29,4 +29,19 @@ fs.writeFileSync(`${OUT}/wrangler.base.json`, JSON.stringify(c, null, 1));
 fs.mkdirSync(`${OUT}/run`, { recursive: true });
 fs.copyFileSync('selfhost/run-worker.js', `${OUT}/run/index.js`);
 fs.writeFileSync(`${OUT}/run/wrangler.base.json`, JSON.stringify({ name: 'my-qodebase-run', main: 'index.js', compatibility_date: c.compatibility_date, observability: { enabled: true }, workers_dev: true }, null, 1));
+// The bundle's path comments name the build machine's directories (/home/<user>/...): published in a public repo, they
+// leaked the laptop's layout (privacy scrub, 2026-10-14). Make them relative to the repo; refuse to finish if any remain.
+const ROOT = process.cwd().replace(/\/+$/, '') + '/';
+const HOME = (process.env.HOME || '/home/x').replace(/\/+$/, '') + '/';
+for (const f of fs.readdirSync(`${OUT}/worker`)) {
+  const fp = `${OUT}/worker/${f}`;
+  if (!/\.(m?js|cjs)$/.test(f) || !fs.statSync(fp).isFile()) continue;
+  let t = fs.readFileSync(fp, 'utf8');
+  const n0 = t.split(ROOT).length - 1;
+  t = t.split(ROOT).join('').split(HOME).join('~/');
+  fs.writeFileSync(fp, t);
+  if (n0) console.log(`  ${f}: ${n0} absolute path(s) made relative`);
+}
+const left = fs.readdirSync(`${OUT}/worker`).filter((f) => /\.(m?js|cjs)$/.test(f) && /\/home\/[a-z]/.test(fs.readFileSync(`${OUT}/worker/${f}`, 'utf8')));
+if (left.length) { console.error(`absolute /home paths remain in: ${left.join(', ')}`); process.exit(1); }
 console.log(`${OUT} ready:`, fs.readdirSync(`${OUT}/worker`).join(' '));
