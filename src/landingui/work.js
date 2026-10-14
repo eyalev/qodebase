@@ -766,7 +766,7 @@
   function belowFold() {
     const intro = D.mode === 'demo' ? `Each agent here is ${term('scripted', 'scripted')} (it follows a script instead of an AI model) and works on its own ${term('fork', 'copy')} of the code.` : `Each agent is an AI working on its own ${term('fork', 'copy')} of the code.`;
     return `<section class="sec"><div class="sec-h"><h3>Where they work</h3><a href="#/changes">All changes</a></div>
-        <p class="cap">Each circle is an agent, in the part of the code it is changing. Tap one to see its change.</p>${theMap()}${mapKey()}</section>
+        <p class="cap">Each circle is an agent, in the part of the code it is changing. ${matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click' : 'Tap'} one to see its change.</p>${theMap()}${mapKey()}</section>
       ${D.changes.length ? `<section class="sec"><div class="sec-h"><h3>Step by step</h3><a href="#/feed">Every step</a></div>${feed(20)}</section>
       <section class="sec"><div class="sec-h"><h3>Change records</h3></div><p class="cap">What each change was asked to do, its diff, review, tests and how it landed.</p><ul class="rows">${sortC(D.changes).map((c) => row(c)).join('')}</ul></section>` : ''}
       <section class="sec"><h3>How this works</h3><p class="intro">${intro} Finished work waits in ${term('queue', 'the line')}, is tested, then joins ${term('main', 'the main code')}. When two changes collide, the later one is redone on the newest code instead of being sent back.</p><p class="fmore"><a href="/how">How qodebase works</a></p></section>`;

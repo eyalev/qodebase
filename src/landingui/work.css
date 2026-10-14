@@ -350,3 +350,5 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .pcol .ph b{font-variant-numeric:tabular-nums;min-width:0}
 .lw .pback{margin:0;font-size:13px;color:var(--dim);line-height:1.4}
 .lw .pcol .ph:has(b.k4){flex-wrap:wrap;row-gap:0}.lw .pcol .ph b.k4{font-size:15px}
+/* desktop (qb5's critique): the details panel grows with the page instead of scrolling inside it; landed chips keep full size */
+@media (min-width:1000px){.lw .fpanel{max-height:none;overflow:visible}.lw .pchips.many{gap:8px}.lw .pchips.many .pc{width:28px;height:28px;font-size:13px}.lw .pchips.many .pc.rp::after{width:8px;height:8px;right:-3px;top:-3px;box-shadow:0 0 0 2px var(--card)}}

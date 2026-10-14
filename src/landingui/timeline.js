@@ -131,7 +131,7 @@
     return `<section class="tl" aria-label="Run timeline">
       <div class="tl-sum">${S.lines.map((l) => `<p>${esc(l)}</p>`).join('')}${T.criticalChange ? `<p class="dim">Highlighted: the chain that set the end of the run (${esc(T.criticalChange)}).</p>` : ''}</div>
       <div class="tl-legend">${legend}<span class="tl-lg"><i class="tl-crit-k"></i>Critical path</span></div>
-      <div class="tl-ctl"><button type="button" class="chipb" data-zoom="out" aria-label="Zoom out">−</button><button type="button" class="chipb" data-zoom="in" aria-label="Zoom in">+</button><button type="button" class="chipb" data-zoom="fit">Fit</button><span class="dim tl-zl">Pinch or use + and − to zoom; drag to move.</span></div>
+      <div class="tl-ctl"><button type="button" class="chipb" data-zoom="out" aria-label="Zoom out">−</button><button type="button" class="chipb" data-zoom="in" aria-label="Zoom in">+</button><button type="button" class="chipb" data-zoom="fit">Fit</button><span class="dim tl-zl">${matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Ctrl + scroll' : 'Pinch'} or use + and − to zoom; drag to move.</span></div>
       <div class="tl-brush" aria-hidden="true"><div class="tl-conc">${bins.map((v) => `<i style="height:${Math.round((v / bmax) * 100)}%"></i>`).join('')}</div><div class="tl-win"></div></div>
       <div class="tl-scroll"><div class="tl-canvas">
         <div class="tl-row tl-axisrow"><div class="tl-lab">Agents busy</div><div class="tl-track tl-conc tl-conc-big">${bins.map((v) => `<i style="height:${Math.round((v / bmax) * 100)}%" title="${v}"></i>`).join('')}</div></div>

@@ -36,6 +36,7 @@
 
   let D = null, TL = {}, failures = 0, timer = 0, lastOk = 0, stopAsk = {}, busy = false;
   const live = (r) => r.state === 'running' || r.state === 'paused';
+  const TAP = matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click' : 'Tap';   // the words for a mouse (qb5's desktop critique)
   const key = (r) => `${r.repo}/${r.runId}`;
 
   // ---- data ------------------------------------------------------------------------------------------------------
@@ -345,7 +346,7 @@
       <svg class="tl-ov" width="${W}" height="100%" aria-hidden="true">${grid}${sel}${marks}</svg>
       ${rows.map(strip).join('')}
       <svg class="tl-ax" width="${W}" height="16" aria-hidden="true">${axis}</svg></div></div>${legend}
-      ${mini ? '' : '<p class="tl-hint">Tap a column to see what happened in that slice.</p>'}`;
+      ${mini ? '' : `<p class="tl-hint">${TAP} a column to see what happened in that slice.</p>`}`;
   }
 
   // ---- drill-down: a slice -> its changes -> an agent's files, or one change's comments and timings --------------
@@ -502,7 +503,7 @@
     if (!r && pendingFor(repo, id)) return startingCard(PENDING);
     if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
     const base = `#/intents/run/${encodeURIComponent(repo)}/${encodeURIComponent(id)}`;
-    return `<p class="crumb"><a href="#/">All runs</a></p><section class="rsec"><h2>${why ? 'Why this exists' : `Intents: ${esc(plainName(r.label) || repo)}`}</h2><p><a class="chipbtn rc-go" href="#/run/${encodeURIComponent(repo)}/${encodeURIComponent(id)}">Timeline</a></p>${why ? '' : '<p class="dim">The job, then its folders; each file is one agent\'s intent. Stuck files come first. Tap a line to open it.</p>'}<div class="it-mount" data-src="${esc(itSrc(r))}" data-runs="/api/runs/${esc(encodeURIComponent(repo))}/${esc(encodeURIComponent(id))}" data-why-href="${esc(base)}/why/{id}" data-tree-href="${esc(base)}"${why ? ` data-why="${esc(why)}"` : ''}></div></section>`;
+    return `<p class="crumb"><a href="#/">All runs</a></p><section class="rsec"><h2>${why ? 'Why this exists' : `Intents: ${esc(plainName(r.label) || repo)}`}</h2><p><a class="chipbtn rc-go" href="#/run/${encodeURIComponent(repo)}/${encodeURIComponent(id)}">Timeline</a></p>${why ? '' : `<p class="dim">The job, then its folders; each file is one agent\u2019s intent. Stuck files come first. ${TAP} a line to open it.</p>`}<div class="it-mount" data-src="${esc(itSrc(r))}" data-runs="/api/runs/${esc(encodeURIComponent(repo))}/${esc(encodeURIComponent(id))}" data-why-href="${esc(base)}/why/{id}" data-tree-href="${esc(base)}"${why ? ` data-why="${esc(why)}"` : ''}></div></section>`;
   }
   function intentsStepView(label) {
     const g = stepOf(label);
