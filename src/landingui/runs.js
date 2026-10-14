@@ -539,7 +539,7 @@
       render();
     } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (!D) root.innerHTML = `<header class="rh"><h1>Scale runs</h1></header><p class="dim">Could not load the runs (${esc(String(e.message || e))}). Trying again.</p>`; }
     const anyLive = (D?.fleet || []).some(live);
-    timer = setTimeout(tick, document.hidden ? 30e3 : anyLive ? 5e3 : 30e3 * Math.min(4, 2 ** failures));
+    timer = setTimeout(tick, !D ? 3e3 : document.hidden ? 30e3 : anyLive ? 5e3 : 30e3 * Math.min(4, 2 ** failures));   // nothing on screen yet: try again soon
   }
   addEventListener('hashchange', () => { DR = null; lastHtml = ''; render(); tick(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
