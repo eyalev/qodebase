@@ -896,6 +896,9 @@ export class Agent extends DurableObject {
     const rec = await this.ctx.storage.get('pendRec');
     const nL = (await this.ctx.storage.get('pendLandN')) || 0;
     if (!rec && !nL) return true;
+    // A retry is booked BEFORE trying, so a failure anywhere (even in the catch below) can never leave the report stranded
+    // (the 50k rerun: one agent's 3 files were recorded but never reached the Lander, and its retries stopped at 10:03).
+    await this.ctx.storage.setAlarm(Date.now() + 30_000);
     try {
       if (rec) {
         const single = await this.ctx.storage.get('pendSingle');
