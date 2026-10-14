@@ -10812,8 +10812,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791908546429,
-   "endedAt": 1791969508644,
-   "wallS": 60962,
+   "endedAt": 1791969564145,
+   "wallS": 61018,
    "landWaitS": {
     "p50": 78,
     "p90": 88
@@ -23236,8 +23236,8 @@
    "tokensIn": 8420553,
    "tokensOut": 264827,
    "startedAt": 1791902486503,
-   "endedAt": 1791969508929,
-   "wallS": 67022,
+   "endedAt": 1791969564407,
+   "wallS": 67078,
    "landWaitS": {
     "p50": 35,
     "p90": 52
@@ -23354,8 +23354,8 @@
    "tokensIn": 8472369,
    "tokensOut": 266508,
    "startedAt": 1791902486581,
-   "endedAt": 1791969508920,
-   "wallS": 67022,
+   "endedAt": 1791969564400,
+   "wallS": 67078,
    "landWaitS": {
     "p50": 19,
     "p90": 31
@@ -23476,8 +23476,8 @@
    "tokensIn": 8428473,
    "tokensOut": 265250,
    "startedAt": 1791902486505,
-   "endedAt": 1791969508936,
-   "wallS": 67022,
+   "endedAt": 1791969564484,
+   "wallS": 67078,
    "landWaitS": {
     "p50": 45,
     "p90": 71

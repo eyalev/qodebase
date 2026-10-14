@@ -1326,8 +1326,9 @@ After that the copies ran out of files.
 | **between** | | **~3,000 files/s: ~1,500 per namespace** at ~44 copies each, where one namespace gave 2,100 at ~40 copies in S4d. Read latency ~3x S4d's |
 
 What it says:
-- **Part per namespace, part shared.** A second namespace added ~45%, not 100%. The shared part got worse because 88
-  copies started at once (S4d never had more than 42).
+- ~~**Part per namespace, part shared.**~~ **Corrected by R10K-c (2026-10-14): the read limit is account-wide, not per
+  namespace.** 3 namespaces held ~1,900 files/s over a whole run. S4e's 3,000 was one 10-s window, a burst; it does
+  not show a second namespace adding capacity. (Original reading: a second namespace added ~45%, not 100%.)
 - **A cold namespace failed instead of slowing.** qbfleet2 threw 1,454 'An internal error occurred' on blob reads in
   that window; qbfleet threw 0. Forks fresh in a new namespace under a cold burst failed outright, the first refusals
   in the whole ladder. Fix on our side: warm a new namespace's copies (one slow pass) before a burst, and retry a read

@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-14T09:19:03.187Z",
+ "generated": "2026-10-14T09:19:27.895Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -50,6 +50,7 @@
    "filesPerSecPlateau": 2100,
    "twoNamespacesFilesPerSec": 3000,
    "twoNamespacesNote": "R10K-c (3 namespaces, 10 min of load) did not repeat this: ~1,900 files/s across the account. S4e's 3,000 was one 10-s window; read it as a burst, not a per-namespace ceiling.",
+   "readLimit": "account-wide: ~1,900-2,000 Artifacts reads/s; more namespaces do not raise it (R10K-c)",
    "ladder": [
     {
      "run": "S4a",
@@ -94,7 +95,7 @@
      "namespaces": 2,
      "filesPerSec": 3000,
      "readP50Ms": 908,
-     "limit": "2 namespaces ~1.4x: part per namespace, part shared; a cold namespace's reads failed (1,454 internal errors); one 10-s window"
+     "limit": "one 10-s window at 3,000 (a burst; R10K-c showed the read limit is account-wide, ~1,900-2,000/s, not per namespace); a cold namespace's reads failed (1,454 internal errors)"
     },
     {
      "run": "R10K-a",
@@ -173,10 +174,12 @@
      "filesPerSec": 1900,
      "busiest10sFiles": 18946,
      "files": 40640,
+     "nothingToDocument": 10690,
      "busyAtOnceMax": 2796,
      "readP50Ms": 536,
      "readP90Ms": 1290,
      "answersDoneS": 33,
+     "landed": 29890,
      "readsFromArtifacts": 40630,
      "errors": 0,
      "landedPerSecPeak": 980,
@@ -211,9 +214,10 @@
     }
    ],
    "tenK": {
-    "say": "10,000 agents on Cloudflare (cached answers, no model calls), nothing refused: ~1,900 files a second when every file is different, ~2,350 when files repeat (read cache); start to all landed in 86 s. Reads slow down but never fail; the wall is Artifacts' read throughput for the account (~1,900-2,000 reads/s), and more namespaces do not raise it.",
-    "always": "Agents start in ramps: at most ~2,300 of the 10,000 were busy in any 10 s. Cached answers: no model calls.",
-    "not": "The read cache did not raise the realistic throughput (1,900 vs the 2,100 plateau without it): not 'the fix'.",
+    "say": "10,000 agents on Cloudflare, every file different, 0 errors: all 29,890 changes on main 86 s after the start (~1,900 files a second at the busiest; Artifacts reads slow down but never fail, and that read rate, ~2,000/s for the account, is the wall).",
+    "headlineRun": "R10K-c",
+    "always": "Cached answers (no model calls). Agents start in ramps: at most ~2,800 of the 10,000 were busy at once.",
+    "not": "The read cache did not raise the realistic throughput (1,900 vs the 2,100 plateau without it): not 'the fix'. More namespaces did not raise it either: the read limit is for the account.",
     "notRun": "20,000 agents: not run (budget)."
    },
    "maxBusyAtOnce": 2796,
@@ -1906,7 +1910,7 @@
     "rejected": 46,
     "rateLimited": 0,
     "usd": 5.7866,
-    "wallS": 67022,
+    "wallS": 67078,
     "landWaitP90S": 71,
     "firstAt": 1791902486503
    },
@@ -2178,7 +2182,7 @@
     "rejected": 0,
     "rateLimited": 0,
     "usd": 0,
-    "wallS": 60964,
+    "wallS": 61019,
     "landWaitP90S": 183,
     "firstAt": 1791908544889
    },
@@ -9681,8 +9685,8 @@
     "calls": null,
     "usd": 0,
     "startedAt": 1791908546429,
-    "endedAt": 1791969508644,
-    "wallS": 60962,
+    "endedAt": 1791969564145,
+    "wallS": 61018,
     "landWaitP50S": 78,
     "landWaitP90S": 88,
     "peakPerMin": null,
@@ -17510,8 +17514,8 @@
     "calls": null,
     "usd": 1.9211,
     "startedAt": 1791902486503,
-    "endedAt": 1791969508929,
-    "wallS": 67022,
+    "endedAt": 1791969564407,
+    "wallS": 67078,
     "landWaitP50S": 35,
     "landWaitP90S": 52,
     "peakPerMin": null,
@@ -17576,8 +17580,8 @@
     "calls": null,
     "usd": 1.9426,
     "startedAt": 1791902486581,
-    "endedAt": 1791969508920,
-    "wallS": 67022,
+    "endedAt": 1791969564400,
+    "wallS": 67078,
     "landWaitP50S": 19,
     "landWaitP90S": 31,
     "peakPerMin": null,
@@ -17641,8 +17645,8 @@
     "calls": null,
     "usd": 1.9229,
     "startedAt": 1791902486505,
-    "endedAt": 1791969508936,
-    "wallS": 67022,
+    "endedAt": 1791969564484,
+    "wallS": 67078,
     "landWaitP50S": 45,
     "landWaitP90S": 71,
     "peakPerMin": null,

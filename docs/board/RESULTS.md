@@ -38,7 +38,7 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | batching bench: gemini-3.1 single (70 files) | 1 | fleet-vscode-src-7 src/vs | gemini-3.1-flash-lite | 10 | 70 | 51 | 19 | 0 | 0 | 0 | $0.05 | 19 s | 11 s |
 | batching bench: gemini-3.1 pack (70 files) | 1 | fleet-vscode-src-8 src/vs | gemini-3.1-flash-lite | 10 | 70 | 49 | 19 | 0 | 2 | 0 | $0.06 | 24 s | 13 s |
 | S5b batched (gemma + glm-4.7, Gemini overflow) | 3 | fleet-vscode-src-9 src/vs, fleet-vscode-src-10 src/vs, fleet-vscode-src-11 src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.1-flash-lite | 450 | 12,191 | 8,910 | 3,207 | 0 | 74 | 0 | $6.84 | 309 s | 25 s |
-| S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) | 3 | fleet-vscode-src-12 src/vs, fleet-vscode-src-13 src/vs, fleet-vscode-src-14 src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.1-flash-lite | 450 | 12,192 | 8,608 | 3,207 | 0 | 46 | 0 | $5.79 | 67,022 s | 71 s |
+| S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) | 3 | fleet-vscode-src-12 src/vs, fleet-vscode-src-13 src/vs, fleet-vscode-src-14 src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.1-flash-lite | 450 | 12,192 | 8,608 | 3,207 | 0 | 46 | 0 | $5.79 | 67,078 s | 71 s |
 | dial smoke 60% [cached answers] | 1 | fleet-vscode-ext-21 extensions | cache | 20 | 43 | 49 | 0 | 0 | 0 | 0 | $0.00 | 5 s | 13 s |
 | comment dial L0 [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 30,720 | 0 | 0 | 0 | 0 | $0.00 | 26 s | 805 s |
 | comment dial L10 [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 32,340 | 0 | 0 | 0 | 0 | $0.00 | 27 s | 176 s |
@@ -46,7 +46,7 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | code dial smoke (20 tasks) | 2 | fleet-kata-d0 src/vs | gemini-3.1-flash-lite | 10 | 40 | 20 | 0 | 0 | 21 | 0 | $0.03 | 1,448 s | 18 s |
 | comment dial L60 [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 43,869 | 11 | 0 | 0 | 0 | $0.00 | 38 s | 189 s |
 | index job test (src/vs/editor, 100 agents) | 1 | fleet-vscode-src-15 src/vs/editor | gemma-4-26b-a4b-it, glm-4.7-flash | 100 | 659 | 506 | 153 | 0 | 0 | 0 | $0.13 | 155 s | 14 s |
-| comment dial L60c [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 35,446 | 9 | 0 | 0 | 0 | $0.00 | 60,964 s | 183 s |
+| comment dial L60c [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 35,446 | 9 | 0 | 0 | 0 | $0.00 | 61,019 s | 183 s |
 | code dial 0% (K0) | 1 | fleet-kata-d0b src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 400 | 1,228 | 0 | 0 | 54 | 0 | $0.96 | 2,487 s | 397 s |
 | code dial 30% (K30) | 1 | fleet-kata-d30 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 400 | 1,264 | 0 | 0 | 0 | 0 | $0.79 | 8,826 s | 1,776 s |
 | code dial 60% (K60) | 1 | fleet-kata-d60 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 400 | 1,276 | 0 | 0 | 0 | 0 | $0.82 | 12,495 s | 2,742 s |
@@ -97,12 +97,12 @@ Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6's series;
 | S4b | 200 | 1 | 1 | 178 | 76 ms | one copy: the Run DO still queues (after the fix) |
 | S4c | 1,000 | 20 | 1 | 1,230 | 135 ms | none refused; reads slow as copies overlap |
 | S4d | 4,750 | 95 | 1 | 2,100 | 353 ms | plateau: Artifacts' shared read path, shown as latency, nothing refused |
-| S4e | 4,400 | 88 | 2 | 3,000 | 908 ms | 2 namespaces ~1.4x: part per namespace, part shared; a cold namespace's reads failed (1,454 internal errors); one 10-s window |
+| S4e | 4,400 | 88 | 2 | 3,000 | 908 ms | one 10-s window at 3,000 (a burst; R10K-c showed the read limit is account-wide, ~1,900-2,000/s, not per namespace); a cold namespace's reads failed (1,454 internal errors) |
 | R10K-a (read cache: identical copies (best case)) | 10,000 | 10 | - | 2,350 | 44 ms | none on reads (100% from the cache); landing took ~2.5 min more: one landing queue per copy |
 | R10K-b (read cache: every file different per copy (realistic)) | 10,000 | 10 | - | 1,900 | 615 ms | Artifacts reads slow past ~2,000/s (p90 1.2 s, worst copy 2.9 s), none failed; landing took ~3 min more: one landing queue per copy |
 | R10K-c (read cache: every file different per copy (realistic), 3 namespaces, faster start and landing) | 10,000 | 10 | 3 | 1,900 | 536 ms | Artifacts reads for the whole account, ~1,900-2,000/s: 3 namespaces did not raise it (reads waited longer, none failed). Landing no longer the wall (~1 min after the answers). Behind it: one Run object per copy hands out work (at most ~2,800 reading at once) |
 
-10,000 agents: 10,000 agents on Cloudflare (cached answers, no model calls), nothing refused: ~1,900 files a second when every file is different, ~2,350 when files repeat (read cache); start to all landed in 86 s. Reads slow down but never fail; the wall is Artifacts' read throughput for the account (~1,900-2,000 reads/s), and more namespaces do not raise it. Agents start in ramps: at most ~2,300 of the 10,000 were busy in any 10 s. Cached answers: no model calls. The read cache did not raise the realistic throughput (1,900 vs the 2,100 plateau without it): not 'the fix'. 20,000 agents: not run (budget).
+10,000 agents: 10,000 agents on Cloudflare, every file different, 0 errors: all 29,890 changes on main 86 s after the start (~1,900 files a second at the busiest; Artifacts reads slow down but never fail, and that read rate, ~2,000/s for the account, is the wall). Cached answers (no model calls). Agents start in ramps: at most ~2,800 of the 10,000 were busy at once. The read cache did not raise the realistic throughput (1,900 vs the 2,100 plateau without it): not 'the fix'. More namespaces did not raise it either: the read limit is for the account. 20,000 agents: not run (budget).
 
 | real-model run | agents | files/s | calls/min | what limited it | $ |
 |---|---|---|---|---|---|
