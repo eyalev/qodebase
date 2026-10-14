@@ -25,6 +25,7 @@
 .ct-none p{margin:0;color:var(--dim);font-size:14px;max-width:68ch}
 .ct-err{color:var(--warn);font-size:14px}
 .ct-load{color:var(--dim);font-size:14px}
+@media (min-width:1000px){.lw .drill:has(.ct-mount){max-width:none}}
 `;
   const esc = (x) => String(x == null ? '' : x).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const log = (event, data) => { try { console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'contract', event, ...(data || {}) })); } catch (e) { /* none */ } };

@@ -737,6 +737,7 @@
     if (tab === 'events') return `${headFeed(8, true)}<p class="fmore"><a href="#/feed">Every step</a>${asksUrl() ? ` <a href="${asksUrl()}">All asks</a>` : ''}</p>`;
     if (tab === 'timeline') return timelineHtml(false);
     if (tab === 'intents' && itOk()) return `${itMount()}<p class="fmore"><a href="#/intents">Open the intent tree full width</a></p>`;
+    if (tab === 'contract' && ctOk()) return `${ctMount()}<p class="fmore"><a href="#/contract">Open the contract full width</a></p>`;
     return '';
   }
   // The run as a trace (timeline.js, bundled in front of this file): a tab here and a full page at #/timeline.
@@ -765,6 +766,12 @@
   // intents.js draws inside the mount and keeps its own state, so this page's re-renders never close what is open.
   const itOk = () => !!(window.qbIntentsMount && API && !MOCK);
   const itMount = (why) => `<div class="it-mount" data-src="${esc(API)}/intents" data-change-href="#/change/{id}"${why ? ` data-why="${esc(why)}"` : ''}></div>`;
+  // The team's contract (qb5, src/landingui/contract.js + src/contract.ts): the skeleton's contracts file, its history.
+  const ctOk = () => !!(window.qbContractMount && API && !MOCK);
+  const ctMount = () => `<div class="ct-mount" data-src="${esc(API)}/contract" data-change-href="#/change/{id}"></div>`;
+  function viewContract() {
+    return `<div class="drill">${crumbs([['Board', '#/'], ['Contract']])}<h2 style="font-size:20px;margin-bottom:8px">The team's contract</h2>${ctMount()}</div>`;
+  }
   function viewIntents(why) {
     return `<div class="drill">${crumbs(why ? [['Board', '#/'], ['Intents', '#/intents'], ['Why this exists']] : [['Board', '#/'], ['Intents']])}<h2 style="font-size:20px;margin-bottom:8px">${why ? 'Why this exists' : 'What was asked, and where each part stands'}</h2>${why ? '' : '<p class="cap">Each request splits into areas, each area into what one agent set out to do. Things that need you or are stuck come first. ' + (matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click' : 'Tap') + ' a line to open it.</p>'}${itMount(why)}</div>`;
   }
@@ -780,7 +787,7 @@
     return `<div class="fit open">${statusStrip(live, isStarting)}
       ${boardHead()}<div class="fpipe">${pipeline()}</div>
       ${latestLine(isStarting)}
-      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${tlOk() ? tab('timeline', 'Timeline') : ''}${itOk() ? tab('intents', 'Intents') : ''}</div>
+      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${tlOk() ? tab('timeline', 'Timeline') : ''}${itOk() ? tab('intents', 'Intents') : ''}${ctOk() ? tab('contract', 'Contract') : ''}</div>
       <div class="fpanel">${OWN ? needsYou() : ''}${fitPanel(cur)}</div></div>
       ${belowFold()}`;
   }
@@ -975,7 +982,7 @@
     if (!D) return;
     const h = decodeURIComponent(location.hash || '#/'); let m;
     termSeen = new Set();
-    const html = (m = /^#\/intents(?:\/why\/(.+))?$/.exec(h)) && itOk() ? viewIntents(m[1] || null) : (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
+    const html = /^#\/contract$/.test(h) && ctOk() ? viewContract() : (m = /^#\/intents(?:\/why\/(.+))?$/.exec(h)) && itOk() ? viewIntents(m[1] || null) : (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
       : h === '#/timeline' && tlOk() ? viewTimeline() : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
     termSeen = null;
     // Rebuild only when something other than a time changed, and never under a finger:
@@ -1004,6 +1011,7 @@
       fitSize();
       if (same && before.size) flip(before);
       if (window.qbIntentsMount) window.qbIntentsMount(root);
+      if (window.qbContractMount) window.qbContractMount(root);
     }
     lastNow = D.now;
     firstPaint = false;
