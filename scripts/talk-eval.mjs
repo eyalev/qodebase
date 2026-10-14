@@ -153,6 +153,8 @@ const CASES = [
   ['work_cb_tree', 'show me the app', { mode: ['act'], op: 'go', href: '/p/eyal/real-course-builder/app' }],
   ['work', 'go back', { mode: ['act'], op: 'back' }],
   ['work', 'switch to dark mode', { mode: ['act', 'ask', 'none', 'both'] }],
+  ['home_build', 'pick the cheapest team', { mode: 'act', op: 'press', label: 'Cheapest' }],
+  ['home_build', 'use the cheapest team', { mode: 'act', op: 'press', label: 'Cheapest' }],
   ['run_detail', 'back to all runs', { mode: 'act', op: ['go', 'back'], href: '#/' }],
   ['home_build', 'use the cheapest preset', { mode: 'act', op: 'press', label: 'Cheapest' }],
   ['home_build', 'set the agents to 6', { mode: 'act', op: 'type', label: 'Agents', text: '6' }],
