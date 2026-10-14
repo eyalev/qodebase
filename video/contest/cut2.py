@@ -49,7 +49,7 @@ class Cut2(base.Cut):
 
     def __init__(self, out):
         super().__init__(out)
-        self.notes = deck_notes(); self.pace = []
+        self.notes = deck_notes(); self.pace = []; self.marks = [(0.0, 'Why qodebase')]
 
     def deck(self, n, say=None, after=0.4):
         title, notes = self.notes[n]
@@ -73,6 +73,38 @@ class Cut2(base.Cut):
         for p in self.pace:
             if p[1] is None: p[1] = self.now()
 
+    PARTS = ['The idea', 'Watch it work, by voice', 'Does it hold up? 40, 200 and thousands of agents', 'Built on Cloudflare']
+    PART_SHORT = ['The idea', 'Watch it work', 'Does it hold up?', 'Built on Cloudflare']
+    F_PART = font(28, 500)
+    part = None
+
+    def emit(self, im, n=1):
+        """Every frame after the agenda carries a small part label, top right (the phone sits top left)."""
+        if self.part is not None and n:
+            im = im.copy(); d = ImageDraw.Draw(im)
+            t = f'Part {self.part + 1} of {len(self.PARTS)}: {self.PART_SHORT[self.part]}'
+            w = d.textlength(t, font=self.F_PART); d.text((W - 96 - w, 40), t, font=self.F_PART, fill=DIM)
+            fit_check(d, [(t, self.F_PART)], W - 192, 'part label')
+        return super().emit(im, n)
+
+    def agenda_im(self, cur=None):
+        im = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(im)
+        d.text((160, 170), 'In four parts', font=F_VH, fill=FG)
+        for i, p in enumerate(self.PARTS):
+            y = 360 + i * 120; on = cur is None or i == cur
+            d.text((160, y), f'{i + 1}', font=F_VSUB, fill=ACC if on else LINE)
+            d.text((260, y), p, font=font(46, 700) if i == cur else F_VSUB, fill=FG if on else DIM)
+        fit_check(d, [(p, F_VSUB) for p in self.PARTS], W - 420, 'agenda')
+        return im
+
+    def agenda(self, say):
+        secs = self.speak(say) + self.TAIL; self.cues.append((self.now(), self.now() + secs, say))
+        self.emit(self.agenda_im(), round(max(6.0, secs) * FPS)); self.block_end()
+
+    def start_part(self, i):
+        """A short title moment as each part starts: the agenda with this part highlighted, then its label in the corner."""
+        self.part = i; self.chapter(self.PARTS[i]); self.marks.append((self.now(), f'Part {i + 1}: {self.PARTS[i]}')); self.emit(self.agenda_im(i), round(2.0 * FPS))
+
     def chapter(self, title):
         # no 0.5 s blank page between chapters (review of voice-7: white flashes at 0:40, 4:04, 5:26, 8:02)
         self.chapters.append((self.now(), title)); self.chap = title
@@ -90,11 +122,16 @@ class Cut2(base.Cut):
         if sub: y += 30
         fit_check(d, [(l, F_VH) for l in hl] + [(l, F_VSUB) for l in (wrap(d, sub, F_VSUB, W - 320) if sub else [])], W - 320, headline)
         if nums:
+            fb = F_VBIG   # shrink the numbers until the row fits the safe area (44.5 min reached the edge)
+            for size in (150, 136, 124, 112, 100):
+                fb = font(size, 700); widths = [d.textlength(b, font=fb) + 90 for b, _ in nums]
+                if sum(max((W - 320) // len(nums), w) for w in widths) <= W - 320: break
             colw = (W - 320) // len(nums); x = 160
             for i, (big, label) in enumerate(nums):
-                bw = d.textlength(big, font=F_VBIG)
+                bw = d.textlength(big, font=fb)
                 cw = max(colw, bw + 90)                     # a wide number gets the room it needs
-                d.text((x, y + 20), big, font=F_VBIG, fill=ACC)
+                d.text((x, y + 20), big, font=fb, fill=ACC)
+                if x + bw > W - 160: FIT_FAIL.append((headline[:40], big))
                 for j, l in enumerate(wrap(d, label, F_VLAB, max(cw - 60, 300))[:3]): d.text((x, y + 200 + j * 46), l, font=F_VLAB, fill=FG)
                 x += cw
         secs = max(hold(headline + ' ' + sub), (self.speak(say) + max(after, self.TAIL)) if say else 0)
@@ -321,24 +358,24 @@ def script(c):
     c.vslide('Agents write code faster than people can review it', say="Agents now write code faster than people can review it and merge it. And when many agents work at once, their changes depend on each other and collide.")
     c.vslide('qodebase lands each change by its intent', sub='Phone-first, and on desktop too, on Cloudflare', say="qodebase lands each change by what it was asked to do, on the newest code. You run it from a phone or a desktop, and it is built on Cloudflare.")
     c.vslide('What we proved', nums=PROVED, say="We proved it at three scales: ten thousand agents on Cloudflare with cached answers instead of model calls, two hundred agents on one codebase with at most two changes lost in landing, and up to forty agents running Claude, building one app.")
-    c.chapter('The idea: land by intent')
+    c.agenda(say="In four parts: the idea; watching it work, by voice; whether it holds up with forty, two hundred and thousands of agents; and what it is built on.")
+    c.start_part(0)
     c.deck(4, say="A hint from real history. Hono is an open-source web framework. Replaying a hundred of its real pull requests as if they were written at the same moment, almost half needed another one to land first. People write pull requests one after another; agents in parallel can't see each other's unlanded work. So dependent work must wait, be stacked, or be redone after it lands.")
     c.deck(5)
     c.deck(6, say="Every change keeps its record inside git, as a note on its commit: what it was asked to do, which agent did it, the review, or that there was none, how it landed, and the tests.")
-    c.chapter('A team build, all by voice')
+    c.start_part(1); c.chap = 'A team build, all by voice'
     for t in TAKES2: c.take(t, json.load(open(os.path.join(t, 'segs.json'))))
-    c.chapter('A bigger build: forty agents')
+    c.start_part(2)
     c.deck(11, say="Then a bigger build: forty agents running Claude built one travel planner. Twenty-eight of their changes collided, and a model redid every one on the newest code. We tried the app by hand: eleven of thirteen features work. The two that didn't taught us two fixes: a shared contract, so agents agree on how their pieces connect, and a check that a redone change can't drop work.")
     c.deck(12, say="And an honest finding: for a fresh app, one strong agent beat a team. A single Opus agent finished sooner in all three comparisons, two to six times, with at least as many features working; the team was cheaper in two of three.")
-    c.chapter('Many agents, at scale')
     c.vslide('200 agents on one codebase', nums=(('1,385', 'coding tasks, checked by hidden tests'), ('0', 'lost in landing at 60% overlap'), ('44.5 min', 'with lanes and prefetch, from 207')), say="To test landing itself, with tests the agents never saw: two hundred cheap-model agents took almost fourteen hundred coding tasks on one codebase. As more tasks aimed at the same functions, losses stayed in the same range: at most two changes lost in landing, none at sixty percent overlap. The overlap cost time; lanes, one landing queue per module, cut the worst case from two hundred and seven minutes to forty-four and a half.")
     c.scale_chart(say="Then thousands of agents on one platform. With every file different, storage reads cap it near two thousand files a second; ten thousand agents still put all their changes on main in eighty-six seconds. When files repeat, the cache lets a hundred thousand agents reach twenty-two thousand a second, with nothing lost. All of these used cached answers instead of model calls.")
     c.chapter('A thousand agents, all by voice')
     T3 = os.path.join(V, os.environ.get('TAKE3', 'take-c3'))
     c.take(T3, json.load(open(os.path.join(T3, 'segs.json'))))
-    c.chapter('Built on Cloudflare')
+    c.start_part(3)
     c.vslide('All of it runs on Cloudflare', sub='Workers, Durable Objects, Artifacts, Containers, Workers AI and AI Gateway', say="Underneath, it is all Cloudflare: Workers serve the app, Durable Objects hold every project and agent, Artifacts hold every repository and fork, Containers run the agents, and the low-cost models and the voice run through Workers AI and Cloudflare's AI Gateway.")
-    c.chapter('')
+    c.chapter(''); c.part = None; c.marks.append((c.now(), 'Try it'))
     c.vslide('What we proved', nums=PROVED, say="Ten thousand agents on one platform with cached answers, two hundred on one codebase with at most two changes lost in landing, and up to forty agents running Claude building one app, every step recorded and visible.")
     c.end_card(say="Try it yourself at qodebase dot app: watch a run with no sign-in, and read the code.")
 
@@ -389,6 +426,8 @@ def _close_fixed(self):
     late = [(round(p[1] - p[0], 2), p[2]) for p in self.pace if p[1] is not None and p[1] - p[0] < 0.8]
     print(json.dumps({'event': 'pace_check', 'late': late}))
     if late and os.environ.get('ALLOW_PACE') != '1': _close(self); sys.exit(f'pace check FAILED: {len(late)} narrations end < 0.8 s before their slide ends')
+    with open(os.path.splitext(self.out)[0] + '.chapters.txt', 'w') as f:
+        for t, title in self.marks: f.write(f'{int(t // 60)}:{int(t % 60):02d} {title}\n')
     bad = overlap_check(self.audio)
     print(json.dumps({'event': 'overlap_check', 'overlaps': len(bad), 'list': bad[:20]}))
     if bad and os.environ.get('ALLOW_OVERLAP') != '1':

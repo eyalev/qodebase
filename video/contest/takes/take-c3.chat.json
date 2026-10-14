@@ -1,8 +1,42 @@
-[[16540, "you", "Document every exported function in Visual Studio Code and add each one to the API index, with a thousand agents."],
- [24910, "talk", "One moment, getting the estimate."],
- [27424, "talk", "This will start 1,000 agents on VS Code (4,064 files): about 2 to 3 minutes and $1.57 to $2.91. It stops at $5.00 whatever happens. Start?"],
- [43079, "you", "Yes, start."],
- [357833, "you", "Show the index check."],
- [362838, "talk", "API index, one line per exported function, written by this job: 5,787 of 5,787 lines, sorted, none missing, none twice."],
- [377902, "you", "Show the intent tree."],
- [389231, "talk", "I've opened the Intents page for this run. From what's on this page, the run's intent is the VS Code doc-comments job, with 5,787 of 5,787 API index lines written and none missing or duplicated."]]
+[
+ [
+  16540,
+  "you",
+  "Document every exported function in Visual Studio Code and add each one to the API index, with a thousand agents."
+ ],
+ [
+  24910,
+  "talk",
+  "One moment, getting the estimate."
+ ],
+ [
+  27424,
+  "talk",
+  "This will start 1,000 agents on VS Code (4,064 files): about 2 to 3 minutes and $1.57 to $2.91. It stops at $5.00 whatever happens. Start?"
+ ],
+ [
+  43079,
+  "you",
+  "Yes, start."
+ ],
+ [
+  357833,
+  "you",
+  "Show the index check."
+ ],
+ [
+  362838,
+  "talk",
+  "API index, one line per exported function, written by this job: 5,787 of 5,787 lines, sorted, none missing, none twice."
+ ],
+ [
+  377902,
+  "you",
+  "Show the intent tree."
+ ],
+ [
+  389231,
+  "talk",
+  "I've opened the Intents page for this run."
+ ]
+]
