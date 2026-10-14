@@ -173,6 +173,7 @@ const CASES = [
   ['work_board', 'play it at 4x', { mode: 'act', op: 'press', label: '4×' }],
   ['p_forq_calculator', 'show the board', { mode: 'act', op: 'go', href: '/p/forq/calculator/work#/' }],
   ['p_forq_calculator', 'show the line history', { mode: 'act', op: 'go', href: '/p/forq/calculator/work#/' }],
+  ['p_forq_calculator', 'show the contract', { mode: 'act', op: 'go', href: '/p/forq/calculator/work#/contract' }],
   ['p_forq_calculator', 'replay this run', { mode: 'act', op: 'go', href: '/p/forq/calculator/work#/' }],
   ['work', 'watch a run', { mode: 'act', op: 'press', label: 'Watch a run', gate: 'confirm' }],
   ['work', 'open all the asks', { mode: 'act', op: 'go', href: 'asks' }],

@@ -336,16 +336,16 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   const proj = /^\/p\/([^/]+)\/([^/#?]+)/.exec(s.path || '');
   if (proj) {
     const work = `/p/${proj[1]}/${proj[2]}/work`;
-    const view = /^\s*(please\s+)?(show( me)?|open|go to|take me to|switch to)\s+(the\s+)?(timeline|agents|collisions|intent tree|intents|changes list|board|agents at work|line history|line|merge line)( tab| view| page)?\s*[.!]*\s*$/i.exec(utterance);
+    const view = /^\s*(please\s+)?(show( me)?|open|go to|take me to|switch to)\s+(the\s+)?(timeline|agents|collisions|intent tree|intents|changes list|board|agents at work|line history|line|merge line|contract|contracts|team's contract|teams contract)( tab| view| page| file)?\s*[.!]*\s*$/i.exec(utterance);
     if (view) {
-      const want = view[5].toLowerCase(), word = want === 'agents' ? 'Agents' : want === 'timeline' ? 'Timeline' : want === 'collisions' ? 'collided' : /intent/.test(want) ? 'Intents' : /line/.test(want) ? 'Line' : '';
+      const want = view[5].toLowerCase(), word = want === 'agents' ? 'Agents' : want === 'timeline' ? 'Timeline' : want === 'collisions' ? 'collided' : /intent/.test(want) ? 'Intents' : /line/.test(want) ? 'Line' : /contract/.test(want) ? 'Contract' : '';
       // The Board itself (qb7, 2026-10-14: 'Agents at work' is now 'Board', the work view #/)
       if (want === 'board' || want === 'agents at work') {
         return { ...cmd, mode: 'act', op: 'go', href: work + '#/', label: `${proj[2]}: Board`, p: 0.9, why: 'the Board (word rule)' };
       }
       const btn = word && s.items.find((i) => i.kind === 'button' && new RegExp('^' + word + '\\b', 'i').test(i.text));
       if (btn) return { ...cmd, mode: 'act', op: 'press', target: btn.id, label: btn.text, p: 0.9, why: 'a view of the work page (word rule)' };
-      const hash = want === 'timeline' ? '#/timeline' : /intent/.test(want) ? '#/intents' : '#/';
+      const hash = want === 'timeline' ? '#/timeline' : /intent/.test(want) ? '#/intents' : /contract/.test(want) ? '#/contract' : '#/';
       return { ...cmd, mode: 'act', op: 'go', href: work + hash, label: `${proj[2]}: ${view[5]}`, p: 0.9, then: want === 'collisions' || /line/.test(want) ? utterance : undefined, why: 'a view of the work page (word rule)' };
     }
     // 'replay this run' / 'watch it again' on a finished build: the Board's 'Replay this run' (or 'Replay again');
