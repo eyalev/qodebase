@@ -1732,7 +1732,7 @@ function playParts(parts, whole) {
   var pre = function (k) { if (k >= parts.length || urls[k]) return; urls[k] = fetch(ttsUrl(parts[k]), { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.blob(); }).then(function (b) { return URL.createObjectURL(b); }).catch(function () { return null; }); };
   var next = function () {
     if (seq !== saySeq) return;
-    if (i >= parts.length) { speakingQ = false; return; }
+    if (i >= parts.length || (i > 0 && stopAfterPart)) { speakingQ = false; return; }
     var k = i++;
     var src = k === 0 ? Promise.resolve(streamSrc(parts[0]) || ttsUrl(parts[0])) : (pre(k), urls[k]);
     pre(k + 1);
@@ -1924,7 +1924,20 @@ function finish() {
   r.resolve({ ok: r.ok !== false, text: r.texts.join(' ') || 'Done.', data: { mode: r.mode || null, action: r.action || null } });
 }
 // Navigating away: answer the call first, then leave (a result sent after unload is lost).
-function leave(go) { if (convOn() && lastSpoken) sset('convresume', Date.now()); if (run) { finish(); setTimeout(go, 80); } else go(); }
+function leave(go) {
+  if (convOn() && lastSpoken) sset('convresume', Date.now());
+  var nav = function () { if (run) { finish(); setTimeout(go, 80); } else go(); };
+  // Talking while it navigates: let the sentence being said finish (at most 4 s), skip the rest, then go
+  // (qb3's pilot: 'Opening the How it works page now…' was cut to 'Open-' by the page unload).
+  if (speakingQ || speakPending) {
+    stopAfterPart = true; var w0 = Date.now();
+    trace('nav_wait_speech', {});
+    (function wait() { if ((speakingQ || speakPending) && Date.now() - w0 < 4000) return setTimeout(wait, 100); stopAfterPart = false; nav(); })();
+    return;
+  }
+  nav();
+}
+var stopAfterPart = false;
 // Home's 'Build it' (pressed by Talk or by hand) opens the brief: keep its estimate, so the brief can ask out loud
 // 'This will start …, about … and …. Start?' before 'Start building' (manager, 2026-10-14). Talk's own press is untrusted.
 function keepEstimate(t, voice) {
@@ -2290,7 +2303,7 @@ function liveOpen() {
     // Conversation mode, nothing heard yet, and the socket closed under us (nova-3 closed a quiet stream ~8 s in during
     // qb3's take, so the clip that came later in the window was never heard): listen again at once, fresh recorder and
     // socket, not counted as an empty window.
-    if (dcOn && !gotWords && convOn() && ws === liveWs && myTurn === dcT0) { trace('stt_restart', { code: e.code, ms: Date.now() - t0 }); liveStop(true); setTimeout(function () { if (convOn() && !listening && !busy) startListen(); }, 60); return; }
+    if (dcOn && !gotWords && convOn() && ws === liveWs && myTurn === dcT0 && !ws.__closing && !dcStopping) { trace('stt_restart', { code: e.code, ms: Date.now() - t0 }); liveStop(true); setTimeout(function () { if (convOn() && !listening && !busy) startListen(); }, 60); return; }
     if (dcOn && !gotWords && !nativePreview) startNativePreview();   // the live words failed: the phone's recogniser instead
   };
 }
@@ -2298,7 +2311,7 @@ var nextWs = null, endT = null, convQuietT = null;
 // A level meter on the microphone (conversation mode's end of turn): nova-3's words for the next phrase arrive ~1 s after
 // the speaker goes on, so a pause at a comma looked like the end ('…my home.' / 'with a paid pro version'). Before ending
 // a turn, the last 0.3 s of sound is checked against the turn's own noise floor.
-var vadAn = null, vadBuf = null, vadHist = [], vadTick = null, vadVoiceAt = 0, vadVoiceFrom = 0;
+var vadAn = null, vadBuf = null, vadHist = [], vadTick = null, vadVoiceAt = 0, vadVoiceFrom = 0, dcStopping = false;
 function vadStart(st) {
   try {
     clearInterval(vadTick); vadHist = []; vadVoiceAt = 0; vadVoiceFrom = 0;
@@ -2353,6 +2366,7 @@ function endTurn(how) {
   liveFinish('', true); liveClose();
 }
 function startLive() {
+  dcStopping = false;
   specCalls = 0; spec = null; clearTimeout(endT); lastWordAt = 0; talkUsedAt = Date.now();
   if (convOn() && (!stCache || Date.now() - (stCache.at || 0) > 25000)) warmStatus('listen');
   setListening(true); status('Starting\u2026'); dcText = ''; dcBuf = []; clearTimeout(dcQuiet); clearTimeout(quietT); live.textContent = '';
@@ -2371,6 +2385,7 @@ function startLive() {
 }
 function liveFinish(text, sendIt) {
   if (!dcOn) return;
+  dcStopping = false;
   clearTimeout(convQuietT);
   dcOn = false; clearTimeout(dcQuiet); stopNativePreview();
   setListening(false); live.textContent = '';
@@ -2434,16 +2449,16 @@ function liveFinish(text, sendIt) {
       .catch(function (e) { trace('whisper_missing', { why: String(e), bytes: blob.size }); send(t, 'live-error', { err: String(e) }); });
   });
 }
-function liveClose() { var ws = liveWs; liveWs = null; if (ws && ws.readyState === 1) { try { ws.send('close'); } catch (e) {} setTimeout(function () { try { ws.close(); } catch (e) {} }, 1500); } else if (ws) { try { ws.close(); } catch (e) {} } }
+function liveClose() { var ws = liveWs; liveWs = null; if (ws) ws.__closing = true; if (ws && ws.readyState === 1) { try { ws.send('close'); } catch (e) {} setTimeout(function () { try { ws.close(); } catch (e) {} }, 1500); } else if (ws) { try { ws.close(); } catch (e) {} } }
 function liveStop(cancel, sendIt) {
   if (cancel) { dcOn = false; stopNativePreview(); liveClose(); clipStop(null); setListening(false); live.textContent = ''; cInto = null; cMic = null; return; }
   // Stopped by hand: the recorder's last chunk goes to the socket, which then finishes its words (up to 0.8 s).
   trace('dc_stop', { how: 'hand', pieces: dcBuf.length, interim: dcText, ms: Date.now() - dcT0, sent: liveSent, queued: liveQ.length });
   if (sendIt && !lat) latStart('hand');
-  status('Finishing\u2026');
+  status('Finishing\u2026'); dcStopping = true;
   try { if (clip && clip.state === 'recording') clip.requestData(); } catch (e) {}
   setTimeout(function () {
-    if (liveWs && liveWs.readyState === 1) try { liveWs.send('close'); } catch (e) {}
+    if (liveWs && liveWs.readyState === 1) try { liveWs.__closing = true; liveWs.send('close'); } catch (e) {}
     setTimeout(function () { if (dcOn) { var t = dcText; liveFinish(t, sendIt); liveClose(); } }, 700);
   }, 150);
 }
