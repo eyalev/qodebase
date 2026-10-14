@@ -54,7 +54,7 @@ async function fleet() {
     runId: r.runId, models: Array.isArray(r.models) ? r.models : r.models ? Object.keys(r.models) : r.model ? [r.model] : [],
     state: r.state ?? null, tokensIn: r.tokensIn ?? null, tokensOut: r.tokensOut ?? null, agents: r.agents ?? null, agentsStarted: r.agentsStarted ?? null, files: r.files ?? null,
     landed: r.landed ?? r.counts?.landed ?? null, skipped: r.skipped ?? r.counts?.skipped ?? null, verifyFail: r.verify_fail ?? r.counts?.verify_fail ?? null,
-    rejected: r.rejected ?? r.counts?.rejected ?? null, rateLimited: r.rate_limited ?? r.counts?.rate_limited ?? null, modelError: r.model_error ?? r.counts?.model_error ?? null,
+    rejected: r.rejected ?? r.counts?.rejected ?? null, notLanded: r.notLanded ?? null, rateLimited: r.rate_limited ?? r.counts?.rate_limited ?? null, modelError: r.model_error ?? r.counts?.model_error ?? null,
     calls: r.calls ?? null, usd: r.usd ?? null, startedAt: r.startedAt ?? null, endedAt: r.endedAt ?? null, wallS: r.wallS ?? r.wall ?? (r.endedAt && r.startedAt ? Math.round((r.endedAt - r.startedAt) / 1000) : null),
     landWaitP50S: r.landWaitS?.p50 ?? r.landWaitP50S ?? null, landWaitP90S: r.landWaitS?.p90 ?? r.landWaitP90S ?? null,
     peakPerMin: r.peakPerMin ?? null, perModel: r.perModel || (r.models && !Array.isArray(r.models) ? r.models : null),
@@ -98,12 +98,12 @@ async function fleet() {
   totals.largestRun = big && { runId: big.runId, agents: big.agents, files: big.files, landed: big.landed, skipped: big.skipped, wallS: big.wallS, filesPerMin: big.wallS ? r1(((big.landed || 0) + (big.skipped || 0)) / (big.wallS / 60), 0) : null, landWaitP90S: big.landWaitP90S, usd: big.usd, models: big.models };
   // One row per step: a step's copies share its label up to ' - copy N'.
   const groups = new Map();
-  for (const r of rows) { const k = (r.label || r.runId).replace(/ - copy \d+$/, ''); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
+  for (const r of rows) { const k = (r.label || r.runId).replace(/(,| -) copy \d+$/, ''); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
   const steps = [...groups.entries()].map(([label, rs]) => {
     const g = (k) => rs.reduce((a, r) => a + (r[k] || 0), 0);
     const st = Math.min(...rs.map((r) => r.startedAt || Infinity)), en = Math.max(...rs.map((r) => r.endedAt || 0));
     return { label, runs: rs.length, cached: rs.every((r) => r.cached), models: [...new Set(rs.flatMap((r) => r.models))], repos: [...new Set(rs.map((r) => r.repo))],
-      agents: g('agents') || null, files: g('files'), landed: g('landed'), skipped: g('skipped'), verifyFail: g('verifyFail'), rejected: g('rejected'), rateLimited: g('rateLimited'), usd: r1(g('usd'), 4),
+      agents: g('agents') || null, files: g('files'), landed: g('landed'), skipped: g('skipped'), verifyFail: g('verifyFail'), rejected: g('rejected'), rateLimited: g('rateLimited'), notLanded: rs.some((r) => r.notLanded != null) ? g('notLanded') : null, notLandedMissingOn: rs.filter((r) => r.notLanded == null && r.state !== 'done').length || 0, usd: r1(g('usd'), 4),
       wallS: Number.isFinite(st) && en ? Math.round((en - st) / 1000) : rs.length === 1 ? rs[0].wallS : null, landWaitP90S: Math.max(...rs.map((r) => r.landWaitP90S || 0)) || null, firstAt: Number.isFinite(st) ? st : null };
   }).sort((a, b) => (a.firstAt || 0) - (b.firstAt || 0));
   return { steps, label: 'measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)', source: runs.from, runs: rows, perModel: pm, totals, cached: cachedTotals, quality, f0: f0?.models || null };
@@ -227,8 +227,8 @@ if (notes.length) md.push('Sources not fresh: ' + notes.join('; ') + '.', '');
 md.push('## Fleet: documentation comments on VS Code (F2-F3)', '', `Label: ${F.label}. Source: qbfleet /runs (${F.source}).`, '');
 if (F.runs.length) {
   md.push(`${F.runs.length} runs (one per repo copy) grouped into ${F.steps.length} steps; every run is in results.json fleet.runs.`, '');
-  md.push(table(['step', 'runs', 'repos', 'models', 'agents', 'files', 'landed', 'nothing to add', 'verify refused', 'rejected', 'rate-limited', '$', 'wall (first start to last end)', 'land wait p90 (worst run)'],
-    F.steps.map((r) => [`${r.label}${r.cached ? ' [cached answers]' : ''}`, r.runs, r.repos.length > 3 ? `${r.repos.length} copies` : r.repos.join(', '), r.models.map((m) => m.split('/').pop()).join(', ') || '-', fmt(r.agents), fmt(r.files), fmt(r.landed), fmt(r.skipped), fmt(r.verifyFail), fmt(r.rejected), fmt(r.rateLimited), usd(r.usd, 2), r.wallS != null ? `${fmt(r.wallS)} s` : '-', r.landWaitP90S != null ? `${fmt(r.landWaitP90S)} s` : '-'])), '');
+  md.push(table(['step', 'runs', 'repos', 'models', 'agents', 'files', 'landed', 'nothing to add', 'verify refused', 'rejected', 'rate-limited', 'not landed (/runs)', '$', 'wall (first start to last end)', 'land wait p90 (worst run)'],
+    F.steps.map((r) => [`${r.label}${r.cached ? ' [cached answers]' : ''}`, r.runs, r.repos.length > 3 ? `${r.repos.length} copies` : r.repos.join(', '), r.models.map((m) => m.split('/').pop()).join(', ') || '-', fmt(r.agents), fmt(r.files), fmt(r.landed), fmt(r.skipped), fmt(r.verifyFail), fmt(r.rejected), fmt(r.rateLimited), r.notLanded != null ? `${fmt(r.notLanded)}${r.notLandedMissingOn ? ` (+${r.notLandedMissingOn} copies not counted)` : ''}` : '-', usd(r.usd, 2), r.wallS != null ? `${fmt(r.wallS)} s` : '-', r.landWaitP90S != null ? `${fmt(r.landWaitP90S)} s` : '-'])), '');
   const S = (() => { try { return JSON.parse(rd('sim/fleet/scale-ladder.json')); } catch { return null; } })();
   if (S) md.push('Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6\'s series; sim.md (l)):', '',
     table(['run', 'agents', 'copies', 'namespaces', 'files/s (peak window)', 'read p50', 'what limited it'], S.cached.ladder.map((r) => [`${r.run}${r.readCache ? ` (read cache: ${r.readCache})` : ''}`, fmt(r.agents), r.copies, r.namespaces ?? '-', fmt(r.filesPerSec), r.readP50Ms ? `${r.readP50Ms} ms` : '-', r.limit])), '',
