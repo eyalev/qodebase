@@ -47,7 +47,7 @@
     if (numOf === src && numMap) return numMap;
     const m = new Map(), used = new Set();
     const all = src ? [...src.changes].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)) : [];
-    for (const c of all) { const k = /^(?:scripted )?agent[- ](\d+)$/i.exec(c.agent || ''); if (k && !m.has(c.agent)) { m.set(c.agent, +k[1]); used.add(+k[1]); } }
+    for (const c of all) { const k = /^(?:scripted )?agent[- ](\d+)$/i.exec(c.agent || ''); if (k && !m.has(c.agent) && !used.has(+k[1])) { m.set(c.agent, +k[1]); used.add(+k[1]); } }   // a second id with the same number gets the next free one (review 3: 'Agent 5' twice)
     let n = 1;
     for (const c of all) if (!m.has(c.agent)) { while (used.has(n)) n++; m.set(c.agent, n); used.add(n); }
     numOf = src; numMap = m; return m;
@@ -58,7 +58,9 @@
     return m.get(a);
   }
   const AG = (a) => (a ? `Agent ${agentNum(a)}` : 'an agent');
-  const leadName = (l) => { const x = (l || '').replace(/^agent-(\d+)/i, 'Agent $1'); return /^(scripted )?lead$/i.test(x) ? 'its lead' : x; };
+  const leadName = (l) => { const x = (l || '').replace(/^agent-(\d+)/i, 'Agent $1'); return /^(scripted )?lead$/i.test(x) ? (D && D.mode === 'demo' ? 'its scripted lead' : 'its lead') : x; };
+  // review 3: in the demo the area lead is scripted like the agents, so it says so
+  const LEAD = (cap) => { const t = D && D.mode === 'demo' ? 'the scripted area lead' : 'the area lead'; return cap ? t[0].toUpperCase() + t.slice(1) : t; };
   const ready = (c) => c.state === 'pushed' && c.review && c.review.verdict !== 'changes';
   // A stopped run (R1: the owner or the budget halted every box) shows its unfinished changes as halted, not working.
   const skey = (c) => (D?.run?.stopped && !['landed', 'bounced'].includes(c.state) ? 'halted' : ready(c) ? 'ready' : c.state);
@@ -145,6 +147,12 @@
     if (r.status === 404) { D = null; throw Object.assign(new Error('none'), { none: true }); }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     D = await r.json(); fetchedAt = Date.now();
+    // review 3: right after 'Watch a run' the server is still resetting the café, and the previous run's changes showed
+    // for ~2 s as if they were the new run: until the new run has its own, show none of the old ones
+    if (starting && Date.now() - starting < 60e3 && Array.isArray(D.changes)) {
+      const t0 = starting - 2000, mine = (c) => ((c.events || [])[0]?.t || c.at || 0) >= t0;
+      if (D.changes.some((c) => !mine(c))) { D.changes = D.changes.filter(mine); if (D.queue) D.queue = { ...D.queue, trains: (D.queue.trains || []).filter((t) => t.changes.every((id) => D.changes.some((c) => c.id === id))) }; }
+    }
     if (REPLAY_ON_LOAD && D.changes.length) { REPLAY_ON_LOAD = 0; D.queue.trains = D.queue.trains.filter((t) => !t.note); P = replayOf(D, REPLAY_SPEED); D = playAt(P); return; }
     // Trains that failed for infrastructure reasons carry a note (qb6): not part of the story.
     D.queue.trains = D.queue.trains.filter((t) => !t.note);
@@ -196,13 +204,13 @@
       case 'conflict': return oc && oc.agent === c.agent ? [`Two of ${who}'s changes edited the same lines`, d] : [`${its} collided with ${oc ? `${AG(oc.agent)}'s` : 'newer code'}`, d];
       case 'replaying': return [`Replaying ${its} on the newest code instead of sending it back`, d];
       // Review 2 (#6): the demo's lead redo and stacked change get their own words.
-      case 'replayed': return c.landing?.how === 'lead' ? [`The area lead redid ${its} on the newest code`, T] : [`${its} replayed cleanly and went back in line`, T];
+      case 'replayed': return c.landing?.how === 'lead' ? [`${LEAD(true)} redid ${its} on the newest code`, T] : [`${its} replayed cleanly and went back in line`, T];
       case 'with-lead': return [`${its} needs ${leadName(c.lead) || 'its lead'} to decide`, d];
       case 'bounced': return [`${its} was sent back: a test failed`, T];
       case 'sent back': case 'sent-back': case 'sendback': return [`${its} was sent back by ${e.by === 'owner' || !e.by ? 'you' : esc(e.by)}`, d];
       case 'landed': {
         const rp = c.landing && /^replayed/.test(c.landing.how || '');
-        if (c.landing?.how === 'lead') return [`${its} landed, redone by the area lead`, `${T.replace(/[.!?]+$/, '')}: it collided${(c.landing.conflicts || []).length ? ` on ${c.landing.conflicts.join(', ')}` : ''}, no rule could merge it, so the area lead redid it on the newest code and it passed the tests.`];
+        if (c.landing?.how === 'lead') return [`${its} landed, redone by ${LEAD()}`, `${T.replace(/[.!?]+$/, '')}: it collided${(c.landing.conflicts || []).length ? ` on ${c.landing.conflicts.join(', ')}` : ''}, no rule could merge it, so ${LEAD()} redid it on the newest code and it passed the tests.`];
         const base = c.stackedOn && idx.get(c.stackedOn);
         if (base) return [`${its} landed right after the change it was built on`, `Built on ${AG(base.agent)}'s change (${title1(base).replace(/[.!?]+$/, '')}), it landed right after it.`];
         return rp ? [`${its} landed after a replay`, `${T.replace(/[.!?]+$/, '')}: it collided on ${(c.landing.conflicts || []).join(', ')}, was re-applied on the newest code, and passed the tests.`] : [`${its} landed on main`, T];
@@ -246,7 +254,7 @@
         const where = paths.length ? files(paths) : 'the same file';
         const pair = oc && oc.agent === c.agent ? `Two of ${AG(c.agent)}'s changes edited ${where}.` : `${AG(c.agent)}${oc ? ` and ${AG(oc.agent)}` : ''} both changed ${where}.`;
         text = c.state === 'with-lead' ? `<b>Collision, waiting for its lead.</b> ${pair} No rule could redo it, so ${esc(leadName(c.lead) || 'its lead')} decides.`
-          : c.landing?.how === 'lead' ? `<b>Collision, redone by the area lead.</b> ${pair} No rule could merge it, so the area lead redid it on the newest code${c.state === 'landed' ? ' and it landed' : ''}.`
+          : c.landing?.how === 'lead' ? `<b>Collision, redone by ${LEAD()}.</b> ${pair} No rule could merge it, so ${LEAD()} redid it on the newest code${c.state === 'landed' ? ' and it landed' : ''}.`
           : ev.has('replayed') || ev.has('replaying') ? `<b>Collision, replayed.</b> ${pair} Instead of sending ${AG(c.agent)} back, its change was redone on the newest code.`
           : `<b>Collision.</b> ${pair}`;
       } else { kind = 'back'; text = `<b>Sent back.</b> ${AG(c.agent)}'s change failed a test, so main stayed healthy.${c.state === 'landed' ? ' It was fixed and landed.' : ` ${AG(c.agent)} is fixing it.`}`; }
