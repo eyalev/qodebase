@@ -684,7 +684,9 @@ export class Run extends DurableObject {
       const cur = s && s.runId === id ? s : null;
       const pct = (q) => (waits.length ? Math.round(waits[Math.floor(waits.length * q)] / 1000) : null);
       const landingLeft = cur?.runId === id && cur.state === 'done' && cur.counts?.ready > 0 && Date.now() - (cur.endedAt || 0) < 10 * 60_000;   // as in status(): still landing
-      const notLanded = cur?.runId === id && cur.state === 'done' && cur.counts?.ready > 0 && !landingLeft ? cur.counts.ready : 0;
+      // Any ended run: answered files still 'ready' in its records never reached main (the card shows the count).
+      const live = cur?.runId === id && (cur.state === 'running' || cur.state === 'paused' || cur.state === 'held');
+      const notLanded = !landingLeft && !live ? (by.ready || 0) : 0;
       const t0 = cur?.startedAt || agg.t0, t1 = landingLeft ? Date.now() : (cur?.endedAt || agg.t1);
       return { runId: id, label: meta.label || null, ladder: meta.ladder || null, copy: meta.copy ?? null, repo: meta.repo || cur?.cfg.repo || MAIN, root: meta.root || cur?.cfg.root || 'src/vs', state: landingLeft ? 'running' : (cur?.state || 'ended'), ...(landingLeft ? { phase: 'landing', landingLeft: cur.counts.ready } : {}), ...(notLanded ? { notLanded } : {}), agents: meta.agents ?? cur?.cfg.agents ?? null, agentsStarted: meta.agentsStarted ?? cur?.agentsStarted ?? null, files: agg.files,
         landed: by.landed || 0, ready: by.ready || 0, skipped: by.skipped || 0, verify_fail: by.verify_fail || 0, rejected: by.rejected || 0, rate_limited: by.rate_limited || 0, model_error: by.model_error || 0,
