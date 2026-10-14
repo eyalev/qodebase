@@ -201,6 +201,8 @@ No one way of running agents won everywhere. What won, by the shape of the job:
 
 **Next: choose per job.** The plan is an orchestrator that profiles a job (pieces, overlap, hot files, chains, check time), picks from this toolbox starting from what was measured, pilots on a simulation or a replay of the repo's own history when the stakes are high, adapts live when a queue saturates, and learns from its estimates across projects, within the person's choice of speed, cost or safety. This is a direction, not built.
 
+qodebase's own code also lives on qodebase: https://qodebase.app/p/eyal/qodebase (a mirror of this repo, updated on every push).
+
 ## More
 
 - [`CLAUDE.md`](CLAUDE.md): architecture and the gotchas found building it

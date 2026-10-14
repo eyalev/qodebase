@@ -2,7 +2,7 @@
 
 - **How it works (demo, lab, measurements):** https://qodebase.app/how
 - **Live:** https://qodebase.app
-- **Code:** https://github.com/eyalev/qodebase (Apache-2.0)
+- **Code:** https://github.com/eyalev/qodebase (Apache-2.0); qodebase's own code also lives on qodebase: https://qodebase.app/p/eyal/qodebase (a mirror of the repo, updated on every push)
 - **Watch a run, no sign-in:** https://qodebase.app/p/eyal/corner-cafe
 - **Real agents:** https://qodebase.app/p/eyal/cafe-team (12 agents) and https://qodebase.app/p/eyal/real-course-builder (up to 40)
 
