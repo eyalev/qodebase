@@ -38,7 +38,7 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | batching bench: gemini-3.1 single (70 files) | 1 | fleet-vscode-src-7 src/vs | gemini-3.1-flash-lite | 10 | 70 | 51 | 19 | 0 | 0 | 0 | $0.05 | 19 s | 11 s |
 | batching bench: gemini-3.1 pack (70 files) | 1 | fleet-vscode-src-8 src/vs | gemini-3.1-flash-lite | 10 | 70 | 49 | 19 | 0 | 2 | 0 | $0.06 | 24 s | 13 s |
 | S5b batched (gemma + glm-4.7, Gemini overflow) | 3 | fleet-vscode-src-9 src/vs, fleet-vscode-src-10 src/vs, fleet-vscode-src-11 src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.1-flash-lite | 450 | 12,191 | 8,910 | 3,207 | 0 | 74 | 0 | $6.84 | 309 s | 25 s |
-| S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) | 3 | fleet-vscode-src-12 src/vs, fleet-vscode-src-13 src/vs, fleet-vscode-src-14 src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.1-flash-lite | 450 | 12,192 | 8,608 | 3,207 | 0 | 46 | 0 | $5.79 | 71,451 s | 71 s |
+| S5c batched, paced per call (gemma + glm-4.7, Gemini overflow) | 3 | fleet-vscode-src-12 src/vs, fleet-vscode-src-13 src/vs, fleet-vscode-src-14 src/vs | gemma-4-26b-a4b-it, glm-4.7-flash, gemini-3.1-flash-lite | 450 | 12,192 | 8,608 | 3,207 | 0 | 46 | 0 | $5.79 | 71,710 s | 71 s |
 | dial smoke 60% [cached answers] | 1 | fleet-vscode-ext-21 extensions | cache | 20 | 43 | 49 | 0 | 0 | 0 | 0 | $0.00 | 5 s | 13 s |
 | comment dial L0 [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 30,720 | 0 | 0 | 0 | 0 | $0.00 | 26 s | 805 s |
 | comment dial L10 [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 32,340 | 0 | 0 | 0 | 0 | $0.00 | 27 s | 176 s |
@@ -46,7 +46,7 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | code dial smoke (20 tasks) | 2 | fleet-kata-d0 src/vs | gemini-3.1-flash-lite | 10 | 40 | 20 | 0 | 0 | 21 | 0 | $0.03 | 1,448 s | 18 s |
 | comment dial L60 [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 43,869 | 11 | 0 | 0 | 0 | $0.00 | 38 s | 189 s |
 | index job test (src/vs/editor, 100 agents) | 1 | fleet-vscode-src-15 src/vs/editor | gemma-4-26b-a4b-it, glm-4.7-flash | 100 | 659 | 506 | 153 | 0 | 0 | 0 | $0.13 | 155 s | 14 s |
-| comment dial L60c [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 35,446 | 9 | 0 | 0 | 0 | $0.00 | 65,392 s | 183 s |
+| comment dial L60c [cached answers] | 20 | 20 copies | cache | 1,000 | 30,720 | 35,446 | 9 | 0 | 0 | 0 | $0.00 | 65,651 s | 183 s |
 | code dial 0% (K0) | 1 | fleet-kata-d0b src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 400 | 1,228 | 0 | 0 | 54 | 0 | $0.96 | 2,487 s | 397 s |
 | code dial 30% (K30) | 1 | fleet-kata-d30 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 400 | 1,264 | 0 | 0 | 0 | 0 | $0.79 | 8,826 s | 1,776 s |
 | code dial 60% (K60) | 1 | fleet-kata-d60 src/vs | glm-4.7-flash, gemini-3.1-flash-lite | 200 | 400 | 1,276 | 0 | 0 | 0 | 0 | $0.82 | 12,495 s | 2,742 s |
@@ -207,7 +207,7 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | R100K-g: 1000 cached agents, copy 6 [cached answers] | 1 | fleet-vscode-f6 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 24 s | 28 s |
 | R100K-g: 1000 cached agents, copy 9 [cached answers] | 1 | fleet-vscode-f9 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 16 s | 27 s |
 | R100K-g: 1000 cached agents, copy 12 [cached answers] | 1 | fleet-vscode-f12 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 22 s | 30 s |
-| R100K-g: 1000 cached agents, copy 13 [cached answers] | 1 | fleet-vscode-f13 src/vs | cache | 1,000 | 4,064 | 2,986 | 1,069 | 0 | 0 | 0 | $0.00 | 830 s | 26 s |
+| R100K-g: 1000 cached agents, copy 13 [cached answers] | 1 | fleet-vscode-f13 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 973 s | 26 s |
 | R100K-g: 1000 cached agents, copy 4 [cached answers] | 1 | fleet-vscode-f4 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 35 s | 25 s |
 | R100K-g: 1000 cached agents, copy 11 [cached answers] | 1 | fleet-vscode-f11 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 23 s | 24 s |
 | R100K-g: 1000 cached agents, copy 5 [cached answers] | 1 | fleet-vscode-f5 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 23 s | 26 s |
@@ -226,7 +226,7 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | R100K-g: 1000 cached agents, copy 31 [cached answers] | 1 | fleet-n3-vscode-f6 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 17 s | 26 s |
 | R100K-g: 1000 cached agents, copy 30 [cached answers] | 1 | fleet-n3-vscode-f5 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 15 s | 46 s |
 | R100K-g: 1000 cached agents, copy 34 [cached answers] | 1 | fleet-n3-vscode-f9 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 18 s | 33 s |
-| R100K-g: 1000 cached agents, copy 19 [cached answers] | 1 | fleet-vscode-f19 src/vs | cache | 1,000 | 4,064 | 2,984 | 1,069 | 0 | 0 | 0 | $0.00 | 830 s | 26 s |
+| R100K-g: 1000 cached agents, copy 19 [cached answers] | 1 | fleet-vscode-f19 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 974 s | 26 s |
 | R100K-g: 1000 cached agents, copy 17 [cached answers] | 1 | fleet-vscode-f17 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 15 s | 35 s |
 | R100K-g: 1000 cached agents, copy 26 [cached answers] | 1 | fleet-n3-vscode-f1 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 19 s | 33 s |
 | R100K-g: 1000 cached agents, copy 58 [cached answers] | 1 | fleet-n4-vscode-f8 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 17 s | 36 s |
@@ -235,7 +235,7 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | R100K-g: 1000 cached agents, copy 79 [cached answers] | 1 | fleet-n5-vscode-f4 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 19 s | 36 s |
 | R100K-g: 1000 cached agents, copy 35 [cached answers] | 1 | fleet-n3-vscode-f10 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 17 s | 34 s |
 | R100K-g: 1000 cached agents, copy 66 [cached answers] | 1 | fleet-n4-vscode-f16 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 17 s | 27 s |
-| R100K-g: 1000 cached agents, copy 41 [cached answers] | 1 | fleet-n3-vscode-f16 src/vs | cache | 1,000 | 4,064 | 2,987 | 1,069 | 0 | 0 | 0 | $0.00 | 829 s | 23 s |
+| R100K-g: 1000 cached agents, copy 41 [cached answers] | 1 | fleet-n3-vscode-f16 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 976 s | 23 s |
 | R100K-g: 1000 cached agents, copy 80 [cached answers] | 1 | fleet-n5-vscode-f5 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 35 s | 27 s |
 | R100K-g: 1000 cached agents, copy 21 [cached answers] | 1 | fleet-vscode-f21 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 19 s | 38 s |
 | R100K-g: 1000 cached agents, copy 18 [cached answers] | 1 | fleet-vscode-f18 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 18 s | 26 s |
@@ -245,12 +245,12 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | R100K-g: 1000 cached agents, copy 55 [cached answers] | 1 | fleet-n4-vscode-f5 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 18 s | 29 s |
 | R100K-g: 1000 cached agents, copy 57 [cached answers] | 1 | fleet-n4-vscode-f7 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 20 s | 33 s |
 | R100K-g: 1000 cached agents, copy 62 [cached answers] | 1 | fleet-n4-vscode-f12 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 17 s | 32 s |
-| R100K-g: 1000 cached agents, copy 46 [cached answers] | 1 | fleet-n3-vscode-f21 src/vs | cache | 1,000 | 4,064 | 2,983 | 1,069 | 0 | 0 | 0 | $0.00 | 830 s | 30 s |
-| R100K-g: 1000 cached agents, copy 51 [cached answers] | 1 | fleet-n4-vscode-f1 src/vs | cache | 1,000 | 4,064 | 2,982 | 1,069 | 0 | 0 | 0 | $0.00 | 829 s | 30 s |
+| R100K-g: 1000 cached agents, copy 46 [cached answers] | 1 | fleet-n3-vscode-f21 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 977 s | 30 s |
+| R100K-g: 1000 cached agents, copy 51 [cached answers] | 1 | fleet-n4-vscode-f1 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 977 s | 30 s |
 | R100K-g: 1000 cached agents, copy 99 [cached answers] | 1 | fleet-n5-vscode-f24 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 19 s | 31 s |
 | R100K-g: 1000 cached agents, copy 86 [cached answers] | 1 | fleet-n5-vscode-f11 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 27 s | 41 s |
-| R100K-g: 1000 cached agents, copy 98 [cached answers] | 1 | fleet-n5-vscode-f23 src/vs | cache | 1,000 | 4,064 | 2,986 | 1,069 | 0 | 0 | 0 | $0.00 | 830 s | 28 s |
-| R100K-g: 1000 cached agents, copy 56 [cached answers] | 1 | fleet-n4-vscode-f6 src/vs | cache | 1,000 | 4,064 | 2,986 | 1,069 | 0 | 0 | 0 | $0.00 | 830 s | 28 s |
+| R100K-g: 1000 cached agents, copy 98 [cached answers] | 1 | fleet-n5-vscode-f23 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 982 s | 28 s |
+| R100K-g: 1000 cached agents, copy 56 [cached answers] | 1 | fleet-n4-vscode-f6 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 980 s | 28 s |
 | R100K-g: 1000 cached agents, copy 72 [cached answers] | 1 | fleet-n4-vscode-f22 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 18 s | 29 s |
 | R100K-g: 1000 cached agents, copy 59 [cached answers] | 1 | fleet-n4-vscode-f9 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 15 s | 38 s |
 | R100K-g: 1000 cached agents, copy 65 [cached answers] | 1 | fleet-n4-vscode-f15 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 20 s | 35 s |
@@ -258,14 +258,14 @@ Label: measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare
 | R100K-g: 1000 cached agents, copy 45 [cached answers] | 1 | fleet-n3-vscode-f20 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 20 s | 41 s |
 | R100K-g: 1000 cached agents, copy 70 [cached answers] | 1 | fleet-n4-vscode-f20 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 17 s | 46 s |
 | R100K-g: 1000 cached agents, copy 39 [cached answers] | 1 | fleet-n3-vscode-f14 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 17 s | 31 s |
-| R100K-g: 1000 cached agents, copy 20 [cached answers] | 1 | fleet-vscode-f20 src/vs | cache | 1,000 | 4,064 | 2,985 | 1,069 | 0 | 0 | 0 | $0.00 | 829 s | 37 s |
+| R100K-g: 1000 cached agents, copy 20 [cached answers] | 1 | fleet-vscode-f20 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 974 s | 37 s |
 | R100K-g: 1000 cached agents, copy 25 [cached answers] | 1 | fleet-vscode-f25 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 16 s | 29 s |
-| R100K-g: 1000 cached agents, copy 52 [cached answers] | 1 | fleet-n4-vscode-f2 src/vs | cache | 1,000 | 4,064 | 2,985 | 1,069 | 0 | 0 | 0 | $0.00 | 829 s | 31 s |
-| R100K-g: 1000 cached agents, copy 53 [cached answers] | 1 | fleet-n4-vscode-f3 src/vs | cache | 1,000 | 4,064 | 2,986 | 1,069 | 0 | 0 | 0 | $0.00 | 829 s | 41 s |
+| R100K-g: 1000 cached agents, copy 52 [cached answers] | 1 | fleet-n4-vscode-f2 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 978 s | 31 s |
+| R100K-g: 1000 cached agents, copy 53 [cached answers] | 1 | fleet-n4-vscode-f3 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 979 s | 41 s |
 | R100K-g: 1000 cached agents, copy 82 [cached answers] | 1 | fleet-n5-vscode-f7 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 18 s | 24 s |
 | R100K-g: 1000 cached agents, copy 85 [cached answers] | 1 | fleet-n5-vscode-f10 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 18 s | 24 s |
 | R100K-g: 1000 cached agents, copy 77 [cached answers] | 1 | fleet-n5-vscode-f2 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 20 s | 38 s |
-| R100K-g: 1000 cached agents, copy 91 [cached answers] | 1 | fleet-n5-vscode-f16 src/vs | cache | 1,000 | 4,064 | 2,986 | 1,069 | 0 | 0 | 0 | $0.00 | 829 s | 41 s |
+| R100K-g: 1000 cached agents, copy 91 [cached answers] | 1 | fleet-n5-vscode-f16 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 981 s | 41 s |
 | R100K-g: 1000 cached agents, copy 60 [cached answers] | 1 | fleet-n4-vscode-f10 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 16 s | 34 s |
 | R100K-g: 1000 cached agents, copy 43 [cached answers] | 1 | fleet-n3-vscode-f18 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 17 s | 35 s |
 | R100K-g: 1000 cached agents, copy 37 [cached answers] | 1 | fleet-n3-vscode-f12 src/vs | cache | 1,000 | 4,064 | 2,989 | 1,069 | 0 | 0 | 0 | $0.00 | 18 s | 28 s |
@@ -316,7 +316,7 @@ Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6's series;
 | R50K-f (read cache: best case: files repeat (cache), after the fixes (4a4769f, 5aa4910)) | 50,000 | 50 | 4 | 12,900 | 20 ms | 3 files answered but not landed (0.0015%); was 10,943 before the fixes |
 | R100K-g (read cache: best case: files repeat (cache), after the fixes (4a4769f, 5aa4910)) | 100,000 | 100 | 4 | 21,100 | 40 ms | 43 files (0.01%) answered but never landed, on 11 of 100 copies: the agents' report met 'Durable Object is overloaded' (the write went through) and their invocations were cancelled before the hand-off retry. Run objects and Landers overloaded at peaks. Nothing landed wrong. Fix not built: the Run object re-dispatches answered files no landing queue took within a minute |
 
-10,000 agents: 10,000 agents on Cloudflare, every file different, 0 errors: all 29,890 changes on main 86 s after the start (~1,900 files a second at the busiest; Artifacts reads slow down but never fail, and that read rate, ~2,000/s for the account, is the wall). Cached answers (no model calls). Agents start in ramps: at most ~2,800 of the 10,000 were busy at once. The read cache did not raise the realistic throughput (1,900 vs the 2,100 plateau without it): not 'the fix'. More namespaces did not raise it either: the read limit is for the account. 20,000 agents: not run (budget). 50,000 agents (cached answers, files repeat, best case), before the fixes: 5.4% dropped by our own bookkeeping (R50K-e). After the fixes (R50K-f): 3 of 203,200 not landed (0.0015%), ~12,900 files/s at the busiest. 100,000 agents (cached answers, files repeat, best case): ~21,100 files a second at the busiest, 298,857 changes landed in ~66 s, nothing landed wrong; 43 of 406,400 files (0.01%) were answered but never landed (our bookkeeping objects overloaded at the peak). At most ~13,800 agents busy at once.
+10,000 agents: 10,000 agents on Cloudflare, every file different, 0 errors: all 29,890 changes on main 86 s after the start (~1,900 files a second at the busiest; Artifacts reads slow down but never fail, and that read rate, ~2,000/s for the account, is the wall). Cached answers (no model calls). Agents start in ramps: at most ~2,800 of the 10,000 were busy at once. The read cache did not raise the realistic throughput (1,900 vs the 2,100 plateau without it): not 'the fix'. More namespaces did not raise it either: the read limit is for the account. 20,000 agents: not run (budget). 50,000 agents (cached answers, files repeat, best case), before the fixes: 5.4% dropped by our own bookkeeping (R50K-e). After the fixes (R50K-f): 3 of 203,200 not landed (0.0015%), ~12,900 files/s at the busiest. 100,000 agents (cached answers, files repeat, best case): ~21,100 files a second at the busiest, 298,857 changes landed in ~66 s, nothing landed wrong; 43 of 406,400 files (0.01%) were answered but not landed in the run (our bookkeeping objects overloaded at the peak), and a sweep added afterwards redid and landed all 43 within ~75 s. At most ~13,800 agents busy at once.
 
 | real-model run | agents | files/s | calls/min | what limited it | $ |
 |---|---|---|---|---|---|
@@ -332,7 +332,7 @@ Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6's series;
 | gemini-3.1-flash-lite | 43,544 | 31,912 | 0 | 51 (0.2%) | 2,059 | $29.32 | $0.67 |
 | @cf/zai-org/glm-5.3-flash | 223 | 98 | 0 | 63 (35.8%) | 50 | $0.08 | $0.34 |
 
-Cached-answer runs (measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real): 555 runs, 1,392,379 files, 1,025,346 landed, 0 refused by verify. Not counted in the model totals below.
+Cached-answer runs (measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real): 555 runs, 1,392,379 files, 1,025,389 landed, 0 refused by verify. Not counted in the model totals below.
 
 Model-written totals: 53,128 files landed of 69,191 attempted over 42 runs (19,410 needed no comment); by job: docs 31,466 landed in 27 runs, index 506 landed in 1 run, docs+index 14,263 landed in 5 runs, code 6,893 landed in 9 runs; 0 refused by the code-unchanged check; $35.11 ($0.51 per 1k files).
 

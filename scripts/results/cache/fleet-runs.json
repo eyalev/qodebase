@@ -11754,8 +11754,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791908546429,
-   "endedAt": 1791973937322,
-   "wallS": 65391,
+   "endedAt": 1791974196193,
+   "wallS": 65650,
    "landWaitS": {
     "p50": 78,
     "p90": 88
@@ -25312,8 +25312,8 @@
    "tokensIn": 8420553,
    "tokensOut": 264827,
    "startedAt": 1791902486503,
-   "endedAt": 1791973937438,
-   "wallS": 71451,
+   "endedAt": 1791974196482,
+   "wallS": 71710,
    "landWaitS": {
     "p50": 35,
     "p90": 52
@@ -25436,8 +25436,8 @@
    "tokensIn": 8472369,
    "tokensOut": 266508,
    "startedAt": 1791902486581,
-   "endedAt": 1791973937760,
-   "wallS": 71451,
+   "endedAt": 1791974196483,
+   "wallS": 71710,
    "landWaitS": {
     "p50": 19,
     "p90": 31
@@ -25564,8 +25564,8 @@
    "tokensIn": 8428473,
    "tokensOut": 265250,
    "startedAt": 1791902486505,
-   "endedAt": 1791973937513,
-   "wallS": 71451,
+   "endedAt": 1791974196499,
+   "wallS": 71710,
    "landWaitS": {
     "p50": 45,
     "p90": 71
@@ -36090,14 +36090,12 @@
    "copy": 51,
    "repo": "fleet-n4-vscode-f1",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 7,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2982,
-   "ready": 7,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -36108,8 +36106,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108723,
-   "endedAt": 1791973937996,
-   "wallS": 829,
+   "endedAt": 1791974085704,
+   "wallS": 977,
    "landWaitS": {
     "p50": 22,
     "p90": 30
@@ -36118,10 +36116,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2982,
-     "ready": 7,
+     "landed": 2989,
+     "ready_retry": 7,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 3002,
      "rateLimited429": 0,
      "peakPerMin": 2995,
      "role": "planned"
@@ -36132,22 +36130,27 @@
      "minute": 1791973080000,
      "model": "cache",
      "calls": 2995
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 7
     }
    ],
    "readMs": {
     "p50": 11,
-    "p90": 51,
+    "p90": 52,
     "p99": 289,
-    "n": 3867
+    "n": 3874
    },
    "nextMs": {
     "p50": 97,
     "p90": 159,
     "p99": 555,
-    "n": 4064
+    "n": 4071
    },
    "readTiers": {
-    "kv": 3867,
+    "kv": 3874,
     "mem": 197
    },
    "copyOfKind": 1,
@@ -36537,14 +36540,12 @@
    "copy": 52,
    "repo": "fleet-n4-vscode-f2",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 4,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2985,
-   "ready": 4,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -36555,8 +36556,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108927,
-   "endedAt": 1791973938008,
-   "wallS": 829,
+   "endedAt": 1791974086947,
+   "wallS": 978,
    "landWaitS": {
     "p50": 22,
     "p90": 31
@@ -36565,10 +36566,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2985,
-     "ready": 4,
+     "landed": 2989,
+     "ready_retry": 4,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 2999,
      "rateLimited429": 0,
      "peakPerMin": 2995,
      "role": "planned"
@@ -36579,22 +36580,27 @@
      "minute": 1791973080000,
      "model": "cache",
      "calls": 2995
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 4
     }
    ],
    "readMs": {
     "p50": 26,
     "p90": 183,
     "p99": 489,
-    "n": 3886
+    "n": 3890
    },
    "nextMs": {
     "p50": 71,
     "p90": 202,
     "p99": 425,
-    "n": 4064
+    "n": 4068
    },
    "readTiers": {
-    "kv": 3886,
+    "kv": 3890,
     "mem": 178
    },
    "copyOfKind": 1,
@@ -36837,14 +36843,12 @@
    "copy": 53,
    "repo": "fleet-n4-vscode-f3",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 3,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2986,
-   "ready": 3,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -36855,8 +36859,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108931,
-   "endedAt": 1791973938015,
-   "wallS": 829,
+   "endedAt": 1791974087682,
+   "wallS": 979,
    "landWaitS": {
     "p50": 33,
     "p90": 41
@@ -36865,10 +36869,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2986,
-     "ready": 3,
+     "landed": 2989,
+     "ready_retry": 3,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 2998,
      "rateLimited429": 0,
      "peakPerMin": 2995,
      "role": "planned"
@@ -36879,22 +36883,27 @@
      "minute": 1791973080000,
      "model": "cache",
      "calls": 2995
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 3
     }
    ],
    "readMs": {
     "p50": 33,
     "p90": 214,
     "p99": 534,
-    "n": 3920
+    "n": 3923
    },
    "nextMs": {
     "p50": 66,
     "p90": 196,
     "p99": 471,
-    "n": 4064
+    "n": 4067
    },
    "readTiers": {
-    "kv": 3920,
+    "kv": 3923,
     "mem": 144
    },
    "copyOfKind": 1,
@@ -38008,14 +38017,12 @@
    "copy": 56,
    "repo": "fleet-n4-vscode-f6",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 3,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2986,
-   "ready": 3,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -38026,8 +38033,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108752,
-   "endedAt": 1791973938980,
-   "wallS": 830,
+   "endedAt": 1791974088437,
+   "wallS": 980,
    "landWaitS": {
     "p50": 19,
     "p90": 28
@@ -38036,10 +38043,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2986,
-     "ready": 3,
+     "landed": 2989,
+     "ready_retry": 3,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 2998,
      "rateLimited429": 0,
      "peakPerMin": 2995,
      "role": "planned"
@@ -38050,22 +38057,27 @@
      "minute": 1791973080000,
      "model": "cache",
      "calls": 2995
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 3
     }
    ],
    "readMs": {
     "p50": 19,
     "p90": 179,
     "p99": 457,
-    "n": 3752
+    "n": 3755
    },
    "nextMs": {
     "p50": 81,
     "p90": 268,
     "p99": 659,
-    "n": 4064
+    "n": 4067
    },
    "readTiers": {
-    "kv": 3752,
+    "kv": 3755,
     "mem": 312
    },
    "copyOfKind": 1,
@@ -41972,14 +41984,12 @@
    "copy": 41,
    "repo": "fleet-n3-vscode-f16",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 2,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2987,
-   "ready": 2,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -41990,8 +42000,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108658,
-   "endedAt": 1791973938089,
-   "wallS": 829,
+   "endedAt": 1791974084243,
+   "wallS": 976,
    "landWaitS": {
     "p50": 14,
     "p90": 23
@@ -42000,10 +42010,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2987,
-     "ready": 2,
+     "landed": 2989,
+     "ready_retry": 2,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 2997,
      "rateLimited429": 0,
      "peakPerMin": 1732,
      "role": "planned"
@@ -42019,22 +42029,27 @@
      "minute": 1791973140000,
      "model": "cache",
      "calls": 1732
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 2
     }
    ],
    "readMs": {
     "p50": 12,
     "p90": 32,
     "p99": 220,
-    "n": 3848
+    "n": 3850
    },
    "nextMs": {
     "p50": 67,
     "p90": 84,
     "p99": 221,
-    "n": 4064
+    "n": 4066
    },
    "readTiers": {
-    "kv": 3848,
+    "kv": 3850,
     "mem": 216
    },
    "copyOfKind": 1,
@@ -42715,14 +42730,12 @@
    "copy": 13,
    "repo": "fleet-vscode-f13",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 3,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2986,
-   "ready": 3,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -42733,8 +42746,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108261,
-   "endedAt": 1791973938110,
-   "wallS": 830,
+   "endedAt": 1791974081243,
+   "wallS": 973,
    "landWaitS": {
     "p50": 19,
     "p90": 26
@@ -42743,10 +42756,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2986,
-     "ready": 3,
+     "landed": 2989,
+     "ready_retry": 3,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 2998,
      "rateLimited429": 0,
      "peakPerMin": 2099,
      "role": "planned"
@@ -42762,22 +42775,27 @@
      "minute": 1791973140000,
      "model": "cache",
      "calls": 2099
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 3
     }
    ],
    "readMs": {
     "p50": 9,
     "p90": 23,
     "p99": 93,
-    "n": 3704
+    "n": 3707
    },
    "nextMs": {
     "p50": 63,
     "p90": 126,
     "p99": 274,
-    "n": 4064
+    "n": 4067
    },
    "readTiers": {
-    "kv": 3704,
+    "kv": 3707,
     "mem": 360
    },
    "copyOfKind": 1,
@@ -43901,14 +43919,12 @@
    "copy": 19,
    "repo": "fleet-vscode-f19",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 5,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2984,
-   "ready": 5,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -43919,8 +43935,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108576,
-   "endedAt": 1791973938147,
-   "wallS": 830,
+   "endedAt": 1791974082567,
+   "wallS": 974,
    "landWaitS": {
     "p50": 19,
     "p90": 26
@@ -43929,10 +43945,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2984,
-     "ready": 5,
+     "landed": 2989,
+     "ready_retry": 5,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 3000,
      "rateLimited429": 0,
      "peakPerMin": 1940,
      "role": "planned"
@@ -43948,22 +43964,27 @@
      "minute": 1791973140000,
      "model": "cache",
      "calls": 1055
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 5
     }
    ],
    "readMs": {
     "p50": 12,
-    "p90": 47,
+    "p90": 48,
     "p99": 281,
-    "n": 3692
+    "n": 3697
    },
    "nextMs": {
     "p50": 72,
     "p90": 127,
     "p99": 498,
-    "n": 4064
+    "n": 4069
    },
    "readTiers": {
-    "kv": 3692,
+    "kv": 3697,
     "mem": 372
    },
    "copyOfKind": 1,
@@ -44274,14 +44295,12 @@
    "copy": 46,
    "repo": "fleet-n3-vscode-f21",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 6,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2983,
-   "ready": 6,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -44292,8 +44311,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108707,
-   "endedAt": 1791973938480,
-   "wallS": 830,
+   "endedAt": 1791974085458,
+   "wallS": 977,
    "landWaitS": {
     "p50": 21,
     "p90": 30
@@ -44302,10 +44321,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2983,
-     "ready": 6,
+     "landed": 2989,
+     "ready_retry": 6,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 3001,
      "rateLimited429": 0,
      "peakPerMin": 2995,
      "role": "planned"
@@ -44316,22 +44335,27 @@
      "minute": 1791973080000,
      "model": "cache",
      "calls": 2995
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 6
     }
    ],
    "readMs": {
     "p50": 29,
-    "p90": 216,
+    "p90": 215,
     "p99": 588,
-    "n": 3785
+    "n": 3791
    },
    "nextMs": {
     "p50": 77,
     "p90": 320,
     "p99": 616,
-    "n": 4064
+    "n": 4070
    },
    "readTiers": {
-    "kv": 3785,
+    "kv": 3791,
     "mem": 279
    },
    "copyOfKind": 1,
@@ -44350,14 +44374,12 @@
    "copy": 91,
    "repo": "fleet-n5-vscode-f16",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 3,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2986,
-   "ready": 3,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -44368,8 +44390,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108944,
-   "endedAt": 1791973938190,
-   "wallS": 829,
+   "endedAt": 1791974089606,
+   "wallS": 981,
    "landWaitS": {
     "p50": 29,
     "p90": 41
@@ -44378,10 +44400,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2986,
-     "ready": 3,
+     "landed": 2989,
+     "ready_retry": 3,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 2998,
      "rateLimited429": 0,
      "peakPerMin": 2995,
      "role": "planned"
@@ -44392,22 +44414,27 @@
      "minute": 1791973080000,
      "model": "cache",
      "calls": 2995
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 3
     }
    ],
    "readMs": {
     "p50": 14,
     "p90": 106,
     "p99": 326,
-    "n": 3989
+    "n": 3992
    },
    "nextMs": {
     "p50": 63,
     "p90": 180,
     "p99": 408,
-    "n": 4064
+    "n": 4067
    },
    "readTiers": {
-    "kv": 3989,
+    "kv": 3992,
     "mem": 75
    },
    "copyOfKind": 1,
@@ -44499,14 +44526,12 @@
    "copy": 20,
    "repo": "fleet-vscode-f20",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 4,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2985,
-   "ready": 4,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -44517,8 +44542,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108901,
-   "endedAt": 1791973938207,
-   "wallS": 829,
+   "endedAt": 1791974083081,
+   "wallS": 974,
    "landWaitS": {
     "p50": 24,
     "p90": 37
@@ -44527,10 +44552,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2985,
-     "ready": 4,
+     "landed": 2989,
+     "ready_retry": 4,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 2999,
      "rateLimited429": 0,
      "peakPerMin": 2310,
      "role": "planned"
@@ -44546,22 +44571,27 @@
      "minute": 1791973140000,
      "model": "cache",
      "calls": 685
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 4
     }
    ],
    "readMs": {
     "p50": 11,
     "p90": 52,
-    "p99": 302,
-    "n": 3699
+    "p99": 297,
+    "n": 3703
    },
    "nextMs": {
     "p50": 72,
     "p90": 157,
     "p99": 467,
-    "n": 4064
+    "n": 4068
    },
    "readTiers": {
-    "kv": 3699,
+    "kv": 3703,
     "mem": 365
    },
    "copyOfKind": 1,
@@ -46415,14 +46445,12 @@
    "copy": 98,
    "repo": "fleet-n5-vscode-f23",
    "root": "src/vs",
-   "state": "running",
-   "phase": "landing",
-   "landingLeft": 3,
+   "state": "done",
    "agents": 1000,
    "agentsStarted": 1000,
    "files": 4064,
-   "landed": 2986,
-   "ready": 3,
+   "landed": 2989,
+   "ready": 0,
    "skipped": 1069,
    "verify_fail": 0,
    "rejected": 0,
@@ -46433,8 +46461,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791973108743,
-   "endedAt": 1791973938774,
-   "wallS": 830,
+   "endedAt": 1791974090394,
+   "wallS": 982,
    "landWaitS": {
     "p50": 20,
     "p90": 28
@@ -46443,10 +46471,10 @@
     "cache": {
      "usd": 0,
      "cache_miss": 6,
-     "landed": 2986,
-     "ready": 3,
+     "landed": 2989,
+     "ready_retry": 3,
      "skipped": 1069,
-     "calls": 2995,
+     "calls": 2998,
      "rateLimited429": 0,
      "peakPerMin": 2995,
      "role": "planned"
@@ -46457,22 +46485,27 @@
      "minute": 1791973080000,
      "model": "cache",
      "calls": 2995
+    },
+    {
+     "minute": 1791974040000,
+     "model": "cache",
+     "calls": 3
     }
    ],
    "readMs": {
     "p50": 18,
     "p90": 155,
     "p99": 465,
-    "n": 3884
+    "n": 3887
    },
    "nextMs": {
     "p50": 69,
     "p90": 187,
     "p99": 488,
-    "n": 4064
+    "n": 4067
    },
    "readTiers": {
-    "kv": 3884,
+    "kv": 3887,
     "mem": 180
    },
    "copyOfKind": 1,

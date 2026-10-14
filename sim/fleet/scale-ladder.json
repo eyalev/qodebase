@@ -238,7 +238,13 @@
     "noCachedAnswer": 600,
     "readsFromArtifacts": 0,
     "limit": "43 files (0.01%) answered but never landed, on 11 of 100 copies: the agents' report met 'Durable Object is overloaded' (the write went through) and their invocations were cancelled before the hand-off retry. Run objects and Landers overloaded at peaks. Nothing landed wrong. Fix not built: the Run object re-dispatches answered files no landing queue took within a minute",
-    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9643506)"
+    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9643506)",
+    "afterSweep": {
+     "landed": 298900,
+     "lost": 0,
+     "runsFinished": 100,
+     "note": "The re-issue sweep (fleet b3ae9c4b; commits c93f333, 96d052c) was applied afterwards to the 11 unfinished copies: all 43 were redone and landed within ~75 s. The in-run figure stays 43 not landed; a rerun with the sweep live is planned."
+    }
    }
   ],
   "files": {
@@ -261,7 +267,7 @@
    "not": "The read cache did not raise the realistic throughput (1,900 vs the 2,100 plateau without it): not 'the fix'. More namespaces did not raise it either: the read limit is for the account.",
    "notRun": "20,000 agents: not run (budget).",
    "fiftyK": "50,000 agents (cached answers, files repeat, best case), before the fixes: 5.4% dropped by our own bookkeeping (R50K-e). After the fixes (R50K-f): 3 of 203,200 not landed (0.0015%), ~12,900 files/s at the busiest.",
-   "hundredK": "100,000 agents (cached answers, files repeat, best case): ~21,100 files a second at the busiest, 298,857 changes landed in ~66 s, nothing landed wrong; 43 of 406,400 files (0.01%) were answered but never landed (our bookkeeping objects overloaded at the peak). At most ~13,800 agents busy at once."
+   "hundredK": "100,000 agents (cached answers, files repeat, best case): ~21,100 files a second at the busiest, 298,857 changes landed in ~66 s, nothing landed wrong; 43 of 406,400 files (0.01%) were answered but not landed in the run (our bookkeeping objects overloaded at the peak), and a sweep added afterwards redid and landed all 43 within ~75 s. At most ~13,800 agents busy at once."
   }
  },
  "realModels": {
