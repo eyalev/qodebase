@@ -217,6 +217,9 @@ export class Landing extends DurableObject<Env> {
     await this.#prune();
     await this.#saveMeta();
     log('landing', 'recorded', { slug, id: ch.id, kind: ch.kind, claims: ch.claims.length, stackedOn: ch.stackedOn });
+    // The alarm runs the stall check (a box that never started gets woken after 2 min). A build whose only change is the
+    // skeleton had nothing else arming it: the scene-2 take's skeleton sat 14 min with its box never started (2026-10-14).
+    if (ch.kind === 'agent') await this.#arm(150_000);
     // Push events for the project's main (once): a person's plain git push to main then shows up. Not for agent forks
     // (forq push reports those; Eyal/manager 2026-10-12), never for lab projects (eyal.lab-*) or the demo.
     if (ch.kind === 'agent' && eligibleSlug(m.slug)) this.ctx.waitUntil(this.#subscribe([m.slug]).catch((e) => log('landing', 'subscribe_error', { err: String(e).slice(0, 200) })));
