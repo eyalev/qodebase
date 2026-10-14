@@ -543,6 +543,9 @@
     try {
       const first = !D;
       await load(); failures = 0; lastOk = Date.now(); if (!NJ && OWN && !MOCK) { njMount(); lastHtml = ''; } loaded1();
+      // The copies list (~4 s) fetched now, so a spoken fleet sentence gets its estimate at once (qb2, 2026-10-14: the
+      // question came 7-25 s after the sentence on film).
+      if (OWN && !MOCK && !COPIES) njCopies().catch(() => {});
       if (first) render();   // the list at once; timelines fill in as they arrive
       const cur = current();
       if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); if (!cur.group) await loadIndexCheck(cur).catch(() => {}); }
@@ -664,8 +667,14 @@
     NJ.innerHTML = '<button type="button" class="btn nj-open" aria-expanded="false" aria-controls="nj-f">New fleet job</button><form class="nj-f" id="nj-f" hidden></form>';
     NJ.querySelector('.nj-open').onclick = () => njToggle();
   }
+  let copiesP = null;   // one request at a time: the prefetch at load and Talk's fleet sentence share it
   async function njCopies() {
     if (COPIES) return COPIES;
+    if (copiesP) return copiesP;
+    copiesP = njCopies1().finally(() => { copiesP = null; });
+    return copiesP;
+  }
+  async function njCopies1() {
     const r = await fetch(`${API}/copies`, { cache: 'no-store', credentials: 'same-origin' }).catch(() => null);
     const j = r && r.ok ? await r.json().catch(() => ({})) : {};
     COPIES = { copies: (j.copies || []).slice().sort((a, b) => (b.fresh - a.fresh) || String(a.repo).localeCompare(String(b.repo))), jobs: j.jobs || ['comments'], error: j.error || (!r || !r.ok ? 'Could not list the copies.' : '') };

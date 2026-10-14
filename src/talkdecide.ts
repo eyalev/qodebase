@@ -180,8 +180,12 @@ export type Cmd = {
 export const STATUS_RX = /^\s*((ok(ay)?|so|hey|hi|and)[,\s]+)?(what'?s|what is|whats)\s+(going on|happening)(\s+(with|in|across)\s+(all\s+)?(my|the)\s+(projects?|builds?|work|apps?))?(\s+(today|right now|now|at the moment))?\s*[?.!]*\s*$|^\s*(status|status update|any updates?|give me (a|the) status( update)?)\s*[?.!]*\s*$/i;
 export function quickCmd(utterance: string, s: Screen, projects: Proj[]): Cmd | null {
   const u = utterance.trim();
-  if (!u || u.split(/\s+/).length > 12) return null;
+  if (!u) return null;
   const base: Cmd = { mode: 'act', modeP: 1, op: 'none', p: 0.95, risky: 0, destroys: 0, complete: 1 };
+  // A fleet sentence on /runs: the page's own fleet-job action at once (the model took 2.5 s of a filmed turn).
+  const fj = s.items.find((i) => i.id === 'xfleet-job');
+  if (fj && /^\/runs/.test(s.path) && (/\b(document|comment) (every|all|each)\b.*\b(function|class|file|export)/i.test(u) || /\b(fleet job|doc comments|api index)\b/i.test(u))) return { ...base, op: 'press', target: fj.id, label: fj.text, why: 'fleet words on /runs (no model)' };
+  if (u.split(/\s+/).length > 12) return null;
   if (STATUS_RX.test(u)) return { ...base, mode: 'ask', op: 'status', why: 'status words (no model)' };
   if (/^\s*(please\s+)?((take me|go|bring me|get me) to|open|show( me)?)\s+(my\s+|the\s+)?(settings|account( settings)?|preferences|profile)( page)?\s*[.!]*\s*$/i.test(u)) return { ...base, op: 'go', href: '/settings', label: 'Settings', why: 'settings words (no model)' };
   if (/\bimport\b.{0,40}\b(from\s+)?github\b|^\s*(take me to|go to|open)\s+(the\s+)?import( page)?\s*[.!]*\s*$/i.test(u) && !/\b(how|what|why)\b/i.test(u)) return { ...base, op: 'go', href: '/import', label: 'Import from GitHub', why: 'import words (no model)' };

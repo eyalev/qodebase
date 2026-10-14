@@ -1461,6 +1461,8 @@ function pageAction(c) {
   list.forEach(function (x, i) { if ('x' + (x.id || i) === c.target) a = x; });
   if (!a) { add('note', 'Could not find that on the page any more.'); return done(); }
   var t0 = Date.now();
+  // The fleet form takes a few seconds to fill and estimate: say so at once (manager, 2026-10-14).
+  if (c.target === 'xfleet-job' && lastSpoken && S.voice !== 'off') { var fm = new String('One moment, getting the estimate.'); fm.__short = true; say(fm); }
   var said = numberWords(lastText || c.text || '');
   if (said !== (lastText || c.text || '')) trace('number_words', { from: lastText, to: said });
   Promise.resolve().then(function () { return a.run(said); }).then(function (r) {
