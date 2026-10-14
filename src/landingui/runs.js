@@ -73,10 +73,12 @@
   // every 15 s while it runs; a 404 (no index job, or not deployed) shows nothing.
   const IX = {}, IXat = {};
   async function loadIndexCheck(r) {
-    const k = key(r); if (IX[k] && (!live(r) || Date.now() - (IXat[k] || 0) < 15e3)) return;
-    IXat[k] = Date.now();
+    // a check made while the run was live is refetched once it ends (qb6: the card froze at a mid-landing 5,252 of 5,300)
+    const k = key(r); if (IX[k] && !(IX[k].wasLive && !live(r)) && (!live(r) || Date.now() - (IXat[k] || 0) < 15e3)) return;
+    IXat[k] = Date.now(); const wasLive = live(r);
     const res = await fetch(`${API}/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}/indexcheck`, { cache: 'no-store', credentials: 'same-origin' }).catch(() => null);
     IX[k] = res && res.ok ? await res.json().catch(() => ({ error: 'bad' })) : { error: res ? res.status : 'net' };
+    IX[k].wasLive = wasLive;
   }
   const openCopies = new Set();   // which steps' 'Show all copies' are open: kept across the 5 s refresh
   // A ladder step's own summed series (qb6: /api/runs/ladder/<ladder>/series); copies summed in the page otherwise.
@@ -476,7 +478,7 @@
     if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
     if (PENDING && PENDING.runId === id) { log('fleet_listed', { runId: id, ms: Date.now() - PENDING.at }); PENDING = null; }
     const ix = IX[key(r)];
-    const ixLine = ix && !ix.error && ix.expected != null && ix.lines > 0 ? `<p class="rc-ix${ix.lines === ix.expected && ix.sorted && !ix.missing && !ix.twice ? ' ok' : ' bad'}"><b>API index (docs/API.md, one line per exported function, written by this job):</b> ${n0(ix.lines)} of ${n0(ix.expected)} lines, ${ix.sorted ? 'sorted' : 'not sorted'}, ${ix.missing ? `${n0(ix.missing)} missing` : 'none missing'}, ${ix.twice ? `${n0(ix.twice)} twice` : 'none twice'}.</p>` : '';
+    const ixLine = ix && !ix.error && ix.expected != null && ix.lines > 0 ? `<p class="rc-ix${ix.wasLive ? '' : ix.lines === ix.expected && ix.sorted && !ix.missing && !ix.twice ? ' ok' : ' bad'}"><b>API index (docs/API.md, one line per exported function, written by this job)${ix.wasLive ? ', so far' : ''}:</b> ${n0(ix.lines)} of ${n0(ix.expected)} lines, ${ix.sorted ? 'sorted' : 'not sorted'}, ${ix.missing ? `${n0(ix.missing)} missing` : 'none missing'}, ${ix.twice ? `${n0(ix.twice)} twice` : 'none twice'}.</p>` : '';
     return `<p class="crumb"><a href="#/">All runs</a></p>${card(r, true)}${ixLine}<section class="rsec"><h2>Timeline</h2>${timeline(r, TL[key(r)], DR && DR.k === key(r) ? DR : null)}${drillPanel(r)}</section>`;
   }
   const stepOf = (base) => grouped((D.fleet || []).slice()).find((g) => g.group && g.label === base) || null;
