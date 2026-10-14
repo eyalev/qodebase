@@ -187,6 +187,14 @@ export function quickCmd(utterance: string, s: Screen, projects: Proj[]): Cmd | 
   if (fj && /^\/runs/.test(s.path) && (/\b(document|comment) (every|all|each)\b.*\b(function|class|file|export)/i.test(u) || /\b(fleet job|doc comments|api index)\b/i.test(u))) return { ...base, op: 'press', target: fj.id, label: fj.text, why: 'fleet words on /runs (no model)' };
   if (u.split(/\s+/).length > 12) return null;
   if (STATUS_RX.test(u)) return { ...base, mode: 'ask', op: 'status', why: 'status words (no model)' };
+  // 'Use the cheapest team.' / 'pick the balanced preset' / 'go with fastest': the preset tile, no model (qb3's take:
+  // p 0.43 gave only 'Maybe…?').
+  const pm = /^\s*(please\s+)?(use|pick|choose|select|go with|switch to|take|i want|let'?s (use|go with))\s+(the\s+)?(?<preset>cheapest|fastest|balanced)(\s+(one|team|preset|option|setting|settings|plan))?\s*[.!]*\s*$/i.exec(u);
+  if (pm) {
+    const pn = pm.groups!.preset, name = pn.charAt(0).toUpperCase() + pn.slice(1).toLowerCase();
+    const tile = s.items.find((i) => i.kind === 'button' && new RegExp('^' + name + '\\b').test(i.text));
+    if (tile) return { ...base, op: 'press', target: tile.id, label: tile.text, why: 'a preset by name (no model)' };
+  }
   if (/^\s*(please\s+)?((take me|go|bring me|get me) to|open|show( me)?)\s+(my\s+|the\s+)?(settings|account( settings)?|preferences|profile)( page)?\s*[.!]*\s*$/i.test(u)) return { ...base, op: 'go', href: '/settings', label: 'Settings', why: 'settings words (no model)' };
   if (/\bimport\b.{0,40}\b(from\s+)?github\b|^\s*(take me to|go to|open)\s+(the\s+)?import( page)?\s*[.!]*\s*$/i.test(u) && !/\b(how|what|why)\b/i.test(u)) return { ...base, op: 'go', href: '/import', label: 'Import from GitHub', why: 'import words (no model)' };
   // The turns Eyal says most (traces, 2026-10-13): counts, greetings, ideas, how-it-works questions. Same answers resolve() gives.

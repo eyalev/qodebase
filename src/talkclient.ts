@@ -1552,7 +1552,16 @@ function offerOn(text, yes, yesLabel) {
   offerState = { text: text || '', yes: yes, label: yesLabel || 'Go' };
   // A question asked after a spoken turn is said too, short (the quoted request stays on screen), unless something is
   // already being said (a confirm line says itself): in conversation mode it was silent and waited for an unheard yes.
-  if (text && lastSpoken && S.voice !== 'off' && !speakPending && !speakingQ && !ackPlaying) { var sq = new String(String(text).replace(/:\s*\u201c[^\u201d]*\u201d/, '').replace(/\s+\?$/, '?')); sq.__short = true; say(sq); }
+  // ... and when something is still being said, right after it (qb3: 'Build it?' after 'Typed …' was never heard).
+  if (text && lastSpoken && S.voice !== 'off') {
+    var sq = new String(String(text).replace(/:\s*\u201c[^\u201d]*\u201d/, '').replace(/\s+\?$/, '?')); sq.__short = true;
+    var mine = offerState, w0 = Date.now();
+    (function sayWhenFree() {
+      if (offerState !== mine) return;   // answered or replaced meanwhile
+      if ((speakPending || speakingQ || ackPlaying || (player && !player.paused && !player.ended && player.currentTime > 0)) && Date.now() - w0 < 15000) return setTimeout(sayWhenFree, 200);
+      say(sq);
+    })();
+  }
   bOffer.innerHTML = '';
   var by = el('button', { type: 'button', class: 'talk-chip pri' }); by.textContent = yesLabel || 'Go';
   var bn = el('button', { type: 'button', class: 'talk-chip', 'aria-label': 'No' }); bn.textContent = 'No';
