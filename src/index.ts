@@ -993,7 +993,7 @@ const app = {
           // Estimate vs elapsed (Build): the estimate shown and the progress, when the project was built with one.
           const bi = { ...(await env.Landing.get(env.Landing.idFromName(slug)).pageExtras().catch(() => null)), billing: await billingOf(env, slug.split('.')[0]) };
           // Visitors never see the owner's notices (a request's words and handle) or the requests counters (critique).
-          const pub = info.owner === me.handle || me.admin ? info : (({ notices: _n, requestsOpen: _o, requestsOff: _f, ...rest }) => rest)(info);
+          const pub = info.owner === me.handle || me.admin ? info : (({ notices: _n, requestsOpen: _o, requestsOff: _f, waiting: _w, ...rest }) => rest)(info);
           return json(bi ? { ...pub, ...bi } : pub);
         }
         if (verb === 'fork' && request.method === 'POST') {
@@ -1745,7 +1745,18 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       const hold = await env.Landing.get(env.Landing.idFromName(slug)).skeletonHold().catch(() => null);
       if (hold) return json({ error: `wait: the skeleton (${hold.id}, "${hold.title}") has not landed yet. End your turn; qodebase tells you when it lands, then start the features.` }, 409);
     }
-    return json(await spawn(env, ctx, slug, String(b.task || ''), apiBase, { files: Array.isArray(b.files) ? b.files.map(String) : undefined, on: b.on ? String(b.on) : undefined, skeleton: b.skeleton === true }));
+    const out = await spawn(env, ctx, slug, String(b.task || ''), apiBase, { files: Array.isArray(b.files) ? b.files.map(String) : undefined, on: b.on ? String(b.on) : undefined, skeleton: b.skeleton === true });
+    // A held task that now has its agent leaves the waiting list.
+    await env.Landing.get(env.Landing.idFromName(slug)).unhold(String(b.task || '')).catch(() => null);
+    return json(out);
+  }
+  // forq hold "<task>": a task the router holds until an agent is free (the person sees it waiting); --done "<task>" / --clear.
+  if (verb === 'hold') {
+    const b = body as Record<string, unknown>;
+    const L = env.Landing.get(env.Landing.idFromName(slug));
+    if (b.clear === true) return json(await L.unhold('*'));
+    if (b.done) return json(await L.unhold(String(b.done)));
+    return json(await L.hold(String(b.task || '')));
   }
   if (verb === 'parts') {
     const n = Number((body as Record<string, unknown>).parts);

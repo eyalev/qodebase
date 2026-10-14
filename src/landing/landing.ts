@@ -119,6 +119,8 @@ type Meta = {
   landings?: [number, number, number?][];   // [landedAt, ask-to-land s, replayed 0/1], last 2000: stats outlive pruned records
   bounces?: number[];                       // times of the last 2000 bounces (same reason)
   outbox?: { to: string; text: string; tries: number; at: number }[];
+  /** Tasks the router holds until an agent is free (forq hold): shown to the person as waiting; a spawn of the same task clears it. */
+  held?: { text: string; at: number }[];
   boardIntent?: Record<string, string>;     // board: each agent's stated intent (`forq intent`), newest 60
   boardClaims?: Record<string, { ids: string[]; at: number }>;   // board: task ids each agent claimed, and when (earliest keeps it)
   aliases?: Alias[];                         // board: pairs the dedupe pass found to be the same work
@@ -542,6 +544,28 @@ export class Landing extends DurableObject<Env> {
   }
 
   /** X1: a skeleton that has not landed yet holds other spawns (unless it bounced, or 20 minutes passed). */
+  /** forq hold: the router holds a task until an agent is free. */
+  async hold(text: string) {
+    const m = await this.#m();
+    const t = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+    if (!t) return { held: m.held || [] };
+    m.held = [...(m.held || []).filter((h) => h.text.toLowerCase() !== t.toLowerCase()), { text: t, at: Date.now() }].slice(-30);
+    await this.#saveMeta();
+    await this.env.Project.get(this.env.Project.idFromName(m.slug)).setWaiting(m.held).catch(() => {});
+    return { held: m.held };
+  }
+  /** A spawn (or forq hold --done) takes a held task off the list: same first words, either way round. */
+  async unhold(task: string) {
+    const m = await this.#m();
+    if (!m.held?.length) return { held: [] };
+    const key = (x: string) => x.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+    const k = key(String(task || '').split('\n')[0]);
+    const before = m.held.length;
+    m.held = task === '*' ? [] : m.held.filter((h) => { const hk = key(h.text); return !(k && hk && (k.startsWith(hk) || hk.startsWith(k))); });
+    if (m.held.length !== before) { await this.#saveMeta(); await this.env.Project.get(this.env.Project.idFromName(m.slug)).setWaiting(m.held).catch(() => {}); }
+    return { held: m.held };
+  }
+
   async skeletonHold(): Promise<{ id: string; title: string } | null> {
     const s = (await this.#all()).find((c) => c.skeleton && c.state !== 'landed' && c.state !== 'bounced' && Date.now() - c.createdAt < 20 * 60_000);
     return s ? { id: s.id, title: s.title } : null;
@@ -1165,7 +1189,8 @@ export class Landing extends DurableObject<Env> {
       const landedTitles = (r as { landedTitles?: string[] }).landedTitles || [];
       if (landedTitles.length) {
         const open = (await this.#all()).filter((x) => x.kind === 'agent' && ['working', 'pushed', 'reviewing', 'queued', 'testing', 'replaying', 'with-lead'].includes(x.state)).length;
-        this.#tell(`${m.slug}--router`, `qodebase: landed on main: ${landedTitles.map((x) => `"${x}"`).join(', ')}. ${open} change${open === 1 ? '' : 's'} still in progress${m.flags.caps?.agents ? ` (your agent limit: ${m.flags.caps.agents})` : ''}. If you have tasks waiting for a free agent, start them now with forq spawn; if everything is already running or done, end your turn without a reply.`);
+        const held = (m.held || []).map((h) => `"${h.text}"`);
+        this.#tell(`${m.slug}--router`, `qodebase: landed on main: ${landedTitles.map((x) => `"${x}"`).join(', ')}. ${open} change${open === 1 ? '' : 's'} still in progress${m.flags.caps?.agents ? ` (your agent limit: ${m.flags.caps.agents})` : ''}. ${held.length ? `You are holding ${held.join(', ')}: start them now with forq spawn while there is room.` : 'If you have tasks waiting for a free agent, start them now with forq spawn; if everything is already running or done, end your turn without a reply.'}`);
       }
       await this.#afterRealTrain(r);
     }
@@ -1367,6 +1392,8 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       // Estimate vs elapsed (Build): absent when built without an estimate.
       ...(m.build ? await this.buildInfo() : {}),
       build: this.#progressOf(m, await this.#all(), m.build?.actual?.settledAt || null),
+      // Requests and planned parts the router holds until an agent is free (qb7: the work page's 'waiting' line).
+      waiting: (m.held || []).map((h) => ({ text: h.text, at: h.at })),
       // The board (qb7's "who works on what"): working now + finished in the last 30 min + dedupe aliases.
       ...(m.flags.board ? { board: await this.boardWho({ recent: 30 * 60_000 }).then(({ rows, aliases }) => ({ rows, aliases })) } : {}),
       ...(m.flags.budgetUsd ? { budget: { usd: m.flags.budgetUsd, spent: m.spent?.usd ?? 0, halted: !!m.flags.halted, reviewers: m.flags.reviewers || 1 } } : {}),

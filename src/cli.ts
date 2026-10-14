@@ -210,6 +210,14 @@ def main(argv):
             if a.get('note'): print(f"    note: {a['note'][:200]}")
             if a.get('claims'): print(f"    claims: {', '.join(a['claims'][:12])}")
             if a.get('landing'): print(f"    queue: {a['landing']}")
+    elif v == 'hold':
+        # A task held until an agent is free: the person sees it as waiting; forq spawn of the same task clears it.
+        if rest[:1] == ['--clear']: r = api('POST', '/api/agent/hold', {'clear': True})
+        elif rest[:1] == ['--done']: r = api('POST', '/api/agent/hold', {'done': ' '.join(rest[1:])})
+        elif rest: r = api('POST', '/api/agent/hold', {'task': ' '.join(rest)})
+        else: sys.exit('usage: forq hold "<task>" | forq hold --done "<task>" | forq hold --clear')
+        held = r.get('held') or []
+        print(f"holding {len(held)}: " + '; '.join(h['text'][:60] for h in held) if held else 'holding nothing')
     elif v == 'spawn':
         files, on, words, skeleton = [], None, [], False
         it = iter(rest)

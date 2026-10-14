@@ -62,6 +62,8 @@ export type ProjectInfo = {
    *  turned them off. The requests themselves are kept apart in this object's storage ('rq:<id>'). */
   requestsOpen?: number;
   requestsOff?: boolean;
+  /** Tasks the router holds until an agent is free (forq hold; mirrored from the Landing): [{text, at}]. */
+  waiting?: { text: string; at: number }[];
 };
 export type Notice = { kind: 'build-done' | 'decision' | 'request'; title: string; at: number; href: string };
 /** A request from a signed-in person to the owner (src/requests.ts). Text fields are stored as typed and escaped where shown. */
@@ -128,6 +130,13 @@ export class Project extends DurableObject<Env> {
   }
 
   /** Public or private (owner-only). */
+  /** The Landing's held list (forq hold), for Talk's status and the Changes page. */
+  async setWaiting(list: { text: string; at: number }[]) {
+    const info = await this.#need();
+    if (list.length) info.waiting = list.slice(-30); else delete info.waiting;
+    await this.ctx.storage.put('info', info);
+  }
+
   async setPrivate(v: boolean): Promise<ProjectInfo> {
     const info = await this.#need();
     if (!!info.private === v) return info;
