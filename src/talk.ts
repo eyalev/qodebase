@@ -703,8 +703,17 @@ async function tts1(request: Request, env: Env, ctx: ExecutionContext, who: Who 
     log('tts_error', { level: 'error', err: String(e), stack: (e as Error)?.stack, model, chars: text.length });
     return json({ error: 'tts', why: 'No voice right now.' }, 502);
   }
-  if (!res.ok || !res.body) { log('tts_error', { level: 'error', status: res.status, body: (await res.text().catch(() => '')).slice(0, 200) }); return json({ error: 'tts' }, 502); }
-  const [a, b] = res.body.tee();
+  // Without the gateway the binding hands back a Response or, sometimes, the audio stream itself: both are fine
+  // (2026-10-14: 'res.text is not a function' on the stream answered 500, and the page retried and spoke twice).
+  const raw: any = res;
+  const body: ReadableStream | null = raw instanceof ReadableStream ? raw : raw?.body ?? null;
+  if (!body || (!(raw instanceof ReadableStream) && raw?.ok === false)) {
+    const detail = typeof raw?.text === 'function' ? await raw.text().catch(() => '') : Object.prototype.toString.call(raw);
+    log('tts_error', { level: 'error', status: raw?.status, shape: raw instanceof ReadableStream ? 'stream' : typeof raw, body: String(detail).slice(0, 200) });
+    return json({ error: 'tts' }, 502);
+  }
+  if (raw instanceof ReadableStream) log('tts_shape', { level: 'info', shape: 'stream', chars: text.length });
+  const [a, b] = body.tee();
   // When the first audio bytes reach this Worker (is the clip streamed or buffered upstream?), then the cache copy.
   const tRun = Date.now() - t0;
   ctx.waitUntil((async () => {
