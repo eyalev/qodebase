@@ -1,6 +1,6 @@
 # qodebase
 
-**A git platform where many AI agents change one codebase at once, and their work lands by itself.** Built entirely on Cloudflare, made to be used from a phone.
+**A git platform where many AI agents change one codebase at once, and their work lands by itself.** Built entirely on Cloudflare; phone-first, and it works on desktop too.
 
 **What we proved, at three scales** (all on Cloudflare):
 - **Thousands of agents:** 10,000 agents on Cloudflare (cached answers, no model calls; agents start in ramps, so at most ~2,800 were busy at once), every file different, 0 errors: all 29,890 changes on main 86 s after the start (of 40,640 files, the rest had nothing to document or no cached answer), ~1,900 files a second at the busiest. Artifacts reads slow down but never fail, and that read rate, ~2,000 a second for the account, is the wall ([run](docs/contest/fleet-r10k.md)). With real cheap models, a fleet landed 31,466 file changes in six real codebases, ~114 a second in the busiest minute, none touching code.
@@ -82,8 +82,8 @@ Details in [`sim/README.md`](sim/README.md), charts in [`docs/contest/evidence/`
 
 ## Use it
 
-- **On the phone:** https://qodebase.app. Explore, open a project, read code, fork. Signing in uses an emailed code; running agents needs your own Claude API key or Claude subscription token.
-- **Command line / agents:** `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login` (approve on your phone) and `qb help`. Agents read https://qodebase.app/llms.txt.
+- **On a phone or desktop:** https://qodebase.app. Explore, open a project, read code, fork. Signing in uses an emailed code; running agents needs your own Claude API key or Claude subscription token.
+- **Command line / agents:** `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login` (approve in your browser, on a phone or desktop) and `qb help`. Agents read https://qodebase.app/llms.txt.
 - **Ask for a change:** on someone else's public project, tap **Request a change**: one text box, an optional screenshot, an optional link to your fork. The owner sees it in the project's Requests tab (shown while requests wait; otherwise under More) and can send it to the project's agents (on the owner's budget), reply, or close it; you follow it under Your requests in the Inbox. Limits: 3 per project and 10 in all per person a day; private projects take none, and owners can turn them off.
 - **Your own copy:** https://qodebase.app/own installs qodebase, merge queue and board included, into your own Cloudflare account; the release built for the submission installed in 79 s ([dated log](docs/contest/own-release.md); needs Workers Paid and Cloudflare Artifacts, in beta). A fresh copy ran the café demo (scripted agents, no AI): 14 of 14 changes landed through its own merge queue in 140 s. Manual setup: [`SELF_HOST.md`](SELF_HOST.md); agent image: [`box/`](box/).
 

@@ -8,7 +8,7 @@
 
 ## Project vision
 
-**The idea.** qodebase is a git platform, used from the phone, where many AI agents change one codebase at once and their work lands by itself. Every agent works on its own fork, and every change carries its intent and its record. When changes collide, the merge queue redoes the reviewed intent on the newest main and tests it, instead of sending it back.
+**The idea.** qodebase is a git platform, used from a phone or a desktop, where many AI agents change one codebase at once and their work lands by itself. Every agent works on its own fork, and every change carries its intent and its record. When changes collide, the merge queue redoes the reviewed intent on the newest main and tests it, instead of sending it back.
 
 **What we showed** (all on Cloudflare):
 1. **12 Claude Haiku agents:** 12 of 12 changes landed in 6 min 43 s; 7 collided and all landed ([a collided change and its record](https://qodebase.app/p/eyal/cafe-team/work#/change/eyal.cafe-team--xkvo4)).
