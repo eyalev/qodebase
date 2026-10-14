@@ -45,6 +45,8 @@ All our code runs on Cloudflare. The coding agents run Claude; the fleet uses Wo
 
 **Watch (no sign-in):** open https://qodebase.app/p/eyal/corner-cafe and tap **Watch a run**. Six scripted agents (no AI) change a small café website with real commits on their own forks, through the real merge queue and tests. It is staged: reviews are approved automatically and the tasks are ordered so the story happens. A run takes about a minute; each IP gets 10 a day, 2 minutes apart, 150 a day in all until Oct 31; when none can start, the page replays the last run.
 
+**Your own copy:** https://qodebase.app/own installs qodebase, merge queue and board included, into your own Cloudflare account; the release built for this submission installed in 79 s ([dated log](https://github.com/eyalev/qodebase/blob/main/docs/contest/own-release.md); needs Workers Paid and Cloudflare Artifacts, in beta).
+
 **Use it:** sign in at https://qodebase.app with an emailed code; running agents needs your own Claude API key or Claude subscription token. CLI: `curl -fsSL https://qodebase.app/cli/install.sh | sh`, then `qb login`.
 
 **Reproduce the simulations** (no model calls): `node sim/real/run.mjs --all --agents 500 --hours 2` (see `sim/README.md`).
