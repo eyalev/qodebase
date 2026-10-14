@@ -1028,6 +1028,7 @@
     return `<div class="drill">${crumbs([['Board', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [ref(c.id)]])}
       <h2 style="font-size:20px;margin-bottom:6px">${short(c)}</h2>
       <div class="tags">${st(c)}<span>${AG(c.agent)}</span>${c.createdAt ? `<span>started ${ago(c.createdAt)}</span>` : ''}</div>
+      ${OWN && c.kind !== 'demo' && window.forqOpenSheet ? `<div class="sess"><span>${AG(c.agent)}\u2019s session</span><button type="button" class="chipb" data-sheet="${esc(c.id)}" data-name="${esc(`${AG(c.agent)}: ${short(c)}`)}" data-mode="chat">Chat</button><button type="button" class="chipb" data-sheet="${esc(c.id)}" data-name="${esc(`${AG(c.agent)}: ${short(c)}`)}" data-mode="term">Terminal</button></div>` : ''}
       ${progress(c)}
       <section class="sec" style="margin-top:16px">${howBox(c)}</section>
       <section class="sec"><h3>What it was asked to do</h3>${intentHtml(c)}${itOk() ? `<p class="fmore"><a href="#/intents/why/${encodeURIComponent(`c:${c.id}`)}">Why this exists: its place in the intent tree</a></p>` : ''}</section>

@@ -381,4 +381,6 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .hw-tb{cursor:pointer}.lw .hw-tb::before{content:'';position:absolute;inset:0 -8px}
 .lw .hw-links{margin-left:0;display:flex;gap:16px}.lw .hw-links>*{display:inline-flex;align-items:center;min-height:44px}
 .lw .ph .ph-t{position:relative}.lw .ph .ph-t::before{content:'';position:absolute;inset:-13px -4px}   /* 44 px to tap (qb5's critique) */
+/* a change's agent session (Eyal, 2026-10-15): opens the agent sheet on Chat or Terminal */
+.lw .sess{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:12px 0 16px}.lw .sess span{font-size:14px;color:var(--dim);margin-right:4px}.lw .sess .chipb{min-height:44px}
 
