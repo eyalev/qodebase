@@ -8,7 +8,7 @@ qodebase is a git platform where many AI agents change one codebase at once, and
 
 **What is new.** Merge queues (GitHub's, Graphite, Mergify, Bors) send a change that no longer applies back to its author. Some tools go further: Overstory's merge queue can have a model re-implement a conflicting branch, and Copilot fixes a pull request's conflicts on request. qodebase combines what we found nowhere together: the reviewed intent is recorded with each change as a git note (`git log --notes=qodebase`); redoing that intent on the newest main and testing it is the normal landing path, not a last resort; a live agent board shows who works on what; and with a thousand agents you browse intents, not agents: the [Intents tab](https://qodebase.app/p/eyal/real-course-builder/work#/intents) goes from the request to areas to each agent's change, needs-you first.
 
-- **Video (7:11):** https://qodebase.app/video
+- **Video (7:15):** https://qodebase.app/video
 - **How it works (demo, lab, measurements):** https://qodebase.app/how
 - **Code:** https://github.com/eyalev/qodebase (Apache-2.0); qodebase's own code also lives on qodebase: https://qodebase.app/p/eyal/qodebase (a mirror, updated on every push)
 - **Watch a run, no sign-in:** https://qodebase.app/p/eyal/corner-cafe
