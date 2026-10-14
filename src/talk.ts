@@ -676,7 +676,12 @@ const VOICES: Record<string, { id: string; speakers: string[]; def: string }> = 
   'aura-1': { id: '@cf/deepgram/aura-1', def: 'helios', speakers: ['helios', 'angus', 'arcas', 'orion', 'orpheus', 'perseus', 'zeus', 'athena', 'asteria', 'luna', 'hera', 'stella'] },
   'aura-2': { id: '@cf/deepgram/aura-2-en', def: 'draco', speakers: ['draco', 'apollo', 'arcas', 'atlas', 'hermes', 'orion', 'zeus', 'asteria', 'athena', 'aurora', 'cora', 'helena', 'hera', 'iris', 'juno', 'luna', 'minerva', 'thalia'] },
 };
+// Any exception in a spoken reply is logged with its stack and answered 502 (an intermittent 500 on fresh texts, 2026-10-14).
 async function tts(request: Request, env: Env, ctx: ExecutionContext, who: Who & {}, url: URL) {
+  try { return await tts1(request, env, ctx, who, url); }
+  catch (e) { log('tts_crash', { level: 'error', err: String(e), stack: (e as Error)?.stack, text: String(url.searchParams.get('text') || '').slice(0, 80) }); return json({ error: 'tts', why: String(e).slice(0, 200) }, 502); }
+}
+async function tts1(request: Request, env: Env, ctx: ExecutionContext, who: Who & {}, url: URL) {
   const t0 = Date.now();
   const text = String(url.searchParams.get('text') || '').replace(/\s+/g, ' ').trim().slice(0, 600);
   if (!text) return json({ error: 'empty' }, 400);

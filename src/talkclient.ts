@@ -1731,31 +1731,35 @@ function playParts(parts, whole) {
       if (!u) return next();
       player.src = u;
       try { player.playbackRate = S.speed; player.preservesPitch = true; player.defaultPlaybackRate = S.speed; } catch (e) {}
+      player.__retry = false;
       player.onplaying = function () { started = true; speakPending = false; try { player.playbackRate = S.speed; } catch (e) {} if (k === 0) { latMark('audio'); logEv('speak_start', { chars: whole.length, parts: parts.length, ms_first: Date.now() - t0, speed: S.speed }); } };
       player.onended = next;
       // A clip that fails (an intermittent 500 on a fresh text, 2026-10-13) is fetched whole ONCE, then the phone voice.
       // The element's error and play()'s rejection both report the same failure: handled once (two voices otherwise).
       var failed = 0, started = false;
+      // why 'retry' only from the retry's own handlers; the first play()'s late rejection after the element's error is
+      // the same failure, not the retry failing (qb7's e2e: that started the phone voice while the retry played Aura).
       var fail = function (why) {
         if (seq !== saySeq || failed === 2) return;
+        if (failed === 1 && why !== 'retry') return;
         // Cut off after it had started (a stream that broke mid-way): go on, never say it again from the start
         // (qb7's e2e heard 'Your latest is…' twice, 2026-10-13).
         if (started) { failed = 2; logEv('speak_cut', { part: k, why: why, at: Math.round(player.currentTime * 10) / 10 }); return next(); }
         if (failed === 1 && why !== 'retry') return;
         failed++;
         if (failed === 1) {
-          logEv('speak_retry', { part: k, why: why });
+          logEv('speak_retry', { part: k, why: why }); player.__retry = true;
           fetch(ttsUrl(parts[k]), { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
-            .then(function (b) { if (seq !== saySeq) return; player.src = URL.createObjectURL(b); var p2 = player.play(); if (p2 && p2.catch) p2.catch(function (e) { fail('retry'); }); })
+            .then(function (b) { if (seq !== saySeq) return; player.src = URL.createObjectURL(b); var p2 = player.play(); if (p2 && p2.catch) p2.catch(function (e) { if (/NotAllowed/.test(String(e))) fail('retry'); }); })
             .catch(function (e) { fail('retry'); });
           return;
         }
         logEv('speak_error', { chars: parts[k].length, part: k, why: why });
         if (k === 0) { speakingQ = false; phoneSay(whole); } else next();
       };
-      player.onerror = function () { fail(failed ? 'retry' : 'element'); };
+      player.onerror = function () { fail(failed === 1 && /^blob:/.test(player.src || '') && player.__retry ? 'retry' : 'element'); };
       var p = player.play();
-      if (p && p.catch) p.catch(function (e) { if (/NotAllowed/.test(String(e))) { logEv('speak_blocked', { err: String(e) }); if (k === 0 && !failed) { failed = 2; speakingQ = false; phoneSay(whole); } return; } fail(failed ? 'retry' : 'play'); });
+      if (p && p.catch) p.catch(function (e) { if (/NotAllowed/.test(String(e))) { logEv('speak_blocked', { err: String(e) }); if (k === 0 && !failed) { failed = 2; speakingQ = false; phoneSay(whole); } return; } fail('play'); });
     });
   };
   // An acknowledgement still playing finishes first.
