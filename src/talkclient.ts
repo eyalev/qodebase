@@ -413,6 +413,7 @@ function build() {
   setp.innerHTML =
     '<label>Dictation<select id="talk-s-engine"><option value="live">Deepgram live (Cloudflare): words as you speak</option><option value="native">Phone’s own (Chrome), free, live words</option><option value="whisper">Whisper on Cloudflare, steadier with names</option></select></label>' +
     '<label>How the mic works<select id="talk-s-mic"><option value="send">Tap the mic, speak, tap Send (like tmux-web)</option><option value="pause">Tap the mic; it sends when I stop talking</option><option value="hold">Hold the mic while I talk; letting go sends</option></select></label>' +
+    (CLIPS ? '<label>Build versions<select id="talk-s-debug"><option value="off">Hidden</option><option value="on">Shown in the header (owner only)</option></select></label>' : '') +
     '<label>Quick replies<select id="talk-s-fast"><option value="on">On: answer from the live words, Whisper double-checks</option><option value="off">Off: wait for Whisper before answering</option></select></label>' +
     '<label>Conversation mode<select id="talk-s-convmode"><option value="off">Off: tap the mic, speak, tap Send</option><option value="on">On: it sends after a pause, speaks the answer, and listens again</option></select></label>' +
     '<label>Send after a pause of<select id="talk-s-pause"><option value="1500">1.5 s</option><option value="2500">2.5 s</option><option value="4000">4 s</option></select></label>' +
@@ -451,7 +452,8 @@ function build() {
   // Tap the header (not its buttons) to fold the conversation back into the bar.
   head.addEventListener('click', function (e) { if (e.target.closest('button')) return; open(false); });
   dragHandle(grab);
-  if (VERSION) {
+  // Build versions only for the owner with 'Build versions' on (manager, 2026-10-14: the hashes showed in the video).
+  if (VERSION && CLIPS && get('debug', 'off') === 'on') {
     var vb = el('div', { id: 'talk-ver', 'aria-hidden': 'true' }); vb.textContent = VERSION; root.appendChild(vb);
     var vh = el('span', { class: 'ver' }); vh.textContent = VERSION; head.querySelector('b').after(vh);
   }
@@ -535,6 +537,8 @@ function build() {
   // Models: what the running Talk uses for each step (from /api/talk/me), never typed in here.
   var mdl = document.getElementById('talk-s-models'), ROWS = [['live', 'Live words'], ['final', 'Final words'], ['cleanup', 'Clean-up'], ['decide', 'Picking the action'], ['chat', 'Answering'], ['status', 'What\u2019s going on'], ['code', 'Questions about code'], ['summary', 'Spoken summary'], ['voice', 'Voice']];
   mdl.innerHTML = ROWS.filter(function (r) { return MODELS[r[0]]; }).map(function (r) { var m = MODELS[r[0]]; return '<dt>' + r[1] + '</dt><dd>' + esc(m.model ? shortModel(m.model) : 'no model') + ' \u00b7 ' + esc(m.provider) + (m.note ? '<br><span style="color:var(--t-dim)">' + esc(m.note) + '</span>' : '') + '</dd>'; }).join('') + (MODELS.gateway ? '<dt>Gateway</dt><dd>' + esc(MODELS.gateway) + '</dd>' : '');
+  var sdb = document.getElementById('talk-s-debug');
+  if (sdb) { sdb.value = get('debug', 'off'); sdb.onchange = function () { set('debug', sdb.value); trace('setting', { debug: sdb.value }); add('note', sdb.value === 'on' ? 'Build versions show after a reload.' : 'Build versions hidden.'); [].forEach.call(document.querySelectorAll('#talk-ver, #talk-head .ver'), function (e) { if (sdb.value !== 'on') e.remove(); }); }; }
   var sfa = document.getElementById('talk-s-fast'); sfa.value = S.fast; sfa.onchange = function () { S.fast = sfa.value; set('fast', S.fast); trace('setting', { fast: S.fast }); };
   var scm = document.getElementById('talk-s-convmode'); scm.value = S.convmode; scm.onchange = function () { if ((scm.value === 'on') !== convOn()) toggleConv('settings'); };
   var smg = document.getElementById('talk-s-merge'); smg.value = S.merge; smg.onchange = function () { S.merge = smg.value; set('merge', S.merge); trace('setting', { merge: S.merge }); };
@@ -2307,7 +2311,7 @@ function vadStart(st) {
         var fl = Math.min.apply(null, vadHist.map(function (h) { return h.r; }));
         if (r0 > Math.max(fl * 4, fl + 0.012) && now0 - dcT0 > 300) { vadVoiceAt = now0; if (!vadVoiceFrom) vadVoiceFrom = now0; }
       }
-      if (convOn() && S.fast === 'on' && vadVoiceAt && !dcBuf.length && !dcText && now0 - vadVoiceAt > 1200 && vadVoiceAt - vadVoiceFrom > 150) {
+      if (convOn() && S.fast === 'on' && vadVoiceAt && !dcBuf.length && !dcText && now0 - vadVoiceAt > 2000 && vadVoiceAt - vadVoiceFrom > 150) {   // 2 s: nova-3's words can come 1-1.5 s after the speech
         clearInterval(vadTick); trace('vad_rescue', { voice_ms: vadVoiceAt - vadVoiceFrom }); latStart('vad'); liveStop(false, true);
       }
     }, 50);
