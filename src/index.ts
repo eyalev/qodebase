@@ -53,6 +53,7 @@ import MA_REV from '../box/mobile-agent.rev';
 
 export { AgentBox, Project, Registry, BuildBox, Installs, TalkLog, Ledger, TalkVoice };
 import { landingRoute } from './landing/routes';
+import { contractAnswer } from './contract';
 import { projectTree, fleetTree, parseRecords, answer as intentsAnswer, memoTree } from './intents';
 import * as landingHooks from './landing/hooks';
 import { landingOn } from './landing/hooks';
@@ -613,6 +614,13 @@ const app = {
         // One Landing view per project per 5 s per isolate, however many viewers and open nodes.
         const T = await memoTree(`p:${info.slug}`, 5_000, async () => projectTree(info as any, await env.Landing.get(env.Landing.idFromName(info.slug)).view(info.slug) as any));
         return json(intentsAnswer(T, url.searchParams));
+      }
+      // The team's contract (qb5, src/contract.ts): the skeleton's contracts file on main + the changes that created/edited it.
+      if ((m = path.match(/^\/api\/p\/([a-z0-9-]+)\/([a-z0-9-]+)\/contract$/)) && request.method === 'GET') {
+        const info = await projectStub(env, slugOf(m[1], m[2])).info();
+        if (!info) return json({ error: 'no such project' }, 404);
+        const view = await env.Landing.get(env.Landing.idFromName(info.slug)).view(info.slug).catch(() => null) as any;
+        return json(await contractAnswer(env, ctx, info as any, view || {}));
       }
 
       // ---- pages
