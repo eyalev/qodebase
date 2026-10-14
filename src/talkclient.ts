@@ -1359,7 +1359,8 @@ function act(c, withPreview) {
       // A button that asks again ("Stop" → "Stop this run", "Remove" → tap again): after a yes, press the second one too.
       if (c.confirmed) return followConfirm(c, before);
     }
-    else if (c.op === 'type' && target && c.preset) {
+    if (c.op === 'type' && c.name) { sset('pname', { name: c.name, at: Date.now() }); trace('act', { op: 'name later', name: c.name }); }   // filled on the brief
+    if (c.op === 'type' && target && c.preset) {
       // The idea goes in, the preset is picked (its panel opens), then Build it is offered.
       trace('act', { op: 'type', label: c.label, text: c.text, preset: c.preset }); typeInto(target, c.text); add('app', 'Typed \u201c' + c.text + '\u201d.');
       var pb = [].filter.call(document.querySelectorAll('button'), function (b) { return String(b.innerText || b.textContent || '').trim().toLowerCase().indexOf(c.preset.toLowerCase()) === 0; })[0];
@@ -1938,6 +1939,9 @@ function briefQuestion() {
   (function ask1() {
     var go = document.getElementById('go');
     if (!go || !go.getClientRects().length) { if (++tries < 30) setTimeout(ask1, 300); return; }
+    // 'Build me … called Home Ledger': the name said in the first sentence goes in the name box before the question.
+    var pn = sget('pname', null), pbox = document.getElementById('pname');
+    if (pn && pbox && Date.now() - pn.at < 5 * 60000) { sset('pname', null); typeInto(pbox, pn.name); add('app', 'Named it \u201c' + pn.name + '\u201d.'); }
     var q = 'This will start ' + (est.team || 'the agents') + (est.time ? ', about ' + est.time.replace(/min$/, 'minutes') : '') + (est.cost ? ' and ' + est.cost : '') + '. Start?';
     lastSpoken = true; add('ai', q); trace('build_confirm', { q: q });
     // Asked again after the name was changed: short, never the same sentence twice ('Start building home-things-2?').
@@ -2285,17 +2289,27 @@ var nextWs = null, endT = null, convQuietT = null;
 // A level meter on the microphone (conversation mode's end of turn): nova-3's words for the next phrase arrive ~1 s after
 // the speaker goes on, so a pause at a comma looked like the end ('…my home.' / 'with a paid pro version'). Before ending
 // a turn, the last 0.3 s of sound is checked against the turn's own noise floor.
-var vadAn = null, vadBuf = null, vadHist = [], vadTick = null;
+var vadAn = null, vadBuf = null, vadHist = [], vadTick = null, vadVoiceAt = 0, vadVoiceFrom = 0;
 function vadStart(st) {
   try {
-    clearInterval(vadTick); vadHist = [];
+    clearInterval(vadTick); vadHist = []; vadVoiceAt = 0; vadVoiceFrom = 0;
     var C = window.AudioContext || window.webkitAudioContext; if (!C) return;
     actx = actx || new C(); if (actx.state === 'suspended') actx.resume();
     var src = actx.createMediaStreamSource(st); vadAn = actx.createAnalyser(); vadAn.fftSize = 1024; src.connect(vadAn); vadBuf = new Float32Array(vadAn.fftSize);
     vadTick = setInterval(function () {
       if (!dcOn) { clearInterval(vadTick); return; }
       vadAn.getFloatTimeDomainData(vadBuf); var e = 0; for (var i = 0; i < vadBuf.length; i++) e += vadBuf[i] * vadBuf[i];
-      vadHist.push({ t: Date.now(), r: Math.sqrt(e / vadBuf.length) }); if (vadHist.length > 60) vadHist.shift();
+      var now0 = Date.now(), r0 = Math.sqrt(e / vadBuf.length);
+      vadHist.push({ t: now0, r: r0 }); if (vadHist.length > 60) vadHist.shift();
+      // Someone spoke (well above the turn's floor), nova-3 gave no words, and it has been quiet 1.2 s: the turn ends and
+      // Whisper reads the recording (qb3's take: a short 'Yes.' came back empty from nova-3 and was never heard).
+      if (vadHist.length >= 10) {
+        var fl = Math.min.apply(null, vadHist.map(function (h) { return h.r; }));
+        if (r0 > Math.max(fl * 4, fl + 0.012) && now0 - dcT0 > 300) { vadVoiceAt = now0; if (!vadVoiceFrom) vadVoiceFrom = now0; }
+      }
+      if (convOn() && S.fast === 'on' && vadVoiceAt && !dcBuf.length && !dcText && now0 - vadVoiceAt > 1200 && vadVoiceAt - vadVoiceFrom > 150) {
+        clearInterval(vadTick); trace('vad_rescue', { voice_ms: vadVoiceAt - vadVoiceFrom }); latStart('vad'); liveStop(false, true);
+      }
     }, 50);
   } catch (e) { vadAn = null; }
 }

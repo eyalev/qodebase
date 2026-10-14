@@ -171,6 +171,7 @@ export type Cmd = {
   depth?: string;                  // code: fact | explain | plan (haiku | sonnet | opus in the ask box)
   then?: string;                   // go: say this again on the page it opens (an action that lives there)
   updatedAt?: number;              // latest: when the project last changed
+  name?: string;                   // build: the project's name said in the sentence ('called Home Ledger')
   preset?: string;                 // type into the idea box: the Build preset to pick too (Fastest | Balanced | Cheapest)
 };
 
@@ -281,8 +282,12 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
       : /\b(one|a single|single) agent\b|\bon its own\b|\bfast(est)?\b|\bquick(est|ly)?\b/i.test(utterance) ? 'Fastest'
       : /\bteam\b|\bseveral agents\b|\bmany agents\b|\bbalanced\b/i.test(utterance) ? 'Balanced' : '';
     const SETTINGS_RX = /,?\s*\b(with|using|on|as|by|in)\s+(a|an|the|one|my)?\s*(cheapest|cheap|cheaper|fastest|fast|quickest|quick|balanced|small|big|whole|single|best)?\s*(team|agents?|preset|settings?|way|mode)( of agents)?\b|,?\s*\b(cheaply|quickly|the cheapest way|the fast way|on its own)\b/gi;
-    const idea = bm[4].replace(SETTINGS_RX, '').replace(/\s+(and|,)\s*(and\s+)?(?=[,.]|$)/gi, '').replace(/\s{2,}/g, ' ').replace(/\s+,/g, ',').replace(/^[\s,]+|[\s,.]+$/g, '');
-    return { ...cmd, mode: 'act', op: 'type', target: ideaBox.id, label: ideaBox.text, text: idea.charAt(0).toUpperCase() + idea.slice(1), preset: preset || undefined, p: 0.9, why: 'build words on the idea box' };
+    // '… called Home Ledger' / 'named house helper': the project's name, not part of the idea (qb3's redo: the name became
+    // 'called-home-ledger').
+    const named = /,?\s*\b(called|named)\s+["\u201c]?([\p{L}\p{N}][\p{L}\p{N} '-]{1,38}?)["\u201d]?(?=\s*(,|\.|$|\bwith\b|\band\b|\bthat\b|\bwhich\b|\bfor\b))/iu.exec(bm[4]);
+    const projName = named ? named[2].trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : '';
+    const idea = (named ? bm[4].replace(named[0], '') : bm[4]).replace(SETTINGS_RX, '').replace(/\s+(and|,)\s*(and\s+)?(?=[,.]|$)/gi, '').replace(/\s{2,}/g, ' ').replace(/\s+,/g, ',').replace(/^[\s,]+|[\s,.]+$/g, '');
+    return { ...cmd, mode: 'act', op: 'type', target: ideaBox.id, label: ideaBox.text, text: idea.charAt(0).toUpperCase() + idea.slice(1), preset: preset || undefined, name: projName || undefined, p: 0.9, why: 'build words on the idea box' } as Cmd;
   }
   // The 1,000-agent job (qb3's shot 3a) said without the words 'fleet job'.
   const docJob = /\b(document|comment) (every|all|each)\b.*\b(function|class|file|export)/i.test(utterance) || /\bapi index\b/i.test(utterance);
