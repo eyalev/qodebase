@@ -183,11 +183,13 @@
     return `<div class="rc-files"><p>Agents ${live(r) ? 'have added' : 'added'} <b>${n0(c.landed)}</b> doc comments, one per declaration, to the ${n0(c.files)} files of ${r.group ? 'the copies' : 'the copy'} and committed them to main.</p>
         <p class="rc-sm">${n0(c.rejected)} rejected. One change = a comment on one declaration.</p></div>`;
   }
+  // qb4's kata seed 1 has 1,385 tasks (the texts' number); a run's own records can miss one (qb8: K60h recorded 1,384)
+  const KATA_TASKS = 1385;
   function codeFiles(r, c) {
     const redone = bouncedOf(r), made = c.landed + redone + c.rejected;
     const seg = (n, cls) => (n ? `<i class="${cls}" style="width:${pct(n, made).toFixed(2)}%"></i>` : '');
     return `<div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${made} code changes reached main">${seg(c.landed, 's-l')}${seg(redone, 's-s')}${seg(c.rejected, 's-r')}</div>
-        <p><b>${n0(c.landed)}</b> of ${n0(made)} code tasks ${live(r) ? 'have landed' : 'landed'} on main. ${n0(redone)} failed their own tests and went back to their agents${live(r) ? '' : '; none was broken by the merge'}${c.rejected ? `, ${n0(c.rejected)} rejected` : ''}.</p>
+        <p><b>${n0(c.landed)}</b> of ${n0(Math.max(made, KATA_TASKS))} code tasks ${live(r) ? 'have landed' : 'landed'} on main${made < KATA_TASKS && !live(r) ? ` (${n0(made)} recorded: ${n0(KATA_TASKS - made)} task${KATA_TASKS - made === 1 ? ' has' : 's have'} no final record)` : ''}. ${n0(redone)} failed their own tests and went back to their agents${live(r) ? '' : '; none was broken by the merge'}${c.rejected ? `, ${n0(c.rejected)} rejected` : ''}.</p>
         <p class="rc-sm">${n0(r.agentsStarted ?? r.agents)} agents${live(r) ? '' : `, ${clock(elapsedS(r))}`}. A task is one small change to the code, tested before it lands.</p></div>`;
   }
   // Run labels are the team's shorthand ('code dial 60% (K60h)', 'S5b batched…', 'smoke'): the card says it plainly; the
