@@ -1175,11 +1175,14 @@ function toggleConv(where) {
 function convAfter() {
   if (!convOn() || !lastSpoken) return;
   prewarmWs();   // the next turn's socket, whatever ended this one
-  var t0 = Date.now();
+  var t0 = Date.now(), quietAt = 0;
   (function wait() {
     if (!convOn()) return;
     var talking = speakPending || speakingQ || ackPlaying || (player && !player.paused && !player.ended && player.currentTime > 0) || (window.speechSynthesis && speechSynthesis.speaking);
-    if ((talking || busy) && Date.now() - t0 < 30000) return setTimeout(wait, 300);
+    if ((talking || busy) && Date.now() - t0 < 30000) { quietAt = 0; return setTimeout(wait, 300); }
+    // the reply's last sound leaves the speakers a little after 'ended': listen 0.4 s later, never on top of it
+    if (!quietAt) quietAt = Date.now();
+    if (Date.now() - quietAt < 400) return setTimeout(wait, 100);
     // A question on screen is answered by voice too: listen (a spoken yes/no answers it, anything else is a new turn).
     // It used to stop here, so 'Want to open it?' was asked out loud and never heard (2026-10-13 user test).
     if (offerState) trace('conv_listen_offer', { offer: String(offerState.text || '').slice(0, 60) });
@@ -1764,7 +1767,14 @@ function say(text) {
   }
   if (S.voice === 'phone') return phoneSay(t);
   unlockAudio();
-  playParts(S.fast === 'on' ? sentencesOf(t) : [t], t);
+  var playIt = function () { playParts(S.fast === 'on' ? sentencesOf(t) : [t], t); };
+  // Hands-free with a cold mic (a new page): open the mic BEFORE speaking. Opening it (echo cancellation re-routes the
+  // audio) right after a reply clipped the reply's last word ('…Start?' cut in qb3's take, 2026-10-14).
+  if (convOn() && S.engine === 'live' && S.keep === 'open' && !clipStream && navigator.mediaDevices) {
+    warmMic(true); var mw0 = Date.now();
+    return (function mw() { if (clipStream || Date.now() - mw0 > 900) { trace('mic_before_speech', { ms: Date.now() - mw0, ok: !!clipStream }); return playIt(); } setTimeout(mw, 50); })();
+  }
+  playIt();
 }
 function ttsUrl(t) { return '/api/talk/tts?model=' + encodeURIComponent(S.voice) + '&speaker=' + encodeURIComponent(S.speaker || '') + '&text=' + encodeURIComponent(t); }
 // Sentence by sentence (latency work, 2026-10-13): a short first sentence comes back from Aura fastest; the next one is
