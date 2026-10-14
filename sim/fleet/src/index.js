@@ -1562,7 +1562,9 @@ async function runsUncached(env) {
           // The code dial ran on qb4's kata seed in qodebase projects (eyal/kata-*), through the real merge queue: not a fleet copy.
           ? { name: 'Kata (code dial)', upstream: 'qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests', root: 'kata', project: `eyal/${r.repo.slice('fleet-'.length)}`, namespace: 'forq' }
           : { ...(SOURCES[kindOf(r)] || SOURCES.main), namespace: nsName(r.repo) };
-        return { runs: rows, ...(missing.length ? { missing } : {}) };
+        // The list never reads perMinute (the timeline uses /series): dropped, it was most of the bytes.
+  for (const r of rows) delete r.perMinute;
+  return { runs: rows, ...(missing.length ? { missing } : {}) };
 }
 
 /** The copies the job form offers: every registered copy except deleted ones ('gone', skipped without opening), each with
