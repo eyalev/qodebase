@@ -328,6 +328,7 @@ const REAL_BUILDS: [string, string][] = [['eyal.real-tip-splitter', 'R2'], ['eya
 // The merged list, memoised per isolate for 8 s (owner and public apart): it fans out to every copy's Run (~180 after S4),
 // 4.6 s cold (qb7, 2026-10-13).
 const runsMemo = new Map<boolean, { at: number; p: Promise<unknown> }>();
+let runsRefreshing = false;   // one background refresh of the public runs list per isolate at a time
 async function runsData(env: Env, me: { handle?: string | null; admin?: boolean }) {
   const owner = !!(me.admin || (me.handle && isOwner(env, me.handle)));
   const m = runsMemo.get(owner);
@@ -691,7 +692,24 @@ const app = {
         return json({ kind, tail: u.apiKeyEnc ? u.apiKeyTail || null : null, ...(u.keyFailed ? { failed: u.keyFailed } : {}) });
       }
       // qb7's /runs page: the fleet runs (qbfleet Worker, its key stays here) + the real builds. Public read; control owner-only.
-      if (path === '/api/runs' && request.method === 'GET') return json(await runsData(env, me));
+      if (path === '/api/runs' && request.method === 'GET') {
+        // Everyone but the owner gets the same list: kept at the edge, fresh for 30 s, then served stale while one refresh
+        // runs (desktop walk 2026-10-14: a fresh browser waited 5-17 s for it and the page gave up; the fleet's own list
+        // took 6 s). The owner's (private builds included) is always computed.
+        if (me.admin || (me.handle && isOwner(env, me.handle))) return json(await runsData(env, me));
+        const ck = new Request('https://runs.cache/api/runs?v=1');
+        const fresh = async () => {
+          const t0 = Date.now(), body = JSON.stringify(await runsData(env, {}));
+          await caches.default.put(ck, new Response(body, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=3600', 'x-at': String(Date.now()) } }));
+          console.log(JSON.stringify({ ts: new Date().toISOString(), level: 'info', module: 'runs', event: 'list_refreshed', ms: Date.now() - t0, bytes: body.length }));
+          return body;
+        };
+        const hit = await caches.default.match(ck);
+        const age = hit ? Date.now() - Number(hit.headers.get('x-at') || 0) : Infinity;
+        if (hit && age > 30_000 && !runsRefreshing) { runsRefreshing = true; ctx.waitUntil(fresh().catch((e) => console.log(JSON.stringify({ level: 'error', module: 'runs', event: 'refresh_failed', err: String(e) }))).finally(() => { runsRefreshing = false; })); }
+        const body = hit ? await hit.text() : await fresh();
+        return new Response(body, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-runs-age': String(Number.isFinite(age) ? Math.round(age / 1000) : 0) } });
+      }
       if ((m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(series|timeline)$/)) && request.method === 'GET') return json(await fleetCall(env, `/series?repo=${m[1]}&run=${m[2]}`));
       // /runs v2 drill-down (qb7), public reads, bounded by the fleet (<= 200 rows, offset paging).
       if (request.method === 'GET' && (m = path.match(/^\/api\/runs\/(fleet-[a-z0-9-]{1,40})\/([a-z0-9]{4,20})\/(agents|agent\/(\d{1,5})|slice|change|commits|commit\/([0-9a-f]{40})|indexcheck)$/))) {
