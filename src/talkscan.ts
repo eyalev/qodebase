@@ -3,7 +3,7 @@
 // scripts/talk-eval.mjs to snapshot real pages, so both read pages the same way.
 // Each element gets data-talk="<id>" so the command can find it again.
 //
-// Voice coverage (2026-10-13): in-page routes (#/… links on Runs and Agents at work), <summary> toggles,
+// Voice coverage (2026-10-13): in-page routes (#/… links on Runs and the Board), <summary> toggles,
 // role=tab|switch|button elements, names given by aria-labelledby, sliders and selects named by their label
 // (with the value and choices), only what is on screen or one tap away (a closed <details>, or a [hidden]
 // panel that a visible button controls), and buttons that share a label (every run card's "Pause") carry the

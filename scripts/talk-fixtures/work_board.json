@@ -1,0 +1,471 @@
+{
+ "path": "/p/eyal/real-course-builder/work",
+ "title": "Board · eyal/real-course-builder",
+ "items": [
+  {
+   "id": "h1",
+   "kind": "heading",
+   "text": "Where they work"
+  },
+  {
+   "id": "h2",
+   "kind": "heading",
+   "text": "Step by step"
+  },
+  {
+   "id": "h3",
+   "kind": "heading",
+   "text": "Change records"
+  },
+  {
+   "id": "h4",
+   "kind": "heading",
+   "text": "How this works"
+  },
+  {
+   "id": "l1",
+   "kind": "link",
+   "text": "qodebase home",
+   "href": "/"
+  },
+  {
+   "id": "l2",
+   "kind": "link",
+   "text": "eyal / real-course-builder",
+   "href": "/p/eyal/real-course-builder"
+  },
+  {
+   "id": "l3",
+   "kind": "link",
+   "text": "Inbox: 58 need you",
+   "href": "/inbox"
+  },
+  {
+   "id": "l4",
+   "kind": "link",
+   "text": "Landed. Agent 41; tests passed. (Wire missing views and smoke-test the whole app, 8 h ago)",
+   "href": "#/line"
+  },
+  {
+   "id": "l5",
+   "kind": "link",
+   "text": "Collision, replayed. Agent 37 and Agent 25 both changed index.html. Instead of sending Agent 37 back, its change was red",
+   "href": "#/change/eyal.real-course-builder--djsql"
+  },
+  {
+   "id": "l6",
+   "kind": "link",
+   "text": "Collision, replayed. Agent 25 and Agent 20 both changed index.html. Instead of sending Agent 25 back, its change was red",
+   "href": "#/change/eyal.real-course-builder--hzllw"
+  },
+  {
+   "id": "l7",
+   "kind": "link",
+   "text": "Collision, replayed. Agent 29 and Agent 23 both changed index.html. Instead of sending Agent 29 back, its change was red",
+   "href": "#/change/eyal.real-course-builder--ag1dx"
+  },
+  {
+   "id": "l8",
+   "kind": "link",
+   "text": "Collision, replayed. Agent 23 and Agent 7 both changed index.html. Instead of sending Agent 23 back, its change was redo",
+   "href": "#/change/eyal.real-course-builder--yr97t"
+  },
+  {
+   "id": "l9",
+   "kind": "link",
+   "text": "Collision, replayed. Agent 20 and Agent 29 both changed index.html. Instead of sending Agent 20 back, its change was red",
+   "href": "#/change/eyal.real-course-builder--u5nxn"
+  },
+  {
+   "id": "l10",
+   "kind": "link",
+   "text": "Every step",
+   "href": "#/feed"
+  },
+  {
+   "id": "l11",
+   "kind": "link",
+   "text": "All asks",
+   "href": "/p/eyal/real-course-builder/asks"
+  },
+  {
+   "id": "l12",
+   "kind": "link",
+   "text": "All changes",
+   "href": "#/changes"
+  },
+  {
+   "id": "l13",
+   "kind": "link",
+   "text": ".qodebase",
+   "href": "#/area/.qodebase"
+  },
+  {
+   "id": "l14",
+   "kind": "link",
+   "text": "top-level files",
+   "href": "#/area/%2F"
+  },
+  {
+   "id": "l15",
+   "kind": "link",
+   "text": "css",
+   "href": "#/area/css"
+  },
+  {
+   "id": "l16",
+   "kind": "link",
+   "text": "icons",
+   "href": "#/area/icons"
+  },
+  {
+   "id": "l17",
+   "kind": "link",
+   "text": "js/core",
+   "href": "#/area/js%2Fcore"
+  },
+  {
+   "id": "l18",
+   "kind": "link",
+   "text": "js/features",
+   "href": "#/area/js%2Ffeatures"
+  },
+  {
+   "id": "l19",
+   "kind": "link",
+   "text": "tests",
+   "href": "#/area/tests"
+  },
+  {
+   "id": "l20",
+   "kind": "link",
+   "text": "Agent 41's change landed on main (8 h ago, Wire missing views and smoke-test the whole app)",
+   "href": "#/change/eyal.real-course-builder--o64lu"
+  },
+  {
+   "id": "l21",
+   "kind": "link",
+   "text": "Agent 30's change landed on main (15 h ago, Settlement algorithm)",
+   "href": "#/change/eyal.real-course-builder--fppwx"
+  },
+  {
+   "id": "l22",
+   "kind": "link",
+   "text": "Agent 36's change landed on main (15 h ago, Sample trip demo data)",
+   "href": "#/change/eyal.real-course-builder--o846m"
+  },
+  {
+   "id": "l23",
+   "kind": "link",
+   "text": "README and about page (Landed, Agent 40, 16 h ago #u8drx)",
+   "href": "#/change/eyal.real-course-builder--u8drx"
+  },
+  {
+   "id": "l24",
+   "kind": "link",
+   "text": "Browser test runner (Landed, Agent 39, 16 h ago #19g4j)",
+   "href": "#/change/eyal.real-course-builder--19g4j"
+  },
+  {
+   "id": "l25",
+   "kind": "link",
+   "text": "Today view during a trip (Landed, Agent 38, 16 h ago #rbd8q)",
+   "href": "#/change/eyal.real-course-builder--rbd8q"
+  },
+  {
+   "id": "l26",
+   "kind": "link",
+   "text": "Search across trips (Landed, Agent 35, 16 h ago #izqi4)",
+   "href": "#/change/eyal.real-course-builder--izqi4"
+  },
+  {
+   "id": "l27",
+   "kind": "link",
+   "text": "Backup, export and import (Landed, Agent 34, 16 h ago #nyik0)",
+   "href": "#/change/eyal.real-course-builder--nyik0"
+  },
+  {
+   "id": "l28",
+   "kind": "link",
+   "text": "Travel stats (Landed, Agent 33, 16 h ago #a2nwj)",
+   "href": "#/change/eyal.real-course-builder--a2nwj"
+  },
+  {
+   "id": "l29",
+   "kind": "link",
+   "text": "Past trips archive (Landed, Agent 32, 16 h ago #bubxj)",
+   "href": "#/change/eyal.real-course-builder--bubxj"
+  },
+  {
+   "id": "l30",
+   "kind": "link",
+   "text": "Printable itinerary (Landed, Agent 31, 16 h ago #jmyfv)",
+   "href": "#/change/eyal.real-course-builder--jmyfv"
+  },
+  {
+   "id": "l31",
+   "kind": "link",
+   "text": "Journal photos and lightbox (Landed, Agent 28, 16 h ago #jymaa)",
+   "href": "#/change/eyal.real-course-builder--jymaa"
+  },
+  {
+   "id": "l32",
+   "kind": "link",
+   "text": "Daily journal entries (Landed, Agent 27, 16 h ago #qatlb)",
+   "href": "#/change/eyal.real-course-builder--qatlb"
+  },
+  {
+   "id": "l33",
+   "kind": "link",
+   "text": "Map link builder (Landed, Agent 26, 16 h ago #nd4ne)",
+   "href": "#/change/eyal.real-course-builder--nd4ne"
+  },
+  {
+   "id": "l34",
+   "kind": "link",
+   "text": "Travel documents checklist (Landed, Agent 24, 16 h ago #e5qte)",
+   "href": "#/change/eyal.real-course-builder--e5qte"
+  },
+  {
+   "id": "l35",
+   "kind": "link",
+   "text": "Packing list (Landed, Agent 22, 16 h ago #3b4rn)",
+   "href": "#/change/eyal.real-course-builder--3b4rn"
+  },
+  {
+   "id": "l36",
+   "kind": "link",
+   "text": "Budget summary and charts (Landed, Agent 21, 16 h ago #eu9go)",
+   "href": "#/change/eyal.real-course-builder--eu9go"
+  },
+  {
+   "id": "l37",
+   "kind": "link",
+   "text": "Currency exchange rates editor (Landed, Agent 19, 16 h ago #akfot)",
+   "href": "#/change/eyal.real-course-builder--akfot"
+  },
+  {
+   "id": "l38",
+   "kind": "link",
+   "text": "Hotel booking type (Landed, Agent 18, 16 h ago #rax6l)",
+   "href": "#/change/eyal.real-course-builder--rax6l"
+  },
+  {
+   "id": "l39",
+   "kind": "link",
+   "text": "Train booking type (Landed, Agent 17, 16 h ago #p228f)",
+   "href": "#/change/eyal.real-course-builder--p228f"
+  },
+  {
+   "id": "l40",
+   "kind": "link",
+   "text": "Flight booking type (Landed, Agent 16, 16 h ago #iwz2p)",
+   "href": "#/change/eyal.real-course-builder--iwz2p"
+  },
+  {
+   "id": "l41",
+   "kind": "link",
+   "text": "Bookings list and timeline (Landed, Agent 15, 16 h ago #077do)",
+   "href": "#/change/eyal.real-course-builder--077do"
+  },
+  {
+   "id": "l42",
+   "kind": "link",
+   "text": "Itinerary item editor dialog (Landed, Agent 14, 16 h ago #hqil4)",
+   "href": "#/change/eyal.real-course-builder--hqil4"
+  },
+  {
+   "id": "l43",
+   "kind": "link",
+   "text": "Day-by-day itinerary with drag reorder (Landed, Agent 13, 16 h ago #57iby)",
+   "href": "#/change/eyal.real-course-builder--57iby"
+  },
+  {
+   "id": "l44",
+   "kind": "link",
+   "text": "Countdown to departure (Landed, Agent 12, 16 h ago #wr1sp)",
+   "href": "#/change/eyal.real-course-builder--wr1sp"
+  },
+  {
+   "id": "l45",
+   "kind": "link",
+   "text": "Trip overview dashboard (Landed, Agent 11, 16 h ago #180pg)",
+   "href": "#/change/eyal.real-course-builder--180pg"
+  },
+  {
+   "id": "l46",
+   "kind": "link",
+   "text": "Trip editor: dates, places, cover (Landed, Agent 10, 16 h ago #0vrof)",
+   "href": "#/change/eyal.real-course-builder--0vrof"
+  },
+  {
+   "id": "l47",
+   "kind": "link",
+   "text": "Trips home list and create trip (Landed, Agent 9, 16 h ago #epqh7)",
+   "href": "#/change/eyal.real-course-builder--epqh7"
+  },
+  {
+   "id": "l48",
+   "kind": "link",
+   "text": "Offline support and PWA manifest (Landed, Agent 8, 16 h ago #jjsph)",
+   "href": "#/change/eyal.real-course-builder--jjsph"
+  },
+  {
+   "id": "l49",
+   "kind": "link",
+   "text": "Drag-to-reorder helper (Landed, Agent 7, 16 h ago #ibcj9)",
+   "href": "#/change/eyal.real-course-builder--ibcj9"
+  },
+  {
+   "id": "l50",
+   "kind": "link",
+   "text": "Photo storage in IndexedDB (Landed, Agent 6, 16 h ago #hnkew)",
+   "href": "#/change/eyal.real-course-builder--hnkew"
+  },
+  {
+   "id": "l51",
+   "kind": "link",
+   "text": "Date and money utilities (Landed, Agent 5, 16 h ago #d47n5)",
+   "href": "#/change/eyal.real-course-builder--d47n5"
+  },
+  {
+   "id": "l52",
+   "kind": "link",
+   "text": "Design system base CSS (Landed, Agent 4, 16 h ago #i910b)",
+   "href": "#/change/eyal.real-course-builder--i910b"
+  },
+  {
+   "id": "l53",
+   "kind": "link",
+   "text": "UI kit helpers (Landed, Agent 3, 16 h ago #awbym)",
+   "href": "#/change/eyal.real-course-builder--awbym"
+  },
+  {
+   "id": "l54",
+   "kind": "link",
+   "text": "Data store with localStorage persistence (Landed, Agent 2, 16 h ago #zjvf2)",
+   "href": "#/change/eyal.real-course-builder--zjvf2"
+  },
+  {
+   "id": "l55",
+   "kind": "link",
+   "text": "App shell, router and view registry (Landed, Agent 1, 16 h ago #6x0o3)",
+   "href": "#/change/eyal.real-course-builder--6x0o3"
+  },
+  {
+   "id": "l56",
+   "kind": "link",
+   "text": "How qodebase works",
+   "href": "/how"
+  },
+  {
+   "id": "l57",
+   "kind": "link",
+   "text": "Board",
+   "href": "/p/eyal/real-course-builder/work"
+  },
+  {
+   "id": "l58",
+   "kind": "link",
+   "text": "Changes",
+   "href": "/p/eyal/real-course-builder/changes"
+  },
+  {
+   "id": "l59",
+   "kind": "link",
+   "text": "App",
+   "href": "/p/eyal/real-course-builder/app"
+  },
+  {
+   "id": "l60",
+   "kind": "link",
+   "text": "Code",
+   "href": "/p/eyal/real-course-builder/code/"
+  },
+  {
+   "id": "b1",
+   "kind": "button",
+   "text": "Menu and account: eyal"
+  },
+  {
+   "id": "b2",
+   "kind": "button",
+   "text": "Resume"
+  },
+  {
+   "id": "b3",
+   "kind": "button",
+   "text": "Agents"
+  },
+  {
+   "id": "b4",
+   "kind": "button",
+   "text": "Line"
+  },
+  {
+   "id": "b5",
+   "kind": "button",
+   "text": "Events"
+  },
+  {
+   "id": "b6",
+   "kind": "button",
+   "text": "Timeline"
+  },
+  {
+   "id": "b7",
+   "kind": "button",
+   "text": "Intents"
+  },
+  {
+   "id": "b8",
+   "kind": "button",
+   "text": "collided"
+  },
+  {
+   "id": "b9",
+   "kind": "button",
+   "text": "copy"
+  },
+  {
+   "id": "b10",
+   "kind": "button",
+   "text": "the line"
+  },
+  {
+   "id": "b11",
+   "kind": "button",
+   "text": "the main code"
+  },
+  {
+   "id": "b12",
+   "kind": "button",
+   "text": "Add photos or screenshots"
+  },
+  {
+   "id": "f1",
+   "kind": "field",
+   "text": "Ask for a change"
+  },
+  {
+   "id": "b13",
+   "kind": "button",
+   "text": "Replay this run"
+  },
+  {
+   "id": "b14",
+   "kind": "button",
+   "text": "2×"
+  },
+  {
+   "id": "b15",
+   "kind": "button",
+   "text": "4×"
+  },
+  {
+   "id": "b16",
+   "kind": "button",
+   "text": "8×"
+  }
+ ]
+}

@@ -1470,7 +1470,7 @@ function whichOne(c) {
   }).catch(function () { add('note', 'That page is not there.'); done(); });
 }
 
-// The element a command names. Pages that redraw every few seconds (Runs, Agents at work) drop the data-talk ids:
+// The element a command names. Pages that redraw every few seconds (Runs, the Board) drop the data-talk ids:
 // read the page again and take the element with the same words.
 function find(c) {
   var e = c.target ? byId(c.target) : null;

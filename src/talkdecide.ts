@@ -324,11 +324,11 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   if ((cmd.op === 'type' || cmd.op === 'press') && !/^x/.test(String(cmd.target || '')) && /^\s*(please\s+)?(give me|suggest|tell me|what('s| is| are| was)|explain|describe|recommend|can you (tell|suggest|give|recommend)|any (ideas|suggestions))\b/i.test(utterance) && !/\b(type|write|enter|fill|press|tap|click|put)\b/i.test(utterance))
     return { ...cmd, mode: 'ask', op: 'none', why: `${cmd.why || ''}; a request for content goes to the answering model` };
   // Everything by voice for the video (manager + qb3, 2026-10-14). The page's own tabs by name ('show me the app' went
-  // to a similarly named project's app): App, Code, Changes, Agents at work, More, All asks.
+  // to a similarly named project's app): App, Code, Changes, Board (was 'Agents at work', still heard), More, All asks.
   const tabm = /^\s*(please\s+)?(show( me)?|open|go to|take me to|switch to)\s+(the\s+)?(app|code|changes|asks|agents at work|more)( tab| page)?\s*[.!]*\s*$/i.exec(utterance);
   if (tabm) {
     const want = tabm[5].toLowerCase();
-    const tab = s.items.find((i) => i.kind === 'link' && (i.text.toLowerCase() === want || (want === 'asks' && /^all asks$/i.test(i.text))) && /^\/p\//.test(i.href || ''));
+    const tab = s.items.find((i) => i.kind === 'link' && (i.text.toLowerCase() === want || (want === 'asks' && /^all asks$/i.test(i.text)) || (want === 'agents at work' && /^board$/i.test(i.text))) && /^\/p\//.test(i.href || ''));
     if (tab) return { ...cmd, mode: 'act', op: 'go', href: tab.href, label: tab.text, target: tab.id, p: 0.9, why: 'the page\'s own tab by name (word rule)' };
   }
   // The work page's views from anywhere in a project (qb3's take: 'show the timeline' on a change record answered with a
@@ -336,16 +336,33 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   const proj = /^\/p\/([^/]+)\/([^/#?]+)/.exec(s.path || '');
   if (proj) {
     const work = `/p/${proj[1]}/${proj[2]}/work`;
-    const view = /^\s*(please\s+)?(show( me)?|open|go to|take me to|switch to)\s+(the\s+)?(timeline|agents|collisions|intent tree|intents|changes list)( tab| view)?\s*[.!]*\s*$/i.exec(utterance);
+    const view = /^\s*(please\s+)?(show( me)?|open|go to|take me to|switch to)\s+(the\s+)?(timeline|agents|collisions|intent tree|intents|changes list|board|agents at work|line history|line|merge line)( tab| view| page)?\s*[.!]*\s*$/i.exec(utterance);
     if (view) {
-      const want = view[5].toLowerCase(), word = want === 'agents' ? 'Agents' : want === 'timeline' ? 'Timeline' : want === 'collisions' ? 'collided' : /intent/.test(want) ? 'Intents' : '';
+      const want = view[5].toLowerCase(), word = want === 'agents' ? 'Agents' : want === 'timeline' ? 'Timeline' : want === 'collisions' ? 'collided' : /intent/.test(want) ? 'Intents' : /line/.test(want) ? 'Line' : '';
+      // The Board itself (qb7, 2026-10-14: 'Agents at work' is now 'Board', the work view #/)
+      if (want === 'board' || want === 'agents at work') {
+        return { ...cmd, mode: 'act', op: 'go', href: work + '#/', label: `${proj[2]}: Board`, p: 0.9, why: 'the Board (word rule)' };
+      }
       const btn = word && s.items.find((i) => i.kind === 'button' && new RegExp('^' + word + '\\b', 'i').test(i.text));
       if (btn) return { ...cmd, mode: 'act', op: 'press', target: btn.id, label: btn.text, p: 0.9, why: 'a view of the work page (word rule)' };
       const hash = want === 'timeline' ? '#/timeline' : /intent/.test(want) ? '#/intents' : '#/';
-      return { ...cmd, mode: 'act', op: 'go', href: work + hash, label: `${proj[2]}: ${view[5]}`, p: 0.9, then: want === 'collisions' ? utterance : undefined, why: 'a view of the work page (word rule)' };
+      return { ...cmd, mode: 'act', op: 'go', href: work + hash, label: `${proj[2]}: ${view[5]}`, p: 0.9, then: want === 'collisions' || /line/.test(want) ? utterance : undefined, why: 'a view of the work page (word rule)' };
+    }
+    // 'replay this run' / 'watch it again' on a finished build: the Board's 'Replay this run' (or 'Replay again');
+    // '4x' / 'four times' = its speed chips (qb7, 2026-10-14). Elsewhere in the project: the Board first, then this.
+    if (/\b(replay|play (it |this |the run )?(back|again)|watch (it|this|the run) again)\b/i.test(utterance)) {
+      const btn = s.items.find((i) => i.kind === 'button' && /^replay (this run|again|the last one)\b/i.test(i.text));
+      if (btn) return { ...cmd, mode: 'act', op: 'press', target: btn.id, label: btn.text, p: 0.9, why: 'replay the run (word rule)' };
+      if (!/^\/p\/[^/]+\/[^/]+\/work/.test(s.path)) return { ...cmd, mode: 'act', op: 'go', href: work + '#/', label: `${proj[2]}: Board`, then: utterance, p: 0.9, why: 'replays start on the Board (word rule)' };
+    }
+    const sp = /\b(2|4|8|two|four|eight)\s*(x|×|times)\b/i.exec(utterance);
+    if (sp) {
+      const n = ({ two: '2', four: '4', eight: '8' } as Record<string, string>)[sp[1].toLowerCase()] || sp[1];
+      const chip = s.items.find((i) => i.kind === 'button' && new RegExp('^' + n + '\\s*[×x]$').test(i.text.trim()));
+      if (chip) return { ...cmd, mode: 'act', op: 'press', target: chip.id, label: chip.text, p: 0.9, why: 'replay speed (word rule)' };
     }
     if (/\b(open|show( me)?)\b.*\bchange\b/i.test(utterance) && !s.items.some((i) => i.kind === 'link' && /#\/change\//.test(i.href || '')) && !/^\/p\/[^/]+\/[^/]+\/work/.test(s.path))
-      return { ...cmd, mode: 'act', op: 'go', href: work, label: `${proj[2]}: Agents at work`, then: utterance, p: 0.9, why: 'changes are listed on the work page (word rule)' };
+      return { ...cmd, mode: 'act', op: 'go', href: work, label: `${proj[2]}: Board`, then: utterance, p: 0.9, why: 'changes are listed on the work page (word rule)' };
   }
   // 'open the dark mode change' on the work page: the change links (#/change/…) by their words; 'that change (record)'
   // with no words of its own = the newest one listed. Never another project with a similar name.
@@ -550,7 +567,8 @@ export function gate(c: Cmd): 'refuse' | 'confirm' | null {
   // A page's own action (window.__talkActions) is the page's promise to be safe: its UI asks for the real step
   // (qb7's fleet-job fills the form; the person taps Start). Opening a page is only a navigation.
   if (c.op === 'press' && /^x/.test(String(c.target || ''))) return null;
-  if (c.op === 'press' && PRESET_RX.test(label)) return null;   // choosing a preset only changes the settings (qb7's e2e)
+  if (c.op === 'press' && PRESET_RX.test(label)) return null;
+  if (c.op === 'press' && /^(replay (this run|again|the last one)|[248]\s*[×x])$/i.test(label)) return null;   // a replay only plays back a finished build   // choosing a preset only changes the settings (qb7's e2e)
   if (c.op === 'go' && (c.then || c.href === '/runs' || /^\/p\//.test(String(c.href || '')))) return null;
   // Typing only fills a box (its Send or Build it is the step that needs a yes): "build a habit tracker" types at once.
   if (c.op === 'type') return null;

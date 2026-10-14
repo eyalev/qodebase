@@ -639,7 +639,7 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
     { title: 'Waiting for you', items: [...asked, ...stalled, ...blocked, ...waiting] },
     { title: 'In progress', items: builds },
     { title: 'Experiments running', items: runs },
-    { title: 'Agents at work', items: working },
+    { title: 'Agents working', items: working },
     { title: 'Ready to merge', items: ready },
     { title: `Done ${today ? 'today' : 'this week'}`, items: finished },
   ].filter((x) => x.items.length).map((x) => ({ title: x.title, items: x.items.slice(0, 6).map((y) => ({ text: y.t, href: y.href })), more: Math.max(0, x.items.length - 6) }));
@@ -660,7 +660,7 @@ export async function statusCore(env: Env, who: Who & {}, body: any) {
   // count line ("Status: 1 build in progress, 1 experiment running"), never a heading fragment.
   const n = (k: number, one: string, many: string) => k ? `${k} ${k === 1 ? one : many}` : '';
   const brief = [n(asked.length + blocked.length + waiting.length, 'thing waiting for you', 'things waiting for you'), n(stalled.length, 'thing stuck', 'things stuck'), n(builds.length, 'build in progress', 'builds in progress'),
-    n(runs.length, 'experiment running', 'experiments running'), n(working.length, 'agent at work', 'agents at work'), n(ready.length, 'change ready to merge', 'changes ready to merge')].filter(Boolean);
+    n(runs.length, 'experiment running', 'experiments running'), n(working.length, 'agent working', 'agents working'), n(ready.length, 'change ready to merge', 'changes ready to merge')].filter(Boolean);
   const lead = 'Here\u2019s where things stand:';
   // What is said aloud: one short line from the counts, no summary model (it was 1.7 s of the turn).
   const say1 = (xs: string[]) => xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
