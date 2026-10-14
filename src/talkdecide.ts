@@ -201,7 +201,7 @@ export function quickCmd(utterance: string, s: Screen, projects: Proj[]): Cmd | 
     if (btn) return { ...base, op: 'idea', target: btn.id, label: btn.text, text: size, why: 'idea words (no model)' };
     return { ...base, op: 'go', href: '/', label: 'home', then: u, why: 'ideas live on home (no model)' };
   }
-  if (/^\s*(how does (a |the )?(build|qodebase|code ?base|this|it|talk) work|what (can|does) (qodebase|code ?base|this( site| app)?|talk) do( for me)?|what is qodebase|explain qodebase)\s*[?.!]*\s*$/i.test(u))
+  if (/^\s*(how does (a |the )?(build|qodebase|code ?base|this|it|talk) work|what (can|does) (qodebase|code ?base|cold ?base|codebase|this( site| app)?|talk) do( for me)?|what is (qodebase|code ?base|cold ?base)|explain qodebase)\s*[?.!]*\s*$/i.test(u))
     return { ...base, mode: 'ask', op: 'none', why: 'a question about qodebase (no model)' };
   const home = s.items.find((i) => i.kind === 'link' && i.href === '/');
   if (home && /^\s*((please\s+)?(go|take me|bring me|get me)\s+(back\s+)?home|(open\s+|go to\s+)?(the\s+)?home ?page|home)\s*[.!]*\s*$/i.test(u)) return { ...base, op: 'go', href: '/', label: home.text, target: home.id, why: 'home words (no model)' };
