@@ -628,7 +628,10 @@
   let fitTab = null; // the person's choice; null = the default for the state (critique: no blank panel)
   // The run's clock as m:ss (its own attribute: other tickers rewrite [data-since]).
   const elTxt = (t) => { const s = Math.max(0, Math.floor((now() - t) / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
-  const COLS = [['work', 'Working', (c) => c.state === 'working' || c.state === 'bounced'], ['rev', 'Review', (c) => ['pushed', 'reviewing'].includes(c.state) || ready(c)],
+  // A sent-back change is redone, so it counts as working, while the run goes on; once nothing is moving any more it
+  // did not land, and it is listed under the pipeline instead (qb8: an ended kata view showed 'Working 15').
+  const runOver = () => !D.changes.some((c) => ['working', 'pushed', 'reviewing', 'queued', 'testing', 'replaying', 'with-lead'].includes(c.state));
+  const COLS = [['work', 'Working', (c) => c.state === 'working' || (c.state === 'bounced' && !runOver())], ['rev', 'Review', (c) => ['pushed', 'reviewing'].includes(c.state) || ready(c)],
     ['line', 'In line', (c) => ['queued', 'testing', 'replaying', 'with-lead'].includes(c.state) && !ready(c)], ['done', 'Landed', (c) => c.state === 'landed']];
   // R1 (Eyal, 2026-10-12): the owner's brakes for a real run. Pause = no new tasks or trains, agents finish what they
   // are on; Stop all = every box halts (asks once more inline: a browser confirm() would block the page); Resume
@@ -675,7 +678,7 @@
     // The kata code-dial projects (qb8/qb6): their Landing kept only the newest change records during the runs, so this
     // view counts fewer landings than the run did; say so, with the run's own count and a link to its card
     const kr = KATA_RUNS[API.replace(/^\/api\/p\//, '')];
-    const keptNote = kr && landed < kr.landed ? `<p class="snote">This view kept the newest change records of the run; the run\u2019s own count is ${n0(kr.landed)} of ${n0(kr.tasks)} tasks landed (see <a href="/runs#/run/${kr.run}">/runs</a>). Every landed change is a commit on main with its note.</p>` : '';
+    const keptNote = kr && landed < kr.landed ? `<p class="snote">This view kept the newest change records of the run; the run\u2019s own count is ${n0(kr.landed)} tasks landed (see <a href="/runs#/run/${kr.run}">/runs</a>). Every landed change is a commit on main with its note.</p>` : '';
     const waitLine = wq.length ? `<p class="swait"><i class="live"></i><span>Waiting for a free agent: \u201c${esc(String(wq[0].text).slice(0, 90))}\u201d${wq.length > 1 ? ` and ${wq.length - 1} more` : ''}${wq[0].at ? ` <span class="stm" data-el="${wq[0].at}">${elTxt(wq[0].at)}</span>` : ''}</span></p>` : '';
     return `<div class="sstrip"><p class="skick"><i class="live${(live || isStarting) && !RUN().paused && !RUN().stopped ? '' : ' off'}"></i><span>${kick}${RUN().stopped ? ', stopped' : RUN().paused ? ', paused' : ''}</span>${tm ? `<span class="stm">${tm}</span>` : ''}</p>
       ${partsShown ? '' : `<p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>`}${keptNote}${waitLine}${acts}${ctl}</div>`;
@@ -684,11 +687,15 @@
     const rp = (c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying');
     const cols = COLS.map(([k, label, f]) => {
       const cs = D.changes.filter(f).sort((a, b) => agentNum(a.agent) - agentNum(b.agent));
-      const chips = cs.map((c) => `<span class="pc${rp(c) ? ' rp' : ''}${c.state === 'with-lead' || c.state === 'bounced' ? ' bad' : ''}${c.state === 'testing' ? ' test' : ''}" title="${AG(c.agent)}: ${short(c)}">${agentNum(c.agent)}</span>`).join('');
-      return `<div class="pcol ${k}"><p class="ph"><span>${label}</span><b>${cs.length}</b></p><div class="pchips${cs.length > 6 ? ' many' : ''}">${chips}</div></div>`;
+      // a big run's column (1,052 landed on a kata view) stops after 47 chips with '+N' (it ran the length of the page)
+      const CAP = 48, shown = cs.length > CAP ? cs.slice(0, CAP - 1) : cs;
+      const chips = shown.map((c) => `<span class="pc${rp(c) ? ' rp' : ''}${c.state === 'with-lead' || c.state === 'bounced' ? ' bad' : ''}${c.state === 'testing' ? ' test' : ''}" title="${AG(c.agent)}: ${short(c)}">${agentNum(c.agent)}</span>`).join('') + (shown.length < cs.length ? `<span class="pc more">+${n0(cs.length - shown.length)}</span>` : '');
+      return `<div class="pcol ${k}"><p class="ph"><span>${label}</span><b${cs.length >= 1000 ? ' class="k4"' : ''}>${n0(cs.length)}</b></p><div class="pchips${cs.length > 6 ? ' many' : ''}">${chips}</div></div>`;
     }).join('');
-    const anyRp = D.changes.some(rp), anyBad = D.changes.some((c) => c.state === 'with-lead' || c.state === 'bounced');
-    return `<div class="pipe${RUN().stopped ? ' halted' : ''}">${cols}</div>${anyRp || anyBad ? `<p class="pkey">${anyRp ? '<span><i class="pc rp mini"></i>collided, then redone on the newest code</span>' : ''}${anyBad ? '<span><i class="pc bad mini"></i>sent back or waiting</span>' : ''}</p>` : ''}`;
+    const anyRp = D.changes.some(rp), over = runOver(), anyBad = D.changes.some((c) => c.state === 'with-lead' || (c.state === 'bounced' && !over));
+    const back = over ? D.changes.filter((c) => c.state === 'bounced').sort((a, b) => agentNum(a.agent) - agentNum(b.agent)) : [];
+    const backLine = back.length ? `<p class="pback">${n0(back.length)} ${back.length === 1 ? 'was' : 'were'} sent back and did not land: ${back.length === 1 ? AG(back[0].agent) : `Agents ${back.slice(0, 12).map((c) => agentNum(c.agent)).join(', ')}`}${back.length > 12 ? ` and ${n0(back.length - 12)} more` : ''}.</p>` : '';
+    return `<div class="pipe${RUN().stopped ? ' halted' : ''}">${cols}</div>${backLine}${anyRp || anyBad ? `<p class="pkey">${anyRp ? '<span><i class="pc rp mini"></i>collided, then redone on the newest code</span>' : ''}${anyBad ? '<span><i class="pc bad mini"></i>sent back or waiting</span>' : ''}</p>` : ''}`;
   }
   function latestLine(isStarting) {
     if (isStarting) return '<p class="slast2">The café site goes back to its first version and the agents get their tasks.</p>';

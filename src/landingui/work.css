@@ -345,3 +345,7 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .sb textarea{width:100%;box-sizing:border-box;min-height:64px;margin:8px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font:inherit;font-size:16px;resize:vertical}
 .lw .sb .btn{min-height:44px}
 .lw .swait{display:flex;gap:8px;align-items:baseline;margin:8px 0 0;font-size:14px;color:var(--fg)}.lw .swait .live{flex:none;width:8px;height:8px;border-radius:50%;background:var(--busy);transform:translateY(-1px)}
+.lw .pc.more{width:auto!important;padding:0 6px;border-radius:10px;background:var(--chip)!important;color:var(--fg)!important;box-shadow:none;font-weight:500}
+.lw .pcol .ph b{font-variant-numeric:tabular-nums;min-width:0}
+.lw .pback{margin:0;font-size:13px;color:var(--dim);line-height:1.4}
+.lw .pcol .ph:has(b.k4){flex-wrap:wrap;row-gap:0}.lw .pcol .ph b.k4{font-size:15px}
