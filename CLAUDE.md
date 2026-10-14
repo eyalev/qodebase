@@ -3,6 +3,8 @@
 A Git platform for the age of agents, built entirely on Cloudflare, phone-first and
 used from a desktop too. Every project runs, and every fork comes with its own agents.
 
+Local paths and operator notes (the `<…>` names below): `CLAUDE.local.md` (not in git; Claude Code loads it with this file).
+
 ## Name: qodebase (since 2026-10-06)
 
 The product is **qodebase** at **https://qodebase.app**; "forq" stays as the
@@ -17,7 +19,7 @@ cookies, `x-forq-*` headers, the showcase handle
   `fromFront()` (index.ts) checks the secret and rewrites the URL to
   qodebase.app, so all code sees the real host (`FRONT_HOSTS`, `isUiHost()` in
   env.ts). Visitor IP and cf facts ride along in `x-qb-ip` / `x-qb-cf`.
-  Secret: `~/.config/forq-cf/front-secret` (set on both Workers).
+  Secret: `<front-secret file>` (set on both Workers).
 - Sign-in on qodebase.app: Access sits only on projectsbase.dev/login, so the
   front sends `/login` to `projectsbase.dev/login?to=qodebase.app` and forq hands
   the session back through `/session` (the variant-host handoff).
@@ -147,13 +149,13 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 ## Running it (v0)
 
 - **Account:** forq runs in its own Cloudflare account `forq` (Workers Paid) since 2026-10-02, not the personal one.
-  Deploy with `CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx
+  Deploy with `CLOUDFLARE_API_TOKEN=$(cat <forq api-token file>) npx
   wrangler deploy` (account token, write all, forq account only, expires
   2027-10-02); the OAuth login cannot see this account. Zones projectsbase.dev
   and ttyview.dev live there. The old instance (personal account) is frozen;
   `forq.kapps.dev`, `forq-run.kapps.dev` and `forq-{a..d}.kapps.dev` 301 to the
   new hosts (redirect rules in the kapps.dev zone). Repo mirrors of the old
-  instance and the migration script: `~/.local/share/forq-backups/old-account-repos/`.
+  instance and the migration script: `<old-account backups dir>`.
 - Phone: https://projectsbase.dev/ (Access team `forqdev`, app `forq sign-in`
   on `/login`, One-time PIN; the owner's email → handle `eyal` via `HANDLES`).
   Design variants: `a.`…`d.projectsbase.dev` (`variants/`).
@@ -169,7 +171,7 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
   one: `POST /api/p/forq/<name>/create {description}` → push with the returned
   token → `POST /api/p/forq/<name>/touch`.
 - Laptop/admin: `https://forq.forqdev.workers.dev` with header
-  `x-forq-secret: $(cat ~/.config/forq/admin-secret)` (acts as `eyal`, or
+  `x-forq-secret: $(cat <admin-secret file>)` (acts as `eyal`, or
   `x-forq-as: <handle>`). Verbs: `/api/p/<owner>/<name>` (GET info,
   `create`, `fork`, `agents`, `router`, `merge`, `main-token`, `touch`,
   `agents-html`), `/api/agents/<id>/{state,wake,stop,send,exec,reset}`,
@@ -185,7 +187,7 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 
 ## Claude sign-in: whose Claude runs what (audit 2026-10-12)
 
-Rules: `~/.claude/docs/claude-subscription-policy.md` (Anthropic, Oct 2026). Allowed: a platform runs the real,
+Rules: the owner's Claude subscription policy notes (`<subscription policy doc>`; Anthropic, Oct 2026). Allowed: a platform runs the real,
 unmodified `claude` binary and the person signs in with their OWN plan. Not allowed: our own agent loop calling the API
 with a plan token; anyone's work on someone else's subscription. Audited (file:line evidence in the qb6 session,
 2026-10-12):
@@ -298,7 +300,7 @@ waitUntil work is cut ~30 s after the response. Waking a box can take longer
 - Builds run from BuildBox.alarm() (outlive the request), one at a time.
 - `CF_DEPLOY_TOKEN` (Workers Scripts write only) goes to one wrangler command
   per build and never into agent boxes. It cannot delete Workers: use the
-  account token (`CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler delete --name forq-app-…`).
+  account token (`CLOUDFLARE_API_TOKEN=$(cat <forq api-token file>) npx wrangler delete --name forq-app-…`).
 - The sanitized config drops routes/env/account_id, refuses bindings that
   need account resources (KV, D1, R2, queues, services…), turns on
   observability + Issues, and adds a `previews` block.
@@ -317,7 +319,7 @@ waitUntil work is cut ~30 s after the response. Waking a box can take longer
 OWN account with no GitHub and no pasted tokens (research and options:
 `docs/deploy-without-github.md`).
 - **Sign in with Cloudflare** = forq's OAuth client (forq account;
-  secret `CF_OAUTH_CLIENT_SECRET`, laptop copy `~/.config/forq-cf/oauth-client.json`).
+  secret `CF_OAUTH_CLIENT_SECRET`, laptop copy `<oauth-client file>`).
   Endpoints `dash.cloudflare.com/oauth2/{auth,token,revoke}`; access tokens live
   1 h, refresh tokens rotate on every refresh. **Public** since 2026-10-04
   (projectsbase.dev verified by TXT `cloudflare_oauth_client_publisher=…` on the
@@ -407,7 +409,7 @@ OWN account with no GitHub and no pasted tokens (research and options:
   sits in `forq-release/worker/` so `no_bundle` rules skip the UI's JS
   (1.2 MB gzip instead of 3.2). Needs Workers Paid. Replaced the 23-star
   `harshil1712/pi-on-cf` port (`forq/pi-on-cf`, kept in Artifacts, unused) after
-  Eyal's social-proof rule (~/.claude/CLAUDE.md).
+  Eyal's social-proof rule for third-party code.
 - **Cloudflare Agent** (`forq/agents-starter`, local `../forq-agents-starter`):
   Push with `git push forq HEAD:main` (`origin` is Cloudflare's GitHub repo). Its
   release keeps the Worker in `forq-release/worker/` (no_bundle would upload `client/` too).
@@ -492,7 +494,7 @@ tab loads `/a/<id>/agent/?ui=minimal` (terminal, six keys, input).
 - **Cloudflare OS managed**: nearest Cloudflare-made neighbour (company agent
   workspace, git to GitHub, not phone-first, no fork/social model).
 
-## Cost (read `~/.claude/docs/cost-hygiene.md` before adding anything metered)
+## Cost (read `<cost-hygiene doc>` before adding anything metered)
 
 - Artifacts (billing from 2026-10-14): 10k ops/month free, then $0.15 per 1k;
   1 GB free, then $0.50/GB-month. Risk: an agent `git fetch`-ing in a loop.
@@ -525,7 +527,7 @@ and its repo is public (Apache-2.0). Done, in `src/baseline.ts` unless noted:
   open `/e?self=1` once per host (projectsbase.dev and each `X.projectsbase.dev`
   variant: localStorage is per origin).
 - **Share cards:** og-cards theme `forq` (key `OG_KEY`, laptop copy
-  `~/.config/forq-cf/og-key`), signed per page by `withBaseline`.
+  `<og-key file>`), signed per page by `withBaseline`.
 - **`/health.json`** `{sha, version, built, checks:[builds]}` (sha = the deploy
   `--tag`: always deploy with `--tag "$(git rev-parse --short HEAD)"`).
 - **Alerts** (`src/alert.ts`, Pushover `PUSHOVER_TOKEN`/`PUSHOVER_USER`): a live
@@ -654,8 +656,8 @@ Owners: qb6 runner + flags + baselines, qb4 sim/predict.js/plan, qb5 scenarios +
   landing flags (verified before the request), router prompt with the policy's instructions
   (opus-alone: one agent, no router), waits until settled, stops every box, scores on the laptop
   with scripts/lab/score.mjs --judge (hidden tests live in a PRIVATE repo
-  $LAB_HIDDEN_DIR, never in this public repo or a box), appends the line.
-  Log: ~/.local/share/qodebase-lab/runner.jsonl. `--out public/lab/runs.smoke.jsonl` for tests.
+  `<lab-hidden repo>`, never in this public repo or a box), appends the line.
+  Log: `<lab runner log>`. `--out public/lab/runs.smoke.jsonl` for tests.
 - Variant flags (`POST …/landing/flags`): plannerModel/coderModel/reviewerModel (haiku|sonnet|opus,
   mapped to the 5.5 ids at box boot), reviewers 0-6 (0 = no review, approved automatically),
   reviewStyle read|adversarial, policy intent|ffa|phases|stacking|leads|github (github/ffa: no
@@ -776,7 +778,7 @@ answers, or both.
   service binding with `x-talk-who` (signed-in person; stripped from incoming
   requests) and `x-talk-site` (forq's version). Self-host has no binding and
   runs Talk in-process (talkRoute). **Deploy Talk changes with**
-  `CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler deploy -c talk/wrangler.jsonc --tag $(git rev-parse --short HEAD)`
+  `CLOUDFLARE_API_TOKEN=$(cat <forq api-token file>) npx wrangler deploy -c talk/wrangler.jsonc --tag $(git rev-parse --short HEAD)`
   (from a clean worktree): it never touches forq or its boxes, so no batching.
   Changes to the hand-off in index.ts still need a forq deploy. The owner's
   label reads `<forq sha> HH:MM talk <talk sha>`.
@@ -825,7 +827,7 @@ answers, or both.
   sound p50 16.8 -> 3.8 s, p90 20.2 -> 5.2 s; in-page last word -> first sound p50 2.0 s.
   Every spoken turn writes a `latency` trace row (end,
   final, decide, data, ack, audio, total in ms from the stop); /admin/talk -> "Latency of spoken turns" = p50/p90.
-  Bench: `~/.local/share/forq-deploy/qb2-tests/lat/bench.mjs <label>` (fixtures.json: Eyal's kept clips + Aura
+  Bench: `<talk latency bench> <label>` (fixtures.json: Eyal's kept clips + Aura
   voices at 0.9/1.0/1.15 speed, fed as the mic in conversation mode on / at 390 px, real Chrome for MP3, every write
   intercepted; results.jsonl).
 - **Conversations** (qb5, 2026-10-14, hidden: per device, `?conv=1` turns it on, `?conv=0` off; settings row only when
