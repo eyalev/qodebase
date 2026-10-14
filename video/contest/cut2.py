@@ -142,7 +142,7 @@ class Cut2(base.Cut):
             if hold_s: self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), None), round(hold_s * FPS))
 
 V = os.path.expanduser('~/.local/share/qodebase-video')
-TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-v2').split(',')]
+TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-v2b,take-v2c').split(',')]
 
 def script(c):
     c.chapter('')
