@@ -653,6 +653,7 @@
       : c.paused ? `Paused by you${at(c.pausedAt)}. No new tasks or merges start; agents finish what they are on.` : '';
     return `<div class="sacts sctl" role="group" aria-label="Run controls">${btns}</div>${note ? `<p class="snote sctl-n">${note}</p>` : ''}`;
   }
+  const KATA_RUNS = { 'eyal/kata-d60h': { landed: 1330, tasks: 1385, run: 'fleet-kata-d60h/fmv78n0e9' }, 'eyal/kata-d60g': { landed: 1341, tasks: 1385, run: 'fleet-kata-d60g/fmv740a4m' }, 'eyal/kata-d0b': { landed: 1228, tasks: 1385, run: 'fleet-kata-d0b/fmv6wdrh7' } };
   function statusStrip(live, isStarting) {
     const dm = D.demo || {}, W = D.watch || {}, replay = P && P.replay;
     const landed = countIf(D.changes, (c) => c.state === 'landed');
@@ -671,9 +672,13 @@
     const ctl = runCtl(live);
     // Requests the router queued until an agent is free (qb6's view.waiting, or lastRequest.state 'queued')
     const wq = (D.waiting || (D.lastRequest && D.lastRequest.state === 'queued' ? [D.lastRequest] : [])).filter((w) => w && w.text);
+    // The kata code-dial projects (qb8/qb6): their Landing kept only the newest change records during the runs, so this
+    // view counts fewer landings than the run did; say so, with the run's own count and a link to its card
+    const kr = KATA_RUNS[API.replace(/^\/api\/p\//, '')];
+    const keptNote = kr && landed < kr.landed ? `<p class="snote">This view kept the newest change records of the run; the run\u2019s own count is ${n0(kr.landed)} of ${n0(kr.tasks)} tasks landed (see <a href="/runs#/run/${kr.run}">/runs</a>). Every landed change is a commit on main with its note.</p>` : '';
     const waitLine = wq.length ? `<p class="swait"><i class="live"></i><span>Waiting for a free agent: \u201c${esc(String(wq[0].text).slice(0, 90))}\u201d${wq.length > 1 ? ` and ${wq.length - 1} more` : ''}${wq[0].at ? ` <span class="stm" data-el="${wq[0].at}">${elTxt(wq[0].at)}</span>` : ''}</span></p>` : '';
     return `<div class="sstrip"><p class="skick"><i class="live${(live || isStarting) && !RUN().paused && !RUN().stopped ? '' : ' off'}"></i><span>${kick}${RUN().stopped ? ', stopped' : RUN().paused ? ', paused' : ''}</span>${tm ? `<span class="stm">${tm}</span>` : ''}</p>
-      ${partsShown ? '' : `<p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>`}${waitLine}${acts}${ctl}</div>`;
+      ${partsShown ? '' : `<p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>`}${keptNote}${waitLine}${acts}${ctl}</div>`;
   }
   function pipeline() {
     const rp = (c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying');
