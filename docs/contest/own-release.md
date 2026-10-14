@@ -28,3 +28,6 @@
 ## 2026-10-14 15:24-15:26 UTC: release rebuilt after the qb-agent rename
 - Built from forq 72ced72 (the in-box CLI is qb-agent, forq kept as a symlink), committed as 814d3e8, pushed to GitHub
   and the Artifacts mirror. Install test into qb-selftest: all 5 steps done in 95 s; the copy answers 302 (Access).
+
+## 2026-10-14 18:27 UTC: release rebuilt after the merger patch fix
+- Built from forq 47a1369 (patches applied byte-exact), committed as f8852f9, mirror pushed; install test into qb-selftest done (see log).
