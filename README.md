@@ -63,7 +63,7 @@ No model calls in any of these; every number has its script.
 
 | | finding |
 |---|---|
-| Hono's last 346 PRs, replayed as 100 at once | 48% needed another PR to land first; **0 git conflicts**. The problem is order. (Holding a change until what it needs has landed is this simulation's strategy; the live queue orders only declared stacks.) |
+| Hono's last 346 PRs, replayed as 100 at once | 48% needed another PR to land first; **0 git conflicts**. The problem is order. (Holding a change until what it needs has landed is the strategy of the Hono simulation in the next row; the live queue orders only declared stacks.) |
 | A migration of Hono's code, many agents (simulation) | grabbing tasks in any order wasted **90 agent-hours**; knowing the order finished in less than half the time at 10 agents; stacking + land by intent wasted nothing |
 | Real code (403 files), 500 scripted agents, real git + tests (simulation, scripted edits) | land by intent landed **3.5×** as many changes per hour as review-then-merge |
 | 500 agents on Cloudflare (Durable Objects + Artifacts) | 7,033 pushes from 500 forks at once, 280 ms median; one merge queue was the limit (it reset three times, and a bug of ours caused 88 stale-ref rejections, since fixed) |
