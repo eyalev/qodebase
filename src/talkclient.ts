@@ -1662,7 +1662,8 @@ function say(text) {
   if (!t) return;
   // The same sentence twice within 6 s is never said again (qb7's e2e, 1 run in 3: the status line started twice);
   // the second caller is traced so the cause shows up.
-  if (t === lastSay.t && Date.now() - lastSay.at < 6000) { trace('say_dupe', { text: t.slice(0, 80), ms: Date.now() - lastSay.at, from: String(new Error().stack || '').split('\n').slice(2, 6).map(function (x) { return x.trim().replace(/^at\s+/, '').replace(/\s*\(.*$/, ''); }).join(' < ') }); return; }
+  // (only while the first one is still being said: asking 'Build it?' again on a later turn is fine)
+  if (t === lastSay.t && Date.now() - lastSay.at < 6000 && (speakPending || speakingQ || (player && !player.paused && !player.ended && player.currentTime > 0))) { trace('say_dupe', { text: t.slice(0, 80), ms: Date.now() - lastSay.at, from: String(new Error().stack || '').split('\n').slice(2, 6).map(function (x) { return x.trim().replace(/^at\s+/, '').replace(/\s*\(.*$/, ''); }).join(' < ') }); return; }
   lastSay = { t: t, at: Date.now() };
   // A long answer is summarised for the ear (the text stays on screen); 4 s at most, else its first two sentences.
   speakPending = true; setTimeout(function () { speakPending = false; }, 8000);
