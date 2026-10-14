@@ -2274,6 +2274,10 @@ function liveOpen() {
   ws.onclose = function (e) {
     liveClosedAt = Date.now();
     trace('stt_ws_close', { code: e.code, reason: String(e.reason || '').slice(0, 80), sent: liveSent, words: gotWords, ms: Date.now() - t0 });
+    // Conversation mode, nothing heard yet, and the socket closed under us (nova-3 closed a quiet stream ~8 s in during
+    // qb3's take, so the clip that came later in the window was never heard): listen again at once, fresh recorder and
+    // socket, not counted as an empty window.
+    if (dcOn && !gotWords && convOn() && ws === liveWs && myTurn === dcT0) { trace('stt_restart', { code: e.code, ms: Date.now() - t0 }); liveStop(true); setTimeout(function () { if (convOn() && !listening && !busy) startListen(); }, 60); return; }
     if (dcOn && !gotWords && !nativePreview) startNativePreview();   // the live words failed: the phone's recogniser instead
   };
 }

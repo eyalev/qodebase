@@ -357,12 +357,12 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
     }
   }
   // 'call it home things 2' / 'name it …' on the brief: the Project name box (qb3's scene 2).
-  const nm = /^\s*(please\s+)?(call it|name it|rename it( to)?|name the project|call the project|the name is)\s+(.{2,60}?)\s*[.!]*\s*$/i.exec(utterance);
+  const nm = /^\s*(please\s+)?(call (it|at|that|this)|cool it|cold it|name it|rename it( to)?|name the project|call the project|the name is|its name is)\s+(?<name>.{2,60}?)\s*[.!]*\s*$/i.exec(utterance);   // 'Call at homekeeper' (qb3's take)
   const nameBox = s.items.find((i) => i.kind === 'field' && /project name|^name\b/i.test(i.text));
   // A spoken number at the end of a name comes out as a homophone ('home things too' for 'home things 2', qb3's take).
   const nameText = (t: string) => t.trim().toLowerCase().replace(/\b(to|too|two)\s*$/, '2').replace(/\b(for|four)\s*$/, '4').replace(/\b(one|won)\s*$/, '1').replace(/\bthree\s*$/, '3')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  if (nm && nameBox) return { ...cmd, mode: 'act', op: 'type', target: nameBox.id, label: nameBox.text, text: nameText(nm[4]), p: 0.9, why: 'the project name (word rule)' };
+  if (nm && nameBox) return { ...cmd, mode: 'act', op: 'type', target: nameBox.id, label: nameBox.text, text: nameText(nm.groups!.name), p: 0.9, why: 'the project name (word rule)' };
   // On a project's page a change request goes to THIS project unless another project is named by its words
   // ('switch to dark mode' on corner-cafe went to cafe-crew).
   const here = currentSlug(s.path);
