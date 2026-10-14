@@ -49,8 +49,11 @@
       D = m; TL = m.timelines || {}; if (m.owner) OWN = true; return;
     }
     // 20 s at most (qb3: the first load sometimes sat on 'Loading the runs…' past 25 s); the poll tries again
-    const ac = new AbortController(), to = setTimeout(() => ac.abort(), 20e3), t0 = Date.now();
-    const r = await fetch(API, { cache: 'no-store', credentials: 'same-origin', signal: ac.signal }).finally(() => clearTimeout(to));
+    // the first load may take long on a cold server (qb5 measured 17 s for 709 KB): 60 s then, 20 s for the polls after;
+    // past 5 s the page says it is still loading
+    const ac = new AbortController(), to = setTimeout(() => ac.abort(), D ? 20e3 : 60e3), t0 = Date.now();
+    const slow = D ? 0 : setTimeout(() => { const s = root.querySelector('.rh-s span'); if (s && !D) s.textContent = 'Still loading the runs: the list is long, this can take up to 20 s the first time…'; }, 5e3);
+    const r = await fetch(API, { cache: 'no-store', credentials: 'same-origin', signal: ac.signal }).finally(() => { clearTimeout(to); clearTimeout(slow); });
     if (Date.now() - t0 > 5e3) log('runs_slow', { ms: Date.now() - t0 });
     if (!r.ok) throw new Error(`runs ${r.status}`);
     D = await r.json();
@@ -551,7 +554,7 @@
       if (cur) { if (!(cur.group && (await loadLadder(cur).catch(() => false)))) await loadMany(cur.group ? cur.copies : [cur]); if (!cur.group) await loadIndexCheck(cur).catch(() => {}); }
       else await Promise.all(shownGroups().slice(0, 16).map((g) => loadLadder(g).catch(() => false)));   // the steps on screen, in screen order (qb3: cards kept 'Loading the timeline…')
       render();
-    } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (!D) root.innerHTML = `<header class="rh"><h1>Scale runs</h1></header><p class="dim">Could not load the runs (${esc(String(e.message || e))}). Trying again.</p>`; }
+    } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (!D) root.innerHTML = `<header class="rh"><h1>Scale runs</h1></header><p class="dim">${e && e.name === 'AbortError' ? 'The list of runs is taking too long to load.' : 'Could not load the runs.'} Trying again in a few seconds\u2026</p>`; }
     const anyLive = (D?.fleet || []).some(live);
     if (PENDING && Date.now() - PENDING.at > 5 * 60e3) PENDING = null;
     timer = setTimeout(tick, !D || PENDING ? 3e3 : document.hidden ? 30e3 : anyLive ? 5e3 : 30e3 * Math.min(4, 2 ** failures));   // nothing on screen yet: try again soon
