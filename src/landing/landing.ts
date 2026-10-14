@@ -825,7 +825,7 @@ export class Landing extends DurableObject<Env> {
           // until a box is free. Before, one refusal was final and the agent never started (scene-2 takes 3 and 4,
           // 2026-10-14: 'Stuck: Agent 10 never started' until it was woken by hand).
           // Said only when the wake went through: the work page reads 'box had not started' as stuck.
-          if (w?.ok || !/already awake/.test(String(w?.error || ''))) { this.#ev(c, 'working', 'its box had not started: woken'); await this.#put(c); }
+          if (w?.ok || !/already awake|boxes are awake/.test(String(w?.error || ''))) { this.#ev(c, 'working', 'its box had not started: woken'); await this.#put(c); }
           else {
             delete (c as { bootKicked?: number }).bootKicked;
             if (c.events.at(-1)?.detail !== 'waiting for a free box') this.#ev(c, 'working', 'waiting for a free box');
