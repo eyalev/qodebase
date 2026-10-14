@@ -147,7 +147,7 @@
     const ctl = OWN && live(r) ? controls(r) : '';
     const title = plainName(r.label) || `${r.repo}${r.root ? ` ${r.root}` : ''}`;
     return `<article class="rc st-${esc(r.state)}" data-k="${esc(key(r))}" data-talk-ctx="${esc(title)}">
-      <div class="rc-h">${stateTag(r)}<span class="rc-t">${live(r) ? `running <b data-since="${r.startedAt}">${clock(elapsedS(r))}</b>` : r.endedAt ? `${clock(elapsedS(r))}, ended ${ago(r.endedAt)}` : ''}</span></div>
+      <div class="rc-h">${stateTag(r)}<span class="rc-t">${r.state === 'paused' ? `paused <b data-since="${lastPause(r)?.at || Date.now()}">${clock((Date.now() - (lastPause(r)?.at || Date.now())) / 1000)}</b>` : live(r) ? `running <b data-since="${r.startedAt}">${clock(elapsedS(r))}</b>` : r.endedAt ? `${clock(elapsedS(r))}, ended ${ago(r.endedAt)}` : ''}</span></div>
       ${full || r.group ? `<h2 class="rc-name">${esc(title)}</h2>` : `<a class="rc-name" href="#/run/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}">${esc(title)}</a>`}
       <p class="rc-sub">${r.group ? `${r.copies.length} copies of ${new Set(r.copies.map((c) => repoBase(c.repo))).size} projects, run side by side` : whatIs(r)}, ${n0(r.agentsStarted ?? r.agents)} of ${n0(r.agents)} agents started</p>
       ${r.group && r.copies[0]?.ladder ? `<div class="rc-tl"><p class="rc-mh">All ${r.copies.length} copies together</p>${timeline(r, TL['ladder:' + r.copies[0].ladder], full ? (DR && DR.k === key(r) ? DR : null) : 'mini')}</div>` : ''}
