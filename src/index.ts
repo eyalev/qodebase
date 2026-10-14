@@ -440,6 +440,14 @@ const app = {
     // it, drop it (x-api-key would be forwarded and unified billing would not apply), add cf-aig-authorization with the
     // gateway token (never in a box or a log) and stream Anthropic's answer back.
     if (url.pathname.startsWith('/api/aig/anthropic/')) return aigAnthropic(request, env, url);
+    // Admin: landing flags for a slug that may not exist yet (a build about to be started by voice gets billing 'gateway').
+    if (url.pathname === '/api/admin/landing-flags' && request.method === 'POST' && env.ADMIN_SECRET && request.headers.get('x-forq-secret') === env.ADMIN_SECRET) {
+      const b = await request.json().catch(() => ({})) as { slug?: string; flags?: Record<string, unknown> };
+      if (!/^[a-z0-9-]+\.[a-z0-9-]+$/.test(String(b.slug || '')) || !b.flags) return json({ error: 'slug owner.name and flags' }, 400);
+      const f: Record<string, unknown> = {};
+      if (b.flags.billing === 'gateway' || b.flags.billing === 'plan') f.billing = b.flags.billing;
+      return json(await env.Landing.get(env.Landing.idFromName(String(b.slug))).setFlags(String(b.slug), f as never));
+    }
     // GitHub push webhook for a mirror project (signed with its secret: X-Hub-Signature-256); the sync runs after the reply.
     { const mh = url.pathname.match(/^\/api\/hooks\/mirror\/([a-z0-9-]+)\/([a-z0-9-]+)$/);
       if (mh && request.method === 'POST') {
@@ -1903,8 +1911,8 @@ async function aigAnthropic(request: Request, env: Env, url: URL): Promise<Respo
   if (f?.billing !== 'gateway' || !env.REPLAY_GATEWAY_TOKEN) return json({ type: 'error', error: { type: 'permission_error', message: 'this project is not on gateway billing' } }, 403);
   // AI Gateway's native Anthropic route bills unified credits for the models in Cloudflare's catalog: Opus 5.5, Sonnet 5.5
   // and the 4.x models answer; Haiku 5.5 is not covered yet (forwarded without a key: 'x-api-key header is required',
-  // measured 2026-10-14). Claude Code's Haiku 5.5 calls (its background model and the default coder) go as Haiku 4.5,
-  // logged on every call. Cloudflare's REST /ai/v1/messages refused Claude Code's requests (system blocks, roles).
+  // measured 2026-10-14). Claude Code's Haiku 5.5 calls (its background model and the default coder) go as Sonnet 5.5,
+  // logged on every call (as Sonnet 5.5: Haiku 4.5 refused them). Cloudflare's REST /ai/v1/messages refused Claude Code's requests (system blocks, roles).
   const acct = '887d7234a6b8d65ad355a4f6684cab67', gw = env.REPLAY_GATEWAY || 'qodebase-replay';
   const target = `https://gateway.ai.cloudflare.com/v1/${acct}/${gw}/anthropic/${url.pathname.slice('/api/aig/anthropic/'.length)}${url.search}`;
   const h = new Headers();
@@ -1916,13 +1924,14 @@ async function aigAnthropic(request: Request, env: Env, url: URL): Promise<Respo
     const txt = await request.text();
     try {
       const j = JSON.parse(txt);
-      if (typeof j.model === 'string' && /^claude-haiku-5-5/.test(j.model)) { swapped = j.model; j.model = 'claude-haiku-4-5'; if (j.max_tokens > 64000) j.max_tokens = 64000; }   // Haiku 4.5's output cap
+      // Haiku 4.5 refuses Claude Code's 5.5 requests (a 'system' role in messages, 128k max_tokens): Sonnet 5.5 takes them.
+      if (typeof j.model === 'string' && /^claude-haiku-5-5/.test(j.model)) { swapped = j.model; j.model = 'claude-sonnet-5-5'; }
       body = JSON.stringify(j);
     } catch { body = txt; }
   }
   const t0 = Date.now();
   const res = await fetch(target, { method: request.method, headers: h, body });
-  log('aig', 'call', { slug, agent: id, path: url.pathname.slice(19, 60), status: res.status, ms: Date.now() - t0, ...(swapped ? { model: `${swapped} -> claude-haiku-4-5` } : {}) });
+  log('aig', 'call', { slug, agent: id, path: url.pathname.slice(19, 60), status: res.status, ms: Date.now() - t0, ...(swapped ? { model: `${swapped} -> claude-sonnet-5-5` } : {}) });
   const out = new Headers(res.headers); out.delete('set-cookie');
   return new Response(res.body, { status: res.status, headers: out });
 }
