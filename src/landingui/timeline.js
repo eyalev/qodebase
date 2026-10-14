@@ -91,11 +91,29 @@
     const used = new Set(T.spans.map((s) => s.lane).concat(T.marks.map((m) => m.lane)));
     const lanes = T.lanes.filter((l) => used.has(l.id)).map((l) => ({ ...l, label: String(l.label || l.id).replace(/^scripted agent (\d+)$/i, 'Agent $1').replace(/^r:reviewer$/, 'Reviewer').replace(/\s*\(.*\)$/, '') }));
     const crit = new Set(T.critical || []);
-    const pct = (t) => `${(((t - T.run.start) / runMs) * 100).toFixed(3)}%`;
-    const wid = (s) => `${Math.max(0.15, ((s.end - s.start) / runMs) * 100).toFixed(3)}%`;
-    // agents busy over time, 60 bins
+    // Long idle gaps fold into a narrow marked break (qb5's desktop critique: an 8 h 19 min build with one change 7.7 h
+    // later put all 41 agents in the first 30 px, and Fit could not help). A gap folds when it is longer than 12% of the
+    // run and 10 minutes; x runs over the folded axis, so Fit shows the busy part.
+    const SEG = (() => {
+      const iv = T.spans.filter((x) => !/^wait/.test(x.phase)).map((x) => [x.start, x.end])   // waiting is not activity: a 7 h wait in the line must not hold the axis open
+.concat(T.marks.map((m) => [m.at, m.at + 1])).filter(([a, b]) => b > a).sort((p, q) => p[0] - q[0]);
+      const busy = []; for (const [a, b] of iv) { const L = busy[busy.length - 1]; if (L && a <= L[1]) L[1] = Math.max(L[1], b); else busy.push([a, b]); }
+      const G = Math.max(10 * 60e3, runMs * 0.12), segs = []; let at = T.run.start;
+      const gap = (a, b) => { if (b - a > G) segs.push({ a, b, fold: true }); else if (b > a) segs.push({ a, b }); };
+      for (const [a, b] of busy) { gap(at, Math.max(at, a)); if (b > Math.max(at, a)) segs.push({ a: Math.max(at, a), b }); at = Math.max(at, b); }
+      gap(at, T.run.end);
+      const real = segs.filter((g) => !g.fold).reduce((n, g) => n + g.b - g.a, 0) || runMs, F = Math.max(real * 0.04, 1);
+      let off = 0; for (const g of segs) { g.off = off; g.len = g.fold ? F : g.b - g.a; off += g.len; }
+      return { segs, total: off || runMs, folds: segs.filter((g) => g.fold) };
+    })();
+    const X = (t) => { const g = SEG.segs.find((x) => t <= x.b) || SEG.segs[SEG.segs.length - 1]; if (!g) return 0; const f = g.b > g.a ? Math.min(1, Math.max(0, (t - g.a) / (g.b - g.a))) : 0; return (g.off + f * g.len) / SEG.total; };
+    const Xi = (f) => { const d = f * SEG.total, g = SEG.segs.find((x) => d <= x.off + x.len) || SEG.segs[SEG.segs.length - 1]; return g ? g.a + ((d - g.off) / (g.len || 1)) * (g.b - g.a) : T.run.start + f * runMs; };
+    const pct = (t) => `${(X(t) * 100).toFixed(3)}%`;
+    const wid = (s) => `${Math.max(0.15, (X(s.end) - X(s.start)) * 100).toFixed(3)}%`;
+    const gaps = SEG.folds.map((g) => `<i class="tl-gap" style="left:${pct(g.a)};width:${((g.len / SEG.total) * 100).toFixed(3)}%" title="${esc(dur(g.b - g.a))} with nothing happening"></i>`).join('');
+    // agents busy over time, 60 bins (over the folded axis)
     const work = T.spans.filter((s) => s.lane.startsWith('a:') && s.phase === 'work'), B = 60, bins = Array(B).fill(0);
-    for (let i = 0; i < B; i++) { const a = T.run.start + (runMs * i) / B, b = a + runMs / B; bins[i] = work.filter((s) => s.start < b && s.end > a).length; }
+    for (let i = 0; i < B; i++) { const a = Xi(i / B), b = Xi((i + 1) / B); bins[i] = work.filter((s) => s.start < b && s.end > a).length; }
     const bmax = Math.max(1, ...bins);
     // One legend entry per colour (several phases share one: all the waits are hatched, fetch/apply are merging).
     const LEG = [['tl-plan', 'Planning, waking'], ['tl-work', 'Working'], ['tl-review', 'Review'], ['tl-wait', 'Waiting'], ['tl-apply', 'Merging (fetch, apply)'], ['tl-train', 'Testing and landing'], ['tl-checks', 'Checks'], ['tl-bounced', 'Sent back']];
@@ -104,11 +122,12 @@
     const agentsN = lanes.filter((l) => l.group === 'agents').length;
     const rows = GROUPS.map(([g, gl]) => {
       const ls = lanes.filter((l) => l.group === g); if (!ls.length) return '';
-      const one = (l, sub) => `<div class="tl-row${sub ? ' tl-sub' : ''}" data-group="${g}"><div class="tl-lab">${esc(l.label)}</div><div class="tl-track">${T.spans.filter((s) => s.lane === l.id).map((s) => `<button type="button" class="tl-span ${PHASE[s.phase]?.[1] || ''}${crit.has(s.id) ? ' tl-crit' : ''}" style="left:${pct(s.start)};width:${wid(s)}" data-span="${s.id}" aria-label="${esc(`${PHASE[s.phase]?.[0] || s.phase}: ${s.label || ''}, ${dur(s.end - s.start)}`)}"></button>`).join('')}${T.marks.filter((m) => m.lane === l.id).map((m) => `<i class="tl-mark tl-${m.kind}" style="left:${pct(m.at)}" title="${esc(m.label || '')}"></i>`).join('')}</div></div>`;
+      const one = (l, sub) => `<div class="tl-row${sub ? ' tl-sub' : ''}" data-group="${g}"><div class="tl-lab">${esc(l.label)}</div><div class="tl-track">${gaps}${T.spans.filter((s) => s.lane === l.id).map((s) => `<button type="button" class="tl-span ${PHASE[s.phase]?.[1] || ''}${crit.has(s.id) ? ' tl-crit' : ''}" style="left:${pct(s.start)};width:${wid(s)}" data-span="${s.id}" aria-label="${esc(`${PHASE[s.phase]?.[0] || s.phase}: ${s.label || ''}, ${dur(s.end - s.start)}`)}"></button>`).join('')}${T.marks.filter((m) => m.lane === l.id).map((m) => `<i class="tl-mark tl-${m.kind}" style="left:${pct(m.at)}" title="${esc(m.label || '')}"></i>`).join('')}</div></div>`;
       if (g !== 'agents') return ls.map((l) => one(l, false)).join('');
       return `<div class="tl-row tl-ghead"><div class="tl-lab"><button type="button" class="tl-fold" data-fold aria-expanded="true">Agents (${agentsN})</button></div><div class="tl-track tl-agg">${work.map((s) => `<i class="tl-aggbar" style="left:${pct(s.start)};width:${wid(s)}"></i>`).join('')}</div></div>${ls.map((l) => one(l, true)).join('')}`;
     }).join('');
-    const ticks = [0, 1 / 3, 2 / 3, 1].map((f) => `<span style="left:${f * 100}%">${dur(runMs * f)}</span>`).join('');
+    const ticks = [0, 1 / 3, 2 / 3, 1].map((f) => `<span${f === 1 ? ' class="tl-t4"' : ''} style="left:${f * 100}%">${dur(Xi(f) - T.run.start)}</span>`).join('')
+      + SEG.folds.map((g) => `<span class="tl-gapl" style="left:${((g.off + g.len / 2) / SEG.total * 100).toFixed(3)}%">${esc(dur(g.b - g.a))} idle</span>`).join('');
     return `<section class="tl" aria-label="Run timeline">
       <div class="tl-sum">${S.lines.map((l) => `<p>${esc(l)}</p>`).join('')}${T.criticalChange ? `<p class="dim">Highlighted: the chain that set the end of the run (${esc(T.criticalChange)}).</p>` : ''}</div>
       <div class="tl-legend">${legend}<span class="tl-lg"><i class="tl-crit-k"></i>Critical path</span></div>
@@ -186,6 +205,8 @@
 .tl-fold::before{content:'';display:inline-block;width:6px;height:6px;margin-right:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px)}
 .tl-fold[aria-expanded="false"]::before{transform:rotate(-45deg)}
 .tl-track{flex:1;position:relative;min-width:0}
+.tl-gap{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(90deg,transparent 0 3px,var(--line) 3px 4px);box-shadow:inset 1px 0 0 var(--dim),inset -1px 0 0 var(--dim);pointer-events:none;opacity:.7}
+.tl-gapl{transform:translateX(-50%);white-space:nowrap;color:var(--fg);font-weight:500}
 .tl-span{position:absolute;top:7px;height:16px;border:0;border-radius:3px;padding:0;cursor:pointer;min-width:2px}
 .tl-span:focus-visible{outline:2px solid var(--fg);outline-offset:1px}
 .tl-aggbar{position:absolute;top:9px;height:12px;background:color-mix(in srgb,var(--acc) 40%,transparent)}
@@ -196,7 +217,7 @@
 .tl-crit{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--warn)}.tl-crit-k{box-shadow:0 0 0 1.5px var(--warn) inset}
 .tl-mark{position:absolute;top:4px;bottom:4px;width:3px;margin-left:-1px;border-radius:2px;background:var(--acc)}.tl-mark.tl-bounced{background:var(--warn)}
 .tl-conc-big{display:flex;align-items:flex-end;gap:1px;padding:3px 0}
-.tl-axis{height:22px}.tl-axis span{position:absolute;top:4px;transform:translateX(-50%);font-size:11px;color:var(--dim);white-space:nowrap}.tl-axis span:first-child{transform:none}.tl-axis span:last-child{transform:translateX(-100%)}
+.tl-axis{height:22px}.tl-axis span{position:absolute;top:4px;transform:translateX(-50%);font-size:11px;color:var(--dim);white-space:nowrap}.tl-axis span:first-child{transform:none}.tl-axis span.tl-t4{transform:translateX(-100%)}.tl-axis span.tl-gapl{top:4px;transform:translateX(-50%);color:var(--fg)}
 .tl-sheet{position:sticky;bottom:8px;z-index:5;padding:12px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line),0 0 0 8px var(--bg)}
 .tl-sheet p{margin:4px 0 0;font-size:14px}.tl-sh{display:flex;align-items:center;justify-content:space-between}.tl-x{border:0;background:none;font-size:22px;width:44px;height:44px;color:var(--dim);cursor:pointer}`;
 })();

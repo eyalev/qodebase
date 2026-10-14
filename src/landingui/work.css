@@ -192,6 +192,7 @@
   .lw .ov .col2>.sec:first-child{margin-top:0}
   .lw .car{height:56px;font-size:15px;max-width:160px}.lw .car small{font-size:13px;max-width:140px}.lw .stop{min-height:92px;width:96px;font-size:14px}.lw .stop b{font-size:16px}
   .lw .drill{max-width:760px}
+  .lw .drill:has(.tl){max-width:none}   /* the run timeline needs the width (qb5's desktop critique) */
 }
 
 /* Watch a run (public) */
