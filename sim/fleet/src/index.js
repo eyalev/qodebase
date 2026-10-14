@@ -233,7 +233,7 @@ export class Run extends DurableObject {
     for (const c of ['task TEXT', 'fns TEXT', 'kind TEXT', 'grp TEXT', 'variant INT', 'text TEXT']) try { this.sql.exec(`ALTER TABLE q ADD COLUMN ${c}`); } catch {}
     this.sql.exec(`CREATE TABLE IF NOT EXISTS claim (run TEXT, file TEXT, fn TEXT, task TEXT, PRIMARY KEY (run, file, fn))`);
     // cmt: the comments this file got ({name: text}, for the per-file diff); commit: the lane commit it landed in.
-    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT', 'task TEXT', 'kind TEXT', 'grp TEXT', 'resolution TEXT', 'change_id TEXT', 'redos INT', 'base_sha TEXT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
+    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT', 'task TEXT', 'kind TEXT', 'grp TEXT', 'resolution TEXT', 'change_id TEXT', 'redos INT', 'base_sha TEXT', 'read_tier TEXT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
     // S4/qb7: the queue sampled every 10 s while a run is on (the series' depth per stage).
     this.sql.exec(`CREATE TABLE IF NOT EXISTS samp (run TEXT, t INT, waiting INT, at_model INT, ready INT, landed INT, lander_waiting INT, PRIMARY KEY (run, t))`);
     // S4a: the per-result land-wait check scanned the whole table; landed() looked files up by name.
@@ -405,6 +405,7 @@ export class Run extends DurableObject {
     (s.perMin[minute] ||= { calls: 0, usd: 0 }).usd += usd;
     s.counts.model--;
     s.counts[r.status] = (s.counts[r.status] || 0) + 1;
+    if (r.readTier) { (s.reads ||= {})[r.readTier] = (s.reads[r.readTier] || 0) + 1; }
     s.recent.push({ status: r.status, at: Date.now() }); if (s.recent.length > 200) s.recent.splice(0, s.recent.length - 200);
     // A rate limit or a model error is not the file's verdict: back in the queue, two more tries.
     if (r.status === 'rate_limited' || r.status === 'model_error' || r.status === 'read_error') {
@@ -413,8 +414,8 @@ export class Run extends DurableObject {
     }
     const cmt = r.cmt ? JSON.stringify(r.cmt).slice(0, 8000) : null;
     if (r.task && r.status !== 'ready') this.sql.exec(`DELETE FROM claim WHERE run = ? AND task = ?`, runId, r.task);
-    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n, task, kind, grp, resolution, change_id, redos, landed_at, commit_sha, base_sha) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null, r.task || null, r.kind || null, r.grp || null, r.resolution || (r.status === 'caught_early' ? 'caught_early' : r.status === 'skipped' && r.task ? 'done_before' : null), r.changeId || null, r.redos ?? null, r.landedAt || null, r.commit || null, r.baseSha || null);
+    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n, task, kind, grp, resolution, change_id, redos, landed_at, commit_sha, base_sha, read_tier) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null, r.task || null, r.kind || null, r.grp || null, r.resolution || (r.status === 'caught_early' ? 'caught_early' : r.status === 'skipped' && r.task ? 'done_before' : null), r.changeId || null, r.redos ?? null, r.landedAt || null, r.commit || null, r.baseSha || null, r.readTier || null);
     const t10 = Math.floor(Date.now() / 10000) * 10000;
     if (s.lastSample !== t10) {
       s.lastSample = t10;
@@ -541,7 +542,7 @@ export class Run extends DurableObject {
     // Every answer is in but some still wait to land: the run is not over for the person watching (scene-3 rehearsal: the
     // card said Done with half the files still landing). Shown as running, phase 'landing', until the last one lands.
     const landingLeft = s.state === 'done' && s.counts.ready > 0;
-    return { runId: s.runId, state: landingLeft ? 'running' : s.state, phase: landingLeft ? 'landing' : null, landingLeft: landingLeft ? s.counts.ready : 0, model: s.cfg.model, agents: s.cfg.agents, agentsStarted: s.agentsStarted ?? null, inFlight: s.counts.model, files: s.files, base: s.base, startedAt: s.startedAt, endedAt: landingLeft ? null : (s.endedAt || null),
+    return { runId: s.runId, state: landingLeft ? 'running' : s.state, phase: landingLeft ? 'landing' : null, landingLeft: landingLeft ? s.counts.ready : 0, model: s.cfg.model, agents: s.cfg.agents, agentsStarted: s.agentsStarted ?? null, inFlight: s.counts.model, reads: s.reads || null, files: s.files, base: s.base, startedAt: s.startedAt, endedAt: landingLeft ? null : (s.endedAt || null),
       counts: s.counts, usd: Math.round(s.usd * 10000) / 10000, budgetUsd: s.cfg.budgetUsd, calls: s.calls, lastMinute: lastMin,
       landWaitS: { p50: pct(waits, 0.5), p90: pct(waits, 0.9) }, errors: reasons, pauses: s.pauses.slice(-5), budget: await budget(this.env).check(), repo: s.cfg.repo || MAIN, root: s.cfg.root || 'src/vs', lander: await lander(this.env, s.cfg.repo || MAIN).summary() };
   }
@@ -573,7 +574,10 @@ export class Run extends DurableObject {
       return { runId: id, label: meta.label || null, ladder: meta.ladder || null, copy: meta.copy ?? null, repo: meta.repo || cur?.cfg.repo || MAIN, root: meta.root || cur?.cfg.root || 'src/vs', state: landingLeft ? 'running' : (cur?.state || 'ended'), ...(landingLeft ? { phase: 'landing', landingLeft: cur.counts.ready } : {}), agents: meta.agents ?? cur?.cfg.agents ?? null, agentsStarted: meta.agentsStarted ?? cur?.agentsStarted ?? null, files: agg.files,
         landed: by.landed || 0, ready: by.ready || 0, skipped: by.skipped || 0, verify_fail: by.verify_fail || 0, rejected: by.rejected || 0, rate_limited: by.rate_limited || 0, model_error: by.model_error || 0,
         retried: (by.rate_limited_retry || 0) + (by.model_error_retry || 0), usd: Math.round((agg.usd || 0) * 10000) / 10000, tokensIn: agg.tin, tokensOut: agg.tout,
-        startedAt: t0, endedAt: t1, wallS: Math.round((t1 - t0) / 1000), landWaitS: { p50: pct(0.5), p90: pct(0.9) }, models, perMinute };
+        startedAt: t0, endedAt: t1, wallS: Math.round((t1 - t0) / 1000), landWaitS: { p50: pct(0.5), p90: pct(0.9) }, models, perMinute,
+        // Read path (2026-10-14): how long each file's read took (ms) and which cache tier answered it.
+        readMs: (() => { const v = this.sql.exec(`SELECT t_read AS t FROM rec WHERE run = ? AND t_read IS NOT NULL ORDER BY t_read`, id).toArray().map((x) => x.t); const q = (f) => (v.length ? v[Math.min(v.length - 1, Math.floor(v.length * f))] : null); return { p50: q(0.5), p90: q(0.9), p99: q(0.99), n: v.length }; })(),
+        readTiers: Object.fromEntries(this.sql.exec(`SELECT read_tier AS k, COUNT(*) AS n FROM rec WHERE run = ? AND read_tier IS NOT NULL GROUP BY read_tier`, id).toArray().map((x) => [x.k, x.n])) };
     });
   }
 
@@ -772,8 +776,9 @@ export class Agent extends DurableObject {
       const rs = [];
       const pack = await this.ctx.storage.get('pack');
       if (n.files[0]?.task) for (const f of n.files) {
+        this._tier = null;
         const r = await this.workTask(runId, R, f, repoName).catch((e) => ({ file: f.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
-        Object.assign(r, { model: f.model, slot: f.slot, finishedAt: Date.now(), task: f.task, kind: f.kind, grp: f.grp }); rs.push(r);
+        Object.assign(r, { model: f.model, slot: f.slot, finishedAt: Date.now(), task: f.task, kind: f.kind, grp: f.grp, readTier: r.readTier || this._tier }); rs.push(r);
       }
       else if (pack && n.files[0]?.provider !== 'cache') rs.push(...(await this.workPack(n.files, repoName, pack).catch((e) => n.files.map((f) => ({ file: f.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}`, model: f.model, slot: f.slot, finishedAt: Date.now() })))));
       else for (const f of n.files) {
@@ -812,6 +817,7 @@ export class Agent extends DurableObject {
     const rd = await this.readText(repoName, f.hash);
     if (rd.error) return { file: f.path, status: 'read_error', reason: rd.error, ms: Date.now() - t0 };
     const tRead = Date.now() - t0;
+    this._tier = rd.tier;
     const hit = await this.env.FLEET_CACHE.get(f.hash, 'json');
     const c = {};
     for (const name of f.fns) if (typeof hit?.c?.[name] === 'string') c[name] = f.variant ? variantOf(hit.c[name]) : hit.c[name];
@@ -827,7 +833,7 @@ export class Agent extends DurableObject {
     let lastErr = '';
     for (const wait of [0, 250, 1000, 3000]) {
       if (wait) await new Promise((r) => setTimeout(r, wait + Math.random() * wait));
-      try { using repo = await ns(this.env, repoName).get(repoName); const b = await repo.readBlob(hash); if (b) return { text: new TextDecoder().decode(await b.arrayBuffer()) }; lastErr = 'blob not found'; }
+      try { const rb = await readBlobCached(this.env, repoName, hash); if (rb.text !== undefined) return { text: rb.text, tier: rb.tier }; lastErr = 'blob not found'; }
       catch (e) { lastErr = `artifacts: ${String(e?.message || e).slice(0, 200)}`; }
     }
     return { error: lastErr };
@@ -860,8 +866,8 @@ export class Agent extends DurableObject {
       const base = { file: f.path, model: f.model, slot: f.slot };
       if (rd.error) { out.push({ ...base, status: 'read_error', reason: rd.error, ms: Date.now() - t1, finishedAt: Date.now() }); continue; }
       const tg = targets(f.path, rd.text);
-      if (!tg.length) { out.push({ ...base, status: 'skipped', reason: 'nothing to document', ms: Date.now() - t1, tRead, finishedAt: Date.now() }); continue; }
-      cand.push({ ...f, id: `F${cand.length + 1}`, text: rd.text, tg, tRead });
+      if (!tg.length) { out.push({ ...base, status: 'skipped', reason: 'nothing to document', ms: Date.now() - t1, tRead, readTier: rd.tier, finishedAt: Date.now() }); continue; }
+      cand.push({ ...f, id: `F${cand.length + 1}`, text: rd.text, tg, tRead, readTier: rd.tier });
     }
     const byModel = new Map(); for (const c of cand) { if (!byModel.has(c.model)) byModel.set(c.model, []); byModel.get(c.model).push(c); }
     const runPack = async (p, halves) => {
@@ -881,7 +887,7 @@ export class Agent extends DurableObject {
       p.forEach((x, k) => {
         const share = x.text.length / size, c = x.carry || { usd: 0, tin: 0, tout: 0 };
         const cost = { usd: r.usd * share + c.usd, tin: Math.round(r.tin * share) + c.tin, tout: Math.round(r.tout * share) + c.tout };
-        const base = { file: x.path, model: x.model, slot: x.slot, packN: p.length, packExtra: k > 0, tRead: x.tRead, tModel, ...cost };
+        const base = { file: x.path, model: x.model, slot: x.slot, packN: p.length, packExtra: k > 0, tRead: x.tRead, readTier: x.readTier, tModel, ...cost };
         const a = ans[x.id] || {};
         if (!Object.keys(a).length) { out.push({ ...base, status: 'rejected', reason: p.length > 1 ? `no usable answer for this file in a pack of ${p.length}` : `no usable JSON in the answer: ${String(r.raw).replace(/\s+/g, ' ').slice(0, 160)}`, ms: Date.now() - t0, finishedAt: Date.now() }); return; }
         const tV = Date.now();
@@ -896,17 +902,22 @@ export class Agent extends DurableObject {
     return out;
   }
   async work(file, model, provider = 'workers-ai', repoName = MAIN) {
+    const h = {};
+    const r = await this.work1(file, model, provider, repoName, h);
+    if (r && !r.readTier && h.tier) r.readTier = h.tier;   // where the file's text came from (read cache tier)
+    return r;
+  }
+  async work1(file, model, provider, repoName, h) {
     const t0 = Date.now();
-    let text, readTries = 0, lastErr = '';
+    let text, readTries = 0, lastErr = '', readTier = null;
     // An internal error on a read is retried here with backoff (S4e: a fresh namespace's forks failed 1,454 reads in one burst).
     for (const wait of [0, 250, 1000, 3000]) {
       if (wait) await new Promise((r) => setTimeout(r, wait + Math.random() * wait));
       readTries++;
       try {
-        using repo = await ns(this.env, repoName).get(repoName);
-        const blob = await repo.readBlob(file.hash);
-        if (!blob) { lastErr = 'blob not found'; continue; }
-        text = new TextDecoder().decode(await blob.arrayBuffer());
+        const rb = await readBlobCached(this.env, repoName, file.hash);
+        if (rb.text === undefined) { lastErr = 'blob not found'; continue; }
+        text = rb.text; readTier = rb.tier; h.tier = rb.tier;
         break;
       } catch (e) { lastErr = `artifacts: ${String(e?.message || e).slice(0, 200)}`; }
     }
@@ -1347,6 +1358,28 @@ async function indexCheck(env, repoName, runId) {
 }
 
 /** An Artifacts read with backoff (internal errors under load). */
+// Content-addressed read cache (2026-10-14, the 10k/20k runs): a git blob hash names exact bytes, so a blob read once can be
+// served to every agent on every copy that holds the same file, for as long as we like. Tiers, each traced as the record's
+// read_tier and the run's reads{} counters: this isolate's memory, Cloudflare's cache in this location (caches.default;
+// may be a no-op on workers.dev), the KV namespace (global, key 'blob:<hash>'), then Artifacts (and fill the tiers above).
+const BLOB_MEM = new Map();
+const BLOB_TTL = 30 * 24 * 3600;
+const blobKey = (h) => new Request(`https://qbfleet-blob-cache.qodebase.app/blob/${h}`);
+async function readBlobCached(env, repoName, hash) {
+  if (BLOB_MEM.has(hash)) return { text: BLOB_MEM.get(hash), tier: 'mem' };
+  const remember = (t) => { BLOB_MEM.set(hash, t); if (BLOB_MEM.size > 3000) BLOB_MEM.delete(BLOB_MEM.keys().next().value); };
+  try { const hit = await caches.default.match(blobKey(hash)); if (hit) { const t = await hit.text(); remember(t); return { text: t, tier: 'edge' }; } } catch {}
+  try { const t = await env.FLEET_CACHE.get(`blob:${hash}`); if (t !== null) { remember(t); caches.default.put(blobKey(hash), new Response(t, { headers: { 'cache-control': `public, max-age=${BLOB_TTL}` } })).catch(() => {}); return { text: t, tier: 'kv' }; } } catch {}
+  using repo = await ns(env, repoName).get(repoName);
+  const b = await repo.readBlob(hash);
+  if (!b) return { tier: 'artifacts' };
+  const t = new TextDecoder().decode(await b.arrayBuffer());
+  remember(t);
+  caches.default.put(blobKey(hash), new Response(t, { headers: { 'cache-control': `public, max-age=${BLOB_TTL}` } })).catch(() => {});
+  if (t.length < 2_000_000) env.FLEET_CACHE.put(`blob:${hash}`, t, { expirationTtl: BLOB_TTL }).catch(() => {});
+  return { text: t, tier: 'artifacts' };
+}
+
 async function retry(fn, waits = [0, 300, 1000, 3000]) {
   let last;
   for (const w of waits) { if (w) await new Promise((r) => setTimeout(r, w + Math.random() * w)); try { return await fn(); } catch (e) { last = e; } }
