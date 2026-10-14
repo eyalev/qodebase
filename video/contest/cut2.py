@@ -240,7 +240,7 @@ def script(c):
     c.vslide('qodebase lands each change by its intent', sub='Phone-first, and on desktop too, on Cloudflare', say="qodebase lands each change by what it was asked to do, on the newest code. You run it from a phone or a desktop, and it is built on Cloudflare.")
     c.vslide('What we proved', nums=PROVED, say="We proved it at three scales: ten thousand agents on Cloudflare, two hundred agents on real code with nothing lost in landing, and real Claude teams of up to forty agents building an app.")
     c.chapter('The idea: land by intent')
-    c.deck(4, say="Before building anything, we measured. Hono is an open-source web framework. We replayed a hundred of its last three hundred and forty-six real pull requests as if they were written at the same moment, as a hundred agents would. Forty-eight percent could not land until another one landed first, and git saw no conflicts at all. In real life each author waited for the others; agents don't.")
+    c.deck(4, say="A hint from real history. Hono is an open-source web framework. Replaying a hundred of its real pull requests as if they were written at the same moment, almost half needed another one to land first. People write pull requests one after another; agents in parallel can't see each other's unlanded work. So dependent work must wait, be stacked, or be redone after it lands.")
     for n in (5, 6): c.deck(n)
     c.chapter('A team build, all by voice')
     for t in TAKES2: c.take(t, json.load(open(os.path.join(t, 'segs.json'))))
