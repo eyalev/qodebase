@@ -489,7 +489,7 @@
     const r = (D.fleet || []).find((x) => x.repo === repo && x.runId === id);
     if (!r && pendingFor(repo, id)) return startingCard(PENDING);
     if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
-    if (PENDING && PENDING.runId === id) { log('fleet_listed', { runId: id, ms: Date.now() - PENDING.at }); PENDING = null; }
+    if (PENDING && PENDING.runId === id && PENDING.repo === repo) { log('fleet_listed', { runId: id, ms: Date.now() - PENDING.at }); PENDING = null; }
     const ix = IX[key(r)];
     const ixLine = ix && !ix.error && ix.expected != null && ix.lines > 0 ? `<p class="rc-ix${ix.wasLive ? '' : ix.lines === ix.expected && ix.sorted && !ix.missing && !ix.twice ? ' ok' : ' bad'}"><b>API index (docs/API.md, one line per exported function, written by this job)${ix.wasLive ? ', so far' : ''}:</b> ${n0(ix.lines)} of ${n0(ix.expected)} lines, ${ix.sorted ? 'sorted' : 'not sorted'}, ${ix.missing ? `${n0(ix.missing)} missing` : 'none missing'}, ${ix.twice ? `${n0(ix.twice)} twice` : 'none twice'}.</p>` : '';
     return `<p class="crumb"><a href="#/">All runs</a></p>${card(r, true)}${ixLine}<section class="rsec"><h2>Timeline</h2>${timeline(r, TL[key(r)], DR && DR.k === key(r) ? DR : null)}${drillPanel(r)}</section>`;
