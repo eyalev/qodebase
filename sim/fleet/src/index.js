@@ -54,6 +54,35 @@ export default {
       // VS Code is too big for Artifacts' import ('upstream unavailable'): an empty repo, then the laptop pushes src/vs.
       // S4: more copies server-side: an Artifacts fork of a never-touched seed copy (seconds; pushing from the laptop took ~1 min
       // a copy). {repo, from}. A fresh repo can be invisible to an immediate read: callers retry reads.
+      // Unique copies (2026-10-14, the realistic 10k case): every listed file gets a first line naming the copy, so no two
+      // copies share a blob and the read cache only helps repeat reads within a copy. One chunk per call {repo, root, offset,
+      // n}: the caller loops until done. Agents strip the line to find the file's cached answer (answerHash).
+      case '/uniquify': {
+        if (!REPO_RE.test(repo)) return json({ error: 'repo: fleet-<name>' }, 400);
+        const root = String(body.root || 'src/vs'), off = Math.max(0, Number(body.offset) || 0), n = Math.min(800, Math.max(1, Number(body.n) || 400));
+        // The listing once per copy (each walk is ~800 Artifacts tree reads): later chunks read it from KV.
+        const lk = `ulist:${repo}:${root}`;
+        let files = off ? await env.FLEET_CACHE.get(lk, 'json') : null;
+        if (!files) { files = (await listFiles(env, repo, root)).files.sort((a, b) => (a.path < b.path ? -1 : 1)); await env.FLEET_CACHE.put(lk, JSON.stringify(files), { expirationTtl: 86400 }); }
+        const slice = files.slice(off, off + n);
+        if (!slice.length) return json({ done: true, total: files.length });
+        using r = await ns(env, repo).get(repo);
+        const tip = (await r.log({ limit: 1 }))[0];
+        const objs = new Objects(), marker = `${COPY_MARK}${repo}\n`;
+        const out = [];
+        for (const f of slice) {
+          const rb = await readBlobCached(env, repo, f.hash);
+          if (rb.text === undefined || rb.text.startsWith(COPY_MARK)) continue;
+          out.push({ path: f.path, sha: objs.blob(marker + rb.text) });
+        }
+        if (!out.length) return json({ done: off + n >= files.length, next: off + n, total: files.length, changed: 0 });
+        const tree = await overlay(r, objs, tip.treeHash, out);
+        const c = objs.commit(tree, [tip.hash], `fleet: unique copy (first line names ${repo}), files ${off}-${off + slice.length}`, Date.now(), 'qodebase fleet <fleet@qodebase.app>');
+        const tok = (await r.createToken('write', 600)).plaintext;
+        const pr = await push({ remote: remoteOf(repo), token: tok, branch: 'main', oldSha: tip.hash, newSha: c, objs: [...objs.map.values()] });
+        if (!pr.ok) return json({ error: `push: HTTP ${pr.status} ${String(pr.detail || '').slice(0, 200)}` }, 502);
+        return json({ done: off + n >= files.length, next: off + n, total: files.length, changed: out.length, commit: c });
+      }
       case '/fork': {
         if (!REPO_RE.test(String(body.from || ''))) return json({ error: 'from: fleet-<name>' }, 400);
         const t0 = Date.now();
@@ -737,7 +766,7 @@ async function listFiles(env, repoName = MAIN, root = 'src/vs') {
   let h = tip.treeHash;
   for (const part of root.split('/')) { const e = (await r.readTree(h)).find((x) => x.name === part && x.type === 'tree'); if (!e) throw new Error(`no ${root}/ in ${repoName}`); h = e.hash; }
   const walk = async (hash, prefix) => {
-    for (const e of await r.readTree(hash)) {
+    for (const e of await readTreeCached(env, r, hash)) {
       const p = `${prefix}/${e.name}`;
       if (e.type === 'tree') { if (!SKIP_DIRS.has(e.name)) await walk(e.hash, p); }
       else if (e.type === 'blob' && /\.m?ts$/.test(p) && !/\.d\.m?ts$|[._](test|spec)\.m?ts$/.test(p)) out.push({ path: p, hash: e.hash });
@@ -818,7 +847,7 @@ export class Agent extends DurableObject {
     if (rd.error) return { file: f.path, status: 'read_error', reason: rd.error, ms: Date.now() - t0 };
     const tRead = Date.now() - t0;
     this._tier = rd.tier;
-    const hit = await this.env.FLEET_CACHE.get(f.hash, 'json');
+    const hit = await this.env.FLEET_CACHE.get(await answerHash(rd.text, f.hash), 'json');
     const c = {};
     for (const name of f.fns) if (typeof hit?.c?.[name] === 'string') c[name] = f.variant ? variantOf(hit.c[name]) : hit.c[name];
     const tg = targets(f.path, rd.text).filter((t) => f.fns.includes(t.name) && c[t.name]);
@@ -927,7 +956,7 @@ export class Agent extends DurableObject {
     const tg = targets(file.path, text);
     if (!tg.length) return { file: file.path, status: 'skipped', reason: 'nothing to document', ms: Date.now() - t0, tRead };
     if (provider === 'cache') {
-      const hit = await this.env.FLEET_CACHE.get(file.hash, 'json');
+      const hit = await this.env.FLEET_CACHE.get(await answerHash(text, file.hash), 'json');
       if (!hit) return { file: file.path, status: 'cache_miss', reason: 'no cached answer for this content', ms: Date.now() - t0, tRead };
       const tV = Date.now();
       const { text: next, inserted } = insert(text, tg, hit.c || {});
@@ -1362,6 +1391,23 @@ async function indexCheck(env, repoName, runId) {
 // served to every agent on every copy that holds the same file, for as long as we like. Tiers, each traced as the record's
 // read_tier and the run's reads{} counters: this isolate's memory, Cloudflare's cache in this location (caches.default;
 // may be a no-op on workers.dev), the KV namespace (global, key 'blob:<hash>'), then Artifacts (and fill the tiers above).
+const COPY_MARK = '// qodebase fleet copy: ';
+/** The cached answer's key for a file: its git blob hash, or (a unique copy) the hash of the file without its copy line. */
+async function answerHash(text, hash) {
+  if (!text.startsWith(COPY_MARK)) return hash;
+  const body = new TextEncoder().encode(text.slice(text.indexOf('\n') + 1));
+  const head = new TextEncoder().encode(`blob ${body.length}\0`);
+  const all = new Uint8Array(head.length + body.length); all.set(head); all.set(body, head.length);
+  return [...new Uint8Array(await crypto.subtle.digest('SHA-1', all))].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+/** A git tree by its hash (immutable): KV 'tree:<hash>', else Artifacts (and kept). Read path of listFiles. */
+async function readTreeCached(env, r, hash) {
+  try { const t = await env.FLEET_CACHE.get(`tree:${hash}`, 'json'); if (t) return t; } catch {}
+  const t = await r.readTree(hash);
+  const slim = t.map((e) => ({ name: e.name, type: e.type, hash: e.hash, mode: e.mode }));
+  env.FLEET_CACHE.put(`tree:${hash}`, JSON.stringify(slim), { expirationTtl: 30 * 24 * 3600 }).catch(() => {});
+  return slim;
+}
 const BLOB_MEM = new Map();
 const BLOB_TTL = 30 * 24 * 3600;
 const blobKey = (h) => new Request(`https://qbfleet-blob-cache.qodebase.app/blob/${h}`);
