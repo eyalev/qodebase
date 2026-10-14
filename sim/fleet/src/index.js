@@ -318,7 +318,7 @@ export class Run extends DurableObject {
     const p = { base };
     const off = Math.max(0, Number(cfg.offset) || 0);   // the next slice of the (stable) file list
     let pick = files.slice(off, off + Math.max(1, Math.min(files.length, Number(cfg.maxFiles) || 10)));
-    const runId = `f${Date.now().toString(36)}`;
+    const runId = `f${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;   // + random: copies started in the same ms got the same id (qb4, 2026-10-14)
     if (cfg.kata) {
       const list = (cfg.kata.tasks || []).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       list.forEach((t, i) => this.sql.exec(`INSERT INTO q (run, i, path, hash, task, fns, kind, grp, text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, runId, i, t.file, '', t.id, JSON.stringify([t.fn]), t.kind, t.group || null, t.text));
