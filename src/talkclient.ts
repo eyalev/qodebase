@@ -865,6 +865,23 @@ function submit(text) {
   if (convSaid(text)) return;   // Conversations (hidden setting): "new conversation", the turn, project chips
   // A short yes / no answers the question on screen (Stop this run? Send it to the agents?): no model.
   var said = String(text || '').trim(), short = said.split(/\s+/).length <= 5;
+  // 'switch to dark mode': a theme toggle on the page if there is one, else say how (manager, 2026-10-14).
+  var dm = /^\s*(please\s+)?((switch|change|turn)\s+(to|on)\s+(the\s+)?(dark|light)( mode| theme)?|(dark|light) (mode|theme)( please)?)\s*[.!]*\s*$/i.exec(said);
+  if (dm) {
+    add('you', said);
+    var dark = /dark/i.test(said), tog = [].filter.call(document.querySelectorAll('button, [role=switch], input[type=checkbox]'), function (e) { return !e.closest('#talk-root') && e.getClientRects().length && /dark|theme|light mode|appearance/i.test((e.getAttribute('aria-label') || '') + ' ' + (e.innerText || '') + ' ' + (e.title || '')); })[0];
+    if (tog) { tog.click(); add('app', 'Pressed \u201c' + String(tog.getAttribute('aria-label') || tog.innerText).trim() + '\u201d.'); trace('act', { op: 'press', label: 'theme toggle' }); return finish(); }
+    var ml = 'qodebase follows your phone\u2019s ' + (dark ? 'dark' : 'light') + ' mode setting, so there\u2019s no switch here. To add a ' + (dark ? 'dark' : 'light') + ' mode to an app, say \u201cadd a ' + (dark ? 'dark' : 'light') + ' mode to the app\u201d on its page.';
+    add('ai', ml); if (lastSpoken) say(ml); trace('theme', { has_toggle: false }); return finish();
+  }
+  // 'show the index check' on /runs: the API index line on a run's card, read out (qb3's scene 3e).
+  if (/^\/runs/.test(location.pathname) && /\b(index check|api index|the index)\b/i.test(said) && /\b(show|open|read|what|how)\b/i.test(said)) {
+    var ix = [].filter.call(document.querySelectorAll('.rc-ix'), function (e) { return e.getClientRects().length; })[0];
+    add('you', said);
+    if (ix) { ix.scrollIntoView({ block: 'center', behavior: 'smooth' }); unmark(); mark(ix); var it = ix.innerText.replace(/\s+/g, ' ').trim(); add('ai', it); if (lastSpoken) say(it); trace('act', { op: 'show', label: 'index check' }); }
+    else { var nx = 'This run has no API index check yet: it shows on a run that writes docs/API.md.'; add('ai', nx); if (lastSpoken) say(nx); }
+    return finish();
+  }
   // Talk's own settings by voice (qb7's e2e: no route to them): spoken replies, conversation mode.
   var setv = /^\s*(please\s+)?(turn|switch)\s+(off|on)\s+(the\s+)?(spoken replies|voice replies|replies out loud|speaking|talking back|voice)\s*[.!]*\s*$|^\s*(mute|unmute)( talk| replies| yourself)?\s*[.!]*\s*$|^\s*(stop|start) (talking|speaking)( out loud)?\s*[.!]*\s*$/i.exec(said);
   if (setv) {
@@ -1139,7 +1156,7 @@ function ideaFlow(size, targetId) {
 var CONFIRM_RX = /^(stop|pause|resume|merge|build it|build|send back|start|watch a run|run for real|replay|replace|connect my plan|save the key|shot|fork|import)\b/i;
 var DESTROY_RX = /^(remove|delete|revoke|sign out|log out|uninstall|disconnect|make (it )?(private|public)|clear)\b/i;
 // The whole sentence is the answer ('go back' is a new turn, not a yes: qb7's e2e, 2026-10-13).
-var YES_RX = /^\s*(yes|yeah|yep|yup|sure|ok(ay)?|do it|go( ahead)?|please( do)?|confirm|send( it)?|fork( it)?|stop it|go for it|open( it)?|build( it)?|yes,? (please|do it|go ahead|open it|send it))\s*(please|then|now)?[.!]*\s*$/i;
+var YES_RX = /^\s*(yes|yeah|yep|yup|sure|ok(ay)?|do it|go( ahead)?|please( do)?|confirm|send( it)?|fork( it)?|stop it|go for it|open( it)?|build( it)?|start( it| building| the run| the job)?|yes,? (please|do it|go ahead|open it|send it|start( it| building)?|build it)|go ahead and (start|build)( it)?)\s*(please|then|now)?[.!]*\s*$/i;
 var NO_RX = /^\s*(no|nope|nah|cancel|don'?t|never ?mind|not now|leave it|no,? thanks?|no thank you)\s*(then|now)?[.!]*\s*$/i;
 function gateOf(c) {
   if (['press', 'go', 'type'].indexOf(c.op) < 0) return (c.risky || 0) >= 0.5 && ['status', 'list', 'code', 'none', 'latest', 'idea', 'which'].indexOf(c.op) < 0 ? 'refuse' : null;
@@ -1445,6 +1462,18 @@ function pageAction(c) {
   if (said !== (lastText || c.text || '')) trace('number_words', { from: lastText, to: said });
   Promise.resolve().then(function () { return a.run(said); }).then(function (r) {
     logEv('page_action', { id: c.target, ms: Date.now() - t0, ok: r !== false });
+    // The fleet form filled by voice: ask out loud with the size and the hard cap; a spoken yes presses its Start
+    // (manager, 2026-10-14: everything by voice, a safety question first; silence or 'no' never starts).
+    var go = c.target === 'xfleet-job' && r !== false && document.getElementById('nj-go');
+    if (go && go.getClientRects().length) {
+      var cap = (document.querySelector('#nj input[name=budget], #nj-budget, input[aria-label^="Budget"]') || {}).value;
+      var copy = ((document.getElementById('nj-copy') || {}).selectedOptions || [])[0];
+      var est = (document.querySelector('#nj .nj-est, #nj-est') || {}).innerText || '';
+      var q = String(go.innerText || 'Start').trim().replace(/^Start/, 'This will start') + (copy ? ' on ' + String(copy.textContent).replace(/\s*\(.*$/, '') : '') + (est ? ', ' + est.replace(/\s+/g, ' ').trim().replace(/\.$/, '') : '') + (cap ? '. It stops at the $' + cap + ' budget' : '') + '. Start?';
+      add('ai', q); trace('fleet_confirm', { q: q });
+      offerOn(q, function () { add('app', 'Pressed \u201c' + String(go.innerText).trim() + '\u201d.'); trace('act', { op: 'press', label: go.innerText, confirmed: true }); go.click(); }, 'Start');
+      return done();
+    }
     add('app', typeof r === 'string' ? r : r === false ? 'That did not work here.' : 'Done: ' + a.text + '.');
     done();
   }).catch(function (e) { logEv('page_action', { id: c.target, err: String(e) }); add('note', 'That did not work: ' + String(e && e.message || e)); done(); });
@@ -1834,7 +1863,29 @@ function finish() {
   r.resolve({ ok: r.ok !== false, text: r.texts.join(' ') || 'Done.', data: { mode: r.mode || null, action: r.action || null } });
 }
 // Navigating away: answer the call first, then leave (a result sent after unload is lost).
-function leave(go) { if (run) { finish(); setTimeout(go, 80); } else go(); }
+function leave(go) { if (convOn() && lastSpoken) sset('convresume', Date.now()); if (run) { finish(); setTimeout(go, 80); } else go(); }
+// Home's 'Build it' (pressed by Talk or by hand) opens the brief: keep its estimate, so the brief can ask out loud
+// 'This will start …, about … and …. Start?' before 'Start building' (manager, 2026-10-14). Talk's own press is untrusted.
+document.addEventListener('click', function (e) {
+  var t = e.target && e.target.closest && e.target.closest('button');
+  if (!t || t.closest('#talk-root') || location.pathname !== '/' || !/^build it$/i.test(String(t.innerText || '').trim())) return;
+  var box = document.getElementById('bsopen'), ln = box ? String(box.innerText || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean) : [];
+  var team = (ln[0] || '').replace(/^[^:]*:\s*/, ''), tc = ln[1] || '', time = (tc.match(/[\d.]+\s*(to|-)\s*[\d.]+\s*min/) || [''])[0], cost = (tc.match(/\$[\d.,]+\s*(to|-)\s*\$[\d.,]+/) || [''])[0];
+  sset('est', { team: team, time: time, cost: cost, voice: !e.isTrusted || lastSpoken, at: Date.now() });
+}, true);
+function briefQuestion() {
+  var est = sget('est', null);
+  if (location.pathname !== '/build' || !est || !est.voice || Date.now() - est.at > 5 * 60000) return;
+  sset('est', null);
+  var tries = 0;
+  (function ask1() {
+    var go = document.getElementById('go');
+    if (!go || !go.getClientRects().length) { if (++tries < 30) setTimeout(ask1, 300); return; }
+    var q = 'This will start ' + (est.team || 'the agents') + (est.time ? ', about ' + est.time.replace(/min$/, 'minutes') : '') + (est.cost ? ' and ' + est.cost : '') + '. Start?';
+    lastSpoken = true; add('ai', q); trace('build_confirm', { q: q });
+    offerOn(q, function () { add('app', 'Pressed \u201cStart building\u201d.'); trace('act', { op: 'press', label: 'Start building', confirmed: true }); go.click(); }, 'Start');
+  })();
+}
 
 var PAGES = { home: '/', explore: '/explore', yours: '/mine', inbox: '/inbox', build: '/build', import: '/import', settings: '/settings', command_line: '/cli', personal_agents: '/personal-agents', own_copy: '/own', about: '/about' };
 var PAGE_WORDS = { home: 'home', explore: 'Explore', yours: 'your projects', inbox: 'Inbox', build: 'Build', import: 'Import from GitHub', settings: 'Settings', command_line: 'the command line page', personal_agents: 'your own AI assistant', own_copy: 'get your own qodebase', about: 'About' };
@@ -2479,6 +2530,10 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   if (last && last.who === 'app' && /^Opening /.test(last.text)) { hist[hist.length - 1] = { who: 'app', text: last.text.replace(/^Opening (.*)…$/, 'Opened $1.') }; sset('log', hist); render(); }
   var p = sget('pending', null);
   if (p) { sset('pending', null); setTimeout(function () { ask(p.text, p.did); }, 300); }
+  briefQuestion();
+  // Conversation mode carries over a page Talk opened: listen again here once the page has spoken (hands-free across pages).
+  var cr = sget('convresume', 0);
+  if (cr && convOn() && Date.now() - cr < 60000) { sset('convresume', 0); lastSpoken = true; setTimeout(function () { trace('conv_resume', {}); convAfter(); }, 1500); }
   // Said on another page for an action that lives here (a fleet job on /runs): say it again once the page has drawn its actions.
   var th = sget('then', null);
   if (th && Date.now() - th.at < 60000) {

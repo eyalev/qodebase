@@ -306,6 +306,40 @@ export function resolve(answers: Record<string, Ans>, cands: string[], s: Screen
   // actions (x…: a timeline moment, an intent), which answer questions themselves.
   if ((cmd.op === 'type' || cmd.op === 'press') && !/^x/.test(String(cmd.target || '')) && /^\s*(please\s+)?(give me|suggest|tell me|what('s| is| are| was)|explain|describe|recommend|can you (tell|suggest|give|recommend)|any (ideas|suggestions))\b/i.test(utterance) && !/\b(type|write|enter|fill|press|tap|click|put)\b/i.test(utterance))
     return { ...cmd, mode: 'ask', op: 'none', why: `${cmd.why || ''}; a request for content goes to the answering model` };
+  // Everything by voice for the video (manager + qb3, 2026-10-14). The page's own tabs by name ('show me the app' went
+  // to a similarly named project's app): App, Code, Changes, Agents at work, More, All asks.
+  const tabm = /^\s*(please\s+)?(show( me)?|open|go to|take me to|switch to)\s+(the\s+)?(app|code|changes|asks|agents at work|more)( tab| page)?\s*[.!]*\s*$/i.exec(utterance);
+  if (tabm) {
+    const want = tabm[5].toLowerCase();
+    const tab = s.items.find((i) => i.kind === 'link' && (i.text.toLowerCase() === want || (want === 'asks' && /^all asks$/i.test(i.text))) && /^\/p\//.test(i.href || ''));
+    if (tab) return { ...cmd, mode: 'act', op: 'go', href: tab.href, label: tab.text, target: tab.id, p: 0.9, why: 'the page\'s own tab by name (word rule)' };
+  }
+  // 'open the dark mode change' on the work page: the change links (#/change/…) by their words; 'that change (record)'
+  // with no words of its own = the newest one listed. Never another project with a similar name.
+  if (/\b(open|show( me)?|go to)\b.*\bchanges?\b/i.test(utterance) && !/\ball (the )?changes\b/i.test(utterance)) {
+    const changes = s.items.filter((i) => i.kind === 'link' && /#\/change\//.test(i.href || ''));
+    if (changes.length) {
+      const SYN: Record<string, string> = { mode: 'theme', theme: 'mode', colour: 'color', color: 'colour', night: 'dark' };
+      const STOP = /^(open|show|me|the|that|this|a|an|change|changes|record|please|go|to|of|for|its|it|on|in|new)$/;
+      const words = utterance.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/).filter((w) => w && !STOP.test(w));
+      const score = (t: string) => { const tw = t.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/); return words.filter((w) => tw.includes(w) || (SYN[w] && tw.includes(SYN[w]))).length; };
+      const best = changes.map((c) => ({ c, n: score(c.text) })).sort((x, y) => y.n - x.n)[0];
+      if (best && best.n > 0) return { ...cmd, mode: 'act', op: 'go', href: best.c.href, label: best.c.text, target: best.c.id, p: 0.9, why: 'a change on this page by its words (word rule)' };
+      if (!words.length) return { ...cmd, mode: 'act', op: 'go', href: changes[0].href, label: changes[0].text, target: changes[0].id, p: 0.8, why: 'the newest change listed (word rule)' };
+    }
+  }
+  // 'call it home things 2' / 'name it …' on the brief: the Project name box (qb3's scene 2).
+  const nm = /^\s*(please\s+)?(call it|name it|rename it( to)?|name the project|call the project|the name is)\s+(.{2,60}?)\s*[.!]*\s*$/i.exec(utterance);
+  const nameBox = s.items.find((i) => i.kind === 'field' && /project name|^name\b/i.test(i.text));
+  if (nm && nameBox) return { ...cmd, mode: 'act', op: 'type', target: nameBox.id, label: nameBox.text, text: nm[4].trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''), p: 0.9, why: 'the project name (word rule)' };
+  // On a project's page a change request goes to THIS project unless another project is named by its words
+  // ('switch to dark mode' on corner-cafe went to cafe-crew).
+  const here = currentSlug(s.path);
+  if (here && cmd.op === 'change' && cmd.slug && cmd.slug !== here) {
+    const other = projects.find((p) => p.slug === cmd.slug);
+    const named = other && other.name.toLowerCase().split(/[-_\s]+/).filter((w) => w.length >= 4).some((w) => utterance.toLowerCase().includes(w));
+    if (!named) { const cur = projects.find((p) => p.slug === here); return { ...cmd, slug: here, label: cur ? projLabel(cur, 'changes') : cmd.label, href: cur ? projectHref(cur, 'changes') : cmd.href, why: `${cmd.why || ''}; this page's project (no other named)` }; }
+  }
   // On a run's page: 'show me minute 1' / 'at 1:20' is the timeline's moment action, 'back to all runs' the run list
   // (qb7's e2e: the model scrolled to Timeline at p 0.65, and offered 'go back' at p 0.44).
   if (/^\/runs/.test(s.path)) {
