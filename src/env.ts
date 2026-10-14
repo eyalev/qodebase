@@ -37,6 +37,7 @@ export interface Env {
   ARTIFACTS: Artifacts;
   /** Attached images (src/attach.ts); absent on a self-hosted copy without the bucket. */
   ATTACH?: R2Bucket;
+  VIDEO?: R2Bucket;   // qodebase.app/video: the latest cut of the qodebase video (src/video.ts)
   /** Browser Rendering (screenshots, src/screenshot.ts). */
   BROWSER?: Fetcher;
   ACCESS_TEAM_DOMAIN: string;

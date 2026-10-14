@@ -95,7 +95,7 @@
   ],
   "artifacts": [{ "binding": "ARTIFACTS", "namespace": "forq" }],
   // Images the person attaches to a request (src/attach.ts); lifecycle rule expire-30d deletes them after 30 days.
-  "r2_buckets": [{ "binding": "ATTACH", "bucket_name": "qodebase-attachments" }],
+  "r2_buckets": [{ "binding": "ATTACH", "bucket_name": "qodebase-attachments" }, { "binding": "VIDEO", "bucket_name": "qodebase-video" }],
   // Artifacts events: pushes to project mains + project repo lifecycle (src/events.ts). Queues bills 3 ops per message.
   "queues": { "consumers": [{ "queue": "forq-artifacts-events", "max_batch_size": 25, "max_batch_timeout": 2, "max_retries": 3 }] },
   // Cloudflare Browser Rendering: App view screenshots (src/screenshot.ts); 10 browser-hours/month included, then $0.09/h.

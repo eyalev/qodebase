@@ -54,6 +54,7 @@ import MA_REV from '../box/mobile-agent.rev';
 export { AgentBox, Project, Registry, BuildBox, Installs, TalkLog, Ledger, TalkVoice };
 import { landingRoute } from './landing/routes';
 import { contractAnswer } from './contract';
+import { videoRoute } from './video';
 import { projectTree, fleetTree, parseRecords, answer as intentsAnswer, memoTree } from './intents';
 import * as landingHooks from './landing/hooks';
 import { landingOn } from './landing/hooks';
@@ -450,6 +451,8 @@ const app = {
         const u = em ? await userByEmail(env, em) : null;
         return html(withGlobal(aboutPage(!!env.SELF_HOST), 'home', 0, u?.handle || '', 'd'));
       }
+      // The video page (src/video.ts): unlisted, before the crawler gate so link previews (WhatsApp, X) can read it.
+      if (url.pathname === '/video' || url.pathname.startsWith('/video/')) { const r = await videoRoute(request, env, url); if (r) return r; }
       if (url.pathname === '/how' || url.pathname === '/how/') {
         // How qodebase works (qb3, 2026-10-12): the demo, land by intent, the board, the numbers; home stays the product.
         const em = await sessionEmail(env, request);
