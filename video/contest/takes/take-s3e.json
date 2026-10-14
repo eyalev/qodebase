@@ -1,10 +1,44 @@
 [
- {"a": 9700, "b": 21000, "quote": "Document every exported function in Visual Studio Code and add each one to the API index, with a thousand agents."},
- {"a": 21000, "b": 57000, "x": 2, "say": "Talk opens the Runs page and fills in the job: the copy of VS Code, the folder, doc comments plus a line in the API index, a thousand agents, a five-dollar cap, and the estimate."},
- {"a": 57000, "b": 61000, "cap": "Start 1,000 agents."},
- {"a": 61000, "b": 221000, "x": 4, "say": "A thousand agents start, each on its own files, on Workers AI with Gemini as overflow. When the answers are in, the last files land on main."},
- {"a": 221000, "b": 229000, "say": "Done: 2,840 files landed in about two minutes, for two dollars and twenty-six cents."},
- {"a": 237311, "b": 251000, "say": "Every agent also wrote one line in one shared index file, so they collided all the time: 2,699 collisions, every one redone on the newest code."},
- {"a": 287795, "b": 301000, "say": "With a thousand agents you browse intents, not agents: the job, its folders, and what did not land, first."},
- {"a": 315000, "b": 322000, "cap": "Each file is one agent's intent, with its state on main."}
+ {
+  "a": 9700,
+  "b": 21000,
+  "quote": "Document every exported function in Visual Studio Code and add each one to the API index, with a thousand agents."
+ },
+ {
+  "a": 21000,
+  "b": 57000,
+  "x": 2,
+  "say": "Talk opens the Runs page and fills in the job: the copy of VS Code, the folder, doc comments plus a line in the API index, a thousand agents, a five-dollar cap, and the estimate."
+ },
+ {
+  "a": 57000,
+  "b": 61000,
+  "cap": "Start 1,000 agents."
+ },
+ {
+  "a": 61000,
+  "b": 221000,
+  "x": 4,
+  "say": "A thousand agents start, each on its own files, on Workers AI with Gemini as overflow. When the answers are in, the last files land on main."
+ },
+ {
+  "a": 221000,
+  "b": 229000,
+  "say": "Done: 2,840 files landed in about two minutes, for two dollars and twenty-six cents."
+ },
+ {
+  "a": 237311,
+  "b": 251000,
+  "say": "Every agent also wrote one line in one shared index file, so they collided all the time, thousands of times, and every collision was redone on the newest code."
+ },
+ {
+  "a": 287795,
+  "b": 301000,
+  "say": "With a thousand agents you browse intents, not agents: the job, its folders, and what did not land, first."
+ },
+ {
+  "a": 315000,
+  "b": 322000,
+  "cap": "Each file is one agent's intent, with its state on main."
+ }
 ]

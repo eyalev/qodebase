@@ -151,6 +151,8 @@ def script(c):
     c.chapter('A thousand agents, by voice')
     T3 = os.path.join(V, os.environ.get('TAKE3', 'take-s3e'))
     c.take(T3, json.load(open(os.path.join(T3, 'segs.json'))))
+    T3b = os.path.join(V, 'take-s3f')   # the index card's final check (a pickup after faf32ef)
+    c.take(T3b, json.load(open(os.path.join(T3b, 'segs.json'))))
     c.chapter('Built on Cloudflare')
     c.deck(26)
     c.chapter('')
