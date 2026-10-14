@@ -1167,7 +1167,8 @@ function toggleConv(where) {
   if (convBtn) convBtn.setAttribute('aria-pressed', convOn() ? 'true' : 'false');
   var scm = document.getElementById('talk-s-convmode'); if (scm) scm.value = S.convmode;
   trace('conv_mode', { on: convOn(), where: where });
-  if (convOn()) { if (S.voice === 'off') { S.voice = get('voice-on', 'aura-2'); set('voice', S.voice); voiceBtn(); } if (!listening && !busy) startListen(); }
+  if (convOn()) { lastSpoken = true;   // hands-free is a spoken conversation from the first turn (a quiet first window stopped it listening)
+    if (S.voice === 'off') { S.voice = get('voice-on', 'aura-2'); set('voice', S.voice); voiceBtn(); } if (!listening && !busy) startListen(); }
   else if (listening) stopListen(false, false);
   barSync();
 }
@@ -2214,7 +2215,7 @@ function dcWarm(cb) {
 // The whole clip, recorded on the phone from the tap (like tmux-web): Deepgram's live words can miss
 // the start (the call takes ~0.8 s to begin) and mishear names; Whisper reads the clip at the end and
 // its text replaces the live words.
-var clip = null, clipChunks = [], clipStream = null, clipT0 = 0, warmP = null;
+var clip = null, clipChunks = [], clipStream = null, clipT0 = 0, warmP = null, recGen = 0;
 function micOpts() { return { audio: { echoCancellation: true, noiseSuppression: true } }; }
 // "Microphone: ready while Talk is open": the stream is opened when Talk opens (only if the mic was
 // already allowed, so no permission prompt pops up) and kept until Talk closes, so a tap records at once.
@@ -2236,14 +2237,17 @@ function warmIdle() { clearTimeout(warmTimer); warmTimer = setTimeout(function (
 function releaseMic(why) { if (clipStream && !clip) { clipStream.getTracks().forEach(function (x) { x.stop(); }); clipStream = null; trace('mic_release', { why: why || '' }); } }
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && !listening) releaseMic('hidden'); });
 function clipStart(ready) {
-  clipChunks = []; clipT0 = Date.now();
+  // Each recording keeps its own chunks, and only the newest one feeds the live socket: a stopped recorder's last
+  // chunk (no WebM header) arriving after the next one started was the new clip's first bytes, so nova-3 heard nothing
+  // and Whisper could not read it (qb3's collapsed take: 'I did not hear anything' after a quiet 15 s window).
+  var gen = ++recGen, mine = []; clipChunks = mine; clipT0 = Date.now();
   if (!navigator.mediaDevices || !window.MediaRecorder) return ready && ready();
   var begin = function (st) {
     if (!listening) { if (S.keep !== 'open') st.getTracks().forEach(function (x) { x.stop(); }); return; }
     clipStream = st;
     var type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].filter(function (x) { return MediaRecorder.isTypeSupported(x); })[0] || '';
     clip = new MediaRecorder(st, type ? { mimeType: type } : {});
-    clip.ondataavailable = function (e) { if (e.data && e.data.size) { clipChunks.push(e.data); liveChunk(e.data); } };
+    clip.ondataavailable = function (e) { if (!e.data || !e.data.size) return; mine.push(e.data); if (gen === recGen) liveChunk(e.data); else trace('rec_late_chunk', { bytes: e.data.size }); };
     clip.start(250);
     vadStart(st);
     trace('rec_start', { ms: Date.now() - clipT0, warm: !!warmUsed });
@@ -2263,11 +2267,11 @@ function keepClip(blob, m) {
     .catch(function (e) { trace('clip_error', { err: String(e) }); });
 }
 function clipStop(cb) {
-  var r = clip, st = clipStream; clip = null;
+  var r = clip, st = clipStream, ch = clipChunks; clip = null;
   if (!r) { if (cb) cb(null); return; }
   r.onstop = function () {
     if (S.keep !== 'open') { if (st) st.getTracks().forEach(function (x) { x.stop(); }); clipStream = null; } else warmIdle();
-    if (cb) cb(new Blob(clipChunks, { type: r.mimeType || 'audio/webm' }));
+    if (cb) cb(new Blob(ch, { type: r.mimeType || 'audio/webm' }));
   };
   try { r.stop(); } catch (e) { if (cb) cb(null); }
 }
