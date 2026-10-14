@@ -63,8 +63,8 @@
   const LEAD = (cap) => { const t = D && D.mode === 'demo' ? 'the scripted area lead' : 'the area lead'; return cap ? t[0].toUpperCase() + t.slice(1) : t; };
   const ready = (c) => c.state === 'pushed' && c.review && c.review.verdict !== 'changes';
   // A stopped run (R1: the owner or the budget halted every box) shows its unfinished changes as halted, not working.
-  const skey = (c) => (D?.run?.stopped && !['landed', 'bounced'].includes(c.state) ? 'halted' : ready(c) ? 'ready' : c.state);
-  const WORD = { working: 'Working', pushed: 'Waiting for review', ready: 'Ready to merge', reviewing: 'Being reviewed', queued: 'In line', testing: 'Being tested', landed: 'Landed', bounced: 'Sent back', halted: 'Halted', replaying: 'Replaying', 'with-lead': 'With its lead' };
+  const skey = (c) => (D?.run?.stopped && !['landed', 'bounced', 'ended'].includes(c.state) ? 'halted' : ready(c) ? 'ready' : c.state);
+  const WORD = { working: 'Working', pushed: 'Waiting for review', ready: 'Ready to merge', reviewing: 'Being reviewed', queued: 'In line', testing: 'Being tested', landed: 'Landed', bounced: 'Sent back', halted: 'Halted', replaying: 'Replaying', 'with-lead': 'With its lead', ended: 'Ended with the run' };
   const st = (c) => `<span class="st s-${skey(c)}"><i class="dot"></i><span class="w">${WORD[skey(c)] || esc(c.state)}</span></span>`;
   // Real ids are '<owner>.<name>--<id>': people see the short part.
   const ref = (id) => `#${esc(String(id).split('--').pop())}`;
@@ -86,7 +86,7 @@
   // ---- playback: a run revealed over time from its own events and train times ---------
   // Used for the mock (looping, its `future` events) and for replaying the last finished
   // real run ("Watch a run" when no live run can start). P = {base, start, end, wall0, speed, loop}.
-  const STATE = { asked: 'working', claimed: 'working', working: 'working', stacked: 'working', 'changes-suggested': 'working', pushed: 'pushed', approved: 'pushed', reviewing: 'reviewing', queued: 'queued', replayed: 'queued', testing: 'testing', landed: 'landed', bounced: 'bounced', replaying: 'replaying', 'with-lead': 'with-lead' };
+  const STATE = { asked: 'working', claimed: 'working', working: 'working', stacked: 'working', 'changes-suggested': 'working', pushed: 'pushed', approved: 'pushed', reviewing: 'reviewing', queued: 'queued', replayed: 'queued', testing: 'testing', landed: 'landed', bounced: 'bounced', replaying: 'replaying', 'with-lead': 'with-lead', ended: 'ended' };
   let P = null;
   const QS = new URLSearchParams(location.search);
   let REPLAY_ON_LOAD = QS.has('replay') ? 1 : 0;
@@ -165,7 +165,7 @@
     return a || (p.includes('/') ? p.split('/')[0] : (D.areas.find((x) => isRoot(x.path))?.path ?? '.'));
   };
   const areaLabel = (p) => (isRoot(p) ? 'top-level files' : p);
-  const active = (c) => !['landed', 'bounced'].includes(c.state);
+  const active = (c) => !['landed', 'bounced', 'ended'].includes(c.state);
 
   // The other change in a collision or overlap: named in the detail (a full id or #short id),
   // else the newest change by another agent that landed on the same file before it.

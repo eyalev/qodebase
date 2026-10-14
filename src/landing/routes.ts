@@ -73,6 +73,8 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
   }
   if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
   // R1 owner controls: pause (no new spawns or trains, router holds), resume, stop all (every box stops).
+  // Admin: close a finished run's never-closed attempts as 'ended' (records only).
+  if (verb === 'end-open' && request.method === 'POST' && me.admin) return json(await L.endOpen('ended with the run: a later attempt or the end of the run superseded it'));
   if ((verb === 'pause' || verb === 'resume' || verb === 'stop') && request.method === 'POST') {
     const by = me.handle || 'owner';
     return json(verb === 'pause' ? await L.pause(by) : verb === 'resume' ? await L.resume(by) : await L.stopAll(by));

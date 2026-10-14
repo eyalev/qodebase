@@ -29,9 +29,9 @@ import { subscribePush, unsubscribe, eligibleSlug, type PushEv } from '../events
 import { makeBoardEvent, boardView, boardText, taskIds, knownTaskIds, claimHolders, pickNext, type TwinCandidate, BOARD_KEEP_MS, BOARD_TTL_MS, IN_FLIGHT_MS, type BoardEvent, type BoardKind, type BoardQuery, type Alias } from './board';
 
 export type What = 'asked' | 'claimed' | 'working' | 'pushed' | 'reviewing' | 'approved' | 'changes-suggested' | 'queued' | 'testing'
-  | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap' | 'sent-back' | 'decided' | 'asked-person';
+  | 'landed' | 'bounced' | 'conflict' | 'replaying' | 'replayed' | 'with-lead' | 'stacked' | 'overlap' | 'sent-back' | 'decided' | 'asked-person' | 'ended';
 export type Ev = { t: number; what: What; detail?: string; why?: string };
-export type ChangeState = 'working' | 'pushed' | 'reviewing' | 'queued' | 'testing' | 'landed' | 'bounced' | 'replaying' | 'with-lead';
+export type ChangeState = 'working' | 'pushed' | 'reviewing' | 'queued' | 'testing' | 'landed' | 'bounced' | 'replaying' | 'with-lead' | 'ended';
 export type Landing_ = { how: 'merged' | 'replayed-handler' | 'replayed-llm' | 'lead' | null; conflicts: string[]; diff: { path: string; lines: string[] }[]; commit: string | null; mainCommit: string | null;
   /** Tier 2: the model that redid it, its usage, and whether it changed the same lines as the reviewed change. */
   replay?: { model: string; ms: number; usd: number | null; tokensIn: number; tokensOut: number; sameLinesAsReviewed: boolean | null };
@@ -698,6 +698,21 @@ export class Landing extends DurableObject<Env> {
     const f = this.#meta!.flags;
     return { paused: !!f.paused, ...(f.paused ? { pausedAt: f.pausedAt, pausedBy: f.pausedBy } : {}), stopped: !!f.halted, ...(f.halted ? { stoppedAt: f.haltedAt, stoppedWhy: f.haltedWhy } : {}) };
   }
+  /** Admin: a finished run's attempts that never closed (superseded when a fleet run ended) become 'ended', records only:
+   *  no box, no git. Published comparison runs showed 'Working 15 / In line 34' on runs that had ended (2026-10-14). */
+  async endOpen(why: string) {
+    const m = await this.#m();
+    const n: Record<string, number> = {};
+    for (const id of m.order) {
+      const c = await this.#get(id);
+      if (!c || ['landed', 'bounced', 'ended'].includes(c.state)) continue;
+      n[c.state] = (n[c.state] || 0) + 1;
+      c.state = 'ended'; this.#ev(c, 'ended', why); await this.#put(c);
+    }
+    log('landing', 'ended_open', { slug: m.slug, n, why });
+    return { ended: n };
+  }
+
   async isPaused() { const m = (await this.ctx.storage.get<Meta>('meta')) || null; return !!(m?.flags.paused || m?.flags.halted); }
   async pause(by: string) {
     const m = await this.#m();
