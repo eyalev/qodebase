@@ -1085,7 +1085,10 @@ export class Lander extends DurableObject {
     const lanes = this.ctx.storage.sql.exec(`SELECT lane, COUNT(*) AS n, MIN(at) AS a FROM pend GROUP BY lane ORDER BY a`).toArray();
     if (!lanes.length) return;
     const keys = []; let files = 0;
-    for (const l of lanes) { if (keys.length && files + Math.min(l.n, 200) > LAND_MAX_FILES) break; keys.push(l.lane); files += Math.min(l.n, 200); }
+    // comments+index: each lane's commit carries a whole new docs/API.md (thousands of lines), all held until the push, so
+    // lanes, not files, fill the memory there (the scene-3 take stalled at 424 files in 226 lanes): at most 10 lanes a pass.
+    const maxLanes = (await this.ctx.storage.get('job')) === 'comments+index' ? 10 : Infinity;
+    for (const l of lanes) { if (keys.length && (files + Math.min(l.n, 200) > LAND_MAX_FILES || keys.length >= maxLanes)) break; keys.push(l.lane); files += Math.min(l.n, 200); }
     const more = keys.length < lanes.length || lanes.some((l) => l.n > 200);
     try { await this.land(runId, keys); }
     catch (e) { const errors = (await this.ctx.storage.get('errors')) || []; errors.push({ at: Date.now(), err: String(e?.stack || e).slice(0, 600) }); await this.ctx.storage.put('errors', errors.slice(-20)); log('land_error', { runId, err: String(e?.stack || e).slice(0, 500) }); }
