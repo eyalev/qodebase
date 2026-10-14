@@ -400,7 +400,19 @@ export function tabBar(c: Pick<Ctx, 'own' | 'base' | 'worker' | 'info'> & Partia
 
 // ---- page ----------------------------------------------------------------------
 
+// The project's other tabs are fetched as soon as the page is idle and fully prerendered on touch (Eyal, 2026-10-14):
+// a tab switch then shows a page that is already there.
+const TAB_SPECULATE = `<script type="speculationrules">${JSON.stringify({
+  prefetch: [{ where: { selector_matches: '.tabbar a[href^="/p/"]' }, eagerness: 'eager' }],
+  prerender: [{ where: { selector_matches: '.tabbar a[href^="/p/"]' }, eagerness: 'moderate' }],
+})}</script>`;
 export const V3_CSS = `
+/* Switching a project's tabs is a page load: fade between them and keep the header and the tab bar still (Eyal,
+   2026-10-14: it felt slow). Cross-document view transitions, same origin; nothing when motion is reduced. */
+@view-transition{navigation:auto}
+.gtop{view-transition-name:qb-top}.tabbar{view-transition-name:qb-tabs}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.14s}
+@media (prefers-reduced-motion:reduce){@view-transition{navigation:none}}
 body.v3{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .h3{flex:none;display:flex;align-items:center;gap:4px;height:48px;padding:0 4px 0 4px;border-bottom:1px solid var(--line);background:var(--bg)}
 .h3 .home{font-weight:600;color:var(--fg);min-height:44px;display:inline-flex;align-items:center;padding:0 10px}
@@ -582,6 +594,7 @@ ${g.nav === 'd' ? '' : `<header class="h3">${home}<a class="nm" href="${c.base}"
 ${g.nav === 'b' ? tabBar(c, id, needs, true) : ''}
 <main class="view${r.full ? ' full' : ''}" id="view">${r.body}</main>${r.compose || (own ? askBox(c) : '')}
 ${g.nav === 'b' ? globalBar('projects', g.inbox, me) : tabBar(c, id, needs)}
+${TAB_SPECULATE}
 ${own ? `<div class="scrim3" id="scrim3"></div><div class="moresheet" id="moresheet" aria-hidden="true">${moreMenu(c)}</div>` : ''}
 ${own ? SHEET_HTML : ''}${pageJs(info, r.poll ? `?view=${id}` : '?view=none')}${FORK_JS}
 <script>

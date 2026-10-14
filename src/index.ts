@@ -80,7 +80,7 @@ const agentToken = async (env: Env, agentId: string) => `${agentId}.${await hmac
 
 async function who(request: Request, env: Env): Promise<Who | null> {
   const url = new URL(request.url);
-  const handles = JSON.parse(env.HANDLES || '{}') as Record<string, string>;
+  const handles = JSON.parse(env.HANDLES_SECRET || env.HANDLES || '{}') as Record<string, string>;
   // workers.dev = the API for boxes and the laptop, unless it is this site's own host
   // (a self-hosted copy lives on workers.dev).
   if (url.hostname.endsWith('.workers.dev') && !isUiHost(env, url.hostname)) {
@@ -117,7 +117,7 @@ async function who(request: Request, env: Env): Promise<Who | null> {
     let u = await userByEmail(env, email);
     // A self-hosted copy sits wholly behind Access: its owner's first visit makes the account.
     if (!u && env.SELF_HOST) {
-      const mapped = (JSON.parse(env.HANDLES || '{}') as Record<string, string>)[email];
+      const mapped = (JSON.parse(env.HANDLES_SECRET || env.HANDLES || '{}') as Record<string, string>)[email];
       u = (await claimHandle(env, email, mapped || await suggestHandle(env, email))).user || null;
     }
     if (u) return { kind: 'user', handle: u.handle, admin: false, email: u.email };
@@ -151,7 +151,7 @@ async function loginRoute(request: Request, env: Env, url: URL): Promise<Respons
   let user = await userByEmail(env, email);
   let fresh = false;
   if (!user) {
-    const mapped = (JSON.parse(env.HANDLES || '{}') as Record<string, string>)[email];
+    const mapped = (JSON.parse(env.HANDLES_SECRET || env.HANDLES || '{}') as Record<string, string>)[email];
     const r = await claimHandle(env, email, mapped || await suggestHandle(env, email));
     if (!r.ok || !r.user) return new Response(`Could not create your account: ${r.error}`, { status: 500 });
     user = r.user; fresh = true;
@@ -1325,6 +1325,42 @@ export default {
   async queue(batch: MessageBatch<unknown>, env: Env): Promise<void> { await handleArtifactsBatch(batch, env); },
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     request = fromFront(request, env);
+    return pageCache(request, env, ctx, () => serveUi(request, env, ctx));
+  },
+} satisfies ExportedHandler<Env>;
+
+// Signed-out project pages from the edge (Eyal, 2026-10-14: switching a project's tabs felt slow; each view took 220-590
+// ms to render on the server). GET /p/<o>/<n>[/readme|/code/…|/history|/app] with no session and no Access cookie: kept
+// in caches.default for up to 5 min, refreshed in the background once older than 30 s (stale-while-revalidate). Never
+// kept: anything with a session, a Set-Cookie, a non-200 or non-HTML answer. Private projects answer 404 signed out.
+const PC_PATH = /^\/p\/[a-z0-9-]+\/[a-z0-9-]+(\/(readme|history|app|code(\/.*)?))?\/?$/;
+const pcBusy = new Set<string>();
+async function pageCache(request: Request, env: Env, ctx: ExecutionContext, serve: () => Promise<Response>): Promise<Response> {
+  const u = new URL(request.url), ck = request.headers.get('cookie') || '';
+  const ok = request.method === 'GET' && isUiHost(env, u.hostname) && PC_PATH.test(u.pathname) && ![...u.searchParams.keys()].some((k) => k !== 'doc')
+    && !/(^|;\s*)(forq_session|CF_Authorization)=/.test(ck) && !request.headers.get('authorization');
+  if (!ok) return serve();
+  const key = new Request(`https://pagecache.internal${u.pathname}${u.search}`);
+  const fresh = async () => {
+    const res = await serve();
+    if (res.status !== 200 || !(res.headers.get('content-type') || '').startsWith('text/html') || res.headers.has('set-cookie')) return res;
+    const body = await res.arrayBuffer();
+    const h = new Headers(res.headers); h.set('x-pc-at', String(Date.now())); h.set('cache-control', 'public, max-age=300');
+    await caches.default.put(key, new Response(body, { status: 200, headers: h }));
+    return new Response(body, { status: 200, headers: res.headers });
+  };
+  const hit = await caches.default.match(key);
+  if (hit) {
+    const age = Date.now() - Number(hit.headers.get('x-pc-at') || 0);
+    if (age > 30_000 && !pcBusy.has(key.url)) { pcBusy.add(key.url); ctx.waitUntil(fresh().catch((e) => log('pagecache', 'refresh_failed', { path: u.pathname, err: String(e) })).finally(() => pcBusy.delete(key.url))); }
+    const h = new Headers(hit.headers); h.set('cache-control', 'no-store'); h.set('x-page-cache', `hit ${Math.round(age / 1000)}s`); h.delete('x-pc-at');
+    return new Response(hit.body, { status: 200, headers: h });
+  }
+  return fresh();
+}
+
+async function serveUi(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  {
     let res = await app.fetch(request, env, ctx);
     res = await withRunPasses(request, env, res);
     const u = new URL(request.url);
@@ -1345,8 +1381,8 @@ export default {
       }
     }
     return withLook(res);   // the site-wide look layer (src/look.ts)
-  },
-} satisfies ExportedHandler<Env>;
+  }
+}
 
 /** A private project's pages (and the agents-html JSON that refreshes them) link to its
  *  live app and agent forks on the run host, which only opens with a signed pass
