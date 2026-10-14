@@ -112,7 +112,10 @@ var css = [
   '.talk-bb.pri{background:var(--t-chip);color:var(--t-fg)}',
   '#talk-bmic{width:48px;height:48px;border-radius:12px}',
   '#talk-bmic svg{width:24px;height:24px}',
-  '#talk-bspk,#talk-bexp{width:40px}',
+  '#talk-bspk,#talk-bexp,#talk-bconv{width:40px}',
+  '#talk-bconv{color:var(--t-dim)}',
+  '#talk-bconv[aria-pressed=true]{background:var(--acc-soft,color-mix(in srgb,var(--t-acc) 14%,var(--t-bg)));color:var(--t-acc)}',
+  '#talk-root.boffer #talk-bconv,#talk-root.miconly #talk-bconv,#talk-root.draft #talk-bconv{display:none}',
   // The bar's own mic is a filled accent circle at rest since Eyal's ask (2026-10-13, the bar blended in); the
   // composer's buttons below keep the old rule (accent only while live). DESIGN.md's radius rule names this circle.
   '#talk-root.live .talk-bb.pri,#talk-bsend.talk-bb.pri{background:var(--t-acc);color:var(--t-accfg)}',
@@ -277,7 +280,7 @@ var ICON = {
 };
 
 var root, sheet, logEl, live, offer, inp, micBtn, sendBtn, stEl, spk, convBtn;
-var bar, bMic, bText, bOffer, bSend, bExp, bSpk, spacer;
+var bar, bMic, bText, bOffer, bSend, bExp, bSpk, bConv, spacer;
 // The input grows with what you say or type (up to a third of the screen), then scrolls to the newest words.
 function fitInp() { if (!inp) return; if (root) root.classList.toggle('canagain', !!(lastClip && inp.value.trim() && !listening && Date.now() - lastClip.at < 10 * 60000)); inp.style.height = 'auto'; inp.style.height = Math.max(44, inp.scrollHeight + 2) + 'px'; inp.scrollTop = inp.scrollHeight; if (sendBtn) sendBtn.classList.toggle('ready', !!inp.value.trim() || listening); }
 function setInp(v) {
@@ -320,13 +323,15 @@ function wireComposers() {
       trace('cmic', { how: 'send-while-listening' }); f.__sendAfter = 1; stopListen(false, false);
     }, true);
     var lp = null, long = false;
-    b.addEventListener('pointerdown', function () { long = false; lp = setTimeout(function () { long = true; trace('cmic', { how: 'long' }); open(true); if (!listening && !busy) startListen(); }, 550); });
+    // Long-press: hands-free conversation with Talk, in the one-row bar (it used to open the sheet).
+    b.addEventListener('pointerdown', function () { long = false; lp = setTimeout(function () { long = true; unlockAudio(); trace('cmic', { how: 'long' }); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} if (!convOn()) toggleConv('cmic-long'); else if (!listening && !busy) startListen(); }, 550); });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { b.addEventListener(ev, function () { clearTimeout(lp); }); });
     b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     b.addEventListener('click', function (e) {
       e.preventDefault(); if (long) return; unlockAudio();
       if (listening && cInto === ta) { trace('cmic', { how: 'stop' }); stopListen(false, false); return; }
       if (listening || busy) return;
+      if (convOn()) { trace('cmic', { how: 'conv' }); startListen(); return; }   // hands-free: the words are for Talk, not the box
       if (S.engine !== 'live') { open(true); startListen(); return; }   // the other engines live in the sheet
       cInto = ta; cMic = b; trace('cmic', { how: 'start', path: location.pathname });
       startListen();
@@ -396,7 +401,11 @@ function build() {
   // A clear (×) whenever the bar holds words (manager, 2026-10-13).
   var bClr = el('button', { id: 'talk-bclr', class: 'talk-bb', type: 'button', 'aria-label': 'Clear the words' }, ICON.x);
   bClr.addEventListener('click', function () { trace('bar', { how: 'clear' }); setInp(''); lastClip = null; barSync(); });
-  bar.appendChild(bExp); bar.appendChild(bSpk); bar.appendChild(bMid); bar.appendChild(bClr); bar.appendChild(bOffer); bar.appendChild(bSend); bar.appendChild(bMic);
+  // Hands-free conversation from the one-row bar (Eyal, 2026-10-14: Talk works fully with the sheet collapsed):
+  // on = it sends after a pause, speaks the answer and listens again. Long-press on the mic does the same.
+  bConv = el('button', { id: 'talk-bconv', class: 'talk-bb', type: 'button', 'aria-pressed': 'false', 'aria-label': 'Hands-free conversation', title: 'Hands-free conversation: it sends after a pause, speaks the answer and listens again' }, ICON.conv);
+  bConv.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'conv' }); toggleConv('bar'); });
+  bar.appendChild(bExp); bar.appendChild(bSpk); bar.appendChild(bMid); bar.appendChild(bClr); bar.appendChild(bOffer); bar.appendChild(bSend); bar.appendChild(bConv); bar.appendChild(bMic);
   // Examples are hints, never sent (Eyal, 2026-10-13: a tap near the bar sent 'how does it work?' twice). A tap opens Talk.
   bMid.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'open' }); open(true); });
   bExp.addEventListener('click', function () { unlockAudio(); trace('bar', { how: 'expand' }); open(true); });
@@ -480,8 +489,12 @@ function build() {
   var bHoldEnd = function () { clearTimeout(bHoldT); if (S.mic === 'hold' && bHeld && listening) { trace('bar', { how: 'release' }); stopListen(false, true); } };
   bMic.addEventListener('pointerup', bHoldEnd); bMic.addEventListener('pointercancel', bHoldEnd); bMic.addEventListener('pointerleave', bHoldEnd);
   bMic.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  var bLongT = null, bLong = false;
+  bMic.addEventListener('pointerdown', function () { bLong = false; if (S.mic === 'hold' || vc) return; bLongT = setTimeout(function () { bLong = true; unlockAudio(); trace('bar', { how: 'mic-long' }); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} if (!convOn()) toggleConv('mic-long'); else if (!listening && !busy) startListen(); }, 550); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { bMic.addEventListener(ev, function () { clearTimeout(bLongT); }); });
   bMic.addEventListener('click', function () {
     unlockAudio();
+    if (bLong) { bLong = false; return; }
     if (S.mic === 'hold') { if (bHeld) { bHeld = false; return; } if (!listening) { bNote('Hold the mic while you talk'); } return; }
     if (S.mic === 'conv') { if (vc) endConversation('you'); else { startConversation(); } return; }
     if (vc) { vc.toggleMute(); return; }
@@ -811,7 +824,8 @@ function barSync() {
   if (root.classList.contains('boffer') !== !!root.__boffer) { root.__boffer = root.classList.contains('boffer'); setTimeout(placeBar, 30); }
   var on = (listening && !cInto) || (vc && vcStatus !== 'idle');
   bMic.classList.toggle('on', !!on); bMic.innerHTML = on ? ICON.stop : ICON.mic;
-  bMic.setAttribute('aria-label', on ? 'Stop' : 'Speak to qodebase');
+  bMic.setAttribute('aria-label', on ? 'Stop' : 'Speak to qodebase (hold: hands-free)');
+  if (bConv) { bConv.setAttribute('aria-pressed', convOn() ? 'true' : 'false'); bConv.setAttribute('aria-label', convOn() ? 'Hands-free conversation: on' : 'Hands-free conversation: off'); }
   barMode();
 }
 function bNote(t) { add('note', t); }
