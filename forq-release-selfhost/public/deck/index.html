@@ -104,7 +104,7 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
 .proved li>span{font-size:15px;line-height:1.4;color:var(--dim)}
 .s.ovs{overflow-y:auto}
 .ovs .map li>span>span{display:none}
-.lc{background:var(--acc);box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--warn)}
+.lc{background:var(--busy);box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--warn)}
 .dots.d12{grid-template-columns:repeat(6,1fr);max-width:260px}
 .shot{display:block;width:100%;height:auto}
 /* 1 title: lanes merging */
@@ -165,7 +165,7 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
 .s.on .dots i{animation:land .25s forwards;animation-delay:calc(var(--d) * 45ms + .2s)}
 .s.on .dots i.c{animation:coll 1.6s forwards;animation-delay:calc(var(--d) * 45ms + .2s)}
 @keyframes land{to{opacity:1}}
-@keyframes coll{0%{opacity:1;background:var(--warn)}45%{background:var(--warn)}100%{opacity:1;background:var(--acc);box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--warn)}}
+@keyframes coll{0%{opacity:1;background:var(--warn)}45%{background:var(--warn)}100%{opacity:1;background:var(--busy);box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--warn)}}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--dim)}
 .legend b{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
 @media (min-width:900px) and (min-aspect-ratio:4/3){.dots{max-width:26em}}
@@ -224,14 +224,14 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
 
 <section class="s secs" data-t="The idea: land by intent" data-sec="A" data-head>
  <div class="claim"><span class="secn">Section A</span><h2>The idea: land by intent</h2><p>Agents work alone and finish at the same time. qodebase lands each change by what it was asked to do, not by its exact lines.</p></div>
- <div class="vis"><ul class="pts"><li>Order, not merge conflicts, is the hard part</li><li>A collision is redone on the newest code, not sent back</li><li>Every change keeps its record inside git</li></ul><ol class="map mini" data-map></ol></div>
+ <div class="vis"><ul class="pts"><li>Half of real changes build on another</li><li>A collision is redone on the newest code, not sent back</li><li>Every change keeps its record inside git</li></ul><ol class="map mini" data-map></ol></div>
  <aside class="say">Section A: the idea. Agents work alone and all finish at once. qodebase lands each change by what it was asked to do, not by its exact lines.</aside>
 </section>
 
-<section class="s" data-t="The problem is order" data-sec="A" data-vh="48% couldn’t land until another did">
- <div class="claim"><h2>The real problem is order</h2><span class="vline">Hono, an open-source web framework: if 100 of its last 346 real PRs were written at once, as 100 agents would. Git conflicts: 0.</span><p>Hono's last 346 pull requests, replayed in waves of 100: <b>48%</b> needed another one to land first. Git saw no conflicts at all.</p><span class="src">Replay of real pull requests, no model calls</span></div>
+<section class="s" data-t="The problem is order" data-sec="A" data-vh="Half of real changes build on another">
+ <div class="claim"><h2>Half of real changes build on another</h2><span class="vline">Hono, an open-source web framework: replaying 100 of its real PRs as if written at once, 48% needed another to land first. Agents in parallel can’t see each other’s unlanded work.</span><p>Hono's last 346 pull requests, replayed in waves of 100: <b>48%</b> needed another one to land first. Git saw no conflicts at all.</p><span class="src">Replay of real pull requests, no model calls</span></div>
  <div class="vis"><div class="sq" id="hono" aria-label="48 of 100 squares filled"></div><div class="legend"><span><b style="background:var(--busy)"></b>needed another change first</span><span><b style="background:var(--chip);box-shadow:inset 0 0 0 1px var(--frame)"></b>could land alone</span></div></div>
- <aside class="say">We measured first. We replayed Hono's last 346 pull requests in waves of a hundred. Almost half needed another one to land first, and git reported no conflicts at all. The hard part is order.</aside>
+ <aside class="say">A hint from real history: Hono is an open-source web framework. Replaying a hundred of its real pull requests as if they were written at the same moment, almost half needed another one to land first, while git conflicts were rare. Agents working in parallel can't see each other's unlanded work, so dependent work must wait, be stacked, or be redone after it lands. Our real agent builds showed collisions on shared files too.</aside>
 </section>
 
 <section class="s" data-t="Land by intent" data-vh="A collision is redone, not sent back" data-sec="A">
@@ -458,7 +458,7 @@ if(q.get('rec'))document.body.classList.add('rec');
 var S=[].slice.call(document.querySelectorAll('.s')),i=0,notes=document.getElementById('notes'),nb=document.getElementById('nbtn');
 function dark(){var t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
 [].forEach.call(document.querySelectorAll('[data-shot]'),function(e){e.src=e.dataset.shot+'-'+(dark()?'dark':'light')+'.webp'});
-var SECS=[['A','The idea: land by intent','Why order breaks the flow, and how qodebase lands by intent'],['B','It works with real agents','Real Claude teams of up to 40 building apps, and one agent against a team'],['C','Many agents, at scale','Hundreds checked by tests, 10,000 on Cloudflare, a cheap fleet, lanes'],['D','Built for people, built on Cloudflare','Phone first, intents, the timeline, Asks, estimates, the Runs page']];
+var SECS=[['A','The idea: land by intent','Why parallel work must wait or be redone, and how qodebase lands by intent'],['B','It works with real agents','Real Claude teams of up to 40 building apps, and one agent against a team'],['C','Many agents, at scale','Hundreds checked by tests, 10,000 on Cloudflare, a cheap fleet, lanes'],['D','Built for people, built on Cloudflare','Phone first, intents, the timeline, Asks, estimates, the Runs page']];
 [].forEach.call(document.querySelectorAll('[data-map]'),function(m){var cur=m.closest('.s').dataset.sec;m.innerHTML=SECS.map(function(x){return'<li'+(x[0]===cur?' class="on"':'')+'><b>'+x[0]+'</b><span><b>'+x[1]+'</b><span>'+x[2]+'</span></span></li>'}).join('')});
 // Where am I: 'Section B, slide 2 of 4' on every slide (plain words, no meta string)
 S.forEach(function(s){var sec=s.dataset.sec,w='';
