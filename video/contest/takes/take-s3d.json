@@ -1,0 +1,9 @@
+[
+ {"a": 9600, "b": 20500, "quote": "Document every exported function in Visual Studio Code and add each one to the API index, with a thousand agents."},
+ {"a": 20500, "b": 56500, "x": 2, "say": "Talk opens the Runs page and fills in the job: the copy of VS Code, the folder, doc comments plus a line in the API index, a thousand agents, a five-dollar cap, and the estimate."},
+ {"a": 56500, "b": 61000, "cap": "Start 1,000 agents."},
+ {"a": 61000, "b": 200000, "x": 4, "say": "A thousand agents start. Each writes its comments and one line in a shared index file, so they collide all the time, and each collision is redone on the newest code."},
+ {"a": 200000, "b": 449000, "x": 40, "cap": "At 1:53 the run paused itself: model errors passed its 5% safety stop. It was resumed by hand."},
+ {"a": 449000, "b": 515000, "x": 4, "say": "Then it finished: 2,833 files landed for two dollars and thirty-three cents. A checker read main: every function in the index once, sorted, nothing lost."},
+ {"a": 515000, "b": 522000, "cap": "2,833 landed, 1,069 already documented, 162 rejected. Index check: 5,917 entries, 0 missing, 0 twice."}
+]
