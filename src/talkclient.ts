@@ -1661,7 +1661,10 @@ function spoken(text) {
   // What is worth hearing: no links or ids, at most ~3 sentences / 600 characters.
   var t = String(text || '').replace(/https?:\/\/\S+/g, '').replace(/[\x60*#_]/g, '').replace(/\(?\b[\w.-]+\/[\w./-]+\.[a-z]{1,5}(:\d+)?\)?/gi, '').replace(/\s+([,.])/g, '$1').replace(/\s+/g, ' ').trim();
   // a removed '(path/file' leaves its ')' behind: drop closing brackets that open nowhere
-  var depth = 0; t = t.split('').filter(function (ch) { if (ch === '(') depth++; else if (ch === ')') { if (!depth) return false; depth--; } return true; }).join('').replace(/\s+([,.:;])/g, '$1');
+  var cs = t.split(''), open = [], drop = {};
+  cs.forEach(function (ch, i) { if (ch === '(') open.push(i); else if (ch === ')') { if (open.length) open.pop(); else drop[i] = 1; } });
+  open.forEach(function (i) { drop[i] = 1; });   // and opening ones that close nowhere
+  t = cs.filter(function (ch, i) { return !drop[i]; }).join('').replace(/\s{2,}/g, ' ').replace(/\s+([,.:;])/g, '$1');
   if (t.length > 600) { var cut = t.slice(0, 600); var i = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! ')); t = i > 200 ? cut.slice(0, i + 1) : cut; }
   return t;
 }
