@@ -1036,6 +1036,8 @@ export class KataAgent extends DurableObject {
 }
 
 // ---- Lander: lanes by folder, one commit per lane, pushed in order ---------------------------
+const LAND_MAX_FILES = 400;   // files per landing pass (memory: see Lander.alarm)
+
 export class Lander extends DurableObject {
   // S4a: pending files were one 'lanes' object rewritten per file (and a key per text); now SQL rows, one insert per file.
   tables() {
@@ -1074,11 +1076,17 @@ export class Lander extends DurableObject {
       await this.ctx.storage.setAlarm(Date.now() + 5000);
       return;
     }
-    const keys = this.ctx.storage.sql.exec(`SELECT DISTINCT lane FROM pend`).toArray().map((x) => x.lane);
-    if (!keys.length) return;
+    // At most ~LAND_MAX_FILES files per pass, oldest lanes first: the scene-3 rehearsal (2026-10-14, 1,000 agents, docs+index)
+    // queued 2,701 files in 352 lanes, one pass took them all and the isolate ran out of memory (128 MB), every retry the same;
+    // the run ended with 2,701 answered files never landed. More left -> the next pass starts at once.
+    const lanes = this.ctx.storage.sql.exec(`SELECT lane, COUNT(*) AS n, MIN(at) AS a FROM pend GROUP BY lane ORDER BY a`).toArray();
+    if (!lanes.length) return;
+    const keys = []; let files = 0;
+    for (const l of lanes) { if (keys.length && files + Math.min(l.n, 200) > LAND_MAX_FILES) break; keys.push(l.lane); files += Math.min(l.n, 200); }
+    const more = keys.length < lanes.length || lanes.some((l) => l.n > 200);
     try { await this.land(runId, keys); }
     catch (e) { const errors = (await this.ctx.storage.get('errors')) || []; errors.push({ at: Date.now(), err: String(e?.stack || e).slice(0, 600) }); await this.ctx.storage.put('errors', errors.slice(-20)); log('land_error', { runId, err: String(e?.stack || e).slice(0, 500) }); }
-    await this.ctx.storage.setAlarm(Date.now() + 5000);
+    await this.ctx.storage.setAlarm(Date.now() + (more ? 200 : 5000));
   }
   /** Dial: per file, every pending task lands on the file's current text the way git would (merge, else replay by intent,
    *  or 'duplicate' when its declaration already has a comment); one commit per lane, one push (main only: notes off here). */
