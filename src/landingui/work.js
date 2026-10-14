@@ -28,6 +28,15 @@
     stack: ['Stacked', 'A change that builds on another change that has not landed yet. They land in order.'],
     lead: ['Lead', 'When no rule can replay a change, it goes to a lead (an agent or a person responsible for that part of the code) who decides how to combine both changes.'],
     review: ['Review', 'Another agent reads the change and approves it or asks for fixes before it can join the line.'],
+    // concepts on the Board (qb5's legend, Eyal 2026-10-14), plain words
+    colWork: ['Working', 'Agents writing code right now, each on its own copy of the project.'],
+    colLanded: ['Landed', 'Changes that passed the tests and joined the main code. Each circle is one change, numbered by the agent that made it.'],
+    intent: ['Intent', 'What an agent was asked to do, kept with its change so it can be redone on newer code.'],
+    record: ['Change record', 'Everything about one change, kept in git: what it was asked, its diff, the review, the tests, how it landed.'],
+    lane: ['Lane', 'A separate line for one part of the code, so changes to different parts do not wait for each other.'],
+    contract: ['Contract', 'One shared file the skeleton writes first: the data shapes and the functions modules call in each other. Every agent codes against it.'],
+    skeleton: ['Skeleton', 'The first agent of a team build: it makes the app shell that opens, with empty views and the contract, before the features start.'],
+    router: ['Router', 'The agent you talk to: it splits your request into tasks and starts one agent per task.'],
     scripted: ['Scripted agents', 'In this demo the agents follow a script instead of calling an AI model, so it costs nothing to run. Everything else is real: real git commits on real forks, real collisions, real tests.'],
   };
   // A glossary word is tappable (dotted underline) only the first time it shows in a view; later it is plain
@@ -704,16 +713,18 @@
     const landedN = countIf(D.changes, (c) => c.state === 'landed'), total = D.changes.length;
     const done = total > 0 && runOver() && !(P && P.replay);
     const hint = done ? `All ${n0(landedN)} landed. ${(matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click' : 'Tap')} a circle to see what each agent did.` : 'Each circle is an agent; it moves right as its work lands.';
-    return `<div class="bhead"><h2>Board</h2><p>${hint}</p></div>`;
+    return `<div class="bhead"><h2>Board${window.qbLegendMount ? ' <button class="blq" type="button" data-legend aria-label="What the marks on the Board mean">?</button>' : ''}</h2><p>${hint}</p></div>`;
   }
+  const idx0 = () => byId();
+  const COLG = { work: 'colWork', rev: 'review', line: 'queue', done: 'colLanded' };
   function pipeline() {
     const rp = (c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying');
     const cols = COLS.map(([k, label, f]) => {
       const cs = D.changes.filter(f).sort((a, b) => agentNum(a.agent) - agentNum(b.agent));
       // a big run's column (1,052 landed on a kata view) stops after 47 chips with '+N' (it ran the length of the page)
       const CAP = 48, shown = cs.length > CAP ? cs.slice(0, CAP - 1) : cs;
-      const chips = shown.map((c) => `<a class="pc${rp(c) ? ' rp' : ''}${c.state === 'with-lead' || c.state === 'bounced' ? ' bad' : ''}${c.state === 'testing' ? ' test' : ''}" href="#/change/${esc(c.id)}" title="${AG(c.agent)}: ${short(c)}" aria-label="${AG(c.agent)}: ${esc(short(c))}">${agentNum(c.agent)}</a>`).join('') + (shown.length < cs.length ? `<span class="pc more">+${n0(cs.length - shown.length)}</span>` : '');
-      return `<div class="pcol ${k}"><p class="ph"><span>${label}</span><b${cs.length >= 1000 ? ' class="k4"' : ''}>${n0(cs.length)}</b></p><div class="pchips${cs.length > 6 ? ' many' : ''}">${chips}</div></div>`;
+      const chips = shown.map((c) => `<a class="pc${rp(c) ? ' rp' : ''}${c.state === 'with-lead' || c.state === 'bounced' ? ' bad' : ''}${c.state === 'testing' ? ' test' : ''}${c.stackedOn && c.state !== 'landed' ? ' st' : ''}" href="#/change/${esc(c.id)}" title="${AG(c.agent)}: ${short(c)}${c.stackedOn && idx0().get(c.stackedOn) ? ` (stacked on ${AG(idx0().get(c.stackedOn).agent)})` : ''}" aria-label="${AG(c.agent)}: ${esc(short(c))}${c.stackedOn && idx0().get(c.stackedOn) ? `, stacked on ${AG(idx0().get(c.stackedOn).agent)}` : ''}">${agentNum(c.agent)}</a>`).join('') + (shown.length < cs.length ? `<span class="pc more">+${n0(cs.length - shown.length)}</span>` : '');
+      return `<div class="pcol ${k}"><p class="ph"><button class="term ph-t" type="button" data-gloss="${COLG[k]}">${label}</button><b${cs.length >= 1000 ? ' class="k4"' : ''}>${n0(cs.length)}</b></p><div class="pchips${cs.length > 6 ? ' many' : ''}">${chips}</div></div>`;
     }).join('');
     const anyRp = D.changes.some(rp), over = runOver(), anyBad = D.changes.some((c) => c.state === 'with-lead' || (c.state === 'bounced' && !over));
     const back = over ? D.changes.filter((c) => c.state === 'bounced').sort((a, b) => agentNum(a.agent) - agentNum(b.agent)) : [];
@@ -1011,6 +1022,7 @@
       fitSize();
       if (same && before.size) flip(before);
       if (window.qbIntentsMount) window.qbIntentsMount(root);
+      if (window.qbLegendMount) window.qbLegendMount(root);   // qb5's Board legend (legend.js)
       if (window.qbContractMount) window.qbContractMount(root);
     }
     lastNow = D.now;

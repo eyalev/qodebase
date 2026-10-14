@@ -357,3 +357,7 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw a.pc{cursor:pointer}
 /* Line history */
 .lw .lh-h{font-size:16px;margin:16px 0 6px}.lw .lhist{list-style:none;margin:0;padding:0}.lw .lhist>li{box-shadow:inset 0 1px 0 var(--line)}.lw .lhist summary{min-height:44px;padding:12px 0;box-sizing:border-box;cursor:pointer;font-size:14px;font-variant-numeric:tabular-nums}.lw .lhist .results{margin:0 0 10px}
+/* Board concepts: column names explain on tap; the legend button; a stacked change's mark (bottom-left) */
+.lw .ph .ph-t{font:inherit;color:inherit;background:none;border:0;padding:0;min-height:0;text-decoration:underline dotted;text-underline-offset:3px;cursor:help}
+.lw .blq{position:relative;display:inline-grid;place-items:center;width:26px;height:26px;margin-left:6px;vertical-align:3px;border-radius:50%;border:0;background:var(--chip);color:var(--fg);font:600 14px/1 Geist,sans-serif;cursor:pointer}.lw .blq::before{content:'';position:absolute;inset:-9px}
+.lw .pc.st{position:relative}.lw .pc.st::before{content:'';position:absolute;left:-3px;bottom:-3px;width:8px;height:8px;border-radius:2px;background:var(--acc-soft);box-shadow:0 0 0 1.5px var(--acc),0 0 0 3px var(--card)}
