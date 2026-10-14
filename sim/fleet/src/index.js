@@ -185,14 +185,16 @@ export default {
       // An object that never goes idle (the Lander's 5 s alarm) keeps running old code after a deploy: restart it.
       case '/restart': { await lander(env, repo).restart().catch(() => {}); await run(env, repo).restart().catch(() => {}); return json({ ok: true }); }
       // One summary row per run, every repo (qb4's results generator).
-      case '/runs': { const repos = [MAIN, ...((await budget(env).repos().catch(() => [])) || []).filter((x) => x !== MAIN)]; const missing = []; const rows = (await Promise.all(repos.map((x) => run(env, x).runs().catch((e) => { missing.push({ repo: x, err: String(e?.message || e).slice(0, 120) }); return []; })))).flat(); const kindOf = (r) => r.repo.replace(/^fleet-(n2-)?/, '').replace(/-\d+$/, '');
-        const groups = new Map(); for (const r of rows) if (r.ladder) { const k = `${r.ladder}|${kindOf(r)}`; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
-        for (const g of groups.values()) g.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0)).forEach((r, i) => { r.copyOfKind = i + 1; r.copiesOfKind = g.length; });
-        for (const r of rows) r.source = r.repo.startsWith('fleet-kata-')
-          // The code dial ran on qb4's kata seed in qodebase projects (eyal/kata-*), through the real merge queue: not a fleet copy.
-          ? { name: 'Kata (code dial)', upstream: 'qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests', root: 'kata', project: `eyal/${r.repo.slice('fleet-'.length)}`, namespace: 'forq' }
-          : { ...(SOURCES[kindOf(r)] || SOURCES.main), namespace: nsName(r.repo) };
-        return json({ runs: rows, ...(missing.length ? { missing } : {}) }); }
+      case '/runs': {
+        // Served from KV for 30 s, refreshed in the background (2026-10-14: ~6 s and 700 KB per call once hundreds of copies
+        // had runs; a judge's first /runs load timed out). ?fresh=1 skips the cache.
+        const cached = url.searchParams.get('fresh') ? null : await env.FLEET_CACHE.get('runs:v1', 'json').catch(() => null);
+        if (cached?.body) { if (Date.now() - cached.at > 30_000 && ctx) ctx.waitUntil(runsUncached(env).then((b) => env.FLEET_CACHE.put('runs:v1', JSON.stringify({ at: Date.now(), body: b }), { expirationTtl: 86400 })).catch(() => {})); return json(cached.body); }
+        const b = await runsUncached(env);
+        await env.FLEET_CACHE.put('runs:v1', JSON.stringify({ at: Date.now(), body: b }), { expirationTtl: 86400 }).catch(() => {});
+        return json(b);
+      }
+      case '/runs-uncached': return json(await runsUncached(env));
       case '/clone-token': { using r = await ns(env, repo).get(repo); const t = await r.createToken('read', 3600); return json({ repo, remote: remoteOf(repo), token: t.plaintext }); }
       default: return json({ error: 'not found' }, 404);
     }
@@ -1549,6 +1551,18 @@ async function readBlobCached(env, repoName, hash) {
   caches.default.put(blobKey(hash), new Response(t, { headers: { 'cache-control': `public, max-age=${BLOB_TTL}` } })).catch(() => {});
   if (t.length < 2_000_000) env.FLEET_CACHE.put(`blob:${hash}`, t, { expirationTtl: BLOB_TTL }).catch(() => {});
   return { text: t, tier: 'artifacts' };
+}
+
+/** Every run of every copy (the /runs list), computed in full. */
+async function runsUncached(env) {
+  const repos = [MAIN, ...((await budget(env).repos().catch(() => [])) || []).filter((x) => x !== MAIN)]; const missing = []; const rows = (await Promise.all(repos.map((x) => run(env, x).runs().catch((e) => { missing.push({ repo: x, err: String(e?.message || e).slice(0, 120) }); return []; })))).flat(); const kindOf = (r) => r.repo.replace(/^fleet-(n2-)?/, '').replace(/-\d+$/, '');
+        const groups = new Map(); for (const r of rows) if (r.ladder) { const k = `${r.ladder}|${kindOf(r)}`; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
+        for (const g of groups.values()) g.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0)).forEach((r, i) => { r.copyOfKind = i + 1; r.copiesOfKind = g.length; });
+        for (const r of rows) r.source = r.repo.startsWith('fleet-kata-')
+          // The code dial ran on qb4's kata seed in qodebase projects (eyal/kata-*), through the real merge queue: not a fleet copy.
+          ? { name: 'Kata (code dial)', upstream: 'qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests', root: 'kata', project: `eyal/${r.repo.slice('fleet-'.length)}`, namespace: 'forq' }
+          : { ...(SOURCES[kindOf(r)] || SOURCES.main), namespace: nsName(r.repo) };
+        return { runs: rows, ...(missing.length ? { missing } : {}) };
 }
 
 /** The copies the job form offers: every registered copy except deleted ones ('gone', skipped without opening), each with
