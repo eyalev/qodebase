@@ -744,6 +744,18 @@
   }
   // Talk (qb2): 'document every exported function in VS Code's editor and add each one to the API index' -> the form,
   // filled in, with its estimate: the person checks it and taps Start (Talk never starts a job by itself).
+  // 'with a thousand agents' -> 'with 1000 agents'; '2.5k' -> 2500; runs of number words become one number
+  const NW = { zero: 0, a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
+  function spokenNums(t) {
+    let x = String(t || '').toLowerCase().replace(/(\d+(?:\.\d+)?)\s*k\b/g, (m, n) => String(Math.round(+n * 1000))).replace(/(\d[\d,]*)\s+(thousand|hundred)\b/g, (m, n, w) => String(+n.replace(/,/g, '') * (w === 'thousand' ? 1000 : 100)));
+    return x.replace(/\b((?:(?:a|an|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)(?:[\s-]+(?:and\s+)?)?)+)(?=\s*(?:agents?|dollars?|bucks)\b)/g, (m) => {
+      const ws = m.trim().split(/[\s-]+/).filter((w) => w !== 'and');
+      if (!ws.some((w) => w !== 'a' && w !== 'an')) return m;   // 'an agent' stays
+      let total = 0, cur = 0;
+      for (const w of ws) { if (w === 'hundred') cur = (cur || 1) * 100; else if (w === 'thousand') { total += (cur || 1) * 1000; cur = 0; } else cur += NW[w] ?? 0; }
+      return `${total + cur} `;
+    });
+  }
   function njFromSentence(t) {
     const x = String(t || '').toLowerCase(), pre = {};
     const kinds = [[/vs ?code|visual studio code/, /extension/.test(x) ? 'VS Code extensions' : 'VS Code'], [/nest/, 'NestJS'], [/angular/, 'Angular'], [/next(\.js|js)?\b/, 'Next.js'], [/babel/, 'Babel']];
@@ -758,8 +770,11 @@
     const c = cs.find((y) => y.reserved && y.fresh) || cs.find((y) => y.repo === RESERVED_TAKE && y.fresh) || cs.find((y) => y.fresh) || cs[0];
     if (c) { pre.repo = c.repo; if (area) pre.root = `src/vs/${area}`; }
     if (/api index|index|api\.md/.test(x)) pre.job = 'comments+index';
-    const ag = /([\d,]+)\s*agents/.exec(x); if (ag) pre.agents = Math.min(2000, +ag[1].replace(/,/g, ''));
-    const bd = /\$\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*dollars?/.exec(x); if (bd) pre.budgetUsd = Math.min(30, +(bd[1] || bd[2]));
+    // spoken numbers too (qb3's take: Talk heard 'with a thousand agents' and the form kept 200): 'a thousand', 'one
+    // thousand', 'two hundred and fifty', '1k', 'five dollars'
+    const xs = spokenNums(x);
+    const ag = /([\d,]+)\s*agents/.exec(xs); if (ag) pre.agents = Math.min(2000, +ag[1].replace(/,/g, ''));
+    const bd = /\$\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:dollars?|bucks)|budget (?:of |to |at )?(\d+(?:\.\d+)?)/.exec(xs); if (bd) pre.budgetUsd = Math.min(30, +(bd[1] || bd[2] || bd[3]));
     if (/\bcache\b|for free/.test(x)) pre.preset = 'cache';
     if (!pre.budgetUsd && (pre.agents || 0) >= 500) pre.budgetUsd = 5;   // a big run gets room: small batches cost more per file
     return pre;
