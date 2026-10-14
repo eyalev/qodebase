@@ -264,6 +264,11 @@ export class Run extends DurableObject {
     for (const m of [...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])]) if (!m.model || (m.model !== 'cache' && !prices[m.model])) return { error: `model ${m.model} has no price: one of ${Object.keys(prices).join(', ')}` };
     if ([...cfg.models, ...(cfg.overflow ? [cfg.overflow] : [])].some((m) => m.model.startsWith('gemini')) && !this.env.GEMINI_KEY) return { error: 'a Gemini model needs the GEMINI_KEY secret' };
     cfg.agents = Math.max(1, Math.min(2000, Number(cfg.agents) || 10));
+    // A big run's safety window: 40 answers is ~1 s of a 1,000-agent run, so 3 model errors (8%) paused the scene-3 take
+    // (2026-10-14) although a model error is retried on the overflow model. Window grows with the agents; with an overflow
+    // model the error line is at least 15%.
+    cfg.pause.window = Math.max(cfg.pause.window || 40, Math.round(cfg.agents / 5));
+    if (cfg.overflow) cfg.pause.modelErrorShare = Math.max(cfg.pause.modelErrorShare, 0.15);
     cfg.budgetUsd = Math.min(Number(cfg.budgetUsd) || 1, b.left);
     // One walk of main's src/vs (~800 folders): the files with their blob hashes, lanes interleaved, and main's tip.
     cfg.repo = REPO_RE.test(cfg.repo || '') ? cfg.repo : MAIN;
