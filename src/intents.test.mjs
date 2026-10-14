@@ -128,7 +128,7 @@ test('a build that settled, then a change hours later: groups keep the build\'s 
   const root = answer(T, q(''));
   assert.equal(root.node.startedAt, 1500);
   assert.equal(root.node.endedAt, 6500, 'the project = the build, as the project page says');
-  assert.deepEqual(root.node.later, { n: 1, at: 8 * 3600_000 });
+  assert.deepEqual(root.node.later, { n: 1, at: 8 * 3600_000, items: [{ after: 8 * 3600_000 - 6500, back: false }] });
   assert.equal(root.children[0].endedAt, 6000);
   assert.equal(root.children[0].later.n, 1);
   // No build record: unchanged.

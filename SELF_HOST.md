@@ -12,7 +12,7 @@ Worker projects deploy to your account, and nobody else's limits apply.
 | Cloudflare | Workers **Paid** plan (Containers, Artifacts and Durable Objects with SQLite need it) |
 | Artifacts | open beta, enabled on the account |
 | A domain on Cloudflare | for the UI host and the run host (two hostnames, e.g. `code.example.com`, `run.example.com`) |
-| Claude | a Claude subscription token (`claude setup-token`) for your own projects, or an Anthropic API key |
+| Claude | a Claude subscription token (`claude setup-token`) for your own projects, or a Claude API key |
 | Local tools | Node 20+, `wrangler` 4.145+ (logged in), `jq`; optionally the `cf` CLI for the Issues wiring |
 
 ## The box image
@@ -54,7 +54,7 @@ If you bring your own image, it must keep this contract (see `src/box.ts`):
 2. **Cloudflare Access**: create a self-hosted Access application for
    `<UI_HOST>/login` only, with an allow policy (everyone, or just you) and the
    One-time PIN login method (sign-in by emailed code). People not in `HANDLES`
-   choose a handle on first sign-in and bring their own Anthropic API key. Put its
+   choose a handle on first sign-in and bring their own Claude API key. Put its
    team domain and AUD in `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD`. Everything else
    on the UI host stays public to read.
 3. **Secrets** (`wrangler secret put …`):
@@ -62,7 +62,7 @@ If you bring your own image, it must keep this contract (see `src/box.ts`):
    | Secret | What |
    |---|---|
    | `ADMIN_SECRET` | random; signs sessions and agent tokens, and unlocks the admin API on workers.dev |
-   | `KEY_ENC_SECRET` | random; encrypts users' Anthropic API keys |
+   | `KEY_ENC_SECRET` | random; encrypts users' Claude API keys |
    | `CLAUDE_CODE_OAUTH_TOKEN` | your `claude setup-token` value (the owner's agents) |
    | `CF_DEPLOY_TOKEN` | API token with **Workers Scripts Write** only (qodebase's builder deploys Worker projects) |
    | `OBS_READ_TOKEN` | API token with **Workers Observability Read** only (Issues → agent) |

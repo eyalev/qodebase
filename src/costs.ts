@@ -127,12 +127,12 @@ ${rs.map((r) => `<div class="crow"><span>${esc(KIND_LABEL[r.kind] || r.kind)}${r
   }).join('') || '<p class="desc">Nothing yet. Costs appear here once your agents run.</p>';
   return shell('Costs · qodebase', `<h1>Costs</h1>
 <div class="csum"><div><span>Today</span><b>${usd(s.today.total.usd)}</b></div><div><span>Last 7 days</span><b>${usd(s.week.total.usd)}</b></div><div><span>Next 30 days</span><b>${usd(s.month.usd)}</b><small>estimate at this week's pace</small></div></div>
-<p class="desc">What you pay. ${selfHost ? 'This copy runs in your Cloudflare account, so its boxes and voice bill you.' : 'On qodebase.app the agent boxes and voice bill qodebase, shown as covered, so you can still see them.'} On your Claude plan there is no per-use charge from qodebase: your agents' tokens count toward your plan's limits, counted by Anthropic, and the dollars beside them are what the same work would cost at API prices.</p>
+<p class="desc">What you pay. ${selfHost ? 'This copy runs in your Cloudflare account, so its boxes and voice bill you.' : 'On qodebase.app the agent boxes and voice bill qodebase, shown as covered, so you can still see them.'} On your Claude plan there is no per-use charge from qodebase: your agents' tokens count toward your plan's limits, counted by Claude, and the dollars beside them are what the same work would cost at API prices.</p>
 <table class="ctab"><tr><th></th><th>Today</th><th>7 days</th></tr>${kinds}</table>
 <h2>By day</h2>${days}
 <h2>How it is measured</h2>
 <ul class="cnote"><li>Agent boxes: every second awake (memory $${(CONTAINER.gibSecond * 3600).toFixed(3)} per GiB-hour, disk $${(CONTAINER.gbDiskSecond * 3600).toFixed(5)} per GB-hour) plus the CPU they actually used ($${(CONTAINER.vcpuSecond * 3600).toFixed(3)} per vCPU-hour), Cloudflare Workers Paid rates beyond the plan's included usage.</li>
-<li>Claude: tokens per model from Claude Code's own records, at Anthropic's API prices (Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 4.5 $1/$5 per million in/out).</li>
+<li>Claude: tokens per model from Claude Code's own records, at Claude's API prices (Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 4.5 $1/$5 per million in/out).</li>
 <li>Not measured: git storage and requests, a few cents a month.</li>
 <li>Prices checked ${PRICES_CHECKED}. Updated every 10 minutes while agents run.</li></ul>
 <style>.csum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.csum div{border:1px solid var(--line);border-radius:14px;padding:12px}.csum span,.csum small{display:block;color:var(--dim);font-size:13px}.csum b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}

@@ -448,7 +448,7 @@ export function aboutPage(selfHost = false) {
 <h2>What you can do</h2>
 <ul class="abl">
 ${li('Start or bring a project', 'Describe it in a sentence, or import a public repo from GitHub.')}
-${li('Ask for changes', 'Agents each work on their own copy; a reviewer agent checks every change; you merge.')}
+${li('Ask for changes', 'Agents each work on their own copy; a reviewer agent checks every change, and checked changes land on main by themselves, tested together.')}
 ${li('See it run', 'Anything with a web page runs live at its own address, every version too.')}
 ${li('Public or private', 'Share a project with everyone, or keep it, its code and its app to yourself.')}
 </ul>

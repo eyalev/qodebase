@@ -10,7 +10,7 @@ const esc = (s: string) => String(s ?? '').replace(/[<>&"']/g, (c) => ({ '<': '&
 
 export type KeyState = { kind?: 'plan' | 'api'; tail?: string; checkedAt?: number; failed?: { at: number; why: string } };
 
-export const COVERAGE = "Your agents run the real Claude Code on your plan; it counts toward your Claude plan's limits, counted by Anthropic, not billed by qodebase. qodebase's own helpers (ideas, Suggest, Talk) run on Cloudflare at our cost.";
+export const COVERAGE = "Your agents run the real Claude Code on your plan; it counts toward your Claude plan's limits, counted by Claude, not billed by qodebase. qodebase's own helpers (ideas, Suggest, Talk) run on Cloudflare at our cost.";
 
 const COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
 
@@ -76,7 +76,7 @@ export function connectPlan(mode: 'build' | 'settings', k: KeyState = {}) {
 <p class="cp-msg" id="cp-msg" role="status" aria-live="polite"></p>
 <p class="cp-cov">${COVERAGE}</p>
 <details class="cp-alt"><summary>Or use an API key</summary><div class="cp-api">
-<label for="cp-api">An Anthropic API key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. You pay Anthropic for what your agents use.</label>
+<label for="cp-api">A Claude API key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. You pay for what your agents use on that key; qodebase does not bill it.</label>
 <input class="cp-in" id="cp-api" aria-describedby="cp-msg" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="sk-ant-api03-…">
 <button type="button" class="chipbtn cp-go" data-cp="api">Save the key</button>
 <p class="cp-small">Max and Team plans' monthly API credits pay for a key only when it belongs to a Console organization linked in your claude.ai billing settings. A plan sign-in above uses your plan's limits instead.</p></div></details>`;
@@ -84,7 +84,7 @@ export function connectPlan(mode: 'build' | 'settings', k: KeyState = {}) {
     ? `<h2 class="cp-h">Connect your Claude plan</h2><p class="cp-sub">Your agents need Claude to work. This takes about a minute, once.</p>`
     : '';
   const connected = on ? `<div class="cp-on${k.failed ? ' cp-fail' : ''}"><p class="cp-st"><i aria-hidden="true"></i>${k.failed ? (kind === 'plan' ? 'Your Claude sign-in stopped working' : 'Your API key stopped working') : kind === 'plan' ? 'Claude plan connected' : 'API key connected'}</p>${k.failed ? `<p class="cp-why">${esc(k.failed.why)}${k.failed.at ? `, ${ago(k.failed.at)}` : ''}. ${kind === 'plan' ? 'Run claude setup-token again and paste the new token with Replace.' : 'Replace it with a working key.'}</p>` : ''}
-<p class="cp-small">${kind === 'plan' ? 'Token' : 'Key'} ending in …${esc(k.tail || '')}${k.checkedAt ? `, checked ${ago(k.checkedAt)}` : ''}. ${kind === 'plan' ? "Your agents run the real Claude Code on your plan's limits." : 'You pay Anthropic for what your agents use.'}</p>
+<p class="cp-small">${kind === 'plan' ? 'Token' : 'Key'} ending in …${esc(k.tail || '')}${k.checkedAt ? `, checked ${ago(k.checkedAt)}` : ''}. ${kind === 'plan' ? "Your agents run the real Claude Code on your plan's limits." : 'You pay for what your agents use on that key; qodebase does not bill it.'}</p>
 <div class="cp-acts"><button type="button" class="chipbtn" data-cp="replace" aria-expanded="false">Replace</button><button type="button" class="chipbtn" data-cp="remove">Remove</button></div></div>` : '';
   return `<section class="cp" id="connect" data-mode="${mode}" aria-label="Connect your Claude plan">${head}${connected}<div class="cp-steps"${on ? ' hidden' : ''}>${steps}</div></section>
 <style>${CSS}</style>
@@ -96,10 +96,10 @@ S.addEventListener('input',(e)=>{if(e.target.matches('.cp-in')){e.target.removeA
 const clean=(v)=>String(v||'').replace(/\\s+/g,'');
 async function save(kind,btn){const inp=S.querySelector(kind==='plan'?'#cp-plan':'#cp-api'),key=clean(inp.value);
  if(!key){say(kind==='plan'?'Paste the token from step 3 first.':'Paste the API key first.',true);inp.setAttribute('aria-invalid','true');inp.focus();return;}
- if(!/^sk-ant-/.test(key)){say(kind==='plan'?'That is not a Claude token: it starts with sk-ant-oat. Copy the whole line setup-token printed.':'That is not an Anthropic key: it starts with sk-ant-.',true);inp.focus();return;}
+ if(!/^sk-ant-/.test(key)){say(kind==='plan'?'That is not a Claude token: it starts with sk-ant-oat. Copy the whole line setup-token printed.':'That is not a Claude API key: it starts with sk-ant-.',true);inp.focus();return;}
  if(kind==='api'&&/^sk-ant-oat/.test(key)){say('That is a Claude plan token: paste it in step 3 above instead.',true);return;}
  if(kind==='plan'&&!/^sk-ant-oat/.test(key)){say('That looks like an API key: open "Or use an API key" below and paste it there.',true);return;}
- const label=btn.textContent;btn.disabled=true;btn.textContent='Checking…';say(kind==='plan'?'Checking the token with Claude Code. This can take up to 40 seconds the first time.':'Checking the key with Anthropic.');
+ const label=btn.textContent;btn.disabled=true;btn.textContent='Checking…';say(kind==='plan'?'Checking the token with Claude Code. This can take up to 40 seconds the first time.':'Checking the key with Claude.');
  const t0=performance.now();let r,j={};
  try{r=await fetch('/api/me/key',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key})});j=await r.json().catch(()=>({}));}catch(e){r={ok:false,status:0};}
  log('save',{kind,status:r.status,ok:!!r.ok,ms:Math.round(performance.now()-t0),got:j.kind||null});

@@ -148,7 +148,12 @@
   function timeOf(n) {
     if (!n.startedAt) return ''; const end = n.endedAt || Date.now();
     // A build that settled, then had a change land later: the build's own time, the later ones named apart (src/intents.ts buildWindow).
-    if (n.endedAt && n.later) return `build took ${dur(end - n.startedAt)}, then ${n.later.n === 1 ? 'one more change' : `${n0(n.later.n)} more changes`} ${dur(n.later.at - n.endedAt)} later`;
+    if (n.endedAt && n.later) {
+      // Each later change with its own delay (review 3: one was sent back by review and landed 43 min after, one 7.7 h after).
+      const it = n.later.items || [], one = (x) => `${x.back ? 'one sent back by review, landed ' : 'one '}${dur(x.after)} later`;
+      const tail = it.length && it.length === n.later.n ? it.map(one).join(', ') : `the last ${dur(n.later.at - n.endedAt)} later`;
+      return `build took ${dur(end - n.startedAt)}, then ${n.later.n === 1 ? 'one more change' : `${n0(n.later.n)} more changes`}: ${n.later.n === 1 ? tail.replace(/^one /, '') : tail}`;
+    }
     return n.endedAt ? `took ${dur(end - n.startedAt)}` : `<span data-it-since="${n.startedAt}">${dur(end - n.startedAt)}</span> so far`;
   }
   function rowHtml(src, n, depth) {

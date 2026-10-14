@@ -22,7 +22,7 @@ export type Node = {
   label: string; sub?: string; status: Status; counts: Counts; leaves: number;
   usd: number | null; startedAt: number | null; endedAt: number | null;
   waitingOn?: string; who?: string; pending?: number; kids: number; parent: string | null;
-  later?: { n: number; at: number };   // a build's group: changes that landed after the build settled (its time stops at the build)
+  later?: { n: number; at: number; items: { after: number; back: boolean }[] };   // a build's group: changes that landed after the build settled (its time stops at the build); items = the first 3, ms after the build, sent back by review first?
   detail?: unknown;   // leaves only: what the client shows when the node opens
 };
 export type Page = { node: Node; children: Node[]; offset: number; limit: number; total: number; path?: Node[] };
@@ -181,7 +181,7 @@ export function projectTree(info: Info, v: View): Tree {
       detail: { change: c.id, agent: c.agent ? who : null, intent: intentText.slice(0, 2000), word: s.word, claims: c.claims || [], files: c.files || [],
         stackedOn: c.stackedOn || null, review: c.review ? { verdict: c.review.verdict || null, notes: (c.review.notes || '').slice(0, 600) } : null,
         commits: [c.commit ? { sha: c.commit, what: 'its last commit on its own copy' } : null, c.landing?.mainCommit ? { sha: c.landing.mainCommit, what: 'on main' } : null].filter(Boolean),
-        how: c.landing?.how || null, conflicts: c.landing?.conflicts || [],
+        how: c.landing?.how || null, conflicts: c.landing?.conflicts || [], back: ev.some((e) => e.what === 'changes-suggested' || e.what === 'bounced'),
         diff: (c.landing?.diff || []).slice(0, 20).map((d) => ({ path: d.path, lines: d.lines.slice(0, 120) })),
         steps: ev.slice(-8).map((e) => ({ t: e.t, what: e.what, detail: (e.detail || '').slice(0, 200) })), age: now - (c.createdAt || now) } });
   }
@@ -210,7 +210,9 @@ function buildWindow(T: Tree, v: View) {
     if (!inside.length || !after.length) continue;
     n.endedAt = Math.max(...inside.map((x) => x.endedAt!));
     if (n.kind === 'project' && b.startedAt) { n.startedAt = b.startedAt; n.endedAt = b.settledAt; }
-    n.later = { n: after.length, at: Math.max(...after.map((x) => x.endedAt!)) };
+    const endAt = n.kind === 'project' && b.startedAt ? b.settledAt : n.endedAt;
+    n.later = { n: after.length, at: Math.max(...after.map((x) => x.endedAt!)),
+      items: after.slice().sort((x, y) => x.endedAt! - y.endedAt!).slice(0, 3).map((x) => ({ after: x.endedAt! - endAt!, back: !!(x.detail as any)?.back })) };
   }
 }
 
