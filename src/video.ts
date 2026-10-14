@@ -64,18 +64,19 @@ function page(v: Latest | null, origin: string) {
 <meta property="og:site_name" content="qodebase"><meta property="og:type" content="video.other">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${origin}/video">
-${v?.jpg ? `<meta property="og:image" content="${origin}${f(v.jpg)}"><meta property="og:image:width" content="${v.w || 1280}"><meta property="og:image:height" content="${v.h || 720}"><meta name="twitter:card" content="summary_large_image">` : ''}
+${v?.jpg ? `<meta property="og:image" content="${origin}${f(v.jpg)}"><meta property="og:image:width" content="1280"><meta property="og:image:height" content="${v.w && v.h ? Math.round((v.h * 1280) / v.w) : 720}"><meta name="twitter:card" content="summary_large_image">` : ''}
 ${v?.mp4 ? `<meta property="og:video" content="${origin}${f(v.mp4)}"><meta property="og:video:type" content="video/mp4">` : ''}
 <style>
 .vid{display:grid;gap:12px;max-width:960px;margin:0 auto}
 .vid h1{margin:0;font-size:24px;line-height:1.2;letter-spacing:-.02em}
 .vid .lede{margin:0;color:var(--dim);font-size:15px;max-width:62ch}
 .vid video{display:block;width:100%;max-height:78dvh;border-radius:12px;background:#000;aspect-ratio:${v?.w && v?.h ? `${v.w}/${v.h}` : '16/9'}}
-.vid .row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.vid .vrow{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
 .vid .share{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:0;border-radius:10px;background:var(--acc);color:var(--acc-fg);font-family:inherit;font-weight:500;font-size:15px;cursor:pointer}
 .vid .share svg{width:18px;height:18px}
 .vid .meta{color:var(--dim);font-size:13px;font-variant-numeric:tabular-nums}
-.vid .note{color:var(--dim);font-size:14px;min-height:20px}
+.vid .vnote{color:var(--dim);font-size:14px;margin:0}
+.vid .vnote:empty{display:none}
 .vid .site{color:var(--acc)}
 </style>`;
   const body = !v ? `<section class="vid"><h1>No video yet</h1><p class="lede">The first cut is not published yet.</p></section>` : `<section class="vid">
@@ -85,10 +86,10 @@ ${v?.mp4 ? `<meta property="og:video" content="${origin}${f(v.mp4)}"><meta prope
 <source src="${f(v.mp4)}" type="video/mp4">
 ${v.vtt ? `<track kind="captions" src="${f(v.vtt)}" srclang="en" label="English" default>` : ''}
 </video>
-<div class="row"><button type="button" class="share" id="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>Share</button>
-<span class="meta">${v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.round(v.duration % 60)).padStart(2, '0')}` : ''}${v.at ? `${v.duration ? ', ' : ''}cut of ${new Date(v.at).toISOString().slice(0, 10)}` : ''}</span>
+<div class="vrow"><button type="button" class="share" id="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>Share</button>
+<span class="meta">${v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, '0')}` : ''}${v.at ? `${v.duration ? ', ' : ''}cut of ${new Date(v.at).toISOString().slice(0, 10)}` : ''}</span>
 <a class="site" href="/">Try qodebase</a></div>
-<p class="note" id="note" role="status" aria-live="polite"></p>
+<p class="vnote" id="note" role="status" aria-live="polite"></p>
 </section>
 <script>(function(){var b=document.getElementById('share'),n=document.getElementById('note'),u=location.origin+'/video';
 b.addEventListener('click',function(){var d={title:${JSON.stringify(title)},text:${JSON.stringify(desc)},url:u};
