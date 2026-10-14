@@ -158,7 +158,7 @@
       <p class="rc-sub">${r.group ? (() => { const np = new Set(r.copies.map((c) => repoBase(c.repo))).size; return `${r.copies.length} copies of ${np} project${np === 1 ? '' : 's'}, run side by side`; })() : whatIs(r)}, ${n0(r.agentsStarted ?? r.agents)} of ${n0(r.agents)} agents started</p>
       ${r.group && r.copies[0]?.ladder ? `<div class="rc-tl"><p class="rc-mh">All ${r.copies.length} copies together</p>${timeline(r, TL['ladder:' + r.copies[0].ladder], full ? (DR && DR.k === key(r) ? DR : null) : 'mini')}</div>` : ''}
       ${(() => { const ph = r.phase || r.live?.phase, left = r.landingLeft ?? r.live?.landingLeft; return live(r) && ph === 'landing' ? `<p class="rc-why">Every agent has answered: landing the last ${left != null ? `${n0(left)} file${left === 1 ? '' : 's'}` : 'files'} on main.</p>` : ''; })()}
-      ${(() => { const nl = r.notLanded ?? r.live?.notLanded; return !live(r) && nl > 0 ? `<p class="rc-sm">${n0(nl)} answered file${nl === 1 ? '' : 's'} never landed: the run ended before ${nl === 1 ? 'it' : 'they'} reached main.</p>` : ''; })()}
+      ${(() => { const nl = r.notLanded ?? r.live?.notLanded; return !live(r) && nl > 0 ? `<p class="rc-sm">${n0(nl)} answered file${nl === 1 ? '' : 's'} never landed on main.</p>` : ''; })()}
       ${why ? `<p class="rc-why">${r.state === 'paused' && autoWhy(r) ? 'Paused automatically: ' : ''}${esc(why)}</p>` : ''}
       ${isCode(r) ? codeFiles(r, c) : isDecl(r) ? declFiles(r, c) : `<div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${c.files} files got comments on main">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
         <p>Agents ${live(r) ? 'have added' : 'added'} doc comments to <b>${n0(c.landed)}</b> files and committed them to ${r.group ? 'each copy\u2019s' : 'the'} main branch; ${n0(c.skipped)} files already had them.</p>
@@ -197,6 +197,13 @@
   function plainName(l) {
     if (!l) return '';
     if (STEP[l]) return STEP[l];
+    // the scale ladder (qb6: R10K-a … R100K-h, copies of 1,000 cached agents): the total, and which try at that size
+    let rk = /^R(\d+)K-([a-z])(?::.*)?$/.exec(l);
+    if (rk) {
+      const tries = [...new Set((D?.fleet || []).map((x) => x.ladder).filter((x) => new RegExp(`^R${rk[1]}K-[a-z]$`).test(x || '')))].sort();
+      const k = tries.indexOf(`R${rk[1]}K-${rk[2]}`);
+      return `${n0(+rk[1] * 1000)} agents on ${n0(+rk[1])} copies (cached answers)${tries.length > 1 && k >= 0 ? `, run ${k + 1} of ${tries.length}` : ''}`;
+    }
     let m = /^code dial (\d+)% \(K(?:\d+([a-z]?)|-([\w-]+))\)$/i.exec(l);
     if (m) return `Code changes, ${m[1] === '0' ? 'no tasks overlapping' : `${m[1]}% of tasks overlapping`}${m[3] ? `, ${m[3].replace(/-/g, ' ')} test` : KV[m[2] || ''] ?? ''}`;
     m = /^comment dial L(\d+)(c?)\b(.*)$/i.exec(l);
@@ -424,7 +431,8 @@
         startedAt: Math.min(...cs.map((c) => c.startedAt || Infinity)), endedAt: cs.every((c) => c.endedAt) ? Math.max(...cs.map((c) => c.endedAt)) : null,
         lastMinute: { landed: sum((c) => c.lastMinute?.landed), calls: sum((c) => c.lastMinute?.calls) },
         landWaitS: p90s.length ? { p50: Math.round(p50s.reduce((a, v) => a + v, 0) / p50s.length), p90: Math.max(...p90s) } : null,
-        models, pauses: cs.flatMap((c) => c.pauses || []).sort((a, b) => a.at - b.at), repos: cs.map((c) => c.repo) });
+        models, pauses: cs.flatMap((c) => c.pauses || []).sort((a, b) => a.at - b.at), repos: cs.map((c) => c.repo),
+        notLanded: sum((c) => (live(c) ? 0 : c.notLanded ?? c.live?.notLanded)) });
     }
     return out;
   }
