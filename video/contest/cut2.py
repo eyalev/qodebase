@@ -68,10 +68,12 @@ class Cut2(base.Cut):
         narration carries the detail (Eyal, 2026-10-14: the deck's paragraphs are unreadable in a video)."""
         im = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(im)
         hl = wrap(d, headline, F_VH, W - 320)
-        y = (H - (len(hl) * 104 + (90 if sub else 0) + (300 if nums else 0))) // 2
+        y = (H - (len(hl) * 104 + (len(wrap(d, sub, F_VSUB, W - 320)) * 60 + 30 if sub else 0) + (300 if nums else 0))) // 2
         for i, l in enumerate(hl): d.text((160, y + i * 104), l, font=F_VH, fill=FG)
         y += len(hl) * 104 + 30
-        if sub: d.text((160, y), sub, font=F_VSUB, fill=DIM); y += 90
+        for l in wrap(d, sub, F_VSUB, W - 320) if sub else []: d.text((160, y), l, font=F_VSUB, fill=DIM); y += 60
+        if sub: y += 30
+        fit_check(d, [(l, F_VH) for l in hl] + [(l, F_VSUB) for l in (wrap(d, sub, F_VSUB, W - 320) if sub else [])], W - 320, headline)
         if nums:
             colw = (W - 320) // len(nums); x = 160
             for i, (big, label) in enumerate(nums):
@@ -83,6 +85,27 @@ class Cut2(base.Cut):
         secs = max(hold(headline + ' ' + sub) , (self.speak(say) + after) if say else 0)
         if say: self.cues.append((self.now(), self.now() + secs, say))
         self.emit(im, round(secs * FPS))
+
+    def scale_chart(self, say, after=0.6):
+        """Eyal: the old ladder read as 'scaling failed'. Two groups: realistic (every file read from storage) and
+        best case (files repeat, read cache, no model calls), files per second over the busiest 10 s."""
+        im = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(im)
+        d.text((160, 110), 'Files per second, busiest 10 seconds', font=F_VH, fill=FG)
+        groups = [('Realistic: every file read from storage', ACC, [('1,000 agents', 1230), ('4,750 agents', 2100), ('10,000 agents', 1900)],
+                   'Capped by the account\'s storage reads, about 2,000 a second; the 10,000 run still finished in 86 s.'),
+                  ('Best case: files repeat (read cache, no model calls)', (148, 96, 15), [('50,000 agents', 12900), ('100,000 agents, 0 lost', 22400)], '')]
+        mx, y, x0, x1 = 22400, 270, 560, W - 260
+        for title, col, bars, note in groups:
+            d.text((160, y), title, font=F_VSUB, fill=col); y += 70
+            for label, v in bars:
+                d.text((160, y + 4), label, font=F_VLAB, fill=FG)
+                w = max(8, int((x1 - x0) * v / mx)); d.rounded_rectangle((x0, y, x0 + w, y + 46), radius=8, fill=col)
+                d.text((x0 + w + 20, y + 2), f'{v:,}', font=F_VLAB, fill=FG); y += 66
+            for l in (wrap(d, note, F_VLAB, W - 400) if note else []): d.text((160, y + 4), l, font=F_VLAB, fill=DIM); y += 50
+            if note: y += 10
+            y += 40
+        secs = max(6.0, self.speak(say) + after)
+        self.cues.append((self.now(), self.now() + secs, say)); self.emit(im, round(secs * FPS))
 
     def _canvas(self, shot, y0, caption, quote, badge, zoom=1.0):
         canvas = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(canvas)
@@ -129,6 +152,8 @@ class Cut2(base.Cut):
         return canvas
 
     def take(self, src, segs):
+        tight = os.path.join(src, 'segs.tight.json')
+        if os.environ.get('TIGHT', '1') == '1' and os.path.exists(tight): segs = json.load(open(tight))
         """segs: [{a, b, x=1, cap='', quote='', say='', y=0, audio=True}]; a/b are ms or event labels ('mark:2a',
         'say:2a' = when that clip started, '+1500' = ms after the previous b)."""
         frames = sorted((int(f[:-4]), f) for f in os.listdir(os.path.join(src, 'frames')) if f.endswith('.jpg'))
@@ -163,6 +188,9 @@ class Cut2(base.Cut):
         last_b = None
         for s in segs:
             a = at(s['a'], prev); b = at(s['b'], a); prev = b; x = float(s.get('x', 1))
+            if x > 1 and s.get('say'):
+                need = base.voice(s['say'])[1] + 0.5
+                if (b - a) / 1000 / x < need: x = max(1.0, (b - a) / 1000 / need)
             jump = (a - last_b) if (last_b is not None and x == 1 and a - last_b > 15000) else 0
             last_b = b
             if s.get('say'): self.speak(s['say'])
@@ -240,7 +268,7 @@ def cover_talk_version(im):
     ImageDraw.Draw(im).rectangle((int(w * .135), y0 - 4, int(w * .40), y1 + 4), fill=bg)
     return im
 
-TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-v2d').split(',')]
+TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-d2').split(',')]
 
 def script(c):
     PROVED = [('10,000', 'agents on Cloudflare, cached answers'), ('200', 'agents on real code: 0 lost in landing at 60% overlap'), ('40', 'real Claude agents on one app')]
@@ -260,15 +288,48 @@ def script(c):
     c.deck(12, say="And an honest finding: for a fresh app, one strong agent beat a team. A single Opus agent finished sooner in all three comparisons, two to six times, with at least as many features working; the team was cheaper in two of three.")
     c.chapter('Many agents, at scale')
     c.vslide('200 agents on real code', nums=(('1,385', 'coding tasks, checked by hidden tests'), ('0', 'lost in landing at 60% overlap'), ('44.5 min', 'with lanes and prefetch, from 207')), say="Two hundred cheap-model agents took almost fourteen hundred coding tasks on one codebase, checked by tests they never saw. As more tasks aimed at the same functions, losses stayed in the same range and nothing was lost in landing. The overlap cost time; lanes, one landing queue per module, cut the worst case from two hundred and seven minutes to forty-four and a half.")
-    c.deck(15, say="Then thousands of agents on one platform. Throughput stops near two thousand files a second: past about two thousand reads a second for the whole account, Artifacts slows down instead of failing. Faster landing let ten thousand agents put all twenty-nine thousand eight hundred ninety of their changes on main in eighty-six seconds, with cached answers instead of model calls, starting in ramps.")
+    c.scale_chart(say="Then thousands of agents on one platform. With every file different, storage reads cap it near two thousand files a second; ten thousand agents still put all their changes on main in eighty-six seconds. When files repeat, the cache lets a hundred thousand agents reach twenty-two thousand a second, with nothing lost.")
     c.chapter('A thousand agents, all by voice')
-    T3 = os.path.join(V, os.environ.get('TAKE3', 'take-v3r'))
+    T3 = os.path.join(V, os.environ.get('TAKE3', 'take-c3'))
     c.take(T3, json.load(open(os.path.join(T3, 'segs.json'))))
     c.chapter('Built on Cloudflare')
     c.vslide('All of it runs on Cloudflare', sub='Workers, Durable Objects, Artifacts, Containers and Workers AI (Gemini as overflow)', say="Underneath, it is all Cloudflare: Workers serve the app, Durable Objects hold every project and agent, Artifacts hold every repository and fork, Containers run the agents, and Workers AI runs the low-cost models, with Gemini as overflow, and the voice.")
     c.chapter('')
     c.vslide('What we proved', nums=PROVED, say="Ten thousand agents on one platform, two hundred on real code with nothing lost in landing, and up to forty agents running Claude building one app, every step recorded and visible.")
-    c.vslide('Try it: qodebase.app', sub='Watch a run, no sign-in. Code: github.com/eyalev/qodebase', say="Try it yourself at qodebase dot app: watch a run with no sign-in, and read how it works.", after=4.0)
+    c.vslide('Try it: qodebase.app', sub='Watch a run, no sign-in. Code: qodebase.app/p/eyal/qodebase (also on GitHub: github.com/eyalev/qodebase)', say="Try it yourself at qodebase dot app: watch a run with no sign-in, and read how it works.", after=4.0)
+
+_SPEECH = {}
+def speech_spans(path, start):
+    """Where a clip actually speaks (silencedetect at -40 dB, 0.25 s), shifted to its start in the cut."""
+    if path not in _SPEECH:
+        o = subprocess.run(['ffmpeg', '-nostdin', '-i', path, '-af', 'silencedetect=noise=-40dB:d=0.25', '-f', 'null', '-'], capture_output=True, text=True).stderr
+        import re
+        dur = float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path], capture_output=True, text=True).stdout or 0)
+        st = [float(x) for x in re.findall(r'silence_start: ([0-9.]+)', o)]; en = [float(x) for x in re.findall(r'silence_end: ([0-9.]+)', o)]
+        edges = [0.0] + [v for pr in zip(st, en) for v in pr] + [dur]
+        _SPEECH[path] = [(a, b) for a, b in zip(edges[0::2], edges[1::2]) if b - a > 0.12]
+    return [(start + a, start + b) for a, b in _SPEECH[path]]
+
+FIT_FAIL = []
+def fit_check(d, lines, width, where):
+    """Eyal: nothing may run past the safe area. Every drawn line must fit its width (fails the render otherwise)."""
+    for text, f in lines:
+        if d.textlength(text, font=f) > width + 1: FIT_FAIL.append((where[:40], text[:60]))
+
+def voice_kind(path):
+    if '/clips/user/' in path: return 'user'
+    if os.path.basename(path).startswith(('tab-', 'aud-')) or path.endswith('-x125.wav'): return 'talk'
+    return 'narrator'
+
+def overlap_check(audio):
+    """Eyal's rule: never two voices at once. Returns the overlaps (kind, kind, t0, t1) between user, Talk and narrator."""
+    spans = [(k, a, b) for t, f in audio for k in [voice_kind(f)] for a, b in speech_spans(f, t)]
+    spans.sort(key=lambda x: x[1]); bad = []
+    for i, (k1, a1, b1) in enumerate(spans):
+        for k2, a2, b2 in spans[i + 1:]:
+            if a2 >= b1: break
+            if k1 != k2 and min(b1, b2) - a2 > 0.05: bad.append((k1, k2, round(a2, 2), round(min(b1, b2), 2)))
+    return bad
 
 def _no_overlap(cues):
     cues.sort(key=lambda c: c[0])
@@ -276,7 +337,16 @@ def _no_overlap(cues):
 
 _close = Cut2.close
 def _close_fixed(self):
-    self.cues = _no_overlap(self.cues); return _close(self)
+    self.cues = _no_overlap(self.cues)
+    if FIT_FAIL:
+        print(json.dumps({'event': 'fit_check', 'overflows': FIT_FAIL}))
+        if os.environ.get('ALLOW_OVERFLOW') != '1': _close(self); sys.exit(f'fit check FAILED: {len(FIT_FAIL)} lines overflow')
+    print(json.dumps({'event': 'fit_check', 'overflows': 0}))
+    bad = overlap_check(self.audio)
+    print(json.dumps({'event': 'overlap_check', 'overlaps': len(bad), 'list': bad[:20]}))
+    if bad and os.environ.get('ALLOW_OVERLAP') != '1':
+        _close(self); sys.exit(f'overlap check FAILED: {len(bad)} overlaps (see above); fix the timing (ALLOW_OVERLAP=1 to keep the file)')
+    return _close(self)
 Cut2.close = _close_fixed
 
 if __name__ == '__main__':

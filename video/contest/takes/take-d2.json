@@ -1,0 +1,81 @@
+[
+ {
+  "a": 14400,
+  "b": 24700
+ },
+ {
+  "a": 41900,
+  "b": 44600
+ },
+ {
+  "a": 55600,
+  "b": 57100
+ },
+ {
+  "a": 58400,
+  "b": 75200
+ },
+ {
+  "a": 78300,
+  "b": 81400
+ },
+ {
+  "a": 96500,
+  "b": 99000
+ },
+ {
+  "a": 111100,
+  "b": 113900
+ },
+ {
+  "a": 116000,
+  "b": 118500
+ },
+ {
+  "a": 122000,
+  "b": 542000,
+  "x": 60,
+  "say": "An Opus planner splits the app into parts, and Haiku agents take them, each on its own copy of the code."
+ },
+ {
+  "a": 543100,
+  "b": 552400
+ },
+ {
+  "a": 569200,
+  "b": 571900
+ },
+ {
+  "a": 574000,
+  "b": 576500
+ },
+ {
+  "a": 577000,
+  "b": 1435000,
+  "x": 80,
+  "say": "The dark mode lands on top of the rest while the other agents work, and collisions are redone on the newest code. All nine parts landed in twenty-two minutes, for under two dollars of model time."
+ },
+ {
+  "a": 1452900,
+  "b": 1456200,
+  "zoom": 1.35,
+  "y": 140
+ },
+ {
+  "a": 1456200,
+  "b": 1462500,
+  "zoom": 1.35,
+  "y": 140,
+  "say": "The timeline shows where the time went, agent by agent."
+ },
+ {
+  "a": 1468500,
+  "b": 1471000
+ },
+ {
+  "a": 1473000,
+  "b": 1484500,
+  "say": "And the app is live, with its light and dark switch.",
+  "hold": 1
+ }
+]

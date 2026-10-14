@@ -1,0 +1,13 @@
+[[14531, "you", "Build me an app called Item Tracker that keeps track of everything in my home, with a paid Pro plan."],
+ [23635, "talk", "Build it?"],
+ [42121, "you", "Use the cheapest team."],
+ [56058, "talk", "Build it?"],
+ [58527, "you", "Yes, build it."],
+ [64115, "talk", "This will start 6 Haiku agents and an Opus planner, shared board, about 8 to 21 minutes and $0.78 to $2.10. Start?"],
+ [78453, "you", "Yes, start."],
+ [111271, "you", "Show me the agents."],
+ [543240, "you", "Add a dark mode to the app."],
+ [549837, "talk", "Send to eyal/tracker’s agents?"],
+ [569370, "you", "Yes."],
+ [1453009, "you", "Show the timeline."],
+ [1468628, "you", "Show me the app."]]

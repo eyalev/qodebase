@@ -1,0 +1,58 @@
+[
+ {
+  "a": 14400,
+  "b": 33500
+ },
+ {
+  "a": 34900,
+  "b": 41800
+ },
+ {
+  "a": 43200,
+  "b": 61500
+ },
+ {
+  "a": 62700,
+  "b": 82000
+ },
+ {
+  "a": 158700,
+  "b": 170000
+ },
+ {
+  "a": 170000,
+  "b": 515000,
+  "x": 40,
+  "say": "An Opus planner splits the app into parts, and Haiku agents take them, each on its own copy of the code."
+ },
+ {
+  "a": 515400,
+  "b": 528000
+ },
+ {
+  "a": 563300,
+  "b": 576000
+ },
+ {
+  "a": 576000,
+  "b": 3865000,
+  "x": 150,
+  "say": "The dark mode lands on top of the rest while the other agents work, and collisions are redone on the newest code. The last part was held up by a bug in our merger, found and fixed during this take; then all ten parts landed, for under two dollars of model time."
+ },
+ {
+  "a": 3884100,
+  "b": 3899500
+ },
+ {
+  "a": 3900700,
+  "b": 3926500,
+  "zoom": 1.35,
+  "y": 140,
+  "hold": 1
+ },
+ {
+  "a": 3928000,
+  "b": 3942000,
+  "hold": 1
+ }
+]

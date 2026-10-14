@@ -1,0 +1,75 @@
+[
+ {
+  "a": 14631,
+  "b": 20439
+ },
+ {
+  "a": 23415,
+  "b": 25782
+ },
+ {
+  "a": 42221,
+  "b": 43920
+ },
+ {
+  "a": 55847,
+  "b": 57400
+ },
+ {
+  "a": 58627,
+  "b": 60526
+ },
+ {
+  "a": 63940,
+  "b": 76265
+ },
+ {
+  "a": 78553,
+  "b": 81012
+ },
+ {
+  "a": 111371,
+  "b": 114150
+ },
+ {
+  "a": 122000,
+  "b": 542000,
+  "x": 60,
+  "say": "An Opus planner splits the app into parts, and Haiku agents take them, each on its own copy of the code."
+ },
+ {
+  "a": 543340,
+  "b": 545399
+ },
+ {
+  "a": 549518,
+  "b": 553389
+ },
+ {
+  "a": 569470,
+  "b": 571569
+ },
+ {
+  "a": 585000,
+  "b": 1435000,
+  "x": 80,
+  "say": "The dark mode lands on top of the rest while the other agents work, and collisions are redone on the newest code. All nine parts landed in twenty-two minutes, for under two dollars of model time."
+ },
+ {
+  "a": 1453109,
+  "b": 1455808,
+  "zoom": 1.35,
+  "y": 140,
+  "say": "The timeline shows where the time went, agent by agent."
+ },
+ {
+  "a": 1468728,
+  "b": 1470107,
+  "say": "And the app is live, with its dark mode."
+ },
+ {
+  "a": 1483834,
+  "b": 1490000,
+  "hold": 1
+ }
+]

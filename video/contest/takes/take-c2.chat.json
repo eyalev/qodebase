@@ -1,0 +1,72 @@
+[
+ [
+  14552,
+  "you",
+  "Build me an app called Stuff Tracker that keeps track of everything in my home, with a paid pro version."
+ ],
+ [
+  23648,
+  "talk",
+  "Build it?"
+ ],
+ [
+  34986,
+  "you",
+  "Use the cheapest team."
+ ],
+ [
+  39191,
+  "talk",
+  "Build it?"
+ ],
+ [
+  43279,
+  "you",
+  "Yes, build it."
+ ],
+ [
+  50558,
+  "talk",
+  "This will start 6 Haiku agents and an Opus planner, shared board, about 8 to 21 minutes and $0.78 to $2.10. Start?"
+ ],
+ [
+  62743,
+  "you",
+  "Yes, start."
+ ],
+ [
+  158748,
+  "you",
+  "Show me the agents."
+ ],
+ [
+  515525,
+  "you",
+  "Add a dark mode to the app."
+ ],
+ [
+  520882,
+  "talk",
+  "Send to eyal/stuff-tracker\u2019s agents?"
+ ],
+ [
+  563415,
+  "you",
+  "Yes."
+ ],
+ [
+  3884145,
+  "you",
+  "Open the dark mode change."
+ ],
+ [
+  3900783,
+  "you",
+  "Show the timeline."
+ ],
+ [
+  3928050,
+  "you",
+  "Show me the app."
+ ]
+]

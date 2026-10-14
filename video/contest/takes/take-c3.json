@@ -1,0 +1,10 @@
+[
+ {"a": 16400, "b": 41500},
+ {"a": 42900, "b": 46500},
+ {"a": 46500, "b": 350000, "x": 16, "say": "A thousand agents start in ramps, at most about three hundred and fifty busy at once, each on its own files. Each also writes one line in a shared index, so they collide thousands of times, and every collision is redone on the newest code. The files the checks rejected are left unchanged; the rest land on main."},
+ {"a": 357700, "b": 375200},
+ {"a": 377800, "b": 380600},
+ {"a": 388500, "b": 398700},
+ {"a": 398700, "b": 408500, "zoom": 1.3, "y": 130},
+ {"a": 408500, "b": 409800, "zoom": 1.3, "y": 130, "say": "The run's own page: the index check, five thousand seven hundred eighty-seven lines, none missing, and every one of the two thousand seven hundred ninety-one collisions redone.", "hold": 9}
+]

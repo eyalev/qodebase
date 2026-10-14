@@ -151,6 +151,14 @@ http.createServer(async (req, res) => {
       case '/tapxy': await page.touchscreen.tap(+a.x, +a.y); return send(log('tap', { x: +a.x, y: +a.y }));
       case '/ftap': await page.frameLocator(a.frame || 'iframe').locator(a.sel).first().tap({ timeout: +(a.timeout || 8000) }); return send(log('tap', { frame: a.frame || 'iframe', sel: a.sel }));
       case '/fselect': await page.frameLocator(a.frame || 'iframe').locator(a.sel).first().selectOption(a.value); return send(log('select', { frame: a.frame || 'iframe', sel: a.sel, value: a.value }));
+      case '/hold': {   // a touch long-press (qb2: 0.55 s on a mic turns conversation mode on)
+        const bb = await page.locator(a.sel).first().boundingBox(); if (!bb) return send({ err: 'not visible' }, 404);
+        const x = bb.x + bb.width / 2, y = bb.y + bb.height / 2, c = await page.context().newCDPSession(page);
+        await c.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+        await new Promise((ok) => setTimeout(ok, +(a.ms || 800)));
+        await c.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        return send(log('hold', { sel: a.sel, ms: +(a.ms || 800) }));
+      }
       case '/type': await page.locator(a.sel).first().fill(a.text); return send(log('type', { sel: a.sel, text: a.text }));
       case '/press': await page.keyboard.press(a.key); return send(log('press', { key: a.key }));
       case '/goto': await page.goto(BASE + a.path, { waitUntil: 'load' }); return send(log('goto', { path: a.path }));
