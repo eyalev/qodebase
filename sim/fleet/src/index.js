@@ -358,13 +358,44 @@ export class Run extends DurableObject {
 
   async alarm() {
     const s = await this.st();
-    if (!s || s.state === 'stopped' || s.state === 'held' || (s.agentsStarted || 0) >= s.cfg.agents) return;
+    if (!s || s.state === 'stopped' || s.state === 'held') return;
+    if ((s.agentsStarted || 0) >= s.cfg.agents) { await this.sweepLost(s); return; }
     const from = s.agentsStarted || 0, to = Math.min(s.cfg.agents, from + (s.cfg.ramp || 50));
     await Promise.all(Array.from({ length: to - from }, (_, k) => (s.cfg.kata ? this.env.KATA : this.env.AGENT).get((s.cfg.kata ? this.env.KATA : this.env.AGENT).idFromName(`${s.runId}-${from + k}`)).begin(s.runId, from + k, s.cfg.repo || MAIN, Math.max(1, Math.min(20, Number(s.cfg.batch) || 1)), s.cfg.pack ? { files: Math.max(2, Math.min(10, Number(s.cfg.pack.files) || 8)), tokens: Math.max(2000, Math.min(30000, Number(s.cfg.pack.tokens) || 12000)) } : null, Number(s.cfg.jitterMs ?? 3000))));
     s.agentsStarted = to; await this.save(s);
     const meta = await this.ctx.storage.get(`meta:${s.runId}`); if (meta) { meta.agentsStarted = to; await this.ctx.storage.put(`meta:${s.runId}`, meta); }
     log('agents_started', { runId: s.runId, started: to, of: s.cfg.agents });
     if (to < s.cfg.agents) await this.ctx.storage.setAlarm(Date.now() + (s.cfg.ramp > 50 ? 100 : 200));
+    else await this.ctx.storage.setAlarm(Date.now() + 30_000);   // then the lost-file sweep
+  }
+
+  /** Answered files no landing queue took (2026-10-14, 100k: 43 files recorded 'ready' whose agents' hand-off to the Lander
+   *  never ran: those invocations were cancelled under load). Every 30 s: a file 'ready' for over a minute that its Lander
+   *  does not hold goes back in the queue and a fresh agent redoes it (cache answers are the same every time). */
+  async sweepLost(s) {
+    if (s.cfg.kata || s.cfg.dial) return;
+    const runId = s.runId;
+    const old = this.sql.exec(`SELECT file FROM rec WHERE run = ? AND status = 'ready' AND landed_at IS NULL AND at < ?`, runId, Date.now() - 60_000).toArray().map((x) => x.file);
+    const anyReady = this.sql.exec(`SELECT COUNT(*) AS n FROM rec WHERE run = ? AND status = 'ready'`, runId).toArray()[0]?.n || 0;
+    if (old.length) {
+      const held = new Set(await lander(this.env, s.cfg.repo || MAIN).holds(old).catch(() => old));
+      const lost = old.filter((f) => !held.has(f));
+      if (lost.length) {
+        for (const f of lost) {
+          this.sql.exec(`UPDATE rec SET status = 'ready_retry', reason = 'answered, but no landing queue took it: redone' WHERE run = ? AND file = ? AND status = 'ready'`, runId, f);
+          this.sql.exec(`UPDATE q SET taken = 0, taken_at = NULL WHERE run = ? AND path = ?`, runId, f);
+        }
+        s.counts.ready = Math.max(0, (s.counts.ready || 0) - lost.length); s.counts.queued += lost.length;
+        s.reissued = (s.reissued || 0) + lost.length;
+        if (s.state === 'done') { s.state = 'running'; delete s.endedAt; }
+        await this.save(s);
+        const k0 = s.sweepAgents || 0, n = Math.min(5, lost.length);
+        await Promise.all(Array.from({ length: n }, (_, k) => this.env.AGENT.get(this.env.AGENT.idFromName(`${runId}-sweep-${k0 + k}`)).begin(runId, s.cfg.agents + k0 + k, s.cfg.repo || MAIN, Math.max(1, Math.min(20, Number(s.cfg.batch) || 1)), null, 0)));
+        s.sweepAgents = k0 + n; await this.save(s);
+        log('reissued_lost', { runId, n: lost.length, agents: n });
+      }
+    }
+    if (anyReady || s.state === 'running') await this.ctx.storage.setAlarm(Date.now() + 30_000);
   }
 
   /** An agent asks for its next file. */
@@ -593,7 +624,7 @@ export class Run extends DurableObject {
     s.state = 'running'; s.recent = []; s.pauses.push({ at: Date.now(), why: 'resumed', cfg }); await this.save(s); return { state: s.state, cfg: s.cfg };
   }
   async stop(why) { const s = await this.st(); if (!s) return { error: 'no run' }; s.state = 'stopped'; s.stoppedWhy = why; s.endedAt = Date.now(); await this.save(s); await lander(this.env, s.cfg.repo || MAIN).flush(s.runId); return { state: s.state }; }
-  async restart() { await this.ctx.storage.sync(); this.ctx.abort('restart on the deployed code'); }
+  async restart() { await this.ctx.storage.setAlarm(Date.now() + 2000); await this.ctx.storage.sync(); this.ctx.abort('restart on the deployed code'); }   // the alarm runs the lost-file sweep (or goes on starting agents)
   async agentFinished(runId) { const s = await this.st(); if (!s || s.runId !== runId) return; s.agentsDone++; if (s.agentsDone >= s.cfg.agents && s.state === 'running') { s.state = 'done'; s.endedAt = Date.now(); await lander(this.env, s.cfg.repo || MAIN).flush(runId); } await this.save(s); }
 
   async status() {
@@ -1186,6 +1217,8 @@ export class Lander extends DurableObject {
   }
   async begin(runId, base, repo = MAIN, job = null) { await this.ctx.storage.deleteAll(); this.tables(); await this.ctx.storage.put({ runId, base, repo, job, landed: 0, commits: 0, pushes: 0, stale: 0, errors: [] }); }
   async add(runId, lane, path, text, at) { return this.addMany(runId, [{ lane, path, text, at }]); }
+  /** Which of these paths wait in this Lander (for the Run object's lost-file sweep). */
+  async holds(paths) { this.tables(); return paths.filter((p) => this.ctx.storage.sql.exec(`SELECT 1 FROM pend WHERE path = ? LIMIT 1`, p).toArray().length); }
   async addTasks(runId, items) {
     if ((await this.ctx.storage.get('runId')) !== runId) return;
     this.tables();
