@@ -321,7 +321,7 @@
   }
   function watchCard() {
     const W = D.watch || {}, dm = D.demo || {};
-    const speedChips = (on) => [1, 2, 4].map((x) => `<button class="chipb sp" type="button" data-speed="${x}" aria-pressed="${on === x}">${x}×</button>`).join('');
+    const speedChips = (on) => [2, 4, 8].map((x) => `<button class="chipb sp" type="button" data-speed="${x}" aria-pressed="${on === x}">${x}×</button>`).join('');
     if (P && P.replay) {
       const done = now() >= P.end - 1, pct = Math.min(100, (100 * (now() - P.start)) / (P.end - P.start));
       return `<div class="watch"><div class="wt"><i class="live off"></i><span><b>Replay</b> of a run from ${hhmm(P.realStart)}: ${P.base.mode === 'demo' ? `${dm.agents || ''} ${term('scripted', 'scripted agents')}` : `${new Set(P.base.changes.map((c) => c.agent)).size} AI ${term('agent', 'agents')}`}, sped up ${P.speed}×.${limitNote ? ` ${esc(limitNote)}` : ''}</span></div>
@@ -400,13 +400,12 @@
     if (wait.length) parts.push(`<div class="wait"><div class="cars">${capped(wait, full ? 999 : 10)}</div><div class="lbl">${D.queue.waiting.length} waiting${replaying.length ? `, ${replaying.length} replaying` : ''}</div></div>`);
     const lastLand = D.queue.trains.filter((t) => t.state === 'landed').sort((x, y) => y.endedAt - x.endedAt)[0];
     const landP = lastLand ? pulse(`train:${lastLand.id}`) : null;
-    const track = parts.length || landP ? `<div class="track" aria-label="The line, front first"><div class="stop${landP ? ' pl' : ''}"${landP || ''}><b>main</b>lands here</div>${parts.join('')}</div>` : '<p class="empty-line">The line is empty. Finished changes wait here to be tested.</p>';
-    const done = D.queue.trains.filter((t) => t.state !== 'testing').sort((a, b) => b.endedAt - a.endedAt).slice(0, full ? 50 : 3);
+    const track = parts.length || (landP && !runOver()) ? `<div class="track" aria-label="The line, front first"><div class="stop${landP ? ' pl' : ''}"${landP || ''}><b>main</b>lands here</div>${parts.join('')}</div>` : (() => { const ln = countIf(D.changes, (c) => c.state === 'landed'); return ln && runOver() ? `<p class="empty-line">The line is empty: all ${n0(ln)} change${ln === 1 ? '' : 's'} landed.</p>` : '<p class="empty-line">The line is empty. Finished changes wait here to be tested.</p>'; })();
     // What landed, by name: "Add oat milk to the menu (Agent 4)".
     const what = (ids, t) => ids.map((id) => { const c = look(id, t); return c ? `<a href="#/change/${esc(id)}">${short(c)}</a> (${AG(c.agent)})` : `<a href="#/change/${esc(id)}">${ref(id)}</a>`; }).join(', ');
     // One row per outcome. train.items (qb6) says each change's outcome: a train can land
     // some changes and send one back; without items the train's state is everyone's.
-    const res = done.flatMap((t) => {
+    const resOf = (t) => [t].flatMap((t) => {
       const by = { landed: [], bounced: [], back: [] };
       if (t.items?.length) for (const it of t.items) (it.outcome === 'landed' ? by.landed : it.outcome === 'bounced' ? by.bounced : by.back).push(it.id);
       else (t.state === 'landed' ? by.landed : by.bounced).push(...t.changes);
@@ -419,8 +418,22 @@
       if (by.back.length) rows.push(`<li><i class="dot s-replaying"></i><span>Back in line after a ${term('collision', 'collision')}: ${what(by.back, t)}</span>${when}</li>`);
       return rows;
     }).join('');
-    return `<div class="line">${track}${res ? `<ul class="results">${res}</ul>` : ''}</div>`;
+    // Line history (Eyal, 2026-10-14): every past train, newest first, numbered in the order they ran; open one for its
+    // changes and what happened to each
+    const all = D.queue.trains.filter((t) => t.state !== 'testing' && t.startedAt).sort((a, b) => a.startedAt - b.startedAt);
+    const num = new Map(all.map((t, i) => [t.id, i + 1]));
+    const hist = all.slice().reverse().slice(0, full ? 200 : 30).map((t) => {
+      const ids = t.changes || [], rpN = ids.filter((id) => /^replayed/.test(idx.get(id)?.landing?.how || '')).length;
+      const rpMs = t.phases?.replay ?? t.timing?.replay ?? null, took = t.endedAt && t.startedAt ? t.endedAt - t.startedAt : null;
+      const verb = t.state === 'landed' ? 'landed' : t.state === 'bounced' ? 'sent back' : 'ended';
+      const head = `Train ${num.get(t.id)}: ${ids.length} change${ids.length === 1 ? '' : 's'}${rpN ? `, ${rpN} replayed${rpMs ? ` (${secs(rpMs)})` : ''}` : ''}, ${verb} ${ago(t.endedAt)}${took ? `, took ${secs(took)}` : ''}`;
+      const rows = resOf(t);
+      return `<li><details${openTrains.has(t.id) ? ' open' : ''} data-train="${esc(t.id)}"><summary>${head}</summary><ul class="results">${rows}</ul></details></li>`;
+    }).join('');
+    return `<div class="line">${track}${hist ? `<h3 class="lh-h">Line history</h3><ul class="lhist">${hist}</ul>` : ''}</div>`;
   }
+  const openTrains = new Set();   // which past trains are open: kept across the 2 s redraw
+  root.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('[data-train]')) { if (d.open) openTrains.add(d.dataset.train); else openTrains.delete(d.dataset.train); } }, true);
   function fileMarks() {
     // Per file: working (w), claimed (c), collided recently (x), landed recently (l).
     const m = new Map(), T = now(), put = (p, k) => { const o = { l: 1, c: 2, w: 3, x: 4 }; if (!m.has(p) || o[k] > o[m.get(p)]) m.set(p, k); };
@@ -667,11 +680,13 @@
     // its planned parts, this strip leaves the count to it.
     const partsShown = !!(D.estimate && D.build && D.build.parts && !replay);
     const head = isStarting ? 'Starting the run' : idle ? (landed ? `${n0(landed)} of ${n0(total)} landed in the last run` : 'Nothing has run yet') : `${n0(landed)} of ${n0(total || landed)} landed`;
-    const speedChips = (on) => [1, 2, 4].map((x) => `<button class="chipb sp" type="button" data-speed="${x}" aria-pressed="${on === x}">${x}×</button>`).join('');
+    const speedChips = (on) => [2, 4, 8].map((x) => `<button class="chipb sp" type="button" data-speed="${x}" aria-pressed="${on === x}">${x}×</button>`).join('');
     const left = W.maxPerDay ? Math.max(0, W.maxPerDay - (W.runsToday || 0)) : null;
     const acts = replay ? `<div class="sacts">${now() >= P.end - 1 ? '<button class="btn" type="button" data-watch="again">Replay again</button>' : speedChips(P.speed)}<button class="chipb" type="button" data-watch="live">Back to live</button></div>`
       : idle && !MOCK && D.watch?.enabled ? `<div class="sacts"><button class="btn" type="button" data-watch="start">Watch a run</button>${D.changes.length ? '<button class="chipb" type="button" data-watch="replay">Replay the last one</button>' : ''}${ownerCtl(false)}</div>${limitNote ? `<p class="snote">${esc(limitNote)}</p>` : left != null ? `<p class="snote">${left} of ${W.maxPerDay} live runs left today.</p>` : ''}`
-      : live && OWN && !MOCK && D.mode === 'demo' ? `<div class="sacts">${ownerCtl(true)}</div>` : ''
+      : live && OWN && !MOCK && D.mode === 'demo' ? `<div class="sacts">${ownerCtl(true)}</div>`
+      // a finished real build can be watched again (Eyal, 2026-10-14): the recorded events at 2x, 4x or 8x
+      : idle && !MOCK && D.mode !== 'demo' && landed ? `<div class="sacts"><button class="btn" type="button" data-watch="replay">Replay this run</button></div>` : ''
     const ctl = runCtl(live);
     // Requests the router queued until an agent is free (qb6's view.waiting, or lastRequest.state 'queued')
     const wq = (D.waiting || (D.lastRequest && D.lastRequest.state === 'queued' ? [D.lastRequest] : [])).filter((w) => w && w.text);
@@ -683,13 +698,21 @@
     return `<div class="sstrip"><p class="skick"><i class="live${(live || isStarting) && !RUN().paused && !RUN().stopped ? '' : ' off'}"></i><span>${kick}${RUN().stopped ? ', stopped' : RUN().paused ? ', paused' : ''}</span>${tm ? `<span class="stm">${tm}</span>` : ''}</p>
       ${partsShown ? '' : `<p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>`}${keptNote}${waitLine}${acts}${ctl}</div>`;
   }
+  // Eyal (2026-10-14): the page is the Board. A heading over the four columns with what it shows; once a build is done,
+  // what to do with it.
+  function boardHead() {
+    const landedN = countIf(D.changes, (c) => c.state === 'landed'), total = D.changes.length;
+    const done = total > 0 && runOver() && !(P && P.replay);
+    const hint = done ? `All ${n0(landedN)} landed. ${(matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click' : 'Tap')} a circle to see what each agent did.` : 'Each circle is an agent; it moves right as its work lands.';
+    return `<div class="bhead"><h2>Board</h2><p>${hint}</p></div>`;
+  }
   function pipeline() {
     const rp = (c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying');
     const cols = COLS.map(([k, label, f]) => {
       const cs = D.changes.filter(f).sort((a, b) => agentNum(a.agent) - agentNum(b.agent));
       // a big run's column (1,052 landed on a kata view) stops after 47 chips with '+N' (it ran the length of the page)
       const CAP = 48, shown = cs.length > CAP ? cs.slice(0, CAP - 1) : cs;
-      const chips = shown.map((c) => `<span class="pc${rp(c) ? ' rp' : ''}${c.state === 'with-lead' || c.state === 'bounced' ? ' bad' : ''}${c.state === 'testing' ? ' test' : ''}" title="${AG(c.agent)}: ${short(c)}">${agentNum(c.agent)}</span>`).join('') + (shown.length < cs.length ? `<span class="pc more">+${n0(cs.length - shown.length)}</span>` : '');
+      const chips = shown.map((c) => `<a class="pc${rp(c) ? ' rp' : ''}${c.state === 'with-lead' || c.state === 'bounced' ? ' bad' : ''}${c.state === 'testing' ? ' test' : ''}" href="#/change/${esc(c.id)}" title="${AG(c.agent)}: ${short(c)}" aria-label="${AG(c.agent)}: ${esc(short(c))}">${agentNum(c.agent)}</a>`).join('') + (shown.length < cs.length ? `<span class="pc more">+${n0(cs.length - shown.length)}</span>` : '');
       return `<div class="pcol ${k}"><p class="ph"><span>${label}</span><b${cs.length >= 1000 ? ' class="k4"' : ''}>${n0(cs.length)}</b></p><div class="pchips${cs.length > 6 ? ' many' : ''}">${chips}</div></div>`;
     }).join('');
     const anyRp = D.changes.some(rp), over = runOver(), anyBad = D.changes.some((c) => c.state === 'with-lead' || (c.state === 'bounced' && !over));
@@ -743,9 +766,9 @@
   const itOk = () => !!(window.qbIntentsMount && API && !MOCK);
   const itMount = (why) => `<div class="it-mount" data-src="${esc(API)}/intents" data-change-href="#/change/{id}"${why ? ` data-why="${esc(why)}"` : ''}></div>`;
   function viewIntents(why) {
-    return `<div class="drill">${crumbs(why ? [['Agents at work', '#/'], ['Intents', '#/intents'], ['Why this exists']] : [['Agents at work', '#/'], ['Intents']])}<h2 style="font-size:20px;margin-bottom:8px">${why ? 'Why this exists' : 'What was asked, and where each part stands'}</h2>${why ? '' : '<p class="cap">Each request splits into areas, each area into what one agent set out to do. Things that need you or are stuck come first. ' + (matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click' : 'Tap') + ' a line to open it.</p>'}${itMount(why)}</div>`;
+    return `<div class="drill">${crumbs(why ? [['Board', '#/'], ['Intents', '#/intents'], ['Why this exists']] : [['Board', '#/'], ['Intents']])}<h2 style="font-size:20px;margin-bottom:8px">${why ? 'Why this exists' : 'What was asked, and where each part stands'}</h2>${why ? '' : '<p class="cap">Each request splits into areas, each area into what one agent set out to do. Things that need you or are stuck come first. ' + (matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click' : 'Tap') + ' a line to open it.</p>'}${itMount(why)}</div>`;
   }
-  function viewTimeline() { return `<div class="drill">${crumbs([['Agents at work', '#/'], ['Timeline']])}<h2 style="font-size:20px;margin-bottom:8px">How the run went</h2>${timelineHtml(true)}</div>`; }
+  function viewTimeline() { return `<div class="drill">${crumbs([['Board', '#/'], ['Timeline']])}<h2 style="font-size:20px;margin-bottom:8px">How the run went</h2>${timelineHtml(true)}</div>`; }
   function overview() {
     const act = D.changes.filter(active);
     const idleDemo = D.mode === 'demo' && D.demo && !D.demo.running;
@@ -755,7 +778,7 @@
     const cur = fitTab || (live || isStarting ? 'agents' : 'events');
     const tab = (k, l) => `<button type="button" class="ftab" data-fittab="${k}" aria-pressed="${cur === k}">${l}</button>`;
     return `<div class="fit open">${statusStrip(live, isStarting)}
-      <div class="fpipe">${pipeline()}</div>
+      ${boardHead()}<div class="fpipe">${pipeline()}</div>
       ${latestLine(isStarting)}
       <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${tlOk() ? tab('timeline', 'Timeline') : ''}${itOk() ? tab('intents', 'Intents') : ''}</div>
       <div class="fpanel">${OWN ? needsYou() : ''}${fitPanel(cur)}</div></div>
@@ -804,7 +827,7 @@
       const dk = { x: 'bounced', w: 'working', l: 'landed', c: 'pushed' }[k] || 'none';
       return `<li><a href="#/file/${encodeURIComponent(p)}"><i class="dot s-${dk}"${dk === 'none' ? ' style="visibility:hidden"' : ''}></i><span class="t mono">${esc(p.slice(isRoot(path) ? 0 : path.length + 1))}</span>${tag || '<span></span>'}<span class="sub">${now_.length ? `${[...new Set(now_)].join(', ')} on it now` : 'nobody on it now'}; ${on.length} change${on.length === 1 ? '' : 's'}</span></a></li>`;
     }).join('');
-    return `<div class="drill">${crumbs([['Agents at work', '#/'], [areaLabel(path)]])}
+    return `<div class="drill">${crumbs([['Board', '#/'], [areaLabel(path)]])}
       <div class="tags"><span>${n0(a.files)} file${a.files === 1 ? '' : 's'}</span><span>${a.claimed} ${term('claim', 'claimed')} now</span><span>${a.recentLandings} landed</span><span>${a.recentConflicts} ${term('collision', a.recentConflicts === 1 ? 'collision' : 'collisions')}</span></div>
       <section class="sec" style="margin-top:8px"><h3>Changes here</h3>${touch.length ? `<ul class="rows">${sortC(touch).map((c) => row(c)).join('')}</ul>` : '<p class="dim">No changes here yet.</p>'}</section>
       <section class="sec"><h3>Files being touched</h3><p class="cap">Only files someone changed or claimed.</p>${fl ? `<ul class="rows">${fl}</ul>` : '<p class="dim">None.</p>'}</section></div>`;
@@ -813,7 +836,7 @@
     const area = areaOf(p);
     const on = sortC(D.changes.filter((c) => c.files.includes(p) || (c.claims || []).includes(p)));
     const coll = D.changes.flatMap((c) => c.events.filter((e) => e.what === 'conflict' && (c.landing?.conflicts || c.files).includes(p)).map((e) => ({ c, e }))).sort((a, b) => b.e.t - a.e.t);
-    return `<div class="drill">${crumbs([['Agents at work', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [p.split('/').pop()]])}
+    return `<div class="drill">${crumbs([['Board', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [p.split('/').pop()]])}
       <p class="mono dim">${esc(p)}</p>
       <section class="sec" style="margin-top:12px"><h3>Changes to this file</h3>${on.length ? `<ul class="rows">${on.map((c) => row(c, `${AG(c.agent)}${(c.claims || []).includes(p) && !c.files.includes(p) ? ', claimed only' : ''}`)).join('')}</ul>` : '<p class="dim">None yet.</p>'}</section>
       ${coll.length ? `<section class="sec"><h3>${term('collision', 'Collisions')} here</h3><ul class="rows">${coll.map(({ c, e }) => { const oc = otherOf(c, e, byId()); const ev = new Set(c.events.map((x) => x.what)); const how = c.state === 'with-lead' ? 'waiting for its lead' : ev.has('replayed') ? (c.state === 'landed' ? 'redone on the newest code, then landed' : 'redone on the newest code') : c.state === 'bounced' ? 'sent back' : c.state === 'landed' ? 'landed' : WORD[skey(c)].toLowerCase(); return `<li><a href="#/change/${esc(c.id)}"><i class="dot s-${ev.has('replayed') ? 'replaying' : 'bounced'}"></i><span class="t">${short(c)}</span><time>${ago(e.t)}</time><span class="sub">${oc ? `With ${AG(oc.agent)}'s ${short(oc)}; ` : ''}${how}</span></a></li>`; }).join('')}</ul></section>` : ''}</div>`;
@@ -878,7 +901,7 @@
   }
   function viewChange(id) {
     const idx = byId(), c = idx.get(id);
-    if (!c) return `<div class="drill">${crumbs([['Agents at work', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style="font-size:20px;margin-bottom:6px">${short(it)}</h2><p class="dim">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : gone(); })()}</div>`;
+    if (!c) return `<div class="drill">${crumbs([['Board', '#/'], [ref(id)]])}${(() => { const it = look(id); return it ? `<h2 style="font-size:20px;margin-bottom:6px">${short(it)}</h2><p class="dim">${AG(it.agent)}. This change is older than the newest ${D.changes.length} shown here, so only its title is kept on this page.</p>` : gone(); })()}</div>`;
     const area = areaOf(c.files[0] || '.');
     const story = c.events.map((e) => { const s = sentence(c, e, idx) || [{ working: `${AG(c.agent)} working`, reviewing: 'The reviewer is reading it', testing: 'Being tested with the newest main' }[e.what] || e.what, { alone: 'on its own', 'next train': '' }[e.detail] ?? e.detail]; return `<li><time>${hhmm(e.t)}</time><span>${esc(s[0])}${s[1] && s[1] !== title1(c) ? `<span class="d">${esc(s[1])}</span>` : ''}</span></li>`; }).reverse().join('');
     const stackOn = c.stackedOn && idx.get(c.stackedOn);
@@ -890,7 +913,7 @@
     const tabs = two ? `<div class="dtabs" role="tablist"><button type="button" role="tab" class="chipb" data-diff="landed" aria-pressed="${diffTab !== 'reviewed'}">What landed</button><button type="button" role="tab" class="chipb" data-diff="reviewed" aria-pressed="${diffTab === 'reviewed'}">What was reviewed</button></div>` : '';
     const diff = L?.diff?.length ? tabs + diffHtml(two && diffTab === 'reviewed' ? L.reviewedDiff : L.diff) : '';
     const rv = c.review ? `<dt>${term('review', 'Review')}</dt><dd>${c.review.verdict === 'changes' ? 'Fixes asked' : c.review.verdict === 'auto' ? (D.mode === 'demo' ? 'Approved (scripted)' : 'No reviewer in this setup: landed after its checks passed') : 'Approved'}${c.review.notes && !(c.review.verdict === 'auto' && D.mode !== 'demo') ? `<span class="dim small" style="display:block">${esc(c.review.notes)}</span>` : ''}</dd>` : '';
-    return `<div class="drill">${crumbs([['Agents at work', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [ref(c.id)]])}
+    return `<div class="drill">${crumbs([['Board', '#/'], [areaLabel(area), `#/area/${encodeURIComponent(area)}`], [ref(c.id)]])}
       <h2 style="font-size:20px;margin-bottom:6px">${short(c)}</h2>
       <div class="tags">${st(c)}<span>${AG(c.agent)}</span>${c.createdAt ? `<span>started ${ago(c.createdAt)}</span>` : ''}</div>
       ${progress(c)}
@@ -909,17 +932,17 @@
       ${diff ? `<section class="sec"><h3>The change</h3><p class="cap">Green lines were added, red lines removed.${two ? ' The reviewed version was written on older code; the replay re-did the same intent on the newest code.' : ''}</p>${diff}</section>` : ''}</div>`;
   }
   function viewLine() {
-    return `<div class="drill">${crumbs([['Agents at work', '#/'], ['The line']])}
+    return `<div class="drill">${crumbs([['Board', '#/'], ['The line']])}
       <p class="cap" style="margin-top:4px">${GLOSS.queue[1]} Changes tested together are a ${term('train', 'train')}: if the tests pass, they all land at once.</p>${theLine(true)}</div>`;
   }
-  function viewFeed() { return `<div class="drill">${crumbs([['Agents at work', '#/'], ['What happened']])}${feed(200)}</div>`; }
+  function viewFeed() { return `<div class="drill">${crumbs([['Board', '#/'], ['What happened']])}${feed(200)}</div>`; }
   function viewReplayed() {
     const l = D.changes.filter((c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying')).sort((a, b) => b.createdAt - a.createdAt);
-    return `<div class="drill">${crumbs([['Agents at work', '#/'], ['Replayed']])}<p class="cap" style="margin-top:4px">${GLOSS.replay[1]}</p>${l.length ? `<ul class="rows">${l.map((c) => row(c)).join('')}</ul>` : '<p class="dim">None yet.</p>'}${D.stats.replayed > l.length ? `<p class="cap" style="margin-top:8px">${n0(D.stats.replayed)} in all; the ones above are the recent ones.</p>` : ''}</div>`;
+    return `<div class="drill">${crumbs([['Board', '#/'], ['Replayed']])}<p class="cap" style="margin-top:4px">${GLOSS.replay[1]}</p>${l.length ? `<ul class="rows">${l.map((c) => row(c)).join('')}</ul>` : '<p class="dim">None yet.</p>'}${D.stats.replayed > l.length ? `<p class="cap" style="margin-top:8px">${n0(D.stats.replayed)} in all; the ones above are the recent ones.</p>` : ''}</div>`;
   }
   function viewChanges() {
     const groups = [['Needs a decision', ['with-lead', 'ready']], ['On the way', ['bounced', 'replaying', 'testing', 'queued', 'reviewing', 'pushed']], ['Working', ['working']], ['Landed', ['landed']]];
-    return `<div class="drill">${crumbs([['Agents at work', '#/'], ['All changes']])}${groups.map(([h, ks]) => { const l = sortC(D.changes.filter((c) => ks.includes(skey(c)))); return l.length ? `<section class="sec" style="margin-top:12px"><h3>${h} <span class="dim">${l.length}</span></h3><ul class="rows">${l.map((c) => row(c)).join('')}</ul></section>` : ''; }).join('')}</div>`;
+    return `<div class="drill">${crumbs([['Board', '#/'], ['All changes']])}${groups.map(([h, ks]) => { const l = sortC(D.changes.filter((c) => ks.includes(skey(c)))); return l.length ? `<section class="sec" style="margin-top:12px"><h3>${h} <span class="dim">${l.length}</span></h3><ul class="rows">${l.map((c) => row(c)).join('')}</ul></section>` : ''; }).join('')}</div>`;
   }
 
   // ---- render, poll -----------------------------------------------------------------------------

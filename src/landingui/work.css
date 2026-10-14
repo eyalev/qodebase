@@ -352,3 +352,8 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .pcol .ph:has(b.k4){flex-wrap:wrap;row-gap:0}.lw .pcol .ph b.k4{font-size:15px}
 /* desktop (qb5's critique): the details panel grows with the page instead of scrolling inside it; landed chips keep full size */
 @media (min-width:1000px){.lw .fpanel{max-height:none;overflow:visible}.lw .pchips.many{gap:8px}.lw .pchips.many .pc{width:28px;height:28px;font-size:13px}.lw .pchips.many .pc.rp::after{width:8px;height:8px;right:-3px;top:-3px;box-shadow:0 0 0 2px var(--card)}}
+/* the Board heading (Eyal, 2026-10-14) */
+.lw .bhead{margin:12px 0 8px}.lw .bhead h2{font-size:20px;margin:0}.lw .bhead p{margin:2px 0 0;font-size:14px;color:var(--dim)}
+.lw a.pc{cursor:pointer}
+/* Line history */
+.lw .lh-h{font-size:16px;margin:16px 0 6px}.lw .lhist{list-style:none;margin:0;padding:0}.lw .lhist>li{box-shadow:inset 0 1px 0 var(--line)}.lw .lhist summary{min-height:44px;padding:12px 0;box-sizing:border-box;cursor:pointer;font-size:14px;font-variant-numeric:tabular-nums}.lw .lhist .results{margin:0 0 10px}

@@ -360,7 +360,7 @@ const VIEWS: View[] = [
   { id: 'history', label: 'History', icon: ICONS.history, desc: 'Merged changes, commits, deploys and forks, by day', when: () => true, render: historyView },
   { id: 'agents', label: 'Agents', icon: ICONS.agents, desc: 'The router, the reviewer and each change\'s agent: chat or terminal', when: (c) => c.own, render: agentsView },
   // Agents at work (qb7, src/landingui): many agents at once, the merge queue, who works where.
-  { id: 'work', label: 'Agents at work', short: 'Agents', icon: ICONS.work, desc: 'Every agent changing the project at once: where they work, the line their changes wait in, how each landed', when: () => true,
+  { id: 'work', label: 'Board', short: 'Board', icon: ICONS.work, desc: 'Every agent changing the project at once: where they work, the line their changes wait in, how each landed', when: () => true,
     render: (c) => ({ body: workBody({ owner: c.info.owner, name: c.info.name, own: c.own }), js: workJs() }) },
   // Asks (G4, qb3): every request the agents got and every task on the board, with state, agent and duplicates.
   { id: 'asks', label: 'Asks', icon: ICONS.asks, desc: 'Every request the agents got and every task on the list: state, agents, duplicates', when: (c) => !!c.info.landing, render: asksView },
