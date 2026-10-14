@@ -51,7 +51,7 @@ export const SHEET_CSS = `
 .sh-h b{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .seg{display:flex;background:var(--chip);border-radius:8px;padding:2px}
 .seg button{min-height:36px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--dim);font:500 14px 'Geist',sans-serif;cursor:pointer}
-.seg button.on{background:var(--bg);color:var(--fg)}
+.seg button.on{background:var(--acc);color:var(--acc-fg);font-weight:600}   /* the open tab unmistakable (Eyal, 2026-10-15) */
 .x{width:44px;height:44px;border:0;background:none;color:var(--dim);font-size:24px;cursor:pointer}
 .sh-body{flex:1;min-height:0;display:flex;flex-direction:column}
 .sh-body iframe{flex:1;width:100%;border:0;background:#0d1117}
@@ -91,7 +91,7 @@ export const SHEET_JS = String.raw`
  // The agent's light markdown, drawn (qb3: bold file names showed as raw stars and backticks): escaped first, then bold, inline code, headings, bullets.
  const md=(t)=>esc(t).replace(/\x60\x60\x60[a-z]*\n?([\s\S]*?)\x60\x60\x60/g,'<pre>$1</pre>').replace(/\x60([^\x60]+)\x60/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/^#{1,6} +(.+)$/gm,'<b>$1</b>').replace(/^[-*] +/gm,'• ');
  function setMode(m){mode=m;
-  for(const b of sheet.querySelectorAll('.seg button'))b.classList.toggle('on',b.dataset.m===m);
+  for(const b of sheet.querySelectorAll('.seg button')){b.classList.toggle('on',b.dataset.m===m);b.setAttribute('aria-selected',String(b.dataset.m===m));}
   chat.hidden=m!=='chat';term.hidden=m!=='term';
   if(m==='term'){const src='/a/'+cur.id+'/agent/?ui=minimal';if(term.dataset.for!==cur.id){term.src=src;term.dataset.for=cur.id;}}
   else poll();}
@@ -118,6 +118,13 @@ export const SHEET_JS = String.raw`
   try{localStorage.setItem(HKEY,String(h/innerHeight))}catch{}});
  grab.addEventListener('pointercancel',()=>{drag=null;sheet.classList.remove('dragging');});
  sheet.querySelector('.seg').onclick=(e)=>{const b=e.target.closest('button');if(b)setMode(b.dataset.m);};
+ // Deep link (Eyal, 2026-10-15): /p/<o>/<n>/work?agent=<id>&tab=terminal opens that agent's sheet on that tab; the id is
+ // the short one (tfqk3) or the full one. The Board names it ('Agent 3') once its data is in (window.qbAgentLabel).
+ (()=>{const q=new URLSearchParams(location.search),a=q.get('agent');if(!a||!/^[a-z0-9.-]+$/.test(a))return;
+  const pm=/^\/p\/([^/]+)\/([^/]+)/.exec(location.pathname);if(!pm)return;
+  const id=a.includes('--')?a:pm[1]+'.'+pm[2]+'--'+a,tab=/^term/.test(q.get('tab')||'')?'term':'chat';let n=0;
+  const go=()=>{const lb=window.qbAgentLabel&&window.qbAgentLabel(id);if(!lb&&n++<20)return setTimeout(go,250);
+   const el=document.querySelector('[data-sheet="'+id+'"]');window.forqOpenSheet(id,(el&&el.dataset.name)||lb||'Agent',tab);};go();})();
 
  function render(j){
   if(j.asleep){log.innerHTML='<div class="m-x">Asleep. Send a message and it wakes up (a few seconds).</div>';busy=false;return;}

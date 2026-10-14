@@ -67,6 +67,8 @@
     return m.get(a);
   }
   const AG = (a) => (a ? `Agent ${agentNum(a)}` : 'an agent');
+  // the agent sheet's deep link asks for a name by agent id ('eyal.tracker--tfqk3' -> 'Agent 3'), once the data is in
+  window.qbAgentLabel = (id) => { if (!D) return null; const c = D.changes.find((x) => x.id === id || x.agent === `agent ${String(id).split('--').pop()}`); return c ? `${AG(c.agent)}: ${short(c)}` : null; };
   const leadName = (l) => { const x = (l || '').replace(/^agent-(\d+)/i, 'Agent $1'); return /^(scripted )?lead$/i.test(x) ? (D && D.mode === 'demo' ? 'its scripted lead' : 'its lead') : x; };
   // review 3: in the demo the area lead is scripted like the agents, so it says so
   const LEAD = (cap) => { const t = D && D.mode === 'demo' ? 'the scripted area lead' : 'the area lead'; return cap ? t[0].toUpperCase() + t.slice(1) : t; };
