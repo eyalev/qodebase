@@ -344,3 +344,4 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 /* G5 'Ask for changes' on a change record */
 .lw .sb textarea{width:100%;box-sizing:border-box;min-height:64px;margin:8px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font:inherit;font-size:16px;resize:vertical}
 .lw .sb .btn{min-height:44px}
+.lw .swait{display:flex;gap:8px;align-items:baseline;margin:8px 0 0;font-size:14px;color:var(--fg)}.lw .swait .live{flex:none;width:8px;height:8px;border-radius:50%;background:var(--busy);transform:translateY(-1px)}

@@ -100,6 +100,7 @@ export function summaryOf(open: Change[], planning: string): { html: string; sta
 }
 
 /** The router agent's progress as one plain line ('' when idle). */
+export const QUEUED_RX = /until an agent is free|no (free|idle) agent|all agents are busy|queued (it|this|your request)/i;
 export function planningOf(info: ProjectInfo, r: BoxStatus): { line: string; failed?: string; said?: string } {
   const q = info.lastRequest;
   const since = (t: number) => `<span data-since="${t}">0s</span>`;
@@ -107,6 +108,11 @@ export function planningOf(info: ProjectInfo, r: BoxStatus): { line: string; fai
   if (q.state === 'failed') return { line: '', failed: q.error || 'unknown error' };
   const doing = isMerge(q.text) ? 'Merging' : 'Planning your request';
   if (q.state === 'waking') return { line: `${doing} ${since(q.at)}` };
+  // The router took the request but every agent is busy (qb6: 'queued until an agent is free'): say so, or the page
+  // looks idle (the manager, 2026-10-14). The state from the server when it records it; meanwhile the router's own words.
+  const qq = q as typeof q & { queuedAt?: number; ahead?: number };
+  if (!isMerge(q.text) && ((q.state as string) === 'queued' || (q.state === 'sent' && QUEUED_RX.test(r.said || ''))))
+    return { line: `Waiting for a free agent${qq.ahead ? `, ${qq.ahead} request${qq.ahead > 1 ? 's' : ''} ahead` : ''} ${since(qq.queuedAt || q.sentAt || q.at)}` };
   if (q.state === 'sent' && (BUSY.test(r.cc) || Date.now() - (q.sentAt || 0) < 8000)) {
     if (isMerge(q.text)) return { line: `Merging ${since(q.sentAt || q.at)}` };
     const n = info.agents.filter((a) => a.createdAt >= q.at).length;

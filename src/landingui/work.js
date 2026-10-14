@@ -661,8 +661,11 @@
       : idle && !MOCK && D.watch?.enabled ? `<div class="sacts"><button class="btn" type="button" data-watch="start">Watch a run</button>${D.changes.length ? '<button class="chipb" type="button" data-watch="replay">Replay the last one</button>' : ''}${ownerCtl(false)}</div>${limitNote ? `<p class="snote">${esc(limitNote)}</p>` : left != null ? `<p class="snote">${left} of ${W.maxPerDay} live runs left today.</p>` : ''}`
       : live && OWN && !MOCK && D.mode === 'demo' ? `<div class="sacts">${ownerCtl(true)}</div>` : ''
     const ctl = runCtl(live);
+    // Requests the router queued until an agent is free (qb6's view.waiting, or lastRequest.state 'queued')
+    const wq = (D.waiting || (D.lastRequest && D.lastRequest.state === 'queued' ? [D.lastRequest] : [])).filter((w) => w && w.text);
+    const waitLine = wq.length ? `<p class="swait"><i class="live"></i><span>Waiting for a free agent: \u201c${esc(String(wq[0].text).slice(0, 90))}\u201d${wq.length > 1 ? ` and ${wq.length - 1} more` : ''}${wq[0].at ? ` <span class="stm" data-el="${wq[0].at}">${elTxt(wq[0].at)}</span>` : ''}</span></p>` : '';
     return `<div class="sstrip"><p class="skick"><i class="live${(live || isStarting) && !RUN().paused && !RUN().stopped ? '' : ' off'}"></i><span>${kick}${RUN().stopped ? ', stopped' : RUN().paused ? ', paused' : ''}</span>${tm ? `<span class="stm">${tm}</span>` : ''}</p>
-      ${partsShown ? '' : `<p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>`}${acts}${ctl}</div>`;
+      ${partsShown ? '' : `<p class="shead">${head}</p><div class="sbar2" role="img" aria-label="${landed} of ${total} landed"><i style="width:${total ? ((100 * landed) / total).toFixed(1) : 0}%"></i></div>`}${waitLine}${acts}${ctl}</div>`;
   }
   function pipeline() {
     const rp = (c) => c.events.some((e) => e.what === 'replayed' || e.what === 'replaying');
