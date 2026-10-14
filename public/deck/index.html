@@ -214,7 +214,7 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
   <div class="ovc"><h3>What we proved</h3>
    <ul class="proved">
     <li><b>Thousands</b><span>of agents on Cloudflare: 10,000 with cached answers (at most ~2,800 busy at once), every file different, all on main in 86 s, 0 errors; cheap models landed <span>31,466</span> file changes across six codebases (VS Code re-documented on fresh copies for scale), up to <span data-k="fleet.peak">114</span> a second over the busiest minute</span></li>
-    <li><b>Hundreds</b><span>200 agents on one codebase, checked by tests they never saw: with up to 60% of tasks aimed at the same code, losses stayed in the same range (96, 74, 60 lost checks; 0 lost in landing); the queue slowed, and lanes per module took the worst case from 207 to 53 min, 44.5 with prefetch</span></li>
+    <li><b>Hundreds</b><span>200 agents on one codebase, checked by tests they never saw: with up to 60% of tasks aimed at the same code, losses stayed in the same range (96, 74, 60 lost checks; at most 2 lost in landing, 0 at 60%); the queue slowed, and lanes per module took the worst case from 207 to 53 min, 44.5 with prefetch</span></li>
     <li><b>Up to 40</b><span>real Claude agents building apps: 28 of 40 changes collided, all redone; at this size one strong agent finished sooner in 3 of 3 builds</span></li>
     <li><b>Every step</b><span>recorded in git and visible: each change, the timeline, the asks</span></li>
    </ul></div>
@@ -297,8 +297,8 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
 
 
 
-<section class="s" data-t="Hundreds of agents, checked by tests" data-vh="200 agents on one codebase, 0 lost in landing" data-sec="C">
- <div class="claim"><h2>200 agents on the same code: losses in the same range, 0 lost in landing</h2><p>1,385 small coding tasks through the real merge queue. A model redid up to 468 collided changes, wrong about as often as fresh work (~5%). The queue slowed; lanes per module fixed most of it.</p><span class="src">Cloudflare, 200 cheap-model agents, hidden tests, one run each; 0 lost in landing at 60%. Change records missing in those lane runs: fixed, 199 of 199 in a check run</span></div>
+<section class="s" data-t="Hundreds of agents, checked by tests" data-vh="200 agents on one codebase, at most 2 lost in landing" data-sec="C">
+ <div class="claim"><h2>200 agents on the same code: losses in the same range, at most 2 lost in landing</h2><p>1,385 small coding tasks through the real merge queue. A model redid up to 468 collided changes, wrong about as often as fresh work (~5%). The queue slowed; lanes per module fixed most of it.</p><span class="src">Cloudflare, 200 cheap-model agents, hidden tests, one run each; 0 lost in landing at 60%. Change records missing in those lane runs: fixed, 199 of 199 in a check run</span></div>
  <div class="vis"><div class="bars">
   <div class="pair"><h3>Checks lost on main, of 1,385</h3>
    <div class="bar"><div class="l"><span>No overlap</span><b>96</b></div><div class="t"><i class="dim" style="--w:100%;--d:0"></i></div></div>
@@ -417,7 +417,7 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
    <li><b>Every step is visible</b><span>the record in git, the timeline, Asks, estimates, the Runs page (Sections A, D)</span></li>
   </ul></div>
   <div class="ovc"><h3>The map</h3><ol class="map" data-map></ol></div></div>
- <aside class="say">So, what we proved, at three scales. Thousands of agents on Cloudflare, with cheap models doing real work for a few dollars. Two hundred agents with real code collisions, checked by hidden tests, with losses in the same range and nothing lost in landing. And real Claude teams of up to forty building apps, where we also learned when one strong agent is better. Every step is recorded and visible.</aside>
+ <aside class="say">So, what we proved, at three scales. Thousands of agents on Cloudflare, with cheap models doing real work for a few dollars. Two hundred agents with real code collisions, checked by hidden tests, with losses in the same range and at most two changes lost in landing. And real Claude teams of up to forty building apps, where we also learned when one strong agent is better. Every step is recorded and visible.</aside>
 </section>
 
 <section class="s" data-t="What's next" data-sec="wrap">

@@ -760,7 +760,7 @@ const app = {
         if (m[3] === 'slice') return json(await fleetCall(env, `/slice?${base}&t=${Number(q.get('t')) || 0}&to=${Number(q.get('to')) || 0}${pg}`));
         // The hotspot job's checker: docs/API.md on main has every landed declaration exactly once, sorted.
         // a run without an index job has no docs/API.md to check: answer 'not applicable', not a 500 (submission review H1)
-        if (m[3] === 'indexcheck') { try { return json(await fleetCall(env, `/indexcheck?${base}`)); } catch (e) { console.log(JSON.stringify({ module: 'runs', event: 'indexcheck_na', repo: m[1], run: m[2], error: String(e).slice(0, 160) })); return json({ notApplicable: true }); } }
+        if (m[3] === 'indexcheck') { try { return json(await fleetCall(env, `/indexcheck?${base}`)); } catch (e) { console.log(JSON.stringify({ module: 'runs', event: 'indexcheck_na', repo: m[1], run: m[2], error: String(e).slice(0, 160) })); return json({ notApplicable: true, error: String(e).slice(0, 160) }); } }
         if (m[3] === 'commits') return json(await fleetCall(env, `/commits?${base}&t=${Number(q.get('t')) || 0}&to=${Number(q.get('to')) || 0}${pg}`));
         if (m[5]) return json(await fleetCall(env, `/commit?${base}&sha=${m[5]}`));
         const sha = /^[0-9a-f]{40}$/.test(String(q.get('sha') || '')) ? `&sha=${q.get('sha')}` : '';

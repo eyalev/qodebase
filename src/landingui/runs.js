@@ -162,7 +162,7 @@
       ${why ? `<p class="rc-why">${r.state === 'paused' && autoWhy(r) ? 'Paused automatically: ' : ''}${esc(why)}</p>` : ''}
       ${isCode(r) ? codeFiles(r, c) : isDecl(r) ? declFiles(r, c) : `<div class="rc-files"><div class="seg" role="img" aria-label="${c.landed} of ${c.files} files got comments on main">${seg(c.landed, 's-l')}${seg(c.skipped, 's-s')}${seg(c.rejected, 's-r')}</div>
         <p>Agents ${live(r) ? 'have added' : 'added'} doc comments to <b>${n0(c.landed)}</b> files and committed them to ${r.group ? 'each copy\u2019s' : 'the'} main branch; ${n0(c.skipped)} files already had them.</p>
-        <p class="rc-sm">${n0(c.rejected)} rejected${c.inflight && live(r) ? `, ${n0(c.inflight)} still to do` : ''}, of ${n0(c.files)} files. One change = comments added to one file.</p></div>`}
+        <p class="rc-sm">${c.rejected ? `${n0(c.rejected)} rejected: the model\u2019s answer for the file could not be used (it was left out of a multi-file answer, or the answer was unreadable), so nothing was written and the file stayed as it was. ` : ''}${c.inflight && live(r) ? `${n0(c.inflight)} still to do. ` : ''}${n0(c.files)} files in all; one change = comments added to one file.</p></div>`}
       <dl class="rc-k">
         <div><dt>Spent</dt><dd>${usd(spent)}${budget ? ` <small>of ${usd(budget)}</small>` : ''}</dd>${budget ? `<div class="bar" aria-hidden="true"><i style="width:${pct(spent, budget).toFixed(1)}%"${spent / budget > 0.85 ? ' class="hot"' : ''}></i></div>` : ''}</div>
         <div><dt>${live(r) ? 'Changes on main per min' : elapsedS(r) < 120 ? 'Changes on main' : 'Changes on main per min, average'}</dt><dd>${lpm}</dd></div>
@@ -491,7 +491,7 @@
     if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
     if (PENDING && PENDING.runId === id && PENDING.repo === repo) { log('fleet_listed', { runId: id, ms: Date.now() - PENDING.at }); PENDING = null; }
     const ix = IX[key(r)];
-    const ixLine = ix && !ix.error && ix.expected != null && ix.lines > 0 ? `<p class="rc-ix${ix.wasLive ? '' : ix.lines === ix.expected && ix.sorted && !ix.missing && !ix.twice ? ' ok' : ' bad'}"><b>API index (docs/API.md, one line per exported function, written by this job)${ix.wasLive ? ', so far' : ''}:</b> ${n0(ix.lines)} of ${n0(ix.expected)} lines, ${ix.sorted ? 'sorted' : 'not sorted'}, ${ix.missing ? `${n0(ix.missing)} missing` : 'none missing'}, ${ix.twice ? `${n0(ix.twice)} twice` : 'none twice'}.</p>` : '';
+    const ixLine = ix && ix.notApplicable && ix.error ? '<p class="rc-ix">API index (docs/API.md): could not be checked just now.</p>' : ix && !ix.error && ix.expected != null && ix.lines > 0 ? `<p class="rc-ix${ix.wasLive ? '' : ix.lines === ix.expected && ix.sorted && !ix.missing && !ix.twice ? ' ok' : ' bad'}"><b>API index (docs/API.md, one line per exported function, written by this job)${ix.wasLive ? ', so far' : ''}:</b> ${n0(ix.lines)} of ${n0(ix.expected)} lines, ${ix.sorted ? 'sorted' : 'not sorted'}, ${ix.missing ? `${n0(ix.missing)} missing` : 'none missing'}, ${ix.twice ? `${n0(ix.twice)} twice` : 'none twice'}.</p>` : '';
     return `<p class="crumb"><a href="#/">All runs</a></p>${card(r, true)}${ixLine}<section class="rsec"><h2>Timeline</h2>${timeline(r, TL[key(r)], DR && DR.k === key(r) ? DR : null)}${drillPanel(r)}</section>`;
   }
   const stepOf = (base) => grouped((D.fleet || []).slice()).find((g) => g.group && g.label === base) || null;
