@@ -4,13 +4,13 @@
 interface __BaseEnv_Env {
 	ARTIFACTS: Artifacts;
 	CF_VERSION_METADATA: WorkerVersionMetadata;
-	ACCESS_TEAM_DOMAIN: "<personal access team>.cloudflareaccess.com";
-	ACCESS_AUD: "<personal access aud>";
-	HANDLES: "{\"owner@example.com\":\"eyal\"}";
-	UI_HOST: "forq.kapps.dev";
-	RUN_HOST: "forq-run.kapps.dev";
-	ACCOUNT_ID: "<personal account id>";
-	API_BASE: "https://forq.<sub>.workers.dev";
+	ACCESS_TEAM_DOMAIN: string;
+	ACCESS_AUD: string;
+	HANDLES: string;
+	UI_HOST: string;
+	RUN_HOST: string;
+	ACCOUNT_ID: string;
+	API_BASE: string;
 	MAX_AGENTS_PER_PROJECT: "6";
 	OWNER_HANDLE: "eyal";
 	OTHERS_MAX_AWAKE: "2";

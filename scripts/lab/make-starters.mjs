@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Variants lab (docs/lab/PLAN.md): build each scenario's starter repo (public, in
 // scripts/lab/scenarios/<id>/starter/) and its hidden acceptance tests (PRIVATE, in
-// $LAB_HIDDEN_DIR/<id>/, never in this public repo, never in a box).
+// $LAB_HIDDEN_DIR/<id>/ (the private hidden-tests repo), never in this public repo, never in a box).
 //
 //   node --experimental-strip-types scripts/lab/make-starters.mjs [--validator <clone>]
 //
@@ -22,7 +22,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const VALIDATOR = opt('--validator', join(homedir(), 'projects/github/validatorjs/validator.js'));
-const HIDDEN = opt('--hidden', join(homedir(), '<lab-hidden dir>'));
+const HIDDEN = (opt('--hidden', process.env.LAB_HIDDEN_DIR) || (console.error('set LAB_HIDDEN_DIR or --hidden (the private hidden-tests repo, see CLAUDE.local.md)'), process.exit(2)));
 
 function writeTree(dir, files) {
   rmSync(dir, { recursive: true, force: true });

@@ -1,7 +1,7 @@
 # What forq costs to run
 
 Measured with `scripts/measure.mjs` (Artifacts and container GraphQL, the
-subscription meter `~/.claude/data/history.jsonl`, and every box's own Claude
+subscription usage meter, and every box's own Claude
 Code transcript). "API price" = what the same tokens would cost on the Claude
 API at Sonnet 5 / 5.5 rates (input $2/M, 5-min cache write $2.50/M, cache read
 $0.20/M, output $10/M; claude-api skill, cached 2026-09-25). On the

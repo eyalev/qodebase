@@ -59,12 +59,12 @@
 
 ### Round 7 (2026-10-01): Worker projects — forq's own builder + Issues → router agent
 - [x] Pick + read the project: cloudflare/workers-chat-demo (BSD-3, 1.2k lines, Durable Objects only, no outbound calls, no secrets)
-- [x] Deploy token `forq-builder` (id c90be299…, Workers Scripts Write on this account only, expires 2027-10-01) → `~/.config/forq/deploy-token` + Worker secret CF_DEPLOY_TOKEN; never in agent boxes. It cannot `wrangler delete` (no memberships read): delete with the normal wrangler login
+- [x] Deploy token `forq-builder` (Workers Scripts Write on this account only, expires 2027-10-01) → `<deploy-token file>` + Worker secret CF_DEPLOY_TOKEN; never in agent boxes. It cannot `wrangler delete` (no memberships read): delete with the normal wrangler login
 - [x] BuildBox container: clone commit, sanitize wrangler config (forq-app-<slug>, workers.dev only, routes/env stripped, account-resource bindings refused, observability on, `previews` block so each preview gets its own Durable Object storage), npm install, `wrangler deploy` / `wrangler preview --name ag-<id>` (aliased Version URLs do not work for Durable Object Workers; Previews do); logs kept per build; restarts a dead container
 - [x] Triggers: first page view of a Worker project and every merge → deploy; agent pushed → preview, then review
 - [x] Page: Worker projects show the deployed app, status line (live / deploying with timer / failed + build log), Deploy again; agent tabs + Preview use preview URLs
 - [x] Imported cloudflare/workers-chat-demo as forq/workers-chat-demo: deployed by forq's builder in ~30 s; chat verified (joined a room, sent a message, came back over the WebSocket)
-- [x] Issues: builder turns on observability.issues; `scripts/issues-automation.sh <worker>` (webhook destination aae815c2…, policy 8b7bcf76…, automation per app Worker); POST /api/hooks/issues (cf-webhook-auth) → occurrences fetched with the forq-issues-reader token (Workers Observability read) → router agent, told to reproduce with the same request first
+- [x] Issues: builder turns on observability.issues; `scripts/issues-automation.sh <worker>` (a webhook destination and a policy, automation per app Worker); POST /api/hooks/issues (cf-webhook-auth) → occurrences fetched with the forq-issues-reader token (Workers Observability read) → router agent, told to reproduce with the same request first
 - [x] End to end on eyal/workers-chat-demo: 4 real 500s (invalid 64-hex room id → idFromString throws, stack trace returned) → Issues alert 20:14:34 → router agent → agent ggbs2 → preview → reviewer approved after checking the 404 in the preview → merged → live app redeployed, same request now 404 "Invalid room ID"
 - [x] Also verified on the way: agent itvo6 (participant count) → preview in 21 s → review → merge → redeploy
 - [x] cloudcost `forq` entry covers BuildBox, forq-app-* Workers, previews, Issues wiring and both tokens
@@ -82,7 +82,7 @@ Bugs found and fixed during the run:
 - [x] Sign-in: Access app now covers only forq.kapps.dev/login, policy "everyone" (emailed one-time code: no IdP configured, Google would need a GCP OAuth client) → forq's own HMAC session cookie, 30 days; new users get a suggested handle, changeable until they own a project
 - [x] Settings: Anthropic API key checked with one /v1/models call, AES-GCM encrypted (KEY_ENC_SECRET), last 4 shown; their boxes run ANTHROPIC_API_KEY + ANTHROPIC_MODEL=claude-sonnet-5-5; Eyal (OWNER_HANDLE) keeps the subscription
 - [x] Limits for others: 10 projects, 2 awake boxes across their projects (their containers bill this account), no Worker deploys (they run on this account); no-key requests fail at once with "add your key"
-- [ ] A real agent run on an API key: needs a forq-specific Anthropic key from Eyal (did not run forq agents on desk's key: one key per project); key save/check verified with it, then removed
+- [ ] A real agent run on an API key: needs a forq-specific Anthropic key from Eyal (did not run forq agents on another project's key: one key per project); key save/check verified with it, then removed
 - [x] Baseline pass: /about, /privacy, /version.json, /health.json, robots.txt, crawler gate (verified bots: front page only); not yet: feedback form, kstats, og:image, push alerts (noted in CLAUDE.md)
 - [x] Self-host guide (SELF_HOST.md) + no account-specific values left in src (UI host, API base from config); repo stays PRIVATE (Eyal, 2026-10-02). Open item: a public Dockerfile for the box image
 - [x] Video research → docs/video-guide.md
@@ -104,7 +104,7 @@ Bugs found and fixed during the run:
 ## Open
 
 - Name: `forq` is a working name.
-- Demo repo: sleepsounds (pushed from the laptop's origin/master as `main`; the GitHub repo is private, so Artifacts import — public remotes only — could not be used).
+- Demo repo: sleepsounds (pushed from the laptop's origin/master as `main`; a private GitHub repo, so Artifacts import — public remotes only — could not be used).
 - Subscription agents run on the plan's default model (Sonnet 5 seen); pass `--model` if a task needs more.
 
 ### Round 10 (2026-10-02): design v2, three variants to compare

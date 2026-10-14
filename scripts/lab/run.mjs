@@ -56,7 +56,7 @@ async function api(method, path, body) {
   return j;
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const meter = () => { try { const l = readFileSync(join(homedir(), '.claude/data/history.jsonl'), 'utf8').trim().split('\n').pop(); const d = JSON.parse(l); return { at: d.timestamp, weekly: d.weekly_all_pct, session: d.session_pct }; } catch { return null; } };
+const meter = () => { try { const l = readFileSync(process.env.QB_USAGE_HISTORY || join(homedir(), '.claude/data/history.jsonl'), 'utf8').trim().split('\n').pop(); const d = JSON.parse(l); return { at: d.timestamp, weekly: d.weekly_all_pct, session: d.session_pct }; } catch { return null; } };
 
 // ---- inputs ----------------------------------------------------------------------------
 // --plan public/lab/stage1-plan.json --order N: the run comes from qb4's plan (variant, baseline,

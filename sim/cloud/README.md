@@ -17,9 +17,9 @@ agents use it at once, what fails, and how many Artifacts operations a run costs
 
 ```sh
 # deploy (forq's account; Artifacts namespace qbsim, separate from real projects)
-CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler deploy -c sim/cloud/wrangler.jsonc
-# run (key in ~/.config/qbsim/key); capped in code at 600 agents, 20 minutes
-curl -X POST https://qbsim-cloud.forqdev.workers.dev/start -H "x-sim-key: $(cat ~/.config/qbsim/key)" \
+CLOUDFLARE_API_TOKEN=$(cat <forq api-token file>) npx wrangler deploy -c sim/cloud/wrangler.jsonc
+# run (key in <sim key file>); capped in code at 600 agents, 20 minutes
+curl -X POST https://qbsim-cloud.forqdev.workers.dev/start -H "x-sim-key: $(cat <sim key file>)" \
   -H 'content-type: application/json' -A qbsim-cli/1 \
   -d '{"agents":500,"minutes":10,"workMinS":20,"workMaxS":60,"trainEveryS":10}'
 curl -A qbsim-cli/1 https://qbsim-cloud.forqdev.workers.dev/status

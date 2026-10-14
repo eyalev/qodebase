@@ -1,6 +1,6 @@
 // qodebase sim on Cloudflare (sim/cloud/README.md). Forq's account, its own Artifacts
 // namespace `qbsim` so sim repos never mix with real projects. workers.dev only.
-//   CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler deploy -c sim/cloud/wrangler.jsonc
+//   CLOUDFLARE_API_TOKEN=$(cat <forq api-token file>) npx wrangler deploy -c sim/cloud/wrangler.jsonc
 {
   "name": "qbsim-cloud",
   "account_id": "887d7234a6b8d65ad355a4f6684cab67",

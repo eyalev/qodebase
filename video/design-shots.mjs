@@ -15,7 +15,7 @@ const b = await chromium.launch({ executablePath: CHROME });
 async function ctx(v, { w = 390, h = 844, dark = false, signedIn = true } = {}) {
   const mobile = w < 800;
   const c = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile, colorScheme: dark ? 'dark' : 'light' });
-  if (signedIn) await c.addCookies([{ name: 'forq_session', value: cookie('owner@example.com'), domain: `forq-${v}.kapps.dev`, path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
+  if (signedIn) await c.addCookies([{ name: 'forq_session', value: cookie(process.env.QB_EMAIL), domain: `forq-${v}.kapps.dev`, path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
   return c;
 }
 async function shot(v, name, url, opts = {}, act) {

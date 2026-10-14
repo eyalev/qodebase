@@ -1985,7 +1985,7 @@ function silenceStop(s) {
 
 // ---- Page tools (WebMCP) ------------------------------------------------------
 // Jarvis hands (and any WebMCP client) can call Talk and a few typed navigation
-// tools. Contract: <jarvis webmcp contract>.
+// tools. Contract: the Jarvis WebMCP contract (<jarvis webmcp contract> in CLAUDE.local.md).
 // Mirrored in window.__webmcp (what Jarvis reads over CDP) and registered with
 // real WebMCP when the browser has it. Navigation and questions only: nothing
 // that deletes, merges, deploys or changes settings.

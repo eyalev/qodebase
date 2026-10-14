@@ -10,8 +10,8 @@ node scripts/lab/scenario.mjs --index                           # public/lab/sce
 node scripts/lab/score.mjs --scenario <id> --repo <clone of final main> [--judge]
 ```
 
-**Hidden tests are private**: `$LAB_HIDDEN_DIR` (GitHub
-<private hidden-tests repo>, PRIVATE). This repo is public and agents in boxes can read it,
+**Hidden tests are private**: a private repo (`<private hidden-tests repo>`,
+`$LAB_HIDDEN_DIR` on the runner's machine). This repo is public and agents in boxes can read it,
 so hidden tests, judge rubrics and reference solutions never come here or into a box.
 
 **The number** (`public/lab/score.js`, shared with predict.js and the page):

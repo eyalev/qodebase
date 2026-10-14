@@ -84,7 +84,7 @@ Then open `https://<UI_HOST>/login`, sign in (your handle comes from
 `HANDLES`), and import a project from GitHub.
 
 Optional, for "a production error starts a fix": put the `ISSUES_WEBHOOK_SECRET`
-value in `~/.config/forq/issues-webhook-secret`, then for each Worker project
+value in `<issues-webhook-secret file>`, then for each Worker project
 you deploy run `FORQ_API=<API_BASE> scripts/issues-automation.sh forq-app-<owner>-<name>`
 once (needs the `cf` CLI logged in).
 

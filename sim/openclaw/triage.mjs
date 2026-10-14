@@ -102,7 +102,7 @@ const stateOf = (r) => ({ title: r.title, body: r.body });
 function logCall(o) { fs.appendFileSync(CALLS, JSON.stringify({ ts: new Date().toISOString(), question_version: QUESTION_VERSION, ...o }) + '\n'); }
 
 async function runSystemOne(name, rows) {
-  const { provider } = await import(path.join(os.homedir(), '<system-one module>'));
+  const { provider } = await import(process.env.SYSTEM_ONE_MODULE || (console.error('set SYSTEM_ONE_MODULE (a model-provider module with provider(name))'), process.exit(2)));
   const call = provider(name);
   for (const r of rows) {
     try {

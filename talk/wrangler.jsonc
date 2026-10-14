@@ -1,5 +1,5 @@
 // qodebase-talk: Talk as its own Worker (src/talkworker.ts). Deploy:
-//   CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler deploy -c talk/wrangler.jsonc --tag "$(git rev-parse --short HEAD)"
+//   CLOUDFLARE_API_TOKEN=$(cat <forq api-token file>) npx wrangler deploy -c talk/wrangler.jsonc --tag "$(git rev-parse --short HEAD)"
 // No route: forq reaches it through its TALK service binding. Its own TalkLog / TalkVoice;
 // Registry, Project and Ledger are forq's (script_name).
 {

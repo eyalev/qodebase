@@ -10,7 +10,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   // forq's own Cloudflare account (since 2026-10-02; docs/hosting-plan.md).
-  // Deploy with its token: CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token).
+  // Deploy with its token: CLOUDFLARE_API_TOKEN=$(cat <forq api-token file>).
   // workers.dev answers only with the admin secret (laptop scripts); the phone
   // uses projectsbase.dev, sign-in through Cloudflare Access on /login.
   "workers_dev": true,
@@ -109,8 +109,8 @@
     "CF_OAUTH_CLIENT_ID": "c7a959b3f19f0ba8cabb1f7efb55d809",
     "ACCESS_TEAM_DOMAIN": "forqdev.cloudflareaccess.com",
     "ACCESS_AUD": "6c86f18e31312db3a76b73caf12f86a9ee360a75a667bb961608e55c9fea251e",
-    // Access email → forq handle (v0: one person).
-    "HANDLES": "{\"owner@example.com\":\"eyal\"}",
+    // Access email → handle: the real map is the secret HANDLES_SECRET (wrangler secret put HANDLES_SECRET), kept out of git.
+    "HANDLES": "{}",
     "UI_HOST": "projectsbase.dev",
     // Served by the front Worker in the personal account until the zone moves here (front/).
     "FRONT_HOSTS": "qodebase.app",

@@ -1,6 +1,6 @@
 // qodebase fleet on Workers AI (sim/fleet/src/index.js). Forq's account, its own Artifacts namespace `qbfleet`.
-//   CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler deploy -c sim/fleet/wrangler.jsonc
-// Secrets: FLEET_KEY (~/.config/qbfleet/key), PUSHOVER_TOKEN, PUSHOVER_USER, GEMINI_KEY (~/.config/qodebase-fleet/gemini.key).
+//   CLOUDFLARE_API_TOKEN=$(cat <forq api-token file>) npx wrangler deploy -c sim/fleet/wrangler.jsonc
+// Secrets: FLEET_KEY (<fleet key file>), PUSHOVER_TOKEN, PUSHOVER_USER, GEMINI_KEY (<gemini key file>).
 {
   "name": "qbfleet",
   "account_id": "887d7234a6b8d65ad355a4f6684cab67",

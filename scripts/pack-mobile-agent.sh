@@ -9,7 +9,7 @@
 #   MA_IMAGE_REF  the commit the image was built from (box/Dockerfile's
 #                 MOBILE_AGENT_REF); default: the last packed revision
 set -euo pipefail
-SRC=${MA_SRC:-<mobile-agent repo>}
+SRC=${MA_SRC:?set MA_SRC to the mobile-agent repo (see CLAUDE.local.md)}
 OUT=$(cd "$(dirname "$0")/.." && pwd)/box
 BASE=${MA_IMAGE_REF:-$(cat "$OUT/mobile-agent.rev")}
 deps() { jq -S -c '{d:.dependencies,dd:.devDependencies}'; }

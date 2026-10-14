@@ -11,7 +11,7 @@ import { dirname, extname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const HIDDEN = process.env.LAB_HIDDEN_DIR || join(homedir(), '<lab-hidden dir>');
+const HIDDEN = (() => { const d = process.env.LAB_HIDDEN_DIR; if (!d) { console.error('set LAB_HIDDEN_DIR to the private hidden-tests repo (see CLAUDE.local.md)'); process.exit(2); } return d; })();
 const MODEL = process.env.LAB_JUDGE_MODEL || 'sonnet';
 const RUBRIC = '1';
 const MAX_DIFF = 60_000;

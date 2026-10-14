@@ -1,5 +1,5 @@
 // Preview Worker for qb3's qodebase-redesign branch (see index.js). Delete after the review:
-//   CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler delete --name qodebase-redesign-preview
+//   CLOUDFLARE_API_TOKEN=$(cat <forq api-token file>) npx wrangler delete --name qodebase-redesign-preview
 {
   "name": "qodebase-redesign-preview",
   "account_id": "887d7234a6b8d65ad355a4f6684cab67",

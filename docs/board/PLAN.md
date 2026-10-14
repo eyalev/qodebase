@@ -35,7 +35,7 @@ the manager (s1007-1655) runs experiments to find out whether it has real value.
 - **E5 Write-up** (manager): FINDINGS.md with numbers + recommendation (build / don't / how).
 
 ## Guards (weekly meter is the binding constraint)
-- Weekly meter 71% at 12:15 UTC Oct 10, resets Oct 12 13:00 UTC; 
+- The weekly quota meter is the binding constraint.
   **All LLM experiment runs stop at 77%.** Tabs: be token-frugal (no long explorations, short replies).
 - E4 uses Haiku 5.5 only, on the subscription (`claude -p`), never other projects' keys.
 - Real spend cap $5 (DO + KV for the bench). Never print secrets. No pkill/killall by pattern.

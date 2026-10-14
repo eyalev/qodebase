@@ -1,5 +1,5 @@
 // qb-board (docs/board/PLAN.md): forq account, workers.dev only.
-// Deploy: CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx wrangler deploy -c board/wrangler.jsonc
+// Deploy: CLOUDFLARE_API_TOKEN=$(cat <forq api-token file>) npx wrangler deploy -c board/wrangler.jsonc
 {
   "name": "qb-board",
   "account_id": "887d7234a6b8d65ad355a4f6684cab67",

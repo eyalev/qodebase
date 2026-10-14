@@ -15,8 +15,8 @@
 // 4. Per box: tokens from each box's own Claude Code transcripts inside the
 //    window (deduplicated by message id), via forq's admin exec. Wakes a box
 //    that is asleep (a few seconds of container).
-// Tokens: <analytics token file> (analytics, as cloudcost uses) and
-// ~/.config/forq/admin-secret.
+// Tokens: CF_ANALYTICS_TOKEN_FILE (a Cloudflare analytics read token) and FORQ_ADMIN_SECRET_FILE
+// (paths in CLAUDE.local.md); CF_ACCOUNT_ID; FORQ_API.
 
 import { readFileSync, existsSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -25,11 +25,11 @@ const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ?
 const FROM = arg('from'), TO = arg('to', new Date().toISOString().replace(/\.\d+Z$/, 'Z'));
 if (!FROM) { console.error('usage: measure.mjs --from <ISO> [--to <ISO>] [--boxes a,b] [--json]'); process.exit(2); }
 const BOXES = (arg('boxes', '') || '').split(',').filter(Boolean);
-const ACCOUNT = '<personal account id>';
+const ACCOUNT = process.env.CF_ACCOUNT_ID;
 const home = (p) => p.replace(/^~/, homedir());
-const CF = readFileSync(home('<analytics token file>'), 'utf8').trim();
-const ADMIN = readFileSync(home('~/.config/forq/admin-secret'), 'utf8').trim();
-const API = 'https://forq.<sub>.workers.dev';
+const CF = readFileSync(home(process.env.CF_ANALYTICS_TOKEN_FILE), 'utf8').trim();
+const ADMIN = readFileSync(home(process.env.FORQ_ADMIN_SECRET_FILE || '~/.config/forq/admin-secret'), 'utf8').trim();
+const API = process.env.FORQ_API || 'https://forq.forqdev.workers.dev';
 const RATE = { memGiBs: 0.0000025, cpuS: 0.00002, diskGBs: 0.00000007, artifactsPer1k: 0.15 };
 // What the agents' tokens would cost on the Claude API (what a public forq pays
 // without subscriptions). Sonnet 5 / 5.5, $ per token, from the claude-api skill

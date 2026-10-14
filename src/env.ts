@@ -43,6 +43,7 @@ export interface Env {
   ACCESS_TEAM_DOMAIN: string;
   ACCESS_AUD: string;
   HANDLES: string;            // JSON {email: handle}
+  HANDLES_SECRET?: string;    // same map as a secret (the hosted instance keeps emails out of wrangler.jsonc); wins over HANDLES
   UI_HOST: string;            // forq.kapps.dev
   UI_VARIANT_HOSTS?: string;  // design-variant preview hosts (comma-separated), see variants/
   SELF_HOST?: string;         // '1' = a copy installed into someone's own Cloudflare (src/install.ts template qodebase)

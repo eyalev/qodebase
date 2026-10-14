@@ -4,7 +4,7 @@
 // user. Frames come from CDP screenshots at 2x in a loop (~14 fps), with timestamps; every narration step is an event
 // in events.json. compose.py turns frames + events into the final mp4.
 //
-//   const r = await rig({ name: 'fork-and-agents', email: 'owner@example.com' });
+//   const r = await rig({ name: 'fork-and-agents', email: process.env.QB_EMAIL });
 //   await r.chapter('Fork a project', 'One tap gives you your own copy');
 //   await r.say('This is forq/tipsplit, a tip calculator anyone can open.');
 //   await r.tap('#fork');                     // marker + pause before/after
@@ -49,7 +49,7 @@ const TAP_MARKER = `(() => {
   window.addEventListener('pointerdown', (e) => add(e.clientX, e.clientY), true);
 })();`;
 
-export async function rig({ name, email = 'owner@example.com', width = 390, height = 844, dark = false }) {
+export async function rig({ name, email = process.env.QB_EMAIL, width = 390, height = 844, dark = false }) {
   const dir = join(HERE, 'frames', name);
   // Keep the previous take as <name>.prev: a spoiled take must not wipe the last good one.
   rmSync(dir + '.prev', { recursive: true, force: true });

@@ -24,7 +24,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const SCENARIO = opt('--scenario');
 const REPO = opt('--repo', opt('--dir'));
-const HIDDEN = opt('--hidden', process.env.LAB_HIDDEN_DIR || join(homedir(), '<lab-hidden dir>'));
+const HIDDEN = (opt('--hidden', process.env.LAB_HIDDEN_DIR) || (console.error('set LAB_HIDDEN_DIR or --hidden (the private hidden-tests repo, see CLAUDE.local.md)'), process.exit(2)));
 const TSC = join(ROOT, 'node_modules/.bin/tsc');
 const { NODE_TEST_CONTEXT, ...ENV } = process.env; // so nested `node --test` runs report normally
 

@@ -65,7 +65,7 @@ const BOARD_SEL = opt('board', COND === 'E' ? 'e1' : 'live');
 const BOARD_DIR = (COND === 'D' || COND === 'E') ? (BOARD_SEL === 'e1' ? E1 : path.resolve(HERE, '../../board')) : V1;
 const BOARD = path.join(BOARD_DIR, 'board.mjs');
 const HOOK = path.join(BOARD_DIR, 'hooks/board-hook.mjs');
-const HIDDEN = path.join(os.homedir(), '<lab-hidden dir>/board-ab', S.hidden);
+const HIDDEN = path.join(process.env.LAB_HIDDEN_DIR || (console.error('set LAB_HIDDEN_DIR (see CLAUDE.local.md)'), process.exit(2)), 'board-ab', S.hidden);
 const ROOT = path.join(os.homedir(), '.local/share/qb9-board-ab');
 const RUN_ID = `${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}-${SCEN === 's1' ? '' : SCEN + '-'}${COND}${opt('aimd', null) ? '-aimd' : ''}-n${N}-r${REP}`;
 const DIR = path.join(ROOT, RUN_ID);

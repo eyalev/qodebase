@@ -13,7 +13,7 @@ const b = await chromium.launch({ executablePath: CHROME });
 async function shot(v, name, url, { w = 390, h = 844, signedIn = true, dark = false } = {}) {
   const mobile = w < 800;
   const c = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile, colorScheme: dark ? 'dark' : 'light' });
-  if (signedIn) await c.addCookies([{ name: 'forq_session', value: cookie('owner@example.com'), domain: `forq-${v}.kapps.dev`, path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
+  if (signedIn) await c.addCookies([{ name: 'forq_session', value: cookie(process.env.QB_EMAIL), domain: `forq-${v}.kapps.dev`, path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
   const p = await c.newPage();
   await p.goto(`https://forq-${v}.kapps.dev${url}`, { waitUntil: 'networkidle' }).catch(() => {});
   await p.waitForTimeout(1000);

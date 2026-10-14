@@ -446,7 +446,7 @@ The image's mobile-agent is a 2026-09-06 copy. Each box unpacks forq's newer
 copy over `/opt/mobile-agent` at boot (once per version, `.forq-rev`), keeping
 the image's `node_modules`. After changing mobile-agent
 (`<mobile-agent repo>`, commit first):
-`./scripts/pack-mobile-agent.sh && npx wrangler deploy`. The script refuses a
+`MA_SRC=<mobile-agent repo> ./scripts/pack-mobile-agent.sh && npx wrangler deploy`. The script refuses a
 dependency change, which needs an image rebuild instead. The sheet's Terminal
 tab loads `/a/<id>/agent/?ui=minimal` (terminal, six keys, input).
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Talk dictation bench: Eyal's real dictations from tmux-web (<recordings dir>, audio + the
-// final text tmux-web produced with Groq whisper-large-v3-turbo) through what Talk uses on qodebase's own account:
+// Talk dictation bench: real dictations from a recordings dir (--dir or STT_BENCH_DIR: audio + the final text
+// another dictation tool produced with Groq whisper-large-v3-turbo) through what Talk uses on qodebase's own account:
 // Workers AI whisper-large-v3-turbo (the final pass) and Workers AI nova-3 (the live words, here on the whole clip).
-// Scores word error rate against tmux-web's final (agreement, not ground truth). Audio never leaves the laptop
+// Scores word error rate against that tool's final (agreement, not ground truth). Audio never leaves the laptop
 // except to Workers AI; nothing is committed. Run from the forq root:
 //   node scripts/talk-stt-bench.mjs [--en 8] [--he 4]
 // One JSONL line per clip to ~/.local/share/forq/talk-stt-bench.jsonl.
@@ -13,7 +13,7 @@ import { MERGE_MODEL, mergeMessages, cleanMerge } from '../src/talkmerge.ts';
 
 const ACC = '887d7234a6b8d65ad355a4f6684cab67';
 const TOKEN = fs.readFileSync(path.join(os.homedir(), '.config/forq-cf/api-token'), 'utf8').trim();
-const DIR = path.join(os.homedir(), '.config/tmux-web/voice-recordings');
+const DIR = (() => { const i = process.argv.indexOf('--dir'); const d = i > 0 ? process.argv[i + 1] : process.env.STT_BENCH_DIR; if (!d) { console.error('set --dir or STT_BENCH_DIR to the recordings dir'); process.exit(2); } return d; })();
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const nEn = arg('--en', 8), nHe = arg('--he', 4);
 const OUT = path.join(os.homedir(), '.local/share/forq/talk-stt-bench.jsonl');

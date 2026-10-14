@@ -8,3 +8,7 @@ selfhost/.selfhost-build/
 .selfhost-build/
 
 CLAUDE.local.md
+
+# local-only docs (personal/operator notes; never in git)
+*.local.md
+docs/contest/form-answers.local.md
