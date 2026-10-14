@@ -14,7 +14,12 @@
 .ct-hist .w{color:var(--dim)}
 .ct-hist a{color:var(--acc);text-underline-offset:3px}
 .ct-hist time{color:var(--dim);font-variant-numeric:tabular-nums}
-.ct-code{margin:0;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);overflow:auto;max-height:70vh;overscroll-behavior:contain}
+/* The whole file in the page's own scroll (Eyal, 2026-10-14: in the Board's tab the end of the file was trapped in a
+   scroll inside a scroll, behind the bottom bars): no height limit, sideways scroll only inside the box on wide screens,
+   lines wrap on phones, and the Board's tab panel grows to fit it. */
+.ct-code{margin:0;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);overflow-x:auto;overflow-y:hidden;max-height:none;overscroll-behavior:auto}
+@media (max-width:719px){.ct-code table{min-width:0;width:100%;table-layout:auto}.ct-code td:not(.n){white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}}
+.lw .fpanel:has(.ct-mount){max-height:none!important;overflow:visible!important}
 .ct-code table{border-collapse:collapse;font:13px/1.55 'JetBrains Mono',ui-monospace,monospace;min-width:100%}
 .ct-code td{padding:0 12px 0 0;vertical-align:top;white-space:pre}
 .ct-code td.n{padding:0 10px 0 12px;text-align:right;color:var(--dim);user-select:none;position:sticky;left:0;background:var(--card);box-shadow:inset -1px 0 0 var(--line)}
