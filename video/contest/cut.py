@@ -57,7 +57,7 @@ VO_DIR = os.path.join(HERE, 'build', 'vo')
 VO_MODEL, VO_SPEAKER = '@cf/deepgram/aura-2-en', os.environ.get('VO_SPEAKER', 'draco')
 ACCOUNT, GATEWAY = '887d7234a6b8d65ad355a4f6684cab67', 'qodebase-talk'
 # Spoken forms: what the captions write vs how it should sound.
-SAY = [(r'\bqodebase\b', 'codebase'), (r'package\.json', 'package dot json'), (r'\bgit\b', 'git'), (r'(\d)\.(\d)x\b', r'\1.\2 times'), (r'\bDurable Objects\b', 'Durable Objects')]
+SAY = [(r"Agent 4's change collides with Agent 2's", "one agent's change collides with another's"), (r'\bClaude\b', 'Clawed'), (r'\bcheap\b', 'low-cost'), (r'\bqodebase\b', 'codebase'), (r'package\.json', 'package dot json'), (r'\bgit\b', 'git'), (r'(\d)\.(\d)x\b', r'\1.\2 times'), (r'\bDurable Objects\b', 'Durable Objects')]
 
 def spoken(text):
     for a, b in SAY: text = re.sub(a, b, text)

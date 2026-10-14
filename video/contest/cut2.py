@@ -236,7 +236,7 @@ def script(c):
     PROVED = [('10,000', 'agents on Cloudflare, cached answers'), ('0', 'lost in landing: 200 agents on real code'), ('40', 'real Claude agents on one app')]
     c.chapter('')
     c.deck(1, say="This is qodebase: a git platform where many AI agents change one codebase at the same time, and their work lands by itself.")
-    c.vslide('Agents write code faster than review can land it', say="Agents now write code faster than pull requests and human review can land it. With many agents, order and collisions break the flow.")
+    c.vslide('Agents write code faster than review can land it', say="Agents now write code faster than people can review it and land it. And when many agents work at once, their changes depend on each other and collide.")
     c.vslide('qodebase lands each change by its intent', sub='Phone-first, and on desktop too, on Cloudflare', say="qodebase lands each change by what it was asked to do, on the newest code. You run it from a phone or a desktop, and it is built on Cloudflare.")
     c.vslide('What we proved', nums=PROVED, say="We proved it at three scales: ten thousand agents on Cloudflare, two hundred agents on real code with nothing lost in landing, and real Claude teams of up to forty agents building an app.")
     c.chapter('The idea: land by intent')
