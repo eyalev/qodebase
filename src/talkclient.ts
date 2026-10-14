@@ -1704,7 +1704,8 @@ function sentencesOf(t) {
   parts.forEach(function (x) { x = x.trim(); if (!x) return; if (out.length > 1 && out[out.length - 1].length < 40) out[out.length - 1] += ' ' + x; else out.push(x); });
   return out.length ? out : [t];
 }
-var saySeq = 0, speakingQ = false;
+var saySeq = 0, speakingQ = false, curParts = null, curPart = 0;
+function sayRest() { return curParts && curPart < curParts.length ? curParts.slice(curPart).join(' ') : ''; }
 // The first sentence streams into a MediaSource from our own fetch: sound starts on the first chunk, and the audio
 // element never requests the URL itself (its media request got an intermittent 500 on 'Hi.' that a fetch did not,
 // 2026-10-13). No MediaSource for MP3 -> the plain URL.
@@ -1727,11 +1728,12 @@ function streamSrc(text) {
 }
 function playParts(parts, whole) {
   var seq = ++saySeq, i = 0, urls = {}, t0 = Date.now();
-  speakingQ = true;
+  speakingQ = true; curParts = parts; curPart = 0;
   try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}   // one voice at a time
   var pre = function (k) { if (k >= parts.length || urls[k]) return; urls[k] = fetch(ttsUrl(parts[k]), { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.blob(); }).then(function (b) { return URL.createObjectURL(b); }).catch(function () { return null; }); };
   var next = function () {
     if (seq !== saySeq) return;
+    curPart = i;
     if (i >= parts.length || (i > 0 && stopAfterPart)) { speakingQ = false; return; }
     var k = i++;
     var src = k === 0 ? Promise.resolve(streamSrc(parts[0]) || ttsUrl(parts[0])) : (pre(k), urls[k]);
@@ -1932,7 +1934,13 @@ function leave(go) {
   if (speakingQ || speakPending) {
     stopAfterPart = true; var w0 = Date.now();
     trace('nav_wait_speech', {});
-    (function wait() { if ((speakingQ || speakPending) && Date.now() - w0 < 4000) return setTimeout(wait, 100); stopAfterPart = false; nav(); })();
+    (function wait() {
+      if ((speakingQ || speakPending) && Date.now() - w0 < 8000) return setTimeout(wait, 100);
+      stopAfterPart = false;
+      // what was not said yet is said on the next page, after it loads (no line is cut by a navigation: manager)
+      var rest = sayRest(); if (rest) { sset('sayafter', { text: rest, at: Date.now() }); trace('say_after_nav', { chars: rest.length }); }
+      nav();
+    })();
     return;
   }
   nav();
@@ -2664,6 +2672,9 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   var p = sget('pending', null);
   if (p) { sset('pending', null); setTimeout(function () { ask(p.text, p.did); }, 300); }
   briefQuestion();
+  // The rest of a reply that a navigation interrupted, said here once the page is up.
+  var sa = sget('sayafter', null);
+  if (sa && Date.now() - sa.at < 30000) { sset('sayafter', null); lastSpoken = true; setTimeout(function () { var o = new String(sa.text); o.__short = true; say(o); }, 900); }
   // Conversation mode carries over a page Talk opened: listen again here once the page has spoken (hands-free across pages).
   var cr = sget('convresume', 0);
   if (cr && convOn() && Date.now() - cr < 60000) { sset('convresume', 0); lastSpoken = true; setTimeout(function () { trace('conv_resume', {}); convAfter(); }, 1500); }
