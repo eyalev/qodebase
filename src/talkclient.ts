@@ -1466,9 +1466,17 @@ function pageAction(c) {
   var t0 = Date.now();
   // The fleet form takes a few seconds to fill and estimate: say so at once (manager, 2026-10-14).
   if (c.target === 'xfleet-job' && lastSpoken && S.voice !== 'off') { var fm = new String('One moment, getting the estimate.'); fm.__short = true; say(fm); }
-  var said = numberWords(lastText || c.text || '');
-  if (said !== (lastText || c.text || '')) trace('number_words', { from: lastText, to: said });
-  Promise.resolve().then(function () { return a.run(said); }).then(function (r) {
+  // The fleet form reads numbers and names from the sentence: wait (≤ 3 s) for Whisper's words when the turn acted on
+  // the live ones (live 2026-10-14: nova-3 heard 'Versus Code with a agents', no 'thousand').
+  var wpf = c.target === 'xfleet-job' && whisperP && whisperP.live === lastText ? whisperP : null;
+  if (wpf) wpf.taken = true;
+  Promise.race([wpf ? wpf.p : Promise.resolve(''), new Promise(function (ok) { setTimeout(function () { ok(''); }, wpf ? 3000 : 0); })]).then(function (w) {
+    var src = (w && wordsOnly(w)) || lastText || c.text || '';
+    if (w && src !== lastText) trace('fleet_whisper', { live: lastText, whisper: src });
+    var said = numberWords(src);
+    if (said !== src) trace('number_words', { from: src, to: said });
+    return a.run(said);
+  }).then(function (r) {
     logEv('page_action', { id: c.target, ms: Date.now() - t0, ok: r !== false });
     // The fleet form filled by voice: ask out loud with the size and the hard cap; a spoken yes presses its Start
     // (manager, 2026-10-14: everything by voice, a safety question first; silence or 'no' never starts).
@@ -2128,6 +2136,7 @@ function clipStart(ready) {
     clip = new MediaRecorder(st, type ? { mimeType: type } : {});
     clip.ondataavailable = function (e) { if (e.data && e.data.size) { clipChunks.push(e.data); liveChunk(e.data); } };
     clip.start(250);
+    vadStart(st);
     trace('rec_start', { ms: Date.now() - clipT0, warm: !!warmUsed });
     if (ready) ready();
   };
@@ -2251,7 +2260,9 @@ function liveOpen() {
       // nova-3's speech_final sometimes comes seconds after the final words (2.3 s, 2026-10-13): a final that ends a
       // sentence ('…project?') and sounds finished ends the turn too, after 0.6 s with no new words.
       var sentenceEnd = d.type === 'final' && /[.?!]["\u201d\u2019)]*$/.test(txt);
-      if ((d.end || sentenceEnd) && dcBuf.length && !dcText && convOn() && S.fast === 'on' && soundsDone(dcSaid(''))) { guess(dcSaid(''), true); endT = setTimeout(function () { if (dcOn && !dcText) endTurn(d.end ? 'endpoint' : 'sentence'); }, /\?["\u201d\u2019)]*$/.test(txt) ? 450 : sentenceEnd ? 900 : 1000); }   // nova-3 writes '.' at a comma pause: wait longer after a full stop than after a question   // no closing punctuation ('What's going'): wait longer   // + nova-3's 300 ms = ~0.75 s of quiet
+      if ((d.end || sentenceEnd) && dcBuf.length && !dcText && convOn() && S.fast === 'on' && soundsDone(dcSaid(''))) { guess(dcSaid(''), true); var endHow = d.end ? 'endpoint' : 'sentence';
+        var tryEnd = function () { if (!dcOn || dcText) return; if (speakingNow() && Date.now() - lastWordAt < 1500) { trace('end_wait', { why: 'voice on the mic' }); endT = setTimeout(tryEnd, 250); return; } endTurn(endHow); };
+        endT = setTimeout(tryEnd, /\?["\u201d\u2019)]*$/.test(txt) ? 450 : sentenceEnd ? 700 : 1000); }   // + the mic check: someone still talking waits   // nova-3 writes '.' at a comma pause: wait longer after a full stop than after a question   // no closing punctuation ('What's going'): wait longer   // + nova-3's 300 ms = ~0.75 s of quiet
       if (!nativePreview) setInp(dcBase + dcSaid(dcText));
     } else if (d.type === 'error') { trace('stt_ws_server_error', { err: d.error }); if (!gotWords && dcOn && !nativePreview) startNativePreview(); }
   };
@@ -2263,6 +2274,28 @@ function liveOpen() {
   };
 }
 var nextWs = null, endT = null, convQuietT = null;
+// A level meter on the microphone (conversation mode's end of turn): nova-3's words for the next phrase arrive ~1 s after
+// the speaker goes on, so a pause at a comma looked like the end ('…my home.' / 'with a paid pro version'). Before ending
+// a turn, the last 0.3 s of sound is checked against the turn's own noise floor.
+var vadAn = null, vadBuf = null, vadHist = [], vadTick = null;
+function vadStart(st) {
+  try {
+    clearInterval(vadTick); vadHist = [];
+    var C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    actx = actx || new C(); if (actx.state === 'suspended') actx.resume();
+    var src = actx.createMediaStreamSource(st); vadAn = actx.createAnalyser(); vadAn.fftSize = 1024; src.connect(vadAn); vadBuf = new Float32Array(vadAn.fftSize);
+    vadTick = setInterval(function () {
+      if (!dcOn) { clearInterval(vadTick); return; }
+      vadAn.getFloatTimeDomainData(vadBuf); var e = 0; for (var i = 0; i < vadBuf.length; i++) e += vadBuf[i] * vadBuf[i];
+      vadHist.push({ t: Date.now(), r: Math.sqrt(e / vadBuf.length) }); if (vadHist.length > 60) vadHist.shift();
+    }, 50);
+  } catch (e) { vadAn = null; }
+}
+function speakingNow() {
+  if (!vadAn || vadHist.length < 8 || (actx && actx.state !== 'running')) return false;
+  var floor = Math.min.apply(null, vadHist.map(function (h) { return h.r; })), now = Date.now();
+  return vadHist.some(function (h) { return now - h.t < 300 && h.r > Math.max(floor * 3, floor + 0.008); });
+}
 // A pause after "…update for" is a breath, not the end (Eyal's 'What is the latest update for … my projects?' was cut,
 // 2026-10-13): end early only when the words sound finished; otherwise the 1.5 s quiet rule decides.
 var DANGLING = /\b(for|the|a|an|to|and|or|of|my|with|in|on|at|is|are|was|what|how|about|from|into|that|this|so|but|if|then|because|like|um|uh|can|could|would|should|please|me|i|you|your|our|their|its)\s*$/i;
