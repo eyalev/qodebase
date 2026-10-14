@@ -42,6 +42,8 @@ export type ProjectInfo = {
   slug: string; owner: string; name: string; description: string;
   repo: string; remote: string; forkedFrom: string | null; createdAt: number;
   importedFrom?: ImportedFrom;
+  /** A read-only mirror of a GitHub repo (qodebase's own code, 2026-10-14): synced by the build box on each push (webhook). */
+  mirror?: { from: string; branch: string; syncedAt?: number; head?: string; ms?: number; error?: string };
   /** Path of the web page to preview ('' = root, 'demo/' …); null = none
    *  found; undefined = not looked yet (detected from main's tree). */
   entry?: string | null;
@@ -114,6 +116,22 @@ export class Project extends DurableObject<Env> {
 
   /** A project imported from a public GitHub repo (shallow). Artifacts imports
    *  in the background; the page shows "Importing" until main can be read. */
+  /** Make this project a mirror of a GitHub repo: never deployed (kind static, app off) whatever its files say. */
+  async setMirror(from: string, branch: string) {
+    const info = await this.#need();
+    info.mirror = { ...(info.mirror || {}), from, branch };
+    info.kind = 'static';
+    info.app = { status: 'failed', at: Date.now(), worker: '', error: 'A mirror of a GitHub repo: shown here, not deployed.' } as ProjectInfo['app'];
+    await this.ctx.storage.put('info', info);
+    return info;
+  }
+  async mirrorSynced(r: { head?: string; ms: number; error?: string }) {
+    const info = await this.#need();
+    if (!info.mirror) return;
+    info.mirror = { ...info.mirror, syncedAt: Date.now(), ms: r.ms, ...(r.head ? { head: r.head, error: undefined } : { error: r.error }) };
+    await this.ctx.storage.put('info', info);
+  }
+
   async createImported(owner: string, name: string, src: ImportedFrom, description: string): Promise<ProjectInfo> {
     if (!NAME_RE.test(owner) || !NAME_RE.test(name)) throw new Error('names: lowercase letters, digits, dashes');
     if (await this.info()) throw new Error('project exists');

@@ -429,6 +429,16 @@ const app = {
       return withPicker(request, await serveRun(request, env, ctx), [...uiHosts(env), ...(env.UI_VARIANT_HOSTS || '').split(',').map((h) => h.trim()).filter(Boolean)].map((h) => `https://${h}`));
     // Cloudflare Issues → Notifications webhook. Its own auth (cf-webhook-auth), before the user/agent auth.
     if (url.pathname === '/api/hooks/issues' && request.method === 'POST') return issuesHook(request, env, ctx);
+    // GitHub push webhook for a mirror project (signed with its secret: X-Hub-Signature-256); the sync runs after the reply.
+    { const mh = url.pathname.match(/^\/api\/hooks\/mirror\/([a-z0-9-]+)\/([a-z0-9-]+)$/);
+      if (mh && request.method === 'POST') {
+        const slug = `${mh[1]}.${mh[2]}`, body = await request.text();
+        const want = 'sha256=' + await hmacHex(await mirrorSecret(env, slug), body);
+        if ((request.headers.get('x-hub-signature-256') || '') !== want) { log('mirror', 'hook_refused', { slug }); return json({ error: 'bad signature' }, 401); }
+        if (request.headers.get('x-github-event') === 'ping') return json({ ok: true, ping: true });
+        ctx.waitUntil(syncMirror(env, slug).catch((e) => log('mirror', 'sync_failed', { slug, err: String(e).slice(0, 200) })));
+        return json({ ok: true, syncing: true });
+      } }
     // Public-site basics (baseline): about, privacy, robots, version, health.
     // Talk's traces as JSON with the admin key (workers.dev + x-forq-secret), for agents reviewing Talk (2026-10-13).
     if (url.pathname.startsWith('/api/talk/admin') && env.TALK && !isUiHost(env, url.hostname)) {
@@ -1070,6 +1080,15 @@ const app = {
         }
         if (info.owner !== me.handle && !me.admin) return json({ error: 'not your project' }, 403);
         if (verb === 'main-token' && request.method === 'POST' && me.admin) return json(await p.mainToken());
+        // Admin: make this project a mirror of a public GitHub repo ({github: 'owner/repo', branch}) and sync it now; the
+        // answer carries the webhook secret to set on GitHub (push events -> /api/hooks/mirror/<owner>/<name>).
+        if (verb === 'mirror' && request.method === 'POST' && me.admin) {
+          const b = await request.json().catch(() => ({})) as { github?: string; branch?: string };
+          if (!/^[\w.-]+\/[\w.-]+$/.test(String(b.github || ''))) return json({ error: 'github: owner/repo' }, 400);
+          await p.setMirror(String(b.github), String(b.branch || 'main'));
+          const r = await syncMirror(env, slug);
+          return json({ ...r, webhook: `https://${env.UI_HOST}/api/hooks/mirror/${slug.replace('.', '/')}`, secret: await mirrorSecret(env, slug) });
+        }
         // Ask Claude (the ask box, src/box.ts): owner-only, read-only, on the owner's Claude.
         if (verb === 'ask' && request.method === 'POST') {
           const b = await request.json().catch(() => ({})) as { question?: string; model?: string };
@@ -1842,4 +1861,23 @@ async function agentProxy(request: Request, env: Env, ctx: ExecutionContext, age
     if (r.status < 500) return r;
   }
   return startingPage(agentId, done && !done.ok ? done.error : undefined);
+}
+
+// ---- mirrors (qodebase's own code on qodebase, 2026-10-14) ----
+async function hmacHex(key: string, data: string) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return [...new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(data)))].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+/** Per mirror, derived (nothing stored): the GitHub webhook's secret. */
+async function mirrorSecret(env: Env, slug: string) { return (await hmacHex(env.ADMIN_SECRET, `mirror:${slug}`)).slice(0, 40); }
+async function syncMirror(env: Env, slug: string) {
+  const p = projectStub(env, slug);
+  const info = await p.info();
+  if (!info?.mirror) return { error: 'not a mirror' };
+  const t = await p.mainToken(900);
+  const r = await env.BuildBox.get(env.BuildBox.idFromName('mirror')).mirrorSync(`https://github.com/${info.mirror.from}.git`, t.remote, t.token, info.mirror.branch);
+  await p.mirrorSynced(r);
+  await registry(env).touch(slug).catch(() => {});
+  log('mirror', r.head ? 'synced' : 'sync_error', { slug, from: info.mirror.from, head: r.head?.slice(0, 12), ms: r.ms, err: r.error?.slice(0, 200) });
+  return r;
 }

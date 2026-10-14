@@ -162,6 +162,19 @@ export class BuildBox extends DurableObject<Env> {
     }
   }
 
+  /** Mirror sync: fetch a public GitHub branch with its whole history and force-push it to the project's repo (a mirror
+   *  has no other writer). The repo token goes to this one git command; never logged. */
+  async mirrorSync(src: string, remote: string, token: string, branch: string): Promise<{ head?: string; ms: number; error?: string }> {
+    const t0 = Date.now();
+    try {
+      await this.#ensureContainer(() => {});
+      const r = await this.#sh(`set -e; D=/tmp/mirror-$(echo "$REMOTE" | md5sum | cut -c1-8); [ -d "$D/.git" ] || git init -q "$D"; cd "$D"; timeout 240 git fetch -q --no-tags "$SRC" "+refs/heads/$BR:refs/heads/main"; timeout 240 git -c http.extraHeader="Authorization: Bearer $TOK" push -q -f "$REMOTE" main:main; git log -1 --format=%H main`,
+        { SRC: src, REMOTE: remote, TOK: token, BR: branch });
+      if (r.exitCode !== 0) return { ms: Date.now() - t0, error: (r.stderr || r.stdout || '').replace(token, '***').slice(-300) };
+      return { head: r.stdout.trim().split('\n').pop(), ms: Date.now() - t0 };
+    } catch (e) { return { ms: Date.now() - t0, error: String(e).slice(0, 300) }; }
+  }
+
   /** A finished job's result, if this builder still has it. */
   /** Is a pasted Claude plan token (claude setup-token) good? One tiny `claude -p` with it, through the real binary in
    *  a throwaway HOME (a plan token is only ever used by the claude binary: Anthropic's rule, 2026-10). Never logged. */
