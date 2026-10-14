@@ -23,7 +23,7 @@
     queue: ['The line (merge queue)', 'Finished changes wait here to be tested together, a few at a time, before they join the main code. If the tests fail, the change is sent back and main stays healthy.'],
     train: ['Train', 'A group of changes from the line that are tested together. If the tests pass, they all land at once.'],
     collision: ['Collision (conflict)', 'Two agents changed the same lines of the same file. Usually the second one has to start over. Here it does not have to: see "replayed".'],
-    replay: ['Replayed', 'When a change collides with newer code, qodebase re-applies what the change was meant to do (its intent) on the newest version, instead of throwing the work away. Then it is tested again.'],
+    replay: ['Redone (replay)', 'When a change collides with newer code, qodebase re-applies what the change was meant to do (its intent) on the newest version, instead of throwing the work away. Then it is tested again.'],
     claim: ['Claim', 'Before an agent starts, it says which files it expects to touch. Others can see the claims and avoid stepping on each other.'],
     stack: ['Stacked', 'A change that builds on another change that has not landed yet. They land in order.'],
     lead: ['Lead', 'When no rule can replay a change, it goes to a lead (an agent or a person responsible for that part of the code) who decides how to combine both changes.'],
@@ -770,7 +770,7 @@
     const H = HR && HR.j, skel = new Set((H?.plan?.skeleton || []).map((x) => (typeof x === 'string' ? x : x.id)));
     const T = TLsrv && TLsrv.t, cs = D.changes.slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     const t0 = Math.min(...cs.map((c) => c.createdAt || Infinity), D.estimate?.startedAt || Infinity);
-    const chipOf = (c) => `<a class="pc hw-c ${c.state === 'landed' ? 'hw-l' : c.state === 'bounced' || c.state === 'with-lead' ? 'bad' : 'hw-o'}${c.stackedOn ? ' st' : ''}" href="#/change/${esc(c.id)}" title="${AG(c.agent)}: ${esc(short(c))}" aria-label="${AG(c.agent)}: ${esc(short(c))}">${agentNum(c.agent)}</a>`;
+    const chipOf = (c) => `<a class="pc hw-c ${c.state === 'landed' ? 'hw-l' : c.state === 'bounced' || c.state === 'with-lead' ? 'bad' : 'hw-o'}${c.stackedOn ? ' st' : ''}${/^replayed/.test(c.landing?.how || '') ? ' rp' : ''}" href="#/change/${esc(c.id)}" title="${AG(c.agent)}: ${esc(short(c))}${/^replayed/.test(c.landing?.how || '') ? ' (collided, then redone on the newest code)' : ''}" aria-label="${AG(c.agent)}: ${esc(short(c))}">${agentNum(c.agent)}</a>`;
     // (1) The plan: agents started together form a wave (60 s apart at most); a wave after the first started once the
     // changes before it had landed. Stacked changes say what they build on.
     const waves = []; for (const c of cs) { const w = waves[waves.length - 1]; if (w && (c.createdAt || 0) - w.last < 60e3) { w.cs.push(c); w.last = c.createdAt || w.last; } else waves.push({ at: c.createdAt || 0, last: c.createdAt || 0, cs: [c] }); }
@@ -789,10 +789,12 @@
     const maxN = Math.max(1, ...trains.map((t) => t.changes.length));
     // positions on a shortened axis: a quiet gap counts at most 6% of the run, so a late train does not crush the rest
     const span0 = tEnd - t0, G = span0 * 0.06; let acc = 0, prev = t0, shortened = false; const posOf = new Map();
-    for (const t of trains) { const gap = t.startedAt - prev; if (gap > G) { acc += G; shortened = true; } else acc += Math.max(0, gap); posOf.set(t.id, acc); prev = t.startedAt; }
+    const breaks = [];
+    for (const t of trains) { const gap = t.startedAt - prev; if (gap > G) { breaks.push({ at: acc + G / 2, ms: gap }); acc += G; shortened = true; } else acc += Math.max(0, gap); posOf.set(t.id, acc); prev = t.startedAt; }
     const endGap = tEnd - prev, axisLen = acc + (endGap > G ? (shortened = true, G) : endGap) || 1;
-    const bars = trains.map((t, i) => `<i class="hw-tb${t.state === 'bounced' || (t.items || []).some((x) => x.outcome === 'bounced') ? ' bad' : ''}" style="left:${Math.min(99, (posOf.get(t.id) / axisLen) * 100).toFixed(2)}%;height:${Math.round(25 + 75 * (t.changes.length / maxN))}%" title="Train ${i + 1}: ${t.changes.length} change${t.changes.length === 1 ? '' : 's'}, ${mmss(t.startedAt - t0)} into the run"></i>`).join('');
-    const line = trains.length ? `<div class="hw-line" role="img" aria-label="${trains.length} trains over ${mmss(tEnd - t0)}">${bars}</div><div class="hw-ax"><span>0:00</span><span>${mmss(tEnd - t0)}${shortened ? ' (quiet stretches shortened)' : ''}</span></div>
+    const bars = trains.map((t, i) => `<i data-hwt="${esc(t.id)}" class="hw-tb${t.state === 'bounced' || (t.items || []).some((x) => x.outcome === 'bounced') ? ' bad' : ''}" style="left:${Math.min(99, (posOf.get(t.id) / axisLen) * 100).toFixed(2)}%;height:${Math.round(25 + 75 * (t.changes.length / maxN))}%" title="Train ${i + 1}: ${t.changes.length} change${t.changes.length === 1 ? '' : 's'}, ${mmss(t.startedAt - t0)} into the run"></i>`).join('');
+    const brk = breaks.map((b) => `<i class="hw-brk" style="left:${((b.at / axisLen) * 100).toFixed(2)}%" title="${esc(mmss(b.ms))} with no train"></i>`).join('');
+    const line = trains.length ? `<p class="cap">Each bar is a train of changes tested together, taller with more changes (1 to ${n0(maxN)}). ${matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click' : 'Tap'} one for what the merger did.${breaks.length ? ' Dashed lines mark quiet stretches that are shortened.' : ''}</p><div class="hw-line" role="img" aria-label="${trains.length} trains over ${mmss(tEnd - t0)}">${brk}${bars}</div><div class="hw-ax"><span>0:00</span><span>${mmss(tEnd - t0)}${shortened ? ' (quiet stretches shortened)' : ''}</span></div>
       <p class="hw-n">${n0(trains.length)} train${trains.length === 1 ? '' : 's'} took ${n0(cs.filter((c) => c.state === 'landed').length)} changes to main, up to ${n0(maxN)} at a time. <span class="hw-links"><button class="linkb" type="button" data-fittab="line">Line history</button>${tlOk() ? '<a href="#/timeline">Timeline</a>' : ''}</span></p>` : '<p class="dim">No trains yet.</p>';
     // (3) The budget: what it cost against the estimate and the guard's cap, and any halts
     const P0 = D.progress || {}, est = D.estimate || {}, B = D.budget || {};
@@ -800,9 +802,16 @@
     const top = Math.max(spent || 0, cap || 0, er ? er[1] : 0) || 1, pc = (v) => `${((v / top) * 100).toFixed(1)}%`;
     const plan_ = (D.billing || P0.billing || est.billing) === 'sub';
     const HB = H?.budget, gs = HB?.spent?.usd;
-    const halts = [gs != null && (HB.capUsd || cap) ? `The budget guard counted ${usd2(gs)} since the budget was set (box time and every Claude call); it stops the run at ${usd2(HB.capUsd || cap)}.` : '',
+    const halts = [gs != null && (HB.capUsd || cap) ? 'The guard counts box time and every Claude call since the budget was set, and stops the run at its cap.' : '',
       HB?.halted ? `Halted: ${HB.haltedWhy || 'by the guard'}.` : D.run?.stopped ? `Stopped: ${D.run.stoppedWhy || 'by the owner'}.` : '', D.run?.paused || HB?.paused ? 'Paused now.' : '', !HB && B.halted && !D.run?.stopped ? 'The budget guard halted it.' : ''].filter(Boolean);
-    const budget = spent != null || cap ? `<div class="hw-bud">${spent != null ? `<i class="hw-sp" style="width:${pc(spent)}"></i>` : ''}${er ? `<i class="hw-er" style="left:${pc(er[0])};width:${pc(er[1] - er[0])}"></i>` : ''}${cap ? `<i class="hw-cap" style="left:${pc(cap)}"></i>` : ''}</div>
+    // two rows that never share a scale (the critique: one bar compared two different numbers): the build's cost at API
+    // prices against its estimate (overrun in amber), then the guard's own count against its cap
+    const top1 = Math.max(spent || 0, er ? er[1] : 0) * 1.08 || 1, p1 = (v) => `${Math.min(100, (v / top1) * 100).toFixed(1)}%`;
+    const over = er && spent > er[1];
+    const row1 = spent != null ? `<p class="hw-bl">${plan_ ? 'Cost at API prices' : 'Cost'}</p><div class="hw-bud"><i class="hw-sp" style="width:${p1(over ? er[1] : spent)}"></i>${over ? `<i class="hw-ov" style="left:${p1(er[1])};width:calc(${p1(spent)} - ${p1(er[1])})"></i>` : ''}${er ? `<i class="hw-er" style="left:${p1(er[0])};width:${p1(er[1] - er[0])}"></i>` : ''}</div>
+      <div class="hw-ax"><span>${er ? `estimate ${usd2(er[0])} to ${usd2(er[1])}` : ''}</span><span><b>${usd2(spent)}</b></span></div>` : '';
+    const gcap = H?.budget?.capUsd || cap, row2 = gs != null && gcap ? `<p class="hw-bl">The budget guard\u2019s count</p><div class="hw-bud"><i class="hw-sp hw-g" style="width:${Math.min(100, (gs / gcap) * 100).toFixed(1)}%"></i></div><div class="hw-ax"><span>${usd2(gs)} counted</span><span>stops at ${usd2(gcap)}</span></div>` : '';
+    const budget = spent != null || cap ? `${row1}${row2}
       <p class="hw-n">${spent != null ? `${plan_ ? 'API-equivalent' : 'Spent'} <b>${usd2(spent)}</b>` : ''}${er ? `; the estimate was ${usd2(er[0])} to ${usd2(er[1])}` : ''}${cap && !(H?.budget?.spent) ? `; the guard stops it at ${usd2(cap)}` : ''}.${plan_ ? ' It ran on a Claude plan, so the dollars are what the same work costs at API prices.' : ''}</p>${halts.length ? `<p class="hw-n">${esc(halts.join(' '))}</p>` : ''}` : '<p class="dim">No cost recorded for this build.</p>';
     // (4) What the merger did, train by train (qb6's merger spans, keyed by train)
     const mer = T ? T.spans.filter((x) => x.lane === 'merger' && x.train) : [];
@@ -817,7 +826,7 @@
           return nRep ? `replayed ${nRep}${sumP(xs, 'replay') ? ` in ${sec(sumP(xs, 'replay'))}` : ''}` : ''; })(),
         t.checks ? (t.checks.ok === false ? 'checks failed' : t.checks.ms ? `checks passed in ${sec(t.checks.ms)}` : 'checks passed') : '', sumP(xs, 'push') ? `pushed in ${sec(sumP(xs, 'push'))}` : (t.state === 'landed' ? 'pushed' : '')].filter(Boolean);
       const det = xs.map((x) => `<li><span>${esc(x.label || x.phase)}${x.detail ? ` <span class="dim">(${esc(x.detail)})</span>` : ''}</span><span class="dim small">${sec(x.end - x.start)}</span></li>`).join('');
-      return `<li><details${openTrains.has('m' + t.id) ? ' open' : ''} data-train="m${esc(t.id)}"><summary>Train ${i}: ${esc(parts.join(', '))}.</summary>${det ? `<ul class="hw-det">${det}</ul>` : '<p class="dim small">No step-by-step record for this train.</p>'}</details></li>`;
+      return `<li id="hwt-${esc(t.id)}"><details${openTrains.has('m' + t.id) ? ' open' : ''} data-train="m${esc(t.id)}"><summary>Train ${i}: ${esc(parts.join(', '))}.</summary>${det ? `<ul class="hw-det">${det}</ul>` : '<p class="dim small">No step-by-step record for this train.</p>'}</details></li>`;
     }).join('');
     // (5) The reviewers (lanes r:*): how many each read, how long a change waited for one
     const rv = T ? T.lanes.filter((l) => /^r:/.test(l.id)) : [];
@@ -1131,6 +1140,8 @@
   root.addEventListener('click', async (ev) => {
     const g = ev.target.closest('[data-gloss]');
     if (g) { ev.preventDefault(); ev.stopPropagation(); const [t, d] = GLOSS[g.dataset.gloss]; pop.innerHTML = `<button class="x" type="button" aria-label="Close" popovertarget="lw-pop" popovertargetaction="hide">×</button><b>${esc(t)}</b><p>${esc(d)}</p>`; pop.showPopover?.(); return; }
+    const hb = ev.target.closest('[data-hwt]');
+    if (hb) { const li = document.getElementById('hwt-' + hb.dataset.hwt); if (li) { const d = li.querySelector('details'); if (d) { d.open = true; openTrains.add(d.dataset.train); } li.scrollIntoView({ block: 'center', behavior: 'smooth' }); } return; }
     const ft = ev.target.closest('[data-fittab]');
     if (ft) { fitTab = ft.dataset.fittab; lastKey = null; render(); return; }
     const go = ev.target.closest('[data-go]');

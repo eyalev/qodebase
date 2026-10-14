@@ -375,4 +375,10 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .hw-det{list-style:none;margin:0 0 10px;padding:0}.lw .hw-det li{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;box-shadow:inset 0 1px 0 var(--line)}
 .lw .hw-rv{margin:0;padding:0 0 0 18px;font-size:14px;display:grid;gap:4px}
 .lw .hw-links{display:inline-flex;gap:16px;margin-left:8px}
+.lw .hw-bl{margin:10px 0 4px;font-size:13px;font-weight:500}.lw .hw-ov{position:absolute;top:3px;bottom:3px;border-radius:0 4px 4px 0;background:var(--busy)}.lw .hw-sp.hw-g{background:var(--acc)}
+.lw .hw-er{z-index:1}.lw .hw-bud{overflow:hidden}
+.lw .hw-brk{position:absolute;top:0;bottom:0;width:0;border-left:1.5px dashed var(--dim);opacity:.6}
+.lw .hw-tb{cursor:pointer}.lw .hw-tb::before{content:'';position:absolute;inset:0 -8px}
+.lw .hw-links{margin-left:0;display:flex;gap:16px}.lw .hw-links>*{display:inline-flex;align-items:center;min-height:44px}
+.lw .ph .ph-t{position:relative}.lw .ph .ph-t::before{content:'';position:absolute;inset:-13px -4px}   /* 44 px to tap (qb5's critique) */
 
