@@ -266,7 +266,7 @@ export class Run extends DurableObject {
     for (const c of ['task TEXT', 'fns TEXT', 'kind TEXT', 'grp TEXT', 'variant INT', 'text TEXT']) try { this.sql.exec(`ALTER TABLE q ADD COLUMN ${c}`); } catch {}
     this.sql.exec(`CREATE TABLE IF NOT EXISTS claim (run TEXT, file TEXT, fn TEXT, task TEXT, PRIMARY KEY (run, file, fn))`);
     // cmt: the comments this file got ({name: text}, for the per-file diff); commit: the lane commit it landed in.
-    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT', 'task TEXT', 'kind TEXT', 'grp TEXT', 'resolution TEXT', 'change_id TEXT', 'redos INT', 'base_sha TEXT', 'read_tier TEXT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
+    for (const c of ['t_read INT', 't_model INT', 't_verify INT', 'infra_errs INT', 'cmt TEXT', 'commit_sha TEXT', 'pack_n INT', 'task TEXT', 'kind TEXT', 'grp TEXT', 'resolution TEXT', 'change_id TEXT', 'redos INT', 'base_sha TEXT', 'read_tier TEXT', 't_next INT']) try { this.sql.exec(`ALTER TABLE rec ADD COLUMN ${c}`); } catch {}
     // S4/qb7: the queue sampled every 10 s while a run is on (the series' depth per stage).
     this.sql.exec(`CREATE TABLE IF NOT EXISTS samp (run TEXT, t INT, waiting INT, at_model INT, ready INT, landed INT, lander_waiting INT, PRIMARY KEY (run, t))`);
     // S4a: the per-result land-wait check scanned the whole table; landed() looked files up by name.
@@ -447,8 +447,8 @@ export class Run extends DurableObject {
     }
     const cmt = r.cmt ? JSON.stringify(r.cmt).slice(0, 8000) : null;
     if (r.task && r.status !== 'ready') this.sql.exec(`DELETE FROM claim WHERE run = ? AND task = ?`, runId, r.task);
-    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n, task, kind, grp, resolution, change_id, redos, landed_at, commit_sha, base_sha, read_tier) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null, r.task || null, r.kind || null, r.grp || null, r.resolution || (r.status === 'caught_early' ? 'caught_early' : r.status === 'skipped' && r.task ? 'done_before' : null), r.changeId || null, r.redos ?? null, r.landedAt || null, r.commit || null, r.baseSha || null, r.readTier || null);
+    this.sql.exec(`INSERT INTO rec (run, file, status, reason, model, agent, at, ms, usd, tin, tout, comments, t_read, t_model, t_verify, infra_errs, cmt, pack_n, task, kind, grp, resolution, change_id, redos, landed_at, commit_sha, base_sha, read_tier, t_next) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      runId, r.file, r.status, (r.reason || '').slice(0, 300), r.model || s.cfg.model, agent, Date.now(), r.ms || 0, usd, r.tin || 0, r.tout || 0, r.comments || 0, r.tRead || null, r.tModel || null, r.tVerify || null, r.infraErrs || 0, cmt, r.packN || null, r.task || null, r.kind || null, r.grp || null, r.resolution || (r.status === 'caught_early' ? 'caught_early' : r.status === 'skipped' && r.task ? 'done_before' : null), r.changeId || null, r.redos ?? null, r.landedAt || null, r.commit || null, r.baseSha || null, r.readTier || null, r.tNext ?? null);
     const t10 = Math.floor(Date.now() / 10000) * 10000;
     if (s.lastSample !== t10) {
       s.lastSample = t10;
@@ -610,6 +610,7 @@ export class Run extends DurableObject {
         startedAt: t0, endedAt: t1, wallS: Math.round((t1 - t0) / 1000), landWaitS: { p50: pct(0.5), p90: pct(0.9) }, models, perMinute,
         // Read path (2026-10-14): how long each file's read took (ms) and which cache tier answered it.
         readMs: (() => { const v = this.sql.exec(`SELECT t_read AS t FROM rec WHERE run = ? AND t_read IS NOT NULL ORDER BY t_read`, id).toArray().map((x) => x.t); const q = (f) => (v.length ? v[Math.min(v.length - 1, Math.floor(v.length * f))] : null); return { p50: q(0.5), p90: q(0.9), p99: q(0.99), n: v.length }; })(),
+        nextMs: (() => { const v = this.sql.exec(`SELECT t_next AS t FROM rec WHERE run = ? AND t_next IS NOT NULL ORDER BY t_next`, id).toArray().map((x) => x.t); const q = (f) => (v.length ? v[Math.min(v.length - 1, Math.floor(v.length * f))] : null); return { p50: q(0.5), p90: q(0.9), p99: q(0.99), n: v.length }; })(),
         readTiers: Object.fromEntries(this.sql.exec(`SELECT read_tier AS k, COUNT(*) AS n FROM rec WHERE run = ? AND read_tier IS NOT NULL GROUP BY read_tier`, id).toArray().map((x) => [x.k, x.n])) };
     });
   }
@@ -801,7 +802,8 @@ export class Agent extends DurableObject {
     let n;
     const batch = (await this.ctx.storage.get('batch')) || 1;
     // Infra errors on our own objects (an overloaded Run, a reset) are counted here and reported with the next result.
-    try { n = await R.next(runId, batch); } catch (e) { await this.ctx.storage.put('infraErrs', ((await this.ctx.storage.get('infraErrs')) || 0) + 1); log('agent_infra_error', { runId, i, where: 'next', err: String(e?.message || e).slice(0, 200) }); await this.ctx.storage.setAlarm(Date.now() + 1000 + Math.random() * 2000); return; }
+    const tN = Date.now();
+    try { n = await R.next(runId, batch); this._tNext = Date.now() - tN; } catch (e) { await this.ctx.storage.put('infraErrs', ((await this.ctx.storage.get('infraErrs')) || 0) + 1); log('agent_infra_error', { runId, i, where: 'next', err: String(e?.message || e).slice(0, 200) }); await this.ctx.storage.setAlarm(Date.now() + 1000 + Math.random() * 2000); return; }
     if (n.stop) { await R.agentFinished(runId); return; }
     if (n.wait) { await this.ctx.storage.setAlarm(Date.now() + n.wait); return; }
     if (n.files) {
@@ -829,6 +831,7 @@ export class Agent extends DurableObject {
             // Index job: one docs/API.md line per declaration this file got a comment for.
             index: Object.entries(r.cmt || {}).map(([name, c]) => ({ name, line: indexLine(name, r.file, c) })) } }));
         for (const r of rs) delete r.text;
+        for (const r of rs) r.tNext = this._tNext ?? null;   // how long the Run object took to hand this batch out
         rs[0].infraErrs = (await this.ctx.storage.get('infraErrs')) || 0;
         await R.doneMany(runId, i, rs); await this.ctx.storage.put('infraErrs', 0);
         if (items.length) await (items[0].task ? lander(this.env, repoName).addTasks(runId, items) : lander(this.env, repoName).addMany(runId, items));
@@ -837,7 +840,7 @@ export class Agent extends DurableObject {
       return;
     }
     const r = await this.work(n.file, n.model, n.provider, repoName).catch((e) => ({ file: n.file.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
-    r.model = n.model; r.slot = n.slot;
+    r.model = n.model; r.slot = n.slot; r.tNext = this._tNext ?? null;
     r.infraErrs = (await this.ctx.storage.get('infraErrs')) || 0;
     try { await R.done(runId, i, r); await this.ctx.storage.put('infraErrs', 0); }
     catch (e) { await this.ctx.storage.put('infraErrs', r.infraErrs + 1); log('agent_infra_error', { runId, i, where: 'done', err: String(e?.message || e).slice(0, 200) }); }
@@ -1223,7 +1226,7 @@ export class Lander extends DurableObject {
           if (add.length) files.push({ path: API_MD, sha: objs.blob(mergeIndex(cur, add)) });
           for (const x of items) { const m = x.meta ? JSON.parse(x.meta) : {}; hows[x.path] = (m.index || []).length ? (m.picked < apiChangedAt ? 'index-replayed' : 'index-clean') : 'clean'; }
         }
-        tree = await overlay(repo, objs, tree, files);
+        tree = await overlay(repo, objs, tree, files, this.env);
         const message = `docs(${k}): comments for ${items.length} file${items.length === 1 ? '' : 's'}\n\nqodebase fleet run ${runId}; code unchanged (verified per file).`;
         const at = Date.now();
         parent = objs.commit(tree, [parent], message, at, 'qodebase fleet <fleet@qodebase.app>');
@@ -1488,7 +1491,7 @@ function parseTree(body) {
 }
 
 /** A new root tree with files replaced: only the trees on the changed paths are rewritten; the rest keep their hashes. */
-async function overlay(repo, objs, rootHash, files) {
+async function overlay(repo, objs, rootHash, files, env = null) {
   const byDir = new Map();
   for (const f of files) { const i = f.path.lastIndexOf('/'); const d = f.path.slice(0, i); if (!byDir.has(d)) byDir.set(d, []); byDir.get(d).push({ name: f.path.slice(i + 1), sha: f.sha }); }
   const memo = new Map();
@@ -1496,7 +1499,8 @@ async function overlay(repo, objs, rootHash, files) {
   const read = async (hash) => {
     const o = objs.map.get(hash);
     if (o && o.type === 'tree') return parseTree(o.body);
-    const t = await repo.readTree(hash);
+    // A git tree is immutable by hash: with env, read it through the KV tree cache (the Lander re-reads trees every push).
+    const t = env ? await readTreeCached(env, repo, hash) : await repo.readTree(hash);
     if (!t) throw new Error(`tree ${hash} not found`);
     return t.map((e) => ({ name: e.name, mode: e.type === 'tree' ? '40000' : String(e.mode).replace(/^0+/, ''), sha: e.hash, type: e.type }));
   };
