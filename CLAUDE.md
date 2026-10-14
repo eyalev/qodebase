@@ -1,18 +1,15 @@
-# forq
+# qodebase (internal name: forq)
 
-A Git platform for the age of agents, built entirely on Cloudflare and used from
-the phone. Every project runs, and every fork comes with its own agents.
-
-Personal project first; Cloudflare's "next Git platform" contest
-(deadline 2026-10-14) is a bonus, not the driver.
+A Git platform for the age of agents, built entirely on Cloudflare, phone-first and
+used from a desktop too. Every project runs, and every fork comes with its own agents.
 
 ## Name: qodebase (since 2026-10-06)
 
 The product is **qodebase** at **https://qodebase.app**; "forq" stays as the
 internal name (directory, Worker `forq`, DO classes, Artifacts namespace,
-cookies, `x-forq-*` headers, the `forq` CLI inside boxes, the showcase handle
+cookies, `x-forq-*` headers, the showcase handle
 `forq`). Visible text says qodebase. The public GitHub repo is `eyalev/qodebase`.
-- **qodebase.app was registered in the PERSONAL account** (zone `9630d9cb…`).
+- **qodebase.app was registered in the PERSONAL account**.
   Cloudflare lets a Registrar domain move between accounts only 10+ days after
   registration, so until then **`front/`** (Worker `qodebase-front`, personal
   account, deploy with the OAuth wrangler login) forwards every request to
@@ -149,8 +146,7 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
 
 ## Running it (v0)
 
-- **Account:** forq runs in its own Cloudflare account `forq` (`887d7234…`,
-  Workers Paid ) since 2026-10-02, not the personal one.
+- **Account:** forq runs in its own Cloudflare account `forq` (Workers Paid) since 2026-10-02, not the personal one.
   Deploy with `CLOUDFLARE_API_TOKEN=$(cat ~/.config/forq-cf/api-token) npx
   wrangler deploy` (account token, write all, forq account only, expires
   2027-10-02); the OAuth login cannot see this account. Zones projectsbase.dev
@@ -159,7 +155,7 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
   new hosts (redirect rules in the kapps.dev zone). Repo mirrors of the old
   instance and the migration script: `~/.local/share/forq-backups/old-account-repos/`.
 - Phone: https://projectsbase.dev/ (Access team `forqdev`, app `forq sign-in`
-  on `/login`, One-time PIN; owner@example.com → handle `eyal` via `HANDLES`).
+  on `/login`, One-time PIN; the owner's email → handle `eyal` via `HANDLES`).
   Design variants: `a.`…`d.projectsbase.dev` (`variants/`).
   Explore → project `/p/<owner>/<name>` → Fork / Send to router / agent cards.
   Agent and router UIs: `/a/<agent-id>/agent/` (router id `<owner>.<name>--router`).
@@ -179,9 +175,8 @@ Not in v0: per-branch previews, voice, Google login, multiple users, contest vid
   `agents-html`), `/api/agents/<id>/{state,wake,stop,send,exec,reset}`,
   `/api/admin/delete {repo?, box?, project?}`.
 - Boxes call `/api/agent/*` on workers.dev with `x-forq-agent: <id>.<hmac>`
-  (HMAC of the id with ADMIN_SECRET), through the `forq` CLI (`src/cli.ts`).
-- Secrets: `CLAUDE_CODE_OAUTH_TOKEN` (copied from opendev D1
-  `user_connections.claude_token`), `ADMIN_SECRET`.
+  (HMAC of the id with ADMIN_SECRET), through the in-box CLI `qb-agent` (`src/cli.ts`; `forq` is its old name and still works as an alias).
+- Secrets: `CLAUDE_CODE_OAUTH_TOKEN` (the owner's Claude subscription token), `ADMIN_SECRET`.
 - **Deploys do NOT kill awake boxes** (measured 2026-10-07: AgentBox/BuildBox use the
   `durable_object` scheduling policy, so a deploy restarts only the Durable Object; the
   container and every process in it kept running). What a deploy breaks is a command
@@ -218,7 +213,7 @@ with a plan token; anyone's work on someone else's subscription. Audited (file:l
   one tiny `claude -p` in BuildBox `keycheck` (throwaway HOME, the token only in that process's env, never logged).
   Stored AES-GCM (`KEY_ENC_SECRET`); `DELETE /api/me/key` removes it. Saving or deleting stops the person's awake
   boxes, so none keeps running on the old key.
-- **Grey, as for Amp:** we store a pasted setup-token (encrypted). `forq dedupe` reads the credential from the box's
+- **Grey, as for Amp:** we store a pasted setup-token (encrypted). `qb-agent dedupe` reads the credential from the box's
   tmux env because Claude Code keeps it out of its Bash tool's env (same person's credential, same box).
 - **Closed 2026-10-12:** the ask box keeps its boot spec (credential + tokens) AES-GCM-encrypted at rest
   (`askSpecEnc`, same key store as pasted keys; an older clear spec is sealed on first read). `boot.env` lives on
@@ -233,7 +228,7 @@ with a plan token; anyone's work on someone else's subscription. Audited (file:l
   (repo 10 min, search 1 h): fine for one person, needs a token when public.
 - Imports are shallow (`depth: 1`) and keep GitHub's default branch name, so
   never assume `main`: the run host and overview read `HEAD`, agents push
-  `HEAD`, `forq merge` reads `origin/HEAD`.
+  `HEAD`, `qb-agent merge` reads `origin/HEAD`.
 - The previewed page (`entry`) is detected once from main's tree and can be
   overridden: `POST /api/p/<o>/<n>/entry {"entry":"demo.html"}`.
 
@@ -279,11 +274,11 @@ waitUntil work is cut ~30 s after the response. Waking a box can take longer
 
 ## Roles (one box each, `src/box.ts` taskPrompt)
 
-- agent `<slug>--<id>`: its fork, writable; reports with `forq status`.
-- router agent `<slug>--router`: main, writable; `forq spawn|send|list|merge`.
+- agent `<slug>--<id>`: its fork, writable; reports with `qb-agent status`.
+- router agent `<slug>--router`: main, writable; `qb-agent spawn|send|list|merge`.
 - reviewer agent `<slug>--review`: main, read-only token; on every push forq
   queues a review (Project.queueReview → startReview in index.ts), it runs
-  `forq fetch-agent` + `forq verdict`. One review at a time; reviews stuck in
+  `qb-agent fetch-agent` + `qb-agent verdict`. One review at a time; reviews stuck in
   "reviewing" for 20 min requeue on the next page poll.
 
 ## Worker projects (src/build.ts)
@@ -321,7 +316,7 @@ waitUntil work is cut ~30 s after the response. Waking a box can take longer
 `/personal-agents` → "Install in my Cloudflare" puts an agent into the user's
 OWN account with no GitHub and no pasted tokens (research and options:
 `docs/deploy-without-github.md`).
-- **Sign in with Cloudflare** = forq's OAuth client `c7a959b3…` (forq account;
+- **Sign in with Cloudflare** = forq's OAuth client (forq account;
   secret `CF_OAUTH_CLIENT_SECRET`, laptop copy `~/.config/forq-cf/oauth-client.json`).
   Endpoints `dash.cloudflare.com/oauth2/{auth,token,revoke}`; access tokens live
   1 h, refresh tokens rotate on every refresh. **Public** since 2026-10-04
@@ -358,7 +353,7 @@ OWN account with no GitHub and no pasted tokens (research and options:
   `/__forq/save`, `/__forq/restart[?fresh=1]`. Container deploys no longer
   restart running boxes (DO policy), so test entrypoint changes with a restart.
   Needs Workers Paid. Snapshot storage price: not documented (cloudcost gap).
-  **Idle rule (2026-10-06, after three boxes ran 24/7 for a day, ~€1.17/day each):**
+  **Idle rule (2026-10-06, after three boxes ran 24/7 for a day):**
   use = requests through fetch(), POST chat completions through ai.forq
   (ForqOutbound → `touch('ai')`), and a kind's `workDirs` (T3: Claude Code
   transcripts). `stateDirs` changes only trigger snapshots and never count as
@@ -584,9 +579,9 @@ docs/contest/landing.md; owner tab qb6). UI: src/landingui/ (qb7), view "Agents 
   idle ones switch within a minute). Deploying a demo change: `stop`, wait until
   `landing/state` shows no agent alarms, then `start`.
 - **Real agents** (projects with `info.landing`): src/landing/hooks.ts records at spawn
-  (`forq spawn --files a,b` = claims, `--on <agent>` = stacked), push/verdict hooks, the merge tap
-  and `forq merge` queue the change; landed agents are marked merged; bounced agents and the
-  router are told through Landing's outbox (delivered from its alarm). `forq sync-main` rebases
+  (`qb-agent spawn --files a,b` = claims, `--on <agent>` = stacked), push/verdict hooks, the merge tap
+  and `qb-agent merge` queue the change; landed agents are marked merged; bounced agents and the
+  router are told through Landing's outbox (delivered from its alarm). `qb-agent sync-main` rebases
   an agent on main. Flags (`POST …/landing/flags`): `agentModel` (the boxes' model on the
   subscription, e.g. claude-haiku-5-5), `llmReplay` + `replayModel` (tier 2 in the merger box,
   default claude-haiku-5-5; `landing.reviewedDiff` vs `landing.diff` = diff-of-diffs),
@@ -632,21 +627,21 @@ Read-only answer to "what does the developer see when a thousand agents work on 
 
 Who works on what, live, inside each project's Landing DO (SQLite table `board`, 24 h). Landing flag
 `board` (off by default; the lab A/Bs it), `crossDedupe`, `nextTask` (self-picked backlogs).
-- Posts: the platform at spawn/push/review/queue/land/bounce; the box hook (`forq hook`, installed in
+- Posts: the platform at spawn/push/review/queue/land/bounce; the box hook (`qb-agent hook`, installed in
   /workspace/.claude/settings.json at boot only while the flag is on) on edits (file, debounced 30 s),
   commits (subject + files), and it puts the board into the agent's context on each prompt.
-- Agents: `forq who [--recent [30m]] [--files a,b] [--area X]`, `forq intent "…" --files a,b` (reply
-  carries live work on those files + finished work), `forq dedupe <file>|"task"…` (one Haiku `claude -p`
+- Agents: `qb-agent who [--recent [30m]] [--files a,b] [--area X]`, `qb-agent intent "…" --files a,b` (reply
+  carries live work on those files + finished work), `qb-agent dedupe <file>|"task"…` (one Haiku `claude -p`
   in the box; credentials come from tmux because Claude Code keeps them out of its Bash tool's env).
 - People: `GET /api/p/<o>/<n>/landing/board?recent=30&files=&area=&tail=N`; `view()` has `board {rows, aliases}`.
 - A second router per project: `<slug>--router2` (two-teams scenario).
 - After the adversarial review (W10, 2026-10-12): task ids count only when a registered list has them
-  (`forq tasks <file>` or `forq dedupe <file>`, router only; ES2022/SHA256 are not claims); only the router
+  (`qb-agent tasks <file>` or `qb-agent dedupe <file>`, router only; ES2022/SHA256 are not claims); only the router
   registers lists and alias pairs (agents get 403); the hook posts an `alive` heartbeat on any tool use (at
-  most every 2 min), so a slow agent keeps its claim; flag `claimNext` = atomic `forq next` (pickNext in
+  most every 2 min), so a slow agent keeps its claim; flag `claimNext` = atomic `qb-agent next` (pickNext in
   board.ts: first task not done, not held by a live agent, not an alias's second name; asking twice returns
-  the same task; a landed change marks its claim done). Two-teams: forq next hands out the union of lists.
-- Tests: `src/landing/board.test.mjs`, `src/landing/boxhook.test.mjs` (the forq CLI against a stub API).
+  the same task; a landed change marks its claim done). Two-teams: qb-agent next hands out the union of lists.
+- Tests: `src/landing/board.test.mjs`, `src/landing/boxhook.test.mjs` (the qb-agent CLI against a stub API).
 
 ## Variants lab (qodebase.app/lab, docs/lab/PLAN.md, since 2026-10-08)
 
@@ -876,5 +871,5 @@ token as `ANTHROPIC_API_KEY`; forq (`aigAnthropic` in index.ts) checks the token
   ('x-api-key header is required'). Opus 5.5, Sonnet 5.5 and the 4.x models work. Haiku 4.5 refuses Claude Code's 5.5
   requests; Cloudflare's REST `/ai/v1/messages` refuses Claude Code's requests (system blocks, roles). So the proxy sends
   Haiku 5.5 calls as Sonnet 5.5 (logged, `aig` module): use gateway billing only for Sonnet/Opus builds (Eyal's call).
-- The credit balance API (`/ai-gateway/billing/credit-balance`) reports CENTS (853.88 = $8.54).
+- The credit balance API (`/ai-gateway/billing/credit-balance`) reports CENTS (100.00 = $1.00).
 - Logs: Workers Logs module `aig` (call, status, ms, model swap); costs per gateway in `aiGatewayRequestsAdaptiveGroups`.
