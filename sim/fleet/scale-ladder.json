@@ -128,7 +128,8 @@
     "limit": "Artifacts reads for the whole account, ~1,900-2,000/s: 3 namespaces did not raise it (reads waited longer, none failed). Landing no longer the wall (~1 min after the answers). Behind it: one Run object per copy hands out work (at most ~2,800 reading at once)",
     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, fdde165)",
     "landed": 29890,
-    "nothingToDocument": 10690
+    "nothingToDocument": 10690,
+    "noCachedAnswer": 60
    }
   ],
   "files": {
