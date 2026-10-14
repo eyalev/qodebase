@@ -132,6 +132,7 @@ export async function landingRoute(request: Request, env: Env, info: ProjectInfo
         ...(Number.isFinite(Number(body.lanes)) && body.lanes !== undefined && body.lanes !== null ? { lanes: Math.max(0, Math.min(4, Math.round(Number(body.lanes)))) || undefined } : {}),
         ...(body.replayVia === 'gateway' || body.replayVia === null ? { replayVia: body.replayVia || undefined } : {}),
         ...(typeof body.replayDirect === 'boolean' ? { replayDirect: body.replayDirect } : {}),
+        ...(body.billing === 'plan' || body.billing === 'gateway' ? { billing: body.billing as 'plan' | 'gateway' } : {}),
         ...(typeof body.claims === 'boolean' ? { claims: body.claims } : {}),
         ...(typeof body.dedupe === 'boolean' ? { dedupe: body.dedupe } : {}),
         ...(typeof body.board === 'boolean' ? { board: body.board } : {}),

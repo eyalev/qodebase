@@ -191,6 +191,12 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
   let ccEnv: string, keyTail: string, billing: string;
   if (onSubscription(env, owner)) {
     ccEnv = `CLAUDE_CODE_OAUTH_TOKEN=${env.CLAUDE_CODE_OAUTH_TOKEN}`; keyTail = env.CLAUDE_CODE_OAUTH_TOKEN.slice(-20); billing = 'sub';
+    // Landing flag billing 'gateway': Claude via AI Gateway on forq's credits instead of the plan (see aigAnthropic).
+    const lfb = await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null);
+    if (lfb?.billing === 'gateway' && env.REPLAY_GATEWAY_TOKEN) {
+      const k = await agentToken(env, agentId);
+      ccEnv = `ANTHROPIC_BASE_URL=${apiBase}/api/aig/anthropic ANTHROPIC_API_KEY=${k}`; keyTail = 'gateway'; billing = 'gateway';
+    }
     // A landing project can pin its boxes' model (landing flags.agentModel, e.g. Sonnet for a test).
     const pinfo = await projectStub(env, slug).info();
     // Lab variants pin a model per role (plannerModel = the router, reviewerModel, coderModel).
@@ -429,6 +435,11 @@ const app = {
       return withPicker(request, await serveRun(request, env, ctx), [...uiHosts(env), ...(env.UI_VARIANT_HOSTS || '').split(',').map((h) => h.trim()).filter(Boolean)].map((h) => `https://${h}`));
     // Cloudflare Issues → Notifications webhook. Its own auth (cf-webhook-auth), before the user/agent auth.
     if (url.pathname === '/api/hooks/issues' && request.method === 'POST') return issuesHook(request, env, ctx);
+    // Claude through Cloudflare AI Gateway, paid from forq's unified-billing credits (2026-10-14, Eyal): a box of a project
+    // whose landing flag billing is 'gateway' gets ANTHROPIC_BASE_URL = here and its own agent token as the API key. We check
+    // it, drop it (x-api-key would be forwarded and unified billing would not apply), add cf-aig-authorization with the
+    // gateway token (never in a box or a log) and stream Anthropic's answer back.
+    if (url.pathname.startsWith('/api/aig/anthropic/')) return aigAnthropic(request, env, url);
     // GitHub push webhook for a mirror project (signed with its secret: X-Hub-Signature-256); the sync runs after the reply.
     { const mh = url.pathname.match(/^\/api\/hooks\/mirror\/([a-z0-9-]+)\/([a-z0-9-]+)$/);
       if (mh && request.method === 'POST') {
@@ -1880,4 +1891,25 @@ async function syncMirror(env: Env, slug: string) {
   await registry(env).touch(slug).catch(() => {});
   log('mirror', r.head ? 'synced' : 'sync_error', { slug, from: info.mirror.from, head: r.head?.slice(0, 12), ms: r.ms, err: r.error?.slice(0, 200) });
   return r;
+}
+
+// ---- Claude via AI Gateway with unified billing (landing flag billing: 'gateway') ----
+async function aigAnthropic(request: Request, env: Env, url: URL): Promise<Response> {
+  const key = request.headers.get('x-api-key') || (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  const i = key.lastIndexOf('.'), id = key.slice(0, i);
+  if (!(i > 0 && AGENT_RE.test(id) && key.slice(i + 1) === await hmac(env, id))) return json({ type: 'error', error: { type: 'authentication_error', message: 'not a qodebase box' } }, 401);
+  const slug = projectOf(id);
+  const f = await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null);
+  if (f?.billing !== 'gateway' || !env.REPLAY_GATEWAY_TOKEN) return json({ type: 'error', error: { type: 'permission_error', message: 'this project is not on gateway billing' } }, 403);
+  const acct = '887d7234a6b8d65ad355a4f6684cab67', gw = env.REPLAY_GATEWAY || 'qodebase-replay';
+  const target = `https://gateway.ai.cloudflare.com/v1/${acct}/${gw}/anthropic/${url.pathname.slice('/api/aig/anthropic/'.length)}${url.search}`;
+  const h = new Headers();
+  for (const [k, v] of request.headers) if (/^(content-type|anthropic-version|anthropic-beta|accept)$/i.test(k)) h.set(k, v);
+  h.set('cf-aig-authorization', `Bearer ${env.REPLAY_GATEWAY_TOKEN}`);
+  h.set('cf-aig-metadata', JSON.stringify({ project: slug, agent: id.split('--')[1] || id }));
+  const t0 = Date.now();
+  const res = await fetch(target, { method: request.method, headers: h, body: request.method === 'GET' ? undefined : request.body });
+  log('aig', 'call', { slug, agent: id, path: url.pathname.slice(19, 60), status: res.status, ms: Date.now() - t0 });
+  const out = new Headers(res.headers); out.delete('set-cookie');
+  return new Response(res.body, { status: res.status, headers: out });
 }

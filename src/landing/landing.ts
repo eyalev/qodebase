@@ -91,6 +91,8 @@ type Meta = {
     lanes?: number;
     /** Model replays as one direct call through the replay gateway instead of claude -p (needs replayVia 'gateway'). */
     replayDirect?: boolean;
+    /** 'gateway': the project's boxes run Claude through AI Gateway on forq's unified-billing credits, not the plan. */
+    billing?: 'plan' | 'gateway';
     /** The agent board (board.ts): platform + box-hook posts, `qb-agent who`, the hook's context. Off unless set (lab A/B). */
     board?: boolean;
     /** Dedupe passes read every list handed out on this project (two teams), not only the caller's. */
@@ -981,7 +983,8 @@ export class Landing extends DurableObject<Env> {
         const priciest = roleModels.length ? roleModels.reduce((a, b) => ((claudeUsd(b, x.tokens!) ?? Infinity) > (claudeUsd(a, x.tokens!) ?? Infinity) ? b : a)) : 'opus';
         // A row that names its model (lab projects, box.ts) is priced at that model; otherwise the priciest.
         const rowModel = x.project.includes(':') ? x.project.slice(x.project.lastIndexOf(':') + 1) : '';
-        const margin = rowModel ? GUARD_MARGIN : GUARD_MARGIN_UNNAMED;
+        // Gateway billing is real money at API rates: the guard prices it at +5% (the plan's margins are for estimates).
+        const margin = m.flags.billing === 'gateway' ? 1.05 : rowModel ? GUARD_MARGIN : GUARD_MARGIN_UNNAMED;
         claude += Math.max((claudeUsd(rowModel || priciest, x.tokens) ?? claudeUsd('opus', x.tokens) ?? 0) * margin, x.usd || 0);
       }
     }
