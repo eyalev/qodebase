@@ -59,6 +59,10 @@ class Cut2(base.Cut):
         if text: self.cues.append((self.now(), self.now() + secs, text))
         self.emit(im, round(secs * FPS))
 
+    def chapter(self, title):
+        # no 0.5 s blank page between chapters (review of voice-7: white flashes at 0:40, 4:04, 5:26, 8:02)
+        self.chapters.append((self.now(), title)); self.chap = title
+
     def vslide(self, headline, sub='', nums=(), say='', after=0.6):
         """A video slide: one big headline (<= 8 words), at most one short line, or up to three big numbers; the
         narration carries the detail (Eyal, 2026-10-14: the deck's paragraphs are unreadable in a video)."""
@@ -80,19 +84,24 @@ class Cut2(base.Cut):
         if say: self.cues.append((self.now(), self.now() + secs, say))
         self.emit(im, round(secs * FPS))
 
-    def _canvas(self, shot, y0, caption, quote, badge):
+    def _canvas(self, shot, y0, caption, quote, badge, zoom=1.0):
         canvas = Image.new('RGB', (W, H), BG); d = ImageDraw.Draw(canvas)
         px, py, pw, ph = self.PX, self.PY, self.PW, self.PH
-        y0 = max(0, min(shot.height - self.WIN, round(y0)))
-        win = shot.crop((0, y0, self.SRC_W, y0 + self.WIN)).resize((pw, ph), Image.LANCZOS)
+        if zoom > 1:   # a closer look: the window is narrower in the source, the frame on screen is wider
+            sw = round(self.SRC_W / zoom); sh = round(shot.height / zoom); pw = round(pw * 1.3); px = max(60, px - 70)
+            x0 = (self.SRC_W - sw) // 2; y0 = max(0, min(shot.height - sh, round(y0)))
+            win = shot.crop((x0, y0, x0 + sw, y0 + sh)).resize((pw, ph), Image.LANCZOS)
+        else:
+            y0 = max(0, min(shot.height - self.WIN, round(y0)))
+            win = shot.crop((0, y0, self.SRC_W, y0 + self.WIN)).resize((pw, ph), Image.LANCZOS)
         d.rounded_rectangle((px - 3, py - 3, px + pw + 2, py + ph + 2), radius=33, outline=(212, 212, 222), width=2)
         mask = Image.new('L', (pw, ph), 0); ImageDraw.Draw(mask).rounded_rectangle((0, 0, pw - 1, ph - 1), radius=30, fill=255)
         canvas.paste(win, (px, py), mask)
         tx = px + pw + 110; tw = W - tx - 120; y = 120
         if self.chap: d.text((tx, y), self.chap, font=F_CHAP, fill=ACC); y += 56
-        for i, line in enumerate(wrap(d, caption or '', F_CAP, tw)[:3]):
+        for i, line in enumerate(wrap(d, caption or '', F_CAP, tw)[:5]):
             d.text((tx, y + i * 56), line, font=F_CAP, fill=FG)
-        if caption: y += min(3, len(wrap(d, caption, F_CAP, tw))) * 56 + 30
+        if caption: y += min(5, len(wrap(d, caption, F_CAP, tw))) * 56 + 30
         chat = list(getattr(self, 'chat', [])) or ([('you', quote)] if quote else [])
         top, bottom = y, (H - 260 if badge else H - 80)
         blocks, yb = [], bottom
@@ -186,16 +195,17 @@ class Cut2(base.Cut):
                 else: print(json.dumps({'event': 'page_audio_missing', 'take': os.path.basename(src), 'a': a, 'b': b}), file=sys.stderr)
             t = float(a)
             while t <= b:
-                while ci < len(chat_ev) and chat_ev[ci][0] <= t: self.chat.append((chat_ev[ci][1], chat_ev[ci][2])); ci += 1
+                while ci < len(chat_ev) and chat_ev[ci][0] <= t:
+                    self.chat.append((chat_ev[ci][1], chat_ev[ci][2])); self.cues.append((self.now(), self.now() + max(2.0, len(chat_ev[ci][2]) / 15), ('Talk: ' if chat_ev[ci][1] == 'talk' else '') + chat_ev[ci][2])); ci += 1
                 while fi + 1 < len(frames) and frames[fi + 1][0] <= t: fi += 1
                 while fi > 0 and frames[fi][0] > t: fi -= 1
                 f = frames[fi][1]
                 if f not in cache: cache.clear(); cache[f] = cover_talk_version(Image.open(os.path.join(src, 'frames', f)).convert('RGB'))
                 badge = (f'{x:g}×', f'real time {int((t - a) / 60000)}:{int((t - a) / 1000 % 60):02d}') if x > 1 else (('later', f'+{round(jump / 60000)} min' if jump >= 60000 else f'+{round(jump / 1000)} s') if jump and t - a < 2000 else None)
-                self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), badge))
+                self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), badge, s.get('zoom', 1.0)))
                 t += 1000 * x / FPS
             hold_s = s.get('hold', 0)
-            if hold_s: self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), None), round(hold_s * FPS))
+            if hold_s: self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), None, s.get('zoom', 1.0)), round(hold_s * FPS))
 
 V = os.path.expanduser('~/.local/share/qodebase-video')
 def talk_voice(text):
@@ -233,30 +243,32 @@ def cover_talk_version(im):
 TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-v2d').split(',')]
 
 def script(c):
-    PROVED = [('10,000', 'agents on Cloudflare, cached answers'), ('0', 'lost in landing: 200 agents on real code'), ('40', 'real Claude agents on one app')]
+    PROVED = [('10,000', 'agents on Cloudflare, cached answers'), ('200', 'agents on real code: 0 lost in landing at 60% overlap'), ('40', 'real Claude agents on one app')]
     c.chapter('')
     c.deck(1, say="This is qodebase: a git platform where many AI agents change one codebase at the same time, and their work lands by itself.")
     c.vslide('Agents write code faster than review can land it', say="Agents now write code faster than people can review it and land it. And when many agents work at once, their changes depend on each other and collide.")
     c.vslide('qodebase lands each change by its intent', sub='Phone-first, and on desktop too, on Cloudflare', say="qodebase lands each change by what it was asked to do, on the newest code. You run it from a phone or a desktop, and it is built on Cloudflare.")
-    c.vslide('What we proved', nums=PROVED, say="We proved it at three scales: ten thousand agents on Cloudflare, two hundred agents on real code with nothing lost in landing, and real Claude teams of up to forty agents building an app.")
+    c.vslide('What we proved', nums=PROVED, say="We proved it at three scales: ten thousand agents on Cloudflare, two hundred agents on real code with nothing lost in landing, and up to forty agents running Claude, building one app.")
     c.chapter('The idea: land by intent')
     c.deck(4, say="A hint from real history. Hono is an open-source web framework. Replaying a hundred of its real pull requests as if they were written at the same moment, almost half needed another one to land first. People write pull requests one after another; agents in parallel can't see each other's unlanded work. So dependent work must wait, be stacked, or be redone after it lands.")
-    for n in (5, 6): c.deck(n)
+    c.deck(5)
+    c.deck(6, say="Every change keeps its record inside git, as a note on its commit: what it was asked to do, which agent did it, the review, or that there was none, how it landed, and the tests.")
     c.chapter('A team build, all by voice')
     for t in TAKES2: c.take(t, json.load(open(os.path.join(t, 'segs.json'))))
     c.chapter('It works with real agents')
-    for n in (11, 12): c.deck(n)
+    c.deck(11, say="Then a real app: forty agents running Claude built one travel planner. Twenty-eight of their changes collided, and a model redid every one on the newest code. We tried the app by hand: eleven of thirteen features work. Why not forty Opus agents instead? One forty-agent run already cost about seventeen dollars.")
+    c.deck(12, say="And an honest finding: for a fresh app, one strong agent beat a team. A single Opus agent finished sooner in all three comparisons, two to six times, with at least as many features working; the team was cheaper in two of three.")
     c.chapter('Many agents, at scale')
-    c.vslide('200 agents on real code', nums=(('1,385', 'coding tasks, checked by hidden tests'), ('0', 'lost in landing'), ('53 min', 'with lanes, from 207')), say="Two hundred cheap-model agents took almost fourteen hundred coding tasks on one codebase, checked by tests they never saw. As more tasks aimed at the same functions, losses stayed in the same range and nothing was lost in landing. The overlap cost time, and lanes per module won most of it back.")
-    c.deck(15)
+    c.vslide('200 agents on real code', nums=(('1,385', 'coding tasks, checked by hidden tests'), ('0', 'lost in landing at 60% overlap'), ('44.5 min', 'with lanes and prefetch, from 207')), say="Two hundred cheap-model agents took almost fourteen hundred coding tasks on one codebase, checked by tests they never saw. As more tasks aimed at the same functions, losses stayed in the same range and nothing was lost in landing. The overlap cost time; lanes, one landing queue per module, cut the worst case from two hundred and seven minutes to forty-four and a half.")
+    c.deck(15, say="Then thousands of agents on one platform. Throughput stops near two thousand files a second: past about two thousand reads a second for the whole account, Artifacts slows down instead of failing. Faster landing let ten thousand agents put all twenty-nine thousand eight hundred ninety of their changes on main in eighty-six seconds, with cached answers instead of model calls, starting in ramps.")
     c.chapter('A thousand agents, all by voice')
     T3 = os.path.join(V, os.environ.get('TAKE3', 'take-v3r'))
     c.take(T3, json.load(open(os.path.join(T3, 'segs.json'))))
     c.chapter('Built on Cloudflare')
-    c.vslide('All of it runs on Cloudflare', sub='Workers, Durable Objects, Artifacts, Containers and Workers AI', say="Underneath, it is all Cloudflare: Workers serve the app, Durable Objects hold every project and agent, Artifacts hold every repository and fork, Containers run the agents, and Workers AI runs the cheap models and the voice.")
+    c.vslide('All of it runs on Cloudflare', sub='Workers, Durable Objects, Artifacts, Containers and Workers AI (Gemini as overflow)', say="Underneath, it is all Cloudflare: Workers serve the app, Durable Objects hold every project and agent, Artifacts hold every repository and fork, Containers run the agents, and Workers AI runs the low-cost models, with Gemini as overflow, and the voice.")
     c.chapter('')
-    c.vslide('What we proved', nums=PROVED, say="Thousands of agents on one platform, hundreds on real code with nothing lost in landing, and real Claude teams building apps, every step recorded and visible.")
-    c.vslide('Try it: qodebase.app', sub='Watch a run, no sign-in. The details: How it works, the README, the Runs page.', say="Try it yourself at qodebase dot app: watch a run with no sign-in, and read how it works.")
+    c.vslide('What we proved', nums=PROVED, say="Ten thousand agents on one platform, two hundred on real code with nothing lost in landing, and up to forty agents running Claude building one app, every step recorded and visible.")
+    c.vslide('Try it: qodebase.app', sub='Watch a run, no sign-in. Code: github.com/eyalev/qodebase', say="Try it yourself at qodebase dot app: watch a run with no sign-in, and read how it works.", after=4.0)
 
 def _no_overlap(cues):
     cues.sort(key=lambda c: c[0])

@@ -15,7 +15,7 @@ await p.route('**/deck/**', (r) => { const f = new URL(r.request().url()).pathna
 await p.goto('https://qodebase.app/deck/?rec=1&theme=light#1'); await p.waitForTimeout(1500);
 const n = await p.evaluate(() => window.deckSlides().length);
 for (let k = first; k <= Math.min(n, last); k++) {
-  await p.evaluate((k) => window.deckGo(k), k); await p.waitForTimeout(k === 7 ? 7000 : 2600);
+  await p.evaluate((k) => window.deckGo(k), k); await p.waitForTimeout(k === 7 ? 7000 : (k === 10 || k === 11) ? 4800 : 2600);
   await p.screenshot({ path: path.join(OUT, String(k).padStart(2, '0') + '.png') });
 }
 console.log(JSON.stringify({ slides: n, out: OUT }));

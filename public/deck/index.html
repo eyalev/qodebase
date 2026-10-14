@@ -104,7 +104,7 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
 .proved li>span{font-size:15px;line-height:1.4;color:var(--dim)}
 .s.ovs{overflow-y:auto}
 .ovs .map li>span>span{display:none}
-.lc{background:var(--acc);box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--warn)}
+.lc{background:var(--busy);box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--warn)}
 .dots.d12{grid-template-columns:repeat(6,1fr);max-width:260px}
 .shot{display:block;width:100%;height:auto}
 /* 1 title: lanes merging */
@@ -165,7 +165,7 @@ body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}b
 .s.on .dots i{animation:land .25s forwards;animation-delay:calc(var(--d) * 45ms + .2s)}
 .s.on .dots i.c{animation:coll 1.6s forwards;animation-delay:calc(var(--d) * 45ms + .2s)}
 @keyframes land{to{opacity:1}}
-@keyframes coll{0%{opacity:1;background:var(--warn)}45%{background:var(--warn)}100%{opacity:1;background:var(--acc);box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--warn)}}
+@keyframes coll{0%{opacity:1;background:var(--warn)}45%{background:var(--warn)}100%{opacity:1;background:var(--busy);box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--warn)}}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--dim)}
 .legend b{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
 @media (min-width:900px) and (min-aspect-ratio:4/3){.dots{max-width:26em}}
