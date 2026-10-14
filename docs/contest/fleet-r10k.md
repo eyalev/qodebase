@@ -59,3 +59,36 @@ being the wall. Reads did not get faster with more namespaces: ~1,900 files/s wi
 2 namespaces or 3, and each read slower when more run at once. **The next wall is Artifacts read throughput for the
 account (~1,900-2,000 reads/s), not per namespace**; past it reads wait longer (p90 1.3-1.8 s) but none failed. Behind
 it: one Run object per copy hands out the work to 1,000 agents, which is why at most ~2,800 agents were reading at once.
+
+## Runs (d) and (e): best case: files repeat (cache), fast settings (2026-10-14 09:36 and 09:40 UTC)
+
+Every read served from the read cache (identical copies of VS Code `src/vs`), run (c)'s fast start (250 agents per
+100 ms per copy, 0-0.5 s first-file delay) and landing (passes up to 1,500 files every second), cache-mode answers (no
+model). Goal: find the wall when reads are not the limit. 1,000 agents per copy; copies spread over 4 namespaces.
+
+| | (d) 10,000 agents, 10 copies | (e) 50,000 agents, 50 copies |
+|---|---|---|
+| files | 40,640: 29,890 landed, 10,690 nothing to document, 60 no cached answer | 203,200: 139,385 landed, 52,577 nothing to document; **10,943 (5.4%) lost** (below) |
+| errors | 0 | 10,943 files lost to 'Durable Object is overloaded. Requests queued for too long.' on the Run objects; 0 read, landing or Artifacts errors |
+| busiest 10 s | 20,846 files (~2,085/s) | 123,843 files (~12,400/s) |
+| agents busy at once (max per 10 s) | 1,570 | 6,793 |
+| reads | 100% cache (KV 40,530, memory 110), p50 51 ms, p90 102 ms | 100% cache (KV 194,362, memory 5,517), p50 28 ms, p90 113 ms |
+| Run object hand-out (time to give an agent its batch) p50 / p90 / worst p99 | 74 / 235 / 1,321 ms | 74 / 209 / 1,011 ms |
+| landing peak | 8,334 files in 10 s (~830/s), 45 pushes | 69,776 files in 10 s (~7,000/s), 223 pushes |
+| start to everything landed | 82 s | ~70 s for what landed; 40 of 50 copies never finished (lost results) |
+
+**What (e) lost, and why.** Each copy's Run object (one Durable Object) hands out work to its 1,000 agents and records
+every result (an SQL row per file plus the run's counters). At 50 copies at once, Run objects answered agents with
+'Durable Object is overloaded. Requests queued for too long.': 3,321 files were handed out and their results never
+recorded, and 7,622 were recorded as ready but the hand-off to the landing queue failed the same way, so they never
+landed. The fleet code dropped those results instead of retrying, and nothing re-queues work that is out for too long,
+so 40 runs never reached 'done' (stopped by hand). Nothing landed was wrong, and every landed change is on main.
+
+**The next wall (cache case): the fleet's own bookkeeping objects, not Artifacts or KV.** 10 copies at 1,000 agents each
+were clean; 50 copies at the same per-copy load overloaded the Run objects (likely sharing hosts). Fixes, not built:
+retry the report with backoff instead of dropping it, re-queue files out for more than N seconds, split each copy's Run
+object into several (e.g. one per 250 agents), and batch the per-file SQL writes. Reads and landing kept up: 12,400
+files/s answered and 7,000 files/s landed at the peak.
+
+Cost: (d) ~$1, (e) ~$2-3 (estimates: forks, ~270 pushes, ~240k KV reads, a few million Durable Object requests; no
+model calls). All copies deleted after (deleted.log, 55 repos incl. two seeds and three unused forks).
