@@ -32,9 +32,19 @@
   }
   // qb6 (#5, from the 23:00 deploy): a change whose agent's box never started gets the event 'its box had not started:
   // woken', and an agent whose box stopped before its task is 'blocked' with that note. -> 'Agent N' (or 'an agent').
+  // qb6 (2026-10-14): a box refused by the awake limit now waits for a free one ('waiting for a free box', retried each
+  // minute) -> 'waiting for a free box: Agent N', not stuck; 'box had not started' appears only after a real wake failed.
+  window.qbBoxWait = function (view, name) {
+    const waits = (c) => { const ev = (c.events || []).filter((e) => /waiting for a free box|box had not started/i.test(JSON.stringify(e))); return ev.length && /waiting for a free box/i.test(JSON.stringify(ev[ev.length - 1])); };
+    const cs = ((view && view.changes) || []).filter((c) => c.state !== 'landed' && waits(c));
+    if (!cs.length) return null;
+    const who = name ? name(cs[0].agent) : 'an agent';
+    return cs.length > 1 ? `${who} and ${cs.length - 1} more` : who;
+  };
   window.qbStuckAgent = function (view, name) {
     const never = (x) => /box had not started|never started|before its task was sent/i.test(JSON.stringify(x || ''));
-    const c = ((view && view.changes) || []).find((c) => c.state !== 'landed' && (c.events || []).some(never));
+    const latest = (c) => (c.events || []).filter((e) => /waiting for a free box|box had not started/i.test(JSON.stringify(e))).slice(-1)[0];
+    const c = ((view && view.changes) || []).find((c) => c.state !== 'landed' && never(latest(c) || ''));
     const a = c ? null : ((view && view.agents) || []).find((a) => a.state === 'blocked' && never(a));
     const id = c ? c.agent : a ? a.id || a.agent : null;
     if (!c && !a) return null;
@@ -56,7 +66,7 @@
     const exp = fin ? 'estimated' : 'expected';
     // qb6 (#5): an agent whose box never started holds the build; say so instead of 'On track'
     const state = fin ? (el > hi ? 'Took longer than estimated' : el < lo ? 'Faster than estimated' : 'Within the estimate')
-      : B.stuck ? `Stuck: ${B.stuck} never started` : el > hi ? 'Taking longer than expected' : el >= lo ? 'Within the expected range' : 'On track';
+      : B.stuck ? `Stuck: ${B.stuck} never started` : B.boxWait ? `Waiting for a free box: ${B.boxWait}` : el > hi ? 'Taking longer than expected' : el >= lo ? 'Within the expected range' : 'On track';
     const late = el > hi || (!fin && !!B.stuck);
     const cost = done ? p.actualUsd : stopAt && B.usdAtLastLanding != null ? B.usdAtLastLanding : p.spentUsd;
     // On the person's Claude plan (qb6: billing 'sub'), the dollars are what the same work costs at API prices.
@@ -113,6 +123,7 @@
           } catch (e) { console.log(JSON.stringify({ module: 'estbar', event: 'remaining_failed', error: String(e) })); }
         }
         if (b && !b.stuck) b.stuck = window.qbStuckAgent ? window.qbStuckAgent(j) : null;
+        if (b && !b.boxWait) b.boxWait = window.qbBoxWait ? window.qbBoxWait(j) : null;
         w.last = b; w.cbs.forEach((f) => { try { f(b, j); } catch (e) {} });
         if (b && b.settledAt) { w.timer = -1; return; }
       } catch (e) { console.log(JSON.stringify({ module: 'estbar', event: 'build_poll_failed', error: String(e) })); }
