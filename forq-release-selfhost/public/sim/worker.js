@@ -6,6 +6,8 @@ const TICK_MS = 100, MAX_EVENTS_PER_TICK = 250000;
 
 function start(c) {
   cfg = c; sim = createSim(c);
+  // warmS: run that much simulated time before the first frame, so a fresh visit opens on numbers, not dashes
+  for (let guard = 0; c.warmS && sim.t < c.warmS && guard < 400; guard++) sim.runUntil(c.warmS, MAX_EVENTS_PER_TICK);
   post();
 }
 

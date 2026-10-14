@@ -94,6 +94,9 @@ th:first-child, td:first-child { text-align: left; white-space: normal; }
 th { font-weight: 500; color: var(--dim); font-size: 13px; }
 .scroll { overflow-x: auto; margin: 0 -16px; padding: 0 16px; }
 .muted { color: var(--dim); font-size: 13px; }
+nav.site { display: flex; gap: 16px; font-size: 14px; margin: 0 0 12px; }
+nav.site a { color: var(--dim); text-decoration: none; min-height: 32px; display: inline-flex; align-items: center; }
+nav.site a:first-child { color: var(--fg); font-weight: 600; margin-right: auto; }
 .note { font-size: 13px; color: var(--dim); margin-top: 8px; }
 a { color: var(--acc); }
 @media (hover: hover) { .chip:hover { background: var(--line); } .chip[aria-pressed="true"]:hover { background: var(--fg); } }
@@ -101,12 +104,21 @@ a { color: var(--acc); }
 </head>
 <body>
 <main>
-  <h1>qodebase sim</h1>
-  <p class="lede">Many agents changing code at once, simulated: no model calls, each agent a small state machine on a virtual clock. Timings come from qodebase's measured runs; the outcomes are estimates, not measurements. <a href="./run.html">See a real run</a>: a real codebase, real git, 500 scripted agents.</p>
+  <nav class="site"><a href="/">qodebase</a><a href="/lab">Lab</a><a href="./run.html">A real run</a></nav>
+  <h1>Many agents changing one codebase, playing now</h1>
+  <p class="lede" style="color:var(--fg)">Every agent, file and merge below is simulated live: pick how changes land and watch which way keeps up.</p>
+  <p class="lede" style="margin-top:6px">No model calls: each agent is a small state machine on a virtual clock. Timings come from qodebase's measured runs; the outcomes are estimates, not measurements. <a href="./run.html">See a real run</a>: a real codebase, real git, 500 scripted agents.</p>
+
+  <section class="stats" id="stats" aria-label="Numbers" style="margin-top:16px"></section>
 
   <div class="grid">
     <div class="side stack">
       <section class="card stack" aria-label="Controls">
+        <div class="row">
+          <button class="btn" id="play">Pause</button>
+          <button class="chip" id="restart">Restart</button>
+          <button class="chip" id="compareBtn">Compare all</button>
+        </div>
         <label class="f">Scale
           <select id="preset"></select>
         </label>
@@ -119,18 +131,11 @@ a { color: var(--acc); }
           <div class="muted" id="spdLabel">Speed</div>
           <div class="chips" id="speed" role="group" aria-labelledby="spdLabel" style="margin-top:4px"></div>
         </div>
-        <div class="row">
-          <button class="btn" id="play">Play</button>
-          <button class="chip" id="restart">Restart</button>
-          <button class="chip" id="compareBtn">Compare all</button>
-        </div>
         <div class="clock" id="clock"></div>
       </section>
     </div>
 
     <div class="stack">
-      <section class="stats" id="stats" aria-label="Numbers"></section>
-
       <section class="card">
         <h2>Where the agents are</h2>
         <div class="bar" id="bar"></div>

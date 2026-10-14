@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>qodebase deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<!-- Contest deck (qb3, 2026-10-13): one claim + one visual per slide; the notes are the narration (the video script).
+     Unlisted (noindex, linked from nowhere). Numbers marked data-k are filled from /results.json (qb4's generator), so
+     they follow the measurements; the numbers written here are the fallback. ?theme=dark|light, ?rec=1 hides the bar. -->
+<style>
+:root{--bg:#f7f7fa;--card:#ffffff;--chip:#efeff4;--line:#e4e4ec;--frame:#d4d4de;--fg:#14121f;--dim:#646177;--acc:#6a2ff0;--acc-fg:#ffffff;--acc-soft:#f0ebfe;--busy:#94600f;--warn:#c2321f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0c12;--card:#16151e;--chip:#211f2b;--line:#2a2836;--frame:#3b3849;--fg:#eeedf3;--dim:#a3a0b3;--acc:#a585ff;--acc-fg:#120c24;--acc-soft:#231b3d;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d0c12;--card:#16151e;--chip:#211f2b;--line:#2a2836;--frame:#3b3849;--fg:#eeedf3;--dim:#a3a0b3;--acc:#a585ff;--acc-fg:#120c24;--acc-soft:#231b3d;--busy:#e0a948;--warn:#f08a7e;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:400 16px/1.45 'Geist',sans-serif;-webkit-tap-highlight-color:transparent;overflow:hidden;font-variant-numeric:tabular-nums}
+a{color:var(--acc)}
+.mono{font-family:'JetBrains Mono',monospace}
+/* Stage: the whole screen on a phone; a 16:9 frame (the video's shape) on a wide screen. */
+#deck{position:fixed;inset:0 0 calc(56px + env(safe-area-inset-bottom)) 0;display:grid;place-items:center;touch-action:pan-y}
+body.rec #deck{bottom:0}
+.stage{position:relative;width:100%;height:100%;overflow:hidden}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.stage{width:min(100vw,calc((100dvh - 56px) * 16 / 9));height:auto;aspect-ratio:16/9;font-size:clamp(18px,1.8vw,36px)}body.rec .stage{width:min(100vw,calc(100dvh * 16 / 9))}}
+.say{display:none}
+.s{position:absolute;inset:0;display:none;padding:24px 16px 16px;flex-direction:column;gap:20px}
+.s.on{display:flex}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.s{display:none;padding:5% 6%;flex-direction:row;align-items:center;gap:5%}.s.on{display:flex}.s .claim{flex:0 0 40%}.s .vis{flex:1;min-width:0;align-self:stretch}}
+.claim h2{margin:0;font-size:28px;line-height:1.15;font-weight:600;letter-spacing:-.02em;text-wrap:balance}
+.claim p{margin:12px 0 0;font-size:17px;line-height:1.45;color:var(--dim);text-wrap:pretty}
+.claim .src{display:block;margin-top:12px;font-size:13px;color:var(--dim)}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.claim h2{font-size:2.1em}.claim p{font-size:1.05em}.claim .src{font-size:.72em}}
+.vis{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.big{font-size:56px;font-weight:600;letter-spacing:-.03em;line-height:1}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.big{font-size:5em}}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;background:var(--chip);font-size:14px;font-weight:500}
+.tag.x{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
+.tag.ok{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+.tag.b{background:color-mix(in srgb,var(--busy) 16%,transparent);color:var(--busy)}
+.card{background:var(--card);border-radius:14px;box-shadow:inset 0 0 0 1px var(--line);padding:16px}
+/* Bars */
+.bars{display:grid;gap:14px}
+.bar{display:grid;gap:4px}
+.bar .l{display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.bar .l b{font-weight:600}
+.bar .t{height:14px;border-radius:4px;background:var(--chip);overflow:hidden}
+.bar .t i{display:block;height:100%;width:var(--w);border-radius:4px;background:var(--fg);transform-origin:left;transform:scaleX(0)}
+.bar .t i.acc{background:var(--acc)}.bar .t i.warn{background:var(--warn)}.bar .t i.busy{background:var(--busy)}.bar .t i.dim{background:var(--dim)}
+.s.on .bar .t i{animation:grow .9s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--d,0) * 1s + .2s)}
+@keyframes grow{to{transform:scaleX(1)}}
+.pair{display:grid;gap:6px}
+.pair h3{margin:0;font-size:14px;font-weight:600;color:var(--dim)}
+/* Controls */
+.bar-c{position:fixed;left:0;right:0;bottom:0;height:calc(56px + env(safe-area-inset-bottom));padding:6px 8px env(safe-area-inset-bottom);display:flex;align-items:center;gap:6px;border-top:1px solid var(--line);background:var(--bg);z-index:5}
+body.rec .bar-c{display:none}
+.bar-c button{min-width:44px;height:44px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);font:500 15px 'Geist',sans-serif;cursor:pointer;padding:0 14px}
+.bar-c button:disabled{opacity:.35}
+.bar-c button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.bar-c .n{flex:1;text-align:center;font-size:14px;color:var(--dim)}
+.bar-c svg{width:18px;height:18px;vertical-align:-3px}
+.prog{position:fixed;left:0;top:0;height:3px;background:var(--acc);width:0;transition:width 220ms ease;z-index:6}
+body.rec .prog,body.rec .notes{display:none}
+.notes{position:fixed;left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom));max-height:46dvh;overflow:auto;padding:16px 16px 20px;background:var(--card);border-top:1px solid var(--line);font-size:17px;line-height:1.5;transform:translateY(110%);transition:transform 220ms ease;z-index:4}
+.notes.open{transform:none}
+.notes h4{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--dim)}
+.notes p{margin:0;max-width:72ch}
+.notes .secs{margin-top:8px;font-size:13px;color:var(--dim)}
+@media (hover:hover){.bar-c button:hover{background:color-mix(in srgb,var(--chip) 60%,var(--line))}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:1ms!important;animation-delay:0s!important;transition:none!important}}
+
+/* 1 title: agents flowing into one main */
+.flow{position:relative;height:220px}
+.flow .main{position:absolute;left:0;right:0;bottom:24px;height:4px;border-radius:2px;background:var(--fg)}
+.flow .main::after{content:'main';position:absolute;right:0;top:10px;font:500 14px 'Geist';color:var(--dim)}
+.flow i{position:absolute;width:18px;height:18px;border-radius:50%;background:var(--acc);left:calc(var(--x) * 1%);top:0;opacity:0}
+.s.on .flow i{animation:drop 2.4s ease-in infinite;animation-delay:calc(var(--d) * .4s)}
+@keyframes drop{0%{transform:translateY(0);opacity:0}10%{opacity:1}80%{transform:translateY(181px);opacity:1}100%{transform:translateY(181px) scaleX(2.2);opacity:0}}
+.flow i:nth-child(2n){background:var(--busy)}
+/* Sections (Eyal, 2026-10-13: an overview up front, four sections each opening with its big picture, a wrap-up) */
+.where{position:absolute;left:16px;top:6px;font-size:13px;color:var(--dim);pointer-events:none}
+.s{padding-top:32px}
+.secn{display:block;margin-bottom:8px;font-size:15px;font-weight:600;color:var(--acc)}
+.pts{list-style:none;padding:0;margin:0}
+.pts li{padding:10px 0;border-bottom:1px solid var(--line);font-size:17px;line-height:1.35}
+.pts li:last-child{border-bottom:0}
+.map{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.map li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;color:var(--dim)}
+.map li>b{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--chip);color:var(--fg);font-size:14px;font-weight:600}
+.map li>span{display:grid;gap:1px;font-size:14px;line-height:1.35}
+.map li>span>b{font-size:15px;font-weight:600;color:var(--fg)}
+.map li.on>b{background:var(--acc);color:var(--acc-fg)}
+.map li.on>span>b{color:var(--acc)}
+.map.mini{margin-top:16px;gap:6px}.map.mini li>span>span{display:none}
+.map.mini li:not(.on){opacity:.55}
+.ov{display:grid;gap:16px;width:100%}
+.ovc{display:grid;gap:12px;align-content:start}
+.ov h3{margin:0 0 4px;font-size:14px;font-weight:600;color:var(--dim)}
+.ov p{margin:0;font-size:16px;line-height:1.45}
+.proved{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.proved li{display:grid;gap:2px}
+.proved li>b{font-size:22px;font-weight:600;letter-spacing:-.02em}
+.proved li>span{font-size:15px;line-height:1.4;color:var(--dim)}
+.s.ovs{overflow-y:auto}
+.ovs .map li>span>span{display:none}
+.lc{background:var(--acc);box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--warn)}
+.dots.d12{grid-template-columns:repeat(6,1fr);max-width:260px}
+.shot{display:block;width:100%;height:auto}
+/* 1 title: lanes merging */
+.merge{width:100%;height:auto;max-height:100%}
+.merge .mdots circle{fill:var(--acc);offset-distance:0%}
+.merge .mdots circle:nth-child(2n){fill:var(--busy)}
+.s.on .merge .mdots circle{animation:merge 1.6s cubic-bezier(.4,0,.2,1) forwards;animation-delay:calc(var(--d) * .25s + .2s)}
+@keyframes merge{to{offset-distance:var(--e,100%)}}
+.merge .ml{font:500 13px 'Geist',sans-serif;fill:var(--dim)}
+/* 2 problem: lanes hitting main */
+.lanes{display:grid;gap:10px;position:relative}
+.lane{display:grid;grid-template-columns:72px 1fr;align-items:center;gap:10px;font-size:14px;color:var(--dim)}
+.lane .tr{position:relative;height:26px;border-radius:4px;background:var(--chip)}
+.lane .tr i{position:absolute;left:0;top:0;bottom:0;width:30%;border-radius:4px;background:var(--acc);transform:translateX(0)}
+.s.on .lane .tr i{animation:run 2s ease-in-out forwards;animation-delay:calc(var(--d) * .15s)}
+@keyframes run{to{transform:translateX(233%)}}
+.lane.hit .tr i{background:var(--busy)}
+.s.on .lane.hit .tr i{animation:run 2s ease-in-out forwards,hit .6s 2.1s forwards}
+@keyframes hit{to{background:var(--warn);box-shadow:0 0 0 4px color-mix(in srgb,var(--warn) 25%,transparent)}}
+.lanes .wall{position:absolute;right:0;top:-6px;bottom:-6px;width:4px;border-radius:2px;background:var(--fg)}
+.lanes .note{opacity:0;margin-top:6px}
+.s.on .lanes .note{animation:show .3s 2.4s forwards}
+@keyframes show{to{opacity:1}}
+/* 3 Hono squares */
+.sq{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;max-width:360px}
+.sq i{aspect-ratio:1;border-radius:3px;background:var(--chip)}
+.s.on .sq i.y{animation:fillb .2s forwards;animation-delay:calc(var(--d) * 22ms + .3s)}
+@keyframes fillb{to{background:var(--busy)}}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.sq{max-width:28em}}
+/* 4 land by intent */
+.lbi{display:grid;gap:10px}
+.lbi .row{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:600 14px 'Geist';color:#fff}
+.av.a{background:var(--busy);color:var(--bg)}.av.b{background:var(--fg);color:var(--bg)}
+.lbi .steps{display:flex;flex-wrap:wrap;gap:6px}
+.lbi .steps .tag{opacity:0}
+.s.on .lbi .steps .tag{animation:show .25s forwards;animation-delay:calc(var(--d) * .6s + .3s)}
+.lbi .file{font-size:14px}
+.lbi .main2{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--dim)}
+.lbi .main2 i{width:14px;height:14px;border-radius:50%;background:var(--fg);opacity:.25}
+.s.on .lbi .main2 i{animation:lit .2s forwards;animation-delay:calc(var(--d) * .6s + .3s)}
+@keyframes lit{to{opacity:1;background:var(--acc)}}
+/* 5 record */
+.term{font:14px/1.6 'JetBrains Mono',monospace;background:var(--card);border-radius:12px;box-shadow:inset 0 0 0 1px var(--line);padding:14px;white-space:pre-wrap;overflow:hidden}
+.term span{display:block;opacity:0}
+.s.on .term span{animation:show .2s forwards;animation-delay:calc(var(--d) * .35s + .2s)}
+.term .k{color:var(--dim)}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.term{font-size:.78em}}
+/* 6 phone */
+.phone{align-self:center;width:min(250px,62vw);border-radius:22px;box-shadow:0 0 0 1px var(--frame),0 12px 32px rgba(0,0,0,.12);overflow:hidden;background:var(--bg)}
+.phone img{display:block;width:100%;height:auto}
+.phone.live{position:relative;aspect-ratio:1/2;width:min(250px,58vw)}
+.phone.live iframe{position:absolute;left:0;top:0;width:390px;height:780px;border:0;transform-origin:0 0;transform:scale(var(--k,.64));pointer-events:none;background:var(--bg)}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.phone{width:auto;height:100%;aspect-ratio:1/2}.phone.live{width:auto;height:100%}.phone img{height:100%;width:100%;object-fit:cover;object-position:top}}
+/* 7 dots grid */
+.dots{display:grid;grid-template-columns:repeat(10,1fr);gap:9px;max-width:340px;padding:4px}
+.dots i{aspect-ratio:1;border-radius:50%;background:var(--acc);opacity:.35}
+.s.on .dots i{animation:land .25s forwards;animation-delay:calc(var(--d) * 45ms + .2s)}
+.s.on .dots i.c{animation:coll 1.6s forwards;animation-delay:calc(var(--d) * 45ms + .2s)}
+@keyframes land{to{opacity:1}}
+@keyframes coll{0%{opacity:1;background:var(--warn)}45%{background:var(--warn)}100%{opacity:1;background:var(--acc);box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--warn)}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--dim)}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.dots{max-width:26em}}
+/* 13 toolbox, 14 cloudflare */
+.tbx{display:grid;gap:0}
+.tbx div{display:grid;gap:2px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tbx div:last-child{border-bottom:0}
+.tbx span{font-size:14px;color:var(--dim)}
+.tbx b{font-size:16px;font-weight:600}
+.cf{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cf div{background:var(--card);border-radius:12px;box-shadow:inset 0 0 0 1px var(--line);padding:10px 12px;display:grid;gap:2px}
+.cf b{font-size:15px;font-weight:600}.cf span{font-size:13px;color:var(--dim)}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.cf{grid-template-columns:repeat(3,1fr)}.cf b{font-size:1em}.cf span{font-size:.85em}.tbx b{font-size:1.05em}.tbx span{font-size:.9em}}
+.go{display:grid;gap:10px}
+.go a{display:grid;gap:2px;padding:14px 16px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);text-decoration:none;color:var(--fg);min-height:44px}
+.go a b{font-size:18px;font-weight:600}.go a span{font-size:14px;color:var(--dim)}.go a .u{color:var(--acc);font-size:14px}
+.fl{margin:6px 0 0;font-size:17px}.fc{color:var(--dim);font-size:15px}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.fl{font-size:1.2em}.fc{font-size:.9em}}
+.count{font-size:56px;font-weight:600;letter-spacing:-.03em;line-height:1}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.count{font-size:5em}}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.bar .l{font-size:1em}.bar .t{height:.8em}.pair h3{font-size:.85em}.tag{font-size:.9em}.lane{font-size:.85em;grid-template-columns:5em 1fr}.lane .tr{height:1.4em}.lbi .file,.lbi .main2,.legend{font-size:.85em}.av{width:1.8em;height:1.8em;font-size:.85em}.card{padding:1em}.go a b{font-size:1.1em}.go a span,.go a .u{font-size:.85em}
+@media (min-width:900px) and (min-aspect-ratio:4/3){.where{left:6%;top:3%;font-size:.6em}.s{padding-top:6%}.secn{font-size:.7em}.pts li{font-size:.95em}.map li{grid-template-columns:1.6em 1fr;gap:.5em}.map li>b{width:1.6em;height:1.6em;font-size:.65em}.map li>span{font-size:.62em}.map li>span>b{font-size:1.2em}.map.mini li>span{font-size:.75em}.ov{grid-template-columns:1fr 1.1fr;gap:6%}.ov h3{font-size:.62em}.ov p{font-size:.85em}.proved li>b{font-size:1.3em}.proved li>span{font-size:.75em}.ovc{gap:.9em}.s.ovs{overflow:hidden}.ovs .map li>span>span{display:grid}.dots.d12{max-width:17em}.phone .shot{height:100%;width:100%;object-fit:cover;object-position:top}}
+</style>
+</head>
+<body data-talk-bar="mic">
+<div class="prog" id="prog"></div>
+<div id="deck"><div class="stage" id="stage">
+
+<section class="s" data-t="Title" data-sec="intro">
+ <div class="claim"><h2>qodebase</h2><p>A git platform where many AI agents change one codebase, and their work lands by itself.</p></div>
+ <div class="vis"><svg class="merge" viewBox="0 0 400 220" aria-label="Six agents' lanes merging into one main line">
+  <g fill="none" stroke="var(--frame)" stroke-width="3"><path d="M10 20 C160 20 200 120 300 120"/><path d="M10 60 C160 60 200 120 300 120"/><path d="M10 100 C160 100 200 120 300 120"/><path d="M10 140 C160 140 200 120 300 120"/><path d="M10 180 C160 180 200 120 300 120"/><path d="M10 210 C160 210 200 120 300 120"/></g>
+  <line x1="300" y1="120" x2="392" y2="120" stroke="var(--fg)" stroke-width="5" stroke-linecap="round"/>
+  <g class="mdots"><circle r="8" style="offset-path:path('M10 20 C160 20 200 120 300 120 L390 120');--d:0;--e:100%"/><circle r="8" style="offset-path:path('M10 60 C160 60 200 120 300 120 L390 120');--d:1;--e:95%"/><circle r="8" style="offset-path:path('M10 100 C160 100 200 120 300 120 L390 120');--d:2;--e:90%"/><circle r="8" style="offset-path:path('M10 140 C160 140 200 120 300 120 L390 120');--d:3;--e:85%"/><circle r="8" style="offset-path:path('M10 180 C160 180 200 120 300 120 L390 120');--d:4;--e:80%"/><circle r="8" style="offset-path:path('M10 210 C160 210 200 120 300 120 L390 120');--d:5;--e:75%"/></g>
+  <text x="10" y="12" class="ml">6 agents</text><text x="392" y="146" text-anchor="end" class="ml">1 shared main</text></svg></div>
+ <aside class="say">This is qodebase: a git platform where many AI agents change one codebase at the same time, and their work lands by itself. It is built on Cloudflare, and you run it from your phone.</aside>
+</section>
+
+<section class="s ovs" data-t="Overview" data-sec="intro">
+ <div class="ov">
+  <div class="ovc">
+   <div><h3>Why we are here</h3><p>Agents write code faster than pull requests and human review can land it. With many agents, order and collisions break the flow.</p></div>
+   <div><h3>What is new</h3><p>Others send a collided change back (merge queues) or fix conflicts on request (Copilot), or let a model re-implement a branch as a last tier (Overstory). qodebase records the reviewed intent with every change, redoes it on the newest main as the normal path, and shows a live board and an Intents view, phone-first on Cloudflare.</p></div>
+   <div><h3>The map</h3><ol class="map" data-map></ol></div>
+  </div>
+  <div class="ovc"><h3>What we proved</h3>
+   <ul class="proved">
+    <li><b>Thousands</b><span>of agents on Cloudflare: 10,000 with cached answers (at most ~2,800 busy at once), every file different, all on main in 86 s, 0 errors; cheap models landed <span>31,466</span> file changes across six codebases (VS Code re-documented on fresh copies for scale), up to <span data-k="fleet.peak">114</span> a second over the busiest minute</span></li>
+    <li><b>Hundreds</b><span>200 agents on one codebase, checked by tests they never saw: with up to 60% of tasks aimed at the same code, losses stayed in the same range (96, 74, 60 lost checks; 0 lost in landing); the queue slowed, and lanes per module took the worst case from 207 to 53 min, 44.5 with prefetch</span></li>
+    <li><b>Up to 40</b><span>real Claude agents building apps: 28 of 40 changes collided, all redone; at this size one strong agent finished sooner in 3 of 3 builds</span></li>
+    <li><b>Every step</b><span>recorded in git and visible: each change, the timeline, the asks</span></li>
+   </ul></div>
+ </div>
+ <aside class="say">Here is the plan. Agents now write code faster than pull requests and human review can land it, and with many agents, order and collisions break the flow. We built qodebase to fix that. We proved it at three scales: thousands of agents on Cloudflare, hundreds with real code collisions checked by tests, and real Claude teams of up to forty building apps. We will show the idea, real agents, scale, and how a person follows it all.</aside>
+</section>
+
+<section class="s secs" data-t="The idea: land by intent" data-sec="A" data-head>
+ <div class="claim"><span class="secn">Section A</span><h2>The idea: land by intent</h2><p>Agents work alone and finish at the same time. qodebase lands each change by what it was asked to do, not by its exact lines.</p></div>
+ <div class="vis"><ul class="pts"><li>Order, not merge conflicts, is the hard part</li><li>A collision is redone on the newest code, not sent back</li><li>Every change keeps its record inside git</li></ul><ol class="map mini" data-map></ol></div>
+ <aside class="say">Section A: the idea. Agents work alone and all finish at once. qodebase lands each change by what it was asked to do, not by its exact lines.</aside>
+</section>
+
+<section class="s" data-t="The problem is order" data-sec="A">
+ <div class="claim"><h2>The real problem is order</h2><p>Hono's last 346 pull requests, replayed in waves of 100: <b>48%</b> needed another one to land first. Git saw no conflicts at all.</p><span class="src">Replay of real pull requests, no model calls</span></div>
+ <div class="vis"><div class="sq" id="hono" aria-label="48 of 100 squares filled"></div><div class="legend"><span><b style="background:var(--busy)"></b>needed another change first</span><span><b style="background:var(--chip);box-shadow:inset 0 0 0 1px var(--frame)"></b>could land alone</span></div></div>
+ <aside class="say">We measured first. We replayed Hono's last 346 pull requests in waves of a hundred. Almost half needed another one to land first, and git reported no conflicts at all. The hard part is order.</aside>
+</section>
+
+<section class="s" data-t="Land by intent" data-sec="A">
+ <div class="claim"><h2>A collision is redone, not sent back</h2><p>When a change collides, qodebase applies its request again on the newest code, tests it, and lands it.</p></div>
+ <div class="vis"><div class="card lbi">
+  <div class="row"><span class="av a">2</span><span class="file">Agent 2 changed <span class="mono">style.css</span> <span class="tag ok">landed</span></span></div>
+  <div class="row"><span class="av b">4</span><span class="file">Agent 4 changed <span class="mono">style.css</span> too</span></div>
+  <div class="steps"><span class="tag x" style="--d:1">collided</span><span class="tag b" style="--d:2">redone on the newest code</span><span class="tag" style="--d:3">tests passed</span><span class="tag ok" style="--d:4">landed</span></div>
+  <div class="main2">main <i style="--d:0"></i><i style="--d:4"></i></div></div></div>
+ <aside class="say">When Agent 4's change collides with Agent 2's, qodebase does not send it back. It applies the same request again on the newest code, by rules for shared files or by a model for a real conflict, tests it, and lands it.</aside>
+</section>
+
+<section class="s" data-t="Review and record" data-sec="A">
+ <div class="claim"><h2>Every change keeps its record, inside git</h2><p>What it was asked to do, which agent did it, the review (or that there was none), how it landed and the tests: a git note on its commit, read with plain git. This one is real, from a build in this video; long fields are cut with “…”.</p><span class="src">eyal/home-tracker, commit 373036d, refs/notes/qodebase (fields trimmed: title, fork, base, agentCommit, handled)</span></div>
+ <div class="vis"><div class="term" aria-label="git log output with a real qodebase note"><span style="--d:0">$ git log --notes=qodebase -1 373036d</span><span style="--d:0.6">commit 373036d  Dark mode: follow the device and allow a manual switch</span><span class="k" style="--d:1.2">Notes (qodebase):</span><span style="--d:1.8">{</span><span style="--d:2.4">  "change": "eyal.home-tracker--fcnj9",</span><span style="--d:3">  "intent": "Dark mode: follow the device and allow a manual switch\nIn styles.css move every color into CSS variables …\nAsked: Please add a dark mode to the app.",</span><span style="--d:3.6">  "agent": "agent fcnj9",</span><span style="--d:4.2">  "how": "replayed-llm",</span><span style="--d:4.8">  "review": { "verdict": "auto", "notes": "no reviewer in this variant" },</span><span style="--d:5.4">  "replay": { "model": "claude-haiku-5-5", "sameLinesAsReviewed": true },</span><span style="--d:6">  "checks": { "ok": true },</span><span style="--d:6.6">  "landedBy": "qodebase merge queue",</span><span style="--d:7.2">  "at": "2026-10-13T23:21:14.599Z"</span><span style="--d:7.8">}</span></div></div>
+ <aside class="say">Every change keeps its record inside git. What it was asked to do, which agent did it, the review, how it landed and the tests, written as a git note on its commit. This one is real: the dark mode from a build you will see in a minute. It collided, a model redid it on the newest code, and the tests passed. This is not GitHub with agents on top: the unit is a request with its record.</aside>
+</section>
+
+<section class="s" data-t="Watch a run" data-sec="A">
+ <div class="claim"><h2>Six agents, 14 changes, one app at once</h2><p>A scripted run: real commits, real collisions, real tests. Anyone can watch one, no sign-in.</p><span class="src">qodebase.app/p/eyal/corner-cafe</span></div>
+ <div class="vis"><div class="phone live" id="livebox"><iframe id="live" title="Watch a run: a replay of the last corner-cafe run" loading="lazy" tabindex="-1"></iframe></div></div>
+ <aside class="say">Here it is working. Six scripted agents make fourteen changes to one café website at once. Every commit, collision and test is real. Watch them move from working, to review, to the line, to landed. Anyone can watch a run, no sign-in.</aside>
+</section>
+
+<section class="s secs" data-t="It works with real agents" data-sec="B" data-head>
+ <div class="claim"><span class="secn">Section B</span><h2>It works with real agents</h2><p>Real Claude agents, through the same Build button anyone uses, on Cloudflare.</p></div>
+ <div class="vis"><ul class="pts"><li>12 agents, one request, all landed</li><li>A real logic conflict, redone by a model</li><li>40 agents, one real app: honest results</li><li>When one agent is better than a team</li></ul><ol class="map mini" data-map></ol></div>
+ <aside class="say">Section B: real agents. Not scripts this time: real Claude agents, through the same Build button anyone can use.</aside>
+</section>
+
+<section class="s" data-t="12 real agents" data-sec="B">
+ <div class="claim"><h2>12 of 12 landed in 6 min 43 s</h2><p>One request on a phone became 12 changes by 12 real agents. 7 collided; none was sent back. One real conflict was redone by a model in 19 s.</p><span class="src">Real Claude Haiku agents, eyal/cafe-team; $0.16 of container time</span></div>
+ <div class="vis"><div class="dots d12" data-dots="12,7" aria-label="12 changes, 7 collided and were redone"></div><div class="legend"><span><b class="lc"></b>collided, redone, landed</span><span><b style="background:var(--acc)"></b>landed first try</span></div></div>
+ <aside class="say">One request typed on a phone became twelve changes by twelve real agents. Seven collided, and none was sent back. One was a real conflict, two edits to the same line, and a model redid it in nineteen seconds. All twelve landed in under seven minutes.</aside>
+</section>
+
+<section class="s" data-t="A real logic conflict" data-sec="B">
+ <div class="claim"><h2>A real conflict, redone in 2 minutes</h2><p>“Lent out: who has what” collided with another agent's change in app.js. A model redid the loan logic on the newest code for $0.62, and the tests passed.</p><span class="src">eyal/real-home-inventory-r8b, Claude Haiku 5.5</span></div>
+ <div class="vis"><div class="phone"><img class="shot" data-shot="r8b" alt="The change record: Landed after a replay, redone by an AI model in 2 min for $0.62"></div></div>
+ <aside class="say">Here is a harder one. In another build, the change Lent out, who has what, collided with another agent's code. Instead of sending it back, a model redid the loan logic on the newest code in two minutes, for sixty-two cents, and the tests passed.</aside>
+</section>
+
+<section class="s" data-t="40 real agents" data-sec="B">
+ <div class="claim"><h2>Real agents, real app</h2><p>40 agents built a travel planner: 28 of 40 changes collided, all were redone. Tried by hand, <b>11 of 13</b> features work. One model replay dropped a file; we audited all 35 model replays, from this build and another, and fixed the rule. Why not 400 Opus agents? A 40-agent run cost about $17, and at this size one strong agent finished sooner in 3 of 3 builds.</p><span class="src">Real Claude Haiku agents, one build: eyal/real-course-builder</span></div>
+ <div class="vis"><div class="dots" data-dots="40,28" aria-label="40 changes, 28 collided and were redone"></div><div class="legend"><span><b class="lc"></b>collided, redone, landed</span><span><b style="background:var(--acc)"></b>landed first try</span></div></div>
+ <aside class="say">Then a real app: forty agents on one travel planner. Twenty-eight of their changes collided, and every one was redone. We tried the app by hand: eleven of thirteen features work. One replay had dropped a file, so we audited every model replay, thirty-five in two builds, and fixed the rule. Why not four hundred Opus agents? One forty-agent run cost about seventeen dollars, and at this size one strong agent was faster anyway.</aside>
+</section>
+
+<section class="s" data-t="One agent or a team" data-sec="B">
+ <div class="claim"><h2>For a fresh app, one strong agent was faster</h2><p>On the same prompts, one Opus agent finished sooner than a team in all three real builds, 2 to 6 times, with at least as many features working. The team was cheaper in two of the three.</p><span class="src">Real builds on the same prompts, one run each</span></div>
+ <div class="vis"><div class="bars" id="solo"></div></div>
+ <aside class="say">And an honest finding: for a fresh app, one strong agent beat a team. On the same prompts, a single Opus agent finished sooner in all three real builds, two to six times, with at least as many features working. The team was cheaper in two of the three.</aside>
+</section>
+
+<section class="s secs" data-t="Many agents, at scale" data-sec="C" data-head>
+ <div class="claim"><span class="secn">Section C</span><h2>Many agents, at scale</h2><p>Hundreds of agents with real code collisions, thousands on Cloudflare, and when many agents pay off.</p></div>
+ <div class="vis"><ul class="pts"><li>Hundreds of agents, checked by hidden tests</li><li>10,000 agents on Cloudflare</li><li>A fleet of cheap models on real code</li><li>Lanes, and the board for wide work</li></ul><ol class="map mini" data-map></ol></div>
+ <aside class="say">Section C: scale. Hundreds of agents with real code collisions, thousands on Cloudflare, and when many agents really pay off.</aside>
+</section>
+
+
+
+
+
+
+<section class="s" data-t="Hundreds of agents, checked by tests" data-sec="C">
+ <div class="claim"><h2>200 agents on the same code: losses in the same range, 0 lost in landing</h2><p>1,385 small coding tasks through the real merge queue. A model redid up to 468 collided changes, wrong about as often as fresh work (~5%). The queue slowed; lanes per module fixed most of it.</p><span class="src">Cloudflare, 200 cheap-model agents, hidden tests, one run each; 0 lost in landing at 60%. Change records missing in those lane runs: fixed, 199 of 199 in a check run</span></div>
+ <div class="vis"><div class="bars">
+  <div class="pair"><h3>Checks lost on main, of 1,385</h3>
+   <div class="bar"><div class="l"><span>No overlap</span><b>96</b></div><div class="t"><i class="dim" style="--w:100%;--d:0"></i></div></div>
+   <div class="bar"><div class="l"><span>30% overlap</span><b>74</b></div><div class="t"><i class="acc" style="--w:77%;--d:0.15"></i></div></div>
+   <div class="bar"><div class="l"><span>60% overlap</span><b>60</b></div><div class="t"><i class="acc" style="--w:62.5%;--d:0.3"></i></div></div>
+   <div class="bar"><div class="l"><span>60%, lanes + prefetch</span><b>66</b></div><div class="t"><i class="acc" style="--w:68.8%;--d:0.4"></i></div></div>
+  </div>
+  <div class="pair"><h3>Minutes to finish</h3>
+   <div class="bar"><div class="l"><span>No overlap</span><b>40</b></div><div class="t"><i class="dim" style="--w:19.3%;--d:0.5"></i></div></div>
+   <div class="bar"><div class="l"><span>30% overlap</span><b>145</b></div><div class="t"><i class="warn" style="--w:70%;--d:0.65"></i></div></div>
+   <div class="bar"><div class="l"><span>60% overlap</span><b>207</b></div><div class="t"><i class="warn" style="--w:100%;--d:0.8"></i></div></div>
+   <div class="bar"><div class="l"><span>60%, lanes + prefetch</span><b>44.5</b></div><div class="t"><i class="acc" style="--w:21.5%;--d:0.95"></i></div></div>
+ </div>
+ </div></div>
+ <aside class="say">Now hundreds. Two hundred cheap-model agents took almost fourteen hundred small coding tasks on one codebase, and every change went through the real merge queue. Then we aimed more and more of the tasks at the same functions, up to sixty percent. A model redid up to four hundred and sixty-eight collided changes, and they were wrong about as often as fresh work. Losses stayed in the same range: ninety-six, seventy-four, then sixty lost checks, almost all the models' own mistakes, not the landing. What the overlap cost was time: the queue went from forty minutes to over three hours. Splitting it into lanes per module cut the worst case to fifty-three minutes, and fetching ahead in each lane to forty-four and a half, with more requirements passing on main and nothing lost in landing.</aside>
+</section>
+
+<section class="s" data-t="Scale runs" data-sec="C">
+ <div class="claim"><h2>Thousands of agents on one platform</h2><p>Past about 2,000 reads a second for the whole account, Artifacts slowed down instead of failing. What we built: a read cache and faster landing: 10,000 agents, every file different, everything on main in 86 seconds (cached answers, no model calls; at most ~2,800 busy at once).</p><span class="src">10,000 agents, run (c): 10 copies of VS Code src/vs, 40,640 files, 29,890 changes on main, 0 errors (docs/contest/fleet-r10k.md); earlier steps with cached answers too</span></div>
+ <div class="vis"><div class="bars"><div class="pair" id="ladder"><h3>Files a second, busiest 10 seconds</h3>
+  <div class="bar"><div class="l"><span>200 agents, before our first fix</span><b>227</b></div><div class="t"><i class="warn" style="--w:7.6%;--d:0"></i></div></div>
+  <div class="bar"><div class="l"><span>1,000 agents</span><b>1,230</b></div><div class="t"><i class="acc" style="--w:41%;--d:.25"></i></div></div>
+  <div class="bar"><div class="l"><span>4,750 agents</span><b>2,100</b></div><div class="t"><i class="acc" style="--w:89%;--d:.5"></i></div></div><div class="bar"><div class="l"><span>10,000 agents, every file different</span><b>1,900</b></div><div class="t"><i class="acc" style="--w:90%;--d:.75"></i></div></div></div></div></div>
+ <aside class="say">Then we pushed it. Past about two thousand reads a second for the whole account, Artifacts slowed down instead of failing. So we built a read cache and faster landing: ten thousand agents, every file different, and everything was on main eighty-six seconds after the start. These runs used cached answers instead of model calls, and agents start in ramps, so at most about twenty-eight hundred were busy at once.</aside>
+</section>
+
+<section class="s" data-t="A fleet of cheap models" data-sec="C">
+ <div class="claim"><h2>A fleet of cheap models, on real code</h2><p>Agents on Workers AI and Gemini Flash-Lite, no Claude, documented real codebases including VS Code, Next.js and Angular. A hand check found 109 of 115 comments right.</p><span class="src">Measured on Cloudflare; Durable Object agents, real git on Artifacts; VS Code src/vs documented again on fresh copies for the scale runs</span></div>
+ <div class="vis"><div><div class="count">31,466</div><p class="fl">file changes landed across six codebases for <b>$<span>19.09</span></b>, about $<span>0.61</span> per thousand, up to <span data-k="fleet.peak">114</span> a second over the busiest minute</p></div></div>
+ <aside class="say">And agents do not have to be expensive. A fleet on cheap models, Workers AI and Gemini Flash-Lite, documented real codebases, VS Code, Next.js and Angular. About thirty thousand file changes have landed so far, across six codebases, up to a hundred a second, for well under a dollar per thousand, and a hand check found a hundred and nine of a hundred and fifteen comments right.</aside>
+</section>
+
+<section class="s" data-t="Lanes" data-sec="C">
+ <div class="claim"><h2>One queue has a ceiling; lanes lift it</h2><p>2,000 scripted agents for 10 minutes: eight lanes landed twice as much as one, and main stayed whole.</p><span class="src">Durable Objects and Artifacts, real git, scripted agents, one run per setup</span></div>
+ <div class="vis"><div class="bars">
+  <div class="pair"><h3>Changes landed in 10 minutes</h3>
+   <div class="bar"><div class="l"><span>One lane</span><b data-k="l3.one">14,336</b></div><div class="t"><i class="dim" style="--w:48%;--d:0"></i></div></div>
+   <div class="bar"><div class="l"><span>Eight lanes</span><b data-k="l3.eight">30,066</b></div><div class="t"><i class="acc" style="--w:100%;--d:.3"></i></div></div></div>
+  <div class="pair"><h3>Median wait to land</h3>
+   <div class="bar"><div class="l"><span>One lane</span><b>500 s</b></div><div class="t"><i class="warn" style="--w:100%;--d:.6"></i></div></div>
+   <div class="bar"><div class="l"><span>Eight lanes</span><b>8 s</b></div><div class="t"><i class="acc" style="--w:2%;--d:.9"></i></div></div></div>
+ </div></div>
+ <aside class="say">At larger scale one landing queue is the limit, so qodebase splits it into lanes, one per area of the code. With two thousand agents, eight lanes landed twice as much, the wait fell from minutes to seconds, and main stayed whole.</aside>
+</section>
+
+<section class="s" data-t="When many agents pay off" data-sec="C">
+ <div class="claim"><h2>Wide work: no task built twice</h2><p>Agents say what they are doing on a shared board, and a duplicate check runs first.</p><span class="src">20 Claude Haiku agents, 60 tasks with 10 hidden duplicate pairs, 3 runs each; two teams: 3 runs each on qodebase</span></div>
+ <div class="vis"><div class="bars">
+  <div class="pair"><h3>Pairs built twice, of 10</h3>
+   <div class="bar"><div class="l"><span>Without the board</span><b data-k="board.dupNo">8</b></div><div class="t"><i class="warn" style="--w:80%;--d:0"></i></div></div>
+   <div class="bar"><div class="l"><span>With the board</span><b data-k="board.dupYes">0</b></div><div class="t"><i class="acc" style="--w:1%;--d:.3"></i></div></div></div>
+  <div class="pair"><h3>Two teams on one repo, time</h3>
+   <div class="bar"><div class="l"><span>Without the board</span><b>100%</b></div><div class="t"><i class="dim" style="--w:100%;--d:.6"></i></div></div>
+   <div class="bar"><div class="l"><span>With the board</span><b>60%</b></div><div class="t"><i class="acc" style="--w:60%;--d:.9"></i></div></div></div>
+ </div></div>
+ <aside class="say">Many agents pay off for wide work. On qodebase's board, each agent says what it is doing and one check catches duplicates first. No task pair was built twice, against eight without it. Two teams on one repo finished in forty percent less time.</aside>
+</section>
+
+<section class="s secs" data-t="Built for people, built on Cloudflare" data-sec="D" data-head>
+ <div class="claim"><span class="secn">Section D</span><h2>Built for people, built on Cloudflare</h2><p>One person steers from a phone, and every step is visible.</p></div>
+ <div class="vis"><ul class="pts"><li>Phone first, plain words</li><li>Intents, the timeline, Asks and the Runs page</li><li>An estimate before you build</li><li>Cloudflare underneath</li></ul><ol class="map mini" data-map></ol></div>
+ <aside class="say">Section D: the people side. One person steers it all from a phone, and every step is visible.</aside>
+</section>
+
+<section class="s" data-t="From your phone" data-sec="D">
+ <div class="claim"><h2>Built to run from your phone</h2><p>Say what you want built. Follow every agent, read any change in plain words, and answer only when something needs you.</p></div>
+ <div class="vis"><div class="phone"><img class="shot" data-shot="home" alt="qodebase home on a phone: What do you want to build? and a Build it button"></div></div>
+ <aside class="say">You type or say what you want built. You follow every agent in plain words, and you are only asked when something really needs you: a password, money, or a change that keeps failing.</aside>
+</section>
+
+<section class="s" data-t="The timeline" data-sec="D">
+ <div class="claim"><h2>The timeline shows where time went</h2><p>Each agent's time: working, in review, waiting, merging. In the 40-agent build it showed agents waiting for review as long as they worked, so reviewers now scale with the team.</p></div>
+ <div class="vis"><div class="phone"><img class="shot" data-shot="timeline" alt="The timeline of a run: how each agent's time was spent"></div></div>
+ <aside class="say">Every run has a timeline. In the forty-agent build, it showed agents waiting for a reviewer about as long as they worked. So we changed the product: reviewers now scale with the team.</aside>
+</section>
+
+<section class="s" data-t="Intents" data-sec="D">
+ <div class="claim"><h2>With 1,000 agents, you browse intents, not agents</h2><p>Each request splits into areas, each area into what one agent set out to do, then its change. Status rolls up on every line, stuck things first, and any change leads back to the request it came from.</p><span class="src">A fleet run on 4,063 VS Code files: 4,042 done, 21 did not land, shown first; the same view for a 40-agent app build</span></div>
+ <div class="vis"><div class="phone"><img class="shot" data-shot="intentsrun" alt="Intents for a fleet run: 4,042 done, 21 did not land, by folder"></div></div>
+ <aside class="say">With a thousand agents, nobody can follow agents one by one. So qodebase shows intents: each request, split into areas, then what each agent set out to do, then its change. Every line rolls up its status, stuck things come first, and from any change you can ask why it exists, all the way up to the request.</aside>
+</section>
+
+<section class="s" data-t="Asks" data-sec="D">
+ <div class="claim"><h2>Asks: every request, and what became of it</h2><p>Each request, the changes it became and their state. Agents log what they decided for you, and ask you only for real decisions.</p></div>
+ <div class="vis"><div class="phone"><img class="shot" data-shot="asks" alt="Asks: one request, 12 changes, all landed"></div></div>
+ <aside class="say">Asks lists every request and what became of it: the changes it turned into and where each one is. Agents also log the decisions they made for you, and ask you only for the real ones.</aside>
+</section>
+
+<section class="s" data-t="Estimates" data-sec="D">
+ <div class="claim"><h2>An estimate before you build, the real numbers after</h2><p>Time and cost are estimated before agents start, then shown next to what happened. Big real builds took longer than estimated, so we refit the estimates on them.</p></div>
+ <div class="vis"><div class="phone"><img class="shot" data-shot="realbuild" alt="A build's estimate next to its real time and cost"></div></div>
+ <aside class="say">Before you build, qodebase estimates time and cost, and afterwards it shows the real numbers next to the estimate. Our big real builds took longer than estimated, so we refit the estimates on them.</aside>
+</section>
+
+<section class="s" data-t="The Runs page" data-sec="D">
+ <div class="claim"><h2>Scale runs, live and public</h2><p>Every scale run is on one page: agents, files, cost, wait to land, and each model's peak calls a minute.</p><span class="src">qodebase.app/runs</span></div>
+ <div class="vis"><div class="phone"><img class="shot" data-shot="runs" alt="The Scale runs page: a fleet run with its files, cost and waits"></div></div>
+ <aside class="say">And the scale runs are public, live, on one page: how many agents, how many files, what it cost, how long changes waited to land, and how hard each model was pushed.</aside>
+</section>
+
+<section class="s" data-t="Built on Cloudflare" data-sec="D">
+ <div class="claim"><h2>Built on Cloudflare</h2><p>Every agent, queue and repo runs on Cloudflare's developer platform.</p></div>
+ <div class="vis"><div class="cf">
+  <div><b>Workers</b><span>the whole app</span></div><div><b>Durable Objects</b><span>projects, queues, agents</span></div><div><b>Artifacts</b><span>git repos, a fork per agent</span></div>
+  <div><b>Containers</b><span>agent boxes, the merger</span></div><div><b>Workers AI</b><span>replays, the fleet, the voice</span></div><div><b>AI Gateway</b><span>one door for model calls</span></div>
+  <div><b>Queues</b><span>git push events</span></div><div><b>R2</b><span>attachments</span></div><div><b>Browser Rendering</b><span>app previews</span></div></div></div>
+ <aside class="say">Underneath, it is all Cloudflare. Workers serve the app, Durable Objects hold projects and queues, Artifacts store the git repos, Containers run the agents, and Workers AI runs the replays, the fleet and this voice.</aside>
+</section>
+
+<section class="s ovs" data-t="What we proved" data-sec="wrap">
+ <div class="ov"><div class="ovc"><h3>What we proved</h3>
+  <ul class="proved">
+   <li><b>Thousands</b><span>10,000 agents on Cloudflare with cached answers (at most ~2,800 busy at once), every file different, all on main in 86 s; cheap models landed <span>31,466</span> file changes across six codebases for $<span>19.09</span> (Section C)</span></li>
+   <li><b>Hundreds</b><span>200 agents, 1,385 coding tasks, hidden tests: up to 468 collided changes redone by a model, losses stayed in the same range (96, 74, 60), at most 2 lost in landing; lanes per module, 207 to 53 min, 44.5 with prefetch (Section C)</span></li>
+   <li><b>Up to 40</b><span>real Claude agents: 12 of 12 landed; 28 of 40 collided and all were redone, 11 of 13 features work; one strong agent sooner in 3 of 3, the team cheaper in 2 of 3 (Section B)</span></li>
+   <li><b>Every step is visible</b><span>the record in git, the timeline, Asks, estimates, the Runs page (Sections A, D)</span></li>
+  </ul></div>
+  <div class="ovc"><h3>The map</h3><ol class="map" data-map></ol></div></div>
+ <aside class="say">So, what we proved, at three scales. Thousands of agents on Cloudflare, with cheap models doing real work for a few dollars. Two hundred agents with real code collisions, checked by hidden tests, with losses in the same range and nothing lost in landing. And real Claude teams of up to forty building apps, where we also learned when one strong agent is better. Every step is recorded and visible.</aside>
+</section>
+
+<section class="s" data-t="What's next" data-sec="wrap">
+ <div class="claim"><h2>Next: choose the way per job</h2><p>No one way won everywhere. The direction, not built yet: qodebase profiles a job and picks from what we measured.</p></div>
+ <div class="vis"><div class="tbx">
+  <div><span>A fresh app</span><b>One strong agent</b></div>
+  <div><span>A shared task list</span><b>The board and a duplicate check</b></div>
+  <div><span>How many agents</span><b>Grow the team while landings rise</b></div>
+  <div><span>Thousands of agents</span><b>Lanes, one door onto main</b></div></div></div>
+ <aside class="say">What is next: different jobs need different ways to run agents. The direction, not built yet, is for qodebase to profile each job and pick from what we measured: one strong agent, the board, a growing team, or lanes.</aside>
+</section>
+
+<section class="s" data-t="Try it" data-sec="wrap">
+ <div class="claim"><h2>Try it</h2><p>Everything here is live, and the code is open source.</p></div>
+ <div class="vis"><div class="go">
+  <a href="/p/eyal/corner-cafe"><b>Watch a run</b><span>Six agents, one app, about a minute. No sign-in.</span><span class="u">qodebase.app/p/eyal/corner-cafe</span></a>
+  <a href="/p/eyal/real-course-builder"><b>A real 40-agent build</b><span>Every change, with its record.</span><span class="u">qodebase.app/p/eyal/real-course-builder</span></a>
+  <a href="/how"><b>How it works</b><span>Every number, with how it was measured.</span><span class="u">qodebase.app/how</span></a>
+  <a href="/own"><b>Get your own qodebase</b><span>On your own Cloudflare account.</span><span class="u">qodebase.app/own</span></a></div></div>
+ <aside class="say">Try it yourself: watch a run with no sign-in, open a real forty-agent build, read how it works with every number, or get your own qodebase on your own Cloudflare account. Thanks for watching.</aside>
+</section>
+
+</div></div>
+
+<aside class="notes" id="notes" aria-live="polite"><h4 id="nt"></h4><p id="np"></p><div class="secs" id="ns"></div></aside>
+<nav class="bar-c" aria-label="Slides">
+ <button type="button" id="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+ <span class="n" id="num">1 of 15</span>
+ <button type="button" id="nbtn" aria-pressed="false">Notes</button>
+ <button type="button" id="next" aria-label="Next slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+</nav>
+
+<script>
+(function(){
+var q=new URLSearchParams(location.search);
+if(q.get('theme'))document.documentElement.dataset.theme=q.get('theme');
+if(q.get('rec'))document.body.classList.add('rec');
+var S=[].slice.call(document.querySelectorAll('.s')),i=0,notes=document.getElementById('notes'),nb=document.getElementById('nbtn');
+function dark(){var t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
+[].forEach.call(document.querySelectorAll('[data-shot]'),function(e){e.src=e.dataset.shot+'-'+(dark()?'dark':'light')+'.webp'});
+var SECS=[['A','The idea: land by intent','Why order breaks the flow, and how qodebase lands by intent'],['B','It works with real agents','Real Claude teams of up to 40 building apps, and one agent against a team'],['C','Many agents, at scale','Hundreds checked by tests, 10,000 on Cloudflare, a cheap fleet, lanes'],['D','Built for people, built on Cloudflare','Phone first, intents, the timeline, Asks, estimates, the Runs page']];
+[].forEach.call(document.querySelectorAll('[data-map]'),function(m){var cur=m.closest('.s').dataset.sec;m.innerHTML=SECS.map(function(x){return'<li'+(x[0]===cur?' class="on"':'')+'><b>'+x[0]+'</b><span><b>'+x[1]+'</b><span>'+x[2]+'</span></span></li>'}).join('')});
+// Where am I: 'Section B, slide 2 of 4' on every slide (plain words, no meta string)
+S.forEach(function(s){var sec=s.dataset.sec,w='';
+ if(sec==='intro')w=s.dataset.t==='Overview'?'Overview':'';else if(sec==='wrap')w='Wrap-up';
+ else if(!s.hasAttribute('data-head')){var c=S.filter(function(x){return x.dataset.sec===sec&&!x.hasAttribute('data-head')});w='Section '+sec+', slide '+(c.indexOf(s)+1)+' of '+c.length}
+ if(w){var d=document.createElement('div');d.className='where';d.textContent=w;s.insertBefore(d,s.firstChild)}});
+var live=document.getElementById('live'),lbox=document.getElementById('livebox');
+function fitLive(){lbox.style.setProperty('--k',(lbox.clientWidth/390).toFixed(4))}
+addEventListener('resize',fitLive);
+// The replay is client-side (no live run is started): restart it each time the slide is shown.
+function startLive(){fitLive();live.src='/p/eyal/corner-cafe/work?replay=3'+(document.documentElement.dataset.theme?'&theme='+document.documentElement.dataset.theme:'')+'#'+Date.now()}
+// Visuals built in JS: Hono's 100 squares, the 40-change grid, the one-agent bars.
+var h='';for(var k=0;k<100;k++)h+='<i'+(k<48?' class="y" style="--d:'+k+'"':'')+'></i>';document.getElementById('hono').innerHTML=h;
+// Change grids: data-dots="total,collided" (collided first)
+[].forEach.call(document.querySelectorAll('[data-dots]'),function(e){var v=e.dataset.dots.split(','),n=+v[0],c=+v[1],o='';for(var k=0;k<n;k++)o+='<i'+(k<c?' class="c"':'')+' style="--d:'+k+'"></i>';e.innerHTML=o});
+function solo(rows){var by={};rows.forEach(function(r){by[r.id]=r});
+ var P=[['R6','R3','Home inventory'],['R7','R4','Café website'],['R6','R8b','Home inventory, again']],max=0;
+ P.forEach(function(p){if(by[p[0]]&&by[p[1]])max=Math.max(max,by[p[0]].wallS,by[p[1]].wallS)});
+ var o='';P.forEach(function(p,j){var a=by[p[0]],b=by[p[1]];if(!a||!b)return;
+  o+='<div class="pair"><h3>'+p[2]+'</h3>'+bar('One Opus agent',a.wallS,max,'acc',j*.5)+bar('A team',b.wallS,max,'dim',j*.5+.25)+'</div>'});
+ document.getElementById('solo').innerHTML=o}
+function mins(s){return s<90?s+' s':Math.round(s/60)+' min'}
+function bar(l,v,max,c,d){return'<div class="bar"><div class="l"><span>'+l+'</span><b>'+mins(v)+'</b></div><div class="t"><i class="'+c+'" style="--w:'+Math.max(1,v/max*100).toFixed(1)+'%;--d:'+d+'"></i></div></div>'}
+solo([{id:'R3',wallS:1940},{id:'R4',wallS:1762},{id:'R6',wallS:457},{id:'R7',wallS:863},{id:'R8b',wallS:2765}]);
+// Numbers from /results.json (falls back to the numbers in the page).
+var fmt=function(n){return typeof n==='number'?n.toLocaleString('en-US'):n};
+fetch('/results.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(j){if(!j)return;
+ var H=j.headline||{},D=((H.fleet||{}).byJob||{}).docs||{},L3=((j.lanes||{}).L3||{}).rows||[],cell=function(c){return(L3.filter(function(r){return r.cell===c})[0]||{}).landed};
+ var v={'board.dupNo':(H.board||{}).dupPairsNoBoard,'board.dupYes':(H.board||{}).dupPairsBoard,'board.wallNo':(H.board||{}).wallNoBoardS,'board.wallYes':(H.board||{}).wallBoardS,
+  'l3.one':cell('2000-1lane'),'l3.eight':cell('2000-8lanes-combine'),'fleet.files':D.landed,'fleet.usd':D.usd,'fleet.per1k':D.landed&&D.usd!=null?D.usd/D.landed*1000:null,'scale.agents':(H.scale||{}).maxAgents,'fleet.peak':(H.fleet||{}).peakFilesPerSec,'scale.label':(H.scale||{}).label};
+ [].forEach.call(document.querySelectorAll('[data-k]'),function(e){var x=v[e.dataset.k];if(x!=null)e.textContent=/usd|per1k/.test(e.dataset.k)&&typeof x==='number'?x.toFixed(2):fmt(x)});
+ if((j.realBuilds||{}).rows)solo(j.realBuilds.rows);
+ // The scale ladder (qb4: headline.scale.ladder); one copy (S4b) is left out: it is the fix's control, not a step up.
+ var L=((H.scale||{}).ladder||[]).filter(function(r){return r.copies!==1&&r.filesPerSec&&!(r.namespaces>1)&&r.run!=='R10K-a'});
+ if(L.length){var mx=Math.max.apply(null,L.map(function(r){return r.filesPerSec}).concat([2100]));
+  document.getElementById('ladder').innerHTML='<h3>Files a second, busiest 10 seconds</h3>'+L.map(function(r,k){var first=k===0;
+   return'<div class="bar"><div class="l"><span>'+fmt(r.agents)+' agents'+(r.agents>=10000?', every file different':'')+(first?', before the fix':'')+'</span><b>'+fmt(r.filesPerSec)+'</b></div><div class="t"><i class="'+(first?'warn':'acc')+'" style="--w:'+(r.filesPerSec/mx*100).toFixed(1)+'%;--d:'+(k*.25)+'"></i></div></div>'}).join('')}
+}).catch(function(e){console.log(JSON.stringify({event:'deck_results_failed',error:String(e)}))});
+function words(t){return t.trim().split(/\s+/).length}
+function go(n){i=Math.max(0,Math.min(S.length-1,n));
+ S.forEach(function(s,k){s.classList.toggle('on',k===i)});
+ // restart the visual's animation every time the slide is shown
+ var s=S[i];s.classList.remove('on');void s.offsetWidth;s.classList.add('on');
+ if(s.contains(live))startLive();else if(live.src)live.removeAttribute('src');
+ document.getElementById('num').textContent=(i+1)+' of '+S.length;
+ document.getElementById('prog').style.width=((i+1)/S.length*100)+'%';
+ var say=s.querySelector('.say').textContent;document.getElementById('nt').textContent=(i+1)+'. '+s.dataset.t;document.getElementById('np').textContent=say;
+ document.getElementById('ns').textContent='About '+Math.round(words(say)/2.5)+' s at a calm pace ('+words(say)+' words)';
+ document.getElementById('prev').disabled=i===0;document.getElementById('next').disabled=i===S.length-1;
+ history.replaceState(null,'','#'+(i+1))}
+function notesOpen(o){notes.classList.toggle('open',o);nb.setAttribute('aria-pressed',o)}
+document.getElementById('prev').onclick=function(){go(i-1)};
+document.getElementById('next').onclick=function(){go(i+1)};
+nb.onclick=function(){notesOpen(!notes.classList.contains('open'))};
+document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(i+1)}else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1)}else if(e.key==='Home')go(0);else if(e.key==='End')go(S.length-1);else if(e.key==='n'||e.key==='N')notesOpen(!notes.classList.contains('open'))});
+// Tap: left third back, the rest forward (links still work). Swipe left/right.
+var x0=null,y0=0,t0=0;
+var deck=document.getElementById('deck');
+deck.addEventListener('pointerdown',function(e){x0=e.clientX;y0=e.clientY;t0=Date.now()});
+deck.addEventListener('pointerup',function(e){if(x0==null)return;var dx=e.clientX-x0,dy=e.clientY-y0;x0=null;
+ if(e.target.closest('a,button'))return;
+ if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){go(i+(dx<0?1:-1));return}
+ if(Math.abs(dx)<10&&Math.abs(dy)<10&&Date.now()-t0<500){var r=deck.getBoundingClientRect();go(i+(e.clientX-r.left<r.width/3?-1:1))}});
+window.addEventListener('hashchange',function(){var n=parseInt(location.hash.slice(1),10);if(n&&n-1!==i)go(n-1)});
+// For Talk (qb2): go to a slide by number (1-based) or by words in its title.
+window.deckGo=function(x){var n=parseInt(x,10);if(!n){var q=String(x||'').toLowerCase();S.some(function(s,k){var t=(s.dataset.t+' '+(s.querySelector('h2')||{}).textContent).toLowerCase();if(q&&t.indexOf(q)>=0){n=k+1;return true}})}if(n)go(n-1);return n||0};
+window.deckSlides=function(){return S.map(function(s,k){return{n:k+1,title:s.dataset.t}})};
+go((parseInt(location.hash.slice(1),10)||1)-1);
+})();
+</script>
+<script>
+// Talk (qb2): voice on the deck. Next/Previous are found by their labels; this goes to a slide by number or title.
+window.__talkActions=[{id:'slide',text:'Go to a slide by its number or title ('+(window.deckSlides?deckSlides().length:'')+' slides)',run:function(said){
+ var t=String(said||'').toLowerCase(),W={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,first:1,last:(window.deckSlides?deckSlides().length:1)};
+ var m=/\b(\d{1,2})\b/.exec(t),n=m?+m[1]:0;if(!n)Object.keys(W).some(function(k){if(new RegExp('\\b'+k+'\\b').test(t)){n=W[k];return true}});
+ var got=n?deckGo(n):0;
+ if(!got){var q=t.replace(/^.*?\b(slide|section)s?\b\s*(about|on|called|with|for)?\s*/,'').replace(/^(go|show|open|take me|jump)( me)?( to)?( the)?\s*/,'').replace(/[.?!]+$/,'').trim();got=q?deckGo(q):0;}
+ return got?'Slide '+got+'.':false}}];
+</script>
+<script src="/talk.js" defer></script>
+</body>
+</html>

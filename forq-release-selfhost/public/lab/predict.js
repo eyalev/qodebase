@@ -459,14 +459,16 @@ export function predict(variant, scenario, { seeds = 5, cal, baseline } = {}) {
 // number here: only a direction against Balanced, plus what the lab saw for the knob.
 import EST_CAL from './estimate-cal.js';
 
-// The three presets, each one a setup the lab has run for real (public/lab/runs.jsonl).
+// The three presets, each one a setup the lab has run for real (public/lab/runs.jsonl). R0 (2026-10-12): the two
+// team presets run with the board on. The lab measured the board only with agents picking their own tasks; with
+// a planner handing out tasks its effect is not measured yet, so the estimate says so (notes) instead of claiming it.
 export const BUILD_PRESETS = {
   fastest: { label: 'Fastest', variant: { baseline: 'opus-alone' },
-    why: 'One Opus agent does it all. In the lab it finished first on every app and scored highest, at about twice the cost of a team.' },
-  balanced: { label: 'Balanced', variant: { planner: 'opus', coders: 12, coderModel: 'haiku', reviewers: 3, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4 },
-    why: 'An Opus planner, 12 Haiku coders and 3 Haiku reviewers. In the lab: about half the cost of Fastest, slower, nearly the same quality.' },
-  cheapest: { label: 'Cheapest', variant: { planner: 'opus', coders: 6, coderModel: 'haiku', reviewers: 0, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 8 },
-    why: 'An Opus planner and 6 Haiku coders, no reviewer. The lowest cost in the lab, and more misses get through.' },
+    why: 'One Opus agent does it all. In the lab it finished first where time could be compared (2 of 4 jobs), with the same quality or within one hidden test; on the bigger apps it cost 2-2.5x a team.' },
+  balanced: { label: 'Balanced', variant: { planner: 'opus', coders: 12, coderModel: 'haiku', reviewers: 3, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4, board: true },
+    why: 'An Opus planner, 12 Haiku coders and 3 Haiku reviewers, with the board on. On the lab\'s bigger apps: about half the cost of Fastest, slower, nearly the same quality. On small jobs the saving shrinks or reverses.' },
+  cheapest: { label: 'Cheapest', variant: { planner: 'opus', coders: 6, coderModel: 'haiku', reviewers: 0, reviewerModel: 'haiku', reviewStyle: 'read', policy: 'intent', claims: false, dedupe: true, trainMax: 4, board: true },
+    why: 'An Opus planner and 6 Haiku coders with the board on, no reviewer. Cheapest of the three on most jobs (on very small ones a single agent can cost less), and more misses get through.' },
 };
 
 // job: { tasks: 1-80 (pieces of work), overlap: 'low'|'some'|'high' or 0-1 (how much the pieces touch the same
@@ -490,29 +492,333 @@ const sameSetup = (key) => (EST_CAL.rows || []).filter((r) => r.key === key).len
 
 // -> { wallS: [lo, hi], apiUsd: [lo, hi], basedOn, sameSetup, quality, notes, simVersion }
 // basedOn = real lab runs the range rests on; sameSetup = how many of them used exactly this setup.
-export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced.variant) {
+// Memo: the Adjust sheet re-asks on every slider move.
+const BUILD_MEMO = new Map();
+function cachedPredict(variant, sc, baseline) {
+  const k = `${baseline || ''}|${variantKey(variant, baseline)}|${sc.tasks}|${sc.pShared}|${sc.difficulty}`;
+  if (!BUILD_MEMO.has(k)) { if (BUILD_MEMO.size > 500) BUILD_MEMO.clear(); BUILD_MEMO.set(k, predict(variant, sc, { seeds: 15, baseline })); }
+  return BUILD_MEMO.get(k);
+}
+// Was this kind of setup run in the lab? One agent alone; or a team with this coder model, with or without review.
+function measured(v) {
+  const rows = EST_CAL.rows || [];
+  if (v.baseline === 'opus-alone') return rows.some((r) => r.key === 'opus-alone');
+  return rows.some((r) => {
+    if (r.key === 'opus-alone') return false;
+    const kv = Object.fromEntries(r.key.split(';').map((x) => x.split('=')));
+    return kv.coderModel === v.coderModel && (+kv.reviewers > 0) === (v.reviewers > 0);
+  });
+}
+
+// Fixed start-up time every build pays whatever its size: agent boxes starting, the planner's split, the queue's
+// check and landing. The lab's per-task fit scales it away on tiny jobs (one agent on 2 easy pieces: 20-40 s).
+// low = no build of this shape finished sooner; mid = what a tiny build takes. From the lab's quickest finished
+// runs (one agent 58 s, a team 172 s) and the real builds below (Workers Logs build_settled). Refit at 3+ builds.
+export const REAL_BUILDS = [
+  // eyal/est-bar-test, 2026-10-12: click-counter page + README, router + 2 Opus agents, no review, auto-land.
+  // Router split at +41 s, both pushed at +311 s, landed at +320 s. The page showed Fastest's 70-180 s: it ran
+  // on code from before a810395, which ignored the setting. The model for what ran (2 pieces): 90-240 s.
+  { slug: 'eyal/est-bar-test', at: '2026-10-12', shape: 'team', pieces: 2, wallS: 320 },
+  // R2, eyal/real-tip-splitter, 2026-10-12: curated small idea (3 pieces), default Build = one Opus agent. Shown
+  // 50-120 s, $0.21-0.28; took 149 s and $0.81 (Ledger at lab rates). Cost: not refit yet (which tokens: asked qb6).
+  { slug: 'eyal/real-tip-splitter', at: '2026-10-12', shape: 'alone', pieces: 3, wallS: 149, usd: 0.813 },
+  // R3-R5 (FINDINGS2 section 11; Ledger per model at lab rates, Haiku prompts over 100k tokens at 5x; boxes left out,
+  // the estimate is API cost). Walls include a false budget halt (2-6 min, fixed) and, in R3, a stalled push.
+  { slug: 'eyal/real-home-inventory', prompt: 'home-inventory', at: '2026-10-12', shape: 'team', bucket: 'large', coders: 12, agents: 9, reviewers: 3, wallS: 1940, usd: 2.40, shown: { wallS: [420, 1080], usd: [1.0, 1.4] } },
+  { slug: 'eyal/real-cafe-site', prompt: 'cafe-site', at: '2026-10-12', shape: 'team', bucket: 'huge', coders: 20, agents: 10, reviewers: 3, wallS: 1762, usd: 3.32, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
+  // 40 agents: long-context Haiku calls $8.16 of $17.3; agents waited 16,234 agent-s for a reviewer vs 15,731 working.
+  { slug: 'eyal/real-course-builder', at: '2026-10-13', shape: 'team', bucket: 'huge', coders: 40, agents: 40, reviewers: 6, wallS: 2257, usd: 17.48, shown: { wallS: [540, 1440], usd: [1.7, 2.3] } },
+  // R6: R3's Large prompt on Fastest (one Opus agent): 457 s, $3.87 (out 95k, cache reads 4.6M, 1-h writes 132k);
+  // 1 change, 7 files, ~1,340 lines vs R3's 22 files, ~4,140 lines. Shown 120-300 s, $1.70-3.10 (sim ~195 s, $1.67).
+  { slug: 'eyal/real-home-inventory-solo', prompt: 'home-inventory', at: '2026-10-13', shape: 'alone', bucket: 'large', wallS: 457, usd: 3.87, shown: { wallS: [120, 300], usd: [1.7, 3.1] } },
+  // R7: R4's Huge prompt on Fastest: 863 s, $7.55 (out 201k, cache reads 7.8M, 1-h writes 244k), 44 files ~2,320 lines
+  // vs R4's 71 / ~5,940 (features not compared yet). Shown 660-1800 s, $5.4-11.9 (sim ~470 s, $3.9): inside.
+  // R8 proof build (X1/X4), Balanced: 12 Haiku coders, 3 reviewers, 13 parts: 1,639 s, $3.52. Shown 840-2220 s,
+  // $1.8-4.6: inside both, out of sample (the fit above did not see it), so REAL_FIT is unchanged.
+  { slug: 'eyal/real-budget-tracker-10', at: '2026-10-13', shape: 'team', bucket: 'large', coders: 12, agents: 12, reviewers: 3, wallS: 1639, usd: 3.52, shown: { wallS: [840, 2220], usd: [1.8, 4.6] } },
+  // R8b, R3's prompt again on Balanced: 2,765 s (~10 min of it a merge-queue bug, a train run twice, fixed), $4.41
+  // (Haiku 1-h cache writes 7.7M, inflated by compaction near 66k tokens), 13 changes, first landing 274 s. Shown
+  // 720-1980 s, $1.3-4.1: over both. Without the bug ~2,165 s, still 9% over the top: team time at 10 agents x1.8 -> x2.0.
+  { slug: 'eyal/real-home-inventory-r8b', prompt: 'home-inventory', at: '2026-10-13', shape: 'team', bucket: 'large', coders: 12, agents: 12, reviewers: 3, wallS: 2765, usd: 4.41, clean: false, shown: { wallS: [720, 1980], usd: [1.3, 4.1] } },
+  { slug: 'eyal/real-cafe-site-solo', prompt: 'cafe-site', at: '2026-10-13', shape: 'alone', bucket: 'huge', wallS: 863, usd: 7.55, shown: { wallS: [660, 1800], usd: [5.4, 11.9] } },
+];
+// The refit on those builds (2026-10-13), applied on top of the lab-calibrated sim. Few points, so each term is
+// named, the range is widened, and the estimate says how many real builds it rests on.
+// - one Opus agent: real = aloneUsdX x sim + sessionUsd, least squares over R2 ($0.81 real, $0.24 sim), R6 ($3.87,
+//   $1.67) and R7 ($7.55, $3.9): x1.83 + $0.54 (was x2.14 + $0.30 on R2 and R6). The fixed part is the start-up
+//   context (1-h cache) and the push/landing turns; the x1.8 is more work per piece than in the lab. Time: R6 2.4x
+//   the sim, R7 1.84x: x2.1 (geometric mean; R2 sits on the floor).
+// - perAgentUsd: each Haiku team agent's own session on top of the sim (start-up context, board, waiting turns):
+//   R3 ($2.40 - $1.2 sim) / 9 agents = $0.13, R4 ($3.45 - $2.0) / 10 = $0.145.
+// - long: at 40 agents contexts grew past 100k tokens (5x price): per-agent cost x2.7 (R5: ($17.3 - $2.0) / 40 =
+//   $0.38). Grows linearly from 10 agents (none seen) to 40 (R5). Why contexts grow is open (FINDINGS2 11).
+// - wall: real team walls were 1.8x the sim at 9-10 agents (R3, R4; R8b ~2.0x without its queue bug: x2.0) and 2.3x at 40 (R5: as much time waiting for a
+//   reviewer as working). Same linear ramp.
+// - agents: how many the router opens. It is now told how many it has, so up to min(coders, pieces) (R5 used all
+//   40); R3/R4 used fewer (9 of 12, 10 of 20). Low end = the planner's bundling, high end = min(coders, pieces).
+export const REAL_FIT = { aloneUsdX: 1.83, sessionUsd: 0.54, aloneWallX: 2.1, perAgentUsd: 0.14, longAt40: 2.7, wallAt10: 2.0, wallAt40: 2.3, from: 10, to: 40 };
+const ramp = (n) => Math.max(0, Math.min(1, (n - REAL_FIT.from) / (REAL_FIT.to - REAL_FIT.from)));
+// alone mid: the one real one-agent build (R2, 149 s); low stays the lab's quickest (58 s).
+// Same prompt, team vs one agent, from REAL_BUILDS (the `prompt` key): what the picker may say about a team's cost.
+// R3 $2.40 and R8b $4.41 vs R6 $3.87 (Large), R4 $3.32 vs R7 $7.55 (Huge): the team was cheaper in 2 of 3 (2026-10-13).
+// usd = the build's settled cost from /api/admin/build-estimates (model use at API rates, containers not included);
+// R4 and R5 were first entered from a by-hand Ledger sum ($3.45, $17.3), aligned to the settled figures 2026-10-13.
+export function teamVsOneAgent() {
+  const out = [];
+  for (const solo of REAL_BUILDS.filter((r) => r.shape === 'alone' && r.prompt)) for (const team of REAL_BUILDS.filter((r) => r.shape === 'team' && r.prompt === solo.prompt))
+    out.push({ prompt: solo.prompt, bucket: solo.bucket, team: team.slug, teamUsd: team.usd, oneUsd: solo.usd, teamS: team.wallS, oneS: solo.wallS, teamCheaper: team.usd < solo.usd });
+  return { n: out.length, teamCheaper: out.filter((c) => c.teamCheaper).length, comparisons: out };
+}
+export const BUILD_FLOOR = { alone: { low: 50, mid: 150 }, team: { low: 170, mid: 320 } };
+
+// -> { wallS: [lo, hi], apiUsd: [lo, hi], basedOn, sameSetup, agentTasks, quality, qualityMeasured, notes, simVersion, job }
+// basedOn = real lab runs the range rests on; sameSetup = how many of them used exactly this setup.
+// Monotonic in reviewers (qb7, 2026-10-12): each change is reviewed once, so reviewers add review time and cost
+// once (0 -> 1) and after that only shorten the wait for a free reviewer. So over the same variant with
+// 0..r reviewers: cost never falls (running max), quality never falls (running max), and time is at least the
+// no-review time, else the best of 1..r (sim noise would otherwise make 2 reviewers cheaper than 1).
+// opts.real = false: the lab-only estimate, without REAL_FIT (suggestBuild compares presets on it, see there).
+export function predictBuild(job = SMALL_APP, variantIn = BUILD_PRESETS.balanced.variant, opts = {}) {
+  const real = opts.real !== false;
+  // X4 (qb6, 2026-10-13): the builder gives a reviewed crew max(asked, ceil(coders / 5)) reviewers, up to 8
+  // (resolveBuildPlan), so estimate what will run. REAL_FIT's review-wait ramp is left as R5 measured it until a
+  // real build with X4 (more reviewers, replays side by side) says how much it gained.
+  if (!variantIn?.baseline && variantIn?.reviewers > 0 && variantIn?.coders > 0) {
+    const r = Math.min(8, Math.max(variantIn.reviewers, Math.ceil(variantIn.coders / 5)));
+    if (r !== variantIn.reviewers) variantIn = { ...variantIn, reviewers: r };
+  }
   const sc = jobProfile(job);
   const baseline = variantIn?.baseline ?? null;
-  const p = predict(variantIn, sc, { seeds: 15, baseline });
-  const ref = baseline || variantKey(variantIn) !== variantKey(BUILD_PRESETS.balanced.variant)
-    ? predict(BUILD_PRESETS.balanced.variant, sc, { seeds: 15 }) : p;
-  const w = EST_CAL.wall, c = EST_CAL.cost;
   const v = variantOf(variantIn, baseline);
+  let p = cachedPredict(variantIn, sc, baseline);
+  if (!baseline && v.reviewers > 0) {
+    const at = (r) => cachedPredict({ ...variantIn, reviewers: r }, sc, null);
+    let cost = 0, q = 0, wall = Infinity;
+    for (let r = 0; r <= v.reviewers; r++) { const x = at(r); cost = Math.max(cost, x.apiUsdStd); q = Math.max(q, x.quality); if (r > 0) wall = Math.min(wall, x.wallS); }
+    p = { ...p, apiUsdStd: cost, quality: q, wallS: Math.max(at(0).wallS, wall) };
+  }
+  // Quality is compared with the nearest preset: one coder (alone or with reviewers) against Fastest, a team
+  // against Balanced.
+  const solo = baseline === 'opus-alone' || v.coders === 1;
+  const refName = solo ? 'Fastest' : 'Balanced';
+  const refVariant = solo ? BUILD_PRESETS.fastest.variant : BUILD_PRESETS.balanced.variant;
+  const isRef = variantKey(variantIn, baseline) === variantKey(refVariant, refVariant.baseline ?? null);
+  const ref = isRef ? p : cachedPredict(refVariant, sc, refVariant.baseline ?? null);
+  const w = EST_CAL.wall, c = EST_CAL.cost;
   const notes = [];
   if (baseline === 'opus-alone') notes.push('One agent: no merges, nothing to coordinate.');
   else {
     if (v.reviewers === 0) notes.push('No reviewer: a mistake that the build does not catch lands as is.');
-    else notes.push(`${v.reviewers} reviewer${v.reviewers > 1 ? 's' : ''}: more reviewers, fewer misses, a little slower.`);
+    else notes.push('Each change is reviewed once: more reviewers only shorten the wait for one.');
+    if (v.coders === 1) notes.push('One coder in a team still pays for a planner and reviews: Fastest skips both.');
     if (v.planner === 'haiku') notes.push('A Haiku planner missed requirements on vague prompts in the lab.');
-    if (v.board) notes.push('Board on: fewer pieces built twice when tasks overlap.');
+    // The lab measured the board with self-picking agents only (round 2); the sim's planned-team effect is a guess.
+    if (v.board) notes.push('Board on: its effect is not measured for planned teams yet (the lab measured it with agents picking their own tasks).');
     else if (sc.pShared >= 0.7) notes.push('Many tasks touch the same files: the board helps here.');
   }
+  const qualityMeasured = measured(v);
   const dq = p.quality - ref.quality;
-  const quality = baseline === 'opus-alone' ? 'Fewest misses in the lab.' : ref === p ? 'The lab\'s middle setting.' : dq > 2 ? 'Fewer misses than Balanced.' : dq < -2 ? 'More misses than Balanced.' : 'About like Balanced.';
+  const direction = baseline === 'opus-alone' ? 'About the same quality as a team in the lab.' : isRef ? 'The lab\'s middle setting.'
+    // Never better than Fastest: in the lab a team matched one Opus agent at best (same, or one hidden test apart), so a sim edge over it is not evidence.
+    : dq > 2 && !solo ? `Fewer misses than ${refName}.` : dq < -2 ? `More misses than ${refName}.` : `About like ${refName}.`;
+  const shape = baseline === 'opus-alone' ? 'alone' : 'team';
+  const floor = BUILD_FLOOR[shape];
+  const realN = REAL_BUILDS.filter((r) => r.shape === shape && r.usd != null).length;
+  // REAL_FIT (above): time x the real/sim ratio for this many agents; cost + per-session costs.
+  const agentsLo = shape === 'alone' ? 1 : Math.max(1, Math.min(v.coders, Math.round(p.counts.tasksPlanned)));
+  const agentsHi = shape === 'alone' ? 1 : Math.max(agentsLo, Math.min(v.coders, sc.tasks));
+  const wallX = !real ? 1 : shape === 'alone' ? REAL_FIT.aloneWallX : REAL_FIT.wallAt10 + (REAL_FIT.wallAt40 - REAL_FIT.wallAt10) * ramp(agentsHi);
+  const extraUsd = (n) => !real ? 0 : shape === 'alone' ? REAL_FIT.sessionUsd + (REAL_FIT.aloneUsdX - 1) * p.apiUsdStd
+    : v.coderModel === 'haiku' ? n * REAL_FIT.perAgentUsd * (1 + (REAL_FIT.longAt40 - 1) * ramp(n))
+    // Sonnet/Opus crews: no real build yet. A guess: R2's extra over the sim ($0.57) per Opus agent, half per Sonnet one.
+    : n * 0.57 * (v.coderModel === 'sonnet' ? 0.5 : 1);
+  const simWall = p.wallS * wallX;
+  const wallMid = Math.max(simWall, floor.mid);
+  if (simWall < floor.mid) notes.push('Mostly start-up time (agents starting, landing) at this size.');
+  if (real && shape === 'team' && v.coderModel === 'haiku' && agentsHi >= 20) notes.push(`With ${agentsHi} agents, contexts grow past 100k tokens, priced 5x (nearly half of a 40-agent build's cost), and agents wait for reviewers about as long as they work.`);
+  if (real) notes.push(`Fitted to ${realN} real build${realN === 1 ? '' : 's'} like this (${REAL_BUILDS.length} in all) on top of ${EST_CAL.runs} lab runs.`);
+  // Widened: the low end takes 40% of the fitted extra (R4 used 10 agents where the planner's bundling says 15), the
+  // high end x1.25 for having so few real builds.
+  const usdLo = p.apiUsdStd * c.p10 + extraUsd(agentsLo) * 0.4, usdHi = (p.apiUsdStd * c.p90 + extraUsd(agentsHi)) * (real ? 1.25 : 1);
   return {
-    wallS: [roundS(p.wallS * w.p10), roundS(p.wallS * w.p90)],
-    apiUsd: [roundUsd(p.apiUsdStd * c.p10), roundUsd(p.apiUsdStd * c.p90)],
+    wallS: [roundS(Math.max(wallMid * w.p10, floor.low)), roundS(wallMid * w.p90)],
+    apiUsd: [roundUsd(usdLo), roundUsd(usdHi)], realBuilds: realN,
     basedOn: EST_CAL.runs, sameSetup: sameSetup(variantKey(variantIn, baseline)),
-    quality, notes, simVersion: SIM_VERSION, job: { tasks: sc.tasks, overlap: sc.pShared, difficulty: sc.difficulty, label: sc.label },
+    // The planner bundles pieces into fewer agent tasks (Opus ~0.37 of the pieces, Haiku ~0.8: stage 1); the
+    // router spawns one agent per task, so agents beyond `agentTasks` never start: the coders knob is a cap.
+    agentTasks: baseline ? 1 : Math.max(1, Math.round(p.counts.tasksPlanned)),
+    quality: qualityMeasured ? direction : 'Not measured in the lab.', qualityGuess: direction, qualityMeasured,
+    notes, simVersion: SIM_VERSION, job: { tasks: sc.tasks, overlap: sc.pShared, difficulty: sc.difficulty, label: sc.label },
   };
+}
+
+// B4: the prompt analysis (one Haiku call, docs/board/build-estimate.md) returns only the job; the preset is
+// chosen here, in code, from the estimates, so the model never picks a setting.
+// Stable across readings (qb6, 2026-10-12: the same bakery prompt read as 20, 12, 20, 20 pieces): the piece count
+// goes into log-scale buckets ~2.5x wide and the decision and its words use the bucket's middle, so a +-40%
+// wobble in the reading mostly stays inside one bucket. Show `job` (bucketed) and estimate from it.
+export const TASK_BUCKETS = [
+  { max: 4, tasks: 3, label: '1-4 pieces', small: true },
+  { max: 11, tasks: 7, label: '5-11 pieces', small: true },
+  { max: 29, tasks: 18, label: '12-29 pieces', small: false, size: 'A mid-size job' },
+  { max: Infinity, tasks: 40, label: '30 or more pieces', small: false, size: 'A big job' },
+];
+export const bucketOf = (n) => TASK_BUCKETS.find((b) => Math.round(n) <= b.max);
+// -> { preset, why, bucket, job }. The board comes with the preset (R0: on for both team presets), so no board here.
+export function suggestBuild(jobIn = SMALL_APP) {
+  const bucket = bucketOf(jobProfile(jobIn).tasks);
+  const job = { ...jobIn, tasks: bucket.tasks, bucket: bucket.label };
+  // The rule (Eyal via the manager, 2026-10-13): the best experience at every size: time to a working app first, then
+  // quality, then cost. One agent at every size now: the same prompt both ways at Large (R3 team vs R6: 11/11 features
+  // each, 1,940 s vs 457 s; docs/board/R3-R6-quality.md) and at Huge (R4 team vs R7: team 10/12 working + 2 partial,
+  // one agent 12/12; 1,762 s vs 863 s). The team stays one tap away (Balanced). What it costs is said from the real
+  // same-prompt comparisons (teamVsOneAgent), not the fit: the team was cheaper in only 2 of 3 (R8b cost more than one
+  // agent: second review, 2026-10-13), so the words say so instead of promising a saving.
+  const f = predictBuild(job, BUILD_PRESETS.fastest.variant), b = predictBuild(job, BUILD_PRESETS.balanced.variant);
+  const mid = (r) => (r.apiUsd[0] + r.apiUsd[1]) / 2;
+  const x = mid(f) / mid(b);
+  const out = (o) => ({ ...o, preset: 'fastest', bucket: bucket.label, job });
+  if (bucket.small) {
+    const cost = x <= 1.05 ? 'costs about the same as a team or less' : x <= 1.25 ? 'costs a little more than a team' : `costs about ${x.toFixed(1)}x a team`;
+    return out({ why: `A small job: one agent is likely quickest here and ${cost}; in the lab its quality was about a team's.` });
+  }
+  const cmp = teamVsOneAgent();
+  const teamCost = cmp.teamCheaper === cmp.n
+    ? `a team cost less in all ${cmp.n} of our same-prompt comparisons (Balanced)`
+    : `a team may cost less or more (Balanced): it was cheaper in ${cmp.teamCheaper} of ${cmp.n} same-prompt comparisons`;
+  if (bucket.max < 30) return out({ why: `One strong agent: about 4x faster in our real builds, same features; ${teamCost}.` });
+  return out({ why: `One strong agent: about 2x faster in our real builds and as complete; ${teamCost}.` });
+}
+
+// "Need an idea?" chips (docs/board/TASKS.md I1): each size's typical time and cost, i.e. a job in the middle of
+// its bucket (some overlap, normal difficulty) on the settings suggestBuild picks for it. A picked idea then shows
+// its own estimate (POST /api/build/idea returns it). The ideas themselves are one list, server side: qb6's
+// CURATED_IDEAS in src/buildsettings.ts. A function, memoised, so importing this module costs nothing.
+// -> { small: { label, tasks, bucket: '1-4 pieces', preset, board?, settings, wallS: [lo, hi], apiUsd: [lo, hi] }, medium, large, huge }
+const IDEA_SIZE_IDS = [['small', 'Small'], ['medium', 'Medium'], ['large', 'Large'], ['huge', 'Huge']];
+let ideaSizesMemo = null;
+export function ideaSizes() {
+  if (ideaSizesMemo) return ideaSizesMemo;
+  ideaSizesMemo = Object.fromEntries(IDEA_SIZE_IDS.map(([id, label], i) => {
+    const b = TASK_BUCKETS[i];
+    const s = suggestBuild({ tasks: b.tasks, overlap: 'some', difficulty: 'normal' });
+    const settings = { ...BUILD_PRESETS[s.preset].variant, ...(s.board !== undefined ? { board: s.board } : {}) };
+    const e = predictBuild(s.job, settings);
+    return [id, { label, tasks: b.tasks, bucket: b.label, preset: s.preset, ...(s.board !== undefined ? { board: s.board } : {}), settings, wallS: e.wallS, apiUsd: e.apiUsd }];
+  }));
+  return ideaSizesMemo;
+}
+
+// ---- the adaptive orchestrator's label (manager + qb7, 2026-10-12): what kind of job this is, the strategy the
+// builder will run for it (never one it cannot run) and why, from the suggest/idea job facts and suggestBuild's pick.
+// jobType(job, suggestion?) -> { type, label, strategy, why, preset, board?, better?, evidence, from }
+//   type: 'small-app' | 'app' | 'big-app' | 'shared-list' | 'port' | 'sweep'
+//   strategy/why: what the builder runs and the short reason (qb7 shows "Looks like: <label>. Strategy: <strategy> (<why>).")
+//   better: a strategy we measured that the builder does not run yet (lanes, owned ranges + check behind); may be absent
+//   from: 'kind' (job.kind said port/sweep) or 'size'. Port and sweep come ONLY from job.kind, never guessed.
+const STRATEGY = { fastest: 'one strong agent', balanced: 'an Opus planner with a reviewed Haiku team', cheapest: 'an Opus planner and a Haiku crew, no reviewer' };
+export function jobType(job = SMALL_APP, suggestion = null) {
+  const s = suggestion || suggestBuild(job);
+  // The board comes with the preset (R0); an older suggestion may still carry its own.
+  const preset = s.preset, board = s.board ?? BUILD_PRESETS[preset]?.variant.board;
+  const strategy = STRATEGY[preset] + (board ? ' with the board on' : '');
+  const base = { preset, ...(board !== undefined ? { board } : {}), strategy };
+  const b = bucketOf(jobProfile(job).tasks);
+  const overlapHigh = jobProfile(job).pShared >= 0.7;
+  if (job.kind === 'port') return { ...base, type: 'port', from: 'kind', label: 'a port of existing code',
+    why: preset === 'fastest' ? 'in a port most changes build on earlier ones, so extra agents mostly wait'
+      : 'a team at about half the cost of one agent, though changes that build on each other still wait for each other',
+    better: 'agents owning line ranges, each change landing at once with its check behind it',
+    evidence: 'Bun port replay (BUN3): 89% of commits depend on earlier lines; 640 agents no faster than 64.' };
+  if (job.kind === 'sweep') return { ...base, type: 'sweep', from: 'kind', label: 'one change across many files',
+    why: preset === 'fastest' ? 'at this size one agent is still quickest' : 'many small, separate edits split well, and the queue replays each on the newest main',
+    evidence: 'Real-code run (sim/real): 972 of 976 conflicts replayed cleanly on the new main.' };
+  if (b.small) return { ...base, type: 'small-app', from: 'size', label: 'a new small app',
+    why: preset === 'fastest' ? 'quickest, and in the lab about as good as a team' : s.why,
+    evidence: 'Lab: one agent finished first where time could be compared (2 of 4 jobs), same quality or within one hidden test.' };
+  if (overlapHigh) return { ...base, type: 'shared-list', from: 'size', label: 'an app whose pieces overlap',
+    why: board ? 'the board shows who works on what, so pieces are not built twice (not yet measured with a planner)' : s.why,
+    evidence: 'Board runs and sims (sim.md (d)-(h)): a duplicate check before work stops pieces being built twice.' };
+  if (b.tasks < 30) return { ...base, type: 'app', from: 'size', label: 'a mid-size app',
+    why: preset === 'balanced' ? 'about half the cost of one agent on the lab\'s bigger apps' : preset === 'cheapest' ? 'many simple, separate pieces' : 'about 4x faster than a team in our real builds, same features',
+    evidence: preset === 'fastest' ? 'Same prompt in our real builds: one agent 457 s, $3.87 (R6); a 9-agent team 1,940 s, $2.40 (R3, 11/11 features each); the same team again 2,765 s, $4.41 (R8b, more than one agent).'
+      : 'Lab stage 1: on the bigger apps a team cost about half of one agent.' };
+  return { ...base, type: 'big-app', from: 'size', label: 'a big app',
+    why: preset === 'fastest' ? 'about 2x faster than a team in our real builds (one each) and as complete' : preset === 'cheapest' ? 'many simple, separate pieces: a Haiku crew does them for the least'
+      : 'in the lab a team cost about half of one agent on big apps; the builder runs up to 12 coders',
+    better: 'landing lanes by area that test what depends on each change, with a controller per lane',
+    evidence: 'L1-L2: one queue saturates near 300 agents; 32 dependency-aware lanes + controller landed 1.4x one queue with 0 breaks.' };
+}
+
+// ---- X2: time left on a running build (docs/board/TASKS.md X2; qb7 shows 'N of M parts landed, about K min left').
+// remainingTime({ parts, landed, elapsedS, estimate: { wallS: [lo, hi] }, firstLandS?, lastLandS? })
+//   parts: the plan's part count (changes it will land; one agent = 1); landed: how many have landed;
+//   elapsedS: seconds since Build; estimate: the shown estimate (predictBuild's wallS); firstLandS: when the first
+//   part landed and lastLandS when the latest one did (seconds since Build), from the board or timeline.
+// -> { leftS: [lo, hi], midS, text, phase: 'starting'|'landing'|'done'|'over', parts, landed }
+// Before the first landing the estimate is all we have: its range minus the time gone. After it, each landing is
+// evidence: seconds per part = (first to latest landing + k prior parts) / (parts landed since + k), so the prior
+// fades as parts land and the range narrows with them. Between landings the time left counts down (the part in
+// flight is credited up to one part's time); it grows only when the gap since the latest landing runs past the pace
+// (then the pace is taken as if a part landed now). v2 (2026-10-13, qb7 saw v1 grow while parts landed on
+// real-budget-tracker-10): v1 counted every second between landings as slower pace (with 11 parts left, +3 s left per
+// second). Prior pace = 2x what the estimate's middle leaves after the first landing (real builds land their parts
+// slower than that). Real builds landed in trains and their last part straggled (R3 +395 s, R4 +614 s after the one
+// before): the top end adds 3 parts' time. Tuned on R3-R5's landing times (sim/remaining-backtest.mjs): truth inside
+// the range 85-91% of the time after the first landing, shown minutes going up on 0-6% of 15 s steps (v1: 74-80%,
+// 10-27%). 3 builds, in-sample: a rough fit. Out of sample on real-budget-tracker-10 (13 parts): inside 86% of the
+// time after the first landing, minutes going up on 3% of steps; "about K" ran high early (30 min said, 17 real).
+// Re-tuning on all four gained little (median 'about K' error 1.35x -> 1.26x), so these stay.
+export const REMAINING = { k: 4, priorX: 2, spreadLo: 1.5, spreadHi: 2, straggleParts: 3, minS: 30, minPartS: 20 };
+export function remainingTime({ parts, landed = 0, elapsedS, estimate, firstLandS = null, lastLandS = null } = {}) {
+  const M = Math.max(1, Math.round(parts || 1)), n = Math.max(0, Math.min(M, Math.round(landed || 0)));
+  const t = Math.max(0, elapsedS || 0);
+  const [eLo, eHi] = estimate?.wallS || [0, 0];
+  const R = REMAINING;
+  const out = (phase, lo, hi, mid) => {
+    lo = Math.max(0, Math.round(lo)); hi = Math.max(lo, Math.round(hi)); mid = Math.round(Math.min(hi, Math.max(lo, mid)));
+    return { leftS: [lo, hi], midS: mid, text: leftText(phase, lo, hi, mid), phase, parts: M, landed: n };
+  };
+  if (n >= M) return out('done', 0, 0, 0);
+  const eMid = eLo > 0 && eHi > 0 ? Math.sqrt(eLo * eHi) : null;
+  if (n === 0 || firstLandS == null) {
+    // No landing yet (or no time for it): the estimate minus the time gone. Past its top end: say so, and give
+    // half as long again as the time already taken at most.
+    if (eMid == null) return out('starting', 0, 0, 0);
+    if (t >= eHi) return out('over', R.minS, Math.max(R.minS * 2, t * 0.5), Math.max(R.minS, t * 0.2));
+    const lo = Math.max(R.minS, eLo - t), hi = Math.max(lo, eHi - t);
+    return out('starting', lo, hi, Math.max(lo, Math.min(hi, (eMid ?? hi) - t)));
+  }
+  const t1 = Math.min(firstLandS, t), seen = n - 1;
+  // No latest-landing time: assume the landings so far were evenly spread.
+  const tL = Math.max(t1, Math.min(t, lastLandS ?? (t1 + (t - t1) * seen / (seen + 1))));
+  // Prior seconds per part after the first.
+  const r0 = Math.max(R.minPartS, R.priorX * ((eMid ?? t1 * 2) - t1) / Math.max(1, M - 1));
+  const k = R.k;
+  const rDone = (tL - t1 + k * r0) / (seen + k), rOpen = (t - t1 + k * r0) / (seen + 1 + k);
+  const r = Math.max(R.minPartS, rDone, rOpen);
+  const left = M - n, mid = Math.max(r * (left - 1) + R.minPartS, r * left - Math.min(t - tL, r));
+  const q = Math.sqrt(seen + k);
+  const lo = Math.max(R.minS, mid / (1 + R.spreadLo / q)), hi = mid * (1 + R.spreadHi / q) + r * R.straggleParts;
+  // 'about K' = the range's geometric middle: on R3-R5 it was nearer the truth than the rate alone (which ignores
+  // stragglers): median error 1.2-1.7x vs 1.2-2.4x.
+  return out('landing', lo, hi, Math.sqrt(lo * hi));
+}
+const mins = (s) => Math.max(1, Math.round(s / 60));
+function leftText(phase, lo, hi, mid) {
+  if (phase === 'done') return 'done';
+  if (phase === 'starting' && hi === 0) return 'starting';
+  if (phase === 'over') return `taking longer than estimated; maybe ${mins(lo)}-${mins(hi)} min more`;
+  if (hi < 90) return 'about a minute left';
+  const a = mins(lo), b = mins(hi), k = mins(mid);
+  return a === b ? `about ${k} min left` : `about ${k} min left (${a}-${b})`;
+}
+
+// qb7's call shape (est-bar.js, in the browser): times in ms since the epoch -> [lo, hi] seconds, or null when it
+// cannot say (no estimate and nothing landed yet, or the build is done).
+export function remainingS({ estimate, parts, landed = 0, firstLandedAt = null, lastLandedAt = null, now = Date.now() } = {}) {
+  if (!estimate?.startedAt || !Array.isArray(estimate.wallS)) return null;
+  const s = (at) => (at ? (at - estimate.startedAt) / 1000 : null);
+  const r = remainingTime({ parts, landed, elapsedS: (now - estimate.startedAt) / 1000, estimate, firstLandS: s(firstLandedAt), lastLandS: s(lastLandedAt) });
+  return r.phase === 'done' || (r.phase === 'starting' && r.leftS[1] === 0) ? null : r.leftS;
 }
