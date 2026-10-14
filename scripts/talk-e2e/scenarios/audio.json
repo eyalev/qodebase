@@ -1,0 +1,6 @@
+[
+  { "id": "voice-status", "title": "Spoken (audio fixture): what's going on, conversation mode", "start": "/", "audio": "~tts01-thalia-x1.0", "turns": [{ "expect": { "lane": "status", "spoken": "once", "stay": true, "no_writes": true } }] },
+  { "id": "voice-latest", "title": "Spoken: what is my latest project?", "start": "/", "audio": "~tts02-thalia-x1.0", "turns": [{ "expect": { "lane": "latest", "spoken": "once", "stay": true } }] },
+  { "id": "voice-idea", "title": "Spoken: give me a small idea", "start": "/", "audio": "~tts04-thalia-x1.0", "turns": [{ "expect": { "lane": "idea", "spoken": "once", "fields": { "What do you want to build": "\\w{4,}" } } }] },
+  { "id": "live-status", "title": "Live-words hook: what's going on", "start": "/", "turns": [{ "say": "What's going on?", "via": "live", "expect": { "lane": "status", "spoken": "once", "stay": true } }] }
+]
