@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated": "2026-10-13T23:48:43.765Z",
+ "generated": "2026-10-14T08:26:31.854Z",
  "sources": {
   "fleet": "live",
   "buildEstimates": "live"
@@ -46,7 +46,7 @@
    "label": "measured (qb9: re-verify of every changed file, automatic checks, gpt-oss-120b judge, 50-file hand check)"
   },
   "scale": {
-   "maxAgents": 4750,
+   "maxAgents": 10000,
    "filesPerSecPlateau": 2100,
    "twoNamespacesFilesPerSec": 3000,
    "ladder": [
@@ -94,6 +94,58 @@
      "filesPerSec": 3000,
      "readP50Ms": 908,
      "limit": "2 namespaces ~1.4x: part per namespace, part shared; a cold namespace's reads failed (1,454 internal errors); one 10-s window"
+    },
+    {
+     "run": "R10K-a",
+     "agents": 10000,
+     "copies": 10,
+     "namespaces": null,
+     "filesPerSec": 2350,
+     "readP50Ms": 44,
+     "limit": "none on reads (100% from the cache); landing took ~2.5 min more: one landing queue per copy"
+    },
+    {
+     "run": "R10K-b",
+     "agents": 10000,
+     "copies": 10,
+     "namespaces": null,
+     "filesPerSec": 1900,
+     "readP50Ms": 615,
+     "limit": "Artifacts reads slow past ~2,000/s (p90 1.2 s, worst copy 2.9 s), none failed; landing took ~3 min more: one landing queue per copy"
+    }
+   ],
+   "readCache": [
+    {
+     "run": "R10K-a",
+     "agents": 10000,
+     "copies": 10,
+     "readCache": "identical copies (best case)",
+     "filesPerSec": 2350,
+     "readP50Ms": 44,
+     "readP90Ms": 73,
+     "answersDoneS": 20,
+     "landed": 29890,
+     "readsFromArtifacts": 0,
+     "errors": 0,
+     "landedPerSecPeak": 690,
+     "limit": "none on reads (100% from the cache); landing took ~2.5 min more: one landing queue per copy",
+     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14)"
+    },
+    {
+     "run": "R10K-b",
+     "agents": 10000,
+     "copies": 10,
+     "readCache": "every file different per copy (realistic)",
+     "filesPerSec": 1900,
+     "readP50Ms": 615,
+     "readP90Ms": 1163,
+     "answersDoneS": 50,
+     "landed": 29883,
+     "readsFromArtifacts": 36555,
+     "errors": 0,
+     "landedPerSecPeak": 690,
+     "limit": "Artifacts reads slow past ~2,000/s (p90 1.2 s, worst copy 2.9 s), none failed; landing took ~3 min more: one landing queue per copy",
+     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14)"
     }
    ],
    "realModels": [
@@ -122,14 +174,21 @@
      "usd": 5.79
     }
    ],
+   "tenK": {
+    "say": "10,000 agents on Cloudflare (cached answers, no model calls), nothing refused: ~1,900 files a second when every file is different, ~2,350 when files repeat (read cache). Reads slow down but never fail; the next wall is landing on main.",
+    "always": "Agents start in ramps: at most ~2,300 of the 10,000 were busy in any 10 s. Cached answers: no model calls.",
+    "not": "The read cache did not raise the realistic throughput (1,900 vs the 2,100 plateau without it): not 'the fix'.",
+    "notRun": "20,000 agents: not run (budget)."
+   },
+   "maxBusyAtOnce": 2300,
    "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call); agents, Artifacts reads, verify, lanes, the door and pushes real",
    "realModelsLabel": "measured on Cloudflare with real models (Workers AI + Gemini through AI Gateway qodebase-fleet)"
   },
   "fleetCached": {
-   "runs": 312,
-   "files": 408165,
-   "landed": 309139,
-   "skipped": 123503,
+   "runs": 335,
+   "files": 501620,
+   "landed": 377877,
+   "skipped": 148083,
    "verifyRefused": 0,
    "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real"
   },
@@ -142,27 +201,27 @@
     "files": 4064,
     "landed": 2989,
     "skipped": 1069,
-    "wallS": 681,
-    "filesPerMin": 358,
+    "wallS": 679,
+    "filesPerMin": 359,
     "landWaitP90S": 18,
     "usd": 0.5553,
     "models": [
      "@cf/zai-org/glm-4.7-flash"
     ]
    },
-   "filesLanded": 38865,
-   "filesAttempted": 48871,
+   "filesLanded": 53128,
+   "filesAttempted": 69191,
    "verifyRefused": 0,
-   "usd": 23.85,
-   "usdPer1kLanded": 0.61,
-   "runs": 37,
+   "usd": 35.11,
+   "usdPer1kLanded": 0.66,
+   "runs": 42,
    "byJob": {
     "docs": {
-     "runs": 27,
-     "filesAttempted": 45923,
-     "landed": 31466,
-     "skipped": 13912,
-     "usd": 19.09
+     "runs": 32,
+     "filesAttempted": 66243,
+     "landed": 45729,
+     "skipped": 19257,
+     "usd": 30.35
     },
     "index": {
      "runs": 1,
@@ -1566,50 +1625,6 @@
     "firstAt": 1791898420661
    },
    {
-    "label": "S5 gemini-3.1-flash-lite at its limit (VS Code src/vs, 300 agents)",
-    "runs": 1,
-    "cached": false,
-    "models": [
-     "gemini-3.1-flash-lite"
-    ],
-    "repos": [
-     "fleet-vscode-src-4 src/vs"
-    ],
-    "agents": 300,
-    "files": 4064,
-    "landed": 2990,
-    "skipped": 1069,
-    "verifyFail": 0,
-    "rejected": 5,
-    "rateLimited": 0,
-    "usd": 2.565,
-    "wallS": 330,
-    "landWaitP90S": 54,
-    "firstAt": 1791899916203
-   },
-   {
-    "label": "S5 glm-4.7-flash at its limit (VS Code src/vs, 120 agents)",
-    "runs": 1,
-    "cached": false,
-    "models": [
-     "@cf/zai-org/glm-4.7-flash"
-    ],
-    "repos": [
-     "fleet-vscode-src-2 src/vs"
-    ],
-    "agents": 120,
-    "files": 4064,
-    "landed": 2989,
-    "skipped": 1069,
-    "verifyFail": 0,
-    "rejected": 6,
-    "rateLimited": 0,
-    "usd": 0.5553,
-    "wallS": 681,
-    "landWaitP90S": 18,
-    "firstAt": 1791899916239
-   },
-   {
     "label": "S5 gemma-4-26b at its limit (VS Code src/vs, 120 agents)",
     "runs": 1,
     "cached": false,
@@ -1630,6 +1645,50 @@
     "wallS": 705,
     "landWaitP90S": 13,
     "firstAt": 1791899916240
+   },
+   {
+    "label": "S5 glm-4.7-flash at its limit (VS Code src/vs, 120 agents)",
+    "runs": 1,
+    "cached": false,
+    "models": [
+     "@cf/zai-org/glm-4.7-flash"
+    ],
+    "repos": [
+     "fleet-vscode-src-2 src/vs"
+    ],
+    "agents": 120,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 6,
+    "rateLimited": 0,
+    "usd": 0.5553,
+    "wallS": 679,
+    "landWaitP90S": 18,
+    "firstAt": 1791899918106
+   },
+   {
+    "label": "S5 gemini-3.1-flash-lite at its limit (VS Code src/vs, 300 agents)",
+    "runs": 1,
+    "cached": false,
+    "models": [
+     "gemini-3.1-flash-lite"
+    ],
+    "repos": [
+     "fleet-vscode-src-4 src/vs"
+    ],
+    "agents": 300,
+    "files": 4064,
+    "landed": 2990,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 5,
+    "rateLimited": 0,
+    "usd": 2.565,
+    "wallS": 327,
+    "landWaitP90S": 54,
+    "firstAt": 1791899918949
    },
    {
     "label": "S5 glm-5.3-flash at its limit (VS Code src/vs, 120 agents)",
@@ -1671,9 +1730,9 @@
     "rejected": 10,
     "rateLimited": 0,
     "usd": 0.0457,
-    "wallS": 384,
+    "wallS": 182,
     "landWaitP90S": 6,
-    "firstAt": 1791900237281
+    "firstAt": 1791900238877
    },
    {
     "label": "batching bench: glm-4.7 single (70 files)",
@@ -1693,9 +1752,9 @@
     "rejected": 0,
     "rateLimited": 0,
     "usd": 0.0106,
-    "wallS": 70,
+    "wallS": 49,
     "landWaitP90S": 7,
-    "firstAt": 1791900908033
+    "firstAt": 1791900929617
    },
    {
     "label": "batching bench: glm-4.7 pack (70 files)",
@@ -1715,9 +1774,9 @@
     "rejected": 0,
     "rateLimited": 0,
     "usd": 0.0104,
-    "wallS": 48,
+    "wallS": 34,
     "landWaitP90S": 11,
-    "firstAt": 1791900963500
+    "firstAt": 1791900977933
    },
    {
     "label": "batching bench: gemini-3.1 single (70 files)",
@@ -1811,7 +1870,7 @@
     "rejected": 46,
     "rateLimited": 0,
     "usd": 5.7866,
-    "wallS": 163,
+    "wallS": 63902,
     "landWaitP90S": 71,
     "firstAt": 1791902486503
    },
@@ -1979,7 +2038,7 @@
     "rateLimited": 0,
     "usd": 0.0327,
     "wallS": 1448,
-    "landWaitP90S": null,
+    "landWaitP90S": 18,
     "firstAt": 1791907422629
    },
    {
@@ -2083,7 +2142,7 @@
     "rejected": 0,
     "rateLimited": 0,
     "usd": 0,
-    "wallS": 36,
+    "wallS": 57843,
     "landWaitP90S": 183,
     "firstAt": 1791908544889
    },
@@ -2107,7 +2166,7 @@
     "rateLimited": 0,
     "usd": 0.9644,
     "wallS": 2487,
-    "landWaitP90S": -1,
+    "landWaitP90S": 397,
     "firstAt": 1791909049435
    },
    {
@@ -2130,7 +2189,7 @@
     "rateLimited": 0,
     "usd": 0.789,
     "wallS": 8826,
-    "landWaitP90S": null,
+    "landWaitP90S": 1776,
     "firstAt": 1791909049479
    },
    {
@@ -2153,7 +2212,7 @@
     "rateLimited": 0,
     "usd": 0.8198,
     "wallS": 12495,
-    "landWaitP90S": -1,
+    "landWaitP90S": 2742,
     "firstAt": 1791909049547
    },
    {
@@ -2176,7 +2235,7 @@
     "rateLimited": 0,
     "usd": 0.1148,
     "wallS": 161,
-    "landWaitP90S": null,
+    "landWaitP90S": 465,
     "firstAt": 1791921679743
    },
    {
@@ -2199,7 +2258,7 @@
     "rateLimited": 0,
     "usd": 0.8948,
     "wallS": 3216,
-    "landWaitP90S": -1,
+    "landWaitP90S": 921,
     "firstAt": 1791921857350
    },
    {
@@ -2222,7 +2281,7 @@
     "rateLimited": 0,
     "usd": 0.9058,
     "wallS": 2691,
-    "landWaitP90S": -1,
+    "landWaitP90S": 740,
     "firstAt": 1791929636289
    },
    {
@@ -2244,8 +2303,539 @@
     "rateLimited": 0,
     "usd": 0.1096,
     "wallS": 267,
-    "landWaitP90S": -1,
+    "landWaitP90S": 87,
     "firstAt": 1791934940249
+   },
+   {
+    "label": "VS Code: doc comments + API index",
+    "runs": 5,
+    "cached": false,
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-1 src/vs",
+     "fleet-n2-vscode-src-2 src/vs"
+    ],
+    "agents": 4200,
+    "files": 20320,
+    "landed": 14263,
+    "skipped": 5345,
+    "verifyFail": 0,
+    "rejected": 712,
+    "rateLimited": 0,
+    "usd": 11.2656,
+    "wallS": 2999,
+    "landWaitP90S": 561,
+    "firstAt": 1791939833517
+   },
+   {
+    "label": "read cache test (cache mode)",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-2 src/vs"
+    ],
+    "agents": 400,
+    "files": 4059,
+    "landed": 2987,
+    "skipped": 1067,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 22,
+    "landWaitP90S": 179,
+    "firstAt": 1791963165666
+   },
+   {
+    "label": "read cache test 2 (cache mode, same files)",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-1 src/vs"
+    ],
+    "agents": 400,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 15,
+    "landWaitP90S": 94,
+    "firstAt": 1791963532972
+   },
+   {
+    "label": "read cache test 3 (unique copy)",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-6 src/vs"
+    ],
+    "agents": 400,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 24,
+    "landWaitP90S": 115,
+    "firstAt": 1791965120885
+   },
+   {
+    "label": "R10K-a: 1000 cached agents, copy 6",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-2 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 15,
+    "landWaitP90S": 134,
+    "firstAt": 1791965423287
+   },
+   {
+    "label": "R10K-a: 1000 cached agents, copy 10",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-6 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 14,
+    "landWaitP90S": 88,
+    "firstAt": 1791965423308
+   },
+   {
+    "label": "R10K-a: 1000 cached agents, copy 2",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-3 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 13,
+    "landWaitP90S": 74,
+    "firstAt": 1791965423344
+   },
+   {
+    "label": "R10K-a: 1000 cached agents, copy 7",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-3 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 16,
+    "landWaitP90S": 87,
+    "firstAt": 1791965423402
+   },
+   {
+    "label": "R10K-a: 1000 cached agents, copy 9",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-5 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 13,
+    "landWaitP90S": 46,
+    "firstAt": 1791965423461
+   },
+   {
+    "label": "R10K-a: 1000 cached agents, copy 4",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-5 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 13,
+    "landWaitP90S": 36,
+    "firstAt": 1791965423569
+   },
+   {
+    "label": "R10K-a: 1000 cached agents, copy 5",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-6 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 13,
+    "landWaitP90S": 86,
+    "firstAt": 1791965423583
+   },
+   {
+    "label": "R10K-a: 1000 cached agents, copy 1",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-2 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 13,
+    "landWaitP90S": 95,
+    "firstAt": 1791965423662
+   },
+   {
+    "label": "R10K-a: 1000 cached agents, copy 3",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-4 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 12,
+    "landWaitP90S": 116,
+    "firstAt": 1791965423809
+   },
+   {
+    "label": "R10K-a: 1000 cached agents, copy 8",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-4 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 13,
+    "landWaitP90S": 86,
+    "firstAt": 1791965423840
+   },
+   {
+    "label": "R10K-b: 1000 cached agents, copy 1",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-2 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 40,
+    "landWaitP90S": 102,
+    "firstAt": 1791966032604
+   },
+   {
+    "label": "R10K-b: 1000 cached agents, copy 6",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-2 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4060,
+    "landed": 2987,
+    "skipped": 1067,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 78,
+    "landWaitP90S": 163,
+    "firstAt": 1791966032743
+   },
+   {
+    "label": "R10K-b: 1000 cached agents, copy 4",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-5 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 21,
+    "landWaitP90S": 50,
+    "firstAt": 1791966032759
+   },
+   {
+    "label": "R10K-b: 1000 cached agents, copy 2",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-3 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 39,
+    "landWaitP90S": 78,
+    "firstAt": 1791966032762
+   },
+   {
+    "label": "R10K-b: 1000 cached agents, copy 3",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-4 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 26,
+    "landWaitP90S": 162,
+    "firstAt": 1791966032762
+   },
+   {
+    "label": "R10K-b: 1000 cached agents, copy 9",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-5 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 21,
+    "landWaitP90S": 58,
+    "firstAt": 1791966032775
+   },
+   {
+    "label": "R10K-b: 1000 cached agents, copy 5",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-vscode-src-6 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 18,
+    "landWaitP90S": 94,
+    "firstAt": 1791966032777
+   },
+   {
+    "label": "R10K-b: 1000 cached agents, copy 8",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-4 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 27,
+    "landWaitP90S": 120,
+    "firstAt": 1791966033150
+   },
+   {
+    "label": "R10K-b: 1000 cached agents, copy 10",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-6 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4060,
+    "landed": 2985,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 72,
+    "landWaitP90S": 118,
+    "firstAt": 1791966033184
+   },
+   {
+    "label": "R10K-b: 1000 cached agents, copy 7",
+    "runs": 1,
+    "cached": true,
+    "models": [
+     "cache"
+    ],
+    "repos": [
+     "fleet-n2-vscode-src-3 src/vs"
+    ],
+    "agents": 1000,
+    "files": 4060,
+    "landed": 2988,
+    "skipped": 1066,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "usd": 0,
+    "wallS": 74,
+    "landWaitP90S": 112,
+    "firstAt": 1791966033247
    }
   ],
   "label": "measured (Workers AI and Gemini agents, real git on Artifacts, Cloudflare)",
@@ -4218,7 +4808,7 @@
     "models": [
      "@cf/zai-org/glm-4.7-flash"
     ],
-    "state": "done",
+    "state": "ended",
     "tokensIn": 7515873,
     "tokensOut": 251414,
     "agents": 120,
@@ -4232,9 +4822,9 @@
     "modelError": 0,
     "calls": null,
     "usd": 0.5553,
-    "startedAt": 1791899916239,
-    "endedAt": 1791900597444,
-    "wallS": 681,
+    "startedAt": 1791899918106,
+    "endedAt": 1791900597339,
+    "wallS": 679,
     "landWaitP50S": 9,
     "landWaitP90S": 18,
     "peakPerMin": null,
@@ -4254,6 +4844,90 @@
     "repo": "fleet-vscode-src-2 src/vs",
     "label": "S5 glm-4.7-flash at its limit (VS Code src/vs, 120 agents)",
     "cached": false,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7txzly",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965423662,
+    "endedAt": 1791965436233,
+    "wallS": 13,
+    "landWaitP50S": 65,
+    "landWaitP90S": 95,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-2 src/vs",
+    "label": "R10K-a: 1000 cached agents, copy 1",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7ub3fr",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791966032604,
+    "endedAt": 1791966072786,
+    "wallS": 40,
+    "landWaitP50S": 78,
+    "landWaitP90S": 102,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 1646,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-2 src/vs",
+    "label": "R10K-b: 1000 cached agents, copy 1",
+    "cached": true,
     "job": "docs"
    },
    {
@@ -4883,7 +5557,7 @@
     "models": [
      "@cf/zai-org/glm-5.3-flash"
     ],
-    "state": "stopped",
+    "state": "ended",
     "tokensIn": 175674,
     "tokensOut": 38776,
     "agents": 40,
@@ -4897,9 +5571,9 @@
     "modelError": 0,
     "calls": null,
     "usd": 0.0457,
-    "startedAt": 1791900237281,
-    "endedAt": 1791900621728,
-    "wallS": 384,
+    "startedAt": 1791900238877,
+    "endedAt": 1791900421106,
+    "wallS": 182,
     "landWaitP50S": 4,
     "landWaitP90S": 6,
     "peakPerMin": null,
@@ -4919,6 +5593,90 @@
     "repo": "fleet-vscode-src-3 src/vs",
     "label": "S5 glm-5.3-flash at 30/min (VS Code src/vs, 40 agents)",
     "cached": false,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7txzkj",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965423344,
+    "endedAt": 1791965436662,
+    "wallS": 13,
+    "landWaitP50S": 59,
+    "landWaitP90S": 74,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-3 src/vs",
+    "label": "R10K-a: 1000 cached agents, copy 2",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7uatd9",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791966032762,
+    "endedAt": 1791966071272,
+    "wallS": 39,
+    "landWaitP50S": 61,
+    "landWaitP90S": 78,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 1622,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-3 src/vs",
+    "label": "R10K-b: 1000 cached agents, copy 2",
+    "cached": true,
     "job": "docs"
    },
    {
@@ -5421,7 +6179,7 @@
     "models": [
      "gemini-3.1-flash-lite"
     ],
-    "state": "done",
+    "state": "ended",
     "tokensIn": 8719940,
     "tokensOut": 256682,
     "agents": 300,
@@ -5435,9 +6193,9 @@
     "modelError": 0,
     "calls": null,
     "usd": 2.565,
-    "startedAt": 1791899916203,
-    "endedAt": 1791900246235,
-    "wallS": 330,
+    "startedAt": 1791899918949,
+    "endedAt": 1791900246147,
+    "wallS": 327,
     "landWaitP50S": 20,
     "landWaitP90S": 54,
     "peakPerMin": null,
@@ -5458,6 +6216,90 @@
     "repo": "fleet-vscode-src-4 src/vs",
     "label": "S5 gemini-3.1-flash-lite at its limit (VS Code src/vs, 300 agents)",
     "cached": false,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7txzpb",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965423809,
+    "endedAt": 1791965436215,
+    "wallS": 12,
+    "landWaitP50S": 77,
+    "landWaitP90S": 116,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-4 src/vs",
+    "label": "R10K-a: 1000 cached agents, copy 3",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7ub1gx",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791966032762,
+    "endedAt": 1791966058799,
+    "wallS": 26,
+    "landWaitP50S": 150,
+    "landWaitP90S": 162,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-4 src/vs",
+    "label": "R10K-b: 1000 cached agents, copy 3",
+    "cached": true,
     "job": "docs"
    },
    {
@@ -5961,7 +6803,7 @@
     "models": [
      "@cf/zai-org/glm-4.7-flash"
     ],
-    "state": "done",
+    "state": "ended",
     "tokensIn": 140350,
     "tokensOut": 5166,
     "agents": 10,
@@ -5975,9 +6817,9 @@
     "modelError": 0,
     "calls": null,
     "usd": 0.0106,
-    "startedAt": 1791900908033,
+    "startedAt": 1791900929617,
     "endedAt": 1791900978218,
-    "wallS": 70,
+    "wallS": 49,
     "landWaitP50S": 6,
     "landWaitP90S": 7,
     "peakPerMin": null,
@@ -5995,6 +6837,90 @@
     "repo": "fleet-vscode-src-5 src/vs",
     "label": "batching bench: glm-4.7 single (70 files)",
     "cached": false,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7txzjf",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965423569,
+    "endedAt": 1791965436347,
+    "wallS": 13,
+    "landWaitP50S": 28,
+    "landWaitP90S": 36,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-5 src/vs",
+    "label": "R10K-a: 1000 cached agents, copy 4",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7uazlc",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791966032759,
+    "endedAt": 1791966053350,
+    "wallS": 21,
+    "landWaitP50S": 43,
+    "landWaitP90S": 50,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-5 src/vs",
+    "label": "R10K-b: 1000 cached agents, copy 4",
+    "cached": true,
     "job": "docs"
    },
    {
@@ -6498,7 +7424,7 @@
     "models": [
      "@cf/zai-org/glm-4.7-flash"
     ],
-    "state": "done",
+    "state": "ended",
     "tokensIn": 137823,
     "tokensOut": 5154,
     "agents": 10,
@@ -6512,9 +7438,9 @@
     "modelError": 0,
     "calls": null,
     "usd": 0.0104,
-    "startedAt": 1791900963500,
-    "endedAt": 1791901011929,
-    "wallS": 48,
+    "startedAt": 1791900977933,
+    "endedAt": 1791901011843,
+    "wallS": 34,
     "landWaitP50S": 8,
     "landWaitP90S": 11,
     "peakPerMin": null,
@@ -6532,6 +7458,132 @@
     "repo": "fleet-vscode-src-6 src/vs",
     "label": "batching bench: glm-4.7 pack (70 files)",
     "cached": false,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7trhqd",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 400,
+    "agentsStarted": 400,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965120885,
+    "endedAt": 1791965145083,
+    "wallS": 24,
+    "landWaitP50S": 107,
+    "landWaitP90S": 115,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-6 src/vs",
+    "label": "read cache test 3 (unique copy)",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7txznf",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965423583,
+    "endedAt": 1791965436629,
+    "wallS": 13,
+    "landWaitP50S": 68,
+    "landWaitP90S": 86,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-6 src/vs",
+    "label": "R10K-a: 1000 cached agents, copy 5",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7uavz9",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791966032777,
+    "endedAt": 1791966050834,
+    "wallS": 18,
+    "landWaitP50S": 84,
+    "landWaitP90S": 94,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-vscode-src-6 src/vs",
+    "label": "R10K-b: 1000 cached agents, copy 5",
+    "cached": true,
     "job": "docs"
    },
    {
@@ -8358,7 +9410,7 @@
     "models": [
      "cache"
     ],
-    "state": "done",
+    "state": "running",
     "tokensIn": 0,
     "tokensOut": 0,
     "agents": 50,
@@ -8373,8 +9425,8 @@
     "calls": null,
     "usd": 0,
     "startedAt": 1791908546429,
-    "endedAt": 1791908577919,
-    "wallS": 31,
+    "endedAt": 1791966387596,
+    "wallS": 57841,
     "landWaitP50S": 78,
     "landWaitP90S": 88,
     "peakPerMin": null,
@@ -16187,7 +17239,7 @@
      "@cf/zai-org/glm-4.7-flash",
      "gemini-3.1-flash-lite"
     ],
-    "state": "done",
+    "state": "running",
     "tokensIn": 8420553,
     "tokensOut": 264827,
     "agents": 150,
@@ -16202,8 +17254,8 @@
     "calls": null,
     "usd": 1.9211,
     "startedAt": 1791902486503,
-    "endedAt": 1791902614893,
-    "wallS": 128,
+    "endedAt": 1791966387980,
+    "wallS": 63901,
     "landWaitP50S": 35,
     "landWaitP90S": 52,
     "peakPerMin": null,
@@ -16253,7 +17305,7 @@
      "@cf/zai-org/glm-4.7-flash",
      "gemini-3.1-flash-lite"
     ],
-    "state": "done",
+    "state": "running",
     "tokensIn": 8472369,
     "tokensOut": 266508,
     "agents": 150,
@@ -16268,8 +17320,8 @@
     "calls": null,
     "usd": 1.9426,
     "startedAt": 1791902486581,
-    "endedAt": 1791902649405,
-    "wallS": 163,
+    "endedAt": 1791966388349,
+    "wallS": 63902,
     "landWaitP50S": 19,
     "landWaitP90S": 31,
     "peakPerMin": null,
@@ -16318,7 +17370,7 @@
      "@cf/zai-org/glm-4.7-flash",
      "gemini-3.1-flash-lite"
     ],
-    "state": "done",
+    "state": "running",
     "tokensIn": 8428473,
     "tokensOut": 265250,
     "agents": 150,
@@ -16333,8 +17385,8 @@
     "calls": null,
     "usd": 1.9229,
     "startedAt": 1791902486505,
-    "endedAt": 1791902636616,
-    "wallS": 150,
+    "endedAt": 1791966387989,
+    "wallS": 63901,
     "landWaitP50S": 45,
     "landWaitP90S": 71,
     "peakPerMin": null,
@@ -16493,6 +17545,828 @@
     "job": "index"
    },
    {
+    "runId": "fmv7fb20o",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "ended",
+    "tokensIn": 8353173,
+    "tokensOut": 263814,
+    "agents": 200,
+    "agentsStarted": 200,
+    "files": 4064,
+    "landed": 2978,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 17,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 1.7061,
+    "startedAt": 1791940848305,
+    "endedAt": 1791940961236,
+    "wallS": 113,
+    "landWaitP50S": 22,
+    "landWaitP90S": 561,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.2026,
+      "landed": 692,
+      "skipped": 298,
+      "calls": 692,
+      "rateLimited429": 0,
+      "peakPerMin": 610,
+      "role": "planned"
+     },
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.1392,
+      "landed": 814,
+      "rejected": 2,
+      "skipped": 288,
+      "calls": 816,
+      "rateLimited429": 0,
+      "peakPerMin": 771,
+      "role": "planned"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 1.3643,
+      "landed": 1472,
+      "rejected": 15,
+      "skipped": 483,
+      "calls": 1487,
+      "rateLimited429": 0,
+      "peakPerMin": 1138,
+      "role": "overflow"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-1 src/vs",
+    "label": "VS Code: doc comments + API index",
+    "cached": false,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7g24wi",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "ended",
+    "tokensIn": 9897804,
+    "tokensOut": 330818,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2833,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 162,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 2.3289,
+    "startedAt": 1791942104326,
+    "endedAt": 1791942543216,
+    "wallS": 439,
+    "landWaitP50S": 15,
+    "landWaitP90S": 53,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.1474,
+      "landed": 437,
+      "model_error_retry": 4,
+      "rejected": 4,
+      "skipped": 171,
+      "calls": 445,
+      "rateLimited429": 0,
+      "peakPerMin": 175,
+      "role": "planned"
+     },
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.1266,
+      "landed": 688,
+      "rejected": 1,
+      "skipped": 287,
+      "calls": 689,
+      "rateLimited429": 0,
+      "peakPerMin": 265,
+      "role": "planned"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 2.055,
+      "landed": 1708,
+      "rejected": 157,
+      "skipped": 611,
+      "calls": 1865,
+      "rateLimited429": 0,
+      "peakPerMin": 823,
+      "role": "overflow"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-1 src/vs",
+    "label": "VS Code: doc comments + API index",
+    "cached": false,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7ggbyf",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "ended",
+    "tokensIn": 9699089,
+    "tokensOut": 323473,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2840,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 155,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 2.256,
+    "startedAt": 1791942766805,
+    "endedAt": 1791942832025,
+    "wallS": 65,
+    "landWaitP50S": 45,
+    "landWaitP90S": 74,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.1483,
+      "landed": 467,
+      "rejected": 3,
+      "skipped": 174,
+      "calls": 470,
+      "rateLimited429": 0,
+      "peakPerMin": 279,
+      "role": "planned"
+     },
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.1295,
+      "landed": 708,
+      "rejected": 1,
+      "skipped": 327,
+      "calls": 709,
+      "rateLimited429": 0,
+      "peakPerMin": 549,
+      "role": "planned"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 1.9783,
+      "landed": 1665,
+      "rejected": 151,
+      "skipped": 568,
+      "calls": 1816,
+      "rateLimited429": 0,
+      "peakPerMin": 1431,
+      "role": "overflow"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-1 src/vs",
+    "label": "VS Code: doc comments + API index",
+    "cached": false,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7stj8s",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 400,
+    "agentsStarted": 400,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791963532972,
+    "endedAt": 1791963548158,
+    "wallS": 15,
+    "landWaitP50S": 68,
+    "landWaitP90S": 94,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2373,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-1 src/vs",
+    "label": "read cache test 2 (cache mode, same files)",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7epfda",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "ended",
+    "tokensIn": 10034451,
+    "tokensOut": 334074,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2814,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 181,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 2.4588,
+    "startedAt": 1791939833517,
+    "endedAt": 1791939886824,
+    "wallS": 53,
+    "landWaitP50S": 171,
+    "landWaitP90S": 201,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.1124,
+      "landed": 361,
+      "rejected": 2,
+      "skipped": 145,
+      "calls": 363,
+      "rateLimited429": 0,
+      "peakPerMin": 272,
+      "role": "planned"
+     },
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.116,
+      "landed": 629,
+      "rejected": 1,
+      "skipped": 250,
+      "calls": 630,
+      "rateLimited429": 0,
+      "peakPerMin": 599,
+      "role": "planned"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 2.2303,
+      "landed": 1824,
+      "rejected": 178,
+      "skipped": 674,
+      "calls": 2002,
+      "rateLimited429": 0,
+      "peakPerMin": 1934,
+      "role": "overflow"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-2 src/vs",
+    "label": "VS Code: doc comments + API index",
+    "cached": false,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7f1obq",
+    "models": [
+     "@cf/google/gemma-4-26b-a4b-it",
+     "@cf/zai-org/glm-4.7-flash",
+     "gemini-3.1-flash-lite"
+    ],
+    "state": "ended",
+    "tokensIn": 10113391,
+    "tokensOut": 339817,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2798,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 197,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 2.5158,
+    "startedAt": 1791940403190,
+    "endedAt": 1791940455717,
+    "wallS": 53,
+    "landWaitP50S": 43,
+    "landWaitP90S": 75,
+    "peakPerMin": null,
+    "perModel": {
+     "@cf/google/gemma-4-26b-a4b-it": {
+      "usd": 0.1092,
+      "landed": 343,
+      "skipped": 121,
+      "calls": 343,
+      "rateLimited429": 0,
+      "peakPerMin": 343,
+      "role": "planned"
+     },
+     "@cf/zai-org/glm-4.7-flash": {
+      "usd": 0.1083,
+      "landed": 593,
+      "skipped": 267,
+      "calls": 593,
+      "rateLimited429": 0,
+      "peakPerMin": 560,
+      "role": "planned"
+     },
+     "gemini-3.1-flash-lite": {
+      "usd": 2.2983,
+      "landed": 1862,
+      "rejected": 197,
+      "skipped": 681,
+      "calls": 2059,
+      "rateLimited429": 0,
+      "peakPerMin": 2059,
+      "role": "overflow"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-2 src/vs",
+    "label": "VS Code: doc comments + API index",
+    "cached": false,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7slli9",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 400,
+    "agentsStarted": 400,
+    "files": 4059,
+    "landed": 2987,
+    "skipped": 1067,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791963165666,
+    "endedAt": 1791963187174,
+    "wallS": 22,
+    "landWaitP50S": 168,
+    "landWaitP90S": 179,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 5,
+      "landed": 2987,
+      "skipped": 1067,
+      "calls": 2992,
+      "rateLimited429": 0,
+      "peakPerMin": 1784,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-2 src/vs",
+    "label": "read cache test (cache mode)",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7txzg5",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965423287,
+    "endedAt": 1791965437857,
+    "wallS": 15,
+    "landWaitP50S": 105,
+    "landWaitP90S": 134,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-2 src/vs",
+    "label": "R10K-a: 1000 cached agents, copy 6",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7ub258",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4060,
+    "landed": 2987,
+    "skipped": 1067,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791966032743,
+    "endedAt": 1791966110600,
+    "wallS": 78,
+    "landWaitP50S": 143,
+    "landWaitP90S": 163,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2987,
+      "skipped": 1067,
+      "calls": 2993,
+      "rateLimited429": 0,
+      "peakPerMin": 2684,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-2 src/vs",
+    "label": "R10K-b: 1000 cached agents, copy 6",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7txzm3",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965423402,
+    "endedAt": 1791965439591,
+    "wallS": 16,
+    "landWaitP50S": 66,
+    "landWaitP90S": 87,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-3 src/vs",
+    "label": "R10K-a: 1000 cached agents, copy 7",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7uarpk",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4060,
+    "landed": 2988,
+    "skipped": 1066,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791966033247,
+    "endedAt": 1791966107011,
+    "wallS": 74,
+    "landWaitP50S": 103,
+    "landWaitP90S": 112,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2988,
+      "skipped": 1066,
+      "calls": 2994,
+      "rateLimited429": 0,
+      "peakPerMin": 2983,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-3 src/vs",
+    "label": "R10K-b: 1000 cached agents, copy 7",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7txzln",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965423840,
+    "endedAt": 1791965436367,
+    "wallS": 13,
+    "landWaitP50S": 64,
+    "landWaitP90S": 86,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-4 src/vs",
+    "label": "R10K-a: 1000 cached agents, copy 8",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7uarbw",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791966033150,
+    "endedAt": 1791966060327,
+    "wallS": 27,
+    "landWaitP50S": 104,
+    "landWaitP90S": 120,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2989,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-4 src/vs",
+    "label": "R10K-b: 1000 cached agents, copy 8",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7txzm5",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965423461,
+    "endedAt": 1791965436452,
+    "wallS": 13,
+    "landWaitP50S": 35,
+    "landWaitP90S": 46,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-5 src/vs",
+    "label": "R10K-a: 1000 cached agents, copy 9",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7uau1l",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791966032775,
+    "endedAt": 1791966053313,
+    "wallS": 21,
+    "landWaitP50S": 52,
+    "landWaitP90S": 58,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-5 src/vs",
+    "label": "R10K-b: 1000 cached agents, copy 9",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7txzmd",
+    "models": [
+     "cache"
+    ],
+    "state": "ended",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4064,
+    "landed": 2989,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791965423308,
+    "endedAt": 1791965437151,
+    "wallS": 14,
+    "landWaitP50S": 64,
+    "landWaitP90S": 88,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2989,
+      "skipped": 1069,
+      "calls": 2995,
+      "rateLimited429": 0,
+      "peakPerMin": 2995,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-6 src/vs",
+    "label": "R10K-a: 1000 cached agents, copy 10",
+    "cached": true,
+    "job": "docs"
+   },
+   {
+    "runId": "fmv7uaqys",
+    "models": [
+     "cache"
+    ],
+    "state": "done",
+    "tokensIn": 0,
+    "tokensOut": 0,
+    "agents": 1000,
+    "agentsStarted": 1000,
+    "files": 4060,
+    "landed": 2985,
+    "skipped": 1069,
+    "verifyFail": 0,
+    "rejected": 0,
+    "rateLimited": 0,
+    "modelError": 0,
+    "calls": null,
+    "usd": 0,
+    "startedAt": 1791966033184,
+    "endedAt": 1791966105002,
+    "wallS": 72,
+    "landWaitP50S": 107,
+    "landWaitP90S": 118,
+    "peakPerMin": null,
+    "perModel": {
+     "cache": {
+      "usd": 0,
+      "cache_miss": 6,
+      "landed": 2985,
+      "skipped": 1069,
+      "calls": 2991,
+      "rateLimited429": 0,
+      "peakPerMin": 2937,
+      "role": "planned"
+     }
+    },
+    "repo": "fleet-n2-vscode-src-6 src/vs",
+    "label": "R10K-b: 1000 cached agents, copy 10",
+    "cached": true,
+    "job": "docs"
+   },
+   {
     "runId": "fmv6ver2k",
     "models": [
      "gemini-3.1-flash-lite"
@@ -16554,8 +18428,8 @@
     "startedAt": 1791908471837,
     "endedAt": 1791908870799,
     "wallS": 399,
-    "landWaitP50S": -1,
-    "landWaitP90S": 0,
+    "landWaitP50S": 10,
+    "landWaitP90S": 18,
     "peakPerMin": null,
     "perModel": {
      "gemini-3.1-flash-lite": {
@@ -16597,8 +18471,8 @@
     "startedAt": 1791909049435,
     "endedAt": 1791911536365,
     "wallS": 2487,
-    "landWaitP50S": -2,
-    "landWaitP90S": -1,
+    "landWaitP50S": 176,
+    "landWaitP90S": 397,
     "peakPerMin": null,
     "perModel": {
      "@cf/zai-org/glm-4.7-flash": {
@@ -16650,8 +18524,8 @@
     "startedAt": 1791909049479,
     "endedAt": 1791917875774,
     "wallS": 8826,
-    "landWaitP50S": -2,
-    "landWaitP90S": 0,
+    "landWaitP50S": 1102,
+    "landWaitP90S": 1776,
     "peakPerMin": null,
     "perModel": {
      "@cf/zai-org/glm-4.7-flash": {
@@ -16700,8 +18574,8 @@
     "startedAt": 1791909049547,
     "endedAt": 1791921544266,
     "wallS": 12495,
-    "landWaitP50S": -2,
-    "landWaitP90S": -1,
+    "landWaitP50S": 1409,
+    "landWaitP90S": 2742,
     "peakPerMin": null,
     "perModel": {
      "@cf/zai-org/glm-4.7-flash": {
@@ -16751,8 +18625,8 @@
     "startedAt": 1791921679743,
     "endedAt": 1791921841158,
     "wallS": 161,
-    "landWaitP50S": -2,
-    "landWaitP90S": 0,
+    "landWaitP50S": 317,
+    "landWaitP90S": 465,
     "peakPerMin": null,
     "perModel": {
      "@cf/zai-org/glm-4.7-flash": {
@@ -16802,8 +18676,8 @@
     "startedAt": 1791921857350,
     "endedAt": 1791925073662,
     "wallS": 3216,
-    "landWaitP50S": -3,
-    "landWaitP90S": -1,
+    "landWaitP50S": 254,
+    "landWaitP90S": 921,
     "peakPerMin": null,
     "perModel": {
      "@cf/zai-org/glm-4.7-flash": {
@@ -16853,8 +18727,8 @@
     "startedAt": 1791929636289,
     "endedAt": 1791932327753,
     "wallS": 2691,
-    "landWaitP50S": -2,
-    "landWaitP90S": -1,
+    "landWaitP50S": 217,
+    "landWaitP90S": 740,
     "peakPerMin": null,
     "perModel": {
      "@cf/zai-org/glm-4.7-flash": {
@@ -16902,8 +18776,8 @@
     "startedAt": 1791934940249,
     "endedAt": 1791935207564,
     "wallS": 267,
-    "landWaitP50S": -2,
-    "landWaitP90S": -1,
+    "landWaitP50S": 38,
+    "landWaitP90S": 87,
     "peakPerMin": null,
     "perModel": {
      "gemini-3.1-flash-lite": {
@@ -16924,37 +18798,37 @@
   ],
   "perModel": {
    "@cf/zai-org/glm-4.7-flash": {
-    "files": 11658,
-    "landed": 8301,
-    "skipped": 3339,
+    "files": 16514,
+    "landed": 11733,
+    "skipped": 4758,
     "verifyFail": 0,
-    "rejected": 18,
+    "rejected": 23,
     "rateLimited": 31,
-    "calls": 8436,
-    "usd": 1.5142,
-    "peakPerMin": 587,
+    "calls": 11873,
+    "usd": 2.1338,
+    "peakPerMin": 771,
     "roles": {
-     "planned": 11276,
+     "planned": 16127,
      "overflow": 364
     },
     "usdPer1kFiles": 0.13,
-    "share429": 0.004
+    "share429": 0.003
    },
    "@cf/google/gemma-4-26b-a4b-it": {
-    "files": 8839,
-    "landed": 6225,
-    "skipped": 2602,
+    "files": 12057,
+    "landed": 8525,
+    "skipped": 3511,
     "verifyFail": 0,
-    "rejected": 12,
+    "rejected": 21,
     "rateLimited": 23,
-    "calls": 6448,
-    "usd": 1.8609,
-    "peakPerMin": 406,
+    "calls": 8761,
+    "usd": 2.5808,
+    "peakPerMin": 610,
     "roles": {
-     "planned": 8827
+     "planned": 12036
     },
     "usdPer1kFiles": 0.21,
-    "share429": 0.004
+    "share429": 0.003
    },
    "gemini-3.5-flash-lite": {
     "files": 1152,
@@ -16973,20 +18847,20 @@
     "share429": 0
    },
    "gemini-3.1-flash-lite": {
-    "files": 31298,
-    "landed": 23381,
-    "skipped": 7724,
+    "files": 43544,
+    "landed": 31912,
+    "skipped": 10741,
     "verifyFail": 0,
-    "rejected": 193,
+    "rejected": 891,
     "rateLimited": 51,
-    "calls": 24188,
-    "usd": 19.3948,
-    "peakPerMin": 1500,
+    "calls": 33417,
+    "usd": 29.321,
+    "peakPerMin": 2059,
     "roles": {
      "planned": 14058,
-     "overflow": 17047
+     "overflow": 28595
     },
-    "usdPer1kFiles": 0.62,
+    "usdPer1kFiles": 0.67,
     "share429": 0.002
    },
    "@cf/zai-org/glm-5.3-flash": {
@@ -17007,23 +18881,23 @@
    }
   },
   "totals": {
-   "runs": 37,
-   "filesAttempted": 48871,
-   "landed": 38865,
-   "skipped": 14065,
+   "runs": 42,
+   "filesAttempted": 69191,
+   "landed": 53128,
+   "skipped": 19410,
    "verifyRefused": 0,
-   "rejected": 240,
+   "rejected": 952,
    "rateLimited": 3,
-   "usd": 23.85,
-   "usdPer1kLanded": 0.61,
-   "usdPer1kFiles": 0.49,
+   "usd": 35.11,
+   "usdPer1kLanded": 0.66,
+   "usdPer1kFiles": 0.51,
    "byJob": {
     "docs": {
-     "runs": 27,
-     "filesAttempted": 45923,
-     "landed": 31466,
-     "skipped": 13912,
-     "usd": 19.09
+     "runs": 32,
+     "filesAttempted": 66243,
+     "landed": 45729,
+     "skipped": 19257,
+     "usd": 30.35
     },
     "index": {
      "runs": 1,
@@ -17046,8 +18920,8 @@
     "files": 4064,
     "landed": 2989,
     "skipped": 1069,
-    "wallS": 681,
-    "filesPerMin": 358,
+    "wallS": 679,
+    "filesPerMin": 359,
     "landWaitP90S": 18,
     "usd": 0.5553,
     "models": [
@@ -17056,10 +18930,10 @@
    }
   },
   "cached": {
-   "runs": 312,
-   "files": 408165,
-   "landed": 309139,
-   "skipped": 123503,
+   "runs": 335,
+   "files": 501620,
+   "landed": 377877,
+   "skipped": 148083,
    "verifyRefused": 0,
    "label": "measured on Cloudflare with cached answers (comments reused by content hash, no model call): agents, verify, lanes, door and pushes real"
   },

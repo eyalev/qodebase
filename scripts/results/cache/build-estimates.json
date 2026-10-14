@@ -1,6 +1,156 @@
 {
  "builds": [
   {
+   "slug": "eyal.real-cafe-site-solo",
+   "estimate": {
+    "startedAt": 1791874751158,
+    "wallS": [
+     660,
+     1800
+    ],
+    "apiUsd": [
+     5.4,
+     11.9
+    ],
+    "preset": "default",
+    "v": {
+     "coders": 1,
+     "coderModel": "opus",
+     "reviewers": 0,
+     "board": false
+    },
+    "basis": "idea",
+    "basedOn": 25,
+    "simVersion": "lab-0.11"
+   },
+   "progress": {
+    "spentUsd": 7.549,
+    "settledAt": 1791875613789,
+    "actualWallS": 863,
+    "actualUsd": 7.549
+   }
+  },
+  {
+   "slug": "eyal.real-home-inventory-solo",
+   "estimate": {
+    "startedAt": 1791853255713,
+    "wallS": [
+     120,
+     300
+    ],
+    "apiUsd": [
+     1.7,
+     3.1
+    ],
+    "preset": "default",
+    "v": {
+     "coders": 1,
+     "coderModel": "opus",
+     "reviewers": 0,
+     "board": false
+    },
+    "basis": "idea",
+    "basedOn": 25,
+    "simVersion": "lab-0.11"
+   },
+   "progress": {
+    "spentUsd": 3.867,
+    "settledAt": 1791853713026,
+    "actualWallS": 457,
+    "actualUsd": 3.867
+   }
+  },
+  {
+   "slug": "eyal.real-cafe-site",
+   "estimate": {
+    "startedAt": 1791845285159,
+    "wallS": [
+     540,
+     1440
+    ],
+    "apiUsd": [
+     1.7,
+     2.3
+    ],
+    "preset": "custom",
+    "v": {
+     "coders": 20,
+     "coderModel": "haiku",
+     "reviewers": 3,
+     "board": true
+    },
+    "basis": "idea",
+    "basedOn": 25,
+    "simVersion": "lab-0.11"
+   },
+   "progress": {
+    "spentUsd": 3.323,
+    "settledAt": 1791847047576,
+    "actualWallS": 1762,
+    "actualUsd": 3.323
+   }
+  },
+  {
+   "slug": "eyal.real-home-inventory",
+   "estimate": {
+    "startedAt": 1791843031223,
+    "wallS": [
+     420,
+     1080
+    ],
+    "apiUsd": [
+     1,
+     1.4
+    ],
+    "preset": "balanced",
+    "v": {
+     "coders": 12,
+     "coderModel": "haiku",
+     "reviewers": 3,
+     "board": true
+    },
+    "basis": "idea",
+    "basedOn": 25,
+    "simVersion": "lab-0.11"
+   },
+   "progress": {
+    "spentUsd": 2.396,
+    "settledAt": 1791844970801,
+    "actualWallS": 1940,
+    "actualUsd": 2.396
+   }
+  },
+  {
+   "slug": "eyal.home-things",
+   "estimate": {
+    "startedAt": 1791937719765,
+    "wallS": [
+     480,
+     1260
+    ],
+    "apiUsd": [
+     0.78,
+     2.1
+    ],
+    "preset": "cheapest",
+    "v": {
+     "coders": 6,
+     "coderModel": "haiku",
+     "reviewers": 0,
+     "board": true
+    },
+    "basis": "typical",
+    "basedOn": 25,
+    "simVersion": "lab-0.11"
+   },
+   "progress": {
+    "spentUsd": 2.465,
+    "settledAt": 1791939208596,
+    "actualWallS": 1489,
+    "actualUsd": 2.465
+   }
+  },
+  {
    "slug": "eyal.my-home",
    "estimate": {
     "startedAt": 1791935181969,
@@ -24,10 +174,10 @@
     "simVersion": "lab-0.11"
    },
    "progress": {
-    "spentUsd": 0,
-    "settledAt": null,
-    "actualWallS": null,
-    "actualUsd": null
+    "spentUsd": 1.32,
+    "settledAt": 1791936338749,
+    "actualWallS": 1157,
+    "actualUsd": 1.32
    }
   },
   {
@@ -208,126 +358,6 @@
     "settledAt": 1791877367733,
     "actualWallS": 1639,
     "actualUsd": 3.52
-   }
-  },
-  {
-   "slug": "eyal.real-cafe-site-solo",
-   "estimate": {
-    "startedAt": 1791874751158,
-    "wallS": [
-     660,
-     1800
-    ],
-    "apiUsd": [
-     5.4,
-     11.9
-    ],
-    "preset": "default",
-    "v": {
-     "coders": 1,
-     "coderModel": "opus",
-     "reviewers": 0,
-     "board": false
-    },
-    "basis": "idea",
-    "basedOn": 25,
-    "simVersion": "lab-0.11"
-   },
-   "progress": {
-    "spentUsd": 7.549,
-    "settledAt": 1791875613789,
-    "actualWallS": 863,
-    "actualUsd": 7.549
-   }
-  },
-  {
-   "slug": "eyal.real-home-inventory-solo",
-   "estimate": {
-    "startedAt": 1791853255713,
-    "wallS": [
-     120,
-     300
-    ],
-    "apiUsd": [
-     1.7,
-     3.1
-    ],
-    "preset": "default",
-    "v": {
-     "coders": 1,
-     "coderModel": "opus",
-     "reviewers": 0,
-     "board": false
-    },
-    "basis": "idea",
-    "basedOn": 25,
-    "simVersion": "lab-0.11"
-   },
-   "progress": {
-    "spentUsd": 3.867,
-    "settledAt": 1791853713026,
-    "actualWallS": 457,
-    "actualUsd": 3.867
-   }
-  },
-  {
-   "slug": "eyal.real-cafe-site",
-   "estimate": {
-    "startedAt": 1791845285159,
-    "wallS": [
-     540,
-     1440
-    ],
-    "apiUsd": [
-     1.7,
-     2.3
-    ],
-    "preset": "custom",
-    "v": {
-     "coders": 20,
-     "coderModel": "haiku",
-     "reviewers": 3,
-     "board": true
-    },
-    "basis": "idea",
-    "basedOn": 25,
-    "simVersion": "lab-0.11"
-   },
-   "progress": {
-    "spentUsd": 3.323,
-    "settledAt": 1791847047576,
-    "actualWallS": 1762,
-    "actualUsd": 3.323
-   }
-  },
-  {
-   "slug": "eyal.real-home-inventory",
-   "estimate": {
-    "startedAt": 1791843031223,
-    "wallS": [
-     420,
-     1080
-    ],
-    "apiUsd": [
-     1,
-     1.4
-    ],
-    "preset": "balanced",
-    "v": {
-     "coders": 12,
-     "coderModel": "haiku",
-     "reviewers": 3,
-     "board": true
-    },
-    "basis": "idea",
-    "basedOn": 25,
-    "simVersion": "lab-0.11"
-   },
-   "progress": {
-    "spentUsd": 2.396,
-    "settledAt": 1791844970801,
-    "actualWallS": 1940,
-    "actualUsd": 2.396
    }
   },
   {

@@ -189,10 +189,12 @@ const headline = {
     judge: (F.quality.judge || []).map((j) => ({ model: j.model, n: j.n, accurate: j.accurate, helpful: j.helpful, invented: j.invented })), judgeVsHand: F.quality.judge_vs_hand, label: 'measured (qb9: re-verify of every changed file, automatic checks, gpt-oss-120b judge, 50-file hand check)' } : null,
   // headline.scale (qb3's deck): the S4 ladder's peak windows from sim/fleet/scale-ladder.json.
   scale: (() => { try { const d = JSON.parse(rd('sim/fleet/scale-ladder.json')); const L = d.cached.ladder;
-    const one = L.filter((r) => r.namespaces === 1);
+    const one = L.filter((r) => r.namespaces === 1 && !r.readCache);   // the read-cache runs (R10K) are reported apart
     return { maxAgents: Math.max(...L.map((r) => r.agents)), filesPerSecPlateau: Math.max(...one.map((r) => r.filesPerSec)), twoNamespacesFilesPerSec: L.find((r) => r.namespaces === 2)?.filesPerSec ?? null,
       ladder: L.map(({ run, agents, copies, namespaces, filesPerSec, readP50Ms, limit }) => ({ run, agents, copies, namespaces, filesPerSec, readP50Ms, limit })),
+      readCache: L.filter((r) => r.readCache).map(({ run, agents, copies, readCache, filesPerSec, readP50Ms, readP90Ms, answersDoneS, landed, readsFromArtifacts, errors, landedPerSecPeak, limit, source }) => ({ run, agents, copies, readCache, filesPerSec, readP50Ms, readP90Ms, answersDoneS, landed, readsFromArtifacts, errors, landedPerSecPeak, limit, source })),
       realModels: d.realModels.runs.map(({ run, agents, filesPerSec, callsPerMin, limit, usd }) => ({ run, agents, filesPerSec, callsPerMin, limit, usd })),
+      tenK: d.cached.tenK || null, maxBusyAtOnce: Math.max(...L.map((r) => r.busyAtOnceMax || 0)) || null,
       label: d.cached.label, realModelsLabel: d.realModels.label }; } catch { return null; } })(),
   fleetCached: F.cached,
   fleet: { peakFilesPerSec: (() => { try { const d = JSON.parse(rd('sim/fleet/scale-ladder.json')); return Math.max(...d.realModels.runs.map((r) => r.filesPerSec || 0)) || null; } catch { return null; } })(),
@@ -225,7 +227,8 @@ if (F.runs.length) {
     F.steps.map((r) => [`${r.label}${r.cached ? ' [cached answers]' : ''}`, r.runs, r.repos.length > 3 ? `${r.repos.length} copies` : r.repos.join(', '), r.models.map((m) => m.split('/').pop()).join(', ') || '-', fmt(r.agents), fmt(r.files), fmt(r.landed), fmt(r.skipped), fmt(r.verifyFail), fmt(r.rejected), fmt(r.rateLimited), usd(r.usd, 2), r.wallS != null ? `${fmt(r.wallS)} s` : '-', r.landWaitP90S != null ? `${fmt(r.landWaitP90S)} s` : '-'])), '');
   const S = (() => { try { return JSON.parse(rd('sim/fleet/scale-ladder.json')); } catch { return null; } })();
   if (S) md.push('Scale ladder, peak 10-s windows (sim/fleet/scale-ladder.json, from qb6\'s series; sim.md (l)):', '',
-    table(['run', 'agents', 'copies', 'namespaces', 'files/s (peak window)', 'read p50', 'what limited it'], S.cached.ladder.map((r) => [r.run, fmt(r.agents), r.copies, r.namespaces, fmt(r.filesPerSec), r.readP50Ms ? `${r.readP50Ms} ms` : '-', r.limit])), '',
+    table(['run', 'agents', 'copies', 'namespaces', 'files/s (peak window)', 'read p50', 'what limited it'], S.cached.ladder.map((r) => [`${r.run}${r.readCache ? ` (read cache: ${r.readCache})` : ''}`, fmt(r.agents), r.copies, r.namespaces ?? '-', fmt(r.filesPerSec), r.readP50Ms ? `${r.readP50Ms} ms` : '-', r.limit])), '',
+    ...(S.cached.tenK ? [`10,000 agents: ${S.cached.tenK.say} ${S.cached.tenK.always} ${S.cached.tenK.not} ${S.cached.tenK.notRun}`, ''] : []),
     table(['real-model run', 'agents', 'files/s', 'calls/min', 'what limited it', '$'], S.realModels.runs.map((r) => [r.run, fmt(r.agents), fmt(r.filesPerSec), fmt(r.callsPerMin), r.limit, usd(r.usd)])), '');
   if (Object.keys(F.perModel).length) md.push(table(['model', 'files handled', 'landed', 'verify refused', 'rate-limited (share of calls)', 'peak calls/min', '$', '$ per 1k files'],
     Object.entries(F.perModel).map(([m, t]) => [m, fmt(t.files), fmt(t.landed), fmt(t.verifyFail), `${fmt(t.rateLimited)} (${t.share429 != null ? fmt(t.share429 * 100, 1) + '%' : '-'})`, fmt(t.peakPerMin), usd(t.usd, 2), usd(t.usdPer1kFiles, 2)])), '');

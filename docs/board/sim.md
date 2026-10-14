@@ -1470,6 +1470,15 @@ runs, i.e. its 85/min share x 3, counted in files. qb6's fix: one slot per pack 
 - **With real models the fleet does ~114 files/s, ~5% of what our side carried with cached answers (S4d: 2,100).**
   The first wall is a model's capacity (gemma), then call limits and latency.
 
+**Measured, 10,000 agents with the read cache** (qb6, 2026-10-14; docs/contest/fleet-r10k.md). Cached answers, no
+model calls. 10 copies of src/vs, 1,000 agents each.
+- **Throughput:** ~1,900 files/s when every file is different (36,555 Artifacts reads, p50 0.6 s / p90 1.2 s, none
+  failed), ~2,350 when files repeat (every read cached). That matches the S4d plateau (~2,100) on Artifacts' read path,
+  as S1 predicted from S4d. The cache does not lift the realistic case; it only removes repeat reads.
+- **The ramp:** at most ~2,300 of the 10,000 were busy in any 10 s.
+- **Next wall: landing.** There is one queue per copy, peaking at ~690 files/s landed, and landing took 2.5-3 min after
+  the answers. 20,000 agents: not run (budget).
+
 ## (m) Code collision dial: prediction before qb6's runs (qb4, 2026-10-13)
 
 **Setup** (generator: lab-hidden/kata, private; public seed and tasks: sim/kata/seed-1):

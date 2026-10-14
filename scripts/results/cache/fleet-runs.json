@@ -51,6 +51,13 @@
      "calls": 2
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -104,6 +111,13 @@
      "calls": 3
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -157,6 +171,13 @@
      "calls": 6
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -212,6 +233,13 @@
      "calls": 37
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -281,6 +309,13 @@
      "calls": 83
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -346,6 +381,13 @@
      "calls": 59
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -490,6 +532,13 @@
      "calls": 54
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -569,6 +618,13 @@
      "calls": 39
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "NestJS",
     "upstream": "nestjs/nest",
@@ -709,6 +765,13 @@
      "calls": 2
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "Angular",
     "upstream": "angular/angular",
@@ -794,6 +857,13 @@
      "calls": 5
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "Next.js",
     "upstream": "vercel/next.js",
@@ -889,6 +959,13 @@
      "calls": 157
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -974,6 +1051,13 @@
      "calls": 2
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
     "name": "Babel",
     "upstream": "babel/babel",
@@ -1029,6 +1113,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 58,
+    "p90": 174,
+    "p99": 353,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 5,
    "source": {
@@ -1091,6 +1182,13 @@
      "calls": 639
     }
    ],
+   "readMs": {
+    "p50": 69,
+    "p90": 178,
+    "p99": 630,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 4,
    "source": {
@@ -1174,7 +1272,14 @@
      "calls": 243
     }
    ],
-   "copyOfKind": 3,
+   "readMs": {
+    "p50": 61,
+    "p90": 392,
+    "p99": 859,
+    "n": 1470
+   },
+   "readTiers": {},
+   "copyOfKind": 1,
    "copiesOfKind": 5,
    "source": {
     "name": "VS Code",
@@ -1231,6 +1336,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 154,
+    "p90": 293,
+    "p99": 410,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 5,
    "source": {
@@ -1288,6 +1400,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 176,
+    "p90": 397,
+    "p99": 605,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 5,
    "source": {
@@ -1348,6 +1467,13 @@
      "calls": 264
     }
    ],
+   "readMs": {
+    "p50": 374,
+    "p90": 649,
+    "p99": 758,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 20,
    "source": {
@@ -1403,6 +1529,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 427,
+    "p90": 629,
+    "p99": 738,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 20,
    "source": {
@@ -1463,6 +1596,13 @@
      "calls": 3
     }
    ],
+   "readMs": {
+    "p50": 329,
+    "p90": 660,
+    "p99": 770,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 20,
    "source": {
@@ -1518,6 +1658,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 336,
+    "p90": 642,
+    "p99": 882,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 20,
    "source": {
@@ -1574,6 +1721,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 222,
+    "p90": 575,
+    "p99": 902,
+    "n": 1770
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 20,
    "source": {
@@ -1630,6 +1784,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 76,
+    "p90": 209,
+    "p99": 555,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 22,
    "source": {
@@ -1686,6 +1847,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 584,
+    "p90": 816,
+    "p99": 923,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 19,
    "copiesOfKind": 44,
    "source": {
@@ -1743,6 +1911,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 176,
+    "p90": 302,
+    "p99": 528,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 22,
    "source": {
@@ -1800,6 +1975,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 560,
+    "p90": 769,
+    "p99": 845,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 44,
    "source": {
@@ -1856,6 +2038,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 525,
+    "p90": 750,
+    "p99": 836,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 22,
    "source": {
@@ -1917,6 +2106,13 @@
      "calls": 51
     }
    ],
+   "readMs": {
+    "p50": 1114,
+    "p90": 1727,
+    "p99": 1831,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 41,
    "copiesOfKind": 44,
    "source": {
@@ -1973,6 +2169,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 548,
+    "p90": 765,
+    "p99": 1055,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 22,
    "source": {
@@ -2034,6 +2237,13 @@
      "calls": 41
     }
    ],
+   "readMs": {
+    "p50": 1147,
+    "p90": 1750,
+    "p99": 1841,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 37,
    "copiesOfKind": 44,
    "source": {
@@ -2090,6 +2300,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 51,
+    "p90": 126,
+    "p99": 428,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 22,
    "source": {
@@ -2146,6 +2363,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 572,
+    "p90": 943,
+    "p99": 1034,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 44,
    "source": {
@@ -2202,6 +2426,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 86,
+    "p90": 277,
+    "p99": 441,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 22,
    "source": {
@@ -2258,6 +2489,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 538,
+    "p90": 914,
+    "p99": 1155,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 35,
    "copiesOfKind": 44,
    "source": {
@@ -2315,6 +2553,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 102,
+    "p90": 241,
+    "p99": 556,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 22,
    "source": {
@@ -2376,6 +2621,13 @@
      "calls": 16
     }
    ],
+   "readMs": {
+    "p50": 921,
+    "p90": 1361,
+    "p99": 1553,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 32,
    "copiesOfKind": 44,
    "source": {
@@ -2432,6 +2684,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 575,
+    "p90": 792,
+    "p99": 980,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 22,
    "source": {
@@ -2493,6 +2752,13 @@
      "calls": 51
     }
    ],
+   "readMs": {
+    "p50": 1167,
+    "p90": 1749,
+    "p99": 1838,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 20,
    "copiesOfKind": 44,
    "source": {
@@ -2550,6 +2816,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 146,
+    "p90": 311,
+    "p99": 462,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 5,
    "source": {
@@ -2607,6 +2880,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 92,
+    "p90": 279,
+    "p99": 427,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 5,
    "source": {
@@ -2663,6 +2943,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 351,
+    "p90": 596,
+    "p99": 721,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 22,
    "source": {
@@ -2724,6 +3011,13 @@
      "calls": 50
     }
    ],
+   "readMs": {
+    "p50": 1141,
+    "p90": 1736,
+    "p99": 1910,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 30,
    "copiesOfKind": 44,
    "source": {
@@ -2780,6 +3074,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 72,
+    "p90": 184,
+    "p99": 425,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 22,
    "source": {
@@ -2841,6 +3142,13 @@
      "calls": 17
     }
    ],
+   "readMs": {
+    "p50": 882,
+    "p90": 1360,
+    "p99": 1412,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 38,
    "copiesOfKind": 44,
    "source": {
@@ -2898,6 +3206,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 84,
+    "p90": 205,
+    "p99": 386,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 22,
    "source": {
@@ -2955,6 +3270,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 522,
+    "p90": 745,
+    "p99": 830,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 44,
    "source": {
@@ -3017,6 +3339,13 @@
      "calls": 421
     }
    ],
+   "readMs": {
+    "p50": 105,
+    "p90": 239,
+    "p99": 764,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 4,
    "source": {
@@ -3033,7 +3362,7 @@
    "copy": 2,
    "repo": "fleet-vscode-src-2",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 120,
    "agentsStarted": 120,
    "files": 4064,
@@ -3048,9 +3377,9 @@
    "usd": 0.5553,
    "tokensIn": 7515873,
    "tokensOut": 251414,
-   "startedAt": 1791899916239,
-   "endedAt": 1791900597444,
-   "wallS": 681,
+   "startedAt": 1791899918106,
+   "endedAt": 1791900597339,
+   "wallS": 679,
    "landWaitS": {
     "p50": 9,
     "p90": 18
@@ -3120,8 +3449,153 @@
      "calls": 248
     }
    ],
+   "readMs": {
+    "p50": 79,
+    "p90": 189,
+    "p99": 737,
+    "n": 4058
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7txzly",
+   "label": "R10K-a: 1000 cached agents, copy 1",
+   "ladder": "R10K-a",
+   "copy": 1,
+   "repo": "fleet-vscode-src-2",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965423662,
+   "endedAt": 1791965436233,
+   "wallS": 13,
+   "landWaitS": {
+    "p50": 65,
+    "p90": 95
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965400000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 45,
+    "p90": 80,
+    "p99": 160,
+    "n": 4064
+   },
+   "readTiers": {
+    "kv": 4064
+   },
+   "copyOfKind": 8,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7ub3fr",
+   "label": "R10K-b: 1000 cached agents, copy 1",
+   "ladder": "R10K-b",
+   "copy": 1,
+   "repo": "fleet-vscode-src-2",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791966032604,
+   "endedAt": 1791966072786,
+   "wallS": 40,
+   "landWaitS": {
+    "p50": 78,
+    "p90": 102
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 1646,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791966000000,
+     "model": "cache",
+     "calls": 1646
+    },
+    {
+     "minute": 1791966060000,
+     "model": "cache",
+     "calls": 1349
+    }
+   ],
+   "readMs": {
+    "p50": 1860,
+    "p90": 2819,
+    "p99": 3053,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 1,
+   "copiesOfKind": 10,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -3176,6 +3650,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 550,
+    "p90": 794,
+    "p99": 1534,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 22,
    "source": {
@@ -3237,6 +3718,13 @@
      "calls": 45
     }
    ],
+   "readMs": {
+    "p50": 1099,
+    "p90": 1728,
+    "p99": 1842,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 24,
    "copiesOfKind": 44,
    "source": {
@@ -3294,6 +3782,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 151,
+    "p90": 375,
+    "p99": 653,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 5,
    "source": {
@@ -3349,6 +3844,13 @@
      "calls": 1536
     }
    ],
+   "readMs": {
+    "p50": 74,
+    "p90": 263,
+    "p99": 481,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 20,
    "source": {
@@ -3404,6 +3906,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 84,
+    "p90": 252,
+    "p99": 407,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 20,
    "source": {
@@ -3459,6 +3968,13 @@
      "calls": 1807
     }
    ],
+   "readMs": {
+    "p50": 75,
+    "p90": 199,
+    "p99": 389,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 18,
    "copiesOfKind": 20,
    "source": {
@@ -3515,6 +4031,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 70,
+    "p90": 195,
+    "p99": 433,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 20,
    "source": {
@@ -3572,6 +4095,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 111,
+    "p90": 296,
+    "p99": 896,
+    "n": 1778
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 20,
    "source": {
@@ -3629,6 +4159,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 132,
+    "p90": 346,
+    "p99": 683,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 5,
    "source": {
@@ -3686,6 +4223,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 170,
+    "p90": 427,
+    "p99": 659,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 5,
    "source": {
@@ -3743,6 +4287,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 514,
+    "p90": 676,
+    "p99": 903,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 22,
    "source": {
@@ -3805,6 +4356,13 @@
      "calls": 96
     }
    ],
+   "readMs": {
+    "p50": 1142,
+    "p90": 1841,
+    "p99": 3066,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 44,
    "source": {
@@ -3862,6 +4420,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 180,
+    "p90": 352,
+    "p99": 445,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 5,
    "source": {
@@ -3924,6 +4489,13 @@
      "calls": 2992
     }
    ],
+   "readMs": {
+    "p50": 48,
+    "p90": 101,
+    "p99": 572,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 4,
    "source": {
@@ -3997,6 +4569,13 @@
      "calls": 8
     }
    ],
+   "readMs": {
+    "p50": 64,
+    "p90": 525,
+    "p99": 765,
+    "n": 67
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 5,
    "source": {
@@ -4013,7 +4592,7 @@
    "copy": 5,
    "repo": "fleet-vscode-src-3",
    "root": "src/vs",
-   "state": "stopped",
+   "state": "ended",
    "agents": 40,
    "agentsStarted": 40,
    "files": 152,
@@ -4028,9 +4607,9 @@
    "usd": 0.0457,
    "tokensIn": 175674,
    "tokensOut": 38776,
-   "startedAt": 1791900237281,
-   "endedAt": 1791900621728,
-   "wallS": 384,
+   "startedAt": 1791900238877,
+   "endedAt": 1791900421106,
+   "wallS": 182,
    "landWaitS": {
     "p50": 4,
     "p90": 6
@@ -4070,8 +4649,154 @@
      "calls": 1
     }
    ],
+   "readMs": {
+    "p50": 53,
+    "p90": 289,
+    "p99": 449,
+    "n": 141
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7txzkj",
+   "label": "R10K-a: 1000 cached agents, copy 2",
+   "ladder": "R10K-a",
+   "copy": 2,
+   "repo": "fleet-vscode-src-3",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965423344,
+   "endedAt": 1791965436662,
+   "wallS": 13,
+   "landWaitS": {
+    "p50": 59,
+    "p90": 74
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965400000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 50,
+    "p90": 72,
+    "p99": 172,
+    "n": 4062
+   },
+   "readTiers": {
+    "kv": 4062,
+    "mem": 2
+   },
+   "copyOfKind": 3,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7uatd9",
+   "label": "R10K-b: 1000 cached agents, copy 2",
+   "ladder": "R10K-b",
+   "copy": 2,
+   "repo": "fleet-vscode-src-3",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791966032762,
+   "endedAt": 1791966071272,
+   "wallS": 39,
+   "landWaitS": {
+    "p50": 61,
+    "p90": 78
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 1622,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791966000000,
+     "model": "cache",
+     "calls": 1622
+    },
+    {
+     "minute": 1791966060000,
+     "model": "cache",
+     "calls": 1373
+    }
+   ],
+   "readMs": {
+    "p50": 1738,
+    "p90": 2889,
+    "p99": 3091,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 4,
+   "copiesOfKind": 10,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -4127,6 +4852,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 236,
+    "p90": 426,
+    "p99": 617,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 5,
    "source": {
@@ -4189,6 +4921,13 @@
      "calls": 1184
     }
    ],
+   "readMs": {
+    "p50": 260,
+    "p90": 479,
+    "p99": 717,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 5,
    "source": {
@@ -4249,6 +4988,13 @@
      "calls": 131
     }
    ],
+   "readMs": {
+    "p50": 382,
+    "p90": 620,
+    "p99": 781,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 20,
    "source": {
@@ -4304,6 +5050,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 442,
+    "p90": 695,
+    "p99": 832,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 20,
    "source": {
@@ -4364,6 +5117,13 @@
      "calls": 94
     }
    ],
+   "readMs": {
+    "p50": 374,
+    "p90": 755,
+    "p99": 1041,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 20,
    "source": {
@@ -4419,6 +5179,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 380,
+    "p90": 665,
+    "p99": 937,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 20,
    "source": {
@@ -4475,6 +5242,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 332,
+    "p90": 767,
+    "p99": 946,
+    "n": 1775
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 20,
    "source": {
@@ -4532,6 +5306,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 174,
+    "p90": 397,
+    "p99": 606,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 5,
    "source": {
@@ -4589,6 +5370,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 110,
+    "p90": 276,
+    "p99": 464,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 22,
    "source": {
@@ -4646,6 +5434,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 497,
+    "p90": 783,
+    "p99": 879,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 44,
    "source": {
@@ -4703,6 +5498,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 103,
+    "p90": 280,
+    "p99": 372,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 5,
    "source": {
@@ -4760,6 +5562,13 @@
      "calls": 2995
     }
    ],
+   "readMs": {
+    "p50": 111,
+    "p90": 229,
+    "p99": 499,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 4,
    "source": {
@@ -4776,7 +5585,7 @@
    "copy": 4,
    "repo": "fleet-vscode-src-4",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 300,
    "agentsStarted": 300,
    "files": 4064,
@@ -4791,9 +5600,9 @@
    "usd": 2.565,
    "tokensIn": 8719940,
    "tokensOut": 256682,
-   "startedAt": 1791899916203,
-   "endedAt": 1791900246235,
-   "wallS": 330,
+   "startedAt": 1791899918949,
+   "endedAt": 1791900246147,
+   "wallS": 327,
    "landWaitS": {
     "p50": 20,
     "p90": 54
@@ -4839,8 +5648,148 @@
      "calls": 155
     }
    ],
-   "copyOfKind": 1,
+   "readMs": {
+    "p50": 114,
+    "p90": 415,
+    "p99": 1184,
+    "n": 4059
+   },
+   "readTiers": {},
+   "copyOfKind": 3,
    "copiesOfKind": 5,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7txzpb",
+   "label": "R10K-a: 1000 cached agents, copy 3",
+   "ladder": "R10K-a",
+   "copy": 3,
+   "repo": "fleet-vscode-src-4",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965423809,
+   "endedAt": 1791965436215,
+   "wallS": 12,
+   "landWaitS": {
+    "p50": 77,
+    "p90": 116
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965400000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 55,
+    "p90": 91,
+    "p99": 192,
+    "n": 4064
+   },
+   "readTiers": {
+    "kv": 4064
+   },
+   "copyOfKind": 9,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7ub1gx",
+   "label": "R10K-b: 1000 cached agents, copy 3",
+   "ladder": "R10K-b",
+   "copy": 3,
+   "repo": "fleet-vscode-src-4",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791966032762,
+   "endedAt": 1791966058799,
+   "wallS": 26,
+   "landWaitS": {
+    "p50": 150,
+    "p90": 162
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791966000000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 759,
+    "p90": 1361,
+    "p99": 1607,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 5,
+   "copiesOfKind": 10,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -4901,6 +5850,13 @@
      "calls": 139
     }
    ],
+   "readMs": {
+    "p50": 906,
+    "p90": 1416,
+    "p99": 2016,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 17,
    "source": {
@@ -4963,6 +5919,13 @@
      "calls": 1187
     }
    ],
+   "readMs": {
+    "p50": 245,
+    "p90": 452,
+    "p99": 663,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 5,
    "source": {
@@ -5023,6 +5986,13 @@
      "calls": 149
     }
    ],
+   "readMs": {
+    "p50": 345,
+    "p90": 577,
+    "p99": 756,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 20,
    "source": {
@@ -5078,6 +6048,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 363,
+    "p90": 610,
+    "p99": 740,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 20,
    "source": {
@@ -5139,6 +6116,13 @@
      "calls": 220
     }
    ],
+   "readMs": {
+    "p50": 205,
+    "p90": 594,
+    "p99": 1035,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 20,
    "source": {
@@ -5194,6 +6178,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 249,
+    "p90": 614,
+    "p99": 783,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 18,
    "copiesOfKind": 20,
    "source": {
@@ -5250,6 +6241,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 286,
+    "p90": 738,
+    "p99": 1035,
+    "n": 1780
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 20,
    "source": {
@@ -5307,6 +6305,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 531,
+    "p90": 691,
+    "p99": 903,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 22,
    "source": {
@@ -5369,6 +6374,13 @@
      "calls": 81
     }
    ],
+   "readMs": {
+    "p50": 1355,
+    "p90": 1847,
+    "p99": 2757,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 44,
    "source": {
@@ -5426,6 +6438,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 134,
+    "p90": 456,
+    "p99": 644,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 17,
    "source": {
@@ -5483,6 +6502,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 96,
+    "p90": 266,
+    "p99": 607,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 17,
    "source": {
@@ -5545,6 +6571,13 @@
      "calls": 1750
     }
    ],
+   "readMs": {
+    "p50": 76,
+    "p90": 287,
+    "p99": 568,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 1,
    "source": {
@@ -5561,7 +6594,7 @@
    "copy": 1,
    "repo": "fleet-vscode-src-5",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 10,
    "agentsStarted": 10,
    "files": 70,
@@ -5576,9 +6609,9 @@
    "usd": 0.0106,
    "tokensIn": 140350,
    "tokensOut": 5166,
-   "startedAt": 1791900908033,
+   "startedAt": 1791900929617,
    "endedAt": 1791900978218,
-   "wallS": 70,
+   "wallS": 49,
    "landWaitS": {
     "p50": 6,
     "p90": 7
@@ -5606,8 +6639,149 @@
      "calls": 13
     }
    ],
+   "readMs": {
+    "p50": 44,
+    "p90": 331,
+    "p99": 618,
+    "n": 70
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 4,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7txzjf",
+   "label": "R10K-a: 1000 cached agents, copy 4",
+   "ladder": "R10K-a",
+   "copy": 4,
+   "repo": "fleet-vscode-src-5",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965423569,
+   "endedAt": 1791965436347,
+   "wallS": 13,
+   "landWaitS": {
+    "p50": 28,
+    "p90": 36
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965400000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 44,
+    "p90": 67,
+    "p99": 142,
+    "n": 4053
+   },
+   "readTiers": {
+    "kv": 4053,
+    "mem": 11
+   },
+   "copyOfKind": 6,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7uazlc",
+   "label": "R10K-b: 1000 cached agents, copy 4",
+   "ladder": "R10K-b",
+   "copy": 4,
+   "repo": "fleet-vscode-src-5",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791966032759,
+   "endedAt": 1791966053350,
+   "wallS": 21,
+   "landWaitS": {
+    "p50": 43,
+    "p90": 50
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791966000000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 233,
+    "p90": 725,
+    "p99": 896,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 3,
+   "copiesOfKind": 10,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -5663,6 +6837,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 93,
+    "p90": 256,
+    "p99": 521,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 17,
    "source": {
@@ -5720,6 +6901,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 73,
+    "p90": 184,
+    "p99": 404,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 22,
    "source": {
@@ -5777,6 +6965,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 564,
+    "p90": 950,
+    "p99": 1068,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 20,
    "copiesOfKind": 44,
    "source": {
@@ -5834,6 +7029,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 700,
+    "p90": 1011,
+    "p99": 1249,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 17,
    "source": {
@@ -5896,6 +7098,13 @@
      "calls": 165
     }
    ],
+   "readMs": {
+    "p50": 106,
+    "p90": 158,
+    "p99": 466,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 5,
    "source": {
@@ -5951,6 +7160,13 @@
      "calls": 1536
     }
    ],
+   "readMs": {
+    "p50": 96,
+    "p90": 147,
+    "p99": 498,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 20,
    "source": {
@@ -6006,6 +7222,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 102,
+    "p90": 236,
+    "p99": 448,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 20,
    "source": {
@@ -6061,6 +7284,13 @@
      "calls": 1807
     }
    ],
+   "readMs": {
+    "p50": 96,
+    "p90": 170,
+    "p99": 483,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 20,
    "source": {
@@ -6116,6 +7346,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 103,
+    "p90": 191,
+    "p99": 463,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 20,
    "source": {
@@ -6173,6 +7410,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 147,
+    "p90": 212,
+    "p99": 567,
+    "n": 1770
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 20,
    "source": {
@@ -6230,6 +7474,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 243,
+    "p90": 426,
+    "p99": 603,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 17,
    "source": {
@@ -6287,6 +7538,13 @@
      "calls": 2995
     }
    ],
+   "readMs": {
+    "p50": 117,
+    "p90": 256,
+    "p99": 439,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 5,
    "source": {
@@ -6303,7 +7561,7 @@
    "copy": 2,
    "repo": "fleet-vscode-src-6",
    "root": "src/vs",
-   "state": "done",
+   "state": "ended",
    "agents": 10,
    "agentsStarted": 10,
    "files": 70,
@@ -6318,9 +7576,9 @@
    "usd": 0.0104,
    "tokensIn": 137823,
    "tokensOut": 5154,
-   "startedAt": 1791900963500,
-   "endedAt": 1791901011929,
-   "wallS": 48,
+   "startedAt": 1791900977933,
+   "endedAt": 1791901011843,
+   "wallS": 34,
    "landWaitS": {
     "p50": 8,
     "p90": 11
@@ -6343,8 +7601,214 @@
      "calls": 51
     }
    ],
+   "readMs": {
+    "p50": 64,
+    "p90": 125,
+    "p99": 601,
+    "n": 70
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 4,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7trhqd",
+   "label": "read cache test 3 (unique copy)",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-vscode-src-6",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 400,
+   "agentsStarted": 400,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965120885,
+   "endedAt": 1791965145083,
+   "wallS": 24,
+   "landWaitS": {
+    "p50": 107,
+    "p90": 115
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965100000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 414,
+    "p90": 999,
+    "p99": 1221,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7txznf",
+   "label": "R10K-a: 1000 cached agents, copy 5",
+   "ladder": "R10K-a",
+   "copy": 5,
+   "repo": "fleet-vscode-src-6",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965423583,
+   "endedAt": 1791965436629,
+   "wallS": 13,
+   "landWaitS": {
+    "p50": 68,
+    "p90": 86
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965400000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 53,
+    "p90": 75,
+    "p99": 164,
+    "n": 4060
+   },
+   "readTiers": {
+    "kv": 4060,
+    "mem": 4
+   },
+   "copyOfKind": 7,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7uavz9",
+   "label": "R10K-b: 1000 cached agents, copy 5",
+   "ladder": "R10K-b",
+   "copy": 5,
+   "repo": "fleet-vscode-src-6",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791966032777,
+   "endedAt": 1791966050834,
+   "wallS": 18,
+   "landWaitS": {
+    "p50": 84,
+    "p90": 94
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791966000000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 79,
+    "p90": 110,
+    "p99": 225,
+    "n": 4053
+   },
+   "readTiers": {
+    "kv": 4053,
+    "mem": 11
+   },
+   "copyOfKind": 7,
+   "copiesOfKind": 10,
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
@@ -6400,6 +7864,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 123,
+    "p90": 345,
+    "p99": 462,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 17,
    "source": {
@@ -6457,6 +7928,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 380,
+    "p90": 563,
+    "p99": 683,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 22,
    "source": {
@@ -6519,6 +7997,13 @@
      "calls": 52
     }
    ],
+   "readMs": {
+    "p50": 964,
+    "p90": 1377,
+    "p99": 2285,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 36,
    "copiesOfKind": 44,
    "source": {
@@ -6581,6 +8066,13 @@
      "calls": 1148
     }
    ],
+   "readMs": {
+    "p50": 936,
+    "p90": 1441,
+    "p99": 2055,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 17,
    "source": {
@@ -6641,6 +8133,13 @@
      "calls": 318
     }
    ],
+   "readMs": {
+    "p50": 490,
+    "p90": 792,
+    "p99": 964,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 20,
    "source": {
@@ -6696,6 +8195,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 438,
+    "p90": 739,
+    "p99": 920,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 20,
    "source": {
@@ -6752,6 +8258,13 @@
      "calls": 1806
     }
    ],
+   "readMs": {
+    "p50": 269,
+    "p90": 634,
+    "p99": 847,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 20,
    "source": {
@@ -6808,6 +8321,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 401,
+    "p90": 586,
+    "p99": 769,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 20,
    "source": {
@@ -6865,6 +8385,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 286,
+    "p90": 596,
+    "p99": 903,
+    "n": 1770
+   },
+   "readTiers": {},
    "copyOfKind": 19,
    "copiesOfKind": 20,
    "source": {
@@ -6927,6 +8454,13 @@
      "calls": 127
     }
    ],
+   "readMs": {
+    "p50": 911,
+    "p90": 1381,
+    "p99": 2044,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 17,
    "source": {
@@ -6984,6 +8518,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 153,
+    "p90": 383,
+    "p99": 589,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 17,
    "source": {
@@ -7046,6 +8587,13 @@
      "calls": 2459
     }
    ],
+   "readMs": {
+    "p50": 188,
+    "p90": 422,
+    "p99": 801,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 5,
    "source": {
@@ -7107,6 +8655,13 @@
      "calls": 38
     }
    ],
+   "readMs": {
+    "p50": 64,
+    "p90": 165,
+    "p99": 697,
+    "n": 70
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 4,
    "source": {
@@ -7164,6 +8719,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 556,
+    "p90": 769,
+    "p99": 894,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 22,
    "source": {
@@ -7226,6 +8788,13 @@
      "calls": 194
     }
    ],
+   "readMs": {
+    "p50": 1110,
+    "p90": 1808,
+    "p99": 4423,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 43,
    "copiesOfKind": 44,
    "source": {
@@ -7283,6 +8852,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 249,
+    "p90": 468,
+    "p99": 656,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 17,
    "source": {
@@ -7340,6 +8916,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 354,
+    "p90": 554,
+    "p99": 762,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 17,
    "source": {
@@ -7400,6 +8983,13 @@
      "calls": 147
     }
    ],
+   "readMs": {
+    "p50": 309,
+    "p90": 624,
+    "p99": 765,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 18,
    "copiesOfKind": 20,
    "source": {
@@ -7455,6 +9045,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 430,
+    "p90": 643,
+    "p99": 831,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 20,
    "source": {
@@ -7510,6 +9107,13 @@
      "calls": 1807
     }
    ],
+   "readMs": {
+    "p50": 241,
+    "p90": 581,
+    "p99": 703,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 20,
    "source": {
@@ -7565,6 +9169,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 287,
+    "p90": 606,
+    "p99": 1130,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 20,
    "source": {
@@ -7621,6 +9232,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 200,
+    "p90": 528,
+    "p99": 895,
+    "n": 1762
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 20,
    "source": {
@@ -7678,6 +9296,13 @@
      "calls": 2995
     }
    ],
+   "readMs": {
+    "p50": 78,
+    "p90": 216,
+    "p99": 482,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 5,
    "source": {
@@ -7735,6 +9360,13 @@
      "calls": 51
     }
    ],
+   "readMs": {
+    "p50": 59,
+    "p90": 266,
+    "p99": 737,
+    "n": 70
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 4,
    "source": {
@@ -7792,6 +9424,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 107,
+    "p90": 206,
+    "p99": 329,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 22,
    "source": {
@@ -7849,6 +9488,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 526,
+    "p90": 743,
+    "p99": 853,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 44,
    "source": {
@@ -7911,6 +9557,13 @@
      "calls": 499
     }
    ],
+   "readMs": {
+    "p50": 62,
+    "p90": 267,
+    "p99": 444,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 5,
    "source": {
@@ -8068,6 +9721,13 @@
      "calls": 3
     }
    ],
+   "readMs": {
+    "p50": 40,
+    "p90": 86,
+    "p99": 520,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 3,
    "source": {
@@ -8125,6 +9785,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 319,
+    "p90": 549,
+    "p99": 792,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 17,
    "source": {
@@ -8185,6 +9852,13 @@
      "calls": 163
     }
    ],
+   "readMs": {
+    "p50": 339,
+    "p90": 575,
+    "p99": 705,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 20,
    "source": {
@@ -8240,6 +9914,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 389,
+    "p90": 581,
+    "p99": 769,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 20,
    "source": {
@@ -8296,6 +9977,13 @@
      "calls": 1806
     }
    ],
+   "readMs": {
+    "p50": 271,
+    "p90": 552,
+    "p99": 843,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 20,
    "copiesOfKind": 20,
    "source": {
@@ -8352,6 +10040,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 264,
+    "p90": 567,
+    "p99": 1004,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 20,
    "source": {
@@ -8408,6 +10103,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 199,
+    "p90": 494,
+    "p99": 803,
+    "n": 1763
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 20,
    "source": {
@@ -8465,6 +10167,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 417,
+    "p90": 563,
+    "p99": 2793,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 22,
    "source": {
@@ -8527,6 +10236,13 @@
      "calls": 69
     }
    ],
+   "readMs": {
+    "p50": 824,
+    "p90": 1509,
+    "p99": 4673,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 37,
    "copiesOfKind": 44,
    "source": {
@@ -8589,6 +10305,13 @@
      "calls": 1438
     }
    ],
+   "readMs": {
+    "p50": 149,
+    "p90": 392,
+    "p99": 592,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 5,
    "source": {
@@ -8735,6 +10458,13 @@
      "calls": 28
     }
    ],
+   "readMs": {
+    "p50": 55,
+    "p90": 138,
+    "p99": 693,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 3,
    "source": {
@@ -8792,6 +10522,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 210,
+    "p90": 479,
+    "p99": 686,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 17,
    "source": {
@@ -8847,6 +10584,13 @@
      "calls": 1536
     }
    ],
+   "readMs": {
+    "p50": 162,
+    "p90": 504,
+    "p99": 641,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 20,
    "source": {
@@ -8902,6 +10646,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 222,
+    "p90": 567,
+    "p99": 697,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 20,
    "copiesOfKind": 20,
    "source": {
@@ -8957,6 +10708,13 @@
      "calls": 1807
     }
    ],
+   "readMs": {
+    "p50": 143,
+    "p90": 491,
+    "p99": 673,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 20,
    "source": {
@@ -9013,6 +10771,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 151,
+    "p90": 472,
+    "p99": 715,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 20,
    "source": {
@@ -9029,7 +10794,9 @@
    "copy": 9,
    "repo": "fleet-vscode-ext-9",
    "root": "extensions",
-   "state": "done",
+   "state": "running",
+   "phase": "landing",
+   "landingLeft": 1,
    "agents": 50,
    "agentsStarted": 50,
    "files": 1536,
@@ -9045,8 +10812,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791908546429,
-   "endedAt": 1791908577919,
-   "wallS": 31,
+   "endedAt": 1791966387596,
+   "wallS": 57841,
    "landWaitS": {
     "p50": 78,
     "p90": 88
@@ -9071,6 +10838,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 229,
+    "p90": 675,
+    "p99": 1091,
+    "n": 1774
+   },
+   "readTiers": {},
    "copyOfKind": 20,
    "copiesOfKind": 20,
    "source": {
@@ -9128,6 +10902,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 182,
+    "p90": 396,
+    "p99": 593,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 17,
    "source": {
@@ -9188,6 +10969,13 @@
      "calls": 116
     }
    ],
+   "readMs": {
+    "p50": 358,
+    "p90": 555,
+    "p99": 760,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 20,
    "source": {
@@ -9243,6 +11031,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 338,
+    "p90": 632,
+    "p99": 1062,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 20,
    "source": {
@@ -9303,6 +11098,13 @@
      "calls": 2
     }
    ],
+   "readMs": {
+    "p50": 287,
+    "p90": 673,
+    "p99": 1054,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 20,
    "source": {
@@ -9359,6 +11161,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 295,
+    "p90": 677,
+    "p99": 851,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 20,
    "source": {
@@ -9415,6 +11224,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 286,
+    "p90": 675,
+    "p99": 827,
+    "n": 1775
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 20,
    "source": {
@@ -9472,6 +11288,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 106,
+    "p90": 170,
+    "p99": 472,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 17,
    "source": {
@@ -9532,6 +11355,13 @@
      "calls": 91
     }
    ],
+   "readMs": {
+    "p50": 303,
+    "p90": 557,
+    "p99": 709,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 19,
    "copiesOfKind": 20,
    "source": {
@@ -9587,6 +11417,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 337,
+    "p90": 569,
+    "p99": 830,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 20,
    "source": {
@@ -9642,6 +11479,13 @@
      "calls": 1807
     }
    ],
+   "readMs": {
+    "p50": 256,
+    "p90": 619,
+    "p99": 989,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 20,
    "source": {
@@ -9698,6 +11542,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 247,
+    "p90": 565,
+    "p99": 761,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 20,
    "source": {
@@ -9754,6 +11605,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 303,
+    "p90": 638,
+    "p99": 855,
+    "n": 1777
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 20,
    "source": {
@@ -9811,6 +11669,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 102,
+    "p90": 162,
+    "p99": 294,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 17,
    "source": {
@@ -9866,6 +11731,13 @@
      "calls": 1536
     }
    ],
+   "readMs": {
+    "p50": 282,
+    "p90": 555,
+    "p99": 727,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 20,
    "source": {
@@ -9921,6 +11793,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 312,
+    "p90": 599,
+    "p99": 713,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 20,
    "source": {
@@ -9976,6 +11855,13 @@
      "calls": 1807
     }
    ],
+   "readMs": {
+    "p50": 299,
+    "p90": 589,
+    "p99": 856,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 19,
    "copiesOfKind": 20,
    "source": {
@@ -10031,6 +11917,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 267,
+    "p90": 585,
+    "p99": 945,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 20,
    "source": {
@@ -10088,6 +11981,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 187,
+    "p90": 529,
+    "p99": 793,
+    "n": 1771
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 20,
    "source": {
@@ -10150,6 +12050,13 @@
      "calls": 778
     }
    ],
+   "readMs": {
+    "p50": 149,
+    "p90": 323,
+    "p99": 475,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 17,
    "source": {
@@ -10210,6 +12117,13 @@
      "calls": 186
     }
    ],
+   "readMs": {
+    "p50": 354,
+    "p90": 636,
+    "p99": 728,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 20,
    "source": {
@@ -10265,6 +12179,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 315,
+    "p90": 628,
+    "p99": 759,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 20,
    "source": {
@@ -10325,6 +12246,13 @@
      "calls": 312
     }
    ],
+   "readMs": {
+    "p50": 252,
+    "p90": 624,
+    "p99": 784,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 20,
    "source": {
@@ -10381,6 +12309,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 243,
+    "p90": 558,
+    "p99": 877,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 20,
    "source": {
@@ -10437,6 +12372,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 201,
+    "p90": 504,
+    "p99": 812,
+    "n": 1790
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 20,
    "source": {
@@ -10499,6 +12441,13 @@
      "calls": 831
     }
    ],
+   "readMs": {
+    "p50": 275,
+    "p90": 534,
+    "p99": 713,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 17,
    "source": {
@@ -10559,6 +12508,13 @@
      "calls": 343
     }
    ],
+   "readMs": {
+    "p50": 286,
+    "p90": 523,
+    "p99": 781,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 20,
    "source": {
@@ -10614,6 +12570,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 362,
+    "p90": 581,
+    "p99": 715,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 20,
    "source": {
@@ -10675,6 +12638,13 @@
      "calls": 353
     }
    ],
+   "readMs": {
+    "p50": 289,
+    "p90": 629,
+    "p99": 748,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 20,
    "source": {
@@ -10731,6 +12701,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 285,
+    "p90": 547,
+    "p99": 797,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 20,
    "source": {
@@ -10792,6 +12769,13 @@
      "calls": 65
     }
    ],
+   "readMs": {
+    "p50": 317,
+    "p90": 705,
+    "p99": 1001,
+    "n": 1770
+   },
+   "readTiers": {},
    "copyOfKind": 18,
    "copiesOfKind": 20,
    "source": {
@@ -10849,6 +12833,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 331,
+    "p90": 1005,
+    "p99": 1721,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 17,
    "source": {
@@ -10909,6 +12900,13 @@
      "calls": 217
     }
    ],
+   "readMs": {
+    "p50": 371,
+    "p90": 616,
+    "p99": 910,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 20,
    "source": {
@@ -10964,6 +12962,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 246,
+    "p90": 627,
+    "p99": 1021,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 20,
    "source": {
@@ -11019,6 +13024,13 @@
      "calls": 1807
     }
    ],
+   "readMs": {
+    "p50": 186,
+    "p90": 539,
+    "p99": 832,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 20,
    "source": {
@@ -11075,6 +13087,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 205,
+    "p90": 497,
+    "p99": 674,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 20,
    "copiesOfKind": 20,
    "source": {
@@ -11132,6 +13151,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 179,
+    "p90": 511,
+    "p99": 766,
+    "n": 1768
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 20,
    "source": {
@@ -11194,6 +13220,13 @@
      "calls": 806
     }
    ],
+   "readMs": {
+    "p50": 282,
+    "p90": 552,
+    "p99": 669,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 17,
    "source": {
@@ -11254,6 +13287,13 @@
      "calls": 45
     }
    ],
+   "readMs": {
+    "p50": 77,
+    "p90": 555,
+    "p99": 802,
+    "n": 49
+   },
+   "readTiers": {},
    "source": {
     "name": "VS Code extensions",
     "upstream": "microsoft/vscode",
@@ -11314,6 +13354,13 @@
      "calls": 1530
     }
    ],
+   "readMs": {
+    "p50": 103,
+    "p90": 217,
+    "p99": 327,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 17,
    "source": {
@@ -11371,6 +13418,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 155,
+    "p90": 310,
+    "p99": 448,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 17,
    "source": {
@@ -11431,6 +13485,13 @@
      "calls": 402
     }
    ],
+   "readMs": {
+    "p50": 388,
+    "p90": 695,
+    "p99": 949,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 20,
    "source": {
@@ -11486,6 +13547,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 397,
+    "p90": 625,
+    "p99": 833,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 20,
    "source": {
@@ -11546,6 +13614,13 @@
      "calls": 397
     }
    ],
+   "readMs": {
+    "p50": 256,
+    "p90": 620,
+    "p99": 888,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 20,
    "source": {
@@ -11602,6 +13677,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 258,
+    "p90": 624,
+    "p99": 1020,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 20,
    "source": {
@@ -11658,6 +13740,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 189,
+    "p90": 666,
+    "p99": 915,
+    "n": 1777
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 20,
    "source": {
@@ -11720,6 +13809,13 @@
      "calls": 1475
     }
    ],
+   "readMs": {
+    "p50": 132,
+    "p90": 276,
+    "p99": 467,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 17,
    "source": {
@@ -11780,6 +13876,13 @@
      "calls": 148
     }
    ],
+   "readMs": {
+    "p50": 339,
+    "p90": 548,
+    "p99": 752,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 20,
    "source": {
@@ -11835,6 +13938,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 344,
+    "p90": 649,
+    "p99": 843,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 18,
    "copiesOfKind": 20,
    "source": {
@@ -11895,6 +14005,13 @@
      "calls": 290
     }
    ],
+   "readMs": {
+    "p50": 238,
+    "p90": 540,
+    "p99": 736,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 20,
    "source": {
@@ -11951,6 +14068,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 253,
+    "p90": 555,
+    "p99": 862,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 20,
    "source": {
@@ -12008,6 +14132,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 264,
+    "p90": 631,
+    "p99": 837,
+    "n": 1765
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 20,
    "source": {
@@ -12065,6 +14196,13 @@
      "calls": 1538
     }
    ],
+   "readMs": {
+    "p50": 176,
+    "p90": 400,
+    "p99": 1192,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 17,
    "source": {
@@ -12125,6 +14263,13 @@
      "calls": 345
     }
    ],
+   "readMs": {
+    "p50": 523,
+    "p90": 771,
+    "p99": 886,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 20,
    "copiesOfKind": 20,
    "source": {
@@ -12180,6 +14325,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 431,
+    "p90": 730,
+    "p99": 1008,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 20,
    "source": {
@@ -12236,6 +14388,13 @@
      "calls": 1806
     }
    ],
+   "readMs": {
+    "p50": 377,
+    "p90": 565,
+    "p99": 814,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 20,
    "source": {
@@ -12291,6 +14450,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 384,
+    "p90": 639,
+    "p99": 818,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 19,
    "copiesOfKind": 20,
    "source": {
@@ -12347,6 +14513,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 344,
+    "p90": 682,
+    "p99": 1018,
+    "n": 1780
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 20,
    "source": {
@@ -12404,6 +14577,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 243,
+    "p90": 344,
+    "p99": 497,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 17,
    "source": {
@@ -12461,6 +14641,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 198,
+    "p90": 380,
+    "p99": 526,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 17,
    "source": {
@@ -12518,6 +14705,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 195,
+    "p90": 399,
+    "p99": 567,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 17,
    "source": {
@@ -12580,6 +14774,13 @@
      "calls": 343
     }
    ],
+   "readMs": {
+    "p50": 1005,
+    "p90": 1567,
+    "p99": 2080,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 17,
    "source": {
@@ -12642,6 +14843,13 @@
      "calls": 181
     }
    ],
+   "readMs": {
+    "p50": 394,
+    "p90": 578,
+    "p99": 758,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 17,
    "source": {
@@ -12699,6 +14907,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 212,
+    "p90": 380,
+    "p99": 485,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 17,
    "source": {
@@ -12756,6 +14971,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 404,
+    "p90": 551,
+    "p99": 688,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 17,
    "source": {
@@ -12813,6 +15035,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 321,
+    "p90": 531,
+    "p99": 761,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 17,
    "source": {
@@ -12870,6 +15099,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 285,
+    "p90": 512,
+    "p99": 695,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 17,
    "source": {
@@ -12932,6 +15168,13 @@
      "calls": 767
     }
    ],
+   "readMs": {
+    "p50": 1003,
+    "p90": 1593,
+    "p99": 2125,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 17,
    "source": {
@@ -12994,6 +15237,13 @@
      "calls": 632
     }
    ],
+   "readMs": {
+    "p50": 1024,
+    "p90": 1674,
+    "p99": 2126,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 17,
    "source": {
@@ -13051,6 +15301,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 270,
+    "p90": 509,
+    "p99": 732,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 17,
    "source": {
@@ -13108,6 +15365,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 203,
+    "p90": 404,
+    "p99": 605,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 17,
    "source": {
@@ -13170,6 +15434,13 @@
      "calls": 73
     }
    ],
+   "readMs": {
+    "p50": 379,
+    "p90": 584,
+    "p99": 854,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 17,
    "source": {
@@ -13232,6 +15503,13 @@
      "calls": 372
     }
    ],
+   "readMs": {
+    "p50": 955,
+    "p90": 1429,
+    "p99": 2016,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 17,
    "source": {
@@ -13289,6 +15567,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 355,
+    "p90": 560,
+    "p99": 711,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 17,
    "source": {
@@ -13351,6 +15636,13 @@
      "calls": 422
     }
    ],
+   "readMs": {
+    "p50": 138,
+    "p90": 256,
+    "p99": 473,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 17,
    "source": {
@@ -13413,6 +15705,13 @@
      "calls": 399
     }
    ],
+   "readMs": {
+    "p50": 966,
+    "p90": 1458,
+    "p99": 2024,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 17,
    "source": {
@@ -13470,6 +15769,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 356,
+    "p90": 571,
+    "p99": 665,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 17,
    "source": {
@@ -13527,6 +15833,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 183,
+    "p90": 349,
+    "p99": 542,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 17,
    "source": {
@@ -13584,6 +15897,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 376,
+    "p90": 577,
+    "p99": 740,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 17,
    "source": {
@@ -13640,6 +15960,13 @@
      "calls": 16
     }
    ],
+   "readMs": {
+    "p50": 57,
+    "p90": 84,
+    "p99": 588,
+    "n": 80
+   },
+   "readTiers": {},
    "source": {
     "name": "Angular",
     "upstream": "angular/angular",
@@ -13694,6 +16021,13 @@
      "calls": 16
     }
    ],
+   "readMs": {
+    "p50": 57,
+    "p90": 128,
+    "p99": 610,
+    "n": 80
+   },
+   "readTiers": {},
    "source": {
     "name": "Angular",
     "upstream": "angular/angular",
@@ -13748,6 +16082,13 @@
      "calls": 16
     }
    ],
+   "readMs": {
+    "p50": 68,
+    "p90": 111,
+    "p99": 614,
+    "n": 80
+   },
+   "readTiers": {},
    "source": {
     "name": "Angular",
     "upstream": "angular/angular",
@@ -13803,6 +16144,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 257,
+    "p90": 520,
+    "p99": 741,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 18,
    "copiesOfKind": 22,
    "source": {
@@ -13865,6 +16213,13 @@
      "calls": 52
     }
    ],
+   "readMs": {
+    "p50": 1012,
+    "p90": 1339,
+    "p99": 2566,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 44,
    "source": {
@@ -13922,6 +16277,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 650,
+    "p90": 1218,
+    "p99": 4939,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 22,
    "source": {
@@ -13984,6 +16346,13 @@
      "calls": 228
     }
    ],
+   "readMs": {
+    "p50": 1182,
+    "p90": 1814,
+    "p99": 7868,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 44,
    "source": {
@@ -14041,6 +16410,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 235,
+    "p90": 489,
+    "p99": 686,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 22,
    "source": {
@@ -14103,6 +16479,13 @@
      "calls": 55
     }
    ],
+   "readMs": {
+    "p50": 950,
+    "p90": 1431,
+    "p99": 3481,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 44,
    "source": {
@@ -14160,6 +16543,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 221,
+    "p90": 393,
+    "p99": 591,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 22,
    "source": {
@@ -14217,6 +16607,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 557,
+    "p90": 900,
+    "p99": 1050,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 44,
    "source": {
@@ -14274,6 +16671,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 146,
+    "p90": 325,
+    "p99": 568,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 22,
    "source": {
@@ -14331,6 +16735,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 540,
+    "p90": 866,
+    "p99": 947,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 44,
    "source": {
@@ -14388,6 +16799,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 114,
+    "p90": 246,
+    "p99": 433,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 22,
    "source": {
@@ -14450,6 +16868,13 @@
      "calls": 36
     }
    ],
+   "readMs": {
+    "p50": 978,
+    "p90": 1394,
+    "p99": 1925,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 42,
    "copiesOfKind": 44,
    "source": {
@@ -14507,6 +16932,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 231,
+    "p90": 426,
+    "p99": 724,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 20,
    "copiesOfKind": 22,
    "source": {
@@ -14569,6 +17001,13 @@
      "calls": 22
     }
    ],
+   "readMs": {
+    "p50": 941,
+    "p90": 1387,
+    "p99": 1999,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 44,
    "source": {
@@ -14626,6 +17065,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 256,
+    "p90": 418,
+    "p99": 499,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 22,
    "source": {
@@ -14688,6 +17134,13 @@
      "calls": 190
     }
    ],
+   "readMs": {
+    "p50": 1002,
+    "p90": 1594,
+    "p99": 9220,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 44,
    "source": {
@@ -14745,6 +17198,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 358,
+    "p90": 543,
+    "p99": 709,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 22,
    "copiesOfKind": 22,
    "source": {
@@ -14807,6 +17267,13 @@
      "calls": 51
     }
    ],
+   "readMs": {
+    "p50": 996,
+    "p90": 1440,
+    "p99": 3641,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 44,
    "source": {
@@ -14863,6 +17330,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 372,
+    "p90": 547,
+    "p99": 670,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 20,
    "copiesOfKind": 22,
    "source": {
@@ -14924,6 +17398,13 @@
      "calls": 16
     }
    ],
+   "readMs": {
+    "p50": 897,
+    "p90": 1332,
+    "p99": 1393,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 22,
    "copiesOfKind": 44,
    "source": {
@@ -14980,6 +17461,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 363,
+    "p90": 529,
+    "p99": 729,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 18,
    "copiesOfKind": 22,
    "source": {
@@ -15041,6 +17529,13 @@
      "calls": 25
     }
    ],
+   "readMs": {
+    "p50": 899,
+    "p90": 1378,
+    "p99": 1459,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 44,
    "source": {
@@ -15097,6 +17592,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 215,
+    "p90": 422,
+    "p99": 590,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 22,
    "source": {
@@ -15158,6 +17660,13 @@
      "calls": 15
     }
    ],
+   "readMs": {
+    "p50": 897,
+    "p90": 1338,
+    "p99": 1510,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 31,
    "copiesOfKind": 44,
    "source": {
@@ -15214,6 +17723,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 131,
+    "p90": 277,
+    "p99": 341,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 22,
    "source": {
@@ -15270,6 +17786,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 533,
+    "p90": 786,
+    "p99": 842,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 44,
    "source": {
@@ -15326,6 +17849,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 128,
+    "p90": 331,
+    "p99": 516,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 19,
    "copiesOfKind": 22,
    "source": {
@@ -15382,6 +17912,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 529,
+    "p90": 874,
+    "p99": 1067,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 27,
    "copiesOfKind": 44,
    "source": {
@@ -15438,6 +17975,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 276,
+    "p90": 495,
+    "p99": 650,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 17,
    "copiesOfKind": 22,
    "source": {
@@ -15499,6 +18043,13 @@
      "calls": 17
     }
    ],
+   "readMs": {
+    "p50": 904,
+    "p90": 1328,
+    "p99": 1364,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 34,
    "copiesOfKind": 44,
    "source": {
@@ -15555,6 +18106,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 204,
+    "p90": 322,
+    "p99": 400,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 22,
    "source": {
@@ -15611,6 +18169,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 527,
+    "p90": 772,
+    "p99": 853,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 33,
    "copiesOfKind": 44,
    "source": {
@@ -15667,6 +18232,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 123,
+    "p90": 256,
+    "p99": 503,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 22,
    "source": {
@@ -15723,6 +18295,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 532,
+    "p90": 862,
+    "p99": 996,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 14,
    "copiesOfKind": 44,
    "source": {
@@ -15779,6 +18358,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 335,
+    "p90": 578,
+    "p99": 626,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 22,
    "source": {
@@ -15840,6 +18426,13 @@
      "calls": 17
     }
    ],
+   "readMs": {
+    "p50": 906,
+    "p90": 1324,
+    "p99": 1384,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 44,
    "source": {
@@ -15896,6 +18489,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 544,
+    "p90": 749,
+    "p99": 821,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 22,
    "copiesOfKind": 22,
    "source": {
@@ -15957,6 +18557,13 @@
      "calls": 49
     }
    ],
+   "readMs": {
+    "p50": 1138,
+    "p90": 1769,
+    "p99": 1893,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 28,
    "copiesOfKind": 44,
    "source": {
@@ -16013,6 +18620,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 187,
+    "p90": 382,
+    "p99": 655,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 21,
    "copiesOfKind": 22,
    "source": {
@@ -16069,6 +18683,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 583,
+    "p90": 874,
+    "p99": 1117,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 25,
    "copiesOfKind": 44,
    "source": {
@@ -16131,6 +18752,13 @@
      "calls": 257
     }
    ],
+   "readMs": {
+    "p50": 110,
+    "p90": 195,
+    "p99": 371,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 16,
    "copiesOfKind": 17,
    "source": {
@@ -16188,6 +18816,13 @@
      "calls": 692
     }
    ],
+   "readMs": {
+    "p50": 401,
+    "p90": 573,
+    "p99": 852,
+    "n": 2090
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 17,
    "source": {
@@ -16245,6 +18880,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 435,
+    "p90": 615,
+    "p99": 733,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 19,
    "copiesOfKind": 22,
    "source": {
@@ -16302,6 +18944,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 528,
+    "p90": 829,
+    "p99": 1066,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 44,
    "source": {
@@ -16359,6 +19008,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 113,
+    "p90": 259,
+    "p99": 466,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 21,
    "copiesOfKind": 22,
    "source": {
@@ -16416,6 +19072,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 556,
+    "p90": 867,
+    "p99": 1071,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 44,
    "source": {
@@ -16473,6 +19136,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 658,
+    "p90": 968,
+    "p99": 1205,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 15,
    "copiesOfKind": 22,
    "source": {
@@ -16535,6 +19205,13 @@
      "calls": 184
     }
    ],
+   "readMs": {
+    "p50": 1222,
+    "p90": 1856,
+    "p99": 5141,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 44,
    "source": {
@@ -16591,6 +19268,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 103,
+    "p90": 308,
+    "p99": 745,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 22,
    "source": {
@@ -16647,6 +19331,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 604,
+    "p90": 971,
+    "p99": 1127,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 26,
    "copiesOfKind": 44,
    "source": {
@@ -16704,6 +19395,13 @@
      "calls": 869
     }
    ],
+   "readMs": {
+    "p50": 232,
+    "p90": 422,
+    "p99": 665,
+    "n": 1546
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 17,
    "source": {
@@ -16766,6 +19464,13 @@
      "calls": 1509
     }
    ],
+   "readMs": {
+    "p50": 724,
+    "p90": 1315,
+    "p99": 2080,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 17,
    "source": {
@@ -16826,6 +19531,13 @@
      "calls": 406
     }
    ],
+   "readMs": {
+    "p50": 451,
+    "p90": 764,
+    "p99": 972,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 20,
    "source": {
@@ -16881,6 +19593,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 352,
+    "p90": 763,
+    "p99": 931,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 20,
    "source": {
@@ -16941,6 +19660,13 @@
      "calls": 91
     }
    ],
+   "readMs": {
+    "p50": 238,
+    "p90": 626,
+    "p99": 977,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 20,
    "source": {
@@ -16996,6 +19722,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 269,
+    "p90": 571,
+    "p99": 798,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 20,
    "source": {
@@ -17053,6 +19786,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 235,
+    "p90": 668,
+    "p99": 959,
+    "n": 1767
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 20,
    "source": {
@@ -17115,6 +19855,13 @@
      "calls": 529
     }
    ],
+   "readMs": {
+    "p50": 132,
+    "p90": 302,
+    "p99": 504,
+    "n": 2328
+   },
+   "readTiers": {},
    "copyOfKind": 8,
    "copiesOfKind": 17,
    "source": {
@@ -17175,6 +19922,13 @@
      "calls": 53
     }
    ],
+   "readMs": {
+    "p50": 352,
+    "p90": 602,
+    "p99": 823,
+    "n": 1536
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 20,
    "source": {
@@ -17230,6 +19984,13 @@
      "calls": 1617
     }
    ],
+   "readMs": {
+    "p50": 338,
+    "p90": 670,
+    "p99": 789,
+    "n": 1617
+   },
+   "readTiers": {},
    "copyOfKind": 19,
    "copiesOfKind": 20,
    "source": {
@@ -17290,6 +20051,13 @@
      "calls": 6
     }
    ],
+   "readMs": {
+    "p50": 243,
+    "p90": 576,
+    "p99": 872,
+    "n": 1807
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 20,
    "source": {
@@ -17345,6 +20113,13 @@
      "calls": 2194
     }
    ],
+   "readMs": {
+    "p50": 224,
+    "p90": 595,
+    "p99": 1053,
+    "n": 2194
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 20,
    "source": {
@@ -17402,6 +20177,13 @@
      "calls": 2193
     }
    ],
+   "readMs": {
+    "p50": 140,
+    "p90": 538,
+    "p99": 733,
+    "n": 1774
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 20,
    "source": {
@@ -17459,6 +20241,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 549,
+    "p90": 902,
+    "p99": 1034,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 26,
    "copiesOfKind": 44,
    "source": {
@@ -17526,6 +20315,13 @@
      "calls": 26
     }
    ],
+   "readMs": {
+    "p50": 1076,
+    "p90": 1972,
+    "p99": 2191,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 12,
    "copiesOfKind": 44,
    "source": {
@@ -17582,6 +20378,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 706,
+    "p90": 929,
+    "p99": 1047,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 40,
    "copiesOfKind": 44,
    "source": {
@@ -17644,6 +20447,13 @@
      "calls": 71
     }
    ],
+   "readMs": {
+    "p50": 566,
+    "p90": 2721,
+    "p99": 3132,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 36,
    "copiesOfKind": 44,
    "source": {
@@ -17706,6 +20516,13 @@
      "calls": 105
     }
    ],
+   "readMs": {
+    "p50": 490,
+    "p90": 2676,
+    "p99": 3107,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 29,
    "copiesOfKind": 44,
    "source": {
@@ -17774,6 +20591,13 @@
      "calls": 24
     }
    ],
+   "readMs": {
+    "p50": 449,
+    "p90": 2072,
+    "p99": 3815,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 28,
    "copiesOfKind": 44,
    "source": {
@@ -17842,6 +20666,13 @@
      "calls": 120
     }
    ],
+   "readMs": {
+    "p50": 412,
+    "p90": 2141,
+    "p99": 4863,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 35,
    "copiesOfKind": 44,
    "source": {
@@ -17905,6 +20736,13 @@
      "calls": 199
     }
    ],
+   "readMs": {
+    "p50": 618,
+    "p90": 2778,
+    "p99": 3088,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 25,
    "copiesOfKind": 44,
    "source": {
@@ -17967,6 +20805,13 @@
      "calls": 106
     }
    ],
+   "readMs": {
+    "p50": 1061,
+    "p90": 2022,
+    "p99": 2103,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 39,
    "copiesOfKind": 44,
    "source": {
@@ -18029,6 +20874,13 @@
      "calls": 104
     }
    ],
+   "readMs": {
+    "p50": 1118,
+    "p90": 1997,
+    "p99": 2139,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 43,
    "copiesOfKind": 44,
    "source": {
@@ -18085,6 +20937,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 569,
+    "p90": 899,
+    "p99": 980,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 21,
    "copiesOfKind": 44,
    "source": {
@@ -18153,6 +21012,13 @@
      "calls": 105
     }
    ],
+   "readMs": {
+    "p50": 232,
+    "p90": 2099,
+    "p99": 2941,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 34,
    "copiesOfKind": 44,
    "source": {
@@ -18221,6 +21087,13 @@
      "calls": 127
     }
    ],
+   "readMs": {
+    "p50": 716,
+    "p90": 2667,
+    "p99": 3158,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 33,
    "copiesOfKind": 44,
    "source": {
@@ -18278,6 +21151,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 711,
+    "p90": 943,
+    "p99": 1072,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 40,
    "copiesOfKind": 44,
    "source": {
@@ -18334,6 +21214,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 547,
+    "p90": 859,
+    "p99": 1020,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 18,
    "copiesOfKind": 44,
    "source": {
@@ -18396,6 +21283,13 @@
      "calls": 72
     }
    ],
+   "readMs": {
+    "p50": 648,
+    "p90": 2674,
+    "p99": 3121,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 4,
    "copiesOfKind": 44,
    "source": {
@@ -18452,6 +21346,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 599,
+    "p90": 905,
+    "p99": 974,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 23,
    "copiesOfKind": 44,
    "source": {
@@ -18509,6 +21410,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 730,
+    "p90": 950,
+    "p99": 1090,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 29,
    "copiesOfKind": 44,
    "source": {
@@ -18566,6 +21474,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 580,
+    "p90": 907,
+    "p99": 1055,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 41,
    "copiesOfKind": 44,
    "source": {
@@ -18629,6 +21544,13 @@
      "calls": 213
     }
    ],
+   "readMs": {
+    "p50": 337,
+    "p90": 2022,
+    "p99": 2078,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 38,
    "copiesOfKind": 44,
    "source": {
@@ -18685,6 +21607,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 706,
+    "p90": 945,
+    "p99": 1088,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 44,
    "copiesOfKind": 44,
    "source": {
@@ -18741,6 +21670,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 680,
+    "p90": 1067,
+    "p99": 1127,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 10,
    "copiesOfKind": 44,
    "source": {
@@ -18797,6 +21733,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 704,
+    "p90": 996,
+    "p99": 1144,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 44,
    "source": {
@@ -18865,6 +21808,13 @@
      "calls": 106
     }
    ],
+   "readMs": {
+    "p50": 372,
+    "p90": 2704,
+    "p99": 3079,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 22,
    "copiesOfKind": 44,
    "source": {
@@ -18922,6 +21872,13 @@
      "calls": 323
     }
    ],
+   "readMs": {
+    "p50": 707,
+    "p90": 937,
+    "p99": 1138,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 19,
    "copiesOfKind": 44,
    "source": {
@@ -18984,6 +21941,13 @@
      "calls": 12
     }
    ],
+   "readMs": {
+    "p50": 728,
+    "p90": 934,
+    "p99": 3861,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 24,
    "copiesOfKind": 44,
    "source": {
@@ -19040,6 +22004,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 686,
+    "p90": 968,
+    "p99": 1033,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 11,
    "copiesOfKind": 44,
    "source": {
@@ -19096,6 +22067,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 555,
+    "p90": 920,
+    "p99": 1041,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 7,
    "copiesOfKind": 44,
    "source": {
@@ -19152,6 +22130,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 697,
+    "p90": 986,
+    "p99": 1070,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 5,
    "copiesOfKind": 44,
    "source": {
@@ -19220,6 +22205,13 @@
      "calls": 134
     }
    ],
+   "readMs": {
+    "p50": 592,
+    "p90": 2692,
+    "p99": 3187,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 27,
    "copiesOfKind": 44,
    "source": {
@@ -19288,6 +22280,13 @@
      "calls": 188
     }
    ],
+   "readMs": {
+    "p50": 466,
+    "p90": 2790,
+    "p99": 2947,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 23,
    "copiesOfKind": 44,
    "source": {
@@ -19356,6 +22355,13 @@
      "calls": 166
     }
    ],
+   "readMs": {
+    "p50": 428,
+    "p90": 2082,
+    "p99": 3556,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 21,
    "copiesOfKind": 44,
    "source": {
@@ -19418,6 +22424,13 @@
      "calls": 106
     }
    ],
+   "readMs": {
+    "p50": 1121,
+    "p90": 1919,
+    "p99": 2125,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 44,
    "source": {
@@ -19474,6 +22487,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 679,
+    "p90": 1017,
+    "p99": 1112,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 6,
    "copiesOfKind": 44,
    "source": {
@@ -19536,6 +22556,13 @@
      "calls": 105
     }
    ],
+   "readMs": {
+    "p50": 374,
+    "p90": 2540,
+    "p99": 2926,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 44,
    "source": {
@@ -19599,6 +22626,13 @@
      "calls": 204
     }
    ],
+   "readMs": {
+    "p50": 1219,
+    "p90": 2671,
+    "p99": 3031,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 39,
    "copiesOfKind": 44,
    "source": {
@@ -19661,6 +22695,13 @@
      "calls": 39
     }
    ],
+   "readMs": {
+    "p50": 1090,
+    "p90": 2022,
+    "p99": 2215,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 18,
    "copiesOfKind": 44,
    "source": {
@@ -19729,6 +22770,13 @@
      "calls": 117
     }
    ],
+   "readMs": {
+    "p50": 673,
+    "p90": 2632,
+    "p99": 2957,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 31,
    "copiesOfKind": 44,
    "source": {
@@ -19785,6 +22833,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 719,
+    "p90": 966,
+    "p99": 1009,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 42,
    "copiesOfKind": 44,
    "source": {
@@ -19852,6 +22907,13 @@
      "calls": 16
     }
    ],
+   "readMs": {
+    "p50": 1111,
+    "p90": 2012,
+    "p99": 2084,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 13,
    "copiesOfKind": 44,
    "source": {
@@ -19908,6 +22970,13 @@
      "calls": 175
     }
    ],
+   "readMs": {
+    "p50": 681,
+    "p90": 1012,
+    "p99": 1127,
+    "n": 652
+   },
+   "readTiers": {},
    "copyOfKind": 9,
    "copiesOfKind": 44,
    "source": {
@@ -19976,6 +23045,13 @@
      "calls": 126
     }
    ],
+   "readMs": {
+    "p50": 652,
+    "p90": 2776,
+    "p99": 3075,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 32,
    "copiesOfKind": 44,
    "source": {
@@ -20044,6 +23120,13 @@
      "calls": 26
     }
    ],
+   "readMs": {
+    "p50": 786,
+    "p90": 2413,
+    "p99": 3379,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 30,
    "copiesOfKind": 44,
    "source": {
@@ -20112,6 +23195,13 @@
      "calls": 125
     }
    ],
+   "readMs": {
+    "p50": 339,
+    "p90": 2273,
+    "p99": 4558,
+    "n": 597
+   },
+   "readTiers": {},
    "copyOfKind": 44,
    "copiesOfKind": 44,
    "source": {
@@ -20128,7 +23218,9 @@
    "copy": 1,
    "repo": "fleet-vscode-src-12",
    "root": "src/vs",
-   "state": "done",
+   "state": "running",
+   "phase": "landing",
+   "landingLeft": 27,
    "agents": 150,
    "agentsStarted": 150,
    "files": 4064,
@@ -20144,8 +23236,8 @@
    "tokensIn": 8420553,
    "tokensOut": 264827,
    "startedAt": 1791902486503,
-   "endedAt": 1791902614893,
-   "wallS": 128,
+   "endedAt": 1791966387980,
+   "wallS": 63901,
    "landWaitS": {
     "p50": 35,
     "p90": 52
@@ -20221,6 +23313,13 @@
      "calls": 31
     }
    ],
+   "readMs": {
+    "p50": 206,
+    "p90": 363,
+    "p99": 504,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 3,
    "source": {
@@ -20237,7 +23336,9 @@
    "copy": 2,
    "repo": "fleet-vscode-src-13",
    "root": "src/vs",
-   "state": "done",
+   "state": "running",
+   "phase": "landing",
+   "landingLeft": 75,
    "agents": 150,
    "agentsStarted": 150,
    "files": 4064,
@@ -20253,8 +23354,8 @@
    "tokensIn": 8472369,
    "tokensOut": 266508,
    "startedAt": 1791902486581,
-   "endedAt": 1791902649405,
-   "wallS": 163,
+   "endedAt": 1791966388349,
+   "wallS": 63902,
    "landWaitS": {
     "p50": 19,
     "p90": 31
@@ -20334,6 +23435,13 @@
      "calls": 15
     }
    ],
+   "readMs": {
+    "p50": 149,
+    "p90": 292,
+    "p99": 553,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 3,
    "copiesOfKind": 3,
    "source": {
@@ -20350,7 +23458,9 @@
    "copy": 3,
    "repo": "fleet-vscode-src-14",
    "root": "src/vs",
-   "state": "done",
+   "state": "running",
+   "phase": "landing",
+   "landingLeft": 229,
    "agents": 150,
    "agentsStarted": 150,
    "files": 4064,
@@ -20366,8 +23476,8 @@
    "tokensIn": 8428473,
    "tokensOut": 265250,
    "startedAt": 1791902486505,
-   "endedAt": 1791902636616,
-   "wallS": 150,
+   "endedAt": 1791966387989,
+   "wallS": 63901,
    "landWaitS": {
     "p50": 45,
     "p90": 71
@@ -20449,6 +23559,13 @@
      "calls": 34
     }
    ],
+   "readMs": {
+    "p50": 253,
+    "p90": 487,
+    "p99": 611,
+    "n": 4064
+   },
+   "readTiers": {},
    "copyOfKind": 2,
    "copiesOfKind": 3,
    "source": {
@@ -20595,6 +23712,13 @@
      "calls": 96
     }
    ],
+   "readMs": {
+    "p50": 114,
+    "p90": 223,
+    "p99": 751,
+    "n": 4063
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 3,
    "source": {
@@ -20680,11 +23804,1409 @@
      "calls": 78
     }
    ],
+   "readMs": {
+    "p50": 132,
+    "p90": 294,
+    "p99": 756,
+    "n": 659
+   },
+   "readTiers": {},
    "source": {
     "name": "VS Code",
     "upstream": "microsoft/vscode",
     "root": "src/vs",
     "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7fb20o",
+   "label": "VS Code: doc comments + API index",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-n2-vscode-src-1",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 200,
+   "agentsStarted": 200,
+   "files": 4064,
+   "landed": 2978,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 17,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 1.7061,
+   "tokensIn": 8353173,
+   "tokensOut": 263814,
+   "startedAt": 1791940848305,
+   "endedAt": 1791940961236,
+   "wallS": 113,
+   "landWaitS": {
+    "p50": 22,
+    "p90": 561
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.2026,
+     "landed": 692,
+     "skipped": 298,
+     "calls": 692,
+     "rateLimited429": 0,
+     "peakPerMin": 610,
+     "role": "planned"
+    },
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.1392,
+     "landed": 814,
+     "rejected": 2,
+     "skipped": 288,
+     "calls": 816,
+     "rateLimited429": 0,
+     "peakPerMin": 771,
+     "role": "planned"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 1.3643,
+     "landed": 1472,
+     "rejected": 15,
+     "skipped": 483,
+     "calls": 1487,
+     "rateLimited429": 0,
+     "peakPerMin": 1138,
+     "role": "overflow"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791940800000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 53
+    },
+    {
+     "minute": 1791940800000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 3
+    },
+    {
+     "minute": 1791940800000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 1138
+    },
+    {
+     "minute": 1791940860000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 610
+    },
+    {
+     "minute": 1791940860000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 771
+    },
+    {
+     "minute": 1791940860000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 349
+    },
+    {
+     "minute": 1791940920000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 29
+    },
+    {
+     "minute": 1791940920000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 42
+    }
+   ],
+   "readMs": {
+    "p50": 130,
+    "p90": 211,
+    "p99": 413,
+    "n": 4064
+   },
+   "readTiers": {},
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7g24wi",
+   "label": "VS Code: doc comments + API index",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-n2-vscode-src-1",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2833,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 162,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 4,
+   "usd": 2.3289,
+   "tokensIn": 9897804,
+   "tokensOut": 330818,
+   "startedAt": 1791942104326,
+   "endedAt": 1791942543216,
+   "wallS": 439,
+   "landWaitS": {
+    "p50": 15,
+    "p90": 53
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.1474,
+     "landed": 437,
+     "model_error_retry": 4,
+     "rejected": 4,
+     "skipped": 171,
+     "calls": 445,
+     "rateLimited429": 0,
+     "peakPerMin": 175,
+     "role": "planned"
+    },
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.1266,
+     "landed": 688,
+     "rejected": 1,
+     "skipped": 287,
+     "calls": 689,
+     "rateLimited429": 0,
+     "peakPerMin": 265,
+     "role": "planned"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 2.055,
+     "landed": 1708,
+     "rejected": 157,
+     "skipped": 611,
+     "calls": 1865,
+     "rateLimited429": 0,
+     "peakPerMin": 823,
+     "role": "overflow"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791942060000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 166
+    },
+    {
+     "minute": 1791942060000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 135
+    },
+    {
+     "minute": 1791942060000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 696
+    },
+    {
+     "minute": 1791942120000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 77
+    },
+    {
+     "minute": 1791942120000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 265
+    },
+    {
+     "minute": 1791942120000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 346
+    },
+    {
+     "minute": 1791942420000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 175
+    },
+    {
+     "minute": 1791942420000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 217
+    },
+    {
+     "minute": 1791942420000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 823
+    },
+    {
+     "minute": 1791942480000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 27
+    },
+    {
+     "minute": 1791942480000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 69
+    },
+    {
+     "minute": 1791942540000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 3
+    }
+   ],
+   "readMs": {
+    "p50": 100,
+    "p90": 478,
+    "p99": 539,
+    "n": 4064
+   },
+   "readTiers": {},
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7ggbyf",
+   "label": "VS Code: doc comments + API index",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-n2-vscode-src-1",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2840,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 155,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 2.256,
+   "tokensIn": 9699089,
+   "tokensOut": 323473,
+   "startedAt": 1791942766805,
+   "endedAt": 1791942832025,
+   "wallS": 65,
+   "landWaitS": {
+    "p50": 45,
+    "p90": 74
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.1483,
+     "landed": 467,
+     "rejected": 3,
+     "skipped": 174,
+     "calls": 470,
+     "rateLimited429": 0,
+     "peakPerMin": 279,
+     "role": "planned"
+    },
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.1295,
+     "landed": 708,
+     "rejected": 1,
+     "skipped": 327,
+     "calls": 709,
+     "rateLimited429": 0,
+     "peakPerMin": 549,
+     "role": "planned"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 1.9783,
+     "landed": 1665,
+     "rejected": 151,
+     "skipped": 568,
+     "calls": 1816,
+     "rateLimited429": 0,
+     "peakPerMin": 1431,
+     "role": "overflow"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791942720000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 191
+    },
+    {
+     "minute": 1791942720000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 160
+    },
+    {
+     "minute": 1791942720000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 385
+    },
+    {
+     "minute": 1791942780000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 279
+    },
+    {
+     "minute": 1791942780000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 549
+    },
+    {
+     "minute": 1791942780000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 1431
+    }
+   ],
+   "readMs": {
+    "p50": 88,
+    "p90": 375,
+    "p99": 739,
+    "n": 4064
+   },
+   "readTiers": {},
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7stj8s",
+   "label": "read cache test 2 (cache mode, same files)",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-n2-vscode-src-1",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 400,
+   "agentsStarted": 400,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791963532972,
+   "endedAt": 1791963548158,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 68,
+    "p90": 94
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2373,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791963480000,
+     "model": "cache",
+     "calls": 622
+    },
+    {
+     "minute": 1791963540000,
+     "model": "cache",
+     "calls": 2373
+    }
+   ],
+   "readMs": {
+    "p50": 50,
+    "p90": 79,
+    "p99": 189,
+    "n": 4064
+   },
+   "readTiers": {
+    "kv": 4064
+   },
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7epfda",
+   "label": "VS Code: doc comments + API index",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-n2-vscode-src-2",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2814,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 181,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 2.4588,
+   "tokensIn": 10034451,
+   "tokensOut": 334074,
+   "startedAt": 1791939833517,
+   "endedAt": 1791939886824,
+   "wallS": 53,
+   "landWaitS": {
+    "p50": 171,
+    "p90": 201
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.1124,
+     "landed": 361,
+     "rejected": 2,
+     "skipped": 145,
+     "calls": 363,
+     "rateLimited429": 0,
+     "peakPerMin": 272,
+     "role": "planned"
+    },
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.116,
+     "landed": 629,
+     "rejected": 1,
+     "skipped": 250,
+     "calls": 630,
+     "rateLimited429": 0,
+     "peakPerMin": 599,
+     "role": "planned"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 2.2303,
+     "landed": 1824,
+     "rejected": 178,
+     "skipped": 674,
+     "calls": 2002,
+     "rateLimited429": 0,
+     "peakPerMin": 1934,
+     "role": "overflow"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791939780000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 91
+    },
+    {
+     "minute": 1791939780000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 31
+    },
+    {
+     "minute": 1791939780000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 68
+    },
+    {
+     "minute": 1791939840000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 272
+    },
+    {
+     "minute": 1791939840000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 599
+    },
+    {
+     "minute": 1791939840000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 1934
+    }
+   ],
+   "readMs": {
+    "p50": 95,
+    "p90": 408,
+    "p99": 706,
+    "n": 4064
+   },
+   "readTiers": {},
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7f1obq",
+   "label": "VS Code: doc comments + API index",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-n2-vscode-src-2",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2798,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 197,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 2.5158,
+   "tokensIn": 10113391,
+   "tokensOut": 339817,
+   "startedAt": 1791940403190,
+   "endedAt": 1791940455717,
+   "wallS": 53,
+   "landWaitS": {
+    "p50": 43,
+    "p90": 75
+   },
+   "models": {
+    "@cf/google/gemma-4-26b-a4b-it": {
+     "usd": 0.1092,
+     "landed": 343,
+     "skipped": 121,
+     "calls": 343,
+     "rateLimited429": 0,
+     "peakPerMin": 343,
+     "role": "planned"
+    },
+    "@cf/zai-org/glm-4.7-flash": {
+     "usd": 0.1083,
+     "landed": 593,
+     "skipped": 267,
+     "calls": 593,
+     "rateLimited429": 0,
+     "peakPerMin": 560,
+     "role": "planned"
+    },
+    "gemini-3.1-flash-lite": {
+     "usd": 2.2983,
+     "landed": 1862,
+     "rejected": 197,
+     "skipped": 681,
+     "calls": 2059,
+     "rateLimited429": 0,
+     "peakPerMin": 2059,
+     "role": "overflow"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791940380000,
+     "model": "@cf/google/gemma-4-26b-a4b-it",
+     "calls": 343
+    },
+    {
+     "minute": 1791940380000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 560
+    },
+    {
+     "minute": 1791940380000,
+     "model": "gemini-3.1-flash-lite",
+     "calls": 2059
+    },
+    {
+     "minute": 1791940440000,
+     "model": "@cf/zai-org/glm-4.7-flash",
+     "calls": 33
+    }
+   ],
+   "readMs": {
+    "p50": 75,
+    "p90": 215,
+    "p99": 467,
+    "n": 4064
+   },
+   "readTiers": {},
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7slli9",
+   "label": "read cache test (cache mode)",
+   "ladder": null,
+   "copy": null,
+   "repo": "fleet-n2-vscode-src-2",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 400,
+   "agentsStarted": 400,
+   "files": 4059,
+   "landed": 2987,
+   "ready": 0,
+   "skipped": 1067,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791963165666,
+   "endedAt": 1791963187174,
+   "wallS": 22,
+   "landWaitS": {
+    "p50": 168,
+    "p90": 179
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 5,
+     "landed": 2987,
+     "skipped": 1067,
+     "calls": 2992,
+     "rateLimited429": 0,
+     "peakPerMin": 1784,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791963120000,
+     "model": "cache",
+     "calls": 1784
+    },
+    {
+     "minute": 1791963180000,
+     "model": "cache",
+     "calls": 1208
+    }
+   ],
+   "readMs": {
+    "p50": 493,
+    "p90": 1040,
+    "p99": 1225,
+    "n": 4059
+   },
+   "readTiers": {
+    "artifacts": 4058,
+    "kv": 1
+   },
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7txzg5",
+   "label": "R10K-a: 1000 cached agents, copy 6",
+   "ladder": "R10K-a",
+   "copy": 6,
+   "repo": "fleet-n2-vscode-src-2",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965423287,
+   "endedAt": 1791965437857,
+   "wallS": 15,
+   "landWaitS": {
+    "p50": 105,
+    "p90": 134
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965400000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 16,
+    "p90": 51,
+    "p99": 195,
+    "n": 4044
+   },
+   "readTiers": {
+    "kv": 4044,
+    "mem": 20
+   },
+   "copyOfKind": 1,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7ub258",
+   "label": "R10K-b: 1000 cached agents, copy 6",
+   "ladder": "R10K-b",
+   "copy": 6,
+   "repo": "fleet-n2-vscode-src-2",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4060,
+   "landed": 2987,
+   "ready": 0,
+   "skipped": 1067,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791966032743,
+   "endedAt": 1791966110600,
+   "wallS": 78,
+   "landWaitS": {
+    "p50": 143,
+    "p90": 163
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2987,
+     "skipped": 1067,
+     "calls": 2993,
+     "rateLimited429": 0,
+     "peakPerMin": 2684,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791966000000,
+     "model": "cache",
+     "calls": 2684
+    },
+    {
+     "minute": 1791966060000,
+     "model": "cache",
+     "calls": 309
+    }
+   ],
+   "readMs": {
+    "p50": 606,
+    "p90": 1085,
+    "p99": 1305,
+    "n": 4060
+   },
+   "readTiers": {
+    "artifacts": 4059,
+    "kv": 1
+   },
+   "copyOfKind": 2,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7txzm3",
+   "label": "R10K-a: 1000 cached agents, copy 7",
+   "ladder": "R10K-a",
+   "copy": 7,
+   "repo": "fleet-n2-vscode-src-3",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965423402,
+   "endedAt": 1791965439591,
+   "wallS": 16,
+   "landWaitS": {
+    "p50": 66,
+    "p90": 87
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965400000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 17,
+    "p90": 51,
+    "p99": 211,
+    "n": 4037
+   },
+   "readTiers": {
+    "kv": 4037,
+    "mem": 27
+   },
+   "copyOfKind": 4,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7uarpk",
+   "label": "R10K-b: 1000 cached agents, copy 7",
+   "ladder": "R10K-b",
+   "copy": 7,
+   "repo": "fleet-n2-vscode-src-3",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4060,
+   "landed": 2988,
+   "ready": 0,
+   "skipped": 1066,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791966033247,
+   "endedAt": 1791966107011,
+   "wallS": 74,
+   "landWaitS": {
+    "p50": 103,
+    "p90": 112
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2988,
+     "skipped": 1066,
+     "calls": 2994,
+     "rateLimited429": 0,
+     "peakPerMin": 2983,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791966000000,
+     "model": "cache",
+     "calls": 2983
+    },
+    {
+     "minute": 1791966060000,
+     "model": "cache",
+     "calls": 11
+    }
+   ],
+   "readMs": {
+    "p50": 694,
+    "p90": 1133,
+    "p99": 1328,
+    "n": 4060
+   },
+   "readTiers": {
+    "artifacts": 4059,
+    "kv": 1
+   },
+   "copyOfKind": 10,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7txzln",
+   "label": "R10K-a: 1000 cached agents, copy 8",
+   "ladder": "R10K-a",
+   "copy": 8,
+   "repo": "fleet-n2-vscode-src-4",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965423840,
+   "endedAt": 1791965436367,
+   "wallS": 13,
+   "landWaitS": {
+    "p50": 64,
+    "p90": 86
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965400000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 23,
+    "p90": 73,
+    "p99": 224,
+    "n": 4049
+   },
+   "readTiers": {
+    "kv": 4049,
+    "mem": 15
+   },
+   "copyOfKind": 10,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7uarbw",
+   "label": "R10K-b: 1000 cached agents, copy 8",
+   "ladder": "R10K-b",
+   "copy": 8,
+   "repo": "fleet-n2-vscode-src-4",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791966033150,
+   "endedAt": 1791966060327,
+   "wallS": 27,
+   "landWaitS": {
+    "p50": 104,
+    "p90": 120
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2989,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791966000000,
+     "model": "cache",
+     "calls": 2989
+    },
+    {
+     "minute": 1791966060000,
+     "model": "cache",
+     "calls": 6
+    }
+   ],
+   "readMs": {
+    "p50": 569,
+    "p90": 1163,
+    "p99": 1321,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 8,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7txzm5",
+   "label": "R10K-a: 1000 cached agents, copy 9",
+   "ladder": "R10K-a",
+   "copy": 9,
+   "repo": "fleet-n2-vscode-src-5",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965423461,
+   "endedAt": 1791965436452,
+   "wallS": 13,
+   "landWaitS": {
+    "p50": 35,
+    "p90": 46
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965400000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 20,
+    "p90": 64,
+    "p99": 237,
+    "n": 4057
+   },
+   "readTiers": {
+    "kv": 4057,
+    "mem": 7
+   },
+   "copyOfKind": 5,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7uau1l",
+   "label": "R10K-b: 1000 cached agents, copy 9",
+   "ladder": "R10K-b",
+   "copy": 9,
+   "repo": "fleet-n2-vscode-src-5",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791966032775,
+   "endedAt": 1791966053313,
+   "wallS": 21,
+   "landWaitS": {
+    "p50": 52,
+    "p90": 58
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791966000000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 293,
+    "p90": 750,
+    "p99": 1080,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 6,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7txzmd",
+   "label": "R10K-a: 1000 cached agents, copy 10",
+   "ladder": "R10K-a",
+   "copy": 10,
+   "repo": "fleet-n2-vscode-src-6",
+   "root": "src/vs",
+   "state": "ended",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791965423308,
+   "endedAt": 1791965437151,
+   "wallS": 14,
+   "landWaitS": {
+    "p50": 64,
+    "p90": 88
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791965400000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 38,
+    "p90": 91,
+    "p99": 239,
+    "n": 4064
+   },
+   "readTiers": {
+    "kv": 4064
+   },
+   "copyOfKind": 2,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
+   }
+  },
+  {
+   "runId": "fmv7uaqys",
+   "label": "R10K-b: 1000 cached agents, copy 10",
+   "ladder": "R10K-b",
+   "copy": 10,
+   "repo": "fleet-n2-vscode-src-6",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4060,
+   "landed": 2985,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791966033184,
+   "endedAt": 1791966105002,
+   "wallS": 72,
+   "landWaitS": {
+    "p50": 107,
+    "p90": 118
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2985,
+     "skipped": 1069,
+     "calls": 2991,
+     "rateLimited429": 0,
+     "peakPerMin": 2937,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791966000000,
+     "model": "cache",
+     "calls": 2937
+    },
+    {
+     "minute": 1791966060000,
+     "model": "cache",
+     "calls": 54
+    }
+   ],
+   "readMs": {
+    "p50": 615,
+    "p90": 1359,
+    "p99": 1587,
+    "n": 4060
+   },
+   "readTiers": {
+    "artifacts": 4059,
+    "kv": 1
+   },
+   "copyOfKind": 9,
+   "copiesOfKind": 10,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet2"
    }
   },
   {
@@ -20738,11 +25260,19 @@
      "calls": 4
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
-    "name": "VS Code",
-    "upstream": "microsoft/vscode",
-    "root": "src/vs",
-    "namespace": "qbfleet"
+    "name": "Kata (code dial)",
+    "upstream": "qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests",
+    "root": "kata",
+    "project": "eyal/kata-d0",
+    "namespace": "forq"
    }
   },
   {
@@ -20771,8 +25301,8 @@
    "endedAt": 1791908870799,
    "wallS": 399,
    "landWaitS": {
-    "p50": -1,
-    "p90": 0
+    "p50": 10,
+    "p90": 18
    },
    "models": {
     "gemini-3.1-flash-lite": {
@@ -20803,11 +25333,19 @@
      "calls": 10
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "source": {
-    "name": "VS Code",
-    "upstream": "microsoft/vscode",
-    "root": "src/vs",
-    "namespace": "qbfleet"
+    "name": "Kata (code dial)",
+    "upstream": "qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests",
+    "root": "kata",
+    "project": "eyal/kata-d0",
+    "namespace": "forq"
    }
   },
   {
@@ -20836,8 +25374,8 @@
    "endedAt": 1791911536365,
    "wallS": 2487,
    "landWaitS": {
-    "p50": -2,
-    "p90": -1
+    "p50": 176,
+    "p90": 397
    },
    "models": {
     "@cf/zai-org/glm-4.7-flash": {
@@ -21083,13 +25621,21 @@
      "calls": 16
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 1,
    "source": {
-    "name": "VS Code",
-    "upstream": "microsoft/vscode",
-    "root": "src/vs",
-    "namespace": "qbfleet"
+    "name": "Kata (code dial)",
+    "upstream": "qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests",
+    "root": "kata",
+    "project": "eyal/kata-d0b",
+    "namespace": "forq"
    }
   },
   {
@@ -21118,8 +25664,8 @@
    "endedAt": 1791917875774,
    "wallS": 8826,
    "landWaitS": {
-    "p50": -2,
-    "p90": 0
+    "p50": 1102,
+    "p90": 1776
    },
    "models": {
     "@cf/zai-org/glm-4.7-flash": {
@@ -21937,13 +26483,21 @@
      "calls": 15
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 1,
    "source": {
-    "name": "VS Code",
-    "upstream": "microsoft/vscode",
-    "root": "src/vs",
-    "namespace": "qbfleet"
+    "name": "Kata (code dial)",
+    "upstream": "qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests",
+    "root": "kata",
+    "project": "eyal/kata-d30",
+    "namespace": "forq"
    }
   },
   {
@@ -21972,8 +26526,8 @@
    "endedAt": 1791921544266,
    "wallS": 12495,
    "landWaitS": {
-    "p50": -2,
-    "p90": -1
+    "p50": 1409,
+    "p90": 2742
    },
    "models": {
     "@cf/zai-org/glm-4.7-flash": {
@@ -23052,13 +27606,21 @@
      "calls": 3
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 1,
    "source": {
-    "name": "VS Code",
-    "upstream": "microsoft/vscode",
-    "root": "src/vs",
-    "namespace": "qbfleet"
+    "name": "Kata (code dial)",
+    "upstream": "qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests",
+    "root": "kata",
+    "project": "eyal/kata-d60",
+    "namespace": "forq"
    }
   },
   {
@@ -23087,8 +27649,8 @@
    "endedAt": 1791921841158,
    "wallS": 161,
    "landWaitS": {
-    "p50": -2,
-    "p90": 0
+    "p50": 317,
+    "p90": 465
    },
    "models": {
     "@cf/zai-org/glm-4.7-flash": {
@@ -23212,13 +27774,21 @@
      "calls": 6
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 1,
    "source": {
-    "name": "VS Code",
-    "upstream": "microsoft/vscode",
-    "root": "src/vs",
-    "namespace": "qbfleet"
+    "name": "Kata (code dial)",
+    "upstream": "qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests",
+    "root": "kata",
+    "project": "eyal/kata-d60f",
+    "namespace": "forq"
    }
   },
   {
@@ -23247,8 +27817,8 @@
    "endedAt": 1791925073662,
    "wallS": 3216,
    "landWaitS": {
-    "p50": -3,
-    "p90": -1
+    "p50": 254,
+    "p90": 921
    },
    "models": {
     "@cf/zai-org/glm-4.7-flash": {
@@ -23592,13 +28162,21 @@
      "calls": 3
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 1,
    "source": {
-    "name": "VS Code",
-    "upstream": "microsoft/vscode",
-    "root": "src/vs",
-    "namespace": "qbfleet"
+    "name": "Kata (code dial)",
+    "upstream": "qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests",
+    "root": "kata",
+    "project": "eyal/kata-d60g",
+    "namespace": "forq"
    }
   },
   {
@@ -23627,8 +28205,8 @@
    "endedAt": 1791932327753,
    "wallS": 2691,
    "landWaitS": {
-    "p50": -2,
-    "p90": -1
+    "p50": 217,
+    "p90": 740
    },
    "models": {
     "@cf/zai-org/glm-4.7-flash": {
@@ -23916,13 +28494,21 @@
      "calls": 13
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 1,
    "source": {
-    "name": "VS Code",
-    "upstream": "microsoft/vscode",
-    "root": "src/vs",
-    "namespace": "qbfleet"
+    "name": "Kata (code dial)",
+    "upstream": "qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests",
+    "root": "kata",
+    "project": "eyal/kata-d60h",
+    "namespace": "forq"
    }
   },
   {
@@ -23951,8 +28537,8 @@
    "endedAt": 1791935207564,
    "wallS": 267,
    "landWaitS": {
-    "p50": -2,
-    "p90": -1
+    "p50": 38,
+    "p90": 87
    },
    "models": {
     "gemini-3.1-flash-lite": {
@@ -23992,13 +28578,21 @@
      "calls": 25
     }
    ],
+   "readMs": {
+    "p50": null,
+    "p90": null,
+    "p99": null,
+    "n": 0
+   },
+   "readTiers": {},
    "copyOfKind": 1,
    "copiesOfKind": 1,
    "source": {
-    "name": "VS Code",
-    "upstream": "microsoft/vscode",
-    "root": "src/vs",
-    "namespace": "qbfleet"
+    "name": "Kata (code dial)",
+    "upstream": "qb4 kata seed 1: 400 small JavaScript functions with specs and hidden tests",
+    "root": "kata",
+    "project": "eyal/kata-notes",
+    "namespace": "forq"
    }
   }
  ]
