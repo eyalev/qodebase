@@ -1,6 +1,287 @@
 [
-  { "id": "voice-status", "title": "Spoken (audio fixture): what's going on, conversation mode", "start": "/", "audio": "~tts01-thalia-x1.0", "turns": [{ "expect": { "lane": "status", "spoken": "once", "stay": true, "no_writes": true } }] },
-  { "id": "voice-latest", "title": "Spoken: what is my latest project?", "start": "/", "audio": "~tts02-thalia-x1.0", "turns": [{ "expect": { "lane": "latest", "spoken": "once", "stay": true } }] },
-  { "id": "voice-idea", "title": "Spoken: give me a small idea", "start": "/", "audio": "~tts04-thalia-x1.0", "turns": [{ "expect": { "lane": "idea", "spoken": "once", "fields": { "What do you want to build": "\\w{4,}" } } }] },
-  { "id": "live-status", "title": "Live-words hook: what's going on", "start": "/", "turns": [{ "say": "What's going on?", "via": "live", "expect": { "lane": "status", "spoken": "once", "stay": true } }] }
+ {
+  "id": "voice-build-start",
+  "title": "Build by voice end to end: idea, cheapest, 'yes, build it' -> brief asks with the estimate, 'call it \u2026', 'yes, start' (the build request is intercepted)",
+  "start": "/",
+  "turns": [
+   {
+    "say": "Build me a small app that keeps track of everything in my home, with a paid pro version that uses Stripe.",
+    "via": "live",
+    "expect": {
+     "lane": "act/type",
+     "fields": {
+      "What do you want to build": "keeps track of everything in my home"
+     },
+     "no_writes": true
+    }
+   },
+   {
+    "say": "use the cheapest preset",
+    "via": "live",
+    "expect": {
+     "fields": {
+      "css:[data-preset=cheapest]": "true"
+     },
+     "no_writes": true
+    }
+   },
+   {
+    "say": "yes, build it",
+    "via": "live",
+    "expect": {
+     "nav": "/build\\?step=brief",
+     "answer_has": "This will start .* Start\\?",
+     "no_writes": true
+    }
+   },
+   {
+    "say": "call it home things 2",
+    "via": "live",
+    "expect": {
+     "fields": {
+      "css:#pname": "^home-things-2$"
+     },
+     "offer": "Start building home-things-2\\?",
+     "no_writes": true
+    }
+   },
+   {
+    "say": "yes, start",
+    "via": "live",
+    "expect": {
+     "writes": "POST /api/build"
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-build-no",
+  "title": "The brief's start question: 'no' never starts",
+  "start": "/",
+  "turns": [
+   {
+    "say": "Build me a small habit tracker",
+    "via": "live",
+    "expect": {
+     "no_writes": true
+    }
+   },
+   {
+    "say": "yes, build it",
+    "via": "live",
+    "expect": {
+     "nav": "/build\\?step=brief",
+     "answer_has": "Start\\?",
+     "no_writes": true
+    }
+   },
+   {
+    "say": "no",
+    "via": "live",
+    "expect": {
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-fleet-start",
+  "title": "Fleet job by voice: the form fills, Talk asks with the estimate and the hard cap, 'yes, start' presses Start (intercepted)",
+  "start": "/runs",
+  "turns": [
+   {
+    "say": "Document every exported function in VS Code with a thousand agents",
+    "via": "live",
+    "expect": {
+     "fields": {
+      "css:#nj-agents": "^1000$"
+     },
+     "answer_has": "This will start 1,000 agents.*stops at.*Start\\?",
+     "no_writes": true
+    }
+   },
+   {
+    "say": "yes, start",
+    "via": "live",
+    "expect": {
+     "writes": "POST /api/runs/start"
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-fleet-no",
+  "title": "The fleet question: 'no' never starts",
+  "start": "/runs",
+  "turns": [
+   {
+    "say": "Document every exported function in VS Code with a thousand agents",
+    "via": "live",
+    "expect": {
+     "no_writes": true
+    }
+   },
+   {
+    "say": "no",
+    "via": "live",
+    "expect": {
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-nav-agents",
+  "title": "show me the agents",
+  "start": "/p/eyal/home-inventory-demo/work",
+  "turns": [
+   {
+    "say": "show me the agents",
+    "via": "live",
+    "expect": {
+     "lane": "act/press",
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-nav-timeline",
+  "title": "open the timeline",
+  "start": "/p/eyal/home-inventory-demo/work",
+  "turns": [
+   {
+    "say": "open the timeline",
+    "via": "live",
+    "expect": {
+     "lane": "act/press",
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-nav-collisions",
+  "title": "show the collisions",
+  "start": "/p/eyal/home-inventory-demo/work",
+  "turns": [
+   {
+    "say": "show the collisions",
+    "via": "live",
+    "expect": {
+     "lane": "act/press",
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-nav-change",
+  "title": "open the dark mode change",
+  "start": "/p/eyal/home-inventory-demo/work",
+  "turns": [
+   {
+    "say": "open the dark mode change",
+    "via": "live",
+    "expect": {
+     "nav": {
+      "url": "#/change/",
+      "hash": true
+     },
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-nav-intents",
+  "title": "show the intent tree",
+  "start": "/p/eyal/home-inventory-demo/work",
+  "turns": [
+   {
+    "say": "show the intent tree",
+    "via": "live",
+    "expect": {
+     "lane": "act/press",
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-nav-app",
+  "title": "open the app",
+  "start": "/p/eyal/home-inventory-demo/work",
+  "turns": [
+   {
+    "say": "open the app",
+    "via": "live",
+    "expect": {
+     "nav": "/p/eyal/home-inventory-demo/app$",
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-nav-showapp",
+  "title": "show me the app",
+  "start": "/p/eyal/home-inventory-demo/work",
+  "turns": [
+   {
+    "say": "show me the app",
+    "via": "live",
+    "expect": {
+     "nav": "/p/eyal/home-inventory-demo/app$",
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-nav-dark",
+  "title": "switch to dark mode",
+  "start": "/p/eyal/home-inventory-demo/work",
+  "turns": [
+   {
+    "say": "switch to dark mode",
+    "via": "live",
+    "expect": {
+     "answer_has": "phone|Pressed",
+     "stay": true,
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-change-dark",
+  "title": "add a dark mode to the app",
+  "start": "/p/eyal/home-inventory-demo",
+  "turns": [
+   {
+    "say": "add a dark mode to the app",
+    "via": "live",
+    "expect": {
+     "offer": "Send to .*agents",
+     "no_writes": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "voice-runs-index",
+  "title": "show the index check",
+  "start": "/runs",
+  "turns": [
+   {
+    "say": "show the index check",
+    "via": "live",
+    "expect": {
+     "answer_has": "index|API",
+     "no_writes": true
+    }
+   }
+  ]
+ }
 ]

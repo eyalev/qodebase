@@ -1521,7 +1521,7 @@ function typeInto(t, text) {
   t.dispatchEvent(new Event('change', { bubbles: true }));
 }
 function offerSubmit(t) {
-  if (briefAsk && location.pathname === '/build') { var a2 = briefAsk; setTimeout(a2, 300); return; }
+  if (briefAsk && location.pathname === '/build') { var a2 = briefAsk; setTimeout(function () { a2(true); }, 300); return; }
   // Something was filled on the page and its Send / Build it is offered: fold the sheet into the bar, so the page
   // (Build's preset tiles) can be seen and tapped while the question waits (qb3's take, 2026-10-14: the open sheet
   // covered the tiles and taps never landed).
@@ -1902,7 +1902,8 @@ function briefQuestion() {
     if (!go || !go.getClientRects().length) { if (++tries < 30) setTimeout(ask1, 300); return; }
     var q = 'This will start ' + (est.team || 'the agents') + (est.time ? ', about ' + est.time.replace(/min$/, 'minutes') : '') + (est.cost ? ' and ' + est.cost : '') + '. Start?';
     lastSpoken = true; add('ai', q); trace('build_confirm', { q: q });
-    briefAsk = function () { offerOn(q, function () { briefAsk = null; add('app', 'Pressed \u201cStart building\u201d.'); trace('act', { op: 'press', label: 'Start building', confirmed: true }); go.click(); }, 'Start'); };
+    // Asked again after the name was changed: short, never the same sentence twice ('Start building home-things-2?').
+    briefAsk = function (again) { var nmv = (document.getElementById('pname') || {}).value; var q2 = again ? 'Start building' + (nmv ? ' ' + nmv : '') + '?' : q; offerOn(q2, function () { briefAsk = null; add('app', 'Pressed \u201cStart building\u201d.'); trace('act', { op: 'press', label: 'Start building', confirmed: true }); go.click(); }, 'Start'); };
     briefAsk();
   })();
 }
