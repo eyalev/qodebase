@@ -1478,6 +1478,13 @@ model calls. 10 copies of src/vs, 1,000 agents each.
 - **The ramp:** at most ~2,300 of the 10,000 were busy in any 10 s.
 - **Next wall: landing.** There is one queue per copy, peaking at ~690 files/s landed, and landing took 2.5-3 min after
   the answers. 20,000 agents: not run (budget).
+- **Run (c), 3 namespaces**, with a faster start (250 agents per 100 ms) and landing passes of up to 1,500 files/s:
+  - **Throughput:** the busiest 10 s held ~1,900 files/s again.
+  - **Faster overall:** start to all landed in 86 s (b: ~5 min), with ~1 min of landing after the answers, so landing
+    is no longer the wall.
+  - **Wall:** Artifacts reads for the whole account, ~1,900-2,000/s. More namespaces only made reads wait longer
+    (p50 0.5-0.9 s), and none failed.
+  - **This corrects my S4e reading:** "2 namespaces ~1.4x" was one 10-s burst, not a per-namespace ceiling.
 
 ## (m) Code collision dial: prediction before qb6's runs (qb4, 2026-10-13)
 

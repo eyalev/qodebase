@@ -190,7 +190,7 @@ const headline = {
   // headline.scale (qb3's deck): the S4 ladder's peak windows from sim/fleet/scale-ladder.json.
   scale: (() => { try { const d = JSON.parse(rd('sim/fleet/scale-ladder.json')); const L = d.cached.ladder;
     const one = L.filter((r) => r.namespaces === 1 && !r.readCache);   // the read-cache runs (R10K) are reported apart
-    return { maxAgents: Math.max(...L.map((r) => r.agents)), filesPerSecPlateau: Math.max(...one.map((r) => r.filesPerSec)), twoNamespacesFilesPerSec: L.find((r) => r.namespaces === 2)?.filesPerSec ?? null,
+    return { maxAgents: Math.max(...L.map((r) => r.agents)), filesPerSecPlateau: Math.max(...one.map((r) => r.filesPerSec)), twoNamespacesFilesPerSec: L.find((r) => r.namespaces === 2)?.filesPerSec ?? null, twoNamespacesNote: L.find((r) => r.namespaces === 2)?.laterReading ?? null,
       ladder: L.map(({ run, agents, copies, namespaces, filesPerSec, readP50Ms, limit }) => ({ run, agents, copies, namespaces, filesPerSec, readP50Ms, limit })),
       readCache: L.filter((r) => r.readCache).map(({ run, agents, copies, readCache, filesPerSec, busiest10sFiles, readP50Ms, readP90Ms, answersDoneS, files, landed, nothingToDocument, readsFromArtifacts, errors, landedPerSecPeak, busyAtOnceMax, limit, source }) => ({ run, agents, copies, readCache, filesPerSec, busiest10sFiles, files, nothingToDocument, busyAtOnceMax, readP50Ms, readP90Ms, answersDoneS, landed, readsFromArtifacts, errors, landedPerSecPeak, limit, source })),
       realModels: d.realModels.runs.map(({ run, agents, filesPerSec, callsPerMin, limit, usd }) => ({ run, agents, filesPerSec, callsPerMin, limit, usd })),

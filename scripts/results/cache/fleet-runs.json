@@ -10812,8 +10812,8 @@
    "tokensIn": 0,
    "tokensOut": 0,
    "startedAt": 1791908546429,
-   "endedAt": 1791966387596,
-   "wallS": 57841,
+   "endedAt": 1791969508644,
+   "wallS": 60962,
    "landWaitS": {
     "p50": 78,
     "p90": 88
@@ -23236,8 +23236,8 @@
    "tokensIn": 8420553,
    "tokensOut": 264827,
    "startedAt": 1791902486503,
-   "endedAt": 1791966387980,
-   "wallS": 63901,
+   "endedAt": 1791969508929,
+   "wallS": 67022,
    "landWaitS": {
     "p50": 35,
     "p90": 52
@@ -23354,8 +23354,8 @@
    "tokensIn": 8472369,
    "tokensOut": 266508,
    "startedAt": 1791902486581,
-   "endedAt": 1791966388349,
-   "wallS": 63902,
+   "endedAt": 1791969508920,
+   "wallS": 67022,
    "landWaitS": {
     "p50": 19,
     "p90": 31
@@ -23476,8 +23476,8 @@
    "tokensIn": 8428473,
    "tokensOut": 265250,
    "startedAt": 1791902486505,
-   "endedAt": 1791966387989,
-   "wallS": 63901,
+   "endedAt": 1791969508936,
+   "wallS": 67022,
    "landWaitS": {
     "p50": 45,
     "p90": 71
@@ -28593,6 +28593,676 @@
     "root": "kata",
     "project": "eyal/kata-notes",
     "namespace": "forq"
+   }
+  },
+  {
+   "runId": "fmv7w8o4z",
+   "label": "R10K-c: 1000 cached agents, copy 5",
+   "ladder": "R10K-c",
+   "copy": 5,
+   "repo": "fleet-n3-vscode-src-1",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791969316219,
+   "endedAt": 1791969335506,
+   "wallS": 19,
+   "landWaitS": {
+    "p50": 37,
+    "p90": 43
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791969300000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 295,
+    "p90": 789,
+    "p99": 1058,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 1,
+   "copiesOfKind": 2,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet3"
+   }
+  },
+  {
+   "runId": "fmv7w900r",
+   "label": "R10K-c: 1000 cached agents, copy 6",
+   "ladder": "R10K-c",
+   "copy": 6,
+   "repo": "fleet-n3-vscode-src-2",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791969316298,
+   "endedAt": 1791969347694,
+   "wallS": 31,
+   "landWaitS": {
+    "p50": 25,
+    "p90": 35
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791969300000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 877,
+    "p90": 1821,
+    "p99": 2105,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 2,
+   "copiesOfKind": 2,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet3"
+   }
+  },
+  {
+   "runId": "fmv7w94tm",
+   "label": "R10K-c: 1000 cached agents, copy 8",
+   "ladder": "R10K-c",
+   "copy": 8,
+   "repo": "fleet-n4-vscode-src-1",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791969316285,
+   "endedAt": 1791969343325,
+   "wallS": 27,
+   "landWaitS": {
+    "p50": 47,
+    "p90": 57
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791969300000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 811,
+    "p90": 1460,
+    "p99": 1578,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 1,
+   "copiesOfKind": 2,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet4"
+   }
+  },
+  {
+   "runId": "fmv7w8pbm",
+   "label": "R10K-c: 1000 cached agents, copy 9",
+   "ladder": "R10K-c",
+   "copy": 9,
+   "repo": "fleet-n4-vscode-src-2",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791969316300,
+   "endedAt": 1791969335927,
+   "wallS": 20,
+   "landWaitS": {
+    "p50": 31,
+    "p90": 37
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791969300000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 276,
+    "p90": 817,
+    "p99": 1036,
+    "n": 4063
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "mem": 1
+   },
+   "copyOfKind": 2,
+   "copiesOfKind": 2,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet4"
+   }
+  },
+  {
+   "runId": "fmv7w8tq3",
+   "label": "R10K-c: 1000 cached agents, copy 1",
+   "ladder": "R10K-c",
+   "copy": 1,
+   "repo": "fleet-vscode-c1",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791969316271,
+   "endedAt": 1791969340651,
+   "wallS": 24,
+   "landWaitS": {
+    "p50": 30,
+    "p90": 41
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791969300000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 536,
+    "p90": 1294,
+    "p99": 1631,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 1,
+   "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7w8smd",
+   "label": "R10K-c: 1000 cached agents, copy 2",
+   "ladder": "R10K-c",
+   "copy": 2,
+   "repo": "fleet-vscode-c2",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791969316733,
+   "endedAt": 1791969347478,
+   "wallS": 31,
+   "landWaitS": {
+    "p50": 26,
+    "p90": 39
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791969300000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 1373,
+    "p90": 2317,
+    "p99": 2462,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 1,
+   "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7w8gew",
+   "label": "R10K-c: 1000 cached agents, copy 3",
+   "ladder": "R10K-c",
+   "copy": 3,
+   "repo": "fleet-vscode-c3",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791969316511,
+   "endedAt": 1791969334512,
+   "wallS": 18,
+   "landWaitS": {
+    "p50": 31,
+    "p90": 41
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791969300000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 285,
+    "p90": 720,
+    "p99": 970,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 1,
+   "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7w8rpf",
+   "label": "R10K-c: 1000 cached agents, copy 4",
+   "ladder": "R10K-c",
+   "copy": 4,
+   "repo": "fleet-vscode-c4",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791969316295,
+   "endedAt": 1791969335431,
+   "wallS": 19,
+   "landWaitS": {
+    "p50": 48,
+    "p90": 64
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791969300000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 428,
+    "p90": 810,
+    "p99": 1067,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 1,
+   "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet"
+   }
+  },
+  {
+   "runId": "fmv7w8gya",
+   "label": "R10K-c: 1000 cached agents, copy 7",
+   "ladder": "R10K-c",
+   "copy": 7,
+   "repo": "fleet-n3-vscode-c3",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791969316465,
+   "endedAt": 1791969349185,
+   "wallS": 33,
+   "landWaitS": {
+    "p50": 46,
+    "p90": 58
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791969300000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 1328,
+    "p90": 2305,
+    "p99": 2715,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 1,
+   "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet3"
+   }
+  },
+  {
+   "runId": "fmv7w9h1p",
+   "label": "R10K-c: 1000 cached agents, copy 10",
+   "ladder": "R10K-c",
+   "copy": 10,
+   "repo": "fleet-n4-vscode-c3",
+   "root": "src/vs",
+   "state": "done",
+   "agents": 1000,
+   "agentsStarted": 1000,
+   "files": 4064,
+   "landed": 2989,
+   "ready": 0,
+   "skipped": 1069,
+   "verify_fail": 0,
+   "rejected": 0,
+   "rate_limited": 0,
+   "model_error": 0,
+   "retried": 0,
+   "usd": 0,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "startedAt": 1791969316443,
+   "endedAt": 1791969343924,
+   "wallS": 27,
+   "landWaitS": {
+    "p50": 51,
+    "p90": 68
+   },
+   "models": {
+    "cache": {
+     "usd": 0,
+     "cache_miss": 6,
+     "landed": 2989,
+     "skipped": 1069,
+     "calls": 2995,
+     "rateLimited429": 0,
+     "peakPerMin": 2995,
+     "role": "planned"
+    }
+   },
+   "perMinute": [
+    {
+     "minute": 1791969300000,
+     "model": "cache",
+     "calls": 2995
+    }
+   ],
+   "readMs": {
+    "p50": 1012,
+    "p90": 1651,
+    "p99": 1989,
+    "n": 4064
+   },
+   "readTiers": {
+    "artifacts": 4063,
+    "kv": 1
+   },
+   "copyOfKind": 1,
+   "copiesOfKind": 1,
+   "source": {
+    "name": "VS Code",
+    "upstream": "microsoft/vscode",
+    "root": "src/vs",
+    "namespace": "qbfleet4"
    }
   }
  ]
