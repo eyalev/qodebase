@@ -329,8 +329,8 @@ body:has(.lw .watch) .gbuild,body:has(.lw .sacts .btn) .gbuild{background:var(--
 .lw .pc.mini.bad{background:var(--bg)}
 .lw .slast2{flex:none;font-size:15px;line-height:1.35;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .lw .slast2 .meta{font-size:13px;color:var(--dim)}
-.lw .ftabs{flex:none;display:flex;gap:4px;align-items:center}
-.lw .ftab{min-height:44px;padding:0 14px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);font:500 14px Geist,sans-serif;cursor:pointer;transition:background-color 120ms}
+.lw .ftabs{flex:none;display:flex;gap:4px;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.lw .ftabs::-webkit-scrollbar{display:none}
+.lw .ftab{flex:none;white-space:nowrap;min-height:44px;height:44px;padding:0 14px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);font:500 14px Geist,sans-serif;cursor:pointer;transition:background-color 120ms}
 @media (max-width:420px){.lw .ftab{padding:0 8px}.lw .ftabs{overflow-x:auto;scrollbar-width:none}}
 .lw .ftab[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 .lw .fhow{margin-left:auto;font-size:13px;color:var(--acc);min-height:44px;display:inline-flex;align-items:center}
