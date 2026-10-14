@@ -2628,6 +2628,9 @@ fetch('/api/talk/me', { credentials: 'same-origin' }).then(function (r) { return
   // Conversation mode carries over a page Talk opened: listen again here once the page has spoken (hands-free across pages).
   var cr = sget('convresume', 0);
   if (cr && convOn() && Date.now() - cr < 60000) { sset('convresume', 0); lastSpoken = true; setTimeout(function () { trace('conv_resume', {}); convAfter(); }, 1500); }
+  // A fresh page (not one a conversation moved to) starts with conversation mode off: a saved 'on' showed the toggle
+  // pressed while nothing listened, and the first tap turned it OFF (qb3's rig: no mic ever opened after a reload).
+  else if (convOn()) { S.convmode = 'off'; set('convmode', 'off'); if (convBtn) convBtn.setAttribute('aria-pressed', 'false'); var scm0 = document.getElementById('talk-s-convmode'); if (scm0) scm0.value = 'off'; trace('conv_mode', { on: false, where: 'fresh page' }); }
   // Said on another page for an action that lives here (a fleet job on /runs): say it again once the page has drawn its actions.
   var th = sget('then', null);
   if (th && Date.now() - th.at < 60000) {
