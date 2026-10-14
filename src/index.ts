@@ -1916,7 +1916,7 @@ async function aigAnthropic(request: Request, env: Env, url: URL): Promise<Respo
     const txt = await request.text();
     try {
       const j = JSON.parse(txt);
-      if (typeof j.model === 'string' && /^claude-haiku-5-5/.test(j.model)) { swapped = j.model; j.model = 'claude-haiku-4-5'; }
+      if (typeof j.model === 'string' && /^claude-haiku-5-5/.test(j.model)) { swapped = j.model; j.model = 'claude-haiku-4-5'; if (j.max_tokens > 64000) j.max_tokens = 64000; }   // Haiku 4.5's output cap
       body = JSON.stringify(j);
     } catch { body = txt; }
   }
