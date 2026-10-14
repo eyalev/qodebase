@@ -1,0 +1,8 @@
+[
+ {"a": 16900, "b": 26700},
+ {"a": 83100, "b": 90400},
+ {"a": 90400, "b": 109000, "say": "The agent's own Claude Code session is kept with its change, and the agent can still be asked about it."},
+ {"a": 110900, "b": 116300},
+ {"a": 136000, "b": 144300},
+ {"a": 152300, "b": 174000, "hold": 1}
+]
