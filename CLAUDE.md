@@ -863,3 +863,18 @@ https://qodebase.app/p/eyal/qodebase is a read-only mirror of github.com/eyalev/
 - On each GitHub push: webhook `POST /api/hooks/mirror/<o>/<n>` (GitHub hook id 698091321 on eyalev/qodebase, push
   events), checked with X-Hub-Signature-256 against a secret derived per project from ADMIN_SECRET (nothing stored).
   Workers Logs: module `mirror`, events synced / sync_error / hook_refused. Info shows `mirror.{syncedAt, head, ms}`.
+
+## Gateway billing (Claude on forq's AI Gateway credits, opt-in, 2026-10-14)
+
+Landing flag `billing: 'plan' | 'gateway'` (default plan; `POST …/landing/flags`, or admin
+`POST /api/admin/landing-flags {slug, flags:{billing}}` for a project that doesn't exist yet). With `gateway`, the
+project's boxes (router, coders, reviewers) get `ANTHROPIC_BASE_URL=<API_BASE>/api/aig/anthropic` and their own agent
+token as `ANTHROPIC_API_KEY`; forq (`aigAnthropic` in index.ts) checks the token, drops it, adds `cf-aig-authorization`
+(REPLAY_GATEWAY_TOKEN, never in a box or a log) and streams from AI Gateway's native Anthropic route on gateway
+`qodebase-replay` (authenticated, 600/min). Billed from unified-billing credits; the budget guard prices it at API rates +5%.
+- **Haiku 5.5 is NOT billable this way (measured 2026-10-14):** the gateway forwards it to Anthropic without a key
+  ('x-api-key header is required'). Opus 5.5, Sonnet 5.5 and the 4.x models work. Haiku 4.5 refuses Claude Code's 5.5
+  requests; Cloudflare's REST `/ai/v1/messages` refuses Claude Code's requests (system blocks, roles). So the proxy sends
+  Haiku 5.5 calls as Sonnet 5.5 (logged, `aig` module): use gateway billing only for Sonnet/Opus builds (Eyal's call).
+- The credit balance API (`/ai-gateway/billing/credit-balance`) reports CENTS (853.88 = $8.54).
+- Logs: Workers Logs module `aig` (call, status, ms, model swap); costs per gateway in `aiGatewayRequestsAdaptiveGroups`.
