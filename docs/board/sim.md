@@ -1504,6 +1504,8 @@ model calls. 10 copies of src/vs, 1,000 agents each.
     never ran. That is the next fix.
   - **Throughput:** roughly linear in copies, since each copy has its own Run object and Lander. The bookkeeping objects
     are still the wall at the peaks.
+- **(h), the 100,000 rerun with the re-issue sweep live:** 0 lost. All 298,900 landed in ~89 s; ~22,400 files/s at
+  the busiest; ~12,300 busy at once. The sweep had nothing to redo.
 
 ## (m) Code collision dial: prediction before qb6's runs (qb4, 2026-10-13)
 

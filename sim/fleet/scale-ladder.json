@@ -243,8 +243,36 @@
      "landed": 298900,
      "lost": 0,
      "runsFinished": 100,
-     "note": "The re-issue sweep (fleet b3ae9c4b; commits c93f333, 96d052c) was applied afterwards to the 11 unfinished copies: all 43 were redone and landed within ~75 s. The in-run figure stays 43 not landed; a rerun with the sweep live is planned."
+     "note": "The re-issue sweep (fleet b3ae9c4b; commits c93f333, 96d052c) was applied afterwards to the 11 unfinished copies: all 43 were redone and landed within ~75 s. The in-run figure stays 43 not landed; the rerun with the sweep live is R100K-h (0 lost)."
     }
+   },
+   {
+    "run": "R100K-h",
+    "agents": 100000,
+    "copies": 100,
+    "namespaces": 4,
+    "files": 406400,
+    "errors": 0,
+    "clean": true,
+    "lost": 0,
+    "lostShare": 0,
+    "readCache": "best case: files repeat (cache), with the re-issue sweep live (fleet b3ae9c4b)",
+    "filesPerSec": 22400,
+    "busiest10sFiles": 223880,
+    "busyAtOnceMax": 12275,
+    "readP50Ms": 32,
+    "readP90Ms": 149,
+    "handOutP50Ms": 72,
+    "handOutP90Ms": 225,
+    "landedPerSecPeak": 10750,
+    "startToAllLandedS": 89,
+    "landed": 298900,
+    "nothingToDocument": 106900,
+    "noCachedAnswer": 600,
+    "readsFromArtifacts": 0,
+    "reissued": 0,
+    "limit": "none lost: 100 of 100 runs finished, the sweep had nothing to redo",
+    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9ebf0dd)"
    }
   ],
   "files": {
@@ -258,7 +286,8 @@
    "R10K-d": 40640,
    "R50K-e": 203200,
    "R50K-f": 203200,
-   "R100K-g": 406400
+   "R100K-g": 406400,
+   "R100K-h": 406400
   },
   "tenK": {
    "say": "10,000 agents on Cloudflare, every file different, 0 errors: all 29,890 changes on main 86 s after the start (~1,900 files a second at the busiest; Artifacts reads slow down but never fail, and that read rate, ~2,000/s for the account, is the wall).",
@@ -267,7 +296,7 @@
    "not": "The read cache did not raise the realistic throughput (1,900 vs the 2,100 plateau without it): not 'the fix'. More namespaces did not raise it either: the read limit is for the account.",
    "notRun": "20,000 agents: not run (budget).",
    "fiftyK": "50,000 agents (cached answers, files repeat, best case), before the fixes: 5.4% dropped by our own bookkeeping (R50K-e). After the fixes (R50K-f): 3 of 203,200 not landed (0.0015%), ~12,900 files/s at the busiest.",
-   "hundredK": "100,000 agents (cached answers, files repeat, best case): ~21,100 files a second at the busiest, 298,857 changes landed in ~66 s, nothing landed wrong; 43 of 406,400 files (0.01%) were answered but not landed in the run (our bookkeeping objects overloaded at the peak), and a sweep added afterwards redid and landed all 43 within ~75 s. At most ~13,800 agents busy at once."
+   "hundredK": "100,000 agents on Cloudflare (cached answers, no model calls; files repeat, the best case): 0 lost, all 298,900 changes on main ~89 s after the start, ~22,400 files a second at the busiest, at most ~12,300 agents busy at once. When every file is different, Artifacts reads cap the account at ~2,000 files a second (the 10,000 run)."
   }
  },
  "realModels": {
