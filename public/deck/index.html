@@ -61,7 +61,7 @@ body.rec .bar-c{display:none}
 .bar-c svg{width:18px;height:18px;vertical-align:-3px}
 .prog{position:fixed;left:0;top:0;height:3px;background:var(--acc);width:0;transition:width 220ms ease;z-index:6}
 body.rec .prog,body.rec .notes,body.rec .where{display:none}
-body.rec .claim p,body.rec .claim .src{display:none}body.rec .claim h2{font-size:2.1em;line-height:1.08}
+body.rec .claim p,body.rec .claim .src{display:none}.claim .vline{display:none}body.rec .claim .vline{display:block;margin-top:.7em;font-size:1em;line-height:1.35;color:var(--dim)}body.rec .claim h2{font-size:2.1em;line-height:1.08}
 .notes{position:fixed;left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom));max-height:46dvh;overflow:auto;padding:16px 16px 20px;background:var(--card);border-top:1px solid var(--line);font-size:17px;line-height:1.5;transform:translateY(110%);transition:transform 220ms ease;z-index:4}
 .notes.open{transform:none}
 .notes h4{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--dim)}
@@ -228,8 +228,8 @@ body.rec .claim p,body.rec .claim .src{display:none}body.rec .claim h2{font-size
  <aside class="say">Section A: the idea. Agents work alone and all finish at once. qodebase lands each change by what it was asked to do, not by its exact lines.</aside>
 </section>
 
-<section class="s" data-t="The problem is order" data-sec="A">
- <div class="claim"><h2>The real problem is order</h2><p>Hono's last 346 pull requests, replayed in waves of 100: <b>48%</b> needed another one to land first. Git saw no conflicts at all.</p><span class="src">Replay of real pull requests, no model calls</span></div>
+<section class="s" data-t="The problem is order" data-sec="A" data-vh="48% couldn’t land until another did">
+ <div class="claim"><h2>The real problem is order</h2><span class="vline">Hono, an open-source web framework: if 100 of its last 346 real PRs were written at once, as 100 agents would. Git conflicts: 0.</span><p>Hono's last 346 pull requests, replayed in waves of 100: <b>48%</b> needed another one to land first. Git saw no conflicts at all.</p><span class="src">Replay of real pull requests, no model calls</span></div>
  <div class="vis"><div class="sq" id="hono" aria-label="48 of 100 squares filled"></div><div class="legend"><span><b style="background:var(--busy)"></b>needed another change first</span><span><b style="background:var(--chip);box-shadow:inset 0 0 0 1px var(--frame)"></b>could land alone</span></div></div>
  <aside class="say">We measured first. We replayed Hono's last 346 pull requests in waves of a hundred. Almost half needed another one to land first, and git reported no conflicts at all. The hard part is order.</aside>
 </section>
