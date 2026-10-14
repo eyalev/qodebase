@@ -1901,14 +1901,28 @@ async function aigAnthropic(request: Request, env: Env, url: URL): Promise<Respo
   const slug = projectOf(id);
   const f = await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null);
   if (f?.billing !== 'gateway' || !env.REPLAY_GATEWAY_TOKEN) return json({ type: 'error', error: { type: 'permission_error', message: 'this project is not on gateway billing' } }, 403);
+  // AI Gateway's native /anthropic route forwarded our calls to Anthropic without a key ('x-api-key header is required'),
+  // as it did for the merger's replays; Cloudflare's AI REST API (Anthropic-compatible /ai/v1/messages) bills unified
+  // credits. Its model ids are 'anthropic/claude-haiku-5.5': Claude Code's are mapped on the way in.
   const acct = '887d7234a6b8d65ad355a4f6684cab67', gw = env.REPLAY_GATEWAY || 'qodebase-replay';
-  const target = `https://gateway.ai.cloudflare.com/v1/${acct}/${gw}/anthropic/${url.pathname.slice('/api/aig/anthropic/'.length)}${url.search}`;
+  const rest = url.pathname.slice('/api/aig/anthropic/'.length).replace(/^v1\//, '');
+  const target = `https://api.cloudflare.com/client/v4/accounts/${acct}/ai/v1/${rest}${url.search}`;
   const h = new Headers();
   for (const [k, v] of request.headers) if (/^(content-type|anthropic-version|anthropic-beta|accept)$/i.test(k)) h.set(k, v);
-  h.set('cf-aig-authorization', `Bearer ${env.REPLAY_GATEWAY_TOKEN}`);
+  h.set('authorization', `Bearer ${env.REPLAY_GATEWAY_TOKEN}`);
+  h.set('cf-aig-gateway-id', gw);
   h.set('cf-aig-metadata', JSON.stringify({ project: slug, agent: id.split('--')[1] || id }));
+  let body: BodyInit | undefined;
+  if (request.method !== 'GET') {
+    const txt = await request.text();
+    try {
+      const j = JSON.parse(txt);
+      if (typeof j.model === 'string' && !j.model.includes('/')) j.model = 'anthropic/' + j.model.replace(/^(claude-(?:opus|sonnet|haiku))-(\d+)-(\d+)(.*)$/, '$1-$2.$3$4');
+      body = JSON.stringify(j);
+    } catch { body = txt; }
+  }
   const t0 = Date.now();
-  const res = await fetch(target, { method: request.method, headers: h, body: request.method === 'GET' ? undefined : request.body });
+  const res = await fetch(target, { method: request.method, headers: h, body });
   log('aig', 'call', { slug, agent: id, path: url.pathname.slice(19, 60), status: res.status, ms: Date.now() - t0 });
   const out = new Headers(res.headers); out.delete('set-cookie');
   return new Response(res.body, { status: res.status, headers: out });
