@@ -24,3 +24,7 @@
   Artifacts mirror forq/forq.
 - Install test `qb install qodebase --name qb-selftest`: account, storage, deploy, lock and ready all done in 79 s;
   the copy answers 302 (Access). This is the release a person gets from /own now.
+
+## 2026-10-14 15:24-15:26 UTC: release rebuilt after the qb-agent rename
+- Built from forq 72ced72 (the in-box CLI is qb-agent, forq kept as a symlink), committed as 814d3e8, pushed to GitHub
+  and the Artifacts mirror. Install test into qb-selftest: all 5 steps done in 95 s; the copy answers 302 (Access).
