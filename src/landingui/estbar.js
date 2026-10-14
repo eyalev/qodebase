@@ -35,7 +35,7 @@
   // qb6 (2026-10-14): a box refused by the awake limit now waits for a free one ('waiting for a free box', retried each
   // minute) -> 'waiting for a free box: Agent N', not stuck; 'box had not started' appears only after a real wake failed.
   window.qbBoxWait = function (view, name) {
-    const waits = (c) => { const ev = (c.events || []).filter((e) => /waiting for a free box|box had not started/i.test(JSON.stringify(e))); return ev.length && /waiting for a free box/i.test(JSON.stringify(ev[ev.length - 1])); };
+    const waits = (c) => { const ev = (c.events || []).filter((e) => /waiting for a free box|box had not started|box is starting/i.test(JSON.stringify(e))); return ev.length && /waiting for a free box/i.test(JSON.stringify(ev[ev.length - 1])); };
     const cs = ((view && view.changes) || []).filter((c) => c.state !== 'landed' && waits(c));
     if (!cs.length) return null;
     const who = name ? name(cs[0].agent) : 'an agent';
@@ -43,7 +43,7 @@
   };
   window.qbStuckAgent = function (view, name) {
     const never = (x) => /box had not started|never started|before its task was sent/i.test(JSON.stringify(x || ''));
-    const latest = (c) => (c.events || []).filter((e) => /waiting for a free box|box had not started/i.test(JSON.stringify(e))).slice(-1)[0];
+    const latest = (c) => (c.events || []).filter((e) => /waiting for a free box|box had not started|box is starting/i.test(JSON.stringify(e))).slice(-1)[0];
     const c = ((view && view.changes) || []).find((c) => c.state !== 'landed' && never(latest(c) || ''));
     const a = c ? null : ((view && view.agents) || []).find((a) => a.state === 'blocked' && never(a));
     const id = c ? c.agent : a ? a.id || a.agent : null;
