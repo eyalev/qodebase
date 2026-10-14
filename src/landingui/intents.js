@@ -16,6 +16,8 @@
   const usd = (x) => (x == null ? '' : x < 0.01 ? '<$0.01' : `$${x.toFixed(x < 10 ? 2 : 0)}`);
 
   const IT_CSS = `
+/* Desktop (critique 2026-10-14): the tree uses the work page's full width, like the Agents tab, not the 760 px reading column. */
+@media (min-width:1000px){.lw .drill:has(.it-mount){max-width:none}.it-d dd{max-width:72ch}}
 .it{font-variant-numeric:tabular-nums;--it-i:14px}
 .it *{box-sizing:border-box}
 .it p{margin:0}

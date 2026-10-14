@@ -1086,6 +1086,23 @@ body:has(.bsheet:not([hidden])) #talk-ver{display:none!important}
 /* One green button on the start page: the box's own Build it. */
 body:has(.land) .gbuild{display:none}
 @media (min-width:900px){.land{padding-top:16vh}.land h1{font-size:36px}}
+/* Desktop (2026-10-14, desktop critique): from 1100 px the home is two columns: the build box and Build it on the left,
+   the build settings (signed in) or the doors (signed out) beside them; hero 40 px from the top. Phones unchanged. */
+@media (min-width:1100px){
+.pad:has(>.land){max-width:1112px}
+.land{max-width:1080px;padding-top:40px;display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,440px);grid-template-rows:auto auto auto auto auto auto 1fr auto auto auto;column-gap:40px;align-items:start}
+.land>h1,.land>.lede{grid-column:1 / -1}
+.land>h1{grid-row:1}.land>.lede{grid-row:2;max-width:640px}
+.landask{display:contents}
+.landask>.askbox{grid-column:1;grid-row:3}
+.landask>.btn{grid-column:1;grid-row:4;margin-top:10px}
+.land>.ideas{grid-column:1;grid-row:5}
+.land>.howlink{grid-column:1;grid-row:6}
+.landask>.bsbox{grid-column:2;grid-row:3 / span 5}
+.land>.doors{grid-column:2;grid-row:3 / span 5;margin-top:0}
+.land:has(#bsopen:not([hidden]))>.doors{grid-column:1;grid-row:7}
+.land>.tryh{grid-column:1 / -1;grid-row:8}.land>.trys{grid-column:1 / -1;grid-row:9}.land>.tryrow{grid-column:1 / -1;grid-row:10}
+}
 `;
 
 /** Small apps that run here, each with one change to ask for: the fastest way to see
