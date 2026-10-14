@@ -504,6 +504,7 @@ h3{font-size:13px;font-weight:600;color:var(--dim);margin:24px 0 8px}
 /* Readme: the project's documents as a row of tabs over the rendered file. */
 .docs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:16px -16px 8px;padding:0 16px 10px;border-bottom:1px solid var(--line)}
 .docs::-webkit-scrollbar{display:none}
+.docs{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}   /* the row scrolls: its last tab fades at the edge */
 .docs a{flex:none;position:relative;display:inline-flex;align-items:center;min-height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line);color:var(--dim);font:500 13px 'Geist',sans-serif}
 .docs a::after{content:'';position:absolute;inset:-6px 0}
 .rhd{display:flex;align-items:center;gap:8px;margin:2px 0 10px;min-width:0}
