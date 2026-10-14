@@ -2603,6 +2603,7 @@ if (TEST_ON) window.__talkTest = {
     submit(words);
     return Promise.resolve({ u: curU });
   },
+  scan: function () { return talkScan(document); },   // what the decide sees (for harnesses)
   state: function () { return { busy: busy, listening: listening, conv: convOn(), speaking: !!(speakPending || speakingQ || ackPlaying), offer: offerState ? offerState.text : null, last: hist.length ? hist[hist.length - 1] : null }; },
 };
 
