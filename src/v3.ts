@@ -949,7 +949,7 @@ export const LAND_CSS = `
 /* The mic sits inside the prompt box (Eyal, 2026-10-12): speaking fills the box. Talk's floating button is not
    shown on the home page, so it never covers the Build settings dock. */
 .askbox{position:relative}
-.askbox textarea{padding-right:56px}
+.askbox textarea,.landask .askbox textarea{padding-right:56px}   /* clear of the × and the mic (the .landask padding shorthand below reset it, desktop critique 2026-10-14) */
 .askmic{position:absolute;right:8px;bottom:8px;width:44px;height:44px;border:0;border-radius:10px;background:var(--chip);color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .askmic svg{width:22px;height:22px}.askmic.on{background:var(--warn);color:#fff}
 .askmic:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
