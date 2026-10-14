@@ -747,9 +747,92 @@
     if (tab === 'line') return theLine(false);
     if (tab === 'events') return `${headFeed(8, true)}<p class="fmore"><a href="#/feed">Every step</a>${asksUrl() ? ` <a href="${asksUrl()}">All asks</a>` : ''}</p>`;
     if (tab === 'timeline') return timelineHtml(false);
+    if (tab === 'how') return `${howRan()}<p class="fmore"><a href="#/how">Open it as a full page</a></p>`;
     if (tab === 'intents' && itOk()) return `${itMount()}<p class="fmore"><a href="#/intents">Open the intent tree full width</a></p>`;
     if (tab === 'contract' && ctOk()) return `${ctMount()}<p class="fmore"><a href="#/contract">Open the contract full width</a></p>`;
     return '';
+  }
+  // ---- How this build ran (Eyal, 2026-10-14): the internals made visible, in his order: the plan, the line over time,
+  // the budget, what the merger did per train, the reviewers. Built from the landing view and qb6's timeline (merger
+  // spans carry their train; reviewer lanes are r:*); nothing here is made up: a part with no data is left out.
+  const usd2 = (x) => `$${(+x || 0).toFixed(2)}`;
+  const mmss = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} min` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  // qb6's GET …/landing/howran: {plan {parts, skeleton, changes, held}, trains [{replays, phaseMs, cold…}], reviews, budget}
+  let HR = null, HRbusy = false;
+  async function loadHowran() {
+    if (HRbusy || !API || MOCK) return; HRbusy = true;
+    try { const r = await fetch(`${API}/landing/howran`); const j = r.ok ? await r.json() : null; log('howran', { status: r.status }); if (j) { HR = { j, at: Date.now() }; render(); } }
+    catch (e) { log('howran_failed', { error: String(e) }); } finally { HRbusy = false; }
+  }
+  function howRan() {
+    if (!TLsrv || Date.now() - TLsrv.at > 60e3) loadTimeline();
+    if (!HR || Date.now() - HR.at > 30e3) loadHowran();
+    const H = HR && HR.j, skel = new Set((H?.plan?.skeleton || []).map((x) => (typeof x === 'string' ? x : x.id)));
+    const T = TLsrv && TLsrv.t, cs = D.changes.slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    const t0 = Math.min(...cs.map((c) => c.createdAt || Infinity), D.estimate?.startedAt || Infinity);
+    const chipOf = (c) => `<a class="pc hw-c ${c.state === 'landed' ? 'hw-l' : c.state === 'bounced' || c.state === 'with-lead' ? 'bad' : 'hw-o'}${c.stackedOn ? ' st' : ''}" href="#/change/${esc(c.id)}" title="${AG(c.agent)}: ${esc(short(c))}" aria-label="${AG(c.agent)}: ${esc(short(c))}">${agentNum(c.agent)}</a>`;
+    // (1) The plan: agents started together form a wave (60 s apart at most); a wave after the first started once the
+    // changes before it had landed. Stacked changes say what they build on.
+    const waves = []; for (const c of cs) { const w = waves[waves.length - 1]; if (w && (c.createdAt || 0) - w.last < 60e3) { w.cs.push(c); w.last = c.createdAt || w.last; } else waves.push({ at: c.createdAt || 0, last: c.createdAt || 0, cs: [c] }); }
+    const idx = byId();
+    const plan = waves.map((w, i) => {
+      const before = cs.filter((c) => c.landedAt && c.landedAt <= w.at).length;
+      const stacks = w.cs.filter((c) => c.stackedOn && idx.get(c.stackedOn)).map((c) => `${AG(c.agent)} on ${AG(idx.get(c.stackedOn).agent)}`);
+      const sk = w.cs.some((c) => skel.has(c.id));
+      const head = `${i === 0 ? (sk ? 'First, the skeleton' : 'First') : `Then, at ${mmss(w.at - t0)}`}: ${w.cs.length === 1 ? `1 agent` : `${n0(w.cs.length)} agents side by side`}${i && before ? `, after ${n0(before)} change${before === 1 ? '' : 's'} had landed` : ''}`;
+      const first = i === 0 && w.cs.length <= 3 ? ` <span class="dim small">(${esc(short(w.cs[0]))})</span>` : '';
+      return `<li><p class="hw-h">${head}${first}</p><div class="pchips hw-w">${w.cs.map(chipOf).join('')}</div>${stacks.length ? `<p class="hw-s">Stacked: ${esc(stacks.join(', '))}</p>` : ''}</li>`;
+    }).join('');
+    // (2) The line over time: each train a bar on one time axis, height by its changes; red when it sent one back
+    const trains = (D.queue?.trains || []).filter((t) => t.startedAt).sort((a, b) => a.startedAt - b.startedAt);
+    const tEnd = Math.max(...trains.map((t) => t.endedAt || t.startedAt), ...cs.map((c) => c.landedAt || 0), t0 + 1);
+    const maxN = Math.max(1, ...trains.map((t) => t.changes.length));
+    // positions on a shortened axis: a quiet gap counts at most 6% of the run, so a late train does not crush the rest
+    const span0 = tEnd - t0, G = span0 * 0.06; let acc = 0, prev = t0, shortened = false; const posOf = new Map();
+    for (const t of trains) { const gap = t.startedAt - prev; if (gap > G) { acc += G; shortened = true; } else acc += Math.max(0, gap); posOf.set(t.id, acc); prev = t.startedAt; }
+    const endGap = tEnd - prev, axisLen = acc + (endGap > G ? (shortened = true, G) : endGap) || 1;
+    const bars = trains.map((t, i) => `<i class="hw-tb${t.state === 'bounced' || (t.items || []).some((x) => x.outcome === 'bounced') ? ' bad' : ''}" style="left:${Math.min(99, (posOf.get(t.id) / axisLen) * 100).toFixed(2)}%;height:${Math.round(25 + 75 * (t.changes.length / maxN))}%" title="Train ${i + 1}: ${t.changes.length} change${t.changes.length === 1 ? '' : 's'}, ${mmss(t.startedAt - t0)} into the run"></i>`).join('');
+    const line = trains.length ? `<div class="hw-line" role="img" aria-label="${trains.length} trains over ${mmss(tEnd - t0)}">${bars}</div><div class="hw-ax"><span>0:00</span><span>${mmss(tEnd - t0)}${shortened ? ' (quiet stretches shortened)' : ''}</span></div>
+      <p class="hw-n">${n0(trains.length)} train${trains.length === 1 ? '' : 's'} took ${n0(cs.filter((c) => c.state === 'landed').length)} changes to main, up to ${n0(maxN)} at a time. <span class="hw-links"><button class="linkb" type="button" data-fittab="line">Line history</button>${tlOk() ? '<a href="#/timeline">Timeline</a>' : ''}</span></p>` : '<p class="dim">No trains yet.</p>';
+    // (3) The budget: what it cost against the estimate and the guard's cap, and any halts
+    const P0 = D.progress || {}, est = D.estimate || {}, B = D.budget || {};
+    const spent = P0.actualUsd ?? P0.spentUsd ?? null, cap = B.usd || null, er = Array.isArray(est.apiUsd) ? est.apiUsd : null;
+    const top = Math.max(spent || 0, cap || 0, er ? er[1] : 0) || 1, pc = (v) => `${((v / top) * 100).toFixed(1)}%`;
+    const plan_ = (D.billing || P0.billing || est.billing) === 'sub';
+    const HB = H?.budget, gs = HB?.spent?.usd;
+    const halts = [gs != null && (HB.capUsd || cap) ? `The budget guard counted ${usd2(gs)} since the budget was set (box time and every Claude call); it stops the run at ${usd2(HB.capUsd || cap)}.` : '',
+      HB?.halted ? `Halted: ${HB.haltedWhy || 'by the guard'}.` : D.run?.stopped ? `Stopped: ${D.run.stoppedWhy || 'by the owner'}.` : '', D.run?.paused || HB?.paused ? 'Paused now.' : '', !HB && B.halted && !D.run?.stopped ? 'The budget guard halted it.' : ''].filter(Boolean);
+    const budget = spent != null || cap ? `<div class="hw-bud">${spent != null ? `<i class="hw-sp" style="width:${pc(spent)}"></i>` : ''}${er ? `<i class="hw-er" style="left:${pc(er[0])};width:${pc(er[1] - er[0])}"></i>` : ''}${cap ? `<i class="hw-cap" style="left:${pc(cap)}"></i>` : ''}</div>
+      <p class="hw-n">${spent != null ? `${plan_ ? 'API-equivalent' : 'Spent'} <b>${usd2(spent)}</b>` : ''}${er ? `; the estimate was ${usd2(er[0])} to ${usd2(er[1])}` : ''}${cap && !(H?.budget?.spent) ? `; the guard stops it at ${usd2(cap)}` : ''}.${plan_ ? ' It ran on a Claude plan, so the dollars are what the same work costs at API prices.' : ''}</p>${halts.length ? `<p class="hw-n">${esc(halts.join(' '))}</p>` : ''}` : '<p class="dim">No cost recorded for this build.</p>';
+    // (4) What the merger did, train by train (qb6's merger spans, keyed by train)
+    const mer = T ? T.spans.filter((x) => x.lane === 'merger' && x.train) : [];
+    const byT = new Map(); for (const x of mer) { if (!byT.has(x.train)) byT.set(x.train, []); byT.get(x.train).push(x); }
+    const sec = (ms) => `${(ms / 1000).toFixed(ms < 10e3 ? 1 : 0)} s`;
+    const sumP = (xs, ph) => xs.filter((x) => x.phase === ph).reduce((n, x) => n + (x.end - x.start), 0);
+    const merger = trains.slice().reverse().slice(0, 30).map((t) => {
+      const xs = byT.get(t.id) || [], i = trains.indexOf(t) + 1, nRep = (t.changes || []).filter((id) => /^replayed/.test(idx.get(id)?.landing?.how || '')).length;
+      const parts = [xs.some((x) => x.phase === 'wake' && /cold/.test(x.label + (x.detail || ''))) ? 'woke the merger box (cold)' : '', sumP(xs, 'fetch') ? `fetched in ${sec(sumP(xs, 'fetch'))}` : '',
+        `merged ${t.changes.length} change${t.changes.length === 1 ? '' : 's'}`, (() => { const ht = (H?.trains || []).find((x) => x.id === t.id), rp = ht?.replays || [];
+          if (rp.length) { const ms = rp.reduce((n, x) => n + (x.ms || 0), 0), md = [...new Set(rp.map((x) => String(x.model || '').replace(/^claude-/, '').replace(/-\d.*$/, '')).filter(Boolean))]; return `replayed ${rp.length} by ${md.length ? md.join(' and ') : 'a model'}${ms ? ` in ${sec(ms)}` : ''}`; }
+          return nRep ? `replayed ${nRep}${sumP(xs, 'replay') ? ` in ${sec(sumP(xs, 'replay'))}` : ''}` : ''; })(),
+        t.checks ? (t.checks.ok === false ? 'checks failed' : t.checks.ms ? `checks passed in ${sec(t.checks.ms)}` : 'checks passed') : '', sumP(xs, 'push') ? `pushed in ${sec(sumP(xs, 'push'))}` : (t.state === 'landed' ? 'pushed' : '')].filter(Boolean);
+      const det = xs.map((x) => `<li><span>${esc(x.label || x.phase)}${x.detail ? ` <span class="dim">(${esc(x.detail)})</span>` : ''}</span><span class="dim small">${sec(x.end - x.start)}</span></li>`).join('');
+      return `<li><details${openTrains.has('m' + t.id) ? ' open' : ''} data-train="m${esc(t.id)}"><summary>Train ${i}: ${esc(parts.join(', '))}.</summary>${det ? `<ul class="hw-det">${det}</ul>` : '<p class="dim small">No step-by-step record for this train.</p>'}</details></li>`;
+    }).join('');
+    // (5) The reviewers (lanes r:*): how many each read, how long a change waited for one
+    const rv = T ? T.lanes.filter((l) => /^r:/.test(l.id)) : [];
+    const rows = rv.map((l, i) => { const xs = T.spans.filter((x) => x.lane === l.id && x.phase === 'review'); const avg = xs.length ? xs.reduce((n, x) => n + x.end - x.start, 0) / xs.length : 0; return xs.length ? `<li>Reviewer ${i + 1}: ${n0(xs.length)} review${xs.length === 1 ? '' : 's'}, ${sec(avg)} each on average</li>` : ''; }).join('');
+    const waits = T ? T.spans.filter((x) => x.phase === 'wait_review') : [], wAvg = waits.length ? waits.reduce((n, x) => n + x.end - x.start, 0) / waits.length : 0;
+    const RV = H?.reviews, rvHead = RV ? `<p class="hw-n">${n0(RV.reviewers || 0)} reviewer${RV.reviewers === 1 ? '' : 's'}${RV.model ? ` (${esc(RV.model)}${RV.style === 'adversarial' ? ', adversarial' : ''})` : ''}: ${n0(RV.approved || 0)} approved, ${n0(RV.changesAsked || 0)} asked for a fix${RV.autoApproved ? `, ${n0(RV.autoApproved)} went through with no review` : ''}.</p>` : '';
+    const reviewers = rows || rvHead ? `${rvHead}${rows ? `<ul class="hw-rv">${rows}</ul>` : ''}${waits.length ? `<p class="hw-n">A change waited ${sec(wAvg)} for a reviewer on average.</p>` : ''}` : '';
+    const reviewers0 = rows ? `<ul class="hw-rv">${rows}</ul>${waits.length ? `<p class="hw-n">A change waited ${sec(wAvg)} for a reviewer on average.</p>` : ''}` : '';
+    return `<div class="hw">
+      <section><h3>The plan</h3>${H?.plan?.parts ? `<p class="hw-n">The router planned ${n0(H.plan.parts)} parts.</p>` : ''}${H?.plan?.held?.length ? `<p class="hw-n">${n0(H.plan.held.length)} task${H.plan.held.length === 1 ? '' : 's'} waited for a free agent.</p>` : ''}<p class="cap">How the work was split: agents started together sit side by side; a later group started once earlier changes had landed. Each circle is one change; ${matchMedia('(hover: hover) and (pointer: fine)').matches ? 'click' : 'tap'} it to open.</p><ol class="hw-plan">${plan}</ol></section>
+      <section><h3>The line over time</h3>${line}</section>
+      <section><h3>The budget</h3>${budget}</section>
+      ${T ? `<section><h3>What the merger did</h3><ul class="lhist">${merger}</ul></section>` : tlOk() ? '<p class="dim">Loading the merger\u2019s record\u2026</p>' : ''}
+      ${reviewers ? `<section><h3>The reviewers</h3>${reviewers}</section>` : ''}
+    </div>`;
   }
   // The run as a trace (timeline.js, bundled in front of this file): a tab here and a full page at #/timeline.
   let TL = null;
@@ -798,7 +881,7 @@
     return `<div class="fit open">${statusStrip(live, isStarting)}
       ${boardHead()}<div class="fpipe">${pipeline()}</div>
       ${latestLine(isStarting)}
-      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${tlOk() ? tab('timeline', 'Timeline') : ''}${itOk() ? tab('intents', 'Intents') : ''}${ctOk() ? tab('contract', 'Contract') : ''}</div>
+      <div class="ftabs" role="group" aria-label="Details">${tab('agents', 'Agents')}${tab('line', 'Line')}${tab('events', 'Events')}${D.changes.length ? tab('how', 'How it ran') : ''}${tlOk() ? tab('timeline', 'Timeline') : ''}${itOk() ? tab('intents', 'Intents') : ''}${ctOk() ? tab('contract', 'Contract') : ''}</div>
       <div class="fpanel">${OWN ? needsYou() : ''}${fitPanel(cur)}</div></div>
       ${belowFold()}`;
   }
@@ -994,7 +1077,7 @@
     const h = decodeURIComponent(location.hash || '#/'); let m;
     termSeen = new Set();
     const html = /^#\/contract$/.test(h) && ctOk() ? viewContract() : (m = /^#\/intents(?:\/why\/(.+))?$/.exec(h)) && itOk() ? viewIntents(m[1] || null) : (m = /^#\/area\/(.+)$/.exec(h)) ? viewArea(m[1]) : (m = /^#\/file\/(.+)$/.exec(h)) ? viewFile(m[1]) : (m = /^#\/change\/(.+)$/.exec(h)) ? viewChange(m[1])
-      : h === '#/timeline' && tlOk() ? viewTimeline() : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
+      : h === '#/timeline' && tlOk() ? viewTimeline() : h === '#/how' && D.changes.length ? `<div class="drill">${crumbs([['Board', '#/'], ['How this build ran']])}<h2 style="font-size:20px;margin-bottom:8px">How this build ran</h2>${howRan()}</div>` : h === '#/replayed' ? viewReplayed() : h === '#/line' ? viewLine() : h === '#/feed' ? viewFeed() : h === '#/changes' ? viewChanges() : estTop() + overview();
     termSeen = null;
     // Rebuild only when something other than a time changed, and never under a finger:
     // a rebuild mid-tap swallowed about one tap in six (critique, 2026-10-07).
