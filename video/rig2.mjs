@@ -91,9 +91,11 @@ const cookies = await session();
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', headless: !argv.includes('--headed'), args: ['--autoplay-policy=no-user-gesture-required'] });
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, permissions: ['microphone'], colorScheme: opt('--theme', 'light') });
 await ctx.addCookies(cookies);
-const audioF = fs.createWriteStream(path.join(OUT, 'audio.webm'));
-await ctx.exposeBinding('__rigAudio', (_s, b64) => { audioF.write(Buffer.from(b64, 'base64')); });
-await ctx.exposeBinding('__rigAudioStart', () => { log('audio-start'); });
+// One file per page load: each load starts a new MediaRecorder with its own header (appending them to one file left
+// everything after the first load unreadable, 2026-10-14). audio-start events carry the file name.
+let audioF = null, audioN = 0;
+await ctx.exposeBinding('__rigAudio', (_s, b64) => { if (audioF) audioF.write(Buffer.from(b64, 'base64')); });
+await ctx.exposeBinding('__rigAudioStart', () => { if (audioF) audioF.end(); const f = `audio-${audioN++}.webm`; audioF = fs.createWriteStream(path.join(OUT, f)); log('audio-start', { file: f }); });
 await ctx.exposeBinding('__rigPlay', (_s, src) => { log('page-audio', { src }); });
 await ctx.addInitScript(`window.__rigNoise = ${+opt('--noise', '0.004')};`);
 await ctx.addInitScript(MIC);
@@ -143,7 +145,7 @@ http.createServer(async (req, res) => {
       case '/shot': { const f = path.join(OUT, 'shots', (a.name || String(Date.now() - T0)) + '.png'); await page.screenshot({ path: f }); return send({ f }); }
       case '/mark': return send(log('mark', { label: a.label }));
       case '/status': return send({ t: Date.now() - T0, frames, url: page.url(), micOpens: await page.evaluate(() => window.__rigMicOpens || 0) });
-      case '/stop': send(log('stop', { frames })); running = false; await page.evaluate(() => new Promise((ok) => setTimeout(ok, 1500))).catch(() => {}); await b.close(); audioF.end(); evf.end(); setTimeout(() => process.exit(0), 500); return;
+      case '/stop': send(log('stop', { frames })); running = false; await page.evaluate(() => new Promise((ok) => setTimeout(ok, 1500))).catch(() => {}); await b.close(); if (audioF) audioF.end(); evf.end(); setTimeout(() => process.exit(0), 500); return;
       default: send({ err: 'unknown ' + u.pathname }, 404);
     }
   } catch (e) { send({ err: String(e.message || e).slice(0, 400) }, 500); }

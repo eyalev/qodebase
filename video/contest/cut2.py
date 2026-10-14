@@ -86,7 +86,20 @@ class Cut2(base.Cut):
         'say:2a' = when that clip started, '+1500' = ms after the previous b)."""
         frames = sorted((int(f[:-4]), f) for f in os.listdir(os.path.join(src, 'frames')) if f.endswith('.jpg'))
         ev = [json.loads(l) for l in open(os.path.join(src, 'events.jsonl'))]
-        a_start = next((e['t'] for e in ev if e['ev'] == 'audio-start'), None)
+        # audio.webm holds one recording per page load (each with its own header and its own audio-start event):
+        # split it at the headers and pair the parts with the events in order.
+        starts = [e['t'] for e in ev if e['ev'] == 'audio-start']
+        parts = []
+        files = [(e['t'], os.path.join(src, e['file'])) for e in ev if e['ev'] == 'audio-start' and e.get('file')]
+        if files: parts = files   # rig2 after 2026-10-14: one file per page load
+        elif starts and os.path.exists(os.path.join(src, 'audio.webm')):
+            blob = open(os.path.join(src, 'audio.webm'), 'rb').read(); m = b'\x1a\x45\xdf\xa3'; pos = []; i = 0
+            while (i := blob.find(m, i)) >= 0: pos.append(i); i += 4
+            for k, (p0, t0) in enumerate(zip(pos, starts)):
+                f = os.path.join(src, f'audio-part{k}.webm')
+                if not os.path.exists(f): open(f, 'wb').write(blob[p0:pos[k + 1] if k + 1 < len(pos) else len(blob)])
+                parts.append((t0, f))
+        a_start = starts[0] if starts else None
         def at(v, prev):
             if isinstance(v, (int, float)): return int(v)
             if v.startswith('+'): return prev + int(v[1:])
@@ -101,12 +114,13 @@ class Cut2(base.Cut):
             if s.get('say'): self.speak(s['say'])
             cap = s.get('cap', s.get('say', ''))
             if cap or s.get('quote'): self.cues.append((self.now(), self.now() + (b - a) / 1000 / x, s.get('quote') or cap))
-            if x == 1 and s.get('audio', True) and a_start is not None:
+            part = next(((t0, f) for t0, f in reversed(parts) if t0 <= a), None)
+            if x == 1 and s.get('audio', True) and part:
                 wav = os.path.join(src, f'aud-{a}-{b}.wav')
                 if not os.path.exists(wav):
-                    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-ss', f'{(a - a_start) / 1000:.3f}', '-t', f'{(b - a) / 1000:.3f}',
-                                    '-i', os.path.join(src, 'audio.webm'), '-ar', '48000', '-ac', '1', wav], check=True)
-                self.audio.append((self.now(), wav))
+                    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-ss', f'{(a - part[0]) / 1000:.3f}', '-t', f'{(b - a) / 1000:.3f}',
+                                    '-i', part[1], '-ar', '48000', '-ac', '1', wav], check=True)
+                if os.path.getsize(wav) > 1000: self.audio.append((self.now(), wav))
             t = float(a)
             while t <= b:
                 while fi + 1 < len(frames) and frames[fi + 1][0] <= t: fi += 1
