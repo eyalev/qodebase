@@ -212,7 +212,7 @@ body.rec .prog,body.rec .notes{display:none}
   </div>
   <div class="ovc"><h3>What we proved</h3>
    <ul class="proved">
-    <li><b>Thousands</b><span>of agents on Cloudflare: <span data-k="scale.agents">4,750</span> with cached answers; cheap models landed <span data-k="fleet.files">31,466</span> file changes across six codebases (VS Code re-documented on fresh copies for scale), up to <span data-k="fleet.peak">114</span> a second over the busiest minute</span></li>
+    <li><b>Thousands</b><span>of agents on Cloudflare: 10,000 with cached answers (ramped, at most ~2,300 busy at once), nothing refused; cheap models landed <span data-k="fleet.files">31,466</span> file changes across six codebases (VS Code re-documented on fresh copies for scale), up to <span data-k="fleet.peak">114</span> a second over the busiest minute</span></li>
     <li><b>Hundreds</b><span>200 agents on one codebase, checked by tests they never saw: with up to 60% of tasks aimed at the same code, losses stayed in the same range (96, 74, 60 lost checks; 0 lost in landing); the queue slowed, and lanes per module took the worst case from 207 to 53 min, 44.5 with prefetch</span></li>
     <li><b>Up to 40</b><span>real Claude agents building apps: 28 of 40 changes collided, all redone; at this size one strong agent finished sooner in 3 of 3 builds</span></li>
     <li><b>Every step</b><span>recorded in git and visible: each change, the timeline, the asks</span></li>
@@ -287,7 +287,7 @@ body.rec .prog,body.rec .notes{display:none}
 
 <section class="s secs" data-t="Many agents, at scale" data-sec="C" data-head>
  <div class="claim"><span class="secn">Section C</span><h2>Many agents, at scale</h2><p>Hundreds of agents with real code collisions, thousands on Cloudflare, and when many agents pay off.</p></div>
- <div class="vis"><ul class="pts"><li>Hundreds of agents, checked by hidden tests</li><li>4,750 agents on Cloudflare</li><li>A fleet of cheap models on real code</li><li>Lanes, and the board for wide work</li></ul><ol class="map mini" data-map></ol></div>
+ <div class="vis"><ul class="pts"><li>Hundreds of agents, checked by hidden tests</li><li>10,000 agents on Cloudflare</li><li>A fleet of cheap models on real code</li><li>Lanes, and the board for wide work</li></ul><ol class="map mini" data-map></ol></div>
  <aside class="say">Section C: scale. Hundreds of agents with real code collisions, thousands on Cloudflare, and when many agents really pay off.</aside>
 </section>
 
@@ -316,12 +316,12 @@ body.rec .prog,body.rec .notes{display:none}
 </section>
 
 <section class="s" data-t="Scale runs" data-sec="C">
- <div class="claim"><h2>Thousands of agents on one platform</h2><p>4,750 on Cloudflare, with cached answers (no model calls). Past about 2,000 files a second, Artifacts slowed down instead of failing; nothing broke.</p><span class="src" data-k="scale.label">Scale runs with cached answers (no model calls); every other step real</span></div>
+ <div class="claim"><h2>Thousands of agents on one platform</h2><p>10,000 agents on Cloudflare (cached answers, no model calls; started in ramps, at most ~2,300 busy at once), nothing refused: ~1,900 files a second when every file is different, ~2,350 when files repeat (read cache). Reads slow down but never fail; the next wall is landing on main.</p><span class="src">10,000 agents: 10 copies of VS Code src/vs, 40,640 files, 29,883 landed (the rest had nothing to document); earlier steps with cached answers too</span></div>
  <div class="vis"><div class="bars"><div class="pair" id="ladder"><h3>Files a second, busiest 10 seconds</h3>
   <div class="bar"><div class="l"><span>200 agents, before our first fix</span><b>227</b></div><div class="t"><i class="warn" style="--w:7.6%;--d:0"></i></div></div>
   <div class="bar"><div class="l"><span>1,000 agents</span><b>1,230</b></div><div class="t"><i class="acc" style="--w:41%;--d:.25"></i></div></div>
-  <div class="bar"><div class="l"><span>4,750 agents</span><b>2,100</b></div><div class="t"><i class="acc" style="--w:100%;--d:.5"></i></div></div></div></div></div>
- <aside class="say">Then we pushed it: thousands of agents on one platform, four thousand seven hundred and fifty on Cloudflare, with cached answers instead of model calls. Past about two thousand files a second, Artifacts slowed down instead of failing; nothing broke, the waits just grew.</aside>
+  <div class="bar"><div class="l"><span>4,750 agents</span><b>2,100</b></div><div class="t"><i class="acc" style="--w:89%;--d:.5"></i></div></div><div class="bar"><div class="l"><span>10,000 agents (ramped)</span><b>1,900 to 2,350</b></div><div class="t"><i class="acc" style="--w:100%;--d:.75"></i></div></div></div></div></div>
+ <aside class="say">Then we pushed it: ten thousand agents on one platform, with cached answers instead of model calls, started in ramps so at most about twenty-three hundred were busy at once. Nothing was refused: about nineteen hundred files a second when every file is different, and about twenty-three hundred and fifty when files repeat and a read cache serves them. Reads slow down, but they never fail; the next wall is landing on main.</aside>
 </section>
 
 <section class="s" data-t="A fleet of cheap models" data-sec="C">
@@ -410,7 +410,7 @@ body.rec .prog,body.rec .notes{display:none}
 <section class="s ovs" data-t="What we proved" data-sec="wrap">
  <div class="ov"><div class="ovc"><h3>What we proved</h3>
   <ul class="proved">
-   <li><b>Thousands</b><span><span data-k="scale.agents">4,750</span> agents on Cloudflare with cached answers; cheap models landed <span data-k="fleet.files">31,466</span> file changes across six codebases for $<span data-k="fleet.usd">19.09</span> (Section C)</span></li>
+   <li><b>Thousands</b><span>10,000 agents on Cloudflare with cached answers (at most ~2,300 busy at once), nothing refused; cheap models landed <span data-k="fleet.files">31,466</span> file changes across six codebases for $<span data-k="fleet.usd">19.09</span> (Section C)</span></li>
    <li><b>Hundreds</b><span>200 agents, 1,385 coding tasks, hidden tests: up to 468 collided changes redone by a model, losses stayed in the same range (96, 74, 60), at most 2 lost in landing; lanes per module, 207 to 53 min, 44.5 with prefetch (Section C)</span></li>
    <li><b>Up to 40</b><span>real Claude agents: 12 of 12 landed; 28 of 40 collided and all were redone, 11 of 13 features work; one strong agent sooner in 3 of 3, the team cheaper in 2 of 3 (Section B)</span></li>
    <li><b>Every step is visible</b><span>the record in git, the timeline, Asks, estimates, the Runs page (Sections A, D)</span></li>
@@ -457,7 +457,7 @@ if(q.get('rec'))document.body.classList.add('rec');
 var S=[].slice.call(document.querySelectorAll('.s')),i=0,notes=document.getElementById('notes'),nb=document.getElementById('nbtn');
 function dark(){var t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
 [].forEach.call(document.querySelectorAll('[data-shot]'),function(e){e.src=e.dataset.shot+'-'+(dark()?'dark':'light')+'.webp'});
-var SECS=[['A','The idea: land by intent','Why order breaks the flow, and how qodebase lands by intent'],['B','It works with real agents','Real Claude teams of up to 40 building apps, and one agent against a team'],['C','Many agents, at scale','Hundreds checked by tests, 4,750 on Cloudflare, a cheap fleet, lanes'],['D','Built for people, built on Cloudflare','Phone first, intents, the timeline, Asks, estimates, the Runs page']];
+var SECS=[['A','The idea: land by intent','Why order breaks the flow, and how qodebase lands by intent'],['B','It works with real agents','Real Claude teams of up to 40 building apps, and one agent against a team'],['C','Many agents, at scale','Hundreds checked by tests, 10,000 on Cloudflare, a cheap fleet, lanes'],['D','Built for people, built on Cloudflare','Phone first, intents, the timeline, Asks, estimates, the Runs page']];
 [].forEach.call(document.querySelectorAll('[data-map]'),function(m){var cur=m.closest('.s').dataset.sec;m.innerHTML=SECS.map(function(x){return'<li'+(x[0]===cur?' class="on"':'')+'><b>'+x[0]+'</b><span><b>'+x[1]+'</b><span>'+x[2]+'</span></span></li>'}).join('')});
 // Where am I: 'Section B, slide 2 of 4' on every slide (plain words, no meta string)
 S.forEach(function(s){var sec=s.dataset.sec,w='';
@@ -491,10 +491,11 @@ fetch('/results.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():
  [].forEach.call(document.querySelectorAll('[data-k]'),function(e){var x=v[e.dataset.k];if(x!=null)e.textContent=/usd|per1k/.test(e.dataset.k)&&typeof x==='number'?x.toFixed(2):fmt(x)});
  if((j.realBuilds||{}).rows)solo(j.realBuilds.rows);
  // The scale ladder (qb4: headline.scale.ladder); one copy (S4b) is left out: it is the fix's control, not a step up.
+ var R10K='<div class="bar"><div class="l"><span>10,000 agents (ramped)</span><b>1,900 to 2,350</b></div><div class="t"><i class="acc" style="--w:100%;--d:.75"></i></div></div>'; // 10,000 agents with the read cache (docs/contest/fleet-r10k.md, qb6): busiest 10 s 19,058 to 23,504 files
  var L=((H.scale||{}).ladder||[]).filter(function(r){return r.copies!==1&&r.filesPerSec&&!(r.namespaces>1)});
- if(L.length){var mx=Math.max.apply(null,L.map(function(r){return r.filesPerSec}));
+ if(L.length){var mx=Math.max.apply(null,L.map(function(r){return r.filesPerSec}).concat([2350]));
   document.getElementById('ladder').innerHTML='<h3>Files a second, busiest 10 seconds</h3>'+L.map(function(r,k){var first=k===0;
-   return'<div class="bar"><div class="l"><span>'+fmt(r.agents)+' agents'+(r.namespaces>1?', storage split in two':'')+(first?', before the fix':'')+'</span><b>'+fmt(r.filesPerSec)+'</b></div><div class="t"><i class="'+(first?'warn':'acc')+'" style="--w:'+(r.filesPerSec/mx*100).toFixed(1)+'%;--d:'+(k*.25)+'"></i></div></div>'}).join('')}
+   return'<div class="bar"><div class="l"><span>'+fmt(r.agents)+' agents'+(r.namespaces>1?', storage split in two':'')+(first?', before the fix':'')+'</span><b>'+fmt(r.filesPerSec)+'</b></div><div class="t"><i class="'+(first?'warn':'acc')+'" style="--w:'+(r.filesPerSec/mx*100).toFixed(1)+'%;--d:'+(k*.25)+'"></i></div></div>'}).join('')+R10K}
 }).catch(function(e){console.log(JSON.stringify({event:'deck_results_failed',error:String(e)}))});
 function words(t){return t.trim().split(/\s+/).length}
 function go(n){i=Math.max(0,Math.min(S.length-1,n));
