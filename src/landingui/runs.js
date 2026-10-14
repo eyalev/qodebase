@@ -464,9 +464,16 @@
       <section class="rsec"><h2>${pins.length ? 'Experiments' : cur.length ? 'Earlier' : 'Fleet runs'}</h2>${rest.length ? rest.slice(0, 20).map((r) => card(r, false)).join('') : '<p class="dim">No fleet runs yet.</p>'}</section>
       ${real.length ? `<section class="rsec"><h2>Real builds</h2><p class="dim">Real Claude Code agents building an app; each opens its project's timeline.</p><ul class="rr">${real.map(realRow).join('')}</ul></section>` : ''}`;
   }
+  // A run just started from New fleet job, until /api/runs lists it (polled every 3 s, 5 min at most)
+  let PENDING = null;
+  const pendingFor = (repo, id) => (PENDING && PENDING.repo === repo && PENDING.runId === id && Date.now() - PENDING.at < 5 * 60e3 ? PENDING : null);
+  const startingCard = (p) => `<p class="crumb"><a href="#/">All runs</a></p><article class="rc st-running"><div class="rc-h"><span class="rs-st st-running"><i></i>Starting</span><span class="rc-t">started <b data-since="${p.at}">${clock((Date.now() - p.at) / 1000)}</b> ago</span></div>
+      <h2 class="rc-name">${esc(plainName(p.label) || 'New fleet job')}</h2><p class="rc-sub">${n0(p.agents || 0)} agents on ${esc(p.repo)}${p.root ? ` (${esc(p.root)})` : ''}. Its timeline appears here as soon as the fleet lists it, in a few seconds.</p></article>`;
   function runView(repo, id) {
     const r = (D.fleet || []).find((x) => x.repo === repo && x.runId === id);
+    if (!r && pendingFor(repo, id)) return startingCard(PENDING);
     if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
+    if (PENDING && PENDING.runId === id) { log('fleet_listed', { runId: id, ms: Date.now() - PENDING.at }); PENDING = null; }
     const ix = IX[key(r)];
     const ixLine = ix && !ix.error && ix.expected != null && ix.lines > 0 ? `<p class="rc-ix${ix.lines === ix.expected && ix.sorted && !ix.missing && !ix.twice ? ' ok' : ' bad'}"><b>API index (docs/API.md, one line per exported function, written by this job):</b> ${n0(ix.lines)} of ${n0(ix.expected)} lines, ${ix.sorted ? 'sorted' : 'not sorted'}, ${ix.missing ? `${n0(ix.missing)} missing` : 'none missing'}, ${ix.twice ? `${n0(ix.twice)} twice` : 'none twice'}.</p>` : '';
     return `<p class="crumb"><a href="#/">All runs</a></p>${card(r, true)}${ixLine}<section class="rsec"><h2>Timeline</h2>${timeline(r, TL[key(r)], DR && DR.k === key(r) ? DR : null)}${drillPanel(r)}</section>`;
@@ -486,6 +493,7 @@
   const itSrc = (r) => `/api/runs/${encodeURIComponent(r.repo)}/${encodeURIComponent(r.runId)}/intents`;
   function intentsRunView(repo, id, why) {
     const r = (D.fleet || []).find((x) => x.repo === repo && x.runId === id);
+    if (!r && pendingFor(repo, id)) return startingCard(PENDING);
     if (!r) return `<p><a href="#/">All runs</a></p><p>That run is not in the list any more.</p>`;
     const base = `#/intents/run/${encodeURIComponent(repo)}/${encodeURIComponent(id)}`;
     return `<p class="crumb"><a href="#/">All runs</a></p><section class="rsec"><h2>${why ? 'Why this exists' : `Intents: ${esc(plainName(r.label) || repo)}`}</h2><p><a class="chipbtn rc-go" href="#/run/${encodeURIComponent(repo)}/${encodeURIComponent(id)}">Timeline</a></p>${why ? '' : '<p class="dim">The job, then its folders; each file is one agent\'s intent. Stuck files come first. Tap a line to open it.</p>'}<div class="it-mount" data-src="${esc(itSrc(r))}" data-runs="/api/runs/${esc(encodeURIComponent(repo))}/${esc(encodeURIComponent(id))}" data-why-href="${esc(base)}/why/{id}" data-tree-href="${esc(base)}"${why ? ` data-why="${esc(why)}"` : ''}></div></section>`;
@@ -539,7 +547,8 @@
       render();
     } catch (e) { failures++; log('poll_failed', { error: String(e), failures }); if (!D) root.innerHTML = `<header class="rh"><h1>Scale runs</h1></header><p class="dim">Could not load the runs (${esc(String(e.message || e))}). Trying again.</p>`; }
     const anyLive = (D?.fleet || []).some(live);
-    timer = setTimeout(tick, !D ? 3e3 : document.hidden ? 30e3 : anyLive ? 5e3 : 30e3 * Math.min(4, 2 ** failures));   // nothing on screen yet: try again soon
+    if (PENDING && Date.now() - PENDING.at > 5 * 60e3) PENDING = null;
+    timer = setTimeout(tick, !D || PENDING ? 3e3 : document.hidden ? 30e3 : anyLive ? 5e3 : 30e3 * Math.min(4, 2 ** failures));   // nothing on screen yet: try again soon
   }
   addEventListener('hashchange', () => { DR = null; lastHtml = ''; render(); tick(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
@@ -683,13 +692,16 @@
     rootI.oninput = () => { rootI.dataset.touched = '1'; njEstimate(); };
     f.oninput = (e) => { if (e.target !== rootI) njEstimate(); };
     $('nj-x').onclick = () => njToggle(false);
-    f.onsubmit = async (e) => { e.preventDefault(); const b2 = njBody(); const go = $('nj-go'), msg = $('nj-msg'); go.disabled = true; go.textContent = 'Starting…'; msg.textContent = ''; msg.className = 'rc-cn';
+    f.onsubmit = async (e) => { e.preventDefault(); const b2 = njBody(); const go = $('nj-go'), msg = $('nj-msg'); go.disabled = true; go.textContent = `Starting ${n0(b2.agents || 0)} agents…`; msg.textContent = (b2.agents || 0) >= 200 ? 'Starting every agent takes up to a minute for a big job.' : ''; msg.className = 'rc-cn';
       let r, j = {};
       try { r = await fetch(`${API}/start`, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(b2) }); j = await r.json().catch(() => ({})); } catch (x) { r = { ok: false }; }
       log('fleet_start', { ok: !!r.ok, repo: b2.repo, agents: b2.agents, runId: j.runId || null, error: j.error || null });
       go.disabled = false; go.textContent = 'Start';
       if (!r.ok || !j.runId) { msg.className = 'rc-cn bad'; msg.textContent = j.error || 'Could not start it. Try again.'; return; }
-      njToggle(false); COPIES = null; location.hash = `#/run/${encodeURIComponent(j.repo || b2.repo)}/${encodeURIComponent(j.runId)}`; tick(); };
+      // qb3's rehearsal: the new run is not in /api/runs for a while; show it as starting and poll until it is
+      PENDING = { repo: j.repo || b2.repo, runId: j.runId, at: Date.now(), agents: b2.agents, root: b2.root || '', label: b2.label || '' };
+      log('fleet_pending', { repo: PENDING.repo, runId: PENDING.runId });
+      njToggle(false); COPIES = null; location.hash = `#/run/${encodeURIComponent(PENDING.repo)}/${encodeURIComponent(j.runId)}`; tick(); };
     njEstimate();
     setTimeout(() => f.scrollIntoView({ block: 'start', behavior: 'smooth' }), 30);
   }
