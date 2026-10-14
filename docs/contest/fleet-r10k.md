@@ -92,3 +92,33 @@ files/s answered and 7,000 files/s landed at the peak.
 
 Cost: (d) ~$1, (e) ~$2-3 (estimates: forks, ~270 pushes, ~240k KV reads, a few million Durable Object requests; no
 model calls). All copies deleted after (deleted.log, 55 repos incl. two seeds and three unused forks).
+
+## Runs (f) 50,000 again and (g) 100,000, after the fixes (2026-10-14 10:02 and 10:18 UTC), best case: files repeat (cache)
+
+Fixes (4a4769f, 5aa4910): agents keep a report until it is delivered and retry with backoff (records to the Run
+object, then the files to the Lander), with the retry booked before each try; the Run object writes a batch with one
+state save and skips results already recorded; work out for more than 90 s is re-queued. Same fast settings. (g) used a
+fifth namespace (qbfleet5): 25 copies each in qbfleet, qbfleet3, qbfleet4, qbfleet5.
+
+| | (e) 50,000, before | (f) 50,000, after | (g) 100,000, after |
+|---|---|---|---|
+| files | 203,200 | 203,200 | 406,400 |
+| landed / nothing to document / no cached answer | 139,385 / 52,577 / - | 149,447 / 53,450 / 300 | 298,857 / 106,900 / 600 |
+| **not landed** | **10,943 (5.4%)** | **3 (0.0015%)** | **43 (0.01%)** |
+| runs that finished | 10 of 50 | 50 of 50 | 89 of 100 (11 hold their last 2-6 files) |
+| busiest 10 s | 123,843 (~12,400/s) | 128,876 (~12,900/s) | 211,032 (~21,100/s) |
+| agents busy at once | 6,793 | 6,949 | 13,839 |
+| reads (100% cache) p50 / p90 | 28 / 113 ms | 20 / 119 ms | 40 / 214 ms |
+| Run-object hand-out p50 / p90 / worst p99 | 74 / 209 / 1,011 ms | 70 / 203 / 930 ms | 80 / 252 / 1,505 ms |
+| landing peak | ~7,000 files/s | ~6,800 files/s | ~10,300 files/s (534 pushes) |
+| start to (nearly) everything landed | ~70 s | ~75 s | ~66 s |
+
+**What is still lost, and why.** In (g) 43 files on 11 copies were recorded as answered but never reached their
+landing queue. Their agents' first report met 'Durable Object is overloaded' although the write went through, and the
+retry that also hands the files to landing never ran: hundreds of agent invocations ended 'canceled' at 10:19:25-30,
+under the load of 100,000 agents. The fix (not built): the Run object notices answered files that no landing queue
+took within a minute and gives them to a fresh agent to redo (cache answers are the same every time).
+
+**The walls at this scale (cache case):** Durable Objects of our own design. Each copy's Run object and Lander work for
+1,000 agents; at 50-100 copies at once they answer 'overloaded' at peaks, and agent invocations get cancelled. Reads
+(KV) and landing (Artifacts pushes, ~10,000 files/s at the peak) kept up.
