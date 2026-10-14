@@ -336,10 +336,12 @@ document.addEventListener('click',async(e)=>{
 }
 
 /** Fork / sign-in for someone who does not own the project. */
-export function forkAction(info: ProjectInfo, me: string, myForks: Entry[], cls = 'btn') {
-  if (myForks.length) return `<a class="${cls}" href="${path(myForks[0].slug)}">Open your copy</a>`;
-  if (me) return `<button class="${cls}" id="fork">Fork to change it</button>`;
-  return `<a class="${cls}" href="/login?next=${encodeURIComponent(path(info.slug))}">Sign in to fork</a>`;
+// short: GitHub-style labels for the compact project header ("Fork"; sign-in happens on tap), with an icon.
+export function forkAction(info: ProjectInfo, me: string, myForks: Entry[], cls = 'btn', short = false) {
+  const ic = short ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="5" r="2"/><circle cx="12" cy="19" r="2"/><path d="M6 7v2a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V7M12 12v5"/></svg>' : '';
+  if (myForks.length) return `<a class="${cls}" href="${path(myForks[0].slug)}">${ic}Open your copy</a>`;
+  if (me) return `<button class="${cls}" id="fork">${ic}${short ? 'Fork' : 'Fork to change it'}</button>`;
+  return `<a class="${cls}" href="/login?next=${encodeURIComponent(path(info.slug))}">${ic}${short ? 'Fork' : 'Sign in to fork'}</a>`;
 }
 // The project's API is /api/p/<owner>/<name>, whatever view the page is on: on
 // /p/o/n/app it used to post to .../app/fork, so Fork failed everywhere but the

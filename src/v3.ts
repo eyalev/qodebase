@@ -310,7 +310,7 @@ function readmeView(c: Ctx) {
   const d = c.docs || { list: [], current: null, text: null };
   const cur = d.current;
   const chips = d.list.length > 1 ? `<nav class="docs" aria-label="Documents">${d.list.map((x) =>
-    `<a href="${c.base}/readme${x.path === d.list[0].path ? '' : `?doc=${encodeURIComponent(x.path)}`}" class="${x.path === cur ? 'on' : ''}"${x.path === cur ? ' aria-current="page"' : ''}>${esc(x.label)}</a>`).join('')}</nav>` : '';
+    `<a href="${c.base}/readme${x.path === d.list[0].path ? '' : `?doc=${encodeURIComponent(x.path)}`}" class="${x.path === cur ? 'on' : ''}"${x.path === cur ? ' aria-current="page"' : ''}>${esc(x.path.split('/').pop() || x.label)}</a>`).join('')}</nav>` : '';
   const isMd = cur && /\.(md|markdown|mdx)$/i.test(cur);
   const doc = !cur ? `<p class="empty">This project has no README yet.${c.own ? ' Ask for one in <a href="' + c.base + '/changes">Changes</a>.' : ''}</p>`
     : d.text == null ? `<p class="empty">This file could not be shown. <a href="/p/${info.owner}/${info.name}/code/${esc(cur)}">Open it in Code</a>.</p>`
@@ -318,8 +318,11 @@ function readmeView(c: Ctx) {
   const origin = [info.forkedFrom ? `Forked from <a href="${path(info.forkedFrom)}">${esc(label(info.forkedFrom))}</a>` : '',
     info.importedFrom ? `From <a href="${esc(info.importedFrom.url)}" rel="noopener">${esc(info.importedFrom.fullName)}</a> on GitHub` : '',
     forks.length ? `${forks.length} fork${forks.length > 1 ? 's' : ''}` : ''].filter(Boolean);
-  return { body: `<div class="pad">${info.description ? `<p class="big">${esc(info.description)}</p>` : ''}${origin.length ? `<p class="lede">${origin.join('. ')}.</p>` : ''}
-${c.own ? '' : `<div class="forkbar in">${VISIT}${forkAction(info, c.me, forks.filter((e) => e.owner === c.me))}${requestButton({ info, base: c.base, me: c.me, accepts: !(info as { requestsOff?: boolean }).requestsOff })}</div>`}
+  // A compact header like a GitHub repo's (Eyal, 2026-10-14: the signed-out header took the whole first screen): name and
+  // visibility on one line, small outline buttons (sign-in happens on tap), the description as a short About line.
+  const acts = c.own ? '' : `<div class="racts">${forkAction(info, c.me, forks.filter((e) => e.owner === c.me), 'obtn', true)}${requestButton({ info, base: c.base, me: c.me, accepts: !(info as { requestsOff?: boolean }).requestsOff, cls: 'obtn', short: true })}</div>`;
+  return { body: `<div class="pad"><div class="rhd"><h1 class="rhn">${esc(info.name)}</h1><span class="rbadge">${info.private ? 'Private' : 'Public'}</span></div>
+${acts}${info.description ? `<p class="rabout">${esc(info.description)}</p>` : ''}${origin.length ? `<p class="rorigin">${origin.join('. ')}.</p>` : ''}
 ${chips}${doc}${cur ? `<p class="srcl"><a href="/p/${info.owner}/${info.name}/code/${esc(cur)}">${esc(cur)} in Code</a></p>` : ''}${FOOT}</div>` };
 }
 
@@ -501,7 +504,18 @@ h3{font-size:13px;font-weight:600;color:var(--dim);margin:24px 0 8px}
 /* Readme: the project's documents as a row of tabs over the rendered file. */
 .docs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:16px -16px 8px;padding:0 16px 10px;border-bottom:1px solid var(--line)}
 .docs::-webkit-scrollbar{display:none}
-.docs a{flex:none;display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);color:var(--dim);font:500 14px 'Geist',sans-serif}
+.docs a{flex:none;position:relative;display:inline-flex;align-items:center;min-height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line);color:var(--dim);font:500 13px 'Geist',sans-serif}
+.docs a::after{content:'';position:absolute;inset:-6px 0}
+.rhd{display:flex;align-items:center;gap:8px;margin:2px 0 10px;min-width:0}
+.rhn{margin:0;font-size:20px;font-weight:600;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rbadge{flex:none;font-size:12px;line-height:20px;padding:0 8px;border-radius:4px;color:var(--dim);box-shadow:inset 0 0 0 1px var(--line)}
+.racts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.obtn{position:relative;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border:0;border-radius:10px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);font:500 14px 'Geist',sans-serif;text-decoration:none;cursor:pointer}
+.obtn::after{content:'';position:absolute;inset:-5px 0}
+.obtn svg{width:16px;height:16px;color:var(--dim)}
+@media (hover:hover){.obtn:hover{background:var(--chip)}}
+.rabout{margin:0 0 4px;font-size:15px;line-height:1.45;color:var(--fg)}
+.rorigin{margin:0 0 4px;font-size:13px;color:var(--dim)}
 .docs a.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .plain{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.55 'JetBrains Mono',monospace;background:var(--card);border-radius:8px;padding:12px}
 .srcl{font-size:13px;margin:24px 0 0}

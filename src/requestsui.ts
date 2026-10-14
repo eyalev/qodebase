@@ -22,9 +22,10 @@ export function requestsView(c: RequestsCtx) {
 }
 
 /** The 'Request a change' button for a signed-in visitor on a public project (in the project's fork bar). */
-export function requestButton(c: RequestsCtx & { accepts?: boolean }) {
+export function requestButton(c: RequestsCtx & { accepts?: boolean; cls?: string; short?: boolean }) {
   if (c.own || c.info.private || c.accepts === false) return '';
-  return c.me ? `<a class="chipbtn rq-btn" href="${escA(c.base)}/requests#new">Request a change</a>` : `<a class="chipbtn rq-btn" href="/login?next=${encodeURIComponent(c.base + '/requests#new')}">Sign in to request a change</a>`;
+  const cls = c.cls || 'chipbtn rq-btn';
+  return c.me ? `<a class="${cls}" href="${escA(c.base)}/requests#new">Request a change</a>` : `<a class="${cls}" href="/login?next=${encodeURIComponent(c.base + '/requests#new')}">${c.short ? 'Request a change' : 'Sign in to request a change'}</a>`;
 }
 
 export const REQ_CSS = `.rq .rq-h{font-size:22px;font-weight:600;letter-spacing:-.02em;margin:4px 0 6px}
