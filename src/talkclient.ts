@@ -732,7 +732,7 @@ function render() {
 function barSync() {
   if (!bar) return;
   var mine = listening && !cInto;   // words for Talk (a page's composer shows its own)
-  root.classList.toggle('live', mine && !offerState);
+  root.classList.toggle('live', mine);   // listening, with or without a question on screen
   var draft = !listening && !offerState && !busy && !!inp.value.trim() && !root.classList.contains('open');
   root.classList.toggle('draft', draft);
   root.classList.toggle('boffer', !!offerState);
@@ -1774,7 +1774,10 @@ function startListen() {
   trace('listen_start', { engine: S.engine, lang: S.lang, listening: listening, busy: busy });
   if (listening || busy) return;
   stopSpeaking();   // talking over the reply stops it
-  offerOff(); live.textContent = '';
+  // The question on screen stays while listening: the spoken yes/no answers it (qb3's take, 2026-10-14: conversation
+  // mode re-opened the mic after 'Start?' and this cleared the question, so 'Yes. Start.' went to the model).
+  // A sentence that is not a yes/no clears it in submit().
+  live.textContent = '';
   if (S.engine === 'live') return startLive();
   if (S.engine === 'native') return startNative();
   return startWhisper();
@@ -1909,6 +1912,9 @@ function keepEstimate(t, voice) {
   sset('est', { team: team, time: time, cost: cost, voice: voice, at: Date.now() });
 }
 document.addEventListener('click', function (e) { keepEstimate(e.target && e.target.closest && e.target.closest('button'), !e.isTrusted || lastSpoken); }, true);
+// Conversation mode carries over ANY page change made during a conversation (a form Talk submitted, a link it opened),
+// not only Talk's own navigation: listen again on the next page (the brief after 'Yes, build it').
+window.addEventListener('pagehide', function () { try { if (convOn() && Date.now() - talkUsedAt < 60000) sset('convresume', Date.now()); } catch (e) {} });
 // Talk's yes to 'Build it?' submits the form (requestSubmit), which fires no click.
 document.addEventListener('submit', function (e) { keepEstimate(e.submitter, !e.isTrusted || lastSpoken); }, true);
 var briefAsk = null;   // the brief's start question, asked again after the name is changed by voice
@@ -2229,8 +2235,12 @@ function liveOpen() {
     trace('stt_ws_open', { ms: Date.now() - t0, flushed: queued, warm: reused });
   };
   if (reused && ws.readyState === 1) ws.onopen();
+  var myTurn = dcT0;   // this socket belongs to this turn only
   ws.onmessage = function (ev) {
     var d = null; try { d = JSON.parse(ev.data); } catch (e) { return; }
+    // A late final from an earlier turn's socket must not land in this one (2026-10-14: '…with a paid' from the turn
+    // before was glued to 'Use the cheapest team.').
+    if (myTurn !== dcT0 || ws !== liveWs) { if (d.type === 'final' && d.text) trace('stt_late_word', { text: String(d.text).slice(0, 60) }); return; }
     if (!dcOn && d.type !== 'final') return;
     if (d.type === 'interim' || d.type === 'final') {
       var txt = String(d.text || '').trim();
@@ -2241,7 +2251,7 @@ function liveOpen() {
       // nova-3's speech_final sometimes comes seconds after the final words (2.3 s, 2026-10-13): a final that ends a
       // sentence ('…project?') and sounds finished ends the turn too, after 0.6 s with no new words.
       var sentenceEnd = d.type === 'final' && /[.?!]["\u201d\u2019)]*$/.test(txt);
-      if ((d.end || sentenceEnd) && dcBuf.length && !dcText && convOn() && S.fast === 'on' && soundsDone(dcSaid(''))) { guess(dcSaid(''), true); endT = setTimeout(function () { if (dcOn && !dcText) endTurn(d.end ? 'endpoint' : 'sentence'); }, sentenceEnd ? 450 : 1000); }   // no closing punctuation ('What's going'): wait longer   // + nova-3's 300 ms = ~0.75 s of quiet
+      if ((d.end || sentenceEnd) && dcBuf.length && !dcText && convOn() && S.fast === 'on' && soundsDone(dcSaid(''))) { guess(dcSaid(''), true); endT = setTimeout(function () { if (dcOn && !dcText) endTurn(d.end ? 'endpoint' : 'sentence'); }, /\?["\u201d\u2019)]*$/.test(txt) ? 450 : sentenceEnd ? 900 : 1000); }   // nova-3 writes '.' at a comma pause: wait longer after a full stop than after a question   // no closing punctuation ('What's going'): wait longer   // + nova-3's 300 ms = ~0.75 s of quiet
       if (!nativePreview) setInp(dcBase + dcSaid(dcText));
     } else if (d.type === 'error') { trace('stt_ws_server_error', { err: d.error }); if (!gotWords && dcOn && !nativePreview) startNativePreview(); }
   };
