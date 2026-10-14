@@ -31,3 +31,6 @@
 
 ## 2026-10-14 18:27 UTC: release rebuilt after the merger patch fix
 - Built from forq 47a1369 (patches applied byte-exact), committed as f8852f9, mirror pushed; install test into qb-selftest done (see log).
+
+## 2026-10-14 20:05 UTC: release rebuilt on the rewritten history, without absolute paths
+- Built from forq 7c4c3c0 (after the privacy scrub; scripts/selfhost-release.mjs now makes the bundle's path comments relative and refuses to finish if a /home/<user>/ path remains), committed as fe16b4f, pushed to GitHub and the Artifacts mirror forq/forq. Install test into qb-selftest: all 5 steps done in 100 s; the copy answers 302 (Access).
