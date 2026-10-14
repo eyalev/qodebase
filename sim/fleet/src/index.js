@@ -274,6 +274,7 @@ export class Run extends DurableObject {
     this.sql.exec(`CREATE INDEX IF NOT EXISTS rec_run_file ON rec (run, file)`);
     this.sql.exec(`CREATE INDEX IF NOT EXISTS rec_run_landed ON rec (run, landed_at)`);
     this.sql.exec(`CREATE INDEX IF NOT EXISTS q_run_taken ON q (run, taken, i)`);
+    try { this.sql.exec(`ALTER TABLE q ADD COLUMN taken_at INT`); } catch {}
   }
   // One state object in memory, shared by every handler: handlers that await other objects interleave, and each saving the
   // copy it had read lost the others' counts (F2 at 100 agents showed -37 files at the model).
@@ -385,17 +386,29 @@ export class Run extends DurableObject {
     s.perSlice[`${pickM.model}|${slice}`] = (s.perSlice[`${pickM.model}|${slice}`] || 0) + 1;
     for (const k of Object.keys(s.perSlice)) if (Number(k.split('|')[1]) < slice - 12) delete s.perSlice[k];
     if (s.usd >= s.cfg.budgetUsd) { await this.autoPause(s, `run budget reached: $${s.usd.toFixed(3)} of $${s.cfg.budgetUsd}`); return { wait: 15_000 }; }
-    const row = this.sql.exec(`SELECT i, path, hash, task, fns, kind, grp, variant, text FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0];
-    if (!row) return { stop: true };
-    this.sql.exec(`UPDATE q SET taken = 1 WHERE run = ? AND i = ?`, runId, row.i);
+    let row = this.sql.exec(`SELECT i, path, hash, task, fns, kind, grp, variant, text FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0];
+    // Work out for more than 90 s with no result (its agent was lost) goes back in the queue, at most every 10 s.
+    if (!row && Date.now() - (this._swept || 0) > 10_000) { this._swept = Date.now(); if (this.requeueStale(s, runId)) row = this.sql.exec(`SELECT i, path, hash, task, fns, kind, grp, variant, text FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0]; }
+    // Queue empty but files still out: about one agent in ten stays to pick up whatever comes back, the rest finish.
+    if (!row) return s.counts.model > 0 && Math.random() < 0.1 ? { wait: 10_000 + Math.random() * 5_000 } : { stop: true };
+    this.sql.exec(`UPDATE q SET taken = 1, taken_at = ? WHERE run = ? AND i = ?`, Date.now(), runId, row.i);
     s.counts.queued--; s.counts.model++;
     (s.perMin[minute] ||= { calls: 0, usd: 0 }).calls++;
-    await this.save(s);
+    if (!inner) await this.save(s);   // nextMany saves once for the batch
     const task = row.task ? { task: row.task, fns: JSON.parse(row.fns || '[]'), kind: row.kind, grp: row.grp, variant: row.variant || 0, claims: !!s.cfg.dial?.claims, ...(s.cfg.kata ? { text: row.text, slug: s.cfg.kata.slug, maxRedos: s.cfg.kata.maxRedos } : {}) } : {};
     return { file: { path: row.path, hash: row.hash, ...task }, model: pickM.model, provider, slot: `${pickM.model}|${slice}` };
   }
 
   /** S4: up to n files per call (one round trip, not n): each still paced per model, the first without room stops the batch. */
+  /** Files handed out more than 90 s ago with no final record go back in the queue; their late reports are deduplicated. */
+  requeueStale(s, runId) {
+    const old = this.sql.exec(`SELECT i, path FROM q WHERE run = ? AND taken = 1 AND taken_at IS NOT NULL AND taken_at < ? AND task IS NULL
+      AND NOT EXISTS (SELECT 1 FROM rec WHERE rec.run = q.run AND rec.file = q.path AND rec.status NOT LIKE '%_retry')`, runId, Date.now() - 90_000).toArray();
+    for (const o of old) this.sql.exec(`UPDATE q SET taken = 0, taken_at = NULL WHERE run = ? AND i = ?`, runId, o.i);
+    if (old.length) { s.counts.model -= old.length; s.counts.queued += old.length; s.requeued = (s.requeued || 0) + old.length; log('requeued_stale', { runId, n: old.length }); }
+    return old.length;
+  }
+
   async nextMany(runId, n) {
     const files = [];
     let first = null;
@@ -408,7 +421,7 @@ export class Run extends DurableObject {
         if (!s || s.runId !== runId || s.state !== 'running') break;
         const row = this.sql.exec(`SELECT i, path, hash FROM q WHERE run = ? AND taken = 0 ORDER BY i LIMIT 1`, runId).toArray()[0];
         if (!row) break;
-        this.sql.exec(`UPDATE q SET taken = 1 WHERE run = ? AND i = ?`, runId, row.i);
+        this.sql.exec(`UPDATE q SET taken = 1, taken_at = ? WHERE run = ? AND i = ?`, Date.now(), runId, row.i);
         s.counts.queued--; s.counts.model++; await this.save(s);
         const lead = files[files.length - (files.length % per)];
         files.push({ path: row.path, hash: row.hash, model: lead.model, provider: lead.provider, slot: null });
@@ -419,22 +432,43 @@ export class Run extends DurableObject {
       first ||= r; files.push({ ...r.file, model: r.model, provider: r.provider, slot: r.slot });
     }
     const s = await this.st();
+    if (files.length && s) await this.save(s);
     return { files, root: s?.cfg.root || 'src/vs', repo: s?.cfg.repo || MAIN };
   }
 
   /** S4: an agent's results for a batch of files (the ready ones went to the Lander already). */
-  async doneMany(runId, agent, rs) { for (const r of rs) await this.done(runId, agent, r); }
+  /** Results for a batch: one state read and one save for all (2026-10-14: per-file saves overloaded the Run objects at
+   *  50,000 agents: 'Durable Object is overloaded. Requests queued for too long.'). A file whose final result is already
+   *  recorded is skipped, so an agent may safely send the same report again after a failure. */
+  async doneMany(runId, agent, rs) {
+    const s = await this.st();
+    if (!s || s.runId !== runId) return { ok: false, stale: true };
+    let usd = 0, n = 0;
+    for (const r of rs) { const u = this.apply(s, runId, agent, r); if (u !== null) { usd += u; n++; } }
+    return this.finish(s, runId, usd, n);
+  }
 
   /** An agent's result for one file. */
-  async done(runId, agent, r) {   // r may be rewritten (a retry)
+  async done(runId, agent, r) {
     const s = await this.st();
-    if (!s || s.runId !== runId) return;
+    if (!s || s.runId !== runId) return { ok: false, stale: true };
+    const usd = this.apply(s, runId, agent, r);
+    if (usd === null) return { ok: true, dup: true };
+    const out = await this.finish(s, runId, usd, 1);
+    if (r.status === 'ready' && r.text) await lander(this.env, s.cfg.repo || MAIN).add(runId, laneOf(r.file, s.cfg.root || 'src/vs'), r.file, r.text, Date.now());
+    return out;
+  }
+
+  /** One result into the state and the records (no save). null = already recorded (a repeated report). */
+  apply(s, runId, agent, r) {
+    if (!/_retry$/.test(r.status) && this.sql.exec(`SELECT 1 FROM rec WHERE run = ? AND file = ? AND status NOT LIKE '%_retry' LIMIT 1`, runId, r.file).toArray().length) return null;
     // A file with nothing to document never reached the model: its pace slot goes back (F3b: the pacer was the first thing
     // to saturate, counting those files; the models peaked at 207/191/172 calls/min of 290/290/350).
     if (r.status === 'skipped' && r.slot && s.perSlice?.[r.slot] > 0) s.perSlice[r.slot]--;
     const usd = r.usd || 0;
     s.usd += usd; s.calls++;
     const minute = Math.floor(Date.now() / 60000);
+    this._minute = minute;
     (s.perMin[minute] ||= { calls: 0, usd: 0 }).usd += usd;
     s.counts.model--;
     s.counts[r.status] = (s.counts[r.status] || 0) + 1;
@@ -456,18 +490,23 @@ export class Run extends DurableObject {
       const fin = this.sql.exec(`SELECT COUNT(*) AS n, SUM(status = 'ready') AS rd, SUM(status = 'landed') AS ld FROM rec WHERE run = ? AND status NOT LIKE '%_retry'`, runId).toArray()[0] || {};
       this.sql.exec(`INSERT OR REPLACE INTO samp (run, t, waiting, at_model, ready, landed, lander_waiting) VALUES (?,?,?,?,?,?,?)`, runId, t10, qq.w || 0, Math.max(0, (qq.tk || 0) - (fin.n || 0)), fin.rd || 0, fin.ld || 0, null);
     }
+    return usd;
+  }
+
+  async finish(s, runId, usd, n) {
+    const minute = Math.floor(Date.now() / 60000);
     // Old per-minute buckets go (an hour kept).
     for (const k of Object.keys(s.perMin)) if (Number(k) < minute - 60) delete s.perMin[k];
     await this.save(s);
     if (usd) await budget(this.env).spend(usd);
-    if (r.status === 'ready' && r.text) await lander(this.env, s.cfg.repo || MAIN).add(runId, laneOf(r.file, s.cfg.root || 'src/vs'), r.file, r.text, Date.now());
     // Done when no file is waiting or at the model (not only when every agent reported in: a lost agent kept a run open).
-    if (s.state === 'running' && s.counts.queued <= 0 && s.counts.model <= 0) { s.state = 'done'; s.endedAt = Date.now(); await this.save(s); await lander(this.env, s.cfg.repo || MAIN).flush(runId); return; }
+    if (s.state === 'running' && s.counts.queued <= 0 && s.counts.model <= 0) { s.state = 'done'; s.endedAt = Date.now(); await this.save(s); await lander(this.env, s.cfg.repo || MAIN).flush(runId); return { ok: true }; }
     // The shares come from memory each time; the land-wait query and the budget check every 50 results (S4a: per result they
     // were a full table scan and a round trip to a shared object).
-    s.sinceCheck = (s.sinceCheck || 0) + 1;
+    s.sinceCheck = (s.sinceCheck || 0) + n;
     if (s.sinceCheck >= 50 || s.counts?.queued <= 0) { s.sinceCheck = 0; await this.checkAutoPause(s); }
     else await this.checkShares(s);
+    return { ok: true };
   }
 
   async landedCmts(runId) { return this.sql.exec(`SELECT file, cmt FROM rec WHERE run = ? AND status = 'landed' AND cmt IS NOT NULL`, runId).toArray(); }
@@ -799,6 +838,7 @@ export class Agent extends DurableObject {
   async alarm() {
     const runId = await this.ctx.storage.get('runId'), i = await this.ctx.storage.get('i'), repoName = (await this.ctx.storage.get('repo')) || MAIN;
     const R = run(this.env, repoName);
+    if (!(await this.flushPending(runId, i, R, repoName))) return;   // a kept report goes first
     let n;
     const batch = (await this.ctx.storage.get('batch')) || 1;
     // Infra errors on our own objects (an overloaded Run, a reset) are counted here and reported with the next result.
@@ -821,7 +861,7 @@ export class Agent extends DurableObject {
         r.model = f.model; r.slot = f.slot; r.finishedAt = Date.now(); rs.push(r);
       }
       const ready = rs.filter((r) => r.status === 'ready');
-      try {
+      {
         // Records first, then the Lander: a fast land before the record exists was lost (S4d: 8 files on nest-6 stayed 'ready').
         // meta = the change record that goes into the lane commit's git note.
         const items = ready.map((r) => ({ lane: laneOf(r.file, n.root), path: r.file, text: r.text, at: Date.now(), task: r.task, base: r.base, names: r.names, cmtMap: r.cmt,
@@ -833,18 +873,52 @@ export class Agent extends DurableObject {
         for (const r of rs) delete r.text;
         for (const r of rs) r.tNext = this._tNext ?? null;   // how long the Run object took to hand this batch out
         rs[0].infraErrs = (await this.ctx.storage.get('infraErrs')) || 0;
-        await R.doneMany(runId, i, rs); await this.ctx.storage.put('infraErrs', 0);
-        if (items.length) await (items[0].task ? lander(this.env, repoName).addTasks(runId, items) : lander(this.env, repoName).addMany(runId, items));
-      } catch (e) { await this.ctx.storage.put('infraErrs', ((await this.ctx.storage.get('infraErrs')) || 0) + 1); log('agent_infra_error', { runId, i, where: 'doneMany', err: String(e?.message || e).slice(0, 200) }); }
+        // Kept until delivered (2026-10-14: a failed report used to be dropped: 10,943 files lost at 50,000 agents).
+        const kv = { pendRec: rs, pendLandN: items.length, pendKind: items[0]?.task ? 'tasks' : 'files' };
+        items.forEach((it, k) => { kv[`pendLand:${k}`] = it; });
+        await this.ctx.storage.put(kv);
+        if (!(await this.flushPending(runId, i, R, repoName))) return;
+      }
       await this.ctx.storage.setAlarm(Date.now() + 20);
       return;
     }
     const r = await this.work(n.file, n.model, n.provider, repoName).catch((e) => ({ file: n.file.path, status: 'model_error', reason: `crash: ${String(e?.message || e).slice(0, 200)}` }));
     r.model = n.model; r.slot = n.slot; r.tNext = this._tNext ?? null;
     r.infraErrs = (await this.ctx.storage.get('infraErrs')) || 0;
-    try { await R.done(runId, i, r); await this.ctx.storage.put('infraErrs', 0); }
-    catch (e) { await this.ctx.storage.put('infraErrs', r.infraErrs + 1); log('agent_infra_error', { runId, i, where: 'done', err: String(e?.message || e).slice(0, 200) }); }
+    await this.ctx.storage.put({ pendRec: [r], pendLandN: 0, pendSingle: true });
+    if (!(await this.flushPending(runId, i, R, repoName))) return;
     await this.ctx.storage.setAlarm(Date.now() + 50);
+  }
+
+  /** Deliver a kept report: the records to the Run object, then the ready files to the Lander. Retried with backoff (up to
+   *  30 s) until both arrive; true when nothing is pending. */
+  async flushPending(runId, i, R, repoName) {
+    const rec = await this.ctx.storage.get('pendRec');
+    const nL = (await this.ctx.storage.get('pendLandN')) || 0;
+    if (!rec && !nL) return true;
+    try {
+      if (rec) {
+        const single = await this.ctx.storage.get('pendSingle');
+        await (single ? R.done(runId, i, rec[0]) : R.doneMany(runId, i, rec));
+        await this.ctx.storage.delete(['pendRec', 'pendSingle']);
+      }
+      if (nL) {
+        const keys = Array.from({ length: nL }, (_, k) => `pendLand:${k}`);
+        const m = await this.ctx.storage.get(keys);
+        const items = keys.map((k) => m.get(k)).filter(Boolean);
+        const kind = await this.ctx.storage.get('pendKind');
+        if (items.length) await (kind === 'tasks' ? lander(this.env, repoName).addTasks(runId, items) : lander(this.env, repoName).addMany(runId, items));
+        await this.ctx.storage.delete([...keys, 'pendLandN', 'pendKind']);
+      }
+      await this.ctx.storage.put('infraErrs', 0); await this.ctx.storage.delete('pendFails');
+      return true;
+    } catch (e) {
+      const f = ((await this.ctx.storage.get('pendFails')) || 0) + 1;
+      await this.ctx.storage.put({ pendFails: f, infraErrs: ((await this.ctx.storage.get('infraErrs')) || 0) + 1 });
+      log('agent_infra_error', { runId, i, where: rec ? 'report' : 'lander', tries: f, err: String(e?.message || e).slice(0, 200) });
+      await this.ctx.storage.setAlarm(Date.now() + Math.min(30_000, 300 * 2 ** Math.min(f, 7)) * (0.5 + Math.random()));
+      return false;
+    }
   }
   /** Dial task (cache mode): only this task's declarations; claims first when the run uses them. */
   async workTask(runId, R, f, repoName) {
