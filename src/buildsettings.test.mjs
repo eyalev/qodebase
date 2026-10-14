@@ -40,10 +40,10 @@ test('flags as the lab runner sets them; the router and single-agent texts', () 
   const s = planFlags(resolveBuildPlan({ preset: 'fastest' }, O));
   assert.deepEqual([s.reviewers, s.coderModel, s.caps.agents], [0, 'opus', 1]);
   assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /you have 6 agents; use them. Split the rest into at least 6 tasks/);
-  assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /forq spawn --skeleton/);
+  assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /qb-agent spawn --skeleton/);
   assert.match(crewRules(resolveBuildPlan({ preset: 'cheapest' }, O)), /signature of every function one module calls in another/);
   assert.match(skeletonTask('a travel planner'), /contracts file/);
-  assert.match(singleTask('a todo app', true), /EMPTY project[\s\S]*only agent[\s\S]*a todo app[\s\S]*forq push/);
+  assert.match(singleTask('a todo app', true), /EMPTY project[\s\S]*only agent[\s\S]*a todo app[\s\S]*qb-agent push/);
 });
 
 test('the sheet contract (qb7): v as a URL JSON string; 1 opus coder with 0 reviewers = one agent; reviewers use the coders\' model', () => {

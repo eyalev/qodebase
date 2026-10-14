@@ -192,14 +192,14 @@ changelogs) by rule or by its own agent, runs the project's check (\`.qodebase/l
 it back to its agent. \`qb merge\` on such a project queues the change.
 
 Inside an agent's box, the \`forq\` command (the router and agents run it):
-- \`forq spawn "<task>" --files a,b\` — start an agent with CLAIMS (the files it expects to change: overlaps are warned
+- \`qb-agent spawn "<task>" --files a,b\` — start an agent with CLAIMS (the files it expects to change: overlaps are warned
   on both changes); \`--on <agent-id>\` stacks it on another agent's unlanded work (it lands after it)
-- \`forq who [--recent [30m]] [--files a,b]\` — the agent board: who works on what right now, and what landed recently
-- \`forq intent "<task id + title>" --files a,b\` — say which task you took; the earliest claim of a task keeps it
-- \`forq next\` — (projects with atomic claims) take the next free task of the registered list
-- \`forq tasks <file>\`, \`forq dedupe <file>\` — (router) register a task list; one quick pass that finds tasks that are
+- \`qb-agent who [--recent [30m]] [--files a,b]\` — the agent board: who works on what right now, and what landed recently
+- \`qb-agent intent "<task id + title>" --files a,b\` — say which task you took; the earliest claim of a task keeps it
+- \`qb-agent next\` — (projects with atomic claims) take the next free task of the registered list
+- \`qb-agent tasks <file>\`, \`qb-agent dedupe <file>\` — (router) register a task list; one quick pass that finds tasks that are
   the same work under different names
-- \`forq sync-main\`, \`forq skip\`, \`forq push\`, \`forq status pushed "<what>"\` — rebase on main, drop a commit main
+- \`qb-agent sync-main\`, \`qb-agent skip\`, \`qb-agent push\`, \`qb-agent status pushed "<what>"\` — rebase on main, drop a commit main
   already has, push your own fork, hand the change to review and the queue
 
 ## HTTP API

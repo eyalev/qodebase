@@ -6,7 +6,7 @@
 // multiple subscriptions on the same resource"). wrangler 4.145 has no --namespace/--repo-name for artifacts.repo,
 // so subscriptions are made over the REST API with a Queues-Write token (secret CF_EVENTS_TOKEN).
 // Which repos get 'pushed': only project MAINS of landing projects (subscribed by Landing with the first real agent's
-// change), never lab projects or the demo; agent forks are left out (forq push reports agent pushes; Eyal, 2026-10-12).
+// change), never lab projects or the demo; agent forks are left out (qb-agent push reports agent pushes; Eyal, 2026-10-12).
 // The account-level stream (subscription 'forq-repos') carries every repo event in the account, the sim's namespace
 // and the demo's forks included: repoEventTarget() keeps only a project's own lifecycle (imported, a person's fork
 // of it, deleted) in namespace forq and drops the rest (created is skipped: every Build creates a repo).

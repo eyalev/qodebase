@@ -1,41 +1,42 @@
-// The `forq` command inside every box (written to /usr/local/bin/forq at boot).
+// The `qb-agent` command inside every box (written to /usr/local/bin/qb-agent at boot; `forq` is a symlink to it, the
+// old name, so agents that started before the rename keep working).
 // It talks to the Worker's /api/agent/* verbs with the box's own signed token
 // (/run/forq/agent-token, tmpfs). Router-only verbs are refused for agents.
 
 export const FORQ_CLI = String.raw`#!/usr/bin/env python3
-"""forq - talk to the forq platform from inside an agent box.
+"""qb-agent - talk to the qodebase platform from inside an agent box (forq is the old name, kept as an alias).
 
-  forq status <working|pushed|blocked> "note"   report your state (agents)
-  forq list                                     this project's agents
-  forq spawn "task" [--files a,b] [--on <agent-id>] [--skeleton]
+  qb-agent status <working|pushed|blocked> "note"   report your state (agents)
+  qb-agent list                                     this project's agents
+  qb-agent spawn "task" [--files a,b] [--on <agent-id>] [--skeleton]
                                                 start an agent on its own fork (router); --files claims
                                                 the files it expects to change, --on stacks it on
                                                 another agent's unlanded work; --skeleton marks the
                                                 build's runnable skeleton (other spawns wait until it lands)
-  forq parts N                                  say how many tasks you planned, the skeleton included (router)
-  forq decided "what it means for the person" [--why "tech detail"]
+  qb-agent parts N                                  say how many tasks you planned, the skeleton included (router)
+  qb-agent decided "what it means for the person" [--why "tech detail"]
                                                 log a choice you made on the person's behalf, in plain
                                                 words (they see it in Asks); the technical part goes in --why
-  forq ask-person --why secret|money|failing|other "question"
+  qb-agent ask-person --why secret|money|failing|other "question"
                                                 ask the person; ONLY for a secret/key, spending money, or a
                                                 change that keeps failing; then carry on with what you can
-  forq send <agent-id> "text"                   message an agent (router)
-  forq merge <agent-id>                         merge an agent's fork into main (router); on projects
+  qb-agent send <agent-id> "text"                   message an agent (router)
+  qb-agent merge <agent-id>                         merge an agent's fork into main (router); on projects
                                                 with the merge queue it queues the change instead
-  forq sync-main                                rebase your work on the latest main (agents)
-  forq skip                                     during sync-main conflicts: drop your commit when main
+  qb-agent sync-main                                rebase your work on the latest main (agents)
+  qb-agent skip                                     during sync-main conflicts: drop your commit when main
                                                 already has its task, and go on
-  forq push                                     push your work to your own fork (agents); after a
+  qb-agent push                                     push your work to your own fork (agents); after a
                                                 sync-main its history is rewritten, and this pushes anyway
-  forq fetch-agent <agent-id>                   fetch an agent's work to review it (reviewer)
-  forq verdict <agent-id> approve|changes "notes"   your review verdict (reviewer)
-  forq who [--recent [30m]] [--files a,b] [--area X]
+  qb-agent fetch-agent <agent-id>                   fetch an agent's work to review it (reviewer)
+  qb-agent verdict <agent-id> approve|changes "notes"   your review verdict (reviewer)
+  qb-agent who [--recent [30m]] [--files a,b] [--area X]
                                                 the agent board: who works on what now (--recent: and
                                                 what others landed on main in that window)
-  forq intent "what you are doing" [--files a,b]  say on the board which task you took and its files
-  forq next                                     take the next free task of the project's list (when on)
-  forq tasks <file>                             register a task list (router)
-  forq dedupe <file> | "task" "task" ...        one quick pass: which tasks are the same work (shown on
+  qb-agent intent "what you are doing" [--files a,b]  say on the board which task you took and its files
+  qb-agent next                                     take the next free task of the project's list (when on)
+  qb-agent tasks <file>                             register a task list (router)
+  qb-agent dedupe <file> | "task" "task" ...        one quick pass: which tasks are the same work (shown on
                                                 the board as aliases: build it once)
 """
 import json, os, re, subprocess, sys, time, urllib.parse, urllib.request
@@ -44,7 +45,7 @@ RUN = os.environ.get('FORQ_RUN', '/run/forq')   # tests point these elsewhere
 REPO = os.environ.get('FORQ_REPO', '/workspace/repo')
 def secret(n):
     try: return open(f'{RUN}/{n}').read().strip()
-    except OSError: sys.exit(f'forq: {RUN}/{n} missing (box not booted by forq?)')
+    except OSError: sys.exit(f'qb-agent: {RUN}/{n} missing (box not booted by forq?)')
 
 def api(method, path, body=None):
     req = urllib.request.Request(secret('api') + path, method=method,
@@ -57,7 +58,7 @@ def api(method, path, body=None):
     except urllib.error.HTTPError as e:
         try: msg = json.load(e).get('error')
         except Exception: msg = e.reason
-        sys.exit(f'forq: {msg} ({e.code})')
+        sys.exit(f'qb-agent: {msg} ({e.code})')
 
 def try_api(method, path, body=None, timeout=3):
     """The hook's calls: short, and never an error (the hook must not get in the agent's way)."""
@@ -105,7 +106,7 @@ def board_hook():
         rows = (r or {}).get('rows') or []
         if rows and now - warned.get(f, 0) >= 300:
             warned[f] = now
-            out(ev, f"Agent board: {f} was also touched in the last 10 min by:\n" + '\n'.join(x['line'] for x in rows[:3]) + "\nYour work lands through the merge queue either way; keep your change to this file small, or see: forq who --files " + f)
+            out(ev, f"Agent board: {f} was also touched in the last 10 min by:\n" + '\n'.join(x['line'] for x in rows[:3]) + "\nYour work lands through the merge queue either way; keep your change to this file small, or see: qb-agent who --files " + f)
         for m in (edits, warned):
             for k in [k for k, t in m.items() if now - t > 3600]: del m[k]
         save()
@@ -151,9 +152,9 @@ def dedupe_env():
         if p.returncode == 0 and p.stdout.startswith(k + '='): env[k] = p.stdout.strip()[len(k) + 1:]
     return env
 
-CONFLICT_MSG = ('forq: conflicts while rebasing on main. If main already has this commit\'s task (another change landed it), '
-    'run: forq skip (it drops that commit and goes on; your fork is yours alone, no approval needed). Otherwise resolve them '
-    'keeping BOTH main\'s changes and your intent, then: git add -A && git rebase --continue && forq push && forq status pushed "redone on the latest main"')
+CONFLICT_MSG = ('qb-agent: conflicts while rebasing on main. If main already has this commit\'s task (another change landed it), '
+    'run: qb-agent skip (it drops that commit and goes on; your fork is yours alone, no approval needed). Otherwise resolve them '
+    'keeping BOTH main\'s changes and your intent, then: git add -A && git rebase --continue && qb-agent push && qb-agent status pushed "redone on the latest main"')
 
 def rebasing():
     return os.path.isdir(os.path.join(REPO, '.git', 'rebase-merge')) or os.path.isdir(os.path.join(REPO, '.git', 'rebase-apply'))
@@ -174,14 +175,14 @@ def on_main(commit, mref):
 
 def git(*a, check=True):
     p = subprocess.run(['git', *a], cwd=REPO, text=True, capture_output=True)
-    if check and p.returncode: sys.exit(f'forq: git {" ".join(a[:2])} failed:\n{p.stdout}{p.stderr}')
+    if check and p.returncode: sys.exit(f'qb-agent: git {" ".join(a[:2])} failed:\n{p.stdout}{p.stderr}')
     return p
 
 def main(argv):
     if not argv or argv[0] in ('-h', '--help', 'help'): print(__doc__.strip()); return
     v, rest = argv[0], argv[1:]
     if v == 'status':
-        if not rest or rest[0] not in ('working', 'pushed', 'blocked'): sys.exit('usage: forq status <working|pushed|blocked> "note"')
+        if not rest or rest[0] not in ('working', 'pushed', 'blocked'): sys.exit('usage: qb-agent status <working|pushed|blocked> "note"')
         api('POST', '/api/agent/status', {'state': rest[0], 'note': ' '.join(rest[1:])}); print('ok')
     elif v == 'autopush':
         # B-1 (2026-10-13): the Stop hook at the end of every turn of a change agent. Agents finished and went quiet
@@ -201,9 +202,9 @@ def main(argv):
                 return
             git('fetch', '-q', 'origin', check=False)
             api('POST', '/api/agent/status', {'state': 'pushed', 'note': f'{subject} (pushed automatically at the end of a turn: {ahead} commit{"s" if ahead != "1" else ""})'})
-            print(f'forq: pushed {ahead} unpushed commit(s) and reported them')
+            print(f'qb-agent: pushed {ahead} unpushed commit(s) and reported them')
         except SystemExit: pass
-        except Exception as e: print(f'forq autopush: {e}', file=sys.stderr)
+        except Exception as e: print(f'qb-agent autopush: {e}', file=sys.stderr)
     elif v == 'list':
         for a in api('GET', '/api/agent/list')['agents']:
             print(f"{a['id']}  [{a['state']}]  {a['task'][:70]}")
@@ -211,11 +212,11 @@ def main(argv):
             if a.get('claims'): print(f"    claims: {', '.join(a['claims'][:12])}")
             if a.get('landing'): print(f"    queue: {a['landing']}")
     elif v == 'hold':
-        # A task held until an agent is free: the person sees it as waiting; forq spawn of the same task clears it.
+        # A task held until an agent is free: the person sees it as waiting; qb-agent spawn of the same task clears it.
         if rest[:1] == ['--clear']: r = api('POST', '/api/agent/hold', {'clear': True})
         elif rest[:1] == ['--done']: r = api('POST', '/api/agent/hold', {'done': ' '.join(rest[1:])})
         elif rest: r = api('POST', '/api/agent/hold', {'task': ' '.join(rest)})
-        else: sys.exit('usage: forq hold "<task>" | forq hold --done "<task>" | forq hold --clear')
+        else: sys.exit('usage: qb-agent hold "<task>" | qb-agent hold --done "<task>" | qb-agent hold --clear')
         held = r.get('held') or []
         print(f"holding {len(held)}: " + '; '.join(h['text'][:60] for h in held) if held else 'holding nothing')
     elif v == 'spawn':
@@ -226,7 +227,7 @@ def main(argv):
             elif w == '--on': on = next(it, None)
             elif w == '--skeleton': skeleton = True
             else: words.append(w)
-        if not words: sys.exit('usage: forq spawn "task" [--files a,b] [--on <agent-id>] [--skeleton]')
+        if not words: sys.exit('usage: qb-agent spawn "task" [--files a,b] [--on <agent-id>] [--skeleton]')
         task = ' '.join(words)
         # W9c: on a board project, one quick pass checks the new task against work under way or just landed. A twin is
         # not dropped: it goes out as "a thin alias of <the original> under this task's name" (its name is still wanted).
@@ -255,13 +256,13 @@ def main(argv):
         api('POST', f'/api/agent/{v}', body)
         print('logged: the person sees it in Asks' if v == 'decided' else 'asked: the person gets it in their Inbox; carry on with what you can meanwhile')
     elif v == 'parts':
-        if not rest or not rest[0].isdigit(): sys.exit('usage: forq parts <N>   (how many tasks you planned, the skeleton included)')
+        if not rest or not rest[0].isdigit(): sys.exit('usage: qb-agent parts <N>   (how many tasks you planned, the skeleton included)')
         print(api('POST', '/api/agent/parts', {'parts': int(rest[0])}))
     elif v == 'send':
-        if len(rest) < 2: sys.exit('usage: forq send <agent-id> "text"')
+        if len(rest) < 2: sys.exit('usage: qb-agent send <agent-id> "text"')
         print(api('POST', '/api/agent/send', {'agent': rest[0], 'text': ' '.join(rest[1:])}))
     elif v == 'merge':
-        if not rest: sys.exit('usage: forq merge <agent-id>')
+        if not rest: sys.exit('usage: qb-agent merge <agent-id>')
         f = api('GET', '/api/agent/merge-info?agent=' + rest[0])
         if f.get('queued'):
             print(f"queued {rest[0]} for the merge queue: it lands on main once it passes the checks (state: {f.get('state')})"); return
@@ -271,11 +272,11 @@ def main(argv):
         git('-c', f"http.extraHeader=Authorization: Bearer {f['token']}", 'fetch', '-q', f['remote'], br)
         m = git('merge', '--no-edit', '-m', f"Merge {rest[0]}", 'FETCH_HEAD', check=False)
         if m.returncode:
-            sys.exit(f'forq: merge conflict - resolve in /workspace/repo, commit, then: git push origin HEAD && forq merged {rest[0]}\n{m.stdout}{m.stderr}')
+            sys.exit(f'qb-agent: merge conflict - resolve in /workspace/repo, commit, then: git push origin HEAD && qb-agent merged {rest[0]}\n{m.stdout}{m.stderr}')
         git('push', '-q', 'origin', f'HEAD:{br}')
         api('POST', '/api/agent/merged', {'agent': rest[0]}); print(f'merged {rest[0]} into main')
     elif v == 'fetch-agent':
-        if not rest: sys.exit('usage: forq fetch-agent <agent-id>')
+        if not rest: sys.exit('usage: qb-agent fetch-agent <agent-id>')
         f = api('GET', '/api/agent/review-info?agent=' + rest[0])
         ref = f'refs/agents/{rest[0]}'
         git('-c', f"http.extraHeader=Authorization: Bearer {f['token']}", 'fetch', '-q', f['remote'], f'+HEAD:{ref}')
@@ -288,10 +289,10 @@ def main(argv):
         print(f"base:    {f.get('base') or '(unknown: diff against main)'}\nfetched: {ref}\npreview: {f['preview']}")
         print(f"diff:    git diff {f.get('base') or 'HEAD'} {ref}")
     elif v == 'verdict':
-        if len(rest) < 2 or rest[1] not in ('approve', 'changes'): sys.exit('usage: forq verdict <agent-id> approve|changes "notes"')
+        if len(rest) < 2 or rest[1] not in ('approve', 'changes'): sys.exit('usage: qb-agent verdict <agent-id> approve|changes "notes"')
         # Say which commit was reviewed: forq refuses a verdict on an older one.
         c = git('rev-parse', f'refs/agents/{rest[0]}', check=False).stdout.strip()
-        if not c: sys.exit(f'forq: run "forq fetch-agent {rest[0]}" first')
+        if not c: sys.exit(f'qb-agent: run "qb-agent fetch-agent {rest[0]}" first')
         api('POST', '/api/agent/verdict', {'agent': rest[0], 'verdict': rest[1], 'notes': ' '.join(rest[2:]), 'commit': c}); print('ok')
     elif v == 'sync-main':
         f = api('GET', '/api/agent/main-info')
@@ -314,10 +315,10 @@ def main(argv):
         if r.returncode:
             sys.exit(CONFLICT_MSG + f'\n{r.stdout}{r.stderr}')
         git('push', '-q', '-f', 'origin', 'HEAD')
-        print(f'rebased on main ({br}) and pushed. Run the tests, then: forq status pushed "redone on the latest main"')
+        print(f'rebased on main ({br}) and pushed. Run the tests, then: qb-agent status pushed "redone on the latest main"')
     elif v == 'skip':
         # The agent's own call: main already has this commit's task (another change landed it), so drop it.
-        if not rebasing(): sys.exit('forq: no rebase in progress (run forq sync-main)')
+        if not rebasing(): sys.exit('qb-agent: no rebase in progress (run qb-agent sync-main)')
         mref = git('for-each-ref', '--format=%(refname)', 'refs/remotes/main/', check=False).stdout.split('\n')[0].strip()
         r = git('rebase', '--skip', check=False); n = 1
         while r.returncode and rebasing() and n < 50:
@@ -326,29 +327,29 @@ def main(argv):
             n += 1; r = git('rebase', '--skip', check=False)
         if r.returncode: sys.exit(CONFLICT_MSG + f'\n{r.stdout}{r.stderr}')
         git('push', '-q', '-f', 'origin', 'HEAD')
-        print(f'dropped {n} commit(s) main already has; rebased on main and pushed. If nothing of yours is left, your task is already on main: forq status pushed "already on main"')
+        print(f'dropped {n} commit(s) main already has; rebased on main and pushed. If nothing of yours is left, your task is already on main: qb-agent status pushed "already on main"')
     elif v == 'push':
         # An agent's fork is its own: after sync-main (a rebase) a plain push is refused and agents would not
         # force-push without asking, so the run stalled with 'blocked' agents (board W4c r1d, 2026-10-10).
         me = secret('agent-token').rsplit('.', 1)[0]   # <agent-id>.<hmac>
         tail = me.split('--')[-1] if '--' in me else ''
         if not tail or tail.startswith('router') or tail.startswith('review') or tail == 'ask':
-            sys.exit('forq push is for agents on their own fork; the router pushes main with git push')
+            sys.exit('qb-agent push is for agents on their own fork; the router pushes main with git push')
         r = git('push', '-q', '--force', 'origin', 'HEAD', check=False)
-        if r.returncode: sys.exit(f'forq: push failed:\n{r.stdout}{r.stderr}')
-        print('pushed to your fork. Now run: forq status pushed "<what you did>"')
+        if r.returncode: sys.exit(f'qb-agent: push failed:\n{r.stdout}{r.stderr}')
+        print('pushed to your fork. Now run: qb-agent status pushed "<what you did>"')
     elif v == 'next':
         r = api('POST', '/api/agent/next', {})
-        if r.get('off'): sys.exit('forq next is off in this project: pick a task yourself')
-        if r.get('error'): sys.exit('forq: ' + r['error'])
+        if r.get('off'): sys.exit('qb-agent next is off in this project: pick a task yourself')
+        if r.get('error'): sys.exit('qb-agent: ' + r['error'])
         if r.get('none'): print('no task left: every task is done or taken. Reply "done".'); return
         print(f"your task{' (still yours)' if r.get('again') else ''}: {r['id']}: {r['text']}")
         if r.get('aliases'): print(f"also add {', '.join(r['aliases'])} as a thin alias of it: the same work under another name")
-        print('It is reserved for you: no other agent gets it. When it has landed, run forq next again.')
+        print('It is reserved for you: no other agent gets it. When it has landed, run qb-agent next again.')
     elif v == 'tasks':
-        if not rest: sys.exit('usage: forq tasks <file>   (router: register the task list for forq next and claims)')
+        if not rest: sys.exit('usage: qb-agent tasks <file>   (router: register the task list for qb-agent next and claims)')
         p = rest[0] if os.path.isabs(rest[0]) else os.path.join(REPO, rest[0])
-        if not os.path.isfile(p): sys.exit(f'forq: no such file {rest[0]}')
+        if not os.path.isfile(p): sys.exit(f'qb-agent: no such file {rest[0]}')
         r = api('POST', '/api/agent/tasks', {'text': open(p).read()})
         print(f"registered {r.get('ids', 0)} task ids ({r.get('items', 0)} items) from {rest[0]}")
     elif v == 'hook':
@@ -370,22 +371,22 @@ def main(argv):
         for w in it:
             if w == '--files': files += [f for f in next(it, '').split(',') if f]
             else: words.append(w)
-        if not words: sys.exit('usage: forq intent "what you are doing" [--files a,b]')
+        if not words: sys.exit('usage: qb-agent intent "what you are doing" [--files a,b]')
         r = api('POST', '/api/agent/intent', {'intent': ' '.join(words), 'files': files})
         if r.get('off'): print('the agent board is off in this project'); return
         print('on the board: ' + ' '.join(words))
         if r.get('taken'): print(r['taken'])
         if r.get('others'): print('Others on the same files, or landed on main in the last 30 min (if one of these is the same work as yours, under any name, pick another task or make yours a thin alias of it):\n' + r['others'])
     elif v == 'dedupe':
-        if not rest: sys.exit('usage: forq dedupe <file> | "task" "task" ...')
+        if not rest: sys.exit('usage: qb-agent dedupe <file> | "task" "task" ...')
         p = rest[0] if len(rest) == 1 else ''
         if p and not os.path.isabs(p): p = os.path.join(REPO, p) if os.path.exists(os.path.join(REPO, p)) else p
         text = open(p).read() if p and os.path.isfile(p) else '\n'.join('- ' + w for w in rest)
         f = api('POST', '/api/agent/dedupe', {'stage': 'prompt', 'text': text})
         if len(f.get('items') or []) < 2: print('fewer than two tasks: nothing to compare'); return
         ans, usage, err, code = haiku(f['prompt'])
-        if ans is None: sys.exit('forq: the dedupe pass gave no answer')
-        if err or '{' not in ans: print(f"forq: the dedupe pass answered oddly: {ans[:300]}", file=sys.stderr)
+        if ans is None: sys.exit('qb-agent: the dedupe pass gave no answer')
+        if err or '{' not in ans: print(f"qb-agent: the dedupe pass answered oddly: {ans[:300]}", file=sys.stderr)
         r = api('POST', '/api/agent/dedupe', {'stage': 'answer', 'ids': [i['id'] for i in f['items']], 'answer': ans, 'isError': err, 'exit': code, 'usage': usage})
         pairs = r.get('pairs') or []
         print(f"{len(f['items'])} tasks, {len(pairs)} pair(s) of the same work" + (':' if pairs else ''))
@@ -393,7 +394,7 @@ def main(argv):
     elif v == 'merged':
         api('POST', '/api/agent/merged', {'agent': rest[0]}); print('ok')
     else:
-        sys.exit(f'forq: unknown verb {v}. Try: forq help')
+        sys.exit(f'qb-agent: unknown verb {v}. Try: qb-agent help')
 
 main(sys.argv[1:])
 `;

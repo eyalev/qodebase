@@ -111,7 +111,7 @@ export function planningOf(info: ProjectInfo, r: BoxStatus): { line: string; fai
   // The router took the request but every agent is busy (qb6: 'queued until an agent is free'): say so, or the page
   // looks idle (the manager, 2026-10-14). The state from the server when it records it; meanwhile the router's own words.
   const qq = q as typeof q & { queuedAt?: number; ahead?: number };
-  // qb6's field (info.waiting [{text, at}], set by the router's 'forq hold', also read by Talk's status). The router
+  // qb6's field (info.waiting [{text, at}], set by the router's 'qb-agent hold', also read by Talk's status). The router
   // words a held task its own way, so it is not matched to the request text: anything held while the newest request has
   // no agent yet is that request waiting.
   const held = (info as { waiting?: { text: string; at: number }[] }).waiting || [];

@@ -1,6 +1,6 @@
 // Real agents and the landing system: the calls index.ts makes at spawn, push, verdict and
 // merge. Only for projects with the landing system on (`info.landing`); every other
-// project keeps the old flow (the router merges with `forq merge`).
+// project keeps the old flow (the router merges with `qb-agent merge`).
 
 import type { Env } from '../env';
 import type { Agent, ProjectInfo } from '../project';
@@ -20,7 +20,7 @@ export async function onSpawn(env: Env, info: ProjectInfo, agent: Agent, o: { fi
   });
 }
 
-/** `forq status pushed`: the fork's head and the files it changed since its base. */
+/** `qb-agent status pushed`: the fork's head and the files it changed since its base. */
 export async function onPushed(env: Env, ctx: ExecutionContext, info: ProjectInfo, agentId: string, note: string, pooled: boolean | 'none' = false) {
   const a = info.agents.find((x) => x.id === agentId);
   if (!a) return;
@@ -28,7 +28,7 @@ export async function onPushed(env: Env, ctx: ExecutionContext, info: ProjectInf
   if (!tip) return;
   const L_ = L(env, info.slug);
   const rec = await L_.change(agentId);
-  // Where the agent's work meets main: after `forq sync-main` it is a newer main commit than the
+  // Where the agent's work meets main: after `qb-agent sync-main` it is a newer main commit than the
   // fork point, and the change is only what lies on top of it. Diffing from the old fork point
   // re-applied main's own commits and conflicted forever (GitHub-style lab run, 2026-10-08).
   // A stacked change builds on the change it is stacked on: while that one has not landed, the base
@@ -62,7 +62,7 @@ export async function onVerdict(env: Env, slug: string, agentId: string, verdict
   await L(env, slug).reviewed(agentId, verdict, notes);
 }
 
-/** The merge tap (the person) or `forq merge` (the router): into the queue. */
+/** The merge tap (the person) or `qb-agent merge` (the router): into the queue. */
 export async function onMerge(env: Env, slug: string, agentId: string) {
   const c = await L(env, slug).approve(agentId);
   log('landing', 'merge_tap', { slug, agentId, state: c.state });

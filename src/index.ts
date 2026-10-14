@@ -213,7 +213,7 @@ async function bootSpec(env: Env, agentId: string, apiBase: string): Promise<Boo
   if (/ANTHROPIC_MODEL=\S*haiku/i.test(ccEnv)) ccEnv += ' CLAUDE_CODE_AUTO_COMPACT_WINDOW=125000 CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=88';
   ccEnv += ' BASH_MAX_OUTPUT_LENGTH=15000 CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS=12000';
   if (roleOf(agentId) === 'agent') ccEnv += ' CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS=1';
-  // The agent board (landing flag `board`): the box gets the hook and the prompts mention `forq who`.
+  // The agent board (landing flag `board`): the box gets the hook and the prompts mention `qb-agent who`.
   const lfl = landingOn(await projectStub(env, slug).info().catch(() => null)) ? await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null) : null;
   const boardOn = !!lfl?.board;
   const autoLand = !!lfl?.autoMerge;   // the merge queue lands approved changes itself: the router never asks to merge
@@ -1154,12 +1154,12 @@ const app = {
           // G5: the owner's own note ("Ask for changes"): on a landing project through Landing (record + outbox).
           if (a && typeof b.notes === 'string' && b.notes.trim()) {
             if (landingOn(info)) { const r = await env.Landing.get(env.Landing.idFromName(slug)).sendBack(a.id, b.notes, me.handle || 'owner'); return json(r, r.ok ? 200 : (r as { status?: number }).status || 400); }
-            const r = await sendTo(env, a.id, `The project's owner asked for changes:\n\n${b.notes.trim().slice(0, 4000)}\n\nMake them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`, apiBase);
+            const r = await sendTo(env, a.id, `The project's owner asked for changes:\n\n${b.notes.trim().slice(0, 4000)}\n\nMake them, commit, push with \`qb-agent push\`, then run \`qb-agent status pushed "<what you changed>"\`.`, apiBase);
             if (r.ok) await p.setState(a.id, 'working');
             return json(r, r.ok ? 200 : 502);
           }
           if (!a?.review?.notes) return json({ error: 'no review notes for that agent' }, 400);
-          const r = await sendTo(env, a.id, `The reviewer asked for changes:\n\n${a.review.notes}\n\nFix them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`, apiBase);
+          const r = await sendTo(env, a.id, `The reviewer asked for changes:\n\n${a.review.notes}\n\nFix them, commit, push with \`qb-agent push\`, then run \`qb-agent status pushed "<what you changed>"\`.`, apiBase);
           if (r.ok) { await p.markReviewSent(a.id); await p.setState(a.id, 'working'); }
           return json(r, r.ok ? 200 : 502);
         }
@@ -1169,7 +1169,7 @@ const app = {
           if (!a) return json({ error: 'unknown agent' }, 404);
           // Landing projects: the merge tap queues the change (src/landing/), no router turn.
           if (landingOn(info)) return json({ queued: true, change: await landingHooks.onMerge(env, slug, a.id) });
-          return json(await askRouter(env, ctx, p, slug, `Merge agent ${a.id} into the project's main line: run \`forq merge ${a.id}\` and tell me the result in one line.`, apiBase, `Merge ${a.id.split('--')[1]}`, 'merge'));
+          return json(await askRouter(env, ctx, p, slug, `Merge agent ${a.id} into the project's main line: run \`qb-agent merge ${a.id}\` and tell me the result in one line.`, apiBase, `Merge ${a.id.split('--')[1]}`, 'merge'));
         }
       }
 
@@ -1523,7 +1523,7 @@ async function issuesHook(request: Request, env: Env, ctx: ExecutionContext): Pr
     `Cloudflare Issues reported a production error in this project's live app (Worker ${worker}, live at ${live}):`,
     text.split('\n\nAI-assisted investigation')[0],
     occ ? `The failing requests, from the issue's occurrences (dynamic path parts are shown as REDACTED by Cloudflare):\n${occ}` : 'The occurrences could not be fetched.',
-    `First reproduce it: send the SAME request to the live URL with curl (same method, path and headers as above; a plain GET is not a WebSocket upgrade), trying realistic values where the path says REDACTED, until you get the same status, and read the response body. Only then decide the cause from the code. If you cannot reproduce it, say so rather than picking a theory. Start one agent with \`forq spawn\` to fix it, giving it the exact failing request, what the response showed, and the cause. If an agent is already working on this error with a different theory, tell it with \`forq send\`. Reply with one line saying what you found and did.`,
+    `First reproduce it: send the SAME request to the live URL with curl (same method, path and headers as above; a plain GET is not a WebSocket upgrade), trying realistic values where the path says REDACTED, until you get the same status, and read the response body. Only then decide the cause from the code. If you cannot reproduce it, say so rather than picking a theory. Start one agent with \`qb-agent spawn\` to fix it, giving it the exact failing request, what the response showed, and the cause. If an agent is already working on this error with a different theory, tell it with \`qb-agent send\`. Reply with one line saying what you found and did.`,
   ].join('\n\n');
   const r = await askRouter(env, ctx, p, e.slug, ask, env.API_BASE, `Production error from Cloudflare Issues: ${title}`, 'issues');
   log('issues', 'routed', { worker, slug: e.slug });
@@ -1602,7 +1602,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
   if (verb === 'list') {
     const info = await p.info();
     const agents = (info?.agents || []).map(({ id, task, state, note }) => ({ id, task, state, note } as Record<string, unknown>));
-    // Landing projects: each agent's claims and where its change is in the queue (`forq list`).
+    // Landing projects: each agent's claims and where its change is in the queue (`qb-agent list`).
     if (landingOn(info)) for (const a of agents) {
       const c = await env.Landing.get(env.Landing.idFromName(slug)).change(String(a.id)).catch(() => null);
       if (c) { a.claims = [...new Set([...c.claims, ...c.files])]; a.landing = c.state; }
@@ -1610,7 +1610,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     return json({ agents });
   }
   // The agent board (src/landing/board.ts) on landing projects: the box hook posts edits and commits,
-  // `forq who` asks, `forq intent` states the agent's own task, `forq dedupe` stores same-work pairs.
+  // `qb-agent who` asks, `qb-agent intent` states the agent's own task, `qb-agent dedupe` stores same-work pairs.
   // The box downloads an image attached to a message for it (sendTo -> AgentBox.fetchAttachments).
   if (verb === 'attachment') {
     const id = url.searchParams.get('id') || '';
@@ -1663,10 +1663,10 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       const done = (await L.boardWho({ me: name, recent: 30 * 60_000 })).rows.filter((r) => r.done);
       const live = (await L.boardWho({ me: name })).rows.filter((r) => !near.some((x) => x.agent === r.agent));
       const taken = Object.entries((e as { takenBy?: Record<string, string> }).takenBy || {});
-      return json({ ...e, ...(taken.length ? { taken: `Already claimed earlier by another agent: ${taken.map(([id, a]) => `${id} by ${a}`).join(', ')}. The earliest claim keeps the task: pick another one and announce it with forq intent.` } : {}), others: boardText([...near, ...live.slice(0, Math.max(0, 8 - near.length)), ...done], (await L.boardWho({})).aliases, { live: 8, done: 8 }) });
+      return json({ ...e, ...(taken.length ? { taken: `Already claimed earlier by another agent: ${taken.map(([id, a]) => `${id} by ${a}`).join(', ')}. The earliest claim keeps the task: pick another one and announce it with qb-agent intent.` } : {}), others: boardText([...near, ...live.slice(0, Math.max(0, 8 - near.length)), ...done], (await L.boardWho({})).aliases, { live: 8, done: 8 }) });
     }
     if (verb === 'next') {
-      if (me.role !== 'agent') return json({ error: 'forq next is for agents' }, 403);
+      if (me.role !== 'agent') return json({ error: 'qb-agent next is for agents' }, 403);
       return json(await L.claimNextTask(me.agentId));
     }
     // Task lists and alias pairs come only from the router (the planner): an agent posting pairs could make
@@ -1722,7 +1722,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     }
     return json({ ok: true });
   }
-  // An agent's own main, read-only: `forq sync-main` rebases its work on it (landing tier 2).
+  // An agent's own main, read-only: `qb-agent sync-main` rebases its work on it (landing tier 2).
   if (verb === 'main-info' && me.role === 'agent') {
     const t = await p.gitToken('read');
     return json({ remote: t.remote, token: t.token, branch: t.branch });
@@ -1744,7 +1744,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
       const tip = ag ? await head(env, ctx, ag.fork).catch(() => null) : null;
       if (tip && body.commit && tip.commit !== body.commit) {
         log('review', 'stale_verdict', { agent: body.agent, reviewed: String(body.commit).slice(0, 8), latest: tip.commit.slice(0, 8) });
-        return json({ error: `you reviewed ${String(body.commit).slice(0, 7)} but the agent's latest push is ${tip.commit.slice(0, 7)}: run \`forq fetch-agent ${body.agent}\` and review again` }, 409);
+        return json({ error: `you reviewed ${String(body.commit).slice(0, 7)} but the agent's latest push is ${tip.commit.slice(0, 7)}: run \`qb-agent fetch-agent ${body.agent}\` and review again` }, 409);
       }
       // Deferred: the reviewer is still inside this very command; the next review waits until it is idle.
       await startReview(env, p, slug, apiBase, () => p.setVerdict(body.agent, body.verdict === 'approve' ? 'approved' : 'changes', String(body.notes || '')), true);
@@ -1768,7 +1768,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
     await env.Landing.get(env.Landing.idFromName(slug)).unhold(String(b.task || '')).catch(() => null);
     return json(out);
   }
-  // forq hold "<task>": a task the router holds until an agent is free (the person sees it waiting); --done "<task>" / --clear.
+  // qb-agent hold "<task>": a task the router holds until an agent is free (the person sees it waiting); --done "<task>" / --clear.
   if (verb === 'hold') {
     const b = body as Record<string, unknown>;
     const L = env.Landing.get(env.Landing.idFromName(slug));
@@ -1788,7 +1788,7 @@ async function agentApi(request: Request, env: Env, ctx: ExecutionContext, me: E
   if (verb === 'merge-info') {
     const agent = url.searchParams.get('agent') || '';
     if (projectOf(agent) !== slug) return json({ error: 'not an agent of this project' }, 400);
-    // Landing projects: `forq merge` puts the change in the merge queue instead.
+    // Landing projects: `qb-agent merge` puts the change in the merge queue instead.
     if (landingOn(await p.info())) { const c = await landingHooks.onMerge(env, slug, agent); return json({ queued: true, state: c.state }); }
     return json(await p.forkForMerge(agent));
   }

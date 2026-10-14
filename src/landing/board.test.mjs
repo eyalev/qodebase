@@ -122,7 +122,7 @@ test('heartbeats keep a slow agent (and its claim) live without changing its row
   assert.equal(boardView([{ ...ev('x', 'alive', '', [], 0), kind: 'alive' }], { now: T0 + 1000 }).length, 0, 'a heartbeat alone is no row');
 });
 
-test('forq next: first free task in list order; skips done, live claims and alias second names; same task when asked twice', () => {
+test('qb-agent next: first free task in list order; skips done, live claims and alias second names; same task when asked twice', () => {
   const items = ['T1', 'T2', 'T3', 'T4', 'T5'].map((id) => ({ id, text: `${id} text` }));
   const aliases = [{ a: 'T2', b: 'T4', at: 0, by: 'router' }];
   const base = { done: new Set(['T1']), live: new Set(['a', 'b']), aliases };
@@ -151,5 +151,5 @@ test('W9c twins: one pass per new task against open/landed work; a twin becomes 
   assert.equal(parseTwin('garbage', cands), null);
   const t = aliasTask('capitalizeWords: …', cands[0]);
   assert.match(t, /same thing as "titleCase\(s\) in src\/text\.js" \(change eyal\.app--a1, already on main\)[\s\S]*thin alias[\s\S]*test that the name this task uses works/);
-  assert.match(aliasTask('x', cands[1]), /being built by another agent right now[\s\S]*forq sync-main/);
+  assert.match(aliasTask('x', cands[1]), /being built by another agent right now[\s\S]*qb-agent sync-main/);
 });

@@ -91,11 +91,11 @@ type Meta = {
     lanes?: number;
     /** Model replays as one direct call through the replay gateway instead of claude -p (needs replayVia 'gateway'). */
     replayDirect?: boolean;
-    /** The agent board (board.ts): platform + box-hook posts, `forq who`, the hook's context. Off unless set (lab A/B). */
+    /** The agent board (board.ts): platform + box-hook posts, `qb-agent who`, the hook's context. Off unless set (lab A/B). */
     board?: boolean;
     /** Dedupe passes read every list handed out on this project (two teams), not only the caller's. */
     crossDedupe?: boolean;
-    /** Atomic claims: \`forq next\` hands each agent the next free task of the registered lists (pickNext). */
+    /** Atomic claims: \`qb-agent next\` hands each agent the next free task of the registered lists (pickNext). */
     claimNext?: boolean;
     /** Records kept as published evidence (eyal/cafe-team, linked from the README): no demo reset, seed or Watch,
      *  never pruned. Only an explicit keep:false lifts it. */
@@ -119,18 +119,18 @@ type Meta = {
   landings?: [number, number, number?][];   // [landedAt, ask-to-land s, replayed 0/1], last 2000: stats outlive pruned records
   bounces?: number[];                       // times of the last 2000 bounces (same reason)
   outbox?: { to: string; text: string; tries: number; at: number }[];
-  /** Tasks the router holds until an agent is free (forq hold): shown to the person as waiting; a spawn of the same task clears it. */
+  /** Tasks the router holds until an agent is free (qb-agent hold): shown to the person as waiting; a spawn of the same task clears it. */
   held?: { text: string; at: number }[];
-  boardIntent?: Record<string, string>;     // board: each agent's stated intent (`forq intent`), newest 60
+  boardIntent?: Record<string, string>;     // board: each agent's stated intent (`qb-agent intent`), newest 60
   boardClaims?: Record<string, { ids: string[]; at: number }>;   // board: task ids each agent claimed, and when (earliest keeps it)
   aliases?: Alias[];                         // board: pairs the dedupe pass found to be the same work
-  dedupeLists?: { by: string; at: number; items: { id: string; text: string }[] }[];   // every task list registered (forq dedupe / forq tasks)
+  dedupeLists?: { by: string; at: number; items: { id: string; text: string }[] }[];   // every task list registered (qb-agent dedupe / qb-agent tasks)
   tasksDone?: string[];
   /** The estimate shown at Build (estimate vs elapsed bar) and, once the build settled, what it really took. */
-  build?: BuildEstimate & { actual?: { settledAt: number; actualWallS: number; actualUsd: number | null } };                      // task ids whose claiming change landed (claims, forq next)
+  build?: BuildEstimate & { actual?: { settledAt: number; actualWallS: number; actualUsd: number | null } };                      // task ids whose claiming change landed (claims, qb-agent next)
   /** G2 History: each landed change by its commit on main (and the train's tip), newest 300; built once from the records. */
   landedIdx?: Record<string, LandedEntry>;
-  /** X1/X2: how many parts the router planned (`forq parts N`), and when the first change landed. */
+  /** X1/X2: how many parts the router planned (`qb-agent parts N`), and when the first change landed. */
   parts?: number; firstLandedAt?: number;
   /** X5: the router's own decisions and questions to the person (agents' go on their change), newest 300. */
   routerNotes?: { at: number; kind: 'decided' | 'asked-person'; text: string; why?: string }[];
@@ -221,7 +221,7 @@ export class Landing extends DurableObject<Env> {
     // skeleton had nothing else arming it: the scene-2 take's skeleton sat 14 min with its box never started (2026-10-14).
     if (ch.kind === 'agent') await this.#arm(150_000);
     // Push events for the project's main (once): a person's plain git push to main then shows up. Not for agent forks
-    // (forq push reports those; Eyal/manager 2026-10-12), never for lab projects (eyal.lab-*) or the demo.
+    // (qb-agent push reports those; Eyal/manager 2026-10-12), never for lab projects (eyal.lab-*) or the demo.
     if (ch.kind === 'agent' && eligibleSlug(m.slug)) this.ctx.waitUntil(this.#subscribe([m.slug]).catch((e) => log('landing', 'subscribe_error', { err: String(e).slice(0, 200) })));
     return ch;
   }
@@ -267,13 +267,13 @@ export class Landing extends DurableObject<Env> {
     if (ev.change) {
       const c = await this.#get(ev.change);
       if (!c) out = 'no such change';
-      else if (c.commit === ev.after) out = 'known';                     // forq push already recorded this commit
+      else if (c.commit === ev.after) out = 'known';                     // qb-agent push already recorded this commit
       else if (ev.by.kind === 'lander' || ev.by.kind === 'platform') out = 'platform';
       else if (c.state === 'landed' || c.state === 'testing') {
         this.#ev(c, 'pushed', `${ev.n} commit${ev.n === 1 ? '' : 's'} via git by ${who}, not taken: the change is ${c.state === 'testing' ? 'in a train' : 'already landed'}`);
         await this.#put(c); out = 'not taken';
       } else {
-        // A push nobody reported (a person over git, or an agent that skipped forq push): the change follows its fork.
+        // A push nobody reported (a person over git, or an agent that skipped qb-agent push): the change follows its fork.
         c.commit = ev.after;
         this.#ev(c, 'pushed', `via git by ${ev.by.kind === 'agent' ? 'its agent' : who}${ev.message ? `: ${ev.message}` : ''}`);
         await this.#put(c);
@@ -365,7 +365,7 @@ export class Landing extends DurableObject<Env> {
       // Auto-merge projects (lab, crew runs): no person taps 'send to the agent', so the notes go
       // straight to the agent (a lab run waited 15 min on a change nobody passed on, 2026-10-08).
       if (m0.flags.autoMerge && c.kind === 'agent') {
-        this.#tell(c.id, `The reviewer asked for changes:\n\n${notes.slice(0, 3000)}\n\nFix them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`);
+        this.#tell(c.id, `The reviewer asked for changes:\n\n${notes.slice(0, 3000)}\n\nFix them, commit, push with \`qb-agent push\`, then run \`qb-agent status pushed "<what you changed>"\`.`);
         await this.#saveMeta(); await this.#arm(500);
       }
     }
@@ -394,7 +394,7 @@ export class Landing extends DurableObject<Env> {
     try { await this.boardPost({ agent: boardName(changeId), kind, intent, files, status, change: changeId }); }
     catch (e) { log('landing', 'board_post_failed', { changeId, kind, err: String(e) }); }
   }
-  /** One event (platform, the box hook, `forq intent`). No intent = the agent's stated one, else its change's title. */
+  /** One event (platform, the box hook, `qb-agent intent`). No intent = the agent's stated one, else its change's title. */
   async boardPost(o: { agent: string; kind: string; intent?: string; files?: string[] | string; status?: string; change?: string; stated?: boolean }) {
     const m = await this.#m();
     if (!m.flags.board) return { off: true };
@@ -420,7 +420,7 @@ export class Landing extends DurableObject<Env> {
     return { on: true, cands: cs.slice(-40).reverse().map((c) => ({ change: c.id, title: (m.boardIntent?.[boardName(c.id)] || c.title).slice(0, 200), state: c.state })) };
   }
 
-  /** `forq intent "<what I am doing>" [--files a,b]`: the agent's own words (a self-picked backlog item);
+  /** `qb-agent intent "<what I am doing>" [--files a,b]`: the agent's own words (a self-picked backlog item);
    *  the files become claims on its change (overlap warnings as at spawn). */
   async stateIntent(changeId: string, intent: string, files: string[]) {
     const c = await this.#get(changeId);
@@ -451,7 +451,7 @@ export class Landing extends DurableObject<Env> {
     const e = await this.boardPost({ agent: name, kind: 'started', intent, files, change: changeId, stated: true });
     return 'off' in e ? e : { ...e, takenBy };
   }
-  /** `forq who`, the hook's context, the view: rows + aliases + the text an agent reads. */
+  /** `qb-agent who`, the hook's context, the view: rows + aliases + the text an agent reads. */
   async boardWho(q: BoardQuery & { text?: boolean } = {}) {
     if (!this.#meta && !(await this.ctx.storage.get<Meta>('meta'))) return { on: false, rows: [], aliases: [], text: '' };   // no landing here (was a 500)
     const m = await this.#m();
@@ -476,13 +476,13 @@ export class Landing extends DurableObject<Env> {
     delete m.boardClaims![name];
   }
 
-  /** \`forq next\` (flag claimNext): one atomic step in this single-threaded object, so two agents asking at the
+  /** \`qb-agent next\` (flag claimNext): one atomic step in this single-threaded object, so two agents asking at the
    *  same moment never get the same task (the tie-break and TTL races of advisory claims cannot happen). */
   async claimNextTask(changeId: string) {   // not `next`: Workers RPC answers "does not implement the method" for that name
     const m = await this.#m();
     if (!m.flags.claimNext) return { off: true as const };
     const items = (m.dedupeLists || []).flatMap((l) => l.items).filter((i, k, a) => !i.id.startsWith('#') && a.findIndex((x) => x.id === i.id) === k);
-    if (!items.length) return { error: 'no task list registered: the router runs forq tasks <file> (or forq dedupe <file>) first' };
+    if (!items.length) return { error: 'no task list registered: the router runs qb-agent tasks <file> (or qb-agent dedupe <file>) first' };
     const name = boardName(changeId);
     const live = new Set((await this.boardWho({})).rows.map((r) => r.agent));
     live.add(name);
@@ -508,7 +508,7 @@ export class Landing extends DurableObject<Env> {
     for (const it of [...items, ...m.dedupeLists.filter((l) => l.by !== by).flatMap((l) => l.items)]) if (!seen.has(it.id)) { seen.add(it.id); all.push(it); }
     return all.slice(0, 300);
   }
-  /** The dedupe pass's pairs (a box ran it: `forq dedupe`). Replaces earlier pairs from the same list. */
+  /** The dedupe pass's pairs (a box ran it: `qb-agent dedupe`). Replaces earlier pairs from the same list. */
   async boardAliases(pairs: [string, string][], by: string) {
     const m = await this.#m();
     const now = Date.now();
@@ -547,7 +547,7 @@ export class Landing extends DurableObject<Env> {
   }
 
   /** X1: a skeleton that has not landed yet holds other spawns (unless it bounced, or 20 minutes passed). */
-  /** forq hold: the router holds a task until an agent is free. */
+  /** qb-agent hold: the router holds a task until an agent is free. */
   async hold(text: string) {
     const m = await this.#m();
     const t = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 300);
@@ -557,7 +557,7 @@ export class Landing extends DurableObject<Env> {
     await this.env.Project.get(this.env.Project.idFromName(m.slug)).setWaiting(m.held).catch(() => {});
     return { held: m.held };
   }
-  /** A spawn (or forq hold --done) takes a held task off the list: same first words, either way round. */
+  /** A spawn (or qb-agent hold --done) takes a held task off the list: same first words, either way round. */
   async unhold(task: string) {
     const m = await this.#m();
     if (!m.held?.length) return { held: [] };
@@ -659,7 +659,7 @@ export class Landing extends DurableObject<Env> {
     c.state = 'working'; c.review = null; delete c.redo;
     this.#ev(c, 'sent-back', text.slice(0, 300));
     await this.#put(c);
-    this.#tell(c.id, `The project's owner (${by}) asked for changes:\n\n${text}\n\nMake them, commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`);
+    this.#tell(c.id, `The project's owner (${by}) asked for changes:\n\n${text}\n\nMake them, commit, push with \`qb-agent push\`, then run \`qb-agent status pushed "<what you changed>"\`.`);
     await this.#saveMeta(); await this.#arm(500);
     await this.#bpost(c.id, 'changes', '', c.files, 'sent back by the owner').catch(() => {});
     log('landing', 'sent_back', { slug: m.slug, id, by, chars: text.length });
@@ -684,7 +684,7 @@ export class Landing extends DurableObject<Env> {
     return { changes, lists: m.dedupeLists || [], done: m.tasksDone || [], claims: m.boardClaims || {}, aliases: (m.aliases || []).map((a) => ({ a: a.a, b: a.b })), gitPushes: (m.gitPushes || []).filter((g) => g.n > 0), notes };
   }
 
-  /** X5: `forq decided` / `forq ask-person` from an agent (on its change) or the router. */
+  /** X5: `qb-agent decided` / `qb-agent ask-person` from an agent (on its change) or the router. */
   async personNote(by: string, kind: 'decided' | 'asked-person', text: string, why?: string) {
     const m = await this.#m();
     text = text.replace(/\s+/g, ' ').trim().slice(0, kind === 'decided' ? 300 : 600);
@@ -737,7 +737,7 @@ export class Landing extends DurableObject<Env> {
       // Stop all stopped every box: agents mid-task have to be told to go on, or they sit idle (R3, 2026-10-12).
       if (was.stopped) for (const id of m.order) {
         const c = await this.#get(id);
-        if (c && c.kind === 'agent' && (c.state === 'working' || c.state === 'replaying')) this.#tell(c.id, `qodebase: this project was stopped and has been resumed. Continue your task where you left off; when done, commit, push with \`forq push\` and run \`forq status pushed "<what you did>"\`.`);
+        if (c && c.kind === 'agent' && (c.state === 'working' || c.state === 'replaying')) this.#tell(c.id, `qodebase: this project was stopped and has been resumed. Continue your task where you left off; when done, commit, push with \`qb-agent push\` and run \`qb-agent status pushed "<what you did>"\`.`);
       }
       await this.#saveMeta(); await this.#arm(500);
       log('landing', 'resumed', { slug: m.slug, by, ...was });
@@ -870,8 +870,8 @@ export class Landing extends DurableObject<Env> {
       (c as { nudges?: number }).nudges = nudges + 1;
       this.#ev(c, 'working', `nudged: nothing pushed for ${Math.round((Date.now() - last) / 60_000)} min and its agent was idle`);
       await this.#put(c);
-      if (sentBack) this.#tell(c.id, `qodebase: your reviewer asked for changes on "${c.title}" and nothing has been pushed since:\n\n${c.events.at(-1)?.detail || ''}\n\nMake them (run \`forq sync-main\` first), commit, push with \`forq push\`, then run \`forq status pushed "<what you changed>"\`.`);
-      else this.#tell(c.id, `qodebase: your task "${c.title}" has not been pushed yet. Check what you have, finish it, commit, push with \`forq push\`, then run \`forq status pushed "<what you did>"\`. If it is already done, just push and report.`);
+      if (sentBack) this.#tell(c.id, `qodebase: your reviewer asked for changes on "${c.title}" and nothing has been pushed since:\n\n${c.events.at(-1)?.detail || ''}\n\nMake them (run \`qb-agent sync-main\` first), commit, push with \`qb-agent push\`, then run \`qb-agent status pushed "<what you changed>"\`.`);
+      else this.#tell(c.id, `qodebase: your task "${c.title}" has not been pushed yet. Check what you have, finish it, commit, push with \`qb-agent push\`, then run \`qb-agent status pushed "<what you did>"\`. If it is already done, just push and report.`);
       await this.#saveMeta();
       log('landing', 'stall_nudge', { slug: m.slug, id: c.id, idleMin: Math.round((Date.now() - last) / 60_000), nudge: nudges + 1 });
     }
@@ -908,7 +908,7 @@ export class Landing extends DurableObject<Env> {
       b.nudged = now;
       await this.#saveMeta();
       const ok = await fetch(`${this.env.API_BASE}/api/agents/${rv}/send`, { method: 'POST', headers: H,
-        body: JSON.stringify({ text: `You have not given your verdict on ${b.change} yet. Finish the review now: run  forq verdict ${b.change} approve "<one line>"  or  forq verdict ${b.change} changes "<what to fix>".` }) }).then((x) => x.ok).catch(() => false);
+        body: JSON.stringify({ text: `You have not given your verdict on ${b.change} yet. Finish the review now: run  qb-agent verdict ${b.change} approve "<one line>"  or  qb-agent verdict ${b.change} changes "<what to fix>".` }) }).then((x) => x.ok).catch(() => false);
       log('landing', 'review_nudge', { slug: m.slug, change: b.change, reviewer: rv, cc: st.cc, ok });
     }
     for (const [rv, b] of Object.entries(r.busy)) {
@@ -1226,7 +1226,7 @@ export class Landing extends DurableObject<Env> {
       if (landedTitles.length) {
         const open = (await this.#all()).filter((x) => x.kind === 'agent' && ['working', 'pushed', 'reviewing', 'queued', 'testing', 'replaying', 'with-lead'].includes(x.state)).length;
         const held = (m.held || []).map((h) => `"${h.text}"`);
-        this.#tell(`${m.slug}--router`, `qodebase: landed on main: ${landedTitles.map((x) => `"${x}"`).join(', ')}. ${open} change${open === 1 ? '' : 's'} still in progress${m.flags.caps?.agents ? ` (your agent limit: ${m.flags.caps.agents})` : ''}. ${held.length ? `You are holding ${held.join(', ')}: start them now with forq spawn while there is room.` : 'If you have tasks waiting for a free agent, start them now with forq spawn; if everything is already running or done, end your turn without a reply.'}`);
+        this.#tell(`${m.slug}--router`, `qodebase: landed on main: ${landedTitles.map((x) => `"${x}"`).join(', ')}. ${open} change${open === 1 ? '' : 's'} still in progress${m.flags.caps?.agents ? ` (your agent limit: ${m.flags.caps.agents})` : ''}. ${held.length ? `You are holding ${held.join(', ')}: start them now with qb-agent spawn while there is room.` : 'If you have tasks waiting for a free agent, start them now with qb-agent spawn; if everything is already running or done, end your turn without a reply.'}`);
       }
       await this.#afterRealTrain(r);
     }
@@ -1264,16 +1264,16 @@ export class Landing extends DurableObject<Env> {
       if (!c || c.kind !== 'agent') continue;
       if ((rc as { empty?: boolean }).empty && !rc.landed) {
         await P.setState(c.id, 'merged', 'nothing new: already on main').catch(() => {});
-        if (m.flags.nextTask) this.#tell(c.id, `qodebase: your change "${c.title}" had nothing new: main already has it. Run \`forq sync-main\` first, then: ${m.flags.nextTask}`);
+        if (m.flags.nextTask) this.#tell(c.id, `qodebase: your change "${c.title}" had nothing new: main already has it. Run \`qb-agent sync-main\` first, then: ${m.flags.nextTask}`);
         continue;
       }
       if (rc.landed) {
         await P.setState(c.id, 'merged', `landed on main as ${(rc.commit || '').slice(0, 7)}`).catch((e) => log('landing', 'set_merged_failed', { id: c.id, err: String(e) })); deploy = true;
-        if (m.flags.nextTask) this.#tell(c.id, `qodebase: your change "${c.title}" landed on main (${(rc.commit || '').slice(0, 7)}). Run \`forq sync-main\` first, then: ${m.flags.nextTask}`);
+        if (m.flags.nextTask) this.#tell(c.id, `qodebase: your change "${c.title}" landed on main (${(rc.commit || '').slice(0, 7)}). Run \`qb-agent sync-main\` first, then: ${m.flags.nextTask}`);
       }
       else if (rc.bounced) this.#tell(c.id, `qodebase merge queue: your change did not pass the project's checks on the latest main, so it was sent back.
 Failures: ${(rc.checks?.failures || []).slice(0, 4).join(' | ') || rc.why}
-Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
+Fix it on your fork, push, then run: qb-agent status pushed "fixed: <what>"`);
     }
     if (deploy && (await P.kindOf()) === 'worker') await P.requestBuild('deploy').catch((e) => log('landing', 'deploy_request_failed', { err: String(e) }));
     // Changes stacked on what just landed: their agents learn their base is on main, whatever their state (R4,
@@ -1285,7 +1285,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       const base = r.changes.find((x) => x.landed && x.id === c.stackedOn);
       if (!base) continue;
       const parent = await this.#get(c.stackedOn);
-      this.#tell(c.id, `qodebase: the change you build on ("${parent?.title || c.stackedOn}") just landed on main (${(r.mainAfter || '').slice(0, 7)}). Run \`forq sync-main\` to rebase on it and finish your task now; then push and run: forq status pushed "<what you did>".`);
+      this.#tell(c.id, `qodebase: the change you build on ("${parent?.title || c.stackedOn}") just landed on main (${(r.mainAfter || '').slice(0, 7)}). Run \`qb-agent sync-main\` to rebase on it and finish your task now; then push and run: qb-agent status pushed "<what you did>".`);
     }
     // Agents that said they are blocked (often: waiting for another agent's work) learn that main
     // moved. Four agents waited 20 min for helpers that had already landed (lab run 14, 2026-10-08).
@@ -1295,7 +1295,7 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       for (const a of info?.agents || []) {
         if (a.state !== 'blocked' || landedTitles.includes(a.id)) continue;
         const what = (await Promise.all(landedTitles.map((id) => this.#get(id)))).filter(Boolean).map((c) => `"${c!.title}"`).join(', ');
-        this.#tell(a.id, `qodebase: main moved: ${what} landed (${(r.mainAfter || '').slice(0, 7)}). If you were waiting for it, run \`forq sync-main\` to rebase on the latest main and continue your task; then push and run: forq status pushed "<what you did>".`);
+        this.#tell(a.id, `qodebase: main moved: ${what} landed (${(r.mainAfter || '').slice(0, 7)}). If you were waiting for it, run \`qb-agent sync-main\` to rebase on the latest main and continue your task; then push and run: qb-agent status pushed "<what you did>".`);
       }
     }
   }
@@ -1315,20 +1315,20 @@ Fix it on your fork, push, then run: forq status pushed "fixed: <what>"`);
       // GitHub-style: the conflict is the author's to fix. Back to the agent: rebase, push, review again.
       c.state = 'bounced';
       this.#ev(c, 'bounced', `conflict in ${where}: back to its agent to rebase on main`);
-      this.#tell(c.id, `qodebase merge queue: your change conflicts with main in ${where}. Rebase it on the latest main: run \`forq sync-main\`, resolve the conflicts keeping BOTH main's changes and your task, run the tests, then: forq status pushed "rebased on main"`);
+      this.#tell(c.id, `qodebase merge queue: your change conflicts with main in ${where}. Rebase it on the latest main: run \`qb-agent sync-main\`, resolve the conflicts keeping BOTH main's changes and your task, run the tests, then: qb-agent status pushed "rebased on main"`);
       return;
     }
     if (m.flags.llmReplay) {
       // Tier 2: the change's own agent redoes its intent on today's main.
       c.state = 'replaying'; c.redo = 'llm';
       this.#ev(c, 'replaying', 'its agent is asked to redo the change on the latest main');
-      this.#tell(c.id, `qodebase merge queue: main changed under your change and it conflicts in ${where}. Redo your task on the latest main: run \`forq sync-main\` (it rebases your work on main; resolve any conflict keeping BOTH main's changes and your intent), run the tests, push, then: forq status pushed "redone on the latest main"`);
+      this.#tell(c.id, `qodebase merge queue: main changed under your change and it conflicts in ${where}. Redo your task on the latest main: run \`qb-agent sync-main\` (it rebases your work on main; resolve any conflict keeping BOTH main's changes and your intent), run the tests, push, then: qb-agent status pushed "redone on the latest main"`);
       return;
     }
     // Tier 3: the owner (or the router on their behalf) decides.
     c.state = 'with-lead'; c.lead = (await this.env.Project.get(this.env.Project.idFromName(m.slug)).info())?.owner || null;
     this.#ev(c, 'with-lead', `${c.lead || 'the owner'} decides: conflict in ${where}`);
-    this.#tell(`${m.slug}--router`, `qodebase merge queue: agent ${c.id} ("${c.title}") conflicts with main in ${where}. Ask it to redo the change on the latest main (forq send ${c.id} "run forq sync-main, redo your change on it, push"), or tell the person it needs a decision.`);
+    this.#tell(`${m.slug}--router`, `qodebase merge queue: agent ${c.id} ("${c.title}") conflicts with main in ${where}. Ask it to redo the change on the latest main (qb-agent send ${c.id} "run qb-agent sync-main, redo your change on it, push"), or tell the person it needs a decision.`);
   }
 
   async flags() { const m = (await this.ctx.storage.get<Meta>('meta')) || null; return m?.flags || { llmReplay: false }; }

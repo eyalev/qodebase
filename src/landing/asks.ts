@@ -26,7 +26,7 @@ export type AsksInput = {
   lists: { by: string; at: number; items: { id: string; text: string }[] }[];
   done: string[]; claims: Record<string, { ids: string[]; at: number }>; aliases: { a: string; b: string }[];
   gitPushes?: { at: number; by: string; after: string; n: number; message: string }[];
-  /** X5 notes (`forq decided`, `forq ask-person`); by = a change id or 'router'. */
+  /** X5 notes (`qb-agent decided`, `qb-agent ask-person`); by = a change id or 'router'. */
   notes?: Note[]; owner?: boolean; base?: string;
 };
 
@@ -56,7 +56,7 @@ export function buildAsks(inp: AsksInput): { asks: Ask[]; counts: Record<AskStat
       changes: mine.map((c) => c.id), changeStates: Object.fromEntries(mine.map((c) => [c.id, c.state])),
       ...(r.state && r.state !== 'sent' ? { delivery: r.state } : {}) });
   });
-  // Board tasks: the lists the router registered (forq tasks / forq dedupe); one ask per task id.
+  // Board tasks: the lists the router registered (qb-agent tasks / qb-agent dedupe); one ask per task id.
   const holders = new Map<string, string[]>();
   for (const [agent, cl] of Object.entries(inp.claims)) for (const t of cl.ids) holders.set(t, [...(holders.get(t) || []), agent]);
   const done = new Set(inp.done);

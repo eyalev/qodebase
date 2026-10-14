@@ -2,11 +2,11 @@
 // Pure functions here (tested by board.test.mjs); storage, posts and the API are in landing.ts.
 //
 //   EVENT   {ts, agent, kind, intent, files, status}: posted by the platform (spawn, push, review,
-//           land, bounce), by the hook in every box (edits -> files, commits) and by `forq intent`.
+//           land, bounce), by the hook in every box (edits -> files, commits) and by `qb-agent intent`.
 //   NOW     one row per agent whose last event is under TTL (10 min) old, files = all it named then.
 //   RECENT  what others LANDED on main in the window, once per agent+intent (pushed/queued is not finished).
 //   IN FLIGHT an agent whose latest word is pushed/queued/bounced… stays in NOW for up to 45 min.
-//   ALIASES pairs the dedupe pass (`forq dedupe`, Haiku) found to be the same work.
+//   ALIASES pairs the dedupe pass (`qb-agent dedupe`, Haiku) found to be the same work.
 // Advisory only: nothing here blocks an agent; the merge queue stays the gate.
 
 export const BOARD_TTL_MS = 10 * 60_000;
@@ -88,7 +88,7 @@ export const fmtBoardRow = (r: BoardRow) => `${r.done ? 'LANDED ' : ''}${r.agent
   + `${r.files?.length ? ` [${r.files.slice(0, 5).join(', ')}${r.files.length > 5 ? ', …' : ''}]` : ''}${r.status ? ` (${r.status})` : ''}`;
 const fmtAge = (s: number) => (s < 90 ? `${s}s ago` : s < 5400 ? `${Math.round(s / 60)}m ago` : `${Math.round(s / 3600)}h ago`);
 
-/** Text an agent reads (hook context, `forq who`): max `live` working rows + `done` finished rows + aliases. */
+/** Text an agent reads (hook context, `qb-agent who`): max `live` working rows + `done` finished rows + aliases. */
 export function boardText(rows: BoardRow[], aliases: Alias[] = [], o: { live?: number; done?: number; recentMin?: number } = {}) {
   const live = rows.filter((r) => !r.done).slice(0, o.live ?? 5), done = rows.filter((r) => r.done).slice(0, o.done ?? 5);
   const parts: string[] = [];
@@ -160,7 +160,7 @@ export function claimHolders(claims: Record<string, { ids: string[]; at: number 
   return out;
 }
 
-/** `forq next` (atomic claim, flag claimNext): the first task, in list order, that is not done, not held by
+/** `qb-agent next` (atomic claim, flag claimNext): the first task, in list order, that is not done, not held by
  *  another live agent, and not the second name of an alias pair (whoever builds its first name adds the alias).
  *  The caller's own unfinished claim comes back unchanged, so asking twice never takes a second task. */
 export function pickNext(items: { id: string; text: string }[], o: { me: string; done: Set<string>; claims: Record<string, { ids: string[]; at: number }>; live: Set<string>; aliases?: Alias[] }) {
@@ -201,5 +201,5 @@ export function aliasTask(task: string, twin: TwinCandidate) {
   const where = twin.state === 'landed' ? 'already on main' : 'being built by another agent right now';
   return `${task}\n\nNote from qodebase: this asks for the same thing as "${twin.title}" (change ${twin.change}, ${where}). Do not build it again. `
     + `Make the smallest change that offers it under the name THIS task asks for: a thin alias of the existing work (one line where possible, `
-    + `waiting for it to land first if it has not: run forq sync-main to get it), plus a test that the name this task uses works. Then push and report as usual.`;
+    + `waiting for it to land first if it has not: run qb-agent sync-main to get it), plus a test that the name this task uses works. Then push and report as usual.`;
 }

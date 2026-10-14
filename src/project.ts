@@ -16,7 +16,7 @@ export type Agent = {
   remote: string;
   createdAt: number;
   state: 'working' | 'pushed' | 'merged' | 'stopped' | 'blocked';
-  note?: string;       // the agent's last `forq status` note
+  note?: string;       // the agent's last `qb-agent status` note
   noteAt?: number;
   request?: string;    // the person's request that led to it (router-spawned agents)
   base?: { commit: string; tree: string };  // main when it was forked: what its Changes diff against
@@ -62,7 +62,7 @@ export type ProjectInfo = {
    *  turned them off. The requests themselves are kept apart in this object's storage ('rq:<id>'). */
   requestsOpen?: number;
   requestsOff?: boolean;
-  /** Tasks the router holds until an agent is free (forq hold; mirrored from the Landing): [{text, at}]. */
+  /** Tasks the router holds until an agent is free (qb-agent hold; mirrored from the Landing): [{text, at}]. */
   waiting?: { text: string; at: number }[];
 };
 export type Notice = { kind: 'build-done' | 'decision' | 'request'; title: string; at: number; href: string };
@@ -130,7 +130,7 @@ export class Project extends DurableObject<Env> {
   }
 
   /** Public or private (owner-only). */
-  /** The Landing's held list (forq hold), for Talk's status and the Changes page. */
+  /** The Landing's held list (qb-agent hold), for Talk's status and the Changes page. */
   async setWaiting(list: { text: string; at: number }[]) {
     const info = await this.#need();
     if (list.length) info.waiting = list.slice(-30); else delete info.waiting;

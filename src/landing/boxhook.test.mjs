@@ -1,4 +1,4 @@
-// The box side of the agent board: `forq hook` (Claude Code hooks), `forq who`, `forq intent`, against a stub API.
+// The box side of the agent board: `qb-agent hook` (Claude Code hooks), `qb-agent who`, `qb-agent intent`, against a stub API.
 //   node --experimental-strip-types --test src/landing/boxhook.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -87,7 +87,7 @@ test('commit: posts the subject and files once per new commit, never the command
   } finally { t.close(); }
 });
 
-test('forq who / intent', async () => {
+test('qb-agent who / intent', async () => {
   const t = await setup((c) => (c.url.startsWith('/api/agent/who') ? { on: true, text: 'Working now:\na2 x' }
     : c.url === '/api/agent/intent' ? { ts: 1, others: 'Landed on main in the last 30 min:\nLANDED a3 landed 2m ago: titleCase' } : {}));
   try {
@@ -102,7 +102,7 @@ test('forq who / intent', async () => {
   } finally { t.close(); }
 });
 
-test('forq push: force-pushes an agent fork, refuses the router', async () => {
+test('qb-agent push: force-pushes an agent fork, refuses the router', async () => {
   const t = await setup(() => ({}));
   try {
     const remote = join(t.root, 'fork.git'); execFileSync('git', [...ID, 'init', '-q', '--bare', remote]);
@@ -120,7 +120,7 @@ test('forq push: force-pushes an agent fork, refuses the router', async () => {
   } finally { t.close(); }
 });
 
-test('forq sync-main: conflict says forq skip; forq skip drops the duplicate commit and pushes; a half-done rebase is aborted first', async () => {
+test('qb-agent sync-main: conflict says qb-agent skip; qb-agent skip drops the duplicate commit and pushes; a half-done rebase is aborted first', async () => {
   const t = await setup((c) => (c.url === '/api/agent/main-info' ? { remote: join(t.root, 'main.git'), token: 'x', branch: 'main' } : {}));
   try {
     const g = (cwd, ...a) => execFileSync('git', [...ID, ...a], { cwd, encoding: 'utf8' }).trim();
@@ -135,10 +135,10 @@ test('forq sync-main: conflict says forq skip; forq skip drops the duplicate com
     writeFileSync(join(w, 'dates.js'), 'base\nparseDate = theirs\n'); g(w, 'commit', '-qam', 'T1 dates (theirs)'); g(w, 'push', '-q', 'origin', 'HEAD:main');
     const r = await t.forq(['sync-main']);
     assert.notEqual(r.code, 0);
-    assert.match(r.err, /run: forq skip/);
+    assert.match(r.err, /run: qb-agent skip/);
     // an earlier half-done rebase does not block a new sync-main: it is aborted and redone
     const r2 = await t.forq(['sync-main']);
-    assert.match(r2.err, /run: forq skip/);
+    assert.match(r2.err, /run: qb-agent skip/);
     const s = await t.forq(['skip']);
     assert.equal(s.code, 0, s.err);
     assert.match(s.out, /dropped 1 commit/);
@@ -163,7 +163,7 @@ test('heartbeat: any tool use posts alive at most every 2 min; an off board stop
   } finally { t.close(); }
 });
 
-test('forq next and forq tasks', async () => {
+test('qb-agent next and qb-agent tasks', async () => {
   let ans = { id: 'T3', text: 'T3 dates helper', aliases: ['T21'], again: false };
   const t = await setup((c) => (c.url === '/api/agent/next' ? ans : c.url === '/api/agent/tasks' ? { items: 31, ids: 30 } : {}));
   try {
@@ -181,7 +181,7 @@ test('forq next and forq tasks', async () => {
   } finally { t.close(); }
 });
 
-test('forq spawn: a twin of running/landed work goes out as an alias task (W9c); no twin, no check, or the board off: the task as typed', async () => {
+test('qb-agent spawn: a twin of running/landed work goes out as an alias task (W9c); no twin, no check, or the board off: the task as typed', async () => {
   let twinOn = true;
   const t = await setup((c) => {
     if (c.url === '/api/agent/twin') return !twinOn ? { on: false, items: [] }
