@@ -24,6 +24,9 @@ ${selfHost ? '' : `<nav class="hw-doors hw-top" aria-label="Start here">
 <a href="/deck/"><b>The 6-minute tour</b><span>The whole story in slides, with the numbers.</span></a>
 <a href="/runs"><b>See it at scale: live runs</b><span>Hundreds of agents changing real codebases, file by file, with the cost.</span></a>
 </nav>`}
+<section class="hw-sec" id="connects"><h2>How it connects</h2>
+<p class="desc">From what you ask to code on main. The marks are the ones the <a href="/p/eyal/real-course-builder/work">Board</a> uses.</p>
+<ol class="cx"><li class=""><span class="cx-m"><i class="cx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></i></span><b>Your request</b><span class="cx-d">You say or type what you want, on the phone or here.</span></li><li class=""><span class="cx-m"><i class="cx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="2"/><path d="M7 12h4M11 12l4-6h4M11 12l4 6h4M11 12h8"/></svg></i></span><b>Router plans the parts</b><span class="cx-d">One agent splits it into tasks, one per part of the app.</span></li><li class=""><span class="cx-m"><i class="cx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg></i><i class="cx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4c-2 0-2 1.5-2 3v2c0 1.5-1 3-2 3 1 0 2 1.5 2 3v2c0 1.5 0 3 2 3M16 4c2 0 2 1.5 2 3v2c0 1.5 1 3 2 3-1 0-2 1.5-2 3v2c0 1.5 0 3-2 3"/></svg></i></span><b>Skeleton and contract</b><span class="cx-d">The first agent builds the app shell and the shared contract every agent codes against.</span></li><li class=""><span class="cx-m"><i class="cx-pc w">1</i><i class="cx-pc w">2</i><i class="cx-pc w">3</i></span><b>Agents claim tasks on the Board</b><span class="cx-d">Each works on its own copy and says which files it will touch.</span></li><li class=""><span class="cx-m"><i class="cx-pc r">2</i></span><b>Review</b><span class="cx-d">Another agent reads each change and approves it or asks for fixes.</span></li><li class=""><span class="cx-m"><span class="cx-train"><i class="cx-pc l mini"></i><i class="cx-pc l mini"></i><i class="cx-pc l mini"></i></span><span class="cx-lanes"><i></i><i></i></span></span><b>The Line: trains, lanes</b><span class="cx-d">Approved changes are tested together in trains; big codebases get a lane per part.</span></li><li class="cx-if"><span class="cx-m"><i class="cx-pc d rp">2</i></span><b>Redone on the newest code if it moved</b><span class="cx-d">If code it touched landed first, its intent is redone on the newest main and tested again, not sent back.</span></li><li class=""><span class="cx-m"><i class="cx-pc d">1</i><i class="cx-pc d">2</i><i class="cx-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></i></span><b>Lands on main, record kept as a git note</b><span class="cx-d">What it was asked, the diff, the review and the tests stay with the code.</span></li></ol></section>
 <section class="hw-sec hw-when"><h2>One agent or many?</h2>
 <p>For a fresh app, one strong agent is the measured default: in 3 of 3 real builds, one strong agent finished sooner than a team (2×, 4× and 6×; the 6× pair, R8b, had a ~10 min queue bug), with at least as many features working; the team was cheaper in 2 of 3 (one build each: <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R3-R6-quality.md">R6 against R3</a>, <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R4-R7-quality.md">R7 against R4</a>, <a href="https://github.com/eyalev/qodebase/blob/main/docs/board/R8b-quality.md">R8b</a>). Many agents pay off for wide work (shared task lists, two teams, tasks arriving mid-run: the board), for work that must run in parallel (big ports like Bun's), and at fleet scale (lanes, fleets of cheap models). qodebase is the layer that makes many agents safe: each change an intent with a record, landed by intent on the newest code, with a live board and a timeline.</p></section>
 ${demo}
@@ -112,6 +115,39 @@ body:has(.hw-demo) .gbuild{background:var(--chip);color:var(--fg)}
 .hw-ex{margin:12px 0 0;font-size:15px;line-height:1.5;color:var(--dim)}
 .hw-next{margin:12px 0 0;padding:12px 14px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);font-size:15px;line-height:1.5;color:var(--fg)}
 .hw-next b{font-weight:600}
+/* How it connects (qb5, 2026-10-14): the path from a request to main, with the Board's own marks and colours. Phone: a
+   column with a line down the left; from 900 px: two rows of four. */
+.cx{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:0;counter-reset:cx}
+.cx li{position:relative;display:grid;grid-template-columns:84px minmax(0,1fr);align-content:start;grid-template-rows:auto auto;column-gap:12px;padding:0 0 16px 28px;counter-increment:cx}
+.cx li::before{content:counter(cx);position:absolute;left:0;top:2px;width:20px;height:20px;border-radius:50%;background:var(--chip);color:var(--dim);font:600 12px/20px var(--ff,inherit);text-align:center;font-variant-numeric:tabular-nums}
+.cx li::after{content:'';position:absolute;left:9.5px;top:24px;bottom:0;width:1px;background:var(--line)}
+.cx li:last-child::after{display:none}
+.cx .cx-m{grid-row:1 / 3;display:flex;align-items:center;gap:3px;min-width:56px;min-height:28px}
+.cx b{font-size:16px;font-weight:600;line-height:1.3}
+.cx .cx-d{color:var(--dim);font-size:14px;line-height:1.45}
+.cx li.cx-if b::after{content:' (only if needed)';font-weight:400;color:var(--dim);font-size:13px}
+.cx-pc{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font:600 12px/1 var(--ff,inherit);font-style:normal;flex:none;position:relative}
+.cx-pc.w{background:var(--busy);color:var(--acc-fg)}
+.cx-pc.r{background:var(--bg);color:var(--fg);box-shadow:inset 0 0 0 1.5px var(--dim)}
+.cx-pc.l{background:var(--fg);color:var(--bg)}
+.cx-pc.d{background:var(--acc);color:var(--acc-fg)}
+.cx-pc.rp::after{content:'';position:absolute;right:-3px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--busy);box-shadow:0 0 0 2px var(--bg)}
+.cx-pc.mini{width:10px;height:10px}
+.cx-train{display:inline-flex;gap:2px;padding:4px 5px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line)}
+.cx-lanes{display:inline-grid;gap:4px;width:26px;margin-left:4px}
+.cx-lanes i{display:block;height:3px;border-radius:2px;background:var(--fg)}
+.cx-lanes i+i{margin-left:8px;background:var(--dim)}
+.cx-ic{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--acc-soft,var(--chip));color:var(--acc);flex:none}
+.cx-ic svg{width:18px;height:18px}
+@media (min-width:900px){
+.cx{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 12px}
+.cx li{grid-template-columns:1fr;grid-template-rows:auto auto auto;align-content:start;row-gap:2px;padding:12px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+.cx li::before{left:auto;right:10px;top:10px}
+.cx li::after{left:auto;right:-10px;top:50%;bottom:auto;width:8px;height:8px;background:none;border-top:1.5px solid var(--dim);border-right:1.5px solid var(--dim);transform:translateY(-50%) rotate(45deg)}
+.cx li:nth-child(4n)::after{display:none}
+.cx .cx-m{grid-row:auto;margin-bottom:6px}
+.cx li.cx-if{box-shadow:inset 0 0 0 1px var(--line);background:repeating-linear-gradient(135deg,var(--card) 0 8px,var(--bg) 8px 9px)}
+}
 .hw-doors{display:grid;gap:8px}
 .hw-top{margin:16px 0 8px}
 @media (min-width:720px){.hw-top{grid-template-columns:1fr 1fr}}

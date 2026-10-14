@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 const here = (f) => new URL(f, import.meta.url);
 const intentsJs = readFileSync(here('intents.js'), 'utf8');
-const js = intentsJs + '\n' + readFileSync(here('contract.js'), 'utf8') + '\n' + readFileSync(here('estbar.js'), 'utf8') + '\n' + readFileSync(here('timeline.js'), 'utf8') + '\n' + readFileSync(here('work.js'), 'utf8'), css = readFileSync(here('work.css'), 'utf8');
+const js = intentsJs + '\n' + readFileSync(here('contract.js'), 'utf8') + '\n' + readFileSync(here('legend.js'), 'utf8') + '\n' + readFileSync(here('estbar.js'), 'utf8') + '\n' + readFileSync(here('timeline.js'), 'utf8') + '\n' + readFileSync(here('work.js'), 'utf8'), css = readFileSync(here('work.css'), 'utf8');
 const labJs = readFileSync(here('lab.js'), 'utf8'), labCss = readFileSync(here('lab.css'), 'utf8');
 const runsJs = intentsJs + '\n' + readFileSync(here('runs.js'), 'utf8'), runsCss = readFileSync(here('runs.css'), 'utf8');
 if (/<\/script/i.test(js + labJs + runsJs) || /<\/style/i.test(css + labCss + runsCss)) throw new Error('closing tag inside an inline asset');
