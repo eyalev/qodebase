@@ -1,0 +1,33 @@
+[
+ {
+  "a": 17000,
+  "b": 46900,
+  "quote": "Document every exported function in Visual Studio Code and add each one to the API index, with a thousand agents.",
+  "page_audio": true
+ },
+ {
+  "a": 46990,
+  "b": 62000,
+  "quote": "Yes, start.",
+  "page_audio": true
+ },
+ {
+  "a": 62000,
+  "b": 345000,
+  "x": 12,
+  "say": "A thousand agents start, each on its own files. Each also writes one line in a shared index, so they collide thousands of times, and every collision is redone on the newest code. Then the last files land on main."
+ },
+ {
+  "a": 402000,
+  "b": 426000,
+  "quote": "Show the index check.",
+  "page_audio": true
+ },
+ {
+  "a": 480900,
+  "b": 506000,
+  "quote": "Show the intent tree.",
+  "page_audio": true,
+  "hold": 1
+ }
+]

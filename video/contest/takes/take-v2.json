@@ -1,0 +1,82 @@
+[
+ {
+  "a": 14800,
+  "b": 30500,
+  "quote": "Build me a small app that keeps track of everything in my home, with a paid pro version that uses Stripe.",
+  "page_audio": true
+ },
+ {
+  "a": 31300,
+  "b": 41000,
+  "quote": "Use the cheapest team.",
+  "page_audio": true
+ },
+ {
+  "a": 191800,
+  "b": 204000,
+  "quote": "Yes, build it.",
+  "page_audio": true,
+  "cap": "Talk asks before it spends anything."
+ },
+ {
+  "a": 305800,
+  "b": 316500,
+  "quote": "Call it house helper.",
+  "page_audio": true
+ },
+ {
+  "a": 317400,
+  "b": 334000,
+  "quote": "Yes, start.",
+  "page_audio": true
+ },
+ {
+  "a": 372100,
+  "b": 384000,
+  "quote": "Show me the agents.",
+  "page_audio": true
+ },
+ {
+  "a": 384000,
+  "b": 925000,
+  "x": 40,
+  "say": "An Opus planner splits the app into parts, and Haiku agents take them, each on its own copy. The first agent's machine never started; it was restarted after fifteen minutes."
+ },
+ {
+  "a": 926400,
+  "b": 945000,
+  "quote": "Add a dark mode to the app.",
+  "page_audio": true
+ },
+ {
+  "a": 945000,
+  "b": 982500,
+  "x": 12,
+  "cap": "Talk asks before it sends a request to the agents."
+ },
+ {
+  "a": 983800,
+  "b": 993000,
+  "quote": "Yes.",
+  "page_audio": true
+ },
+ {
+  "a": 993000,
+  "b": 2680000,
+  "x": 120,
+  "say": "The dark mode lands on top of the rest while the other agents work; collisions are redone on the newest code. All ten parts landed, for about two dollars of model time."
+ },
+ {
+  "a": 2681700,
+  "b": 2697000,
+  "quote": "Show me the app.",
+  "page_audio": true
+ },
+ {
+  "a": 2898300,
+  "b": 2915000,
+  "quote": "Open the dark mode change.",
+  "page_audio": true,
+  "hold": 1
+ }
+]

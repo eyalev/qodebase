@@ -124,9 +124,11 @@ class Cut2(base.Cut):
             if x == 1 and s.get('audio', True) and part and (s.get('page_audio') or not s.get('quote')):
                 wav = os.path.join(src, f'aud-{a}-{b}.wav')
                 if not os.path.exists(wav):
+                    # a page recording can end early (the page navigated away mid-chunk): a slice past its end is skipped
                     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-ss', f'{(a - part[0]) / 1000:.3f}', '-t', f'{(b - a) / 1000:.3f}',
-                                    '-i', part[1], '-ar', '48000', '-ac', '1', wav], check=True)
-                if os.path.getsize(wav) > 1000: self.audio.append((self.now(), wav))
+                                    '-i', part[1], '-ar', '48000', '-ac', '1', wav], check=False)
+                if os.path.exists(wav) and os.path.getsize(wav) > 1000: self.audio.append((self.now(), wav))
+                else: print(json.dumps({'event': 'page_audio_missing', 'take': os.path.basename(src), 'a': a, 'b': b}), file=sys.stderr)
             t = float(a)
             while t <= b:
                 while fi + 1 < len(frames) and frames[fi + 1][0] <= t: fi += 1
@@ -140,26 +142,26 @@ class Cut2(base.Cut):
             if hold_s: self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), None), round(hold_s * FPS))
 
 V = os.path.expanduser('~/.local/share/qodebase-video')
-TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-5,take-5b').split(',')]
+TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-v2').split(',')]
 
 def script(c):
     c.chapter('')
     c.deck(1); c.deck(2)
     c.chapter('The idea: land by intent')
     for n in (4, 5, 6): c.deck(n)
-    c.chapter('A team build, by voice')
+    c.chapter('A team build, all by voice')
     for t in TAKES2: c.take(t, json.load(open(os.path.join(t, 'segs.json'))))
     c.deck(23)
     c.chapter('It works with real agents')
     for n in (11, 12): c.deck(n)
     c.chapter('Many agents, at scale')
     c.deck(14, say="Now hundreds. Two hundred cheap-model agents took almost fourteen hundred coding tasks on one codebase, checked by tests they never saw. As more tasks aimed at the same functions, a model redid up to four hundred and sixty-eight collided changes, and losses stayed in the same range, with nothing lost in landing. The overlap cost time, and lanes per module won most of it back.")
-    for n in (15, 16): c.deck(n)
-    c.chapter('A thousand agents, by voice')
-    T3 = os.path.join(V, os.environ.get('TAKE3', 'take-s3e'))
+    c.deck(15)
+    c.chapter('A thousand agents, all by voice')
+    T3 = os.path.join(V, os.environ.get('TAKE3', 'take-v3'))
     c.take(T3, json.load(open(os.path.join(T3, 'segs.json'))))
-    T3b = os.path.join(V, 'take-s3f')   # the index card's final check (a pickup after faf32ef)
-    c.take(T3b, json.load(open(os.path.join(T3b, 'segs.json'))))
+    if os.environ.get('TAKE3', 'take-v3') == 'take-s3e':   # the taps version had the index check as a pickup
+        T3b = os.path.join(V, 'take-s3f'); c.take(T3b, json.load(open(os.path.join(T3b, 'segs.json'))))
     c.chapter('Built on Cloudflare')
     c.deck(26)
     c.chapter('')
