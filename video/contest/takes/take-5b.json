@@ -1,0 +1,5 @@
+[
+ {"a": 13000, "b": 21000, "say": "With the phone in dark mode, the app opens dark."},
+ {"a": 35139, "b": 45000, "say": "This change collided on styles.css. A model redid it on the newest code in sixteen seconds, and the tests passed again.", "hold": 1},
+ {"a": 82295, "b": 92000, "say": "And the timeline shows where the time went: the one slow part is the agent that had to be restarted.", "hold": 1}
+]

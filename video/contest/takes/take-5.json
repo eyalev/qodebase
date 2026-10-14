@@ -1,0 +1,13 @@
+[
+ {"a": 11000, "b": 21500, "quote": "Build me a small app that keeps track of everything in my home, with a paid pro version that uses Stripe."},
+ {"a": 21500, "b": 36000, "say": "Talk hears it, fills in the idea, and offers to build it."},
+ {"a": 41441, "b": 53000, "say": "I pick the cheapest team: an Opus planner and six Haiku agents. It shows how long and what it should cost."},
+ {"a": 53000, "b": 86000, "x": 3, "cap": "The brief: the team, no reviewer, and what happens next."},
+ {"a": 86260, "b": 120000, "say": "The planner splits the app into parts, and an agent takes each one, on its own copy of the code."},
+ {"a": 120000, "b": 405000, "x": 16, "cap": "Agents at work."},
+ {"a": 405005, "b": 416500, "quote": "Please add a dark mode to the app.", "y": 380},
+ {"a": 416500, "b": 432000, "say": "Mid-build, one more request. It joins the plan as one more part.", "y": 380},
+ {"a": 432000, "b": 1610000, "x": 48, "say": "It lands on top of the rest while the other agents work. When two changes touch the same file, the later one is redone on the newest code, not sent back. One agent's machine never started; the page said so, and it was restarted."},
+ {"a": 1610004, "b": 1618000, "say": "All ten parts landed in about twenty-five minutes, for two dollars of model time."},
+ {"a": 1706904, "b": 1714500, "say": "The dark mode's record: what it was asked, no reviewer in this setup, checks passed, landed."}
+]

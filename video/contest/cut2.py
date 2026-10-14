@@ -119,7 +119,8 @@ class Cut2(base.Cut):
             hold_s = s.get('hold', 0)
             if hold_s: self.emit(self._canvas(cache[f], s.get('y', 0) * 2, cap, s.get('quote', ''), None), round(hold_s * FPS))
 
-TAKE2 = os.environ.get('TAKE2', os.path.expanduser('~/.local/share/qodebase-video/take-2'))
+V = os.path.expanduser('~/.local/share/qodebase-video')
+TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-5,take-5b').split(',')]
 
 def script(c):
     c.chapter('')
@@ -127,7 +128,8 @@ def script(c):
     c.chapter('The idea: land by intent')
     for n in (4, 5, 6): c.deck(n)
     c.chapter('A team build, by voice')
-    c.take(TAKE2, json.load(open(os.path.join(TAKE2, 'segs.json'))))
+    for t in TAKES2: c.take(t, json.load(open(os.path.join(t, 'segs.json'))))
+    c.deck(23)
     c.chapter('It works with real agents')
     for n in (9, 11, 12): c.deck(n)
     c.chapter('Many agents, at scale')
