@@ -1901,30 +1901,28 @@ async function aigAnthropic(request: Request, env: Env, url: URL): Promise<Respo
   const slug = projectOf(id);
   const f = await env.Landing.get(env.Landing.idFromName(slug)).flags().catch(() => null);
   if (f?.billing !== 'gateway' || !env.REPLAY_GATEWAY_TOKEN) return json({ type: 'error', error: { type: 'permission_error', message: 'this project is not on gateway billing' } }, 403);
-  // AI Gateway's native /anthropic route forwarded our calls to Anthropic without a key ('x-api-key header is required'),
-  // as it did for the merger's replays; Cloudflare's AI REST API (Anthropic-compatible /ai/v1/messages) bills unified
-  // credits. Its model ids are 'anthropic/claude-haiku-5.5': Claude Code's are mapped on the way in.
+  // AI Gateway's native Anthropic route bills unified credits for the models in Cloudflare's catalog: Opus 5.5, Sonnet 5.5
+  // and the 4.x models answer; Haiku 5.5 is not covered yet (forwarded without a key: 'x-api-key header is required',
+  // measured 2026-10-14). Claude Code's Haiku 5.5 calls (its background model and the default coder) go as Haiku 4.5,
+  // logged on every call. Cloudflare's REST /ai/v1/messages refused Claude Code's requests (system blocks, roles).
   const acct = '887d7234a6b8d65ad355a4f6684cab67', gw = env.REPLAY_GATEWAY || 'qodebase-replay';
-  const rest = url.pathname.slice('/api/aig/anthropic/'.length).replace(/^v1\//, '');
-  // No query string: Claude Code adds ?beta=true and the API refuses any ('Unrecognized key(s): query').
-  const target = `https://api.cloudflare.com/client/v4/accounts/${acct}/ai/v1/${rest}`;
+  const target = `https://gateway.ai.cloudflare.com/v1/${acct}/${gw}/anthropic/${url.pathname.slice('/api/aig/anthropic/'.length)}${url.search}`;
   const h = new Headers();
   for (const [k, v] of request.headers) if (/^(content-type|anthropic-version|anthropic-beta|accept)$/i.test(k)) h.set(k, v);
-  h.set('authorization', `Bearer ${env.REPLAY_GATEWAY_TOKEN}`);
-  h.set('cf-aig-gateway-id', gw);
+  h.set('cf-aig-authorization', `Bearer ${env.REPLAY_GATEWAY_TOKEN}`);
   h.set('cf-aig-metadata', JSON.stringify({ project: slug, agent: id.split('--')[1] || id }));
-  let body: BodyInit | undefined;
+  let body: BodyInit | undefined, swapped: string | null = null;
   if (request.method !== 'GET') {
     const txt = await request.text();
     try {
       const j = JSON.parse(txt);
-      if (typeof j.model === 'string' && !j.model.includes('/')) j.model = 'anthropic/' + j.model.replace(/^(claude-(?:opus|sonnet|haiku))-(\d+)-(\d+)(.*)$/, '$1-$2.$3$4');
+      if (typeof j.model === 'string' && /^claude-haiku-5-5/.test(j.model)) { swapped = j.model; j.model = 'claude-haiku-4-5'; }
       body = JSON.stringify(j);
     } catch { body = txt; }
   }
   const t0 = Date.now();
   const res = await fetch(target, { method: request.method, headers: h, body });
-  log('aig', 'call', { slug, agent: id, path: url.pathname.slice(19, 60), status: res.status, ms: Date.now() - t0 });
+  log('aig', 'call', { slug, agent: id, path: url.pathname.slice(19, 60), status: res.status, ms: Date.now() - t0, ...(swapped ? { model: `${swapped} -> claude-haiku-4-5` } : {}) });
   const out = new Headers(res.headers); out.delete('set-cookie');
   return new Response(res.body, { status: res.status, headers: out });
 }
