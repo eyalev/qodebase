@@ -1103,6 +1103,13 @@ body:has(.land) .gbuild{display:none}
 .land:has(#bsopen:not([hidden]))>.doors{grid-column:1;grid-row:7}
 .land>.tryh{grid-column:1 / -1;grid-row:8}.land>.trys{grid-column:1 / -1;grid-row:9}.land>.tryrow{grid-column:1 / -1;grid-row:10}
 }
+/* Signed in, settings closed: the doors sit under the settings toggle on the right; opened, the settings take the
+   right column and the doors move under the links. */
+@media (min-width:1100px){
+.land:has(#bsopen:not([hidden]))>.doors{grid-column:2;grid-row:4 / span 4;margin-top:12px}
+.land:has(#bsopen[aria-expanded="false"]) .landask>.bsbox{grid-row:3}
+.land:has(#bsopen[aria-expanded="true"])>.doors{grid-column:1;grid-row:7;margin-top:0}
+}
 `;
 
 /** Small apps that run here, each with one change to ask for: the fastest way to see
