@@ -63,7 +63,7 @@ No model calls in any of these; every number has its script.
 
 | | finding |
 |---|---|
-| Hono's last 346 PRs, replayed as 100 at once | 48% needed another PR to land first; **0 git conflicts**. The problem is order. (Holding a change until what it needs has landed is the strategy of the Hono simulation in the next row; the live queue orders only declared stacks.) |
+| Hono's last 346 PRs, replayed as 100 at once | 48% needed another PR to land first; **0 git conflicts**. A hint from real history, not proof: people wrote these PRs one after another, so replaying them as if written at once creates the dependencies. Written at the same moment, about half of Hono's PRs would have needed another to land first, while git conflicts were rare. Our real agent builds showed collisions on shared files too (28 of 40). So qodebase plans first (skeleton, contract), stacks what must wait (only declared stacks wait), and redoes the rest by intent. |
 | A migration of Hono's code, many agents (simulation) | grabbing tasks in any order wasted **90 agent-hours**; knowing the order finished in less than half the time at 10 agents; stacking + land by intent wasted nothing |
 | Real code (403 files), 500 scripted agents, real git + tests (simulation, scripted edits) | land by intent landed **3.5×** as many changes per hour as review-then-merge |
 | 500 agents on Cloudflare (Durable Objects + Artifacts) | 7,033 pushes from 500 forks at once, 280 ms median; one merge queue was the limit (it reset three times, and a bug of ours caused 88 stale-ref rejections, since fixed) |
