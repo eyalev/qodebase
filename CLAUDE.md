@@ -853,3 +853,13 @@ answers, or both.
   `go({page})`. Nothing destructive. One row per call: console + `/api/talk/log`
   (Workers Logs, `event: webmcp`). `/talk.js` revalidates on every load (ETag,
   `no-cache`), but a tab opened before a deploy keeps the old tools until it reloads.
+
+## Mirrors (qodebase's own code on qodebase, 2026-10-14)
+
+https://qodebase.app/p/eyal/qodebase is a read-only mirror of github.com/eyalev/qodebase with its whole history.
+- Admin `POST /api/p/<o>/<n>/mirror {github, branch}` marks a project a mirror (kind static, app off: never deployed,
+  though the repo has a wrangler config) and syncs it; the answer carries the webhook URL and secret.
+- Sync: BuildBox `mirror` fetches the GitHub branch (full history) and force-pushes it to the project's repo (~30 s).
+- On each GitHub push: webhook `POST /api/hooks/mirror/<o>/<n>` (GitHub hook id 698091321 on eyalev/qodebase, push
+  events), checked with X-Hub-Signature-256 against a secret derived per project from ADMIN_SECRET (nothing stored).
+  Workers Logs: module `mirror`, events synced / sync_error / hook_refused. Info shows `mirror.{syncedAt, head, ms}`.
