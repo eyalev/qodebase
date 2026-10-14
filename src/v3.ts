@@ -310,7 +310,9 @@ function readmeView(c: Ctx) {
   const d = c.docs || { list: [], current: null, text: null };
   const cur = d.current;
   const chips = d.list.length > 1 ? `<nav class="docs" aria-label="Documents">${d.list.map((x) =>
-    `<a href="${c.base}/readme${x.path === d.list[0].path ? '' : `?doc=${encodeURIComponent(x.path)}`}" class="${x.path === cur ? 'on' : ''}"${x.path === cur ? ' aria-current="page"' : ''}>${esc(x.path.split('/').pop() || x.label)}</a>`).join('')}</nav>` : '';
+    `<a href="${c.base}/readme${x.path === d.list[0].path ? '' : `?doc=${encodeURIComponent(x.path)}`}" class="${x.path === cur ? 'on' : ''}"${x.path === cur ? ' aria-current="page"' : ''}>${esc(x.path.split('/').pop() || x.label)}</a>`).join('')}</nav>`
+    // Each tab is a new page: the row starts where the chosen file shows (Eyal, 2026-10-14: it jumped back to the left).
+    + `<script>(function(){var n=document.querySelector('nav.docs'),a=n&&n.querySelector('a.on');if(!a)return;var r=a.offsetLeft+a.offsetWidth-n.clientWidth+28;if(r>0)n.scrollLeft=r;})()</script>` : '';
   const isMd = cur && /\.(md|markdown|mdx)$/i.test(cur);
   const doc = !cur ? `<p class="empty">This project has no README yet.${c.own ? ' Ask for one in <a href="' + c.base + '/changes">Changes</a>.' : ''}</p>`
     : d.text == null ? `<p class="empty">This file could not be shown. <a href="/p/${info.owner}/${info.name}/code/${esc(cur)}">Open it in Code</a>.</p>`

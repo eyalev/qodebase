@@ -1106,10 +1106,17 @@
       const before = new Map();
       if (same) root.querySelectorAll('[data-car]').forEach((e) => before.set(e.dataset.car, e.getBoundingClientRect()));
       const ps = root.querySelector('.fpanel')?.scrollTop || 0;
+      const tx = root.querySelector('.ftabs')?.scrollLeft || 0;   // the tab row keeps its sideways position across redraws (Eyal, 2026-10-14)
       const ctlF = document.activeElement?.closest?.('.sctl') ? document.activeElement.dataset.ctl : null;   // keep focus on the run controls
       root.innerHTML = html;
       if (ctlF) (root.querySelector(`[data-ctl="${ctlF}"]`) || root.querySelector('.sctl button'))?.focus({ preventScroll: true });
       const pn = root.querySelector('.fpanel'); if (pn && ps) pn.scrollTop = ps;
+      const ft = root.querySelector('.ftabs');
+      if (ft) {
+        ft.scrollLeft = tx;
+        const on = ft.querySelector('[aria-pressed="true"]');   // and the chosen tab comes into view, the least scroll that shows it
+        if (on && (on.offsetLeft < ft.scrollLeft || on.offsetLeft + on.offsetWidth > ft.scrollLeft + ft.clientWidth)) ft.scrollTo({ left: Math.max(0, on.offsetLeft < ft.scrollLeft ? on.offsetLeft - 16 : on.offsetLeft + on.offsetWidth - ft.clientWidth + 16), behavior: 'smooth' });
+      }
       if (TL && root.querySelector('.tl') && window.qbTimelineMount) window.qbTimelineMount(root, TL);
       fitSize();
       if (same && before.size) flip(before);
