@@ -1496,6 +1496,14 @@ model calls. 10 copies of src/vs, 1,000 agents each.
     several requests to its Run object). It hit our bookkeeping, not Artifacts, KV or landing.
   - **Without the cache, reads stop the fleet at ~2,000/s long before this.** So the bookkeeping limit matters only
     when the files repeat.
+- **After qb6's fixes** (retries with backoff, batched writes, re-queueing work out too long):
+  - **(f), 50,000 agents:** 3 not landed (0.0015%).
+  - **(g), 100,000 agents over 100 copies:** ~21,100 files/s at the busiest, 298,857 landed in ~66 s, ~13,800 busy at
+    once.
+  - **(g)'s 43 not landed (0.01%):** their agents' invocations were cancelled during overload, so the hand-off retry
+    never ran. That is the next fix.
+  - **Throughput:** roughly linear in copies, since each copy has its own Run object and Lander. The bookkeeping objects
+    are still the wall at the peaks.
 
 ## (m) Code collision dial: prediction before qb6's runs (qb4, 2026-10-13)
 

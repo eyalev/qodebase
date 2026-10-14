@@ -187,6 +187,58 @@
      "batch the SQL writes"
     ],
     "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 5d97b0b)"
+   },
+   {
+    "run": "R50K-f",
+    "agents": 50000,
+    "copies": 50,
+    "namespaces": 4,
+    "files": 203200,
+    "clean": false,
+    "lost": 3,
+    "lostShare": 1.5e-05,
+    "readCache": "best case: files repeat (cache), after the fixes (4a4769f, 5aa4910)",
+    "filesPerSec": 12900,
+    "busiest10sFiles": 128876,
+    "busyAtOnceMax": 6949,
+    "readP50Ms": 20,
+    "readP90Ms": 119,
+    "handOutP50Ms": 70,
+    "handOutP90Ms": 203,
+    "landedPerSecPeak": 6800,
+    "startToAllLandedS": 75,
+    "landed": 149447,
+    "nothingToDocument": 53450,
+    "noCachedAnswer": 300,
+    "readsFromArtifacts": 0,
+    "limit": "3 files answered but not landed (0.0015%); was 10,943 before the fixes",
+    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9643506)"
+   },
+   {
+    "run": "R100K-g",
+    "agents": 100000,
+    "copies": 100,
+    "namespaces": 4,
+    "files": 406400,
+    "clean": false,
+    "lost": 43,
+    "lostShare": 0.0001,
+    "readCache": "best case: files repeat (cache), after the fixes (4a4769f, 5aa4910)",
+    "filesPerSec": 21100,
+    "busiest10sFiles": 211032,
+    "busyAtOnceMax": 13839,
+    "readP50Ms": 40,
+    "readP90Ms": 214,
+    "handOutP50Ms": 80,
+    "handOutP90Ms": 252,
+    "landedPerSecPeak": 10300,
+    "startToAllLandedS": 66,
+    "landed": 298857,
+    "nothingToDocument": 106900,
+    "noCachedAnswer": 600,
+    "readsFromArtifacts": 0,
+    "limit": "43 files (0.01%) answered but never landed, on 11 of 100 copies: the agents' report met 'Durable Object is overloaded' (the write went through) and their invocations were cancelled before the hand-off retry. Run objects and Landers overloaded at peaks. Nothing landed wrong. Fix not built: the Run object re-dispatches answered files no landing queue took within a minute",
+    "source": "docs/contest/fleet-r10k.md (qb6, 2026-10-14, 9643506)"
    }
   ],
   "files": {
@@ -198,7 +250,9 @@
    "R10K-b": 40640,
    "R10K-c": 40640,
    "R10K-d": 40640,
-   "R50K-e": 203200
+   "R50K-e": 203200,
+   "R50K-f": 203200,
+   "R100K-g": 406400
   },
   "tenK": {
    "say": "10,000 agents on Cloudflare, every file different, 0 errors: all 29,890 changes on main 86 s after the start (~1,900 files a second at the busiest; Artifacts reads slow down but never fail, and that read rate, ~2,000/s for the account, is the wall).",
@@ -206,7 +260,8 @@
    "always": "Cached answers (no model calls). Agents start in ramps: at most ~2,800 of the 10,000 were busy at once.",
    "not": "The read cache did not raise the realistic throughput (1,900 vs the 2,100 plateau without it): not 'the fix'. More namespaces did not raise it either: the read limit is for the account.",
    "notRun": "20,000 agents: not run (budget).",
-   "fiftyK": "50,000 agents (cached answers, files repeat, best case): ~12,400 files a second at the busiest, 139,385 changes landed in ~70 s, nothing landed wrong; but 5.4% of files were dropped by our own bookkeeping (per-copy Durable Objects overloaded, no retry), so it is not a clean run. Never quote it without that."
+   "fiftyK": "50,000 agents (cached answers, files repeat, best case), before the fixes: 5.4% dropped by our own bookkeeping (R50K-e). After the fixes (R50K-f): 3 of 203,200 not landed (0.0015%), ~12,900 files/s at the busiest.",
+   "hundredK": "100,000 agents (cached answers, files repeat, best case): ~21,100 files a second at the busiest, 298,857 changes landed in ~66 s, nothing landed wrong; 43 of 406,400 files (0.01%) were answered but never landed (our bookkeeping objects overloaded at the peak). At most ~13,800 agents busy at once."
   }
  },
  "realModels": {
