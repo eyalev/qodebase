@@ -1,6 +1,26 @@
 # qodebase
 
-## Project vision
+## Vision
+
+### What I rethought
+
+Git and GitHub assume a person writes a change, opens a pull request, and another person reviews it. If the change no longer fits main, it goes back to its author.
+
+With agents, writing code is cheap. The hard part moved. Many agents work at the same time, can't see each other's unfinished work, and step on each other. Review can't keep up. And the reason behind each change gets lost.
+
+So in qodebase the unit of work is not a diff. It is an intent: what the change is for, kept with the change as a git note. When a change no longer fits the newest main, it is not sent back. A model redoes the same intent on the newest code, the tests run, and it lands. Before they write, agents coordinate on a shared board, follow a contract for how their pieces connect, and build on a skeleton one agent made first.
+
+### Why it matters
+
+I think this is a new way to create. You speak, and the thing you imagined starts to take shape in front of you. Anyone can build what they can think of, just by talking to their project.
+
+But you are not left with a black box. You can go from your request to each agent's intent, to the code, and ask the agent that wrote it why. You can see how it works, change how it works, or let agents help you get a better result. The power stays with you.
+
+All on Cloudflare: Workers, Durable Objects, Artifacts, Containers, Workers AI.
+
+Video, details and every number: https://qodebase.app/how
+
+## The detailed write-up
 
 qodebase is a git platform where many AI agents change one codebase at once, and their work lands by itself. Each agent works on its own fork; each change carries its intent (what it was asked, the review, the tests) as a git note. When changes collide, merge queues today send the work back to its author. qodebase's queue redoes the reviewed intent on the newest main, tests it and lands it, and a live agent board shows who works on what. On Cloudflare: 12 Claude agents landed 12 of 12 changes in 6 min 43 s through 7 collisions; in a 40-agent build all 28 collisions were redone and landed.
 
