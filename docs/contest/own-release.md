@@ -34,3 +34,6 @@
 
 ## 2026-10-14 20:05 UTC: release rebuilt on the rewritten history, without absolute paths
 - Built from forq 7c4c3c0 (after the privacy scrub; scripts/selfhost-release.mjs now makes the bundle's path comments relative and refuses to finish if a /home/<user>/ path remains), committed as fe16b4f, pushed to GitHub and the Artifacts mirror forq/forq. Install test into qb-selftest: all 5 steps done in 100 s; the copy answers 302 (Access).
+
+## 2026-10-15 01:26 UTC: release for the submission
+- Built from forq 4fb729b (main at the time of the contest form), committed as 625cbb5, pushed to GitHub and the Artifacts mirror forq/forq. Install test into qb-selftest: all 5 steps done in 63 s; the copy answers 302 (Access). Deploys frozen after this (manager).
