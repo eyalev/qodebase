@@ -349,7 +349,7 @@ def cover_talk_version(im):
     ImageDraw.Draw(im).rectangle((int(w * .135), y0 - 4, int(w * .40), y1 + 4), fill=bg)
     return im
 
-TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-d2,take-d2b,take-d2v').split(',')]
+TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-d2,take-d2b,take-d2w').split(',')]
 
 def script(c):
     PROVED = [('10,000', 'agents on Cloudflare, cached answers'), ('200', 'agents on one codebase: 0 lost in landing at 60% overlap'), ('40', 'Claude agents on one app')]

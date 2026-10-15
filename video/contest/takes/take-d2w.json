@@ -1,0 +1,9 @@
+[
+ {"a": 16900, "b": 24600},
+ {"a": 29200, "b": 36200},
+ {"a": 36200, "b": 62000, "x": 4, "say": "Its box wakes from a snapshot, and the session comes back as it was."},
+ {"a": 62000, "b": 71000, "say": "The agent's own Claude Code session is kept with its change, and the agent can still be asked about it."},
+ {"a": 85800, "b": 91100},
+ {"a": 96500, "b": 104000},
+ {"a": 106600, "b": 120500, "hold": 1}
+]
