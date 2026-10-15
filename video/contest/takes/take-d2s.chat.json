@@ -1,0 +1,47 @@
+[
+ [
+  0,
+  "you",
+  "Open the agent that added the dark mode."
+ ],
+ [
+  0,
+  "talk",
+  "This is Agent 9, the agent that made dark mode."
+ ],
+ [
+  0,
+  "you",
+  "Show its session."
+ ],
+ [
+  0,
+  "talk",
+  "Opening its terminal. If the agent was asleep, it is waking up."
+ ],
+ [
+  0,
+  "you",
+  "Ask it: what did you change, and why?"
+ ],
+ [
+  0,
+  "talk",
+  "Send this to the agent?"
+ ],
+ [
+  0,
+  "you",
+  "Yes."
+ ],
+ [
+  0,
+  "talk",
+  "Agent 9 is answering."
+ ],
+ [
+  0,
+  "talk",
+  "Agent 9 says, in short: I added dark mode with a system toggle and saved the choice to localStorage. I updated the CSS variables to handle both themes and added a script to prevent a white flash on load. The full answer is on screen."
+ ]
+]

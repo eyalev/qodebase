@@ -302,7 +302,9 @@ class Cut2(base.Cut):
             t = float(a)
             while t <= b:
                 while ci < len(chat_ev) and chat_ev[ci][0] <= t:
-                    self.chat.append((chat_ev[ci][1], chat_ev[ci][2])); self.cues.append((self.now(), self.now() + max(2.0, len(chat_ev[ci][2]) / (11.5 if chat_ev[ci][1] == 'talk' else 15)), ('Talk: ' if chat_ev[ci][1] == 'talk' else '') + chat_ev[ci][2])); ci += 1
+                    self.chat.append((chat_ev[ci][1], chat_ev[ci][2]))
+                    if chat_ev[ci][0] > 0: self.cues.append((self.now(), self.now() + max(2.0, len(chat_ev[ci][2]) / (11.5 if chat_ev[ci][1] == 'talk' else 15)), ('Talk: ' if chat_ev[ci][1] == 'talk' else '') + chat_ev[ci][2]))   # t=0 lines only carry the transcript over from the previous take
+                    ci += 1
                 tf = min(t, s['frame_until']) if s.get('frame_until') else t
                 while fi + 1 < len(frames) and frames[fi + 1][0] <= tf: fi += 1
                 while fi > 0 and frames[fi][0] > tf: fi -= 1
@@ -349,7 +351,7 @@ def cover_talk_version(im):
     ImageDraw.Draw(im).rectangle((int(w * .135), y0 - 4, int(w * .40), y1 + 4), fill=bg)
     return im
 
-TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-d2,take-d2b,take-d2w').split(',')]
+TAKES2 = [os.path.join(V, t) for t in os.environ.get('TAKES2', 'take-d2,take-d2b,take-d2w,take-d2s').split(',')]
 
 def script(c):
     PROVED = [('10,000', 'agents on Cloudflare, cached answers'), ('200', 'agents on one codebase: 0 lost in landing at 60% overlap'), ('40', 'Claude agents on one app')]
