@@ -1685,7 +1685,7 @@ function agentTalk(said) {
     || /^\s*(please\s+)?(open|show( me)?|go to|bring up)\s+(the\s+)?(.+?)\s+agent\s*[.!?]*\s*$/i.exec(said);
   var mTerm = /^\s*(please\s+)?(show|open|go to|bring up)\s+(me\s+)?(its|the agent'?s|that agent'?s|his|her|their)\s+(session|terminal|console|screen)\s*[.!?]*\s*$/i.exec(said);
   var mChat = /^\s*(please\s+)?(show|open|go to)\s+(me\s+)?(its|the agent'?s|that agent'?s)\s+(chat|conversation|messages)\s*[.!?]*\s*$/i.exec(said);
-  var mAsk = /^\s*(please\s+)?ask\s+(it|the agent|that agent|him|her|them)\s*[:,]?\s*(.{3,})$/i.exec(said);
+  var mAsk = /^\s*(please\s+)?ask\s+(it|the agent|that agent|him|her|them)\s*[:,.;!?\u2014-]*\s*(.{3,})$/i.exec(said);   // 'Ask it. What…' (the recogniser's full stop)
   // 'open the terminal for agent 8', 'show agent 8's session', 'open agent 3' (the Board's numbers)
   var NUMW = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, to: 2, too: 2, for: 4, ate: 8 };
   var saidN = numberWords(said).replace(/\bagent\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|to|too|for|ate)\b/gi, function (_m, w) { return 'agent ' + NUMW[w.toLowerCase()]; });
@@ -1747,7 +1747,7 @@ function agentTalk(said) {
   if (mTerm) { goTo(cur, 'term', 'Opening its terminal. If the agent was asleep, it is waking up.'); return true; }
   if (mChat) { goTo(cur, 'chat', 'Here is its chat.'); return true; }
   // Ask it: one confirm, then send and wait for the answer.
-  var q = mAsk[3].trim().replace(/^[\u201c"]|[\u201d"]$/g, '');
+  var q = mAsk[3].trim().replace(/^[\s.,:;!?\u2014-]+/, '').replace(/^[\u201c"]|[\u201d"]$/g, '');
   q = q.charAt(0).toUpperCase() + q.slice(1);
   busy = false; status('');
   offerOn('Send this to the agent: \u201c' + q + '\u201d?', function () { askAgent(cur, q); }, 'Send');
