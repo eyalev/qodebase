@@ -58,7 +58,7 @@ else if (opt('--mode', 'drag') === 'pipe') {   // trusted CDP touches on a 16 ms
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] }); log('touch', { x, y, k: 'down' });
     const t0 = Date.now();
     for (let i = 1; i <= n; i++) {
-      const p = i / n, e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, yy = y + dist * e;
+      const p = i / n, e = opt('--ease', 'inout') === 'flick' ? p * p * (1.6 - 0.6 * p) : (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2), yy = y + dist * e;   // flick: speeds up and lets go while still moving
       const wait = t0 + i * 16 - Date.now(); if (wait > 0) await sleep(wait);
       pend.push(cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: yy, id: 1 }] })); log('touch', { x, y: Math.round(yy), k: 'move' });
     }
