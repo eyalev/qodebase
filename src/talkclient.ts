@@ -329,7 +329,9 @@ function wireComposers() {
     // Talk; a typed change goes straight to the agents (manager, 2026-10-14).
     var proj = !!projHere() && f.matches('form.ask');
     if (proj) {
-      ta.setAttribute('placeholder', 'Ask for a change, or say a command');
+      // one line always: the longer words where they fit (390 px), else the short ones (360 px)
+      var phFit = function () { try { var cs = getComputedStyle(ta), cx = document.createElement('canvas').getContext('2d'); cx.font = cs.fontSize + ' ' + cs.fontFamily; var room = ta.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 4; ta.setAttribute('placeholder', cx.measureText('Ask for a change or command').width <= room ? 'Ask for a change or command' : 'A change or a command'); } catch (x) { ta.setAttribute('placeholder', 'A change or a command'); } };
+      phFit(); window.addEventListener('resize', phFit);
       b.setAttribute('aria-label', 'Talk (hold: hands-free)');
       f.addEventListener('submit', function (e) {
         if (listening && cInto === ta) return;
