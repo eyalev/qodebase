@@ -23,9 +23,12 @@
     const lo = Math.max(1, Math.round(a / 60)), hi = Math.max(1, Math.round(b / 60)); return hi - lo <= Math.max(1, lo * 0.25) ? `about ${Math.round((lo + hi) / 2)} min left` : `about ${lo} to ${hi} min left`; };
   window.qbLeftText = left;   // the App tab's strip says it the same way
   // X2 (Eyal, 2026-10-13: 'clear progress + finish estimate'): N of M parts landed, about K min left.
-  function partsRow(b, done) {
+  function partsRow(b, done, el) {
     if (!b) return '';
     const M = b.parts, N = b.landed || 0;
+    // changes that landed after the build settled (the flagship: 39 in 37:37, 2 more hours later) are not part of 'Took'
+    // (submission review M6: '41 landed' over 'Took 37:37' read as all 41 in that time)
+    if (done && b.bySettle != null && b.bySettle < N) return `<div class="eb-row eb-parts"><b>${b.bySettle} landed in ${clock(el)}</b><span class="eb-x">${N - b.bySettle} more later</span></div>`;
     if (!M) return `<div class="eb-row eb-parts"><b>${N ? `${N} part${N === 1 ? '' : 's'} landed` : 'Planning the parts'}</b>${done ? '' : '<span class="eb-x">the plan says how many soon</span>'}</div>`;
     const all = N >= M;
     return `<div class="eb-row eb-parts"><b>${all ? `All ${M} parts landed` : `${N} of ${M} parts landed`}</b>${done || all ? '' : `<span class="eb-x">${esc(b.leftText || left(b.remainingS))}</span>`}</div>
@@ -74,7 +77,7 @@
     const plan = (billing || p.billing || est.billing) === 'sub';   // qb6: info.billing, next to estimate/progress
     const costRow = Array.isArray(est.apiUsd) ? `<div class="eb-row"><span class="eb-k">${plan ? (fin ? 'API-equivalent' : 'API-equivalent so far') : fin ? 'Cost' : 'Cost so far'}</span>${cost == null ? '<span class="eb-k">not known yet</span>' : `<b>${usd(cost)}</b>`}<span class="eb-x">${exp} ${span(est.apiUsd, usd)}</span></div>
       ${cost == null ? '' : bar(cost, est.apiUsd[0], est.apiUsd[1], cost > est.apiUsd[1] ? 'eb-late' : '')}` : '';
-    return `<section class="estbar${late ? ' eb-over' : ''}" aria-label="Estimated and actual time and cost">${partsRow(build, done)}
+    return `<section class="estbar${late ? ' eb-over' : ''}" aria-label="Estimated and actual time and cost">${partsRow(build, done, el)}
       <div class="eb-row"><span class="eb-k">${fin ? 'Took' : 'Elapsed'}</span><b${fin ? '' : ` data-eb-since="${est.startedAt}"`}>${clock(el)}</b><span class="eb-x">${exp} ${span(est.wallS, mins)}</span></div>
       ${bar(el, lo, hi, late ? 'eb-late' : '')}
       <p class="eb-state">${esc(state)}</p>
@@ -125,6 +128,7 @@
         }
         if (b && !b.stuck) b.stuck = window.qbStuckAgent ? window.qbStuckAgent(j) : null;
         if (b && !b.boxWait) b.boxWait = window.qbBoxWait ? window.qbBoxWait(j) : null;
+        if (b && j && j.progress && j.progress.settledAt) b.bySettle = (j.changes || []).filter((c) => c.landedAt && c.landedAt <= j.progress.settledAt + 1000).length;
         w.last = b; w.cbs.forEach((f) => { try { f(b, j); } catch (e) {} });
         if (b && b.settledAt) { w.timer = -1; return; }
       } catch (e) { console.log(JSON.stringify({ module: 'estbar', event: 'build_poll_failed', error: String(e) })); }
